@@ -1,0 +1,6 @@
+/build
+__pycache__
+
+# Vim
+*.swp
+.ycm_extra_conf.py
