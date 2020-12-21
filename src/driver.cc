@@ -1,5 +1,6 @@
 #include <cstdio>  // remove
 #include <cstdlib> // mkdtemp, system
+#include <cstring> // memset
 #include <dlfcn.h> // dlopen
 #include <fstream>
 #include <sys/stat.h> // mkdir
@@ -14,12 +15,13 @@ void Driver::buildAndLoad(const std::string &src, int nParam) {
     mkdir("/tmp/ir", 0755);
     char path[] = "/tmp/ir/XXXXXX";
     mkdtemp(path);
+
+    auto cpp = (std::string)path + "/run.cpp";
+    auto so = (std::string)path + "/run.so";
     {
-        std::ofstream f((std::string)path + ".cpp");
+        std::ofstream f(cpp);
         f << src;
     }
-    auto cpp = (std::string)path + ".cpp";
-    auto so = (std::string)path + ".so";
     auto cmd = (std::string) "c++ -shared -fPIC -o " + so + " " + cpp;
     system(cmd.c_str());
 
@@ -34,6 +36,7 @@ void Driver::buildAndLoad(const std::string &src, int nParam) {
     }
 
     params_ = new void *[nParam];
+    memset(params_, 0, nParam * sizeof(void *));
 
     remove(cpp.c_str());
     remove(so.c_str());

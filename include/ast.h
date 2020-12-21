@@ -13,6 +13,11 @@ enum class ASTNodeType : int {
     Load,
     IntConst,
     FloatConst,
+    Add,
+    Sub,
+    Mul,
+    Div,
+    Mod,
 };
 
 #define DEFINE_NODE_ACCESS(name)                                               \

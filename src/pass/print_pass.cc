@@ -54,6 +54,46 @@ void PrintPass::visit(const IntConst &op) { os << std::to_string(op->val_); }
 
 void PrintPass::visit(const FloatConst &op) { os << std::to_string(op->val_); }
 
+void PrintPass::visit(const Add &op) {
+    os << "(";
+    (*this)(op->lhs_);
+    os << " + ";
+    (*this)(op->rhs_);
+    os << ")";
+}
+
+void PrintPass::visit(const Sub &op) {
+    os << "(";
+    (*this)(op->lhs_);
+    os << " - ";
+    (*this)(op->rhs_);
+    os << ")";
+}
+
+void PrintPass::visit(const Mul &op) {
+    os << "(";
+    (*this)(op->lhs_);
+    os << " * ";
+    (*this)(op->rhs_);
+    os << ")";
+}
+
+void PrintPass::visit(const Div &op) {
+    os << "(";
+    (*this)(op->lhs_);
+    os << " / ";
+    (*this)(op->rhs_);
+    os << ")";
+}
+
+void PrintPass::visit(const Mod &op) {
+    os << "(";
+    (*this)(op->lhs_);
+    os << " + ";
+    (*this)(op->rhs_);
+    os << ")";
+}
+
 std::string printPass(const AST &op) {
     PrintPass pass;
     pass(op);

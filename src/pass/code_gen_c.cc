@@ -55,11 +55,16 @@ void CodeGenC::visit(const Var &op) {
 
 void CodeGenC::visit(const Store &op) {
     makeIndent();
-    (*this)(op->var_);
-    for (auto &&index : op->indices_) {
-        os << "[";
-        (*this)(index);
-        os << "]";
+    if (op->indices_.empty()) {
+        os << "*";
+        (*this)(op->var_);
+    } else {
+        (*this)(op->var_);
+        for (auto &&index : op->indices_) {
+            os << "[";
+            (*this)(index);
+            os << "]";
+        }
     }
     os << " = ";
     (*this)(op->expr_);
@@ -67,17 +72,62 @@ void CodeGenC::visit(const Store &op) {
 }
 
 void CodeGenC::visit(const Load &op) {
-    (*this)(op->var_);
-    for (auto &&index : op->indices_) {
-        os << "[";
-        (*this)(index);
-        os << "]";
+    if (op->indices_.empty()) {
+        os << "*";
+        (*this)(op->var_);
+    } else {
+        (*this)(op->var_);
+        for (auto &&index : op->indices_) {
+            os << "[";
+            (*this)(index);
+            os << "]";
+        }
     }
 }
 
 void CodeGenC::visit(const IntConst &op) { os << std::to_string(op->val_); }
 
 void CodeGenC::visit(const FloatConst &op) { os << std::to_string(op->val_); }
+
+void CodeGenC::visit(const Add &op) {
+    os << "(";
+    (*this)(op->lhs_);
+    os << " + ";
+    (*this)(op->rhs_);
+    os << ")";
+}
+
+void CodeGenC::visit(const Sub &op) {
+    os << "(";
+    (*this)(op->lhs_);
+    os << " - ";
+    (*this)(op->rhs_);
+    os << ")";
+}
+
+void CodeGenC::visit(const Mul &op) {
+    os << "(";
+    (*this)(op->lhs_);
+    os << " * ";
+    (*this)(op->rhs_);
+    os << ")";
+}
+
+void CodeGenC::visit(const Div &op) {
+    os << "(";
+    (*this)(op->lhs_);
+    os << " / ";
+    (*this)(op->rhs_);
+    os << ")";
+}
+
+void CodeGenC::visit(const Mod &op) {
+    os << "(";
+    (*this)(op->lhs_);
+    os << " + ";
+    (*this)(op->rhs_);
+    os << ")";
+}
 
 std::string CodeGenC::gen(DataType dtype) {
     switch (dtype) {
@@ -96,14 +146,15 @@ std::pair<std::string, std::vector<std::string>> codeGenC(const AST &op) {
     visitor(op);
     visitor.endBlock();
 
-    const char *header = "#define restrict __restrict__\n"
+    const char *header = "#include <cstdint>\n"
+                         "#define restrict __restrict__\n"
                          "\n"
                          "extern \"C\" {\n"
                          "\n";
     const char *tailer = "\n"
                          "}";
 
-    return std::make_pair((std::string)header + "void run(void **_params)" +
+    return std::make_pair((std::string)header + "void run(void **_params) " +
                               visitor.toString() + tailer,
                           visitor.params());
 }

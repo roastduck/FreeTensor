@@ -17,6 +17,11 @@ class CodeGenC : public CodeGen {
     virtual void visit(const Load &op) override;
     virtual void visit(const IntConst &op) override;
     virtual void visit(const FloatConst &op) override;
+    virtual void visit(const Add &op) override;
+    virtual void visit(const Sub &op) override;
+    virtual void visit(const Mul &op) override;
+    virtual void visit(const Div &op) override;
+    virtual void visit(const Mod &op) override;
 
   private:
     static std::string gen(DataType dtype);

@@ -62,6 +62,66 @@ inline Expr makeFloatConst(double val) {
     return c;
 }
 
+class AddNode : public ExprNode {
+  public:
+    Expr lhs_, rhs_;
+    DEFINE_NODE_TRAIT(Add);
+};
+typedef Ref<AddNode> Add;
+inline Expr makeAdd(const Expr &lhs, const Expr &rhs) {
+    Add a = Add::make();
+    a->lhs_ = lhs, a->rhs_ = rhs;
+    return a;
+}
+
+class SubNode : public ExprNode {
+  public:
+    Expr lhs_, rhs_;
+    DEFINE_NODE_TRAIT(Sub);
+};
+typedef Ref<SubNode> Sub;
+inline Expr makeSub(const Expr &lhs, const Expr &rhs) {
+    Sub a = Sub::make();
+    a->lhs_ = lhs, a->rhs_ = rhs;
+    return a;
+}
+
+class MulNode : public ExprNode {
+  public:
+    Expr lhs_, rhs_;
+    DEFINE_NODE_TRAIT(Mul);
+};
+typedef Ref<MulNode> Mul;
+inline Expr makeMul(const Expr &lhs, const Expr &rhs) {
+    Mul a = Mul::make();
+    a->lhs_ = lhs, a->rhs_ = rhs;
+    return a;
+}
+
+class DivNode : public ExprNode {
+  public:
+    Expr lhs_, rhs_;
+    DEFINE_NODE_TRAIT(Div);
+};
+typedef Ref<DivNode> Div;
+inline Expr makeDiv(const Expr &lhs, const Expr &rhs) {
+    Div a = Div::make();
+    a->lhs_ = lhs, a->rhs_ = rhs;
+    return a;
+}
+
+class ModNode : public ExprNode {
+  public:
+    Expr lhs_, rhs_;
+    DEFINE_NODE_TRAIT(Mod);
+};
+typedef Ref<ModNode> Mod;
+inline Expr makeMod(const Expr &lhs, const Expr &rhs) {
+    Mod a = Mod::make();
+    a->lhs_ = lhs, a->rhs_ = rhs;
+    return a;
+}
+
 } // namespace ir
 
 #endif // EXPR_H

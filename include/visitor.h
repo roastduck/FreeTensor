@@ -26,6 +26,11 @@ class Visitor {
             DISPATCH_CASE(Load);
             DISPATCH_CASE(IntConst);
             DISPATCH_CASE(FloatConst);
+            DISPATCH_CASE(Add);
+            DISPATCH_CASE(Sub);
+            DISPATCH_CASE(Mul);
+            DISPATCH_CASE(Div);
+            DISPATCH_CASE(Mod);
 
         default:
             ERROR("Unexpected AST node type");
@@ -66,6 +71,31 @@ class Visitor {
     virtual void visit(const IntConst &op) {}
 
     virtual void visit(const FloatConst &op) {}
+
+    virtual void visit(const Add &op) {
+        (*this)(op->lhs_);
+        (*this)(op->rhs_);
+    }
+
+    virtual void visit(const Sub &op) {
+        (*this)(op->lhs_);
+        (*this)(op->rhs_);
+    }
+
+    virtual void visit(const Mul &op) {
+        (*this)(op->lhs_);
+        (*this)(op->rhs_);
+    }
+
+    virtual void visit(const Div &op) {
+        (*this)(op->lhs_);
+        (*this)(op->rhs_);
+    }
+
+    virtual void visit(const Mod &op) {
+        (*this)(op->lhs_);
+        (*this)(op->rhs_);
+    }
 };
 
 } // namespace ir

@@ -18,6 +18,9 @@ class Context:
 
 class ContextStack:
 	def __init__(self):
+		self.reset()
+
+	def reset(self):
 		self.stack = [Context()]
 
 	def top(self):
@@ -31,17 +34,11 @@ class ContextStack:
 
 ctx_stack = ContextStack()
 
-def get_ast():
-	return ctx_stack.top().make_stmt()
-
-def make_expr(val):
-	if type(val) is ffi.Expr:
-		return val
-	if type(val) is int:
-		return ffi.makeIntConst(val)
-	if type(val) is float:
-		return ffi.makeFloatConst(val)
-	assert False, "Unrecognized expr type"
+''' Get AST and reset context '''
+def pop_ast():
+	ret = ctx_stack.pop().make_stmt()
+	ctx_stack.reset()
+	return ret
 
 class Var:
 	def __init__(self, name: str):
@@ -50,19 +47,17 @@ class Var:
 	def __getitem__(self, key):
 		if type(key) is not tuple and type(key) is not list:
 			key = (key,)
-		key = tuple(map(make_expr, key))
 		return ffi.makeLoad(ffi.makeVar(self.name), key)
 
 	def __setitem__(self, key, value):
 		if type(key) is not tuple and type(key) is not list:
 			key = (key,)
-		key = tuple(map(make_expr, key))
-		ctx_stack.top().append_stmt(ffi.makeStore(ffi.makeVar(self.name), key, make_expr(value)))
+		ctx_stack.top().append_stmt(ffi.makeStore(ffi.makeVar(self.name), key, value))
 
 class VarDef:
 	def __init__(self, name: str, shape: Sequence, dtype: DataType, atype: AccessType):
 		self.name = name
-		self.shape = tuple(map(make_expr, shape))
+		self.shape = shape
 		self.dtype = dtype
 		self.atype = atype
 
