@@ -3,7 +3,7 @@
 namespace ir {
 
 void CodeGen::beginBlock() {
-    os << " {" << std::endl;
+    os << "{" << std::endl;
     nIndent++;
 }
 

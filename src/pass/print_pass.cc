@@ -12,7 +12,7 @@ void PrintPass::visit(const VarDef &op) {
         (*this)(shape[i]);
         os << (i < iEnd - 1 ? ", " : "");
     }
-    os << "]";
+    os << "] ";
     beginBlock();
     (*this)(op->body_);
     endBlock();

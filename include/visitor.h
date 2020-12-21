@@ -1,8 +1,7 @@
 #ifndef VISITOR_H
 #define VISITOR_H
 
-#include <stdexcept>
-
+#include <except.h>
 #include <expr.h>
 #include <stmt.h>
 
@@ -29,7 +28,7 @@ class Visitor {
             DISPATCH_CASE(FloatConst);
 
         default:
-            throw std::runtime_error("Unexpected AST node type");
+            ERROR("Unexpected AST node type");
         }
     }
 

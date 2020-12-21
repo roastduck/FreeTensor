@@ -5,6 +5,7 @@
 namespace ir {
 
 void CodeGenC::visit(const VarDef &op) {
+    makeIndent();
     beginBlock();
 
     makeIndent();
@@ -23,19 +24,24 @@ void CodeGenC::visit(const VarDef &op) {
         int nthParam = params_.size();
         params_.emplace_back(op->name_);
 
-        // e.g. restrict const (float(*)[5][5])x = _params[0];
-        os << "restrict ";
+        // e.g. const float (*restrict x)[5][5] = (float(*)[5][5])_params[0];
         if (op->buffer_->atype() == AccessType::Input) {
             os << "const ";
         }
-        os << "(" << gen(tensor.dtype()) << "(*)";
+        os << gen(tensor.dtype()) << " (*restrict ";
+        os << op->name_ << ")";
         for (size_t i = 1, iEnd = shape.size(); i < iEnd; i++) { // No shape[0]
             os << "[";
             (*this)(shape[i]);
             os << "]";
         }
-        os << ")" << op->name_ << " = _params[" << nthParam << "];"
-           << std::endl;
+        os << " = (" << gen(tensor.dtype()) << "(*)";
+        for (size_t i = 1, iEnd = shape.size(); i < iEnd; i++) { // No shape[0]
+            os << "[";
+            (*this)(shape[i]);
+            os << "]";
+        }
+        os << ")_params[" << nthParam << "];" << std::endl;
     }
 
     (*this)(op->body_);
@@ -90,7 +96,15 @@ std::pair<std::string, std::vector<std::string>> codeGenC(const AST &op) {
     visitor(op);
     visitor.endBlock();
 
-    return std::make_pair("void run(void **_params)" + visitor.toString(),
+    const char *header = "#define restrict __restrict__\n"
+                         "\n"
+                         "extern \"C\" {\n"
+                         "\n";
+    const char *tailer = "\n"
+                         "}";
+
+    return std::make_pair((std::string)header + "void run(void **_params)" +
+                              visitor.toString() + tailer,
                           visitor.params());
 }
 
