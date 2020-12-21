@@ -1,0 +1,98 @@
+#include <algorithm>
+
+#include <pass/code_gen_c.h>
+
+namespace ir {
+
+void CodeGenC::visit(const VarDef &op) {
+    beginBlock();
+
+    makeIndent();
+    auto &&tensor = op->buffer_->tensor();
+    auto &&shape = tensor.shape();
+    if (op->buffer_->atype() == AccessType::Cache) {
+        // e.g. float x[5][5][5];
+        os << gen(tensor.dtype()) << " ";
+        for (auto &&dim : shape) {
+            os << "[";
+            (*this)(dim);
+            os << "]";
+        }
+        os << ";" << std::endl;
+    } else {
+        int nthParam = params_.size();
+        params_.emplace_back(op->name_);
+
+        // e.g. restrict const (float(*)[5][5])x = _params[0];
+        os << "restrict ";
+        if (op->buffer_->atype() == AccessType::Input) {
+            os << "const ";
+        }
+        os << "(" << gen(tensor.dtype()) << "(*)";
+        for (size_t i = 1, iEnd = shape.size(); i < iEnd; i++) { // No shape[0]
+            os << "[";
+            (*this)(shape[i]);
+            os << "]";
+        }
+        os << ")" << op->name_ << " = _params[" << nthParam << "];"
+           << std::endl;
+    }
+
+    (*this)(op->body_);
+    endBlock();
+}
+
+void CodeGenC::visit(const Var &op) {
+    os << op->name_;
+    Visitor::visit(op);
+}
+
+void CodeGenC::visit(const Store &op) {
+    makeIndent();
+    (*this)(op->var_);
+    for (auto &&index : op->indices_) {
+        os << "[";
+        (*this)(index);
+        os << "]";
+    }
+    os << " = ";
+    (*this)(op->expr_);
+    os << ";" << std::endl;
+}
+
+void CodeGenC::visit(const Load &op) {
+    (*this)(op->var_);
+    for (auto &&index : op->indices_) {
+        os << "[";
+        (*this)(index);
+        os << "]";
+    }
+}
+
+void CodeGenC::visit(const IntConst &op) { os << std::to_string(op->val_); }
+
+void CodeGenC::visit(const FloatConst &op) { os << std::to_string(op->val_); }
+
+std::string CodeGenC::gen(DataType dtype) {
+    switch (dtype) {
+    case DataType::Float32:
+        return "float";
+    case DataType::Int32:
+        return "int32_t";
+    default:
+        ASSERT(false);
+    }
+}
+
+std::pair<std::string, std::vector<std::string>> codeGenC(const AST &op) {
+    CodeGenC visitor;
+    visitor.beginBlock();
+    visitor(op);
+    visitor.endBlock();
+
+    return std::make_pair("void run(void **_params)" + visitor.toString(),
+                          visitor.params());
+}
+
+} // namespace ir
+

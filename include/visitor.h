@@ -20,6 +20,7 @@ class Visitor {
         visit(op.as<name##Node>());                                            \
         break;
 
+            DISPATCH_CASE(StmtSeq);
             DISPATCH_CASE(VarDef);
             DISPATCH_CASE(Var);
             DISPATCH_CASE(Store);
@@ -33,6 +34,12 @@ class Visitor {
     }
 
   protected:
+    virtual void visit(const StmtSeq &op) {
+        for (auto &&stmt : op->stmts_) {
+            (*this)(stmt);
+        }
+    }
+
     virtual void visit(const VarDef &op) {
         for (auto &&dim : op->buffer_->tensor().shape()) {
             (*this)(dim);

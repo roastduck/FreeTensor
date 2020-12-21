@@ -54,25 +54,6 @@ void PrintPass::visit(const IntConst &op) { os << std::to_string(op->val_); }
 
 void PrintPass::visit(const FloatConst &op) { os << std::to_string(op->val_); }
 
-void PrintPass::beginBlock() {
-    os << " {" << std::endl;
-    nIndent++;
-}
-
-void PrintPass::endBlock() {
-    nIndent--;
-    makeIndent();
-    os << "}" << std::endl;
-}
-
-void PrintPass::makeIndent() {
-    for (int i = 0; i < nIndent; i++) {
-        os << "  ";
-    }
-}
-
-std::string PrintPass::toString() { return os.str(); }
-
 std::string printPass(const AST &op) {
     PrintPass pass;
     pass(op);
