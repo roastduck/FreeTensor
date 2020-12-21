@@ -1,8 +1,10 @@
 #ifndef VISITOR_H
 #define VISITOR_H
 
-#include <ast.h>
 #include <stdexcept>
+
+#include <expr.h>
+#include <stmt.h>
 
 namespace ir {
 
@@ -31,7 +33,12 @@ class Visitor {
     }
 
   protected:
-    virtual void visit(const VarDef &op) { (*this)(op->body_); }
+    virtual void visit(const VarDef &op) {
+        for (auto &&dim : op->buffer_->tensor().shape()) {
+            (*this)(dim);
+        }
+        (*this)(op->body_);
+    }
 
     virtual void visit(const Var &op) {}
 

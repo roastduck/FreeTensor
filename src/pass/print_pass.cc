@@ -7,12 +7,14 @@ void PrintPass::visit(const VarDef &op) {
     os << ::ir::toString(op->buffer_->atype()) << " " << op->name_ << ": ";
     auto &&tensor = op->buffer_->tensor();
     os << ::ir::toString(tensor.dtype()) << "[";
-    for (size_t i = 0, iEnd = tensor.shape().size(); i < iEnd; i++) {
-        os << tensor.shape()[i] << (i < iEnd - 1 ? ", " : "");
+    auto &&shape = tensor.shape();
+    for (size_t i = 0, iEnd = shape.size(); i < iEnd; i++) {
+        (*this)(shape[i]);
+        os << (i < iEnd - 1 ? ", " : "");
     }
     os << "]";
     beginBlock();
-    Visitor::visit(op);
+    (*this)(op->body_);
     endBlock();
 }
 

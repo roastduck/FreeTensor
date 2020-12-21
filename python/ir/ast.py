@@ -1,4 +1,4 @@
-from typing import List
+from typing import Sequence
 
 import ffi
 from ffi import AccessType, DataType
@@ -60,9 +60,9 @@ class Var:
 		ctx_stack.top().append_stmt(ffi.makeStore(ffi.makeVar(self.name), key, make_expr(value)))
 
 class VarDef:
-	def __init__(self, name: str, shape: List[int], dtype: DataType, atype: AccessType):
+	def __init__(self, name: str, shape: Sequence, dtype: DataType, atype: AccessType):
 		self.name = name
-		self.shape = shape
+		self.shape = tuple(map(make_expr, shape))
 		self.dtype = dtype
 		self.atype = atype
 

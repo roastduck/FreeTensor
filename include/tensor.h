@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+#include <expr.h>
+
 namespace ir {
 
 enum class DataType : int { Float32, Int32 };
@@ -19,16 +21,16 @@ inline std::string toString(DataType dtype) {
 }
 
 class Tensor {
-    std::vector<int> shape_;
+    std::vector<Expr> shape_;
     DataType dtype_;
 
   public:
-    Tensor(std::vector<int> &&shape, DataType dtype)
+    Tensor(std::vector<Expr> &&shape, DataType dtype)
         : shape_(std::move(shape)), dtype_(dtype) {}
-    Tensor(const std::vector<int> &shape, DataType dtype)
+    Tensor(const std::vector<Expr> &shape, DataType dtype)
         : shape_(shape), dtype_(dtype) {}
 
-    const std::vector<int> &shape() const { return shape_; }
+    const std::vector<Expr> &shape() const { return shape_; }
     DataType dtype() const { return dtype_; }
 };
 
