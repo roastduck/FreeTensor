@@ -8,10 +8,12 @@ void PrintPass::visit(const VarDef &op) {
     auto &&tensor = op->buffer_->tensor();
     os << ::ir::toString(tensor.dtype()) << "[";
     for (size_t i = 0, iEnd = tensor.shape().size(); i < iEnd; i++) {
-        os << tensor.shape()[i] << (i < iEnd - 1 ? "," : "");
+        os << tensor.shape()[i] << (i < iEnd - 1 ? ", " : "");
     }
-    os << "]" << std::endl;
+    os << "]";
+    beginBlock();
     Visitor::visit(op);
+    endBlock();
 }
 
 void PrintPass::visit(const Var &op) {
@@ -50,6 +52,17 @@ void PrintPass::visit(const IntConst &op) { os << std::to_string(op->val_); }
 
 void PrintPass::visit(const FloatConst &op) { os << std::to_string(op->val_); }
 
+void PrintPass::beginBlock() {
+    os << " {" << std::endl;
+    nIndent++;
+}
+
+void PrintPass::endBlock() {
+    nIndent--;
+    makeIndent();
+    os << "}" << std::endl;
+}
+
 void PrintPass::makeIndent() {
     for (int i = 0; i < nIndent; i++) {
         os << "  ";
@@ -57,6 +70,12 @@ void PrintPass::makeIndent() {
 }
 
 std::string PrintPass::toString() { return os.str(); }
+
+std::string printPass(const AST &op) {
+    PrintPass pass;
+    pass(op);
+    return pass.toString();
+}
 
 } // namespace ir
 

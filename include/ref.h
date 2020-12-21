@@ -22,8 +22,6 @@ template <class T> class Ref {
     Ref(T *ptr) : ptr_(ptr) {}
 
   public:
-    Ref clone() const { return Ref(new T(*ptr_)); }
-
     /**
      * Shared with any compatible references
      */
@@ -34,6 +32,8 @@ template <class T> class Ref {
         ptr_ = std::static_pointer_cast<T>(other.ptr_);
         return *this;
     }
+
+    Ref clone() const { return Ref(new T(*ptr_)); }
 
     template <class U> Ref<U> as() const { return Ref<U>(*this); }
 
@@ -55,6 +55,8 @@ template <class T> class Ref {
     }
 
     static Ref make() { return Ref(new T()); }
+    static Ref make(T &&x) { return Ref(new T(std::move(x))); }
+    static Ref make(const T &x) { return Ref(new T(x)); }
 };
 
 } // namespace ir

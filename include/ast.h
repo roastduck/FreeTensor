@@ -9,6 +9,7 @@
 namespace ir {
 
 enum class ASTNodeType : int {
+    StmtSeq,
     VarDef,
     Var,
     Store,
@@ -47,6 +48,18 @@ class ExprNode : public ASTNode {
 };
 typedef Ref<ExprNode> Expr;
 
+class StmtSeqNode : public StmtNode {
+  public:
+    std::vector<Stmt> stmts_;
+    DEFINE_NODE_TRAIT(StmtSeq);
+};
+typedef Ref<StmtSeqNode> StmtSeq;
+inline Stmt makeStmtSeq(const std::vector<Stmt> &stmts) {
+    StmtSeq s = StmtSeq::make();
+    s->stmts_ = stmts;
+    return s;
+}
+
 class VarDefNode : public StmtNode {
   public:
     std::string name_;
@@ -59,10 +72,10 @@ class VarDefNode : public StmtNode {
     DEFINE_NODE_TRAIT(VarDef);
 };
 typedef Ref<VarDefNode> VarDef;
-inline VarDef makeVarDef(const std::string &name, const Ref<Buffer> &buffer,
-                         const Stmt &body) {
+inline Stmt makeVarDef(const std::string &name, const Buffer &buffer,
+                       const Stmt &body) {
     VarDef d = VarDef::make();
-    d->name_ = name, d->buffer_ = buffer, d->body_ = body;
+    d->name_ = name, d->buffer_ = Ref<Buffer>::make(buffer), d->body_ = body;
     return d;
 }
 
@@ -72,7 +85,7 @@ class VarNode : public ExprNode {
     DEFINE_NODE_TRAIT(Var);
 };
 typedef Ref<VarNode> Var;
-inline Var makeVar(const std::string &name) {
+inline Expr makeVar(const std::string &name) {
     Var v = Var::make();
     v->name_ = name;
     return v;
@@ -80,27 +93,27 @@ inline Var makeVar(const std::string &name) {
 
 class StoreNode : public StmtNode {
   public:
-    Var var_;
-    Expr expr_;
+    Expr var_;
     std::vector<Expr> indices_;
+    Expr expr_;
     DEFINE_NODE_TRAIT(Store);
 };
 typedef Ref<StoreNode> Store;
-inline Store makeStore(const Var &var, const Expr &expr,
-                       const std::vector<Expr> &indices) {
+inline Stmt makeStore(const Expr &var, const std::vector<Expr> &indices,
+                      const Expr &expr) {
     Store s = Store::make();
-    s->var_ = var, s->expr_ = expr, s->indices_ = indices;
+    s->var_ = var, s->indices_ = indices, s->expr_ = expr;
     return s;
 }
 
 class LoadNode : public ExprNode {
   public:
-    Var var_;
+    Expr var_;
     std::vector<Expr> indices_;
     DEFINE_NODE_TRAIT(Load);
 };
 typedef Ref<LoadNode> Load;
-inline Load makeLoad(const Var &var, const std::vector<Expr> &indices) {
+inline Expr makeLoad(const Expr &var, const std::vector<Expr> &indices) {
     Load l = Load::make();
     l->var_ = var, l->indices_ = indices;
     return l;
@@ -112,7 +125,7 @@ class IntConstNode : public ExprNode {
     DEFINE_NODE_TRAIT(IntConst);
 };
 typedef Ref<IntConstNode> IntConst;
-inline IntConst makeIntConst(int val) {
+inline Expr makeIntConst(int val) {
     IntConst c = IntConst::make();
     c->val_ = val;
     return c;
@@ -124,7 +137,7 @@ class FloatConstNode : public ExprNode {
     DEFINE_NODE_TRAIT(FloatConst);
 };
 typedef Ref<FloatConstNode> FloatConst;
-inline FloatConst makeFloatConst(double val) {
+inline Expr makeFloatConst(double val) {
     FloatConst c = FloatConst::make();
     c->val_ = val;
     return c;

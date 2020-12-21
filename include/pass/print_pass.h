@@ -19,13 +19,17 @@ class PrintPass : public Visitor {
 
   private:
     std::ostringstream os;
-    int nIndent;
+    int nIndent = 0;
 
+    void beginBlock();
+    void endBlock();
     void makeIndent();
 
   public:
     std::string toString();
 };
+
+std::string printPass(const AST &op);
 
 } // namespace ir
 
