@@ -69,9 +69,9 @@ class AddNode : public ExprNode {
     DEFINE_NODE_TRAIT(Add);
 };
 typedef Ref<AddNode> Add;
-inline Expr makeAdd(const Expr &lhs, const Expr &rhs) {
+template <class T, class U> Expr makeAdd(T &&lhs, U &&rhs) {
     Add a = Add::make();
-    a->lhs_ = lhs, a->rhs_ = rhs;
+    a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
     return a;
 }
 
@@ -81,9 +81,9 @@ class SubNode : public ExprNode {
     DEFINE_NODE_TRAIT(Sub);
 };
 typedef Ref<SubNode> Sub;
-inline Expr makeSub(const Expr &lhs, const Expr &rhs) {
+template <class T, class U> Expr makeSub(T &&lhs, U &&rhs) {
     Sub a = Sub::make();
-    a->lhs_ = lhs, a->rhs_ = rhs;
+    a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
     return a;
 }
 
@@ -93,9 +93,9 @@ class MulNode : public ExprNode {
     DEFINE_NODE_TRAIT(Mul);
 };
 typedef Ref<MulNode> Mul;
-inline Expr makeMul(const Expr &lhs, const Expr &rhs) {
+template <class T, class U> Expr makeMul(T &&lhs, U &&rhs) {
     Mul a = Mul::make();
-    a->lhs_ = lhs, a->rhs_ = rhs;
+    a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
     return a;
 }
 
@@ -105,9 +105,9 @@ class DivNode : public ExprNode {
     DEFINE_NODE_TRAIT(Div);
 };
 typedef Ref<DivNode> Div;
-inline Expr makeDiv(const Expr &lhs, const Expr &rhs) {
+template <class T, class U> Expr makeDiv(T &&lhs, U &&rhs) {
     Div a = Div::make();
-    a->lhs_ = lhs, a->rhs_ = rhs;
+    a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
     return a;
 }
 
@@ -117,9 +117,9 @@ class ModNode : public ExprNode {
     DEFINE_NODE_TRAIT(Mod);
 };
 typedef Ref<ModNode> Mod;
-inline Expr makeMod(const Expr &lhs, const Expr &rhs) {
+template <class T, class U> Expr makeMod(T &&lhs, U &&rhs) {
     Mod a = Mod::make();
-    a->lhs_ = lhs, a->rhs_ = rhs;
+    a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
     return a;
 }
 
@@ -129,9 +129,9 @@ class LTNode : public ExprNode {
     DEFINE_NODE_TRAIT(LT);
 };
 typedef Ref<LTNode> LT;
-inline Expr makeLT(const Expr &lhs, const Expr &rhs) {
+template <class T, class U> Expr makeLT(T &&lhs, U &&rhs) {
     LT a = LT::make();
-    a->lhs_ = lhs, a->rhs_ = rhs;
+    a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
     return a;
 }
 
@@ -141,9 +141,9 @@ class LENode : public ExprNode {
     DEFINE_NODE_TRAIT(LE);
 };
 typedef Ref<LENode> LE;
-inline Expr makeLE(const Expr &lhs, const Expr &rhs) {
+template <class T, class U> Expr makeLE(T &&lhs, U &&rhs) {
     LE a = LE::make();
-    a->lhs_ = lhs, a->rhs_ = rhs;
+    a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
     return a;
 }
 
@@ -153,9 +153,9 @@ class GTNode : public ExprNode {
     DEFINE_NODE_TRAIT(GT);
 };
 typedef Ref<GTNode> GT;
-inline Expr makeGT(const Expr &lhs, const Expr &rhs) {
+template <class T, class U> Expr makeGT(T &&lhs, U &&rhs) {
     GT a = GT::make();
-    a->lhs_ = lhs, a->rhs_ = rhs;
+    a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
     return a;
 }
 
@@ -165,9 +165,9 @@ class GENode : public ExprNode {
     DEFINE_NODE_TRAIT(GE);
 };
 typedef Ref<GENode> GE;
-inline Expr makeGE(const Expr &lhs, const Expr &rhs) {
+template <class T, class U> Expr makeGE(T &&lhs, U &&rhs) {
     GE a = GE::make();
-    a->lhs_ = lhs, a->rhs_ = rhs;
+    a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
     return a;
 }
 
@@ -177,9 +177,9 @@ class EQNode : public ExprNode {
     DEFINE_NODE_TRAIT(EQ);
 };
 typedef Ref<EQNode> EQ;
-inline Expr makeEQ(const Expr &lhs, const Expr &rhs) {
+template <class T, class U> Expr makeEQ(T &&lhs, U &&rhs) {
     EQ a = EQ::make();
-    a->lhs_ = lhs, a->rhs_ = rhs;
+    a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
     return a;
 }
 
@@ -189,9 +189,9 @@ class NENode : public ExprNode {
     DEFINE_NODE_TRAIT(NE);
 };
 typedef Ref<NENode> NE;
-inline Expr makeNE(const Expr &lhs, const Expr &rhs) {
+template <class T, class U> Expr makeNE(T &&lhs, U &&rhs) {
     NE a = NE::make();
-    a->lhs_ = lhs, a->rhs_ = rhs;
+    a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
     return a;
 }
 

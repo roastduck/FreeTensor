@@ -21,9 +21,9 @@ class StmtSeqNode : public StmtNode {
     DEFINE_NODE_TRAIT(StmtSeq);
 };
 typedef Ref<StmtSeqNode> StmtSeq;
-inline Stmt makeStmtSeq(const std::vector<Stmt> &stmts) {
+template <class Tstmts> Stmt makeStmtSeq(Tstmts &&stmts) {
     StmtSeq s = StmtSeq::make();
-    s->stmts_ = stmts;
+    s->stmts_ = std::forward<Tstmts>(stmts);
     return s;
 }
 
@@ -39,10 +39,12 @@ class VarDefNode : public StmtNode {
     DEFINE_NODE_TRAIT(VarDef);
 };
 typedef Ref<VarDefNode> VarDef;
-inline Stmt makeVarDef(const std::string &name, const Buffer &buffer,
-                       const Stmt &body) {
+template <class Tbuffer, class Tbody>
+Stmt makeVarDef(const std::string &name, Tbuffer &&buffer, Tbody &&body) {
     VarDef d = VarDef::make();
-    d->name_ = name, d->buffer_ = Ref<Buffer>::make(buffer), d->body_ = body;
+    d->name_ = name;
+    d->buffer_ = Ref<Buffer>::make(std::forward<Tbuffer>(buffer));
+    d->body_ = std::forward<Tbody>(body);
     return d;
 }
 
@@ -54,10 +56,12 @@ class StoreNode : public StmtNode {
     DEFINE_NODE_TRAIT(Store);
 };
 typedef Ref<StoreNode> Store;
-inline Stmt makeStore(const Expr &var, const std::vector<Expr> &indices,
-                      const Expr &expr) {
+template <class Tvar, class Tindices, class Texpr>
+Stmt makeStore(Tvar &&var, Tindices &&indices, Texpr &&expr) {
     Store s = Store::make();
-    s->var_ = var, s->indices_ = indices, s->expr_ = expr;
+    s->var_ = std::forward<Tvar>(var);
+    s->indices_ = std::forward<Tindices>(indices),
+    s->expr_ = std::forward<Texpr>(expr);
     return s;
 }
 
@@ -69,10 +73,14 @@ class ForNode : public StmtNode {
     DEFINE_NODE_TRAIT(For);
 };
 typedef Ref<ForNode> For;
-inline Stmt makeFor(const std::string &iter, const Expr &begin, const Expr &end,
-                    const Stmt &body) {
+template <class Tbegin, class Tend, class Tbody>
+Stmt makeFor(const std::string &iter, Tbegin &&begin, Tend &&end,
+             Tbody &&body) {
     For f = For::make();
-    f->iter_ = iter, f->begin_ = begin, f->end_ = end, f->body_ = body;
+    f->iter_ = iter;
+    f->begin_ = std::forward<Tbegin>(begin);
+    f->end_ = std::forward<Tend>(end);
+    f->body_ = std::forward<Tbody>(body);
     return f;
 }
 
@@ -83,10 +91,12 @@ class IfNode : public StmtNode {
     DEFINE_NODE_TRAIT(If);
 };
 typedef Ref<IfNode> If;
-inline Stmt makeIf(const Expr &cond, const Stmt &thenCase,
-                   const Stmt &elseCase = nullptr) {
+template <class Tcond, class Tthen, class Telse>
+Stmt makeIf(Tcond &&cond, Tthen &&thenCase, Telse &&elseCase = nullptr) {
     If i = If::make();
-    i->cond_ = cond, i->thenCase_ = thenCase, i->elseCase_ = elseCase;
+    i->cond_ = std::forward<Tcond>(cond);
+    i->thenCase_ = std::forward<Tthen>(thenCase);
+    i->elseCase_ = std::forward<Telse>(elseCase);
     return i;
 }
 

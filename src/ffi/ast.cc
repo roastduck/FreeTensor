@@ -86,26 +86,29 @@ void init_ffi_ast(py::module_ &m) {
     py::implicitly_convertible<int, Expr>();
     py::implicitly_convertible<float, Expr>();
 
-    m.def("makeStmtSeq", &makeStmtSeq, "stmts"_a);
-    m.def("makeVarDef", &makeVarDef, "name"_a, "buffer"_a, "body"_a);
+    m.def("makeStmtSeq",
+          static_cast<Stmt (*)(const std::vector<Stmt> &)>(&makeStmtSeq),
+          "stmts"_a);
+    m.def("makeVarDef",
+          static_cast<Stmt (*)(const std::string &, const Buffer &,
+                               const Stmt &)>(&makeVarDef),
+          "name"_a, "buffer"_a, "body"_a);
     m.def("makeVar", &makeVar, "name"_a);
-    m.def("makeStore", &makeStore, "var"_a, "indices"_a, "expr"_a);
+    m.def("makeStore",
+          static_cast<Stmt (*)(const Expr &, const std::vector<Expr> &,
+                               const Expr &)>(&makeStore),
+          "var"_a, "indices"_a, "expr"_a);
     m.def("makeLoad", &makeLoad, "var"_a, "indices"_a);
     m.def("makeIntConst", &makeIntConst, "val"_a);
     m.def("makeFloatConst", &makeFloatConst, "val"_a);
-    m.def("makeAdd", &makeAdd, "lhs"_a, "rhs"_a);
-    m.def("makeSub", &makeSub, "lhs"_a, "rhs"_a);
-    m.def("makeMul", &makeMul, "lhs"_a, "rhs"_a);
-    m.def("makeDiv", &makeDiv, "lhs"_a, "rhs"_a);
-    m.def("makeMod", &makeMod, "lhs"_a, "rhs"_a);
-    m.def("makeLT", &makeLT, "lhs"_a, "rhs"_a);
-    m.def("makeLE", &makeLE, "lhs"_a, "rhs"_a);
-    m.def("makeGT", &makeGT, "lhs"_a, "rhs"_a);
-    m.def("makeGE", &makeGE, "lhs"_a, "rhs"_a);
-    m.def("makeEQ", &makeEQ, "lhs"_a, "rhs"_a);
-    m.def("makeNE", &makeNE, "lhs"_a, "rhs"_a);
-    m.def("makeFor", &makeFor, "iter"_a, "begin"_a, "end"_a, "body"_a);
-    m.def("makeIf", &makeIf, "cond"_a, "thenCase"_a, "elseCase"_a = Stmt());
+    m.def("makeFor",
+          static_cast<Stmt (*)(const std::string &, const Expr &, const Expr &,
+                               const Stmt &)>(&makeFor),
+          "iter"_a, "begin"_a, "end"_a, "body"_a);
+    m.def("makeIf",
+          static_cast<Stmt (*)(const Expr &, const Stmt &, const Stmt &)>(
+              &makeIf),
+          "cond"_a, "thenCase"_a, "elseCase"_a = Stmt());
 }
 
 } // namespace ir
