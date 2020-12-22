@@ -89,7 +89,55 @@ void PrintPass::visit(const Div &op) {
 void PrintPass::visit(const Mod &op) {
     os << "(";
     (*this)(op->lhs_);
-    os << " + ";
+    os << " % ";
+    (*this)(op->rhs_);
+    os << ")";
+}
+
+void PrintPass::visit(const LT &op) {
+    os << "(";
+    (*this)(op->lhs_);
+    os << " < ";
+    (*this)(op->rhs_);
+    os << ")";
+}
+
+void PrintPass::visit(const LE &op) {
+    os << "(";
+    (*this)(op->lhs_);
+    os << " <= ";
+    (*this)(op->rhs_);
+    os << ")";
+}
+
+void PrintPass::visit(const GT &op) {
+    os << "(";
+    (*this)(op->lhs_);
+    os << " > ";
+    (*this)(op->rhs_);
+    os << ")";
+}
+
+void PrintPass::visit(const GE &op) {
+    os << "(";
+    (*this)(op->lhs_);
+    os << " >= ";
+    (*this)(op->rhs_);
+    os << ")";
+}
+
+void PrintPass::visit(const EQ &op) {
+    os << "(";
+    (*this)(op->lhs_);
+    os << " == ";
+    (*this)(op->rhs_);
+    os << ")";
+}
+
+void PrintPass::visit(const NE &op) {
+    os << "(";
+    (*this)(op->lhs_);
+    os << " != ";
     (*this)(op->rhs_);
     os << ")";
 }
@@ -104,6 +152,23 @@ void PrintPass::visit(const For &op) {
     beginBlock();
     (*this)(op->body_);
     endBlock();
+}
+
+void PrintPass::visit(const If &op) {
+    makeIndent();
+    os << "if ";
+    (*this)(op->cond_);
+    os << " ";
+    beginBlock();
+    (*this)(op->thenCase_);
+    endBlock();
+    if (op->elseCase_.isValid()) {
+        makeIndent();
+        os << "else ";
+        beginBlock();
+        (*this)(op->elseCase_);
+        endBlock();
+    }
 }
 
 std::string printPass(const AST &op) {

@@ -17,6 +17,7 @@ template <class T> class Ref {
 
   public:
     Ref() = default;
+    Ref(std::nullptr_t) : Ref() {}
 
   private:
     Ref(T *ptr) : ptr_(ptr) {}

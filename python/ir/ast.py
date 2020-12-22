@@ -6,9 +6,21 @@ from ffi import AccessType, DataType
 class Context:
 	def __init__(self):
 		self.stmt_seq = []
+		self.lastIf = None # To handle else case
 
 	def append_stmt(self, stmt: ffi.Stmt):
 		self.stmt_seq.append(stmt)
+		self.lastIf = None
+
+	def append_if_then_stmt(self, cond, body: ffi.Stmt):
+		self.append_stmt(ffi.makeIf(cond, body))
+		self.lastIf = (cond, body)
+
+	def append_if_else_stmt(self, elseCase: ffi.Stmt):
+		cond, thenCase = self.lastIf
+		self.stmt_seq.pop()
+		self.append_stmt(ffi.makeIf(cond, thenCase, elseCase))
+		self.lastIf = None
 
 	def make_stmt(self):
 		if len(self.stmt_seq) == 1:
@@ -54,7 +66,7 @@ class Var:
 			key = (key,)
 		ctx_stack.top().append_stmt(ffi.makeStore(self.var, key, value))
 
-class VarDef:
+class _VarDef:
 	def __init__(self, name: str, shape: Sequence, dtype: DataType, atype: AccessType):
 		self.name = name
 		self.shape = shape
@@ -70,7 +82,7 @@ class VarDef:
 		body = ctx_stack.pop().make_stmt()
 		ctx_stack.top().append_stmt(ffi.makeVarDef(self.name, buf, body))
 
-class VarsDef:
+class _VarsDef:
 	def __init__(self, defs: Tuple[str, Sequence, DataType, AccessType]):
 		self.defs = [VarDef(*d) for d in defs]
 
@@ -80,6 +92,13 @@ class VarsDef:
 	def __exit__(self, exc_type, exc_value, traceback):
 		for d in reversed(self.defs):
 			d.__exit__(exc_type, exc_value, traceback)
+
+# Factory
+def VarDef(*args):
+	if len(args) == 1:
+		return _VarsDef(args[0])
+	else:
+		return _VarDef(*args)
 
 class For:
 	def __init__(self, iter_var: str, begin, end):
@@ -94,4 +113,26 @@ class For:
 	def __exit__(self, exc_type, exc_value, traceback):
 		body = ctx_stack.pop().make_stmt()
 		ctx_stack.top().append_stmt(ffi.makeFor(self.iter_var, self.begin, self.end, body))
+
+class If:
+	def __init__(self, cond):
+		self.cond = cond
+
+	def __enter__(self):
+		ctx_stack.push()
+
+	def __exit__(self, exc_type, exc_value, traceback):
+		body = ctx_stack.pop().make_stmt()
+		ctx_stack.top().append_if_then_stmt(self.cond, body)
+
+class Else:
+	def __init__(self):
+		pass
+
+	def __enter__(self):
+		ctx_stack.push()
+
+	def __exit__(self, exc_type, exc_value, traceback):
+		body = ctx_stack.pop().make_stmt()
+		ctx_stack.top().append_if_else_stmt(body)
 

@@ -1,15 +1,13 @@
-from typing import Mapping
+from typing import Sequence, Mapping
 
 import numpy as np
 
 import ffi
 
 class Driver:
-	def __init__(self, params):
+	def __init__(self, src: str, params: Sequence):
 		self.driver = ffi._Driver()
 		self.params = params
-
-	def build_and_load(self, src: str):
 		self.driver.buildAndLoad(src, len(self.params))
 
 	def set_params(self, tensors: Mapping):

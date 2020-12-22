@@ -123,6 +123,78 @@ inline Expr makeMod(const Expr &lhs, const Expr &rhs) {
     return a;
 }
 
+class LTNode : public ExprNode {
+  public:
+    Expr lhs_, rhs_;
+    DEFINE_NODE_TRAIT(LT);
+};
+typedef Ref<LTNode> LT;
+inline Expr makeLT(const Expr &lhs, const Expr &rhs) {
+    LT a = LT::make();
+    a->lhs_ = lhs, a->rhs_ = rhs;
+    return a;
+}
+
+class LENode : public ExprNode {
+  public:
+    Expr lhs_, rhs_;
+    DEFINE_NODE_TRAIT(LE);
+};
+typedef Ref<LENode> LE;
+inline Expr makeLE(const Expr &lhs, const Expr &rhs) {
+    LE a = LE::make();
+    a->lhs_ = lhs, a->rhs_ = rhs;
+    return a;
+}
+
+class GTNode : public ExprNode {
+  public:
+    Expr lhs_, rhs_;
+    DEFINE_NODE_TRAIT(GT);
+};
+typedef Ref<GTNode> GT;
+inline Expr makeGT(const Expr &lhs, const Expr &rhs) {
+    GT a = GT::make();
+    a->lhs_ = lhs, a->rhs_ = rhs;
+    return a;
+}
+
+class GENode : public ExprNode {
+  public:
+    Expr lhs_, rhs_;
+    DEFINE_NODE_TRAIT(GE);
+};
+typedef Ref<GENode> GE;
+inline Expr makeGE(const Expr &lhs, const Expr &rhs) {
+    GE a = GE::make();
+    a->lhs_ = lhs, a->rhs_ = rhs;
+    return a;
+}
+
+class EQNode : public ExprNode {
+  public:
+    Expr lhs_, rhs_;
+    DEFINE_NODE_TRAIT(EQ);
+};
+typedef Ref<EQNode> EQ;
+inline Expr makeEQ(const Expr &lhs, const Expr &rhs) {
+    EQ a = EQ::make();
+    a->lhs_ = lhs, a->rhs_ = rhs;
+    return a;
+}
+
+class NENode : public ExprNode {
+  public:
+    Expr lhs_, rhs_;
+    DEFINE_NODE_TRAIT(NE);
+};
+typedef Ref<NENode> NE;
+inline Expr makeNE(const Expr &lhs, const Expr &rhs) {
+    NE a = NE::make();
+    a->lhs_ = lhs, a->rhs_ = rhs;
+    return a;
+}
+
 } // namespace ir
 
 #endif // EXPR_H

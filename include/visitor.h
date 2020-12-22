@@ -31,7 +31,14 @@ class Visitor {
             DISPATCH_CASE(Mul);
             DISPATCH_CASE(Div);
             DISPATCH_CASE(Mod);
+            DISPATCH_CASE(LT);
+            DISPATCH_CASE(LE);
+            DISPATCH_CASE(GT);
+            DISPATCH_CASE(GE);
+            DISPATCH_CASE(EQ);
+            DISPATCH_CASE(NE);
             DISPATCH_CASE(For);
+            DISPATCH_CASE(If);
 
         default:
             ERROR("Unexpected AST node type");
@@ -98,10 +105,48 @@ class Visitor {
         (*this)(op->rhs_);
     }
 
+    virtual void visit(const LT &op) {
+        (*this)(op->lhs_);
+        (*this)(op->rhs_);
+    }
+
+    virtual void visit(const LE &op) {
+        (*this)(op->lhs_);
+        (*this)(op->rhs_);
+    }
+
+    virtual void visit(const GT &op) {
+        (*this)(op->lhs_);
+        (*this)(op->rhs_);
+    }
+
+    virtual void visit(const GE &op) {
+        (*this)(op->lhs_);
+        (*this)(op->rhs_);
+    }
+
+    virtual void visit(const EQ &op) {
+        (*this)(op->lhs_);
+        (*this)(op->rhs_);
+    }
+
+    virtual void visit(const NE &op) {
+        (*this)(op->lhs_);
+        (*this)(op->rhs_);
+    }
+
     virtual void visit(const For &op) {
         (*this)(op->begin_);
         (*this)(op->end_);
         (*this)(op->body_);
+    }
+
+    virtual void visit(const If &op) {
+        (*this)(op->cond_);
+        (*this)(op->thenCase_);
+        if (op->elseCase_.isValid()) {
+            (*this)(op->elseCase_);
+        }
     }
 };
 

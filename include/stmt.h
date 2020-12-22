@@ -76,6 +76,20 @@ inline Stmt makeFor(const std::string &iter, const Expr &begin, const Expr &end,
     return f;
 }
 
+class IfNode : public StmtNode {
+  public:
+    Expr cond_;
+    Stmt thenCase_, elseCase_;
+    DEFINE_NODE_TRAIT(If);
+};
+typedef Ref<IfNode> If;
+inline Stmt makeIf(const Expr &cond, const Stmt &thenCase,
+                   const Stmt &elseCase = nullptr) {
+    If i = If::make();
+    i->cond_ = cond, i->thenCase_ = thenCase, i->elseCase_ = elseCase;
+    return i;
+}
+
 } // namespace ir
 
 #endif // STMT_H

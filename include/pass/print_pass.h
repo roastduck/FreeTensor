@@ -18,7 +18,14 @@ class PrintPass : public CodeGen {
     virtual void visit(const Mul &op) override;
     virtual void visit(const Div &op) override;
     virtual void visit(const Mod &op) override;
+    virtual void visit(const LT &op) override;
+    virtual void visit(const LE &op) override;
+    virtual void visit(const GT &op) override;
+    virtual void visit(const GE &op) override;
+    virtual void visit(const EQ &op) override;
+    virtual void visit(const NE &op) override;
     virtual void visit(const For &op) override;
+    virtual void visit(const If &op) override;
 };
 
 std::string printPass(const AST &op);
