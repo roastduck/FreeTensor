@@ -61,6 +61,21 @@ inline Stmt makeStore(const Expr &var, const std::vector<Expr> &indices,
     return s;
 }
 
+class ForNode : public StmtNode {
+  public:
+    std::string iter_;
+    Expr begin_, end_;
+    Stmt body_;
+    DEFINE_NODE_TRAIT(For);
+};
+typedef Ref<ForNode> For;
+inline Stmt makeFor(const std::string &iter, const Expr &begin, const Expr &end,
+                    const Stmt &body) {
+    For f = For::make();
+    f->iter_ = iter, f->begin_ = begin, f->end_ = end, f->body_ = body;
+    return f;
+}
+
 } // namespace ir
 
 #endif // STMT_H

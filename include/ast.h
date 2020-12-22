@@ -18,6 +18,7 @@ enum class ASTNodeType : int {
     Mul,
     Div,
     Mod,
+    For,
 };
 
 #define DEFINE_NODE_ACCESS(name)                                               \

@@ -22,6 +22,7 @@ class CodeGenC : public CodeGen {
     virtual void visit(const Mul &op) override;
     virtual void visit(const Div &op) override;
     virtual void visit(const Mod &op) override;
+    virtual void visit(const For &op) override;
 
   private:
     static std::string gen(DataType dtype);

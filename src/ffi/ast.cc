@@ -57,6 +57,7 @@ void init_ffi_ast(py::module_ &m) {
     m.def("makeMul", &makeMul);
     m.def("makeDiv", &makeDiv);
     m.def("makeMod", &makeMod);
+    m.def("makeFor", &makeFor);
 }
 
 } // namespace ir

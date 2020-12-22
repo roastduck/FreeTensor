@@ -31,6 +31,7 @@ class Visitor {
             DISPATCH_CASE(Mul);
             DISPATCH_CASE(Div);
             DISPATCH_CASE(Mod);
+            DISPATCH_CASE(For);
 
         default:
             ERROR("Unexpected AST node type");
@@ -95,6 +96,12 @@ class Visitor {
     virtual void visit(const Mod &op) {
         (*this)(op->lhs_);
         (*this)(op->rhs_);
+    }
+
+    virtual void visit(const For &op) {
+        (*this)(op->begin_);
+        (*this)(op->end_);
+        (*this)(op->body_);
     }
 };
 

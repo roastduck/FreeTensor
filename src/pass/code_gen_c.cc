@@ -129,6 +129,18 @@ void CodeGenC::visit(const Mod &op) {
     os << ")";
 }
 
+void CodeGenC::visit(const For &op) {
+    makeIndent();
+    os << "for (int " << op->iter_ << " = ";
+    (*this)(op->begin_);
+    os << "; " << op->iter_ << " < ";
+    (*this)(op->end_);
+    os << "; " << op->iter_ << "++) ";
+    beginBlock();
+    (*this)(op->body_);
+    endBlock();
+}
+
 std::string CodeGenC::gen(DataType dtype) {
     switch (dtype) {
     case DataType::Float32:

@@ -94,6 +94,18 @@ void PrintPass::visit(const Mod &op) {
     os << ")";
 }
 
+void PrintPass::visit(const For &op) {
+    makeIndent();
+    os << "for " << op->iter_ << " = ";
+    (*this)(op->begin_);
+    os << " to ";
+    (*this)(op->end_);
+    os << " ";
+    beginBlock();
+    (*this)(op->body_);
+    endBlock();
+}
+
 std::string printPass(const AST &op) {
     PrintPass pass;
     pass(op);
