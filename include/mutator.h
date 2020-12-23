@@ -118,6 +118,15 @@ class Mutator {
     }
 };
 
+/**
+ * Make there will be no shared node in a AST
+ *
+ * If any pass uses node addresses as keys, perform Disambiguous first
+ */
+class Disambiguous : public Mutator {
+    // Do nothing
+};
+
 } // namespace ir
 
 #endif // MUTATOR_H

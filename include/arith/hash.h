@@ -12,7 +12,6 @@ namespace ir {
  */
 class GetHash : public Visitor {
     std::unordered_map<const ExprNode *, uint64_t> hash_;
-    std::unordered_map<uint64_t, Expr> subexpr_;
 
     static constexpr uint64_t P = 2147483647; // % P
     static constexpr uint64_t K1 = 179424673, B1 = 275604541;
@@ -31,7 +30,6 @@ class GetHash : public Visitor {
         // Permutable
         h += hash_.at(op->lhs_.get()) + hash_.at(op->rhs_.get());
         hash_[op.get()] = h = (h * K3 + B3) % P;
-        subexpr_[h] = op;
     }
 
     template <class T> void binOpNonPermutable(const T &op) {
@@ -41,7 +39,6 @@ class GetHash : public Visitor {
         h = ((h + hash_.at(op->lhs_.get())) * K2 + B2) % P;
         h = ((h + hash_.at(op->rhs_.get())) * K2 + B2) % P;
         hash_[op.get()] = h = (h * K3 + B3) % P;
-        subexpr_[h] = op;
     }
 
   protected:
@@ -65,10 +62,6 @@ class GetHash : public Visitor {
     const std::unordered_map<const ExprNode *, uint64_t> &hash() const {
         return hash_;
     }
-
-    const std::unordered_map<uint64_t, Expr> &subexpr() const {
-        return subexpr_;
-    }
 };
 
 /**
@@ -76,17 +69,14 @@ class GetHash : public Visitor {
  *
  * Statements are NOT hashed
  */
-inline std::pair<std::unordered_map<const ExprNode *, uint64_t>,
-                 std::unordered_map<uint64_t, Expr>>
+inline std::unordered_map<const ExprNode *, uint64_t>
 getHashMap(const AST &op) {
     GetHash visitor;
     visitor(op);
-    return std::make_pair(visitor.hash(), visitor.subexpr());
+    return visitor.hash();
 }
 
-inline uint64_t getHash(const Expr &op) {
-    return getHashMap(op).first.at(op.get());
-}
+inline uint64_t getHash(const Expr &op) { return getHashMap(op).at(op.get()); }
 
 } // namespace ir
 

@@ -7,7 +7,6 @@ void GetHash::visit(const Var &op) {
     uint64_t h = ((uint64_t)op->nodeType() * K1 + B1) % P;
     h = ((h + std::hash<std::string>()(op->name_)) * K2 + B2) % P;
     hash_[op.get()] = h = (h * K3 + B3) % P;
-    subexpr_[h] = op;
 }
 
 void GetHash::visit(const Load &op) {
@@ -18,7 +17,6 @@ void GetHash::visit(const Load &op) {
         h = ((h + hash_.at(index.get())) * K2 + B2) % P;
     }
     hash_[op.get()] = h = (h * K3 + B3) % P;
-    subexpr_[h] = op;
 }
 
 void GetHash::visit(const IntConst &op) {
@@ -26,7 +24,6 @@ void GetHash::visit(const IntConst &op) {
     uint64_t h = ((uint64_t)op->nodeType() * K1 + B1) % P;
     h = ((h + std::hash<int>()(op->val_)) * K2 + B2) % P;
     hash_[op.get()] = h = (h * K3 + B3) % P;
-    subexpr_[h] = op;
 }
 
 void GetHash::visit(const FloatConst &op) {
@@ -34,7 +31,6 @@ void GetHash::visit(const FloatConst &op) {
     uint64_t h = ((uint64_t)op->nodeType() * K1 + B1) % P;
     h = ((h + std::hash<double>()(op->val_)) * K2 + B2) % P;
     hash_[op.get()] = h = (h * K3 + B3) % P;
-    subexpr_[h] = op;
 }
 
 void GetHash::visit(const Add &op) { binOpPermutable(op); }

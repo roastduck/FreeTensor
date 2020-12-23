@@ -8,14 +8,14 @@
 namespace ir {
 
 class SimplifyPass : public Mutator {
-    const std::unordered_map<const ExprNode *, uint64_t> &hash_; // expr -> hash
-    const std::unordered_map<uint64_t, Expr> &lower_, &upper_; // hash -> bound
+    const std::unordered_map<const ExprNode *, uint64_t> &hash_;
+    const std::unordered_map<const ExprNode *, Expr> &lower_, &upper_;
     bool isFixPoint_ = true;
 
   public:
     SimplifyPass(const std::unordered_map<const ExprNode *, uint64_t> &hash,
-                 const std::unordered_map<uint64_t, Expr> &lower,
-                 const std::unordered_map<uint64_t, Expr> &upper)
+                 const std::unordered_map<const ExprNode *, Expr> &lower,
+                 const std::unordered_map<const ExprNode *, Expr> &upper)
         : hash_(hash), lower_(lower), upper_(upper) {}
 
     bool isFixPoint() const { return isFixPoint_; }
@@ -25,14 +25,15 @@ class SimplifyPass : public Mutator {
 
     template <class T> Expr doSimplify(const T &_op) {
         auto op = Mutator::visit(_op);
-        auto h = getHash(op);
-        if (lower_.count(h) && upper_.count(h)) {
-            auto lower = lower_.at(h);
-            auto upper = upper_.at(h);
+        // lower_ / upper_ for _op and op shall be the same, but those for op
+        // are not updated, so using _op
+        if (lower_.count(_op.get()) && upper_.count(_op.get())) {
+            auto lower = lower_.at(_op.get());
+            auto upper = upper_.at(_op.get());
             auto hl = getHash(lower);
             auto hr = getHash(upper);
             if (hl == hr) {
-                if (hl != h) {
+                if (hl != getHash(op)) {
                     isFixPoint_ = false;
                 }
                 return lower;

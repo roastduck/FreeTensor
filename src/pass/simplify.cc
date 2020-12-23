@@ -13,11 +13,9 @@ uint64_t SimplifyPass::getHash(const Expr &op) {
 }
 
 bool SimplifyPass::alwaysLT(const Expr &lhs, const Expr &rhs) {
-    auto hl = getHash(lhs);
-    auto hr = getHash(rhs);
-    if (upper_.count(hl) && lower_.count(hr)) {
-        auto &&l = upper_.at(hl);
-        auto &&r = lower_.at(hr);
+    if (upper_.count(lhs.get()) && lower_.count(rhs.get())) {
+        auto &&l = upper_.at(lhs.get());
+        auto &&r = lower_.at(rhs.get());
         if (l->nodeType() == ASTNodeType::IntConst &&
             r->nodeType() == ASTNodeType::IntConst &&
             l.as<IntConstNode>()->val_ < r.as<IntConstNode>()->val_) {
@@ -28,11 +26,9 @@ bool SimplifyPass::alwaysLT(const Expr &lhs, const Expr &rhs) {
 }
 
 bool SimplifyPass::alwaysLE(const Expr &lhs, const Expr &rhs) {
-    auto hl = getHash(lhs);
-    auto hr = getHash(rhs);
-    if (upper_.count(hl) && lower_.count(hr)) {
-        auto &&l = upper_.at(hl);
-        auto &&r = lower_.at(hr);
+    if (upper_.count(lhs.get()) && lower_.count(rhs.get())) {
+        auto &&l = upper_.at(lhs.get());
+        auto &&r = lower_.at(rhs.get());
         if (l->nodeType() == ASTNodeType::IntConst &&
             r->nodeType() == ASTNodeType::IntConst &&
             l.as<IntConstNode>()->val_ <= r.as<IntConstNode>()->val_) {
@@ -42,9 +38,7 @@ bool SimplifyPass::alwaysLE(const Expr &lhs, const Expr &rhs) {
     return false;
 }
 
-Expr SimplifyPass::visit(const LT &_op) {
-    auto op = Mutator::visit(_op);
-    ASSERT(op->nodeType() == ASTNodeType::LT);
+Expr SimplifyPass::visit(const LT &op) {
     if (alwaysLT(op.as<LTNode>()->lhs_, op.as<LTNode>()->rhs_)) {
         isFixPoint_ = false;
         return makeIntConst(1);
@@ -53,12 +47,10 @@ Expr SimplifyPass::visit(const LT &_op) {
         isFixPoint_ = false;
         return makeIntConst(0);
     }
-    return op;
+    return Mutator::visit(op);
 }
 
-Expr SimplifyPass::visit(const LE &_op) {
-    auto op = Mutator::visit(_op);
-    ASSERT(op->nodeType() == ASTNodeType::LE);
+Expr SimplifyPass::visit(const LE &op) {
     if (alwaysLE(op.as<LENode>()->lhs_, op.as<LENode>()->rhs_)) {
         isFixPoint_ = false;
         return makeIntConst(1);
@@ -67,12 +59,10 @@ Expr SimplifyPass::visit(const LE &_op) {
         isFixPoint_ = false;
         return makeIntConst(0);
     }
-    return op;
+    return Mutator::visit(op);
 }
 
-Expr SimplifyPass::visit(const GT &_op) {
-    auto op = Mutator::visit(_op);
-    ASSERT(op->nodeType() == ASTNodeType::GT);
+Expr SimplifyPass::visit(const GT &op) {
     if (alwaysLT(op.as<GTNode>()->rhs_, op.as<GTNode>()->lhs_)) {
         isFixPoint_ = false;
         return makeIntConst(1);
@@ -81,12 +71,10 @@ Expr SimplifyPass::visit(const GT &_op) {
         isFixPoint_ = false;
         return makeIntConst(0);
     }
-    return op;
+    return Mutator::visit(op);
 }
 
-Expr SimplifyPass::visit(const GE &_op) {
-    auto op = Mutator::visit(_op);
-    ASSERT(op->nodeType() == ASTNodeType::GE);
+Expr SimplifyPass::visit(const GE &op) {
     if (alwaysLE(op.as<GENode>()->rhs_, op.as<GENode>()->lhs_)) {
         isFixPoint_ = false;
         return makeIntConst(1);
@@ -95,12 +83,10 @@ Expr SimplifyPass::visit(const GE &_op) {
         isFixPoint_ = false;
         return makeIntConst(0);
     }
-    return op;
+    return Mutator::visit(op);
 }
 
-Expr SimplifyPass::visit(const EQ &_op) {
-    auto op = Mutator::visit(_op);
-    ASSERT(op->nodeType() == ASTNodeType::EQ);
+Expr SimplifyPass::visit(const EQ &op) {
     auto l = op.as<EQNode>()->lhs_;
     auto r = op.as<EQNode>()->rhs_;
     if (l->nodeType() == ASTNodeType::IntConst &&
@@ -109,12 +95,10 @@ Expr SimplifyPass::visit(const EQ &_op) {
         isFixPoint_ = false;
         return makeIntConst(eq);
     }
-    return op;
+    return Mutator::visit(op);
 }
 
-Expr SimplifyPass::visit(const NE &_op) {
-    auto op = Mutator::visit(_op);
-    ASSERT(op->nodeType() == ASTNodeType::NE);
+Expr SimplifyPass::visit(const NE &op) {
     auto l = op.as<NENode>()->lhs_;
     auto r = op.as<NENode>()->rhs_;
     if (l->nodeType() == ASTNodeType::IntConst &&
@@ -123,7 +107,7 @@ Expr SimplifyPass::visit(const NE &_op) {
         isFixPoint_ = false;
         return makeIntConst(ne);
     }
-    return op;
+    return Mutator::visit(op);
 }
 
 Stmt SimplifyPass::visit(const If &_op) {
@@ -150,15 +134,16 @@ Stmt simplifyPass(const Stmt &_op) {
             return op;
         }
 
-        std::unordered_map<const ExprNode *, uint64_t> hash; // expr -> hash
-        std::unordered_map<uint64_t, Expr> subexpr;          // hash -> expr
-        std::tie(hash, subexpr) = getHashMap(op);
+        Disambiguous disambiguous;
+        op = disambiguous(op);
+
+        auto hash = getHashMap(op);
 
         AnalyzeLinear analyzeLinear(hash);
         analyzeLinear(op);
         auto &&linear = analyzeLinear.result();
 
-        AnalyzeBounds analyzeBounds(hash, subexpr, linear);
+        AnalyzeBounds analyzeBounds(hash, linear);
         analyzeBounds(op);
         auto &&lower = analyzeBounds.lower();
         auto &&upper = analyzeBounds.upper();

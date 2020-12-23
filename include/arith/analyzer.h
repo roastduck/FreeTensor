@@ -8,8 +8,19 @@
 
 namespace ir {
 
+/**
+ * k * a
+ */
+struct Scale {
+    int k;
+    Expr a;
+};
+
+/**
+ * (sum_i k_i * a_i) + b
+ */
 struct LinearExpr {
-    std::unordered_map<uint64_t, int> coeff_;
+    std::unordered_map<uint64_t, Scale> coeff_;
     int bias_;
 };
 
@@ -44,17 +55,18 @@ class AnalyzeLinear : public Visitor {
  *
  * This pass is not accurate. Simplifying passes using thiss analysis may need
  * to run for multiple rounds
- *
- * FIXME: lower / upper should be in scope!!! Access in one branch doesn't mean
- * the same in other branch
  */
 class AnalyzeBounds : public Visitor {
-    const std::unordered_map<const ExprNode *, uint64_t> &hash_; // expr -> hash
-    const std::unordered_map<uint64_t, Expr> &subexpr_;          // hash -> expr
+    // expr -> hash
+    const std::unordered_map<const ExprNode *, uint64_t> &hash_;
     const std::unordered_map<const ASTNode *, LinearExpr> &linear_;
 
-    std::unordered_map<uint64_t, Expr> lower_, upper_;
-    std::unordered_map<std::string, Ref<Buffer>> vars_; // variable table
+    std::unordered_map<const ExprNode *, Expr> lower_, upper_;
+
+    // buffer table
+    std::unordered_map<std::string, Ref<Buffer>> buffers_;
+    // iterator table
+    std::unordered_map<std::string, std::pair<Expr, Expr>> iters_;
 
   private:
     // Compute k * a + b
@@ -64,21 +76,32 @@ class AnalyzeBounds : public Visitor {
     Expr getLower(const LinearExpr &linear) const;
     Expr getUpper(const LinearExpr &linear) const;
 
-    void doAnalyze(const Expr &op);
+    template <class T> void doAnalyze(const T &op) {
+        if (linear_.count(op.get())) {
+            auto &&lin = linear_.at(op.get());
+            updLower(op, getLower(lin));
+            updUpper(op, getUpper(lin));
+        }
+        Visitor::visit(op);
+    }
 
-    void updLower(uint64_t hash, const Expr &expr);
-    void updUpper(uint64_t hash, const Expr &expr);
+    // Update lower bound, return old value
+    void updLower(const Expr &op, const Expr &expr);
+    void updUpper(const Expr &op, const Expr &expr);
 
     uint64_t getHash(const Expr &op);
 
   public:
     AnalyzeBounds(const std::unordered_map<const ExprNode *, uint64_t> &hash,
-                  const std::unordered_map<uint64_t, Expr> &subexpr,
                   const std::unordered_map<const ASTNode *, LinearExpr> &linear)
-        : hash_(hash), subexpr_(subexpr), linear_(linear) {}
+        : hash_(hash), linear_(linear) {}
 
-    const std::unordered_map<uint64_t, Expr> &lower() const { return lower_; }
-    const std::unordered_map<uint64_t, Expr> &upper() const { return upper_; }
+    const std::unordered_map<const ExprNode *, Expr> &lower() const {
+        return lower_;
+    }
+    const std::unordered_map<const ExprNode *, Expr> &upper() const {
+        return upper_;
+    }
 
   protected:
     virtual void visit(const VarDef &op) override;
