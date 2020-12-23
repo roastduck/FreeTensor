@@ -50,16 +50,16 @@ Stmt makeVarDef(const std::string &name, Tbuffer &&buffer, Tbody &&body) {
 
 class StoreNode : public StmtNode {
   public:
-    Expr var_;
+    std::string var_;
     std::vector<Expr> indices_;
     Expr expr_;
     DEFINE_NODE_TRAIT(Store);
 };
 typedef Ref<StoreNode> Store;
-template <class Tvar, class Tindices, class Texpr>
-Stmt makeStore(Tvar &&var, Tindices &&indices, Texpr &&expr) {
+template <class Tindices, class Texpr>
+Stmt makeStore(const std::string &var, Tindices &&indices, Texpr &&expr) {
     Store s = Store::make();
-    s->var_ = std::forward<Tvar>(var);
+    s->var_ = var;
     s->indices_ = std::forward<Tindices>(indices),
     s->expr_ = std::forward<Texpr>(expr);
     return s;

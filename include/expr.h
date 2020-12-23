@@ -28,12 +28,12 @@ inline Expr makeVar(const std::string &name) {
 
 class LoadNode : public ExprNode {
   public:
-    Expr var_;
+    std::string var_;
     std::vector<Expr> indices_;
     DEFINE_NODE_TRAIT(Load);
 };
 typedef Ref<LoadNode> Load;
-inline Expr makeLoad(const Expr &var, const std::vector<Expr> &indices) {
+inline Expr makeLoad(const std::string &var, const std::vector<Expr> &indices) {
     Load l = Load::make();
     l->var_ = var, l->indices_ = indices;
     return l;

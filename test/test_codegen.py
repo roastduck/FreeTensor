@@ -6,8 +6,10 @@ def test_hello_world():
 		x[2, 3] = 2.0
 		x[1, 0] = 3.0
 
-	ast = ir.pop_ast()
+	ast = ir.lower(ir.pop_ast())
+	print(ast)
 	code, params = ir.code_gen_c(ast)
+	print(code)
 
 	x = np.zeros((4, 4), dtype="float32")
 	driver = ir.Driver(code, params)
@@ -25,7 +27,8 @@ def test_scalar_op():
 			("y", (), ir.DataType.Int32, ir.AccessType.Output)]) as (x, y):
 		y[()] = x[()] * 2 + 1
 
-	code, params = ir.code_gen_c(ir.pop_ast())
+	code, params = ir.code_gen_c(ir.lower(ir.pop_ast()))
+	print(code)
 	x = np.array(5, dtype="int32")
 	y = np.array(0, dtype="int32")
 	driver = ir.Driver(code, params)
@@ -41,7 +44,8 @@ def test_for():
 		with ir.For("i", 0, 4) as i:
 			y[i] = x[i] + 1
 
-	code, params = ir.code_gen_c(ir.pop_ast())
+	code, params = ir.code_gen_c(ir.lower(ir.pop_ast()))
+	print(code)
 	x = np.array([1, 2, 3, 4], dtype="int32")
 	y = np.zeros((4,), dtype="int32")
 	driver = ir.Driver(code, params)
@@ -59,7 +63,8 @@ def test_if():
 			with ir.Else():
 				y[i] = 1
 
-	code, params = ir.code_gen_c(ir.pop_ast())
+	code, params = ir.code_gen_c(ir.lower(ir.pop_ast()))
+	print(code)
 	y = np.zeros((4,), dtype="int32")
 	driver = ir.Driver(code, params)
 	driver.set_params({"y": y})

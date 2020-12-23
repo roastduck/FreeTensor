@@ -29,7 +29,6 @@ class Visitor {
     virtual void visit(const Var &op) {}
 
     virtual void visit(const Store &op) {
-        (*this)(op->var_);
         for (auto &&index : op->indices_) {
             (*this)(index);
         }
@@ -37,7 +36,6 @@ class Visitor {
     }
 
     virtual void visit(const Load &op) {
-        (*this)(op->var_);
         for (auto &&index : op->indices_) {
             (*this)(index);
         }

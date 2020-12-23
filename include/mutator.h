@@ -38,24 +38,22 @@ class Mutator {
     virtual Expr visit(const Var &op) { return makeVar(op->name_); }
 
     virtual Stmt visit(const Store &op) {
-        auto &&var = (*this)(op->var_);
         std::vector<Expr> indices;
         indices.reserve(op->indices_.size());
         for (auto &&index : op->indices_) {
             indices.emplace_back((*this)(index));
         }
         auto &&expr = (*this)(op->expr_);
-        return makeStore(std::move(var), std::move(indices), std::move(expr));
+        return makeStore(op->var_, std::move(indices), std::move(expr));
     }
 
     virtual Expr visit(const Load &op) {
-        auto &&var = (*this)(op->var_);
         std::vector<Expr> indices;
         indices.reserve(op->indices_.size());
         for (auto &&index : op->indices_) {
             indices.emplace_back((*this)(index));
         }
-        return makeLoad(std::move(var), std::move(indices));
+        return makeLoad(op->var_, std::move(indices));
     }
 
     virtual Expr visit(const IntConst &op) { return makeIntConst(op->val_); }

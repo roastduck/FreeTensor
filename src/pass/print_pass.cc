@@ -25,8 +25,7 @@ void PrintPass::visit(const Var &op) {
 
 void PrintPass::visit(const Store &op) {
     makeIndent();
-    (*this)(op->var_);
-    os << "[";
+    os << op->var_ << "[";
     for (size_t i = 0, iEnd = op->indices_.size(); i < iEnd; i++) {
         (*this)(op->indices_[i]);
         if (i < iEnd - 1) {
@@ -39,8 +38,7 @@ void PrintPass::visit(const Store &op) {
 }
 
 void PrintPass::visit(const Load &op) {
-    (*this)(op->var_);
-    os << "[";
+    os << op->var_ << "[";
     for (size_t i = 0, iEnd = op->indices_.size(); i < iEnd; i++) {
         (*this)(op->indices_[i]);
         if (i < iEnd - 1) {

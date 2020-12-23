@@ -54,7 +54,7 @@ def pop_ast():
 
 class Var:
 	def __init__(self, name: str):
-		self.var = ffi.makeVar(name)
+		self.var = name
 
 	def __getitem__(self, key):
 		if type(key) is not tuple and type(key) is not list:

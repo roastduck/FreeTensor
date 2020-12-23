@@ -56,10 +56,9 @@ void CodeGenC::visit(const Var &op) {
 void CodeGenC::visit(const Store &op) {
     makeIndent();
     if (op->indices_.empty()) {
-        os << "*";
-        (*this)(op->var_);
+        os << "*" << op->var_;
     } else {
-        (*this)(op->var_);
+        os << op->var_;
         for (auto &&index : op->indices_) {
             os << "[";
             (*this)(index);
@@ -73,10 +72,9 @@ void CodeGenC::visit(const Store &op) {
 
 void CodeGenC::visit(const Load &op) {
     if (op->indices_.empty()) {
-        os << "*";
-        (*this)(op->var_);
+        os << "*" << op->var_;
     } else {
-        (*this)(op->var_);
+        os << op->var_;
         for (auto &&index : op->indices_) {
             os << "[";
             (*this)(index);

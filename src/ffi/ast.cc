@@ -33,24 +33,48 @@ void init_ffi_ast(py::module_ &m) {
             [](const Expr &lhs, const Expr &rhs) { return makeAdd(lhs, rhs); },
             py::is_operator())
         .def(
+            "__radd__",
+            [](const Expr &rhs, const Expr &lhs) { return makeAdd(lhs, rhs); },
+            py::is_operator())
+        .def(
             "__sub__",
             [](const Expr &lhs, const Expr &rhs) { return makeSub(lhs, rhs); },
+            py::is_operator())
+        .def(
+            "__rsub__",
+            [](const Expr &rhs, const Expr &lhs) { return makeSub(lhs, rhs); },
             py::is_operator())
         .def(
             "__mul__",
             [](const Expr &lhs, const Expr &rhs) { return makeMul(lhs, rhs); },
             py::is_operator())
         .def(
+            "__rmul__",
+            [](const Expr &rhs, const Expr &lhs) { return makeMul(lhs, rhs); },
+            py::is_operator())
+        .def(
             "__truediv__",
             [](const Expr &lhs, const Expr &rhs) { return makeDiv(lhs, rhs); },
+            py::is_operator())
+        .def(
+            "__rtruediv__",
+            [](const Expr &rhs, const Expr &lhs) { return makeDiv(lhs, rhs); },
             py::is_operator())
         .def(
             "__floorDiv__",
             [](const Expr &lhs, const Expr &rhs) { return makeDiv(lhs, rhs); },
             py::is_operator())
         .def(
+            "__rfloorDiv__",
+            [](const Expr &rhs, const Expr &lhs) { return makeDiv(lhs, rhs); },
+            py::is_operator())
+        .def(
             "__mod__",
             [](const Expr &lhs, const Expr &rhs) { return makeMod(lhs, rhs); },
+            py::is_operator())
+        .def(
+            "__rmod__",
+            [](const Expr &rhs, const Expr &lhs) { return makeMod(lhs, rhs); },
             py::is_operator())
         .def(
             "__lt__",
@@ -95,7 +119,7 @@ void init_ffi_ast(py::module_ &m) {
           "name"_a, "buffer"_a, "body"_a);
     m.def("makeVar", &makeVar, "name"_a);
     m.def("makeStore",
-          static_cast<Stmt (*)(const Expr &, const std::vector<Expr> &,
+          static_cast<Stmt (*)(const std::string &, const std::vector<Expr> &,
                                const Expr &)>(&makeStore),
           "var"_a, "indices"_a, "expr"_a);
     m.def("makeLoad", &makeLoad, "var"_a, "indices"_a);
