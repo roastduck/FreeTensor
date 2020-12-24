@@ -1,6 +1,7 @@
 #ifndef VISITOR_H
 #define VISITOR_H
 
+#include <debug.h>
 #include <expr.h>
 #include <stmt.h>
 

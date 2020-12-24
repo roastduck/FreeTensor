@@ -15,6 +15,17 @@ class StmtNode : public ASTNode {
 };
 typedef Ref<StmtNode> Stmt;
 
+/**
+ * Matches any statement
+ *
+ * Only used in pattern matching
+ */
+class AnyNode : public StmtNode {
+    DEFINE_NODE_TRAIT(Any);
+};
+typedef Ref<AnyNode> Any;
+inline Stmt makeAny() { return Any::make(); }
+
 class StmtSeqNode : public StmtNode {
   public:
     std::vector<Stmt> stmts_;
@@ -67,6 +78,8 @@ Stmt makeStore(const std::string &var, Tindices &&indices, Texpr &&expr) {
 
 class ForNode : public StmtNode {
   public:
+    std::string id_;
+
     std::string iter_;
     Expr begin_, end_;
     Stmt body_;
@@ -74,9 +87,10 @@ class ForNode : public StmtNode {
 };
 typedef Ref<ForNode> For;
 template <class Tbegin, class Tend, class Tbody>
-Stmt makeFor(const std::string &iter, Tbegin &&begin, Tend &&end,
-             Tbody &&body) {
+Stmt makeFor(const std::string &iter, Tbegin &&begin, Tend &&end, Tbody &&body,
+             const std::string &id = "") {
     For f = For::make();
+    f->id_ = id;
     f->iter_ = iter;
     f->begin_ = std::forward<Tbegin>(begin);
     f->end_ = std::forward<Tend>(end);
@@ -91,7 +105,7 @@ class IfNode : public StmtNode {
     DEFINE_NODE_TRAIT(If);
 };
 typedef Ref<IfNode> If;
-template <class Tcond, class Tthen, class Telse>
+template <class Tcond, class Tthen, class Telse = std::nullptr_t>
 Stmt makeIf(Tcond &&cond, Tthen &&thenCase, Telse &&elseCase = nullptr) {
     If i = If::make();
     i->cond_ = std::forward<Tcond>(cond);

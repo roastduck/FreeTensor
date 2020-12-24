@@ -101,10 +101,11 @@ def VarDef(*args):
 		return _VarDef(*args)
 
 class For:
-	def __init__(self, iter_var: str, begin, end):
+	def __init__(self, iter_var: str, begin, end, nid: str = ""):
 		self.iter_var = iter_var
 		self.begin = begin
 		self.end = end
+		self.nid = nid
 
 	def __enter__(self):
 		ctx_stack.push()
@@ -112,7 +113,8 @@ class For:
 
 	def __exit__(self, exc_type, exc_value, traceback):
 		body = ctx_stack.pop().make_stmt()
-		ctx_stack.top().append_stmt(ffi.makeFor(self.iter_var, self.begin, self.end, body))
+		ctx_stack.top().append_stmt(
+				ffi.makeFor(self.iter_var, self.begin, self.end, body, nid=self.nid))
 
 class If:
 	def __init__(self, cond):
@@ -135,4 +137,7 @@ class Else:
 	def __exit__(self, exc_type, exc_value, traceback):
 		body = ctx_stack.pop().make_stmt()
 		ctx_stack.top().append_if_else_stmt(body)
+
+def Any():
+	ctx_stack.top().append_stmt(ffi.makeAny())
 

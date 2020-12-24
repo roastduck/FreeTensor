@@ -1,5 +1,4 @@
 import ir
-import numpy as np
 
 def test_const_fold():
 	with ir.VarDef("y", (4,), ir.DataType.Int32, ir.AccessType.Output) as y:

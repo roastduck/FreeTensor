@@ -1,6 +1,7 @@
 #ifndef MUTATOR_H
 #define MUTATOR_H
 
+#include <debug.h>
 #include <except.h>
 #include <expr.h>
 #include <stmt.h>
@@ -15,6 +16,8 @@ class Mutator {
     virtual Expr operator()(const Expr &op) final;
 
   protected:
+    virtual Stmt visit(const Any &op) { return makeAny(); }
+
     virtual Stmt visit(const StmtSeq &op) {
         std::vector<Stmt> stmts;
         stmts.reserve(op->stmts_.size());
@@ -108,7 +111,7 @@ class Mutator {
 
     virtual Stmt visit(const For &op) {
         return makeFor(op->iter_, (*this)(op->begin_), (*this)(op->end_),
-                       (*this)(op->body_));
+                       (*this)(op->body_), op->id_);
     }
 
     virtual Stmt visit(const If &op) {

@@ -117,6 +117,9 @@ Expr AnalyzeBounds::compLinear(int k, const Expr &a, const Expr &b) const {
         b->nodeType() == ASTNodeType::IntConst) {
         x = makeIntConst(x.as<IntConstNode>()->val_ +
                          b.as<IntConstNode>()->val_);
+    } else if (b->nodeType() == ASTNodeType::IntConst &&
+               b.as<IntConstNode>()->val_ == 0) {
+        // do nothing
     } else {
         x = makeAdd(x, b);
     }
@@ -185,7 +188,6 @@ void AnalyzeBounds::updLower(const Expr &op, const Expr &expr) {
             }
         } else {
             // TODO: Use max node
-            ASSERT(false);
         }
     }
 }
@@ -210,7 +212,6 @@ void AnalyzeBounds::updUpper(const Expr &op, const Expr &expr) {
             }
         } else {
             // TODO: Use min node
-            ASSERT(false);
         }
     }
 }
@@ -245,6 +246,8 @@ void AnalyzeBounds::visit(const Var &op) {
 }
 
 void AnalyzeBounds::visit(const Store &op) {
+    Visitor::visit(op); // Recurse first, assume there won't be the same buffer
+                        // in the indices
     if (!buffers_.count(op->var_)) {
         ERROR("Storing to undefined variable " + op->var_);
     }
@@ -253,10 +256,10 @@ void AnalyzeBounds::visit(const Store &op) {
         updLower(op->indices_[i], makeIntConst(0));
         updUpper(op->indices_[i], shape[i]);
     }
-    Visitor::visit(op);
 }
 
 void AnalyzeBounds::visit(const Load &op) {
+    Visitor::visit(op);
     if (!buffers_.count(op->var_)) {
         ERROR("Storing to undefined variable " + op->var_);
     }
@@ -265,7 +268,6 @@ void AnalyzeBounds::visit(const Load &op) {
         updLower(op->indices_[i], makeIntConst(0));
         updUpper(op->indices_[i], shape[i]);
     }
-    Visitor::visit(op);
 }
 
 void AnalyzeBounds::visit(const IntConst &op) { doAnalyze(op); }

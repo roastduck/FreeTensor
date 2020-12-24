@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cctype>
 
 #include <pass/code_gen_c.h>
 
@@ -14,6 +15,7 @@ void CodeGenC::visit(const VarDef &op) {
     if (op->buffer_->atype() == AccessType::Cache) {
         // e.g. float x[5][5][5];
         os << gen(tensor.dtype()) << " ";
+        os << normalizeId(op->name_);
         for (auto &&dim : shape) {
             os << "[";
             (*this)(dim);
@@ -29,7 +31,7 @@ void CodeGenC::visit(const VarDef &op) {
             os << "const ";
         }
         os << gen(tensor.dtype()) << " (*restrict ";
-        os << op->name_ << ")";
+        os << normalizeId(op->name_) << ")";
         for (size_t i = 1, iEnd = shape.size(); i < iEnd; i++) { // No shape[0]
             os << "[";
             (*this)(shape[i]);
@@ -49,16 +51,16 @@ void CodeGenC::visit(const VarDef &op) {
 }
 
 void CodeGenC::visit(const Var &op) {
-    os << op->name_;
+    os << normalizeId(op->name_);
     Visitor::visit(op);
 }
 
 void CodeGenC::visit(const Store &op) {
     makeIndent();
     if (op->indices_.empty()) {
-        os << "*" << op->var_;
+        os << "*" << normalizeId(op->var_);
     } else {
-        os << op->var_;
+        os << normalizeId(op->var_);
         for (auto &&index : op->indices_) {
             os << "[";
             (*this)(index);
@@ -72,9 +74,9 @@ void CodeGenC::visit(const Store &op) {
 
 void CodeGenC::visit(const Load &op) {
     if (op->indices_.empty()) {
-        os << "*" << op->var_;
+        os << "*" << normalizeId(op->var_);
     } else {
-        os << op->var_;
+        os << normalizeId(op->var_);
         for (auto &&index : op->indices_) {
             os << "[";
             (*this)(index);
@@ -177,7 +179,7 @@ void CodeGenC::visit(const NE &op) {
 
 void CodeGenC::visit(const For &op) {
     makeIndent();
-    os << "for (int " << op->iter_ << " = ";
+    os << "for (int " << normalizeId(op->iter_) << " = ";
     (*this)(op->begin_);
     os << "; " << op->iter_ << " < ";
     (*this)(op->end_);
@@ -202,6 +204,23 @@ void CodeGenC::visit(const If &op) {
         (*this)(op->elseCase_);
         endBlock();
     }
+}
+
+const std::string &CodeGenC::normalizeId(const std::string &old) {
+    if (idCache_.count(old)) {
+        return idCache_.at(old);
+    }
+    std::string ret = old;
+    for (char &c : ret) {
+        if (!isalnum(c) && c != '_') {
+            c = '_';
+        }
+    }
+    while (idFlag_.count(ret)) {
+        ret += "_";
+    }
+    idFlag_.insert(ret);
+    return idCache_[old] = ret;
 }
 
 std::string CodeGenC::gen(DataType dtype) {

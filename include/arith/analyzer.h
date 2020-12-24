@@ -77,12 +77,12 @@ class AnalyzeBounds : public Visitor {
     Expr getUpper(const LinearExpr &linear) const;
 
     template <class T> void doAnalyze(const T &op) {
+        Visitor::visit(op); // Recurse first, so bounds of vars get updated
         if (linear_.count(op.get())) {
             auto &&lin = linear_.at(op.get());
             updLower(op, getLower(lin));
             updUpper(op, getUpper(lin));
         }
-        Visitor::visit(op);
     }
 
     // Update lower bound, return old value

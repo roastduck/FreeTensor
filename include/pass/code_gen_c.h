@@ -1,6 +1,8 @@
 #ifndef CODE_GEN_C_H
 #define CODE_GEN_C_H
 
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include <pass/code_gen.h>
@@ -9,6 +11,8 @@ namespace ir {
 
 class CodeGenC : public CodeGen {
     std::vector<std::string> params_;
+    std::unordered_map<std::string, std::string> idCache_; // IR IDs -> C IDs
+    std::unordered_set<std::string> idFlag_;               // C IDs
 
   protected:
     virtual void visit(const VarDef &op) override;
@@ -32,6 +36,7 @@ class CodeGenC : public CodeGen {
     virtual void visit(const If &op) override;
 
   private:
+    const std::string &normalizeId(const std::string &id);
     static std::string gen(DataType dtype);
 
   public:

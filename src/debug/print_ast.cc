@@ -2,6 +2,11 @@
 
 namespace ir {
 
+void PrintVisitor::visit(const Any &op) {
+    makeIndent();
+    os << "<Any>" << std::endl;
+}
+
 void PrintVisitor::visit(const VarDef &op) {
     makeIndent();
     os << ::ir::toString(op->buffer_->atype()) << " " << op->name_ << ": ";
@@ -143,6 +148,9 @@ void PrintVisitor::visit(const NE &op) {
 }
 
 void PrintVisitor::visit(const For &op) {
+    if (!op->id_.empty()) {
+        os << op->id_ << ":" << std::endl;
+    }
     makeIndent();
     os << "for " << op->iter_ << " = ";
     (*this)(op->begin_);
