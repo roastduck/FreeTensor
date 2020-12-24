@@ -6,6 +6,7 @@
 namespace ir {
 
 enum class ASTNodeType : int {
+    Any,
     StmtSeq,
     VarDef,
     Var,
@@ -47,6 +48,16 @@ class ASTNode {
     DEFINE_NODE_ACCESS(AST);
 };
 typedef Ref<ASTNode> AST;
+
+/**
+ * Matches any node
+ *
+ * Only used in pattern matching
+ */
+class AnyNode : public ASTNode {
+    DEFINE_NODE_TRAIT(Any);
+};
+typedef Ref<AnyNode> Any;
 
 } // namespace ir
 

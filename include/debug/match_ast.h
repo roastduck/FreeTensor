@@ -1,11 +1,24 @@
-#ifndef PRINT_PASS_H
-#define PRINT_PASS_H
+#ifndef MATCH_AST_H
+#define MATCH_AST_H
 
-#include <pass/code_gen.h>
+#include <visitor.h>
 
 namespace ir {
 
-class PrintPass : public CodeGen {
+/**
+ * Check whether an AST strictly matches a pattern
+ *
+ * Note that a + b doesn't match b + a
+ */
+class MatchVisitor : public Visitor {
+    bool isMatched_ = true;
+    AST instance_;
+
+  public:
+    MatchVisitor(const AST &instance) : instance_(instance) {}
+
+    bool isMatched() const { return isMatched_; }
+
   protected:
     virtual void visit(const VarDef &op) override;
     virtual void visit(const Var &op) override;
@@ -28,8 +41,6 @@ class PrintPass : public CodeGen {
     virtual void visit(const If &op) override;
 };
 
-std::string printPass(const AST &op);
-
 } // namespace ir
 
-#endif // PRINT_PASS_H
+#endif // MATCH_AST_H

@@ -13,6 +13,8 @@ class Visitor {
     virtual void operator()(const AST &op) final;
 
   protected:
+    virtual void visit(const Any &op) {}
+
     virtual void visit(const StmtSeq &op) {
         for (auto &&stmt : op->stmts_) {
             (*this)(stmt);

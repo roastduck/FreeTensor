@@ -11,6 +11,7 @@ void Visitor::operator()(const AST &op) {
         visit(op.as<name##Node>());                                            \
         break;
 
+        DISPATCH_CASE(Any);
         DISPATCH_CASE(StmtSeq);
         DISPATCH_CASE(VarDef);
         DISPATCH_CASE(Var);

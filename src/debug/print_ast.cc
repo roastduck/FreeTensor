@@ -1,8 +1,8 @@
-#include <pass/print_pass.h>
+#include <debug/print_ast.h>
 
 namespace ir {
 
-void PrintPass::visit(const VarDef &op) {
+void PrintVisitor::visit(const VarDef &op) {
     makeIndent();
     os << ::ir::toString(op->buffer_->atype()) << " " << op->name_ << ": ";
     auto &&tensor = op->buffer_->tensor();
@@ -18,12 +18,12 @@ void PrintPass::visit(const VarDef &op) {
     endBlock();
 }
 
-void PrintPass::visit(const Var &op) {
+void PrintVisitor::visit(const Var &op) {
     os << op->name_;
     Visitor::visit(op);
 }
 
-void PrintPass::visit(const Store &op) {
+void PrintVisitor::visit(const Store &op) {
     makeIndent();
     os << op->var_ << "[";
     for (size_t i = 0, iEnd = op->indices_.size(); i < iEnd; i++) {
@@ -37,7 +37,7 @@ void PrintPass::visit(const Store &op) {
     os << std::endl;
 }
 
-void PrintPass::visit(const Load &op) {
+void PrintVisitor::visit(const Load &op) {
     os << op->var_ << "[";
     for (size_t i = 0, iEnd = op->indices_.size(); i < iEnd; i++) {
         (*this)(op->indices_[i]);
@@ -48,11 +48,13 @@ void PrintPass::visit(const Load &op) {
     os << "]";
 }
 
-void PrintPass::visit(const IntConst &op) { os << std::to_string(op->val_); }
+void PrintVisitor::visit(const IntConst &op) { os << std::to_string(op->val_); }
 
-void PrintPass::visit(const FloatConst &op) { os << std::to_string(op->val_); }
+void PrintVisitor::visit(const FloatConst &op) {
+    os << std::to_string(op->val_);
+}
 
-void PrintPass::visit(const Add &op) {
+void PrintVisitor::visit(const Add &op) {
     os << "(";
     (*this)(op->lhs_);
     os << " + ";
@@ -60,7 +62,7 @@ void PrintPass::visit(const Add &op) {
     os << ")";
 }
 
-void PrintPass::visit(const Sub &op) {
+void PrintVisitor::visit(const Sub &op) {
     os << "(";
     (*this)(op->lhs_);
     os << " - ";
@@ -68,7 +70,7 @@ void PrintPass::visit(const Sub &op) {
     os << ")";
 }
 
-void PrintPass::visit(const Mul &op) {
+void PrintVisitor::visit(const Mul &op) {
     os << "(";
     (*this)(op->lhs_);
     os << " * ";
@@ -76,7 +78,7 @@ void PrintPass::visit(const Mul &op) {
     os << ")";
 }
 
-void PrintPass::visit(const Div &op) {
+void PrintVisitor::visit(const Div &op) {
     os << "(";
     (*this)(op->lhs_);
     os << " / ";
@@ -84,7 +86,7 @@ void PrintPass::visit(const Div &op) {
     os << ")";
 }
 
-void PrintPass::visit(const Mod &op) {
+void PrintVisitor::visit(const Mod &op) {
     os << "(";
     (*this)(op->lhs_);
     os << " % ";
@@ -92,7 +94,7 @@ void PrintPass::visit(const Mod &op) {
     os << ")";
 }
 
-void PrintPass::visit(const LT &op) {
+void PrintVisitor::visit(const LT &op) {
     os << "(";
     (*this)(op->lhs_);
     os << " < ";
@@ -100,7 +102,7 @@ void PrintPass::visit(const LT &op) {
     os << ")";
 }
 
-void PrintPass::visit(const LE &op) {
+void PrintVisitor::visit(const LE &op) {
     os << "(";
     (*this)(op->lhs_);
     os << " <= ";
@@ -108,7 +110,7 @@ void PrintPass::visit(const LE &op) {
     os << ")";
 }
 
-void PrintPass::visit(const GT &op) {
+void PrintVisitor::visit(const GT &op) {
     os << "(";
     (*this)(op->lhs_);
     os << " > ";
@@ -116,7 +118,7 @@ void PrintPass::visit(const GT &op) {
     os << ")";
 }
 
-void PrintPass::visit(const GE &op) {
+void PrintVisitor::visit(const GE &op) {
     os << "(";
     (*this)(op->lhs_);
     os << " >= ";
@@ -124,7 +126,7 @@ void PrintPass::visit(const GE &op) {
     os << ")";
 }
 
-void PrintPass::visit(const EQ &op) {
+void PrintVisitor::visit(const EQ &op) {
     os << "(";
     (*this)(op->lhs_);
     os << " == ";
@@ -132,7 +134,7 @@ void PrintPass::visit(const EQ &op) {
     os << ")";
 }
 
-void PrintPass::visit(const NE &op) {
+void PrintVisitor::visit(const NE &op) {
     os << "(";
     (*this)(op->lhs_);
     os << " != ";
@@ -140,7 +142,7 @@ void PrintPass::visit(const NE &op) {
     os << ")";
 }
 
-void PrintPass::visit(const For &op) {
+void PrintVisitor::visit(const For &op) {
     makeIndent();
     os << "for " << op->iter_ << " = ";
     (*this)(op->begin_);
@@ -152,7 +154,7 @@ void PrintPass::visit(const For &op) {
     endBlock();
 }
 
-void PrintPass::visit(const If &op) {
+void PrintVisitor::visit(const If &op) {
     makeIndent();
     os << "if ";
     (*this)(op->cond_);
@@ -169,10 +171,10 @@ void PrintPass::visit(const If &op) {
     }
 }
 
-std::string printPass(const AST &op) {
-    PrintPass pass;
-    pass(op);
-    return pass.toString();
+std::string toString(const AST &op) {
+    PrintVisitor visitor;
+    visitor(op);
+    return visitor.toString();
 }
 
 } // namespace ir

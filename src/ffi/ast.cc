@@ -1,6 +1,6 @@
+#include <debug.h>
 #include <expr.h>
 #include <ffi.h>
-#include <pass/print_pass.h>
 #include <stmt.h>
 
 namespace ir {
@@ -12,22 +12,28 @@ void init_ffi_ast(py::module_ &m) {
         .def(py::init<>())
         .def(py::init<const Stmt &>())
         .def(py::init<const Expr &>())
+        .def("match",
+             [](const AST &op, const AST &other) { return match(op, other); })
         .def("__str__",
-             [](const AST &op) { return op.isValid() ? printPass(op) : ""; })
+             [](const AST &op) { return op.isValid() ? toString(op) : ""; })
         .def("__repr__", [](const AST &op) {
-            return op.isValid() ? "<AST: " + printPass(op) + ">" : "None";
+            return op.isValid() ? "<AST: " + toString(op) + ">" : "None";
         });
     py::class_<Stmt>(m, "Stmt")
         .def(py::init<>())
+        .def("match",
+             [](const AST &op, const AST &other) { return match(op, other); })
         .def("__str__",
-             [](const Stmt &op) { return op.isValid() ? printPass(op) : ""; })
+             [](const Stmt &op) { return op.isValid() ? toString(op) : ""; })
         .def("__repr__", [](const Stmt &op) {
-            return op.isValid() ? "<Stmt: " + printPass(op) + ">" : "None";
+            return op.isValid() ? "<Stmt: " + toString(op) + ">" : "None";
         });
     py::class_<Expr>(m, "Expr")
         .def(py::init<>())
         .def(py::init([](int val) { return makeIntConst(val); }))
         .def(py::init([](float val) { return makeFloatConst(val); }))
+        .def("match",
+             [](const AST &op, const AST &other) { return match(op, other); })
         .def(
             "__add__",
             [](const Expr &lhs, const Expr &rhs) { return makeAdd(lhs, rhs); },
@@ -101,9 +107,9 @@ void init_ffi_ast(py::module_ &m) {
             [](const Expr &lhs, const Expr &rhs) { return makeNE(lhs, rhs); },
             py::is_operator())
         .def("__str__",
-             [](const Expr &op) { return op.isValid() ? printPass(op) : ""; })
+             [](const Expr &op) { return op.isValid() ? toString(op) : ""; })
         .def("__repr__", [](const Expr &op) {
-            return op.isValid() ? "<Expr: " + printPass(op) + ">" : "None";
+            return op.isValid() ? "<Expr: " + toString(op) + ">" : "None";
         });
     py::implicitly_convertible<Stmt, AST>();
     py::implicitly_convertible<Expr, AST>();
