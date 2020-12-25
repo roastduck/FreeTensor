@@ -4,6 +4,23 @@
 
 namespace ir {
 
+void FindInnerMostScope::visit(const Var &op) {
+    Visitor::visit(op);
+    innerMost_ = std::max(innerMost_, varScope_.at(op->name_));
+}
+
+void FindInnerMostScope::visit(const Load &op) {
+    Visitor::visit(op);
+    innerMost_ = std::max(innerMost_, varScope_.at(op->var_));
+}
+
+int findInnerMostScope(const std::unordered_map<std::string, int> &varScope,
+                       const Expr &op) {
+    FindInnerMostScope visitor(varScope);
+    visitor(op);
+    return visitor.innnerMost();
+}
+
 uint64_t SimplifyPass::getHash(const Expr &op) {
     if (hash_.count(op.get())) { // maybe not, beacuse Mutator::visit
         return hash_.at(op.get());
@@ -112,6 +129,27 @@ Expr SimplifyPass::visit(const NE &op) {
         return makeIntConst(ne);
     }
     return Mutator::visit(op);
+}
+
+Stmt SimplifyPass::visit(const VarDef &_op) {
+    if (varScope_.count(_op->name_)) {
+        ERROR("Conflict var name: " + _op->name_ +
+              ". Nested vars with the same name are not allowed");
+    }
+    varScope_[_op->name_] = curScope_++;
+    auto op = Mutator::visit(_op);
+    varScope_.erase(_op->name_), curScope_--;
+    return op;
+}
+
+Stmt SimplifyPass::visit(const For &_op) {
+    if (varScope_.count(_op->iter_)) {
+        ERROR("iterators with the same name in nested loops are not allowed");
+    }
+    varScope_[_op->iter_] = curScope_++;
+    auto op = Mutator::visit(_op);
+    varScope_.erase(_op->iter_), curScope_--;
+    return op;
 }
 
 Stmt SimplifyPass::visit(const If &_op) {

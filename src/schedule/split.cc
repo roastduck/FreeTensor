@@ -12,11 +12,13 @@ Stmt Splitter::visit(const For &_op) {
         if (factor_ != -1) {
             ASSERT(nparts_ == -1);
             factor = makeIntConst(factor_);
-            nparts = makeDiv(len, factor);
+            nparts = makeAdd(makeDiv(makeSub(len, makeIntConst(1)), factor),
+                             makeIntConst(1));
         } else {
             ASSERT(nparts_ != -1);
             nparts = makeIntConst(nparts_);
-            factor = makeDiv(len, nparts);
+            factor = makeAdd(makeDiv(makeSub(len, makeIntConst(1)), nparts),
+                             makeIntConst(1));
         }
 
         auto newIter =

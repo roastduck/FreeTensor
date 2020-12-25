@@ -261,6 +261,9 @@ void AnalyzeBounds::visit(const VarDef &op) {
 }
 
 void AnalyzeBounds::visit(const Var &op) {
+    Visitor::visit(op);
+    updLower(op, {op}); // Don't forget itself
+    updUpper(op, {op});
     if (iters_.count(op->name_)) {
         updLower(op, {iters_[op->name_].first});
         updUpper(op, {iters_[op->name_].second});
@@ -282,6 +285,8 @@ void AnalyzeBounds::visit(const Store &op) {
 
 void AnalyzeBounds::visit(const Load &op) {
     Visitor::visit(op);
+    updLower(op, {op}); // Don't forget itself
+    updUpper(op, {op});
     if (!buffers_.count(op->var_)) {
         ERROR("Storing to undefined variable " + op->var_);
     }

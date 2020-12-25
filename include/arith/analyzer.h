@@ -78,10 +78,6 @@ class AnalyzeBounds : public Visitor {
 
     template <class T> void doAnalyze(const T &op) {
         Visitor::visit(op); // Recurse first, so bounds of vars get updated
-
-        // TODO
-        // updLower(op, {op}); // Don't forget itself
-        // updUpper(op, {op});
         if (linear_.count(op.get())) {
             auto &&lin = linear_.at(op.get());
             updLower(op, getLower(lin));
