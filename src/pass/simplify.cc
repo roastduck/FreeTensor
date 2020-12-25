@@ -14,12 +14,14 @@ uint64_t SimplifyPass::getHash(const Expr &op) {
 
 bool SimplifyPass::alwaysLT(const Expr &lhs, const Expr &rhs) {
     if (upper_.count(lhs.get()) && lower_.count(rhs.get())) {
-        auto &&l = upper_.at(lhs.get());
-        auto &&r = lower_.at(rhs.get());
-        if (l->nodeType() == ASTNodeType::IntConst &&
-            r->nodeType() == ASTNodeType::IntConst &&
-            l.as<IntConstNode>()->val_ < r.as<IntConstNode>()->val_) {
-            return true;
+        for (auto &&l : upper_.at(lhs.get())) {
+            for (auto &&r : lower_.at(rhs.get())) {
+                if (l->nodeType() == ASTNodeType::IntConst &&
+                    r->nodeType() == ASTNodeType::IntConst &&
+                    l.as<IntConstNode>()->val_ < r.as<IntConstNode>()->val_) {
+                    return true;
+                }
+            }
         }
     }
     return false;
@@ -27,12 +29,14 @@ bool SimplifyPass::alwaysLT(const Expr &lhs, const Expr &rhs) {
 
 bool SimplifyPass::alwaysLE(const Expr &lhs, const Expr &rhs) {
     if (upper_.count(lhs.get()) && lower_.count(rhs.get())) {
-        auto &&l = upper_.at(lhs.get());
-        auto &&r = lower_.at(rhs.get());
-        if (l->nodeType() == ASTNodeType::IntConst &&
-            r->nodeType() == ASTNodeType::IntConst &&
-            l.as<IntConstNode>()->val_ <= r.as<IntConstNode>()->val_) {
-            return true;
+        for (auto &&l : upper_.at(lhs.get())) {
+            for (auto &&r : lower_.at(rhs.get())) {
+                if (l->nodeType() == ASTNodeType::IntConst &&
+                    r->nodeType() == ASTNodeType::IntConst &&
+                    l.as<IntConstNode>()->val_ <= r.as<IntConstNode>()->val_) {
+                    return true;
+                }
+            }
         }
     }
     return false;

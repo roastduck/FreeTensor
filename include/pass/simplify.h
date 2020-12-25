@@ -9,13 +9,15 @@ namespace ir {
 
 class SimplifyPass : public Mutator {
     const std::unordered_map<const ExprNode *, uint64_t> &hash_;
-    const std::unordered_map<const ExprNode *, Expr> &lower_, &upper_;
+    const std::unordered_map<const ExprNode *, std::vector<Expr>> &lower_,
+        &upper_;
     bool isFixPoint_ = true;
 
   public:
-    SimplifyPass(const std::unordered_map<const ExprNode *, uint64_t> &hash,
-                 const std::unordered_map<const ExprNode *, Expr> &lower,
-                 const std::unordered_map<const ExprNode *, Expr> &upper)
+    SimplifyPass(
+        const std::unordered_map<const ExprNode *, uint64_t> &hash,
+        const std::unordered_map<const ExprNode *, std::vector<Expr>> &lower,
+        const std::unordered_map<const ExprNode *, std::vector<Expr>> &upper)
         : hash_(hash), lower_(lower), upper_(upper) {}
 
     bool isFixPoint() const { return isFixPoint_; }
@@ -28,15 +30,19 @@ class SimplifyPass : public Mutator {
         // lower_ / upper_ for _op and op shall be the same, but those for op
         // are not updated, so using _op
         if (lower_.count(_op.get()) && upper_.count(_op.get())) {
-            auto lower = lower_.at(_op.get());
-            auto upper = upper_.at(_op.get());
-            auto hl = getHash(lower);
-            auto hr = getHash(upper);
-            if (hl == hr) {
-                if (hl != getHash(op)) {
-                    isFixPoint_ = false;
+            for (auto &&lower : lower_.at(_op.get())) {
+                for (auto &&upper : upper_.at(_op.get())) {
+                    auto hl = getHash(lower);
+                    auto hr = getHash(upper);
+                    if (hl == hr) {
+                        if (hl != getHash(op)) {
+                            isFixPoint_ = false;
+                        }
+                        return lower;
+                        // FIXME: We need to choose the simplest one. Other wise
+                        // we are always picking the original expression
+                    }
                 }
-                return lower;
             }
         }
         return op;

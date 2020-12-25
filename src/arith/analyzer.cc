@@ -1,3 +1,5 @@
+#include <functional>
+
 #include <arith/analyzer.h>
 
 namespace ir {
@@ -110,6 +112,8 @@ Expr AnalyzeBounds::compLinear(int k, const Expr &a, const Expr &b) const {
     Expr x;
     if (a->nodeType() == ASTNodeType::IntConst) {
         x = makeIntConst(k * a.as<IntConstNode>()->val_);
+    } else if (k == 1) {
+        x = a;
     } else {
         x = makeMul(makeIntConst(k), a);
     }
@@ -126,93 +130,111 @@ Expr AnalyzeBounds::compLinear(int k, const Expr &a, const Expr &b) const {
     return x;
 }
 
-Expr AnalyzeBounds::getLower(const LinearExpr &linear) const {
-    Expr ret = makeIntConst(linear.bias_);
-    for (auto &&item : linear.coeff_) {
-        if (item.second.k > 0) {
-            if (!lower_.count(item.second.a.get())) {
-                return nullptr;
-            }
-            ret =
-                compLinear(item.second.k, lower_.at(item.second.a.get()), ret);
+std::vector<Expr> AnalyzeBounds::getLower(const LinearExpr &linear) const {
+    std::vector<Expr> ret;
+    typedef std::unordered_map<uint64_t, Scale>::const_iterator Iter;
+    std::function<void(Iter, Expr)> dfs = [&](Iter i, Expr expr) {
+        if (i == linear.coeff_.end()) {
+            ret.emplace_back(expr);
+            return;
         }
-        if (item.second.k < 0) {
-            if (!upper_.count(item.second.a.get())) {
-                return nullptr;
+        auto ii = i;
+        ii++;
+        if (i->second.k > 0 && lower_.count(i->second.a.get())) {
+            for (auto &&candidate : lower_.at(i->second.a.get())) {
+                dfs(ii, compLinear(i->second.k, candidate, expr));
             }
-            ret =
-                compLinear(item.second.k, upper_.at(item.second.a.get()), ret);
         }
-    }
+        if (i->second.k < 0 && upper_.count(i->second.a.get())) {
+            for (auto &&candidate : upper_.at(i->second.a.get())) {
+                dfs(ii, compLinear(i->second.k, candidate, expr));
+            }
+        }
+        if (i->second.k == 0) {
+            dfs(ii, expr);
+        }
+    };
+    dfs(linear.coeff_.begin(), makeIntConst(linear.bias_));
     return ret;
 }
 
-Expr AnalyzeBounds::getUpper(const LinearExpr &linear) const {
-    Expr ret = makeIntConst(linear.bias_);
-    for (auto &&item : linear.coeff_) {
-        if (item.second.k > 0) {
-            if (!upper_.count(item.second.a.get())) {
-                return nullptr;
-            }
-            ret =
-                compLinear(item.second.k, upper_.at(item.second.a.get()), ret);
+std::vector<Expr> AnalyzeBounds::getUpper(const LinearExpr &linear) const {
+    std::vector<Expr> ret;
+    typedef std::unordered_map<uint64_t, Scale>::const_iterator Iter;
+    std::function<void(Iter, Expr)> dfs = [&](Iter i, Expr expr) {
+        if (i == linear.coeff_.end()) {
+            ret.emplace_back(expr);
+            return;
         }
-        if (item.second.k < 0) {
-            if (!lower_.count(item.second.a.get())) {
-                return nullptr;
+        auto ii = i;
+        ii++;
+        if (i->second.k > 0 && upper_.count(i->second.a.get())) {
+            for (auto &&candidate : upper_.at(i->second.a.get())) {
+                dfs(ii, compLinear(i->second.k, candidate, expr));
             }
-            ret =
-                compLinear(item.second.k, lower_.at(item.second.a.get()), ret);
         }
-    }
+        if (i->second.k < 0 && lower_.count(i->second.a.get())) {
+            for (auto &&candidate : lower_.at(i->second.a.get())) {
+                dfs(ii, compLinear(i->second.k, candidate, expr));
+            }
+        }
+        if (i->second.k == 0) {
+            dfs(ii, expr);
+        }
+    };
+    dfs(linear.coeff_.begin(), makeIntConst(linear.bias_));
     return ret;
 }
 
-void AnalyzeBounds::updLower(const Expr &op, const Expr &expr) {
-    if (!expr.isValid()) {
-        return;
-    }
+void AnalyzeBounds::updLower(const Expr &op, const std::vector<Expr> &exprs) {
     if (!lower_.count(op.get())) {
-        lower_[op.get()] = expr;
+        lower_[op.get()] = exprs;
         return;
     }
-
-    Expr old = lower_.at(op.get());
-    if (getHash(old) != getHash(expr)) {
-        if (expr->nodeType() == ASTNodeType::IntConst &&
-            old->nodeType() == ASTNodeType::IntConst) {
-            auto oldVal = old.as<IntConstNode>()->val_;
-            auto newVal = expr.as<IntConstNode>()->val_;
-            if (newVal > oldVal) {
-                lower_[op.get()] = expr;
+    for (auto &&expr : exprs) {
+        auto h = getHash(expr);
+        for (Expr &old : lower_.at(op.get())) {
+            if (getHash(old) == h) {
+                goto done;
             }
-        } else {
-            // TODO: Use max node
+            if (expr->nodeType() == ASTNodeType::IntConst &&
+                old->nodeType() == ASTNodeType::IntConst) {
+                auto oldVal = old.as<IntConstNode>()->val_;
+                auto newVal = expr.as<IntConstNode>()->val_;
+                if (newVal > oldVal) {
+                    old.as<IntConstNode>()->val_ = newVal;
+                }
+                goto done;
+            }
         }
+        lower_.at(op.get()).emplace_back(expr);
+    done:;
     }
 }
 
-void AnalyzeBounds::updUpper(const Expr &op, const Expr &expr) {
-    if (!expr.isValid()) {
-        return;
-    }
+void AnalyzeBounds::updUpper(const Expr &op, const std::vector<Expr> &exprs) {
     if (!upper_.count(op.get())) {
-        upper_[op.get()] = expr;
+        upper_[op.get()] = exprs;
         return;
     }
-
-    Expr old = upper_.at(op.get());
-    if (getHash(old) != getHash(expr)) {
-        if (expr->nodeType() == ASTNodeType::IntConst &&
-            old->nodeType() == ASTNodeType::IntConst) {
-            auto oldVal = old.as<IntConstNode>()->val_;
-            auto newVal = expr.as<IntConstNode>()->val_;
-            if (newVal < oldVal) {
-                upper_[op.get()] = expr;
+    for (auto &&expr : exprs) {
+        auto h = getHash(expr);
+        for (Expr &old : upper_.at(op.get())) {
+            if (getHash(old) == h) {
+                goto done;
             }
-        } else {
-            // TODO: Use min node
+            if (expr->nodeType() == ASTNodeType::IntConst &&
+                old->nodeType() == ASTNodeType::IntConst) {
+                auto oldVal = old.as<IntConstNode>()->val_;
+                auto newVal = expr.as<IntConstNode>()->val_;
+                if (newVal < oldVal) {
+                    old.as<IntConstNode>()->val_ = newVal;
+                }
+                goto done;
+            }
         }
+        upper_.at(op.get()).emplace_back(expr);
+    done:;
     }
 }
 
@@ -240,8 +262,8 @@ void AnalyzeBounds::visit(const VarDef &op) {
 
 void AnalyzeBounds::visit(const Var &op) {
     if (iters_.count(op->name_)) {
-        updLower(op, iters_[op->name_].first);
-        updUpper(op, iters_[op->name_].second);
+        updLower(op, {iters_[op->name_].first});
+        updUpper(op, {iters_[op->name_].second});
     }
 }
 
@@ -253,8 +275,8 @@ void AnalyzeBounds::visit(const Store &op) {
     }
     for (size_t i = 0, iEnd = op->indices_.size(); i < iEnd; i++) {
         auto &&shape = buffers_.at(op->var_)->tensor().shape();
-        updLower(op->indices_[i], makeIntConst(0));
-        updUpper(op->indices_[i], shape[i]);
+        updLower(op->indices_[i], {makeIntConst(0)});
+        updUpper(op->indices_[i], {shape[i]});
     }
 }
 
@@ -265,8 +287,8 @@ void AnalyzeBounds::visit(const Load &op) {
     }
     for (size_t i = 0, iEnd = op->indices_.size(); i < iEnd; i++) {
         auto &&shape = buffers_.at(op->var_)->tensor().shape();
-        updLower(op->indices_[i], makeIntConst(0));
-        updUpper(op->indices_[i], shape[i]);
+        updLower(op->indices_[i], {makeIntConst(0)});
+        updUpper(op->indices_[i], {shape[i]});
     }
 }
 

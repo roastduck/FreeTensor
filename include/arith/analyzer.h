@@ -61,7 +61,7 @@ class AnalyzeBounds : public Visitor {
     const std::unordered_map<const ExprNode *, uint64_t> &hash_;
     const std::unordered_map<const ASTNode *, LinearExpr> &linear_;
 
-    std::unordered_map<const ExprNode *, Expr> lower_, upper_;
+    std::unordered_map<const ExprNode *, std::vector<Expr>> lower_, upper_;
 
     // buffer table
     std::unordered_map<std::string, Ref<Buffer>> buffers_;
@@ -73,11 +73,15 @@ class AnalyzeBounds : public Visitor {
     Expr compLinear(int k, const Expr &a, const Expr &b) const;
 
     // Optionally get lower bound
-    Expr getLower(const LinearExpr &linear) const;
-    Expr getUpper(const LinearExpr &linear) const;
+    std::vector<Expr> getLower(const LinearExpr &linear) const;
+    std::vector<Expr> getUpper(const LinearExpr &linear) const;
 
     template <class T> void doAnalyze(const T &op) {
         Visitor::visit(op); // Recurse first, so bounds of vars get updated
+
+        // TODO
+        // updLower(op, {op}); // Don't forget itself
+        // updUpper(op, {op});
         if (linear_.count(op.get())) {
             auto &&lin = linear_.at(op.get());
             updLower(op, getLower(lin));
@@ -86,8 +90,8 @@ class AnalyzeBounds : public Visitor {
     }
 
     // Update lower bound, return old value
-    void updLower(const Expr &op, const Expr &expr);
-    void updUpper(const Expr &op, const Expr &expr);
+    void updLower(const Expr &op, const std::vector<Expr> &exprs);
+    void updUpper(const Expr &op, const std::vector<Expr> &exprs);
 
     uint64_t getHash(const Expr &op);
 
@@ -96,10 +100,12 @@ class AnalyzeBounds : public Visitor {
                   const std::unordered_map<const ASTNode *, LinearExpr> &linear)
         : hash_(hash), linear_(linear) {}
 
-    const std::unordered_map<const ExprNode *, Expr> &lower() const {
+    const std::unordered_map<const ExprNode *, std::vector<Expr>> &
+    lower() const {
         return lower_;
     }
-    const std::unordered_map<const ExprNode *, Expr> &upper() const {
+    const std::unordered_map<const ExprNode *, std::vector<Expr>> &
+    upper() const {
         return upper_;
     }
 
