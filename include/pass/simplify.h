@@ -9,14 +9,6 @@
 namespace ir {
 
 /**
- * Hint all If nodes with (x < 0) like conditions
- */
-class NormalizeIf : public Mutator {
-  protected:
-    virtual Stmt visit(const If &op) override;
-};
-
-/**
  * Find all the variables in an expression, and determine the inner most scope
  * where these variables are defined
  */

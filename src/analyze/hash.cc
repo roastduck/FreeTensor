@@ -1,4 +1,4 @@
-#include <arith/hash.h>
+#include <analyze/hash.h>
 
 namespace ir {
 
