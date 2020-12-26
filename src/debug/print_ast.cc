@@ -147,6 +147,11 @@ void PrintVisitor::visit(const NE &op) {
     os << ")";
 }
 
+void PrintVisitor::visit(const Not &op) {
+    os << "!";
+    (*this)(op->expr_);
+}
+
 void PrintVisitor::visit(const For &op) {
     if (!op->id_.empty()) {
         os << op->id_ << ":" << std::endl;

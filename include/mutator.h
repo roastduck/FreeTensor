@@ -47,7 +47,23 @@ class Mutator {
             indices.emplace_back((*this)(index));
         }
         auto &&expr = (*this)(op->expr_);
-        return makeStore(op->var_, std::move(indices), std::move(expr));
+        auto ret = makeStore(op->var_, std::move(indices), std::move(expr));
+
+        std::vector<std::vector<Expr>> info_dep_rw = op->info_dep_rw_;
+        std::vector<std::vector<Expr>> info_dep_ww = op->info_dep_ww_;
+        for (auto &dep : info_dep_rw) {
+            for (auto &expr : dep) {
+                expr = (*this)(expr);
+            }
+        }
+        for (auto &dep : info_dep_ww) {
+            for (auto &expr : dep) {
+                expr = (*this)(expr);
+            }
+        }
+        ret.as<StoreNode>()->info_dep_rw_ = std::move(info_dep_rw);
+        ret.as<StoreNode>()->info_dep_ww_ = std::move(info_dep_ww);
+        return ret;
     }
 
     virtual Expr visit(const Load &op) {
@@ -56,7 +72,16 @@ class Mutator {
         for (auto &&index : op->indices_) {
             indices.emplace_back((*this)(index));
         }
-        return makeLoad(op->var_, std::move(indices));
+        auto ret = makeLoad(op->var_, std::move(indices));
+
+        std::vector<std::vector<Expr>> info_dep_rw = op->info_dep_rw_;
+        for (auto &dep : info_dep_rw) {
+            for (auto &expr : dep) {
+                expr = (*this)(expr);
+            }
+        }
+        ret.as<LoadNode>()->info_dep_rw_ = std::move(info_dep_rw);
+        return ret;
     }
 
     virtual Expr visit(const IntConst &op) { return makeIntConst(op->val_); }
@@ -108,6 +133,8 @@ class Mutator {
     virtual Expr visit(const NE &op) {
         return makeNE((*this)(op->lhs_), (*this)(op->rhs_));
     }
+
+    virtual Expr visit(const Not &op) { return makeNot((*this)(op->expr_)); }
 
     virtual Stmt visit(const For &op) {
         return makeFor(op->iter_, (*this)(op->begin_), (*this)(op->end_),

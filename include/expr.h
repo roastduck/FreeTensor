@@ -30,6 +30,9 @@ class LoadNode : public ExprNode {
   public:
     std::string var_;
     std::vector<Expr> indices_;
+
+    std::vector<std::vector<Expr>> info_dep_rw_; // RAW and WAR dependencies
+
     DEFINE_NODE_TRAIT(Load);
 };
 typedef Ref<LoadNode> Load;
@@ -193,6 +196,18 @@ template <class T, class U> Expr makeNE(T &&lhs, U &&rhs) {
     NE a = NE::make();
     a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
     return a;
+}
+
+class NotNode : public ExprNode {
+  public:
+    Expr expr_;
+    DEFINE_NODE_TRAIT(Not);
+};
+typedef Ref<NotNode> Not;
+template <class T> Expr makeNot(T &&expr) {
+    Not n = Not::make();
+    n->expr_ = std::forward<T>(expr);
+    return n;
 }
 
 } // namespace ir

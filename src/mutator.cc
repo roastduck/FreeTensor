@@ -24,6 +24,7 @@ Expr Mutator::operator()(const Expr &op) {
         DISPATCH_CASE(GE);
         DISPATCH_CASE(EQ);
         DISPATCH_CASE(NE);
+        DISPATCH_CASE(Not);
 
     default:
         ERROR("Unexpected Expr node type");

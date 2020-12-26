@@ -23,6 +23,15 @@ class Schedule {
      */
     std::pair<std::string, std::string> split(const std::string &id,
                                               int factor = -1, int nparts = -1);
+
+    /**
+     * Reorder directly nested loops
+     *
+     * @param order : Vector of loop IDs. The requested order of the loops
+     * @throw InvalidSchedule if the input is invalid or there are breaking
+     * dependencies
+     */
+    void reorder(const std::vector<std::string> &order);
 };
 
 } // namespace ir

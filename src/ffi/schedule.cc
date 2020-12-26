@@ -10,7 +10,8 @@ void init_ffi_schedule(py::module_ &m) {
         .def(py::init<const Stmt &>())
         .def("ast", &Schedule::ast)
         .def("split", &Schedule::split, "id"_a, "factor"_a = -1,
-             "nparts"_a = -1);
+             "nparts"_a = -1)
+        .def("reorder", &Schedule::reorder, "order"_a);
 }
 
 } // namespace ir

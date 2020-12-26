@@ -30,6 +30,7 @@ void Visitor::operator()(const AST &op) {
         DISPATCH_CASE(GE);
         DISPATCH_CASE(EQ);
         DISPATCH_CASE(NE);
+        DISPATCH_CASE(Not);
         DISPATCH_CASE(For);
         DISPATCH_CASE(If);
 

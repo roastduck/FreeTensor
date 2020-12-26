@@ -177,6 +177,11 @@ void CodeGenC::visit(const NE &op) {
     os << ")";
 }
 
+void CodeGenC::visit(const Not &op) {
+    os << "!";
+    (*this)(op->expr_);
+}
+
 void CodeGenC::visit(const For &op) {
     makeIndent();
     os << "for (int " << normalizeId(op->iter_) << " = ";

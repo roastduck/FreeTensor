@@ -25,6 +25,7 @@ enum class ASTNodeType : int {
     GE,
     EQ,
     NE,
+    Not,
     For,
     If,
 };

@@ -32,6 +32,7 @@ class CodeGenC : public CodeGen {
     virtual void visit(const GE &op) override;
     virtual void visit(const EQ &op) override;
     virtual void visit(const NE &op) override;
+    virtual void visit(const Not &op) override;
     virtual void visit(const For &op) override;
     virtual void visit(const If &op) override;
 

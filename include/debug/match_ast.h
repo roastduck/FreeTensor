@@ -20,6 +20,7 @@ class MatchVisitor : public Visitor {
     bool isMatched() const { return isMatched_; }
 
   protected:
+    virtual void visit(const StmtSeq &op) override;
     virtual void visit(const VarDef &op) override;
     virtual void visit(const Var &op) override;
     virtual void visit(const Store &op) override;
@@ -37,6 +38,7 @@ class MatchVisitor : public Visitor {
     virtual void visit(const GE &op) override;
     virtual void visit(const EQ &op) override;
     virtual void visit(const NE &op) override;
+    virtual void visit(const Not &op) override;
     virtual void visit(const For &op) override;
     virtual void visit(const If &op) override;
 };

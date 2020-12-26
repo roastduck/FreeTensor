@@ -7,10 +7,20 @@
 
 namespace ir {
 
+class Error : public std::runtime_error {
+  public:
+    Error(const std::string &msg) : std::runtime_error(msg) {}
+};
+
+class InvalidSchedule : public Error {
+  public:
+    InvalidSchedule(const std::string &msg) : Error(msg) {}
+};
+
 #define ERROR(msg)                                                             \
     {                                                                          \
-        throw std::runtime_error((std::string) "[ERROR] " __FILE__ ":" +       \
-                                 std::to_string(__LINE__) + ": " + (msg));     \
+        throw Error((std::string) "[ERROR] " __FILE__ ":" +                    \
+                    std::to_string(__LINE__) + ": " + (msg));                  \
     }
 
 #define WARNING(msg)                                                           \

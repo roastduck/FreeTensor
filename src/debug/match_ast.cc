@@ -19,6 +19,15 @@ namespace ir {
         }                                                                      \
     }
 
+void MatchVisitor::visit(const StmtSeq &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::StmtSeq);
+    auto instance = instance_.as<StmtSeqNode>();
+    CHECK(op->stmts_.size() == instance->stmts_.size());
+    for (size_t i = 0, iEnd = op->stmts_.size(); i < iEnd; i++) {
+        RECURSE(op->stmts_[i], instance->stmts_[i]);
+    }
+}
+
 void MatchVisitor::visit(const VarDef &op) {
     CHECK(instance_->nodeType() == ASTNodeType::VarDef);
     auto instance = instance_.as<VarDefNode>();
@@ -145,6 +154,12 @@ void MatchVisitor::visit(const NE &op) {
     auto instance = instance_.as<NENode>();
     RECURSE(op->lhs_, instance->lhs_);
     RECURSE(op->rhs_, instance->rhs_);
+}
+
+void MatchVisitor::visit(const Not &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::Not);
+    auto instance = instance_.as<NotNode>();
+    RECURSE(op->expr_, instance->expr_);
 }
 
 void MatchVisitor::visit(const For &op) {
