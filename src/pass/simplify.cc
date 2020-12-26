@@ -4,6 +4,25 @@
 
 namespace ir {
 
+Stmt NormalizeIf::visit(const If &_op) {
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::If);
+    auto op = __op.as<IfNode>();
+    switch (op->cond_->nodeType()) {
+    case ASTNodeType::LT:
+        op->info_equival_cond_ =
+            makeSub(op->cond_.as<LTNode>()->lhs_, op->cond_.as<LTNode>()->rhs_);
+        break;
+    case ASTNodeType::GT:
+        op->info_equival_cond_ =
+            makeSub(op->cond_.as<GTNode>()->rhs_, op->cond_.as<GTNode>()->lhs_);
+        break;
+        // TODO: LE and GE, but check for int type
+    default:;
+    }
+    return op;
+}
+
 void FindInnerMostScope::visit(const Var &op) {
     Visitor::visit(op);
     innerMost_ = std::max(innerMost_, varScope_.at(op->name_));
@@ -164,6 +183,27 @@ Stmt SimplifyPass::visit(const If &_op) {
             return op->elseCase_;
         }
     }
+    // Use _op, as op is not analyzed yet
+    if (_op->info_equival_cond_.isValid()) {
+        if (upper_.count(_op->info_equival_cond_.get())) {
+            for (auto &&upper : upper_.at(_op->info_equival_cond_.get())) {
+                if (upper->nodeType() == ASTNodeType::IntConst &&
+                    upper.as<IntConstNode>()->val_ < 0) {
+                    isFixPoint_ = false;
+                    return _op->thenCase_;
+                }
+            }
+        }
+        if (lower_.count(_op->info_equival_cond_.get())) {
+            for (auto &&lower : lower_.at(_op->info_equival_cond_.get())) {
+                if (lower->nodeType() == ASTNodeType::IntConst &&
+                    lower.as<IntConstNode>()->val_ >= 0) {
+                    isFixPoint_ = false;
+                    return _op->elseCase_;
+                }
+            }
+        }
+    }
     return op;
 }
 
@@ -176,8 +216,8 @@ Stmt simplifyPass(const Stmt &_op) {
             return op;
         }
 
-        Disambiguous disambiguous;
-        op = disambiguous(op);
+        op = NormalizeIf()(op);
+        op = Disambiguous()(op);
 
         auto hash = getHashMap(op);
 

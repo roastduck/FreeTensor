@@ -33,6 +33,23 @@ def test_redundant_if():
 
 	assert std.match(ast)
 
+def test_redundant_if_2():
+	with ir.VarDef("y", (4,), ir.DataType.Int32, ir.AccessType.Output) as y:
+		with ir.For("i", 0, 4) as i:
+			with ir.If(i < i + 2):
+				y[i] = 1
+	ast = ir.pop_ast()
+	print(ast)
+	ast = ir.lower(ast)
+	print(ast)
+
+	with ir.VarDef("y", (4,), ir.DataType.Int32, ir.AccessType.Output) as y:
+		with ir.For("i", 0, 4) as i:
+			y[i] = 1
+	std = ir.pop_ast()
+
+	assert std.match(ast)
+
 def test_different_scope():
 	with ir.VarDef([
 			("x", (4, 10), ir.DataType.Int32, ir.AccessType.Input),

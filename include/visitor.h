@@ -115,6 +115,9 @@ class Visitor {
         if (op->elseCase_.isValid()) {
             (*this)(op->elseCase_);
         }
+        if (op->info_equival_cond_.isValid()) {
+            (*this)(op->info_equival_cond_);
+        }
     }
 };
 

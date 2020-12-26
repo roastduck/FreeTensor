@@ -115,9 +115,14 @@ class Mutator {
     }
 
     virtual Stmt visit(const If &op) {
-        return makeIf((*this)(op->cond_), (*this)(op->thenCase_),
-                      op->elseCase_.isValid() ? (*this)(op->elseCase_)
-                                              : nullptr);
+        auto ret =
+            makeIf((*this)(op->cond_), (*this)(op->thenCase_),
+                   op->elseCase_.isValid() ? (*this)(op->elseCase_) : nullptr);
+        if (op->info_equival_cond_.isValid()) {
+            ret.as<IfNode>()->info_equival_cond_ =
+                (*this)(op->info_equival_cond_);
+        }
+        return ret;
     }
 };
 
