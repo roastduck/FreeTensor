@@ -111,27 +111,51 @@ class Mutator {
     }
 
     virtual Expr visit(const LT &op) {
-        return makeLT((*this)(op->lhs_), (*this)(op->rhs_));
+        auto ret = makeLT((*this)(op->lhs_), (*this)(op->rhs_));
+        if (op->info_norm_form_.isValid()) {
+            ret.as<LTNode>()->info_norm_form_ = (*this)(op->info_norm_form_);
+        }
+        return ret;
     }
 
     virtual Expr visit(const LE &op) {
-        return makeLE((*this)(op->lhs_), (*this)(op->rhs_));
+        auto ret = makeLE((*this)(op->lhs_), (*this)(op->rhs_));
+        if (op->info_norm_form_.isValid()) {
+            ret.as<LENode>()->info_norm_form_ = (*this)(op->info_norm_form_);
+        }
+        return ret;
     }
 
     virtual Expr visit(const GT &op) {
-        return makeGT((*this)(op->lhs_), (*this)(op->rhs_));
+        auto ret = makeGT((*this)(op->lhs_), (*this)(op->rhs_));
+        if (op->info_norm_form_.isValid()) {
+            ret.as<GTNode>()->info_norm_form_ = (*this)(op->info_norm_form_);
+        }
+        return ret;
     }
 
     virtual Expr visit(const GE &op) {
-        return makeGE((*this)(op->lhs_), (*this)(op->rhs_));
+        auto ret = makeGE((*this)(op->lhs_), (*this)(op->rhs_));
+        if (op->info_norm_form_.isValid()) {
+            ret.as<GENode>()->info_norm_form_ = (*this)(op->info_norm_form_);
+        }
+        return ret;
     }
 
     virtual Expr visit(const EQ &op) {
-        return makeEQ((*this)(op->lhs_), (*this)(op->rhs_));
+        auto ret = makeEQ((*this)(op->lhs_), (*this)(op->rhs_));
+        if (op->info_norm_form_.isValid()) {
+            ret.as<EQNode>()->info_norm_form_ = (*this)(op->info_norm_form_);
+        }
+        return ret;
     }
 
     virtual Expr visit(const NE &op) {
-        return makeNE((*this)(op->lhs_), (*this)(op->rhs_));
+        auto ret = makeNE((*this)(op->lhs_), (*this)(op->rhs_));
+        if (op->info_norm_form_.isValid()) {
+            ret.as<NENode>()->info_norm_form_ = (*this)(op->info_norm_form_);
+        }
+        return ret;
     }
 
     virtual Expr visit(const Not &op) { return makeNot((*this)(op->expr_)); }
@@ -142,14 +166,9 @@ class Mutator {
     }
 
     virtual Stmt visit(const If &op) {
-        auto ret =
-            makeIf((*this)(op->cond_), (*this)(op->thenCase_),
-                   op->elseCase_.isValid() ? (*this)(op->elseCase_) : nullptr);
-        if (op->info_equival_cond_.isValid()) {
-            ret.as<IfNode>()->info_equival_cond_ =
-                (*this)(op->info_equival_cond_);
-        }
-        return ret;
+        return makeIf((*this)(op->cond_), (*this)(op->thenCase_),
+                      op->elseCase_.isValid() ? (*this)(op->elseCase_)
+                                              : nullptr);
     }
 };
 

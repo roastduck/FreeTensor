@@ -31,104 +31,170 @@ uint64_t SimplifyPass::getHash(const Expr &op) {
     }
 }
 
-bool SimplifyPass::alwaysLT(const Expr &lhs, const Expr &rhs) {
-    if (upper_.count(lhs.get()) && lower_.count(rhs.get())) {
-        for (auto &&l : upper_.at(lhs.get())) {
-            for (auto &&r : lower_.at(rhs.get())) {
-                if (l->nodeType() == ASTNodeType::IntConst &&
-                    r->nodeType() == ASTNodeType::IntConst &&
-                    l.as<IntConstNode>()->val_ < r.as<IntConstNode>()->val_) {
-                    return true;
-                }
-            }
-        }
-    }
-    return false;
-}
-
-bool SimplifyPass::alwaysLE(const Expr &lhs, const Expr &rhs) {
-    if (upper_.count(lhs.get()) && lower_.count(rhs.get())) {
-        for (auto &&l : upper_.at(lhs.get())) {
-            for (auto &&r : lower_.at(rhs.get())) {
-                if (l->nodeType() == ASTNodeType::IntConst &&
-                    r->nodeType() == ASTNodeType::IntConst &&
-                    l.as<IntConstNode>()->val_ <= r.as<IntConstNode>()->val_) {
-                    return true;
-                }
-            }
-        }
-    }
-    return false;
-}
-
 Expr SimplifyPass::visit(const LT &op) {
-    if (alwaysLT(op.as<LTNode>()->lhs_, op.as<LTNode>()->rhs_)) {
-        isFixPoint_ = false;
-        return makeIntConst(1);
+    ASSERT(op->info_norm_form_.isValid());
+    if (upper_.count(op->info_norm_form_.get())) {
+        for (auto &&upper : upper_.at(op->info_norm_form_.get())) {
+            if (upper->nodeType() == ASTNodeType::IntConst &&
+                upper.as<IntConstNode>()->val_ < 0) {
+                isFixPoint_ = false;
+                return makeIntConst(1);
+            }
+        }
     }
-    if (alwaysLE(op.as<LTNode>()->rhs_, op.as<LTNode>()->lhs_)) {
-        isFixPoint_ = false;
-        return makeIntConst(0);
+    if (lower_.count(op->info_norm_form_.get())) {
+        for (auto &&lower : lower_.at(op->info_norm_form_.get())) {
+            if (lower->nodeType() == ASTNodeType::IntConst &&
+                lower.as<IntConstNode>()->val_ >= 0) {
+                isFixPoint_ = false;
+                return makeIntConst(0);
+            }
+        }
     }
     return Mutator::visit(op);
 }
 
 Expr SimplifyPass::visit(const LE &op) {
-    if (alwaysLE(op.as<LENode>()->lhs_, op.as<LENode>()->rhs_)) {
-        isFixPoint_ = false;
-        return makeIntConst(1);
+    ASSERT(op->info_norm_form_.isValid());
+    if (upper_.count(op->info_norm_form_.get())) {
+        for (auto &&upper : upper_.at(op->info_norm_form_.get())) {
+            if (upper->nodeType() == ASTNodeType::IntConst &&
+                upper.as<IntConstNode>()->val_ <= 0) {
+                isFixPoint_ = false;
+                return makeIntConst(1);
+            }
+        }
     }
-    if (alwaysLT(op.as<LENode>()->rhs_, op.as<LENode>()->lhs_)) {
-        isFixPoint_ = false;
-        return makeIntConst(0);
+    if (lower_.count(op->info_norm_form_.get())) {
+        for (auto &&lower : lower_.at(op->info_norm_form_.get())) {
+            if (lower->nodeType() == ASTNodeType::IntConst &&
+                lower.as<IntConstNode>()->val_ > 0) {
+                isFixPoint_ = false;
+                return makeIntConst(0);
+            }
+        }
     }
     return Mutator::visit(op);
 }
 
 Expr SimplifyPass::visit(const GT &op) {
-    if (alwaysLT(op.as<GTNode>()->rhs_, op.as<GTNode>()->lhs_)) {
-        isFixPoint_ = false;
-        return makeIntConst(1);
+    ASSERT(op->info_norm_form_.isValid());
+    if (upper_.count(op->info_norm_form_.get())) {
+        for (auto &&upper : upper_.at(op->info_norm_form_.get())) {
+            if (upper->nodeType() == ASTNodeType::IntConst &&
+                upper.as<IntConstNode>()->val_ <= 0) {
+                isFixPoint_ = false;
+                return makeIntConst(0);
+            }
+        }
     }
-    if (alwaysLE(op.as<GTNode>()->lhs_, op.as<GTNode>()->rhs_)) {
-        isFixPoint_ = false;
-        return makeIntConst(0);
+    if (lower_.count(op->info_norm_form_.get())) {
+        for (auto &&lower : lower_.at(op->info_norm_form_.get())) {
+            if (lower->nodeType() == ASTNodeType::IntConst &&
+                lower.as<IntConstNode>()->val_ > 0) {
+                isFixPoint_ = false;
+                return makeIntConst(1);
+            }
+        }
     }
     return Mutator::visit(op);
 }
 
 Expr SimplifyPass::visit(const GE &op) {
-    if (alwaysLE(op.as<GENode>()->rhs_, op.as<GENode>()->lhs_)) {
-        isFixPoint_ = false;
-        return makeIntConst(1);
+    ASSERT(op->info_norm_form_.isValid());
+    if (upper_.count(op->info_norm_form_.get())) {
+        for (auto &&upper : upper_.at(op->info_norm_form_.get())) {
+            if (upper->nodeType() == ASTNodeType::IntConst &&
+                upper.as<IntConstNode>()->val_ < 0) {
+                isFixPoint_ = false;
+                return makeIntConst(0);
+            }
+        }
     }
-    if (alwaysLT(op.as<GENode>()->lhs_, op.as<GENode>()->rhs_)) {
-        isFixPoint_ = false;
-        return makeIntConst(0);
+    if (lower_.count(op->info_norm_form_.get())) {
+        for (auto &&lower : lower_.at(op->info_norm_form_.get())) {
+            if (lower->nodeType() == ASTNodeType::IntConst &&
+                lower.as<IntConstNode>()->val_ >= 0) {
+                isFixPoint_ = false;
+                return makeIntConst(1);
+            }
+        }
     }
     return Mutator::visit(op);
 }
 
 Expr SimplifyPass::visit(const EQ &op) {
-    auto l = op.as<EQNode>()->lhs_;
-    auto r = op.as<EQNode>()->rhs_;
-    if (l->nodeType() == ASTNodeType::IntConst &&
-        r->nodeType() == ASTNodeType::IntConst) {
-        bool eq = l.as<IntConstNode>()->val_ == r.as<IntConstNode>()->val_;
-        isFixPoint_ = false;
-        return makeIntConst(eq);
+    ASSERT(op->info_norm_form_.isValid());
+    if (upper_.count(op->info_norm_form_.get())) {
+        for (auto &&upper : upper_.at(op->info_norm_form_.get())) {
+            if (upper->nodeType() == ASTNodeType::IntConst &&
+                upper.as<IntConstNode>()->val_ < 0) {
+                isFixPoint_ = false;
+                return makeIntConst(0);
+            }
+        }
+    }
+    if (lower_.count(op->info_norm_form_.get())) {
+        for (auto &&lower : lower_.at(op->info_norm_form_.get())) {
+            if (lower->nodeType() == ASTNodeType::IntConst &&
+                lower.as<IntConstNode>()->val_ > 0) {
+                isFixPoint_ = false;
+                return makeIntConst(0);
+            }
+        }
+    }
+    if (upper_.count(op->info_norm_form_.get()) &&
+        lower_.count(op->info_norm_form_.get())) {
+        for (auto &&upper : upper_.at(op->info_norm_form_.get())) {
+            if (upper->nodeType() == ASTNodeType::IntConst &&
+                upper.as<IntConstNode>()->val_ == 0) {
+                for (auto &&lower : lower_.at(op->info_norm_form_.get())) {
+                    if (lower->nodeType() == ASTNodeType::IntConst &&
+                        lower.as<IntConstNode>()->val_ == 0) {
+                        isFixPoint_ = false;
+                        return makeIntConst(1);
+                    }
+                }
+            }
+        }
     }
     return Mutator::visit(op);
 }
 
 Expr SimplifyPass::visit(const NE &op) {
-    auto l = op.as<NENode>()->lhs_;
-    auto r = op.as<NENode>()->rhs_;
-    if (l->nodeType() == ASTNodeType::IntConst &&
-        r->nodeType() == ASTNodeType::IntConst) {
-        bool ne = l.as<IntConstNode>()->val_ != r.as<IntConstNode>()->val_;
-        isFixPoint_ = false;
-        return makeIntConst(ne);
+    ASSERT(op->info_norm_form_.isValid());
+    if (upper_.count(op->info_norm_form_.get())) {
+        for (auto &&upper : upper_.at(op->info_norm_form_.get())) {
+            if (upper->nodeType() == ASTNodeType::IntConst &&
+                upper.as<IntConstNode>()->val_ < 0) {
+                isFixPoint_ = false;
+                return makeIntConst(1);
+            }
+        }
+    }
+    if (lower_.count(op->info_norm_form_.get())) {
+        for (auto &&lower : lower_.at(op->info_norm_form_.get())) {
+            if (lower->nodeType() == ASTNodeType::IntConst &&
+                lower.as<IntConstNode>()->val_ > 0) {
+                isFixPoint_ = false;
+                return makeIntConst(1);
+            }
+        }
+    }
+    if (upper_.count(op->info_norm_form_.get()) &&
+        lower_.count(op->info_norm_form_.get())) {
+        for (auto &&upper : upper_.at(op->info_norm_form_.get())) {
+            if (upper->nodeType() == ASTNodeType::IntConst &&
+                upper.as<IntConstNode>()->val_ == 0) {
+                for (auto &&lower : lower_.at(op->info_norm_form_.get())) {
+                    if (lower->nodeType() == ASTNodeType::IntConst &&
+                        lower.as<IntConstNode>()->val_ == 0) {
+                        isFixPoint_ = false;
+                        return makeIntConst(0);
+                    }
+                }
+            }
+        }
     }
     return Mutator::visit(op);
 }
@@ -164,27 +230,6 @@ Stmt SimplifyPass::visit(const If &_op) {
             return op->thenCase_;
         } else {
             return op->elseCase_;
-        }
-    }
-    // Use _op, as op is not analyzed yet
-    if (_op->info_equival_cond_.isValid()) {
-        if (upper_.count(_op->info_equival_cond_.get())) {
-            for (auto &&upper : upper_.at(_op->info_equival_cond_.get())) {
-                if (upper->nodeType() == ASTNodeType::IntConst &&
-                    upper.as<IntConstNode>()->val_ < 0) {
-                    isFixPoint_ = false;
-                    return _op->thenCase_;
-                }
-            }
-        }
-        if (lower_.count(_op->info_equival_cond_.get())) {
-            for (auto &&lower : lower_.at(_op->info_equival_cond_.get())) {
-                if (lower->nodeType() == ASTNodeType::IntConst &&
-                    lower.as<IntConstNode>()->val_ >= 0) {
-                    isFixPoint_ = false;
-                    return _op->elseCase_;
-                }
-            }
         }
     }
     return op;

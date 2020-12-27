@@ -106,9 +106,6 @@ class IfNode : public StmtNode {
   public:
     Expr cond_;
     Stmt thenCase_, elseCase_;
-
-    Expr info_equival_cond_; // cond_ <==> (info_equival_cond_ < 0)
-
     DEFINE_NODE_TRAIT(If);
 };
 typedef Ref<IfNode> If;

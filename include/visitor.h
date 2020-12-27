@@ -91,31 +91,49 @@ class Visitor {
     virtual void visit(const LT &op) {
         (*this)(op->lhs_);
         (*this)(op->rhs_);
+        if (op->info_norm_form_.isValid()) {
+            (*this)(op->info_norm_form_);
+        }
     }
 
     virtual void visit(const LE &op) {
         (*this)(op->lhs_);
         (*this)(op->rhs_);
+        if (op->info_norm_form_.isValid()) {
+            (*this)(op->info_norm_form_);
+        }
     }
 
     virtual void visit(const GT &op) {
         (*this)(op->lhs_);
         (*this)(op->rhs_);
+        if (op->info_norm_form_.isValid()) {
+            (*this)(op->info_norm_form_);
+        }
     }
 
     virtual void visit(const GE &op) {
         (*this)(op->lhs_);
         (*this)(op->rhs_);
+        if (op->info_norm_form_.isValid()) {
+            (*this)(op->info_norm_form_);
+        }
     }
 
     virtual void visit(const EQ &op) {
         (*this)(op->lhs_);
         (*this)(op->rhs_);
+        if (op->info_norm_form_.isValid()) {
+            (*this)(op->info_norm_form_);
+        }
     }
 
     virtual void visit(const NE &op) {
         (*this)(op->lhs_);
         (*this)(op->rhs_);
+        if (op->info_norm_form_.isValid()) {
+            (*this)(op->info_norm_form_);
+        }
     }
 
     virtual void visit(const Not &op) { (*this)(op->expr_); }
@@ -131,9 +149,6 @@ class Visitor {
         (*this)(op->thenCase_);
         if (op->elseCase_.isValid()) {
             (*this)(op->elseCase_);
-        }
-        if (op->info_equival_cond_.isValid()) {
-            (*this)(op->info_equival_cond_);
         }
     }
 };

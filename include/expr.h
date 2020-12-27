@@ -129,6 +129,9 @@ template <class T, class U> Expr makeMod(T &&lhs, U &&rhs) {
 class LTNode : public ExprNode {
   public:
     Expr lhs_, rhs_;
+
+    Expr info_norm_form_; // this <==> (info_norm_form_ < 0)
+
     DEFINE_NODE_TRAIT(LT);
 };
 typedef Ref<LTNode> LT;
@@ -141,6 +144,9 @@ template <class T, class U> Expr makeLT(T &&lhs, U &&rhs) {
 class LENode : public ExprNode {
   public:
     Expr lhs_, rhs_;
+
+    Expr info_norm_form_; // this <==> (info_norm_form_ <= 0)
+
     DEFINE_NODE_TRAIT(LE);
 };
 typedef Ref<LENode> LE;
@@ -153,6 +159,9 @@ template <class T, class U> Expr makeLE(T &&lhs, U &&rhs) {
 class GTNode : public ExprNode {
   public:
     Expr lhs_, rhs_;
+
+    Expr info_norm_form_; // this <==> (info_norm_form_ > 0)
+
     DEFINE_NODE_TRAIT(GT);
 };
 typedef Ref<GTNode> GT;
@@ -165,6 +174,9 @@ template <class T, class U> Expr makeGT(T &&lhs, U &&rhs) {
 class GENode : public ExprNode {
   public:
     Expr lhs_, rhs_;
+
+    Expr info_norm_form_; // this <==> (info_norm_form_ >= 0)
+
     DEFINE_NODE_TRAIT(GE);
 };
 typedef Ref<GENode> GE;
@@ -177,6 +189,9 @@ template <class T, class U> Expr makeGE(T &&lhs, U &&rhs) {
 class EQNode : public ExprNode {
   public:
     Expr lhs_, rhs_;
+
+    Expr info_norm_form_; // this <==> (info_norm_form_ == 0)
+
     DEFINE_NODE_TRAIT(EQ);
 };
 typedef Ref<EQNode> EQ;
@@ -189,6 +204,9 @@ template <class T, class U> Expr makeEQ(T &&lhs, U &&rhs) {
 class NENode : public ExprNode {
   public:
     Expr lhs_, rhs_;
+
+    Expr info_norm_form_; // this <==> (info_norm_form_ != 0)
+
     DEFINE_NODE_TRAIT(NE);
 };
 typedef Ref<NENode> NE;

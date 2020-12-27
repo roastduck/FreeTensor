@@ -81,9 +81,6 @@ class SimplifyPass : public Mutator {
         return op;
     }
 
-    bool alwaysLT(const Expr &lhs, const Expr &rhs);
-    bool alwaysLE(const Expr &lhs, const Expr &rhs);
-
   protected:
     Expr visit(const Var &op) override { return doSimplify(op); }
     Expr visit(const Add &op) override { return doSimplify(op); }

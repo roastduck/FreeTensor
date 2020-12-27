@@ -16,6 +16,8 @@ template <class T> class Ref {
     std::shared_ptr<T> ptr_;
 
   public:
+    typedef T Object;
+
     Ref() = default;
     Ref(std::nullptr_t) : Ref() {}
 
