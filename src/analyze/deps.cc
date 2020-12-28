@@ -171,8 +171,10 @@ void AnalyzeDeps::checkDep(const AccessPoint &point, const AccessPoint &other) {
             isl_, makeSingleIneq(iterId, iterDim).c_str());
         isl_map *res = isl_map_intersect(isl_map_copy(nearest),
                                          isl_map_from_basic_map(require));
-        if (!isl_map_is_empty(res)) {
-            permutable_ = false;
+
+        permutable_ &= isl_map_is_empty(res);
+        isl_map_free(res);
+        if (!permutable_) {
             msg_ << "Dependency "
                  << (point.op_->nodeType() == ASTNodeType::Load ? "READ "
                                                                 : "WRITE ")
