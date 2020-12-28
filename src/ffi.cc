@@ -3,6 +3,7 @@
 namespace ir {
 
 PYBIND11_MODULE(ffi, m) {
+    init_ffi_except(m);
     init_ffi_tensor(m);
     init_ffi_buffer(m);
     init_ffi_ast(m);

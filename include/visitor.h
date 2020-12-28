@@ -36,26 +36,11 @@ class Visitor {
             (*this)(index);
         }
         (*this)(op->expr_);
-        for (auto &&dep : op->info_dep_rw_) {
-            for (auto &&expr : dep) {
-                (*this)(expr);
-            }
-        }
-        for (auto &&dep : op->info_dep_ww_) {
-            for (auto &&expr : dep) {
-                (*this)(expr);
-            }
-        }
     }
 
     virtual void visit(const Load &op) {
         for (auto &&index : op->indices_) {
             (*this)(index);
-        }
-        for (auto &&dep : op->info_dep_rw_) {
-            for (auto &&expr : dep) {
-                (*this)(expr);
-            }
         }
     }
 

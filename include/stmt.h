@@ -64,10 +64,6 @@ class StoreNode : public StmtNode {
     std::string var_;
     std::vector<Expr> indices_;
     Expr expr_;
-
-    // WAW, WAR and RAW dependencies
-    std::vector<std::vector<Expr>> info_dep_ww_, info_dep_rw_;
-
     DEFINE_NODE_TRAIT(Store);
 };
 typedef Ref<StoreNode> Store;

@@ -10,6 +10,8 @@ void init_ffi_tensor(py::module_ &m) {
 
     py::class_<Tensor> tensor(m, "Tensor");
     tensor.def(py::init<const std::vector<Expr> &, DataType>());
+    tensor.def(
+        py::init([](const Expr &e, DataType d) { return Tensor({e}, d); }));
 }
 
 } // namespace ir

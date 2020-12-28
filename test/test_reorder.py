@@ -1,4 +1,5 @@
 import ir
+import pytest
 
 def test_basic():
 	with ir.VarDef("y", (4, 8), ir.DataType.Int32, ir.AccessType.Output) as y:
@@ -78,4 +79,18 @@ def test_stmt_in_between():
 	std = ir.pop_ast()
 
 	assert std.match(ast)
+
+def test_dependency():
+	with ir.VarDef("y", (0), ir.DataType.Int32, ir.AccessType.Output) as y:
+		y[0] = 0
+		with ir.For("i", 0, 4, nid="L1") as i:
+			with ir.For("j", 0, 8, nid="L2") as j:
+				y[0] = y[0] * i + j
+	ast = ir.pop_ast()
+	print(ast)
+	s = ir.Schedule(ast)
+	with pytest.raises(ir.InvalidSchedule):
+		s.reorder(["L2", "L1"])
+	ast_ = s.ast() # Should not changed
+	assert ast_.match(ast)
 

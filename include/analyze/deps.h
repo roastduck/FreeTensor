@@ -1,29 +1,50 @@
 #ifndef DEPS_H
 #define DEPS_H
 
+#include <regex>
+#include <sstream>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
-#include <mutator.h>
+#include <isl/ctx.h>
+#include <isl/map.h>
+#include <isl/set.h>
+
+#include <analyze/linear.h>
 #include <visitor.h>
 
 namespace ir {
 
-typedef std::vector<Expr> AccessPoint;
+struct AccessPoint {
+    AST op_;
+    std::vector<Expr> iter_, access_;
+};
 
 /**
  * Find read and write points
  */
 class FindAccessPoint : public Visitor {
-    AccessPoint cur_; // Current iteration point in the space
-    std::unordered_map<const ASTNode *, AccessPoint> reads_, writes_;
+    std::vector<Expr> cur_; // Current iteration point in the space
+    std::unordered_map<const ASTNode *, Ref<AccessPoint>> points_;
+    std::unordered_multimap<std::string, Ref<AccessPoint>> reads_, writes_;
+    std::unordered_map<std::string, int> loop2axis_; // ForNode -> axis in space
 
   public:
-    const std::unordered_map<const ASTNode *, AccessPoint> &reads() const {
+    const std::unordered_map<const ASTNode *, Ref<AccessPoint>> &
+    points() const {
+        return points_;
+    }
+    const std::unordered_multimap<std::string, Ref<AccessPoint>> &
+    reads() const {
         return reads_;
     }
-    const std::unordered_map<const ASTNode *, AccessPoint> &writes() const {
+    const std::unordered_multimap<std::string, Ref<AccessPoint>> &
+    writes() const {
         return writes_;
+    }
+    const std::unordered_map<std::string, int> &loop2axis() const {
+        return loop2axis_;
     }
 
   protected:
@@ -34,25 +55,60 @@ class FindAccessPoint : public Visitor {
 };
 
 /**
- * Find RAW, WAR and WAW dependencies, and mark them in the AST
+ * Find RAW, WAR and WAW dependencies
  */
-class AnalyzeDeps : public Mutator {
-    const std::unordered_map<const ASTNode *, AccessPoint> &reads_, &writes_;
+class AnalyzeDeps : public Visitor {
+    const std::unordered_map<const ASTNode *, Ref<AccessPoint>> &points_;
+    const std::unordered_multimap<std::string, Ref<AccessPoint>> &reads_,
+        &writes_;
+
+    // Permuting loops that we are intereseted in
+    const std::vector<int> &loops_;
+
+    const std::unordered_map<const ASTNode *, LinearExpr> &linear_;
+
+    bool permutable_ = true;
+    std::ostringstream msg_;
+
+    isl_ctx *isl_;
 
   public:
-    AnalyzeDeps(const std::unordered_map<const ASTNode *, AccessPoint> &reads,
-                const std::unordered_map<const ASTNode *, AccessPoint> &writes)
-        : reads_(reads), writes_(writes) {}
+    AnalyzeDeps(
+        const std::unordered_map<const ASTNode *, Ref<AccessPoint>> &points,
+        const std::unordered_multimap<std::string, Ref<AccessPoint>> &reads,
+        const std::unordered_multimap<std::string, Ref<AccessPoint>> &writes,
+        const std::vector<int> &loops,
+        const std::unordered_map<const ASTNode *, LinearExpr> &linear)
+        : points_(points), reads_(reads), writes_(writes), loops_(loops),
+          linear_(linear) {
+        isl_ = isl_ctx_alloc();
+    }
+
+    ~AnalyzeDeps() { isl_ctx_free(isl_); }
+
+    bool permutable() const { return permutable_; }
+    std::string msg() const {
+        return std::regex_replace(msg_.str(), std::regex("\n"), "");
+    }
 
   private:
-    AccessPoint makeDep(const AccessPoint &lhs, const AccessPoint &rhs);
+    std::string linear2str(const LinearExpr &lin) const;
+    std::string makeIterList(const std::vector<Expr> &list, int n) const;
+    std::string makeLinList(const std::vector<LinearExpr> &list) const;
+    std::string makeRange(const std::vector<Expr> &list) const;
+    std::string makeNdList(const std::string &name, int n) const;
+    std::string makeAccMap(const AccessPoint &p, int iterDim, int accDim) const;
+    std::string makeSingleIneq(int iterId, int iterDim) const;
+
+    void checkDep(const AccessPoint &lhs, const AccessPoint &rhs);
 
   protected:
-    Stmt visit(const Store &op) override;
-    Expr visit(const Load &op) override;
+    void visit(const Store &op) override;
+    void visit(const Load &op) override;
 };
 
-Stmt analyzeDeps(const Stmt &op);
+std::pair<bool, std::string> isPermutable(const Stmt &op,
+                                          const std::vector<std::string> loops);
 
 }; // namespace ir
 

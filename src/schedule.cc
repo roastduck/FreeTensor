@@ -1,5 +1,6 @@
 #include <algorithm>
 
+#include <analyze/deps.h>
 #include <schedule.h>
 #include <schedule/reorder.h>
 #include <schedule/split.h>
@@ -34,7 +35,15 @@ void Schedule::reorder(const std::vector<std::string> &dstOrder) {
     for (size_t i = 0; i < n; i++) {
         for (size_t j = 0; j + 1 < n; j++) {
             if (index[j] > index[j + 1]) {
-                // TODO: Check dependencies
+                bool permutable;
+                std::string msg;
+                std::tie(permutable, msg) =
+                    isPermutable(ast, {curOrder[j]->id_, curOrder[j + 1]->id_});
+                if (!permutable) {
+                    throw InvalidSchedule("Loop " + curOrder[j]->id_ + " and " +
+                                          curOrder[j + 1]->id_ +
+                                          " are not permutable: " + msg);
+                }
 
                 SwapFor swapper(curOrder[j], curOrder[j + 1]);
                 ast = swapper(ast);

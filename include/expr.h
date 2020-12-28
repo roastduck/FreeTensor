@@ -30,9 +30,6 @@ class LoadNode : public ExprNode {
   public:
     std::string var_;
     std::vector<Expr> indices_;
-
-    std::vector<std::vector<Expr>> info_dep_rw_; // RAW and WAR dependencies
-
     DEFINE_NODE_TRAIT(Load);
 };
 typedef Ref<LoadNode> Load;
