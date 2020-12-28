@@ -18,6 +18,8 @@ void Schedule::reorder(const std::vector<std::string> &dstOrder) {
     auto ast = ast_;
 
     // BEGIN: MAY THROW: Don't use ast_
+    ast = MakeReduction()(ast);
+
     CheckLoopOrder checker(dstOrder);
     checker(ast);
     auto curOrder = checker.order();

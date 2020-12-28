@@ -17,6 +17,7 @@ void Visitor::operator()(const AST &op) {
         DISPATCH_CASE(Var);
         DISPATCH_CASE(Store);
         DISPATCH_CASE(Load);
+        DISPATCH_CASE(AddTo);
         DISPATCH_CASE(IntConst);
         DISPATCH_CASE(FloatConst);
         DISPATCH_CASE(Add);

@@ -53,6 +53,20 @@ void PrintVisitor::visit(const Load &op) {
     os << "]";
 }
 
+void PrintVisitor::visit(const AddTo &op) {
+    makeIndent();
+    os << op->var_ << "[";
+    for (size_t i = 0, iEnd = op->indices_.size(); i < iEnd; i++) {
+        (*this)(op->indices_[i]);
+        if (i < iEnd - 1) {
+            os << ", ";
+        }
+    }
+    os << "] += ";
+    (*this)(op->expr_);
+    os << std::endl;
+}
+
 void PrintVisitor::visit(const IntConst &op) { os << std::to_string(op->val_); }
 
 void PrintVisitor::visit(const FloatConst &op) {

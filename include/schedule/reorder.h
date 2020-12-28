@@ -10,6 +10,19 @@
 namespace ir {
 
 /**
+ * Transform a = a + b into a += b
+ *
+ * This is to make the dependency analysis more accurate
+ */
+class MakeReduction : public Mutator {
+  private:
+    bool isSameElem(const Store &s, const Load &l);
+
+  protected:
+    Stmt visit(const Store &op) override;
+};
+
+/**
  * Return loops in nesting order
  */
 class CheckLoopOrder : public Visitor {

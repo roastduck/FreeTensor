@@ -71,9 +71,26 @@ template <class Tindices, class Texpr>
 Stmt makeStore(const std::string &var, Tindices &&indices, Texpr &&expr) {
     Store s = Store::make();
     s->var_ = var;
-    s->indices_ = std::forward<Tindices>(indices),
+    s->indices_ = std::forward<Tindices>(indices);
     s->expr_ = std::forward<Texpr>(expr);
     return s;
+}
+
+class AddToNode : public StmtNode {
+  public:
+    std::string var_;
+    std::vector<Expr> indices_;
+    Expr expr_;
+    DEFINE_NODE_TRAIT(AddTo)
+};
+typedef Ref<AddToNode> AddTo;
+template <class Tindices, class Texpr>
+Stmt makeAddTo(const std::string &var, Tindices &&indices, Texpr &&expr) {
+    AddTo a = AddTo::make();
+    a->var_ = var;
+    a->indices_ = std::forward<Tindices>(indices);
+    a->expr_ = std::forward<Texpr>(expr);
+    return a;
 }
 
 class ForNode : public StmtNode {

@@ -44,6 +44,13 @@ class Visitor {
         }
     }
 
+    virtual void visit(const AddTo &op) {
+        for (auto &&index : op->indices_) {
+            (*this)(index);
+        }
+        (*this)(op->expr_);
+    }
+
     virtual void visit(const IntConst &op) {}
 
     virtual void visit(const FloatConst &op) {}

@@ -23,19 +23,6 @@ void FindAccessPoint::visit(const For &op) {
     cur_.pop_back();
 }
 
-void FindAccessPoint::visit(const Store &op) {
-    // For a[i] = a[i] + 1, write happens after read
-    cur_.emplace_back(makeIntConst(0));
-    auto ap = Ref<AccessPoint>::make();
-    *ap = {op, cur_, op->indices_};
-    points_.emplace(op.get(), ap);
-    writes_.emplace(op->var_, ap);
-
-    cur_.back() = makeIntConst(1);
-    Visitor::visit(op);
-    cur_.pop_back();
-}
-
 void FindAccessPoint::visit(const Load &op) {
     Visitor::visit(op);
     auto ap = Ref<AccessPoint>::make();
@@ -186,19 +173,6 @@ void AnalyzeDeps::checkDep(const AccessPoint &point, const AccessPoint &other) {
         }
     }
     isl_map_free(nearest);
-}
-
-void AnalyzeDeps::visit(const Store &op) {
-    Visitor::visit(op);
-    auto &&point = points_.at(op.get());
-    auto range = reads_.equal_range(op->var_);
-    for (auto i = range.first; i != range.second; i++) {
-        checkDep(*point, *(i->second)); // WAR
-    }
-    range = writes_.equal_range(op->var_);
-    for (auto i = range.first; i != range.second; i++) {
-        checkDep(*point, *(i->second)); // WAW
-    }
 }
 
 void AnalyzeDeps::visit(const Load &op) {

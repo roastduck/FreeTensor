@@ -36,6 +36,7 @@ Stmt Mutator::operator()(const Stmt &op) {
         DISPATCH_CASE(StmtSeq);
         DISPATCH_CASE(VarDef);
         DISPATCH_CASE(Store);
+        DISPATCH_CASE(AddTo);
         DISPATCH_CASE(For);
         DISPATCH_CASE(If);
 

@@ -85,6 +85,23 @@ void CodeGenC::visit(const Load &op) {
     }
 }
 
+void CodeGenC::visit(const AddTo &op) {
+    makeIndent();
+    if (op->indices_.empty()) {
+        os << "*" << normalizeId(op->var_);
+    } else {
+        os << normalizeId(op->var_);
+        for (auto &&index : op->indices_) {
+            os << "[";
+            (*this)(index);
+            os << "]";
+        }
+    }
+    os << " += ";
+    (*this)(op->expr_);
+    os << ";" << std::endl;
+}
+
 void CodeGenC::visit(const IntConst &op) { os << std::to_string(op->val_); }
 
 void CodeGenC::visit(const FloatConst &op) { os << std::to_string(op->val_); }

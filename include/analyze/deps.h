@@ -47,10 +47,25 @@ class FindAccessPoint : public Visitor {
         return loop2axis_;
     }
 
+  private:
+    template <class T> void visitStoreLike(const T &op) {
+        // For a[i] = a[i] + 1, write happens after read
+        cur_.emplace_back(makeIntConst(0));
+        auto ap = Ref<AccessPoint>::make();
+        *ap = {op, cur_, op->indices_};
+        points_.emplace(op.get(), ap);
+        writes_.emplace(op->var_, ap);
+
+        cur_.back() = makeIntConst(1);
+        Visitor::visit(op);
+        cur_.pop_back();
+    }
+
   protected:
     void visit(const StmtSeq &op) override;
     void visit(const For &op) override;
-    void visit(const Store &op) override;
+    void visit(const Store &op) override { visitStoreLike(op); }
+    void visit(const AddTo &op) override { visitStoreLike(op); }
     void visit(const Load &op) override;
 };
 
@@ -102,8 +117,27 @@ class AnalyzeDeps : public Visitor {
 
     void checkDep(const AccessPoint &lhs, const AccessPoint &rhs);
 
+    template <class T> void visitStoreLike(const T &op) {
+        Visitor::visit(op);
+        auto &&point = points_.at(op.get());
+        auto range = reads_.equal_range(op->var_);
+        for (auto i = range.first; i != range.second; i++) {
+            checkDep(*point, *(i->second)); // WAR
+        }
+        range = writes_.equal_range(op->var_);
+        for (auto i = range.first; i != range.second; i++) {
+            if (op->nodeType() != ASTNodeType::Store &&
+                i->second->op_->nodeType() != ASTNodeType::Store) {
+                // No dependency between reductions
+                continue;
+            }
+            checkDep(*point, *(i->second)); // WAW
+        }
+    }
+
   protected:
-    void visit(const Store &op) override;
+    void visit(const Store &op) override { visitStoreLike(op); }
+    void visit(const AddTo &op) override { visitStoreLike(op); }
     void visit(const Load &op) override;
 };
 
