@@ -9,7 +9,7 @@ def test_basic():
 	ast = ir.pop_ast()
 	print(ast)
 	s = ir.Schedule(ast)
-	s.fuse("L1", "L2")
+	s.merge("L1", "L2")
 	ast = s.ast()
 	print(ast)
 	ast = ir.lower(ast)
@@ -33,7 +33,7 @@ def test_invalid():
 	print(ast)
 	s = ir.Schedule(ast)
 	with pytest.raises(ir.InvalidSchedule):
-		s.fuse("L1", "L3")
+		s.merge("L1", "L3")
 	ast_ = s.ast() # Should not changed
 	assert ast_.match(ast)
 
@@ -48,7 +48,7 @@ def test_if_in_between():
 	ast = ir.pop_ast()
 	print(ast)
 	s = ir.Schedule(ast)
-	s.fuse("L1", "L2")
+	s.merge("L1", "L2")
 	ast = s.ast()
 	print(ast)
 	ast = ir.lower(ast)
@@ -75,7 +75,7 @@ def test_stmt_in_between():
 	ast = ir.pop_ast()
 	print(ast)
 	s = ir.Schedule(ast)
-	s.fuse("L1", "L2")
+	s.merge("L1", "L2")
 	ast = s.ast()
 	print(ast)
 	ast = ir.lower(ast)

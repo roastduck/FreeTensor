@@ -1,8 +1,8 @@
-#include <schedule/fuse.h>
+#include <schedule/merge.h>
 
 namespace ir {
 
-Stmt FuseFor::visit(const For &_op) {
+Stmt MergeFor::visit(const For &_op) {
     if (_op->id_ == oldOuter_->id_) {
         insideOuter_ = true;
         auto __op = Mutator::visit(_op);
@@ -24,7 +24,7 @@ Stmt FuseFor::visit(const For &_op) {
     }
 }
 
-Stmt FuseFor::visit(const StmtSeq &_op) {
+Stmt MergeFor::visit(const StmtSeq &_op) {
     if (insideOuter_) {
         if (insideInner_) {
             return Mutator::visit(_op);
@@ -76,7 +76,7 @@ Stmt FuseFor::visit(const StmtSeq &_op) {
     }
 }
 
-Expr FuseFor::visit(const Var &_op) {
+Expr MergeFor::visit(const Var &_op) {
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Var);
     auto op = __op.as<VarNode>();

@@ -34,13 +34,13 @@ class Schedule {
     void reorder(const std::vector<std::string> &order);
 
     /**
-     * Fuse two directly nested loops
+     * Merge two directly nested loops into one
      *
-     * @param loop1, loop2 : ID of the loops to be fused, can be in any order
+     * @param loop1, loop2 : ID of the loops to be merged, can be in any order
      * @throw InvalidSchedule if the loops are not directly nested
-     * @return : ID of the fused loop
+     * @return : ID of the merged loop
      */
-    std::string fuse(const std::string &loop1, const std::string &loop2);
+    std::string merge(const std::string &loop1, const std::string &loop2);
 };
 
 } // namespace ir

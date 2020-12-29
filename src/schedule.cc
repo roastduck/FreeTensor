@@ -3,7 +3,7 @@
 #include <analyze/deps.h>
 #include <schedule.h>
 #include <schedule/check_loop_order.h>
-#include <schedule/fuse.h>
+#include <schedule/merge.h>
 #include <schedule/reorder.h>
 #include <schedule/split.h>
 
@@ -61,13 +61,14 @@ void Schedule::reorder(const std::vector<std::string> &dstOrder) {
     ast_ = ast;
 }
 
-std::string Schedule::fuse(const std::string &loop1, const std::string &loop2) {
+std::string Schedule::merge(const std::string &loop1,
+                            const std::string &loop2) {
     CheckLoopOrder checker({loop1, loop2});
     checker(ast_); // Check they are nested
     auto &&curOrder = checker.order();
     auto outer = curOrder[0], inner = curOrder[1];
 
-    FuseFor mutator(outer, inner);
+    MergeFor mutator(outer, inner);
     ast_ = mutator(ast_);
     return mutator.newIter();
 }

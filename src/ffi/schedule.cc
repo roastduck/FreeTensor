@@ -12,7 +12,7 @@ void init_ffi_schedule(py::module_ &m) {
         .def("split", &Schedule::split, "id"_a, "factor"_a = -1,
              "nparts"_a = -1)
         .def("reorder", &Schedule::reorder, "order"_a)
-        .def("fuse", &Schedule::fuse, "loop1"_a, "loop2"_a);
+        .def("merge", &Schedule::merge, "loop1"_a, "loop2"_a);
 }
 
 } // namespace ir

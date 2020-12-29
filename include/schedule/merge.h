@@ -1,14 +1,14 @@
-#ifndef FUSE_H
-#define FUSE_H
+#ifndef MERGE_H
+#define MERGE_H
 
 #include <mutator.h>
 
 namespace ir {
 
 /**
- * Fuse two directly nested loops
+ * Merge two directly nested loops
  */
-class FuseFor : public Mutator {
+class MergeFor : public Mutator {
     For oldOuter_, oldInner_;
     Expr outerLen_, innerLen_;
 
@@ -18,7 +18,7 @@ class FuseFor : public Mutator {
     bool visitedInner_ = false;
 
   public:
-    FuseFor(const For oldOuter, const For &oldInner)
+    MergeFor(const For oldOuter, const For &oldInner)
         : oldOuter_(oldOuter), oldInner_(oldInner),
           outerLen_(makeSub(oldOuter_->end_, oldOuter_->begin_)),
           innerLen_(makeSub(oldInner_->end_, oldInner_->begin_)),
@@ -35,4 +35,4 @@ class FuseFor : public Mutator {
 
 } // namespace ir
 
-#endif // FUSE_H
+#endif // MERGE_H
