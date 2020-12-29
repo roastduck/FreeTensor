@@ -31,6 +31,30 @@ uint64_t SimplifyPass::getHash(const Expr &op) {
     }
 }
 
+Expr SimplifyPass::visit(const Div &_op) {
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::Div);
+    auto op = __op.as<DivNode>();
+    if (op->lhs_->nodeType() == ASTNodeType::IntConst &&
+        op->rhs_->nodeType() == ASTNodeType::IntConst) {
+        return makeIntConst(op->lhs_.as<IntConstNode>()->val_ /
+                            op->rhs_.as<IntConstNode>()->val_);
+    }
+    return op;
+}
+
+Expr SimplifyPass::visit(const Mod &_op) {
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::Mod);
+    auto op = __op.as<DivNode>();
+    if (op->lhs_->nodeType() == ASTNodeType::IntConst &&
+        op->rhs_->nodeType() == ASTNodeType::IntConst) {
+        return makeIntConst(op->lhs_.as<IntConstNode>()->val_ %
+                            op->rhs_.as<IntConstNode>()->val_);
+    }
+    return op;
+}
+
 Expr SimplifyPass::visit(const LT &op) {
     ASSERT(op->info_norm_form_.isValid());
     if (upper_.count(op->info_norm_form_.get())) {

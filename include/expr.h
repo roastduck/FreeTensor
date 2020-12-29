@@ -15,14 +15,13 @@ typedef Ref<ExprNode> Expr;
 
 class VarNode : public ExprNode {
   public:
-    const std::string name_; // Multiple expressions may share the same VarNode
-                             // reference, so const
+    std::string name_;
     DEFINE_NODE_TRAIT(Var);
 };
 typedef Ref<VarNode> Var;
 inline Expr makeVar(const std::string &name) {
     Var v = Var::make();
-    const_cast<std::string &>(v->name_) = name;
+    v->name_ = name;
     return v;
 }
 

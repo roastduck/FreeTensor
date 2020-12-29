@@ -86,7 +86,8 @@ class SimplifyPass : public Mutator {
     Expr visit(const Add &op) override { return doSimplify(op); }
     Expr visit(const Sub &op) override { return doSimplify(op); }
     Expr visit(const Mul &op) override { return doSimplify(op); }
-    Expr visit(const Div &op) override { return doSimplify(op); }
+    Expr visit(const Div &op) override;
+    Expr visit(const Mod &op) override;
     Expr visit(const LT &op) override;
     Expr visit(const LE &op) override;
     Expr visit(const GT &op) override;

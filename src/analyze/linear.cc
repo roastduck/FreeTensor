@@ -86,25 +86,5 @@ void AnalyzeLinear::visit(const Mul &op) {
     // Not linear
 }
 
-void AnalyzeLinear::visit(const Div &op) {
-    Visitor::visit(op);
-    if (!result_.count(op->lhs_.get()) || !result_.count(op->rhs_.get())) {
-        return;
-    }
-    const auto &e1 = result_.at(op->lhs_.get());
-    const auto &e2 = result_.at(op->rhs_.get());
-
-    if (e2.coeff_.empty()) {
-        auto ret = e1;
-        for (auto &&item : ret.coeff_) {
-            item.second.k /= e2.bias_;
-        }
-        ret.bias_ /= e2.bias_;
-        result_[op.get()] = ret;
-        return;
-    }
-    // Not linear
-}
-
 } // namespace ir
 

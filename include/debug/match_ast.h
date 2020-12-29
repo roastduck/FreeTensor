@@ -1,6 +1,8 @@
 #ifndef MATCH_AST_H
 #define MATCH_AST_H
 
+#include <unordered_map>
+
 #include <visitor.h>
 
 namespace ir {
@@ -14,10 +16,14 @@ class MatchVisitor : public Visitor {
     bool isMatched_ = true;
     AST instance_;
 
+    std::unordered_map<std::string, std::string> nameMap_;
+
   public:
     MatchVisitor(const AST &instance) : instance_(instance) {}
 
     bool isMatched() const { return isMatched_; }
+
+    bool matchName(const std::string &thisName, const std::string &otherName);
 
   protected:
     virtual void visit(const StmtSeq &op) override;
@@ -25,6 +31,7 @@ class MatchVisitor : public Visitor {
     virtual void visit(const Var &op) override;
     virtual void visit(const Store &op) override;
     virtual void visit(const Load &op) override;
+    virtual void visit(const AddTo &op) override;
     virtual void visit(const IntConst &op) override;
     virtual void visit(const FloatConst &op) override;
     virtual void visit(const Add &op) override;

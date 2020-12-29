@@ -23,24 +23,6 @@ class MakeReduction : public Mutator {
 };
 
 /**
- * Return loops in nesting order
- */
-class CheckLoopOrder : public Visitor {
-    const std::vector<std::string> &dstOrder_;
-    std::vector<For> curOrder_;
-    bool done_ = false;
-
-  public:
-    CheckLoopOrder(const std::vector<std::string> &dstOrder)
-        : dstOrder_(dstOrder) {}
-
-    const std::vector<For> &order() const;
-
-  protected:
-    void visit(const For &op) override;
-};
-
-/**
  * Swap two directly nested loops
  */
 class SwapFor : public Mutator {

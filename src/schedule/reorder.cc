@@ -1,5 +1,3 @@
-#include <algorithm>
-
 #include <analyze/hash.h>
 #include <except.h>
 #include <schedule/reorder.h>
@@ -35,40 +33,6 @@ Stmt MakeReduction::visit(const Store &_op) {
         }
     }
     return op;
-}
-
-void CheckLoopOrder::visit(const For &op) {
-    if (done_) {
-        return;
-    }
-    if (!op->id_.empty() && std::find(dstOrder_.begin(), dstOrder_.end(),
-                                      op->id_) != dstOrder_.end()) {
-        curOrder_.emplace_back(op);
-        if (curOrder_.size() < dstOrder_.size()) {
-            Visitor::visit(op);
-        }
-        done_ = true;
-        // done_ is to avoid such a program:
-        // for i {
-        //	 for j {}
-        //	 for k {}
-        // }
-    } else {
-        if (!curOrder_.empty()) { // Already met the first loop
-            throw InvalidSchedule(
-                "Unable to find all the loops to be reordered. "
-                "These loops should be directly nested");
-        }
-        Visitor::visit(op);
-    }
-}
-
-const std::vector<For> &CheckLoopOrder::order() const {
-    if (curOrder_.size() != dstOrder_.size()) {
-        throw InvalidSchedule("Unable to find all the loops to be reordered. "
-                              "These loops should be directly nested");
-    }
-    return curOrder_;
 }
 
 Stmt SwapFor::visit(const For &_op) {

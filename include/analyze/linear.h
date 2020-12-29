@@ -47,7 +47,8 @@ class AnalyzeLinear : public Visitor {
     virtual void visit(const Add &op) override;
     virtual void visit(const Sub &op) override;
     virtual void visit(const Mul &op) override;
-    virtual void visit(const Div &op) override;
+    // Note that for integer (floored) div, k * a / d !== (k / d) * a, so we are
+    // not handling Div here
 };
 
 } // namespace ir

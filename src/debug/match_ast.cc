@@ -2,6 +2,15 @@
 
 namespace ir {
 
+bool MatchVisitor::matchName(const std::string &thisName,
+                             const std::string &otherName) {
+    if (!nameMap_.count(thisName)) {
+        nameMap_[thisName] = otherName;
+        return true;
+    }
+    return nameMap_.at(thisName) == otherName;
+}
+
 #define CHECK(expr)                                                            \
     if (!(expr)) {                                                             \
         isMatched_ = false;                                                    \
@@ -31,6 +40,7 @@ void MatchVisitor::visit(const StmtSeq &op) {
 void MatchVisitor::visit(const VarDef &op) {
     CHECK(instance_->nodeType() == ASTNodeType::VarDef);
     auto instance = instance_.as<VarDefNode>();
+    CHECK(matchName(op->name_, instance->name_));
     CHECK(op->buffer_->atype() == instance->buffer_->atype());
     CHECK(op->buffer_->tensor().dtype() == instance->buffer_->tensor().dtype());
     auto &&lshape = op->buffer_->tensor().shape();
@@ -45,13 +55,13 @@ void MatchVisitor::visit(const VarDef &op) {
 void MatchVisitor::visit(const Var &op) {
     CHECK(instance_->nodeType() == ASTNodeType::Var);
     auto instance = instance_.as<VarNode>();
-    CHECK(op->name_ == instance->name_);
+    CHECK(matchName(op->name_, instance->name_));
 }
 
 void MatchVisitor::visit(const Store &op) {
     CHECK(instance_->nodeType() == ASTNodeType::Store);
     auto instance = instance_.as<StoreNode>();
-    CHECK(op->var_ == instance->var_);
+    CHECK(matchName(op->var_, instance->var_));
     for (size_t i = 0, iEnd = op->indices_.size(); i < iEnd; i++) {
         RECURSE(op->indices_[i], instance->indices_[i]);
     }
@@ -61,10 +71,20 @@ void MatchVisitor::visit(const Store &op) {
 void MatchVisitor::visit(const Load &op) {
     CHECK(instance_->nodeType() == ASTNodeType::Load);
     auto instance = instance_.as<LoadNode>();
-    CHECK(op->var_ == instance->var_);
+    CHECK(matchName(op->var_, instance->var_));
     for (size_t i = 0, iEnd = op->indices_.size(); i < iEnd; i++) {
         RECURSE(op->indices_[i], instance->indices_[i]);
     }
+}
+
+void MatchVisitor::visit(const AddTo &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::Store);
+    auto instance = instance_.as<StoreNode>();
+    CHECK(matchName(op->var_, instance->var_));
+    for (size_t i = 0, iEnd = op->indices_.size(); i < iEnd; i++) {
+        RECURSE(op->indices_[i], instance->indices_[i]);
+    }
+    RECURSE(op->expr_, instance->expr_);
 }
 
 void MatchVisitor::visit(const IntConst &op) {
@@ -165,7 +185,7 @@ void MatchVisitor::visit(const Not &op) {
 void MatchVisitor::visit(const For &op) {
     CHECK(instance_->nodeType() == ASTNodeType::For);
     auto instance = instance_.as<ForNode>();
-    CHECK(op->iter_ == instance->iter_);
+    CHECK(matchName(op->iter_, instance->iter_));
     RECURSE(op->begin_, instance->begin_);
     RECURSE(op->end_, instance->end_);
     RECURSE(op->body_, instance->body_);
