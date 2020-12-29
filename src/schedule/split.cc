@@ -33,9 +33,9 @@ Stmt Splitter::visit(const For &_op) {
         ASSERT(__op->nodeType() == ASTNodeType::For);
         auto &&op = __op.as<ForNode>();
 
-        auto body = makeIf(makeLT(newIter, op->end_), op->body_);
-        auto inner = makeFor(iter1, makeIntConst(0), factor, body, dst1_);
-        auto outer = makeFor(iter0, makeIntConst(0), nparts, inner, dst0_);
+        auto body = makeIf("", makeLT(newIter, op->end_), op->body_);
+        auto inner = makeFor(dst1_, iter1, makeIntConst(0), factor, body);
+        auto outer = makeFor(dst0_, iter0, makeIntConst(0), nparts, inner);
         return outer;
     } else {
         return Mutator::visit(_op);

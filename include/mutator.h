@@ -35,7 +35,7 @@ class Mutator {
         }
         Tensor t(std::move(shape), op->buffer_->tensor().dtype());
         Buffer b(t, op->buffer_->atype());
-        return makeVarDef(op->name_, std::move(b), (*this)(op->body_));
+        return makeVarDef(op->id_, op->name_, std::move(b), (*this)(op->body_));
     }
 
     virtual Expr visit(const Var &op) { return makeVar(op->name_); }
@@ -47,7 +47,8 @@ class Mutator {
             indices.emplace_back((*this)(index));
         }
         auto &&expr = (*this)(op->expr_);
-        return makeStore(op->var_, std::move(indices), std::move(expr));
+        return makeStore(op->id_, op->var_, std::move(indices),
+                         std::move(expr));
     }
 
     virtual Expr visit(const Load &op) {
@@ -66,7 +67,8 @@ class Mutator {
             indices.emplace_back((*this)(index));
         }
         auto &&expr = (*this)(op->expr_);
-        return makeAddTo(op->var_, std::move(indices), std::move(expr));
+        return makeAddTo(op->id_, op->var_, std::move(indices),
+                         std::move(expr));
     }
 
     virtual Expr visit(const IntConst &op) { return makeIntConst(op->val_); }
@@ -146,12 +148,12 @@ class Mutator {
     virtual Expr visit(const Not &op) { return makeNot((*this)(op->expr_)); }
 
     virtual Stmt visit(const For &op) {
-        return makeFor(op->iter_, (*this)(op->begin_), (*this)(op->end_),
-                       (*this)(op->body_), op->id_);
+        return makeFor(op->id_, op->iter_, (*this)(op->begin_),
+                       (*this)(op->end_), (*this)(op->body_));
     }
 
     virtual Stmt visit(const If &op) {
-        return makeIf((*this)(op->cond_), (*this)(op->thenCase_),
+        return makeIf(op->id_, (*this)(op->cond_), (*this)(op->thenCase_),
                       op->elseCase_.isValid() ? (*this)(op->elseCase_)
                                               : nullptr);
     }

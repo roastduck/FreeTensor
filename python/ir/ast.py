@@ -7,20 +7,30 @@ class Context:
 	def __init__(self):
 		self.stmt_seq = []
 		self.lastIf = None # To handle else case
+		self.nextNid = ""
 
 	def append_stmt(self, stmt: ffi.Stmt):
 		self.stmt_seq.append(stmt)
 		self.lastIf = None
+		self.nextNid = ""
 
 	def append_if_then_stmt(self, cond, body: ffi.Stmt):
-		self.append_stmt(ffi.makeIf(cond, body))
-		self.lastIf = (cond, body)
+		self.append_stmt(ffi.makeIf(self.nextNid, cond, body))
+		self.lastIf = (self.nextNid, cond, body)
+		self.nextNid = ""
 
 	def append_if_else_stmt(self, elseCase: ffi.Stmt):
-		cond, thenCase = self.lastIf
+		nid, cond, thenCase = self.lastIf
 		self.stmt_seq.pop()
-		self.append_stmt(ffi.makeIf(cond, thenCase, elseCase))
+		self.append_stmt(ffi.makeIf(nid, cond, thenCase, elseCase))
 		self.lastIf = None
+		self.nextNid = ""
+
+	def setNextNid(self, nid: str):
+		self.nextNid = nid
+
+	def getNextNid(self):
+		return self.nextNid
 
 	def make_stmt(self):
 		if len(self.stmt_seq) == 1:
@@ -64,7 +74,8 @@ class Var:
 	def __setitem__(self, key, value):
 		if type(key) is not tuple and type(key) is not list:
 			key = (key,)
-		ctx_stack.top().append_stmt(ffi.makeStore(self.var, key, value))
+		top = ctx_stack.top()
+		top.append_stmt(ffi.makeStore(top.getNextNid(), self.var, key, value))
 
 class _VarDef:
 	def __init__(self, name: str, shape: Sequence, dtype: DataType, atype: AccessType):
@@ -80,7 +91,8 @@ class _VarDef:
 	def __exit__(self, exc_type, exc_value, traceback):
 		buf = ffi.Buffer(ffi.Tensor(self.shape, self.dtype), self.atype)
 		body = ctx_stack.pop().make_stmt()
-		ctx_stack.top().append_stmt(ffi.makeVarDef(self.name, buf, body))
+		top = ctx_stack.top()
+		top.append_stmt(ffi.makeVarDef(top.getNextNid(), self.name, buf, body))
 
 class _VarsDef:
 	def __init__(self, defs: Tuple[str, Sequence, DataType, AccessType]):
@@ -113,8 +125,11 @@ class For:
 
 	def __exit__(self, exc_type, exc_value, traceback):
 		body = ctx_stack.pop().make_stmt()
-		ctx_stack.top().append_stmt(
-				ffi.makeFor(self.iter_var, self.begin, self.end, body, nid=self.nid))
+		top = ctx_stack.top()
+		nid = top.getNextNid()
+		if self.nid != "":
+			nid = self.nid
+		top.append_stmt(ffi.makeFor(nid, self.iter_var, self.begin, self.end, body))
 
 class If:
 	def __init__(self, cond):
@@ -137,6 +152,10 @@ class Else:
 	def __exit__(self, exc_type, exc_value, traceback):
 		body = ctx_stack.pop().make_stmt()
 		ctx_stack.top().append_if_else_stmt(body)
+
+''' Mark the ID of the following statement '''
+def MarkNid(nid: str):
+	ctx_stack.top().setNextNid(nid)
 
 def Any():
 	ctx_stack.top().append_stmt(ffi.makeAny())

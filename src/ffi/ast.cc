@@ -121,25 +121,27 @@ void init_ffi_ast(py::module_ &m) {
           static_cast<Stmt (*)(const std::vector<Stmt> &)>(&makeStmtSeq),
           "stmts"_a);
     m.def("makeVarDef",
-          static_cast<Stmt (*)(const std::string &, const Buffer &,
-                               const Stmt &)>(&makeVarDef),
-          "name"_a, "buffer"_a, "body"_a);
+          static_cast<Stmt (*)(const std::string &, const std::string &,
+                               const Buffer &, const Stmt &)>(&makeVarDef),
+          "nid"_a, "name"_a, "buffer"_a, "body"_a);
     m.def("makeVar", &makeVar, "name"_a);
     m.def("makeStore",
-          static_cast<Stmt (*)(const std::string &, const std::vector<Expr> &,
-                               const Expr &)>(&makeStore),
-          "var"_a, "indices"_a, "expr"_a);
+          static_cast<Stmt (*)(const std::string &, const std::string &,
+                               const std::vector<Expr> &, const Expr &)>(
+              &makeStore),
+          "nid"_a, "var"_a, "indices"_a, "expr"_a);
     m.def("makeLoad", &makeLoad, "var"_a, "indices"_a);
     m.def("makeIntConst", &makeIntConst, "val"_a);
     m.def("makeFloatConst", &makeFloatConst, "val"_a);
     m.def("makeFor",
-          static_cast<Stmt (*)(const std::string &, const Expr &, const Expr &,
-                               const Stmt &, const std::string &)>(&makeFor),
-          "iter"_a, "begin"_a, "end"_a, "body"_a, "nid"_a = "");
+          static_cast<Stmt (*)(const std::string &, const std::string &,
+                               const Expr &, const Expr &, const Stmt &)>(
+              &makeFor),
+          "nid"_a, "iter"_a, "begin"_a, "end"_a, "body"_a);
     m.def("makeIf",
-          static_cast<Stmt (*)(const Expr &, const Stmt &, const Stmt &)>(
-              &makeIf),
-          "cond"_a, "thenCase"_a, "elseCase"_a = Stmt());
+          static_cast<Stmt (*)(const std::string &, const Expr &, const Stmt &,
+                               const Stmt &)>(&makeIf),
+          "nid"_a, "cond"_a, "thenCase"_a, "elseCase"_a = Stmt());
 }
 
 } // namespace ir

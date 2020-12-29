@@ -11,6 +11,8 @@
 namespace ir {
 
 class StmtNode : public ASTNode {
+  public:
+    std::string id_;
     DEFINE_NODE_ACCESS(Stmt);
 };
 typedef Ref<StmtNode> Stmt;
@@ -51,8 +53,10 @@ class VarDefNode : public StmtNode {
 };
 typedef Ref<VarDefNode> VarDef;
 template <class Tbuffer, class Tbody>
-Stmt makeVarDef(const std::string &name, Tbuffer &&buffer, Tbody &&body) {
+Stmt makeVarDef(const std::string &id, const std::string &name,
+                Tbuffer &&buffer, Tbody &&body) {
     VarDef d = VarDef::make();
+    d->id_ = id;
     d->name_ = name;
     d->buffer_ = Ref<Buffer>::make(std::forward<Tbuffer>(buffer));
     d->body_ = std::forward<Tbody>(body);
@@ -68,8 +72,10 @@ class StoreNode : public StmtNode {
 };
 typedef Ref<StoreNode> Store;
 template <class Tindices, class Texpr>
-Stmt makeStore(const std::string &var, Tindices &&indices, Texpr &&expr) {
+Stmt makeStore(const std::string &id, const std::string &var,
+               Tindices &&indices, Texpr &&expr) {
     Store s = Store::make();
+    s->id_ = id;
     s->var_ = var;
     s->indices_ = std::forward<Tindices>(indices);
     s->expr_ = std::forward<Texpr>(expr);
@@ -85,8 +91,10 @@ class AddToNode : public StmtNode {
 };
 typedef Ref<AddToNode> AddTo;
 template <class Tindices, class Texpr>
-Stmt makeAddTo(const std::string &var, Tindices &&indices, Texpr &&expr) {
+Stmt makeAddTo(const std::string &id, const std::string &var,
+               Tindices &&indices, Texpr &&expr) {
     AddTo a = AddTo::make();
+    a->id_ = id;
     a->var_ = var;
     a->indices_ = std::forward<Tindices>(indices);
     a->expr_ = std::forward<Texpr>(expr);
@@ -104,8 +112,8 @@ class ForNode : public StmtNode {
 };
 typedef Ref<ForNode> For;
 template <class Tbegin, class Tend, class Tbody>
-Stmt makeFor(const std::string &iter, Tbegin &&begin, Tend &&end, Tbody &&body,
-             const std::string &id = "") {
+Stmt makeFor(const std::string &id, const std::string &iter, Tbegin &&begin,
+             Tend &&end, Tbody &&body) {
     For f = For::make();
     f->id_ = id;
     f->iter_ = iter;
@@ -123,8 +131,10 @@ class IfNode : public StmtNode {
 };
 typedef Ref<IfNode> If;
 template <class Tcond, class Tthen, class Telse = std::nullptr_t>
-Stmt makeIf(Tcond &&cond, Tthen &&thenCase, Telse &&elseCase = nullptr) {
+Stmt makeIf(const std::string &id, Tcond &&cond, Tthen &&thenCase,
+            Telse &&elseCase = nullptr) {
     If i = If::make();
+    i->id_ = id;
     i->cond_ = std::forward<Tcond>(cond);
     i->thenCase_ = std::forward<Tthen>(thenCase);
     i->elseCase_ = std::forward<Telse>(elseCase);

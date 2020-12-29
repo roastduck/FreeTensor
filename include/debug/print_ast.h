@@ -6,6 +6,9 @@
 namespace ir {
 
 class PrintVisitor : public CodeGen {
+  private:
+    void printId(const Stmt &op);
+
   protected:
     virtual void visit(const Any &op) override;
     virtual void visit(const VarDef &op) override;

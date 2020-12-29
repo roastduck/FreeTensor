@@ -2,12 +2,19 @@
 
 namespace ir {
 
+void PrintVisitor::printId(const Stmt &op) {
+    if (!op->id_.empty()) {
+        os << op->id_ << ":" << std::endl;
+    }
+}
+
 void PrintVisitor::visit(const Any &op) {
     makeIndent();
     os << "<Any>" << std::endl;
 }
 
 void PrintVisitor::visit(const VarDef &op) {
+    printId(op);
     makeIndent();
     os << ::ir::toString(op->buffer_->atype()) << " " << op->name_ << ": ";
     auto &&tensor = op->buffer_->tensor();
@@ -29,6 +36,7 @@ void PrintVisitor::visit(const Var &op) {
 }
 
 void PrintVisitor::visit(const Store &op) {
+    printId(op);
     makeIndent();
     os << op->var_ << "[";
     for (size_t i = 0, iEnd = op->indices_.size(); i < iEnd; i++) {
@@ -54,6 +62,7 @@ void PrintVisitor::visit(const Load &op) {
 }
 
 void PrintVisitor::visit(const AddTo &op) {
+    printId(op);
     makeIndent();
     os << op->var_ << "[";
     for (size_t i = 0, iEnd = op->indices_.size(); i < iEnd; i++) {
@@ -167,9 +176,7 @@ void PrintVisitor::visit(const Not &op) {
 }
 
 void PrintVisitor::visit(const For &op) {
-    if (!op->id_.empty()) {
-        os << op->id_ << ":" << std::endl;
-    }
+    printId(op);
     makeIndent();
     os << "for " << op->iter_ << " = ";
     (*this)(op->begin_);
@@ -182,6 +189,7 @@ void PrintVisitor::visit(const For &op) {
 }
 
 void PrintVisitor::visit(const If &op) {
+    printId(op);
     makeIndent();
     os << "if ";
     (*this)(op->cond_);
