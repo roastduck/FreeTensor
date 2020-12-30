@@ -39,6 +39,11 @@ template <class Tstmts> Stmt makeStmtSeq(Tstmts &&stmts) {
     s->stmts_ = std::forward<Tstmts>(stmts);
     return s;
 }
+inline Stmt makeStmtSeq(std::initializer_list<Stmt> stmts) {
+    StmtSeq s = StmtSeq::make();
+    s->stmts_ = stmts;
+    return s;
+}
 
 class VarDefNode : public StmtNode {
   public:

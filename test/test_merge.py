@@ -19,7 +19,6 @@ def test_basic():
 		with ir.For("i", 0, 32) as i:
 			y[i / 8, i % 8] = i / 8 + i % 8
 	std = ir.pop_ast()
-	print(std)
 
 	assert std.match(ast)
 

@@ -3,6 +3,7 @@
 #include <analyze/deps.h>
 #include <schedule.h>
 #include <schedule/check_loop_order.h>
+#include <schedule/fission.h>
 #include <schedule/merge.h>
 #include <schedule/reorder.h>
 #include <schedule/split.h>
@@ -71,6 +72,15 @@ std::string Schedule::merge(const std::string &loop1,
     MergeFor mutator(outer, inner);
     ast_ = mutator(ast_);
     return mutator.newIter();
+}
+
+std::pair<std::string, std::string>
+Schedule::fission(const std::string &loop, const std::string &after) {
+    HoistVar hoist(loop, after);
+    ast_ = hoist(ast_);
+    FissionFor mutator(loop, after);
+    ast_ = mutator(ast_);
+    return std::make_pair(mutator.id0(), mutator.id1());
 }
 
 } // namespace ir

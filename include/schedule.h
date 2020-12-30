@@ -41,6 +41,17 @@ class Schedule {
      * @return : ID of the merged loop
      */
     std::string merge(const std::string &loop1, const std::string &loop2);
+
+    /**
+     * Fission a loop into two loops each containing part of the statements, one
+     * followed by another
+     *
+     * @param loop : ID of the loop to be fissioned
+     * @param after : ID of the last statment of the first loop
+     * @return : (first loop ID, last loop iD)
+     */
+    std::pair<std::string, std::string> fission(const std::string &loop,
+                                                const std::string &after);
 };
 
 } // namespace ir
