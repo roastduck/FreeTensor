@@ -1,3 +1,5 @@
+#include <sstream>
+
 #include <analyze/deps.h>
 #include <analyze/hash.h>
 #include <except.h>
@@ -126,10 +128,6 @@ std::string AnalyzeDeps::makeSingleIneq(int iterId, int iterDim) const {
 }
 
 void AnalyzeDeps::checkDep(const AccessPoint &point, const AccessPoint &other) {
-    if (!permutable_) {
-        return;
-    }
-
     int iterDim = std::max(point.iter_.size(), other.iter_.size());
     int accDim = point.access_.size();
     ASSERT((int)other.access_.size() == accDim);
@@ -150,7 +148,8 @@ void AnalyzeDeps::checkDep(const AccessPoint &point, const AccessPoint &other) {
     isl_map *dep = isl_map_intersect(isl_map_from_basic_map(depall), pred);
     isl_map *nearest = isl_map_lexmax(dep);
 
-    for (auto &&iterId : loops_) {
+    for (size_t i = 0, iEnd = loops_.size(); i < iEnd; i++) {
+        auto iterId = loops_[i];
         if (iterId >= iterDim) {
             continue;
         }
@@ -159,18 +158,15 @@ void AnalyzeDeps::checkDep(const AccessPoint &point, const AccessPoint &other) {
         isl_map *res = isl_map_intersect(isl_map_copy(nearest),
                                          isl_map_from_basic_map(require));
 
-        permutable_ &= isl_map_is_empty(res);
-        isl_map_free(res);
-        if (!permutable_) {
-            msg_ << "Dependency "
-                 << (point.op_->nodeType() == ASTNodeType::Load ? "READ "
-                                                                : "WRITE ")
-                 << point.op_ << " after "
-                 << (other.op_->nodeType() == ASTNodeType::Load ? "READ "
-                                                                : "WRITE ")
-                 << other.op_ << " cannot be resolved";
-            break;
+        try {
+            if (!isl_map_is_empty(res)) {
+                callback_(i, point.op_, other.op_);
+            }
+        } catch (...) {
+            isl_map_free(res);
+            throw;
         }
+        isl_map_free(res);
     }
     isl_map_free(nearest);
 }
@@ -184,8 +180,9 @@ void AnalyzeDeps::visit(const Load &op) {
     }
 }
 
-std::pair<bool, std::string>
-isPermutable(const Stmt &_op, const std::vector<std::string> loops) {
+void findInvDeps(const Stmt &_op, const std::vector<std::string> loops,
+                 const std::function<void(const std::string &, const AST &,
+                                          const AST &)> &callback) {
     auto op = Disambiguous()(_op);
     auto hash = getHashMap(op);
     AnalyzeLinear analyzeLinear(hash);
@@ -200,9 +197,11 @@ isPermutable(const Stmt &_op, const std::vector<std::string> loops) {
         loopIds.emplace_back(visitor.loop2axis().at(item));
     }
     AnalyzeDeps mutator(visitor.points(), visitor.reads(), visitor.writes(),
-                        loopIds, linear);
+                        loopIds, linear,
+                        [&](int i, const AST &later, const AST &earlier) {
+                            callback(loops[i], later, earlier);
+                        });
     mutator(op);
-    return std::make_pair(mutator.permutable(), mutator.msg());
 }
 
 } // namespace ir

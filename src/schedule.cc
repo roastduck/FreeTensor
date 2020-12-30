@@ -1,4 +1,6 @@
 #include <algorithm>
+#include <regex>
+#include <sstream>
 
 #include <analyze/deps.h>
 #include <schedule.h>
@@ -40,15 +42,25 @@ void Schedule::reorder(const std::vector<std::string> &dstOrder) {
     for (size_t i = 0; i < n; i++) {
         for (size_t j = 0; j + 1 < n; j++) {
             if (index[j] > index[j + 1]) {
-                bool permutable;
-                std::string msg;
-                std::tie(permutable, msg) =
-                    isPermutable(ast, {curOrder[j]->id_, curOrder[j + 1]->id_});
-                if (!permutable) {
-                    throw InvalidSchedule("Loop " + curOrder[j]->id_ + " and " +
-                                          curOrder[j + 1]->id_ +
-                                          " are not permutable: " + msg);
-                }
+                findInvDeps(ast, {curOrder[j]->id_, curOrder[j + 1]->id_},
+                            [&](const std::string &loop, const AST &later,
+                                const AST &earlier) {
+                                std::ostringstream os;
+                                os << "Loop " << curOrder[j]->id_ << " and "
+                                   << curOrder[j + 1]->id_
+                                   << " are not permutable: Dependency "
+                                   << (later->nodeType() == ASTNodeType::Load
+                                           ? "READ "
+                                           : "WRITE ")
+                                   << later << " after "
+                                   << (earlier->nodeType() == ASTNodeType::Load
+                                           ? "READ "
+                                           : "WRITE ")
+                                   << earlier << " along loop " << loop
+                                   << " cannot be resolved";
+                                throw InvalidSchedule(std::regex_replace(
+                                    os.str(), std::regex("\n"), ""));
+                            });
 
                 SwapFor swapper(curOrder[j], curOrder[j + 1]);
                 ast = swapper(ast);
