@@ -29,6 +29,9 @@ class FindAccessPoint : public Visitor {
     std::unordered_multimap<std::string, Ref<AccessPoint>> reads_, writes_;
     std::unordered_map<std::string, int> loop2axis_; // ForNode -> axis in space
 
+    // Var name -> axis: Which axis is a local var defined
+    std::unordered_map<std::string, int> defAxis_;
+
   public:
     const std::unordered_map<const ASTNode *, Ref<AccessPoint>> &
     points() const {
@@ -52,6 +55,8 @@ class FindAccessPoint : public Visitor {
         cur_.emplace_back(makeIntConst(0));
         auto ap = Ref<AccessPoint>::make();
         *ap = {op, cur_, op->indices_};
+        std::fill(ap->iter_.begin(), ap->iter_.begin() + defAxis_.at(op->var_),
+                  makeIntConst(0));
         points_.emplace(op.get(), ap);
         writes_.emplace(op->var_, ap);
 
@@ -61,6 +66,7 @@ class FindAccessPoint : public Visitor {
     }
 
   protected:
+    void visit(const VarDef &op) override;
     void visit(const StmtSeq &op) override;
     void visit(const For &op) override;
     void visit(const Store &op) override { visitStoreLike(op); }

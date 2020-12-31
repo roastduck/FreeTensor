@@ -122,3 +122,35 @@ def test_reduction():
 
 	assert std.match(ast)
 
+def test_local_var():
+	with ir.VarDef([
+			("x0", (4, 8), ir.DataType.Int32, ir.AccessType.Input),
+			("x1", (4, 8), ir.DataType.Int32, ir.AccessType.Input),
+			("y", (4, 8), ir.DataType.Int32, ir.AccessType.Output)]) as (x0, x1, y):
+		with ir.For("i", 0, 4, nid="L1") as i:
+			with ir.For("j", 0, 8, nid="L2") as j:
+				with ir.VarDef("buf", (1,), ir.DataType.Int32, ir.AccessType.Cache) as buf:
+					buf[0] = x0[i, j] + x1[i, j]
+					y[i, j] = buf[0] * 2
+	ast = ir.pop_ast()
+	print(ast)
+	s = ir.Schedule(ast)
+	s.reorder(["L2", "L1"])
+	ast = s.ast()
+	print(ast)
+	ast = ir.lower(ast)
+	print(ast)
+
+	with ir.VarDef([
+			("x0", (4, 8), ir.DataType.Int32, ir.AccessType.Input),
+			("x1", (4, 8), ir.DataType.Int32, ir.AccessType.Input),
+			("y", (4, 8), ir.DataType.Int32, ir.AccessType.Output)]) as (x0, x1, y):
+		with ir.For("j", 0, 8) as j:
+			with ir.For("i", 0, 4) as i:
+				with ir.VarDef("buf", (1,), ir.DataType.Int32, ir.AccessType.Cache) as buf:
+					buf[0] = x0[i, j] + x1[i, j]
+					y[i, j] = buf[0] * 2
+	std = ir.pop_ast()
+
+	assert std.match(ast)
+

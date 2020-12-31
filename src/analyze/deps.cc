@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <sstream>
 
 #include <analyze/deps.h>
@@ -6,6 +7,12 @@
 #include <mutator.h>
 
 namespace ir {
+
+void FindAccessPoint::visit(const VarDef &op) {
+    defAxis_[op->name_] = cur_.size();
+    Visitor::visit(op);
+    defAxis_.erase(op->name_);
+}
 
 void FindAccessPoint::visit(const StmtSeq &op) {
     cur_.emplace_back();
@@ -29,6 +36,8 @@ void FindAccessPoint::visit(const Load &op) {
     Visitor::visit(op);
     auto ap = Ref<AccessPoint>::make();
     *ap = {op, cur_, op->indices_};
+    std::fill(ap->iter_.begin(), ap->iter_.begin() + defAxis_.at(op->var_),
+              makeIntConst(0));
     points_.emplace(op.get(), ap);
     reads_.emplace(op->var_, ap);
 }
