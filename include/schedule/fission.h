@@ -10,7 +10,7 @@
 namespace ir {
 
 class HoistVar : public Mutator {
-    std::string loop_, after_;
+    std::string loop_, after_, seqId_;
     std::unordered_set<std::string> part0Vars_, part1Vars_;
     std::vector<VarDef> defStack_;
 
@@ -22,6 +22,8 @@ class HoistVar : public Mutator {
   public:
     HoistVar(const std::string &loop, const std::string &after)
         : loop_(loop), after_(after) {}
+
+    const std::string &seqId() const { return seqId_; }
 
     const std::unordered_map<std::string, std::vector<std::string>> &
     xLoops() const {

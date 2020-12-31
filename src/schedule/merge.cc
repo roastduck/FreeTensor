@@ -52,14 +52,14 @@ Stmt MergeFor::visit(const StmtSeq &_op) {
                 "",
                 makeEQ(makeMod(makeVar(newIter_), innerLen_), makeIntConst(0)),
                 beforeStmts.size() == 1 ? beforeStmts[0]
-                                        : makeStmtSeq(beforeStmts));
+                                        : makeStmtSeq("", beforeStmts));
         }
         if (!afterStmts.empty()) {
             after = makeIf(
                 "",
                 makeEQ(makeMod(makeVar(newIter_), innerLen_), makeIntConst(0)),
                 afterStmts.size() == 1 ? afterStmts[0]
-                                       : makeStmtSeq(afterStmts));
+                                       : makeStmtSeq("", afterStmts));
         }
 
         std::vector<Stmt> stmts;
@@ -72,7 +72,7 @@ Stmt MergeFor::visit(const StmtSeq &_op) {
         if (after.isValid()) {
             stmts.emplace_back(after);
         }
-        return stmts.size() == 1 ? stmts[0] : makeStmtSeq(stmts);
+        return stmts.size() == 1 ? stmts[0] : makeStmtSeq(_op->id(), stmts);
     } else {
         return Mutator::visit(_op);
     }

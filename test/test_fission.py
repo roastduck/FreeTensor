@@ -102,7 +102,7 @@ def test_buffer_no_hoist():
 
 	assert std.match(ast)
 
-def test_correct_dependency_1():
+def test_correct_dependency_basic():
 	with ir.VarDef([
 			("x0", (4, 8), ir.DataType.Int32, ir.AccessType.Input),
 			("x1", (4, 8), ir.DataType.Int32, ir.AccessType.Input),
@@ -136,7 +136,7 @@ def test_correct_dependency_1():
 
 	assert std.match(ast)
 
-def test_correct_dependency_2():
+def test_correct_dependency_multi_loop():
 	with ir.VarDef([
 			("x0", (4, 8), ir.DataType.Int32, ir.AccessType.Input),
 			("x1", (4, 8), ir.DataType.Int32, ir.AccessType.Input),
@@ -171,7 +171,7 @@ def test_correct_dependency_2():
 
 	assert std.match(ast)
 
-def test_correct_dependency_3():
+def test_correct_dependency_real_dep():
 	with ir.VarDef([
 			("x", (4, 8), ir.DataType.Int32, ir.AccessType.Input),
 			("y", (4, 8), ir.DataType.Int32, ir.AccessType.Output)]) as (x, y):
@@ -203,7 +203,6 @@ def test_correct_dependency_3():
 				with ir.For("j", 0, 8) as j:
 					y[i, j] = b[0, i] * b[0, i]
 	std = ir.pop_ast()
-	print(std)
 
 	assert std.match(ast)
 

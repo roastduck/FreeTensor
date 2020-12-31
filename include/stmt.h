@@ -39,13 +39,17 @@ class StmtSeqNode : public StmtNode {
     DEFINE_NODE_TRAIT(StmtSeq);
 };
 typedef Ref<StmtSeqNode> StmtSeq;
-template <class Tstmts> Stmt makeStmtSeq(Tstmts &&stmts) {
+template <class Tstmts>
+Stmt makeStmtSeq(const std::string &id, Tstmts &&stmts) {
     StmtSeq s = StmtSeq::make();
+    s->setId(id);
     s->stmts_ = std::forward<Tstmts>(stmts);
     return s;
 }
-inline Stmt makeStmtSeq(std::initializer_list<Stmt> stmts) {
+inline Stmt makeStmtSeq(const std::string &id,
+                        std::initializer_list<Stmt> stmts) {
     StmtSeq s = StmtSeq::make();
+    s->setId(id);
     s->stmts_ = stmts;
     return s;
 }

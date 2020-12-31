@@ -24,7 +24,7 @@ class Mutator {
         for (auto &&stmt : op->stmts_) {
             stmts.emplace_back((*this)(stmt));
         }
-        return makeStmtSeq(std::move(stmts));
+        return makeStmtSeq(op->id(), std::move(stmts));
     }
 
     virtual Stmt visit(const VarDef &op) {

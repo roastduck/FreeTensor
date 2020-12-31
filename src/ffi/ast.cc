@@ -118,8 +118,9 @@ void init_ffi_ast(py::module_ &m) {
 
     m.def("makeAny", &makeAny);
     m.def("makeStmtSeq",
-          static_cast<Stmt (*)(const std::vector<Stmt> &)>(&makeStmtSeq),
-          "stmts"_a);
+          static_cast<Stmt (*)(const std::string &, const std::vector<Stmt> &)>(
+              &makeStmtSeq),
+          "id"_a, "stmts"_a);
     m.def("makeVarDef",
           static_cast<Stmt (*)(const std::string &, const std::string &,
                                const Buffer &, const Stmt &)>(&makeVarDef),

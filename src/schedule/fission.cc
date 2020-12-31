@@ -30,14 +30,29 @@ Stmt HoistVar::visit(const StmtSeq &op) {
     if (!inside_) {
         return Mutator::visit(op);
     } else {
-        std::vector<Stmt> stmts;
-        stmts.reserve(op->stmts_.size());
+        std::vector<Stmt> before, after;
         for (auto &&_stmt : op->stmts_) {
             auto stmt = (*this)(_stmt);
-            stmts.emplace_back(stmt);
+            (isAfter_ ? after : before).emplace_back(stmt);
             isAfter_ |= stmt->id() == after_;
         }
-        return makeStmtSeq(std::move(stmts));
+        Stmt ret;
+        if (after.empty()) {
+            ret = makeStmtSeq(op->id(), std::move(before));
+        } else if (before.empty()) {
+            ret = makeStmtSeq(op->id(), std::move(after));
+        } else {
+            auto beforeNode = before.size() > 1
+                                  ? makeStmtSeq("", std::move(before))
+                                  : before[0];
+            auto afterNode =
+                after.size() > 1 ? makeStmtSeq("", std::move(after)) : after[0];
+            ret = makeStmtSeq(op->id(), {beforeNode, afterNode});
+        }
+        if (isAfter_ && seqId_.empty()) {
+            seqId_ = ret->id();
+        }
+        return ret;
     }
 }
 
@@ -127,7 +142,7 @@ Stmt FissionFor::visit(const For &op) {
         inside_ = false;
         auto for0 = makeFor(id0_, op->iter_, begin, end, part0);
         auto for1 = makeFor(id1_, op->iter_, begin, end, part1);
-        return makeStmtSeq({for0, for1});
+        return makeStmtSeq("", {for0, for1});
     }
 }
 
@@ -151,7 +166,7 @@ Stmt FissionFor::visit(const StmtSeq &op) {
         if (stmts.size() == 1) {
             return stmts[0];
         } else {
-            return makeStmtSeq(std::move(stmts));
+            return makeStmtSeq(op->id(), std::move(stmts));
         }
     }
 }

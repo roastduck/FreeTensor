@@ -36,7 +36,7 @@ class Context:
 		if len(self.stmt_seq) == 1:
 			return self.stmt_seq[0]
 		else:
-			return ffi.makeStmtSeq(self.stmt_seq)
+			return ffi.makeStmtSeq("", self.stmt_seq)
 
 class ContextStack:
 	def __init__(self):
