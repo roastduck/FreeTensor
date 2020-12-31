@@ -81,7 +81,7 @@ def test_stmt_in_between():
 	assert std.match(ast)
 
 def test_dependency():
-	with ir.VarDef("y", (0), ir.DataType.Int32, ir.AccessType.Output) as y:
+	with ir.VarDef("y", (1,), ir.DataType.Int32, ir.AccessType.Output) as y:
 		y[0] = 0
 		with ir.For("i", 0, 4, nid="L1") as i:
 			with ir.For("j", 0, 8, nid="L2") as j:
@@ -97,7 +97,7 @@ def test_dependency():
 def test_reduction():
 	with ir.VarDef([
 			("x", (4, 8), ir.DataType.Int32, ir.AccessType.Output),
-			("y", (0), ir.DataType.Int32, ir.AccessType.Output)]) as (x, y):
+			("y", (1,), ir.DataType.Int32, ir.AccessType.Output)]) as (x, y):
 		y[0] = 0
 		with ir.For("i", 0, 4, nid="L1") as i:
 			with ir.For("j", 0, 8, nid="L2") as j:
@@ -113,7 +113,7 @@ def test_reduction():
 
 	with ir.VarDef([
 			("x", (4, 8), ir.DataType.Int32, ir.AccessType.Output),
-			("y", (0), ir.DataType.Int32, ir.AccessType.Output)]) as (x, y):
+			("y", (1,), ir.DataType.Int32, ir.AccessType.Output)]) as (x, y):
 		y[0] = 0
 		with ir.For("j", 0, 8) as j:
 			with ir.For("i", 0, 4) as i:

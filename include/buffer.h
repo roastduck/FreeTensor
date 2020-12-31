@@ -34,6 +34,8 @@ class Buffer {
         : tensor_(tensor), atype_(atype) {}
 
     const Tensor &tensor() const { return tensor_; }
+    Tensor &tensor() { return tensor_; }
+
     AccessType atype() const { return atype_; }
 };
 
