@@ -25,6 +25,7 @@ void FindAccessPoint::visit(const StmtSeq &op) {
 
 void FindAccessPoint::visit(const For &op) {
     loop2axis_[op->id()] = cur_.size();
+    axis2loop_[cur_.size()] = op->id();
     cur_.emplace_back(makeVar(op->iter_));
     Visitor::visit(op);
     cur_.pop_back();
@@ -33,9 +34,7 @@ void FindAccessPoint::visit(const For &op) {
 void FindAccessPoint::visit(const Load &op) {
     Visitor::visit(op);
     auto ap = Ref<AccessPoint>::make();
-    *ap = {op, cur_, op->indices_};
-    std::fill(ap->iter_.begin(), ap->iter_.begin() + defAxis_.at(op->var_),
-              makeIntConst(0));
+    *ap = {op, defAxis_.at(op->var_), cur_, op->indices_};
     points_.emplace(op.get(), ap);
     reads_.emplace(op->var_, ap);
 }
@@ -55,12 +54,15 @@ std::string AnalyzeDeps::linear2str(const LinearExpr &lin) const {
 }
 
 std::string AnalyzeDeps::makeIterList(const std::vector<Expr> &list,
-                                      int n) const {
+                                      int eraseBefore, int n) const {
     std::string ret;
     for (int i = 0; i < n; i++) {
         if (i < (int)list.size()) {
             if (list[i]->nodeType() == ASTNodeType::Var) {
                 ret += list[i].as<VarNode>()->name_;
+                if (i < eraseBefore) {
+                    ret += " = 0";
+                }
             } else if (list[i]->nodeType() == ASTNodeType::IntConst) {
                 ret += std::to_string(list[i].as<IntConstNode>()->val_);
             } else {
@@ -124,14 +126,32 @@ std::string AnalyzeDeps::makeAccMap(const AccessPoint &p, int iterDim,
     for (auto &&item : p.access_) {
         acc.emplace_back(linear_.at(item.get()));
     }
-    return makeNdList("N", iterDim) + " -> {" + makeIterList(p.iter_, iterDim) +
-           " -> " + makeLinList(acc) + ": " + makeRange(p.iter_) + "}";
+    auto ret = makeNdList("N", iterDim) + " -> {" +
+               makeIterList(p.iter_, p.defAxis_, iterDim) + " -> " +
+               makeLinList(acc) + ": " + makeRange(p.iter_) + "}";
+    return ret;
 }
 
-std::string AnalyzeDeps::makeSingleIneq(int iterId, int iterDim) const {
+std::string AnalyzeDeps::makeSingleIneq(FindDepsMode mode, int iterId,
+                                        int iterDim) const {
     auto idStr = std::to_string(iterId);
+    ASSERT(mode == FindDepsMode::Normal || mode == FindDepsMode::Inv);
+    auto ineq = mode == FindDepsMode::Inv ? ">" : "<";
     return "{" + makeNdList("d", iterDim) + " -> " + makeNdList("d_", iterDim) +
-           ": d_" + idStr + " > d" + idStr + "}";
+           ": d_" + idStr + " " + ineq + " d" + idStr + "}";
+}
+
+const std::string &AnalyzeDeps::getVar(const AST &op) {
+    switch (op->nodeType()) {
+    case ASTNodeType::Load:
+        return op.as<LoadNode>()->var_;
+    case ASTNodeType::Store:
+        return op.as<StoreNode>()->var_;
+    case ASTNodeType::AddTo:
+        return op.as<AddToNode>()->var_;
+    default:
+        ASSERT(false);
+    }
 }
 
 void AnalyzeDeps::checkDep(const AccessPoint &point, const AccessPoint &other) {
@@ -155,25 +175,46 @@ void AnalyzeDeps::checkDep(const AccessPoint &point, const AccessPoint &other) {
     isl_map *dep = isl_map_intersect(isl_map_from_basic_map(depall), pred);
     isl_map *nearest = isl_map_lexmax(dep);
 
-    for (size_t i = 0, iEnd = loops_.size(); i < iEnd; i++) {
-        auto iterId = loops_[i];
+    auto &&loops = loops_(getVar(point.op_));
+    for (auto iterId : loops) {
         if (iterId >= iterDim) {
             continue;
         }
-        isl_basic_map *require = isl_basic_map_read_from_str(
-            isl_, makeSingleIneq(iterId, iterDim).c_str());
-        isl_map *res = isl_map_intersect(isl_map_copy(nearest),
-                                         isl_map_from_basic_map(require));
-
-        try {
-            if (!isl_map_is_empty(res)) {
-                callback_(i, point.op_, other.op_);
-            }
-        } catch (...) {
+        isl_basic_map *require;
+        isl_map *res;
+        bool found = false;
+        auto check = [&](FindDepsMode mode) {
+            require = isl_basic_map_read_from_str(
+                isl_, makeSingleIneq(mode, iterId, iterDim).c_str());
+            res = isl_map_intersect(isl_map_copy(nearest),
+                                    isl_map_from_basic_map(require));
+            found |= !isl_map_is_empty(res);
             isl_map_free(res);
-            throw;
+        };
+
+        switch (mode_) {
+        case FindDepsMode::Normal:
+            check(FindDepsMode::Normal);
+            break;
+        case FindDepsMode::Inv:
+            check(FindDepsMode::Inv);
+            break;
+        case FindDepsMode::NonZero:
+            check(FindDepsMode::Normal);
+            check(FindDepsMode::Inv);
+            break;
+        default:
+            ASSERT(false);
         }
-        isl_map_free(res);
+
+        if (found) {
+            try {
+                found_(iterId, getVar(point.op_), point.op_, other.op_);
+            } catch (...) {
+                isl_map_free(nearest);
+                throw;
+            }
+        }
     }
     isl_map_free(nearest);
 }
@@ -187,9 +228,11 @@ void AnalyzeDeps::visit(const Load &op) {
     }
 }
 
-void findInvDeps(const Stmt &_op, const std::vector<std::string> loops,
-                 const std::function<void(const std::string &, const AST &,
-                                          const AST &)> &callback) {
+void findDeps(
+    const Stmt &_op, FindDepsMode mode,
+    const std::function<std::vector<std::string>(const std::string &)> &_loops,
+    const std::function<void(const std::string &, const std::string &,
+                             const AST &, const AST &)> &_found) {
     auto op = Disambiguous()(_op);
     auto hash = getHashMap(op);
     AnalyzeLinear analyzeLinear(hash);
@@ -198,16 +241,19 @@ void findInvDeps(const Stmt &_op, const std::vector<std::string> loops,
 
     FindAccessPoint visitor;
     visitor(op);
-    std::vector<int> loopIds;
-    loopIds.reserve(loops.size());
-    for (auto &&item : loops) {
-        loopIds.emplace_back(visitor.loop2axis().at(item));
-    }
+    auto loops = [&](const std::string &var) {
+        std::vector<int> ret;
+        for (auto &&item : _loops(var)) {
+            ret.emplace_back(visitor.loop2axis().at(item));
+        }
+        return ret;
+    };
+    auto found = [&](int axis, const std::string &var, const AST &later,
+                     const AST &earlier) {
+        _found(visitor.axis2loop().at(axis), var, later, earlier);
+    };
     AnalyzeDeps mutator(visitor.points(), visitor.reads(), visitor.writes(),
-                        loopIds, linear,
-                        [&](int i, const AST &later, const AST &earlier) {
-                            callback(loops[i], later, earlier);
-                        });
+                        linear, mode, loops, found);
     mutator(op);
 }
 

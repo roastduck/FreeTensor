@@ -42,8 +42,13 @@ void Schedule::reorder(const std::vector<std::string> &dstOrder) {
     for (size_t i = 0; i < n; i++) {
         for (size_t j = 0; j + 1 < n; j++) {
             if (index[j] > index[j + 1]) {
-                auto callback = [&](const std::string &loop, const AST &later,
-                                    const AST &earlier) {
+                auto loops =
+                    [&](const std::string &var) -> std::vector<std::string> {
+                    return {curOrder[j]->id(), curOrder[j + 1]->id()};
+                };
+                auto found = [&](const std::string &loop,
+                                 const std::string &var, const AST &later,
+                                 const AST &earlier) {
                     std::ostringstream os;
                     os << "Loop " << curOrder[j]->id() << " and "
                        << curOrder[j + 1]->id()
@@ -58,8 +63,7 @@ void Schedule::reorder(const std::vector<std::string> &dstOrder) {
                     throw InvalidSchedule(
                         std::regex_replace(os.str(), std::regex("\n"), ""));
                 };
-                findInvDeps(ast, {curOrder[j]->id(), curOrder[j + 1]->id()},
-                            callback);
+                findDeps(ast, FindDepsMode::Inv, loops, found);
 
                 SwapFor swapper(curOrder[j], curOrder[j + 1]);
                 ast = swapper(ast);
@@ -89,6 +93,25 @@ std::pair<std::string, std::string>
 Schedule::fission(const std::string &loop, const std::string &after) {
     HoistVar hoist(loop, after);
     ast_ = hoist(ast_);
+    auto &&xLoops = hoist.xLoops();
+
+    // var name -> loop id
+    std::unordered_map<std::string, std::vector<std::string>> toAdd;
+    auto loops = [&](const std::string &var) {
+        return xLoops.count(var) ? xLoops.at(var) : std::vector<std::string>{};
+    };
+    auto found = [&](const std::string &id, const std::string &var,
+                     const AST &later, const AST &earlier) {
+        if (std::find(toAdd[var].begin(), toAdd[var].end(), id) ==
+            toAdd[var].end()) {
+            toAdd[var].emplace_back(id);
+        }
+    };
+    findDeps(ast_, FindDepsMode::NonZero, loops, found);
+
+    AddDimToVar adder(toAdd);
+    ast_ = adder(ast_);
+
     FissionFor mutator(loop, after);
     ast_ = mutator(ast_);
     return std::make_pair(mutator.id0(), mutator.id1());

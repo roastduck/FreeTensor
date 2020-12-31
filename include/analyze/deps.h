@@ -17,6 +17,7 @@ namespace ir {
 
 struct AccessPoint {
     AST op_;
+    int defAxis_;
     std::vector<Expr> iter_, access_;
 };
 
@@ -28,6 +29,7 @@ class FindAccessPoint : public Visitor {
     std::unordered_map<const ASTNode *, Ref<AccessPoint>> points_;
     std::unordered_multimap<std::string, Ref<AccessPoint>> reads_, writes_;
     std::unordered_map<std::string, int> loop2axis_; // ForNode -> axis in space
+    std::unordered_map<int, std::string> axis2loop_; // axis in space -> ForNode
 
     // Var name -> axis: Which axis is a local var defined
     std::unordered_map<std::string, int> defAxis_;
@@ -48,15 +50,16 @@ class FindAccessPoint : public Visitor {
     const std::unordered_map<std::string, int> &loop2axis() const {
         return loop2axis_;
     }
+    const std::unordered_map<int, std::string> &axis2loop() const {
+        return axis2loop_;
+    }
 
   private:
     template <class T> void visitStoreLike(const T &op) {
         // For a[i] = a[i] + 1, write happens after read
         cur_.emplace_back(makeIntConst(0));
         auto ap = Ref<AccessPoint>::make();
-        *ap = {op, cur_, op->indices_};
-        std::fill(ap->iter_.begin(), ap->iter_.begin() + defAxis_.at(op->var_),
-                  makeIntConst(0));
+        *ap = {op, defAxis_.at(op->var_), cur_, op->indices_};
         points_.emplace(op.get(), ap);
         writes_.emplace(op->var_, ap);
 
@@ -74,6 +77,12 @@ class FindAccessPoint : public Visitor {
     void visit(const Load &op) override;
 };
 
+enum class FindDepsMode : int {
+    Normal,
+    Inv,
+    NonZero,
+};
+
 /**
  * Find RAW, WAR and WAW dependencies
  */
@@ -81,13 +90,18 @@ class AnalyzeDeps : public Visitor {
     const std::unordered_map<const ASTNode *, Ref<AccessPoint>> &points_;
     const std::unordered_multimap<std::string, Ref<AccessPoint>> &reads_,
         &writes_;
-
-    // Permuting loops that we are intereseted in
-    const std::vector<int> &loops_;
-
     const std::unordered_map<const ASTNode *, LinearExpr> &linear_;
 
-    const std::function<void(int, const AST &, const AST &)> &callback_;
+    FindDepsMode mode_;
+    // callback(var name) -> [loop IDs]: Get loops that we are intereseted in
+    typedef std::function<std::vector<int>(const std::string &)> LoopsCallback;
+    const LoopsCallback &loops_;
+    // callback(axis, var name, later access, earlier access): Called when we
+    // found a interesting dependency
+    typedef std::function<void(int, const std::string &, const AST &,
+                               const AST &)>
+        FoundCallback;
+    const FoundCallback &found_;
 
     isl_ctx *isl_;
 
@@ -96,11 +110,11 @@ class AnalyzeDeps : public Visitor {
         const std::unordered_map<const ASTNode *, Ref<AccessPoint>> &points,
         const std::unordered_multimap<std::string, Ref<AccessPoint>> &reads,
         const std::unordered_multimap<std::string, Ref<AccessPoint>> &writes,
-        const std::vector<int> &loops,
         const std::unordered_map<const ASTNode *, LinearExpr> &linear,
-        const std::function<void(int, const AST &, const AST &)> &callback)
-        : points_(points), reads_(reads), writes_(writes), loops_(loops),
-          linear_(linear), callback_(callback) {
+        FindDepsMode mode, const LoopsCallback &loops,
+        const FoundCallback &found)
+        : points_(points), reads_(reads), writes_(writes), linear_(linear),
+          mode_(mode), loops_(loops), found_(found) {
         isl_ = isl_ctx_alloc();
     }
 
@@ -108,12 +122,16 @@ class AnalyzeDeps : public Visitor {
 
   private:
     std::string linear2str(const LinearExpr &lin) const;
-    std::string makeIterList(const std::vector<Expr> &list, int n) const;
+    std::string makeIterList(const std::vector<Expr> &list, int eraseBefore,
+                             int n) const;
     std::string makeLinList(const std::vector<LinearExpr> &list) const;
     std::string makeRange(const std::vector<Expr> &list) const;
     std::string makeNdList(const std::string &name, int n) const;
     std::string makeAccMap(const AccessPoint &p, int iterDim, int accDim) const;
-    std::string makeSingleIneq(int iterId, int iterDim) const;
+    std::string makeSingleIneq(FindDepsMode mode, int iterId,
+                               int iterDim) const;
+
+    static const std::string &getVar(const AST &op);
 
     void checkDep(const AccessPoint &lhs, const AccessPoint &rhs);
 
@@ -145,12 +163,14 @@ class AnalyzeDeps : public Visitor {
  * Find all inverse (negative) dependencies along the given loops
  *
  * @param op : AST root
- * @param loop : ID of the interesting loops
- * @param callback : f(loop ID, later op, erlier op)
+ * @param loop : callback(var name) -> [ID] of the interesting loops
+ * @param found : callback(loop ID, var name, later op, erlier op)
  */
-void findInvDeps(const Stmt &op, const std::vector<std::string> loops,
-                 const std::function<void(const std::string &, const AST &,
-                                          const AST &)> &callback);
+void findDeps(
+    const Stmt &op, FindDepsMode mode,
+    const std::function<std::vector<std::string>(const std::string &)> &loops,
+    const std::function<void(const std::string &, const std::string &,
+                             const AST &, const AST &)> &found);
 
 }; // namespace ir
 

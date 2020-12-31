@@ -4,11 +4,20 @@ namespace ir {
 
 Stmt HoistVar::visit(const For &op) {
     if (op->id() != loop_) {
-        return Mutator::visit(op);
+        auto ret = Mutator::visit(op);
+        if (inside_) {
+            for (auto &&def : defStack_) {
+                xLoops_[def->name_].emplace_back(op->id());
+            }
+        }
+        return ret;
     } else {
         inside_ = true, isAfter_ = false;
         auto ret = Mutator::visit(op);
         inside_ = false;
+        for (auto &&def : defStack_) {
+            xLoops_[def->name_].emplace_back(op->id());
+        }
         for (auto i = defStack_.rbegin(); i != defStack_.rend(); i++) {
             ret = makeVarDef((*i)->id(), std::move((*i)->name_),
                              std::move(*((*i)->buffer_)), ret);
@@ -65,6 +74,45 @@ Stmt HoistVar::visit(const AddTo &op) {
     return Mutator::visit(op);
 }
 
+Stmt AddDimToVar::visit(const For &op) {
+    forMap_[op->id()] = op;
+    return Mutator::visit(op);
+}
+
+Stmt AddDimToVar::visit(const VarDef &_op) {
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::VarDef);
+    auto op = __op.as<VarDefNode>();
+    if (toAdd_.count(op->name_)) {
+        auto &&loops = toAdd_.at(op->name_);
+        auto shape = op->buffer_->tensor().shape();
+        for (auto it = loops.rbegin(); it != loops.rend(); it++) {
+            auto len = makeSub(forMap_.at(*it)->end_, forMap_.at(*it)->begin_);
+            shape.emplace_back(len);
+        }
+        op->buffer_->tensor().setShape(std::move(shape));
+    }
+    return op;
+}
+
+Stmt AddDimToVar::visit(const Store &_op) {
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::Store);
+    return doAdd(__op.as<StoreNode>());
+}
+
+Expr AddDimToVar::visit(const Load &_op) {
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::Load);
+    return doAdd(__op.as<LoadNode>());
+}
+
+Stmt AddDimToVar::visit(const AddTo &_op) {
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::AddTo);
+    return doAdd(__op.as<AddToNode>());
+}
+
 Stmt FissionFor::visit(const For &op) {
     if (op->id() != loop_) {
         return Mutator::visit(op);
@@ -90,8 +138,10 @@ Stmt FissionFor::visit(const StmtSeq &op) {
         std::vector<Stmt> stmts;
         stmts.reserve(op->stmts_.size());
         for (auto &&_stmt : op->stmts_) {
-            if (inPart_) {
-                auto stmt = (*this)(_stmt);
+            bool beforeInPart = inPart_;
+            auto stmt = (*this)(_stmt);
+            bool afterInPart = inPart_;
+            if (beforeInPart || afterInPart) {
                 stmts.emplace_back(stmt);
             }
             if (_stmt->id() == after_) {
@@ -123,17 +173,23 @@ Stmt FissionFor::visit(const VarDef &_op) {
 }
 
 Stmt FissionFor::visit(const Store &op) {
-    varUses_.insert(op->var_);
+    if (inPart_) {
+        varUses_.insert(op->var_);
+    }
     return Mutator::visit(op);
 }
 
 Expr FissionFor::visit(const Load &op) {
-    varUses_.insert(op->var_);
+    if (inPart_) {
+        varUses_.insert(op->var_);
+    }
     return Mutator::visit(op);
 }
 
 Stmt FissionFor::visit(const AddTo &op) {
-    varUses_.insert(op->var_);
+    if (inPart_) {
+        varUses_.insert(op->var_);
+    }
     return Mutator::visit(op);
 }
 

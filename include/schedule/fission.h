@@ -2,6 +2,7 @@
 #define FISSION_H
 
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 
 #include <mutator.h>
@@ -12,11 +13,20 @@ class HoistVar : public Mutator {
     std::string loop_, after_;
     std::unordered_set<std::string> part0Vars_, part1Vars_;
     std::vector<VarDef> defStack_;
+
+    // var name -> loop id: which loops will a var cross during hoisting?
+    std::unordered_map<std::string, std::vector<std::string>> xLoops_;
+
     bool inside_ = false, isAfter_ = false;
 
   public:
     HoistVar(const std::string &loop, const std::string &after)
         : loop_(loop), after_(after) {}
+
+    const std::unordered_map<std::string, std::vector<std::string>> &
+    xLoops() const {
+        return xLoops_;
+    }
 
   private:
     template <class T> void recordAccess(const T &op) {
@@ -32,6 +42,36 @@ class HoistVar : public Mutator {
     virtual Stmt visit(const Store &op) override;
     virtual Expr visit(const Load &op) override;
     virtual Stmt visit(const AddTo &op) override;
+};
+
+class AddDimToVar : public Mutator {
+    // var name -> for ID
+    std::unordered_map<std::string, std::vector<std::string>> toAdd_;
+    // for ID -> For
+    std::unordered_map<std::string, For> forMap_;
+
+  public:
+    AddDimToVar(
+        const std::unordered_map<std::string, std::vector<std::string>> &toAdd)
+        : toAdd_(toAdd) {}
+
+  private:
+    template <class T> T doAdd(T op) {
+        if (toAdd_.count(op->var_)) {
+            auto &&loops = toAdd_.at(op->var_);
+            for (auto it = loops.rbegin(); it != loops.rend(); it++) {
+                op->indices_.emplace_back(makeVar(forMap_.at(*it)->iter_));
+            }
+        }
+        return op;
+    }
+
+  protected:
+    virtual Stmt visit(const For &op) override;
+    virtual Stmt visit(const VarDef &op) override;
+    virtual Stmt visit(const Store &op) override;
+    virtual Stmt visit(const AddTo &op) override;
+    virtual Expr visit(const Load &op) override;
 };
 
 class FissionFor : public Mutator {
