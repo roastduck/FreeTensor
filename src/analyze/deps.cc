@@ -24,9 +24,7 @@ void FindAccessPoint::visit(const StmtSeq &op) {
 }
 
 void FindAccessPoint::visit(const For &op) {
-    if (!op->id_.empty()) {
-        loop2axis_[op->id_] = cur_.size();
-    }
+    loop2axis_[op->id()] = cur_.size();
     cur_.emplace_back(makeVar(op->iter_));
     Visitor::visit(op);
     cur_.pop_back();

@@ -33,7 +33,7 @@ void Schedule::reorder(const std::vector<std::string> &dstOrder) {
     index.reserve(curOrder.size());
     for (auto &&loop : curOrder) {
         index.emplace_back(
-            std::find(dstOrder.begin(), dstOrder.end(), loop->id_) -
+            std::find(dstOrder.begin(), dstOrder.end(), loop->id()) -
             dstOrder.begin());
     }
 
@@ -42,25 +42,24 @@ void Schedule::reorder(const std::vector<std::string> &dstOrder) {
     for (size_t i = 0; i < n; i++) {
         for (size_t j = 0; j + 1 < n; j++) {
             if (index[j] > index[j + 1]) {
-                findInvDeps(ast, {curOrder[j]->id_, curOrder[j + 1]->id_},
-                            [&](const std::string &loop, const AST &later,
-                                const AST &earlier) {
-                                std::ostringstream os;
-                                os << "Loop " << curOrder[j]->id_ << " and "
-                                   << curOrder[j + 1]->id_
-                                   << " are not permutable: Dependency "
-                                   << (later->nodeType() == ASTNodeType::Load
-                                           ? "READ "
-                                           : "WRITE ")
-                                   << later << " after "
-                                   << (earlier->nodeType() == ASTNodeType::Load
-                                           ? "READ "
-                                           : "WRITE ")
-                                   << earlier << " along loop " << loop
-                                   << " cannot be resolved";
-                                throw InvalidSchedule(std::regex_replace(
-                                    os.str(), std::regex("\n"), ""));
-                            });
+                auto callback = [&](const std::string &loop, const AST &later,
+                                    const AST &earlier) {
+                    std::ostringstream os;
+                    os << "Loop " << curOrder[j]->id() << " and "
+                       << curOrder[j + 1]->id()
+                       << " are not permutable: Dependency "
+                       << (later->nodeType() == ASTNodeType::Load ? "READ "
+                                                                  : "WRITE ")
+                       << later << " after "
+                       << (earlier->nodeType() == ASTNodeType::Load ? "READ "
+                                                                    : "WRITE ")
+                       << earlier << " along loop " << loop
+                       << " cannot be resolved";
+                    throw InvalidSchedule(
+                        std::regex_replace(os.str(), std::regex("\n"), ""));
+                };
+                findInvDeps(ast, {curOrder[j]->id(), curOrder[j + 1]->id()},
+                            callback);
 
                 SwapFor swapper(curOrder[j], curOrder[j + 1]);
                 ast = swapper(ast);

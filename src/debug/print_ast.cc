@@ -3,8 +3,8 @@
 namespace ir {
 
 void PrintVisitor::printId(const Stmt &op) {
-    if (!op->id_.empty()) {
-        os << op->id_ << ":" << std::endl;
+    if (op->id()[0] != '#') {
+        os << op->id() << ":" << std::endl;
     }
 }
 

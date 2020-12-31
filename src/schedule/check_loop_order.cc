@@ -8,8 +8,8 @@ void CheckLoopOrder::visit(const For &op) {
     if (done_) {
         return;
     }
-    if (!op->id_.empty() && std::find(dstOrder_.begin(), dstOrder_.end(),
-                                      op->id_) != dstOrder_.end()) {
+    if (std::find(dstOrder_.begin(), dstOrder_.end(), op->id()) !=
+        dstOrder_.end()) {
         curOrder_.emplace_back(op);
         if (curOrder_.size() < dstOrder_.size()) {
             Visitor::visit(op);

@@ -3,7 +3,7 @@
 namespace ir {
 
 Stmt MergeFor::visit(const For &_op) {
-    if (_op->id_ == oldOuter_->id_) {
+    if (_op->id() == oldOuter_->id()) {
         insideOuter_ = true;
         auto __op = Mutator::visit(_op);
         insideOuter_ = false;
@@ -11,7 +11,7 @@ Stmt MergeFor::visit(const For &_op) {
         auto op = __op.as<ForNode>();
         return makeFor(newId_, newIter_, makeIntConst(0),
                        makeMul(innerLen_, outerLen_), op->body_);
-    } else if (_op->id_ == oldInner_->id_) {
+    } else if (_op->id() == oldInner_->id()) {
         insideInner_ = true;
         auto __op = Mutator::visit(_op);
         insideInner_ = false;

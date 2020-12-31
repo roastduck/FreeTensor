@@ -3,7 +3,7 @@
 namespace ir {
 
 Stmt Splitter::visit(const For &_op) {
-    if (_op->id_ == src_) {
+    if (_op->id() == src_) {
         auto iter0 = _op->iter_ + ".0";
         auto iter1 = _op->iter_ + ".1";
         auto len = makeSub(_op->end_, _op->begin_);

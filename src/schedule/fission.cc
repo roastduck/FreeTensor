@@ -3,14 +3,14 @@
 namespace ir {
 
 Stmt HoistVar::visit(const For &op) {
-    if (op->id_ != loop_) {
+    if (op->id() != loop_) {
         return Mutator::visit(op);
     } else {
         inside_ = true, isAfter_ = false;
         auto ret = Mutator::visit(op);
         inside_ = false;
         for (auto i = defStack_.rbegin(); i != defStack_.rend(); i++) {
-            ret = makeVarDef((*i)->id_, std::move((*i)->name_),
+            ret = makeVarDef((*i)->id(), std::move((*i)->name_),
                              std::move(*((*i)->buffer_)), ret);
         }
         return ret;
@@ -26,7 +26,7 @@ Stmt HoistVar::visit(const StmtSeq &op) {
         for (auto &&_stmt : op->stmts_) {
             auto stmt = (*this)(_stmt);
             stmts.emplace_back(stmt);
-            isAfter_ |= stmt->id_ == after_;
+            isAfter_ |= stmt->id() == after_;
         }
         return makeStmtSeq(std::move(stmts));
     }
@@ -66,7 +66,7 @@ Stmt HoistVar::visit(const AddTo &op) {
 }
 
 Stmt FissionFor::visit(const For &op) {
-    if (op->id_ != loop_) {
+    if (op->id() != loop_) {
         return Mutator::visit(op);
     } else {
         auto begin = (*this)(op->begin_);
@@ -94,7 +94,7 @@ Stmt FissionFor::visit(const StmtSeq &op) {
                 auto stmt = (*this)(_stmt);
                 stmts.emplace_back(stmt);
             }
-            if (_stmt->id_ == after_) {
+            if (_stmt->id() == after_) {
                 inPart_ = !isPart0_;
             }
         }
