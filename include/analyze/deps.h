@@ -80,7 +80,6 @@ class FindAccessPoint : public Visitor {
 enum class FindDepsMode : int {
     Normal,
     Inv,
-    NonZero,
 };
 
 /**
@@ -92,13 +91,12 @@ class AnalyzeDeps : public Visitor {
         &writes_;
     const std::unordered_map<const ASTNode *, LinearExpr> &linear_;
 
-    FindDepsMode mode_;
-    // callback(var name) -> [loop IDs]: Get loops that we are intereseted in
-    typedef std::function<std::vector<int>(const std::string &)> LoopsCallback;
-    const LoopsCallback &loops_;
+    // conditions to check: reduce_and [ reduce_or [ axis, mode ]]
+    typedef std::vector<std::pair<int, FindDepsMode>> Cond;
+    const std::vector<Cond> &cond_;
     // callback(axis, var name, later access, earlier access): Called when we
     // found a interesting dependency
-    typedef std::function<void(int, const std::string &, const AST &,
+    typedef std::function<void(const Cond &, const std::string &, const AST &,
                                const AST &)>
         FoundCallback;
     const FoundCallback &found_;
@@ -111,10 +109,9 @@ class AnalyzeDeps : public Visitor {
         const std::unordered_multimap<std::string, Ref<AccessPoint>> &reads,
         const std::unordered_multimap<std::string, Ref<AccessPoint>> &writes,
         const std::unordered_map<const ASTNode *, LinearExpr> &linear,
-        FindDepsMode mode, const LoopsCallback &loops,
-        const FoundCallback &found)
+        const std::vector<Cond> &cond, const FoundCallback &found)
         : points_(points), reads_(reads), writes_(writes), linear_(linear),
-          mode_(mode), loops_(loops), found_(found) {
+          cond_(cond), found_(found) {
         isl_ = isl_ctx_alloc();
     }
 
@@ -163,14 +160,15 @@ class AnalyzeDeps : public Visitor {
  * Find all inverse (negative) dependencies along the given loops
  *
  * @param op : AST root
- * @param loop : callback(var name) -> [ID] of the interesting loops
+ * @param cond : conditions to check: reduce_and [ reduce_or [ axis, mode ]]
  * @param found : callback(loop ID, var name, later op, erlier op)
  */
 void findDeps(
-    const Stmt &op, FindDepsMode mode,
-    const std::function<std::vector<std::string>(const std::string &)> &loops,
-    const std::function<void(const std::string &, const std::string &,
-                             const AST &, const AST &)> &found);
+    const Stmt &op,
+    const std::vector<std::vector<std::pair<std::string, FindDepsMode>>> &cond,
+    const std::function<
+        void(const std::vector<std::pair<std::string, FindDepsMode>> &,
+             const std::string &, const AST &, const AST &)> &found);
 
 }; // namespace ir
 

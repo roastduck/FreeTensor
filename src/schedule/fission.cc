@@ -9,6 +9,7 @@ Stmt HoistVar::visit(const For &op) {
             for (auto &&def : defStack_) {
                 xLoops_[def->name_].emplace_back(op->id());
             }
+            innerLoops_.emplace_back(op->id());
         }
         return ret;
     } else {
@@ -18,6 +19,7 @@ Stmt HoistVar::visit(const For &op) {
         for (auto &&def : defStack_) {
             xLoops_[def->name_].emplace_back(op->id());
         }
+        innerLoops_.emplace_back(op->id());
         for (auto i = defStack_.rbegin(); i != defStack_.rend(); i++) {
             ret = makeVarDef((*i)->id(), std::move((*i)->name_),
                              std::move(*((*i)->buffer_)), ret);

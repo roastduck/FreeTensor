@@ -19,6 +19,17 @@ std::pair<std::string, std::string> Schedule::split(const std::string &id,
     return std::make_pair(mutator.outerId(), mutator.innerId());
 }
 
+static std::string dep2Str(const std::string &loop, const std::string &var,
+                           const AST &later, const AST &earlier) {
+    std::ostringstream os;
+    os << "Dependency "
+       << (later->nodeType() == ASTNodeType::Load ? "READ " : "WRITE ") << later
+       << " after "
+       << (earlier->nodeType() == ASTNodeType::Load ? "READ " : "WRITE ")
+       << earlier << " along loop " << loop << " cannot be resolved";
+    return std::regex_replace(os.str(), std::regex("\n"), "");
+}
+
 void Schedule::reorder(const std::vector<std::string> &dstOrder) {
     auto ast = ast_;
 
@@ -42,28 +53,22 @@ void Schedule::reorder(const std::vector<std::string> &dstOrder) {
     for (size_t i = 0; i < n; i++) {
         for (size_t j = 0; j + 1 < n; j++) {
             if (index[j] > index[j + 1]) {
-                auto loops =
-                    [&](const std::string &var) -> std::vector<std::string> {
-                    return {curOrder[j]->id(), curOrder[j + 1]->id()};
-                };
-                auto found = [&](const std::string &loop,
-                                 const std::string &var, const AST &later,
-                                 const AST &earlier) {
-                    std::ostringstream os;
-                    os << "Loop " << curOrder[j]->id() << " and "
-                       << curOrder[j + 1]->id()
-                       << " are not permutable: Dependency "
-                       << (later->nodeType() == ASTNodeType::Load ? "READ "
-                                                                  : "WRITE ")
-                       << later << " after "
-                       << (earlier->nodeType() == ASTNodeType::Load ? "READ "
-                                                                    : "WRITE ")
-                       << earlier << " along loop " << loop
-                       << " cannot be resolved";
-                    throw InvalidSchedule(
-                        std::regex_replace(os.str(), std::regex("\n"), ""));
-                };
-                findDeps(ast, FindDepsMode::Inv, loops, found);
+                auto found =
+                    [&](const std::vector<std::pair<std::string, FindDepsMode>>
+                            &cond,
+                        const std::string &var, const AST &later,
+                        const AST &earlier) {
+                        ASSERT(cond.size() == 1);
+                        std::ostringstream os;
+                        os << "Loop " << curOrder[j]->id() << " and "
+                           << curOrder[j + 1]->id() << " are not permutable: "
+                           << dep2Str(cond[0].first, var, later, earlier);
+                        throw InvalidSchedule(os.str());
+                    };
+                findDeps(ast,
+                         {{{curOrder[j]->id(), FindDepsMode::Inv}},
+                          {{curOrder[j + 1]->id(), FindDepsMode::Inv}}},
+                         found);
 
                 SwapFor swapper(curOrder[j], curOrder[j + 1]);
                 ast = swapper(ast);
@@ -96,18 +101,29 @@ Schedule::fission(const std::string &loop, const std::string &after) {
     auto &&xLoops = hoist.xLoops();
 
     // var name -> loop id
+    std::vector<std::vector<std::pair<std::string, FindDepsMode>>> cond;
+    for (const std::string &loop : hoist.innerLoops()) {
+        cond.emplace_back(std::vector<std::pair<std::string, FindDepsMode>>{
+            {loop, FindDepsMode::Normal}, {hoist.seqId(), FindDepsMode::Inv}});
+    }
     std::unordered_map<std::string, std::vector<std::string>> toAdd;
-    auto loops = [&](const std::string &var) {
-        return xLoops.count(var) ? xLoops.at(var) : std::vector<std::string>{};
-    };
-    auto found = [&](const std::string &id, const std::string &var,
-                     const AST &later, const AST &earlier) {
-        if (std::find(toAdd[var].begin(), toAdd[var].end(), id) ==
-            toAdd[var].end()) {
-            toAdd[var].emplace_back(id);
-        }
-    };
-    findDeps(ast_, FindDepsMode::NonZero, loops, found);
+    auto found =
+        [&](const std::vector<std::pair<std::string, FindDepsMode>> &cond,
+            const std::string &var, const AST &later, const AST &earlier) {
+            ASSERT(cond.size() == 2);
+            auto &&id = cond[0].first;
+            if (!xLoops.count(var) ||
+                std::find(xLoops.at(var).begin(), xLoops.at(var).end(), id) ==
+                    xLoops.at(var).end()) {
+                throw InvalidSchedule("Unable to fission: " +
+                                      dep2Str(id, var, later, earlier));
+            }
+            if (std::find(toAdd[var].begin(), toAdd[var].end(), id) ==
+                toAdd[var].end()) {
+                toAdd[var].emplace_back(id);
+            }
+        };
+    findDeps(ast_, cond, found);
 
     AddDimToVar adder(toAdd);
     ast_ = adder(ast_);

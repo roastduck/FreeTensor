@@ -48,6 +48,7 @@ class Schedule {
      *
      * @param loop : ID of the loop to be fissioned
      * @param after : ID of the last statment of the first loop
+     * @throw InvalidSchedule if any dependency cannot be resolved
      * @return : (first loop ID, last loop iD)
      */
     std::pair<std::string, std::string> fission(const std::string &loop,
