@@ -16,6 +16,9 @@ class Mutator {
     virtual Expr operator()(const Expr &op) final;
 
   protected:
+    // NOTE: Do NOT std::move from the original op! The original op may be
+    // duplicated around the AST!
+
     virtual Stmt visit(const Any &op) { return makeAny(); }
 
     virtual Stmt visit(const StmtSeq &op) {
@@ -34,7 +37,7 @@ class Mutator {
             shape.emplace_back((*this)(dim));
         }
         Tensor t(std::move(shape), op->buffer_->tensor().dtype());
-        Buffer b(t, op->buffer_->atype());
+        Buffer b(std::move(t), op->buffer_->atype());
         return makeVarDef(op->id(), op->name_, std::move(b),
                           (*this)(op->body_));
     }
