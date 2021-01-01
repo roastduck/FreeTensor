@@ -81,10 +81,14 @@ std::string AnalyzeDeps::makeIterList(const std::vector<Expr> &list,
 }
 
 std::string
-AnalyzeDeps::makeLinList(const std::vector<LinearExpr> &list) const {
+AnalyzeDeps::makeLinList(const std::vector<Ref<LinearExpr>> &list) const {
     std::string ret;
     for (int i = 0, iEnd = list.size(); i < iEnd; i++) {
-        ret += linear2str(list[i]);
+        if (list[i].isValid()) {
+            ret += linear2str(*list[i]);
+        } else {
+            ret += "free" + std::to_string(i);
+        }
         if (i < iEnd - 1) {
             ret += ", ";
         }
@@ -123,10 +127,14 @@ std::string AnalyzeDeps::makeNdList(const std::string &name, int n) const {
 
 std::string AnalyzeDeps::makeAccMap(const AccessPoint &p, int iterDim,
                                     int accDim) const {
-    std::vector<LinearExpr> acc;
+    std::vector<Ref<LinearExpr>> acc;
     acc.reserve(accDim);
     for (auto &&item : p.access_) {
-        acc.emplace_back(linear_.at(item.get()));
+        if (linear_.count(item.get())) {
+            acc.emplace_back(Ref<LinearExpr>::make(linear_.at(item.get())));
+        } else {
+            acc.emplace_back(nullptr);
+        }
     }
     auto ret = makeNdList("N", iterDim) + " -> {" +
                makeIterList(p.iter_, p.defAxis_, iterDim) + " -> " +

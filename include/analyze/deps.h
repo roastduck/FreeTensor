@@ -121,7 +121,7 @@ class AnalyzeDeps : public Visitor {
     std::string linear2str(const LinearExpr &lin) const;
     std::string makeIterList(const std::vector<Expr> &list, int eraseBefore,
                              int n) const;
-    std::string makeLinList(const std::vector<LinearExpr> &list) const;
+    std::string makeLinList(const std::vector<Ref<LinearExpr>> &list) const;
     std::string makeRange(const std::vector<Expr> &list) const;
     std::string makeNdList(const std::string &name, int n) const;
     std::string makeAccMap(const AccessPoint &p, int iterDim, int accDim) const;

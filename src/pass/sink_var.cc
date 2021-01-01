@@ -1,6 +1,9 @@
+#include <analyze/deps.h>
 #include <pass/sink_var.h>
 
 namespace ir {
+
+void FindAllLoops::visit(const For &op) { loops_.emplace_back(op->id()); }
 
 Expr SinkVar::visit(const Load &op) {
     used_.insert(op->var_);
@@ -58,6 +61,19 @@ Stmt SinkVar::visit(const VarDef &op) {
         break;
     }
 
+    case ASTNodeType::For: {
+        auto loop = op->body_.as<ForNode>();
+        if (!deps_.count(std::make_pair(op->name_, loop->id()))) {
+            auto loopBody = makeVarDef(op->id(), op->name_, std::move(buffer),
+                                       (*this)(loop->body_));
+            return makeFor(loop->id(), loop->iter_, (*this)(loop->begin_),
+                           (*this)(loop->end_), std::move(loopBody));
+        } else {
+            body = (*this)(op->body_);
+        }
+        break;
+    }
+
     default:
         body = (*this)(op->body_);
     }
@@ -67,12 +83,29 @@ Stmt SinkVar::visit(const VarDef &op) {
 
 Stmt sinkVar(const Stmt &_op) {
     Stmt op = _op;
+
+    FindAllLoops finder;
+    finder(op);
+    std::vector<std::vector<std::pair<std::string, FindDepsMode>>> cond;
+    cond.reserve(finder.loops().size());
+    for (auto &&loop : finder.loops()) {
+        cond.push_back({{loop, FindDepsMode::Normal}});
+    }
+    std::set<std::pair<std::string, std::string>> deps; // {(var, loop)}
+    auto found = [&](const std::vector<std::pair<std::string, FindDepsMode>> &c,
+                     const std::string &var, const AST &later,
+                     const AST &earlier) {
+        ASSERT(c.size() == 1);
+        deps.emplace(var, c[0].first);
+    };
+    findDeps(op, cond, found);
+
     for (int i = 0;; i++) {
         if (i > 100) {
             WARNING("SinkVar iterates over 100 rounds. Maybe there is a bug");
             break;
         }
-        SinkVar mutator;
+        SinkVar mutator(deps);
         op = mutator(op);
         if (mutator.isFixPoint()) {
             break;
