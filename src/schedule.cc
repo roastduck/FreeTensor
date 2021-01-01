@@ -3,9 +3,11 @@
 #include <sstream>
 
 #include <analyze/deps.h>
+#include <pass/simplify.h>
 #include <schedule.h>
 #include <schedule/check_loop_order.h>
 #include <schedule/fission.h>
+#include <schedule/fuse.h>
 #include <schedule/merge.h>
 #include <schedule/reorder.h>
 #include <schedule/split.h>
@@ -96,8 +98,11 @@ std::string Schedule::merge(const std::string &loop1,
 
 std::pair<std::string, std::string>
 Schedule::fission(const std::string &loop, const std::string &after) {
+    auto ast = ast_;
+
+    // BEGIN: MAY THROW: Don't use ast_
     HoistVar hoist(loop, after);
-    ast_ = hoist(ast_);
+    ast = hoist(ast);
     auto &&xLoops = hoist.xLoops();
 
     // var name -> loop id
@@ -123,14 +128,36 @@ Schedule::fission(const std::string &loop, const std::string &after) {
                 toAdd[var].emplace_back(id);
             }
         };
-    findDeps(ast_, cond, found);
+    findDeps(ast, cond, found);
 
     AddDimToVar adder(toAdd);
-    ast_ = adder(ast_);
+    ast = adder(ast);
 
     FissionFor mutator(loop, after);
-    ast_ = mutator(ast_);
+    ast = mutator(ast);
+
+    // END: MAY THROW
+    ast_ = ast;
     return std::make_pair(mutator.id0(), mutator.id1());
+}
+
+std::string Schedule::fuse(const std::string &loop0, const std::string &loop1) {
+    auto ast = ast_;
+
+    // BEGIN: MAY THROW: Don't use ast_
+    FuseFor mutator(loop0, loop1);
+    ast = mutator(ast);
+
+    try {
+        ast = simplifyPass(ast);
+    } catch (const InvalidSchedule &e) {
+        throw InvalidSchedule(
+            (std::string) "Fusing loops with different lengths? " + e.what());
+    }
+
+    // END: MAY THROW
+    ast_ = ast;
+    return mutator.fused();
 }
 
 } // namespace ir

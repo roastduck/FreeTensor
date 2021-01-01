@@ -158,6 +158,10 @@ class Mutator {
                       op->elseCase_.isValid() ? (*this)(op->elseCase_)
                                               : nullptr);
     }
+
+    virtual Stmt visit(const Assert &op) {
+        return makeAssert(op->id(), (*this)(op->cond_), (*this)(op->body_));
+    }
 };
 
 /**

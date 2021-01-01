@@ -202,6 +202,13 @@ void MatchVisitor::visit(const If &op) {
     }
 }
 
+void MatchVisitor::visit(const Assert &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::Assert);
+    auto instance = instance_.as<AssertNode>();
+    RECURSE(op->cond_, instance->cond_);
+    RECURSE(op->body_, instance->body_);
+}
+
 bool match(const AST &pattern, const AST &instance) {
     MatchVisitor visitor(instance);
     visitor(pattern);

@@ -206,6 +206,17 @@ void PrintVisitor::visit(const If &op) {
     }
 }
 
+void PrintVisitor::visit(const Assert &op) {
+    printId(op);
+    makeIndent();
+    os << "assert ";
+    (*this)(op->cond_);
+    os << " ";
+    beginBlock();
+    (*this)(op->body_);
+    endBlock();
+}
+
 std::string toString(const AST &op) {
     PrintVisitor visitor;
     visitor(op);

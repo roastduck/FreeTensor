@@ -29,6 +29,7 @@ enum class ASTNodeType : int {
     Not,
     For,
     If,
+    Assert,
 };
 
 #define DEFINE_NODE_ACCESS(name)                                               \

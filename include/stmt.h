@@ -153,6 +153,22 @@ Stmt makeIf(const std::string &id, Tcond &&cond, Tthen &&thenCase,
     return i;
 }
 
+class AssertNode : public StmtNode {
+  public:
+    Expr cond_;
+    Stmt body_;
+    DEFINE_NODE_TRAIT(Assert);
+};
+typedef Ref<AssertNode> Assert;
+template <class Tcond, class Tbody>
+Stmt makeAssert(const std::string &id, Tcond &&cond, Tbody &&body) {
+    Assert a = Assert::make();
+    a->setId(id);
+    a->cond_ = std::forward<Tcond>(cond);
+    a->body_ = std::forward<Tbody>(body);
+    return a;
+}
+
 } // namespace ir
 
 #endif // STMT_H

@@ -34,6 +34,7 @@ void Visitor::operator()(const AST &op) {
         DISPATCH_CASE(Not);
         DISPATCH_CASE(For);
         DISPATCH_CASE(If);
+        DISPATCH_CASE(Assert);
 
     default:
         ERROR("Unexpected AST node type");

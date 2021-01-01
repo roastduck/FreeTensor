@@ -220,4 +220,6 @@ def test_correct_dependency_unable_resolve():
 	s = ir.Schedule(ast)
 	with pytest.raises(ir.InvalidSchedule):
 		s.fission("L2", "S0")
+	ast_ = s.ast() # Should not changed
+	assert ast_.match(ast)
 

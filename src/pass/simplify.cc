@@ -1,7 +1,10 @@
+#include <sstream>
+
 #include <analyze/bounds.h>
 #include <analyze/hash.h>
 #include <analyze/linear.h>
 #include <analyze/normalize_if.h>
+#include <except.h>
 #include <pass/simplify.h>
 
 namespace ir {
@@ -254,6 +257,24 @@ Stmt SimplifyPass::visit(const If &_op) {
             return op->thenCase_;
         } else {
             return op->elseCase_;
+        }
+    }
+    return op;
+}
+
+Stmt SimplifyPass::visit(const Assert &_op) {
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::Assert);
+    auto op = __op.as<AssertNode>();
+    if (op->cond_->nodeType() == ASTNodeType::IntConst) {
+        isFixPoint_ = false;
+        if (op->cond_.as<IntConstNode>()->val_) {
+            return op->body_;
+        } else {
+            std::ostringstream os;
+            // Print the unchanged _op
+            os << "Assertion always false: " << _op;
+            throw InvalidSchedule(os.str());
         }
     }
     return op;

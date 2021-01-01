@@ -53,6 +53,18 @@ class Schedule {
      */
     std::pair<std::string, std::string> fission(const std::string &loop,
                                                 const std::string &after);
+
+    /**
+     * Fuse two directly following loops with the same length into one
+     *
+     * @param loop0 : ID of the leading loop
+     * @param loop1 : ID of the following loop
+     * @throw InvalidSchedule if the two loops are not directly following, the
+     * two loops are not with the same length, or there is any dependency cannot
+     * be resolved
+     * @return : ID of the result loop
+     */
+    std::string fuse(const std::string &loop0, const std::string &loop1);
 };
 
 } // namespace ir

@@ -228,6 +228,16 @@ void CodeGenC::visit(const If &op) {
     }
 }
 
+void CodeGenC::visit(const Assert &op) {
+    makeIndent();
+    os << "assert(";
+    (*this)(op->cond_);
+    os << ") ";
+    beginBlock();
+    (*this)(op->body_);
+    endBlock();
+}
+
 const std::string &CodeGenC::normalizeId(const std::string &old) {
     if (idCache_.count(old)) {
         return idCache_.at(old);

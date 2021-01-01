@@ -143,6 +143,11 @@ class Visitor {
             (*this)(op->elseCase_);
         }
     }
+
+    virtual void visit(const Assert &op) {
+        (*this)(op->cond_);
+        (*this)(op->body_);
+    }
 };
 
 } // namespace ir

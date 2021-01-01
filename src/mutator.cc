@@ -39,6 +39,7 @@ Stmt Mutator::operator()(const Stmt &op) {
         DISPATCH_CASE(AddTo);
         DISPATCH_CASE(For);
         DISPATCH_CASE(If);
+        DISPATCH_CASE(Assert);
 
     default:
         ERROR("Unexpected Stmt node type");

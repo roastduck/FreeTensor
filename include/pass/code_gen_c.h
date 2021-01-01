@@ -36,6 +36,7 @@ class CodeGenC : public CodeGen {
     virtual void visit(const Not &op) override;
     virtual void visit(const For &op) override;
     virtual void visit(const If &op) override;
+    virtual void visit(const Assert &op) override;
 
   private:
     const std::string &normalizeId(const std::string &id);
