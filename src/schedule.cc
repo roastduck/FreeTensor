@@ -145,14 +145,26 @@ std::string Schedule::fuse(const std::string &loop0, const std::string &loop1) {
     auto ast = ast_;
 
     // BEGIN: MAY THROW: Don't use ast_
+    auto found =
+        [&](const std::vector<std::pair<std::string, FindDepsMode>> &cond,
+            const std::string &var, const AST &later, const AST &earlier) {
+            ASSERT(cond.size() == 1);
+            std::ostringstream os;
+            os << "Unable to fuse " << loop0 << " and " << loop1 << ": "
+               << dep2Str(cond[0].first, var, later, earlier);
+            throw InvalidSchedule(os.str());
+        };
+    findDeps(ast, {{{loop0, FindDepsMode::Inv}}}, found);
+
     FuseFor mutator(loop0, loop1);
     ast = mutator(ast);
 
     try {
         ast = simplifyPass(ast);
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule(
-            (std::string) "Fusing loops with different lengths? " + e.what());
+        throw InvalidSchedule((std::string) "Fusing " + loop0 + " and " +
+                              loop1 + " loop1 with different lengths? " +
+                              e.what());
     }
 
     // END: MAY THROW
