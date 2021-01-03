@@ -1,3 +1,4 @@
+#include <functional>
 #include <sstream>
 
 #include <analyze/bounds.h>
@@ -58,117 +59,93 @@ Expr SimplifyPass::visit(const Mod &_op) {
     return op;
 }
 
+Expr SimplifyPass::visit(const Min &op) {
+    ASSERT(op->info_norm_form_.isValid());
+    if (checkUpperCmp0(op, std::less_equal<int>())) {
+        isFixPoint_ = false;
+        return (*this)(op->lhs_);
+    }
+    if (checkLowerCmp0(op, std::greater_equal<int>())) {
+        isFixPoint_ = false;
+        return (*this)(op->rhs_);
+    }
+    return Mutator::visit(op);
+}
+
+Expr SimplifyPass::visit(const Max &op) {
+    ASSERT(op->info_norm_form_.isValid());
+    if (checkUpperCmp0(op, std::greater_equal<int>())) {
+        isFixPoint_ = false;
+        return (*this)(op->lhs_);
+    }
+    if (checkLowerCmp0(op, std::less_equal<int>())) {
+        isFixPoint_ = false;
+        return (*this)(op->rhs_);
+    }
+    return Mutator::visit(op);
+}
+
 Expr SimplifyPass::visit(const LT &op) {
     ASSERT(op->info_norm_form_.isValid());
-    if (upper_.count(op->info_norm_form_.get())) {
-        for (auto &&upper : upper_.at(op->info_norm_form_.get())) {
-            if (upper->nodeType() == ASTNodeType::IntConst &&
-                upper.as<IntConstNode>()->val_ < 0) {
-                isFixPoint_ = false;
-                return makeIntConst(1);
-            }
-        }
+    if (checkUpperCmp0(op, std::less<int>())) {
+        isFixPoint_ = false;
+        return makeIntConst(1);
     }
-    if (lower_.count(op->info_norm_form_.get())) {
-        for (auto &&lower : lower_.at(op->info_norm_form_.get())) {
-            if (lower->nodeType() == ASTNodeType::IntConst &&
-                lower.as<IntConstNode>()->val_ >= 0) {
-                isFixPoint_ = false;
-                return makeIntConst(0);
-            }
-        }
+    if (checkLowerCmp0(op, std::greater_equal<int>())) {
+        isFixPoint_ = false;
+        return makeIntConst(0);
     }
     return Mutator::visit(op);
 }
 
 Expr SimplifyPass::visit(const LE &op) {
     ASSERT(op->info_norm_form_.isValid());
-    if (upper_.count(op->info_norm_form_.get())) {
-        for (auto &&upper : upper_.at(op->info_norm_form_.get())) {
-            if (upper->nodeType() == ASTNodeType::IntConst &&
-                upper.as<IntConstNode>()->val_ <= 0) {
-                isFixPoint_ = false;
-                return makeIntConst(1);
-            }
-        }
+    if (checkUpperCmp0(op, std::less_equal<int>())) {
+        isFixPoint_ = false;
+        return makeIntConst(1);
     }
-    if (lower_.count(op->info_norm_form_.get())) {
-        for (auto &&lower : lower_.at(op->info_norm_form_.get())) {
-            if (lower->nodeType() == ASTNodeType::IntConst &&
-                lower.as<IntConstNode>()->val_ > 0) {
-                isFixPoint_ = false;
-                return makeIntConst(0);
-            }
-        }
+    if (checkLowerCmp0(op, std::greater<int>())) {
+        isFixPoint_ = false;
+        return makeIntConst(0);
     }
     return Mutator::visit(op);
 }
 
 Expr SimplifyPass::visit(const GT &op) {
     ASSERT(op->info_norm_form_.isValid());
-    if (upper_.count(op->info_norm_form_.get())) {
-        for (auto &&upper : upper_.at(op->info_norm_form_.get())) {
-            if (upper->nodeType() == ASTNodeType::IntConst &&
-                upper.as<IntConstNode>()->val_ <= 0) {
-                isFixPoint_ = false;
-                return makeIntConst(0);
-            }
-        }
+    if (checkUpperCmp0(op, std::less_equal<int>())) {
+        isFixPoint_ = false;
+        return makeIntConst(0);
     }
-    if (lower_.count(op->info_norm_form_.get())) {
-        for (auto &&lower : lower_.at(op->info_norm_form_.get())) {
-            if (lower->nodeType() == ASTNodeType::IntConst &&
-                lower.as<IntConstNode>()->val_ > 0) {
-                isFixPoint_ = false;
-                return makeIntConst(1);
-            }
-        }
+    if (checkLowerCmp0(op, std::greater<int>())) {
+        isFixPoint_ = false;
+        return makeIntConst(1);
     }
     return Mutator::visit(op);
 }
 
 Expr SimplifyPass::visit(const GE &op) {
     ASSERT(op->info_norm_form_.isValid());
-    if (upper_.count(op->info_norm_form_.get())) {
-        for (auto &&upper : upper_.at(op->info_norm_form_.get())) {
-            if (upper->nodeType() == ASTNodeType::IntConst &&
-                upper.as<IntConstNode>()->val_ < 0) {
-                isFixPoint_ = false;
-                return makeIntConst(0);
-            }
-        }
+    if (checkUpperCmp0(op, std::less<int>())) {
+        isFixPoint_ = false;
+        return makeIntConst(0);
     }
-    if (lower_.count(op->info_norm_form_.get())) {
-        for (auto &&lower : lower_.at(op->info_norm_form_.get())) {
-            if (lower->nodeType() == ASTNodeType::IntConst &&
-                lower.as<IntConstNode>()->val_ >= 0) {
-                isFixPoint_ = false;
-                return makeIntConst(1);
-            }
-        }
+    if (checkLowerCmp0(op, std::greater_equal<int>())) {
+        isFixPoint_ = false;
+        return makeIntConst(1);
     }
     return Mutator::visit(op);
 }
 
 Expr SimplifyPass::visit(const EQ &op) {
     ASSERT(op->info_norm_form_.isValid());
-    if (upper_.count(op->info_norm_form_.get())) {
-        for (auto &&upper : upper_.at(op->info_norm_form_.get())) {
-            if (upper->nodeType() == ASTNodeType::IntConst &&
-                upper.as<IntConstNode>()->val_ < 0) {
-                isFixPoint_ = false;
-                return makeIntConst(0);
-            }
-        }
+    if (checkUpperCmp0(op, std::less<int>())) {
+        isFixPoint_ = false;
+        return makeIntConst(0);
     }
-    if (lower_.count(op->info_norm_form_.get())) {
-        for (auto &&lower : lower_.at(op->info_norm_form_.get())) {
-            if (lower->nodeType() == ASTNodeType::IntConst &&
-                lower.as<IntConstNode>()->val_ > 0) {
-                isFixPoint_ = false;
-                return makeIntConst(0);
-            }
-        }
+    if (checkLowerCmp0(op, std::greater<int>())) {
+        isFixPoint_ = false;
+        return makeIntConst(0);
     }
     if (upper_.count(op->info_norm_form_.get()) &&
         lower_.count(op->info_norm_form_.get())) {
@@ -190,23 +167,13 @@ Expr SimplifyPass::visit(const EQ &op) {
 
 Expr SimplifyPass::visit(const NE &op) {
     ASSERT(op->info_norm_form_.isValid());
-    if (upper_.count(op->info_norm_form_.get())) {
-        for (auto &&upper : upper_.at(op->info_norm_form_.get())) {
-            if (upper->nodeType() == ASTNodeType::IntConst &&
-                upper.as<IntConstNode>()->val_ < 0) {
-                isFixPoint_ = false;
-                return makeIntConst(1);
-            }
-        }
+    if (checkUpperCmp0(op, std::less<int>())) {
+        isFixPoint_ = false;
+        return makeIntConst(1);
     }
-    if (lower_.count(op->info_norm_form_.get())) {
-        for (auto &&lower : lower_.at(op->info_norm_form_.get())) {
-            if (lower->nodeType() == ASTNodeType::IntConst &&
-                lower.as<IntConstNode>()->val_ > 0) {
-                isFixPoint_ = false;
-                return makeIntConst(1);
-            }
-        }
+    if (checkLowerCmp0(op, std::greater<int>())) {
+        isFixPoint_ = false;
+        return makeIntConst(1);
     }
     if (upper_.count(op->info_norm_form_.get()) &&
         lower_.count(op->info_norm_form_.get())) {

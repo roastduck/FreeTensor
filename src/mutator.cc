@@ -18,6 +18,8 @@ Expr Mutator::operator()(const Expr &op) {
         DISPATCH_CASE(Mul);
         DISPATCH_CASE(Div);
         DISPATCH_CASE(Mod);
+        DISPATCH_CASE(Min);
+        DISPATCH_CASE(Max);
         DISPATCH_CASE(LT);
         DISPATCH_CASE(LE);
         DISPATCH_CASE(GT);

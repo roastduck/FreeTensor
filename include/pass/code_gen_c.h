@@ -27,6 +27,8 @@ class CodeGenC : public CodeGen {
     virtual void visit(const Mul &op) override;
     virtual void visit(const Div &op) override;
     virtual void visit(const Mod &op) override;
+    virtual void visit(const Min &op) override;
+    virtual void visit(const Max &op) override;
     virtual void visit(const LT &op) override;
     virtual void visit(const LE &op) override;
     virtual void visit(const GT &op) override;

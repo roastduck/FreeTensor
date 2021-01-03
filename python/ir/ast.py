@@ -160,3 +160,9 @@ def MarkNid(nid: str):
 def Any():
 	ctx_stack.top().append_stmt(ffi.makeAny())
 
+def min(lhs, rhs):
+	return ffi.makeMin(lhs, rhs)
+
+def max(lhs, rhs):
+	return ffi.makeMax(lhs, rhs)
+

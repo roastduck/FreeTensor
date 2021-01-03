@@ -81,6 +81,30 @@ class SimplifyPass : public Mutator {
         return op;
     }
 
+    template <class T, class Cmp> bool checkUpperCmp0(const T &op, Cmp &&cmp) {
+        if (upper_.count(op->info_norm_form_.get())) {
+            for (auto &&upper : upper_.at(op->info_norm_form_.get())) {
+                if (upper->nodeType() == ASTNodeType::IntConst &&
+                    cmp(upper.template as<IntConstNode>()->val_, 0)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    template <class T, class Cmp> bool checkLowerCmp0(const T &op, Cmp &&cmp) {
+        if (lower_.count(op->info_norm_form_.get())) {
+            for (auto &&lower : lower_.at(op->info_norm_form_.get())) {
+                if (lower->nodeType() == ASTNodeType::IntConst &&
+                    cmp(lower.template as<IntConstNode>()->val_, 0)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
   protected:
     Expr visit(const Var &op) override { return doSimplify(op); }
     Expr visit(const Add &op) override { return doSimplify(op); }
@@ -88,6 +112,8 @@ class SimplifyPass : public Mutator {
     Expr visit(const Mul &op) override { return doSimplify(op); }
     Expr visit(const Div &op) override;
     Expr visit(const Mod &op) override;
+    Expr visit(const Min &op) override;
+    Expr visit(const Max &op) override;
     Expr visit(const LT &op) override;
     Expr visit(const LE &op) override;
     Expr visit(const GT &op) override;

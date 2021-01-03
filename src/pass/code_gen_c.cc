@@ -146,6 +146,22 @@ void CodeGenC::visit(const Mod &op) {
     os << ")";
 }
 
+void CodeGenC::visit(const Min &op) {
+    os << "std::min("; // TODO: Pure C?
+    (*this)(op->lhs_);
+    os << ", ";
+    (*this)(op->rhs_);
+    os << ")";
+}
+
+void CodeGenC::visit(const Max &op) {
+    os << "std::max("; // TODO: Pure C?
+    (*this)(op->lhs_);
+    os << ", ";
+    (*this)(op->rhs_);
+    os << ")";
+}
+
 void CodeGenC::visit(const LT &op) {
     os << "(";
     (*this)(op->lhs_);
@@ -273,6 +289,7 @@ std::pair<std::string, std::vector<std::string>> codeGenC(const AST &op) {
     visitor.endBlock();
 
     const char *header = "#include <cstdint>\n"
+                         "#include <algorithm>\n" // TODO: Pure C?
                          "#define restrict __restrict__\n"
                          "\n"
                          "extern \"C\" {\n"

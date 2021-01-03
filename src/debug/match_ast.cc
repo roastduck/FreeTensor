@@ -134,6 +134,20 @@ void MatchVisitor::visit(const Mod &op) {
     RECURSE(op->rhs_, instance->rhs_);
 }
 
+void MatchVisitor::visit(const Min &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::Min);
+    auto instance = instance_.as<MinNode>();
+    RECURSE(op->lhs_, instance->lhs_);
+    RECURSE(op->rhs_, instance->rhs_);
+}
+
+void MatchVisitor::visit(const Max &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::Max);
+    auto instance = instance_.as<MaxNode>();
+    RECURSE(op->lhs_, instance->lhs_);
+    RECURSE(op->rhs_, instance->rhs_);
+}
+
 void MatchVisitor::visit(const LT &op) {
     CHECK(instance_->nodeType() == ASTNodeType::LT);
     auto instance = instance_.as<LTNode>();

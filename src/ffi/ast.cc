@@ -116,6 +116,7 @@ void init_ffi_ast(py::module_ &m) {
     py::implicitly_convertible<int, Expr>();
     py::implicitly_convertible<float, Expr>();
 
+    // Statements
     m.def("makeAny", &makeAny);
     m.def("makeStmtSeq",
           static_cast<Stmt (*)(const std::string &, const std::vector<Stmt> &)>(
@@ -143,6 +144,14 @@ void init_ffi_ast(py::module_ &m) {
           static_cast<Stmt (*)(const std::string &, const Expr &, const Stmt &,
                                const Stmt &)>(&makeIf),
           "nid"_a, "cond"_a, "thenCase"_a, "elseCase"_a = Stmt());
+
+    // Expressions
+    m.def("makeMin",
+          static_cast<Expr (*)(const Expr &, const Expr &)>(&makeMin), "lhs"_a,
+          "rhs"_a);
+    m.def("makeMax",
+          static_cast<Expr (*)(const Expr &, const Expr &)>(&makeMax), "lhs"_a,
+          "rhs"_a);
 }
 
 } // namespace ir

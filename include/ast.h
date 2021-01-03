@@ -20,6 +20,8 @@ enum class ASTNodeType : int {
     Mul,
     Div,
     Mod,
+    Min,
+    Max,
     LT,
     LE,
     GT,

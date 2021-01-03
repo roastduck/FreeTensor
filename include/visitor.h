@@ -80,6 +80,22 @@ class Visitor {
         (*this)(op->rhs_);
     }
 
+    virtual void visit(const Min &op) {
+        (*this)(op->lhs_);
+        (*this)(op->rhs_);
+        if (op->info_norm_form_.isValid()) {
+            (*this)(op->info_norm_form_);
+        }
+    }
+
+    virtual void visit(const Max &op) {
+        (*this)(op->lhs_);
+        (*this)(op->rhs_);
+        if (op->info_norm_form_.isValid()) {
+            (*this)(op->info_norm_form_);
+        }
+    }
+
     virtual void visit(const LT &op) {
         (*this)(op->lhs_);
         (*this)(op->rhs_);

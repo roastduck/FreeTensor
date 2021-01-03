@@ -122,6 +122,22 @@ void PrintVisitor::visit(const Mod &op) {
     os << ")";
 }
 
+void PrintVisitor::visit(const Min &op) {
+    os << "min(";
+    (*this)(op->lhs_);
+    os << ", ";
+    (*this)(op->rhs_);
+    os << ")";
+}
+
+void PrintVisitor::visit(const Max &op) {
+    os << "max(";
+    (*this)(op->lhs_);
+    os << ", ";
+    (*this)(op->rhs_);
+    os << ")";
+}
+
 void PrintVisitor::visit(const LT &op) {
     os << "(";
     (*this)(op->lhs_);

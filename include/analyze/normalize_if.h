@@ -25,6 +25,8 @@ class NormalizeIf : public Mutator {
     virtual Expr visit(const GE &op) override { return doNormalize(op); }
     virtual Expr visit(const EQ &op) override { return doNormalize(op); }
     virtual Expr visit(const NE &op) override { return doNormalize(op); }
+    virtual Expr visit(const Min &op) override { return doNormalize(op); }
+    virtual Expr visit(const Max &op) override { return doNormalize(op); }
 };
 
 inline Stmt normalizeIf(const Stmt &op) { return NormalizeIf()(op); }

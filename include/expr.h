@@ -122,6 +122,36 @@ template <class T, class U> Expr makeMod(T &&lhs, U &&rhs) {
     return a;
 }
 
+class MinNode : public ExprNode {
+  public:
+    Expr lhs_, rhs_;
+
+    Expr info_norm_form_; // this <==> (info_norm_form_ < 0 ? lhs_ : rhs_)
+
+    DEFINE_NODE_TRAIT(Min);
+};
+typedef Ref<MinNode> Min;
+template <class T, class U> Expr makeMin(T &&lhs, U &&rhs) {
+    Min m = Min::make();
+    m->lhs_ = std::forward<T>(lhs), m->rhs_ = std::forward<U>(rhs);
+    return m;
+}
+
+class MaxNode : public ExprNode {
+  public:
+    Expr lhs_, rhs_;
+
+    Expr info_norm_form_; // this <==> (info_norm_form_ > 0 ? lhs_ : rhs_)
+
+    DEFINE_NODE_TRAIT(Max);
+};
+typedef Ref<MaxNode> Max;
+template <class T, class U> Expr makeMax(T &&lhs, U &&rhs) {
+    Max m = Max::make();
+    m->lhs_ = std::forward<T>(lhs), m->rhs_ = std::forward<U>(rhs);
+    return m;
+}
+
 class LTNode : public ExprNode {
   public:
     Expr lhs_, rhs_;
