@@ -253,9 +253,8 @@ Stmt simplifyPass(const Stmt &op) {
 
 std::tuple<Stmt, SimplifyPass::BoundsMap, SimplifyPass::BoundsMap>
 simplifyAndGetBounds(const Stmt &_op) {
-    Stmt op = _op;
+    Stmt op = normalizeIf(_op);
     for (int i = 0;; i++) {
-        op = normalizeIf(op);
         op = Disambiguous()(op);
 
         auto hash = getHashMap(op);

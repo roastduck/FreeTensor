@@ -15,16 +15,14 @@ class Context:
 		self.nextNid = ""
 
 	def append_if_then_stmt(self, cond, body: ffi.Stmt):
-		self.append_stmt(ffi.makeIf(self.nextNid, cond, body))
-		self.lastIf = (self.nextNid, cond, body)
-		self.nextNid = ""
+		nextNid = self.nextNid
+		self.append_stmt(ffi.makeIf(nextNid, cond, body))
+		self.lastIf = (nextNid, cond, body)
 
 	def append_if_else_stmt(self, elseCase: ffi.Stmt):
 		nid, cond, thenCase = self.lastIf
 		self.stmt_seq.pop()
 		self.append_stmt(ffi.makeIf(nid, cond, thenCase, elseCase))
-		self.lastIf = None
-		self.nextNid = ""
 
 	def setNextNid(self, nid: str):
 		self.nextNid = nid
