@@ -7,6 +7,7 @@
 #include <pass/simplify.h>
 #include <pass/sink_var.h>
 #include <schedule.h>
+#include <schedule/cache_read.h>
 #include <schedule/check_loop_order.h>
 #include <schedule/fission.h>
 #include <schedule/fuse.h>
@@ -172,6 +173,14 @@ std::string Schedule::fuse(const std::string &loop0, const std::string &loop1) {
     // END: MAY THROW
     ast_ = shrinkVar(sinkVar(ast));
     return mutator.fused();
+}
+
+std::pair<std::string, std::string>
+Schedule::cacheRead(const std::string &stmt, const std::string &var) {
+    CacheRead mutator(stmt, var);
+    ast_ = mutator(ast_);
+    ast_ = shrinkVar(ast_);
+    return std::make_pair(mutator.fillStmt(), mutator.cacheVar());
 }
 
 } // namespace ir

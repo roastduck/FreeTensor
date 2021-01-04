@@ -172,8 +172,9 @@ void AnalyzeBounds::visit(const Store &op) {
     if (!buffers_.count(op->var_)) {
         ERROR("Storing to undefined variable " + op->var_);
     }
+    auto &&shape = buffers_.at(op->var_)->tensor().shape();
+    ASSERT(shape.size() == op->indices_.size());
     for (size_t i = 0, iEnd = op->indices_.size(); i < iEnd; i++) {
-        auto &&shape = buffers_.at(op->var_)->tensor().shape();
         updLower(op->indices_[i], {makeIntConst(0)});
         updUpper(op->indices_[i], {shape[i]});
     }
@@ -186,8 +187,9 @@ void AnalyzeBounds::visit(const Load &op) {
     if (!buffers_.count(op->var_)) {
         ERROR("Storing to undefined variable " + op->var_);
     }
+    auto &&shape = buffers_.at(op->var_)->tensor().shape();
+    ASSERT(shape.size() == op->indices_.size());
     for (size_t i = 0, iEnd = op->indices_.size(); i < iEnd; i++) {
-        auto &&shape = buffers_.at(op->var_)->tensor().shape();
         updLower(op->indices_[i], {makeIntConst(0)});
         updUpper(op->indices_[i], {shape[i]});
     }

@@ -118,6 +118,7 @@ class AnalyzeDeps : public Visitor {
     ~AnalyzeDeps() { isl_ctx_free(isl_); }
 
   private:
+    std::string normalizeId(const std::string &id) const;
     std::string linear2str(const LinearExpr &lin) const;
     std::string makeIterList(const std::vector<Expr> &list, int eraseBefore,
                              int n) const;

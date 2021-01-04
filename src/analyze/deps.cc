@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <regex>
 #include <sstream>
 
 #include <analyze/deps.h>
@@ -41,6 +42,10 @@ void FindAccessPoint::visit(const Load &op) {
     reads_.emplace(op->var_, ap);
 }
 
+std::string AnalyzeDeps::normalizeId(const std::string &id) const {
+    return std::regex_replace(id, std::regex("\\."), "__dot__");
+}
+
 std::string AnalyzeDeps::linear2str(const LinearExpr &lin) const {
     std::ostringstream os;
     os << lin.bias_;
@@ -52,7 +57,7 @@ std::string AnalyzeDeps::linear2str(const LinearExpr &lin) const {
             ASSERT(false);
         }
     }
-    return os.str();
+    return normalizeId(os.str());
 }
 
 std::string AnalyzeDeps::makeIterList(const std::vector<Expr> &list,
@@ -61,7 +66,7 @@ std::string AnalyzeDeps::makeIterList(const std::vector<Expr> &list,
     for (int i = 0; i < n; i++) {
         if (i < (int)list.size()) {
             if (list[i]->nodeType() == ASTNodeType::Var) {
-                ret += list[i].as<VarNode>()->name_;
+                ret += normalizeId(list[i].as<VarNode>()->name_);
                 if (i < eraseBefore) {
                     ret += " = 0";
                 }
@@ -107,8 +112,8 @@ std::string AnalyzeDeps::makeRange(const std::vector<Expr> &list) const {
             if (first) {
                 first = false;
             }
-            ret += "0 <= " + list[i].as<VarNode>()->name_ + " < N" +
-                   std::to_string(i);
+            ret += "0 <= " + normalizeId(list[i].as<VarNode>()->name_) +
+                   " < N" + std::to_string(i);
         }
     }
     return ret;

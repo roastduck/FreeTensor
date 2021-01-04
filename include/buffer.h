@@ -36,6 +36,7 @@ class Buffer {
     const Tensor &tensor() const { return tensor_; }
     Tensor &tensor() { return tensor_; }
 
+    void setAtype(AccessType atype) { atype_ = atype; }
     AccessType atype() const { return atype_; }
 };
 

@@ -1,8 +1,8 @@
-from ffi import codeGenC as code_gen_c
-from ffi import simplifyPass as simplify_pass
-from ffi import flattenStmtSeq as flatten_stmt_seq
-from ffi import sinkVar as sink_var
-from ffi import shrinkVar as shrink_var
+from ffi import code_gen_c
+from ffi import simplify_pass
+from ffi import sink_var
+from ffi import shrink_var
+from ffi import flatten_stmt_seq
 
 def lower(ast):
 	ast = simplify_pass(ast)

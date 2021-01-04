@@ -65,6 +65,17 @@ class Schedule {
      * @return : ID of the result loop
      */
     std::string fuse(const std::string &loop0, const std::string &loop1);
+
+    /**
+     * Cache the reads of a variable into a new local variable
+     *
+     * @param stmt : ID of the statment or scope (e.g. a loop) to be modified
+     * @param var : name of the variable to be cached
+     * @return : (ID of the statment that fills into the cache, name of the
+     * cache variable)
+     */
+    std::pair<std::string, std::string> cacheRead(const std::string &stmt,
+                                                  const std::string &var);
 };
 
 } // namespace ir
