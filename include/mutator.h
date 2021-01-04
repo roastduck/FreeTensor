@@ -38,8 +38,25 @@ class Mutator {
         }
         Tensor t(std::move(shape), op->buffer_->tensor().dtype());
         Buffer b(std::move(t), op->buffer_->atype());
-        return makeVarDef(op->id(), op->name_, std::move(b),
-                          (*this)(op->body_));
+        auto ret =
+            makeVarDef(op->id(), op->name_, std::move(b), (*this)(op->body_));
+        if (op->info_acc_lower_.isValid()) {
+            auto indices = ret.as<VarDefNode>()->info_acc_lower_ =
+                Ref<std::vector<Expr>>::make();
+            indices->reserve(op->info_acc_lower_->size());
+            for (auto &&index : *op->info_acc_lower_) {
+                indices->emplace_back((*this)(index));
+            }
+        }
+        if (op->info_acc_len_.isValid()) {
+            auto indices = ret.as<VarDefNode>()->info_acc_len_ =
+                Ref<std::vector<Expr>>::make();
+            indices->reserve(op->info_acc_len_->size());
+            for (auto &&index : *op->info_acc_len_) {
+                indices->emplace_back((*this)(index));
+            }
+        }
+        return ret;
     }
 
     virtual Expr visit(const Var &op) { return makeVar(op->name_); }

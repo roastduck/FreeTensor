@@ -43,9 +43,10 @@ def test_sink_for():
 			("x", (5,), ir.DataType.Int32, ir.AccessType.Input),
 			("y", (4,), ir.DataType.Int32, ir.AccessType.Output)]) as (x, y):
 		with ir.For("i", 0, 4) as i:
-			with ir.VarDef("b", (4,), ir.DataType.Int32, ir.AccessType.Cache) as b:
-				b[i] = x[i] + x[i + 1]
-				y[i] = b[i] * i
+			# Also shrinked
+			with ir.VarDef("b", (1,), ir.DataType.Int32, ir.AccessType.Cache) as b:
+				b[0] = x[i] + x[i + 1]
+				y[i] = b[0] * i
 	std = ir.pop_ast()
 
 	assert std.match(ast)

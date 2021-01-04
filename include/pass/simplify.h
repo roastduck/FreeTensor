@@ -30,9 +30,12 @@ int findInnerMostScope(const std::unordered_map<std::string, int> &varScope,
                        const Expr &op);
 
 class SimplifyPass : public Mutator {
+  public:
+    typedef std::unordered_map<const ExprNode *, std::vector<Expr>> BoundsMap;
+
+  private:
     const std::unordered_map<const ExprNode *, uint64_t> &hash_;
-    const std::unordered_map<const ExprNode *, std::vector<Expr>> &lower_,
-        &upper_;
+    const BoundsMap &lower_, &upper_;
     bool isFixPoint_ = true;
 
     // defining scope table
@@ -40,10 +43,8 @@ class SimplifyPass : public Mutator {
     int curScope_ = 0;
 
   public:
-    SimplifyPass(
-        const std::unordered_map<const ExprNode *, uint64_t> &hash,
-        const std::unordered_map<const ExprNode *, std::vector<Expr>> &lower,
-        const std::unordered_map<const ExprNode *, std::vector<Expr>> &upper)
+    SimplifyPass(const std::unordered_map<const ExprNode *, uint64_t> &hash,
+                 const BoundsMap &lower, const BoundsMap &upper)
         : hash_(hash), lower_(lower), upper_(upper) {}
 
     bool isFixPoint() const { return isFixPoint_; }
@@ -53,6 +54,15 @@ class SimplifyPass : public Mutator {
 
     template <class T> Expr doSimplify(const T &_op) {
         auto op = Mutator::visit(_op);
+
+        // To avoid divergence
+        if (getHash(op) != getHash(_op)) {
+            // E.g.
+            // (1) a[0 - 0] -> a[0]
+            // (2) (1 + 1) * a[0] -> 2 * a[0 - 0], because of the old bound
+            return op;
+        }
+
         Expr best = nullptr;
         auto bestScope = -1;
         // lower_ / upper_ for _op and op shall be the same, but those for op
@@ -127,6 +137,10 @@ class SimplifyPass : public Mutator {
 };
 
 Stmt simplifyPass(const Stmt &op);
+
+// return {simplified, lower, upper}
+std::tuple<Stmt, SimplifyPass::BoundsMap, SimplifyPass::BoundsMap>
+simplifyAndGetBounds(const Stmt &op);
 
 } // namespace ir
 

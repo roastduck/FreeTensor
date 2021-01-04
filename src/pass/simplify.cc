@@ -247,15 +247,14 @@ Stmt SimplifyPass::visit(const Assert &_op) {
     return op;
 }
 
-Stmt simplifyPass(const Stmt &_op) {
+Stmt simplifyPass(const Stmt &op) {
+    return std::get<0>(simplifyAndGetBounds(op));
+}
+
+std::tuple<Stmt, SimplifyPass::BoundsMap, SimplifyPass::BoundsMap>
+simplifyAndGetBounds(const Stmt &_op) {
     Stmt op = _op;
     for (int i = 0;; i++) {
-        if (i > 100) {
-            WARNING(
-                "SimplifyPass iterates over 100 rounds. Maybe there is a bug");
-            return op;
-        }
-
         op = normalizeIf(op);
         op = Disambiguous()(op);
 
@@ -271,12 +270,18 @@ Stmt simplifyPass(const Stmt &_op) {
         auto &&upper = analyzeBounds.upper();
 
         SimplifyPass simplifyVisitor(hash, lower, upper);
-        op = simplifyVisitor(op);
-        if (simplifyVisitor.isFixPoint()) {
-            break;
+        auto newOp = simplifyVisitor(op);
+        if (simplifyVisitor.isFixPoint() || i > 100) {
+            if (i > 100) {
+                WARNING("SimplifyPass iterates over 100 rounds. Maybe there is "
+                        "a bug");
+            }
+            return {op, lower, upper}; // return the old op, or the lower /
+                                       // upper will be invalid
+        } else {
+            op = newOp;
         }
     }
-    return op;
 }
 
 } // namespace ir

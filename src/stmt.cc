@@ -18,11 +18,16 @@ const std::string &StmtNode::id() const {
 }
 
 VarDefNode::VarDefNode(const VarDefNode &other)
-    : name_(other.name_), buffer_(other.buffer_.clone()) {}
+    : name_(other.name_), buffer_(other.buffer_.clone()), body_(other.body_),
+      info_acc_lower_(other.info_acc_lower_),
+      info_acc_len_(other.info_acc_len_) {}
 
 VarDefNode &VarDefNode::operator=(const VarDefNode &other) {
     name_ = other.name_;
     buffer_ = other.buffer_.clone();
+    body_ = other.body_;
+    info_acc_lower_ = other.info_acc_lower_;
+    info_acc_len_ = other.info_acc_len_;
     return *this;
 }
 

@@ -114,3 +114,34 @@ def test_dependency_unable_resolve():
 	ast_ = s.ast() # Should not changed
 	assert ast_.match(ast)
 
+def test_buffer_fuse():
+	with ir.VarDef([
+			("x", (4, 8), ir.DataType.Int32, ir.AccessType.Input),
+			("y", (4, 8), ir.DataType.Int32, ir.AccessType.Output)]) as (x, y):
+		with ir.For("i", 0, 4, nid="L1") as i:
+			with ir.VarDef("b", (4, 8), ir.DataType.Int32, ir.AccessType.Cache) as b:
+				with ir.For("j", 0, 8, nid="L2a") as j:
+					b[i, j] = x[i, j] * 2
+				with ir.For("j", 0, 8, nid="L2b") as j:
+					y[i, j] = b[i, j]
+	ast = ir.pop_ast()
+	print(ast)
+	s = ir.Schedule(ast)
+	s.fuse("L2a", "L2b")
+	ast = s.ast()
+	print(ast)
+	ast = ir.lower(ast)
+	print(ast)
+
+	with ir.VarDef([
+			("x", (4, 8), ir.DataType.Int32, ir.AccessType.Input),
+			("y", (4, 8), ir.DataType.Int32, ir.AccessType.Output)]) as (x, y):
+		with ir.For("i", 0, 4) as i:
+			with ir.For("j", 0, 8) as j:
+				with ir.VarDef("b", (1, 1), ir.DataType.Int32, ir.AccessType.Cache) as b:
+					b[0, 0] = x[i, j] * 2
+					y[i, j] = b[0, 0]
+	std = ir.pop_ast()
+
+	assert std.match(ast)
+

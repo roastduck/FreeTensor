@@ -15,11 +15,15 @@ namespace ir {
  * to run for multiple rounds
  */
 class AnalyzeBounds : public Visitor {
+  public:
+    typedef std::unordered_map<const ExprNode *, std::vector<Expr>> BoundsMap;
+
+  private:
     // expr -> hash
     const std::unordered_map<const ExprNode *, uint64_t> &hash_;
     const std::unordered_map<const ASTNode *, LinearExpr> &linear_;
 
-    std::unordered_map<const ExprNode *, std::vector<Expr>> lower_, upper_;
+    BoundsMap lower_, upper_;
 
     // buffer table
     std::unordered_map<std::string, Ref<Buffer>> buffers_;
@@ -54,14 +58,8 @@ class AnalyzeBounds : public Visitor {
                   const std::unordered_map<const ASTNode *, LinearExpr> &linear)
         : hash_(hash), linear_(linear) {}
 
-    const std::unordered_map<const ExprNode *, std::vector<Expr>> &
-    lower() const {
-        return lower_;
-    }
-    const std::unordered_map<const ExprNode *, std::vector<Expr>> &
-    upper() const {
-        return upper_;
-    }
+    const BoundsMap &lower() const { return lower_; }
+    const BoundsMap &upper() const { return upper_; }
 
   protected:
     virtual void visit(const VarDef &op) override;

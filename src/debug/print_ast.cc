@@ -15,15 +15,19 @@ void PrintVisitor::visit(const Any &op) {
 
 void PrintVisitor::visit(const VarDef &op) {
     printId(op);
+    if (op->info_acc_lower_.isValid() && op->info_acc_len_.isValid()) {
+        makeIndent();
+        os << "// lower = [";
+        printList(*op->info_acc_lower_);
+        os << "], len = [";
+        printList(*op->info_acc_len_);
+        os << "]" << std::endl;
+    }
     makeIndent();
     os << ::ir::toString(op->buffer_->atype()) << " " << op->name_ << ": ";
     auto &&tensor = op->buffer_->tensor();
     os << ::ir::toString(tensor.dtype()) << "[";
-    auto &&shape = tensor.shape();
-    for (size_t i = 0, iEnd = shape.size(); i < iEnd; i++) {
-        (*this)(shape[i]);
-        os << (i < iEnd - 1 ? ", " : "");
-    }
+    printList(tensor.shape());
     os << "] ";
     beginBlock();
     (*this)(op->body_);
@@ -39,12 +43,7 @@ void PrintVisitor::visit(const Store &op) {
     printId(op);
     makeIndent();
     os << op->var_ << "[";
-    for (size_t i = 0, iEnd = op->indices_.size(); i < iEnd; i++) {
-        (*this)(op->indices_[i]);
-        if (i < iEnd - 1) {
-            os << ", ";
-        }
-    }
+    printList(op->indices_);
     os << "] = ";
     (*this)(op->expr_);
     os << std::endl;
@@ -52,12 +51,7 @@ void PrintVisitor::visit(const Store &op) {
 
 void PrintVisitor::visit(const Load &op) {
     os << op->var_ << "[";
-    for (size_t i = 0, iEnd = op->indices_.size(); i < iEnd; i++) {
-        (*this)(op->indices_[i]);
-        if (i < iEnd - 1) {
-            os << ", ";
-        }
-    }
+    printList(op->indices_);
     os << "]";
 }
 
@@ -65,12 +59,7 @@ void PrintVisitor::visit(const AddTo &op) {
     printId(op);
     makeIndent();
     os << op->var_ << "[";
-    for (size_t i = 0, iEnd = op->indices_.size(); i < iEnd; i++) {
-        (*this)(op->indices_[i]);
-        if (i < iEnd - 1) {
-            os << ", ";
-        }
-    }
+    printList(op->indices_);
     os << "] += ";
     (*this)(op->expr_);
     os << std::endl;

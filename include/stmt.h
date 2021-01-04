@@ -60,6 +60,9 @@ class VarDefNode : public StmtNode {
     Ref<Buffer> buffer_;
     Stmt body_;
 
+    Ref<std::vector<Expr>> info_acc_lower_; // lower_bound(access)
+    Ref<std::vector<Expr>> info_acc_len_;   // upper_bound(access_i - access_j)
+
     VarDefNode(const VarDefNode &other);            // Deep copy
     VarDefNode &operator=(const VarDefNode &other); // Deep copy
 

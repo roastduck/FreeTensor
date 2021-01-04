@@ -3,7 +3,9 @@
 #include <sstream>
 
 #include <analyze/deps.h>
+#include <pass/shrink_var.h>
 #include <pass/simplify.h>
+#include <pass/sink_var.h>
 #include <schedule.h>
 #include <schedule/check_loop_order.h>
 #include <schedule/fission.h>
@@ -168,7 +170,7 @@ std::string Schedule::fuse(const std::string &loop0, const std::string &loop1) {
     }
 
     // END: MAY THROW
-    ast_ = ast;
+    ast_ = shrinkVar(sinkVar(ast));
     return mutator.fused();
 }
 

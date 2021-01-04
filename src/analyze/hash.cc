@@ -38,6 +38,8 @@ void GetHash::visit(const Sub &op) { binOpNonPermutable(op); }
 void GetHash::visit(const Mul &op) { binOpPermutable(op); }
 void GetHash::visit(const Div &op) { binOpNonPermutable(op); }
 void GetHash::visit(const Mod &op) { binOpNonPermutable(op); }
+void GetHash::visit(const Min &op) { binOpPermutable(op); }
+void GetHash::visit(const Max &op) { binOpPermutable(op); }
 void GetHash::visit(const LT &op) { binOpNonPermutable(op); }
 void GetHash::visit(const LE &op) { binOpNonPermutable(op); }
 void GetHash::visit(const GT &op) { binOpNonPermutable(op); }
