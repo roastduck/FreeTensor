@@ -19,25 +19,35 @@ void FindAccessPoint::visit(const StmtSeq &op) {
     loop2axis_[op->id()] = cur_.size();
     axis2loop_[cur_.size()] = op->id();
     cur_.emplace_back();
+    begin_.emplace_back(makeIntConst(0));
+    end_.emplace_back(makeIntConst(op->stmts_.size()));
     for (size_t i = 0, iEnd = op->stmts_.size(); i < iEnd; i++) {
         cur_.back() = makeIntConst(i);
         (*this)(op->stmts_[i]);
     }
     cur_.pop_back();
+    begin_.pop_back();
+    end_.pop_back();
 }
 
 void FindAccessPoint::visit(const For &op) {
     loop2axis_[op->id()] = cur_.size();
     axis2loop_[cur_.size()] = op->id();
     cur_.emplace_back(makeVar(op->iter_));
+    begin_.emplace_back(op->begin_);
+    end_.emplace_back(op->end_);
     Visitor::visit(op);
     cur_.pop_back();
+    begin_.pop_back();
+    end_.pop_back();
 }
 
 void FindAccessPoint::visit(const Load &op) {
     Visitor::visit(op);
     auto ap = Ref<AccessPoint>::make();
-    *ap = {op, defAxis_.at(op->var_), cur_, op->indices_};
+    ASSERT(cur_.size() == begin_.size());
+    ASSERT(cur_.size() == end_.size());
+    *ap = {op, defAxis_.at(op->var_), cur_, begin_, end_, op->indices_};
     points_.emplace(op.get(), ap);
     reads_.emplace(op->var_, ap);
 }
@@ -101,20 +111,36 @@ AnalyzeDeps::makeLinList(const std::vector<Ref<LinearExpr>> &list) const {
     return "[" + ret + "]";
 }
 
-std::string AnalyzeDeps::makeRange(const std::vector<Expr> &list) const {
-    std::string ret;
-    bool first = true;
-    for (int i = 0, iEnd = list.size(); i < iEnd; i++) {
-        if (list[i]->nodeType() == ASTNodeType::Var) {
-            if (!first) {
-                ret += " and ";
+std::string AnalyzeDeps::makeRange(const std::vector<Expr> &point,
+                                   const std::vector<Expr> &begin,
+                                   const std::vector<Expr> &end) const {
+    size_t n = point.size();
+    ASSERT(begin.size() == n);
+    ASSERT(end.size() == n);
+    std::vector<std::string> ineqs;
+    for (size_t i = 0; i < n; i++) {
+        if (point[i]->nodeType() == ASTNodeType::Var) {
+            std::string ineq = normalizeId(point[i].as<VarNode>()->name_);
+            bool bounded = false;
+            if (linear_.count(begin[i].get())) {
+                ineq = linear2str(linear_.at(begin[i].get())) + " <= " + ineq;
+                bounded = true;
             }
-            if (first) {
-                first = false;
+            if (linear_.count(end[i].get())) {
+                ineq = ineq + " < " + linear2str(linear_.at(end[i].get()));
+                bounded = true;
             }
-            ret += "0 <= " + normalizeId(list[i].as<VarNode>()->name_) +
-                   " < N" + std::to_string(i);
+            if (bounded) {
+                ineqs.emplace_back(std::move(ineq));
+            }
         }
+    }
+    std::string ret;
+    for (size_t i = 0, iEnd = ineqs.size(); i < iEnd; i++) {
+        if (i > 0) {
+            ret += " and ";
+        }
+        ret += ineqs[i];
     }
     return ret;
 }
@@ -141,9 +167,9 @@ std::string AnalyzeDeps::makeAccMap(const AccessPoint &p, int iterDim,
             acc.emplace_back(nullptr);
         }
     }
-    auto ret = makeNdList("N", iterDim) + " -> {" +
-               makeIterList(p.iter_, p.defAxis_, iterDim) + " -> " +
-               makeLinList(acc) + ": " + makeRange(p.iter_) + "}";
+    auto ret = "{" + makeIterList(p.iter_, p.defAxis_, iterDim) + " -> " +
+               makeLinList(acc) + ": " + makeRange(p.iter_, p.begin_, p.end_) +
+               "}";
     return ret;
 }
 

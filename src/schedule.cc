@@ -43,7 +43,8 @@ std::pair<std::string, std::string> Schedule::split(const std::string &id,
             "Invalid split(" + id + ", factor=" + std::to_string(factor) +
             ", nparts=" + std::to_string(nparts) + "): " + e.what());
     }
-    ast_ = ast;
+    ast_ = simplifyPass(ast); // try to remove divisions, or it will hinder
+                              // the dependency analysis
     return std::make_pair(mutator.outerId(), mutator.innerId());
 }
 

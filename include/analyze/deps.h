@@ -18,14 +18,15 @@ namespace ir {
 struct AccessPoint {
     AST op_;
     int defAxis_;
-    std::vector<Expr> iter_, access_;
+    std::vector<Expr> iter_, begin_, end_, access_;
 };
 
 /**
  * Find read and write points
  */
 class FindAccessPoint : public Visitor {
-    std::vector<Expr> cur_; // Current iteration point in the space
+    std::vector<Expr> cur_;         // Current iteration point in the space
+    std::vector<Expr> begin_, end_; // Point range in the space
     std::unordered_map<const ASTNode *, Ref<AccessPoint>> points_;
     std::unordered_multimap<std::string, Ref<AccessPoint>> reads_, writes_;
     std::unordered_map<std::string, int> loop2axis_; // ForNode -> axis in space
@@ -58,14 +59,18 @@ class FindAccessPoint : public Visitor {
     template <class T> void visitStoreLike(const T &op) {
         // For a[i] = a[i] + 1, write happens after read
         cur_.emplace_back(makeIntConst(0));
+        begin_.emplace_back(makeIntConst(0));
+        end_.emplace_back(makeIntConst(2));
         auto ap = Ref<AccessPoint>::make();
-        *ap = {op, defAxis_.at(op->var_), cur_, op->indices_};
+        *ap = {op, defAxis_.at(op->var_), cur_, begin_, end_, op->indices_};
         points_.emplace(op.get(), ap);
         writes_.emplace(op->var_, ap);
 
         cur_.back() = makeIntConst(1);
         Visitor::visit(op);
         cur_.pop_back();
+        begin_.pop_back();
+        end_.pop_back();
     }
 
   protected:
@@ -123,7 +128,9 @@ class AnalyzeDeps : public Visitor {
     std::string makeIterList(const std::vector<Expr> &list, int eraseBefore,
                              int n) const;
     std::string makeLinList(const std::vector<Ref<LinearExpr>> &list) const;
-    std::string makeRange(const std::vector<Expr> &list) const;
+    std::string makeRange(const std::vector<Expr> &point,
+                          const std::vector<Expr> &begin,
+                          const std::vector<Expr> &end) const;
     std::string makeNdList(const std::string &name, int n) const;
     std::string makeAccMap(const AccessPoint &p, int iterDim, int accDim) const;
     std::string makeSingleIneq(FindDepsMode mode, int iterId,
