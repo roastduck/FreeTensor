@@ -70,9 +70,9 @@ class Schedule {
     /**
      * Cache the reads of a variable into a new local variable
      *
-     * @param stmt : ID of the statment or block (e.g. an If) to be modified
-     * (NOTE: Currently statements with name scopes inside, like a For node, is
-     * not supported)
+     * @param stmt : ID of the statment or block (e.g. an If) to be modified.
+     * Note that it is not supported to define a local variable inside stmt and
+     * use it to read the variable to be cached.
      * @param var : name of the variable to be cached
      * @throw InvalidSchedule if the ID or name is not found
      * @return : (ID of the statment that fills into the cache, name of the
@@ -85,8 +85,8 @@ class Schedule {
      * Cache the writes of a variable into a new local variable
      *
      * @param stmt : ID of the statment or block (e.g. an If) to be modified
-     * (NOTE: Currently statements with name scopes inside, like a For node, is
-     * not supported)
+     * Note that it is not supported to define a local variable inside stmt and
+     * use it to write the variable to be cached.
      * @param var : name of the variable to be cached
      * @throw InvalidSchedule if the ID or name is not found
      * @return : (ID of the statment that flushes from the cache, name of the

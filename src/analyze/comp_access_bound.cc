@@ -1,45 +1,7 @@
+#include <analyze/check_all_defined.h>
 #include <analyze/comp_access_bound.h>
 
 namespace ir {
-
-void CheckAllDefined::visit(const Var &op) {
-    if (!allDef_) {
-        return;
-    }
-    Visitor::visit(op);
-    allDef_ &= !!defs_.count(op->name_);
-}
-
-void CheckAllDefined::visit(const Load &op) {
-    if (!allDef_) {
-        return;
-    }
-    Visitor::visit(op);
-    allDef_ &= !!defs_.count(op->var_);
-}
-
-void CheckAllDefined::visit(const Store &op) {
-    if (!allDef_) {
-        return;
-    }
-    Visitor::visit(op);
-    allDef_ &= !!defs_.count(op->var_);
-}
-
-void CheckAllDefined::visit(const AddTo &op) {
-    if (!allDef_) {
-        return;
-    }
-    Visitor::visit(op);
-    allDef_ &= !!defs_.count(op->var_);
-}
-
-bool checkAllDefined(const std::unordered_set<std::string> &defs,
-                     const AST &op) {
-    CheckAllDefined visitor(defs);
-    visitor(op);
-    return visitor.allDef();
-}
 
 Expr CompAccessBound::reduceMin(const Expr &reduction, const Expr &item) {
     return reduction.isValid() ? makeMin(reduction, item) : item;

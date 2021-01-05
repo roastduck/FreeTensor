@@ -5,29 +5,8 @@
 #include <unordered_set>
 
 #include <mutator.h>
-#include <visitor.h>
 
 namespace ir {
-
-class CheckAllDefined : public Visitor {
-    const std::unordered_set<std::string> &defs_;
-    bool allDef_ = true;
-
-  public:
-    CheckAllDefined(const std::unordered_set<std::string> &defs)
-        : defs_(defs) {}
-
-    bool allDef() const { return allDef_; }
-
-  protected:
-    void visit(const Var &op) override;
-    void visit(const Load &op) override;
-    void visit(const Store &op) override;
-    void visit(const AddTo &op) override;
-};
-
-bool checkAllDefined(const std::unordered_set<std::string> &defs,
-                     const AST &op);
 
 class CompAccessBound : public Mutator {
     // bounds from AnalyzeBounds

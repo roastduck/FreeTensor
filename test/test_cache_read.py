@@ -129,3 +129,19 @@ def test_no_stmt():
 	ast_ = s.ast() # Should not changed
 	assert ast_.match(ast)
 
+def test_local_var_as_index():
+	with ir.VarDef([
+			("x", (4, 8), ir.DataType.Int32, ir.AccessType.Input),
+			("y", (4,), ir.DataType.Int32, ir.AccessType.Output)]) as (x, y):
+		with ir.For("i", 0, 4, nid="L1") as i:
+			y[i] = 0
+			with ir.For("j", 0, 8, nid="L2") as j:
+				y[i] = y[i] + x[i, j] * 2
+	ast = ir.pop_ast()
+	print(ast)
+	s = ir.Schedule(ast)
+	with pytest.raises(ir.InvalidSchedule):
+		s.cache_read("L2", "x")
+	ast_ = s.ast() # Should not changed
+	assert ast_.match(ast)
+

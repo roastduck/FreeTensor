@@ -21,12 +21,5 @@ Expr CacheRead::visit(const Load &_op) {
     return op;
 }
 
-Stmt CacheRead::visit(const VarDef &op) {
-    if (op->name_ == var_) {
-        buffer_ = op->buffer_;
-    }
-    return Mutator::visit(op);
-}
-
 } // namespace ir
 
