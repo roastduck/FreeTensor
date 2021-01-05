@@ -39,9 +39,9 @@ std::pair<std::string, std::string> Schedule::split(const std::string &id,
             throw InvalidSchedule("Loop not found");
         }
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule("Invalid split(" + id + ", " +
-                              std::to_string(factor) + ", " +
-                              std::to_string(nparts) + "): " + e.what());
+        throw InvalidSchedule(
+            "Invalid split(" + id + ", factor=" + std::to_string(factor) +
+            ", nparts=" + std::to_string(nparts) + "): " + e.what());
     }
     ast_ = ast;
     return std::make_pair(mutator.outerId(), mutator.innerId());

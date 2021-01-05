@@ -19,6 +19,7 @@ class Schedule {
      * @param id : ID of the loop to be split
      * @param factor : Length of the inner loop. Set to -1 if using `nparts`
      * @param nparts : Length of the outer loop. Set to -1 if using `factor`
+     * @throw InvalidSchedule if the loop is not found
      * @return : (outer loop ID, inner loop ID)
      */
     std::pair<std::string, std::string> split(const std::string &id,

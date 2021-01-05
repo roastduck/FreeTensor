@@ -23,6 +23,30 @@ def test_basic():
 
 	assert std.match(ast)
 
+def test_multiple_loops():
+	with ir.VarDef("y", (4, 8, 16), ir.DataType.Int32, ir.AccessType.Output) as y:
+		with ir.For("i", 0, 4, nid="L1") as i:
+			with ir.For("j", 0, 8, nid="L2") as j:
+				with ir.For("k", 0, 16, nid="L3") as k:
+					y[i, j, k] = (i + j) * k
+	ast = ir.pop_ast()
+	print(ast)
+	s = ir.Schedule(ast)
+	s.reorder(["L3", "L2", "L1"])
+	ast = s.ast()
+	print(ast)
+	ast = ir.lower(ast)
+	print(ast)
+
+	with ir.VarDef("y", (4, 8, 16), ir.DataType.Int32, ir.AccessType.Output) as y:
+		with ir.For("k", 0, 16) as k:
+			with ir.For("j", 0, 8) as j:
+				with ir.For("i", 0, 4) as i:
+					y[i, j, k] = (i + j) * k
+	std = ir.pop_ast()
+
+	assert std.match(ast)
+
 def test_if_in_between():
 	with ir.VarDef([
 			("x", (4,), ir.DataType.Int32, ir.AccessType.Input),
