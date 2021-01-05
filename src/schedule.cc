@@ -134,6 +134,10 @@ Schedule::fission(const std::string &loop, const std::string &after) {
     FissionFor mutator(loop, after);
     try {
         ast = hoist(ast);
+        if (!hoist.found()) {
+            throw InvalidSchedule("Split point " + after + " not found");
+        }
+
         auto &&xLoops = hoist.xLoops();
 
         // var name -> loop id

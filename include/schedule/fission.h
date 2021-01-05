@@ -25,6 +25,7 @@ class HoistVar : public Mutator {
         : loop_(loop), after_(after) {}
 
     const std::string &seqId() const { return seqId_; }
+    bool found() const { return isAfter_; }
 
     const std::vector<std::string> &innerLoops() const { return innerLoops_; }
 

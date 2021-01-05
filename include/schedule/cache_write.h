@@ -94,7 +94,7 @@ class CacheWrite : public Mutator {
             }
 
             // Make cache flush
-            std::vector<Stmt> flush{ret};
+            std::vector<Stmt> flush;
             for (auto &&item : stores_) {
                 if (!checkAllDefined(defs_, item)) {
                     throw InvalidSchedule("Using local variables defined in "
@@ -119,7 +119,10 @@ class CacheWrite : public Mutator {
                 }
             }
 
-            ret = makeStmtSeq("", std::move(flush));
+            auto f = flush.size() == 1 ? flush[0]
+                                       : makeStmtSeq("", std::move(flush));
+            f->setId(flushStmt_);
+            ret = makeStmtSeq("", {ret, f});
             ret =
                 makeVarDef("", cacheVar_, std::move(*buffer_), std::move(ret));
             ret.template as<VarDefNode>()->buffer_->setAtype(AccessType::Cache);

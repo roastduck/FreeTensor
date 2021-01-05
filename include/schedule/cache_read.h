@@ -68,8 +68,10 @@ class CacheRead : public Mutator {
                     makeStore("", cacheVar_, indices, makeLoad(var_, indices)));
             }
 
-            fill.emplace_back(ret);
-            ret = makeStmtSeq("", std::move(fill));
+            auto f =
+                fill.size() == 1 ? fill[0] : makeStmtSeq("", std::move(fill));
+            f->setId(fillStmt_);
+            ret = makeStmtSeq("", {f, ret});
             ret =
                 makeVarDef("", cacheVar_, std::move(*buffer_), std::move(ret));
             ret.template as<VarDefNode>()->buffer_->setAtype(AccessType::Cache);

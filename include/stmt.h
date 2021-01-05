@@ -17,6 +17,7 @@ class StmtNode : public ASTNode {
   public:
     void setId(const std::string &id);
     const std::string &id() const;
+    bool hasNamedId() const;
 
     DEFINE_NODE_ACCESS(Stmt);
 };

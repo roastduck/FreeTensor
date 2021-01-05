@@ -3,7 +3,7 @@
 namespace ir {
 
 void PrintVisitor::printId(const Stmt &op) {
-    if (op->id()[0] != '#') {
+    if (op->hasNamedId()) {
         os << op->id() << ":" << std::endl;
     }
 }
