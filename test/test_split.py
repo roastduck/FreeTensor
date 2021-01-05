@@ -1,4 +1,5 @@
 import ir
+import pytest
 
 def test_factor():
 	with ir.VarDef("y", (8,), ir.DataType.Int32, ir.AccessType.Output) as y:
@@ -63,4 +64,16 @@ def test_guard():
 	std = ir.pop_ast()
 
 	assert std.match(ast)
+
+def test_not_found():
+	with ir.VarDef("y", (8,), ir.DataType.Int32, ir.AccessType.Output) as y:
+		with ir.For("i", 0, 8) as i:
+			y[i] = i
+	ast = ir.pop_ast()
+	print(ast)
+	s = ir.Schedule(ast)
+	with pytest.raises(ir.InvalidSchedule):
+		s.split("L1", 4)
+	ast_ = s.ast() # Should not changed
+	assert ast_.match(ast)
 

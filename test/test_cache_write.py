@@ -1,4 +1,5 @@
 import ir
+import pytest
 
 def test_basic():
 	with ir.VarDef([
@@ -66,4 +67,35 @@ def test_different_indices():
 	std = ir.pop_ast()
 
 	assert std.match(ast)
+
+def test_no_store():
+	with ir.VarDef([
+			("x", (4, 8), ir.DataType.Int32, ir.AccessType.Input),
+			("y", (4, 8), ir.DataType.Int32, ir.AccessType.Output)]) as (x, y):
+		with ir.For("i", 0, 4, nid="L1") as i:
+			with ir.For("j", 0, 8, nid="L2") as j:
+				ir.MarkNid("S0")
+				y[i, j] = x[i, j] * 2
+	ast = ir.pop_ast()
+	print(ast)
+	s = ir.Schedule(ast)
+	with pytest.raises(ir.InvalidSchedule):
+		s.cache_write("S0", "x")
+	ast_ = s.ast() # Should not changed
+	assert ast_.match(ast)
+
+def test_no_stmt():
+	with ir.VarDef([
+			("x", (4, 8), ir.DataType.Int32, ir.AccessType.Input),
+			("y", (4, 8), ir.DataType.Int32, ir.AccessType.Output)]) as (x, y):
+		with ir.For("i", 0, 4, nid="L1") as i:
+			with ir.For("j", 0, 8, nid="L2") as j:
+				y[i, j] = x[i, j] * 2
+	ast = ir.pop_ast()
+	print(ast)
+	s = ir.Schedule(ast)
+	with pytest.raises(ir.InvalidSchedule):
+		s.cache_write("S0", "y")
+	ast_ = s.ast() # Should not changed
+	assert ast_.match(ast)
 

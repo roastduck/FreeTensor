@@ -22,9 +22,8 @@ void CheckLoopOrder::visit(const For &op) {
         // }
     } else {
         if (!curOrder_.empty()) { // Already met the first loop
-            throw InvalidSchedule(
-                "Unable to find all the loops to be reordered. "
-                "These loops should be directly nested");
+            throw InvalidSchedule("Unable to find all the loops. "
+                                  "These loops should be directly nested");
         }
         Visitor::visit(op);
     }

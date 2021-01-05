@@ -1,6 +1,7 @@
 #ifndef CACHE_READ_H
 #define CACHE_READ_H
 
+#include <except.h>
 #include <mutator.h>
 
 namespace ir {
@@ -10,6 +11,7 @@ class CacheRead : public Mutator {
     Ref<Buffer> buffer_;
     std::vector<std::pair<uint64_t, Load>> loads_;
     bool inside_ = false;
+    bool modified_ = false;
 
   public:
     CacheRead(const std::string &stmt, const std::string &var)
@@ -18,6 +20,7 @@ class CacheRead : public Mutator {
 
     const std::string &fillStmt() const { return fillStmt_; }
     const std::string &cacheVar() const { return cacheVar_; }
+    bool modified() const { return modified_; }
 
   private:
     template <class T> Stmt doModify(const T &op) {
@@ -25,6 +28,11 @@ class CacheRead : public Mutator {
             inside_ = true;
             auto ret = Mutator::visit(op);
             inside_ = false;
+
+            if (loads_.empty()) {
+                throw InvalidSchedule("No loads found from the specific "
+                                      "variable in the given scope");
+            }
 
             // Make cache fill
             std::vector<Stmt> fill;
@@ -39,6 +47,7 @@ class CacheRead : public Mutator {
             ret =
                 makeVarDef("", cacheVar_, std::move(*buffer_), std::move(ret));
             ret.template as<VarDefNode>()->buffer_->setAtype(AccessType::Cache);
+            modified_ = true;
             return ret;
         } else {
             return Mutator::visit(op);

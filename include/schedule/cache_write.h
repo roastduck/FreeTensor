@@ -2,6 +2,7 @@
 #define CACHE_WRITE_H
 
 #include <analyze/hash.h>
+#include <except.h>
 #include <mutator.h>
 
 namespace ir {
@@ -11,6 +12,7 @@ class CacheWrite : public Mutator {
     Ref<Buffer> buffer_;
     std::vector<Stmt> stores_;
     bool inside_ = false;
+    bool modified_ = false;
 
   public:
     CacheWrite(const std::string &stmt, const std::string &var)
@@ -19,6 +21,7 @@ class CacheWrite : public Mutator {
 
     const std::string &flushStmt() const { return flushStmt_; }
     const std::string &cacheVar() const { return cacheVar_; }
+    bool modified() const { return modified_; }
 
   private:
     template <class T, class U> bool sameIndices(const T &lhs, const U &rhs) {
@@ -68,6 +71,11 @@ class CacheWrite : public Mutator {
             auto ret = recurseProxy(op);
             inside_ = false;
 
+            if (stores_.empty()) {
+                throw InvalidSchedule(
+                    "no stores to the specified variable in the given scope");
+            }
+
             // Make cache flush
             std::vector<Stmt> flush{ret};
             for (auto &&item : stores_) {
@@ -93,6 +101,7 @@ class CacheWrite : public Mutator {
             ret =
                 makeVarDef("", cacheVar_, std::move(*buffer_), std::move(ret));
             ret.template as<VarDefNode>()->buffer_->setAtype(AccessType::Cache);
+            modified_ = true;
             return ret;
         } else {
             return Mutator::visit(op);

@@ -73,6 +73,7 @@ class Schedule {
      * (NOTE: Currently statements with name scopes inside, like a For node, is
      * not supported)
      * @param var : name of the variable to be cached
+     * @throw InvalidSchedule if the ID or name is not found
      * @return : (ID of the statment that fills into the cache, name of the
      * cache variable)
      */
@@ -86,6 +87,7 @@ class Schedule {
      * (NOTE: Currently statements with name scopes inside, like a For node, is
      * not supported)
      * @param var : name of the variable to be cached
+     * @throw InvalidSchedule if the ID or name is not found
      * @return : (ID of the statment that flushes from the cache, name of the
      * cache variable)
      */

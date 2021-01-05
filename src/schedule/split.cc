@@ -36,6 +36,7 @@ Stmt Splitter::visit(const For &_op) {
         auto body = makeIf("", makeLT(newIter, op->end_), op->body_);
         auto inner = makeFor(dst1_, iter1, makeIntConst(0), factor, body);
         auto outer = makeFor(dst0_, iter0, makeIntConst(0), nparts, inner);
+        found_ = true;
         return outer;
     } else {
         return Mutator::visit(_op);
