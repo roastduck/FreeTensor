@@ -1,5 +1,4 @@
 #include <analyze/hash.h>
-#include <pass/shrink_var.h>
 #include <schedule/cache_read.h>
 
 namespace ir {

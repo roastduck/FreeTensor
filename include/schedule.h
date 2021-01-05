@@ -69,13 +69,28 @@ class Schedule {
     /**
      * Cache the reads of a variable into a new local variable
      *
-     * @param stmt : ID of the statment or scope (e.g. a loop) to be modified
+     * @param stmt : ID of the statment or block (e.g. an If) to be modified
+     * (NOTE: Currently statements with name scopes inside, like a For node, is
+     * not supported)
      * @param var : name of the variable to be cached
      * @return : (ID of the statment that fills into the cache, name of the
      * cache variable)
      */
     std::pair<std::string, std::string> cacheRead(const std::string &stmt,
                                                   const std::string &var);
+
+    /**
+     * Cache the writes of a variable into a new local variable
+     *
+     * @param stmt : ID of the statment or block (e.g. an If) to be modified
+     * (NOTE: Currently statements with name scopes inside, like a For node, is
+     * not supported)
+     * @param var : name of the variable to be cached
+     * @return : (ID of the statment that flushes from the cache, name of the
+     * cache variable)
+     */
+    std::pair<std::string, std::string> cacheWrite(const std::string &stmt,
+                                                   const std::string &var);
 };
 
 } // namespace ir
