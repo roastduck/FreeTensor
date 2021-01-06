@@ -13,7 +13,7 @@ class HoistVar : public Mutator {
     std::string loop_, after_, seqId_;
     std::unordered_set<std::string> part0Vars_, part1Vars_;
     std::vector<VarDef> defStack_;
-    std::vector<std::string> innerLoops_;
+    std::vector<std::string> outerScopes_, innerLoops_;
 
     // var name -> loop id: which loops will a var cross during hoisting?
     std::unordered_map<std::string, std::vector<std::string>> xLoops_;
@@ -27,6 +27,7 @@ class HoistVar : public Mutator {
     const std::string &seqId() const { return seqId_; }
     bool found() const { return isAfter_; }
 
+    const std::vector<std::string> &outerScopes() const { return outerScopes_; }
     const std::vector<std::string> &innerLoops() const { return innerLoops_; }
 
     const std::unordered_map<std::string, std::vector<std::string>> &

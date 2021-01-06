@@ -176,8 +176,20 @@ std::string AnalyzeDeps::makeAccMap(const AccessPoint &p, int iterDim,
 std::string AnalyzeDeps::makeSingleIneq(FindDepsMode mode, int iterId,
                                         int iterDim) const {
     auto idStr = std::to_string(iterId);
-    ASSERT(mode == FindDepsMode::Normal || mode == FindDepsMode::Inv);
-    auto ineq = mode == FindDepsMode::Inv ? ">" : "<";
+    std::string ineq;
+    switch (mode) {
+    case FindDepsMode::Inv:
+        ineq = ">";
+        break;
+    case FindDepsMode::Same:
+        ineq = "=";
+        break;
+    case FindDepsMode::Normal:
+        ineq = "<";
+        break;
+    default:
+        ASSERT(false);
+    }
     return "{" + makeNdList("d", iterDim) + " -> " + makeNdList("d_", iterDim) +
            ": d_" + idStr + " " + ineq + " d" + idStr + "}";
 }

@@ -84,6 +84,7 @@ class FindAccessPoint : public Visitor {
 
 enum class FindDepsMode : int {
     Normal,
+    Same,
     Inv,
 };
 

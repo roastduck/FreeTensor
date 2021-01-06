@@ -10,6 +10,8 @@ Stmt HoistVar::visit(const For &op) {
                 xLoops_[def->name_].emplace_back(op->id());
             }
             innerLoops_.emplace_back(op->id());
+        } else {
+            outerScopes_.emplace_back(op->id());
         }
         return ret;
     } else {
@@ -30,6 +32,7 @@ Stmt HoistVar::visit(const For &op) {
 
 Stmt HoistVar::visit(const StmtSeq &op) {
     if (!inside_) {
+        outerScopes_.emplace_back(op->id());
         return Mutator::visit(op);
     } else {
         std::vector<Stmt> before, after;
