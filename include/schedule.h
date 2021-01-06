@@ -1,6 +1,8 @@
 #ifndef SCHEDULE_H
 #define SCHEDULE_H
 
+#include <unordered_map>
+
 #include <stmt.h>
 
 namespace ir {
@@ -43,6 +45,7 @@ class Schedule {
      */
     std::string merge(const std::string &loop1, const std::string &loop2);
 
+    typedef std::unordered_map<std::string, std::string> IDMap;
     /**
      * Fission a loop into two loops each containing part of the statements, one
      * followed by another
@@ -50,10 +53,11 @@ class Schedule {
      * @param loop : ID of the loop to be fissioned
      * @param after : ID of the last statment of the first loop
      * @throw InvalidSchedule if any dependency cannot be resolved
-     * @return : (first loop ID, last loop iD)
+     * @return : ({old ID -> new ID in 1st loop}, {old ID -> new ID in 2nd
+     * loop})
      */
-    std::pair<std::string, std::string> fission(const std::string &loop,
-                                                const std::string &after);
+    std::pair<IDMap, IDMap> fission(const std::string &loop,
+                                    const std::string &after);
 
     /**
      * Fuse two directly following loops with the same length into one

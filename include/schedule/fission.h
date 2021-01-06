@@ -82,16 +82,23 @@ class AddDimToVar : public Mutator {
 
 class FissionFor : public Mutator {
     std::string loop_, after_;
-    std::string id0_, id1_;
+    std::unordered_map<std::string, std::string> ids0_, ids1_;
     std::unordered_set<std::string> varUses_;
     bool inside_ = false, isPart0_ = true, inPart_ = false;
 
   public:
     FissionFor(const std::string &loop, const std::string &after)
-        : loop_(loop), after_(after), id0_(loop_ + ".a"), id1_(loop_ + ".b") {}
+        : loop_(loop), after_(after) {}
 
-    const std::string &id0() const { return id0_; }
-    const std::string &id1() const { return id1_; }
+    const std::unordered_map<std::string, std::string> &ids0() const {
+        return ids0_;
+    }
+    const std::unordered_map<std::string, std::string> &ids1() const {
+        return ids1_;
+    }
+
+  private:
+    void markNewId(const Stmt &op, bool isPart0);
 
   protected:
     virtual Stmt visit(const For &op) override;
@@ -100,6 +107,8 @@ class FissionFor : public Mutator {
     virtual Stmt visit(const Store &op) override;
     virtual Expr visit(const Load &op) override;
     virtual Stmt visit(const AddTo &op) override;
+    virtual Stmt visit(const If &op) override;
+    virtual Stmt visit(const Assert &op) override;
 };
 
 } // namespace ir

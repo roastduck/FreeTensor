@@ -127,7 +127,7 @@ std::string Schedule::merge(const std::string &loop1,
     return ret;
 }
 
-std::pair<std::string, std::string>
+std::pair<Schedule::IDMap, Schedule::IDMap>
 Schedule::fission(const std::string &loop, const std::string &after) {
     auto ast = ast_;
     HoistVar hoist(loop, after);
@@ -135,7 +135,8 @@ Schedule::fission(const std::string &loop, const std::string &after) {
     try {
         ast = hoist(ast);
         if (!hoist.found()) {
-            throw InvalidSchedule("Split point " + after + " not found");
+            throw InvalidSchedule("Split point " + after +
+                                  " not found inside " + loop);
         }
 
         auto &&xLoops = hoist.xLoops();
@@ -174,7 +175,7 @@ Schedule::fission(const std::string &loop, const std::string &after) {
                               "): " + e.what());
     }
     ast_ = ast;
-    return std::make_pair(mutator.id0(), mutator.id1());
+    return std::make_pair(mutator.ids0(), mutator.ids1());
 }
 
 std::string Schedule::fuse(const std::string &loop0, const std::string &loop1) {

@@ -130,9 +130,24 @@ Stmt AddDimToVar::visit(const AddTo &_op) {
     return doAdd(__op.as<AddToNode>());
 }
 
+void FissionFor::markNewId(const Stmt &op, bool isPart0) {
+    std::string oldId = op->id(), newId;
+    if (isPart0) {
+        op->setId(newId = oldId + ".a");
+        ids0_.emplace(oldId, newId);
+    } else {
+        op->setId(newId = oldId + ".b");
+        ids1_.emplace(oldId, newId);
+    }
+}
+
 Stmt FissionFor::visit(const For &op) {
     if (op->id() != loop_) {
-        return Mutator::visit(op);
+        auto ret = Mutator::visit(op);
+        if (inside_) {
+            markNewId(ret, isPart0_);
+        }
+        return ret;
     } else {
         auto begin = (*this)(op->begin_);
         auto end = (*this)(op->end_);
@@ -142,8 +157,10 @@ Stmt FissionFor::visit(const For &op) {
         isPart0_ = false, inPart_ = false;
         auto part1 = (*this)(op->body_);
         inside_ = false;
-        auto for0 = makeFor(id0_, op->iter_, begin, end, part0);
-        auto for1 = makeFor(id1_, op->iter_, begin, end, part1);
+        auto for0 = makeFor(op->id(), op->iter_, begin, end, part0);
+        auto for1 = makeFor(op->id(), op->iter_, begin, end, part1);
+        markNewId(for0, true);
+        markNewId(for1, false);
         return makeStmtSeq("", {for0, for1});
     }
 }
@@ -166,9 +183,11 @@ Stmt FissionFor::visit(const StmtSeq &op) {
             }
         }
         if (stmts.size() == 1) {
-            return stmts[0];
+            return stmts[0]; // id already modified
         } else {
-            return makeStmtSeq(op->id(), std::move(stmts));
+            Stmt ret = makeStmtSeq(op->id(), std::move(stmts));
+            markNewId(ret, isPart0_);
+            return ret;
         }
     }
 }
@@ -181,11 +200,9 @@ Stmt FissionFor::visit(const VarDef &_op) {
         auto __op = Mutator::visit(_op);
         ASSERT(__op->nodeType() == ASTNodeType::VarDef);
         auto op = __op.as<VarDefNode>();
-        if (varUses_.count(op->name_)) {
-            return op;
-        } else {
-            return op->body_;
-        }
+        Stmt ret = varUses_.count(op->name_) ? __op : op->body_;
+        markNewId(ret, isPart0_);
+        return ret;
     }
 }
 
@@ -193,7 +210,11 @@ Stmt FissionFor::visit(const Store &op) {
     if (inPart_) {
         varUses_.insert(op->var_);
     }
-    return Mutator::visit(op);
+    auto ret = Mutator::visit(op);
+    if (inside_) {
+        markNewId(ret, isPart0_);
+    }
+    return ret;
 }
 
 Expr FissionFor::visit(const Load &op) {
@@ -207,7 +228,27 @@ Stmt FissionFor::visit(const AddTo &op) {
     if (inPart_) {
         varUses_.insert(op->var_);
     }
-    return Mutator::visit(op);
+    auto ret = Mutator::visit(op);
+    if (inside_) {
+        markNewId(ret, isPart0_);
+    }
+    return ret;
+}
+
+Stmt FissionFor::visit(const If &op) {
+    auto ret = Mutator::visit(op);
+    if (inside_) {
+        markNewId(ret, isPart0_);
+    }
+    return ret;
+}
+
+Stmt FissionFor::visit(const Assert &op) {
+    auto ret = Mutator::visit(op);
+    if (inside_) {
+        markNewId(ret, isPart0_);
+    }
+    return ret;
 }
 
 } // namespace ir
