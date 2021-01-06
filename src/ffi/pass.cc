@@ -1,6 +1,7 @@
 #include <ffi.h>
 #include <pass/code_gen_c.h>
 #include <pass/flatten_stmt_seq.h>
+#include <pass/shrink_for.h>
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
 #include <pass/sink_var.h>
@@ -13,6 +14,7 @@ void init_ffi_pass(py::module_ &m) {
     m.def("flatten_stmt_seq", &flattenStmtSeq);
     m.def("sink_var", &sinkVar);
     m.def("shrink_var", &shrinkVar);
+    m.def("shrink_for", &shrinkFor);
 }
 
 } // namespace ir

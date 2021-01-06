@@ -182,6 +182,14 @@ void PrintVisitor::visit(const Not &op) {
 
 void PrintVisitor::visit(const For &op) {
     printId(op);
+    if (op->info_max_begin_.isValid() && op->info_min_end_.isValid()) {
+        makeIndent();
+        os << "// max_begin = ";
+        (*this)(op->info_max_begin_);
+        os << ", min_end = ";
+        (*this)(op->info_min_end_);
+        os << std::endl;
+    }
     makeIndent();
     os << "for " << op->iter_ << " = ";
     (*this)(op->begin_);

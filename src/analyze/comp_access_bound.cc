@@ -65,6 +65,7 @@ Stmt CompAccessBound::visit(const VarDef &_op) {
                     upper = reduceMax(upper, upperItem);
                 } else {
                     upper = op->buffer_->tensor().shape()[i];
+                    break;
                 }
             }
 
@@ -72,6 +73,8 @@ Stmt CompAccessBound::visit(const VarDef &_op) {
             op->info_acc_len_->emplace_back(
                 makeAdd(makeSub(upper, lower), makeIntConst(1)));
         }
+    } else {
+        return op->body_;
     }
     return op;
 }

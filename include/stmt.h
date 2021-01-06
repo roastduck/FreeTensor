@@ -124,6 +124,9 @@ class ForNode : public StmtNode {
     std::string iter_;
     Expr begin_, end_;
     Stmt body_;
+
+    Expr info_max_begin_, info_min_end_;
+
     DEFINE_NODE_TRAIT(For);
 };
 typedef Ref<ForNode> For;

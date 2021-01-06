@@ -53,6 +53,9 @@ class AnalyzeBounds : public Visitor {
 
     uint64_t getHash(const Expr &op);
 
+    static Expr sub1(const Expr &op);
+    static Expr add1(const Expr &op);
+
   public:
     AnalyzeBounds(const std::unordered_map<const ExprNode *, uint64_t> &hash,
                   const std::unordered_map<const ASTNode *, LinearExpr> &linear)
@@ -64,7 +67,6 @@ class AnalyzeBounds : public Visitor {
   protected:
     virtual void visit(const VarDef &op) override;
     virtual void visit(const Var &op) override;
-    virtual void visit(const Store &op) override;
     virtual void visit(const Load &op) override;
     virtual void visit(const IntConst &op) override;
     virtual void visit(const Add &op) override;
@@ -72,6 +74,7 @@ class AnalyzeBounds : public Visitor {
     virtual void visit(const Mul &op) override;
     virtual void visit(const Div &op) override;
     virtual void visit(const For &op) override;
+    virtual void visit(const If &op) override;
 };
 
 } // namespace ir
