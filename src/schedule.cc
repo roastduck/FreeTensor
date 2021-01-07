@@ -15,6 +15,7 @@
 #include <schedule/merge.h>
 #include <schedule/reorder.h>
 #include <schedule/split.h>
+#include <schedule/swap.h>
 
 namespace ir {
 
@@ -217,6 +218,24 @@ std::string Schedule::fuse(const std::string &loop0, const std::string &loop1) {
     }
     ast_ = ast;
     return mutator.fused();
+}
+
+void Schedule::swap(const std::vector<std::string> &order) {
+    auto ast = ast_;
+    try {
+        Swap mutator(order);
+        ast = mutator(ast);
+        if (!mutator.found()) {
+            throw InvalidSchedule("Statements not found or not consecutive");
+        }
+    } catch (const InvalidSchedule &e) {
+        std::string msg = "Invalid reorder(";
+        for (size_t i = 0, iEnd = order.size(); i < iEnd; i++) {
+            msg += order[i] + (i < iEnd - 1 ? ", " : "");
+        }
+        throw InvalidSchedule(msg + "): " + e.what());
+    }
+    ast_ = ast;
 }
 
 std::pair<std::string, std::string>

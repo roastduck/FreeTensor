@@ -51,7 +51,7 @@ class Schedule {
      * followed by another
      *
      * @param loop : ID of the loop to be fissioned
-     * @param after : ID of the last statment of the first loop
+     * @param after : ID of the last statement of the first loop
      * @throw InvalidSchedule if any dependency cannot be resolved
      * @return : ({old ID -> new ID in 1st loop}, {old ID -> new ID in 2nd
      * loop})
@@ -72,14 +72,23 @@ class Schedule {
     std::string fuse(const std::string &loop0, const std::string &loop1);
 
     /**
+     * Swap statements in the same block
+     *
+     * @param order : list of IDs of the statements
+     * @throw InvalidSchedule if the statements are not found or the
+     * dependencies cannot be solved
+     */
+    void swap(const std::vector<std::string> &order);
+
+    /**
      * Cache the reads of a variable into a new local variable
      *
-     * @param stmt : ID of the statment or block (e.g. an If) to be modified.
+     * @param stmt : ID of the statement or block (e.g. an If) to be modified.
      * Note that it is not supported to define a local variable inside stmt and
      * use it to read the variable to be cached.
      * @param var : name of the variable to be cached
      * @throw InvalidSchedule if the ID or name is not found
-     * @return : (ID of the statment that fills into the cache, name of the
+     * @return : (ID of the statement that fills into the cache, name of the
      * cache variable)
      */
     std::pair<std::string, std::string> cacheRead(const std::string &stmt,
@@ -88,12 +97,12 @@ class Schedule {
     /**
      * Cache the writes of a variable into a new local variable
      *
-     * @param stmt : ID of the statment or block (e.g. an If) to be modified
+     * @param stmt : ID of the statement or block (e.g. an If) to be modified
      * Note that it is not supported to define a local variable inside stmt and
      * use it to write the variable to be cached.
      * @param var : name of the variable to be cached
      * @throw InvalidSchedule if the ID or name is not found
-     * @return : (ID of the statment that flushes from the cache, name of the
+     * @return : (ID of the statement that flushes from the cache, name of the
      * cache variable)
      */
     std::pair<std::string, std::string> cacheWrite(const std::string &stmt,

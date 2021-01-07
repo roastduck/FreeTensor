@@ -15,6 +15,7 @@ void init_ffi_schedule(py::module_ &m) {
         .def("merge", &Schedule::merge, "loop1"_a, "loop2"_a)
         .def("fission", &Schedule::fission, "loop"_a, "after"_a)
         .def("fuse", &Schedule::fuse, "loop0"_a, "loop1"_a)
+        .def("swap", &Schedule::swap, "order"_a)
         .def("cache_read", &Schedule::cacheRead, "stmt"_a, "var"_a)
         .def("cache_write", &Schedule::cacheWrite, "stmt"_a, "var"_a);
 }
