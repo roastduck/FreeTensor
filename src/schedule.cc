@@ -19,14 +19,15 @@
 
 namespace ir {
 
-static std::string dep2Str(const std::string &loop, const std::string &var,
+static std::string dep2Str(const std::string &scope, const std::string &var,
                            const AST &later, const AST &earlier) {
     std::ostringstream os;
     os << "Dependency "
        << (later->nodeType() == ASTNodeType::Load ? "READ " : "WRITE ") << later
        << " after "
        << (earlier->nodeType() == ASTNodeType::Load ? "READ " : "WRITE ")
-       << earlier << " along loop " << loop << " cannot be resolved";
+       << earlier << " along loop or statement block " << scope
+       << " cannot be resolved";
     return std::regex_replace(os.str(), std::regex("\n"), "");
 }
 
@@ -75,7 +76,8 @@ void Schedule::reorder(const std::vector<std::string> &dstOrder) {
                         [&](const std::vector<
                                 std::pair<std::string, FindDepsMode>> &cond,
                             const std::string &var, const AST &later,
-                            const AST &earlier) {
+                            const AST &earlier, const Cursor &,
+                            const Cursor &) {
                             ASSERT(cond.size() == 1);
                             std::ostringstream os;
                             os << "Loop " << curOrder[j]->id() << " and "
@@ -159,7 +161,8 @@ Schedule::fission(const std::string &loop, const std::string &after) {
         std::unordered_map<std::string, std::vector<std::string>> toAdd;
         auto found =
             [&](const std::vector<std::pair<std::string, FindDepsMode>> &cond,
-                const std::string &var, const AST &later, const AST &earlier) {
+                const std::string &var, const AST &later, const AST &earlier,
+                const Cursor &, const Cursor &) {
                 ASSERT(cond.size() >= 2);
                 auto &&id = cond[cond.size() - 2].first;
                 if (!xLoops.count(var) ||
@@ -192,7 +195,8 @@ std::string Schedule::fuse(const std::string &loop0, const std::string &loop1) {
     try {
         auto found =
             [&](const std::vector<std::pair<std::string, FindDepsMode>> &cond,
-                const std::string &var, const AST &later, const AST &earlier) {
+                const std::string &var, const AST &later, const AST &earlier,
+                const Cursor &, const Cursor &) {
                 ASSERT(cond.size() == 1);
                 throw InvalidSchedule(
                     dep2Str(cond[0].first, var, later, earlier));
@@ -225,9 +229,44 @@ void Schedule::swap(const std::vector<std::string> &order) {
     try {
         Swap mutator(order);
         ast = mutator(ast);
-        if (!mutator.found()) {
+        auto scope = mutator.scope();
+        if (!scope.isValid()) {
             throw InvalidSchedule("Statements not found or not consecutive");
         }
+
+        auto findParentStmt = [&](const Cursor &cursor) -> Stmt {
+            for (auto &&item : order) {
+                auto stmt = cursor.getParentById(item);
+                if (stmt.isValid()) {
+                    return stmt;
+                }
+            }
+            ASSERT(false);
+        };
+        auto found =
+            [&](const std::vector<std::pair<std::string, FindDepsMode>> &cond,
+                const std::string &var, const AST &later, const AST &earlier,
+                const Cursor &laterCursor, const Cursor &earlierCursor) {
+                auto s0 = findParentStmt(laterCursor);
+                auto s1 = findParentStmt(earlierCursor);
+                auto old0 = std::find_if(
+                    scope->stmts_.begin(), scope->stmts_.end(),
+                    [&](const Stmt &s) { return s->id() == s0->id(); });
+                auto old1 = std::find_if(
+                    scope->stmts_.begin(), scope->stmts_.end(),
+                    [&](const Stmt &s) { return s->id() == s1->id(); });
+                auto new0 = std::find_if(
+                    order.begin(), order.end(),
+                    [&](const std::string &id) { return id == s0->id(); });
+                auto new1 = std::find_if(
+                    order.begin(), order.end(),
+                    [&](const std::string &id) { return id == s1->id(); });
+                if ((old0 < old1) != (new0 < new1)) {
+                    throw InvalidSchedule(
+                        dep2Str(scope->id(), var, later, earlier));
+                }
+            };
+        findDeps(ast, {{{scope->id(), FindDepsMode::Normal}}}, found);
     } catch (const InvalidSchedule &e) {
         std::string msg = "Invalid reorder(";
         for (size_t i = 0, iEnd = order.size(); i < iEnd; i++) {

@@ -43,5 +43,24 @@ void Visitor::operator()(const AST &op) {
     }
 }
 
+void VisitorWithCursor::operator()(const AST &op) {
+    switch (op->nodeType()) {
+    case ASTNodeType::Any:
+    case ASTNodeType::StmtSeq:
+    case ASTNodeType::VarDef:
+    case ASTNodeType::Store:
+    case ASTNodeType::AddTo:
+    case ASTNodeType::For:
+    case ASTNodeType::If:
+    case ASTNodeType::Assert:
+        cursor_.enter(op.as<StmtNode>());
+        Visitor::operator()(op);
+        cursor_.leave();
+        break;
+    default:
+        Visitor::operator()(op);
+    }
+}
+
 } // namespace ir
 

@@ -47,7 +47,8 @@ void FindAccessPoint::visit(const Load &op) {
     auto ap = Ref<AccessPoint>::make();
     ASSERT(cur_.size() == begin_.size());
     ASSERT(cur_.size() == end_.size());
-    *ap = {op, defAxis_.at(op->var_), cur_, begin_, end_, op->indices_};
+    *ap = {op,     cursor(), defAxis_.at(op->var_), cur_,
+           begin_, end_,     op->indices_};
     points_.emplace(op.get(), ap);
     reads_.emplace(op->var_, ap);
 }
@@ -247,7 +248,8 @@ void AnalyzeDeps::checkDep(const AccessPoint &point, const AccessPoint &other) {
         }
         if (found) {
             try {
-                found_(item, getVar(point.op_), point.op_, other.op_);
+                found_(item, getVar(point.op_), point.op_, other.op_,
+                       point.cursor_, other.cursor_);
             } catch (...) {
                 isl_map_free(nearest);
                 throw;
@@ -269,9 +271,7 @@ void AnalyzeDeps::visit(const Load &op) {
 void findDeps(
     const Stmt &_op,
     const std::vector<std::vector<std::pair<std::string, FindDepsMode>>> &_cond,
-    const std::function<
-        void(const std::vector<std::pair<std::string, FindDepsMode>> &,
-             const std::string &, const AST &, const AST &)> &_found) {
+    const FindDepsCallback &_found) {
     auto op = Disambiguous()(_op);
     auto hash = getHashMap(op);
     AnalyzeLinear analyzeLinear(hash);
@@ -292,13 +292,14 @@ void findDeps(
     }
     auto found = [&](const std::vector<std::pair<int, FindDepsMode>> &_cond,
                      const std::string &var, const AST &later,
-                     const AST &earlier) {
+                     const AST &earlier, const Cursor &laterCursor,
+                     const Cursor &earlierCursor) {
         std::vector<std::pair<std::string, FindDepsMode>> cond;
         cond.reserve(_cond.size());
         for (auto &&item : _cond) {
             cond.emplace_back(visitor.axis2loop().at(item.first), item.second);
         }
-        _found(cond, var, later, earlier);
+        _found(cond, var, later, earlier, laterCursor, earlierCursor);
     };
     AnalyzeDeps mutator(visitor.points(), visitor.reads(), visitor.writes(),
                         linear, cond, found);

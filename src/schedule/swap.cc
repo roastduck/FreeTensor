@@ -30,7 +30,7 @@ Stmt Swap::visit(const StmtSeq &_op) {
         }
         stmts[start + i] = op->stmts_[p];
     }
-    found_ = true;
+    scope_ = _op; // the old one
     return makeStmtSeq(op->id(), std::move(stmts));
 }
 

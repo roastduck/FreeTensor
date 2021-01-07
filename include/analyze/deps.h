@@ -17,6 +17,7 @@ namespace ir {
 
 struct AccessPoint {
     AST op_;
+    Cursor cursor_;
     int defAxis_;
     std::vector<Expr> iter_, begin_, end_, access_;
 };
@@ -24,7 +25,7 @@ struct AccessPoint {
 /**
  * Find read and write points
  */
-class FindAccessPoint : public Visitor {
+class FindAccessPoint : public VisitorWithCursor {
     std::vector<Expr> cur_;         // Current iteration point in the space
     std::vector<Expr> begin_, end_; // Point range in the space
     std::unordered_map<const ASTNode *, Ref<AccessPoint>> points_;
@@ -62,7 +63,8 @@ class FindAccessPoint : public Visitor {
         begin_.emplace_back(makeIntConst(0));
         end_.emplace_back(makeIntConst(2));
         auto ap = Ref<AccessPoint>::make();
-        *ap = {op, defAxis_.at(op->var_), cur_, begin_, end_, op->indices_};
+        *ap = {op,     cursor(), defAxis_.at(op->var_), cur_,
+               begin_, end_,     op->indices_};
         points_.emplace(op.get(), ap);
         writes_.emplace(op->var_, ap);
 
@@ -103,7 +105,7 @@ class AnalyzeDeps : public Visitor {
     // callback(axis, var name, later access, earlier access): Called when we
     // found a interesting dependency
     typedef std::function<void(const Cond &, const std::string &, const AST &,
-                               const AST &)>
+                               const AST &, const Cursor &, const Cursor &)>
         FoundCallback;
     const FoundCallback &found_;
 
@@ -165,19 +167,23 @@ class AnalyzeDeps : public Visitor {
     void visit(const Load &op) override;
 };
 
+typedef std::function<void(
+    const std::vector<std::pair<std::string, FindDepsMode>> &,
+    const std::string &, const AST &, const AST &, const Cursor &,
+    const Cursor &)>
+    FindDepsCallback;
 /**
  * Find all inverse (negative) dependencies along the given loops
  *
  * @param op : AST root
  * @param cond : conditions to check: reduce_and [ reduce_or [ axis, mode ]]
- * @param found : callback(loop ID, var name, later op, erlier op)
+ * @param found : callback(sub-condition that fails, var name, later op, earlier
+ * op, later cursor, earlier cursor)
  */
 void findDeps(
     const Stmt &op,
     const std::vector<std::vector<std::pair<std::string, FindDepsMode>>> &cond,
-    const std::function<
-        void(const std::vector<std::pair<std::string, FindDepsMode>> &,
-             const std::string &, const AST &, const AST &)> &found);
+    const FindDepsCallback &found);
 
 }; // namespace ir
 

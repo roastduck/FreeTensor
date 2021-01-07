@@ -94,7 +94,7 @@ Stmt sinkVar(const Stmt &_op) {
     std::set<std::pair<std::string, std::string>> deps; // {(var, loop)}
     auto found = [&](const std::vector<std::pair<std::string, FindDepsMode>> &c,
                      const std::string &var, const AST &later,
-                     const AST &earlier) {
+                     const AST &earlier, const Cursor &, const Cursor &) {
         ASSERT(c.size() == 1);
         deps.emplace(var, c[0].first);
     };

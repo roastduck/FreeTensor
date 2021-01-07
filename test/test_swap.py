@@ -62,3 +62,20 @@ def test_not_consecutive():
 	ast_ = s.ast() # Should not changed
 	assert ast_.match(ast)
 
+def test_dependency():
+	with ir.VarDef([
+			("y1", (4,), ir.DataType.Int32, ir.AccessType.InOut),
+			("y2", (4,), ir.DataType.Int32, ir.AccessType.Output)]) as (y1, y2):
+		with ir.For("i", 0, 4, nid="L1") as i:
+			ir.MarkNid("S1")
+			y1[i] = i + 1
+			ir.MarkNid("S2")
+			y2[i] = y1[i] * 2
+	ast = ir.pop_ast()
+	print(ast)
+	s = ir.Schedule(ast)
+	with pytest.raises(ir.InvalidSchedule):
+		s.swap(["S2", "S1"])
+	ast_ = s.ast() # Should not changed
+	assert ast_.match(ast)
+

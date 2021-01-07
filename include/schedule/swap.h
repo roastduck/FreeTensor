@@ -10,12 +10,12 @@ namespace ir {
 
 class Swap : public Mutator {
     std::vector<std::string> order_;
-    bool found_ = false;
+    StmtSeq scope_;
 
   public:
     Swap(const std::vector<std::string> &order) : order_(order) {}
 
-    bool found() const { return found_; }
+    const StmtSeq &scope() const { return scope_; }
 
   protected:
     Stmt visit(const StmtSeq &op) override;
