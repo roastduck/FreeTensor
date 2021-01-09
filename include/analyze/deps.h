@@ -11,6 +11,7 @@
 #include <isl/set.h>
 
 #include <analyze/linear.h>
+#include <cursor.h>
 #include <visitor.h>
 
 namespace ir {

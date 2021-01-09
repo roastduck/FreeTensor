@@ -3,6 +3,8 @@
 #include <sstream>
 
 #include <analyze/deps.h>
+#include <cursor.h>
+#include <pass/flatten_stmt_seq.h>
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
 #include <pass/sink_var.h>
@@ -311,6 +313,61 @@ Schedule::cacheWrite(const std::string &stmt, const std::string &var) {
     }
     ast_ = ast;
     return std::make_pair(mutator.flushStmt(), mutator.cacheVar());
+}
+
+void Schedule::moveTo(const std::string &_stmt, const std::string &_dst,
+                      bool toBegin, bool toEnd) {
+    auto bak = ast_;
+    try {
+        auto stmt = _stmt, dst = _dst;
+        while (true) {
+            ast_ = flattenStmtSeq(ast_);
+            Cursor s = getCursorById(ast_, stmt);
+            Cursor d = getCursorById(ast_, dst);
+            if (toBegin) {
+                d.setMode(CursorMode::Begin);
+            }
+            if (toEnd) {
+                d.setMode(CursorMode::End);
+            }
+
+            if (d.isBefore(s)) {
+                if (s.hasPrev()) {
+                    std::vector<std::string> orderRev;
+                    if (!d.isBefore(s.prev())) {
+                        break;
+                    }
+                    while (s.hasPrev() && d.isBefore(s.prev())) {
+                        s = s.prev();
+                        orderRev.emplace_back(s.id());
+                    }
+                    orderRev.emplace_back(stmt);
+                    std::vector<std::string> order(orderRev.rbegin(),
+                                                   orderRev.rend());
+                    swap(order);
+                } else {
+                    if (!d.isBefore(s.outer())) {
+                        break;
+                    }
+                    while (!s.hasPrev() && d.isBefore(s.outer())) {
+                        s = s.outer();
+                    }
+                    // TODO: Fission IfNode
+                    ASSERT(s.top()->nodeType() == ASTNodeType::For);
+                    auto idMap = fission(s.id(), stmt).first;
+                    stmt = idMap.at(s.id());
+                }
+                // TODO: Fuse if d is inner of s
+            } else {
+                // TODO
+                ASSERT(false);
+            }
+        }
+    } catch (const InvalidSchedule &e) {
+        ast_ = bak;
+        throw InvalidSchedule("Invalid move_to(" + _stmt + ", " + _dst +
+                              "): " + e.what());
+    }
 }
 
 } // namespace ir

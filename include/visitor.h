@@ -1,7 +1,6 @@
 #ifndef VISITOR_H
 #define VISITOR_H
 
-#include <cursor.h>
 #include <debug.h>
 #include <expr.h>
 #include <stmt.h>
@@ -181,16 +180,6 @@ class Visitor {
         (*this)(op->cond_);
         (*this)(op->body_);
     }
-};
-
-class VisitorWithCursor : public Visitor {
-    Cursor cursor_;
-
-  public:
-    virtual void operator()(const AST &op) override;
-
-  protected:
-    const Cursor &cursor() const { return cursor_; }
 };
 
 } // namespace ir

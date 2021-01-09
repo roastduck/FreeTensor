@@ -107,6 +107,23 @@ class Schedule {
      */
     std::pair<std::string, std::string> cacheWrite(const std::string &stmt,
                                                    const std::string &var);
+
+    /**
+     * Move a statement to a new position
+     *
+     * This is a composite schedule command, which is implemented with other
+     * commands
+     *
+     * @param stmt : ID of the statement to be moved
+     * @param dst : Insert `stmt` to be directly after this statement
+     * @param toBegin : Move to the begin point of dst. This specifies the
+     * behavior when dst is a scope, e.g. a loop
+     * @param toEnd : Move to the end point of dst This specifies the behavior
+     * when dst is a scope, e.g. a loop
+     * @throw InvalidSchedule if there is no feasible path to move
+     */
+    void moveTo(const std::string &stmt, const std::string &dst,
+                bool toBegin = false, bool toEnd = false);
 };
 
 } // namespace ir
