@@ -243,7 +243,7 @@ void Schedule::swap(const std::vector<std::string> &order) {
                     return stmt;
                 }
             }
-            ASSERT(false);
+            return nullptr;
         };
         auto found =
             [&](const std::vector<std::pair<std::string, FindDepsMode>> &cond,
@@ -251,6 +251,9 @@ void Schedule::swap(const std::vector<std::string> &order) {
                 const Cursor &laterCursor, const Cursor &earlierCursor) {
                 auto s0 = findParentStmt(laterCursor);
                 auto s1 = findParentStmt(earlierCursor);
+                if (!s0.isValid() || !s1.isValid()) {
+                    return;
+                }
                 auto old0 = std::find_if(
                     scope->stmts_.begin(), scope->stmts_.end(),
                     [&](const Stmt &s) { return s->id() == s0->id(); });
@@ -321,7 +324,7 @@ void Schedule::moveTo(const std::string &_stmt, const std::string &_dst,
     try {
         auto stmt = _stmt, dst = _dst;
         while (true) {
-            ast_ = flattenStmtSeq(ast_);
+            ast_ = flattenStmtSeq(ast_, true);
             Cursor s = getCursorById(ast_, stmt);
             Cursor d = getCursorById(ast_, dst);
             if (toBegin) {

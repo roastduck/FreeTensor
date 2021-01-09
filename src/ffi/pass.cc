@@ -8,13 +8,15 @@
 
 namespace ir {
 
+using namespace pybind11::literals;
+
 void init_ffi_pass(py::module_ &m) {
-    m.def("code_gen_c", &codeGenC);
-    m.def("simplify_pass", &simplifyPass);
-    m.def("flatten_stmt_seq", &flattenStmtSeq);
-    m.def("sink_var", &sinkVar);
-    m.def("shrink_var", &shrinkVar);
-    m.def("shrink_for", &shrinkFor);
+    m.def("code_gen_c", &codeGenC, "ast"_a);
+    m.def("simplify_pass", &simplifyPass, "ast"_a);
+    m.def("flatten_stmt_seq", &flattenStmtSeq, "ast"_a, "popVarDef"_a = false);
+    m.def("sink_var", &sinkVar, "ast"_a);
+    m.def("shrink_var", &shrinkVar, "ast"_a);
+    m.def("shrink_for", &shrinkFor, "ast"_a);
 }
 
 } // namespace ir

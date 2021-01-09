@@ -104,7 +104,8 @@ bool Cursor::hasOuter() const {
         if (!t.isValid()) {
             return false;
         }
-    } while (t->data_->nodeType() == ASTNodeType::StmtSeq);
+    } while (t->data_->nodeType() == ASTNodeType::StmtSeq ||
+             t->data_->nodeType() == ASTNodeType::VarDef);
     return true;
 }
 
@@ -112,7 +113,8 @@ Cursor Cursor::outer() const {
     auto ret = *this;
     do {
         ret.pop();
-    } while (ret.top()->nodeType() == ASTNodeType::StmtSeq);
+    } while (ret.top()->nodeType() == ASTNodeType::StmtSeq ||
+             ret.top()->nodeType() == ASTNodeType::VarDef);
     return ret;
 }
 
