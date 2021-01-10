@@ -16,11 +16,10 @@ void FindAccessPoint::visit(const VarDef &op) {
 }
 
 void FindAccessPoint::visit(const StmtSeq &op) {
-    loop2axis_[op->id()] = cur_.size();
-    axis2loop_[cur_.size()] = op->id();
     cur_.emplace_back();
     begin_.emplace_back(makeIntConst(0));
     end_.emplace_back(makeIntConst(op->stmts_.size()));
+    scope2coord_[op->id()] = cur_;
     for (size_t i = 0, iEnd = op->stmts_.size(); i < iEnd; i++) {
         cur_.back() = makeIntConst(i);
         (*this)(op->stmts_[i]);
@@ -31,11 +30,10 @@ void FindAccessPoint::visit(const StmtSeq &op) {
 }
 
 void FindAccessPoint::visit(const For &op) {
-    loop2axis_[op->id()] = cur_.size();
-    axis2loop_[cur_.size()] = op->id();
     cur_.emplace_back(makeVar(op->iter_));
     begin_.emplace_back(op->begin_);
     end_.emplace_back(op->end_);
+    scope2coord_[op->id()] = cur_;
     Visitor::visit(op);
     cur_.pop_back();
     begin_.pop_back();
@@ -174,8 +172,25 @@ std::string AnalyzeDeps::makeAccMap(const AccessPoint &p, int iterDim,
     return ret;
 }
 
-std::string AnalyzeDeps::makeSingleIneq(FindDepsMode mode, int iterId,
-                                        int iterDim) const {
+std::string
+AnalyzeDeps::makeEqForBothOps(const std::vector<std::pair<int, int>> &coord,
+                              int iterDim) const {
+    std::ostringstream os;
+    os << "{" << makeNdList("d", iterDim) << " -> " << makeNdList("d_", iterDim)
+       << ": ";
+    for (size_t i = 0, iEnd = coord.size(); i < iEnd; i++) {
+        if (i > 0) {
+            os << " and ";
+        }
+        os << "d" << coord[i].first << " = " << coord[i].second << " and "
+           << "d_" << coord[i].first << " = " << coord[i].second;
+    }
+    os << "}";
+    return os.str();
+}
+
+std::string AnalyzeDeps::makeIneqBetweenOps(FindDepsMode mode, int iterId,
+                                            int iterDim) const {
     auto idStr = std::to_string(iterId);
     std::string ineq;
     switch (mode) {
@@ -232,17 +247,31 @@ void AnalyzeDeps::checkDep(const AccessPoint &point, const AccessPoint &other) {
     for (auto &&item : cond_) {
         bool found = true;
         for (auto &&subitem : item) {
-            int iterId;
-            FindDepsMode mode;
-            std::tie(iterId, mode) = subitem;
+            auto &&coord = scope2coord_.at(subitem.first);
+            int iterId = coord.size() - 1;
+            FindDepsMode mode = subitem.second;
             if (iterId >= iterDim) {
                 found = false;
                 break;
             }
+            isl_map *res = isl_map_copy(nearest);
+
+            // Position in the outer StmtSeq nodes
+            std::vector<std::pair<int, int>> pos;
+            for (int i = 0; i < iterId; i++) {
+                if (coord[i]->nodeType() == ASTNodeType::IntConst) {
+                    pos.emplace_back(i, coord[i].as<IntConstNode>()->val_);
+                }
+            }
+            if (!pos.empty()) {
+                isl_basic_map *require = isl_basic_map_read_from_str(
+                    isl_, makeEqForBothOps(pos, iterDim).c_str());
+                res = isl_map_intersect(res, isl_map_from_basic_map(require));
+            }
+
             isl_basic_map *require = isl_basic_map_read_from_str(
-                isl_, makeSingleIneq(mode, iterId, iterDim).c_str());
-            isl_map *res = isl_map_intersect(isl_map_copy(nearest),
-                                             isl_map_from_basic_map(require));
+                isl_, makeIneqBetweenOps(mode, iterId, iterDim).c_str());
+            res = isl_map_intersect(res, isl_map_from_basic_map(require));
             found &= !isl_map_is_empty(res);
             isl_map_free(res);
         }
@@ -270,8 +299,8 @@ void AnalyzeDeps::visit(const Load &op) {
 
 void findDeps(
     const Stmt &_op,
-    const std::vector<std::vector<std::pair<std::string, FindDepsMode>>> &_cond,
-    const FindDepsCallback &_found) {
+    const std::vector<std::vector<std::pair<std::string, FindDepsMode>>> &cond,
+    const FindDepsCallback &found) {
     auto op = Disambiguous()(_op);
     auto hash = getHashMap(op);
     AnalyzeLinear analyzeLinear(hash);
@@ -280,29 +309,8 @@ void findDeps(
 
     FindAccessPoint visitor;
     visitor(op);
-    std::vector<std::vector<std::pair<int, FindDepsMode>>> cond;
-    cond.reserve(_cond.size());
-    for (auto &&item : _cond) {
-        cond.emplace_back();
-        cond.back().reserve(item.size());
-        for (auto &&subitem : item) {
-            cond.back().emplace_back(visitor.loop2axis().at(subitem.first),
-                                     subitem.second);
-        }
-    }
-    auto found = [&](const std::vector<std::pair<int, FindDepsMode>> &_cond,
-                     const std::string &var, const AST &later,
-                     const AST &earlier, const Cursor &laterCursor,
-                     const Cursor &earlierCursor) {
-        std::vector<std::pair<std::string, FindDepsMode>> cond;
-        cond.reserve(_cond.size());
-        for (auto &&item : _cond) {
-            cond.emplace_back(visitor.axis2loop().at(item.first), item.second);
-        }
-        _found(cond, var, later, earlier, laterCursor, earlierCursor);
-    };
     AnalyzeDeps mutator(visitor.points(), visitor.reads(), visitor.writes(),
-                        linear, cond, found);
+                        visitor.scope2coord(), linear, cond, found);
     mutator(op);
 }
 

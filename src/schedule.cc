@@ -92,8 +92,6 @@ void Schedule::reorder(const std::vector<std::string> &dstOrder) {
                              {{{curOrder[j]->id(), FindDepsMode::Inv}},
                               {{curOrder[j + 1]->id(), FindDepsMode::Inv}}},
                              found);
-                    // FIXME: Use FindDepsMode::Same to limit the analysis in a
-                    // scope, just like fission
 
                     SwapFor swapper(curOrder[j], curOrder[j + 1]);
                     ast = swapper(ast);
@@ -151,13 +149,9 @@ Schedule::fission(const std::string &loop, const std::string &after) {
         // var name -> loop id
         std::vector<std::vector<std::pair<std::string, FindDepsMode>>> disjunct;
         for (const std::string &inner : hoist.innerLoops()) {
-            std::vector<std::pair<std::string, FindDepsMode>> conjunct;
-            conjunct.reserve(hoist.outerScopes().size() + 2);
-            for (const std::string &outer : hoist.outerScopes()) {
-                conjunct.push_back({outer, FindDepsMode::Same});
-            }
-            conjunct.push_back({inner, FindDepsMode::Normal});
-            conjunct.push_back({hoist.seqId(), FindDepsMode::Inv});
+            std::vector<std::pair<std::string, FindDepsMode>> conjunct{
+                {inner, FindDepsMode::Normal},
+                {hoist.seqId(), FindDepsMode::Inv}};
             disjunct.emplace_back(std::move(conjunct));
         }
         std::unordered_map<std::string, std::vector<std::string>> toAdd;
@@ -204,8 +198,6 @@ std::string Schedule::fuse(const std::string &loop0, const std::string &loop1) {
                     dep2Str(cond[0].first, var, later, earlier));
             };
         findDeps(ast, {{{loop0, FindDepsMode::Inv}}}, found);
-        // FIXME: Use FindDepsMode::Same to limit the analysis in a
-        // scope, just like fission
 
         ast = mutator(ast);
 

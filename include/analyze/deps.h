@@ -31,8 +31,9 @@ class FindAccessPoint : public VisitorWithCursor {
     std::vector<Expr> begin_, end_; // Point range in the space
     std::unordered_map<const ASTNode *, Ref<AccessPoint>> points_;
     std::unordered_multimap<std::string, Ref<AccessPoint>> reads_, writes_;
-    std::unordered_map<std::string, int> loop2axis_; // ForNode -> axis in space
-    std::unordered_map<int, std::string> axis2loop_; // axis in space -> ForNode
+
+    // For or StmtSeq -> coordinate in space
+    std::unordered_map<std::string, std::vector<Expr>> scope2coord_;
 
     // Var name -> axis: Which axis is a local var defined
     std::unordered_map<std::string, int> defAxis_;
@@ -50,11 +51,9 @@ class FindAccessPoint : public VisitorWithCursor {
     writes() const {
         return writes_;
     }
-    const std::unordered_map<std::string, int> &loop2axis() const {
-        return loop2axis_;
-    }
-    const std::unordered_map<int, std::string> &axis2loop() const {
-        return axis2loop_;
+    const std::unordered_map<std::string, std::vector<Expr>> &
+    scope2coord() const {
+        return scope2coord_;
     }
 
   private:
@@ -91,6 +90,14 @@ enum class FindDepsMode : int {
     Inv,
 };
 
+typedef std::vector<std::pair<std::string, FindDepsMode>> FindDepsCond;
+
+typedef std::function<void(
+    const std::vector<std::pair<std::string, FindDepsMode>> &,
+    const std::string &, const AST &, const AST &, const Cursor &,
+    const Cursor &)>
+    FindDepsCallback;
+
 /**
  * Find RAW, WAR and WAW dependencies
  */
@@ -98,17 +105,11 @@ class AnalyzeDeps : public Visitor {
     const std::unordered_map<const ASTNode *, Ref<AccessPoint>> &points_;
     const std::unordered_multimap<std::string, Ref<AccessPoint>> &reads_,
         &writes_;
+    const std::unordered_map<std::string, std::vector<Expr>> &scope2coord_;
     const std::unordered_map<const ASTNode *, LinearExpr> &linear_;
 
-    // conditions to check: reduce_and [ reduce_or [ axis, mode ]]
-    typedef std::vector<std::pair<int, FindDepsMode>> Cond;
-    const std::vector<Cond> &cond_;
-    // callback(axis, var name, later access, earlier access): Called when we
-    // found a interesting dependency
-    typedef std::function<void(const Cond &, const std::string &, const AST &,
-                               const AST &, const Cursor &, const Cursor &)>
-        FoundCallback;
-    const FoundCallback &found_;
+    const std::vector<FindDepsCond> &cond_;
+    const FindDepsCallback &found_;
 
     isl_ctx *isl_;
 
@@ -117,10 +118,12 @@ class AnalyzeDeps : public Visitor {
         const std::unordered_map<const ASTNode *, Ref<AccessPoint>> &points,
         const std::unordered_multimap<std::string, Ref<AccessPoint>> &reads,
         const std::unordered_multimap<std::string, Ref<AccessPoint>> &writes,
+        const std::unordered_map<std::string, std::vector<Expr>> &scope2coord,
         const std::unordered_map<const ASTNode *, LinearExpr> &linear,
-        const std::vector<Cond> &cond, const FoundCallback &found)
-        : points_(points), reads_(reads), writes_(writes), linear_(linear),
-          cond_(cond), found_(found) {
+        const std::vector<FindDepsCond> &cond, const FindDepsCallback &found)
+        : points_(points), reads_(reads), writes_(writes),
+          scope2coord_(scope2coord), linear_(linear), cond_(cond),
+          found_(found) {
         isl_ = isl_ctx_alloc();
     }
 
@@ -137,8 +140,10 @@ class AnalyzeDeps : public Visitor {
                           const std::vector<Expr> &end) const;
     std::string makeNdList(const std::string &name, int n) const;
     std::string makeAccMap(const AccessPoint &p, int iterDim, int accDim) const;
-    std::string makeSingleIneq(FindDepsMode mode, int iterId,
-                               int iterDim) const;
+    std::string makeEqForBothOps(const std::vector<std::pair<int, int>> &coord,
+                                 int iterDim) const;
+    std::string makeIneqBetweenOps(FindDepsMode mode, int iterId,
+                                   int iterDim) const;
 
     static const std::string &getVar(const AST &op);
 
@@ -168,11 +173,6 @@ class AnalyzeDeps : public Visitor {
     void visit(const Load &op) override;
 };
 
-typedef std::function<void(
-    const std::vector<std::pair<std::string, FindDepsMode>> &,
-    const std::string &, const AST &, const AST &, const Cursor &,
-    const Cursor &)>
-    FindDepsCallback;
 /**
  * Find all inverse (negative) dependencies along the given loops
  *
@@ -181,10 +181,8 @@ typedef std::function<void(
  * @param found : callback(sub-condition that fails, var name, later op, earlier
  * op, later cursor, earlier cursor)
  */
-void findDeps(
-    const Stmt &op,
-    const std::vector<std::vector<std::pair<std::string, FindDepsMode>>> &cond,
-    const FindDepsCallback &found);
+void findDeps(const Stmt &op, const std::vector<FindDepsCond> &cond,
+              const FindDepsCallback &found);
 
 }; // namespace ir
 
