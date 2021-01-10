@@ -136,10 +136,10 @@ Stmt AddDimToVar::visit(const AddTo &_op) {
 void FissionFor::markNewId(const Stmt &op, bool isPart0) {
     std::string oldId = op->id(), newId;
     if (isPart0) {
-        op->setId(newId = oldId + ".a");
+        op->setId(newId = oldId + suffix0_);
         ids0_.emplace(oldId, newId);
     } else {
-        op->setId(newId = oldId + ".b");
+        op->setId(newId = oldId + suffix1_);
         ids1_.emplace(oldId, newId);
     }
 }

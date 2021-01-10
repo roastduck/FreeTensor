@@ -133,10 +133,16 @@ std::string Schedule::merge(const std::string &loop1,
 }
 
 std::pair<Schedule::IDMap, Schedule::IDMap>
-Schedule::fission(const std::string &loop, const std::string &after) {
+Schedule::fission(const std::string &loop, const std::string &after,
+                  const std::string &suffix0, const std::string &suffix1) {
+    if (suffix0 == suffix1) {
+        throw InvalidSchedule(
+            "fission: suffix0 cannot be the same with suffix1");
+    }
+
     auto ast = ast_;
     HoistVar hoist(loop, after);
-    FissionFor mutator(loop, after);
+    FissionFor mutator(loop, after, suffix0, suffix1);
     try {
         ast = hoist(ast);
         if (!hoist.found()) {
@@ -310,8 +316,8 @@ Schedule::cacheWrite(const std::string &stmt, const std::string &var) {
     return std::make_pair(mutator.flushStmt(), mutator.cacheVar());
 }
 
-void Schedule::moveTo(const std::string &_stmt, const std::string &_dst,
-                      bool toBegin, bool toEnd) {
+std::string Schedule::moveTo(const std::string &_stmt, const std::string &_dst,
+                             bool toBegin, bool toEnd) {
     auto bak = ast_;
     try {
         auto stmt = _stmt, dst = _dst;
@@ -330,7 +336,7 @@ void Schedule::moveTo(const std::string &_stmt, const std::string &_dst,
                 if (s.hasPrev()) {
                     std::vector<std::string> orderRev;
                     if (!d.isBefore(s.prev())) {
-                        break;
+                        return s.id();
                     }
                     while (s.hasPrev() && d.isBefore(s.prev())) {
                         s = s.prev();
@@ -342,14 +348,15 @@ void Schedule::moveTo(const std::string &_stmt, const std::string &_dst,
                     swap(order);
                 } else {
                     if (!d.isBefore(s.outer())) {
-                        break;
+                        return s.id();
                     }
                     while (!s.hasPrev() && d.isBefore(s.outer())) {
                         s = s.outer();
                     }
                     // TODO: Fission IfNode
                     ASSERT(s.top()->nodeType() == ASTNodeType::For);
-                    auto idMap = fission(s.id(), stmt).first;
+                    // Leave IDs of the other statements unchanged
+                    auto idMap = fission(s.id(), stmt, ".a", "").first;
                     stmt = idMap.at(s.id());
                 }
                 // TODO: Fuse if d is inner of s

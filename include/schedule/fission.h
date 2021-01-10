@@ -82,14 +82,16 @@ class AddDimToVar : public Mutator {
 };
 
 class FissionFor : public Mutator {
-    std::string loop_, after_;
+    std::string loop_, after_, suffix0_, suffix1_;
     std::unordered_map<std::string, std::string> ids0_, ids1_;
     std::unordered_set<std::string> varUses_;
     bool inside_ = false, isPart0_ = true, inPart_ = false;
 
   public:
-    FissionFor(const std::string &loop, const std::string &after)
-        : loop_(loop), after_(after) {}
+    FissionFor(const std::string &loop, const std::string &after,
+               const std::string &suffix0 = ".a",
+               const std::string &suffix1 = ".b")
+        : loop_(loop), after_(after), suffix0_(suffix0), suffix1_(suffix1) {}
 
     const std::unordered_map<std::string, std::string> &ids0() const {
         return ids0_;

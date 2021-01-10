@@ -52,12 +52,18 @@ class Schedule {
      *
      * @param loop : ID of the loop to be fissioned
      * @param after : ID of the last statement of the first loop
+     * @param suffix0 : ID suffix of the statements in the first loop, default
+     * to ".a", can be "" for convenience, but cannot be the same with suffix1
+     * @param suffix1 : ID suffix of the statements in the second loop, default
+     * to ".b", can be "" for convenience, but cannot be the same with suffix0
      * @throw InvalidSchedule if any dependency cannot be resolved
      * @return : ({old ID -> new ID in 1st loop}, {old ID -> new ID in 2nd
      * loop})
      */
     std::pair<IDMap, IDMap> fission(const std::string &loop,
-                                    const std::string &after);
+                                    const std::string &after,
+                                    const std::string &suffx0 = ".a",
+                                    const std::string &suffix1 = ".b");
 
     /**
      * Fuse two directly following loops with the same length into one
@@ -121,9 +127,10 @@ class Schedule {
      * @param toEnd : Move to the end point of dst This specifies the behavior
      * when dst is a scope, e.g. a loop
      * @throw InvalidSchedule if there is no feasible path to move
+     * @return : The new ID of stmt
      */
-    void moveTo(const std::string &stmt, const std::string &dst,
-                bool toBegin = false, bool toEnd = false);
+    std::string moveTo(const std::string &stmt, const std::string &dst,
+                       bool toBegin = false, bool toEnd = false);
 };
 
 } // namespace ir
