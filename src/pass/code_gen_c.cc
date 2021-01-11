@@ -219,9 +219,9 @@ void CodeGenC::visit(const For &op) {
     makeIndent();
     os << "for (int " << normalizeId(op->iter_) << " = ";
     (*this)(op->begin_);
-    os << "; " << op->iter_ << " < ";
+    os << "; " << normalizeId(op->iter_) << " < ";
     (*this)(op->end_);
-    os << "; " << op->iter_ << "++) ";
+    os << "; " << normalizeId(op->iter_) << "++) ";
     beginBlock();
     (*this)(op->body_);
     endBlock();

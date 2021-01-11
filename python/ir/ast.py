@@ -30,11 +30,11 @@ class Context:
 	def getNextNid(self):
 		return self.nextNid
 
-	def make_stmt(self):
-		if len(self.stmt_seq) == 1:
+	def make_stmt(self, nid: str = ""):
+		if len(self.stmt_seq) == 1 and nid == "":
 			return self.stmt_seq[0]
 		else:
-			return ffi.makeStmtSeq("", self.stmt_seq)
+			return ffi.makeStmtSeq(nid, self.stmt_seq)
 
 class ContextStack:
 	def __init__(self):
@@ -154,6 +154,17 @@ class Else:
 ''' Mark the ID of the following statement '''
 def MarkNid(nid: str):
 	ctx_stack.top().setNextNid(nid)
+
+class NamedScope:
+	def __init__(self, nid: str):
+		self.nid = nid
+
+	def __enter__(self):
+		ctx_stack.push()
+
+	def __exit__(self, exc_type, exc_value, traceback):
+		body = ctx_stack.pop().make_stmt(self.nid)
+		ctx_stack.top().append_stmt(body)
 
 def Any():
 	ctx_stack.top().append_stmt(ffi.makeAny())
