@@ -111,8 +111,8 @@ def test_tiling():
 		with ir.For("i.0", 0, 8) as i0:
 			with ir.For("j.0", 0, 8) as j0:
 				with ir.VarDef([
-					("a.r", (1, 1, 256, 32), ir.DataType.Float32, ir.AccessType.Cache),
-					("b.r", (1, 1, 256, 32), ir.DataType.Float32, ir.AccessType.Cache)]) as (ar, br):
+					("a.r", (32, 256, 1, 1), ir.DataType.Float32, ir.AccessType.Cache),
+					("b.r", (32, 256, 1, 1), ir.DataType.Float32, ir.AccessType.Cache)]) as (ar, br):
 					with ir.For("i.1", 0, 32) as i1:
 						with ir.For("k", 0, 256) as k:
 							ir.Any()

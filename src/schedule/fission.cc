@@ -104,11 +104,11 @@ Stmt AddDimToVar::visit(const VarDef &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::VarDef);
     auto op = __op.as<VarDefNode>();
     if (toAdd_.count(op->name_)) {
-        auto &&loops = toAdd_.at(op->name_);
         auto shape = op->buffer_->tensor().shape();
-        for (auto it = loops.rbegin(); it != loops.rend(); it++) {
-            auto len = makeSub(forMap_.at(*it)->end_, forMap_.at(*it)->begin_);
-            shape.emplace_back(len);
+        for (auto &&loop : toAdd_.at(op->name_)) {
+            auto len =
+                makeSub(forMap_.at(loop)->end_, forMap_.at(loop)->begin_);
+            shape.insert(shape.begin(), len);
         }
         op->buffer_->tensor().setShape(std::move(shape));
     }

@@ -65,9 +65,9 @@ class AddDimToVar : public Mutator {
   private:
     template <class T> T doAdd(T op) {
         if (toAdd_.count(op->var_)) {
-            auto &&loops = toAdd_.at(op->var_);
-            for (auto it = loops.rbegin(); it != loops.rend(); it++) {
-                op->indices_.emplace_back(makeVar(forMap_.at(*it)->iter_));
+            for (auto &&loop : toAdd_.at(op->var_)) {
+                op->indices_.insert(op->indices_.begin(),
+                                    makeVar(forMap_.at(loop)->iter_));
             }
         }
         return op;

@@ -127,11 +127,11 @@ def test_correct_dependency_basic():
 			("x1", (4, 8), ir.DataType.Int32, ir.AccessType.Input),
 			("y", (4, 8), ir.DataType.Int32, ir.AccessType.Output)]) as (x0, x1, y):
 		with ir.For("i", 0, 4) as i:
-			with ir.VarDef("buf", (1, 8), ir.DataType.Int32, ir.AccessType.Cache) as b:
+			with ir.VarDef("buf", (8, 1), ir.DataType.Int32, ir.AccessType.Cache) as b:
 				with ir.For("j", 0, 8) as j:
-					b[0, j] = x0[i, j] + x1[i, j]
+					b[j, 0] = x0[i, j] + x1[i, j]
 				with ir.For("j", 0, 8) as j:
-					y[i, j] = b[0, j] * b[0, j]
+					y[i, j] = b[j, 0] * b[j, 0]
 	std = ir.pop_ast()
 
 	assert std.match(ast)
@@ -160,13 +160,13 @@ def test_correct_dependency_multi_loop():
 			("x0", (4, 8), ir.DataType.Int32, ir.AccessType.Input),
 			("x1", (4, 8), ir.DataType.Int32, ir.AccessType.Input),
 			("y", (4, 8), ir.DataType.Int32, ir.AccessType.Output)]) as (x0, x1, y):
-		with ir.VarDef("buf", (1, 4, 8), ir.DataType.Int32, ir.AccessType.Cache) as b:
+		with ir.VarDef("buf", (4, 8, 1), ir.DataType.Int32, ir.AccessType.Cache) as b:
 			with ir.For("i", 0, 4) as i:
 				with ir.For("j", 0, 8) as j:
-					b[0, i, j] = x0[i, j] + x1[i, j]
+					b[i, j, 0] = x0[i, j] + x1[i, j]
 			with ir.For("i", 0, 4) as i:
 				with ir.For("j", 0, 8) as j:
-					y[i, j] = b[0, i, j] * b[0, i, j]
+					y[i, j] = b[i, j, 0] * b[i, j, 0]
 	std = ir.pop_ast()
 
 	assert std.match(ast)
@@ -193,12 +193,12 @@ def test_correct_dependency_real_dep():
 	with ir.VarDef([
 			("x", (4), ir.DataType.Int32, ir.AccessType.Input),
 			("y", (4, 8), ir.DataType.Int32, ir.AccessType.Output)]) as (x, y):
-		with ir.VarDef("buf", (1, 4), ir.DataType.Int32, ir.AccessType.Cache) as b:
+		with ir.VarDef("buf", (4, 1), ir.DataType.Int32, ir.AccessType.Cache) as b:
 			with ir.For("i", 0, 4) as i:
-				b[0, i] = x[i] * 2
+				b[i, 0] = x[i] * 2
 			with ir.For("i", 0, 4) as i:
 				with ir.For("j", 0, 8) as j:
-					y[i, j] = b[0, i] * b[0, i]
+					y[i, j] = b[i, 0] * b[i, 0]
 	std = ir.pop_ast()
 
 	assert std.match(ast)
