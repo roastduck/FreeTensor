@@ -222,3 +222,39 @@ def test_correct_dependency_unable_resolve():
 	ast_ = s.ast() # Should not changed
 	assert ast_.match(ast)
 
+def test_correct_dependency_no_need_to_modify():
+	with ir.VarDef([
+			("x0", (4, 4), ir.DataType.Int32, ir.AccessType.Input),
+			("x1", (4, 4), ir.DataType.Int32, ir.AccessType.Input),
+			("y", (4, 4), ir.DataType.Int32, ir.AccessType.Output)]) as (x0, x1, y):
+		with ir.For("i", 0, 4, nid="L1") as i:
+			with ir.For("j", 0, 4, nid="L2") as j:
+				with ir.VarDef("buf", (4,), ir.DataType.Int32, ir.AccessType.Cache) as b:
+					with ir.For("k", 0, 4, nid="L3") as k:
+						ir.MarkNid("S0")
+						b[k] = x0[i, k]
+						y[i, j] = b[k] * x1[i, j]
+	ast = ir.pop_ast()
+	print(ast)
+	s = ir.Schedule(ast)
+	s.fission("L2", "S0")
+	ast = s.ast()
+	print(ast)
+	ast = ir.lower(ast)
+	print(ast)
+
+	with ir.VarDef([
+			("x0", (4, 4), ir.DataType.Int32, ir.AccessType.Input),
+			("x1", (4, 4), ir.DataType.Int32, ir.AccessType.Input),
+			("y", (4, 4), ir.DataType.Int32, ir.AccessType.Output)]) as (x0, x1, y):
+		with ir.For("i", 0, 4) as i:
+			with ir.VarDef("buf", (4,), ir.DataType.Int32, ir.AccessType.Cache) as b:
+				with ir.For("k", 0, 4) as k:
+					b[k] = x0[i, k]
+				with ir.For("j", 0, 4) as j:
+					with ir.For("k", 0, 4) as k:
+						y[i, j] = b[k] * x1[i, j]
+	std = ir.pop_ast()
+
+	assert std.match(ast)
+

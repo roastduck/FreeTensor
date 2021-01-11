@@ -3,6 +3,8 @@
 #include <sstream>
 
 #include <analyze/deps.h>
+#include <analyze/disambiguous.h>
+#include <analyze/find_loop_variance.h>
 #include <cursor.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/shrink_var.h>
@@ -74,6 +76,8 @@ void Schedule::reorder(const std::vector<std::string> &dstOrder) {
         for (size_t i = 0; i < n; i++) {
             for (size_t j = 0; j + 1 < n; j++) {
                 if (index[j] > index[j + 1]) {
+                    ast = Disambiguous()(ast);
+
                     auto found =
                         [&](const std::vector<
                                 std::pair<std::string, FindDepsMode>> &cond,
@@ -149,8 +153,11 @@ Schedule::fission(const std::string &loop, const std::string &after,
             throw InvalidSchedule("Split point " + after +
                                   " not found inside " + loop);
         }
-
         auto &&xLoops = hoist.xLoops();
+
+        ast = Disambiguous()(ast);
+
+        auto variantExpr = findLoopVariance(ast);
 
         // var name -> loop id
         std::vector<std::vector<std::pair<std::string, FindDepsMode>>> disjunct;
@@ -160,6 +167,19 @@ Schedule::fission(const std::string &loop, const std::string &after,
                 {hoist.seqId(), FindDepsMode::Inv}};
             disjunct.emplace_back(std::move(conjunct));
         }
+        auto isRealWrite = [&](const std::string &loop, const AST &op) -> bool {
+            if (op->nodeType() == ASTNodeType::Store) {
+                auto expr = op.as<StoreNode>()->expr_;
+                return variantExpr.count(expr.get()) &&
+                       variantExpr.at(expr.get()).count(loop);
+            } else if (op->nodeType() == ASTNodeType::AddTo) {
+                auto expr = op.as<AddToNode>()->expr_;
+                return variantExpr.count(expr.get()) &&
+                       variantExpr.at(expr.get()).count(loop);
+            } else {
+                return false;
+            }
+        };
         std::unordered_map<std::string, std::vector<std::string>> toAdd;
         auto found =
             [&](const std::vector<std::pair<std::string, FindDepsMode>> &cond,
@@ -171,6 +191,14 @@ Schedule::fission(const std::string &loop, const std::string &after,
                     std::find(xLoops.at(var).begin(), xLoops.at(var).end(),
                               id) == xLoops.at(var).end()) {
                     throw InvalidSchedule(dep2Str(id, var, later, earlier));
+                }
+                if (!isRealWrite(id, later) &&
+                    earlier->nodeType() == ASTNodeType::Load) {
+                    return;
+                }
+                if (!isRealWrite(id, earlier) &&
+                    later->nodeType() == ASTNodeType::Load) {
+                    return;
                 }
                 if (std::find(toAdd[var].begin(), toAdd[var].end(), id) ==
                     toAdd[var].end()) {
@@ -195,6 +223,8 @@ std::string Schedule::fuse(const std::string &loop0, const std::string &loop1) {
     auto ast = ast_;
     FuseFor mutator(loop0, loop1);
     try {
+        ast = Disambiguous()(ast);
+
         auto found =
             [&](const std::vector<std::pair<std::string, FindDepsMode>> &cond,
                 const std::string &var, const AST &later, const AST &earlier,
@@ -269,6 +299,7 @@ void Schedule::swap(const std::vector<std::string> &order) {
                         dep2Str(scope->id(), var, later, earlier));
                 }
             };
+        ast = Disambiguous()(ast);
         findDeps(ast, {{{scope->id(), FindDepsMode::Normal}}}, found);
     } catch (const InvalidSchedule &e) {
         std::string msg = "Invalid reorder(";

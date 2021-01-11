@@ -12,8 +12,8 @@ class Mutator {
   public:
     virtual ~Mutator() {}
 
-    virtual Stmt operator()(const Stmt &op) final;
-    virtual Expr operator()(const Expr &op) final;
+    virtual Stmt operator()(const Stmt &op);
+    virtual Expr operator()(const Expr &op);
 
   protected:
     // NOTE: Do NOT std::move from the original op! The original op may be
@@ -205,15 +205,6 @@ class Mutator {
     virtual Stmt visit(const Assert &op) {
         return makeAssert(op->id(), (*this)(op->cond_), (*this)(op->body_));
     }
-};
-
-/**
- * Make there will be no shared node in a AST
- *
- * If any pass uses node addresses as keys, perform Disambiguous first
- */
-class Disambiguous : public Mutator {
-    // Do nothing
 };
 
 } // namespace ir

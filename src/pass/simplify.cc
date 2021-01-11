@@ -2,6 +2,7 @@
 #include <sstream>
 
 #include <analyze/bounds.h>
+#include <analyze/disambiguous.h>
 #include <analyze/hash.h>
 #include <analyze/linear.h>
 #include <analyze/normalize_if.h>

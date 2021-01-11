@@ -298,10 +298,10 @@ void AnalyzeDeps::visit(const Load &op) {
 }
 
 void findDeps(
-    const Stmt &_op,
+    const Stmt &op,
     const std::vector<std::vector<std::pair<std::string, FindDepsMode>>> &cond,
     const FindDepsCallback &found) {
-    auto op = Disambiguous()(_op);
+    ASSERT(op->noAmbiguous());
     auto hash = getHashMap(op);
     AnalyzeLinear analyzeLinear(hash);
     analyzeLinear(op);

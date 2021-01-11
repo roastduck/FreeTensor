@@ -46,9 +46,16 @@ enum class ASTNodeType : int {
     virtual ASTNodeType nodeType() const override { return ASTNodeType::name; }
 
 class ASTNode {
+    friend class Disambiguous;
+
+    bool noAmbiguous_ = false;
+
   public:
     virtual ~ASTNode() {}
     virtual ASTNodeType nodeType() const = 0;
+
+    /// There are no different nodes sharing the same address
+    bool noAmbiguous() const { return noAmbiguous_; }
 
     DEFINE_NODE_ACCESS(AST);
 };
