@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <cctype>
 
-#include <pass/code_gen_c.h>
+#include <codegen/code_gen_c.h>
 
 namespace ir {
 
@@ -280,26 +280,6 @@ std::string CodeGenC::gen(DataType dtype) {
     default:
         ASSERT(false);
     }
-}
-
-std::pair<std::string, std::vector<std::string>> codeGenC(const AST &op) {
-    CodeGenC visitor;
-    visitor.beginBlock();
-    visitor(op);
-    visitor.endBlock();
-
-    const char *header = "#include <cstdint>\n"
-                         "#include <algorithm>\n" // TODO: Pure C?
-                         "#define restrict __restrict__\n"
-                         "\n"
-                         "extern \"C\" {\n"
-                         "\n";
-    const char *tailer = "\n"
-                         "}";
-
-    return std::make_pair((std::string)header + "void run(void **_params) " +
-                              visitor.toString() + tailer,
-                          visitor.params());
 }
 
 } // namespace ir

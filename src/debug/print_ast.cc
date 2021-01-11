@@ -190,6 +190,10 @@ void PrintVisitor::visit(const For &op) {
         (*this)(op->info_min_end_);
         os << std::endl;
     }
+    if (!op->parallel_.empty()) {
+        makeIndent();
+        os << "// parallel = " << op->parallel_ << std::endl;
+    }
     makeIndent();
     os << "for " << op->iter_ << " = ";
     (*this)(op->begin_);

@@ -17,6 +17,7 @@
 #include <schedule/fission.h>
 #include <schedule/fuse.h>
 #include <schedule/merge.h>
+#include <schedule/parallelize.h>
 #include <schedule/reorder.h>
 #include <schedule/split.h>
 #include <schedule/swap.h>
@@ -401,6 +402,22 @@ std::string Schedule::moveTo(const std::string &_stmt, const std::string &_dst,
         throw InvalidSchedule("Invalid move_to(" + _stmt + ", " + _dst +
                               "): " + e.what());
     }
+}
+
+void Schedule::parallelize(const std::string &loop,
+                           const std::string &parallel) {
+    auto ast = ast_;
+    Parallelize mutator(loop, parallel);
+    try {
+        ast = mutator(ast);
+        if (!mutator.done()) {
+            throw InvalidSchedule("Loop " + loop + " not found");
+        }
+    } catch (const InvalidSchedule &e) {
+        throw InvalidSchedule("Invalid parallelize(" + loop + ", " + parallel +
+                              "): " + e.what());
+    }
+    ast_ = ast;
 }
 
 } // namespace ir

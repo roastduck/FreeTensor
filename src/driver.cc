@@ -22,7 +22,8 @@ void Driver::buildAndLoad(const std::string &src, int nParam) {
         std::ofstream f(cpp);
         f << src;
     }
-    auto cmd = (std::string) "c++ -shared -fPIC -o " + so + " " + cpp;
+    auto cmd =
+        (std::string) "c++ -shared -fPIC -Wall -fopenmp -o " + so + " " + cpp;
     system(cmd.c_str());
 
     dlHandle_ = dlopen(so.c_str(), RTLD_NOW);
@@ -48,12 +49,14 @@ void Driver::run() { func_(params_); }
 void Driver::unload() {
     delete[] params_;
     func_ = nullptr;
-    if (dlHandle_) {
+    // FIXME: How to safely close it? OpenMP won't kill its worker threads
+    // before it ends
+    /*if (dlHandle_) {
         auto err = dlclose(dlHandle_);
         if (err) {
             WARNING("Unable to unload target code");
         }
-    }
+    }*/
 }
 
 } // namespace ir

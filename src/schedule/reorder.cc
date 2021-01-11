@@ -41,7 +41,7 @@ Stmt SwapFor::visit(const For &_op) {
         auto body = Mutator::visit(_op);
         insideOuter_ = false;
         return makeFor(oldInner_->id(), oldInner_->iter_, oldInner_->begin_,
-                       oldInner_->end_, body);
+                       oldInner_->end_, oldInner_->parallel_, body);
     } else if (_op->id() == oldInner_->id()) {
         insideInner_ = true;
         auto __op = Mutator::visit(_op);

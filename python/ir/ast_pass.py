@@ -1,4 +1,3 @@
-from ffi import code_gen_c
 from ffi import simplify_pass
 from ffi import sink_var
 from ffi import shrink_var

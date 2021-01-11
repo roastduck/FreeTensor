@@ -9,6 +9,7 @@ PYBIND11_MODULE(ffi, m) {
     init_ffi_ast(m);
     init_ffi_schedule(m);
     init_ffi_pass(m);
+    init_ffi_codegen(m);
     init_ffi_driver(m);
 }
 

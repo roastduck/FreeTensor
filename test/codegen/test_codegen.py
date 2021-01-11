@@ -8,7 +8,7 @@ def test_hello_world():
 
 	ast = ir.lower(ir.pop_ast())
 	print(ast)
-	code, params = ir.code_gen_c(ast)
+	code, params = ir.codegen(ast, "cpu")
 	print(code)
 
 	x = np.zeros((4, 4), dtype="float32")
@@ -27,7 +27,7 @@ def test_scalar_op():
 			("y", (), ir.DataType.Int32, ir.AccessType.Output)]) as (x, y):
 		y[()] = x[()] * 2 + 1
 
-	code, params = ir.code_gen_c(ir.lower(ir.pop_ast()))
+	code, params = ir.codegen(ir.lower(ir.pop_ast()), "cpu")
 	print(code)
 	x = np.array(5, dtype="int32")
 	y = np.array(0, dtype="int32")
@@ -44,7 +44,7 @@ def test_for():
 		with ir.For("i", 0, 4) as i:
 			y[i] = x[i] + 1
 
-	code, params = ir.code_gen_c(ir.lower(ir.pop_ast()))
+	code, params = ir.codegen(ir.lower(ir.pop_ast()), "cpu")
 	print(code)
 	x = np.array([1, 2, 3, 4], dtype="int32")
 	y = np.zeros((4,), dtype="int32")
@@ -63,7 +63,7 @@ def test_if():
 			with ir.Else():
 				y[i] = 1
 
-	code, params = ir.code_gen_c(ir.lower(ir.pop_ast()))
+	code, params = ir.codegen(ir.lower(ir.pop_ast()), "cpu")
 	print(code)
 	y = np.zeros((4,), dtype="int32")
 	driver = ir.Driver(code, params)
@@ -128,7 +128,7 @@ def test_tiling():
 								ir.Any()
 	assert ir.pop_ast().match(ast)
 
-	code, params = ir.code_gen_c(ast)
+	code, params = ir.codegen(ast, "cpu")
 	print(code)
 	a = np.random.rand(256, 256).astype("float32")
 	b = np.random.rand(256, 256).astype("float32")

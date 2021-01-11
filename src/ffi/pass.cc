@@ -1,5 +1,4 @@
 #include <ffi.h>
-#include <pass/code_gen_c.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/shrink_for.h>
 #include <pass/shrink_var.h>
@@ -11,7 +10,6 @@ namespace ir {
 using namespace pybind11::literals;
 
 void init_ffi_pass(py::module_ &m) {
-    m.def("code_gen_c", &codeGenC, "ast"_a);
     m.def("simplify_pass", &simplifyPass, "ast"_a);
     m.def("flatten_stmt_seq", &flattenStmtSeq, "ast"_a, "popVarDef"_a = false);
     m.def("sink_var", &sinkVar, "ast"_a);

@@ -185,8 +185,9 @@ class Mutator {
     virtual Expr visit(const Not &op) { return makeNot((*this)(op->expr_)); }
 
     virtual Stmt visit(const For &op) {
-        auto ret = makeFor(op->id(), op->iter_, (*this)(op->begin_),
-                           (*this)(op->end_), (*this)(op->body_));
+        auto ret =
+            makeFor(op->id(), op->iter_, (*this)(op->begin_), (*this)(op->end_),
+                    op->parallel_, (*this)(op->body_));
         if (op->info_max_begin_.isValid()) {
             ret.as<ForNode>()->info_max_begin_ = (*this)(op->info_max_begin_);
         }

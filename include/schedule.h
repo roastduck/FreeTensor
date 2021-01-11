@@ -18,6 +18,8 @@ class Schedule {
     /**
      * Split a loop into two nested loops
      *
+     * To fission a loop into two consecutive loops, use `fission` instead
+     *
      * @param id : ID of the loop to be split
      * @param factor : Length of the inner loop. Set to -1 if using `nparts`
      * @param nparts : Length of the outer loop. Set to -1 if using `factor`
@@ -30,6 +32,8 @@ class Schedule {
     /**
      * Reorder directly nested loops
      *
+     * To swap consecutive loops, use `swap` instead
+     *
      * @param order : Vector of loop IDs. The requested order of the loops
      * @throw InvalidSchedule if the input is invalid or there are breaking
      * dependencies
@@ -38,6 +42,8 @@ class Schedule {
 
     /**
      * Merge two directly nested loops into one
+     *
+     * To fuse consecutive loops, use `fuse` instead
      *
      * @param loop1, loop2 : ID of the loops to be merged, can be in any order
      * @throw InvalidSchedule if the loops are not directly nested
@@ -49,6 +55,8 @@ class Schedule {
     /**
      * Fission a loop into two loops each containing part of the statements, one
      * followed by another
+     *
+     * To split loop into two nested loops, use `split` instead
      *
      * @param loop : ID of the loop to be fissioned
      * @param after : ID of the last statement of the first loop
@@ -68,6 +76,8 @@ class Schedule {
     /**
      * Fuse two directly following loops with the same length into one
      *
+     * To merge nested loops into one, use `merge` instead
+     *
      * @param loop0 : ID of the leading loop
      * @param loop1 : ID of the following loop
      * @throw InvalidSchedule if the two loops are not directly following, the
@@ -79,6 +89,8 @@ class Schedule {
 
     /**
      * Swap statements in the same block
+     *
+     * To reorder nested loops, use `reorder` instead
      *
      * @param order : list of IDs of the statements
      * @throw InvalidSchedule if the statements are not found or the
@@ -131,6 +143,14 @@ class Schedule {
      */
     std::string moveTo(const std::string &stmt, const std::string &dst,
                        bool toBegin = false, bool toEnd = false);
+
+    /**
+     * Mark a loop with a parallel implementation
+     *
+     * @param loop : ID of the loop
+     * @param parallel : Parallel implementation. Supported values are "openmp"
+     */
+    void parallelize(const std::string &loop, const std::string &parallel);
 };
 
 } // namespace ir

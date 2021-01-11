@@ -20,7 +20,8 @@ void init_ffi_schedule(py::module_ &m) {
         .def("cache_read", &Schedule::cacheRead, "stmt"_a, "var"_a)
         .def("cache_write", &Schedule::cacheWrite, "stmt"_a, "var"_a)
         .def("move_to", &Schedule::moveTo, "stmt"_a, "dst"_a,
-             "to_begin"_a = false, "to_end"_a = false);
+             "to_begin"_a = false, "to_end"_a = false)
+        .def("parallelize", &Schedule::parallelize, "loop"_a, "parallel"_a);
 }
 
 } // namespace ir

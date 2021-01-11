@@ -5,7 +5,7 @@
 #include <unordered_set>
 #include <vector>
 
-#include <pass/code_gen.h>
+#include <codegen/code_gen.h>
 
 namespace ir {
 
@@ -47,13 +47,6 @@ class CodeGenC : public CodeGen {
   public:
     const std::vector<std::string> &params() const { return params_; }
 };
-
-/**
- * Generate target function code
- *
- * @return : (source, list of params)
- */
-std::pair<std::string, std::vector<std::string>> codeGenC(const AST &op);
 
 } // namespace ir
 

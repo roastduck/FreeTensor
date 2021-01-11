@@ -123,6 +123,7 @@ class ForNode : public StmtNode {
   public:
     std::string iter_;
     Expr begin_, end_;
+    std::string parallel_;
     Stmt body_;
 
     Expr info_max_begin_, info_min_end_;
@@ -132,12 +133,13 @@ class ForNode : public StmtNode {
 typedef Ref<ForNode> For;
 template <class Tbegin, class Tend, class Tbody>
 Stmt makeFor(const std::string &id, const std::string &iter, Tbegin &&begin,
-             Tend &&end, Tbody &&body) {
+             Tend &&end, const std::string &parallel, Tbody &&body) {
     For f = For::make();
     f->setId(id);
     f->iter_ = iter;
     f->begin_ = std::forward<Tbegin>(begin);
     f->end_ = std::forward<Tend>(end);
+    f->parallel_ = parallel;
     f->body_ = std::forward<Tbody>(body);
     return f;
 }

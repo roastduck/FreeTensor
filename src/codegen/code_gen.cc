@@ -1,4 +1,4 @@
-#include <pass/code_gen.h>
+#include <codegen/code_gen.h>
 
 namespace ir {
 
