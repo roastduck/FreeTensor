@@ -10,21 +10,23 @@ namespace ir {
 
 class CodeGen : public Visitor {
   protected:
-    std::ostringstream os;
-    int nIndent = 0;
+    std::ostringstream os_;
+    int nIndent_ = 0;
 
     void makeIndent();
 
     template <class T> void printList(T &&list) {
         for (size_t i = 0, iEnd = list.size(); i < iEnd; i++) {
             (*this)(list[i]);
-            os << (i < iEnd - 1 ? ", " : "");
+            os() << (i < iEnd - 1 ? ", " : "");
         }
     }
 
   public:
     void beginBlock();
     void endBlock();
+
+    std::ostringstream &os() { return os_; }
 
     std::string toString();
 };

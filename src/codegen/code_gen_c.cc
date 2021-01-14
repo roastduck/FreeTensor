@@ -14,36 +14,36 @@ void CodeGenC::visit(const VarDef &op) {
     auto &&shape = tensor.shape();
     if (op->buffer_->atype() == AccessType::Cache) {
         // e.g. float x[5][5][5];
-        os << gen(tensor.dtype()) << " ";
-        os << normalizeId(op->name_);
+        os() << gen(tensor.dtype()) << " ";
+        os() << normalizeId(op->name_);
         for (auto &&dim : shape) {
-            os << "[";
+            os() << "[";
             (*this)(dim);
-            os << "]";
+            os() << "]";
         }
-        os << ";" << std::endl;
+        os() << ";" << std::endl;
     } else {
         int nthParam = params_.size();
         params_.emplace_back(op->name_);
 
         // e.g. const float (*restrict x)[5][5] = (float(*)[5][5])_params[0];
         if (op->buffer_->atype() == AccessType::Input) {
-            os << "const ";
+            os() << "const ";
         }
-        os << gen(tensor.dtype()) << " (*restrict ";
-        os << normalizeId(op->name_) << ")";
+        os() << gen(tensor.dtype()) << " (*restrict ";
+        os() << normalizeId(op->name_) << ")";
         for (size_t i = 1, iEnd = shape.size(); i < iEnd; i++) { // No shape[0]
-            os << "[";
+            os() << "[";
             (*this)(shape[i]);
-            os << "]";
+            os() << "]";
         }
-        os << " = (" << gen(tensor.dtype()) << "(*)";
+        os() << " = (" << gen(tensor.dtype()) << "(*)";
         for (size_t i = 1, iEnd = shape.size(); i < iEnd; i++) { // No shape[0]
-            os << "[";
+            os() << "[";
             (*this)(shape[i]);
-            os << "]";
+            os() << "]";
         }
-        os << ")_params[" << nthParam << "];" << std::endl;
+        os() << ")_params[" << nthParam << "];" << std::endl;
     }
 
     (*this)(op->body_);
@@ -51,36 +51,36 @@ void CodeGenC::visit(const VarDef &op) {
 }
 
 void CodeGenC::visit(const Var &op) {
-    os << normalizeId(op->name_);
+    os() << normalizeId(op->name_);
     Visitor::visit(op);
 }
 
 void CodeGenC::visit(const Store &op) {
     makeIndent();
     if (op->indices_.empty()) {
-        os << "*" << normalizeId(op->var_);
+        os() << "*" << normalizeId(op->var_);
     } else {
-        os << normalizeId(op->var_);
+        os() << normalizeId(op->var_);
         for (auto &&index : op->indices_) {
-            os << "[";
+            os() << "[";
             (*this)(index);
-            os << "]";
+            os() << "]";
         }
     }
-    os << " = ";
+    os() << " = ";
     (*this)(op->expr_);
-    os << ";" << std::endl;
+    os() << ";" << std::endl;
 }
 
 void CodeGenC::visit(const Load &op) {
     if (op->indices_.empty()) {
-        os << "*" << normalizeId(op->var_);
+        os() << "*" << normalizeId(op->var_);
     } else {
-        os << normalizeId(op->var_);
+        os() << normalizeId(op->var_);
         for (auto &&index : op->indices_) {
-            os << "[";
+            os() << "[";
             (*this)(index);
-            os << "]";
+            os() << "]";
         }
     }
 }
@@ -88,140 +88,140 @@ void CodeGenC::visit(const Load &op) {
 void CodeGenC::visit(const AddTo &op) {
     makeIndent();
     if (op->indices_.empty()) {
-        os << "*" << normalizeId(op->var_);
+        os() << "*" << normalizeId(op->var_);
     } else {
-        os << normalizeId(op->var_);
+        os() << normalizeId(op->var_);
         for (auto &&index : op->indices_) {
-            os << "[";
+            os() << "[";
             (*this)(index);
-            os << "]";
+            os() << "]";
         }
     }
-    os << " += ";
+    os() << " += ";
     (*this)(op->expr_);
-    os << ";" << std::endl;
+    os() << ";" << std::endl;
 }
 
-void CodeGenC::visit(const IntConst &op) { os << std::to_string(op->val_); }
+void CodeGenC::visit(const IntConst &op) { os() << std::to_string(op->val_); }
 
-void CodeGenC::visit(const FloatConst &op) { os << std::to_string(op->val_); }
+void CodeGenC::visit(const FloatConst &op) { os() << std::to_string(op->val_); }
 
 void CodeGenC::visit(const Add &op) {
-    os << "(";
+    os() << "(";
     (*this)(op->lhs_);
-    os << " + ";
+    os() << " + ";
     (*this)(op->rhs_);
-    os << ")";
+    os() << ")";
 }
 
 void CodeGenC::visit(const Sub &op) {
-    os << "(";
+    os() << "(";
     (*this)(op->lhs_);
-    os << " - ";
+    os() << " - ";
     (*this)(op->rhs_);
-    os << ")";
+    os() << ")";
 }
 
 void CodeGenC::visit(const Mul &op) {
-    os << "(";
+    os() << "(";
     (*this)(op->lhs_);
-    os << " * ";
+    os() << " * ";
     (*this)(op->rhs_);
-    os << ")";
+    os() << ")";
 }
 
 void CodeGenC::visit(const Div &op) {
-    os << "(";
+    os() << "(";
     (*this)(op->lhs_);
-    os << " / ";
+    os() << " / ";
     (*this)(op->rhs_);
-    os << ")";
+    os() << ")";
 }
 
 void CodeGenC::visit(const Mod &op) {
-    os << "(";
+    os() << "(";
     (*this)(op->lhs_);
-    os << " % ";
+    os() << " % ";
     (*this)(op->rhs_);
-    os << ")";
+    os() << ")";
 }
 
 void CodeGenC::visit(const Min &op) {
-    os << "std::min("; // TODO: Pure C?
+    os() << "std::min("; // TODO: Pure C?
     (*this)(op->lhs_);
-    os << ", ";
+    os() << ", ";
     (*this)(op->rhs_);
-    os << ")";
+    os() << ")";
 }
 
 void CodeGenC::visit(const Max &op) {
-    os << "std::max("; // TODO: Pure C?
+    os() << "std::max("; // TODO: Pure C?
     (*this)(op->lhs_);
-    os << ", ";
+    os() << ", ";
     (*this)(op->rhs_);
-    os << ")";
+    os() << ")";
 }
 
 void CodeGenC::visit(const LT &op) {
-    os << "(";
+    os() << "(";
     (*this)(op->lhs_);
-    os << " < ";
+    os() << " < ";
     (*this)(op->rhs_);
-    os << ")";
+    os() << ")";
 }
 
 void CodeGenC::visit(const LE &op) {
-    os << "(";
+    os() << "(";
     (*this)(op->lhs_);
-    os << " <= ";
+    os() << " <= ";
     (*this)(op->rhs_);
-    os << ")";
+    os() << ")";
 }
 
 void CodeGenC::visit(const GT &op) {
-    os << "(";
+    os() << "(";
     (*this)(op->lhs_);
-    os << " > ";
+    os() << " > ";
     (*this)(op->rhs_);
-    os << ")";
+    os() << ")";
 }
 
 void CodeGenC::visit(const GE &op) {
-    os << "(";
+    os() << "(";
     (*this)(op->lhs_);
-    os << " >= ";
+    os() << " >= ";
     (*this)(op->rhs_);
-    os << ")";
+    os() << ")";
 }
 
 void CodeGenC::visit(const EQ &op) {
-    os << "(";
+    os() << "(";
     (*this)(op->lhs_);
-    os << " == ";
+    os() << " == ";
     (*this)(op->rhs_);
-    os << ")";
+    os() << ")";
 }
 
 void CodeGenC::visit(const NE &op) {
-    os << "(";
+    os() << "(";
     (*this)(op->lhs_);
-    os << " != ";
+    os() << " != ";
     (*this)(op->rhs_);
-    os << ")";
+    os() << ")";
 }
 
 void CodeGenC::visit(const Not &op) {
-    os << "!";
+    os() << "!";
     (*this)(op->expr_);
 }
 
 void CodeGenC::visit(const For &op) {
     makeIndent();
-    os << "for (int " << normalizeId(op->iter_) << " = ";
+    os() << "for (int " << normalizeId(op->iter_) << " = ";
     (*this)(op->begin_);
-    os << "; " << normalizeId(op->iter_) << " < ";
+    os() << "; " << normalizeId(op->iter_) << " < ";
     (*this)(op->end_);
-    os << "; " << normalizeId(op->iter_) << "++) ";
+    os() << "; " << normalizeId(op->iter_) << "++) ";
     beginBlock();
     (*this)(op->body_);
     endBlock();
@@ -229,15 +229,15 @@ void CodeGenC::visit(const For &op) {
 
 void CodeGenC::visit(const If &op) {
     makeIndent();
-    os << "if (";
+    os() << "if (";
     (*this)(op->cond_);
-    os << ") ";
+    os() << ") ";
     beginBlock();
     (*this)(op->thenCase_);
     endBlock();
     if (op->elseCase_.isValid()) {
         makeIndent();
-        os << "else ";
+        os() << "else ";
         beginBlock();
         (*this)(op->elseCase_);
         endBlock();
@@ -246,9 +246,9 @@ void CodeGenC::visit(const If &op) {
 
 void CodeGenC::visit(const Assert &op) {
     makeIndent();
-    os << "assert(";
+    os() << "assert(";
     (*this)(op->cond_);
-    os << ") ";
+    os() << ") ";
     beginBlock();
     (*this)(op->body_);
     endBlock();

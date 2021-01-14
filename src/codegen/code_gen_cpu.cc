@@ -4,7 +4,7 @@ namespace ir {
 
 void CodeGenCPU::visit(const For &op) {
     if (op->parallel_ == "openmp") {
-        os << "#pragma omp parallel for" << std::endl;
+        os() << "#pragma omp parallel for" << std::endl;
     }
     CodeGenC::visit(op);
 }

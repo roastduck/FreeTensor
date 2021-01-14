@@ -3,23 +3,23 @@
 namespace ir {
 
 void CodeGen::beginBlock() {
-    os << "{" << std::endl;
-    nIndent++;
+    os() << "{" << std::endl;
+    nIndent_++;
 }
 
 void CodeGen::endBlock() {
-    nIndent--;
+    nIndent_--;
     makeIndent();
-    os << "}" << std::endl;
+    os() << "}" << std::endl;
 }
 
 void CodeGen::makeIndent() {
-    for (int i = 0; i < nIndent; i++) {
-        os << "  ";
+    for (int i = 0; i < nIndent_; i++) {
+        os() << "  ";
     }
 }
 
-std::string CodeGen::toString() { return os.str(); }
+std::string CodeGen::toString() { return os().str(); }
 
 } // namespace ir
 
