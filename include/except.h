@@ -17,6 +17,11 @@ class InvalidSchedule : public Error {
     InvalidSchedule(const std::string &msg) : Error(msg) {}
 };
 
+class DriverError : public Error {
+  public:
+    DriverError(const std::string &msg) : Error(msg) {}
+};
+
 #define ERROR(msg)                                                             \
     {                                                                          \
         throw Error((std::string) "[ERROR] " __FILE__ ":" +                    \

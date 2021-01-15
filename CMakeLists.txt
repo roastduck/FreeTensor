@@ -37,5 +37,5 @@ file(GLOB_RECURSE SRC src/*.cc)
 # Target
 pybind11_add_module(ffi SHARED ${SRC})
 add_dependencies(ffi ISL)
-target_link_libraries(ffi PRIVATE isl)
+target_link_libraries(ffi PRIVATE isl cuda cudart)
 

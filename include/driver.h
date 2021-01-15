@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+#include <driver/array.h>
+
 namespace ir {
 
 class Driver {
@@ -14,7 +16,7 @@ class Driver {
   public:
     ~Driver() { unload(); }
     void buildAndLoad(const std::string &src, int nParam);
-    void setParam(int nth, void *param) { params_[nth] = param; }
+    void setParam(int nth, const Array &param) { params_[nth] = param.raw(); }
     void run();
     void unload();
 };

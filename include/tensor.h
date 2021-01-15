@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+#include <except.h>
 #include <expr.h>
 
 namespace ir {
@@ -18,6 +19,15 @@ inline std::string toString(DataType dtype) {
         return "i32";
     }
     return "???";
+}
+
+inline size_t sizeOf(DataType dtype) {
+    switch (dtype) {
+    case DataType::Float32:
+    case DataType::Int32:
+        return 4;
+    }
+    ASSERT(false);
 }
 
 class Tensor {
