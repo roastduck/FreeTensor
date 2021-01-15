@@ -11,7 +11,17 @@
 
 namespace ir {
 
-void Driver::buildAndLoad(const std::string &src, int nParam) {
+Driver::Driver(const std::string &src,
+               const std::vector<std::string> &paramNames)
+    : src_(src), params_(paramNames.size(), nullptr) {
+    name2param_.reserve(paramNames.size());
+    for (size_t i = 0, iEnd = paramNames.size(); i < iEnd; i++) {
+        name2param_[paramNames[i]] = i;
+    }
+    buildAndLoad();
+}
+
+void Driver::buildAndLoad() {
     mkdir("/tmp/ir", 0755);
     char path[] = "/tmp/ir/XXXXXX";
     mkdtemp(path);
@@ -20,7 +30,7 @@ void Driver::buildAndLoad(const std::string &src, int nParam) {
     auto so = (std::string)path + "/run.so";
     {
         std::ofstream f(cpp);
-        f << src;
+        f << src_;
     }
     auto cmd =
         (std::string) "c++ -shared -fPIC -Wall -fopenmp -o " + so + " " + cpp;
@@ -36,18 +46,20 @@ void Driver::buildAndLoad(const std::string &src, int nParam) {
         ERROR("Target function not found");
     }
 
-    params_ = new void *[nParam];
-    memset(params_, 0, nParam * sizeof(void *));
-
     remove(cpp.c_str());
     remove(so.c_str());
     rmdir(path);
 }
 
-void Driver::run() { func_(params_); }
+void Driver::setParams(const std::unordered_map<std::string, Array &> &params) {
+    for (auto &&item : params) {
+        params_[name2param_[item.first]] = item.second.raw();
+    }
+}
+
+void Driver::run() { func_(params_.data()); }
 
 void Driver::unload() {
-    delete[] params_;
     func_ = nullptr;
     // FIXME: How to safely close it? OpenMP won't kill its worker threads
     // before it ends
