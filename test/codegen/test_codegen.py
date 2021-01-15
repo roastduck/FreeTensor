@@ -8,15 +8,15 @@ def test_hello_world():
 
 	ast = ir.lower(ir.pop_ast())
 	print(ast)
-	code, params = ir.codegen(ast, "cpu")
+	code, params = ir.codegen(ast, ir.CPU())
 	print(code)
 
 	x_np = np.zeros((4, 4), dtype="float32")
-	x_ir = ir.Array(x_np, "cpu")
+	x_arr = ir.Array(x_np, ir.Device(ir.CPU()))
 	driver = ir.Driver(code, params)
-	driver.set_params({"x": x_ir})
+	driver.set_params({"x": x_arr})
 	driver.run()
-	x_np = x_ir.numpy()
+	x_np = x_arr.numpy()
 
 	x_std = np.zeros((4, 4), dtype="float32")
 	x_std[2, 3] = 2.0
@@ -29,16 +29,16 @@ def test_scalar_op():
 			("y", (), ir.DataType.Int32, ir.AccessType.Output)]) as (x, y):
 		y[()] = x[()] * 2 + 1
 
-	code, params = ir.codegen(ir.lower(ir.pop_ast()), "cpu")
+	code, params = ir.codegen(ir.lower(ir.pop_ast()), ir.CPU())
 	print(code)
 	x_np = np.array(5, dtype="int32")
 	y_np = np.array(0, dtype="int32")
-	x_ir = ir.Array(x_np, "cpu")
-	y_ir = ir.Array(y_np, "cpu")
+	x_arr = ir.Array(x_np, ir.Device(ir.CPU()))
+	y_arr = ir.Array(y_np, ir.Device(ir.CPU()))
 	driver = ir.Driver(code, params)
-	driver.set_params({"x": x_ir, "y": y_ir})
+	driver.set_params({"x": x_arr, "y": y_arr})
 	driver.run()
-	y_np = y_ir.numpy()
+	y_np = y_arr.numpy()
 
 	assert y_np[()] == 11
 
@@ -49,16 +49,16 @@ def test_for():
 		with ir.For("i", 0, 4) as i:
 			y[i] = x[i] + 1
 
-	code, params = ir.codegen(ir.lower(ir.pop_ast()), "cpu")
+	code, params = ir.codegen(ir.lower(ir.pop_ast()), ir.CPU())
 	print(code)
 	x_np = np.array([1, 2, 3, 4], dtype="int32")
 	y_np = np.zeros((4,), dtype="int32")
-	x_ir = ir.Array(x_np, "cpu")
-	y_ir = ir.Array(y_np, "cpu")
+	x_arr = ir.Array(x_np, ir.Device(ir.CPU()))
+	y_arr = ir.Array(y_np, ir.Device(ir.CPU()))
 	driver = ir.Driver(code, params)
-	driver.set_params({"x": x_ir, "y": y_ir})
+	driver.set_params({"x": x_arr, "y": y_arr})
 	driver.run()
-	y_np = y_ir.numpy()
+	y_np = y_arr.numpy()
 
 	y_std = np.array([2, 3, 4, 5], dtype="int32")
 	assert np.array_equal(y_np, y_std)
@@ -71,14 +71,14 @@ def test_if():
 			with ir.Else():
 				y[i] = 1
 
-	code, params = ir.codegen(ir.lower(ir.pop_ast()), "cpu")
+	code, params = ir.codegen(ir.lower(ir.pop_ast()), ir.CPU())
 	print(code)
 	y_np = np.zeros((4,), dtype="int32")
-	y_ir = ir.Array(y_np, "cpu")
+	y_arr = ir.Array(y_np, ir.Device(ir.CPU()))
 	driver = ir.Driver(code, params)
-	driver.set_params({"y": y_ir})
+	driver.set_params({"y": y_arr})
 	driver.run()
-	y_np = y_ir.numpy()
+	y_np = y_arr.numpy()
 
 	y_std = np.array([0, 0, 1, 1], dtype="int32")
 	assert np.array_equal(y_np, y_std)
@@ -138,18 +138,18 @@ def test_tiling():
 								ir.Any()
 	assert ir.pop_ast().match(ast)
 
-	code, params = ir.codegen(ast, "cpu")
+	code, params = ir.codegen(ast, ir.CPU())
 	print(code)
 	a_np = np.random.rand(256, 256).astype("float32")
 	b_np = np.random.rand(256, 256).astype("float32")
 	c_np = np.zeros((256, 256), dtype="float32")
-	a_ir = ir.Array(a_np, "cpu")
-	b_ir = ir.Array(b_np, "cpu")
-	c_ir = ir.Array(c_np, "cpu")
+	a_arr = ir.Array(a_np, ir.Device(ir.CPU()))
+	b_arr = ir.Array(b_np, ir.Device(ir.CPU()))
+	c_arr = ir.Array(c_np, ir.Device(ir.CPU()))
 	driver = ir.Driver(code, params)
-	driver.set_params({"a": a_ir, "b": b_ir, "c": c_ir})
+	driver.set_params({"a": a_arr, "b": b_arr, "c": c_arr})
 	driver.run()
-	c_np = c_ir.numpy()
+	c_np = c_arr.numpy()
 
 	c_std = a_np @ b_np
 	assert np.all(np.isclose(c_np, c_std))

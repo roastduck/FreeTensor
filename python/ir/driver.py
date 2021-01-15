@@ -1,2 +1,2 @@
-from ffi import Array, Driver
+from ffi import Target, CPU, GPU, Device, Array, Driver
 

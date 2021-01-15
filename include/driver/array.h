@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include <driver/device.h>
 #include <tensor.h>
 
 namespace ir {
@@ -15,17 +16,17 @@ class Array {
 
     DataType dtype_;
     std::vector<size_t> shape_;
-    std::string device_;
+    Device device_;
 
   public:
     Array(const std::vector<size_t> &shape, DataType dtype,
-          const std::string &device);
+          const Device &device);
     ~Array();
 
-    Array(Array &&) = default;
+    Array(Array &&);
     Array(const Array &) = delete;
 
-    Array &operator=(Array &&) = default;
+    Array &operator=(Array &&);
     Array &operator=(const Array &) = delete;
 
     size_t size() const { return size_; }
