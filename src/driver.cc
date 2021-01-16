@@ -12,8 +12,8 @@
 namespace ir {
 
 Driver::Driver(const std::string &src,
-               const std::vector<std::string> &paramNames)
-    : src_(src), params_(paramNames.size(), nullptr) {
+               const std::vector<std::string> &paramNames, const Device &dev)
+    : src_(src), params_(paramNames.size(), nullptr), dev_(dev) {
     name2param_.reserve(paramNames.size());
     for (size_t i = 0, iEnd = paramNames.size(); i < iEnd; i++) {
         name2param_[paramNames[i]] = i;
@@ -26,24 +26,45 @@ void Driver::buildAndLoad() {
     char path[] = "/tmp/ir/XXXXXX";
     mkdtemp(path);
 
-    auto cpp = (std::string)path + "/run.cpp";
+    std::string srcSuffix;
+    switch (dev_.type()) {
+    case TargetType::CPU:
+        srcSuffix = ".cpp";
+        break;
+    case TargetType::GPU:
+        srcSuffix = ".cu";
+        break;
+    default:
+        ASSERT(false);
+    }
+
+    auto cpp = (std::string)path + "/run" + srcSuffix;
     auto so = (std::string)path + "/run.so";
     {
         std::ofstream f(cpp);
         f << src_;
     }
-    auto cmd =
-        (std::string) "c++ -shared -fPIC -Wall -fopenmp -o " + so + " " + cpp;
+    std::string cmd;
+    switch (dev_.type()) {
+    case TargetType::CPU:
+        cmd = "c++ -shared -fPIC -Wall -fopenmp -o " + so + " " + cpp;
+        break;
+    case TargetType::GPU:
+        cmd = "nvcc -shared -Xcompiler -fPIC,-Wall -o " + so + " " + cpp;
+        break;
+    default:
+        ASSERT(false);
+    }
     system(cmd.c_str());
 
     dlHandle_ = dlopen(so.c_str(), RTLD_NOW);
     if (!dlHandle_) {
-        ERROR("Unable to load target code");
+        throw DriverError("Unable to load target code");
     }
 
     func_ = (void (*)(void **))dlsym(dlHandle_, "run");
     if (!func_) {
-        ERROR("Target function not found");
+        throw DriverError("Target function not found");
     }
 
     remove(cpp.c_str());

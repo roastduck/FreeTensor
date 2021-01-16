@@ -6,9 +6,9 @@
 namespace ir {
 
 /**
- * Hint all conditions like (x < 0) with normalized forms
+ * Hint all conditions, min/max and loops with normalized forms
  */
-class NormalizeIf : public Mutator {
+class Normalize : public Mutator {
   private:
     template <class T> Expr doNormalize(const T &_op) {
         auto __op = Mutator::visit(_op);
@@ -27,9 +27,10 @@ class NormalizeIf : public Mutator {
     virtual Expr visit(const NE &op) override { return doNormalize(op); }
     virtual Expr visit(const Min &op) override { return doNormalize(op); }
     virtual Expr visit(const Max &op) override { return doNormalize(op); }
+    virtual Stmt visit(const For &op) override;
 };
 
-inline Stmt normalizeIf(const Stmt &op) { return NormalizeIf()(op); }
+inline Stmt normalize(const Stmt &op) { return Normalize()(op); }
 
 } // namespace ir
 

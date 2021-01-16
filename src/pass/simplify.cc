@@ -5,7 +5,7 @@
 #include <analyze/disambiguous.h>
 #include <analyze/hash.h>
 #include <analyze/linear.h>
-#include <analyze/normalize_if.h>
+#include <analyze/normalize.h>
 #include <except.h>
 #include <pass/simplify.h>
 
@@ -254,7 +254,7 @@ Stmt simplifyPass(const Stmt &op) {
 
 std::tuple<Stmt, SimplifyPass::BoundsMap, SimplifyPass::BoundsMap>
 simplifyAndGetBounds(const Stmt &_op) {
-    Stmt op = normalizeIf(_op);
+    Stmt op = normalize(_op);
     for (int i = 0;; i++) {
         op = Disambiguous()(op);
 

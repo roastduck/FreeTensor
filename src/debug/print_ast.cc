@@ -239,7 +239,8 @@ void PrintVisitor::visit(const Assert &op) {
 std::string toString(const AST &op) {
     PrintVisitor visitor;
     visitor(op);
-    return visitor.toString();
+    return visitor.toString(
+        [](const PrintVisitor::Stream &stream) { return stream.os_.str(); });
 }
 
 } // namespace ir

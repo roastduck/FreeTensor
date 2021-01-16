@@ -42,9 +42,9 @@ class CodeGenC : public CodeGen {
 
   private:
     const std::string &normalizeId(const std::string &id);
-    static std::string gen(DataType dtype);
 
   public:
+    static std::string gen(DataType dtype);
     const std::vector<std::string> &params() const { return params_; }
 };
 

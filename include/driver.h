@@ -16,12 +16,14 @@ class Driver {
     std::string src_;
     std::vector<void *> params_;
     std::unordered_map<std::string, size_t> name2param_;
+    Device dev_;
 
   private:
     void buildAndLoad();
 
   public:
-    Driver(const std::string &src, const std::vector<std::string> &paramNames);
+    Driver(const std::string &src, const std::vector<std::string> &paramNames,
+           const Device &dev);
     ~Driver() { unload(); }
 
     void setParams(const std::unordered_map<std::string, Array &> &params);

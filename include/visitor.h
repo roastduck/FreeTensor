@@ -160,6 +160,9 @@ class Visitor {
         (*this)(op->begin_);
         (*this)(op->end_);
         (*this)(op->body_);
+        if (op->info_len_.isValid()) {
+            (*this)(op->info_len_);
+        }
         if (op->info_max_begin_.isValid()) {
             (*this)(op->info_max_begin_);
         }

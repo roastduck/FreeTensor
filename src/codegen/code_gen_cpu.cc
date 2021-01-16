@@ -24,9 +24,10 @@ std::pair<std::string, std::vector<std::string>> codeGenCPU(const AST &op) {
     const char *tailer = "\n"
                          "}";
 
-    return std::make_pair((std::string)header + "void run(void **_params) " +
-                              visitor.toString() + tailer,
-                          visitor.params());
+    auto body = visitor.toString([&](const CodeGenCPU::Stream &stream) {
+        return "void run(void **_params) " + stream.os_.str();
+    });
+    return std::make_pair(header + body + tailer, visitor.params());
 }
 
 } // namespace ir

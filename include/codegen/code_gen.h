@@ -1,17 +1,29 @@
 #ifndef CODE_GEN_H
 #define CODE_GEN_H
 
+#include <functional>
 #include <sstream>
 #include <string>
+#include <unordered_map>
+#include <vector>
 
 #include <visitor.h>
 
 namespace ir {
 
 class CodeGen : public Visitor {
+  public:
+    struct Stream {
+        std::string name_;
+        std::ostringstream os_;
+        int nIndent_ = 0;
+        std::unordered_map<std::string, Ref<Buffer>> uses_;
+        std::unordered_map<std::string, int> threadDim_;
+    };
+
   protected:
-    std::ostringstream os_;
-    int nIndent_ = 0;
+    std::vector<Stream> streamStack_, poppedStream_;
+    std::unordered_map<std::string, Ref<Buffer>> vars_;
 
     void makeIndent();
 
@@ -22,13 +34,29 @@ class CodeGen : public Visitor {
         }
     }
 
+    CodeGen();
+
+    void markDef(const std::string &name, const Ref<Buffer> &buffer);
+    void markUse(const std::string &name);
+
+    void pushStream(const std::string &name);
+    void popStream();
+
+    std::ostringstream &os();
+    int &nIndent();
+
   public:
     void beginBlock();
     void endBlock();
 
-    std::ostringstream &os() { return os_; }
-
-    std::string toString();
+    /**
+     * Dump all streams to a string
+     *
+     * @param action : callback(stream). Do more modification to a stream.
+     * Function prelude and finale can be added here
+     */
+    std::string
+    toString(const std::function<std::string(const Stream &)> &action);
 };
 
 } // namespace ir
