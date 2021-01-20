@@ -40,6 +40,12 @@ void init_ffi_driver(py::module_ &m) {
     py::class_<Ref<GPU>>(m, "GPU")
         .def(py::init([]() { return Ref<GPU>::make(); }))
         .def("type", [](const Ref<GPU> &target) { return target->type(); })
+        .def("set_compute_capability",
+             [](const Ref<GPU> &target, int value) {
+                 target->setComputeCapability(value);
+             })
+        .def("compute_capability",
+             [](const Ref<GPU> &target) { return target->computeCapability(); })
         .def("__str__",
              [](const Ref<GPU> &target) {
                  return target.isValid() ? target->toString() : "";

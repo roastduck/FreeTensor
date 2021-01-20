@@ -50,7 +50,15 @@ void Driver::buildAndLoad() {
         cmd = "c++ -shared -fPIC -Wall -fopenmp -o " + so + " " + cpp;
         break;
     case TargetType::GPU:
-        cmd = "nvcc -shared -Xcompiler -fPIC,-Wall -o " + so + " " + cpp;
+        cmd = "nvcc -shared -Xcompiler -fPIC,-Wall";
+        if (auto arch = dev_.target().as<GPU>()->computeCapability();
+            arch != 0) {
+            cmd += " -arch sm_" + std::to_string(arch);
+        } else {
+            WARNING("GPU arch not specified, which may result in suboptimal "
+                    "performance ");
+        }
+        cmd += " -o " + so + " " + cpp;
         break;
     default:
         ASSERT(false);
