@@ -9,6 +9,7 @@ namespace ir {
 
 class CacheRead : public Mutator {
     std::string stmt_, var_, fillStmt_, cacheVar_;
+    MemType mtype_;
     Ref<Buffer> buffer_;
     std::vector<std::pair<uint64_t, Load>> loads_;
     std::unordered_set<std::string> defs_;
@@ -16,9 +17,9 @@ class CacheRead : public Mutator {
     bool modified_ = false;
 
   public:
-    CacheRead(const std::string &stmt, const std::string &var)
+    CacheRead(const std::string &stmt, const std::string &var, MemType mtype)
         : stmt_(stmt), var_(var), fillStmt_(stmt_ + ".init"),
-          cacheVar_(var + ".r") {}
+          cacheVar_(var + ".r"), mtype_(mtype) {}
 
     const std::string &fillStmt() const { return fillStmt_; }
     const std::string &cacheVar() const { return cacheVar_; }
@@ -72,9 +73,9 @@ class CacheRead : public Mutator {
                 fill.size() == 1 ? fill[0] : makeStmtSeq("", std::move(fill));
             f->setId(fillStmt_);
             ret = makeStmtSeq("", {f, ret});
-            ret =
-                makeVarDef("", cacheVar_, std::move(*buffer_), std::move(ret));
+            ret = makeVarDef("", cacheVar_, *buffer_, std::move(ret));
             ret.template as<VarDefNode>()->buffer_->setAtype(AccessType::Cache);
+            ret.template as<VarDefNode>()->buffer_->setMtype(mtype_);
             modified_ = true;
             return ret;
         } else {

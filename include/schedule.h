@@ -105,12 +105,13 @@ class Schedule {
      * Note that it is not supported to define a local variable inside stmt and
      * use it to read the variable to be cached.
      * @param var : name of the variable to be cached
+     * @param mtype : where to cache
      * @throw InvalidSchedule if the ID or name is not found
      * @return : (ID of the statement that fills into the cache, name of the
      * cache variable)
      */
-    std::pair<std::string, std::string> cacheRead(const std::string &stmt,
-                                                  const std::string &var);
+    std::pair<std::string, std::string>
+    cacheRead(const std::string &stmt, const std::string &var, MemType mtype);
 
     /**
      * Cache the writes of a variable into a new local variable
@@ -119,12 +120,13 @@ class Schedule {
      * Note that it is not supported to define a local variable inside stmt and
      * use it to write the variable to be cached.
      * @param var : name of the variable to be cached
+     * @param mtype : where to cache
      * @throw InvalidSchedule if the ID or name is not found
      * @return : (ID of the statement that flushes from the cache, name of the
      * cache variable)
      */
-    std::pair<std::string, std::string> cacheWrite(const std::string &stmt,
-                                                   const std::string &var);
+    std::pair<std::string, std::string>
+    cacheWrite(const std::string &stmt, const std::string &var, MemType mtype);
 
     /**
      * Move a statement to a new position

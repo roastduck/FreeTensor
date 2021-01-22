@@ -3,8 +3,8 @@ import pytest
 
 def test_basic():
 	with ir.VarDef([
-			("y", (4, 8), ir.DataType.Int32, ir.AccessType.Output),
-			("z", (4, 8), ir.DataType.Int32, ir.AccessType.Output)]) as (y, z):
+			("y", (4, 8), "int32", "output", "cpu"),
+			("z", (4, 8), "int32", "output", "cpu")]) as (y, z):
 		with ir.For("i", 0, 4, nid="L1") as i:
 			with ir.For("j", 0, 8, nid="L2") as j:
 				ir.MarkNid("S0")
@@ -20,8 +20,8 @@ def test_basic():
 	print(ast)
 
 	with ir.VarDef([
-			("y", (4, 8), ir.DataType.Int32, ir.AccessType.Output),
-			("z", (4, 8), ir.DataType.Int32, ir.AccessType.Output)]) as (y, z):
+			("y", (4, 8), "int32", "output", "cpu"),
+			("z", (4, 8), "int32", "output", "cpu")]) as (y, z):
 		with ir.For("i", 0, 4) as i:
 			with ir.For("j", 0, 8) as j:
 				y[i, j] = i + j
@@ -33,12 +33,12 @@ def test_basic():
 
 def test_buffer_hoist():
 	with ir.VarDef([
-			("x0", (4, 8), ir.DataType.Int32, ir.AccessType.Input),
-			("x1", (4, 8), ir.DataType.Int32, ir.AccessType.Input),
-			("y", (4, 8), ir.DataType.Int32, ir.AccessType.Output)]) as (x0, x1, y):
+			("x0", (4, 8), "int32", "input", "cpu"),
+			("x1", (4, 8), "int32", "input", "cpu"),
+			("y", (4, 8), "int32", "output", "cpu")]) as (x0, x1, y):
 		with ir.For("i", 0, 4, nid="L1") as i:
 			with ir.For("j", 0, 8, nid="L2") as j:
-				with ir.VarDef("buf", (8), ir.DataType.Int32, ir.AccessType.Cache) as b:
+				with ir.VarDef("buf", (8), "int32", "cache", "cpu") as b:
 					ir.MarkNid("S0")
 					b[j] = x0[i, j] + x1[i, j]
 					y[i, j] = b[j] * b[j]
@@ -52,11 +52,11 @@ def test_buffer_hoist():
 	print(ast)
 
 	with ir.VarDef([
-			("x0", (4, 8), ir.DataType.Int32, ir.AccessType.Input),
-			("x1", (4, 8), ir.DataType.Int32, ir.AccessType.Input),
-			("y", (4, 8), ir.DataType.Int32, ir.AccessType.Output)]) as (x0, x1, y):
+			("x0", (4, 8), "int32", "input", "cpu"),
+			("x1", (4, 8), "int32", "input", "cpu"),
+			("y", (4, 8), "int32", "output", "cpu")]) as (x0, x1, y):
 		with ir.For("i", 0, 4) as i:
-			with ir.VarDef("buf", (8), ir.DataType.Int32, ir.AccessType.Cache) as b:
+			with ir.VarDef("buf", (8), "int32", "cache", "cpu") as b:
 				with ir.For("j", 0, 8) as j:
 					b[j] = x0[i, j] + x1[i, j]
 				with ir.For("j", 0, 8) as j:
@@ -67,13 +67,13 @@ def test_buffer_hoist():
 
 def test_buffer_no_hoist():
 	with ir.VarDef([
-			("x0", (4, 8), ir.DataType.Int32, ir.AccessType.Input),
-			("x1", (4, 8), ir.DataType.Int32, ir.AccessType.Input),
-			("y", (4, 8), ir.DataType.Int32, ir.AccessType.Output),
-			("z", (4, 8), ir.DataType.Int32, ir.AccessType.Output)]) as (x0, x1, y, z):
+			("x0", (4, 8), "int32", "input", "cpu"),
+			("x1", (4, 8), "int32", "input", "cpu"),
+			("y", (4, 8), "int32", "output", "cpu"),
+			("z", (4, 8), "int32", "output", "cpu")]) as (x0, x1, y, z):
 		with ir.For("i", 0, 4, nid="L1") as i:
 			with ir.For("j", 0, 8, nid="L2") as j:
-				with ir.VarDef("buf", (4, 8), ir.DataType.Int32, ir.AccessType.Cache) as b:
+				with ir.VarDef("buf", (4, 8), "int32", "cache", "cpu") as b:
 					b[i, j] = x0[i, j] + x1[i, j]
 					ir.MarkNid("S0")
 					y[i, j] = b[i, j] * b[i, j]
@@ -88,10 +88,10 @@ def test_buffer_no_hoist():
 	print(ast)
 
 	with ir.VarDef([
-			("x0", (4, 8), ir.DataType.Int32, ir.AccessType.Input),
-			("x1", (4, 8), ir.DataType.Int32, ir.AccessType.Input),
-			("y", (4, 8), ir.DataType.Int32, ir.AccessType.Output),
-			("z", (4, 8), ir.DataType.Int32, ir.AccessType.Output)]) as (x0, x1, y, z):
+			("x0", (4, 8), "int32", "input", "cpu"),
+			("x1", (4, 8), "int32", "input", "cpu"),
+			("y", (4, 8), "int32", "output", "cpu"),
+			("z", (4, 8), "int32", "output", "cpu")]) as (x0, x1, y, z):
 		with ir.For("i", 0, 4) as i:
 			# buf is not here
 			with ir.For("j", 0, 8) as j:
@@ -104,12 +104,12 @@ def test_buffer_no_hoist():
 
 def test_correct_dependency_basic():
 	with ir.VarDef([
-			("x0", (4, 8), ir.DataType.Int32, ir.AccessType.Input),
-			("x1", (4, 8), ir.DataType.Int32, ir.AccessType.Input),
-			("y", (4, 8), ir.DataType.Int32, ir.AccessType.Output)]) as (x0, x1, y):
+			("x0", (4, 8), "int32", "input", "cpu"),
+			("x1", (4, 8), "int32", "input", "cpu"),
+			("y", (4, 8), "int32", "output", "cpu")]) as (x0, x1, y):
 		with ir.For("i", 0, 4, nid="L1") as i:
 			with ir.For("j", 0, 8, nid="L2") as j:
-				with ir.VarDef("buf", (1,), ir.DataType.Int32, ir.AccessType.Cache) as b:
+				with ir.VarDef("buf", (1,), "int32", "cache", "cpu") as b:
 					ir.MarkNid("S0")
 					b[0] = x0[i, j] + x1[i, j]
 					y[i, j] = b[0] * b[0]
@@ -123,11 +123,11 @@ def test_correct_dependency_basic():
 	print(ast)
 
 	with ir.VarDef([
-			("x0", (4, 8), ir.DataType.Int32, ir.AccessType.Input),
-			("x1", (4, 8), ir.DataType.Int32, ir.AccessType.Input),
-			("y", (4, 8), ir.DataType.Int32, ir.AccessType.Output)]) as (x0, x1, y):
+			("x0", (4, 8), "int32", "input", "cpu"),
+			("x1", (4, 8), "int32", "input", "cpu"),
+			("y", (4, 8), "int32", "output", "cpu")]) as (x0, x1, y):
 		with ir.For("i", 0, 4) as i:
-			with ir.VarDef("buf", (8, 1), ir.DataType.Int32, ir.AccessType.Cache) as b:
+			with ir.VarDef("buf", (8, 1), "int32", "cache", "cpu") as b:
 				with ir.For("j", 0, 8) as j:
 					b[j, 0] = x0[i, j] + x1[i, j]
 				with ir.For("j", 0, 8) as j:
@@ -138,12 +138,12 @@ def test_correct_dependency_basic():
 
 def test_correct_dependency_multi_loop():
 	with ir.VarDef([
-			("x0", (4, 8), ir.DataType.Int32, ir.AccessType.Input),
-			("x1", (4, 8), ir.DataType.Int32, ir.AccessType.Input),
-			("y", (4, 8), ir.DataType.Int32, ir.AccessType.Output)]) as (x0, x1, y):
+			("x0", (4, 8), "int32", "input", "cpu"),
+			("x1", (4, 8), "int32", "input", "cpu"),
+			("y", (4, 8), "int32", "output", "cpu")]) as (x0, x1, y):
 		with ir.For("i", 0, 4, nid="L1") as i:
 			with ir.For("j", 0, 8, nid="L2") as j:
-				with ir.VarDef("buf", (1,), ir.DataType.Int32, ir.AccessType.Cache) as b:
+				with ir.VarDef("buf", (1,), "int32", "cache", "cpu") as b:
 					ir.MarkNid("S0")
 					b[0] = x0[i, j] + x1[i, j]
 					y[i, j] = b[0] * b[0]
@@ -157,10 +157,10 @@ def test_correct_dependency_multi_loop():
 	print(ast)
 
 	with ir.VarDef([
-			("x0", (4, 8), ir.DataType.Int32, ir.AccessType.Input),
-			("x1", (4, 8), ir.DataType.Int32, ir.AccessType.Input),
-			("y", (4, 8), ir.DataType.Int32, ir.AccessType.Output)]) as (x0, x1, y):
-		with ir.VarDef("buf", (4, 8, 1), ir.DataType.Int32, ir.AccessType.Cache) as b:
+			("x0", (4, 8), "int32", "input", "cpu"),
+			("x1", (4, 8), "int32", "input", "cpu"),
+			("y", (4, 8), "int32", "output", "cpu")]) as (x0, x1, y):
+		with ir.VarDef("buf", (4, 8, 1), "int32", "cache", "cpu") as b:
 			with ir.For("i", 0, 4) as i:
 				with ir.For("j", 0, 8) as j:
 					b[i, j, 0] = x0[i, j] + x1[i, j]
@@ -173,10 +173,10 @@ def test_correct_dependency_multi_loop():
 
 def test_correct_dependency_real_dep():
 	with ir.VarDef([
-			("x", (4), ir.DataType.Int32, ir.AccessType.Input),
-			("y", (4, 8), ir.DataType.Int32, ir.AccessType.Output)]) as (x, y):
+			("x", (4), "int32", "input", "cpu"),
+			("y", (4, 8), "int32", "output", "cpu")]) as (x, y):
 		with ir.For("i", 0, 4, nid="L1") as i:
-			with ir.VarDef("buf", (1,), ir.DataType.Int32, ir.AccessType.Cache) as b:
+			with ir.VarDef("buf", (1,), "int32", "cache", "cpu") as b:
 				ir.MarkNid("S0")
 				b[0] = x[i] * 2
 				with ir.For("j", 0, 8, nid="L2") as j:
@@ -191,9 +191,9 @@ def test_correct_dependency_real_dep():
 	print(ast)
 
 	with ir.VarDef([
-			("x", (4), ir.DataType.Int32, ir.AccessType.Input),
-			("y", (4, 8), ir.DataType.Int32, ir.AccessType.Output)]) as (x, y):
-		with ir.VarDef("buf", (4, 1), ir.DataType.Int32, ir.AccessType.Cache) as b:
+			("x", (4), "int32", "input", "cpu"),
+			("y", (4, 8), "int32", "output", "cpu")]) as (x, y):
+		with ir.VarDef("buf", (4, 1), "int32", "cache", "cpu") as b:
 			with ir.For("i", 0, 4) as i:
 				b[i, 0] = x[i] * 2
 			with ir.For("i", 0, 4) as i:
@@ -205,10 +205,10 @@ def test_correct_dependency_real_dep():
 
 def test_correct_dependency_unable_resolve():
 	with ir.VarDef([
-			("x0", (4, 8), ir.DataType.Int32, ir.AccessType.Input),
-			("x1", (4, 8), ir.DataType.Int32, ir.AccessType.Input),
-			("y", (4, 8), ir.DataType.Int32, ir.AccessType.Output),
-			("buf", (1,), ir.DataType.Int32, ir.AccessType.InOut)]) as (x0, x1, y, b):
+			("x0", (4, 8), "int32", "input", "cpu"),
+			("x1", (4, 8), "int32", "input", "cpu"),
+			("y", (4, 8), "int32", "output", "cpu"),
+			("buf", (1,), "int32", "inout", "cpu")]) as (x0, x1, y, b):
 		with ir.For("i", 0, 4, nid="L1") as i:
 			with ir.For("j", 0, 8, nid="L2") as j:
 				ir.MarkNid("S0")
@@ -224,12 +224,12 @@ def test_correct_dependency_unable_resolve():
 
 def test_correct_dependency_no_need_to_modify():
 	with ir.VarDef([
-			("x0", (4, 4), ir.DataType.Int32, ir.AccessType.Input),
-			("x1", (4, 4), ir.DataType.Int32, ir.AccessType.Input),
-			("y", (4, 4), ir.DataType.Int32, ir.AccessType.Output)]) as (x0, x1, y):
+			("x0", (4, 4), "int32", "input", "cpu"),
+			("x1", (4, 4), "int32", "input", "cpu"),
+			("y", (4, 4), "int32", "output", "cpu")]) as (x0, x1, y):
 		with ir.For("i", 0, 4, nid="L1") as i:
 			with ir.For("j", 0, 4, nid="L2") as j:
-				with ir.VarDef("buf", (4,), ir.DataType.Int32, ir.AccessType.Cache) as b:
+				with ir.VarDef("buf", (4,), "int32", "cache", "cpu") as b:
 					with ir.For("k", 0, 4, nid="L3") as k:
 						ir.MarkNid("S0")
 						b[k] = x0[i, k]
@@ -244,11 +244,11 @@ def test_correct_dependency_no_need_to_modify():
 	print(ast)
 
 	with ir.VarDef([
-			("x0", (4, 4), ir.DataType.Int32, ir.AccessType.Input),
-			("x1", (4, 4), ir.DataType.Int32, ir.AccessType.Input),
-			("y", (4, 4), ir.DataType.Int32, ir.AccessType.Output)]) as (x0, x1, y):
+			("x0", (4, 4), "int32", "input", "cpu"),
+			("x1", (4, 4), "int32", "input", "cpu"),
+			("y", (4, 4), "int32", "output", "cpu")]) as (x0, x1, y):
 		with ir.For("i", 0, 4) as i:
-			with ir.VarDef("buf", (4,), ir.DataType.Int32, ir.AccessType.Cache) as b:
+			with ir.VarDef("buf", (4,), "int32", "cache", "cpu") as b:
 				with ir.For("k", 0, 4) as k:
 					b[k] = x0[i, k]
 				with ir.For("j", 0, 4) as j:

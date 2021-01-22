@@ -2,7 +2,7 @@ import ir
 import numpy as np
 
 def test_hello_world():
-	with ir.VarDef("x", (4, 4), ir.DataType.Float32, ir.AccessType.Output) as x:
+	with ir.VarDef("x", (4, 4), "float32", "output", "cpu") as x:
 		x[2, 3] = 2.0
 		x[1, 0] = 3.0
 
@@ -25,8 +25,8 @@ def test_hello_world():
 
 def test_scalar_op():
 	with ir.VarDef([
-			("x", (), ir.DataType.Int32, ir.AccessType.Input),
-			("y", (), ir.DataType.Int32, ir.AccessType.Output)]) as (x, y):
+			("x", (), "int32", "input", "cpu"),
+			("y", (), "int32", "output", "cpu")]) as (x, y):
 		y[()] = x[()] * 2 + 1
 
 	code, params = ir.codegen(ir.lower(ir.pop_ast()), ir.CPU())
@@ -44,8 +44,8 @@ def test_scalar_op():
 
 def test_for():
 	with ir.VarDef([
-			("x", (4,), ir.DataType.Int32, ir.AccessType.Input),
-			("y", (4,), ir.DataType.Int32, ir.AccessType.Output)]) as (x, y):
+			("x", (4,), "int32", "input", "cpu"),
+			("y", (4,), "int32", "output", "cpu")]) as (x, y):
 		with ir.For("i", 0, 4) as i:
 			y[i] = x[i] + 1
 
@@ -64,7 +64,7 @@ def test_for():
 	assert np.array_equal(y_np, y_std)
 
 def test_if():
-	with ir.VarDef("y", (4,), ir.DataType.Int32, ir.AccessType.Output) as y:
+	with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
 		with ir.For("i", 0, 4) as i:
 			with ir.If(i < 2):
 				y[i] = 0
@@ -85,9 +85,9 @@ def test_if():
 
 def test_tiling():
 	with ir.VarDef([
-			("a", (256, 256), ir.DataType.Float32, ir.AccessType.Input),
-			("b", (256, 256), ir.DataType.Float32, ir.AccessType.Input),
-			("c", (256, 256), ir.DataType.Float32, ir.AccessType.Output)]) as (a, b, c):
+			("a", (256, 256), "float32", "input", "cpu"),
+			("b", (256, 256), "float32", "input", "cpu"),
+			("c", (256, 256), "float32", "output", "cpu")]) as (a, b, c):
 		with ir.For("i", 0, 256, nid="Li") as i:
 			with ir.For("j", 0, 256, nid="Lj") as j:
 				with ir.NamedScope("S0"):
@@ -103,26 +103,26 @@ def test_tiling():
 	j0, j1 = s.split(j, 32)
 	s.reorder([i0, j0, i1, j1])
 
-	s.cache_write("S0", "c")
+	s.cache_write("S0", "c", "cpu")
 
-	load_a, _ = s.cache_read(S1, "a")
+	load_a, _ = s.cache_read(S1, "a", "cpu")
 	s.move_to(load_a, j0, to_begin=True)
 
-	load_b, _ = s.cache_read(S1, "b")
+	load_b, _ = s.cache_read(S1, "b", "cpu")
 	s.move_to(load_b, j0, to_begin=True)
 
 	ast = ir.lower(s.ast())
 	print(ast)
 
 	with ir.VarDef([
-			("a", (256, 256), ir.DataType.Float32, ir.AccessType.Input),
-			("b", (256, 256), ir.DataType.Float32, ir.AccessType.Input),
-			("c", (256, 256), ir.DataType.Float32, ir.AccessType.Output)]) as (a, b, c):
+			("a", (256, 256), "float32", "input", "cpu"),
+			("b", (256, 256), "float32", "input", "cpu"),
+			("c", (256, 256), "float32", "output", "cpu")]) as (a, b, c):
 		with ir.For("i.0", 0, 8) as i0:
 			with ir.For("j.0", 0, 8) as j0:
 				with ir.VarDef([
-					("a.r", (32, 256, 1, 1), ir.DataType.Float32, ir.AccessType.Cache),
-					("b.r", (32, 256, 1, 1), ir.DataType.Float32, ir.AccessType.Cache)]) as (ar, br):
+					("a.r", (32, 256, 1, 1), "float32", ir.AccessType.Cache, "cpu"),
+					("b.r", (32, 256, 1, 1), "float32", ir.AccessType.Cache, "cpu")]) as (ar, br):
 					with ir.For("i.1", 0, 32) as i1:
 						with ir.For("k", 0, 256) as k:
 							ir.Any()
@@ -131,7 +131,7 @@ def test_tiling():
 							ir.Any()
 					with ir.For("i.1", 0, 32) as i1:
 						with ir.For("j.1", 0, 32) as i1:
-							with ir.VarDef("c.w", (1, 1), ir.DataType.Float32, ir.AccessType.Cache) as cw:
+							with ir.VarDef("c.w", (1, 1), "float32", ir.AccessType.Cache, "cpu") as cw:
 								cw[0, 0] = 0
 								with ir.For("k", 0, 256) as k:
 									ir.Any()

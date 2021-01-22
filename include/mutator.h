@@ -37,7 +37,7 @@ class Mutator {
             shape.emplace_back((*this)(dim));
         }
         Tensor t(std::move(shape), op->buffer_->tensor().dtype());
-        Buffer b(std::move(t), op->buffer_->atype());
+        Buffer b(std::move(t), op->buffer_->atype(), op->buffer_->mtype());
         auto ret =
             makeVarDef(op->id(), op->name_, std::move(b), (*this)(op->body_));
         if (op->info_acc_lower_.isValid()) {

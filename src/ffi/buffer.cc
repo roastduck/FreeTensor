@@ -10,8 +10,14 @@ void init_ffi_buffer(py::module_ &m) {
         .value("InOut", AccessType::InOut)
         .value("Cache", AccessType::Cache);
 
+    py::enum_<MemType>(m, "MemType")
+        .value("CPU", MemType::CPU)
+        .value("GPUGlobal", MemType::GPUGlobal)
+        .value("GPUShared", MemType::GPUShared)
+        .value("GPULocal", MemType::GPUShared);
+
     py::class_<Buffer> buffer(m, "Buffer");
-    buffer.def(py::init<const Tensor &, AccessType>());
+    buffer.def(py::init<const Tensor &, AccessType, MemType>());
 }
 
 } // namespace ir

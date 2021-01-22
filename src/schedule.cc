@@ -312,10 +312,11 @@ void Schedule::swap(const std::vector<std::string> &order) {
     ast_ = ast;
 }
 
-std::pair<std::string, std::string>
-Schedule::cacheRead(const std::string &stmt, const std::string &var) {
+std::pair<std::string, std::string> Schedule::cacheRead(const std::string &stmt,
+                                                        const std::string &var,
+                                                        MemType mtype) {
     auto ast = ast_;
-    CacheRead mutator(stmt, var);
+    CacheRead mutator(stmt, var, mtype);
     try {
         ast = mutator(ast);
         ast = shrinkVar(ast);
@@ -331,9 +332,10 @@ Schedule::cacheRead(const std::string &stmt, const std::string &var) {
 }
 
 std::pair<std::string, std::string>
-Schedule::cacheWrite(const std::string &stmt, const std::string &var) {
+Schedule::cacheWrite(const std::string &stmt, const std::string &var,
+                     MemType mtype) {
     auto ast = ast_;
-    CacheWrite mutator(stmt, var);
+    CacheWrite mutator(stmt, var, mtype);
     try {
         ast = mutator(ast);
         ast = shrinkVar(ast);

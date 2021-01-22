@@ -10,6 +10,7 @@ namespace ir {
 
 class CacheWrite : public Mutator {
     std::string stmt_, var_, flushStmt_, cacheVar_;
+    MemType mtype_;
     Ref<Buffer> buffer_;
     std::vector<Stmt> stores_;
     std::unordered_set<std::string> defs_;
@@ -17,9 +18,9 @@ class CacheWrite : public Mutator {
     bool modified_ = false;
 
   public:
-    CacheWrite(const std::string &stmt, const std::string &var)
+    CacheWrite(const std::string &stmt, const std::string &var, MemType mtype)
         : stmt_(stmt), var_(var), flushStmt_(stmt_ + ".final"),
-          cacheVar_(var + ".w") {}
+          cacheVar_(var + ".w"), mtype_(mtype) {}
 
     const std::string &flushStmt() const { return flushStmt_; }
     const std::string &cacheVar() const { return cacheVar_; }
@@ -123,9 +124,9 @@ class CacheWrite : public Mutator {
                                        : makeStmtSeq("", std::move(flush));
             f->setId(flushStmt_);
             ret = makeStmtSeq("", {ret, f});
-            ret =
-                makeVarDef("", cacheVar_, std::move(*buffer_), std::move(ret));
+            ret = makeVarDef("", cacheVar_, *buffer_, std::move(ret));
             ret.template as<VarDefNode>()->buffer_->setAtype(AccessType::Cache);
+            ret.template as<VarDefNode>()->buffer_->setMtype(mtype_);
             modified_ = true;
             return ret;
         } else {

@@ -1,7 +1,8 @@
 from typing import Sequence, Tuple
 
 import ffi
-from ffi import AccessType, DataType
+
+from .utils import *
 
 class Context:
 	def __init__(self):
@@ -76,18 +77,19 @@ class Var:
 		top.append_stmt(ffi.makeStore(top.getNextNid(), self.var, key, value))
 
 class _VarDef:
-	def __init__(self, name: str, shape: Sequence, dtype: DataType, atype: AccessType):
+	def __init__(self, name: str, shape: Sequence, dtype, atype, mtype):
 		self.name = name
 		self.shape = shape
-		self.dtype = dtype
-		self.atype = atype
+		self.dtype = parseDType(dtype)
+		self.atype = parseAType(atype)
+		self.mtype = parseMType(mtype)
 
 	def __enter__(self):
 		ctx_stack.push()
 		return Var(self.name)
 
 	def __exit__(self, exc_type, exc_value, traceback):
-		buf = ffi.Buffer(ffi.Tensor(self.shape, self.dtype), self.atype)
+		buf = ffi.Buffer(ffi.Tensor(self.shape, self.dtype), self.atype, self.mtype)
 		body = ctx_stack.pop().make_stmt()
 		top = ctx_stack.top()
 		top.append_stmt(ffi.makeVarDef(top.getNextNid(), self.name, buf, body))

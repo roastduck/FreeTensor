@@ -23,21 +23,27 @@ inline std::string toString(AccessType atype) {
     return "[???]";
 }
 
+enum class MemType : int { CPU, GPUGlobal, GPUShared, GPULocal };
+
 class Buffer {
     Tensor tensor_;
     AccessType atype_;
+    MemType mtype_;
 
   public:
-    Buffer(Tensor &&tensor, AccessType atype)
-        : tensor_(std::move(tensor)), atype_(atype) {}
-    Buffer(const Tensor &tensor, AccessType atype)
-        : tensor_(tensor), atype_(atype) {}
+    Buffer(Tensor &&tensor, AccessType atype, MemType mtype)
+        : tensor_(std::move(tensor)), atype_(atype), mtype_(mtype) {}
+    Buffer(const Tensor &tensor, AccessType atype, MemType mtype)
+        : tensor_(tensor), atype_(atype), mtype_(mtype) {}
 
     const Tensor &tensor() const { return tensor_; }
     Tensor &tensor() { return tensor_; }
 
     void setAtype(AccessType atype) { atype_ = atype; }
     AccessType atype() const { return atype_; }
+
+    void setMtype(MemType mtype) { mtype_ = mtype; }
+    MemType mtype() const { return mtype_; }
 };
 
 } // namespace ir

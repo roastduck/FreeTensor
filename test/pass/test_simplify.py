@@ -1,7 +1,7 @@
 import ir
 
 def test_const_fold():
-	with ir.VarDef("y", (4,), ir.DataType.Int32, ir.AccessType.Output) as y:
+	with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
 		with ir.For("i", 0, 4) as i:
 			y[i] = 0 * i
 	ast = ir.pop_ast()
@@ -9,7 +9,7 @@ def test_const_fold():
 	ast = ir.lower(ast)
 	print(ast)
 
-	with ir.VarDef("y", (4,), ir.DataType.Int32, ir.AccessType.Output) as y:
+	with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
 		with ir.For("i", 0, 4) as i:
 			y[i] = 0
 	std = ir.pop_ast()
@@ -17,7 +17,7 @@ def test_const_fold():
 	assert std.match(ast)
 
 def test_redundant_if():
-	with ir.VarDef("y", (4,), ir.DataType.Int32, ir.AccessType.Output) as y:
+	with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
 		with ir.For("i", 0, 4) as i:
 			with ir.If(i < 10):
 				y[i] = 1
@@ -26,7 +26,7 @@ def test_redundant_if():
 	ast = ir.lower(ast)
 	print(ast)
 
-	with ir.VarDef("y", (4,), ir.DataType.Int32, ir.AccessType.Output) as y:
+	with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
 		with ir.For("i", 0, 4) as i:
 			y[i] = 1
 	std = ir.pop_ast()
@@ -34,7 +34,7 @@ def test_redundant_if():
 	assert std.match(ast)
 
 def test_redundant_if_2():
-	with ir.VarDef("y", (4,), ir.DataType.Int32, ir.AccessType.Output) as y:
+	with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
 		with ir.For("i", 0, 4) as i:
 			with ir.If(i < i + 2):
 				y[i] = 1
@@ -43,7 +43,7 @@ def test_redundant_if_2():
 	ast = ir.lower(ast)
 	print(ast)
 
-	with ir.VarDef("y", (4,), ir.DataType.Int32, ir.AccessType.Output) as y:
+	with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
 		with ir.For("i", 0, 4) as i:
 			y[i] = 1
 	std = ir.pop_ast()
@@ -51,7 +51,7 @@ def test_redundant_if_2():
 	assert std.match(ast)
 
 def test_redundant_min():
-	with ir.VarDef("y", (4,), ir.DataType.Int32, ir.AccessType.Output) as y:
+	with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
 		with ir.For("i", 0, 4) as i:
 			with ir.If(i < 10):
 				y[i] = ir.min(i, i + 2)
@@ -60,7 +60,7 @@ def test_redundant_min():
 	ast = ir.lower(ast)
 	print(ast)
 
-	with ir.VarDef("y", (4,), ir.DataType.Int32, ir.AccessType.Output) as y:
+	with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
 		with ir.For("i", 0, 4) as i:
 			y[i] = i
 	std = ir.pop_ast()
@@ -68,7 +68,7 @@ def test_redundant_min():
 	assert std.match(ast)
 
 def test_redundant_max():
-	with ir.VarDef("y", (4,), ir.DataType.Int32, ir.AccessType.Output) as y:
+	with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
 		with ir.For("i", 0, 4) as i:
 			with ir.If(i < 10):
 				y[i] = ir.max(i, i + 2)
@@ -77,7 +77,7 @@ def test_redundant_max():
 	ast = ir.lower(ast)
 	print(ast)
 
-	with ir.VarDef("y", (4,), ir.DataType.Int32, ir.AccessType.Output) as y:
+	with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
 		with ir.For("i", 0, 4) as i:
 			y[i] = i + 2
 	std = ir.pop_ast()
@@ -86,8 +86,8 @@ def test_redundant_max():
 
 def test_different_scope():
 	with ir.VarDef([
-			("x", (4, 10), ir.DataType.Int32, ir.AccessType.Input),
-			("y", (4,), ir.DataType.Int32, ir.AccessType.Output)]) as (x, y):
+			("x", (4, 10), "int32", "input", "cpu"),
+			("y", (4,), "int32", "output", "cpu")]) as (x, y):
 		with ir.For("i", 0, 4) as i:
 			with ir.If(i < 2):
 				with ir.For("j", 0, 5) as j:
@@ -107,8 +107,8 @@ def test_different_scope():
 	print(ast)
 
 	with ir.VarDef([
-			("x", (4, 10), ir.DataType.Int32, ir.AccessType.Input),
-			("y", (4,), ir.DataType.Int32, ir.AccessType.Output)]) as (x, y):
+			("x", (4, 10), "int32", "input", "cpu"),
+			("y", (4,), "int32", "output", "cpu")]) as (x, y):
 		with ir.For("i", 0, 4) as i:
 			with ir.If(i < 2):
 				with ir.For("j", 0, 5) as j:

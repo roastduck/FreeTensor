@@ -2,9 +2,9 @@ import ir
 
 def test_sink_stmt_seq():
 	with ir.VarDef([
-			("x", (5,), ir.DataType.Int32, ir.AccessType.Input),
-			("y", (4,), ir.DataType.Int32, ir.AccessType.Output)]) as (x, y):
-		with ir.VarDef("b", (1,), ir.DataType.Int32, ir.AccessType.Cache) as b:
+			("x", (5,), "int32", "input", "cpu"),
+			("y", (4,), "int32", "output", "cpu")]) as (x, y):
+		with ir.VarDef("b", (1,), "int32", "cache", "cpu") as b:
 			with ir.For("i", 0, 4) as i:
 				b[0] = x[i] + x[i + 1]
 				y[i] = b[0] * i
@@ -15,9 +15,9 @@ def test_sink_stmt_seq():
 	print(ast)
 
 	with ir.VarDef([
-			("x", (5,), ir.DataType.Int32, ir.AccessType.Input),
-			("y", (4,), ir.DataType.Int32, ir.AccessType.Output)]) as (x, y):
-		with ir.VarDef("b", (1,), ir.DataType.Int32, ir.AccessType.Cache) as b:
+			("x", (5,), "int32", "input", "cpu"),
+			("y", (4,), "int32", "output", "cpu")]) as (x, y):
+		with ir.VarDef("b", (1,), "int32", "cache", "cpu") as b:
 			with ir.For("i", 0, 4) as i:
 				b[0] = x[i] + x[i + 1]
 				y[i] = b[0] * i
@@ -28,9 +28,9 @@ def test_sink_stmt_seq():
 
 def test_sink_for():
 	with ir.VarDef([
-			("x", (5,), ir.DataType.Int32, ir.AccessType.Input),
-			("y", (4,), ir.DataType.Int32, ir.AccessType.Output)]) as (x, y):
-		with ir.VarDef("b", (4,), ir.DataType.Int32, ir.AccessType.Cache) as b:
+			("x", (5,), "int32", "input", "cpu"),
+			("y", (4,), "int32", "output", "cpu")]) as (x, y):
+		with ir.VarDef("b", (4,), "int32", "cache", "cpu") as b:
 			with ir.For("i", 0, 4) as i:
 				b[i] = x[i] + x[i + 1]
 				y[i] = b[i] * i
@@ -40,11 +40,11 @@ def test_sink_for():
 	print(ast)
 
 	with ir.VarDef([
-			("x", (5,), ir.DataType.Int32, ir.AccessType.Input),
-			("y", (4,), ir.DataType.Int32, ir.AccessType.Output)]) as (x, y):
+			("x", (5,), "int32", "input", "cpu"),
+			("y", (4,), "int32", "output", "cpu")]) as (x, y):
 		with ir.For("i", 0, 4) as i:
 			# Also shrinked
-			with ir.VarDef("b", (1,), ir.DataType.Int32, ir.AccessType.Cache) as b:
+			with ir.VarDef("b", (1,), "int32", "cache", "cpu") as b:
 				b[0] = x[i] + x[i + 1]
 				y[i] = b[0] * i
 	std = ir.pop_ast()

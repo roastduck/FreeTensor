@@ -31,7 +31,8 @@ Stmt SinkVar::visit(const VarDef &op) {
         shape.emplace_back((*this)(dim));
     }
     Tensor tensor(std::move(shape), op->buffer_->tensor().dtype());
-    Buffer buffer(std::move(tensor), op->buffer_->atype());
+    Buffer buffer(std::move(tensor), op->buffer_->atype(),
+                  op->buffer_->mtype());
     Stmt body;
 
     switch (op->body_->nodeType()) {

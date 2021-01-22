@@ -7,8 +7,8 @@ device = ir.Device(target)
 
 def test_basic():
 	with ir.VarDef([
-			("x", (4,), ir.DataType.Int32, ir.AccessType.Input),
-			("y", (4,), ir.DataType.Int32, ir.AccessType.Output)]) as (x, y):
+			("x", (4,), "int32", "input", "gpuglobal"),
+			("y", (4,), "int32", "output", "gpuglobal")]) as (x, y):
 		with ir.For("i", 0, 4, nid="L1") as i:
 			y[i] = x[i] + 1
 

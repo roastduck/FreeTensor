@@ -3,8 +3,8 @@ import numpy as np
 
 def test_omp_for():
 	with ir.VarDef([
-			("x", (4,), ir.DataType.Int32, ir.AccessType.Input),
-			("y", (4,), ir.DataType.Int32, ir.AccessType.Output)]) as (x, y):
+			("x", (4,), "int32", "input", "cpu"),
+			("y", (4,), "int32", "output", "cpu")]) as (x, y):
 		with ir.For("i", 0, 4, nid="L1") as i:
 			y[i] = x[i] + 1
 
