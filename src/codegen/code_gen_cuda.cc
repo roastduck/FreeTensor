@@ -97,39 +97,86 @@ void CodeGenCUDA::visit(const For &op) {
 }
 
 void CodeGenCUDA::visit(const VarDef &op) {
-    switch (op->buffer_->mtype()) {
-    case MemType::GPUShared: {
-        markDef(normalizeId(op->name_), op->buffer_);
+    if (op->buffer_->atype() != AccessType::Cache) {
+        CodeGenC::visit(op);
 
-        makeIndent();
-        beginBlock();
-
-        makeIndent();
-
-        // e.g. __shared__ float x[5][5][5];
-        auto &&tensor = op->buffer_->tensor();
-        auto &&shape = tensor.shape();
-        os() << "__shared__ " << gen(tensor.dtype()) << " "
-             << normalizeId(op->name_);
-        for (auto &&dim : shape) {
-            if (dim->nodeType() != ASTNodeType::IntConst) {
-                throw Error("Shared memory buffer with dynamic size is not "
+    } else {
+        switch (op->buffer_->mtype()) {
+        case MemType::GPUGlobal: {
+            if (inKernel()) {
+                throw Error("Allocating a global buffer inside a kernel is not "
                             "supported yet");
             }
-            os() << "[";
-            (*this)(dim);
-            os() << "]";
+
+            markDef(normalizeId(op->name_), op->buffer_);
+
+            makeIndent();
+            beginBlock();
+
+            // e.g.
+            // float (*x)[5][5];  // CUDA does not allow "restrict" here
+            // cudaMalloc(&x, 5 * 5 * 5 * sizeof(float)); ...; cudaFree(x);
+            auto &&tensor = op->buffer_->tensor();
+            auto &&shape = tensor.shape();
+            makeIndent();
+            os() << gen(tensor.dtype()) << " (*";
+            os() << normalizeId(op->name_) << ")";
+            for (size_t i = 1, iEnd = shape.size(); i < iEnd;
+                 i++) { // No shape[0]
+                os() << "[";
+                (*this)(shape[i]);
+                os() << "]";
+            }
+            os() << ";" << std::endl;
+            makeIndent();
+            os() << "cudaMalloc(&" << normalizeId(op->name_) << ", ";
+            for (auto &&dim : shape) {
+                (*this)(dim);
+                os() << " * ";
+            }
+            os() << "sizeof(" << gen(tensor.dtype()) << "));" << std::endl;
+
+            (*this)(op->body_);
+
+            makeIndent();
+            os() << "cudaFree(" << normalizeId(op->name_) << ");" << std::endl;
+            endBlock();
+            break;
         }
-        os() << ";" << std::endl;
 
-        (*this)(op->body_);
-        endBlock();
-        break;
-    }
+        case MemType::GPUShared: {
+            markDef(normalizeId(op->name_), op->buffer_);
 
-    default:
-        CodeGenC::visit(op);
-        break;
+            makeIndent();
+            beginBlock();
+
+            makeIndent();
+
+            // e.g. __shared__ float x[5][5][5];
+            auto &&tensor = op->buffer_->tensor();
+            auto &&shape = tensor.shape();
+            os() << "__shared__ " << gen(tensor.dtype()) << " "
+                 << normalizeId(op->name_);
+            for (auto &&dim : shape) {
+                if (dim->nodeType() != ASTNodeType::IntConst) {
+                    throw Error("Shared memory buffer with dynamic size is not "
+                                "supported yet");
+                }
+                os() << "[";
+                (*this)(dim);
+                os() << "]";
+            }
+            os() << ";" << std::endl;
+
+            (*this)(op->body_);
+            endBlock();
+            break;
+        }
+
+        default:
+            CodeGenC::visit(op);
+            break;
+        }
     }
 }
 
