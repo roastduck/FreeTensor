@@ -6,7 +6,7 @@
 namespace ir {
 
 void CodeGenC::visit(const VarDef &op) {
-    markDef(op->name_, op->buffer_);
+    markDef(normalizeId(op->name_), op->buffer_);
 
     makeIndent();
     beginBlock();
@@ -58,7 +58,7 @@ void CodeGenC::visit(const Var &op) {
 }
 
 void CodeGenC::visit(const Store &op) {
-    markUse(op->var_);
+    markUse(normalizeId(op->var_));
 
     makeIndent();
     if (op->indices_.empty()) {
@@ -77,7 +77,7 @@ void CodeGenC::visit(const Store &op) {
 }
 
 void CodeGenC::visit(const Load &op) {
-    markUse(op->var_);
+    markUse(normalizeId(op->var_));
 
     if (op->indices_.empty()) {
         os() << "*" << normalizeId(op->var_);
@@ -92,7 +92,7 @@ void CodeGenC::visit(const Load &op) {
 }
 
 void CodeGenC::visit(const AddTo &op) {
-    markUse(op->var_);
+    markUse(normalizeId(op->var_));
 
     makeIndent();
     if (op->indices_.empty()) {

@@ -24,6 +24,7 @@ class CodeGenCUDA : public CodeGenC {
     void visit(const Max &op) override;
     void visit(const Var &op) override;
     void visit(const For &op) override;
+    void visit(const VarDef &op) override;
 };
 
 /**

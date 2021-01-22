@@ -22,12 +22,16 @@ void CodeGen::makeIndent() {
 }
 
 void CodeGen::markDef(const std::string &name, const Ref<Buffer> &buffer) {
-    vars_[name] = buffer;
+    vars_[name] = std::make_pair(streamStack_.back().name_, buffer);
 }
 
 void CodeGen::markUse(const std::string &name) {
-    for (Stream &item : streamStack_) {
-        item.uses_[name] = vars_.at(name);
+    auto &&def = vars_.at(name);
+    for (auto it = streamStack_.rbegin(); it != streamStack_.rend(); it++) {
+        if (it->name_ == def.first) {
+            break;
+        }
+        it->uses_[name] = def.second;
     }
 }
 

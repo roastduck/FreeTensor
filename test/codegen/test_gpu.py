@@ -30,3 +30,31 @@ def test_basic():
 	y_std = np.array([2, 3, 4, 5], dtype="int32")
 	assert np.array_equal(y_np, y_std)
 
+def test_shmem():
+	with ir.VarDef([
+			("x", (4,), "int32", "input", "gpuglobal"),
+			("y", (4,), "int32", "output", "gpuglobal")]) as (x, y):
+		with ir.For("i", 0, 4, nid="L1") as i:
+			ir.MarkNid("S1")
+			y[i] = x[i] + 1
+
+	s = ir.Schedule(ir.pop_ast())
+	load_x, _ = s.cache_read("S1", "x", "gpushared")
+	s.parallelize("L1", "threadIdx.x")
+	ast = ir.lower(s.ast())
+	print(ast)
+	code, params = ir.codegen(ast, target)
+	print(code)
+	assert "__shared__" in code
+	x_np = np.array([1, 2, 3, 4], dtype="int32")
+	y_np = np.zeros((4,), dtype="int32")
+	x_arr = ir.Array(x_np, device)
+	y_arr = ir.Array(y_np, device)
+	driver = ir.Driver(code, params, device)
+	driver.set_params({"x": x_arr, "y": y_arr})
+	driver.run()
+	y_np = y_arr.numpy()
+
+	y_std = np.array([2, 3, 4, 5], dtype="int32")
+	assert np.array_equal(y_np, y_std)
+

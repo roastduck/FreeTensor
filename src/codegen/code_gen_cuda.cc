@@ -96,6 +96,43 @@ void CodeGenCUDA::visit(const For &op) {
     }
 }
 
+void CodeGenCUDA::visit(const VarDef &op) {
+    switch (op->buffer_->mtype()) {
+    case MemType::GPUShared: {
+        markDef(normalizeId(op->name_), op->buffer_);
+
+        makeIndent();
+        beginBlock();
+
+        makeIndent();
+
+        // e.g. __shared__ float x[5][5][5];
+        auto &&tensor = op->buffer_->tensor();
+        auto &&shape = tensor.shape();
+        os() << "__shared__ " << gen(tensor.dtype()) << " "
+             << normalizeId(op->name_);
+        for (auto &&dim : shape) {
+            if (dim->nodeType() != ASTNodeType::IntConst) {
+                throw Error("Shared memory buffer with dynamic size is not "
+                            "supported yet");
+            }
+            os() << "[";
+            (*this)(dim);
+            os() << "]";
+        }
+        os() << ";" << std::endl;
+
+        (*this)(op->body_);
+        endBlock();
+        break;
+    }
+
+    default:
+        CodeGenC::visit(op);
+        break;
+    }
+}
+
 std::pair<std::string, std::vector<std::string>> codeGenCUDA(const AST &op) {
     CodeGenCUDA visitor;
     visitor.beginBlock();

@@ -25,6 +25,20 @@ inline std::string toString(AccessType atype) {
 
 enum class MemType : int { CPU, GPUGlobal, GPUShared, GPULocal };
 
+inline std::string toString(MemType mtype) {
+    switch (mtype) {
+    case MemType::CPU:
+        return "[CPU]";
+    case MemType::GPUGlobal:
+        return "[GPUGlobal]";
+    case MemType::GPUShared:
+        return "[GPUShared]";
+    case MemType::GPULocal:
+        return "[GPULocal]";
+    }
+    return "[???]";
+}
+
 class Buffer {
     Tensor tensor_;
     AccessType atype_;

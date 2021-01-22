@@ -23,7 +23,9 @@ class CodeGen : public Visitor {
 
   protected:
     std::vector<Stream> streamStack_, poppedStream_;
-    std::unordered_map<std::string, Ref<Buffer>> vars_;
+
+    // var name -> (stream name, buffer)
+    std::unordered_map<std::string, std::pair<std::string, Ref<Buffer>>> vars_;
 
     void makeIndent();
 

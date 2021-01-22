@@ -24,7 +24,8 @@ void PrintVisitor::visit(const VarDef &op) {
         os() << "]" << std::endl;
     }
     makeIndent();
-    os() << ::ir::toString(op->buffer_->atype()) << " " << op->name_ << ": ";
+    os() << ::ir::toString(op->buffer_->atype()) << " "
+         << ::ir::toString(op->buffer_->mtype()) << " " << op->name_ << ": ";
     auto &&tensor = op->buffer_->tensor();
     os() << ::ir::toString(tensor.dtype()) << "[";
     printList(tensor.shape());
