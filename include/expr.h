@@ -254,6 +254,24 @@ template <class T> Expr makeNot(T &&expr) {
     return n;
 }
 
+/**
+ * Invoke whatever target code
+ */
+class IntrinsicNode : public ExprNode {
+  public:
+    std::string format_; /// what to run. "%" is filled by parameters one by one
+                         /// E.g. sinf(%)
+    std::vector<Expr> params_;
+    DEFINE_NODE_TRAIT(Intrinsic);
+};
+typedef Ref<IntrinsicNode> Intrinsic;
+template <class T> Expr makeIntrinsic(const std::string &format, T &&params) {
+    Intrinsic i = Intrinsic::make();
+    i->format_ = format;
+    i->params_ = std::forward<T>(params);
+    return i;
+}
+
 } // namespace ir
 
 #endif // EXPR_H

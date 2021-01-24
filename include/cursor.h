@@ -89,6 +89,7 @@ class GetCursorById : public VisitorWithCursor {
     virtual void visit(const For &op) override { doVisit(op); }
     virtual void visit(const If &op) override { doVisit(op); }
     virtual void visit(const Assert &op) override { doVisit(op); }
+    virtual void visit(const Eval &op) override { doVisit(op); }
 };
 
 inline Cursor getCursorById(const Stmt &ast, const std::string &id) {

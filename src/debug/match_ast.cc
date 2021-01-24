@@ -224,6 +224,22 @@ void MatchVisitor::visit(const Assert &op) {
     RECURSE(op->body_, instance->body_);
 }
 
+void MatchVisitor::visit(const Intrinsic &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::Intrinsic);
+    auto instance = instance_.as<IntrinsicNode>();
+    CHECK(op->format_ == instance->format_);
+    CHECK(op->params_.size() == instance->params_.size());
+    for (size_t i = 0, iEnd = op->params_.size(); i < iEnd; i++) {
+        RECURSE(op->params_[i], instance->params_[i]);
+    }
+}
+
+void MatchVisitor::visit(const Eval &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::Eval);
+    auto instance = instance_.as<EvalNode>();
+    RECURSE(op->expr_, instance->expr_);
+}
+
 bool match(const AST &pattern, const AST &instance) {
     MatchVisitor visitor(instance);
     visitor(pattern);

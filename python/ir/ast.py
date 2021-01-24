@@ -25,10 +25,10 @@ class Context:
 		self.stmt_seq.pop()
 		self.append_stmt(ffi.makeIf(nid, cond, thenCase, elseCase))
 
-	def setNextNid(self, nid: str):
+	def set_next_nid(self, nid: str):
 		self.nextNid = nid
 
-	def getNextNid(self):
+	def get_next_nid(self):
 		return self.nextNid
 
 	def make_stmt(self, nid: str = ""):
@@ -74,7 +74,7 @@ class Var:
 		if type(key) is not tuple and type(key) is not list:
 			key = (key,)
 		top = ctx_stack.top()
-		top.append_stmt(ffi.makeStore(top.getNextNid(), self.var, key, value))
+		top.append_stmt(ffi.makeStore(top.get_next_nid(), self.var, key, value))
 
 class _VarDef:
 	def __init__(self, name: str, shape: Sequence, dtype, atype, mtype):
@@ -92,7 +92,7 @@ class _VarDef:
 		buf = ffi.Buffer(ffi.Tensor(self.shape, self.dtype), self.atype, self.mtype)
 		body = ctx_stack.pop().make_stmt()
 		top = ctx_stack.top()
-		top.append_stmt(ffi.makeVarDef(top.getNextNid(), self.name, buf, body))
+		top.append_stmt(ffi.makeVarDef(top.get_next_nid(), self.name, buf, body))
 
 class _VarsDef:
 	def __init__(self, defs: Tuple[str, Sequence, DataType, AccessType]):
@@ -126,7 +126,7 @@ class For:
 	def __exit__(self, exc_type, exc_value, traceback):
 		body = ctx_stack.pop().make_stmt()
 		top = ctx_stack.top()
-		nid = top.getNextNid()
+		nid = top.get_next_nid()
 		if self.nid != "":
 			nid = self.nid
 		top.append_stmt(ffi.makeFor(nid, self.iter_var, self.begin, self.end, "", body))
@@ -155,7 +155,7 @@ class Else:
 
 ''' Mark the ID of the following statement '''
 def MarkNid(nid: str):
-	ctx_stack.top().setNextNid(nid)
+	ctx_stack.top().set_next_nid(nid)
 
 class NamedScope:
 	def __init__(self, nid: str):
@@ -168,6 +168,10 @@ class NamedScope:
 		body = ctx_stack.pop().make_stmt(self.nid)
 		ctx_stack.top().append_stmt(body)
 
+def Eval(expr):
+	top = ctx_stack.top()
+	top.append_stmt(ffi.makeEval(top.get_next_nid(), expr))
+
 def Any():
 	ctx_stack.top().append_stmt(ffi.makeAny())
 
@@ -176,4 +180,7 @@ def min(lhs, rhs):
 
 def max(lhs, rhs):
 	return ffi.makeMax(lhs, rhs)
+
+def intrinsic(fmt, *params):
+	return ffi.makeIntrinsic(fmt, params)
 

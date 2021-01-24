@@ -8,12 +8,12 @@
 namespace ir {
 
 class CodeGenCUDA : public CodeGenC {
-    struct ThreadInfo {
+    struct IdxInfo {
         std::string threadId_;
         Expr offset_;
     };
 
-    std::unordered_map<std::string, ThreadInfo> varMap_;
+    std::unordered_map<std::string, IdxInfo> varMap_;
     int nKernel_ = 0;
 
   private:

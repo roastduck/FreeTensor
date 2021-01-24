@@ -181,6 +181,24 @@ Stmt makeAssert(const std::string &id, Tcond &&cond, Tbody &&body) {
     return a;
 }
 
+/**
+ * Evaluate an expression and do nothing else
+ *
+ * Can be used to call an intrinsic
+ */
+class EvalNode : public StmtNode {
+  public:
+    Expr expr_;
+    DEFINE_NODE_TRAIT(Eval);
+};
+typedef Ref<EvalNode> Eval;
+template <class T> Stmt makeEval(const std::string &id, T &&expr) {
+    Eval e = Eval::make();
+    e->setId(id);
+    e->expr_ = std::forward<T>(expr);
+    return e;
+}
+
 } // namespace ir
 
 #endif // STMT_H

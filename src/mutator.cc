@@ -27,6 +27,7 @@ Expr Mutator::operator()(const Expr &op) {
         DISPATCH_CASE(EQ);
         DISPATCH_CASE(NE);
         DISPATCH_CASE(Not);
+        DISPATCH_CASE(Intrinsic);
 
     default:
         ERROR("Unexpected Expr node type");
@@ -42,6 +43,7 @@ Stmt Mutator::operator()(const Stmt &op) {
         DISPATCH_CASE(For);
         DISPATCH_CASE(If);
         DISPATCH_CASE(Assert);
+        DISPATCH_CASE(Eval);
 
     default:
         ERROR("Unexpected Stmt node type");

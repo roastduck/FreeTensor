@@ -128,6 +128,7 @@ void VisitorWithCursor::operator()(const AST &op) {
     case ASTNodeType::For:
     case ASTNodeType::If:
     case ASTNodeType::Assert:
+    case ASTNodeType::Eval:
         cursor_.push(op.as<StmtNode>());
         Visitor::operator()(op);
         cursor_.pop();

@@ -209,6 +209,19 @@ class Mutator {
     virtual Stmt visit(const Assert &op) {
         return makeAssert(op->id(), (*this)(op->cond_), (*this)(op->body_));
     }
+
+    virtual Expr visit(const Intrinsic &op) {
+        std::vector<Expr> params;
+        params.reserve(op->params_.size());
+        for (auto &&param : op->params_) {
+            params.emplace_back((*this)(param));
+        }
+        return makeIntrinsic(op->format_, std::move(params));
+    }
+
+    virtual Stmt visit(const Eval &op) {
+        return makeEval(op->id(), (*this)(op->expr_));
+    }
 };
 
 } // namespace ir

@@ -51,6 +51,8 @@ class MatchVisitor : public Visitor {
     virtual void visit(const For &op) override;
     virtual void visit(const If &op) override;
     virtual void visit(const Assert &op) override;
+    virtual void visit(const Intrinsic &op) override;
+    virtual void visit(const Eval &op) override;
 };
 
 } // namespace ir

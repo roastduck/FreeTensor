@@ -183,6 +183,14 @@ class Visitor {
         (*this)(op->cond_);
         (*this)(op->body_);
     }
+
+    virtual void visit(const Intrinsic &op) {
+        for (auto &&param : op->params_) {
+            (*this)(param);
+        }
+    }
+
+    virtual void visit(const Eval &op) { (*this)(op->expr_); }
 };
 
 } // namespace ir

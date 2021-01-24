@@ -144,6 +144,9 @@ void init_ffi_ast(py::module_ &m) {
           static_cast<Stmt (*)(const std::string &, const Expr &, const Stmt &,
                                const Stmt &)>(&makeIf),
           "nid"_a, "cond"_a, "thenCase"_a, "elseCase"_a = Stmt());
+    m.def("makeEval",
+          static_cast<Stmt (*)(const std::string &, const Expr &)>(&makeEval),
+          "nid"_a, "expr"_a);
 
     // Expressions
     m.def("makeMin",
@@ -152,6 +155,10 @@ void init_ffi_ast(py::module_ &m) {
     m.def("makeMax",
           static_cast<Expr (*)(const Expr &, const Expr &)>(&makeMax), "lhs"_a,
           "rhs"_a);
+    m.def("makeIntrinsic",
+          static_cast<Expr (*)(const std::string &, const std::vector<Expr> &)>(
+              &makeIntrinsic),
+          "fmt"_a, "params"_a);
 }
 
 } // namespace ir

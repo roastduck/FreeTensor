@@ -281,6 +281,25 @@ void CodeGenC::visit(const Assert &op) {
     endBlock();
 }
 
+void CodeGenC::visit(const Intrinsic &op) {
+    os() << "(";
+    int i = 0;
+    for (char c : op->format_) {
+        if (c == '%') {
+            (*this)(op->params_.at(i++));
+        } else {
+            os() << c;
+        }
+    }
+    os() << ")";
+}
+
+void CodeGenC::visit(const Eval &op) {
+    makeIndent();
+    (*this)(op->expr_);
+    os() << ";" << std::endl;
+}
+
 const std::string &CodeGenC::normalizeId(const std::string &old) {
     if (idCache_.count(old)) {
         return idCache_.at(old);
