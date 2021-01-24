@@ -56,12 +56,26 @@ void PrintVisitor::visit(const Load &op) {
     os() << "]";
 }
 
-void PrintVisitor::visit(const AddTo &op) {
+void PrintVisitor::visit(const ReduceTo &op) {
     printId(op);
     makeIndent();
     os() << op->var_ << "[";
     printList(op->indices_);
-    os() << "] += ";
+    os() << "] ";
+    switch (op->op_) {
+    case ReduceOp::Add:
+        os() << "+=";
+        break;
+    case ReduceOp::Min:
+        os() << "min=";
+        break;
+    case ReduceOp::Max:
+        os() << "max=";
+        break;
+    default:
+        ASSERT(false);
+    }
+    os() << " ";
     (*this)(op->expr_);
     os() << std::endl;
 }

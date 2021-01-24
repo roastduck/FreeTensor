@@ -88,7 +88,7 @@ class CacheRead : public Mutator {
     Stmt visit(const StmtSeq &op) override { return doModify(op); }
     Stmt visit(const VarDef &op) override { return doModify(op); }
     Stmt visit(const Store &op) override { return doModify(op); }
-    Stmt visit(const AddTo &op) override { return doModify(op); }
+    Stmt visit(const ReduceTo &op) override { return doModify(op); }
     Stmt visit(const For &op) override { return doModify(op); }
     Stmt visit(const If &op) override { return doModify(op); }
     Stmt visit(const Assert &op) override { return doModify(op); }

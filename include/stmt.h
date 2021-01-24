@@ -100,21 +100,24 @@ Stmt makeStore(const std::string &id, const std::string &var,
     return s;
 }
 
-class AddToNode : public StmtNode {
+enum class ReduceOp : int { Add, Min, Max };
+class ReduceToNode : public StmtNode {
   public:
     std::string var_;
     std::vector<Expr> indices_;
+    ReduceOp op_;
     Expr expr_;
-    DEFINE_NODE_TRAIT(AddTo)
+    DEFINE_NODE_TRAIT(ReduceTo)
 };
-typedef Ref<AddToNode> AddTo;
+typedef Ref<ReduceToNode> ReduceTo;
 template <class Tindices, class Texpr>
-Stmt makeAddTo(const std::string &id, const std::string &var,
-               Tindices &&indices, Texpr &&expr) {
-    AddTo a = AddTo::make();
+Stmt makeReduceTo(const std::string &id, const std::string &var,
+                  Tindices &&indices, ReduceOp op, Texpr &&expr) {
+    ReduceTo a = ReduceTo::make();
     a->setId(id);
     a->var_ = var;
     a->indices_ = std::forward<Tindices>(indices);
+    a->op_ = op;
     a->expr_ = std::forward<Texpr>(expr);
     return a;
 }

@@ -216,8 +216,8 @@ const std::string &AnalyzeDeps::getVar(const AST &op) {
         return op.as<LoadNode>()->var_;
     case ASTNodeType::Store:
         return op.as<StoreNode>()->var_;
-    case ASTNodeType::AddTo:
-        return op.as<AddToNode>()->var_;
+    case ASTNodeType::ReduceTo:
+        return op.as<ReduceToNode>()->var_;
     default:
         ASSERT(false);
     }

@@ -89,7 +89,7 @@ Stmt CompAccessBound::visit(const Store &op) {
     return Mutator::visit(op);
 }
 
-Stmt CompAccessBound::visit(const AddTo &op) {
+Stmt CompAccessBound::visit(const ReduceTo &op) {
     access_[op->var_].emplace_back(op->indices_); // use the old object
     return Mutator::visit(op);
 }

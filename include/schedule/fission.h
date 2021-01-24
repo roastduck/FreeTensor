@@ -48,7 +48,7 @@ class HoistVar : public Mutator {
     virtual Stmt visit(const VarDef &op) override;
     virtual Stmt visit(const Store &op) override;
     virtual Expr visit(const Load &op) override;
-    virtual Stmt visit(const AddTo &op) override;
+    virtual Stmt visit(const ReduceTo &op) override;
 };
 
 class AddDimToVar : public Mutator {
@@ -77,7 +77,7 @@ class AddDimToVar : public Mutator {
     virtual Stmt visit(const For &op) override;
     virtual Stmt visit(const VarDef &op) override;
     virtual Stmt visit(const Store &op) override;
-    virtual Stmt visit(const AddTo &op) override;
+    virtual Stmt visit(const ReduceTo &op) override;
     virtual Expr visit(const Load &op) override;
 };
 
@@ -109,7 +109,7 @@ class FissionFor : public Mutator {
     virtual Stmt visit(const VarDef &op) override;
     virtual Stmt visit(const Store &op) override;
     virtual Expr visit(const Load &op) override;
-    virtual Stmt visit(const AddTo &op) override;
+    virtual Stmt visit(const ReduceTo &op) override;
     virtual Stmt visit(const If &op) override;
     virtual Stmt visit(const Assert &op) override;
 };

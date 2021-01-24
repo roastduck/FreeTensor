@@ -15,7 +15,7 @@ void MarkStores::visit(const Store &op) {
     }
 }
 
-void MarkStores::visit(const AddTo &op) {
+void MarkStores::visit(const ReduceTo &op) {
     Visitor::visit(op);
     for (auto &&loop : loopStack_) {
         variantVar_[op->var_].insert(loop);

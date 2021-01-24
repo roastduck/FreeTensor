@@ -12,7 +12,7 @@ enum class ASTNodeType : int {
     Var,
     Store,
     Load,
-    AddTo,
+    ReduceTo,
     IntConst,
     FloatConst,
     Add,

@@ -54,7 +54,7 @@ class Visitor {
         }
     }
 
-    virtual void visit(const AddTo &op) {
+    virtual void visit(const ReduceTo &op) {
         for (auto &&index : op->indices_) {
             (*this)(index);
         }

@@ -4,37 +4,6 @@
 
 namespace ir {
 
-bool MakeReduction::isSameElem(const Store &s, const Load &l) {
-    if (s->var_ != l->var_) {
-        return false;
-    }
-    ASSERT(s->indices_.size() == l->indices_.size());
-    for (size_t i = 0, iEnd = s->indices_.size(); i < iEnd; i++) {
-        if (getHash(s->indices_[i]) != getHash(l->indices_[i])) {
-            return false;
-        }
-    }
-    return true;
-}
-
-Stmt MakeReduction::visit(const Store &_op) {
-    auto __op = Mutator::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::Store);
-    auto op = __op.as<StoreNode>();
-    if (op->expr_->nodeType() == ASTNodeType::Add) {
-        auto expr = op->expr_.as<AddNode>();
-        if (expr->lhs_->nodeType() == ASTNodeType::Load &&
-            isSameElem(op, expr->lhs_.as<LoadNode>())) {
-            return makeAddTo(op->id(), op->var_, op->indices_, expr->rhs_);
-        }
-        if (expr->rhs_->nodeType() == ASTNodeType::Load &&
-            isSameElem(op, expr->rhs_.as<LoadNode>())) {
-            return makeAddTo(op->id(), op->var_, op->indices_, expr->lhs_);
-        }
-    }
-    return op;
-}
-
 Stmt SwapFor::visit(const For &_op) {
     if (_op->id() == oldOuter_->id()) {
         insideOuter_ = true;

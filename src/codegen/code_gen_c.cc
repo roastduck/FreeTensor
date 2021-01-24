@@ -91,22 +91,41 @@ void CodeGenC::visit(const Load &op) {
     }
 }
 
-void CodeGenC::visit(const AddTo &op) {
+void CodeGenC::visit(const ReduceTo &op) {
     markUse(normalizeId(op->var_));
 
     makeIndent();
-    if (op->indices_.empty()) {
-        os() << "*" << normalizeId(op->var_);
-    } else {
-        os() << normalizeId(op->var_);
-        for (auto &&index : op->indices_) {
-            os() << "[";
-            (*this)(index);
-            os() << "]";
+
+    auto genAddr = [&]() {
+        if (op->indices_.empty()) {
+            os() << "*" << normalizeId(op->var_);
+        } else {
+            os() << normalizeId(op->var_);
+            for (auto &&index : op->indices_) {
+                os() << "[";
+                (*this)(index);
+                os() << "]";
+            }
         }
+    };
+    auto genExpr = [&]() { (*this)(op->expr_); };
+
+    switch (op->op_) {
+    case ReduceOp::Add:
+        genAddr(), os() << " += ", genExpr();
+        break;
+    case ReduceOp::Min:
+        genAddr(), os() << " = min(";
+        genAddr(), os() << ", ", genExpr(), os() << ")";
+        break;
+    case ReduceOp::Max:
+        genAddr(), os() << " = min(";
+        genAddr(), os() << ", ", genExpr(), os() << ")";
+        break;
+    default:
+        ASSERT(false);
     }
-    os() << " += ";
-    (*this)(op->expr_);
+
     os() << ";" << std::endl;
 }
 

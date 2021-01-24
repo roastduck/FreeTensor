@@ -21,7 +21,7 @@ class CheckAllDefined : public Visitor {
     void visit(const Var &op) override;
     void visit(const Load &op) override;
     void visit(const Store &op) override;
-    void visit(const AddTo &op) override;
+    void visit(const ReduceTo &op) override;
 };
 
 bool checkAllDefined(const std::unordered_set<std::string> &defs,

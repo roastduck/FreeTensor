@@ -42,10 +42,10 @@ Stmt ShrinkVar::visit(const Store &_op) {
     return modifyAccess(__op.as<StoreNode>());
 }
 
-Stmt ShrinkVar::visit(const AddTo &_op) {
+Stmt ShrinkVar::visit(const ReduceTo &_op) {
     auto __op = Mutator::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::AddTo);
-    return modifyAccess(__op.as<AddToNode>());
+    ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
+    return modifyAccess(__op.as<ReduceToNode>());
 }
 
 Stmt shrinkVar(const Stmt &_op) {

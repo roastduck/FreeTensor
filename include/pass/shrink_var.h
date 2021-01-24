@@ -26,7 +26,7 @@ class ShrinkVar : public Mutator {
     Stmt visit(const VarDef &op) override;
     Expr visit(const Load &op) override;
     Stmt visit(const Store &op) override;
-    Stmt visit(const AddTo &op) override;
+    Stmt visit(const ReduceTo &op) override;
 };
 
 Stmt shrinkVar(const Stmt &op);

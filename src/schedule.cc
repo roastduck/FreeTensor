@@ -7,6 +7,7 @@
 #include <analyze/find_loop_variance.h>
 #include <cursor.h>
 #include <pass/flatten_stmt_seq.h>
+#include <pass/make_reduction.h>
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
 #include <pass/sink_var.h>
@@ -58,7 +59,7 @@ std::pair<std::string, std::string> Schedule::split(const std::string &id,
 void Schedule::reorder(const std::vector<std::string> &dstOrder) {
     auto ast = ast_;
     try {
-        ast = MakeReduction()(ast);
+        ast = makeReduction(ast);
 
         CheckLoopOrder checker(dstOrder);
         checker(ast);
@@ -173,8 +174,8 @@ Schedule::fission(const std::string &loop, const std::string &after,
                 auto expr = op.as<StoreNode>()->expr_;
                 return variantExpr.count(expr.get()) &&
                        variantExpr.at(expr.get()).count(loop);
-            } else if (op->nodeType() == ASTNodeType::AddTo) {
-                auto expr = op.as<AddToNode>()->expr_;
+            } else if (op->nodeType() == ASTNodeType::ReduceTo) {
+                auto expr = op.as<ReduceToNode>()->expr_;
                 return variantExpr.count(expr.get()) &&
                        variantExpr.at(expr.get()).count(loop);
             } else {

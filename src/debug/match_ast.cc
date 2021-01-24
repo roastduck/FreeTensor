@@ -77,13 +77,14 @@ void MatchVisitor::visit(const Load &op) {
     }
 }
 
-void MatchVisitor::visit(const AddTo &op) {
-    CHECK(instance_->nodeType() == ASTNodeType::Store);
-    auto instance = instance_.as<StoreNode>();
+void MatchVisitor::visit(const ReduceTo &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::ReduceTo);
+    auto instance = instance_.as<ReduceToNode>();
     CHECK(matchName(op->var_, instance->var_));
     for (size_t i = 0, iEnd = op->indices_.size(); i < iEnd; i++) {
         RECURSE(op->indices_[i], instance->indices_[i]);
     }
+    CHECK(op->op_ == instance->op_);
     RECURSE(op->expr_, instance->expr_);
 }
 

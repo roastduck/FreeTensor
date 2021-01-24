@@ -81,15 +81,15 @@ class Mutator {
         return makeLoad(op->var_, std::move(indices));
     }
 
-    virtual Stmt visit(const AddTo &op) {
+    virtual Stmt visit(const ReduceTo &op) {
         std::vector<Expr> indices;
         indices.reserve(op->indices_.size());
         for (auto &&index : op->indices_) {
             indices.emplace_back((*this)(index));
         }
         auto &&expr = (*this)(op->expr_);
-        return makeAddTo(op->id(), op->var_, std::move(indices),
-                         std::move(expr));
+        return makeReduceTo(op->id(), op->var_, std::move(indices), op->op_,
+                            std::move(expr));
     }
 
     virtual Expr visit(const IntConst &op) { return makeIntConst(op->val_); }

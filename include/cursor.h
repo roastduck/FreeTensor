@@ -85,7 +85,7 @@ class GetCursorById : public VisitorWithCursor {
     virtual void visit(const Any &op) override { doVisit(op); }
     virtual void visit(const VarDef &op) override { doVisit(op); }
     virtual void visit(const Store &op) override { doVisit(op); }
-    virtual void visit(const AddTo &op) override { doVisit(op); }
+    virtual void visit(const ReduceTo &op) override { doVisit(op); }
     virtual void visit(const For &op) override { doVisit(op); }
     virtual void visit(const If &op) override { doVisit(op); }
     virtual void visit(const Assert &op) override { doVisit(op); }

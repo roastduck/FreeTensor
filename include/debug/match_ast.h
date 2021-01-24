@@ -31,7 +31,7 @@ class MatchVisitor : public Visitor {
     virtual void visit(const Var &op) override;
     virtual void visit(const Store &op) override;
     virtual void visit(const Load &op) override;
-    virtual void visit(const AddTo &op) override;
+    virtual void visit(const ReduceTo &op) override;
     virtual void visit(const IntConst &op) override;
     virtual void visit(const FloatConst &op) override;
     virtual void visit(const Add &op) override;

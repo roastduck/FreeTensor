@@ -89,7 +89,7 @@ Expr HoistVar::visit(const Load &op) {
     return Mutator::visit(op);
 }
 
-Stmt HoistVar::visit(const AddTo &op) {
+Stmt HoistVar::visit(const ReduceTo &op) {
     recordAccess(op);
     return Mutator::visit(op);
 }
@@ -127,10 +127,10 @@ Expr AddDimToVar::visit(const Load &_op) {
     return doAdd(__op.as<LoadNode>());
 }
 
-Stmt AddDimToVar::visit(const AddTo &_op) {
+Stmt AddDimToVar::visit(const ReduceTo &_op) {
     auto __op = Mutator::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::AddTo);
-    return doAdd(__op.as<AddToNode>());
+    ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
+    return doAdd(__op.as<ReduceToNode>());
 }
 
 void FissionFor::markNewId(const Stmt &op, bool isPart0) {
@@ -229,7 +229,7 @@ Expr FissionFor::visit(const Load &op) {
     return Mutator::visit(op);
 }
 
-Stmt FissionFor::visit(const AddTo &op) {
+Stmt FissionFor::visit(const ReduceTo &op) {
     if (inPart_) {
         varUses_.insert(op->var_);
     }

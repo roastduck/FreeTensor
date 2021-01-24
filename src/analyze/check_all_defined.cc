@@ -26,7 +26,7 @@ void CheckAllDefined::visit(const Store &op) {
     allDef_ &= !!defs_.count(op->var_);
 }
 
-void CheckAllDefined::visit(const AddTo &op) {
+void CheckAllDefined::visit(const ReduceTo &op) {
     if (!allDef_) {
         return;
     }

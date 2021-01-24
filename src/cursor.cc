@@ -124,7 +124,7 @@ void VisitorWithCursor::operator()(const AST &op) {
     case ASTNodeType::StmtSeq:
     case ASTNodeType::VarDef:
     case ASTNodeType::Store:
-    case ASTNodeType::AddTo:
+    case ASTNodeType::ReduceTo:
     case ASTNodeType::For:
     case ASTNodeType::If:
     case ASTNodeType::Assert:

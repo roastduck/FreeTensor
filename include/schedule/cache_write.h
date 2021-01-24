@@ -40,8 +40,8 @@ class CacheWrite : public Mutator {
     template <class T> bool sameIndicesProxy(const T &lhs, const Stmt &rhs) {
         if (rhs->nodeType() == ASTNodeType::Store) {
             return sameIndices(lhs, rhs.as<StoreNode>());
-        } else if (rhs->nodeType() == ASTNodeType::AddTo) {
-            return sameIndices(lhs, rhs.as<AddToNode>());
+        } else if (rhs->nodeType() == ASTNodeType::ReduceTo) {
+            return sameIndices(lhs, rhs.as<ReduceToNode>());
         } else {
             ASSERT(false);
         }
@@ -51,7 +51,7 @@ class CacheWrite : public Mutator {
         return Mutator::visit(op);
     }
     Stmt recurseProxy(const Store &op) { return visitStoreLike(op); }
-    Stmt recurseProxy(const AddTo &op) { return visitStoreLike(op); }
+    Stmt recurseProxy(const ReduceTo &op) { return visitStoreLike(op); }
     Stmt recurseProxy(const For &op) {
         defs_.insert(op->iter_);
         auto ret = Mutator::visit(op);
@@ -109,10 +109,12 @@ class CacheWrite : public Mutator {
                                                  makeLoad(cacheVar_, indices)));
                     break;
                 }
-                case ASTNodeType::AddTo: {
-                    auto &&indices = item.as<AddToNode>()->indices_;
-                    flush.emplace_back(makeAddTo("", var_, indices,
-                                                 makeLoad(cacheVar_, indices)));
+                case ASTNodeType::ReduceTo: {
+                    auto &&indices = item.as<ReduceToNode>()->indices_;
+                    auto reduceOp = item.as<ReduceToNode>()->op_;
+                    flush.emplace_back(
+                        makeReduceTo("", var_, indices, reduceOp,
+                                     makeLoad(cacheVar_, indices)));
                     break;
                 }
                 default:
@@ -136,7 +138,7 @@ class CacheWrite : public Mutator {
 
   protected:
     Stmt visit(const Store &op) override { return doModify(op); }
-    Stmt visit(const AddTo &op) override { return doModify(op); }
+    Stmt visit(const ReduceTo &op) override { return doModify(op); }
     Stmt visit(const StmtSeq &op) override { return doModify(op); }
     Stmt visit(const VarDef &op) override { return doModify(op); }
     Stmt visit(const For &op) override { return doModify(op); }

@@ -80,7 +80,7 @@ class FindAccessPoint : public VisitorWithCursor {
     void visit(const StmtSeq &op) override;
     void visit(const For &op) override;
     void visit(const Store &op) override { visitStoreLike(op); }
-    void visit(const AddTo &op) override { visitStoreLike(op); }
+    void visit(const ReduceTo &op) override { visitStoreLike(op); }
     void visit(const Load &op) override;
 };
 
@@ -169,7 +169,7 @@ class AnalyzeDeps : public Visitor {
 
   protected:
     void visit(const Store &op) override { visitStoreLike(op); }
-    void visit(const AddTo &op) override { visitStoreLike(op); }
+    void visit(const ReduceTo &op) override { visitStoreLike(op); }
     void visit(const Load &op) override;
 };
 

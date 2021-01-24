@@ -21,7 +21,7 @@ class MarkStores : public Visitor {
 
     void visit(const For &op) override;
     void visit(const Store &op) override;
-    void visit(const AddTo &op) override;
+    void visit(const ReduceTo &op) override;
 };
 
 class FindLoopVariance : public Visitor {

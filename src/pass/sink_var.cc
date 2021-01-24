@@ -15,7 +15,7 @@ Stmt SinkVar::visit(const Store &op) {
     return Mutator::visit(op);
 }
 
-Stmt SinkVar::visit(const AddTo &op) {
+Stmt SinkVar::visit(const ReduceTo &op) {
     used_.insert(op->var_);
     return Mutator::visit(op);
 }
