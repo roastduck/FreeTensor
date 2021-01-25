@@ -10,7 +10,7 @@ def test_omp_for():
 
 	s = ir.Schedule(ir.pop_ast())
 	s.parallelize("L1", "openmp")
-	ast = ir.lower(s.ast())
+	ast = ir.lower(s.ast(), ir.CPU())
 	print(ast)
 	code, params = ir.codegen(ast, ir.CPU())
 	print(code)

@@ -271,6 +271,13 @@ template <class T> Expr makeIntrinsic(const std::string &format, T &&params) {
     i->params_ = std::forward<T>(params);
     return i;
 }
+inline Expr makeIntrinsic(const std::string &format,
+                          std::initializer_list<Expr> params) {
+    Intrinsic i = Intrinsic::make();
+    i->format_ = format;
+    i->params_ = params;
+    return i;
+}
 
 } // namespace ir
 

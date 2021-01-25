@@ -34,7 +34,7 @@ void CodeGenCUDA::visit(const Max &op) {
 void CodeGenCUDA::visit(const Var &op) {
     if (varMap_.count(op->name_)) {
         auto info = varMap_.at(op->name_);
-        os() << info.threadId_ << " + ";
+        os() << "(int)" << info.threadId_ << " + ";
         (*this)(info.offset_);
     } else {
         CodeGenC::visit(op);

@@ -6,7 +6,7 @@ def test_hello_world():
 		x[2, 3] = 2.0
 		x[1, 0] = 3.0
 
-	ast = ir.lower(ir.pop_ast())
+	ast = ir.lower(ir.pop_ast(), ir.CPU())
 	print(ast)
 	code, params = ir.codegen(ast, ir.CPU())
 	print(code)
@@ -29,7 +29,7 @@ def test_scalar_op():
 			("y", (), "int32", "output", "cpu")]) as (x, y):
 		y[()] = x[()] * 2 + 1
 
-	code, params = ir.codegen(ir.lower(ir.pop_ast()), ir.CPU())
+	code, params = ir.codegen(ir.lower(ir.pop_ast(), ir.CPU()), ir.CPU())
 	print(code)
 	x_np = np.array(5, dtype="int32")
 	y_np = np.array(0, dtype="int32")
@@ -49,7 +49,7 @@ def test_for():
 		with ir.For("i", 0, 4) as i:
 			y[i] = x[i] + 1
 
-	code, params = ir.codegen(ir.lower(ir.pop_ast()), ir.CPU())
+	code, params = ir.codegen(ir.lower(ir.pop_ast(), ir.CPU()), ir.CPU())
 	print(code)
 	x_np = np.array([1, 2, 3, 4], dtype="int32")
 	y_np = np.zeros((4,), dtype="int32")
@@ -71,7 +71,7 @@ def test_if():
 			with ir.Else():
 				y[i] = 1
 
-	code, params = ir.codegen(ir.lower(ir.pop_ast()), ir.CPU())
+	code, params = ir.codegen(ir.lower(ir.pop_ast(), ir.CPU()), ir.CPU())
 	print(code)
 	y_np = np.zeros((4,), dtype="int32")
 	y_arr = ir.Array(y_np, ir.Device(ir.CPU()))
@@ -111,7 +111,7 @@ def test_tiling():
 	load_b, _ = s.cache_read(S1, "b", "cpu")
 	s.move_to(load_b, j0, to_begin=True)
 
-	ast = ir.lower(s.ast())
+	ast = ir.lower(s.ast(), ir.CPU())
 	print(ast)
 
 	with ir.VarDef([

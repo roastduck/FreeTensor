@@ -1,14 +1,19 @@
-from ffi import simplify_pass
-from ffi import sink_var
-from ffi import shrink_var
-from ffi import shrink_for
-from ffi import flatten_stmt_seq
+from typing import Optional
 
-def lower(ast):
-	ast = simplify_pass(ast)
-	ast = sink_var(ast)
-	ast = shrink_var(ast)
-	ast = shrink_for(ast)
-	ast = flatten_stmt_seq(ast)
+import ffi
+
+def lower(ast, target: Optional[ffi.Target]=None):
+	ast = ffi.simplify_pass(ast)
+	ast = ffi.sink_var(ast)
+	ast = ffi.shrink_var(ast)
+	ast = ffi.shrink_for(ast)
+	ast = ffi.flatten_stmt_seq(ast)
+
+	if target is None:
+		return ast
+
+	if target.type() == ffi.TargetType.GPU:
+		ast = ffi.gpu_make_sync(ast)
+
 	return ast
 
