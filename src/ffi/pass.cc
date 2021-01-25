@@ -1,5 +1,6 @@
 #include <ffi.h>
 #include <pass/flatten_stmt_seq.h>
+#include <pass/gpu/correct_shared.h>
 #include <pass/gpu/make_sync.h>
 #include <pass/shrink_for.h>
 #include <pass/shrink_var.h>
@@ -19,6 +20,7 @@ void init_ffi_pass(py::module_ &m) {
 
     // GPU
     m.def("gpu_make_sync", &gpu::makeSync, "ast"_a);
+    m.def("gpu_correct_shared", &gpu::correctShared, "ast"_a);
 }
 
 } // namespace ir

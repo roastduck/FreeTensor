@@ -19,11 +19,11 @@ Stmt ShrinkVar::visit(const VarDef &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::VarDef);
     auto op = __op.as<VarDefNode>();
 
-    auto shape = op->buffer_->tensor().shape();
+    op->buffer_ = op->buffer_.clone();
+    auto &shape = op->buffer_->tensor().shape();
     for (size_t i = 0; i < n; i++) {
         shape[i] = (*op->info_acc_len_)[i];
     }
-    op->buffer_->tensor().setShape(std::move(shape));
 
     op->info_acc_lower_ = nullptr;
     op->info_acc_len_ = nullptr;

@@ -40,9 +40,7 @@ class Tensor {
     Tensor(const std::vector<Expr> &shape, DataType dtype)
         : shape_(shape), dtype_(dtype) {}
 
-    template <class T> void setShape(T &&shape) {
-        shape_ = std::forward<T>(shape);
-    }
+    std::vector<Expr> &shape() { return shape_; }
     const std::vector<Expr> &shape() const { return shape_; }
 
     DataType dtype() const { return dtype_; }

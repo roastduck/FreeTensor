@@ -14,6 +14,7 @@ def lower(ast, target: Optional[ffi.Target]=None):
 
 	if target.type() == ffi.TargetType.GPU:
 		ast = ffi.gpu_make_sync(ast)
+		ast = ffi.gpu_correct_shared(ast) # NOTE: No more shrink_var after this pass
 
 	return ast
 
