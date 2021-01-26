@@ -2,6 +2,7 @@
 #include <pass/flatten_stmt_seq.h>
 #include <pass/gpu/correct_shared.h>
 #include <pass/gpu/make_sync.h>
+#include <pass/merge_if.h>
 #include <pass/shrink_for.h>
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
@@ -17,6 +18,7 @@ void init_ffi_pass(py::module_ &m) {
     m.def("sink_var", &sinkVar, "ast"_a);
     m.def("shrink_var", &shrinkVar, "ast"_a);
     m.def("shrink_for", &shrinkFor, "ast"_a);
+    m.def("merge_if", &mergeIf, "ast"_a);
 
     // GPU
     m.def("gpu_make_sync", &gpu::makeSync, "ast"_a);

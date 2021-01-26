@@ -8,6 +8,7 @@ def lower(ast, target: Optional[ffi.Target]=None):
 	ast = ffi.shrink_var(ast)
 	ast = ffi.shrink_for(ast)
 	ast = ffi.flatten_stmt_seq(ast)
+	ast = ffi.merge_if(ast)
 
 	if target is None:
 		return ast
