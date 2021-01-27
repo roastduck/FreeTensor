@@ -72,7 +72,11 @@ Stmt CompForBound::visit(const For &_op) {
         op->info_max_begin_ = lower;
         op->info_min_end_ = makeAdd(upper, makeIntConst(1));
     } else {
-        return op->body_;
+        // If the iterator is not used in any non-condition expressions, we
+        // assume the loop can only run for 1 iteration. This may not be true in
+        // some programs: E.g. `for i = 0 to 5 { a += b; }`. (FIXME)
+        op->info_max_begin_ = op->begin_;
+        op->info_min_end_ = makeAdd(op->begin_, makeIntConst(1));
     }
     return op;
 }

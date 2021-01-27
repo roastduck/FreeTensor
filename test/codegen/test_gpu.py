@@ -297,3 +297,50 @@ def test_parallel_different_length():
 	c_std = a_np @ b_np
 	assert np.array_equal(c_np, c_std)
 
+def test_parallel_broadcast():
+	with ir.VarDef([
+			("a", (4, 1), "int32", "input", "gpuglobal"),
+			("b", (1, 8), "int32", "input", "gpuglobal"),
+			("c", (4, 8), "int32", "output", "gpuglobal")]) as (a, b, c):
+		with ir.For("i", 0, 4, nid="L0") as i:
+			with ir.VarDef("t", (1,), "int32", "cache", "gpushared") as t:
+				t[0] = a[i, 0]
+				with ir.For("k", 0, 8, nid="L1") as k:
+					c[i, k] = c[i, k] + t[0] * b[0, k]
+
+	s = ir.Schedule(ir.pop_ast())
+	s.parallelize("L0", "blockIdx.x")
+	s.parallelize("L1", "threadIdx.x")
+	ast = ir.lower(s.ast(), target)
+	print(ast)
+
+	with ir.VarDef([
+			("a", (4, 1), "int32", "input", "gpuglobal"),
+			("b", (1, 8), "int32", "input", "gpuglobal"),
+			("c", (4, 8), "int32", "output", "gpuglobal")]) as (a, b, c):
+		with ir.For(".blockIdx.x", 0, 4) as blk:
+			with ir.For(".threadIdx.x", 0, 8) as th:
+				with ir.VarDef("t", (1,), "int32", "cache", "gpushared") as t:
+					with ir.If(th == 0):
+						t[0] = a[blk, 0]
+					ir.Eval(ir.intrinsic("__syncwarp()"))
+					ir.Any()
+					ir.Eval(ir.intrinsic("__syncwarp()"))
+	assert ir.pop_ast().match(ast)
+
+	code, params = ir.codegen(ast, target)
+	print(code)
+	a_np = np.random.rand(4, 1).astype("int32")
+	b_np = np.random.rand(1, 8).astype("int32")
+	c_np = np.zeros((4, 8), dtype="int32")
+	a_arr = ir.Array(a_np, device)
+	b_arr = ir.Array(b_np, device)
+	c_arr = ir.Array(c_np, device)
+	driver = ir.Driver(code, params, device)
+	driver.set_params({"a": a_arr, "b": b_arr, "c": c_arr})
+	driver.run()
+	c_np = c_arr.numpy()
+
+	c_std = a_np @ b_np
+	assert np.array_equal(c_np, c_std)
+

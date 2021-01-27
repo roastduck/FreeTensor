@@ -211,8 +211,21 @@ Stmt SimplifyPass::visit(const For &_op) {
         ERROR("iterators with the same name in nested loops are not allowed");
     }
     varScope_[_op->iter_] = curScope_++;
-    auto op = Mutator::visit(_op);
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::For);
+    auto op = __op.as<ForNode>();
     varScope_.erase(_op->iter_), curScope_--;
+
+    if (op->info_len_->nodeType() == ASTNodeType::IntConst) {
+        auto len = op->info_len_.as<IntConstNode>()->val_;
+        if (len == 1) {
+            return op->body_;
+        }
+        if (len == 0) {
+            return makeStmtSeq("", {});
+        }
+    }
+
     return op;
 }
 
