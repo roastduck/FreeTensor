@@ -7,6 +7,7 @@
 #include <analyze/linear.h>
 #include <analyze/normalize.h>
 #include <except.h>
+#include <pass/flatten_stmt_seq.h>
 #include <pass/simplify.h>
 
 namespace ir {
@@ -249,7 +250,7 @@ Stmt SimplifyPass::visit(const Assert &_op) {
 }
 
 Stmt simplifyPass(const Stmt &op) {
-    return std::get<0>(simplifyAndGetBounds(op));
+    return flattenStmtSeq(std::get<0>(simplifyAndGetBounds(op)));
 }
 
 std::tuple<Stmt, SimplifyPass::BoundsMap, SimplifyPass::BoundsMap>

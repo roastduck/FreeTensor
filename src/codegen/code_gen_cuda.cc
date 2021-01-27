@@ -32,10 +32,18 @@ void CodeGenCUDA::visit(const Max &op) {
 }
 
 void CodeGenCUDA::visit(const Var &op) {
-    if (varMap_.count(op->name_)) {
-        auto info = varMap_.at(op->name_);
-        os() << "(int)" << info.threadId_ << " + ";
-        (*this)(info.offset_);
+    if (op->name_ == ".threadIdx.x") {
+        os() << "(int)threadIdx.x";
+    } else if (op->name_ == ".threadIdx.y") {
+        os() << "(int)threadIdx.y";
+    } else if (op->name_ == ".threadIdx.z") {
+        os() << "(int)threadIdx.z";
+    } else if (op->name_ == ".blockIdx.x") {
+        os() << "(int)blockIdx.x";
+    } else if (op->name_ == ".blockIdx.y") {
+        os() << "(int)blockIdx.y";
+    } else if (op->name_ == ".blockIdx.z") {
+        os() << "(int)blockIdx.z";
     } else {
         CodeGenC::visit(op);
     }
@@ -55,7 +63,6 @@ void CodeGenCUDA::visit(const For &op) {
                 << " should be constant, instead of " << op->info_len_;
             throw Error(msg.str());
         }
-        varMap_[op->iter_] = {op->parallel_, op->begin_};
         if (!inKernel()) {
             std::string kernel = "kernel" + std::to_string(nKernel_++);
             pushStream(kernel);

@@ -135,12 +135,11 @@ def test_syncthreads():
 	with ir.VarDef([
 			("x", (4, 256), "int32", "input", "gpuglobal"),
 			("y", (4, 256), "int32", "output", "gpuglobal")]) as (x, y):
-		with ir.For("i", 0, 4, nid="L0") as i:
-			with ir.VarDef("t", (256,), "int32", "cache", "gpushared") as t:
-				with ir.For("j", 0, 256, nid="L1") as j:
+		with ir.For(".blockIdx.x", 0, 4) as i:
+			with ir.For(".threadIdx.x", 0, 256) as j:
+				with ir.VarDef("t", (256,), "int32", "cache", "gpushared") as t:
 					ir.Any()
 					ir.Eval(ir.intrinsic("__syncthreads()"))
-				with ir.For("j", 0, 256, nid="L2") as j:
 					ir.Any()
 					ir.Eval(ir.intrinsic("__syncthreads()"))
 	assert ir.pop_ast().match(ast)
@@ -180,12 +179,11 @@ def test_syncwarp():
 	with ir.VarDef([
 			("x", (4, 4), "int32", "input", "gpuglobal"),
 			("y", (4, 4), "int32", "output", "gpuglobal")]) as (x, y):
-		with ir.For("i", 0, 4, nid="L0") as i:
-			with ir.VarDef("t", (4,), "int32", "cache", "gpushared") as t:
-				with ir.For("j", 0, 4, nid="L1") as j:
+		with ir.For(".blockIdx.x", 0, 4) as i:
+			with ir.For(".threadIdx.x", 0, 4) as j:
+				with ir.VarDef("t", (4,), "int32", "cache", "gpushared") as t:
 					ir.Any()
 					ir.Eval(ir.intrinsic("__syncwarp()"))
-				with ir.For("j", 0, 4, nid="L2") as j:
 					ir.Any()
 					ir.Eval(ir.intrinsic("__syncwarp()"))
 	assert ir.pop_ast().match(ast)
@@ -225,12 +223,11 @@ def test_correct_shared():
 	with ir.VarDef([
 			("x", (4, 256), "int32", "input", "gpuglobal"),
 			("y", (4, 256), "int32", "output", "gpuglobal")]) as (x, y):
-		with ir.For("i", 0, 4, nid="L0") as i:
-			with ir.VarDef("t", (4, 256), "int32", "cache", "gpushared") as t:
-				with ir.For("j", 0, 256, nid="L1") as j:
+		with ir.For(".threadIdx.y", 0, 4) as i:
+			with ir.For(".threadIdx.x", 0, 256) as j:
+				with ir.VarDef("t", (4, 256), "int32", "cache", "gpushared") as t:
 					t[i, j] = x[i, j] * 2
 					ir.Eval(ir.intrinsic("__syncthreads()"))
-				with ir.For("j", 0, 256, nid="L2") as j:
 					y[i, j] = t[i, j] + 1
 					ir.Eval(ir.intrinsic("__syncthreads()"))
 	assert ir.pop_ast().match(ast)
@@ -248,4 +245,55 @@ def test_correct_shared():
 
 	y_std = np.array([range(1, 513, 2)] * 4, dtype="int32")
 	assert np.array_equal(y_np, y_std)
+
+def test_parallel_different_length():
+	with ir.VarDef([
+			("a", (4, 4), "int32", "input", "gpuglobal"),
+			("b", (4, 8), "int32", "input", "gpuglobal"),
+			("c", (4, 8), "int32", "output", "gpuglobal")]) as (a, b, c):
+		with ir.For("i", 0, 4, nid="L0") as i:
+			with ir.VarDef("t", (4,), "int32", "cache", "gpushared") as t:
+				with ir.For("j", 0, 4, nid="L1") as j:
+					t[j] = a[i, j]
+				with ir.For("j", 0, 4, nid="L2") as j:
+					with ir.For("k", 0, 8, nid="L3") as k:
+						c[i, k] = c[i, k] + t[j] * b[j, k]
+
+	s = ir.Schedule(ir.pop_ast())
+	s.parallelize("L0", "blockIdx.x")
+	s.parallelize("L1", "threadIdx.x")
+	s.parallelize("L3", "threadIdx.x")
+	ast = ir.lower(s.ast(), target)
+	print(ast)
+
+	with ir.VarDef([
+			("a", (4, 4), "int32", "input", "gpuglobal"),
+			("b", (4, 8), "int32", "input", "gpuglobal"),
+			("c", (4, 8), "int32", "output", "gpuglobal")]) as (a, b, c):
+		with ir.For(".blockIdx.x", 0, 4) as blk:
+			with ir.For(".threadIdx.x", 0, 8) as th:
+				with ir.VarDef("t", (4,), "int32", "cache", "gpushared") as t:
+					with ir.If(th < 4):
+						t[th] = a[blk, th]
+						ir.Eval(ir.intrinsic("__syncwarp()"))
+					with ir.For("j", 0, 4) as j:
+						ir.Any()
+						ir.Eval(ir.intrinsic("__syncwarp()"))
+	assert ir.pop_ast().match(ast)
+
+	code, params = ir.codegen(ast, target)
+	print(code)
+	a_np = np.random.rand(4, 4).astype("int32")
+	b_np = np.random.rand(4, 8).astype("int32")
+	c_np = np.zeros((4, 8), dtype="int32")
+	a_arr = ir.Array(a_np, device)
+	b_arr = ir.Array(b_np, device)
+	c_arr = ir.Array(c_np, device)
+	driver = ir.Driver(code, params, device)
+	driver.set_params({"a": a_arr, "b": b_arr, "c": c_arr})
+	driver.run()
+	c_np = c_arr.numpy()
+
+	c_std = a_np @ b_np
+	assert np.array_equal(c_np, c_std)
 
