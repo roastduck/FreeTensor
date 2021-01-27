@@ -54,10 +54,10 @@ class Cursor {
 class VisitorWithCursor : public Visitor {
     Cursor cursor_;
 
-  public:
-    virtual void operator()(const AST &op) override;
-
   protected:
+    void visitStmt(const Stmt &op,
+                   const std::function<void(const Stmt &)> &visitNode) override;
+
     const Cursor &cursor() const { return cursor_; }
 };
 
@@ -72,24 +72,9 @@ class GetCursorById : public VisitorWithCursor {
     const Cursor &result() const { return result_; }
     bool found() const { return found_; }
 
-  private:
-    template <class T> void doVisit(const T &op) {
-        Visitor::visit(op);
-        if (op->id() == id_) {
-            result_ = cursor();
-            found_ = true;
-        }
-    }
-
   protected:
-    virtual void visit(const Any &op) override { doVisit(op); }
-    virtual void visit(const VarDef &op) override { doVisit(op); }
-    virtual void visit(const Store &op) override { doVisit(op); }
-    virtual void visit(const ReduceTo &op) override { doVisit(op); }
-    virtual void visit(const For &op) override { doVisit(op); }
-    virtual void visit(const If &op) override { doVisit(op); }
-    virtual void visit(const Assert &op) override { doVisit(op); }
-    virtual void visit(const Eval &op) override { doVisit(op); }
+    void visitStmt(const Stmt &op,
+                   const std::function<void(const Stmt &)> &visitNode) override;
 };
 
 inline Cursor getCursorById(const Stmt &ast, const std::string &id) {

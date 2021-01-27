@@ -118,23 +118,24 @@ Cursor Cursor::outer() const {
     return ret;
 }
 
-void VisitorWithCursor::operator()(const AST &op) {
-    switch (op->nodeType()) {
-    case ASTNodeType::Any:
-    case ASTNodeType::StmtSeq:
-    case ASTNodeType::VarDef:
-    case ASTNodeType::Store:
-    case ASTNodeType::ReduceTo:
-    case ASTNodeType::For:
-    case ASTNodeType::If:
-    case ASTNodeType::Assert:
-    case ASTNodeType::Eval:
-        cursor_.push(op.as<StmtNode>());
-        Visitor::operator()(op);
-        cursor_.pop();
-        break;
-    default:
-        Visitor::operator()(op);
+void VisitorWithCursor::visitStmt(
+    const Stmt &op, const std::function<void(const Stmt &)> &visitNode) {
+    cursor_.push(op);
+    Visitor::visitStmt(op, visitNode);
+    cursor_.pop();
+}
+
+void GetCursorById::visitStmt(
+    const Stmt &op, const std::function<void(const Stmt &)> &visitNode) {
+    if (!found_) {
+        VisitorWithCursor::visitStmt(op, [&visitNode, this](const Stmt &_op) {
+            visitNode(_op);
+            if (_op->id() == id_) {
+                result_ = cursor();
+                ASSERT(result_.id() == id_);
+                found_ = true;
+            }
+        });
     }
 }
 

@@ -2,11 +2,11 @@
 #include <sstream>
 
 #include <analyze/bounds.h>
-#include <analyze/disambiguous.h>
 #include <analyze/hash.h>
 #include <analyze/linear.h>
 #include <analyze/normalize.h>
 #include <except.h>
+#include <pass/disambiguous.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/simplify.h>
 
@@ -257,7 +257,7 @@ std::tuple<Stmt, SimplifyPass::BoundsMap, SimplifyPass::BoundsMap>
 simplifyAndGetBounds(const Stmt &_op) {
     Stmt op = normalize(_op);
     for (int i = 0;; i++) {
-        op = Disambiguous()(op);
+        op = disambiguous(op);
 
         auto hash = getHashMap(op);
 

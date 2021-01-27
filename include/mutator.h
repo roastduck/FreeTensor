@@ -1,6 +1,8 @@
 #ifndef MUTATOR_H
 #define MUTATOR_H
 
+#include <functional>
+
 #include <debug.h>
 #include <except.h>
 #include <expr.h>
@@ -12,12 +14,24 @@ class Mutator {
   public:
     virtual ~Mutator() {}
 
-    virtual Stmt operator()(const Stmt &op);
-    virtual Expr operator()(const Expr &op);
+    virtual Stmt operator()(const Stmt &op) final;
+    virtual Expr operator()(const Expr &op) final;
 
   protected:
     // NOTE: Do NOT std::move from the original op! The original op may be
     // duplicated around the AST!
+
+    // Additional hook for any expressions
+    virtual Expr visitExpr(const Expr &op,
+                           const std::function<Expr(const Expr &)> &visitNode) {
+        return visitNode(op);
+    }
+
+    // Additional hook for any statements
+    virtual Stmt visitStmt(const Stmt &op,
+                           const std::function<Stmt(const Stmt &)> &visitNode) {
+        return visitNode(op);
+    }
 
     virtual Stmt visit(const Any &op) { return makeAny(); }
 

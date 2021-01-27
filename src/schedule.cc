@@ -3,9 +3,9 @@
 #include <sstream>
 
 #include <analyze/deps.h>
-#include <analyze/disambiguous.h>
 #include <analyze/find_loop_variance.h>
 #include <cursor.h>
+#include <pass/disambiguous.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/make_reduction.h>
 #include <pass/shrink_var.h>
@@ -78,7 +78,7 @@ void Schedule::reorder(const std::vector<std::string> &dstOrder) {
         for (size_t i = 0; i < n; i++) {
             for (size_t j = 0; j + 1 < n; j++) {
                 if (index[j] > index[j + 1]) {
-                    ast = Disambiguous()(ast);
+                    ast = disambiguous(ast);
 
                     auto found =
                         [&](const std::vector<
@@ -157,7 +157,7 @@ Schedule::fission(const std::string &loop, const std::string &after,
         }
         auto &&xLoops = hoist.xLoops();
 
-        ast = Disambiguous()(ast);
+        ast = disambiguous(ast);
 
         auto variantExpr = findLoopVariance(ast);
 
@@ -225,7 +225,7 @@ std::string Schedule::fuse(const std::string &loop0, const std::string &loop1) {
     auto ast = ast_;
     FuseFor mutator(loop0, loop1);
     try {
-        ast = Disambiguous()(ast);
+        ast = disambiguous(ast);
 
         auto found =
             [&](const std::vector<std::pair<std::string, FindDepsMode>> &cond,
@@ -301,7 +301,7 @@ void Schedule::swap(const std::vector<std::string> &order) {
                         dep2Str(scope->id(), var, later, earlier));
                 }
             };
-        ast = Disambiguous()(ast);
+        ast = disambiguous(ast);
         findDeps(ast, {{{scope->id(), FindDepsMode::Normal}}}, found);
     } catch (const InvalidSchedule &e) {
         std::string msg = "Invalid reorder(";

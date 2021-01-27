@@ -1,5 +1,5 @@
 #include <analyze/deps.h>
-#include <analyze/disambiguous.h>
+#include <pass/disambiguous.h>
 #include <pass/sink_var.h>
 
 namespace ir {
@@ -85,7 +85,7 @@ Stmt SinkVar::visit(const VarDef &op) {
 }
 
 Stmt sinkVar(const Stmt &_op) {
-    Stmt op = Disambiguous()(_op);
+    Stmt op = disambiguous(_op);
 
     FindAllLoops finder;
     finder(op);

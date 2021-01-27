@@ -6,39 +6,47 @@ namespace ir {
 void Visitor::operator()(const AST &op) {
     switch (op->nodeType()) {
 
-#define DISPATCH_CASE(name)                                                    \
+#define DISPATCH_EXPR_CASE(name)                                               \
     case ASTNodeType::name:                                                    \
-        visit(op.as<name##Node>());                                            \
+        visitExpr(op.as<ExprNode>(),                                           \
+                  [this](const Expr &_op) { visit(_op.as<name##Node>()); });   \
         break;
 
-        DISPATCH_CASE(Any);
-        DISPATCH_CASE(StmtSeq);
-        DISPATCH_CASE(VarDef);
-        DISPATCH_CASE(Var);
-        DISPATCH_CASE(Store);
-        DISPATCH_CASE(Load);
-        DISPATCH_CASE(ReduceTo);
-        DISPATCH_CASE(IntConst);
-        DISPATCH_CASE(FloatConst);
-        DISPATCH_CASE(Add);
-        DISPATCH_CASE(Sub);
-        DISPATCH_CASE(Mul);
-        DISPATCH_CASE(Div);
-        DISPATCH_CASE(Mod);
-        DISPATCH_CASE(Min);
-        DISPATCH_CASE(Max);
-        DISPATCH_CASE(LT);
-        DISPATCH_CASE(LE);
-        DISPATCH_CASE(GT);
-        DISPATCH_CASE(GE);
-        DISPATCH_CASE(EQ);
-        DISPATCH_CASE(NE);
-        DISPATCH_CASE(Not);
-        DISPATCH_CASE(For);
-        DISPATCH_CASE(If);
-        DISPATCH_CASE(Assert);
-        DISPATCH_CASE(Intrinsic);
-        DISPATCH_CASE(Eval);
+#define DISPATCH_STMT_CASE(name)                                               \
+    case ASTNodeType::name:                                                    \
+        visitStmt(op.as<StmtNode>(),                                           \
+                  [this](const Stmt &_op) { visit(_op.as<name##Node>()); });   \
+        break;
+
+        DISPATCH_EXPR_CASE(Var);
+        DISPATCH_EXPR_CASE(Load);
+        DISPATCH_EXPR_CASE(IntConst);
+        DISPATCH_EXPR_CASE(FloatConst);
+        DISPATCH_EXPR_CASE(Add);
+        DISPATCH_EXPR_CASE(Sub);
+        DISPATCH_EXPR_CASE(Mul);
+        DISPATCH_EXPR_CASE(Div);
+        DISPATCH_EXPR_CASE(Mod);
+        DISPATCH_EXPR_CASE(Min);
+        DISPATCH_EXPR_CASE(Max);
+        DISPATCH_EXPR_CASE(LT);
+        DISPATCH_EXPR_CASE(LE);
+        DISPATCH_EXPR_CASE(GT);
+        DISPATCH_EXPR_CASE(GE);
+        DISPATCH_EXPR_CASE(EQ);
+        DISPATCH_EXPR_CASE(NE);
+        DISPATCH_EXPR_CASE(Not);
+        DISPATCH_EXPR_CASE(Intrinsic);
+
+        DISPATCH_STMT_CASE(StmtSeq);
+        DISPATCH_STMT_CASE(VarDef);
+        DISPATCH_STMT_CASE(Store);
+        DISPATCH_STMT_CASE(ReduceTo);
+        DISPATCH_STMT_CASE(For);
+        DISPATCH_STMT_CASE(If);
+        DISPATCH_STMT_CASE(Assert);
+        DISPATCH_STMT_CASE(Eval);
+        DISPATCH_STMT_CASE(Any);
 
     default:
         ERROR("Unexpected AST node type");
