@@ -16,6 +16,26 @@ def test_const_fold():
 
 	assert std.match(ast)
 
+def test_partial_fold():
+	# This is the case that we need a symbolic bound, instead
+	# of using integers only
+	with ir.VarDef("y", (4, 4), "int32", "output", "cpu") as y:
+		with ir.For("i", 0, 4) as i:
+			with ir.For("j", 0, 4) as j:
+				y[i, j] = 2 * j + i - j - j
+	ast = ir.pop_ast()
+	print(ast)
+	ast = ir.lower(ast)
+	print(ast)
+
+	with ir.VarDef("y", (4, 4), "int32", "output", "cpu") as y:
+		with ir.For("i", 0, 4) as i:
+			with ir.For("j", 0, 4) as j:
+				y[i, j] = i
+	std = ir.pop_ast()
+
+	assert std.match(ast)
+
 def test_redundant_if():
 	with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
 		with ir.For("i", 0, 4) as i:
