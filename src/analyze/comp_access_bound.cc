@@ -41,8 +41,8 @@ Stmt CompAccessBound::visit(const VarDef &_op) {
                 if (lower_.count(index.get())) {
                     Expr lowerItem;
                     for (auto &&item : lower_.at(index.get())) {
-                        if (checkAllDefined(defs_, item)) {
-                            lowerItem = reduceMax(lowerItem, item);
+                        if (checkAllDefined(defs_, item.expr_)) {
+                            lowerItem = reduceMax(lowerItem, item.expr_);
                         }
                     }
                     lower = reduceMin(lower, lowerItem);
@@ -58,8 +58,8 @@ Stmt CompAccessBound::visit(const VarDef &_op) {
                 if (upper_.count(index.get())) {
                     Expr upperItem;
                     for (auto &&item : upper_.at(index.get())) {
-                        if (checkAllDefined(defs_, item)) {
-                            upperItem = reduceMin(upperItem, item);
+                        if (checkAllDefined(defs_, item.expr_)) {
+                            upperItem = reduceMin(upperItem, item.expr_);
                         }
                     }
                     upper = reduceMax(upper, upperItem);

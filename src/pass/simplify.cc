@@ -1,9 +1,7 @@
 #include <functional>
 #include <sstream>
 
-#include <analyze/bounds.h>
 #include <analyze/hash.h>
-#include <analyze/linear.h>
 #include <analyze/normalize.h>
 #include <except.h>
 #include <pass/disambiguous.h>
@@ -76,11 +74,11 @@ Expr SimplifyPass::visit(const Min &op) {
 
 Expr SimplifyPass::visit(const Max &op) {
     ASSERT(op->info_norm_form_.isValid());
-    if (checkUpperCmp0(op, std::greater_equal<int>())) {
+    if (checkLowerCmp0(op, std::greater_equal<int>())) {
         isFixPoint_ = false;
         return (*this)(op->lhs_);
     }
-    if (checkLowerCmp0(op, std::less_equal<int>())) {
+    if (checkUpperCmp0(op, std::less_equal<int>())) {
         isFixPoint_ = false;
         return (*this)(op->rhs_);
     }
@@ -152,11 +150,11 @@ Expr SimplifyPass::visit(const EQ &op) {
     if (upper_.count(op->info_norm_form_.get()) &&
         lower_.count(op->info_norm_form_.get())) {
         for (auto &&upper : upper_.at(op->info_norm_form_.get())) {
-            if (upper->nodeType() == ASTNodeType::IntConst &&
-                upper.as<IntConstNode>()->val_ == 0) {
+            if (upper.expr_->nodeType() == ASTNodeType::IntConst &&
+                upper.expr_.as<IntConstNode>()->val_ == 0) {
                 for (auto &&lower : lower_.at(op->info_norm_form_.get())) {
-                    if (lower->nodeType() == ASTNodeType::IntConst &&
-                        lower.as<IntConstNode>()->val_ == 0) {
+                    if (lower.expr_->nodeType() == ASTNodeType::IntConst &&
+                        lower.expr_.as<IntConstNode>()->val_ == 0) {
                         isFixPoint_ = false;
                         return makeIntConst(1);
                     }
@@ -180,11 +178,11 @@ Expr SimplifyPass::visit(const NE &op) {
     if (upper_.count(op->info_norm_form_.get()) &&
         lower_.count(op->info_norm_form_.get())) {
         for (auto &&upper : upper_.at(op->info_norm_form_.get())) {
-            if (upper->nodeType() == ASTNodeType::IntConst &&
-                upper.as<IntConstNode>()->val_ == 0) {
+            if (upper.expr_->nodeType() == ASTNodeType::IntConst &&
+                upper.expr_.as<IntConstNode>()->val_ == 0) {
                 for (auto &&lower : lower_.at(op->info_norm_form_.get())) {
-                    if (lower->nodeType() == ASTNodeType::IntConst &&
-                        lower.as<IntConstNode>()->val_ == 0) {
+                    if (lower.expr_->nodeType() == ASTNodeType::IntConst &&
+                        lower.expr_.as<IntConstNode>()->val_ == 0) {
                         isFixPoint_ = false;
                         return makeIntConst(0);
                     }
@@ -274,11 +272,7 @@ simplifyAndGetBounds(const Stmt &_op) {
 
         auto hash = getHashMap(op);
 
-        AnalyzeLinear analyzeLinear(hash);
-        analyzeLinear(op);
-        auto &&linear = analyzeLinear.result();
-
-        AnalyzeBounds analyzeBounds(hash, linear);
+        AnalyzeBounds analyzeBounds(hash);
         analyzeBounds(op);
         auto &&lower = analyzeBounds.lower();
         auto &&upper = analyzeBounds.upper();

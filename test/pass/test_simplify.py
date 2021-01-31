@@ -143,3 +143,45 @@ def test_different_scope():
 
 	assert std.match(ast)
 
+def test_dynamic():
+	with ir.VarDef([
+			("n", (), "int32", "input", "cpu"),
+			("y", (4,), "int32", "output", "cpu")]) as (n, y):
+		with ir.For("i", 0, n[()]) as i:
+			with ir.If(n[()] + 1 > n[()]):
+				y[i] = 1
+	ast = ir.pop_ast()
+	print(ast)
+	ast = ir.lower(ast)
+	print(ast)
+
+	with ir.VarDef([
+			("n", (), "int32", "input", "cpu"),
+			("y", (4,), "int32", "output", "cpu")]) as (n, y):
+		with ir.For("i", 0, n[()]) as i:
+			y[i] = 1
+	std = ir.pop_ast()
+
+	assert std.match(ast)
+
+def test_floor_div():
+	with ir.VarDef([
+			("n", (), "int32", "input", "cpu"),
+			("y", (4,), "int32", "output", "cpu")]) as (n, y):
+		with ir.For("i", 0, n[()] // 4) as i:
+			with ir.If(i * 4 < n[()]):
+				y[i] = 1
+	ast = ir.pop_ast()
+	print(ast)
+	ast = ir.lower(ast)
+	print(ast)
+
+	with ir.VarDef([
+			("n", (), "int32", "input", "cpu"),
+			("y", (4,), "int32", "output", "cpu")]) as (n, y):
+		with ir.For("i", 0, n[()] // 4) as i:
+			y[i] = 1
+	std = ir.pop_ast()
+
+	assert std.match(ast)
+

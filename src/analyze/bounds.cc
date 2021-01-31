@@ -1,137 +1,134 @@
+#include <algorithm>
+#include <climits>
 #include <functional>
 
 #include <analyze/bounds.h>
+#include <pass/disambiguous.h>
 
 namespace ir {
 
-Expr AnalyzeBounds::compLinear(int k, const Expr &a, const Expr &b) const {
-    Expr x;
-    if (a->nodeType() == ASTNodeType::IntConst) {
-        x = makeIntConst(k * a.as<IntConstNode>()->val_);
-    } else if (k == 1) {
-        x = a;
-    } else {
-        x = makeMul(makeIntConst(k), a);
+Bound::Bound(const Expr &expr)
+    : expr_(expr), lin_{{{getHash(expr), {1, expr}}}, 0} {}
+
+Bound::Bound(const LinearExpr &lin) : lin_(lin) {
+    Expr b = makeIntConst(lin.bias_);
+    for (auto &&item : lin.coeff_) {
+        int k = item.second.k;
+        auto &&a = item.second.a;
+
+        if (k == 0) {
+            continue;
+        }
+        Expr x;
+        if (a->nodeType() == ASTNodeType::IntConst) {
+            x = makeIntConst(k * a.as<IntConstNode>()->val_);
+        } else if (k == 1) {
+            x = a;
+        } else {
+            x = makeMul(makeIntConst(k), a);
+        }
+        if (x->nodeType() == ASTNodeType::IntConst &&
+            b->nodeType() == ASTNodeType::IntConst) {
+            x = makeIntConst(x.as<IntConstNode>()->val_ +
+                             b.as<IntConstNode>()->val_);
+        } else if (b->nodeType() == ASTNodeType::IntConst &&
+                   b.as<IntConstNode>()->val_ == 0) {
+            // do nothing
+        } else {
+            x = makeAdd(x, b);
+        }
+
+        b = std::move(x);
     }
-    if (x->nodeType() == ASTNodeType::IntConst &&
-        b->nodeType() == ASTNodeType::IntConst) {
-        x = makeIntConst(x.as<IntConstNode>()->val_ +
-                         b.as<IntConstNode>()->val_);
-    } else if (b->nodeType() == ASTNodeType::IntConst &&
-               b.as<IntConstNode>()->val_ == 0) {
-        // do nothing
+    expr_ = std::move(b);
+}
+
+std::vector<Bound> AnalyzeBounds::getLower(const Expr &op) const {
+    if (lower_.count(op.get())) {
+        return lower_.at(op.get());
     } else {
-        x = makeAdd(x, b);
+        return {};
     }
-    return x;
 }
 
-std::vector<Expr> AnalyzeBounds::getLower(const LinearExpr &linear) const {
-    std::vector<Expr> ret;
-    typedef std::unordered_map<uint64_t, Scale>::const_iterator Iter;
-    std::function<void(Iter, Expr)> dfs = [&](Iter i, Expr expr) {
-        if (i == linear.coeff_.end()) {
-            ret.emplace_back(expr);
-            return;
-        }
-        auto ii = i;
-        ii++;
-        if (i->second.k > 0 && lower_.count(i->second.a.get())) {
-            for (auto &&candidate : lower_.at(i->second.a.get())) {
-                dfs(ii, compLinear(i->second.k, candidate, expr));
-            }
-        }
-        if (i->second.k < 0 && upper_.count(i->second.a.get())) {
-            for (auto &&candidate : upper_.at(i->second.a.get())) {
-                dfs(ii, compLinear(i->second.k, candidate, expr));
-            }
-        }
-        if (i->second.k == 0) {
-            dfs(ii, expr);
-        }
-    };
-    dfs(linear.coeff_.begin(), makeIntConst(linear.bias_));
-    return ret;
+std::vector<Bound> AnalyzeBounds::getUpper(const Expr &op) const {
+    if (upper_.count(op.get())) {
+        return upper_.at(op.get());
+    } else {
+        return {};
+    }
 }
 
-std::vector<Expr> AnalyzeBounds::getUpper(const LinearExpr &linear) const {
-    std::vector<Expr> ret;
-    typedef std::unordered_map<uint64_t, Scale>::const_iterator Iter;
-    std::function<void(Iter, Expr)> dfs = [&](Iter i, Expr expr) {
-        if (i == linear.coeff_.end()) {
-            ret.emplace_back(expr);
-            return;
-        }
-        auto ii = i;
-        ii++;
-        if (i->second.k > 0 && upper_.count(i->second.a.get())) {
-            for (auto &&candidate : upper_.at(i->second.a.get())) {
-                dfs(ii, compLinear(i->second.k, candidate, expr));
-            }
-        }
-        if (i->second.k < 0 && lower_.count(i->second.a.get())) {
-            for (auto &&candidate : lower_.at(i->second.a.get())) {
-                dfs(ii, compLinear(i->second.k, candidate, expr));
-            }
-        }
-        if (i->second.k == 0) {
-            dfs(ii, expr);
-        }
-    };
-    dfs(linear.coeff_.begin(), makeIntConst(linear.bias_));
-    return ret;
-}
-
-void AnalyzeBounds::updLower(const Expr &op, const std::vector<Expr> &exprs) {
+void AnalyzeBounds::updLower(const Expr &op, const Bound &bound) {
     if (!lower_.count(op.get())) {
-        lower_[op.get()] = exprs;
+        lower_[op.get()] = {bound};
         return;
     }
-    for (auto &&expr : exprs) {
-        auto h = getHash(expr);
-        for (Expr &old : lower_.at(op.get())) {
-            if (getHash(old) == h) {
-                goto done;
-            }
-            if (expr->nodeType() == ASTNodeType::IntConst &&
-                old->nodeType() == ASTNodeType::IntConst) {
-                auto oldVal = old.as<IntConstNode>()->val_;
-                auto newVal = expr.as<IntConstNode>()->val_;
-                if (newVal > oldVal) {
-                    old = makeIntConst(newVal);
-                }
-                goto done;
-            }
+    auto h = getHash(bound.expr_);
+    for (Bound &old : lower_.at(op.get())) {
+        if (getHash(old.expr_) == h) {
+            return;
         }
-        lower_.at(op.get()).emplace_back(expr);
-    done:;
+        if (bound.expr_->nodeType() == ASTNodeType::IntConst &&
+            old.expr_->nodeType() == ASTNodeType::IntConst) {
+            auto oldVal = old.expr_.as<IntConstNode>()->val_;
+            auto newVal = bound.expr_.as<IntConstNode>()->val_;
+            if (newVal > oldVal) {
+                old = Bound(LinearExpr{{}, newVal});
+            }
+            return;
+        }
     }
+    lower_.at(op.get()).emplace_back(bound);
 }
 
-void AnalyzeBounds::updUpper(const Expr &op, const std::vector<Expr> &exprs) {
+void AnalyzeBounds::updUpper(const Expr &op, const Bound &bound) {
     if (!upper_.count(op.get())) {
-        upper_[op.get()] = exprs;
+        upper_[op.get()] = {bound};
         return;
     }
-    for (auto &&expr : exprs) {
-        auto h = getHash(expr);
-        for (Expr &old : upper_.at(op.get())) {
-            if (getHash(old) == h) {
-                goto done;
-            }
-            if (expr->nodeType() == ASTNodeType::IntConst &&
-                old->nodeType() == ASTNodeType::IntConst) {
-                auto oldVal = old.as<IntConstNode>()->val_;
-                auto newVal = expr.as<IntConstNode>()->val_;
-                if (newVal < oldVal) {
-                    old = makeIntConst(newVal);
-                }
-                goto done;
-            }
+    auto h = getHash(bound.expr_);
+    for (Bound &old : upper_.at(op.get())) {
+        if (getHash(old.expr_) == h) {
+            return;
         }
-        upper_.at(op.get()).emplace_back(expr);
-    done:;
+        if (bound.expr_->nodeType() == ASTNodeType::IntConst &&
+            old.expr_->nodeType() == ASTNodeType::IntConst) {
+            auto oldVal = old.expr_.as<IntConstNode>()->val_;
+            auto newVal = bound.expr_.as<IntConstNode>()->val_;
+            if (newVal < oldVal) {
+                old = Bound(LinearExpr{{}, newVal});
+            }
+            return;
+        }
     }
+    upper_.at(op.get()).emplace_back(bound);
+}
+
+int AnalyzeBounds::getIntLower(const Expr &op) const {
+    int ret = INT_MIN;
+    for (auto &&b : getLower(op)) {
+        if (b.expr_->nodeType() == ASTNodeType::IntConst) {
+            ret = std::max(ret, b.expr_.as<IntConstNode>()->val_);
+        }
+    }
+    return ret;
+}
+
+int AnalyzeBounds::getIntUpper(const Expr &op) const {
+    int ret = INT_MAX;
+    for (auto &&b : getUpper(op)) {
+        if (b.expr_->nodeType() == ASTNodeType::IntConst) {
+            ret = std::min(ret, b.expr_.as<IntConstNode>()->val_);
+        }
+    }
+    return ret;
+}
+
+Ref<int> AnalyzeBounds::getInt(const Expr &op) const {
+    int lower = getIntLower(op);
+    int upper = getIntUpper(op);
+    return lower == upper ? Ref<int>::make(lower) : nullptr;
 }
 
 uint64_t AnalyzeBounds::getHash(const Expr &op) {
@@ -174,25 +171,222 @@ void AnalyzeBounds::visit(const VarDef &op) {
 
 void AnalyzeBounds::visit(const Var &op) {
     Visitor::visit(op);
-    updLower(op, {op}); // Don't forget itself
-    updUpper(op, {op});
-    if (iters_.count(op->name_)) {
-        updLower(op, {iters_[op->name_].first});
-        updUpper(op, {iters_[op->name_].second});
+    Bound b{op}; // Don't forget itself
+    updLower(op, b);
+    updUpper(op, b);
+    static bool inRecur = false;
+    if (!inRecur) {
+        inRecur = true;
+        if (iters_.count(op->name_)) {
+            auto &&range = iters_.at(op->name_);
+            auto first = disambiguous(range.first);
+            auto second = disambiguous(range.second);
+            (*this)(first);
+            (*this)(second);
+            for (auto &&item : getLower(first)) {
+                updLower(op, item);
+            }
+            for (auto &&item : getUpper(second)) {
+                updUpper(op, item);
+            }
+        }
+        inRecur = false;
     }
 }
 
 void AnalyzeBounds::visit(const Load &op) {
     Visitor::visit(op);
-    updLower(op, {op}); // Don't forget itself
-    updUpper(op, {op});
+    Bound b{op}; // Don't forget itself
+    updLower(op, b);
+    updUpper(op, b);
 }
 
-void AnalyzeBounds::visit(const IntConst &op) { doAnalyze(op); }
-void AnalyzeBounds::visit(const Add &op) { doAnalyze(op); }
-void AnalyzeBounds::visit(const Sub &op) { doAnalyze(op); }
-void AnalyzeBounds::visit(const Mul &op) { doAnalyze(op); }
-void AnalyzeBounds::visit(const Div &op) { doAnalyze(op); }
+void AnalyzeBounds::visit(const IntConst &op) {
+    Visitor::visit(op);
+    Bound b{LinearExpr{{}, op->val_}};
+    updLower(op, b);
+    updUpper(op, b);
+}
+
+void AnalyzeBounds::visit(const Add &op) {
+    Visitor::visit(op);
+    auto f = [](const Bound &b1, const Bound &b2) -> Bound {
+        auto ret = b1.lin_;
+        for (auto &&item : b2.lin_.coeff_) {
+            if (ret.coeff_.count(item.first)) {
+                ret.coeff_[item.first].k += item.second.k;
+            } else {
+                ret.coeff_[item.first] = item.second;
+            }
+        }
+        ret.bias_ += b2.lin_.bias_;
+        return ret;
+    };
+    for (auto &&b1 : getLower(op->lhs_)) {
+        for (auto &&b2 : getLower(op->rhs_)) {
+            updLower(op, f(b1, b2));
+        }
+    }
+    for (auto &&b1 : getUpper(op->lhs_)) {
+        for (auto &&b2 : getUpper(op->rhs_)) {
+            updUpper(op, f(b1, b2));
+        }
+    }
+}
+
+void AnalyzeBounds::visit(const Sub &op) {
+    Visitor::visit(op);
+    auto f = [](const Bound &b1, const Bound &b2) -> Bound {
+        auto ret = b1.lin_;
+        for (auto &&item : b2.lin_.coeff_) {
+            if (ret.coeff_.count(item.first)) {
+                ret.coeff_[item.first].k -= item.second.k;
+            } else {
+                ret.coeff_[item.first] = {-item.second.k, item.second.a};
+            }
+        }
+        ret.bias_ -= b2.lin_.bias_;
+        return ret;
+    };
+    for (auto &&b1 : getLower(op->lhs_)) {
+        for (auto &&b2 : getUpper(op->rhs_)) {
+            updLower(op, f(b1, b2));
+        }
+    }
+    for (auto &&b1 : getUpper(op->lhs_)) {
+        for (auto &&b2 : getLower(op->rhs_)) {
+            updUpper(op, f(b1, b2));
+        }
+    }
+}
+
+void AnalyzeBounds::visit(const Mul &op) {
+    Visitor::visit(op);
+
+    // we deal with multiplying constant only. Otherwise, the extreme value of
+    // `x * y` may not falls in the extreme value of `x` and `y`
+    auto f = [](const Bound &b, int k) -> Bound {
+        auto ret = b.lin_;
+        for (auto &&item : ret.coeff_) {
+            item.second.k *= k;
+        }
+        ret.bias_ *= k;
+        return ret;
+    };
+
+    // FIXME: What if b < 0?
+    auto g = [f, this](const Expr &op, const Expr &e1, const Expr &e2) {
+        if (auto k = getInt(e2); k.isValid()) {
+            for (auto &&b : getLower(e1)) {
+                auto upd = *k > 0 ? &AnalyzeBounds::updLower
+                                  : &AnalyzeBounds::updUpper;
+                (this->*upd)(op, f(b, *k));
+            }
+            for (auto &&b : getUpper(e1)) {
+                auto upd = *k > 0 ? &AnalyzeBounds::updUpper
+                                  : &AnalyzeBounds::updLower;
+                (this->*upd)(op, f(b, *k));
+            }
+        }
+    };
+    g(op, op->lhs_, op->rhs_);
+    g(op, op->rhs_, op->lhs_);
+
+    // Special for `(n // p) * k`
+    if (lower_.count(op.get())) {
+        for (Bound &b : lower_.at(op.get())) {
+            bool altered = false;
+            LinearExpr lin;
+            lin.bias_ = b.lin_.bias_;
+            for (auto &&item : b.lin_.coeff_) {
+                if (item.second.a->nodeType() == ASTNodeType::Div) {
+                    auto div = item.second.a.as<DivNode>();
+                    if (div->rhs_->nodeType() == ASTNodeType::IntConst) {
+                        if (int p = div->rhs_.as<IntConstNode>()->val_;
+                            item.second.k % p == 0) {
+                            auto h = getHash(div->lhs_);
+                            if (lin.coeff_.count(h)) {
+                                lin.coeff_.at(h).k += item.second.k / p;
+                            } else {
+                                lin.coeff_[h] = {item.second.k / p, div->lhs_};
+                            }
+                            lin.bias_ -= (p - 1) * (item.second.k / p);
+                            altered = true;
+                            continue;
+                        }
+                    }
+                }
+                lin.coeff_[item.first] = item.second;
+            }
+            if (altered) {
+                b = Bound(lin);
+            }
+        }
+    }
+    if (upper_.count(op.get())) {
+        for (Bound &b : upper_.at(op.get())) {
+            bool altered = false;
+            LinearExpr lin;
+            lin.bias_ = b.lin_.bias_;
+            for (auto &&item : b.lin_.coeff_) {
+                if (item.second.a->nodeType() == ASTNodeType::Div) {
+                    auto div = item.second.a.as<DivNode>();
+                    if (div->rhs_->nodeType() == ASTNodeType::IntConst) {
+                        if (int p = div->rhs_.as<IntConstNode>()->val_;
+                            item.second.k % p == 0) {
+                            auto h = getHash(div->lhs_);
+                            if (lin.coeff_.count(h)) {
+                                lin.coeff_.at(h).k += item.second.k / p;
+                            } else {
+                                lin.coeff_[h] = {item.second.k / p, div->lhs_};
+                            }
+                            altered = true;
+                            continue;
+                        }
+                    }
+                }
+                lin.coeff_[item.first] = item.second;
+            }
+            if (altered) {
+                b = Bound(lin);
+            }
+        }
+    }
+}
+
+void AnalyzeBounds::visit(const Div &op) {
+    Visitor::visit(op);
+
+    // we deal with dividing by constant only. Otherwise, the extreme value of
+    // `x / y` may not falls in the extreme value of `x` and `y`
+    auto f = [](const Bound &b, int k) -> Bound {
+        auto ret = b.lin_;
+        for (auto &&item : ret.coeff_) {
+            if (item.second.k % k != 0) {
+                goto fail;
+            }
+            item.second.k /= k;
+        }
+        if (ret.bias_ % k != 0) {
+            goto fail;
+        }
+        ret.bias_ /= k;
+        return ret;
+    fail:
+        return makeDiv(b.expr_, makeIntConst(k));
+    };
+
+    if (auto k = getInt(op->rhs_); k.isValid()) {
+        for (auto &&b : getLower(op->lhs_)) {
+            (this->*(*k > 0 ? &AnalyzeBounds::updLower
+                            : &AnalyzeBounds::updUpper))(op, f(b, *k));
+        }
+        for (auto &&b : getUpper(op->lhs_)) {
+            (this->*(*k > 0 ? &AnalyzeBounds::updUpper
+                            : &AnalyzeBounds::updLower))(op, f(b, *k));
+        }
+    }
+}
 
 void AnalyzeBounds::visit(const For &op) {
     if (iters_.count(op->iter_)) {

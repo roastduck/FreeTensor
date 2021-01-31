@@ -55,18 +55,18 @@ std::string AnalyzeDeps::normalizeId(const std::string &id) const {
     return std::regex_replace(id, std::regex("\\."), "__dot__");
 }
 
-std::string AnalyzeDeps::linear2str(const LinearExpr &lin) const {
+Ref<std::string> AnalyzeDeps::linear2str(const LinearExpr &lin) const {
     std::ostringstream os;
     os << lin.bias_;
     for (auto &&item : lin.coeff_) {
         if (item.second.a->nodeType() == ASTNodeType::Var) {
             os << " + " << item.second.k << " " << item.second.a;
         } else {
-            // TODO: Use the entire array as dependency
-            ASSERT(false);
+            // Use the entire array as dependency
+            return nullptr;
         }
     }
-    return normalizeId(os.str());
+    return Ref<std::string>::make(normalizeId(os.str()));
 }
 
 std::string AnalyzeDeps::makeIterList(const std::vector<Expr> &list,
@@ -99,7 +99,11 @@ AnalyzeDeps::makeLinList(const std::vector<Ref<LinearExpr>> &list) const {
     std::string ret;
     for (int i = 0, iEnd = list.size(); i < iEnd; i++) {
         if (list[i].isValid()) {
-            ret += linear2str(*list[i]);
+            if (auto linstr = linear2str(*list[i]); linstr.isValid()) {
+                ret += *linstr;
+            } else {
+                ret += "free" + std::to_string(i);
+            }
         } else {
             ret += "free" + std::to_string(i);
         }
@@ -122,12 +126,18 @@ std::string AnalyzeDeps::makeRange(const std::vector<Expr> &point,
             std::string ineq = normalizeId(point[i].as<VarNode>()->name_);
             bool bounded = false;
             if (linear_.count(begin[i].get())) {
-                ineq = linear2str(linear_.at(begin[i].get())) + " <= " + ineq;
-                bounded = true;
+                if (auto linstr = linear2str(linear_.at(begin[i].get()));
+                    linstr.isValid()) {
+                    ineq = *linstr + " <= " + ineq;
+                    bounded = true;
+                }
             }
             if (linear_.count(end[i].get())) {
-                ineq = ineq + " < " + linear2str(linear_.at(end[i].get()));
-                bounded = true;
+                if (auto linstr = linear2str(linear_.at(end[i].get()));
+                    linstr.isValid()) {
+                    ineq = ineq + " < " + *linstr;
+                    bounded = true;
+                }
             }
             if (bounded) {
                 ineqs.emplace_back(std::move(ineq));

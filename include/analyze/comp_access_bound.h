@@ -4,14 +4,15 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include <analyze/bounds.h>
 #include <mutator.h>
 
 namespace ir {
 
 class CompAccessBound : public Mutator {
     // bounds from AnalyzeBounds
-    const std::unordered_map<const ExprNode *, std::vector<Expr>> &lower_;
-    const std::unordered_map<const ExprNode *, std::vector<Expr>> &upper_;
+    const std::unordered_map<const ExprNode *, std::vector<Bound>> &lower_;
+    const std::unordered_map<const ExprNode *, std::vector<Bound>> &upper_;
 
     // var name -> [indices for each access]
     std::unordered_map<std::string, std::vector<std::vector<Expr>>> access_;
@@ -21,8 +22,8 @@ class CompAccessBound : public Mutator {
 
   public:
     CompAccessBound(
-        const std::unordered_map<const ExprNode *, std::vector<Expr>> &lower,
-        const std::unordered_map<const ExprNode *, std::vector<Expr>> &upper)
+        const std::unordered_map<const ExprNode *, std::vector<Bound>> &lower,
+        const std::unordered_map<const ExprNode *, std::vector<Bound>> &upper)
         : lower_(lower), upper_(upper) {}
 
   private:

@@ -43,8 +43,8 @@ Stmt CompForBound::visit(const For &_op) {
             if (lower_.count(use.get())) {
                 Expr lowerItem;
                 for (auto &&item : lower_.at(use.get())) {
-                    if (checkAllDefined(defs_, item)) {
-                        lowerItem = reduceMax(lowerItem, item);
+                    if (checkAllDefined(defs_, item.expr_)) {
+                        lowerItem = reduceMax(lowerItem, item.expr_);
                     }
                 }
                 lower = reduceMin(lower, lowerItem);
@@ -58,8 +58,8 @@ Stmt CompForBound::visit(const For &_op) {
             if (upper_.count(use.get())) {
                 Expr upperItem;
                 for (auto &&item : upper_.at(use.get())) {
-                    if (checkAllDefined(defs_, item)) {
-                        upperItem = reduceMin(upperItem, item);
+                    if (checkAllDefined(defs_, item.expr_)) {
+                        upperItem = reduceMin(upperItem, item.expr_);
                     }
                 }
                 upper = reduceMax(upper, upperItem);

@@ -8,6 +8,14 @@
 
 namespace ir {
 
+struct Bound {
+    Expr expr_;
+    LinearExpr lin_;
+
+    Bound(const Expr &expr);
+    Bound(const LinearExpr &lin);
+};
+
 /**
  * Try to get the upper bound and lower bound of each (sub)expression
  *
@@ -16,12 +24,10 @@ namespace ir {
  */
 class AnalyzeBounds : public Visitor {
   public:
-    typedef std::unordered_map<const ExprNode *, std::vector<Expr>> BoundsMap;
+    typedef std::unordered_map<const ExprNode *, std::vector<Bound>> BoundsMap;
 
   private:
-    // expr -> hash
-    const std::unordered_map<const ExprNode *, uint64_t> &hash_;
-    const std::unordered_map<const ASTNode *, LinearExpr> &linear_;
+    const std::unordered_map<const ExprNode *, uint64_t> &hash_; // expr -> hash
 
     BoundsMap lower_, upper_;
 
@@ -31,25 +37,14 @@ class AnalyzeBounds : public Visitor {
     std::unordered_map<std::string, std::pair<Expr, Expr>> iters_;
 
   private:
-    // Compute k * a + b
-    Expr compLinear(int k, const Expr &a, const Expr &b) const;
+    std::vector<Bound> getLower(const Expr &op) const;
+    std::vector<Bound> getUpper(const Expr &op) const;
+    void updLower(const Expr &op, const Bound &bound);
+    void updUpper(const Expr &op, const Bound &bound);
 
-    // Optionally get lower bound
-    std::vector<Expr> getLower(const LinearExpr &linear) const;
-    std::vector<Expr> getUpper(const LinearExpr &linear) const;
-
-    template <class T> void doAnalyze(const T &op) {
-        Visitor::visit(op); // Recurse first, so bounds of vars get updated
-        if (linear_.count(op.get())) {
-            auto &&lin = linear_.at(op.get());
-            updLower(op, getLower(lin));
-            updUpper(op, getUpper(lin));
-        }
-    }
-
-    // Update lower bound, return old value
-    void updLower(const Expr &op, const std::vector<Expr> &exprs);
-    void updUpper(const Expr &op, const std::vector<Expr> &exprs);
+    int getIntLower(const Expr &op) const;
+    int getIntUpper(const Expr &op) const;
+    Ref<int> getInt(const Expr &op) const;
 
     uint64_t getHash(const Expr &op);
 
@@ -57,9 +52,8 @@ class AnalyzeBounds : public Visitor {
     static Expr add1(const Expr &op);
 
   public:
-    AnalyzeBounds(const std::unordered_map<const ExprNode *, uint64_t> &hash,
-                  const std::unordered_map<const ASTNode *, LinearExpr> &linear)
-        : hash_(hash), linear_(linear) {}
+    AnalyzeBounds(const std::unordered_map<const ExprNode *, uint64_t> &hash)
+        : hash_(hash) {}
 
     const BoundsMap &lower() const { return lower_; }
     const BoundsMap &upper() const { return upper_; }

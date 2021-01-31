@@ -20,6 +20,7 @@ class Disambiguous : public Mutator {
 };
 
 inline Stmt disambiguous(const Stmt &op) { return Disambiguous()(op); }
+inline Expr disambiguous(const Expr &op) { return Disambiguous()(op); }
 
 } // namespace ir
 

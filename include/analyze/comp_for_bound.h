@@ -4,14 +4,15 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include <analyze/bounds.h>
 #include <mutator.h>
 
 namespace ir {
 
 class CompForBound : public Mutator {
     // bounds from AnalyzeBounds
-    const std::unordered_map<const ExprNode *, std::vector<Expr>> &lower_;
-    const std::unordered_map<const ExprNode *, std::vector<Expr>> &upper_;
+    const std::unordered_map<const ExprNode *, std::vector<Bound>> &lower_;
+    const std::unordered_map<const ExprNode *, std::vector<Bound>> &upper_;
 
     // iter name -> all use point
     std::unordered_map<std::string, std::vector<Expr>> uses_;
@@ -23,8 +24,8 @@ class CompForBound : public Mutator {
 
   public:
     CompForBound(
-        const std::unordered_map<const ExprNode *, std::vector<Expr>> &lower,
-        const std::unordered_map<const ExprNode *, std::vector<Expr>> &upper)
+        const std::unordered_map<const ExprNode *, std::vector<Bound>> &lower,
+        const std::unordered_map<const ExprNode *, std::vector<Bound>> &upper)
         : lower_(lower), upper_(upper) {}
 
   private:

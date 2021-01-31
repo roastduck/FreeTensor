@@ -3,6 +3,7 @@
 
 #include <unordered_map>
 
+#include <analyze/bounds.h>
 #include <mutator.h>
 #include <visitor.h>
 
@@ -31,7 +32,7 @@ int findInnerMostScope(const std::unordered_map<std::string, int> &varScope,
 
 class SimplifyPass : public Mutator {
   public:
-    typedef std::unordered_map<const ExprNode *, std::vector<Expr>> BoundsMap;
+    typedef std::unordered_map<const ExprNode *, std::vector<Bound>> BoundsMap;
 
   private:
     const std::unordered_map<const ExprNode *, uint64_t> &hash_;
@@ -69,15 +70,15 @@ class SimplifyPass : public Mutator {
         // are not updated, so using _op
         if (lower_.count(_op.get()) && upper_.count(_op.get())) {
             for (auto &&lower : lower_.at(_op.get())) {
-                auto hl = getHash(lower);
+                auto hl = getHash(lower.expr_);
                 for (auto &&upper : upper_.at(_op.get())) {
-                    auto hr = getHash(upper);
+                    auto hr = getHash(upper.expr_);
                     if (hl == hr) {
                         // We need to choose the simplest one. Other wise
                         // we are always picking the original expression
-                        auto scope = findInnerMostScope(varScope_, lower);
+                        auto scope = findInnerMostScope(varScope_, lower.expr_);
                         if (!best.isValid() || scope < bestScope) {
-                            best = lower, bestScope = scope;
+                            best = lower.expr_, bestScope = scope;
                         }
                         break;
                     }
@@ -94,8 +95,8 @@ class SimplifyPass : public Mutator {
     template <class T, class Cmp> bool checkUpperCmp0(const T &op, Cmp &&cmp) {
         if (upper_.count(op->info_norm_form_.get())) {
             for (auto &&upper : upper_.at(op->info_norm_form_.get())) {
-                if (upper->nodeType() == ASTNodeType::IntConst &&
-                    cmp(upper.template as<IntConstNode>()->val_, 0)) {
+                if (upper.expr_->nodeType() == ASTNodeType::IntConst &&
+                    cmp(upper.expr_.template as<IntConstNode>()->val_, 0)) {
                     return true;
                 }
             }
@@ -106,8 +107,8 @@ class SimplifyPass : public Mutator {
     template <class T, class Cmp> bool checkLowerCmp0(const T &op, Cmp &&cmp) {
         if (lower_.count(op->info_norm_form_.get())) {
             for (auto &&lower : lower_.at(op->info_norm_form_.get())) {
-                if (lower->nodeType() == ASTNodeType::IntConst &&
-                    cmp(lower.template as<IntConstNode>()->val_, 0)) {
+                if (lower.expr_->nodeType() == ASTNodeType::IntConst &&
+                    cmp(lower.expr_.template as<IntConstNode>()->val_, 0)) {
                     return true;
                 }
             }

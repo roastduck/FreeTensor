@@ -67,11 +67,11 @@ void init_ffi_ast(py::module_ &m) {
             [](const Expr &rhs, const Expr &lhs) { return makeDiv(lhs, rhs); },
             py::is_operator())
         .def(
-            "__floorDiv__",
+            "__floordiv__",
             [](const Expr &lhs, const Expr &rhs) { return makeDiv(lhs, rhs); },
             py::is_operator())
         .def(
-            "__rfloorDiv__",
+            "__rfloordiv__",
             [](const Expr &rhs, const Expr &lhs) { return makeDiv(lhs, rhs); },
             py::is_operator())
         .def(

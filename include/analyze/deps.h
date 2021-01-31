@@ -131,7 +131,7 @@ class AnalyzeDeps : public Visitor {
 
   private:
     std::string normalizeId(const std::string &id) const;
-    std::string linear2str(const LinearExpr &lin) const;
+    Ref<std::string> linear2str(const LinearExpr &lin) const;
     std::string makeIterList(const std::vector<Expr> &list, int eraseBefore,
                              int n) const;
     std::string makeLinList(const std::vector<Ref<LinearExpr>> &list) const;
