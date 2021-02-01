@@ -10,6 +10,17 @@
 
 namespace ir {
 
+static bool isEmptyStmt(const Stmt &op) {
+    if (!op.isValid()) { // In case If->elseCase_ == nullptr
+        return true;
+    }
+    if (op->nodeType() == ASTNodeType::StmtSeq &&
+        op.as<StmtSeqNode>()->stmts_.empty()) {
+        return true;
+    }
+    return false;
+}
+
 void FindInnerMostScope::visit(const Var &op) {
     Visitor::visit(op);
     innerMost_ = std::max(innerMost_, varScope_.at(op->name_));
@@ -199,8 +210,15 @@ Stmt SimplifyPass::visit(const VarDef &_op) {
               ". Nested vars with the same name are not allowed");
     }
     varScope_[_op->name_] = curScope_++;
-    auto op = Mutator::visit(_op);
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::VarDef);
+    auto op = __op.as<VarDefNode>();
     varScope_.erase(_op->name_), curScope_--;
+
+    if (isEmptyStmt(op->body_)) {
+        return makeStmtSeq("", {});
+    }
+
     return op;
 }
 
@@ -214,12 +232,15 @@ Stmt SimplifyPass::visit(const For &_op) {
     auto op = __op.as<ForNode>();
     varScope_.erase(_op->iter_), curScope_--;
 
+    if (isEmptyStmt(op->body_)) {
+        return makeStmtSeq("", {});
+    }
     if (op->info_len_->nodeType() == ASTNodeType::IntConst) {
         auto len = op->info_len_.as<IntConstNode>()->val_;
         if (len == 1) {
             return op->body_;
         }
-        if (len == 0) {
+        if (len <= 0) {
             return makeStmtSeq("", {});
         }
     }
@@ -231,12 +252,19 @@ Stmt SimplifyPass::visit(const If &_op) {
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::If);
     auto op = __op.as<IfNode>();
+    if (isEmptyStmt(op->thenCase_) && isEmptyStmt(op->elseCase_)) {
+        return makeStmtSeq("", {});
+    }
     if (op->cond_->nodeType() == ASTNodeType::IntConst) {
         isFixPoint_ = false;
         if (op->cond_.as<IntConstNode>()->val_) {
             return op->thenCase_;
         } else {
-            return op->elseCase_;
+            if (op->elseCase_.isValid()) {
+                return op->elseCase_;
+            } else {
+                return makeStmtSeq("", {});
+            }
         }
     }
     return op;
