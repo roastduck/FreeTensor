@@ -169,7 +169,17 @@ class Visitor {
         }
     }
 
-    virtual void visit(const Not &op) { (*this)(op->expr_); }
+    virtual void visit(const LAnd &op) {
+        (*this)(op->lhs_);
+        (*this)(op->rhs_);
+    }
+
+    virtual void visit(const LOr &op) {
+        (*this)(op->lhs_);
+        (*this)(op->rhs_);
+    }
+
+    virtual void visit(const LNot &op) { (*this)(op->expr_); }
 
     virtual void visit(const For &op) {
         (*this)(op->begin_);

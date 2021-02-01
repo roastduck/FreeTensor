@@ -29,7 +29,9 @@ Expr Mutator::operator()(const Expr &op) {
         DISPATCH_EXPR_CASE(GE);
         DISPATCH_EXPR_CASE(EQ);
         DISPATCH_EXPR_CASE(NE);
-        DISPATCH_EXPR_CASE(Not);
+        DISPATCH_EXPR_CASE(LAnd);
+        DISPATCH_EXPR_CASE(LOr);
+        DISPATCH_EXPR_CASE(LNot);
         DISPATCH_EXPR_CASE(Intrinsic);
 
     default:

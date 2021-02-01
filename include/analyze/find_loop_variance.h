@@ -70,7 +70,9 @@ class FindLoopVariance : public Visitor {
     virtual void visit(const GE &op) override { visitBinOp(op); }
     virtual void visit(const EQ &op) override { visitBinOp(op); }
     virtual void visit(const NE &op) override { visitBinOp(op); }
-    virtual void visit(const Not &op) override;
+    virtual void visit(const LAnd &op) override { visitBinOp(op); }
+    virtual void visit(const LOr &op) override { visitBinOp(op); }
+    virtual void visit(const LNot &op) override;
 };
 
 std::unordered_map<const ExprNode *, std::unordered_set<std::string>>

@@ -242,14 +242,38 @@ template <class T, class U> Expr makeNE(T &&lhs, U &&rhs) {
     return a;
 }
 
-class NotNode : public ExprNode {
+class LAndNode : public ExprNode {
+  public:
+    Expr lhs_, rhs_;
+    DEFINE_NODE_TRAIT(LAnd);
+};
+typedef Ref<LAndNode> LAnd;
+template <class T, class U> Expr makeLAnd(T &&lhs, U &&rhs) {
+    LAnd l = LAnd::make();
+    l->lhs_ = std::forward<T>(lhs), l->rhs_ = std::forward<U>(rhs);
+    return l;
+}
+
+class LOrNode : public ExprNode {
+  public:
+    Expr lhs_, rhs_;
+    DEFINE_NODE_TRAIT(LOr);
+};
+typedef Ref<LOrNode> LOr;
+template <class T, class U> Expr makeLOr(T &&lhs, U &&rhs) {
+    LAnd l = LAnd::make();
+    l->lhs_ = std::forward<T>(lhs), l->rhs_ = std::forward<U>(rhs);
+    return l;
+}
+
+class LNotNode : public ExprNode {
   public:
     Expr expr_;
-    DEFINE_NODE_TRAIT(Not);
+    DEFINE_NODE_TRAIT(LNot);
 };
-typedef Ref<NotNode> Not;
-template <class T> Expr makeNot(T &&expr) {
-    Not n = Not::make();
+typedef Ref<LNotNode> LNot;
+template <class T> Expr makeLNot(T &&expr) {
+    LNot n = LNot::make();
     n->expr_ = std::forward<T>(expr);
     return n;
 }

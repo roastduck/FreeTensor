@@ -155,6 +155,13 @@ void init_ffi_ast(py::module_ &m) {
     m.def("makeMax",
           static_cast<Expr (*)(const Expr &, const Expr &)>(&makeMax), "lhs"_a,
           "rhs"_a);
+    m.def("makeLAnd",
+          static_cast<Expr (*)(const Expr &, const Expr &)>(&makeLAnd), "lhs"_a,
+          "rhs"_a);
+    m.def("makeLOr",
+          static_cast<Expr (*)(const Expr &, const Expr &)>(&makeLOr), "lhs"_a,
+          "rhs"_a);
+    m.def("makeLNot", static_cast<Expr (*)(const Expr &)>(&makeLNot), "expr"_a);
     m.def("makeIntrinsic",
           static_cast<Expr (*)(const std::string &, const std::vector<Expr> &)>(
               &makeIntrinsic),

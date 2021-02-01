@@ -131,6 +131,9 @@ class SimplifyPass : public Mutator {
     Expr visit(const GE &op) override;
     Expr visit(const EQ &op) override;
     Expr visit(const NE &op) override;
+    Expr visit(const LAnd &op) override;
+    Expr visit(const LOr &op) override;
+    Expr visit(const LNot &op) override;
     Stmt visit(const VarDef &op) override;
     Stmt visit(const For &op) override;
     Stmt visit(const If &op) override;

@@ -191,9 +191,23 @@ void MatchVisitor::visit(const NE &op) {
     RECURSE(op->rhs_, instance->rhs_);
 }
 
-void MatchVisitor::visit(const Not &op) {
-    CHECK(instance_->nodeType() == ASTNodeType::Not);
-    auto instance = instance_.as<NotNode>();
+void MatchVisitor::visit(const LAnd &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::LAnd);
+    auto instance = instance_.as<LAndNode>();
+    RECURSE(op->lhs_, instance->lhs_);
+    RECURSE(op->rhs_, instance->rhs_);
+}
+
+void MatchVisitor::visit(const LOr &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::LOr);
+    auto instance = instance_.as<LOrNode>();
+    RECURSE(op->lhs_, instance->lhs_);
+    RECURSE(op->rhs_, instance->rhs_);
+}
+
+void MatchVisitor::visit(const LNot &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::LNot);
+    auto instance = instance_.as<LNotNode>();
     RECURSE(op->expr_, instance->expr_);
 }
 

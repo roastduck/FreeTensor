@@ -237,7 +237,23 @@ void CodeGenC::visit(const NE &op) {
     os() << ")";
 }
 
-void CodeGenC::visit(const Not &op) {
+void CodeGenC::visit(const LAnd &op) {
+    os() << "(";
+    (*this)(op->lhs_);
+    os() << " && ";
+    (*this)(op->rhs_);
+    os() << ")";
+}
+
+void CodeGenC::visit(const LOr &op) {
+    os() << "(";
+    (*this)(op->lhs_);
+    os() << " || ";
+    (*this)(op->rhs_);
+    os() << ")";
+}
+
+void CodeGenC::visit(const LNot &op) {
     os() << "!";
     (*this)(op->expr_);
 }

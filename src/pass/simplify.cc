@@ -204,6 +204,42 @@ Expr SimplifyPass::visit(const NE &op) {
     return Mutator::visit(op);
 }
 
+Expr SimplifyPass::visit(const LAnd &_op) {
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::LAnd);
+    auto op = __op.as<LAndNode>();
+    if (op->lhs_->nodeType() == ASTNodeType::IntConst) {
+        return op->lhs_.as<IntConstNode>()->val_ ? op->rhs_ : makeIntConst(0);
+    }
+    if (op->rhs_->nodeType() == ASTNodeType::IntConst) {
+        return op->rhs_.as<IntConstNode>()->val_ ? op->lhs_ : makeIntConst(0);
+    }
+    return op;
+}
+
+Expr SimplifyPass::visit(const LOr &_op) {
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::LOr);
+    auto op = __op.as<LOrNode>();
+    if (op->lhs_->nodeType() == ASTNodeType::IntConst) {
+        return op->lhs_.as<IntConstNode>()->val_ ? makeIntConst(1) : op->rhs_;
+    }
+    if (op->rhs_->nodeType() == ASTNodeType::IntConst) {
+        return op->rhs_.as<IntConstNode>()->val_ ? makeIntConst(1) : op->lhs_;
+    }
+    return op;
+}
+
+Expr SimplifyPass::visit(const LNot &_op) {
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::LNot);
+    auto op = __op.as<LNotNode>();
+    if (op->expr_->nodeType() == ASTNodeType::IntConst) {
+        return makeIntConst(!op->expr_.as<IntConstNode>()->val_);
+    }
+    return op;
+}
+
 Stmt SimplifyPass::visit(const VarDef &_op) {
     if (varScope_.count(_op->name_)) {
         ERROR("Conflict var name: " + _op->name_ +

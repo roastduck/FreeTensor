@@ -196,7 +196,15 @@ class Mutator {
         return ret;
     }
 
-    virtual Expr visit(const Not &op) { return makeNot((*this)(op->expr_)); }
+    virtual Expr visit(const LAnd &op) {
+        return makeLAnd((*this)(op->lhs_), (*this)(op->rhs_));
+    }
+
+    virtual Expr visit(const LOr &op) {
+        return makeLOr((*this)(op->lhs_), (*this)(op->rhs_));
+    }
+
+    virtual Expr visit(const LNot &op) { return makeLNot((*this)(op->expr_)); }
 
     virtual Stmt visit(const For &op) {
         auto ret =

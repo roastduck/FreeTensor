@@ -192,7 +192,23 @@ void PrintVisitor::visit(const NE &op) {
     os() << ")";
 }
 
-void PrintVisitor::visit(const Not &op) {
+void PrintVisitor::visit(const LAnd &op) {
+    os() << "(";
+    (*this)(op->lhs_);
+    os() << " && ";
+    (*this)(op->rhs_);
+    os() << ")";
+}
+
+void PrintVisitor::visit(const LOr &op) {
+    os() << "(";
+    (*this)(op->lhs_);
+    os() << " || ";
+    (*this)(op->rhs_);
+    os() << ")";
+}
+
+void PrintVisitor::visit(const LNot &op) {
     os() << "!";
     (*this)(op->expr_);
 }

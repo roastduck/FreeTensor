@@ -64,7 +64,7 @@ void FindLoopVariance::visit(const Load &op) {
     }
 }
 
-void FindLoopVariance::visit(const Not &op) {
+void FindLoopVariance::visit(const LNot &op) {
     Visitor::visit(op);
     if (variantExpr_.count(op->expr_.get())) {
         variantExpr_[op.get()] = variantExpr_.at(op->expr_.get());
