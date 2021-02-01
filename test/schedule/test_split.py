@@ -56,11 +56,13 @@ def test_guard():
 	ast = ir.lower(ast)
 	print(ast)
 
+	# The result after the seperate_tail pass
 	with ir.VarDef("y", (10,), "int32", "output", "cpu") as y:
-		with ir.For("i.0", 0, 3) as i0:
+		with ir.For("i.0", 0, 2) as i0:
 			with ir.For("i.1", 0, 4) as i1:
-				with ir.If(i1 + 4 * i0 < 10):
-					y[i1 + 4 * i0] = i1 + 4 * i0
+				y[i1 + 4 * i0] = i1 + 4 * i0
+		with ir.For("i.1", 0, 2) as i1:
+			y[i1 + 8] = i1 + 8
 	std = ir.pop_ast()
 
 	assert std.match(ast)

@@ -129,16 +129,15 @@ def test_different_scope():
 	with ir.VarDef([
 			("x", (4, 10), "int32", "input", "cpu"),
 			("y", (4,), "int32", "output", "cpu")]) as (x, y):
-		with ir.For("i", 0, 4) as i:
-			with ir.If(i < 2):
-				with ir.For("j", 0, 5) as j:
-					y[i] = x[i, j]
-			with ir.Else():
-				with ir.For("j", 0, 10) as j:
-					with ir.If(j < 5):
-						y[i] = x[i, j] + 2
-					with ir.Else():
-						y[i] = x[i, j] + 3
+		# seperate_tail removes the If nodes
+		with ir.For("i", 0, 2) as i:
+			with ir.For("j", 0, 5) as j:
+				y[i] = x[i, j]
+		with ir.For("i", 2, 4) as i:
+			with ir.For("j", 0, 5) as j:
+				y[i] = x[i, j] + 2
+			with ir.For("j", 5, 10) as j:
+				y[i] = x[i, j] + 3
 	std = ir.pop_ast()
 
 	assert std.match(ast)

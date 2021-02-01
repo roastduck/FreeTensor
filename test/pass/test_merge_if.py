@@ -2,14 +2,15 @@ import ir
 
 def test_basic():
 	with ir.VarDef([
+			("x", (4,), "int32", "input", "cpu"),
 			("y1", (4,), "int32", "output", "cpu"),
-			("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):
+			("y2", (4,), "int32", "output", "cpu")]) as (x, y1, y2):
 		with ir.For("i", 0, 4) as i:
-			with ir.If(i < 2):
+			with ir.If(x[i] < 2):
 				y1[i] = 0
 			with ir.Else():
 				y1[i] = 1
-			with ir.If(i < 2):
+			with ir.If(x[i] < 2):
 				y2[i] = 2
 			with ir.Else():
 				y2[i] = 3
@@ -19,10 +20,11 @@ def test_basic():
 	print(ast)
 
 	with ir.VarDef([
+			("x", (4,), "int32", "input", "cpu"),
 			("y1", (4,), "int32", "output", "cpu"),
-			("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):
+			("y2", (4,), "int32", "output", "cpu")]) as (x, y1, y2):
 		with ir.For("i", 0, 4) as i:
-			with ir.If(i < 2):
+			with ir.If(x[i] < 2):
 				y1[i] = 0
 				y2[i] = 2
 			with ir.Else():
@@ -34,14 +36,15 @@ def test_basic():
 
 def test_no_merge_different_cond():
 	with ir.VarDef([
+			("x", (4,), "int32", "input", "cpu"),
 			("y1", (5,), "int32", "output", "cpu"),
-			("y2", (5,), "int32", "output", "cpu")]) as (y1, y2):
+			("y2", (5,), "int32", "output", "cpu")]) as (x, y1, y2):
 		with ir.For("i", 0, 5) as i:
-			with ir.If(i < 2):
+			with ir.If(x[i] < 2):
 				y1[i] = 0
 			with ir.Else():
 				y1[i] = 1
-			with ir.If(i < 3):
+			with ir.If(x[i] < 3):
 				y2[i] = 2
 			with ir.Else():
 				y2[i] = 3
@@ -51,14 +54,15 @@ def test_no_merge_different_cond():
 	print(ast)
 
 	with ir.VarDef([
+			("x", (4,), "int32", "input", "cpu"),
 			("y1", (5,), "int32", "output", "cpu"),
-			("y2", (5,), "int32", "output", "cpu")]) as (y1, y2):
+			("y2", (5,), "int32", "output", "cpu")]) as (x, y1, y2):
 		with ir.For("i", 0, 5) as i:
-			with ir.If(i < 2):
+			with ir.If(x[i] < 2):
 				y1[i] = 0
 			with ir.Else():
 				y1[i] = 1
-			with ir.If(i < 3):
+			with ir.If(x[i] < 3):
 				y2[i] = 2
 			with ir.Else():
 				y2[i] = 3
