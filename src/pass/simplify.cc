@@ -39,8 +39,8 @@ int findInnerMostScope(const std::unordered_map<std::string, int> &varScope,
 }
 
 uint64_t SimplifyPass::getHash(const Expr &op) {
-    if (hash_.count(op.get())) { // maybe not, beacuse Mutator::visit
-        return hash_.at(op.get());
+    if (hash_.count(op)) { // maybe not, beacuse Mutator::visit
+        return hash_.at(op);
     } else {
         return ::ir::getHash(op);
     }
@@ -158,12 +158,12 @@ Expr SimplifyPass::visit(const EQ &op) {
         isFixPoint_ = false;
         return makeIntConst(0);
     }
-    if (upper_.count(op->info_norm_form_.get()) &&
-        lower_.count(op->info_norm_form_.get())) {
-        for (auto &&upper : upper_.at(op->info_norm_form_.get())) {
+    if (upper_.count(op->info_norm_form_) &&
+        lower_.count(op->info_norm_form_)) {
+        for (auto &&upper : upper_.at(op->info_norm_form_)) {
             if (upper.expr_->nodeType() == ASTNodeType::IntConst &&
                 upper.expr_.as<IntConstNode>()->val_ == 0) {
-                for (auto &&lower : lower_.at(op->info_norm_form_.get())) {
+                for (auto &&lower : lower_.at(op->info_norm_form_)) {
                     if (lower.expr_->nodeType() == ASTNodeType::IntConst &&
                         lower.expr_.as<IntConstNode>()->val_ == 0) {
                         isFixPoint_ = false;
@@ -186,12 +186,12 @@ Expr SimplifyPass::visit(const NE &op) {
         isFixPoint_ = false;
         return makeIntConst(1);
     }
-    if (upper_.count(op->info_norm_form_.get()) &&
-        lower_.count(op->info_norm_form_.get())) {
-        for (auto &&upper : upper_.at(op->info_norm_form_.get())) {
+    if (upper_.count(op->info_norm_form_) &&
+        lower_.count(op->info_norm_form_)) {
+        for (auto &&upper : upper_.at(op->info_norm_form_)) {
             if (upper.expr_->nodeType() == ASTNodeType::IntConst &&
                 upper.expr_.as<IntConstNode>()->val_ == 0) {
-                for (auto &&lower : lower_.at(op->info_norm_form_.get())) {
+                for (auto &&lower : lower_.at(op->info_norm_form_)) {
                     if (lower.expr_->nodeType() == ASTNodeType::IntConst &&
                         lower.expr_.as<IntConstNode>()->val_ == 0) {
                         isFixPoint_ = false;

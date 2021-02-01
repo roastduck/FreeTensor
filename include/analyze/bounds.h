@@ -24,10 +24,10 @@ struct Bound {
  */
 class AnalyzeBounds : public Visitor {
   public:
-    typedef std::unordered_map<const ExprNode *, std::vector<Bound>> BoundsMap;
+    typedef std::unordered_map<Expr, std::vector<Bound>> BoundsMap;
 
   private:
-    const std::unordered_map<const ExprNode *, uint64_t> &hash_; // expr -> hash
+    const std::unordered_map<Expr, uint64_t> &hash_; // expr -> hash
 
     BoundsMap lower_, upper_;
 
@@ -52,7 +52,7 @@ class AnalyzeBounds : public Visitor {
     static Expr add1(const Expr &op);
 
   public:
-    AnalyzeBounds(const std::unordered_map<const ExprNode *, uint64_t> &hash)
+    AnalyzeBounds(const std::unordered_map<Expr, uint64_t> &hash)
         : hash_(hash) {}
 
     const BoundsMap &lower() const { return lower_; }

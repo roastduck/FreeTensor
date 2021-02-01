@@ -1,6 +1,7 @@
 #ifndef REF_H
 #define REF_H
 
+#include <functional> // hash
 #include <memory>
 
 #include <except.h>
@@ -60,8 +61,21 @@ template <class T> class Ref {
     static Ref make() { return Ref(new T()); }
     static Ref make(T &&x) { return Ref(new T(std::move(x))); }
     static Ref make(const T &x) { return Ref(new T(x)); }
+
+    friend bool operator==(const Ref &lhs, const Ref &rhs) {
+        return lhs.ptr_ == rhs.ptr_;
+    }
 };
 
 } // namespace ir
+
+namespace std {
+
+template <class T> struct hash<ir::Ref<T>> {
+    hash<T *> hash_;
+    size_t operator()(const ir::Ref<T> &ref) const { return hash_(ref.get()); }
+};
+
+} // namespace std
 
 #endif // REF_H

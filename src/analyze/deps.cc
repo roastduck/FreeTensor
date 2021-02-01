@@ -47,7 +47,7 @@ void FindAccessPoint::visit(const Load &op) {
     ASSERT(cur_.size() == end_.size());
     *ap = {op,     cursor(), defAxis_.at(op->var_), cur_,
            begin_, end_,     op->indices_};
-    points_.emplace(op.get(), ap);
+    points_.emplace(op, ap);
     reads_.emplace(op->var_, ap);
 }
 
@@ -125,15 +125,15 @@ std::string AnalyzeDeps::makeRange(const std::vector<Expr> &point,
         if (point[i]->nodeType() == ASTNodeType::Var) {
             std::string ineq = normalizeId(point[i].as<VarNode>()->name_);
             bool bounded = false;
-            if (linear_.count(begin[i].get())) {
-                if (auto linstr = linear2str(linear_.at(begin[i].get()));
+            if (linear_.count(begin[i])) {
+                if (auto linstr = linear2str(linear_.at(begin[i]));
                     linstr.isValid()) {
                     ineq = *linstr + " <= " + ineq;
                     bounded = true;
                 }
             }
-            if (linear_.count(end[i].get())) {
-                if (auto linstr = linear2str(linear_.at(end[i].get()));
+            if (linear_.count(end[i])) {
+                if (auto linstr = linear2str(linear_.at(end[i]));
                     linstr.isValid()) {
                     ineq = ineq + " < " + *linstr;
                     bounded = true;
@@ -170,8 +170,8 @@ std::string AnalyzeDeps::makeAccMap(const AccessPoint &p, int iterDim,
     std::vector<Ref<LinearExpr>> acc;
     acc.reserve(accDim);
     for (auto &&item : p.access_) {
-        if (linear_.count(item.get())) {
-            acc.emplace_back(Ref<LinearExpr>::make(linear_.at(item.get())));
+        if (linear_.count(item)) {
+            acc.emplace_back(Ref<LinearExpr>::make(linear_.at(item)));
         } else {
             acc.emplace_back(nullptr);
         }
@@ -300,7 +300,7 @@ void AnalyzeDeps::checkDep(const AccessPoint &point, const AccessPoint &other) {
 
 void AnalyzeDeps::visit(const Load &op) {
     Visitor::visit(op);
-    auto &&point = points_.at(op.get());
+    auto &&point = points_.at(op);
     auto range = writes_.equal_range(op->var_);
     for (auto i = range.first; i != range.second; i++) {
         checkDep(*point, *(i->second)); // RAW

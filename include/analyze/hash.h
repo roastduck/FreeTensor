@@ -11,7 +11,7 @@ namespace ir {
  * Get hash of any (sub)expression
  */
 class GetHash : public Visitor {
-    std::unordered_map<const ExprNode *, uint64_t> hash_;
+    std::unordered_map<Expr, uint64_t> hash_;
 
     static constexpr uint64_t P = 2147483647; // % P
     static constexpr uint64_t K1 = 179424673, B1 = 275604541;
@@ -28,17 +28,17 @@ class GetHash : public Visitor {
         Visitor::visit(op);
         uint64_t h = ((uint64_t)op->nodeType() * K1 + B1) % P;
         // Permutable
-        h += hash_.at(op->lhs_.get()) + hash_.at(op->rhs_.get());
-        hash_[op.get()] = h = (h * K3 + B3) % P;
+        h += hash_.at(op->lhs_) + hash_.at(op->rhs_);
+        hash_[op] = h = (h * K3 + B3) % P;
     }
 
     template <class T> void binOpNonPermutable(const T &op) {
         Visitor::visit(op);
         uint64_t h = ((uint64_t)op->nodeType() * K1 + B1) % P;
         // Non-permutable
-        h = ((h + hash_.at(op->lhs_.get())) * K2 + B2) % P;
-        h = ((h + hash_.at(op->rhs_.get())) * K2 + B2) % P;
-        hash_[op.get()] = h = (h * K3 + B3) % P;
+        h = ((h + hash_.at(op->lhs_)) * K2 + B2) % P;
+        h = ((h + hash_.at(op->rhs_)) * K2 + B2) % P;
+        hash_[op] = h = (h * K3 + B3) % P;
     }
 
   protected:
@@ -61,9 +61,7 @@ class GetHash : public Visitor {
     virtual void visit(const NE &op) override;
 
   public:
-    const std::unordered_map<const ExprNode *, uint64_t> &hash() const {
-        return hash_;
-    }
+    const std::unordered_map<Expr, uint64_t> &hash() const { return hash_; }
 };
 
 /**
@@ -71,14 +69,13 @@ class GetHash : public Visitor {
  *
  * Statements are NOT hashed
  */
-inline std::unordered_map<const ExprNode *, uint64_t>
-getHashMap(const AST &op) {
+inline std::unordered_map<Expr, uint64_t> getHashMap(const AST &op) {
     GetHash visitor;
     visitor(op);
     return visitor.hash();
 }
 
-inline uint64_t getHash(const Expr &op) { return getHashMap(op).at(op.get()); }
+inline uint64_t getHash(const Expr &op) { return getHashMap(op).at(op); }
 
 } // namespace ir
 

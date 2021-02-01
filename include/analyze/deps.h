@@ -29,7 +29,7 @@ struct AccessPoint {
 class FindAccessPoint : public VisitorWithCursor {
     std::vector<Expr> cur_;         // Current iteration point in the space
     std::vector<Expr> begin_, end_; // Point range in the space
-    std::unordered_map<const ASTNode *, Ref<AccessPoint>> points_;
+    std::unordered_map<AST, Ref<AccessPoint>> points_;
     std::unordered_multimap<std::string, Ref<AccessPoint>> reads_, writes_;
 
     // For or StmtSeq -> coordinate in space
@@ -39,8 +39,7 @@ class FindAccessPoint : public VisitorWithCursor {
     std::unordered_map<std::string, int> defAxis_;
 
   public:
-    const std::unordered_map<const ASTNode *, Ref<AccessPoint>> &
-    points() const {
+    const std::unordered_map<AST, Ref<AccessPoint>> &points() const {
         return points_;
     }
     const std::unordered_multimap<std::string, Ref<AccessPoint>> &
@@ -65,7 +64,7 @@ class FindAccessPoint : public VisitorWithCursor {
         auto ap = Ref<AccessPoint>::make();
         *ap = {op,     cursor(), defAxis_.at(op->var_), cur_,
                begin_, end_,     op->indices_};
-        points_.emplace(op.get(), ap);
+        points_.emplace(op, ap);
         writes_.emplace(op->var_, ap);
 
         cur_.back() = makeIntConst(1);
@@ -102,11 +101,11 @@ typedef std::function<void(
  * Find RAW, WAR and WAW dependencies
  */
 class AnalyzeDeps : public Visitor {
-    const std::unordered_map<const ASTNode *, Ref<AccessPoint>> &points_;
+    const std::unordered_map<AST, Ref<AccessPoint>> &points_;
     const std::unordered_multimap<std::string, Ref<AccessPoint>> &reads_,
         &writes_;
     const std::unordered_map<std::string, std::vector<Expr>> &scope2coord_;
-    const std::unordered_map<const ASTNode *, LinearExpr> &linear_;
+    const std::unordered_map<AST, LinearExpr> &linear_;
 
     const std::vector<FindDepsCond> &cond_;
     const FindDepsCallback &found_;
@@ -115,11 +114,11 @@ class AnalyzeDeps : public Visitor {
 
   public:
     AnalyzeDeps(
-        const std::unordered_map<const ASTNode *, Ref<AccessPoint>> &points,
+        const std::unordered_map<AST, Ref<AccessPoint>> &points,
         const std::unordered_multimap<std::string, Ref<AccessPoint>> &reads,
         const std::unordered_multimap<std::string, Ref<AccessPoint>> &writes,
         const std::unordered_map<std::string, std::vector<Expr>> &scope2coord,
-        const std::unordered_map<const ASTNode *, LinearExpr> &linear,
+        const std::unordered_map<AST, LinearExpr> &linear,
         const std::vector<FindDepsCond> &cond, const FindDepsCallback &found)
         : points_(points), reads_(reads), writes_(writes),
           scope2coord_(scope2coord), linear_(linear), cond_(cond),
@@ -151,7 +150,7 @@ class AnalyzeDeps : public Visitor {
 
     template <class T> void visitStoreLike(const T &op) {
         Visitor::visit(op);
-        auto &&point = points_.at(op.get());
+        auto &&point = points_.at(op);
         auto range = reads_.equal_range(op->var_);
         for (auto i = range.first; i != range.second; i++) {
             checkDep(*point, *(i->second)); // WAR

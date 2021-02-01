@@ -29,14 +29,14 @@ struct LinearExpr {
  * accesses and loop iterators
  */
 class AnalyzeLinear : public Visitor {
-    const std::unordered_map<const ExprNode *, uint64_t> &hash_; // expr -> hash
-    std::unordered_map<const ASTNode *, LinearExpr> result_;     // hash -> expr
+    const std::unordered_map<Expr, uint64_t> &hash_; // expr -> hash
+    std::unordered_map<AST, LinearExpr> result_;     // hash -> expr
 
   public:
-    AnalyzeLinear(const std::unordered_map<const ExprNode *, uint64_t> &hash)
+    AnalyzeLinear(const std::unordered_map<Expr, uint64_t> &hash)
         : hash_(hash) {}
 
-    const std::unordered_map<const ASTNode *, LinearExpr> &result() const {
+    const std::unordered_map<AST, LinearExpr> &result() const {
         return result_;
     }
 

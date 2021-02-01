@@ -6,7 +6,7 @@ void GetHash::visit(const Var &op) {
     Visitor::visit(op);
     uint64_t h = ((uint64_t)op->nodeType() * K1 + B1) % P;
     h = ((h + std::hash<std::string>()(op->name_)) * K2 + B2) % P;
-    hash_[op.get()] = h = (h * K3 + B3) % P;
+    hash_[op] = h = (h * K3 + B3) % P;
 }
 
 void GetHash::visit(const Load &op) {
@@ -14,23 +14,23 @@ void GetHash::visit(const Load &op) {
     uint64_t h = ((uint64_t)op->nodeType() * K1 + B1) % P;
     h = ((h + std::hash<std::string>()(op->var_)) * K2 + B2) % P;
     for (auto &&index : op->indices_) {
-        h = ((h + hash_.at(index.get())) * K2 + B2) % P;
+        h = ((h + hash_.at(index)) * K2 + B2) % P;
     }
-    hash_[op.get()] = h = (h * K3 + B3) % P;
+    hash_[op] = h = (h * K3 + B3) % P;
 }
 
 void GetHash::visit(const IntConst &op) {
     Visitor::visit(op);
     uint64_t h = ((uint64_t)op->nodeType() * K1 + B1) % P;
     h = ((h + std::hash<int>()(op->val_)) * K2 + B2) % P;
-    hash_[op.get()] = h = (h * K3 + B3) % P;
+    hash_[op] = h = (h * K3 + B3) % P;
 }
 
 void GetHash::visit(const FloatConst &op) {
     Visitor::visit(op);
     uint64_t h = ((uint64_t)op->nodeType() * K1 + B1) % P;
     h = ((h + std::hash<double>()(op->val_)) * K2 + B2) % P;
-    hash_[op.get()] = h = (h * K3 + B3) % P;
+    hash_[op] = h = (h * K3 + B3) % P;
 }
 
 void GetHash::visit(const Add &op) { binOpPermutable(op); }

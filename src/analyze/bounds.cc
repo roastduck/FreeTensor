@@ -44,28 +44,28 @@ Bound::Bound(const LinearExpr &lin) : lin_(lin) {
 }
 
 std::vector<Bound> AnalyzeBounds::getLower(const Expr &op) const {
-    if (lower_.count(op.get())) {
-        return lower_.at(op.get());
+    if (lower_.count(op)) {
+        return lower_.at(op);
     } else {
         return {};
     }
 }
 
 std::vector<Bound> AnalyzeBounds::getUpper(const Expr &op) const {
-    if (upper_.count(op.get())) {
-        return upper_.at(op.get());
+    if (upper_.count(op)) {
+        return upper_.at(op);
     } else {
         return {};
     }
 }
 
 void AnalyzeBounds::updLower(const Expr &op, const Bound &bound) {
-    if (!lower_.count(op.get())) {
-        lower_[op.get()] = {bound};
+    if (!lower_.count(op)) {
+        lower_[op] = {bound};
         return;
     }
     auto h = getHash(bound.expr_);
-    for (Bound &old : lower_.at(op.get())) {
+    for (Bound &old : lower_.at(op)) {
         if (getHash(old.expr_) == h) {
             return;
         }
@@ -79,16 +79,16 @@ void AnalyzeBounds::updLower(const Expr &op, const Bound &bound) {
             return;
         }
     }
-    lower_.at(op.get()).emplace_back(bound);
+    lower_.at(op).emplace_back(bound);
 }
 
 void AnalyzeBounds::updUpper(const Expr &op, const Bound &bound) {
-    if (!upper_.count(op.get())) {
-        upper_[op.get()] = {bound};
+    if (!upper_.count(op)) {
+        upper_[op] = {bound};
         return;
     }
     auto h = getHash(bound.expr_);
-    for (Bound &old : upper_.at(op.get())) {
+    for (Bound &old : upper_.at(op)) {
         if (getHash(old.expr_) == h) {
             return;
         }
@@ -102,7 +102,7 @@ void AnalyzeBounds::updUpper(const Expr &op, const Bound &bound) {
             return;
         }
     }
-    upper_.at(op.get()).emplace_back(bound);
+    upper_.at(op).emplace_back(bound);
 }
 
 int AnalyzeBounds::getIntLower(const Expr &op) const {
@@ -132,8 +132,8 @@ Ref<int> AnalyzeBounds::getInt(const Expr &op) const {
 }
 
 uint64_t AnalyzeBounds::getHash(const Expr &op) {
-    if (hash_.count(op.get())) {
-        return hash_.at(op.get());
+    if (hash_.count(op)) {
+        return hash_.at(op);
     } else { // lowers / uppers are new exprs
         return ::ir::getHash(op);
     }
@@ -293,8 +293,8 @@ void AnalyzeBounds::visit(const Mul &op) {
     g(op, op->rhs_, op->lhs_);
 
     // Special for `(n // p) * k`
-    if (lower_.count(op.get())) {
-        for (Bound &b : lower_.at(op.get())) {
+    if (lower_.count(op)) {
+        for (Bound &b : lower_.at(op)) {
             bool altered = false;
             LinearExpr lin;
             lin.bias_ = b.lin_.bias_;
@@ -323,8 +323,8 @@ void AnalyzeBounds::visit(const Mul &op) {
             }
         }
     }
-    if (upper_.count(op.get())) {
-        for (Bound &b : upper_.at(op.get())) {
+    if (upper_.count(op)) {
+        for (Bound &b : upper_.at(op)) {
             bool altered = false;
             LinearExpr lin;
             lin.bias_ = b.lin_.bias_;

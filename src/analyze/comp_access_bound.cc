@@ -38,9 +38,9 @@ Stmt CompAccessBound::visit(const VarDef &_op) {
             for (size_t j = 0, jEnd = access.size(); j < jEnd; j++) {
                 ASSERT(access[j].size() == n);
                 auto &&index = access[j][i];
-                if (lower_.count(index.get())) {
+                if (lower_.count(index)) {
                     Expr lowerItem;
-                    for (auto &&item : lower_.at(index.get())) {
+                    for (auto &&item : lower_.at(index)) {
                         if (checkAllDefined(defs_, item.expr_)) {
                             lowerItem = reduceMax(lowerItem, item.expr_);
                         }
@@ -55,9 +55,9 @@ Stmt CompAccessBound::visit(const VarDef &_op) {
             for (size_t j = 0, jEnd = access.size(); j < jEnd; j++) {
                 ASSERT(access[j].size() == n);
                 auto &&index = access[j][i];
-                if (upper_.count(index.get())) {
+                if (upper_.count(index)) {
                     Expr upperItem;
-                    for (auto &&item : upper_.at(index.get())) {
+                    for (auto &&item : upper_.at(index)) {
                         if (checkAllDefined(defs_, item.expr_)) {
                             upperItem = reduceMin(upperItem, item.expr_);
                         }

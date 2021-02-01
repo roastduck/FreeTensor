@@ -11,8 +11,8 @@ namespace ir {
 
 class CompForBound : public Mutator {
     // bounds from AnalyzeBounds
-    const std::unordered_map<const ExprNode *, std::vector<Bound>> &lower_;
-    const std::unordered_map<const ExprNode *, std::vector<Bound>> &upper_;
+    const std::unordered_map<Expr, std::vector<Bound>> &lower_;
+    const std::unordered_map<Expr, std::vector<Bound>> &upper_;
 
     // iter name -> all use point
     std::unordered_map<std::string, std::vector<Expr>> uses_;
@@ -23,9 +23,8 @@ class CompForBound : public Mutator {
     bool inCond_ = false;
 
   public:
-    CompForBound(
-        const std::unordered_map<const ExprNode *, std::vector<Bound>> &lower,
-        const std::unordered_map<const ExprNode *, std::vector<Bound>> &upper)
+    CompForBound(const std::unordered_map<Expr, std::vector<Bound>> &lower,
+                 const std::unordered_map<Expr, std::vector<Bound>> &upper)
         : lower_(lower), upper_(upper) {}
 
   private:
