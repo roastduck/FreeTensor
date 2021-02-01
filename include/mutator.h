@@ -135,7 +135,7 @@ class Mutator {
     virtual Expr visit(const Min &op) {
         auto ret = makeMin((*this)(op->lhs_), (*this)(op->rhs_));
         if (op->info_norm_form_.isValid()) {
-            ret.as<LTNode>()->info_norm_form_ = (*this)(op->info_norm_form_);
+            ret.as<MinNode>()->info_norm_form_ = (*this)(op->info_norm_form_);
         }
         return ret;
     }
@@ -143,7 +143,7 @@ class Mutator {
     virtual Expr visit(const Max &op) {
         auto ret = makeMax((*this)(op->lhs_), (*this)(op->rhs_));
         if (op->info_norm_form_.isValid()) {
-            ret.as<LTNode>()->info_norm_form_ = (*this)(op->info_norm_form_);
+            ret.as<MaxNode>()->info_norm_form_ = (*this)(op->info_norm_form_);
         }
         return ret;
     }

@@ -423,7 +423,7 @@ void AnalyzeBounds::visit(const If &op) {
         break;
     }
     case ASTNodeType::LE: {
-        auto le = op->cond_.as<LTNode>();
+        auto le = op->cond_.as<LENode>();
         if (le->lhs_->nodeType() == ASTNodeType::Var) {
             iters_[le->lhs_.as<VarNode>()->name_].second = le->rhs_;
         }
@@ -433,7 +433,7 @@ void AnalyzeBounds::visit(const If &op) {
         break;
     }
     case ASTNodeType::GE: {
-        auto ge = op->cond_.as<GTNode>();
+        auto ge = op->cond_.as<GENode>();
         if (ge->lhs_->nodeType() == ASTNodeType::Var) {
             iters_[ge->lhs_.as<VarNode>()->name_].first = ge->rhs_;
         }
@@ -443,7 +443,7 @@ void AnalyzeBounds::visit(const If &op) {
         break;
     }
     case ASTNodeType::EQ: {
-        auto eq = op->cond_.as<GTNode>();
+        auto eq = op->cond_.as<EQNode>();
         if (eq->lhs_->nodeType() == ASTNodeType::Var) {
             iters_[eq->lhs_.as<VarNode>()->name_] = {eq->rhs_, eq->rhs_};
         }
@@ -462,7 +462,7 @@ void AnalyzeBounds::visit(const If &op) {
         auto oldMap = iters_;
         switch (op->cond_->nodeType()) {
         case ASTNodeType::GE: { // not LT
-            auto lt = op->cond_.as<LTNode>();
+            auto lt = op->cond_.as<GENode>();
             if (lt->lhs_->nodeType() == ASTNodeType::Var) {
                 iters_[lt->lhs_.as<VarNode>()->name_].second = sub1(lt->rhs_);
             }
@@ -472,7 +472,7 @@ void AnalyzeBounds::visit(const If &op) {
             break;
         }
         case ASTNodeType::LE: { // not GT
-            auto gt = op->cond_.as<GTNode>();
+            auto gt = op->cond_.as<LENode>();
             if (gt->lhs_->nodeType() == ASTNodeType::Var) {
                 iters_[gt->lhs_.as<VarNode>()->name_].first = add1(gt->rhs_);
             }
@@ -482,7 +482,7 @@ void AnalyzeBounds::visit(const If &op) {
             break;
         }
         case ASTNodeType::GT: { // not LE
-            auto le = op->cond_.as<LTNode>();
+            auto le = op->cond_.as<GTNode>();
             if (le->lhs_->nodeType() == ASTNodeType::Var) {
                 iters_[le->lhs_.as<VarNode>()->name_].second = le->rhs_;
             }
@@ -492,7 +492,7 @@ void AnalyzeBounds::visit(const If &op) {
             break;
         }
         case ASTNodeType::LT: { // not GE
-            auto ge = op->cond_.as<GTNode>();
+            auto ge = op->cond_.as<LTNode>();
             if (ge->lhs_->nodeType() == ASTNodeType::Var) {
                 iters_[ge->lhs_.as<VarNode>()->name_].first = ge->rhs_;
             }
@@ -502,7 +502,7 @@ void AnalyzeBounds::visit(const If &op) {
             break;
         }
         case ASTNodeType::NE: { // not EQ
-            auto eq = op->cond_.as<GTNode>();
+            auto eq = op->cond_.as<NENode>();
             if (eq->lhs_->nodeType() == ASTNodeType::Var) {
                 iters_[eq->lhs_.as<VarNode>()->name_] = {eq->rhs_, eq->rhs_};
             }
