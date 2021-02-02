@@ -30,11 +30,11 @@ def parseMType(mtype):
 	elif type(mtype) is str:
 		if mtype.lower() == "cpu":
 			return MemType.CPU
-		elif mtype.lower() == "gpuglobal":
+		elif mtype.lower() == "gpu/global":
 			return MemType.GPUGlobal
-		elif mtype.lower() == "gpushared":
+		elif mtype.lower() == "gpu/shared":
 			return MemType.GPUShared
-		elif mtype.lower() == "gpulocal":
+		elif mtype.lower() == "gpu/local":
 			return MemType.GPULocal
 	assert False, "Unrecognized memory type %s" % mtype
 
