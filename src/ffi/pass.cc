@@ -19,7 +19,7 @@ void init_ffi_pass(py::module_ &m) {
     m.def("flatten_stmt_seq", &flattenStmtSeq, "ast"_a, "popVarDef"_a = false);
     m.def("sink_var", &sinkVar, "ast"_a);
     m.def("shrink_var", &shrinkVar, "ast"_a);
-    m.def("shrink_for", &shrinkFor, "ast"_a);
+    m.def("shrink_for", &shrinkFor, "ast"_a, "keepConst"_a = false);
     m.def("merge_if", &mergeIf, "ast"_a);
     m.def("seperate_tail", &seperateTail, "ast"_a);
 

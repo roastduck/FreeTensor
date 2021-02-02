@@ -9,6 +9,13 @@ Stmt ShrinkFor::visit(const For &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::For);
     auto op = __op.as<ForNode>();
 
+    if (keepConst_) {
+        if (op->info_max_begin_->nodeType() != ASTNodeType::IntConst ||
+            op->info_min_end_->nodeType() != ASTNodeType::IntConst) {
+            return op;
+        }
+    }
+
     op->begin_ = op->info_max_begin_;
     op->end_ = op->info_min_end_;
     op->info_max_begin_ = nullptr;
@@ -16,7 +23,7 @@ Stmt ShrinkFor::visit(const For &_op) {
     return op;
 }
 
-Stmt shrinkFor(const Stmt &_op) {
+Stmt shrinkFor(const Stmt &_op, bool keepConst) {
     // Algorithm:
     // (1) Simplify and get bounds of every iterators
     // (2) Represent the bounds of each iterators with min / max expressions
@@ -37,7 +44,7 @@ Stmt shrinkFor(const Stmt &_op) {
     op = simplifyPass(op);
 
     // (4)
-    op = ShrinkFor()(op);
+    op = ShrinkFor(keepConst)(op);
 
     // (5)
     return simplifyPass(op);

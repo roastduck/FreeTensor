@@ -1,4 +1,5 @@
 import ir
+import pytest
 import numpy as np
 
 target = ir.GPU()
@@ -343,4 +344,17 @@ def test_parallel_broadcast():
 
 	c_std = a_np @ b_np
 	assert np.array_equal(c_np, c_std)
+
+def test_unbounded_length():
+	with ir.VarDef([
+			("n", (), "int32", "input", "gpuglobal"),
+			("x", (4,), "int32", "input", "gpuglobal"),
+			("y", (4,), "int32", "output", "gpuglobal")]) as (n, x, y):
+		with ir.For("i", 0, n[()], nid="L1") as i:
+			y[i] = x[i] + 1
+
+	s = ir.Schedule(ir.pop_ast())
+	s.parallelize("L1", "threadIdx.x")
+	with pytest.raises(ir.InvalidProgram):
+		print(ir.lower(s.ast(), target))
 

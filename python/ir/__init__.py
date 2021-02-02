@@ -1,4 +1,6 @@
-from ffi import AccessType, MemType, DataType, InvalidSchedule
+from ffi import AccessType, MemType, DataType
+from ffi import InvalidSchedule, InvalidProgram, DriverError
+
 from .ast import pop_ast, Var, VarDef, For, If, Else, MarkNid, NamedScope, Eval, Any
 from .ast import min, max, intrinsic
 from .ast_pass import *

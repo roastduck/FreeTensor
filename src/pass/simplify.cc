@@ -242,8 +242,9 @@ Expr SimplifyPass::visit(const LNot &_op) {
 
 Stmt SimplifyPass::visit(const VarDef &_op) {
     if (varScope_.count(_op->name_)) {
-        ERROR("Conflict var name: " + _op->name_ +
-              ". Nested vars with the same name are not allowed");
+        throw InvalidProgram(
+            "Conflict var name: " + _op->name_ +
+            ". Nested vars with the same name are not allowed");
     }
     varScope_[_op->name_] = curScope_++;
     auto __op = Mutator::visit(_op);
@@ -260,7 +261,8 @@ Stmt SimplifyPass::visit(const VarDef &_op) {
 
 Stmt SimplifyPass::visit(const For &_op) {
     if (varScope_.count(_op->iter_)) {
-        ERROR("iterators with the same name in nested loops are not allowed");
+        throw InvalidProgram(
+            "iterators with the same name in nested loops are not allowed");
     }
     varScope_[_op->iter_] = curScope_++;
     auto __op = Mutator::visit(_op);

@@ -103,11 +103,21 @@ Stmt NormalizeThreads::visit(const Eval &op) {
     return doVisitStmt(Mutator::visit(op));
 }
 
+void CheckThreadNum::visit(const For &op) {
+    Visitor::visit(op);
+    if (!op->parallel_.empty() &&
+        op->end_->nodeType() == ASTNodeType::IntConst &&
+        op->end_.as<IntConstNode>()->val_ == INT_MAX) {
+        throw InvalidProgram("Length of " + op->parallel_ +
+                             " should have a finite bound");
+    }
+}
+
 Stmt normalizeThreads(const Stmt &_op) {
     auto op = NormalizeThreads()(_op);
-    op = shrinkFor(op);
+    op = shrinkFor(op, true);
     op = mergeIf(op);
-    // TODO: Check for unbounded loops
+    CheckThreadNum()(op);
     return op;
 }
 

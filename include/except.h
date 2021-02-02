@@ -22,6 +22,11 @@ class DriverError : public Error {
     DriverError(const std::string &msg) : Error(msg) {}
 };
 
+class InvalidProgram : public Error {
+  public:
+    InvalidProgram(const std::string &msg) : Error(msg) {}
+};
+
 #define ERROR(msg)                                                             \
     {                                                                          \
         throw Error((std::string) "[ERROR] " __FILE__ ":" +                    \

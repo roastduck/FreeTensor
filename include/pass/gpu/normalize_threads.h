@@ -5,6 +5,7 @@
 #include <unordered_set>
 
 #include <mutator.h>
+#include <visitor.h>
 
 namespace ir {
 
@@ -30,6 +31,11 @@ class NormalizeThreads : public Mutator {
     Stmt visit(const Store &op) override;
     Stmt visit(const ReduceTo &op) override;
     Stmt visit(const Eval &op) override;
+};
+
+class CheckThreadNum : public Visitor {
+  protected:
+    void visit(const For &op) override;
 };
 
 Stmt normalizeThreads(const Stmt &op);

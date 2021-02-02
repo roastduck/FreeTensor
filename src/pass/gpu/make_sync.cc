@@ -1,20 +1,14 @@
+#include <algorithm>
+#include <climits>
 #include <sstream>
 
+#include <analyze/hash.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/gpu/make_sync.h>
 
 namespace ir {
 
 namespace gpu {
-
-static void checkVarLen(const std::string &parallel, const Expr &len) {
-    if (len->nodeType() != ASTNodeType::IntConst) {
-        std::ostringstream msg;
-        msg << "Length of " << parallel << " should be constant, instead of "
-            << len;
-        throw Error(msg.str());
-    }
-}
 
 static Stmt insertIntrin(const Stmt &op, const std::string &front,
                          const std::string &back) {
@@ -29,6 +23,18 @@ static Stmt insertIntrin(const Stmt &op, const std::string &front,
         stmts.emplace_back(makeEval("", makeIntrinsic(back, {})));
     }
     return makeStmtSeq("", std::move(stmts));
+}
+
+int MakeSync::getLen(const Expr &len) {
+    int ret = INT_MAX;
+    if (upper_.count(len)) {
+        for (auto &&b : upper_.at(len)) {
+            if (b.expr_->nodeType() == ASTNodeType::IntConst) {
+                ret = std::min(ret, b.expr_.as<IntConstNode>()->val_);
+            }
+        }
+    }
+    return ret;
 }
 
 Stmt MakeSync::visit(const For &_op) {
@@ -47,8 +53,7 @@ Stmt MakeSync::visit(const For &_op) {
     bool oldWarpSynced = warpSynced, oldThreadsSynced = threadsSynced;
 
     if (_op->parallel_ == "threadIdx.x") {
-        checkVarLen(_op->parallel_, _op->info_len_);
-        thx = _op->info_len_.as<IntConstNode>()->val_;
+        thx = getLen(_op->info_len_);
         auto __op = Mutator::visit(_op);
         ASSERT(__op->nodeType() == ASTNodeType::For);
         auto op = __op.as<ForNode>();
@@ -66,8 +71,7 @@ Stmt MakeSync::visit(const For &_op) {
         return op;
 
     } else if (_op->parallel_ == "threadIdx.y") {
-        checkVarLen(_op->parallel_, _op->info_len_);
-        thy = _op->info_len_.as<IntConstNode>()->val_;
+        thy = getLen(_op->info_len_);
         auto __op = Mutator::visit(_op);
         ASSERT(__op->nodeType() == ASTNodeType::For);
         auto op = __op.as<ForNode>();
@@ -85,8 +89,7 @@ Stmt MakeSync::visit(const For &_op) {
         return op;
 
     } else if (_op->parallel_ == "threadIdx.z") {
-        checkVarLen(_op->parallel_, _op->info_len_);
-        thz = _op->info_len_.as<IntConstNode>()->val_;
+        thz = getLen(_op->info_len_);
         auto __op = Mutator::visit(_op);
         ASSERT(__op->nodeType() == ASTNodeType::For);
         auto op = __op.as<ForNode>();
@@ -124,7 +127,10 @@ Stmt MakeSync::visit(const ReduceTo &op) {
 }
 
 Stmt makeSync(const Stmt &op) {
-    auto ret = MakeSync()(op);
+    auto hash = getHashMap(op);
+    AnalyzeBounds analyzeBounds(hash);
+    analyzeBounds(op);
+    auto ret = MakeSync(analyzeBounds.upper())(op);
     ret = flattenStmtSeq(ret);
     return ret;
 }

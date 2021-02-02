@@ -161,8 +161,9 @@ void AnalyzeBounds::visit(const VarDef &op) {
         (*this)(dim);
     }
     if (buffers_.count(op->name_)) {
-        ERROR("Conflict var name: " + op->name_ +
-              ". Nested vars with the same name are not allowed");
+        throw InvalidProgram(
+            "Conflict var name: " + op->name_ +
+            ". Nested vars with the same name are not allowed");
     }
     buffers_[op->name_] = op->buffer_;
     (*this)(op->body_);
@@ -390,7 +391,8 @@ void AnalyzeBounds::visit(const Div &op) {
 
 void AnalyzeBounds::visit(const For &op) {
     if (iters_.count(op->iter_)) {
-        ERROR("iterators with the same name in nested loops are not allowed");
+        throw InvalidProgram(
+            "iterators with the same name in nested loops are not allowed");
     }
     iters_[op->iter_] = {op->begin_, sub1(op->end_)};
     Visitor::visit(op);
