@@ -193,12 +193,23 @@ std::pair<std::string, std::vector<std::string>> codeGenCUDA(const AST &op) {
     visitor(op);
     visitor.endBlock();
 
-    const char *header = "#include <cstdint>\n"
-                         "#include <algorithm>\n"
-                         "#define restrict __restrict__\n"
-                         "\n"
-                         "extern \"C\" {\n"
-                         "\n";
+    const char *header =
+        "#include <cstdint>\n"
+        "#include <algorithm>\n"
+        "#define restrict __restrict__\n"
+        "\n"
+        "template <class T, size_t n> struct __ByValArray {\n"
+        "    T data[n];\n"
+        "    __host__ __device__ const T &operator[](size_t i) const {\n"
+        "        return data[i];\n"
+        "    }\n"
+        "    __host__ __device__ T &operator[](size_t i) {\n"
+        "        return data[i];\n"
+        "    }\n"
+        "};\n"
+        "\n"
+        "extern \"C\" {\n"
+        "\n";
     const char *tailer = "\n"
                          "}";
 
@@ -219,19 +230,36 @@ std::pair<std::string, std::vector<std::string>> codeGenCUDA(const AST &op) {
                 os << (first ? "" : ", ");
                 auto &&buffer = item.second;
                 auto &&tensor = buffer->tensor();
+                auto &&shape = tensor.shape();
 
-                // e.g. const float (*restrict x)[5][5]
-                if (buffer->atype() == AccessType::Input) {
-                    os << "const ";
-                }
-                os << CodeGenCUDA::gen(tensor.dtype()) << " (*restrict ";
-                os << item.first << ")"; // FIXME: Normalize the ID?
-                for (size_t i = 1, iEnd = tensor.shape().size(); i < iEnd;
-                     i++) { // No shape[0]
-                    ASSERT(tensor.shape()[i]->nodeType() ==
-                           ASTNodeType::IntConst);
-                    os << "[" << tensor.shape()[i].as<IntConstNode>()->val_
-                       << "]";
+                // FIXME: Normalize the ID (item.first)?
+                switch (buffer->mtype()) {
+                case MemType::ByValue:
+                    // e.g.
+                    // __ByValArray<__ByValArray<float, 2>, 2> x;
+                    for (size_t i = 0, iEnd = shape.size(); i < iEnd; i++) {
+                        os << "__ByValArray<";
+                    }
+                    os << CodeGenCUDA::gen(tensor.dtype());
+                    for (auto it = shape.rbegin(); it != shape.rend(); it++) {
+                        ASSERT((*it)->nodeType() == ASTNodeType::IntConst);
+                        os << ", " << (*it).as<IntConstNode>()->val_ << ">";
+                    }
+                    os << " " << item.first;
+                    break;
+
+                default:
+                    // e.g. const float (*restrict x)[5][5]
+                    if (buffer->atype() == AccessType::Input) {
+                        os << "const ";
+                    }
+                    os << CodeGenCUDA::gen(tensor.dtype()) << " (*restrict ";
+                    os << item.first << ")";
+                    for (size_t i = 1, iEnd = shape.size(); i < iEnd;
+                         i++) { // No shape[0]
+                        ASSERT(shape[i]->nodeType() == ASTNodeType::IntConst);
+                        os << "[" << shape[i].as<IntConstNode>()->val_ << "]";
+                    }
                 }
                 first = false;
             }

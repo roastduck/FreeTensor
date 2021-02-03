@@ -28,7 +28,9 @@ def parseMType(mtype):
 	if type(mtype) is MemType:
 		return mtype
 	elif type(mtype) is str:
-		if mtype.lower() == "cpu":
+		if mtype.lower() == "byvalue":
+			return MemType.ByValue
+		elif mtype.lower() == "cpu":
 			return MemType.CPU
 		elif mtype.lower() == "gpu/global":
 			return MemType.GPUGlobal

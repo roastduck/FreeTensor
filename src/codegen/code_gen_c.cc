@@ -1,5 +1,7 @@
 #include <algorithm>
 #include <cctype>
+#include <functional>
+#include <vector>
 
 #include <codegen/code_gen_c.h>
 
@@ -14,10 +16,11 @@ void CodeGenC::visit(const VarDef &op) {
     makeIndent();
     auto &&tensor = op->buffer_->tensor();
     auto &&shape = tensor.shape();
+    auto name = normalizeId(op->name_);
+
     if (op->buffer_->atype() == AccessType::Cache) {
         // e.g. float x[5][5][5];
-        os() << gen(tensor.dtype()) << " ";
-        os() << normalizeId(op->name_);
+        os() << gen(tensor.dtype()) << " " << name;
         for (auto &&dim : shape) {
             os() << "[";
             (*this)(dim);
@@ -28,24 +31,87 @@ void CodeGenC::visit(const VarDef &op) {
         int nthParam = params_.size();
         params_.emplace_back(op->name_);
 
-        // e.g. const float (*restrict x)[5][5] = (float(*)[5][5])_params[0];
-        if (op->buffer_->atype() == AccessType::Input) {
-            os() << "const ";
+        switch (op->buffer_->mtype()) {
+        case MemType::ByValue:
+            // e.g. (1)
+            // float x;
+            // x = *((float*)_params[0]);
+
+            // e.g. (2)
+            // __ByValArray<__ByValArray<float, 2>, 2> x;
+            // x[0][0] = *((float*)_params[0])[0];
+            // x[0][1] = *((float*)_params[0])[1];
+            // x[1][0] = *((float*)_params[0])[2];
+            // x[1][1] = *((float*)_params[0])[3];
+            if (op->buffer_->atype() != AccessType::Input) {
+                throw InvalidProgram("ByValue typed var " + op->name_ +
+                                     " can only be Input");
+            }
+            for (auto &&dim : shape) {
+                if (dim->nodeType() != ASTNodeType::IntConst) {
+                    throw InvalidProgram("ByValue typed var " + op->name_ +
+                                         " can only have a constant size");
+                }
+            }
+            if (shape.empty()) {
+                os() << gen(tensor.dtype()) << " " << name << " = *(("
+                     << gen(tensor.dtype()) << "*)_params[" << nthParam << "]);"
+                     << std::endl;
+            } else {
+                for (size_t i = 0, iEnd = shape.size(); i < iEnd; i++) {
+                    os() << "__ByValArray<";
+                }
+                os() << gen(tensor.dtype());
+                for (auto it = shape.rbegin(); it != shape.rend(); it++) {
+                    os() << ", " << (*it).as<IntConstNode>()->val_ << ">";
+                }
+                os() << " " << name << ";" << std::endl;
+                std::vector<int> idx(shape.size(), 0);
+                std::function<void(size_t, int)> f = [&](size_t i, int offset) {
+                    if (i == shape.size()) {
+                        makeIndent();
+                        os() << name;
+                        for (int x : idx) {
+                            os() << "[" << x << "]";
+                        }
+                        os()
+                            << " = ((" << gen(tensor.dtype()) << "*)_params["
+                            << nthParam << "])[" << offset << "];" << std::endl;
+                        return;
+                    }
+                    for (int j = 0, jEnd = shape[i].as<IntConstNode>()->val_;
+                         j < jEnd; j++) {
+                        idx[i] = j;
+                        f(i + 1, offset * jEnd + j);
+                    }
+                };
+                f(0, 0);
+            }
+            break;
+
+        default:
+            // e.g.
+            // const float (*restrict x)[5][5] = (float(*)[5][5])_params[0];
+            if (op->buffer_->atype() == AccessType::Input) {
+                os() << "const ";
+            }
+            os() << gen(tensor.dtype()) << " (*restrict ";
+            os() << name << ")";
+            for (size_t i = 1, iEnd = shape.size(); i < iEnd;
+                 i++) { // No shape[0]
+                os() << "[";
+                (*this)(shape[i]);
+                os() << "]";
+            }
+            os() << " = (" << gen(tensor.dtype()) << "(*)";
+            for (size_t i = 1, iEnd = shape.size(); i < iEnd;
+                 i++) { // No shape[0]
+                os() << "[";
+                (*this)(shape[i]);
+                os() << "]";
+            }
+            os() << ")_params[" << nthParam << "];" << std::endl;
         }
-        os() << gen(tensor.dtype()) << " (*restrict ";
-        os() << normalizeId(op->name_) << ")";
-        for (size_t i = 1, iEnd = shape.size(); i < iEnd; i++) { // No shape[0]
-            os() << "[";
-            (*this)(shape[i]);
-            os() << "]";
-        }
-        os() << " = (" << gen(tensor.dtype()) << "(*)";
-        for (size_t i = 1, iEnd = shape.size(); i < iEnd; i++) { // No shape[0]
-            os() << "[";
-            (*this)(shape[i]);
-            os() << "]";
-        }
-        os() << ")_params[" << nthParam << "];" << std::endl;
     }
 
     (*this)(op->body_);
@@ -77,12 +143,17 @@ void CodeGenC::visit(const Store &op) {
 }
 
 void CodeGenC::visit(const Load &op) {
-    markUse(normalizeId(op->var_));
+    auto id = normalizeId(op->var_);
+    markUse(id);
 
     if (op->indices_.empty()) {
-        os() << "*" << normalizeId(op->var_);
+        if (vars_.at(id).second->mtype() == MemType::ByValue) {
+            os() << id;
+        } else {
+            os() << "*" << id;
+        }
     } else {
-        os() << normalizeId(op->var_);
+        os() << id;
         for (auto &&index : op->indices_) {
             os() << "[";
             (*this)(index);

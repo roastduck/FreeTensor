@@ -11,6 +11,7 @@ void init_ffi_buffer(py::module_ &m) {
         .value("Cache", AccessType::Cache);
 
     py::enum_<MemType>(m, "MemType")
+        .value("ByValue", MemType::ByValue)
         .value("CPU", MemType::CPU)
         .value("GPUGlobal", MemType::GPUGlobal)
         .value("GPUShared", MemType::GPUShared)

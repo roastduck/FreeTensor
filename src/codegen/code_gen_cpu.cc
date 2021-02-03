@@ -15,9 +15,12 @@ std::pair<std::string, std::vector<std::string>> codeGenCPU(const AST &op) {
     visitor(op);
     visitor.endBlock();
 
+    // TODO: Pure C?
     const char *header = "#include <cstdint>\n"
-                         "#include <algorithm>\n" // TODO: Pure C?
+                         "#include <algorithm>\n" // min, max
+                         "#include <array>\n"     // ByValue
                          "#define restrict __restrict__\n"
+                         "#define __ByValArray std::array\n"
                          "\n"
                          "extern \"C\" {\n"
                          "\n";

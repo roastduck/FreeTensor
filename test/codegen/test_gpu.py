@@ -6,6 +6,8 @@ target = ir.GPU()
 # TODO: Detect GPU arch and set it to target
 device = ir.Device(target)
 
+host = ir.Device(ir.CPU())
+
 def test_basic():
 	with ir.VarDef([
 			("x", (4,), "int32", "input", "gpu/global"),
@@ -88,6 +90,64 @@ def test_global_mem():
 	y_np = y_arr.numpy()
 
 	y_std = np.array([3, 5, 7, 9], dtype="int32")
+	assert np.array_equal(y_np, y_std)
+
+def test_pass_by_value_0d():
+	with ir.VarDef("n", (), "int32", "input", "byvalue") as n:
+		with ir.VarDef([
+				("x", (n[()], 4), "int32", "input", "gpu/global"),
+				("y", (n[()], 4), "int32", "output", "gpu/global")]) as (x, y):
+			with ir.For("i", 0, 4, nid="L1") as i:
+				with ir.For("j", 0, n[()], nid="L2") as j:
+					y[j, i] = x[j, i] + 1
+
+	s = ir.Schedule(ir.pop_ast())
+	s.parallelize("L1", "threadIdx.x")
+	ast = ir.lower(s.ast(), target)
+	print(ast)
+	code, params = ir.codegen(ast, target)
+	print(code)
+	n_np = np.array(5, dtype="int32")
+	x_np = np.array([[1, 2, 3, 4]] * 5, dtype="int32")
+	y_np = np.zeros((5, 4), dtype="int32")
+	n_arr = ir.Array(n_np, host)
+	x_arr = ir.Array(x_np, device)
+	y_arr = ir.Array(y_np, device)
+	driver = ir.Driver(code, params, device)
+	driver.set_params({"n": n_arr, "x": x_arr, "y": y_arr})
+	driver.run()
+	y_np = y_arr.numpy()
+
+	y_std = np.array([[2, 3, 4, 5]] * 5, dtype="int32")
+	assert np.array_equal(y_np, y_std)
+
+def test_pass_by_value_1d():
+	with ir.VarDef("n", (1,), "int32", "input", "byvalue") as n:
+		with ir.VarDef([
+				("x", (n[0], 4), "int32", "input", "gpu/global"),
+				("y", (n[0], 4), "int32", "output", "gpu/global")]) as (x, y):
+			with ir.For("i", 0, 4, nid="L1") as i:
+				with ir.For("j", 0, n[0], nid="L2") as j:
+					y[j, i] = x[j, i] + 1
+
+	s = ir.Schedule(ir.pop_ast())
+	s.parallelize("L1", "threadIdx.x")
+	ast = ir.lower(s.ast(), target)
+	print(ast)
+	code, params = ir.codegen(ast, target)
+	print(code)
+	n_np = np.array([5], dtype="int32")
+	x_np = np.array([[1, 2, 3, 4]] * 5, dtype="int32")
+	y_np = np.zeros((5, 4), dtype="int32")
+	n_arr = ir.Array(n_np, host)
+	x_arr = ir.Array(x_np, device)
+	y_arr = ir.Array(y_np, device)
+	driver = ir.Driver(code, params, device)
+	driver.set_params({"n": n_arr, "x": x_arr, "y": y_arr})
+	driver.run()
+	y_np = y_arr.numpy()
+
+	y_std = np.array([[2, 3, 4, 5]] * 5, dtype="int32")
 	assert np.array_equal(y_np, y_std)
 
 def test_intrinsic():

@@ -23,10 +23,18 @@ inline std::string toString(AccessType atype) {
     return "[???]";
 }
 
-enum class MemType : int { CPU, GPUGlobal, GPUShared, GPULocal };
+enum class MemType : int {
+    ByValue, // Passed by value. Always in stack or registers
+    CPU,     // Main memory
+    GPUGlobal,
+    GPUShared,
+    GPULocal
+};
 
 inline std::string toString(MemType mtype) {
     switch (mtype) {
+    case MemType::ByValue:
+        return "[ByValue]";
     case MemType::CPU:
         return "[CPU]";
     case MemType::GPUGlobal:
