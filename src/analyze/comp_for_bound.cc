@@ -70,7 +70,8 @@ Stmt CompForBound::visit(const For &_op) {
         }
 
         op->info_max_begin_ = lower;
-        op->info_min_end_ = makeAdd(upper, makeIntConst(1));
+        op->info_min_end_ =
+            upper.isValid() ? makeAdd(upper, makeIntConst(1)) : nullptr;
     } else {
         // If the iterator is not used in any non-condition expressions, we
         // assume the loop can only run for 1 iteration. This may not be true in

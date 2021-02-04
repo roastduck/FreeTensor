@@ -2,6 +2,23 @@
 
 namespace ir {
 
+void PrintVisitor::recur(const Expr &op) {
+    if (op.isValid()) {
+        (*this)(op);
+    } else {
+        os() << "<NULL>";
+    }
+}
+
+void PrintVisitor::recur(const Stmt &op) {
+    if (op.isValid()) {
+        (*this)(op);
+    } else {
+        makeIndent();
+        os() << "<NULL>" << std::endl;
+    }
+}
+
 void PrintVisitor::printId(const Stmt &op) {
     if (op->hasNamedId()) {
         os() << op->id() << ":" << std::endl;
@@ -31,7 +48,7 @@ void PrintVisitor::visit(const VarDef &op) {
     printList(tensor.shape());
     os() << "] ";
     beginBlock();
-    (*this)(op->body_);
+    recur(op->body_);
     endBlock();
 }
 
@@ -46,7 +63,7 @@ void PrintVisitor::visit(const Store &op) {
     os() << op->var_ << "[";
     printList(op->indices_);
     os() << "] = ";
-    (*this)(op->expr_);
+    recur(op->expr_);
     os() << std::endl;
 }
 
@@ -80,7 +97,7 @@ void PrintVisitor::visit(const ReduceTo &op) {
         ASSERT(false);
     }
     os() << " ";
-    (*this)(op->expr_);
+    recur(op->expr_);
     os() << std::endl;
 }
 
@@ -94,127 +111,127 @@ void PrintVisitor::visit(const FloatConst &op) {
 
 void PrintVisitor::visit(const Add &op) {
     os() << "(";
-    (*this)(op->lhs_);
+    recur(op->lhs_);
     os() << " + ";
-    (*this)(op->rhs_);
+    recur(op->rhs_);
     os() << ")";
 }
 
 void PrintVisitor::visit(const Sub &op) {
     os() << "(";
-    (*this)(op->lhs_);
+    recur(op->lhs_);
     os() << " - ";
-    (*this)(op->rhs_);
+    recur(op->rhs_);
     os() << ")";
 }
 
 void PrintVisitor::visit(const Mul &op) {
     os() << "(";
-    (*this)(op->lhs_);
+    recur(op->lhs_);
     os() << " * ";
-    (*this)(op->rhs_);
+    recur(op->rhs_);
     os() << ")";
 }
 
 void PrintVisitor::visit(const Div &op) {
     os() << "(";
-    (*this)(op->lhs_);
+    recur(op->lhs_);
     os() << " / ";
-    (*this)(op->rhs_);
+    recur(op->rhs_);
     os() << ")";
 }
 
 void PrintVisitor::visit(const Mod &op) {
     os() << "(";
-    (*this)(op->lhs_);
+    recur(op->lhs_);
     os() << " % ";
-    (*this)(op->rhs_);
+    recur(op->rhs_);
     os() << ")";
 }
 
 void PrintVisitor::visit(const Min &op) {
     os() << "min(";
-    (*this)(op->lhs_);
+    recur(op->lhs_);
     os() << ", ";
-    (*this)(op->rhs_);
+    recur(op->rhs_);
     os() << ")";
 }
 
 void PrintVisitor::visit(const Max &op) {
     os() << "max(";
-    (*this)(op->lhs_);
+    recur(op->lhs_);
     os() << ", ";
-    (*this)(op->rhs_);
+    recur(op->rhs_);
     os() << ")";
 }
 
 void PrintVisitor::visit(const LT &op) {
     os() << "(";
-    (*this)(op->lhs_);
+    recur(op->lhs_);
     os() << " < ";
-    (*this)(op->rhs_);
+    recur(op->rhs_);
     os() << ")";
 }
 
 void PrintVisitor::visit(const LE &op) {
     os() << "(";
-    (*this)(op->lhs_);
+    recur(op->lhs_);
     os() << " <= ";
-    (*this)(op->rhs_);
+    recur(op->rhs_);
     os() << ")";
 }
 
 void PrintVisitor::visit(const GT &op) {
     os() << "(";
-    (*this)(op->lhs_);
+    recur(op->lhs_);
     os() << " > ";
-    (*this)(op->rhs_);
+    recur(op->rhs_);
     os() << ")";
 }
 
 void PrintVisitor::visit(const GE &op) {
     os() << "(";
-    (*this)(op->lhs_);
+    recur(op->lhs_);
     os() << " >= ";
-    (*this)(op->rhs_);
+    recur(op->rhs_);
     os() << ")";
 }
 
 void PrintVisitor::visit(const EQ &op) {
     os() << "(";
-    (*this)(op->lhs_);
+    recur(op->lhs_);
     os() << " == ";
-    (*this)(op->rhs_);
+    recur(op->rhs_);
     os() << ")";
 }
 
 void PrintVisitor::visit(const NE &op) {
     os() << "(";
-    (*this)(op->lhs_);
+    recur(op->lhs_);
     os() << " != ";
-    (*this)(op->rhs_);
+    recur(op->rhs_);
     os() << ")";
 }
 
 void PrintVisitor::visit(const LAnd &op) {
     os() << "(";
-    (*this)(op->lhs_);
+    recur(op->lhs_);
     os() << " && ";
-    (*this)(op->rhs_);
+    recur(op->rhs_);
     os() << ")";
 }
 
 void PrintVisitor::visit(const LOr &op) {
     os() << "(";
-    (*this)(op->lhs_);
+    recur(op->lhs_);
     os() << " || ";
-    (*this)(op->rhs_);
+    recur(op->rhs_);
     os() << ")";
 }
 
 void PrintVisitor::visit(const LNot &op) {
     os() << "!";
-    (*this)(op->expr_);
+    recur(op->expr_);
 }
 
 void PrintVisitor::visit(const For &op) {
@@ -222,9 +239,9 @@ void PrintVisitor::visit(const For &op) {
     if (op->info_max_begin_.isValid() && op->info_min_end_.isValid()) {
         makeIndent();
         os() << "// max_begin = ";
-        (*this)(op->info_max_begin_);
+        recur(op->info_max_begin_);
         os() << ", min_end = ";
-        (*this)(op->info_min_end_);
+        recur(op->info_min_end_);
         os() << std::endl;
     }
     if (!op->parallel_.empty()) {
@@ -233,12 +250,12 @@ void PrintVisitor::visit(const For &op) {
     }
     makeIndent();
     os() << "for " << op->iter_ << " = ";
-    (*this)(op->begin_);
+    recur(op->begin_);
     os() << " to ";
-    (*this)(op->end_);
+    recur(op->end_);
     os() << " ";
     beginBlock();
-    (*this)(op->body_);
+    recur(op->body_);
     endBlock();
 }
 
@@ -246,16 +263,16 @@ void PrintVisitor::visit(const If &op) {
     printId(op);
     makeIndent();
     os() << "if ";
-    (*this)(op->cond_);
+    recur(op->cond_);
     os() << " ";
     beginBlock();
-    (*this)(op->thenCase_);
+    recur(op->thenCase_);
     endBlock();
     if (op->elseCase_.isValid()) {
         makeIndent();
         os() << "else ";
         beginBlock();
-        (*this)(op->elseCase_);
+        recur(op->elseCase_);
         endBlock();
     }
 }
@@ -264,10 +281,10 @@ void PrintVisitor::visit(const Assert &op) {
     printId(op);
     makeIndent();
     os() << "assert ";
-    (*this)(op->cond_);
+    recur(op->cond_);
     os() << " ";
     beginBlock();
-    (*this)(op->body_);
+    recur(op->body_);
     endBlock();
 }
 
@@ -276,7 +293,7 @@ void PrintVisitor::visit(const Intrinsic &op) {
     int i = 0;
     for (char c : op->format_) {
         if (c == '%') {
-            (*this)(op->params_.at(i++));
+            recur(op->params_.at(i++));
         } else {
             os() << c;
         }
@@ -286,7 +303,7 @@ void PrintVisitor::visit(const Intrinsic &op) {
 
 void PrintVisitor::visit(const Eval &op) {
     makeIndent();
-    (*this)(op->expr_);
+    recur(op->expr_);
     os() << std::endl;
 }
 

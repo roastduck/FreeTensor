@@ -7,6 +7,8 @@ namespace ir {
 
 class PrintVisitor : public CodeGen {
   private:
+    void recur(const Expr &op);
+    void recur(const Stmt &op);
     void printId(const Stmt &op);
 
   protected:
