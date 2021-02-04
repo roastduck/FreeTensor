@@ -103,7 +103,7 @@ class Mutator {
         }
         auto &&expr = (*this)(op->expr_);
         return makeReduceTo(op->id(), op->var_, std::move(indices), op->op_,
-                            std::move(expr));
+                            std::move(expr), op->atomic_);
     }
 
     virtual Expr visit(const IntConst &op) { return makeIntConst(op->val_); }

@@ -58,6 +58,10 @@ void PrintVisitor::visit(const Load &op) {
 
 void PrintVisitor::visit(const ReduceTo &op) {
     printId(op);
+    if (op->atomic_) {
+        makeIndent();
+        os() << "// atomic" << std::endl;
+    }
     makeIndent();
     os() << op->var_ << "[";
     printList(op->indices_);

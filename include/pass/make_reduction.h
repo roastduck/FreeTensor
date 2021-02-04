@@ -19,12 +19,12 @@ class MakeReduction : public Mutator {
         if (expr->lhs_->nodeType() == ASTNodeType::Load &&
             isSameElem(op, expr->lhs_.template as<LoadNode>())) {
             return makeReduceTo(op->id(), op->var_, op->indices_, reduceOp,
-                                expr->rhs_);
+                                expr->rhs_, false);
         }
         if (expr->rhs_->nodeType() == ASTNodeType::Load &&
             isSameElem(op, expr->rhs_.template as<LoadNode>())) {
             return makeReduceTo(op->id(), op->var_, op->indices_, reduceOp,
-                                expr->lhs_);
+                                expr->lhs_, false);
         }
         return op;
     }

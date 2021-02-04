@@ -28,7 +28,7 @@ def test_basic():
 				with ir.VarDef("b", (1, 1), "int32", "cache", "cpu") as b:
 					b[0, 0] = x[i, j]
 					y[i] = y[i] + b[0, 0] * 2
-	std = ir.pop_ast()
+	std = ir.make_reduction(ir.pop_ast())
 
 	assert std.match(ast)
 
@@ -93,7 +93,7 @@ def test_block():
 						y[i] = y[i] + b[0, 0]
 					with ir.Else():
 						y[i] = y[i] + b[0, 0] * 2
-	std = ir.pop_ast()
+	std = ir.make_reduction(ir.pop_ast())
 
 	assert std.match(ast)
 

@@ -7,6 +7,7 @@ namespace ir {
 
 class CodeGenCPU : public CodeGenC {
   protected:
+    void visit(const ReduceTo &op) override;
     void visit(const For &op) override;
 };
 

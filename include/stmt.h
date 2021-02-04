@@ -107,18 +107,20 @@ class ReduceToNode : public StmtNode {
     std::vector<Expr> indices_;
     ReduceOp op_;
     Expr expr_;
+    bool atomic_;
     DEFINE_NODE_TRAIT(ReduceTo)
 };
 typedef Ref<ReduceToNode> ReduceTo;
 template <class Tindices, class Texpr>
 Stmt makeReduceTo(const std::string &id, const std::string &var,
-                  Tindices &&indices, ReduceOp op, Texpr &&expr) {
+                  Tindices &&indices, ReduceOp op, Texpr &&expr, bool atomic) {
     ReduceTo a = ReduceTo::make();
     a->setId(id);
     a->var_ = var;
     a->indices_ = std::forward<Tindices>(indices);
     a->op_ = op;
     a->expr_ = std::forward<Texpr>(expr);
+    a->atomic_ = atomic;
     return a;
 }
 

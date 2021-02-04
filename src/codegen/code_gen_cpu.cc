@@ -2,6 +2,13 @@
 
 namespace ir {
 
+void CodeGenCPU::visit(const ReduceTo &op) {
+    if (op->atomic_) {
+        os() << "#pragma omp atomic" << std::endl;
+    }
+    CodeGenC::visit(op);
+}
+
 void CodeGenCPU::visit(const For &op) {
     if (op->parallel_ == "openmp") {
         os() << "#pragma omp parallel for" << std::endl;

@@ -310,7 +310,7 @@ void AnalyzeDeps::visit(const Load &op) {
 void findDeps(
     const Stmt &op,
     const std::vector<std::vector<std::pair<std::string, FindDepsMode>>> &cond,
-    const FindDepsCallback &found) {
+    const FindDepsCallback &found, bool ignoreReductionWAW) {
     ASSERT(op->noAmbiguous());
     auto hash = getHashMap(op);
     AnalyzeLinear analyzeLinear(hash);
@@ -320,7 +320,8 @@ void findDeps(
     FindAccessPoint visitor;
     visitor(op);
     AnalyzeDeps mutator(visitor.points(), visitor.reads(), visitor.writes(),
-                        visitor.scope2coord(), linear, cond, found);
+                        visitor.scope2coord(), linear, cond, found,
+                        ignoreReductionWAW);
     mutator(op);
 }
 

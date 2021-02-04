@@ -110,6 +110,8 @@ class AnalyzeDeps : public Visitor {
     const std::vector<FindDepsCond> &cond_;
     const FindDepsCallback &found_;
 
+    bool ignoreReductionWAW_;
+
     isl_ctx *isl_;
 
   public:
@@ -119,10 +121,11 @@ class AnalyzeDeps : public Visitor {
         const std::unordered_multimap<std::string, Ref<AccessPoint>> &writes,
         const std::unordered_map<std::string, std::vector<Expr>> &scope2coord,
         const std::unordered_map<AST, LinearExpr> &linear,
-        const std::vector<FindDepsCond> &cond, const FindDepsCallback &found)
+        const std::vector<FindDepsCond> &cond, const FindDepsCallback &found,
+        bool ignoreReductionWAW)
         : points_(points), reads_(reads), writes_(writes),
           scope2coord_(scope2coord), linear_(linear), cond_(cond),
-          found_(found) {
+          found_(found), ignoreReductionWAW_(ignoreReductionWAW) {
         isl_ = isl_ctx_alloc();
     }
 
@@ -157,7 +160,7 @@ class AnalyzeDeps : public Visitor {
         }
         range = writes_.equal_range(op->var_);
         for (auto i = range.first; i != range.second; i++) {
-            if (op->nodeType() != ASTNodeType::Store &&
+            if (ignoreReductionWAW_ && op->nodeType() != ASTNodeType::Store &&
                 i->second->op_->nodeType() != ASTNodeType::Store) {
                 // No dependency between reductions
                 continue;
@@ -175,13 +178,16 @@ class AnalyzeDeps : public Visitor {
 /**
  * Find all inverse (negative) dependencies along the given loops
  *
- * @param op : AST root
+ * @param op : AST root. The user should run the `disambiguous` pass before pass
+ * it in
  * @param cond : conditions to check: reduce_and [ reduce_or [ axis, mode ]]
  * @param found : callback(sub-condition that fails, var name, later op, earlier
  * op, later cursor, earlier cursor)
+ * @param ignoreReductionWAW : Ignore WAW dependencies between two ReduceTo
+ * nodes. This kind of dependencies is false dependencies if running serially
  */
 void findDeps(const Stmt &op, const std::vector<FindDepsCond> &cond,
-              const FindDepsCallback &found);
+              const FindDepsCallback &found, bool ignoreReductionWAW = true);
 
 }; // namespace ir
 

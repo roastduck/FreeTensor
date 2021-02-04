@@ -114,7 +114,8 @@ class CacheWrite : public Mutator {
                     auto reduceOp = item.as<ReduceToNode>()->op_;
                     flush.emplace_back(
                         makeReduceTo("", var_, indices, reduceOp,
-                                     makeLoad(cacheVar_, indices)));
+                                     makeLoad(cacheVar_, indices),
+                                     item.as<ReduceToNode>()->atomic_));
                     break;
                 }
                 default:

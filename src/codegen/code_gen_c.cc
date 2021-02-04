@@ -124,13 +124,14 @@ void CodeGenC::visit(const Var &op) {
 }
 
 void CodeGenC::visit(const Store &op) {
-    markUse(normalizeId(op->var_));
+    auto id = normalizeId(op->var_);
+    markUse(id);
 
     makeIndent();
     if (op->indices_.empty()) {
-        os() << "*" << normalizeId(op->var_);
+        os() << "*" << id;
     } else {
-        os() << normalizeId(op->var_);
+        os() << id;
         for (auto &&index : op->indices_) {
             os() << "[";
             (*this)(index);
@@ -163,15 +164,16 @@ void CodeGenC::visit(const Load &op) {
 }
 
 void CodeGenC::visit(const ReduceTo &op) {
-    markUse(normalizeId(op->var_));
+    auto id = normalizeId(op->var_);
+    markUse(id);
 
     makeIndent();
 
     auto genAddr = [&]() {
         if (op->indices_.empty()) {
-            os() << "*" << normalizeId(op->var_);
+            os() << "*" << id;
         } else {
-            os() << normalizeId(op->var_);
+            os() << id;
             for (auto &&index : op->indices_) {
                 os() << "[";
                 (*this)(index);

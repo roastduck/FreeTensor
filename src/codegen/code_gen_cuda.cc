@@ -31,6 +31,47 @@ void CodeGenCUDA::visit(const Max &op) {
     }
 }
 
+void CodeGenCUDA::visit(const ReduceTo &op) {
+    if (op->atomic_) {
+        auto id = normalizeId(op->var_);
+        markUse(id);
+        makeIndent();
+
+        auto genAddr = [&]() {
+            if (op->indices_.empty()) {
+                os() << "*" << id;
+            } else {
+                os() << id;
+                for (auto &&index : op->indices_) {
+                    os() << "[";
+                    (*this)(index);
+                    os() << "]";
+                }
+            }
+        };
+        auto genExpr = [&]() { (*this)(op->expr_); };
+
+        switch (op->op_) {
+        case ReduceOp::Add:
+            os() << "atomicAdd(&", genAddr(), os() << ", ", genExpr();
+            os() << ");" << std::endl;
+            break;
+        case ReduceOp::Min:
+            os() << "atomicMin(&", genAddr(), os() << ", ", genExpr();
+            os() << ");" << std::endl;
+            break;
+        case ReduceOp::Max:
+            os() << "atomicMax(&", genAddr(), os() << ", ", genExpr();
+            os() << ");" << std::endl;
+            break;
+        default:
+            ASSERT(false);
+        }
+    } else {
+        CodeGenC::visit(op);
+    }
+}
+
 void CodeGenCUDA::visit(const Var &op) {
     if (op->name_ == ".threadIdx.x") {
         os() << "(int)threadIdx.x";

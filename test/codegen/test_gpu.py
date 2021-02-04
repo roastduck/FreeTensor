@@ -406,15 +406,74 @@ def test_parallel_broadcast():
 	assert np.array_equal(c_np, c_std)
 
 def test_unbounded_length():
-	with ir.VarDef([
-			("n", (), "int32", "input", "gpu/global"),
-			("x", (4,), "int32", "input", "gpu/global"),
-			("y", (4,), "int32", "output", "gpu/global")]) as (n, x, y):
-		with ir.For("i", 0, n[()], nid="L1") as i:
-			y[i] = x[i] + 1
+	with ir.VarDef("n", (), "int32", "input", "gpu/global") as n:
+		with ir.VarDef([
+				("x", (n[()],), "int32", "input", "gpu/global"),
+				("y", (n[()],), "int32", "output", "gpu/global")]) as (x, y):
+			with ir.For("i", 0, n[()], nid="L1") as i:
+				y[i] = x[i] + 1
 
 	s = ir.Schedule(ir.pop_ast())
 	s.parallelize("L1", "threadIdx.x")
 	with pytest.raises(ir.InvalidProgram):
 		print(ir.lower(s.ast(), target))
+
+def test_parallel_reduction():
+	with ir.VarDef([
+			("x", (4, 64), "int32", "input", "gpu/global"),
+			("y", (4,), "int32", "output", "gpu/global")]) as (x, y):
+		with ir.For("i", 0, 4, nid="L1") as i:
+			with ir.For("j", 0, 64, nid="L2") as j:
+				y[i] = y[i] + x[i, j]
+
+	s = ir.Schedule(ir.pop_ast())
+	s.parallelize("L1", "blockIdx.x")
+	s.parallelize("L2", "threadIdx.x")
+	ast = ir.lower(s.ast(), target)
+	print(ast)
+
+	code, params = ir.codegen(ast, target)
+	assert "atomicAdd" in code
+	assert "+=" not in code
+	print(code)
+	x_np = np.random.rand(4, 64).astype("int32")
+	y_np = np.zeros((4,), dtype="int32")
+	x_arr = ir.Array(x_np, device)
+	y_arr = ir.Array(y_np, device)
+	driver = ir.Driver(code, params, device)
+	driver.set_params({"x": x_arr, "y": y_arr})
+	driver.run()
+	y_np = y_arr.numpy()
+
+	y_std = np.sum(x_np, axis=1)
+	assert np.array_equal(y_np, y_std)
+
+def test_serial_reduction():
+	with ir.VarDef([
+			("x", (4, 64), "int32", "input", "gpu/global"),
+			("y", (4,), "int32", "output", "gpu/global")]) as (x, y):
+		with ir.For("i", 0, 4, nid="L1") as i:
+			with ir.For("j", 0, 64, nid="L2") as j:
+				y[i] = y[i] + x[i, j]
+
+	s = ir.Schedule(ir.pop_ast())
+	s.parallelize("L1", "blockIdx.x")
+	ast = ir.lower(s.ast(), target)
+	print(ast)
+
+	code, params = ir.codegen(ast, target)
+	assert "atomicAdd" not in code
+	assert "+=" in code
+	print(code)
+	x_np = np.random.rand(4, 64).astype("int32")
+	y_np = np.zeros((4,), dtype="int32")
+	x_arr = ir.Array(x_np, device)
+	y_arr = ir.Array(y_np, device)
+	driver = ir.Driver(code, params, device)
+	driver.set_params({"x": x_arr, "y": y_arr})
+	driver.run()
+	y_np = y_arr.numpy()
+
+	y_std = np.sum(x_np, axis=1)
+	assert np.array_equal(y_np, y_std)
 

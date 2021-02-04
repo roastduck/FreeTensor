@@ -3,6 +3,8 @@
 #include <pass/gpu/correct_shared.h>
 #include <pass/gpu/make_sync.h>
 #include <pass/gpu/normalize_threads.h>
+#include <pass/make_atomic.h>
+#include <pass/make_reduction.h>
 #include <pass/merge_if.h>
 #include <pass/seperate_tail.h>
 #include <pass/shrink_for.h>
@@ -22,6 +24,8 @@ void init_ffi_pass(py::module_ &m) {
     m.def("shrink_for", &shrinkFor, "ast"_a, "keepConst"_a = false);
     m.def("merge_if", &mergeIf, "ast"_a);
     m.def("seperate_tail", &seperateTail, "ast"_a);
+    m.def("make_reduction", &makeReduction, "ast"_a);
+    m.def("make_atomic", &makeAtomic, "ast"_a);
 
     // GPU
     m.def("gpu_normalize_threads", &gpu::normalizeThreads, "ast"_a);
