@@ -9,17 +9,19 @@ Stmt ShrinkFor::visit(const For &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::For);
     auto op = __op.as<ForNode>();
 
-    if (keepConst_) {
-        if (op->info_max_begin_->nodeType() != ASTNodeType::IntConst ||
-            op->info_min_end_->nodeType() != ASTNodeType::IntConst) {
-            return op;
+    if (op->info_max_begin_.isValid() && op->info_min_end_.isValid()) {
+        if (keepConst_) {
+            if (op->info_max_begin_->nodeType() != ASTNodeType::IntConst ||
+                op->info_min_end_->nodeType() != ASTNodeType::IntConst) {
+                return op;
+            }
         }
-    }
 
-    op->begin_ = op->info_max_begin_;
-    op->end_ = op->info_min_end_;
-    op->info_max_begin_ = nullptr;
-    op->info_min_end_ = nullptr;
+        op->begin_ = op->info_max_begin_;
+        op->end_ = op->info_min_end_;
+        op->info_max_begin_ = nullptr;
+        op->info_min_end_ = nullptr;
+    }
     return op;
 }
 

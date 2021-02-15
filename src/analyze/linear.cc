@@ -86,5 +86,13 @@ void AnalyzeLinear::visit(const Mul &op) {
     // Not linear
 }
 
+Ref<LinearExpr> analyzeLinear(const Expr &op) {
+    auto hash = getHashMap(op);
+    AnalyzeLinear analyzeLinear(hash);
+    analyzeLinear(op);
+    auto &&linear = analyzeLinear.result();
+    return linear.count(op) ? Ref<LinearExpr>::make(linear.at(op)) : nullptr;
+}
+
 } // namespace ir
 

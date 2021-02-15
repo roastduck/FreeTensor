@@ -1,8 +1,6 @@
 #include <algorithm>
 
 #include <analyze/check_all_defined.h>
-#include <analyze/hash.h>
-#include <analyze/normalize.h>
 #include <pass/seperate_tail.h>
 #include <pass/simplify.h>
 
@@ -64,25 +62,30 @@ Stmt SeperateTail::visit(const For &_op) {
         Expr norm;
         switch (type) {
         case ASTNodeType::LT:
-            norm = branch->cond_.as<LTNode>()->info_norm_form_;
+            norm = makeSub(branch->cond_.as<LTNode>()->lhs_,
+                           branch->cond_.as<LTNode>()->rhs_);
             break;
         case ASTNodeType::LE:
-            norm = branch->cond_.as<LENode>()->info_norm_form_;
+            norm = makeSub(branch->cond_.as<LENode>()->lhs_,
+                           branch->cond_.as<LENode>()->rhs_);
             break;
         case ASTNodeType::GT:
-            norm = branch->cond_.as<GTNode>()->info_norm_form_;
+            norm = makeSub(branch->cond_.as<GTNode>()->lhs_,
+                           branch->cond_.as<GTNode>()->rhs_);
             break;
         case ASTNodeType::GE:
-            norm = branch->cond_.as<GENode>()->info_norm_form_;
+            norm = makeSub(branch->cond_.as<GENode>()->lhs_,
+                           branch->cond_.as<GENode>()->rhs_);
             break;
         default:
             continue;
         }
         ASSERT(norm.isValid());
-        if (!linear_.count(norm)) {
+        auto _lin = analyzeLinear(norm);
+        if (!_lin.isValid()) {
             continue;
         }
-        LinearExpr lin = linear_.at(norm);
+        LinearExpr lin = *_lin;
 
         if (!lin.coeff_.count(iterHash)) {
             continue;
@@ -157,22 +160,14 @@ void CountNestedFor::visit(const For &op) {
 }
 
 Stmt seperateTail(const Stmt &_op) {
-    Stmt op = normalize(_op);
+    auto op = _op;
 
     CountNestedFor counter;
     counter(op);
     int maxNested = counter.maxNested();
 
     for (int i = 0; i < maxNested; i++) {
-        auto hash = getHashMap(op);
-
-        AnalyzeLinear analyzeLinear(hash);
-        analyzeLinear(op);
-        auto &&linear = analyzeLinear.result();
-
-        SeperateTail mutator(linear);
-        op = mutator(op);
-
+        op = SeperateTail()(op);
         op = simplifyPass(op);
     }
     return op;

@@ -2,9 +2,10 @@
 #include <climits>
 #include <sstream>
 
-#include <analyze/hash.h>
+#include <analyze/normalize.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/gpu/make_sync.h>
+#include <pass/simplify.h>
 
 namespace ir {
 
@@ -126,11 +127,12 @@ Stmt MakeSync::visit(const ReduceTo &op) {
     return Mutator::visit(op);
 }
 
-Stmt makeSync(const Stmt &op) {
-    auto hash = getHashMap(op);
-    AnalyzeBounds analyzeBounds(hash);
-    analyzeBounds(op);
-    auto ret = MakeSync(analyzeBounds.upper())(op);
+Stmt makeSync(const Stmt &_op) {
+    Stmt op;
+    std::unordered_map<Expr, std::vector<Bound>> lower, upper;
+    op = normalize(_op);
+    std::tie(op, lower, upper) = simplifyAndGetBounds(op);
+    auto ret = MakeSync(upper)(op);
     ret = flattenStmtSeq(ret);
     return ret;
 }

@@ -59,6 +59,9 @@ class GetHash : public Visitor {
     virtual void visit(const GE &op) override;
     virtual void visit(const EQ &op) override;
     virtual void visit(const NE &op) override;
+    virtual void visit(const LAnd &op) override;
+    virtual void visit(const LOr &op) override;
+    virtual void visit(const LNot &op) override;
 
   public:
     const std::unordered_map<Expr, uint64_t> &hash() const { return hash_; }

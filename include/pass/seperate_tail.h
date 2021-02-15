@@ -40,14 +40,8 @@ namespace ir {
  * ```
  */
 class SeperateTail : public Mutator {
-    const std::unordered_map<AST, LinearExpr> &linear_;
-
     std::unordered_set<std::string> def_;
     std::vector<std::vector<If>> ifStack_;
-
-  public:
-    SeperateTail(const std::unordered_map<AST, LinearExpr> &linear)
-        : linear_(linear) {}
 
   protected:
     Stmt visit(const If &op) override;

@@ -134,65 +134,41 @@ class Mutator {
 
     virtual Expr visit(const Min &op) {
         auto ret = makeMin((*this)(op->lhs_), (*this)(op->rhs_));
-        if (op->info_norm_form_.isValid()) {
-            ret.as<MinNode>()->info_norm_form_ = (*this)(op->info_norm_form_);
-        }
         return ret;
     }
 
     virtual Expr visit(const Max &op) {
         auto ret = makeMax((*this)(op->lhs_), (*this)(op->rhs_));
-        if (op->info_norm_form_.isValid()) {
-            ret.as<MaxNode>()->info_norm_form_ = (*this)(op->info_norm_form_);
-        }
         return ret;
     }
 
     virtual Expr visit(const LT &op) {
         auto ret = makeLT((*this)(op->lhs_), (*this)(op->rhs_));
-        if (op->info_norm_form_.isValid()) {
-            ret.as<LTNode>()->info_norm_form_ = (*this)(op->info_norm_form_);
-        }
         return ret;
     }
 
     virtual Expr visit(const LE &op) {
         auto ret = makeLE((*this)(op->lhs_), (*this)(op->rhs_));
-        if (op->info_norm_form_.isValid()) {
-            ret.as<LENode>()->info_norm_form_ = (*this)(op->info_norm_form_);
-        }
         return ret;
     }
 
     virtual Expr visit(const GT &op) {
         auto ret = makeGT((*this)(op->lhs_), (*this)(op->rhs_));
-        if (op->info_norm_form_.isValid()) {
-            ret.as<GTNode>()->info_norm_form_ = (*this)(op->info_norm_form_);
-        }
         return ret;
     }
 
     virtual Expr visit(const GE &op) {
         auto ret = makeGE((*this)(op->lhs_), (*this)(op->rhs_));
-        if (op->info_norm_form_.isValid()) {
-            ret.as<GENode>()->info_norm_form_ = (*this)(op->info_norm_form_);
-        }
         return ret;
     }
 
     virtual Expr visit(const EQ &op) {
         auto ret = makeEQ((*this)(op->lhs_), (*this)(op->rhs_));
-        if (op->info_norm_form_.isValid()) {
-            ret.as<EQNode>()->info_norm_form_ = (*this)(op->info_norm_form_);
-        }
         return ret;
     }
 
     virtual Expr visit(const NE &op) {
         auto ret = makeNE((*this)(op->lhs_), (*this)(op->rhs_));
-        if (op->info_norm_form_.isValid()) {
-            ret.as<NENode>()->info_norm_form_ = (*this)(op->info_norm_form_);
-        }
         return ret;
     }
 

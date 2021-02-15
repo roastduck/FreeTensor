@@ -51,6 +51,8 @@ class AnalyzeLinear : public Visitor {
     // not handling Div here
 };
 
+Ref<LinearExpr> analyzeLinear(const Expr &op);
+
 } // namespace ir
 
 #endif // LINEAR_H

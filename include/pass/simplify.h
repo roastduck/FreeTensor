@@ -1,9 +1,12 @@
 #ifndef SIMPLIFY_H
 #define SIMPLIFY_H
 
+#include <functional>
 #include <unordered_map>
+#include <unordered_set>
 
 #include <analyze/bounds.h>
+#include <analyze/linear.h>
 #include <mutator.h>
 #include <visitor.h>
 
@@ -30,31 +33,92 @@ class FindInnerMostScope : public Visitor {
 int findInnerMostScope(const std::unordered_map<std::string, int> &varScope,
                        const Expr &op);
 
-class SimplifyPass : public Mutator {
+/**
+ * Try to get the upper bound and lower bound of each (sub)expression
+ *
+ * Inherit this pass to use it
+ *
+ * This pass is not accurate. Simplifying passes using this analysis may need
+ * to run for multiple rounds
+ */
+class AnalyzeBounds : public Mutator {
   public:
     typedef std::unordered_map<Expr, std::vector<Bound>> BoundsMap;
 
   private:
-    const std::unordered_map<Expr, uint64_t> &hash_;
-    const BoundsMap &lower_, &upper_;
-    bool isFixPoint_ = true;
+    const std::unordered_map<Expr, uint64_t> &hash_; // expr -> hash
 
+    BoundsMap lower_, upper_;
+
+    // iterator table
+    std::unordered_map<std::string, std::pair<Expr, Expr>> iters_;
+
+  protected:
+    std::vector<Bound> getLower(const Expr &op) const;
+    std::vector<Bound> getUpper(const Expr &op) const;
+
+    uint64_t getHash(const Expr &op);
+
+  private:
+    void updLower(const Expr &op, const Bound &bound);
+    void updUpper(const Expr &op, const Bound &bound);
+
+    int getIntLower(const Expr &op) const;
+    int getIntUpper(const Expr &op) const;
+    Ref<int> getInt(const Expr &op) const;
+
+    static Expr sub1(const Expr &op);
+    static Expr add1(const Expr &op);
+
+  protected:
+    AnalyzeBounds(const std::unordered_map<Expr, uint64_t> &hash)
+        : hash_(hash) {}
+
+  public:
+    const BoundsMap &lower() const { return lower_; }
+    const BoundsMap &upper() const { return upper_; }
+
+  protected:
+    using Mutator::visit; // Avoid hiding virtual functions
+
+    virtual Expr visit(const Var &op) override;
+    virtual Expr visit(const Load &op) override;
+    virtual Expr visit(const IntConst &op) override;
+    virtual Expr visit(const Add &op) override;
+    virtual Expr visit(const Sub &op) override;
+    virtual Expr visit(const Mul &op) override;
+    virtual Expr visit(const Div &op) override;
+    virtual Stmt visit(const For &op) override;
+    virtual Stmt visit(const If &op) override;
+};
+
+class SimplifyPass : public AnalyzeBounds {
+  public:
+    typedef std::unordered_map<Expr, std::vector<Bound>> BoundsMap;
+
+  private:
     // defining scope table
     std::unordered_map<std::string, int> varScope_;
     int curScope_ = 0;
 
-  public:
-    SimplifyPass(const std::unordered_map<Expr, uint64_t> &hash,
-                 const BoundsMap &lower, const BoundsMap &upper)
-        : hash_(hash), lower_(lower), upper_(upper) {}
+    // Used to check for fixed point
+    std::unordered_set<AST> mutated_;
 
-    bool isFixPoint() const { return isFixPoint_; }
+  public:
+    SimplifyPass(const std::unordered_map<Expr, uint64_t> &hash)
+        : AnalyzeBounds(hash) {}
+
+    const std::unordered_set<AST> &mutated() const { return mutated_; }
 
   private:
-    uint64_t getHash(const Expr &op);
+    template <class T> T markMutated(const T &op) {
+        auto ret = (*this)(op); // Recurse again to get bounds of op
+        mutated_.insert(ret);
+        return ret;
+    }
 
     template <class T> Expr doSimplify(const T &_op) {
-        auto op = Mutator::visit(_op);
+        auto op = AnalyzeBounds::visit(_op);
 
         // To avoid divergence
         if (getHash(op) != getHash(_op)) {
@@ -66,57 +130,35 @@ class SimplifyPass : public Mutator {
 
         Expr best = nullptr;
         auto bestScope = -1;
-        // lower_ / upper_ for _op and op shall be the same, but those for op
-        // are not updated, so using _op
-        if (lower_.count(_op) && upper_.count(_op)) {
-            for (auto &&lower : lower_.at(_op)) {
-                auto hl = getHash(lower.expr_);
-                for (auto &&upper : upper_.at(_op)) {
-                    auto hr = getHash(upper.expr_);
-                    if (hl == hr) {
-                        // We need to choose the simplest one. Other wise
-                        // we are always picking the original expression
-                        auto scope = findInnerMostScope(varScope_, lower.expr_);
-                        if (!best.isValid() || scope < bestScope) {
-                            best = lower.expr_, bestScope = scope;
-                        }
-                        break;
+        for (auto &&lower : getLower(op)) {
+            auto hl = getHash(lower.expr_);
+            for (auto &&upper : getUpper(op)) {
+                auto hr = getHash(upper.expr_);
+                if (hl == hr) {
+                    // We need to choose the simplest one. Other wise
+                    // we are always picking the original expression
+                    auto scope = findInnerMostScope(varScope_, lower.expr_);
+                    if (!best.isValid() || scope < bestScope) {
+                        best = lower.expr_, bestScope = scope;
                     }
+                    break;
                 }
             }
         }
         if (best.isValid() && getHash(best) != getHash(op)) {
-            isFixPoint_ = false;
-            return best;
+            return markMutated(best);
         }
         return op;
     }
 
-    template <class T, class Cmp> bool checkUpperCmp0(const T &op, Cmp &&cmp) {
-        if (upper_.count(op->info_norm_form_)) {
-            for (auto &&upper : upper_.at(op->info_norm_form_)) {
-                if (upper.expr_->nodeType() == ASTNodeType::IntConst &&
-                    cmp(upper.expr_.template as<IntConstNode>()->val_, 0)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    template <class T, class Cmp> bool checkLowerCmp0(const T &op, Cmp &&cmp) {
-        if (lower_.count(op->info_norm_form_)) {
-            for (auto &&lower : lower_.at(op->info_norm_form_)) {
-                if (lower.expr_->nodeType() == ASTNodeType::IntConst &&
-                    cmp(lower.expr_.template as<IntConstNode>()->val_, 0)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
+    bool checkUpperCmp0(const Expr &normForm,
+                        const std::function<bool(int, int)> &&cmp);
+    bool checkLowerCmp0(const Expr &normForm,
+                        const std::function<bool(int, int)> &&cmp);
 
   protected:
+    using AnalyzeBounds::visit;
+
     Expr visit(const Var &op) override { return doSimplify(op); }
     Expr visit(const Add &op) override { return doSimplify(op); }
     Expr visit(const Sub &op) override { return doSimplify(op); }
@@ -138,6 +180,24 @@ class SimplifyPass : public Mutator {
     Stmt visit(const For &op) override;
     Stmt visit(const If &op) override;
     Stmt visit(const Assert &op) override;
+};
+
+class CheckFixedPoint : public Visitor {
+  private:
+    const std::unordered_set<AST> &mutated_;
+    bool isFixPoint_ = true;
+
+  public:
+    CheckFixedPoint(const std::unordered_set<AST> &mutated)
+        : mutated_(mutated) {}
+
+    bool isFixPoint() const { return isFixPoint_; }
+
+  protected:
+    void visitExpr(const Expr &op,
+                   const std::function<void(const Expr &)> &visitNode) override;
+    void visitStmt(const Stmt &op,
+                   const std::function<void(const Stmt &)> &visitNode) override;
 };
 
 Stmt simplifyPass(const Stmt &op);

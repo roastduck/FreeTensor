@@ -1,5 +1,7 @@
+#include <analyze/normalize.h>
 #include <codegen/code_gen_cuda.h>
 #include <except.h>
+#include <pass/simplify.h>
 
 namespace ir {
 
@@ -228,7 +230,9 @@ void CodeGenCUDA::visit(const VarDef &op) {
     }
 }
 
-std::pair<std::string, std::vector<std::string>> codeGenCUDA(const AST &op) {
+std::pair<std::string, std::vector<std::string>> codeGenCUDA(const AST &_op) {
+    auto op = simplifyPass(normalize(_op));
+
     CodeGenCUDA visitor;
     visitor.beginBlock();
     visitor(op);
