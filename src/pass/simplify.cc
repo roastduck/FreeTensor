@@ -1,5 +1,6 @@
 #include <climits>
 #include <sstream>
+#include <unordered_set>
 
 #include <analyze/hash.h>
 #include <except.h>
@@ -575,28 +576,86 @@ Expr SimplifyPass::visit(const Min &_op) {
     auto __op = AnalyzeBounds::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Min);
     auto op = __op.as<MinNode>();
-    auto normForm = (*this)(makeSub(op->lhs_, op->rhs_));
-    if (checkUpperCmp0(normForm, std::less_equal<int>())) {
-        return markMutated(op->lhs_);
+
+    std::function<void(const Expr &, std::unordered_set<Expr> &)> recur =
+        [&recur](const Expr &expr, std::unordered_set<Expr> &list) {
+            if (expr->nodeType() == ASTNodeType::Min) {
+                recur(expr.as<MinNode>()->lhs_, list);
+                recur(expr.as<MinNode>()->rhs_, list);
+            } else {
+                list.insert(expr);
+            }
+        };
+    std::unordered_set<Expr> lhs, rhs, all;
+    recur(op->lhs_, lhs);
+    recur(op->rhs_, rhs);
+    all.insert(lhs.begin(), lhs.end());
+    all.insert(rhs.begin(), rhs.end());
+
+    for (auto &&l : lhs) {
+        for (auto &&r : rhs) {
+            auto normForm = (*this)(makeSub(l, r));
+            if (checkUpperCmp0(normForm, std::less_equal<int>())) {
+                all.erase(r);
+            } else if (checkLowerCmp0(normForm, std::greater_equal<int>())) {
+                all.erase(l);
+            }
+        }
     }
-    if (checkLowerCmp0(normForm, std::greater_equal<int>())) {
-        return markMutated(op->rhs_);
+
+    if (all.size() == lhs.size() + rhs.size()) {
+        return op;
+    } else {
+        ASSERT(!all.empty());
+        Expr ret;
+        for (auto &&item : all) {
+            ret = ret.isValid() ? makeMin(ret, item) : item;
+        }
+        return markMutated(ret);
     }
-    return op;
 }
 
 Expr SimplifyPass::visit(const Max &_op) {
     auto __op = AnalyzeBounds::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Max);
     auto op = __op.as<MaxNode>();
-    auto normForm = (*this)(makeSub(op->lhs_, op->rhs_));
-    if (checkLowerCmp0(normForm, std::greater_equal<int>())) {
-        return markMutated(op->lhs_);
+
+    std::function<void(const Expr &, std::unordered_set<Expr> &)> recur =
+        [&recur](const Expr &expr, std::unordered_set<Expr> &list) {
+            if (expr->nodeType() == ASTNodeType::Max) {
+                recur(expr.as<MaxNode>()->lhs_, list);
+                recur(expr.as<MaxNode>()->rhs_, list);
+            } else {
+                list.insert(expr);
+            }
+        };
+    std::unordered_set<Expr> lhs, rhs, all;
+    recur(op->lhs_, lhs);
+    recur(op->rhs_, rhs);
+    all.insert(lhs.begin(), lhs.end());
+    all.insert(rhs.begin(), rhs.end());
+
+    for (auto &&l : lhs) {
+        for (auto &&r : rhs) {
+            auto normForm = (*this)(makeSub(l, r));
+            if (checkUpperCmp0(normForm, std::less_equal<int>())) {
+                all.erase(l);
+            } else if (checkLowerCmp0(normForm, std::greater_equal<int>())) {
+                all.erase(r);
+            }
+        }
     }
-    if (checkUpperCmp0(normForm, std::less_equal<int>())) {
-        return markMutated(op->rhs_);
+
+    if (all.size() == lhs.size() + rhs.size()) {
+        return op;
+    } else {
+        ASSERT(!all.empty());
+        Expr ret;
+        for (auto &&item : all) {
+            ret = ret.isValid() ? makeMax(ret, item) : item;
+        }
+        return markMutated(ret);
     }
-    return op;
 }
 
 Expr SimplifyPass::visit(const LT &_op) {

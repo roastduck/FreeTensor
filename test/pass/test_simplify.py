@@ -104,6 +104,46 @@ def test_redundant_max():
 
 	assert std.match(ast)
 
+def test_multiple_mins():
+	with ir.VarDef([
+			("x", (4,), "int32", "input", "cpu"),
+			("y", (4,), "int32", "output", "cpu")]) as (x, y):
+		with ir.For("i", 0, 4) as i:
+			y[i] = ir.min(ir.min(x[i] + 2, i), x[i])
+	ast = ir.pop_ast()
+	print(ast)
+	ast = ir.lower(ast)
+	print(ast)
+
+	with ir.VarDef([
+			("x", (4,), "int32", "input", "cpu"),
+			("y", (4,), "int32", "output", "cpu")]) as (x, y):
+		with ir.For("i", 0, 4) as i:
+			y[i] = ir.min(x[i], i)
+	std = ir.pop_ast()
+
+	assert std.match(ast)
+
+def test_multiple_maxes():
+	with ir.VarDef([
+			("x", (4,), "int32", "input", "cpu"),
+			("y", (4,), "int32", "output", "cpu")]) as (x, y):
+		with ir.For("i", 0, 4) as i:
+			y[i] = ir.max(ir.max(x[i] + 2, i), x[i])
+	ast = ir.pop_ast()
+	print(ast)
+	ast = ir.lower(ast)
+	print(ast)
+
+	with ir.VarDef([
+			("x", (4,), "int32", "input", "cpu"),
+			("y", (4,), "int32", "output", "cpu")]) as (x, y):
+		with ir.For("i", 0, 4) as i:
+			y[i] = ir.max(x[i] + 2, i)
+	std = ir.pop_ast()
+
+	assert std.match(ast)
+
 def test_different_scope():
 	with ir.VarDef([
 			("x", (4, 10), "int32", "input", "cpu"),
