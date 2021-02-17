@@ -42,6 +42,7 @@ namespace ir {
 class SeperateTail : public Mutator {
     std::unordered_set<std::string> def_;
     std::vector<std::vector<If>> ifStack_;
+    AnalyzeLinear analyzeLinear_;
 
   protected:
     Stmt visit(const If &op) override;

@@ -46,8 +46,7 @@ class AnalyzeBounds : public Mutator {
     typedef std::unordered_map<Expr, std::vector<Bound>> BoundsMap;
 
   private:
-    const std::unordered_map<Expr, uint64_t> &hash_; // expr -> hash
-
+    GetHash getHash_;
     BoundsMap lower_, upper_;
 
     // iterator table
@@ -69,10 +68,6 @@ class AnalyzeBounds : public Mutator {
 
     static Expr sub1(const Expr &op);
     static Expr add1(const Expr &op);
-
-  protected:
-    AnalyzeBounds(const std::unordered_map<Expr, uint64_t> &hash)
-        : hash_(hash) {}
 
   public:
     const BoundsMap &lower() const { return lower_; }
@@ -105,9 +100,6 @@ class SimplifyPass : public AnalyzeBounds {
     std::unordered_set<AST> mutated_;
 
   public:
-    SimplifyPass(const std::unordered_map<Expr, uint64_t> &hash)
-        : AnalyzeBounds(hash) {}
-
     const std::unordered_set<AST> &mutated() const { return mutated_; }
 
   private:
@@ -202,7 +194,14 @@ class CheckFixedPoint : public Visitor {
 
 Stmt simplifyPass(const Stmt &op);
 
-// return {simplified, lower, upper}
+/**
+ * Simplify a program and compute bounds of each expressions
+ *
+ * This pass can only be applied on a complete program, instead of a single
+ * expression, because it examines VarDef nodes of each Var
+ *
+ * @return : {simplified, lower, upper}
+ */
 std::tuple<Stmt, SimplifyPass::BoundsMap, SimplifyPass::BoundsMap>
 simplifyAndGetBounds(const Stmt &op);
 

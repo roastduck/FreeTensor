@@ -81,11 +81,11 @@ Stmt SeperateTail::visit(const For &_op) {
             continue;
         }
         ASSERT(norm.isValid());
-        auto _lin = analyzeLinear(norm);
-        if (!_lin.isValid()) {
+        analyzeLinear_(norm);
+        if (!analyzeLinear_.result().count(norm)) {
             continue;
         }
-        LinearExpr lin = *_lin;
+        LinearExpr lin = analyzeLinear_.result().at(norm);
 
         if (!lin.coeff_.count(iterHash)) {
             continue;

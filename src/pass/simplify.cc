@@ -127,11 +127,8 @@ Ref<int> AnalyzeBounds::getInt(const Expr &op) const {
 }
 
 uint64_t AnalyzeBounds::getHash(const Expr &op) {
-    if (hash_.count(op)) {
-        return hash_.at(op);
-    } else { // lowers / uppers are new exprs
-        return ::ir::getHash(op);
-    }
+    getHash_(op);
+    return getHash_.hash().at(op);
 }
 
 Expr AnalyzeBounds::sub1(const Expr &op) {
@@ -916,9 +913,7 @@ simplifyAndGetBounds(const Stmt &_op) {
     for (int i = 0;; i++) {
         op = disambiguous(op);
 
-        auto hash = getHashMap(op);
-
-        SimplifyPass mutator(hash);
+        SimplifyPass mutator;
         op = mutator(op);
 
         CheckFixedPoint checker(mutator.mutated());

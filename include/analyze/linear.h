@@ -2,6 +2,7 @@
 #define LINEAR_H
 
 #include <unordered_map>
+#include <unordered_set>
 
 #include <analyze/hash.h>
 #include <visitor.h>
@@ -29,29 +30,28 @@ struct LinearExpr {
  * accesses and loop iterators
  */
 class AnalyzeLinear : public Visitor {
-    const std::unordered_map<Expr, uint64_t> &hash_; // expr -> hash
-    std::unordered_map<AST, LinearExpr> result_;     // hash -> expr
+    GetHash getHash_;
+    std::unordered_map<AST, LinearExpr> result_;
+    std::unordered_set<AST> visited_;
 
   public:
-    AnalyzeLinear(const std::unordered_map<Expr, uint64_t> &hash)
-        : hash_(hash) {}
-
     const std::unordered_map<AST, LinearExpr> &result() const {
         return result_;
     }
 
   protected:
-    virtual void visit(const Var &op) override;
-    virtual void visit(const Load &op) override;
-    virtual void visit(const IntConst &op) override;
-    virtual void visit(const Add &op) override;
-    virtual void visit(const Sub &op) override;
-    virtual void visit(const Mul &op) override;
+    void visitExpr(const Expr &op,
+                   const std::function<void(const Expr &)> &visitNode) override;
+
+    void visit(const Var &op) override;
+    void visit(const Load &op) override;
+    void visit(const IntConst &op) override;
+    void visit(const Add &op) override;
+    void visit(const Sub &op) override;
+    void visit(const Mul &op) override;
     // Note that for integer (floored) div, k * a / d !== (k / d) * a, so we are
     // not handling Div here
 };
-
-Ref<LinearExpr> analyzeLinear(const Expr &op);
 
 } // namespace ir
 

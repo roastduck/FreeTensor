@@ -2,6 +2,13 @@
 
 namespace ir {
 
+void GetHash::visitExpr(const Expr &op,
+                        const std::function<void(const Expr &)> &visitNode) {
+    if (!hash_.count(op)) {
+        Visitor::visitExpr(op, visitNode);
+    }
+}
+
 void GetHash::visit(const Var &op) {
     Visitor::visit(op);
     uint64_t h = ((uint64_t)op->nodeType() * K1 + B1) % P;

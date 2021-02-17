@@ -1,11 +1,10 @@
 #include <algorithm>
-#include <regex>
 #include <sstream>
 
 #include <analyze/deps.h>
-#include <analyze/hash.h>
 #include <except.h>
 #include <mutator.h>
+#include <pass/simplify.h>
 
 namespace ir {
 
@@ -40,42 +39,99 @@ void FindAccessPoint::visit(const For &op) {
     end_.pop_back();
 }
 
+void FindAccessPoint::visit(const If &op) {
+    (*this)(op->cond_);
+    auto oldCond = cond_;
+    cond_ = oldCond.isValid() ? makeLAnd(oldCond, op->cond_) : op->cond_;
+    (*this)(op->thenCase_);
+    if (op->elseCase_.isValid()) {
+        cond_ = oldCond.isValid() ? makeLAnd(oldCond, makeLNot(op->cond_))
+                                  : makeLNot(op->cond_);
+        (*this)(op->elseCase_);
+    }
+}
+
 void FindAccessPoint::visit(const Load &op) {
     Visitor::visit(op);
     auto ap = Ref<AccessPoint>::make();
     ASSERT(cur_.size() == begin_.size());
     ASSERT(cur_.size() == end_.size());
     *ap = {op,     cursor(), defAxis_.at(op->var_), cur_,
-           begin_, end_,     op->indices_};
+           begin_, end_,     op->indices_,          cond_};
     points_.emplace(op, ap);
     reads_.emplace(op->var_, ap);
 }
 
-std::string AnalyzeDeps::normalizeId(const std::string &id) const {
-    return std::regex_replace(id, std::regex("\\."), "__dot__");
+std::string GenISLExpr::normalizeId(const std::string &old) {
+    if (idCache_.count(old)) {
+        return idCache_.at(old);
+    }
+    std::string ret = old;
+    for (char &c : ret) {
+        if (!isalnum(c) && c != '_') {
+            c = '_';
+        }
+    }
+    while (idFlag_.count(ret)) {
+        ret += "_";
+    }
+    idFlag_.insert(ret);
+    return idCache_[old] = ret;
 }
 
-Ref<std::string> AnalyzeDeps::linear2str(const LinearExpr &lin) const {
+Ref<std::string> GenISLExpr::linear2str(const LinearExpr &lin) {
     std::ostringstream os;
     os << lin.bias_;
     for (auto &&item : lin.coeff_) {
         if (item.second.a->nodeType() == ASTNodeType::Var) {
-            os << " + " << item.second.k << " " << item.second.a;
+            os << " + " << item.second.k << " "
+               << normalizeId(toString(item.second.a));
         } else {
             // Use the entire array as dependency
             return nullptr;
         }
     }
-    return Ref<std::string>::make(normalizeId(os.str()));
+    return Ref<std::string>::make(os.str());
+}
+
+Ref<std::string> GenISLExpr::operator()(const Expr &op) {
+    std::vector<LinearExpr> subexprs;
+    std::function<bool(const Expr &expr)> recur = [&](const Expr &expr) {
+        if (expr->nodeType() == ASTNodeType::LAnd) {
+            auto a = expr.as<LAndNode>();
+            return recur(a->lhs_) && recur(a->rhs_);
+        }
+        analyzeLinear_(expr);
+        if (analyzeLinear_.result().count(expr)) {
+            subexprs.emplace_back(analyzeLinear_.result().at(expr));
+            return true;
+        }
+        return false;
+    };
+    if (!recur(op)) {
+        return nullptr;
+    }
+    std::string ret;
+    for (auto &&sub : subexprs) {
+        if (!ret.empty()) {
+            ret += " and ";
+        }
+        if (auto str = linear2str(sub); str.isValid()) {
+            ret += *str;
+        } else {
+            return nullptr;
+        }
+    }
+    return Ref<std::string>::make(std::move(ret));
 }
 
 std::string AnalyzeDeps::makeIterList(const std::vector<Expr> &list,
-                                      int eraseBefore, int n) const {
+                                      int eraseBefore, int n) {
     std::string ret;
     for (int i = 0; i < n; i++) {
         if (i < (int)list.size()) {
             if (list[i]->nodeType() == ASTNodeType::Var) {
-                ret += normalizeId(list[i].as<VarNode>()->name_);
+                ret += genISLExpr_.normalizeId(list[i].as<VarNode>()->name_);
                 if (i < eraseBefore) {
                     ret += " = 0";
                 }
@@ -94,18 +150,13 @@ std::string AnalyzeDeps::makeIterList(const std::vector<Expr> &list,
     return "[" + ret + "]";
 }
 
-std::string
-AnalyzeDeps::makeLinList(const std::vector<Ref<LinearExpr>> &list) const {
+std::string AnalyzeDeps::makeAccList(const std::vector<Expr> &list) {
     std::string ret;
     for (int i = 0, iEnd = list.size(); i < iEnd; i++) {
-        if (list[i].isValid()) {
-            if (auto linstr = linear2str(*list[i]); linstr.isValid()) {
-                ret += *linstr;
-            } else {
-                ret += "free" + std::to_string(i);
-            }
+        if (auto linstr = genISLExpr_(list[i]); linstr.isValid()) {
+            ret += *linstr;
         } else {
-            ret += "free" + std::to_string(i);
+            ret += genISLExpr_.normalizeId("free" + std::to_string(i));
         }
         if (i < iEnd - 1) {
             ret += ", ";
@@ -116,28 +167,23 @@ AnalyzeDeps::makeLinList(const std::vector<Ref<LinearExpr>> &list) const {
 
 std::string AnalyzeDeps::makeRange(const std::vector<Expr> &point,
                                    const std::vector<Expr> &begin,
-                                   const std::vector<Expr> &end) const {
+                                   const std::vector<Expr> &end) {
     size_t n = point.size();
     ASSERT(begin.size() == n);
     ASSERT(end.size() == n);
     std::vector<std::string> ineqs;
     for (size_t i = 0; i < n; i++) {
         if (point[i]->nodeType() == ASTNodeType::Var) {
-            std::string ineq = normalizeId(point[i].as<VarNode>()->name_);
+            std::string ineq =
+                genISLExpr_.normalizeId(point[i].as<VarNode>()->name_);
             bool bounded = false;
-            if (linear_.count(begin[i])) {
-                if (auto linstr = linear2str(linear_.at(begin[i]));
-                    linstr.isValid()) {
-                    ineq = *linstr + " <= " + ineq;
-                    bounded = true;
-                }
+            if (auto linstr = genISLExpr_(begin[i]); linstr.isValid()) {
+                ineq = *linstr + " <= " + ineq;
+                bounded = true;
             }
-            if (linear_.count(end[i])) {
-                if (auto linstr = linear2str(linear_.at(end[i]));
-                    linstr.isValid()) {
-                    ineq = ineq + " < " + *linstr;
-                    bounded = true;
-                }
+            if (auto linstr = genISLExpr_(end[i]); linstr.isValid()) {
+                ineq = ineq + " < " + *linstr;
+                bounded = true;
             }
             if (bounded) {
                 ineqs.emplace_back(std::move(ineq));
@@ -154,6 +200,17 @@ std::string AnalyzeDeps::makeRange(const std::vector<Expr> &point,
     return ret;
 }
 
+std::string AnalyzeDeps::makeCond(const Expr &expr) {
+    if (expr.isValid()) {
+        // TODO: Try to eliminate LNot. But how to simplify a single expression?
+        // auto expr = simplifyPass(_expr);
+        if (auto str = genISLExpr_(expr); str.isValid()) {
+            return " and " + *str;
+        }
+    }
+    return "";
+}
+
 std::string AnalyzeDeps::makeNdList(const std::string &name, int n) const {
     std::string ret;
     for (int i = 0; i < n; i++) {
@@ -166,20 +223,10 @@ std::string AnalyzeDeps::makeNdList(const std::string &name, int n) const {
 }
 
 std::string AnalyzeDeps::makeAccMap(const AccessPoint &p, int iterDim,
-                                    int accDim) const {
-    std::vector<Ref<LinearExpr>> acc;
-    acc.reserve(accDim);
-    for (auto &&item : p.access_) {
-        if (linear_.count(item)) {
-            acc.emplace_back(Ref<LinearExpr>::make(linear_.at(item)));
-        } else {
-            acc.emplace_back(nullptr);
-        }
-    }
-    auto ret = "{" + makeIterList(p.iter_, p.defAxis_, iterDim) + " -> " +
-               makeLinList(acc) + ": " + makeRange(p.iter_, p.begin_, p.end_) +
-               "}";
-    return ret;
+                                    int accDim) {
+    return "{" + makeIterList(p.iter_, p.defAxis_, iterDim) + " -> " +
+           makeAccList(p.access_) + ": " +
+           makeRange(p.iter_, p.begin_, p.end_) + makeCond(p.cond_) + "}";
 }
 
 std::string
@@ -312,16 +359,11 @@ void findDeps(
     const std::vector<std::vector<std::pair<std::string, FindDepsMode>>> &cond,
     const FindDepsCallback &found, bool ignoreReductionWAW) {
     ASSERT(op->noAmbiguous());
-    auto hash = getHashMap(op);
-    AnalyzeLinear analyzeLinear(hash);
-    analyzeLinear(op);
-    auto &&linear = analyzeLinear.result();
 
     FindAccessPoint visitor;
     visitor(op);
     AnalyzeDeps mutator(visitor.points(), visitor.reads(), visitor.writes(),
-                        visitor.scope2coord(), linear, cond, found,
-                        ignoreReductionWAW);
+                        visitor.scope2coord(), cond, found, ignoreReductionWAW);
     mutator(op);
 }
 

@@ -4,6 +4,7 @@
 #include <functional>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include <isl/ctx.h>
@@ -19,8 +20,11 @@ namespace ir {
 struct AccessPoint {
     AST op_;
     Cursor cursor_;
-    int defAxis_;
-    std::vector<Expr> iter_, begin_, end_, access_;
+    int defAxis_;                   /// The position of the VarDef
+    std::vector<Expr> iter_;        /// The temporal location of the access
+    std::vector<Expr> begin_, end_; /// Range. begin_[i] <= iter_[i] < end_[i]
+    std::vector<Expr> access_;      /// The spacial location of the access
+    Expr cond_;                     /// The condition (predicate) of the access
 };
 
 /**
@@ -29,6 +33,7 @@ struct AccessPoint {
 class FindAccessPoint : public VisitorWithCursor {
     std::vector<Expr> cur_;         // Current iteration point in the space
     std::vector<Expr> begin_, end_; // Point range in the space
+    Expr cond_;
     std::unordered_map<AST, Ref<AccessPoint>> points_;
     std::unordered_multimap<std::string, Ref<AccessPoint>> reads_, writes_;
 
@@ -63,7 +68,7 @@ class FindAccessPoint : public VisitorWithCursor {
         end_.emplace_back(makeIntConst(2));
         auto ap = Ref<AccessPoint>::make();
         *ap = {op,     cursor(), defAxis_.at(op->var_), cur_,
-               begin_, end_,     op->indices_};
+               begin_, end_,     op->indices_,          cond_};
         points_.emplace(op, ap);
         writes_.emplace(op->var_, ap);
 
@@ -78,9 +83,31 @@ class FindAccessPoint : public VisitorWithCursor {
     void visit(const VarDef &op) override;
     void visit(const StmtSeq &op) override;
     void visit(const For &op) override;
+    void visit(const If &op) override;
     void visit(const Store &op) override { visitStoreLike(op); }
     void visit(const ReduceTo &op) override { visitStoreLike(op); }
     void visit(const Load &op) override;
+};
+
+/**
+ * Serialize expressions like "linear expressions concatenated with LAnd" to a
+ * string
+ *
+ * ISL rejects non-affine expressions
+ *
+ * ISL also rejects non-contiguous sets, therefore here is no LOr or LNot
+ */
+class GenISLExpr {
+    AnalyzeLinear analyzeLinear_;
+    std::unordered_map<std::string, std::string> idCache_; // IR IDs -> ISL IDs
+    std::unordered_set<std::string> idFlag_;               // ISL IDs
+
+  private:
+    Ref<std::string> linear2str(const LinearExpr &lin);
+
+  public:
+    std::string normalizeId(const std::string &id);
+    Ref<std::string> operator()(const Expr &op);
 };
 
 enum class FindDepsMode : int {
@@ -105,7 +132,7 @@ class AnalyzeDeps : public Visitor {
     const std::unordered_multimap<std::string, Ref<AccessPoint>> &reads_,
         &writes_;
     const std::unordered_map<std::string, std::vector<Expr>> &scope2coord_;
-    const std::unordered_map<AST, LinearExpr> &linear_;
+    GenISLExpr genISLExpr_;
 
     const std::vector<FindDepsCond> &cond_;
     const FindDepsCallback &found_;
@@ -120,28 +147,26 @@ class AnalyzeDeps : public Visitor {
         const std::unordered_multimap<std::string, Ref<AccessPoint>> &reads,
         const std::unordered_multimap<std::string, Ref<AccessPoint>> &writes,
         const std::unordered_map<std::string, std::vector<Expr>> &scope2coord,
-        const std::unordered_map<AST, LinearExpr> &linear,
         const std::vector<FindDepsCond> &cond, const FindDepsCallback &found,
         bool ignoreReductionWAW)
         : points_(points), reads_(reads), writes_(writes),
-          scope2coord_(scope2coord), linear_(linear), cond_(cond),
-          found_(found), ignoreReductionWAW_(ignoreReductionWAW) {
+          scope2coord_(scope2coord), cond_(cond), found_(found),
+          ignoreReductionWAW_(ignoreReductionWAW) {
         isl_ = isl_ctx_alloc();
     }
 
     ~AnalyzeDeps() { isl_ctx_free(isl_); }
 
   private:
-    std::string normalizeId(const std::string &id) const;
-    Ref<std::string> linear2str(const LinearExpr &lin) const;
     std::string makeIterList(const std::vector<Expr> &list, int eraseBefore,
-                             int n) const;
-    std::string makeLinList(const std::vector<Ref<LinearExpr>> &list) const;
+                             int n);
+    std::string makeAccList(const std::vector<Expr> &list);
     std::string makeRange(const std::vector<Expr> &point,
                           const std::vector<Expr> &begin,
-                          const std::vector<Expr> &end) const;
+                          const std::vector<Expr> &end);
+    std::string makeCond(const Expr &cond);
     std::string makeNdList(const std::string &name, int n) const;
-    std::string makeAccMap(const AccessPoint &p, int iterDim, int accDim) const;
+    std::string makeAccMap(const AccessPoint &p, int iterDim, int accDim);
     std::string makeEqForBothOps(const std::vector<std::pair<int, int>> &coord,
                                  int iterDim) const;
     std::string makeIneqBetweenOps(FindDepsMode mode, int iterId,

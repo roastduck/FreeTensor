@@ -2,14 +2,24 @@
 
 namespace ir {
 
+void AnalyzeLinear::visitExpr(
+    const Expr &op, const std::function<void(const Expr &)> &visitNode) {
+    if (!visited_.count(op)) {
+        visited_.insert(op);
+        Visitor::visitExpr(op, visitNode);
+    }
+}
+
 void AnalyzeLinear::visit(const Var &op) {
     Visitor::visit(op);
-    result_[op] = {{{hash_.at(op), {1, op}}}, 0};
+    getHash_(op);
+    result_[op] = {{{getHash_.hash().at(op), {1, op}}}, 0};
 }
 
 void AnalyzeLinear::visit(const Load &op) {
     Visitor::visit(op);
-    result_[op] = {{{hash_.at(op), {1, op}}}, 0};
+    getHash_(op);
+    result_[op] = {{{getHash_.hash().at(op), {1, op}}}, 0};
 }
 
 void AnalyzeLinear::visit(const IntConst &op) {
@@ -84,14 +94,6 @@ void AnalyzeLinear::visit(const Mul &op) {
         return;
     }
     // Not linear
-}
-
-Ref<LinearExpr> analyzeLinear(const Expr &op) {
-    auto hash = getHashMap(op);
-    AnalyzeLinear analyzeLinear(hash);
-    analyzeLinear(op);
-    auto &&linear = analyzeLinear.result();
-    return linear.count(op) ? Ref<LinearExpr>::make(linear.at(op)) : nullptr;
 }
 
 } // namespace ir
