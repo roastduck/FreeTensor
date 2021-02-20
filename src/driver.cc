@@ -22,8 +22,10 @@ Driver::Driver(const std::string &src,
 }
 
 void Driver::buildAndLoad() {
-    mkdir("/tmp/ir", 0755);
-    char path[] = "/tmp/ir/XXXXXX";
+    std::string home = getenv("HOME");
+    mkdir((home + "/.ir").c_str(), 0755);
+    char path[64];
+    strcpy(path, (home + "/.ir/XXXXXX").c_str());
     mkdtemp(path);
 
     std::string srcSuffix;
