@@ -235,11 +235,11 @@ def test_simplify_not_cmp():
 			("y6", (4,), "int32", "output", "cpu")]) as (x, y1, y2, y3, y4, y5, y6):
 		with ir.For("i", 0, 4) as i:
 			y1[i] = ir.l_not(x[i] < 5)
-			y1[i] = ir.l_not(x[i] <= 5)
-			y1[i] = ir.l_not(x[i] > 5)
-			y1[i] = ir.l_not(x[i] >= 5)
-			y1[i] = ir.l_not(x[i] == 5)
-			y1[i] = ir.l_not(x[i] != 5)
+			y2[i] = ir.l_not(x[i] <= 5)
+			y3[i] = ir.l_not(x[i] > 5)
+			y4[i] = ir.l_not(x[i] >= 5)
+			y5[i] = ir.l_not(x[i] == 5)
+			y6[i] = ir.l_not(x[i] != 5)
 	ast = ir.pop_ast()
 	print(ast)
 	ast = ir.lower(ast)
@@ -255,11 +255,11 @@ def test_simplify_not_cmp():
 			("y6", (4,), "int32", "output", "cpu")]) as (x, y1, y2, y3, y4, y5, y6):
 		with ir.For("i", 0, 4) as i:
 			y1[i] = x[i] >= 5
-			y1[i] = x[i] > 5
-			y1[i] = x[i] <= 5
-			y1[i] = x[i] < 5
-			y1[i] = x[i] != 5
-			y1[i] = x[i] == 5
+			y2[i] = x[i] > 5
+			y3[i] = x[i] <= 5
+			y4[i] = x[i] < 5
+			y5[i] = x[i] != 5
+			y6[i] = x[i] == 5
 	std = ir.pop_ast()
 
 	assert std.match(ast)
