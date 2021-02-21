@@ -2,6 +2,14 @@
 
 ## Build
 
+First, clone this repo. Don't forget there are some submodules.
+
+```sh
+git clone --recursive <path-to-this-repo>
+```
+
+Then, build.
+
 ```sh
 mkdir build
 cd build
