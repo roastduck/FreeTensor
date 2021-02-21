@@ -181,6 +181,15 @@ def min(lhs, rhs):
 def max(lhs, rhs):
 	return ffi.makeMax(lhs, rhs)
 
+def l_and(lhs, rhs):
+	return ffi.makeLAnd(lhs, rhs)
+
+def l_or(lhs, rhs):
+	return ffi.makeLOr(lhs, rhs)
+
+def l_not(expr):
+	return ffi.makeLNot(expr)
+
 def intrinsic(fmt, *params):
 	return ffi.makeIntrinsic(fmt, params)
 

@@ -42,13 +42,13 @@ class Visitor {
             (*this)(dim);
         }
         (*this)(op->body_);
-        if (op->info_acc_lower_.isValid()) {
-            for (auto &&index : *op->info_acc_lower_) {
+        if (op->infoAccLower_.isValid()) {
+            for (auto &&index : *op->infoAccLower_) {
                 (*this)(index);
             }
         }
-        if (op->info_acc_len_.isValid()) {
-            for (auto &&index : *op->info_acc_lower_) {
+        if (op->infoAccLen_.isValid()) {
+            for (auto &&index : *op->infoAccLen_) {
                 (*this)(index);
             }
         }
@@ -161,14 +161,14 @@ class Visitor {
         (*this)(op->begin_);
         (*this)(op->end_);
         (*this)(op->body_);
-        if (op->info_len_.isValid()) {
-            (*this)(op->info_len_);
+        if (op->infoLen_.isValid()) {
+            (*this)(op->infoLen_);
         }
-        if (op->info_max_begin_.isValid()) {
-            (*this)(op->info_max_begin_);
+        if (op->infoMaxBegin_.isValid()) {
+            (*this)(op->infoMaxBegin_);
         }
-        if (op->info_min_end_.isValid()) {
-            (*this)(op->info_min_end_);
+        if (op->infoMinEnd_.isValid()) {
+            (*this)(op->infoMinEnd_);
         }
     }
 
@@ -177,6 +177,9 @@ class Visitor {
         (*this)(op->thenCase_);
         if (op->elseCase_.isValid()) {
             (*this)(op->elseCase_);
+        }
+        if (op->infoNotCond_.isValid()) {
+            (*this)(op->infoNotCond_);
         }
     }
 

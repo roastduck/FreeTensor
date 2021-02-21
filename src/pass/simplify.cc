@@ -400,6 +400,8 @@ Stmt AnalyzeBounds::visit(const For &op) {
 
 Stmt AnalyzeBounds::visit(const If &op) {
     auto cond = (*this)(op->cond_);
+    auto notCond =
+        op->infoNotCond_.isValid() ? (*this)(op->infoNotCond_) : nullptr;
 
     auto oldMap = iters_;
     switch (cond->nodeType()) {
@@ -519,8 +521,10 @@ Stmt AnalyzeBounds::visit(const If &op) {
         elseCase = (*this)(op->elseCase_);
         iters_ = oldMap;
     }
-    return makeIf(op->id(), std::move(cond), std::move(thenCase),
-                  std::move(elseCase));
+    auto ret = makeIf(op->id(), std::move(cond), std::move(thenCase),
+                      std::move(elseCase));
+    ret.as<IfNode>()->infoNotCond_ = std::move(notCond);
+    return ret;
 }
 
 bool SimplifyPass::checkUpperCmp0(const Expr &normForm,
@@ -795,8 +799,36 @@ Expr SimplifyPass::visit(const LNot &_op) {
     auto __op = AnalyzeBounds::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::LNot);
     auto op = __op.as<LNotNode>();
-    if (op->expr_->nodeType() == ASTNodeType::IntConst) {
+    switch (op->expr_->nodeType()) {
+    case ASTNodeType::IntConst:
         return markMutated(makeIntConst(!op->expr_.as<IntConstNode>()->val_));
+    case ASTNodeType::LT:
+        return markMutated(
+            makeGE(op->expr_.as<LTNode>()->lhs_, op->expr_.as<LTNode>()->rhs_));
+    case ASTNodeType::GT:
+        return markMutated(
+            makeLE(op->expr_.as<GTNode>()->lhs_, op->expr_.as<GTNode>()->rhs_));
+    case ASTNodeType::LE:
+        return markMutated(
+            makeGT(op->expr_.as<LENode>()->lhs_, op->expr_.as<LENode>()->rhs_));
+    case ASTNodeType::GE:
+        return markMutated(
+            makeLT(op->expr_.as<GENode>()->lhs_, op->expr_.as<GENode>()->rhs_));
+    case ASTNodeType::EQ:
+        return markMutated(
+            makeNE(op->expr_.as<EQNode>()->lhs_, op->expr_.as<EQNode>()->rhs_));
+    case ASTNodeType::NE:
+        return markMutated(
+            makeEQ(op->expr_.as<NENode>()->lhs_, op->expr_.as<NENode>()->rhs_));
+    case ASTNodeType::LAnd:
+        return markMutated(makeLOr(makeLNot(op->expr_.as<LAndNode>()->lhs_),
+                                   makeLNot(op->expr_.as<LAndNode>()->rhs_)));
+    case ASTNodeType::LOr:
+        return markMutated(makeLAnd(makeLNot(op->expr_.as<LOrNode>()->lhs_),
+                                    makeLNot(op->expr_.as<LOrNode>()->rhs_)));
+    case ASTNodeType::LNot:
+        return markMutated(op->expr_.as<LNotNode>()->expr_);
+    default:;
     }
     return op;
 }

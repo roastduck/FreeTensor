@@ -21,15 +21,14 @@ bool StmtNode::hasNamedId() const { return id_.empty() || id_[0] != '#'; }
 
 VarDefNode::VarDefNode(const VarDefNode &other)
     : name_(other.name_), buffer_(other.buffer_.clone()), body_(other.body_),
-      info_acc_lower_(other.info_acc_lower_),
-      info_acc_len_(other.info_acc_len_) {}
+      infoAccLower_(other.infoAccLower_), infoAccLen_(other.infoAccLen_) {}
 
 VarDefNode &VarDefNode::operator=(const VarDefNode &other) {
     name_ = other.name_;
     buffer_ = other.buffer_.clone();
     body_ = other.body_;
-    info_acc_lower_ = other.info_acc_lower_;
-    info_acc_len_ = other.info_acc_len_;
+    infoAccLower_ = other.infoAccLower_;
+    infoAccLen_ = other.infoAccLen_;
     return *this;
 }
 

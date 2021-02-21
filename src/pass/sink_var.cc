@@ -1,5 +1,4 @@
 #include <analyze/deps.h>
-#include <pass/disambiguous.h>
 #include <pass/sink_var.h>
 
 namespace ir {
@@ -85,7 +84,7 @@ Stmt SinkVar::visit(const VarDef &op) {
 }
 
 Stmt sinkVar(const Stmt &_op) {
-    Stmt op = disambiguous(_op);
+    Stmt op = prepareFindDeps(_op);
 
     FindAllLoops finder;
     finder(op);

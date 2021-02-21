@@ -2,8 +2,10 @@
 #include <sstream>
 
 #include <analyze/deps.h>
+#include <analyze/normalize.h>
 #include <except.h>
 #include <mutator.h>
+#include <pass/disambiguous.h>
 #include <pass/simplify.h>
 
 namespace ir {
@@ -41,14 +43,18 @@ void FindAccessPoint::visit(const For &op) {
 
 void FindAccessPoint::visit(const If &op) {
     (*this)(op->cond_);
+    ASSERT(op->infoNotCond_.isValid());
+    (*this)(op->infoNotCond_);
+
     auto oldCond = cond_;
     cond_ = oldCond.isValid() ? makeLAnd(oldCond, op->cond_) : op->cond_;
     (*this)(op->thenCase_);
     if (op->elseCase_.isValid()) {
-        cond_ = oldCond.isValid() ? makeLAnd(oldCond, makeLNot(op->cond_))
-                                  : makeLNot(op->cond_);
+        cond_ = oldCond.isValid() ? makeLAnd(oldCond, op->infoNotCond_)
+                                  : op->infoNotCond_;
         (*this)(op->elseCase_);
     }
+    cond_ = oldCond;
 }
 
 void FindAccessPoint::visit(const Load &op) {
@@ -202,8 +208,6 @@ std::string AnalyzeDeps::makeRange(const std::vector<Expr> &point,
 
 std::string AnalyzeDeps::makeCond(const Expr &expr) {
     if (expr.isValid()) {
-        // TODO: Try to eliminate LNot. But how to simplify a single expression?
-        // auto expr = simplifyPass(_expr);
         if (auto str = genISLExpr_(expr); str.isValid()) {
             return " and " + *str;
         }
@@ -354,17 +358,24 @@ void AnalyzeDeps::visit(const Load &op) {
     }
 }
 
+Stmt prepareFindDeps(const Stmt &_op) {
+    auto op = normalize(_op); // for IfNode::infoNotCond_
+    op = simplifyPass(op);
+    op = disambiguous(op);
+    return op;
+}
+
 void findDeps(
     const Stmt &op,
     const std::vector<std::vector<std::pair<std::string, FindDepsMode>>> &cond,
     const FindDepsCallback &found, bool ignoreReductionWAW) {
     ASSERT(op->noAmbiguous());
 
-    FindAccessPoint visitor;
-    visitor(op);
-    AnalyzeDeps mutator(visitor.points(), visitor.reads(), visitor.writes(),
-                        visitor.scope2coord(), cond, found, ignoreReductionWAW);
-    mutator(op);
+    FindAccessPoint finder;
+    finder(op);
+    AnalyzeDeps analyzer(finder.points(), finder.reads(), finder.writes(),
+                         finder.scope2coord(), cond, found, ignoreReductionWAW);
+    analyzer(op);
 }
 
 } // namespace ir

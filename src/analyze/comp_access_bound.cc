@@ -28,10 +28,10 @@ Stmt CompAccessBound::visit(const VarDef &_op) {
         auto &&access = access_.at(op->name_);
 
         size_t n = op->buffer_->tensor().shape().size();
-        op->info_acc_lower_ = Ref<std::vector<Expr>>::make();
-        op->info_acc_len_ = Ref<std::vector<Expr>>::make();
-        op->info_acc_lower_->reserve(n);
-        op->info_acc_len_->reserve(n);
+        op->infoAccLower_ = Ref<std::vector<Expr>>::make();
+        op->infoAccLen_ = Ref<std::vector<Expr>>::make();
+        op->infoAccLower_->reserve(n);
+        op->infoAccLen_->reserve(n);
 
         for (size_t i = 0; i < n; i++) {
             Expr lower, upper;
@@ -69,8 +69,8 @@ Stmt CompAccessBound::visit(const VarDef &_op) {
                 }
             }
 
-            op->info_acc_lower_->emplace_back(lower);
-            op->info_acc_len_->emplace_back(
+            op->infoAccLower_->emplace_back(lower);
+            op->infoAccLen_->emplace_back(
                 makeAdd(makeSub(upper, lower), makeIntConst(1)));
         }
     } else {

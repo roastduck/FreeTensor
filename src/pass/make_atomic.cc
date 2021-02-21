@@ -1,5 +1,4 @@
 #include <analyze/deps.h>
-#include <pass/disambiguous.h>
 #include <pass/make_atomic.h>
 #include <pass/make_reduction.h>
 
@@ -24,7 +23,7 @@ Stmt MakeAtomic::visit(const ReduceTo &_op) {
 
 Stmt makeAtomic(const Stmt &_op) {
     auto op = makeReduction(_op);
-    op = disambiguous(op); // findDeps need it
+    op = prepareFindDeps(op);
 
     std::vector<std::vector<std::pair<std::string, FindDepsMode>>> cond;
     FindAllParallel finder;

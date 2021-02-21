@@ -54,7 +54,7 @@ Stmt MakeSync::visit(const For &_op) {
     bool oldWarpSynced = warpSynced, oldThreadsSynced = threadsSynced;
 
     if (_op->parallel_ == "threadIdx.x") {
-        thx = getLen(_op->info_len_);
+        thx = getLen(_op->infoLen_);
         auto __op = Mutator::visit(_op);
         ASSERT(__op->nodeType() == ASTNodeType::For);
         auto op = __op.as<ForNode>();
@@ -72,7 +72,7 @@ Stmt MakeSync::visit(const For &_op) {
         return op;
 
     } else if (_op->parallel_ == "threadIdx.y") {
-        thy = getLen(_op->info_len_);
+        thy = getLen(_op->infoLen_);
         auto __op = Mutator::visit(_op);
         ASSERT(__op->nodeType() == ASTNodeType::For);
         auto op = __op.as<ForNode>();
@@ -90,7 +90,7 @@ Stmt MakeSync::visit(const For &_op) {
         return op;
 
     } else if (_op->parallel_ == "threadIdx.z") {
-        thz = getLen(_op->info_len_);
+        thz = getLen(_op->infoLen_);
         auto __op = Mutator::visit(_op);
         ASSERT(__op->nodeType() == ASTNodeType::For);
         auto op = __op.as<ForNode>();

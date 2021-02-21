@@ -61,8 +61,8 @@ class VarDefNode : public StmtNode {
     Ref<Buffer> buffer_;
     Stmt body_;
 
-    Ref<std::vector<Expr>> info_acc_lower_; // lower_bound(access)
-    Ref<std::vector<Expr>> info_acc_len_;   // upper_bound(access_i - access_j)
+    Ref<std::vector<Expr>> infoAccLower_; // lower_bound(access)
+    Ref<std::vector<Expr>> infoAccLen_;   // upper_bound(access_i - access_j)
 
     VarDefNode(const VarDefNode &other);            // Deep copy
     VarDefNode &operator=(const VarDefNode &other); // Deep copy
@@ -131,7 +131,7 @@ class ForNode : public StmtNode {
     std::string parallel_;
     Stmt body_;
 
-    Expr info_len_, info_max_begin_, info_min_end_;
+    Expr infoLen_, infoMaxBegin_, infoMinEnd_;
 
     DEFINE_NODE_TRAIT(For);
 };
@@ -153,6 +153,9 @@ class IfNode : public StmtNode {
   public:
     Expr cond_;
     Stmt thenCase_, elseCase_;
+
+    Expr infoNotCond_;
+
     DEFINE_NODE_TRAIT(If);
 };
 typedef Ref<IfNode> If;

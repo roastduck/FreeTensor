@@ -54,19 +54,19 @@ class Mutator {
         Buffer b(std::move(t), op->buffer_->atype(), op->buffer_->mtype());
         auto ret =
             makeVarDef(op->id(), op->name_, std::move(b), (*this)(op->body_));
-        if (op->info_acc_lower_.isValid()) {
-            auto indices = ret.as<VarDefNode>()->info_acc_lower_ =
+        if (op->infoAccLower_.isValid()) {
+            auto indices = ret.as<VarDefNode>()->infoAccLower_ =
                 Ref<std::vector<Expr>>::make();
-            indices->reserve(op->info_acc_lower_->size());
-            for (auto &&index : *op->info_acc_lower_) {
+            indices->reserve(op->infoAccLower_->size());
+            for (auto &&index : *op->infoAccLower_) {
                 indices->emplace_back((*this)(index));
             }
         }
-        if (op->info_acc_len_.isValid()) {
-            auto indices = ret.as<VarDefNode>()->info_acc_len_ =
+        if (op->infoAccLen_.isValid()) {
+            auto indices = ret.as<VarDefNode>()->infoAccLen_ =
                 Ref<std::vector<Expr>>::make();
-            indices->reserve(op->info_acc_len_->size());
-            for (auto &&index : *op->info_acc_len_) {
+            indices->reserve(op->infoAccLen_->size());
+            for (auto &&index : *op->infoAccLen_) {
                 indices->emplace_back((*this)(index));
             }
         }
@@ -186,22 +186,26 @@ class Mutator {
         auto ret =
             makeFor(op->id(), op->iter_, (*this)(op->begin_), (*this)(op->end_),
                     op->parallel_, (*this)(op->body_));
-        if (op->info_len_.isValid()) {
-            ret.as<ForNode>()->info_len_ = (*this)(op->info_len_);
+        if (op->infoLen_.isValid()) {
+            ret.as<ForNode>()->infoLen_ = (*this)(op->infoLen_);
         }
-        if (op->info_max_begin_.isValid()) {
-            ret.as<ForNode>()->info_max_begin_ = (*this)(op->info_max_begin_);
+        if (op->infoMaxBegin_.isValid()) {
+            ret.as<ForNode>()->infoMaxBegin_ = (*this)(op->infoMaxBegin_);
         }
-        if (op->info_min_end_.isValid()) {
-            ret.as<ForNode>()->info_min_end_ = (*this)(op->info_min_end_);
+        if (op->infoMinEnd_.isValid()) {
+            ret.as<ForNode>()->infoMinEnd_ = (*this)(op->infoMinEnd_);
         }
         return ret;
     }
 
     virtual Stmt visit(const If &op) {
-        return makeIf(op->id(), (*this)(op->cond_), (*this)(op->thenCase_),
-                      op->elseCase_.isValid() ? (*this)(op->elseCase_)
-                                              : nullptr);
+        auto ret =
+            makeIf(op->id(), (*this)(op->cond_), (*this)(op->thenCase_),
+                   op->elseCase_.isValid() ? (*this)(op->elseCase_) : nullptr);
+        if (op->infoNotCond_.isValid()) {
+            ret.as<IfNode>()->infoNotCond_ = (*this)(op->infoNotCond_);
+        }
+        return ret;
     }
 
     virtual Stmt visit(const Assert &op) {

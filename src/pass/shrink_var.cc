@@ -11,9 +11,9 @@ Stmt ShrinkVar::visit(const VarDef &_op) {
 
     offset_.erase(_op->name_);
     size_t n = _op->buffer_->tensor().shape().size();
-    ASSERT(_op->info_acc_len_->size() == n);
-    ASSERT(_op->info_acc_lower_->size() == n);
-    offset_[_op->name_] = *_op->info_acc_lower_;
+    ASSERT(_op->infoAccLen_->size() == n);
+    ASSERT(_op->infoAccLower_->size() == n);
+    offset_[_op->name_] = *_op->infoAccLower_;
 
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::VarDef);
@@ -22,11 +22,11 @@ Stmt ShrinkVar::visit(const VarDef &_op) {
     op->buffer_ = op->buffer_.clone();
     auto &shape = op->buffer_->tensor().shape();
     for (size_t i = 0; i < n; i++) {
-        shape[i] = (*op->info_acc_len_)[i];
+        shape[i] = (*op->infoAccLen_)[i];
     }
 
-    op->info_acc_lower_ = nullptr;
-    op->info_acc_len_ = nullptr;
+    op->infoAccLower_ = nullptr;
+    op->infoAccLen_ = nullptr;
     return op;
 }
 

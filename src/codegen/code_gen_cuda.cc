@@ -100,10 +100,10 @@ void CodeGenCUDA::visit(const For &op) {
                op->parallel_ == "threadIdx.x" ||
                op->parallel_ == "threadIdx.y" ||
                op->parallel_ == "threadIdx.z") {
-        if (op->info_len_->nodeType() != ASTNodeType::IntConst) {
+        if (op->infoLen_->nodeType() != ASTNodeType::IntConst) {
             std::ostringstream msg;
             msg << "Length of " << op->parallel_
-                << " should be constant, instead of " << op->info_len_;
+                << " should be constant, instead of " << op->infoLen_;
             throw Error(msg.str());
         }
         if (!inKernel()) {
@@ -112,7 +112,7 @@ void CodeGenCUDA::visit(const For &op) {
             beginBlock();
             (*this)(op->body_);
             streamStack_.back().threadDim_[op->parallel_] =
-                op->info_len_.as<IntConstNode>()->val_;
+                op->infoLen_.as<IntConstNode>()->val_;
             endBlock();
             popStream();
             Stream &stream = poppedStream_.back();
@@ -139,7 +139,7 @@ void CodeGenCUDA::visit(const For &op) {
         } else {
             (*this)(op->body_);
             streamStack_.back().threadDim_[op->parallel_] =
-                op->info_len_.as<IntConstNode>()->val_;
+                op->infoLen_.as<IntConstNode>()->val_;
         }
     } else {
         throw Error("Unsupported parallel method" + op->parallel_);

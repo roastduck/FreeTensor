@@ -224,3 +224,69 @@ def test_floor_div():
 
 	assert std.match(ast)
 
+def test_simplify_not_cmp():
+	with ir.VarDef([
+			("x", (4,), "int32", "input", "cpu"),
+			("y1", (4,), "int32", "output", "cpu"),
+			("y2", (4,), "int32", "output", "cpu"),
+			("y3", (4,), "int32", "output", "cpu"),
+			("y4", (4,), "int32", "output", "cpu"),
+			("y5", (4,), "int32", "output", "cpu"),
+			("y6", (4,), "int32", "output", "cpu")]) as (x, y1, y2, y3, y4, y5, y6):
+		with ir.For("i", 0, 4) as i:
+			y1[i] = ir.l_not(x[i] < 5)
+			y1[i] = ir.l_not(x[i] <= 5)
+			y1[i] = ir.l_not(x[i] > 5)
+			y1[i] = ir.l_not(x[i] >= 5)
+			y1[i] = ir.l_not(x[i] == 5)
+			y1[i] = ir.l_not(x[i] != 5)
+	ast = ir.pop_ast()
+	print(ast)
+	ast = ir.lower(ast)
+	print(ast)
+
+	with ir.VarDef([
+			("x", (4,), "int32", "input", "cpu"),
+			("y1", (4,), "int32", "output", "cpu"),
+			("y2", (4,), "int32", "output", "cpu"),
+			("y3", (4,), "int32", "output", "cpu"),
+			("y4", (4,), "int32", "output", "cpu"),
+			("y5", (4,), "int32", "output", "cpu"),
+			("y6", (4,), "int32", "output", "cpu")]) as (x, y1, y2, y3, y4, y5, y6):
+		with ir.For("i", 0, 4) as i:
+			y1[i] = x[i] >= 5
+			y1[i] = x[i] > 5
+			y1[i] = x[i] <= 5
+			y1[i] = x[i] < 5
+			y1[i] = x[i] != 5
+			y1[i] = x[i] == 5
+	std = ir.pop_ast()
+
+	assert std.match(ast)
+
+def test_simplify_not_logic_op():
+	with ir.VarDef([
+			("x", (4,), "int32", "input", "cpu"),
+			("y", (4,), "int32", "output", "cpu")]) as (x, y):
+		with ir.For("i", 0, 4) as i:
+			with ir.If(ir.l_not(ir.l_and(x[i] >= 0, x[i] < 10))):
+				y[i] = x[i]
+			with ir.Else():
+				y[i] = 0
+	ast = ir.pop_ast()
+	print(ast)
+	ast = ir.lower(ast)
+	print(ast)
+
+	with ir.VarDef([
+			("x", (4,), "int32", "input", "cpu"),
+			("y", (4,), "int32", "output", "cpu")]) as (x, y):
+		with ir.For("i", 0, 4) as i:
+			with ir.If(ir.l_or(x[i] < 0, x[i] >= 10)):
+				y[i] = x[i]
+			with ir.Else():
+				y[i] = 0
+	std = ir.pop_ast()
+
+	assert std.match(ast)
+

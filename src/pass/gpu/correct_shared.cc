@@ -25,7 +25,7 @@ Stmt CorrectShared::visit(const VarDef &_op) {
         for (int i = pos - 1; i >= 0; i--) {
             op->buffer_ = op->buffer_.clone();
             auto &shape = op->buffer_->tensor().shape();
-            shape.insert(shape.begin(), stack_[i]->info_len_);
+            shape.insert(shape.begin(), stack_[i]->infoLen_);
         }
         return op;
     } else {

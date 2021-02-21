@@ -200,11 +200,13 @@ class AnalyzeDeps : public Visitor {
     void visit(const Load &op) override;
 };
 
+Stmt prepareFindDeps(const Stmt &op);
+
 /**
  * Find all inverse (negative) dependencies along the given loops
  *
- * @param op : AST root. The user should run the `disambiguous` pass before pass
- * it in
+ * @param op : AST root. The user should run the `prepareFindDeps` pass before
+ * pass it in
  * @param cond : conditions to check: reduce_and [ reduce_or [ axis, mode ]]
  * @param found : callback(sub-condition that fails, var name, later op, earlier
  * op, later cursor, earlier cursor)

@@ -32,12 +32,12 @@ void PrintVisitor::visit(const Any &op) {
 
 void PrintVisitor::visit(const VarDef &op) {
     printId(op);
-    if (op->info_acc_lower_.isValid() && op->info_acc_len_.isValid()) {
+    if (op->infoAccLower_.isValid() && op->infoAccLen_.isValid()) {
         makeIndent();
         os() << "// lower = [";
-        printList(*op->info_acc_lower_);
+        printList(*op->infoAccLower_);
         os() << "], len = [";
-        printList(*op->info_acc_len_);
+        printList(*op->infoAccLen_);
         os() << "]" << std::endl;
     }
     makeIndent();
@@ -236,12 +236,12 @@ void PrintVisitor::visit(const LNot &op) {
 
 void PrintVisitor::visit(const For &op) {
     printId(op);
-    if (op->info_max_begin_.isValid() && op->info_min_end_.isValid()) {
+    if (op->infoMaxBegin_.isValid() && op->infoMinEnd_.isValid()) {
         makeIndent();
         os() << "// max_begin = ";
-        recur(op->info_max_begin_);
+        recur(op->infoMaxBegin_);
         os() << ", min_end = ";
-        recur(op->info_min_end_);
+        recur(op->infoMinEnd_);
         os() << std::endl;
     }
     if (!op->parallel_.empty()) {
