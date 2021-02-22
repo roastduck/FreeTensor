@@ -88,13 +88,13 @@ Stmt sinkVar(const Stmt &_op) {
 
     FindAllLoops finder;
     finder(op);
-    std::vector<std::vector<std::pair<std::string, FindDepsMode>>> cond;
+    std::vector<std::vector<std::pair<std::string, DepDirection>>> cond;
     cond.reserve(finder.loops().size());
     for (auto &&loop : finder.loops()) {
-        cond.push_back({{loop, FindDepsMode::Normal}});
+        cond.push_back({{loop, DepDirection::Normal}});
     }
     std::set<std::pair<std::string, std::string>> deps; // {(var, loop)}
-    auto found = [&](const std::vector<std::pair<std::string, FindDepsMode>> &c,
+    auto found = [&](const std::vector<std::pair<std::string, DepDirection>> &c,
                      const std::string &var, const AST &later,
                      const AST &earlier, const Cursor &, const Cursor &) {
         ASSERT(c.size() == 1);

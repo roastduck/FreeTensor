@@ -81,7 +81,7 @@ void Schedule::reorder(const std::vector<std::string> &dstOrder) {
 
                     auto found =
                         [&](const std::vector<
-                                std::pair<std::string, FindDepsMode>> &cond,
+                                std::pair<std::string, DepDirection>> &cond,
                             const std::string &var, const AST &later,
                             const AST &earlier, const Cursor &,
                             const Cursor &) {
@@ -94,8 +94,8 @@ void Schedule::reorder(const std::vector<std::string> &dstOrder) {
                             throw InvalidSchedule(os.str());
                         };
                     findDeps(ast,
-                             {{{curOrder[j]->id(), FindDepsMode::Inv}},
-                              {{curOrder[j + 1]->id(), FindDepsMode::Inv}}},
+                             {{{curOrder[j]->id(), DepDirection::Inv}},
+                              {{curOrder[j + 1]->id(), DepDirection::Inv}}},
                              found);
 
                     SwapFor swapper(curOrder[j], curOrder[j + 1]);
@@ -161,11 +161,11 @@ Schedule::fission(const std::string &loop, const std::string &after,
         auto variantExpr = findLoopVariance(ast);
 
         // var name -> loop id
-        std::vector<std::vector<std::pair<std::string, FindDepsMode>>> disjunct;
+        std::vector<std::vector<std::pair<std::string, DepDirection>>> disjunct;
         for (const std::string &inner : hoist.innerLoops()) {
-            std::vector<std::pair<std::string, FindDepsMode>> conjunct{
-                {inner, FindDepsMode::Normal},
-                {hoist.seqId(), FindDepsMode::Inv}};
+            std::vector<std::pair<std::string, DepDirection>> conjunct{
+                {inner, DepDirection::Normal},
+                {hoist.seqId(), DepDirection::Inv}};
             disjunct.emplace_back(std::move(conjunct));
         }
         auto isRealWrite = [&](const std::string &loop, const AST &op) -> bool {
@@ -183,7 +183,7 @@ Schedule::fission(const std::string &loop, const std::string &after,
         };
         std::unordered_map<std::string, std::vector<std::string>> toAdd;
         auto found =
-            [&](const std::vector<std::pair<std::string, FindDepsMode>> &cond,
+            [&](const std::vector<std::pair<std::string, DepDirection>> &cond,
                 const std::string &var, const AST &later, const AST &earlier,
                 const Cursor &, const Cursor &) {
                 ASSERT(cond.size() >= 2);
@@ -227,14 +227,14 @@ std::string Schedule::fuse(const std::string &loop0, const std::string &loop1) {
         ast = prepareFindDeps(ast);
 
         auto found =
-            [&](const std::vector<std::pair<std::string, FindDepsMode>> &cond,
+            [&](const std::vector<std::pair<std::string, DepDirection>> &cond,
                 const std::string &var, const AST &later, const AST &earlier,
                 const Cursor &, const Cursor &) {
                 ASSERT(cond.size() == 1);
                 throw InvalidSchedule(
                     dep2Str(cond[0].first, var, later, earlier));
             };
-        findDeps(ast, {{{loop0, FindDepsMode::Inv}}}, found);
+        findDeps(ast, {{{loop0, DepDirection::Inv}}}, found);
 
         ast = mutator(ast);
 
@@ -275,7 +275,7 @@ void Schedule::swap(const std::vector<std::string> &order) {
             return nullptr;
         };
         auto found =
-            [&](const std::vector<std::pair<std::string, FindDepsMode>> &cond,
+            [&](const std::vector<std::pair<std::string, DepDirection>> &cond,
                 const std::string &var, const AST &later, const AST &earlier,
                 const Cursor &laterCursor, const Cursor &earlierCursor) {
                 auto s0 = findParentStmt(laterCursor);
@@ -301,7 +301,7 @@ void Schedule::swap(const std::vector<std::string> &order) {
                 }
             };
         ast = prepareFindDeps(ast);
-        findDeps(ast, {{{scope->id(), FindDepsMode::Normal}}}, found);
+        findDeps(ast, {{{scope->id(), DepDirection::Normal}}}, found);
     } catch (const InvalidSchedule &e) {
         std::string msg = "Invalid reorder(";
         for (size_t i = 0, iEnd = order.size(); i < iEnd; i++) {
@@ -395,9 +395,37 @@ std::string Schedule::moveTo(const std::string &_stmt, const std::string &_dst,
                     stmt = idMap.at(s.id());
                 }
                 // TODO: Fuse if d is inner of s
+
             } else {
-                // TODO
-                ASSERT(false);
+                if (s.hasNext()) {
+                    std::vector<std::string> order;
+                    if (!s.next().isBefore(d)) {
+                        return s.id();
+                    }
+                    while (s.hasNext() && s.next().isBefore(d)) {
+                        s = s.next();
+                        order.emplace_back(s.id());
+                    }
+                    order.emplace_back(stmt);
+                    swap(order);
+                } else {
+                    if (!s.outer().isBefore(d)) {
+                        return s.id();
+                    }
+                    while (!s.hasNext() && s.outer().isBefore(d)) {
+                        s = s.outer();
+                    }
+                    // TODO: Fission IfNode
+                    ASSERT(s.top()->nodeType() == ASTNodeType::For);
+                    Cursor stmtCursor = getCursorById(ast_, stmt);
+                    ASSERT(stmtCursor.hasPrev());
+                    // Leave IDs of the other statements unchanged
+                    auto idMap =
+                        fission(s.id(), stmtCursor.prev().id(), "", ".b")
+                            .second;
+                    stmt = idMap.at(s.id());
+                }
+                // TODO: Fuse if d is inner of s
             }
         }
     } catch (const InvalidSchedule &e) {

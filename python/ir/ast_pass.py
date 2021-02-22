@@ -10,12 +10,14 @@ from ffi import merge_if
 from ffi import seperate_tail
 from ffi import make_reduction
 from ffi import make_atomic
+from ffi import remove_writes
 from ffi import gpu_make_sync
 from ffi import gpu_correct_shared
 from ffi import gpu_normalize_threads
 
 def lower(ast, target: Optional[ffi.Target]=None):
 	ast = simplify_pass(ast)
+	ast = remove_writes(ast)
 	ast = sink_var(ast)
 	ast = shrink_var(ast)
 	ast = shrink_for(ast)

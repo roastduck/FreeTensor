@@ -25,15 +25,15 @@ Stmt makeAtomic(const Stmt &_op) {
     auto op = makeReduction(_op);
     op = prepareFindDeps(op);
 
-    std::vector<std::vector<std::pair<std::string, FindDepsMode>>> cond;
+    std::vector<std::vector<std::pair<std::string, DepDirection>>> cond;
     FindAllParallel finder;
     finder(op);
     for (auto &&loop : finder.results()) {
-        cond.push_back({{loop, FindDepsMode::Normal}});
+        cond.push_back({{loop, DepDirection::Normal}});
     }
 
     std::unordered_set<std::string> toAlter;
-    auto found = [&](const std::vector<std::pair<std::string, FindDepsMode>> &,
+    auto found = [&](const std::vector<std::pair<std::string, DepDirection>> &,
                      const std::string &, const AST &later, const AST &earlier,
                      const Cursor &, const Cursor &) {
         if (later->nodeType() == ASTNodeType::ReduceTo &&
@@ -42,7 +42,7 @@ Stmt makeAtomic(const Stmt &_op) {
             toAlter.insert(earlier.as<ReduceToNode>()->id());
         }
     };
-    findDeps(op, cond, found, false);
+    findDeps(op, cond, found, FindDepsMode::Dep, DEP_ALL, false);
 
     return MakeAtomic(toAlter)(op);
 }

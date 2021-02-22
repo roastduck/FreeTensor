@@ -156,24 +156,28 @@ std::string AnalyzeDeps::makeIterList(const std::vector<Expr> &list,
     return "[" + ret + "]";
 }
 
-std::string AnalyzeDeps::makeAccList(const std::vector<Expr> &list) {
+Ref<std::string> AnalyzeDeps::makeAccList(const std::vector<Expr> &list,
+                                          RelaxMode relax) {
     std::string ret;
     for (int i = 0, iEnd = list.size(); i < iEnd; i++) {
         if (auto linstr = genISLExpr_(list[i]); linstr.isValid()) {
             ret += *linstr;
-        } else {
+        } else if (relax == RelaxMode::Possible) {
             ret += genISLExpr_.normalizeId("free" + std::to_string(i));
+        } else {
+            return nullptr;
         }
         if (i < iEnd - 1) {
             ret += ", ";
         }
     }
-    return "[" + ret + "]";
+    return Ref<std::string>::make("[" + ret + "]");
 }
 
-std::string AnalyzeDeps::makeRange(const std::vector<Expr> &point,
-                                   const std::vector<Expr> &begin,
-                                   const std::vector<Expr> &end) {
+Ref<std::string> AnalyzeDeps::makeRange(const std::vector<Expr> &point,
+                                        const std::vector<Expr> &begin,
+                                        const std::vector<Expr> &end,
+                                        RelaxMode relax) {
     size_t n = point.size();
     ASSERT(begin.size() == n);
     ASSERT(end.size() == n);
@@ -193,26 +197,49 @@ std::string AnalyzeDeps::makeRange(const std::vector<Expr> &point,
             }
             if (bounded) {
                 ineqs.emplace_back(std::move(ineq));
+            } else if (relax == RelaxMode::Necessary) {
+                return nullptr;
             }
         }
     }
     std::string ret;
     for (size_t i = 0, iEnd = ineqs.size(); i < iEnd; i++) {
-        if (i > 0) {
-            ret += " and ";
-        }
+        ret += i == 0 ? ": " : " and ";
         ret += ineqs[i];
     }
-    return ret;
+    return Ref<std::string>::make(std::move(ret));
 }
 
-std::string AnalyzeDeps::makeCond(const Expr &expr) {
+Ref<std::string> AnalyzeDeps::makeCond(const Expr &expr, RelaxMode relax) {
     if (expr.isValid()) {
         if (auto str = genISLExpr_(expr); str.isValid()) {
-            return " and " + *str;
+            return Ref<std::string>::make(" and " + *str);
+        } else if (relax == RelaxMode::Necessary) {
+            return nullptr;
         }
     }
-    return "";
+    return Ref<std::string>::make("");
+}
+
+Ref<std::string> AnalyzeDeps::makeAccMap(const AccessPoint &p, int iterDim,
+                                         int accDim, RelaxMode relax) {
+    auto ret = makeIterList(p.iter_, p.defAxis_, iterDim) + " -> ";
+    if (auto str = makeAccList(p.access_, relax); str.isValid()) {
+        ret += *str;
+    } else {
+        return nullptr;
+    }
+    if (auto str = makeRange(p.iter_, p.begin_, p.end_, relax); str.isValid()) {
+        ret += *str;
+    } else {
+        return nullptr;
+    }
+    if (auto str = makeCond(p.cond_, relax); str.isValid()) {
+        ret += *str;
+    } else {
+        return nullptr;
+    }
+    return Ref<std::string>::make("{" + ret + "}");
 }
 
 std::string AnalyzeDeps::makeNdList(const std::string &name, int n) const {
@@ -224,13 +251,6 @@ std::string AnalyzeDeps::makeNdList(const std::string &name, int n) const {
         }
     }
     return "[" + ret + "]";
-}
-
-std::string AnalyzeDeps::makeAccMap(const AccessPoint &p, int iterDim,
-                                    int accDim) {
-    return "{" + makeIterList(p.iter_, p.defAxis_, iterDim) + " -> " +
-           makeAccList(p.access_) + ": " +
-           makeRange(p.iter_, p.begin_, p.end_) + makeCond(p.cond_) + "}";
 }
 
 std::string
@@ -250,18 +270,18 @@ AnalyzeDeps::makeEqForBothOps(const std::vector<std::pair<int, int>> &coord,
     return os.str();
 }
 
-std::string AnalyzeDeps::makeIneqBetweenOps(FindDepsMode mode, int iterId,
+std::string AnalyzeDeps::makeIneqBetweenOps(DepDirection mode, int iterId,
                                             int iterDim) const {
     auto idStr = std::to_string(iterId);
     std::string ineq;
     switch (mode) {
-    case FindDepsMode::Inv:
+    case DepDirection::Inv:
         ineq = ">";
         break;
-    case FindDepsMode::Same:
+    case DepDirection::Same:
         ineq = "=";
         break;
-    case FindDepsMode::Normal:
+    case DepDirection::Normal:
         ineq = "<";
         break;
     default:
@@ -289,12 +309,35 @@ void AnalyzeDeps::checkDep(const AccessPoint &point, const AccessPoint &other) {
     int accDim = point.access_.size();
     ASSERT((int)other.access_.size() == accDim);
 
-    isl_basic_map *pmap = isl_basic_map_read_from_str(
-        isl_, makeAccMap(point, iterDim, accDim).c_str());
-    isl_basic_map *omap = isl_basic_map_read_from_str(
-        isl_, makeAccMap(other, iterDim, accDim).c_str());
+    auto pRelax = mode_ == FindDepsMode::Kill ? RelaxMode::Necessary
+                                              : RelaxMode::Possible; // later
+    auto oRelax = RelaxMode::Possible;                               // earlier
+
+    isl_basic_map *pmap, *omap;
+    if (auto str = makeAccMap(point, iterDim, accDim, pRelax); str.isValid()) {
+        pmap = isl_basic_map_read_from_str(isl_, str->c_str());
+    } else {
+        return;
+    }
+    if (auto str = makeAccMap(other, iterDim, accDim, oRelax); str.isValid()) {
+        omap = isl_basic_map_read_from_str(isl_, str->c_str());
+    } else {
+        isl_basic_map_free(pmap);
+        return;
+    }
+
+    isl_basic_set *pIter = isl_basic_map_domain(isl_basic_map_copy(omap));
     isl_basic_map *depall =
         isl_basic_map_apply_range(pmap, isl_basic_map_reverse(omap));
+    isl_basic_set *pIterKilled =
+        isl_basic_map_range(isl_basic_map_copy(depall));
+    bool fullyKilled = isl_basic_set_is_equal(pIter, pIterKilled);
+    isl_basic_set_free(pIter);
+    isl_basic_set_free(pIterKilled);
+    if (mode_ == FindDepsMode::Kill && !fullyKilled) {
+        isl_basic_map_free(depall);
+        return;
+    }
 
     isl_basic_set *domain = isl_basic_set_read_from_str(
         isl_, ("{" + makeNdList("d", iterDim) + "}").c_str());
@@ -310,7 +353,7 @@ void AnalyzeDeps::checkDep(const AccessPoint &point, const AccessPoint &other) {
         for (auto &&subitem : item) {
             auto &&coord = scope2coord_.at(subitem.first);
             int iterId = coord.size() - 1;
-            FindDepsMode mode = subitem.second;
+            DepDirection mode = subitem.second;
             if (iterId >= iterDim) {
                 found = false;
                 break;
@@ -351,10 +394,12 @@ void AnalyzeDeps::checkDep(const AccessPoint &point, const AccessPoint &other) {
 
 void AnalyzeDeps::visit(const Load &op) {
     Visitor::visit(op);
-    auto &&point = points_.at(op);
-    auto range = writes_.equal_range(op->var_);
-    for (auto i = range.first; i != range.second; i++) {
-        checkDep(*point, *(i->second)); // RAW
+    if (depType_ & DEP_RAW) {
+        auto &&point = points_.at(op);
+        auto range = writes_.equal_range(op->var_);
+        for (auto i = range.first; i != range.second; i++) {
+            checkDep(*point, *(i->second));
+        }
     }
 }
 
@@ -367,14 +412,16 @@ Stmt prepareFindDeps(const Stmt &_op) {
 
 void findDeps(
     const Stmt &op,
-    const std::vector<std::vector<std::pair<std::string, FindDepsMode>>> &cond,
-    const FindDepsCallback &found, bool ignoreReductionWAW) {
+    const std::vector<std::vector<std::pair<std::string, DepDirection>>> &cond,
+    const FindDepsCallback &found, FindDepsMode mode, DepType depType,
+    bool ignoreReductionWAW) {
     ASSERT(op->noAmbiguous());
 
     FindAccessPoint finder;
     finder(op);
     AnalyzeDeps analyzer(finder.points(), finder.reads(), finder.writes(),
-                         finder.scope2coord(), cond, found, ignoreReductionWAW);
+                         finder.scope2coord(), cond, found, mode, depType,
+                         ignoreReductionWAW);
     analyzer(op);
 }
 

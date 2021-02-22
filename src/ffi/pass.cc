@@ -6,6 +6,7 @@
 #include <pass/make_atomic.h>
 #include <pass/make_reduction.h>
 #include <pass/merge_if.h>
+#include <pass/remove_writes.h>
 #include <pass/seperate_tail.h>
 #include <pass/shrink_for.h>
 #include <pass/shrink_var.h>
@@ -26,6 +27,7 @@ void init_ffi_pass(py::module_ &m) {
     m.def("seperate_tail", &seperateTail, "ast"_a);
     m.def("make_reduction", &makeReduction, "ast"_a);
     m.def("make_atomic", &makeAtomic, "ast"_a);
+    m.def("remove_writes", &removeWrites, "ast"_a);
 
     // GPU
     m.def("gpu_normalize_threads", &gpu::normalizeThreads, "ast"_a);

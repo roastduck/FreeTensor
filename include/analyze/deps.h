@@ -110,19 +110,28 @@ class GenISLExpr {
     Ref<std::string> operator()(const Expr &op);
 };
 
-enum class FindDepsMode : int {
+enum class DepDirection : int {
     Normal,
     Same,
     Inv,
 };
 
-typedef std::vector<std::pair<std::string, FindDepsMode>> FindDepsCond;
+typedef std::vector<std::pair<std::string, DepDirection>> FindDepsCond;
 
 typedef std::function<void(
-    const std::vector<std::pair<std::string, FindDepsMode>> &,
+    const std::vector<std::pair<std::string, DepDirection>> &,
     const std::string &, const AST &, const AST &, const Cursor &,
     const Cursor &)>
     FindDepsCallback;
+
+typedef int DepType;
+const DepType DEP_WAW = 0x1;
+const DepType DEP_WAR = 0x2;
+const DepType DEP_RAW = 0x4;
+const DepType DEP_ALL = DEP_WAW | DEP_WAR | DEP_RAW;
+
+enum class RelaxMode : int { Possible, Necessary };
+enum class FindDepsMode : int { Dep, Kill };
 
 /**
  * Find RAW, WAR and WAW dependencies
@@ -137,6 +146,8 @@ class AnalyzeDeps : public Visitor {
     const std::vector<FindDepsCond> &cond_;
     const FindDepsCallback &found_;
 
+    FindDepsMode mode_;
+    DepType depType_;
     bool ignoreReductionWAW_;
 
     isl_ctx *isl_;
@@ -148,10 +159,10 @@ class AnalyzeDeps : public Visitor {
         const std::unordered_multimap<std::string, Ref<AccessPoint>> &writes,
         const std::unordered_map<std::string, std::vector<Expr>> &scope2coord,
         const std::vector<FindDepsCond> &cond, const FindDepsCallback &found,
-        bool ignoreReductionWAW)
+        FindDepsMode mode, DepType depType, bool ignoreReductionWAW)
         : points_(points), reads_(reads), writes_(writes),
-          scope2coord_(scope2coord), cond_(cond), found_(found),
-          ignoreReductionWAW_(ignoreReductionWAW) {
+          scope2coord_(scope2coord), cond_(cond), found_(found), mode_(mode),
+          depType_(depType), ignoreReductionWAW_(ignoreReductionWAW) {
         isl_ = isl_ctx_alloc();
     }
 
@@ -160,16 +171,19 @@ class AnalyzeDeps : public Visitor {
   private:
     std::string makeIterList(const std::vector<Expr> &list, int eraseBefore,
                              int n);
-    std::string makeAccList(const std::vector<Expr> &list);
-    std::string makeRange(const std::vector<Expr> &point,
-                          const std::vector<Expr> &begin,
-                          const std::vector<Expr> &end);
-    std::string makeCond(const Expr &cond);
+    Ref<std::string> makeAccList(const std::vector<Expr> &list,
+                                 RelaxMode relax);
+    Ref<std::string> makeRange(const std::vector<Expr> &point,
+                               const std::vector<Expr> &begin,
+                               const std::vector<Expr> &end, RelaxMode relax);
+    Ref<std::string> makeCond(const Expr &cond, RelaxMode relax);
+    Ref<std::string> makeAccMap(const AccessPoint &p, int iterDim, int accDim,
+                                RelaxMode relax);
+
     std::string makeNdList(const std::string &name, int n) const;
-    std::string makeAccMap(const AccessPoint &p, int iterDim, int accDim);
     std::string makeEqForBothOps(const std::vector<std::pair<int, int>> &coord,
                                  int iterDim) const;
-    std::string makeIneqBetweenOps(FindDepsMode mode, int iterId,
+    std::string makeIneqBetweenOps(DepDirection mode, int iterId,
                                    int iterDim) const;
 
     static const std::string &getVar(const AST &op);
@@ -179,18 +193,22 @@ class AnalyzeDeps : public Visitor {
     template <class T> void visitStoreLike(const T &op) {
         Visitor::visit(op);
         auto &&point = points_.at(op);
-        auto range = reads_.equal_range(op->var_);
-        for (auto i = range.first; i != range.second; i++) {
-            checkDep(*point, *(i->second)); // WAR
-        }
-        range = writes_.equal_range(op->var_);
-        for (auto i = range.first; i != range.second; i++) {
-            if (ignoreReductionWAW_ && op->nodeType() != ASTNodeType::Store &&
-                i->second->op_->nodeType() != ASTNodeType::Store) {
-                // No dependency between reductions
-                continue;
+        if (depType_ & DEP_WAR) {
+            auto range = reads_.equal_range(op->var_);
+            for (auto i = range.first; i != range.second; i++) {
+                checkDep(*point, *(i->second));
             }
-            checkDep(*point, *(i->second)); // WAW
+        }
+        if (depType_ & DEP_WAW) {
+            auto range = writes_.equal_range(op->var_);
+            for (auto i = range.first; i != range.second; i++) {
+                if (ignoreReductionWAW_ &&
+                    op->nodeType() == ASTNodeType::ReduceTo &&
+                    i->second->op_->nodeType() == ASTNodeType::ReduceTo) {
+                    continue;
+                }
+                checkDep(*point, *(i->second));
+            }
         }
     }
 
@@ -203,18 +221,23 @@ class AnalyzeDeps : public Visitor {
 Stmt prepareFindDeps(const Stmt &op);
 
 /**
- * Find all inverse (negative) dependencies along the given loops
+ * Find all dependencies of a specific type along the given loops
  *
  * @param op : AST root. The user should run the `prepareFindDeps` pass before
  * pass it in
- * @param cond : conditions to check: reduce_and [ reduce_or [ axis, mode ]]
+ * @param cond : conditions to check: reduce_or [ reduce_and [ axis, mode ]]
  * @param found : callback(sub-condition that fails, var name, later op, earlier
  * op, later cursor, earlier cursor)
+ * @param mode : Dep: all possible dependencies; Kill: all the situations that a
+ * later access completely covers a earlier one
+ * @param depType : WAW, RAW, RAW, or their combinations
  * @param ignoreReductionWAW : Ignore WAW dependencies between two ReduceTo
- * nodes. This kind of dependencies is false dependencies if running serially
+ * nodes. This kind of dependencies are false dependencies if running serially
  */
 void findDeps(const Stmt &op, const std::vector<FindDepsCond> &cond,
-              const FindDepsCallback &found, bool ignoreReductionWAW = true);
+              const FindDepsCallback &found,
+              FindDepsMode mode = FindDepsMode::Dep, DepType depType = DEP_ALL,
+              bool ignoreReductionWAW = true);
 
 }; // namespace ir
 

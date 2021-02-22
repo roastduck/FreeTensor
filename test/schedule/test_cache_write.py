@@ -53,8 +53,7 @@ def test_reduction():
 		with ir.For("i", 0, 4) as i:
 			with ir.For("j", 0, 8) as j:
 				with ir.VarDef("b", (1, 1), "int32", "cache", "cpu") as b:
-					b[0, 0] = 0
-					b[0, 0] = b[0, 0] + x[i, j] * 2
+					b[0, 0] = 2 * x[i, j] # After remove_writes pass
 					y[i, j] = y[i, j] + b[0, 0]
 	std = ir.make_reduction(ir.pop_ast())
 
