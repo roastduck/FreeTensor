@@ -331,10 +331,10 @@ std::pair<std::string, std::string> Schedule::cacheRead(const std::string &stmt,
     return std::make_pair(mutator.fillStmt(), mutator.cacheVar());
 }
 
-std::pair<std::string, std::string>
+std::tuple<std::string, std::string, std::string>
 Schedule::cacheWrite(const std::string &stmt, const std::string &var,
                      MemType mtype) {
-    auto ast = ast_;
+    auto ast = makeReduction(ast_);
     CacheWrite mutator(stmt, var, mtype);
     try {
         ast = mutator(ast);
@@ -347,7 +347,8 @@ Schedule::cacheWrite(const std::string &stmt, const std::string &var,
                               "): " + e.what());
     }
     ast_ = ast;
-    return std::make_pair(mutator.flushStmt(), mutator.cacheVar());
+    return std::make_tuple(mutator.initStmt(), mutator.flushStmt(),
+                           mutator.cacheVar());
 }
 
 std::string Schedule::moveTo(const std::string &_stmt, const std::string &_dst,

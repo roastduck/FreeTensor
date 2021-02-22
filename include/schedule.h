@@ -122,10 +122,11 @@ class Schedule {
      * @param var : name of the variable to be cached
      * @param mtype : where to cache
      * @throw InvalidSchedule if the ID or name is not found
-     * @return : (ID of the statement that flushes from the cache, name of the
-     * cache variable)
+     * @return : (ID of the statement that initialize the cache for reduction,
+     * ID of the statement that flushes from the cache, name of the cache
+     * variable)
      */
-    std::pair<std::string, std::string>
+    std::tuple<std::string, std::string, std::string>
     cacheWrite(const std::string &stmt, const std::string &var, MemType mtype);
 
     /**

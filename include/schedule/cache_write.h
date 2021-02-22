@@ -9,7 +9,7 @@
 namespace ir {
 
 class CacheWrite : public Mutator {
-    std::string stmt_, var_, flushStmt_, cacheVar_;
+    std::string stmt_, var_, initStmt_, flushStmt_, cacheVar_;
     MemType mtype_;
     Ref<Buffer> buffer_;
     std::vector<Stmt> stores_;
@@ -19,14 +19,17 @@ class CacheWrite : public Mutator {
 
   public:
     CacheWrite(const std::string &stmt, const std::string &var, MemType mtype)
-        : stmt_(stmt), var_(var), flushStmt_(stmt_ + ".final"),
-          cacheVar_(var + ".w"), mtype_(mtype) {}
+        : stmt_(stmt), var_(var), initStmt_(stmt_ + ".init"),
+          flushStmt_(stmt_ + ".final"), cacheVar_(var + ".w"), mtype_(mtype) {}
 
+    const std::string &initStmt() const { return initStmt_; }
     const std::string &flushStmt() const { return flushStmt_; }
     const std::string &cacheVar() const { return cacheVar_; }
     bool modified() const { return modified_; }
 
   private:
+    Expr makeNeutralVal(DataType dtype, ReduceOp op);
+
     template <class T, class U> bool sameIndices(const T &lhs, const U &rhs) {
         ASSERT(lhs->indices_.size() == rhs->indices_.size());
         for (size_t i = 0, iEnd = lhs->indices_.size(); i < iEnd; i++) {
@@ -94,7 +97,8 @@ class CacheWrite : public Mutator {
                     "no stores to the specified variable in the given scope");
             }
 
-            // Make cache flush
+            // Make cache init and flush
+            Stmt init;
             std::vector<Stmt> flush;
             for (auto &&item : stores_) {
                 if (!checkAllDefined(defs_, item)) {
@@ -112,6 +116,15 @@ class CacheWrite : public Mutator {
                 case ASTNodeType::ReduceTo: {
                     auto &&indices = item.as<ReduceToNode>()->indices_;
                     auto reduceOp = item.as<ReduceToNode>()->op_;
+                    if (init.isValid()) {
+                        throw InvalidSchedule(
+                            "Only one reduction statement (ReduceTo node) is "
+                            "allowed in a cached region. This is to ensure the "
+                            "commutative law of the reduciton");
+                    }
+                    init = makeStore(
+                        "", cacheVar_, indices,
+                        makeNeutralVal(buffer_->tensor().dtype(), reduceOp));
                     flush.emplace_back(
                         makeReduceTo("", var_, indices, reduceOp,
                                      makeLoad(cacheVar_, indices),
@@ -123,10 +136,12 @@ class CacheWrite : public Mutator {
                 }
             }
 
+            init = init.isValid() ? init : makeStmtSeq("", {});
             auto f = flush.size() == 1 ? flush[0]
                                        : makeStmtSeq("", std::move(flush));
+            init->setId(initStmt_);
             f->setId(flushStmt_);
-            ret = makeStmtSeq("", {ret, f});
+            ret = makeStmtSeq("", {init, ret, f});
             ret = makeVarDef("", cacheVar_, *buffer_, std::move(ret));
             ret.template as<VarDefNode>()->buffer_->setAtype(AccessType::Cache);
             ret.template as<VarDefNode>()->buffer_->setMtype(mtype_);

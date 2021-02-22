@@ -30,6 +30,36 @@ def test_basic():
 
 	assert std.match(ast)
 
+def test_reduction():
+	with ir.VarDef([
+			("x", (4, 8), "int32", "input", "cpu"),
+			("y", (4, 8), "int32", "inout", "cpu")]) as (x, y):
+		with ir.For("i", 0, 4, nid="L1") as i:
+			with ir.For("j", 0, 8, nid="L2") as j:
+				ir.MarkNid("S0")
+				y[i, j] = y[i, j] + x[i, j] * 2
+	ast = ir.pop_ast()
+	print(ast)
+	s = ir.Schedule(ast)
+	s.cache_write("S0", "y", "cpu")
+	ast = s.ast()
+	print(ast)
+	ast = ir.lower(ast)
+	print(ast)
+
+	with ir.VarDef([
+			("x", (4, 8), "int32", "input", "cpu"),
+			("y", (4, 8), "int32", "inout", "cpu")]) as (x, y):
+		with ir.For("i", 0, 4) as i:
+			with ir.For("j", 0, 8) as j:
+				with ir.VarDef("b", (1, 1), "int32", "cache", "cpu") as b:
+					b[0, 0] = 0
+					b[0, 0] = b[0, 0] + x[i, j] * 2
+					y[i, j] = y[i, j] + b[0, 0]
+	std = ir.make_reduction(ir.pop_ast())
+
+	assert std.match(ast)
+
 def test_different_indices():
 	with ir.VarDef([
 			("x", (4,), "int32", "input", "cpu"),
