@@ -131,7 +131,7 @@ class ForNode : public StmtNode {
     std::string parallel_;
     Stmt body_;
 
-    Expr infoLen_, infoMaxBegin_, infoMinEnd_;
+    Expr infoLen_;
 
     DEFINE_NODE_TRAIT(For);
 };

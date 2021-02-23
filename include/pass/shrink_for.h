@@ -1,17 +1,40 @@
 #ifndef SHRINK_FOR_H
 #define SHRINK_FOR_H
 
-#include <mutator.h>
+#include <pass/simplify.h>
 
 namespace ir {
 
-class ShrinkFor : public Mutator {
+class ShrinkFor : public SimplifyPass {
+    std::unordered_map<std::string, std::pair<Expr, Expr>> newRange_;
     bool keepConst_;
 
   public:
     ShrinkFor(bool keepConst) : keepConst_(keepConst) {}
 
+  private:
+    Expr simplifyExpr(const Expr &expr);
+
+    template <class T> Stmt visitSideEffect(const T &op) {
+        auto ret = SimplifyPass::visit(op);
+        for (auto &&item : iters()) {
+            if (newRange_.count(item.first)) {
+                newRange_[item.first] = std::make_pair(
+                    makeMin(newRange_[item.first].first, item.second.first),
+                    makeMax(newRange_[item.first].second, item.second.second));
+            } else {
+                newRange_[item.first] = item.second;
+            }
+        }
+        return ret;
+    }
+
   protected:
+    using SimplifyPass::visit;
+
+    Stmt visit(const Store &op) override { return visitSideEffect(op); }
+    Stmt visit(const ReduceTo &op) override { return visitSideEffect(op); }
+    // TODO: Also for Eval with side effect
     Stmt visit(const For &op) override;
 };
 

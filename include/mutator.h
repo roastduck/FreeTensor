@@ -189,12 +189,6 @@ class Mutator {
         if (op->infoLen_.isValid()) {
             ret.as<ForNode>()->infoLen_ = (*this)(op->infoLen_);
         }
-        if (op->infoMaxBegin_.isValid()) {
-            ret.as<ForNode>()->infoMaxBegin_ = (*this)(op->infoMaxBegin_);
-        }
-        if (op->infoMinEnd_.isValid()) {
-            ret.as<ForNode>()->infoMinEnd_ = (*this)(op->infoMinEnd_);
-        }
         return ret;
     }
 

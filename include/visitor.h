@@ -164,12 +164,6 @@ class Visitor {
         if (op->infoLen_.isValid()) {
             (*this)(op->infoLen_);
         }
-        if (op->infoMaxBegin_.isValid()) {
-            (*this)(op->infoMaxBegin_);
-        }
-        if (op->infoMinEnd_.isValid()) {
-            (*this)(op->infoMinEnd_);
-        }
     }
 
     virtual void visit(const If &op) {

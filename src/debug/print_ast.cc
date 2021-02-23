@@ -236,14 +236,6 @@ void PrintVisitor::visit(const LNot &op) {
 
 void PrintVisitor::visit(const For &op) {
     printId(op);
-    if (op->infoMaxBegin_.isValid() && op->infoMinEnd_.isValid()) {
-        makeIndent();
-        os() << "// max_begin = ";
-        recur(op->infoMaxBegin_);
-        os() << ", min_end = ";
-        recur(op->infoMinEnd_);
-        os() << std::endl;
-    }
     if (!op->parallel_.empty()) {
         makeIndent();
         os() << "// parallel = " << op->parallel_ << std::endl;

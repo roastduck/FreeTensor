@@ -34,6 +34,31 @@ int findInnerMostScope(const std::unordered_map<std::string, int> &varScope,
                        const Expr &op);
 
 /**
+ * Compute effective bounds of iterators
+ *
+ * Inherit this pass to use it
+ */
+class CompIterBounds : public Mutator {
+    std::unordered_map<std::string, std::pair<Expr, Expr>> iters_;
+
+  protected:
+    const std::unordered_map<std::string, std::pair<Expr, Expr>> &
+    iters() const {
+        return iters_;
+    }
+
+  private:
+    static Expr sub1(const Expr &op);
+    static Expr add1(const Expr &op);
+
+  protected:
+    using Mutator::visit; // Avoid hiding virtual functions
+
+    Stmt visit(const For &op) override;
+    Stmt visit(const If &op) override;
+};
+
+/**
  * Try to get the upper bound and lower bound of each (sub)expression
  *
  * Inherit this pass to use it
@@ -41,16 +66,13 @@ int findInnerMostScope(const std::unordered_map<std::string, int> &varScope,
  * This pass is not accurate. Simplifying passes using this analysis may need
  * to run for multiple rounds
  */
-class AnalyzeBounds : public Mutator {
+class AnalyzeBounds : public CompIterBounds {
   public:
     typedef std::unordered_map<Expr, std::vector<Bound>> BoundsMap;
 
   private:
     GetHash getHash_;
     BoundsMap lower_, upper_;
-
-    // iterator table
-    std::unordered_map<std::string, std::pair<Expr, Expr>> iters_;
 
   protected:
     std::vector<Bound> getLower(const Expr &op) const;
@@ -66,25 +88,20 @@ class AnalyzeBounds : public Mutator {
     int getIntUpper(const Expr &op) const;
     Ref<int> getInt(const Expr &op) const;
 
-    static Expr sub1(const Expr &op);
-    static Expr add1(const Expr &op);
-
   public:
     const BoundsMap &lower() const { return lower_; }
     const BoundsMap &upper() const { return upper_; }
 
   protected:
-    using Mutator::visit; // Avoid hiding virtual functions
+    using CompIterBounds::visit; // Avoid hiding virtual functions
 
-    virtual Expr visit(const Var &op) override;
-    virtual Expr visit(const Load &op) override;
-    virtual Expr visit(const IntConst &op) override;
-    virtual Expr visit(const Add &op) override;
-    virtual Expr visit(const Sub &op) override;
-    virtual Expr visit(const Mul &op) override;
-    virtual Expr visit(const Div &op) override;
-    virtual Stmt visit(const For &op) override;
-    virtual Stmt visit(const If &op) override;
+    Expr visit(const Var &op) override;
+    Expr visit(const Load &op) override;
+    Expr visit(const IntConst &op) override;
+    Expr visit(const Add &op) override;
+    Expr visit(const Sub &op) override;
+    Expr visit(const Mul &op) override;
+    Expr visit(const Div &op) override;
 };
 
 class SimplifyPass : public AnalyzeBounds {
