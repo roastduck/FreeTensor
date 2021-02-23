@@ -226,14 +226,14 @@ def test_correct_dependency_no_need_to_modify():
 	with ir.VarDef([
 			("x0", (4, 4), "int32", "input", "cpu"),
 			("x1", (4, 4), "int32", "input", "cpu"),
-			("y", (4, 4), "int32", "output", "cpu")]) as (x0, x1, y):
+			("y", (4, 4, 4), "int32", "output", "cpu")]) as (x0, x1, y):
 		with ir.For("i", 0, 4, nid="L1") as i:
 			with ir.For("j", 0, 4, nid="L2") as j:
 				with ir.VarDef("buf", (4,), "int32", "cache", "cpu") as b:
 					with ir.For("k", 0, 4, nid="L3") as k:
 						ir.MarkNid("S0")
 						b[k] = x0[i, k]
-						y[i, j] = b[k] * x1[i, j]
+						y[i, j, k] = b[k] * x1[i, j]
 	ast = ir.pop_ast()
 	print(ast)
 	s = ir.Schedule(ast)
@@ -246,14 +246,14 @@ def test_correct_dependency_no_need_to_modify():
 	with ir.VarDef([
 			("x0", (4, 4), "int32", "input", "cpu"),
 			("x1", (4, 4), "int32", "input", "cpu"),
-			("y", (4, 4), "int32", "output", "cpu")]) as (x0, x1, y):
+			("y", (4, 4, 4), "int32", "output", "cpu")]) as (x0, x1, y):
 		with ir.For("i", 0, 4) as i:
 			with ir.VarDef("buf", (4,), "int32", "cache", "cpu") as b:
 				with ir.For("k", 0, 4) as k:
 					b[k] = x0[i, k]
 				with ir.For("j", 0, 4) as j:
 					with ir.For("k", 0, 4) as k:
-						y[i, j] = b[k] * x1[i, j]
+						y[i, j, k] = b[k] * x1[i, j]
 	std = ir.pop_ast()
 
 	assert std.match(ast)
