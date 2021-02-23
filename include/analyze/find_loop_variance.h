@@ -28,12 +28,11 @@ class FindLoopVariance : public Visitor {
     std::vector<std::string> loopStack_;
     std::unordered_map<std::string, std::unordered_set<std::string>>
         variantVar_;
-    std::unordered_map<const ExprNode *, std::unordered_set<std::string>>
-        variantExpr_;
+    std::unordered_map<Expr, std::unordered_set<std::string>> variantExpr_;
 
   public:
-    const std::unordered_map<const ExprNode *, std::unordered_set<std::string>>
-        &variantExpr() const {
+    const std::unordered_map<Expr, std::unordered_set<std::string>> &
+    variantExpr() const {
         return variantExpr_;
     }
 
@@ -43,14 +42,14 @@ class FindLoopVariance : public Visitor {
 
     template <class T> void visitBinOp(const T &op) {
         Visitor::visit(op);
-        if (variantExpr_.count(op->lhs_.get())) {
-            for (auto &&loop : variantExpr_.at(op->lhs_.get())) {
-                variantExpr_[op.get()].insert(loop);
+        if (variantExpr_.count(op->lhs_)) {
+            for (auto &&loop : variantExpr_.at(op->lhs_)) {
+                variantExpr_[op].insert(loop);
             }
         }
-        if (variantExpr_.count(op->rhs_.get())) {
-            for (auto &&loop : variantExpr_.at(op->rhs_.get())) {
-                variantExpr_[op.get()].insert(loop);
+        if (variantExpr_.count(op->rhs_)) {
+            for (auto &&loop : variantExpr_.at(op->rhs_)) {
+                variantExpr_[op].insert(loop);
             }
         }
     }
@@ -75,7 +74,7 @@ class FindLoopVariance : public Visitor {
     virtual void visit(const LNot &op) override;
 };
 
-std::unordered_map<const ExprNode *, std::unordered_set<std::string>>
+std::unordered_map<Expr, std::unordered_set<std::string>>
 findLoopVariance(const AST &op);
 
 } // namespace ir

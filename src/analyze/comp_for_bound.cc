@@ -75,7 +75,9 @@ Stmt CompForBound::visit(const For &_op) {
     } else {
         // If the iterator is not used in any non-condition expressions, we
         // assume the loop can only run for 1 iteration. This may not be true in
-        // some programs: E.g. `for i = 0 to 5 { a += b; }`. (FIXME)
+        // some programs:
+        // E.g. 1 `for i = 0 to 5 { a += b; }`. (FIXME)
+        // E.g. 2 `for i = 0 to 5 { if (i == 4) { a = b; }}`. (FIXME)
         op->infoMaxBegin_ = op->begin_;
         op->infoMinEnd_ = makeAdd(op->begin_, makeIntConst(1));
     }

@@ -46,19 +46,19 @@ void FindLoopVariance::visit(const VarDef &op) {
 void FindLoopVariance::visit(const Var &op) {
     Visitor::visit(op);
     if (variantVar_.count(op->name_)) {
-        variantExpr_[op.get()] = variantVar_.at(op->name_);
+        variantExpr_[op] = variantVar_.at(op->name_);
     }
 }
 
 void FindLoopVariance::visit(const Load &op) {
     Visitor::visit(op);
     if (variantVar_.count(op->var_)) {
-        variantExpr_[op.get()] = variantVar_.at(op->var_);
+        variantExpr_[op] = variantVar_.at(op->var_);
     }
     for (auto &&index : op->indices_) {
-        if (variantExpr_.count(index.get())) {
-            for (auto &&loop : variantExpr_.at(index.get())) {
-                variantExpr_[op.get()].insert(loop);
+        if (variantExpr_.count(index)) {
+            for (auto &&loop : variantExpr_.at(index)) {
+                variantExpr_[op].insert(loop);
             }
         }
     }
@@ -66,12 +66,12 @@ void FindLoopVariance::visit(const Load &op) {
 
 void FindLoopVariance::visit(const LNot &op) {
     Visitor::visit(op);
-    if (variantExpr_.count(op->expr_.get())) {
-        variantExpr_[op.get()] = variantExpr_.at(op->expr_.get());
+    if (variantExpr_.count(op->expr_)) {
+        variantExpr_[op] = variantExpr_.at(op->expr_);
     }
 }
 
-std::unordered_map<const ExprNode *, std::unordered_set<std::string>>
+std::unordered_map<Expr, std::unordered_set<std::string>>
 findLoopVariance(const AST &op) {
     ASSERT(op->noAmbiguous());
     FindLoopVariance visitor;
