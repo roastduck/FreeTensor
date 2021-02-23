@@ -33,13 +33,11 @@ Stmt makeAtomic(const Stmt &_op) {
     }
 
     std::unordered_set<std::string> toAlter;
-    auto found = [&](const std::vector<std::pair<std::string, DepDirection>> &,
-                     const std::string &, const AST &later, const AST &earlier,
-                     const Cursor &, const Cursor &) {
-        if (later->nodeType() == ASTNodeType::ReduceTo &&
-            earlier->nodeType() == ASTNodeType::ReduceTo) {
-            toAlter.insert(later.as<ReduceToNode>()->id());
-            toAlter.insert(earlier.as<ReduceToNode>()->id());
+    auto found = [&](const Dependency &d) {
+        if (d.later()->nodeType() == ASTNodeType::ReduceTo &&
+            d.earlier()->nodeType() == ASTNodeType::ReduceTo) {
+            toAlter.insert(d.later().as<ReduceToNode>()->id());
+            toAlter.insert(d.earlier().as<ReduceToNode>()->id());
         }
     };
     findDeps(op, cond, found, FindDepsMode::Dep, DEP_ALL, false);

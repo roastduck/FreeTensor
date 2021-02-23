@@ -79,20 +79,15 @@ void Schedule::reorder(const std::vector<std::string> &dstOrder) {
                 if (index[j] > index[j + 1]) {
                     ast = prepareFindDeps(ast);
 
-                    auto found =
-                        [&](const std::vector<
-                                std::pair<std::string, DepDirection>> &cond,
-                            const std::string &var, const AST &later,
-                            const AST &earlier, const Cursor &,
-                            const Cursor &) {
-                            ASSERT(cond.size() == 1);
-                            std::ostringstream os;
-                            os << "Loop " << curOrder[j]->id() << " and "
-                               << curOrder[j + 1]->id()
-                               << " are not permutable: "
-                               << dep2Str(cond[0].first, var, later, earlier);
-                            throw InvalidSchedule(os.str());
-                        };
+                    auto found = [&](const Dependency &d) {
+                        ASSERT(d.cond_.size() == 1);
+                        std::ostringstream os;
+                        os << "Loop " << curOrder[j]->id() << " and "
+                           << curOrder[j + 1]->id() << " are not permutable: "
+                           << dep2Str(d.cond_[0].first, d.var_, d.later(),
+                                      d.earlier());
+                        throw InvalidSchedule(os.str());
+                    };
                     findDeps(ast,
                              {{{curOrder[j]->id(), DepDirection::Inv}},
                               {{curOrder[j + 1]->id(), DepDirection::Inv}}},
@@ -182,30 +177,28 @@ Schedule::fission(const std::string &loop, const std::string &after,
             }
         };
         std::unordered_map<std::string, std::vector<std::string>> toAdd;
-        auto found =
-            [&](const std::vector<std::pair<std::string, DepDirection>> &cond,
-                const std::string &var, const AST &later, const AST &earlier,
-                const Cursor &, const Cursor &) {
-                ASSERT(cond.size() >= 2);
-                auto &&id = cond[cond.size() - 2].first;
-                if (!xLoops.count(var) ||
-                    std::find(xLoops.at(var).begin(), xLoops.at(var).end(),
-                              id) == xLoops.at(var).end()) {
-                    throw InvalidSchedule(dep2Str(id, var, later, earlier));
-                }
-                if (!isRealWrite(id, later) &&
-                    earlier->nodeType() == ASTNodeType::Load) {
-                    return;
-                }
-                if (!isRealWrite(id, earlier) &&
-                    later->nodeType() == ASTNodeType::Load) {
-                    return;
-                }
-                if (std::find(toAdd[var].begin(), toAdd[var].end(), id) ==
-                    toAdd[var].end()) {
-                    toAdd[var].emplace_back(id);
-                }
-            };
+        auto found = [&](const Dependency &d) {
+            ASSERT(d.cond_.size() >= 2);
+            auto &&id = d.cond_[d.cond_.size() - 2].first;
+            if (!xLoops.count(d.var_) ||
+                std::find(xLoops.at(d.var_).begin(), xLoops.at(d.var_).end(),
+                          id) == xLoops.at(d.var_).end()) {
+                throw InvalidSchedule(
+                    dep2Str(id, d.var_, d.later(), d.earlier()));
+            }
+            if (!isRealWrite(id, d.later()) &&
+                d.earlier()->nodeType() == ASTNodeType::Load) {
+                return;
+            }
+            if (!isRealWrite(id, d.earlier()) &&
+                d.later()->nodeType() == ASTNodeType::Load) {
+                return;
+            }
+            if (std::find(toAdd[d.var_].begin(), toAdd[d.var_].end(), id) ==
+                toAdd[d.var_].end()) {
+                toAdd[d.var_].emplace_back(id);
+            }
+        };
         findDeps(ast, disjunct, found);
 
         AddDimToVar adder(toAdd);
@@ -226,14 +219,11 @@ std::string Schedule::fuse(const std::string &loop0, const std::string &loop1) {
     try {
         ast = prepareFindDeps(ast);
 
-        auto found =
-            [&](const std::vector<std::pair<std::string, DepDirection>> &cond,
-                const std::string &var, const AST &later, const AST &earlier,
-                const Cursor &, const Cursor &) {
-                ASSERT(cond.size() == 1);
-                throw InvalidSchedule(
-                    dep2Str(cond[0].first, var, later, earlier));
-            };
+        auto found = [&](const Dependency &d) {
+            ASSERT(d.cond_.size() == 1);
+            throw InvalidSchedule(
+                dep2Str(d.cond_[0].first, d.var_, d.later(), d.earlier()));
+        };
         findDeps(ast, {{{loop0, DepDirection::Inv}}}, found);
 
         ast = mutator(ast);
@@ -274,32 +264,29 @@ void Schedule::swap(const std::vector<std::string> &order) {
             }
             return nullptr;
         };
-        auto found =
-            [&](const std::vector<std::pair<std::string, DepDirection>> &cond,
-                const std::string &var, const AST &later, const AST &earlier,
-                const Cursor &laterCursor, const Cursor &earlierCursor) {
-                auto s0 = findParentStmt(laterCursor);
-                auto s1 = findParentStmt(earlierCursor);
-                if (!s0.isValid() || !s1.isValid()) {
-                    return;
-                }
-                auto old0 = std::find_if(
-                    scope->stmts_.begin(), scope->stmts_.end(),
-                    [&](const Stmt &s) { return s->id() == s0->id(); });
-                auto old1 = std::find_if(
-                    scope->stmts_.begin(), scope->stmts_.end(),
-                    [&](const Stmt &s) { return s->id() == s1->id(); });
-                auto new0 = std::find_if(
-                    order.begin(), order.end(),
-                    [&](const std::string &id) { return id == s0->id(); });
-                auto new1 = std::find_if(
-                    order.begin(), order.end(),
-                    [&](const std::string &id) { return id == s1->id(); });
-                if ((old0 < old1) != (new0 < new1)) {
-                    throw InvalidSchedule(
-                        dep2Str(scope->id(), var, later, earlier));
-                }
-            };
+        auto found = [&](const Dependency &d) {
+            auto s0 = findParentStmt(d.later_.cursor_);
+            auto s1 = findParentStmt(d.earlier_.cursor_);
+            if (!s0.isValid() || !s1.isValid()) {
+                return;
+            }
+            auto old0 = std::find_if(
+                scope->stmts_.begin(), scope->stmts_.end(),
+                [&](const Stmt &s) { return s->id() == s0->id(); });
+            auto old1 = std::find_if(
+                scope->stmts_.begin(), scope->stmts_.end(),
+                [&](const Stmt &s) { return s->id() == s1->id(); });
+            auto new0 = std::find_if(
+                order.begin(), order.end(),
+                [&](const std::string &id) { return id == s0->id(); });
+            auto new1 = std::find_if(
+                order.begin(), order.end(),
+                [&](const std::string &id) { return id == s1->id(); });
+            if ((old0 < old1) != (new0 < new1)) {
+                throw InvalidSchedule(
+                    dep2Str(scope->id(), d.var_, d.later(), d.earlier()));
+            }
+        };
         ast = prepareFindDeps(ast);
         findDeps(ast, {{{scope->id(), DepDirection::Normal}}}, found);
     } catch (const InvalidSchedule &e) {

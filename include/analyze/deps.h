@@ -17,28 +17,33 @@
 
 namespace ir {
 
+struct IterAxis {
+    Expr iter_, begin_, end_; /// begin_[i] <= iter_[i] < end_[i]
+
+    IterAxis(Expr iter, Expr begin, Expr end)
+        : iter_(iter), begin_(begin), end_(end) {}
+};
+
 struct AccessPoint {
     AST op_;
     Cursor cursor_;
-    int defAxis_;                   /// The position of the VarDef
-    std::vector<Expr> iter_;        /// The temporal location of the access
-    std::vector<Expr> begin_, end_; /// Range. begin_[i] <= iter_[i] < end_[i]
-    std::vector<Expr> access_;      /// The spacial location of the access
-    Expr cond_;                     /// The condition (predicate) of the access
+    int defAxis_;                /// The position of the VarDef
+    std::vector<IterAxis> iter_; /// The temporal location of the access
+    std::vector<Expr> access_;   /// The spacial location of the access
+    Expr cond_;                  /// The condition (predicate) of the access
 };
 
 /**
  * Find read and write points
  */
 class FindAccessPoint : public VisitorWithCursor {
-    std::vector<Expr> cur_;         // Current iteration point in the space
-    std::vector<Expr> begin_, end_; // Point range in the space
+    std::vector<IterAxis> cur_; // Current iteration point in the space
     Expr cond_;
     std::unordered_map<AST, Ref<AccessPoint>> points_;
     std::unordered_multimap<std::string, Ref<AccessPoint>> reads_, writes_;
 
     // For or StmtSeq -> coordinate in space
-    std::unordered_map<std::string, std::vector<Expr>> scope2coord_;
+    std::unordered_map<std::string, std::vector<IterAxis>> scope2coord_;
 
     // Var name -> axis: Which axis is a local var defined
     std::unordered_map<std::string, int> defAxis_;
@@ -55,7 +60,7 @@ class FindAccessPoint : public VisitorWithCursor {
     writes() const {
         return writes_;
     }
-    const std::unordered_map<std::string, std::vector<Expr>> &
+    const std::unordered_map<std::string, std::vector<IterAxis>> &
     scope2coord() const {
         return scope2coord_;
     }
@@ -63,20 +68,15 @@ class FindAccessPoint : public VisitorWithCursor {
   private:
     template <class T> void visitStoreLike(const T &op) {
         // For a[i] = a[i] + 1, write happens after read
-        cur_.emplace_back(makeIntConst(0));
-        begin_.emplace_back(makeIntConst(0));
-        end_.emplace_back(makeIntConst(2));
+        cur_.emplace_back(makeIntConst(0), makeIntConst(0), makeIntConst(2));
         auto ap = Ref<AccessPoint>::make();
-        *ap = {op,     cursor(), defAxis_.at(op->var_), cur_,
-               begin_, end_,     op->indices_,          cond_};
+        *ap = {op, cursor(), defAxis_.at(op->var_), cur_, op->indices_, cond_};
         points_.emplace(op, ap);
         writes_.emplace(op->var_, ap);
 
-        cur_.back() = makeIntConst(1);
+        cur_.back().iter_ = makeIntConst(1);
         Visitor::visit(op);
         cur_.pop_back();
-        begin_.pop_back();
-        end_.pop_back();
     }
 
   protected:
@@ -118,11 +118,17 @@ enum class DepDirection : int {
 
 typedef std::vector<std::pair<std::string, DepDirection>> FindDepsCond;
 
-typedef std::function<void(
-    const std::vector<std::pair<std::string, DepDirection>> &,
-    const std::string &, const AST &, const AST &, const Cursor &,
-    const Cursor &)>
-    FindDepsCallback;
+struct Dependency {
+    const std::vector<std::pair<std::string, DepDirection>>
+        &cond_; /// sub-condition that fails
+    const std::string &var_;
+    const AccessPoint &later_, &earlier_;
+
+    // Helper functions
+    const AST &later() const { return later_.op_; }
+    const AST &earlier() const { return earlier_.op_; }
+};
+typedef std::function<void(const Dependency &)> FindDepsCallback;
 
 typedef int DepType;
 const DepType DEP_WAW = 0x1;
@@ -140,7 +146,7 @@ class AnalyzeDeps : public Visitor {
     const std::unordered_map<AST, Ref<AccessPoint>> &points_;
     const std::unordered_multimap<std::string, Ref<AccessPoint>> &reads_,
         &writes_;
-    const std::unordered_map<std::string, std::vector<Expr>> &scope2coord_;
+    const std::unordered_map<std::string, std::vector<IterAxis>> &scope2coord_;
     GenISLExpr genISLExpr_;
 
     const std::vector<FindDepsCond> &cond_;
@@ -157,7 +163,8 @@ class AnalyzeDeps : public Visitor {
         const std::unordered_map<AST, Ref<AccessPoint>> &points,
         const std::unordered_multimap<std::string, Ref<AccessPoint>> &reads,
         const std::unordered_multimap<std::string, Ref<AccessPoint>> &writes,
-        const std::unordered_map<std::string, std::vector<Expr>> &scope2coord,
+        const std::unordered_map<std::string, std::vector<IterAxis>>
+            &scope2coord,
         const std::vector<FindDepsCond> &cond, const FindDepsCallback &found,
         FindDepsMode mode, DepType depType, bool ignoreReductionWAW)
         : points_(points), reads_(reads), writes_(writes),
@@ -169,13 +176,12 @@ class AnalyzeDeps : public Visitor {
     ~AnalyzeDeps() { isl_ctx_free(isl_); }
 
   private:
-    std::string makeIterList(const std::vector<Expr> &list, int eraseBefore,
+    std::string makeIterList(const std::vector<IterAxis> &list, int eraseBefore,
                              int n);
     Ref<std::string> makeAccList(const std::vector<Expr> &list,
                                  RelaxMode relax);
-    Ref<std::string> makeRange(const std::vector<Expr> &point,
-                               const std::vector<Expr> &begin,
-                               const std::vector<Expr> &end, RelaxMode relax);
+    Ref<std::string> makeRange(const std::vector<IterAxis> &point,
+                               RelaxMode relax);
     Ref<std::string> makeCond(const Expr &cond, RelaxMode relax);
     Ref<std::string> makeAccMap(const AccessPoint &p, int iterDim, int accDim,
                                 RelaxMode relax);
@@ -226,8 +232,7 @@ Stmt prepareFindDeps(const Stmt &op);
  * @param op : AST root. The user should run the `prepareFindDeps` pass before
  * pass it in
  * @param cond : conditions to check: reduce_or [ reduce_and [ axis, mode ]]
- * @param found : callback(sub-condition that fails, var name, later op, earlier
- * op, later cursor, earlier cursor)
+ * @param found : callback
  * @param mode : Dep: all possible dependencies; Kill: all the situations that a
  * later access completely covers a earlier one
  * @param depType : WAW, RAW, RAW, or their combinations

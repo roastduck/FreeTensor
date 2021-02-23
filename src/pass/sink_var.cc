@@ -94,11 +94,9 @@ Stmt sinkVar(const Stmt &_op) {
         cond.push_back({{loop, DepDirection::Normal}});
     }
     std::set<std::pair<std::string, std::string>> deps; // {(var, loop)}
-    auto found = [&](const std::vector<std::pair<std::string, DepDirection>> &c,
-                     const std::string &var, const AST &later,
-                     const AST &earlier, const Cursor &, const Cursor &) {
-        ASSERT(c.size() == 1);
-        deps.emplace(var, c[0].first);
+    auto found = [&](const Dependency &d) {
+        ASSERT(d.cond_.size() == 1);
+        deps.emplace(d.var_, d.cond_[0].first);
     };
     findDeps(op, cond, found);
 

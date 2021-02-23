@@ -38,28 +38,24 @@ Stmt removeWrites(const Stmt &_op) {
     std::set<std::pair<Stmt, Stmt>> overwrites;
     std::set<std::pair<Expr, Stmt>> usesRAW;
     std::set<std::pair<Stmt, Expr>> usesWAR;
-    auto foundOverwrite =
-        [&](const std::vector<std::pair<std::string, DepDirection>> &,
-            const std::string &, const AST &later, const AST &earlier,
-            const Cursor &laterCursor, const Cursor &earlierCursor) {
-            if (later->nodeType() == ASTNodeType::Store ||
-                sameParent(laterCursor, earlierCursor)) {
-                overwrites.emplace(later.as<StmtNode>(),
-                                   earlier.as<StmtNode>());
-            }
-        };
-    auto foundUse =
-        [&](const std::vector<std::pair<std::string, DepDirection>> &,
-            const std::string &, const AST &later, const AST &earlier,
-            const Cursor &, const Cursor &) {
-            if (later->nodeType() == ASTNodeType::Load) {
-                usesRAW.emplace(later.as<ExprNode>(), earlier.as<StmtNode>());
-            } else if (earlier->nodeType() == ASTNodeType::Load) {
-                usesWAR.emplace(later.as<StmtNode>(), earlier.as<ExprNode>());
-            } else {
-                ASSERT(false);
-            }
-        };
+    auto foundOverwrite = [&](const Dependency &d) {
+        if (d.later()->nodeType() == ASTNodeType::Store ||
+            sameParent(d.later_.cursor_, d.earlier_.cursor_)) {
+            overwrites.emplace(d.later().as<StmtNode>(),
+                               d.earlier().as<StmtNode>());
+        }
+    };
+    auto foundUse = [&](const Dependency &d) {
+        if (d.later()->nodeType() == ASTNodeType::Load) {
+            usesRAW.emplace(d.later().as<ExprNode>(),
+                            d.earlier().as<StmtNode>());
+        } else if (d.earlier()->nodeType() == ASTNodeType::Load) {
+            usesWAR.emplace(d.later().as<StmtNode>(),
+                            d.earlier().as<ExprNode>());
+        } else {
+            ASSERT(false);
+        }
+    };
 
     findDeps(op, {{}}, foundOverwrite, FindDepsMode::Kill, DEP_WAW, false);
     findDeps(op, {{}}, foundUse, FindDepsMode::Dep, DEP_WAR | DEP_RAW, false);

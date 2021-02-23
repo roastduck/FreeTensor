@@ -17,28 +17,21 @@ void FindAccessPoint::visit(const VarDef &op) {
 }
 
 void FindAccessPoint::visit(const StmtSeq &op) {
-    cur_.emplace_back();
-    begin_.emplace_back(makeIntConst(0));
-    end_.emplace_back(makeIntConst(op->stmts_.size()));
+    cur_.emplace_back(nullptr, makeIntConst(0),
+                      makeIntConst(op->stmts_.size()));
     scope2coord_[op->id()] = cur_;
     for (size_t i = 0, iEnd = op->stmts_.size(); i < iEnd; i++) {
-        cur_.back() = makeIntConst(i);
+        cur_.back().iter_ = makeIntConst(i);
         (*this)(op->stmts_[i]);
     }
     cur_.pop_back();
-    begin_.pop_back();
-    end_.pop_back();
 }
 
 void FindAccessPoint::visit(const For &op) {
-    cur_.emplace_back(makeVar(op->iter_));
-    begin_.emplace_back(op->begin_);
-    end_.emplace_back(op->end_);
+    cur_.emplace_back(makeVar(op->iter_), op->begin_, op->end_);
     scope2coord_[op->id()] = cur_;
     Visitor::visit(op);
     cur_.pop_back();
-    begin_.pop_back();
-    end_.pop_back();
 }
 
 void FindAccessPoint::visit(const If &op) {
@@ -60,10 +53,7 @@ void FindAccessPoint::visit(const If &op) {
 void FindAccessPoint::visit(const Load &op) {
     Visitor::visit(op);
     auto ap = Ref<AccessPoint>::make();
-    ASSERT(cur_.size() == begin_.size());
-    ASSERT(cur_.size() == end_.size());
-    *ap = {op,     cursor(), defAxis_.at(op->var_), cur_,
-           begin_, end_,     op->indices_,          cond_};
+    *ap = {op, cursor(), defAxis_.at(op->var_), cur_, op->indices_, cond_};
     points_.emplace(op, ap);
     reads_.emplace(op->var_, ap);
 }
@@ -131,18 +121,19 @@ Ref<std::string> GenISLExpr::operator()(const Expr &op) {
     return Ref<std::string>::make(std::move(ret));
 }
 
-std::string AnalyzeDeps::makeIterList(const std::vector<Expr> &list,
+std::string AnalyzeDeps::makeIterList(const std::vector<IterAxis> &list,
                                       int eraseBefore, int n) {
     std::string ret;
     for (int i = 0; i < n; i++) {
         if (i < (int)list.size()) {
-            if (list[i]->nodeType() == ASTNodeType::Var) {
-                ret += genISLExpr_.normalizeId(list[i].as<VarNode>()->name_);
+            if (list[i].iter_->nodeType() == ASTNodeType::Var) {
+                ret +=
+                    genISLExpr_.normalizeId(list[i].iter_.as<VarNode>()->name_);
                 if (i < eraseBefore) {
                     ret += " = 0";
                 }
-            } else if (list[i]->nodeType() == ASTNodeType::IntConst) {
-                ret += std::to_string(list[i].as<IntConstNode>()->val_);
+            } else if (list[i].iter_->nodeType() == ASTNodeType::IntConst) {
+                ret += std::to_string(list[i].iter_.as<IntConstNode>()->val_);
             } else {
                 ASSERT(false);
             }
@@ -174,24 +165,19 @@ Ref<std::string> AnalyzeDeps::makeAccList(const std::vector<Expr> &list,
     return Ref<std::string>::make("[" + ret + "]");
 }
 
-Ref<std::string> AnalyzeDeps::makeRange(const std::vector<Expr> &point,
-                                        const std::vector<Expr> &begin,
-                                        const std::vector<Expr> &end,
+Ref<std::string> AnalyzeDeps::makeRange(const std::vector<IterAxis> &point,
                                         RelaxMode relax) {
-    size_t n = point.size();
-    ASSERT(begin.size() == n);
-    ASSERT(end.size() == n);
     std::vector<std::string> ineqs;
-    for (size_t i = 0; i < n; i++) {
-        if (point[i]->nodeType() == ASTNodeType::Var) {
+    for (size_t i = 0, iEnd = point.size(); i < iEnd; i++) {
+        if (point[i].iter_->nodeType() == ASTNodeType::Var) {
             std::string ineq =
-                genISLExpr_.normalizeId(point[i].as<VarNode>()->name_);
+                genISLExpr_.normalizeId(point[i].iter_.as<VarNode>()->name_);
             bool bounded = false;
-            if (auto linstr = genISLExpr_(begin[i]); linstr.isValid()) {
+            if (auto linstr = genISLExpr_(point[i].begin_); linstr.isValid()) {
                 ineq = *linstr + " <= " + ineq;
                 bounded = true;
             }
-            if (auto linstr = genISLExpr_(end[i]); linstr.isValid()) {
+            if (auto linstr = genISLExpr_(point[i].end_); linstr.isValid()) {
                 ineq = ineq + " < " + *linstr;
                 bounded = true;
             }
@@ -229,7 +215,7 @@ Ref<std::string> AnalyzeDeps::makeAccMap(const AccessPoint &p, int iterDim,
     } else {
         return nullptr;
     }
-    if (auto str = makeRange(p.iter_, p.begin_, p.end_, relax); str.isValid()) {
+    if (auto str = makeRange(p.iter_, relax); str.isValid()) {
         ret += *str;
     } else {
         return nullptr;
@@ -363,8 +349,9 @@ void AnalyzeDeps::checkDep(const AccessPoint &point, const AccessPoint &other) {
             // Position in the outer StmtSeq nodes
             std::vector<std::pair<int, int>> pos;
             for (int i = 0; i < iterId; i++) {
-                if (coord[i]->nodeType() == ASTNodeType::IntConst) {
-                    pos.emplace_back(i, coord[i].as<IntConstNode>()->val_);
+                if (coord[i].iter_->nodeType() == ASTNodeType::IntConst) {
+                    pos.emplace_back(i,
+                                     coord[i].iter_.as<IntConstNode>()->val_);
                 }
             }
             if (!pos.empty()) {
@@ -381,8 +368,7 @@ void AnalyzeDeps::checkDep(const AccessPoint &point, const AccessPoint &other) {
         }
         if (found) {
             try {
-                found_(item, getVar(point.op_), point.op_, other.op_,
-                       point.cursor_, other.cursor_);
+                found_(Dependency{item, getVar(point.op_), point, other});
             } catch (...) {
                 isl_map_free(nearest);
                 throw;
