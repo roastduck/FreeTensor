@@ -32,7 +32,7 @@ def test_omp_for():
 def test_parallel_reduction():
 	with ir.VarDef([
 			("x", (4, 64), "int32", "input", "cpu"),
-			("y", (4,), "int32", "output", "cpu")]) as (x, y):
+			("y", (4,), "int32", "inout", "cpu")]) as (x, y):
 		with ir.For("i", 0, 4, nid="L1") as i:
 			with ir.For("j", 0, 64, nid="L2") as j:
 				y[i] = y[i] + x[i, j]
@@ -61,7 +61,7 @@ def test_parallel_reduction():
 def test_serial_reduction():
 	with ir.VarDef([
 			("x", (4, 64), "int32", "input", "cpu"),
-			("y", (4,), "int32", "output", "cpu")]) as (x, y):
+			("y", (4,), "int32", "inout", "cpu")]) as (x, y):
 		with ir.For("i", 0, 4, nid="L1") as i:
 			with ir.For("j", 0, 64, nid="L2") as j:
 				y[i] = y[i] + x[i, j]

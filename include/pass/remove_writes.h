@@ -9,19 +9,6 @@
 
 namespace ir {
 
-class FindAllStmtSeq : public Visitor {
-    std::vector<std::string> ids_;
-
-  public:
-    const std::vector<std::string> ids() const { return ids_; }
-
-  protected:
-    void visit(const StmtSeq &op) override {
-        Visitor::visit(op);
-        ids_.emplace_back(op->id());
-    }
-};
-
 class RemoveWrites : public Mutator {
     const std::unordered_set<Stmt> &redundant_;
     const std::unordered_map<Stmt, Stmt> &replacement_;

@@ -326,27 +326,27 @@ void AnalyzeDeps::checkDep(const AccessPoint &point, const AccessPoint &other) {
         return;
     }
 
-    isl_basic_set *pIter = isl_basic_map_domain(isl_basic_map_copy(omap));
-    isl_basic_map *depall =
-        isl_basic_map_apply_range(pmap, isl_basic_map_reverse(omap));
-    isl_basic_set *pIterKilled =
-        isl_basic_map_range(isl_basic_map_copy(depall));
-    bool fullyKilled = isl_basic_set_is_equal(pIter, pIterKilled);
-    isl_basic_set_free(pIter);
-    isl_basic_set_free(pIterKilled);
-    if (mode_ == FindDepsMode::Kill && !fullyKilled) {
-        isl_basic_map_free(depall);
-        return;
-    }
-
     isl_basic_set *domain = isl_basic_set_read_from_str(
         isl_, ("{" + makeNdList("d", iterDim) + "}").c_str());
     isl_space *space = isl_basic_set_get_space(domain);
     isl_basic_set_free(domain);
     isl_map *pred = isl_map_lex_gt(space);
 
+    isl_set *pIter =
+        isl_set_from_basic_set(isl_basic_map_domain(isl_basic_map_copy(omap)));
+    isl_basic_map *depall =
+        isl_basic_map_apply_range(pmap, isl_basic_map_reverse(omap));
     isl_map *dep = isl_map_intersect(isl_map_from_basic_map(depall), pred);
     isl_map *nearest = isl_map_lexmax(dep);
+    isl_set *pIterKilled = isl_map_range(isl_map_copy(nearest));
+    bool fullyKilled = isl_set_is_equal(pIter, pIterKilled);
+    isl_set_free(pIter);
+    isl_set_free(pIterKilled);
+    if (isl_map_is_empty(nearest) ||
+        (mode_ == FindDepsMode::Kill && !fullyKilled)) {
+        isl_map_free(nearest);
+        return;
+    }
 
     for (auto &&item : cond_) {
         bool found = true;

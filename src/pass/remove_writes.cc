@@ -34,14 +34,6 @@ Stmt removeWrites(const Stmt &_op) {
     auto op = makeReduction(_op);
     op = prepareFindDeps(op);
 
-    FindAllStmtSeq finder;
-    finder(op);
-
-    std::vector<std::vector<std::pair<std::string, DepDirection>>> cond;
-    for (auto &&id : finder.ids()) {
-        cond.push_back({{id, DepDirection::Normal}});
-    }
-
     // {(later, earlier)}
     std::set<std::pair<Stmt, Stmt>> overwrites;
     std::set<std::pair<Expr, Stmt>> usesRAW;
@@ -69,8 +61,8 @@ Stmt removeWrites(const Stmt &_op) {
             }
         };
 
-    findDeps(op, cond, foundOverwrite, FindDepsMode::Kill, DEP_WAW, false);
-    findDeps(op, cond, foundUse, FindDepsMode::Dep, DEP_WAR | DEP_RAW, false);
+    findDeps(op, {{}}, foundOverwrite, FindDepsMode::Kill, DEP_WAW, false);
+    findDeps(op, {{}}, foundUse, FindDepsMode::Dep, DEP_WAR | DEP_RAW, false);
 
     std::unordered_set<Stmt> redundant;
     std::unordered_map<Stmt, Stmt> replacement;
