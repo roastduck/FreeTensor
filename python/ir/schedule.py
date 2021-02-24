@@ -9,3 +9,6 @@ class Schedule(ffi.Schedule):
 	def cache(self, stmt, var, mtype):
 		return super(Schedule, self).cache(stmt, var, parseMType(mtype))
 
+	def cache_reduction(self, stmt, var, mtype):
+		return super(Schedule, self).cache_reduction(stmt, var, parseMType(mtype))
+

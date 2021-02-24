@@ -105,6 +105,24 @@ class Schedule {
      * writes will be directed to the cache, and finally all needed data will be
      * flushed from the cache
      *
+     * Note for reduction: This transformation preserves the computation order.
+     * It will transform
+     *
+     * ```
+     * a += x
+     * a += y
+     * ```
+     *
+     * to
+     *
+     * ```
+     * a.cache = a + x + y
+     * a = a.cache
+     * ```
+     *
+     * If you need a "real" cache for reduction, which reorders the computation,
+     * use `cache_reduction` instead
+     *
      * @param stmt : ID of the statement or block (e.g. an If or a For) to be
      * modified
      * @param var : name of the variable to be cached
@@ -115,6 +133,39 @@ class Schedule {
      */
     std::tuple<std::string, std::string, std::string>
     cache(const std::string &stmt, const std::string &var, MemType mtype);
+
+    /**
+     * Perform local reductions (e.g. sum) in a local variable first, and then
+     * reduce the local result to the global variable
+     *
+     * E.g.
+     *
+     * ```
+     * a += x
+     * a += y
+     * ```
+     *
+     * will be transformed to be
+     *
+     * ```
+     * a.cache = x + y
+     * a += a.cache
+     * ```
+     *
+     * @param stmt : ID of the statement or block (e.g. an If or a For) to be
+     * modified
+     * @param var : name of the variable to be cached. Only reductions are
+     * allowed on `var` in `stmt`. Plain reads or writes are not allowed
+     * @param mtype : where to cache
+     * @throw InvalidSchedule if the ID or name is not found, or there are
+     * unsupported reads or writes
+     * @return : (ID of the statement that initialize the cache, ID of the
+     * statement that reduces the local result to the global result, name of the
+     * cache variable)
+     */
+    std::tuple<std::string, std::string, std::string>
+    cacheReduction(const std::string &stmt, const std::string &var,
+                   MemType mtype);
 
     /**
      * Move a statement to a new position

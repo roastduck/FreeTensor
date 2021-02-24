@@ -18,6 +18,8 @@ void init_ffi_schedule(py::module_ &m) {
         .def("fuse", &Schedule::fuse, "loop0"_a, "loop1"_a)
         .def("swap", &Schedule::swap, "order"_a)
         .def("cache", &Schedule::cache, "stmt"_a, "var"_a, "mtype"_a)
+        .def("cache_reduction", &Schedule::cacheReduction, "stmt"_a, "var"_a,
+             "mtype"_a)
         .def("move_to", &Schedule::moveTo, "stmt"_a, "dst"_a,
              "to_begin"_a = false, "to_end"_a = false)
         .def("parallelize", &Schedule::parallelize, "loop"_a, "parallel"_a);

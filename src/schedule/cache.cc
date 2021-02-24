@@ -1,6 +1,40 @@
+#include <climits>
+#include <cmath>
+
 #include <schedule/cache.h>
 
 namespace ir {
+
+static Expr makeNeutralVal(DataType dtype, ReduceOp op) {
+    switch (dtype) {
+    case DataType::Float32:
+        switch (op) {
+        case ReduceOp::Add:
+            return makeFloatConst(0.);
+        case ReduceOp::Max:
+            return makeFloatConst(-INFINITY);
+        case ReduceOp::Min:
+            return makeFloatConst(INFINITY);
+        default:
+            ASSERT(false);
+        }
+
+    case DataType::Int32:
+        switch (op) {
+        case ReduceOp::Add:
+            return makeIntConst(0);
+        case ReduceOp::Max:
+            return makeIntConst(INT_MIN);
+        case ReduceOp::Min:
+            return makeIntConst(INT_MAX);
+        default:
+            ASSERT(false);
+        }
+
+    default:
+        ASSERT(false);
+    }
+}
 
 Stmt MakeCacheVar::visitStmt(
     const Stmt &op, const std::function<Stmt(const Stmt &)> &visitNode) {
@@ -121,6 +155,91 @@ Stmt MakeFillAndFlush::visit(const VarDef &op) {
     } else {
         return Mutator::visit(op);
     }
+}
+
+Stmt MakeInitAndReduce::visitStmt(
+    const Stmt &_op, const std::function<Stmt(const Stmt &)> &visitNode) {
+    auto op = Mutator::visitStmt(_op, visitNode);
+    if (op->id() == stmt_) {
+        std::vector<std::string> iters;
+        std::vector<Expr> indices;
+        ASSERT(buffer_.isValid());
+        int nDim = buffer_->tensor().shape().size();
+        iters.reserve(nDim);
+        indices.reserve(nDim);
+        for (int i = 0; i < nDim; i++) {
+            std::string iter = "." + newVar_ + ".i" + std::to_string(i);
+            indices.emplace_back(makeVar(iter));
+            iters.emplace_back(std::move(iter));
+        }
+
+        if (!range_.count(newDef_)) {
+            throw InvalidSchedule("No access to " + oldVar_ + " is found");
+        }
+        auto &&range = range_.at(newDef_);
+        Stmt init =
+            makeStore("", newVar_, indices,
+                      makeNeutralVal(buffer_->tensor().dtype(), reduce_->op_));
+        for (int i = nDim - 1; i >= 0; i--) {
+            init = makeFor("", iters[i], range.lower_[i],
+                           makeAdd(range.lower_[i], range.len_[i]), "", init);
+        }
+
+        Stmt reduce = makeReduceTo("", oldVar_, indices, reduce_->op_,
+                                   makeLoad(newVar_, indices), false);
+        for (int i = nDim - 1; i >= 0; i--) {
+            reduce =
+                makeFor("", iters[i], range.lower_[i],
+                        makeAdd(range.lower_[i], range.len_[i]), "", reduce);
+        }
+
+        initStmt_ = init->id();
+        reduceStmt_ = reduce->id();
+        op = makeStmtSeq("", {init, op, reduce});
+    }
+    return op;
+}
+
+Stmt MakeInitAndReduce::visit(const VarDef &op) {
+    if (op->id() == newDef_) {
+        buffer_ = op->buffer_;
+        reduce_ = nullptr;
+        auto ret = Mutator::visit(op);
+        buffer_ = nullptr;
+        return ret;
+    } else {
+        return Mutator::visit(op);
+    }
+}
+
+Stmt MakeInitAndReduce::visit(const ReduceTo &_op) {
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
+    auto op = __op.as<ReduceToNode>();
+    if (buffer_.isValid() && op->var_ == newVar_) {
+        if (reduce_.isValid() && reduce_->op_ != op->op_) {
+            throw InvalidSchedule(
+                "Mixing different reduction operation is not allowed");
+        }
+        reduce_ = op;
+    }
+    return op;
+}
+
+Stmt MakeInitAndReduce::visit(const Store &op) {
+    if (buffer_.isValid() && op->var_ == newVar_) {
+        throw InvalidSchedule(
+            "Any Store node in a cache_reduce region is not allowed");
+    }
+    return Mutator::visit(op);
+}
+
+Expr MakeInitAndReduce::visit(const Load &op) {
+    if (buffer_.isValid() && op->var_ == newVar_) {
+        throw InvalidSchedule(
+            "Any Load node in a cache_reduce region is not allowed");
+    }
+    return Mutator::visit(op);
 }
 
 } // namespace ir

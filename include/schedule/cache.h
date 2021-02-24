@@ -51,6 +51,31 @@ class MakeFillAndFlush : public Mutator {
     Stmt visit(const VarDef &op) override;
 };
 
+class MakeInitAndReduce : public Mutator {
+    std::string stmt_, oldVar_, newVar_, newDef_, initStmt_, reduceStmt_;
+    const std::unordered_map<std::string, AccessBound> &range_;
+    Ref<Buffer> buffer_;
+    ReduceTo reduce_;
+
+  public:
+    MakeInitAndReduce(const std::string &stmt, const std::string &oldVar,
+                      const std::string &newVar, const std::string &newDef,
+                      const std::unordered_map<std::string, AccessBound> &range)
+        : stmt_(stmt), oldVar_(oldVar), newVar_(newVar), newDef_(newDef),
+          range_(range) {}
+
+    const std::string &initStmt() const { return initStmt_; }
+    const std::string &reduceStmt() const { return reduceStmt_; }
+
+  protected:
+    Stmt visitStmt(const Stmt &op,
+                   const std::function<Stmt(const Stmt &)> &visitNode) override;
+    Stmt visit(const VarDef &op) override;
+    Stmt visit(const ReduceTo &op) override;
+    Stmt visit(const Store &op) override;
+    Expr visit(const Load &op) override;
+};
+
 } // namespace ir
 
 #endif // CACHE_H

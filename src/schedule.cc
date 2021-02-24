@@ -328,11 +328,47 @@ Schedule::cache(const std::string &stmt, const std::string &var,
 
         ast = shrinkVar(ast);
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule("Invalid cache_write(" + stmt + ", " + var +
+        throw InvalidSchedule("Invalid cache(" + stmt + ", " + var +
                               "): " + e.what());
     }
     ast_ = ast;
     return std::make_tuple(std::move(fillStmt), std::move(flushStmt),
+                           std::move(newVar));
+}
+
+std::tuple<std::string, std::string, std::string>
+Schedule::cacheReduction(const std::string &stmt, const std::string &var,
+                         MemType mtype) {
+    auto ast = ast_;
+    std::string initStmt, reduceStmt, newVar, newDef;
+    try {
+        ast = makeReduction(ast);
+
+        MakeCacheVar makeCacheVar(stmt, var, mtype);
+        ast = makeCacheVar(ast);
+        newVar = makeCacheVar.newVar();
+        newDef = makeCacheVar.newDef();
+        if (newDef.empty()) {
+            throw InvalidSchedule("Statement " + stmt + " not found");
+        }
+
+        SimplifyPass::BoundsMap lower, upper;
+        std::tie(ast, lower, upper) = simplifyAndGetBounds(ast);
+        CompAccessBound compBound(lower, upper);
+        compBound(ast);
+        MakeInitAndReduce makeInitAndReduce(stmt, var, newVar, newDef,
+                                            compBound.results());
+        ast = makeInitAndReduce(ast);
+        initStmt = makeInitAndReduce.initStmt();
+        reduceStmt = makeInitAndReduce.reduceStmt();
+
+        ast = shrinkVar(ast);
+    } catch (const InvalidSchedule &e) {
+        throw InvalidSchedule("Invalid cache_reduction(" + stmt + ", " + var +
+                              "): " + e.what());
+    }
+    ast_ = ast;
+    return std::make_tuple(std::move(initStmt), std::move(reduceStmt),
                            std::move(newVar));
 }
 
