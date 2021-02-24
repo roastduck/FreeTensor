@@ -42,16 +42,6 @@ class Visitor {
             (*this)(dim);
         }
         (*this)(op->body_);
-        if (op->infoAccLower_.isValid()) {
-            for (auto &&index : *op->infoAccLower_) {
-                (*this)(index);
-            }
-        }
-        if (op->infoAccLen_.isValid()) {
-            for (auto &&index : *op->infoAccLen_) {
-                (*this)(index);
-            }
-        }
     }
 
     virtual void visit(const Var &op) {}

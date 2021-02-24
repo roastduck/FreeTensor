@@ -11,94 +11,89 @@ Expr CompAccessBound::reduceMax(const Expr &reduction, const Expr &item) {
     return reduction.isValid() ? makeMax(reduction, item) : item;
 }
 
-Stmt CompAccessBound::visit(const VarDef &_op) {
-    access_.erase(_op->name_);
+void CompAccessBound::visit(const VarDef &op) {
+    access_.erase(op->name_);
 
-    defs_.insert(_op->name_);
-    auto __op = Mutator::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::VarDef);
-    auto op = __op.as<VarDefNode>();
-    defs_.erase(_op->name_);
+    defs_.insert(op->name_);
+    Visitor::visit(op);
+    defs_.erase(op->name_);
 
     if (op->buffer_->atype() != AccessType::Cache) {
-        return op;
+        return;
     }
 
-    if (access_.count(op->name_)) {
-        auto &&access = access_.at(op->name_);
+    if (!access_.count(op->name_)) {
+        return;
+    }
+    auto &&access = access_.at(op->name_);
 
-        size_t n = op->buffer_->tensor().shape().size();
-        op->infoAccLower_ = Ref<std::vector<Expr>>::make();
-        op->infoAccLen_ = Ref<std::vector<Expr>>::make();
-        op->infoAccLower_->reserve(n);
-        op->infoAccLen_->reserve(n);
+    size_t n = op->buffer_->tensor().shape().size();
+    AccessBound result;
+    result.lower_.reserve(n);
+    result.len_.reserve(n);
 
-        for (size_t i = 0; i < n; i++) {
-            Expr lower, upper;
-            for (size_t j = 0, jEnd = access.size(); j < jEnd; j++) {
-                ASSERT(access[j].size() == n);
-                auto &&index = access[j][i];
-                if (lower_.count(index)) {
-                    Expr lowerItem;
-                    for (auto &&item : lower_.at(index)) {
-                        if (checkAllDefined(defs_, item.expr_)) {
-                            lowerItem = reduceMax(lowerItem, item.expr_);
-                        }
+    for (size_t i = 0; i < n; i++) {
+        Expr lower, upper;
+        for (size_t j = 0, jEnd = access.size(); j < jEnd; j++) {
+            ASSERT(access[j].size() == n);
+            auto &&index = access[j][i];
+            if (lower_.count(index)) {
+                Expr lowerItem;
+                for (auto &&item : lower_.at(index)) {
+                    if (checkAllDefined(defs_, item.expr_)) {
+                        lowerItem = reduceMax(lowerItem, item.expr_);
                     }
-                    lower = reduceMin(lower, lowerItem);
-                } else {
-                    lower = makeIntConst(0);
-                    break;
                 }
+                lower = reduceMin(lower, lowerItem);
+            } else {
+                lower = makeIntConst(0);
+                break;
             }
-
-            for (size_t j = 0, jEnd = access.size(); j < jEnd; j++) {
-                ASSERT(access[j].size() == n);
-                auto &&index = access[j][i];
-                if (upper_.count(index)) {
-                    Expr upperItem;
-                    for (auto &&item : upper_.at(index)) {
-                        if (checkAllDefined(defs_, item.expr_)) {
-                            upperItem = reduceMin(upperItem, item.expr_);
-                        }
-                    }
-                    upper = reduceMax(upper, upperItem);
-                } else {
-                    upper = op->buffer_->tensor().shape()[i];
-                    break;
-                }
-            }
-
-            op->infoAccLower_->emplace_back(lower);
-            op->infoAccLen_->emplace_back(
-                makeAdd(makeSub(upper, lower), makeIntConst(1)));
         }
-    } else {
-        return op->body_;
+
+        for (size_t j = 0, jEnd = access.size(); j < jEnd; j++) {
+            ASSERT(access[j].size() == n);
+            auto &&index = access[j][i];
+            if (upper_.count(index)) {
+                Expr upperItem;
+                for (auto &&item : upper_.at(index)) {
+                    if (checkAllDefined(defs_, item.expr_)) {
+                        upperItem = reduceMin(upperItem, item.expr_);
+                    }
+                }
+                upper = reduceMax(upper, upperItem);
+            } else {
+                upper = op->buffer_->tensor().shape()[i];
+                break;
+            }
+        }
+
+        result.lower_.emplace_back(lower);
+        result.len_.emplace_back(
+            makeAdd(makeSub(upper, lower), makeIntConst(1)));
     }
-    return op;
+    results_[op->id()] = std::move(result);
 }
 
-Expr CompAccessBound::visit(const Load &op) {
-    access_[op->var_].emplace_back(op->indices_); // use the old object
-    return Mutator::visit(op);
+void CompAccessBound::visit(const Load &op) {
+    Visitor::visit(op);
+    access_[op->var_].emplace_back(op->indices_);
 }
 
-Stmt CompAccessBound::visit(const Store &op) {
-    access_[op->var_].emplace_back(op->indices_); // use the old object
-    return Mutator::visit(op);
+void CompAccessBound::visit(const Store &op) {
+    Visitor::visit(op);
+    access_[op->var_].emplace_back(op->indices_);
 }
 
-Stmt CompAccessBound::visit(const ReduceTo &op) {
-    access_[op->var_].emplace_back(op->indices_); // use the old object
-    return Mutator::visit(op);
+void CompAccessBound::visit(const ReduceTo &op) {
+    Visitor::visit(op);
+    access_[op->var_].emplace_back(op->indices_);
 }
 
-Stmt CompAccessBound::visit(const For &op) {
+void CompAccessBound::visit(const For &op) {
     defs_.insert(op->iter_);
-    auto ret = Mutator::visit(op);
+    Visitor::visit(op);
     defs_.erase(op->iter_);
-    return ret;
 }
 
 } // namespace ir

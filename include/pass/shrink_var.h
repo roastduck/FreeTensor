@@ -3,12 +3,18 @@
 
 #include <unordered_map>
 
+#include <analyze/comp_access_bound.h>
 #include <mutator.h>
 
 namespace ir {
 
 class ShrinkVar : public Mutator {
     std::unordered_map<std::string, std::vector<Expr>> offset_;
+    const std::unordered_map<std::string, AccessBound> &newRange_;
+
+  public:
+    ShrinkVar(const std::unordered_map<std::string, AccessBound> &newRange)
+        : newRange_(newRange) {}
 
   private:
     template <class T> T modifyAccess(const T &op) {

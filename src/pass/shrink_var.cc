@@ -1,4 +1,3 @@
-#include <analyze/comp_access_bound.h>
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
 
@@ -9,24 +8,23 @@ Stmt ShrinkVar::visit(const VarDef &_op) {
         return Mutator::visit(_op);
     }
 
+    if (!newRange_.count(_op->id())) { // not used at all
+        return (*this)(_op->body_);
+    }
+    auto &&range = newRange_.at(_op->id());
+
     offset_.erase(_op->name_);
     size_t n = _op->buffer_->tensor().shape().size();
-    ASSERT(_op->infoAccLen_->size() == n);
-    ASSERT(_op->infoAccLower_->size() == n);
-    offset_[_op->name_] = *_op->infoAccLower_;
+    ASSERT(range.lower_.size() == n);
+    ASSERT(range.len_.size() == n);
+    offset_[_op->name_] = range.lower_;
 
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::VarDef);
     auto op = __op.as<VarDefNode>();
 
     op->buffer_ = op->buffer_.clone();
-    auto &shape = op->buffer_->tensor().shape();
-    for (size_t i = 0; i < n; i++) {
-        shape[i] = (*op->infoAccLen_)[i];
-    }
-
-    op->infoAccLower_ = nullptr;
-    op->infoAccLen_ = nullptr;
+    op->buffer_->tensor().setShape(range.len_);
     return op;
 }
 
@@ -52,9 +50,8 @@ Stmt shrinkVar(const Stmt &_op) {
     // Algorithm:
     // (1) Simplify and get bounds of every expressions
     // (2) Represent the bounds of each vars with min / max expressions
-    // (3) Simplify those min / max expressions
-    // (4) Modify var definitions
-    // (5) Simplify the new indicies
+    // (3) Modify var definitions
+    // (4) Simplify the new indicies
 
     // (1)
     Stmt op;
@@ -62,16 +59,13 @@ Stmt shrinkVar(const Stmt &_op) {
     std::tie(op, lower, upper) = simplifyAndGetBounds(_op);
 
     // (2)
-    CompAccessBound marker(lower, upper);
-    op = marker(op);
+    CompAccessBound visitor(lower, upper);
+    visitor(op);
 
     // (3)
-    op = simplifyPass(op);
+    op = ShrinkVar(visitor.results())(op);
 
     // (4)
-    op = ShrinkVar()(op);
-
-    // (5)
     return simplifyPass(op);
 }
 

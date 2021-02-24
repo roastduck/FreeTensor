@@ -32,14 +32,6 @@ void PrintVisitor::visit(const Any &op) {
 
 void PrintVisitor::visit(const VarDef &op) {
     printId(op);
-    if (op->infoAccLower_.isValid() && op->infoAccLen_.isValid()) {
-        makeIndent();
-        os() << "// lower = [";
-        printList(*op->infoAccLower_);
-        os() << "], len = [";
-        printList(*op->infoAccLen_);
-        os() << "]" << std::endl;
-    }
     makeIndent();
     os() << ::ir::toString(op->buffer_->atype()) << " "
          << ::ir::toString(op->buffer_->mtype()) << " " << op->name_ << ": ";
