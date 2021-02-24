@@ -99,35 +99,22 @@ class Schedule {
     void swap(const std::vector<std::string> &order);
 
     /**
-     * Cache the reads of a variable into a new local variable
+     * Cache a variable into a new local variable
      *
-     * @param stmt : ID of the statement or block (e.g. an If) to be modified.
-     * Note that it is not supported to define a local variable inside stmt and
-     * use it to read the variable to be cached.
+     * All needed data will be filled into the cache first, then all reads and
+     * writes will be directed to the cache, and finally all needed data will be
+     * flushed from the cache
+     *
+     * @param stmt : ID of the statement or block (e.g. an If or a For) to be
+     * modified
      * @param var : name of the variable to be cached
      * @param mtype : where to cache
      * @throw InvalidSchedule if the ID or name is not found
-     * @return : (ID of the statement that fills into the cache, name of the
-     * cache variable)
-     */
-    std::pair<std::string, std::string>
-    cacheRead(const std::string &stmt, const std::string &var, MemType mtype);
-
-    /**
-     * Cache the writes of a variable into a new local variable
-     *
-     * @param stmt : ID of the statement or block (e.g. an If) to be modified
-     * Note that it is not supported to define a local variable inside stmt and
-     * use it to write the variable to be cached.
-     * @param var : name of the variable to be cached
-     * @param mtype : where to cache
-     * @throw InvalidSchedule if the ID or name is not found
-     * @return : (ID of the statement that initialize the cache for reduction,
-     * ID of the statement that flushes from the cache, name of the cache
-     * variable)
+     * @return : (ID of the statement that fills the cache, ID of the statement
+     * that flushes from the cache, name of the cache variable)
      */
     std::tuple<std::string, std::string, std::string>
-    cacheWrite(const std::string &stmt, const std::string &var, MemType mtype);
+    cache(const std::string &stmt, const std::string &var, MemType mtype);
 
     /**
      * Move a statement to a new position

@@ -42,7 +42,7 @@ def test_shmem():
 			y[i] = x[i] + 1
 
 	s = ir.Schedule(ir.pop_ast())
-	load_x, _ = s.cache_read("S1", "x", "gpu/shared")
+	s.cache("S1", "x", "gpu/shared")
 	s.parallelize("L1", "threadIdx.x")
 	ast = ir.lower(s.ast(), target)
 	print(ast)

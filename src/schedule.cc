@@ -2,6 +2,7 @@
 #include <regex>
 #include <sstream>
 
+#include <analyze/comp_access_bound.h>
 #include <analyze/deps.h>
 #include <analyze/find_loop_variance.h>
 #include <cursor.h>
@@ -11,8 +12,7 @@
 #include <pass/simplify.h>
 #include <pass/sink_var.h>
 #include <schedule.h>
-#include <schedule/cache_read.h>
-#include <schedule/cache_write.h>
+#include <schedule/cache.h>
 #include <schedule/check_loop_order.h>
 #include <schedule/fission.h>
 #include <schedule/fuse.h>
@@ -299,43 +299,41 @@ void Schedule::swap(const std::vector<std::string> &order) {
     ast_ = ast;
 }
 
-std::pair<std::string, std::string> Schedule::cacheRead(const std::string &stmt,
-                                                        const std::string &var,
-                                                        MemType mtype) {
-    auto ast = ast_;
-    CacheRead mutator(stmt, var, mtype);
-    try {
-        ast = mutator(ast);
-        ast = shrinkVar(ast);
-        if (!mutator.modified()) {
-            throw InvalidSchedule("Statement " + stmt + " not found");
-        }
-    } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule("Invalid cache_read(" + stmt + ", " + var +
-                              "): " + e.what());
-    }
-    ast_ = ast;
-    return std::make_pair(mutator.fillStmt(), mutator.cacheVar());
-}
-
 std::tuple<std::string, std::string, std::string>
-Schedule::cacheWrite(const std::string &stmt, const std::string &var,
-                     MemType mtype) {
-    auto ast = makeReduction(ast_);
-    CacheWrite mutator(stmt, var, mtype);
+Schedule::cache(const std::string &stmt, const std::string &var,
+                MemType mtype) {
+    auto ast = ast_;
+    std::string fillStmt, flushStmt, newVar, newDef;
     try {
-        ast = mutator(ast);
-        ast = shrinkVar(ast);
-        if (!mutator.modified()) {
+        MakeCacheVar makeCacheVar(stmt, var, mtype);
+        ast = makeCacheVar(ast);
+        newVar = makeCacheVar.newVar();
+        newDef = makeCacheVar.newDef();
+        if (newDef.empty()) {
             throw InvalidSchedule("Statement " + stmt + " not found");
         }
+
+        SimplifyPass::BoundsMap lower, upper;
+        std::tie(ast, lower, upper) = simplifyAndGetBounds(ast);
+        CompAccessBound compRBound(lower, upper, COMP_ACCESS_BOUND_READ);
+        CompAccessBound compWBound(lower, upper, COMP_ACCESS_BOUND_WRITE);
+        compRBound(ast);
+        compWBound(ast);
+        MakeFillAndFlush makeFillAndFlush(stmt, var, newVar, newDef,
+                                          compRBound.results(),
+                                          compWBound.results());
+        ast = makeFillAndFlush(ast);
+        fillStmt = makeFillAndFlush.fillStmt();
+        flushStmt = makeFillAndFlush.flushStmt();
+
+        ast = shrinkVar(ast);
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid cache_write(" + stmt + ", " + var +
                               "): " + e.what());
     }
     ast_ = ast;
-    return std::make_tuple(mutator.initStmt(), mutator.flushStmt(),
-                           mutator.cacheVar());
+    return std::make_tuple(std::move(fillStmt), std::move(flushStmt),
+                           std::move(newVar));
 }
 
 std::string Schedule::moveTo(const std::string &_stmt, const std::string &_dst,
