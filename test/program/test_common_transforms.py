@@ -71,3 +71,50 @@ def test_tiling():
 	c_std = a_np @ b_np
 	assert np.all(np.isclose(c_np, c_std))
 
+def test_tiled_reduction():
+	target = ir.CPU()
+	device = ir.Device(target)
+
+	with ir.VarDef([
+			("x", (256,), "float32", "input", "cpu"),
+			("y", (1,), "float32", "output", "cpu")]) as (x, y):
+		y[0] = 0
+		with ir.For("i", 0, 256, nid="Li") as i:
+			y[0] = y[0] + x[i]
+
+	i = "Li"
+
+	s = ir.Schedule(ir.pop_ast())
+	i0, i1 = s.split(i, 64)
+	s.cache_reduction(i1, "y", "cpu")
+
+	ast = ir.lower(s.ast(), target)
+	print(ast)
+
+	with ir.VarDef([
+			("x", (256,), "float32", "input", "cpu"),
+			("y", (1,), "float32", "output", "cpu")]) as (x, y):
+		y[0] = 0
+		with ir.For("i0", 0, 4) as i0:
+			with ir.VarDef("yw", (1,), "float32", "cache", "cpu") as yw:
+				yw[0] = 0.
+				with ir.For("i1", 0, 64) as i1:
+					yw[0] = yw[0] + x[i1 + 64 * i0]
+				y[0] = y[0] + yw[0]
+	std = ir.make_reduction(ir.pop_ast())
+	assert std.match(ast)
+
+	code, params = ir.codegen(ast, target)
+	print(code)
+	x_np = np.random.rand(256).astype("float32")
+	y_np = np.zeros((1,), dtype="float32")
+	x_arr = ir.Array(x_np, device)
+	y_arr = ir.Array(y_np, device)
+	driver = ir.Driver(code, params, device)
+	driver.set_params({"x": x_arr, "y": y_arr})
+	driver.run()
+	y_np = y_arr.numpy()
+
+	y_std = np.sum(x_np, keepdims=True)
+	assert np.all(np.isclose(y_np, y_std))
+
