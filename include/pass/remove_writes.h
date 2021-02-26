@@ -47,7 +47,9 @@ class RemoveWrites : public Mutator {
         if (redundant_.count(op)) {
             return makeStmtSeq(op->id(), {});
         } else if (replacement_.count(op)) {
-            return replacement_.at(op);
+            auto ret = replacement_.at(op);
+            ret->setId(op->id());
+            return ret;
         } else {
             return Mutator::visit(op);
         }

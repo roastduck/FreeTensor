@@ -117,6 +117,7 @@ Stmt MakeFillAndFlush::visitStmt(
         if (rRange_.count(newDef_)) {
             auto &&rRange = rRange_.at(newDef_);
             fill = makeStore("", newVar_, indices, makeLoad(oldVar_, indices));
+            fillStmt_ = fill->id();
             for (int i = nDim_ - 1; i >= 0; i--) {
                 fill = makeFor("", iters[i], rRange.lower_[i],
                                makeAdd(rRange.lower_[i], rRange.len_[i]), "",
@@ -130,6 +131,7 @@ Stmt MakeFillAndFlush::visitStmt(
         if (wRange_.count(newDef_)) {
             auto &&wRange = wRange_.at(newDef_);
             flush = makeStore("", oldVar_, indices, makeLoad(newVar_, indices));
+            flushStmt_ = flush->id();
             for (int i = nDim_ - 1; i >= 0; i--) {
                 flush = makeFor("", iters[i], wRange.lower_[i],
                                 makeAdd(wRange.lower_[i], wRange.len_[i]), "",
@@ -139,8 +141,6 @@ Stmt MakeFillAndFlush::visitStmt(
             flush = makeStmtSeq("", {});
         }
 
-        fillStmt_ = fill->id();
-        flushStmt_ = flush->id();
         op = makeStmtSeq("", {fill, op, flush});
     }
     return op;
@@ -180,6 +180,7 @@ Stmt MakeInitAndReduce::visitStmt(
         Stmt init =
             makeStore("", newVar_, indices,
                       makeNeutralVal(buffer_->tensor().dtype(), reduce_->op_));
+        initStmt_ = init->id();
         for (int i = nDim - 1; i >= 0; i--) {
             init = makeFor("", iters[i], range.lower_[i],
                            makeAdd(range.lower_[i], range.len_[i]), "", init);
@@ -187,14 +188,13 @@ Stmt MakeInitAndReduce::visitStmt(
 
         Stmt reduce = makeReduceTo("", oldVar_, indices, reduce_->op_,
                                    makeLoad(newVar_, indices), false);
+        reduceStmt_ = reduce->id();
         for (int i = nDim - 1; i >= 0; i--) {
             reduce =
                 makeFor("", iters[i], range.lower_[i],
                         makeAdd(range.lower_[i], range.len_[i]), "", reduce);
         }
 
-        initStmt_ = init->id();
-        reduceStmt_ = reduce->id();
         op = makeStmtSeq("", {init, op, reduce});
     }
     return op;

@@ -8,10 +8,8 @@ namespace ir {
 using namespace pybind11::literals;
 
 void init_ffi_ast(py::module_ &m) {
-    py::class_<AST>(m, "AST")
-        .def(py::init<>())
-        .def(py::init<const Stmt &>())
-        .def(py::init<const Expr &>())
+    py::class_<AST> pyAST(m, "AST");
+    pyAST.def(py::init<>())
         .def("match",
              [](const AST &op, const AST &other) { return match(op, other); })
         .def("__str__",
@@ -19,21 +17,14 @@ void init_ffi_ast(py::module_ &m) {
         .def("__repr__", [](const AST &op) {
             return op.isValid() ? "<AST: " + toString(op) + ">" : "None";
         });
-    py::class_<Stmt>(m, "Stmt")
-        .def(py::init<>())
-        .def("match",
-             [](const AST &op, const AST &other) { return match(op, other); })
-        .def("__str__",
-             [](const Stmt &op) { return op.isValid() ? toString(op) : ""; })
-        .def("__repr__", [](const Stmt &op) {
-            return op.isValid() ? "<Stmt: " + toString(op) + ">" : "None";
-        });
-    py::class_<Expr>(m, "Expr")
-        .def(py::init<>())
+
+    py::class_<Stmt> pyStmt(m, "Stmt", pyAST);
+    pyStmt.def(py::init<>());
+
+    py::class_<Expr> pyExpr(m, "Expr", pyAST);
+    pyExpr.def(py::init<>())
         .def(py::init([](int val) { return makeIntConst(val); }))
         .def(py::init([](float val) { return makeFloatConst(val); }))
-        .def("match",
-             [](const AST &op, const AST &other) { return match(op, other); })
         .def(
             "__add__",
             [](const Expr &lhs, const Expr &rhs) { return makeAdd(lhs, rhs); },
@@ -105,14 +96,7 @@ void init_ffi_ast(py::module_ &m) {
         .def(
             "__ne__",
             [](const Expr &lhs, const Expr &rhs) { return makeNE(lhs, rhs); },
-            py::is_operator())
-        .def("__str__",
-             [](const Expr &op) { return op.isValid() ? toString(op) : ""; })
-        .def("__repr__", [](const Expr &op) {
-            return op.isValid() ? "<Expr: " + toString(op) + ">" : "None";
-        });
-    py::implicitly_convertible<Stmt, AST>();
-    py::implicitly_convertible<Expr, AST>();
+            py::is_operator());
     py::implicitly_convertible<int, Expr>();
     py::implicitly_convertible<float, Expr>();
 
