@@ -22,10 +22,10 @@ template <class T> class Ref {
     Ref() = default;
     Ref(std::nullptr_t) : Ref() {}
 
-  private:
+    /// NO NOT USE THIS CONSTRUCTOR IN PUBLIC
+    /// It is public because Pybind11 needs it
     Ref(T *ptr) : ptr_(ptr) {}
 
-  public:
     /**
      * Shared with any compatible references
      */

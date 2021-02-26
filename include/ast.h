@@ -38,6 +38,8 @@ enum class ASTNodeType : int {
     Eval,
 };
 
+std::string toString(ASTNodeType type);
+
 #define DEFINE_NODE_ACCESS(name)                                               \
   protected:                                                                   \
     name##Node() = default; /* Must be constructed in Ref */                   \

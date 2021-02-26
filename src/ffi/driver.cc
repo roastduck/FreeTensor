@@ -14,48 +14,23 @@ void init_ffi_driver(py::module_ &m) {
         .value("CPU", TargetType::CPU)
         .value("GPU", TargetType::GPU);
 
-    py::class_<Ref<Target>>(m, "Target")
-        .def(py::init<const Ref<CPU> &>())
-        .def(py::init<const Ref<GPU> &>())
+    py::class_<Target, Ref<Target>> pyTarget(m, "Target");
+    pyTarget
         .def("type", [](const Ref<Target> &target) { return target->type(); })
         .def("__str__",
-             [](const Ref<Target> &target) {
-                 return target.isValid() ? target->toString() : "";
-             })
-        .def("__repr__", [](const Ref<Target> &target) {
-            return target.isValid() ? "<Target: " + target->toString() + ">"
-                                    : "None";
-        });
-    py::class_<Ref<CPU>>(m, "CPU")
-        .def(py::init([]() { return Ref<CPU>::make(); }))
-        .def("type", [](const Ref<CPU> &target) { return target->type(); })
-        .def("__str__",
-             [](const Ref<CPU> &target) {
-                 return target.isValid() ? target->toString() : "";
-             })
-        .def("__repr__", [](const Ref<CPU> &target) {
-            return target.isValid() ? "<CPU: " + target->toString() + ">"
-                                    : "None";
-        });
-    py::class_<Ref<GPU>>(m, "GPU")
+             [](const Ref<Target> &target) { return target->toString(); });
+    py::class_<CPU, Ref<CPU>>(m, "CPU", pyTarget).def(py::init([]() {
+        return Ref<CPU>::make();
+    }));
+    py::class_<GPU, Ref<GPU>>(m, "GPU", pyTarget)
         .def(py::init([]() { return Ref<GPU>::make(); }))
-        .def("type", [](const Ref<GPU> &target) { return target->type(); })
         .def("set_compute_capability",
              [](const Ref<GPU> &target, int value) {
                  target->setComputeCapability(value);
              })
-        .def("compute_capability",
-             [](const Ref<GPU> &target) { return target->computeCapability(); })
-        .def("__str__",
-             [](const Ref<GPU> &target) {
-                 return target.isValid() ? target->toString() : "";
-             })
-        .def("__repr__", [](const Ref<GPU> &target) {
-            return target.isValid() ? "<GPU: " + target->toString() + ">"
-                                    : "None";
+        .def("compute_capability", [](const Ref<GPU> &target) {
+            return target->computeCapability();
         });
-    py::implicitly_convertible<Ref<CPU>, Ref<Target>>();
-    py::implicitly_convertible<Ref<GPU>, Ref<Target>>();
 
     py::class_<Device>(m, "Device")
         .def(py::init<const Ref<Target> &, size_t>(), "target"_a, "num"_a = 0);
@@ -100,4 +75,26 @@ void init_ffi_driver(py::module_ &m) {
 }
 
 } // namespace ir
+
+namespace pybind11 {
+
+template <> struct polymorphic_type_hook<ir::Target> {
+    static const void *get(const ir::Target *src, const std::type_info *&type) {
+        if (src == nullptr) {
+            return src;
+        }
+        switch (src->type()) {
+        case ir::TargetType::CPU:
+            type = &typeid(ir::CPU);
+            return static_cast<const ir::CPU *>(src);
+        case ir::TargetType::GPU:
+            type = &typeid(ir::GPU);
+            return static_cast<const ir::GPU *>(src);
+        default:
+            ERROR("Unexpected target type");
+        }
+    }
+};
+
+} // namespace pybind11
 

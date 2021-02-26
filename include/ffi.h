@@ -4,6 +4,10 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
+#include <ref.h>
+
+PYBIND11_DECLARE_HOLDER_TYPE(T, ir::Ref<T>);
+
 namespace ir {
 
 namespace py = pybind11;

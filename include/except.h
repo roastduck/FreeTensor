@@ -29,8 +29,8 @@ class InvalidProgram : public Error {
 
 #define ERROR(msg)                                                             \
     {                                                                          \
-        throw Error((std::string) "[ERROR] " __FILE__ ":" +                    \
-                    std::to_string(__LINE__) + ": " + (msg));                  \
+        throw ::ir::Error((std::string) "[ERROR] " __FILE__ ":" +              \
+                          std::to_string(__LINE__) + ": " + (msg));            \
     }
 
 #define WARNING(msg)                                                           \
