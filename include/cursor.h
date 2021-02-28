@@ -10,13 +10,10 @@
 
 namespace ir {
 
-enum class CursorMode : int { All, Range, Begin, End };
-
 class Cursor {
     friend class VisitorWithCursor;
 
     Stack<Stmt> stack_;
-    CursorMode mode_ = CursorMode::All;
 
   private:
     void push(const Stmt &op) { stack_.push(op); }
@@ -25,15 +22,14 @@ class Cursor {
   public:
     Cursor() {}
 
-    void setMode(CursorMode mode) { mode_ = mode; }
+    const Stmt &node() const { return stack_.top()->data_; }
 
-    const Stmt &top() const { return stack_.top()->data_; }
-
-    const std::string &id() const { return top()->id(); }
+    const std::string &id() const { return node()->id(); }
 
     Stmt getParentById(const std::string &id) const;
 
     bool isBefore(const Cursor &other) const;
+    bool isOuter(const Cursor &other) const;
 
     // The following functions returns a new cursor pointing to a nearby
     // position

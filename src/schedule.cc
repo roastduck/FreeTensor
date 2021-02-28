@@ -5,7 +5,6 @@
 #include <analyze/comp_access_bound.h>
 #include <analyze/deps.h>
 #include <analyze/find_loop_variance.h>
-#include <cursor.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/make_reduction.h>
 #include <pass/shrink_var.h>
@@ -34,6 +33,10 @@ static std::string dep2Str(const std::string &scope, const std::string &var,
        << earlier << " along loop or statement block " << scope
        << " cannot be resolved";
     return std::regex_replace(os.str(), std::regex("\n"), "");
+}
+
+Cursor Schedule::find(const std::string &id) const {
+    return getCursorById(ast_, id);
 }
 
 std::pair<std::string, std::string> Schedule::split(const std::string &id,
@@ -372,8 +375,8 @@ Schedule::cacheReduction(const std::string &stmt, const std::string &var,
                            std::move(newVar));
 }
 
-std::string Schedule::moveTo(const std::string &_stmt, const std::string &_dst,
-                             bool toBegin, bool toEnd) {
+std::string Schedule::moveTo(const std::string &_stmt, MoveToSide side,
+                             const std::string &_dst) {
     auto bak = ast_;
     try {
         auto stmt = _stmt, dst = _dst;
@@ -381,20 +384,33 @@ std::string Schedule::moveTo(const std::string &_stmt, const std::string &_dst,
             ast_ = flattenStmtSeq(ast_, true);
             Cursor s = getCursorById(ast_, stmt);
             Cursor d = getCursorById(ast_, dst);
-            if (toBegin) {
-                d.setMode(CursorMode::Begin);
-            }
-            if (toEnd) {
-                d.setMode(CursorMode::End);
-            }
 
-            if (d.isBefore(s)) {
+            auto movingUp = [&]() {
+                if (d.isOuter(s)) {
+                    return side == MoveToSide::Before;
+                }
+                if (s.hasPrev()) {
+                    return d.isBefore(side == MoveToSide::After ? s.prev() : s);
+                } else {
+                    return d.isBefore(s);
+                }
+            };
+            auto movingDown = [&]() {
+                if (d.isOuter(s)) {
+                    return side == MoveToSide::After;
+                }
+                if (s.hasNext()) {
+                    return (side == MoveToSide::Before ? s.next() : s)
+                        .isBefore(d);
+                } else {
+                    return s.isBefore(d);
+                }
+            };
+
+            if (movingUp()) {
                 if (s.hasPrev()) {
                     std::vector<std::string> orderRev;
-                    if (!d.isBefore(s.prev())) {
-                        return s.id();
-                    }
-                    while (s.hasPrev() && d.isBefore(s.prev())) {
+                    while (s.hasPrev() && movingUp()) {
                         s = s.prev();
                         orderRev.emplace_back(s.id());
                     }
@@ -403,41 +419,32 @@ std::string Schedule::moveTo(const std::string &_stmt, const std::string &_dst,
                                                    orderRev.rend());
                     swap(order);
                 } else {
-                    if (!d.isBefore(s.outer())) {
-                        return s.id();
-                    }
-                    while (!s.hasPrev() && d.isBefore(s.outer())) {
+                    while (!s.hasPrev() && movingUp()) {
                         s = s.outer();
                     }
                     // TODO: Fission IfNode
-                    ASSERT(s.top()->nodeType() == ASTNodeType::For);
+                    ASSERT(s.node()->nodeType() == ASTNodeType::For);
                     // Leave IDs of the other statements unchanged
                     auto idMap = fission(s.id(), stmt, ".a", "").first;
                     stmt = idMap.at(s.id());
                 }
                 // TODO: Fuse if d is inner of s
 
-            } else {
+            } else if (movingDown()) {
                 if (s.hasNext()) {
                     std::vector<std::string> order;
-                    if (!s.next().isBefore(d)) {
-                        return s.id();
-                    }
-                    while (s.hasNext() && s.next().isBefore(d)) {
+                    while (s.hasNext() && movingDown()) {
                         s = s.next();
                         order.emplace_back(s.id());
                     }
                     order.emplace_back(stmt);
                     swap(order);
                 } else {
-                    if (!s.outer().isBefore(d)) {
-                        return s.id();
-                    }
-                    while (!s.hasNext() && s.outer().isBefore(d)) {
+                    while (!s.hasNext() && movingDown()) {
                         s = s.outer();
                     }
                     // TODO: Fission IfNode
-                    ASSERT(s.top()->nodeType() == ASTNodeType::For);
+                    ASSERT(s.node()->nodeType() == ASTNodeType::For);
                     Cursor stmtCursor = getCursorById(ast_, stmt);
                     ASSERT(stmtCursor.hasPrev());
                     // Leave IDs of the other statements unchanged
@@ -447,6 +454,9 @@ std::string Schedule::moveTo(const std::string &_stmt, const std::string &_dst,
                     stmt = idMap.at(s.id());
                 }
                 // TODO: Fuse if d is inner of s
+
+            } else {
+                return s.id();
             }
         }
     } catch (const InvalidSchedule &e) {

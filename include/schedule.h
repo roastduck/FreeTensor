@@ -3,9 +3,12 @@
 
 #include <unordered_map>
 
+#include <cursor.h>
 #include <stmt.h>
 
 namespace ir {
+
+enum MoveToSide : int { Before, After };
 
 class Schedule {
     Stmt ast_;
@@ -13,7 +16,16 @@ class Schedule {
   public:
     Schedule(const Stmt &ast) : ast_(ast) {}
 
+    /**
+     * @return : The AST being transformed
+     */
     const Stmt &ast() const { return ast_; }
+
+    /**
+     * Find a node in the current AST
+     * @id : ID of the node
+     */
+    Cursor find(const std::string &id) const;
 
     /**
      * Split a loop into two nested loops
@@ -174,16 +186,13 @@ class Schedule {
      * commands
      *
      * @param stmt : ID of the statement to be moved
+     * @param side : Whether `stmt` will be BEFORE or AFTER `dst
      * @param dst : Insert `stmt` to be directly after this statement
-     * @param toBegin : Move to the begin point of dst. This specifies the
-     * behavior when dst is a scope, e.g. a loop
-     * @param toEnd : Move to the end point of dst This specifies the behavior
-     * when dst is a scope, e.g. a loop
      * @throw InvalidSchedule if there is no feasible path to move
      * @return : The new ID of stmt
      */
-    std::string moveTo(const std::string &stmt, const std::string &dst,
-                       bool toBegin = false, bool toEnd = false);
+    std::string moveTo(const std::string &stmt, MoveToSide side,
+                       const std::string &dst);
 
     /**
      * Mark a loop with a parallel implementation

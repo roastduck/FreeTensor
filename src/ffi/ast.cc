@@ -15,14 +15,38 @@ void init_ffi_ast(py::module_ &m) {
     py::class_<StmtNode, Stmt> pyStmt(m, "Stmt", pyAST);
     py::class_<ExprNode, Expr> pyExpr(m, "Expr", pyAST);
 
-    py::class_<StmtSeqNode, StmtSeq> pyStmtSeq(m, "StmtSeq", pyStmt);
-    py::class_<VarDefNode, VarDef> pyVarDef(m, "VarDef", pyStmt);
-    py::class_<StoreNode, Store> pyStore(m, "Store", pyStmt);
-    py::class_<ReduceToNode, ReduceTo> pyReduceTo(m, "ReduceTo", pyStmt);
-    py::class_<ForNode, For> pyFor(m, "For", pyStmt);
-    py::class_<IfNode, If> pyIf(m, "If", pyStmt);
-    py::class_<AssertNode, Assert> pyAssert(m, "Assert", pyStmt);
-    py::class_<EvalNode, Eval> pyEval(m, "Eval", pyStmt);
+    pyStmt.def_property_readonly("nid", &StmtNode::id);
+
+    py::class_<StmtSeqNode, StmtSeq>(m, "StmtSeq", pyStmt)
+        .def_readonly("stmts", &StmtSeqNode::stmts_);
+    py::class_<VarDefNode, VarDef>(m, "VarDef", pyStmt)
+        .def_readonly("name", &VarDefNode::name_)
+        .def_readonly("buffer", &VarDefNode::buffer_)
+        .def_readonly("body", &VarDefNode::body_);
+    py::class_<StoreNode, Store>(m, "Store", pyStmt)
+        .def_readonly("var", &StoreNode::var_)
+        .def_readonly("indices", &StoreNode::indices_)
+        .def_readonly("expr", &StoreNode::expr_);
+    py::class_<ReduceToNode, ReduceTo>(m, "ReduceTo", pyStmt)
+        .def_readonly("var", &ReduceToNode::var_)
+        .def_readonly("indices", &ReduceToNode::indices_)
+        .def_readonly("op", &ReduceToNode::op_)
+        .def_readonly("expr", &ReduceToNode::expr_);
+    py::class_<ForNode, For>(m, "For", pyStmt)
+        .def_readonly("iter", &ForNode::iter_)
+        .def_readonly("begin", &ForNode::begin_)
+        .def_readonly("end", &ForNode::end_)
+        .def_readonly("parallel", &ForNode::parallel_)
+        .def_readonly("body", &ForNode::body_);
+    py::class_<IfNode, If>(m, "If", pyStmt)
+        .def_readonly("cond", &IfNode::cond_)
+        .def_readonly("then_case", &IfNode::thenCase_)
+        .def_readonly("else_case", &IfNode::elseCase_);
+    py::class_<AssertNode, Assert>(m, "Assert", pyStmt)
+        .def_readonly("cond", &AssertNode::cond_)
+        .def_readonly("body", &AssertNode::body_);
+    py::class_<EvalNode, Eval>(m, "Eval", pyStmt)
+        .def_readonly("expr", &EvalNode::expr_);
     py::class_<AnyNode, Any> pyAny(m, "Any", pyStmt);
 
     py::class_<VarNode, Var> pyVar(m, "Var", pyExpr);

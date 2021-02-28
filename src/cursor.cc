@@ -15,24 +15,15 @@ Stmt Cursor::getParentById(const std::string &id) const {
 
 bool Cursor::isBefore(const Cursor &other) const {
     auto l = stack_, r = other.stack_;
-    auto lMode = mode_, rMode = other.mode_;
     while (l.size() > r.size()) {
-        l.pop(), lMode = CursorMode::Range;
+        l.pop();
     }
     while (r.size() > l.size()) {
-        r.pop(), rMode = CursorMode::Range;
+        r.pop();
     }
     for (; !l.empty(); l.pop(), r.pop()) {
         if (l.top()->data_->id() == r.top()->data_->id()) {
-            switch (lMode) {
-            case CursorMode::All:
-            case CursorMode::End:
-                return false;
-            case CursorMode::Range:
-                return rMode == CursorMode::End;
-            case CursorMode::Begin:
-                return rMode == CursorMode::Range || rMode == CursorMode::End;
-            }
+            return false;
         }
         if (l.top()->prev_.isValid() && r.top()->prev_.isValid() &&
             l.top()->prev_->data_->id() == r.top()->prev_->data_->id()) {
@@ -49,6 +40,17 @@ bool Cursor::isBefore(const Cursor &other) const {
         }
     }
     return false;
+}
+
+bool Cursor::isOuter(const Cursor &other) const {
+    auto l = stack_, r = other.stack_;
+    if (r.size() <= l.size()) {
+        return false;
+    }
+    while (r.size() > l.size()) {
+        r.pop();
+    }
+    return l.empty() || l.top()->data_->id() == r.top()->data_->id();
 }
 
 bool Cursor::hasPrev() const {
@@ -113,8 +115,8 @@ Cursor Cursor::outer() const {
     auto ret = *this;
     do {
         ret.pop();
-    } while (ret.top()->nodeType() == ASTNodeType::StmtSeq ||
-             ret.top()->nodeType() == ASTNodeType::VarDef);
+    } while (ret.node()->nodeType() == ASTNodeType::StmtSeq ||
+             ret.node()->nodeType() == ASTNodeType::VarDef);
     return ret;
 }
 
