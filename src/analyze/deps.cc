@@ -172,19 +172,20 @@ Ref<std::string> AnalyzeDeps::makeRange(const std::vector<IterAxis> &point,
         if (point[i].iter_->nodeType() == ASTNodeType::Var) {
             std::string ineq =
                 genISLExpr_.normalizeId(point[i].iter_.as<VarNode>()->name_);
-            bool bounded = false;
+            int bounded = 0;
             if (auto linstr = genISLExpr_(point[i].begin_); linstr.isValid()) {
                 ineq = *linstr + " <= " + ineq;
-                bounded = true;
+                bounded++;
             }
             if (auto linstr = genISLExpr_(point[i].end_); linstr.isValid()) {
                 ineq = ineq + " < " + *linstr;
-                bounded = true;
+                bounded++;
             }
-            if (bounded) {
-                ineqs.emplace_back(std::move(ineq));
-            } else if (relax == RelaxMode::Necessary) {
+            if (bounded < 2 && relax == RelaxMode::Necessary) {
                 return nullptr;
+            }
+            if (bounded > 0) {
+                ineqs.emplace_back(std::move(ineq));
             }
         }
     }

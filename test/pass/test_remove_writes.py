@@ -146,3 +146,30 @@ def test_type2_used_no_remove():
 
 	assert std.match(ast)
 
+def test_type2_dynamic():
+	with ir.VarDef([
+			("n", (), "int32", "input", "byvalue"),
+			("m", (), "int32", "input", "byvalue")]) as (n, m):
+		with ir.VarDef([
+				("x", (n[()],), "int32", "input", "cpu"),
+				("y", (n[()],), "int32", "output", "cpu")]) as (x, y):
+			with ir.For("i", 0, n[()]) as i:
+				with ir.For("j", 0, m[()]) as j:
+					y[i] = x[i] * 2
+	ast = ir.pop_ast()
+	print(ast)
+	ast = ir.lower(ast)
+	print(ast)
+
+	with ir.VarDef([
+			("n", (), "int32", "input", "byvalue"),
+			("m", (), "int32", "input", "byvalue")]) as (n, m):
+		with ir.VarDef([
+				("x", (n[()],), "int32", "input", "cpu"),
+				("y", (n[()],), "int32", "output", "cpu")]) as (x, y):
+			with ir.For("i", 0, n[()]) as i:
+				y[i] = x[i] * 2
+	std = ir.pop_ast()
+
+	assert std.match(ast)
+
