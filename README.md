@@ -56,3 +56,25 @@ PYTHONPATH=../python:../build:$PYTHONPATH PYTHONMALLOC=malloc valgrind python3 -
 ## Contribute
 
 Please configure (or install some plugins for) your editor, to support `clang-format` and `editorconfig`, for code formating.
+
+## Code Structure
+
+```
+include/ --------------------------------------------------- C++ headers
+`- ref.h --------------------------------------------------- A smart pointer, based on std::shared_ptr, used all around the code
+|- ast.h --------------------------------------------------- Base class for AST (the form of our IR) nodes
+|- stmt.h -------------------------------------------------- Statement nodes of an AST
+|- expr.h -------------------------------------------------- Expression nodes of an AST
+|- visitor.h ----------------------------------------------- Inherit Visitor in this file to examine an AST
+|- mutator.h ----------------------------------------------- Inherit Mutator in this file to modify an AST
+|- ffi.h --------------------------------------------------- Interface between C++ and Python. Implementations are in src/ffi/
+|- schedule.h ---------------------------------------------- All user specified transformations (schedules). Main interface. Details are in schedule/
+|- schedule/ ----------------------------------------------- All user specified transformations (schedules)
+|- pass/ --------------------------------------------------- All user agnostic transformations (used inside or after schedules)
+|- analyze/ ------------------------------------------------ Passes to extract information from an AST
+|- codegen/ ------------------------------------------------ Passes to generate a target code from an AST
+|- driver/ ------------------------------------------------- Infrastructure to run a generated target code
+src/ ------------------------------------------------------- C++ sources (the structure is almost same with include/)
+python/ ---------------------------------------------------- Python API
+test/ ------------------------------------------------------ Unit tests
+```
