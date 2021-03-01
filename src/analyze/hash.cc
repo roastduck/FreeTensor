@@ -63,5 +63,15 @@ void GetHash::visit(const LNot &op) {
     hash_[op] = h = (h * K3 + B3) % P;
 }
 
+void GetHash::visit(const Intrinsic &op) {
+    Visitor::visit(op);
+    uint64_t h = ((uint64_t)op->nodeType() * K1 + B1) % P;
+    h = ((h + std::hash<std::string>()(op->format_)) * K2 + B2) % P;
+    for (auto &&item : op->params_) {
+        h = ((h + hash_.at(item)) * K2 + B2) % P;
+    }
+    hash_[op] = h = (h * K3 + B3) % P;
+}
+
 } // namespace ir
 

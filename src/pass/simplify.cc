@@ -265,42 +265,9 @@ Ref<int> CompUniqueBounds::getInt(const Expr &op) const {
     return lower == upper ? Ref<int>::make(lower) : nullptr;
 }
 
-Expr CompUniqueBounds::visit(const Var &_op) {
-    auto __op = CompTransientBounds::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::Var);
-    auto op = __op.as<VarNode>();
-    Bound b{op}; // Don't forget itself
-    updLower(op, b);
-    updUpper(op, b);
-    static bool inRecur = false;
-    if (!inRecur) {
-        inRecur = true;
-        auto hash = getHash(op);
-        if (transients().count(hash)) {
-            auto &&range = transients().at(hash);
-            ASSERT(range.first.isValid());
-            ASSERT(range.second.isValid());
-            auto first = (*this)(range.first);
-            auto second = (*this)(range.second);
-            for (auto &&item : getLower(first)) {
-                updLower(op, item);
-            }
-            for (auto &&item : getUpper(second)) {
-                updUpper(op, item);
-            }
-        }
-        inRecur = false;
-    }
-    return op;
-}
-
-Expr CompUniqueBounds::visit(const Load &_op) {
-    auto __op = CompTransientBounds::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::Load);
-    auto op = __op.as<LoadNode>();
-    Bound b{op}; // Don't forget itself
-    updLower(op, b);
-    updUpper(op, b);
+Expr CompUniqueBounds::visitExpr(
+    const Expr &_op, const std::function<Expr(const Expr &)> &visitNode) {
+    auto op = CompTransientBounds::visitExpr(_op, visitNode);
     static bool inRecur = false;
     if (!inRecur) {
         inRecur = true;
@@ -322,6 +289,26 @@ Expr CompUniqueBounds::visit(const Load &_op) {
         }
         inRecur = false;
     }
+    return op;
+}
+
+Expr CompUniqueBounds::visit(const Var &_op) {
+    auto __op = CompTransientBounds::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::Var);
+    auto op = __op.as<VarNode>();
+    Bound b{op}; // Don't forget itself
+    updLower(op, b);
+    updUpper(op, b);
+    return op;
+}
+
+Expr CompUniqueBounds::visit(const Load &_op) {
+    auto __op = CompTransientBounds::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::Load);
+    auto op = __op.as<LoadNode>();
+    Bound b{op}; // Don't forget itself
+    updLower(op, b);
+    updUpper(op, b);
     return op;
 }
 
@@ -548,6 +535,41 @@ bool SimplifyPass::checkLowerCmp0(const Expr &normForm,
         }
     }
     return false;
+}
+
+Expr SimplifyPass::visitExpr(
+    const Expr &_op, const std::function<Expr(const Expr &)> &visitNode) {
+    auto op = CompUniqueBounds::visitExpr(_op, visitNode);
+
+    // To avoid divergence
+    if (getHash(op) != getHash(_op)) {
+        // E.g.
+        // (1) a[0 - 0] -> a[0]
+        // (2) (1 + 1) * a[0] -> 2 * a[0 - 0], because of the old bound
+        return op;
+    }
+
+    Expr best = nullptr;
+    auto bestScope = -1;
+    for (auto &&lower : getLower(op)) {
+        auto hl = getHash(lower.expr_);
+        for (auto &&upper : getUpper(op)) {
+            auto hr = getHash(upper.expr_);
+            if (hl == hr) {
+                // We need to choose the simplest one. Other wise
+                // we are always picking the original expression
+                auto scope = findInnerMostScope(varScope_, lower.expr_);
+                if (!best.isValid() || scope < bestScope) {
+                    best = lower.expr_, bestScope = scope;
+                }
+                break;
+            }
+        }
+    }
+    if (best.isValid() && getHash(best) != getHash(op)) {
+        return markMutated(best);
+    }
+    return op;
 }
 
 Expr SimplifyPass::visit(const Div &_op) {

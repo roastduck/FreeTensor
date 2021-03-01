@@ -67,6 +67,7 @@ class CompTransientBounds : public Mutator {
 
   protected:
     using Mutator::visit; // Avoid hiding virtual functions
+    using Mutator::visitExpr;
 
     Stmt visit(const For &op) override;
     Stmt visit(const If &op) override;
@@ -117,6 +118,9 @@ class CompUniqueBounds : public CompTransientBounds {
   protected:
     using CompTransientBounds::visit; // Avoid hiding virtual functions
 
+    Expr visitExpr(const Expr &op,
+                   const std::function<Expr(const Expr &)> &visitNode) override;
+
     Expr visit(const Var &op) override;
     Expr visit(const Load &op) override;
     Expr visit(const IntConst &op) override;
@@ -148,40 +152,6 @@ class SimplifyPass : public CompUniqueBounds {
         return ret;
     }
 
-    template <class T> Expr doSimplify(const T &_op) {
-        auto op = CompUniqueBounds::visit(_op);
-
-        // To avoid divergence
-        if (getHash(op) != getHash(_op)) {
-            // E.g.
-            // (1) a[0 - 0] -> a[0]
-            // (2) (1 + 1) * a[0] -> 2 * a[0 - 0], because of the old bound
-            return op;
-        }
-
-        Expr best = nullptr;
-        auto bestScope = -1;
-        for (auto &&lower : getLower(op)) {
-            auto hl = getHash(lower.expr_);
-            for (auto &&upper : getUpper(op)) {
-                auto hr = getHash(upper.expr_);
-                if (hl == hr) {
-                    // We need to choose the simplest one. Other wise
-                    // we are always picking the original expression
-                    auto scope = findInnerMostScope(varScope_, lower.expr_);
-                    if (!best.isValid() || scope < bestScope) {
-                        best = lower.expr_, bestScope = scope;
-                    }
-                    break;
-                }
-            }
-        }
-        if (best.isValid() && getHash(best) != getHash(op)) {
-            return markMutated(best);
-        }
-        return op;
-    }
-
     bool checkUpperCmp0(const Expr &normForm,
                         const std::function<bool(int, int)> &&cmp);
     bool checkLowerCmp0(const Expr &normForm,
@@ -190,10 +160,9 @@ class SimplifyPass : public CompUniqueBounds {
   protected:
     using CompUniqueBounds::visit;
 
-    Expr visit(const Var &op) override { return doSimplify(op); }
-    Expr visit(const Add &op) override { return doSimplify(op); }
-    Expr visit(const Sub &op) override { return doSimplify(op); }
-    Expr visit(const Mul &op) override { return doSimplify(op); }
+    Expr visitExpr(const Expr &op,
+                   const std::function<Expr(const Expr &)> &visitNode) override;
+
     Expr visit(const Div &op) override;
     Expr visit(const Mod &op) override;
     Expr visit(const Min &op) override;
