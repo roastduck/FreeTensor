@@ -125,52 +125,11 @@ Stmt CompTransientBounds::visit(const If &op) {
 
     Stmt elseCase = nullptr;
     if (op->elseCase_.isValid()) {
-        auto oldMap = transients_;
-        std::function<void(const Expr &)> f = [&](const Expr &cond) {
-            switch (cond->nodeType()) {
-            case ASTNodeType::LAnd: {
-                auto land = cond.as<LAndNode>();
-                f(land->lhs_);
-                f(land->rhs_);
-                break;
-            }
-            case ASTNodeType::GE: { // not LT
-                auto lt = cond.as<GENode>();
-                transients_[getHash(lt->lhs_)].second = sub1(lt->rhs_);
-                transients_[getHash(lt->rhs_)].first = add1(lt->lhs_);
-                break;
-            }
-            case ASTNodeType::LE: { // not GT
-                auto gt = cond.as<LENode>();
-                transients_[getHash(gt->lhs_)].first = add1(gt->rhs_);
-                transients_[getHash(gt->rhs_)].second = sub1(gt->lhs_);
-                break;
-            }
-            case ASTNodeType::GT: { // not LE
-                auto le = cond.as<GTNode>();
-                transients_[getHash(le->lhs_)].second = le->rhs_;
-                transients_[getHash(le->rhs_)].first = le->lhs_;
-                break;
-            }
-            case ASTNodeType::LT: { // not GE
-                auto ge = cond.as<LTNode>();
-                transients_[getHash(ge->lhs_)].first = ge->rhs_;
-                transients_[getHash(ge->rhs_)].second = ge->lhs_;
-                break;
-            }
-            case ASTNodeType::NE: { // not EQ
-                auto eq = cond.as<NENode>();
-                transients_[getHash(eq->lhs_)] = {eq->rhs_, eq->rhs_};
-                transients_[getHash(eq->rhs_)] = {eq->lhs_, eq->lhs_};
-                break;
-            }
-            default:;
-                // Do nothing
-            }
-        };
+        f((*this)(makeLNot(op->cond_)));
         elseCase = (*this)(op->elseCase_);
         transients_ = oldMap;
     }
+
     auto ret = makeIf(op->id(), std::move(cond), std::move(thenCase),
                       std::move(elseCase));
     ret.as<IfNode>()->infoNotCond_ = std::move(notCond);

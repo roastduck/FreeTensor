@@ -153,7 +153,7 @@ def test_precondition_from_if():
 			with ir.If(x1[i] < x2[i]):
 				y[i] = ir.min(x1[i], x2[i])
 			with ir.Else():
-				y[i] = 0
+				y[i] = ir.min(x1[i], x2[i]) + 1
 	ast = ir.pop_ast()
 	print(ast)
 	ast = ir.lower(ast)
@@ -167,7 +167,7 @@ def test_precondition_from_if():
 			with ir.If(x1[i] < x2[i]):
 				y[i] = x1[i]
 			with ir.Else():
-				y[i] = 0
+				y[i] = x2[i] + 1
 	std = ir.pop_ast()
 
 	assert std.match(ast)
@@ -181,7 +181,7 @@ def test_multiple_preconditions_from_if():
 			with ir.If(ir.l_and(x1[i] >= 0, x1[i] < x2[i])):
 				y[i] = ir.min(x1[i], x2[i])
 			with ir.Else():
-				y[i] = 0
+				y[i] = ir.min(x1[i], x2[i]) + 1
 	ast = ir.pop_ast()
 	print(ast)
 	ast = ir.lower(ast)
@@ -195,7 +195,7 @@ def test_multiple_preconditions_from_if():
 			with ir.If(ir.l_and(x1[i] >= 0, x1[i] < x2[i])):
 				y[i] = x1[i]
 			with ir.Else():
-				y[i] = 0
+				y[i] = ir.min(x1[i], x2[i]) + 1
 	std = ir.pop_ast()
 
 	assert std.match(ast)

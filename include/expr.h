@@ -237,7 +237,7 @@ class LOrNode : public ExprNode {
 };
 typedef Ref<LOrNode> LOr;
 template <class T, class U> Expr makeLOr(T &&lhs, U &&rhs) {
-    LAnd l = LAnd::make();
+    LOr l = LOr::make();
     l->lhs_ = std::forward<T>(lhs), l->rhs_ = std::forward<U>(rhs);
     return l;
 }
