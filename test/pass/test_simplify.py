@@ -144,6 +144,34 @@ def test_multiple_maxes():
 
 	assert std.match(ast)
 
+def test_precondition_from_if():
+	with ir.VarDef([
+			("x1", (4,), "int32", "input", "cpu"),
+			("x2", (4,), "int32", "input", "cpu"),
+			("y", (4,), "int32", "output", "cpu")]) as (x1, x2, y):
+		with ir.For("i", 0, 4) as i:
+			with ir.If(x1[i] < x2[i]):
+				y[i] = ir.min(x1[i], x2[i])
+			with ir.Else():
+				y[i] = 0
+	ast = ir.pop_ast()
+	print(ast)
+	ast = ir.lower(ast)
+	print(ast)
+
+	with ir.VarDef([
+			("x1", (4,), "int32", "input", "cpu"),
+			("x2", (4,), "int32", "input", "cpu"),
+			("y", (4,), "int32", "output", "cpu")]) as (x1, x2, y):
+		with ir.For("i", 0, 4) as i:
+			with ir.If(x1[i] < x2[i]):
+				y[i] = x1[i]
+			with ir.Else():
+				y[i] = 0
+	std = ir.pop_ast()
+
+	assert std.match(ast)
+
 def test_different_scope():
 	with ir.VarDef([
 			("x", (4, 10), "int32", "input", "cpu"),

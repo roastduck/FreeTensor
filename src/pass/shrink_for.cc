@@ -19,15 +19,16 @@ Expr ShrinkFor::simplifyExpr(const Expr &_expr) {
 }
 
 Stmt ShrinkFor::visit(const For &_op) {
-    newRange_.erase(_op->iter_);
+    auto hash = getHash(makeVar(_op->iter_));
+    newRange_.erase(hash);
 
     auto __op = SimplifyPass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::For);
     auto op = __op.as<ForNode>();
 
-    ASSERT(newRange_.count(op->iter_));
-    auto newBegin = newRange_.at(op->iter_).first;
-    auto newEnd = makeAdd(newRange_.at(op->iter_).second, makeIntConst(1));
+    ASSERT(newRange_.count(hash));
+    auto newBegin = newRange_.at(hash).first;
+    auto newEnd = makeAdd(newRange_.at(hash).second, makeIntConst(1));
     newBegin = simplifyExpr(newBegin);
     newEnd = simplifyExpr(newEnd);
 

@@ -34,18 +34,32 @@ int findInnerMostScope(const std::unordered_map<std::string, int> &varScope,
                        const Expr &op);
 
 /**
- * Compute effective bounds of iterators
+ * Compute bounds of IDENTICAL (sub)expressions AT A POSITION in the AST
+ *
+ * E.g.
+ *
+ * ```
+ * if (x < 2) {
+ *   ... = x + x; // <- AT THIS POSITION
+ * }
+ * ```
+ *
+ * At the position above, ALL TWO IDENTICAL EXPRESSIONS `x` have an upper bound
+ * 2
  *
  * Inherit this pass to use it
  */
-class CompIterBounds : public Mutator {
-    std::unordered_map<std::string, std::pair<Expr, Expr>> iters_;
+class CompTransientBounds : public Mutator {
+    std::unordered_map<uint64_t, std::pair<Expr, Expr>> transients_;
+    GetHash getHash_;
 
   protected:
-    const std::unordered_map<std::string, std::pair<Expr, Expr>> &
-    iters() const {
-        return iters_;
+    const std::unordered_map<uint64_t, std::pair<Expr, Expr>> &
+    transients() const {
+        return transients_;
     }
+
+    uint64_t getHash(const Expr &op);
 
   private:
     static Expr sub1(const Expr &op);
@@ -59,26 +73,34 @@ class CompIterBounds : public Mutator {
 };
 
 /**
- * Try to get the upper bound and lower bound of each (sub)expression
+ * Compute bounds of each UNIQUE (sub)expression
+ *
+ * E.g.
+ *
+ * ```
+ * if (x < 2) {
+ *   ... = x;
+ * }
+ * ... = x;
+ * ```
+ *
+ * Two UNIQUE expressions `x` have different upper bounds
  *
  * Inherit this pass to use it
  *
  * This pass is not accurate. Simplifying passes using this analysis may need
  * to run for multiple rounds
  */
-class AnalyzeBounds : public CompIterBounds {
+class CompUniqueBounds : public CompTransientBounds {
   public:
     typedef std::unordered_map<Expr, std::vector<Bound>> BoundsMap;
 
   private:
-    GetHash getHash_;
     BoundsMap lower_, upper_;
 
   protected:
     std::vector<Bound> getLower(const Expr &op) const;
     std::vector<Bound> getUpper(const Expr &op) const;
-
-    uint64_t getHash(const Expr &op);
 
   private:
     void updLower(const Expr &op, const Bound &bound);
@@ -93,7 +115,7 @@ class AnalyzeBounds : public CompIterBounds {
     const BoundsMap &upper() const { return upper_; }
 
   protected:
-    using CompIterBounds::visit; // Avoid hiding virtual functions
+    using CompTransientBounds::visit; // Avoid hiding virtual functions
 
     Expr visit(const Var &op) override;
     Expr visit(const Load &op) override;
@@ -104,7 +126,7 @@ class AnalyzeBounds : public CompIterBounds {
     Expr visit(const Div &op) override;
 };
 
-class SimplifyPass : public AnalyzeBounds {
+class SimplifyPass : public CompUniqueBounds {
   public:
     typedef std::unordered_map<Expr, std::vector<Bound>> BoundsMap;
 
@@ -127,7 +149,7 @@ class SimplifyPass : public AnalyzeBounds {
     }
 
     template <class T> Expr doSimplify(const T &_op) {
-        auto op = AnalyzeBounds::visit(_op);
+        auto op = CompUniqueBounds::visit(_op);
 
         // To avoid divergence
         if (getHash(op) != getHash(_op)) {
@@ -166,7 +188,7 @@ class SimplifyPass : public AnalyzeBounds {
                         const std::function<bool(int, int)> &&cmp);
 
   protected:
-    using AnalyzeBounds::visit;
+    using CompUniqueBounds::visit;
 
     Expr visit(const Var &op) override { return doSimplify(op); }
     Expr visit(const Add &op) override { return doSimplify(op); }

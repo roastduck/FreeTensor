@@ -6,7 +6,7 @@
 namespace ir {
 
 class ShrinkFor : public SimplifyPass {
-    std::unordered_map<std::string, std::pair<Expr, Expr>> newRange_;
+    std::unordered_map<uint64_t, std::pair<Expr, Expr>> newRange_;
     bool keepConst_;
 
   public:
@@ -17,7 +17,7 @@ class ShrinkFor : public SimplifyPass {
 
     template <class T> Stmt visitSideEffect(const T &op) {
         auto ret = SimplifyPass::visit(op);
-        for (auto &&item : iters()) {
+        for (auto &&item : transients()) {
             if (newRange_.count(item.first)) {
                 newRange_[item.first] = std::make_pair(
                     makeMin(newRange_[item.first].first, item.second.first),
