@@ -409,7 +409,6 @@ Expr CompUniqueBounds::visit(const Mul &_op) {
         return ret;
     };
 
-    // FIXME: What if b < 0?
     auto g = [f, this](const Expr &op, const Expr &e1, const Expr &e2) {
         if (auto k = getInt(e2); k.isValid()) {
             for (auto &&b : getLower(e1)) {
