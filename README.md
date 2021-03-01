@@ -61,7 +61,7 @@ Please configure (or install some plugins for) your editor, to support `clang-fo
 
 ```
 include/ --------------------------------------------------- C++ headers
-`- ref.h --------------------------------------------------- A smart pointer, based on std::shared_ptr, used all around the code
+|- ref.h --------------------------------------------------- A smart pointer, based on std::shared_ptr, used all around the code
 |- ast.h --------------------------------------------------- Base class for AST (the form of our IR) nodes
 |- stmt.h -------------------------------------------------- Statement nodes of an AST
 |- expr.h -------------------------------------------------- Expression nodes of an AST
@@ -73,7 +73,7 @@ include/ --------------------------------------------------- C++ headers
 |- pass/ --------------------------------------------------- All user agnostic transformations (used inside or after schedules)
 |- analyze/ ------------------------------------------------ Passes to extract information from an AST
 |- codegen/ ------------------------------------------------ Passes to generate a target code from an AST
-|- driver/ ------------------------------------------------- Infrastructure to run a generated target code
+`- driver/ ------------------------------------------------- Infrastructure to run a generated target code
 src/ ------------------------------------------------------- C++ sources (the structure is almost same with include/)
 python/ ---------------------------------------------------- Python API
 test/ ------------------------------------------------------ Unit tests
