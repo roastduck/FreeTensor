@@ -26,9 +26,23 @@ static Expr makeCeilDiv(const Expr &lhs, const Expr &rhs) {
                    makeIntConst(1));
 }
 
+void FindAllIfs::visit(const If &op) {
+    Visitor::visit(op);
+    results_.insert(op->id());
+}
+
+Stmt AppendIDs::visitStmt(const Stmt &op,
+                          const std::function<Stmt(const Stmt &)> &visitNode) {
+    auto ret = Mutator::visitStmt(op, visitNode);
+    ret->setId(op->id() + suffix_);
+    return ret;
+}
+
 Stmt SeperateTail::visit(const If &op) {
-    for (auto &item : ifStack_) {
-        item.emplace_back(op); // Use the old one
+    if (candidates_.count(op->id())) {
+        for (auto &item : ifStack_) {
+            item.emplace_back(op); // Use the old one
+        }
     }
     return Mutator::visit(op);
 }
@@ -125,22 +139,24 @@ Stmt SeperateTail::visit(const For &_op) {
     }
 
     std::function<Stmt(size_t, const For &)> dfs =
-        [&seperations, &dfs](size_t i, const For &old) -> Stmt {
+        [&seperations, &dfs, this](size_t i, const For &old) -> Stmt {
         if (i == seperations.size()) {
             return old;
         }
         auto &&sep = seperations[i];
         auto front =
-            makeFor("", old->iter_, old->begin_, makeMin(old->end_, sep),
+            makeFor(old->id(), old->iter_, old->begin_, makeMin(old->end_, sep),
                     old->parallel_, old->body_);
-        auto back = makeFor("", old->iter_, makeMax(old->begin_, sep),
+        auto back = makeFor(old->id(), old->iter_, makeMax(old->begin_, sep),
                             old->end_, old->parallel_, old->body_);
-        front = dfs(i + 1, front);
-        back = dfs(i + 1, back);
+        front = dfs(i + 1, AppendIDs(".front")(front));
+        back = dfs(i + 1, AppendIDs(".back")(back));
         auto seperated = makeStmtSeq("", {front, back});
-        return makeIf(
+        auto ret = makeIf(
             "", makeLAnd(makeGE(sep, old->begin_), makeLT(sep, old->end_)),
             seperated, old);
+        nextCandidates_.insert(ret->id());
+        return ret;
     };
     return dfs(0, op);
 }
@@ -166,9 +182,15 @@ Stmt seperateTail(const Stmt &_op) {
     counter(op);
     int maxNested = counter.maxNested();
 
+    FindAllIfs finder;
+    finder(op);
+    auto candidates = finder.results();
+
     for (int i = 0; i < maxNested; i++) {
-        op = SeperateTail()(op);
+        SeperateTail mutator(candidates);
+        op = mutator(op);
         op = simplifyPass(op);
+        candidates = mutator.nextCandidates();
     }
     return op;
 }

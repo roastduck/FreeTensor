@@ -397,7 +397,6 @@ Expr CompUniqueBounds::visit(const Mul &_op) {
                                 }
                             }
                             lin.bias_ += subLin.bias_ * (item.second.k / p);
-                            lin.bias_ -= (p - 1) * (item.second.k / p);
                             altered = true;
                             continue;
                         }

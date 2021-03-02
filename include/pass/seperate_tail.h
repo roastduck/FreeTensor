@@ -10,6 +10,27 @@
 
 namespace ir {
 
+class FindAllIfs : public Visitor {
+    std::unordered_set<std::string> results_;
+
+  public:
+    const std::unordered_set<std::string> &results() const { return results_; }
+
+  protected:
+    void visit(const If &op) override;
+};
+
+class AppendIDs : public Mutator {
+    std::string suffix_;
+
+  public:
+    AppendIDs(const std::string &suffix) : suffix_(suffix) {}
+
+  protected:
+    Stmt visitStmt(const Stmt &op,
+                   const std::function<Stmt(const Stmt &)> &visitNode) override;
+};
+
 /**
  * Seperate main iterations and tail iterations of a loop
  *
@@ -40,9 +61,20 @@ namespace ir {
  * ```
  */
 class SeperateTail : public Mutator {
+    const std::unordered_set<std::string> &candidates_;
+    std::unordered_set<std::string> nextCandidates_;
+
     std::unordered_set<std::string> def_;
     std::vector<std::vector<If>> ifStack_;
     AnalyzeLinear analyzeLinear_;
+
+  public:
+    SeperateTail(const std::unordered_set<std::string> &candidates)
+        : candidates_(candidates) {}
+
+    const std::unordered_set<std::string> &nextCandidates() const {
+        return nextCandidates_;
+    }
 
   protected:
     Stmt visit(const If &op) override;
