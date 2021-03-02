@@ -153,6 +153,19 @@ class Else:
 		body = ctx_stack.pop().make_stmt()
 		ctx_stack.top().append_if_else_stmt(body)
 
+class Assert:
+	def __init__(self, cond):
+		self.cond = cond
+
+	def __enter__(self):
+		ctx_stack.push()
+
+	def __exit__(self, exc_type, exc_value, traceback):
+		body = ctx_stack.pop().make_stmt()
+		top = ctx_stack.top()
+		nid = top.get_next_nid()
+		top.append_stmt(ffi.makeAssert(nid, self.cond, body))
+
 ''' Mark the ID of the following statement '''
 def MarkNid(nid: str):
 	ctx_stack.top().set_next_nid(nid)

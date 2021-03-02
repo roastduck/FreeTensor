@@ -65,12 +65,15 @@ class CompTransientBounds : public Mutator {
     static Expr sub1(const Expr &op);
     static Expr add1(const Expr &op);
 
+    void applyCond(const Expr &cond);
+
   protected:
     using Mutator::visit; // Avoid hiding virtual functions
     using Mutator::visitExpr;
 
     Stmt visit(const For &op) override;
     Stmt visit(const If &op) override;
+    Stmt visit(const Assert &op) override;
 };
 
 /**

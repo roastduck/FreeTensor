@@ -185,6 +185,11 @@ void init_ffi_ast(py::module_ &m) {
           static_cast<Stmt (*)(const std::string &, const Expr &, const Stmt &,
                                const Stmt &)>(&makeIf),
           "nid"_a, "cond"_a, "thenCase"_a, "elseCase"_a = nullptr);
+    m.def(
+        "makeAssert",
+        static_cast<Stmt (*)(const std::string &, const Expr &, const Stmt &)>(
+            &makeAssert),
+        "nid"_a, "cond"_a, "body"_a);
     m.def("makeEval",
           static_cast<Stmt (*)(const std::string &, const Expr &)>(&makeEval),
           "nid"_a, "expr"_a);
