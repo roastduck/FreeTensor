@@ -131,6 +131,8 @@ class CompUniqueBounds : public CompTransientBounds {
     Expr visit(const Sub &op) override;
     Expr visit(const Mul &op) override;
     Expr visit(const Div &op) override;
+    Expr visit(const Min &op) override;
+    Expr visit(const Max &op) override;
 };
 
 class SimplifyPass : public CompUniqueBounds {

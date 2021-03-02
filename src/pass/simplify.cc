@@ -499,6 +499,32 @@ Expr CompUniqueBounds::visit(const Div &_op) {
     return op;
 }
 
+Expr CompUniqueBounds::visit(const Min &_op) {
+    auto __op = CompTransientBounds::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::Min);
+    auto op = __op.as<MinNode>();
+    for (auto &&b : getUpper(op->lhs_)) {
+        updUpper(op, b);
+    }
+    for (auto &&b : getUpper(op->rhs_)) {
+        updUpper(op, b);
+    }
+    return op;
+}
+
+Expr CompUniqueBounds::visit(const Max &_op) {
+    auto __op = CompTransientBounds::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::Max);
+    auto op = __op.as<MaxNode>();
+    for (auto &&b : getLower(op->lhs_)) {
+        updLower(op, b);
+    }
+    for (auto &&b : getLower(op->rhs_)) {
+        updLower(op, b);
+    }
+    return op;
+}
+
 bool SimplifyPass::checkUpperCmp0(const Expr &normForm,
                                   const std::function<bool(int, int)> &&cmp) {
     for (auto &&upper : getUpper(normForm)) {

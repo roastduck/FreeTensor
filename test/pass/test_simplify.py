@@ -391,3 +391,26 @@ def test_simplify_not_logic_op():
 
 	assert std.match(ast)
 
+def test_min_max_as_bound():
+	with ir.VarDef([
+			("l", (), "int32", "input", "cpu"),
+			("r", (), "int32", "input", "cpu")]) as (l, r):
+		with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
+			with ir.For("i", ir.max(l[()], 0), ir.min(r[()], 4)) as i:
+				y[i] = ir.l_and(i >= l[()], i < r[()])
+	ast = ir.pop_ast()
+	print(ast)
+	ast = ir.lower(ast)
+	print(ast)
+
+	with ir.VarDef([
+			("l", (), "int32", "input", "cpu"),
+			("r", (), "int32", "input", "cpu")]) as (l, r):
+		with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
+			with ir.For("i", ir.max(l[()], 0), ir.min(r[()], 4) - 1 + 1) as i:
+				# TODO: Fix this "- 1 + 1"
+				y[i] = 1
+	std = ir.pop_ast()
+
+	assert std.match(ast)
+
