@@ -117,6 +117,8 @@ Stmt CompTransientBounds::visit(const For &op) {
 Stmt CompTransientBounds::visit(const If &op) {
     auto cond = (*this)(op->cond_);
     auto notCond = (*this)(makeLNot(cond));
+    auto infoNotCond = // Different with notCond because counted in mutated_
+        op->infoNotCond_.isValid() ? (*this)(op->infoNotCond_) : nullptr;
 
     auto oldMap = transients_;
     applyCond(cond);
@@ -132,7 +134,7 @@ Stmt CompTransientBounds::visit(const If &op) {
 
     auto ret = makeIf(op->id(), std::move(cond), std::move(thenCase),
                       std::move(elseCase));
-    ret.as<IfNode>()->infoNotCond_ = std::move(notCond);
+    ret.as<IfNode>()->infoNotCond_ = std::move(infoNotCond);
     return ret;
 }
 
@@ -917,7 +919,7 @@ Stmt SimplifyPass::visit(const Assert &_op) {
             std::ostringstream os;
             // Print the unchanged _op
             os << "Assertion always false: " << _op;
-            throw InvalidSchedule(os.str());
+            throw InvalidProgram(os.str());
         }
     }
     return op;

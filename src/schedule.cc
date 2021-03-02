@@ -233,7 +233,7 @@ std::string Schedule::fuse(const std::string &loop0, const std::string &loop1) {
 
         try {
             ast = simplifyPass(ast);
-        } catch (const InvalidSchedule &e) {
+        } catch (const InvalidProgram &e) {
             throw InvalidSchedule((std::string) "Fusing " + loop0 + " and " +
                                   loop1 + " loop1 with different lengths? " +
                                   e.what());
