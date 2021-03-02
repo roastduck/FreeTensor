@@ -259,7 +259,7 @@ def test_dynamic():
 
 	assert std.match(ast)
 
-def test_floor_div():
+def test_floor_div_1():
 	with ir.VarDef([
 			("n", (), "int32", "input", "cpu"),
 			("y", (4,), "int32", "output", "cpu")]) as (n, y):
@@ -275,6 +275,27 @@ def test_floor_div():
 			("n", (), "int32", "input", "cpu"),
 			("y", (4,), "int32", "output", "cpu")]) as (n, y):
 		with ir.For("i", 0, n[()] // 4) as i:
+			y[i] = 1
+	std = ir.pop_ast()
+
+	assert std.match(ast)
+
+def test_floor_div_2():
+	with ir.VarDef([
+			("n", (), "int32", "input", "cpu"),
+			("y", (4,), "int32", "output", "cpu")]) as (n, y):
+		with ir.For("i", 0, (n[()] - 1) // 4) as i:
+			with ir.If(i * 4 < n[()]):
+				y[i] = 1
+	ast = ir.pop_ast()
+	print(ast)
+	ast = ir.lower(ast)
+	print(ast)
+
+	with ir.VarDef([
+			("n", (), "int32", "input", "cpu"),
+			("y", (4,), "int32", "output", "cpu")]) as (n, y):
+		with ir.For("i", 0, (n[()] + -1) // 4) as i:
 			y[i] = 1
 	std = ir.pop_ast()
 

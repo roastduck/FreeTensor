@@ -373,6 +373,7 @@ Expr CompUniqueBounds::visit(const Mul &_op) {
     g(op, op->rhs_, op->lhs_);
 
     // Special for `(n // p) * k`
+    AnalyzeLinear analyzeLinear;
     if (lower_.count(op)) {
         for (Bound &b : lower_.at(op)) {
             bool altered = false;
@@ -384,12 +385,18 @@ Expr CompUniqueBounds::visit(const Mul &_op) {
                     if (div->rhs_->nodeType() == ASTNodeType::IntConst) {
                         if (int p = div->rhs_.as<IntConstNode>()->val_;
                             item.second.k % p == 0) {
-                            auto h = getHash(div->lhs_);
-                            if (lin.coeff_.count(h)) {
-                                lin.coeff_.at(h).k += item.second.k / p;
-                            } else {
-                                lin.coeff_[h] = {item.second.k / p, div->lhs_};
+                            analyzeLinear(div->lhs_);
+                            auto subLin = analyzeLinear.result().at(div->lhs_);
+                            for (auto &&subitem : subLin.coeff_) {
+                                auto h = subitem.first;
+                                auto k = item.second.k / p * subitem.second.k;
+                                if (lin.coeff_.count(h)) {
+                                    lin.coeff_.at(h).k += k;
+                                } else {
+                                    lin.coeff_[h] = {k, subitem.second.a};
+                                }
                             }
+                            lin.bias_ += subLin.bias_ * (item.second.k / p);
                             lin.bias_ -= (p - 1) * (item.second.k / p);
                             altered = true;
                             continue;
@@ -414,12 +421,18 @@ Expr CompUniqueBounds::visit(const Mul &_op) {
                     if (div->rhs_->nodeType() == ASTNodeType::IntConst) {
                         if (int p = div->rhs_.as<IntConstNode>()->val_;
                             item.second.k % p == 0) {
-                            auto h = getHash(div->lhs_);
-                            if (lin.coeff_.count(h)) {
-                                lin.coeff_.at(h).k += item.second.k / p;
-                            } else {
-                                lin.coeff_[h] = {item.second.k / p, div->lhs_};
+                            analyzeLinear(div->lhs_);
+                            auto subLin = analyzeLinear.result().at(div->lhs_);
+                            for (auto &&subitem : subLin.coeff_) {
+                                auto h = subitem.first;
+                                auto k = item.second.k / p * subitem.second.k;
+                                if (lin.coeff_.count(h)) {
+                                    lin.coeff_.at(h).k += k;
+                                } else {
+                                    lin.coeff_[h] = {k, subitem.second.a};
+                                }
                             }
+                            lin.bias_ += subLin.bias_ * (item.second.k / p);
                             altered = true;
                             continue;
                         }
