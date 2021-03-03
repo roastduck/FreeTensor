@@ -1,6 +1,7 @@
 #ifndef LINEAR_H
 #define LINEAR_H
 
+#include <iostream>
 #include <unordered_map>
 
 #include <analyze/hash.h>
@@ -22,6 +23,15 @@ template <class T> struct LinearExpr {
     std::unordered_map<uint64_t, Scale<T>> coeff_;
     T bias_;
 };
+
+template <class T>
+std::ostream &operator<<(std::ostream &os, const LinearExpr<T> &lin) {
+    for (auto &&item : lin.coeff_) {
+        os << item.second.k_ << " * " << item.second.a_ << " + ";
+    }
+    os << lin.bias_;
+    return os;
+}
 
 } // namespace ir
 

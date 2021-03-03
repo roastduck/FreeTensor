@@ -3,8 +3,61 @@
 #include <functional>
 
 #include <math/bounds.h>
+#include <math/utils.h>
 
 namespace ir {
+
+static LinearExpr<Rational<int>>
+commonDenominator(const LinearExpr<Rational<int>> &_lin) {
+    auto lin = _lin;
+    auto common = lin.bias_.q_;
+    for (auto &&item : lin.coeff_) {
+        common = lcm(common, item.second.k_.q_);
+    }
+    lin.bias_.p_ *= common / lin.bias_.q_;
+    lin.bias_.q_ = common;
+    for (auto &item : lin.coeff_) {
+        item.second.k_.p_ *= common / item.second.k_.q_;
+        item.second.k_.q_ = common;
+    }
+    return lin;
+}
+
+static Expr linToExprNumerator(const LinearExpr<Rational<int>> &lin) {
+    Expr b = makeIntConst(lin.bias_.p_);
+
+    for (auto &&item : lin.coeff_) {
+        auto k = item.second.k_;
+        auto &&a = item.second.a_;
+
+        if (k == 0) {
+            continue;
+        }
+        Expr x;
+        if (a->nodeType() == ASTNodeType::IntConst) {
+            x = makeIntConst(k.p_ * a.as<IntConstNode>()->val_);
+        } else if (k.p_ == 1) {
+            x = a;
+        } else {
+            x = makeMul(makeIntConst(k.p_), a);
+        }
+
+        if (x->nodeType() == ASTNodeType::IntConst &&
+            b->nodeType() == ASTNodeType::IntConst) {
+            x = makeIntConst(x.as<IntConstNode>()->val_ +
+                             b.as<IntConstNode>()->val_);
+        } else if (b->nodeType() == ASTNodeType::IntConst &&
+                   b.as<IntConstNode>()->val_ == 0) {
+            // do nothing
+        } else {
+            x = makeAdd(x, b);
+        }
+
+        b = std::move(x);
+    }
+
+    return b;
+}
 
 template <class T> static T addImpl(const T &b1, const T &b2) {
     auto ret = b1.lin_;
@@ -45,86 +98,32 @@ UpperBound::UpperBound(const Expr &expr)
     : expr_(expr), lin_{{{getHash(expr), {1, expr}}}, 0} {}
 
 UpperBound::UpperBound(const LinearExpr<Rational<int>> &lin) : lin_(lin) {
-    Expr b = makeIntConst(lin.bias_.p_);
-    // Difference between UpperBound and LowerBound
-    b = lin.bias_.q_ == 1 ? b : makeFloorDiv(b, makeIntConst(lin.bias_.q_));
-
-    for (auto &&item : lin.coeff_) {
-        auto k = item.second.k_;
-        auto &&a = item.second.a_;
-
-        if (k == 0) {
-            continue;
-        }
-        Expr x;
-        if (a->nodeType() == ASTNodeType::IntConst) {
-            x = makeIntConst(k.p_ * a.as<IntConstNode>()->val_);
-        } else if (k == 1) {
-            x = a;
+    auto cdLin = commonDenominator(lin);
+    expr_ = linToExprNumerator(cdLin);
+    if (cdLin.bias_.q_ != 1) {
+        if (expr_->nodeType() == ASTNodeType::IntConst) {
+            expr_ = makeIntConst(
+                floorDiv(expr_.as<IntConstNode>()->val_, cdLin.bias_.q_));
         } else {
-            x = makeMul(makeIntConst(k.p_), a);
+            expr_ = makeFloorDiv(expr_, makeIntConst(cdLin.bias_.q_));
         }
-
-        // Difference between UpperBound and LowerBound
-        x = k.q_ == 1 ? x : makeFloorDiv(x, makeIntConst(k.q_));
-
-        if (x->nodeType() == ASTNodeType::IntConst &&
-            b->nodeType() == ASTNodeType::IntConst) {
-            x = makeIntConst(x.as<IntConstNode>()->val_ +
-                             b.as<IntConstNode>()->val_);
-        } else if (b->nodeType() == ASTNodeType::IntConst &&
-                   b.as<IntConstNode>()->val_ == 0) {
-            // do nothing
-        } else {
-            x = makeAdd(x, b);
-        }
-
-        b = std::move(x);
     }
-    expr_ = std::move(b);
 }
 
 LowerBound::LowerBound(const Expr &expr)
     : expr_(expr), lin_{{{getHash(expr), {1, expr}}}, 0} {}
 
 LowerBound::LowerBound(const LinearExpr<Rational<int>> &lin) : lin_(lin) {
-    Expr b = makeIntConst(lin.bias_.p_);
-    // Difference between UpperBound and LowerBound
-    b = lin.bias_.q_ == 1 ? b : makeCeilDiv(b, makeIntConst(lin.bias_.q_));
-
-    for (auto &&item : lin.coeff_) {
-        auto k = item.second.k_;
-        auto &&a = item.second.a_;
-
-        if (k == 0) {
-            continue;
-        }
-        Expr x;
-        if (a->nodeType() == ASTNodeType::IntConst) {
-            x = makeIntConst(k.p_ * a.as<IntConstNode>()->val_);
-        } else if (k == 1) {
-            x = a;
+    auto cdLin = commonDenominator(lin);
+    expr_ = linToExprNumerator(cdLin);
+    if (cdLin.bias_.q_ != 1) {
+        if (expr_->nodeType() == ASTNodeType::IntConst) {
+            expr_ = makeIntConst(
+                ceilDiv(expr_.as<IntConstNode>()->val_, cdLin.bias_.q_));
         } else {
-            x = makeMul(makeIntConst(k.p_), a);
+            expr_ = makeCeilDiv(expr_, makeIntConst(cdLin.bias_.q_));
         }
-
-        // Difference between UpperBound and LowerBound
-        x = k.q_ == 1 ? x : makeCeilDiv(x, makeIntConst(k.q_));
-
-        if (x->nodeType() == ASTNodeType::IntConst &&
-            b->nodeType() == ASTNodeType::IntConst) {
-            x = makeIntConst(x.as<IntConstNode>()->val_ +
-                             b.as<IntConstNode>()->val_);
-        } else if (b->nodeType() == ASTNodeType::IntConst &&
-                   b.as<IntConstNode>()->val_ == 0) {
-            // do nothing
-        } else {
-            x = makeAdd(x, b);
-        }
-
-        b = std::move(x);
     }
-    expr_ = std::move(b);
 }
 
 UpperBound add(const UpperBound &b1, const UpperBound &b2) {

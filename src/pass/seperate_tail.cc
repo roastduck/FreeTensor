@@ -33,6 +33,83 @@ Stmt AppendIDs::visitStmt(const Stmt &op,
     return ret;
 }
 
+void SeperateTail::genSeperation(
+    uint64_t iterHash, const Expr &cond,
+    const std::function<void(const Expr &)> &callback) {
+    auto type = cond->nodeType();
+
+    Expr norm;
+    switch (type) {
+    case ASTNodeType::LAnd:
+        genSeperation(iterHash, cond.as<LAndNode>()->lhs_, callback);
+        genSeperation(iterHash, cond.as<LAndNode>()->rhs_, callback);
+        return;
+    case ASTNodeType::LOr:
+        genSeperation(iterHash, cond.as<LOrNode>()->lhs_, callback);
+        genSeperation(iterHash, cond.as<LOrNode>()->rhs_, callback);
+        return;
+    case ASTNodeType::LNot:
+        genSeperation(iterHash, cond.as<LNotNode>()->expr_, callback);
+        return;
+    case ASTNodeType::LT:
+        norm = makeSub(cond.as<LTNode>()->lhs_, cond.as<LTNode>()->rhs_);
+        break;
+    case ASTNodeType::LE:
+        norm = makeSub(cond.as<LENode>()->lhs_, cond.as<LENode>()->rhs_);
+        break;
+    case ASTNodeType::GT:
+        norm = makeSub(cond.as<GTNode>()->lhs_, cond.as<GTNode>()->rhs_);
+        break;
+    case ASTNodeType::GE:
+        norm = makeSub(cond.as<GENode>()->lhs_, cond.as<GENode>()->rhs_);
+        break;
+    default:
+        return;
+    }
+    ASSERT(norm.isValid());
+    analyzeLinear_(norm);
+    if (!analyzeLinear_.result().count(norm)) {
+        return;
+    }
+    LinearExpr lin = analyzeLinear_.result().at(norm);
+
+    if (!lin.coeff_.count(iterHash)) {
+        return;
+    }
+    auto selfK = lin.coeff_.at(iterHash).k_;
+    if (selfK < 0) {
+        type = reverseCmp(type);
+        selfK *= -1;
+        lin.bias_ *= -1;
+        for (auto &item : lin.coeff_) {
+            item.second.k_ *= -1;
+        }
+    }
+
+    Expr seperation = makeIntConst(-lin.bias_);
+    for (auto &&item : lin.coeff_) {
+        if (item.first != iterHash) {
+            seperation =
+                makeAdd(seperation,
+                        makeMul(makeIntConst(-item.second.k_), item.second.a_));
+        }
+    }
+    switch (type) {
+    case ASTNodeType::LT:
+    case ASTNodeType::GE:
+        seperation = makeCeilDiv(seperation, makeIntConst(selfK));
+        break;
+    case ASTNodeType::LE:
+    case ASTNodeType::GT:
+        seperation = makeAdd(makeFloorDiv(seperation, makeIntConst(selfK)),
+                             makeIntConst(1));
+        break;
+    default:
+        ASSERT(false);
+    }
+    callback(seperation);
+}
+
 Stmt SeperateTail::visit(const If &op) {
     if (candidates_.count(op->id())) {
         for (auto &item : ifStack_) {
@@ -66,71 +143,8 @@ Stmt SeperateTail::visit(const For &_op) {
     auto iterHash = getHash(makeVar(op->iter_));
     std::vector<Expr> seperations;
     for (auto &&branch : ifList) {
-        auto type = branch->cond_->nodeType();
-
-        Expr norm;
-        switch (type) {
-        case ASTNodeType::LT:
-            norm = makeSub(branch->cond_.as<LTNode>()->lhs_,
-                           branch->cond_.as<LTNode>()->rhs_);
-            break;
-        case ASTNodeType::LE:
-            norm = makeSub(branch->cond_.as<LENode>()->lhs_,
-                           branch->cond_.as<LENode>()->rhs_);
-            break;
-        case ASTNodeType::GT:
-            norm = makeSub(branch->cond_.as<GTNode>()->lhs_,
-                           branch->cond_.as<GTNode>()->rhs_);
-            break;
-        case ASTNodeType::GE:
-            norm = makeSub(branch->cond_.as<GENode>()->lhs_,
-                           branch->cond_.as<GENode>()->rhs_);
-            break;
-        default:
-            continue;
-        }
-        ASSERT(norm.isValid());
-        analyzeLinear_(norm);
-        if (!analyzeLinear_.result().count(norm)) {
-            continue;
-        }
-        LinearExpr lin = analyzeLinear_.result().at(norm);
-
-        if (!lin.coeff_.count(iterHash)) {
-            continue;
-        }
-        auto selfK = lin.coeff_.at(iterHash).k_;
-        if (selfK < 0) {
-            type = reverseCmp(type);
-            selfK *= -1;
-            lin.bias_ *= -1;
-            for (auto &item : lin.coeff_) {
-                item.second.k_ *= -1;
-            }
-        }
-
-        Expr seperation = makeIntConst(-lin.bias_);
-        for (auto &&item : lin.coeff_) {
-            if (item.first != iterHash) {
-                seperation =
-                    makeAdd(seperation, makeMul(makeIntConst(-item.second.k_),
-                                                item.second.a_));
-            }
-        }
-        switch (type) {
-        case ASTNodeType::LT:
-        case ASTNodeType::GE:
-            seperation = makeCeilDiv(seperation, makeIntConst(selfK));
-            break;
-        case ASTNodeType::LE:
-        case ASTNodeType::GT:
-            seperation = makeAdd(makeFloorDiv(seperation, makeIntConst(selfK)),
-                                 makeIntConst(1));
-            break;
-        default:
-            ASSERT(false);
-        }
-        seperations.emplace_back(std::move(seperation));
+        genSeperation(iterHash, branch->cond_,
+                      [&](const Expr &sep) { seperations.emplace_back(sep); });
     }
 
     std::function<Stmt(size_t, const For &)> dfs =

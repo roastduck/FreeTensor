@@ -3,27 +3,22 @@
 
 #include <iostream>
 
-namespace ir {
+#include <math/utils.h>
 
-template <class T> T gcd(T x, T y) {
-    do {
-        T z = x % y;
-        x = y;
-        y = z;
-    } while (y);
-    return x;
-}
+namespace ir {
 
 template <class T> struct Rational {
     T p_, q_; // p_ / q_
 
-    Rational() : p_(0), q_(0) {}
-
-    Rational(T p, T q = 1) : p_(p), q_(q) {
-        T g = gcd(p, q);
-        p_ /= g, q_ /= g;
-        if (q_ < 0) {
-            p_ = -p_, q_ = -q_;
+    Rational(T p = 0, T q = 1) : p_(p), q_(q) {
+        if (p == 0) {
+            q_ = 1;
+        } else {
+            T g = gcd(p, q);
+            p_ /= g, q_ /= g;
+            if (q_ < 0) {
+                p_ = -p_, q_ = -q_;
+            }
         }
     }
 
@@ -38,14 +33,14 @@ template <class T> struct Rational {
     friend Rational operator+(const Rational<T> &lhs, const Rational<T> &rhs) {
         T g = gcd(lhs.q_, rhs.q_);
         T p = rhs.q_ / g * lhs.p_ + lhs.q_ / g * rhs.p_;
-        T q = rhs.q_ / g * rhs.q_;
+        T q = lhs.q_ / g * rhs.q_;
         return Rational<T>{p, q};
     }
 
     friend Rational operator-(const Rational<T> &lhs, const Rational<T> &rhs) {
         T g = gcd(lhs.q_, rhs.q_);
         T p = rhs.q_ / g * lhs.p_ - lhs.q_ / g * rhs.p_;
-        T q = rhs.q_ / g * rhs.q_;
+        T q = lhs.q_ / g * rhs.q_;
         return Rational<T>{p, q};
     }
 

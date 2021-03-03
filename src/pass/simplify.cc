@@ -4,6 +4,7 @@
 
 #include <analyze/hash.h>
 #include <except.h>
+#include <math/utils.h>
 #include <pass/disambiguous.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/simplify.h>
@@ -495,12 +496,8 @@ Expr SimplifyPass::visit(const FloorDiv &_op) {
     auto op = __op.as<FloorDivNode>();
     if (op->lhs_->nodeType() == ASTNodeType::IntConst &&
         op->rhs_->nodeType() == ASTNodeType::IntConst) {
-        auto x = op->lhs_.as<IntConstNode>()->val_;
-        auto y = op->rhs_.as<IntConstNode>()->val_;
-        int res = x / y;
-        int rem = x % y;
-        res -= rem != 0 && ((rem < 0) != (y < 0));
-        return makeIntConst(res);
+        return makeIntConst(floorDiv(op->lhs_.as<IntConstNode>()->val_,
+                                     op->rhs_.as<IntConstNode>()->val_));
     }
     return op;
 }
@@ -511,12 +508,8 @@ Expr SimplifyPass::visit(const CeilDiv &_op) {
     auto op = __op.as<CeilDivNode>();
     if (op->lhs_->nodeType() == ASTNodeType::IntConst &&
         op->rhs_->nodeType() == ASTNodeType::IntConst) {
-        auto x = op->lhs_.as<IntConstNode>()->val_;
-        auto y = op->rhs_.as<IntConstNode>()->val_;
-        int res = x / y;
-        int rem = x % y;
-        res += rem != 0 && ((rem < 0) == (y < 0));
-        return makeIntConst(res);
+        return makeIntConst(ceilDiv(op->lhs_.as<IntConstNode>()->val_,
+                                    op->rhs_.as<IntConstNode>()->val_));
     }
     return op;
 }

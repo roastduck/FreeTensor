@@ -1,6 +1,7 @@
 #ifndef SEPERATE_TAIL_H
 #define SEPERATE_TAIL_H
 
+#include <functional>
 #include <unordered_set>
 #include <vector>
 
@@ -75,6 +76,10 @@ class SeperateTail : public Mutator {
     const std::unordered_set<std::string> &nextCandidates() const {
         return nextCandidates_;
     }
+
+  private:
+    void genSeperation(uint64_t iterHash, const Expr &cond,
+                       const std::function<void(const Expr &)> &callback);
 
   protected:
     Stmt visit(const If &op) override;
