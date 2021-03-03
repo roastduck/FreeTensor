@@ -208,9 +208,10 @@ class Schedule {
      * Mark a loop as needing to unroll or not
      *
      * @param loop : ID of the loop
-     * @param isunroll : Num of the loop is needing to unroll.
+     * @param isunroll : Num of the loop is needing to unroll
+     * @throw InvalidSchedule if length of the loop is not constant
      */
-	void unroll(const std::string &loop, int unroll_num = 0);
+	void unroll(const std::string &loop, const unsigned int unroll_num = 0);
 };
 
 } // namespace ir

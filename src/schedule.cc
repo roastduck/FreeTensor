@@ -484,7 +484,7 @@ void Schedule::parallelize(const std::string &loop,
 }
 
 void Schedule::unroll(const std::string &loop,
-					  const int unroll_num) {
+					  const unsigned int unroll_num) {
 	auto ast = ast_;
 	Unroll mutator(loop, unroll_num);
 	try {

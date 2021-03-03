@@ -113,11 +113,12 @@ def VarDef(*args):
 		return _VarDef(*args)
 
 class For:
-	def __init__(self, iter_var: str, begin, end, nid: str = ""):
+	def __init__(self, iter_var: str, begin, end, nid: str = "", unroll_num: int = 0):
 		self.iter_var = iter_var
 		self.begin = begin
 		self.end = end
 		self.nid = nid
+		self.unroll_num = unroll_num
 
 	def __enter__(self):
 		ctx_stack.push()
@@ -129,7 +130,7 @@ class For:
 		nid = top.get_next_nid()
 		if self.nid != "":
 			nid = self.nid
-		top.append_stmt(ffi.makeFor(nid, self.iter_var, self.begin, self.end, "", body, 0))
+		top.append_stmt(ffi.makeFor(nid, self.iter_var, self.begin, self.end, "", body, self.unroll_num))
 
 class If:
 	def __init__(self, cond):

@@ -294,7 +294,7 @@ class Schedule(ffi.Schedule):
 	----------
 	loop : str, Stmt or Cursor
 		The loop
-	unroll_num : int
+	unroll_num : unsigned int
 		Num of the loop is needing to unroll.
 	'''
 
