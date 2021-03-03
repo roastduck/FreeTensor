@@ -51,10 +51,10 @@ void Driver::buildAndLoad() {
     std::string cmd;
     switch (dev_.type()) {
     case TargetType::CPU:
-        cmd = "c++ -shared -fPIC -Wall -fopenmp -o " + so + " " + cpp;
+        cmd = "c++ -shared -O3 -fPIC -Wall -fopenmp -o " + so + " " + cpp;
         break;
     case TargetType::GPU:
-        cmd = "nvcc -shared -Xcompiler -fPIC,-Wall";
+        cmd = "nvcc -shared -Xcompiler -fPIC,-Wall,-O3";
         if (auto arch = dev_.target().as<GPU>()->computeCapability();
             arch != 0) {
             cmd += " -arch sm_" + std::to_string(arch);
