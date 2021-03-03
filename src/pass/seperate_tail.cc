@@ -145,12 +145,12 @@ Stmt SeperateTail::visit(const For &_op) {
         }
         auto &&sep = seperations[i];
         auto front =
-            makeFor("", old->iter_, old->begin_, makeMin(old->end_, sep),
+            makeFor(old->id(), old->iter_, old->begin_, makeMin(old->end_, sep),
                     old->parallel_, old->body_, old->unroll_num_);
-        auto back = makeFor("", old->iter_, makeMax(old->begin_, sep),
+        auto back = makeFor(old->id(), old->iter_, makeMax(old->begin_, sep),
                             old->end_, old->parallel_, old->body_, old->unroll_num_);
-        front = dfs(i + 1, front);
-        back = dfs(i + 1, back);
+        front = dfs(i + 1, AppendIDs(".front")(front));
+        back = dfs(i + 1, AppendIDs(".back")(back));
         auto seperated = makeStmtSeq("", {front, back});
         auto ret = makeIf(
             "", makeLAnd(makeGE(sep, old->begin_), makeLT(sep, old->end_)),
