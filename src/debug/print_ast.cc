@@ -125,8 +125,32 @@ void PrintVisitor::visit(const Mul &op) {
     os() << ")";
 }
 
-void PrintVisitor::visit(const Div &op) {
+void PrintVisitor::visit(const RealDiv &op) {
     os() << "(";
+    recur(op->lhs_);
+    os() << " / ";
+    recur(op->rhs_);
+    os() << ")";
+}
+
+void PrintVisitor::visit(const FloorDiv &op) {
+    os() << "floor(";
+    recur(op->lhs_);
+    os() << " / ";
+    recur(op->rhs_);
+    os() << ")";
+}
+
+void PrintVisitor::visit(const CeilDiv &op) {
+    os() << "ceil(";
+    recur(op->lhs_);
+    os() << " / ";
+    recur(op->rhs_);
+    os() << ")";
+}
+
+void PrintVisitor::visit(const RoundTowards0Div &op) {
+    os() << "towards0(";
     recur(op->lhs_);
     os() << " / ";
     recur(op->rhs_);

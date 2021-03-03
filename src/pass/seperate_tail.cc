@@ -21,11 +21,6 @@ static ASTNodeType reverseCmp(ASTNodeType type) {
     }
 }
 
-static Expr makeCeilDiv(const Expr &lhs, const Expr &rhs) {
-    return makeAdd(makeDiv(makeSub(lhs, makeIntConst(1)), rhs),
-                   makeIntConst(1));
-}
-
 void FindAllIfs::visit(const If &op) {
     Visitor::visit(op);
     results_.insert(op->id());
@@ -104,13 +99,13 @@ Stmt SeperateTail::visit(const For &_op) {
         if (!lin.coeff_.count(iterHash)) {
             continue;
         }
-        auto selfK = lin.coeff_.at(iterHash).k;
+        auto selfK = lin.coeff_.at(iterHash).k_;
         if (selfK < 0) {
             type = reverseCmp(type);
             selfK *= -1;
             lin.bias_ *= -1;
             for (auto &item : lin.coeff_) {
-                item.second.k *= -1;
+                item.second.k_ *= -1;
             }
         }
 
@@ -118,8 +113,8 @@ Stmt SeperateTail::visit(const For &_op) {
         for (auto &&item : lin.coeff_) {
             if (item.first != iterHash) {
                 seperation =
-                    makeAdd(seperation, makeMul(makeIntConst(-item.second.k),
-                                                item.second.a));
+                    makeAdd(seperation, makeMul(makeIntConst(-item.second.k_),
+                                                item.second.a_));
             }
         }
         switch (type) {
@@ -129,7 +124,7 @@ Stmt SeperateTail::visit(const For &_op) {
             break;
         case ASTNodeType::LE:
         case ASTNodeType::GT:
-            seperation = makeAdd(makeDiv(seperation, makeIntConst(selfK)),
+            seperation = makeAdd(makeFloorDiv(seperation, makeIntConst(selfK)),
                                  makeIntConst(1));
             break;
         default:

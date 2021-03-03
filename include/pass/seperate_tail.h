@@ -4,7 +4,7 @@
 #include <unordered_set>
 #include <vector>
 
-#include <analyze/linear.h>
+#include <analyze/analyze_linear.h>
 #include <mutator.h>
 #include <visitor.h>
 

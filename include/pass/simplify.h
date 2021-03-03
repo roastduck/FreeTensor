@@ -5,8 +5,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include <analyze/bounds.h>
-#include <analyze/linear.h>
+#include <math/bounds.h>
 #include <mutator.h>
 #include <visitor.h>
 
@@ -97,26 +96,28 @@ class CompTransientBounds : public Mutator {
  */
 class CompUniqueBounds : public CompTransientBounds {
   public:
-    typedef std::unordered_map<Expr, std::vector<Bound>> BoundsMap;
+    typedef std::unordered_map<Expr, std::vector<LowerBound>> LowerBoundsMap;
+    typedef std::unordered_map<Expr, std::vector<UpperBound>> UpperBoundsMap;
 
   private:
-    BoundsMap lower_, upper_;
+    LowerBoundsMap lower_;
+    UpperBoundsMap upper_;
 
   protected:
-    std::vector<Bound> getLower(const Expr &op) const;
-    std::vector<Bound> getUpper(const Expr &op) const;
+    std::vector<LowerBound> getLower(const Expr &op) const;
+    std::vector<UpperBound> getUpper(const Expr &op) const;
 
   private:
-    void updLower(const Expr &op, const Bound &bound);
-    void updUpper(const Expr &op, const Bound &bound);
+    void updLower(const Expr &op, const LowerBound &bound);
+    void updUpper(const Expr &op, const UpperBound &bound);
 
     int getIntLower(const Expr &op) const;
     int getIntUpper(const Expr &op) const;
     Ref<int> getInt(const Expr &op) const;
 
   public:
-    const BoundsMap &lower() const { return lower_; }
-    const BoundsMap &upper() const { return upper_; }
+    const LowerBoundsMap &lower() const { return lower_; }
+    const UpperBoundsMap &upper() const { return upper_; }
 
   protected:
     using CompTransientBounds::visit; // Avoid hiding virtual functions
@@ -130,16 +131,13 @@ class CompUniqueBounds : public CompTransientBounds {
     Expr visit(const Add &op) override;
     Expr visit(const Sub &op) override;
     Expr visit(const Mul &op) override;
-    Expr visit(const Div &op) override;
+    Expr visit(const FloorDiv &op) override;
+    Expr visit(const CeilDiv &op) override;
     Expr visit(const Min &op) override;
     Expr visit(const Max &op) override;
 };
 
 class SimplifyPass : public CompUniqueBounds {
-  public:
-    typedef std::unordered_map<Expr, std::vector<Bound>> BoundsMap;
-
-  private:
     // defining scope table
     std::unordered_map<std::string, int> varScope_;
     int curScope_ = 0;
@@ -168,7 +166,9 @@ class SimplifyPass : public CompUniqueBounds {
     Expr visitExpr(const Expr &op,
                    const std::function<Expr(const Expr &)> &visitNode) override;
 
-    Expr visit(const Div &op) override;
+    Expr visit(const FloorDiv &op) override;
+    Expr visit(const CeilDiv &op) override;
+    Expr visit(const RoundTowards0Div &op) override;
     Expr visit(const Mod &op) override;
     Expr visit(const Min &op) override;
     Expr visit(const Max &op) override;
@@ -215,7 +215,7 @@ Stmt simplifyPass(const Stmt &op);
  *
  * @return : {simplified, lower, upper}
  */
-std::tuple<Stmt, SimplifyPass::BoundsMap, SimplifyPass::BoundsMap>
+std::tuple<Stmt, SimplifyPass::LowerBoundsMap, SimplifyPass::UpperBoundsMap>
 simplifyAndGetBounds(const Stmt &op);
 
 } // namespace ir

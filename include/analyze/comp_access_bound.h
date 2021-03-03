@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include <analyze/bounds.h>
+#include <math/bounds.h>
 #include <visitor.h>
 
 namespace ir {
@@ -22,8 +22,8 @@ const CompAccessBoundMode COMP_ACCESS_BOUND_ALL =
 
 class CompAccessBound : public Visitor {
     // bounds from AnalyzeBounds
-    const std::unordered_map<Expr, std::vector<Bound>> &lower_;
-    const std::unordered_map<Expr, std::vector<Bound>> &upper_;
+    const std::unordered_map<Expr, std::vector<LowerBound>> &lower_;
+    const std::unordered_map<Expr, std::vector<UpperBound>> &upper_;
 
     // var name -> [indices for each access]
     std::unordered_map<std::string, std::vector<std::vector<Expr>>> access_;
@@ -36,9 +36,10 @@ class CompAccessBound : public Visitor {
     std::unordered_map<std::string, AccessBound> results_;
 
   public:
-    CompAccessBound(const std::unordered_map<Expr, std::vector<Bound>> &lower,
-                    const std::unordered_map<Expr, std::vector<Bound>> &upper,
-                    CompAccessBoundMode mode = COMP_ACCESS_BOUND_ALL)
+    CompAccessBound(
+        const std::unordered_map<Expr, std::vector<LowerBound>> &lower,
+        const std::unordered_map<Expr, std::vector<UpperBound>> &upper,
+        CompAccessBoundMode mode = COMP_ACCESS_BOUND_ALL)
         : lower_(lower), upper_(upper), mode_(mode) {}
 
     const std::unordered_map<std::string, AccessBound> &results() const {

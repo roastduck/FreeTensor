@@ -1,7 +1,7 @@
 #ifndef GPU_MAKE_SYNC_H
 #define GPU_MAKE_SYNC_H
 
-#include <analyze/bounds.h>
+#include <math/bounds.h>
 #include <mutator.h>
 
 namespace ir {
@@ -14,10 +14,10 @@ class MakeSync : public Mutator {
     bool warpSynced = true, threadsSynced = true;
     int thx = 1, thy = 1, thz = 1;
 
-    const std::unordered_map<Expr, std::vector<Bound>> &upper_;
+    const std::unordered_map<Expr, std::vector<UpperBound>> &upper_;
 
   public:
-    MakeSync(const std::unordered_map<Expr, std::vector<Bound>> &upper)
+    MakeSync(const std::unordered_map<Expr, std::vector<UpperBound>> &upper)
         : upper_(upper) {}
 
   private:

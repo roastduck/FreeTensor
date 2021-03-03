@@ -23,7 +23,10 @@ class PrintVisitor : public CodeGen {
     virtual void visit(const Add &op) override;
     virtual void visit(const Sub &op) override;
     virtual void visit(const Mul &op) override;
-    virtual void visit(const Div &op) override;
+    virtual void visit(const RealDiv &op) override;
+    virtual void visit(const FloorDiv &op) override;
+    virtual void visit(const CeilDiv &op) override;
+    virtual void visit(const RoundTowards0Div &op) override;
     virtual void visit(const Mod &op) override;
     virtual void visit(const Min &op) override;
     virtual void visit(const Max &op) override;

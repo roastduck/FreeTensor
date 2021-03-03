@@ -121,9 +121,30 @@ void MatchVisitor::visit(const Mul &op) {
     RECURSE(op->rhs_, instance->rhs_);
 }
 
-void MatchVisitor::visit(const Div &op) {
-    CHECK(instance_->nodeType() == ASTNodeType::Div);
-    auto instance = instance_.as<DivNode>();
+void MatchVisitor::visit(const RealDiv &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::RealDiv);
+    auto instance = instance_.as<RealDivNode>();
+    RECURSE(op->lhs_, instance->lhs_);
+    RECURSE(op->rhs_, instance->rhs_);
+}
+
+void MatchVisitor::visit(const FloorDiv &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::FloorDiv);
+    auto instance = instance_.as<FloorDivNode>();
+    RECURSE(op->lhs_, instance->lhs_);
+    RECURSE(op->rhs_, instance->rhs_);
+}
+
+void MatchVisitor::visit(const CeilDiv &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::CeilDiv);
+    auto instance = instance_.as<CeilDivNode>();
+    RECURSE(op->lhs_, instance->lhs_);
+    RECURSE(op->rhs_, instance->rhs_);
+}
+
+void MatchVisitor::visit(const RoundTowards0Div &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::RoundTowards0Div);
+    auto instance = instance_.as<RoundTowards0DivNode>();
     RECURSE(op->lhs_, instance->lhs_);
     RECURSE(op->rhs_, instance->rhs_);
 }

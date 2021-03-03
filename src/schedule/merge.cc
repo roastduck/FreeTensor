@@ -86,7 +86,7 @@ Expr MergeFor::visit(const Var &_op) {
         return makeMod(makeVar(newIter_), innerLen_);
     }
     if (op->name_ == oldOuter_->iter_) {
-        return makeDiv(makeVar(newIter_), innerLen_);
+        return makeFloorDiv(makeVar(newIter_), innerLen_);
     }
     return op;
 }

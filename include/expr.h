@@ -98,14 +98,50 @@ template <class T, class U> Expr makeMul(T &&lhs, U &&rhs) {
     return a;
 }
 
-class DivNode : public ExprNode {
+class RealDivNode : public ExprNode {
   public:
     Expr lhs_, rhs_;
-    DEFINE_NODE_TRAIT(Div);
+    DEFINE_NODE_TRAIT(RealDiv);
 };
-typedef Ref<DivNode> Div;
-template <class T, class U> Expr makeDiv(T &&lhs, U &&rhs) {
-    Div a = Div::make();
+typedef Ref<RealDivNode> RealDiv;
+template <class T, class U> Expr makeRealDiv(T &&lhs, U &&rhs) {
+    RealDiv a = RealDiv::make();
+    a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
+    return a;
+}
+
+class FloorDivNode : public ExprNode {
+  public:
+    Expr lhs_, rhs_;
+    DEFINE_NODE_TRAIT(FloorDiv);
+};
+typedef Ref<FloorDivNode> FloorDiv;
+template <class T, class U> Expr makeFloorDiv(T &&lhs, U &&rhs) {
+    FloorDiv a = FloorDiv::make();
+    a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
+    return a;
+}
+
+class CeilDivNode : public ExprNode {
+  public:
+    Expr lhs_, rhs_;
+    DEFINE_NODE_TRAIT(CeilDiv);
+};
+typedef Ref<CeilDivNode> CeilDiv;
+template <class T, class U> Expr makeCeilDiv(T &&lhs, U &&rhs) {
+    CeilDiv a = CeilDiv::make();
+    a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
+    return a;
+}
+
+class RoundTowards0DivNode : public ExprNode {
+  public:
+    Expr lhs_, rhs_;
+    DEFINE_NODE_TRAIT(RoundTowards0Div);
+};
+typedef Ref<RoundTowards0DivNode> RoundTowards0Div;
+template <class T, class U> Expr makeRoundTowards0Div(T &&lhs, U &&rhs) {
+    RoundTowards0Div a = RoundTowards0Div::make();
     a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
     return a;
 }

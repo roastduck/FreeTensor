@@ -25,7 +25,10 @@ void Visitor::operator()(const AST &op) {
         DISPATCH_EXPR_CASE(Add);
         DISPATCH_EXPR_CASE(Sub);
         DISPATCH_EXPR_CASE(Mul);
-        DISPATCH_EXPR_CASE(Div);
+        DISPATCH_EXPR_CASE(RealDiv);
+        DISPATCH_EXPR_CASE(FloorDiv);
+        DISPATCH_EXPR_CASE(CeilDiv);
+        DISPATCH_EXPR_CASE(RoundTowards0Div);
         DISPATCH_EXPR_CASE(Mod);
         DISPATCH_EXPR_CASE(Min);
         DISPATCH_EXPR_CASE(Max);
