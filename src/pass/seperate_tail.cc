@@ -177,25 +177,14 @@ Stmt SeperateTail::visit(const VarDef &op) {
     return ret;
 }
 
-void CountNestedFor::visit(const For &op) {
-    curNested_++;
-    maxNested_ = std::max(maxNested_, curNested_);
-    Visitor::visit(op);
-    curNested_--;
-}
-
 Stmt seperateTail(const Stmt &_op) {
     auto op = _op;
-
-    CountNestedFor counter;
-    counter(op);
-    int maxNested = counter.maxNested();
 
     FindAllIfs finder;
     finder(op);
     auto candidates = finder.results();
 
-    for (int i = 0; i < maxNested; i++) {
+    while (!candidates.empty()) {
         SeperateTail mutator(candidates);
         op = mutator(op);
         op = simplifyPass(op);

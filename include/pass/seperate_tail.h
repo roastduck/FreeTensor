@@ -87,16 +87,6 @@ class SeperateTail : public Mutator {
     Stmt visit(const VarDef &op) override;
 };
 
-class CountNestedFor : public Visitor {
-    int curNested_ = 0, maxNested_ = 0;
-
-  public:
-    int maxNested() const { return maxNested_; }
-
-  protected:
-    void visit(const For &op) override;
-};
-
 Stmt seperateTail(const Stmt &op);
 
 } // namespace ir
