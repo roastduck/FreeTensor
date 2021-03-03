@@ -59,6 +59,49 @@ Expr CompTransientBounds::add1(const Expr &op) {
     }
 }
 
+void CompTransientBounds::applyCond(const Expr &cond) {
+    switch (cond->nodeType()) {
+    case ASTNodeType::LAnd: {
+        auto land = cond.as<LAndNode>();
+        applyCond(land->lhs_);
+        applyCond(land->rhs_);
+        break;
+    }
+    case ASTNodeType::LT: {
+        auto lt = cond.as<LTNode>();
+        transients_[getHash(lt->lhs_)].second = sub1(lt->rhs_);
+        transients_[getHash(lt->rhs_)].first = add1(lt->lhs_);
+        break;
+    }
+    case ASTNodeType::GT: {
+        auto gt = cond.as<GTNode>();
+        transients_[getHash(gt->lhs_)].first = add1(gt->rhs_);
+        transients_[getHash(gt->rhs_)].second = sub1(gt->lhs_);
+        break;
+    }
+    case ASTNodeType::LE: {
+        auto le = cond.as<LENode>();
+        transients_[getHash(le->lhs_)].second = le->rhs_;
+        transients_[getHash(le->rhs_)].first = le->lhs_;
+        break;
+    }
+    case ASTNodeType::GE: {
+        auto ge = cond.as<GENode>();
+        transients_[getHash(ge->lhs_)].first = ge->rhs_;
+        transients_[getHash(ge->rhs_)].second = ge->lhs_;
+        break;
+    }
+    case ASTNodeType::EQ: {
+        auto eq = cond.as<EQNode>();
+        transients_[getHash(eq->lhs_)] = {eq->rhs_, eq->rhs_};
+        transients_[getHash(eq->rhs_)] = {eq->lhs_, eq->lhs_};
+        break;
+    }
+    default:;
+        // Do nothing
+    }
+}
+
 Stmt CompTransientBounds::visit(const For &op) {
     auto hash = getHash(makeVar(op->iter_));
     if (transients_.count(hash)) {
@@ -73,67 +116,37 @@ Stmt CompTransientBounds::visit(const For &op) {
 
 Stmt CompTransientBounds::visit(const If &op) {
     auto cond = (*this)(op->cond_);
-    auto notCond =
+    auto notCond = (*this)(makeLNot(cond));
+    auto infoNotCond = // Different with notCond because counted in mutated_
         op->infoNotCond_.isValid() ? (*this)(op->infoNotCond_) : nullptr;
 
     auto oldMap = transients_;
-    std::function<void(const Expr &)> f = [&](const Expr &cond) {
-        switch (cond->nodeType()) {
-        case ASTNodeType::LAnd: {
-            auto land = cond.as<LAndNode>();
-            f(land->lhs_);
-            f(land->rhs_);
-            break;
-        }
-        case ASTNodeType::LT: {
-            auto lt = cond.as<LTNode>();
-            transients_[getHash(lt->lhs_)].second = sub1(lt->rhs_);
-            transients_[getHash(lt->rhs_)].first = add1(lt->lhs_);
-            break;
-        }
-        case ASTNodeType::GT: {
-            auto gt = cond.as<GTNode>();
-            transients_[getHash(gt->lhs_)].first = add1(gt->rhs_);
-            transients_[getHash(gt->rhs_)].second = sub1(gt->lhs_);
-            break;
-        }
-        case ASTNodeType::LE: {
-            auto le = cond.as<LENode>();
-            transients_[getHash(le->lhs_)].second = le->rhs_;
-            transients_[getHash(le->rhs_)].first = le->lhs_;
-            break;
-        }
-        case ASTNodeType::GE: {
-            auto ge = cond.as<GENode>();
-            transients_[getHash(ge->lhs_)].first = ge->rhs_;
-            transients_[getHash(ge->rhs_)].second = ge->lhs_;
-            break;
-        }
-        case ASTNodeType::EQ: {
-            auto eq = cond.as<EQNode>();
-            transients_[getHash(eq->lhs_)] = {eq->rhs_, eq->rhs_};
-            transients_[getHash(eq->rhs_)] = {eq->lhs_, eq->lhs_};
-            break;
-        }
-        default:;
-            // Do nothing
-        }
-    };
-    f(op->cond_);
+    applyCond(cond);
     auto thenCase = (*this)(op->thenCase_);
     transients_ = oldMap;
 
     Stmt elseCase = nullptr;
     if (op->elseCase_.isValid()) {
-        f((*this)(makeLNot(op->cond_)));
+        applyCond(notCond);
         elseCase = (*this)(op->elseCase_);
         transients_ = oldMap;
     }
 
     auto ret = makeIf(op->id(), std::move(cond), std::move(thenCase),
                       std::move(elseCase));
-    ret.as<IfNode>()->infoNotCond_ = std::move(notCond);
+    ret.as<IfNode>()->infoNotCond_ = std::move(infoNotCond);
     return ret;
+}
+
+Stmt CompTransientBounds::visit(const Assert &op) {
+    auto cond = (*this)(op->cond_);
+
+    auto oldMap = transients_;
+    applyCond(cond);
+    auto body = (*this)(op->body_);
+    transients_ = oldMap;
+
+    return makeAssert(op->id(), std::move(cond), std::move(body));
 }
 
 std::vector<Bound> CompUniqueBounds::getLower(const Expr &op) const {
@@ -373,6 +386,7 @@ Expr CompUniqueBounds::visit(const Mul &_op) {
     g(op, op->rhs_, op->lhs_);
 
     // Special for `(n // p) * k`
+    AnalyzeLinear analyzeLinear;
     if (lower_.count(op)) {
         for (Bound &b : lower_.at(op)) {
             bool altered = false;
@@ -384,13 +398,18 @@ Expr CompUniqueBounds::visit(const Mul &_op) {
                     if (div->rhs_->nodeType() == ASTNodeType::IntConst) {
                         if (int p = div->rhs_.as<IntConstNode>()->val_;
                             item.second.k % p == 0) {
-                            auto h = getHash(div->lhs_);
-                            if (lin.coeff_.count(h)) {
-                                lin.coeff_.at(h).k += item.second.k / p;
-                            } else {
-                                lin.coeff_[h] = {item.second.k / p, div->lhs_};
+                            analyzeLinear(div->lhs_);
+                            auto subLin = analyzeLinear.result().at(div->lhs_);
+                            for (auto &&subitem : subLin.coeff_) {
+                                auto h = subitem.first;
+                                auto k = item.second.k / p * subitem.second.k;
+                                if (lin.coeff_.count(h)) {
+                                    lin.coeff_.at(h).k += k;
+                                } else {
+                                    lin.coeff_[h] = {k, subitem.second.a};
+                                }
                             }
-                            lin.bias_ -= (p - 1) * (item.second.k / p);
+                            lin.bias_ += subLin.bias_ * (item.second.k / p);
                             altered = true;
                             continue;
                         }
@@ -414,12 +433,18 @@ Expr CompUniqueBounds::visit(const Mul &_op) {
                     if (div->rhs_->nodeType() == ASTNodeType::IntConst) {
                         if (int p = div->rhs_.as<IntConstNode>()->val_;
                             item.second.k % p == 0) {
-                            auto h = getHash(div->lhs_);
-                            if (lin.coeff_.count(h)) {
-                                lin.coeff_.at(h).k += item.second.k / p;
-                            } else {
-                                lin.coeff_[h] = {item.second.k / p, div->lhs_};
+                            analyzeLinear(div->lhs_);
+                            auto subLin = analyzeLinear.result().at(div->lhs_);
+                            for (auto &&subitem : subLin.coeff_) {
+                                auto h = subitem.first;
+                                auto k = item.second.k / p * subitem.second.k;
+                                if (lin.coeff_.count(h)) {
+                                    lin.coeff_.at(h).k += k;
+                                } else {
+                                    lin.coeff_[h] = {k, subitem.second.a};
+                                }
                             }
+                            lin.bias_ += subLin.bias_ * (item.second.k / p);
                             altered = true;
                             continue;
                         }
@@ -471,6 +496,32 @@ Expr CompUniqueBounds::visit(const Div &_op) {
         }
     }
 
+    return op;
+}
+
+Expr CompUniqueBounds::visit(const Min &_op) {
+    auto __op = CompTransientBounds::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::Min);
+    auto op = __op.as<MinNode>();
+    for (auto &&b : getUpper(op->lhs_)) {
+        updUpper(op, b);
+    }
+    for (auto &&b : getUpper(op->rhs_)) {
+        updUpper(op, b);
+    }
+    return op;
+}
+
+Expr CompUniqueBounds::visit(const Max &_op) {
+    auto __op = CompTransientBounds::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::Max);
+    auto op = __op.as<MaxNode>();
+    for (auto &&b : getLower(op->lhs_)) {
+        updLower(op, b);
+    }
+    for (auto &&b : getLower(op->rhs_)) {
+        updLower(op, b);
+    }
     return op;
 }
 
@@ -894,7 +945,7 @@ Stmt SimplifyPass::visit(const Assert &_op) {
             std::ostringstream os;
             // Print the unchanged _op
             os << "Assertion always false: " << _op;
-            throw InvalidSchedule(os.str());
+            throw InvalidProgram(os.str());
         }
     }
     return op;

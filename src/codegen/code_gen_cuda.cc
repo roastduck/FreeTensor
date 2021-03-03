@@ -94,6 +94,10 @@ void CodeGenCUDA::visit(const Var &op) {
 
 void CodeGenCUDA::visit(const For &op) {
     if (op->parallel_.empty()) {
+		if(op->unroll_num_ != 0) {
+			makeIndent();
+			os() << "#pragma unroll " << op->unroll_num_ << std::endl;
+		}
         CodeGenC::visit(op);
     } else if (op->parallel_ == "blockIdx.x" || op->parallel_ == "blockIdx.y" ||
                op->parallel_ == "blockIdx.z" ||

@@ -69,7 +69,7 @@ Stmt SinkVar::visit(const VarDef &op) {
                                        (*this)(loop->body_));
             return makeFor(loop->id(), loop->iter_, (*this)(loop->begin_),
                            (*this)(loop->end_), loop->parallel_,
-                           std::move(loopBody));
+                           std::move(loopBody), loop->unroll_num_);
         } else {
             body = (*this)(op->body_);
         }

@@ -161,9 +161,9 @@ Stmt FissionFor::visit(const For &op) {
         auto part1 = (*this)(op->body_);
         inside_ = false;
         auto for0 =
-            makeFor(op->id(), op->iter_, begin, end, op->parallel_, part0);
+            makeFor(op->id(), op->iter_, begin, end, op->parallel_, part0, op->unroll_num_);
         auto for1 =
-            makeFor(op->id(), op->iter_, begin, end, op->parallel_, part1);
+            makeFor(op->id(), op->iter_, begin, end, op->parallel_, part1, op->unroll_num_);
         markNewId(for0, true);
         markNewId(for1, false);
         return makeStmtSeq("", {for0, for1});

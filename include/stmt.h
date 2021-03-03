@@ -128,6 +128,8 @@ class ForNode : public StmtNode {
     std::string parallel_;
     Stmt body_;
 
+	int unroll_num_;
+
     Expr infoLen_;
 
     DEFINE_NODE_TRAIT(For);
@@ -135,7 +137,7 @@ class ForNode : public StmtNode {
 typedef Ref<ForNode> For;
 template <class Tbegin, class Tend, class Tbody>
 Stmt makeFor(const std::string &id, const std::string &iter, Tbegin &&begin,
-             Tend &&end, const std::string &parallel, Tbody &&body) {
+             Tend &&end, const std::string &parallel, Tbody &&body, const int &unroll_num = 0) {
     For f = For::make();
     f->setId(id);
     f->iter_ = iter;
@@ -143,6 +145,7 @@ Stmt makeFor(const std::string &id, const std::string &iter, Tbegin &&begin,
     f->end_ = std::forward<Tend>(end);
     f->parallel_ = parallel;
     f->body_ = std::forward<Tbody>(body);
+	f->unroll_num_ = unroll_num;
     return f;
 }
 

@@ -35,9 +35,9 @@ Stmt Splitter::visit(const For &_op) {
 
         auto body = makeIf("", makeLT(newIter, op->end_), op->body_);
         auto inner =
-            makeFor(dst1_, iter1, makeIntConst(0), factor, op->parallel_, body);
+            makeFor(dst1_, iter1, makeIntConst(0), factor, op->parallel_, body, op->unroll_num_);
         auto outer = makeFor(dst0_, iter0, makeIntConst(0), nparts,
-                             op->parallel_, inner);
+                             op->parallel_, inner, op->unroll_num_);
         found_ = true;
         return outer;
     } else {

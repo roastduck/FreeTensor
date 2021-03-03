@@ -20,6 +20,7 @@
 #include <schedule/reorder.h>
 #include <schedule/split.h>
 #include <schedule/swap.h>
+#include <schedule/unroll.h>
 
 namespace ir {
 
@@ -233,7 +234,7 @@ std::string Schedule::fuse(const std::string &loop0, const std::string &loop1) {
 
         try {
             ast = simplifyPass(ast);
-        } catch (const InvalidSchedule &e) {
+        } catch (const InvalidProgram &e) {
             throw InvalidSchedule((std::string) "Fusing " + loop0 + " and " +
                                   loop1 + " loop1 with different lengths? " +
                                   e.what());
@@ -477,6 +478,24 @@ void Schedule::parallelize(const std::string &loop,
         }
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid parallelize(" + loop + ", " + parallel +
+                              "): " + e.what());
+    }
+    ast_ = ast;
+}
+
+void Schedule::unroll(const std::string &loop,
+					  const int unroll_num) {
+	auto ast = ast_;
+	Unroll mutator(loop, unroll_num);
+	try {
+		ast = simplifyPass(mutator(ast));
+		mutator.work = true;
+        ast = mutator(ast);
+        if (!mutator.done()) {
+            throw InvalidSchedule("Loop " + loop + " not found");
+        }
+    } catch (const InvalidSchedule &e) {
+        throw InvalidSchedule("Invalid unroll(" + loop + ", " + std::to_string(unroll_num) +
                               "): " + e.what());
     }
     ast_ = ast;

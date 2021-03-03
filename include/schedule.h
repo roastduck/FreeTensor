@@ -203,6 +203,14 @@ class Schedule {
      * "threadIdx.z"
      */
     void parallelize(const std::string &loop, const std::string &parallel);
+
+	/**
+     * Mark a loop as needing to unroll or not
+     *
+     * @param loop : ID of the loop
+     * @param isunroll : Num of the loop is needing to unroll.
+     */
+	void unroll(const std::string &loop, int unroll_num = 0);
 };
 
 } // namespace ir

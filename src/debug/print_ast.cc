@@ -232,6 +232,10 @@ void PrintVisitor::visit(const For &op) {
         makeIndent();
         os() << "// parallel = " << op->parallel_ << std::endl;
     }
+	if(op->unroll_num_ != 0) {
+		makeIndent();
+		os() << "// unroll_num = " << op->unroll_num_ << std::endl;
+	}
     makeIndent();
     os() << "for " << op->iter_ << " = ";
     recur(op->begin_);
