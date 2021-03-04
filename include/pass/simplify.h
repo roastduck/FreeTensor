@@ -111,15 +111,15 @@ class CompUniqueBounds : public CompTransientBounds {
     void updLower(const Expr &op, const LowerBound &bound);
     void updUpper(const Expr &op, const UpperBound &bound);
 
-    int getIntLower(const Expr &op) const;
-    int getIntUpper(const Expr &op) const;
-    Ref<int> getInt(const Expr &op) const;
-
   public:
     const LowerBoundsMap &lower() const { return lower_; }
     const UpperBoundsMap &upper() const { return upper_; }
 
   protected:
+    int getIntLower(const Expr &op) const;
+    int getIntUpper(const Expr &op) const;
+    Ref<int> getInt(const Expr &op) const;
+
     using CompTransientBounds::visit; // Avoid hiding virtual functions
 
     Expr visitExpr(const Expr &op,
@@ -154,11 +154,6 @@ class SimplifyPass : public CompUniqueBounds {
         mutated_.insert(ret);
         return ret;
     }
-
-    bool checkUpperCmp0(const Expr &normForm,
-                        const std::function<bool(int, int)> &&cmp);
-    bool checkLowerCmp0(const Expr &normForm,
-                        const std::function<bool(int, int)> &&cmp);
 
   protected:
     using CompUniqueBounds::visit;

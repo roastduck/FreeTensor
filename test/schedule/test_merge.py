@@ -1,6 +1,9 @@
 import ir
 import pytest
 
+def div(lhs, rhs):
+	return ir.round_towards_0_div(lhs, rhs)
+
 def test_basic():
 	with ir.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
 		with ir.For("i", 0, 4, nid="L1") as i:
@@ -17,7 +20,7 @@ def test_basic():
 
 	with ir.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
 		with ir.For("i", 0, 32) as i:
-			y[i // 8, i % 8] = i // 8 + i % 8
+			y[div(i, 8), i % 8] = div(i, 8) + i % 8
 	std = ir.pop_ast()
 
 	assert std.match(ast)
@@ -57,8 +60,8 @@ def test_if_in_between():
 			("x", (4,), "int32", "input", "cpu"),
 			("y", (4, 8), "int32", "output", "cpu")]) as (x, y):
 		with ir.For("i", 0, 32) as i:
-			with ir.If(x[i // 8] > 0):
-				y[i // 8, i % 8] = i // 8 + i % 8
+			with ir.If(x[div(i, 8)] > 0):
+				y[div(i, 8), i % 8] = div(i, 8) + i % 8
 	std = ir.pop_ast()
 
 	assert std.match(ast)
@@ -85,8 +88,8 @@ def test_stmt_in_between():
 			("z", (4,), "int32", "output", "cpu")]) as (y, z):
 		with ir.For("i", 0, 32) as i:
 			with ir.If(i % 8 == 0):
-				z[i // 8] = i // 8
-			y[i // 8, i % 8] = i // 8 + i % 8
+				z[div(i, 8)] = div(i, 8)
+			y[div(i, 8), i % 8] = div(i, 8) + i % 8
 	std = ir.pop_ast()
 
 	assert std.match(ast)

@@ -203,6 +203,15 @@ def l_or(lhs, rhs):
 def l_not(expr):
 	return ffi.makeLNot(expr)
 
+def floor_div(lhs, rhs):
+	return ffi.makeFloorDiv(lhs, rhs)
+
+def ceil_div(lhs, rhs):
+	return ffi.makeCeilDiv(lhs, rhs)
+
+def round_towards_0_div(lhs, rhs):
+	return ffi.makeRoundTowards0Div(lhs, rhs)
+
 def intrinsic(fmt, *params):
 	return ffi.makeIntrinsic(fmt, params)
 

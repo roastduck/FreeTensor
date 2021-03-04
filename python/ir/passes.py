@@ -11,6 +11,7 @@ from ffi import seperate_tail
 from ffi import make_reduction
 from ffi import make_atomic
 from ffi import remove_writes
+from ffi import use_builtin_div
 from ffi import gpu_make_sync
 from ffi import gpu_correct_shared
 from ffi import gpu_normalize_threads
@@ -24,6 +25,9 @@ def lower(ast, target: Optional[ffi.Target]=None):
 	ast = merge_if(ast)
 	ast = seperate_tail(ast)
 	ast = make_atomic(ast)
+
+	# After all general analysis
+	ast = use_builtin_div(ast)
 
 	if target is None:
 		return ast

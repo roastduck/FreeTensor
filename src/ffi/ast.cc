@@ -220,6 +220,16 @@ void init_ffi_ast(py::module_ &m) {
           static_cast<Expr (*)(const Expr &, const Expr &)>(&makeLOr), "lhs"_a,
           "rhs"_a);
     m.def("makeLNot", static_cast<Expr (*)(const Expr &)>(&makeLNot), "expr"_a);
+    m.def("makeFloorDiv",
+          static_cast<Expr (*)(const Expr &, const Expr &)>(&makeFloorDiv),
+          "expr"_a, "expr"_a);
+    m.def("makeCeilDiv",
+          static_cast<Expr (*)(const Expr &, const Expr &)>(&makeCeilDiv),
+          "expr"_a, "expr"_a);
+    m.def("makeRoundTowards0Div",
+          static_cast<Expr (*)(const Expr &, const Expr &)>(
+              &makeRoundTowards0Div),
+          "expr"_a, "expr"_a);
     m.def("makeIntrinsic",
           static_cast<Expr (*)(const std::string &, const std::vector<Expr> &)>(
               &makeIntrinsic),

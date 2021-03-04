@@ -98,6 +98,9 @@ template <class T, class U> Expr makeMul(T &&lhs, U &&rhs) {
     return a;
 }
 
+/**
+ * Floating-point division
+ */
 class RealDivNode : public ExprNode {
   public:
     Expr lhs_, rhs_;
@@ -110,6 +113,12 @@ template <class T, class U> Expr makeRealDiv(T &&lhs, U &&rhs) {
     return a;
 }
 
+/**
+ * Integer division, rounded towards negative infinity
+ *
+ * FloorDiv nodes are easy to analyze, and will be replaced by RoundTowards0Div
+ * nodes before codegen if possible
+ */
 class FloorDivNode : public ExprNode {
   public:
     Expr lhs_, rhs_;
@@ -122,6 +131,12 @@ template <class T, class U> Expr makeFloorDiv(T &&lhs, U &&rhs) {
     return a;
 }
 
+/**
+ * Integer division, rounded towards positive infinity
+ *
+ * CeilDiv nodes are easy to analyze, and will be replaced by RoundTowards0Div
+ * nodes before codegen if possible
+ */
 class CeilDivNode : public ExprNode {
   public:
     Expr lhs_, rhs_;
@@ -134,6 +149,12 @@ template <class T, class U> Expr makeCeilDiv(T &&lhs, U &&rhs) {
     return a;
 }
 
+/**
+ * Integer division, rounded towards 0
+ *
+ * RoundTowards0Div nodes comply with the integer division behaviour in C. They
+ * have minimal runtime overhead, but are hard to analyze
+ */
 class RoundTowards0DivNode : public ExprNode {
   public:
     Expr lhs_, rhs_;

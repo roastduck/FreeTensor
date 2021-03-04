@@ -12,6 +12,7 @@
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
 #include <pass/sink_var.h>
+#include <pass/use_builtin_div.h>
 
 namespace ir {
 
@@ -28,6 +29,7 @@ void init_ffi_pass(py::module_ &m) {
     m.def("make_reduction", &makeReduction, "ast"_a);
     m.def("make_atomic", &makeAtomic, "ast"_a);
     m.def("remove_writes", &removeWrites, "ast"_a);
+    m.def("use_builtin_div", &useBuiltinDiv, "ast"_a);
 
     // GPU
     m.def("gpu_normalize_threads", &gpu::normalizeThreads, "ast"_a);

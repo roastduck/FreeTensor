@@ -433,28 +433,6 @@ Expr CompUniqueBounds::visit(const Max &_op) {
     return op;
 }
 
-bool SimplifyPass::checkUpperCmp0(const Expr &normForm,
-                                  const std::function<bool(int, int)> &&cmp) {
-    for (auto &&upper : getUpper(normForm)) {
-        if (upper.expr_->nodeType() == ASTNodeType::IntConst &&
-            cmp(upper.expr_.as<IntConstNode>()->val_, 0)) {
-            return true;
-        }
-    }
-    return false;
-}
-
-bool SimplifyPass::checkLowerCmp0(const Expr &normForm,
-                                  const std::function<bool(int, int)> &&cmp) {
-    for (auto &&lower : getLower(normForm)) {
-        if (lower.expr_->nodeType() == ASTNodeType::IntConst &&
-            cmp(lower.expr_.as<IntConstNode>()->val_, 0)) {
-            return true;
-        }
-    }
-    return false;
-}
-
 Expr SimplifyPass::visitExpr(
     const Expr &_op, const std::function<Expr(const Expr &)> &visitNode) {
     auto op = CompUniqueBounds::visitExpr(_op, visitNode);
@@ -561,9 +539,9 @@ Expr SimplifyPass::visit(const Min &_op) {
     for (auto &&l : lhs) {
         for (auto &&r : rhs) {
             auto normForm = (*this)(makeSub(l, r));
-            if (checkUpperCmp0(normForm, std::less_equal<int>())) {
+            if (getIntUpper(normForm) <= 0) {
                 all.erase(r);
-            } else if (checkLowerCmp0(normForm, std::greater_equal<int>())) {
+            } else if (getIntLower(normForm) >= 0) {
                 all.erase(l);
             }
         }
@@ -604,9 +582,9 @@ Expr SimplifyPass::visit(const Max &_op) {
     for (auto &&l : lhs) {
         for (auto &&r : rhs) {
             auto normForm = (*this)(makeSub(l, r));
-            if (checkUpperCmp0(normForm, std::less_equal<int>())) {
+            if (getIntUpper(normForm) <= 0) {
                 all.erase(l);
-            } else if (checkLowerCmp0(normForm, std::greater_equal<int>())) {
+            } else if (getIntLower(normForm) >= 0) {
                 all.erase(r);
             }
         }
@@ -629,10 +607,10 @@ Expr SimplifyPass::visit(const LT &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::LT);
     auto op = __op.as<LTNode>();
     auto normForm = (*this)(makeSub(op->lhs_, op->rhs_));
-    if (checkUpperCmp0(normForm, std::less<int>())) {
+    if (getIntUpper(normForm) < 0) {
         return markMutated(makeIntConst(1));
     }
-    if (checkLowerCmp0(normForm, std::greater_equal<int>())) {
+    if (getIntLower(normForm) >= 0) {
         return markMutated(makeIntConst(0));
     }
     return op;
@@ -643,10 +621,10 @@ Expr SimplifyPass::visit(const LE &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::LE);
     auto op = __op.as<LENode>();
     auto normForm = (*this)(makeSub(op->lhs_, op->rhs_));
-    if (checkUpperCmp0(normForm, std::less_equal<int>())) {
+    if (getIntUpper(normForm) <= 0) {
         return markMutated(makeIntConst(1));
     }
-    if (checkLowerCmp0(normForm, std::greater<int>())) {
+    if (getIntLower(normForm) > 0) {
         return markMutated(makeIntConst(0));
     }
     return op;
@@ -657,10 +635,10 @@ Expr SimplifyPass::visit(const GT &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::GT);
     auto op = __op.as<GTNode>();
     auto normForm = (*this)(makeSub(op->lhs_, op->rhs_));
-    if (checkUpperCmp0(normForm, std::less_equal<int>())) {
+    if (getIntUpper(normForm) <= 0) {
         return markMutated(makeIntConst(0));
     }
-    if (checkLowerCmp0(normForm, std::greater<int>())) {
+    if (getIntLower(normForm) > 0) {
         return markMutated(makeIntConst(1));
     }
     return op;
@@ -671,10 +649,10 @@ Expr SimplifyPass::visit(const GE &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::GE);
     auto op = __op.as<GENode>();
     auto normForm = (*this)(makeSub(op->lhs_, op->rhs_));
-    if (checkUpperCmp0(normForm, std::less<int>())) {
+    if (getIntUpper(normForm) < 0) {
         return markMutated(makeIntConst(0));
     }
-    if (checkLowerCmp0(normForm, std::greater_equal<int>())) {
+    if (getIntLower(normForm) >= 0) {
         return markMutated(makeIntConst(1));
     }
     return op;
@@ -685,10 +663,10 @@ Expr SimplifyPass::visit(const EQ &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::EQ);
     auto op = __op.as<EQNode>();
     auto normForm = (*this)(makeSub(op->lhs_, op->rhs_));
-    if (checkUpperCmp0(normForm, std::less<int>())) {
+    if (getIntUpper(normForm) < 0) {
         return markMutated(makeIntConst(0));
     }
-    if (checkLowerCmp0(normForm, std::greater<int>())) {
+    if (getIntLower(normForm) > 0) {
         return markMutated(makeIntConst(0));
     }
     for (auto &&upper : getUpper(normForm)) {
@@ -710,10 +688,10 @@ Expr SimplifyPass::visit(const NE &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::NE);
     auto op = __op.as<NENode>();
     auto normForm = (*this)(makeSub(op->lhs_, op->rhs_));
-    if (checkUpperCmp0(normForm, std::less<int>())) {
+    if (getIntUpper(normForm) < 0) {
         return markMutated(makeIntConst(1));
     }
-    if (checkLowerCmp0(normForm, std::greater<int>())) {
+    if (getIntLower(normForm) > 0) {
         return markMutated(makeIntConst(1));
     }
     for (auto &&upper : getUpper(normForm)) {
