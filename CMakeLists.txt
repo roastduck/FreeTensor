@@ -30,6 +30,9 @@ ExternalProject_add(ISL
 include_directories(${ISL_DIR}/install/include)
 link_directories(${ISL_DIR}/install/lib)
 
+# CUDA
+find_package(CUDA)
+
 include_directories(include)
 include_directories(3rd-party/pybind11/include)
 file(GLOB_RECURSE SRC src/*.cc)
@@ -37,5 +40,5 @@ file(GLOB_RECURSE SRC src/*.cc)
 # Target
 pybind11_add_module(ffi SHARED ${SRC})
 add_dependencies(ffi ISL)
-target_link_libraries(ffi PRIVATE isl cuda cudart)
+target_link_libraries(ffi PRIVATE isl ${CUDA_LIBRARIES})
 
