@@ -85,7 +85,22 @@ class Visitor {
         (*this)(op->rhs_);
     }
 
-    virtual void visit(const Div &op) {
+    virtual void visit(const RealDiv &op) {
+        (*this)(op->lhs_);
+        (*this)(op->rhs_);
+    }
+
+    virtual void visit(const FloorDiv &op) {
+        (*this)(op->lhs_);
+        (*this)(op->rhs_);
+    }
+
+    virtual void visit(const CeilDiv &op) {
+        (*this)(op->lhs_);
+        (*this)(op->rhs_);
+    }
+
+    virtual void visit(const RoundTowards0Div &op) {
         (*this)(op->lhs_);
         (*this)(op->rhs_);
     }

@@ -43,7 +43,10 @@ void GetHash::visit(const FloatConst &op) {
 void GetHash::visit(const Add &op) { binOpPermutable(op); }
 void GetHash::visit(const Sub &op) { binOpNonPermutable(op); }
 void GetHash::visit(const Mul &op) { binOpPermutable(op); }
-void GetHash::visit(const Div &op) { binOpNonPermutable(op); }
+void GetHash::visit(const RealDiv &op) { binOpNonPermutable(op); }
+void GetHash::visit(const FloorDiv &op) { binOpNonPermutable(op); }
+void GetHash::visit(const CeilDiv &op) { binOpNonPermutable(op); }
+void GetHash::visit(const RoundTowards0Div &op) { binOpNonPermutable(op); }
 void GetHash::visit(const Mod &op) { binOpNonPermutable(op); }
 void GetHash::visit(const Min &op) { binOpPermutable(op); }
 void GetHash::visit(const Max &op) { binOpPermutable(op); }

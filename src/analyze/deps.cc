@@ -75,13 +75,13 @@ std::string GenISLExpr::normalizeId(const std::string &old) {
     return idCache_[old] = ret;
 }
 
-Ref<std::string> GenISLExpr::linear2str(const LinearExpr &lin) {
+Ref<std::string> GenISLExpr::linear2str(const LinearExpr<int> &lin) {
     std::ostringstream os;
     os << lin.bias_;
     for (auto &&item : lin.coeff_) {
-        if (item.second.a->nodeType() == ASTNodeType::Var) {
-            os << " + " << item.second.k << " "
-               << normalizeId(toString(item.second.a));
+        if (item.second.a_->nodeType() == ASTNodeType::Var) {
+            os << " + " << item.second.k_ << " "
+               << normalizeId(toString(item.second.a_));
         } else {
             // Use the entire array as dependency
             return nullptr;
@@ -91,7 +91,7 @@ Ref<std::string> GenISLExpr::linear2str(const LinearExpr &lin) {
 }
 
 Ref<std::string> GenISLExpr::operator()(const Expr &op) {
-    std::vector<LinearExpr> subexprs;
+    std::vector<LinearExpr<int>> subexprs;
     std::function<bool(const Expr &expr)> recur = [&](const Expr &expr) {
         if (expr->nodeType() == ASTNodeType::LAnd) {
             auto a = expr.as<LAndNode>();

@@ -11,7 +11,7 @@
 #include <isl/map.h>
 #include <isl/set.h>
 
-#include <analyze/linear.h>
+#include <analyze/analyze_linear.h>
 #include <cursor.h>
 #include <visitor.h>
 
@@ -103,7 +103,7 @@ class GenISLExpr {
     std::unordered_set<std::string> idFlag_;               // ISL IDs
 
   private:
-    Ref<std::string> linear2str(const LinearExpr &lin);
+    Ref<std::string> linear2str(const LinearExpr<int> &lin);
 
   public:
     std::string normalizeId(const std::string &id);

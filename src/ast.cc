@@ -24,7 +24,10 @@ std::string toString(ASTNodeType type) {
         DISPATCH(Add);
         DISPATCH(Sub);
         DISPATCH(Mul);
-        DISPATCH(Div);
+        DISPATCH(RealDiv);
+        DISPATCH(FloorDiv);
+        DISPATCH(CeilDiv);
+        DISPATCH(RoundTowards0Div);
         DISPATCH(Mod);
         DISPATCH(Min);
         DISPATCH(Max);

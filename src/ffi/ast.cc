@@ -57,7 +57,11 @@ void init_ffi_ast(py::module_ &m) {
     py::class_<AddNode, Add> pyAdd(m, "Add", pyExpr);
     py::class_<SubNode, Sub> pySub(m, "Sub", pyExpr);
     py::class_<MulNode, Mul> pyMul(m, "Mul", pyExpr);
-    py::class_<DivNode, Div> pyDiv(m, "Div", pyExpr);
+    py::class_<RealDivNode, RealDiv> pyRealDiv(m, "RealDiv", pyExpr);
+    py::class_<FloorDivNode, FloorDiv> pyFloorDiv(m, "FloorDiv", pyExpr);
+    py::class_<CeilDivNode, CeilDiv> pyCeilDiv(m, "CeilDiv", pyExpr);
+    py::class_<RoundTowards0DivNode, RoundTowards0Div> pyRoundTowards0Div(
+        m, "RoundTowards0Div", pyExpr);
     py::class_<ModNode, Mod> pyMod(m, "Mod", pyExpr);
     py::class_<MinNode, Min> pyMin(m, "Min", pyExpr);
     py::class_<MaxNode, Max> pyMax(m, "Max", pyExpr);
@@ -108,19 +112,27 @@ void init_ffi_ast(py::module_ &m) {
             py::is_operator())
         .def(
             "__truediv__",
-            [](const Expr &lhs, const Expr &rhs) { return makeDiv(lhs, rhs); },
+            [](const Expr &lhs, const Expr &rhs) {
+                return makeRealDiv(lhs, rhs);
+            },
             py::is_operator())
         .def(
             "__rtruediv__",
-            [](const Expr &rhs, const Expr &lhs) { return makeDiv(lhs, rhs); },
+            [](const Expr &rhs, const Expr &lhs) {
+                return makeRealDiv(lhs, rhs);
+            },
             py::is_operator())
         .def(
             "__floordiv__",
-            [](const Expr &lhs, const Expr &rhs) { return makeDiv(lhs, rhs); },
+            [](const Expr &lhs, const Expr &rhs) {
+                return makeFloorDiv(lhs, rhs);
+            },
             py::is_operator())
         .def(
             "__rfloordiv__",
-            [](const Expr &rhs, const Expr &lhs) { return makeDiv(lhs, rhs); },
+            [](const Expr &rhs, const Expr &lhs) {
+                return makeFloorDiv(lhs, rhs);
+            },
             py::is_operator())
         .def(
             "__mod__",
@@ -208,6 +220,16 @@ void init_ffi_ast(py::module_ &m) {
           static_cast<Expr (*)(const Expr &, const Expr &)>(&makeLOr), "lhs"_a,
           "rhs"_a);
     m.def("makeLNot", static_cast<Expr (*)(const Expr &)>(&makeLNot), "expr"_a);
+    m.def("makeFloorDiv",
+          static_cast<Expr (*)(const Expr &, const Expr &)>(&makeFloorDiv),
+          "expr"_a, "expr"_a);
+    m.def("makeCeilDiv",
+          static_cast<Expr (*)(const Expr &, const Expr &)>(&makeCeilDiv),
+          "expr"_a, "expr"_a);
+    m.def("makeRoundTowards0Div",
+          static_cast<Expr (*)(const Expr &, const Expr &)>(
+              &makeRoundTowards0Div),
+          "expr"_a, "expr"_a);
     m.def("makeIntrinsic",
           static_cast<Expr (*)(const std::string &, const std::vector<Expr> &)>(
               &makeIntrinsic),
@@ -246,7 +268,10 @@ template <> struct polymorphic_type_hook<ir::ASTNode> {
             DISPATCH(Add);
             DISPATCH(Sub);
             DISPATCH(Mul);
-            DISPATCH(Div);
+            DISPATCH(RealDiv);
+            DISPATCH(FloorDiv);
+            DISPATCH(CeilDiv);
+            DISPATCH(RoundTowards0Div);
             DISPATCH(Mod);
             DISPATCH(Min);
             DISPATCH(Max);
@@ -312,7 +337,10 @@ template <> struct polymorphic_type_hook<ir::ExprNode> {
             DISPATCH(Add);
             DISPATCH(Sub);
             DISPATCH(Mul);
-            DISPATCH(Div);
+            DISPATCH(RealDiv);
+            DISPATCH(FloorDiv);
+            DISPATCH(CeilDiv);
+            DISPATCH(RoundTowards0Div);
             DISPATCH(Mod);
             DISPATCH(Min);
             DISPATCH(Max);

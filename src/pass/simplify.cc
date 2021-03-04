@@ -4,6 +4,7 @@
 
 #include <analyze/hash.h>
 #include <except.h>
+#include <math/utils.h>
 #include <pass/disambiguous.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/simplify.h>
@@ -149,7 +150,7 @@ Stmt CompTransientBounds::visit(const Assert &op) {
     return makeAssert(op->id(), std::move(cond), std::move(body));
 }
 
-std::vector<Bound> CompUniqueBounds::getLower(const Expr &op) const {
+std::vector<LowerBound> CompUniqueBounds::getLower(const Expr &op) const {
     if (lower_.count(op)) {
         return lower_.at(op);
     } else {
@@ -157,7 +158,7 @@ std::vector<Bound> CompUniqueBounds::getLower(const Expr &op) const {
     }
 }
 
-std::vector<Bound> CompUniqueBounds::getUpper(const Expr &op) const {
+std::vector<UpperBound> CompUniqueBounds::getUpper(const Expr &op) const {
     if (upper_.count(op)) {
         return upper_.at(op);
     } else {
@@ -165,13 +166,13 @@ std::vector<Bound> CompUniqueBounds::getUpper(const Expr &op) const {
     }
 }
 
-void CompUniqueBounds::updLower(const Expr &op, const Bound &bound) {
+void CompUniqueBounds::updLower(const Expr &op, const LowerBound &bound) {
     if (!lower_.count(op)) {
         lower_[op] = {bound};
         return;
     }
     auto h = getHash(bound.expr_);
-    for (Bound &old : lower_.at(op)) {
+    for (LowerBound &old : lower_.at(op)) {
         if (getHash(old.expr_) == h) {
             return;
         }
@@ -180,7 +181,7 @@ void CompUniqueBounds::updLower(const Expr &op, const Bound &bound) {
             auto oldVal = old.expr_.as<IntConstNode>()->val_;
             auto newVal = bound.expr_.as<IntConstNode>()->val_;
             if (newVal > oldVal) {
-                old = Bound(LinearExpr{{}, newVal});
+                old = LowerBound(LinearExpr<Rational<int>>{{}, newVal});
             }
             return;
         }
@@ -188,13 +189,13 @@ void CompUniqueBounds::updLower(const Expr &op, const Bound &bound) {
     lower_.at(op).emplace_back(bound);
 }
 
-void CompUniqueBounds::updUpper(const Expr &op, const Bound &bound) {
+void CompUniqueBounds::updUpper(const Expr &op, const UpperBound &bound) {
     if (!upper_.count(op)) {
         upper_[op] = {bound};
         return;
     }
     auto h = getHash(bound.expr_);
-    for (Bound &old : upper_.at(op)) {
+    for (UpperBound &old : upper_.at(op)) {
         if (getHash(old.expr_) == h) {
             return;
         }
@@ -203,7 +204,7 @@ void CompUniqueBounds::updUpper(const Expr &op, const Bound &bound) {
             auto oldVal = old.expr_.as<IntConstNode>()->val_;
             auto newVal = bound.expr_.as<IntConstNode>()->val_;
             if (newVal < oldVal) {
-                old = Bound(LinearExpr{{}, newVal});
+                old = UpperBound(LinearExpr<Rational<int>>{{}, newVal});
             }
             return;
         }
@@ -268,9 +269,8 @@ Expr CompUniqueBounds::visit(const Var &_op) {
     auto __op = CompTransientBounds::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Var);
     auto op = __op.as<VarNode>();
-    Bound b{op}; // Don't forget itself
-    updLower(op, b);
-    updUpper(op, b);
+    updLower(op, LowerBound{op});
+    updUpper(op, UpperBound{op});
     return op;
 }
 
@@ -278,9 +278,8 @@ Expr CompUniqueBounds::visit(const Load &_op) {
     auto __op = CompTransientBounds::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Load);
     auto op = __op.as<LoadNode>();
-    Bound b{op}; // Don't forget itself
-    updLower(op, b);
-    updUpper(op, b);
+    updLower(op, LowerBound{op});
+    updUpper(op, UpperBound{op});
     return op;
 }
 
@@ -288,9 +287,8 @@ Expr CompUniqueBounds::visit(const IntConst &_op) {
     auto __op = CompTransientBounds::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::IntConst);
     auto op = __op.as<IntConstNode>();
-    Bound b{LinearExpr{{}, op->val_}};
-    updLower(op, b);
-    updUpper(op, b);
+    updLower(op, LowerBound{LinearExpr<Rational<int>>{{}, op->val_}});
+    updUpper(op, UpperBound{LinearExpr<Rational<int>>{{}, op->val_}});
     return op;
 }
 
@@ -298,26 +296,14 @@ Expr CompUniqueBounds::visit(const Add &_op) {
     auto __op = CompTransientBounds::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Add);
     auto op = __op.as<AddNode>();
-    auto f = [](const Bound &b1, const Bound &b2) -> Bound {
-        auto ret = b1.lin_;
-        for (auto &&item : b2.lin_.coeff_) {
-            if (ret.coeff_.count(item.first)) {
-                ret.coeff_[item.first].k += item.second.k;
-            } else {
-                ret.coeff_[item.first] = item.second;
-            }
-        }
-        ret.bias_ += b2.lin_.bias_;
-        return ret;
-    };
     for (auto &&b1 : getLower(op->lhs_)) {
         for (auto &&b2 : getLower(op->rhs_)) {
-            updLower(op, f(b1, b2));
+            updLower(op, add(b1, b2));
         }
     }
     for (auto &&b1 : getUpper(op->lhs_)) {
         for (auto &&b2 : getUpper(op->rhs_)) {
-            updUpper(op, f(b1, b2));
+            updUpper(op, add(b1, b2));
         }
     }
     return op;
@@ -327,26 +313,14 @@ Expr CompUniqueBounds::visit(const Sub &_op) {
     auto __op = CompTransientBounds::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Sub);
     auto op = __op.as<SubNode>();
-    auto f = [](const Bound &b1, const Bound &b2) -> Bound {
-        auto ret = b1.lin_;
-        for (auto &&item : b2.lin_.coeff_) {
-            if (ret.coeff_.count(item.first)) {
-                ret.coeff_[item.first].k -= item.second.k;
-            } else {
-                ret.coeff_[item.first] = {-item.second.k, item.second.a};
-            }
-        }
-        ret.bias_ -= b2.lin_.bias_;
-        return ret;
-    };
     for (auto &&b1 : getLower(op->lhs_)) {
         for (auto &&b2 : getUpper(op->rhs_)) {
-            updLower(op, f(b1, b2));
+            updLower(op, sub(b1, b2));
         }
     }
     for (auto &&b1 : getUpper(op->lhs_)) {
         for (auto &&b2 : getLower(op->rhs_)) {
-            updUpper(op, f(b1, b2));
+            updUpper(op, sub(b1, b2));
         }
     }
     return op;
@@ -357,103 +331,49 @@ Expr CompUniqueBounds::visit(const Mul &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::Mul);
     auto op = __op.as<MulNode>();
 
-    // we deal with multiplying constant only. Otherwise, the extreme value of
-    // `x * y` may not falls in the extreme value of `x` and `y`
-    auto f = [](const Bound &b, int k) -> Bound {
-        auto ret = b.lin_;
-        for (auto &&item : ret.coeff_) {
-            item.second.k *= k;
-        }
-        ret.bias_ *= k;
-        return ret;
-    };
-
-    auto g = [f, this](const Expr &op, const Expr &e1, const Expr &e2) {
+    auto g = [this](const Expr &op, const Expr &e1, const Expr &e2) {
         if (auto k = getInt(e2); k.isValid()) {
-            for (auto &&b : getLower(e1)) {
-                auto upd = *k > 0 ? &CompUniqueBounds::updLower
-                                  : &CompUniqueBounds::updUpper;
-                (this->*upd)(op, f(b, *k));
-            }
-            for (auto &&b : getUpper(e1)) {
-                auto upd = *k > 0 ? &CompUniqueBounds::updUpper
-                                  : &CompUniqueBounds::updLower;
-                (this->*upd)(op, f(b, *k));
+            if (*k > 0) {
+                for (auto &&b : getLower(e1)) {
+                    updLower(op, mul(b, *k));
+                }
+                for (auto &&b : getUpper(e1)) {
+                    updUpper(op, mul(b, *k));
+                }
+            } else {
+                for (auto &&b : getLower(e1)) {
+                    updUpper(op, mul(UpperBound{b.lin_}, *k));
+                }
+                for (auto &&b : getUpper(e1)) {
+                    updLower(op, mul(LowerBound{b.lin_}, *k));
+                }
             }
         }
     };
     g(op, op->lhs_, op->rhs_);
     g(op, op->rhs_, op->lhs_);
+    return op;
+}
 
-    // Special for `(n // p) * k`
-    AnalyzeLinear analyzeLinear;
-    if (lower_.count(op)) {
-        for (Bound &b : lower_.at(op)) {
-            bool altered = false;
-            LinearExpr lin;
-            lin.bias_ = b.lin_.bias_;
-            for (auto &&item : b.lin_.coeff_) {
-                if (item.second.a->nodeType() == ASTNodeType::Div) {
-                    auto div = item.second.a.as<DivNode>();
-                    if (div->rhs_->nodeType() == ASTNodeType::IntConst) {
-                        if (int p = div->rhs_.as<IntConstNode>()->val_;
-                            item.second.k % p == 0) {
-                            analyzeLinear(div->lhs_);
-                            auto subLin = analyzeLinear.result().at(div->lhs_);
-                            for (auto &&subitem : subLin.coeff_) {
-                                auto h = subitem.first;
-                                auto k = item.second.k / p * subitem.second.k;
-                                if (lin.coeff_.count(h)) {
-                                    lin.coeff_.at(h).k += k;
-                                } else {
-                                    lin.coeff_[h] = {k, subitem.second.a};
-                                }
-                            }
-                            lin.bias_ += subLin.bias_ * (item.second.k / p);
-                            altered = true;
-                            continue;
-                        }
-                    }
-                }
-                lin.coeff_[item.first] = item.second;
+Expr CompUniqueBounds::visit(const FloorDiv &_op) {
+    auto __op = CompTransientBounds::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::FloorDiv);
+    auto op = __op.as<FloorDivNode>();
+
+    if (auto k = getInt(op->rhs_); k.isValid()) {
+        if (*k > 0) {
+            for (auto &&b : getLower(op->lhs_)) {
+                updLower(op, floorDiv(b, *k));
             }
-            if (altered) {
-                b = Bound(lin);
+            for (auto &&b : getUpper(op->lhs_)) {
+                updUpper(op, floorDiv(b, *k));
             }
-        }
-    }
-    if (upper_.count(op)) {
-        for (Bound &b : upper_.at(op)) {
-            bool altered = false;
-            LinearExpr lin;
-            lin.bias_ = b.lin_.bias_;
-            for (auto &&item : b.lin_.coeff_) {
-                if (item.second.a->nodeType() == ASTNodeType::Div) {
-                    auto div = item.second.a.as<DivNode>();
-                    if (div->rhs_->nodeType() == ASTNodeType::IntConst) {
-                        if (int p = div->rhs_.as<IntConstNode>()->val_;
-                            item.second.k % p == 0) {
-                            analyzeLinear(div->lhs_);
-                            auto subLin = analyzeLinear.result().at(div->lhs_);
-                            for (auto &&subitem : subLin.coeff_) {
-                                auto h = subitem.first;
-                                auto k = item.second.k / p * subitem.second.k;
-                                if (lin.coeff_.count(h)) {
-                                    lin.coeff_.at(h).k += k;
-                                } else {
-                                    lin.coeff_[h] = {k, subitem.second.a};
-                                }
-                            }
-                            lin.bias_ += subLin.bias_ * (item.second.k / p);
-                            altered = true;
-                            continue;
-                        }
-                    }
-                }
-                lin.coeff_[item.first] = item.second;
+        } else {
+            for (auto &&b : getLower(op->lhs_)) {
+                updUpper(op, floorDiv(UpperBound{b.lin_}, *k));
             }
-            if (altered) {
-                b = Bound(lin);
+            for (auto &&b : getUpper(op->lhs_)) {
+                updLower(op, floorDiv(LowerBound{b.lin_}, *k));
             }
         }
     }
@@ -461,38 +381,26 @@ Expr CompUniqueBounds::visit(const Mul &_op) {
     return op;
 }
 
-Expr CompUniqueBounds::visit(const Div &_op) {
+Expr CompUniqueBounds::visit(const CeilDiv &_op) {
     auto __op = CompTransientBounds::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::Div);
-    auto op = __op.as<DivNode>();
-
-    // we deal with dividing by constant only. Otherwise, the extreme value of
-    // `x / y` may not falls in the extreme value of `x` and `y`
-    auto f = [](const Bound &b, int k) -> Bound {
-        auto ret = b.lin_;
-        for (auto &&item : ret.coeff_) {
-            if (item.second.k % k != 0) {
-                goto fail;
-            }
-            item.second.k /= k;
-        }
-        if (ret.bias_ % k != 0) {
-            goto fail;
-        }
-        ret.bias_ /= k;
-        return ret;
-    fail:
-        return makeDiv(b.expr_, makeIntConst(k));
-    };
+    ASSERT(__op->nodeType() == ASTNodeType::CeilDiv);
+    auto op = __op.as<CeilDivNode>();
 
     if (auto k = getInt(op->rhs_); k.isValid()) {
-        for (auto &&b : getLower(op->lhs_)) {
-            (this->*(*k > 0 ? &CompUniqueBounds::updLower
-                            : &CompUniqueBounds::updUpper))(op, f(b, *k));
-        }
-        for (auto &&b : getUpper(op->lhs_)) {
-            (this->*(*k > 0 ? &CompUniqueBounds::updUpper
-                            : &CompUniqueBounds::updLower))(op, f(b, *k));
+        if (*k > 0) {
+            for (auto &&b : getLower(op->lhs_)) {
+                updLower(op, ceilDiv(b, *k));
+            }
+            for (auto &&b : getUpper(op->lhs_)) {
+                updUpper(op, ceilDiv(b, *k));
+            }
+        } else {
+            for (auto &&b : getLower(op->lhs_)) {
+                updUpper(op, ceilDiv(UpperBound{b.lin_}, *k));
+            }
+            for (auto &&b : getUpper(op->lhs_)) {
+                updLower(op, ceilDiv(LowerBound{b.lin_}, *k));
+            }
         }
     }
 
@@ -523,28 +431,6 @@ Expr CompUniqueBounds::visit(const Max &_op) {
         updLower(op, b);
     }
     return op;
-}
-
-bool SimplifyPass::checkUpperCmp0(const Expr &normForm,
-                                  const std::function<bool(int, int)> &&cmp) {
-    for (auto &&upper : getUpper(normForm)) {
-        if (upper.expr_->nodeType() == ASTNodeType::IntConst &&
-            cmp(upper.expr_.as<IntConstNode>()->val_, 0)) {
-            return true;
-        }
-    }
-    return false;
-}
-
-bool SimplifyPass::checkLowerCmp0(const Expr &normForm,
-                                  const std::function<bool(int, int)> &&cmp) {
-    for (auto &&lower : getLower(normForm)) {
-        if (lower.expr_->nodeType() == ASTNodeType::IntConst &&
-            cmp(lower.expr_.as<IntConstNode>()->val_, 0)) {
-            return true;
-        }
-    }
-    return false;
 }
 
 Expr SimplifyPass::visitExpr(
@@ -582,10 +468,34 @@ Expr SimplifyPass::visitExpr(
     return op;
 }
 
-Expr SimplifyPass::visit(const Div &_op) {
+Expr SimplifyPass::visit(const FloorDiv &_op) {
     auto __op = CompUniqueBounds::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::Div);
-    auto op = __op.as<DivNode>();
+    ASSERT(__op->nodeType() == ASTNodeType::FloorDiv);
+    auto op = __op.as<FloorDivNode>();
+    if (op->lhs_->nodeType() == ASTNodeType::IntConst &&
+        op->rhs_->nodeType() == ASTNodeType::IntConst) {
+        return makeIntConst(floorDiv(op->lhs_.as<IntConstNode>()->val_,
+                                     op->rhs_.as<IntConstNode>()->val_));
+    }
+    return op;
+}
+
+Expr SimplifyPass::visit(const CeilDiv &_op) {
+    auto __op = CompUniqueBounds::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::CeilDiv);
+    auto op = __op.as<CeilDivNode>();
+    if (op->lhs_->nodeType() == ASTNodeType::IntConst &&
+        op->rhs_->nodeType() == ASTNodeType::IntConst) {
+        return makeIntConst(ceilDiv(op->lhs_.as<IntConstNode>()->val_,
+                                    op->rhs_.as<IntConstNode>()->val_));
+    }
+    return op;
+}
+
+Expr SimplifyPass::visit(const RoundTowards0Div &_op) {
+    auto __op = CompUniqueBounds::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::RoundTowards0Div);
+    auto op = __op.as<RoundTowards0DivNode>();
     if (op->lhs_->nodeType() == ASTNodeType::IntConst &&
         op->rhs_->nodeType() == ASTNodeType::IntConst) {
         return makeIntConst(op->lhs_.as<IntConstNode>()->val_ /
@@ -597,7 +507,7 @@ Expr SimplifyPass::visit(const Div &_op) {
 Expr SimplifyPass::visit(const Mod &_op) {
     auto __op = CompUniqueBounds::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Mod);
-    auto op = __op.as<DivNode>();
+    auto op = __op.as<ModNode>();
     if (op->lhs_->nodeType() == ASTNodeType::IntConst &&
         op->rhs_->nodeType() == ASTNodeType::IntConst) {
         return makeIntConst(op->lhs_.as<IntConstNode>()->val_ %
@@ -629,9 +539,9 @@ Expr SimplifyPass::visit(const Min &_op) {
     for (auto &&l : lhs) {
         for (auto &&r : rhs) {
             auto normForm = (*this)(makeSub(l, r));
-            if (checkUpperCmp0(normForm, std::less_equal<int>())) {
+            if (getIntUpper(normForm) <= 0) {
                 all.erase(r);
-            } else if (checkLowerCmp0(normForm, std::greater_equal<int>())) {
+            } else if (getIntLower(normForm) >= 0) {
                 all.erase(l);
             }
         }
@@ -672,9 +582,9 @@ Expr SimplifyPass::visit(const Max &_op) {
     for (auto &&l : lhs) {
         for (auto &&r : rhs) {
             auto normForm = (*this)(makeSub(l, r));
-            if (checkUpperCmp0(normForm, std::less_equal<int>())) {
+            if (getIntUpper(normForm) <= 0) {
                 all.erase(l);
-            } else if (checkLowerCmp0(normForm, std::greater_equal<int>())) {
+            } else if (getIntLower(normForm) >= 0) {
                 all.erase(r);
             }
         }
@@ -697,10 +607,10 @@ Expr SimplifyPass::visit(const LT &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::LT);
     auto op = __op.as<LTNode>();
     auto normForm = (*this)(makeSub(op->lhs_, op->rhs_));
-    if (checkUpperCmp0(normForm, std::less<int>())) {
+    if (getIntUpper(normForm) < 0) {
         return markMutated(makeIntConst(1));
     }
-    if (checkLowerCmp0(normForm, std::greater_equal<int>())) {
+    if (getIntLower(normForm) >= 0) {
         return markMutated(makeIntConst(0));
     }
     return op;
@@ -711,10 +621,10 @@ Expr SimplifyPass::visit(const LE &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::LE);
     auto op = __op.as<LENode>();
     auto normForm = (*this)(makeSub(op->lhs_, op->rhs_));
-    if (checkUpperCmp0(normForm, std::less_equal<int>())) {
+    if (getIntUpper(normForm) <= 0) {
         return markMutated(makeIntConst(1));
     }
-    if (checkLowerCmp0(normForm, std::greater<int>())) {
+    if (getIntLower(normForm) > 0) {
         return markMutated(makeIntConst(0));
     }
     return op;
@@ -725,10 +635,10 @@ Expr SimplifyPass::visit(const GT &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::GT);
     auto op = __op.as<GTNode>();
     auto normForm = (*this)(makeSub(op->lhs_, op->rhs_));
-    if (checkUpperCmp0(normForm, std::less_equal<int>())) {
+    if (getIntUpper(normForm) <= 0) {
         return markMutated(makeIntConst(0));
     }
-    if (checkLowerCmp0(normForm, std::greater<int>())) {
+    if (getIntLower(normForm) > 0) {
         return markMutated(makeIntConst(1));
     }
     return op;
@@ -739,10 +649,10 @@ Expr SimplifyPass::visit(const GE &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::GE);
     auto op = __op.as<GENode>();
     auto normForm = (*this)(makeSub(op->lhs_, op->rhs_));
-    if (checkUpperCmp0(normForm, std::less<int>())) {
+    if (getIntUpper(normForm) < 0) {
         return markMutated(makeIntConst(0));
     }
-    if (checkLowerCmp0(normForm, std::greater_equal<int>())) {
+    if (getIntLower(normForm) >= 0) {
         return markMutated(makeIntConst(1));
     }
     return op;
@@ -753,10 +663,10 @@ Expr SimplifyPass::visit(const EQ &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::EQ);
     auto op = __op.as<EQNode>();
     auto normForm = (*this)(makeSub(op->lhs_, op->rhs_));
-    if (checkUpperCmp0(normForm, std::less<int>())) {
+    if (getIntUpper(normForm) < 0) {
         return markMutated(makeIntConst(0));
     }
-    if (checkLowerCmp0(normForm, std::greater<int>())) {
+    if (getIntLower(normForm) > 0) {
         return markMutated(makeIntConst(0));
     }
     for (auto &&upper : getUpper(normForm)) {
@@ -778,10 +688,10 @@ Expr SimplifyPass::visit(const NE &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::NE);
     auto op = __op.as<NENode>();
     auto normForm = (*this)(makeSub(op->lhs_, op->rhs_));
-    if (checkUpperCmp0(normForm, std::less<int>())) {
+    if (getIntUpper(normForm) < 0) {
         return markMutated(makeIntConst(1));
     }
-    if (checkLowerCmp0(normForm, std::greater<int>())) {
+    if (getIntLower(normForm) > 0) {
         return markMutated(makeIntConst(1));
     }
     for (auto &&upper : getUpper(normForm)) {
@@ -971,7 +881,7 @@ Stmt simplifyPass(const Stmt &op) {
     return flattenStmtSeq(std::get<0>(simplifyAndGetBounds(op)));
 }
 
-std::tuple<Stmt, SimplifyPass::BoundsMap, SimplifyPass::BoundsMap>
+std::tuple<Stmt, SimplifyPass::LowerBoundsMap, SimplifyPass::UpperBoundsMap>
 simplifyAndGetBounds(const Stmt &_op) {
     auto op = _op;
 

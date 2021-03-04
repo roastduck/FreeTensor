@@ -1,4 +1,4 @@
-#include <analyze/linear.h>
+#include <analyze/analyze_linear.h>
 
 namespace ir {
 
@@ -38,7 +38,7 @@ void AnalyzeLinear::visit(const Add &op) {
     auto ret = e1;
     for (auto &&item : e2.coeff_) {
         if (ret.coeff_.count(item.first)) {
-            ret.coeff_[item.first].k += item.second.k;
+            ret.coeff_[item.first].k_ += item.second.k_;
         } else {
             ret.coeff_[item.first] = item.second;
         }
@@ -58,9 +58,9 @@ void AnalyzeLinear::visit(const Sub &op) {
     auto ret = e1;
     for (auto &&item : e2.coeff_) {
         if (ret.coeff_.count(item.first)) {
-            ret.coeff_[item.first].k -= item.second.k;
+            ret.coeff_[item.first].k_ -= item.second.k_;
         } else {
-            ret.coeff_[item.first] = {-item.second.k, item.second.a};
+            ret.coeff_[item.first] = {-item.second.k_, item.second.a_};
         }
     }
     ret.bias_ -= e2.bias_;
@@ -78,7 +78,7 @@ void AnalyzeLinear::visit(const Mul &op) {
     if (e1.coeff_.empty()) {
         auto ret = e2;
         for (auto &&item : ret.coeff_) {
-            item.second.k *= e1.bias_;
+            item.second.k_ *= e1.bias_;
         }
         ret.bias_ *= e1.bias_;
         result_[op] = ret;
@@ -87,7 +87,7 @@ void AnalyzeLinear::visit(const Mul &op) {
     if (e2.coeff_.empty()) {
         auto ret = e1;
         for (auto &&item : ret.coeff_) {
-            item.second.k *= e2.bias_;
+            item.second.k_ *= e2.bias_;
         }
         ret.bias_ *= e2.bias_;
         result_[op] = ret;

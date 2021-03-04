@@ -317,7 +317,8 @@ Schedule::cache(const std::string &stmt, const std::string &var,
             throw InvalidSchedule("Statement " + stmt + " not found");
         }
 
-        SimplifyPass::BoundsMap lower, upper;
+        SimplifyPass::LowerBoundsMap lower;
+        SimplifyPass::UpperBoundsMap upper;
         std::tie(ast, lower, upper) = simplifyAndGetBounds(ast);
         CompAccessBound compRBound(lower, upper, COMP_ACCESS_BOUND_READ);
         CompAccessBound compWBound(lower, upper, COMP_ACCESS_BOUND_WRITE);
@@ -356,7 +357,8 @@ Schedule::cacheReduction(const std::string &stmt, const std::string &var,
             throw InvalidSchedule("Statement " + stmt + " not found");
         }
 
-        SimplifyPass::BoundsMap lower, upper;
+        SimplifyPass::LowerBoundsMap lower;
+        SimplifyPass::UpperBoundsMap upper;
         std::tie(ast, lower, upper) = simplifyAndGetBounds(ast);
         CompAccessBound compBound(lower, upper);
         compBound(ast);

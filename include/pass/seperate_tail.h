@@ -1,10 +1,11 @@
 #ifndef SEPERATE_TAIL_H
 #define SEPERATE_TAIL_H
 
+#include <functional>
 #include <unordered_set>
 #include <vector>
 
-#include <analyze/linear.h>
+#include <analyze/analyze_linear.h>
 #include <mutator.h>
 #include <visitor.h>
 
@@ -76,20 +77,14 @@ class SeperateTail : public Mutator {
         return nextCandidates_;
     }
 
+  private:
+    void genSeperation(uint64_t iterHash, const Expr &cond,
+                       const std::function<void(const Expr &)> &callback);
+
   protected:
     Stmt visit(const If &op) override;
     Stmt visit(const For &op) override;
     Stmt visit(const VarDef &op) override;
-};
-
-class CountNestedFor : public Visitor {
-    int curNested_ = 0, maxNested_ = 0;
-
-  public:
-    int maxNested() const { return maxNested_; }
-
-  protected:
-    void visit(const For &op) override;
 };
 
 Stmt seperateTail(const Stmt &op);

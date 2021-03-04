@@ -55,7 +55,8 @@ Stmt shrinkVar(const Stmt &_op) {
 
     // (1)
     Stmt op;
-    SimplifyPass::BoundsMap lower, upper;
+    SimplifyPass::LowerBoundsMap lower;
+    SimplifyPass::UpperBoundsMap upper;
     std::tie(op, lower, upper) = simplifyAndGetBounds(_op);
 
     // (2)

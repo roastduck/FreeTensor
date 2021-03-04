@@ -230,10 +230,34 @@ void CodeGenC::visit(const Mul &op) {
     os() << ")";
 }
 
-void CodeGenC::visit(const Div &op) {
+void CodeGenC::visit(const RealDiv &op) {
     os() << "(";
     (*this)(op->lhs_);
     os() << " / ";
+    (*this)(op->rhs_);
+    os() << ")";
+}
+
+void CodeGenC::visit(const RoundTowards0Div &op) {
+    os() << "(";
+    (*this)(op->lhs_);
+    os() << " / ";
+    (*this)(op->rhs_);
+    os() << ")";
+}
+
+void CodeGenC::visit(const FloorDiv &op) {
+    os() << "floorDiv(";
+    (*this)(op->lhs_);
+    os() << ", ";
+    (*this)(op->rhs_);
+    os() << ")";
+}
+
+void CodeGenC::visit(const CeilDiv &op) {
+    os() << "ceilDiv(";
+    (*this)(op->lhs_);
+    os() << ", ";
     (*this)(op->rhs_);
     os() << ")";
 }

@@ -1,29 +1,14 @@
-#ifndef LINEAR_H
-#define LINEAR_H
+#ifndef ANALYZE_LINEAR_H
+#define ANALYZE_LINEAR_H
 
 #include <unordered_map>
 #include <unordered_set>
 
 #include <analyze/hash.h>
+#include <math/linear.h>
 #include <visitor.h>
 
 namespace ir {
-
-/**
- * k * a
- */
-struct Scale {
-    int k;
-    Expr a;
-};
-
-/**
- * (sum_i k_i * a_i) + b
- */
-struct LinearExpr {
-    std::unordered_map<uint64_t, Scale> coeff_;
-    int bias_;
-};
 
 /**
  * Try to represent each (sub)expression as a linear expression of memory
@@ -31,11 +16,11 @@ struct LinearExpr {
  */
 class AnalyzeLinear : public Visitor {
     GetHash getHash_;
-    std::unordered_map<AST, LinearExpr> result_;
+    std::unordered_map<AST, LinearExpr<int>> result_;
     std::unordered_set<AST> visited_;
 
   public:
-    const std::unordered_map<AST, LinearExpr> &result() const {
+    const std::unordered_map<AST, LinearExpr<int>> &result() const {
         return result_;
     }
 
@@ -55,4 +40,4 @@ class AnalyzeLinear : public Visitor {
 
 } // namespace ir
 
-#endif // LINEAR_H
+#endif // ANALYZE_LINEAR_H

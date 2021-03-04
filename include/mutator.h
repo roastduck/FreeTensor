@@ -107,8 +107,20 @@ class Mutator {
         return makeMul((*this)(op->lhs_), (*this)(op->rhs_));
     }
 
-    virtual Expr visit(const Div &op) {
-        return makeDiv((*this)(op->lhs_), (*this)(op->rhs_));
+    virtual Expr visit(const RealDiv &op) {
+        return makeRealDiv((*this)(op->lhs_), (*this)(op->rhs_));
+    }
+
+    virtual Expr visit(const FloorDiv &op) {
+        return makeFloorDiv((*this)(op->lhs_), (*this)(op->rhs_));
+    }
+
+    virtual Expr visit(const CeilDiv &op) {
+        return makeCeilDiv((*this)(op->lhs_), (*this)(op->rhs_));
+    }
+
+    virtual Expr visit(const RoundTowards0Div &op) {
+        return makeRoundTowards0Div((*this)(op->lhs_), (*this)(op->rhs_));
     }
 
     virtual Expr visit(const Mod &op) {
