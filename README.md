@@ -53,6 +53,12 @@ If using Valgrind, one should set Python to use the system malloc:
 PYTHONPATH=../python:../build:$PYTHONPATH PYTHONMALLOC=malloc valgrind python3 -m pytest
 ```
 
+Sometimes Valgrind is not enough to detect some errors. An alternative is to use the sanitizer from GCC. To use it, first edit `CMakeLists.txt` to add a `-fsanitize=address` compiler flag (or other mode like `-fsanitize=undefined`), then:
+
+```sh
+PYTHONPATH=../python:../build:$PYTHONPATH LD_PRELOAD=`gcc -print-file-name=libasan.so` pytest -s
+```
+
 ## Contribute
 
 Please configure (or install some plugins for) your editor, to support `clang-format` and `editorconfig`, for code formating.
