@@ -13,6 +13,17 @@ class ExprNode : public ASTNode {
 };
 typedef Ref<ExprNode> Expr;
 
+/**
+ * Matches any expression
+ *
+ * Only used in pattern matching
+ */
+class AnyExprNode : public ExprNode {
+    DEFINE_NODE_TRAIT(AnyExpr);
+};
+typedef Ref<AnyExprNode> AnyExpr;
+inline Expr makeAnyExpr() { return AnyExpr::make(); }
+
 class VarNode : public ExprNode {
   public:
     std::string name_;
@@ -60,6 +71,18 @@ inline Expr makeFloatConst(double val) {
     FloatConst c = FloatConst::make();
     c->val_ = val;
     return c;
+}
+
+class BoolConstNode : public ExprNode {
+  public:
+    bool val_;
+    DEFINE_NODE_TRAIT(BoolConst);
+};
+typedef Ref<BoolConstNode> BoolConst;
+inline Expr makeBoolConst(bool val) {
+    BoolConst b = BoolConst::make();
+    b->val_ = val;
+    return b;
 }
 
 class AddNode : public ExprNode {

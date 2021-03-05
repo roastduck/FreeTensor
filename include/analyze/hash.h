@@ -49,6 +49,7 @@ class GetHash : public Visitor {
     virtual void visit(const Load &op) override;
     virtual void visit(const IntConst &op) override;
     virtual void visit(const FloatConst &op) override;
+    virtual void visit(const BoolConst &op) override;
     virtual void visit(const Add &op) override;
     virtual void visit(const Sub &op) override;
     virtual void visit(const Mul &op) override;

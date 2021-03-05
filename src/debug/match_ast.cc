@@ -100,6 +100,12 @@ void MatchVisitor::visit(const FloatConst &op) {
     CHECK(op->val_ == instance->val_);
 }
 
+void MatchVisitor::visit(const BoolConst &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::BoolConst);
+    auto instance = instance_.as<BoolConstNode>();
+    CHECK(op->val_ == instance->val_);
+}
+
 void MatchVisitor::visit(const Add &op) {
     CHECK(instance_->nodeType() == ASTNodeType::Add);
     auto instance = instance_.as<AddNode>();

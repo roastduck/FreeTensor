@@ -206,6 +206,8 @@ void CodeGenC::visit(const IntConst &op) { os() << std::to_string(op->val_); }
 
 void CodeGenC::visit(const FloatConst &op) { os() << std::to_string(op->val_); }
 
+void CodeGenC::visit(const BoolConst &op) { os() << std::to_string(op->val_); }
+
 void CodeGenC::visit(const Add &op) {
     os() << "(";
     (*this)(op->lhs_);

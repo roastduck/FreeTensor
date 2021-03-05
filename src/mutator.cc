@@ -16,6 +16,7 @@ Expr Mutator::operator()(const Expr &op) {
         DISPATCH_EXPR_CASE(Load);
         DISPATCH_EXPR_CASE(IntConst);
         DISPATCH_EXPR_CASE(FloatConst);
+        DISPATCH_EXPR_CASE(BoolConst);
         DISPATCH_EXPR_CASE(Add);
         DISPATCH_EXPR_CASE(Sub);
         DISPATCH_EXPR_CASE(Mul);
@@ -36,6 +37,7 @@ Expr Mutator::operator()(const Expr &op) {
         DISPATCH_EXPR_CASE(LOr);
         DISPATCH_EXPR_CASE(LNot);
         DISPATCH_EXPR_CASE(Intrinsic);
+        DISPATCH_EXPR_CASE(AnyExpr);
 
     default:
         ERROR("Unexpected Expr node type");

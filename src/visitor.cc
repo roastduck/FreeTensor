@@ -22,6 +22,7 @@ void Visitor::operator()(const AST &op) {
         DISPATCH_EXPR_CASE(Load);
         DISPATCH_EXPR_CASE(IntConst);
         DISPATCH_EXPR_CASE(FloatConst);
+        DISPATCH_EXPR_CASE(BoolConst);
         DISPATCH_EXPR_CASE(Add);
         DISPATCH_EXPR_CASE(Sub);
         DISPATCH_EXPR_CASE(Mul);
@@ -42,6 +43,7 @@ void Visitor::operator()(const AST &op) {
         DISPATCH_EXPR_CASE(LOr);
         DISPATCH_EXPR_CASE(LNot);
         DISPATCH_EXPR_CASE(Intrinsic);
+        DISPATCH_EXPR_CASE(AnyExpr);
 
         DISPATCH_STMT_CASE(StmtSeq);
         DISPATCH_STMT_CASE(VarDef);

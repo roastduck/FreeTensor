@@ -474,8 +474,9 @@ Expr SimplifyPass::visit(const FloorDiv &_op) {
     auto op = __op.as<FloorDivNode>();
     if (op->lhs_->nodeType() == ASTNodeType::IntConst &&
         op->rhs_->nodeType() == ASTNodeType::IntConst) {
-        return makeIntConst(floorDiv(op->lhs_.as<IntConstNode>()->val_,
-                                     op->rhs_.as<IntConstNode>()->val_));
+        return markMutated(
+            makeIntConst(floorDiv(op->lhs_.as<IntConstNode>()->val_,
+                                  op->rhs_.as<IntConstNode>()->val_)));
     }
     return op;
 }
@@ -486,8 +487,9 @@ Expr SimplifyPass::visit(const CeilDiv &_op) {
     auto op = __op.as<CeilDivNode>();
     if (op->lhs_->nodeType() == ASTNodeType::IntConst &&
         op->rhs_->nodeType() == ASTNodeType::IntConst) {
-        return makeIntConst(ceilDiv(op->lhs_.as<IntConstNode>()->val_,
-                                    op->rhs_.as<IntConstNode>()->val_));
+        return markMutated(
+            makeIntConst(ceilDiv(op->lhs_.as<IntConstNode>()->val_,
+                                 op->rhs_.as<IntConstNode>()->val_)));
     }
     return op;
 }
@@ -498,8 +500,8 @@ Expr SimplifyPass::visit(const RoundTowards0Div &_op) {
     auto op = __op.as<RoundTowards0DivNode>();
     if (op->lhs_->nodeType() == ASTNodeType::IntConst &&
         op->rhs_->nodeType() == ASTNodeType::IntConst) {
-        return makeIntConst(op->lhs_.as<IntConstNode>()->val_ /
-                            op->rhs_.as<IntConstNode>()->val_);
+        return markMutated(makeIntConst(op->lhs_.as<IntConstNode>()->val_ /
+                                        op->rhs_.as<IntConstNode>()->val_));
     }
     return op;
 }
@@ -510,8 +512,8 @@ Expr SimplifyPass::visit(const Mod &_op) {
     auto op = __op.as<ModNode>();
     if (op->lhs_->nodeType() == ASTNodeType::IntConst &&
         op->rhs_->nodeType() == ASTNodeType::IntConst) {
-        return makeIntConst(op->lhs_.as<IntConstNode>()->val_ %
-                            op->rhs_.as<IntConstNode>()->val_);
+        return markMutated(makeIntConst(op->lhs_.as<IntConstNode>()->val_ %
+                                        op->rhs_.as<IntConstNode>()->val_));
     }
     return op;
 }
@@ -608,10 +610,10 @@ Expr SimplifyPass::visit(const LT &_op) {
     auto op = __op.as<LTNode>();
     auto normForm = (*this)(makeSub(op->lhs_, op->rhs_));
     if (getIntUpper(normForm) < 0) {
-        return markMutated(makeIntConst(1));
+        return markMutated(makeBoolConst(true));
     }
     if (getIntLower(normForm) >= 0) {
-        return markMutated(makeIntConst(0));
+        return markMutated(makeBoolConst(false));
     }
     return op;
 }
@@ -622,10 +624,10 @@ Expr SimplifyPass::visit(const LE &_op) {
     auto op = __op.as<LENode>();
     auto normForm = (*this)(makeSub(op->lhs_, op->rhs_));
     if (getIntUpper(normForm) <= 0) {
-        return markMutated(makeIntConst(1));
+        return markMutated(makeBoolConst(true));
     }
     if (getIntLower(normForm) > 0) {
-        return markMutated(makeIntConst(0));
+        return markMutated(makeBoolConst(false));
     }
     return op;
 }
@@ -636,10 +638,10 @@ Expr SimplifyPass::visit(const GT &_op) {
     auto op = __op.as<GTNode>();
     auto normForm = (*this)(makeSub(op->lhs_, op->rhs_));
     if (getIntUpper(normForm) <= 0) {
-        return markMutated(makeIntConst(0));
+        return markMutated(makeBoolConst(false));
     }
     if (getIntLower(normForm) > 0) {
-        return markMutated(makeIntConst(1));
+        return markMutated(makeBoolConst(true));
     }
     return op;
 }
@@ -650,10 +652,10 @@ Expr SimplifyPass::visit(const GE &_op) {
     auto op = __op.as<GENode>();
     auto normForm = (*this)(makeSub(op->lhs_, op->rhs_));
     if (getIntUpper(normForm) < 0) {
-        return markMutated(makeIntConst(0));
+        return markMutated(makeBoolConst(false));
     }
     if (getIntLower(normForm) >= 0) {
-        return markMutated(makeIntConst(1));
+        return markMutated(makeBoolConst(true));
     }
     return op;
 }
@@ -664,21 +666,13 @@ Expr SimplifyPass::visit(const EQ &_op) {
     auto op = __op.as<EQNode>();
     auto normForm = (*this)(makeSub(op->lhs_, op->rhs_));
     if (getIntUpper(normForm) < 0) {
-        return markMutated(makeIntConst(0));
+        return markMutated(makeBoolConst(false));
     }
     if (getIntLower(normForm) > 0) {
-        return markMutated(makeIntConst(0));
+        return markMutated(makeBoolConst(false));
     }
-    for (auto &&upper : getUpper(normForm)) {
-        if (upper.expr_->nodeType() == ASTNodeType::IntConst &&
-            upper.expr_.as<IntConstNode>()->val_ == 0) {
-            for (auto &&lower : getLower(normForm)) {
-                if (lower.expr_->nodeType() == ASTNodeType::IntConst &&
-                    lower.expr_.as<IntConstNode>()->val_ == 0) {
-                    return markMutated(makeIntConst(1));
-                }
-            }
-        }
+    if (getIntUpper(normForm) == 0 && getIntLower(normForm) == 0) {
+        return markMutated(makeBoolConst(true));
     }
     return op;
 }
@@ -689,21 +683,13 @@ Expr SimplifyPass::visit(const NE &_op) {
     auto op = __op.as<NENode>();
     auto normForm = (*this)(makeSub(op->lhs_, op->rhs_));
     if (getIntUpper(normForm) < 0) {
-        return markMutated(makeIntConst(1));
+        return markMutated(makeBoolConst(true));
     }
     if (getIntLower(normForm) > 0) {
-        return markMutated(makeIntConst(1));
+        return markMutated(makeBoolConst(true));
     }
-    for (auto &&upper : getUpper(normForm)) {
-        if (upper.expr_->nodeType() == ASTNodeType::IntConst &&
-            upper.expr_.as<IntConstNode>()->val_ == 0) {
-            for (auto &&lower : getLower(normForm)) {
-                if (lower.expr_->nodeType() == ASTNodeType::IntConst &&
-                    lower.expr_.as<IntConstNode>()->val_ == 0) {
-                    return markMutated(makeIntConst(0));
-                }
-            }
-        }
+    if (getIntUpper(normForm) == 0 && getIntLower(normForm) == 0) {
+        return markMutated(makeBoolConst(false));
     }
     return op;
 }
@@ -712,13 +698,15 @@ Expr SimplifyPass::visit(const LAnd &_op) {
     auto __op = CompUniqueBounds::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::LAnd);
     auto op = __op.as<LAndNode>();
-    if (op->lhs_->nodeType() == ASTNodeType::IntConst) {
-        return markMutated(op->lhs_.as<IntConstNode>()->val_ ? op->rhs_
-                                                             : makeIntConst(0));
+    if (op->lhs_->nodeType() == ASTNodeType::BoolConst) {
+        return markMutated(op->lhs_.as<BoolConstNode>()->val_
+                               ? op->rhs_
+                               : makeBoolConst(false));
     }
-    if (op->rhs_->nodeType() == ASTNodeType::IntConst) {
-        return markMutated(op->rhs_.as<IntConstNode>()->val_ ? op->lhs_
-                                                             : makeIntConst(0));
+    if (op->rhs_->nodeType() == ASTNodeType::BoolConst) {
+        return markMutated(op->rhs_.as<BoolConstNode>()->val_
+                               ? op->lhs_
+                               : makeBoolConst(false));
     }
     return op;
 }
@@ -727,13 +715,15 @@ Expr SimplifyPass::visit(const LOr &_op) {
     auto __op = CompUniqueBounds::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::LOr);
     auto op = __op.as<LOrNode>();
-    if (op->lhs_->nodeType() == ASTNodeType::IntConst) {
-        return markMutated(op->lhs_.as<IntConstNode>()->val_ ? makeIntConst(1)
-                                                             : op->rhs_);
+    if (op->lhs_->nodeType() == ASTNodeType::BoolConst) {
+        return markMutated(op->lhs_.as<BoolConstNode>()->val_
+                               ? makeBoolConst(true)
+                               : op->rhs_);
     }
-    if (op->rhs_->nodeType() == ASTNodeType::IntConst) {
-        return markMutated(op->rhs_.as<IntConstNode>()->val_ ? makeIntConst(1)
-                                                             : op->lhs_);
+    if (op->rhs_->nodeType() == ASTNodeType::BoolConst) {
+        return markMutated(op->rhs_.as<BoolConstNode>()->val_
+                               ? makeBoolConst(true)
+                               : op->lhs_);
     }
     return op;
 }
@@ -743,8 +733,8 @@ Expr SimplifyPass::visit(const LNot &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::LNot);
     auto op = __op.as<LNotNode>();
     switch (op->expr_->nodeType()) {
-    case ASTNodeType::IntConst:
-        return markMutated(makeIntConst(!op->expr_.as<IntConstNode>()->val_));
+    case ASTNodeType::BoolConst:
+        return markMutated(makeBoolConst(!op->expr_.as<BoolConstNode>()->val_));
     case ASTNodeType::LT:
         return markMutated(
             makeGE(op->expr_.as<LTNode>()->lhs_, op->expr_.as<LTNode>()->rhs_));
@@ -830,8 +820,8 @@ Stmt SimplifyPass::visit(const If &_op) {
     if (isEmptyStmt(op->thenCase_) && isEmptyStmt(op->elseCase_)) {
         return makeStmtSeq("", {});
     }
-    if (op->cond_->nodeType() == ASTNodeType::IntConst) {
-        if (op->cond_.as<IntConstNode>()->val_) {
+    if (op->cond_->nodeType() == ASTNodeType::BoolConst) {
+        if (op->cond_.as<BoolConstNode>()->val_) {
             return markMutated(op->thenCase_);
         } else {
             if (op->elseCase_.isValid()) {
@@ -848,8 +838,8 @@ Stmt SimplifyPass::visit(const Assert &_op) {
     auto __op = CompUniqueBounds::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Assert);
     auto op = __op.as<AssertNode>();
-    if (op->cond_->nodeType() == ASTNodeType::IntConst) {
-        if (op->cond_.as<IntConstNode>()->val_) {
+    if (op->cond_->nodeType() == ASTNodeType::BoolConst) {
+        if (op->cond_.as<BoolConstNode>()->val_) {
             return markMutated(op->body_);
         } else {
             std::ostringstream os;

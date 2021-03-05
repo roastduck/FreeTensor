@@ -54,6 +54,7 @@ void init_ffi_ast(py::module_ &m) {
     py::class_<IntConstNode, IntConst> pyIntConst(m, "IntConst", pyExpr);
     py::class_<FloatConstNode, FloatConst> pyFloatConst(m, "FloatConst",
                                                         pyExpr);
+    py::class_<BoolConstNode, BoolConst> pyBoolConst(m, "BoolConst", pyExpr);
     py::class_<AddNode, Add> pyAdd(m, "Add", pyExpr);
     py::class_<SubNode, Sub> pySub(m, "Sub", pyExpr);
     py::class_<MulNode, Mul> pyMul(m, "Mul", pyExpr);
@@ -75,6 +76,7 @@ void init_ffi_ast(py::module_ &m) {
     py::class_<LOrNode, LOr> pyLOr(m, "LOr", pyExpr);
     py::class_<LNotNode, LNot> pyLNot(m, "LNot", pyExpr);
     py::class_<IntrinsicNode, Intrinsic> pyIntrinsic(m, "Intrinsic", pyExpr);
+    py::class_<AnyExprNode, AnyExpr> pyAnyExpr(m, "AnyExpr", pyExpr);
 
     pyAST
         .def("match",
@@ -86,6 +88,7 @@ void init_ffi_ast(py::module_ &m) {
 
     pyExpr.def(py::init([](int val) { return makeIntConst(val); }))
         .def(py::init([](float val) { return makeFloatConst(val); }))
+        .def(py::init([](bool val) { return makeBoolConst(val); }))
         .def(
             "__add__",
             [](const Expr &lhs, const Expr &rhs) { return makeAdd(lhs, rhs); },
@@ -168,6 +171,7 @@ void init_ffi_ast(py::module_ &m) {
             py::is_operator());
     py::implicitly_convertible<int, ExprNode>();
     py::implicitly_convertible<float, ExprNode>();
+    py::implicitly_convertible<bool, ExprNode>();
 
     // Statements
     m.def("makeAny", &makeAny);
@@ -207,6 +211,7 @@ void init_ffi_ast(py::module_ &m) {
           "nid"_a, "expr"_a);
 
     // Expressions
+    m.def("makeAnyExpr", &makeAnyExpr);
     m.def("makeMin",
           static_cast<Expr (*)(const Expr &, const Expr &)>(&makeMin), "lhs"_a,
           "rhs"_a);
@@ -261,10 +266,12 @@ template <> struct polymorphic_type_hook<ir::ASTNode> {
             DISPATCH(Assert);
             DISPATCH(Eval);
             DISPATCH(Any);
+            DISPATCH(AnyExpr);
             DISPATCH(Var);
             DISPATCH(Load);
             DISPATCH(IntConst);
             DISPATCH(FloatConst);
+            DISPATCH(BoolConst);
             DISPATCH(Add);
             DISPATCH(Sub);
             DISPATCH(Mul);
@@ -334,6 +341,7 @@ template <> struct polymorphic_type_hook<ir::ExprNode> {
             DISPATCH(Load);
             DISPATCH(IntConst);
             DISPATCH(FloatConst);
+            DISPATCH(BoolConst);
             DISPATCH(Add);
             DISPATCH(Sub);
             DISPATCH(Mul);
@@ -354,6 +362,7 @@ template <> struct polymorphic_type_hook<ir::ExprNode> {
             DISPATCH(LOr);
             DISPATCH(LNot);
             DISPATCH(Intrinsic);
+            DISPATCH(AnyExpr);
         default:
             ERROR("Unexpected Expr node type");
         }

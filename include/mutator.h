@@ -89,11 +89,15 @@ class Mutator {
                             std::move(expr), op->atomic_);
     }
 
+    virtual Expr visit(const AnyExpr &op) { return makeAnyExpr(); }
+
     virtual Expr visit(const IntConst &op) { return makeIntConst(op->val_); }
 
     virtual Expr visit(const FloatConst &op) {
         return makeFloatConst(op->val_);
     }
+
+    virtual Expr visit(const BoolConst &op) { return makeBoolConst(op->val_); }
 
     virtual Expr visit(const Add &op) {
         return makeAdd((*this)(op->lhs_), (*this)(op->rhs_));

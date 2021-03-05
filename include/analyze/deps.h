@@ -9,6 +9,7 @@
 
 #include <isl/ctx.h>
 #include <isl/map.h>
+#include <isl/options.h>
 #include <isl/set.h>
 
 #include <analyze/analyze_linear.h>
@@ -171,6 +172,7 @@ class AnalyzeDeps : public Visitor {
           scope2coord_(scope2coord), cond_(cond), found_(found), mode_(mode),
           depType_(depType), ignoreReductionWAW_(ignoreReductionWAW) {
         isl_ = isl_ctx_alloc();
+        isl_options_set_on_error(isl_, ISL_ON_ERROR_ABORT);
     }
 
     ~AnalyzeDeps() { isl_ctx_free(isl_); }

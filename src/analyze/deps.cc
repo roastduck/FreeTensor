@@ -172,21 +172,23 @@ Ref<std::string> AnalyzeDeps::makeRange(const std::vector<IterAxis> &point,
         if (point[i].iter_->nodeType() == ASTNodeType::Var) {
             std::string ineq =
                 genISLExpr_.normalizeId(point[i].iter_.as<VarNode>()->name_);
-            int bounded = 0;
+            bool bounded = true;
             if (auto linstr = genISLExpr_(point[i].begin_); linstr.isValid()) {
                 ineq = *linstr + " <= " + ineq;
-                bounded++;
+            } else {
+                ineq = "free_lo <= " + ineq;
+                bounded = false;
             }
             if (auto linstr = genISLExpr_(point[i].end_); linstr.isValid()) {
                 ineq = ineq + " < " + *linstr;
-                bounded++;
+            } else {
+                ineq = ineq + " < free_hi";
+                bounded = false;
             }
-            if (bounded < 2 && relax == RelaxMode::Necessary) {
+            if (!bounded && relax == RelaxMode::Necessary) {
                 return nullptr;
             }
-            if (bounded > 0) {
-                ineqs.emplace_back(std::move(ineq));
-            }
+            ineqs.emplace_back(std::move(ineq));
         }
     }
     std::string ret;
@@ -226,7 +228,7 @@ Ref<std::string> AnalyzeDeps::makeAccMap(const AccessPoint &p, int iterDim,
     } else {
         return nullptr;
     }
-    return Ref<std::string>::make("{" + ret + "}");
+    return Ref<std::string>::make("[free_lo, free_hi] -> {" + ret + "}");
 }
 
 std::string AnalyzeDeps::makeNdList(const std::string &name, int n) const {
