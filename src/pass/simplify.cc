@@ -474,8 +474,9 @@ Expr SimplifyPass::visit(const FloorDiv &_op) {
     auto op = __op.as<FloorDivNode>();
     if (op->lhs_->nodeType() == ASTNodeType::IntConst &&
         op->rhs_->nodeType() == ASTNodeType::IntConst) {
-        return makeIntConst(floorDiv(op->lhs_.as<IntConstNode>()->val_,
-                                     op->rhs_.as<IntConstNode>()->val_));
+        return markMutated(
+            makeIntConst(floorDiv(op->lhs_.as<IntConstNode>()->val_,
+                                  op->rhs_.as<IntConstNode>()->val_)));
     }
     return op;
 }
@@ -486,8 +487,9 @@ Expr SimplifyPass::visit(const CeilDiv &_op) {
     auto op = __op.as<CeilDivNode>();
     if (op->lhs_->nodeType() == ASTNodeType::IntConst &&
         op->rhs_->nodeType() == ASTNodeType::IntConst) {
-        return makeIntConst(ceilDiv(op->lhs_.as<IntConstNode>()->val_,
-                                    op->rhs_.as<IntConstNode>()->val_));
+        return markMutated(
+            makeIntConst(ceilDiv(op->lhs_.as<IntConstNode>()->val_,
+                                 op->rhs_.as<IntConstNode>()->val_)));
     }
     return op;
 }
@@ -498,8 +500,8 @@ Expr SimplifyPass::visit(const RoundTowards0Div &_op) {
     auto op = __op.as<RoundTowards0DivNode>();
     if (op->lhs_->nodeType() == ASTNodeType::IntConst &&
         op->rhs_->nodeType() == ASTNodeType::IntConst) {
-        return makeIntConst(op->lhs_.as<IntConstNode>()->val_ /
-                            op->rhs_.as<IntConstNode>()->val_);
+        return markMutated(makeIntConst(op->lhs_.as<IntConstNode>()->val_ /
+                                        op->rhs_.as<IntConstNode>()->val_));
     }
     return op;
 }
@@ -510,8 +512,8 @@ Expr SimplifyPass::visit(const Mod &_op) {
     auto op = __op.as<ModNode>();
     if (op->lhs_->nodeType() == ASTNodeType::IntConst &&
         op->rhs_->nodeType() == ASTNodeType::IntConst) {
-        return makeIntConst(op->lhs_.as<IntConstNode>()->val_ %
-                            op->rhs_.as<IntConstNode>()->val_);
+        return markMutated(makeIntConst(op->lhs_.as<IntConstNode>()->val_ %
+                                        op->rhs_.as<IntConstNode>()->val_));
     }
     return op;
 }

@@ -2,7 +2,6 @@
 
 #include <analyze/check_all_defined.h>
 #include <pass/seperate_tail.h>
-#include <pass/simplify.h>
 #include <pass/z3_simplify.h>
 
 namespace ir {
@@ -188,11 +187,12 @@ Stmt seperateTail(const Stmt &_op) {
     while (!candidates.empty()) {
         SeperateTail mutator(candidates);
         op = mutator(op);
-        op = simplifyPass(op);
+        op = z3Simplify(op); // Although Z3 may be slow, if we don't use Z3
+                             // here, there will be too many redundant branches,
+                             // which will make each pass even slower
         candidates = mutator.nextCandidates();
     }
 
-    op = z3Simplify(op);
     return op;
 }
 
