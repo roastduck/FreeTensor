@@ -30,6 +30,8 @@ void PrintVisitor::visit(const Any &op) {
     os() << "<Any>" << std::endl;
 }
 
+void PrintVisitor::visit(const AnyExpr &op) { os() << "<Any>"; }
+
 void PrintVisitor::visit(const VarDef &op) {
     printId(op);
     makeIndent();
@@ -99,6 +101,10 @@ void PrintVisitor::visit(const IntConst &op) {
 
 void PrintVisitor::visit(const FloatConst &op) {
     os() << std::to_string(op->val_);
+}
+
+void PrintVisitor::visit(const BoolConst &op) {
+    os() << (op->val_ ? "true" : "false");
 }
 
 void PrintVisitor::visit(const Add &op) {

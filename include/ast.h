@@ -7,6 +7,7 @@ namespace ir {
 
 enum class ASTNodeType : int {
     Any,
+    AnyExpr,
     StmtSeq,
     VarDef,
     Var,
@@ -15,6 +16,7 @@ enum class ASTNodeType : int {
     ReduceTo,
     IntConst,
     FloatConst,
+    BoolConst,
     Add,
     Sub,
     Mul,

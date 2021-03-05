@@ -9,11 +9,6 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "${DEFAULT_BUILD_TYPE}")
 endif()
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
-
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_EXTENSIONS OFF) # -std=gnu++11 when on, -std=c++11 when off
-
 # PyBind11
 find_package(Python COMPONENTS Interpreter Development REQUIRED)
 add_subdirectory(3rd-party/pybind11)
@@ -30,15 +25,29 @@ ExternalProject_add(ISL
 include_directories(${ISL_DIR}/install/include)
 link_directories(${ISL_DIR}/install/lib)
 
-# CUDA
-find_package(CUDA)
+# Z3
+set(SUBMODULE_DIR_NAME "3rd-party") # Z3 PR #4959
+add_subdirectory(3rd-party/z3)
 
-include_directories(include)
-include_directories(3rd-party/pybind11/include)
-file(GLOB_RECURSE SRC src/*.cc)
+# CUDA
+find_package(CUDA REQUIRED)
+
+# THIS PROJECT
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_EXTENSIONS OFF) # -std=gnu++11 when on, -std=c++11 when off
+
+include_directories(${CMAKE_SOURCE_DIR}/include)
+include_directories(${CMAKE_SOURCE_DIR}/3rd-party/pybind11/include)
+include_directories(${CMAKE_SOURCE_DIR}/3rd-party/z3/src/api/c++)
+file(GLOB_RECURSE SRC ${CMAKE_SOURCE_DIR}/src/*.cc)
 
 # Target
 pybind11_add_module(ffi SHARED ${SRC})
 add_dependencies(ffi ISL)
-target_link_libraries(ffi PRIVATE isl ${CUDA_LIBRARIES})
+target_link_libraries(ffi PRIVATE
+	${ISL_DIR}/install/lib/libisl.so
+	libz3 # See 3rd-party/z3/src/CMakeLists.txt
+	${CUDA_LIBRARIES})
 

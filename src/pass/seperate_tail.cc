@@ -3,6 +3,7 @@
 #include <analyze/check_all_defined.h>
 #include <pass/seperate_tail.h>
 #include <pass/simplify.h>
+#include <pass/z3_simplify.h>
 
 namespace ir {
 
@@ -190,6 +191,8 @@ Stmt seperateTail(const Stmt &_op) {
         op = simplifyPass(op);
         candidates = mutator.nextCandidates();
     }
+
+    op = z3Simplify(op);
     return op;
 }
 

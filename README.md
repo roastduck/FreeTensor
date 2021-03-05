@@ -1,5 +1,10 @@
 # IR
 
+## Dependencies
+
+- GCC (>= 8, to support C++17 and the "unroll" pragma)
+- CUDA (>= 10.2, to support GCC 8)
+
 ## Build
 
 First, clone this repo. Don't forget there are some submodules.

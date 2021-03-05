@@ -399,7 +399,10 @@ def test_min_max_as_bound():
 			("r", (), "int32", "input", "cpu")]) as (l, r):
 		with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
 			with ir.For("i", ir.max(l[()], 0), ir.min(r[()], 4)) as i:
-				y[i] = ir.l_and(i >= l[()], i < r[()])
+				with ir.If(ir.l_and(i >= l[()], i < r[()])):
+					y[i] = 1
+				with ir.Else():
+					y[i] = 0
 	ast = ir.pop_ast()
 	print(ast)
 	ast = ir.lower(ast)

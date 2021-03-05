@@ -85,3 +85,34 @@ def test_tiled():
 
 	assert std.match(ast)
 
+def test_dynamic_tiled():
+	with ir.VarDef("n", (), "int32", "input", "byvalue") as n:
+		with ir.Assert(n[()] >= 0):
+			with ir.VarDef("y", (n[()],), "int32", "output", "cpu") as y:
+				with ir.For("i", 0, ir.ceil_div(n[()], 4)) as i:
+					with ir.For("j", 0, 4) as j:
+						with ir.If(4 * i + j < n[()]):
+							y[4 * i + j] = 4 * i + j
+	ast = ir.pop_ast()
+	print(ast)
+	ast = ir.lower(ast)
+	print(ast)
+
+	with ir.VarDef("n", (), "int32", "input", "byvalue") as n:
+		with ir.Assert(n[()] >= 0):
+			with ir.VarDef("y", (n[()],), "int32", "output", "cpu") as y:
+				with ir.If(ir.any()): # n[()] % 4 != 0
+					with ir.For("i", 0, ir.any()) as i:
+						with ir.For("j", 0, 4) as j:
+							y[4 * i + j] = 4 * i + j
+					with ir.For("i", ir.any(), ir.any()) as i:
+						with ir.For("j", 0, n[()] + -4 * i) as j:
+							y[4 * i + j] = 4 * i + j
+				with ir.Else():
+					with ir.For("i", 0, ir.any()) as i:
+						with ir.For("j", 0, 4) as j:
+							y[4 * i + j] = 4 * i + j
+	std = ir.pop_ast()
+
+	assert std.match(ast)
+

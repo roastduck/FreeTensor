@@ -30,9 +30,8 @@ Expr UseBuiltinDiv::visit(const CeilDiv &_op) {
     auto op = __op.as<CeilDivNode>();
     if (getIntLower(op->lhs_) >= 0 && getIntLower(op->rhs_) >= 0) {
         // In case of unsigned data types
-        return makeAdd(
-            makeRoundTowards0Div(makeSub(op->lhs_, makeIntConst(1)), op->rhs_),
-            makeIntConst(1));
+        return makeRoundTowards0Div(
+            makeAdd(op->lhs_, makeSub(op->rhs_, makeIntConst(1))), op->rhs_);
     }
     if (getIntLower(op->lhs_) >= 0 && getIntUpper(op->rhs_) <= 0) {
         return makeRoundTowards0Div(op->lhs_, op->rhs_);

@@ -30,6 +30,7 @@ class Visitor {
 
     // Hooks for each node
     virtual void visit(const Any &op) {}
+    virtual void visit(const AnyExpr &op) {}
 
     virtual void visit(const StmtSeq &op) {
         for (auto &&stmt : op->stmts_) {
@@ -69,6 +70,8 @@ class Visitor {
     virtual void visit(const IntConst &op) {}
 
     virtual void visit(const FloatConst &op) {}
+
+    virtual void visit(const BoolConst &op) {}
 
     virtual void visit(const Add &op) {
         (*this)(op->lhs_);

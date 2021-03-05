@@ -40,6 +40,13 @@ void GetHash::visit(const FloatConst &op) {
     hash_[op] = h = (h * K3 + B3) % P;
 }
 
+void GetHash::visit(const BoolConst &op) {
+    Visitor::visit(op);
+    uint64_t h = ((uint64_t)op->nodeType() * K1 + B1) % P;
+    h = ((h + std::hash<bool>()(op->val_)) * K2 + B2) % P;
+    hash_[op] = h = (h * K3 + B3) % P;
+}
+
 void GetHash::visit(const Add &op) { binOpPermutable(op); }
 void GetHash::visit(const Sub &op) { binOpNonPermutable(op); }
 void GetHash::visit(const Mul &op) { binOpPermutable(op); }

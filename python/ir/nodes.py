@@ -215,3 +215,6 @@ def round_towards_0_div(lhs, rhs):
 def intrinsic(fmt, *params):
 	return ffi.makeIntrinsic(fmt, params)
 
+def any():
+	return ffi.makeAnyExpr()
+

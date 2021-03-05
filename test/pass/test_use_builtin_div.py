@@ -64,7 +64,7 @@ def test_ge0_ceil_div_ge0():
 			("c", (), "int32", "output", "cpu")]) as (a, b, c):
 		with ir.Assert(a[()] >= 0):
 			with ir.Assert(b[()] >= 0):
-				c[()] = ir.round_towards_0_div(a[()] - 1, b[()]) + 1
+				c[()] = ir.round_towards_0_div(a[()] + (b[()] - 1), b[()])
 	std = ir.pop_ast()
 
 	assert std.match(ast)
