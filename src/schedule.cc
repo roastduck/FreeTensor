@@ -268,11 +268,12 @@ void Schedule::swap(const std::vector<std::string> &order) {
             }
             return nullptr;
         };
-        auto found = [&](const Dependency &d) {
-            auto s0 = findParentStmt(d.later_.cursor_);
-            auto s1 = findParentStmt(d.earlier_.cursor_);
+        auto filter = [&](const AccessPoint &later,
+                          const AccessPoint &earlier) {
+            auto s0 = findParentStmt(later.cursor_);
+            auto s1 = findParentStmt(earlier.cursor_);
             if (!s0.isValid() || !s1.isValid()) {
-                return;
+                return false;
             }
             auto old0 = std::find_if(
                 scope->stmts_.begin(), scope->stmts_.end(),
@@ -286,13 +287,15 @@ void Schedule::swap(const std::vector<std::string> &order) {
             auto new1 = std::find_if(
                 order.begin(), order.end(),
                 [&](const std::string &id) { return id == s1->id(); });
-            if ((old0 < old1) != (new0 < new1)) {
-                throw InvalidSchedule(
-                    dep2Str(scope->id(), d.var_, d.later(), d.earlier()));
-            }
+            return (old0 < old1) != (new0 < new1);
+        };
+        auto found = [&](const Dependency &d) {
+            throw InvalidSchedule(
+                dep2Str(scope->id(), d.var_, d.later(), d.earlier()));
         };
         ast = prepareFindDeps(ast);
-        findDeps(ast, {{{scope->id(), DepDirection::Normal}}}, found);
+        findDeps(ast, {{{scope->id(), DepDirection::Normal}}}, found,
+                 FindDepsMode::Dep, DEP_ALL, filter);
     } catch (const InvalidSchedule &e) {
         std::string msg = "Invalid reorder(";
         for (size_t i = 0, iEnd = order.size(); i < iEnd; i++) {

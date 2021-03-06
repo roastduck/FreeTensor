@@ -140,6 +140,10 @@ const DepType DEP_ALL = DEP_WAW | DEP_WAR | DEP_RAW;
 enum class RelaxMode : int { Possible, Necessary };
 enum class FindDepsMode : int { Dep, Kill };
 
+typedef std::function<bool(const AccessPoint &later,
+                           const AccessPoint &earlier)>
+    FindDepsFilter;
+
 /**
  * Find RAW, WAR and WAW dependencies
  */
@@ -152,6 +156,7 @@ class AnalyzeDeps : public Visitor {
 
     const std::vector<FindDepsCond> &cond_;
     const FindDepsCallback &found_;
+    const FindDepsFilter &filter_;
 
     FindDepsMode mode_;
     DepType depType_;
@@ -167,10 +172,12 @@ class AnalyzeDeps : public Visitor {
         const std::unordered_map<std::string, std::vector<IterAxis>>
             &scope2coord,
         const std::vector<FindDepsCond> &cond, const FindDepsCallback &found,
-        FindDepsMode mode, DepType depType, bool ignoreReductionWAW)
+        FindDepsMode mode, DepType depType, const FindDepsFilter &filter,
+        bool ignoreReductionWAW)
         : points_(points), reads_(reads), writes_(writes),
-          scope2coord_(scope2coord), cond_(cond), found_(found), mode_(mode),
-          depType_(depType), ignoreReductionWAW_(ignoreReductionWAW) {
+          scope2coord_(scope2coord), cond_(cond), found_(found),
+          filter_(filter), mode_(mode), depType_(depType),
+          ignoreReductionWAW_(ignoreReductionWAW) {
         isl_ = isl_ctx_alloc();
         isl_options_set_on_error(isl_, ISL_ON_ERROR_ABORT);
     }
@@ -210,6 +217,9 @@ class AnalyzeDeps : public Visitor {
         if (depType_ & DEP_WAW) {
             auto range = writes_.equal_range(op->var_);
             for (auto i = range.first; i != range.second; i++) {
+                if (filter_ != nullptr && !filter_(*point, *(i->second))) {
+                    continue;
+                }
                 if (ignoreReductionWAW_ &&
                     op->nodeType() == ASTNodeType::ReduceTo &&
                     i->second->op_->nodeType() == ASTNodeType::ReduceTo) {
@@ -238,12 +248,16 @@ Stmt prepareFindDeps(const Stmt &op);
  * @param mode : Dep: all possible dependencies; Kill: all the situations that a
  * later access completely covers a earlier one
  * @param depType : WAW, RAW, RAW, or their combinations
+ * @param filter : Additional callback to select which dependencies to check.
+ * Return false in this callback to skip some dependencies. This callback can be
+ * nullptr
  * @param ignoreReductionWAW : Ignore WAW dependencies between two ReduceTo
  * nodes. This kind of dependencies are false dependencies if running serially
  */
 void findDeps(const Stmt &op, const std::vector<FindDepsCond> &cond,
               const FindDepsCallback &found,
               FindDepsMode mode = FindDepsMode::Dep, DepType depType = DEP_ALL,
+              const FindDepsFilter &filter = nullptr,
               bool ignoreReductionWAW = true);
 
 }; // namespace ir

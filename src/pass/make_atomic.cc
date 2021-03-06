@@ -33,14 +33,15 @@ Stmt makeAtomic(const Stmt &_op) {
     }
 
     std::unordered_set<std::string> toAlter;
-    auto found = [&](const Dependency &d) {
-        if (d.later()->nodeType() == ASTNodeType::ReduceTo &&
-            d.earlier()->nodeType() == ASTNodeType::ReduceTo) {
-            toAlter.insert(d.later().as<ReduceToNode>()->id());
-            toAlter.insert(d.earlier().as<ReduceToNode>()->id());
-        }
+    auto filter = [](const AccessPoint &later, const AccessPoint &earlier) {
+        return later.op_->nodeType() == ASTNodeType::ReduceTo &&
+               earlier.op_->nodeType() == ASTNodeType::ReduceTo;
     };
-    findDeps(op, cond, found, FindDepsMode::Dep, DEP_ALL, false);
+    auto found = [&](const Dependency &d) {
+        toAlter.insert(d.later().as<ReduceToNode>()->id());
+        toAlter.insert(d.earlier().as<ReduceToNode>()->id());
+    };
+    findDeps(op, cond, found, FindDepsMode::Dep, DEP_ALL, filter, false);
 
     return MakeAtomic(toAlter)(op);
 }

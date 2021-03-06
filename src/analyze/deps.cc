@@ -387,6 +387,9 @@ void AnalyzeDeps::visit(const Load &op) {
         auto &&point = points_.at(op);
         auto range = writes_.equal_range(op->var_);
         for (auto i = range.first; i != range.second; i++) {
+            if (filter_ != nullptr && !filter_(*point, *(i->second))) {
+                continue;
+            }
             checkDep(*point, *(i->second));
         }
     }
@@ -403,14 +406,18 @@ void findDeps(
     const Stmt &op,
     const std::vector<std::vector<std::pair<std::string, DepDirection>>> &cond,
     const FindDepsCallback &found, FindDepsMode mode, DepType depType,
-    bool ignoreReductionWAW) {
+    const FindDepsFilter &filter, bool ignoreReductionWAW) {
+    if (cond.empty()) {
+        return;
+    }
+
     ASSERT(op->noAmbiguous());
 
     FindAccessPoint finder;
     finder(op);
     AnalyzeDeps analyzer(finder.points(), finder.reads(), finder.writes(),
                          finder.scope2coord(), cond, found, mode, depType,
-                         ignoreReductionWAW);
+                         filter, ignoreReductionWAW);
     analyzer(op);
 }
 

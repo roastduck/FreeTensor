@@ -2,7 +2,7 @@
 #define LINEAR_H
 
 #include <iostream>
-#include <unordered_map>
+#include <map>
 
 #include <analyze/hash.h>
 
@@ -20,7 +20,9 @@ template <class T> struct Scale {
  * (sum_i k_i * a_i) + b
  */
 template <class T> struct LinearExpr {
-    std::unordered_map<uint64_t, Scale<T>> coeff_;
+    // Using ordered map to guarantee ASTs generated from two identical
+    // `LinearExpr`s are the same
+    std::map<uint64_t, Scale<T>> coeff_;
     T bias_;
 };
 
