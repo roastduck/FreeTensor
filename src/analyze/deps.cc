@@ -407,6 +407,10 @@ void findDeps(
     const std::vector<std::vector<std::pair<std::string, DepDirection>>> &cond,
     const FindDepsCallback &found, FindDepsMode mode, DepType depType,
     const FindDepsFilter &filter, bool ignoreReductionWAW) {
+    if (cond.empty()) {
+        return;
+    }
+
     ASSERT(op->noAmbiguous());
 
     FindAccessPoint finder;
