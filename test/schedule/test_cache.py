@@ -146,7 +146,7 @@ def test_different_indices():
 		with ir.For("i", 0, 4) as i:
 			with ir.VarDef("b", (2,), "int32", "cache", "cpu") as b:
 				with ir.For("j", i, i + 2) as j:
-					b[j + -1 * i] = x[j]
+					b[-1 * i + j] = x[j]
 				y[i] = b[0] + b[1]
 	std = ir.pop_ast()
 
