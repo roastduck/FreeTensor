@@ -88,12 +88,14 @@ Stmt removeWrites(const Stmt &_op) {
     std::set<std::pair<Stmt, Stmt>> overwrites;
     std::set<std::pair<Expr, Stmt>> usesRAW;
     std::set<std::pair<Stmt, Expr>> usesWAR;
+    auto filterOverwrite = [&](const AccessPoint &later,
+                               const AccessPoint &earlier) {
+        return later.op_->nodeType() == ASTNodeType::Store ||
+               sameParent(later.cursor_, earlier.cursor_);
+    };
     auto foundOverwrite = [&](const Dependency &d) {
-        if (d.later()->nodeType() == ASTNodeType::Store ||
-            sameParent(d.later_.cursor_, d.earlier_.cursor_)) {
-            overwrites.emplace(d.later().as<StmtNode>(),
-                               d.earlier().as<StmtNode>());
-        }
+        overwrites.emplace(d.later().as<StmtNode>(),
+                           d.earlier().as<StmtNode>());
     };
     auto foundUse = [&](const Dependency &d) {
         if (d.later()->nodeType() == ASTNodeType::Load) {
@@ -107,8 +109,10 @@ Stmt removeWrites(const Stmt &_op) {
         }
     };
 
-    findDeps(op, {{}}, foundOverwrite, FindDepsMode::Kill, DEP_WAW, false);
-    findDeps(op, {{}}, foundUse, FindDepsMode::Dep, DEP_WAR | DEP_RAW, false);
+    findDeps(op, {{}}, foundOverwrite, FindDepsMode::Kill, DEP_WAW,
+             filterOverwrite, false);
+    findDeps(op, {{}}, foundUse, FindDepsMode::Dep, DEP_WAR | DEP_RAW, nullptr,
+             false);
 
     std::unordered_set<Stmt> redundant;
     std::unordered_map<Stmt, Stmt> replacement;
