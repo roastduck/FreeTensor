@@ -5,6 +5,7 @@
 #include <analyze/comp_access_bound.h>
 #include <analyze/deps.h>
 #include <analyze/find_loop_variance.h>
+#include <analyze/normalize.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/make_reduction.h>
 #include <pass/shrink_var.h>
@@ -492,8 +493,7 @@ void Schedule::unroll(const std::string &loop) {
     auto ast = ast_;
     Unroll mutator(loop);
     try {
-        ast = simplifyPass(mutator(ast));
-        mutator.simplified = true;
+        ast = simplifyPass(normalize(ast)); // for ForNode::infoLen_
         ast = mutator(ast);
         if (!mutator.done()) {
             throw InvalidSchedule("Loop " + loop + " not found");

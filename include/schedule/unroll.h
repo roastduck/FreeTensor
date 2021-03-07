@@ -7,8 +7,6 @@
 namespace ir {
 
 class Unroll : public Mutator {
-    friend class Schedule;
-
     std::string loop_;
     bool done_ = false;
 
@@ -18,7 +16,6 @@ class Unroll : public Mutator {
     bool done() const { return done_; }
 
   protected:
-    bool simplified = false;
     Stmt visit(const For &op) override;
 };
 
