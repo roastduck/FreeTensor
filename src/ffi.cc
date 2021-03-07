@@ -15,4 +15,3 @@ PYBIND11_MODULE(ffi, m) {
 }
 
 } // namespace ir
-

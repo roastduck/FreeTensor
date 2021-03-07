@@ -5,6 +5,7 @@
 #include <analyze/comp_access_bound.h>
 #include <analyze/deps.h>
 #include <analyze/find_loop_variance.h>
+#include <analyze/normalize.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/make_reduction.h>
 #include <pass/shrink_var.h>
@@ -20,6 +21,7 @@
 #include <schedule/reorder.h>
 #include <schedule/split.h>
 #include <schedule/swap.h>
+#include <schedule/unroll.h>
 
 namespace ir {
 
@@ -487,5 +489,19 @@ void Schedule::parallelize(const std::string &loop,
     ast_ = ast;
 }
 
-} // namespace ir
+void Schedule::unroll(const std::string &loop) {
+    auto ast = ast_;
+    Unroll mutator(loop);
+    try {
+        ast = simplifyPass(normalize(ast)); // for ForNode::infoLen_
+        ast = mutator(ast);
+        if (!mutator.done()) {
+            throw InvalidSchedule("Loop " + loop + " not found");
+        }
+    } catch (const InvalidSchedule &e) {
+        throw InvalidSchedule("Invalid unroll(" + loop + "): " + e.what());
+    }
+    ast_ = ast;
+}
 
+} // namespace ir

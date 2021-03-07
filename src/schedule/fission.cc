@@ -160,10 +160,10 @@ Stmt FissionFor::visit(const For &op) {
         isPart0_ = false, inPart_ = false;
         auto part1 = (*this)(op->body_);
         inside_ = false;
-        auto for0 =
-            makeFor(op->id(), op->iter_, begin, end, op->parallel_, part0);
-        auto for1 =
-            makeFor(op->id(), op->iter_, begin, end, op->parallel_, part1);
+        auto for0 = makeFor(op->id(), op->iter_, begin, end, op->parallel_,
+                            op->unroll_, part0);
+        auto for1 = makeFor(op->id(), op->iter_, begin, end, op->parallel_,
+                            op->unroll_, part1);
         markNewId(for0, true);
         markNewId(for1, false);
         return makeStmtSeq("", {for0, for1});
@@ -257,4 +257,3 @@ Stmt FissionFor::visit(const Assert &op) {
 }
 
 } // namespace ir
-

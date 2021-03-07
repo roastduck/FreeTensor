@@ -444,4 +444,3 @@ std::string CodeGenC::gen(DataType dtype) {
 }
 
 } // namespace ir
-

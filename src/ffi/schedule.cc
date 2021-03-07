@@ -26,8 +26,8 @@ void init_ffi_schedule(py::module_ &m) {
         .def("cache_reduction", &Schedule::cacheReduction, "stmt"_a, "var"_a,
              "mtype"_a)
         .def("move_to", &Schedule::moveTo, "stmt"_a, "side"_a, "dst"_a)
-        .def("parallelize", &Schedule::parallelize, "loop"_a, "parallel"_a);
+        .def("parallelize", &Schedule::parallelize, "loop"_a, "parallel"_a)
+        .def("unroll", &Schedule::unroll, "loop"_a);
 }
 
 } // namespace ir
-

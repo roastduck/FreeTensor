@@ -287,3 +287,13 @@ class Schedule(ffi.Schedule):
     def parallelize(self, loop, parallel):
         super(Schedule, self).parallelize(toId(loop), parallel)
 
+    '''
+    Mark a loop as needing to unroll
+
+    Parameters
+    ----------
+    loop : str, Stmt or Cursor
+        The loop which is needing to unroll
+    '''
+    def unroll(self, loop):
+        super(Schedule, self).unroll(toId(loop))

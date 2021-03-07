@@ -61,4 +61,3 @@ void Visitor::operator()(const AST &op) {
 }
 
 } // namespace ir
-

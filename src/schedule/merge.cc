@@ -10,7 +10,8 @@ Stmt MergeFor::visit(const For &_op) {
         ASSERT(__op->nodeType() == ASTNodeType::For);
         auto op = __op.as<ForNode>();
         return makeFor(newId_, newIter_, makeIntConst(0),
-                       makeMul(innerLen_, outerLen_), op->parallel_, op->body_);
+                       makeMul(innerLen_, outerLen_), op->parallel_,
+                       op->unroll_, op->body_);
     } else if (_op->id() == oldInner_->id()) {
         insideInner_ = true;
         auto __op = Mutator::visit(_op);
@@ -92,4 +93,3 @@ Expr MergeFor::visit(const Var &_op) {
 }
 
 } // namespace ir
-

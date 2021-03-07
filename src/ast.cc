@@ -47,4 +47,3 @@ std::string toString(ASTNodeType type) {
 }
 
 } // namespace ir
-

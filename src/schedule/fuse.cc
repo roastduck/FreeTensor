@@ -29,7 +29,8 @@ Stmt FuseFor::visit(const For &_op) {
     auto op = __op.as<ForNode>();
     if (op->id() == id0_ || op->id() == id1_) {
         op = makeFor(op->id(), op->iter_, makeIntConst(0),
-                     makeSub(op->end_, op->begin_), op->parallel_, op->body_);
+                     makeSub(op->end_, op->begin_), op->parallel_, op->unroll_,
+                     op->body_);
     }
     return op;
 }
@@ -47,7 +48,7 @@ Stmt FuseFor::visit(const StmtSeq &_op) {
             auto loop0 = op->stmts_[i].as<ForNode>();
             auto loop1 = op->stmts_[i + 1].as<ForNode>();
             auto fused = makeFor(fused_, iter0_, makeIntConst(0), loop0->end_,
-                                 loop0->parallel_,
+                                 loop0->parallel_, loop0->unroll_,
                                  makeStmtSeq("", {loop0->body_, loop1->body_}));
             op->stmts_[i] =
                 makeAssert("", makeEQ(loop0->end_, loop1->end_), fused);
@@ -59,4 +60,3 @@ Stmt FuseFor::visit(const StmtSeq &_op) {
 }
 
 } // namespace ir
-

@@ -74,17 +74,17 @@ Stmt NormalizeThreads::visit(const For &op) {
         auto ret = doVisitFor(op);
         inKernel_ = false;
         ret = makeFor("", ".threadIdx.x", makeIntConst(0),
-                      makeIntConst(INT_MAX), "threadIdx.x", ret);
+                      makeIntConst(INT_MAX), "threadIdx.x", false, ret);
         ret = makeFor("", ".threadIdx.y", makeIntConst(0),
-                      makeIntConst(INT_MAX), "threadIdx.y", ret);
+                      makeIntConst(INT_MAX), "threadIdx.y", false, ret);
         ret = makeFor("", ".threadIdx.z", makeIntConst(0),
-                      makeIntConst(INT_MAX), "threadIdx.z", ret);
+                      makeIntConst(INT_MAX), "threadIdx.z", false, ret);
         ret = makeFor("", ".blockIdx.x", makeIntConst(0), makeIntConst(INT_MAX),
-                      "blockIdx.x", ret);
+                      "blockIdx.x", false, ret);
         ret = makeFor("", ".blockIdx.y", makeIntConst(0), makeIntConst(INT_MAX),
-                      "blockIdx.y", ret);
+                      "blockIdx.y", false, ret);
         ret = makeFor("", ".blockIdx.z", makeIntConst(0), makeIntConst(INT_MAX),
-                      "blockIdx.z", ret);
+                      "blockIdx.z", false, ret);
         return ret;
     } else {
         return doVisitFor(op);
@@ -124,4 +124,3 @@ Stmt normalizeThreads(const Stmt &_op) {
 } // namespace gpu
 
 } // namespace ir
-

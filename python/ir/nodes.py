@@ -129,7 +129,7 @@ class For:
         nid = top.get_next_nid()
         if self.nid != "":
             nid = self.nid
-        top.append_stmt(ffi.makeFor(nid, self.iter_var, self.begin, self.end, "", body))
+        top.append_stmt(ffi.makeFor(nid, self.iter_var, self.begin, self.end, "", False, body))
 
 class If:
     def __init__(self, cond):

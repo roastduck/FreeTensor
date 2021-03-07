@@ -94,6 +94,9 @@ void CodeGenCUDA::visit(const Var &op) {
 
 void CodeGenCUDA::visit(const For &op) {
     if (op->parallel_.empty()) {
+        if (op->unroll_) {
+            os() << "#pragma unroll " << op->infoLen_ << std::endl;
+        }
         CodeGenC::visit(op);
     } else if (op->parallel_ == "blockIdx.x" || op->parallel_ == "blockIdx.y" ||
                op->parallel_ == "blockIdx.z" ||
@@ -328,4 +331,3 @@ std::pair<std::string, std::vector<std::string>> codeGenCUDA(const AST &_op) {
 }
 
 } // namespace ir
-

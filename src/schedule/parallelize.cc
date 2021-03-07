@@ -14,4 +14,3 @@ Stmt Parallelize::visit(const For &_op) {
 }
 
 } // namespace ir
-
