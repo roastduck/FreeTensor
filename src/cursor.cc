@@ -142,4 +142,3 @@ void GetCursorById::visitStmt(
 }
 
 } // namespace ir
-
