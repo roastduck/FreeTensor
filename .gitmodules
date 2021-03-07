@@ -1,10 +1,10 @@
 [submodule "3rd-party/pybind11"]
-	path = 3rd-party/pybind11
-	url = https://github.com/pybind/pybind11.git
-	branch = v2.6
+    path = 3rd-party/pybind11
+    url = https://github.com/pybind/pybind11.git
+    branch = v2.6
 [submodule "3rd-party/isl"]
-	path = 3rd-party/isl
-	url = git://repo.or.cz/isl.git
+    path = 3rd-party/isl
+    url = git://repo.or.cz/isl.git
 [submodule "3rd-party/z3"]
-	path = 3rd-party/z3
-	url = git@github.com:Z3Prover/z3.git
+    path = 3rd-party/z3
+    url = git@github.com:Z3Prover/z3.git
