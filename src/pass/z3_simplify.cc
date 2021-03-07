@@ -327,7 +327,7 @@ Stmt Z3Simplify::visit(const For &op) {
     pop();
 
     return makeFor(op->id(), op->iter_, std::move(begin), std::move(end),
-                   op->parallel_, std::move(body), op->unroll_);
+                   op->parallel_, op->unroll_, std::move(body));
 }
 
 Stmt z3Simplify(const Stmt &_op) {
@@ -337,4 +337,3 @@ Stmt z3Simplify(const Stmt &_op) {
 }
 
 } // namespace ir
-

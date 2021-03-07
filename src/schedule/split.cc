@@ -32,10 +32,10 @@ Stmt Splitter::visit(const For &_op) {
         auto &&op = __op.as<ForNode>();
 
         auto body = makeIf("", makeLT(newIter, op->end_), op->body_);
-        auto inner =
-            makeFor(dst1_, iter1, makeIntConst(0), factor, op->parallel_, body, op->unroll_);
+        auto inner = makeFor(dst1_, iter1, makeIntConst(0), factor,
+                             op->parallel_, op->unroll_, body);
         auto outer = makeFor(dst0_, iter0, makeIntConst(0), nparts,
-                             op->parallel_, inner, op->unroll_);
+                             op->parallel_, op->unroll_, inner);
         found_ = true;
         return outer;
     } else {
@@ -52,4 +52,3 @@ Expr Splitter::visit(const Var &op) {
 }
 
 } // namespace ir
-

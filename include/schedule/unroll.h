@@ -13,8 +13,7 @@ class Unroll : public Mutator {
     bool done_ = false;
 
   public:
-    Unroll(const std::string &loop)
-        : loop_(loop) {}
+    Unroll(const std::string &loop) : loop_(loop) {}
 
     bool done() const { return done_; }
 

@@ -184,7 +184,7 @@ class Mutator {
     virtual Stmt visit(const For &op) {
         auto ret =
             makeFor(op->id(), op->iter_, (*this)(op->begin_), (*this)(op->end_),
-                    op->parallel_, (*this)(op->body_), op->unroll_);
+                    op->parallel_, op->unroll_, (*this)(op->body_));
         if (op->infoLen_.isValid()) {
             ret.as<ForNode>()->infoLen_ = (*this)(op->infoLen_);
         }
@@ -222,4 +222,3 @@ class Mutator {
 } // namespace ir
 
 #endif // MUTATOR_H
-

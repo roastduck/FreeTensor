@@ -195,8 +195,9 @@ void init_ffi_ast(py::module_ &m) {
     m.def("makeFor",
           static_cast<Stmt (*)(const std::string &, const std::string &,
                                const Expr &, const Expr &, const std::string &,
-                               const Stmt &, const bool)>(&makeFor),
-          "nid"_a, "iter"_a, "begin"_a, "end"_a, "parallel"_a, "body"_a, "unroll"_a);
+                               const bool, const Stmt &)>(&makeFor),
+          "nid"_a, "iter"_a, "begin"_a, "end"_a, "parallel"_a, "unroll"_a,
+          "body"_a);
     m.def("makeIf",
           static_cast<Stmt (*)(const std::string &, const Expr &, const Stmt &,
                                const Stmt &)>(&makeIf),
@@ -370,4 +371,3 @@ template <> struct polymorphic_type_hook<ir::ExprNode> {
 };
 
 } // namespace pybind11
-

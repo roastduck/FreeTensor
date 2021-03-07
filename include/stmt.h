@@ -137,7 +137,8 @@ class ForNode : public StmtNode {
 typedef Ref<ForNode> For;
 template <class Tbegin, class Tend, class Tbody>
 Stmt makeFor(const std::string &id, const std::string &iter, Tbegin &&begin,
-             Tend &&end, const std::string &parallel, Tbody &&body, const bool unroll = false) {
+             Tend &&end, const std::string &parallel, const bool unroll,
+             Tbody &&body) {
     For f = For::make();
     f->setId(id);
     f->iter_ = iter;

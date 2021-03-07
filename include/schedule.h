@@ -205,7 +205,7 @@ class Schedule {
     void parallelize(const std::string &loop, const std::string &parallel);
 
     /**
-     * Mark a loop as needing to unroll or not
+     * Mark a loop as needing to unroll
      *
      * @param loop : ID of the loop
      * @throw InvalidSchedule if length of the loop is not constant

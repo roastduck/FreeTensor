@@ -295,6 +295,5 @@ class Schedule(ffi.Schedule):
     loop : str, Stmt or Cursor
         The loop which is needing to unroll
     '''
-
     def unroll(self, loop):
         super(Schedule, self).unroll(toId(loop))

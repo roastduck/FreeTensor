@@ -31,4 +31,3 @@ void init_ffi_schedule(py::module_ &m) {
 }
 
 } // namespace ir
-

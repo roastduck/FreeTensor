@@ -62,4 +62,3 @@ CodeGen::toString(const std::function<std::string(const Stream &)> &action) {
 }
 
 } // namespace ir
-

@@ -68,8 +68,8 @@ Stmt SinkVar::visit(const VarDef &op) {
             auto loopBody = makeVarDef(op->id(), op->name_, std::move(buffer),
                                        (*this)(loop->body_));
             return makeFor(loop->id(), loop->iter_, (*this)(loop->begin_),
-                           (*this)(loop->end_), loop->parallel_,
-                           std::move(loopBody), loop->unroll_);
+                           (*this)(loop->end_), loop->parallel_, loop->unroll_,
+                           std::move(loopBody));
         } else {
             body = (*this)(op->body_);
         }
@@ -115,4 +115,3 @@ Stmt sinkVar(const Stmt &_op) {
 }
 
 } // namespace ir
-

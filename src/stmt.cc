@@ -30,4 +30,3 @@ VarDefNode &VarDefNode::operator=(const VarDefNode &other) {
 }
 
 } // namespace ir
-

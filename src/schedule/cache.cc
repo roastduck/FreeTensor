@@ -121,7 +121,7 @@ Stmt MakeFillAndFlush::visitStmt(
             for (int i = nDim_ - 1; i >= 0; i--) {
                 fill = makeFor("", iters[i], rRange.lower_[i],
                                makeAdd(rRange.lower_[i], rRange.len_[i]), "",
-                               fill);
+                               false, fill);
             }
         } else {
             fill = makeStmtSeq("", {});
@@ -135,7 +135,7 @@ Stmt MakeFillAndFlush::visitStmt(
             for (int i = nDim_ - 1; i >= 0; i--) {
                 flush = makeFor("", iters[i], wRange.lower_[i],
                                 makeAdd(wRange.lower_[i], wRange.len_[i]), "",
-                                flush);
+                                false, flush);
             }
         } else {
             flush = makeStmtSeq("", {});
@@ -183,16 +183,17 @@ Stmt MakeInitAndReduce::visitStmt(
         initStmt_ = init->id();
         for (int i = nDim - 1; i >= 0; i--) {
             init = makeFor("", iters[i], range.lower_[i],
-                           makeAdd(range.lower_[i], range.len_[i]), "", init);
+                           makeAdd(range.lower_[i], range.len_[i]), "", false,
+                           init);
         }
 
         Stmt reduce = makeReduceTo("", oldVar_, indices, reduce_->op_,
                                    makeLoad(newVar_, indices), false);
         reduceStmt_ = reduce->id();
         for (int i = nDim - 1; i >= 0; i--) {
-            reduce =
-                makeFor("", iters[i], range.lower_[i],
-                        makeAdd(range.lower_[i], range.len_[i]), "", reduce);
+            reduce = makeFor("", iters[i], range.lower_[i],
+                             makeAdd(range.lower_[i], range.len_[i]), "", false,
+                             reduce);
         }
 
         op = makeStmtSeq("", {init, op, reduce});
@@ -243,4 +244,3 @@ Expr MakeInitAndReduce::visit(const Load &op) {
 }
 
 } // namespace ir
-

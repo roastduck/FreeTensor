@@ -22,4 +22,3 @@ class Parallelize : public Mutator {
 } // namespace ir
 
 #endif // PARALLELIZE_H
-
