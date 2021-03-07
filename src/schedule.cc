@@ -489,11 +489,11 @@ void Schedule::parallelize(const std::string &loop,
 }
 
 void Schedule::unroll(const std::string &loop) {
-	auto ast = ast_;
-	Unroll mutator(loop);
-	try {
-		ast = simplifyPass(mutator(ast));
-		mutator.work = true;
+    auto ast = ast_;
+    Unroll mutator(loop);
+    try {
+        ast = simplifyPass(mutator(ast));
+        mutator.work = true;
         ast = mutator(ast);
         if (!mutator.done()) {
             throw InvalidSchedule("Loop " + loop + " not found");

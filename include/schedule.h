@@ -204,13 +204,13 @@ class Schedule {
      */
     void parallelize(const std::string &loop, const std::string &parallel);
 
-	/**
+    /**
      * Mark a loop as needing to unroll or not
      *
      * @param loop : ID of the loop
      * @throw InvalidSchedule if length of the loop is not constant
      */
-	void unroll(const std::string &loop);
+    void unroll(const std::string &loop);
 };
 
 } // namespace ir

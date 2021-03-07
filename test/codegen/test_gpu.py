@@ -478,31 +478,31 @@ def test_serial_reduction():
     assert np.array_equal(y_np, y_std)
 
 def test_unroll_for():
-	with ir.VarDef([
-			("x", (4, 64), "int32", "input", "gpu/global"),
-			("y", (4,), "int32", "output", "gpu/global")]) as (x, y):
-		with ir.For("i", 0, 4, nid="L1") as i:
-			with ir.For("j", 0, 64, nid="L2") as j:
-				y[i] = y[i] + x[i, j]
+    with ir.VarDef([
+            ("x", (4, 64), "int32", "input", "gpu/global"),
+            ("y", (4,), "int32", "output", "gpu/global")]) as (x, y):
+        with ir.For("i", 0, 4, nid="L1") as i:
+            with ir.For("j", 0, 64, nid="L2") as j:
+                y[i] = y[i] + x[i, j]
 
-	s = ir.Schedule(ir.pop_ast())
-	s.parallelize("L1", "blockIdx.x")
-	s.unroll("L2")
-	ast = ir.lower(s.ast(), target)
-	print(ast)
+    s = ir.Schedule(ir.pop_ast())
+    s.parallelize("L1", "blockIdx.x")
+    s.unroll("L2")
+    ast = ir.lower(s.ast(), target)
+    print(ast)
 
-	code, params = ir.codegen(ast, target)
-	assert "atomicAdd" not in code
-	assert "+=" in code
-	print(code)
-	x_np = np.random.rand(4, 64).astype("int32")
-	y_np = np.zeros((4,), dtype="int32")
-	x_arr = ir.Array(x_np, device)
-	y_arr = ir.Array(y_np, device)
-	driver = ir.Driver(code, params, device)
-	driver.set_params({"x": x_arr, "y": y_arr})
-	driver.run()
-	y_np = y_arr.numpy()
+    code, params = ir.codegen(ast, target)
+    assert "atomicAdd" not in code
+    assert "+=" in code
+    print(code)
+    x_np = np.random.rand(4, 64).astype("int32")
+    y_np = np.zeros((4,), dtype="int32")
+    x_arr = ir.Array(x_np, device)
+    y_arr = ir.Array(y_np, device)
+    driver = ir.Driver(code, params, device)
+    driver.set_params({"x": x_arr, "y": y_arr})
+    driver.run()
+    y_np = y_arr.numpy()
 
-	y_std = np.sum(x_np, axis=1)
-	assert np.array_equal(y_np, y_std)
+    y_std = np.sum(x_np, axis=1)
+    assert np.array_equal(y_np, y_std)
