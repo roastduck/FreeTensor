@@ -487,7 +487,7 @@ def test_unroll_for():
 
 	s = ir.Schedule(ir.pop_ast())
 	s.parallelize("L1", "blockIdx.x")
-	s.unroll("L2", 4)
+	s.unroll("L2")
 	ast = ir.lower(s.ast(), target)
 	print(ast)
 

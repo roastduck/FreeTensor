@@ -488,10 +488,9 @@ void Schedule::parallelize(const std::string &loop,
     ast_ = ast;
 }
 
-void Schedule::unroll(const std::string &loop,
-					  const unsigned int unroll_num) {
+void Schedule::unroll(const std::string &loop) {
 	auto ast = ast_;
-	Unroll mutator(loop, unroll_num);
+	Unroll mutator(loop);
 	try {
 		ast = simplifyPass(mutator(ast));
 		mutator.work = true;
@@ -500,8 +499,7 @@ void Schedule::unroll(const std::string &loop,
             throw InvalidSchedule("Loop " + loop + " not found");
         }
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule("Invalid unroll(" + loop + ", " + std::to_string(unroll_num) +
-                              "): " + e.what());
+        throw InvalidSchedule("Invalid unroll(" + loop + "): " + e.what());
     }
     ast_ = ast;
 }

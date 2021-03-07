@@ -155,9 +155,9 @@ Stmt SeperateTail::visit(const For &_op) {
         auto &&sep = seperations[i];
         auto front =
             makeFor(old->id(), old->iter_, old->begin_, makeMin(old->end_, sep),
-                    old->parallel_, old->body_, old->unroll_num_);
+                    old->parallel_, old->body_, old->unroll_);
         auto back = makeFor(old->id(), old->iter_, makeMax(old->begin_, sep),
-                            old->end_, old->parallel_, old->body_, old->unroll_num_);
+                            old->end_, old->parallel_, old->body_, old->unroll_);
         front = dfs(i + 1, AppendIDs(".front")(front));
         back = dfs(i + 1, AppendIDs(".back")(back));
         auto seperated = makeStmtSeq("", {front, back});

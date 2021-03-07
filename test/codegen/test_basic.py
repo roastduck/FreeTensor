@@ -46,7 +46,7 @@ def test_for():
 	with ir.VarDef([
 			("x", (4,), "int32", "input", "cpu"),
 			("y", (4,), "int32", "output", "cpu")]) as (x, y):
-		with ir.For("i", 0, 4, unroll_num = 4) as i:
+		with ir.For("i", 0, 4, unroll = True) as i:
 			y[i] = x[i] + 1
 
 	code, params = ir.codegen(ir.lower(ir.pop_ast(), ir.CPU()), ir.CPU())

@@ -95,7 +95,7 @@ def test_unroll_for():
 			y[i] = x[i] + 1
 
 	s = ir.Schedule(ir.pop_ast())
-	s.unroll("L1", 4)
+	s.unroll("L1")
 	ast = ir.lower(s.ast(), target)
 	print(ast)
 	code, params = ir.codegen(ast, target)

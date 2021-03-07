@@ -293,10 +293,8 @@ class Schedule(ffi.Schedule):
 	Parameters
 	----------
 	loop : str, Stmt or Cursor
-		The loop
-	unroll_num : unsigned int
-		Num of the loop is needing to unroll.
+		The loop which is needing to unroll
 	'''
 
-	def unroll(self, loop, unroll_num = 0):
-		super(Schedule, self).unroll(toId(loop), unroll_num)
+	def unroll(self, loop):
+		super(Schedule, self).unroll(toId(loop))

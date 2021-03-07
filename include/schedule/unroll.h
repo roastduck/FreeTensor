@@ -10,12 +10,11 @@ class Unroll : public Mutator {
     friend class Schedule;
 
     std::string loop_;
-	unsigned int unroll_num_;
     bool done_ = false;
 
   public:
-    Unroll(const std::string &loop, const unsigned int unroll_num = 0)
-        : loop_(loop), unroll_num_(unroll_num) {}
+    Unroll(const std::string &loop)
+        : loop_(loop) {}
 
     bool done() const { return done_; }
 

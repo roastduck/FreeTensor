@@ -13,7 +13,7 @@ Stmt Unroll::visit(const For &_op) {
 		}
 		if(work) {
 			if(op->infoLen_->nodeType() == ASTNodeType::IntConst) {
-				op->unroll_num_ = unroll_num_;
+				op->unroll_ = true;
 				done_ = true;
 			}
 			else {
