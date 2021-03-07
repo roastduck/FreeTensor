@@ -126,9 +126,8 @@ class ForNode : public StmtNode {
     std::string iter_;
     Expr begin_, end_;
     std::string parallel_;
-    Stmt body_;
-
     bool unroll_;
+    Stmt body_;
 
     Expr infoLen_;
 
