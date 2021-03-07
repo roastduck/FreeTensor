@@ -288,7 +288,7 @@ class Schedule(ffi.Schedule):
         super(Schedule, self).parallelize(toId(loop), parallel)
 
     '''
-    Mark a loop with a parallel implementation
+    Mark a loop as needing to unroll
 
     Parameters
     ----------

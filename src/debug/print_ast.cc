@@ -262,7 +262,7 @@ void PrintVisitor::visit(const For &op) {
         makeIndent();
         os() << "// parallel = " << op->parallel_ << std::endl;
     }
-    if (op->unroll_ != 0) {
+    if (op->unroll_) {
         makeIndent();
         os() << "// unroll = true" << std::endl;
     }

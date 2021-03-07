@@ -11,7 +11,7 @@ Stmt Unroll::visit(const For &_op) {
         if (!op->infoLen_.isValid()) {
             op = normalize(op).as<ForNode>(); // for ForNode::infoLen_
         }
-        if (work) {
+        if (simplified) {
             if (op->infoLen_->nodeType() == ASTNodeType::IntConst) {
                 op->unroll_ = true;
                 done_ = true;

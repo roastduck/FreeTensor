@@ -493,7 +493,7 @@ void Schedule::unroll(const std::string &loop) {
     Unroll mutator(loop);
     try {
         ast = simplifyPass(mutator(ast));
-        mutator.work = true;
+        mutator.simplified = true;
         ast = mutator(ast);
         if (!mutator.done()) {
             throw InvalidSchedule("Loop " + loop + " not found");

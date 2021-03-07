@@ -18,7 +18,7 @@ class Unroll : public Mutator {
     bool done() const { return done_; }
 
   protected:
-    bool work = false;
+    bool simplified = false;
     Stmt visit(const For &op) override;
 };
 
