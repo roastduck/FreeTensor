@@ -18,13 +18,13 @@ class Visitor {
   protected:
     // Additional hook for any expressions
     virtual void visitExpr(const Expr &op,
-                           const std::function<void(const Expr &)> &visitNode) {
+                            const std::function<void(const Expr &)> &visitNode) {
         visitNode(op);
     }
 
     // Additional hook for any statements
     virtual void visitStmt(const Stmt &op,
-                           const std::function<void(const Stmt &)> &visitNode) {
+                            const std::function<void(const Stmt &)> &visitNode) {
         visitNode(op);
     }
 

@@ -32,7 +32,7 @@ Stmt SinkVar::visit(const VarDef &op) {
     }
     Tensor tensor(std::move(shape), op->buffer_->tensor().dtype());
     Buffer buffer(std::move(tensor), op->buffer_->atype(),
-                  op->buffer_->mtype());
+                op->buffer_->mtype());
     Stmt body;
 
     switch (op->body_->nodeType()) {
@@ -66,10 +66,10 @@ Stmt SinkVar::visit(const VarDef &op) {
         auto loop = op->body_.as<ForNode>();
         if (!deps_.count(std::make_pair(op->name_, loop->id()))) {
             auto loopBody = makeVarDef(op->id(), op->name_, std::move(buffer),
-                                       (*this)(loop->body_));
+                                        (*this)(loop->body_));
             return makeFor(loop->id(), loop->iter_, (*this)(loop->begin_),
-                           (*this)(loop->end_), loop->parallel_,
-                           std::move(loopBody));
+                            (*this)(loop->end_), loop->parallel_,
+                            std::move(loopBody));
         } else {
             body = (*this)(op->body_);
         }

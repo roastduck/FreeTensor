@@ -19,7 +19,7 @@ class Splitter : public Mutator {
   public:
     Splitter(const std::string &id, int factor = -1, int nparts = -1)
         : src_(id), dst0_(id + ".0"), dst1_(id + ".1"), factor_(factor),
-          nparts_(nparts) {}
+        nparts_(nparts) {}
 
     const std::string &outerId() const { return dst0_; }
     const std::string &innerId() const { return dst1_; }

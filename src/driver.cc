@@ -12,7 +12,7 @@
 namespace ir {
 
 Driver::Driver(const std::string &src,
-               const std::vector<std::string> &paramNames, const Device &dev)
+                const std::vector<std::string> &paramNames, const Device &dev)
     : src_(src), params_(paramNames.size(), nullptr), dev_(dev) {
     name2param_.reserve(paramNames.size());
     for (size_t i = 0, iEnd = paramNames.size(); i < iEnd; i++) {

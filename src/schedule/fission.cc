@@ -24,7 +24,7 @@ Stmt HoistVar::visit(const For &op) {
         innerLoops_.emplace_back(op->id());
         for (auto i = defStack_.rbegin(); i != defStack_.rend(); i++) {
             ret = makeVarDef((*i)->id(), std::move((*i)->name_),
-                             std::move(*((*i)->buffer_)), ret);
+                            std::move(*((*i)->buffer_)), ret);
         }
         return ret;
     }
@@ -48,8 +48,8 @@ Stmt HoistVar::visit(const StmtSeq &op) {
             ret = makeStmtSeq(op->id(), std::move(after));
         } else {
             auto beforeNode = before.size() > 1
-                                  ? makeStmtSeq("", std::move(before))
-                                  : before[0];
+                                ? makeStmtSeq("", std::move(before))
+                                : before[0];
             auto afterNode =
                 after.size() > 1 ? makeStmtSeq("", std::move(after)) : after[0];
             ret = makeStmtSeq(op->id(), {beforeNode, afterNode});

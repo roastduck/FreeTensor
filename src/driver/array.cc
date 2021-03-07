@@ -7,7 +7,7 @@
 namespace ir {
 
 Array::Array(const std::vector<size_t> &shape, DataType dtype,
-             const Device &device)
+            const Device &device)
     : dtype_(dtype), shape_(shape), device_(device) {
     size_ = sizeOf(dtype_);
     for (size_t dim : shape_) {
@@ -43,7 +43,7 @@ Array::~Array() {
 
 Array::Array(Array &&other)
     : ptr_(other.ptr_), size_(other.size_), dtype_(other.dtype_),
-      shape_(std::move(other.shape_)), device_(std::move(other.device_)) {
+    shape_(std::move(other.shape_)), device_(std::move(other.device_)) {
     other.ptr_ = nullptr; // MUST!
     other.size_ = 0;
 }

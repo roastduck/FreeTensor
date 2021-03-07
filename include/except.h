@@ -30,14 +30,14 @@ class InvalidProgram : public Error {
 #define ERROR(msg)                                                             \
     {                                                                          \
         throw ::ir::Error((std::string) "[ERROR] " __FILE__ ":" +              \
-                          std::to_string(__LINE__) + ": " + (msg));            \
+                        std::to_string(__LINE__) + ": " + (msg));            \
     }
 
 #define WARNING(msg)                                                           \
     {                                                                          \
         std::cerr << ((std::string) "[WARING] " __FILE__ ":" +                 \
-                      std::to_string(__LINE__) + ": " + (msg))                 \
-                  << std::endl;                                                \
+                    std::to_string(__LINE__) + ": " + (msg))                 \
+                << std::endl;                                                \
     }
 
 #define ASSERT(expr)                                                           \

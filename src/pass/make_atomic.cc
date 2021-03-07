@@ -35,7 +35,7 @@ Stmt makeAtomic(const Stmt &_op) {
     std::unordered_set<std::string> toAlter;
     auto filter = [](const AccessPoint &later, const AccessPoint &earlier) {
         return later.op_->nodeType() == ASTNodeType::ReduceTo &&
-               earlier.op_->nodeType() == ASTNodeType::ReduceTo;
+                earlier.op_->nodeType() == ASTNodeType::ReduceTo;
     };
     auto found = [&](const Dependency &d) {
         toAlter.insert(d.later().as<ReduceToNode>()->id());

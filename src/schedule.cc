@@ -24,14 +24,14 @@
 namespace ir {
 
 static std::string dep2Str(const std::string &scope, const std::string &var,
-                           const AST &later, const AST &earlier) {
+                            const AST &later, const AST &earlier) {
     std::ostringstream os;
     os << "Dependency "
-       << (later->nodeType() == ASTNodeType::Load ? "READ " : "WRITE ") << later
-       << " after "
-       << (earlier->nodeType() == ASTNodeType::Load ? "READ " : "WRITE ")
-       << earlier << " along loop or statement block " << scope
-       << " cannot be resolved";
+        << (later->nodeType() == ASTNodeType::Load ? "READ " : "WRITE ") << later
+        << " after "
+        << (earlier->nodeType() == ASTNodeType::Load ? "READ " : "WRITE ")
+        << earlier << " along loop or statement block " << scope
+        << " cannot be resolved";
     return std::regex_replace(os.str(), std::regex("\n"), "");
 }
 
@@ -54,7 +54,7 @@ std::pair<std::string, std::string> Schedule::split(const std::string &id,
             ", nparts=" + std::to_string(nparts) + "): " + e.what());
     }
     ast_ = simplifyPass(ast); // try to remove divisions, or it will hinder
-                              // the dependency analysis
+                            // the dependency analysis
     return std::make_pair(mutator.outerId(), mutator.innerId());
 }
 
@@ -86,15 +86,15 @@ void Schedule::reorder(const std::vector<std::string> &dstOrder) {
                         ASSERT(d.cond_.size() == 1);
                         std::ostringstream os;
                         os << "Loop " << curOrder[j]->id() << " and "
-                           << curOrder[j + 1]->id() << " are not permutable: "
-                           << dep2Str(d.cond_[0].first, d.var_, d.later(),
-                                      d.earlier());
+                            << curOrder[j + 1]->id() << " are not permutable: "
+                            << dep2Str(d.cond_[0].first, d.var_, d.later(),
+                                    d.earlier());
                         throw InvalidSchedule(os.str());
                     };
                     findDeps(ast,
-                             {{{curOrder[j]->id(), DepDirection::Inv}},
-                              {{curOrder[j + 1]->id(), DepDirection::Inv}}},
-                             found);
+                            {{{curOrder[j]->id(), DepDirection::Inv}},
+                            {{curOrder[j + 1]->id(), DepDirection::Inv}}},
+                            found);
 
                     SwapFor swapper(curOrder[j], curOrder[j + 1]);
                     ast = swapper(ast);
@@ -129,7 +129,7 @@ std::string Schedule::merge(const std::string &loop1,
         ret = mutator.newIter();
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid merge(" + loop1 + ", " + loop2 +
-                              "): " + e.what());
+                            "): " + e.what());
     }
     ast_ = ast;
     return ret;
@@ -137,7 +137,7 @@ std::string Schedule::merge(const std::string &loop1,
 
 std::pair<Schedule::IDMap, Schedule::IDMap>
 Schedule::fission(const std::string &loop, const std::string &after,
-                  const std::string &suffix0, const std::string &suffix1) {
+                const std::string &suffix0, const std::string &suffix1) {
     if (suffix0 == suffix1) {
         throw InvalidSchedule(
             "fission: suffix0 cannot be the same with suffix1");
@@ -150,7 +150,7 @@ Schedule::fission(const std::string &loop, const std::string &after,
         ast = hoist(ast);
         if (!hoist.found()) {
             throw InvalidSchedule("Split point " + after +
-                                  " not found inside " + loop);
+                                " not found inside " + loop);
         }
         auto &&xLoops = hoist.xLoops();
 
@@ -170,11 +170,11 @@ Schedule::fission(const std::string &loop, const std::string &after,
             if (op->nodeType() == ASTNodeType::Store) {
                 auto expr = op.as<StoreNode>()->expr_;
                 return variantExpr.count(expr) &&
-                       variantExpr.at(expr).count(loop);
+                        variantExpr.at(expr).count(loop);
             } else if (op->nodeType() == ASTNodeType::ReduceTo) {
                 auto expr = op.as<ReduceToNode>()->expr_;
                 return variantExpr.count(expr) &&
-                       variantExpr.at(expr).count(loop);
+                        variantExpr.at(expr).count(loop);
             } else {
                 return false;
             }
@@ -185,7 +185,7 @@ Schedule::fission(const std::string &loop, const std::string &after,
             auto &&id = d.cond_[d.cond_.size() - 2].first;
             if (!xLoops.count(d.var_) ||
                 std::find(xLoops.at(d.var_).begin(), xLoops.at(d.var_).end(),
-                          id) == xLoops.at(d.var_).end()) {
+                        id) == xLoops.at(d.var_).end()) {
                 throw InvalidSchedule(
                     dep2Str(id, d.var_, d.later(), d.earlier()));
             }
@@ -210,7 +210,7 @@ Schedule::fission(const std::string &loop, const std::string &after,
         ast = mutator(ast);
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid fission(" + loop + ", " + after +
-                              "): " + e.what());
+                            "): " + e.what());
     }
     ast_ = ast;
     return std::make_pair(mutator.ids0(), mutator.ids1());
@@ -235,14 +235,14 @@ std::string Schedule::fuse(const std::string &loop0, const std::string &loop1) {
             ast = simplifyPass(ast);
         } catch (const InvalidProgram &e) {
             throw InvalidSchedule((std::string) "Fusing " + loop0 + " and " +
-                                  loop1 + " loop1 with different lengths? " +
-                                  e.what());
+                                loop1 + " loop1 with different lengths? " +
+                                e.what());
         }
 
         ast = shrinkVar(sinkVar(ast));
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid fuse(" + loop0 + ", " + loop1 +
-                              "): " + e.what());
+                            "): " + e.what());
     }
     ast_ = ast;
     return mutator.fused();
@@ -268,7 +268,7 @@ void Schedule::swap(const std::vector<std::string> &order) {
             return nullptr;
         };
         auto filter = [&](const AccessPoint &later,
-                          const AccessPoint &earlier) {
+                        const AccessPoint &earlier) {
             auto s0 = findParentStmt(later.cursor_);
             auto s1 = findParentStmt(earlier.cursor_);
             if (!s0.isValid() || !s1.isValid()) {
@@ -294,7 +294,7 @@ void Schedule::swap(const std::vector<std::string> &order) {
         };
         ast = prepareFindDeps(ast);
         findDeps(ast, {{{scope->id(), DepDirection::Normal}}}, found,
-                 FindDepsMode::Dep, DEP_ALL, filter);
+                FindDepsMode::Dep, DEP_ALL, filter);
     } catch (const InvalidSchedule &e) {
         std::string msg = "Invalid reorder(";
         for (size_t i = 0, iEnd = order.size(); i < iEnd; i++) {
@@ -327,8 +327,8 @@ Schedule::cache(const std::string &stmt, const std::string &var,
         compRBound(ast);
         compWBound(ast);
         MakeFillAndFlush makeFillAndFlush(stmt, var, newVar, newDef,
-                                          compRBound.results(),
-                                          compWBound.results());
+                                        compRBound.results(),
+                                        compWBound.results());
         ast = makeFillAndFlush(ast);
         fillStmt = makeFillAndFlush.fillStmt();
         flushStmt = makeFillAndFlush.flushStmt();
@@ -336,16 +336,16 @@ Schedule::cache(const std::string &stmt, const std::string &var,
         ast = shrinkVar(ast);
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid cache(" + stmt + ", " + var +
-                              "): " + e.what());
+                            "): " + e.what());
     }
     ast_ = ast;
     return std::make_tuple(std::move(fillStmt), std::move(flushStmt),
-                           std::move(newVar));
+                            std::move(newVar));
 }
 
 std::tuple<std::string, std::string, std::string>
 Schedule::cacheReduction(const std::string &stmt, const std::string &var,
-                         MemType mtype) {
+                        MemType mtype) {
     auto ast = ast_;
     std::string initStmt, reduceStmt, newVar, newDef;
     try {
@@ -373,15 +373,15 @@ Schedule::cacheReduction(const std::string &stmt, const std::string &var,
         ast = shrinkVar(ast);
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid cache_reduction(" + stmt + ", " + var +
-                              "): " + e.what());
+                            "): " + e.what());
     }
     ast_ = ast;
     return std::make_tuple(std::move(initStmt), std::move(reduceStmt),
-                           std::move(newVar));
+                            std::move(newVar));
 }
 
 std::string Schedule::moveTo(const std::string &_stmt, MoveToSide side,
-                             const std::string &_dst) {
+                            const std::string &_dst) {
     auto bak = ast_;
     try {
         auto stmt = _stmt, dst = _dst;
@@ -421,7 +421,7 @@ std::string Schedule::moveTo(const std::string &_stmt, MoveToSide side,
                     }
                     orderRev.emplace_back(stmt);
                     std::vector<std::string> order(orderRev.rbegin(),
-                                                   orderRev.rend());
+                                                    orderRev.rend());
                     swap(order);
                 } else {
                     while (!s.hasPrev() && movingUp()) {
@@ -467,12 +467,12 @@ std::string Schedule::moveTo(const std::string &_stmt, MoveToSide side,
     } catch (const InvalidSchedule &e) {
         ast_ = bak;
         throw InvalidSchedule("Invalid move_to(" + _stmt + ", " + _dst +
-                              "): " + e.what());
+                            "): " + e.what());
     }
 }
 
 void Schedule::parallelize(const std::string &loop,
-                           const std::string &parallel) {
+                            const std::string &parallel) {
     auto ast = ast_;
     Parallelize mutator(loop, parallel);
     try {
@@ -482,7 +482,7 @@ void Schedule::parallelize(const std::string &loop,
         }
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid parallelize(" + loop + ", " + parallel +
-                              "): " + e.what());
+                            "): " + e.what());
     }
     ast_ = ast;
 }

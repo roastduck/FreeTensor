@@ -52,11 +52,11 @@ class CodeGen : public Visitor {
     void endBlock();
 
     /**
-     * Dump all streams to a string
-     *
-     * @param action : callback(stream). Do more modification to a stream.
-     * Function prelude and finale can be added here
-     */
+    * Dump all streams to a string
+    *
+    * @param action : callback(stream). Do more modification to a stream.
+    * Function prelude and finale can be added here
+    */
     std::string
     toString(const std::function<std::string(const Stream &)> &action);
 };

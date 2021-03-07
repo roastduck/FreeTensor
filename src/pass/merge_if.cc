@@ -23,9 +23,9 @@ Stmt MergeIf::visit(const StmtSeq &_op) {
                 auto writes = allWrites(if1);
                 auto reads = allReads(if2->cond_);
                 if (std::none_of(reads.begin(), reads.end(),
-                                 [&writes](const std::string &var) -> bool {
-                                     return writes.count(var);
-                                 })) {
+                                [&writes](const std::string &var) -> bool {
+                                    return writes.count(var);
+                                })) {
                     auto thenCase =
                         makeStmtSeq("", {if1->thenCase_, if2->thenCase_});
                     Stmt elseCase;
@@ -33,16 +33,16 @@ Stmt MergeIf::visit(const StmtSeq &_op) {
                         elseCase =
                             makeStmtSeq("", {if1->elseCase_, if2->elseCase_});
                     } else if (if1->elseCase_.isValid() &&
-                               !if2->elseCase_.isValid()) {
+                                !if2->elseCase_.isValid()) {
                         elseCase = if1->elseCase_;
                     } else if (!if1->elseCase_.isValid() &&
-                               if2->elseCase_.isValid()) {
+                                if2->elseCase_.isValid()) {
                         elseCase = if2->elseCase_;
                     }
                     stmts.pop_back();
                     stmts.emplace_back(makeIf("", if1->cond_,
-                                              std::move(thenCase),
-                                              std::move(elseCase)));
+                                            std::move(thenCase),
+                                            std::move(elseCase)));
                     continue;
                 }
             }

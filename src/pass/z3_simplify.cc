@@ -273,7 +273,7 @@ Stmt Z3Simplify::visit(const If &op) {
     }
     if (prove(notCond)) {
         return op->elseCase_.isValid() ? (*this)(op->elseCase_)
-                                       : makeStmtSeq("", {});
+                                        : makeStmtSeq("", {});
     }
 
     push(cond);
@@ -288,8 +288,8 @@ Stmt Z3Simplify::visit(const If &op) {
     }
 
     auto ret = makeIf(op->id(), std::move(cond), std::move(thenCase),
-                      std::move(elseCase))
-                   .as<IfNode>();
+                    std::move(elseCase))
+                    .as<IfNode>();
     if (op->infoNotCond_.isValid()) {
         ret->infoNotCond_ = op->infoNotCond_;
     }
@@ -327,7 +327,7 @@ Stmt Z3Simplify::visit(const For &op) {
     pop();
 
     return makeFor(op->id(), op->iter_, std::move(begin), std::move(end),
-                   op->parallel_, std::move(body));
+                    op->parallel_, std::move(body));
 }
 
 Stmt z3Simplify(const Stmt &_op) {

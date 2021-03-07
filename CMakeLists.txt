@@ -16,12 +16,12 @@ add_subdirectory(3rd-party/pybind11)
 # ISL
 set(ISL_DIR ${CMAKE_SOURCE_DIR}/3rd-party/isl)
 ExternalProject_add(ISL
-	SOURCE_DIR ${ISL_DIR}
-	BUILD_IN_SOURCE true
-	INSTALL_DIR ${ISL_DIR}/install
-	CONFIGURE_COMMAND ./autogen.sh && ./configure --prefix=${ISL_DIR}/install
-	BUILD_COMMAND make -j
-	INSTALL_COMMAND make install)
+    SOURCE_DIR ${ISL_DIR}
+    BUILD_IN_SOURCE true
+    INSTALL_DIR ${ISL_DIR}/install
+    CONFIGURE_COMMAND ./autogen.sh && ./configure --prefix=${ISL_DIR}/install
+    BUILD_COMMAND make -j
+    INSTALL_COMMAND make install)
 include_directories(${ISL_DIR}/install/include)
 link_directories(${ISL_DIR}/install/lib)
 
@@ -47,7 +47,7 @@ file(GLOB_RECURSE SRC ${CMAKE_SOURCE_DIR}/src/*.cc)
 pybind11_add_module(ffi SHARED ${SRC})
 add_dependencies(ffi ISL)
 target_link_libraries(ffi PRIVATE
-	${ISL_DIR}/install/lib/libisl.so
-	libz3 # See 3rd-party/z3/src/CMakeLists.txt
-	${CUDA_LIBRARIES})
+    ${ISL_DIR}/install/lib/libisl.so
+    libz3 # See 3rd-party/z3/src/CMakeLists.txt
+    ${CUDA_LIBRARIES})
 

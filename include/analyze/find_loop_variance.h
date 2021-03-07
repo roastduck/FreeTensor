@@ -16,7 +16,7 @@ class MarkStores : public Visitor {
 
   public:
     MarkStores(std::unordered_map<std::string, std::unordered_set<std::string>>
-                   &variantVar)
+                    &variantVar)
         : variantVar_(variantVar) {}
 
     void visit(const For &op) override;

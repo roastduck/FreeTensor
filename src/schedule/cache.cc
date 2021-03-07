@@ -120,8 +120,8 @@ Stmt MakeFillAndFlush::visitStmt(
             fillStmt_ = fill->id();
             for (int i = nDim_ - 1; i >= 0; i--) {
                 fill = makeFor("", iters[i], rRange.lower_[i],
-                               makeAdd(rRange.lower_[i], rRange.len_[i]), "",
-                               fill);
+                                makeAdd(rRange.lower_[i], rRange.len_[i]), "",
+                                fill);
             }
         } else {
             fill = makeStmtSeq("", {});
@@ -179,15 +179,15 @@ Stmt MakeInitAndReduce::visitStmt(
         auto &&range = range_.at(newDef_);
         Stmt init =
             makeStore("", newVar_, indices,
-                      makeNeutralVal(buffer_->tensor().dtype(), reduce_->op_));
+                    makeNeutralVal(buffer_->tensor().dtype(), reduce_->op_));
         initStmt_ = init->id();
         for (int i = nDim - 1; i >= 0; i--) {
             init = makeFor("", iters[i], range.lower_[i],
-                           makeAdd(range.lower_[i], range.len_[i]), "", init);
+                            makeAdd(range.lower_[i], range.len_[i]), "", init);
         }
 
         Stmt reduce = makeReduceTo("", oldVar_, indices, reduce_->op_,
-                                   makeLoad(newVar_, indices), false);
+                                    makeLoad(newVar_, indices), false);
         reduceStmt_ = reduce->id();
         for (int i = nDim - 1; i >= 0; i--) {
             reduce =

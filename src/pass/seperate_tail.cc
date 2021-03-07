@@ -27,7 +27,7 @@ void FindAllIfs::visit(const If &op) {
 }
 
 Stmt AppendIDs::visitStmt(const Stmt &op,
-                          const std::function<Stmt(const Stmt &)> &visitNode) {
+                        const std::function<Stmt(const Stmt &)> &visitNode) {
     auto ret = Mutator::visitStmt(op, visitNode);
     ret->setId(op->id() + suffix_);
     return ret;
@@ -102,7 +102,7 @@ void SeperateTail::genSeperation(
     case ASTNodeType::LE:
     case ASTNodeType::GT:
         seperation = makeAdd(makeFloorDiv(seperation, makeIntConst(selfK)),
-                             makeIntConst(1));
+                            makeIntConst(1));
         break;
     default:
         ASSERT(false);
@@ -144,7 +144,7 @@ Stmt SeperateTail::visit(const For &_op) {
     std::vector<Expr> seperations;
     for (auto &&branch : ifList) {
         genSeperation(iterHash, branch->cond_,
-                      [&](const Expr &sep) { seperations.emplace_back(sep); });
+                    [&](const Expr &sep) { seperations.emplace_back(sep); });
     }
 
     std::function<Stmt(size_t, const For &)> dfs =
@@ -188,8 +188,8 @@ Stmt seperateTail(const Stmt &_op) {
         SeperateTail mutator(candidates);
         op = mutator(op);
         op = z3Simplify(op); // Although Z3 may be slow, if we don't use Z3
-                             // here, there will be too many redundant branches,
-                             // which will make each pass even slower
+                            // here, there will be too many redundant branches,
+                            // which will make each pass even slower
         candidates = mutator.nextCandidates();
     }
 

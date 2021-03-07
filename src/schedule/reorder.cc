@@ -10,7 +10,7 @@ Stmt SwapFor::visit(const For &_op) {
         auto body = Mutator::visit(_op);
         insideOuter_ = false;
         return makeFor(oldInner_->id(), oldInner_->iter_, oldInner_->begin_,
-                       oldInner_->end_, oldInner_->parallel_, body);
+                        oldInner_->end_, oldInner_->parallel_, body);
     } else if (_op->id() == oldInner_->id()) {
         insideInner_ = true;
         auto __op = Mutator::visit(_op);
@@ -50,14 +50,14 @@ Stmt SwapFor::visit(const StmtSeq &_op) {
         if (!beforeStmts.empty()) {
             before =
                 makeIf("", makeEQ(makeVar(oldInner_->iter_), oldInner_->begin_),
-                       beforeStmts.size() == 1 ? beforeStmts[0]
-                                               : makeStmtSeq("", beforeStmts));
+                        beforeStmts.size() == 1 ? beforeStmts[0]
+                                                : makeStmtSeq("", beforeStmts));
         }
         if (!afterStmts.empty()) {
             after =
                 makeIf("", makeEQ(makeVar(oldInner_->iter_), oldInner_->begin_),
-                       afterStmts.size() == 1 ? afterStmts[0]
-                                              : makeStmtSeq("", afterStmts));
+                        afterStmts.size() == 1 ? afterStmts[0]
+                                            : makeStmtSeq("", afterStmts));
         }
 
         std::vector<Stmt> stmts;

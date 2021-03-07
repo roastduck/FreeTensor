@@ -23,7 +23,7 @@ class Driver {
 
   public:
     Driver(const std::string &src, const std::vector<std::string> &paramNames,
-           const Device &dev);
+            const Device &dev);
     ~Driver() { unload(); }
 
     void setParams(const std::unordered_map<std::string, Array &> &params);

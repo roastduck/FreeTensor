@@ -88,7 +88,7 @@ class StoreNode : public StmtNode {
 typedef Ref<StoreNode> Store;
 template <class Tindices, class Texpr>
 Stmt makeStore(const std::string &id, const std::string &var,
-               Tindices &&indices, Texpr &&expr) {
+                Tindices &&indices, Texpr &&expr) {
     Store s = Store::make();
     s->setId(id);
     s->var_ = var;
@@ -110,7 +110,7 @@ class ReduceToNode : public StmtNode {
 typedef Ref<ReduceToNode> ReduceTo;
 template <class Tindices, class Texpr>
 Stmt makeReduceTo(const std::string &id, const std::string &var,
-                  Tindices &&indices, ReduceOp op, Texpr &&expr, bool atomic) {
+                Tindices &&indices, ReduceOp op, Texpr &&expr, bool atomic) {
     ReduceTo a = ReduceTo::make();
     a->setId(id);
     a->var_ = var;
@@ -135,7 +135,7 @@ class ForNode : public StmtNode {
 typedef Ref<ForNode> For;
 template <class Tbegin, class Tend, class Tbody>
 Stmt makeFor(const std::string &id, const std::string &iter, Tbegin &&begin,
-             Tend &&end, const std::string &parallel, Tbody &&body) {
+            Tend &&end, const std::string &parallel, Tbody &&body) {
     For f = For::make();
     f->setId(id);
     f->iter_ = iter;

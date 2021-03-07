@@ -44,7 +44,7 @@ std::pair<std::string, std::vector<std::string>> codeGenCPU(const AST &op) {
         "extern \"C\" {\n"
         "\n";
     const char *tailer = "\n"
-                         "}";
+                        "}";
 
     auto body = visitor.toString([&](const CodeGenCPU::Stream &stream) {
         return "void run(void **_params) " + stream.os_.str();

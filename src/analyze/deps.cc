@@ -18,7 +18,7 @@ void FindAccessPoint::visit(const VarDef &op) {
 
 void FindAccessPoint::visit(const StmtSeq &op) {
     cur_.emplace_back(nullptr, makeIntConst(0),
-                      makeIntConst(op->stmts_.size()));
+                    makeIntConst(op->stmts_.size()));
     scope2coord_[op->id()] = cur_;
     for (size_t i = 0, iEnd = op->stmts_.size(); i < iEnd; i++) {
         cur_.back().iter_ = makeIntConst(i);
@@ -44,7 +44,7 @@ void FindAccessPoint::visit(const If &op) {
     (*this)(op->thenCase_);
     if (op->elseCase_.isValid()) {
         cond_ = oldCond.isValid() ? makeLAnd(oldCond, op->infoNotCond_)
-                                  : op->infoNotCond_;
+                                : op->infoNotCond_;
         (*this)(op->elseCase_);
     }
     cond_ = oldCond;
@@ -81,7 +81,7 @@ Ref<std::string> GenISLExpr::linear2str(const LinearExpr<int> &lin) {
     for (auto &&item : lin.coeff_) {
         if (item.second.a_->nodeType() == ASTNodeType::Var) {
             os << " + " << item.second.k_ << " "
-               << normalizeId(toString(item.second.a_));
+                << normalizeId(toString(item.second.a_));
         } else {
             // Use the entire array as dependency
             return nullptr;
@@ -122,7 +122,7 @@ Ref<std::string> GenISLExpr::operator()(const Expr &op) {
 }
 
 std::string AnalyzeDeps::makeIterList(const std::vector<IterAxis> &list,
-                                      int eraseBefore, int n) {
+                                    int eraseBefore, int n) {
     std::string ret;
     for (int i = 0; i < n; i++) {
         if (i < (int)list.size()) {
@@ -148,7 +148,7 @@ std::string AnalyzeDeps::makeIterList(const std::vector<IterAxis> &list,
 }
 
 Ref<std::string> AnalyzeDeps::makeAccList(const std::vector<Expr> &list,
-                                          RelaxMode relax) {
+                                        RelaxMode relax) {
     std::string ret;
     for (int i = 0, iEnd = list.size(); i < iEnd; i++) {
         if (auto linstr = genISLExpr_(list[i]); linstr.isValid()) {
@@ -211,7 +211,7 @@ Ref<std::string> AnalyzeDeps::makeCond(const Expr &expr, RelaxMode relax) {
 }
 
 Ref<std::string> AnalyzeDeps::makeAccMap(const AccessPoint &p, int iterDim,
-                                         int accDim, RelaxMode relax) {
+                                        int accDim, RelaxMode relax) {
     auto ret = makeIterList(p.iter_, p.defAxis_, iterDim) + " -> ";
     if (auto str = makeAccList(p.access_, relax); str.isValid()) {
         ret += *str;
@@ -244,16 +244,16 @@ std::string AnalyzeDeps::makeNdList(const std::string &name, int n) const {
 
 std::string
 AnalyzeDeps::makeEqForBothOps(const std::vector<std::pair<int, int>> &coord,
-                              int iterDim) const {
+                            int iterDim) const {
     std::ostringstream os;
     os << "{" << makeNdList("d", iterDim) << " -> " << makeNdList("d_", iterDim)
-       << ": ";
+        << ": ";
     for (size_t i = 0, iEnd = coord.size(); i < iEnd; i++) {
         if (i > 0) {
             os << " and ";
         }
         os << "d" << coord[i].first << " = " << coord[i].second << " and "
-           << "d_" << coord[i].first << " = " << coord[i].second;
+            << "d_" << coord[i].first << " = " << coord[i].second;
     }
     os << "}";
     return os.str();
@@ -277,7 +277,7 @@ std::string AnalyzeDeps::makeIneqBetweenOps(DepDirection mode, int iterId,
         ASSERT(false);
     }
     return "{" + makeNdList("d", iterDim) + " -> " + makeNdList("d_", iterDim) +
-           ": d_" + idStr + " " + ineq + " d" + idStr + "}";
+            ": d_" + idStr + " " + ineq + " d" + idStr + "}";
 }
 
 const std::string &AnalyzeDeps::getVar(const AST &op) {
@@ -299,7 +299,7 @@ void AnalyzeDeps::checkDep(const AccessPoint &point, const AccessPoint &other) {
     ASSERT((int)other.access_.size() == accDim);
 
     auto pRelax = mode_ == FindDepsMode::Kill ? RelaxMode::Necessary
-                                              : RelaxMode::Possible; // later
+                                            : RelaxMode::Possible; // later
     auto oRelax = RelaxMode::Possible;                               // earlier
 
     isl_basic_map *pmap, *omap;
@@ -354,7 +354,7 @@ void AnalyzeDeps::checkDep(const AccessPoint &point, const AccessPoint &other) {
             for (int i = 0; i < iterId; i++) {
                 if (coord[i].iter_->nodeType() == ASTNodeType::IntConst) {
                     pos.emplace_back(i,
-                                     coord[i].iter_.as<IntConstNode>()->val_);
+                                    coord[i].iter_.as<IntConstNode>()->val_);
                 }
             }
             if (!pos.empty()) {
@@ -416,8 +416,8 @@ void findDeps(
     FindAccessPoint finder;
     finder(op);
     AnalyzeDeps analyzer(finder.points(), finder.reads(), finder.writes(),
-                         finder.scope2coord(), cond, found, mode, depType,
-                         filter, ignoreReductionWAW);
+                        finder.scope2coord(), cond, found, mode, depType,
+                        filter, ignoreReductionWAW);
     analyzer(op);
 }
 

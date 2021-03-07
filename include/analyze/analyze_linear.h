@@ -26,7 +26,7 @@ class AnalyzeLinear : public Visitor {
 
   protected:
     void visitExpr(const Expr &op,
-                   const std::function<void(const Expr &)> &visitNode) override;
+                    const std::function<void(const Expr &)> &visitNode) override;
 
     void visit(const Var &op) override;
     void visit(const Load &op) override;

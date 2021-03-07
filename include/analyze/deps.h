@@ -141,7 +141,7 @@ enum class RelaxMode : int { Possible, Necessary };
 enum class FindDepsMode : int { Dep, Kill };
 
 typedef std::function<bool(const AccessPoint &later,
-                           const AccessPoint &earlier)>
+                            const AccessPoint &earlier)>
     FindDepsFilter;
 
 /**
@@ -175,9 +175,9 @@ class AnalyzeDeps : public Visitor {
         FindDepsMode mode, DepType depType, const FindDepsFilter &filter,
         bool ignoreReductionWAW)
         : points_(points), reads_(reads), writes_(writes),
-          scope2coord_(scope2coord), cond_(cond), found_(found),
-          filter_(filter), mode_(mode), depType_(depType),
-          ignoreReductionWAW_(ignoreReductionWAW) {
+        scope2coord_(scope2coord), cond_(cond), found_(found),
+        filter_(filter), mode_(mode), depType_(depType),
+        ignoreReductionWAW_(ignoreReductionWAW) {
         isl_ = isl_ctx_alloc();
         isl_options_set_on_error(isl_, ISL_ON_ERROR_ABORT);
     }
@@ -186,20 +186,20 @@ class AnalyzeDeps : public Visitor {
 
   private:
     std::string makeIterList(const std::vector<IterAxis> &list, int eraseBefore,
-                             int n);
+                            int n);
     Ref<std::string> makeAccList(const std::vector<Expr> &list,
-                                 RelaxMode relax);
+                                RelaxMode relax);
     Ref<std::string> makeRange(const std::vector<IterAxis> &point,
-                               RelaxMode relax);
+                                RelaxMode relax);
     Ref<std::string> makeCond(const Expr &cond, RelaxMode relax);
     Ref<std::string> makeAccMap(const AccessPoint &p, int iterDim, int accDim,
                                 RelaxMode relax);
 
     std::string makeNdList(const std::string &name, int n) const;
     std::string makeEqForBothOps(const std::vector<std::pair<int, int>> &coord,
-                                 int iterDim) const;
+                                int iterDim) const;
     std::string makeIneqBetweenOps(DepDirection mode, int iterId,
-                                   int iterDim) const;
+                                    int iterDim) const;
 
     static const std::string &getVar(const AST &op);
 
@@ -255,10 +255,10 @@ Stmt prepareFindDeps(const Stmt &op);
  * nodes. This kind of dependencies are false dependencies if running serially
  */
 void findDeps(const Stmt &op, const std::vector<FindDepsCond> &cond,
-              const FindDepsCallback &found,
-              FindDepsMode mode = FindDepsMode::Dep, DepType depType = DEP_ALL,
-              const FindDepsFilter &filter = nullptr,
-              bool ignoreReductionWAW = true);
+            const FindDepsCallback &found,
+            FindDepsMode mode = FindDepsMode::Dep, DepType depType = DEP_ALL,
+            const FindDepsFilter &filter = nullptr,
+            bool ignoreReductionWAW = true);
 
 }; // namespace ir
 

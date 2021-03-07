@@ -62,7 +62,7 @@ bool Cursor::hasPrev() const {
     }
     auto seq = stack_.top()->prev_->data_.as<StmtSeqNode>();
     auto it = std::find_if(seq->stmts_.begin(), seq->stmts_.end(),
-                           [&](const Stmt &s) { return s->id() == id(); });
+                            [&](const Stmt &s) { return s->id() == id(); });
     return it > seq->stmts_.begin();
 }
 
@@ -70,7 +70,7 @@ Cursor Cursor::prev() const {
     ASSERT(stack_.top()->prev_->data_->nodeType() == ASTNodeType::StmtSeq);
     auto seq = stack_.top()->prev_->data_.as<StmtSeqNode>();
     auto it = std::find_if(seq->stmts_.begin(), seq->stmts_.end(),
-                           [&](const Stmt &s) { return s->id() == id(); });
+                            [&](const Stmt &s) { return s->id() == id(); });
     Cursor ret = *this;
     ret.pop(), ret.push(*(it - 1));
     return ret;
@@ -85,7 +85,7 @@ bool Cursor::hasNext() const {
     }
     auto seq = stack_.top()->prev_->data_.as<StmtSeqNode>();
     auto it = std::find_if(seq->stmts_.rbegin(), seq->stmts_.rend(),
-                           [&](const Stmt &s) { return s->id() == id(); });
+                            [&](const Stmt &s) { return s->id() == id(); });
     return it > seq->stmts_.rbegin();
 }
 
@@ -93,7 +93,7 @@ Cursor Cursor::next() const {
     ASSERT(stack_.top()->prev_->data_->nodeType() == ASTNodeType::StmtSeq);
     auto seq = stack_.top()->prev_->data_.as<StmtSeqNode>();
     auto it = std::find_if(seq->stmts_.rbegin(), seq->stmts_.rend(),
-                           [&](const Stmt &s) { return s->id() == id(); });
+                            [&](const Stmt &s) { return s->id() == id(); });
     Cursor ret = *this;
     ret.pop(), ret.push(*(it - 1));
     return ret;
@@ -107,7 +107,7 @@ bool Cursor::hasOuter() const {
             return false;
         }
     } while (t->data_->nodeType() == ASTNodeType::StmtSeq ||
-             t->data_->nodeType() == ASTNodeType::VarDef);
+            t->data_->nodeType() == ASTNodeType::VarDef);
     return true;
 }
 
@@ -116,7 +116,7 @@ Cursor Cursor::outer() const {
     do {
         ret.pop();
     } while (ret.node()->nodeType() == ASTNodeType::StmtSeq ||
-             ret.node()->nodeType() == ASTNodeType::VarDef);
+            ret.node()->nodeType() == ASTNodeType::VarDef);
     return ret;
 }
 

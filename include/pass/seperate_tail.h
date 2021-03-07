@@ -29,7 +29,7 @@ class AppendIDs : public Mutator {
 
   protected:
     Stmt visitStmt(const Stmt &op,
-                   const std::function<Stmt(const Stmt &)> &visitNode) override;
+                    const std::function<Stmt(const Stmt &)> &visitNode) override;
 };
 
 /**
@@ -79,7 +79,7 @@ class SeperateTail : public Mutator {
 
   private:
     void genSeperation(uint64_t iterHash, const Expr &cond,
-                       const std::function<void(const Expr &)> &callback);
+                        const std::function<void(const Expr &)> &callback);
 
   protected:
     Stmt visit(const If &op) override;

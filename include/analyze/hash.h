@@ -43,7 +43,7 @@ class GetHash : public Visitor {
 
   protected:
     void visitExpr(const Expr &op,
-                   const std::function<void(const Expr &)> &visitNode) override;
+                    const std::function<void(const Expr &)> &visitNode) override;
 
     virtual void visit(const Var &op) override;
     virtual void visit(const Load &op) override;

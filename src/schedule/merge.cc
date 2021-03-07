@@ -10,7 +10,7 @@ Stmt MergeFor::visit(const For &_op) {
         ASSERT(__op->nodeType() == ASTNodeType::For);
         auto op = __op.as<ForNode>();
         return makeFor(newId_, newIter_, makeIntConst(0),
-                       makeMul(innerLen_, outerLen_), op->parallel_, op->body_);
+                        makeMul(innerLen_, outerLen_), op->parallel_, op->body_);
     } else if (_op->id() == oldInner_->id()) {
         insideInner_ = true;
         auto __op = Mutator::visit(_op);
@@ -59,7 +59,7 @@ Stmt MergeFor::visit(const StmtSeq &_op) {
                 "",
                 makeEQ(makeMod(makeVar(newIter_), innerLen_), makeIntConst(0)),
                 afterStmts.size() == 1 ? afterStmts[0]
-                                       : makeStmtSeq("", afterStmts));
+                                        : makeStmtSeq("", afterStmts));
         }
 
         std::vector<Stmt> stmts;

@@ -45,18 +45,18 @@ void CodeGenC::visit(const VarDef &op) {
             // x[1][1] = *((float*)_params[0])[3];
             if (op->buffer_->atype() != AccessType::Input) {
                 throw InvalidProgram("ByValue typed var " + op->name_ +
-                                     " can only be Input");
+                                    " can only be Input");
             }
             for (auto &&dim : shape) {
                 if (dim->nodeType() != ASTNodeType::IntConst) {
                     throw InvalidProgram("ByValue typed var " + op->name_ +
-                                         " can only have a constant size");
+                                        " can only have a constant size");
                 }
             }
             if (shape.empty()) {
                 os() << gen(tensor.dtype()) << " " << name << " = *(("
-                     << gen(tensor.dtype()) << "*)_params[" << nthParam << "]);"
-                     << std::endl;
+                    << gen(tensor.dtype()) << "*)_params[" << nthParam << "]);"
+                    << std::endl;
             } else {
                 for (size_t i = 0, iEnd = shape.size(); i < iEnd; i++) {
                     os() << "__ByValArray<";
@@ -80,7 +80,7 @@ void CodeGenC::visit(const VarDef &op) {
                         return;
                     }
                     for (int j = 0, jEnd = shape[i].as<IntConstNode>()->val_;
-                         j < jEnd; j++) {
+                        j < jEnd; j++) {
                         idx[i] = j;
                         f(i + 1, offset * jEnd + j);
                     }
@@ -98,14 +98,14 @@ void CodeGenC::visit(const VarDef &op) {
             os() << gen(tensor.dtype()) << " (*restrict ";
             os() << name << ")";
             for (size_t i = 1, iEnd = shape.size(); i < iEnd;
-                 i++) { // No shape[0]
+                i++) { // No shape[0]
                 os() << "[";
                 (*this)(shape[i]);
                 os() << "]";
             }
             os() << " = (" << gen(tensor.dtype()) << "(*)";
             for (size_t i = 1, iEnd = shape.size(); i < iEnd;
-                 i++) { // No shape[0]
+                i++) { // No shape[0]
                 os() << "[";
                 (*this)(shape[i]);
                 os() << "]";

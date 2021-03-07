@@ -20,7 +20,7 @@ class Array {
 
   public:
     Array(const std::vector<size_t> &shape, DataType dtype,
-          const Device &device);
+        const Device &device);
     ~Array();
 
     Array(Array &&);

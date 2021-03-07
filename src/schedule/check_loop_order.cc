@@ -23,7 +23,7 @@ void CheckLoopOrder::visit(const For &op) {
     } else {
         if (!curOrder_.empty()) { // Already met the first loop
             throw InvalidSchedule("Unable to find all the loops. "
-                                  "These loops should be directly nested");
+                                "These loops should be directly nested");
         }
         Visitor::visit(op);
     }

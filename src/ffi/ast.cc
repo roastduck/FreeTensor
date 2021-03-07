@@ -80,7 +80,7 @@ void init_ffi_ast(py::module_ &m) {
 
     pyAST
         .def("match",
-             [](const AST &op, const AST &other) { return match(op, other); })
+            [](const AST &op, const AST &other) { return match(op, other); })
         .def("__str__", [](const AST &op) { return toString(op); })
         .def("__repr__", [](const AST &op) {
             return "<" + toString(op->nodeType()) + ": " + toString(op) + ">";
@@ -176,69 +176,69 @@ void init_ffi_ast(py::module_ &m) {
     // Statements
     m.def("makeAny", &makeAny);
     m.def("makeStmtSeq",
-          static_cast<Stmt (*)(const std::string &, const std::vector<Stmt> &)>(
-              &makeStmtSeq),
-          "id"_a, "stmts"_a);
+        static_cast<Stmt (*)(const std::string &, const std::vector<Stmt> &)>(
+            &makeStmtSeq),
+        "id"_a, "stmts"_a);
     m.def("makeVarDef",
-          static_cast<Stmt (*)(const std::string &, const std::string &,
-                               const Buffer &, const Stmt &)>(&makeVarDef),
-          "nid"_a, "name"_a, "buffer"_a, "body"_a);
+        static_cast<Stmt (*)(const std::string &, const std::string &,
+                                const Buffer &, const Stmt &)>(&makeVarDef),
+        "nid"_a, "name"_a, "buffer"_a, "body"_a);
     m.def("makeVar", &makeVar, "name"_a);
     m.def("makeStore",
-          static_cast<Stmt (*)(const std::string &, const std::string &,
-                               const std::vector<Expr> &, const Expr &)>(
-              &makeStore),
-          "nid"_a, "var"_a, "indices"_a, "expr"_a);
+        static_cast<Stmt (*)(const std::string &, const std::string &,
+                                const std::vector<Expr> &, const Expr &)>(
+            &makeStore),
+        "nid"_a, "var"_a, "indices"_a, "expr"_a);
     m.def("makeLoad", &makeLoad, "var"_a, "indices"_a);
     m.def("makeIntConst", &makeIntConst, "val"_a);
     m.def("makeFloatConst", &makeFloatConst, "val"_a);
     m.def("makeFor",
-          static_cast<Stmt (*)(const std::string &, const std::string &,
-                               const Expr &, const Expr &, const std::string &,
-                               const Stmt &)>(&makeFor),
-          "nid"_a, "iter"_a, "begin"_a, "end"_a, "parallel"_a, "body"_a);
+        static_cast<Stmt (*)(const std::string &, const std::string &,
+                                const Expr &, const Expr &, const std::string &,
+                                const Stmt &)>(&makeFor),
+        "nid"_a, "iter"_a, "begin"_a, "end"_a, "parallel"_a, "body"_a);
     m.def("makeIf",
-          static_cast<Stmt (*)(const std::string &, const Expr &, const Stmt &,
-                               const Stmt &)>(&makeIf),
-          "nid"_a, "cond"_a, "thenCase"_a, "elseCase"_a = nullptr);
+        static_cast<Stmt (*)(const std::string &, const Expr &, const Stmt &,
+                                const Stmt &)>(&makeIf),
+        "nid"_a, "cond"_a, "thenCase"_a, "elseCase"_a = nullptr);
     m.def(
         "makeAssert",
         static_cast<Stmt (*)(const std::string &, const Expr &, const Stmt &)>(
             &makeAssert),
         "nid"_a, "cond"_a, "body"_a);
     m.def("makeEval",
-          static_cast<Stmt (*)(const std::string &, const Expr &)>(&makeEval),
-          "nid"_a, "expr"_a);
+        static_cast<Stmt (*)(const std::string &, const Expr &)>(&makeEval),
+        "nid"_a, "expr"_a);
 
     // Expressions
     m.def("makeAnyExpr", &makeAnyExpr);
     m.def("makeMin",
-          static_cast<Expr (*)(const Expr &, const Expr &)>(&makeMin), "lhs"_a,
-          "rhs"_a);
+        static_cast<Expr (*)(const Expr &, const Expr &)>(&makeMin), "lhs"_a,
+        "rhs"_a);
     m.def("makeMax",
-          static_cast<Expr (*)(const Expr &, const Expr &)>(&makeMax), "lhs"_a,
-          "rhs"_a);
+        static_cast<Expr (*)(const Expr &, const Expr &)>(&makeMax), "lhs"_a,
+        "rhs"_a);
     m.def("makeLAnd",
-          static_cast<Expr (*)(const Expr &, const Expr &)>(&makeLAnd), "lhs"_a,
-          "rhs"_a);
+        static_cast<Expr (*)(const Expr &, const Expr &)>(&makeLAnd), "lhs"_a,
+        "rhs"_a);
     m.def("makeLOr",
-          static_cast<Expr (*)(const Expr &, const Expr &)>(&makeLOr), "lhs"_a,
-          "rhs"_a);
+        static_cast<Expr (*)(const Expr &, const Expr &)>(&makeLOr), "lhs"_a,
+        "rhs"_a);
     m.def("makeLNot", static_cast<Expr (*)(const Expr &)>(&makeLNot), "expr"_a);
     m.def("makeFloorDiv",
-          static_cast<Expr (*)(const Expr &, const Expr &)>(&makeFloorDiv),
-          "expr"_a, "expr"_a);
+        static_cast<Expr (*)(const Expr &, const Expr &)>(&makeFloorDiv),
+        "expr"_a, "expr"_a);
     m.def("makeCeilDiv",
-          static_cast<Expr (*)(const Expr &, const Expr &)>(&makeCeilDiv),
-          "expr"_a, "expr"_a);
+        static_cast<Expr (*)(const Expr &, const Expr &)>(&makeCeilDiv),
+        "expr"_a, "expr"_a);
     m.def("makeRoundTowards0Div",
-          static_cast<Expr (*)(const Expr &, const Expr &)>(
-              &makeRoundTowards0Div),
-          "expr"_a, "expr"_a);
+        static_cast<Expr (*)(const Expr &, const Expr &)>(
+            &makeRoundTowards0Div),
+        "expr"_a, "expr"_a);
     m.def("makeIntrinsic",
-          static_cast<Expr (*)(const std::string &, const std::vector<Expr> &)>(
-              &makeIntrinsic),
-          "fmt"_a, "params"_a);
+        static_cast<Expr (*)(const std::string &, const std::vector<Expr> &)>(
+            &makeIntrinsic),
+        "fmt"_a, "params"_a);
 }
 
 } // namespace ir
@@ -247,7 +247,7 @@ namespace pybind11 {
 
 template <> struct polymorphic_type_hook<ir::ASTNode> {
     static const void *get(const ir::ASTNode *src,
-                           const std::type_info *&type) {
+                            const std::type_info *&type) {
         if (src == nullptr) {
             return src;
         }
@@ -300,7 +300,7 @@ template <> struct polymorphic_type_hook<ir::ASTNode> {
 
 template <> struct polymorphic_type_hook<ir::StmtNode> {
     static const void *get(const ir::StmtNode *src,
-                           const std::type_info *&type) {
+                            const std::type_info *&type) {
         if (src == nullptr) {
             return src;
         }
@@ -327,7 +327,7 @@ template <> struct polymorphic_type_hook<ir::StmtNode> {
 
 template <> struct polymorphic_type_hook<ir::ExprNode> {
     static const void *get(const ir::ExprNode *src,
-                           const std::type_info *&type) {
+                            const std::type_info *&type) {
         if (src == nullptr) {
             return src;
         }

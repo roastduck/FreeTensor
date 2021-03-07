@@ -48,7 +48,7 @@ std::string toString(ASTNodeType type);
 #define DEFINE_NODE_ACCESS(name)                                               \
   protected:                                                                   \
     name##Node() = default; /* Must be constructed in Ref */                   \
-                                                                               \
+                                                                                \
     friend class Ref<name##Node>;
 
 #define DEFINE_NODE_TRAIT(name)                                                \

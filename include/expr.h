@@ -340,7 +340,7 @@ template <class T> Expr makeLNot(T &&expr) {
 class IntrinsicNode : public ExprNode {
   public:
     std::string format_; /// what to run. "%" is filled by parameters one by one
-                         /// E.g. sinf(%)
+                        /// E.g. sinf(%)
     std::vector<Expr> params_;
     DEFINE_NODE_TRAIT(Intrinsic);
 };
@@ -352,7 +352,7 @@ template <class T> Expr makeIntrinsic(const std::string &format, T &&params) {
     return i;
 }
 inline Expr makeIntrinsic(const std::string &format,
-                          std::initializer_list<Expr> params) {
+                        std::initializer_list<Expr> params) {
     Intrinsic i = Intrinsic::make();
     i->format_ = format;
     i->params_ = params;

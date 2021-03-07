@@ -13,10 +13,10 @@ namespace ir {
 class Disambiguous : public Mutator {
   public:
     Stmt visitStmt(const Stmt &op,
-                   const std::function<Stmt(const Stmt &)> &visitNode) override;
+                    const std::function<Stmt(const Stmt &)> &visitNode) override;
 
     Expr visitExpr(const Expr &op,
-                   const std::function<Expr(const Expr &)> &visitNode) override;
+                    const std::function<Expr(const Expr &)> &visitNode) override;
 };
 
 inline Stmt disambiguous(const Stmt &op) { return Disambiguous()(op); }

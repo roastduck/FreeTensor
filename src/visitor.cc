@@ -9,13 +9,13 @@ void Visitor::operator()(const AST &op) {
 #define DISPATCH_EXPR_CASE(name)                                               \
     case ASTNodeType::name:                                                    \
         visitExpr(op.as<ExprNode>(),                                           \
-                  [this](const Expr &_op) { visit(_op.as<name##Node>()); });   \
+                [this](const Expr &_op) { visit(_op.as<name##Node>()); });   \
         break;
 
 #define DISPATCH_STMT_CASE(name)                                               \
     case ASTNodeType::name:                                                    \
         visitStmt(op.as<StmtNode>(),                                           \
-                  [this](const Stmt &_op) { visit(_op.as<name##Node>()); });   \
+                [this](const Stmt &_op) { visit(_op.as<name##Node>()); });   \
         break;
 
         DISPATCH_EXPR_CASE(Var);

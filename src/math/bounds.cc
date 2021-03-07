@@ -45,9 +45,9 @@ static Expr linToExprNumerator(const LinearExpr<Rational<int>> &lin) {
         if (x->nodeType() == ASTNodeType::IntConst &&
             b->nodeType() == ASTNodeType::IntConst) {
             x = makeIntConst(x.as<IntConstNode>()->val_ +
-                             b.as<IntConstNode>()->val_);
+                            b.as<IntConstNode>()->val_);
         } else if (b->nodeType() == ASTNodeType::IntConst &&
-                   b.as<IntConstNode>()->val_ == 0) {
+                    b.as<IntConstNode>()->val_ == 0) {
             // do nothing
         } else {
             x = makeAdd(x, b);

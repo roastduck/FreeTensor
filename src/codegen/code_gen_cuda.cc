@@ -96,10 +96,10 @@ void CodeGenCUDA::visit(const For &op) {
     if (op->parallel_.empty()) {
         CodeGenC::visit(op);
     } else if (op->parallel_ == "blockIdx.x" || op->parallel_ == "blockIdx.y" ||
-               op->parallel_ == "blockIdx.z" ||
-               op->parallel_ == "threadIdx.x" ||
-               op->parallel_ == "threadIdx.y" ||
-               op->parallel_ == "threadIdx.z") {
+                op->parallel_ == "blockIdx.z" ||
+                op->parallel_ == "threadIdx.x" ||
+                op->parallel_ == "threadIdx.y" ||
+                op->parallel_ == "threadIdx.z") {
         if (op->infoLen_->nodeType() != ASTNodeType::IntConst) {
             std::ostringstream msg;
             msg << "Length of " << op->parallel_
@@ -120,16 +120,16 @@ void CodeGenCUDA::visit(const For &op) {
 
             makeIndent();
             os() << kernel << "<<<dim3("
-                 << (dim.count("blockIdx.x") ? dim.at("blockIdx.x") : 1) << ", "
-                 << (dim.count("blockIdx.y") ? dim.at("blockIdx.y") : 1) << ", "
-                 << (dim.count("blockIdx.z") ? dim.at("blockIdx.z") : 1)
-                 << "), dim3("
-                 << (dim.count("threadIdx.x") ? dim.at("threadIdx.x") : 1)
-                 << ", "
-                 << (dim.count("threadIdx.y") ? dim.at("threadIdx.y") : 1)
-                 << ", "
-                 << (dim.count("threadIdx.z") ? dim.at("threadIdx.z") : 1)
-                 << ")>>>(";
+                << (dim.count("blockIdx.x") ? dim.at("blockIdx.x") : 1) << ", "
+                << (dim.count("blockIdx.y") ? dim.at("blockIdx.y") : 1) << ", "
+                << (dim.count("blockIdx.z") ? dim.at("blockIdx.z") : 1)
+                << "), dim3("
+                << (dim.count("threadIdx.x") ? dim.at("threadIdx.x") : 1)
+                << ", "
+                << (dim.count("threadIdx.y") ? dim.at("threadIdx.y") : 1)
+                << ", "
+                << (dim.count("threadIdx.z") ? dim.at("threadIdx.z") : 1)
+                << ")>>>(";
             bool first = true;
             for (auto &&item : stream.uses_) {
                 os() << (first ? "" : ", ") << item.first;
@@ -172,7 +172,7 @@ void CodeGenCUDA::visit(const VarDef &op) {
             os() << gen(tensor.dtype()) << " (*";
             os() << normalizeId(op->name_) << ")";
             for (size_t i = 1, iEnd = shape.size(); i < iEnd;
-                 i++) { // No shape[0]
+                i++) { // No shape[0]
                 os() << "[";
                 (*this)(shape[i]);
                 os() << "]";
@@ -206,7 +206,7 @@ void CodeGenCUDA::visit(const VarDef &op) {
             auto &&tensor = op->buffer_->tensor();
             auto &&shape = tensor.shape();
             os() << "__shared__ " << gen(tensor.dtype()) << " "
-                 << normalizeId(op->name_);
+                << normalizeId(op->name_);
             for (auto &&dim : shape) {
                 if (dim->nodeType() != ASTNodeType::IntConst) {
                     throw Error("Shared memory buffer with dynamic size is not "
@@ -267,7 +267,7 @@ std::pair<std::string, std::vector<std::string>> codeGenCUDA(const AST &_op) {
         "extern \"C\" {\n"
         "\n";
     const char *tailer = "\n"
-                         "}";
+                        "}";
 
     auto body = visitor.toString([&](const CodeGenCUDA::Stream &stream) {
         if (stream.name_ == "default") {
@@ -312,7 +312,7 @@ std::pair<std::string, std::vector<std::string>> codeGenCUDA(const AST &_op) {
                     os << CodeGenCUDA::gen(tensor.dtype()) << " (*restrict ";
                     os << item.first << ")";
                     for (size_t i = 1, iEnd = shape.size(); i < iEnd;
-                         i++) { // No shape[0]
+                        i++) { // No shape[0]
                         ASSERT(shape[i]->nodeType() == ASTNodeType::IntConst);
                         os << "[" << shape[i].as<IntConstNode>()->val_ << "]";
                     }

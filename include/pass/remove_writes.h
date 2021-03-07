@@ -40,7 +40,7 @@ class RemoveWrites : public Mutator {
 
   public:
     RemoveWrites(const std::unordered_set<Stmt> &redundant,
-                 const std::unordered_map<Stmt, Stmt> &replacement)
+                const std::unordered_map<Stmt, Stmt> &replacement)
         : redundant_(redundant), replacement_(replacement) {}
 
     template <class T> Stmt doVisit(const T &op) {

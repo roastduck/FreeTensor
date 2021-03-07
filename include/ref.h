@@ -27,8 +27,8 @@ template <class T> class Ref {
     Ref(T *ptr) : ptr_(ptr) {}
 
     /**
-     * Shared with any compatible references
-     */
+    * Shared with any compatible references
+    */
     template <class U>
     Ref(const Ref<U> &other) : ptr_(std::static_pointer_cast<T>(other.ptr_)) {}
 

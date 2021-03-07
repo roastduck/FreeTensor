@@ -3,7 +3,7 @@
 namespace ir {
 
 bool MatchVisitor::matchName(const std::string &thisName,
-                             const std::string &otherName) {
+                            const std::string &otherName) {
     if (!nameMap_.count(thisName)) {
         nameMap_[thisName] = otherName;
         return true;

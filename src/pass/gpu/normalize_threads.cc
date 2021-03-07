@@ -58,8 +58,8 @@ Stmt NormalizeThreads::doVisitFor(const For &_op) {
         varMap_.erase(_op->iter_);
         inside_.erase(_op->parallel_);
         return makeIf(op->id(),
-                      makeLT(makeVar(newIter), makeSub(op->end_, op->begin_)),
-                      op->body_);
+                    makeLT(makeVar(newIter), makeSub(op->end_, op->begin_)),
+                    op->body_);
     } else {
         return Mutator::visit(_op);
     }
@@ -68,23 +68,23 @@ Stmt NormalizeThreads::doVisitFor(const For &_op) {
 Stmt NormalizeThreads::visit(const For &op) {
     if (!inKernel_ &&
         (op->parallel_ == "blockIdx.x" || op->parallel_ == "blockIdx.y" ||
-         op->parallel_ == "blockIdx.z" || op->parallel_ == "threadIdx.x" ||
-         op->parallel_ == "threadIdx.y" || op->parallel_ == "threadIdx.z")) {
+        op->parallel_ == "blockIdx.z" || op->parallel_ == "threadIdx.x" ||
+        op->parallel_ == "threadIdx.y" || op->parallel_ == "threadIdx.z")) {
         inKernel_ = true;
         auto ret = doVisitFor(op);
         inKernel_ = false;
         ret = makeFor("", ".threadIdx.x", makeIntConst(0),
-                      makeIntConst(INT_MAX), "threadIdx.x", ret);
+                    makeIntConst(INT_MAX), "threadIdx.x", ret);
         ret = makeFor("", ".threadIdx.y", makeIntConst(0),
-                      makeIntConst(INT_MAX), "threadIdx.y", ret);
+                    makeIntConst(INT_MAX), "threadIdx.y", ret);
         ret = makeFor("", ".threadIdx.z", makeIntConst(0),
-                      makeIntConst(INT_MAX), "threadIdx.z", ret);
+                    makeIntConst(INT_MAX), "threadIdx.z", ret);
         ret = makeFor("", ".blockIdx.x", makeIntConst(0), makeIntConst(INT_MAX),
-                      "blockIdx.x", ret);
+                    "blockIdx.x", ret);
         ret = makeFor("", ".blockIdx.y", makeIntConst(0), makeIntConst(INT_MAX),
-                      "blockIdx.y", ret);
+                    "blockIdx.y", ret);
         ret = makeFor("", ".blockIdx.z", makeIntConst(0), makeIntConst(INT_MAX),
-                      "blockIdx.z", ret);
+                    "blockIdx.z", ret);
         return ret;
     } else {
         return doVisitFor(op);
@@ -109,7 +109,7 @@ void CheckThreadNum::visit(const For &op) {
         op->end_->nodeType() == ASTNodeType::IntConst &&
         op->end_.as<IntConstNode>()->val_ == INT_MAX) {
         throw InvalidProgram("Length of " + op->parallel_ +
-                             " should have a finite bound");
+                            " should have a finite bound");
     }
 }
 

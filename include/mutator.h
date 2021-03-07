@@ -23,13 +23,13 @@ class Mutator {
 
     // Additional hook for any expressions
     virtual Expr visitExpr(const Expr &op,
-                           const std::function<Expr(const Expr &)> &visitNode) {
+                            const std::function<Expr(const Expr &)> &visitNode) {
         return visitNode(op);
     }
 
     // Additional hook for any statements
     virtual Stmt visitStmt(const Stmt &op,
-                           const std::function<Stmt(const Stmt &)> &visitNode) {
+                            const std::function<Stmt(const Stmt &)> &visitNode) {
         return visitNode(op);
     }
 
@@ -53,7 +53,7 @@ class Mutator {
         Tensor t(std::move(shape), op->buffer_->tensor().dtype());
         Buffer b(std::move(t), op->buffer_->atype(), op->buffer_->mtype());
         return makeVarDef(op->id(), op->name_, std::move(b),
-                          (*this)(op->body_));
+                        (*this)(op->body_));
     }
 
     virtual Expr visit(const Var &op) { return makeVar(op->name_); }
@@ -66,7 +66,7 @@ class Mutator {
         }
         auto &&expr = (*this)(op->expr_);
         return makeStore(op->id(), op->var_, std::move(indices),
-                         std::move(expr));
+                        std::move(expr));
     }
 
     virtual Expr visit(const Load &op) {
@@ -194,7 +194,7 @@ class Mutator {
     virtual Stmt visit(const If &op) {
         auto ret =
             makeIf(op->id(), (*this)(op->cond_), (*this)(op->thenCase_),
-                   op->elseCase_.isValid() ? (*this)(op->elseCase_) : nullptr);
+                    op->elseCase_.isValid() ? (*this)(op->elseCase_) : nullptr);
         if (op->infoNotCond_.isValid()) {
             ret.as<IfNode>()->infoNotCond_ = (*this)(op->infoNotCond_);
         }

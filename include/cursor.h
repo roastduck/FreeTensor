@@ -52,7 +52,7 @@ class VisitorWithCursor : public Visitor {
 
   protected:
     void visitStmt(const Stmt &op,
-                   const std::function<void(const Stmt &)> &visitNode) override;
+                    const std::function<void(const Stmt &)> &visitNode) override;
 
     const Cursor &cursor() const { return cursor_; }
 };
@@ -70,7 +70,7 @@ class GetCursorById : public VisitorWithCursor {
 
   protected:
     void visitStmt(const Stmt &op,
-                   const std::function<void(const Stmt &)> &visitNode) override;
+                    const std::function<void(const Stmt &)> &visitNode) override;
 };
 
 inline Cursor getCursorById(const Stmt &ast, const std::string &id) {

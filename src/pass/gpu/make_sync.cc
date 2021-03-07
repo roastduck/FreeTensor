@@ -12,7 +12,7 @@ namespace ir {
 namespace gpu {
 
 static Stmt insertIntrin(const Stmt &op, const std::string &front,
-                         const std::string &back) {
+                        const std::string &back) {
     if (front.empty() && back.empty()) {
         return op;
     }
@@ -61,12 +61,12 @@ Stmt MakeSync::visit(const For &_op) {
         if (thx <= warpSize) {
             op->body_ =
                 insertIntrin(op->body_, oldWarpSynced ? "" : "__syncwarp()",
-                             warpSynced ? "" : "__syncwarp()");
+                            warpSynced ? "" : "__syncwarp()");
             warpSynced = true;
         } else {
             op->body_ = insertIntrin(op->body_,
-                                     oldThreadsSynced ? "" : "__syncthreads()",
-                                     threadsSynced ? "" : "__syncthreads()");
+                                    oldThreadsSynced ? "" : "__syncthreads()",
+                                    threadsSynced ? "" : "__syncthreads()");
             warpSynced = threadsSynced = true;
         }
         return op;
@@ -79,12 +79,12 @@ Stmt MakeSync::visit(const For &_op) {
         if (thx * thy <= warpSize) {
             op->body_ =
                 insertIntrin(op->body_, oldWarpSynced ? "" : "__syncwarp()",
-                             warpSynced ? "" : "__syncwarp()");
+                            warpSynced ? "" : "__syncwarp()");
             warpSynced = true;
         } else {
             op->body_ = insertIntrin(op->body_,
-                                     oldThreadsSynced ? "" : "__syncthreads()",
-                                     threadsSynced ? "" : "__syncthreads()");
+                                    oldThreadsSynced ? "" : "__syncthreads()",
+                                    threadsSynced ? "" : "__syncthreads()");
             warpSynced = threadsSynced = true;
         }
         return op;
@@ -97,12 +97,12 @@ Stmt MakeSync::visit(const For &_op) {
         if (thx * thy * thz <= warpSize) {
             op->body_ =
                 insertIntrin(op->body_, oldWarpSynced ? "" : "__syncwarp()",
-                             warpSynced ? "" : "__syncwarp()");
+                            warpSynced ? "" : "__syncwarp()");
             warpSynced = true;
         } else {
             op->body_ = insertIntrin(op->body_,
-                                     oldThreadsSynced ? "" : "__syncthreads()",
-                                     threadsSynced ? "" : "__syncthreads()");
+                                    oldThreadsSynced ? "" : "__syncthreads()",
+                                    threadsSynced ? "" : "__syncthreads()");
             warpSynced = threadsSynced = true;
         }
         return op;

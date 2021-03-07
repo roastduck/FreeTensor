@@ -53,7 +53,7 @@ void FindLoopInvariantWrites::visit(const Store &op) {
     Visitor::visit(op);
     Expr cond;
     for (int i = (int)(loopStack_.size()) - 1, iEnd = defDepth_.at(op->var_);
-         i >= iEnd; i--) {
+        i >= iEnd; i--) {
         auto &&item = loopStack_[i];
         Expr thisCond;
         for (auto &&idx : op->indices_) {
@@ -89,13 +89,13 @@ Stmt removeWrites(const Stmt &_op) {
     std::set<std::pair<Expr, Stmt>> usesRAW;
     std::set<std::pair<Stmt, Expr>> usesWAR;
     auto filterOverwrite = [&](const AccessPoint &later,
-                               const AccessPoint &earlier) {
+                                const AccessPoint &earlier) {
         return later.op_->nodeType() == ASTNodeType::Store ||
-               sameParent(later.cursor_, earlier.cursor_);
+                sameParent(later.cursor_, earlier.cursor_);
     };
     auto foundOverwrite = [&](const Dependency &d) {
         overwrites.emplace(d.later().as<StmtNode>(),
-                           d.earlier().as<StmtNode>());
+                            d.earlier().as<StmtNode>());
     };
     auto foundUse = [&](const Dependency &d) {
         if (d.later()->nodeType() == ASTNodeType::Load) {
@@ -110,9 +110,9 @@ Stmt removeWrites(const Stmt &_op) {
     };
 
     findDeps(op, {{}}, foundOverwrite, FindDepsMode::Kill, DEP_WAW,
-             filterOverwrite, false);
+            filterOverwrite, false);
     findDeps(op, {{}}, foundUse, FindDepsMode::Dep, DEP_WAR | DEP_RAW, nullptr,
-             false);
+            false);
 
     std::unordered_set<Stmt> redundant;
     std::unordered_map<Stmt, Stmt> replacement;
@@ -138,17 +138,17 @@ Stmt removeWrites(const Stmt &_op) {
                 replacement.emplace(
                     later,
                     makeStore(later->id(), l->var_, l->indices_,
-                              makeReduce(l->op_, earlier.as<StoreNode>()->expr_,
-                                         l->expr_)));
+                            makeReduce(l->op_, earlier.as<StoreNode>()->expr_,
+                                        l->expr_)));
             } else if (earlier.as<ReduceToNode>()->op_ == l->op_) {
                 redundant.insert(earlier);
                 replacement.emplace(
                     later,
                     makeReduceTo(later->id(), l->var_, l->indices_, l->op_,
-                                 makeReduce(l->op_,
+                                makeReduce(l->op_,
                                             earlier.as<ReduceToNode>()->expr_,
                                             l->expr_),
-                                 false));
+                                false));
             }
         }
         continue;

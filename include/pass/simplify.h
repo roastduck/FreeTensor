@@ -30,7 +30,7 @@ class FindInnerMostScope : public Visitor {
 };
 
 int findInnerMostScope(const std::unordered_map<std::string, int> &varScope,
-                       const Expr &op);
+                        const Expr &op);
 
 /**
  * Compute bounds of IDENTICAL (sub)expressions AT A POSITION in the AST
@@ -123,7 +123,7 @@ class CompUniqueBounds : public CompTransientBounds {
     using CompTransientBounds::visit; // Avoid hiding virtual functions
 
     Expr visitExpr(const Expr &op,
-                   const std::function<Expr(const Expr &)> &visitNode) override;
+                    const std::function<Expr(const Expr &)> &visitNode) override;
 
     Expr visit(const Var &op) override;
     Expr visit(const Load &op) override;
@@ -159,7 +159,7 @@ class SimplifyPass : public CompUniqueBounds {
     using CompUniqueBounds::visit;
 
     Expr visitExpr(const Expr &op,
-                   const std::function<Expr(const Expr &)> &visitNode) override;
+                    const std::function<Expr(const Expr &)> &visitNode) override;
 
     Expr visit(const FloorDiv &op) override;
     Expr visit(const CeilDiv &op) override;
@@ -195,9 +195,9 @@ class CheckFixedPoint : public Visitor {
 
   protected:
     void visitExpr(const Expr &op,
-                   const std::function<void(const Expr &)> &visitNode) override;
+                    const std::function<void(const Expr &)> &visitNode) override;
     void visitStmt(const Stmt &op,
-                   const std::function<void(const Stmt &)> &visitNode) override;
+                    const std::function<void(const Stmt &)> &visitNode) override;
 };
 
 Stmt simplifyPass(const Stmt &op);

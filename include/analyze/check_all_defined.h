@@ -25,7 +25,7 @@ class CheckAllDefined : public Visitor {
 };
 
 bool checkAllDefined(const std::unordered_set<std::string> &defs,
-                     const AST &op);
+                    const AST &op);
 
 } // namespace ir
 

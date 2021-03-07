@@ -35,7 +35,7 @@ void CheckAllDefined::visit(const ReduceTo &op) {
 }
 
 bool checkAllDefined(const std::unordered_set<std::string> &defs,
-                     const AST &op) {
+                    const AST &op) {
     CheckAllDefined visitor(defs);
     visitor(op);
     return visitor.allDef();

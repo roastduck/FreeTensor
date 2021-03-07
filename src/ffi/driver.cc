@@ -18,16 +18,16 @@ void init_ffi_driver(py::module_ &m) {
     pyTarget
         .def("type", [](const Ref<Target> &target) { return target->type(); })
         .def("__str__",
-             [](const Ref<Target> &target) { return target->toString(); });
+            [](const Ref<Target> &target) { return target->toString(); });
     py::class_<CPU, Ref<CPU>>(m, "CPU", pyTarget).def(py::init([]() {
         return Ref<CPU>::make();
     }));
     py::class_<GPU, Ref<GPU>>(m, "GPU", pyTarget)
         .def(py::init([]() { return Ref<GPU>::make(); }))
         .def("set_compute_capability",
-             [](const Ref<GPU> &target, int value) {
-                 target->setComputeCapability(value);
-             })
+            [](const Ref<GPU> &target, int value) {
+                target->setComputeCapability(value);
+            })
         .def("compute_capability", [](const Ref<GPU> &target) {
             return target->computeCapability();
         });
@@ -37,14 +37,14 @@ void init_ffi_driver(py::module_ &m) {
 
     py::class_<Array>(m, "Array")
         .def(py::init([](py::array_t<float, py::array::c_style> &np,
-                         const Device &device) {
+                        const Device &device) {
             std::vector<size_t> shape(np.shape(), np.shape() + np.ndim());
             Array arr(shape, DataType::Float32, device);
             arr.fromCPU(np.unchecked().data(), np.nbytes());
             return arr;
         }))
         .def(py::init([](py::array_t<int32_t, py::array::c_style> &np,
-                         const Device &device) {
+                        const Device &device) {
             std::vector<size_t> shape(np.shape(), np.shape() + np.ndim());
             Array arr(shape, DataType::Int32, device);
             arr.fromCPU(np.unchecked().data(), np.nbytes());
@@ -69,7 +69,7 @@ void init_ffi_driver(py::module_ &m) {
 
     py::class_<Driver>(m, "Driver")
         .def(py::init<const std::string &, const std::vector<std::string> &,
-                      const Device &>())
+                    const Device &>())
         .def("set_params", &Driver::setParams)
         .def("run", &Driver::run);
 }

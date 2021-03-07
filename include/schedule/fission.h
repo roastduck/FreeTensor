@@ -89,8 +89,8 @@ class FissionFor : public Mutator {
 
   public:
     FissionFor(const std::string &loop, const std::string &after,
-               const std::string &suffix0 = ".a",
-               const std::string &suffix1 = ".b")
+                const std::string &suffix0 = ".a",
+                const std::string &suffix1 = ".b")
         : loop_(loop), after_(after), suffix0_(suffix0), suffix1_(suffix1) {}
 
     const std::unordered_map<std::string, std::string> &ids0() const {
