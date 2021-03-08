@@ -111,6 +111,36 @@ class Schedule {
     void swap(const std::vector<std::string> &order);
 
     /**
+     * Unroll a loop and interleave statements from each iteration
+     *
+     * E.g.
+     *
+     * ```
+     * for i = 0 to 2 {
+     *   f(i);
+     *   g(i);
+     * }
+     * ```
+     *
+     * will be transformed to be
+     *
+     * ```
+     * f(0);
+     * f(1);
+     * g(0);
+     * g(1);
+     * ```
+     *
+     * Virtual threads in TVM can be implemented via first reorder and then
+     * blend
+     *
+     * @param loop : ID of the loop being transformed
+     * @throw InvalidSchedule if the loop is not found, the loop length is not a
+     * constant, or the dependencies cannot be solved
+     */
+    void blend(const std::string &loop);
+
+    /**
      * Cache a variable into a new local variable
      *
      * All needed data will be filled into the cache first, then all reads and

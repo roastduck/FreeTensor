@@ -22,6 +22,7 @@ void init_ffi_schedule(py::module_ &m) {
              "suffix0"_a = ".a", "suffix1"_a = ".b")
         .def("fuse", &Schedule::fuse, "loop0"_a, "loop1"_a)
         .def("swap", &Schedule::swap, "order"_a)
+        .def("blend", &Schedule::blend, "loop"_a)
         .def("cache", &Schedule::cache, "stmt"_a, "var"_a, "mtype"_a)
         .def("cache_reduction", &Schedule::cacheReduction, "stmt"_a, "var"_a,
              "mtype"_a)

@@ -12,6 +12,7 @@
 #include <pass/simplify.h>
 #include <pass/sink_var.h>
 #include <schedule.h>
+#include <schedule/blend.h>
 #include <schedule/cache.h>
 #include <schedule/check_loop_order.h>
 #include <schedule/fission.h>
@@ -303,6 +304,37 @@ void Schedule::swap(const std::vector<std::string> &order) {
             msg += order[i] + (i < iEnd - 1 ? ", " : "");
         }
         throw InvalidSchedule(msg + "): " + e.what());
+    }
+    ast_ = ast;
+}
+
+void Schedule::blend(const std::string &loop) {
+    auto ast = ast_;
+    try {
+        FindAllScopesInside finder(loop);
+        finder(ast);
+        if (!finder.found()) {
+            throw InvalidSchedule("Loop " + loop + " not found");
+        }
+
+        std::vector<std::vector<std::pair<std::string, DepDirection>>> cond;
+        for (auto &&item : finder.scopes()) {
+            cond.push_back(
+                {{loop, DepDirection::Normal}, {item, DepDirection::Inv}});
+        }
+        auto found = [&](const Dependency &d) {
+            ASSERT(d.cond_.size() == 2);
+            throw InvalidSchedule(
+                dep2Str(d.cond_[1].first, d.var_, d.later(), d.earlier()));
+        };
+        ast = prepareFindDeps(ast);
+        findDeps(ast, cond, found);
+
+        ast = simplifyPass(normalize(ast)); // ForNode::infoLen_
+        ast = BlendPass(loop)(ast);
+        ast = flattenStmtSeq(ast);
+    } catch (const InvalidSchedule &e) {
+        throw InvalidSchedule("Invalid blend(" + loop + "): " + e.what());
     }
     ast_ = ast;
 }
