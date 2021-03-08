@@ -493,7 +493,8 @@ void Schedule::unroll(const std::string &loop) {
     auto ast = ast_;
     Unroll mutator(loop);
     try {
-        ast = simplifyPass(normalize(ast)); // for ForNode::infoLen_
+        ast = normalize(ast); // for ForNode::infoLen_
+        ast = simplifyPass(ast);
         ast = mutator(ast);
         if (!mutator.done()) {
             throw InvalidSchedule("Loop " + loop + " not found");
