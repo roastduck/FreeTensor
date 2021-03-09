@@ -129,7 +129,7 @@ std::string Schedule::merge(const std::string &loop1,
 
         MergeFor mutator(outer, inner);
         ast = mutator(ast);
-        ret = mutator.newIter();
+        ret = mutator.newId();
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid merge(" + loop1 + ", " + loop2 +
                               "): " + e.what());

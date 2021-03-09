@@ -276,15 +276,16 @@ std::pair<std::string, std::vector<std::string>> codeGenCUDA(const AST &_op) {
         if (stream.name_ == "default") {
             return "void run(void **_params) " + stream.os_.str();
         } else {
+            const auto &dim = stream.threadDim_;
             std::ostringstream os;
             os << "__global__ void __launch_bounds__(";
-            bool first = true;
-            for (auto &&dim : stream.threadDim_) {
-                os << (first ? "" : " * ") << dim.second;
-                first = false;
-            }
+            os << (dim.count("threadIdx.x") ? dim.at("threadIdx.x") : 1);
+            os << " * ";
+            os << (dim.count("threadIdx.y") ? dim.at("threadIdx.y") : 1);
+            os << " * ";
+            os << (dim.count("threadIdx.z") ? dim.at("threadIdx.z") : 1);
             os << ") " << stream.name_ << "(";
-            first = true;
+            bool first = true;
             for (auto &&item : stream.uses_) {
                 os << (first ? "" : ", ");
                 auto &&buffer = item.second;
