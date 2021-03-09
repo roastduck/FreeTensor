@@ -91,24 +91,34 @@ class FindAccessPoint : public VisitorWithCursor {
 };
 
 /**
- * Serialize expressions like "linear expressions concatenated with LAnd" to a
- * string
+ * Serialize expressions to an ISL input string
  *
- * ISL rejects non-affine expressions
- *
- * ISL also rejects non-contiguous sets, therefore here is no LOr or LNot
+ * It returns nullptr for unsupported expressions, because ISL reports errors on
+ * them
  */
-class GenISLExpr {
+class GenISLExpr : public Visitor {
     AnalyzeLinear analyzeLinear_;
+    std::unordered_map<Expr, std::string> results_;
     std::unordered_map<std::string, std::string> idCache_; // IR IDs -> ISL IDs
     std::unordered_set<std::string> idFlag_;               // ISL IDs
 
-  private:
-    Ref<std::string> linear2str(const LinearExpr<int> &lin);
-
   public:
     std::string normalizeId(const std::string &id);
-    Ref<std::string> operator()(const Expr &op);
+    Ref<std::string> gen(const Expr &op);
+
+  protected:
+    void visitExpr(const Expr &op,
+                   const std::function<void(const Expr &)> &visitNode) override;
+    void visit(const LAnd &op) override;
+    // No LOr or LNot because rejects non-contiguous sets
+    void visit(const LT &op) override;
+    void visit(const LE &op) override;
+    void visit(const GT &op) override;
+    void visit(const GE &op) override;
+    void visit(const EQ &op) override;
+    // No NE because rejects non-contiguous sets
+    void visit(const FloorDiv &op) override;
+    void visit(const Mod &op) override;
 };
 
 enum class DepDirection : int {
