@@ -134,7 +134,7 @@ void GenISLExpr::visit(const GE &op) {
 void GenISLExpr::visit(const EQ &op) {
     Visitor::visit(op);
     if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
-        results_[op] = results_.at(op->lhs_) + " == " + results_.at(op->rhs_);
+        results_[op] = results_.at(op->lhs_) + " = " + results_.at(op->rhs_);
     }
 }
 

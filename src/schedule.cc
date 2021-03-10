@@ -311,6 +311,8 @@ void Schedule::swap(const std::vector<std::string> &order) {
 void Schedule::blend(const std::string &loop) {
     auto ast = ast_;
     try {
+        ast = simplifyPass(normalize(ast)); // ForNode::infoLen_
+
         FindAllScopesInside finder(loop);
         finder(ast);
         if (!finder.found()) {
@@ -330,7 +332,6 @@ void Schedule::blend(const std::string &loop) {
         ast = prepareFindDeps(ast);
         findDeps(ast, cond, found);
 
-        ast = simplifyPass(normalize(ast)); // ForNode::infoLen_
         ast = BlendPass(loop)(ast);
         ast = flattenStmtSeq(ast);
     } catch (const InvalidSchedule &e) {

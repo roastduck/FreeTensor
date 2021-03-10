@@ -96,7 +96,7 @@ Stmt BlendPass::visit(const VarDef &op) {
 }
 
 Expr BlendPass::visit(const Var &op) {
-    if (inLoop_) {
+    if (inLoop_ && op->name_ == iter_) {
         return makeAdd(begin_, makeIntConst(curIter_));
     } else {
         return Mutator::visit(op);
