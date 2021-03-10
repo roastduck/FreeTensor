@@ -44,11 +44,13 @@ void CompAccessBound::visit(const VarDef &op) {
                         lowerItem = reduceMax(lowerItem, item.expr_);
                     }
                 }
-                lower = reduceMin(lower, lowerItem);
-            } else {
-                lower = makeIntConst(0);
-                break;
+                if (lowerItem.isValid()) {
+                    lower = reduceMin(lower, lowerItem);
+                    continue;
+                }
             }
+            lower = makeIntConst(0);
+            break;
         }
 
         for (size_t j = 0, jEnd = access.size(); j < jEnd; j++) {
@@ -61,11 +63,13 @@ void CompAccessBound::visit(const VarDef &op) {
                         upperItem = reduceMin(upperItem, item.expr_);
                     }
                 }
-                upper = reduceMax(upper, upperItem);
-            } else {
-                upper = op->buffer_->tensor().shape()[i];
-                break;
+                if (upperItem.isValid()) {
+                    upper = reduceMax(upper, upperItem);
+                    continue;
+                }
             }
+            upper = op->buffer_->tensor().shape()[i];
+            break;
         }
 
         result.lower_.emplace_back(lower);
