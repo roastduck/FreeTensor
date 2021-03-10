@@ -40,7 +40,7 @@ To run the test, first change into the `test/` directory, then
 PYTHONPATH=../python:../build:$PYTHONPATH pytest
 ```
 
-To run a single test case, use `pytest -s` to specify the test case name. E.g,
+To run a single test case, specify the test case name, and optionally use `pytest -s` to display the standard output. E.g,
 
 ```sh
 PYTHONPATH=../python:../build:$PYTHONPATH pytest -s codegen/test_basic.py::test_hello_world
