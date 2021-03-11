@@ -171,9 +171,10 @@ void CompUniqueBounds::updLower(const Expr &op, const LowerBound &bound) {
         lower_[op] = {bound};
         return;
     }
-    auto h = getHash(bound.expr_);
     for (LowerBound &old : lower_.at(op)) {
-        if (getHash(old.expr_) == h) {
+        // The same .expr_ does not mean the same bounds
+        // E.g. 1 * floor(a / 4) vs. (1/4) * a
+        if (old.lin_ == bound.lin_) {
             return;
         }
         if (bound.expr_->nodeType() == ASTNodeType::IntConst &&
@@ -194,9 +195,10 @@ void CompUniqueBounds::updUpper(const Expr &op, const UpperBound &bound) {
         upper_[op] = {bound};
         return;
     }
-    auto h = getHash(bound.expr_);
     for (UpperBound &old : upper_.at(op)) {
-        if (getHash(old.expr_) == h) {
+        // The same .expr_ does not mean the same bounds
+        // E.g. 1 * floor(a / 4) vs. (1/4) * a
+        if (old.lin_ == bound.lin_) {
             return;
         }
         if (bound.expr_->nodeType() == ASTNodeType::IntConst &&
@@ -378,6 +380,10 @@ Expr CompUniqueBounds::visit(const FloorDiv &_op) {
         }
     }
 
+    // Still record an monolithic item, in case floor(a / b) - floor(a / b)
+    updLower(op, LowerBound{op});
+    updUpper(op, UpperBound{op});
+
     return op;
 }
 
@@ -403,6 +409,10 @@ Expr CompUniqueBounds::visit(const CeilDiv &_op) {
             }
         }
     }
+
+    // Still record an monolithic item, in case ceil(a / b) - ceil(a / b)
+    updLower(op, LowerBound{op});
+    updUpper(op, UpperBound{op});
 
     return op;
 }

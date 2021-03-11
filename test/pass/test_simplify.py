@@ -298,8 +298,7 @@ def test_floor_div_1():
     with ir.VarDef([
             ("n", (), "int32", "input", "cpu"),
             ("y", (4,), "int32", "output", "cpu")]) as (n, y):
-        with ir.For("i", 0, n[()] // 4 - 1 + 1) as i:
-            # TODO: - 1 + 1
+        with ir.For("i", 0, n[()] // 4) as i:
             y[i] = 1
     std = ir.pop_ast()
 
@@ -320,9 +319,26 @@ def test_floor_div_2():
     with ir.VarDef([
             ("n", (), "int32", "input", "cpu"),
             ("y", (4,), "int32", "output", "cpu")]) as (n, y):
-        with ir.For("i", 0, (n[()] + -1) // 4 - 1 + 1) as i:
-            # TODO: - 1 + 1
+        with ir.For("i", 0, (n[()] + -1) // 4) as i:
             y[i] = 1
+    std = ir.pop_ast()
+
+    assert std.match(ast)
+
+def test_floor_div_3():
+    with ir.VarDef([
+            ("x", (), "int32", "input", "cpu"),
+            ("y", (), "int32", "input", "cpu")]) as (x, y):
+        y[()] = ir.min(x[()] // 4, x[()] // 4)
+    ast = ir.pop_ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([
+            ("x", (), "int32", "input", "cpu"),
+            ("y", (), "int32", "input", "cpu")]) as (x, y):
+        y[()] = x[()] // 4
     std = ir.pop_ast()
 
     assert std.match(ast)
