@@ -10,6 +10,8 @@ namespace ir {
 
 enum MoveToSide : int { Before, After };
 
+enum VarSplitMode : int { FixedSize, RelaxedSize };
+
 class Schedule {
     Stmt ast_;
 
@@ -208,6 +210,25 @@ class Schedule {
     std::tuple<std::string, std::string, std::string>
     cacheReduction(const std::string &stmt, const std::string &var,
                    MemType mtype);
+
+    /**
+     * Split a dimension of a variable into two
+     *
+     * @param def : ID of the VarDef statement of the specific variable
+     * @param dim : which dimension to be split
+     * @param mode : When the dimension to split is not divisible by `factor` or
+     * `nparts`, the resulting shape may become larger. In `FixedSize` mode, the
+     * actual buffer size will not be changed, and gurads will be added to
+     * prevent out-of-bound accesses. In `RelaxedSize` mode, the buffer size may
+     * increase. The `RelaxedSize` mode cannot be applied to I/O variables
+     * @param factor : Length of the inner (higher no.) dimension. Set to -1 if
+     * using `nparts`
+     * @param nparts : Length of the outer (lower no.) loop. Set to -1 if using
+     * `factor`
+     * @throw InvalidSchedule if the variable or the dimension is not found
+     */
+    void varSplit(const std::string &def, int dim, VarSplitMode mode,
+                  int factor = -1, int nparts = -1);
 
     /**
      * Move a statement to a new position

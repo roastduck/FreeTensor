@@ -1,5 +1,5 @@
 import ffi
-from ffi import MoveToSide
+from ffi import MoveToSide, VarSplitMode
 
 from .utils import *
 
@@ -281,6 +281,34 @@ class Schedule(ffi.Schedule):
     '''
     def cache_reduction(self, stmt, var, mtype):
         return super(Schedule, self).cache_reduction(toId(stmt), var, parseMType(mtype))
+
+    '''
+    Split a dimension of a variable into two
+
+    Parameters
+    ----------
+    vardef : str, Stmt or Cursor
+        ID of the VarDef statement of the specific variable
+    dim : int
+        which dimension to be split
+    mode : VarSplitMode
+        When the dimension to split is not divisible by `factor` or `nparts`,
+        the resulting shape may become larger. In `FixedSize` mode, the actual
+        buffer size will not be changed, and gurads will be added to prevent
+        out-of-bound accesses. In `RelaxedSize` mode, the buffer size may
+        increase. The `RelaxedSize` mode cannot be applied to I/O variables
+    factor : int
+        Length of the inner (higher no.) dimension. Set to -1 if using `nparts`
+    nparts : int
+        Length of the outer (lower no.) loop. Set to -1 if using `factor`
+
+    Raises
+    ------
+    InvalidSchedule
+        if the variable or the dimension is not found
+    '''
+    def var_split(self, vardef, dim, mode, factor=-1, nparts=-1):
+        return super(Schedule, self).var_split(toId(vardef), dim, mode, factor, nparts)
 
     '''
     Move a statement to a new position

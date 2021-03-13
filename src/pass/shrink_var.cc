@@ -1,10 +1,11 @@
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
+#include <pass/z3_simplify.h>
 
 namespace ir {
 
 Stmt ShrinkVar::visit(const VarDef &_op) {
-    if (_op->buffer_->atype() != AccessType::Cache) {
+    if (_op->buffer_->atype() != AccessType::Cache || _op->sizeLim_.isValid()) {
         return Mutator::visit(_op);
     }
 
@@ -67,7 +68,7 @@ Stmt shrinkVar(const Stmt &_op) {
     op = ShrinkVar(visitor.results())(op);
 
     // (4)
-    return simplifyPass(op);
+    return z3Simplify(op); // Currently SimplifyPass is not sufficient
 }
 
 } // namespace ir

@@ -147,6 +147,15 @@ void GenISLExpr::visit(const FloorDiv &op) {
     }
 }
 
+void GenISLExpr::visit(const CeilDiv &op) {
+    Visitor::visit(op);
+    if (results_.count(op->lhs_) &&
+        op->rhs_->nodeType() == ASTNodeType::IntConst) {
+        results_[op] = "ceil(" + results_.at(op->lhs_) + " / " +
+                       std::to_string(op->rhs_.as<IntConstNode>()->val_) + ")";
+    }
+}
+
 void GenISLExpr::visit(const Mod &op) {
     Visitor::visit(op);
     if (results_.count(op->lhs_) &&

@@ -417,6 +417,15 @@ Expr CompUniqueBounds::visit(const CeilDiv &_op) {
     return op;
 }
 
+Expr CompUniqueBounds::visit(const Mod &_op) {
+    auto __op = CompTransientBounds::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::Mod);
+    auto op = __op.as<ModNode>();
+    updLower(op, LowerBound{op});
+    updUpper(op, UpperBound{op});
+    return op;
+}
+
 Expr CompUniqueBounds::visit(const Min &_op) {
     auto __op = CompTransientBounds::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Min);
@@ -790,6 +799,16 @@ Stmt SimplifyPass::visit(const VarDef &_op) {
 
     if (isEmptyStmt(op->body_)) {
         return makeStmtSeq("", {});
+    }
+
+    if (op->sizeLim_.isValid()) {
+        Expr size = makeIntConst(1);
+        for (auto &&dim : op->buffer_->tensor().shape()) {
+            size = makeMul(size, dim);
+        }
+        if (getIntLower((*this)(makeSub(op->sizeLim_, size))) >= 0) {
+            op->sizeLim_ = nullptr;
+        }
     }
 
     return op;

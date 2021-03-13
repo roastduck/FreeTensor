@@ -37,39 +37,45 @@ void CompAccessBound::visit(const VarDef &op) {
         for (size_t j = 0, jEnd = access.size(); j < jEnd; j++) {
             ASSERT(access[j].size() == n);
             auto &&index = access[j][i];
+            Expr lowerItem;
+            if (checkAllDefined(defs_, index)) {
+                lowerItem = index;
+            }
             if (lower_.count(index)) {
-                Expr lowerItem;
                 for (auto &&item : lower_.at(index)) {
                     if (checkAllDefined(defs_, item.expr_)) {
                         lowerItem = reduceMax(lowerItem, item.expr_);
                     }
                 }
-                if (lowerItem.isValid()) {
-                    lower = reduceMin(lower, lowerItem);
-                    continue;
-                }
             }
-            lower = makeIntConst(0);
-            break;
+            if (lowerItem.isValid()) {
+                lower = reduceMin(lower, lowerItem);
+            } else {
+                lower = makeIntConst(0);
+                break;
+            }
         }
 
         for (size_t j = 0, jEnd = access.size(); j < jEnd; j++) {
             ASSERT(access[j].size() == n);
             auto &&index = access[j][i];
+            Expr upperItem;
+            if (checkAllDefined(defs_, index)) {
+                upperItem = index;
+            }
             if (upper_.count(index)) {
-                Expr upperItem;
                 for (auto &&item : upper_.at(index)) {
                     if (checkAllDefined(defs_, item.expr_)) {
                         upperItem = reduceMin(upperItem, item.expr_);
                     }
                 }
-                if (upperItem.isValid()) {
-                    upper = reduceMax(upper, upperItem);
-                    continue;
-                }
             }
-            upper = op->buffer_->tensor().shape()[i];
-            break;
+            if (upperItem.isValid()) {
+                upper = reduceMax(upper, upperItem);
+            } else {
+                upper = op->buffer_->tensor().shape()[i];
+                break;
+            }
         }
 
         result.lower_.emplace_back(lower);

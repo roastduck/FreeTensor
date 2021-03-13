@@ -23,6 +23,7 @@
 #include <schedule/split.h>
 #include <schedule/swap.h>
 #include <schedule/unroll.h>
+#include <schedule/var_split.h>
 
 namespace ir {
 
@@ -344,11 +345,12 @@ std::tuple<std::string, std::string, std::string>
 Schedule::cache(const std::string &stmt, const std::string &var,
                 MemType mtype) {
     auto ast = ast_;
-    std::string fillStmt, flushStmt, newVar, newDef;
+    std::string fillStmt, flushStmt, newVar, oldDef, newDef;
     try {
         MakeCacheVar makeCacheVar(stmt, var, mtype);
         ast = makeCacheVar(ast);
         newVar = makeCacheVar.newVar();
+        oldDef = makeCacheVar.oldDef();
         newDef = makeCacheVar.newDef();
         if (newDef.empty()) {
             throw InvalidSchedule("Statement " + stmt + " not found");
@@ -361,7 +363,7 @@ Schedule::cache(const std::string &stmt, const std::string &var,
         CompAccessBound compWBound(lower, upper, COMP_ACCESS_BOUND_WRITE);
         compRBound(ast);
         compWBound(ast);
-        MakeFillAndFlush makeFillAndFlush(stmt, var, newVar, newDef,
+        MakeFillAndFlush makeFillAndFlush(stmt, var, newVar, oldDef, newDef,
                                           compRBound.results(),
                                           compWBound.results());
         ast = makeFillAndFlush(ast);
@@ -382,13 +384,14 @@ std::tuple<std::string, std::string, std::string>
 Schedule::cacheReduction(const std::string &stmt, const std::string &var,
                          MemType mtype) {
     auto ast = ast_;
-    std::string initStmt, reduceStmt, newVar, newDef;
+    std::string initStmt, reduceStmt, newVar, oldDef, newDef;
     try {
         ast = makeReduction(ast);
 
         MakeCacheVar makeCacheVar(stmt, var, mtype);
         ast = makeCacheVar(ast);
         newVar = makeCacheVar.newVar();
+        oldDef = makeCacheVar.oldDef();
         newDef = makeCacheVar.newDef();
         if (newDef.empty()) {
             throw InvalidSchedule("Statement " + stmt + " not found");
@@ -399,7 +402,7 @@ Schedule::cacheReduction(const std::string &stmt, const std::string &var,
         std::tie(ast, lower, upper) = simplifyAndGetBounds(ast);
         CompAccessBound compBound(lower, upper);
         compBound(ast);
-        MakeInitAndReduce makeInitAndReduce(stmt, var, newVar, newDef,
+        MakeInitAndReduce makeInitAndReduce(stmt, var, newVar, oldDef, newDef,
                                             compBound.results());
         ast = makeInitAndReduce(ast);
         initStmt = makeInitAndReduce.initStmt();
@@ -413,6 +416,27 @@ Schedule::cacheReduction(const std::string &stmt, const std::string &var,
     ast_ = ast;
     return std::make_tuple(std::move(initStmt), std::move(reduceStmt),
                            std::move(newVar));
+}
+
+void Schedule::varSplit(const std::string &def, int dim, VarSplitMode mode,
+                        int factor, int nparts) {
+    auto ast = ast_;
+    try {
+        VarSplit mutator(def, dim, mode == VarSplitMode::FixedSize, factor,
+                         nparts);
+        ast = mutator(ast);
+        if (!mutator.found()) {
+            throw InvalidSchedule(def + "not found");
+        }
+    } catch (const InvalidSchedule &e) {
+        throw InvalidSchedule(
+            "Invalid var_split(" + def + ", " + std::to_string(dim) +
+            (mode == VarSplitMode::FixedSize ? ", FixedSize"
+                                             : ", RelaxedSize") +
+            ", factor=" + std::to_string(factor) +
+            ", nparts=" + std::to_string(nparts) + "): " + e.what());
+    }
+    ast_ = ast;
 }
 
 std::string Schedule::moveTo(const std::string &_stmt, MoveToSide side,

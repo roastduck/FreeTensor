@@ -320,6 +320,14 @@ Stmt Z3Simplify::visit(const For &op) {
     auto begin = (*this)(op->begin_);
     auto end = (*this)(op->end_);
 
+    if (prove((*this)(makeGE(begin, end)))) {
+        return makeStmtSeq("", {});
+    }
+    if (prove((*this)(makeEQ(makeAdd(begin, makeIntConst(1)), end)))) {
+        // Help the following simplifyPass delete it
+        end = makeAdd(begin, makeIntConst(1));
+    }
+
     push((*this)(makeGE(var, begin)));
     push((*this)(makeLT(var, end)));
     auto body = (*this)(op->body_);

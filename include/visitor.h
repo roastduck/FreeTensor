@@ -42,6 +42,9 @@ class Visitor {
         for (auto &&dim : op->buffer_->tensor().shape()) {
             (*this)(dim);
         }
+        if (op->sizeLim_.isValid()) {
+            (*this)(op->sizeLim_);
+        }
         (*this)(op->body_);
     }
 

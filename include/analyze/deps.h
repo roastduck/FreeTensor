@@ -118,6 +118,7 @@ class GenISLExpr : public Visitor {
     void visit(const EQ &op) override;
     // No NE because rejects non-contiguous sets
     void visit(const FloorDiv &op) override;
+    void visit(const CeilDiv &op) override;
     void visit(const Mod &op) override;
 };
 

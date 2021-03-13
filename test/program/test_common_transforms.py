@@ -66,7 +66,7 @@ def test_tiling():
     driver = ir.Driver(code, params, device)
     driver.set_params({"a": a_arr, "b": b_arr, "c": c_arr})
     driver.run()
-    c_np = c_arr.numpy()
+    c_np = c_arr.numpy().reshape(256, 256)
 
     c_std = a_np @ b_np
     assert np.all(np.isclose(c_np, c_std))
@@ -227,7 +227,7 @@ def test_dynamic_tiling():
         "n": n_arr, "k": k_arr, "m": m_arr,
         "a": a_arr, "b": b_arr, "c": c_arr})
     driver.run()
-    c_np = c_arr.numpy()
+    c_np = c_arr.numpy().reshape(300, 500)
 
     c_std = a_np @ b_np
     assert np.all(np.isclose(c_np, c_std))

@@ -22,6 +22,7 @@ void init_ffi_ast(py::module_ &m) {
     py::class_<VarDefNode, VarDef>(m, "VarDef", pyStmt)
         .def_readonly("name", &VarDefNode::name_)
         .def_readonly("buffer", &VarDefNode::buffer_)
+        .def_readonly("size_lim", &VarDefNode::sizeLim_)
         .def_readonly("body", &VarDefNode::body_);
     py::class_<StoreNode, Store>(m, "Store", pyStmt)
         .def_readonly("var", &StoreNode::var_)
@@ -181,8 +182,9 @@ void init_ffi_ast(py::module_ &m) {
           "id"_a, "stmts"_a);
     m.def("makeVarDef",
           static_cast<Stmt (*)(const std::string &, const std::string &,
-                               const Buffer &, const Stmt &)>(&makeVarDef),
-          "nid"_a, "name"_a, "buffer"_a, "body"_a);
+                               const Buffer &, const Expr &, const Stmt &)>(
+              &makeVarDef),
+          "nid"_a, "name"_a, "buffer"_a, "size_lim"_a, "body"_a);
     m.def("makeVar", &makeVar, "name"_a);
     m.def("makeStore",
           static_cast<Stmt (*)(const std::string &, const std::string &,

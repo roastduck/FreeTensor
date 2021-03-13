@@ -38,7 +38,7 @@ Stmt BlendPass::visit(const For &op) {
         for (auto it = defs_.rbegin(); it != defs_.rend(); it++) {
             for (int k = len_ - 1; k >= 0; k--) {
                 body = makeVarDef("", (*it)->name_ + "." + std::to_string(k),
-                                  *(*it)->buffer_, body);
+                                  *(*it)->buffer_, (*it)->sizeLim_, body);
             }
         }
         inLoop_ = false;

@@ -31,7 +31,8 @@ Stmt FlattenStmtSeq::visit(const StmtSeq &_op) {
         stmts.size() == 1 ? stmts[0] : makeStmtSeq(op->id(), std::move(stmts));
     for (auto it = defStack.rbegin(); it != defStack.rend(); it++) {
         auto &&def = *it;
-        ret = makeVarDef(def->id(), def->name_, *def->buffer_, ret);
+        ret = makeVarDef(def->id(), def->name_, *def->buffer_, def->sizeLim_,
+                         ret);
     }
     return ret;
 }

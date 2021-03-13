@@ -127,9 +127,8 @@ def test_dynamic_tiled():
                     with ir.For("i", 0, ir.any()) as i:
                         with ir.For("j", 0, 4) as j:
                             y[4 * i + j] = 4 * i + j
-                    with ir.For("i", ir.any(), ir.any()) as i:
-                        with ir.For("j", 0, -4 * i + n[()]) as j:
-                            y[4 * i + j] = 4 * i + j
+                    with ir.For("j", 0, ir.any()) as j:
+                        y[ir.any() + j] = ir.any() + j
                 with ir.Else():
                     with ir.For("i", 0, ir.any()) as i:
                         with ir.For("j", 0, 4) as j:

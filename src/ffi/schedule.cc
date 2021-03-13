@@ -9,6 +9,9 @@ void init_ffi_schedule(py::module_ &m) {
     py::enum_<MoveToSide>(m, "MoveToSide")
         .value("Before", MoveToSide::Before)
         .value("After", MoveToSide::After);
+    py::enum_<VarSplitMode>(m, "VarSplitMode")
+        .value("FixedSize", VarSplitMode::FixedSize)
+        .value("RelaxedSize", VarSplitMode::RelaxedSize);
 
     py::class_<Schedule>(m, "Schedule")
         .def(py::init<const Stmt &>())
@@ -26,6 +29,8 @@ void init_ffi_schedule(py::module_ &m) {
         .def("cache", &Schedule::cache, "stmt"_a, "var"_a, "mtype"_a)
         .def("cache_reduction", &Schedule::cacheReduction, "stmt"_a, "var"_a,
              "mtype"_a)
+        .def("var_split", &Schedule::varSplit, "vardef"_a, "dim"_a, "mode"_a,
+             "factor"_a = -1, "nparts"_a = -1)
         .def("move_to", &Schedule::moveTo, "stmt"_a, "side"_a, "dst"_a)
         .def("parallelize", &Schedule::parallelize, "loop"_a, "parallel"_a)
         .def("unroll", &Schedule::unroll, "loop"_a);
