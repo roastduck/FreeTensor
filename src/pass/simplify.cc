@@ -423,6 +423,10 @@ Expr CompUniqueBounds::visit(const Mod &_op) {
     auto op = __op.as<ModNode>();
     updLower(op, LowerBound{op});
     updUpper(op, UpperBound{op});
+    updLower(op, LowerBound{LinearExpr<Rational<int>>{{}, 0}});
+    for (auto &&item : getUpper(op->rhs_)) {
+        updUpper(op, item);
+    }
     return op;
 }
 
@@ -529,11 +533,42 @@ Expr SimplifyPass::visit(const Mod &_op) {
     auto __op = CompUniqueBounds::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Mod);
     auto op = __op.as<ModNode>();
-    if (op->lhs_->nodeType() == ASTNodeType::IntConst &&
-        op->rhs_->nodeType() == ASTNodeType::IntConst) {
-        return markMutated(makeIntConst(op->lhs_.as<IntConstNode>()->val_ %
-                                        op->rhs_.as<IntConstNode>()->val_));
+
+    if (op->rhs_->nodeType() == ASTNodeType::IntConst) {
+        auto k = op->rhs_.as<IntConstNode>()->val_;
+
+        if (op->lhs_->nodeType() == ASTNodeType::IntConst) {
+            return markMutated(
+                makeIntConst(op->lhs_.as<IntConstNode>()->val_ % k));
+        }
+
+        bool mutated = false;
+        std::function<Expr(const Expr &)> f = [&f, &mutated, k](const Expr &x) {
+            switch (x->nodeType()) {
+            case ASTNodeType::IntConst: {
+                auto val = x.as<IntConstNode>()->val_;
+                mutated = (val % k != val);
+                return makeIntConst(val % k);
+            }
+            case ASTNodeType::Add:
+                return makeAdd(f(x.as<AddNode>()->lhs_),
+                               f(x.as<AddNode>()->rhs_));
+            case ASTNodeType::Sub:
+                return makeSub(f(x.as<SubNode>()->lhs_),
+                               f(x.as<SubNode>()->rhs_));
+            case ASTNodeType::Mul:
+                return makeMul(f(x.as<MulNode>()->lhs_),
+                               f(x.as<MulNode>()->rhs_));
+            default:
+                return x;
+            }
+        };
+        auto newLhs = f(op->lhs_);
+        if (mutated) {
+            return markMutated(makeMod(newLhs, op->rhs_));
+        }
     }
+
     return op;
 }
 
