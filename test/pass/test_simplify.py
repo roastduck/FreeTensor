@@ -361,6 +361,24 @@ def test_floor_div_4():
 
     assert std.match(ast)
 
+def test_floor_div_5():
+    with ir.VarDef([
+            ("x", (), "int32", "input", "cpu"),
+            ("y", (), "int32", "input", "cpu")]) as (x, y):
+        y[()] = x[()] // 4 - x[()] // 4
+    ast = ir.pop_ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([
+            ("x", (), "int32", "input", "cpu"),
+            ("y", (), "int32", "input", "cpu")]) as (x, y):
+        y[()] = 0
+    std = ir.pop_ast()
+
+    assert std.match(ast)
+
 def test_mod_1():
     with ir.VarDef([
             ("x", (), "int32", "input", "cpu"),

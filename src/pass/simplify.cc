@@ -380,10 +380,6 @@ Expr CompUniqueBounds::visit(const FloorDiv &_op) {
         }
     }
 
-    // Still record an monolithic item, in case floor(a / b) - floor(a / b)
-    updLower(op, LowerBound{op});
-    updUpper(op, UpperBound{op});
-
     return op;
 }
 
@@ -409,10 +405,6 @@ Expr CompUniqueBounds::visit(const CeilDiv &_op) {
             }
         }
     }
-
-    // Still record an monolithic item, in case ceil(a / b) - ceil(a / b)
-    updLower(op, LowerBound{op});
-    updUpper(op, UpperBound{op});
 
     return op;
 }
@@ -472,9 +464,23 @@ Expr SimplifyPass::visitExpr(
     auto bestScope = -1;
     for (auto &&lower : getLower(op)) {
         for (auto &&upper : getUpper(op)) {
+            bool isEqual = false;
+
+            // Case 1: lower and upper the same const. E.g. 1/3 <= x <= 5/3
+            if (upper.lin_.coeff_.empty() && lower.lin_.coeff_.empty() &&
+                floorDiv(upper.lin_.bias_.p_, upper.lin_.bias_.q_) ==
+                    ceilDiv(lower.lin_.bias_.p_, lower.lin_.bias_.q_)) {
+                isEqual = true;
+            }
+
+            // Case 2: upper - lower < 1. E.g. a <= x <= a + 2/3
             auto diff = sub(upper, lower);
             if (diff.expr_->nodeType() == ASTNodeType::IntConst &&
                 diff.expr_.as<IntConstNode>()->val_ == 0) {
+                isEqual = true;
+            }
+
+            if (isEqual) {
                 // We need to choose the simplest one. Otherwise we are always
                 // picking the original expression
                 Expr expr;
