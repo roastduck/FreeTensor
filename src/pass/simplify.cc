@@ -541,6 +541,11 @@ Expr SimplifyPass::visit(const Mod &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::Mod);
     auto op = __op.as<ModNode>();
 
+    if (getIntLower(op->lhs_) >= 0 &&
+        getIntUpper((*this)(makeSub(op->lhs_, op->rhs_))) < 0) {
+        return op->lhs_;
+    }
+
     if (op->rhs_->nodeType() == ASTNodeType::IntConst) {
         auto k = op->rhs_.as<IntConstNode>()->val_;
 
