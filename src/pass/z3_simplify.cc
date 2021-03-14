@@ -39,6 +39,9 @@ void Z3Simplify::push(const Expr &op) {
 void Z3Simplify::pop() { solver_.pop(); }
 
 Expr Z3Simplify::visit(const Var &_op) {
+    if (replace_.count(_op->name_)) {
+        return (*this)(replace_.at(_op->name_));
+    }
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Var);
     auto op = __op.as<VarNode>();
@@ -324,8 +327,11 @@ Stmt Z3Simplify::visit(const For &op) {
         return makeStmtSeq("", {});
     }
     if (prove((*this)(makeEQ(makeAdd(begin, makeIntConst(1)), end)))) {
-        // Help the following simplifyPass delete it
-        end = makeAdd(begin, makeIntConst(1));
+        ASSERT(!replace_.count(op->iter_));
+        replace_[op->iter_] = begin;
+        auto body = (*this)(op->body_);
+        replace_.erase(op->iter_);
+        return body;
     }
 
     push((*this)(makeGE(var, begin)));

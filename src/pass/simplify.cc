@@ -471,15 +471,22 @@ Expr SimplifyPass::visitExpr(
     Expr best = nullptr;
     auto bestScope = -1;
     for (auto &&lower : getLower(op)) {
-        auto hl = getHash(lower.expr_);
         for (auto &&upper : getUpper(op)) {
-            auto hr = getHash(upper.expr_);
-            if (hl == hr) {
-                // We need to choose the simplest one. Other wise
-                // we are always picking the original expression
-                auto scope = findInnerMostScope(varScope_, lower.expr_);
+            auto diff = sub(upper, lower);
+            if (diff.expr_->nodeType() == ASTNodeType::IntConst &&
+                diff.expr_.as<IntConstNode>()->val_ == 0) {
+                // We need to choose the simplest one. Otherwise we are always
+                // picking the original expression
+                Expr expr;
+                if (upper.lin_.coeff_.size() + (upper.lin_.bias_ != 0) >
+                    lower.lin_.coeff_.size() + (lower.lin_.bias_ != 0)) {
+                    expr = lower.expr_;
+                } else {
+                    expr = upper.expr_;
+                }
+                auto scope = findInnerMostScope(varScope_, expr);
                 if (!best.isValid() || scope < bestScope) {
-                    best = lower.expr_, bestScope = scope;
+                    best = expr, bestScope = scope;
                 }
                 break;
             }
