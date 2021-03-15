@@ -141,4 +141,15 @@ void GetCursorById::visitStmt(
     }
 }
 
+void GetCursorByFilter::visitStmt(
+    const Stmt &op, const std::function<void(const Stmt &)> &visitNode) {
+    VisitorWithCursor::visitStmt(op, [&visitNode, this](const Stmt &_op) {
+        visitNode(_op);
+        auto &&c = cursor();
+        if (filter_(c)) {
+            results_.emplace_back(c);
+        }
+    });
+}
+
 } // namespace ir

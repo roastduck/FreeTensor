@@ -1,6 +1,7 @@
 #ifndef SCHEDULE_H
 #define SCHEDULE_H
 
+#include <functional>
 #include <unordered_map>
 
 #include <cursor.h>
@@ -24,10 +25,18 @@ class Schedule {
     const Stmt &ast() const { return ast_; }
 
     /**
-     * Find a node in the current AST
-     * @id : ID of the node
+     * Find all nodes in the current AST satisfying a given condition
+     * @param filter : A callback. Return true for acceptance
      */
-    Cursor find(const std::string &id) const;
+    std::vector<Cursor>
+    findAll(const std::function<bool(const Cursor &)> &filter) const;
+
+    /**
+     * Find the only one nodes in the current AST satisfying a given condition
+     * @param filter : A callback. Return true for acceptance
+     * @throw Error : if there is more than one, or there is no node found
+     */
+    Cursor find(const std::function<bool(const Cursor &)> &filter) const;
 
     /**
      * Split a loop into two nested loops

@@ -88,7 +88,7 @@ def test_swap_to_begin():
     ast = ir.pop_ast()
     print(ast)
     s = ir.Schedule(ast)
-    dst = s.find("L1").node().body.stmts[0]
+    dst = s.find(lambda x: x.nid() == "L1").node().body.stmts[0]
     s.move_to("S1", ir.MoveToSide.Before, dst)
     ast = s.ast()
     print(ast)
@@ -124,7 +124,7 @@ def test_swap_to_end():
     ast = ir.pop_ast()
     print(ast)
     s = ir.Schedule(ast)
-    dst = s.find("L1").node().body.stmts[-1]
+    dst = s.find(lambda x: x.nid() == "L1").node().body.stmts[-1]
     s.move_to("S1", ir.MoveToSide.After, dst)
     ast = s.ast()
     print(ast)
@@ -291,7 +291,7 @@ def test_crossing_var_def():
     ast = ir.pop_ast()
     print(ast)
     s = ir.Schedule(ast)
-    dst = s.find("L1").node().body.stmts[0]
+    dst = s.find(lambda x: x.nid() == "L1").node().body.stmts[0]
     s.move_to("S1", ir.MoveToSide.Before, dst)
     ast = s.ast()
     print(ast)

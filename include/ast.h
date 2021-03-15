@@ -59,7 +59,8 @@ std::string toString(ASTNodeType type);
 class ASTNode {
     friend class Disambiguous;
 
-    bool noAmbiguous_ = false;
+    bool noAmbiguous_ = false; // FIXME: What if we first perform disambigous,
+                               // and then copy the pointer?
 
   public:
     virtual ~ASTNode() {}

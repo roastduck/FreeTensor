@@ -39,8 +39,19 @@ static std::string dep2Str(const std::string &scope, const std::string &var,
     return std::regex_replace(os.str(), std::regex("\n"), "");
 }
 
-Cursor Schedule::find(const std::string &id) const {
-    return getCursorById(ast_, id);
+std::vector<Cursor>
+Schedule::findAll(const std::function<bool(const Cursor &)> &filter) const {
+    return getCursorByFilter(ast_, filter);
+}
+
+Cursor Schedule::find(const std::function<bool(const Cursor &)> &filter) const {
+    auto ret = getCursorByFilter(ast_, filter);
+    if (ret.size() != 1) {
+        throw Error("find: There is " + std::to_string(ret.size()) +
+                    " nodes matching the given condition. "
+                    "Consider using findAll");
+    }
+    return ret[0];
 }
 
 std::pair<std::string, std::string> Schedule::split(const std::string &id,

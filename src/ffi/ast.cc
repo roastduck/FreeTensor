@@ -82,6 +82,7 @@ void init_ffi_ast(py::module_ &m) {
     pyAST
         .def("match",
              [](const AST &op, const AST &other) { return match(op, other); })
+        .def("type", [](const AST &op) { return toString(op->nodeType()); })
         .def("__str__", [](const AST &op) { return toString(op); })
         .def("__repr__", [](const AST &op) {
             return "<" + toString(op->nodeType()) + ": " + toString(op) + ">";
