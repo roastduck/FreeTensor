@@ -339,8 +339,7 @@ Expr CompUniqueBounds::visit(const Var &_op) {
     auto __op = CompTransientBounds::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Var);
     auto op = __op.as<VarNode>();
-    auto hash = getHash(op);
-    if (boundaccess_.count(hash)) {
+    if (checkboundaccess(op)) {
         updLower(op, LowerBound{op});
         updUpper(op, UpperBound{op});
     }
@@ -351,8 +350,7 @@ Expr CompUniqueBounds::visit(const Load &_op) {
     auto __op = CompTransientBounds::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Load);
     auto op = __op.as<LoadNode>();
-    auto hash = getHash(makeVar(op->var_));
-    if (boundaccess_.count(hash)) {
+    if (checkboundaccess(op)) {
         updLower(op, LowerBound{op});
         updUpper(op, UpperBound{op});
     }
