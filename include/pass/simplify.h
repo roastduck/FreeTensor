@@ -33,6 +33,38 @@ int findInnerMostScope(const std::unordered_map<std::string, int> &varScope,
                        const Expr &op);
 
 /**
+ *
+ */
+class FindBoundAccess : public Mutator {
+  protected:
+    std::unordered_multiset<uint64_t> boundaccess_;
+    GetHash getHash_;
+    bool dontinsert_ = false;
+
+  public:
+    const void boundaccess(std::unordered_multiset<uint64_t> &boundaccess) {
+        boundaccess_ = boundaccess;
+    }
+    const std::unordered_multiset<uint64_t> &boundaccess() const {
+        return boundaccess_;
+    }
+
+    void findboundaccess(const For &op);
+    void dontinsert();
+
+  protected:
+    using Mutator::visit; // Avoid hiding virtual functions
+    using Mutator::visitExpr;
+
+    uint64_t getHash(const Expr &op);
+    void setboundaccess(const Expr &op);
+    bool checkboundaccess(const Expr &op);
+
+    Stmt visit(const Store &op) override;
+    Stmt visit(const ReduceTo &op) override;
+};
+
+/**
  * Compute bounds of IDENTICAL (sub)expressions AT A POSITION in the AST
  *
  * E.g.
@@ -48,17 +80,14 @@ int findInnerMostScope(const std::unordered_map<std::string, int> &varScope,
  *
  * Inherit this pass to use it
  */
-class CompTransientBounds : public Mutator {
+class CompTransientBounds : public FindBoundAccess {
     std::unordered_map<uint64_t, std::pair<Expr, Expr>> transients_;
-    GetHash getHash_;
 
   protected:
     const std::unordered_map<uint64_t, std::pair<Expr, Expr>> &
     transients() const {
         return transients_;
     }
-
-    uint64_t getHash(const Expr &op);
 
   private:
     static Expr sub1(const Expr &op);
@@ -67,8 +96,7 @@ class CompTransientBounds : public Mutator {
     void applyCond(const Expr &cond);
 
   protected:
-    using Mutator::visit; // Avoid hiding virtual functions
-    using Mutator::visitExpr;
+    using FindBoundAccess::visit; // Avoid hiding virtual functions
 
     Stmt visit(const For &op) override;
     Stmt visit(const If &op) override;
