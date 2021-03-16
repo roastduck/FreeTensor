@@ -173,7 +173,7 @@ Stmt CompTransientBounds::visit(const For &op) {
         throw InvalidProgram(
             "iterators with the same name in nested loops are not allowed");
     }
-    transients_[hash] = {op->begin_, sub1(op->end_)},
+    transients_[hash] = {op->begin_, sub1(op->end_)};
     boundAccess_.emplace(hash);
     auto ret = FindBoundAccess::visit(op);
     transients_.erase(hash);
