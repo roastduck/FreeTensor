@@ -75,50 +75,102 @@ std::string GenISLExpr::normalizeId(const std::string &old) {
     return idCache_[old] = ret;
 }
 
-Ref<std::string> GenISLExpr::linear2str(const LinearExpr<int> &lin) {
-    std::ostringstream os;
-    os << lin.bias_;
-    for (auto &&item : lin.coeff_) {
-        if (item.second.a_->nodeType() == ASTNodeType::Var) {
-            os << " + " << item.second.k_ << " "
-               << normalizeId(toString(item.second.a_));
-        } else {
-            // Use the entire array as dependency
-            return nullptr;
+void GenISLExpr::visitExpr(const Expr &op,
+                           const std::function<void(const Expr &)> &visitNode) {
+    analyzeLinear_(op);
+    if (analyzeLinear_.result().count(op)) {
+        auto &&lin = analyzeLinear_.result().at(op);
+        std::ostringstream os;
+        os << lin.bias_;
+        for (auto &&item : lin.coeff_) {
+            if (item.second.a_->nodeType() == ASTNodeType::Var) {
+                os << " + " << item.second.k_ << " "
+                   << normalizeId(toString(item.second.a_));
+            } else {
+                goto fail;
+            }
         }
+        results_[op] = "(" + os.str() + ")";
     }
-    return Ref<std::string>::make(os.str());
+fail:
+    Visitor::visitExpr(op, visitNode);
 }
 
-Ref<std::string> GenISLExpr::operator()(const Expr &op) {
-    std::vector<LinearExpr<int>> subexprs;
-    std::function<bool(const Expr &expr)> recur = [&](const Expr &expr) {
-        if (expr->nodeType() == ASTNodeType::LAnd) {
-            auto a = expr.as<LAndNode>();
-            return recur(a->lhs_) && recur(a->rhs_);
-        }
-        analyzeLinear_(expr);
-        if (analyzeLinear_.result().count(expr)) {
-            subexprs.emplace_back(analyzeLinear_.result().at(expr));
-            return true;
-        }
-        return false;
-    };
-    if (!recur(op)) {
-        return nullptr;
+void GenISLExpr::visit(const LAnd &op) {
+    Visitor::visit(op);
+    if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
+        results_[op] = results_.at(op->lhs_) + " and " + results_.at(op->rhs_);
     }
-    std::string ret;
-    for (auto &&sub : subexprs) {
-        if (!ret.empty()) {
-            ret += " and ";
-        }
-        if (auto str = linear2str(sub); str.isValid()) {
-            ret += *str;
-        } else {
-            return nullptr;
-        }
+}
+
+void GenISLExpr::visit(const LT &op) {
+    Visitor::visit(op);
+    if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
+        results_[op] = results_.at(op->lhs_) + " < " + results_.at(op->rhs_);
     }
-    return Ref<std::string>::make(std::move(ret));
+}
+
+void GenISLExpr::visit(const LE &op) {
+    Visitor::visit(op);
+    if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
+        results_[op] = results_.at(op->lhs_) + " <= " + results_.at(op->rhs_);
+    }
+}
+
+void GenISLExpr::visit(const GT &op) {
+    Visitor::visit(op);
+    if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
+        results_[op] = results_.at(op->lhs_) + " > " + results_.at(op->rhs_);
+    }
+}
+
+void GenISLExpr::visit(const GE &op) {
+    Visitor::visit(op);
+    if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
+        results_[op] = results_.at(op->lhs_) + " >= " + results_.at(op->rhs_);
+    }
+}
+
+void GenISLExpr::visit(const EQ &op) {
+    Visitor::visit(op);
+    if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
+        results_[op] = results_.at(op->lhs_) + " = " + results_.at(op->rhs_);
+    }
+}
+
+void GenISLExpr::visit(const FloorDiv &op) {
+    Visitor::visit(op);
+    if (results_.count(op->lhs_) &&
+        op->rhs_->nodeType() == ASTNodeType::IntConst) {
+        results_[op] = "floor(" + results_.at(op->lhs_) + " / " +
+                       std::to_string(op->rhs_.as<IntConstNode>()->val_) + ")";
+    }
+}
+
+void GenISLExpr::visit(const CeilDiv &op) {
+    Visitor::visit(op);
+    if (results_.count(op->lhs_) &&
+        op->rhs_->nodeType() == ASTNodeType::IntConst) {
+        results_[op] = "ceil(" + results_.at(op->lhs_) + " / " +
+                       std::to_string(op->rhs_.as<IntConstNode>()->val_) + ")";
+    }
+}
+
+void GenISLExpr::visit(const Mod &op) {
+    Visitor::visit(op);
+    if (results_.count(op->lhs_) &&
+        op->rhs_->nodeType() == ASTNodeType::IntConst) {
+        results_[op] = "(" + results_.at(op->lhs_) + " % " +
+                       std::to_string(op->rhs_.as<IntConstNode>()->val_) + ")";
+    }
+}
+
+Ref<std::string> GenISLExpr::gen(const Expr &op) {
+    (*this)(op);
+    if (results_.count(op)) {
+        return Ref<std::string>::make(results_.at(op));
+    }
+    return nullptr;
 }
 
 std::string AnalyzeDeps::makeIterList(const std::vector<IterAxis> &list,
@@ -151,7 +203,7 @@ Ref<std::string> AnalyzeDeps::makeAccList(const std::vector<Expr> &list,
                                           RelaxMode relax) {
     std::string ret;
     for (int i = 0, iEnd = list.size(); i < iEnd; i++) {
-        if (auto linstr = genISLExpr_(list[i]); linstr.isValid()) {
+        if (auto linstr = genISLExpr_.gen(list[i]); linstr.isValid()) {
             ret += *linstr;
         } else if (relax == RelaxMode::Possible) {
             ret += genISLExpr_.normalizeId("free" + std::to_string(i));
@@ -173,13 +225,15 @@ Ref<std::string> AnalyzeDeps::makeRange(const std::vector<IterAxis> &point,
             std::string ineq =
                 genISLExpr_.normalizeId(point[i].iter_.as<VarNode>()->name_);
             bool bounded = true;
-            if (auto linstr = genISLExpr_(point[i].begin_); linstr.isValid()) {
+            if (auto linstr = genISLExpr_.gen(point[i].begin_);
+                linstr.isValid()) {
                 ineq = *linstr + " <= " + ineq;
             } else {
                 ineq = "free_lo <= " + ineq;
                 bounded = false;
             }
-            if (auto linstr = genISLExpr_(point[i].end_); linstr.isValid()) {
+            if (auto linstr = genISLExpr_.gen(point[i].end_);
+                linstr.isValid()) {
                 ineq = ineq + " < " + *linstr;
             } else {
                 ineq = ineq + " < free_hi";
@@ -201,7 +255,7 @@ Ref<std::string> AnalyzeDeps::makeRange(const std::vector<IterAxis> &point,
 
 Ref<std::string> AnalyzeDeps::makeCond(const Expr &expr, RelaxMode relax) {
     if (expr.isValid()) {
-        if (auto str = genISLExpr_(expr); str.isValid()) {
+        if (auto str = genISLExpr_.gen(expr); str.isValid()) {
             return Ref<std::string>::make(" and " + *str);
         } else if (relax == RelaxMode::Necessary) {
             return nullptr;

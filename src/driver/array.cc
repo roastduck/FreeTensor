@@ -6,14 +6,9 @@
 
 namespace ir {
 
-Array::Array(const std::vector<size_t> &shape, DataType dtype,
-             const Device &device)
-    : dtype_(dtype), shape_(shape), device_(device) {
-    size_ = sizeOf(dtype_);
-    for (size_t dim : shape_) {
-        size_ *= dim;
-    }
-
+Array::Array(size_t nElem, DataType dtype, const Device &device)
+    : size_(sizeOf(dtype) * nElem), nElem_(nElem), dtype_(dtype),
+      device_(device) {
     switch (device_.type()) {
     case TargetType::CPU:
         ptr_ = new uint8_t[size_];
@@ -42,8 +37,8 @@ Array::~Array() {
 }
 
 Array::Array(Array &&other)
-    : ptr_(other.ptr_), size_(other.size_), dtype_(other.dtype_),
-      shape_(std::move(other.shape_)), device_(std::move(other.device_)) {
+    : ptr_(other.ptr_), size_(other.size_), nElem_(other.nElem_),
+      dtype_(other.dtype_), device_(std::move(other.device_)) {
     other.ptr_ = nullptr; // MUST!
     other.size_ = 0;
 }
@@ -51,8 +46,8 @@ Array::Array(Array &&other)
 Array &Array::operator=(Array &&other) {
     ptr_ = other.ptr_;
     size_ = other.size_;
+    nElem_ = other.nElem_;
     dtype_ = other.dtype_;
-    shape_ = std::move(other.shape_);
     device_ = std::move(other.device_);
     other.ptr_ = nullptr; // MUST!
     other.size_ = 0;

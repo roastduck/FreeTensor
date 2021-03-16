@@ -8,7 +8,7 @@ def test_basic():
     with ir.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 8, nid="L2") as j:
-                y[i, j] = i + j
+                y[i, j] = i * j
     ast = ir.pop_ast()
     print(ast)
     s = ir.Schedule(ast)
@@ -20,7 +20,7 @@ def test_basic():
 
     with ir.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
         with ir.For("i", 0, 32) as i:
-            y[div(i, 8), i % 8] = div(i, 8) + i % 8
+            y[div(i, 8), i % 8] = div(i, 8) * (i % 8)
     std = ir.pop_ast()
 
     assert std.match(ast)
@@ -46,7 +46,7 @@ def test_if_in_between():
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.If(x[i] > 0):
                 with ir.For("j", 0, 8, nid="L2") as j:
-                    y[i, j] = i + j
+                    y[i, j] = i * j
     ast = ir.pop_ast()
     print(ast)
     s = ir.Schedule(ast)
@@ -61,7 +61,7 @@ def test_if_in_between():
             ("y", (4, 8), "int32", "output", "cpu")]) as (x, y):
         with ir.For("i", 0, 32) as i:
             with ir.If(x[div(i, 8)] > 0):
-                y[div(i, 8), i % 8] = div(i, 8) + i % 8
+                y[div(i, 8), i % 8] = div(i, 8) * (i % 8)
     std = ir.pop_ast()
 
     assert std.match(ast)
@@ -73,7 +73,7 @@ def test_stmt_in_between():
         with ir.For("i", 0, 4, nid="L1") as i:
             z[i] = i
             with ir.For("j", 0, 8, nid="L2") as j:
-                y[i, j] = i + j
+                y[i, j] = i * j
     ast = ir.pop_ast()
     print(ast)
     s = ir.Schedule(ast)
@@ -89,7 +89,7 @@ def test_stmt_in_between():
         with ir.For("i", 0, 32) as i:
             with ir.If(i % 8 == 0):
                 z[div(i, 8)] = div(i, 8)
-            y[div(i, 8), i % 8] = div(i, 8) + i % 8
+            y[div(i, 8), i % 8] = div(i, 8) * (i % 8)
     std = ir.pop_ast()
 
     assert std.match(ast)

@@ -41,6 +41,11 @@ void PrintVisitor::visit(const VarDef &op) {
     os() << ::ir::toString(tensor.dtype()) << "[";
     printList(tensor.shape());
     os() << "] ";
+    if (op->sizeLim_.isValid()) {
+        os() << "size_lim = ";
+        recur(op->sizeLim_);
+        os() << " ";
+    }
     beginBlock();
     recur(op->body_);
     endBlock();

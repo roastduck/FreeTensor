@@ -239,9 +239,10 @@ void CompUniqueBounds::updLower(const Expr &op, const LowerBound &bound) {
         lower_[op] = {bound};
         return;
     }
-    auto h = getHash(bound.expr_);
     for (LowerBound &old : lower_.at(op)) {
-        if (getHash(old.expr_) == h) {
+        // The same .expr_ does not mean the same bounds
+        // E.g. 1 * floor(a / 4) vs. (1/4) * a
+        if (old.lin_ == bound.lin_) {
             return;
         }
         if (bound.expr_->nodeType() == ASTNodeType::IntConst &&
@@ -262,9 +263,10 @@ void CompUniqueBounds::updUpper(const Expr &op, const UpperBound &bound) {
         upper_[op] = {bound};
         return;
     }
-    auto h = getHash(bound.expr_);
     for (UpperBound &old : upper_.at(op)) {
-        if (getHash(old.expr_) == h) {
+        // The same .expr_ does not mean the same bounds
+        // E.g. 1 * floor(a / 4) vs. (1/4) * a
+        if (old.lin_ == bound.lin_) {
             return;
         }
         if (bound.expr_->nodeType() == ASTNodeType::IntConst &&
@@ -481,6 +483,19 @@ Expr CompUniqueBounds::visit(const CeilDiv &_op) {
     return op;
 }
 
+Expr CompUniqueBounds::visit(const Mod &_op) {
+    auto __op = CompTransientBounds::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::Mod);
+    auto op = __op.as<ModNode>();
+    updLower(op, LowerBound{op});
+    updUpper(op, UpperBound{op});
+    updLower(op, LowerBound{LinearExpr<Rational<int>>{{}, 0}});
+    for (auto &&item : getUpper(op->rhs_)) {
+        updUpper(op, item);
+    }
+    return op;
+}
+
 Expr CompUniqueBounds::visit(const Min &_op) {
     auto __op = CompTransientBounds::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Min);
@@ -522,15 +537,36 @@ Expr SimplifyPass::visitExpr(
     Expr best = nullptr;
     auto bestScope = -1;
     for (auto &&lower : getLower(op)) {
-        auto hl = getHash(lower.expr_);
         for (auto &&upper : getUpper(op)) {
-            auto hr = getHash(upper.expr_);
-            if (hl == hr) {
-                // We need to choose the simplest one. Other wise
-                // we are always picking the original expression
-                auto scope = findInnerMostScope(varScope_, lower.expr_);
+            bool isEqual = false;
+
+            // Case 1: lower and upper the same const. E.g. 1/3 <= x <= 5/3
+            if (upper.lin_.coeff_.empty() && lower.lin_.coeff_.empty() &&
+                floorDiv(upper.lin_.bias_.p_, upper.lin_.bias_.q_) ==
+                    ceilDiv(lower.lin_.bias_.p_, lower.lin_.bias_.q_)) {
+                isEqual = true;
+            }
+
+            // Case 2: upper - lower < 1. E.g. a <= x <= a + 2/3
+            auto diff = sub(upper, lower);
+            if (diff.expr_->nodeType() == ASTNodeType::IntConst &&
+                diff.expr_.as<IntConstNode>()->val_ == 0) {
+                isEqual = true;
+            }
+
+            if (isEqual) {
+                // We need to choose the simplest one. Otherwise we are always
+                // picking the original expression
+                Expr expr;
+                if (upper.lin_.coeff_.size() + (upper.lin_.bias_ != 0) >
+                    lower.lin_.coeff_.size() + (lower.lin_.bias_ != 0)) {
+                    expr = lower.expr_;
+                } else {
+                    expr = upper.expr_;
+                }
+                auto scope = findInnerMostScope(varScope_, expr);
                 if (!best.isValid() || scope < bestScope) {
-                    best = lower.expr_, bestScope = scope;
+                    best = expr, bestScope = scope;
                 }
                 break;
             }
@@ -584,11 +620,47 @@ Expr SimplifyPass::visit(const Mod &_op) {
     auto __op = CompUniqueBounds::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Mod);
     auto op = __op.as<ModNode>();
-    if (op->lhs_->nodeType() == ASTNodeType::IntConst &&
-        op->rhs_->nodeType() == ASTNodeType::IntConst) {
-        return markMutated(makeIntConst(op->lhs_.as<IntConstNode>()->val_ %
-                                        op->rhs_.as<IntConstNode>()->val_));
+
+    if (getIntLower(op->lhs_) >= 0 &&
+        getIntUpper((*this)(makeSub(op->lhs_, op->rhs_))) < 0) {
+        return op->lhs_;
     }
+
+    if (op->rhs_->nodeType() == ASTNodeType::IntConst) {
+        auto k = op->rhs_.as<IntConstNode>()->val_;
+
+        if (op->lhs_->nodeType() == ASTNodeType::IntConst) {
+            return markMutated(
+                makeIntConst(op->lhs_.as<IntConstNode>()->val_ % k));
+        }
+
+        bool mutated = false;
+        std::function<Expr(const Expr &)> f = [&f, &mutated, k](const Expr &x) {
+            switch (x->nodeType()) {
+            case ASTNodeType::IntConst: {
+                auto val = x.as<IntConstNode>()->val_;
+                mutated = (val % k != val);
+                return makeIntConst(val % k);
+            }
+            case ASTNodeType::Add:
+                return makeAdd(f(x.as<AddNode>()->lhs_),
+                               f(x.as<AddNode>()->rhs_));
+            case ASTNodeType::Sub:
+                return makeSub(f(x.as<SubNode>()->lhs_),
+                               f(x.as<SubNode>()->rhs_));
+            case ASTNodeType::Mul:
+                return makeMul(f(x.as<MulNode>()->lhs_),
+                               f(x.as<MulNode>()->rhs_));
+            default:
+                return x;
+            }
+        };
+        auto newLhs = f(op->lhs_);
+        if (mutated) {
+            return markMutated(makeMod(newLhs, op->rhs_));
+        }
+    }
+
     return op;
 }
 
@@ -854,6 +926,16 @@ Stmt SimplifyPass::visit(const VarDef &_op) {
 
     if (isEmptyStmt(op->body_)) {
         return makeStmtSeq("", {});
+    }
+
+    if (op->sizeLim_.isValid()) {
+        Expr size = makeIntConst(1);
+        for (auto &&dim : op->buffer_->tensor().shape()) {
+            size = makeMul(size, dim);
+        }
+        if (getIntLower((*this)(makeSub(op->sizeLim_, size))) >= 0) {
+            op->sizeLim_ = nullptr;
+        }
     }
 
     return op;

@@ -63,7 +63,12 @@ template <class T> static T addImpl(const T &b1, const T &b2) {
     auto ret = b1.lin_;
     for (auto &&item : b2.lin_.coeff_) {
         if (ret.coeff_.count(item.first)) {
-            ret.coeff_[item.first].k_ += item.second.k_;
+            auto k = ret.coeff_[item.first].k_ + item.second.k_;
+            if (k == 0) {
+                ret.coeff_.erase(item.first);
+            } else {
+                ret.coeff_[item.first].k_ = k;
+            }
         } else {
             ret.coeff_[item.first] = item.second;
         }
@@ -76,7 +81,12 @@ template <class T, class U> static T subImpl(const T &b1, const U &b2) {
     auto ret = b1.lin_;
     for (auto &&item : b2.lin_.coeff_) {
         if (ret.coeff_.count(item.first)) {
-            ret.coeff_[item.first].k_ -= item.second.k_;
+            auto k = ret.coeff_[item.first].k_ - item.second.k_;
+            if (k == 0) {
+                ret.coeff_.erase(item.first);
+            } else {
+                ret.coeff_[item.first].k_ = k;
+            }
         } else {
             ret.coeff_[item.first] = {-item.second.k_, item.second.a_};
         }
@@ -87,6 +97,11 @@ template <class T, class U> static T subImpl(const T &b1, const U &b2) {
 
 template <class T> static T mulImpl(const T &b, int k) {
     auto ret = b.lin_;
+    if (k == 0) {
+        ret.coeff_.clear();
+        ret.bias_ = 0;
+        return ret;
+    }
     for (auto &&item : ret.coeff_) {
         item.second.k_ *= k;
     }

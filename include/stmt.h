@@ -59,6 +59,8 @@ class VarDefNode : public StmtNode {
   public:
     std::string name_;
     Ref<Buffer> buffer_;
+    Expr sizeLim_; // limit the buffer size to a specific expression, other than
+                   // the size of buffer_
     Stmt body_;
 
     VarDefNode(const VarDefNode &other);            // Deep copy
@@ -69,11 +71,12 @@ class VarDefNode : public StmtNode {
 typedef Ref<VarDefNode> VarDef;
 template <class Tbuffer, class Tbody>
 Stmt makeVarDef(const std::string &id, const std::string &name,
-                Tbuffer &&buffer, Tbody &&body) {
+                Tbuffer &&buffer, const Expr &sizeLim, Tbody &&body) {
     VarDef d = VarDef::make();
     d->setId(id);
     d->name_ = name;
     d->buffer_ = Ref<Buffer>::make(std::forward<Tbuffer>(buffer));
+    d->sizeLim_ = sizeLim;
     d->body_ = std::forward<Tbody>(body);
     return d;
 }

@@ -1,6 +1,7 @@
 #ifndef CURSOR_H
 #define CURSOR_H
 
+#include <functional>
 #include <vector>
 
 #include <except.h>
@@ -80,6 +81,28 @@ inline Cursor getCursorById(const Stmt &ast, const std::string &id) {
         throw InvalidSchedule("Statement " + id + " not found");
     }
     return visitor.result();
+}
+
+class GetCursorByFilter : public VisitorWithCursor {
+    const std::function<bool(const Cursor &)> &filter_;
+    std::vector<Cursor> results_;
+
+  public:
+    GetCursorByFilter(const std::function<bool(const Cursor &)> &filter)
+        : filter_(filter) {}
+    const std::vector<Cursor> &results() const { return results_; }
+
+  protected:
+    void visitStmt(const Stmt &op,
+                   const std::function<void(const Stmt &)> &visitNode) override;
+};
+
+inline std::vector<Cursor>
+getCursorByFilter(const Stmt &ast,
+                  const std::function<bool(const Cursor &)> &filter) {
+    GetCursorByFilter visitor(filter);
+    visitor(ast);
+    return visitor.results();
 }
 
 } // namespace ir

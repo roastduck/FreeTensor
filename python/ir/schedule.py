@@ -1,5 +1,5 @@
 import ffi
-from ffi import MoveToSide
+from ffi import MoveToSide, VarSplitMode
 
 from .utils import *
 
@@ -153,6 +153,44 @@ class Schedule(ffi.Schedule):
         super(Schedule, self).swap(list(map(toId, order)))
 
     '''
+    Unroll a loop and interleave statements from each iteration
+
+    E.g.
+
+    ```
+    for i = 0 to 2 {
+      f(i);
+      g(i);
+    }
+    ```
+
+    will be transformed to be
+
+    ```
+    f(0);
+    f(1);
+    g(0);
+    g(1);
+    ```
+
+    Virtual threads in TVM can be implemented via first reorder and then
+    blend
+
+    Parameters
+    ----------
+    loop : str, Stmt or Cursor
+        The loop being transformed
+
+    Raises
+    ------
+    InvalidSchedule
+        if the loop is not found, the loop length is not a constant, or
+        the dependencies cannot be solved
+    '''
+    def blend(self, loop):
+        super(Schedule, self).blend(toId(loop))
+
+    '''
     Cache a variable into a new local variable
 
     All needed data will be filled into the cache first, then all reads and
@@ -243,6 +281,34 @@ class Schedule(ffi.Schedule):
     '''
     def cache_reduction(self, stmt, var, mtype):
         return super(Schedule, self).cache_reduction(toId(stmt), var, parseMType(mtype))
+
+    '''
+    Split a dimension of a variable into two
+
+    Parameters
+    ----------
+    vardef : str, Stmt or Cursor
+        ID of the VarDef statement of the specific variable
+    dim : int
+        which dimension to be split
+    mode : VarSplitMode
+        When the dimension to split is not divisible by `factor` or `nparts`,
+        the resulting shape may become larger. In `FixedSize` mode, the actual
+        buffer size will not be changed, and gurads will be added to prevent
+        out-of-bound accesses. In `RelaxedSize` mode, the buffer size may
+        increase. The `RelaxedSize` mode cannot be applied to I/O variables
+    factor : int
+        Length of the inner (higher no.) dimension. Set to -1 if using `nparts`
+    nparts : int
+        Length of the outer (lower no.) loop. Set to -1 if using `factor`
+
+    Raises
+    ------
+    InvalidSchedule
+        if the variable or the dimension is not found
+    '''
+    def var_split(self, vardef, dim, mode, factor=-1, nparts=-1):
+        return super(Schedule, self).var_split(toId(vardef), dim, mode, factor, nparts)
 
     '''
     Move a statement to a new position

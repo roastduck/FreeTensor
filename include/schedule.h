@@ -1,6 +1,7 @@
 #ifndef SCHEDULE_H
 #define SCHEDULE_H
 
+#include <functional>
 #include <unordered_map>
 
 #include <cursor.h>
@@ -9,6 +10,8 @@
 namespace ir {
 
 enum MoveToSide : int { Before, After };
+
+enum VarSplitMode : int { FixedSize, RelaxedSize };
 
 class Schedule {
     Stmt ast_;
@@ -22,10 +25,18 @@ class Schedule {
     const Stmt &ast() const { return ast_; }
 
     /**
-     * Find a node in the current AST
-     * @id : ID of the node
+     * Find all nodes in the current AST satisfying a given condition
+     * @param filter : A callback. Return true for acceptance
      */
-    Cursor find(const std::string &id) const;
+    std::vector<Cursor>
+    findAll(const std::function<bool(const Cursor &)> &filter) const;
+
+    /**
+     * Find the only one nodes in the current AST satisfying a given condition
+     * @param filter : A callback. Return true for acceptance
+     * @throw Error : if there is more than one, or there is no node found
+     */
+    Cursor find(const std::function<bool(const Cursor &)> &filter) const;
 
     /**
      * Split a loop into two nested loops
@@ -111,6 +122,36 @@ class Schedule {
     void swap(const std::vector<std::string> &order);
 
     /**
+     * Unroll a loop and interleave statements from each iteration
+     *
+     * E.g.
+     *
+     * ```
+     * for i = 0 to 2 {
+     *   f(i);
+     *   g(i);
+     * }
+     * ```
+     *
+     * will be transformed to be
+     *
+     * ```
+     * f(0);
+     * f(1);
+     * g(0);
+     * g(1);
+     * ```
+     *
+     * Virtual threads in TVM can be implemented via first reorder and then
+     * blend
+     *
+     * @param loop : ID of the loop being transformed
+     * @throw InvalidSchedule if the loop is not found, the loop length is not a
+     * constant, or the dependencies cannot be solved
+     */
+    void blend(const std::string &loop);
+
+    /**
      * Cache a variable into a new local variable
      *
      * All needed data will be filled into the cache first, then all reads and
@@ -178,6 +219,25 @@ class Schedule {
     std::tuple<std::string, std::string, std::string>
     cacheReduction(const std::string &stmt, const std::string &var,
                    MemType mtype);
+
+    /**
+     * Split a dimension of a variable into two
+     *
+     * @param def : ID of the VarDef statement of the specific variable
+     * @param dim : which dimension to be split
+     * @param mode : When the dimension to split is not divisible by `factor` or
+     * `nparts`, the resulting shape may become larger. In `FixedSize` mode, the
+     * actual buffer size will not be changed, and gurads will be added to
+     * prevent out-of-bound accesses. In `RelaxedSize` mode, the buffer size may
+     * increase. The `RelaxedSize` mode cannot be applied to I/O variables
+     * @param factor : Length of the inner (higher no.) dimension. Set to -1 if
+     * using `nparts`
+     * @param nparts : Length of the outer (lower no.) loop. Set to -1 if using
+     * `factor`
+     * @throw InvalidSchedule if the variable or the dimension is not found
+     */
+    void varSplit(const std::string &def, int dim, VarSplitMode mode,
+                  int factor = -1, int nparts = -1);
 
     /**
      * Move a statement to a new position

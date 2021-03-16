@@ -26,6 +26,7 @@ class MergeFor : public Mutator {
           newId_("merged." + oldOuter_->id() + "." + oldInner_->id()) {}
 
     const std::string &newIter() const { return newIter_; }
+    const std::string &newId() const { return newId_; }
 
   protected:
     Stmt visit(const For &op) override;

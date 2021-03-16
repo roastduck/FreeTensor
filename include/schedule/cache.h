@@ -7,9 +7,9 @@
 namespace ir {
 
 class MakeCacheVar : public Mutator {
-    std::string stmt_, oldVar_, newVar_, newDef_;
+    std::string stmt_, oldVar_, newVar_, oldDef_, newDef_;
     MemType mtype_;
-    Ref<Buffer> oldBuffer_;
+    VarDef def_;
     bool inStmt_ = false;
 
   public:
@@ -18,6 +18,7 @@ class MakeCacheVar : public Mutator {
         : stmt_(stmt), oldVar_(oldVar), newVar_(oldVar + ".c"), mtype_(mtype) {}
 
     const std::string &newVar() const { return newVar_; }
+    const std::string &oldDef() const { return oldDef_; }
     const std::string &newDef() const { return newDef_; }
 
   protected:
@@ -30,17 +31,19 @@ class MakeCacheVar : public Mutator {
 };
 
 class MakeFillAndFlush : public Mutator {
-    std::string stmt_, oldVar_, newVar_, newDef_, fillStmt_, flushStmt_;
+    std::string stmt_, oldVar_, newVar_, oldDef_, newDef_;
+    std::string fillStmt_, flushStmt_;
     const std::unordered_map<std::string, AccessBound> &rRange_, &wRange_;
-    int nDim_ = -1;
+    VarDef def_;
 
   public:
     MakeFillAndFlush(const std::string &stmt, const std::string &oldVar,
-                     const std::string &newVar, const std::string &newDef,
+                     const std::string &newVar, const std::string &oldDef,
+                     const std::string &newDef,
                      const std::unordered_map<std::string, AccessBound> &rRange,
                      const std::unordered_map<std::string, AccessBound> &wRange)
-        : stmt_(stmt), oldVar_(oldVar), newVar_(newVar), newDef_(newDef),
-          rRange_(rRange), wRange_(wRange) {}
+        : stmt_(stmt), oldVar_(oldVar), newVar_(newVar), oldDef_(oldDef),
+          newDef_(newDef), rRange_(rRange), wRange_(wRange) {}
 
     const std::string &fillStmt() const { return fillStmt_; }
     const std::string &flushStmt() const { return flushStmt_; }
@@ -52,17 +55,20 @@ class MakeFillAndFlush : public Mutator {
 };
 
 class MakeInitAndReduce : public Mutator {
-    std::string stmt_, oldVar_, newVar_, newDef_, initStmt_, reduceStmt_;
+    std::string stmt_, oldVar_, newVar_, oldDef_, newDef_;
+    std::string initStmt_, reduceStmt_;
     const std::unordered_map<std::string, AccessBound> &range_;
-    Ref<Buffer> buffer_;
+    VarDef def_;
     ReduceTo reduce_;
+    bool inNewVar_ = false;
 
   public:
     MakeInitAndReduce(const std::string &stmt, const std::string &oldVar,
-                      const std::string &newVar, const std::string &newDef,
+                      const std::string &newVar, const std::string &oldDef,
+                      const std::string &newDef,
                       const std::unordered_map<std::string, AccessBound> &range)
-        : stmt_(stmt), oldVar_(oldVar), newVar_(newVar), newDef_(newDef),
-          range_(range) {}
+        : stmt_(stmt), oldVar_(oldVar), newVar_(newVar), oldDef_(oldDef),
+          newDef_(newDef), range_(range) {}
 
     const std::string &initStmt() const { return initStmt_; }
     const std::string &reduceStmt() const { return reduceStmt_; }

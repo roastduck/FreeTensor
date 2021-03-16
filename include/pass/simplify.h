@@ -161,6 +161,7 @@ class CompUniqueBounds : public CompTransientBounds {
     Expr visit(const Mul &op) override;
     Expr visit(const FloorDiv &op) override;
     Expr visit(const CeilDiv &op) override;
+    Expr visit(const Mod &op) override;
     Expr visit(const Min &op) override;
     Expr visit(const Max &op) override;
 };

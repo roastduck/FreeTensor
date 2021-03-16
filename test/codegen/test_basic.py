@@ -16,7 +16,7 @@ def test_hello_world():
     driver = ir.Driver(code, params, ir.Device(ir.CPU()))
     driver.set_params({"x": x_arr})
     driver.run()
-    x_np = x_arr.numpy()
+    x_np = x_arr.numpy().reshape(4, 4)
 
     x_std = np.zeros((4, 4), dtype="float32")
     x_std[2, 3] = 2.0
