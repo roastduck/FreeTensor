@@ -9,7 +9,7 @@ def test_not_constant():
             ("n", (), "int32", "input", "cpu"),
             ("y", (4,), "int32", "output", "cpu")]) as (n, y):
         with ir.For("i", 0, n[()], nid = "L1") as i:
-                y[i] = i
+            y[i] = i
 
     ast = ir.pop_ast()
     print(ast)

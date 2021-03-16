@@ -33,32 +33,32 @@ int findInnerMostScope(const std::unordered_map<std::string, int> &varScope,
                        const Expr &op);
 
 /**
- *
+ * Find whether the bound of value is accessible.
  */
 class FindBoundAccess : public Mutator {
   protected:
-    std::unordered_multiset<uint64_t> boundaccess_;
+    std::unordered_multiset<uint64_t> boundAccess_;
     GetHash getHash_;
-    bool dontinsert_ = false;
+    bool dontInsert_ = false;
 
   public:
-    const void boundaccess(std::unordered_multiset<uint64_t> &boundaccess) {
-        boundaccess_ = boundaccess;
+    const void boundAccess(std::unordered_multiset<uint64_t> &boundAccess) {
+        boundAccess_ = boundAccess;
     }
-    const std::unordered_multiset<uint64_t> &boundaccess() const {
-        return boundaccess_;
+    const std::unordered_multiset<uint64_t> &boundAccess() const {
+        return boundAccess_;
     }
 
-    void findboundaccess(const For &op);
-    void dontinsert();
+    void findBoundAccess(const For &op) { Mutator::visit(op); }
+    void dontInsert() { dontInsert_ = true; }
 
   protected:
     using Mutator::visit; // Avoid hiding virtual functions
     using Mutator::visitExpr;
 
     uint64_t getHash(const Expr &op);
-    void setboundaccess(const Expr &op);
-    bool checkboundaccess(const Expr &op);
+    void setBoundAccess(const Expr &op);
+    bool checkBoundAccess(const Expr &op);
 
     Stmt visit(const Store &op) override;
     Stmt visit(const ReduceTo &op) override;
@@ -88,6 +88,7 @@ class CompTransientBounds : public FindBoundAccess {
     transients() const {
         return transients_;
     }
+    void transientsErase(uint64_t hash) { transients_.erase(hash); }
 
   private:
     static Expr sub1(const Expr &op);

@@ -39,26 +39,23 @@ int findInnerMostScope(const std::unordered_map<std::string, int> &varScope,
     return visitor.innnerMost();
 }
 
-void FindBoundAccess::findboundaccess(const For &op) { Mutator::visit(op); }
-void FindBoundAccess::dontinsert() { dontinsert_ = true; }
-
 uint64_t FindBoundAccess::getHash(const Expr &op) {
     getHash_(op);
     return getHash_.hash().at(op);
 }
 
-void FindBoundAccess::setboundaccess(const Expr &op) {
-    if (dontinsert_)
+void FindBoundAccess::setBoundAccess(const Expr &op) {
+    if (dontInsert_)
         return;
     switch (op->nodeType()) {
     case ASTNodeType::Var: {
         auto hash = getHash(op.as<VarNode>());
-        boundaccess_.emplace(hash);
+        boundAccess_.emplace(hash);
         break;
     }
     case ASTNodeType::Load: {
         auto hash = getHash(makeVar(op.as<LoadNode>()->var_));
-        boundaccess_.emplace(hash);
+        boundAccess_.emplace(hash);
         break;
     }
     default:;
@@ -66,15 +63,15 @@ void FindBoundAccess::setboundaccess(const Expr &op) {
     }
 }
 
-bool FindBoundAccess::checkboundaccess(const Expr &op) {
+bool FindBoundAccess::checkBoundAccess(const Expr &op) {
     switch (op->nodeType()) {
     case ASTNodeType::Var: {
         auto hash = getHash(op.as<VarNode>());
-        return boundaccess_.count(hash);
+        return boundAccess_.count(hash);
     }
     case ASTNodeType::Load: {
         auto hash = getHash(makeVar(op.as<LoadNode>()->var_));
-        return boundaccess_.count(hash);
+        return boundAccess_.count(hash);
     }
     default: {
         return true;
@@ -84,14 +81,14 @@ bool FindBoundAccess::checkboundaccess(const Expr &op) {
 
 Stmt FindBoundAccess::visit(const Store &op) {
     auto hash = getHash(makeVar(op->var_));
-    boundaccess_.erase(hash);
+    boundAccess_.erase(hash);
     auto ret = Mutator::visit(op);
     return ret;
 }
 
 Stmt FindBoundAccess::visit(const ReduceTo &op) {
     auto hash = getHash(makeVar(op->var_));
-    boundaccess_.erase(hash);
+    boundAccess_.erase(hash);
     auto ret = Mutator::visit(op);
     return ret;
 }
@@ -123,41 +120,41 @@ void CompTransientBounds::applyCond(const Expr &cond) {
     case ASTNodeType::LT: {
         auto lt = cond.as<LTNode>();
         transients_[getHash(lt->lhs_)].second = sub1(lt->rhs_);
-        setboundaccess(lt->lhs_);
+        setBoundAccess(lt->lhs_);
         transients_[getHash(lt->rhs_)].first = add1(lt->lhs_);
-        setboundaccess(lt->rhs_);
+        setBoundAccess(lt->rhs_);
         break;
     }
     case ASTNodeType::GT: {
         auto gt = cond.as<GTNode>();
         transients_[getHash(gt->lhs_)].first = add1(gt->rhs_);
-        setboundaccess(gt->lhs_);
+        setBoundAccess(gt->lhs_);
         transients_[getHash(gt->rhs_)].second = sub1(gt->lhs_);
-        setboundaccess(gt->rhs_);
+        setBoundAccess(gt->rhs_);
         break;
     }
     case ASTNodeType::LE: {
         auto le = cond.as<LENode>();
         transients_[getHash(le->lhs_)].second = le->rhs_;
-        setboundaccess(le->lhs_);
+        setBoundAccess(le->lhs_);
         transients_[getHash(le->rhs_)].first = le->lhs_;
-        setboundaccess(le->rhs_);
+        setBoundAccess(le->rhs_);
         break;
     }
     case ASTNodeType::GE: {
         auto ge = cond.as<GENode>();
         transients_[getHash(ge->lhs_)].first = ge->rhs_;
-        setboundaccess(ge->lhs_);
+        setBoundAccess(ge->lhs_);
         transients_[getHash(ge->rhs_)].second = ge->lhs_;
-        setboundaccess(ge->rhs_);
+        setBoundAccess(ge->rhs_);
         break;
     }
     case ASTNodeType::EQ: {
         auto eq = cond.as<EQNode>();
         transients_[getHash(eq->lhs_)] = {eq->rhs_, eq->rhs_};
-        setboundaccess(eq->lhs_);
+        setBoundAccess(eq->lhs_);
         transients_[getHash(eq->rhs_)] = {eq->lhs_, eq->lhs_};
-        setboundaccess(eq->rhs_);
+        setBoundAccess(eq->rhs_);
         break;
     }
     default:;
@@ -167,18 +164,18 @@ void CompTransientBounds::applyCond(const Expr &cond) {
 
 Stmt CompTransientBounds::visit(const For &op) {
     FindBoundAccess fbaccess;
-    fbaccess.dontinsert();
-    fbaccess.boundaccess(boundaccess_);
-    fbaccess.findboundaccess(op);
-    boundaccess_ = fbaccess.boundaccess();
+    fbaccess.dontInsert();
+    fbaccess.boundAccess(boundAccess_);
+    fbaccess.findBoundAccess(op);
+    boundAccess_ = fbaccess.boundAccess();
     auto hash = getHash(makeVar(op->iter_));
     if (transients_.count(hash)) {
         throw InvalidProgram(
             "iterators with the same name in nested loops are not allowed");
     }
     transients_[hash] = {op->begin_, sub1(op->end_)},
-    boundaccess_.emplace(hash);
-    auto ret = Mutator::visit(op);
+    boundAccess_.emplace(hash);
+    auto ret = FindBoundAccess::visit(op);
     transients_.erase(hash);
     return ret;
 }
@@ -315,7 +312,7 @@ Expr CompUniqueBounds::visitExpr(
     if (!inRecur) {
         inRecur = true;
         auto hash = getHash(op);
-        if (transients().count(hash) && checkboundaccess(op)) {
+        if (transients().count(hash) && checkBoundAccess(op)) {
             auto &&range = transients().at(hash);
             if (range.first.isValid()) {
                 auto first = (*this)(range.first);
@@ -339,10 +336,11 @@ Expr CompUniqueBounds::visit(const Var &_op) {
     auto __op = CompTransientBounds::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Var);
     auto op = __op.as<VarNode>();
-    if (checkboundaccess(op)) {
-        updLower(op, LowerBound{op});
-        updUpper(op, UpperBound{op});
-    }
+    auto hash = getHash(op);
+    if (transients().count(hash) && !checkBoundAccess(op))
+        transientsErase(hash);
+    updLower(op, LowerBound{op});
+    updUpper(op, UpperBound{op});
     return op;
 }
 
@@ -350,10 +348,11 @@ Expr CompUniqueBounds::visit(const Load &_op) {
     auto __op = CompTransientBounds::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Load);
     auto op = __op.as<LoadNode>();
-    if (checkboundaccess(op)) {
-        updLower(op, LowerBound{op});
-        updUpper(op, UpperBound{op});
-    }
+    auto hash = getHash(op);
+    if (transients().count(hash) && !checkBoundAccess(op))
+        transientsErase(hash);
+    updLower(op, LowerBound{op});
+    updUpper(op, UpperBound{op});
     return op;
 }
 
