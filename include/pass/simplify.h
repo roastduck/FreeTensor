@@ -33,6 +33,38 @@ int findInnerMostScope(const std::unordered_map<std::string, int> &varScope,
                        const Expr &op);
 
 /**
+ * Find whether the bound of value is accessible.
+ */
+class FindBoundAccess : public Mutator {
+  protected:
+    std::unordered_multiset<uint64_t> boundAccess_;
+    GetHash getHash_;
+    bool dontInsert_ = false;
+
+  public:
+    const void boundAccess(std::unordered_multiset<uint64_t> &boundAccess) {
+        boundAccess_ = boundAccess;
+    }
+    const std::unordered_multiset<uint64_t> &boundAccess() const {
+        return boundAccess_;
+    }
+
+    void findBoundAccess(const For &op) { Mutator::visit(op); }
+    void dontInsert() { dontInsert_ = true; }
+
+  protected:
+    using Mutator::visit; // Avoid hiding virtual functions
+    using Mutator::visitExpr;
+
+    uint64_t getHash(const Expr &op);
+    void setBoundAccess(const Expr &op);
+    bool checkBoundAccess(const Expr &op);
+
+    Stmt visit(const Store &op) override;
+    Stmt visit(const ReduceTo &op) override;
+};
+
+/**
  * Compute bounds of IDENTICAL (sub)expressions AT A POSITION in the AST
  *
  * E.g.
@@ -48,17 +80,15 @@ int findInnerMostScope(const std::unordered_map<std::string, int> &varScope,
  *
  * Inherit this pass to use it
  */
-class CompTransientBounds : public Mutator {
+class CompTransientBounds : public FindBoundAccess {
     std::unordered_map<uint64_t, std::pair<Expr, Expr>> transients_;
-    GetHash getHash_;
 
   protected:
     const std::unordered_map<uint64_t, std::pair<Expr, Expr>> &
     transients() const {
         return transients_;
     }
-
-    uint64_t getHash(const Expr &op);
+    void transientsErase(uint64_t hash) { transients_.erase(hash); }
 
   private:
     static Expr sub1(const Expr &op);
@@ -67,8 +97,7 @@ class CompTransientBounds : public Mutator {
     void applyCond(const Expr &cond);
 
   protected:
-    using Mutator::visit; // Avoid hiding virtual functions
-    using Mutator::visitExpr;
+    using FindBoundAccess::visit; // Avoid hiding virtual functions
 
     Stmt visit(const For &op) override;
     Stmt visit(const If &op) override;
