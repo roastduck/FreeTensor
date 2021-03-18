@@ -1,16 +1,46 @@
 import ast
 import numpy as np
 import sourceinspect as ins
+from typing import Sequence
 
-from .nodes import _VarDef, Var, pop_ast
+from .nodes import _VarDef, Var, pop_ast, For, If, Else
 
-in_transformation = False
+import ffi
+
 
 def declare_var(var, shape, dtype, atype, mtype):
     pass
 
+
 def create_var(shape, dtype, atype, mtype):
     return np.zeros(shape, dtype)
+
+
+class VarSubscript:
+    def __init__(self, var, sub):
+        self.var = var
+        self.sub = sub
+
+    def set(self, value):
+        self.var.__setitem__(self.sub, value)
+
+
+class VarCreation:
+    def __init__(self, shape: Sequence, dtype, atype, mtype, name=None):
+        self.shape = shape
+        self.dtype = dtype
+        self.atype = atype
+        self.mtype = mtype
+        self.name = name
+
+    def add_name(self, name):
+        assert self.name is None, "Bug: Variable name is set more than once"
+        self.name = name
+
+    def execute(self):
+        assert self.name is not None, "Bug: Variable name is not set"
+        ctx_stack.create_variable(self.name, self.shape, self.dtype, self.atype, self.mtype)
+
 
 class ASTContext:
     def __init__(self):
@@ -35,8 +65,10 @@ class ASTContextStack:
     def top(self) -> ASTContext:
         return self.ctx_stack[-1]
 
-    def get_current_name(self, name):
+    def get_current_name(self, name, prefetch = False):
         name_id = self.now_var_id.get(name)
+        if prefetch and name_id is None:
+            return None
         assert name_id is not None, "Variable not found"
         if name_id != 0:
             return '___cache_' + name + '_' + str(name_id)
@@ -62,16 +94,20 @@ class ASTContextStack:
         self.name_set.add(name)
         return name
 
-    def find_var_by_name(self, name):
-        name = self.get_current_name(name)
+    def find_var_by_name(self, name, prefetch=False):
+        name = self.get_current_name(name, prefetch)
 
         for ctx in reversed(self.ctx_stack):  # type: ASTContext
             if name in ctx.old_vars:
+                if prefetch:
+                    return None
                 assert False, "Variable reassigned in if/for/while"
             var = ctx.var_dict.get(name)
             if var is not None:
                 return var
 
+        if prefetch:
+            return None
         assert False, "Bug: variable not found by find_var_by_name"
 
     def create_scope(self):
@@ -95,6 +131,14 @@ class ASTContextStack:
         top.var_dict[name] = var
         return var
 
+    def create_loop(self, name, begin, end):
+        name = self.create_current_name(name, "cache")
+        fr = For(name, begin, end, self.get_nid())
+        var = fr.__enter__()
+        top = self.top()
+        top.var_dict[name] = var
+        return fr
+
     def set_nid(self, name):
         self.next_nid = name
 
@@ -102,6 +146,7 @@ class ASTContextStack:
         ret = self.next_nid
         self.next_nid = ''
         return ret
+
 
 ctx_stack = ASTContextStack()
 
@@ -118,12 +163,98 @@ class ASTTransformer(ast.NodeTransformer):
     def parse_expr(expr):
         return ast.parse(expr).body[0].value
 
-    def visit_FunctionDef(self, node):
+    def visit_Name(self, node):
+        node.expr_ptr = ctx_stack.find_var_by_name(node.id, prefetch=True)
+        return node
+
+    def visit_Constant(self, node):
+        value = node.value
+        if isinstance(value, int) or isinstance(value, float) or isinstance(value, bool):
+            node.expr_ptr = value
+        elif isinstance(value, str):
+            node.expr_str = value
+        return node
+
+    def visit_Subscript(self, node):
         self.generic_visit(node)
-        node.args.args = []
-        prologue = [self.parse_stmt('ir.transformer.ctx_stack.create_scope()')]
-        epilogue = [self.parse_stmt('ir.transformer.ctx_stack.pop_scope()')]
-        node.body = [self.parse_stmt('import ir')] + prologue + node.body + epilogue
+        assert isinstance(node.value.expr_ptr, Var), "Invalid subscript"  # TODO: more specific error message
+        print(ast.dump(node))
+        var = node.value.expr_ptr
+        value = node.slice.value
+        if isinstance(value, ast.Tuple):
+            assert hasattr(value, 'expr_tuple')
+            tup = value.expr_tuple
+        elif hasattr(value, 'expr_ptr'):
+            tup = (value.expr_ptr,)
+        else:
+            assert False, "Invalid subscript value"
+        if isinstance(node.ctx, ast.Load):
+            node.expr_ptr = var[tup]
+        else:
+            node.expr_ptr = VarSubscript(var, tup)
+        return node
+
+    def visit_BinOp(self, node):
+        self.generic_visit(node)
+        assert hasattr(node.left, "expr_ptr"), "left operand is not expression"
+        assert hasattr(node.right, "expr_ptr"), "right operand is not expression"
+        if isinstance(node.op, ast.Add):
+            node.expr_ptr = node.left.expr_ptr + node.right.expr_ptr
+        if isinstance(node.op, ast.Mult):
+            node.expr_ptr = node.left.expr_ptr * node.right.expr_ptr
+        return node
+
+    def visit_FunctionDef(self, node):
+        ctx_stack.create_scope()
+        self.generic_visit(node)
+        ctx_stack.pop_scope()
+        return node
+
+    def visit_Call(self, node):
+        self.generic_visit(node)
+        if isinstance(node.func, ast.Attribute) and \
+              isinstance(node.func.value, ast.Name) and \
+              node.func.value.id == 'ir':
+            func_name = node.func.attr
+            args = node.args
+            if func_name == 'create_var':
+                assert len(args) == 4, "create_var function has 4 arguments"
+                shape = args[0]
+                assert hasattr(shape, "expr_tuple"), "Shape is not a tuple"
+                shape = shape.expr_tuple
+                for i in range(1, 4):
+                    assert hasattr(args[i], "expr_str"), "argument {} expects str".format(i + 1)
+                dtype = args[1].expr_str
+                atype = args[2].expr_str
+                mtype = args[3].expr_str
+                node.expr_call = VarCreation(shape, dtype, atype, mtype)
+            elif func_name == 'declare_var':
+                assert len(args) == 5, "define_var function has 5 arguments"
+                assert isinstance(args[0], ast.Name)
+                name = args[0].id
+                shape = args[1]
+                assert hasattr(shape, "expr_tuple"), "Shape is not a tuple"
+                shape = shape.expr_tuple
+                for i in range(2, 5):
+                    assert hasattr(args[i], "expr_str"), "argument {} expects str".format(i + 1)
+                dtype = args[2].expr_str
+                atype = args[3].expr_str
+                mtype = args[4].expr_str
+                node.expr_call = VarCreation(shape, dtype, atype, mtype, name)
+            else:
+                assert False, "Function not implemented"
+        else:
+            assert False, "External call not implemented"
+        return node
+
+    def visit_Tuple(self, node):
+        self.generic_visit(node)
+        tup = []
+        for i in node.elts:  # TODO: maybe support for tuple in tuple
+            assert hasattr(i, "expr_ptr"), "Invalid tuple"
+            tup.append(i.expr_ptr)
+        tup = tuple(tup)
+        node.expr_tuple = tup
         return node
 
     def visit_Assign(self, node):
@@ -131,42 +262,40 @@ class ASTTransformer(ast.NodeTransformer):
         print(ast.dump(node))
         # TODO: (maybe) support for multiple assignment
         assert len(node.targets) == 1, "Multiple assignment is not supported"
-        if isinstance(node.value, ast.Call) and \
-              isinstance(node.value.func, ast.Attribute) and \
-              isinstance(node.value.func.value, ast.Name) and \
-              node.value.func.value.id == 'ir' and \
-              node.value.func.attr == 'create_var':
+        if hasattr(node.value, "expr_call") and isinstance(node.value.expr_call, VarCreation):
             name = node.targets[0].id
-            template = "{} = ir.transformer.ctx_stack.create_variable(0, 0, 0, 0, 0)".format(name)
-            new_node = self.parse_stmt(template)
-            new_node.value.args = [self.parse_expr('"' + name + '"')] + node.value.args
-            return new_node
+            var_creation = node.value.expr_call
+            var_creation.add_name(name)
+            var_creation.execute()
+        elif hasattr(node.targets[0], "expr_ptr") and isinstance(node.targets[0].expr_ptr, VarSubscript):
+            var = node.targets[0].expr_ptr
+            assert hasattr(node.value, "expr_ptr"), "Value to be assigned is not an expression"
+            var.set(node.value.expr_ptr)
+        else:
+            assert False, "Invalid assignment"
         return node
 
     def visit_For(self, node):
-        nid = ctx_stack.get_nid()
-        self.generic_visit(node)
         if isinstance(node.iter, ast.Call) and \
               isinstance(node.iter.func, ast.Name) and \
               node.iter.func.id == 'range' and \
               len(node.iter.args) == 2:
+            ctx_stack.create_scope()
             name = node.target.id
-            template = '''
-if 1:
-    ir.transformer.ctx_stack.create_scope()
-    with ir.For(0, 0, 0, 0) as {}:
-        pass
-    ir.transformer.ctx_stack.pop_scope()
-            '''.format(name)
-            new_node = self.parse_stmt(template)
-            wt = new_node.body[1]
-            args = [self.parse_expr('"' + name + '"')] + node.iter.args
-            args.append(self.parse_expr('"' + nid + '"'))
-            wt.items[0].context_expr.args = args
-            wt.body = node.body
-            return new_node
+            self.visit(node.iter.args[0])
+            self.visit(node.iter.args[1])
+            assert hasattr(node.iter.args[0], "expr_ptr"), "For range is not expression"
+            assert hasattr(node.iter.args[1], "expr_ptr"), "For range is not expression"
+            begin = node.iter.args[0].expr_ptr
+            end = node.iter.args[1].expr_ptr
+            fr = ctx_stack.create_loop(name, begin, end)
+            for i in node.body:
+                self.visit(i)
+            fr.__exit__(None, None, None)
+            ctx_stack.pop_scope()
         else:
             assert False, "For statement other than range(a, b) is not implemented"
+        return node
 
     def visit_Expr(self, node):
         self.generic_visit(node)
@@ -175,37 +304,33 @@ if 1:
             s = node.value.value
             if s[0:9] == 'for-nid: ':
                 ctx_stack.set_nid(s[9:])
-        elif isinstance(node.value, ast.Call) and \
-              isinstance(node.value.func, ast.Attribute) and \
-              isinstance(node.value.func.value, ast.Name) and \
-              node.value.func.value.id == 'ir' and \
-              node.value.func.attr == 'declare_var':
-            name = node.value.args[0].id
-            template = "{} = ir.transformer.ctx_stack.create_variable(0, 0, 0, 0, 0)".format(name)
-            new_node = self.parse_stmt(template)
-            new_node.value.args = node.value.args
-            new_node.value.args[0] = self.parse_expr('"' + name + '"')
-            print(ast.dump(new_node))
-            return new_node
+        elif hasattr(node.value, "expr_call") and isinstance(node.value.expr_call, VarCreation):
+            node.value.expr_call.execute()
         return node
 
     def visit_If(self, node):
-        template = '''
-if 1:
-    ir.transformer.ctx_stack.create_scope()
-    with ir.If(0):
-        pass
-    with ir.Else():
-        pass
-    ir.transformer.ctx_stack.pop_scope()
-        '''
-        new_node = self.parse_stmt(template)
-        wif = new_node.body[1]
-        wif.items[0].context_expr.args = [node.test]
-        wif.body = node.body
-        new_node.body[2].body = node.orelse
+        self.visit(node.test)
+        assert hasattr(node.test, "expr_ptr"), "If condition is not an expression"
+        with If(node.test.expr_ptr):
+            ctx_stack.create_scope()
+            for i in node.body:
+                self.visit(i)
+            ctx_stack.pop_scope()
+        with Else():
+            ctx_stack.create_scope()
+            for i in node.orelse:
+                self.visit(i)
+            ctx_stack.pop_scope()
+        return node
 
-        return new_node
+    def visit_Compare(self, node):  # TODO: add support for chain comparison
+        self.generic_visit(node)
+        assert len(node.ops) == 1, "Chain comparison not supported"
+        assert hasattr(node.left, "expr_ptr") and hasattr(node.comparators[0], "expr_ptr"), "Comparator is not an expression"
+        if isinstance(node.ops[0], ast.Lt):
+            node.expr_ptr = (node.left.expr_ptr < node.comparators[0].expr_ptr)
+        return node
+
 
 def _get_global_vars(func):
     # Discussions: https://github.com/taichi-dev/taichi/issues/282
@@ -246,14 +371,5 @@ def transform(func):
     src = remove_indent(ins.getsource(func))
     tree = ast.parse(src)
     ASTTransformer().visit(tree)
-    tree = ast.fix_missing_locations(tree)
-    local_vars = {}
-    global_vars = _get_global_vars(func)
     print(ast.dump(tree))
-    exec(
-        compile(tree,
-                filename=ins.getsourcefile(func),
-                mode='exec'), global_vars, local_vars)
-    compiled = local_vars[func.__name__]
-    compiled()
     return pop_ast()
