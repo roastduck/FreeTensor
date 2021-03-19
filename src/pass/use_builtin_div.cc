@@ -1,4 +1,3 @@
-#include <pass/disambiguous.h>
 #include <pass/use_builtin_div.h>
 
 namespace ir {
@@ -45,11 +44,7 @@ Expr UseBuiltinDiv::visit(const CeilDiv &_op) {
     return op;
 }
 
-Stmt useBuiltinDiv(const Stmt &_op) {
-    auto op = disambiguous(_op);
-    op = UseBuiltinDiv()(op);
-    return op;
-}
+Stmt useBuiltinDiv(const Stmt &_op) { return UseBuiltinDiv()(_op); }
 
 } // namespace ir
 

@@ -71,7 +71,12 @@ class FindAccessPoint : public VisitorWithCursor {
         // For a[i] = a[i] + 1, write happens after read
         cur_.emplace_back(makeIntConst(0), makeIntConst(0), makeIntConst(2));
         auto ap = Ref<AccessPoint>::make();
-        *ap = {op, cursor(), defAxis_.at(op->var_), cur_, op->indices_, cond_};
+        *ap = {op,
+               cursor(),
+               defAxis_.at(op->var_),
+               cur_,
+               std::vector<Expr>{op->indices_.begin(), op->indices_.end()},
+               cond_};
         points_.emplace(op, ap);
         writes_.emplace(op->var_, ap);
 

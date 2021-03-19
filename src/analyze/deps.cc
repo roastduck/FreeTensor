@@ -5,7 +5,6 @@
 #include <analyze/normalize.h>
 #include <except.h>
 #include <mutator.h>
-#include <pass/disambiguous.h>
 #include <pass/simplify.h>
 
 namespace ir {
@@ -40,11 +39,11 @@ void FindAccessPoint::visit(const If &op) {
     (*this)(op->infoNotCond_);
 
     auto oldCond = cond_;
-    cond_ = oldCond.isValid() ? makeLAnd(oldCond, op->cond_) : op->cond_;
+    cond_ = oldCond.isValid() ? makeLAnd(oldCond, op->cond_) : (Expr)op->cond_;
     (*this)(op->thenCase_);
     if (op->elseCase_.isValid()) {
         cond_ = oldCond.isValid() ? makeLAnd(oldCond, op->infoNotCond_)
-                                  : op->infoNotCond_;
+                                  : (Expr)op->infoNotCond_;
         (*this)(op->elseCase_);
     }
     cond_ = oldCond;
@@ -53,7 +52,12 @@ void FindAccessPoint::visit(const If &op) {
 void FindAccessPoint::visit(const Load &op) {
     Visitor::visit(op);
     auto ap = Ref<AccessPoint>::make();
-    *ap = {op, cursor(), defAxis_.at(op->var_), cur_, op->indices_, cond_};
+    *ap = {op,
+           cursor(),
+           defAxis_.at(op->var_),
+           cur_,
+           std::vector<Expr>{op->indices_.begin(), op->indices_.end()},
+           cond_};
     points_.emplace(op, ap);
     reads_.emplace(op->var_, ap);
 }
@@ -452,7 +456,6 @@ void AnalyzeDeps::visit(const Load &op) {
 Stmt prepareFindDeps(const Stmt &_op) {
     auto op = normalize(_op); // for IfNode::infoNotCond_
     op = simplifyPass(op);
-    op = disambiguous(op);
     return op;
 }
 
@@ -464,8 +467,6 @@ void findDeps(
     if (cond.empty()) {
         return;
     }
-
-    ASSERT(op->noAmbiguous());
 
     FindAccessPoint finder;
     finder(op);

@@ -94,6 +94,9 @@ class CompTransientBounds : public FindBoundAccess {
     static Expr sub1(const Expr &op);
     static Expr add1(const Expr &op);
 
+    void minAssign(Expr &lhs, const Expr &rhs);
+    void maxAssign(Expr &lhs, const Expr &rhs);
+
     void applyCond(const Expr &cond);
 
   protected:

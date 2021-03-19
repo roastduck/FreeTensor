@@ -28,9 +28,9 @@ Stmt FuseFor::visit(const For &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::For);
     auto op = __op.as<ForNode>();
     if (op->id() == id0_ || op->id() == id1_) {
-        op = makeFor(op->id(), op->iter_, makeIntConst(0),
-                     makeSub(op->end_, op->begin_), op->parallel_, op->unroll_,
-                     op->body_);
+        return makeFor(op->id(), op->iter_, makeIntConst(0),
+                       makeSub(op->end_, op->begin_), op->parallel_,
+                       op->unroll_, op->body_);
     }
     return op;
 }

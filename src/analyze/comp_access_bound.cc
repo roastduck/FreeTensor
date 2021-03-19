@@ -88,20 +88,22 @@ void CompAccessBound::visit(const VarDef &op) {
 void CompAccessBound::visit(const Load &op) {
     Visitor::visit(op);
     if (mode_ & COMP_ACCESS_BOUND_READ) {
-        access_[op->var_].emplace_back(op->indices_);
+        access_[op->var_].emplace_back(op->indices_.begin(),
+                                       op->indices_.end());
     }
 }
 
 void CompAccessBound::visit(const Store &op) {
     Visitor::visit(op);
     if (mode_ & COMP_ACCESS_BOUND_WRITE) {
-        access_[op->var_].emplace_back(op->indices_);
+        access_[op->var_].emplace_back(op->indices_.begin(),
+                                       op->indices_.end());
     }
 }
 
 void CompAccessBound::visit(const ReduceTo &op) {
     Visitor::visit(op);
-    access_[op->var_].emplace_back(op->indices_);
+    access_[op->var_].emplace_back(op->indices_.begin(), op->indices_.end());
 }
 
 void CompAccessBound::visit(const For &op) {

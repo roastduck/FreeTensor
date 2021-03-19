@@ -183,11 +183,11 @@ Schedule::fission(const std::string &loop, const std::string &after,
         }
         auto isRealWrite = [&](const std::string &loop, const AST &op) -> bool {
             if (op->nodeType() == ASTNodeType::Store) {
-                auto expr = op.as<StoreNode>()->expr_;
+                Expr expr = op.as<StoreNode>()->expr_;
                 return variantExpr.count(expr) &&
                        variantExpr.at(expr).count(loop);
             } else if (op->nodeType() == ASTNodeType::ReduceTo) {
-                auto expr = op.as<ReduceToNode>()->expr_;
+                Expr expr = op.as<ReduceToNode>()->expr_;
                 return variantExpr.count(expr) &&
                        variantExpr.at(expr).count(loop);
             } else {

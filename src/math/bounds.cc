@@ -28,7 +28,7 @@ static Expr linToExprNumerator(const LinearExpr<Rational<int>> &lin) {
 
     for (auto &&item : lin.coeff_) {
         auto k = item.second.k_;
-        auto &&a = item.second.a_;
+        auto a = deepCopy(item.second.a_);
 
         if (k == 0) {
             continue;
@@ -110,7 +110,7 @@ template <class T> static T mulImpl(const T &b, int k) {
 }
 
 UpperBound::UpperBound(const Expr &expr)
-    : expr_(expr), lin_{{{getHash(expr), {1, expr}}}, 0} {}
+    : expr_(expr), lin_{{{getHash(expr), {1, deepCopy(expr)}}}, 0} {}
 
 UpperBound::UpperBound(const LinearExpr<Rational<int>> &lin) : lin_(lin) {
     auto cdLin = commonDenominator(lin);

@@ -233,7 +233,7 @@ void CodeGenCUDA::visit(const VarDef &op) {
     }
 }
 
-std::pair<std::string, std::vector<std::string>> codeGenCUDA(const AST &_op) {
+std::pair<std::string, std::vector<std::string>> codeGenCUDA(const Stmt &_op) {
     auto op = simplifyPass(normalize(_op));
 
     CodeGenCUDA visitor;

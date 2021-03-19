@@ -14,7 +14,7 @@ Expr NormalizeThreads::visit(const Var &_op) {
     auto op = __op.as<VarNode>();
     if (varMap_.count(op->name_)) {
         auto &&info = varMap_.at(op->name_);
-        op = makeSub(makeVar(info.newIter_), info.offset_);
+        return makeSub(makeVar(info.newIter_), info.offset_);
     }
     return op;
 }
