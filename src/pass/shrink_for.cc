@@ -20,13 +20,13 @@ Expr ShrinkFor::simplifyExpr(const Expr &_expr) {
 Stmt ShrinkFor::visit(const For &_op) {
     auto hash = getHash(makeVar(_op->iter_));
     newRange_.erase(hash);
-    iterStack_.emplace_back(hash);
 
+    iterStack_.emplace_back(hash);
     auto __op = SimplifyPass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::For);
     auto op = __op.as<ForNode>();
-
     iterStack_.pop_back();
+
     ASSERT(newRange_.count(hash));
     auto newBegin = newRange_.at(hash).first;
     auto newEnd = makeAdd(newRange_.at(hash).second, makeIntConst(1));

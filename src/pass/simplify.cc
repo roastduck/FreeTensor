@@ -598,6 +598,13 @@ Expr SimplifyPass::visitExpr(
     return op;
 }
 
+Expr SimplifyPass::visit(const Var &op) {
+    if (replace_.count(op->name_)) {
+        return (*this)(replace_.at(op->name_));
+    }
+    return CompUniqueBounds::visit(op);
+}
+
 Expr SimplifyPass::visit(const FloorDiv &_op) {
     auto __op = CompUniqueBounds::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::FloorDiv);
@@ -966,6 +973,22 @@ Stmt SimplifyPass::visit(const For &_op) {
         throw InvalidProgram(
             "iterators with the same name in nested loops are not allowed");
     }
+
+    auto len = (*this)(makeSub(_op->end_, _op->begin_));
+    if (len->nodeType() == ASTNodeType::IntConst) {
+        auto intLen = len.as<IntConstNode>()->val_;
+        if (intLen == 1) {
+            ASSERT(!replace_.count(_op->iter_));
+            replace_[_op->iter_] = (*this)(_op->begin_);
+            auto body = (*this)(_op->body_);
+            replace_.erase(_op->iter_);
+            return body;
+        }
+        if (intLen <= 0) {
+            return makeStmtSeq("", {});
+        }
+    }
+
     varScope_[_op->iter_] = curScope_++;
     auto __op = CompUniqueBounds::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::For);
@@ -975,17 +998,6 @@ Stmt SimplifyPass::visit(const For &_op) {
     if (isEmptyStmt(op->body_)) {
         return makeStmtSeq("", {});
     }
-    auto len = (*this)(makeSub(op->end_, op->begin_));
-    if (len->nodeType() == ASTNodeType::IntConst) {
-        auto intLen = len.as<IntConstNode>()->val_;
-        if (intLen == 1) {
-            return op->body_;
-        }
-        if (intLen <= 0) {
-            return makeStmtSeq("", {});
-        }
-    }
-
     return op;
 }
 

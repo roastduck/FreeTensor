@@ -37,9 +37,9 @@ void CompAccessBound::visit(const VarDef &op) {
         for (size_t j = 0, jEnd = access.size(); j < jEnd; j++) {
             ASSERT(access[j].size() == n);
             auto &&index = access[j][i];
-            Expr lowerItem;
+            Expr lowerItem = makeIntConst(0);
             if (checkAllDefined(defs_, index)) {
-                lowerItem = index;
+                lowerItem = reduceMax(lowerItem, index);
             }
             if (lower_.count(index)) {
                 for (auto &&item : lower_.at(index)) {
@@ -48,20 +48,15 @@ void CompAccessBound::visit(const VarDef &op) {
                     }
                 }
             }
-            if (lowerItem.isValid()) {
-                lower = reduceMin(lower, lowerItem);
-            } else {
-                lower = makeIntConst(0);
-                break;
-            }
+            lower = reduceMin(lower, lowerItem);
         }
 
         for (size_t j = 0, jEnd = access.size(); j < jEnd; j++) {
             ASSERT(access[j].size() == n);
             auto &&index = access[j][i];
-            Expr upperItem;
+            Expr upperItem = op->buffer_->tensor().shape()[i];
             if (checkAllDefined(defs_, index)) {
-                upperItem = index;
+                upperItem = reduceMin(upperItem, index);
             }
             if (upper_.count(index)) {
                 for (auto &&item : upper_.at(index)) {
@@ -70,12 +65,7 @@ void CompAccessBound::visit(const VarDef &op) {
                     }
                 }
             }
-            if (upperItem.isValid()) {
-                upper = reduceMax(upper, upperItem);
-            } else {
-                upper = op->buffer_->tensor().shape()[i];
-                break;
-            }
+            upper = reduceMax(upper, upperItem);
         }
 
         result.lower_.emplace_back(lower);

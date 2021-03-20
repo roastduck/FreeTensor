@@ -178,6 +178,8 @@ class SimplifyPass : public CompUniqueBounds {
     // Used to check for fixed point
     std::unordered_set<AST> mutated_;
 
+    std::unordered_map<std::string, Expr> replace_;
+
   public:
     const std::unordered_set<AST> &mutated() const { return mutated_; }
 
@@ -194,6 +196,7 @@ class SimplifyPass : public CompUniqueBounds {
     Expr visitExpr(const Expr &op,
                    const std::function<Expr(const Expr &)> &visitNode) override;
 
+    Expr visit(const Var &op) override;
     Expr visit(const FloorDiv &op) override;
     Expr visit(const CeilDiv &op) override;
     Expr visit(const RoundTowards0Div &op) override;

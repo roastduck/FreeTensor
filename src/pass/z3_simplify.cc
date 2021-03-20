@@ -294,7 +294,7 @@ Stmt Z3Simplify::visit(const If &op) {
                       std::move(elseCase))
                    .as<IfNode>();
     if (op->infoNotCond_.isValid()) {
-        ret->infoNotCond_ = op->infoNotCond_;
+        ret->infoNotCond_ = (*this)(op->infoNotCond_);
     }
     return ret;
 }
