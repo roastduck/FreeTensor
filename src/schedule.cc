@@ -344,7 +344,7 @@ void Schedule::blend(const std::string &loop) {
         ast = prepareFindDeps(ast);
         findDeps(ast, cond, found);
 
-        ast = BlendPass(loop)(ast);
+        ast = BlendPass(loop, findLoopVariance(ast))(ast);
         ast = flattenStmtSeq(ast);
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid blend(" + loop + "): " + e.what());

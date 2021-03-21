@@ -23,6 +23,10 @@ void FindAllScopesInside::visit(const StmtSeq &op) {
     Visitor::visit(op);
 }
 
+bool BlendPass::checkVari(const Expr &expr) const {
+    return loopVari_.count(expr) && loopVari_.at(expr).count(loop_);
+}
+
 Stmt BlendPass::visit(const For &op) {
     if (op->id() == loop_) {
         ASSERT(op->infoLen_.isValid());
@@ -45,9 +49,15 @@ Stmt BlendPass::visit(const For &op) {
         return body;
     } else {
         if (inLoop_) {
-            envStack_.emplace_back(op);
+            bool isVari = (!envStack_.empty() && envStack_.back().isVari_) ||
+                          checkVari(op->begin_) || checkVari(op->end_);
+            envStack_.emplace_back(op, isVari);
             auto ret = (*this)(op->body_);
             envStack_.pop_back();
+            if (!isVari) {
+                ret = makeFor(op->id(), op->iter_, op->begin_, op->end_,
+                              op->parallel_, op->unroll_, std::move(ret));
+            }
             return ret;
         } else {
             return Mutator::visit(op);
@@ -57,18 +67,29 @@ Stmt BlendPass::visit(const For &op) {
 
 Stmt BlendPass::visit(const If &op) {
     if (inLoop_) {
-        envStack_.emplace_back(makeIf("", op->cond_, op->thenCase_));
+        bool isVari = (!envStack_.empty() && envStack_.back().isVari_) ||
+                      checkVari(op->cond_);
+        envStack_.emplace_back(makeIf("", op->cond_, op->thenCase_), isVari);
         auto thenCase = (*this)(op->thenCase_);
         envStack_.pop_back();
 
         if (op->elseCase_.isValid()) {
             envStack_.emplace_back(
-                makeIf("", makeLNot(op->cond_), op->elseCase_));
+                makeIf("", makeLNot(op->cond_), op->elseCase_), isVari);
             auto elseCase = (*this)(op->elseCase_);
             envStack_.pop_back();
-            return makeStmtSeq("", {thenCase, elseCase});
+            if (!isVari) {
+                return makeIf(op->id(), op->cond_, std::move(thenCase),
+                              std::move(elseCase));
+            } else {
+                return makeStmtSeq("", {thenCase, elseCase});
+            }
         } else {
-            return thenCase;
+            if (!isVari) {
+                return makeIf(op->id(), op->cond_, std::move(thenCase));
+            } else {
+                return thenCase;
+            }
         }
     } else {
         return Mutator::visit(op);
@@ -77,9 +98,14 @@ Stmt BlendPass::visit(const If &op) {
 
 Stmt BlendPass::visit(const Assert &op) {
     if (inLoop_) {
-        envStack_.emplace_back(op);
+        bool isVari = (!envStack_.empty() && envStack_.back().isVari_) ||
+                      checkVari(op->cond_);
+        envStack_.emplace_back(op, isVari);
         auto ret = Mutator::visit(op);
         envStack_.pop_back();
+        if (!isVari) {
+            ret = makeAssert(op->id(), op->cond_, std::move(ret));
+        }
         return ret;
     } else {
         return Mutator::visit(op);

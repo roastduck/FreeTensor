@@ -1,6 +1,8 @@
 #ifndef BLEND_H
 #define BLEND_H
 
+#include <unordered_set>
+
 #include <mutator.h>
 #include <visitor.h>
 
@@ -25,18 +27,30 @@ class FindAllScopesInside : public Visitor {
 };
 
 class BlendPass : public Mutator {
+    struct Env {
+        Stmt env_;
+        bool isVari_;
+        Env(const Stmt &env, bool isVari) : env_(env), isVari_(isVari) {}
+    };
+
     std::string loop_;
     bool inLoop_ = false;
     std::string iter_;
     Expr begin_;
     int len_ = 0, curIter_ = 0;
-    std::vector<Stmt> envStack_;
+    std::vector<Env> envStack_;
     std::vector<VarDef> defs_;
+    const std::unordered_map<Expr, std::unordered_set<std::string>> &loopVari_;
 
   public:
-    BlendPass(const std::string &loop) : loop_(loop) {}
+    BlendPass(const std::string &loop,
+              const std::unordered_map<Expr, std::unordered_set<std::string>>
+                  &loopVari)
+        : loop_(loop), loopVari_(loopVari) {}
 
   private:
+    bool checkVari(const Expr &expr) const;
+
     template <class T> Stmt visitLeafStmt(const T &op) {
         if (inLoop_) {
             std::vector<Stmt> stmts;
@@ -50,21 +64,24 @@ class BlendPass : public Mutator {
 
                 for (auto it = envStack_.rbegin(); it != envStack_.rend();
                      it++) {
-                    switch ((*it)->nodeType()) {
+                    if (!it->isVari_) {
+                        break;
+                    }
+                    switch (it->env_->nodeType()) {
                     case ASTNodeType::For: {
-                        auto env = (*it).as<ForNode>();
+                        auto env = it->env_.as<ForNode>();
                         stmt = makeFor("", env->iter_, (*this)(env->begin_),
                                        (*this)(env->end_), env->parallel_,
                                        env->unroll_, std::move(stmt));
                         break;
                     }
                     case ASTNodeType::If: {
-                        auto env = (*it).as<IfNode>();
+                        auto env = it->env_.as<IfNode>();
                         stmt = makeIf("", (*this)(env->cond_), std::move(stmt));
                         break;
                     }
                     case ASTNodeType::Assert: {
-                        auto env = (*it).as<AssertNode>();
+                        auto env = it->env_.as<AssertNode>();
                         stmt = makeAssert("", (*this)(env->cond_),
                                           std::move(stmt));
                         break;
