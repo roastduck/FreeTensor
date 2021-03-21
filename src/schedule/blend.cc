@@ -49,14 +49,19 @@ Stmt BlendPass::visit(const For &op) {
         return body;
     } else {
         if (inLoop_) {
-            bool isVari = (!envStack_.empty() && envStack_.back().isVari_) ||
-                          checkVari(op->begin_) || checkVari(op->end_);
-            envStack_.emplace_back(op, isVari);
-            auto ret = (*this)(op->body_);
-            envStack_.pop_back();
-            if (!isVari) {
-                ret = makeFor(op->id(), op->iter_, op->begin_, op->end_,
-                              op->parallel_, op->unroll_, std::move(ret));
+            Stmt ret;
+            if (!envStack_.empty() || checkVari(op->infoLen_)) {
+                envStack_.emplace_back(op);
+                ret = (*this)(op->body_);
+                envStack_.pop_back();
+            } else {
+                ASSERT(!offset_.count(op->iter_));
+                offset_[op->iter_] = op->begin_;
+                ret = (*this)(op->body_);
+                offset_.erase(op->iter_);
+                ret = makeFor(op->id(), op->iter_, makeIntConst(0),
+                              (*this)(op->infoLen_), op->parallel_, op->unroll_,
+                              std::move(ret));
             }
             return ret;
         } else {
@@ -67,28 +72,29 @@ Stmt BlendPass::visit(const For &op) {
 
 Stmt BlendPass::visit(const If &op) {
     if (inLoop_) {
-        bool isVari = (!envStack_.empty() && envStack_.back().isVari_) ||
-                      checkVari(op->cond_);
-        envStack_.emplace_back(makeIf("", op->cond_, op->thenCase_), isVari);
-        auto thenCase = (*this)(op->thenCase_);
-        envStack_.pop_back();
-
-        if (op->elseCase_.isValid()) {
-            envStack_.emplace_back(
-                makeIf("", makeLNot(op->cond_), op->elseCase_), isVari);
-            auto elseCase = (*this)(op->elseCase_);
+        Stmt thenCase, elseCase;
+        if (!envStack_.empty() || checkVari(op->cond_)) {
+            envStack_.emplace_back(makeIf("", op->cond_, op->thenCase_));
+            thenCase = (*this)(op->thenCase_);
             envStack_.pop_back();
-            if (!isVari) {
-                return makeIf(op->id(), op->cond_, std::move(thenCase),
-                              std::move(elseCase));
-            } else {
+            if (op->elseCase_.isValid()) {
+                envStack_.emplace_back(
+                    makeIf("", makeLNot(op->cond_), op->elseCase_));
+                elseCase = (*this)(op->elseCase_);
+                envStack_.pop_back();
                 return makeStmtSeq("", {thenCase, elseCase});
-            }
-        } else {
-            if (!isVari) {
-                return makeIf(op->id(), op->cond_, std::move(thenCase));
             } else {
                 return thenCase;
+            }
+        } else {
+            thenCase = (*this)(op->thenCase_);
+            if (op->elseCase_.isValid()) {
+                elseCase = (*this)(op->elseCase_);
+                return makeIf(op->id(), (*this)(op->cond_), std::move(thenCase),
+                              std::move(elseCase));
+            } else {
+                return makeIf(op->id(), (*this)(op->cond_),
+                              std::move(thenCase));
             }
         }
     } else {
@@ -98,13 +104,14 @@ Stmt BlendPass::visit(const If &op) {
 
 Stmt BlendPass::visit(const Assert &op) {
     if (inLoop_) {
-        bool isVari = (!envStack_.empty() && envStack_.back().isVari_) ||
-                      checkVari(op->cond_);
-        envStack_.emplace_back(op, isVari);
-        auto ret = Mutator::visit(op);
-        envStack_.pop_back();
-        if (!isVari) {
-            ret = makeAssert(op->id(), op->cond_, std::move(ret));
+        Stmt ret;
+        if (!envStack_.empty() || checkVari(op->cond_)) {
+            envStack_.emplace_back(op);
+            ret = Mutator::visit(op);
+            envStack_.pop_back();
+        } else {
+            ret = Mutator::visit(op);
+            ret = makeAssert(op->id(), (*this)(op->cond_), std::move(ret));
         }
         return ret;
     } else {
@@ -124,9 +131,11 @@ Stmt BlendPass::visit(const VarDef &op) {
 Expr BlendPass::visit(const Var &op) {
     if (inLoop_ && op->name_ == iter_) {
         return makeAdd(begin_, makeIntConst(curIter_));
-    } else {
-        return Mutator::visit(op);
     }
+    if (offset_.count(op->name_)) {
+        return makeAdd(Mutator::visit(op), (*this)(offset_.at(op->name_)));
+    }
+    return Mutator::visit(op);
 }
 
 Expr BlendPass::visit(const Load &_op) {

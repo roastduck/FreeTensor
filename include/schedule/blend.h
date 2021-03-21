@@ -1,6 +1,7 @@
 #ifndef BLEND_H
 #define BLEND_H
 
+#include <unordered_map>
 #include <unordered_set>
 
 #include <mutator.h>
@@ -27,19 +28,14 @@ class FindAllScopesInside : public Visitor {
 };
 
 class BlendPass : public Mutator {
-    struct Env {
-        Stmt env_;
-        bool isVari_;
-        Env(const Stmt &env, bool isVari) : env_(env), isVari_(isVari) {}
-    };
-
     std::string loop_;
     bool inLoop_ = false;
     std::string iter_;
     Expr begin_;
     int len_ = 0, curIter_ = 0;
-    std::vector<Env> envStack_;
+    std::vector<Stmt> envStack_;
     std::vector<VarDef> defs_;
+    std::unordered_map<std::string, Expr> offset_;
     const std::unordered_map<Expr, std::unordered_set<std::string>> &loopVari_;
 
   public:
@@ -64,24 +60,21 @@ class BlendPass : public Mutator {
 
                 for (auto it = envStack_.rbegin(); it != envStack_.rend();
                      it++) {
-                    if (!it->isVari_) {
-                        break;
-                    }
-                    switch (it->env_->nodeType()) {
+                    switch ((*it)->nodeType()) {
                     case ASTNodeType::For: {
-                        auto env = it->env_.as<ForNode>();
+                        auto env = it->as<ForNode>();
                         stmt = makeFor("", env->iter_, (*this)(env->begin_),
                                        (*this)(env->end_), env->parallel_,
                                        env->unroll_, std::move(stmt));
                         break;
                     }
                     case ASTNodeType::If: {
-                        auto env = it->env_.as<IfNode>();
+                        auto env = it->as<IfNode>();
                         stmt = makeIf("", (*this)(env->cond_), std::move(stmt));
                         break;
                     }
                     case ASTNodeType::Assert: {
-                        auto env = it->env_.as<AssertNode>();
+                        auto env = it->as<AssertNode>();
                         stmt = makeAssert("", (*this)(env->cond_),
                                           std::move(stmt));
                         break;
