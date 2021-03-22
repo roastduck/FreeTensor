@@ -39,12 +39,6 @@ Stmt BlendPass::visit(const For &op) {
         len_ = op->infoLen_.as<IntConstNode>()->val_;
         inLoop_ = true;
         auto body = (*this)(op->body_);
-        for (auto it = defs_.rbegin(); it != defs_.rend(); it++) {
-            for (int k = len_ - 1; k >= 0; k--) {
-                body = makeVarDef("", (*it)->name_ + "." + std::to_string(k),
-                                  *(*it)->buffer_, (*it)->sizeLim_, body);
-            }
-        }
         inLoop_ = false;
         return body;
     } else {
@@ -122,7 +116,14 @@ Stmt BlendPass::visit(const Assert &op) {
 Stmt BlendPass::visit(const VarDef &op) {
     if (inLoop_) {
         defs_.emplace_back(op);
-        return (*this)(op->body_);
+        auto body = (*this)(op->body_);
+        auto sizeLim = op->sizeLim_.isValid() ? (*this)(op->sizeLim_) : nullptr;
+        for (int k = len_ - 1; k >= 0; k--) {
+            body = makeVarDef("", op->name_ + "." + std::to_string(k),
+                              *op->buffer_, sizeLim, std::move(body));
+        }
+        defs_.pop_back();
+        return body;
     } else {
         return Mutator::visit(op);
     }

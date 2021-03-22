@@ -23,11 +23,17 @@ static bool isEmptyStmt(const Stmt &op) {
 
 void FindInnerMostScope::visit(const Var &op) {
     Visitor::visit(op);
+    if (!varScope_.count(op->name_)) {
+        ERROR("Undefined variable: " + op->name_);
+    }
     innerMost_ = std::max(innerMost_, varScope_.at(op->name_));
 }
 
 void FindInnerMostScope::visit(const Load &op) {
     Visitor::visit(op);
+    if (!varScope_.count(op->var_)) {
+        ERROR("Undefined variable: " + op->var_);
+    }
     innerMost_ = std::max(innerMost_, varScope_.at(op->var_));
 }
 
