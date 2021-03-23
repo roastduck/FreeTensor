@@ -21,7 +21,7 @@ Stmt SinkVar::visit(const ReduceTo &op) {
 }
 
 Stmt SinkVar::visit(const VarDef &op) {
-    if (op->buffer_->atype() != AccessType::Cache) {
+    if (op->buffer_->atype() != AccessType::Cache || op->pinned_) {
         return Mutator::visit(op);
     }
 
@@ -53,8 +53,9 @@ Stmt SinkVar::visit(const VarDef &op) {
             isFixPoint_ = false;
             return makeStmtSeq(seq->id(), std::move(stmts));
         } else if (useCnt == 1) {
-            stmts[lastUse] = makeVarDef(op->id(), op->name_, std::move(buffer),
-                                        std::move(sizeLim), stmts[lastUse]);
+            stmts[lastUse] =
+                makeVarDef(op->id(), op->name_, std::move(buffer),
+                           std::move(sizeLim), stmts[lastUse], false);
             isFixPoint_ = false;
             return makeStmtSeq(seq->id(), std::move(stmts));
         } else {
@@ -68,7 +69,7 @@ Stmt SinkVar::visit(const VarDef &op) {
         if (!deps_.count(std::make_pair(op->name_, loop->id()))) {
             auto loopBody =
                 makeVarDef(op->id(), op->name_, std::move(buffer),
-                           std::move(sizeLim), (*this)(loop->body_));
+                           std::move(sizeLim), (*this)(loop->body_), false);
             return makeFor(loop->id(), loop->iter_, (*this)(loop->begin_),
                            (*this)(loop->end_), loop->parallel_, loop->unroll_,
                            std::move(loopBody));
@@ -83,7 +84,7 @@ Stmt SinkVar::visit(const VarDef &op) {
     }
 
     return makeVarDef(op->id(), op->name_, std::move(buffer),
-                      std::move(sizeLim), body);
+                      std::move(sizeLim), body, false);
 }
 
 Stmt sinkVar(const Stmt &_op) {

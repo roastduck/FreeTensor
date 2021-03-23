@@ -35,6 +35,11 @@ class ShrinkVar : public Mutator {
     Stmt visit(const ReduceTo &op) override;
 };
 
+/**
+ * Make the shape of a variable smaller if some elements are not used
+ *
+ * If you don't want to shrink some variables, please set VarDefNode::pinned_
+ */
 Stmt shrinkVar(const Stmt &op);
 
 } // namespace ir

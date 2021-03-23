@@ -45,7 +45,7 @@ void CodeGen::popStream() {
     streamStack_.pop_back();
 }
 
-std::ostringstream &CodeGen::os() { return streamStack_.back().os_; }
+std::ostream &CodeGen::os() { return streamStack_.back().os_; }
 
 int &CodeGen::nIndent() { return streamStack_.back().nIndent_; }
 

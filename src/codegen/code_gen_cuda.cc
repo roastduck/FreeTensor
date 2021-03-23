@@ -244,6 +244,7 @@ std::pair<std::string, std::vector<std::string>> codeGenCUDA(const Stmt &_op) {
     const char *header =
         "#include <cstdint>\n"
         "#include <algorithm>\n"
+        "#include <assert.h>\n"
         "#define restrict __restrict__\n"
         "\n"
         "template <class T, size_t n> struct __ByValArray {\n"
@@ -292,7 +293,6 @@ std::pair<std::string, std::vector<std::string>> codeGenCUDA(const Stmt &_op) {
                 auto &&tensor = buffer->tensor();
                 auto &&shape = tensor.shape();
 
-                // FIXME: Normalize the ID (item.first)?
                 switch (buffer->mtype()) {
                 case MemType::ByValue:
                     // e.g.
@@ -305,7 +305,7 @@ std::pair<std::string, std::vector<std::string>> codeGenCUDA(const Stmt &_op) {
                         ASSERT((*it)->nodeType() == ASTNodeType::IntConst);
                         os << ", " << (*it).as<IntConstNode>()->val_ << ">";
                     }
-                    os << " " << item.first;
+                    os << " " << visitor.normalizeId(item.first);
                     break;
 
                 default:
@@ -314,7 +314,7 @@ std::pair<std::string, std::vector<std::string>> codeGenCUDA(const Stmt &_op) {
                         os << "const ";
                     }
                     os << CodeGenCUDA::gen(tensor.dtype()) << " (*restrict ";
-                    os << item.first << ")";
+                    os << visitor.normalizeId(item.first) << ")";
                     for (size_t i = 1, iEnd = shape.size(); i < iEnd;
                          i++) { // No shape[0]
                         ASSERT(shape[i]->nodeType() == ASTNodeType::IntConst);

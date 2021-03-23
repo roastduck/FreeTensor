@@ -47,7 +47,7 @@ Stmt MakeCacheVar::visitStmt(
         inStmt_ = false;
         Buffer newBuffer(def_->buffer_->tensor(), AccessType::Cache, mtype_);
         ret = makeVarDef("", newVar_, std::move(newBuffer), nullptr,
-                         std::move(ret));
+                         std::move(ret), false);
         oldDef_ = def_->id();
         newDef_ = ret->id();
         return ret;

@@ -4,6 +4,7 @@
 #include <pass/gpu/make_sync.h>
 #include <pass/gpu/normalize_threads.h>
 #include <pass/make_atomic.h>
+#include <pass/make_const_shape.h>
 #include <pass/make_reduction.h>
 #include <pass/merge_if.h>
 #include <pass/remove_writes.h>
@@ -29,6 +30,7 @@ void init_ffi_pass(py::module_ &m) {
     m.def("make_reduction", &makeReduction, "ast"_a);
     m.def("make_atomic", &makeAtomic, "ast"_a);
     m.def("remove_writes", &removeWrites, "ast"_a);
+    m.def("make_const_shape", &makeConstShape, "ast"_a, "mtypes"_a);
     m.def("use_builtin_div", &useBuiltinDiv, "ast"_a);
 
     // GPU

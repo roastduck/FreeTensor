@@ -25,7 +25,7 @@ Stmt HoistVar::visit(const For &op) {
         for (auto i = defStack_.rbegin(); i != defStack_.rend(); i++) {
             ret = makeVarDef((*i)->id(), std::move((*i)->name_),
                              std::move(*((*i)->buffer_)),
-                             std::move((*i)->sizeLim_), ret);
+                             std::move((*i)->sizeLim_), ret, (*i)->pinned_);
         }
         return ret;
     }

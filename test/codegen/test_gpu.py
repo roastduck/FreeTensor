@@ -1,4 +1,5 @@
 import ir
+import ir.debug
 import pytest
 import numpy as np
 
@@ -305,6 +306,58 @@ def test_correct_shared():
     y_np = y_arr.numpy().reshape(4, 256)
 
     y_std = np.array([range(1, 513, 2)] * 4, dtype="int32")
+    assert np.array_equal(y_np, y_std)
+
+def test_relax_shared_shape_to_constants():
+    with ir.VarDef("n", (), "int32", "input", "byvalue") as n:
+        with ir.VarDef([
+                ("x", (4, 256), "int32", "input", "gpu/global"),
+                ("y", (4, 256), "int32", "output", "gpu/global")]) as (x, y):
+            with ir.Assert(n[()] <= 256):
+                with ir.For("i", 0, 4, nid="L0") as i:
+                    with ir.VarDef("t", (n[()],), "int32", "cache", "gpu/shared") as t:
+                        with ir.For("j", 0, n[()], nid="L1") as j:
+                            t[j] = x[i, j] * 2
+                        with ir.For("j", 0, n[()], nid="L2") as j:
+                            y[i, j] = t[j] + 1
+                        with ir.For("j", n[()], 256, nid="L3") as j:
+                            y[i, j] = 0
+
+    s = ir.Schedule(ir.pop_ast())
+    s.parallelize("L0", "threadIdx.x")
+    ast = ir.lower(s.ast(), target)
+    print(ast)
+
+    with ir.VarDef("n", (), "int32", "input", "byvalue") as n:
+        with ir.VarDef([
+                ("x", (4, 256), "int32", "input", "gpu/global"),
+                ("y", (4, 256), "int32", "output", "gpu/global")]) as (x, y):
+            with ir.Assert(n[()] <= 256):
+                with ir.For(".threadIdx.y", 0, 4) as i:
+                    with ir.VarDef("t", (4, 256), "int32", "cache", "gpu/shared") as t:
+                        with ir.For("j", 0, n[()]) as j:
+                            t[i, j] = x[i, j] * 2
+                        with ir.For("j", 0, n[()]) as j:
+                            y[i, j] = t[i, j] + 1
+                        with ir.For("j", n[()], 256) as j:
+                            y[i, j] = 0
+                    ir.Eval(ir.intrinsic("__syncwarp()"))
+    assert ir.pop_ast().match(ast)
+
+    code, params = ir.codegen(ast, target)
+    print(ir.debug.with_line_no(code))
+    n_np = np.array(200, dtype="int32")
+    x_np = np.array([range(256)] * 4, dtype="int32")
+    y_np = np.zeros((4, 256), dtype="int32")
+    n_arr = ir.Array(n_np, host)
+    x_arr = ir.Array(x_np, device)
+    y_arr = ir.Array(y_np, device)
+    driver = ir.Driver(code, params, device)
+    driver.set_params({"n": n_arr, "x": x_arr, "y": y_arr})
+    driver.run()
+    y_np = y_arr.numpy().reshape(4, 256)
+
+    y_std = np.array([list(range(1, 401, 2)) + [0] * 56] * 4, dtype="int32")
     assert np.array_equal(y_np, y_std)
 
 def test_parallel_different_length():

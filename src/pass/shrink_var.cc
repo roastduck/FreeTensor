@@ -5,7 +5,8 @@
 namespace ir {
 
 Stmt ShrinkVar::visit(const VarDef &_op) {
-    if (_op->buffer_->atype() != AccessType::Cache || _op->sizeLim_.isValid()) {
+    if (_op->buffer_->atype() != AccessType::Cache || _op->sizeLim_.isValid() ||
+        _op->pinned_) {
         return Mutator::visit(_op);
     }
 

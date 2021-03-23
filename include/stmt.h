@@ -49,6 +49,7 @@ class VarDefNode : public StmtNode {
         sizeLim_; // limit the buffer size to a specific
                   // expression, other than the size of buffer_
     SubTree<StmtNode> body_;
+    bool pinned_; // If pinned, SinkVar and ShrinkVar will not alter this node
 
     VarDefNode(const VarDefNode &other);            // Deep copy buffer_
     VarDefNode &operator=(const VarDefNode &other); // Deep copy buffer_
@@ -58,13 +59,15 @@ class VarDefNode : public StmtNode {
 typedef Ref<VarDefNode> VarDef;
 template <class Tbuffer, class Tbody>
 Stmt makeVarDef(const std::string &id, const std::string &name,
-                Tbuffer &&buffer, const Expr &sizeLim, Tbody &&body) {
+                Tbuffer &&buffer, const Expr &sizeLim, Tbody &&body,
+                bool pinned) {
     VarDef d = VarDef::make();
     d->setId(id);
     d->name_ = name;
     d->buffer_ = Ref<Buffer>::make(std::forward<Tbuffer>(buffer));
     d->sizeLim_ = sizeLim;
     d->body_ = std::forward<Tbody>(body);
+    d->pinned_ = pinned;
     return d;
 }
 

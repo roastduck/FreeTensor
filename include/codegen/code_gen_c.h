@@ -48,9 +48,9 @@ class CodeGenC : public CodeGen {
     virtual void visit(const Intrinsic &op) override;
     virtual void visit(const Eval &op) override;
 
+  public:
     const std::string &normalizeId(const std::string &id);
 
-  public:
     static std::string gen(DataType dtype);
     const std::vector<std::string> &params() const { return params_; }
 };

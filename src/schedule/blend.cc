@@ -119,8 +119,9 @@ Stmt BlendPass::visit(const VarDef &op) {
         auto body = (*this)(op->body_);
         auto sizeLim = op->sizeLim_.isValid() ? (*this)(op->sizeLim_) : nullptr;
         for (int k = len_ - 1; k >= 0; k--) {
-            body = makeVarDef("", op->name_ + "." + std::to_string(k),
-                              *op->buffer_, sizeLim, std::move(body));
+            body =
+                makeVarDef("", op->name_ + "." + std::to_string(k),
+                           *op->buffer_, sizeLim, std::move(body), op->pinned_);
         }
         defs_.pop_back();
         return body;

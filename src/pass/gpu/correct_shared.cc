@@ -27,6 +27,7 @@ Stmt CorrectShared::visit(const VarDef &_op) {
             auto &shape = op->buffer_->tensor().shape();
             shape.insert(shape.begin(), stack_[i]->infoLen_);
         }
+        op->pinned_ = true;
         return op;
     } else {
         return Mutator::visit(_op);
