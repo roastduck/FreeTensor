@@ -12,7 +12,6 @@
 #include <isl/options.h>
 #include <isl/set.h>
 
-#include <analyze/analyze_linear.h>
 #include <cursor.h>
 #include <visitor.h>
 
@@ -102,18 +101,31 @@ class FindAccessPoint : public VisitorWithCursor {
  * them
  */
 class GenISLExpr : public Visitor {
-    AnalyzeLinear analyzeLinear_;
     std::unordered_map<Expr, std::string> results_;
+    std::unordered_set<Expr> visited_;
+    std::unordered_set<std::string> externals_;
     std::unordered_map<std::string, std::string> idCache_; // IR IDs -> ISL IDs
     std::unordered_set<std::string> idFlag_;               // ISL IDs
 
   public:
     std::string normalizeId(const std::string &id);
+
+    void reset();
     Ref<std::string> gen(const Expr &op);
+
+    const std::unordered_set<std::string> &externals() const {
+        return externals_;
+    }
 
   protected:
     void visitExpr(const Expr &op,
                    const std::function<void(const Expr &)> &visitNode) override;
+    void visit(const Var &op) override;
+    void visit(const IntConst &op) override;
+    void visit(const Load &op) override;
+    void visit(const Add &op) override;
+    void visit(const Sub &op) override;
+    void visit(const Mul &op) override;
     void visit(const LAnd &op) override;
     // No LOr or LNot because rejects non-contiguous sets
     void visit(const LT &op) override;

@@ -12,6 +12,7 @@ from ffi import make_reduction
 from ffi import make_atomic
 from ffi import remove_writes
 from ffi import make_const_shape
+from ffi import make_1d_var
 from ffi import use_builtin_div
 from ffi import gpu_make_sync
 from ffi import gpu_correct_shared
@@ -40,6 +41,8 @@ def lower(ast, target: Optional[ffi.Target]=None):
         # outside of kernels
         ast = make_const_shape(ast, [ffi.MemType.GPUShared, ffi.MemType.GPULocal])
         ast = gpu_correct_shared(ast)
+
+        ast = make_1d_var(ast)
 
         # After gpu_make_sync and gpu_correct_shared. Otherwise, these 2 passes
         # cannot get the right thread info
