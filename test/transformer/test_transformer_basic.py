@@ -35,11 +35,6 @@ def test_scalar_op():
         ir.declare_var(y, (), "int32", "output", "cpu")
         y[()] = x[()] * 2 + 1
 
-    # with ir.VarDef([
-    #         ("x", (), "int32", "input", "cpu"),
-    #         ("y", (), "int32", "output", "cpu")]) as (x, y):
-    #     y[()] = x[()] * 2 + 1
-
     code, params = ir.codegen(ir.lower(ir.transform(test), ir.CPU()), ir.CPU())
     # print(code)
     x_np = np.array(5, dtype="int32")

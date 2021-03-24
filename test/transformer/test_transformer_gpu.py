@@ -12,7 +12,7 @@ def test_basic():
     def test(x, y):
         ir.declare_var(x, (4,), "int32", "input", "gpu/global")
         ir.declare_var(y, (4,), "int32", "output", "gpu/global")
-        'for-nid: L1'
+        'nid: L1'
         for i in range(0, 4):
             y[i] = x[i] + 1
     # with ir.VarDef([
@@ -43,7 +43,7 @@ def test_shmem():
     def test(x, y):
         ir.declare_var(x, (4,), "int32", "input", "gpu/global")
         ir.declare_var(y, (4,), "int32", "output", "gpu/global")
-        'for-nid: L1'
+        'nid: L1'
         for i in range(0, 4):
             ir.MarkNid("S1")
             y[i] = x[i] + 1
@@ -79,10 +79,10 @@ def test_global_mem():
         ir.declare_var(x, (4,), "int32", "input", "gpu/global")
         ir.declare_var(y, (4,), "int32", "output", "gpu/global")
         t = ir.create_var((4,), "int32", "cache", "gpu/global")
-        'for-nid: L1'
+        'nid: L1'
         for i in range(0, 4):
             t[i] = x[i] * 2
-        'for-nid: L2'
+        'nid: L2'
         for i in range(0, 4):
             y[i] = t[i] + 1
     # with ir.VarDef([
@@ -120,9 +120,9 @@ def test_pass_by_value_0d():
         ir.declare_var(n, (), "int32", "input", "byvalue")
         ir.declare_var(x, (n[()], 4), "int32", "input", "gpu/global")
         ir.declare_var(y, (n[()], 4), "int32", "output", "gpu/global")
-        'for-nid: L1'
+        'nid: L1'
         for i in range(0, 4):
-            'for-nid: L2'
+            'nid: L2'
             for j in range(0, n[()]):
                 y[j, i] = x[j, i] + 1
 
@@ -159,9 +159,9 @@ def test_pass_by_value_1d():
         ir.declare_var(n, (1, ), "int32", "input", "byvalue")
         ir.declare_var(x, (n[0], 4), "int32", "input", "gpu/global")
         ir.declare_var(y, (n[0], 4), "int32", "output", "gpu/global")
-        'for-nid: L1'
+        'nid: L1'
         for i in range(0, 4):
-            'for-nid: L2'
+            'nid: L2'
             for j in range(0, n[0]):
                 y[j, i] = x[j, i] + 1
     # with ir.VarDef("n", (1,), "int32", "input", "byvalue") as n:
@@ -196,7 +196,7 @@ def test_intrinsic():
     def test(x, y):
         ir.declare_var(x, (4,), "float32", "input", "gpu/global")
         ir.declare_var(y, (4,), "float32", "output", "gpu/global")
-        'for-nid: L1'
+        'nid: L1'
         for i in range(0, 4):
             y[i] = ir.intrinsic("sinf(%)", x[i])
 
@@ -228,13 +228,13 @@ def test_intrinsic():
 #     def test(x, y):
 #         ir.declare_var(x, (4, 256), "int32", "input", "gpu/global")
 #         ir.declare_var(y, (4, 256), "int32", "output", "gpu/global")
-#         'for-nid: L0'
+#         'nid: L0'
 #         for i in range(0, 4):
 #             t = ir.create_var((256,), "int32", "cache", "gpu/shared")
-#             'for-nid: L1'
+#             'nid: L1'
 #             for j in range(0, 256):
 #                 t[j] = x[i, j] * 2
-#             'for-nid: L2'
+#             'nid: L2'
 #             for j in range(0, 256):
 #                 y[i, j] = t[255 - j] + 1
 #

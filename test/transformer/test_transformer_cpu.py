@@ -8,7 +8,7 @@ def test_omp_for():
     def test(x, y):
         ir.declare_var(x, (4,), "int32", "input", "cpu")
         ir.declare_var(y, (4,), "int32", "output", "cpu")
-        'for-nid: L1'
+        'nid: L1'
         for i in range(0, 4):
             y[i] = x[i] + 1
 
@@ -40,9 +40,9 @@ def test_parallel_reduction():
     def test(x, y):
         ir.declare_var(x, (4, 64), "int32", "input", "cpu")
         ir.declare_var(y, (4,), "int32", "inout", "cpu")
-        'for-nid: L1'
+        'nid: L1'
         for i in range(0, 4):
-            'for-nid: L2'
+            'nid: L2'
             for j in range(0, 64):
                 y[i] = y[i] + x[i, j]
     # with ir.VarDef([
@@ -77,9 +77,9 @@ def test_serial_reduction():
     def test(x, y):
         ir.declare_var(x, (4, 64), "int32", "input", "cpu")
         ir.declare_var(y, (4,), "int32", "inout", "cpu")
-        'for-nid: L1'
+        'nid: L1'
         for i in range(0, 4):
-            'for-nid: L2'
+            'nid: L2'
             for j in range(0, 64):
                 y[i] = y[i] + x[i, j]
     # with ir.VarDef([
@@ -114,7 +114,7 @@ def test_unroll_for():
     def test(x, y):
         ir.declare_var(x, (4,), "int32", "input", "cpu")
         ir.declare_var(y, (4,), "int32", "output", "cpu")
-        'for-nid: L1'
+        'nid: L1'
         for i in range(0, 4):
             y[i] = x[i] + 1
     # with ir.VarDef([
