@@ -528,6 +528,14 @@ Expr CompUniqueBounds::visit(const Min &_op) {
     for (auto &&b : getUpper(op->rhs_)) {
         updUpper(op, b);
     }
+    for (auto &&b1 : getLower(op->lhs_)) {
+        for (auto &&b2 : getLower(op->rhs_)) {
+            if (b1.lin_.coeff_.empty() && b2.lin_.coeff_.empty()) {
+                updLower(op, LinearExpr<Rational<int>>{
+                                 {}, std::min(b1.lin_.bias_, b2.lin_.bias_)});
+            }
+        }
+    }
     updLower(op, LowerBound{op});
     updUpper(op, UpperBound{op});
     return op;
@@ -542,6 +550,14 @@ Expr CompUniqueBounds::visit(const Max &_op) {
     }
     for (auto &&b : getLower(op->rhs_)) {
         updLower(op, b);
+    }
+    for (auto &&b1 : getUpper(op->lhs_)) {
+        for (auto &&b2 : getUpper(op->rhs_)) {
+            if (b1.lin_.coeff_.empty() && b2.lin_.coeff_.empty()) {
+                updUpper(op, LinearExpr<Rational<int>>{
+                                 {}, std::max(b1.lin_.bias_, b2.lin_.bias_)});
+            }
+        }
     }
     updLower(op, LowerBound{op});
     updUpper(op, UpperBound{op});

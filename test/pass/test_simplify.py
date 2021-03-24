@@ -144,6 +144,29 @@ def test_multiple_maxes():
 
     assert std.match(ast)
 
+def test_multiple_min_max():
+    with ir.VarDef([
+            ("a", (), "int32", "input", "cpu"),
+            ("b", (), "int32", "input", "cpu"),
+            ("y", (4,), "int32", "inout", "cpu")]) as (a, b, y):
+        with ir.For("i", 0, 4) as i:
+            with ir.If(i < ir.min(ir.max(5, a[()]), ir.max(6, b[()]))):
+                y[i] = i
+    ast = ir.pop_ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([
+            ("a", (), "int32", "input", "cpu"),
+            ("b", (), "int32", "input", "cpu"),
+            ("y", (4,), "int32", "inout", "cpu")]) as (a, b, y):
+        with ir.For("i", 0, 4) as i:
+            y[i] = i
+    std = ir.pop_ast()
+
+    assert std.match(ast)
+
 def test_precondition_from_if():
     with ir.VarDef([
             ("x1", (4,), "int32", "input", "cpu"),
