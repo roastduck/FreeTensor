@@ -45,7 +45,7 @@ def test_shmem():
         ir.declare_var(y, (4,), "int32", "output", "gpu/global")
         'nid: L1'
         for i in range(0, 4):
-            ir.MarkNid("S1")
+            'nid: S1'
             y[i] = x[i] + 1
     # with ir.VarDef([
     #         ("x", (4,), "int32", "input", "gpu/global"),
