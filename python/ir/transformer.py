@@ -5,6 +5,9 @@ from typing import Sequence
 
 from .nodes import _VarDef, Var, pop_ast, For, If, Else, MarkNid, ctx_stack as node_ctx
 import ffi
+import sys
+
+assert sys.version_info >= (3, 8), "Python version lower than 3.8 is not supported"
 
 
 def declare_var(var, shape, dtype, atype, mtype):
@@ -339,8 +342,8 @@ class ASTTransformer(ast.NodeTransformer):
             fr = ctx_stack.create_loop(name, begin, end)
             for i in node.body:
                 self.visit(i)
-            fr.__exit__(None, None, None)
             ctx_stack.pop_scope()
+            fr.__exit__(None, None, None)
         else:
             assert False, "For statement other than range(a, b) is not implemented"
         return node
