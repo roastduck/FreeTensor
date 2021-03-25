@@ -29,10 +29,10 @@ def test_bool_op():
     def test(x, y):
         ir.declare_var(x, (4, ), "int32", "input", "cpu")
         ir.declare_var(y, (4, ), "int32", "output", "cpu")
-        y[0] = (x[0] and x[1]) or (x[2] and x[3])
-        y[1] = (x[0] or x[1]) and (x[2] or x[2])
-        y[2] = x[0] and x[1] and x[2]
-        y[3] = x[2] or x[2] or x[3]
+        y[0] = (x[0] != 0 and x[1] != 0) or (x[2] != 0 and x[3] != 0)
+        y[1] = (x[0] != 0 or x[1] != 0) and (x[2] != 0 or x[2] != 0)
+        y[2] = x[0] != 0 and x[1] != 0 and x[2] != 0
+        y[3] = x[2] != 0 or x[2] != 0 or x[3] != 0
 
     code, params = ir.codegen(ir.lower(ir.transform(test), ir.CPU()), ir.CPU())
     # print(code)
@@ -56,7 +56,7 @@ def test_unary_op():
         ir.declare_var(x, (4, ), "int32", "input", "cpu")
         ir.declare_var(y, (4, ), "int32", "output", "cpu")
         for i in range(0, 4):
-            y[i] = not x[i]
+            y[i] = not x[i] != 0
 
     code, params = ir.codegen(ir.lower(ir.transform(test), ir.CPU()), ir.CPU())
     # print(code)
