@@ -71,7 +71,8 @@ void init_ffi_driver(py::module_ &m) {
         .def(py::init<const std::string &, const std::vector<std::string> &,
                       const Device &>())
         .def("set_params", &Driver::setParams)
-        .def("run", &Driver::run);
+        .def("run", &Driver::run)
+        .def("time", &Driver::time, "rounds"_a = 10, "warmpups"_a = 3);
 }
 
 } // namespace ir
