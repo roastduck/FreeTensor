@@ -44,7 +44,7 @@ class CodeGen : public Visitor {
     void pushStream(const std::string &name);
     void popStream();
 
-    std::ostringstream &os();
+    std::ostream &os();
     int &nIndent();
 
   public:

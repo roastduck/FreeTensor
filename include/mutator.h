@@ -52,8 +52,9 @@ class Mutator {
         }
         Tensor t(std::move(shape), op->buffer_->tensor().dtype());
         Buffer b(std::move(t), op->buffer_->atype(), op->buffer_->mtype());
-        return makeVarDef(op->id(), op->name_, std::move(b),
-                          (*this)(op->body_));
+        Expr sizeLim = op->sizeLim_.isValid() ? (*this)(op->sizeLim_) : nullptr;
+        return makeVarDef(op->id(), op->name_, std::move(b), std::move(sizeLim),
+                          (*this)(op->body_), op->pinned_);
     }
 
     virtual Expr visit(const Var &op) { return makeVar(op->name_); }

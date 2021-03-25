@@ -3,6 +3,7 @@
 
 #include <functional> // hash
 #include <memory>
+#include <type_traits>
 
 #include <except.h>
 
@@ -29,17 +30,24 @@ template <class T> class Ref {
     /**
      * Shared with any compatible references
      */
-    template <class U>
+    template <class U,
+              typename std::enable_if_t<std::is_base_of_v<T, U>> * = nullptr>
     Ref(const Ref<U> &other) : ptr_(std::static_pointer_cast<T>(other.ptr_)) {}
 
-    template <class U> Ref &operator=(const Ref<U> &other) {
+    template <class U,
+              typename std::enable_if_t<std::is_base_of_v<T, U>> * = nullptr>
+    Ref &operator=(const Ref<U> &other) {
         ptr_ = std::static_pointer_cast<T>(other.ptr_);
         return *this;
     }
 
     Ref clone() const { return Ref(new T(*ptr_)); }
 
-    template <class U> Ref<U> as() const { return Ref<U>(*this); }
+    template <class U> Ref<U> as() const {
+        Ref<U> ret;
+        ret.ptr_ = std::static_pointer_cast<U>(ptr_);
+        return ret;
+    }
 
     bool isValid() const { return ptr_ != nullptr; }
 

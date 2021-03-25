@@ -1,4 +1,5 @@
 #include <ast.h>
+#include <mutator.h>
 
 namespace ir {
 
@@ -45,5 +46,25 @@ std::string toString(ASTNodeType type) {
         ERROR("Unexpected AST node type");
     }
 }
+
+uint64_t StmtNode::idCnt_ = 0;
+
+void StmtNode::setId(const std::string &id) {
+    if (id.empty()) {
+        id_ = "#" + std::to_string(idCnt_++);
+    } else {
+        id_ = id;
+    }
+}
+
+const std::string &StmtNode::id() const {
+    ASSERT(!id_.empty());
+    return id_;
+}
+
+bool StmtNode::hasNamedId() const { return id_.empty() || id_[0] != '#'; }
+
+Expr deepCopy(const Expr &op) { return Mutator()(op); }
+Stmt deepCopy(const Stmt &op) { return Mutator()(op); }
 
 } // namespace ir

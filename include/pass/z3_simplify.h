@@ -32,6 +32,8 @@ class Z3Simplify : public Mutator {
     // We use Ref because there is no z3::expr::expr()
     std::unordered_map<Expr, Ref<z3::expr>> z3Exprs_;
 
+    std::unordered_map<std::string, Expr> replace_;
+
   public:
     Z3Simplify() : solver_(ctx_) {}
 

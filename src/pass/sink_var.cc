@@ -21,7 +21,7 @@ Stmt SinkVar::visit(const ReduceTo &op) {
 }
 
 Stmt SinkVar::visit(const VarDef &op) {
-    if (op->buffer_->atype() != AccessType::Cache) {
+    if (op->buffer_->atype() != AccessType::Cache || op->pinned_) {
         return Mutator::visit(op);
     }
 
@@ -33,6 +33,7 @@ Stmt SinkVar::visit(const VarDef &op) {
     Tensor tensor(std::move(shape), op->buffer_->tensor().dtype());
     Buffer buffer(std::move(tensor), op->buffer_->atype(),
                   op->buffer_->mtype());
+    Expr sizeLim = op->sizeLim_.isValid() ? (*this)(op->sizeLim_) : nullptr;
     Stmt body;
 
     switch (op->body_->nodeType()) {
@@ -52,8 +53,9 @@ Stmt SinkVar::visit(const VarDef &op) {
             isFixPoint_ = false;
             return makeStmtSeq(seq->id(), std::move(stmts));
         } else if (useCnt == 1) {
-            stmts[lastUse] = makeVarDef(op->id(), op->name_, std::move(buffer),
-                                        stmts[lastUse]);
+            stmts[lastUse] =
+                makeVarDef(op->id(), op->name_, std::move(buffer),
+                           std::move(sizeLim), stmts[lastUse], false);
             isFixPoint_ = false;
             return makeStmtSeq(seq->id(), std::move(stmts));
         } else {
@@ -65,8 +67,9 @@ Stmt SinkVar::visit(const VarDef &op) {
     case ASTNodeType::For: {
         auto loop = op->body_.as<ForNode>();
         if (!deps_.count(std::make_pair(op->name_, loop->id()))) {
-            auto loopBody = makeVarDef(op->id(), op->name_, std::move(buffer),
-                                       (*this)(loop->body_));
+            auto loopBody =
+                makeVarDef(op->id(), op->name_, std::move(buffer),
+                           std::move(sizeLim), (*this)(loop->body_), false);
             return makeFor(loop->id(), loop->iter_, (*this)(loop->begin_),
                            (*this)(loop->end_), loop->parallel_, loop->unroll_,
                            std::move(loopBody));
@@ -80,7 +83,8 @@ Stmt SinkVar::visit(const VarDef &op) {
         body = (*this)(op->body_);
     }
 
-    return makeVarDef(op->id(), op->name_, std::move(buffer), body);
+    return makeVarDef(op->id(), op->name_, std::move(buffer),
+                      std::move(sizeLim), body, false);
 }
 
 Stmt sinkVar(const Stmt &_op) {

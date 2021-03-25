@@ -233,7 +233,7 @@ void CodeGenCUDA::visit(const VarDef &op) {
     }
 }
 
-std::pair<std::string, std::vector<std::string>> codeGenCUDA(const AST &_op) {
+std::pair<std::string, std::vector<std::string>> codeGenCUDA(const Stmt &_op) {
     auto op = simplifyPass(normalize(_op));
 
     CodeGenCUDA visitor;
@@ -244,6 +244,7 @@ std::pair<std::string, std::vector<std::string>> codeGenCUDA(const AST &_op) {
     const char *header =
         "#include <cstdint>\n"
         "#include <algorithm>\n"
+        "#include <assert.h>\n"
         "#define restrict __restrict__\n"
         "\n"
         "template <class T, size_t n> struct __ByValArray {\n"
@@ -257,12 +258,12 @@ std::pair<std::string, std::vector<std::string>> codeGenCUDA(const AST &_op) {
         "};\n"
         "\n"
         "template <class T>\n"
-        "T floorDiv(T a, T b) {\n"
+        "__host__ __device__ T floorDiv(T a, T b) {\n"
         "  T res = a / b, rem = a % b;\n"
         "  return res - (rem != 0 && ((rem < 0) != (b < 0)));\n"
         "}\n"
         "template <class T>\n"
-        "T ceilDiv(T a, T b) {\n"
+        "__host__ __device__ T ceilDiv(T a, T b) {\n"
         "  T res = a / b, rem = a % b;\n"
         "  return res + (rem != 0 && ((rem < 0) == (b < 0)));\n"
         "}\n"
@@ -276,22 +277,22 @@ std::pair<std::string, std::vector<std::string>> codeGenCUDA(const AST &_op) {
         if (stream.name_ == "default") {
             return "void run(void **_params) " + stream.os_.str();
         } else {
+            const auto &dim = stream.threadDim_;
             std::ostringstream os;
             os << "__global__ void __launch_bounds__(";
-            bool first = true;
-            for (auto &&dim : stream.threadDim_) {
-                os << (first ? "" : " * ") << dim.second;
-                first = false;
-            }
+            os << (dim.count("threadIdx.x") ? dim.at("threadIdx.x") : 1);
+            os << " * ";
+            os << (dim.count("threadIdx.y") ? dim.at("threadIdx.y") : 1);
+            os << " * ";
+            os << (dim.count("threadIdx.z") ? dim.at("threadIdx.z") : 1);
             os << ") " << stream.name_ << "(";
-            first = true;
+            bool first = true;
             for (auto &&item : stream.uses_) {
                 os << (first ? "" : ", ");
                 auto &&buffer = item.second;
                 auto &&tensor = buffer->tensor();
                 auto &&shape = tensor.shape();
 
-                // FIXME: Normalize the ID (item.first)?
                 switch (buffer->mtype()) {
                 case MemType::ByValue:
                     // e.g.
@@ -304,7 +305,7 @@ std::pair<std::string, std::vector<std::string>> codeGenCUDA(const AST &_op) {
                         ASSERT((*it)->nodeType() == ASTNodeType::IntConst);
                         os << ", " << (*it).as<IntConstNode>()->val_ << ">";
                     }
-                    os << " " << item.first;
+                    os << " " << visitor.normalizeId(item.first);
                     break;
 
                 default:
@@ -313,7 +314,7 @@ std::pair<std::string, std::vector<std::string>> codeGenCUDA(const AST &_op) {
                         os << "const ";
                     }
                     os << CodeGenCUDA::gen(tensor.dtype()) << " (*restrict ";
-                    os << item.first << ")";
+                    os << visitor.normalizeId(item.first) << ")";
                     for (size_t i = 1, iEnd = shape.size(); i < iEnd;
                          i++) { // No shape[0]
                         ASSERT(shape[i]->nodeType() == ASTNodeType::IntConst);

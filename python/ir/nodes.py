@@ -92,7 +92,7 @@ class _VarDef:
         buf = ffi.Buffer(ffi.Tensor(self.shape, self.dtype), self.atype, self.mtype)
         body = ctx_stack.pop().make_stmt()
         top = ctx_stack.top()
-        top.append_stmt(ffi.makeVarDef(top.get_next_nid(), self.name, buf, body))
+        top.append_stmt(ffi.makeVarDef(top.get_next_nid(), self.name, buf, None, body, False))
 
 class _VarsDef:
     def __init__(self, defs: Tuple[str, Sequence, DataType, AccessType]):

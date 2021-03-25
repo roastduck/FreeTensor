@@ -12,7 +12,6 @@
 #include <isl/options.h>
 #include <isl/set.h>
 
-#include <analyze/analyze_linear.h>
 #include <cursor.h>
 #include <visitor.h>
 
@@ -71,7 +70,12 @@ class FindAccessPoint : public VisitorWithCursor {
         // For a[i] = a[i] + 1, write happens after read
         cur_.emplace_back(makeIntConst(0), makeIntConst(0), makeIntConst(2));
         auto ap = Ref<AccessPoint>::make();
-        *ap = {op, cursor(), defAxis_.at(op->var_), cur_, op->indices_, cond_};
+        *ap = {op,
+               cursor(),
+               defAxis_.at(op->var_),
+               cur_,
+               std::vector<Expr>{op->indices_.begin(), op->indices_.end()},
+               cond_};
         points_.emplace(op, ap);
         writes_.emplace(op->var_, ap);
 
@@ -91,24 +95,48 @@ class FindAccessPoint : public VisitorWithCursor {
 };
 
 /**
- * Serialize expressions like "linear expressions concatenated with LAnd" to a
- * string
+ * Serialize expressions to an ISL input string
  *
- * ISL rejects non-affine expressions
- *
- * ISL also rejects non-contiguous sets, therefore here is no LOr or LNot
+ * It returns nullptr for unsupported expressions, because ISL reports errors on
+ * them
  */
-class GenISLExpr {
-    AnalyzeLinear analyzeLinear_;
+class GenISLExpr : public Visitor {
+    std::unordered_map<Expr, std::string> results_;
+    std::unordered_set<Expr> visited_;
+    std::unordered_set<std::string> externals_;
     std::unordered_map<std::string, std::string> idCache_; // IR IDs -> ISL IDs
     std::unordered_set<std::string> idFlag_;               // ISL IDs
 
-  private:
-    Ref<std::string> linear2str(const LinearExpr<int> &lin);
-
   public:
     std::string normalizeId(const std::string &id);
-    Ref<std::string> operator()(const Expr &op);
+
+    void reset();
+    Ref<std::string> gen(const Expr &op);
+
+    const std::unordered_set<std::string> &externals() const {
+        return externals_;
+    }
+
+  protected:
+    void visitExpr(const Expr &op,
+                   const std::function<void(const Expr &)> &visitNode) override;
+    void visit(const Var &op) override;
+    void visit(const IntConst &op) override;
+    void visit(const Load &op) override;
+    void visit(const Add &op) override;
+    void visit(const Sub &op) override;
+    void visit(const Mul &op) override;
+    void visit(const LAnd &op) override;
+    // No LOr or LNot because rejects non-contiguous sets
+    void visit(const LT &op) override;
+    void visit(const LE &op) override;
+    void visit(const GT &op) override;
+    void visit(const GE &op) override;
+    void visit(const EQ &op) override;
+    // No NE because rejects non-contiguous sets
+    void visit(const FloorDiv &op) override;
+    void visit(const CeilDiv &op) override;
+    void visit(const Mod &op) override;
 };
 
 enum class DepDirection : int {

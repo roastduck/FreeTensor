@@ -14,7 +14,7 @@ Stmt FlattenStmtSeq::visit(const StmtSeq &_op) {
     for (Stmt item : op->stmts_) {
         if (popVarDef_) {
             while (item->nodeType() == ASTNodeType::VarDef) {
-                defStack.emplace_back(item);
+                defStack.emplace_back(item.as<VarDefNode>());
                 item = item.as<VarDefNode>()->body_;
             }
         }
@@ -31,7 +31,8 @@ Stmt FlattenStmtSeq::visit(const StmtSeq &_op) {
         stmts.size() == 1 ? stmts[0] : makeStmtSeq(op->id(), std::move(stmts));
     for (auto it = defStack.rbegin(); it != defStack.rend(); it++) {
         auto &&def = *it;
-        ret = makeVarDef(def->id(), def->name_, *def->buffer_, ret);
+        ret = makeVarDef(def->id(), def->name_, *def->buffer_, def->sizeLim_,
+                         ret, def->pinned_);
     }
     return ret;
 }

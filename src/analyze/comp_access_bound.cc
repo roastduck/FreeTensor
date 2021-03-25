@@ -37,35 +37,35 @@ void CompAccessBound::visit(const VarDef &op) {
         for (size_t j = 0, jEnd = access.size(); j < jEnd; j++) {
             ASSERT(access[j].size() == n);
             auto &&index = access[j][i];
+            Expr lowerItem = makeIntConst(0);
+            if (checkAllDefined(defs_, index)) {
+                lowerItem = reduceMax(lowerItem, index);
+            }
             if (lower_.count(index)) {
-                Expr lowerItem;
                 for (auto &&item : lower_.at(index)) {
                     if (checkAllDefined(defs_, item.expr_)) {
                         lowerItem = reduceMax(lowerItem, item.expr_);
                     }
                 }
-                lower = reduceMin(lower, lowerItem);
-            } else {
-                lower = makeIntConst(0);
-                break;
             }
+            lower = reduceMin(lower, lowerItem);
         }
 
         for (size_t j = 0, jEnd = access.size(); j < jEnd; j++) {
             ASSERT(access[j].size() == n);
             auto &&index = access[j][i];
+            Expr upperItem = op->buffer_->tensor().shape()[i];
+            if (checkAllDefined(defs_, index)) {
+                upperItem = reduceMin(upperItem, index);
+            }
             if (upper_.count(index)) {
-                Expr upperItem;
                 for (auto &&item : upper_.at(index)) {
                     if (checkAllDefined(defs_, item.expr_)) {
                         upperItem = reduceMin(upperItem, item.expr_);
                     }
                 }
-                upper = reduceMax(upper, upperItem);
-            } else {
-                upper = op->buffer_->tensor().shape()[i];
-                break;
             }
+            upper = reduceMax(upper, upperItem);
         }
 
         result.lower_.emplace_back(lower);
@@ -78,20 +78,22 @@ void CompAccessBound::visit(const VarDef &op) {
 void CompAccessBound::visit(const Load &op) {
     Visitor::visit(op);
     if (mode_ & COMP_ACCESS_BOUND_READ) {
-        access_[op->var_].emplace_back(op->indices_);
+        access_[op->var_].emplace_back(op->indices_.begin(),
+                                       op->indices_.end());
     }
 }
 
 void CompAccessBound::visit(const Store &op) {
     Visitor::visit(op);
     if (mode_ & COMP_ACCESS_BOUND_WRITE) {
-        access_[op->var_].emplace_back(op->indices_);
+        access_[op->var_].emplace_back(op->indices_.begin(),
+                                       op->indices_.end());
     }
 }
 
 void CompAccessBound::visit(const ReduceTo &op) {
     Visitor::visit(op);
-    access_[op->var_].emplace_back(op->indices_);
+    access_[op->var_].emplace_back(op->indices_.begin(), op->indices_.end());
 }
 
 void CompAccessBound::visit(const For &op) {

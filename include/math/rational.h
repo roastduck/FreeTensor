@@ -61,6 +61,11 @@ template <class T> struct Rational {
         return os;
     }
 
+    friend bool operator<(const Rational<T> &lhs, const Rational<T> &rhs) {
+        T g = gcd(lhs.q_, rhs.q_);
+        return rhs.q_ / g * lhs.p_ < lhs.q_ / g * rhs.p_;
+    }
+
     Rational &operator+=(const Rational<T> &other) {
         return *this = *this + other;
     }

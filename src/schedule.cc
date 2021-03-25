@@ -23,6 +23,7 @@
 #include <schedule/split.h>
 #include <schedule/swap.h>
 #include <schedule/unroll.h>
+#include <schedule/var_split.h>
 
 namespace ir {
 
@@ -38,8 +39,19 @@ static std::string dep2Str(const std::string &scope, const std::string &var,
     return std::regex_replace(os.str(), std::regex("\n"), "");
 }
 
-Cursor Schedule::find(const std::string &id) const {
-    return getCursorById(ast_, id);
+std::vector<Cursor>
+Schedule::findAll(const std::function<bool(const Cursor &)> &filter) const {
+    return getCursorByFilter(ast_, filter);
+}
+
+Cursor Schedule::find(const std::function<bool(const Cursor &)> &filter) const {
+    auto ret = getCursorByFilter(ast_, filter);
+    if (ret.size() != 1) {
+        throw Error("find: There is " + std::to_string(ret.size()) +
+                    " nodes matching the given condition. "
+                    "Consider using findAll");
+    }
+    return ret[0];
 }
 
 std::pair<std::string, std::string> Schedule::split(const std::string &id,
@@ -129,7 +141,7 @@ std::string Schedule::merge(const std::string &loop1,
 
         MergeFor mutator(outer, inner);
         ast = mutator(ast);
-        ret = mutator.newIter();
+        ret = mutator.newId();
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid merge(" + loop1 + ", " + loop2 +
                               "): " + e.what());
@@ -171,11 +183,11 @@ Schedule::fission(const std::string &loop, const std::string &after,
         }
         auto isRealWrite = [&](const std::string &loop, const AST &op) -> bool {
             if (op->nodeType() == ASTNodeType::Store) {
-                auto expr = op.as<StoreNode>()->expr_;
+                Expr expr = op.as<StoreNode>()->expr_;
                 return variantExpr.count(expr) &&
                        variantExpr.at(expr).count(loop);
             } else if (op->nodeType() == ASTNodeType::ReduceTo) {
-                auto expr = op.as<ReduceToNode>()->expr_;
+                Expr expr = op.as<ReduceToNode>()->expr_;
                 return variantExpr.count(expr) &&
                        variantExpr.at(expr).count(loop);
             } else {
@@ -311,6 +323,8 @@ void Schedule::swap(const std::vector<std::string> &order) {
 void Schedule::blend(const std::string &loop) {
     auto ast = ast_;
     try {
+        ast = simplifyPass(normalize(ast)); // ForNode::infoLen_
+
         FindAllScopesInside finder(loop);
         finder(ast);
         if (!finder.found()) {
@@ -330,8 +344,7 @@ void Schedule::blend(const std::string &loop) {
         ast = prepareFindDeps(ast);
         findDeps(ast, cond, found);
 
-        ast = simplifyPass(normalize(ast)); // ForNode::infoLen_
-        ast = BlendPass(loop)(ast);
+        ast = BlendPass(loop, findLoopVariance(ast))(ast);
         ast = flattenStmtSeq(ast);
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid blend(" + loop + "): " + e.what());
@@ -343,11 +356,12 @@ std::tuple<std::string, std::string, std::string>
 Schedule::cache(const std::string &stmt, const std::string &var,
                 MemType mtype) {
     auto ast = ast_;
-    std::string fillStmt, flushStmt, newVar, newDef;
+    std::string fillStmt, flushStmt, newVar, oldDef, newDef;
     try {
         MakeCacheVar makeCacheVar(stmt, var, mtype);
         ast = makeCacheVar(ast);
         newVar = makeCacheVar.newVar();
+        oldDef = makeCacheVar.oldDef();
         newDef = makeCacheVar.newDef();
         if (newDef.empty()) {
             throw InvalidSchedule("Statement " + stmt + " not found");
@@ -360,7 +374,7 @@ Schedule::cache(const std::string &stmt, const std::string &var,
         CompAccessBound compWBound(lower, upper, COMP_ACCESS_BOUND_WRITE);
         compRBound(ast);
         compWBound(ast);
-        MakeFillAndFlush makeFillAndFlush(stmt, var, newVar, newDef,
+        MakeFillAndFlush makeFillAndFlush(stmt, var, newVar, oldDef, newDef,
                                           compRBound.results(),
                                           compWBound.results());
         ast = makeFillAndFlush(ast);
@@ -381,13 +395,14 @@ std::tuple<std::string, std::string, std::string>
 Schedule::cacheReduction(const std::string &stmt, const std::string &var,
                          MemType mtype) {
     auto ast = ast_;
-    std::string initStmt, reduceStmt, newVar, newDef;
+    std::string initStmt, reduceStmt, newVar, oldDef, newDef;
     try {
         ast = makeReduction(ast);
 
         MakeCacheVar makeCacheVar(stmt, var, mtype);
         ast = makeCacheVar(ast);
         newVar = makeCacheVar.newVar();
+        oldDef = makeCacheVar.oldDef();
         newDef = makeCacheVar.newDef();
         if (newDef.empty()) {
             throw InvalidSchedule("Statement " + stmt + " not found");
@@ -398,7 +413,7 @@ Schedule::cacheReduction(const std::string &stmt, const std::string &var,
         std::tie(ast, lower, upper) = simplifyAndGetBounds(ast);
         CompAccessBound compBound(lower, upper);
         compBound(ast);
-        MakeInitAndReduce makeInitAndReduce(stmt, var, newVar, newDef,
+        MakeInitAndReduce makeInitAndReduce(stmt, var, newVar, oldDef, newDef,
                                             compBound.results());
         ast = makeInitAndReduce(ast);
         initStmt = makeInitAndReduce.initStmt();
@@ -412,6 +427,27 @@ Schedule::cacheReduction(const std::string &stmt, const std::string &var,
     ast_ = ast;
     return std::make_tuple(std::move(initStmt), std::move(reduceStmt),
                            std::move(newVar));
+}
+
+void Schedule::varSplit(const std::string &def, int dim, VarSplitMode mode,
+                        int factor, int nparts) {
+    auto ast = ast_;
+    try {
+        VarSplit mutator(def, dim, mode == VarSplitMode::FixedSize, factor,
+                         nparts);
+        ast = mutator(ast);
+        if (!mutator.found()) {
+            throw InvalidSchedule(def + "not found");
+        }
+    } catch (const InvalidSchedule &e) {
+        throw InvalidSchedule(
+            "Invalid var_split(" + def + ", " + std::to_string(dim) +
+            (mode == VarSplitMode::FixedSize ? ", FixedSize"
+                                             : ", RelaxedSize") +
+            ", factor=" + std::to_string(factor) +
+            ", nparts=" + std::to_string(nparts) + "): " + e.what());
+    }
+    ast_ = ast;
 }
 
 std::string Schedule::moveTo(const std::string &_stmt, MoveToSide side,
@@ -514,6 +550,13 @@ void Schedule::parallelize(const std::string &loop,
         if (!mutator.done()) {
             throw InvalidSchedule("Loop " + loop + " not found");
         }
+        ast = makeReduction(ast);
+        ast = prepareFindDeps(ast);
+        findDeps(ast, {{{loop, DepDirection::Normal}}},
+                 [&](const Dependency &d) {
+                     throw InvalidSchedule(
+                         dep2Str(loop, d.var_, d.later(), d.earlier()));
+                 });
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid parallelize(" + loop + ", " + parallel +
                               "): " + e.what());

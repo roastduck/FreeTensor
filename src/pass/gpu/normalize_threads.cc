@@ -14,7 +14,7 @@ Expr NormalizeThreads::visit(const Var &_op) {
     auto op = __op.as<VarNode>();
     if (varMap_.count(op->name_)) {
         auto &&info = varMap_.at(op->name_);
-        op = makeSub(makeVar(info.newIter_), info.offset_);
+        return makeAdd(makeVar(info.newIter_), info.offset_);
     }
     return op;
 }
@@ -24,22 +24,22 @@ Stmt NormalizeThreads::doVisitStmt(const Stmt &_op) {
     if (!inKernel_) {
         return op;
     }
-    if (!inside_.count("threadIdx.x")) {
+    if (!inside_["threadIdx.x"]) {
         op = makeIf("", makeEQ(makeVar(".threadIdx.x"), makeIntConst(0)), op);
     }
-    if (!inside_.count("threadIdx.y")) {
+    if (!inside_["threadIdx.y"]) {
         op = makeIf("", makeEQ(makeVar(".threadIdx.y"), makeIntConst(0)), op);
     }
-    if (!inside_.count("threadIdx.z")) {
+    if (!inside_["threadIdx.z"]) {
         op = makeIf("", makeEQ(makeVar(".threadIdx.z"), makeIntConst(0)), op);
     }
-    if (!inside_.count("blockIdx.x")) {
+    if (!inside_["blockIdx.x"]) {
         op = makeIf("", makeEQ(makeVar(".blockIdx.x"), makeIntConst(0)), op);
     }
-    if (!inside_.count("blockIdx.y")) {
+    if (!inside_["blockIdx.y"]) {
         op = makeIf("", makeEQ(makeVar(".blockIdx.y"), makeIntConst(0)), op);
     }
-    if (!inside_.count("blockIdx.z")) {
+    if (!inside_["blockIdx.z"]) {
         op = makeIf("", makeEQ(makeVar(".blockIdx.z"), makeIntConst(0)), op);
     }
     return op;
@@ -51,12 +51,12 @@ Stmt NormalizeThreads::doVisitFor(const For &_op) {
         _op->parallel_ == "threadIdx.y" || _op->parallel_ == "threadIdx.z") {
         auto newIter = "." + _op->parallel_;
         varMap_[_op->iter_] = {newIter, _op->begin_};
-        inside_.insert(_op->parallel_);
+        inside_[_op->parallel_]++;
         auto __op = Mutator::visit(_op);
         ASSERT(__op->nodeType() == ASTNodeType::For);
         auto op = __op.as<ForNode>();
         varMap_.erase(_op->iter_);
-        inside_.erase(_op->parallel_);
+        inside_[_op->parallel_]--;
         return makeIf(op->id(),
                       makeLT(makeVar(newIter), makeSub(op->end_, op->begin_)),
                       op->body_);

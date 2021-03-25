@@ -73,7 +73,6 @@ void FindLoopVariance::visit(const LNot &op) {
 
 std::unordered_map<Expr, std::unordered_set<std::string>>
 findLoopVariance(const AST &op) {
-    ASSERT(op->noAmbiguous());
     FindLoopVariance visitor;
     visitor(op);
     return visitor.variantExpr();

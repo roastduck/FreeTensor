@@ -1,6 +1,7 @@
 #include <algorithm>
 
 #include <analyze/check_all_defined.h>
+#include <analyze/hash.h>
 #include <pass/seperate_tail.h>
 #include <pass/z3_simplify.h>
 
@@ -63,6 +64,12 @@ void SeperateTail::genSeperation(
     case ASTNodeType::GE:
         norm = makeSub(cond.as<GENode>()->lhs_, cond.as<GENode>()->rhs_);
         break;
+    case ASTNodeType::EQ:
+        norm = makeSub(cond.as<EQNode>()->lhs_, cond.as<EQNode>()->rhs_);
+        break;
+    case ASTNodeType::NE:
+        norm = makeSub(cond.as<NENode>()->lhs_, cond.as<NENode>()->rhs_);
+        break;
     default:
         return;
     }
@@ -97,17 +104,22 @@ void SeperateTail::genSeperation(
     switch (type) {
     case ASTNodeType::LT:
     case ASTNodeType::GE:
-        seperation = makeCeilDiv(seperation, makeIntConst(selfK));
+        callback(makeCeilDiv(seperation, makeIntConst(selfK)));
         break;
     case ASTNodeType::LE:
     case ASTNodeType::GT:
-        seperation = makeAdd(makeFloorDiv(seperation, makeIntConst(selfK)),
-                             makeIntConst(1));
+        callback(makeAdd(makeFloorDiv(seperation, makeIntConst(selfK)),
+                         makeIntConst(1)));
+        break;
+    case ASTNodeType::EQ:
+    case ASTNodeType::NE:
+        callback(makeCeilDiv(seperation, makeIntConst(selfK)));
+        callback(makeAdd(makeFloorDiv(seperation, makeIntConst(selfK)),
+                         makeIntConst(1)));
         break;
     default:
         ASSERT(false);
     }
-    callback(seperation);
 }
 
 Stmt SeperateTail::visit(const If &op) {
@@ -141,12 +153,17 @@ Stmt SeperateTail::visit(const For &_op) {
     }
 
     auto iterHash = getHash(makeVar(op->iter_));
-    std::vector<Expr> seperations;
+    std::unordered_map<uint64_t, Expr> sepSet;
     for (auto &&branch : ifList) {
         genSeperation(iterHash, branch->cond_,
-                      [&](const Expr &sep) { seperations.emplace_back(sep); });
+                      [&](const Expr &sep) { sepSet[getHash(sep)] = sep; });
     }
 
+    std::vector<Expr> seperations;
+    seperations.reserve(sepSet.size());
+    for (auto &&item : sepSet) {
+        seperations.emplace_back(item.second);
+    }
     std::function<Stmt(size_t, const For &)> dfs =
         [&seperations, &dfs, this](size_t i, const For &old) -> Stmt {
         if (i == seperations.size()) {
@@ -159,8 +176,8 @@ Stmt SeperateTail::visit(const For &_op) {
         auto back =
             makeFor(old->id(), old->iter_, makeMax(old->begin_, sep), old->end_,
                     old->parallel_, old->unroll_, old->body_);
-        front = dfs(i + 1, AppendIDs(".front")(front));
-        back = dfs(i + 1, AppendIDs(".back")(back));
+        front = dfs(i + 1, AppendIDs(".front")(front).as<ForNode>());
+        back = dfs(i + 1, AppendIDs(".back")(back).as<ForNode>());
         auto seperated = makeStmtSeq("", {front, back});
         auto ret = makeIf(
             "", makeLAnd(makeGE(sep, old->begin_), makeLT(sep, old->end_)),

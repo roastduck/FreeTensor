@@ -95,10 +95,12 @@ def test_stmt_in_between():
     with ir.VarDef([
             ("y", (4, 8), "int32", "output", "cpu"),
             ("z", (4,), "int32", "output", "cpu")]) as (y, z):
-        with ir.For("j", 0, 8) as j:
+        # After pass/seperate_tail
+        with ir.For("i", 0, 4) as i:
+            z[i] = i
+            y[i, 0] = i
+        with ir.For("j", 1, 8) as j:
             with ir.For("i", 0, 4) as i:
-                with ir.If(j == 0):
-                    z[i] = i
                 y[i, j] = i + j
     std = ir.pop_ast()
 

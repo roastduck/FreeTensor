@@ -144,6 +144,29 @@ def test_multiple_maxes():
 
     assert std.match(ast)
 
+def test_multiple_min_max():
+    with ir.VarDef([
+            ("a", (), "int32", "input", "cpu"),
+            ("b", (), "int32", "input", "cpu"),
+            ("y", (4,), "int32", "inout", "cpu")]) as (a, b, y):
+        with ir.For("i", 0, 4) as i:
+            with ir.If(i < ir.min(ir.max(5, a[()]), ir.max(6, b[()]))):
+                y[i] = i
+    ast = ir.pop_ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([
+            ("a", (), "int32", "input", "cpu"),
+            ("b", (), "int32", "input", "cpu"),
+            ("y", (4,), "int32", "inout", "cpu")]) as (a, b, y):
+        with ir.For("i", 0, 4) as i:
+            y[i] = i
+    std = ir.pop_ast()
+
+    assert std.match(ast)
+
 def test_precondition_from_if():
     with ir.VarDef([
             ("x1", (4,), "int32", "input", "cpu"),
@@ -298,8 +321,7 @@ def test_floor_div_1():
     with ir.VarDef([
             ("n", (), "int32", "input", "cpu"),
             ("y", (4,), "int32", "output", "cpu")]) as (n, y):
-        with ir.For("i", 0, n[()] // 4 - 1 + 1) as i:
-            # TODO: - 1 + 1
+        with ir.For("i", 0, n[()] // 4) as i:
             y[i] = 1
     std = ir.pop_ast()
 
@@ -320,9 +342,104 @@ def test_floor_div_2():
     with ir.VarDef([
             ("n", (), "int32", "input", "cpu"),
             ("y", (4,), "int32", "output", "cpu")]) as (n, y):
-        with ir.For("i", 0, (n[()] + -1) // 4 - 1 + 1) as i:
-            # TODO: - 1 + 1
+        with ir.For("i", 0, (n[()] + -1) // 4) as i:
             y[i] = 1
+    std = ir.pop_ast()
+
+    assert std.match(ast)
+
+def test_floor_div_3():
+    with ir.VarDef([
+            ("x", (), "int32", "input", "cpu"),
+            ("y", (), "int32", "input", "cpu")]) as (x, y):
+        y[()] = ir.min(x[()] // 4, x[()] // 4)
+    ast = ir.pop_ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([
+            ("x", (), "int32", "input", "cpu"),
+            ("y", (), "int32", "input", "cpu")]) as (x, y):
+        y[()] = x[()] // 4
+    std = ir.pop_ast()
+
+    assert std.match(ast)
+
+def test_floor_div_4():
+    with ir.VarDef([
+            ("x", (), "int32", "input", "cpu"),
+            ("y", (), "int32", "input", "cpu")]) as (x, y):
+        y[()] = 64 * x[()] // 64
+    ast = ir.pop_ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([
+            ("x", (), "int32", "input", "cpu"),
+            ("y", (), "int32", "input", "cpu")]) as (x, y):
+        y[()] = x[()]
+    std = ir.pop_ast()
+
+    assert std.match(ast)
+
+def test_floor_div_5():
+    with ir.VarDef([
+            ("x", (), "int32", "input", "cpu"),
+            ("y", (), "int32", "input", "cpu")]) as (x, y):
+        y[()] = x[()] // 4 - x[()] // 4
+    ast = ir.pop_ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([
+            ("x", (), "int32", "input", "cpu"),
+            ("y", (), "int32", "input", "cpu")]) as (x, y):
+        y[()] = 0
+    std = ir.pop_ast()
+
+    assert std.match(ast)
+
+def test_mod_1():
+    with ir.VarDef([
+            ("x", (), "int32", "input", "cpu"),
+            ("y", (), "int32", "input", "cpu")]) as (x, y):
+        y[()] = 64 * x[()] % 64
+    ast = ir.pop_ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([
+            ("x", (), "int32", "input", "cpu"),
+            ("y", (), "int32", "input", "cpu")]) as (x, y):
+        y[()] = 0
+    std = ir.pop_ast()
+
+    assert std.match(ast)
+
+def test_mod_2():
+    with ir.VarDef([
+            ("x", (), "int32", "input", "cpu"),
+            ("y", (), "int32", "input", "cpu")]) as (x, y):
+        with ir.If(ir.l_and(x[()] >= 0, x[()] < 64)):
+            y[()] = x[()] % 64
+        with ir.Else():
+            y[()] = 0
+    ast = ir.pop_ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([
+            ("x", (), "int32", "input", "cpu"),
+            ("y", (), "int32", "input", "cpu")]) as (x, y):
+        with ir.If(ir.l_and(x[()] >= 0, x[()] < 64)):
+            y[()] = x[()]
+        with ir.Else():
+            y[()] = 0
     std = ir.pop_ast()
 
     assert std.match(ast)
@@ -393,6 +510,26 @@ def test_simplify_not_logic_op():
 
     assert std.match(ast)
 
+def test_min_minus_min():
+    with ir.VarDef([
+            ("x", (), "int32", "input", "cpu"),
+            ("y", (), "int32", "input", "cpu"),
+            ("z", (), "int32", "input", "cpu")]) as (x, y, z):
+        z[()] = ir.min(x[()], y[()]) - ir.min(x[()], y[()])
+    ast = ir.pop_ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([
+            ("x", (), "int32", "input", "cpu"),
+            ("y", (), "int32", "input", "cpu"),
+            ("z", (), "int32", "input", "cpu")]) as (x, y, z):
+        z[()] = 0
+    std = ir.pop_ast()
+
+    assert std.match(ast)
+
 def test_min_max_as_bound():
     with ir.VarDef([
             ("l", (), "int32", "input", "cpu"),
@@ -412,10 +549,65 @@ def test_min_max_as_bound():
             ("l", (), "int32", "input", "cpu"),
             ("r", (), "int32", "input", "cpu")]) as (l, r):
         with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
-            with ir.For("i", ir.max(l[()], 0), ir.min(r[()], 4) - 1 + 1) as i:
-                # TODO: Fix this "- 1 + 1"
+            with ir.For("i", ir.max(l[()], 0), ir.min(r[()], 4)) as i:
                 y[i] = 1
     std = ir.pop_ast()
 
     assert std.match(ast)
 
+def test_accessible_after_writing_if():
+    with ir.VarDef([
+            ("x", (4,), "int32", "input", "cpu"),
+            ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+        with ir.If(x[0] < 4):
+            with ir.If(x[0] < 4):
+                y[0] = 1
+            x[0] += 1
+            with ir.If(x[0] < 4):
+                y[0] = 1
+    ast = ir.pop_ast()
+    print(ast)
+    ast = ir.simplify_pass(ast)
+    print(ast)
+
+    with ir.VarDef([
+            ("x", (4,), "int32", "input", "cpu"),
+            ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+        with ir.If(x[0] < 4):
+            y[0] = 1
+            x[0] += 1
+            with ir.If(x[0] < 4):
+                y[0] = 1
+    std = ir.pop_ast()
+
+    assert std.match(ast)
+
+def test_accessible_after_writing_for():
+    with ir.VarDef([
+            ("x", (4,), "int32", "input", "cpu"),
+            ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+        with ir.If(x[0] < 4):
+            with ir.For("i", 0, 4) as i:
+                with ir.If(x[0] < 4):
+                    y[0] = 1
+                x[0] += 1
+                with ir.If(x[0] < 4):
+                    y[0] = 1
+    ast = ir.pop_ast()
+    print(ast)
+    ast = ir.simplify_pass(ast)
+    print(ast)
+
+    with ir.VarDef([
+            ("x", (4,), "int32", "input", "cpu"),
+            ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+        with ir.If(x[0] < 4):
+            with ir.For("i", 0, 4) as i:
+                with ir.If(x[0] < 4):
+                    y[0] = 1
+                x[0] += 1
+                with ir.If(x[0] < 4):
+                    y[0] = 1
+    std = ir.pop_ast()
+
+    assert std.match(ast)

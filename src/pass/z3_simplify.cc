@@ -39,6 +39,9 @@ void Z3Simplify::push(const Expr &op) {
 void Z3Simplify::pop() { solver_.pop(); }
 
 Expr Z3Simplify::visit(const Var &_op) {
+    if (replace_.count(_op->name_)) {
+        return (*this)(replace_.at(_op->name_));
+    }
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Var);
     auto op = __op.as<VarNode>();
@@ -291,7 +294,7 @@ Stmt Z3Simplify::visit(const If &op) {
                       std::move(elseCase))
                    .as<IfNode>();
     if (op->infoNotCond_.isValid()) {
-        ret->infoNotCond_ = op->infoNotCond_;
+        ret->infoNotCond_ = (*this)(op->infoNotCond_);
     }
     return ret;
 }
@@ -319,6 +322,17 @@ Stmt Z3Simplify::visit(const For &op) {
     auto var = makeVar(op->iter_);
     auto begin = (*this)(op->begin_);
     auto end = (*this)(op->end_);
+
+    if (prove((*this)(makeGE(begin, end)))) {
+        return makeStmtSeq("", {});
+    }
+    if (prove((*this)(makeEQ(makeAdd(begin, makeIntConst(1)), end)))) {
+        ASSERT(!replace_.count(op->iter_));
+        replace_[op->iter_] = begin;
+        auto body = (*this)(op->body_);
+        replace_.erase(op->iter_);
+        return body;
+    }
 
     push((*this)(makeGE(var, begin)));
     push((*this)(makeLT(var, end)));

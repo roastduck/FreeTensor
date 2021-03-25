@@ -24,7 +24,8 @@ Stmt HoistVar::visit(const For &op) {
         innerLoops_.emplace_back(op->id());
         for (auto i = defStack_.rbegin(); i != defStack_.rend(); i++) {
             ret = makeVarDef((*i)->id(), std::move((*i)->name_),
-                             std::move(*((*i)->buffer_)), ret);
+                             std::move(*((*i)->buffer_)),
+                             std::move((*i)->sizeLim_), ret, (*i)->pinned_);
         }
         return ret;
     }
@@ -205,7 +206,7 @@ Stmt FissionFor::visit(const VarDef &_op) {
         auto __op = Mutator::visit(_op);
         ASSERT(__op->nodeType() == ASTNodeType::VarDef);
         auto op = __op.as<VarDefNode>();
-        Stmt ret = varUses_.count(op->name_) ? __op : op->body_;
+        Stmt ret = varUses_.count(op->name_) ? __op : (Stmt)op->body_;
         markNewId(ret, isPart0_);
         return ret;
     }

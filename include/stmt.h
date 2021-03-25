@@ -6,22 +6,8 @@
 
 #include <ast.h>
 #include <buffer.h>
-#include <expr.h>
 
 namespace ir {
-
-class StmtNode : public ASTNode {
-    std::string id_;
-    static uint64_t idCnt_;
-
-  public:
-    void setId(const std::string &id);
-    const std::string &id() const;
-    bool hasNamedId() const;
-
-    DEFINE_NODE_ACCESS(Stmt);
-};
-typedef Ref<StmtNode> Stmt;
 
 /**
  * Matches any statement
@@ -36,7 +22,7 @@ inline Stmt makeAny() { return Any::make(); }
 
 class StmtSeqNode : public StmtNode {
   public:
-    std::vector<Stmt> stmts_;
+    std::vector<SubTree<StmtNode>> stmts_;
     DEFINE_NODE_TRAIT(StmtSeq);
 };
 typedef Ref<StmtSeqNode> StmtSeq;
@@ -44,14 +30,14 @@ template <class Tstmts>
 Stmt makeStmtSeq(const std::string &id, Tstmts &&stmts) {
     StmtSeq s = StmtSeq::make();
     s->setId(id);
-    s->stmts_ = std::forward<Tstmts>(stmts);
+    s->stmts_ = std::vector<SubTree<StmtNode>>(stmts.begin(), stmts.end());
     return s;
 }
 inline Stmt makeStmtSeq(const std::string &id,
                         std::initializer_list<Stmt> stmts) {
     StmtSeq s = StmtSeq::make();
     s->setId(id);
-    s->stmts_ = stmts;
+    s->stmts_ = std::vector<SubTree<StmtNode>>(stmts.begin(), stmts.end());
     return s;
 }
 
@@ -59,30 +45,37 @@ class VarDefNode : public StmtNode {
   public:
     std::string name_;
     Ref<Buffer> buffer_;
-    Stmt body_;
+    SubTree<ExprNode, NullPolicy::Nullable>
+        sizeLim_; // limit the buffer size to a specific
+                  // expression, other than the size of buffer_
+    SubTree<StmtNode> body_;
+    bool pinned_; // If pinned, SinkVar and ShrinkVar will not alter this node
 
-    VarDefNode(const VarDefNode &other);            // Deep copy
-    VarDefNode &operator=(const VarDefNode &other); // Deep copy
+    VarDefNode(const VarDefNode &other);            // Deep copy buffer_
+    VarDefNode &operator=(const VarDefNode &other); // Deep copy buffer_
 
     DEFINE_NODE_TRAIT(VarDef);
 };
 typedef Ref<VarDefNode> VarDef;
 template <class Tbuffer, class Tbody>
 Stmt makeVarDef(const std::string &id, const std::string &name,
-                Tbuffer &&buffer, Tbody &&body) {
+                Tbuffer &&buffer, const Expr &sizeLim, Tbody &&body,
+                bool pinned) {
     VarDef d = VarDef::make();
     d->setId(id);
     d->name_ = name;
     d->buffer_ = Ref<Buffer>::make(std::forward<Tbuffer>(buffer));
+    d->sizeLim_ = sizeLim;
     d->body_ = std::forward<Tbody>(body);
+    d->pinned_ = pinned;
     return d;
 }
 
 class StoreNode : public StmtNode {
   public:
     std::string var_;
-    std::vector<Expr> indices_;
-    Expr expr_;
+    std::vector<SubTree<ExprNode>> indices_;
+    SubTree<ExprNode> expr_;
     DEFINE_NODE_TRAIT(Store);
 };
 typedef Ref<StoreNode> Store;
@@ -92,7 +85,8 @@ Stmt makeStore(const std::string &id, const std::string &var,
     Store s = Store::make();
     s->setId(id);
     s->var_ = var;
-    s->indices_ = std::forward<Tindices>(indices);
+    s->indices_ =
+        std::vector<SubTree<ExprNode>>(indices.begin(), indices.end());
     s->expr_ = std::forward<Texpr>(expr);
     return s;
 }
@@ -101,9 +95,9 @@ enum class ReduceOp : int { Add, Min, Max };
 class ReduceToNode : public StmtNode {
   public:
     std::string var_;
-    std::vector<Expr> indices_;
+    std::vector<SubTree<ExprNode>> indices_;
     ReduceOp op_;
-    Expr expr_;
+    SubTree<ExprNode> expr_;
     bool atomic_;
     DEFINE_NODE_TRAIT(ReduceTo)
 };
@@ -114,7 +108,8 @@ Stmt makeReduceTo(const std::string &id, const std::string &var,
     ReduceTo a = ReduceTo::make();
     a->setId(id);
     a->var_ = var;
-    a->indices_ = std::forward<Tindices>(indices);
+    a->indices_ =
+        std::vector<SubTree<ExprNode>>(indices.begin(), indices.end());
     a->op_ = op;
     a->expr_ = std::forward<Texpr>(expr);
     a->atomic_ = atomic;
@@ -124,12 +119,12 @@ Stmt makeReduceTo(const std::string &id, const std::string &var,
 class ForNode : public StmtNode {
   public:
     std::string iter_;
-    Expr begin_, end_;
+    SubTree<ExprNode> begin_, end_;
     std::string parallel_;
     bool unroll_;
-    Stmt body_;
+    SubTree<StmtNode> body_;
 
-    Expr infoLen_;
+    SubTree<ExprNode, NullPolicy::Nullable> infoLen_;
 
     DEFINE_NODE_TRAIT(For);
 };
@@ -151,10 +146,11 @@ Stmt makeFor(const std::string &id, const std::string &iter, Tbegin &&begin,
 
 class IfNode : public StmtNode {
   public:
-    Expr cond_;
-    Stmt thenCase_, elseCase_;
+    SubTree<ExprNode> cond_;
+    SubTree<StmtNode> thenCase_;
+    SubTree<StmtNode, NullPolicy::Nullable> elseCase_;
 
-    Expr infoNotCond_;
+    SubTree<ExprNode, NullPolicy::Nullable> infoNotCond_;
 
     DEFINE_NODE_TRAIT(If);
 };
@@ -172,8 +168,8 @@ Stmt makeIf(const std::string &id, Tcond &&cond, Tthen &&thenCase,
 
 class AssertNode : public StmtNode {
   public:
-    Expr cond_;
-    Stmt body_;
+    SubTree<ExprNode> cond_;
+    SubTree<StmtNode> body_;
     DEFINE_NODE_TRAIT(Assert);
 };
 typedef Ref<AssertNode> Assert;
@@ -193,7 +189,7 @@ Stmt makeAssert(const std::string &id, Tcond &&cond, Tbody &&body) {
  */
 class EvalNode : public StmtNode {
   public:
-    Expr expr_;
+    SubTree<ExprNode> expr_;
     DEFINE_NODE_TRAIT(Eval);
 };
 typedef Ref<EvalNode> Eval;
