@@ -173,8 +173,7 @@ class Schedule(ffi.Schedule):
     g(1);
     ```
 
-    Virtual threads in TVM can be implemented via first reorder and then
-    blend
+    Virtual threads in TVM can be implemented via blend
 
     Parameters
     ----------

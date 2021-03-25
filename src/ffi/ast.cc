@@ -18,36 +18,61 @@ void init_ffi_ast(py::module_ &m) {
     pyStmt.def_property_readonly("nid", &StmtNode::id);
 
     py::class_<StmtSeqNode, StmtSeq>(m, "StmtSeq", pyStmt)
-        .def_readonly("stmts", &StmtSeqNode::stmts_);
+        .def_property_readonly("stmts", [](const StmtSeq &op) {
+            return std::vector<Stmt>(op->stmts_.begin(), op->stmts_.end());
+        });
     py::class_<VarDefNode, VarDef>(m, "VarDef", pyStmt)
         .def_readonly("name", &VarDefNode::name_)
         .def_readonly("buffer", &VarDefNode::buffer_)
-        .def_readonly("size_lim", &VarDefNode::sizeLim_)
-        .def_readonly("body", &VarDefNode::body_);
+        .def_property_readonly(
+            "size_lim", [](const VarDef &op) -> Expr { return op->sizeLim_; })
+        .def_property_readonly(
+            "body", [](const VarDef &op) -> Stmt { return op->body_; });
     py::class_<StoreNode, Store>(m, "Store", pyStmt)
         .def_readonly("var", &StoreNode::var_)
-        .def_readonly("indices", &StoreNode::indices_)
-        .def_readonly("expr", &StoreNode::expr_);
+        .def_property_readonly("indices",
+                               [](const Store &op) {
+                                   return std::vector<Expr>(
+                                       op->indices_.begin(),
+                                       op->indices_.end());
+                               })
+        .def_property_readonly(
+            "expr", [](const Store &op) -> Expr { return op->expr_; });
     py::class_<ReduceToNode, ReduceTo>(m, "ReduceTo", pyStmt)
         .def_readonly("var", &ReduceToNode::var_)
-        .def_readonly("indices", &ReduceToNode::indices_)
+        .def_property_readonly("indices",
+                               [](const ReduceTo &op) {
+                                   return std::vector<Expr>(
+                                       op->indices_.begin(),
+                                       op->indices_.end());
+                               })
         .def_readonly("op", &ReduceToNode::op_)
-        .def_readonly("expr", &ReduceToNode::expr_);
+        .def_property_readonly(
+            "expr", [](const ReduceTo &op) -> Expr { return op->expr_; });
     py::class_<ForNode, For>(m, "For", pyStmt)
         .def_readonly("iter", &ForNode::iter_)
-        .def_readonly("begin", &ForNode::begin_)
-        .def_readonly("end", &ForNode::end_)
+        .def_property_readonly("begin",
+                               [](const For &op) -> Expr { return op->begin_; })
+        .def_property_readonly("end",
+                               [](const For &op) -> Expr { return op->end_; })
         .def_readonly("parallel", &ForNode::parallel_)
-        .def_readonly("body", &ForNode::body_);
+        .def_property_readonly("body",
+                               [](const For &op) -> Stmt { return op->body_; });
     py::class_<IfNode, If>(m, "If", pyStmt)
-        .def_readonly("cond", &IfNode::cond_)
-        .def_readonly("then_case", &IfNode::thenCase_)
-        .def_readonly("else_case", &IfNode::elseCase_);
+        .def_property_readonly("cond",
+                               [](const If &op) -> Expr { return op->cond_; })
+        .def_property_readonly(
+            "then_case", [](const If &op) -> Stmt { return op->thenCase_; })
+        .def_property_readonly(
+            "else_case", [](const If &op) -> Stmt { return op->elseCase_; });
     py::class_<AssertNode, Assert>(m, "Assert", pyStmt)
-        .def_readonly("cond", &AssertNode::cond_)
-        .def_readonly("body", &AssertNode::body_);
+        .def_property_readonly(
+            "cond", [](const Assert &op) -> Expr { return op->cond_; })
+        .def_property_readonly(
+            "body", [](const Assert &op) -> Stmt { return op->body_; });
     py::class_<EvalNode, Eval>(m, "Eval", pyStmt)
-        .def_readonly("expr", &EvalNode::expr_);
+        .def_property_readonly(
+            "expr", [](const Eval &op) -> Expr { return op->expr_; });
     py::class_<AnyNode, Any> pyAny(m, "Any", pyStmt);
 
     py::class_<VarNode, Var> pyVar(m, "Var", pyExpr);
@@ -181,11 +206,12 @@ void init_ffi_ast(py::module_ &m) {
           static_cast<Stmt (*)(const std::string &, const std::vector<Stmt> &)>(
               &makeStmtSeq),
           "id"_a, "stmts"_a);
-    m.def("makeVarDef",
-          static_cast<Stmt (*)(const std::string &, const std::string &,
-                               const Buffer &, const Expr &, const Stmt &)>(
-              &makeVarDef),
-          "nid"_a, "name"_a, "buffer"_a, "size_lim"_a, "body"_a);
+    m.def(
+        "makeVarDef",
+        static_cast<Stmt (*)(const std::string &, const std::string &,
+                             const Buffer &, const Expr &, const Stmt &, bool)>(
+            &makeVarDef),
+        "nid"_a, "name"_a, "buffer"_a, "size_lim"_a, "body"_a, "pinned"_a);
     m.def("makeVar", &makeVar, "name"_a);
     m.def("makeStore",
           static_cast<Stmt (*)(const std::string &, const std::string &,

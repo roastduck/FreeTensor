@@ -144,6 +144,29 @@ def test_multiple_maxes():
 
     assert std.match(ast)
 
+def test_multiple_min_max():
+    with ir.VarDef([
+            ("a", (), "int32", "input", "cpu"),
+            ("b", (), "int32", "input", "cpu"),
+            ("y", (4,), "int32", "inout", "cpu")]) as (a, b, y):
+        with ir.For("i", 0, 4) as i:
+            with ir.If(i < ir.min(ir.max(5, a[()]), ir.max(6, b[()]))):
+                y[i] = i
+    ast = ir.pop_ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([
+            ("a", (), "int32", "input", "cpu"),
+            ("b", (), "int32", "input", "cpu"),
+            ("y", (4,), "int32", "inout", "cpu")]) as (a, b, y):
+        with ir.For("i", 0, 4) as i:
+            y[i] = i
+    std = ir.pop_ast()
+
+    assert std.match(ast)
+
 def test_precondition_from_if():
     with ir.VarDef([
             ("x1", (4,), "int32", "input", "cpu"),
@@ -487,6 +510,26 @@ def test_simplify_not_logic_op():
 
     assert std.match(ast)
 
+def test_min_minus_min():
+    with ir.VarDef([
+            ("x", (), "int32", "input", "cpu"),
+            ("y", (), "int32", "input", "cpu"),
+            ("z", (), "int32", "input", "cpu")]) as (x, y, z):
+        z[()] = ir.min(x[()], y[()]) - ir.min(x[()], y[()])
+    ast = ir.pop_ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([
+            ("x", (), "int32", "input", "cpu"),
+            ("y", (), "int32", "input", "cpu"),
+            ("z", (), "int32", "input", "cpu")]) as (x, y, z):
+        z[()] = 0
+    std = ir.pop_ast()
+
+    assert std.match(ast)
+
 def test_min_max_as_bound():
     with ir.VarDef([
             ("l", (), "int32", "input", "cpu"),
@@ -506,8 +549,7 @@ def test_min_max_as_bound():
             ("l", (), "int32", "input", "cpu"),
             ("r", (), "int32", "input", "cpu")]) as (l, r):
         with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
-            with ir.For("i", ir.max(l[()], 0), ir.min(r[()], 4) - 1 + 1) as i:
-                # TODO: Fix this "- 1 + 1"
+            with ir.For("i", ir.max(l[()], 0), ir.min(r[()], 4)) as i:
                 y[i] = 1
     std = ir.pop_ast()
 

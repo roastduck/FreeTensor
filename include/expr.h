@@ -8,11 +8,6 @@
 
 namespace ir {
 
-class ExprNode : public ASTNode {
-    DEFINE_NODE_ACCESS(Expr);
-};
-typedef Ref<ExprNode> Expr;
-
 /**
  * Matches any expression
  *
@@ -39,13 +34,15 @@ inline Expr makeVar(const std::string &name) {
 class LoadNode : public ExprNode {
   public:
     std::string var_;
-    std::vector<Expr> indices_;
+    std::vector<SubTree<ExprNode>> indices_;
     DEFINE_NODE_TRAIT(Load);
 };
 typedef Ref<LoadNode> Load;
 inline Expr makeLoad(const std::string &var, const std::vector<Expr> &indices) {
     Load l = Load::make();
-    l->var_ = var, l->indices_ = indices;
+    l->var_ = var;
+    l->indices_ =
+        std::vector<SubTree<ExprNode>>(indices.begin(), indices.end());
     return l;
 }
 
@@ -87,7 +84,7 @@ inline Expr makeBoolConst(bool val) {
 
 class AddNode : public ExprNode {
   public:
-    Expr lhs_, rhs_;
+    SubTree<ExprNode> lhs_, rhs_;
     DEFINE_NODE_TRAIT(Add);
 };
 typedef Ref<AddNode> Add;
@@ -99,7 +96,7 @@ template <class T, class U> Expr makeAdd(T &&lhs, U &&rhs) {
 
 class SubNode : public ExprNode {
   public:
-    Expr lhs_, rhs_;
+    SubTree<ExprNode> lhs_, rhs_;
     DEFINE_NODE_TRAIT(Sub);
 };
 typedef Ref<SubNode> Sub;
@@ -111,7 +108,7 @@ template <class T, class U> Expr makeSub(T &&lhs, U &&rhs) {
 
 class MulNode : public ExprNode {
   public:
-    Expr lhs_, rhs_;
+    SubTree<ExprNode> lhs_, rhs_;
     DEFINE_NODE_TRAIT(Mul);
 };
 typedef Ref<MulNode> Mul;
@@ -126,7 +123,7 @@ template <class T, class U> Expr makeMul(T &&lhs, U &&rhs) {
  */
 class RealDivNode : public ExprNode {
   public:
-    Expr lhs_, rhs_;
+    SubTree<ExprNode> lhs_, rhs_;
     DEFINE_NODE_TRAIT(RealDiv);
 };
 typedef Ref<RealDivNode> RealDiv;
@@ -144,7 +141,7 @@ template <class T, class U> Expr makeRealDiv(T &&lhs, U &&rhs) {
  */
 class FloorDivNode : public ExprNode {
   public:
-    Expr lhs_, rhs_;
+    SubTree<ExprNode> lhs_, rhs_;
     DEFINE_NODE_TRAIT(FloorDiv);
 };
 typedef Ref<FloorDivNode> FloorDiv;
@@ -162,7 +159,7 @@ template <class T, class U> Expr makeFloorDiv(T &&lhs, U &&rhs) {
  */
 class CeilDivNode : public ExprNode {
   public:
-    Expr lhs_, rhs_;
+    SubTree<ExprNode> lhs_, rhs_;
     DEFINE_NODE_TRAIT(CeilDiv);
 };
 typedef Ref<CeilDivNode> CeilDiv;
@@ -180,7 +177,7 @@ template <class T, class U> Expr makeCeilDiv(T &&lhs, U &&rhs) {
  */
 class RoundTowards0DivNode : public ExprNode {
   public:
-    Expr lhs_, rhs_;
+    SubTree<ExprNode> lhs_, rhs_;
     DEFINE_NODE_TRAIT(RoundTowards0Div);
 };
 typedef Ref<RoundTowards0DivNode> RoundTowards0Div;
@@ -192,7 +189,7 @@ template <class T, class U> Expr makeRoundTowards0Div(T &&lhs, U &&rhs) {
 
 class ModNode : public ExprNode {
   public:
-    Expr lhs_, rhs_;
+    SubTree<ExprNode> lhs_, rhs_;
     DEFINE_NODE_TRAIT(Mod);
 };
 typedef Ref<ModNode> Mod;
@@ -204,7 +201,7 @@ template <class T, class U> Expr makeMod(T &&lhs, U &&rhs) {
 
 class MinNode : public ExprNode {
   public:
-    Expr lhs_, rhs_;
+    SubTree<ExprNode> lhs_, rhs_;
     DEFINE_NODE_TRAIT(Min);
 };
 typedef Ref<MinNode> Min;
@@ -216,7 +213,7 @@ template <class T, class U> Expr makeMin(T &&lhs, U &&rhs) {
 
 class MaxNode : public ExprNode {
   public:
-    Expr lhs_, rhs_;
+    SubTree<ExprNode> lhs_, rhs_;
     DEFINE_NODE_TRAIT(Max);
 };
 typedef Ref<MaxNode> Max;
@@ -228,7 +225,7 @@ template <class T, class U> Expr makeMax(T &&lhs, U &&rhs) {
 
 class LTNode : public ExprNode {
   public:
-    Expr lhs_, rhs_;
+    SubTree<ExprNode> lhs_, rhs_;
     DEFINE_NODE_TRAIT(LT);
 };
 typedef Ref<LTNode> LT;
@@ -240,7 +237,7 @@ template <class T, class U> Expr makeLT(T &&lhs, U &&rhs) {
 
 class LENode : public ExprNode {
   public:
-    Expr lhs_, rhs_;
+    SubTree<ExprNode> lhs_, rhs_;
     DEFINE_NODE_TRAIT(LE);
 };
 typedef Ref<LENode> LE;
@@ -252,7 +249,7 @@ template <class T, class U> Expr makeLE(T &&lhs, U &&rhs) {
 
 class GTNode : public ExprNode {
   public:
-    Expr lhs_, rhs_;
+    SubTree<ExprNode> lhs_, rhs_;
     DEFINE_NODE_TRAIT(GT);
 };
 typedef Ref<GTNode> GT;
@@ -264,7 +261,7 @@ template <class T, class U> Expr makeGT(T &&lhs, U &&rhs) {
 
 class GENode : public ExprNode {
   public:
-    Expr lhs_, rhs_;
+    SubTree<ExprNode> lhs_, rhs_;
     DEFINE_NODE_TRAIT(GE);
 };
 typedef Ref<GENode> GE;
@@ -276,7 +273,7 @@ template <class T, class U> Expr makeGE(T &&lhs, U &&rhs) {
 
 class EQNode : public ExprNode {
   public:
-    Expr lhs_, rhs_;
+    SubTree<ExprNode> lhs_, rhs_;
     DEFINE_NODE_TRAIT(EQ);
 };
 typedef Ref<EQNode> EQ;
@@ -288,7 +285,7 @@ template <class T, class U> Expr makeEQ(T &&lhs, U &&rhs) {
 
 class NENode : public ExprNode {
   public:
-    Expr lhs_, rhs_;
+    SubTree<ExprNode> lhs_, rhs_;
     DEFINE_NODE_TRAIT(NE);
 };
 typedef Ref<NENode> NE;
@@ -300,7 +297,7 @@ template <class T, class U> Expr makeNE(T &&lhs, U &&rhs) {
 
 class LAndNode : public ExprNode {
   public:
-    Expr lhs_, rhs_;
+    SubTree<ExprNode> lhs_, rhs_;
     DEFINE_NODE_TRAIT(LAnd);
 };
 typedef Ref<LAndNode> LAnd;
@@ -312,7 +309,7 @@ template <class T, class U> Expr makeLAnd(T &&lhs, U &&rhs) {
 
 class LOrNode : public ExprNode {
   public:
-    Expr lhs_, rhs_;
+    SubTree<ExprNode> lhs_, rhs_;
     DEFINE_NODE_TRAIT(LOr);
 };
 typedef Ref<LOrNode> LOr;
@@ -324,7 +321,7 @@ template <class T, class U> Expr makeLOr(T &&lhs, U &&rhs) {
 
 class LNotNode : public ExprNode {
   public:
-    Expr expr_;
+    SubTree<ExprNode> expr_;
     DEFINE_NODE_TRAIT(LNot);
 };
 typedef Ref<LNotNode> LNot;
@@ -341,21 +338,21 @@ class IntrinsicNode : public ExprNode {
   public:
     std::string format_; /// what to run. "%" is filled by parameters one by one
                          /// E.g. sinf(%)
-    std::vector<Expr> params_;
+    std::vector<SubTree<ExprNode>> params_;
     DEFINE_NODE_TRAIT(Intrinsic);
 };
 typedef Ref<IntrinsicNode> Intrinsic;
 template <class T> Expr makeIntrinsic(const std::string &format, T &&params) {
     Intrinsic i = Intrinsic::make();
     i->format_ = format;
-    i->params_ = std::forward<T>(params);
+    i->params_ = std::vector<SubTree<ExprNode>>(params.begin(), params.end());
     return i;
 }
 inline Expr makeIntrinsic(const std::string &format,
                           std::initializer_list<Expr> params) {
     Intrinsic i = Intrinsic::make();
     i->format_ = format;
-    i->params_ = params;
+    i->params_ = std::vector<SubTree<ExprNode>>(params.begin(), params.end());
     return i;
 }
 

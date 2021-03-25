@@ -24,7 +24,7 @@ class VarSplit : public Mutator {
   private:
     template <class T> T splitMemAcc(const T &op) {
         if (op->var_ == var_) {
-            auto x = op->indices_[dim_];
+            Expr x = op->indices_[dim_];
             op->indices_[dim_] = makeFloorDiv(x, dynFactor_);
             op->indices_.insert(op->indices_.begin() + dim_ + 1,
                                 makeMod(x, dynFactor_));

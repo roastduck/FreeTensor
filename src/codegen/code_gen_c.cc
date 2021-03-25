@@ -390,10 +390,8 @@ void CodeGenC::visit(const Assert &op) {
     makeIndent();
     os() << "assert(";
     (*this)(op->cond_);
-    os() << ") ";
-    beginBlock();
+    os() << ");" << std::endl;
     (*this)(op->body_);
-    endBlock();
 }
 
 void CodeGenC::visit(const Intrinsic &op) {

@@ -27,7 +27,7 @@ class CodeGenCUDA : public CodeGenC {
  *
  * @return : (source, list of params)
  */
-std::pair<std::string, std::vector<std::string>> codeGenCUDA(const AST &op);
+std::pair<std::string, std::vector<std::string>> codeGenCUDA(const Stmt &op);
 
 } // namespace ir
 

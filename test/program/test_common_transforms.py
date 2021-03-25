@@ -1,4 +1,5 @@
 import ir
+import ir.debug
 import numpy as np
 
 def test_tiling():
@@ -228,6 +229,50 @@ def test_dynamic_tiling():
         "a": a_arr, "b": b_arr, "c": c_arr})
     driver.run()
     c_np = c_arr.numpy().reshape(300, 500)
+
+    c_std = a_np @ b_np
+    assert np.all(np.isclose(c_np, c_std))
+
+def test_collaborative_fetch():
+    target = ir.GPU()
+    device = ir.Device(target)
+    host = ir.Device(ir.CPU())
+
+    with ir.VarDef([
+            ("a", (32, 256), "float32", "input", "cpu"),
+            ("b", (256, 32), "float32", "input", "cpu"),
+            ("c", (32, 32), "float32", "output", "cpu")]) as (a, b, c):
+        with ir.For("i", 0, 32, nid="Li") as i:
+            with ir.For("j", 0, 32, nid="Lj") as j:
+                c[i, j] = 0
+                with ir.For("k", 0, 256, nid="Lk") as k:
+                    c[i, j] = c[i, j] + a[i, k] * b[k, j]
+
+    i, j, k = "Li", "Lj", "Lk"
+
+    s = ir.Schedule(ir.pop_ast())
+    k0, k1 = s.split(k, 32)
+    fill_a, _, _ = s.cache(k1, "a", "gpu/shared")
+    fill_b, _, _ = s.cache(k1, "b", "gpu/shared")
+    s.parallelize(i, "threadIdx.y")
+    s.parallelize(j, "threadIdx.x")
+    s.parallelize(s.find(lambda x: x.type() == "For" and x.node().body.nid == fill_a), "threadIdx.x")
+    s.parallelize(s.find(lambda x: x.type() == "For" and x.node().body.nid == fill_b), "threadIdx.y")
+    ast = ir.lower(s.ast(), target)
+    print(ast)
+
+    code, params = ir.codegen(ast, target)
+    print(ir.debug.with_line_no(code))
+    a_np = np.random.rand(32, 256).astype("float32")
+    b_np = np.random.rand(256, 32).astype("float32")
+    c_np = np.zeros((32, 32), dtype="float32")
+    a_arr = ir.Array(a_np, device)
+    b_arr = ir.Array(b_np, device)
+    c_arr = ir.Array(c_np, device)
+    driver = ir.Driver(code, params, device)
+    driver.set_params({"a": a_arr, "b": b_arr, "c": c_arr})
+    driver.run()
+    c_np = c_arr.numpy().reshape(32, 32)
 
     c_std = a_np @ b_np
     assert np.all(np.isclose(c_np, c_std))

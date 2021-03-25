@@ -49,7 +49,7 @@ Stmt MergeIf::visit(const StmtSeq &_op) {
         }
         stmts.emplace_back(stmt);
     }
-    op->stmts_ = std::move(stmts);
+    op->stmts_ = std::vector<SubTree<StmtNode>>(stmts.begin(), stmts.end());
     return op;
 }
 

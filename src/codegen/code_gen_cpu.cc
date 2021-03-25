@@ -28,6 +28,7 @@ std::pair<std::string, std::vector<std::string>> codeGenCPU(const AST &op) {
     // TODO: Pure C?
     const char *header =
         "#include <cstdint>\n"
+        "#include <cassert>\n"
         "#include <algorithm>\n" // min, max
         "#include <array>\n"     // ByValue
         "#define restrict __restrict__\n"

@@ -142,8 +142,7 @@ class Schedule {
      * g(1);
      * ```
      *
-     * Virtual threads in TVM can be implemented via first reorder and then
-     * blend
+     * Virtual threads in TVM can be implemented via blend
      *
      * @param loop : ID of the loop being transformed
      * @throw InvalidSchedule if the loop is not found, the loop length is not a

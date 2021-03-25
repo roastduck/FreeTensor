@@ -176,8 +176,8 @@ Stmt SeperateTail::visit(const For &_op) {
         auto back =
             makeFor(old->id(), old->iter_, makeMax(old->begin_, sep), old->end_,
                     old->parallel_, old->unroll_, old->body_);
-        front = dfs(i + 1, AppendIDs(".front")(front));
-        back = dfs(i + 1, AppendIDs(".back")(back));
+        front = dfs(i + 1, AppendIDs(".front")(front).as<ForNode>());
+        back = dfs(i + 1, AppendIDs(".back")(back).as<ForNode>());
         auto seperated = makeStmtSeq("", {front, back});
         auto ret = makeIf(
             "", makeLAnd(makeGE(sep, old->begin_), makeLT(sep, old->end_)),

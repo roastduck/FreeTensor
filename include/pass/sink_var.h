@@ -22,6 +22,8 @@ class FindAllLoops : public Visitor {
 
 /**
  * Make the scope of a local variable smaller
+ *
+ * If you don't want a variable to be sinked, please set VarDefNode::pinned_
  */
 class SinkVar : public Mutator {
     const std::set<std::pair<std::string, std::string>> &deps_; // {(var, loop)}

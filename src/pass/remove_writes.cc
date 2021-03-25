@@ -55,6 +55,9 @@ void FindLoopInvariantWrites::visit(const Store &op) {
     for (int i = (int)(loopStack_.size()) - 1, iEnd = defDepth_.at(op->var_);
          i >= iEnd; i--) {
         auto &&item = loopStack_[i];
+        if (!item->parallel_.empty()) {
+            continue;
+        }
         Expr thisCond;
         for (auto &&idx : op->indices_) {
             if (variantExpr_.count(idx) &&
