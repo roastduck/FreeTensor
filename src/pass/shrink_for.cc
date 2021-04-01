@@ -18,10 +18,11 @@ Expr ShrinkFor::simplifyExpr(const Expr &_expr) {
 }
 
 Stmt ShrinkFor::visit(const For &_op) {
-    auto hash = getHash(makeVar(_op->iter_));
+    auto var = makeVar(_op->iter_).as<VarNode>();
+    auto hash = getHash(var);
     newRange_.erase(hash);
 
-    iterStack_.emplace_back(hash);
+    iterStack_.emplace_back(var);
     auto __op = SimplifyPass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::For);
     auto op = __op.as<ForNode>();
