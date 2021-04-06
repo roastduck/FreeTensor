@@ -28,6 +28,16 @@ class Driver {
 
     void setParams(const std::unordered_map<std::string, Array &> &params);
     void run();
+
+    /**
+     * Run the program and measure its time cost
+     *
+     * @param rounds : Run this amount of rounds, and report the average
+     * @param warmups : Run this amount of rounds before actual measurement
+     * @return : The time, in ms
+     */
+    double time(int rounds = 10, int warmups = 3);
+
     void unload();
 };
 

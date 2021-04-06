@@ -1,3 +1,4 @@
+#include <chrono>
 #include <cstdio>  // remove
 #include <cstdlib> // mkdtemp, system
 #include <cstring> // memset
@@ -6,8 +7,9 @@
 #include <sys/stat.h> // mkdir
 #include <unistd.h>   // rmdir
 
-#include "driver.h"
-#include "except.h"
+#include <driver.h>
+#include <driver/gpu.h>
+#include <except.h>
 
 namespace ir {
 
@@ -91,6 +93,43 @@ void Driver::setParams(const std::unordered_map<std::string, Array &> &params) {
 }
 
 void Driver::run() { func_(params_.data()); }
+
+double Driver::time(int rounds, int warmups) {
+    namespace ch = std::chrono;
+
+    double tot = 0;
+    auto tgtType = dev_.type();
+    for (int i = 0; i < warmups; i++) {
+        run();
+        switch (tgtType) {
+        case TargetType::GPU:
+            checkCudaError(cudaDeviceSynchronize());
+        default:;
+        }
+    }
+    for (int i = 0; i < rounds; i++) {
+        auto cudaErr = cudaSuccess;
+
+        auto beg = ch::high_resolution_clock::now();
+        run();
+        switch (tgtType) {
+        case TargetType::GPU:
+            cudaErr = cudaDeviceSynchronize();
+        default:;
+        }
+        auto end = ch::high_resolution_clock::now();
+        double dur =
+            ch::duration_cast<ch::duration<double>>(end - beg).count() *
+            1000; // ms
+
+        if (cudaErr) {
+            throw DriverError(cudaGetErrorString(cudaErr));
+        }
+
+        tot += dur;
+    }
+    return tot / rounds;
+}
 
 void Driver::unload() {
     func_ = nullptr;

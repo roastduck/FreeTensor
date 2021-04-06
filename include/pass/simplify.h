@@ -84,11 +84,7 @@ class CompTransientBounds : public FindBoundAccess {
     std::unordered_map<uint64_t, std::pair<Expr, Expr>> transients_;
 
   protected:
-    const std::unordered_map<uint64_t, std::pair<Expr, Expr>> &
-    transients() const {
-        return transients_;
-    }
-    void transientsErase(uint64_t hash) { transients_.erase(hash); }
+    Ref<std::pair<Expr, Expr>> transient(const Expr &op);
 
   private:
     static Expr sub1(const Expr &op);

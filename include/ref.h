@@ -5,6 +5,7 @@
 #include <memory>
 #include <type_traits>
 
+#include <allocator.h>
 #include <except.h>
 
 namespace ir {
@@ -16,6 +17,9 @@ template <class T> class Ref {
     template <class U> friend class Ref;
 
     std::shared_ptr<T> ptr_;
+
+  private:
+    Ref(std::shared_ptr<T> &&ptr) : ptr_(ptr) {}
 
   public:
     typedef T Object;
@@ -41,7 +45,9 @@ template <class T> class Ref {
         return *this;
     }
 
-    Ref clone() const { return Ref(new T(*ptr_)); }
+    Ref clone() const {
+        return Ref(std::allocate_shared<T>(Allocator<T>(), *ptr_));
+    }
 
     template <class U> Ref<U> as() const {
         Ref<U> ret;
@@ -66,9 +72,13 @@ template <class T> class Ref {
         return ptr_.get();
     }
 
-    static Ref make() { return Ref(new T()); }
-    static Ref make(T &&x) { return Ref(new T(std::move(x))); }
-    static Ref make(const T &x) { return Ref(new T(x)); }
+    static Ref make() { return Ref(std::allocate_shared<T>(Allocator<T>())); }
+    static Ref make(T &&x) {
+        return Ref(std::allocate_shared<T>(Allocator<T>(), std::move(x)));
+    }
+    static Ref make(const T &x) {
+        return Ref(std::allocate_shared<T>(Allocator<T>(), x));
+    }
 
     friend bool operator==(const Ref &lhs, const Ref &rhs) {
         return lhs.ptr_ == rhs.ptr_;

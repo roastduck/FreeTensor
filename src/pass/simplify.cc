@@ -71,7 +71,7 @@ void FindBoundAccess::setBoundAccess(const Expr &op) {
 bool FindBoundAccess::checkBoundAccess(const Expr &op) {
     switch (op->nodeType()) {
     case ASTNodeType::Var: {
-        auto hash = getHash(op.as<VarNode>());
+        auto hash = getHash(op);
         return boundAccess_.count(hash);
     }
     case ASTNodeType::Load: {
@@ -96,6 +96,19 @@ Stmt FindBoundAccess::visit(const ReduceTo &op) {
     boundAccess_.erase(hash);
     auto ret = Mutator::visit(op);
     return ret;
+}
+
+Ref<std::pair<Expr, Expr>> CompTransientBounds::transient(const Expr &op) {
+    auto hash = getHash(op);
+    if (transients_.count(hash)) {
+        if (!checkBoundAccess(op)) {
+            transients_.erase(hash);
+        }
+        if (transients_.count(hash)) {
+            return Ref<std::pair<Expr, Expr>>::make(transients_.at(hash));
+        }
+    }
+    return nullptr;
 }
 
 Expr CompTransientBounds::sub1(const Expr &op) {
@@ -132,9 +145,12 @@ void CompTransientBounds::applyCond(const Expr &cond) {
     }
     case ASTNodeType::LT: {
         auto lt = cond.as<LTNode>();
+<<<<<<< HEAD
         transients_[getHash(lt->lhs_)].second = sub1(lt->rhs_);
         setBoundAccess(lt->lhs_);
         transients_[getHash(lt->rhs_)].first = add1(lt->lhs_);
+=======
+>>>>>>> 0201e1f146b17e8e9738b102d0eb55fc6db91f47
         minAssign(transients_[getHash(lt->lhs_)].second, sub1(lt->rhs_));
         setBoundAccess(lt->lhs_);
         maxAssign(transients_[getHash(lt->rhs_)].first, add1(lt->lhs_));
@@ -143,9 +159,12 @@ void CompTransientBounds::applyCond(const Expr &cond) {
     }
     case ASTNodeType::GT: {
         auto gt = cond.as<GTNode>();
+<<<<<<< HEAD
         transients_[getHash(gt->lhs_)].first = add1(gt->rhs_);
         setBoundAccess(gt->lhs_);
         transients_[getHash(gt->rhs_)].second = sub1(gt->lhs_);
+=======
+>>>>>>> 0201e1f146b17e8e9738b102d0eb55fc6db91f47
         maxAssign(transients_[getHash(gt->lhs_)].first, add1(gt->rhs_));
         setBoundAccess(gt->lhs_);
         minAssign(transients_[getHash(gt->rhs_)].second, sub1(gt->lhs_));
@@ -154,9 +173,12 @@ void CompTransientBounds::applyCond(const Expr &cond) {
     }
     case ASTNodeType::LE: {
         auto le = cond.as<LENode>();
+<<<<<<< HEAD
         transients_[getHash(le->lhs_)].second = le->rhs_;
         setBoundAccess(le->lhs_);
         transients_[getHash(le->rhs_)].first = le->lhs_;
+=======
+>>>>>>> 0201e1f146b17e8e9738b102d0eb55fc6db91f47
         minAssign(transients_[getHash(le->lhs_)].second, le->rhs_);
         setBoundAccess(le->lhs_);
         maxAssign(transients_[getHash(le->rhs_)].first, le->lhs_);
@@ -165,9 +187,12 @@ void CompTransientBounds::applyCond(const Expr &cond) {
     }
     case ASTNodeType::GE: {
         auto ge = cond.as<GENode>();
+<<<<<<< HEAD
         transients_[getHash(ge->lhs_)].first = ge->rhs_;
         setBoundAccess(ge->lhs_);
         transients_[getHash(ge->rhs_)].second = ge->lhs_;
+=======
+>>>>>>> 0201e1f146b17e8e9738b102d0eb55fc6db91f47
         maxAssign(transients_[getHash(ge->lhs_)].first, ge->rhs_);
         setBoundAccess(ge->lhs_);
         minAssign(transients_[getHash(ge->rhs_)].second, ge->lhs_);
@@ -176,9 +201,12 @@ void CompTransientBounds::applyCond(const Expr &cond) {
     }
     case ASTNodeType::EQ: {
         auto eq = cond.as<EQNode>();
+<<<<<<< HEAD
         transients_[getHash(eq->lhs_)] = {eq->rhs_, eq->rhs_};
         setBoundAccess(eq->lhs_);
         transients_[getHash(eq->rhs_)] = {eq->lhs_, eq->lhs_};
+=======
+>>>>>>> 0201e1f146b17e8e9738b102d0eb55fc6db91f47
         maxAssign(transients_[getHash(eq->lhs_)].first, eq->rhs_);
         minAssign(transients_[getHash(eq->lhs_)].second, eq->rhs_);
         setBoundAccess(eq->lhs_);
@@ -341,17 +369,15 @@ Expr CompUniqueBounds::visitExpr(
     static bool inRecur = false;
     if (!inRecur) {
         inRecur = true;
-        auto hash = getHash(op);
-        if (transients().count(hash) && checkBoundAccess(op)) {
-            auto &&range = transients().at(hash);
-            if (range.first.isValid()) {
-                auto first = (*this)(range.first);
+        if (auto tr = transient(op); tr.isValid()) {
+            if (tr->first.isValid()) {
+                auto first = (*this)(tr->first);
                 for (auto &&item : getLower(first)) {
                     updLower(op, item);
                 }
             }
-            if (range.second.isValid()) {
-                auto second = (*this)(range.second);
+            if (tr->second.isValid()) {
+                auto second = (*this)(tr->second);
                 for (auto &&item : getUpper(second)) {
                     updUpper(op, item);
                 }
@@ -366,9 +392,6 @@ Expr CompUniqueBounds::visit(const Var &_op) {
     auto __op = CompTransientBounds::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Var);
     auto op = __op.as<VarNode>();
-    auto hash = getHash(op);
-    if (transients().count(hash) && !checkBoundAccess(op))
-        transientsErase(hash);
     updLower(op, LowerBound{op});
     updUpper(op, UpperBound{op});
     return op;
@@ -378,9 +401,6 @@ Expr CompUniqueBounds::visit(const Load &_op) {
     auto __op = CompTransientBounds::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Load);
     auto op = __op.as<LoadNode>();
-    auto hash = getHash(op);
-    if (transients().count(hash) && !checkBoundAccess(op))
-        transientsErase(hash);
     updLower(op, LowerBound{op});
     updUpper(op, UpperBound{op});
     return op;
