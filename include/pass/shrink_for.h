@@ -5,7 +5,7 @@
 
 namespace ir {
 
-class ShrinkFor : public SimplifyPass {
+class ShrinkFor : public BuiltinSimplify {
     std::unordered_map<uint64_t, std::pair<Expr, Expr>> newRange_;
     std::vector<Var> iterStack_;
     bool keepConst_;
@@ -17,7 +17,7 @@ class ShrinkFor : public SimplifyPass {
     Expr simplifyExpr(const Expr &expr);
 
     template <class T> Stmt visitSideEffect(const T &op) {
-        auto ret = SimplifyPass::visit(op);
+        auto ret = BuiltinSimplify::visit(op);
         for (auto var : iterStack_) {
             auto hash = getHash(var);
             if (auto bound = transient(var); bound.isValid()) {
@@ -34,7 +34,7 @@ class ShrinkFor : public SimplifyPass {
     }
 
   protected:
-    using SimplifyPass::visit;
+    using BuiltinSimplify::visit;
 
     Stmt visit(const Store &op) override { return visitSideEffect(op); }
     Stmt visit(const ReduceTo &op) override { return visitSideEffect(op); }

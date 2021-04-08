@@ -135,7 +135,6 @@ class CompUniqueBounds : public CompTransientBounds {
     std::vector<LowerBound> getLower(const Expr &op) const;
     std::vector<UpperBound> getUpper(const Expr &op) const;
 
-  private:
     void updLower(const Expr &op, const LowerBound &bound);
     void updUpper(const Expr &op, const UpperBound &bound);
 
@@ -166,7 +165,7 @@ class CompUniqueBounds : public CompTransientBounds {
     Expr visit(const Max &op) override;
 };
 
-class SimplifyPass : public CompUniqueBounds {
+template <class BaseClass> class SimplifyPass : public BaseClass {
     // defining scope table
     std::unordered_map<std::string, int> varScope_;
     int curScope_ = 0;
@@ -187,7 +186,7 @@ class SimplifyPass : public CompUniqueBounds {
     }
 
   protected:
-    using CompUniqueBounds::visit;
+    using BaseClass::visit;
 
     Expr visitExpr(const Expr &op,
                    const std::function<Expr(const Expr &)> &visitNode) override;
@@ -214,6 +213,8 @@ class SimplifyPass : public CompUniqueBounds {
     Stmt visit(const Assert &op) override;
 };
 
+class BuiltinSimplify : public SimplifyPass<CompUniqueBounds> {};
+
 class CheckFixedPoint : public Visitor {
   private:
     const std::unordered_set<AST> &mutated_;
@@ -232,8 +233,6 @@ class CheckFixedPoint : public Visitor {
                    const std::function<void(const Stmt &)> &visitNode) override;
 };
 
-Stmt simplifyPass(const Stmt &op);
-
 /**
  * Simplify a program and compute bounds of each expressions
  *
@@ -242,8 +241,14 @@ Stmt simplifyPass(const Stmt &op);
  *
  * @return : {simplified, lower, upper}
  */
-std::tuple<Stmt, SimplifyPass::LowerBoundsMap, SimplifyPass::UpperBoundsMap>
+template <class Simplifier>
+std::tuple<Stmt, typename Simplifier::LowerBoundsMap,
+           typename Simplifier::UpperBoundsMap>
 simplifyAndGetBounds(const Stmt &op);
+
+Stmt builtinSimplify(const Stmt &op);
+
+Stmt simplifyPass(const Stmt &op);
 
 } // namespace ir
 

@@ -132,7 +132,7 @@ Stmt makeSync(const Stmt &_op) {
     std::unordered_map<Expr, std::vector<LowerBound>> lower;
     std::unordered_map<Expr, std::vector<UpperBound>> upper;
     op = normalize(_op);
-    std::tie(op, lower, upper) = simplifyAndGetBounds(op);
+    std::tie(op, lower, upper) = simplifyAndGetBounds<BuiltinSimplify>(op);
     auto ret = MakeSync(upper)(op);
     ret = flattenStmtSeq(ret);
     return ret;

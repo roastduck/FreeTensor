@@ -23,7 +23,7 @@ Stmt ShrinkFor::visit(const For &_op) {
     newRange_.erase(hash);
 
     iterStack_.emplace_back(var);
-    auto __op = SimplifyPass::visit(_op);
+    auto __op = BuiltinSimplify::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::For);
     auto op = __op.as<ForNode>();
     iterStack_.pop_back();

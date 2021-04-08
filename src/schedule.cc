@@ -367,9 +367,10 @@ Schedule::cache(const std::string &stmt, const std::string &var,
             throw InvalidSchedule("Statement " + stmt + " not found");
         }
 
-        SimplifyPass::LowerBoundsMap lower;
-        SimplifyPass::UpperBoundsMap upper;
-        std::tie(ast, lower, upper) = simplifyAndGetBounds(ast);
+        BuiltinSimplify::LowerBoundsMap lower;
+        BuiltinSimplify::UpperBoundsMap upper;
+        std::tie(ast, lower, upper) =
+            simplifyAndGetBounds<BuiltinSimplify>(ast);
         CompAccessBound compRBound(lower, upper, COMP_ACCESS_BOUND_READ);
         CompAccessBound compWBound(lower, upper, COMP_ACCESS_BOUND_WRITE);
         compRBound(ast);
@@ -408,9 +409,10 @@ Schedule::cacheReduction(const std::string &stmt, const std::string &var,
             throw InvalidSchedule("Statement " + stmt + " not found");
         }
 
-        SimplifyPass::LowerBoundsMap lower;
-        SimplifyPass::UpperBoundsMap upper;
-        std::tie(ast, lower, upper) = simplifyAndGetBounds(ast);
+        BuiltinSimplify::LowerBoundsMap lower;
+        BuiltinSimplify::UpperBoundsMap upper;
+        std::tie(ast, lower, upper) =
+            simplifyAndGetBounds<BuiltinSimplify>(ast);
         CompAccessBound compBound(lower, upper);
         compBound(ast);
         MakeInitAndReduce makeInitAndReduce(stmt, var, newVar, oldDef, newDef,

@@ -1,3 +1,4 @@
+#include <pass/isl_simplify.h>
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
 #include <pass/z3_simplify.h>
@@ -57,9 +58,9 @@ Stmt shrinkVar(const Stmt &_op) {
 
     // (1)
     Stmt op;
-    SimplifyPass::LowerBoundsMap lower;
-    SimplifyPass::UpperBoundsMap upper;
-    std::tie(op, lower, upper) = simplifyAndGetBounds(_op);
+    BuiltinSimplify::LowerBoundsMap lower;
+    BuiltinSimplify::UpperBoundsMap upper;
+    std::tie(op, lower, upper) = simplifyAndGetBounds<ISLSimplify>(_op);
 
     // (2)
     CompAccessBound visitor(lower, upper);
@@ -69,7 +70,7 @@ Stmt shrinkVar(const Stmt &_op) {
     op = ShrinkVar(visitor.results())(op);
 
     // (4)
-    return z3Simplify(op); // Currently SimplifyPass is not sufficient
+    return z3Simplify(op); // Currently BuiltinSimplify is not sufficient
 }
 
 } // namespace ir
