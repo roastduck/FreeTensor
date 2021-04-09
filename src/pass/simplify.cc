@@ -219,7 +219,7 @@ Stmt CompTransientBounds::visit(const If &op) {
     auto ret = makeIf(op->id(), std::move(cond), std::move(thenCase),
                       std::move(elseCase));
     ret.as<IfNode>()->infoNotCond_ = std::move(infoNotCond);
-    return ret;
+    return COPY_DEBUG_INFO(ret, op);
 }
 
 Stmt CompTransientBounds::visit(const Assert &op) {

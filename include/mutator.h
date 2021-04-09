@@ -33,7 +33,7 @@ class Mutator {
         return visitNode(op);
     }
 
-    virtual Stmt visit(const Any &op) { return makeAny(); }
+    virtual Stmt visit(const Any &op) { return COPY_DEBUG_INFO(makeAny(), op); }
 
     virtual Stmt visit(const StmtSeq &op) {
         std::vector<Stmt> stmts;
@@ -41,7 +41,7 @@ class Mutator {
         for (auto &&stmt : op->stmts_) {
             stmts.emplace_back((*this)(stmt));
         }
-        return makeStmtSeq(op->id(), std::move(stmts));
+        return COPY_DEBUG_INFO(makeStmtSeq(op->id(), std::move(stmts)), op);
     }
 
     virtual Stmt visit(const VarDef &op) {
@@ -53,11 +53,15 @@ class Mutator {
         Tensor t(std::move(shape), op->buffer_->tensor().dtype());
         Buffer b(std::move(t), op->buffer_->atype(), op->buffer_->mtype());
         Expr sizeLim = op->sizeLim_.isValid() ? (*this)(op->sizeLim_) : nullptr;
-        return makeVarDef(op->id(), op->name_, std::move(b), std::move(sizeLim),
-                          (*this)(op->body_), op->pinned_);
+        return COPY_DEBUG_INFO(makeVarDef(op->id(), op->name_, std::move(b),
+                                          std::move(sizeLim),
+                                          (*this)(op->body_), op->pinned_),
+                               op);
     }
 
-    virtual Expr visit(const Var &op) { return makeVar(op->name_); }
+    virtual Expr visit(const Var &op) {
+        return COPY_DEBUG_INFO(makeVar(op->name_), op);
+    }
 
     virtual Stmt visit(const Store &op) {
         std::vector<Expr> indices;
@@ -66,8 +70,9 @@ class Mutator {
             indices.emplace_back((*this)(index));
         }
         auto &&expr = (*this)(op->expr_);
-        return makeStore(op->id(), op->var_, std::move(indices),
-                         std::move(expr));
+        return COPY_DEBUG_INFO(
+            makeStore(op->id(), op->var_, std::move(indices), std::move(expr)),
+            op);
     }
 
     virtual Expr visit(const Load &op) {
@@ -76,7 +81,7 @@ class Mutator {
         for (auto &&index : op->indices_) {
             indices.emplace_back((*this)(index));
         }
-        return makeLoad(op->var_, std::move(indices));
+        return COPY_DEBUG_INFO(makeLoad(op->var_, std::move(indices)), op);
     }
 
     virtual Stmt visit(const ReduceTo &op) {
@@ -86,101 +91,121 @@ class Mutator {
             indices.emplace_back((*this)(index));
         }
         auto &&expr = (*this)(op->expr_);
-        return makeReduceTo(op->id(), op->var_, std::move(indices), op->op_,
-                            std::move(expr), op->atomic_);
+        return COPY_DEBUG_INFO(makeReduceTo(op->id(), op->var_,
+                                            std::move(indices), op->op_,
+                                            std::move(expr), op->atomic_),
+                               op);
     }
 
-    virtual Expr visit(const AnyExpr &op) { return makeAnyExpr(); }
+    virtual Expr visit(const AnyExpr &op) {
+        return COPY_DEBUG_INFO(makeAnyExpr(), op);
+    }
 
-    virtual Expr visit(const IntConst &op) { return makeIntConst(op->val_); }
+    virtual Expr visit(const IntConst &op) {
+        return COPY_DEBUG_INFO(makeIntConst(op->val_), op);
+    }
 
     virtual Expr visit(const FloatConst &op) {
-        return makeFloatConst(op->val_);
+        return COPY_DEBUG_INFO(makeFloatConst(op->val_), op);
     }
 
-    virtual Expr visit(const BoolConst &op) { return makeBoolConst(op->val_); }
+    virtual Expr visit(const BoolConst &op) {
+        return COPY_DEBUG_INFO(makeBoolConst(op->val_), op);
+    }
 
     virtual Expr visit(const Add &op) {
-        return makeAdd((*this)(op->lhs_), (*this)(op->rhs_));
+        return COPY_DEBUG_INFO(makeAdd((*this)(op->lhs_), (*this)(op->rhs_)),
+                               op);
     }
 
     virtual Expr visit(const Sub &op) {
-        return makeSub((*this)(op->lhs_), (*this)(op->rhs_));
+        return COPY_DEBUG_INFO(makeSub((*this)(op->lhs_), (*this)(op->rhs_)),
+                               op);
     }
 
     virtual Expr visit(const Mul &op) {
-        return makeMul((*this)(op->lhs_), (*this)(op->rhs_));
+        return COPY_DEBUG_INFO(makeMul((*this)(op->lhs_), (*this)(op->rhs_)),
+                               op);
     }
 
     virtual Expr visit(const RealDiv &op) {
-        return makeRealDiv((*this)(op->lhs_), (*this)(op->rhs_));
+        return COPY_DEBUG_INFO(
+            makeRealDiv((*this)(op->lhs_), (*this)(op->rhs_)), op);
     }
 
     virtual Expr visit(const FloorDiv &op) {
-        return makeFloorDiv((*this)(op->lhs_), (*this)(op->rhs_));
+        return COPY_DEBUG_INFO(
+            makeFloorDiv((*this)(op->lhs_), (*this)(op->rhs_)), op);
     }
 
     virtual Expr visit(const CeilDiv &op) {
-        return makeCeilDiv((*this)(op->lhs_), (*this)(op->rhs_));
+        return COPY_DEBUG_INFO(
+            makeCeilDiv((*this)(op->lhs_), (*this)(op->rhs_)), op);
     }
 
     virtual Expr visit(const RoundTowards0Div &op) {
-        return makeRoundTowards0Div((*this)(op->lhs_), (*this)(op->rhs_));
+        return COPY_DEBUG_INFO(
+            makeRoundTowards0Div((*this)(op->lhs_), (*this)(op->rhs_)), op);
     }
 
     virtual Expr visit(const Mod &op) {
-        return makeMod((*this)(op->lhs_), (*this)(op->rhs_));
+        return COPY_DEBUG_INFO(makeMod((*this)(op->lhs_), (*this)(op->rhs_)),
+                               op);
     }
 
     virtual Expr visit(const Min &op) {
-        auto ret = makeMin((*this)(op->lhs_), (*this)(op->rhs_));
-        return ret;
+        return COPY_DEBUG_INFO(makeMin((*this)(op->lhs_), (*this)(op->rhs_)),
+                               op);
     }
 
     virtual Expr visit(const Max &op) {
-        auto ret = makeMax((*this)(op->lhs_), (*this)(op->rhs_));
-        return ret;
+        return COPY_DEBUG_INFO(makeMax((*this)(op->lhs_), (*this)(op->rhs_)),
+                               op);
     }
 
     virtual Expr visit(const LT &op) {
-        auto ret = makeLT((*this)(op->lhs_), (*this)(op->rhs_));
-        return ret;
+        return COPY_DEBUG_INFO(makeLT((*this)(op->lhs_), (*this)(op->rhs_)),
+                               op);
     }
 
     virtual Expr visit(const LE &op) {
-        auto ret = makeLE((*this)(op->lhs_), (*this)(op->rhs_));
-        return ret;
+        return COPY_DEBUG_INFO(makeLE((*this)(op->lhs_), (*this)(op->rhs_)),
+                               op);
     }
 
     virtual Expr visit(const GT &op) {
-        auto ret = makeGT((*this)(op->lhs_), (*this)(op->rhs_));
-        return ret;
+        return COPY_DEBUG_INFO(makeGT((*this)(op->lhs_), (*this)(op->rhs_)),
+                               op);
     }
 
     virtual Expr visit(const GE &op) {
-        auto ret = makeGE((*this)(op->lhs_), (*this)(op->rhs_));
-        return ret;
+        return COPY_DEBUG_INFO(makeGE((*this)(op->lhs_), (*this)(op->rhs_)),
+                               op);
     }
 
     virtual Expr visit(const EQ &op) {
-        auto ret = makeEQ((*this)(op->lhs_), (*this)(op->rhs_));
-        return ret;
+        return COPY_DEBUG_INFO(makeEQ((*this)(op->lhs_), (*this)(op->rhs_)),
+                               op);
     }
 
     virtual Expr visit(const NE &op) {
-        auto ret = makeNE((*this)(op->lhs_), (*this)(op->rhs_));
-        return ret;
+        return COPY_DEBUG_INFO(makeNE((*this)(op->lhs_), (*this)(op->rhs_)),
+                               op);
     }
 
     virtual Expr visit(const LAnd &op) {
-        return makeLAnd((*this)(op->lhs_), (*this)(op->rhs_));
+        return COPY_DEBUG_INFO(makeLAnd((*this)(op->lhs_), (*this)(op->rhs_)),
+                               op);
     }
 
     virtual Expr visit(const LOr &op) {
-        return makeLOr((*this)(op->lhs_), (*this)(op->rhs_));
+        return COPY_DEBUG_INFO(makeLOr((*this)(op->lhs_), (*this)(op->rhs_)),
+                               op);
     }
 
-    virtual Expr visit(const LNot &op) { return makeLNot((*this)(op->expr_)); }
+    virtual Expr visit(const LNot &op) {
+        return COPY_DEBUG_INFO(makeLNot((*this)(op->expr_)), op);
+    }
 
     virtual Stmt visit(const For &op) {
         auto ret =
@@ -189,7 +214,7 @@ class Mutator {
         if (op->infoLen_.isValid()) {
             ret.as<ForNode>()->infoLen_ = (*this)(op->infoLen_);
         }
-        return ret;
+        return COPY_DEBUG_INFO(ret, op);
     }
 
     virtual Stmt visit(const If &op) {
@@ -199,11 +224,12 @@ class Mutator {
         if (op->infoNotCond_.isValid()) {
             ret.as<IfNode>()->infoNotCond_ = (*this)(op->infoNotCond_);
         }
-        return ret;
+        return COPY_DEBUG_INFO(ret, op);
     }
 
     virtual Stmt visit(const Assert &op) {
-        return makeAssert(op->id(), (*this)(op->cond_), (*this)(op->body_));
+        return COPY_DEBUG_INFO(
+            makeAssert(op->id(), (*this)(op->cond_), (*this)(op->body_)), op);
     }
 
     virtual Expr visit(const Intrinsic &op) {
@@ -212,11 +238,12 @@ class Mutator {
         for (auto &&param : op->params_) {
             params.emplace_back((*this)(param));
         }
-        return makeIntrinsic(op->format_, std::move(params));
+        return COPY_DEBUG_INFO(makeIntrinsic(op->format_, std::move(params)),
+                               op);
     }
 
     virtual Stmt visit(const Eval &op) {
-        return makeEval(op->id(), (*this)(op->expr_));
+        return COPY_DEBUG_INFO(makeEval(op->id(), (*this)(op->expr_)), op);
     }
 };
 

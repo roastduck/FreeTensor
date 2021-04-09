@@ -296,7 +296,7 @@ Stmt Z3Simplify::visit(const If &op) {
     if (op->infoNotCond_.isValid()) {
         ret->infoNotCond_ = (*this)(op->infoNotCond_);
     }
-    return ret;
+    return COPY_DEBUG_INFO(ret, op);
 }
 
 Stmt Z3Simplify::visit(const Assert &op) {
@@ -340,8 +340,9 @@ Stmt Z3Simplify::visit(const For &op) {
     pop();
     pop();
 
-    return makeFor(op->id(), op->iter_, std::move(begin), std::move(end),
-                   op->parallel_, op->unroll_, std::move(body));
+    auto ret = makeFor(op->id(), op->iter_, std::move(begin), std::move(end),
+                       op->parallel_, op->unroll_, std::move(body));
+    return COPY_DEBUG_INFO(ret, op);
 }
 
 Stmt z3Simplify(const Stmt &_op) {

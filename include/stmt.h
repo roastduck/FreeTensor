@@ -18,7 +18,8 @@ class AnyNode : public StmtNode {
     DEFINE_NODE_TRAIT(Any);
 };
 typedef Ref<AnyNode> Any;
-inline Stmt makeAny() { return Any::make(); }
+#define makeAny(...) makeNode(Any, __VA_ARGS__)
+inline Stmt _makeAny() { return Any::make(); }
 
 class StmtSeqNode : public StmtNode {
   public:
@@ -26,15 +27,16 @@ class StmtSeqNode : public StmtNode {
     DEFINE_NODE_TRAIT(StmtSeq);
 };
 typedef Ref<StmtSeqNode> StmtSeq;
+#define makeStmtSeq(...) makeNode(StmtSeq, __VA_ARGS__)
 template <class Tstmts>
-Stmt makeStmtSeq(const std::string &id, Tstmts &&stmts) {
+Stmt _makeStmtSeq(const std::string &id, Tstmts &&stmts) {
     StmtSeq s = StmtSeq::make();
     s->setId(id);
     s->stmts_ = std::vector<SubTree<StmtNode>>(stmts.begin(), stmts.end());
     return s;
 }
-inline Stmt makeStmtSeq(const std::string &id,
-                        std::initializer_list<Stmt> stmts) {
+inline Stmt _makeStmtSeq(const std::string &id,
+                         std::initializer_list<Stmt> stmts) {
     StmtSeq s = StmtSeq::make();
     s->setId(id);
     s->stmts_ = std::vector<SubTree<StmtNode>>(stmts.begin(), stmts.end());
@@ -57,10 +59,11 @@ class VarDefNode : public StmtNode {
     DEFINE_NODE_TRAIT(VarDef);
 };
 typedef Ref<VarDefNode> VarDef;
+#define makeVarDef(...) makeNode(VarDef, __VA_ARGS__)
 template <class Tbuffer, class Tbody>
-Stmt makeVarDef(const std::string &id, const std::string &name,
-                Tbuffer &&buffer, const Expr &sizeLim, Tbody &&body,
-                bool pinned) {
+Stmt _makeVarDef(const std::string &id, const std::string &name,
+                 Tbuffer &&buffer, const Expr &sizeLim, Tbody &&body,
+                 bool pinned) {
     VarDef d = VarDef::make();
     d->setId(id);
     d->name_ = name;
@@ -79,9 +82,10 @@ class StoreNode : public StmtNode {
     DEFINE_NODE_TRAIT(Store);
 };
 typedef Ref<StoreNode> Store;
+#define makeStore(...) makeNode(Store, __VA_ARGS__)
 template <class Tindices, class Texpr>
-Stmt makeStore(const std::string &id, const std::string &var,
-               Tindices &&indices, Texpr &&expr) {
+Stmt _makeStore(const std::string &id, const std::string &var,
+                Tindices &&indices, Texpr &&expr) {
     Store s = Store::make();
     s->setId(id);
     s->var_ = var;
@@ -102,9 +106,10 @@ class ReduceToNode : public StmtNode {
     DEFINE_NODE_TRAIT(ReduceTo)
 };
 typedef Ref<ReduceToNode> ReduceTo;
+#define makeReduceTo(...) makeNode(ReduceTo, __VA_ARGS__)
 template <class Tindices, class Texpr>
-Stmt makeReduceTo(const std::string &id, const std::string &var,
-                  Tindices &&indices, ReduceOp op, Texpr &&expr, bool atomic) {
+Stmt _makeReduceTo(const std::string &id, const std::string &var,
+                   Tindices &&indices, ReduceOp op, Texpr &&expr, bool atomic) {
     ReduceTo a = ReduceTo::make();
     a->setId(id);
     a->var_ = var;
@@ -129,10 +134,11 @@ class ForNode : public StmtNode {
     DEFINE_NODE_TRAIT(For);
 };
 typedef Ref<ForNode> For;
+#define makeFor(...) makeNode(For, __VA_ARGS__)
 template <class Tbegin, class Tend, class Tbody>
-Stmt makeFor(const std::string &id, const std::string &iter, Tbegin &&begin,
-             Tend &&end, const std::string &parallel, const bool unroll,
-             Tbody &&body) {
+Stmt _makeFor(const std::string &id, const std::string &iter, Tbegin &&begin,
+              Tend &&end, const std::string &parallel, const bool unroll,
+              Tbody &&body) {
     For f = For::make();
     f->setId(id);
     f->iter_ = iter;
@@ -155,9 +161,10 @@ class IfNode : public StmtNode {
     DEFINE_NODE_TRAIT(If);
 };
 typedef Ref<IfNode> If;
+#define makeIf(...) makeNode(If, __VA_ARGS__)
 template <class Tcond, class Tthen, class Telse = std::nullptr_t>
-Stmt makeIf(const std::string &id, Tcond &&cond, Tthen &&thenCase,
-            Telse &&elseCase = nullptr) {
+Stmt _makeIf(const std::string &id, Tcond &&cond, Tthen &&thenCase,
+             Telse &&elseCase = nullptr) {
     If i = If::make();
     i->setId(id);
     i->cond_ = std::forward<Tcond>(cond);
@@ -173,8 +180,9 @@ class AssertNode : public StmtNode {
     DEFINE_NODE_TRAIT(Assert);
 };
 typedef Ref<AssertNode> Assert;
+#define makeAssert(...) makeNode(Assert, __VA_ARGS__)
 template <class Tcond, class Tbody>
-Stmt makeAssert(const std::string &id, Tcond &&cond, Tbody &&body) {
+Stmt _makeAssert(const std::string &id, Tcond &&cond, Tbody &&body) {
     Assert a = Assert::make();
     a->setId(id);
     a->cond_ = std::forward<Tcond>(cond);
@@ -193,7 +201,8 @@ class EvalNode : public StmtNode {
     DEFINE_NODE_TRAIT(Eval);
 };
 typedef Ref<EvalNode> Eval;
-template <class T> Stmt makeEval(const std::string &id, T &&expr) {
+#define makeEval(...) makeNode(Eval, __VA_ARGS__)
+template <class T> Stmt _makeEval(const std::string &id, T &&expr) {
     Eval e = Eval::make();
     e->setId(id);
     e->expr_ = std::forward<T>(expr);
