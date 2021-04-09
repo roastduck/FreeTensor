@@ -479,6 +479,13 @@ template <class BaseClass> Stmt SimplifyPass<BaseClass>::visit(const For &_op) {
             return makeStmtSeq("", {});
         }
     }
+    if (this->getIntUpper(len) == 1) {
+        ASSERT(!replace_.count(_op->iter_));
+        replace_[_op->iter_] = (*this)(_op->begin_);
+        auto body = (*this)(_op->body_);
+        replace_.erase(_op->iter_);
+        return markMutated(makeIf("", makeEQ(len, makeIntConst(1)), body));
+    }
 
     varScope_[_op->iter_] = curScope_++;
     auto __op = BaseClass::visit(_op);

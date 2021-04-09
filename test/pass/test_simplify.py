@@ -611,3 +611,24 @@ def test_accessible_after_writing_for():
     std = ir.pop_ast()
 
     assert std.match(ast)
+
+def test_loop_length_0_or_1():
+    with ir.VarDef("n", (), "int32", "input", "cpu") as n:
+        with ir.Assert(n[()] <= 1):
+            with ir.VarDef("y", (n[()],), "int32", "inout", "cpu") as y:
+                with ir.For("i", 0, n[()]) as i:
+                    y[i] = i
+    ast = ir.pop_ast()
+    print(ast)
+    ast = ir.simplify_pass(ast)
+    print(ast)
+
+    with ir.VarDef("n", (), "int32", "input", "cpu") as n:
+        with ir.Assert(n[()] <= 1):
+            with ir.VarDef("y", (n[()],), "int32", "inout", "cpu") as y:
+                with ir.If(n[()] == 1):
+                    y[0] = 0
+    std = ir.pop_ast()
+
+    assert std.match(ast)
+
