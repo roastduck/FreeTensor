@@ -25,6 +25,10 @@ make -j
 
 It will build a shared library with a name like `ffi.cpython-37m-x86_64-linux-gnu.so`.
 
+You can also replace `cmake ..` with `cmake -DIR_DEBUG=ON ..` to enable some debugging features. Currently, this includes:
+
+- Enable tracing to tell by which pass a specific AST node is modified.
+
 ## Run
 
 To run any program with IR, one should add the `python/` and `build/` directory to `PYTHONPATH` first.
