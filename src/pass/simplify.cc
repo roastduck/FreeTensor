@@ -201,8 +201,6 @@ Stmt CompTransientBounds::visit(const For &op) {
 Stmt CompTransientBounds::visit(const If &op) {
     auto cond = (*this)(op->cond_);
     auto notCond = (*this)(makeLNot(cond));
-    auto infoNotCond = // Different with notCond because counted in mutated_
-        op->infoNotCond_.isValid() ? (*this)(op->infoNotCond_) : nullptr;
 
     auto oldMap = transients_;
     applyCond(cond);
@@ -218,7 +216,6 @@ Stmt CompTransientBounds::visit(const If &op) {
 
     auto ret = makeIf(op->id(), std::move(cond), std::move(thenCase),
                       std::move(elseCase));
-    ret.as<IfNode>()->infoNotCond_ = std::move(infoNotCond);
     return COPY_DEBUG_INFO(ret, op);
 }
 

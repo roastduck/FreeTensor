@@ -221,9 +221,6 @@ class Mutator {
         auto ret =
             makeIf(op->id(), (*this)(op->cond_), (*this)(op->thenCase_),
                    op->elseCase_.isValid() ? (*this)(op->elseCase_) : nullptr);
-        if (op->infoNotCond_.isValid()) {
-            ret.as<IfNode>()->infoNotCond_ = (*this)(op->infoNotCond_);
-        }
         return COPY_DEBUG_INFO(ret, op);
     }
 

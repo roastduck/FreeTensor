@@ -183,9 +183,6 @@ class Visitor {
         if (op->elseCase_.isValid()) {
             (*this)(op->elseCase_);
         }
-        if (op->infoNotCond_.isValid()) {
-            (*this)(op->infoNotCond_);
-        }
     }
 
     virtual void visit(const Assert &op) {

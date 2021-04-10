@@ -156,8 +156,6 @@ class IfNode : public StmtNode {
     SubTree<StmtNode> thenCase_;
     SubTree<StmtNode, NullPolicy::Nullable> elseCase_;
 
-    SubTree<ExprNode, NullPolicy::Nullable> infoNotCond_;
-
     DEFINE_NODE_TRAIT(If);
 };
 typedef Ref<IfNode> If;

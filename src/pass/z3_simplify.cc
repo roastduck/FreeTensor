@@ -291,11 +291,7 @@ Stmt Z3Simplify::visit(const If &op) {
     }
 
     auto ret = makeIf(op->id(), std::move(cond), std::move(thenCase),
-                      std::move(elseCase))
-                   .as<IfNode>();
-    if (op->infoNotCond_.isValid()) {
-        ret->infoNotCond_ = (*this)(op->infoNotCond_);
-    }
+                      std::move(elseCase));
     return COPY_DEBUG_INFO(ret, op);
 }
 
