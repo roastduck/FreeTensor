@@ -44,15 +44,21 @@ Expr ISLCompBounds::visitExpr(
             if (tr->first.isValid()) {
                 // (*this)(tr->first) already been called by CompUniqueBounds
                 if (islExprs_.count(tr->first)) {
-                    e.cond_.emplace_back(
-                        e.expr_ + " >= " + islExprs_.at(tr->first).expr_);
+                    auto &&bound = islExprs_.at(tr->first);
+                    for (auto &&var : bound.var_) {
+                        e.var_.insert(var);
+                    }
+                    e.cond_.emplace_back(e.expr_ + " >= " + bound.expr_);
                 }
             }
             if (tr->second.isValid()) {
                 // (*this)(tr->second) already been called by CompUniqueBounds
                 if (islExprs_.count(tr->second)) {
-                    e.cond_.emplace_back(
-                        e.expr_ + " <= " + islExprs_.at(tr->second).expr_);
+                    auto &&bound = islExprs_.at(tr->second);
+                    for (auto &&var : bound.var_) {
+                        e.var_.insert(var);
+                    }
+                    e.cond_.emplace_back(e.expr_ + " <= " + bound.expr_);
                 }
             }
         }
@@ -66,7 +72,7 @@ Expr ISLCompBounds::visitExpr(
         str += "] -> [" + e.expr_ + "]";
         first = true;
         for (auto &&cond : e.cond_) {
-            str += (first ? ": " : " and " + cond);
+            str += (first ? ": " : " and ") + cond;
             first = false;
         }
         str += "}";
@@ -76,18 +82,18 @@ Expr ISLCompBounds::visitExpr(
         if (isl_val_is_rat(maxVal)) {
             int maxP = isl_val_get_num_si(maxVal);
             int maxQ = isl_val_get_den_si(maxVal);
-            isl_val_free(maxVal);
             updUpper(op, UpperBound{LinearExpr<Rational<int>>{
                              {}, Rational<int>{maxP, maxQ}}});
         }
+        isl_val_free(maxVal);
         isl_val *minVal = isl_set_dim_min_val(image, 0);
         if (isl_val_is_rat(minVal)) {
             int minP = isl_val_get_num_si(minVal);
             int minQ = isl_val_get_den_si(minVal);
-            isl_val_free(minVal);
             updLower(op, LowerBound{LinearExpr<Rational<int>>{
                              {}, Rational<int>{minP, minQ}}});
         }
+        isl_val_free(minVal);
     }
     return op;
 }
@@ -148,11 +154,14 @@ Expr ISLCompBounds::visit(const Mul &_op) {
     auto __op = CompUniqueBounds::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Mul);
     auto op = __op.as<MulNode>();
-    if (islExprs_.count(op->lhs_) && islExprs_.count(op->rhs_)) {
-        auto &&l = islExprs_.at(op->lhs_);
-        auto &&r = islExprs_.at(op->rhs_);
-        islExprs_[op] = ISLExpr{uni(l.var_, r.var_), cat(l.cond_, r.cond_),
-                                "(" + l.expr_ + " * " + r.expr_ + ")"};
+    if (op->lhs_->nodeType() == ASTNodeType::IntConst ||
+        op->rhs_->nodeType() == ASTNodeType::IntConst) {
+        if (islExprs_.count(op->lhs_) && islExprs_.count(op->rhs_)) {
+            auto &&l = islExprs_.at(op->lhs_);
+            auto &&r = islExprs_.at(op->rhs_);
+            islExprs_[op] = ISLExpr{uni(l.var_, r.var_), cat(l.cond_, r.cond_),
+                                    "(" + l.expr_ + " * " + r.expr_ + ")"};
+        }
     }
     return op;
 }
@@ -161,11 +170,13 @@ Expr ISLCompBounds::visit(const FloorDiv &_op) {
     auto __op = CompUniqueBounds::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::FloorDiv);
     auto op = __op.as<FloorDivNode>();
-    if (islExprs_.count(op->lhs_) && islExprs_.count(op->rhs_)) {
-        auto &&l = islExprs_.at(op->lhs_);
-        auto &&r = islExprs_.at(op->rhs_);
-        islExprs_[op] = ISLExpr{uni(l.var_, r.var_), cat(l.cond_, r.cond_),
-                                "floor(" + l.expr_ + " / " + r.expr_ + ")"};
+    if (op->rhs_->nodeType() == ASTNodeType::IntConst) {
+        if (islExprs_.count(op->lhs_) && islExprs_.count(op->rhs_)) {
+            auto &&l = islExprs_.at(op->lhs_);
+            auto &&r = islExprs_.at(op->rhs_);
+            islExprs_[op] = ISLExpr{uni(l.var_, r.var_), cat(l.cond_, r.cond_),
+                                    "floor(" + l.expr_ + " / " + r.expr_ + ")"};
+        }
     }
     return op;
 }
@@ -174,11 +185,13 @@ Expr ISLCompBounds::visit(const CeilDiv &_op) {
     auto __op = CompUniqueBounds::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::CeilDiv);
     auto op = __op.as<CeilDivNode>();
-    if (islExprs_.count(op->lhs_) && islExprs_.count(op->rhs_)) {
-        auto &&l = islExprs_.at(op->lhs_);
-        auto &&r = islExprs_.at(op->rhs_);
-        islExprs_[op] = ISLExpr{uni(l.var_, r.var_), cat(l.cond_, r.cond_),
-                                "ceil(" + l.expr_ + " / " + r.expr_ + ")"};
+    if (op->rhs_->nodeType() == ASTNodeType::IntConst) {
+        if (islExprs_.count(op->lhs_) && islExprs_.count(op->rhs_)) {
+            auto &&l = islExprs_.at(op->lhs_);
+            auto &&r = islExprs_.at(op->rhs_);
+            islExprs_[op] = ISLExpr{uni(l.var_, r.var_), cat(l.cond_, r.cond_),
+                                    "ceil(" + l.expr_ + " / " + r.expr_ + ")"};
+        }
     }
     return op;
 }
@@ -187,11 +200,13 @@ Expr ISLCompBounds::visit(const Mod &_op) {
     auto __op = CompUniqueBounds::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Mod);
     auto op = __op.as<ModNode>();
-    if (islExprs_.count(op->lhs_) && islExprs_.count(op->rhs_)) {
-        auto &&l = islExprs_.at(op->lhs_);
-        auto &&r = islExprs_.at(op->rhs_);
-        islExprs_[op] = ISLExpr{uni(l.var_, r.var_), cat(l.cond_, r.cond_),
-                                "(" + l.expr_ + " % " + r.expr_ + ")"};
+    if (op->rhs_->nodeType() == ASTNodeType::IntConst) {
+        if (islExprs_.count(op->lhs_) && islExprs_.count(op->rhs_)) {
+            auto &&l = islExprs_.at(op->lhs_);
+            auto &&r = islExprs_.at(op->rhs_);
+            islExprs_[op] = ISLExpr{uni(l.var_, r.var_), cat(l.cond_, r.cond_),
+                                    "(" + l.expr_ + " % " + r.expr_ + ")"};
+        }
     }
     return op;
 }

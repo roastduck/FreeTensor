@@ -546,7 +546,7 @@ simplifyAndGetBounds(const Stmt &_op) {
     auto op = _op;
 
     for (int i = 0;; i++) {
-        BuiltinSimplify mutator;
+        Simplifier mutator;
         op = mutator(op);
 
         CheckFixedPoint checker(mutator.mutated());
