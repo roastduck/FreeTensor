@@ -15,6 +15,10 @@ void init_ffi_ast(py::module_ &m) {
     py::class_<StmtNode, Stmt> pyStmt(m, "Stmt", pyAST);
     py::class_<ExprNode, Expr> pyExpr(m, "Expr", pyAST);
 
+#ifdef IR_DEBUG
+    pyAST.def_readonly("debug_creator", &ASTNode::debugCreator_);
+#endif
+
     pyStmt.def_property_readonly("nid", &StmtNode::id);
 
     py::class_<StmtSeqNode, StmtSeq>(m, "StmtSeq", pyStmt)
