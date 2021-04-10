@@ -265,13 +265,10 @@ class AnalyzeDeps : public Visitor {
     void visit(const Load &op) override;
 };
 
-Stmt prepareFindDeps(const Stmt &op);
-
 /**
  * Find all dependencies of a specific type along the given loops
  *
- * @param op : AST root. The user should run the `prepareFindDeps` pass before
- * pass it in
+ * @param op : AST root
  * @param cond : conditions to check: reduce_or [ reduce_and [ axis, mode ]]
  * @param found : callback
  * @param mode : Dep: all possible dependencies; Kill: all the situations that a

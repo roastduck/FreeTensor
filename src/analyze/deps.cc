@@ -522,8 +522,6 @@ void AnalyzeDeps::visit(const Load &op) {
     }
 }
 
-Stmt prepareFindDeps(const Stmt &_op) { return simplifyPass(_op); }
-
 void findDeps(
     const Stmt &op,
     const std::vector<std::vector<std::pair<std::string, DepDirection>>> &cond,

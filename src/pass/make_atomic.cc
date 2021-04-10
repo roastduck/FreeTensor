@@ -23,7 +23,6 @@ Stmt MakeAtomic::visit(const ReduceTo &_op) {
 
 Stmt makeAtomic(const Stmt &_op) {
     auto op = makeReduction(_op);
-    op = prepareFindDeps(op);
 
     std::vector<std::vector<std::pair<std::string, DepDirection>>> cond;
     FindAllParallel finder;

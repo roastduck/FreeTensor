@@ -85,7 +85,6 @@ void FindLoopInvariantWrites::visit(const Store &op) {
 
 Stmt removeWrites(const Stmt &_op) {
     auto op = makeReduction(_op);
-    op = prepareFindDeps(op);
 
     // {(later, earlier)}
     std::set<std::pair<Stmt, Stmt>> overwrites;

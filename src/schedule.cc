@@ -95,8 +95,6 @@ void Schedule::reorder(const std::vector<std::string> &dstOrder) {
         for (size_t i = 0; i < n; i++) {
             for (size_t j = 0; j + 1 < n; j++) {
                 if (index[j] > index[j + 1]) {
-                    ast = prepareFindDeps(ast);
-
                     auto found = [&](const Dependency &d) {
                         ASSERT(d.cond_.size() == 1);
                         std::ostringstream os;
@@ -169,8 +167,6 @@ Schedule::fission(const std::string &loop, const std::string &after,
         }
         auto &&xLoops = hoist.xLoops();
 
-        ast = prepareFindDeps(ast);
-
         auto variantExpr = findLoopVariance(ast);
 
         // var name -> loop id
@@ -235,8 +231,6 @@ std::string Schedule::fuse(const std::string &loop0, const std::string &loop1) {
     auto ast = ast_;
     FuseFor mutator(loop0, loop1);
     try {
-        ast = prepareFindDeps(ast);
-
         auto found = [&](const Dependency &d) {
             ASSERT(d.cond_.size() == 1);
             throw InvalidSchedule(
@@ -307,7 +301,6 @@ void Schedule::swap(const std::vector<std::string> &order) {
             throw InvalidSchedule(
                 dep2Str(scope->id(), d.var_, d.later(), d.earlier()));
         };
-        ast = prepareFindDeps(ast);
         findDeps(ast, {{{scope->id(), DepDirection::Normal}}}, found,
                  FindDepsMode::Dep, DEP_ALL, filter);
     } catch (const InvalidSchedule &e) {
@@ -341,7 +334,6 @@ void Schedule::blend(const std::string &loop) {
             throw InvalidSchedule(
                 dep2Str(d.cond_[1].first, d.var_, d.later(), d.earlier()));
         };
-        ast = prepareFindDeps(ast);
         findDeps(ast, cond, found);
 
         ast = BlendPass(loop, findLoopVariance(ast))(ast);
@@ -553,7 +545,6 @@ void Schedule::parallelize(const std::string &loop,
             throw InvalidSchedule("Loop " + loop + " not found");
         }
         ast = makeReduction(ast);
-        ast = prepareFindDeps(ast);
         findDeps(ast, {{{loop, DepDirection::Normal}}},
                  [&](const Dependency &d) {
                      throw InvalidSchedule(

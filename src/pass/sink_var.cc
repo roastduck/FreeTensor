@@ -88,7 +88,7 @@ Stmt SinkVar::visit(const VarDef &op) {
 }
 
 Stmt sinkVar(const Stmt &_op) {
-    Stmt op = prepareFindDeps(_op);
+    auto op = _op;
 
     FindAllLoops finder;
     finder(op);
