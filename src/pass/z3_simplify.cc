@@ -136,34 +136,88 @@ Expr Z3Simplify::visit(const Mod &_op) {
     return op;
 }
 
-Expr Z3Simplify::visit(const Min &op) {
-    auto lhs = (*this)(op->lhs_);
-    auto rhs = (*this)(op->rhs_);
-    if (exists(lhs) && exists(rhs)) {
-        if (prove((*this)(makeLE(lhs, rhs)))) {
-            return lhs;
+Expr Z3Simplify::visit(const Min &_op) {
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::Min);
+    auto op = __op.as<MinNode>();
+
+    std::function<void(const Expr &, std::unordered_set<Expr> &)> recur =
+        [&recur](const Expr &expr, std::unordered_set<Expr> &list) {
+            if (expr->nodeType() == ASTNodeType::Min) {
+                recur(expr.as<MinNode>()->lhs_, list);
+                recur(expr.as<MinNode>()->rhs_, list);
+            } else {
+                list.insert(expr);
+            }
+        };
+    std::unordered_set<Expr> lhs, rhs, all;
+    recur(op->lhs_, lhs);
+    recur(op->rhs_, rhs);
+    all.insert(lhs.begin(), lhs.end());
+    all.insert(rhs.begin(), rhs.end());
+
+    for (auto &&l : lhs) {
+        for (auto &&r : rhs) {
+            if (prove((*this)(makeLE(l, r)))) {
+                all.erase(r);
+            } else if (prove((*this)(makeGE(l, r)))) {
+                all.erase(l);
+            }
         }
-        if (prove((*this)(makeGE(lhs, rhs)))) {
-            return rhs;
-        }
-        put(op, z3::min(get(lhs), get(rhs)));
     }
-    return makeMin(std::move(lhs), std::move(rhs));
+
+    if (all.size() == lhs.size() + rhs.size()) {
+        return op;
+    } else {
+        ASSERT(!all.empty());
+        Expr ret;
+        for (auto &&item : all) {
+            ret = ret.isValid() ? makeMin(ret, item) : item;
+        }
+        return ret;
+    }
 }
 
-Expr Z3Simplify::visit(const Max &op) {
-    auto lhs = (*this)(op->lhs_);
-    auto rhs = (*this)(op->rhs_);
-    if (exists(lhs) && exists(rhs)) {
-        if (prove((*this)(makeLE(lhs, rhs)))) {
-            return rhs;
+Expr Z3Simplify::visit(const Max &_op) {
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::Max);
+    auto op = __op.as<MaxNode>();
+
+    std::function<void(const Expr &, std::unordered_set<Expr> &)> recur =
+        [&recur](const Expr &expr, std::unordered_set<Expr> &list) {
+            if (expr->nodeType() == ASTNodeType::Min) {
+                recur(expr.as<MinNode>()->lhs_, list);
+                recur(expr.as<MinNode>()->rhs_, list);
+            } else {
+                list.insert(expr);
+            }
+        };
+    std::unordered_set<Expr> lhs, rhs, all;
+    recur(op->lhs_, lhs);
+    recur(op->rhs_, rhs);
+    all.insert(lhs.begin(), lhs.end());
+    all.insert(rhs.begin(), rhs.end());
+
+    for (auto &&l : lhs) {
+        for (auto &&r : rhs) {
+            if (prove((*this)(makeGE(l, r)))) {
+                all.erase(r);
+            } else if (prove((*this)(makeLE(l, r)))) {
+                all.erase(l);
+            }
         }
-        if (prove((*this)(makeGE(lhs, rhs)))) {
-            return lhs;
-        }
-        put(op, z3::max(get(lhs), get(rhs)));
     }
-    return makeMax(std::move(lhs), std::move(rhs));
+
+    if (all.size() == lhs.size() + rhs.size()) {
+        return op;
+    } else {
+        ASSERT(!all.empty());
+        Expr ret;
+        for (auto &&item : all) {
+            ret = ret.isValid() ? makeMax(ret, item) : item;
+        }
+        return ret;
+    }
 }
 
 Expr Z3Simplify::visit(const LT &_op) {

@@ -23,9 +23,9 @@ def lower(ast, target: Optional[ffi.Target]=None):
     ast = remove_writes(ast)
     ast = sink_var(ast)
     ast = shrink_var(ast)
-    ast = shrink_for(ast)
     ast = merge_if(ast)
     ast = seperate_tail(ast)
+    ast = shrink_for(ast) # After seperate_tail
     ast = make_atomic(ast)
 
     # After all general analysis

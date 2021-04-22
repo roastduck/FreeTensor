@@ -26,6 +26,51 @@ template <class T> struct LinearExpr {
     T bias_;
 };
 
+/**
+ * Generate an expression from a LinearExpr
+ *
+ * This function is only applied to fundamental types. For
+ * LinearExpr<Rational<T>>, see bounds.cc, because there are different rounding
+ * directinos
+ */
+template <class T,
+          typename std::enable_if_t<std::is_fundamental_v<T>> * = nullptr>
+Expr lin2expr(const LinearExpr<T> &lin) {
+    Expr b = makeIntConst(lin.bias_);
+
+    for (auto &&item : lin.coeff_) {
+        auto k = item.second.k_;
+        auto a = deepCopy(item.second.a_);
+
+        if (k == 0) {
+            continue;
+        }
+        Expr x;
+        if (a->nodeType() == ASTNodeType::IntConst) {
+            x = makeIntConst(k * a.template as<IntConstNode>()->val_);
+        } else if (k == 1) {
+            x = a;
+        } else {
+            x = makeMul(makeIntConst(k), a);
+        }
+
+        if (x->nodeType() == ASTNodeType::IntConst &&
+            b->nodeType() == ASTNodeType::IntConst) {
+            x = makeIntConst(x.as<IntConstNode>()->val_ +
+                             b.as<IntConstNode>()->val_);
+        } else if (b->nodeType() == ASTNodeType::IntConst &&
+                   b.as<IntConstNode>()->val_ == 0) {
+            // do nothing
+        } else {
+            x = makeAdd(x, b);
+        }
+
+        b = std::move(x);
+    }
+
+    return b;
+}
+
 template <class T>
 bool operator==(const LinearExpr<T> &lhs, const LinearExpr<T> &rhs) {
     if (lhs.coeff_.size() != rhs.coeff_.size()) {

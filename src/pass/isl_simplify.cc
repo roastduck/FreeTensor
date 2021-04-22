@@ -40,26 +40,25 @@ Expr ISLCompBounds::visitExpr(
     auto op = CompUniqueBounds::visitExpr(_op, visitNode);
     if (islExprs_.count(op)) {
         ISLExpr &e = islExprs_.at(op);
-        if (auto tr = transient(op); tr.isValid()) {
-            if (tr->first.isValid()) {
-                // (*this)(tr->first) already been called by CompUniqueBounds
-                if (islExprs_.count(tr->first)) {
-                    auto &&bound = islExprs_.at(tr->first);
-                    for (auto &&var : bound.var_) {
-                        e.var_.insert(var);
-                    }
-                    e.cond_.emplace_back(e.expr_ + " >= " + bound.expr_);
+        auto tr = transient(op);
+        for (auto &&first : tr.first) {
+            // (*this)(first) already been called by CompUniqueBounds
+            if (islExprs_.count(first)) {
+                auto &&bound = islExprs_.at(first);
+                for (auto &&var : bound.var_) {
+                    e.var_.insert(var);
                 }
+                e.cond_.emplace_back(e.expr_ + " >= " + bound.expr_);
             }
-            if (tr->second.isValid()) {
-                // (*this)(tr->second) already been called by CompUniqueBounds
-                if (islExprs_.count(tr->second)) {
-                    auto &&bound = islExprs_.at(tr->second);
-                    for (auto &&var : bound.var_) {
-                        e.var_.insert(var);
-                    }
-                    e.cond_.emplace_back(e.expr_ + " <= " + bound.expr_);
+        }
+        for (auto &&second : tr.second) {
+            // (*this)(second) already been called by CompUniqueBounds
+            if (islExprs_.count(second)) {
+                auto &&bound = islExprs_.at(second);
+                for (auto &&var : bound.var_) {
+                    e.var_.insert(var);
                 }
+                e.cond_.emplace_back(e.expr_ + " <= " + bound.expr_);
             }
         }
 

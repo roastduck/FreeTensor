@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include <analyze/analyze_linear.h>
 #include <math/bounds.h>
 #include <mutator.h>
 #include <visitor.h>
@@ -81,18 +82,19 @@ class FindBoundAccess : public Mutator {
  * Inherit this pass to use it
  */
 class CompTransientBounds : public FindBoundAccess {
-    std::unordered_map<uint64_t, std::pair<Expr, Expr>> transients_;
+    AnalyzeLinear analyzeLinear_;
+    std::unordered_map<uint64_t,
+                       std::pair<std::vector<Expr>, std::vector<Expr>>>
+        transients_;
 
   protected:
-    Ref<std::pair<Expr, Expr>> transient(const Expr &op);
+    std::pair<std::vector<Expr>, std::vector<Expr>> transient(const Expr &op);
 
   private:
     static Expr sub1(const Expr &op);
     static Expr add1(const Expr &op);
 
-    void minAssign(Expr &lhs, const Expr &rhs);
-    void maxAssign(Expr &lhs, const Expr &rhs);
-
+    void applyCond(int k, const Expr &lhs, ASTNodeType opType, const Expr &rhs);
     void applyCond(const Expr &cond);
 
   protected:
