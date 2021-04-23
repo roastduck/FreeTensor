@@ -185,9 +185,9 @@ Expr Z3Simplify::visit(const Max &_op) {
 
     std::function<void(const Expr &, std::unordered_set<Expr> &)> recur =
         [&recur](const Expr &expr, std::unordered_set<Expr> &list) {
-            if (expr->nodeType() == ASTNodeType::Min) {
-                recur(expr.as<MinNode>()->lhs_, list);
-                recur(expr.as<MinNode>()->rhs_, list);
+            if (expr->nodeType() == ASTNodeType::Max) {
+                recur(expr.as<MaxNode>()->lhs_, list);
+                recur(expr.as<MaxNode>()->rhs_, list);
             } else {
                 list.insert(expr);
             }
