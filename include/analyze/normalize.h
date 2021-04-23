@@ -14,7 +14,6 @@ namespace ir {
 class Normalize : public Mutator {
   protected:
     Stmt visit(const For &op) override;
-    Stmt visit(const If &op) override;
 };
 
 inline Stmt normalize(const Stmt &op) { return Normalize()(op); }

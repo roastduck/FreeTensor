@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include <analyze/analyze_linear.h>
 #include <math/bounds.h>
 #include <mutator.h>
 #include <visitor.h>
@@ -81,18 +82,19 @@ class FindBoundAccess : public Mutator {
  * Inherit this pass to use it
  */
 class CompTransientBounds : public FindBoundAccess {
-    std::unordered_map<uint64_t, std::pair<Expr, Expr>> transients_;
+    AnalyzeLinear analyzeLinear_;
+    std::unordered_map<uint64_t,
+                       std::pair<std::vector<Expr>, std::vector<Expr>>>
+        transients_;
 
   protected:
-    Ref<std::pair<Expr, Expr>> transient(const Expr &op);
+    std::pair<std::vector<Expr>, std::vector<Expr>> transient(const Expr &op);
 
   private:
     static Expr sub1(const Expr &op);
     static Expr add1(const Expr &op);
 
-    void minAssign(Expr &lhs, const Expr &rhs);
-    void maxAssign(Expr &lhs, const Expr &rhs);
-
+    void applyCond(int k, const Expr &lhs, ASTNodeType opType, const Expr &rhs);
     void applyCond(const Expr &cond);
 
   protected:
@@ -135,7 +137,6 @@ class CompUniqueBounds : public CompTransientBounds {
     std::vector<LowerBound> getLower(const Expr &op) const;
     std::vector<UpperBound> getUpper(const Expr &op) const;
 
-  private:
     void updLower(const Expr &op, const LowerBound &bound);
     void updUpper(const Expr &op, const UpperBound &bound);
 
@@ -166,7 +167,7 @@ class CompUniqueBounds : public CompTransientBounds {
     Expr visit(const Max &op) override;
 };
 
-class SimplifyPass : public CompUniqueBounds {
+template <class BaseClass> class SimplifyPass : public BaseClass {
     // defining scope table
     std::unordered_map<std::string, int> varScope_;
     int curScope_ = 0;
@@ -187,7 +188,7 @@ class SimplifyPass : public CompUniqueBounds {
     }
 
   protected:
-    using CompUniqueBounds::visit;
+    using BaseClass::visit;
 
     Expr visitExpr(const Expr &op,
                    const std::function<Expr(const Expr &)> &visitNode) override;
@@ -214,6 +215,8 @@ class SimplifyPass : public CompUniqueBounds {
     Stmt visit(const Assert &op) override;
 };
 
+class BuiltinSimplify : public SimplifyPass<CompUniqueBounds> {};
+
 class CheckFixedPoint : public Visitor {
   private:
     const std::unordered_set<AST> &mutated_;
@@ -232,8 +235,6 @@ class CheckFixedPoint : public Visitor {
                    const std::function<void(const Stmt &)> &visitNode) override;
 };
 
-Stmt simplifyPass(const Stmt &op);
-
 /**
  * Simplify a program and compute bounds of each expressions
  *
@@ -242,8 +243,14 @@ Stmt simplifyPass(const Stmt &op);
  *
  * @return : {simplified, lower, upper}
  */
-std::tuple<Stmt, SimplifyPass::LowerBoundsMap, SimplifyPass::UpperBoundsMap>
+template <class Simplifier>
+std::tuple<Stmt, typename Simplifier::LowerBoundsMap,
+           typename Simplifier::UpperBoundsMap>
 simplifyAndGetBounds(const Stmt &op);
+
+Stmt builtinSimplify(const Stmt &op);
+
+Stmt simplifyPass(const Stmt &op);
 
 } // namespace ir
 

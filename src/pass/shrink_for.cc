@@ -1,4 +1,5 @@
 #include <pass/shrink_for.h>
+#include <pass/z3_simplify.h>
 
 namespace ir {
 
@@ -23,9 +24,13 @@ Stmt ShrinkFor::visit(const For &_op) {
     newRange_.erase(hash);
 
     iterStack_.emplace_back(var);
-    auto __op = SimplifyPass::visit(_op);
+    defStack_.emplace_back(defs_);
+    defs_.insert(_op->iter_);
+    auto __op = BuiltinSimplify::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::For);
     auto op = __op.as<ForNode>();
+    defs_.erase(_op->iter_);
+    defStack_.pop_back();
     iterStack_.pop_back();
 
     ASSERT(newRange_.count(hash));
@@ -46,9 +51,16 @@ Stmt ShrinkFor::visit(const For &_op) {
     return op;
 }
 
+Stmt ShrinkFor::visit(const VarDef &op) {
+    defs_.insert(op->name_);
+    auto ret = BuiltinSimplify::visit(op);
+    defs_.erase(op->name_);
+    return ret;
+}
+
 Stmt shrinkFor(const Stmt &_op, bool keepConst) {
     auto op = ShrinkFor(keepConst)(_op);
-    return simplifyPass(op);
+    return z3Simplify(op);
 }
 
 } // namespace ir

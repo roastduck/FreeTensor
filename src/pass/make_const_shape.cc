@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <climits>
 
+#include <pass/isl_simplify.h>
 #include <pass/make_const_shape.h>
 
 namespace ir {
@@ -44,9 +45,9 @@ Stmt MakeConstShape::visit(const VarDef &_op) {
 
 Stmt makeConstShape(const Stmt &_op, const std::vector<MemType> &mtypes) {
     Stmt op;
-    SimplifyPass::LowerBoundsMap lower;
-    SimplifyPass::UpperBoundsMap upper;
-    std::tie(op, lower, upper) = simplifyAndGetBounds(_op);
+    BuiltinSimplify::LowerBoundsMap lower;
+    BuiltinSimplify::UpperBoundsMap upper;
+    std::tie(op, lower, upper) = simplifyAndGetBounds<ISLSimplify>(_op);
     op = MakeConstShape(mtypes, upper)(op);
     return op;
 }

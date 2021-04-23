@@ -15,6 +15,10 @@ void init_ffi_ast(py::module_ &m) {
     py::class_<StmtNode, Stmt> pyStmt(m, "Stmt", pyAST);
     py::class_<ExprNode, Expr> pyExpr(m, "Expr", pyAST);
 
+#ifdef IR_DEBUG
+    pyAST.def_readonly("debug_creator", &ASTNode::debugCreator_);
+#endif
+
     pyStmt.def_property_readonly("nid", &StmtNode::id);
 
     py::class_<StmtSeqNode, StmtSeq>(m, "StmtSeq", pyStmt)
@@ -201,73 +205,74 @@ void init_ffi_ast(py::module_ &m) {
     py::implicitly_convertible<bool, ExprNode>();
 
     // Statements
-    m.def("makeAny", &makeAny);
+    m.def("makeAny", &_makeAny);
     m.def("makeStmtSeq",
           static_cast<Stmt (*)(const std::string &, const std::vector<Stmt> &)>(
-              &makeStmtSeq),
+              &_makeStmtSeq),
           "id"_a, "stmts"_a);
     m.def(
         "makeVarDef",
         static_cast<Stmt (*)(const std::string &, const std::string &,
                              const Buffer &, const Expr &, const Stmt &, bool)>(
-            &makeVarDef),
+            &_makeVarDef),
         "nid"_a, "name"_a, "buffer"_a, "size_lim"_a, "body"_a, "pinned"_a);
-    m.def("makeVar", &makeVar, "name"_a);
+    m.def("makeVar", &_makeVar, "name"_a);
     m.def("makeStore",
           static_cast<Stmt (*)(const std::string &, const std::string &,
                                const std::vector<Expr> &, const Expr &)>(
-              &makeStore),
+              &_makeStore),
           "nid"_a, "var"_a, "indices"_a, "expr"_a);
-    m.def("makeLoad", &makeLoad, "var"_a, "indices"_a);
-    m.def("makeIntConst", &makeIntConst, "val"_a);
-    m.def("makeFloatConst", &makeFloatConst, "val"_a);
+    m.def("makeLoad", &_makeLoad, "var"_a, "indices"_a);
+    m.def("makeIntConst", &_makeIntConst, "val"_a);
+    m.def("makeFloatConst", &_makeFloatConst, "val"_a);
     m.def("makeFor",
           static_cast<Stmt (*)(const std::string &, const std::string &,
                                const Expr &, const Expr &, const std::string &,
-                               const bool, const Stmt &)>(&makeFor),
+                               const bool, const Stmt &)>(&_makeFor),
           "nid"_a, "iter"_a, "begin"_a, "end"_a, "parallel"_a, "unroll"_a,
           "body"_a);
     m.def("makeIf",
           static_cast<Stmt (*)(const std::string &, const Expr &, const Stmt &,
-                               const Stmt &)>(&makeIf),
+                               const Stmt &)>(&_makeIf),
           "nid"_a, "cond"_a, "thenCase"_a, "elseCase"_a = nullptr);
     m.def(
         "makeAssert",
         static_cast<Stmt (*)(const std::string &, const Expr &, const Stmt &)>(
-            &makeAssert),
+            &_makeAssert),
         "nid"_a, "cond"_a, "body"_a);
     m.def("makeEval",
-          static_cast<Stmt (*)(const std::string &, const Expr &)>(&makeEval),
+          static_cast<Stmt (*)(const std::string &, const Expr &)>(&_makeEval),
           "nid"_a, "expr"_a);
 
     // Expressions
-    m.def("makeAnyExpr", &makeAnyExpr);
+    m.def("makeAnyExpr", &_makeAnyExpr);
     m.def("makeMin",
-          static_cast<Expr (*)(const Expr &, const Expr &)>(&makeMin), "lhs"_a,
+          static_cast<Expr (*)(const Expr &, const Expr &)>(&_makeMin), "lhs"_a,
           "rhs"_a);
     m.def("makeMax",
-          static_cast<Expr (*)(const Expr &, const Expr &)>(&makeMax), "lhs"_a,
+          static_cast<Expr (*)(const Expr &, const Expr &)>(&_makeMax), "lhs"_a,
           "rhs"_a);
     m.def("makeLAnd",
-          static_cast<Expr (*)(const Expr &, const Expr &)>(&makeLAnd), "lhs"_a,
-          "rhs"_a);
+          static_cast<Expr (*)(const Expr &, const Expr &)>(&_makeLAnd),
+          "lhs"_a, "rhs"_a);
     m.def("makeLOr",
-          static_cast<Expr (*)(const Expr &, const Expr &)>(&makeLOr), "lhs"_a,
+          static_cast<Expr (*)(const Expr &, const Expr &)>(&_makeLOr), "lhs"_a,
           "rhs"_a);
-    m.def("makeLNot", static_cast<Expr (*)(const Expr &)>(&makeLNot), "expr"_a);
+    m.def("makeLNot", static_cast<Expr (*)(const Expr &)>(&_makeLNot),
+          "expr"_a);
     m.def("makeFloorDiv",
-          static_cast<Expr (*)(const Expr &, const Expr &)>(&makeFloorDiv),
+          static_cast<Expr (*)(const Expr &, const Expr &)>(&_makeFloorDiv),
           "expr"_a, "expr"_a);
     m.def("makeCeilDiv",
-          static_cast<Expr (*)(const Expr &, const Expr &)>(&makeCeilDiv),
+          static_cast<Expr (*)(const Expr &, const Expr &)>(&_makeCeilDiv),
           "expr"_a, "expr"_a);
     m.def("makeRoundTowards0Div",
           static_cast<Expr (*)(const Expr &, const Expr &)>(
-              &makeRoundTowards0Div),
+              &_makeRoundTowards0Div),
           "expr"_a, "expr"_a);
     m.def("makeIntrinsic",
           static_cast<Expr (*)(const std::string &, const std::vector<Expr> &)>(
-              &makeIntrinsic),
+              &_makeIntrinsic),
           "fmt"_a, "params"_a);
 }
 

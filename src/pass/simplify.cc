@@ -1,5 +1,4 @@
 #include <climits>
-#include <sstream>
 #include <unordered_set>
 
 #include <analyze/hash.h>
@@ -8,18 +7,9 @@
 #include <pass/flatten_stmt_seq.h>
 #include <pass/simplify.h>
 
-namespace ir {
+#include "detail/simplify.h"
 
-static bool isEmptyStmt(const Stmt &op) {
-    if (!op.isValid()) { // In case If->elseCase_ == nullptr
-        return true;
-    }
-    if (op->nodeType() == ASTNodeType::StmtSeq &&
-        op.as<StmtSeqNode>()->stmts_.empty()) {
-        return true;
-    }
-    return false;
-}
+namespace ir {
 
 void FindInnerMostScope::visit(const Var &op) {
     Visitor::visit(op);
@@ -98,17 +88,20 @@ Stmt FindBoundAccess::visit(const ReduceTo &op) {
     return ret;
 }
 
-Ref<std::pair<Expr, Expr>> CompTransientBounds::transient(const Expr &op) {
+std::pair<std::vector<Expr>, std::vector<Expr>>
+CompTransientBounds::transient(const Expr &op) {
+    // FIXME: Currently we only check if X is out-of-date in A <= X <= B, but
+    // not in f(X) <= Y <= g(X)
     auto hash = getHash(op);
     if (transients_.count(hash)) {
         if (!checkBoundAccess(op)) {
             transients_.erase(hash);
         }
         if (transients_.count(hash)) {
-            return Ref<std::pair<Expr, Expr>>::make(transients_.at(hash));
+            return transients_.at(hash);
         }
     }
-    return nullptr;
+    return {};
 }
 
 Expr CompTransientBounds::sub1(const Expr &op) {
@@ -127,66 +120,103 @@ Expr CompTransientBounds::add1(const Expr &op) {
     }
 }
 
-void CompTransientBounds::minAssign(Expr &lhs, const Expr &rhs) {
-    lhs = lhs.isValid() ? makeMin(lhs, rhs) : rhs;
-}
-
-void CompTransientBounds::maxAssign(Expr &lhs, const Expr &rhs) {
-    lhs = lhs.isValid() ? makeMax(lhs, rhs) : rhs;
+void CompTransientBounds::applyCond(int k, const Expr &lhs, ASTNodeType opType,
+                                    const Expr &rhs) {
+    if (k < 0) {
+        opType = opType == ASTNodeType::LT   ? ASTNodeType::GT
+                 : opType == ASTNodeType::LE ? ASTNodeType::GE
+                 : opType == ASTNodeType::GT ? ASTNodeType::LT
+                 : opType == ASTNodeType::GE ? ASTNodeType::LE
+                                             : opType;
+        applyCond(-k, lhs, opType, makeMul(makeIntConst(-1), rhs));
+        return;
+    }
+    auto floorRhs = k != 1 ? makeFloorDiv(rhs, makeIntConst(k)) : rhs;
+    auto ceilRhs = k != 1 ? makeCeilDiv(rhs, makeIntConst(k)) : rhs;
+    switch (opType) {
+    case ASTNodeType::LT: {
+        transients_[getHash(lhs)].second.emplace_back(sub1(ceilRhs));
+        setBoundAccess(lhs);
+        break;
+    }
+    case ASTNodeType::GT: {
+        transients_[getHash(lhs)].first.emplace_back(add1(floorRhs));
+        setBoundAccess(lhs);
+        break;
+    }
+    case ASTNodeType::LE: {
+        transients_[getHash(lhs)].second.emplace_back(floorRhs);
+        setBoundAccess(lhs);
+        break;
+    }
+    case ASTNodeType::GE: {
+        transients_[getHash(lhs)].first.emplace_back(ceilRhs);
+        setBoundAccess(lhs);
+        break;
+    }
+    case ASTNodeType::EQ: {
+        transients_[getHash(lhs)].first.emplace_back(ceilRhs);
+        transients_[getHash(lhs)].second.emplace_back(floorRhs);
+        setBoundAccess(lhs);
+        break;
+    }
+    default:
+        ASSERT(false);
+    }
 }
 
 void CompTransientBounds::applyCond(const Expr &cond) {
+    Expr norm;
     switch (cond->nodeType()) {
     case ASTNodeType::LAnd: {
         auto land = cond.as<LAndNode>();
         applyCond(land->lhs_);
         applyCond(land->rhs_);
-        break;
+        return;
     }
     case ASTNodeType::LT: {
         auto lt = cond.as<LTNode>();
-        minAssign(transients_[getHash(lt->lhs_)].second, sub1(lt->rhs_));
-        setBoundAccess(lt->lhs_);
-        maxAssign(transients_[getHash(lt->rhs_)].first, add1(lt->lhs_));
-        setBoundAccess(lt->rhs_);
+        norm = makeSub(lt->rhs_, lt->lhs_);
         break;
     }
     case ASTNodeType::GT: {
         auto gt = cond.as<GTNode>();
-        maxAssign(transients_[getHash(gt->lhs_)].first, add1(gt->rhs_));
-        setBoundAccess(gt->lhs_);
-        minAssign(transients_[getHash(gt->rhs_)].second, sub1(gt->lhs_));
-        setBoundAccess(gt->rhs_);
+        norm = makeSub(gt->rhs_, gt->lhs_);
         break;
     }
     case ASTNodeType::LE: {
         auto le = cond.as<LENode>();
-        minAssign(transients_[getHash(le->lhs_)].second, le->rhs_);
-        setBoundAccess(le->lhs_);
-        maxAssign(transients_[getHash(le->rhs_)].first, le->lhs_);
-        setBoundAccess(le->rhs_);
+        norm = makeSub(le->rhs_, le->lhs_);
         break;
     }
     case ASTNodeType::GE: {
         auto ge = cond.as<GENode>();
-        maxAssign(transients_[getHash(ge->lhs_)].first, ge->rhs_);
-        setBoundAccess(ge->lhs_);
-        minAssign(transients_[getHash(ge->rhs_)].second, ge->lhs_);
-        setBoundAccess(ge->rhs_);
+        norm = makeSub(ge->rhs_, ge->lhs_);
         break;
     }
     case ASTNodeType::EQ: {
         auto eq = cond.as<EQNode>();
-        maxAssign(transients_[getHash(eq->lhs_)].first, eq->rhs_);
-        minAssign(transients_[getHash(eq->lhs_)].second, eq->rhs_);
-        setBoundAccess(eq->lhs_);
-        maxAssign(transients_[getHash(eq->rhs_)].first, eq->lhs_);
-        minAssign(transients_[getHash(eq->rhs_)].second, eq->lhs_);
-        setBoundAccess(eq->rhs_);
+        norm = makeSub(eq->rhs_, eq->lhs_);
         break;
     }
-    default:;
-        // Do nothing
+    default:
+        return;
+    }
+
+    analyzeLinear_(norm);
+    if (!analyzeLinear_.result().count(norm)) {
+        return;
+    }
+    LinearExpr lin = analyzeLinear_.result().at(norm);
+    for (auto &&item : lin.coeff_) {
+        if (item.second.k_ != 0 &&
+            (item.second.a_->nodeType() == ASTNodeType::Var ||
+             item.second.a_->nodeType() == ASTNodeType::Load)) {
+            auto l = lin;
+            l.coeff_.erase(item.first);
+            applyCond(-item.second.k_, item.second.a_, cond->nodeType(),
+                      lin2expr(l));
+        }
     }
 }
 
@@ -201,7 +231,7 @@ Stmt CompTransientBounds::visit(const For &op) {
         throw InvalidProgram(
             "iterators with the same name in nested loops are not allowed");
     }
-    transients_[hash] = {op->begin_, sub1(op->end_)};
+    transients_[hash] = {{op->begin_}, {sub1(op->end_)}};
     boundAccess_.emplace(hash);
     auto ret = FindBoundAccess::visit(op);
     transients_.erase(hash);
@@ -211,8 +241,6 @@ Stmt CompTransientBounds::visit(const For &op) {
 Stmt CompTransientBounds::visit(const If &op) {
     auto cond = (*this)(op->cond_);
     auto notCond = (*this)(makeLNot(cond));
-    auto infoNotCond = // Different with notCond because counted in mutated_
-        op->infoNotCond_.isValid() ? (*this)(op->infoNotCond_) : nullptr;
 
     auto oldMap = transients_;
     applyCond(cond);
@@ -228,8 +256,7 @@ Stmt CompTransientBounds::visit(const If &op) {
 
     auto ret = makeIf(op->id(), std::move(cond), std::move(thenCase),
                       std::move(elseCase));
-    ret.as<IfNode>()->infoNotCond_ = std::move(infoNotCond);
-    return ret;
+    return COPY_DEBUG_INFO(ret, op);
 }
 
 Stmt CompTransientBounds::visit(const Assert &op) {
@@ -339,18 +366,17 @@ Expr CompUniqueBounds::visitExpr(
     static bool inRecur = false;
     if (!inRecur) {
         inRecur = true;
-        if (auto tr = transient(op); tr.isValid()) {
-            if (tr->first.isValid()) {
-                auto first = (*this)(tr->first);
-                for (auto &&item : getLower(first)) {
-                    updLower(op, item);
-                }
+        auto tr = transient(op);
+        for (auto &&_first : tr.first) {
+            auto first = (*this)(_first);
+            for (auto &&item : getLower(first)) {
+                updLower(op, item);
             }
-            if (tr->second.isValid()) {
-                auto second = (*this)(tr->second);
-                for (auto &&item : getUpper(second)) {
-                    updUpper(op, item);
-                }
+        }
+        for (auto &&_second : tr.second) {
+            auto second = (*this)(_second);
+            for (auto &&item : getUpper(second)) {
+                updUpper(op, item);
             }
         }
         inRecur = false;
@@ -559,503 +585,6 @@ Expr CompUniqueBounds::visit(const Max &_op) {
     return op;
 }
 
-Expr SimplifyPass::visitExpr(
-    const Expr &_op, const std::function<Expr(const Expr &)> &visitNode) {
-    auto op = CompUniqueBounds::visitExpr(_op, visitNode);
-
-    // To avoid divergence
-    if (getHash(op) != getHash(_op)) {
-        // E.g.
-        // (1) a[0 - 0] -> a[0]
-        // (2) (1 + 1) * a[0] -> 2 * a[0 - 0], because of the old bound
-        return op;
-    }
-
-    Expr best = nullptr;
-    auto bestScope = -1;
-    for (auto &&lower : getLower(op)) {
-        for (auto &&upper : getUpper(op)) {
-            bool isEqual = false;
-
-            // Case 1: lower and upper the same const. E.g. 1/3 <= x <= 5/3
-            if (upper.lin_.coeff_.empty() && lower.lin_.coeff_.empty() &&
-                floorDiv(upper.lin_.bias_.p_, upper.lin_.bias_.q_) ==
-                    ceilDiv(lower.lin_.bias_.p_, lower.lin_.bias_.q_)) {
-                isEqual = true;
-            }
-
-            // Case 2: upper - lower < 1. E.g. a <= x <= a + 2/3
-            auto diff = sub(upper, lower);
-            if (diff.expr_->nodeType() == ASTNodeType::IntConst &&
-                diff.expr_.as<IntConstNode>()->val_ == 0) {
-                isEqual = true;
-            }
-
-            if (isEqual) {
-                // We need to choose the simplest one. Otherwise we are always
-                // picking the original expression
-                Expr expr;
-                if (upper.lin_.coeff_.size() + (upper.lin_.bias_ != 0) >
-                    lower.lin_.coeff_.size() + (lower.lin_.bias_ != 0)) {
-                    expr = lower.expr_;
-                } else {
-                    expr = upper.expr_;
-                }
-                auto scope = findInnerMostScope(varScope_, expr);
-                if (!best.isValid() || scope < bestScope) {
-                    best = expr, bestScope = scope;
-                }
-                break;
-            }
-        }
-    }
-    if (best.isValid() && getHash(best) != getHash(op)) {
-        return markMutated(best);
-    }
-    return op;
-}
-
-Expr SimplifyPass::visit(const Var &op) {
-    if (replace_.count(op->name_)) {
-        return (*this)(replace_.at(op->name_));
-    }
-    return CompUniqueBounds::visit(op);
-}
-
-Expr SimplifyPass::visit(const FloorDiv &_op) {
-    auto __op = CompUniqueBounds::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::FloorDiv);
-    auto op = __op.as<FloorDivNode>();
-    if (op->lhs_->nodeType() == ASTNodeType::IntConst &&
-        op->rhs_->nodeType() == ASTNodeType::IntConst) {
-        return markMutated(
-            makeIntConst(floorDiv(op->lhs_.as<IntConstNode>()->val_,
-                                  op->rhs_.as<IntConstNode>()->val_)));
-    }
-    return op;
-}
-
-Expr SimplifyPass::visit(const CeilDiv &_op) {
-    auto __op = CompUniqueBounds::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::CeilDiv);
-    auto op = __op.as<CeilDivNode>();
-    if (op->lhs_->nodeType() == ASTNodeType::IntConst &&
-        op->rhs_->nodeType() == ASTNodeType::IntConst) {
-        return markMutated(
-            makeIntConst(ceilDiv(op->lhs_.as<IntConstNode>()->val_,
-                                 op->rhs_.as<IntConstNode>()->val_)));
-    }
-    return op;
-}
-
-Expr SimplifyPass::visit(const RoundTowards0Div &_op) {
-    auto __op = CompUniqueBounds::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::RoundTowards0Div);
-    auto op = __op.as<RoundTowards0DivNode>();
-    if (op->lhs_->nodeType() == ASTNodeType::IntConst &&
-        op->rhs_->nodeType() == ASTNodeType::IntConst) {
-        return markMutated(makeIntConst(op->lhs_.as<IntConstNode>()->val_ /
-                                        op->rhs_.as<IntConstNode>()->val_));
-    }
-    return op;
-}
-
-Expr SimplifyPass::visit(const Mod &_op) {
-    auto __op = CompUniqueBounds::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::Mod);
-    auto op = __op.as<ModNode>();
-
-    if (getIntLower(op->lhs_) >= 0 &&
-        getIntUpper((*this)(makeSub(op->lhs_, op->rhs_))) < 0) {
-        return markMutated(op->lhs_);
-    }
-
-    if (op->rhs_->nodeType() == ASTNodeType::IntConst) {
-        auto k = op->rhs_.as<IntConstNode>()->val_;
-
-        if (op->lhs_->nodeType() == ASTNodeType::IntConst) {
-            return markMutated(
-                makeIntConst(op->lhs_.as<IntConstNode>()->val_ % k));
-        }
-
-        bool mutated = false;
-        std::function<Expr(const Expr &)> f = [&f, &mutated, k](const Expr &x) {
-            switch (x->nodeType()) {
-            case ASTNodeType::IntConst: {
-                auto val = x.as<IntConstNode>()->val_;
-                mutated = (val % k != val);
-                return makeIntConst(val % k);
-            }
-            case ASTNodeType::Add:
-                return makeAdd(f(x.as<AddNode>()->lhs_),
-                               f(x.as<AddNode>()->rhs_));
-            case ASTNodeType::Sub:
-                return makeSub(f(x.as<SubNode>()->lhs_),
-                               f(x.as<SubNode>()->rhs_));
-            case ASTNodeType::Mul:
-                return makeMul(f(x.as<MulNode>()->lhs_),
-                               f(x.as<MulNode>()->rhs_));
-            default:
-                return x;
-            }
-        };
-        auto newLhs = f(op->lhs_);
-        if (mutated) {
-            return markMutated(makeMod(newLhs, op->rhs_));
-        }
-    }
-
-    return op;
-}
-
-Expr SimplifyPass::visit(const Min &_op) {
-    auto __op = CompUniqueBounds::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::Min);
-    auto op = __op.as<MinNode>();
-
-    std::function<void(const Expr &, std::unordered_set<Expr> &)> recur =
-        [&recur](const Expr &expr, std::unordered_set<Expr> &list) {
-            if (expr->nodeType() == ASTNodeType::Min) {
-                recur(expr.as<MinNode>()->lhs_, list);
-                recur(expr.as<MinNode>()->rhs_, list);
-            } else {
-                list.insert(expr);
-            }
-        };
-    std::unordered_set<Expr> lhs, rhs, all;
-    recur(op->lhs_, lhs);
-    recur(op->rhs_, rhs);
-    all.insert(lhs.begin(), lhs.end());
-    all.insert(rhs.begin(), rhs.end());
-
-    for (auto &&l : lhs) {
-        for (auto &&r : rhs) {
-            auto normForm = (*this)(makeSub(l, r));
-            if (getIntUpper(normForm) <= 0) {
-                all.erase(r);
-            } else if (getIntLower(normForm) >= 0) {
-                all.erase(l);
-            }
-        }
-    }
-
-    if (all.size() == lhs.size() + rhs.size()) {
-        return op;
-    } else {
-        ASSERT(!all.empty());
-        Expr ret;
-        for (auto &&item : all) {
-            ret = ret.isValid() ? makeMin(ret, item) : item;
-        }
-        return markMutated(ret);
-    }
-}
-
-Expr SimplifyPass::visit(const Max &_op) {
-    auto __op = CompUniqueBounds::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::Max);
-    auto op = __op.as<MaxNode>();
-
-    std::function<void(const Expr &, std::unordered_set<Expr> &)> recur =
-        [&recur](const Expr &expr, std::unordered_set<Expr> &list) {
-            if (expr->nodeType() == ASTNodeType::Max) {
-                recur(expr.as<MaxNode>()->lhs_, list);
-                recur(expr.as<MaxNode>()->rhs_, list);
-            } else {
-                list.insert(expr);
-            }
-        };
-    std::unordered_set<Expr> lhs, rhs, all;
-    recur(op->lhs_, lhs);
-    recur(op->rhs_, rhs);
-    all.insert(lhs.begin(), lhs.end());
-    all.insert(rhs.begin(), rhs.end());
-
-    for (auto &&l : lhs) {
-        for (auto &&r : rhs) {
-            auto normForm = (*this)(makeSub(l, r));
-            if (getIntUpper(normForm) <= 0) {
-                all.erase(l);
-            } else if (getIntLower(normForm) >= 0) {
-                all.erase(r);
-            }
-        }
-    }
-
-    if (all.size() == lhs.size() + rhs.size()) {
-        return op;
-    } else {
-        ASSERT(!all.empty());
-        Expr ret;
-        for (auto &&item : all) {
-            ret = ret.isValid() ? makeMax(ret, item) : item;
-        }
-        return markMutated(ret);
-    }
-}
-
-Expr SimplifyPass::visit(const LT &_op) {
-    auto __op = CompUniqueBounds::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::LT);
-    auto op = __op.as<LTNode>();
-    auto normForm = (*this)(makeSub(op->lhs_, op->rhs_));
-    if (getIntUpper(normForm) < 0) {
-        return markMutated(makeBoolConst(true));
-    }
-    if (getIntLower(normForm) >= 0) {
-        return markMutated(makeBoolConst(false));
-    }
-    return op;
-}
-
-Expr SimplifyPass::visit(const LE &_op) {
-    auto __op = CompUniqueBounds::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::LE);
-    auto op = __op.as<LENode>();
-    auto normForm = (*this)(makeSub(op->lhs_, op->rhs_));
-    if (getIntUpper(normForm) <= 0) {
-        return markMutated(makeBoolConst(true));
-    }
-    if (getIntLower(normForm) > 0) {
-        return markMutated(makeBoolConst(false));
-    }
-    return op;
-}
-
-Expr SimplifyPass::visit(const GT &_op) {
-    auto __op = CompUniqueBounds::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::GT);
-    auto op = __op.as<GTNode>();
-    auto normForm = (*this)(makeSub(op->lhs_, op->rhs_));
-    if (getIntUpper(normForm) <= 0) {
-        return markMutated(makeBoolConst(false));
-    }
-    if (getIntLower(normForm) > 0) {
-        return markMutated(makeBoolConst(true));
-    }
-    return op;
-}
-
-Expr SimplifyPass::visit(const GE &_op) {
-    auto __op = CompUniqueBounds::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::GE);
-    auto op = __op.as<GENode>();
-    auto normForm = (*this)(makeSub(op->lhs_, op->rhs_));
-    if (getIntUpper(normForm) < 0) {
-        return markMutated(makeBoolConst(false));
-    }
-    if (getIntLower(normForm) >= 0) {
-        return markMutated(makeBoolConst(true));
-    }
-    return op;
-}
-
-Expr SimplifyPass::visit(const EQ &_op) {
-    auto __op = CompUniqueBounds::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::EQ);
-    auto op = __op.as<EQNode>();
-    auto normForm = (*this)(makeSub(op->lhs_, op->rhs_));
-    if (getIntUpper(normForm) < 0) {
-        return markMutated(makeBoolConst(false));
-    }
-    if (getIntLower(normForm) > 0) {
-        return markMutated(makeBoolConst(false));
-    }
-    if (getIntUpper(normForm) == 0 && getIntLower(normForm) == 0) {
-        return markMutated(makeBoolConst(true));
-    }
-    return op;
-}
-
-Expr SimplifyPass::visit(const NE &_op) {
-    auto __op = CompUniqueBounds::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::NE);
-    auto op = __op.as<NENode>();
-    auto normForm = (*this)(makeSub(op->lhs_, op->rhs_));
-    if (getIntUpper(normForm) < 0) {
-        return markMutated(makeBoolConst(true));
-    }
-    if (getIntLower(normForm) > 0) {
-        return markMutated(makeBoolConst(true));
-    }
-    if (getIntUpper(normForm) == 0 && getIntLower(normForm) == 0) {
-        return markMutated(makeBoolConst(false));
-    }
-    return op;
-}
-
-Expr SimplifyPass::visit(const LAnd &_op) {
-    auto __op = CompUniqueBounds::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::LAnd);
-    auto op = __op.as<LAndNode>();
-    if (op->lhs_->nodeType() == ASTNodeType::BoolConst) {
-        return markMutated(op->lhs_.as<BoolConstNode>()->val_
-                               ? (Expr)op->rhs_
-                               : makeBoolConst(false));
-    }
-    if (op->rhs_->nodeType() == ASTNodeType::BoolConst) {
-        return markMutated(op->rhs_.as<BoolConstNode>()->val_
-                               ? (Expr)op->lhs_
-                               : makeBoolConst(false));
-    }
-    return op;
-}
-
-Expr SimplifyPass::visit(const LOr &_op) {
-    auto __op = CompUniqueBounds::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::LOr);
-    auto op = __op.as<LOrNode>();
-    if (op->lhs_->nodeType() == ASTNodeType::BoolConst) {
-        return markMutated(op->lhs_.as<BoolConstNode>()->val_
-                               ? makeBoolConst(true)
-                               : (Expr)op->rhs_);
-    }
-    if (op->rhs_->nodeType() == ASTNodeType::BoolConst) {
-        return markMutated(op->rhs_.as<BoolConstNode>()->val_
-                               ? makeBoolConst(true)
-                               : (Expr)op->lhs_);
-    }
-    return op;
-}
-
-Expr SimplifyPass::visit(const LNot &_op) {
-    auto __op = CompUniqueBounds::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::LNot);
-    auto op = __op.as<LNotNode>();
-    switch (op->expr_->nodeType()) {
-    case ASTNodeType::BoolConst:
-        return markMutated(makeBoolConst(!op->expr_.as<BoolConstNode>()->val_));
-    case ASTNodeType::LT:
-        return markMutated(
-            makeGE(op->expr_.as<LTNode>()->lhs_, op->expr_.as<LTNode>()->rhs_));
-    case ASTNodeType::GT:
-        return markMutated(
-            makeLE(op->expr_.as<GTNode>()->lhs_, op->expr_.as<GTNode>()->rhs_));
-    case ASTNodeType::LE:
-        return markMutated(
-            makeGT(op->expr_.as<LENode>()->lhs_, op->expr_.as<LENode>()->rhs_));
-    case ASTNodeType::GE:
-        return markMutated(
-            makeLT(op->expr_.as<GENode>()->lhs_, op->expr_.as<GENode>()->rhs_));
-    case ASTNodeType::EQ:
-        return markMutated(
-            makeNE(op->expr_.as<EQNode>()->lhs_, op->expr_.as<EQNode>()->rhs_));
-    case ASTNodeType::NE:
-        return markMutated(
-            makeEQ(op->expr_.as<NENode>()->lhs_, op->expr_.as<NENode>()->rhs_));
-    case ASTNodeType::LAnd:
-        return markMutated(makeLOr(makeLNot(op->expr_.as<LAndNode>()->lhs_),
-                                   makeLNot(op->expr_.as<LAndNode>()->rhs_)));
-    case ASTNodeType::LOr:
-        return markMutated(makeLAnd(makeLNot(op->expr_.as<LOrNode>()->lhs_),
-                                    makeLNot(op->expr_.as<LOrNode>()->rhs_)));
-    case ASTNodeType::LNot:
-        return markMutated(op->expr_.as<LNotNode>()->expr_);
-    default:;
-    }
-    return op;
-}
-
-Stmt SimplifyPass::visit(const VarDef &_op) {
-    if (varScope_.count(_op->name_)) {
-        throw InvalidProgram(
-            "Conflict var name: " + _op->name_ +
-            ". Nested vars with the same name are not allowed");
-    }
-    varScope_[_op->name_] = curScope_++;
-    auto __op = CompUniqueBounds::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::VarDef);
-    auto op = __op.as<VarDefNode>();
-    varScope_.erase(_op->name_), curScope_--;
-
-    if (isEmptyStmt(op->body_)) {
-        return makeStmtSeq("", {});
-    }
-
-    if (op->sizeLim_.isValid()) {
-        Expr size = makeIntConst(1);
-        for (auto &&dim : op->buffer_->tensor().shape()) {
-            size = makeMul(size, dim);
-        }
-        if (getIntLower((*this)(makeSub(op->sizeLim_, size))) >= 0) {
-            op->sizeLim_ = nullptr;
-        }
-    }
-
-    return op;
-}
-
-Stmt SimplifyPass::visit(const For &_op) {
-    if (varScope_.count(_op->iter_)) {
-        throw InvalidProgram(
-            "iterators with the same name in nested loops are not allowed");
-    }
-
-    auto len = (*this)(makeSub(_op->end_, _op->begin_));
-    if (len->nodeType() == ASTNodeType::IntConst) {
-        auto intLen = len.as<IntConstNode>()->val_;
-        if (intLen == 1) {
-            ASSERT(!replace_.count(_op->iter_));
-            replace_[_op->iter_] = (*this)(_op->begin_);
-            auto body = (*this)(_op->body_);
-            replace_.erase(_op->iter_);
-            return body;
-        }
-        if (intLen <= 0) {
-            return makeStmtSeq("", {});
-        }
-    }
-
-    varScope_[_op->iter_] = curScope_++;
-    auto __op = CompUniqueBounds::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::For);
-    auto op = __op.as<ForNode>();
-    varScope_.erase(_op->iter_), curScope_--;
-
-    if (isEmptyStmt(op->body_)) {
-        return makeStmtSeq("", {});
-    }
-    return op;
-}
-
-Stmt SimplifyPass::visit(const If &_op) {
-    auto __op = CompUniqueBounds::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::If);
-    auto op = __op.as<IfNode>();
-    if (isEmptyStmt(op->thenCase_) && isEmptyStmt(op->elseCase_)) {
-        return makeStmtSeq("", {});
-    }
-    if (op->cond_->nodeType() == ASTNodeType::BoolConst) {
-        if (op->cond_.as<BoolConstNode>()->val_) {
-            return markMutated(op->thenCase_);
-        } else {
-            if (op->elseCase_.isValid()) {
-                return markMutated(op->elseCase_);
-            } else {
-                return markMutated(makeStmtSeq("", {}));
-            }
-        }
-    }
-    return op;
-}
-
-Stmt SimplifyPass::visit(const Assert &_op) {
-    auto __op = CompUniqueBounds::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::Assert);
-    auto op = __op.as<AssertNode>();
-    if (op->cond_->nodeType() == ASTNodeType::BoolConst) {
-        if (op->cond_.as<BoolConstNode>()->val_) {
-            return markMutated(op->body_);
-        } else {
-            std::ostringstream os;
-            // Print the unchanged _op
-            os << "Assertion always false: " << _op;
-            throw InvalidProgram(os.str());
-        }
-    }
-    return op;
-}
-
 void CheckFixedPoint::visitExpr(
     const Expr &op, const std::function<void(const Expr &)> &visitNode) {
     Visitor::visitExpr(op, visitNode);
@@ -1072,28 +601,11 @@ void CheckFixedPoint::visitStmt(
     }
 }
 
-Stmt simplifyPass(const Stmt &op) {
-    return flattenStmtSeq(std::get<0>(simplifyAndGetBounds(op)));
+Stmt builtinSimplify(const Stmt &op) {
+    return flattenStmtSeq(
+        std::get<0>(simplifyAndGetBounds<BuiltinSimplify>(op)));
 }
 
-std::tuple<Stmt, SimplifyPass::LowerBoundsMap, SimplifyPass::UpperBoundsMap>
-simplifyAndGetBounds(const Stmt &_op) {
-    auto op = _op;
-
-    for (int i = 0;; i++) {
-        SimplifyPass mutator;
-        op = mutator(op);
-
-        CheckFixedPoint checker(mutator.mutated());
-        checker(op);
-        if (checker.isFixPoint() || i > 100) {
-            if (i > 100) {
-                WARNING("SimplifyPass iterates over 100 rounds. Maybe there is "
-                        "a bug");
-            }
-            return {op, mutator.lower(), mutator.upper()};
-        }
-    }
-}
+Stmt simplifyPass(const Stmt &op) { return builtinSimplify(op); }
 
 } // namespace ir

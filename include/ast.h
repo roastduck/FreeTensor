@@ -1,6 +1,8 @@
 #ifndef AST_H
 #define AST_H
 
+#include <string>
+
 #include <ref.h>
 
 namespace ir {
@@ -62,6 +64,10 @@ class ASTNode {
     bool isSubTree_ = false;
 
   public:
+#ifdef IR_DEBUG
+    std::string debugCreator_ = "Python API";
+#endif
+
     virtual ~ASTNode() {}
     virtual ASTNodeType nodeType() const = 0;
 
@@ -71,6 +77,25 @@ class ASTNode {
     DEFINE_NODE_ACCESS(AST);
 };
 typedef Ref<ASTNode> AST;
+
+#ifdef IR_DEBUG
+#define makeNode(type, ...)                                                    \
+    ({                                                                         \
+        auto __x = _make##type(__VA_ARGS__);                                   \
+        __x->debugCreator_ = __FILE__ ":" + std::to_string(__LINE__);          \
+        __x;                                                                   \
+    }) // GCC Extension: Statement expression
+#define COPY_DEBUG_INFO(ret, old)                                              \
+    ({                                                                         \
+        auto __x = (ret);                                                      \
+        auto __y = (old);                                                      \
+        __x->debugCreator_ = __y->debugCreator_;                               \
+        __x;                                                                   \
+    }) // GCC Extension: Statement expression
+#else
+#define makeNode(type, ...) _make##type(__VA_ARGS__)
+#define COPY_DEBUG_INFO(ret, old) (ret)
+#endif
 
 class ExprNode : public ASTNode {
     DEFINE_NODE_ACCESS(Expr);

@@ -16,7 +16,7 @@ class CodeGenCPU : public CodeGenC {
  *
  * @return : (source, list of params)
  */
-std::pair<std::string, std::vector<std::string>> codeGenCPU(const AST &op);
+std::pair<std::string, std::vector<std::string>> codeGenCPU(const Stmt &op);
 
 } // namespace ir
 

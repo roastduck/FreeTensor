@@ -17,7 +17,8 @@ class AnyExprNode : public ExprNode {
     DEFINE_NODE_TRAIT(AnyExpr);
 };
 typedef Ref<AnyExprNode> AnyExpr;
-inline Expr makeAnyExpr() { return AnyExpr::make(); }
+#define makeAnyExpr(...) makeNode(AnyExpr, __VA_ARGS__)
+inline Expr _makeAnyExpr() { return AnyExpr::make(); }
 
 class VarNode : public ExprNode {
   public:
@@ -25,7 +26,8 @@ class VarNode : public ExprNode {
     DEFINE_NODE_TRAIT(Var);
 };
 typedef Ref<VarNode> Var;
-inline Expr makeVar(const std::string &name) {
+#define makeVar(...) makeNode(Var, __VA_ARGS__)
+inline Expr _makeVar(const std::string &name) {
     Var v = Var::make();
     v->name_ = name;
     return v;
@@ -38,7 +40,9 @@ class LoadNode : public ExprNode {
     DEFINE_NODE_TRAIT(Load);
 };
 typedef Ref<LoadNode> Load;
-inline Expr makeLoad(const std::string &var, const std::vector<Expr> &indices) {
+#define makeLoad(...) makeNode(Load, __VA_ARGS__)
+inline Expr _makeLoad(const std::string &var,
+                      const std::vector<Expr> &indices) {
     Load l = Load::make();
     l->var_ = var;
     l->indices_ =
@@ -52,7 +56,8 @@ class IntConstNode : public ExprNode {
     DEFINE_NODE_TRAIT(IntConst);
 };
 typedef Ref<IntConstNode> IntConst;
-inline Expr makeIntConst(int val) {
+#define makeIntConst(...) makeNode(IntConst, __VA_ARGS__)
+inline Expr _makeIntConst(int val) {
     IntConst c = IntConst::make();
     c->val_ = val;
     return c;
@@ -64,7 +69,8 @@ class FloatConstNode : public ExprNode {
     DEFINE_NODE_TRAIT(FloatConst);
 };
 typedef Ref<FloatConstNode> FloatConst;
-inline Expr makeFloatConst(double val) {
+#define makeFloatConst(...) makeNode(FloatConst, __VA_ARGS__)
+inline Expr _makeFloatConst(double val) {
     FloatConst c = FloatConst::make();
     c->val_ = val;
     return c;
@@ -76,7 +82,8 @@ class BoolConstNode : public ExprNode {
     DEFINE_NODE_TRAIT(BoolConst);
 };
 typedef Ref<BoolConstNode> BoolConst;
-inline Expr makeBoolConst(bool val) {
+#define makeBoolConst(...) makeNode(BoolConst, __VA_ARGS__)
+inline Expr _makeBoolConst(bool val) {
     BoolConst b = BoolConst::make();
     b->val_ = val;
     return b;
@@ -88,7 +95,8 @@ class AddNode : public ExprNode {
     DEFINE_NODE_TRAIT(Add);
 };
 typedef Ref<AddNode> Add;
-template <class T, class U> Expr makeAdd(T &&lhs, U &&rhs) {
+#define makeAdd(...) makeNode(Add, __VA_ARGS__)
+template <class T, class U> Expr _makeAdd(T &&lhs, U &&rhs) {
     Add a = Add::make();
     a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
     return a;
@@ -100,7 +108,8 @@ class SubNode : public ExprNode {
     DEFINE_NODE_TRAIT(Sub);
 };
 typedef Ref<SubNode> Sub;
-template <class T, class U> Expr makeSub(T &&lhs, U &&rhs) {
+#define makeSub(...) makeNode(Sub, __VA_ARGS__)
+template <class T, class U> Expr _makeSub(T &&lhs, U &&rhs) {
     Sub a = Sub::make();
     a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
     return a;
@@ -112,7 +121,8 @@ class MulNode : public ExprNode {
     DEFINE_NODE_TRAIT(Mul);
 };
 typedef Ref<MulNode> Mul;
-template <class T, class U> Expr makeMul(T &&lhs, U &&rhs) {
+#define makeMul(...) makeNode(Mul, __VA_ARGS__)
+template <class T, class U> Expr _makeMul(T &&lhs, U &&rhs) {
     Mul a = Mul::make();
     a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
     return a;
@@ -127,7 +137,8 @@ class RealDivNode : public ExprNode {
     DEFINE_NODE_TRAIT(RealDiv);
 };
 typedef Ref<RealDivNode> RealDiv;
-template <class T, class U> Expr makeRealDiv(T &&lhs, U &&rhs) {
+#define makeRealDiv(...) makeNode(RealDiv, __VA_ARGS__)
+template <class T, class U> Expr _makeRealDiv(T &&lhs, U &&rhs) {
     RealDiv a = RealDiv::make();
     a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
     return a;
@@ -145,7 +156,8 @@ class FloorDivNode : public ExprNode {
     DEFINE_NODE_TRAIT(FloorDiv);
 };
 typedef Ref<FloorDivNode> FloorDiv;
-template <class T, class U> Expr makeFloorDiv(T &&lhs, U &&rhs) {
+#define makeFloorDiv(...) makeNode(FloorDiv, __VA_ARGS__)
+template <class T, class U> Expr _makeFloorDiv(T &&lhs, U &&rhs) {
     FloorDiv a = FloorDiv::make();
     a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
     return a;
@@ -163,7 +175,8 @@ class CeilDivNode : public ExprNode {
     DEFINE_NODE_TRAIT(CeilDiv);
 };
 typedef Ref<CeilDivNode> CeilDiv;
-template <class T, class U> Expr makeCeilDiv(T &&lhs, U &&rhs) {
+#define makeCeilDiv(...) makeNode(CeilDiv, __VA_ARGS__)
+template <class T, class U> Expr _makeCeilDiv(T &&lhs, U &&rhs) {
     CeilDiv a = CeilDiv::make();
     a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
     return a;
@@ -181,19 +194,22 @@ class RoundTowards0DivNode : public ExprNode {
     DEFINE_NODE_TRAIT(RoundTowards0Div);
 };
 typedef Ref<RoundTowards0DivNode> RoundTowards0Div;
-template <class T, class U> Expr makeRoundTowards0Div(T &&lhs, U &&rhs) {
+#define makeRoundTowards0Div(...) makeNode(RoundTowards0Div, __VA_ARGS__)
+template <class T, class U> Expr _makeRoundTowards0Div(T &&lhs, U &&rhs) {
     RoundTowards0Div a = RoundTowards0Div::make();
     a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
     return a;
 }
 
+// FIXME: Deal with negative numbers in Mod
 class ModNode : public ExprNode {
   public:
     SubTree<ExprNode> lhs_, rhs_;
     DEFINE_NODE_TRAIT(Mod);
 };
 typedef Ref<ModNode> Mod;
-template <class T, class U> Expr makeMod(T &&lhs, U &&rhs) {
+#define makeMod(...) makeNode(Mod, __VA_ARGS__)
+template <class T, class U> Expr _makeMod(T &&lhs, U &&rhs) {
     Mod a = Mod::make();
     a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
     return a;
@@ -205,7 +221,8 @@ class MinNode : public ExprNode {
     DEFINE_NODE_TRAIT(Min);
 };
 typedef Ref<MinNode> Min;
-template <class T, class U> Expr makeMin(T &&lhs, U &&rhs) {
+#define makeMin(...) makeNode(Min, __VA_ARGS__)
+template <class T, class U> Expr _makeMin(T &&lhs, U &&rhs) {
     Min m = Min::make();
     m->lhs_ = std::forward<T>(lhs), m->rhs_ = std::forward<U>(rhs);
     return m;
@@ -217,7 +234,8 @@ class MaxNode : public ExprNode {
     DEFINE_NODE_TRAIT(Max);
 };
 typedef Ref<MaxNode> Max;
-template <class T, class U> Expr makeMax(T &&lhs, U &&rhs) {
+#define makeMax(...) makeNode(Max, __VA_ARGS__)
+template <class T, class U> Expr _makeMax(T &&lhs, U &&rhs) {
     Max m = Max::make();
     m->lhs_ = std::forward<T>(lhs), m->rhs_ = std::forward<U>(rhs);
     return m;
@@ -229,7 +247,8 @@ class LTNode : public ExprNode {
     DEFINE_NODE_TRAIT(LT);
 };
 typedef Ref<LTNode> LT;
-template <class T, class U> Expr makeLT(T &&lhs, U &&rhs) {
+#define makeLT(...) makeNode(LT, __VA_ARGS__)
+template <class T, class U> Expr _makeLT(T &&lhs, U &&rhs) {
     LT a = LT::make();
     a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
     return a;
@@ -241,7 +260,8 @@ class LENode : public ExprNode {
     DEFINE_NODE_TRAIT(LE);
 };
 typedef Ref<LENode> LE;
-template <class T, class U> Expr makeLE(T &&lhs, U &&rhs) {
+#define makeLE(...) makeNode(LE, __VA_ARGS__)
+template <class T, class U> Expr _makeLE(T &&lhs, U &&rhs) {
     LE a = LE::make();
     a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
     return a;
@@ -253,7 +273,8 @@ class GTNode : public ExprNode {
     DEFINE_NODE_TRAIT(GT);
 };
 typedef Ref<GTNode> GT;
-template <class T, class U> Expr makeGT(T &&lhs, U &&rhs) {
+#define makeGT(...) makeNode(GT, __VA_ARGS__)
+template <class T, class U> Expr _makeGT(T &&lhs, U &&rhs) {
     GT a = GT::make();
     a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
     return a;
@@ -265,7 +286,8 @@ class GENode : public ExprNode {
     DEFINE_NODE_TRAIT(GE);
 };
 typedef Ref<GENode> GE;
-template <class T, class U> Expr makeGE(T &&lhs, U &&rhs) {
+#define makeGE(...) makeNode(GE, __VA_ARGS__)
+template <class T, class U> Expr _makeGE(T &&lhs, U &&rhs) {
     GE a = GE::make();
     a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
     return a;
@@ -277,7 +299,8 @@ class EQNode : public ExprNode {
     DEFINE_NODE_TRAIT(EQ);
 };
 typedef Ref<EQNode> EQ;
-template <class T, class U> Expr makeEQ(T &&lhs, U &&rhs) {
+#define makeEQ(...) makeNode(EQ, __VA_ARGS__)
+template <class T, class U> Expr _makeEQ(T &&lhs, U &&rhs) {
     EQ a = EQ::make();
     a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
     return a;
@@ -289,7 +312,8 @@ class NENode : public ExprNode {
     DEFINE_NODE_TRAIT(NE);
 };
 typedef Ref<NENode> NE;
-template <class T, class U> Expr makeNE(T &&lhs, U &&rhs) {
+#define makeNE(...) makeNode(NE, __VA_ARGS__)
+template <class T, class U> Expr _makeNE(T &&lhs, U &&rhs) {
     NE a = NE::make();
     a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
     return a;
@@ -301,7 +325,8 @@ class LAndNode : public ExprNode {
     DEFINE_NODE_TRAIT(LAnd);
 };
 typedef Ref<LAndNode> LAnd;
-template <class T, class U> Expr makeLAnd(T &&lhs, U &&rhs) {
+#define makeLAnd(...) makeNode(LAnd, __VA_ARGS__)
+template <class T, class U> Expr _makeLAnd(T &&lhs, U &&rhs) {
     LAnd l = LAnd::make();
     l->lhs_ = std::forward<T>(lhs), l->rhs_ = std::forward<U>(rhs);
     return l;
@@ -313,7 +338,8 @@ class LOrNode : public ExprNode {
     DEFINE_NODE_TRAIT(LOr);
 };
 typedef Ref<LOrNode> LOr;
-template <class T, class U> Expr makeLOr(T &&lhs, U &&rhs) {
+#define makeLOr(...) makeNode(LOr, __VA_ARGS__)
+template <class T, class U> Expr _makeLOr(T &&lhs, U &&rhs) {
     LOr l = LOr::make();
     l->lhs_ = std::forward<T>(lhs), l->rhs_ = std::forward<U>(rhs);
     return l;
@@ -325,7 +351,8 @@ class LNotNode : public ExprNode {
     DEFINE_NODE_TRAIT(LNot);
 };
 typedef Ref<LNotNode> LNot;
-template <class T> Expr makeLNot(T &&expr) {
+#define makeLNot(...) makeNode(LNot, __VA_ARGS__)
+template <class T> Expr _makeLNot(T &&expr) {
     LNot n = LNot::make();
     n->expr_ = std::forward<T>(expr);
     return n;
@@ -342,14 +369,15 @@ class IntrinsicNode : public ExprNode {
     DEFINE_NODE_TRAIT(Intrinsic);
 };
 typedef Ref<IntrinsicNode> Intrinsic;
-template <class T> Expr makeIntrinsic(const std::string &format, T &&params) {
+#define makeIntrinsic(...) makeNode(Intrinsic, __VA_ARGS__)
+template <class T> Expr _makeIntrinsic(const std::string &format, T &&params) {
     Intrinsic i = Intrinsic::make();
     i->format_ = format;
     i->params_ = std::vector<SubTree<ExprNode>>(params.begin(), params.end());
     return i;
 }
-inline Expr makeIntrinsic(const std::string &format,
-                          std::initializer_list<Expr> params) {
+inline Expr _makeIntrinsic(const std::string &format,
+                           std::initializer_list<Expr> params) {
     Intrinsic i = Intrinsic::make();
     i->format_ = format;
     i->params_ = std::vector<SubTree<ExprNode>>(params.begin(), params.end());

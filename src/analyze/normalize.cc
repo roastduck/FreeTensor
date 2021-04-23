@@ -10,13 +10,5 @@ Stmt Normalize::visit(const For &_op) {
     return op;
 }
 
-Stmt Normalize::visit(const If &_op) {
-    auto __op = Mutator::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::If);
-    auto op = __op.as<IfNode>();
-    op->infoNotCond_ = makeLNot(op->cond_);
-    return op;
-}
-
 } // namespace ir
 

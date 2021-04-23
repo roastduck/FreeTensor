@@ -17,8 +17,13 @@ void init_ffi_buffer(py::module_ &m) {
         .value("GPUShared", MemType::GPUShared)
         .value("GPULocal", MemType::GPULocal);
 
-    py::class_<Buffer> buffer(m, "Buffer");
-    buffer.def(py::init<const Tensor &, AccessType, MemType>());
+    py::class_<Buffer, Ref<Buffer>> buffer(m, "Buffer");
+    buffer.def(py::init<const Tensor &, AccessType, MemType>())
+        .def_property_readonly(
+            "tensor",
+            static_cast<const Tensor &(Buffer::*)() const>(&Buffer::tensor))
+        .def_property_readonly("atype", &Buffer ::atype)
+        .def_property_readonly("mtype", &Buffer::mtype);
 }
 
 } // namespace ir

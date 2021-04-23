@@ -1,13 +1,16 @@
 #ifndef SHRINK_FOR_H
 #define SHRINK_FOR_H
 
+#include <analyze/check_all_defined.h>
 #include <pass/simplify.h>
 
 namespace ir {
 
-class ShrinkFor : public SimplifyPass {
+class ShrinkFor : public BuiltinSimplify {
     std::unordered_map<uint64_t, std::pair<Expr, Expr>> newRange_;
     std::vector<Var> iterStack_;
+    std::vector<std::unordered_set<std::string>> defStack_;
+    std::unordered_set<std::string> defs_;
     bool keepConst_;
 
   public:
@@ -17,29 +20,44 @@ class ShrinkFor : public SimplifyPass {
     Expr simplifyExpr(const Expr &expr);
 
     template <class T> Stmt visitSideEffect(const T &op) {
-        auto ret = SimplifyPass::visit(op);
-        for (auto var : iterStack_) {
+        auto ret = BuiltinSimplify::visit(op);
+        for (size_t i = 0, iEnd = iterStack_.size(); i < iEnd; i++) {
+            auto &&var = iterStack_[i];
+            auto &&defs = defStack_[i];
             auto hash = getHash(var);
-            if (auto bound = transient(var); bound.isValid()) {
-                if (newRange_.count(hash)) {
-                    newRange_[hash] = std::make_pair(
-                        makeMin(newRange_[hash].first, bound->first),
-                        makeMax(newRange_[hash].second, bound->second));
-                } else {
-                    newRange_[hash] = *bound;
+            auto bound = transient(var);
+            Expr lower, upper;
+            for (auto &&first : bound.first) {
+                if (checkAllDefined(defs, first)) {
+                    lower = lower.isValid() ? makeMax(lower, first) : first;
                 }
             }
+            for (auto &&second : bound.second) {
+                if (checkAllDefined(defs, second)) {
+                    upper = upper.isValid() ? makeMin(upper, second) : second;
+                }
+            }
+            // The bound can not be infinity, because it is a loop iterator
+            ASSERT(lower.isValid() && upper.isValid());
+            newRange_[hash].first = newRange_[hash].first.isValid()
+                                        ? makeMin(newRange_[hash].first, lower)
+                                        : lower;
+            newRange_[hash].second =
+                newRange_[hash].second.isValid()
+                    ? makeMax(newRange_[hash].second, upper)
+                    : upper;
         }
         return ret;
     }
 
   protected:
-    using SimplifyPass::visit;
+    using BuiltinSimplify::visit;
 
     Stmt visit(const Store &op) override { return visitSideEffect(op); }
     Stmt visit(const ReduceTo &op) override { return visitSideEffect(op); }
     // TODO: Also for Eval with side effect
     Stmt visit(const For &op) override;
+    Stmt visit(const VarDef &op) override;
 };
 
 /**

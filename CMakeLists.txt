@@ -3,6 +3,8 @@ project(IR C CXX)
 
 include(ExternalProject)
 
+option(IR_DEBUG "Enable debug mode" OFF)
+
 set(DEFAULT_BUILD_TYPE "RelWithDebInfo")
 if(NOT CMAKE_BUILD_TYPE)
     message(STATUS "Setting build type to '${DEFAULT_BUILD_TYPE}' as none was specified.")
@@ -34,6 +36,9 @@ find_package(CUDA REQUIRED)
 
 # THIS PROJECT
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
+if(IR_DEBUG)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DIR_DEBUG")
+endif()
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_EXTENSIONS OFF) # -std=gnu++11 when on, -std=c++11 when off

@@ -127,13 +127,14 @@ class GenISLExpr : public Visitor {
     void visit(const Sub &op) override;
     void visit(const Mul &op) override;
     void visit(const LAnd &op) override;
-    // No LOr or LNot because rejects non-contiguous sets
+    void visit(const LOr &op) override;
+    void visit(const LNot &op) override;
     void visit(const LT &op) override;
     void visit(const LE &op) override;
     void visit(const GT &op) override;
     void visit(const GE &op) override;
     void visit(const EQ &op) override;
-    // No NE because rejects non-contiguous sets
+    void visit(const NE &op) override;
     void visit(const FloorDiv &op) override;
     void visit(const CeilDiv &op) override;
     void visit(const Mod &op) override;
@@ -264,13 +265,10 @@ class AnalyzeDeps : public Visitor {
     void visit(const Load &op) override;
 };
 
-Stmt prepareFindDeps(const Stmt &op);
-
 /**
  * Find all dependencies of a specific type along the given loops
  *
- * @param op : AST root. The user should run the `prepareFindDeps` pass before
- * pass it in
+ * @param op : AST root
  * @param cond : conditions to check: reduce_or [ reduce_and [ axis, mode ]]
  * @param found : callback
  * @param mode : Dep: all possible dependencies; Kill: all the situations that a

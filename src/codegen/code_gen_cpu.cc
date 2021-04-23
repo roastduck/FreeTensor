@@ -1,4 +1,6 @@
+#include <analyze/normalize.h>
 #include <codegen/code_gen_cpu.h>
+#include <pass/simplify.h>
 
 namespace ir {
 
@@ -19,7 +21,9 @@ void CodeGenCPU::visit(const For &op) {
     CodeGenC::visit(op);
 }
 
-std::pair<std::string, std::vector<std::string>> codeGenCPU(const AST &op) {
+std::pair<std::string, std::vector<std::string>> codeGenCPU(const Stmt &_op) {
+    auto op = simplifyPass(normalize(_op)); // infoLen_
+
     CodeGenCPU visitor;
     visitor.beginBlock();
     visitor(op);

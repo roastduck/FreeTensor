@@ -20,6 +20,10 @@ void PrintVisitor::recur(const Stmt &op) {
 }
 
 void PrintVisitor::printId(const Stmt &op) {
+#ifdef IR_DEBUG
+    makeIndent();
+    os() << "// By " << op->debugCreator_ << std::endl;
+#endif
     if (op->hasNamedId()) {
         os() << op->id() << ":" << std::endl;
     }

@@ -35,15 +35,13 @@ void FindAccessPoint::visit(const For &op) {
 
 void FindAccessPoint::visit(const If &op) {
     (*this)(op->cond_);
-    ASSERT(op->infoNotCond_.isValid());
-    (*this)(op->infoNotCond_);
 
     auto oldCond = cond_;
     cond_ = oldCond.isValid() ? makeLAnd(oldCond, op->cond_) : (Expr)op->cond_;
     (*this)(op->thenCase_);
     if (op->elseCase_.isValid()) {
-        cond_ = oldCond.isValid() ? makeLAnd(oldCond, op->infoNotCond_)
-                                  : (Expr)op->infoNotCond_;
+        cond_ = oldCond.isValid() ? makeLAnd(oldCond, makeLNot(op->cond_))
+                                  : makeLNot(op->cond_);
         (*this)(op->elseCase_);
     }
     cond_ = oldCond;
@@ -140,7 +138,23 @@ void GenISLExpr::visit(const Mul &op) {
 void GenISLExpr::visit(const LAnd &op) {
     Visitor::visit(op);
     if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
-        results_[op] = results_.at(op->lhs_) + " and " + results_.at(op->rhs_);
+        results_[op] =
+            "(" + results_.at(op->lhs_) + " and " + results_.at(op->rhs_) + ")";
+    }
+}
+
+void GenISLExpr::visit(const LOr &op) {
+    Visitor::visit(op);
+    if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
+        results_[op] =
+            "(" + results_.at(op->lhs_) + " or " + results_.at(op->rhs_) + ")";
+    }
+}
+
+void GenISLExpr::visit(const LNot &op) {
+    Visitor::visit(op);
+    if (results_.count(op->expr_)) {
+        results_[op] = "not " + results_.at(op->expr_);
     }
 }
 
@@ -176,6 +190,13 @@ void GenISLExpr::visit(const EQ &op) {
     Visitor::visit(op);
     if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
         results_[op] = results_.at(op->lhs_) + " = " + results_.at(op->rhs_);
+    }
+}
+
+void GenISLExpr::visit(const NE &op) {
+    Visitor::visit(op);
+    if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
+        results_[op] = results_.at(op->lhs_) + " != " + results_.at(op->rhs_);
     }
 }
 
@@ -288,7 +309,7 @@ Ref<std::string> AnalyzeDeps::makeRange(const std::vector<IterAxis> &point,
     }
     std::string ret;
     for (size_t i = 0, iEnd = ineqs.size(); i < iEnd; i++) {
-        ret += i == 0 ? ": " : " and ";
+        ret += i == 0 ? "" : " and ";
         ret += ineqs[i];
     }
     return Ref<std::string>::make(std::move(ret));
@@ -297,7 +318,7 @@ Ref<std::string> AnalyzeDeps::makeRange(const std::vector<IterAxis> &point,
 Ref<std::string> AnalyzeDeps::makeCond(const Expr &expr, RelaxMode relax) {
     if (expr.isValid()) {
         if (auto str = genISLExpr_.gen(expr); str.isValid()) {
-            return Ref<std::string>::make(" and " + *str);
+            return Ref<std::string>::make(*str);
         } else if (relax == RelaxMode::Necessary) {
             return nullptr;
         }
@@ -313,15 +334,19 @@ Ref<std::string> AnalyzeDeps::makeAccMap(const AccessPoint &p, int iterDim,
     } else {
         return nullptr;
     }
+    std::string cond;
     if (auto str = makeRange(p.iter_, relax); str.isValid()) {
-        ret += *str;
+        cond += *str;
     } else {
         return nullptr;
     }
     if (auto str = makeCond(p.cond_, relax); str.isValid()) {
-        ret += *str;
+        cond += (cond.empty() || str->empty() ? "" : " and ") + *str;
     } else {
         return nullptr;
+    }
+    if (!cond.empty()) {
+        ret += ": " + cond;
     }
     std::string ext = "free_lo, free_hi";
     for (auto &&item : genISLExpr_.externals()) {
@@ -414,22 +439,20 @@ void AnalyzeDeps::checkDep(const AccessPoint &point, const AccessPoint &other) {
     }
 
     // 2nd time
-    isl_basic_map *pmap = isl_basic_map_read_from_str(
+    isl_map *pmap = isl_map_read_from_str(
         isl_, makeAccMap(point, iterDim, accDim, pRelax)->c_str());
-    isl_basic_map *omap = isl_basic_map_read_from_str(
+    isl_map *omap = isl_map_read_from_str(
         isl_, makeAccMap(other, iterDim, accDim, oRelax)->c_str());
 
-    isl_basic_set *domain = isl_basic_set_read_from_str(
+    isl_set *domain = isl_set_read_from_str(
         isl_, ("{" + makeNdList("d", iterDim) + "}").c_str());
-    isl_space *space = isl_basic_set_get_space(domain);
-    isl_basic_set_free(domain);
+    isl_space *space = isl_set_get_space(domain);
+    isl_set_free(domain);
     isl_map *pred = isl_map_lex_gt(space);
 
-    isl_set *pIter =
-        isl_set_from_basic_set(isl_basic_map_domain(isl_basic_map_copy(omap)));
-    isl_basic_map *depall =
-        isl_basic_map_apply_range(pmap, isl_basic_map_reverse(omap));
-    isl_map *dep = isl_map_intersect(isl_map_from_basic_map(depall), pred);
+    isl_set *pIter = isl_map_domain(isl_map_copy(omap));
+    isl_map *depall = isl_map_apply_range(pmap, isl_map_reverse(omap));
+    isl_map *dep = isl_map_intersect(depall, pred);
     isl_map *nearest = isl_map_lexmax(dep);
     isl_set *pIterKilled = isl_map_range(isl_map_copy(nearest));
     bool fullyKilled = isl_set_is_equal(pIter, pIterKilled);
@@ -497,12 +520,6 @@ void AnalyzeDeps::visit(const Load &op) {
             checkDep(*point, *(i->second));
         }
     }
-}
-
-Stmt prepareFindDeps(const Stmt &_op) {
-    auto op = normalize(_op); // for IfNode::infoNotCond_
-    op = simplifyPass(op);
-    return op;
 }
 
 void findDeps(
