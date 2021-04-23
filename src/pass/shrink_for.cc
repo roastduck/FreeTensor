@@ -1,3 +1,4 @@
+#include <math/min_max.h>
 #include <pass/shrink_for.h>
 #include <pass/z3_simplify.h>
 
@@ -34,8 +35,9 @@ Stmt ShrinkFor::visit(const For &_op) {
     iterStack_.pop_back();
 
     ASSERT(newRange_.count(hash));
-    auto newBegin = newRange_.at(hash).first;
-    auto newEnd = makeAdd(newRange_.at(hash).second, makeIntConst(1));
+    auto newBegin = makeMinMax(newRange_.at(hash).first);
+    auto newEnd =
+        makeAdd(makeMaxMin(newRange_.at(hash).second), makeIntConst(1));
     newBegin = simplifyExpr(newBegin);
     newEnd = simplifyExpr(newEnd);
 

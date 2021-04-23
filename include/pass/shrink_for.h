@@ -7,7 +7,9 @@
 namespace ir {
 
 class ShrinkFor : public BuiltinSimplify {
-    std::unordered_map<uint64_t, std::pair<Expr, Expr>> newRange_;
+    std::unordered_map<uint64_t, std::pair<std::vector<std::vector<Expr>>,
+                                           std::vector<std::vector<Expr>>>>
+        newRange_;
     std::vector<Var> iterStack_;
     std::vector<std::unordered_set<std::string>> defStack_;
     std::unordered_set<std::string> defs_;
@@ -26,26 +28,19 @@ class ShrinkFor : public BuiltinSimplify {
             auto &&defs = defStack_[i];
             auto hash = getHash(var);
             auto bound = transient(var);
-            Expr lower, upper;
+            std::vector<Expr> lower, upper;
             for (auto &&first : bound.first) {
                 if (checkAllDefined(defs, first)) {
-                    lower = lower.isValid() ? makeMax(lower, first) : first;
+                    lower.emplace_back(first);
                 }
             }
             for (auto &&second : bound.second) {
                 if (checkAllDefined(defs, second)) {
-                    upper = upper.isValid() ? makeMin(upper, second) : second;
+                    upper.emplace_back(second);
                 }
             }
-            // The bound can not be infinity, because it is a loop iterator
-            ASSERT(lower.isValid() && upper.isValid());
-            newRange_[hash].first = newRange_[hash].first.isValid()
-                                        ? makeMin(newRange_[hash].first, lower)
-                                        : lower;
-            newRange_[hash].second =
-                newRange_[hash].second.isValid()
-                    ? makeMax(newRange_[hash].second, upper)
-                    : upper;
+            newRange_[hash].first.emplace_back(std::move(lower));
+            newRange_[hash].second.emplace_back(std::move(upper));
         }
         return ret;
     }

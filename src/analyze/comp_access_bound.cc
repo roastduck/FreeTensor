@@ -1,15 +1,8 @@
 #include <analyze/check_all_defined.h>
 #include <analyze/comp_access_bound.h>
+#include <math/min_max.h>
 
 namespace ir {
-
-Expr CompAccessBound::reduceMin(const Expr &reduction, const Expr &item) {
-    return reduction.isValid() ? makeMin(reduction, item) : item;
-}
-
-Expr CompAccessBound::reduceMax(const Expr &reduction, const Expr &item) {
-    return reduction.isValid() ? makeMax(reduction, item) : item;
-}
 
 void CompAccessBound::visit(const VarDef &op) {
     access_.erase(op->name_);
@@ -33,44 +26,45 @@ void CompAccessBound::visit(const VarDef &op) {
     result.len_.reserve(n);
 
     for (size_t i = 0; i < n; i++) {
-        Expr lower, upper;
+        std::vector<std::vector<Expr>> lower, upper;
         for (size_t j = 0, jEnd = access.size(); j < jEnd; j++) {
             ASSERT(access[j].size() == n);
             auto &&index = access[j][i];
-            Expr lowerItem = makeIntConst(0);
+            std::vector<Expr> lowerItem({makeIntConst(0)});
             if (checkAllDefined(defs_, index)) {
-                lowerItem = reduceMax(lowerItem, index);
+                lowerItem.emplace_back(index);
             }
             if (lower_.count(index)) {
                 for (auto &&item : lower_.at(index)) {
                     if (checkAllDefined(defs_, item.expr_)) {
-                        lowerItem = reduceMax(lowerItem, item.expr_);
+                        lowerItem.emplace_back(item.expr_);
                     }
                 }
             }
-            lower = reduceMin(lower, lowerItem);
+            lower.emplace_back(std::move(lowerItem));
         }
 
         for (size_t j = 0, jEnd = access.size(); j < jEnd; j++) {
             ASSERT(access[j].size() == n);
             auto &&index = access[j][i];
-            Expr upperItem = op->buffer_->tensor().shape()[i];
+            std::vector<Expr> upperItem({op->buffer_->tensor().shape()[i]});
             if (checkAllDefined(defs_, index)) {
-                upperItem = reduceMin(upperItem, index);
+                upperItem.emplace_back(index);
             }
             if (upper_.count(index)) {
                 for (auto &&item : upper_.at(index)) {
                     if (checkAllDefined(defs_, item.expr_)) {
-                        upperItem = reduceMin(upperItem, item.expr_);
+                        upperItem.emplace_back(item.expr_);
                     }
                 }
             }
-            upper = reduceMax(upper, upperItem);
+            upper.emplace_back(std::move(upperItem));
         }
 
-        result.lower_.emplace_back(lower);
-        result.len_.emplace_back(
-            makeAdd(makeSub(upper, lower), makeIntConst(1)));
+        auto l = makeMinMax(lower);
+        auto u = makeMaxMin(upper);
+        result.lower_.emplace_back(l);
+        result.len_.emplace_back(makeAdd(makeSub(u, l), makeIntConst(1)));
     }
     results_[op->id()] = std::move(result);
 }
