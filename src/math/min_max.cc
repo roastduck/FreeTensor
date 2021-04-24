@@ -21,6 +21,14 @@ Expr makeOuterInner(
     const MakerType &makeOuter, const MakerType &makeInner,
     std::vector<std::unordered_map<uint64_t, Expr>>::iterator begin,
     std::vector<std::unordered_map<uint64_t, Expr>>::iterator end) {
+    for (auto it = begin; it != end; it++) {
+        if (it->empty()) {
+            // In case of min(max(...), ...), this means min(max(empty), ...) =
+            // min(-inf, ...) = -inf
+            return nullptr;
+        }
+    }
+
     std::unordered_map<uint64_t, int> counter;
     uint64_t mostHash;
     Expr mostExpr;
@@ -36,9 +44,7 @@ Expr makeOuterInner(
             }
         }
     }
-    if (!mostExpr.isValid()) {
-        return nullptr;
-    }
+    ASSERT(mostExpr.isValid());
 
     auto split = begin;
     for (auto i = begin; i != end; i++) {
@@ -53,10 +59,12 @@ Expr makeOuterInner(
     }
 
     auto left = makeOuterInner(makeOuter, makeInner, begin, split);
+    // In case of min(max(...), ...), invalid left <==> max(-inf, mostExpr)
     left = left.isValid() ? makeInner(mostExpr, left) : mostExpr;
     if (split != end) {
         auto right = makeOuterInner(makeOuter, makeInner, split, end);
-        left = right.isValid() ? makeOuter(left, right) : left;
+        // In case of min(max(...), ...), invalid right <==> min(left, -inf)
+        left = right.isValid() ? makeOuter(left, right) : nullptr;
     }
     return left;
 }
