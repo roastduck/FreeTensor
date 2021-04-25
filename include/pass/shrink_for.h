@@ -6,7 +6,7 @@
 
 namespace ir {
 
-class ShrinkFor : public BuiltinSimplify {
+class ShrinkFor : public CompTransientBounds {
     std::unordered_map<uint64_t, std::pair<std::vector<std::vector<Expr>>,
                                            std::vector<std::vector<Expr>>>>
         newRange_;
@@ -19,10 +19,8 @@ class ShrinkFor : public BuiltinSimplify {
     ShrinkFor(bool keepConst) : keepConst_(keepConst) {}
 
   private:
-    Expr simplifyExpr(const Expr &expr);
-
     template <class T> Stmt visitSideEffect(const T &op) {
-        auto ret = BuiltinSimplify::visit(op);
+        auto ret = CompTransientBounds::visit(op);
         for (size_t i = 0, iEnd = iterStack_.size(); i < iEnd; i++) {
             auto &&var = iterStack_[i];
             auto &&defs = defStack_[i];
@@ -31,12 +29,18 @@ class ShrinkFor : public BuiltinSimplify {
             std::vector<Expr> lower, upper;
             for (auto &&first : bound.first) {
                 if (checkAllDefined(defs, first)) {
-                    lower.emplace_back(first);
+                    if (!keepConst_ ||
+                        first->nodeType() == ASTNodeType::IntConst) {
+                        lower.emplace_back(first);
+                    }
                 }
             }
             for (auto &&second : bound.second) {
                 if (checkAllDefined(defs, second)) {
-                    upper.emplace_back(second);
+                    if (!keepConst_ ||
+                        second->nodeType() == ASTNodeType::IntConst) {
+                        upper.emplace_back(second);
+                    }
                 }
             }
             newRange_[hash].first.emplace_back(std::move(lower));
@@ -46,7 +50,7 @@ class ShrinkFor : public BuiltinSimplify {
     }
 
   protected:
-    using BuiltinSimplify::visit;
+    using CompTransientBounds::visit;
 
     Stmt visit(const Store &op) override { return visitSideEffect(op); }
     Stmt visit(const ReduceTo &op) override { return visitSideEffect(op); }

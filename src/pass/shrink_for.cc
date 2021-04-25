@@ -4,21 +4,6 @@
 
 namespace ir {
 
-Expr ShrinkFor::simplifyExpr(const Expr &_expr) {
-    auto expr = _expr;
-    auto hash = getHash(expr);
-    for (int i = 0; i < 100; i++) {
-        auto newExpr = (*this)(expr);
-        auto newHash = getHash(newExpr);
-        if (newHash == hash) {
-            return expr;
-        }
-        expr = newExpr, hash = newHash;
-    }
-    WARNING("ShrinkFor::simplifyExpr not converged");
-    return expr;
-}
-
 Stmt ShrinkFor::visit(const For &_op) {
     auto var = makeVar(_op->iter_).as<VarNode>();
     auto hash = getHash(var);
@@ -27,7 +12,7 @@ Stmt ShrinkFor::visit(const For &_op) {
     iterStack_.emplace_back(var);
     defStack_.emplace_back(defs_);
     defs_.insert(_op->iter_);
-    auto __op = BuiltinSimplify::visit(_op);
+    auto __op = CompTransientBounds::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::For);
     auto op = __op.as<ForNode>();
     defs_.erase(_op->iter_);
@@ -36,32 +21,27 @@ Stmt ShrinkFor::visit(const For &_op) {
 
     ASSERT(newRange_.count(hash));
     auto newBegin = makeMinMax(newRange_.at(hash).first);
-    auto newEnd =
-        makeAdd(makeMaxMin(newRange_.at(hash).second), makeIntConst(1));
-    newBegin = simplifyExpr(newBegin);
-    newEnd = simplifyExpr(newEnd);
-
-    if (keepConst_) {
-        if (newBegin->nodeType() != ASTNodeType::IntConst ||
-            newEnd->nodeType() != ASTNodeType::IntConst) {
-            return op;
-        }
+    auto newEndMinus1 = makeMaxMin(newRange_.at(hash).second);
+    if (newBegin.isValid()) {
+        op->begin_ = newBegin;
+    }
+    if (newEndMinus1.isValid()) {
+        op->end_ = makeAdd(newEndMinus1, makeIntConst(1));
     }
 
-    op->begin_ = newBegin;
-    op->end_ = newEnd;
     return op;
 }
 
 Stmt ShrinkFor::visit(const VarDef &op) {
     defs_.insert(op->name_);
-    auto ret = BuiltinSimplify::visit(op);
+    auto ret = CompTransientBounds::visit(op);
     defs_.erase(op->name_);
     return ret;
 }
 
 Stmt shrinkFor(const Stmt &_op, bool keepConst) {
-    auto op = ShrinkFor(keepConst)(_op);
+    auto op = simplifyPass(_op); // Const prop + eliminate empty loops
+    op = ShrinkFor(keepConst)(op);
     return z3Simplify(op);
 }
 

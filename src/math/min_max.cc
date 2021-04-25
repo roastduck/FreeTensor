@@ -11,9 +11,19 @@ namespace {
 typedef std::function<Expr(const Expr &, const Expr &)> MakerType;
 
 auto makeMinFunc = [](const Expr &lhs, const Expr &rhs) {
+    if (lhs->nodeType() == ASTNodeType::IntConst &&
+        rhs->nodeType() == ASTNodeType::IntConst) {
+        return makeIntConst(std::min(lhs.as<IntConstNode>()->val_,
+                                     rhs.as<IntConstNode>()->val_));
+    }
     return makeMin(lhs, rhs);
 };
 auto makeMaxFunc = [](const Expr &lhs, const Expr &rhs) {
+    if (lhs->nodeType() == ASTNodeType::IntConst &&
+        rhs->nodeType() == ASTNodeType::IntConst) {
+        return makeIntConst(std::max(lhs.as<IntConstNode>()->val_,
+                                     rhs.as<IntConstNode>()->val_));
+    }
     return makeMax(lhs, rhs);
 };
 
@@ -81,10 +91,8 @@ Expr makeOuterInner(const MakerType &makeOuter, const MakerType &makeInner,
         }
         exprsMap.emplace_back(std::move(groupMap));
     }
-    auto ret =
-        makeOuterInner(makeOuter, makeInner, exprsMap.begin(), exprsMap.end());
-    ASSERT(ret.isValid());
-    return ret;
+    return makeOuterInner(makeOuter, makeInner, exprsMap.begin(),
+                          exprsMap.end());
 }
 
 } // Anonymous namespace

@@ -10,6 +10,8 @@ namespace ir {
  *
  * This will remove some duplicated items in advance, to reduce the burden on
  * simplifier
+ *
+ * Returning nullptr means -inf
  */
 Expr makeMinMax(const std::vector<std::vector<Expr>> &exprs);
 
@@ -18,6 +20,8 @@ Expr makeMinMax(const std::vector<std::vector<Expr>> &exprs);
  *
  * This will remove some duplicated items in advance, to reduce the burden on
  * simplifier
+ *
+ * Returning nullptr means +inf
  */
 Expr makeMaxMin(const std::vector<std::vector<Expr>> &exprs);
 
