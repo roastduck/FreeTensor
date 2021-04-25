@@ -503,8 +503,9 @@ template <class BaseClass> Stmt SimplifyPass<BaseClass>::visit(const If &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::If);
     auto op = __op.template as<IfNode>();
-    if (detail::isEmptyStmt(op->thenCase_) &&
-        detail::isEmptyStmt(op->elseCase_)) {
+    bool emptyThen = detail::isEmptyStmt(op->thenCase_);
+    bool emptyElse = detail::isEmptyStmt(op->elseCase_);
+    if (emptyThen && emptyElse) {
         return makeStmtSeq("", {});
     }
     if (op->cond_->nodeType() == ASTNodeType::BoolConst) {
@@ -516,6 +517,14 @@ template <class BaseClass> Stmt SimplifyPass<BaseClass>::visit(const If &_op) {
             } else {
                 return markMutated(makeStmtSeq("", {}));
             }
+        }
+    }
+    if (op->elseCase_.isValid()) {
+        if (emptyThen) {
+            return makeIf(op->id(), makeLNot(op->cond_), op->elseCase_);
+        }
+        if (emptyElse) {
+            op->elseCase_ = nullptr;
         }
     }
     return op;

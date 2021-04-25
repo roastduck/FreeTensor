@@ -178,8 +178,8 @@ Stmt SeperateTail::visit(const For &_op) {
         back = dfs(i + 1, AppendIDs(".back")(back).as<ForNode>());
         auto seperated = makeStmtSeq("", {front, back});
         auto ret = makeIf(
-            "", makeLAnd(makeGE(sep, old->begin_), makeLT(sep, old->end_)),
-            seperated, old);
+            "", makeLAnd(makeGE(sep, old->begin_), makeLE(sep, old->end_)),
+            seperated, dfs(i + 1, old));
         nextCandidates_.insert(ret->id());
         return ret;
     };

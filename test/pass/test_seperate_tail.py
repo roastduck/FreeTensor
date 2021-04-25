@@ -109,7 +109,7 @@ def test_tiled():
 
 def test_dynamic_tiled():
     with ir.VarDef("n", (), "int32", "input", "byvalue") as n:
-        with ir.Assert(n[()] >= 0):
+        with ir.Assert(n[()] > 0):
             with ir.VarDef("y", (n[()],), "int32", "output", "cpu") as y:
                 with ir.For("i", 0, ir.ceil_div(n[()], 4)) as i:
                     with ir.For("j", 0, 4) as j:
@@ -121,18 +121,13 @@ def test_dynamic_tiled():
     print(ast)
 
     with ir.VarDef("n", (), "int32", "input", "byvalue") as n:
-        with ir.Assert(n[()] >= 0):
+        with ir.Assert(n[()] > 0):
             with ir.VarDef("y", (n[()],), "int32", "output", "cpu") as y:
-                with ir.If(ir.any()): # n[()] % 4 != 0
-                    with ir.For("i", 0, ir.any()) as i:
-                        with ir.For("j", 0, 4) as j:
-                            y[4 * i + j] = 4 * i + j
-                    with ir.For("j", 0, ir.any()) as j:
-                        y[ir.any() + j] = ir.any() + j
-                with ir.Else():
-                    with ir.For("i", 0, ir.any()) as i:
-                        with ir.For("j", 0, 4) as j:
-                            y[4 * i + j] = 4 * i + j
+                with ir.For("i", 0, ir.any()) as i:
+                    with ir.For("j", 0, 4) as j:
+                        y[4 * i + j] = 4 * i + j
+                with ir.For("j", 0, ir.any()) as j:
+                    y[ir.any() + j] = ir.any() + j
     std = ir.pop_ast()
 
     assert std.match(ast)
