@@ -6,6 +6,7 @@
 #include <unordered_set>
 
 #include <analyze/analyze_linear.h>
+#include <analyze/type_infer.h>
 #include <math/bounds.h>
 #include <mutator.h>
 #include <visitor.h>
@@ -71,15 +72,18 @@ class OutDatedBoundsRemover : public Visitor {
  * Inherit this pass to use it
  */
 class CompTransientBounds : public Mutator {
-    AnalyzeLinear analyzeLinear_;
     std::unordered_map<uint64_t, TransientBound> transients_;
+    std::unordered_map<std::string, Ref<Buffer>> buffers_;
+    AnalyzeLinear analyzeLinear_;
+    TypeInfer typeInfer_;
     GetHash getHash_;
     OutDatedBoundsRemover remover_;
 
   protected:
-    CompTransientBounds() : remover_(transients_) {}
+    CompTransientBounds() : typeInfer_(&buffers_), remover_(transients_) {}
 
     TransientBound transient(const Expr &op);
+    DataType dtype(const Expr &op);
     uint64_t getHash(const Expr &op);
 
   private:
@@ -92,6 +96,7 @@ class CompTransientBounds : public Mutator {
   protected:
     using Mutator::visit; // Avoid hiding virtual functions
 
+    Stmt visit(const VarDef &op) override;
     Stmt visit(const For &op) override;
     Stmt visit(const If &op) override;
     Stmt visit(const Assert &op) override;

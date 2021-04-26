@@ -58,6 +58,11 @@ void OutDatedBoundsRemover::visit(const ReduceTo &op) {
     remove(op->var_);
 }
 
+DataType CompTransientBounds::dtype(const Expr &op) {
+    typeInfer_(op);
+    return typeInfer_.types().at(op);
+}
+
 uint64_t CompTransientBounds::getHash(const Expr &op) {
     getHash_(op);
     return getHash_.hash().at(op);
@@ -171,6 +176,9 @@ void CompTransientBounds::applyCond(const Expr &cond) {
         return;
     }
 
+    if (!isInt(dtype(norm))) {
+        return;
+    }
     analyzeLinear_(norm);
     if (!analyzeLinear_.result().count(norm)) {
         return;
@@ -186,6 +194,16 @@ void CompTransientBounds::applyCond(const Expr &cond) {
                       lin2expr(l));
         }
     }
+}
+
+Stmt CompTransientBounds::visit(const VarDef &op) {
+    if (buffers_.count(op->name_)) {
+        throw InvalidProgram("Nested VarDef with the same name is not allowed");
+    }
+    buffers_[op->name_] = op->buffer_;
+    auto ret = Mutator::visit(op);
+    buffers_.erase(op->name_);
+    return ret;
 }
 
 Stmt CompTransientBounds::visit(const For &op) {
@@ -374,8 +392,10 @@ Expr CompUniqueBounds::visit(const Load &_op) {
     auto __op = CompTransientBounds::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Load);
     auto op = __op.as<LoadNode>();
-    updLower(op, LowerBound{op});
-    updUpper(op, UpperBound{op});
+    if (isInt(dtype(op))) {
+        updLower(op, LowerBound{op});
+        updUpper(op, UpperBound{op});
+    }
     return op;
 }
 
@@ -520,6 +540,9 @@ Expr CompUniqueBounds::visit(const Min &_op) {
     auto __op = CompTransientBounds::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Min);
     auto op = __op.as<MinNode>();
+    if (!isInt(dtype(op))) {
+        return op;
+    }
     for (auto &&b : getUpper(op->lhs_)) {
         updUpper(op, b);
     }
@@ -543,6 +566,9 @@ Expr CompUniqueBounds::visit(const Max &_op) {
     auto __op = CompTransientBounds::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Max);
     auto op = __op.as<MaxNode>();
+    if (!isInt(dtype(op))) {
+        return op;
+    }
     for (auto &&b : getLower(op->lhs_)) {
         updLower(op, b);
     }

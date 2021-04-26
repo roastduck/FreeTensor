@@ -212,8 +212,25 @@ def ceil_div(lhs, rhs):
 def round_towards_0_div(lhs, rhs):
     return ffi.makeRoundTowards0Div(lhs, rhs)
 
-def intrinsic(fmt, *params):
-    return ffi.makeIntrinsic(fmt, params)
+'''
+Invoke whatever target code
+
+Parameters
+----------
+fmt : str
+    What to run. "%" is filled by parameters one by one. E.g. sinf(%)
+The following variadic arguments : Expr
+    Parameters to `fmt`
+ret_type : DataType or str
+    (Keyword argument only) The return type. Void for no return type. Defaults to Void
+'''
+def intrinsic(fmt, *params, **kws):
+    ret_type = ffi.DataType.Void
+    if "ret_type" in kws:
+        ret_type = parseDType(kws["ret_type"])
+        del kws["ret_type"]
+    assert len(kws) == 0, "Unrecognized keyword arguments: %s" % kws
+    return ffi.makeIntrinsic(fmt, params, ret_type)
 
 def any():
     return ffi.makeAnyExpr()

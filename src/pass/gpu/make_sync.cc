@@ -18,10 +18,12 @@ static Stmt insertIntrin(const Stmt &op, const std::string &front,
     }
     std::vector<Stmt> stmts = {op};
     if (!front.empty()) {
-        stmts.insert(stmts.begin(), makeEval("", makeIntrinsic(front, {})));
+        stmts.insert(stmts.begin(),
+                     makeEval("", makeIntrinsic(front, {}, DataType::Void)));
     }
     if (!back.empty()) {
-        stmts.emplace_back(makeEval("", makeIntrinsic(back, {})));
+        stmts.emplace_back(
+            makeEval("", makeIntrinsic(back, {}, DataType::Void)));
     }
     return makeStmtSeq("", std::move(stmts));
 }

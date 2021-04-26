@@ -235,8 +235,8 @@ class Mutator {
         for (auto &&param : op->params_) {
             params.emplace_back((*this)(param));
         }
-        return COPY_DEBUG_INFO(makeIntrinsic(op->format_, std::move(params)),
-                               op);
+        return COPY_DEBUG_INFO(
+            makeIntrinsic(op->format_, std::move(params), op->retType_), op);
     }
 
     virtual Stmt visit(const Eval &op) {

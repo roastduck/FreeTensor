@@ -4,6 +4,7 @@ import sourceinspect as ins
 from typing import Sequence
 
 from .nodes import _VarDef, Var, pop_ast, For, If, Else, MarkNid, ctx_stack as node_ctx
+from .utils import *
 import ffi
 import sys
 
@@ -288,7 +289,11 @@ class ASTTransformer(ast.NodeTransformer):
                 for i in args[1:]:
                     assert hasattr(i, "expr_ptr"), "intrinsic argument is not expression"
                     expr_args.append(i.expr_ptr)
-                node.expr_ptr = ffi.makeIntrinsic(args[0].expr_str, tuple(expr_args))
+                ret_type = ffi.DataType.Void
+                for item in node.keywords:
+                    assert item.arg == "ret_type", "Unrecognized keyword argument %s" % item.arg
+                    ret_type = parseDType(item.value.expr_str)
+                node.expr_ptr = ffi.makeIntrinsic(args[0].expr_str, tuple(expr_args), ret_type)
             else:
                 assert False, "Function not implemented"
         else:

@@ -273,6 +273,7 @@ void MatchVisitor::visit(const Intrinsic &op) {
     for (size_t i = 0, iEnd = op->params_.size(); i < iEnd; i++) {
         RECURSE(op->params_[i], instance->params_[i]);
     }
+    CHECK(op->retType_ == instance->retType_);
 }
 
 void MatchVisitor::visit(const Eval &op) {

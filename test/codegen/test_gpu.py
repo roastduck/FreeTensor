@@ -245,13 +245,13 @@ def test_intrinsic():
         ir.declare_var(y, (4,), "float32", "output", "gpu/global")
         'nid: L1'
         for i in range(0, 4):
-            y[i] = ir.intrinsic("sinf(%)", x[i])
+            y[i] = ir.intrinsic("sinf(%)", x[i], ret_type="float32")
 
     with ir.VarDef([
             ("x", (4,), "float32", "input", "gpu/global"),
             ("y", (4,), "float32", "output", "gpu/global")]) as (x, y):
         with ir.For("i", 0, 4, nid="L1") as i:
-            y[i] = ir.intrinsic("sinf(%)", x[i])
+            y[i] = ir.intrinsic("sinf(%)", x[i], ret_type="float32")
     assert ir.pop_ast().match(test)
 
     s = ir.Schedule(test)

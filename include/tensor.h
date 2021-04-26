@@ -4,31 +4,11 @@
 #include <string>
 #include <vector>
 
+#include <data_type.h>
 #include <except.h>
 #include <expr.h>
 
 namespace ir {
-
-enum class DataType : int { Float32, Int32 };
-
-inline std::string toString(DataType dtype) {
-    switch (dtype) {
-    case DataType::Float32:
-        return "f32";
-    case DataType::Int32:
-        return "i32";
-    }
-    return "???";
-}
-
-inline size_t sizeOf(DataType dtype) {
-    switch (dtype) {
-    case DataType::Float32:
-    case DataType::Int32:
-        return 4;
-    }
-    ASSERT(false);
-}
 
 class Tensor {
     std::vector<Expr> shape_;

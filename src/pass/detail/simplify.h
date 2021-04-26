@@ -180,6 +180,9 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const Min &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Min);
     auto op = __op.template as<MinNode>();
+    if (!isInt(this->dtype(op))) {
+        return op;
+    }
 
     std::function<void(const Expr &, std::unordered_set<Expr> &)> recur =
         [&recur](const Expr &expr, std::unordered_set<Expr> &list) {
@@ -223,6 +226,9 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const Max &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Max);
     auto op = __op.template as<MaxNode>();
+    if (!isInt(this->dtype(op))) {
+        return op;
+    }
 
     std::function<void(const Expr &, std::unordered_set<Expr> &)> recur =
         [&recur](const Expr &expr, std::unordered_set<Expr> &list) {
@@ -266,6 +272,9 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const LT &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::LT);
     auto op = __op.template as<LTNode>();
+    if (!isInt(this->dtype(op->lhs_)) || !isInt(this->dtype(op->rhs_))) {
+        return op;
+    }
     auto normForm = (*this)(makeSub(op->lhs_, op->rhs_));
     if (this->getIntUpper(normForm) < 0) {
         return markMutated(makeBoolConst(true));
@@ -280,6 +289,9 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const LE &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::LE);
     auto op = __op.template as<LENode>();
+    if (!isInt(this->dtype(op->lhs_)) || !isInt(this->dtype(op->rhs_))) {
+        return op;
+    }
     auto normForm = (*this)(makeSub(op->lhs_, op->rhs_));
     if (this->getIntUpper(normForm) <= 0) {
         return markMutated(makeBoolConst(true));
@@ -294,6 +306,9 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const GT &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::GT);
     auto op = __op.template as<GTNode>();
+    if (!isInt(this->dtype(op->lhs_)) || !isInt(this->dtype(op->rhs_))) {
+        return op;
+    }
     auto normForm = (*this)(makeSub(op->lhs_, op->rhs_));
     if (this->getIntUpper(normForm) <= 0) {
         return markMutated(makeBoolConst(false));
@@ -308,6 +323,9 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const GE &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::GE);
     auto op = __op.template as<GENode>();
+    if (!isInt(this->dtype(op->lhs_)) || !isInt(this->dtype(op->rhs_))) {
+        return op;
+    }
     auto normForm = (*this)(makeSub(op->lhs_, op->rhs_));
     if (this->getIntUpper(normForm) < 0) {
         return markMutated(makeBoolConst(false));
@@ -322,6 +340,9 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const EQ &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::EQ);
     auto op = __op.template as<EQNode>();
+    if (!isInt(this->dtype(op->lhs_)) || !isInt(this->dtype(op->rhs_))) {
+        return op;
+    }
     auto normForm = (*this)(makeSub(op->lhs_, op->rhs_));
     if (this->getIntUpper(normForm) < 0) {
         return markMutated(makeBoolConst(false));
@@ -339,6 +360,9 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const NE &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::NE);
     auto op = __op.template as<NENode>();
+    if (!isInt(this->dtype(op->lhs_)) || !isInt(this->dtype(op->rhs_))) {
+        return op;
+    }
     auto normForm = (*this)(makeSub(op->lhs_, op->rhs_));
     if (this->getIntUpper(normForm) < 0) {
         return markMutated(makeBoolConst(true));
