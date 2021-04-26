@@ -6,8 +6,10 @@
 
 namespace ir {
 
-class ShrinkFor : public BuiltinSimplify {
-    std::unordered_map<uint64_t, std::pair<Expr, Expr>> newRange_;
+class ShrinkFor : public CompTransientBounds {
+    std::unordered_map<uint64_t, std::pair<std::vector<std::vector<Expr>>,
+                                           std::vector<std::vector<Expr>>>>
+        newRange_;
     std::vector<Var> iterStack_;
     std::vector<std::unordered_set<std::string>> defStack_;
     std::unordered_set<std::string> defs_;
@@ -17,41 +19,38 @@ class ShrinkFor : public BuiltinSimplify {
     ShrinkFor(bool keepConst) : keepConst_(keepConst) {}
 
   private:
-    Expr simplifyExpr(const Expr &expr);
-
     template <class T> Stmt visitSideEffect(const T &op) {
-        auto ret = BuiltinSimplify::visit(op);
+        auto ret = CompTransientBounds::visit(op);
         for (size_t i = 0, iEnd = iterStack_.size(); i < iEnd; i++) {
             auto &&var = iterStack_[i];
             auto &&defs = defStack_[i];
             auto hash = getHash(var);
             auto bound = transient(var);
-            Expr lower, upper;
-            for (auto &&first : bound.first) {
+            std::vector<Expr> lower, upper;
+            for (auto &&first : bound.lower_) {
                 if (checkAllDefined(defs, first)) {
-                    lower = lower.isValid() ? makeMax(lower, first) : first;
+                    if (!keepConst_ ||
+                        first->nodeType() == ASTNodeType::IntConst) {
+                        lower.emplace_back(first);
+                    }
                 }
             }
-            for (auto &&second : bound.second) {
+            for (auto &&second : bound.upper_) {
                 if (checkAllDefined(defs, second)) {
-                    upper = upper.isValid() ? makeMin(upper, second) : second;
+                    if (!keepConst_ ||
+                        second->nodeType() == ASTNodeType::IntConst) {
+                        upper.emplace_back(second);
+                    }
                 }
             }
-            // The bound can not be infinity, because it is a loop iterator
-            ASSERT(lower.isValid() && upper.isValid());
-            newRange_[hash].first = newRange_[hash].first.isValid()
-                                        ? makeMin(newRange_[hash].first, lower)
-                                        : lower;
-            newRange_[hash].second =
-                newRange_[hash].second.isValid()
-                    ? makeMax(newRange_[hash].second, upper)
-                    : upper;
+            newRange_[hash].first.emplace_back(std::move(lower));
+            newRange_[hash].second.emplace_back(std::move(upper));
         }
         return ret;
     }
 
   protected:
-    using BuiltinSimplify::visit;
+    using CompTransientBounds::visit;
 
     Stmt visit(const Store &op) override { return visitSideEffect(op); }
     Stmt visit(const ReduceTo &op) override { return visitSideEffect(op); }

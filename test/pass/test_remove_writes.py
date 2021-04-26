@@ -80,6 +80,22 @@ def test_type1_reduce_then_reduce():
 
     assert std.match(ast)
 
+def test_type1_write_then_multiple_reduces():
+    with ir.VarDef("y", (), "int32", "output", "cpu") as y:
+        y[()] = 1
+        y[()] = y[()] + 2
+        y[()] = y[()] + 3
+    ast = ir.pop_ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef("y", (), "int32", "output", "cpu") as y:
+        y[()] = 6
+    std = ir.pop_ast()
+
+    assert std.match(ast)
+
 def test_type2_inner_loop():
     with ir.VarDef([
             ("x", (4,), "int32", "input", "cpu"),

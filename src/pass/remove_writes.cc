@@ -1,3 +1,4 @@
+#include <functional>
 #include <set>
 
 #include <analyze/deps.h>
@@ -120,41 +121,69 @@ Stmt removeWrites(const Stmt &_op) {
     std::unordered_map<Stmt, Stmt> replacement;
 
     // Type 1
+    std::set<std::pair<Stmt, Stmt>> visited;
+    std::function<void(const std::pair<Stmt, Stmt> &)> visitType1 =
+        [&](const std::pair<Stmt, Stmt> &item) {
+            if (visited.count(item)) {
+                return;
+            }
+            visited.insert(item);
+
+            auto &&_later = item.first, &&_earlier = item.second;
+            for (auto &&use : usesRAW) {
+                if (use.second == _earlier &&
+                    usesWAR.count(std::make_pair(_later, use.first))) {
+                    return;
+                }
+            }
+            for (auto &&use : overwrites) {
+                if (use.second == _earlier && !redundant.count(use.first) &&
+                    overwrites.count(std::make_pair(_later, use.first))) {
+                    // In the case of:
+                    // (1) A = X
+                    // (2) A += Y
+                    // (3) A += Z
+                    // if we handle (1)-(3) first, which resulting to A = X + Z,
+                    // we cannot handle (2) then. So, we handle (1)-(2) before
+                    // (1)-(3)
+                    visitType1(use);
+                }
+            }
+
+            if (redundant.count(_later) || redundant.count(_earlier)) {
+                return;
+            }
+            auto later =
+                replacement.count(_later) ? replacement.at(_later) : _later;
+            auto earlier = replacement.count(_earlier)
+                               ? replacement.at(_earlier)
+                               : _earlier;
+
+            if (later->nodeType() == ASTNodeType::Store) {
+                redundant.insert(_earlier);
+            } else {
+                ASSERT(later->nodeType() == ASTNodeType::ReduceTo);
+                // FIXME: What if StoreNode::expr_ is modified between the
+                // StoreNode and the ReduceNode?
+                auto l = later.as<ReduceToNode>();
+                if (earlier->nodeType() == ASTNodeType::Store) {
+                    redundant.insert(_earlier);
+                    replacement[_later] = makeStore(
+                        later->id(), l->var_, l->indices_,
+                        makeReduce(l->op_, earlier.as<StoreNode>()->expr_,
+                                   l->expr_));
+                } else if (earlier.as<ReduceToNode>()->op_ == l->op_) {
+                    redundant.insert(_earlier);
+                    replacement[_later] = makeReduceTo(
+                        later->id(), l->var_, l->indices_, l->op_,
+                        makeReduce(l->op_, earlier.as<ReduceToNode>()->expr_,
+                                   l->expr_),
+                        false);
+                }
+            }
+        };
     for (auto &&item : overwrites) {
-        auto &&later = item.first, &&earlier = item.second;
-        for (auto &&use : usesRAW) {
-            if (use.second == earlier &&
-                usesWAR.count(std::make_pair(later, use.first))) {
-                goto type1Fail;
-            }
-        }
-        if (later->nodeType() == ASTNodeType::Store) {
-            redundant.insert(earlier);
-        } else {
-            ASSERT(later->nodeType() == ASTNodeType::ReduceTo);
-            // FIXME: What if StoreNode::expr_ is modified between the StoreNode
-            // and the ReduceNode?
-            auto l = later.as<ReduceToNode>();
-            if (earlier->nodeType() == ASTNodeType::Store) {
-                redundant.insert(earlier);
-                replacement.emplace(
-                    later,
-                    makeStore(later->id(), l->var_, l->indices_,
-                              makeReduce(l->op_, earlier.as<StoreNode>()->expr_,
-                                         l->expr_)));
-            } else if (earlier.as<ReduceToNode>()->op_ == l->op_) {
-                redundant.insert(earlier);
-                replacement.emplace(
-                    later,
-                    makeReduceTo(later->id(), l->var_, l->indices_, l->op_,
-                                 makeReduce(l->op_,
-                                            earlier.as<ReduceToNode>()->expr_,
-                                            l->expr_),
-                                 false));
-            }
-        }
-        continue;
-    type1Fail:;
+        visitType1(item);
     }
 
     // Type 2

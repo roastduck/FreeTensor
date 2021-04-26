@@ -33,36 +33,25 @@ class FindInnerMostScope : public Visitor {
 int findInnerMostScope(const std::unordered_map<std::string, int> &varScope,
                        const Expr &op);
 
-/**
- * Find whether the bound of value is accessible.
- */
-class FindBoundAccess : public Mutator {
-  protected:
-    std::unordered_multiset<uint64_t> boundAccess_;
-    GetHash getHash_;
-    bool dontInsert_ = false;
+struct TransientBound {
+    Expr expr_;
+    std::vector<Expr> lower_, upper_;
+};
+
+class OutDatedBoundsRemover : public Visitor {
+    std::unordered_map<uint64_t, TransientBound> &transients_;
 
   public:
-    const void boundAccess(std::unordered_multiset<uint64_t> &boundAccess) {
-        boundAccess_ = boundAccess;
-    }
-    const std::unordered_multiset<uint64_t> &boundAccess() const {
-        return boundAccess_;
-    }
+    OutDatedBoundsRemover(
+        std::unordered_map<uint64_t, TransientBound> &transients)
+        : transients_(transients) {}
 
-    void findBoundAccess(const For &op) { Mutator::visit(op); }
-    void dontInsert() { dontInsert_ = true; }
+  private:
+    void remove(const std::string &name);
 
   protected:
-    using Mutator::visit; // Avoid hiding virtual functions
-    using Mutator::visitExpr;
-
-    uint64_t getHash(const Expr &op);
-    void setBoundAccess(const Expr &op);
-    bool checkBoundAccess(const Expr &op);
-
-    Stmt visit(const Store &op) override;
-    Stmt visit(const ReduceTo &op) override;
+    void visit(const Store &op) override;
+    void visit(const ReduceTo &op) override;
 };
 
 /**
@@ -81,14 +70,17 @@ class FindBoundAccess : public Mutator {
  *
  * Inherit this pass to use it
  */
-class CompTransientBounds : public FindBoundAccess {
+class CompTransientBounds : public Mutator {
     AnalyzeLinear analyzeLinear_;
-    std::unordered_map<uint64_t,
-                       std::pair<std::vector<Expr>, std::vector<Expr>>>
-        transients_;
+    std::unordered_map<uint64_t, TransientBound> transients_;
+    GetHash getHash_;
+    OutDatedBoundsRemover remover_;
 
   protected:
-    std::pair<std::vector<Expr>, std::vector<Expr>> transient(const Expr &op);
+    CompTransientBounds() : remover_(transients_) {}
+
+    TransientBound transient(const Expr &op);
+    uint64_t getHash(const Expr &op);
 
   private:
     static Expr sub1(const Expr &op);
@@ -98,11 +90,13 @@ class CompTransientBounds : public FindBoundAccess {
     void applyCond(const Expr &cond);
 
   protected:
-    using FindBoundAccess::visit; // Avoid hiding virtual functions
+    using Mutator::visit; // Avoid hiding virtual functions
 
     Stmt visit(const For &op) override;
     Stmt visit(const If &op) override;
     Stmt visit(const Assert &op) override;
+    Stmt visit(const Store &op) override;
+    Stmt visit(const ReduceTo &op) override;
 };
 
 /**

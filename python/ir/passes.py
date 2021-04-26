@@ -20,12 +20,12 @@ from ffi import gpu_normalize_threads
 
 def lower(ast, target: Optional[ffi.Target]=None):
     ast = simplify_pass(ast)
-    ast = remove_writes(ast)
     ast = sink_var(ast)
     ast = shrink_var(ast)
     ast = merge_if(ast)
     ast = seperate_tail(ast)
-    ast = shrink_for(ast) # After seperate_tail
+    ast = remove_writes(ast) # After seperate_tail
+    ast = shrink_for(ast) # After seperate_tail and remove_writes
     ast = make_atomic(ast)
 
     # After all general analysis

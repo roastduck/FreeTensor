@@ -46,10 +46,6 @@ class CompAccessBound : public Visitor {
         return results_;
     }
 
-  private:
-    static Expr reduceMin(const Expr &reduction, const Expr &item);
-    static Expr reduceMax(const Expr &reduction, const Expr &item);
-
   protected:
     void visit(const VarDef &op) override;
     void visit(const Load &op) override;

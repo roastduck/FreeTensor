@@ -41,7 +41,7 @@ Expr ISLCompBounds::visitExpr(
     if (islExprs_.count(op)) {
         ISLExpr &e = islExprs_.at(op);
         auto tr = transient(op);
-        for (auto &&first : tr.first) {
+        for (auto &&first : tr.lower_) {
             // (*this)(first) already been called by CompUniqueBounds
             if (islExprs_.count(first)) {
                 auto &&bound = islExprs_.at(first);
@@ -51,7 +51,7 @@ Expr ISLCompBounds::visitExpr(
                 e.cond_.emplace_back(e.expr_ + " >= " + bound.expr_);
             }
         }
-        for (auto &&second : tr.second) {
+        for (auto &&second : tr.upper_) {
             // (*this)(second) already been called by CompUniqueBounds
             if (islExprs_.count(second)) {
                 auto &&bound = islExprs_.at(second);

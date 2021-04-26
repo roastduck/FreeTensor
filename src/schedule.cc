@@ -338,8 +338,6 @@ void Schedule::blend(const std::string &loop) {
 
         ast = BlendPass(loop, findLoopVariance(ast))(ast);
         ast = flattenStmtSeq(ast);
-        ast = shrinkVar(ast); // `blend` may split a large tensor into multiple
-                              // small ones. We need to recompute sizes for them
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid blend(" + loop + "): " + e.what());
     }
