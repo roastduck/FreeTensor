@@ -27,7 +27,7 @@ class ShrinkFor : public CompTransientBounds {
             auto hash = getHash(var);
             auto bound = transient(var);
             std::vector<Expr> lower, upper;
-            for (auto &&first : bound.first) {
+            for (auto &&first : bound.lower_) {
                 if (checkAllDefined(defs, first)) {
                     if (!keepConst_ ||
                         first->nodeType() == ASTNodeType::IntConst) {
@@ -35,7 +35,7 @@ class ShrinkFor : public CompTransientBounds {
                     }
                 }
             }
-            for (auto &&second : bound.second) {
+            for (auto &&second : bound.upper_) {
                 if (checkAllDefined(defs, second)) {
                     if (!keepConst_ ||
                         second->nodeType() == ASTNodeType::IntConst) {
