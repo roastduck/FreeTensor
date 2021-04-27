@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <climits>
 #include <unordered_set>
 
@@ -189,7 +190,12 @@ void CompTransientBounds::applyCond(const Expr &cond) {
             (item.second.a_->nodeType() == ASTNodeType::Var ||
              item.second.a_->nodeType() == ASTNodeType::Load)) {
             auto l = lin;
-            l.coeff_.erase(item.first);
+            l.coeff_.resize(std::remove_if(l.coeff_.begin(), l.coeff_.end(),
+                                           [&item](const decltype(
+                                               l.coeff_)::value_type &kx) {
+                                               return kx.first == item.first;
+                                           }) -
+                            l.coeff_.begin());
             applyCond(-item.second.k_, item.second.a_, cond->nodeType(),
                       lin2expr(l));
         }

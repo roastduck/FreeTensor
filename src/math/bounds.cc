@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <climits>
 #include <functional>
+#include <type_traits>
 
 #include <math/bounds.h>
 #include <math/utils.h>
@@ -60,39 +61,33 @@ static Expr linToExprNumerator(const LinearExpr<Rational<int>> &lin) {
 }
 
 template <class T> static T addImpl(const T &b1, const T &b2) {
-    auto ret = b1.lin();
-    for (auto &&item : b2.lin().coeff_) {
-        if (ret.coeff_.count(item.first)) {
-            auto k = ret.coeff_[item.first].k_ + item.second.k_;
-            if (k == 0) {
-                ret.coeff_.erase(item.first);
-            } else {
-                ret.coeff_[item.first].k_ = k;
-            }
-        } else {
-            ret.coeff_[item.first] = item.second;
-        }
-    }
-    ret.bias_ += b2.lin().bias_;
-    return ret;
+    typename std::remove_const_t<std::remove_reference_t<decltype(b1.lin())>>
+        ret;
+    ret.coeff_.reserve(b1.lin().coeff_.size() + b2.lin().coeff_.size());
+    ret.coeff_.insert(ret.coeff_.end(), b1.lin().coeff_.begin(),
+                      b1.lin().coeff_.end());
+    ret.coeff_.insert(ret.coeff_.end(), b2.lin().coeff_.begin(),
+                      b2.lin().coeff_.end());
+    ret.bias_ = b1.lin().bias_ + b2.lin().bias_;
+    ret.sortCoeff();
+    return T(std::move(ret));
 }
 
 template <class T, class U> static T subImpl(const T &b1, const U &b2) {
-    auto ret = b1.lin();
-    for (auto &&item : b2.lin().coeff_) {
-        if (ret.coeff_.count(item.first)) {
-            auto k = ret.coeff_[item.first].k_ - item.second.k_;
-            if (k == 0) {
-                ret.coeff_.erase(item.first);
-            } else {
-                ret.coeff_[item.first].k_ = k;
-            }
-        } else {
-            ret.coeff_[item.first] = {-item.second.k_, item.second.a_};
-        }
+    typename std::remove_const_t<std::remove_reference_t<decltype(b1.lin())>>
+        ret;
+    ret.coeff_.reserve(b1.lin().coeff_.size() + b2.lin().coeff_.size());
+    ret.coeff_.insert(ret.coeff_.end(), b1.lin().coeff_.begin(),
+                      b1.lin().coeff_.end());
+    ret.coeff_.insert(ret.coeff_.end(), b2.lin().coeff_.begin(),
+                      b2.lin().coeff_.end());
+    for (auto it = ret.coeff_.begin() + b1.lin().coeff_.size();
+         it != ret.coeff_.end(); it++) {
+        it->second.k_ = -it->second.k_;
     }
-    ret.bias_ -= b2.lin().bias_;
-    return ret;
+    ret.bias_ = b1.lin().bias_ - b2.lin().bias_;
+    ret.sortCoeff();
+    return T(std::move(ret));
 }
 
 template <class T> static T mulImpl(const T &b, int k) {
@@ -106,13 +101,8 @@ template <class T> static T mulImpl(const T &b, int k) {
         item.second.k_ *= k;
     }
     ret.bias_ *= k;
-    return ret;
+    return T(std::move(ret));
 }
-
-UpperBound::UpperBound(const Expr &expr)
-    : expr_(expr), lin_{{{getHash(expr), {1, deepCopy(expr)}}}, 0} {}
-
-UpperBound::UpperBound(const LinearExpr<Rational<int>> &lin) : lin_(lin) {}
 
 const Expr &UpperBound::expr() {
     if (expr_.isValid()) {
@@ -130,11 +120,6 @@ const Expr &UpperBound::expr() {
     }
     return expr_;
 }
-
-LowerBound::LowerBound(const Expr &expr)
-    : expr_(expr), lin_{{{getHash(expr), {1, expr}}}, 0} {}
-
-LowerBound::LowerBound(const LinearExpr<Rational<int>> &lin) : lin_(lin) {}
 
 const Expr &LowerBound::expr() {
     if (expr_.isValid()) {
@@ -176,7 +161,7 @@ UpperBound floorDiv(const UpperBound &b, int k) {
         item.second.k_ /= k;
     }
     ret.bias_ /= k;
-    return ret;
+    return UpperBound(std::move(ret));
 }
 LowerBound floorDiv(const LowerBound &b, int k) {
     auto ret = b.lin();
@@ -185,7 +170,7 @@ LowerBound floorDiv(const LowerBound &b, int k) {
     }
     ret.bias_ -= k - 1;
     ret.bias_ /= k;
-    return ret;
+    return LowerBound(std::move(ret));
 }
 
 UpperBound ceilDiv(const UpperBound &b, int k) {
@@ -195,7 +180,7 @@ UpperBound ceilDiv(const UpperBound &b, int k) {
     }
     ret.bias_ += k - 1;
     ret.bias_ /= k;
-    return ret;
+    return UpperBound(std::move(ret));
 }
 LowerBound ceilDiv(const LowerBound &b, int k) {
     auto ret = b.lin();
@@ -203,7 +188,7 @@ LowerBound ceilDiv(const LowerBound &b, int k) {
         item.second.k_ /= k;
     }
     ret.bias_ /= k;
-    return ret;
+    return LowerBound(std::move(ret));
 }
 
 } // namespace ir
