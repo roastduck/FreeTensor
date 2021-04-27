@@ -42,16 +42,15 @@ Expr SimplifyPass<BaseClass>::visitExpr(
             bool isEqual = false;
 
             // Case 1: lower and upper the same const. E.g. 1/3 <= x <= 5/3
-            if (upper.lin_.coeff_.empty() && lower.lin_.coeff_.empty() &&
-                floorDiv(upper.lin_.bias_.p_, upper.lin_.bias_.q_) ==
-                    ceilDiv(lower.lin_.bias_.p_, lower.lin_.bias_.q_)) {
+            if (upper.lin().coeff_.empty() && lower.lin().coeff_.empty() &&
+                floorDiv(upper.lin().bias_.p_, upper.lin().bias_.q_) ==
+                    ceilDiv(lower.lin().bias_.p_, lower.lin().bias_.q_)) {
                 isEqual = true;
             }
 
             // Case 2: upper - lower < 1. E.g. a <= x <= a + 2/3
             auto diff = sub(upper, lower);
-            if (diff.expr_->nodeType() == ASTNodeType::IntConst &&
-                diff.expr_.template as<IntConstNode>()->val_ == 0) {
+            if (diff.lin().coeff_.empty() && diff.lin().bias_ < 1) {
                 isEqual = true;
             }
 
@@ -59,11 +58,11 @@ Expr SimplifyPass<BaseClass>::visitExpr(
                 // We need to choose the simplest one. Otherwise we are always
                 // picking the original expression
                 Expr expr;
-                if (upper.lin_.coeff_.size() + (upper.lin_.bias_ != 0) >
-                    lower.lin_.coeff_.size() + (lower.lin_.bias_ != 0)) {
-                    expr = lower.expr_;
+                if (upper.lin().coeff_.size() + (upper.lin().bias_ != 0) >
+                    lower.lin().coeff_.size() + (lower.lin().bias_ != 0)) {
+                    expr = lower.expr();
                 } else {
-                    expr = upper.expr_;
+                    expr = upper.expr();
                 }
                 auto scope = findInnerMostScope(varScope_, expr);
                 if (!best.isValid() || scope < bestScope) {

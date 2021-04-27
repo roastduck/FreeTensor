@@ -25,9 +25,10 @@ Stmt MakeConstShape::visit(const VarDef &_op) {
         }
         int result = INT_MAX;
         if (upper_.count(oldDim)) {
-            for (auto &&b : upper_.at(oldDim)) {
-                if (b.expr_->nodeType() == ASTNodeType::IntConst) {
-                    result = std::min(result, b.expr_.as<IntConstNode>()->val_);
+            for (auto b : upper_.at(oldDim)) {
+                if (b.lin().coeff_.empty()) {
+                    auto bias = b.lin().bias_;
+                    result = std::min(result, floorDiv(bias.p_, bias.q_));
                 }
             }
         }

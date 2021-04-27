@@ -60,8 +60,8 @@ static Expr linToExprNumerator(const LinearExpr<Rational<int>> &lin) {
 }
 
 template <class T> static T addImpl(const T &b1, const T &b2) {
-    auto ret = b1.lin_;
-    for (auto &&item : b2.lin_.coeff_) {
+    auto ret = b1.lin();
+    for (auto &&item : b2.lin().coeff_) {
         if (ret.coeff_.count(item.first)) {
             auto k = ret.coeff_[item.first].k_ + item.second.k_;
             if (k == 0) {
@@ -73,13 +73,13 @@ template <class T> static T addImpl(const T &b1, const T &b2) {
             ret.coeff_[item.first] = item.second;
         }
     }
-    ret.bias_ += b2.lin_.bias_;
+    ret.bias_ += b2.lin().bias_;
     return ret;
 }
 
 template <class T, class U> static T subImpl(const T &b1, const U &b2) {
-    auto ret = b1.lin_;
-    for (auto &&item : b2.lin_.coeff_) {
+    auto ret = b1.lin();
+    for (auto &&item : b2.lin().coeff_) {
         if (ret.coeff_.count(item.first)) {
             auto k = ret.coeff_[item.first].k_ - item.second.k_;
             if (k == 0) {
@@ -91,12 +91,12 @@ template <class T, class U> static T subImpl(const T &b1, const U &b2) {
             ret.coeff_[item.first] = {-item.second.k_, item.second.a_};
         }
     }
-    ret.bias_ -= b2.lin_.bias_;
+    ret.bias_ -= b2.lin().bias_;
     return ret;
 }
 
 template <class T> static T mulImpl(const T &b, int k) {
-    auto ret = b.lin_;
+    auto ret = b.lin();
     if (k == 0) {
         ret.coeff_.clear();
         ret.bias_ = 0;
@@ -112,8 +112,13 @@ template <class T> static T mulImpl(const T &b, int k) {
 UpperBound::UpperBound(const Expr &expr)
     : expr_(expr), lin_{{{getHash(expr), {1, deepCopy(expr)}}}, 0} {}
 
-UpperBound::UpperBound(const LinearExpr<Rational<int>> &lin) : lin_(lin) {
-    auto cdLin = commonDenominator(lin);
+UpperBound::UpperBound(const LinearExpr<Rational<int>> &lin) : lin_(lin) {}
+
+const Expr &UpperBound::expr() {
+    if (expr_.isValid()) {
+        return expr_;
+    }
+    auto cdLin = commonDenominator(lin_);
     expr_ = linToExprNumerator(cdLin);
     if (cdLin.bias_.q_ != 1) {
         if (expr_->nodeType() == ASTNodeType::IntConst) {
@@ -123,13 +128,19 @@ UpperBound::UpperBound(const LinearExpr<Rational<int>> &lin) : lin_(lin) {
             expr_ = makeFloorDiv(expr_, makeIntConst(cdLin.bias_.q_));
         }
     }
+    return expr_;
 }
 
 LowerBound::LowerBound(const Expr &expr)
     : expr_(expr), lin_{{{getHash(expr), {1, expr}}}, 0} {}
 
-LowerBound::LowerBound(const LinearExpr<Rational<int>> &lin) : lin_(lin) {
-    auto cdLin = commonDenominator(lin);
+LowerBound::LowerBound(const LinearExpr<Rational<int>> &lin) : lin_(lin) {}
+
+const Expr &LowerBound::expr() {
+    if (expr_.isValid()) {
+        return expr_;
+    }
+    auto cdLin = commonDenominator(lin_);
     expr_ = linToExprNumerator(cdLin);
     if (cdLin.bias_.q_ != 1) {
         if (expr_->nodeType() == ASTNodeType::IntConst) {
@@ -139,6 +150,7 @@ LowerBound::LowerBound(const LinearExpr<Rational<int>> &lin) : lin_(lin) {
             expr_ = makeCeilDiv(expr_, makeIntConst(cdLin.bias_.q_));
         }
     }
+    return expr_;
 }
 
 UpperBound add(const UpperBound &b1, const UpperBound &b2) {
@@ -159,7 +171,7 @@ UpperBound mul(const UpperBound &b, int k) { return mulImpl(b, k); }
 LowerBound mul(const LowerBound &b, int k) { return mulImpl(b, k); }
 
 UpperBound floorDiv(const UpperBound &b, int k) {
-    auto ret = b.lin_;
+    auto ret = b.lin();
     for (auto &&item : ret.coeff_) {
         item.second.k_ /= k;
     }
@@ -167,7 +179,7 @@ UpperBound floorDiv(const UpperBound &b, int k) {
     return ret;
 }
 LowerBound floorDiv(const LowerBound &b, int k) {
-    auto ret = b.lin_;
+    auto ret = b.lin();
     for (auto &&item : ret.coeff_) {
         item.second.k_ /= k;
     }
@@ -177,7 +189,7 @@ LowerBound floorDiv(const LowerBound &b, int k) {
 }
 
 UpperBound ceilDiv(const UpperBound &b, int k) {
-    auto ret = b.lin_;
+    auto ret = b.lin();
     for (auto &&item : ret.coeff_) {
         item.second.k_ /= k;
     }
@@ -186,7 +198,7 @@ UpperBound ceilDiv(const UpperBound &b, int k) {
     return ret;
 }
 LowerBound ceilDiv(const LowerBound &b, int k) {
-    auto ret = b.lin_;
+    auto ret = b.lin();
     for (auto &&item : ret.coeff_) {
         item.second.k_ /= k;
     }

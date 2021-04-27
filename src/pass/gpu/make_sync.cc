@@ -31,9 +31,10 @@ static Stmt insertIntrin(const Stmt &op, const std::string &front,
 int MakeSync::getLen(const Expr &len) {
     int ret = INT_MAX;
     if (upper_.count(len)) {
-        for (auto &&b : upper_.at(len)) {
-            if (b.expr_->nodeType() == ASTNodeType::IntConst) {
-                ret = std::min(ret, b.expr_.as<IntConstNode>()->val_);
+        for (auto b : upper_.at(len)) {
+            if (b.lin().coeff_.empty()) {
+                auto bias = b.lin().bias_;
+                ret = std::min(ret, floorDiv(bias.p_, bias.q_));
             }
         }
     }

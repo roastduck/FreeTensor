@@ -268,15 +268,14 @@ Stmt CompTransientBounds::visit(const ReduceTo &op) {
 void CompUniqueBounds::updLower(LowerBoundsList &list,
                                 const LowerBound &bound) const {
     for (LowerBound &old : list) {
-        // The same .expr_ does not mean the same bounds
+        // The same .expr() does not mean the same bounds
         // E.g. 1 * floor(a / 4) vs. (1/4) * a
-        if (old.lin_ == bound.lin_) {
+        if (old.lin() == bound.lin()) {
             return;
         }
-        if (bound.expr_->nodeType() == ASTNodeType::IntConst &&
-            old.expr_->nodeType() == ASTNodeType::IntConst) {
-            auto oldVal = old.expr_.as<IntConstNode>()->val_;
-            auto newVal = bound.expr_.as<IntConstNode>()->val_;
+        if (bound.lin().coeff_.empty() && old.lin().coeff_.empty()) {
+            auto oldVal = old.lin().bias_;
+            auto newVal = bound.lin().bias_;
             if (newVal > oldVal) {
                 old = LowerBound(LinearExpr<Rational<int>>{{}, newVal});
             }
@@ -289,15 +288,14 @@ void CompUniqueBounds::updLower(LowerBoundsList &list,
 void CompUniqueBounds::updUpper(UpperBoundsList &list,
                                 const UpperBound &bound) const {
     for (UpperBound &old : list) {
-        // The same .expr_ does not mean the same bounds
+        // The same .expr() does not mean the same bounds
         // E.g. 1 * floor(a / 4) vs. (1/4) * a
-        if (old.lin_ == bound.lin_) {
+        if (old.lin() == bound.lin()) {
             return;
         }
-        if (bound.expr_->nodeType() == ASTNodeType::IntConst &&
-            old.expr_->nodeType() == ASTNodeType::IntConst) {
-            auto oldVal = old.expr_.as<IntConstNode>()->val_;
-            auto newVal = bound.expr_.as<IntConstNode>()->val_;
+        if (bound.lin().coeff_.empty() && old.lin().coeff_.empty()) {
+            auto oldVal = old.lin().bias_;
+            auto newVal = bound.lin().bias_;
             if (newVal < oldVal) {
                 old = UpperBound(LinearExpr<Rational<int>>{{}, newVal});
             }
@@ -310,8 +308,9 @@ void CompUniqueBounds::updUpper(UpperBoundsList &list,
 int CompUniqueBounds::getIntLower(const LowerBoundsList &list) const {
     int ret = INT_MIN;
     for (auto &&b : list) {
-        if (b.expr_->nodeType() == ASTNodeType::IntConst) {
-            ret = std::max(ret, b.expr_.as<IntConstNode>()->val_);
+        if (b.lin().coeff_.empty()) {
+            auto bias = b.lin().bias_;
+            ret = std::max(ret, ceilDiv(bias.p_, bias.q_));
         }
     }
     return ret;
@@ -320,8 +319,9 @@ int CompUniqueBounds::getIntLower(const LowerBoundsList &list) const {
 int CompUniqueBounds::getIntUpper(const UpperBoundsList &list) const {
     int ret = INT_MAX;
     for (auto &&b : list) {
-        if (b.expr_->nodeType() == ASTNodeType::IntConst) {
-            ret = std::min(ret, b.expr_.as<IntConstNode>()->val_);
+        if (b.lin().coeff_.empty()) {
+            auto bias = b.lin().bias_;
+            ret = std::min(ret, floorDiv(bias.p_, bias.q_));
         }
     }
     return ret;
@@ -454,10 +454,10 @@ Expr CompUniqueBounds::visit(const Mul &_op) {
                 }
             } else {
                 for (auto &&b : getLower(e1)) {
-                    updUpper(upper_[op], mul(UpperBound{b.lin_}, *k));
+                    updUpper(upper_[op], mul(UpperBound{b.lin()}, *k));
                 }
                 for (auto &&b : getUpper(e1)) {
-                    updLower(lower_[op], mul(LowerBound{b.lin_}, *k));
+                    updLower(lower_[op], mul(LowerBound{b.lin()}, *k));
                 }
             }
         }
@@ -482,10 +482,10 @@ Expr CompUniqueBounds::visit(const FloorDiv &_op) {
             }
         } else {
             for (auto &&b : getLower(op->lhs_)) {
-                updUpper(upper_[op], floorDiv(UpperBound{b.lin_}, *k));
+                updUpper(upper_[op], floorDiv(UpperBound{b.lin()}, *k));
             }
             for (auto &&b : getUpper(op->lhs_)) {
-                updLower(lower_[op], floorDiv(LowerBound{b.lin_}, *k));
+                updLower(lower_[op], floorDiv(LowerBound{b.lin()}, *k));
             }
         }
     }
@@ -508,10 +508,10 @@ Expr CompUniqueBounds::visit(const CeilDiv &_op) {
             }
         } else {
             for (auto &&b : getLower(op->lhs_)) {
-                updUpper(upper_[op], ceilDiv(UpperBound{b.lin_}, *k));
+                updUpper(upper_[op], ceilDiv(UpperBound{b.lin()}, *k));
             }
             for (auto &&b : getUpper(op->lhs_)) {
-                updLower(lower_[op], ceilDiv(LowerBound{b.lin_}, *k));
+                updLower(lower_[op], ceilDiv(LowerBound{b.lin()}, *k));
             }
         }
     }
@@ -547,10 +547,10 @@ Expr CompUniqueBounds::visit(const Min &_op) {
     }
     for (auto &&b1 : getLower(op->lhs_)) {
         for (auto &&b2 : getLower(op->rhs_)) {
-            if (b1.lin_.coeff_.empty() && b2.lin_.coeff_.empty()) {
+            if (b1.lin().coeff_.empty() && b2.lin().coeff_.empty()) {
                 updLower(lower_[op],
                          LinearExpr<Rational<int>>{
-                             {}, std::min(b1.lin_.bias_, b2.lin_.bias_)});
+                             {}, std::min(b1.lin().bias_, b2.lin().bias_)});
             }
         }
     }
@@ -574,10 +574,10 @@ Expr CompUniqueBounds::visit(const Max &_op) {
     }
     for (auto &&b1 : getUpper(op->lhs_)) {
         for (auto &&b2 : getUpper(op->rhs_)) {
-            if (b1.lin_.coeff_.empty() && b2.lin_.coeff_.empty()) {
+            if (b1.lin().coeff_.empty() && b2.lin().coeff_.empty()) {
                 updUpper(upper_[op],
                          LinearExpr<Rational<int>>{
-                             {}, std::max(b1.lin_.bias_, b2.lin_.bias_)});
+                             {}, std::max(b1.lin().bias_, b2.lin().bias_)});
             }
         }
     }

@@ -6,20 +6,28 @@
 
 namespace ir {
 
-struct UpperBound {
+class UpperBound {
     Expr expr_;
     LinearExpr<Rational<int>> lin_;
 
+  public:
     UpperBound(const Expr &expr);
     UpperBound(const LinearExpr<Rational<int>> &lin);
+
+    const Expr &expr();
+    const LinearExpr<Rational<int>> &lin() const { return lin_; }
 };
 
-struct LowerBound {
+class LowerBound {
     Expr expr_;
     LinearExpr<Rational<int>> lin_;
 
+  public:
     LowerBound(const Expr &expr);
     LowerBound(const LinearExpr<Rational<int>> &lin);
+
+    const Expr &expr();
+    const LinearExpr<Rational<int>> &lin() const { return lin_; }
 };
 
 UpperBound add(const UpperBound &b1, const UpperBound &b2);
