@@ -54,7 +54,7 @@ Stmt CorrectShared::visit(const VarDef &_op) {
             for (int i = pos - 1; i >= 0; i--) {
                 if (aff.count(stack_[i]->id())) {
                     auto &shape = op->buffer_->tensor().shape();
-                    shape.insert(shape.begin(), stack_[i]->infoLen_);
+                    shape.insert(shape.begin(), stack_[i]->len_);
                 }
             }
             op->pinned_ = true;

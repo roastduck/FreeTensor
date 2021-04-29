@@ -155,15 +155,16 @@ Stmt FissionFor::visit(const For &op) {
     } else {
         auto begin = (*this)(op->begin_);
         auto end = (*this)(op->end_);
+        auto len = (*this)(op->len_);
         inside_ = true;
         isPart0_ = true, inPart_ = true;
         auto part0 = (*this)(op->body_);
         isPart0_ = false, inPart_ = false;
         auto part1 = (*this)(op->body_);
         inside_ = false;
-        auto for0 = makeFor(op->id(), op->iter_, begin, end, op->parallel_,
+        auto for0 = makeFor(op->id(), op->iter_, begin, end, len, op->parallel_,
                             op->unroll_, part0);
-        auto for1 = makeFor(op->id(), op->iter_, begin, end, op->parallel_,
+        auto for1 = makeFor(op->id(), op->iter_, begin, end, len, op->parallel_,
                             op->unroll_, part1);
         markNewId(for0, true);
         markNewId(for1, false);

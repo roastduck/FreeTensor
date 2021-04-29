@@ -2,7 +2,6 @@
 #include <climits>
 #include <sstream>
 
-#include <analyze/normalize.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/gpu/make_sync.h>
 #include <pass/simplify.h>
@@ -57,7 +56,7 @@ Stmt MakeSync::visit(const For &_op) {
     bool oldWarpSynced = warpSynced, oldThreadsSynced = threadsSynced;
 
     if (_op->parallel_ == "threadIdx.x") {
-        thx = getLen(_op->infoLen_);
+        thx = getLen(_op->len_);
         auto __op = Mutator::visit(_op);
         ASSERT(__op->nodeType() == ASTNodeType::For);
         auto op = __op.as<ForNode>();
@@ -75,7 +74,7 @@ Stmt MakeSync::visit(const For &_op) {
         return op;
 
     } else if (_op->parallel_ == "threadIdx.y") {
-        thy = getLen(_op->infoLen_);
+        thy = getLen(_op->len_);
         auto __op = Mutator::visit(_op);
         ASSERT(__op->nodeType() == ASTNodeType::For);
         auto op = __op.as<ForNode>();
@@ -93,7 +92,7 @@ Stmt MakeSync::visit(const For &_op) {
         return op;
 
     } else if (_op->parallel_ == "threadIdx.z") {
-        thz = getLen(_op->infoLen_);
+        thz = getLen(_op->len_);
         auto __op = Mutator::visit(_op);
         ASSERT(__op->nodeType() == ASTNodeType::For);
         auto op = __op.as<ForNode>();
@@ -131,10 +130,9 @@ Stmt MakeSync::visit(const ReduceTo &op) {
 }
 
 Stmt makeSync(const Stmt &_op) {
-    Stmt op;
+    Stmt op = _op;
     std::unordered_map<Expr, std::vector<LowerBound>> lower;
     std::unordered_map<Expr, std::vector<UpperBound>> upper;
-    op = normalize(_op);
     std::tie(op, lower, upper) = simplifyAndGetBounds<BuiltinSimplify>(op);
     auto ret = MakeSync(upper)(op);
     ret = flattenStmtSeq(ret);

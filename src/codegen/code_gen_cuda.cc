@@ -1,4 +1,3 @@
-#include <analyze/normalize.h>
 #include <codegen/code_gen_cuda.h>
 #include <except.h>
 #include <pass/simplify.h>
@@ -95,7 +94,7 @@ void CodeGenCUDA::visit(const Var &op) {
 void CodeGenCUDA::visit(const For &op) {
     if (op->parallel_.empty()) {
         if (op->unroll_) {
-            os() << "#pragma unroll " << op->infoLen_ << std::endl;
+            os() << "#pragma unroll " << op->len_ << std::endl;
         }
         CodeGenC::visit(op);
     } else if (op->parallel_ == "blockIdx.x" || op->parallel_ == "blockIdx.y" ||
@@ -103,10 +102,10 @@ void CodeGenCUDA::visit(const For &op) {
                op->parallel_ == "threadIdx.x" ||
                op->parallel_ == "threadIdx.y" ||
                op->parallel_ == "threadIdx.z") {
-        if (op->infoLen_->nodeType() != ASTNodeType::IntConst) {
+        if (op->len_->nodeType() != ASTNodeType::IntConst) {
             std::ostringstream msg;
             msg << "Length of " << op->parallel_
-                << " should be constant, instead of " << op->infoLen_;
+                << " should be constant, instead of " << op->len_;
             throw Error(msg.str());
         }
         if (!inKernel()) {
@@ -115,7 +114,7 @@ void CodeGenCUDA::visit(const For &op) {
             beginBlock();
             (*this)(op->body_);
             streamStack_.back().threadDim_[op->parallel_] =
-                op->infoLen_.as<IntConstNode>()->val_;
+                op->len_.as<IntConstNode>()->val_;
             endBlock();
             popStream();
             Stream &stream = poppedStream_.back();
@@ -142,7 +141,7 @@ void CodeGenCUDA::visit(const For &op) {
         } else {
             (*this)(op->body_);
             streamStack_.back().threadDim_[op->parallel_] =
-                op->infoLen_.as<IntConstNode>()->val_;
+                op->len_.as<IntConstNode>()->val_;
         }
     } else {
         throw Error("Unsupported parallel method" + op->parallel_);
@@ -233,9 +232,7 @@ void CodeGenCUDA::visit(const VarDef &op) {
     }
 }
 
-std::pair<std::string, std::vector<std::string>> codeGenCUDA(const Stmt &_op) {
-    auto op = simplifyPass(normalize(_op));
-
+std::pair<std::string, std::vector<std::string>> codeGenCUDA(const Stmt &op) {
     CodeGenCUDA visitor;
     visitor.beginBlock();
     visitor(op);

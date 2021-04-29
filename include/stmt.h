@@ -124,26 +124,30 @@ Stmt _makeReduceTo(const std::string &id, const std::string &var,
 class ForNode : public StmtNode {
   public:
     std::string iter_;
-    SubTree<ExprNode> begin_, end_;
+
+    // We also record len_ because it is used in may passes. If we computes len_
+    // every time and call simplifyPass to propagate the constants, it is very
+    // time consuming
+    SubTree<ExprNode> begin_, end_, len_;
+
     std::string parallel_;
     bool unroll_;
     SubTree<StmtNode> body_;
-
-    SubTree<ExprNode, NullPolicy::Nullable> infoLen_;
 
     DEFINE_NODE_TRAIT(For);
 };
 typedef Ref<ForNode> For;
 #define makeFor(...) makeNode(For, __VA_ARGS__)
-template <class Tbegin, class Tend, class Tbody>
+template <class Tbegin, class Tend, class Tlen, class Tbody>
 Stmt _makeFor(const std::string &id, const std::string &iter, Tbegin &&begin,
-              Tend &&end, const std::string &parallel, const bool unroll,
-              Tbody &&body) {
+              Tend &&end, Tlen &&len, const std::string &parallel,
+              const bool unroll, Tbody &&body) {
     For f = For::make();
     f->setId(id);
     f->iter_ = iter;
     f->begin_ = std::forward<Tbegin>(begin);
     f->end_ = std::forward<Tend>(end);
+    f->len_ = std::forward<Tlen>(len);
     f->parallel_ = parallel;
     f->body_ = std::forward<Tbody>(body);
     f->unroll_ = unroll;
