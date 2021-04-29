@@ -5,6 +5,7 @@
 #include <vector>
 
 #include <ast.h>
+#include <data_type.h>
 
 namespace ir {
 
@@ -366,21 +367,26 @@ class IntrinsicNode : public ExprNode {
     std::string format_; /// what to run. "%" is filled by parameters one by one
                          /// E.g. sinf(%)
     std::vector<SubTree<ExprNode>> params_;
+    DataType retType_;
     DEFINE_NODE_TRAIT(Intrinsic);
 };
 typedef Ref<IntrinsicNode> Intrinsic;
 #define makeIntrinsic(...) makeNode(Intrinsic, __VA_ARGS__)
-template <class T> Expr _makeIntrinsic(const std::string &format, T &&params) {
+template <class T>
+Expr _makeIntrinsic(const std::string &format, T &&params, DataType retType) {
     Intrinsic i = Intrinsic::make();
     i->format_ = format;
     i->params_ = std::vector<SubTree<ExprNode>>(params.begin(), params.end());
+    i->retType_ = retType;
     return i;
 }
 inline Expr _makeIntrinsic(const std::string &format,
-                           std::initializer_list<Expr> params) {
+                           std::initializer_list<Expr> params,
+                           DataType retType) {
     Intrinsic i = Intrinsic::make();
     i->format_ = format;
     i->params_ = std::vector<SubTree<ExprNode>>(params.begin(), params.end());
+    i->retType_ = retType;
     return i;
 }
 

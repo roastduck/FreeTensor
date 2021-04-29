@@ -42,16 +42,15 @@ Expr SimplifyPass<BaseClass>::visitExpr(
             bool isEqual = false;
 
             // Case 1: lower and upper the same const. E.g. 1/3 <= x <= 5/3
-            if (upper.lin_.coeff_.empty() && lower.lin_.coeff_.empty() &&
-                floorDiv(upper.lin_.bias_.p_, upper.lin_.bias_.q_) ==
-                    ceilDiv(lower.lin_.bias_.p_, lower.lin_.bias_.q_)) {
+            if (upper.lin().coeff_.empty() && lower.lin().coeff_.empty() &&
+                floorDiv(upper.lin().bias_.p_, upper.lin().bias_.q_) ==
+                    ceilDiv(lower.lin().bias_.p_, lower.lin().bias_.q_)) {
                 isEqual = true;
             }
 
             // Case 2: upper - lower < 1. E.g. a <= x <= a + 2/3
             auto diff = sub(upper, lower);
-            if (diff.expr_->nodeType() == ASTNodeType::IntConst &&
-                diff.expr_.template as<IntConstNode>()->val_ == 0) {
+            if (diff.lin().coeff_.empty() && diff.lin().bias_ < 1) {
                 isEqual = true;
             }
 
@@ -59,11 +58,11 @@ Expr SimplifyPass<BaseClass>::visitExpr(
                 // We need to choose the simplest one. Otherwise we are always
                 // picking the original expression
                 Expr expr;
-                if (upper.lin_.coeff_.size() + (upper.lin_.bias_ != 0) >
-                    lower.lin_.coeff_.size() + (lower.lin_.bias_ != 0)) {
-                    expr = lower.expr_;
+                if (upper.lin().coeff_.size() + (upper.lin().bias_ != 0) >
+                    lower.lin().coeff_.size() + (lower.lin().bias_ != 0)) {
+                    expr = lower.expr();
                 } else {
-                    expr = upper.expr_;
+                    expr = upper.expr();
                 }
                 auto scope = findInnerMostScope(varScope_, expr);
                 if (!best.isValid() || scope < bestScope) {
@@ -134,7 +133,9 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const Mod &_op) {
     auto op = __op.template as<ModNode>();
 
     if (this->getIntLower(op->lhs_) >= 0 &&
-        this->getIntUpper((*this)(makeSub(op->lhs_, op->rhs_))) < 0) {
+        this->getIntUpper(this->subBounds(this->getBoundsPair(op->lhs_),
+                                          this->getBoundsPair(op->rhs_))
+                              .second) < 0) {
         return markMutated(op->lhs_);
     }
 
@@ -180,6 +181,9 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const Min &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Min);
     auto op = __op.template as<MinNode>();
+    if (!isInt(this->dtype(op))) {
+        return op;
+    }
 
     std::function<void(const Expr &, std::unordered_set<Expr> &)> recur =
         [&recur](const Expr &expr, std::unordered_set<Expr> &list) {
@@ -198,10 +202,11 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const Min &_op) {
 
     for (auto &&l : lhs) {
         for (auto &&r : rhs) {
-            auto normForm = (*this)(makeSub(l, r));
-            if (this->getIntUpper(normForm) <= 0) {
+            auto normForm =
+                this->subBounds(this->getBoundsPair(l), this->getBoundsPair(r));
+            if (this->getIntUpper(normForm.second) <= 0) {
                 all.erase(r);
-            } else if (this->getIntLower(normForm) >= 0) {
+            } else if (this->getIntLower(normForm.first) >= 0) {
                 all.erase(l);
             }
         }
@@ -223,6 +228,9 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const Max &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Max);
     auto op = __op.template as<MaxNode>();
+    if (!isInt(this->dtype(op))) {
+        return op;
+    }
 
     std::function<void(const Expr &, std::unordered_set<Expr> &)> recur =
         [&recur](const Expr &expr, std::unordered_set<Expr> &list) {
@@ -241,10 +249,11 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const Max &_op) {
 
     for (auto &&l : lhs) {
         for (auto &&r : rhs) {
-            auto normForm = (*this)(makeSub(l, r));
-            if (this->getIntUpper(normForm) <= 0) {
+            auto normForm =
+                this->subBounds(this->getBoundsPair(l), this->getBoundsPair(r));
+            if (this->getIntUpper(normForm.second) <= 0) {
                 all.erase(l);
-            } else if (this->getIntLower(normForm) >= 0) {
+            } else if (this->getIntLower(normForm.first) >= 0) {
                 all.erase(r);
             }
         }
@@ -266,11 +275,15 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const LT &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::LT);
     auto op = __op.template as<LTNode>();
-    auto normForm = (*this)(makeSub(op->lhs_, op->rhs_));
-    if (this->getIntUpper(normForm) < 0) {
+    if (!isInt(this->dtype(op->lhs_)) || !isInt(this->dtype(op->rhs_))) {
+        return op;
+    }
+    auto normForm = this->subBounds(this->getBoundsPair(op->lhs_),
+                                    this->getBoundsPair(op->rhs_));
+    if (this->getIntUpper(normForm.second) < 0) {
         return markMutated(makeBoolConst(true));
     }
-    if (this->getIntLower(normForm) >= 0) {
+    if (this->getIntLower(normForm.first) >= 0) {
         return markMutated(makeBoolConst(false));
     }
     return op;
@@ -280,11 +293,15 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const LE &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::LE);
     auto op = __op.template as<LENode>();
-    auto normForm = (*this)(makeSub(op->lhs_, op->rhs_));
-    if (this->getIntUpper(normForm) <= 0) {
+    if (!isInt(this->dtype(op->lhs_)) || !isInt(this->dtype(op->rhs_))) {
+        return op;
+    }
+    auto normForm = this->subBounds(this->getBoundsPair(op->lhs_),
+                                    this->getBoundsPair(op->rhs_));
+    if (this->getIntUpper(normForm.second) <= 0) {
         return markMutated(makeBoolConst(true));
     }
-    if (this->getIntLower(normForm) > 0) {
+    if (this->getIntLower(normForm.first) > 0) {
         return markMutated(makeBoolConst(false));
     }
     return op;
@@ -294,11 +311,15 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const GT &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::GT);
     auto op = __op.template as<GTNode>();
-    auto normForm = (*this)(makeSub(op->lhs_, op->rhs_));
-    if (this->getIntUpper(normForm) <= 0) {
+    if (!isInt(this->dtype(op->lhs_)) || !isInt(this->dtype(op->rhs_))) {
+        return op;
+    }
+    auto normForm = this->subBounds(this->getBoundsPair(op->lhs_),
+                                    this->getBoundsPair(op->rhs_));
+    if (this->getIntUpper(normForm.second) <= 0) {
         return markMutated(makeBoolConst(false));
     }
-    if (this->getIntLower(normForm) > 0) {
+    if (this->getIntLower(normForm.first) > 0) {
         return markMutated(makeBoolConst(true));
     }
     return op;
@@ -308,11 +329,15 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const GE &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::GE);
     auto op = __op.template as<GENode>();
-    auto normForm = (*this)(makeSub(op->lhs_, op->rhs_));
-    if (this->getIntUpper(normForm) < 0) {
+    if (!isInt(this->dtype(op->lhs_)) || !isInt(this->dtype(op->rhs_))) {
+        return op;
+    }
+    auto normForm = this->subBounds(this->getBoundsPair(op->lhs_),
+                                    this->getBoundsPair(op->rhs_));
+    if (this->getIntUpper(normForm.second) < 0) {
         return markMutated(makeBoolConst(false));
     }
-    if (this->getIntLower(normForm) >= 0) {
+    if (this->getIntLower(normForm.first) >= 0) {
         return markMutated(makeBoolConst(true));
     }
     return op;
@@ -322,14 +347,19 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const EQ &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::EQ);
     auto op = __op.template as<EQNode>();
-    auto normForm = (*this)(makeSub(op->lhs_, op->rhs_));
-    if (this->getIntUpper(normForm) < 0) {
+    if (!isInt(this->dtype(op->lhs_)) || !isInt(this->dtype(op->rhs_))) {
+        return op;
+    }
+    auto normForm = this->subBounds(this->getBoundsPair(op->lhs_),
+                                    this->getBoundsPair(op->rhs_));
+    if (this->getIntUpper(normForm.second) < 0) {
         return markMutated(makeBoolConst(false));
     }
-    if (this->getIntLower(normForm) > 0) {
+    if (this->getIntLower(normForm.first) > 0) {
         return markMutated(makeBoolConst(false));
     }
-    if (this->getIntUpper(normForm) == 0 && this->getIntLower(normForm) == 0) {
+    if (this->getIntUpper(normForm.second) == 0 &&
+        this->getIntLower(normForm.first) == 0) {
         return markMutated(makeBoolConst(true));
     }
     return op;
@@ -339,14 +369,19 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const NE &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::NE);
     auto op = __op.template as<NENode>();
-    auto normForm = (*this)(makeSub(op->lhs_, op->rhs_));
-    if (this->getIntUpper(normForm) < 0) {
+    if (!isInt(this->dtype(op->lhs_)) || !isInt(this->dtype(op->rhs_))) {
+        return op;
+    }
+    auto normForm = this->subBounds(this->getBoundsPair(op->lhs_),
+                                    this->getBoundsPair(op->rhs_));
+    if (this->getIntUpper(normForm.second) < 0) {
         return markMutated(makeBoolConst(true));
     }
-    if (this->getIntLower(normForm) > 0) {
+    if (this->getIntLower(normForm.first) > 0) {
         return markMutated(makeBoolConst(true));
     }
-    if (this->getIntUpper(normForm) == 0 && this->getIntLower(normForm) == 0) {
+    if (this->getIntUpper(normForm.second) == 0 &&
+        this->getIntLower(normForm.first) == 0) {
         return markMutated(makeBoolConst(false));
     }
     return op;
@@ -465,12 +500,19 @@ template <class BaseClass> Stmt SimplifyPass<BaseClass>::visit(const For &_op) {
             "iterators with the same name in nested loops are not allowed");
     }
 
-    auto len = (*this)(makeSub(_op->end_, _op->begin_));
-    if (len->nodeType() == ASTNodeType::IntConst) {
-        auto intLen = len.template as<IntConstNode>()->val_;
+    varScope_[_op->iter_] = curScope_++;
+    auto __op = BaseClass::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::For);
+    auto op = __op.template as<ForNode>();
+    varScope_.erase(_op->iter_), curScope_--;
+
+    auto len = this->subBounds(this->getBoundsPair(op->end_),
+                               this->getBoundsPair(op->begin_));
+    if (auto intLen_ = this->getInt(len); intLen_.isValid()) {
+        auto intLen = *intLen_;
         if (intLen == 1) {
             ASSERT(!replace_.count(_op->iter_));
-            replace_[_op->iter_] = (*this)(_op->begin_);
+            replace_[_op->iter_] = op->begin_;
             auto body = (*this)(_op->body_);
             replace_.erase(_op->iter_);
             return body;
@@ -479,19 +521,14 @@ template <class BaseClass> Stmt SimplifyPass<BaseClass>::visit(const For &_op) {
             return makeStmtSeq("", {});
         }
     }
-    if (this->getIntUpper(len) == 1) {
+    if (this->getIntUpper(len.second) == 1) {
         ASSERT(!replace_.count(_op->iter_));
-        replace_[_op->iter_] = (*this)(_op->begin_);
+        replace_[_op->iter_] = op->begin_;
         auto body = (*this)(_op->body_);
         replace_.erase(_op->iter_);
-        return markMutated(makeIf("", makeEQ(len, makeIntConst(1)), body));
+        return markMutated(makeIf(
+            "", makeEQ(makeSub(op->end_, op->begin_), makeIntConst(1)), body));
     }
-
-    varScope_[_op->iter_] = curScope_++;
-    auto __op = BaseClass::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::For);
-    auto op = __op.template as<ForNode>();
-    varScope_.erase(_op->iter_), curScope_--;
 
     if (detail::isEmptyStmt(op->body_)) {
         return makeStmtSeq("", {});

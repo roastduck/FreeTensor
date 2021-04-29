@@ -1,8 +1,8 @@
 #ifndef LINEAR_H
 #define LINEAR_H
 
+#include <algorithm>
 #include <iostream>
-#include <map>
 
 #include <analyze/hash.h>
 
@@ -20,10 +20,32 @@ template <class T> struct Scale {
  * (sum_i k_i * a_i) + b
  */
 template <class T> struct LinearExpr {
-    // Using ordered map to guarantee ASTs generated from two identical
-    // `LinearExpr`s are the same
-    std::map<uint64_t, Scale<T>> coeff_;
+    // std::unordered_map can not guarantee ASTs generated from two identical
+    // `LinearExpr`s are the same, but std::map is too slow. So, we are using
+    // std::vector
+    std::vector<std::pair<uint64_t, Scale<T>>> coeff_;
     T bias_;
+
+    // Call this after modifying coeff_
+    void sortCoeff() {
+        std::sort(coeff_.begin(), coeff_.end(),
+                  [](const std::pair<uint64_t, Scale<T>> &lhs,
+                     const std::pair<uint64_t, Scale<T>> &rhs) {
+                      return lhs.first < rhs.first;
+                  });
+        size_t n = 0;
+        for (size_t i = 0, iEnd = coeff_.size(); i < iEnd; i++) {
+            if (n > 0 && coeff_[n - 1].first == coeff_[i].first) {
+                coeff_[n - 1].second.k_ += coeff_[i].second.k_;
+                if (coeff_[n - 1].second.k_ == 0) {
+                    n--;
+                }
+            } else {
+                coeff_[n++] = coeff_[i];
+            }
+        }
+        coeff_.resize(n);
+    }
 };
 
 /**
@@ -76,11 +98,11 @@ bool operator==(const LinearExpr<T> &lhs, const LinearExpr<T> &rhs) {
     if (lhs.coeff_.size() != rhs.coeff_.size()) {
         return false;
     }
-    for (auto &&item : lhs.coeff_) {
-        if (!rhs.coeff_.count(item.first)) {
+    for (size_t i = 0, iEnd = lhs.coeff_.size(); i < iEnd; i++) {
+        if (lhs.coeff_[i].first != rhs.coeff_[i].first) {
             return false;
         }
-        if (item.second.k_ != rhs.coeff_.at(item.first).k_) {
+        if (lhs.coeff_[i].second.k_ != rhs.coeff_[i].second.k_) {
             return false;
         }
     }

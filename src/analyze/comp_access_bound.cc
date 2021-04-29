@@ -35,9 +35,9 @@ void CompAccessBound::visit(const VarDef &op) {
                 lowerItem.emplace_back(index);
             }
             if (lower_.count(index)) {
-                for (auto &&item : lower_.at(index)) {
-                    if (checkAllDefined(defs_, item.expr_)) {
-                        lowerItem.emplace_back(item.expr_);
+                for (auto item : lower_.at(index)) {
+                    if (checkAllDefined(defs_, item.expr())) {
+                        lowerItem.emplace_back(item.expr());
                     }
                 }
             }
@@ -52,9 +52,9 @@ void CompAccessBound::visit(const VarDef &op) {
                 upperItem.emplace_back(index);
             }
             if (upper_.count(index)) {
-                for (auto &&item : upper_.at(index)) {
-                    if (checkAllDefined(defs_, item.expr_)) {
-                        upperItem.emplace_back(item.expr_);
+                for (auto item : upper_.at(index)) {
+                    if (checkAllDefined(defs_, item.expr())) {
+                        upperItem.emplace_back(item.expr());
                     }
                 }
             }

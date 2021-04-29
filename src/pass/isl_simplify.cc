@@ -79,18 +79,22 @@ Expr ISLCompBounds::visitExpr(
         isl_set *image = isl_map_range(map);
         isl_val *maxVal = isl_set_dim_max_val(isl_set_copy(image), 0);
         if (isl_val_is_rat(maxVal)) {
+            auto &&list = getUpper(op);
             int maxP = isl_val_get_num_si(maxVal);
             int maxQ = isl_val_get_den_si(maxVal);
-            updUpper(op, UpperBound{LinearExpr<Rational<int>>{
-                             {}, Rational<int>{maxP, maxQ}}});
+            updUpper(list, UpperBound{LinearExpr<Rational<int>>{
+                               {}, Rational<int>{maxP, maxQ}}});
+            setUpper(op, std::move(list));
         }
         isl_val_free(maxVal);
         isl_val *minVal = isl_set_dim_min_val(image, 0);
         if (isl_val_is_rat(minVal)) {
+            auto &&list = getLower(op);
             int minP = isl_val_get_num_si(minVal);
             int minQ = isl_val_get_den_si(minVal);
-            updLower(op, LowerBound{LinearExpr<Rational<int>>{
-                             {}, Rational<int>{minP, minQ}}});
+            updLower(list, LowerBound{LinearExpr<Rational<int>>{
+                               {}, Rational<int>{minP, minQ}}});
+            setLower(op, std::move(list));
         }
         isl_val_free(minVal);
     }

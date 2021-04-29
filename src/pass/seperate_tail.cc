@@ -80,10 +80,15 @@ void SeperateTail::genSeperation(
     }
     LinearExpr lin = analyzeLinear_.result().at(norm);
 
-    if (!lin.coeff_.count(iterHash)) {
+    auto it =
+        std::find_if(lin.coeff_.begin(), lin.coeff_.end(),
+                     [iterHash](const decltype(lin.coeff_)::value_type &kx) {
+                         return kx.first == iterHash;
+                     });
+    if (it == lin.coeff_.end()) {
         return;
     }
-    auto selfK = lin.coeff_.at(iterHash).k_;
+    auto selfK = it->second.k_;
     if (selfK < 0) {
         type = reverseCmp(type);
         selfK *= -1;
