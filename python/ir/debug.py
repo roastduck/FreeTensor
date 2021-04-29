@@ -1,5 +1,7 @@
 import itertools
 
+from ffi import logger
+
 def with_line_no(s: str):
     lines = list(s.splitlines())
     maxNuLen = len(str(len(lines)))

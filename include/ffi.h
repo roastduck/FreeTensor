@@ -23,6 +23,7 @@ void init_ffi_schedule(py::module_ &m);
 void init_ffi_pass(py::module_ &m);
 void init_ffi_codegen(py::module_ &m);
 void init_ffi_driver(py::module_ &m);
+void init_ffi_debug(py::module_ &m);
 
 } // namespace ir
 
