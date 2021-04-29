@@ -34,14 +34,7 @@ void AnalyzeLinear::visit(const Add &op) {
     }
     const auto &e1 = result_.at(op->lhs_);
     const auto &e2 = result_.at(op->rhs_);
-
-    LinearExpr<int> ret;
-    ret.coeff_.reserve(e1.coeff_.size() + e2.coeff_.size());
-    ret.coeff_.insert(ret.coeff_.end(), e1.coeff_.begin(), e1.coeff_.end());
-    ret.coeff_.insert(ret.coeff_.end(), e2.coeff_.begin(), e2.coeff_.end());
-    ret.bias_ = e1.bias_ + e2.bias_;
-    ret.sortCoeff();
-    result_[op] = ret;
+    result_[op] = add(e1, e2);
 }
 
 void AnalyzeLinear::visit(const Sub &op) {
@@ -51,17 +44,7 @@ void AnalyzeLinear::visit(const Sub &op) {
     }
     const auto &e1 = result_.at(op->lhs_);
     const auto &e2 = result_.at(op->rhs_);
-
-    LinearExpr<int> ret;
-    ret.coeff_.reserve(e1.coeff_.size() + e2.coeff_.size());
-    ret.coeff_.insert(ret.coeff_.end(), e1.coeff_.begin(), e1.coeff_.end());
-    ret.coeff_.insert(ret.coeff_.end(), e2.coeff_.begin(), e2.coeff_.end());
-    for (auto it = ret.coeff_.begin() + e1.coeff_.size();
-         it != ret.coeff_.end(); it++) {
-        it->second.k_ = -it->second.k_;
-    }
-    ret.bias_ = e1.bias_ - e2.bias_;
-    result_[op] = ret;
+    result_[op] = sub(e1, e2);
 }
 
 void AnalyzeLinear::visit(const Mul &op) {

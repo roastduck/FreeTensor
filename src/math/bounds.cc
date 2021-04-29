@@ -60,36 +60,6 @@ static Expr linToExprNumerator(const LinearExpr<Rational<int>> &lin) {
     return b;
 }
 
-template <class T> static T addImpl(const T &b1, const T &b2) {
-    typename std::remove_const_t<std::remove_reference_t<decltype(b1.lin())>>
-        ret;
-    ret.coeff_.reserve(b1.lin().coeff_.size() + b2.lin().coeff_.size());
-    ret.coeff_.insert(ret.coeff_.end(), b1.lin().coeff_.begin(),
-                      b1.lin().coeff_.end());
-    ret.coeff_.insert(ret.coeff_.end(), b2.lin().coeff_.begin(),
-                      b2.lin().coeff_.end());
-    ret.bias_ = b1.lin().bias_ + b2.lin().bias_;
-    ret.sortCoeff();
-    return T(std::move(ret));
-}
-
-template <class T, class U> static T subImpl(const T &b1, const U &b2) {
-    typename std::remove_const_t<std::remove_reference_t<decltype(b1.lin())>>
-        ret;
-    ret.coeff_.reserve(b1.lin().coeff_.size() + b2.lin().coeff_.size());
-    ret.coeff_.insert(ret.coeff_.end(), b1.lin().coeff_.begin(),
-                      b1.lin().coeff_.end());
-    ret.coeff_.insert(ret.coeff_.end(), b2.lin().coeff_.begin(),
-                      b2.lin().coeff_.end());
-    for (auto it = ret.coeff_.begin() + b1.lin().coeff_.size();
-         it != ret.coeff_.end(); it++) {
-        it->second.k_ = -it->second.k_;
-    }
-    ret.bias_ = b1.lin().bias_ - b2.lin().bias_;
-    ret.sortCoeff();
-    return T(std::move(ret));
-}
-
 template <class T> static T mulImpl(const T &b, int k) {
     auto ret = b.lin();
     if (k == 0) {
@@ -139,17 +109,17 @@ const Expr &LowerBound::expr() {
 }
 
 UpperBound add(const UpperBound &b1, const UpperBound &b2) {
-    return addImpl(b1, b2);
+    return add(b1.lin(), b2.lin());
 }
 LowerBound add(const LowerBound &b1, const LowerBound &b2) {
-    return addImpl(b1, b2);
+    return add(b1.lin(), b2.lin());
 }
 
 UpperBound sub(const UpperBound &b1, const LowerBound &b2) {
-    return subImpl(b1, b2);
+    return sub(b1.lin(), b2.lin());
 }
 LowerBound sub(const LowerBound &b1, const UpperBound &b2) {
-    return subImpl(b1, b2);
+    return sub(b1.lin(), b2.lin());
 }
 
 UpperBound mul(const UpperBound &b, int k) { return mulImpl(b, k); }

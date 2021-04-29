@@ -25,28 +25,58 @@ template <class T> struct LinearExpr {
     // std::vector
     std::vector<std::pair<uint64_t, Scale<T>>> coeff_;
     T bias_;
+};
 
-    // Call this after modifying coeff_
-    void sortCoeff() {
-        std::sort(coeff_.begin(), coeff_.end(),
-                  [](const std::pair<uint64_t, Scale<T>> &lhs,
-                     const std::pair<uint64_t, Scale<T>> &rhs) {
-                      return lhs.first < rhs.first;
-                  });
-        size_t n = 0;
-        for (size_t i = 0, iEnd = coeff_.size(); i < iEnd; i++) {
-            if (n > 0 && coeff_[n - 1].first == coeff_[i].first) {
-                coeff_[n - 1].second.k_ += coeff_[i].second.k_;
-                if (coeff_[n - 1].second.k_ == 0) {
-                    n--;
-                }
-            } else {
-                coeff_[n++] = coeff_[i];
+template <class T>
+LinearExpr<T> add(const LinearExpr<T> &lhs, const LinearExpr<T> &rhs) {
+    LinearExpr<T> ret;
+    auto m = lhs.coeff_.size(), n = rhs.coeff_.size();
+    ret.coeff_.reserve(m + n);
+    for (size_t p = 0, q = 0; p < m || q < n;) {
+        if (q == n || (p < m && lhs.coeff_[p].first < rhs.coeff_[q].first)) {
+            ret.coeff_.emplace_back(lhs.coeff_[p++]);
+        } else if (p == m ||
+                   (q < n && lhs.coeff_[p].first > rhs.coeff_[q].first)) {
+            ret.coeff_.emplace_back(rhs.coeff_[q++]);
+        } else {
+            auto h = lhs.coeff_[p].first;
+            Scale<T> s{lhs.coeff_[p].second.k_ + rhs.coeff_[q].second.k_,
+                       lhs.coeff_[p].second.a_};
+            p++, q++;
+            if (s.k_ != 0) {
+                ret.coeff_.emplace_back(h, s);
             }
         }
-        coeff_.resize(n);
     }
-};
+    ret.bias_ = lhs.bias_ + rhs.bias_;
+    return ret;
+}
+
+template <class T>
+LinearExpr<T> sub(const LinearExpr<T> &lhs, const LinearExpr<T> &rhs) {
+    LinearExpr<T> ret;
+    auto m = lhs.coeff_.size(), n = rhs.coeff_.size();
+    ret.coeff_.reserve(m + n);
+    for (size_t p = 0, q = 0; p < m || q < n;) {
+        if (q == n || (p < m && lhs.coeff_[p].first < rhs.coeff_[q].first)) {
+            ret.coeff_.emplace_back(lhs.coeff_[p++]);
+        } else if (p == m ||
+                   (q < n && lhs.coeff_[p].first > rhs.coeff_[q].first)) {
+            ret.coeff_.emplace_back(rhs.coeff_[q++]);
+            ret.coeff_.back().second.k_ = -ret.coeff_.back().second.k_;
+        } else {
+            auto h = lhs.coeff_[p].first;
+            Scale<T> s{lhs.coeff_[p].second.k_ - rhs.coeff_[q].second.k_,
+                       lhs.coeff_[p].second.a_};
+            p++, q++;
+            if (s.k_ != 0) {
+                ret.coeff_.emplace_back(h, s);
+            }
+        }
+    }
+    ret.bias_ = lhs.bias_ - rhs.bias_;
+    return ret;
+}
 
 /**
  * Generate an expression from a LinearExpr
