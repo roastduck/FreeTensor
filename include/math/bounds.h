@@ -52,6 +52,9 @@ LowerBound floorDiv(const LowerBound &b, int k);
 UpperBound ceilDiv(const UpperBound &b, int k);
 LowerBound ceilDiv(const LowerBound &b, int k);
 
+bool alwaysLT(const UpperBound &b1, const LowerBound &b2);
+bool alwaysLE(const UpperBound &b1, const LowerBound &b2);
+
 } // namespace ir
 
 #endif // BOUNDS_H

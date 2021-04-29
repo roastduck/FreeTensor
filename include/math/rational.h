@@ -71,6 +71,14 @@ template <class T> struct Rational {
         return rhs.q_ / g * lhs.p_ > lhs.q_ / g * rhs.p_;
     }
 
+    friend bool operator<=(const Rational<T> &lhs, const Rational<T> &rhs) {
+        return !(lhs > rhs);
+    }
+
+    friend bool operator>=(const Rational<T> &lhs, const Rational<T> &rhs) {
+        return !(lhs < rhs);
+    }
+
     Rational &operator+=(const Rational<T> &other) {
         return *this = *this + other;
     }

@@ -60,20 +60,6 @@ static Expr linToExprNumerator(const LinearExpr<Rational<int>> &lin) {
     return b;
 }
 
-template <class T> static T mulImpl(const T &b, int k) {
-    auto ret = b.lin();
-    if (k == 0) {
-        ret.coeff_.clear();
-        ret.bias_ = 0;
-        return ret;
-    }
-    for (auto &&item : ret.coeff_) {
-        item.second.k_ *= k;
-    }
-    ret.bias_ *= k;
-    return T(std::move(ret));
-}
-
 const Expr &UpperBound::expr() {
     if (expr_.isValid()) {
         return expr_;
@@ -122,8 +108,12 @@ LowerBound sub(const LowerBound &b1, const UpperBound &b2) {
     return sub(b1.lin(), b2.lin());
 }
 
-UpperBound mul(const UpperBound &b, int k) { return mulImpl(b, k); }
-LowerBound mul(const LowerBound &b, int k) { return mulImpl(b, k); }
+UpperBound mul(const UpperBound &b, int k) {
+    return mul(b.lin(), Rational<int>(k));
+}
+LowerBound mul(const LowerBound &b, int k) {
+    return mul(b.lin(), Rational<int>(k));
+}
 
 UpperBound floorDiv(const UpperBound &b, int k) {
     auto ret = b.lin();
@@ -159,6 +149,13 @@ LowerBound ceilDiv(const LowerBound &b, int k) {
     }
     ret.bias_ /= k;
     return LowerBound(std::move(ret));
+}
+
+bool alwaysLT(const UpperBound &b1, const LowerBound &b2) {
+    return alwaysLT(b1.lin(), b2.lin());
+}
+bool alwaysLE(const UpperBound &b1, const LowerBound &b2) {
+    return alwaysLE(b1.lin(), b2.lin());
 }
 
 } // namespace ir

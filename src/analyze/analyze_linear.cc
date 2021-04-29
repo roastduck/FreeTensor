@@ -56,21 +56,11 @@ void AnalyzeLinear::visit(const Mul &op) {
     const auto &e2 = result_.at(op->rhs_);
 
     if (e1.coeff_.empty()) {
-        auto ret = e2;
-        for (auto &&item : ret.coeff_) {
-            item.second.k_ *= e1.bias_;
-        }
-        ret.bias_ *= e1.bias_;
-        result_[op] = ret;
+        result_[op] = mul(e2, e1.bias_);
         return;
     }
     if (e2.coeff_.empty()) {
-        auto ret = e1;
-        for (auto &&item : ret.coeff_) {
-            item.second.k_ *= e2.bias_;
-        }
-        ret.bias_ *= e2.bias_;
-        result_[op] = ret;
+        result_[op] = mul(e1, e2.bias_);
         return;
     }
     // Not linear

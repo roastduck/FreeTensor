@@ -78,6 +78,51 @@ LinearExpr<T> sub(const LinearExpr<T> &lhs, const LinearExpr<T> &rhs) {
     return ret;
 }
 
+template <class T> LinearExpr<T> mul(const LinearExpr<T> &lin, const T &k) {
+    if (k == 0) {
+        return LinearExpr<T>{{}, 0};
+    }
+    LinearExpr<T> ret;
+    ret.coeff_.reserve(lin.coeff_.size());
+    for (auto &&item : lin.coeff_) {
+        ret.coeff_.emplace_back(item.first,
+                                Scale<T>{item.second.k_ * k, item.second.a_});
+    }
+    ret.bias_ = lin.bias_ * k;
+    return ret;
+}
+
+template <class T>
+bool hasIdenticalCoeff(const LinearExpr<T> &lhs, const LinearExpr<T> &rhs) {
+    if (lhs.coeff_.size() == rhs.coeff_.size()) {
+        for (size_t i = 0, iEnd = lhs.coeff_.size(); i < iEnd; i++) {
+            if (lhs.coeff_[i].first != rhs.coeff_[i].first) {
+                return false;
+            }
+            if (lhs.coeff_[i].second.k_ != rhs.coeff_[i].second.k_) {
+                return false;
+            }
+        }
+        return true;
+    }
+    return false;
+}
+
+template <class T>
+bool alwaysLT(const LinearExpr<T> &lhs, const LinearExpr<T> &rhs) {
+    return lhs.bias_ < rhs.bias_ && hasIdenticalCoeff(lhs, rhs);
+}
+
+template <class T>
+bool alwaysLE(const LinearExpr<T> &lhs, const LinearExpr<T> &rhs) {
+    return lhs.bias_ <= rhs.bias_ && hasIdenticalCoeff(lhs, rhs);
+}
+
+template <class T>
+bool alwaysDiffLT1(const LinearExpr<T> &lhs, const LinearExpr<T> &rhs) {
+    return rhs.bias_ - lhs.bias_ < 1 && hasIdenticalCoeff(lhs, rhs);
+}
+
 /**
  * Generate an expression from a LinearExpr
  *
