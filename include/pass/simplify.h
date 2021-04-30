@@ -72,7 +72,9 @@ class OutDatedBoundsRemover : public Visitor {
  * Inherit this pass to use it
  */
 class CompTransientBounds : public Mutator {
+    // Bounds in transients_ has already been recursed with (*this)(...)
     std::unordered_map<uint64_t, TransientBound> transients_;
+
     std::unordered_map<std::string, Ref<Buffer>> buffers_;
     AnalyzeLinear analyzeLinear_;
     TypeInfer typeInfer_;

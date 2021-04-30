@@ -109,29 +109,29 @@ void CompTransientBounds::applyCond(int k, const Expr &lhs, ASTNodeType opType,
     auto h = getHash(lhs);
     switch (opType) {
     case ASTNodeType::LT: {
-        transients_[h].expr_ = lhs;
-        transients_[h].upper_.emplace_back(sub1(ceilRhs));
+        transients_[h].expr_ = (*this)(lhs);
+        transients_[h].upper_.emplace_back((*this)(sub1(ceilRhs)));
         break;
     }
     case ASTNodeType::GT: {
-        transients_[h].expr_ = lhs;
-        transients_[h].lower_.emplace_back(add1(floorRhs));
+        transients_[h].expr_ = (*this)(lhs);
+        transients_[h].lower_.emplace_back((*this)(add1(floorRhs)));
         break;
     }
     case ASTNodeType::LE: {
-        transients_[h].expr_ = lhs;
-        transients_[h].upper_.emplace_back(floorRhs);
+        transients_[h].expr_ = (*this)(lhs);
+        transients_[h].upper_.emplace_back((*this)(floorRhs));
         break;
     }
     case ASTNodeType::GE: {
-        transients_[h].expr_ = lhs;
-        transients_[h].lower_.emplace_back(ceilRhs);
+        transients_[h].expr_ = (*this)(lhs);
+        transients_[h].lower_.emplace_back((*this)(ceilRhs));
         break;
     }
     case ASTNodeType::EQ: {
-        transients_[h].expr_ = lhs;
-        transients_[h].lower_.emplace_back(ceilRhs);
-        transients_[h].upper_.emplace_back(floorRhs);
+        transients_[h].expr_ = (*this)(lhs);
+        transients_[h].lower_.emplace_back((*this)(ceilRhs));
+        transients_[h].upper_.emplace_back((*this)(floorRhs));
         break;
     }
     default:
@@ -221,7 +221,7 @@ Stmt CompTransientBounds::visit(const For &op) {
         throw InvalidProgram(
             "iterators with the same name in nested loops are not allowed");
     }
-    transients_[hash] = {var, {op->begin_}, {sub1(op->end_)}};
+    transients_[hash] = {var, {(*this)(op->begin_)}, {(*this)(sub1(op->end_))}};
     auto ret = Mutator::visit(op);
     transients_.erase(hash);
     return ret;
@@ -364,25 +364,18 @@ bool CompUniqueBounds::alwaysLE(const Expr &lhs, const Expr &rhs) const {
 Expr CompUniqueBounds::visitExpr(
     const Expr &_op, const std::function<Expr(const Expr &)> &visitNode) {
     auto op = CompTransientBounds::visitExpr(_op, visitNode);
-    static bool inRecur = false;
-    if (!inRecur) {
-        inRecur = true;
-        auto tr = transient(op);
-        auto &lower = lower_[op];
-        auto &upper = upper_[op];
-        for (auto &&_first : tr.lower_) {
-            auto first = (*this)(_first);
-            for (auto &&item : getLower(first)) {
-                updLower(lower, item);
-            }
+    auto tr = transient(op);
+    auto &lower = lower_[op];
+    auto &upper = upper_[op];
+    for (auto &&first : tr.lower_) {
+        for (auto &&item : getLower(first)) {
+            updLower(lower, item);
         }
-        for (auto &&_second : tr.upper_) {
-            auto second = (*this)(_second);
-            for (auto &&item : getUpper(second)) {
-                updUpper(upper, item);
-            }
+    }
+    for (auto &&second : tr.upper_) {
+        for (auto &&item : getUpper(second)) {
+            updUpper(upper, item);
         }
-        inRecur = false;
     }
     return op;
 }
