@@ -4,22 +4,13 @@ namespace ir {
 
 void AnalyzeLinear::visitExpr(
     const Expr &op, const std::function<void(const Expr &)> &visitNode) {
-    if (!visited_.count(op)) {
-        visited_.insert(op);
+    if (!result_.count(op)) {
         Visitor::visitExpr(op, visitNode);
+        if (!result_.count(op)) {
+            getHash_(op);
+            result_[op] = {{{getHash_.hash().at(op), {1, op}}}, 0};
+        }
     }
-}
-
-void AnalyzeLinear::visit(const Var &op) {
-    Visitor::visit(op);
-    getHash_(op);
-    result_[op] = {{{getHash_.hash().at(op), {1, op}}}, 0};
-}
-
-void AnalyzeLinear::visit(const Load &op) {
-    Visitor::visit(op);
-    getHash_(op);
-    result_[op] = {{{getHash_.hash().at(op), {1, op}}}, 0};
 }
 
 void AnalyzeLinear::visit(const IntConst &op) {
