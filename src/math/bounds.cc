@@ -24,14 +24,64 @@ commonDenominator(const LinearExpr<Rational<int>> &_lin) {
     return lin;
 }
 
-static Expr linToExprNumerator(const LinearExpr<Rational<int>> &lin) {
-    Expr b = makeIntConst(lin.bias_.p_);
-
+static Expr linToExprDivisible(const LinearExpr<Rational<int>> &lin) {
+    Expr ret;
     for (auto &&item : lin.coeff_) {
         auto k = item.second.k_;
         auto a = deepCopy(item.second.a_);
 
-        if (k == 0) {
+        if (k == 0 || k.p_ % k.q_ != 0) {
+            continue;
+        }
+        Expr x;
+        if (a->nodeType() == ASTNodeType::IntConst) {
+            x = makeIntConst(k.p_ / k.q_ * a.as<IntConstNode>()->val_);
+        } else if (k.p_ / k.q_ == 1) {
+            x = a;
+        } else {
+            x = makeMul(makeIntConst(k.p_ / k.q_), a);
+        }
+
+        if (x->nodeType() == ASTNodeType::IntConst &&
+            x.as<IntConstNode>()->val_ == 0) {
+            // do nothing
+        } else if (!ret.isValid()) {
+            ret = x;
+        } else if (x->nodeType() == ASTNodeType::IntConst &&
+                   ret->nodeType() == ASTNodeType::IntConst) {
+            ret = makeIntConst(x.as<IntConstNode>()->val_ +
+                               ret.as<IntConstNode>()->val_);
+        } else {
+            ret = makeAdd(ret, x);
+        }
+    }
+
+    if (lin.bias_.p_ % lin.bias_.q_ == 0) {
+        Expr b = makeIntConst(lin.bias_.p_ / lin.bias_.q_);
+        if (b->nodeType() == ASTNodeType::IntConst &&
+            b.as<IntConstNode>()->val_ == 0) {
+            // do nothing
+        } else if (!ret.isValid()) {
+            ret = b;
+        } else if (b->nodeType() == ASTNodeType::IntConst &&
+                   ret->nodeType() == ASTNodeType::IntConst) {
+            ret = makeIntConst(b.as<IntConstNode>()->val_ +
+                               ret.as<IntConstNode>()->val_);
+        } else {
+            ret = makeAdd(ret, b);
+        }
+    }
+
+    return ret;
+}
+
+static Expr linToExprNumerator(const LinearExpr<Rational<int>> &lin) {
+    Expr ret;
+    for (auto &&item : lin.coeff_) {
+        auto k = item.second.k_;
+        auto a = deepCopy(item.second.a_);
+
+        if (k == 0 || k.p_ % k.q_ == 0) {
             continue;
         }
         Expr x;
@@ -44,20 +94,36 @@ static Expr linToExprNumerator(const LinearExpr<Rational<int>> &lin) {
         }
 
         if (x->nodeType() == ASTNodeType::IntConst &&
-            b->nodeType() == ASTNodeType::IntConst) {
-            x = makeIntConst(x.as<IntConstNode>()->val_ +
-                             b.as<IntConstNode>()->val_);
-        } else if (b->nodeType() == ASTNodeType::IntConst &&
-                   b.as<IntConstNode>()->val_ == 0) {
+            x.as<IntConstNode>()->val_ == 0) {
             // do nothing
+        } else if (!ret.isValid()) {
+            ret = x;
+        } else if (x->nodeType() == ASTNodeType::IntConst &&
+                   ret->nodeType() == ASTNodeType::IntConst) {
+            ret = makeIntConst(x.as<IntConstNode>()->val_ +
+                               ret.as<IntConstNode>()->val_);
         } else {
-            x = makeAdd(x, b);
+            ret = makeAdd(ret, x);
         }
-
-        b = std::move(x);
     }
 
-    return b;
+    if (lin.bias_.p_ % lin.bias_.q_ != 0) {
+        Expr b = makeIntConst(lin.bias_.p_);
+        if (b->nodeType() == ASTNodeType::IntConst &&
+            b.as<IntConstNode>()->val_ == 0) {
+            // do nothing
+        } else if (!ret.isValid()) {
+            ret = b;
+        } else if (b->nodeType() == ASTNodeType::IntConst &&
+                   ret->nodeType() == ASTNodeType::IntConst) {
+            ret = makeIntConst(b.as<IntConstNode>()->val_ +
+                               ret.as<IntConstNode>()->val_);
+        } else {
+            ret = makeAdd(ret, b);
+        }
+    }
+
+    return ret;
 }
 
 const Expr &UpperBound::expr() {
@@ -65,14 +131,20 @@ const Expr &UpperBound::expr() {
         return expr_;
     }
     auto cdLin = commonDenominator(lin_);
-    expr_ = linToExprNumerator(cdLin);
-    if (cdLin.bias_.q_ != 1) {
-        if (expr_->nodeType() == ASTNodeType::IntConst) {
-            expr_ = makeIntConst(
-                floorDiv(expr_.as<IntConstNode>()->val_, cdLin.bias_.q_));
+    auto divisible = linToExprDivisible(cdLin);
+    auto nonDivisible = linToExprNumerator(cdLin);
+    if (nonDivisible.isValid()) {
+        if (nonDivisible->nodeType() == ASTNodeType::IntConst) {
+            nonDivisible = makeIntConst(floorDiv(
+                nonDivisible.as<IntConstNode>()->val_, cdLin.bias_.q_));
         } else {
-            expr_ = makeFloorDiv(expr_, makeIntConst(cdLin.bias_.q_));
+            nonDivisible =
+                makeFloorDiv(nonDivisible, makeIntConst(cdLin.bias_.q_));
         }
+        expr_ = divisible.isValid() ? makeAdd(divisible, nonDivisible)
+                                    : nonDivisible;
+    } else {
+        expr_ = divisible.isValid() ? divisible : makeIntConst(0);
     }
     return expr_;
 }
@@ -82,14 +154,20 @@ const Expr &LowerBound::expr() {
         return expr_;
     }
     auto cdLin = commonDenominator(lin_);
-    expr_ = linToExprNumerator(cdLin);
-    if (cdLin.bias_.q_ != 1) {
-        if (expr_->nodeType() == ASTNodeType::IntConst) {
-            expr_ = makeIntConst(
-                ceilDiv(expr_.as<IntConstNode>()->val_, cdLin.bias_.q_));
+    auto divisible = linToExprDivisible(cdLin);
+    auto nonDivisible = linToExprNumerator(cdLin);
+    if (nonDivisible.isValid()) {
+        if (nonDivisible->nodeType() == ASTNodeType::IntConst) {
+            nonDivisible = makeIntConst(
+                ceilDiv(nonDivisible.as<IntConstNode>()->val_, cdLin.bias_.q_));
         } else {
-            expr_ = makeCeilDiv(expr_, makeIntConst(cdLin.bias_.q_));
+            nonDivisible =
+                makeCeilDiv(nonDivisible, makeIntConst(cdLin.bias_.q_));
         }
+        expr_ = divisible.isValid() ? makeAdd(divisible, nonDivisible)
+                                    : nonDivisible;
+    } else {
+        expr_ = divisible.isValid() ? divisible : makeIntConst(0);
     }
     return expr_;
 }

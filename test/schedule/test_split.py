@@ -17,7 +17,7 @@ def test_factor():
     with ir.VarDef("y", (8,), "int32", "output", "cpu") as y:
         with ir.For("i.0", 0, 2) as i0:
             with ir.For("i.1", 0, 4) as i1:
-                y[4 * i0 + i1] = 4 * i0 + i1
+                y[i1 + 4 * i0] = i1 + 4 * i0
     std = ir.pop_ast()
 
     assert std.match(ast)
@@ -38,7 +38,7 @@ def test_nparts():
     with ir.VarDef("y", (8,), "int32", "output", "cpu") as y:
         with ir.For("i.0", 0, 4) as i0:
             with ir.For("i.1", 0, 2) as i1:
-                y[2 * i0 + i1] = 2 * i0 + i1
+                y[i1 + 2 * i0] = i1 + 2 * i0
     std = ir.pop_ast()
 
     assert std.match(ast)
@@ -60,9 +60,9 @@ def test_guard():
     with ir.VarDef("y", (10,), "int32", "output", "cpu") as y:
         with ir.For("i.0", 0, 2) as i0:
             with ir.For("i.1", 0, 4) as i1:
-                y[4 * i0 + i1] = 4 * i0 + i1
+                y[i1 + 4 * i0] = i1 + 4 * i0
         with ir.For("i.1", 0, 2) as i1:
-            y[8 + i1] = 8 + i1
+            y[i1 + 8] = i1 + 8
     std = ir.pop_ast()
 
     assert std.match(ast)
