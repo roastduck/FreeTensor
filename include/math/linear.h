@@ -108,21 +108,6 @@ bool hasIdenticalCoeff(const LinearExpr<T> &lhs, const LinearExpr<T> &rhs) {
     return false;
 }
 
-template <class T>
-bool alwaysLT(const LinearExpr<T> &lhs, const LinearExpr<T> &rhs) {
-    return lhs.bias_ < rhs.bias_ && hasIdenticalCoeff(lhs, rhs);
-}
-
-template <class T>
-bool alwaysLE(const LinearExpr<T> &lhs, const LinearExpr<T> &rhs) {
-    return lhs.bias_ <= rhs.bias_ && hasIdenticalCoeff(lhs, rhs);
-}
-
-template <class T>
-bool alwaysDiffLT1(const LinearExpr<T> &lhs, const LinearExpr<T> &rhs) {
-    return rhs.bias_ - lhs.bias_ < 1 && hasIdenticalCoeff(lhs, rhs);
-}
-
 /**
  * Generate an expression from a LinearExpr
  *

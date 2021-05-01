@@ -39,21 +39,7 @@ Expr SimplifyPass<BaseClass>::visitExpr(
     auto bestScope = -1;
     for (auto &&lower : this->getLower(op)) {
         for (auto &&upper : this->getUpper(op)) {
-            bool isEqual = false;
-
-            // Case 1: lower and upper the same const. E.g. 1/3 <= x <= 5/3
-            if (upper.lin().coeff_.empty() && lower.lin().coeff_.empty() &&
-                floorDiv(upper.lin().bias_.p_, upper.lin().bias_.q_) ==
-                    ceilDiv(lower.lin().bias_.p_, lower.lin().bias_.q_)) {
-                isEqual = true;
-            }
-
-            // Case 2: upper - lower < 1. E.g. a <= x <= a + 2/3
-            if (alwaysDiffLT1(lower.lin(), upper.lin())) {
-                isEqual = true;
-            }
-
-            if (isEqual) {
+            if (ir::alwaysLE(upper, lower)) { // upper <= lower ==> equal
                 // We need to choose the simplest one. Otherwise we are always
                 // picking the original expression
                 Expr expr;

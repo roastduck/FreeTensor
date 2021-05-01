@@ -152,10 +152,29 @@ LowerBound ceilDiv(const LowerBound &b, int k) {
 }
 
 bool alwaysLT(const UpperBound &b1, const LowerBound &b2) {
-    return alwaysLT(b1.lin(), b2.lin());
+    // Case 1: lower and upper round to some const
+    if (b1.lin().coeff_.empty() && b2.lin().coeff_.empty() &&
+        floorDiv(b1.lin().bias_.p_, b1.lin().bias_.q_) <
+            ceilDiv(b2.lin().bias_.p_, b2.lin().bias_.q_)) {
+        return true;
+    }
+
+    // Case 2: upper < lower
+    return b1.lin().bias_ < b2.lin().bias_ &&
+           hasIdenticalCoeff(b1.lin(), b2.lin());
 }
 bool alwaysLE(const UpperBound &b1, const LowerBound &b2) {
-    return alwaysLE(b1.lin(), b2.lin());
+    // Case 1: lower and upper round to some const
+    if (b1.lin().coeff_.empty() && b2.lin().coeff_.empty() &&
+        floorDiv(b1.lin().bias_.p_, b1.lin().bias_.q_) <=
+            ceilDiv(b2.lin().bias_.p_, b2.lin().bias_.q_)) {
+        return true;
+    }
+
+    // Case 2: upper - lower < 1
+    // E.g. x <= a + 2/3 and y >= a ==> (int)y <= (int)x
+    return b1.lin().bias_ - b2.lin().bias_ < 1 &&
+           hasIdenticalCoeff(b1.lin(), b2.lin());
 }
 
 } // namespace ir
