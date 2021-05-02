@@ -7,6 +7,7 @@ from ffi import sink_var
 from ffi import shrink_var
 from ffi import shrink_for
 from ffi import merge_if
+from ffi import hoist_if
 from ffi import seperate_tail
 from ffi import make_reduction
 from ffi import make_atomic
@@ -22,6 +23,7 @@ def lower(ast, target: Optional[ffi.Target]=None):
     ast = simplify_pass(ast)
     ast = sink_var(ast)
     ast = shrink_var(ast)
+    ast = hoist_if(ast)
     ast = merge_if(ast)
     ast = seperate_tail(ast)
     ast = remove_writes(ast) # After seperate_tail
