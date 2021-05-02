@@ -48,7 +48,7 @@ void CheckBoundOutDated::visit(const Load &op) {
 }
 
 void OutDatedBoundsRemover::remove(const std::string &name) {
-    check_ = CheckBoundOutDated(name);
+    check_.setName(name);
     for (auto &item : transients_) {
         check_.reset();
         check_(item.second.expr_);

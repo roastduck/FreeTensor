@@ -42,6 +42,7 @@ class CheckBoundOutDated : public Visitor {
     CheckBoundOutDated() : name_(""), outDated_(false) {}
     CheckBoundOutDated(const std::string &name)
         : name_(name), outDated_(false) {}
+    void setName(const std::string &name) { name_ = name; }
     void reset() { outDated_ = false; }
     bool isoutDated() { return outDated_; }
 
