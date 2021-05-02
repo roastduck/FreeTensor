@@ -2,6 +2,8 @@
 #include <climits>
 #include <unordered_set>
 
+#include <iostream>
+
 #include <analyze/hash.h>
 #include <except.h>
 #include <math/utils.h>
@@ -35,16 +37,41 @@ int findInnerMostScope(const std::unordered_map<std::string, int> &varScope,
     return visitor.innnerMost();
 }
 
+void CheckBoundOutDated::visit(const Var &op) {
+    if (op.as<VarNode>()->name_ == name_)
+        outDated_ = true;
+    return;
+}
+
+void CheckBoundOutDated::visit(const Load &op) {
+    if (op.as<LoadNode>()->var_ == name_)
+        outDated_ = true;
+    return;
+}
+
 void OutDatedBoundsRemover::remove(const std::string &name) {
+    check_ = CheckBoundOutDated(name);
     for (auto &item : transients_) {
-        // FIXME: Currently we only check if X is out-of-date in A <= X <= B,
-        // but not in f(X) <= Y <= g(X)
-        if (item.second.expr_->nodeType() == ASTNodeType::Load) {
-            auto load = item.second.expr_.as<LoadNode>();
-            if (load->var_ == name) {
-                // Not removing the map item because we are iterating through it
-                item.second.lower_ = item.second.upper_ = {};
-            }
+        check_.reset();
+        check_(item.second.expr_);
+        if (check_.isoutDated()) {
+            item.second.lower_ = item.second.upper_ = {};
+        }
+        for (auto i = item.second.lower_.begin();
+             i != item.second.lower_.end();) {
+            check_.reset(), check_(*i);
+            if (check_.isoutDated()) {
+                item.second.lower_.erase(i);
+            } else
+                i++;
+        }
+        for (auto i = item.second.upper_.begin();
+             i != item.second.upper_.end();) {
+            check_.reset(), check_(*i);
+            if (check_.isoutDated()) {
+                i = item.second.upper_.erase(i);
+            } else
+                i++;
         }
     }
 }

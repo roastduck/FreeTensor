@@ -34,6 +34,22 @@ class FindInnerMostScope : public Visitor {
 int findInnerMostScope(const std::unordered_map<std::string, int> &varScope,
                        const Expr &op);
 
+class CheckBoundOutDated : public Visitor {
+    std::string name_;
+    bool outDated_;
+
+  public:
+    CheckBoundOutDated() : name_(""), outDated_(false) {}
+    CheckBoundOutDated(const std::string &name)
+        : name_(name), outDated_(false) {}
+    void reset() { outDated_ = false; }
+    bool isoutDated() { return outDated_; }
+
+  protected:
+    void visit(const Var &op) override;
+    void visit(const Load &op) override;
+};
+
 struct TransientBound {
     Expr expr_;
     std::vector<Expr> lower_, upper_;
@@ -41,11 +57,12 @@ struct TransientBound {
 
 class OutDatedBoundsRemover : public Visitor {
     std::unordered_map<uint64_t, TransientBound> &transients_;
+    CheckBoundOutDated check_;
 
   public:
     OutDatedBoundsRemover(
         std::unordered_map<uint64_t, TransientBound> &transients)
-        : transients_(transients) {}
+        : transients_(transients), check_() {}
 
   private:
     void remove(const std::string &name);
