@@ -158,3 +158,32 @@ def test_1d_stencil():
 
     assert std.match(ast)
 
+def test_no_seperate_vardef():
+    with ir.VarDef([
+            ("x", (4,), "int32", "input", "cpu"),
+            ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+        with ir.For("i", 0, 4) as i:
+            with ir.VarDef("t", (), "int32", "cache", "cpu") as t:
+                t[()] = x[i]
+                with ir.If(i < 2):
+                    y[i] = t[()] + 1
+                with ir.Else():
+                    y[i] = t[()] + 2
+    ast = ir.pop_ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([
+            ("x", (4,), "int32", "input", "cpu"),
+            ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+        with ir.For("i", 0, 4) as i:
+            with ir.VarDef("t", (), "int32", "cache", "cpu") as t:
+                t[()] = x[i]
+                with ir.If(i < 2):
+                    y[i] = t[()] + 1
+                with ir.Else():
+                    y[i] = t[()] + 2
+    std = ir.pop_ast()
+
+    assert std.match(ast)
