@@ -89,7 +89,9 @@ class OutDatedBoundsRemover : public Visitor {
  * Inherit this pass to use it
  */
 class CompTransientBounds : public Mutator {
+    // Bounds in transients_ has already been recursed with (*this)(...)
     std::unordered_map<uint64_t, TransientBound> transients_;
+
     std::unordered_map<std::string, Ref<Buffer>> buffers_;
     AnalyzeLinear analyzeLinear_;
     TypeInfer typeInfer_;
@@ -144,7 +146,6 @@ class CompUniqueBounds : public CompTransientBounds {
   public:
     typedef std::vector<LowerBound> LowerBoundsList;
     typedef std::vector<UpperBound> UpperBoundsList;
-    typedef std::pair<LowerBoundsList, UpperBoundsList> BoundsListPair;
     typedef std::unordered_map<Expr, LowerBoundsList> LowerBoundsMap;
     typedef std::unordered_map<Expr, UpperBoundsList> UpperBoundsMap;
 
@@ -159,9 +160,6 @@ class CompUniqueBounds : public CompTransientBounds {
     UpperBoundsList getUpper(const Expr &op) const {
         return upper_.count(op) ? upper_.at(op) : UpperBoundsList{};
     }
-    BoundsListPair getBoundsPair(const Expr &op) const {
-        return BoundsListPair{getLower(op), getUpper(op)};
-    }
 
     template <class T> void setLower(const Expr &op, T &&list) {
         lower_[op] = std::forward<T>(list);
@@ -169,25 +167,16 @@ class CompUniqueBounds : public CompTransientBounds {
     template <class T> void setUpper(const Expr &op, T &&list) {
         upper_[op] = std::forward<T>(list);
     }
-    void setBoundsPair(const Expr &op, BoundsListPair &&pair) {
-        setLower(op, std::move(pair.first));
-        setUpper(op, std::move(pair.second));
-    }
 
     void updLower(LowerBoundsList &list, const LowerBound &bound) const;
     void updUpper(UpperBoundsList &list, const UpperBound &bound) const;
 
-    int getIntLower(const LowerBoundsList &list) const;
-    int getIntUpper(const UpperBoundsList &list) const;
-    Ref<int> getInt(const BoundsListPair &pair) const;
-    int getIntLower(const Expr &op) const { return getIntLower(getLower(op)); }
-    int getIntUpper(const Expr &op) const { return getIntUpper(getUpper(op)); }
-    Ref<int> getInt(const Expr &op) const { return getInt(getBoundsPair(op)); }
+    int getIntLower(const Expr &op) const;
+    int getIntUpper(const Expr &op) const;
+    Ref<int> getInt(const Expr &op) const;
 
-    BoundsListPair addBounds(const BoundsListPair &lhs,
-                             const BoundsListPair &rhs) const;
-    BoundsListPair subBounds(const BoundsListPair &lhs,
-                             const BoundsListPair &rhs) const;
+    bool alwaysLT(const Expr &lhs, const Expr &rhs) const;
+    bool alwaysLE(const Expr &lhs, const Expr &rhs) const;
 
   public:
     const LowerBoundsMap &lower() const { return lower_; }

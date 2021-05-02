@@ -1,4 +1,3 @@
-#include <analyze/normalize.h>
 #include <codegen/code_gen_cpu.h>
 #include <pass/simplify.h>
 
@@ -16,14 +15,12 @@ void CodeGenCPU::visit(const For &op) {
         os() << "#pragma omp parallel for" << std::endl;
     }
     if (op->unroll_) {
-        os() << "#pragma GCC unroll " << op->infoLen_ << std::endl;
+        os() << "#pragma GCC unroll " << op->len_ << std::endl;
     }
     CodeGenC::visit(op);
 }
 
-std::pair<std::string, std::vector<std::string>> codeGenCPU(const Stmt &_op) {
-    auto op = simplifyPass(normalize(_op)); // infoLen_
-
+std::pair<std::string, std::vector<std::string>> codeGenCPU(const Stmt &op) {
     CodeGenCPU visitor;
     visitor.beginBlock();
     visitor(op);

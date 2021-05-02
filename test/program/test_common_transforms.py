@@ -52,7 +52,7 @@ def test_tiling():
                                     cw[0, 0] = 0
                                     with ir.For("k", 0, 256) as k:
                                         cw[0, 0] = cw[0, 0] + ar[i1, k] * br[k, j1]
-                                    c[32 * i0 + i1, j1 + 32 * j0] = cw[0, 0]
+                                    c[i1 + 32 * i0, 32 * j0 + j1] = cw[0, 0]
     std = ir.make_reduction(ir.pop_ast())
     assert std.match(ast)
 
@@ -100,7 +100,7 @@ def test_tiled_reduction():
             with ir.VarDef("yw", (1,), "float32", "cache", "cpu") as yw:
                 yw[0] = 0.
                 with ir.For("i1", 0, 64) as i1:
-                    yw[0] = yw[0] + x[64 * i0 + i1]
+                    yw[0] = yw[0] + x[i1 + 64 * i0]
                 y[0] = y[0] + yw[0]
     std = ir.make_reduction(ir.pop_ast())
     assert std.match(ast)
@@ -151,7 +151,7 @@ def test_parallel_reduction():
             with ir.For("i0", 0, 4) as i0:
                 yw[i0, 0] = 0.
                 with ir.For("i1", 0, 64) as i1:
-                    yw[i0, 0] = yw[i0, 0] + x[64 * i0 + i1]
+                    yw[i0, 0] = yw[i0, 0] + x[i1 + 64 * i0]
             y[0] = 0
             with ir.For("i0", 0, 4) as i0:
                 y[0] = y[0] + yw[i0, 0]

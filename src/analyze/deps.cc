@@ -2,7 +2,6 @@
 #include <sstream>
 
 #include <analyze/deps.h>
-#include <analyze/normalize.h>
 #include <except.h>
 #include <mutator.h>
 #include <pass/simplify.h>

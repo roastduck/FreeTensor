@@ -17,7 +17,6 @@ namespace ir {
 class AnalyzeLinear : public Visitor {
     GetHash getHash_;
     std::unordered_map<AST, LinearExpr<int>> result_;
-    std::unordered_set<AST> visited_;
 
   public:
     const std::unordered_map<AST, LinearExpr<int>> &result() const {
@@ -28,8 +27,6 @@ class AnalyzeLinear : public Visitor {
     void visitExpr(const Expr &op,
                    const std::function<void(const Expr &)> &visitNode) override;
 
-    void visit(const Var &op) override;
-    void visit(const Load &op) override;
     void visit(const IntConst &op) override;
     void visit(const Add &op) override;
     void visit(const Sub &op) override;

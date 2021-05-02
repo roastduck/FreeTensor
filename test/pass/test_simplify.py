@@ -351,7 +351,7 @@ def test_floor_div_2():
 def test_floor_div_3():
     with ir.VarDef([
             ("x", (), "int32", "input", "cpu"),
-            ("y", (), "int32", "input", "cpu")]) as (x, y):
+            ("y", (), "int32", "output", "cpu")]) as (x, y):
         y[()] = ir.min(x[()] // 4, x[()] // 4)
     ast = ir.pop_ast()
     print(ast)
@@ -360,7 +360,7 @@ def test_floor_div_3():
 
     with ir.VarDef([
             ("x", (), "int32", "input", "cpu"),
-            ("y", (), "int32", "input", "cpu")]) as (x, y):
+            ("y", (), "int32", "output", "cpu")]) as (x, y):
         y[()] = x[()] // 4
     std = ir.pop_ast()
 
@@ -369,7 +369,7 @@ def test_floor_div_3():
 def test_floor_div_4():
     with ir.VarDef([
             ("x", (), "int32", "input", "cpu"),
-            ("y", (), "int32", "input", "cpu")]) as (x, y):
+            ("y", (), "int32", "output", "cpu")]) as (x, y):
         y[()] = 64 * x[()] // 64
     ast = ir.pop_ast()
     print(ast)
@@ -378,7 +378,7 @@ def test_floor_div_4():
 
     with ir.VarDef([
             ("x", (), "int32", "input", "cpu"),
-            ("y", (), "int32", "input", "cpu")]) as (x, y):
+            ("y", (), "int32", "output", "cpu")]) as (x, y):
         y[()] = x[()]
     std = ir.pop_ast()
 
@@ -387,7 +387,7 @@ def test_floor_div_4():
 def test_floor_div_5():
     with ir.VarDef([
             ("x", (), "int32", "input", "cpu"),
-            ("y", (), "int32", "input", "cpu")]) as (x, y):
+            ("y", (), "int32", "output", "cpu")]) as (x, y):
         y[()] = x[()] // 4 - x[()] // 4
     ast = ir.pop_ast()
     print(ast)
@@ -396,7 +396,7 @@ def test_floor_div_5():
 
     with ir.VarDef([
             ("x", (), "int32", "input", "cpu"),
-            ("y", (), "int32", "input", "cpu")]) as (x, y):
+            ("y", (), "int32", "output", "cpu")]) as (x, y):
         y[()] = 0
     std = ir.pop_ast()
 
@@ -405,7 +405,7 @@ def test_floor_div_5():
 def test_mod_1():
     with ir.VarDef([
             ("x", (), "int32", "input", "cpu"),
-            ("y", (), "int32", "input", "cpu")]) as (x, y):
+            ("y", (), "int32", "output", "cpu")]) as (x, y):
         y[()] = 64 * x[()] % 64
     ast = ir.pop_ast()
     print(ast)
@@ -414,7 +414,7 @@ def test_mod_1():
 
     with ir.VarDef([
             ("x", (), "int32", "input", "cpu"),
-            ("y", (), "int32", "input", "cpu")]) as (x, y):
+            ("y", (), "int32", "output", "cpu")]) as (x, y):
         y[()] = 0
     std = ir.pop_ast()
 
@@ -423,7 +423,7 @@ def test_mod_1():
 def test_mod_2():
     with ir.VarDef([
             ("x", (), "int32", "input", "cpu"),
-            ("y", (), "int32", "input", "cpu")]) as (x, y):
+            ("y", (), "int32", "output", "cpu")]) as (x, y):
         with ir.If(ir.l_and(x[()] >= 0, x[()] < 64)):
             y[()] = x[()] % 64
         with ir.Else():
@@ -435,7 +435,7 @@ def test_mod_2():
 
     with ir.VarDef([
             ("x", (), "int32", "input", "cpu"),
-            ("y", (), "int32", "input", "cpu")]) as (x, y):
+            ("y", (), "int32", "output", "cpu")]) as (x, y):
         with ir.If(ir.l_and(x[()] >= 0, x[()] < 64)):
             y[()] = x[()]
         with ir.Else():

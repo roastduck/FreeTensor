@@ -7,7 +7,7 @@ Stmt Unroll::visit(const For &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::For);
     auto op = __op.as<ForNode>();
     if (op->id() == loop_) {
-        if (op->infoLen_->nodeType() == ASTNodeType::IntConst) {
+        if (op->len_->nodeType() == ASTNodeType::IntConst) {
             op->unroll_ = true;
             done_ = true;
         } else {

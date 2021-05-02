@@ -7,6 +7,7 @@
 // Include minimal headers
 
 #include <ast.h>
+#include <debug/logger.h>
 
 namespace ir {
 

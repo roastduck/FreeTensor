@@ -139,10 +139,12 @@ Stmt SeperateTail::visit(const If &op) {
 Stmt SeperateTail::visit(const For &_op) {
     def_.insert(_op->iter_);
     ifStack_.emplace_back();
+    hasVarDefStack_.emplace_back(false);
 
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::For);
     auto op = __op.as<ForNode>();
+    bool hasVarDef = hasVarDefStack_.back();
     std::vector<If> ifList;
     for (auto &&branch : ifStack_.back()) {
         if (checkAllDefined(def_, branch->cond_)) {
@@ -152,6 +154,11 @@ Stmt SeperateTail::visit(const For &_op) {
 
     def_.erase(_op->iter_);
     ifStack_.pop_back();
+    hasVarDefStack_.pop_back();
+
+    if (hasVarDef) {
+        return op;
+    }
 
     if (!op->parallel_.empty()) {
         return op;
@@ -176,9 +183,11 @@ Stmt SeperateTail::visit(const For &_op) {
         }
         auto &&sep = seperations[i];
         auto front = makeFor(old->id(), old->iter_, old->begin_, sep,
-                             old->parallel_, old->unroll_, old->body_);
+                             makeSub(sep, old->begin_), old->parallel_,
+                             old->unroll_, old->body_);
         auto back = makeFor(old->id(), old->iter_, sep, old->end_,
-                            old->parallel_, old->unroll_, old->body_);
+                            makeSub(old->end_, sep), old->parallel_,
+                            old->unroll_, old->body_);
         front = dfs(i + 1, AppendIDs(".front")(front).as<ForNode>());
         back = dfs(i + 1, AppendIDs(".back")(back).as<ForNode>());
         auto seperated = makeStmtSeq("", {front, back});
@@ -195,6 +204,9 @@ Stmt SeperateTail::visit(const VarDef &op) {
     def_.insert(op->name_);
     auto ret = Mutator::visit(op);
     def_.erase(op->name_);
+    for (auto it = hasVarDefStack_.begin(); it != hasVarDefStack_.end(); it++) {
+        *it = true;
+    }
     return ret;
 }
 

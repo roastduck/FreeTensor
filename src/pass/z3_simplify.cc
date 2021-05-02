@@ -372,6 +372,7 @@ Stmt Z3Simplify::visit(const For &op) {
     auto var = makeVar(op->iter_);
     auto begin = (*this)(op->begin_);
     auto end = (*this)(op->end_);
+    auto len = (*this)(op->len_);
 
     if (prove((*this)(makeGE(begin, end)))) {
         return makeStmtSeq("", {});
@@ -390,8 +391,9 @@ Stmt Z3Simplify::visit(const For &op) {
     pop();
     pop();
 
-    auto ret = makeFor(op->id(), op->iter_, std::move(begin), std::move(end),
-                       op->parallel_, op->unroll_, std::move(body));
+    auto ret =
+        makeFor(op->id(), op->iter_, std::move(begin), std::move(end),
+                std::move(len), op->parallel_, op->unroll_, std::move(body));
     return COPY_DEBUG_INFO(ret, op);
 }
 

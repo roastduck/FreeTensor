@@ -5,7 +5,6 @@
 #include <analyze/comp_access_bound.h>
 #include <analyze/deps.h>
 #include <analyze/find_loop_variance.h>
-#include <analyze/normalize.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/make_reduction.h>
 #include <pass/shrink_var.h>
@@ -316,7 +315,7 @@ void Schedule::swap(const std::vector<std::string> &order) {
 void Schedule::blend(const std::string &loop) {
     auto ast = ast_;
     try {
-        ast = simplifyPass(normalize(ast)); // ForNode::infoLen_
+        ast = simplifyPass(ast); // Const prop for ForNode::len_
 
         FindAllScopesInside finder(loop);
         finder(ast);
@@ -561,7 +560,7 @@ void Schedule::unroll(const std::string &loop) {
     auto ast = ast_;
     Unroll mutator(loop);
     try {
-        ast = simplifyPass(normalize(ast)); // for ForNode::infoLen_
+        ast = simplifyPass(ast); // Const prop for ForNode::len_
         ast = mutator(ast);
         if (!mutator.done()) {
             throw InvalidSchedule("Loop " + loop + " not found");

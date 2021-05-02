@@ -171,10 +171,8 @@ class Visitor {
     virtual void visit(const For &op) {
         (*this)(op->begin_);
         (*this)(op->end_);
+        (*this)(op->len_);
         (*this)(op->body_);
-        if (op->infoLen_.isValid()) {
-            (*this)(op->infoLen_);
-        }
     }
 
     virtual void visit(const If &op) {

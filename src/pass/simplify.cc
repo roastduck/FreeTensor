@@ -136,29 +136,29 @@ void CompTransientBounds::applyCond(int k, const Expr &lhs, ASTNodeType opType,
     auto h = getHash(lhs);
     switch (opType) {
     case ASTNodeType::LT: {
-        transients_[h].expr_ = lhs;
-        transients_[h].upper_.emplace_back(sub1(ceilRhs));
+        transients_[h].expr_ = (*this)(lhs);
+        transients_[h].upper_.emplace_back((*this)(sub1(ceilRhs)));
         break;
     }
     case ASTNodeType::GT: {
-        transients_[h].expr_ = lhs;
-        transients_[h].lower_.emplace_back(add1(floorRhs));
+        transients_[h].expr_ = (*this)(lhs);
+        transients_[h].lower_.emplace_back((*this)(add1(floorRhs)));
         break;
     }
     case ASTNodeType::LE: {
-        transients_[h].expr_ = lhs;
-        transients_[h].upper_.emplace_back(floorRhs);
+        transients_[h].expr_ = (*this)(lhs);
+        transients_[h].upper_.emplace_back((*this)(floorRhs));
         break;
     }
     case ASTNodeType::GE: {
-        transients_[h].expr_ = lhs;
-        transients_[h].lower_.emplace_back(ceilRhs);
+        transients_[h].expr_ = (*this)(lhs);
+        transients_[h].lower_.emplace_back((*this)(ceilRhs));
         break;
     }
     case ASTNodeType::EQ: {
-        transients_[h].expr_ = lhs;
-        transients_[h].lower_.emplace_back(ceilRhs);
-        transients_[h].upper_.emplace_back(floorRhs);
+        transients_[h].expr_ = (*this)(lhs);
+        transients_[h].lower_.emplace_back((*this)(ceilRhs));
+        transients_[h].upper_.emplace_back((*this)(floorRhs));
         break;
     }
     default:
@@ -248,7 +248,7 @@ Stmt CompTransientBounds::visit(const For &op) {
         throw InvalidProgram(
             "iterators with the same name in nested loops are not allowed");
     }
-    transients_[hash] = {var, {op->begin_}, {sub1(op->end_)}};
+    transients_[hash] = {var, {(*this)(op->begin_)}, {(*this)(sub1(op->end_))}};
     auto ret = Mutator::visit(op);
     transients_.erase(hash);
     return ret;
@@ -338,9 +338,9 @@ void CompUniqueBounds::updUpper(UpperBoundsList &list,
     list.emplace_back(bound);
 }
 
-int CompUniqueBounds::getIntLower(const LowerBoundsList &list) const {
+int CompUniqueBounds::getIntLower(const Expr &op) const {
     int ret = INT_MIN;
-    for (auto &&b : list) {
+    for (auto &&b : getLower(op)) {
         if (b.lin().coeff_.empty()) {
             auto bias = b.lin().bias_;
             ret = std::max(ret, ceilDiv(bias.p_, bias.q_));
@@ -349,9 +349,9 @@ int CompUniqueBounds::getIntLower(const LowerBoundsList &list) const {
     return ret;
 }
 
-int CompUniqueBounds::getIntUpper(const UpperBoundsList &list) const {
+int CompUniqueBounds::getIntUpper(const Expr &op) const {
     int ret = INT_MAX;
-    for (auto &&b : list) {
+    for (auto &&b : getUpper(op)) {
         if (b.lin().coeff_.empty()) {
             auto bias = b.lin().bias_;
             ret = std::min(ret, floorDiv(bias.p_, bias.q_));
@@ -360,66 +360,49 @@ int CompUniqueBounds::getIntUpper(const UpperBoundsList &list) const {
     return ret;
 }
 
-Ref<int> CompUniqueBounds::getInt(const BoundsListPair &pair) const {
-    int lower = getIntLower(pair.first);
-    int upper = getIntUpper(pair.second);
+Ref<int> CompUniqueBounds::getInt(const Expr &op) const {
+    int lower = getIntLower(op);
+    int upper = getIntUpper(op);
     return lower == upper ? Ref<int>::make(lower) : nullptr;
 }
 
-CompUniqueBounds::BoundsListPair
-CompUniqueBounds::addBounds(const BoundsListPair &lhs,
-                            const BoundsListPair &rhs) const {
-    BoundsListPair ret;
-    for (auto &&b1 : lhs.first) {
-        for (auto &&b2 : rhs.first) {
-            updLower(ret.first, add(b1, b2));
+bool CompUniqueBounds::alwaysLT(const Expr &lhs, const Expr &rhs) const {
+    for (auto &&b1 : getUpper(lhs)) {
+        for (auto &&b2 : getLower(rhs)) {
+            if (ir::alwaysLT(b1, b2)) {
+                return true;
+            }
         }
     }
-    for (auto &&b1 : lhs.second) {
-        for (auto &&b2 : rhs.second) {
-            updUpper(ret.second, add(b1, b2));
-        }
-    }
-    return ret;
+    return false;
 }
 
-CompUniqueBounds::BoundsListPair
-CompUniqueBounds::subBounds(const BoundsListPair &lhs,
-                            const BoundsListPair &rhs) const {
-    BoundsListPair ret;
-    for (auto &&b1 : lhs.first) {
-        for (auto &&b2 : rhs.second) {
-            updLower(ret.first, sub(b1, b2));
+bool CompUniqueBounds::alwaysLE(const Expr &lhs, const Expr &rhs) const {
+    for (auto &&b1 : getUpper(lhs)) {
+        for (auto &&b2 : getLower(rhs)) {
+            if (ir::alwaysLE(b1, b2)) {
+                return true;
+            }
         }
     }
-    for (auto &&b1 : lhs.second) {
-        for (auto &&b2 : rhs.first) {
-            updUpper(ret.second, sub(b1, b2));
-        }
-    }
-    return ret;
+    return false;
 }
 
 Expr CompUniqueBounds::visitExpr(
     const Expr &_op, const std::function<Expr(const Expr &)> &visitNode) {
     auto op = CompTransientBounds::visitExpr(_op, visitNode);
-    static bool inRecur = false;
-    if (!inRecur) {
-        inRecur = true;
-        auto tr = transient(op);
-        for (auto &&_first : tr.lower_) {
-            auto first = (*this)(_first);
-            for (auto &&item : getLower(first)) {
-                updLower(lower_[op], item);
-            }
+    auto tr = transient(op);
+    auto &lower = lower_[op];
+    auto &upper = upper_[op];
+    for (auto &&first : tr.lower_) {
+        for (auto &&item : getLower(first)) {
+            updLower(lower, item);
         }
-        for (auto &&_second : tr.upper_) {
-            auto second = (*this)(_second);
-            for (auto &&item : getUpper(second)) {
-                updUpper(upper_[op], item);
-            }
+    }
+    for (auto &&second : tr.upper_) {
+        for (auto &&item : getUpper(second)) {
+            updUpper(upper, item);
         }
-        inRecur = false;
     }
     return op;
 }
@@ -457,8 +440,18 @@ Expr CompUniqueBounds::visit(const Add &_op) {
     auto __op = CompTransientBounds::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Add);
     auto op = __op.as<AddNode>();
-    setBoundsPair(op,
-                  addBounds(getBoundsPair(op->lhs_), getBoundsPair(op->rhs_)));
+    auto &lower = lower_[op];
+    auto &upper = upper_[op];
+    for (auto &&b1 : getLower(op->lhs_)) {
+        for (auto &&b2 : getLower(op->rhs_)) {
+            updLower(lower, add(b1, b2));
+        }
+    }
+    for (auto &&b1 : getUpper(op->lhs_)) {
+        for (auto &&b2 : getUpper(op->rhs_)) {
+            updUpper(upper, add(b1, b2));
+        }
+    }
     return op;
 }
 
@@ -466,8 +459,18 @@ Expr CompUniqueBounds::visit(const Sub &_op) {
     auto __op = CompTransientBounds::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Sub);
     auto op = __op.as<SubNode>();
-    setBoundsPair(op,
-                  subBounds(getBoundsPair(op->lhs_), getBoundsPair(op->rhs_)));
+    auto &lower = lower_[op];
+    auto &upper = upper_[op];
+    for (auto &&b1 : getLower(op->lhs_)) {
+        for (auto &&b2 : getUpper(op->rhs_)) {
+            updLower(lower, sub(b1, b2));
+        }
+    }
+    for (auto &&b1 : getUpper(op->lhs_)) {
+        for (auto &&b2 : getLower(op->rhs_)) {
+            updUpper(upper, sub(b1, b2));
+        }
+    }
     return op;
 }
 
@@ -476,21 +479,24 @@ Expr CompUniqueBounds::visit(const Mul &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::Mul);
     auto op = __op.as<MulNode>();
 
-    auto g = [this](const Expr &op, const Expr &e1, const Expr &e2) {
+    auto &lower = lower_[op];
+    auto &upper = upper_[op];
+    auto g = [this, &lower, &upper](const Expr &op, const Expr &e1,
+                                    const Expr &e2) {
         if (auto k = getInt(e2); k.isValid()) {
             if (*k > 0) {
                 for (auto &&b : getLower(e1)) {
-                    updLower(lower_[op], mul(b, *k));
+                    updLower(lower, mul(b, *k));
                 }
                 for (auto &&b : getUpper(e1)) {
-                    updUpper(upper_[op], mul(b, *k));
+                    updUpper(upper, mul(b, *k));
                 }
             } else {
                 for (auto &&b : getLower(e1)) {
-                    updUpper(upper_[op], mul(UpperBound{b.lin()}, *k));
+                    updUpper(upper, mul(UpperBound{b.lin()}, *k));
                 }
                 for (auto &&b : getUpper(e1)) {
-                    updLower(lower_[op], mul(LowerBound{b.lin()}, *k));
+                    updLower(lower, mul(LowerBound{b.lin()}, *k));
                 }
             }
         }
@@ -505,20 +511,22 @@ Expr CompUniqueBounds::visit(const FloorDiv &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::FloorDiv);
     auto op = __op.as<FloorDivNode>();
 
+    auto &lower = lower_[op];
+    auto &upper = upper_[op];
     if (auto k = getInt(op->rhs_); k.isValid()) {
         if (*k > 0) {
             for (auto &&b : getLower(op->lhs_)) {
-                updLower(lower_[op], floorDiv(b, *k));
+                updLower(lower, floorDiv(b, *k));
             }
             for (auto &&b : getUpper(op->lhs_)) {
-                updUpper(upper_[op], floorDiv(b, *k));
+                updUpper(upper, floorDiv(b, *k));
             }
         } else {
             for (auto &&b : getLower(op->lhs_)) {
-                updUpper(upper_[op], floorDiv(UpperBound{b.lin()}, *k));
+                updUpper(upper, floorDiv(UpperBound{b.lin()}, *k));
             }
             for (auto &&b : getUpper(op->lhs_)) {
-                updLower(lower_[op], floorDiv(LowerBound{b.lin()}, *k));
+                updLower(lower, floorDiv(LowerBound{b.lin()}, *k));
             }
         }
     }
@@ -531,20 +539,22 @@ Expr CompUniqueBounds::visit(const CeilDiv &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::CeilDiv);
     auto op = __op.as<CeilDivNode>();
 
+    auto &lower = lower_[op];
+    auto &upper = upper_[op];
     if (auto k = getInt(op->rhs_); k.isValid()) {
         if (*k > 0) {
             for (auto &&b : getLower(op->lhs_)) {
-                updLower(lower_[op], ceilDiv(b, *k));
+                updLower(lower, ceilDiv(b, *k));
             }
             for (auto &&b : getUpper(op->lhs_)) {
-                updUpper(upper_[op], ceilDiv(b, *k));
+                updUpper(upper, ceilDiv(b, *k));
             }
         } else {
             for (auto &&b : getLower(op->lhs_)) {
-                updUpper(upper_[op], ceilDiv(UpperBound{b.lin()}, *k));
+                updUpper(upper, ceilDiv(UpperBound{b.lin()}, *k));
             }
             for (auto &&b : getUpper(op->lhs_)) {
-                updLower(lower_[op], ceilDiv(LowerBound{b.lin()}, *k));
+                updLower(lower, ceilDiv(LowerBound{b.lin()}, *k));
             }
         }
     }
@@ -569,26 +579,29 @@ Expr CompUniqueBounds::visit(const Min &_op) {
     auto __op = CompTransientBounds::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Min);
     auto op = __op.as<MinNode>();
+
     if (!isInt(dtype(op))) {
         return op;
     }
+    auto &lower = lower_[op];
+    auto &upper = upper_[op];
     for (auto &&b : getUpper(op->lhs_)) {
-        updUpper(upper_[op], b);
+        updUpper(upper, b);
     }
     for (auto &&b : getUpper(op->rhs_)) {
-        updUpper(upper_[op], b);
+        updUpper(upper, b);
     }
     for (auto &&b1 : getLower(op->lhs_)) {
         for (auto &&b2 : getLower(op->rhs_)) {
             if (b1.lin().coeff_.empty() && b2.lin().coeff_.empty()) {
-                updLower(lower_[op],
+                updLower(lower,
                          LinearExpr<Rational<int>>{
                              {}, std::min(b1.lin().bias_, b2.lin().bias_)});
             }
         }
     }
-    updLower(lower_[op], LowerBound{op});
-    updUpper(upper_[op], UpperBound{op});
+    updLower(lower, LowerBound{op});
+    updUpper(upper, UpperBound{op});
     return op;
 }
 
@@ -596,26 +609,29 @@ Expr CompUniqueBounds::visit(const Max &_op) {
     auto __op = CompTransientBounds::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Max);
     auto op = __op.as<MaxNode>();
+
     if (!isInt(dtype(op))) {
         return op;
     }
+    auto &lower = lower_[op];
+    auto &upper = upper_[op];
     for (auto &&b : getLower(op->lhs_)) {
-        updLower(lower_[op], b);
+        updLower(lower, b);
     }
     for (auto &&b : getLower(op->rhs_)) {
-        updLower(lower_[op], b);
+        updLower(lower, b);
     }
     for (auto &&b1 : getUpper(op->lhs_)) {
         for (auto &&b2 : getUpper(op->rhs_)) {
             if (b1.lin().coeff_.empty() && b2.lin().coeff_.empty()) {
-                updUpper(upper_[op],
+                updUpper(upper,
                          LinearExpr<Rational<int>>{
                              {}, std::max(b1.lin().bias_, b2.lin().bias_)});
             }
         }
     }
-    updLower(lower_[op], LowerBound{op});
-    updUpper(upper_[op], UpperBound{op});
+    updLower(lower, LowerBound{op});
+    updUpper(upper, UpperBound{op});
     return op;
 }
 

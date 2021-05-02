@@ -24,14 +24,64 @@ commonDenominator(const LinearExpr<Rational<int>> &_lin) {
     return lin;
 }
 
-static Expr linToExprNumerator(const LinearExpr<Rational<int>> &lin) {
-    Expr b = makeIntConst(lin.bias_.p_);
-
+static Expr linToExprDivisible(const LinearExpr<Rational<int>> &lin) {
+    Expr ret;
     for (auto &&item : lin.coeff_) {
         auto k = item.second.k_;
         auto a = deepCopy(item.second.a_);
 
-        if (k == 0) {
+        if (k == 0 || k.p_ % k.q_ != 0) {
+            continue;
+        }
+        Expr x;
+        if (a->nodeType() == ASTNodeType::IntConst) {
+            x = makeIntConst(k.p_ / k.q_ * a.as<IntConstNode>()->val_);
+        } else if (k.p_ / k.q_ == 1) {
+            x = a;
+        } else {
+            x = makeMul(makeIntConst(k.p_ / k.q_), a);
+        }
+
+        if (x->nodeType() == ASTNodeType::IntConst &&
+            x.as<IntConstNode>()->val_ == 0) {
+            // do nothing
+        } else if (!ret.isValid()) {
+            ret = x;
+        } else if (x->nodeType() == ASTNodeType::IntConst &&
+                   ret->nodeType() == ASTNodeType::IntConst) {
+            ret = makeIntConst(x.as<IntConstNode>()->val_ +
+                               ret.as<IntConstNode>()->val_);
+        } else {
+            ret = makeAdd(ret, x);
+        }
+    }
+
+    if (lin.bias_.p_ % lin.bias_.q_ == 0) {
+        Expr b = makeIntConst(lin.bias_.p_ / lin.bias_.q_);
+        if (b->nodeType() == ASTNodeType::IntConst &&
+            b.as<IntConstNode>()->val_ == 0) {
+            // do nothing
+        } else if (!ret.isValid()) {
+            ret = b;
+        } else if (b->nodeType() == ASTNodeType::IntConst &&
+                   ret->nodeType() == ASTNodeType::IntConst) {
+            ret = makeIntConst(b.as<IntConstNode>()->val_ +
+                               ret.as<IntConstNode>()->val_);
+        } else {
+            ret = makeAdd(ret, b);
+        }
+    }
+
+    return ret;
+}
+
+static Expr linToExprNumerator(const LinearExpr<Rational<int>> &lin) {
+    Expr ret;
+    for (auto &&item : lin.coeff_) {
+        auto k = item.second.k_;
+        auto a = deepCopy(item.second.a_);
+
+        if (k == 0 || k.p_ % k.q_ == 0) {
             continue;
         }
         Expr x;
@@ -44,64 +94,36 @@ static Expr linToExprNumerator(const LinearExpr<Rational<int>> &lin) {
         }
 
         if (x->nodeType() == ASTNodeType::IntConst &&
-            b->nodeType() == ASTNodeType::IntConst) {
-            x = makeIntConst(x.as<IntConstNode>()->val_ +
-                             b.as<IntConstNode>()->val_);
-        } else if (b->nodeType() == ASTNodeType::IntConst &&
-                   b.as<IntConstNode>()->val_ == 0) {
+            x.as<IntConstNode>()->val_ == 0) {
             // do nothing
+        } else if (!ret.isValid()) {
+            ret = x;
+        } else if (x->nodeType() == ASTNodeType::IntConst &&
+                   ret->nodeType() == ASTNodeType::IntConst) {
+            ret = makeIntConst(x.as<IntConstNode>()->val_ +
+                               ret.as<IntConstNode>()->val_);
         } else {
-            x = makeAdd(x, b);
+            ret = makeAdd(ret, x);
         }
-
-        b = std::move(x);
     }
 
-    return b;
-}
-
-template <class T> static T addImpl(const T &b1, const T &b2) {
-    typename std::remove_const_t<std::remove_reference_t<decltype(b1.lin())>>
-        ret;
-    ret.coeff_.reserve(b1.lin().coeff_.size() + b2.lin().coeff_.size());
-    ret.coeff_.insert(ret.coeff_.end(), b1.lin().coeff_.begin(),
-                      b1.lin().coeff_.end());
-    ret.coeff_.insert(ret.coeff_.end(), b2.lin().coeff_.begin(),
-                      b2.lin().coeff_.end());
-    ret.bias_ = b1.lin().bias_ + b2.lin().bias_;
-    ret.sortCoeff();
-    return T(std::move(ret));
-}
-
-template <class T, class U> static T subImpl(const T &b1, const U &b2) {
-    typename std::remove_const_t<std::remove_reference_t<decltype(b1.lin())>>
-        ret;
-    ret.coeff_.reserve(b1.lin().coeff_.size() + b2.lin().coeff_.size());
-    ret.coeff_.insert(ret.coeff_.end(), b1.lin().coeff_.begin(),
-                      b1.lin().coeff_.end());
-    ret.coeff_.insert(ret.coeff_.end(), b2.lin().coeff_.begin(),
-                      b2.lin().coeff_.end());
-    for (auto it = ret.coeff_.begin() + b1.lin().coeff_.size();
-         it != ret.coeff_.end(); it++) {
-        it->second.k_ = -it->second.k_;
+    if (lin.bias_.p_ % lin.bias_.q_ != 0) {
+        Expr b = makeIntConst(lin.bias_.p_);
+        if (b->nodeType() == ASTNodeType::IntConst &&
+            b.as<IntConstNode>()->val_ == 0) {
+            // do nothing
+        } else if (!ret.isValid()) {
+            ret = b;
+        } else if (b->nodeType() == ASTNodeType::IntConst &&
+                   ret->nodeType() == ASTNodeType::IntConst) {
+            ret = makeIntConst(b.as<IntConstNode>()->val_ +
+                               ret.as<IntConstNode>()->val_);
+        } else {
+            ret = makeAdd(ret, b);
+        }
     }
-    ret.bias_ = b1.lin().bias_ - b2.lin().bias_;
-    ret.sortCoeff();
-    return T(std::move(ret));
-}
 
-template <class T> static T mulImpl(const T &b, int k) {
-    auto ret = b.lin();
-    if (k == 0) {
-        ret.coeff_.clear();
-        ret.bias_ = 0;
-        return ret;
-    }
-    for (auto &&item : ret.coeff_) {
-        item.second.k_ *= k;
-    }
-    ret.bias_ *= k;
-    return T(std::move(ret));
+    return ret;
 }
 
 const Expr &UpperBound::expr() {
@@ -109,14 +131,20 @@ const Expr &UpperBound::expr() {
         return expr_;
     }
     auto cdLin = commonDenominator(lin_);
-    expr_ = linToExprNumerator(cdLin);
-    if (cdLin.bias_.q_ != 1) {
-        if (expr_->nodeType() == ASTNodeType::IntConst) {
-            expr_ = makeIntConst(
-                floorDiv(expr_.as<IntConstNode>()->val_, cdLin.bias_.q_));
+    auto divisible = linToExprDivisible(cdLin);
+    auto nonDivisible = linToExprNumerator(cdLin);
+    if (nonDivisible.isValid()) {
+        if (nonDivisible->nodeType() == ASTNodeType::IntConst) {
+            nonDivisible = makeIntConst(floorDiv(
+                nonDivisible.as<IntConstNode>()->val_, cdLin.bias_.q_));
         } else {
-            expr_ = makeFloorDiv(expr_, makeIntConst(cdLin.bias_.q_));
+            nonDivisible =
+                makeFloorDiv(nonDivisible, makeIntConst(cdLin.bias_.q_));
         }
+        expr_ = divisible.isValid() ? makeAdd(divisible, nonDivisible)
+                                    : nonDivisible;
+    } else {
+        expr_ = divisible.isValid() ? divisible : makeIntConst(0);
     }
     return expr_;
 }
@@ -126,34 +154,44 @@ const Expr &LowerBound::expr() {
         return expr_;
     }
     auto cdLin = commonDenominator(lin_);
-    expr_ = linToExprNumerator(cdLin);
-    if (cdLin.bias_.q_ != 1) {
-        if (expr_->nodeType() == ASTNodeType::IntConst) {
-            expr_ = makeIntConst(
-                ceilDiv(expr_.as<IntConstNode>()->val_, cdLin.bias_.q_));
+    auto divisible = linToExprDivisible(cdLin);
+    auto nonDivisible = linToExprNumerator(cdLin);
+    if (nonDivisible.isValid()) {
+        if (nonDivisible->nodeType() == ASTNodeType::IntConst) {
+            nonDivisible = makeIntConst(
+                ceilDiv(nonDivisible.as<IntConstNode>()->val_, cdLin.bias_.q_));
         } else {
-            expr_ = makeCeilDiv(expr_, makeIntConst(cdLin.bias_.q_));
+            nonDivisible =
+                makeCeilDiv(nonDivisible, makeIntConst(cdLin.bias_.q_));
         }
+        expr_ = divisible.isValid() ? makeAdd(divisible, nonDivisible)
+                                    : nonDivisible;
+    } else {
+        expr_ = divisible.isValid() ? divisible : makeIntConst(0);
     }
     return expr_;
 }
 
 UpperBound add(const UpperBound &b1, const UpperBound &b2) {
-    return addImpl(b1, b2);
+    return add(b1.lin(), b2.lin());
 }
 LowerBound add(const LowerBound &b1, const LowerBound &b2) {
-    return addImpl(b1, b2);
+    return add(b1.lin(), b2.lin());
 }
 
 UpperBound sub(const UpperBound &b1, const LowerBound &b2) {
-    return subImpl(b1, b2);
+    return sub(b1.lin(), b2.lin());
 }
 LowerBound sub(const LowerBound &b1, const UpperBound &b2) {
-    return subImpl(b1, b2);
+    return sub(b1.lin(), b2.lin());
 }
 
-UpperBound mul(const UpperBound &b, int k) { return mulImpl(b, k); }
-LowerBound mul(const LowerBound &b, int k) { return mulImpl(b, k); }
+UpperBound mul(const UpperBound &b, int k) {
+    return mul(b.lin(), Rational<int>(k));
+}
+LowerBound mul(const LowerBound &b, int k) {
+    return mul(b.lin(), Rational<int>(k));
+}
 
 UpperBound floorDiv(const UpperBound &b, int k) {
     auto ret = b.lin();
@@ -189,6 +227,32 @@ LowerBound ceilDiv(const LowerBound &b, int k) {
     }
     ret.bias_ /= k;
     return LowerBound(std::move(ret));
+}
+
+bool alwaysLT(const UpperBound &b1, const LowerBound &b2) {
+    // Case 1: lower and upper round to some const
+    if (b1.lin().coeff_.empty() && b2.lin().coeff_.empty() &&
+        floorDiv(b1.lin().bias_.p_, b1.lin().bias_.q_) <
+            ceilDiv(b2.lin().bias_.p_, b2.lin().bias_.q_)) {
+        return true;
+    }
+
+    // Case 2: upper < lower
+    return b1.lin().bias_ < b2.lin().bias_ &&
+           hasIdenticalCoeff(b1.lin(), b2.lin());
+}
+bool alwaysLE(const UpperBound &b1, const LowerBound &b2) {
+    // Case 1: lower and upper round to some const
+    if (b1.lin().coeff_.empty() && b2.lin().coeff_.empty() &&
+        floorDiv(b1.lin().bias_.p_, b1.lin().bias_.q_) <=
+            ceilDiv(b2.lin().bias_.p_, b2.lin().bias_.q_)) {
+        return true;
+    }
+
+    // Case 2: upper - lower < 1
+    // E.g. x <= a + 2/3 and y >= a ==> (int)y <= (int)x
+    return b1.lin().bias_ - b2.lin().bias_ < 1 &&
+           hasIdenticalCoeff(b1.lin(), b2.lin());
 }
 
 } // namespace ir

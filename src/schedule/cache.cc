@@ -136,8 +136,8 @@ Stmt MakeFillAndFlush::visitStmt(
             }
             for (int i = nDim - 1; i >= 0; i--) {
                 fill = makeFor("", iters[i], rRange.lower_[i],
-                               makeAdd(rRange.lower_[i], rRange.len_[i]), "",
-                               false, fill);
+                               makeAdd(rRange.lower_[i], rRange.len_[i]),
+                               rRange.len_[i], "", false, fill);
             }
         } else {
             fill = makeStmtSeq("", {});
@@ -153,8 +153,8 @@ Stmt MakeFillAndFlush::visitStmt(
             }
             for (int i = nDim - 1; i >= 0; i--) {
                 flush = makeFor("", iters[i], wRange.lower_[i],
-                                makeAdd(wRange.lower_[i], wRange.len_[i]), "",
-                                false, flush);
+                                makeAdd(wRange.lower_[i], wRange.len_[i]),
+                                wRange.len_[i], "", false, flush);
             }
         } else {
             flush = makeStmtSeq("", {});
@@ -215,8 +215,8 @@ Stmt MakeInitAndReduce::visitStmt(
         }
         for (int i = nDim - 1; i >= 0; i--) {
             init = makeFor("", iters[i], range.lower_[i],
-                           makeAdd(range.lower_[i], range.len_[i]), "", false,
-                           init);
+                           makeAdd(range.lower_[i], range.len_[i]),
+                           range.len_[i], "", false, init);
         }
 
         Stmt reduce = makeReduceTo("", oldVar_, indices, reduce_->op_,
@@ -227,8 +227,8 @@ Stmt MakeInitAndReduce::visitStmt(
         }
         for (int i = nDim - 1; i >= 0; i--) {
             reduce = makeFor("", iters[i], range.lower_[i],
-                             makeAdd(range.lower_[i], range.len_[i]), "", false,
-                             reduce);
+                             makeAdd(range.lower_[i], range.len_[i]),
+                             range.len_[i], "", false, reduce);
         }
 
         op = makeStmtSeq("", {init, op, reduce});

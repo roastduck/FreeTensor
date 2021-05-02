@@ -29,14 +29,13 @@ bool BlendPass::checkVari(const Expr &expr) const {
 
 Stmt BlendPass::visit(const For &op) {
     if (op->id() == loop_) {
-        ASSERT(op->infoLen_.isValid());
-        if (op->infoLen_->nodeType() != ASTNodeType::IntConst) {
+        if (op->len_->nodeType() != ASTNodeType::IntConst) {
             throw InvalidSchedule("The length of " + loop_ +
                                   " should be a constant");
         }
         iter_ = op->iter_;
         begin_ = op->begin_;
-        len_ = op->infoLen_.as<IntConstNode>()->val_;
+        len_ = op->len_.as<IntConstNode>()->val_;
         inLoop_ = true;
         auto body = (*this)(op->body_);
         inLoop_ = false;
@@ -44,7 +43,7 @@ Stmt BlendPass::visit(const For &op) {
     } else {
         if (inLoop_) {
             Stmt ret;
-            if (!envStack_.empty() || checkVari(op->infoLen_)) {
+            if (!envStack_.empty() || checkVari(op->len_)) {
                 envStack_.emplace_back(op);
                 ret = (*this)(op->body_);
                 envStack_.pop_back();
@@ -53,9 +52,9 @@ Stmt BlendPass::visit(const For &op) {
                 offset_[op->iter_] = op->begin_;
                 ret = (*this)(op->body_);
                 offset_.erase(op->iter_);
-                ret = makeFor(op->id(), op->iter_, makeIntConst(0),
-                              (*this)(op->infoLen_), op->parallel_, op->unroll_,
-                              std::move(ret));
+                auto len = (*this)(op->len_);
+                ret = makeFor(op->id(), op->iter_, makeIntConst(0), len, len,
+                              op->parallel_, op->unroll_, std::move(ret));
             }
             return ret;
         } else {

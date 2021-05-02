@@ -28,6 +28,7 @@ Stmt ShrinkFor::visit(const For &_op) {
     if (newEndMinus1.isValid()) {
         op->end_ = makeAdd(newEndMinus1, makeIntConst(1));
     }
+    op->len_ = makeSub(op->end_, op->begin_);
 
     return op;
 }

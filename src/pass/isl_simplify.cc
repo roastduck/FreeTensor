@@ -42,7 +42,6 @@ Expr ISLCompBounds::visitExpr(
         ISLExpr &e = islExprs_.at(op);
         auto tr = transient(op);
         for (auto &&first : tr.lower_) {
-            // (*this)(first) already been called by CompUniqueBounds
             if (islExprs_.count(first)) {
                 auto &&bound = islExprs_.at(first);
                 for (auto &&var : bound.var_) {
@@ -52,7 +51,6 @@ Expr ISLCompBounds::visitExpr(
             }
         }
         for (auto &&second : tr.upper_) {
-            // (*this)(second) already been called by CompUniqueBounds
             if (islExprs_.count(second)) {
                 auto &&bound = islExprs_.at(second);
                 for (auto &&var : bound.var_) {
