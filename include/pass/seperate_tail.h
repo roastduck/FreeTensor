@@ -72,8 +72,8 @@ class SeperateTail : public Mutator {
 
     std::unordered_set<std::string> def_;
     std::vector<std::vector<If>> ifStack_;
+    std::vector<bool> hasVarDefStack_;
     AnalyzeLinear analyzeLinear_;
-    std::unordered_set<Stmt> hasVarDef_;
 
   public:
     SeperateTail(const std::unordered_set<std::string> &candidates)
@@ -91,8 +91,6 @@ class SeperateTail : public Mutator {
     Stmt visit(const If &op) override;
     Stmt visit(const For &op) override;
     Stmt visit(const VarDef &op) override;
-    Stmt visit(const StmtSeq &op) override;
-    Stmt visit(const Assert &op) override;
 };
 
 Stmt seperateTail(const Stmt &op);

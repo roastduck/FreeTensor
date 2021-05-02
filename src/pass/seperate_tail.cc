@@ -133,27 +133,18 @@ Stmt SeperateTail::visit(const If &op) {
             item.emplace_back(op); // Use the old one
         }
     }
-    auto ret = Mutator::visit(op);
-    if (hasVarDef_.count(op->thenCase_) ||
-        (op->elseCase_.isValid() && hasVarDef_.count(op->elseCase_))) {
-        hasVarDef_.insert(ret);
-    }
-    return ret;
+    return Mutator::visit(op);
 }
 
 Stmt SeperateTail::visit(const For &_op) {
     def_.insert(_op->iter_);
     ifStack_.emplace_back();
+    hasVarDefStack_.emplace_back(false);
 
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::For);
     auto op = __op.as<ForNode>();
-
-    if (hasVarDef_.count(op->body_)) {
-        hasVarDef_.insert(op);
-        return op;
-    }
-
+    bool hasVarDef = hasVarDefStack_.back();
     std::vector<If> ifList;
     for (auto &&branch : ifStack_.back()) {
         if (checkAllDefined(def_, branch->cond_)) {
@@ -163,6 +154,11 @@ Stmt SeperateTail::visit(const For &_op) {
 
     def_.erase(_op->iter_);
     ifStack_.pop_back();
+    hasVarDefStack_.pop_back();
+
+    if (hasVarDef) {
+        return op;
+    }
 
     if (!op->parallel_.empty()) {
         return op;
@@ -208,31 +204,10 @@ Stmt SeperateTail::visit(const VarDef &op) {
     def_.insert(op->name_);
     auto ret = Mutator::visit(op);
     def_.erase(op->name_);
-    hasVarDef_.insert(ret);
+    for (auto it = hasVarDefStack_.begin(); it != hasVarDefStack_.end(); it++) {
+        *it = true;
+    }
     return ret;
-}
-
-Stmt SeperateTail::visit(const StmtSeq &_op) {
-    auto __op = Mutator::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::StmtSeq);
-    auto op = __op.as<StmtSeqNode>();
-    for (auto &&stmt : op->stmts_) {
-        if (hasVarDef_.count(stmt)) {
-            hasVarDef_.insert(op);
-            break;
-        }
-    }
-    return op;
-}
-
-Stmt SeperateTail::visit(const Assert &_op) {
-    auto __op = Mutator::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::Assert);
-    auto op = __op.as<AssertNode>();
-    if (hasVarDef_.count(op->body_)) {
-        hasVarDef_.insert(op);
-    }
-    return op;
 }
 
 Stmt seperateTail(const Stmt &_op) {
