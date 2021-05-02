@@ -2,8 +2,6 @@
 #include <climits>
 #include <unordered_set>
 
-#include <iostream>
-
 #include <analyze/hash.h>
 #include <except.h>
 #include <math/utils.h>
