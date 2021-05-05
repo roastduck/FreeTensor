@@ -1,4 +1,4 @@
-from ffi import AccessType, MemType, DataType
+from ffi import AccessType, MemType, DataType, ASTNodeType
 from ffi import InvalidSchedule, InvalidProgram, DriverError
 
 from .nodes import pop_ast, Var, VarDef, For, If, Else, Assert, MarkNid, NamedScope, Eval, Any
