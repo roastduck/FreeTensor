@@ -256,8 +256,8 @@ def test_collaborative_fetch():
     fill_b, _, _ = s.cache(k1, "b", "gpu/shared")
     s.parallelize(i, "threadIdx.y")
     s.parallelize(j, "threadIdx.x")
-    s.parallelize(s.find(lambda x: x.type() == "For" and x.node().body.nid == fill_a), "threadIdx.x")
-    s.parallelize(s.find(lambda x: x.type() == "For" and x.node().body.nid == fill_b), "threadIdx.y")
+    s.parallelize(s.find(lambda x: x.node_type() == ir.ASTNodeType.For and x.node().body.nid == fill_a), "threadIdx.x")
+    s.parallelize(s.find(lambda x: x.node_type() == ir.ASTNodeType.For and x.node().body.nid == fill_b), "threadIdx.y")
     ast = ir.lower(s.ast(), target)
     print(ast)
 

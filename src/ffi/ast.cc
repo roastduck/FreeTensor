@@ -11,6 +11,43 @@ namespace ir {
 using namespace pybind11::literals;
 
 void init_ffi_ast(py::module_ &m) {
+    py::enum_<ASTNodeType>(m, "ASTNodeType")
+        .value("Any", ASTNodeType::Any)
+        .value("AnyExpr", ASTNodeType::AnyExpr)
+        .value("StmtSeq", ASTNodeType::StmtSeq)
+        .value("VarDef", ASTNodeType::VarDef)
+        .value("Var", ASTNodeType::Var)
+        .value("Store", ASTNodeType::Store)
+        .value("Load", ASTNodeType::Load)
+        .value("ReduceTo", ASTNodeType::ReduceTo)
+        .value("IntConst", ASTNodeType::IntConst)
+        .value("FloatConst", ASTNodeType::FloatConst)
+        .value("BoolConst", ASTNodeType::BoolConst)
+        .value("Add", ASTNodeType::Add)
+        .value("Sub", ASTNodeType::Sub)
+        .value("Mul", ASTNodeType::Mul)
+        .value("RealDiv", ASTNodeType::RealDiv)
+        .value("FloorDiv", ASTNodeType::FloorDiv)
+        .value("CeilDiv", ASTNodeType::CeilDiv)
+        .value("RoundTowards0Div", ASTNodeType::RoundTowards0Div)
+        .value("Mod", ASTNodeType::Mod)
+        .value("Min", ASTNodeType::Min)
+        .value("Max", ASTNodeType::Max)
+        .value("LT", ASTNodeType::LT)
+        .value("LE", ASTNodeType::LE)
+        .value("GT", ASTNodeType::GT)
+        .value("GE", ASTNodeType::GE)
+        .value("EQ", ASTNodeType::EQ)
+        .value("NE", ASTNodeType::NE)
+        .value("LAnd", ASTNodeType::LAnd)
+        .value("LOr", ASTNodeType::LOr)
+        .value("LNot", ASTNodeType::LNot)
+        .value("For", ASTNodeType::For)
+        .value("If", ASTNodeType::If)
+        .value("Assert", ASTNodeType::Assert)
+        .value("Intrinsic", ASTNodeType::Intrinsic)
+        .value("Eval", ASTNodeType::Eval);
+
     py::class_<ASTNode, AST> pyAST(m, "AST");
     py::class_<StmtNode, Stmt> pyStmt(m, "Stmt", pyAST);
     py::class_<ExprNode, Expr> pyExpr(m, "Expr", pyAST);

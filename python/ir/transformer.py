@@ -72,7 +72,7 @@ class ASTContextStack:
         name_id = self.now_var_id.get(name)
         if prefetch and name_id is None:
             return None
-        assert name_id is not None, "Variable not found"
+        assert name_id is not None, "Variable %s not found" % name
         if name_id != 0:
             return '___cache_' + name + '_' + str(name_id)
         return name
@@ -295,7 +295,7 @@ class ASTTransformer(ast.NodeTransformer):
                     ret_type = parseDType(item.value.expr_str)
                 node.expr_ptr = ffi.makeIntrinsic(args[0].expr_str, tuple(expr_args), ret_type)
             else:
-                assert False, "Function not implemented"
+                assert False, "Function %s not implemented" % func_name
         else:
             assert False, "External call not implemented"
         return node

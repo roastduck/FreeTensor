@@ -24,8 +24,8 @@ class Cursor {
     Cursor() {}
 
     const Stmt &node() const { return stack_.top()->data_; }
-
     const std::string &id() const { return node()->id(); }
+    ASTNodeType nodeType() const { return node()->nodeType(); }
 
     Stmt getParentById(const std::string &id) const;
 
