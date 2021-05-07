@@ -539,16 +539,16 @@ void Schedule::parallelize(const std::string &loop,
     auto ast = ast_;
     Parallelize mutator(loop, parallel);
     try {
-        ast = mutator(ast);
-        if (!mutator.done()) {
-            throw InvalidSchedule("Loop " + loop + " not found");
-        }
         ast = makeReduction(ast);
         findDeps(ast, {{{loop, DepDirection::Normal}}},
                  [&](const Dependency &d) {
                      throw InvalidSchedule(
                          dep2Str(loop, d.var_, d.later(), d.earlier()));
                  });
+        ast = mutator(ast);
+        if (!mutator.done()) {
+            throw InvalidSchedule("Loop " + loop + " not found");
+        }
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid parallelize(" + loop + ", " + parallel +
                               "): " + e.what());

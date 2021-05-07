@@ -28,11 +28,14 @@ Stmt makeAtomic(const Stmt &_op) {
     FindAllParallel finder;
     finder(op);
     for (auto &&loop : finder.results()) {
-        cond.push_back({{loop, DepDirection::Normal}});
+        cond.push_back({{loop, DepDirection::Different}});
     }
 
     std::unordered_set<std::string> toAlter;
     auto filter = [](const AccessPoint &later, const AccessPoint &earlier) {
+        if (later.buffer_->mtype() == MemType::GPULocal) {
+            return false; // TODO: Make this statement device agnostic
+        }
         return later.op_->nodeType() == ASTNodeType::ReduceTo &&
                earlier.op_->nodeType() == ASTNodeType::ReduceTo;
     };

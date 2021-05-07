@@ -120,6 +120,23 @@ Cursor Cursor::outer() const {
     return ret;
 }
 
+Cursor lca(const Cursor &lhs, const Cursor &rhs) {
+    auto l = lhs.stack_, r = rhs.stack_;
+    while (l.size() > r.size()) {
+        l.pop();
+    }
+    while (r.size() > l.size()) {
+        r.pop();
+    }
+    while (!l.empty() && l.top()->data_->id() != r.top()->data_->id()) {
+        l.pop();
+        r.pop();
+    }
+    Cursor ret;
+    ret.stack_ = l;
+    return ret;
+}
+
 void VisitorWithCursor::visitStmt(
     const Stmt &op, const std::function<void(const Stmt &)> &visitNode) {
     cursor_.push(op);

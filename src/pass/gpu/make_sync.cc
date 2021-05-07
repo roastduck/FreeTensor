@@ -2,141 +2,137 @@
 #include <climits>
 #include <sstream>
 
+#include <analyze/deps.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/gpu/make_sync.h>
-#include <pass/simplify.h>
 
 namespace ir {
 
 namespace gpu {
 
-static Stmt insertIntrin(const Stmt &op, const std::string &front,
-                         const std::string &back) {
-    if (front.empty() && back.empty()) {
-        return op;
+void FindAllThreads::visit(const For &op) {
+    if (op->parallel_ == "threadIdx.x") {
+        ASSERT(op->len_->nodeType() == ASTNodeType::IntConst);
+        thx_ = op->len_.as<IntConstNode>()->val_;
+    } else if (op->parallel_ == "threadIdx.y") {
+        ASSERT(op->len_->nodeType() == ASTNodeType::IntConst);
+        thy_ = op->len_.as<IntConstNode>()->val_;
+    } else if (op->parallel_ == "threadIdx.z") {
+        ASSERT(op->len_->nodeType() == ASTNodeType::IntConst);
+        thz_ = op->len_.as<IntConstNode>()->val_;
     }
-    std::vector<Stmt> stmts = {op};
-    if (!front.empty()) {
-        stmts.insert(stmts.begin(),
-                     makeEval("", makeIntrinsic(front, {}, DataType::Void)));
+    Visitor::visit(op);
+    if (op->parallel_ == "threadIdx.x") {
+        results_.emplace_back(ThreadInfo{op, thx_ <= warpSize_});
+    } else if (op->parallel_ == "threadIdx.y") {
+        results_.emplace_back(ThreadInfo{op, thx_ * thy_ <= warpSize_});
+    } else if (op->parallel_ == "threadIdx.z") {
+        results_.emplace_back(ThreadInfo{op, thx_ * thy_ <= warpSize_});
     }
-    if (!back.empty()) {
-        stmts.emplace_back(
-            makeEval("", makeIntrinsic(back, {}, DataType::Void)));
-    }
-    return makeStmtSeq("", std::move(stmts));
 }
 
-int MakeSync::getLen(const Expr &len) {
-    int ret = INT_MAX;
-    if (upper_.count(len)) {
-        for (auto b : upper_.at(len)) {
-            if (b.lin().coeff_.empty()) {
-                auto bias = b.lin().bias_;
-                ret = std::min(ret, floorDiv(bias.p_, bias.q_));
+Stmt MakeSync::visitStmt(const Stmt &op,
+                         const std::function<Stmt(const Stmt &)> &visitNode) {
+    auto ret = Mutator::visitStmt(op, visitNode);
+    bool needSyncThreads = false, needSyncWarp = false;
+    for (CrossThreadDep &dep : deps_) {
+        if (!dep.synced_ && dep.visiting_ && dep.later_.id() == op->id()) {
+            (dep.inWarp_ ? needSyncWarp : needSyncThreads) = true;
+        }
+    }
+    if (needSyncThreads) {
+        ret = makeStmtSeq("", {makeEval("", makeIntrinsic("__syncthreads()", {},
+                                                          DataType::Void)),
+                               ret});
+    } else if (needSyncWarp) {
+        ret = makeStmtSeq("", {makeEval("", makeIntrinsic("__syncwarp()", {},
+                                                          DataType::Void)),
+                               ret});
+    }
+    for (CrossThreadDep &dep : deps_) {
+        if (dep.visiting_) {
+            if (needSyncThreads) {
+                dep.synced_ = true;
             }
+            if (needSyncWarp && dep.inWarp_) {
+                dep.synced_ = true;
+            }
+        }
+    }
+    for (CrossThreadDep &dep : deps_) {
+        if (!dep.synced_ && !dep.visiting_ && dep.earlier_.id() == op->id()) {
+            dep.visiting_ = true;
         }
     }
     return ret;
 }
 
 Stmt MakeSync::visit(const For &_op) {
-    // NOTE: We need to sync both at beginning and at the end of a parallel
-    // region. Consider the following example:
-    //
-    // for i = 0 to 32 { // in a warp
-    //     shmem[...] = ...
-    //     // no syncthreads
-    // }
-    // for i = 0 to 256 { // not in a warp
-    //     __syncthreads();
-    //     ... = shmem[...]
-    // }
-
-    bool oldWarpSynced = warpSynced, oldThreadsSynced = threadsSynced;
-
-    if (_op->parallel_ == "threadIdx.x") {
-        thx = getLen(_op->len_);
-        auto __op = Mutator::visit(_op);
-        ASSERT(__op->nodeType() == ASTNodeType::For);
-        auto op = __op.as<ForNode>();
-        if (thx <= warpSize) {
-            op->body_ =
-                insertIntrin(op->body_, oldWarpSynced ? "" : "__syncwarp()",
-                             warpSynced ? "" : "__syncwarp()");
-            warpSynced = true;
-        } else {
-            op->body_ = insertIntrin(op->body_,
-                                     oldThreadsSynced ? "" : "__syncthreads()",
-                                     threadsSynced ? "" : "__syncthreads()");
-            warpSynced = threadsSynced = true;
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::For);
+    auto op = __op.as<ForNode>();
+    bool needSyncThreads = false, needSyncWarp = false;
+    for (CrossThreadDep &dep : deps_) {
+        if (!dep.synced_ && dep.visiting_ && dep.lcaLoop_.id() == op->id()) {
+            (dep.inWarp_ ? needSyncWarp : needSyncThreads) = true;
         }
-        return op;
-
-    } else if (_op->parallel_ == "threadIdx.y") {
-        thy = getLen(_op->len_);
-        auto __op = Mutator::visit(_op);
-        ASSERT(__op->nodeType() == ASTNodeType::For);
-        auto op = __op.as<ForNode>();
-        if (thx * thy <= warpSize) {
-            op->body_ =
-                insertIntrin(op->body_, oldWarpSynced ? "" : "__syncwarp()",
-                             warpSynced ? "" : "__syncwarp()");
-            warpSynced = true;
-        } else {
-            op->body_ = insertIntrin(op->body_,
-                                     oldThreadsSynced ? "" : "__syncthreads()",
-                                     threadsSynced ? "" : "__syncthreads()");
-            warpSynced = threadsSynced = true;
-        }
-        return op;
-
-    } else if (_op->parallel_ == "threadIdx.z") {
-        thz = getLen(_op->len_);
-        auto __op = Mutator::visit(_op);
-        ASSERT(__op->nodeType() == ASTNodeType::For);
-        auto op = __op.as<ForNode>();
-        if (thx * thy * thz <= warpSize) {
-            op->body_ =
-                insertIntrin(op->body_, oldWarpSynced ? "" : "__syncwarp()",
-                             warpSynced ? "" : "__syncwarp()");
-            warpSynced = true;
-        } else {
-            op->body_ = insertIntrin(op->body_,
-                                     oldThreadsSynced ? "" : "__syncthreads()",
-                                     threadsSynced ? "" : "__syncthreads()");
-            warpSynced = threadsSynced = true;
-        }
-        return op;
-
-    } else {
-        return Mutator::visit(_op);
     }
-}
-
-Expr MakeSync::visit(const Load &op) {
-    threadsSynced = warpSynced = false;
-    return Mutator::visit(op);
-}
-
-Stmt MakeSync::visit(const Store &op) {
-    threadsSynced = warpSynced = false;
-    return Mutator::visit(op);
-}
-
-Stmt MakeSync::visit(const ReduceTo &op) {
-    threadsSynced = warpSynced = false;
-    return Mutator::visit(op);
+    if (needSyncThreads) {
+        op->body_ = makeStmtSeq(
+            "", {op->body_, makeEval("", makeIntrinsic("__syncthreads()", {},
+                                                       DataType::Void))});
+    } else if (needSyncWarp) {
+        op->body_ = makeStmtSeq(
+            "", {op->body_, makeEval("", makeIntrinsic("__syncwarp()", {},
+                                                       DataType::Void))});
+    }
+    for (CrossThreadDep &dep : deps_) {
+        if (dep.visiting_) {
+            if (needSyncThreads) {
+                dep.synced_ = true;
+            }
+            if (needSyncWarp && dep.inWarp_) {
+                dep.synced_ = true;
+            }
+        }
+    }
+    return op;
 }
 
 Stmt makeSync(const Stmt &_op) {
-    Stmt op = _op;
-    std::unordered_map<Expr, std::vector<LowerBound>> lower;
-    std::unordered_map<Expr, std::vector<UpperBound>> upper;
-    std::tie(op, lower, upper) = simplifyAndGetBounds<BuiltinSimplify>(op);
-    auto ret = MakeSync(upper)(op);
-    ret = flattenStmtSeq(ret);
-    return ret;
+    auto op = _op;
+    FindAllThreads finder;
+    finder(op);
+    auto &&threads = finder.results();
+
+    std::vector<std::vector<std::pair<std::string, DepDirection>>> query;
+    query.reserve(threads.size());
+    for (auto &&thr : threads) {
+        query.push_back({{thr.loop_->id(), DepDirection::Different}});
+    }
+    std::vector<CrossThreadDep> deps;
+    auto filter = [](const AccessPoint &later, const AccessPoint &earlier) {
+        return later.buffer_->mtype() == MemType::GPUGlobal ||
+               later.buffer_->mtype() == MemType::GPUShared;
+    };
+    auto found = [&](const Dependency &d) {
+        auto i = &d.cond_ - &query[0];
+        auto lcaLoop = lca(d.later_.cursor_, d.earlier_.cursor_);
+        while (lcaLoop.hasOuter() && lcaLoop.nodeType() != ASTNodeType::For) {
+            lcaLoop = lcaLoop.outer();
+        }
+        ASSERT(lcaLoop.nodeType() == ASTNodeType::For);
+        deps.emplace_back(CrossThreadDep{d.later_.cursor_, d.earlier_.cursor_,
+                                         lcaLoop, threads.at(i).inWarp_, false,
+                                         false});
+    };
+    findDeps(op, query, found, FindDepsMode::Dep, DEP_ALL, filter, false,
+             false);
+
+    MakeSync mutator(std::move(deps));
+    op = mutator(op);
+
+    return flattenStmtSeq(op);
 }
 
 } // namespace gpu
