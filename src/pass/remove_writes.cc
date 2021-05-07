@@ -93,6 +93,9 @@ Stmt removeWrites(const Stmt &_op) {
     std::set<std::pair<Stmt, Expr>> usesWAR;
     auto filterOverwrite = [&](const AccessPoint &later,
                                const AccessPoint &earlier) {
+        if (later.op_.get() == earlier.op_.get()) {
+            return false;
+        }
         return later.op_->nodeType() == ASTNodeType::Store ||
                sameParent(later.cursor_, earlier.cursor_);
     };

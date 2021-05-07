@@ -527,10 +527,9 @@ void AnalyzeDeps::checkDep(const AccessPoint &point, const AccessPoint &other) {
     bool fullyKilled = isl_set_is_equal(pIter, pIterKilled);
     isl_set_free(pIter);
     isl_set_free(pIterKilled);
-    bool injective = isl_map_is_injective(nearest);
 
     if (isl_map_is_empty(nearest) ||
-        (mode_ == FindDepsMode::Kill && (!fullyKilled || !injective))) {
+        (mode_ == FindDepsMode::Kill && !fullyKilled)) {
         isl_map_free(nearest);
         return;
     }
