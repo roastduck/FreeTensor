@@ -162,9 +162,6 @@ void CodeGenCUDA::visit(const VarDef &op) {
 
             markDef(normalizeId(op->name_), op->buffer_);
 
-            makeIndent();
-            beginBlock();
-
             // e.g.
             // float (*x)[5][5];  // CUDA does not allow "restrict" here
             // cudaMalloc(&x, 5 * 5 * 5 * sizeof(float)); ...; cudaFree(x);
@@ -192,15 +189,11 @@ void CodeGenCUDA::visit(const VarDef &op) {
 
             makeIndent();
             os() << "cudaFree(" << normalizeId(op->name_) << ");" << std::endl;
-            endBlock();
             break;
         }
 
         case MemType::GPUShared: {
             markDef(normalizeId(op->name_), op->buffer_);
-
-            makeIndent();
-            beginBlock();
 
             makeIndent();
 
@@ -221,7 +214,6 @@ void CodeGenCUDA::visit(const VarDef &op) {
             os() << ";" << std::endl;
 
             (*this)(op->body_);
-            endBlock();
             break;
         }
 

@@ -7,11 +7,21 @@
 
 namespace ir {
 
+void CodeGenC::visit(const StmtSeq &op) {
+    for (auto &&stmt : op->stmts_) {
+        if (stmt->nodeType() == ASTNodeType::VarDef) {
+            makeIndent();
+            beginBlock();
+            (*this)(stmt);
+            endBlock();
+        } else {
+            (*this)(stmt);
+        }
+    }
+}
+
 void CodeGenC::visit(const VarDef &op) {
     markDef(normalizeId(op->name_), op->buffer_);
-
-    makeIndent();
-    beginBlock();
 
     makeIndent();
     auto &&tensor = op->buffer_->tensor();
@@ -115,7 +125,6 @@ void CodeGenC::visit(const VarDef &op) {
     }
 
     (*this)(op->body_);
-    endBlock();
 }
 
 void CodeGenC::visit(const Var &op) {
