@@ -222,7 +222,7 @@ def test_correct_dependency_unable_resolve():
     ast_ = s.ast() # Should not changed
     assert ast_.match(ast)
 
-def test_correct_dependency_no_need_to_modify():
+def test_correct_dependency_no_need_to_modify_no_dep():
     with ir.VarDef([
             ("x0", (4, 4), "int32", "input", "cpu"),
             ("x1", (4, 4), "int32", "input", "cpu"),
@@ -254,6 +254,41 @@ def test_correct_dependency_no_need_to_modify():
                 with ir.For("j", 0, 4) as j:
                     with ir.For("k", 0, 4) as k:
                         y[i, j, k] = b[k] * x1[i, j]
+    std = ir.pop_ast()
+
+    assert std.match(ast)
+
+def test_correct_dependency_no_need_to_modify_broadcast():
+    with ir.VarDef([
+            ("x0", (4, 4), "int32", "input", "cpu"),
+            ("x1", (4, 4), "int32", "input", "cpu"),
+            ("y", (4, 4, 4), "int32", "output", "cpu")]) as (x0, x1, y):
+        with ir.For("i", 0, 4, nid="L1") as i:
+            with ir.For("j", 0, 4, nid="L2") as j:
+                with ir.VarDef("buf", (), "int32", "cache", "cpu") as b:
+                    ir.MarkNid("S0")
+                    b[()] = 2
+                    with ir.For("k", 0, 4, nid="L3") as k:
+                        y[i, j, k] = b[()] * x1[i, j]
+    ast = ir.pop_ast()
+    print(ast)
+    s = ir.Schedule(ast)
+    s.fission("L2", "S0")
+    ast = s.ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([
+            ("x0", (4, 4), "int32", "input", "cpu"),
+            ("x1", (4, 4), "int32", "input", "cpu"),
+            ("y", (4, 4, 4), "int32", "output", "cpu")]) as (x0, x1, y):
+        with ir.For("i", 0, 4) as i:
+            with ir.VarDef("buf", (), "int32", "cache", "cpu") as b:
+                b[()] = 2
+                with ir.For("j", 0, 4) as j:
+                    with ir.For("k", 0, 4) as k:
+                        y[i, j, k] = b[()] * x1[i, j]
     std = ir.pop_ast()
 
     assert std.match(ast)
