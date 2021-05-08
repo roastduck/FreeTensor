@@ -179,10 +179,10 @@ Schedule::fission(const std::string &loop, const std::string &after,
         auto isRealWrite = [&](const std::string &loop, const AST &op) -> bool {
             if (op->nodeType() == ASTNodeType::Store) {
                 Expr expr = op.as<StoreNode>()->expr_;
-                return isVariant(variantExpr, expr, loop);
+                return isVariant(variantExpr.first, expr, loop);
             } else if (op->nodeType() == ASTNodeType::ReduceTo) {
                 Expr expr = op.as<ReduceToNode>()->expr_;
-                return isVariant(variantExpr, expr, loop);
+                return isVariant(variantExpr.first, expr, loop);
             } else {
                 return false;
             }
@@ -333,7 +333,8 @@ void Schedule::blend(const std::string &loop) {
         };
         findDeps(ast, cond, found);
 
-        ast = BlendPass(loop, findLoopVariance(ast))(ast);
+        auto loopVari = findLoopVariance(ast);
+        ast = BlendPass(loop, loopVari.first, loopVari.second)(ast);
         ast = flattenStmtSeq(ast);
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid blend(" + loop + "): " + e.what());

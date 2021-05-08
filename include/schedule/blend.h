@@ -36,19 +36,15 @@ class BlendPass : public Mutator {
     std::vector<Stmt> envStack_;
     std::vector<VarDef> defs_;
     std::unordered_map<std::string, Expr> offset_;
-    const std::unordered_map<
-        Expr, std::unordered_map<std::string, LoopVariability>> &loopVari_;
+    const LoopVariExprMap &exprVari_;
+    const LoopVariUniqVarMap &varVari_;
 
   public:
-    BlendPass(
-        const std::string &loop,
-        const std::unordered_map<
-            Expr, std::unordered_map<std::string, LoopVariability>> &loopVari)
-        : loop_(loop), loopVari_(loopVari) {}
+    BlendPass(const std::string &loop, const LoopVariExprMap &exprVari,
+              const LoopVariUniqVarMap &varVari)
+        : loop_(loop), exprVari_(exprVari), varVari_(varVari) {}
 
   private:
-    bool checkVari(const Expr &expr) const;
-
     template <class T> Stmt visitLeafStmt(const T &op) {
         if (inLoop_) {
             std::vector<Stmt> stmts;

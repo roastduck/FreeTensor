@@ -188,7 +188,7 @@ Stmt removeWrites(const Stmt &_op) {
 
     // Type 2
     auto variantExpr = findLoopVariance(op);
-    FindLoopInvariantWrites finder(variantExpr);
+    FindLoopInvariantWrites finder(variantExpr.first);
     finder(op);
     for (auto &&item : finder.results()) {
         auto &&store = item.first.as<StmtNode>();

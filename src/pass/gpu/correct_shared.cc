@@ -87,7 +87,7 @@ Stmt CorrectShared::visit(const ReduceTo &_op) {
 
 Stmt correctShared(const Stmt &op) {
     auto variants = findLoopVariance(op);
-    FindAffectingLoops finder(variants);
+    FindAffectingLoops finder(variants.first);
     finder(op);
     return CorrectShared(finder.results())(op);
 }

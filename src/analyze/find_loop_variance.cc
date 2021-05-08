@@ -122,6 +122,9 @@ void FindLoopVariance::visit(const VarDef &op) {
 
     Visitor::visit(op);
 
+    if (varInfo_.count(op->name_)) {
+        uniqVarInfo_[op] = varInfo_.at(op->name_);
+    }
     varInfo_.erase(op->name_);
 }
 
@@ -147,10 +150,8 @@ void FindLoopVariance::visit(const LNot &op) {
     copyInfo(op->expr_, op);
 }
 
-bool isVariant(
-    const std::unordered_map<
-        Expr, std::unordered_map<std::string, LoopVariability>> &exprInfo,
-    const Expr &expr, const std::string &loop) {
+bool isVariant(const LoopVariExprMap &exprInfo, const Expr &expr,
+               const std::string &loop) {
     if (!exprInfo.count(expr)) {
         return true;
     }
@@ -160,8 +161,18 @@ bool isVariant(
     return exprInfo.at(expr).at(loop) == LoopVariability::Variance;
 }
 
-std::unordered_map<Expr, std::unordered_map<std::string, LoopVariability>>
-findLoopVariance(const AST &op) {
+bool isVariant(const LoopVariUniqVarMap &varInfo, const VarDef &def,
+               const std::string &loop) {
+    if (!varInfo.count(def)) {
+        return true;
+    }
+    if (!varInfo.at(def).count(loop)) {
+        return true;
+    }
+    return varInfo.at(def).at(loop) == LoopVariability::Variance;
+}
+
+std::pair<LoopVariExprMap, LoopVariUniqVarMap> findLoopVariance(const AST &op) {
     FindAllLoops finder;
     finder(op);
     FindLoopVariance visitor(finder.loops());
@@ -170,7 +181,7 @@ findLoopVariance(const AST &op) {
         visitor(op);
         int cnt = visitor.exprInfo().size();
         if (cnt == lastCnt) {
-            return visitor.exprInfo();
+            return std::make_pair(visitor.exprInfo(), visitor.varInfo());
         }
         lastCnt = cnt;
     }
