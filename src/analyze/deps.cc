@@ -230,6 +230,22 @@ void GenISLExpr::visit(const Mod &op) {
     }
 }
 
+void GenISLExpr::visit(const Min &op) {
+    Visitor::visit(op);
+    if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
+        results_[op] =
+            "min(" + results_.at(op->lhs_) + ", " + results_.at(op->rhs_) + ")";
+    }
+}
+
+void GenISLExpr::visit(const Max &op) {
+    Visitor::visit(op);
+    if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
+        results_[op] =
+            "max(" + results_.at(op->lhs_) + ", " + results_.at(op->rhs_) + ")";
+    }
+}
+
 Ref<std::string> GenISLExpr::gen(const Expr &op) {
     (*this)(op);
     if (results_.count(op)) {

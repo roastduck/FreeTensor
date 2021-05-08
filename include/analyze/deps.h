@@ -145,6 +145,8 @@ class GenISLExpr : public Visitor {
     void visit(const FloorDiv &op) override;
     void visit(const CeilDiv &op) override;
     void visit(const Mod &op) override;
+    void visit(const Min &op) override;
+    void visit(const Max &op) override;
 };
 
 enum class DepDirection : int {
