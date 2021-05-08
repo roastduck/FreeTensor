@@ -24,7 +24,7 @@ void FindAllScopesInside::visit(const StmtSeq &op) {
 }
 
 bool BlendPass::checkVari(const Expr &expr) const {
-    return loopVari_.count(expr) && loopVari_.at(expr).count(loop_);
+    return isVariant(loopVari_, expr, loop_);
 }
 
 Stmt BlendPass::visit(const For &op) {

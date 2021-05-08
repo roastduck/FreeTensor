@@ -2,7 +2,6 @@
 #include <set>
 
 #include <analyze/deps.h>
-#include <analyze/find_loop_variance.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/make_reduction.h>
 #include <pass/remove_writes.h>
@@ -61,14 +60,12 @@ void FindLoopInvariantWrites::visit(const Store &op) {
         }
         Expr thisCond;
         for (auto &&idx : op->indices_) {
-            if (variantExpr_.count(idx) &&
-                variantExpr_.at(idx).count(item->id())) {
+            if (isVariant(variantExpr_, idx, item->id())) {
                 goto fail;
             }
         }
         for (auto &&branch : ifStack_) {
-            if (variantExpr_.count(branch->cond_) &&
-                variantExpr_.at(branch->cond_).count(item->id())) {
+            if (isVariant(variantExpr_, branch->cond_, item->id())) {
                 goto fail;
             }
         }

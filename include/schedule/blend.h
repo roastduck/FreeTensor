@@ -2,8 +2,8 @@
 #define BLEND_H
 
 #include <unordered_map>
-#include <unordered_set>
 
+#include <analyze/find_loop_variance.h>
 #include <mutator.h>
 #include <visitor.h>
 
@@ -36,12 +36,14 @@ class BlendPass : public Mutator {
     std::vector<Stmt> envStack_;
     std::vector<VarDef> defs_;
     std::unordered_map<std::string, Expr> offset_;
-    const std::unordered_map<Expr, std::unordered_set<std::string>> &loopVari_;
+    const std::unordered_map<
+        Expr, std::unordered_map<std::string, LoopVariability>> &loopVari_;
 
   public:
-    BlendPass(const std::string &loop,
-              const std::unordered_map<Expr, std::unordered_set<std::string>>
-                  &loopVari)
+    BlendPass(
+        const std::string &loop,
+        const std::unordered_map<
+            Expr, std::unordered_map<std::string, LoopVariability>> &loopVari)
         : loop_(loop), loopVari_(loopVari) {}
 
   private:

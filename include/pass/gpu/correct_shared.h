@@ -5,6 +5,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include <analyze/find_loop_variance.h>
 #include <mutator.h>
 #include <visitor.h>
 
@@ -19,12 +20,13 @@ class FindAffectingLoops : public Visitor {
     // VarDef ID -> For ID
     std::unordered_map<std::string, std::unordered_set<std::string>> results_;
     // Expr -> For ID
-    const std::unordered_map<Expr, std::unordered_set<std::string>> &variants_;
+    const std::unordered_map<
+        Expr, std::unordered_map<std::string, LoopVariability>> &variants_;
 
   public:
     FindAffectingLoops(
-        const std::unordered_map<Expr, std::unordered_set<std::string>>
-            &variants)
+        const std::unordered_map<
+            Expr, std::unordered_map<std::string, LoopVariability>> &variants)
         : variants_(variants) {}
 
     const std::unordered_map<std::string, std::unordered_set<std::string>> &
@@ -37,19 +39,15 @@ class FindAffectingLoops : public Visitor {
         Visitor::visit(op);
         if (defs_.count(op->var_)) {
             for (auto &&idx : op->indices_) {
-                if (variants_.count(idx)) {
-                    for (auto &&loop : variants_.at(idx)) {
-                        if (loops_.count(loop)) {
-                            results_[defs_.at(op->var_)].insert(loop);
-                        }
+                for (auto &&loop : loops_) {
+                    if (isVariant(variants_, idx, loop)) {
+                        results_[defs_.at(op->var_)].insert(loop);
                     }
                 }
             }
-            if (variants_.count(op->expr_)) {
-                for (auto &&loop : variants_.at(op->expr_)) {
-                    if (loops_.count(loop)) {
-                        results_[defs_.at(op->var_)].insert(loop);
-                    }
+            for (auto &&loop : loops_) {
+                if (isVariant(variants_, op->expr_, loop)) {
+                    results_[defs_.at(op->var_)].insert(loop);
                 }
             }
         }

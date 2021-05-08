@@ -2,82 +2,138 @@
 #define FIND_LOOP_VARIANCE_H
 
 #include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 #include <visitor.h>
 
 namespace ir {
 
+enum class LoopVariability : int { Variance, Invariance };
+
 class MarkStores : public Visitor {
-    std::vector<std::string> loopStack_;
-    std::unordered_map<std::string, std::unordered_set<std::string>>
-        &variantVar_;
+    const std::string &var_;
+    std::vector<For> &loopStack_;
+    std::vector<Expr> &condStack_;
+    std::unordered_map<std::string,
+                       std::unordered_map<std::string, LoopVariability>>
+        &varInfo_;
+    const std::unordered_map<
+        Expr, std::unordered_map<std::string, LoopVariability>> &exprInfo_;
 
   public:
-    MarkStores(std::unordered_map<std::string, std::unordered_set<std::string>>
-                   &variantVar)
-        : variantVar_(variantVar) {}
+    MarkStores(
+        const std::string &var, std::vector<For> &loopStack,
+        std::vector<Expr> &condStack,
+        std::unordered_map<std::string,
+                           std::unordered_map<std::string, LoopVariability>>
+            &varInfo,
+        const std::unordered_map<
+            Expr, std::unordered_map<std::string, LoopVariability>> &exprInfo)
+        : var_(var), loopStack_(loopStack), condStack_(condStack),
+          varInfo_(varInfo), exprInfo_(exprInfo) {
+        for (auto &&loop : loopStack_) {
+            varInfo_[var_][loop->id()] = LoopVariability::Invariance;
+        }
+    }
 
-    void visit(const For &op) override;
-    void visit(const Store &op) override;
-    void visit(const ReduceTo &op) override;
-};
+  private:
+    void mergeInfo(const Expr &from, const std::string &to);
 
-class FindLoopVariance : public Visitor {
-    std::vector<std::string> loopStack_;
-    std::unordered_map<std::string, std::unordered_set<std::string>>
-        variantVar_;
-    std::unordered_map<Expr, std::unordered_set<std::string>> variantExpr_;
-
-  public:
-    const std::unordered_map<Expr, std::unordered_set<std::string>> &
-    variantExpr() const {
-        return variantExpr_;
+    template <class T> void visitMemWrite(const T &op) {
+        Visitor::visit(op);
+        if (op->var_ == var_) {
+            mergeInfo(op->expr_, op->var_);
+            for (auto &&index : op->indices_) {
+                mergeInfo(index, op->var_);
+            }
+            for (auto &&cond : condStack_) {
+                mergeInfo(cond, op->var_);
+            }
+        }
     }
 
   protected:
     void visit(const For &op) override;
-    void visit(const VarDef &op) override;
+    void visit(const If &op) override;
+    void visit(const Store &op) override { visitMemWrite(op); }
+    void visit(const ReduceTo &op) override { visitMemWrite(op); }
+};
 
-    template <class T> void visitBinOp(const T &op) {
+class FindLoopVariance : public Visitor {
+    const std::vector<std::string> &allLoops_;
+
+    std::vector<For> loopStack_;
+    std::vector<Expr> condStack_;
+    std::unordered_map<std::string,
+                       std::unordered_map<std::string, LoopVariability>>
+        varInfo_;
+    std::unordered_map<Expr, std::unordered_map<std::string, LoopVariability>>
+        exprInfo_;
+
+  public:
+    FindLoopVariance(const std::vector<std::string> &allLoops)
+        : allLoops_(allLoops) {}
+
+    const std::unordered_map<Expr,
+                             std::unordered_map<std::string, LoopVariability>> &
+    exprInfo() const {
+        return exprInfo_;
+    }
+
+  private:
+    void copyInfo(const Expr &from, const Expr &to);
+    void mergeInfo(const Expr &from, const Expr &to);
+
+    template <class T> void visitConst(const T &op) {
         Visitor::visit(op);
-        if (variantExpr_.count(op->lhs_)) {
-            for (auto &&loop : variantExpr_.at(op->lhs_)) {
-                variantExpr_[op].insert(loop);
-            }
-        }
-        if (variantExpr_.count(op->rhs_)) {
-            for (auto &&loop : variantExpr_.at(op->rhs_)) {
-                variantExpr_[op].insert(loop);
-            }
+        for (auto &&loop : allLoops_) {
+            exprInfo_[op][loop] = LoopVariability::Invariance;
         }
     }
 
-    virtual void visit(const Var &op) override;
-    virtual void visit(const Load &op) override;
-    virtual void visit(const Add &op) override { visitBinOp(op); }
-    virtual void visit(const Sub &op) override { visitBinOp(op); }
-    virtual void visit(const Mul &op) override { visitBinOp(op); }
-    virtual void visit(const RealDiv &op) override { visitBinOp(op); }
-    virtual void visit(const FloorDiv &op) override { visitBinOp(op); }
-    virtual void visit(const CeilDiv &op) override { visitBinOp(op); }
-    virtual void visit(const RoundTowards0Div &op) override { visitBinOp(op); }
-    virtual void visit(const Mod &op) override { visitBinOp(op); }
-    virtual void visit(const Min &op) override { visitBinOp(op); }
-    virtual void visit(const Max &op) override { visitBinOp(op); }
-    virtual void visit(const LT &op) override { visitBinOp(op); }
-    virtual void visit(const LE &op) override { visitBinOp(op); }
-    virtual void visit(const GT &op) override { visitBinOp(op); }
-    virtual void visit(const GE &op) override { visitBinOp(op); }
-    virtual void visit(const EQ &op) override { visitBinOp(op); }
-    virtual void visit(const NE &op) override { visitBinOp(op); }
-    virtual void visit(const LAnd &op) override { visitBinOp(op); }
-    virtual void visit(const LOr &op) override { visitBinOp(op); }
-    virtual void visit(const LNot &op) override;
+    template <class T> void visitBinOp(const T &op) {
+        Visitor::visit(op);
+        copyInfo(op->lhs_, op);
+        mergeInfo(op->rhs_, op);
+    }
+
+  protected:
+    void visit(const For &op) override;
+    void visit(const If &op) override;
+    void visit(const VarDef &op) override;
+
+    void visit(const Var &op) override;
+    void visit(const IntConst &op) override { visitConst(op); }
+    void visit(const FloatConst &op) override { visitConst(op); }
+    void visit(const BoolConst &op) override { visitConst(op); }
+    void visit(const Load &op) override;
+    void visit(const Add &op) override { visitBinOp(op); }
+    void visit(const Sub &op) override { visitBinOp(op); }
+    void visit(const Mul &op) override { visitBinOp(op); }
+    void visit(const RealDiv &op) override { visitBinOp(op); }
+    void visit(const FloorDiv &op) override { visitBinOp(op); }
+    void visit(const CeilDiv &op) override { visitBinOp(op); }
+    void visit(const RoundTowards0Div &op) override { visitBinOp(op); }
+    void visit(const Mod &op) override { visitBinOp(op); }
+    void visit(const Min &op) override { visitBinOp(op); }
+    void visit(const Max &op) override { visitBinOp(op); }
+    void visit(const LT &op) override { visitBinOp(op); }
+    void visit(const LE &op) override { visitBinOp(op); }
+    void visit(const GT &op) override { visitBinOp(op); }
+    void visit(const GE &op) override { visitBinOp(op); }
+    void visit(const EQ &op) override { visitBinOp(op); }
+    void visit(const NE &op) override { visitBinOp(op); }
+    void visit(const LAnd &op) override { visitBinOp(op); }
+    void visit(const LOr &op) override { visitBinOp(op); }
+    void visit(const LNot &op) override;
 };
 
-std::unordered_map<Expr, std::unordered_set<std::string>>
+bool isVariant(
+    const std::unordered_map<
+        Expr, std::unordered_map<std::string, LoopVariability>> &exprInfo,
+    const Expr &expr, const std::string &loop);
+
+std::unordered_map<Expr, std::unordered_map<std::string, LoopVariability>>
 findLoopVariance(const AST &op);
 
 } // namespace ir

@@ -1,9 +1,8 @@
 #include <analyze/deps.h>
+#include <analyze/find_all_loops.h>
 #include <pass/sink_var.h>
 
 namespace ir {
-
-void FindAllLoops::visit(const For &op) { loops_.emplace_back(op->id()); }
 
 Expr SinkVar::visit(const Load &op) {
     used_.insert(op->var_);

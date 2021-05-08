@@ -10,16 +10,6 @@
 
 namespace ir {
 
-class FindAllLoops : public Visitor {
-    std::vector<std::string> loops_;
-
-  public:
-    const std::vector<std::string> loops() const { return loops_; }
-
-  protected:
-    void visit(const For &op) override;
-};
-
 /**
  * Make the scope of a local variable smaller
  *
