@@ -1,6 +1,8 @@
 #ifndef GPU_MAKE_SYNC_H
 #define GPU_MAKE_SYNC_H
 
+#include <unordered_set>
+
 #include <cursor.h>
 #include <math/bounds.h>
 #include <mutator.h>
@@ -34,6 +36,8 @@ struct CrossThreadDep {
 
 class MakeSync : public Mutator {
     std::vector<CrossThreadDep> deps_;
+    StmtSeq whereToInsert_;
+    std::unordered_set<StmtSeq> needSyncThreads_, needSyncWarp_;
 
   public:
     MakeSync(std::vector<CrossThreadDep> &&deps) : deps_(std::move(deps)) {}
@@ -41,6 +45,7 @@ class MakeSync : public Mutator {
   protected:
     Stmt visitStmt(const Stmt &op,
                    const std::function<Stmt(const Stmt &)> &visitNode) override;
+    Stmt visit(const StmtSeq &op) override;
     Stmt visit(const For &op) override;
 };
 

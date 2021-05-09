@@ -35,36 +35,57 @@ Stmt MakeSync::visitStmt(const Stmt &op,
                          const std::function<Stmt(const Stmt &)> &visitNode) {
     auto ret = Mutator::visitStmt(op, visitNode);
     bool needSyncThreads = false, needSyncWarp = false;
-    for (CrossThreadDep &dep : deps_) {
-        if (!dep.synced_ && dep.visiting_ && dep.later_.id() == op->id()) {
+    for (const CrossThreadDep &dep : deps_) {
+        if (!dep.synced_ && dep.visiting_ && dep.later_.node() == op) {
+            // Insert the sync as outer of loops as possible, rather than insert
+            // it here before the statement
             (dep.inWarp_ ? needSyncWarp : needSyncThreads) = true;
+            (dep.inWarp_ ? needSyncWarp_ : needSyncThreads_)
+                .insert(whereToInsert_);
         }
     }
-    if (needSyncThreads) {
-        ret = makeStmtSeq("", {makeEval("", makeIntrinsic("__syncthreads()", {},
-                                                          DataType::Void)),
-                               ret});
-    } else if (needSyncWarp) {
-        ret = makeStmtSeq("", {makeEval("", makeIntrinsic("__syncwarp()", {},
-                                                          DataType::Void)),
-                               ret});
-    }
-    for (CrossThreadDep &dep : deps_) {
-        if (dep.visiting_) {
-            if (needSyncThreads) {
-                dep.synced_ = true;
-            }
-            if (needSyncWarp && dep.inWarp_) {
-                dep.synced_ = true;
+    if (needSyncThreads || needSyncWarp) {
+        for (CrossThreadDep &dep : deps_) {
+            if (dep.visiting_) {
+                if (needSyncThreads) {
+                    dep.synced_ = true;
+                }
+                if (needSyncWarp && dep.inWarp_) {
+                    dep.synced_ = true;
+                }
             }
         }
     }
     for (CrossThreadDep &dep : deps_) {
-        if (!dep.synced_ && !dep.visiting_ && dep.earlier_.id() == op->id()) {
+        if (!dep.synced_ && !dep.visiting_ && dep.earlier_.node() == op) {
             dep.visiting_ = true;
+            whereToInsert_ = nullptr;
         }
     }
     return ret;
+}
+
+Stmt MakeSync::visit(const StmtSeq &op) {
+    std::vector<Stmt> stmts;
+    for (auto &&_stmt : op->stmts_) {
+        if (!whereToInsert_.isValid()) {
+            whereToInsert_ = op;
+        }
+        auto stmt = (*this)(_stmt);
+        if (needSyncThreads_.count(op)) {
+            stmts.emplace_back(makeEval(
+                "", makeIntrinsic("__syncthreads()", {}, DataType::Void)));
+            needSyncWarp_.erase(op);
+            needSyncThreads_.erase(op);
+        }
+        if (needSyncWarp_.count(op)) {
+            stmts.emplace_back(makeEval(
+                "", makeIntrinsic("__syncwarp()", {}, DataType::Void)));
+            needSyncWarp_.erase(op);
+        }
+        stmts.emplace_back(std::move(stmt));
+    }
+    return makeStmtSeq(op->id(), std::move(stmts));
 }
 
 Stmt MakeSync::visit(const For &_op) {
@@ -72,8 +93,8 @@ Stmt MakeSync::visit(const For &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::For);
     auto op = __op.as<ForNode>();
     bool needSyncThreads = false, needSyncWarp = false;
-    for (CrossThreadDep &dep : deps_) {
-        if (!dep.synced_ && dep.visiting_ && dep.lcaLoop_.id() == op->id()) {
+    for (const CrossThreadDep &dep : deps_) {
+        if (!dep.synced_ && dep.visiting_ && dep.lcaLoop_.node() == _op) {
             (dep.inWarp_ ? needSyncWarp : needSyncThreads) = true;
         }
     }
@@ -86,13 +107,15 @@ Stmt MakeSync::visit(const For &_op) {
             "", {op->body_, makeEval("", makeIntrinsic("__syncwarp()", {},
                                                        DataType::Void))});
     }
-    for (CrossThreadDep &dep : deps_) {
-        if (dep.visiting_) {
-            if (needSyncThreads) {
-                dep.synced_ = true;
-            }
-            if (needSyncWarp && dep.inWarp_) {
-                dep.synced_ = true;
+    if (needSyncThreads || needSyncWarp) {
+        for (CrossThreadDep &dep : deps_) {
+            if (dep.visiting_) {
+                if (needSyncThreads) {
+                    dep.synced_ = true;
+                }
+                if (needSyncWarp && dep.inWarp_) {
+                    dep.synced_ = true;
+                }
             }
         }
     }
