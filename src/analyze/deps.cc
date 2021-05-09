@@ -480,6 +480,10 @@ int AnalyzeDeps::countSerial(const std::vector<IterAxis> &point) {
 }
 
 void AnalyzeDeps::checkDep(const AccessPoint &point, const AccessPoint &other) {
+    if (filter_ != nullptr && !filter_(point, other)) {
+        return;
+    }
+
     int iterDim = std::max(point.iter_.size(), other.iter_.size());
     int serialIterDim =
         std::max(countSerial(point.iter_), countSerial(other.iter_));
@@ -600,9 +604,6 @@ void AnalyzeDeps::visit(const Load &op) {
         auto &&point = points_.at(op);
         auto range = writes_.equal_range(op->var_);
         for (auto i = range.first; i != range.second; i++) {
-            if (filter_ != nullptr && !filter_(*point, *(i->second))) {
-                continue;
-            }
             checkDep(*point, *(i->second));
         }
     }

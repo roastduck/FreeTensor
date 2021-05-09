@@ -262,9 +262,6 @@ class AnalyzeDeps : public Visitor {
         if (depType_ & DEP_WAW) {
             auto range = writes_.equal_range(op->var_);
             for (auto i = range.first; i != range.second; i++) {
-                if (filter_ != nullptr && !filter_(*point, *(i->second))) {
-                    continue;
-                }
                 if (ignoreReductionWAW_ &&
                     op->nodeType() == ASTNodeType::ReduceTo &&
                     i->second->op_->nodeType() == ASTNodeType::ReduceTo) {
