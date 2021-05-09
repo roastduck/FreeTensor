@@ -4,7 +4,6 @@ import pytest
 import numpy as np
 
 target = ir.GPU()
-# TODO: Detect GPU arch and set it to target
 device = ir.Device(target)
 
 host = ir.Device(ir.CPU())
