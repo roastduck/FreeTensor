@@ -58,6 +58,14 @@ void MarkStores::visit(const If &op) {
     condStack_.pop_back();
 }
 
+int FindLoopVariance::knownCnt() const {
+    int ret = 0;
+    for (auto &&loop : exprInfo_) {
+        ret += loop.second.size();
+    }
+    return ret;
+}
+
 void FindLoopVariance::copyInfo(const Expr &from, const Expr &to) {
     if (exprInfo_.count(from)) {
         exprInfo_[to] = exprInfo_.at(from);
@@ -179,7 +187,7 @@ std::pair<LoopVariExprMap, LoopVariUniqVarMap> findLoopVariance(const AST &op) {
     int lastCnt = 0;
     while (true) {
         visitor(op);
-        int cnt = visitor.exprInfo().size();
+        int cnt = visitor.knownCnt();
         if (cnt == lastCnt) {
             return std::make_pair(visitor.exprInfo(), visitor.varInfo());
         }

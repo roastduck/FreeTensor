@@ -77,6 +77,8 @@ class FindLoopVariance : public Visitor {
     const LoopVariExprMap &exprInfo() const { return exprInfo_; }
     const LoopVariUniqVarMap &varInfo() const { return uniqVarInfo_; }
 
+    int knownCnt() const;
+
   private:
     void copyInfo(const Expr &from, const Expr &to);
     void mergeInfo(const Expr &from, const Expr &to);
