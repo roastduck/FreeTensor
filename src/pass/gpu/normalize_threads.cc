@@ -1,7 +1,7 @@
 #include <climits>
 
 #include <pass/gpu/normalize_threads.h>
-#include <pass/merge_if.h>
+#include <pass/merge_and_hoist_if.h>
 #include <pass/shrink_for.h>
 
 namespace ir {
@@ -118,7 +118,7 @@ void CheckThreadNum::visit(const For &op) {
 Stmt normalizeThreads(const Stmt &_op) {
     auto op = NormalizeThreads()(_op);
     op = shrinkFor(op, true);
-    op = mergeIf(op);
+    op = mergeAndHoistIf(op);
     CheckThreadNum()(op);
     return op;
 }

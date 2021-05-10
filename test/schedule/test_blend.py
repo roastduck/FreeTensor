@@ -92,19 +92,19 @@ def test_inner_if_fuse():
     ast = ir.lower(ast)
     print(ast)
 
-    with ir.VarDef([
-            ("x", (()), "int32", "input", "cpu"),
-            ("y1", (4,), "int32", "output", "cpu"),
-            ("y2", (4,), "int32", "output", "cpu")]) as (x, y1, y2):
+    with ir.VarDef("x", (()), "int32", "input", "cpu") as x:
         with ir.If(x[()] > 0):
-            y1[0] = 1
-            y1[1] = 2
-            y1[2] = 3
-            y1[3] = 4
-            y2[0] = 2
-            y2[1] = 3
-            y2[2] = 4
-            y2[3] = 5
+            with ir.VarDef([
+                    ("y1", (4,), "int32", "output", "cpu"),
+                    ("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):
+                y1[0] = 1
+                y1[1] = 2
+                y1[2] = 3
+                y1[3] = 4
+                y2[0] = 2
+                y2[1] = 3
+                y2[2] = 4
+                y2[3] = 5
     std = ir.pop_ast()
 
     assert std.match(ast)
