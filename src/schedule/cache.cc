@@ -139,6 +139,9 @@ Stmt MakeFillAndFlush::visitStmt(
                                makeAdd(rRange.lower_[i], rRange.len_[i]),
                                rRange.len_[i], "", false, fill);
             }
+            if (rRange.cond_.isValid()) {
+                fill = makeIf("", rRange.cond_, fill);
+            }
         } else {
             fill = makeStmtSeq("", {});
         }
@@ -155,6 +158,9 @@ Stmt MakeFillAndFlush::visitStmt(
                 flush = makeFor("", iters[i], wRange.lower_[i],
                                 makeAdd(wRange.lower_[i], wRange.len_[i]),
                                 wRange.len_[i], "", false, flush);
+            }
+            if (wRange.cond_.isValid()) {
+                flush = makeIf("", wRange.cond_, flush);
             }
         } else {
             flush = makeStmtSeq("", {});

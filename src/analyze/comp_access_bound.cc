@@ -28,8 +28,8 @@ void CompAccessBound::visit(const VarDef &op) {
     for (size_t i = 0; i < n; i++) {
         std::vector<std::vector<Expr>> lower, upper;
         for (size_t j = 0, jEnd = access.size(); j < jEnd; j++) {
-            ASSERT(access[j].size() == n);
-            auto &&index = access[j][i];
+            ASSERT(access[j].indices_.size() == n);
+            auto &&index = access[j].indices_[i];
             std::vector<Expr> lowerItem({makeIntConst(0)});
             if (checkAllDefined(defs_, index)) {
                 lowerItem.emplace_back(index);
@@ -45,8 +45,8 @@ void CompAccessBound::visit(const VarDef &op) {
         }
 
         for (size_t j = 0, jEnd = access.size(); j < jEnd; j++) {
-            ASSERT(access[j].size() == n);
-            auto &&index = access[j][i];
+            ASSERT(access[j].indices_.size() == n);
+            auto &&index = access[j].indices_[i];
             std::vector<Expr> upperItem(
                 {makeSub(op->buffer_->tensor().shape()[i], makeIntConst(1))});
             if (checkAllDefined(defs_, index)) {
@@ -67,34 +67,60 @@ void CompAccessBound::visit(const VarDef &op) {
         result.lower_.emplace_back(l);
         result.len_.emplace_back(makeAdd(makeSub(u, l), makeIntConst(1)));
     }
+
+    for (auto &&item : access) {
+        for (auto &&cond : item.conds_) {
+            if (checkAllDefined(defs_, cond)) {
+                result.cond_ = result.cond_.isValid()
+                                   ? makeLAnd(result.cond_, cond)
+                                   : cond;
+            }
+        }
+    }
+
     results_[op->id()] = std::move(result);
 }
 
 void CompAccessBound::visit(const Load &op) {
     Visitor::visit(op);
     if (mode_ & COMP_ACCESS_BOUND_READ) {
-        access_[op->var_].emplace_back(op->indices_.begin(),
-                                       op->indices_.end());
+        access_[op->var_].emplace_back(
+            std::vector<Expr>(op->indices_.begin(), op->indices_.end()),
+            condStack_);
     }
 }
 
 void CompAccessBound::visit(const Store &op) {
     Visitor::visit(op);
     if (mode_ & COMP_ACCESS_BOUND_WRITE) {
-        access_[op->var_].emplace_back(op->indices_.begin(),
-                                       op->indices_.end());
+        access_[op->var_].emplace_back(
+            std::vector<Expr>(op->indices_.begin(), op->indices_.end()),
+            condStack_);
     }
 }
 
 void CompAccessBound::visit(const ReduceTo &op) {
     Visitor::visit(op);
-    access_[op->var_].emplace_back(op->indices_.begin(), op->indices_.end());
+    access_[op->var_].emplace_back(
+        std::vector<Expr>(op->indices_.begin(), op->indices_.end()),
+        condStack_);
 }
 
 void CompAccessBound::visit(const For &op) {
     defs_.insert(op->iter_);
     Visitor::visit(op);
     defs_.erase(op->iter_);
+}
+
+void CompAccessBound::visit(const If &op) {
+    (*this)(op->cond_);
+    condStack_.emplace_back(op->cond_);
+    (*this)(op->thenCase_);
+    if (op->elseCase_.isValid()) {
+        condStack_.back() = makeLNot(op->cond_);
+        (*this)(op->elseCase_);
+    }
+    condStack_.pop_back();
 }
 
 } // namespace ir
