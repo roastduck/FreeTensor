@@ -137,7 +137,7 @@ Stmt MakeFillAndFlush::visitStmt(
             for (int i = nDim - 1; i >= 0; i--) {
                 fill = makeFor("", iters[i], rRange.lower_[i],
                                makeAdd(rRange.lower_[i], rRange.len_[i]),
-                               rRange.len_[i], "", false, fill);
+                               rRange.len_[i], "", false, false, fill);
             }
             if (rRange.cond_.isValid()) {
                 fill = makeIf("", rRange.cond_, fill);
@@ -157,7 +157,7 @@ Stmt MakeFillAndFlush::visitStmt(
             for (int i = nDim - 1; i >= 0; i--) {
                 flush = makeFor("", iters[i], wRange.lower_[i],
                                 makeAdd(wRange.lower_[i], wRange.len_[i]),
-                                wRange.len_[i], "", false, flush);
+                                wRange.len_[i], "", false, false, flush);
             }
             if (wRange.cond_.isValid()) {
                 flush = makeIf("", wRange.cond_, flush);
@@ -222,7 +222,7 @@ Stmt MakeInitAndReduce::visitStmt(
         for (int i = nDim - 1; i >= 0; i--) {
             init = makeFor("", iters[i], range.lower_[i],
                            makeAdd(range.lower_[i], range.len_[i]),
-                           range.len_[i], "", false, init);
+                           range.len_[i], "", false, false, init);
         }
 
         Stmt reduce = makeReduceTo("", oldVar_, indices, reduce_->op_,
@@ -234,7 +234,7 @@ Stmt MakeInitAndReduce::visitStmt(
         for (int i = nDim - 1; i >= 0; i--) {
             reduce = makeFor("", iters[i], range.lower_[i],
                              makeAdd(range.lower_[i], range.len_[i]),
-                             range.len_[i], "", false, reduce);
+                             range.len_[i], "", false, false, reduce);
         }
 
         op = makeStmtSeq("", {init, op, reduce});

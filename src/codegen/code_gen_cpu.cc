@@ -13,8 +13,9 @@ void CodeGenCPU::visit(const ReduceTo &op) {
 void CodeGenCPU::visit(const For &op) {
     if (op->parallel_ == "openmp") {
         os() << "#pragma omp parallel for" << std::endl;
-    }
-    if (op->unroll_) {
+    } else if (op->vectorize_) {
+        os() << "#pragma omp simd" << std::endl;
+    } else if (op->unroll_) {
         os() << "#pragma GCC unroll " << op->len_ << std::endl;
     }
     CodeGenC::visit(op);

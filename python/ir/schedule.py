@@ -353,12 +353,42 @@ class Schedule(ffi.Schedule):
         super(Schedule, self).parallelize(toId(loop), parallel)
 
     '''
-    Mark a loop as needing to unroll
+    Unroll a loop
+
+    The unrolling is postponed to the backend compiler. It is a best-effort
+    schedule
 
     Parameters
     ----------
     loop : str, Stmt or Cursor
         The loop which is needing to unroll
+
+    Raises
+    ------
+    InvalidSchedule
+        if the loop is not found or length of the loop is not a constant
     '''
     def unroll(self, loop):
         super(Schedule, self).unroll(toId(loop))
+
+    '''
+    Vectorize a loop
+
+    Please note that, as vectorization is different from architecture to
+    achitecture, the scheduler may or may not postpone it to the backend
+    compiler. The vectorization is a best-effort schedule
+
+    Parameters
+    ----------
+    loop : str, Stmt or Cursor
+        ID of the loop
+
+    Raises
+    ------
+    InvalidSchedule
+        if the ID or name is not found, or the dependency requirement is
+        not met
+    '''
+    def vectorize(self, loop):
+        super(Schedule, self).vectorize(toId(loop))
+

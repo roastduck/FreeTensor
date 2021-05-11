@@ -131,7 +131,7 @@ class ForNode : public StmtNode {
     SubTree<ExprNode> begin_, end_, len_;
 
     std::string parallel_;
-    bool unroll_;
+    bool unroll_, vectorize_;
     SubTree<StmtNode> body_;
 
     DEFINE_NODE_TRAIT(For);
@@ -140,8 +140,8 @@ typedef Ref<ForNode> For;
 #define makeFor(...) makeNode(For, __VA_ARGS__)
 template <class Tbegin, class Tend, class Tlen, class Tbody>
 Stmt _makeFor(const std::string &id, const std::string &iter, Tbegin &&begin,
-              Tend &&end, Tlen &&len, const std::string &parallel,
-              const bool unroll, Tbody &&body) {
+              Tend &&end, Tlen &&len, const std::string &parallel, bool unroll,
+              bool vectorize, Tbody &&body) {
     For f = For::make();
     f->setId(id);
     f->iter_ = iter;
@@ -149,8 +149,9 @@ Stmt _makeFor(const std::string &id, const std::string &iter, Tbegin &&begin,
     f->end_ = std::forward<Tend>(end);
     f->len_ = std::forward<Tlen>(len);
     f->parallel_ = parallel;
-    f->body_ = std::forward<Tbody>(body);
     f->unroll_ = unroll;
+    f->vectorize_ = vectorize;
+    f->body_ = std::forward<Tbody>(body);
     return f;
 }
 

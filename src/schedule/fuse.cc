@@ -30,7 +30,7 @@ Stmt FuseFor::visit(const For &_op) {
     if (op->id() == id0_ || op->id() == id1_) {
         auto len = makeSub(op->end_, op->begin_);
         return makeFor(op->id(), op->iter_, makeIntConst(0), len, len,
-                       op->parallel_, op->unroll_, op->body_);
+                       op->parallel_, op->unroll_, op->vectorize_, op->body_);
     }
     return op;
 }
@@ -49,6 +49,7 @@ Stmt FuseFor::visit(const StmtSeq &_op) {
             auto loop1 = op->stmts_[i + 1].as<ForNode>();
             auto fused = makeFor(fused_, iter0_, makeIntConst(0), loop0->end_,
                                  loop0->end_, loop0->parallel_, loop0->unroll_,
+                                 loop0->vectorize_,
                                  makeStmtSeq("", {loop0->body_, loop1->body_}));
             op->stmts_[i] =
                 makeAssert("", makeEQ(loop0->end_, loop1->end_), fused);

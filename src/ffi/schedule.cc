@@ -33,7 +33,8 @@ void init_ffi_schedule(py::module_ &m) {
              "factor"_a = -1, "nparts"_a = -1)
         .def("move_to", &Schedule::moveTo, "stmt"_a, "side"_a, "dst"_a)
         .def("parallelize", &Schedule::parallelize, "loop"_a, "parallel"_a)
-        .def("unroll", &Schedule::unroll, "loop"_a);
+        .def("unroll", &Schedule::unroll, "loop"_a)
+        .def("vectorize", &Schedule::vectorize, "loop"_a);
 }
 
 } // namespace ir

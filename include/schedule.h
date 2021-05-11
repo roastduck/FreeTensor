@@ -264,12 +264,29 @@ class Schedule {
     void parallelize(const std::string &loop, const std::string &parallel);
 
     /**
-     * Mark a loop as needing to unroll
+     * Unroll a loop
+     *
+     * The unrolling is postponed to the backend compiler. It is a best-effort
+     * schedule
      *
      * @param loop : ID of the loop
-     * @throw InvalidSchedule if length of the loop is not constant
+     * @throw InvalidSchedule if the loop is not found or length of the loop is
+     * not a constant
      */
     void unroll(const std::string &loop);
+
+    /**
+     * Vectorize a loop
+     *
+     * Please note that, as vectorization is different from architecture to
+     * achitecture, the scheduler may or may not postpone it to the backend
+     * compiler. The vectorization is a best-effort schedule
+     *
+     * @param loop : ID of the loop
+     * @throw InvalidSchedule if the ID or name is not found, or the dependency
+     * requirement is not met
+     */
+    void vectorize(const std::string &loop);
 };
 
 } // namespace ir

@@ -76,17 +76,17 @@ Stmt NormalizeThreads::visit(const For &op) {
         auto zero = makeIntConst(0);
         auto inf = makeIntConst(INT_MAX);
         ret = makeFor("", ".threadIdx.x", zero, inf, inf, "threadIdx.x", false,
-                      ret);
+                      false, ret);
         ret = makeFor("", ".threadIdx.y", zero, inf, inf, "threadIdx.y", false,
-                      ret);
+                      false, ret);
         ret = makeFor("", ".threadIdx.z", zero, inf, inf, "threadIdx.z", false,
-                      ret);
+                      false, ret);
         ret = makeFor("", ".blockIdx.x", zero, inf, inf, "blockIdx.x", false,
-                      ret);
+                      false, ret);
         ret = makeFor("", ".blockIdx.y", zero, inf, inf, "blockIdx.y", false,
-                      ret);
+                      false, ret);
         ret = makeFor("", ".blockIdx.z", zero, inf, inf, "blockIdx.z", false,
-                      ret);
+                      false, ret);
         return ret;
     } else {
         return doVisitFor(op);

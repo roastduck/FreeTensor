@@ -23,6 +23,7 @@
 #include <schedule/swap.h>
 #include <schedule/unroll.h>
 #include <schedule/var_split.h>
+#include <schedule/vectorize.h>
 
 namespace ir {
 
@@ -567,6 +568,25 @@ void Schedule::unroll(const std::string &loop) {
         }
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid unroll(" + loop + "): " + e.what());
+    }
+    ast_ = ast;
+}
+
+void Schedule::vectorize(const std::string &loop) {
+    auto ast = ast_;
+    Vectorize mutator(loop);
+    try {
+        ast = mutator(ast);
+        if (!mutator.done()) {
+            throw InvalidSchedule("Loop " + loop + " not found");
+        }
+        auto found = [&](const Dependency &d) {
+            throw InvalidSchedule(
+                dep2Str(loop, d.var_, d.later(), d.earlier()));
+        };
+        findDeps(ast, {{{loop, DepDirection::Normal}}}, found);
+    } catch (const InvalidSchedule &e) {
+        throw InvalidSchedule("Invalid vectorize(" + loop + "): " + e.what());
     }
     ast_ = ast;
 }
