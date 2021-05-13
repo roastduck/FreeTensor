@@ -12,6 +12,7 @@ namespace ir {
 struct AccessBound {
     std::vector<Expr> lower_; // lower_bound(access)
     std::vector<Expr> len_;   // upper_bound(access_i - access_j)
+    Expr cond_;               // Conditions surrounding the accesses
 };
 
 typedef int CompAccessBoundMode;
@@ -21,15 +22,25 @@ const CompAccessBoundMode COMP_ACCESS_BOUND_ALL =
     COMP_ACCESS_BOUND_READ | COMP_ACCESS_BOUND_WRITE;
 
 class CompAccessBound : public Visitor {
+    struct Access {
+        std::vector<Expr> indices_, conds_;
+
+        Access(const std::vector<Expr> &indices, const std::vector<Expr> &conds)
+            : indices_(indices), conds_(conds) {}
+    };
+
     // bounds from AnalyzeBounds
     const std::unordered_map<Expr, std::vector<LowerBound>> &lower_;
     const std::unordered_map<Expr, std::vector<UpperBound>> &upper_;
 
-    // var name -> [indices for each access]
-    std::unordered_map<std::string, std::vector<std::vector<Expr>>> access_;
+    // var name -> [each access]
+    std::unordered_map<std::string, std::vector<Access>> access_;
 
     // all defined name in the scope
     std::unordered_set<std::string> defs_;
+
+    // all branching conditions
+    std::vector<Expr> condStack_;
 
     CompAccessBoundMode mode_;
 
@@ -52,6 +63,7 @@ class CompAccessBound : public Visitor {
     void visit(const Store &op) override;
     void visit(const ReduceTo &op) override;
     void visit(const For &op) override;
+    void visit(const If &op) override;
 };
 
 } // namespace ir

@@ -43,6 +43,8 @@ endif()
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_EXTENSIONS OFF) # -std=gnu++11 when on, -std=c++11 when off
 
+add_definitions(-DIR_RUNTIME_DIR=${CMAKE_SOURCE_DIR}/runtime)
+
 include_directories(${CMAKE_SOURCE_DIR}/include)
 include_directories(${CMAKE_SOURCE_DIR}/3rd-party/pybind11/include)
 include_directories(${CMAKE_SOURCE_DIR}/3rd-party/z3/src/api/c++)

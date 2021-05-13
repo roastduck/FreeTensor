@@ -11,6 +11,9 @@
 #include <driver/gpu.h>
 #include <except.h>
 
+#define NAME_(macro) #macro
+#define NAME(macro) NAME_(macro)
+
 namespace ir {
 
 Driver::Driver(const std::string &src,
@@ -53,13 +56,26 @@ void Driver::buildAndLoad() {
     std::string cmd;
     switch (dev_.type()) {
     case TargetType::CPU:
-        cmd = "c++ -shared -O3 -fPIC -Wall -fopenmp -o " + so + " " + cpp;
+        cmd = "c++ -I" NAME(IR_RUNTIME_DIR) " -shared -O3 -fPIC -Wall -fopenmp";
+        if (dev_.target()->useNativeArch()) {
+            cmd += " -march=native";
+        }
+        cmd += " -o " + so + " " + cpp;
         break;
     case TargetType::GPU:
-        cmd = "nvcc -shared -Xcompiler -fPIC,-Wall,-O3";
+        cmd = "nvcc -I" NAME(
+            IR_RUNTIME_DIR) " -shared -Xcompiler -fPIC,-Wall,-O3";
         if (auto arch = dev_.target().as<GPU>()->computeCapability();
-            arch != 0) {
-            cmd += " -arch sm_" + std::to_string(arch);
+            arch.isValid()) {
+            cmd += " -arch sm_" + std::to_string(arch->first) +
+                   std::to_string(arch->second);
+        } else if (dev_.target()->useNativeArch()) {
+            int major, minor;
+            checkCudaError(cudaDeviceGetAttribute(
+                &major, cudaDevAttrComputeCapabilityMajor, dev_.num()));
+            checkCudaError(cudaDeviceGetAttribute(
+                &minor, cudaDevAttrComputeCapabilityMinor, dev_.num()));
+            cmd += " -arch sm_" + std::to_string(major) + std::to_string(minor);
         } else {
             WARNING("GPU arch not specified, which may result in suboptimal "
                     "performance ");

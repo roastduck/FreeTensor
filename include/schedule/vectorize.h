@@ -1,16 +1,16 @@
-#ifndef UNROLL_H
-#define UNROLL_H
+#ifndef VECTORIZE_H
+#define VECTORIZE_H
 
 #include <mutator.h>
 
 namespace ir {
 
-class Unroll : public Mutator {
+class Vectorize : public Mutator {
     std::string loop_;
     bool done_ = false;
 
   public:
-    Unroll(const std::string &loop) : loop_(loop) {}
+    Vectorize(const std::string &loop) : loop_(loop) {}
 
     bool done() const { return done_; }
 
@@ -20,4 +20,4 @@ class Unroll : public Mutator {
 
 } // namespace ir
 
-#endif // UNROLL_H
+#endif // VECTORIZE_H

@@ -4,6 +4,24 @@ import pytest
 target = ir.CPU()
 device = ir.Device(target)
 
+# For normal test cases, please refer to test/codegen
+
+def test_not_found():
+    with ir.VarDef([
+            ("x", (4,), "int32", "input", "cpu"),
+            ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+        with ir.For("i", 0, 4, nid="L1") as i:
+            y[i] = x[i] + 1
+    ast = ir.pop_ast()
+
+    s = ir.Schedule(ast)
+    code, params = ir.codegen(s.ast(), target)
+    with pytest.raises(ir.InvalidSchedule):
+        s.unroll("L0")
+    code_, params_ = ir.codegen(s.ast(), target)
+
+    assert code == code_
+
 def test_not_constant():
     with ir.VarDef([
             ("n", (), "int32", "input", "cpu"),

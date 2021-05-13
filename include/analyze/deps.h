@@ -11,6 +11,7 @@
 #include <isl/map.h>
 #include <isl/options.h>
 #include <isl/set.h>
+#include <isl/space.h>
 
 #include <cursor.h>
 #include <visitor.h>
@@ -19,14 +20,16 @@ namespace ir {
 
 struct IterAxis {
     Expr iter_, begin_, end_; /// begin_[i] <= iter_[i] < end_[i]
+    bool parallel_;
 
-    IterAxis(Expr iter, Expr begin, Expr end)
-        : iter_(iter), begin_(begin), end_(end) {}
+    IterAxis(Expr iter, Expr begin, Expr end, bool parallel = false)
+        : iter_(iter), begin_(begin), end_(end), parallel_(parallel) {}
 };
 
 struct AccessPoint {
     AST op_;
     Cursor cursor_;
+    Ref<Buffer> buffer_;
     int defAxis_;                /// The position of the VarDef
     std::vector<IterAxis> iter_; /// The temporal location of the access
     std::vector<Expr> access_;   /// The spacial location of the access
@@ -47,6 +50,9 @@ class FindAccessPoint : public VisitorWithCursor {
 
     // Var name -> axis: Which axis is a local var defined
     std::unordered_map<std::string, int> defAxis_;
+
+    // Var name -> buffer
+    std::unordered_map<std::string, Ref<Buffer>> buffers_;
 
   public:
     const std::unordered_map<AST, Ref<AccessPoint>> &points() const {
@@ -72,6 +78,7 @@ class FindAccessPoint : public VisitorWithCursor {
         auto ap = Ref<AccessPoint>::make();
         *ap = {op,
                cursor(),
+               buffers_.at(op->var_),
                defAxis_.at(op->var_),
                cur_,
                std::vector<Expr>{op->indices_.begin(), op->indices_.end()},
@@ -138,12 +145,15 @@ class GenISLExpr : public Visitor {
     void visit(const FloorDiv &op) override;
     void visit(const CeilDiv &op) override;
     void visit(const Mod &op) override;
+    void visit(const Min &op) override;
+    void visit(const Max &op) override;
 };
 
 enum class DepDirection : int {
     Normal,
-    Same,
     Inv,
+    Same,
+    Different,
 };
 
 typedef std::vector<std::pair<std::string, DepDirection>> FindDepsCond;
@@ -190,6 +200,7 @@ class AnalyzeDeps : public Visitor {
     FindDepsMode mode_;
     DepType depType_;
     bool ignoreReductionWAW_;
+    bool eraseOutsideVarDef_;
 
     isl_ctx *isl_;
 
@@ -202,11 +213,12 @@ class AnalyzeDeps : public Visitor {
             &scope2coord,
         const std::vector<FindDepsCond> &cond, const FindDepsCallback &found,
         FindDepsMode mode, DepType depType, const FindDepsFilter &filter,
-        bool ignoreReductionWAW)
+        bool ignoreReductionWAW, bool eraseOutsideVarDef)
         : points_(points), reads_(reads), writes_(writes),
           scope2coord_(scope2coord), cond_(cond), found_(found),
           filter_(filter), mode_(mode), depType_(depType),
-          ignoreReductionWAW_(ignoreReductionWAW) {
+          ignoreReductionWAW_(ignoreReductionWAW),
+          eraseOutsideVarDef_(eraseOutsideVarDef) {
         isl_ = isl_ctx_alloc();
         isl_options_set_on_error(isl_, ISL_ON_ERROR_ABORT);
     }
@@ -232,6 +244,10 @@ class AnalyzeDeps : public Visitor {
 
     static const std::string &getVar(const AST &op);
 
+    std::string makeSerialToAll(int iterDim, int serialIterDim,
+                                const std::vector<IterAxis> &point) const;
+    static int countSerial(const std::vector<IterAxis> &point);
+
     void checkDep(const AccessPoint &lhs, const AccessPoint &rhs);
 
     template <class T> void visitStoreLike(const T &op) {
@@ -246,9 +262,6 @@ class AnalyzeDeps : public Visitor {
         if (depType_ & DEP_WAW) {
             auto range = writes_.equal_range(op->var_);
             for (auto i = range.first; i != range.second; i++) {
-                if (filter_ != nullptr && !filter_(*point, *(i->second))) {
-                    continue;
-                }
                 if (ignoreReductionWAW_ &&
                     op->nodeType() == ASTNodeType::ReduceTo &&
                     i->second->op_->nodeType() == ASTNodeType::ReduceTo) {
@@ -279,12 +292,13 @@ class AnalyzeDeps : public Visitor {
  * nullptr
  * @param ignoreReductionWAW : Ignore WAW dependencies between two ReduceTo
  * nodes. This kind of dependencies are false dependencies if running serially
+ * @param eraseOutsideVarDef : Ignore all dependencies outside the VarDef
  */
 void findDeps(const Stmt &op, const std::vector<FindDepsCond> &cond,
               const FindDepsCallback &found,
               FindDepsMode mode = FindDepsMode::Dep, DepType depType = DEP_ALL,
               const FindDepsFilter &filter = nullptr,
-              bool ignoreReductionWAW = true);
+              bool ignoreReductionWAW = true, bool eraseOutsideVarDef = true);
 
 }; // namespace ir
 

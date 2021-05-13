@@ -46,6 +46,9 @@ class Cursor {
     /// The parent in the AST tree
     Cursor outer() const;
     bool hasOuter() const;
+
+    /// Lowest common ancestor
+    friend Cursor lca(const Cursor &lhs, const Cursor &rhs);
 };
 
 class VisitorWithCursor : public Visitor {

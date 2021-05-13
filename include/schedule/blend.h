@@ -2,8 +2,8 @@
 #define BLEND_H
 
 #include <unordered_map>
-#include <unordered_set>
 
+#include <analyze/find_loop_variance.h>
 #include <mutator.h>
 #include <visitor.h>
 
@@ -36,17 +36,15 @@ class BlendPass : public Mutator {
     std::vector<Stmt> envStack_;
     std::vector<VarDef> defs_;
     std::unordered_map<std::string, Expr> offset_;
-    const std::unordered_map<Expr, std::unordered_set<std::string>> &loopVari_;
+    const LoopVariExprMap &exprVari_;
+    const LoopVariUniqVarMap &varVari_;
 
   public:
-    BlendPass(const std::string &loop,
-              const std::unordered_map<Expr, std::unordered_set<std::string>>
-                  &loopVari)
-        : loop_(loop), loopVari_(loopVari) {}
+    BlendPass(const std::string &loop, const LoopVariExprMap &exprVari,
+              const LoopVariUniqVarMap &varVari)
+        : loop_(loop), exprVari_(exprVari), varVari_(varVari) {}
 
   private:
-    bool checkVari(const Expr &expr) const;
-
     template <class T> Stmt visitLeafStmt(const T &op) {
         if (inLoop_) {
             std::vector<Stmt> stmts;
@@ -66,7 +64,7 @@ class BlendPass : public Mutator {
                         stmt = makeFor("", env->iter_, (*this)(env->begin_),
                                        (*this)(env->end_), (*this)(env->len_),
                                        env->parallel_, env->unroll_,
-                                       std::move(stmt));
+                                       env->vectorize_, std::move(stmt));
                         break;
                     }
                     case ASTNodeType::If: {

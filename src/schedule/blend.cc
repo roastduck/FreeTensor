@@ -23,10 +23,6 @@ void FindAllScopesInside::visit(const StmtSeq &op) {
     Visitor::visit(op);
 }
 
-bool BlendPass::checkVari(const Expr &expr) const {
-    return loopVari_.count(expr) && loopVari_.at(expr).count(loop_);
-}
-
 Stmt BlendPass::visit(const For &op) {
     if (op->id() == loop_) {
         if (op->len_->nodeType() != ASTNodeType::IntConst) {
@@ -43,7 +39,7 @@ Stmt BlendPass::visit(const For &op) {
     } else {
         if (inLoop_) {
             Stmt ret;
-            if (!envStack_.empty() || checkVari(op->len_)) {
+            if (!envStack_.empty() || isVariant(exprVari_, op->len_, loop_)) {
                 envStack_.emplace_back(op);
                 ret = (*this)(op->body_);
                 envStack_.pop_back();
@@ -54,7 +50,8 @@ Stmt BlendPass::visit(const For &op) {
                 offset_.erase(op->iter_);
                 auto len = (*this)(op->len_);
                 ret = makeFor(op->id(), op->iter_, makeIntConst(0), len, len,
-                              op->parallel_, op->unroll_, std::move(ret));
+                              op->parallel_, op->unroll_, op->vectorize_,
+                              std::move(ret));
             }
             return ret;
         } else {
@@ -66,7 +63,7 @@ Stmt BlendPass::visit(const For &op) {
 Stmt BlendPass::visit(const If &op) {
     if (inLoop_) {
         Stmt thenCase, elseCase;
-        if (!envStack_.empty() || checkVari(op->cond_)) {
+        if (!envStack_.empty() || isVariant(exprVari_, op->cond_, loop_)) {
             envStack_.emplace_back(makeIf("", op->cond_, op->thenCase_));
             thenCase = (*this)(op->thenCase_);
             envStack_.pop_back();
@@ -98,7 +95,7 @@ Stmt BlendPass::visit(const If &op) {
 Stmt BlendPass::visit(const Assert &op) {
     if (inLoop_) {
         Stmt ret;
-        if (!envStack_.empty() || checkVari(op->cond_)) {
+        if (!envStack_.empty() || isVariant(exprVari_, op->cond_, loop_)) {
             envStack_.emplace_back(op);
             ret = Mutator::visit(op);
             envStack_.pop_back();
@@ -113,7 +110,7 @@ Stmt BlendPass::visit(const Assert &op) {
 }
 
 Stmt BlendPass::visit(const VarDef &op) {
-    if (inLoop_) {
+    if (inLoop_ && isVariant(varVari_, op, loop_)) {
         defs_.emplace_back(op);
         auto body = (*this)(op->body_);
         auto sizeLim = op->sizeLim_.isValid() ? (*this)(op->sizeLim_) : nullptr;

@@ -162,9 +162,6 @@ void CodeGenCUDA::visit(const VarDef &op) {
 
             markDef(normalizeId(op->name_), op->buffer_);
 
-            makeIndent();
-            beginBlock();
-
             // e.g.
             // float (*x)[5][5];  // CUDA does not allow "restrict" here
             // cudaMalloc(&x, 5 * 5 * 5 * sizeof(float)); ...; cudaFree(x);
@@ -192,15 +189,11 @@ void CodeGenCUDA::visit(const VarDef &op) {
 
             makeIndent();
             os() << "cudaFree(" << normalizeId(op->name_) << ");" << std::endl;
-            endBlock();
             break;
         }
 
         case MemType::GPUShared: {
             markDef(normalizeId(op->name_), op->buffer_);
-
-            makeIndent();
-            beginBlock();
 
             makeIndent();
 
@@ -221,7 +214,6 @@ void CodeGenCUDA::visit(const VarDef &op) {
             os() << ";" << std::endl;
 
             (*this)(op->body_);
-            endBlock();
             break;
         }
 
@@ -238,37 +230,14 @@ std::pair<std::string, std::vector<std::string>> codeGenCUDA(const Stmt &op) {
     visitor(op);
     visitor.endBlock();
 
-    const char *header =
-        "#include <cstdint>\n"
-        "#include <algorithm>\n"
-        "#include <assert.h>\n"
-        "#define restrict __restrict__\n"
-        "\n"
-        "template <class T, size_t n> struct __ByValArray {\n"
-        "    T data[n];\n"
-        "    __host__ __device__ const T &operator[](size_t i) const {\n"
-        "        return data[i];\n"
-        "    }\n"
-        "    __host__ __device__ T &operator[](size_t i) {\n"
-        "        return data[i];\n"
-        "    }\n"
-        "};\n"
-        "\n"
-        "template <class T>\n"
-        "__host__ __device__ T floorDiv(T a, T b) {\n"
-        "  T res = a / b, rem = a % b;\n"
-        "  return res - (rem != 0 && ((rem < 0) != (b < 0)));\n"
-        "}\n"
-        "template <class T>\n"
-        "__host__ __device__ T ceilDiv(T a, T b) {\n"
-        "  T res = a / b, rem = a % b;\n"
-        "  return res + (rem != 0 && ((rem < 0) == (b < 0)));\n"
-        "}\n"
-        "\n"
-        "extern \"C\" {\n"
-        "\n";
-    const char *tailer = "\n"
-                         "}";
+    const char *header = R"~~~(
+#include <gpu_runtime.h>
+
+extern "C" {
+)~~~";
+    const char *tailer = R"~~~(
+}
+)~~~";
 
     auto body = visitor.toString([&](const CodeGenCUDA::Stream &stream) {
         if (stream.name_ == "default") {

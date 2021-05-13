@@ -6,8 +6,6 @@ import pytest
 import numpy as np
 
 target = ir.GPU()
-# TODO: Detect GPU arch and set it to target
-#target.set_compute_capability(70)
 device = ir.Device(target)
 
 host = ir.Device(ir.CPU())
@@ -26,18 +24,24 @@ def test_manual_static():
 
     A_np = np.random.uniform(size=(in_size, in_size, in_channel, batch)).astype("float32")
     W_np = np.random.uniform(size=(kernel, kernel, in_channel, out_channel)).astype("float32")
-    def eval(ast):
+    def eval(ast, print_code=False, time=False):
         ast = ir.lower(ast, target)
-        print(ast, flush=True)
+        if print_code:
+            print(ast, flush=True)
         code, params = ir.codegen(ast, target)
-        print(ir.debug.with_line_no(code), flush=True)
+        if print_code:
+            print(ir.debug.with_line_no(code), flush=True)
         driver = ir.Driver(code, params, device)
         B_np = np.zeros((out_size, out_size, out_channel, batch), dtype="float32")
         A_arr = ir.Array(A_np, device)
         W_arr = ir.Array(W_np, device)
         B_arr = ir.Array(B_np, device)
         driver.set_params({"A": A_arr, "W": W_arr, "B": B_arr})
-        driver.run()
+        if time:
+            t = driver.time()
+            print("time: %s ms" % t)
+        else:
+            driver.run()
         B_np = B_arr.numpy().reshape(out_size, out_size, out_channel, batch)
         return B_np
 
@@ -116,11 +120,11 @@ def test_manual_static():
 
     fill_AA, _, AA = s.cache(rci, "A", "gpu/shared")
     s.parallelize(s.find(lambda x: x.nid() == fill_AA).outer().outer(), "threadIdx.y")
-    # TODO: vectorize
+    s.vectorize(s.find(lambda x: x.nid() == fill_AA).outer())
 
     fill_WW, _, WW = s.cache(rci, "W", "gpu/shared")
     s.parallelize(s.find(lambda x: x.nid() == fill_WW).outer().outer(), "threadIdx.x")
-    # TODO: vectorize
+    s.vectorize(s.find(lambda x: x.nid() == fill_WW).outer())
 
     fill_AL, _, AL = s.cache(fi, AA, "gpu/local")
     fill_WL, _, WL = s.cache(fi, WW, "gpu/local")
@@ -134,7 +138,7 @@ def test_manual_static():
     s.parallelize(tx, "threadIdx.x")
 
     ast = s.ast()
-    result = eval(ast)
+    result = eval(ast, True, True)
 
     s = ir.Schedule(algo)
     s.parallelize("Ly", "blockIdx.y")

@@ -265,10 +265,10 @@ void init_ffi_ast(py::module_ &m) {
     m.def("makeFor",
           static_cast<Stmt (*)(const std::string &, const std::string &,
                                const Expr &, const Expr &, const Expr &,
-                               const std::string &, const bool, const Stmt &)>(
+                               const std::string &, bool, bool, const Stmt &)>(
               &_makeFor),
           "nid"_a, "iter"_a, "begin"_a, "end"_a, "len"_a, "parallel"_a,
-          "unroll"_a, "body"_a);
+          "unroll"_a, "vectorize"_a, "body"_a);
     m.def("makeIf",
           static_cast<Stmt (*)(const std::string &, const Expr &, const Stmt &,
                                const Stmt &)>(&_makeIf),

@@ -1,7 +1,7 @@
 #include <climits>
 
 #include <pass/gpu/normalize_threads.h>
-#include <pass/merge_if.h>
+#include <pass/merge_and_hoist_if.h>
 #include <pass/shrink_for.h>
 
 namespace ir {
@@ -76,17 +76,17 @@ Stmt NormalizeThreads::visit(const For &op) {
         auto zero = makeIntConst(0);
         auto inf = makeIntConst(INT_MAX);
         ret = makeFor("", ".threadIdx.x", zero, inf, inf, "threadIdx.x", false,
-                      ret);
+                      false, ret);
         ret = makeFor("", ".threadIdx.y", zero, inf, inf, "threadIdx.y", false,
-                      ret);
+                      false, ret);
         ret = makeFor("", ".threadIdx.z", zero, inf, inf, "threadIdx.z", false,
-                      ret);
+                      false, ret);
         ret = makeFor("", ".blockIdx.x", zero, inf, inf, "blockIdx.x", false,
-                      ret);
+                      false, ret);
         ret = makeFor("", ".blockIdx.y", zero, inf, inf, "blockIdx.y", false,
-                      ret);
+                      false, ret);
         ret = makeFor("", ".blockIdx.z", zero, inf, inf, "blockIdx.z", false,
-                      ret);
+                      false, ret);
         return ret;
     } else {
         return doVisitFor(op);
@@ -118,7 +118,7 @@ void CheckThreadNum::visit(const For &op) {
 Stmt normalizeThreads(const Stmt &_op) {
     auto op = NormalizeThreads()(_op);
     op = shrinkFor(op, true);
-    op = mergeIf(op);
+    op = mergeAndHoistIf(op);
     CheckThreadNum()(op);
     return op;
 }

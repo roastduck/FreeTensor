@@ -273,7 +273,11 @@ void PrintVisitor::visit(const For &op) {
     }
     if (op->unroll_) {
         makeIndent();
-        os() << "// unroll = true" << std::endl;
+        os() << "// unroll" << std::endl;
+    }
+    if (op->vectorize_) {
+        makeIndent();
+        os() << "// vectorize" << std::endl;
     }
     makeIndent();
     os() << "for " << op->iter_ << " = ";

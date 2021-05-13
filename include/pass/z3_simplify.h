@@ -44,11 +44,14 @@ class Z3Simplify : public Mutator {
     bool exists(const Expr &key);
     const z3::expr &get(const Expr &key);
 
-    bool prove(const Expr &op);
     void push(const Expr &op);
     void pop();
 
   protected:
+    bool prove(const Expr &op);
+
+    using Mutator::visit;
+
     Expr visit(const Var &op) override;
     Expr visit(const Load &op) override;
     Expr visit(const IntConst &op) override;

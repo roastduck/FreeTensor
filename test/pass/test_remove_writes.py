@@ -15,6 +15,25 @@ def test_type1_basic():
 
     assert std.match(ast)
 
+def test_type1_before_read():
+    with ir.VarDef("y", (), "int32", "output", "cpu") as y:
+        with ir.VarDef("b", (), "int32", "cache", "cpu") as b:
+            b[()] = 1
+            b[()] = 2
+            y[()] = b[()] * 2
+    ast = ir.pop_ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef("y", (), "int32", "output", "cpu") as y:
+        with ir.VarDef("b", (), "int32", "cache", "cpu") as b:
+            b[()] = 2
+            y[()] = b[()] * 2
+    std = ir.pop_ast()
+
+    assert std.match(ast)
+
 def test_type1_one_then_many():
     with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
         y[0] = 1

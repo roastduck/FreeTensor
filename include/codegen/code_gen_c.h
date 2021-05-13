@@ -15,6 +15,7 @@ class CodeGenC : public CodeGen {
     std::unordered_set<std::string> idFlag_;               // C IDs
 
   protected:
+    virtual void visit(const StmtSeq &op) override;
     virtual void visit(const VarDef &op) override;
     virtual void visit(const Var &op) override;
     virtual void visit(const Store &op) override;

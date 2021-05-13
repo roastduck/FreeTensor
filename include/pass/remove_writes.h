@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include <analyze/find_loop_variance.h>
 #include <mutator.h>
 #include <visitor.h>
 
@@ -14,12 +15,13 @@ class FindLoopInvariantWrites : public Visitor {
     std::vector<If> ifStack_;
     std::vector<std::pair<Store, Expr>> results_; /// (store, extraCond)
     std::unordered_map<std::string, int> defDepth_;
-    const std::unordered_map<Expr, std::unordered_set<std::string>>
-        &variantExpr_;
+    const std::unordered_map<
+        Expr, std::unordered_map<std::string, LoopVariability>> &variantExpr_;
 
   public:
     FindLoopInvariantWrites(
-        const std::unordered_map<Expr, std::unordered_set<std::string>>
+        const std::unordered_map<
+            Expr, std::unordered_map<std::string, LoopVariability>>
             &variantExpr)
         : variantExpr_(variantExpr) {}
 

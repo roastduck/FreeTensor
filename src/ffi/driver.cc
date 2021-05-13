@@ -17,20 +17,34 @@ void init_ffi_driver(py::module_ &m) {
     py::class_<Target, Ref<Target>> pyTarget(m, "Target");
     pyTarget
         .def("type", [](const Ref<Target> &target) { return target->type(); })
+        .def(
+            "set_use_native_arch",
+            [](const Ref<Target> &target, bool useNativeArch) {
+                target->setUseNativeArch(useNativeArch);
+            },
+            "useNativeArch"_a = true)
+        .def("use_native_arch",
+             [](const Ref<Target> &target) { return target->useNativeArch(); })
         .def("__str__",
              [](const Ref<Target> &target) { return target->toString(); });
-    py::class_<CPU, Ref<CPU>>(m, "CPU", pyTarget).def(py::init([]() {
-        return Ref<CPU>::make();
-    }));
+    py::class_<CPU, Ref<CPU>>(m, "CPU", pyTarget)
+        .def(py::init([](bool useNativeArch) {
+                 return Ref<CPU>::make(useNativeArch);
+             }),
+             "use_native_arch"_a = true);
     py::class_<GPU, Ref<GPU>>(m, "GPU", pyTarget)
-        .def(py::init([]() { return Ref<GPU>::make(); }))
-        .def("set_compute_capability",
-             [](const Ref<GPU> &target, int value) {
-                 target->setComputeCapability(value);
-             })
-        .def("compute_capability", [](const Ref<GPU> &target) {
-            return target->computeCapability();
-        });
+        .def(py::init([](bool useNativeArch) {
+                 return Ref<GPU>::make(useNativeArch);
+             }),
+             "use_native_arch"_a = true)
+        .def(
+            "set_compute_capability",
+            [](const Ref<GPU> &target, int major, int minor) {
+                target->setComputeCapability(major, minor);
+            },
+            "major"_a, "minor"_a);
+    // We can't export .compute_capability() to Python due to an issue in
+    // PyBind11
 
     py::class_<Device>(m, "Device")
         .def(py::init<const Ref<Target> &, size_t>(), "target"_a, "num"_a = 0);

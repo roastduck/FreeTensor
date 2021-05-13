@@ -10,8 +10,10 @@ namespace ir {
 
 void FindAccessPoint::visit(const VarDef &op) {
     defAxis_[op->name_] = cur_.size();
+    buffers_[op->name_] = op->buffer_;
     Visitor::visit(op);
     defAxis_.erase(op->name_);
+    buffers_.erase(op->name_);
 }
 
 void FindAccessPoint::visit(const StmtSeq &op) {
@@ -26,7 +28,8 @@ void FindAccessPoint::visit(const StmtSeq &op) {
 }
 
 void FindAccessPoint::visit(const For &op) {
-    cur_.emplace_back(makeVar(op->iter_), op->begin_, op->end_);
+    cur_.emplace_back(makeVar(op->iter_), op->begin_, op->end_,
+                      !op->parallel_.empty());
     scope2coord_[op->id()] = cur_;
     Visitor::visit(op);
     cur_.pop_back();
@@ -51,6 +54,7 @@ void FindAccessPoint::visit(const Load &op) {
     auto ap = Ref<AccessPoint>::make();
     *ap = {op,
            cursor(),
+           buffers_.at(op->var_),
            defAxis_.at(op->var_),
            cur_,
            std::vector<Expr>{op->indices_.begin(), op->indices_.end()},
@@ -226,6 +230,22 @@ void GenISLExpr::visit(const Mod &op) {
     }
 }
 
+void GenISLExpr::visit(const Min &op) {
+    Visitor::visit(op);
+    if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
+        results_[op] =
+            "min(" + results_.at(op->lhs_) + ", " + results_.at(op->rhs_) + ")";
+    }
+}
+
+void GenISLExpr::visit(const Max &op) {
+    Visitor::visit(op);
+    if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
+        results_[op] =
+            "max(" + results_.at(op->lhs_) + ", " + results_.at(op->rhs_) + ")";
+    }
+}
+
 Ref<std::string> GenISLExpr::gen(const Expr &op) {
     (*this)(op);
     if (results_.count(op)) {
@@ -242,7 +262,9 @@ std::string AnalyzeDeps::makeIterList(const std::vector<IterAxis> &list,
             if (list[i].iter_->nodeType() == ASTNodeType::Var) {
                 ret +=
                     genISLExpr_.normalizeId(list[i].iter_.as<VarNode>()->name_);
-                if (i < eraseBefore) {
+                if (i < eraseBefore && !list[i].parallel_ &&
+                    eraseOutsideVarDef_) {
+                    // FIXME: Should be point = other, instead of = 0
                     ret += " = 0";
                 }
             } else if (list[i].iter_->nodeType() == ASTNodeType::IntConst) {
@@ -390,11 +412,14 @@ std::string AnalyzeDeps::makeIneqBetweenOps(DepDirection mode, int iterId,
     case DepDirection::Inv:
         ineq = ">";
         break;
+    case DepDirection::Normal:
+        ineq = "<";
+        break;
     case DepDirection::Same:
         ineq = "=";
         break;
-    case DepDirection::Normal:
-        ineq = "<";
+    case DepDirection::Different:
+        ineq = "!=";
         break;
     default:
         ASSERT(false);
@@ -416,8 +441,52 @@ const std::string &AnalyzeDeps::getVar(const AST &op) {
     }
 }
 
+std::string
+AnalyzeDeps::makeSerialToAll(int iterDim, int serialIterDim,
+                             const std::vector<IterAxis> &point) const {
+    std::string ret =
+        makeNdList("d", serialIterDim) + " -> " + makeNdList("d_", iterDim);
+    bool first = true;
+    int j = 0;
+    for (int i = 0; i < iterDim; i++) {
+        if (i < (int)point.size()) {
+            if (!point[i].parallel_) {
+                ret += first ? ": " : " and ";
+                ret += "d" + std::to_string(j++) + " = d_" + std::to_string(i);
+                first = false;
+            }
+        } else {
+            ret += first ? ": " : " and ";
+            ret += "d_" + std::to_string(i) + " = 0";
+            first = false;
+        }
+    }
+    while (j < serialIterDim) {
+        ret += first ? ": " : " and ";
+        ret += "d" + std::to_string(j++) + " = 0";
+        first = false;
+    }
+    return "{" + ret + "}";
+}
+
+int AnalyzeDeps::countSerial(const std::vector<IterAxis> &point) {
+    int ret = 0;
+    for (auto &&item : point) {
+        if (!item.parallel_) {
+            ret++;
+        }
+    }
+    return ret;
+}
+
 void AnalyzeDeps::checkDep(const AccessPoint &point, const AccessPoint &other) {
+    if (filter_ != nullptr && !filter_(point, other)) {
+        return;
+    }
+
     int iterDim = std::max(point.iter_.size(), other.iter_.size());
+    int serialIterDim =
+        std::max(countSerial(point.iter_), countSerial(other.iter_));
     int accDim = point.access_.size();
     ASSERT((int)other.access_.size() == accDim);
 
@@ -443,20 +512,42 @@ void AnalyzeDeps::checkDep(const AccessPoint &point, const AccessPoint &other) {
     isl_map *omap = isl_map_read_from_str(
         isl_, makeAccMap(other, iterDim, accDim, oRelax)->c_str());
 
-    isl_set *domain = isl_set_read_from_str(
+    isl_map *ps2a = isl_map_read_from_str(
+        isl_, makeSerialToAll(iterDim, serialIterDim, point.iter_).c_str());
+    isl_map *os2a = isl_map_read_from_str(
+        isl_, makeSerialToAll(iterDim, serialIterDim, other.iter_).c_str());
+    isl_map *pa2s = isl_map_reverse(isl_map_copy(ps2a));
+    isl_map *oa2s = isl_map_reverse(isl_map_copy(os2a));
+
+    // lex_ge in serialDepAll AND ne in depAll
+    isl_set *serialDomain = isl_set_read_from_str(
+        isl_, ("{" + makeNdList("d", serialIterDim) + "}").c_str());
+    isl_space *serialSpace = isl_set_get_space(serialDomain);
+    isl_set_free(serialDomain);
+    isl_map *serialLexGE = isl_map_lex_ge(serialSpace);
+    isl_set *allDomain = isl_set_read_from_str(
         isl_, ("{" + makeNdList("d", iterDim) + "}").c_str());
-    isl_space *space = isl_set_get_space(domain);
-    isl_set_free(domain);
-    isl_map *pred = isl_map_lex_gt(space);
+    isl_space *allSpace = isl_set_get_space(allDomain);
+    isl_set_free(allDomain);
+    isl_map *allEQ = isl_map_identity(isl_space_map_from_set(allSpace));
 
     isl_set *pIter = isl_map_domain(isl_map_copy(omap));
-    isl_map *depall = isl_map_apply_range(pmap, isl_map_reverse(omap));
-    isl_map *dep = isl_map_intersect(depall, pred);
-    isl_map *nearest = isl_map_lexmax(dep);
+
+    isl_map *depAll = isl_map_subtract(
+        isl_map_apply_range(pmap, isl_map_reverse(omap)), allEQ);
+    isl_map *serialDepAll = isl_map_apply_range(
+        ps2a, isl_map_apply_range(isl_map_copy(depAll), oa2s));
+    isl_map *serialDep = isl_map_intersect(serialDepAll, serialLexGE);
+    isl_map *serialNearest = isl_map_lexmax(serialDep);
+    isl_map *nearest = isl_map_intersect(
+        isl_map_apply_range(pa2s, isl_map_apply_range(serialNearest, os2a)),
+        depAll);
+
     isl_set *pIterKilled = isl_map_range(isl_map_copy(nearest));
     bool fullyKilled = isl_set_is_equal(pIter, pIterKilled);
     isl_set_free(pIter);
     isl_set_free(pIterKilled);
+
     if (isl_map_is_empty(nearest) ||
         (mode_ == FindDepsMode::Kill && !fullyKilled)) {
         isl_map_free(nearest);
@@ -484,14 +575,14 @@ void AnalyzeDeps::checkDep(const AccessPoint &point, const AccessPoint &other) {
                 }
             }
             if (!pos.empty()) {
-                isl_basic_map *require = isl_basic_map_read_from_str(
+                isl_map *require = isl_map_read_from_str(
                     isl_, makeEqForBothOps(pos, iterDim).c_str());
-                res = isl_map_intersect(res, isl_map_from_basic_map(require));
+                res = isl_map_intersect(res, require);
             }
 
-            isl_basic_map *require = isl_basic_map_read_from_str(
+            isl_map *require = isl_map_read_from_str(
                 isl_, makeIneqBetweenOps(mode, iterId, iterDim).c_str());
-            res = isl_map_intersect(res, isl_map_from_basic_map(require));
+            res = isl_map_intersect(res, require);
             found &= !isl_map_is_empty(res);
             isl_map_free(res);
         }
@@ -513,9 +604,6 @@ void AnalyzeDeps::visit(const Load &op) {
         auto &&point = points_.at(op);
         auto range = writes_.equal_range(op->var_);
         for (auto i = range.first; i != range.second; i++) {
-            if (filter_ != nullptr && !filter_(*point, *(i->second))) {
-                continue;
-            }
             checkDep(*point, *(i->second));
         }
     }
@@ -525,7 +613,8 @@ void findDeps(
     const Stmt &op,
     const std::vector<std::vector<std::pair<std::string, DepDirection>>> &cond,
     const FindDepsCallback &found, FindDepsMode mode, DepType depType,
-    const FindDepsFilter &filter, bool ignoreReductionWAW) {
+    const FindDepsFilter &filter, bool ignoreReductionWAW,
+    bool eraseOutsideVarDef) {
     if (cond.empty()) {
         return;
     }
@@ -534,7 +623,7 @@ void findDeps(
     finder(op);
     AnalyzeDeps analyzer(finder.points(), finder.reads(), finder.writes(),
                          finder.scope2coord(), cond, found, mode, depType,
-                         filter, ignoreReductionWAW);
+                         filter, ignoreReductionWAW, eraseOutsideVarDef);
     analyzer(op);
 }
 

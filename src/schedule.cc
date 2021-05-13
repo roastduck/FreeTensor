@@ -23,6 +23,7 @@
 #include <schedule/swap.h>
 #include <schedule/unroll.h>
 #include <schedule/var_split.h>
+#include <schedule/vectorize.h>
 
 namespace ir {
 
@@ -179,12 +180,10 @@ Schedule::fission(const std::string &loop, const std::string &after,
         auto isRealWrite = [&](const std::string &loop, const AST &op) -> bool {
             if (op->nodeType() == ASTNodeType::Store) {
                 Expr expr = op.as<StoreNode>()->expr_;
-                return variantExpr.count(expr) &&
-                       variantExpr.at(expr).count(loop);
+                return isVariant(variantExpr.first, expr, loop);
             } else if (op->nodeType() == ASTNodeType::ReduceTo) {
                 Expr expr = op.as<ReduceToNode>()->expr_;
-                return variantExpr.count(expr) &&
-                       variantExpr.at(expr).count(loop);
+                return isVariant(variantExpr.first, expr, loop);
             } else {
                 return false;
             }
@@ -335,7 +334,8 @@ void Schedule::blend(const std::string &loop) {
         };
         findDeps(ast, cond, found);
 
-        ast = BlendPass(loop, findLoopVariance(ast))(ast);
+        auto loopVari = findLoopVariance(ast);
+        ast = BlendPass(loop, loopVari.first, loopVari.second)(ast);
         ast = flattenStmtSeq(ast);
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid blend(" + loop + "): " + e.what());
@@ -539,12 +539,13 @@ void Schedule::parallelize(const std::string &loop,
     auto ast = ast_;
     Parallelize mutator(loop, parallel);
     try {
+        ast = makeReduction(ast);
+        auto oldAst = ast;
         ast = mutator(ast);
         if (!mutator.done()) {
             throw InvalidSchedule("Loop " + loop + " not found");
         }
-        ast = makeReduction(ast);
-        findDeps(ast, {{{loop, DepDirection::Normal}}},
+        findDeps(oldAst, {{{loop, DepDirection::Normal}}},
                  [&](const Dependency &d) {
                      throw InvalidSchedule(
                          dep2Str(loop, d.var_, d.later(), d.earlier()));
@@ -567,6 +568,25 @@ void Schedule::unroll(const std::string &loop) {
         }
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid unroll(" + loop + "): " + e.what());
+    }
+    ast_ = ast;
+}
+
+void Schedule::vectorize(const std::string &loop) {
+    auto ast = ast_;
+    Vectorize mutator(loop);
+    try {
+        ast = mutator(ast);
+        if (!mutator.done()) {
+            throw InvalidSchedule("Loop " + loop + " not found");
+        }
+        auto found = [&](const Dependency &d) {
+            throw InvalidSchedule(
+                dep2Str(loop, d.var_, d.later(), d.earlier()));
+        };
+        findDeps(ast, {{{loop, DepDirection::Normal}}}, found);
+    } catch (const InvalidSchedule &e) {
+        throw InvalidSchedule("Invalid vectorize(" + loop + "): " + e.what());
     }
     ast_ = ast;
 }

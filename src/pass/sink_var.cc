@@ -1,9 +1,8 @@
 #include <analyze/deps.h>
+#include <analyze/find_all_loops.h>
 #include <pass/sink_var.h>
 
 namespace ir {
-
-void FindAllLoops::visit(const For &op) { loops_.emplace_back(op->id()); }
 
 Expr SinkVar::visit(const Load &op) {
     used_.insert(op->var_);
@@ -72,7 +71,8 @@ Stmt SinkVar::visit(const VarDef &op) {
                            std::move(sizeLim), (*this)(loop->body_), false);
             return makeFor(loop->id(), loop->iter_, (*this)(loop->begin_),
                            (*this)(loop->end_), (*this)(loop->len_),
-                           loop->parallel_, loop->unroll_, std::move(loopBody));
+                           loop->parallel_, loop->unroll_, loop->vectorize_,
+                           std::move(loopBody));
         } else {
             body = (*this)(op->body_);
         }
