@@ -17,6 +17,7 @@ from ffi import use_builtin_div
 from ffi import gpu_make_sync
 from ffi import gpu_correct_shared
 from ffi import gpu_normalize_threads
+from ffi import gpu_lower_vector
 
 def lower(ast, target: Optional[ffi.Target]=None):
     ast = simplify_pass(ast)
@@ -48,6 +49,9 @@ def lower(ast, target: Optional[ffi.Target]=None):
         ast = gpu_make_sync(ast)
 
         ast = make_1d_var(ast)
+
+        # After make_1d_var
+        ast = gpu_lower_vector(ast)
 
     return ast
 

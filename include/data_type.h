@@ -5,7 +5,7 @@
 
 namespace ir {
 
-enum class DataType : int { Void = 0, Float32, Int32, Bool };
+enum class DataType : int { Void = 0, Float32, Int32, Bool, Custom };
 
 inline std::string toString(DataType dtype) {
     switch (dtype) {
@@ -15,6 +15,8 @@ inline std::string toString(DataType dtype) {
         return "i32";
     case DataType::Bool:
         return "bool";
+    case DataType::Custom:
+        return "custom";
     case DataType::Void:
         return "void";
     }
@@ -28,6 +30,8 @@ inline size_t sizeOf(DataType dtype) {
         return 4;
     case DataType::Bool:
         return 1;
+    case DataType::Custom:
+        ERROR("Cannot get size of a customized data type");
     case DataType::Void:
         return 0;
     }

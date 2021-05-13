@@ -620,8 +620,8 @@ def test_parallel_different_length():
 
     code, params = ir.codegen(ast, target)
     print(ir.debug.with_line_no(code))
-    a_np = np.random.rand(4, 4).astype("int32")
-    b_np = np.random.rand(4, 8).astype("int32")
+    a_np = np.random.randint(0, 100, (4, 4)).astype("int32")
+    b_np = np.random.randint(0, 100, (4, 8)).astype("int32")
     c_np = np.zeros((4, 8), dtype="int32")
     a_arr = ir.Array(a_np, device)
     b_arr = ir.Array(b_np, device)
@@ -680,8 +680,8 @@ def test_parallel_broadcast():
 
     code, params = ir.codegen(ast, target)
     print(ir.debug.with_line_no(code))
-    a_np = np.random.rand(4, 1).astype("int32")
-    b_np = np.random.rand(1, 8).astype("int32")
+    a_np = np.random.randint(0, 100, (4, 1)).astype("int32")
+    b_np = np.random.randint(0, 100, (1, 8)).astype("int32")
     c_np = np.zeros((4, 8), dtype="int32")
     a_arr = ir.Array(a_np, device)
     b_arr = ir.Array(b_np, device)
@@ -746,7 +746,7 @@ def test_parallel_reduction():
     assert "atomicAdd" in code
     assert "+=" not in code
     print(ir.debug.with_line_no(code))
-    x_np = np.random.rand(4, 64).astype("int32")
+    x_np = np.random.randint(0, 100, (4, 64)).astype("int32")
     y_np = np.zeros((4,), dtype="int32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
@@ -786,7 +786,7 @@ def test_serial_reduction():
     assert "atomicAdd" not in code
     assert "+=" in code
     print(ir.debug.with_line_no(code))
-    x_np = np.random.rand(4, 64).astype("int32")
+    x_np = np.random.randint(0, 100, (4, 64)).astype("int32")
     y_np = np.zeros((4,), dtype="int32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
@@ -827,7 +827,7 @@ def test_unroll_for():
     assert "atomicAdd" not in code
     assert "+=" in code
     print(ir.debug.with_line_no(code))
-    x_np = np.random.rand(4, 64).astype("int32")
+    x_np = np.random.randint(0, 100, (4, 64)).astype("int32")
     y_np = np.zeros((4,), dtype="int32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
@@ -838,3 +838,155 @@ def test_unroll_for():
 
     y_std = np.sum(x_np, axis=1)
     assert np.array_equal(y_np, y_std)
+
+def test_vectorize():
+    with ir.VarDef([
+            ("x", (4, 64), "int32", "input", "gpu/global"),
+            ("y", (4, 64), "int32", "output", "gpu/global")]) as (x, y):
+        with ir.For("i", 0, 4, nid="L1") as i:
+            with ir.For("j", 0, 64, nid="L2") as j:
+                y[i, j] = x[i, j] * 2
+    ast = ir.pop_ast()
+
+    s = ir.Schedule(ast)
+    s.parallelize("L1", "blockIdx.x")
+    s.vectorize("L2")
+    ast = ir.lower(s.ast(), target)
+    print(ast)
+
+    code, params = ir.codegen(ast, target)
+    print(ir.debug.with_line_no(code))
+    assert "int4" in code
+
+    x_np = np.random.randint(0, 100, (4, 64)).astype("int32")
+    y_np = np.zeros((4, 64), dtype="int32")
+    x_arr = ir.Array(x_np, device)
+    y_arr = ir.Array(y_np, device)
+    driver = ir.Driver(code, params, device)
+    driver.set_params({"x": x_arr, "y": y_arr})
+    driver.run()
+    y_np = y_arr.numpy().reshape(4, 64)
+
+    y_std = x_np * 2
+    assert np.array_equal(y_np, y_std)
+
+def test_vectorize_with_non_vector_access():
+    with ir.VarDef([
+            ("x", (4,), "int32", "input", "gpu/global"),
+            ("y", (4, 64), "int32", "output", "gpu/global")]) as (x, y):
+        with ir.For("i", 0, 4, nid="L1") as i:
+            with ir.For("j", 0, 64, nid="L2") as j:
+                y[i, j] = x[i] * 2
+    ast = ir.pop_ast()
+
+    s = ir.Schedule(ast)
+    s.parallelize("L1", "blockIdx.x")
+    s.vectorize("L2")
+    ast = ir.lower(s.ast(), target)
+    print(ast)
+
+    code, params = ir.codegen(ast, target)
+    print(ir.debug.with_line_no(code))
+    assert "int4" in code
+
+    x_np = np.random.randint(0, 100, (4,)).astype("int32")
+    y_np = np.zeros((4, 64), dtype="int32")
+    x_arr = ir.Array(x_np, device)
+    y_arr = ir.Array(y_np, device)
+    driver = ir.Driver(code, params, device)
+    driver.set_params({"x": x_arr, "y": y_arr})
+    driver.run()
+    y_np = y_arr.numpy().reshape(4, 64)
+
+    y_std = np.broadcast_to(x_np * 2, (64, 4)).transpose()
+    assert np.array_equal(y_np, y_std)
+
+def test_vectorize_use_iter():
+    with ir.VarDef("y", (4, 64), "int32", "output", "gpu/global") as y:
+        with ir.For("i", 0, 4, nid="L1") as i:
+            with ir.For("j", 0, 64, nid="L2") as j:
+                y[i, j] = i + j
+    ast = ir.pop_ast()
+
+    s = ir.Schedule(ast)
+    s.parallelize("L1", "blockIdx.x")
+    s.vectorize("L2")
+    ast = ir.lower(s.ast(), target)
+    print(ast)
+
+    code, params = ir.codegen(ast, target)
+    print(ir.debug.with_line_no(code))
+    assert "int4" in code
+
+    y_np = np.zeros((4, 64), dtype="int32")
+    y_arr = ir.Array(y_np, device)
+    driver = ir.Driver(code, params, device)
+    driver.set_params({"y": y_arr})
+    driver.run()
+    y_np = y_arr.numpy().reshape(4, 64)
+
+    y_std = np.array([[i + j for j in range(64)] for i in range(4)])
+    assert np.array_equal(y_np, y_std)
+
+def test_vectorize_fallback_to_shorter_when_not_divisible():
+    with ir.VarDef([
+            ("x", (4, 62), "int32", "input", "gpu/global"),
+            ("y", (4, 62), "int32", "output", "gpu/global")]) as (x, y):
+        with ir.For("i", 0, 4, nid="L1") as i:
+            with ir.For("j", 0, 62, nid="L2") as j:
+                y[i, j] = x[i, j] * 2
+    ast = ir.pop_ast()
+
+    s = ir.Schedule(ast)
+    s.parallelize("L1", "blockIdx.x")
+    s.vectorize("L2")
+    ast = ir.lower(s.ast(), target)
+    print(ast)
+
+    code, params = ir.codegen(ast, target)
+    print(ir.debug.with_line_no(code))
+    assert "int2" in code
+
+    x_np = np.random.randint(0, 100, (4, 62)).astype("int32")
+    y_np = np.zeros((4, 62), dtype="int32")
+    x_arr = ir.Array(x_np, device)
+    y_arr = ir.Array(y_np, device)
+    driver = ir.Driver(code, params, device)
+    driver.set_params({"x": x_arr, "y": y_arr})
+    driver.run()
+    y_np = y_arr.numpy().reshape(4, 62)
+
+    y_std = x_np * 2
+    assert np.array_equal(y_np, y_std)
+
+def test_vectorize_fallback_to_shorter_when_not_aligned():
+    with ir.VarDef([
+            ("x", (4, 66), "int32", "input", "gpu/global"),
+            ("y", (4, 64), "int32", "output", "gpu/global")]) as (x, y):
+        with ir.For("i", 0, 4, nid="L1") as i:
+            with ir.For("j", 0, 64, nid="L2") as j:
+                y[i, j] = x[i, j + 2] * 2
+    ast = ir.pop_ast()
+
+    s = ir.Schedule(ast)
+    s.parallelize("L1", "blockIdx.x")
+    s.vectorize("L2")
+    ast = ir.lower(s.ast(), target)
+    print(ast)
+
+    code, params = ir.codegen(ast, target)
+    print(ir.debug.with_line_no(code))
+    assert "int2" in code
+
+    x_np = np.random.randint(0, 100, (4, 66)).astype("int32")
+    y_np = np.zeros((4, 64), dtype="int32")
+    x_arr = ir.Array(x_np, device)
+    y_arr = ir.Array(y_np, device)
+    driver = ir.Driver(code, params, device)
+    driver.set_params({"x": x_arr, "y": y_arr})
+    driver.run()
+    y_np = y_arr.numpy().reshape(4, 64)
+
+    y_std = x_np[:, 2:] * 2
+    assert np.array_equal(y_np, y_std)
+

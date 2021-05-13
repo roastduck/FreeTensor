@@ -66,7 +66,7 @@ def test_parallel_reduction():
     assert "#pragma omp atomic" in code
     assert "+=" in code
     print(code)
-    x_np = np.random.rand(4, 64).astype("int32")
+    x_np = np.random.randint(0, 100, (4, 64)).astype("int32")
     y_np = np.zeros((4,), dtype="int32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
@@ -106,7 +106,7 @@ def test_serial_reduction():
     assert "#pragma omp atomic" not in code
     assert "+=" in code
     print(code)
-    x_np = np.random.rand(4, 64).astype("int32")
+    x_np = np.random.randint(0, 100, (4, 64)).astype("int32")
     y_np = np.zeros((4,), dtype="int32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)

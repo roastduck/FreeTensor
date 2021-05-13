@@ -8,3 +8,6 @@
 [submodule "3rd-party/z3"]
     path = 3rd-party/z3
     url = git@github.com:Z3Prover/z3.git
+[submodule "3rd-party/cuda-samples"]
+	path = 3rd-party/cuda-samples
+	url = git@github.com:NVIDIA/cuda-samples.git

@@ -120,11 +120,11 @@ def test_manual_static():
 
     fill_AA, _, AA = s.cache(rci, "A", "gpu/shared")
     s.parallelize(s.find(lambda x: x.nid() == fill_AA).outer().outer(), "threadIdx.y")
-    # TODO: vectorize
+    s.vectorize(s.find(lambda x: x.nid() == fill_AA).outer())
 
     fill_WW, _, WW = s.cache(rci, "W", "gpu/shared")
     s.parallelize(s.find(lambda x: x.nid() == fill_WW).outer().outer(), "threadIdx.x")
-    # TODO: vectorize
+    s.vectorize(s.find(lambda x: x.nid() == fill_WW).outer())
 
     fill_AL, _, AL = s.cache(fi, AA, "gpu/local")
     fill_WL, _, WL = s.cache(fi, WW, "gpu/local")
