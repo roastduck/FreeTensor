@@ -47,7 +47,8 @@ bool LowerVector::hasVectorIndex(const Expr &index) {
         simplifyOnly_ = false;
         if (!prove(toProve)) {
             throw InvalidSchedule("Vectorized memory access should be"
-                                  "aligned to the vector length");
+                                  "aligned to the vector length: " +
+                                  toString(toProve) + " does not hold");
         }
         return true;
     } else {
@@ -90,17 +91,18 @@ Stmt LowerVector::visit(const For &op) {
                                           "by the vector length");
                 }
                 ret = deepCopy(op).as<ForNode>();
-                // We are after useBuiltinDiv pass, so we have use
-                // RoundTowards0Div
-                ret->len_ =
-                    makeRoundTowards0Div(ret->len_, makeIntConst(vecLen));
+                ret->len_ = makeFloorDiv(ret->len_, makeIntConst(vecLen));
                 ret->end_ = makeAdd(ret->begin_, ret->len_);
                 ret->body_ = (*this)(ret->body_);
             } catch (const InvalidSchedule &e) {
+                WARNING("Vectorizing loop " + op->id() + " to length " +
+                        std::to_string(vecLen) +
+                        " failed because: " + e.what());
                 var_.clear();
                 continue;
             }
             var_.clear();
+            ret->vectorize_ = false; // done
             return ret;
         }
     }
