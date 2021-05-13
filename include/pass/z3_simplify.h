@@ -14,12 +14,10 @@ namespace ir {
 class OutDatedCondsRemover : public Visitor {
     std::deque<std::pair<Expr, bool>> &condList_;
     CheckBoundOutDated check_;
-    bool solverNeedRebuild_ = false;
 
   public:
     OutDatedCondsRemover(std::deque<std::pair<Expr, bool>> &condList)
         : condList_(condList), check_() {}
-    bool &solverNeedRebuild() { return solverNeedRebuild_; }
 
   private:
     void remove(const std::string &name);
