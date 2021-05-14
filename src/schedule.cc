@@ -362,18 +362,20 @@ Schedule::cache(const std::string &stmt, const std::string &var,
         BuiltinSimplify::UpperBoundsMap upper;
         std::tie(ast, lower, upper) =
             simplifyAndGetBounds<BuiltinSimplify>(ast);
-        CompAccessBound compRBound(lower, upper, COMP_ACCESS_BOUND_READ);
-        CompAccessBound compWBound(lower, upper, COMP_ACCESS_BOUND_WRITE);
+        CompAccessBound compRBound(newDef, lower, upper,
+                                   COMP_ACCESS_BOUND_READ);
+        CompAccessBound compWBound(newDef, lower, upper,
+                                   COMP_ACCESS_BOUND_WRITE);
         compRBound(ast);
         compWBound(ast);
-        MakeFillAndFlush makeFillAndFlush(stmt, var, newVar, oldDef, newDef,
-                                          compRBound.results(),
-                                          compWBound.results());
+        MakeFillAndFlush makeFillAndFlush(stmt, var, newVar, oldDef,
+                                          compRBound.result(),
+                                          compWBound.result());
         ast = makeFillAndFlush(ast);
         fillStmt = makeFillAndFlush.fillStmt();
         flushStmt = makeFillAndFlush.flushStmt();
 
-        ast = shrinkVar(ast);
+        ast = shrinkSingleVar(ast, newDef);
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid cache(" + stmt + ", " + var +
                               "): " + e.what());
@@ -404,15 +406,15 @@ Schedule::cacheReduction(const std::string &stmt, const std::string &var,
         BuiltinSimplify::UpperBoundsMap upper;
         std::tie(ast, lower, upper) =
             simplifyAndGetBounds<BuiltinSimplify>(ast);
-        CompAccessBound compBound(lower, upper);
+        CompAccessBound compBound(newDef, lower, upper);
         compBound(ast);
         MakeInitAndReduce makeInitAndReduce(stmt, var, newVar, oldDef, newDef,
-                                            compBound.results());
+                                            compBound.result());
         ast = makeInitAndReduce(ast);
         initStmt = makeInitAndReduce.initStmt();
         reduceStmt = makeInitAndReduce.reduceStmt();
 
-        ast = shrinkVar(ast);
+        ast = shrinkSingleVar(ast, newDef);
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid cache_reduction(" + stmt + ", " + var +
                               "): " + e.what());

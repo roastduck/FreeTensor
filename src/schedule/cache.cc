@@ -127,43 +127,33 @@ Stmt MakeFillAndFlush::visitStmt(
         }
 
         Stmt fill;
-        if (rRange_.count(newDef_)) {
-            auto &&rRange = rRange_.at(newDef_);
-            fill = makeStore("", newVar_, indices, makeLoad(oldVar_, indices));
-            fillStmt_ = fill->id();
-            if (idx1d.isValid()) {
-                fill = makeIf("", makeLT(idx1d, def_->sizeLim_), fill);
-            }
-            for (int i = nDim - 1; i >= 0; i--) {
-                fill = makeFor("", iters[i], rRange.lower_[i],
-                               makeAdd(rRange.lower_[i], rRange.len_[i]),
-                               rRange.len_[i], "", false, false, fill);
-            }
-            if (rRange.cond_.isValid()) {
-                fill = makeIf("", rRange.cond_, fill);
-            }
-        } else {
-            fill = makeStmtSeq("", {});
+        fill = makeStore("", newVar_, indices, makeLoad(oldVar_, indices));
+        fillStmt_ = fill->id();
+        if (idx1d.isValid()) {
+            fill = makeIf("", makeLT(idx1d, def_->sizeLim_), fill);
+        }
+        for (int i = nDim - 1; i >= 0; i--) {
+            fill = makeFor("", iters[i], rRange_.lower_[i],
+                           makeAdd(rRange_.lower_[i], rRange_.len_[i]),
+                           rRange_.len_[i], "", false, false, fill);
+        }
+        if (rRange_.cond_.isValid()) {
+            fill = makeIf("", rRange_.cond_, fill);
         }
 
         Stmt flush;
-        if (wRange_.count(newDef_)) {
-            auto &&wRange = wRange_.at(newDef_);
-            flush = makeStore("", oldVar_, indices, makeLoad(newVar_, indices));
-            flushStmt_ = flush->id();
-            if (idx1d.isValid()) {
-                flush = makeIf("", makeLT(idx1d, def_->sizeLim_), flush);
-            }
-            for (int i = nDim - 1; i >= 0; i--) {
-                flush = makeFor("", iters[i], wRange.lower_[i],
-                                makeAdd(wRange.lower_[i], wRange.len_[i]),
-                                wRange.len_[i], "", false, false, flush);
-            }
-            if (wRange.cond_.isValid()) {
-                flush = makeIf("", wRange.cond_, flush);
-            }
-        } else {
-            flush = makeStmtSeq("", {});
+        flush = makeStore("", oldVar_, indices, makeLoad(newVar_, indices));
+        flushStmt_ = flush->id();
+        if (idx1d.isValid()) {
+            flush = makeIf("", makeLT(idx1d, def_->sizeLim_), flush);
+        }
+        for (int i = nDim - 1; i >= 0; i--) {
+            flush = makeFor("", iters[i], wRange_.lower_[i],
+                            makeAdd(wRange_.lower_[i], wRange_.len_[i]),
+                            wRange_.len_[i], "", false, false, flush);
+        }
+        if (wRange_.cond_.isValid()) {
+            flush = makeIf("", wRange_.cond_, flush);
         }
 
         op = makeStmtSeq("", {fill, op, flush});
@@ -208,10 +198,6 @@ Stmt MakeInitAndReduce::visitStmt(
             }
         }
 
-        if (!range_.count(newDef_)) {
-            throw InvalidSchedule("No access to " + oldVar_ + " is found");
-        }
-        auto &&range = range_.at(newDef_);
         Stmt init = makeStore(
             "", newVar_, indices,
             makeNeutralVal(def_->buffer_->tensor().dtype(), reduce_->op_));
@@ -220,9 +206,9 @@ Stmt MakeInitAndReduce::visitStmt(
             init = makeIf("", makeLT(idx1d, def_->sizeLim_), init);
         }
         for (int i = nDim - 1; i >= 0; i--) {
-            init = makeFor("", iters[i], range.lower_[i],
-                           makeAdd(range.lower_[i], range.len_[i]),
-                           range.len_[i], "", false, false, init);
+            init = makeFor("", iters[i], range_.lower_[i],
+                           makeAdd(range_.lower_[i], range_.len_[i]),
+                           range_.len_[i], "", false, false, init);
         }
 
         Stmt reduce = makeReduceTo("", oldVar_, indices, reduce_->op_,
@@ -232,9 +218,9 @@ Stmt MakeInitAndReduce::visitStmt(
             reduce = makeIf("", makeLT(idx1d, def_->sizeLim_), reduce);
         }
         for (int i = nDim - 1; i >= 0; i--) {
-            reduce = makeFor("", iters[i], range.lower_[i],
-                             makeAdd(range.lower_[i], range.len_[i]),
-                             range.len_[i], "", false, false, reduce);
+            reduce = makeFor("", iters[i], range_.lower_[i],
+                             makeAdd(range_.lower_[i], range_.len_[i]),
+                             range_.len_[i], "", false, false, reduce);
         }
 
         op = makeStmtSeq("", {init, op, reduce});

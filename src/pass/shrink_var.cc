@@ -5,15 +5,19 @@
 
 namespace ir {
 
+void FindAllCacheVarDefs::visit(const VarDef &op) {
+    Visitor::visit(op);
+    if (op->buffer_->atype() == AccessType::Cache) {
+        results_.emplace_back(op->id());
+    }
+}
+
 Stmt ShrinkVar::visit(const VarDef &_op) {
     if (_op->buffer_->atype() != AccessType::Cache || _op->sizeLim_.isValid() ||
-        _op->pinned_) {
+        _op->pinned_ || !newRange_.count(_op->id())) {
         return Mutator::visit(_op);
     }
 
-    if (!newRange_.count(_op->id())) { // not used at all
-        return (*this)(_op->body_);
-    }
     auto &&range = newRange_.at(_op->id());
 
     offset_.erase(_op->name_);
@@ -63,11 +67,38 @@ Stmt shrinkVar(const Stmt &_op) {
     std::tie(op, lower, upper) = simplifyAndGetBounds<ISLSimplify>(_op);
 
     // (2)
-    CompAccessBound visitor(lower, upper);
-    visitor(op);
+    std::unordered_map<std::string, AccessBound> bounds;
+    FindAllCacheVarDefs finder;
+    finder(op);
+    for (auto &&varDefId : finder.results()) {
+        CompAccessBound visitor(varDefId, lower, upper);
+        visitor(op);
+        bounds[varDefId] = visitor.result();
+    }
 
     // (3)
-    op = ShrinkVar(visitor.results())(op);
+    op = ShrinkVar(bounds)(op);
+
+    // (4)
+    return z3Simplify(op); // Currently BuiltinSimplify is not sufficient
+}
+
+Stmt shrinkSingleVar(const Stmt &_op, const std::string &varDefId) {
+    // (1)
+    Stmt op;
+    BuiltinSimplify::LowerBoundsMap lower;
+    BuiltinSimplify::UpperBoundsMap upper;
+    std::tie(op, lower, upper) = simplifyAndGetBounds<ISLSimplify>(_op);
+
+    // (2)
+    std::unordered_map<std::string, AccessBound> bounds;
+    CompAccessBound visitor(varDefId, lower, upper);
+    visitor(op);
+    bounds[varDefId] = visitor.result();
+
+    // (3)
+    op = ShrinkVar(bounds)(op);
+    logger() << op << std::endl;
 
     // (4)
     return z3Simplify(op); // Currently BuiltinSimplify is not sufficient
