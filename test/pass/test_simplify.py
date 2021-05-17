@@ -637,10 +637,10 @@ def test_bound_outdated():
             ("y", (4,), "int32", "output", "cpu")]) as (n, x, y):
         with ir.If(y[0] >= x[0] + x[1]):
             with ir.If(y[0] >= x[0] + x[1]):
-                n[()] = 1
+                n[()] += 1
             x[0] += 1
             with ir.If(y[0] >= x[0] + x[1]):
-                n[()] = 1
+                n[()] += 1
     ast = ir.pop_ast()
     print(ast)
     ast = ir.lower(ast)
@@ -651,9 +651,10 @@ def test_bound_outdated():
             ("x", (4,), "int32", "input", "cpu"),
             ("y", (4,), "int32", "output", "cpu")]) as (n, x, y):
         with ir.If(y[0] >= x[0] + x[1]):
+            n[()] += 1
             x[0] += 1
             with ir.If(y[0] >= x[0] + x[1]):
-                n[()] = 1
+                n[()] += 1
     std = ir.make_reduction(ir.pop_ast())
 
     assert std.match(ast)
