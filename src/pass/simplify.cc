@@ -2,6 +2,7 @@
 #include <climits>
 #include <unordered_set>
 
+#include <analyze/all_reads.h>
 #include <analyze/hash.h>
 #include <except.h>
 #include <math/utils.h>
@@ -35,38 +36,21 @@ int findInnerMostScope(const std::unordered_map<std::string, int> &varScope,
     return visitor.innnerMost();
 }
 
-void CheckBoundOutDated::visit(const Var &op) {
-    if (op.as<VarNode>()->name_ == name_)
-        outDated_ = true;
-    return;
-}
-
-void CheckBoundOutDated::visit(const Load &op) {
-    if (op.as<LoadNode>()->var_ == name_)
-        outDated_ = true;
-    return;
-}
-
 void OutDatedBoundsRemover::remove(const std::string &name) {
-    check_.setName(name);
     for (auto &item : transients_) {
-        check_.reset();
-        check_(item.second.expr_);
-        if (check_.isoutDated()) {
+        if (allReads(item.second.expr_).count(name)) {
             item.second.lower_ = item.second.upper_ = {};
         }
         for (auto i = item.second.lower_.begin();
              i != item.second.lower_.end();) {
-            check_.reset(), check_(*i);
-            if (check_.isoutDated()) {
+            if (allReads(*i).count(name)) {
                 item.second.lower_.erase(i);
             } else
                 i++;
         }
         for (auto i = item.second.upper_.begin();
              i != item.second.upper_.end();) {
-            check_.reset(), check_(*i);
-            if (check_.isoutDated()) {
+            if (allReads(*i).count(name)) {
                 i = item.second.upper_.erase(i);
             } else
                 i++;

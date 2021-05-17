@@ -29,12 +29,16 @@ class CompAccessBound : public Visitor {
             : indices_(indices), conds_(conds) {}
     };
 
+    // The variable to compute
+    std::string varDefId_;
+    std::string var_;
+
     // bounds from AnalyzeBounds
     const std::unordered_map<Expr, std::vector<LowerBound>> &lower_;
     const std::unordered_map<Expr, std::vector<UpperBound>> &upper_;
 
-    // var name -> [each access]
-    std::unordered_map<std::string, std::vector<Access>> access_;
+    // each access to the specific variable
+    std::vector<Access> access_;
 
     // all defined name in the scope
     std::unordered_set<std::string> defs_;
@@ -44,18 +48,17 @@ class CompAccessBound : public Visitor {
 
     CompAccessBoundMode mode_;
 
-    std::unordered_map<std::string, AccessBound> results_;
+    AccessBound result_;
 
   public:
     CompAccessBound(
+        const std::string &varDefId,
         const std::unordered_map<Expr, std::vector<LowerBound>> &lower,
         const std::unordered_map<Expr, std::vector<UpperBound>> &upper,
         CompAccessBoundMode mode = COMP_ACCESS_BOUND_ALL)
-        : lower_(lower), upper_(upper), mode_(mode) {}
+        : varDefId_(varDefId), lower_(lower), upper_(upper), mode_(mode) {}
 
-    const std::unordered_map<std::string, AccessBound> &results() const {
-        return results_;
-    }
+    const AccessBound &result() const { return result_; }
 
   protected:
     void visit(const VarDef &op) override;

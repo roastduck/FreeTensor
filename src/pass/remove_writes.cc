@@ -1,6 +1,7 @@
 #include <functional>
 #include <set>
 
+#include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/make_reduction.h>
@@ -163,8 +164,15 @@ Stmt removeWrites(const Stmt &_op) {
                 redundant.insert(_earlier);
             } else {
                 ASSERT(later->nodeType() == ASTNodeType::ReduceTo);
-                // FIXME: What if StoreNode::expr_ is modified between the
-                // StoreNode and the ReduceNode?
+
+                Expr expr = earlier->nodeType() == ASTNodeType::Store
+                                ? earlier.as<StoreNode>()->expr_
+                                : earlier.as<ReduceToNode>()->expr_;
+
+                if (!checkNotModified(op, expr, earlier->id(), later->id())) {
+                    return;
+                }
+
                 auto l = later.as<ReduceToNode>();
                 if (earlier->nodeType() == ASTNodeType::Store) {
                     redundant.insert(_earlier);

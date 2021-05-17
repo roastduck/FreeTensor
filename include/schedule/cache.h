@@ -31,19 +31,17 @@ class MakeCacheVar : public Mutator {
 };
 
 class MakeFillAndFlush : public Mutator {
-    std::string stmt_, oldVar_, newVar_, oldDef_, newDef_;
+    std::string stmt_, oldVar_, newVar_, oldDef_;
     std::string fillStmt_, flushStmt_;
-    const std::unordered_map<std::string, AccessBound> &rRange_, &wRange_;
+    const AccessBound &rRange_, &wRange_;
     VarDef def_;
 
   public:
     MakeFillAndFlush(const std::string &stmt, const std::string &oldVar,
                      const std::string &newVar, const std::string &oldDef,
-                     const std::string &newDef,
-                     const std::unordered_map<std::string, AccessBound> &rRange,
-                     const std::unordered_map<std::string, AccessBound> &wRange)
+                     const AccessBound &rRange, const AccessBound &wRange)
         : stmt_(stmt), oldVar_(oldVar), newVar_(newVar), oldDef_(oldDef),
-          newDef_(newDef), rRange_(rRange), wRange_(wRange) {}
+          rRange_(rRange), wRange_(wRange) {}
 
     const std::string &fillStmt() const { return fillStmt_; }
     const std::string &flushStmt() const { return flushStmt_; }
@@ -57,7 +55,7 @@ class MakeFillAndFlush : public Mutator {
 class MakeInitAndReduce : public Mutator {
     std::string stmt_, oldVar_, newVar_, oldDef_, newDef_;
     std::string initStmt_, reduceStmt_;
-    const std::unordered_map<std::string, AccessBound> &range_;
+    const AccessBound &range_;
     VarDef def_;
     ReduceTo reduce_;
     bool inNewVar_ = false;
@@ -65,8 +63,7 @@ class MakeInitAndReduce : public Mutator {
   public:
     MakeInitAndReduce(const std::string &stmt, const std::string &oldVar,
                       const std::string &newVar, const std::string &oldDef,
-                      const std::string &newDef,
-                      const std::unordered_map<std::string, AccessBound> &range)
+                      const std::string &newDef, const AccessBound &range)
         : stmt_(stmt), oldVar_(oldVar), newVar_(newVar), oldDef_(oldDef),
           newDef_(newDef), range_(range) {}
 
