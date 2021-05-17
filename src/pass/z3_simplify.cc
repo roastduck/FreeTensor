@@ -1,15 +1,13 @@
+#include <analyze/all_reads.h>
 #include <pass/simplify.h>
 #include <pass/z3_simplify.h>
 
 namespace ir {
 
 void OutDatedCondsRemover::remove(const std::string &name) {
-    check_.setName(name);
     for (auto &i : condList_) {
         if (i.second) {
-            check_.reset();
-            check_(i.first);
-            if (check_.isoutDated())
+            if (allReads(i.first).count(name))
                 i.second = false;
         }
     }

@@ -8,16 +8,14 @@
 
 #include <analyze/hash.h>
 #include <mutator.h>
-#include <pass/simplify.h>
 
 namespace ir {
 class OutDatedCondsRemover : public Visitor {
     std::deque<std::pair<Expr, bool>> &condList_;
-    CheckBoundOutDated check_;
 
   public:
     OutDatedCondsRemover(std::deque<std::pair<Expr, bool>> &condList)
-        : condList_(condList), check_() {}
+        : condList_(condList) {}
 
   private:
     void remove(const std::string &name);
