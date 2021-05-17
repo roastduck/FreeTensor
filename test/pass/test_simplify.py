@@ -562,7 +562,7 @@ def test_accessible_after_writing_if():
         with ir.If(x[0] < 4):
             with ir.If(x[0] < 4):
                 y[0] = 1
-            x[0] = y[0]
+            x[0] += 1
             with ir.If(x[0] < 4):
                 y[1] = 1
     ast = ir.pop_ast()
@@ -574,10 +574,10 @@ def test_accessible_after_writing_if():
         with ir.If(x[0] < 4):
             with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
                 y[0] = 1
-                x[0] = y[0]
+                x[0] += 1
                 with ir.If(x[0] < 4):
                     y[1] = 1
-    std = ir.pop_ast()
+    std = ir.make_reduction(ir.pop_ast())
 
     assert std.match(ast)
 
@@ -589,7 +589,7 @@ def test_accessible_after_writing_for():
             with ir.For("i", 0, 4) as i:
                 with ir.If(x[0] < 4):
                     y[0] = 1
-                x[0] = y[0]
+                x[0] += 1
                 with ir.If(x[0] < 4):
                     y[1] = 1
     ast = ir.pop_ast()
@@ -603,10 +603,10 @@ def test_accessible_after_writing_for():
                 with ir.For("i", 0, 4) as i:
                     with ir.If(x[0] < 4):
                         y[0] = 1
-                    x[0] = y[0]
+                    x[0] += 1
                     with ir.If(x[0] < 4):
                         y[1] = 1
-    std = ir.pop_ast()
+    std = ir.make_reduction(ir.pop_ast())
 
     assert std.match(ast)
 
@@ -638,7 +638,7 @@ def test_bound_outdated():
         with ir.If(y[0] >= x[0] + x[1]):
             with ir.If(y[0] >= x[0] + x[1]):
                 n[()] = 1
-            x[0] = n[()]
+            x[0] += 1
             with ir.If(y[0] >= x[0] + x[1]):
                 n[()] = 1
     ast = ir.pop_ast()
@@ -651,10 +651,9 @@ def test_bound_outdated():
             ("x", (4,), "int32", "input", "cpu"),
             ("y", (4,), "int32", "output", "cpu")]) as (n, x, y):
         with ir.If(y[0] >= x[0] + x[1]):
-            n[()] = 1
-            x[0] = n[()]
+            x[0] += 1
             with ir.If(y[0] >= x[0] + x[1]):
                 n[()] = 1
-    std = ir.pop_ast()
+    std = ir.make_reduction(ir.pop_ast())
 
     assert std.match(ast)
