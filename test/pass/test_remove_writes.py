@@ -84,6 +84,28 @@ def test_type1_write_then_reduce():
 
     assert std.match(ast)
 
+def test_type1_write_then_reduce_expr_modified_no_remove():
+    with ir.VarDef([
+            ("y", (), "int32", "output", "cpu"),
+            ("z", (), "int32", "inout", "cpu")]) as (y, z):
+        y[()] = z[()]
+        z[()] = z[()] + 1
+        y[()] = y[()] + 2
+    ast = ir.pop_ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([
+            ("y", (), "int32", "output", "cpu"),
+            ("z", (), "int32", "inout", "cpu")]) as (y, z):
+        y[()] = z[()]
+        z[()] = z[()] + 1
+        y[()] = y[()] + 2
+    std = ir.make_reduction(ir.pop_ast())
+
+    assert std.match(ast)
+
 def test_type1_reduce_then_reduce():
     with ir.VarDef("y", (), "int32", "inout", "cpu") as y:
         y[()] = y[()] + 1
