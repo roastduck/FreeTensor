@@ -1,7 +1,27 @@
+#include <analyze/all_reads.h>
 #include <pass/simplify.h>
 #include <pass/z3_simplify.h>
 
 namespace ir {
+
+void OutDatedCondsRemover::remove(const std::string &name) {
+    for (auto &i : condList_) {
+        if (i.second) {
+            if (allReads(i.first).count(name))
+                i.second = false;
+        }
+    }
+}
+
+void OutDatedCondsRemover::visit(const Store &op) {
+    Visitor::visit(op);
+    remove(op->var_);
+}
+
+void OutDatedCondsRemover::visit(const ReduceTo &op) {
+    Visitor::visit(op);
+    remove(op->var_);
+}
 
 int Z3Simplify::getVarId(const Expr &op) {
     getHash_(op);
@@ -22,6 +42,10 @@ const z3::expr &Z3Simplify::get(const Expr &key) { return *z3Exprs_.at(key); }
 
 bool Z3Simplify::prove(const Expr &op) {
     // expr can be proved <==> !expr can not be satisfied
+    solver_.reset();
+    for (auto i : condList_)
+        if (i.second)
+            solver_.add(get(i.first));
     if (exists(op)) {
         auto toCheck = !get(op);
         return solver_.check(1, &toCheck) == z3::unsat;
@@ -30,13 +54,13 @@ bool Z3Simplify::prove(const Expr &op) {
 }
 
 void Z3Simplify::push(const Expr &op) {
-    solver_.push();
-    if (exists(op)) {
-        solver_.add(get(op));
-    }
+    std::pair<Expr, bool> cond = std::make_pair(op, false);
+    if (exists(op))
+        cond.second = true;
+    condList_.emplace_back(cond);
 }
 
-void Z3Simplify::pop() { solver_.pop(); }
+void Z3Simplify::pop() { condList_.pop_back(); }
 
 Expr Z3Simplify::visit(const Var &_op) {
     if (replace_.count(_op->name_)) {
@@ -304,7 +328,8 @@ Expr Z3Simplify::visit(const LAnd &op) {
         if (prove(rhs)) {
             return lhs;
         }
-        // If one of the operands is always false, visit(If) will deal with it
+        // If one of the operands is always false, visit(If) will deal with
+        // it
         put(op, get(lhs) && get(rhs));
     }
     return makeLAnd(std::move(lhs), std::move(rhs));
@@ -320,7 +345,8 @@ Expr Z3Simplify::visit(const LOr &op) {
         if (prove((*this)(makeLNot(rhs)))) {
             return lhs;
         }
-        // If one of the operands is always true, visit(If) will deal with it
+        // If one of the operands is always true, visit(If) will deal with
+        // it
         put(op, get(lhs) || get(rhs));
     }
     return makeLOr(std::move(lhs), std::move(rhs));
@@ -383,6 +409,9 @@ Stmt Z3Simplify::visit(const Assert &op) {
 }
 
 Stmt Z3Simplify::visit(const For &op) {
+    OutDatedCondsRemover localRemover(condList_);
+    localRemover(op);
+
     auto var = makeVar(op->iter_);
     auto begin = (*this)(op->begin_);
     auto end = (*this)(op->end_);
@@ -409,6 +438,18 @@ Stmt Z3Simplify::visit(const For &op) {
                        std::move(len), op->parallel_, op->unroll_,
                        op->vectorize_, std::move(body));
     return COPY_DEBUG_INFO(ret, op);
+}
+
+Stmt Z3Simplify::visit(const Store &op) {
+    auto ret = Mutator::visit(op);
+    remove_(op);
+    return ret;
+}
+
+Stmt Z3Simplify::visit(const ReduceTo &op) {
+    auto ret = Mutator::visit(op);
+    remove_(op);
+    return ret;
 }
 
 Stmt z3Simplify(const Stmt &_op) {

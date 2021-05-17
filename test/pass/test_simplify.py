@@ -564,21 +564,20 @@ def test_accessible_after_writing_if():
                 y[0] = 1
             x[0] += 1
             with ir.If(x[0] < 4):
-                y[0] = 1
+                y[1] = 1
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.simplify_pass(ast)
+    ast = ir.lower(ast)
     print(ast)
 
-    with ir.VarDef([
-            ("x", (4,), "int32", "input", "cpu"),
-            ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+    with ir.VarDef("x", (4,), "int32", "input", "cpu") as x:
         with ir.If(x[0] < 4):
-            y[0] = 1
-            x[0] += 1
-            with ir.If(x[0] < 4):
+            with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
                 y[0] = 1
-    std = ir.pop_ast()
+                x[0] += 1
+                with ir.If(x[0] < 4):
+                    y[1] = 1
+    std = ir.make_reduction(ir.pop_ast())
 
     assert std.match(ast)
 
@@ -592,23 +591,22 @@ def test_accessible_after_writing_for():
                     y[0] = 1
                 x[0] += 1
                 with ir.If(x[0] < 4):
-                    y[0] = 1
+                    y[1] = 1
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.simplify_pass(ast)
+    ast = ir.lower(ast)
     print(ast)
 
-    with ir.VarDef([
-            ("x", (4,), "int32", "input", "cpu"),
-            ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+    with ir.VarDef("x", (4,), "int32", "input", "cpu") as x:
         with ir.If(x[0] < 4):
-            with ir.For("i", 0, 4) as i:
-                with ir.If(x[0] < 4):
-                    y[0] = 1
-                x[0] += 1
-                with ir.If(x[0] < 4):
-                    y[0] = 1
-    std = ir.pop_ast()
+            with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
+                with ir.For("i", 0, 4) as i:
+                    with ir.If(x[0] < 4):
+                        y[0] = 1
+                    x[0] += 1
+                    with ir.If(x[0] < 4):
+                        y[1] = 1
+    std = ir.make_reduction(ir.pop_ast())
 
     assert std.match(ast)
 
@@ -620,13 +618,13 @@ def test_loop_length_0_or_1():
                     y[i] = i
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.simplify_pass(ast)
+    ast = ir.lower(ast)
     print(ast)
 
     with ir.VarDef("n", (), "int32", "input", "cpu") as n:
         with ir.Assert(n[()] <= 1):
-            with ir.VarDef("y", (n[()],), "int32", "inout", "cpu") as y:
-                with ir.If(n[()] == 1):
+            with ir.If(n[()] == 1):
+                with ir.VarDef("y", (n[()],), "int32", "inout", "cpu") as y:
                     y[0] = 0
     std = ir.pop_ast()
 
@@ -645,7 +643,7 @@ def test_bound_outdated():
                 n[()] += 1
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.simplify_pass(ast)
+    ast = ir.lower(ast)
     print(ast)
 
     with ir.VarDef([
@@ -657,6 +655,6 @@ def test_bound_outdated():
             x[0] += 1
             with ir.If(y[0] >= x[0] + x[1]):
                 n[()] += 1
-    std = ir.pop_ast()
+    std = ir.make_reduction(ir.pop_ast())
 
     assert std.match(ast)
