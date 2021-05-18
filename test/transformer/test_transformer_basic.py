@@ -48,7 +48,6 @@ def test_scalar_op():
     y_func = np.array(0, dtype="int32")
     test(x_np, y_func)
 
-
     assert y_np[()] == 11
     assert y_func[()] == 11
 
@@ -101,4 +100,3 @@ def test_if():
     y_std = np.array([0, 0, 1, 1], dtype="int32")
     assert np.array_equal(y_np, y_std)
     assert np.array_equal(y_func, y_std)
-

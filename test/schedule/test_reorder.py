@@ -1,6 +1,7 @@
 import ir
 import pytest
 
+
 def test_basic():
     with ir.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
         with ir.For("i", 0, 4, nid="L1") as i:
@@ -22,6 +23,7 @@ def test_basic():
     std = ir.pop_ast()
 
     assert std.match(ast)
+
 
 def test_multiple_loops():
     with ir.VarDef("y", (4, 8, 16), "int32", "output", "cpu") as y:
@@ -47,10 +49,11 @@ def test_multiple_loops():
 
     assert std.match(ast)
 
+
 def test_if_in_between():
-    with ir.VarDef([
-            ("x", (4,), "int32", "input", "cpu"),
-            ("y", (4, 8), "int32", "output", "cpu")]) as (x, y):
+    with ir.VarDef(
+        [("x", (4,), "int32", "input", "cpu"), ("y", (4, 8), "int32", "output", "cpu")]
+    ) as (x, y):
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.If(x[i] > 0):
                 with ir.For("j", 0, 8, nid="L2") as j:
@@ -64,9 +67,9 @@ def test_if_in_between():
     ast = ir.lower(ast)
     print(ast)
 
-    with ir.VarDef([
-            ("x", (4,), "int32", "input", "cpu"),
-            ("y", (4, 8), "int32", "output", "cpu")]) as (x, y):
+    with ir.VarDef(
+        [("x", (4,), "int32", "input", "cpu"), ("y", (4, 8), "int32", "output", "cpu")]
+    ) as (x, y):
         with ir.For("j", 0, 8) as j:
             with ir.For("i", 0, 4) as i:
                 with ir.If(x[i] > 0):
@@ -75,10 +78,11 @@ def test_if_in_between():
 
     assert std.match(ast)
 
+
 def test_stmt_in_between():
-    with ir.VarDef([
-            ("y", (4, 8), "int32", "output", "cpu"),
-            ("z", (4,), "int32", "output", "cpu")]) as (y, z):
+    with ir.VarDef(
+        [("y", (4, 8), "int32", "output", "cpu"), ("z", (4,), "int32", "output", "cpu")]
+    ) as (y, z):
         with ir.For("i", 0, 4, nid="L1") as i:
             z[i] = i
             with ir.For("j", 0, 8, nid="L2") as j:
@@ -92,9 +96,9 @@ def test_stmt_in_between():
     ast = ir.lower(ast)
     print(ast)
 
-    with ir.VarDef([
-            ("y", (4, 8), "int32", "output", "cpu"),
-            ("z", (4,), "int32", "output", "cpu")]) as (y, z):
+    with ir.VarDef(
+        [("y", (4, 8), "int32", "output", "cpu"), ("z", (4,), "int32", "output", "cpu")]
+    ) as (y, z):
         # After pass/seperate_tail
         with ir.For("i", 0, 4) as i:
             z[i] = i
@@ -105,6 +109,7 @@ def test_stmt_in_between():
     std = ir.pop_ast()
 
     assert std.match(ast)
+
 
 def test_dependency():
     with ir.VarDef("y", (1,), "int32", "output", "cpu") as y:
@@ -117,13 +122,14 @@ def test_dependency():
     s = ir.Schedule(ast)
     with pytest.raises(ir.InvalidSchedule):
         s.reorder(["L2", "L1"])
-    ast_ = s.ast() # Should not changed
+    ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
 
+
 def test_reduction():
-    with ir.VarDef([
-            ("x", (4, 8), "int32", "output", "cpu"),
-            ("y", (1,), "int32", "output", "cpu")]) as (x, y):
+    with ir.VarDef(
+        [("x", (4, 8), "int32", "output", "cpu"), ("y", (1,), "int32", "output", "cpu")]
+    ) as (x, y):
         y[0] = 0
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 8, nid="L2") as j:
@@ -137,9 +143,9 @@ def test_reduction():
     ast = ir.lower(ast)
     print(ast)
 
-    with ir.VarDef([
-            ("x", (4, 8), "int32", "output", "cpu"),
-            ("y", (1,), "int32", "output", "cpu")]) as (x, y):
+    with ir.VarDef(
+        [("x", (4, 8), "int32", "output", "cpu"), ("y", (1,), "int32", "output", "cpu")]
+    ) as (x, y):
         y[0] = 0
         with ir.For("j", 0, 8) as j:
             with ir.For("i", 0, 4) as i:
@@ -148,11 +154,15 @@ def test_reduction():
 
     assert std.match(ast)
 
+
 def test_local_var():
-    with ir.VarDef([
+    with ir.VarDef(
+        [
             ("x0", (4, 8), "int32", "input", "cpu"),
             ("x1", (4, 8), "int32", "input", "cpu"),
-            ("y", (4, 8), "int32", "output", "cpu")]) as (x0, x1, y):
+            ("y", (4, 8), "int32", "output", "cpu"),
+        ]
+    ) as (x0, x1, y):
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 8, nid="L2") as j:
                 with ir.VarDef("buf", (1,), "int32", "cache", "cpu") as buf:
@@ -167,10 +177,13 @@ def test_local_var():
     ast = ir.lower(ast)
     print(ast)
 
-    with ir.VarDef([
+    with ir.VarDef(
+        [
             ("x0", (4, 8), "int32", "input", "cpu"),
             ("x1", (4, 8), "int32", "input", "cpu"),
-            ("y", (4, 8), "int32", "output", "cpu")]) as (x0, x1, y):
+            ("y", (4, 8), "int32", "output", "cpu"),
+        ]
+    ) as (x0, x1, y):
         with ir.For("j", 0, 8) as j:
             with ir.For("i", 0, 4) as i:
                 with ir.VarDef("buf", (1,), "int32", "cache", "cpu") as buf:
@@ -179,4 +192,3 @@ def test_local_var():
     std = ir.pop_ast()
 
     assert std.match(ast)
-

@@ -8,18 +8,22 @@ device = ir.Device(target)
 
 host = ir.Device(ir.CPU())
 
+
 def test_basic():
     @ir.transform
     def test(x, y):
         ir.declare_var(x, (4,), "int32", "input", "gpu/global")
         ir.declare_var(y, (4,), "int32", "output", "gpu/global")
-        'nid: L1'
+        "nid: L1"
         for i in range(0, 4):
             y[i] = x[i] + 1
 
-    with ir.VarDef([
+    with ir.VarDef(
+        [
             ("x", (4,), "int32", "input", "gpu/global"),
-            ("y", (4,), "int32", "output", "gpu/global")]) as (x, y):
+            ("y", (4,), "int32", "output", "gpu/global"),
+        ]
+    ) as (x, y):
         with ir.For("i", 0, 4, nid="L1") as i:
             y[i] = x[i] + 1
     assert ir.pop_ast().match(test)
@@ -42,19 +46,23 @@ def test_basic():
     y_std = np.array([2, 3, 4, 5], dtype="int32")
     assert np.array_equal(y_np, y_std)
 
+
 def test_shmem():
     @ir.transform
     def test(x, y):
         ir.declare_var(x, (4,), "int32", "input", "gpu/global")
         ir.declare_var(y, (4,), "int32", "output", "gpu/global")
-        'nid: L1'
+        "nid: L1"
         for i in range(0, 4):
-            'nid: S1'
+            "nid: S1"
             y[i] = x[i] + 1
 
-    with ir.VarDef([
+    with ir.VarDef(
+        [
             ("x", (4,), "int32", "input", "gpu/global"),
-            ("y", (4,), "int32", "output", "gpu/global")]) as (x, y):
+            ("y", (4,), "int32", "output", "gpu/global"),
+        ]
+    ) as (x, y):
         with ir.For("i", 0, 4, nid="L1") as i:
             ir.MarkNid("S1")
             y[i] = x[i] + 1
@@ -80,22 +88,26 @@ def test_shmem():
     y_std = np.array([2, 3, 4, 5], dtype="int32")
     assert np.array_equal(y_np, y_std)
 
+
 def test_global_mem():
     @ir.transform
     def test(x, y):
         ir.declare_var(x, (4,), "int32", "input", "gpu/global")
         ir.declare_var(y, (4,), "int32", "output", "gpu/global")
         t = ir.create_var((4,), "int32", "cache", "gpu/global")
-        'nid: L1'
+        "nid: L1"
         for i in range(0, 4):
             t[i] = x[i] * 2
-        'nid: L2'
+        "nid: L2"
         for i in range(0, 4):
             y[i] = t[i] + 1
 
-    with ir.VarDef([
+    with ir.VarDef(
+        [
             ("x", (4,), "int32", "input", "gpu/global"),
-            ("y", (4,), "int32", "output", "gpu/global")]) as (x, y):
+            ("y", (4,), "int32", "output", "gpu/global"),
+        ]
+    ) as (x, y):
         with ir.VarDef("t", (4,), "int32", "cache", "gpu/global") as t:
             with ir.For("i1", 0, 4, nid="L1") as i:
                 t[i] = x[i] * 2
@@ -124,22 +136,26 @@ def test_global_mem():
     y_std = np.array([3, 5, 7, 9], dtype="int32")
     assert np.array_equal(y_np, y_std)
 
+
 def test_pass_by_value_0d():
     @ir.transform
     def test(n, x, y):
         ir.declare_var(n, (), "int32", "input", "byvalue")
         ir.declare_var(x, (n[()], 4), "int32", "input", "gpu/global")
         ir.declare_var(y, (n[()], 4), "int32", "output", "gpu/global")
-        'nid: L1'
+        "nid: L1"
         for i in range(0, 4):
-            'nid: L2'
+            "nid: L2"
             for j in range(0, n[()]):
                 y[j, i] = x[j, i] + 1
 
     with ir.VarDef("n", (), "int32", "input", "byvalue") as n:
-        with ir.VarDef([
+        with ir.VarDef(
+            [
                 ("x", (n[()], 4), "int32", "input", "gpu/global"),
-                ("y", (n[()], 4), "int32", "output", "gpu/global")]) as (x, y):
+                ("y", (n[()], 4), "int32", "output", "gpu/global"),
+            ]
+        ) as (x, y):
             with ir.For("i", 0, 4, nid="L1") as i:
                 with ir.For("j", 0, n[()], nid="L2") as j:
                     y[j, i] = x[j, i] + 1
@@ -165,22 +181,26 @@ def test_pass_by_value_0d():
     y_std = np.array([[2, 3, 4, 5]] * 5, dtype="int32")
     assert np.array_equal(y_np, y_std)
 
+
 def test_pass_by_value_1d():
     @ir.transform
     def test(n, x, y):
-        ir.declare_var(n, (1, ), "int32", "input", "byvalue")
+        ir.declare_var(n, (1,), "int32", "input", "byvalue")
         ir.declare_var(x, (n[0], 4), "int32", "input", "gpu/global")
         ir.declare_var(y, (n[0], 4), "int32", "output", "gpu/global")
-        'nid: L1'
+        "nid: L1"
         for i in range(0, 4):
-            'nid: L2'
+            "nid: L2"
             for j in range(0, n[0]):
                 y[j, i] = x[j, i] + 1
 
     with ir.VarDef("n", (1,), "int32", "input", "byvalue") as n:
-        with ir.VarDef([
+        with ir.VarDef(
+            [
                 ("x", (n[0], 4), "int32", "input", "gpu/global"),
-                ("y", (n[0], 4), "int32", "output", "gpu/global")]) as (x, y):
+                ("y", (n[0], 4), "int32", "output", "gpu/global"),
+            ]
+        ) as (x, y):
             with ir.For("i", 0, 4, nid="L1") as i:
                 with ir.For("j", 0, n[0], nid="L2") as j:
                     y[j, i] = x[j, i] + 1
@@ -206,11 +226,15 @@ def test_pass_by_value_1d():
     y_std = np.array([[2, 3, 4, 5]] * 5, dtype="int32")
     assert np.array_equal(y_np, y_std)
 
+
 def test_dynamic_2d_array():
     with ir.VarDef("n", (), "int32", "input", "byvalue") as n:
-        with ir.VarDef([
+        with ir.VarDef(
+            [
                 ("x", (n[()], n[()]), "int32", "input", "gpu/global"),
-                ("y", (n[()], n[()]), "int32", "output", "gpu/global")]) as (x, y):
+                ("y", (n[()], n[()]), "int32", "output", "gpu/global"),
+            ]
+        ) as (x, y):
             with ir.For("i", 0, n[()], nid="L1") as i:
                 with ir.For("j", 0, n[()], nid="L2") as j:
                     y[i, j] = x[i, j] + 1
@@ -237,18 +261,22 @@ def test_dynamic_2d_array():
     y_std = x_np + 1
     assert np.array_equal(y_np, y_std)
 
+
 def test_intrinsic():
     @ir.transform
     def test(x, y):
         ir.declare_var(x, (4,), "float32", "input", "gpu/global")
         ir.declare_var(y, (4,), "float32", "output", "gpu/global")
-        'nid: L1'
+        "nid: L1"
         for i in range(0, 4):
             y[i] = ir.intrinsic("sinf(%)", x[i], ret_type="float32")
 
-    with ir.VarDef([
+    with ir.VarDef(
+        [
             ("x", (4,), "float32", "input", "gpu/global"),
-            ("y", (4,), "float32", "output", "gpu/global")]) as (x, y):
+            ("y", (4,), "float32", "output", "gpu/global"),
+        ]
+    ) as (x, y):
         with ir.For("i", 0, 4, nid="L1") as i:
             y[i] = ir.intrinsic("sinf(%)", x[i], ret_type="float32")
     assert ir.pop_ast().match(test)
@@ -271,24 +299,28 @@ def test_intrinsic():
     y_std = np.array(np.sin(x_np), dtype="float32")
     assert np.all(np.isclose(y_np, y_std))
 
+
 def test_syncthreads():
     @ir.transform
     def test(x, y):
         ir.declare_var(x, (4, 256), "int32", "input", "gpu/global")
         ir.declare_var(y, (4, 256), "int32", "output", "gpu/global")
-        'nid: L0'
+        "nid: L0"
         for i in range(0, 4):
             t = ir.create_var((256,), "int32", "cache", "gpu/shared")
-            'nid: L1'
+            "nid: L1"
             for j in range(0, 256):
                 t[j] = x[i, j] * 2
-            'nid: L2'
+            "nid: L2"
             for j in range(0, 256):
                 y[i, j] = t[255 - j] + 1
 
-    with ir.VarDef([
+    with ir.VarDef(
+        [
             ("x", (4, 256), "int32", "input", "gpu/global"),
-            ("y", (4, 256), "int32", "output", "gpu/global")]) as (x, y):
+            ("y", (4, 256), "int32", "output", "gpu/global"),
+        ]
+    ) as (x, y):
         with ir.For("i", 0, 4, nid="L0") as i:
             with ir.VarDef("t", (256,), "int32", "cache", "gpu/shared") as t:
                 with ir.For("j1", 0, 256, nid="L1") as j:
@@ -304,9 +336,12 @@ def test_syncthreads():
     ast = ir.lower(s.ast(), target)
     print(ast)
 
-    with ir.VarDef([
+    with ir.VarDef(
+        [
             ("x", (4, 256), "int32", "input", "gpu/global"),
-            ("y", (4, 256), "int32", "output", "gpu/global")]) as (x, y):
+            ("y", (4, 256), "int32", "output", "gpu/global"),
+        ]
+    ) as (x, y):
         with ir.For(".blockIdx.x", 0, 4) as i:
             with ir.For(".threadIdx.x", 0, 256) as j:
                 with ir.VarDef("t", (256,), "int32", "cache", "gpu/shared") as t:
@@ -329,19 +364,20 @@ def test_syncthreads():
     y_std = np.array([range(511, -1, -2)] * 4, dtype="int32")
     assert np.array_equal(y_np, y_std)
 
+
 def test_syncthreads_in_loop():
     @ir.transform
     def test(x, y):
         ir.declare_var(x, (4, 256), "int32", "input", "gpu/global")
         ir.declare_var(y, (4, 5, 256), "int32", "output", "gpu/global")
-        'nid: L0'
+        "nid: L0"
         for i in range(0, 4):
             for p in range(0, 5):
                 t = ir.create_var((256,), "int32", "cache", "gpu/shared")
-                'nid: L1'
+                "nid: L1"
                 for j in range(0, 256):
                     t[j] = x[i, j] * p
-                'nid: L2'
+                "nid: L2"
                 for j in range(0, 256):
                     y[i, p, j] = t[255 - j] + 1
 
@@ -352,9 +388,12 @@ def test_syncthreads_in_loop():
     ast = ir.lower(s.ast(), target)
     print(ast)
 
-    with ir.VarDef([
+    with ir.VarDef(
+        [
             ("x", (4, 256), "int32", "input", "gpu/global"),
-            ("y", (4, 5, 256), "int32", "output", "gpu/global")]) as (x, y):
+            ("y", (4, 5, 256), "int32", "output", "gpu/global"),
+        ]
+    ) as (x, y):
         with ir.For(".blockIdx.x", 0, 4) as i:
             with ir.For(".threadIdx.x", 0, 256) as j:
                 with ir.For("p", 0, 5) as p:
@@ -365,19 +404,20 @@ def test_syncthreads_in_loop():
                     ir.Eval(ir.intrinsic("__syncthreads()"))
     assert ir.make_1d_var(ir.pop_ast()).match(ast)
 
+
 def test_syncthreads_at_outer_loop():
     @ir.transform
     def test(x, y):
         ir.declare_var(x, (4, 256), "int32", "input", "gpu/global")
         ir.declare_var(y, (4, 5, 256), "int32", "output", "gpu/global")
-        'nid: L0'
+        "nid: L0"
         for i in range(0, 4):
             t = ir.create_var((256,), "int32", "cache", "gpu/shared")
-            'nid: L1'
+            "nid: L1"
             for j in range(0, 256):
                 t[j] = x[i, j]
             for p in range(0, 5):
-                'nid: L2'
+                "nid: L2"
                 for j in range(0, 256):
                     y[i, p, j] = t[255 - j] + 1
 
@@ -388,17 +428,21 @@ def test_syncthreads_at_outer_loop():
     ast = ir.lower(s.ast(), target)
     print(ast)
 
-    with ir.VarDef([
+    with ir.VarDef(
+        [
             ("x", (4, 256), "int32", "input", "gpu/global"),
-            ("y", (4, 5, 256), "int32", "output", "gpu/global")]) as (x, y):
+            ("y", (4, 5, 256), "int32", "output", "gpu/global"),
+        ]
+    ) as (x, y):
         with ir.For(".blockIdx.x", 0, 4) as i:
             with ir.For(".threadIdx.x", 0, 256) as j:
                 with ir.VarDef("t", (256,), "int32", "cache", "gpu/shared") as t:
                     ir.Any()
-                    ir.Eval(ir.intrinsic("__syncthreads()")) # Here outside p
+                    ir.Eval(ir.intrinsic("__syncthreads()"))  # Here outside p
                     with ir.For("p", 0, 5) as p:
                         ir.Any()
     assert ir.make_1d_var(ir.pop_ast()).match(ast)
+
 
 def test_syncwarp():
     @ir.transform
@@ -415,9 +459,12 @@ def test_syncwarp():
             for j in range(0, 4):
                 y[i, j] = t[3 - j] + 1
 
-    with ir.VarDef([
+    with ir.VarDef(
+        [
             ("x", (4, 4), "int32", "input", "gpu/global"),
-            ("y", (4, 4), "int32", "output", "gpu/global")]) as (x, y):
+            ("y", (4, 4), "int32", "output", "gpu/global"),
+        ]
+    ) as (x, y):
         with ir.For("i", 0, 4, nid="L0") as i:
             with ir.VarDef("t", (4,), "int32", "cache", "gpu/shared") as t:
                 with ir.For("j1", 0, 4, nid="L1") as j:
@@ -433,9 +480,12 @@ def test_syncwarp():
     ast = ir.lower(s.ast(), target)
     print(ast)
 
-    with ir.VarDef([
+    with ir.VarDef(
+        [
             ("x", (4, 4), "int32", "input", "gpu/global"),
-            ("y", (4, 4), "int32", "output", "gpu/global")]) as (x, y):
+            ("y", (4, 4), "int32", "output", "gpu/global"),
+        ]
+    ) as (x, y):
         with ir.For(".blockIdx.x", 0, 4) as i:
             with ir.For(".threadIdx.x", 0, 4) as j:
                 with ir.VarDef("t", (4,), "int32", "cache", "gpu/shared") as t:
@@ -458,6 +508,7 @@ def test_syncwarp():
     y_std = np.array([[7, 5, 3, 1]] * 4, dtype="int32")
     assert np.array_equal(y_np, y_std)
 
+
 def test_correct_shared():
     @ir.transform
     def test(x, y):
@@ -473,9 +524,12 @@ def test_correct_shared():
             for j in range(0, 256):
                 y[i, j] = t[j] + 1
 
-    with ir.VarDef([
+    with ir.VarDef(
+        [
             ("x", (4, 256), "int32", "input", "gpu/global"),
-            ("y", (4, 256), "int32", "output", "gpu/global")]) as (x, y):
+            ("y", (4, 256), "int32", "output", "gpu/global"),
+        ]
+    ) as (x, y):
         with ir.For("i", 0, 4, nid="L0") as i:
             with ir.VarDef("t", (256,), "int32", "cache", "gpu/shared") as t:
                 with ir.For("j1", 0, 256, nid="L1") as j:
@@ -491,9 +545,12 @@ def test_correct_shared():
     ast = ir.lower(s.ast(), target)
     print(ast)
 
-    with ir.VarDef([
+    with ir.VarDef(
+        [
             ("x", (4, 256), "int32", "input", "gpu/global"),
-            ("y", (4, 256), "int32", "output", "gpu/global")]) as (x, y):
+            ("y", (4, 256), "int32", "output", "gpu/global"),
+        ]
+    ) as (x, y):
         with ir.For(".threadIdx.y", 0, 4) as i:
             with ir.For(".threadIdx.x", 0, 256) as j:
                 with ir.VarDef("t", (4, 256), "int32", "cache", "gpu/shared") as t:
@@ -515,11 +572,15 @@ def test_correct_shared():
     y_std = np.array([range(1, 513, 2)] * 4, dtype="int32")
     assert np.array_equal(y_np, y_std)
 
+
 def test_relax_shared_shape_to_constants():
     with ir.VarDef("n", (), "int32", "input", "byvalue") as n:
-        with ir.VarDef([
+        with ir.VarDef(
+            [
                 ("x", (4, 256), "int32", "input", "gpu/global"),
-                ("y", (4, 256), "int32", "output", "gpu/global")]) as (x, y):
+                ("y", (4, 256), "int32", "output", "gpu/global"),
+            ]
+        ) as (x, y):
             with ir.Assert(n[()] <= 256):
                 with ir.For("i", 0, 4, nid="L0") as i:
                     with ir.VarDef("t", (n[()],), "int32", "cache", "gpu/shared") as t:
@@ -536,9 +597,12 @@ def test_relax_shared_shape_to_constants():
     print(ast)
 
     with ir.VarDef("n", (), "int32", "input", "byvalue") as n:
-        with ir.VarDef([
+        with ir.VarDef(
+            [
                 ("x", (4, 256), "int32", "input", "gpu/global"),
-                ("y", (4, 256), "int32", "output", "gpu/global")]) as (x, y):
+                ("y", (4, 256), "int32", "output", "gpu/global"),
+            ]
+        ) as (x, y):
             with ir.Assert(n[()] <= 256):
                 with ir.For(".threadIdx.y", 0, 4) as i:
                     with ir.VarDef("t", (4, 256), "int32", "cache", "gpu/shared") as t:
@@ -566,6 +630,7 @@ def test_relax_shared_shape_to_constants():
     y_std = np.array([list(range(1, 401, 2)) + [0] * 56] * 4, dtype="int32")
     assert np.array_equal(y_np, y_std)
 
+
 def test_parallel_different_length():
     @ir.transform
     def test(a, b, c):
@@ -584,10 +649,13 @@ def test_parallel_different_length():
                 for k in range(0, 8):
                     c[i, k] = c[i, k] + t[j] * b[j, k]
 
-    with ir.VarDef([
+    with ir.VarDef(
+        [
             ("a", (4, 4), "int32", "input", "gpu/global"),
             ("b", (4, 8), "int32", "input", "gpu/global"),
-            ("c", (4, 8), "int32", "output", "gpu/global")]) as (a, b, c):
+            ("c", (4, 8), "int32", "output", "gpu/global"),
+        ]
+    ) as (a, b, c):
         with ir.For("i", 0, 4, nid="L0") as i:
             with ir.VarDef("t", (4,), "int32", "cache", "gpu/shared") as t:
                 with ir.For("j1", 0, 4, nid="L1") as j:
@@ -604,10 +672,13 @@ def test_parallel_different_length():
     ast = ir.lower(s.ast(), target)
     print(ast)
 
-    with ir.VarDef([
+    with ir.VarDef(
+        [
             ("a", (4, 4), "int32", "input", "gpu/global"),
             ("b", (4, 8), "int32", "input", "gpu/global"),
-            ("c", (4, 8), "int32", "output", "gpu/global")]) as (a, b, c):
+            ("c", (4, 8), "int32", "output", "gpu/global"),
+        ]
+    ) as (a, b, c):
         with ir.For(".blockIdx.x", 0, 4) as blk:
             with ir.For(".threadIdx.x", 0, 8) as th:
                 with ir.VarDef("t", (4,), "int32", "cache", "gpu/shared") as t:
@@ -634,6 +705,7 @@ def test_parallel_different_length():
     c_std = a_np @ b_np
     assert np.array_equal(c_np, c_std)
 
+
 def test_parallel_broadcast():
     @ir.transform
     def test(a, b, c):
@@ -648,10 +720,13 @@ def test_parallel_broadcast():
             for k in range(0, 8):
                 c[i, k] = c[i, k] + t[0] * b[0, k]
 
-    with ir.VarDef([
+    with ir.VarDef(
+        [
             ("a", (4, 1), "int32", "input", "gpu/global"),
             ("b", (1, 8), "int32", "input", "gpu/global"),
-            ("c", (4, 8), "int32", "output", "gpu/global")]) as (a, b, c):
+            ("c", (4, 8), "int32", "output", "gpu/global"),
+        ]
+    ) as (a, b, c):
         with ir.For("i", 0, 4, nid="L0") as i:
             with ir.VarDef("t", (1,), "int32", "cache", "gpu/shared") as t:
                 t[0] = a[i, 0]
@@ -665,10 +740,13 @@ def test_parallel_broadcast():
     ast = ir.lower(s.ast(), target)
     print(ast)
 
-    with ir.VarDef([
+    with ir.VarDef(
+        [
             ("a", (4, 1), "int32", "input", "gpu/global"),
             ("b", (1, 8), "int32", "input", "gpu/global"),
-            ("c", (4, 8), "int32", "output", "gpu/global")]) as (a, b, c):
+            ("c", (4, 8), "int32", "output", "gpu/global"),
+        ]
+    ) as (a, b, c):
         with ir.For(".blockIdx.x", 0, 4) as blk:
             with ir.For(".threadIdx.x", 0, 8) as th:
                 with ir.VarDef("t", (1,), "int32", "cache", "gpu/shared") as t:
@@ -694,6 +772,7 @@ def test_parallel_broadcast():
     c_std = a_np @ b_np
     assert np.array_equal(c_np, c_std)
 
+
 def test_unbounded_length():
     @ir.transform
     def test(n, x, y):
@@ -705,9 +784,12 @@ def test_unbounded_length():
             y[i] = x[i] + 1
 
     with ir.VarDef("n", (), "int32", "input", "gpu/global") as n:
-        with ir.VarDef([
+        with ir.VarDef(
+            [
                 ("x", (n[()],), "int32", "input", "gpu/global"),
-                ("y", (n[()],), "int32", "output", "gpu/global")]) as (x, y):
+                ("y", (n[()],), "int32", "output", "gpu/global"),
+            ]
+        ) as (x, y):
             with ir.For("i", 0, n[()], nid="L1") as i:
                 y[i] = x[i] + 1
     assert ir.pop_ast().match(test)
@@ -716,6 +798,7 @@ def test_unbounded_length():
     s.parallelize("L1", "threadIdx.x")
     with pytest.raises(ir.InvalidProgram):
         print(ir.lower(s.ast(), target))
+
 
 def test_parallel_reduction():
     @ir.transform
@@ -728,9 +811,12 @@ def test_parallel_reduction():
             for j in range(0, 64):
                 y[i] = y[i] + x[i, j]
 
-    with ir.VarDef([
+    with ir.VarDef(
+        [
             ("x", (4, 64), "int32", "input", "gpu/global"),
-            ("y", (4,), "int32", "output", "gpu/global")]) as (x, y):
+            ("y", (4,), "int32", "output", "gpu/global"),
+        ]
+    ) as (x, y):
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 64, nid="L2") as j:
                 y[i] = y[i] + x[i, j]
@@ -758,6 +844,7 @@ def test_parallel_reduction():
     y_std = np.sum(x_np, axis=1)
     assert np.array_equal(y_np, y_std)
 
+
 def test_serial_reduction():
     @ir.transform
     def test(x, y):
@@ -769,9 +856,12 @@ def test_serial_reduction():
             for j in range(0, 64):
                 y[i] = y[i] + x[i, j]
 
-    with ir.VarDef([
+    with ir.VarDef(
+        [
             ("x", (4, 64), "int32", "input", "gpu/global"),
-            ("y", (4,), "int32", "output", "gpu/global")]) as (x, y):
+            ("y", (4,), "int32", "output", "gpu/global"),
+        ]
+    ) as (x, y):
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 64, nid="L2") as j:
                 y[i] = y[i] + x[i, j]
@@ -798,6 +888,7 @@ def test_serial_reduction():
     y_std = np.sum(x_np, axis=1)
     assert np.array_equal(y_np, y_std)
 
+
 def test_unroll_for():
     @ir.transform
     def test(x, y):
@@ -809,9 +900,12 @@ def test_unroll_for():
             for j in range(0, 64):
                 y[i] = y[i] + x[i, j]
 
-    with ir.VarDef([
+    with ir.VarDef(
+        [
             ("x", (4, 64), "int32", "input", "gpu/global"),
-            ("y", (4,), "int32", "output", "gpu/global")]) as (x, y):
+            ("y", (4,), "int32", "output", "gpu/global"),
+        ]
+    ) as (x, y):
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 64, nid="L2") as j:
                 y[i] = y[i] + x[i, j]
@@ -839,10 +933,14 @@ def test_unroll_for():
     y_std = np.sum(x_np, axis=1)
     assert np.array_equal(y_np, y_std)
 
+
 def test_vectorize():
-    with ir.VarDef([
+    with ir.VarDef(
+        [
             ("x", (4, 64), "int32", "input", "gpu/global"),
-            ("y", (4, 64), "int32", "output", "gpu/global")]) as (x, y):
+            ("y", (4, 64), "int32", "output", "gpu/global"),
+        ]
+    ) as (x, y):
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 64, nid="L2") as j:
                 y[i, j] = x[i, j] * 2
@@ -870,10 +968,14 @@ def test_vectorize():
     y_std = x_np * 2
     assert np.array_equal(y_np, y_std)
 
+
 def test_vectorize_with_non_vector_access():
-    with ir.VarDef([
+    with ir.VarDef(
+        [
             ("x", (4,), "int32", "input", "gpu/global"),
-            ("y", (4, 64), "int32", "output", "gpu/global")]) as (x, y):
+            ("y", (4, 64), "int32", "output", "gpu/global"),
+        ]
+    ) as (x, y):
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 64, nid="L2") as j:
                 y[i, j] = x[i] * 2
@@ -900,6 +1002,7 @@ def test_vectorize_with_non_vector_access():
 
     y_std = np.broadcast_to(x_np * 2, (64, 4)).transpose()
     assert np.array_equal(y_np, y_std)
+
 
 def test_vectorize_use_iter():
     with ir.VarDef("y", (4, 64), "int32", "output", "gpu/global") as y:
@@ -928,10 +1031,14 @@ def test_vectorize_use_iter():
     y_std = np.array([[i + j for j in range(64)] for i in range(4)])
     assert np.array_equal(y_np, y_std)
 
+
 def test_vectorize_fallback_to_shorter_when_not_divisible():
-    with ir.VarDef([
+    with ir.VarDef(
+        [
             ("x", (4, 62), "int32", "input", "gpu/global"),
-            ("y", (4, 62), "int32", "output", "gpu/global")]) as (x, y):
+            ("y", (4, 62), "int32", "output", "gpu/global"),
+        ]
+    ) as (x, y):
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 62, nid="L2") as j:
                 y[i, j] = x[i, j] * 2
@@ -959,10 +1066,14 @@ def test_vectorize_fallback_to_shorter_when_not_divisible():
     y_std = x_np * 2
     assert np.array_equal(y_np, y_std)
 
+
 def test_vectorize_fallback_to_shorter_when_not_aligned():
-    with ir.VarDef([
+    with ir.VarDef(
+        [
             ("x", (4, 66), "int32", "input", "gpu/global"),
-            ("y", (4, 64), "int32", "output", "gpu/global")]) as (x, y):
+            ("y", (4, 64), "int32", "output", "gpu/global"),
+        ]
+    ) as (x, y):
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 64, nid="L2") as j:
                 y[i, j] = x[i, j + 2] * 2
@@ -989,4 +1100,3 @@ def test_vectorize_fallback_to_shorter_when_not_aligned():
 
     y_std = x_np[:, 2:] * 2
     assert np.array_equal(y_np, y_std)
-

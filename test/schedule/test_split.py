@@ -1,6 +1,7 @@
 import ir
 import pytest
 
+
 def test_factor():
     with ir.VarDef("y", (8,), "int32", "output", "cpu") as y:
         with ir.For("i", 0, 8, nid="L1") as i:
@@ -22,6 +23,7 @@ def test_factor():
 
     assert std.match(ast)
 
+
 def test_nparts():
     with ir.VarDef("y", (8,), "int32", "output", "cpu") as y:
         with ir.For("i", 0, 8, nid="L1") as i:
@@ -42,6 +44,7 @@ def test_nparts():
     std = ir.pop_ast()
 
     assert std.match(ast)
+
 
 def test_guard():
     with ir.VarDef("y", (10,), "int32", "output", "cpu") as y:
@@ -67,6 +70,7 @@ def test_guard():
 
     assert std.match(ast)
 
+
 def test_not_found():
     with ir.VarDef("y", (8,), "int32", "output", "cpu") as y:
         with ir.For("i", 0, 8) as i:
@@ -76,6 +80,5 @@ def test_not_found():
     s = ir.Schedule(ast)
     with pytest.raises(ir.InvalidSchedule):
         s.split("L1", 4)
-    ast_ = s.ast() # Should not changed
+    ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
-

@@ -1,6 +1,7 @@
 import ir
 import pytest
 
+
 def test_factor():
     ir.MarkNid("Dy")
     with ir.VarDef("y", (8,), "int32", "output", "cpu") as y:
@@ -21,6 +22,7 @@ def test_factor():
     std = ir.pop_ast()
 
     assert std.match(ast)
+
 
 def test_nparts():
     ir.MarkNid("Dy")
@@ -43,6 +45,7 @@ def test_nparts():
 
     assert std.match(ast)
 
+
 def test_non_divisible():
     ir.MarkNid("Dy")
     with ir.VarDef("y", (10,), "int32", "output", "cpu") as y:
@@ -64,6 +67,7 @@ def test_non_divisible():
 
     assert std.match(ast)
 
+
 def test_not_found():
     ir.MarkNid("Dy")
     with ir.VarDef("y", (8,), "int32", "output", "cpu") as y:
@@ -74,8 +78,9 @@ def test_not_found():
     s = ir.Schedule(ast)
     with pytest.raises(ir.InvalidSchedule):
         s.var_split("Dx", 0, ir.VarSplitMode.FixedSize)
-    ast_ = s.ast() # Should not changed
+    ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
+
 
 def test_out_of_range():
     ir.MarkNid("Dy")
@@ -87,6 +92,5 @@ def test_out_of_range():
     s = ir.Schedule(ast)
     with pytest.raises(ir.InvalidSchedule):
         s.var_split("Dy", 1, ir.VarSplitMode.FixedSize)
-    ast_ = s.ast() # Should not changed
+    ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
-

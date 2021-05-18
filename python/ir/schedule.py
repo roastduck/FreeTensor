@@ -3,11 +3,12 @@ from ffi import MoveToSide, VarSplitMode
 
 from .utils import *
 
+
 class Schedule(ffi.Schedule):
     def __init__(self, ast):
         super(Schedule, self).__init__(ast)
 
-    '''
+    """
     Split a loop into two nested loops
 
     To fission a loop into two consecutive loops, use `fission` instead
@@ -30,11 +31,12 @@ class Schedule(ffi.Schedule):
     -------
     (str, str)
         (outer loop ID, inner loop ID)
-    '''
+    """
+
     def split(self, node, factor=-1, nparts=-1):
         return super(Schedule, self).split(toId(node), factor, nparts)
 
-    '''
+    """
     Reorder directly nested loops
 
     To swap consecutive loops, use `swap` instead
@@ -48,11 +50,12 @@ class Schedule(ffi.Schedule):
     ------
     InvalidSchedule
         if the input is invalid or there are breaking dependencies
-    '''
+    """
+
     def reorder(self, order):
         super(Schedule, self).reorder(list(map(toId, order)))
 
-    '''
+    """
     Merge two directly nested loops into one
 
     To fuse consecutive loops, use `fuse` instead
@@ -71,11 +74,12 @@ class Schedule(ffi.Schedule):
     -------
     str
         ID of the merged loop
-    '''
+    """
+
     def merge(self, loop1, loop2):
         return super(Schedule, self).merge(toId(loop1), toId(loop2))
 
-    '''
+    """
     Fission a loop into two loops each containing part of the statements, one
     followed by another
 
@@ -103,12 +107,12 @@ class Schedule(ffi.Schedule):
     -------
     (map, map)
         ({old ID -> new ID in 1st loop}, {old ID -> new ID in 2nd loop})
-    '''
-    def fission(self, loop, after, suffix0=".a", suffix1=".b"):
-        return super(Schedule, self).fission(
-                toId(loop), toId(after), suffix0, suffix1)
+    """
 
-    '''
+    def fission(self, loop, after, suffix0=".a", suffix1=".b"):
+        return super(Schedule, self).fission(toId(loop), toId(after), suffix0, suffix1)
+
+    """
     Fuse two directly following loops with the same length into one
 
     To merge nested loops into one, use `merge` instead
@@ -130,11 +134,12 @@ class Schedule(ffi.Schedule):
     -------
     str
         ID of the result loop
-    '''
+    """
+
     def fuse(self, loop0, loop1):
         return super(Schedule, self).fuse(toId(loop0), toId(loop1))
 
-    '''
+    """
     Swap statements in the same block
 
     To reorder nested loops, use `reorder` instead
@@ -148,11 +153,12 @@ class Schedule(ffi.Schedule):
     ------
     InvalidSchedule
         if the statements are not found or the dependencies cannot be solved
-    '''
+    """
+
     def swap(self, order):
         super(Schedule, self).swap(list(map(toId, order)))
 
-    '''
+    """
     Unroll a loop and interleave statements from each iteration
 
     E.g.
@@ -185,11 +191,12 @@ class Schedule(ffi.Schedule):
     InvalidSchedule
         if the loop is not found, the loop length is not a constant, or
         the dependencies cannot be solved
-    '''
+    """
+
     def blend(self, loop):
         super(Schedule, self).blend(toId(loop))
 
-    '''
+    """
     Cache a variable into a new local variable
 
     All needed data will be filled into the cache first, then all reads and
@@ -233,11 +240,12 @@ class Schedule(ffi.Schedule):
     (str, str, str)
         (ID of the statement that fills the cache, ID of the statement that
         flushes from the cache, name of the cache variable)
-    '''
+    """
+
     def cache(self, stmt, var, mtype):
         return super(Schedule, self).cache(toId(stmt), var, parseMType(mtype))
 
-    '''
+    """
     Perform local reductions (e.g. sum) in a local variable first, and then
     reduce the local result to the global variable
 
@@ -277,11 +285,12 @@ class Schedule(ffi.Schedule):
         (ID of the statement that initialize the cache, ID of the statement
         that reduces the local result to the global result, name of the
         cache variable)
-    '''
+    """
+
     def cache_reduction(self, stmt, var, mtype):
         return super(Schedule, self).cache_reduction(toId(stmt), var, parseMType(mtype))
 
-    '''
+    """
     Split a dimension of a variable into two
 
     Parameters
@@ -305,11 +314,12 @@ class Schedule(ffi.Schedule):
     ------
     InvalidSchedule
         if the variable or the dimension is not found
-    '''
+    """
+
     def var_split(self, vardef, dim, mode, factor=-1, nparts=-1):
         return super(Schedule, self).var_split(toId(vardef), dim, mode, factor, nparts)
 
-    '''
+    """
     Move a statement to a new position
 
     This is a composite schedule command, which is implemented with other
@@ -333,11 +343,12 @@ class Schedule(ffi.Schedule):
     -------
     str
         The new ID of stmt
-    '''
+    """
+
     def move_to(self, stmt, side, dst):
         return super(Schedule, self).move_to(toId(stmt), side, toId(dst))
 
-    '''
+    """
     Remove a variable. When the variable is used, recompute its value
 
     Parameters
@@ -350,11 +361,12 @@ class Schedule(ffi.Schedule):
     ------
     InvalidSchedule
         if the variable cannot be completely removed
-    '''
+    """
+
     def inline(self, vardef):
         return super(Schedule, self).inline(toId(vardef))
 
-    '''
+    """
     Mark a loop with a parallel implementation
 
     Parameters
@@ -365,11 +377,12 @@ class Schedule(ffi.Schedule):
         Parallel implementation. Supported values are "openmp",
         "blockIdx.x", "blockIdx.y", "blockIdx.z", "threadIdx.x",
         "threadIdx.y", "threadIdx.z"
-    '''
+    """
+
     def parallelize(self, loop, parallel):
         super(Schedule, self).parallelize(toId(loop), parallel)
 
-    '''
+    """
     Unroll a loop
 
     The unrolling is postponed to the backend compiler. It is a best-effort
@@ -384,11 +397,12 @@ class Schedule(ffi.Schedule):
     ------
     InvalidSchedule
         if the loop is not found or length of the loop is not a constant
-    '''
+    """
+
     def unroll(self, loop):
         super(Schedule, self).unroll(toId(loop))
 
-    '''
+    """
     Vectorize a loop
 
     Please note that, as vectorization is different from architecture to
@@ -405,7 +419,7 @@ class Schedule(ffi.Schedule):
     InvalidSchedule
         if the ID or name is not found, or the dependency requirement is
         not met
-    '''
+    """
+
     def vectorize(self, loop):
         super(Schedule, self).vectorize(toId(loop))
-
