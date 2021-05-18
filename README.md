@@ -71,7 +71,7 @@ PYTHONPATH=../python:../build:$PYTHONPATH LD_PRELOAD=`gcc -print-file-name=libas
 
 ## Contribute
 
-Please configure (or install some plugins for) your editor, to support `clang-format` and `editorconfig`, for code formating.
+Please configure (or install some plugins for) your editor, to support `clang-format`, `yapf` and `editorconfig`, for code formating.
 
 ## Code Structure
 
