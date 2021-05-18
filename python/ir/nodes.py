@@ -274,7 +274,6 @@ def intrinsic(fmt, *params, **kws):
     ret_type : DataType or str
         (Keyword argument only) The return type. Void for no return type. Defaults to Void
     """
-
     ret_type = ffi.DataType.Void
     if "ret_type" in kws:
         ret_type = parseDType(kws["ret_type"])
