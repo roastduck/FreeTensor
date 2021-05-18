@@ -29,6 +29,7 @@ struct IterAxis {
 struct AccessPoint {
     AST op_;
     Cursor cursor_;
+    std::string def_;
     Ref<Buffer> buffer_;
     int defAxis_;                /// The position of the VarDef
     std::vector<IterAxis> iter_; /// The temporal location of the access
@@ -51,8 +52,8 @@ class FindAccessPoint : public VisitorWithCursor {
     // Var name -> axis: Which axis is a local var defined
     std::unordered_map<std::string, int> defAxis_;
 
-    // Var name -> buffer
-    std::unordered_map<std::string, Ref<Buffer>> buffers_;
+    // Var name -> VarDef
+    std::unordered_map<std::string, VarDef> defs_;
 
   public:
     const std::unordered_map<AST, Ref<AccessPoint>> &points() const {
@@ -78,7 +79,8 @@ class FindAccessPoint : public VisitorWithCursor {
         auto ap = Ref<AccessPoint>::make();
         *ap = {op,
                cursor(),
-               buffers_.at(op->var_),
+               defs_.at(op->var_)->id(),
+               defs_.at(op->var_)->buffer_,
                defAxis_.at(op->var_),
                cur_,
                std::vector<Expr>{op->indices_.begin(), op->indices_.end()},
@@ -177,7 +179,14 @@ const DepType DEP_RAW = 0x4;
 const DepType DEP_ALL = DEP_WAW | DEP_WAR | DEP_RAW;
 
 enum class RelaxMode : int { Possible, Necessary };
-enum class FindDepsMode : int { Dep, Kill };
+enum class FindDepsMode : int {
+    Dep,         // Dependency may happen between `earlier` and `later`
+    KillEarlier, // At any point in the space of `earlier`, it is dependent by
+                 // `later`
+    KillLater,   // At any point in the space of `later`, it is dependent on
+                 // `earlier`
+    KillBoth,    // KillEarlier + KillLater
+};
 
 typedef std::function<bool(const AccessPoint &later,
                            const AccessPoint &earlier)>

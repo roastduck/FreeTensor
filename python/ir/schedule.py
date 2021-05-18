@@ -338,6 +338,23 @@ class Schedule(ffi.Schedule):
         return super(Schedule, self).move_to(toId(stmt), side, toId(dst))
 
     '''
+    Remove a variable. When the variable is used, recompute its value
+
+    Parameters
+    ----------
+    vardef : str, Stmt or Cursor
+        The VarDef statement of the specific variable. It can not be an
+        I/O varible
+
+    Raises
+    ------
+    InvalidSchedule
+        if the variable cannot be completely removed
+    '''
+    def inline(self, vardef):
+        return super(Schedule, self).inline(toId(vardef))
+
+    '''
     Mark a loop with a parallel implementation
 
     Parameters

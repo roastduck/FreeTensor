@@ -113,7 +113,7 @@ Stmt removeWrites(const Stmt &_op) {
         }
     };
 
-    findDeps(op, {{}}, foundOverwrite, FindDepsMode::Kill, DEP_WAW,
+    findDeps(op, {{}}, foundOverwrite, FindDepsMode::KillEarlier, DEP_WAW,
              filterOverwrite, false);
     findDeps(op, {{}}, foundUse, FindDepsMode::Dep, DEP_WAR | DEP_RAW, nullptr,
              false);

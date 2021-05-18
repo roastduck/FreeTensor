@@ -10,10 +10,10 @@ namespace ir {
 
 void FindAccessPoint::visit(const VarDef &op) {
     defAxis_[op->name_] = cur_.size();
-    buffers_[op->name_] = op->buffer_;
+    defs_[op->name_] = op;
     Visitor::visit(op);
     defAxis_.erase(op->name_);
-    buffers_.erase(op->name_);
+    defs_.erase(op->name_);
 }
 
 void FindAccessPoint::visit(const StmtSeq &op) {
@@ -54,7 +54,8 @@ void FindAccessPoint::visit(const Load &op) {
     auto ap = Ref<AccessPoint>::make();
     *ap = {op,
            cursor(),
-           buffers_.at(op->var_),
+           defs_.at(op->var_)->id(),
+           defs_.at(op->var_)->buffer_,
            defAxis_.at(op->var_),
            cur_,
            std::vector<Expr>{op->indices_.begin(), op->indices_.end()},
@@ -490,9 +491,14 @@ void AnalyzeDeps::checkDep(const AccessPoint &point, const AccessPoint &other) {
     int accDim = point.access_.size();
     ASSERT((int)other.access_.size() == accDim);
 
-    auto pRelax = mode_ == FindDepsMode::Kill ? RelaxMode::Necessary
-                                              : RelaxMode::Possible; // later
-    auto oRelax = RelaxMode::Possible;                               // earlier
+    auto pRelax =
+        mode_ == FindDepsMode::KillEarlier || mode_ == FindDepsMode::KillBoth
+            ? RelaxMode::Necessary
+            : RelaxMode::Possible; // later
+    auto oRelax =
+        mode_ == FindDepsMode::KillLater || mode_ == FindDepsMode::KillBoth
+            ? RelaxMode::Necessary
+            : RelaxMode::Possible; // earlier
 
     // We call genISLExpr_ twice. The first time is to warm up the external
     // list, because all the maps shall have an identical external list
@@ -531,7 +537,8 @@ void AnalyzeDeps::checkDep(const AccessPoint &point, const AccessPoint &other) {
     isl_set_free(allDomain);
     isl_map *allEQ = isl_map_identity(isl_space_map_from_set(allSpace));
 
-    isl_set *pIter = isl_map_domain(isl_map_copy(omap));
+    isl_set *oIter = isl_map_domain(isl_map_copy(omap));
+    isl_set *pIter = isl_map_domain(isl_map_copy(pmap));
 
     isl_map *depAll = isl_map_subtract(
         isl_map_apply_range(pmap, isl_map_reverse(omap)), allEQ);
@@ -543,13 +550,27 @@ void AnalyzeDeps::checkDep(const AccessPoint &point, const AccessPoint &other) {
         isl_map_apply_range(pa2s, isl_map_apply_range(serialNearest, os2a)),
         depAll);
 
-    isl_set *pIterKilled = isl_map_range(isl_map_copy(nearest));
-    bool fullyKilled = isl_set_is_equal(pIter, pIterKilled);
+    isl_set *oIterKilled = isl_map_range(isl_map_copy(nearest));
+    isl_set *pIterKilled = isl_map_domain(isl_map_copy(nearest));
+    bool oFullyKilled = isl_set_is_equal(oIter, oIterKilled);
+    bool pFullyKilled = isl_set_is_equal(pIter, pIterKilled);
+    isl_set_free(oIter);
+    isl_set_free(oIterKilled);
     isl_set_free(pIter);
     isl_set_free(pIterKilled);
 
-    if (isl_map_is_empty(nearest) ||
-        (mode_ == FindDepsMode::Kill && !fullyKilled)) {
+    if (isl_map_is_empty(nearest)) {
+        isl_map_free(nearest);
+        return;
+    }
+    if ((mode_ == FindDepsMode::KillEarlier ||
+         mode_ == FindDepsMode::KillBoth) &&
+        !oFullyKilled) {
+        isl_map_free(nearest);
+        return;
+    }
+    if ((mode_ == FindDepsMode::KillLater || mode_ == FindDepsMode::KillBoth) &&
+        !pFullyKilled) {
         isl_map_free(nearest);
         return;
     }

@@ -2,6 +2,7 @@
 #include <regex>
 #include <sstream>
 
+#include <analyze/check_not_modified.h>
 #include <analyze/comp_access_bound.h>
 #include <analyze/deps.h>
 #include <analyze/find_loop_variance.h>
@@ -16,6 +17,7 @@
 #include <schedule/check_loop_order.h>
 #include <schedule/fission.h>
 #include <schedule/fuse.h>
+#include <schedule/inlining.h>
 #include <schedule/merge.h>
 #include <schedule/parallelize.h>
 #include <schedule/reorder.h>
@@ -534,6 +536,36 @@ std::string Schedule::moveTo(const std::string &_stmt, MoveToSide side,
         throw InvalidSchedule("Invalid move_to(" + _stmt + ", " + _dst +
                               "): " + e.what());
     }
+}
+
+void Schedule::inlining(const std::string &def) {
+    auto ast = ast_;
+    try {
+        std::unordered_map<Load, Expr> replace;
+        auto filter = [&](const AccessPoint &later,
+                          const AccessPoint &earlier) {
+            return earlier.def_ == def;
+        };
+        auto found = [&](const Dependency &dep) {
+            if (replace.count(dep.later().as<LoadNode>())) {
+                throw InvalidSchedule("Multiple writes correspond to one read");
+            }
+            auto expr = dep.earlier()->nodeType() == ASTNodeType::Store
+                            ? dep.earlier().as<StoreNode>()->expr_
+                            : dep.earlier().as<ReduceToNode>()->expr_;
+            if (!checkNotModified(ast, expr, dep.earlier_.cursor_.id(),
+                                  dep.later_.cursor_.id())) {
+                throw InvalidSchedule(
+                    "The expression will be modified after inlining");
+            }
+            replace[dep.later().as<LoadNode>()] = expr;
+        };
+        findDeps(ast, {{}}, found, FindDepsMode::KillLater, DEP_RAW, filter);
+        ast = MakeInline(def, replace)(ast);
+    } catch (const InvalidSchedule &e) {
+        throw InvalidSchedule("Invalid inline(" + def + "): " + e.what());
+    }
+    ast_ = ast;
 }
 
 void Schedule::parallelize(const std::string &loop,

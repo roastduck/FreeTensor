@@ -254,6 +254,15 @@ class Schedule {
                        const std::string &dst);
 
     /**
+     * Remove a variable. When the variable is used, recompute its value
+     *
+     * @param def : ID of the VarDef statement of the specific variable. It can
+     * not be an I/O varible
+     * @throw InvalidSchedule if the variable cannot be completely removed
+     */
+    void inlining(const std::string &def);
+
+    /**
      * Mark a loop with a parallel implementation
      *
      * @param loop : ID of the loop

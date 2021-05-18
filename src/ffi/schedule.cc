@@ -32,6 +32,7 @@ void init_ffi_schedule(py::module_ &m) {
         .def("var_split", &Schedule::varSplit, "vardef"_a, "dim"_a, "mode"_a,
              "factor"_a = -1, "nparts"_a = -1)
         .def("move_to", &Schedule::moveTo, "stmt"_a, "side"_a, "dst"_a)
+        .def("inline", &Schedule::inlining, "vardef"_a)
         .def("parallelize", &Schedule::parallelize, "loop"_a, "parallel"_a)
         .def("unroll", &Schedule::unroll, "loop"_a)
         .def("vectorize", &Schedule::vectorize, "loop"_a);
