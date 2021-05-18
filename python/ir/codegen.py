@@ -1,5 +1,6 @@
 import ffi
 
+
 def codegen(ast, target: ffi.Target):
     if target.type() == ffi.TargetType.CPU:
         return ffi.code_gen_cpu(ast)
@@ -7,4 +8,3 @@ def codegen(ast, target: ffi.Target):
         return ffi.code_gen_cuda(ast)
     else:
         assert False, "Unrecognized target %s" % target
-

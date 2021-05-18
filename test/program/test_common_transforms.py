@@ -2,14 +2,16 @@ import ir
 import ir.debug
 import numpy as np
 
+
 def test_tiling():
     target = ir.CPU()
     device = ir.Device(target)
 
     with ir.VarDef([
-            ("a", (256, 256), "float32", "input", "cpu"),
-            ("b", (256, 256), "float32", "input", "cpu"),
-            ("c", (256, 256), "float32", "output", "cpu")]) as (a, b, c):
+        ("a", (256, 256), "float32", "input", "cpu"),
+        ("b", (256, 256), "float32", "input", "cpu"),
+        ("c", (256, 256), "float32", "output", "cpu"),
+    ]) as (a, b, c):
         with ir.For("i", 0, 256, nid="Li") as i:
             with ir.For("j", 0, 256, nid="Lj") as j:
                 with ir.NamedScope("S0"):
@@ -33,25 +35,31 @@ def test_tiling():
     print(ast)
 
     with ir.VarDef([
-            ("a", (256, 256), "float32", "input", "cpu"),
-            ("b", (256, 256), "float32", "input", "cpu"),
-            ("c", (256, 256), "float32", "output", "cpu")]) as (a, b, c):
+        ("a", (256, 256), "float32", "input", "cpu"),
+        ("b", (256, 256), "float32", "input", "cpu"),
+        ("c", (256, 256), "float32", "output", "cpu"),
+    ]) as (a, b, c):
         with ir.For("i.0", 0, 8) as i0:
             with ir.For("j.0", 0, 8) as j0:
-                with ir.VarDef("a.r", (32, 256), "float32", ir.AccessType.Cache, "cpu") as ar:
+                with ir.VarDef("a.r", (32, 256), "float32", ir.AccessType.Cache,
+                               "cpu") as ar:
                     with ir.For("i.1.ar", 32 * i0, 32 * i0 + 32) as i1:
                         with ir.For("k.ar", 0, 256) as k:
                             ir.Any()
-                    with ir.VarDef("b.r", (256, 32), "float32", ir.AccessType.Cache, "cpu") as br:
+                    with ir.VarDef("b.r", (256, 32), "float32",
+                                   ir.AccessType.Cache, "cpu") as br:
                         with ir.For("k.br", 0, 256) as k:
                             with ir.For("j.1.br", 32 * j0, 32 * j0 + 32) as j1:
                                 ir.Any()
                         with ir.For("i.1", 0, 32) as i1:
                             with ir.For("j.1", 0, 32) as j1:
-                                with ir.VarDef("c.w", (1, 1), "float32", ir.AccessType.Cache, "cpu") as cw:
+                                with ir.VarDef("c.w", (1, 1), "float32",
+                                               ir.AccessType.Cache,
+                                               "cpu") as cw:
                                     cw[0, 0] = 0
                                     with ir.For("k", 0, 256) as k:
-                                        cw[0, 0] = cw[0, 0] + ar[i1, k] * br[k, j1]
+                                        cw[0,
+                                           0] = cw[0, 0] + ar[i1, k] * br[k, j1]
                                     c[i1 + 32 * i0, 32 * j0 + j1] = cw[0, 0]
     std = ir.make_reduction(ir.pop_ast())
     assert std.match(ast)
@@ -72,13 +80,15 @@ def test_tiling():
     c_std = a_np @ b_np
     assert np.all(np.isclose(c_np, c_std))
 
+
 def test_tiled_reduction():
     target = ir.CPU()
     device = ir.Device(target)
 
     with ir.VarDef([
-            ("x", (256,), "float32", "input", "cpu"),
-            ("y", (1,), "float32", "output", "cpu")]) as (x, y):
+        ("x", (256,), "float32", "input", "cpu"),
+        ("y", (1,), "float32", "output", "cpu"),
+    ]) as (x, y):
         y[0] = 0
         with ir.For("i", 0, 256, nid="Li") as i:
             y[0] = y[0] + x[i]
@@ -93,12 +103,13 @@ def test_tiled_reduction():
     print(ast)
 
     with ir.VarDef([
-            ("x", (256,), "float32", "input", "cpu"),
-            ("y", (1,), "float32", "output", "cpu")]) as (x, y):
+        ("x", (256,), "float32", "input", "cpu"),
+        ("y", (1,), "float32", "output", "cpu"),
+    ]) as (x, y):
         y[0] = 0
         with ir.For("i0", 0, 4) as i0:
             with ir.VarDef("yw", (1,), "float32", "cache", "cpu") as yw:
-                yw[0] = 0.
+                yw[0] = 0.0
                 with ir.For("i1", 0, 64) as i1:
                     yw[0] = yw[0] + x[i1 + 64 * i0]
                 y[0] = y[0] + yw[0]
@@ -119,13 +130,15 @@ def test_tiled_reduction():
     y_std = np.sum(x_np, keepdims=True)
     assert np.all(np.isclose(y_np, y_std))
 
+
 def test_parallel_reduction():
     target = ir.CPU()
     device = ir.Device(target)
 
     with ir.VarDef([
-            ("x", (256,), "float32", "input", "cpu"),
-            ("y", (1,), "float32", "output", "cpu")]) as (x, y):
+        ("x", (256,), "float32", "input", "cpu"),
+        ("y", (1,), "float32", "output", "cpu"),
+    ]) as (x, y):
         ir.MarkNid("S0")
         y[0] = 0
         with ir.For("i", 0, 256, nid="Li") as i:
@@ -145,11 +158,12 @@ def test_parallel_reduction():
     print(ast)
 
     with ir.VarDef([
-            ("x", (256,), "float32", "input", "cpu"),
-            ("y", (1,), "float32", "output", "cpu")]) as (x, y):
+        ("x", (256,), "float32", "input", "cpu"),
+        ("y", (1,), "float32", "output", "cpu"),
+    ]) as (x, y):
         with ir.VarDef("yw", (4, 1), "float32", "cache", "cpu") as yw:
             with ir.For("i0", 0, 4) as i0:
-                yw[i0, 0] = 0.
+                yw[i0, 0] = 0.0
                 with ir.For("i1", 0, 64) as i1:
                     yw[i0, 0] = yw[i0, 0] + x[i1 + 64 * i0]
             y[0] = 0
@@ -172,19 +186,22 @@ def test_parallel_reduction():
     y_std = np.sum(x_np, keepdims=True)
     assert np.all(np.isclose(y_np, y_std))
 
+
 def test_dynamic_tiling():
     target = ir.CPU()
     device = ir.Device(target)
     host = device
 
     with ir.VarDef([
-            ("n", (), "int32", "input", "byvalue"),
-            ("k", (), "int32", "input", "byvalue"),
-            ("m", (), "int32", "input", "byvalue")]) as (n, k, m):
+        ("n", (), "int32", "input", "byvalue"),
+        ("k", (), "int32", "input", "byvalue"),
+        ("m", (), "int32", "input", "byvalue"),
+    ]) as (n, k, m):
         with ir.VarDef([
-                ("a", (n[()], k[()]), "float32", "input", "cpu"),
-                ("b", (k[()], m[()]), "float32", "input", "cpu"),
-                ("c", (n[()], m[()]), "float32", "output", "cpu")]) as (a, b, c):
+            ("a", (n[()], k[()]), "float32", "input", "cpu"),
+            ("b", (k[()], m[()]), "float32", "input", "cpu"),
+            ("c", (n[()], m[()]), "float32", "output", "cpu"),
+        ]) as (a, b, c):
             with ir.For("i", 0, n[()], nid="Li") as i:
                 with ir.For("j", 0, m[()], nid="Lj") as j:
                     with ir.NamedScope("S0"):
@@ -225,13 +242,19 @@ def test_dynamic_tiling():
     c_arr = ir.Array(c_np, device)
     driver = ir.Driver(code, params, device)
     driver.set_params({
-        "n": n_arr, "k": k_arr, "m": m_arr,
-        "a": a_arr, "b": b_arr, "c": c_arr})
+        "n": n_arr,
+        "k": k_arr,
+        "m": m_arr,
+        "a": a_arr,
+        "b": b_arr,
+        "c": c_arr
+    })
     driver.run()
     c_np = c_arr.numpy().reshape(300, 500)
 
     c_std = a_np @ b_np
     assert np.all(np.isclose(c_np, c_std))
+
 
 def test_collaborative_fetch():
     target = ir.GPU()
@@ -239,9 +262,10 @@ def test_collaborative_fetch():
     host = ir.Device(ir.CPU())
 
     with ir.VarDef([
-            ("a", (32, 256), "float32", "input", "cpu"),
-            ("b", (256, 32), "float32", "input", "cpu"),
-            ("c", (32, 32), "float32", "output", "cpu")]) as (a, b, c):
+        ("a", (32, 256), "float32", "input", "cpu"),
+        ("b", (256, 32), "float32", "input", "cpu"),
+        ("c", (32, 32), "float32", "output", "cpu"),
+    ]) as (a, b, c):
         with ir.For("i", 0, 32, nid="Li") as i:
             with ir.For("j", 0, 32, nid="Lj") as j:
                 c[i, j] = 0
@@ -256,8 +280,16 @@ def test_collaborative_fetch():
     fill_b, _, _ = s.cache(k1, "b", "gpu/shared")
     s.parallelize(i, "threadIdx.y")
     s.parallelize(j, "threadIdx.x")
-    s.parallelize(s.find(lambda x: x.node_type() == ir.ASTNodeType.For and x.node().body.nid == fill_a), "threadIdx.x")
-    s.parallelize(s.find(lambda x: x.node_type() == ir.ASTNodeType.For and x.node().body.nid == fill_b), "threadIdx.y")
+    s.parallelize(
+        s.find(lambda x: x.node_type() == ir.ASTNodeType.For and x.node().body.
+               nid == fill_a),
+        "threadIdx.x",
+    )
+    s.parallelize(
+        s.find(lambda x: x.node_type() == ir.ASTNodeType.For and x.node().body.
+               nid == fill_b),
+        "threadIdx.y",
+    )
     ast = ir.lower(s.ast(), target)
     print(ast)
 
@@ -276,4 +308,3 @@ def test_collaborative_fetch():
 
     c_std = a_np @ b_np
     assert np.all(np.isclose(c_np, c_std))
-

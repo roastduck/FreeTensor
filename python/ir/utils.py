@@ -1,6 +1,7 @@
 import ffi
 from ffi import AccessType, MemType, DataType
 
+
 def toId(node):
     if type(node) is str:
         return node
@@ -9,6 +10,7 @@ def toId(node):
     if isinstance(node, ffi.Stmt):
         return node.nid
     assert False, "%s is not a valid statement" % node
+
 
 def parseDType(dtype):
     if type(dtype) is DataType:
@@ -19,6 +21,7 @@ def parseDType(dtype):
         elif dtype.lower() == "int32":
             return DataType.Int32
     assert False, "Unrecognized data type %s" % dtype
+
 
 def parseAType(atype):
     if type(atype) is AccessType:
@@ -33,6 +36,7 @@ def parseAType(atype):
         elif atype.lower() == "cache":
             return AccessType.Cache
     assert False, "Unrecognized access type %s" % atype
+
 
 def parseMType(mtype):
     if type(mtype) is MemType:
@@ -49,4 +53,3 @@ def parseMType(mtype):
         elif mtype.lower() == "gpu/local":
             return MemType.GPULocal
     assert False, "Unrecognized memory type %s" % mtype
-

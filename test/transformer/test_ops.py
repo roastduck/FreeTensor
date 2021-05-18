@@ -3,6 +3,7 @@ import numpy as np
 
 
 def test_binary_op():
+
     def test(x, y):
         ir.declare_var(x, (), "int32", "input", "cpu")
         ir.declare_var(y, (), "int32", "output", "cpu")
@@ -26,9 +27,10 @@ def test_binary_op():
 
 
 def test_bool_op():
+
     def test(x, y):
-        ir.declare_var(x, (4, ), "int32", "input", "cpu")
-        ir.declare_var(y, (4, ), "int32", "output", "cpu")
+        ir.declare_var(x, (4,), "int32", "input", "cpu")
+        ir.declare_var(y, (4,), "int32", "output", "cpu")
         y[0] = (x[0] != 0 and x[1] != 0) or (x[2] != 0 and x[3] != 0)
         y[1] = (x[0] != 0 or x[1] != 0) and (x[2] != 0 or x[2] != 0)
         y[2] = x[0] != 0 and x[1] != 0 and x[2] != 0
@@ -51,10 +53,12 @@ def test_bool_op():
     assert np.array_equal(y_np, y_std)
     assert np.array_equal(y_func, y_std)
 
+
 def test_unary_op():
+
     def test(x, y):
-        ir.declare_var(x, (4, ), "int32", "input", "cpu")
-        ir.declare_var(y, (4, ), "int32", "output", "cpu")
+        ir.declare_var(x, (4,), "int32", "input", "cpu")
+        ir.declare_var(y, (4,), "int32", "output", "cpu")
         for i in range(0, 4):
             y[i] = not x[i] != 0
 
@@ -77,9 +81,10 @@ def test_unary_op():
 
 
 def test_comparison_op():
+
     def test(x, y):
-        ir.declare_var(x, (4, ), "int32", "input", "cpu")
-        ir.declare_var(y, (4, ), "int32", "output", "cpu")
+        ir.declare_var(x, (4,), "int32", "input", "cpu")
+        ir.declare_var(y, (4,), "int32", "output", "cpu")
         y[0] = x[0] < x[1] <= x[1] == x[1] != x[2] >= x[2] > x[1]
         y[1] = x[1] != x[1]
         y[2] = x[1] == x[1] != x[1] == x[1]

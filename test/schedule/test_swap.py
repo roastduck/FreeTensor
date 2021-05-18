@@ -1,12 +1,14 @@
 import ir
 import pytest
 
+
 def test_basic():
     with ir.VarDef([
-            ("y1", (4,), "int32", "output", "cpu"),
-            ("y2", (4,), "int32", "output", "cpu"),
-            ("y3", (4,), "int32", "output", "cpu"),
-            ("y4", (4,), "int32", "output", "cpu")]) as (y1, y2, y3, y4):
+        ("y1", (4,), "int32", "output", "cpu"),
+        ("y2", (4,), "int32", "output", "cpu"),
+        ("y3", (4,), "int32", "output", "cpu"),
+        ("y4", (4,), "int32", "output", "cpu"),
+    ]) as (y1, y2, y3, y4):
         with ir.For("i", 0, 4, nid="L1") as i:
             ir.MarkNid("S1")
             y1[i] = i + 1
@@ -26,10 +28,11 @@ def test_basic():
     print(ast)
 
     with ir.VarDef([
-            ("y1", (4,), "int32", "output", "cpu"),
-            ("y2", (4,), "int32", "output", "cpu"),
-            ("y3", (4,), "int32", "output", "cpu"),
-            ("y4", (4,), "int32", "output", "cpu")]) as (y1, y2, y3, y4):
+        ("y1", (4,), "int32", "output", "cpu"),
+        ("y2", (4,), "int32", "output", "cpu"),
+        ("y3", (4,), "int32", "output", "cpu"),
+        ("y4", (4,), "int32", "output", "cpu"),
+    ]) as (y1, y2, y3, y4):
         with ir.For("i", 0, 4) as i:
             y2[i] = i + 2
             y3[i] = i + 3
@@ -39,12 +42,14 @@ def test_basic():
 
     assert std.match(ast)
 
+
 def test_not_consecutive():
     with ir.VarDef([
-            ("y1", (4,), "int32", "output", "cpu"),
-            ("y2", (4,), "int32", "output", "cpu"),
-            ("y3", (4,), "int32", "output", "cpu"),
-            ("y4", (4,), "int32", "output", "cpu")]) as (y1, y2, y3, y4):
+        ("y1", (4,), "int32", "output", "cpu"),
+        ("y2", (4,), "int32", "output", "cpu"),
+        ("y3", (4,), "int32", "output", "cpu"),
+        ("y4", (4,), "int32", "output", "cpu"),
+    ]) as (y1, y2, y3, y4):
         with ir.For("i", 0, 4, nid="L1") as i:
             ir.MarkNid("S1")
             y1[i] = i + 1
@@ -59,13 +64,13 @@ def test_not_consecutive():
     s = ir.Schedule(ast)
     with pytest.raises(ir.InvalidSchedule):
         s.swap(["S4", "S1"])
-    ast_ = s.ast() # Should not changed
+    ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
 
+
 def test_dependency():
-    with ir.VarDef([
-            ("y1", (4,), "int32", "inout", "cpu"),
-            ("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):
+    with ir.VarDef([("y1", (4,), "int32", "inout", "cpu"),
+                    ("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):
         with ir.For("i", 0, 4, nid="L1") as i:
             ir.MarkNid("S1")
             y1[i] = i + 1
@@ -76,6 +81,5 @@ def test_dependency():
     s = ir.Schedule(ast)
     with pytest.raises(ir.InvalidSchedule):
         s.swap(["S2", "S1"])
-    ast_ = s.ast() # Should not changed
+    ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
-

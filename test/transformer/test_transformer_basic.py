@@ -3,6 +3,7 @@ import numpy as np
 
 
 def test_hello_world():
+
     def test(x):
         ir.declare_var(x, (4, 4), "float32", "output", "cpu")
         x[2, 3] = 2.0
@@ -30,6 +31,7 @@ def test_hello_world():
 
 
 def test_scalar_op():
+
     def test(x, y):
         ir.declare_var(x, (), "int32", "input", "cpu")
         ir.declare_var(y, (), "int32", "output", "cpu")
@@ -48,12 +50,12 @@ def test_scalar_op():
     y_func = np.array(0, dtype="int32")
     test(x_np, y_func)
 
-
     assert y_np[()] == 11
     assert y_func[()] == 11
 
 
 def test_for():
+
     def test(x, y):
         ir.declare_var(x, (4,), "int32", "input", "cpu")
         ir.declare_var(y, (4,), "int32", "output", "cpu")
@@ -79,6 +81,7 @@ def test_for():
 
 
 def test_if():
+
     def test(y):
         ir.declare_var(y, (4,), "int32", "output", "cpu")
         for i in range(0, 4):
@@ -101,4 +104,3 @@ def test_if():
     y_std = np.array([0, 0, 1, 1], dtype="int32")
     assert np.array_equal(y_np, y_std)
     assert np.array_equal(y_func, y_std)
-

@@ -1,9 +1,9 @@
 import ir
 
+
 def test_basic():
-    with ir.VarDef([
-            ("y1", (4,), "int32", "output", "cpu"),
-            ("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):
+    with ir.VarDef([("y1", (4,), "int32", "output", "cpu"),
+                    ("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):
         with ir.For("i", 0, 4) as i:
             with ir.If(i < 2):
                 y1[i] = 0
@@ -18,9 +18,8 @@ def test_basic():
     ast = ir.lower(ast)
     print(ast)
 
-    with ir.VarDef([
-            ("y1", (4,), "int32", "output", "cpu"),
-            ("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):
+    with ir.VarDef([("y1", (4,), "int32", "output", "cpu"),
+                    ("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):
         with ir.For("i", 0, 2) as i:
             y1[i] = 0
             y2[i] = 2
@@ -31,10 +30,10 @@ def test_basic():
 
     assert std.match(ast)
 
+
 def test_multiple_cond():
-    with ir.VarDef([
-            ("y1", (5,), "int32", "output", "cpu"),
-            ("y2", (5,), "int32", "output", "cpu")]) as (y1, y2):
+    with ir.VarDef([("y1", (5,), "int32", "output", "cpu"),
+                    ("y2", (5,), "int32", "output", "cpu")]) as (y1, y2):
         with ir.For("i", 0, 5) as i:
             with ir.If(i < 2):
                 y1[i] = 0
@@ -49,9 +48,8 @@ def test_multiple_cond():
     ast = ir.lower(ast)
     print(ast)
 
-    with ir.VarDef([
-            ("y1", (5,), "int32", "output", "cpu"),
-            ("y2", (5,), "int32", "output", "cpu")]) as (y1, y2):
+    with ir.VarDef([("y1", (5,), "int32", "output", "cpu"),
+                    ("y2", (5,), "int32", "output", "cpu")]) as (y1, y2):
         with ir.For("i", 0, 2) as i:
             y1[i] = 0
             y2[i] = 2
@@ -63,6 +61,7 @@ def test_multiple_cond():
     std = ir.pop_ast()
 
     assert std.match(ast)
+
 
 def test_eq():
     with ir.VarDef("y", (5,), "int32", "output", "cpu") as y:
@@ -86,6 +85,7 @@ def test_eq():
 
     assert std.match(ast)
 
+
 def test_tiled():
     with ir.VarDef("y", (10,), "int32", "output", "cpu") as y:
         with ir.For("i", 0, 3) as i:
@@ -106,6 +106,7 @@ def test_tiled():
     std = ir.pop_ast()
 
     assert std.match(ast)
+
 
 def test_dynamic_tiled():
     with ir.VarDef("n", (), "int32", "input", "byvalue") as n:
@@ -132,10 +133,10 @@ def test_dynamic_tiled():
 
     assert std.match(ast)
 
+
 def test_1d_stencil():
-    with ir.VarDef([
-            ("x", (10,), "int32", "input", "cpu"),
-            ("y", (10,), "int32", "output", "cpu")]) as (x, y):
+    with ir.VarDef([("x", (10,), "int32", "input", "cpu"),
+                    ("y", (10,), "int32", "output", "cpu")]) as (x, y):
         with ir.For("i", 0, 10) as i:
             y[i] = x[i]
             with ir.If(i - 1 >= 0):
@@ -147,9 +148,8 @@ def test_1d_stencil():
     ast = ir.lower(ast)
     print(ast)
 
-    with ir.VarDef([
-            ("x", (10,), "int32", "input", "cpu"),
-            ("y", (10,), "int32", "output", "cpu")]) as (x, y):
+    with ir.VarDef([("x", (10,), "int32", "input", "cpu"),
+                    ("y", (10,), "int32", "output", "cpu")]) as (x, y):
         y[0] = x[0] + x[1]
         with ir.For("i", 1, 9) as i:
             y[i] = x[i + 1] + x[i] + x[i + -1]
@@ -158,10 +158,10 @@ def test_1d_stencil():
 
     assert std.match(ast)
 
+
 def test_no_seperate_vardef():
-    with ir.VarDef([
-            ("x", (4,), "int32", "input", "cpu"),
-            ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+    with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ir.For("i", 0, 4) as i:
             with ir.VarDef("t", (), "int32", "cache", "cpu") as t:
                 t[()] = x[i]
@@ -174,9 +174,8 @@ def test_no_seperate_vardef():
     ast = ir.lower(ast)
     print(ast)
 
-    with ir.VarDef([
-            ("x", (4,), "int32", "input", "cpu"),
-            ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+    with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ir.For("i", 0, 4) as i:
             with ir.VarDef("t", (), "int32", "cache", "cpu") as t:
                 t[()] = x[i]

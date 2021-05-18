@@ -10,6 +10,7 @@ device = ir.Device(target)
 
 host = ir.Device(ir.CPU())
 
+
 def test_manual_static():
     # Matching http://tvm.apache.org/docs/tutorials/optimize/opt_conv_cuda.html
 
@@ -22,8 +23,11 @@ def test_manual_static():
     stride = 1
     out_size = (in_size - kernel + 2 * pad) // stride + 1
 
-    A_np = np.random.uniform(size=(in_size, in_size, in_channel, batch)).astype("float32")
-    W_np = np.random.uniform(size=(kernel, kernel, in_channel, out_channel)).astype("float32")
+    A_np = np.random.uniform(size=(in_size, in_size, in_channel,
+                                   batch)).astype("float32")
+    W_np = np.random.uniform(size=(kernel, kernel, in_channel,
+                                   out_channel)).astype("float32")
+
     def eval(ast, print_code=False, time=False):
         ast = ir.lower(ast, target)
         if print_code:
@@ -32,7 +36,8 @@ def test_manual_static():
         if print_code:
             print(ir.debug.with_line_no(code), flush=True)
         driver = ir.Driver(code, params, device)
-        B_np = np.zeros((out_size, out_size, out_channel, batch), dtype="float32")
+        B_np = np.zeros((out_size, out_size, out_channel, batch),
+                        dtype="float32")
         A_arr = ir.Array(A_np, device)
         W_arr = ir.Array(W_np, device)
         B_arr = ir.Array(B_np, device)
@@ -46,30 +51,57 @@ def test_manual_static():
         return B_np
 
     with ir.VarDef([
-            ("A", (in_size, in_size, in_channel, batch), "float32", "input", "gpu/global"),
-            ("W", (kernel, kernel, in_channel, out_channel), "float32", "input", "gpu/global"),
-            ("B", (out_size, out_size, out_channel, batch), "float32", "output", "gpu/global")]) as (A, W, B):
+        (
+            "A",
+            (in_size, in_size, in_channel, batch),
+            "float32",
+            "input",
+            "gpu/global",
+        ),
+        (
+            "W",
+            (kernel, kernel, in_channel, out_channel),
+            "float32",
+            "input",
+            "gpu/global",
+        ),
+        (
+            "B",
+            (out_size, out_size, out_channel, batch),
+            "float32",
+            "output",
+            "gpu/global",
+        ),
+    ]) as (A, W, B):
         with ir.For("yy", 0, out_size, nid="Ly") as yy:
             with ir.For("xx", 0, out_size, nid="Lx") as xx:
                 with ir.For("ff", 0, out_channel, nid="Lf") as ff:
                     with ir.For("nn", 0, batch, nid="Ln") as nn:
                         ir.MarkNid("init")
-                        B[yy, xx, ff, nn] = 0.
+                        B[yy, xx, ff, nn] = 0.0
                         with ir.For("ry", 0, kernel, nid="Lry") as ry:
                             with ir.For("rx", 0, kernel, nid="Lrx") as rx:
-                                with ir.For("rc", 0, in_channel, nid="Lrc") as rc:
+                                with ir.For("rc", 0, in_channel,
+                                            nid="Lrc") as rc:
                                     y = yy * stride + ry - pad
                                     x = xx * stride + rx - pad
-                                    with ir.If(functools.reduce(ir.l_and, [
-                                            y >= 0, y < in_size,
-                                            x >= 0, x < in_size])):
-                                        B[yy, xx, ff, nn] = B[yy, xx, ff, nn] + A[y, x, rc, nn] * W[ry, rx, rc, ff]
+                                    with ir.If(
+                                            functools.reduce(
+                                                ir.l_and,
+                                                [
+                                                    y >= 0, y < in_size, x >= 0,
+                                                    x < in_size
+                                                ],
+                                            )):
+                                        B[yy, xx, ff, nn] = (
+                                            B[yy, xx, ff, nn] +
+                                            A[y, x, rc, nn] * W[ry, rx, rc, ff])
     algo = ir.pop_ast()
 
     # TODO: Use this
     #
-    #@ir.transform
-    #def algo(A, W, B):
+    # @ir.transform
+    # def algo(A, W, B):
     #    ir.declare_var(A, (in_size, in_size, in_channel, batch), "float32", "input", "gpu/global")
     #    ir.declare_var(W, (kernel, kernel, in_channel, out_channel), "float32", "input", "gpu/global")
     #    ir.declare_var(B, (out_size, out_size, out_channel, batch), "float32", "output", "gpu/global")
@@ -119,11 +151,13 @@ def test_manual_static():
     s.cache(s.find(lambda x: x.nid() == txz).node().body, "B", "gpu/local")
 
     fill_AA, _, AA = s.cache(rci, "A", "gpu/shared")
-    s.parallelize(s.find(lambda x: x.nid() == fill_AA).outer().outer(), "threadIdx.y")
+    s.parallelize(
+        s.find(lambda x: x.nid() == fill_AA).outer().outer(), "threadIdx.y")
     s.vectorize(s.find(lambda x: x.nid() == fill_AA).outer())
 
     fill_WW, _, WW = s.cache(rci, "W", "gpu/shared")
-    s.parallelize(s.find(lambda x: x.nid() == fill_WW).outer().outer(), "threadIdx.x")
+    s.parallelize(
+        s.find(lambda x: x.nid() == fill_WW).outer().outer(), "threadIdx.x")
     s.vectorize(s.find(lambda x: x.nid() == fill_WW).outer())
 
     fill_AL, _, AL = s.cache(fi, AA, "gpu/local")
@@ -147,4 +181,3 @@ def test_manual_static():
     baseline = s.ast()
     result_std = eval(baseline)
     assert np.all(np.isclose(result, result_std))
-

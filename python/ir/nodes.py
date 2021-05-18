@@ -4,10 +4,12 @@ import ffi
 
 from .utils import *
 
+
 class Context:
+
     def __init__(self):
         self.stmt_seq = []
-        self.lastIf = None # To handle else case
+        self.lastIf = None  # To handle else case
         self.nextNid = ""
 
     def append_stmt(self, stmt: ffi.Stmt):
@@ -37,7 +39,9 @@ class Context:
         else:
             return ffi.makeStmtSeq(nid, self.stmt_seq)
 
+
 class ContextStack:
+
     def __init__(self):
         self.reset()
 
@@ -53,15 +57,19 @@ class ContextStack:
     def pop(self):
         return self.stack.pop()
 
+
 ctx_stack = ContextStack()
 
-''' Get AST and reset context '''
+
 def pop_ast():
+    """ Get AST and reset context """
     ret = ctx_stack.pop().make_stmt()
     ctx_stack.reset()
     return ret
 
+
 class Var:
+
     def __init__(self, name: str):
         self.var = name
 
@@ -76,7 +84,9 @@ class Var:
         top = ctx_stack.top()
         top.append_stmt(ffi.makeStore(top.get_next_nid(), self.var, key, value))
 
+
 class _VarDef:
+
     def __init__(self, name: str, shape: Sequence, dtype, atype, mtype):
         self.name = name
         self.shape = shape
@@ -89,12 +99,17 @@ class _VarDef:
         return Var(self.name)
 
     def __exit__(self, exc_type, exc_value, traceback):
-        buf = ffi.Buffer(ffi.Tensor(self.shape, self.dtype), self.atype, self.mtype)
+        buf = ffi.Buffer(ffi.Tensor(self.shape, self.dtype), self.atype,
+                         self.mtype)
         body = ctx_stack.pop().make_stmt()
         top = ctx_stack.top()
-        top.append_stmt(ffi.makeVarDef(top.get_next_nid(), self.name, buf, None, body, False))
+        top.append_stmt(
+            ffi.makeVarDef(top.get_next_nid(), self.name, buf, None, body,
+                           False))
+
 
 class _VarsDef:
+
     def __init__(self, defs: Tuple[str, Sequence, DataType, AccessType]):
         self.defs = [VarDef(*d) for d in defs]
 
@@ -105,6 +120,7 @@ class _VarsDef:
         for d in reversed(self.defs):
             d.__exit__(exc_type, exc_value, traceback)
 
+
 # Factory
 def VarDef(*args):
     if len(args) == 1:
@@ -112,7 +128,9 @@ def VarDef(*args):
     else:
         return _VarDef(*args)
 
+
 class For:
+
     def __init__(self, iter_var: str, begin, end, nid: str = ""):
         self.iter_var = iter_var
         self.begin = begin
@@ -129,10 +147,22 @@ class For:
         nid = top.get_next_nid()
         if self.nid != "":
             nid = self.nid
-        top.append_stmt(ffi.makeFor(
-            nid, self.iter_var, self.begin, self.end, self.end - self.begin, "", False, False, body))
+        top.append_stmt(
+            ffi.makeFor(
+                nid,
+                self.iter_var,
+                self.begin,
+                self.end,
+                self.end - self.begin,
+                "",
+                False,
+                False,
+                body,
+            ))
+
 
 class If:
+
     def __init__(self, cond):
         self.cond = cond
 
@@ -143,7 +173,9 @@ class If:
         body = ctx_stack.pop().make_stmt()
         ctx_stack.top().append_if_then_stmt(self.cond, body)
 
+
 class Else:
+
     def __init__(self):
         pass
 
@@ -154,7 +186,9 @@ class Else:
         body = ctx_stack.pop().make_stmt()
         ctx_stack.top().append_if_else_stmt(body)
 
+
 class Assert:
+
     def __init__(self, cond):
         self.cond = cond
 
@@ -167,11 +201,14 @@ class Assert:
         nid = top.get_next_nid()
         top.append_stmt(ffi.makeAssert(nid, self.cond, body))
 
-''' Mark the ID of the following statement '''
+
 def MarkNid(nid: str):
+    """ Mark the ID of the following statement """
     ctx_stack.top().set_next_nid(nid)
 
+
 class NamedScope:
+
     def __init__(self, nid: str):
         self.nid = nid
 
@@ -182,50 +219,61 @@ class NamedScope:
         body = ctx_stack.pop().make_stmt(self.nid)
         ctx_stack.top().append_stmt(body)
 
+
 def Eval(expr):
     top = ctx_stack.top()
     top.append_stmt(ffi.makeEval(top.get_next_nid(), expr))
 
+
 def Any():
     ctx_stack.top().append_stmt(ffi.makeAny())
+
 
 def min(lhs, rhs):
     return ffi.makeMin(lhs, rhs)
 
+
 def max(lhs, rhs):
     return ffi.makeMax(lhs, rhs)
+
 
 def l_and(lhs, rhs):
     return ffi.makeLAnd(lhs, rhs)
 
+
 def l_or(lhs, rhs):
     return ffi.makeLOr(lhs, rhs)
+
 
 def l_not(expr):
     return ffi.makeLNot(expr)
 
+
 def floor_div(lhs, rhs):
     return ffi.makeFloorDiv(lhs, rhs)
+
 
 def ceil_div(lhs, rhs):
     return ffi.makeCeilDiv(lhs, rhs)
 
+
 def round_towards_0_div(lhs, rhs):
     return ffi.makeRoundTowards0Div(lhs, rhs)
 
-'''
-Invoke whatever target code
 
-Parameters
-----------
-fmt : str
-    What to run. "%" is filled by parameters one by one. E.g. sinf(%)
-The following variadic arguments : Expr
-    Parameters to `fmt`
-ret_type : DataType or str
-    (Keyword argument only) The return type. Void for no return type. Defaults to Void
-'''
 def intrinsic(fmt, *params, **kws):
+    """
+    Invoke whatever target code
+
+    Parameters
+    ----------
+    fmt : str
+        What to run. "%" is filled by parameters one by one. E.g. sinf(%)
+    The following variadic arguments : Expr
+        Parameters to `fmt`
+    ret_type : DataType or str
+        (Keyword argument only) The return type. Void for no return type. Defaults to Void
+    """
     ret_type = ffi.DataType.Void
     if "ret_type" in kws:
         ret_type = parseDType(kws["ret_type"])
@@ -233,6 +281,6 @@ def intrinsic(fmt, *params, **kws):
     assert len(kws) == 0, "Unrecognized keyword arguments: %s" % kws
     return ffi.makeIntrinsic(fmt, params, ret_type)
 
+
 def any():
     return ffi.makeAnyExpr()
-

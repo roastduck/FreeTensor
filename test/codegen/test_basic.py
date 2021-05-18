@@ -1,6 +1,7 @@
 import ir
 import numpy as np
 
+
 def test_hello_world():
     with ir.VarDef("x", (4, 4), "float32", "output", "cpu") as x:
         x[2, 3] = 2.0
@@ -23,10 +24,10 @@ def test_hello_world():
     x_std[1, 0] = 3.0
     assert np.array_equal(x_np, x_std)
 
+
 def test_scalar_op():
-    with ir.VarDef([
-            ("x", (), "int32", "input", "cpu"),
-            ("y", (), "int32", "output", "cpu")]) as (x, y):
+    with ir.VarDef([("x", (), "int32", "input", "cpu"),
+                    ("y", (), "int32", "output", "cpu")]) as (x, y):
         y[()] = x[()] * 2 + 1
 
     code, params = ir.codegen(ir.lower(ir.pop_ast(), ir.CPU()), ir.CPU())
@@ -42,10 +43,10 @@ def test_scalar_op():
 
     assert y_np[()] == 11
 
+
 def test_for():
-    with ir.VarDef([
-            ("x", (4,), "int32", "input", "cpu"),
-            ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+    with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ir.For("i", 0, 4) as i:
             y[i] = x[i] + 1
 
@@ -62,6 +63,7 @@ def test_for():
 
     y_std = np.array([2, 3, 4, 5], dtype="int32")
     assert np.array_equal(y_np, y_std)
+
 
 def test_if():
     with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
@@ -82,4 +84,3 @@ def test_if():
 
     y_std = np.array([0, 0, 1, 1], dtype="int32")
     assert np.array_equal(y_np, y_std)
-
