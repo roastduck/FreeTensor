@@ -59,10 +59,10 @@ class ContextStack:
 
 
 ctx_stack = ContextStack()
-""" Get AST and reset context """
 
 
 def pop_ast():
+    """ Get AST and reset context """
     ret = ctx_stack.pop().make_stmt()
     ctx_stack.reset()
     return ret
@@ -202,10 +202,8 @@ class Assert:
         top.append_stmt(ffi.makeAssert(nid, self.cond, body))
 
 
-""" Mark the ID of the following statement """
-
-
 def MarkNid(nid: str):
+    """ Mark the ID of the following statement """
     ctx_stack.top().set_next_nid(nid)
 
 
@@ -263,21 +261,20 @@ def round_towards_0_div(lhs, rhs):
     return ffi.makeRoundTowards0Div(lhs, rhs)
 
 
-"""
-Invoke whatever target code
-
-Parameters
-----------
-fmt : str
-    What to run. "%" is filled by parameters one by one. E.g. sinf(%)
-The following variadic arguments : Expr
-    Parameters to `fmt`
-ret_type : DataType or str
-    (Keyword argument only) The return type. Void for no return type. Defaults to Void
-"""
-
-
 def intrinsic(fmt, *params, **kws):
+    """
+    Invoke whatever target code
+
+    Parameters
+    ----------
+    fmt : str
+        What to run. "%" is filled by parameters one by one. E.g. sinf(%)
+    The following variadic arguments : Expr
+        Parameters to `fmt`
+    ret_type : DataType or str
+        (Keyword argument only) The return type. Void for no return type. Defaults to Void
+    """
+
     ret_type = ffi.DataType.Void
     if "ret_type" in kws:
         ret_type = parseDType(kws["ret_type"])
