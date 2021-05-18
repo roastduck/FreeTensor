@@ -208,7 +208,6 @@ class ASTTransformer(ast.NodeTransformer):
 
     def visit_BinOp(self, node):
         self.generic_visit(node)
-        print(ast.dump(node))
         assert hasattr(node.left, "expr_ptr"), "left operand is not expression"
         assert hasattr(node.right,
                        "expr_ptr"), "right operand is not expression"
