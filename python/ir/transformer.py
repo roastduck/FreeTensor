@@ -354,21 +354,59 @@ class ASTTransformer(ast.NodeTransformer):
             assert False, "Invalid assignment"
         return node
 
+    def visit_AugAssign(self, node):
+        import copy
+
+        target_load = copy.copy(node.target)
+        target_load.ctx = ast.Load()
+        target_load = self.visit(target_load)
+
+        self.generic_visit(node)
+        print(ast.dump(node))
+        assert hasattr(node.target,
+                       "expr_ptr"), "Target to be assigned is not an expression"
+        assert hasattr(node.value,
+                       "expr_ptr"), "Value to be assigned is not an expression"
+        if isinstance(node.target.expr_ptr, VarSubscript):
+            var = node.target.expr_ptr
+            if var is None:
+                var = ctx_stack.find_var_by_name(node.target.id)
+            op = {
+                ast.Add: lambda l, r: l + r,
+                ast.Sub: lambda l, r: l - r,
+                ast.Mult: lambda l, r: l * r,
+                ast.Div: lambda l, r: l / r,
+                ast.FloorDiv: lambda l, r: l // r,
+                ast.Mod: lambda l, r: l % r,
+            }.get(type(node.op))
+            var.set(op(target_load.expr_ptr, node.value.expr_ptr))
+        else:
+            assert False, "Invalid augmented assignment"
+        return node
+
     def visit_For(self, node):
         if (isinstance(node.iter, ast.Call) and
                 isinstance(node.iter.func, ast.Name) and
-                node.iter.func.id == "range" and len(node.iter.args) == 2):
+                node.iter.func.id == "range" and len(node.iter.args) > 0 and
+                len(node.iter.args) <= 2):
 
             ctx_stack.create_scope()
             name = node.target.id
-            self.visit(node.iter.args[0])
-            self.visit(node.iter.args[1])
-            assert hasattr(node.iter.args[0],
-                           "expr_ptr"), "For range is not expression"
-            assert hasattr(node.iter.args[1],
-                           "expr_ptr"), "For range is not expression"
-            begin = node.iter.args[0].expr_ptr
-            end = node.iter.args[1].expr_ptr
+            if len(node.iter.args) == 1:
+                self.visit(node.iter.args[0])
+                assert hasattr(node.iter.args[0],
+                               "expr_ptr"), "For range is not expression"
+                begin = 0
+                end = node.iter.args[0].expr_ptr
+            else:
+                self.visit(node.iter.args[0])
+                self.visit(node.iter.args[1])
+                assert hasattr(node.iter.args[0],
+                               "expr_ptr"), "For range is not expression"
+                assert hasattr(node.iter.args[1],
+                               "expr_ptr"), "For range is not expression"
+                begin = node.iter.args[0].expr_ptr
+                end = node.iter.args[1].expr_ptr
             fr = ctx_stack.create_loop(name, begin, end)
             for i in node.body:
                 self.visit(i)
