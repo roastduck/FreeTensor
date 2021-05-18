@@ -3,12 +3,10 @@ import pytest
 
 
 def test_basic():
-    with ir.VarDef(
-        [
-            ("y", (4, 8), "int32", "output", "cpu"),
-            ("z", (4, 8), "int32", "output", "cpu"),
-        ]
-    ) as (y, z):
+    with ir.VarDef([
+        ("y", (4, 8), "int32", "output", "cpu"),
+        ("z", (4, 8), "int32", "output", "cpu"),
+    ]) as (y, z):
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j1", 0, 8, nid="L2a") as j:
                 y[i, j] = i + j
@@ -23,12 +21,10 @@ def test_basic():
     ast = ir.lower(ast)
     print(ast)
 
-    with ir.VarDef(
-        [
-            ("y", (4, 8), "int32", "output", "cpu"),
-            ("z", (4, 8), "int32", "output", "cpu"),
-        ]
-    ) as (y, z):
+    with ir.VarDef([
+        ("y", (4, 8), "int32", "output", "cpu"),
+        ("z", (4, 8), "int32", "output", "cpu"),
+    ]) as (y, z):
         with ir.For("i", 0, 4) as i:
             with ir.For("j", 0, 8) as j:
                 y[i, j] = i + j
@@ -39,12 +35,10 @@ def test_basic():
 
 
 def test_not_aligned():
-    with ir.VarDef(
-        [
-            ("y", (4, 8), "int32", "output", "cpu"),
-            ("z", (4, 8), "int32", "output", "cpu"),
-        ]
-    ) as (y, z):
+    with ir.VarDef([
+        ("y", (4, 8), "int32", "output", "cpu"),
+        ("z", (4, 8), "int32", "output", "cpu"),
+    ]) as (y, z):
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j1", 0, 8, nid="L2a") as j:
                 y[i, j] = i + j
@@ -59,12 +53,10 @@ def test_not_aligned():
     ast = ir.lower(ast)
     print(ast)
 
-    with ir.VarDef(
-        [
-            ("y", (4, 8), "int32", "output", "cpu"),
-            ("z", (4, 8), "int32", "output", "cpu"),
-        ]
-    ) as (y, z):
+    with ir.VarDef([
+        ("y", (4, 8), "int32", "output", "cpu"),
+        ("z", (4, 8), "int32", "output", "cpu"),
+    ]) as (y, z):
         with ir.For("i", 0, 4) as i:
             with ir.For("j", 0, 8) as j:
                 y[i, j] = i + j
@@ -75,13 +67,11 @@ def test_not_aligned():
 
 
 def test_no_following():
-    with ir.VarDef(
-        [
-            ("y", (4, 8), "int32", "output", "cpu"),
-            ("z", (4, 8), "int32", "output", "cpu"),
-            ("w", (4, 8), "int32", "output", "cpu"),
-        ]
-    ) as (y, z, w):
+    with ir.VarDef([
+        ("y", (4, 8), "int32", "output", "cpu"),
+        ("z", (4, 8), "int32", "output", "cpu"),
+        ("w", (4, 8), "int32", "output", "cpu"),
+    ]) as (y, z, w):
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 8, nid="L2a") as j:
                 y[i, j] = i + j
@@ -99,12 +89,10 @@ def test_no_following():
 
 
 def test_different_length():
-    with ir.VarDef(
-        [
-            ("y", (4, 8), "int32", "output", "cpu"),
-            ("z", (4, 8), "int32", "output", "cpu"),
-        ]
-    ) as (y, z):
+    with ir.VarDef([
+        ("y", (4, 8), "int32", "output", "cpu"),
+        ("z", (4, 8), "int32", "output", "cpu"),
+    ]) as (y, z):
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 8, nid="L2a") as j:
                 y[i, j] = i + j
@@ -120,12 +108,10 @@ def test_different_length():
 
 
 def test_dependency_unable_resolve():
-    with ir.VarDef(
-        [
-            ("x", (4, 8), "int32", "input", "cpu"),
-            ("y", (4, 8), "int32", "output", "cpu"),
-        ]
-    ) as (x, y):
+    with ir.VarDef([
+        ("x", (4, 8), "int32", "input", "cpu"),
+        ("y", (4, 8), "int32", "output", "cpu"),
+    ]) as (x, y):
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.VarDef("b", (4, 8), "int32", "cache", "cpu") as b:
                 with ir.For("j", 0, 8, nid="L2a") as j:
@@ -142,12 +128,10 @@ def test_dependency_unable_resolve():
 
 
 def test_buffer_fuse():
-    with ir.VarDef(
-        [
-            ("x", (4, 8), "int32", "input", "cpu"),
-            ("y", (4, 8), "int32", "output", "cpu"),
-        ]
-    ) as (x, y):
+    with ir.VarDef([
+        ("x", (4, 8), "int32", "input", "cpu"),
+        ("y", (4, 8), "int32", "output", "cpu"),
+    ]) as (x, y):
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.VarDef("b", (4, 8), "int32", "cache", "cpu") as b:
                 with ir.For("j", 0, 8, nid="L2a") as j:
@@ -163,12 +147,10 @@ def test_buffer_fuse():
     ast = ir.lower(ast)
     print(ast)
 
-    with ir.VarDef(
-        [
-            ("x", (4, 8), "int32", "input", "cpu"),
-            ("y", (4, 8), "int32", "output", "cpu"),
-        ]
-    ) as (x, y):
+    with ir.VarDef([
+        ("x", (4, 8), "int32", "input", "cpu"),
+        ("y", (4, 8), "int32", "output", "cpu"),
+    ]) as (x, y):
         with ir.For("i", 0, 4) as i:
             with ir.For("j", 0, 8) as j:
                 with ir.VarDef("b", (1, 1), "int32", "cache", "cpu") as b:

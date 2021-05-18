@@ -26,9 +26,8 @@ def test_hello_world():
 
 
 def test_scalar_op():
-    with ir.VarDef(
-        [("x", (), "int32", "input", "cpu"), ("y", (), "int32", "output", "cpu")]
-    ) as (x, y):
+    with ir.VarDef([("x", (), "int32", "input", "cpu"),
+                    ("y", (), "int32", "output", "cpu")]) as (x, y):
         y[()] = x[()] * 2 + 1
 
     code, params = ir.codegen(ir.lower(ir.pop_ast(), ir.CPU()), ir.CPU())
@@ -46,9 +45,8 @@ def test_scalar_op():
 
 
 def test_for():
-    with ir.VarDef(
-        [("x", (4,), "int32", "input", "cpu"), ("y", (4,), "int32", "output", "cpu")]
-    ) as (x, y):
+    with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ir.For("i", 0, 4) as i:
             y[i] = x[i] + 1
 

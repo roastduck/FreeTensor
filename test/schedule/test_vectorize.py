@@ -8,9 +8,8 @@ device = ir.Device(target)
 
 
 def test_not_found():
-    with ir.VarDef(
-        [("x", (4,), "int32", "input", "cpu"), ("y", (4,), "int32", "output", "cpu")]
-    ) as (x, y):
+    with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ir.For("i", 0, 4, nid="L1") as i:
             y[i] = x[i] + 1
     ast = ir.pop_ast()

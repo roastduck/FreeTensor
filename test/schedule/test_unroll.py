@@ -8,9 +8,8 @@ device = ir.Device(target)
 
 
 def test_not_found():
-    with ir.VarDef(
-        [("x", (4,), "int32", "input", "cpu"), ("y", (4,), "int32", "output", "cpu")]
-    ) as (x, y):
+    with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ir.For("i", 0, 4, nid="L1") as i:
             y[i] = x[i] + 1
     ast = ir.pop_ast()
@@ -25,9 +24,8 @@ def test_not_found():
 
 
 def test_not_constant():
-    with ir.VarDef(
-        [("n", (), "int32", "input", "cpu"), ("y", (4,), "int32", "output", "cpu")]
-    ) as (n, y):
+    with ir.VarDef([("n", (), "int32", "input", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (n, y):
         with ir.For("i", 0, n[()], nid="L1") as i:
             y[i] = i
 
@@ -43,9 +41,8 @@ def test_not_constant():
 
 
 def test_unbounded_length():
-    with ir.VarDef(
-        [("n", (), "int32", "input", "cpu"), ("x", (4, 4), "int32", "output", "cpu")]
-    ) as (n, x):
+    with ir.VarDef([("n", (), "int32", "input", "cpu"),
+                    ("x", (4, 4), "int32", "output", "cpu")]) as (n, x):
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", i, 4, nid="L2") as j:
                 x[i, j] = 1
@@ -62,9 +59,8 @@ def test_unbounded_length():
 
 
 def test_constant_length():
-    with ir.VarDef(
-        [("n", (), "int32", "input", "cpu"), ("x", (8,), "int32", "output", "cpu")]
-    ) as (n, x):
+    with ir.VarDef([("n", (), "int32", "input", "cpu"),
+                    ("x", (8,), "int32", "output", "cpu")]) as (n, x):
         with ir.For("i", n[()], n[()] + 4, nid="L1") as i:
             x[i] = 1
 

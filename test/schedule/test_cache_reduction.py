@@ -3,9 +3,8 @@ import pytest
 
 
 def test_reduce_sum():
-    with ir.VarDef(
-        [("x", (4, 8), "int32", "input", "cpu"), ("y", (4, 8), "int32", "inout", "cpu")]
-    ) as (x, y):
+    with ir.VarDef([("x", (4, 8), "int32", "input", "cpu"),
+                    ("y", (4, 8), "int32", "inout", "cpu")]) as (x, y):
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 8, nid="L2") as j:
                 ir.MarkNid("S0")
@@ -19,9 +18,8 @@ def test_reduce_sum():
     ast = ir.lower(ast)
     print(ast)
 
-    with ir.VarDef(
-        [("x", (4, 8), "int32", "input", "cpu"), ("y", (4, 8), "int32", "inout", "cpu")]
-    ) as (x, y):
+    with ir.VarDef([("x", (4, 8), "int32", "input", "cpu"),
+                    ("y", (4, 8), "int32", "inout", "cpu")]) as (x, y):
         with ir.For("i", 0, 4) as i:
             with ir.For("j", 0, 8) as j:
                 with ir.VarDef("b", (1, 1), "int32", "cache", "cpu") as b:
@@ -33,9 +31,8 @@ def test_reduce_sum():
 
 
 def test_reduce_sum_loop():
-    with ir.VarDef(
-        [("x", (4, 8), "int32", "input", "cpu"), ("y", (4,), "int32", "inout", "cpu")]
-    ) as (x, y):
+    with ir.VarDef([("x", (4, 8), "int32", "input", "cpu"),
+                    ("y", (4,), "int32", "inout", "cpu")]) as (x, y):
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 8, nid="L2") as j:
                 y[i] = y[i] + x[i, j] * 2
@@ -48,9 +45,8 @@ def test_reduce_sum_loop():
     ast = ir.lower(ast)
     print(ast)
 
-    with ir.VarDef(
-        [("x", (4, 8), "int32", "input", "cpu"), ("y", (4,), "int32", "inout", "cpu")]
-    ) as (x, y):
+    with ir.VarDef([("x", (4, 8), "int32", "input", "cpu"),
+                    ("y", (4,), "int32", "inout", "cpu")]) as (x, y):
         with ir.For("i", 0, 4) as i:
             with ir.VarDef("b", (1,), "int32", "cache", "cpu") as b:
                 b[0] = 0
@@ -63,12 +59,10 @@ def test_reduce_sum_loop():
 
 
 def test_reduce_min_loop():
-    with ir.VarDef(
-        [
-            ("x", (4, 8), "float32", "input", "cpu"),
-            ("y", (4,), "float32", "inout", "cpu"),
-        ]
-    ) as (x, y):
+    with ir.VarDef([
+        ("x", (4, 8), "float32", "input", "cpu"),
+        ("y", (4,), "float32", "inout", "cpu"),
+    ]) as (x, y):
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 8, nid="L2") as j:
                 y[i] = ir.min(y[i], x[i, j] * 2)
@@ -81,12 +75,10 @@ def test_reduce_min_loop():
     ast = ir.lower(ast)
     print(ast)
 
-    with ir.VarDef(
-        [
-            ("x", (4, 8), "float32", "input", "cpu"),
-            ("y", (4,), "float32", "inout", "cpu"),
-        ]
-    ) as (x, y):
+    with ir.VarDef([
+        ("x", (4, 8), "float32", "input", "cpu"),
+        ("y", (4,), "float32", "inout", "cpu"),
+    ]) as (x, y):
         with ir.For("i", 0, 4) as i:
             with ir.VarDef("b", (1,), "float32", "cache", "cpu") as b:
                 b[0] = float("inf")
@@ -99,9 +91,8 @@ def test_reduce_min_loop():
 
 
 def test_no_var():
-    with ir.VarDef(
-        [("x", (4, 8), "int32", "input", "cpu"), ("y", (4, 8), "int32", "inout", "cpu")]
-    ) as (x, y):
+    with ir.VarDef([("x", (4, 8), "int32", "input", "cpu"),
+                    ("y", (4, 8), "int32", "inout", "cpu")]) as (x, y):
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 8, nid="L2") as j:
                 ir.MarkNid("S0")
@@ -116,9 +107,8 @@ def test_no_var():
 
 
 def test_no_stmt():
-    with ir.VarDef(
-        [("x", (4, 8), "int32", "input", "cpu"), ("y", (4, 8), "int32", "inout", "cpu")]
-    ) as (x, y):
+    with ir.VarDef([("x", (4, 8), "int32", "input", "cpu"),
+                    ("y", (4, 8), "int32", "inout", "cpu")]) as (x, y):
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 8, nid="L2") as j:
                 y[i, j] = y[i, j] + x[i, j] * 2
@@ -132,9 +122,8 @@ def test_no_stmt():
 
 
 def test_read_not_allowed():
-    with ir.VarDef(
-        [("x", (4, 8), "int32", "input", "cpu"), ("y", (4,), "int32", "output", "cpu")]
-    ) as (x, y):
+    with ir.VarDef([("x", (4, 8), "int32", "input", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ir.For("i", 0, 4, nid="L1") as i:
             y[i] = 0
             with ir.For("j", 0, 8, nid="L2") as j:
@@ -150,12 +139,10 @@ def test_read_not_allowed():
 
 
 def test_write_not_allowed():
-    with ir.VarDef(
-        [
-            ("x", (4, 8), "int32", "input", "cpu"),
-            ("y", (4, 8), "int32", "output", "cpu"),
-        ]
-    ) as (x, y):
+    with ir.VarDef([
+        ("x", (4, 8), "int32", "input", "cpu"),
+        ("y", (4, 8), "int32", "output", "cpu"),
+    ]) as (x, y):
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 8, nid="L2") as j:
                 ir.MarkNid("S0")
@@ -170,9 +157,8 @@ def test_write_not_allowed():
 
 
 def test_mix_op_not_allowed():
-    with ir.VarDef(
-        [("x", (4, 8), "int32", "input", "cpu"), ("y", (4, 8), "int32", "inout", "cpu")]
-    ) as (x, y):
+    with ir.VarDef([("x", (4, 8), "int32", "input", "cpu"),
+                    ("y", (4, 8), "int32", "inout", "cpu")]) as (x, y):
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 8, nid="L2") as j:
                 with ir.NamedScope("S0"):

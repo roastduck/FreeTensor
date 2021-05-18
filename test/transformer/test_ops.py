@@ -3,6 +3,7 @@ import numpy as np
 
 
 def test_binary_op():
+
     def test(x, y):
         ir.declare_var(x, (), "int32", "input", "cpu")
         ir.declare_var(y, (), "int32", "output", "cpu")
@@ -26,6 +27,7 @@ def test_binary_op():
 
 
 def test_bool_op():
+
     def test(x, y):
         ir.declare_var(x, (4,), "int32", "input", "cpu")
         ir.declare_var(y, (4,), "int32", "output", "cpu")
@@ -53,6 +55,7 @@ def test_bool_op():
 
 
 def test_unary_op():
+
     def test(x, y):
         ir.declare_var(x, (4,), "int32", "input", "cpu")
         ir.declare_var(y, (4,), "int32", "output", "cpu")
@@ -78,6 +81,7 @@ def test_unary_op():
 
 
 def test_comparison_op():
+
     def test(x, y):
         ir.declare_var(x, (4,), "int32", "input", "cpu")
         ir.declare_var(y, (4,), "int32", "output", "cpu")

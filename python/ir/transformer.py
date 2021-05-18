@@ -8,7 +8,8 @@ from .utils import *
 import ffi
 import sys
 
-assert sys.version_info >= (3, 8), "Python version lower than 3.8 is not supported"
+assert sys.version_info >= (3,
+                            8), "Python version lower than 3.8 is not supported"
 
 
 def declare_var(var, shape, dtype, atype, mtype):
@@ -20,6 +21,7 @@ def create_var(shape, dtype, atype, mtype):
 
 
 class VarSubscript:
+
     def __init__(self, var, sub):
         self.var = var
         self.sub = sub
@@ -29,6 +31,7 @@ class VarSubscript:
 
 
 class VarCreation:
+
     def __init__(self, shape: Sequence, dtype, atype, mtype, name=None):
         self.shape = shape
         self.dtype = dtype
@@ -42,12 +45,12 @@ class VarCreation:
 
     def execute(self):
         assert self.name is not None, "Bug: Variable name is not set"
-        ctx_stack.create_variable(
-            self.name, self.shape, self.dtype, self.atype, self.mtype
-        )
+        ctx_stack.create_variable(self.name, self.shape, self.dtype, self.atype,
+                                  self.mtype)
 
 
 class ASTContext:
+
     def __init__(self):
         self.vardef_stack = []
         self.var_dict = {}
@@ -55,6 +58,7 @@ class ASTContext:
 
 
 class ASTContextStack:
+
     def __init__(self):
         self.ctx_stack = []
         self.now_var_id = {}
@@ -157,6 +161,7 @@ ctx_stack = ASTContextStack()
 
 
 class ASTTransformer(ast.NodeTransformer):
+
     def __init__(self):
         super().__init__()
 
@@ -174,11 +179,8 @@ class ASTTransformer(ast.NodeTransformer):
 
     def visit_Constant(self, node):
         value = node.value
-        if (
-            isinstance(value, int)
-            or isinstance(value, float)
-            or isinstance(value, bool)
-        ):
+        if (isinstance(value, int) or isinstance(value, float) or
+                isinstance(value, bool)):
             node.expr_ptr = value
         elif isinstance(value, str):
             node.expr_str = value
@@ -207,7 +209,8 @@ class ASTTransformer(ast.NodeTransformer):
     def visit_BinOp(self, node):
         self.generic_visit(node)
         assert hasattr(node.left, "expr_ptr"), "left operand is not expression"
-        assert hasattr(node.right, "expr_ptr"), "right operand is not expression"
+        assert hasattr(node.right,
+                       "expr_ptr"), "right operand is not expression"
         op = {
             ast.Add: lambda l, r: l + r,
             ast.Sub: lambda l, r: l - r,
@@ -224,7 +227,8 @@ class ASTTransformer(ast.NodeTransformer):
         self.generic_visit(node)
         for i in node.values:
             assert hasattr(i, "expr_ptr"), "Bool operand is not expression"
-        assert len(node.values) > 1, "Bug: Bool operator has less than one operand"
+        assert len(
+            node.values) > 1, "Bug: Bool operator has less than one operand"
         op = {
             ast.And: lambda l, r: ffi.makeLAnd(l, r),
             ast.Or: lambda l, r: ffi.makeLOr(l, r),
@@ -238,7 +242,8 @@ class ASTTransformer(ast.NodeTransformer):
 
     def visit_UnaryOp(self, node):
         self.generic_visit(node)
-        assert hasattr(node.operand, "expr_ptr"), "Unary operand is not expression"
+        assert hasattr(node.operand,
+                       "expr_ptr"), "Unary operand is not expression"
         op = {
             ast.Not: lambda l: ffi.makeLNot(l),
         }.get(type(node.op))
@@ -254,11 +259,9 @@ class ASTTransformer(ast.NodeTransformer):
 
     def visit_Call(self, node):
         self.generic_visit(node)
-        if (
-            isinstance(node.func, ast.Attribute)
-            and isinstance(node.func.value, ast.Name)
-            and node.func.value.id == "ir"
-        ):
+        if (isinstance(node.func, ast.Attribute) and
+                isinstance(node.func.value, ast.Name) and
+                node.func.value.id == "ir"):
             func_name = node.func.attr
             args = node.args
             if func_name == "create_var":
@@ -268,8 +271,8 @@ class ASTTransformer(ast.NodeTransformer):
                 shape = shape.expr_tuple
                 for i in range(1, 4):
                     assert hasattr(
-                        args[i], "expr_str"
-                    ), "argument {} expects str".format(i + 1)
+                        args[i],
+                        "expr_str"), "argument {} expects str".format(i + 1)
                 dtype = args[1].expr_str
                 atype = args[2].expr_str
                 mtype = args[3].expr_str
@@ -283,8 +286,8 @@ class ASTTransformer(ast.NodeTransformer):
                 shape = shape.expr_tuple
                 for i in range(2, 5):
                     assert hasattr(
-                        args[i], "expr_str"
-                    ), "argument {} expects str".format(i + 1)
+                        args[i],
+                        "expr_str"), "argument {} expects str".format(i + 1)
                 dtype = args[2].expr_str
                 atype = args[3].expr_str
                 mtype = args[4].expr_str
@@ -302,18 +305,15 @@ class ASTTransformer(ast.NodeTransformer):
                 expr_args = []
                 for i in args[1:]:
                     assert hasattr(
-                        i, "expr_ptr"
-                    ), "intrinsic argument is not expression"
+                        i, "expr_ptr"), "intrinsic argument is not expression"
                     expr_args.append(i.expr_ptr)
                 ret_type = ffi.DataType.Void
                 for item in node.keywords:
                     assert item.arg == "ret_type", (
-                        "Unrecognized keyword argument %s" % item.arg
-                    )
+                        "Unrecognized keyword argument %s" % item.arg)
                     ret_type = parseDType(item.value.expr_str)
-                node.expr_ptr = ffi.makeIntrinsic(
-                    args[0].expr_str, tuple(expr_args), ret_type
-                )
+                node.expr_ptr = ffi.makeIntrinsic(args[0].expr_str,
+                                                  tuple(expr_args), ret_type)
             else:
                 assert False, "Function %s not implemented" % func_name
         else:
@@ -336,40 +336,37 @@ class ASTTransformer(ast.NodeTransformer):
         # TODO: (maybe) support for multiple assignment
         assert len(node.targets) == 1, "Multiple assignment is not supported"
         if hasattr(node.value, "expr_call") and isinstance(
-            node.value.expr_call, VarCreation
-        ):
+                node.value.expr_call, VarCreation):
             name = node.targets[0].id
             var_creation = node.value.expr_call
             var_creation.add_name(name)
             var_creation.execute()
         elif hasattr(node.targets[0], "expr_ptr") and isinstance(
-            node.targets[0].expr_ptr, VarSubscript
-        ):
+                node.targets[0].expr_ptr, VarSubscript):
             var = node.targets[0].expr_ptr
             if var is None:
                 var = ctx_stack.find_var_by_name(node.targets[0].id)
             assert hasattr(
-                node.value, "expr_ptr"
-            ), "Value to be assigned is not an expression"
+                node.value,
+                "expr_ptr"), "Value to be assigned is not an expression"
             var.set(node.value.expr_ptr)
         else:
             assert False, "Invalid assignment"
         return node
 
     def visit_For(self, node):
-        if (
-            isinstance(node.iter, ast.Call)
-            and isinstance(node.iter.func, ast.Name)
-            and node.iter.func.id == "range"
-            and len(node.iter.args) == 2
-        ):
+        if (isinstance(node.iter, ast.Call) and
+                isinstance(node.iter.func, ast.Name) and
+                node.iter.func.id == "range" and len(node.iter.args) == 2):
 
             ctx_stack.create_scope()
             name = node.target.id
             self.visit(node.iter.args[0])
             self.visit(node.iter.args[1])
-            assert hasattr(node.iter.args[0], "expr_ptr"), "For range is not expression"
-            assert hasattr(node.iter.args[1], "expr_ptr"), "For range is not expression"
+            assert hasattr(node.iter.args[0],
+                           "expr_ptr"), "For range is not expression"
+            assert hasattr(node.iter.args[1],
+                           "expr_ptr"), "For range is not expression"
             begin = node.iter.args[0].expr_ptr
             end = node.iter.args[1].expr_ptr
             fr = ctx_stack.create_loop(name, begin, end)
@@ -384,19 +381,20 @@ class ASTTransformer(ast.NodeTransformer):
     def visit_Expr(self, node):
         self.generic_visit(node)
         print(ast.dump(node))
-        if isinstance(node.value, ast.Constant) and isinstance(node.value.value, str):
+        if isinstance(node.value, ast.Constant) and isinstance(
+                node.value.value, str):
             s = node.value.value
             if s[0:5] == "nid: ":
                 ctx_stack.set_nid(s[5:])
         elif hasattr(node.value, "expr_call") and isinstance(
-            node.value.expr_call, VarCreation
-        ):
+                node.value.expr_call, VarCreation):
             node.value.expr_call.execute()
         return node
 
     def visit_If(self, node):
         self.visit(node.test)
-        assert hasattr(node.test, "expr_ptr"), "If condition is not an expression"
+        assert hasattr(node.test,
+                       "expr_ptr"), "If condition is not an expression"
         with If(node.test.expr_ptr):
             ctx_stack.create_scope()
             for i in node.body:
@@ -424,7 +422,8 @@ class ASTTransformer(ast.NodeTransformer):
         }
         for i in node.ops:
             assert type(i) in ops, "Compare operator not supported"
-        expr = ops[type(node.ops[0])](node.left.expr_ptr, node.comparators[0].expr_ptr)
+        expr = ops[type(node.ops[0])](node.left.expr_ptr,
+                                      node.comparators[0].expr_ptr)
         lf = node.comparators[0].expr_ptr
         for op, comparator in zip(node.ops[1:], node.comparators[1:]):
             expr = ffi.makeLAnd(expr, ops[type(op)](lf, comparator.expr_ptr))

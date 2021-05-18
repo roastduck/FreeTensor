@@ -34,7 +34,8 @@ def lower(ast, target: Optional[ffi.Target] = None):
         if target.type() == ffi.TargetType.GPU:
             # TODO: Support dynamic shared memory size, but the size should be determined
             # outside of kernels
-            ast = make_const_shape(ast, [ffi.MemType.GPUShared, ffi.MemType.GPULocal])
+            ast = make_const_shape(
+                ast, [ffi.MemType.GPUShared, ffi.MemType.GPULocal])
             ast = gpu_correct_shared(ast)
 
             # After gpu_make_sync and gpu_correct_shared. Otherwise, these 2 passes

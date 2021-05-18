@@ -6,6 +6,7 @@ from .utils import *
 
 
 class Context:
+
     def __init__(self):
         self.stmt_seq = []
         self.lastIf = None  # To handle else case
@@ -40,6 +41,7 @@ class Context:
 
 
 class ContextStack:
+
     def __init__(self):
         self.reset()
 
@@ -57,7 +59,6 @@ class ContextStack:
 
 
 ctx_stack = ContextStack()
-
 """ Get AST and reset context """
 
 
@@ -68,6 +69,7 @@ def pop_ast():
 
 
 class Var:
+
     def __init__(self, name: str):
         self.var = name
 
@@ -84,6 +86,7 @@ class Var:
 
 
 class _VarDef:
+
     def __init__(self, name: str, shape: Sequence, dtype, atype, mtype):
         self.name = name
         self.shape = shape
@@ -96,15 +99,17 @@ class _VarDef:
         return Var(self.name)
 
     def __exit__(self, exc_type, exc_value, traceback):
-        buf = ffi.Buffer(ffi.Tensor(self.shape, self.dtype), self.atype, self.mtype)
+        buf = ffi.Buffer(ffi.Tensor(self.shape, self.dtype), self.atype,
+                         self.mtype)
         body = ctx_stack.pop().make_stmt()
         top = ctx_stack.top()
         top.append_stmt(
-            ffi.makeVarDef(top.get_next_nid(), self.name, buf, None, body, False)
-        )
+            ffi.makeVarDef(top.get_next_nid(), self.name, buf, None, body,
+                           False))
 
 
 class _VarsDef:
+
     def __init__(self, defs: Tuple[str, Sequence, DataType, AccessType]):
         self.defs = [VarDef(*d) for d in defs]
 
@@ -125,6 +130,7 @@ def VarDef(*args):
 
 
 class For:
+
     def __init__(self, iter_var: str, begin, end, nid: str = ""):
         self.iter_var = iter_var
         self.begin = begin
@@ -152,11 +158,11 @@ class For:
                 False,
                 False,
                 body,
-            )
-        )
+            ))
 
 
 class If:
+
     def __init__(self, cond):
         self.cond = cond
 
@@ -169,6 +175,7 @@ class If:
 
 
 class Else:
+
     def __init__(self):
         pass
 
@@ -181,6 +188,7 @@ class Else:
 
 
 class Assert:
+
     def __init__(self, cond):
         self.cond = cond
 
@@ -202,6 +210,7 @@ def MarkNid(nid: str):
 
 
 class NamedScope:
+
     def __init__(self, nid: str):
         self.nid = nid
 

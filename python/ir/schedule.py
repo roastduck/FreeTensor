@@ -5,6 +5,7 @@ from .utils import *
 
 
 class Schedule(ffi.Schedule):
+
     def __init__(self, ast):
         super(Schedule, self).__init__(ast)
 
@@ -110,7 +111,8 @@ class Schedule(ffi.Schedule):
     """
 
     def fission(self, loop, after, suffix0=".a", suffix1=".b"):
-        return super(Schedule, self).fission(toId(loop), toId(after), suffix0, suffix1)
+        return super(Schedule, self).fission(toId(loop), toId(after), suffix0,
+                                             suffix1)
 
     """
     Fuse two directly following loops with the same length into one
@@ -288,7 +290,8 @@ class Schedule(ffi.Schedule):
     """
 
     def cache_reduction(self, stmt, var, mtype):
-        return super(Schedule, self).cache_reduction(toId(stmt), var, parseMType(mtype))
+        return super(Schedule, self).cache_reduction(toId(stmt), var,
+                                                     parseMType(mtype))
 
     """
     Split a dimension of a variable into two
@@ -317,7 +320,8 @@ class Schedule(ffi.Schedule):
     """
 
     def var_split(self, vardef, dim, mode, factor=-1, nparts=-1):
-        return super(Schedule, self).var_split(toId(vardef), dim, mode, factor, nparts)
+        return super(Schedule, self).var_split(toId(vardef), dim, mode, factor,
+                                               nparts)
 
     """
     Move a statement to a new position
