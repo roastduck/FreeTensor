@@ -98,7 +98,6 @@ Stmt shrinkSingleVar(const Stmt &_op, const std::string &varDefId) {
 
     // (3)
     op = ShrinkVar(bounds)(op);
-    logger() << op << std::endl;
 
     // (4)
     return z3Simplify(op); // Currently BuiltinSimplify is not sufficient
