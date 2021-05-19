@@ -550,15 +550,22 @@ void Schedule::inlining(const std::string &def) {
             if (replace.count(dep.later().as<LoadNode>())) {
                 throw InvalidSchedule("Multiple writes correspond to one read");
             }
-            auto expr = dep.earlier()->nodeType() == ASTNodeType::Store
-                            ? dep.earlier().as<StoreNode>()->expr_
-                            : dep.earlier().as<ReduceToNode>()->expr_;
+            Expr expr;
+            if (dep.earlier()->nodeType() == ASTNodeType::Store) {
+                auto earlier = dep.earlier().as<StoreNode>();
+                expr = MakeInlinePlaceholder(earlier->indices_)(earlier->expr_);
+            } else {
+                ASSERT(dep.earlier()->nodeType() == ASTNodeType::ReduceTo);
+                auto earlier = dep.earlier().as<ReduceToNode>();
+                expr = MakeInlinePlaceholder(earlier->indices_)(earlier->expr_);
+            }
             if (!checkNotModified(ast, expr, dep.earlier_.cursor_.id(),
                                   dep.later_.cursor_.id())) {
                 throw InvalidSchedule(
                     "The expression will be modified after inlining");
             }
-            replace[dep.later().as<LoadNode>()] = expr;
+            auto later = dep.later().as<LoadNode>();
+            replace[later] = ApplyInlinePlaceholder(later->indices_)(expr);
         };
         findDeps(ast, {{}}, found, FindDepsMode::KillLater, DEP_RAW, filter);
         ast = MakeInline(def, replace)(ast);

@@ -1,6 +1,33 @@
+#include <analyze/hash.h>
 #include <schedule/inlining.h>
 
 namespace ir {
+
+MakeInlinePlaceholder::MakeInlinePlaceholder(const std::vector<Expr> &indices) {
+    indexHashes_.reserve(indices.size());
+    for (auto &&index : indices) {
+        indexHashes_.emplace_back(getHash(index));
+    }
+}
+
+Expr MakeInlinePlaceholder::visitExpr(
+    const Expr &op, const std::function<Expr(const Expr &)> &visitNode) {
+    auto h = getHash(op);
+    for (size_t i = 0, iEnd = indexHashes_.size(); i < iEnd; i++) {
+        if (indexHashes_[i] == h) {
+            return makeVar(".inline_placeholder." + std::to_string(i));
+        }
+    }
+    return Mutator::visitExpr(op, visitNode);
+}
+
+Expr ApplyInlinePlaceholder::visit(const Var &op) {
+    if (op->name_.substr(0, 20) == ".inline_placeholder.") {
+        int pos = std::stoi(op->name_.substr(20));
+        return indices_.at(pos);
+    }
+    return Mutator::visit(op);
+}
 
 Expr MakeInline::visit(const Load &op) {
     if (op->var_ == var_) {

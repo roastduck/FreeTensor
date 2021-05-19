@@ -542,13 +542,14 @@ void AnalyzeDeps::checkDep(const AccessPoint &point, const AccessPoint &other) {
 
     isl_map *depAll = isl_map_subtract(
         isl_map_apply_range(pmap, isl_map_reverse(omap)), allEQ);
-    isl_map *serialDepAll = isl_map_apply_range(
-        ps2a, isl_map_apply_range(isl_map_copy(depAll), oa2s));
-    isl_map *serialDep = isl_map_intersect(serialDepAll, serialLexGE);
-    isl_map *serialNearest = isl_map_lexmax(serialDep);
-    isl_map *nearest = isl_map_intersect(
-        isl_map_apply_range(pa2s, isl_map_apply_range(serialNearest, os2a)),
-        depAll);
+    isl_map *psDepAll = isl_map_apply_range(isl_map_copy(depAll), oa2s);
+    isl_map *ssDepAll = isl_map_apply_range(ps2a, isl_map_copy(psDepAll));
+    isl_map *ssDep = isl_map_intersect(ssDepAll, serialLexGE);
+    isl_map *psDep =
+        isl_map_intersect(isl_map_apply_range(pa2s, ssDep), psDepAll);
+    isl_map *psNearest = isl_map_lexmax(psDep);
+    isl_map *nearest =
+        isl_map_intersect(isl_map_apply_range(psNearest, os2a), depAll);
 
     isl_set *oIterKilled = isl_map_range(isl_map_copy(nearest));
     isl_set *pIterKilled = isl_map_domain(isl_map_copy(nearest));
