@@ -135,6 +135,9 @@ Stmt makeSync(const Stmt &_op) {
     }
     std::vector<CrossThreadDep> deps;
     auto filter = [](const AccessPoint &later, const AccessPoint &earlier) {
+        if (later.op_ == earlier.op_) {
+            return false;
+        }
         return later.buffer_->mtype() == MemType::GPUGlobal ||
                later.buffer_->mtype() == MemType::GPUShared;
     };
