@@ -21,6 +21,19 @@ const CompAccessBoundMode COMP_ACCESS_BOUND_WRITE = 0x2;
 const CompAccessBoundMode COMP_ACCESS_BOUND_ALL =
     COMP_ACCESS_BOUND_READ | COMP_ACCESS_BOUND_WRITE;
 
+class FindMemType : public Visitor {
+    std::string varDefId_;
+    MemType mtype_;
+
+  public:
+    FindMemType(const std::string &varDefId) : varDefId_(varDefId) {}
+
+    MemType mtype() const { return mtype_; }
+
+  protected:
+    void visit(const VarDef &op) override;
+};
+
 class CompAccessBound : public Visitor {
     struct Access {
         std::vector<Expr> indices_, conds_;
@@ -32,6 +45,7 @@ class CompAccessBound : public Visitor {
     // The variable to compute
     std::string varDefId_;
     std::string var_;
+    MemType mtype_;
 
     // bounds from AnalyzeBounds
     const std::unordered_map<Expr, std::vector<LowerBound>> &lower_;
@@ -52,11 +66,12 @@ class CompAccessBound : public Visitor {
 
   public:
     CompAccessBound(
-        const std::string &varDefId,
+        const std::string &varDefId, MemType mtype,
         const std::unordered_map<Expr, std::vector<LowerBound>> &lower,
         const std::unordered_map<Expr, std::vector<UpperBound>> &upper,
         CompAccessBoundMode mode = COMP_ACCESS_BOUND_ALL)
-        : varDefId_(varDefId), lower_(lower), upper_(upper), mode_(mode) {}
+        : varDefId_(varDefId), mtype_(mtype), lower_(lower), upper_(upper),
+          mode_(mode) {}
 
     const AccessBound &result() const { return result_; }
 
@@ -68,6 +83,12 @@ class CompAccessBound : public Visitor {
     void visit(const For &op) override;
     void visit(const If &op) override;
 };
+
+AccessBound
+compAccessBound(const Stmt &op, const std::string &varDefId,
+                const std::unordered_map<Expr, std::vector<LowerBound>> &lower,
+                const std::unordered_map<Expr, std::vector<UpperBound>> &upper,
+                CompAccessBoundMode mode = COMP_ACCESS_BOUND_ALL);
 
 } // namespace ir
 

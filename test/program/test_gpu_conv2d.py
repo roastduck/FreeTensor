@@ -148,31 +148,38 @@ def test_manual_static():
     rco, rci = s.split(rci, factor=step)
     s.reorder([rco, ryi, rxi, rci, fi, ni])
 
-    s.cache(s.find(lambda x: x.nid() == txz).node().body, "B", "gpu/local")
-
-    fill_AA, _, AA = s.cache(rci, "A", "gpu/shared")
-    s.parallelize(
-        s.find(lambda x: x.nid() == fill_AA).outer().outer(), "threadIdx.y")
-    s.vectorize(s.find(lambda x: x.nid() == fill_AA).outer())
-
-    fill_WW, _, WW = s.cache(rci, "W", "gpu/shared")
-    s.parallelize(
-        s.find(lambda x: x.nid() == fill_WW).outer().outer(), "threadIdx.x")
-    s.vectorize(s.find(lambda x: x.nid() == fill_WW).outer())
-
-    fill_AL, _, AL = s.cache(fi, AA, "gpu/local")
-    fill_WL, _, WL = s.cache(fi, WW, "gpu/local")
-
-    s.blend(txz)
-    s.blend(tyz)
     s.parallelize(bz, "blockIdx.z")
     s.parallelize(by, "blockIdx.y")
     s.parallelize(bx, "blockIdx.x")
     s.parallelize(ty, "threadIdx.y")
     s.parallelize(tx, "threadIdx.x")
 
+    s.cache(s.find(lambda x: x.nid() == txz).node().body, "B", "gpu/local")
+
+    fill_AA, _, AA = s.cache(rci, "A", "gpu/shared")
+    fill_AA = s.find(lambda x: x.nid() == fill_AA)
+    fill_AA_ty, fill_AA_tx = fill_AA.outer().outer(), fill_AA.outer()
+    fill_AA_tx, fill_AA_vec = s.split(fill_AA_tx, factor=4)
+    s.parallelize(fill_AA_ty, "threadIdx.y")
+    s.parallelize(fill_AA_tx, "threadIdx.x")
+    s.vectorize(fill_AA_vec)
+
+    fill_WW, _, WW = s.cache(rci, "W", "gpu/shared")
+    fill_WW = s.find(lambda x: x.nid() == fill_WW)
+    fill_WW_ty, fill_WW_tx = fill_WW.outer().outer(), fill_WW.outer()
+    fill_WW_tx, fill_WW_vec = s.split(fill_WW_tx, factor=4)
+    s.parallelize(fill_WW_ty, "threadIdx.y")
+    s.parallelize(fill_WW_tx, "threadIdx.x")
+    s.vectorize(fill_WW_vec)
+
+    fill_AL, _, AL = s.cache(fi, AA, "gpu/local")
+    fill_WL, _, WL = s.cache(fi, WW, "gpu/local")
+
+    s.blend(txz)
+    s.blend(tyz)
+
     ast = s.ast()
-    result = eval(ast, True, True)
+    result = eval(ast, True, True)  # Should be about 10ms on V100
 
     s = ir.Schedule(algo)
     s.parallelize("Ly", "blockIdx.y")

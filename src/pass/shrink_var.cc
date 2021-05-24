@@ -71,9 +71,7 @@ Stmt shrinkVar(const Stmt &_op) {
     FindAllCacheVarDefs finder;
     finder(op);
     for (auto &&varDefId : finder.results()) {
-        CompAccessBound visitor(varDefId, lower, upper);
-        visitor(op);
-        bounds[varDefId] = visitor.result();
+        bounds[varDefId] = compAccessBound(op, varDefId, lower, upper);
     }
 
     // (3)
@@ -92,9 +90,7 @@ Stmt shrinkSingleVar(const Stmt &_op, const std::string &varDefId) {
 
     // (2)
     std::unordered_map<std::string, AccessBound> bounds;
-    CompAccessBound visitor(varDefId, lower, upper);
-    visitor(op);
-    bounds[varDefId] = visitor.result();
+    bounds[varDefId] = compAccessBound(op, varDefId, lower, upper);
 
     // (3)
     op = ShrinkVar(bounds)(op);

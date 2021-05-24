@@ -364,15 +364,12 @@ Schedule::cache(const std::string &stmt, const std::string &var,
         BuiltinSimplify::UpperBoundsMap upper;
         std::tie(ast, lower, upper) =
             simplifyAndGetBounds<BuiltinSimplify>(ast);
-        CompAccessBound compRBound(newDef, lower, upper,
-                                   COMP_ACCESS_BOUND_READ);
-        CompAccessBound compWBound(newDef, lower, upper,
-                                   COMP_ACCESS_BOUND_WRITE);
-        compRBound(ast);
-        compWBound(ast);
-        MakeFillAndFlush makeFillAndFlush(stmt, var, newVar, oldDef,
-                                          compRBound.result(),
-                                          compWBound.result());
+        auto rBound =
+            compAccessBound(ast, newDef, lower, upper, COMP_ACCESS_BOUND_READ);
+        auto wBound =
+            compAccessBound(ast, newDef, lower, upper, COMP_ACCESS_BOUND_WRITE);
+        MakeFillAndFlush makeFillAndFlush(stmt, var, newVar, oldDef, rBound,
+                                          wBound);
         ast = makeFillAndFlush(ast);
         fillStmt = makeFillAndFlush.fillStmt();
         flushStmt = makeFillAndFlush.flushStmt();
@@ -408,10 +405,9 @@ Schedule::cacheReduction(const std::string &stmt, const std::string &var,
         BuiltinSimplify::UpperBoundsMap upper;
         std::tie(ast, lower, upper) =
             simplifyAndGetBounds<BuiltinSimplify>(ast);
-        CompAccessBound compBound(newDef, lower, upper);
-        compBound(ast);
+        auto bound = compAccessBound(ast, newDef, lower, upper);
         MakeInitAndReduce makeInitAndReduce(stmt, var, newVar, oldDef, newDef,
-                                            compBound.result());
+                                            bound);
         ast = makeInitAndReduce(ast);
         initStmt = makeInitAndReduce.initStmt();
         reduceStmt = makeInitAndReduce.reduceStmt();
