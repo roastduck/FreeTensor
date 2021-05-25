@@ -325,7 +325,8 @@ class ASTTransformer(ast.NodeTransformer):
                 arg_names = [
                     ctx_stack.find_var_by_name(arg.id).var for arg in args
                 ]
-                node_ctx.top().append_stmt(ffi.func2stmt(inst, arg_names))
+                node_ctx.top().append_stmt(
+                    ffi.func2stmt(inst, arg_names, ctx_stack.get_nid()))
             else:
                 assert False, "Function %s not implemented" % func_name
         else:

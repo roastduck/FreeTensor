@@ -36,7 +36,8 @@ Func _makeFunc(const std::string &name, const std::vector<std::string> &params,
  * 1. Remove I/O VarDef nodes
  * 2. Rename all the IDs and variables
  */
-Stmt func2stmt(const Func &func, const std::vector<std::string> &args);
+Stmt func2stmt(const Func &func, const std::vector<std::string> &args,
+               const std::string &callSiteId);
 
 } // namespace ir
 

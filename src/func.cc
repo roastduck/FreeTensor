@@ -10,13 +10,15 @@ namespace {
 
 class Func2Stmt : public Mutator {
     Func func_;
+    std::string callSiteId_;
     const std::vector<std::string> &args_;
 
     std::unordered_map<std::string, std::string> replace_;
 
   public:
-    Func2Stmt(const Func &func, const std::vector<std::string> &args)
-        : func_(func), args_(args) {}
+    Func2Stmt(const Func &func, const std::string callSiteId,
+              const std::vector<std::string> &args)
+        : func_(func), callSiteId_(callSiteId), args_(args) {}
 
   protected:
     Stmt
@@ -24,7 +26,7 @@ class Func2Stmt : public Mutator {
               const std::function<Stmt(const Stmt &)> &visitNode) override {
         auto ret = Mutator::visitStmt(op, visitNode);
         if (ret->id()[0] != '#') {
-            ret->setId(func_->name_ + "." + ret->id());
+            ret->setId(callSiteId_ + "." + ret->id());
         }
         return ret;
     }
@@ -48,7 +50,7 @@ class Func2Stmt : public Mutator {
             auto __op = Mutator::visit(_op);
             ASSERT(__op->nodeType() == ASTNodeType::VarDef);
             auto op = __op.as<VarDefNode>();
-            op->name_ = func_->name_ + "." + op->name_;
+            op->name_ = callSiteId_ + "." + op->name_;
             return op;
         }
     }
@@ -57,7 +59,7 @@ class Func2Stmt : public Mutator {
         auto __op = Mutator::visit(_op);
         ASSERT(__op->nodeType() == ASTNodeType::For);
         auto op = __op.as<ForNode>();
-        op->iter_ = func_->name_ + "." + op->iter_;
+        op->iter_ = callSiteId_ + "." + op->iter_;
         return op;
     }
 
@@ -65,7 +67,7 @@ class Func2Stmt : public Mutator {
         auto __op = Mutator::visit(_op);
         ASSERT(__op->nodeType() == ASTNodeType::Var);
         auto op = __op.as<VarNode>();
-        op->name_ = func_->name_ + "." + op->name_;
+        op->name_ = callSiteId_ + "." + op->name_;
         return op;
     }
 
@@ -74,7 +76,7 @@ class Func2Stmt : public Mutator {
         ASSERT(__op->nodeType() == ASTNodeType::Load);
         auto op = __op.as<LoadNode>();
         op->var_ = replace_.count(op->var_) ? replace_.at(op->var_)
-                                            : func_->name_ + "." + op->var_;
+                                            : callSiteId_ + "." + op->var_;
         return op;
     }
 
@@ -83,7 +85,7 @@ class Func2Stmt : public Mutator {
         ASSERT(__op->nodeType() == ASTNodeType::Store);
         auto op = __op.as<StoreNode>();
         op->var_ = replace_.count(op->var_) ? replace_.at(op->var_)
-                                            : func_->name_ + "." + op->var_;
+                                            : callSiteId_ + "." + op->var_;
         return op;
     }
 
@@ -92,15 +94,16 @@ class Func2Stmt : public Mutator {
         ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
         auto op = __op.as<ReduceToNode>();
         op->var_ = replace_.count(op->var_) ? replace_.at(op->var_)
-                                            : func_->name_ + "." + op->var_;
+                                            : callSiteId_ + "." + op->var_;
         return op;
     }
 };
 
 } // Anonymous namespace
 
-Stmt func2stmt(const Func &func, const std::vector<std::string> &args) {
-    return Func2Stmt(func, args)(func->body_);
+Stmt func2stmt(const Func &func, const std::vector<std::string> &args,
+               const std::string &callSiteId) {
+    return Func2Stmt(func, callSiteId, args)(func->body_);
 }
 
 } // namespace ir

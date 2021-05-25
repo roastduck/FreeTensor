@@ -19,6 +19,7 @@ void init_ffi_schedule(py::module_ &m) {
         .def("ast", &Schedule::ast)
         .def("func", &Schedule::func)
         .def("find", &Schedule::find)
+        .def("find_all", &Schedule::findAll)
         .def("split", &Schedule::split, "id"_a, "factor"_a = -1,
              "nparts"_a = -1)
         .def("reorder", &Schedule::reorder, "order"_a)
