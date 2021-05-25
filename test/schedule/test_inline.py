@@ -65,3 +65,58 @@ def test_no_inline_output_var():
         s.inline("T")
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
+
+
+def test_different_iter():
+    with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+        ir.MarkNid("T")
+        with ir.VarDef("t", (4,), "int32", "cache", "cpu") as t:
+            with ir.For("i", 0, 4) as i:
+                t[i] = x[i] * 2
+            with ir.For("i", 4, 8) as i:
+                y[i + -4] = t[i + -4] + 1
+    ast = ir.pop_ast()
+    print(ast)
+    s = ir.Schedule(ast)
+    s.inline("T")
+    ast = s.ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+        with ir.For("i", 4, 8) as i:
+            y[i + -4] = x[i + -4] * 2 + 1
+    std = ir.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_inline_serial_into_parallel():
+    with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+        ir.MarkNid("T")
+        with ir.VarDef("t", (4,), "int32", "cache", "cpu") as t:
+            with ir.For("i", 0, 4) as i:
+                t[i] = x[i] * 2
+            with ir.For("i", 0, 4, nid="L") as i:
+                y[i] = t[i] + 1
+    ast = ir.pop_ast()
+    print(ast)
+    s = ir.Schedule(ast)
+    s.parallelize("L", "threadIdx.x")
+    s.inline("T")
+    ast = s.ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+        with ir.For("i", 0, 4) as i:
+            y[i] = x[i] * 2 + 1
+    std = ir.pop_ast()
+
+    assert std.match(ast)

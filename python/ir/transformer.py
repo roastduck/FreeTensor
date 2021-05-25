@@ -1,9 +1,10 @@
 import ast
 import numpy as np
+import inspect
 import sourceinspect as ins
 from typing import Sequence
 
-from .nodes import _VarDef, Var, pop_ast, For, If, Else, MarkNid, ctx_stack as node_ctx
+from .nodes import _VarDef, Var, pop_ast, For, If, Else, MarkNid, ctx_stack as node_ctx, Func
 from .utils import *
 import ffi
 import sys
@@ -332,7 +333,6 @@ class ASTTransformer(ast.NodeTransformer):
 
     def visit_Assign(self, node):
         self.generic_visit(node)
-        print(ast.dump(node))
         # TODO: (maybe) support for multiple assignment
         assert len(node.targets) == 1, "Multiple assignment is not supported"
         if hasattr(node.value, "expr_call") and isinstance(
@@ -362,7 +362,6 @@ class ASTTransformer(ast.NodeTransformer):
         target_load = self.visit(target_load)
 
         self.generic_visit(node)
-        print(ast.dump(node))
         assert hasattr(node.target,
                        "expr_ptr"), "Target to be assigned is not an expression"
         assert hasattr(node.value,
@@ -418,7 +417,6 @@ class ASTTransformer(ast.NodeTransformer):
 
     def visit_Expr(self, node):
         self.generic_visit(node)
-        print(ast.dump(node))
         if isinstance(node.value, ast.Constant) and isinstance(
                 node.value.value, str):
             s = node.value.value
@@ -510,5 +508,5 @@ def transform(func):
     src = remove_indent(ins.getsource(func))
     tree = ast.parse(src)
     ASTTransformer().visit(tree)
-    print(ast.dump(tree))
-    return pop_ast()
+    params = list(inspect.signature(func).parameters)
+    return Func(params, pop_ast())

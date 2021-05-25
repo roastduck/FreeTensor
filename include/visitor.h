@@ -5,6 +5,7 @@
 
 #include <debug.h>
 #include <expr.h>
+#include <func.h>
 #include <stmt.h>
 
 namespace ir {
@@ -31,6 +32,8 @@ class Visitor {
     // Hooks for each node
     virtual void visit(const Any &op) {}
     virtual void visit(const AnyExpr &op) {}
+
+    virtual void visit(const Func &op) { (*this)(op->body_); }
 
     virtual void visit(const StmtSeq &op) {
         for (auto &&stmt : op->stmts_) {

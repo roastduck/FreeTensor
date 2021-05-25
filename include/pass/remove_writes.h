@@ -5,6 +5,7 @@
 #include <unordered_set>
 
 #include <analyze/find_loop_variance.h>
+#include <func.h>
 #include <mutator.h>
 #include <visitor.h>
 
@@ -97,6 +98,10 @@ class RemoveWrites : public Mutator {
  * ```
  */
 Stmt removeWrites(const Stmt &op);
+
+inline Func removeWrites(const Func &func) {
+    return makeFunc(func->params_, removeWrites(func->body_));
+}
 
 } // namespace ir
 

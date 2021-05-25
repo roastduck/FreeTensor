@@ -19,19 +19,19 @@ def test_omp_for():
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ir.For("i", 0, 4, nid="L1") as i:
             y[i] = x[i] + 1
-    assert ir.pop_ast().match(test)
+    assert ir.pop_ast().match(test.body)
 
     s = ir.Schedule(test)
     s.parallelize("L1", "openmp")
-    ast = ir.lower(s.ast(), target)
-    print(ast)
-    code, params = ir.codegen(ast, target)
+    func = ir.lower(s.func(), target)
+    print(func)
+    code = ir.codegen(func, target)
     print(code)
     x_np = np.array([1, 2, 3, 4], dtype="int32")
     y_np = np.zeros((4,), dtype="int32")
     x_arr = ir.Array(x_np, ir.Device(target))
     y_arr = ir.Array(y_np, ir.Device(target))
-    driver = ir.Driver(code, params, device)
+    driver = ir.Driver(func, code, device)
     driver.set_params({"x": x_arr, "y": y_arr})
     driver.run()
     y_np = y_arr.numpy()
@@ -57,14 +57,14 @@ def test_parallel_reduction():
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 64, nid="L2") as j:
                 y[i] = y[i] + x[i, j]
-    assert ir.pop_ast().match(test)
+    assert ir.pop_ast().match(test.body)
 
     s = ir.Schedule(test)
     s.parallelize("L2", "openmp")
-    ast = ir.lower(s.ast(), target)
-    print(ast)
+    func = ir.lower(s.func(), target)
+    print(func)
 
-    code, params = ir.codegen(ast, target)
+    code = ir.codegen(func, target)
     assert "#pragma omp atomic" in code
     assert "+=" in code
     print(code)
@@ -72,7 +72,7 @@ def test_parallel_reduction():
     y_np = np.zeros((4,), dtype="int32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(code, params, device)
+    driver = ir.Driver(func, code, device)
     driver.set_params({"x": x_arr, "y": y_arr})
     driver.run()
     y_np = y_arr.numpy()
@@ -98,14 +98,14 @@ def test_serial_reduction():
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 64, nid="L2") as j:
                 y[i] = y[i] + x[i, j]
-    assert ir.pop_ast().match(test)
+    assert ir.pop_ast().match(test.body)
 
     s = ir.Schedule(test)
     s.parallelize("L1", "openmp")
-    ast = ir.lower(s.ast(), target)
-    print(ast)
+    func = ir.lower(s.func(), target)
+    print(func)
 
-    code, params = ir.codegen(ast, target)
+    code = ir.codegen(func, target)
     assert "#pragma omp atomic" not in code
     assert "+=" in code
     print(code)
@@ -113,7 +113,7 @@ def test_serial_reduction():
     y_np = np.zeros((4,), dtype="int32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(code, params, device)
+    driver = ir.Driver(func, code, device)
     driver.set_params({"x": x_arr, "y": y_arr})
     driver.run()
     y_np = y_arr.numpy()
@@ -136,20 +136,20 @@ def test_unroll_for():
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ir.For("i", 0, 4, nid="L1") as i:
             y[i] = x[i] + 1
-    assert ir.pop_ast().match(test)
+    assert ir.pop_ast().match(test.body)
 
     s = ir.Schedule(test)
     s.unroll("L1")
-    ast = ir.lower(s.ast(), target)
-    print(ast)
-    code, params = ir.codegen(ast, target)
+    func = ir.lower(s.func(), target)
+    print(func)
+    code = ir.codegen(func, target)
     print(code)
     assert "#pragma GCC unroll" in code
     x_np = np.array([1, 2, 3, 4], dtype="int32")
     y_np = np.zeros((4,), dtype="int32")
     x_arr = ir.Array(x_np, ir.Device(ir.CPU()))
     y_arr = ir.Array(y_np, ir.Device(ir.CPU()))
-    driver = ir.Driver(code, params, ir.Device(ir.CPU()))
+    driver = ir.Driver(func, code, ir.Device(ir.CPU()))
     driver.set_params({"x": x_arr, "y": y_arr})
     driver.run()
     y_np = y_arr.numpy()
@@ -172,20 +172,20 @@ def test_vectorize_for():
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ir.For("i", 0, 4, nid="L1") as i:
             y[i] = x[i] + 1
-    assert ir.pop_ast().match(test)
+    assert ir.pop_ast().match(test.body)
 
     s = ir.Schedule(test)
     s.vectorize("L1")
-    ast = ir.lower(s.ast(), target)
-    print(ast)
-    code, params = ir.codegen(ast, target)
+    func = ir.lower(s.func(), target)
+    print(func)
+    code = ir.codegen(func, target)
     print(code)
     assert "#pragma omp simd" in code
     x_np = np.array([1, 2, 3, 4], dtype="int32")
     y_np = np.zeros((4,), dtype="int32")
     x_arr = ir.Array(x_np, ir.Device(ir.CPU()))
     y_arr = ir.Array(y_np, ir.Device(ir.CPU()))
-    driver = ir.Driver(code, params, ir.Device(ir.CPU()))
+    driver = ir.Driver(func, code, ir.Device(ir.CPU()))
     driver.set_params({"x": x_arr, "y": y_arr})
     driver.run()
     y_np = y_arr.numpy()

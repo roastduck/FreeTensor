@@ -10,9 +10,12 @@
 namespace ir {
 
 class CodeGenC : public CodeGen {
-    std::vector<std::string> params_;
+    const std::vector<std::string> &params_;
     std::unordered_map<std::string, std::string> idCache_; // IR IDs -> C IDs
     std::unordered_set<std::string> idFlag_;               // C IDs
+
+  public:
+    CodeGenC(const std::vector<std::string> &params) : params_(params) {}
 
   protected:
     virtual void visit(const StmtSeq &op) override;
@@ -53,7 +56,6 @@ class CodeGenC : public CodeGen {
     const std::string &normalizeId(const std::string &id);
 
     static std::string gen(DataType dtype);
-    const std::vector<std::string> &params() const { return params_; }
 };
 
 } // namespace ir

@@ -6,6 +6,7 @@
 #include <vector>
 
 #include <analyze/find_loop_variance.h>
+#include <func.h>
 #include <mutator.h>
 #include <visitor.h>
 
@@ -105,6 +106,10 @@ class CorrectShared : public Mutator {
 };
 
 Stmt correctShared(const Stmt &op);
+
+inline Func correctShared(const Func &func) {
+    return makeFunc(func->params_, correctShared(func->body_));
+}
 
 } // namespace gpu
 

@@ -13,8 +13,6 @@ from .nodes import (
     NamedScope,
     Eval,
     Any,
-)
-from .nodes import (
     min,
     max,
     l_and,
@@ -25,6 +23,7 @@ from .nodes import (
     round_towards_0_div,
     intrinsic,
     any,
+    Func,
 )
 from .passes import *
 from .schedule import *

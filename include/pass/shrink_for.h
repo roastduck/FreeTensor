@@ -2,6 +2,7 @@
 #define SHRINK_FOR_H
 
 #include <analyze/check_all_defined.h>
+#include <func.h>
 #include <pass/simplify.h>
 
 namespace ir {
@@ -67,6 +68,10 @@ class ShrinkFor : public CompTransientBounds {
  * and ends.
  */
 Stmt shrinkFor(const Stmt &op, bool keepConst = false);
+
+inline Func shrinkFor(const Func &func, bool keepConst = false) {
+    return makeFunc(func->params_, shrinkFor(func->body_));
+}
 
 } // namespace ir
 

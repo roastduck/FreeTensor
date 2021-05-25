@@ -38,8 +38,13 @@ void CodeGenC::visit(const VarDef &op) {
         }
         os() << ";" << std::endl;
     } else {
-        int nthParam = params_.size();
-        params_.emplace_back(op->name_);
+        auto nthParamIter =
+            std::find(params_.begin(), params_.end(), op->name_);
+        if (nthParamIter == params_.end()) {
+            throw InvalidProgram("I/O variable " + op->name_ +
+                                 " used but not defined in a function");
+        }
+        int nthParam = nthParamIter - params_.begin();
 
         switch (op->buffer_->mtype()) {
         case MemType::ByValue:

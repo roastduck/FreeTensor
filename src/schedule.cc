@@ -364,15 +364,12 @@ Schedule::cache(const std::string &stmt, const std::string &var,
         BuiltinSimplify::UpperBoundsMap upper;
         std::tie(ast, lower, upper) =
             simplifyAndGetBounds<BuiltinSimplify>(ast);
-        CompAccessBound compRBound(newDef, lower, upper,
-                                   COMP_ACCESS_BOUND_READ);
-        CompAccessBound compWBound(newDef, lower, upper,
-                                   COMP_ACCESS_BOUND_WRITE);
-        compRBound(ast);
-        compWBound(ast);
-        MakeFillAndFlush makeFillAndFlush(stmt, var, newVar, oldDef,
-                                          compRBound.result(),
-                                          compWBound.result());
+        auto rBound =
+            compAccessBound(ast, newDef, lower, upper, COMP_ACCESS_BOUND_READ);
+        auto wBound =
+            compAccessBound(ast, newDef, lower, upper, COMP_ACCESS_BOUND_WRITE);
+        MakeFillAndFlush makeFillAndFlush(stmt, var, newVar, oldDef, rBound,
+                                          wBound);
         ast = makeFillAndFlush(ast);
         fillStmt = makeFillAndFlush.fillStmt();
         flushStmt = makeFillAndFlush.flushStmt();
@@ -408,10 +405,9 @@ Schedule::cacheReduction(const std::string &stmt, const std::string &var,
         BuiltinSimplify::UpperBoundsMap upper;
         std::tie(ast, lower, upper) =
             simplifyAndGetBounds<BuiltinSimplify>(ast);
-        CompAccessBound compBound(newDef, lower, upper);
-        compBound(ast);
+        auto bound = compAccessBound(ast, newDef, lower, upper);
         MakeInitAndReduce makeInitAndReduce(stmt, var, newVar, oldDef, newDef,
-                                            compBound.result());
+                                            bound);
         ast = makeInitAndReduce(ast);
         initStmt = makeInitAndReduce.initStmt();
         reduceStmt = makeInitAndReduce.reduceStmt();
@@ -550,15 +546,22 @@ void Schedule::inlining(const std::string &def) {
             if (replace.count(dep.later().as<LoadNode>())) {
                 throw InvalidSchedule("Multiple writes correspond to one read");
             }
-            auto expr = dep.earlier()->nodeType() == ASTNodeType::Store
-                            ? dep.earlier().as<StoreNode>()->expr_
-                            : dep.earlier().as<ReduceToNode>()->expr_;
+            Expr expr;
+            if (dep.earlier()->nodeType() == ASTNodeType::Store) {
+                auto earlier = dep.earlier().as<StoreNode>();
+                expr = MakeInlinePlaceholder(earlier->indices_)(earlier->expr_);
+            } else {
+                ASSERT(dep.earlier()->nodeType() == ASTNodeType::ReduceTo);
+                auto earlier = dep.earlier().as<ReduceToNode>();
+                expr = MakeInlinePlaceholder(earlier->indices_)(earlier->expr_);
+            }
             if (!checkNotModified(ast, expr, dep.earlier_.cursor_.id(),
                                   dep.later_.cursor_.id())) {
                 throw InvalidSchedule(
                     "The expression will be modified after inlining");
             }
-            replace[dep.later().as<LoadNode>()] = expr;
+            auto later = dep.later().as<LoadNode>();
+            replace[later] = ApplyInlinePlaceholder(later->indices_)(expr);
         };
         findDeps(ast, {{}}, found, FindDepsMode::KillLater, DEP_RAW, filter);
         ast = MakeInline(def, replace)(ast);

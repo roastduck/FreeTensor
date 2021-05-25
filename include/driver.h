@@ -6,6 +6,7 @@
 #include <vector>
 
 #include <driver/array.h>
+#include <func.h>
 
 namespace ir {
 
@@ -22,8 +23,7 @@ class Driver {
     void buildAndLoad();
 
   public:
-    Driver(const std::string &src, const std::vector<std::string> &paramNames,
-           const Device &dev);
+    Driver(const Func &func, const std::string &src, const Device &dev);
     ~Driver() { unload(); }
 
     void setParams(const std::unordered_map<std::string, Array &> &params);

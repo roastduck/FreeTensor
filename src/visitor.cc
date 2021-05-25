@@ -5,6 +5,9 @@ namespace ir {
 
 void Visitor::operator()(const AST &op) {
     switch (op->nodeType()) {
+    case ASTNodeType::Func:
+        visit(op.as<FuncNode>());
+        break;
 
 #define DISPATCH_EXPR_CASE(name)                                               \
     case ASTNodeType::name:                                                    \

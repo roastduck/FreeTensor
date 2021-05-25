@@ -4,6 +4,36 @@
 
 namespace ir {
 
+static bool isSharedAmong(MemType mtype, const std::string &parallel) {
+    if (parallel == "threadIdx.x" || parallel == "threadIdx.y" ||
+        parallel == "threadIdx.z") {
+        switch (mtype) {
+        case MemType::GPUGlobal:
+        case MemType::GPUShared:
+            return true;
+        default:
+            return false;
+        }
+    }
+    if (parallel == "blockIdx.x" || parallel == "blockIdx.y" ||
+        parallel == "blockIdx.z") {
+        switch (mtype) {
+        case MemType::GPUGlobal:
+            return true;
+        default:
+            return false;
+        }
+    }
+    return false;
+}
+
+void FindMemType::visit(const VarDef &op) {
+    Visitor::visit(op);
+    if (op->id() == varDefId_) {
+        mtype_ = op->buffer_->mtype();
+    }
+}
+
 void CompAccessBound::visit(const VarDef &op) {
     if (op->id() != varDefId_) {
         defs_.insert(op->name_);
@@ -111,9 +141,13 @@ void CompAccessBound::visit(const ReduceTo &op) {
 }
 
 void CompAccessBound::visit(const For &op) {
-    defs_.insert(op->iter_);
-    Visitor::visit(op);
-    defs_.erase(op->iter_);
+    if (isSharedAmong(mtype_, op->parallel_)) {
+        Visitor::visit(op);
+    } else {
+        defs_.insert(op->iter_);
+        Visitor::visit(op);
+        defs_.erase(op->iter_);
+    }
 }
 
 void CompAccessBound::visit(const If &op) {
@@ -125,6 +159,18 @@ void CompAccessBound::visit(const If &op) {
         (*this)(op->elseCase_);
     }
     condStack_.pop_back();
+}
+
+AccessBound
+compAccessBound(const Stmt &op, const std::string &varDefId,
+                const std::unordered_map<Expr, std::vector<LowerBound>> &lower,
+                const std::unordered_map<Expr, std::vector<UpperBound>> &upper,
+                CompAccessBoundMode mode) {
+    FindMemType finder(varDefId);
+    finder(op);
+    CompAccessBound visitor(varDefId, finder.mtype(), lower, upper, mode);
+    visitor(op);
+    return visitor.result();
 }
 
 } // namespace ir

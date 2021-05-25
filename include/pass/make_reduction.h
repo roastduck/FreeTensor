@@ -1,6 +1,7 @@
 #ifndef MAKE_REDUCTION_H
 #define MAKE_REDUCTION_H
 
+#include <func.h>
 #include <mutator.h>
 
 namespace ir {
@@ -34,6 +35,10 @@ class MakeReduction : public Mutator {
 };
 
 inline Stmt makeReduction(const Stmt &op) { return MakeReduction()(op); }
+
+inline Func makeReduction(const Func &func) {
+    return makeFunc(func->params_, makeReduction(func->body_));
+}
 
 } // namespace ir
 

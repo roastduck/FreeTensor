@@ -4,6 +4,7 @@
 #include <except.h>
 #include <expr.h>
 #include <ffi.h>
+#include <func.h>
 #include <stmt.h>
 
 namespace ir {
@@ -14,6 +15,7 @@ void init_ffi_ast(py::module_ &m) {
     py::enum_<ASTNodeType>(m, "ASTNodeType")
         .value("Any", ASTNodeType::Any)
         .value("AnyExpr", ASTNodeType::AnyExpr)
+        .value("Func", ASTNodeType::Func)
         .value("StmtSeq", ASTNodeType::StmtSeq)
         .value("VarDef", ASTNodeType::VarDef)
         .value("Var", ASTNodeType::Var)
@@ -49,12 +51,16 @@ void init_ffi_ast(py::module_ &m) {
         .value("Eval", ASTNodeType::Eval);
 
     py::class_<ASTNode, AST> pyAST(m, "AST");
+    py::class_<FuncNode, Func> pyFunc(m, "Func", pyAST);
     py::class_<StmtNode, Stmt> pyStmt(m, "Stmt", pyAST);
     py::class_<ExprNode, Expr> pyExpr(m, "Expr", pyAST);
 
 #ifdef IR_DEBUG
     pyAST.def_readonly("debug_creator", &ASTNode::debugCreator_);
 #endif
+
+    pyFunc.def_readonly("params", &FuncNode::params_)
+        .def_readonly("body", &FuncNode::body_);
 
     pyStmt.def_property_readonly("nid", &StmtNode::id);
 
@@ -240,6 +246,12 @@ void init_ffi_ast(py::module_ &m) {
     py::implicitly_convertible<int, ExprNode>();
     py::implicitly_convertible<float, ExprNode>();
     py::implicitly_convertible<bool, ExprNode>();
+
+    // Function
+    m.def("makeFunc",
+          static_cast<Func (*)(const std::vector<std::string> &, const Stmt &)>(
+              &_makeFunc),
+          "params"_a, "body"_a);
 
     // Statements
     m.def("makeAny", &_makeAny);

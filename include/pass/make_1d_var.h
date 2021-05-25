@@ -3,6 +3,7 @@
 
 #include <unordered_map>
 
+#include <func.h>
 #include <mutator.h>
 
 namespace ir {
@@ -41,6 +42,10 @@ class Make1DVar : public Mutator {
 };
 
 Stmt make1dVar(const Stmt &op);
+
+inline Func make1dVar(const Func &func) {
+    return makeFunc(func->params_, make1dVar(func->body_));
+}
 
 } // namespace ir
 

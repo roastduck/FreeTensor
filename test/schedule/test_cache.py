@@ -152,6 +152,7 @@ def test_different_indices():
                     b[j + -1 * i] = x[j]
                 y[i] = b[0] + b[1]
     std = ir.pop_ast()
+    print(std)
 
     assert std.match(ast)
 

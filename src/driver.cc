@@ -16,12 +16,12 @@
 
 namespace ir {
 
-Driver::Driver(const std::string &src,
-               const std::vector<std::string> &paramNames, const Device &dev)
-    : src_(src), params_(paramNames.size(), nullptr), dev_(dev) {
-    name2param_.reserve(paramNames.size());
-    for (size_t i = 0, iEnd = paramNames.size(); i < iEnd; i++) {
-        name2param_[paramNames[i]] = i;
+Driver::Driver(const Func &func, const std::string &src, const Device &dev)
+    : src_(src), params_(func->params_.size(), nullptr), dev_(dev) {
+    auto nParams = func->params_.size();
+    name2param_.reserve(nParams);
+    for (size_t i = 0; i < nParams; i++) {
+        name2param_[func->params_[i]] = i;
     }
     buildAndLoad();
 }

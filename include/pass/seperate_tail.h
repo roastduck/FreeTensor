@@ -6,6 +6,7 @@
 #include <vector>
 
 #include <analyze/analyze_linear.h>
+#include <func.h>
 #include <mutator.h>
 #include <visitor.h>
 
@@ -94,6 +95,10 @@ class SeperateTail : public Mutator {
 };
 
 Stmt seperateTail(const Stmt &op);
+
+inline Func seperateTail(const Func &func) {
+    return makeFunc(func->params_, seperateTail(func->body_));
+}
 
 } // namespace ir
 

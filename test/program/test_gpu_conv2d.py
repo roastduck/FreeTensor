@@ -28,14 +28,14 @@ def test_manual_static():
     W_np = np.random.uniform(size=(kernel, kernel, in_channel,
                                    out_channel)).astype("float32")
 
-    def eval(ast, print_code=False, time=False):
-        ast = ir.lower(ast, target)
+    def eval(func, print_code=False, time=False):
+        func = ir.lower(func, target)
         if print_code:
-            print(ast, flush=True)
-        code, params = ir.codegen(ast, target)
+            print(func, flush=True)
+        code = ir.codegen(func, target)
         if print_code:
             print(ir.debug.with_line_no(code), flush=True)
-        driver = ir.Driver(code, params, device)
+        driver = ir.Driver(func, code, device)
         B_np = np.zeros((out_size, out_size, out_channel, batch),
                         dtype="float32")
         A_arr = ir.Array(A_np, device)
@@ -96,7 +96,7 @@ def test_manual_static():
                                         B[yy, xx, ff, nn] = (
                                             B[yy, xx, ff, nn] +
                                             A[y, x, rc, nn] * W[ry, rx, rc, ff])
-    algo = ir.pop_ast()
+    algo = ir.Func(["A", "W", "B"], ir.pop_ast())
 
     # TODO: Use this
     #
@@ -148,36 +148,43 @@ def test_manual_static():
     rco, rci = s.split(rci, factor=step)
     s.reorder([rco, ryi, rxi, rci, fi, ni])
 
-    s.cache(s.find(lambda x: x.nid() == txz).node().body, "B", "gpu/local")
-
-    fill_AA, _, AA = s.cache(rci, "A", "gpu/shared")
-    s.parallelize(
-        s.find(lambda x: x.nid() == fill_AA).outer().outer(), "threadIdx.y")
-    s.vectorize(s.find(lambda x: x.nid() == fill_AA).outer())
-
-    fill_WW, _, WW = s.cache(rci, "W", "gpu/shared")
-    s.parallelize(
-        s.find(lambda x: x.nid() == fill_WW).outer().outer(), "threadIdx.x")
-    s.vectorize(s.find(lambda x: x.nid() == fill_WW).outer())
-
-    fill_AL, _, AL = s.cache(fi, AA, "gpu/local")
-    fill_WL, _, WL = s.cache(fi, WW, "gpu/local")
-
-    s.blend(txz)
-    s.blend(tyz)
     s.parallelize(bz, "blockIdx.z")
     s.parallelize(by, "blockIdx.y")
     s.parallelize(bx, "blockIdx.x")
     s.parallelize(ty, "threadIdx.y")
     s.parallelize(tx, "threadIdx.x")
 
-    ast = s.ast()
-    result = eval(ast, True, True)
+    s.cache(s.find(lambda x: x.nid() == txz).node().body, "B", "gpu/local")
+
+    fill_AA, _, AA = s.cache(rci, "A", "gpu/shared")
+    fill_AA = s.find(lambda x: x.nid() == fill_AA)
+    fill_AA_ty, fill_AA_tx = fill_AA.outer().outer(), fill_AA.outer()
+    fill_AA_tx, fill_AA_vec = s.split(fill_AA_tx, factor=4)
+    s.parallelize(fill_AA_ty, "threadIdx.y")
+    s.parallelize(fill_AA_tx, "threadIdx.x")
+    s.vectorize(fill_AA_vec)
+
+    fill_WW, _, WW = s.cache(rci, "W", "gpu/shared")
+    fill_WW = s.find(lambda x: x.nid() == fill_WW)
+    fill_WW_ty, fill_WW_tx = fill_WW.outer().outer(), fill_WW.outer()
+    fill_WW_tx, fill_WW_vec = s.split(fill_WW_tx, factor=4)
+    s.parallelize(fill_WW_ty, "threadIdx.y")
+    s.parallelize(fill_WW_tx, "threadIdx.x")
+    s.vectorize(fill_WW_vec)
+
+    fill_AL, _, AL = s.cache(fi, AA, "gpu/local")
+    fill_WL, _, WL = s.cache(fi, WW, "gpu/local")
+
+    s.blend(txz)
+    s.blend(tyz)
+
+    func = s.func()
+    result = eval(func, True, True)  # Should be about 10ms on V100
 
     s = ir.Schedule(algo)
     s.parallelize("Ly", "blockIdx.y")
     s.parallelize("Lx", "blockIdx.x")
     s.parallelize("Lf", "threadIdx.x")
-    baseline = s.ast()
+    baseline = s.func()
     result_std = eval(baseline)
     assert np.all(np.isclose(result, result_std))

@@ -12,6 +12,7 @@ class PrintVisitor : public CodeGen {
     void printId(const Stmt &op);
 
   protected:
+    virtual void visit(const Func &op) override;
     virtual void visit(const Any &op) override;
     virtual void visit(const AnyExpr &op) override;
     virtual void visit(const VarDef &op) override;

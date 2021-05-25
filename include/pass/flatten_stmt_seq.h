@@ -1,6 +1,7 @@
 #ifndef FLATTEN_STMT_SEQ_H
 #define FLATTEN_STMT_SEQ_H
 
+#include <func.h>
 #include <mutator.h>
 
 namespace ir {
@@ -17,6 +18,10 @@ class FlattenStmtSeq : public Mutator {
 
 inline Stmt flattenStmtSeq(const Stmt &op, bool popVarDef = false) {
     return FlattenStmtSeq(popVarDef)(op);
+}
+
+inline Func flattenStmtSeq(const Func &func, bool popVarDef = false) {
+    return makeFunc(func->params_, flattenStmtSeq(func->body_, popVarDef));
 }
 
 } // namespace ir

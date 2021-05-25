@@ -15,7 +15,9 @@ void init_ffi_schedule(py::module_ &m) {
 
     py::class_<Schedule>(m, "Schedule")
         .def(py::init<const Stmt &>())
+        .def(py::init<const Func &>())
         .def("ast", &Schedule::ast)
+        .def("func", &Schedule::func)
         .def("find", &Schedule::find)
         .def("split", &Schedule::split, "id"_a, "factor"_a = -1,
              "nparts"_a = -1)
