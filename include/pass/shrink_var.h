@@ -4,6 +4,7 @@
 #include <unordered_map>
 
 #include <analyze/comp_access_bound.h>
+#include <func.h>
 #include <mutator.h>
 
 namespace ir {
@@ -56,6 +57,10 @@ Stmt shrinkVar(const Stmt &op);
  * A variant of shrinkVar that shrinks only one variable only
  */
 Stmt shrinkSingleVar(const Stmt &op, const std::string &varDefId);
+
+inline Func shrinkVar(const Func &func) {
+    return makeFunc(func->params_, shrinkVar(func->body_));
+}
 
 } // namespace ir
 

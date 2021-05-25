@@ -29,6 +29,18 @@ void PrintVisitor::printId(const Stmt &op) {
     }
 }
 
+void PrintVisitor::visit(const Func &op) {
+    makeIndent();
+    os() << "func(";
+    for (size_t i = 0, iEnd = op->params_.size(); i < iEnd; i++) {
+        os() << (i > 0 ? ", " : "") << op->params_[i];
+    }
+    os() << ") ";
+    beginBlock();
+    recur(op->body_);
+    endBlock();
+}
+
 void PrintVisitor::visit(const Any &op) {
     makeIndent();
     os() << "<Any>" << std::endl;

@@ -4,11 +4,15 @@
 #include <unordered_map>
 
 #include <codegen/code_gen_c.h>
+#include <func.h>
 
 namespace ir {
 
 class CodeGenCUDA : public CodeGenC {
     int nKernel_ = 0;
+
+  public:
+    CodeGenCUDA(const std::vector<std::string> &params) : CodeGenC(params) {}
 
   private:
     bool inKernel() const;
@@ -25,9 +29,9 @@ class CodeGenCUDA : public CodeGenC {
 /**
  * Generate target function code
  *
- * @return : (source, list of params)
+ * @return : source
  */
-std::pair<std::string, std::vector<std::string>> codeGenCUDA(const Stmt &op);
+std::string codeGenCUDA(const Func &func);
 
 } // namespace ir
 

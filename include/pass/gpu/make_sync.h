@@ -4,6 +4,7 @@
 #include <unordered_set>
 
 #include <cursor.h>
+#include <func.h>
 #include <math/bounds.h>
 #include <mutator.h>
 
@@ -50,6 +51,10 @@ class MakeSync : public Mutator {
 };
 
 Stmt makeSync(const Stmt &op);
+
+inline Func makeSync(const Func &func) {
+    return makeFunc(func->params_, makeSync(func->body_));
+}
 
 } // namespace gpu
 

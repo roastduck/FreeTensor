@@ -21,8 +21,9 @@ void CodeGenCPU::visit(const For &op) {
     CodeGenC::visit(op);
 }
 
-std::pair<std::string, std::vector<std::string>> codeGenCPU(const Stmt &op) {
-    CodeGenCPU visitor;
+std::string codeGenCPU(const Func &func) {
+    CodeGenCPU visitor(func->params_);
+    auto &&op = func->body_;
     visitor.beginBlock();
     visitor(op);
     visitor.endBlock();
@@ -40,7 +41,7 @@ extern "C" {
     auto body = visitor.toString([&](const CodeGenCPU::Stream &stream) {
         return "void run(void **_params) " + stream.os_.str();
     });
-    return std::make_pair(header + body + tailer, visitor.params());
+    return header + body + tailer;
 }
 
 } // namespace ir

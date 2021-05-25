@@ -17,12 +17,17 @@ bool MatchVisitor::matchName(const std::string &thisName,
         return;                                                                \
     }
 
-#define RECURSE(lexpr, rexpr)                                                  \
+#define TRY_RECURSE(lexpr, rexpr)                                              \
     {                                                                          \
         auto oldInstance = instance_;                                          \
         instance_ = rexpr;                                                     \
         (*this)(lexpr);                                                        \
         instance_ = oldInstance;                                               \
+    }
+
+#define RECURSE(lexpr, rexpr)                                                  \
+    {                                                                          \
+        TRY_RECURSE(lexpr, rexpr)                                              \
         if (!isMatched_) {                                                     \
             return;                                                            \
         }                                                                      \
@@ -109,8 +114,13 @@ void MatchVisitor::visit(const BoolConst &op) {
 void MatchVisitor::visit(const Add &op) {
     CHECK(instance_->nodeType() == ASTNodeType::Add);
     auto instance = instance_.as<AddNode>();
-    RECURSE(op->lhs_, instance->lhs_);
-    RECURSE(op->rhs_, instance->rhs_);
+    TRY_RECURSE(op->lhs_, instance->lhs_);
+    TRY_RECURSE(op->rhs_, instance->rhs_);
+    if (!isMatched_) {
+        isMatched_ = true;
+        RECURSE(op->lhs_, instance->rhs_);
+        RECURSE(op->rhs_, instance->lhs_);
+    }
 }
 
 void MatchVisitor::visit(const Sub &op) {

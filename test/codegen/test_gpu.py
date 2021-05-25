@@ -25,19 +25,19 @@ def test_basic():
     ]) as (x, y):
         with ir.For("i", 0, 4, nid="L1") as i:
             y[i] = x[i] + 1
-    assert ir.pop_ast().match(test)
+    assert ir.pop_ast().match(test.body)
 
     s = ir.Schedule(test)
     s.parallelize("L1", "threadIdx.x")
-    ast = ir.lower(s.ast(), target)
-    print(ast)
-    code, params = ir.codegen(ast, target)
+    func = ir.lower(s.func(), target)
+    print(func)
+    code = ir.codegen(func, target)
     print(ir.debug.with_line_no(code))
     x_np = np.array([1, 2, 3, 4], dtype="int32")
     y_np = np.zeros((4,), dtype="int32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(code, params, device)
+    driver = ir.Driver(func, code, device)
     driver.set_params({"x": x_arr, "y": y_arr})
     driver.run()
     y_np = y_arr.numpy()
@@ -64,21 +64,21 @@ def test_shmem():
         with ir.For("i", 0, 4, nid="L1") as i:
             ir.MarkNid("S1")
             y[i] = x[i] + 1
-    assert ir.pop_ast().match(test)
+    assert ir.pop_ast().match(test.body)
 
     s = ir.Schedule(test)
     s.cache("S1", "x", "gpu/shared")
     s.parallelize("L1", "threadIdx.x")
-    ast = ir.lower(s.ast(), target)
-    print(ast)
-    code, params = ir.codegen(ast, target)
+    func = ir.lower(s.func(), target)
+    print(func)
+    code = ir.codegen(func, target)
     print(ir.debug.with_line_no(code))
     assert "__shared__" in code
     x_np = np.array([1, 2, 3, 4], dtype="int32")
     y_np = np.zeros((4,), dtype="int32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(code, params, device)
+    driver = ir.Driver(func, code, device)
     driver.set_params({"x": x_arr, "y": y_arr})
     driver.run()
     y_np = y_arr.numpy()
@@ -110,14 +110,14 @@ def test_global_mem():
                 t[i] = x[i] * 2
             with ir.For("i2", 0, 4, nid="L2") as i:
                 y[i] = t[i] + 1
-    assert ir.pop_ast().match(test)
+    assert ir.pop_ast().match(test.body)
 
     s = ir.Schedule(test)
     s.parallelize("L1", "threadIdx.x")
     s.parallelize("L2", "threadIdx.x")
-    ast = ir.lower(s.ast(), target)
-    print(ast)
-    code, params = ir.codegen(ast, target)
+    func = ir.lower(s.func(), target)
+    print(func)
+    code = ir.codegen(func, target)
     print(ir.debug.with_line_no(code))
     assert "cudaMalloc" in code
     assert "cudaFree" in code
@@ -125,7 +125,7 @@ def test_global_mem():
     y_np = np.zeros((4,), dtype="int32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(code, params, device)
+    driver = ir.Driver(func, code, device)
     driver.set_params({"x": x_arr, "y": y_arr})
     driver.run()
     y_np = y_arr.numpy()
@@ -155,13 +155,13 @@ def test_pass_by_value_0d():
             with ir.For("i", 0, 4, nid="L1") as i:
                 with ir.For("j", 0, n[()], nid="L2") as j:
                     y[j, i] = x[j, i] + 1
-    assert ir.pop_ast().match(test)
+    assert ir.pop_ast().match(test.body)
 
     s = ir.Schedule(test)
     s.parallelize("L1", "threadIdx.x")
-    ast = ir.lower(s.ast(), target)
-    print(ast)
-    code, params = ir.codegen(ast, target)
+    func = ir.lower(s.func(), target)
+    print(func)
+    code = ir.codegen(func, target)
     print(ir.debug.with_line_no(code))
     n_np = np.array(5, dtype="int32")
     x_np = np.array([[1, 2, 3, 4]] * 5, dtype="int32")
@@ -169,7 +169,7 @@ def test_pass_by_value_0d():
     n_arr = ir.Array(n_np, host)
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(code, params, device)
+    driver = ir.Driver(func, code, device)
     driver.set_params({"n": n_arr, "x": x_arr, "y": y_arr})
     driver.run()
     y_np = y_arr.numpy().reshape(5, 4)
@@ -199,13 +199,13 @@ def test_pass_by_value_1d():
             with ir.For("i", 0, 4, nid="L1") as i:
                 with ir.For("j", 0, n[0], nid="L2") as j:
                     y[j, i] = x[j, i] + 1
-    assert ir.pop_ast().match(test)
+    assert ir.pop_ast().match(test.body)
 
     s = ir.Schedule(test)
     s.parallelize("L1", "threadIdx.x")
-    ast = ir.lower(s.ast(), target)
-    print(ast)
-    code, params = ir.codegen(ast, target)
+    func = ir.lower(s.func(), target)
+    print(func)
+    code = ir.codegen(func, target)
     print(ir.debug.with_line_no(code))
     n_np = np.array([5], dtype="int32")
     x_np = np.array([[1, 2, 3, 4]] * 5, dtype="int32")
@@ -213,7 +213,7 @@ def test_pass_by_value_1d():
     n_arr = ir.Array(n_np, host)
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(code, params, device)
+    driver = ir.Driver(func, code, device)
     driver.set_params({"n": n_arr, "x": x_arr, "y": y_arr})
     driver.run()
     y_np = y_arr.numpy().reshape(5, 4)
@@ -232,13 +232,13 @@ def test_dynamic_2d_array():
                 with ir.For("j", 0, n[()], nid="L2") as j:
                     y[i, j] = x[i, j] + 1
 
-    s = ir.Schedule(ir.pop_ast())
+    s = ir.Schedule(ir.Func(["n", "x", "y"], ir.pop_ast()))
     outer, inner = s.split("L1", 4)
     s.reorder([inner, outer])
     s.parallelize(inner, "threadIdx.x")
-    ast = ir.lower(s.ast(), target)
-    print(ast)
-    code, params = ir.codegen(ast, target)
+    func = ir.lower(s.func(), target)
+    print(func)
+    code = ir.codegen(func, target)
     print(ir.debug.with_line_no(code))
     n_np = np.array(5, dtype="int32")
     x_np = np.random.randint(0, 100, (5, 5)).astype("int32")
@@ -246,7 +246,7 @@ def test_dynamic_2d_array():
     n_arr = ir.Array(n_np, host)
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(code, params, device)
+    driver = ir.Driver(func, code, device)
     driver.set_params({"n": n_arr, "x": x_arr, "y": y_arr})
     driver.run()
     y_np = y_arr.numpy().reshape(5, 5)
@@ -271,19 +271,19 @@ def test_intrinsic():
     ]) as (x, y):
         with ir.For("i", 0, 4, nid="L1") as i:
             y[i] = ir.intrinsic("sinf(%)", x[i], ret_type="float32")
-    assert ir.pop_ast().match(test)
+    assert ir.pop_ast().match(test.body)
 
     s = ir.Schedule(test)
     s.parallelize("L1", "threadIdx.x")
-    ast = ir.lower(s.ast(), target)
-    print(ast)
-    code, params = ir.codegen(ast, target)
+    func = ir.lower(s.func(), target)
+    print(func)
+    code = ir.codegen(func, target)
     print(ir.debug.with_line_no(code))
     x_np = np.array([1, 2, 3, 4], dtype="float32")
     y_np = np.zeros((4,), dtype="float32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(code, params, device)
+    driver = ir.Driver(func, code, device)
     driver.set_params({"x": x_arr, "y": y_arr})
     driver.run()
     y_np = y_arr.numpy()
@@ -318,14 +318,14 @@ def test_syncthreads():
                     t[j] = x[i, j] * 2
                 with ir.For("j2", 0, 256, nid="L2") as j:
                     y[i, j] = t[255 - j] + 1
-    assert ir.pop_ast().match(test)
+    assert ir.pop_ast().match(test.body)
 
     s = ir.Schedule(test)
     s.parallelize("L0", "blockIdx.x")
     s.parallelize("L1", "threadIdx.x")
     s.parallelize("L2", "threadIdx.x")
-    ast = ir.lower(s.ast(), target)
-    print(ast)
+    func = ir.lower(s.func(), target)
+    print(func)
 
     with ir.VarDef([
         ("x", (4, 256), "int32", "input", "gpu/global"),
@@ -338,15 +338,15 @@ def test_syncthreads():
                     ir.Any()
                     ir.Eval(ir.intrinsic("__syncthreads()"))
                     ir.Any()
-    assert ir.make_1d_var(ir.pop_ast()).match(ast)
+    assert ir.make_1d_var(ir.pop_ast()).match(func.body)
 
-    code, params = ir.codegen(ast, target)
+    code = ir.codegen(func, target)
     print(ir.debug.with_line_no(code))
     x_np = np.array([range(256)] * 4, dtype="int32")
     y_np = np.zeros((4, 256), dtype="int32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(code, params, device)
+    driver = ir.Driver(func, code, device)
     driver.set_params({"x": x_arr, "y": y_arr})
     driver.run()
     y_np = y_arr.numpy().reshape(4, 256)
@@ -376,8 +376,8 @@ def test_syncthreads_in_loop():
     s.parallelize("L0", "blockIdx.x")
     s.parallelize("L1", "threadIdx.x")
     s.parallelize("L2", "threadIdx.x")
-    ast = ir.lower(s.ast(), target)
-    print(ast)
+    func = ir.lower(s.func(), target)
+    print(func)
 
     with ir.VarDef([
         ("x", (4, 256), "int32", "input", "gpu/global"),
@@ -392,7 +392,7 @@ def test_syncthreads_in_loop():
                         ir.Eval(ir.intrinsic("__syncthreads()"))
                         ir.Any()
                     ir.Eval(ir.intrinsic("__syncthreads()"))
-    assert ir.make_1d_var(ir.pop_ast()).match(ast)
+    assert ir.make_1d_var(ir.pop_ast()).match(func.body)
 
 
 def test_syncthreads_at_outer_loop():
@@ -416,8 +416,8 @@ def test_syncthreads_at_outer_loop():
     s.parallelize("L0", "blockIdx.x")
     s.parallelize("L1", "threadIdx.x")
     s.parallelize("L2", "threadIdx.x")
-    ast = ir.lower(s.ast(), target)
-    print(ast)
+    func = ir.lower(s.func(), target)
+    print(func)
 
     with ir.VarDef([
         ("x", (4, 256), "int32", "input", "gpu/global"),
@@ -431,7 +431,7 @@ def test_syncthreads_at_outer_loop():
                     ir.Eval(ir.intrinsic("__syncthreads()"))  # Here outside p
                     with ir.For("p", 0, 5) as p:
                         ir.Any()
-    assert ir.make_1d_var(ir.pop_ast()).match(ast)
+    assert ir.make_1d_var(ir.pop_ast()).match(func.body)
 
 
 def test_syncwarp():
@@ -460,14 +460,14 @@ def test_syncwarp():
                     t[j] = x[i, j] * 2
                 with ir.For("j2", 0, 4, nid="L2") as j:
                     y[i, j] = t[3 - j] + 1
-    assert ir.pop_ast().match(test)
+    assert ir.pop_ast().match(test.body)
 
     s = ir.Schedule(test)
     s.parallelize("L0", "blockIdx.x")
     s.parallelize("L1", "threadIdx.x")
     s.parallelize("L2", "threadIdx.x")
-    ast = ir.lower(s.ast(), target)
-    print(ast)
+    func = ir.lower(s.func(), target)
+    print(func)
 
     with ir.VarDef([
         ("x", (4, 4), "int32", "input", "gpu/global"),
@@ -479,15 +479,15 @@ def test_syncwarp():
                     ir.Any()
                     ir.Eval(ir.intrinsic("__syncwarp()"))
                     ir.Any()
-    assert ir.make_1d_var(ir.pop_ast()).match(ast)
+    assert ir.make_1d_var(ir.pop_ast()).match(func.body)
 
-    code, params = ir.codegen(ast, target)
+    code = ir.codegen(func, target)
     print(ir.debug.with_line_no(code))
     x_np = np.array([[0, 1, 2, 3]] * 4, dtype="int32")
     y_np = np.zeros((4, 4), dtype="int32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(code, params, device)
+    driver = ir.Driver(func, code, device)
     driver.set_params({"x": x_arr, "y": y_arr})
     driver.run()
     y_np = y_arr.numpy().reshape(4, 4)
@@ -522,14 +522,14 @@ def test_correct_shared():
                     t[j] = x[i, j] * 2
                 with ir.For("j2", 0, 256, nid="L2") as j:
                     y[i, j] = t[j] + 1
-    assert ir.pop_ast().match(test)
+    assert ir.pop_ast().match(test.body)
 
     s = ir.Schedule(test)
     s.parallelize("L0", "threadIdx.y")
     s.parallelize("L1", "threadIdx.x")
     s.parallelize("L2", "threadIdx.x")
-    ast = ir.lower(s.ast(), target)
-    print(ast)
+    func = ir.lower(s.func(), target)
+    print(func)
 
     with ir.VarDef([
         ("x", (4, 256), "int32", "input", "gpu/global"),
@@ -541,15 +541,15 @@ def test_correct_shared():
                                "gpu/shared") as t:
                     t[i, j] = x[i, j] * 2
                     y[i, j] = t[i, j] + 1
-    assert ir.make_1d_var(ir.pop_ast()).match(ast)
+    assert ir.make_1d_var(ir.pop_ast()).match(func.body)
 
-    code, params = ir.codegen(ast, target)
+    code = ir.codegen(func, target)
     print(ir.debug.with_line_no(code))
     x_np = np.array([range(256)] * 4, dtype="int32")
     y_np = np.zeros((4, 256), dtype="int32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(code, params, device)
+    driver = ir.Driver(func, code, device)
     driver.set_params({"x": x_arr, "y": y_arr})
     driver.run()
     y_np = y_arr.numpy().reshape(4, 256)
@@ -575,10 +575,10 @@ def test_relax_shared_shape_to_constants():
                         with ir.For("j", n[()], 256, nid="L3") as j:
                             y[i, j] = 0
 
-    s = ir.Schedule(ir.pop_ast())
+    s = ir.Schedule(ir.Func(["n", "x", "y"], ir.pop_ast()))
     s.parallelize("L0", "threadIdx.x")
-    ast = ir.lower(s.ast(), target)
-    print(ast)
+    func = ir.lower(s.func(), target)
+    print(func)
 
     with ir.VarDef("n", (), "int32", "input", "byvalue") as n:
         with ir.VarDef([
@@ -595,9 +595,9 @@ def test_relax_shared_shape_to_constants():
                             y[i, j] = t[i, j] + 1
                         with ir.For("j", n[()], 256) as j:
                             y[i, j] = 0
-    assert ir.make_1d_var(ir.pop_ast()).match(ast)
+    assert ir.make_1d_var(ir.pop_ast()).match(func.body)
 
-    code, params = ir.codegen(ast, target)
+    code = ir.codegen(func, target)
     print(ir.debug.with_line_no(code))
     n_np = np.array(200, dtype="int32")
     x_np = np.array([range(256)] * 4, dtype="int32")
@@ -605,7 +605,7 @@ def test_relax_shared_shape_to_constants():
     n_arr = ir.Array(n_np, host)
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(code, params, device)
+    driver = ir.Driver(func, code, device)
     driver.set_params({"n": n_arr, "x": x_arr, "y": y_arr})
     driver.run()
     y_np = y_arr.numpy().reshape(4, 256)
@@ -645,14 +645,14 @@ def test_parallel_different_length():
                 with ir.For("j2", 0, 4, nid="L2") as j:
                     with ir.For("k", 0, 8, nid="L3") as k:
                         c[i, k] = c[i, k] + t[j] * b[j, k]
-    assert ir.pop_ast().match(test)
+    assert ir.pop_ast().match(test.body)
 
     s = ir.Schedule(test)
     s.parallelize("L0", "blockIdx.x")
     s.parallelize("L1", "threadIdx.x")
     s.parallelize("L3", "threadIdx.x")
-    ast = ir.lower(s.ast(), target)
-    print(ast)
+    func = ir.lower(s.func(), target)
+    print(func)
 
     with ir.VarDef([
         ("a", (4, 4), "int32", "input", "gpu/global"),
@@ -667,9 +667,9 @@ def test_parallel_different_length():
                     ir.Eval(ir.intrinsic("__syncwarp()"))
                     with ir.For("j", 0, 4) as j:
                         ir.Any()
-    assert ir.make_1d_var(ir.pop_ast()).match(ast)
+    assert ir.make_1d_var(ir.pop_ast()).match(func.body)
 
-    code, params = ir.codegen(ast, target)
+    code = ir.codegen(func, target)
     print(ir.debug.with_line_no(code))
     a_np = np.random.randint(0, 100, (4, 4)).astype("int32")
     b_np = np.random.randint(0, 100, (4, 8)).astype("int32")
@@ -677,7 +677,7 @@ def test_parallel_different_length():
     a_arr = ir.Array(a_np, device)
     b_arr = ir.Array(b_np, device)
     c_arr = ir.Array(c_np, device)
-    driver = ir.Driver(code, params, device)
+    driver = ir.Driver(func, code, device)
     driver.set_params({"a": a_arr, "b": b_arr, "c": c_arr})
     driver.run()
     c_np = c_arr.numpy().reshape(4, 8)
@@ -711,13 +711,13 @@ def test_parallel_broadcast():
                 t[0] = a[i, 0]
                 with ir.For("k", 0, 8, nid="L1") as k:
                     c[i, k] = c[i, k] + t[0] * b[0, k]
-    assert ir.pop_ast().match(test)
+    assert ir.pop_ast().match(test.body)
 
     s = ir.Schedule(test)
     s.parallelize("L0", "blockIdx.x")
     s.parallelize("L1", "threadIdx.x")
-    ast = ir.lower(s.ast(), target)
-    print(ast)
+    func = ir.lower(s.func(), target)
+    print(func)
 
     with ir.VarDef([
         ("a", (4, 1), "int32", "input", "gpu/global"),
@@ -731,9 +731,9 @@ def test_parallel_broadcast():
                         t[0] = a[blk, 0]
                     ir.Eval(ir.intrinsic("__syncwarp()"))
                     ir.Any()
-    assert ir.make_1d_var(ir.pop_ast()).match(ast)
+    assert ir.make_1d_var(ir.pop_ast()).match(func.body)
 
-    code, params = ir.codegen(ast, target)
+    code = ir.codegen(func, target)
     print(ir.debug.with_line_no(code))
     a_np = np.random.randint(0, 100, (4, 1)).astype("int32")
     b_np = np.random.randint(0, 100, (1, 8)).astype("int32")
@@ -741,7 +741,7 @@ def test_parallel_broadcast():
     a_arr = ir.Array(a_np, device)
     b_arr = ir.Array(b_np, device)
     c_arr = ir.Array(c_np, device)
-    driver = ir.Driver(code, params, device)
+    driver = ir.Driver(func, code, device)
     driver.set_params({"a": a_arr, "b": b_arr, "c": c_arr})
     driver.run()
     c_np = c_arr.numpy().reshape(4, 8)
@@ -768,12 +768,12 @@ def test_unbounded_length():
         ]) as (x, y):
             with ir.For("i", 0, n[()], nid="L1") as i:
                 y[i] = x[i] + 1
-    assert ir.pop_ast().match(test)
+    assert ir.pop_ast().match(test.body)
 
     s = ir.Schedule(test)
     s.parallelize("L1", "threadIdx.x")
     with pytest.raises(ir.InvalidProgram):
-        print(ir.lower(s.ast(), target))
+        print(ir.lower(s.func(), target))
 
 
 def test_parallel_reduction():
@@ -795,15 +795,15 @@ def test_parallel_reduction():
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 64, nid="L2") as j:
                 y[i] = y[i] + x[i, j]
-    assert ir.pop_ast().match(test)
+    assert ir.pop_ast().match(test.body)
 
     s = ir.Schedule(test)
     s.parallelize("L1", "blockIdx.x")
     s.parallelize("L2", "threadIdx.x")
-    ast = ir.lower(s.ast(), target)
-    print(ast)
+    func = ir.lower(s.func(), target)
+    print(func)
 
-    code, params = ir.codegen(ast, target)
+    code = ir.codegen(func, target)
     assert "atomicAdd" in code
     assert "+=" not in code
     print(ir.debug.with_line_no(code))
@@ -811,7 +811,7 @@ def test_parallel_reduction():
     y_np = np.zeros((4,), dtype="int32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(code, params, device)
+    driver = ir.Driver(func, code, device)
     driver.set_params({"x": x_arr, "y": y_arr})
     driver.run()
     y_np = y_arr.numpy()
@@ -839,14 +839,14 @@ def test_serial_reduction():
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 64, nid="L2") as j:
                 y[i] = y[i] + x[i, j]
-    assert ir.pop_ast().match(test)
+    assert ir.pop_ast().match(test.body)
 
     s = ir.Schedule(test)
     s.parallelize("L1", "blockIdx.x")
-    ast = ir.lower(s.ast(), target)
-    print(ast)
+    func = ir.lower(s.func(), target)
+    print(func)
 
-    code, params = ir.codegen(ast, target)
+    code = ir.codegen(func, target)
     assert "atomicAdd" not in code
     assert "+=" in code
     print(ir.debug.with_line_no(code))
@@ -854,7 +854,7 @@ def test_serial_reduction():
     y_np = np.zeros((4,), dtype="int32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(code, params, device)
+    driver = ir.Driver(func, code, device)
     driver.set_params({"x": x_arr, "y": y_arr})
     driver.run()
     y_np = y_arr.numpy()
@@ -882,15 +882,15 @@ def test_unroll_for():
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 64, nid="L2") as j:
                 y[i] = y[i] + x[i, j]
-    assert ir.pop_ast().match(test)
+    assert ir.pop_ast().match(test.body)
 
     s = ir.Schedule(test)
     s.parallelize("L1", "blockIdx.x")
     s.unroll("L2")
-    ast = ir.lower(s.ast(), target)
-    print(ast)
+    func = ir.lower(s.func(), target)
+    print(func)
 
-    code, params = ir.codegen(ast, target)
+    code = ir.codegen(func, target)
     assert "atomicAdd" not in code
     assert "+=" in code
     print(ir.debug.with_line_no(code))
@@ -898,7 +898,7 @@ def test_unroll_for():
     y_np = np.zeros((4,), dtype="int32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(code, params, device)
+    driver = ir.Driver(func, code, device)
     driver.set_params({"x": x_arr, "y": y_arr})
     driver.run()
     y_np = y_arr.numpy()
@@ -915,15 +915,15 @@ def test_vectorize():
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 64, nid="L2") as j:
                 y[i, j] = x[i, j] * 2
-    ast = ir.pop_ast()
+    func = ir.Func(["x", "y"], ir.pop_ast())
 
-    s = ir.Schedule(ast)
+    s = ir.Schedule(func)
     s.parallelize("L1", "blockIdx.x")
     s.vectorize("L2")
-    ast = ir.lower(s.ast(), target)
-    print(ast)
+    func = ir.lower(s.func(), target)
+    print(func)
 
-    code, params = ir.codegen(ast, target)
+    code = ir.codegen(func, target)
     print(ir.debug.with_line_no(code))
     assert "int4" in code
 
@@ -931,7 +931,7 @@ def test_vectorize():
     y_np = np.zeros((4, 64), dtype="int32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(code, params, device)
+    driver = ir.Driver(func, code, device)
     driver.set_params({"x": x_arr, "y": y_arr})
     driver.run()
     y_np = y_arr.numpy().reshape(4, 64)
@@ -948,15 +948,15 @@ def test_vectorize_with_non_vector_access():
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 64, nid="L2") as j:
                 y[i, j] = x[i] * 2
-    ast = ir.pop_ast()
+    func = ir.Func(["x", "y"], ir.pop_ast())
 
-    s = ir.Schedule(ast)
+    s = ir.Schedule(func)
     s.parallelize("L1", "blockIdx.x")
     s.vectorize("L2")
-    ast = ir.lower(s.ast(), target)
-    print(ast)
+    func = ir.lower(s.func(), target)
+    print(func)
 
-    code, params = ir.codegen(ast, target)
+    code = ir.codegen(func, target)
     print(ir.debug.with_line_no(code))
     assert "int4" in code
 
@@ -964,7 +964,7 @@ def test_vectorize_with_non_vector_access():
     y_np = np.zeros((4, 64), dtype="int32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(code, params, device)
+    driver = ir.Driver(func, code, device)
     driver.set_params({"x": x_arr, "y": y_arr})
     driver.run()
     y_np = y_arr.numpy().reshape(4, 64)
@@ -978,21 +978,21 @@ def test_vectorize_use_iter():
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 64, nid="L2") as j:
                 y[i, j] = i + j
-    ast = ir.pop_ast()
+    func = ir.Func(["y"], ir.pop_ast())
 
-    s = ir.Schedule(ast)
+    s = ir.Schedule(func)
     s.parallelize("L1", "blockIdx.x")
     s.vectorize("L2")
-    ast = ir.lower(s.ast(), target)
-    print(ast)
+    func = ir.lower(s.func(), target)
+    print(func)
 
-    code, params = ir.codegen(ast, target)
+    code = ir.codegen(func, target)
     print(ir.debug.with_line_no(code))
     assert "int4" in code
 
     y_np = np.zeros((4, 64), dtype="int32")
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(code, params, device)
+    driver = ir.Driver(func, code, device)
     driver.set_params({"y": y_arr})
     driver.run()
     y_np = y_arr.numpy().reshape(4, 64)
@@ -1009,15 +1009,15 @@ def test_vectorize_fallback_to_shorter_when_not_divisible():
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 62, nid="L2") as j:
                 y[i, j] = x[i, j] * 2
-    ast = ir.pop_ast()
+    func = ir.Func(["x", "y"], ir.pop_ast())
 
-    s = ir.Schedule(ast)
+    s = ir.Schedule(func)
     s.parallelize("L1", "blockIdx.x")
     s.vectorize("L2")
-    ast = ir.lower(s.ast(), target)
-    print(ast)
+    func = ir.lower(s.func(), target)
+    print(func)
 
-    code, params = ir.codegen(ast, target)
+    code = ir.codegen(func, target)
     print(ir.debug.with_line_no(code))
     assert "int2" in code
 
@@ -1025,7 +1025,7 @@ def test_vectorize_fallback_to_shorter_when_not_divisible():
     y_np = np.zeros((4, 62), dtype="int32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(code, params, device)
+    driver = ir.Driver(func, code, device)
     driver.set_params({"x": x_arr, "y": y_arr})
     driver.run()
     y_np = y_arr.numpy().reshape(4, 62)
@@ -1042,15 +1042,15 @@ def test_vectorize_fallback_to_shorter_when_not_aligned():
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 64, nid="L2") as j:
                 y[i, j] = x[i, j + 2] * 2
-    ast = ir.pop_ast()
+    func = ir.Func(["x", "y"], ir.pop_ast())
 
-    s = ir.Schedule(ast)
+    s = ir.Schedule(func)
     s.parallelize("L1", "blockIdx.x")
     s.vectorize("L2")
-    ast = ir.lower(s.ast(), target)
-    print(ast)
+    func = ir.lower(s.func(), target)
+    print(func)
 
-    code, params = ir.codegen(ast, target)
+    code = ir.codegen(func, target)
     print(ir.debug.with_line_no(code))
     assert "int2" in code
 
@@ -1058,7 +1058,7 @@ def test_vectorize_fallback_to_shorter_when_not_aligned():
     y_np = np.zeros((4, 64), dtype="int32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(code, params, device)
+    driver = ir.Driver(func, code, device)
     driver.set_params({"x": x_arr, "y": y_arr})
     driver.run()
     y_np = y_arr.numpy().reshape(4, 64)

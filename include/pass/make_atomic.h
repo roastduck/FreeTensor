@@ -4,6 +4,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include <func.h>
 #include <mutator.h>
 #include <visitor.h>
 
@@ -34,6 +35,10 @@ class MakeAtomic : public Mutator {
  * Mark all racing ReduceTo nodes to be atomic
  */
 Stmt makeAtomic(const Stmt &op);
+
+inline Func makeAtomic(const Func &func) {
+    return makeFunc(func->params_, makeAtomic(func->body_));
+}
 
 } // namespace ir
 

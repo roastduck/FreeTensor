@@ -5,6 +5,7 @@
 #include <unordered_map>
 
 #include <cursor.h>
+#include <func.h>
 #include <stmt.h>
 
 namespace ir {
@@ -14,15 +15,25 @@ enum MoveToSide : int { Before, After };
 enum VarSplitMode : int { FixedSize, RelaxedSize };
 
 class Schedule {
+    Func func_;
     Stmt ast_;
 
   public:
-    Schedule(const Stmt &ast) : ast_(ast) {}
+    Schedule(const Func &func) : func_(func), ast_(func->body_) {}
+    Schedule(const Stmt &ast) : func_(nullptr), ast_(ast) {}
 
     /**
-     * @return : The AST being transformed
+     * @return : The function being transformed
      */
-    const Stmt &ast() const { return ast_; }
+    Func func() const {
+        ASSERT(func_.isValid());
+        return makeFunc(func_->params_, ast_);
+    }
+
+    /**
+     * @return : The statements being transformed, without a function signature
+     */
+    Stmt ast() const { return ast_; }
 
     /**
      * Find all nodes in the current AST satisfying a given condition

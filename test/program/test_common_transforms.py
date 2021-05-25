@@ -22,7 +22,8 @@ def test_tiling():
 
     i, j = "Li", "Lj"
 
-    s = ir.Schedule(ir.pop_ast())
+    func = ir.Func(["a", "b", "c"], ir.pop_ast())
+    s = ir.Schedule(func)
     i0, i1 = s.split(i, 32)
     j0, j1 = s.split(j, 32)
     s.reorder([i0, j0, i1, j1])
@@ -31,8 +32,8 @@ def test_tiling():
     s.cache(i1, "a", "cpu")
     s.cache(i1, "b", "cpu")
 
-    ast = ir.lower(s.ast(), target)
-    print(ast)
+    func = ir.lower(s.func(), target)
+    print(func)
 
     with ir.VarDef([
         ("a", (256, 256), "float32", "input", "cpu"),
@@ -62,9 +63,9 @@ def test_tiling():
                                            0] = cw[0, 0] + ar[i1, k] * br[k, j1]
                                     c[i1 + 32 * i0, 32 * j0 + j1] = cw[0, 0]
     std = ir.make_reduction(ir.pop_ast())
-    assert std.match(ast)
+    assert std.match(func.body)
 
-    code, params = ir.codegen(ast, target)
+    code = ir.codegen(func, target)
     print(code)
     a_np = np.random.rand(256, 256).astype("float32")
     b_np = np.random.rand(256, 256).astype("float32")
@@ -72,7 +73,7 @@ def test_tiling():
     a_arr = ir.Array(a_np, device)
     b_arr = ir.Array(b_np, device)
     c_arr = ir.Array(c_np, device)
-    driver = ir.Driver(code, params, device)
+    driver = ir.Driver(func, code, device)
     driver.set_params({"a": a_arr, "b": b_arr, "c": c_arr})
     driver.run()
     c_np = c_arr.numpy().reshape(256, 256)
@@ -95,12 +96,13 @@ def test_tiled_reduction():
 
     i = "Li"
 
-    s = ir.Schedule(ir.pop_ast())
+    func = ir.Func(["x", "y"], ir.pop_ast())
+    s = ir.Schedule(func)
     i0, i1 = s.split(i, 64)
     s.cache_reduction(i1, "y", "cpu")
 
-    ast = ir.lower(s.ast(), target)
-    print(ast)
+    func = ir.lower(s.func(), target)
+    print(func)
 
     with ir.VarDef([
         ("x", (256,), "float32", "input", "cpu"),
@@ -114,15 +116,15 @@ def test_tiled_reduction():
                     yw[0] = yw[0] + x[i1 + 64 * i0]
                 y[0] = y[0] + yw[0]
     std = ir.make_reduction(ir.pop_ast())
-    assert std.match(ast)
+    assert std.match(func.body)
 
-    code, params = ir.codegen(ast, target)
+    code = ir.codegen(func, target)
     print(code)
     x_np = np.random.rand(256).astype("float32")
     y_np = np.zeros((1,), dtype="float32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(code, params, device)
+    driver = ir.Driver(func, code, device)
     driver.set_params({"x": x_arr, "y": y_arr})
     driver.run()
     y_np = y_arr.numpy()
@@ -146,7 +148,8 @@ def test_parallel_reduction():
 
     i, S0 = "Li", "S0"
 
-    s = ir.Schedule(ir.pop_ast())
+    func = ir.Func(["x", "y"], ir.pop_ast())
+    s = ir.Schedule(func)
     i0, i1 = s.split(i, 64)
     init, final, _ = s.cache_reduction(i1, "y", "cpu")
     final = s.move_to(final, ir.MoveToSide.After, i0)
@@ -154,8 +157,8 @@ def test_parallel_reduction():
 
     s.parallelize(i0, "openmp")
 
-    ast = ir.lower(s.ast(), target)
-    print(ast)
+    func = ir.lower(s.func(), target)
+    print(func)
 
     with ir.VarDef([
         ("x", (256,), "float32", "input", "cpu"),
@@ -170,15 +173,15 @@ def test_parallel_reduction():
             with ir.For("i0", 0, 4) as i0:
                 y[0] = y[0] + yw[i0, 0]
     std = ir.make_reduction(ir.pop_ast())
-    assert std.match(ast)
+    assert std.match(func.body)
 
-    code, params = ir.codegen(ast, target)
+    code = ir.codegen(func, target)
     print(code)
     x_np = np.random.rand(256).astype("float32")
     y_np = np.zeros((1,), dtype="float32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(code, params, device)
+    driver = ir.Driver(func, code, device)
     driver.set_params({"x": x_arr, "y": y_arr})
     driver.run()
     y_np = y_arr.numpy()
@@ -212,7 +215,8 @@ def test_dynamic_tiling():
 
     i, j = "Li", "Lj"
 
-    s = ir.Schedule(ir.pop_ast())
+    func = ir.Func(["n", "k", "m", "a", "b", "c"], ir.pop_ast())
+    s = ir.Schedule(func)
     i0, i1 = s.split(i, 32)
     j0, j1 = s.split(j, 32)
     s.reorder([i0, j0, i1, j1])
@@ -221,12 +225,12 @@ def test_dynamic_tiling():
     s.cache(i1, "a", "cpu")
     s.cache(i1, "b", "cpu")
 
-    ast = s.ast()
-    print(ast)
-    ast = ir.lower(ast, target)
-    print(ast)
+    func = s.func()
+    print(func)
+    func = ir.lower(func, target)
+    print(func)
 
-    code, params = ir.codegen(ast, target)
+    code = ir.codegen(func, target)
     print(code)
     n_np = np.array(300, dtype="int32")
     k_np = np.array(400, dtype="int32")
@@ -240,7 +244,7 @@ def test_dynamic_tiling():
     a_arr = ir.Array(a_np, device)
     b_arr = ir.Array(b_np, device)
     c_arr = ir.Array(c_np, device)
-    driver = ir.Driver(code, params, device)
+    driver = ir.Driver(func, code, device)
     driver.set_params({
         "n": n_arr,
         "k": k_arr,
@@ -274,7 +278,8 @@ def test_collaborative_fetch():
 
     i, j, k = "Li", "Lj", "Lk"
 
-    s = ir.Schedule(ir.pop_ast())
+    func = ir.Func(["a", "b", "c"], ir.pop_ast())
+    s = ir.Schedule(func)
     k0, k1 = s.split(k, 32)
     fill_a, _, _ = s.cache(k1, "a", "gpu/shared")
     fill_b, _, _ = s.cache(k1, "b", "gpu/shared")
@@ -290,10 +295,10 @@ def test_collaborative_fetch():
                nid == fill_b),
         "threadIdx.y",
     )
-    ast = ir.lower(s.ast(), target)
-    print(ast)
+    func = ir.lower(s.func(), target)
+    print(func)
 
-    code, params = ir.codegen(ast, target)
+    code = ir.codegen(func, target)
     print(ir.debug.with_line_no(code))
     a_np = np.random.rand(32, 256).astype("float32")
     b_np = np.random.rand(256, 32).astype("float32")
@@ -301,7 +306,7 @@ def test_collaborative_fetch():
     a_arr = ir.Array(a_np, device)
     b_arr = ir.Array(b_np, device)
     c_arr = ir.Array(c_np, device)
-    driver = ir.Driver(code, params, device)
+    driver = ir.Driver(func, code, device)
     driver.set_params({"a": a_arr, "b": b_arr, "c": c_arr})
     driver.run()
     c_np = c_arr.numpy().reshape(32, 32)

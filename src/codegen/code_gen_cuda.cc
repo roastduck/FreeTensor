@@ -224,8 +224,9 @@ void CodeGenCUDA::visit(const VarDef &op) {
     }
 }
 
-std::pair<std::string, std::vector<std::string>> codeGenCUDA(const Stmt &op) {
-    CodeGenCUDA visitor;
+std::string codeGenCUDA(const Func &func) {
+    CodeGenCUDA visitor(func->params_);
+    auto &&op = func->body_;
     visitor.beginBlock();
     visitor(op);
     visitor.endBlock();
@@ -294,7 +295,7 @@ extern "C" {
             return os.str();
         }
     });
-    return std::make_pair(header + body + tailer, visitor.params());
+    return header + body + tailer;
 }
 
 } // namespace ir

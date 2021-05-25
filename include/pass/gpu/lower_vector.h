@@ -4,6 +4,7 @@
 #include <unordered_map>
 
 #include <analyze/analyze_linear.h>
+#include <func.h>
 #include <pass/z3_simplify.h>
 
 namespace ir {
@@ -39,6 +40,10 @@ class LowerVector : public Z3Simplify {
 };
 
 Stmt lowerVector(const Stmt &op);
+
+inline Func lowerVector(const Func &func) {
+    return makeFunc(func->params_, lowerVector(func->body_));
+}
 
 } // namespace gpu
 

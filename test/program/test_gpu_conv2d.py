@@ -28,14 +28,14 @@ def test_manual_static():
     W_np = np.random.uniform(size=(kernel, kernel, in_channel,
                                    out_channel)).astype("float32")
 
-    def eval(ast, print_code=False, time=False):
-        ast = ir.lower(ast, target)
+    def eval(func, print_code=False, time=False):
+        func = ir.lower(func, target)
         if print_code:
-            print(ast, flush=True)
-        code, params = ir.codegen(ast, target)
+            print(func, flush=True)
+        code = ir.codegen(func, target)
         if print_code:
             print(ir.debug.with_line_no(code), flush=True)
-        driver = ir.Driver(code, params, device)
+        driver = ir.Driver(func, code, device)
         B_np = np.zeros((out_size, out_size, out_channel, batch),
                         dtype="float32")
         A_arr = ir.Array(A_np, device)
@@ -96,7 +96,7 @@ def test_manual_static():
                                         B[yy, xx, ff, nn] = (
                                             B[yy, xx, ff, nn] +
                                             A[y, x, rc, nn] * W[ry, rx, rc, ff])
-    algo = ir.pop_ast()
+    algo = ir.Func(["A", "W", "B"], ir.pop_ast())
 
     # TODO: Use this
     #
@@ -178,13 +178,13 @@ def test_manual_static():
     s.blend(txz)
     s.blend(tyz)
 
-    ast = s.ast()
-    result = eval(ast, True, True)  # Should be about 10ms on V100
+    func = s.func()
+    result = eval(func, True, True)  # Should be about 10ms on V100
 
     s = ir.Schedule(algo)
     s.parallelize("Ly", "blockIdx.y")
     s.parallelize("Lx", "blockIdx.x")
     s.parallelize("Lf", "threadIdx.x")
-    baseline = s.ast()
+    baseline = s.func()
     result_std = eval(baseline)
     assert np.all(np.isclose(result, result_std))

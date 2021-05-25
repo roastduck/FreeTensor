@@ -2,10 +2,14 @@
 #define CODE_GEN_CPU_H
 
 #include <codegen/code_gen_c.h>
+#include <func.h>
 
 namespace ir {
 
 class CodeGenCPU : public CodeGenC {
+  public:
+    CodeGenCPU(const std::vector<std::string> &params) : CodeGenC(params) {}
+
   protected:
     void visit(const ReduceTo &op) override;
     void visit(const For &op) override;
@@ -14,9 +18,9 @@ class CodeGenCPU : public CodeGenC {
 /**
  * Generate target function code
  *
- * @return : (source, list of params)
+ * @return : source
  */
-std::pair<std::string, std::vector<std::string>> codeGenCPU(const Stmt &op);
+std::string codeGenCPU(const Func &func);
 
 } // namespace ir
 

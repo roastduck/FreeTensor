@@ -284,3 +284,7 @@ def intrinsic(fmt, *params, **kws):
 
 def any():
     return ffi.makeAnyExpr()
+
+
+def Func(params, body):
+    return ffi.makeFunc(params, body)

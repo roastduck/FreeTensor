@@ -9,13 +9,13 @@ def test_binary_op():
         ir.declare_var(y, (), "int32", "output", "cpu")
         y[()] = x[()] * 2 + 1
 
-    code, params = ir.codegen(ir.lower(ir.transform(test), ir.CPU()), ir.CPU())
-    # print(code)
+    func = ir.lower(ir.transform(test), ir.CPU())
+    code = ir.codegen(func, ir.CPU())
     x_np = np.array(5, dtype="int32")
     y_np = np.array(0, dtype="int32")
     x_arr = ir.Array(x_np, ir.Device(ir.CPU()))
     y_arr = ir.Array(y_np, ir.Device(ir.CPU()))
-    driver = ir.Driver(code, params, ir.Device(ir.CPU()))
+    driver = ir.Driver(func, code, ir.Device(ir.CPU()))
     driver.set_params({"x": x_arr, "y": y_arr})
     driver.run()
     y_np = y_arr.numpy()
@@ -36,13 +36,13 @@ def test_bool_op():
         y[2] = x[0] != 0 and x[1] != 0 and x[2] != 0
         y[3] = x[2] != 0 or x[2] != 0 or x[3] != 0
 
-    code, params = ir.codegen(ir.lower(ir.transform(test), ir.CPU()), ir.CPU())
-    # print(code)
+    func = ir.lower(ir.transform(test), ir.CPU())
+    code = ir.codegen(func, ir.CPU())
     x_np = np.array([1, 1, 0, 1], dtype="int32")
     y_np = np.array([0, 0, 0, 0], dtype="int32")
     x_arr = ir.Array(x_np, ir.Device(ir.CPU()))
     y_arr = ir.Array(y_np, ir.Device(ir.CPU()))
-    driver = ir.Driver(code, params, ir.Device(ir.CPU()))
+    driver = ir.Driver(func, code, ir.Device(ir.CPU()))
     driver.set_params({"x": x_arr, "y": y_arr})
     driver.run()
     y_np = y_arr.numpy()
@@ -62,13 +62,13 @@ def test_unary_op():
         for i in range(0, 4):
             y[i] = not x[i] != 0
 
-    code, params = ir.codegen(ir.lower(ir.transform(test), ir.CPU()), ir.CPU())
-    # print(code)
+    func = ir.lower(ir.transform(test), ir.CPU())
+    code = ir.codegen(func, ir.CPU())
     x_np = np.array([1, 0, 1, 0], dtype="int32")
     y_np = np.array([0, 0, 0, 0], dtype="int32")
     x_arr = ir.Array(x_np, ir.Device(ir.CPU()))
     y_arr = ir.Array(y_np, ir.Device(ir.CPU()))
-    driver = ir.Driver(code, params, ir.Device(ir.CPU()))
+    driver = ir.Driver(func, code, ir.Device(ir.CPU()))
     driver.set_params({"x": x_arr, "y": y_arr})
     driver.run()
     y_np = y_arr.numpy()
@@ -90,13 +90,13 @@ def test_comparison_op():
         y[2] = x[1] == x[1] != x[1] == x[1]
         y[3] = x[0] == x[0] > x[1]
 
-    code, params = ir.codegen(ir.lower(ir.transform(test), ir.CPU()), ir.CPU())
-    # print(code)
+    func = ir.lower(ir.transform(test), ir.CPU())
+    code = ir.codegen(func, ir.CPU())
     x_np = np.array([0, 1, 2, 3], dtype="int32")
     y_np = np.array([1, 0, 0, 0], dtype="int32")
     x_arr = ir.Array(x_np, ir.Device(ir.CPU()))
     y_arr = ir.Array(y_np, ir.Device(ir.CPU()))
-    driver = ir.Driver(code, params, ir.Device(ir.CPU()))
+    driver = ir.Driver(func, code, ir.Device(ir.CPU()))
     driver.set_params({"x": x_arr, "y": y_arr})
     driver.run()
     y_np = y_arr.numpy()

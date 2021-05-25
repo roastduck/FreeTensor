@@ -7,6 +7,7 @@
 
 #include <analyze/analyze_linear.h>
 #include <analyze/type_infer.h>
+#include <func.h>
 #include <math/bounds.h>
 #include <mutator.h>
 #include <visitor.h>
@@ -268,6 +269,10 @@ simplifyAndGetBounds(const Stmt &op);
 Stmt builtinSimplify(const Stmt &op);
 
 Stmt simplifyPass(const Stmt &op);
+
+inline Func simplifyPass(const Func &func) {
+    return makeFunc(func->params_, simplifyPass(func->body_));
+}
 
 } // namespace ir
 

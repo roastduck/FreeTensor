@@ -9,14 +9,13 @@ def test_hello_world():
         x[2, 3] = 2.0
         x[1, 0] = 3.0
 
-    ast = ir.lower(ir.transform(test), ir.CPU())
-    print(ast)
-    code, params = ir.codegen(ast, ir.CPU())
-    print(code)
+    func = ir.lower(ir.transform(test), ir.CPU())
+    print(func)
+    code = ir.codegen(func, ir.CPU())
 
     x_np = np.zeros((4, 4), dtype="float32")
     x_arr = ir.Array(x_np, ir.Device(ir.CPU()))
-    driver = ir.Driver(code, params, ir.Device(ir.CPU()))
+    driver = ir.Driver(func, code, ir.Device(ir.CPU()))
     driver.set_params({"x": x_arr})
     driver.run()
     x_np = x_arr.numpy().reshape(4, 4)
@@ -37,13 +36,13 @@ def test_scalar_op():
         ir.declare_var(y, (), "int32", "output", "cpu")
         y[()] = x[()] * 2 + 1
 
-    code, params = ir.codegen(ir.lower(ir.transform(test), ir.CPU()), ir.CPU())
-    # print(code)
+    func = ir.lower(ir.transform(test), ir.CPU())
+    code = ir.codegen(func, ir.CPU())
     x_np = np.array(5, dtype="int32")
     y_np = np.array(0, dtype="int32")
     x_arr = ir.Array(x_np, ir.Device(ir.CPU()))
     y_arr = ir.Array(y_np, ir.Device(ir.CPU()))
-    driver = ir.Driver(code, params, ir.Device(ir.CPU()))
+    driver = ir.Driver(func, code, ir.Device(ir.CPU()))
     driver.set_params({"x": x_arr, "y": y_arr})
     driver.run()
     y_np = y_arr.numpy()
@@ -62,13 +61,13 @@ def test_for():
         for i in range(0, 4):
             y[i] = x[i] + 1
 
-    code, params = ir.codegen(ir.lower(ir.transform(test), ir.CPU()), ir.CPU())
-    print(code)
+    func = ir.lower(ir.transform(test), ir.CPU())
+    code = ir.codegen(func, ir.CPU())
     x_np = np.array([1, 2, 3, 4], dtype="int32")
     y_np = np.zeros((4,), dtype="int32")
     x_arr = ir.Array(x_np, ir.Device(ir.CPU()))
     y_arr = ir.Array(y_np, ir.Device(ir.CPU()))
-    driver = ir.Driver(code, params, ir.Device(ir.CPU()))
+    driver = ir.Driver(func, code, ir.Device(ir.CPU()))
     driver.set_params({"x": x_arr, "y": y_arr})
     driver.run()
     y_np = y_arr.numpy()
@@ -90,11 +89,11 @@ def test_if():
             else:
                 y[i] = 1
 
-    code, params = ir.codegen(ir.lower(ir.transform(test), ir.CPU()), ir.CPU())
-    print(code)
+    func = ir.lower(ir.transform(test), ir.CPU())
+    code = ir.codegen(func, ir.CPU())
     y_np = np.zeros((4,), dtype="int32")
     y_arr = ir.Array(y_np, ir.Device(ir.CPU()))
-    driver = ir.Driver(code, params, ir.Device(ir.CPU()))
+    driver = ir.Driver(func, code, ir.Device(ir.CPU()))
     driver.set_params({"y": y_arr})
     driver.run()
     y_np = y_arr.numpy()
@@ -113,11 +112,11 @@ def test_for_range():
         for i in range(4):
             x[i] += 1
 
-    code, params = ir.codegen(ir.lower(ir.transform(test), ir.CPU()), ir.CPU())
-    print(code)
+    func = ir.lower(ir.transform(test), ir.CPU())
+    code = ir.codegen(func, ir.CPU())
     x_np = np.array([1, 2, 3, 4], dtype="int32")
     x_arr = ir.Array(x_np, ir.Device(ir.CPU()))
-    driver = ir.Driver(code, params, ir.Device(ir.CPU()))
+    driver = ir.Driver(func, code, ir.Device(ir.CPU()))
     driver.set_params({"x": x_arr})
     driver.run()
     x_np = x_arr.numpy()

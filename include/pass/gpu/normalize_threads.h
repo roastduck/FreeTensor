@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include <func.h>
 #include <mutator.h>
 #include <visitor.h>
 
@@ -41,6 +42,10 @@ class CheckThreadNum : public Visitor {
 };
 
 Stmt normalizeThreads(const Stmt &op);
+
+inline Func normalizeThreads(const Func &func) {
+    return makeFunc(func->params_, normalizeThreads(func->body_));
+}
 
 } // namespace gpu
 

@@ -10,6 +10,7 @@ namespace ir {
 enum class ASTNodeType : int {
     Any,
     AnyExpr,
+    Func,
     StmtSeq,
     VarDef,
     Var,

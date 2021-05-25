@@ -1,9 +1,10 @@
 import ast
 import numpy as np
+import inspect
 import sourceinspect as ins
 from typing import Sequence
 
-from .nodes import _VarDef, Var, pop_ast, For, If, Else, MarkNid, ctx_stack as node_ctx
+from .nodes import _VarDef, Var, pop_ast, For, If, Else, MarkNid, ctx_stack as node_ctx, Func
 from .utils import *
 import ffi
 import sys
@@ -507,4 +508,5 @@ def transform(func):
     src = remove_indent(ins.getsource(func))
     tree = ast.parse(src)
     ASTTransformer().visit(tree)
-    return pop_ast()
+    params = list(inspect.signature(func).parameters)
+    return Func(params, pop_ast())

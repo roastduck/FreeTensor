@@ -5,6 +5,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include <func.h>
 #include <mutator.h>
 #include <visitor.h>
 
@@ -34,6 +35,10 @@ class SinkVar : public Mutator {
 };
 
 Stmt sinkVar(const Stmt &op);
+
+inline Func sinkVar(const Func &func) {
+    return makeFunc(func->params_, sinkVar(func->body_));
+}
 
 } // namespace ir
 

@@ -12,13 +12,13 @@ def test_not_found():
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ir.For("i", 0, 4, nid="L1") as i:
             y[i] = x[i] + 1
-    ast = ir.pop_ast()
+    func = ir.Func(["x", "y"], ir.pop_ast())
 
-    s = ir.Schedule(ast)
-    code, params = ir.codegen(s.ast(), target)
+    s = ir.Schedule(func)
+    code = ir.codegen(s.func(), target)
     with pytest.raises(ir.InvalidSchedule):
         s.unroll("L0")
-    code_, params_ = ir.codegen(s.ast(), target)
+    code_ = ir.codegen(s.func(), target)
 
     assert code == code_
 
@@ -29,13 +29,13 @@ def test_not_constant():
         with ir.For("i", 0, n[()], nid="L1") as i:
             y[i] = i
 
-    ast = ir.pop_ast()
-    print(ast)
-    s = ir.Schedule(ast)
-    code, params = ir.codegen(s.ast(), target)
+    func = ir.Func(["n", "y"], ir.pop_ast())
+    print(func)
+    s = ir.Schedule(func)
+    code = ir.codegen(s.func(), target)
     with pytest.raises(ir.InvalidSchedule):
         s.unroll("L1")
-    code_, params_ = ir.codegen(s.ast(), target)
+    code_ = ir.codegen(s.func(), target)
 
     assert code == code_
 
@@ -47,13 +47,13 @@ def test_unbounded_length():
             with ir.For("j", i, 4, nid="L2") as j:
                 x[i, j] = 1
 
-    ast = ir.pop_ast()
-    print(ast)
-    s = ir.Schedule(ast)
-    code, params = ir.codegen(s.ast(), target)
+    func = ir.Func(["n", "x"], ir.pop_ast())
+    print(func)
+    s = ir.Schedule(func)
+    code = ir.codegen(s.func(), target)
     with pytest.raises(ir.InvalidSchedule):
         s.unroll("L2")
-    code_, params_ = ir.codegen(s.ast(), target)
+    code_ = ir.codegen(s.func(), target)
 
     assert code == code_
 
@@ -64,11 +64,11 @@ def test_constant_length():
         with ir.For("i", n[()], n[()] + 4, nid="L1") as i:
             x[i] = 1
 
-    ast = ir.pop_ast()
-    print(ast)
-    s = ir.Schedule(ast)
-    code, params = ir.codegen(s.ast(), target)
+    func = ir.Func(["n", "x"], ir.pop_ast())
+    print(func)
+    s = ir.Schedule(func)
+    code = ir.codegen(s.func(), target)
     s.unroll("L1")
-    code_, params_ = ir.codegen(s.ast(), target)
+    code_ = ir.codegen(s.func(), target)
 
     assert code != code_

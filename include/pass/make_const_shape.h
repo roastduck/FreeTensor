@@ -1,6 +1,7 @@
 #ifndef MAKE_CONST_SHAPE_H
 #define MAKE_CONST_SHAPE_H
 
+#include <func.h>
 #include <mutator.h>
 #include <pass/simplify.h>
 
@@ -24,6 +25,11 @@ class MakeConstShape : public Mutator {
 };
 
 Stmt makeConstShape(const Stmt &op, const std::vector<MemType> &mtypes);
+
+inline Func makeConstShape(const Func &func,
+                           const std::vector<MemType> &mtypes) {
+    return makeFunc(func->params_, makeConstShape(func->body_, mtypes));
+}
 
 } // namespace ir
 
