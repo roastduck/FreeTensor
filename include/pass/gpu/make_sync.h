@@ -53,7 +53,7 @@ class MakeSync : public Mutator {
 Stmt makeSync(const Stmt &op);
 
 inline Func makeSync(const Func &func) {
-    return makeFunc(func->params_, makeSync(func->body_));
+    return makeFunc(func->name_, func->params_, makeSync(func->body_));
 }
 
 } // namespace gpu

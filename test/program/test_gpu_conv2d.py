@@ -96,7 +96,7 @@ def test_manual_static():
                                         B[yy, xx, ff, nn] = (
                                             B[yy, xx, ff, nn] +
                                             A[y, x, rc, nn] * W[ry, rx, rc, ff])
-    algo = ir.Func(["A", "W", "B"], ir.pop_ast())
+    algo = ir.Func("main", ["A", "W", "B"], ir.pop_ast())
 
     # TODO: Use this
     #

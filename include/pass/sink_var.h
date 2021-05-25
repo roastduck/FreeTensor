@@ -37,7 +37,7 @@ class SinkVar : public Mutator {
 Stmt sinkVar(const Stmt &op);
 
 inline Func sinkVar(const Func &func) {
-    return makeFunc(func->params_, sinkVar(func->body_));
+    return makeFunc(func->name_, func->params_, sinkVar(func->body_));
 }
 
 } // namespace ir

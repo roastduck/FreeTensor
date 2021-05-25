@@ -22,7 +22,7 @@ def test_tiling():
 
     i, j = "Li", "Lj"
 
-    func = ir.Func(["a", "b", "c"], ir.pop_ast())
+    func = ir.Func("main", ["a", "b", "c"], ir.pop_ast())
     s = ir.Schedule(func)
     i0, i1 = s.split(i, 32)
     j0, j1 = s.split(j, 32)
@@ -96,7 +96,7 @@ def test_tiled_reduction():
 
     i = "Li"
 
-    func = ir.Func(["x", "y"], ir.pop_ast())
+    func = ir.Func("main", ["x", "y"], ir.pop_ast())
     s = ir.Schedule(func)
     i0, i1 = s.split(i, 64)
     s.cache_reduction(i1, "y", "cpu")
@@ -148,7 +148,7 @@ def test_parallel_reduction():
 
     i, S0 = "Li", "S0"
 
-    func = ir.Func(["x", "y"], ir.pop_ast())
+    func = ir.Func("main", ["x", "y"], ir.pop_ast())
     s = ir.Schedule(func)
     i0, i1 = s.split(i, 64)
     init, final, _ = s.cache_reduction(i1, "y", "cpu")
@@ -215,7 +215,7 @@ def test_dynamic_tiling():
 
     i, j = "Li", "Lj"
 
-    func = ir.Func(["n", "k", "m", "a", "b", "c"], ir.pop_ast())
+    func = ir.Func("main", ["n", "k", "m", "a", "b", "c"], ir.pop_ast())
     s = ir.Schedule(func)
     i0, i1 = s.split(i, 32)
     j0, j1 = s.split(j, 32)
@@ -278,7 +278,7 @@ def test_collaborative_fetch():
 
     i, j, k = "Li", "Lj", "Lk"
 
-    func = ir.Func(["a", "b", "c"], ir.pop_ast())
+    func = ir.Func("main", ["a", "b", "c"], ir.pop_ast())
     s = ir.Schedule(func)
     k0, k1 = s.split(k, 32)
     fill_a, _, _ = s.cache(k1, "a", "gpu/shared")

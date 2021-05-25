@@ -7,7 +7,7 @@ def test_hello_world():
         x[2, 3] = 2.0
         x[1, 0] = 3.0
 
-    func = ir.lower(ir.Func(["x"], ir.pop_ast()), ir.CPU())
+    func = ir.lower(ir.Func("main", ["x"], ir.pop_ast()), ir.CPU())
     print(func)
     code = ir.codegen(func, ir.CPU())
     print(code)
@@ -30,7 +30,7 @@ def test_scalar_op():
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         y[()] = x[()] * 2 + 1
 
-    func = ir.lower(ir.Func(["x", "y"], ir.pop_ast()), ir.CPU())
+    func = ir.lower(ir.Func("main", ["x", "y"], ir.pop_ast()), ir.CPU())
     code = ir.codegen(func, ir.CPU())
     print(code)
     x_np = np.array(5, dtype="int32")
@@ -51,7 +51,7 @@ def test_for():
         with ir.For("i", 0, 4) as i:
             y[i] = x[i] + 1
 
-    func = ir.lower(ir.Func(["x", "y"], ir.pop_ast()), ir.CPU())
+    func = ir.lower(ir.Func("main", ["x", "y"], ir.pop_ast()), ir.CPU())
     code = ir.codegen(func, ir.CPU())
     print(code)
     x_np = np.array([1, 2, 3, 4], dtype="int32")
@@ -75,7 +75,7 @@ def test_if():
             with ir.Else():
                 y[i] = 1
 
-    func = ir.lower(ir.Func(["y"], ir.pop_ast()), ir.CPU())
+    func = ir.lower(ir.Func("main", ["y"], ir.pop_ast()), ir.CPU())
     code = ir.codegen(func, ir.CPU())
     print(code)
     y_np = np.zeros((4,), dtype="int32")

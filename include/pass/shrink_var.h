@@ -59,7 +59,7 @@ Stmt shrinkVar(const Stmt &op);
 Stmt shrinkSingleVar(const Stmt &op, const std::string &varDefId);
 
 inline Func shrinkVar(const Func &func) {
-    return makeFunc(func->params_, shrinkVar(func->body_));
+    return makeFunc(func->name_, func->params_, shrinkVar(func->body_));
 }
 
 } // namespace ir

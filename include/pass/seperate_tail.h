@@ -97,7 +97,7 @@ class SeperateTail : public Mutator {
 Stmt seperateTail(const Stmt &op);
 
 inline Func seperateTail(const Func &func) {
-    return makeFunc(func->params_, seperateTail(func->body_));
+    return makeFunc(func->name_, func->params_, seperateTail(func->body_));
 }
 
 } // namespace ir

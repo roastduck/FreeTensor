@@ -286,5 +286,5 @@ def any():
     return ffi.makeAnyExpr()
 
 
-def Func(params, body):
-    return ffi.makeFunc(params, body)
+def Func(name, params, body):
+    return ffi.makeFunc(name, params, body)

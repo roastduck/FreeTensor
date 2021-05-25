@@ -108,7 +108,7 @@ class CorrectShared : public Mutator {
 Stmt correctShared(const Stmt &op);
 
 inline Func correctShared(const Func &func) {
-    return makeFunc(func->params_, correctShared(func->body_));
+    return makeFunc(func->name_, func->params_, correctShared(func->body_));
 }
 
 } // namespace gpu

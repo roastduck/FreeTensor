@@ -59,8 +59,10 @@ void init_ffi_ast(py::module_ &m) {
     pyAST.def_readonly("debug_creator", &ASTNode::debugCreator_);
 #endif
 
-    pyFunc.def_readonly("params", &FuncNode::params_)
+    pyFunc.def_readonly("name", &FuncNode::name_)
+        .def_readonly("params", &FuncNode::params_)
         .def_readonly("body", &FuncNode::body_);
+    m.def("func2stmt", &func2stmt);
 
     pyStmt.def_property_readonly("nid", &StmtNode::id);
 
@@ -249,9 +251,10 @@ void init_ffi_ast(py::module_ &m) {
 
     // Function
     m.def("makeFunc",
-          static_cast<Func (*)(const std::vector<std::string> &, const Stmt &)>(
+          static_cast<Func (*)(const std::string &,
+                               const std::vector<std::string> &, const Stmt &)>(
               &_makeFunc),
-          "params"_a, "body"_a);
+          "name"_a, "params"_a, "body"_a);
 
     // Statements
     m.def("makeAny", &_makeAny);

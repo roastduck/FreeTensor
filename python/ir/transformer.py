@@ -163,8 +163,9 @@ ctx_stack = ASTContextStack()
 
 class ASTTransformer(ast.NodeTransformer):
 
-    def __init__(self):
+    def __init__(self, module):
         super().__init__()
+        self.module = module
 
     @staticmethod
     def parse_stmt(stmt):
@@ -260,11 +261,11 @@ class ASTTransformer(ast.NodeTransformer):
 
     def visit_Call(self, node):
         self.generic_visit(node)
+        args = node.args
         if (isinstance(node.func, ast.Attribute) and
                 isinstance(node.func.value, ast.Name) and
                 node.func.value.id == "ir"):
             func_name = node.func.attr
-            args = node.args
             if func_name == "create_var":
                 assert len(args) == 4, "create_var function has 4 arguments"
                 shape = args[0]
@@ -315,6 +316,16 @@ class ASTTransformer(ast.NodeTransformer):
                     ret_type = parseDType(item.value.expr_str)
                 node.expr_ptr = ffi.makeIntrinsic(args[0].expr_str,
                                                   tuple(expr_args), ret_type)
+            else:
+                assert False, "Function %s not implemented" % func_name
+        elif isinstance(node.func, ast.Name):
+            func_name = node.func.id
+            inst = getattr(self.module, func_name)
+            if isinstance(inst, ffi.Func):
+                arg_names = [
+                    ctx_stack.find_var_by_name(arg.id).var for arg in args
+                ]
+                node_ctx.top().append_stmt(ffi.func2stmt(inst, arg_names))
             else:
                 assert False, "Function %s not implemented" % func_name
         else:
@@ -507,6 +518,7 @@ def transform(func):
     ctx_stack.clear()
     src = remove_indent(ins.getsource(func))
     tree = ast.parse(src)
-    ASTTransformer().visit(tree)
+    module = sys.modules[func.__module__]
+    ASTTransformer(module).visit(tree)
     params = list(inspect.signature(func).parameters)
-    return Func(params, pop_ast())
+    return Func(func.__name__, params, pop_ast())

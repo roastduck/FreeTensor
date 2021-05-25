@@ -44,7 +44,7 @@ class Make1DVar : public Mutator {
 Stmt make1dVar(const Stmt &op);
 
 inline Func make1dVar(const Func &func) {
-    return makeFunc(func->params_, make1dVar(func->body_));
+    return makeFunc(func->name_, func->params_, make1dVar(func->body_));
 }
 
 } // namespace ir
