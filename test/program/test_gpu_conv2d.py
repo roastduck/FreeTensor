@@ -50,82 +50,37 @@ def test_manual_static():
         B_np = B_arr.numpy().reshape(out_size, out_size, out_channel, batch)
         return B_np
 
-    with ir.VarDef([
-        (
-            "A",
-            (in_size, in_size, in_channel, batch),
-            "float32",
-            "input",
-            "gpu/global",
-        ),
-        (
-            "W",
-            (kernel, kernel, in_channel, out_channel),
-            "float32",
-            "input",
-            "gpu/global",
-        ),
-        (
-            "B",
-            (out_size, out_size, out_channel, batch),
-            "float32",
-            "output",
-            "gpu/global",
-        ),
-    ]) as (A, W, B):
-        with ir.For("yy", 0, out_size, nid="Ly") as yy:
-            with ir.For("xx", 0, out_size, nid="Lx") as xx:
-                with ir.For("ff", 0, out_channel, nid="Lf") as ff:
-                    with ir.For("nn", 0, batch, nid="Ln") as nn:
-                        ir.MarkNid("init")
-                        B[yy, xx, ff, nn] = 0.0
-                        with ir.For("ry", 0, kernel, nid="Lry") as ry:
-                            with ir.For("rx", 0, kernel, nid="Lrx") as rx:
-                                with ir.For("rc", 0, in_channel,
-                                            nid="Lrc") as rc:
-                                    y = yy * stride + ry - pad
-                                    x = xx * stride + rx - pad
-                                    with ir.If(
-                                            functools.reduce(
-                                                ir.l_and,
-                                                [
-                                                    y >= 0, y < in_size, x >= 0,
-                                                    x < in_size
-                                                ],
-                                            )):
-                                        B[yy, xx, ff, nn] = (
-                                            B[yy, xx, ff, nn] +
-                                            A[y, x, rc, nn] * W[ry, rx, rc, ff])
-    algo = ir.Func("main", ["A", "W", "B"], ir.pop_ast())
-
-    # TODO: Use this
-    #
-    # @ir.transform
-    # def algo(A, W, B):
-    #    ir.declare_var(A, (in_size, in_size, in_channel, batch), "float32", "input", "gpu/global")
-    #    ir.declare_var(W, (kernel, kernel, in_channel, out_channel), "float32", "input", "gpu/global")
-    #    ir.declare_var(B, (out_size, out_size, out_channel, batch), "float32", "output", "gpu/global")
-    #    # TODO: range(out_size)
-    #    '''nid: Ly'''
-    #    for yy in range(0, out_size):
-    #        '''nid: Lx'''
-    #        for xx in range(0, out_size):
-    #            '''nid: Lf'''
-    #            for ff in range(0, out_channel):
-    #                '''nid: Ln'''
-    #                for nn in range(0, batch):
-    #                    '''nid: init'''
-    #                    B[yy, xx, ff, nn] = 0.
-    #                    '''nid: Lry'''
-    #                    for ry in range(0, kernel):
-    #                        '''nid: Lrx'''
-    #                        for rx in range(0, kernel):
-    #                            '''nid: Lrc'''
-    #                            for rc in range(0, in_channel):
-    #                                # TODO: Let y = yy * stride + ry - pad
-    #                                # TODO：Let x = xx * stride + rx - pad
-    #                                if yy * stride + ry - pad >= 0 and yy * stride + ry - pad < in_size and xx * stride + rx - pad >= 0 and xx * stride + rx - pad < in_size:
-    #                                    B[yy, xx, ff, nn] += A[yy * stride + ry - pad, xx * stride + rx - pad, rc, nn] * W[ry, rx, rc, ff]
+    @ir.transform
+    def algo(A, W, B):
+        ir.declare_var(A, (in_size, in_size, in_channel, batch), "float32",
+                       "input", "gpu/global")
+        ir.declare_var(W, (kernel, kernel, in_channel, out_channel), "float32",
+                       "input", "gpu/global")
+        ir.declare_var(B, (out_size, out_size, out_channel, batch), "float32",
+                       "output", "gpu/global")
+        '''nid: Ly'''
+        for yy in range(out_size):
+            '''nid: Lx'''
+            for xx in range(out_size):
+                '''nid: Lf'''
+                for ff in range(out_channel):
+                    '''nid: Ln'''
+                    for nn in range(batch):
+                        '''nid: init'''
+                        B[yy, xx, ff, nn] = 0.
+                        '''nid: Lry'''
+                        for ry in range(kernel):
+                            '''nid: Lrx'''
+                            for rx in range(0, kernel):
+                                '''nid: Lrc'''
+                                for rc in range(0, in_channel):
+                                    # TODO: Let y = yy * stride + ry - pad
+                                    # TODO：Let x = xx * stride + rx - pad
+                                    if yy * stride + ry - pad >= 0 and yy * stride + ry - pad < in_size and xx * stride + rx - pad >= 0 and xx * stride + rx - pad < in_size:
+                                        B[yy, xx, ff,
+                                          nn] += A[yy * stride + ry - pad,
+                                                   xx * stride + rx - pad, rc,
+                                                   nn] * W[ry, rx, rc, ff]
 
     tile = 8
     num_thread = 8

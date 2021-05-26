@@ -177,6 +177,8 @@ class ASTTransformer(ast.NodeTransformer):
 
     def visit_Name(self, node):
         node.expr_ptr = ctx_stack.find_var_by_name(node.id, prefetch=True)
+        if node.expr_ptr is None and node.id in self.globals:
+            node.expr_ptr = self.globals[node.id]
         return node
 
     def visit_Constant(self, node):
