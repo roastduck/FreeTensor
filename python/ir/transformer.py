@@ -149,7 +149,7 @@ class ASTContextStack:
         top.var_dict[name] = var
         return fr
 
-    def set_nid(self, name):
+    def set_nid(self, name: str):
         MarkNid(name)
 
     def get_nid(self):
@@ -182,24 +182,16 @@ class ASTTransformer(ast.NodeTransformer):
         return node
 
     def visit_Constant(self, node):
-        value = node.value
-        if (isinstance(value, int) or isinstance(value, float) or
-                isinstance(value, bool)):
-            node.expr_ptr = value
-        elif isinstance(value, str):
-            node.expr_str = value
+        node.expr_ptr = node.value
         return node
 
     def visit_Subscript(self, node):
         self.generic_visit(node)
-        if node.value.expr_ptr is None:
-            var = ctx_stack.find_var_by_name(node.value.id)
         assert isinstance(node.value.expr_ptr, Var), "Invalid subscript"
         var = node.value.expr_ptr
         value = node.slice.value
         if isinstance(value, ast.Tuple):
-            assert hasattr(value, "expr_tuple")
-            tup = value.expr_tuple
+            tup = value.expr_ptr
         elif hasattr(value, "expr_ptr"):
             tup = (value.expr_ptr,)
         else:
@@ -264,60 +256,45 @@ class ASTTransformer(ast.NodeTransformer):
     def visit_Call(self, node):
         self.generic_visit(node)
         args = node.args
+        for arg in args:
+            assert hasattr(arg,
+                           "expr_ptr"), "call argument should be an expression"
         if (isinstance(node.func, ast.Attribute) and
                 isinstance(node.func.value, ast.Name) and
                 node.func.value.id == "ir"):
             func_name = node.func.attr
             if func_name == "create_var":
                 assert len(args) == 4, "create_var function has 4 arguments"
-                shape = args[0]
-                assert hasattr(shape, "expr_tuple"), "Shape is not a tuple"
-                shape = shape.expr_tuple
-                for i in range(1, 4):
-                    assert hasattr(
-                        args[i],
-                        "expr_str"), "argument {} expects str".format(i + 1)
-                dtype = args[1].expr_str
-                atype = args[2].expr_str
-                mtype = args[3].expr_str
-                node.expr_call = VarCreation(shape, dtype, atype, mtype)
+                shape = args[0].expr_ptr
+                dtype = args[1].expr_ptr
+                atype = args[2].expr_ptr
+                mtype = args[3].expr_ptr
+                node.expr_ptr = VarCreation(shape, dtype, atype, mtype)
             elif func_name == "declare_var":
                 assert len(args) == 5, "define_var function has 5 arguments"
                 assert isinstance(args[0], ast.Name)
                 name = args[0].id
-                shape = args[1]
-                assert hasattr(shape, "expr_tuple"), "Shape is not a tuple"
-                shape = shape.expr_tuple
-                for i in range(2, 5):
-                    assert hasattr(
-                        args[i],
-                        "expr_str"), "argument {} expects str".format(i + 1)
-                dtype = args[2].expr_str
-                atype = args[3].expr_str
-                mtype = args[4].expr_str
-                node.expr_call = VarCreation(shape, dtype, atype, mtype, name)
+                shape = args[1].expr_ptr
+                dtype = args[2].expr_ptr
+                atype = args[3].expr_ptr
+                mtype = args[4].expr_ptr
+                VarCreation(shape, dtype, atype, mtype, name).execute()
             elif func_name == "MarkNid":
                 assert len(args) == 1, "MarkNid has one argument"
-                assert hasattr(args[0], "expr_str"), "Nid should be string"
-                nid = args[0].expr_str
+                nid = args[0].expr_ptr
                 ctx_stack.set_nid(nid)
             elif func_name == "intrinsic":
                 assert len(args) >= 1, "intrinsic has at least one argument"
-                assert hasattr(
-                    args[0], "expr_str"
-                ), "The first argument of intrinsic should be string"
                 expr_args = []
                 for i in args[1:]:
-                    assert hasattr(
-                        i, "expr_ptr"), "intrinsic argument is not expression"
                     expr_args.append(i.expr_ptr)
                 ret_type = ffi.DataType.Void
                 for item in node.keywords:
                     assert item.arg == "ret_type", (
                         "Unrecognized keyword argument %s" % item.arg)
-                    ret_type = parseDType(item.value.expr_str)
-                node.expr_ptr = ffi.makeIntrinsic(args[0].expr_str,
-                                                  tuple(expr_args), ret_type)
+                    ret_type = parseDType(item.value.expr_ptr)
+                node.expr_ptr = ffi.makeIntrinsic(args[0].expr_ptr, expr_args,
+                                                  ret_type)
             else:
                 assert False, "Function %s not implemented" % func_name
         elif isinstance(node.func, ast.Name):
@@ -342,31 +319,37 @@ class ASTTransformer(ast.NodeTransformer):
     def visit_Tuple(self, node):
         self.generic_visit(node)
         tup = []
-        for i in node.elts:  # TODO: maybe support for tuple in tuple
+        for i in node.elts:
             assert hasattr(i, "expr_ptr"), "Invalid tuple"
             tup.append(i.expr_ptr)
         tup = tuple(tup)
-        node.expr_tuple = tup
+        node.expr_ptr = tup
+        return node
+
+    def visit_List(self, node):
+        self.generic_visit(node)
+        lst = []
+        for i in node.elts:
+            assert hasattr(i, "expr_ptr"), "Invalid list"
+            lst.append(i.expr_ptr)
+        node.expr_ptr = lst
         return node
 
     def visit_Assign(self, node):
         self.generic_visit(node)
         # TODO: (maybe) support for multiple assignment
         assert len(node.targets) == 1, "Multiple assignment is not supported"
-        if hasattr(node.value, "expr_call") and isinstance(
-                node.value.expr_call, VarCreation):
+        assert hasattr(node.targets[0],
+                       "expr_ptr"), "Target to be assigned is not an expression"
+        assert hasattr(node.value,
+                       "expr_ptr"), "Value to be assigned is not an expression"
+        if isinstance(node.value.expr_ptr, VarCreation):
             name = node.targets[0].id
-            var_creation = node.value.expr_call
+            var_creation = node.value.expr_ptr
             var_creation.add_name(name)
             var_creation.execute()
-        elif hasattr(node.targets[0], "expr_ptr") and isinstance(
-                node.targets[0].expr_ptr, VarSubscript):
+        elif isinstance(node.targets[0].expr_ptr, VarSubscript):
             var = node.targets[0].expr_ptr
-            if var is None:
-                var = ctx_stack.find_var_by_name(node.targets[0].id)
-            assert hasattr(
-                node.value,
-                "expr_ptr"), "Value to be assigned is not an expression"
             var.set(node.value.expr_ptr)
         else:
             assert False, "Invalid assignment"
@@ -440,9 +423,6 @@ class ASTTransformer(ast.NodeTransformer):
             s = node.value.value
             if s[0:5] == "nid: ":
                 ctx_stack.set_nid(s[5:])
-        elif hasattr(node.value, "expr_call") and isinstance(
-                node.value.expr_call, VarCreation):
-            node.value.expr_call.execute()
         return node
 
     def visit_If(self, node):

@@ -93,7 +93,7 @@ def test_called_multiple_times():
     assert len(s.find_all(lambda x: x.nid() == "C2.S1")) == 1
 
 
-def test_call_with_data():
+def test_call_with_external_data():
     data = [[0, 1], [2, 3]]
 
     @ir.transform
@@ -108,6 +108,37 @@ def test_call_with_data():
     def f(y):
         ir.declare_var(y, (2, 2), "int32", "output", "cpu")
         g(data, y)
+
+    func = ir.lower(f, ir.CPU())
+    print(func)
+
+    with ir.VarDef("y", (2, 2), "int32", "output", "cpu") as y:
+        with ir.VarDef("x", (2, 2), "int32", "cache", "cpu") as x:
+            x[0, 0] = 0
+            x[0, 1] = 1
+            x[1, 0] = 2
+            x[1, 1] = 3
+            with ir.For("i", 0, 2) as i:
+                with ir.For("j", 0, 2) as j:
+                    y[i, j] = x[i, j] * 2
+    std = ir.pop_ast()
+    assert std.match(func.body)
+
+
+def test_call_with_literal_data():
+
+    @ir.transform
+    def g(x, y):
+        ir.declare_var(x, (2, 2), "int32", "input", "cpu")
+        ir.declare_var(y, (2, 2), "int32", "output", "cpu")
+        for i in range(2):
+            for j in range(2):
+                y[i, j] = x[i, j] * 2
+
+    @ir.transform
+    def f(y):
+        ir.declare_var(y, (2, 2), "int32", "output", "cpu")
+        g([[0, 1], [2, 3]], y)
 
     func = ir.lower(f, ir.CPU())
     print(func)
