@@ -373,24 +373,28 @@ class Schedule(ffi.Schedule):
         """
         super(Schedule, self).parallelize(toId(loop), parallel)
 
-    def unroll(self, loop):
+    def unroll(self, loop, immediate=False):
         """
         Unroll a loop
-
-        The unrolling is postponed to the backend compiler. It is a best-effort
-        schedule
 
         Parameters
         ----------
         loop : str, Stmt or Cursor
-            The loop which is needing to unroll
+            ID of the loop
+        immediate : bool
+            If false (by default), postpone the unroll procedure to the backend
+            compiler, which saves scheduling time. If true, unroll the loop
+            immediately, which may help further simplifications based on the
+            unrolled result. If your purpose is just to fill the instruction cache,
+            set it to false. If you are unrolling a loop that computes array indices,
+            set it to true
 
         Raises
         ------
         InvalidSchedule
             if the loop is not found or length of the loop is not a constant
         """
-        super(Schedule, self).unroll(toId(loop))
+        super(Schedule, self).unroll(toId(loop), immediate)
 
     def vectorize(self, loop):
         """

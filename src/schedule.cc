@@ -8,6 +8,7 @@
 #include <analyze/find_loop_variance.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/make_reduction.h>
+#include <pass/remove_writes.h>
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
 #include <pass/sink_var.h>
@@ -594,13 +595,22 @@ void Schedule::parallelize(const std::string &loop,
     ast_ = ast;
 }
 
-void Schedule::unroll(const std::string &loop) {
+void Schedule::unroll(const std::string &loop, bool immediate) {
     auto ast = ast_;
-    Unroll mutator(loop);
     try {
         ast = simplifyPass(ast); // Const prop for ForNode::len_
-        ast = mutator(ast);
-        if (!mutator.done()) {
+        bool done = false;
+        if (immediate) {
+            ImmediateUnroll mutator(loop);
+            ast = mutator(ast);
+            done = mutator.done();
+            ast = removeWrites(ast);
+        } else {
+            BackUnroll mutator(loop);
+            ast = mutator(ast);
+            done = mutator.done();
+        }
+        if (!done) {
             throw InvalidSchedule("Loop " + loop + " not found");
         }
     } catch (const InvalidSchedule &e) {

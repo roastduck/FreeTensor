@@ -5,16 +5,42 @@
 
 namespace ir {
 
-class Unroll : public Mutator {
+/**
+ * Mark a loop as to be unroll, and let a backend compiler deal with it
+ */
+class BackUnroll : public Mutator {
     std::string loop_;
     bool done_ = false;
 
   public:
-    Unroll(const std::string &loop) : loop_(loop) {}
+    BackUnroll(const std::string &loop) : loop_(loop) {}
 
     bool done() const { return done_; }
 
   protected:
+    Stmt visit(const For &op) override;
+};
+
+/**
+ * Immediately unroll a loop just in the AST
+ */
+class ImmediateUnroll : public Mutator {
+    std::string loop_;
+    bool done_ = false;
+
+    std::string iter_;
+    Expr begin_;
+    int curIter_;
+
+  public:
+    ImmediateUnroll(const std::string &loop) : loop_(loop) {}
+
+    bool done() const { return done_; }
+
+  protected:
+    Stmt visitStmt(const Stmt &op,
+                   const std::function<Stmt(const Stmt &)> &visitNode) override;
+    Expr visit(const Var &op) override;
     Stmt visit(const For &op) override;
 };
 

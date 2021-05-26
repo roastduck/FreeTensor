@@ -286,14 +286,17 @@ class Schedule {
     /**
      * Unroll a loop
      *
-     * The unrolling is postponed to the backend compiler. It is a best-effort
-     * schedule
-     *
      * @param loop : ID of the loop
+     * @param immediate : If false (by default), postpone the unroll procedure
+     * to the backend compiler, which saves scheduling time. If true, unroll the
+     * loop immediately, which may help further simplifications based on the
+     * unrolled result. If your purpose is just to fill the instruction cache,
+     * set it to false. If you are unrolling a loop that computes array indices,
+     * set it to true
      * @throw InvalidSchedule if the loop is not found or length of the loop is
      * not a constant
      */
-    void unroll(const std::string &loop);
+    void unroll(const std::string &loop, bool immediate = false);
 
     /**
      * Vectorize a loop
