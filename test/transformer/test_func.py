@@ -4,7 +4,7 @@ import ir
 
 
 @ir.transform
-def g(y):
+def g_global(y):
     ir.declare_var(y, (2,), "float32", "output", "cpu")
     '''nid: S0'''
     y[0] = 2.0
@@ -13,23 +13,39 @@ def g(y):
 
 
 @ir.transform
-def f1(y):
+def f_global(y):
     ir.declare_var(y, (2,), "float32", "output", "cpu")
-    g(y)
-
-
-@ir.transform
-def f2(y1, y2):
-    ir.declare_var(y1, (2,), "float32", "output", "cpu")
-    ir.declare_var(y2, (2,), "float32", "output", "cpu")
-    '''nid: C1'''
-    g(y1)
-    '''nid: C2'''
-    g(y2)
+    g_global(y)
 
 
 def test_basic_call():
-    func = ir.lower(f1, ir.CPU())
+
+    @ir.transform
+    def g(y):
+        ir.declare_var(y, (2,), "float32", "output", "cpu")
+        '''nid: S0'''
+        y[0] = 2.0
+        '''nid: S1'''
+        y[1] = 3.0
+
+    @ir.transform
+    def f(y):
+        ir.declare_var(y, (2,), "float32", "output", "cpu")
+        g(y)
+
+    func = ir.lower(f, ir.CPU())
+    print(func)
+
+    with ir.VarDef("y", (2,), "float32", "output", "cpu") as y:
+        y[0] = 2.0
+        y[1] = 3.0
+    std = ir.pop_ast()
+    assert std.match(func.body)
+
+
+def test_global_functions():
+
+    func = ir.lower(f_global, ir.CPU())
     print(func)
 
     with ir.VarDef("y", (2,), "float32", "output", "cpu") as y:
@@ -40,7 +56,25 @@ def test_basic_call():
 
 
 def test_called_multiple_times():
-    func = ir.lower(f2, ir.CPU())
+
+    @ir.transform
+    def g(y):
+        ir.declare_var(y, (2,), "float32", "output", "cpu")
+        '''nid: S0'''
+        y[0] = 2.0
+        '''nid: S1'''
+        y[1] = 3.0
+
+    @ir.transform
+    def f(y1, y2):
+        ir.declare_var(y1, (2,), "float32", "output", "cpu")
+        ir.declare_var(y2, (2,), "float32", "output", "cpu")
+        '''nid: C1'''
+        g(y1)
+        '''nid: C2'''
+        g(y2)
+
+    func = ir.lower(f, ir.CPU())
     print(func)
 
     with ir.VarDef([("y1", (2,), "float32", "output", "cpu"),

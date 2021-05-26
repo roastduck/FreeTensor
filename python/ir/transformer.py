@@ -163,9 +163,9 @@ ctx_stack = ASTContextStack()
 
 class ASTTransformer(ast.NodeTransformer):
 
-    def __init__(self, module):
+    def __init__(self, globals):
         super().__init__()
-        self.module = module
+        self.globals = globals
 
     @staticmethod
     def parse_stmt(stmt):
@@ -320,7 +320,7 @@ class ASTTransformer(ast.NodeTransformer):
                 assert False, "Function %s not implemented" % func_name
         elif isinstance(node.func, ast.Name):
             func_name = node.func.id
-            inst = getattr(self.module, func_name)
+            inst = self.globals[func_name]
             if isinstance(inst, ffi.Func):
                 arg_names = [
                     ctx_stack.find_var_by_name(arg.id).var for arg in args
@@ -481,6 +481,7 @@ class ASTTransformer(ast.NodeTransformer):
 
 
 def _get_global_vars(func):
+    # From Taichi
     # Discussions: https://github.com/taichi-dev/taichi/issues/282
     import copy
 
@@ -496,7 +497,9 @@ def _get_global_vars(func):
     return global_vars
 
 
-def remove_indent(lines):
+def _remove_indent(lines):
+    # From Taichi
+
     lines = lines.split("\n")
     to_remove = 0
     for i in range(len(lines[0])):
@@ -517,9 +520,9 @@ def remove_indent(lines):
 
 def transform(func):
     ctx_stack.clear()
-    src = remove_indent(ins.getsource(func))
+    src = _remove_indent(ins.getsource(func))
     tree = ast.parse(src)
-    module = sys.modules[func.__module__]
-    ASTTransformer(module).visit(tree)
+    globals = _get_global_vars(func)
+    ASTTransformer(globals).visit(tree)
     params = list(inspect.signature(func).parameters)
     return Func(func.__name__, params, pop_ast())
