@@ -2,7 +2,7 @@ import ast
 import numpy as np
 import inspect
 import sourceinspect as ins
-from typing import Sequence
+from typing import Sequence, Optional
 
 from .nodes import _VarDef, Var, pop_ast, For, If, Else, MarkNid, ctx_stack as node_ctx, Func
 from .utils import *
@@ -104,7 +104,7 @@ class ASTContextStack:
         self.name_set.add(name)
         return name
 
-    def find_var_by_name(self, name, prefetch=False):
+    def find_var_by_name(self, name, prefetch=False) -> Optional[Var]:
         name = self.get_current_name(name, prefetch)
 
         for ctx in reversed(self.ctx_stack):  # type: ASTContext
@@ -324,11 +324,15 @@ class ASTTransformer(ast.NodeTransformer):
             func_name = node.func.id
             inst = self.globals[func_name]
             if isinstance(inst, ffi.Func):
-                arg_names = [
-                    ctx_stack.find_var_by_name(arg.id).var for arg in args
-                ]
+                ir_args = []
+                for arg in args:
+                    if isinstance(arg.expr_ptr, Var):
+                        ir_args.append(ffi.FuncArg(arg.expr_ptr.var))
+                    else:
+                        ir_args.append(ffi.FuncArg(ffi.TensorData(
+                            arg.expr_ptr)))
                 node_ctx.top().append_stmt(
-                    ffi.func2stmt(inst, arg_names, ctx_stack.get_nid()))
+                    ffi.func2stmt(inst, ir_args, ctx_stack.get_nid()))
             else:
                 assert False, "Function %s not implemented" % func_name
         else:

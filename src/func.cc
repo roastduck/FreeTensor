@@ -11,13 +11,13 @@ namespace {
 class Func2Stmt : public Mutator {
     Func func_;
     std::string callSiteId_;
-    const std::vector<std::string> &args_;
+    const std::vector<FuncArg> &args_;
 
     std::unordered_map<std::string, std::string> replace_;
 
   public:
     Func2Stmt(const Func &func, const std::string callSiteId,
-              const std::vector<std::string> &args)
+              const std::vector<FuncArg> &args)
         : func_(func), callSiteId_(callSiteId), args_(args) {}
 
   protected:
@@ -41,11 +41,41 @@ class Func2Stmt : public Mutator {
                     " should be in the signature of function " + func_->name_);
             }
             auto nth = it - func_->params_.begin();
-            ASSERT(!replace_.count(_op->name_));
-            replace_[_op->name_] = args_.at(nth);
-            auto ret = (*this)(_op->body_);
-            replace_.erase(_op->name_);
-            return ret;
+            const FuncArg &arg = args_.at(nth);
+            if (arg.type() == FuncArgType::Name) {
+                ASSERT(!replace_.count(_op->name_));
+                replace_[_op->name_] = arg.name();
+                auto ret = (*this)(_op->body_);
+                replace_.erase(_op->name_);
+                return ret;
+
+            } else if (arg.type() == FuncArgType::Literal) {
+                const TensorData &data = arg.literal();
+                std::vector<Stmt> stmts;
+                for (size_t i = 0, iEnd = data.size(); i < iEnd; i++) {
+                    std::vector<Expr> indices;
+                    indices.reserve(data.ndim());
+                    for (auto &&dim : data.indices(i)) {
+                        indices.emplace_back(makeIntConst(dim));
+                    }
+                    stmts.emplace_back(makeStore(
+                        "", _op->name_, std::move(indices), data.at(i)));
+                }
+                ASSERT(!replace_.count(_op->name_));
+                replace_[_op->name_] = _op->name_; // Keep it
+                auto __op = Mutator::visit(_op);
+                ASSERT(__op->nodeType() == ASTNodeType::VarDef);
+                auto op = __op.as<VarDefNode>();
+                replace_.erase(op->name_);
+                stmts.emplace_back(op->body_);
+                op->buffer_->setAtype(AccessType::Cache);
+                op->body_ = makeStmtSeq("", std::move(stmts));
+                return op;
+
+            } else {
+                ASSERT(false);
+            }
+
         } else {
             auto __op = Mutator::visit(_op);
             ASSERT(__op->nodeType() == ASTNodeType::VarDef);
@@ -101,9 +131,10 @@ class Func2Stmt : public Mutator {
 
 } // Anonymous namespace
 
-Stmt func2stmt(const Func &func, const std::vector<std::string> &args,
+Stmt func2stmt(const Func &func, const std::vector<FuncArg> &args,
                const std::string &callSiteId) {
-    return Func2Stmt(func, callSiteId, args)(func->body_);
+    return Func2Stmt(func, callSiteId.empty() ? StmtNode::newId() : callSiteId,
+                     args)(func->body_);
 }
 
 } // namespace ir

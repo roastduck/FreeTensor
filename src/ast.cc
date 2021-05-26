@@ -49,9 +49,11 @@ std::string toString(ASTNodeType type) {
 
 uint64_t StmtNode::idCnt_ = 0;
 
+std::string StmtNode::newId() { return "#" + std::to_string(idCnt_++); }
+
 void StmtNode::setId(const std::string &id) {
     if (id.empty()) {
-        id_ = "#" + std::to_string(idCnt_++);
+        id_ = newId();
     } else {
         id_ = id;
     }

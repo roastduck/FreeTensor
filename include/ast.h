@@ -108,6 +108,8 @@ class StmtNode : public ASTNode {
     static uint64_t idCnt_;
 
   public:
+    static std::string newId();
+
     void setId(const std::string &id);
     const std::string &id() const;
     bool hasNamedId() const;
