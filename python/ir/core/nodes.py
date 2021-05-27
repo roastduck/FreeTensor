@@ -1,4 +1,5 @@
-from typing import Sequence, Tuple
+import collections
+from typing import Sequence, Tuple, Any
 
 import ffi
 
@@ -70,8 +71,9 @@ def pop_ast():
 
 class Var:
 
-    def __init__(self, name: str):
+    def __init__(self, name: str, shape: Sequence):
         self.var = name
+        self.shape = shape
 
     def __getitem__(self, key):
         if type(key) is not tuple and type(key) is not list:
@@ -87,16 +89,22 @@ class Var:
 
 class _VarDef:
 
-    def __init__(self, name: str, shape: Sequence, dtype, atype, mtype):
+    def __init__(self, name: str, shape, dtype, atype, mtype):
         self.name = name
-        self.shape = shape
+        if isinstance(shape, collections.abc.Sequence):
+            self.shape = shape
+        elif isinstance(shape, Var):
+            assert len(shape.shape) == 1, "Shape of a shape should be 1-D"
+            self.shape = [shape[i] for i in range(shape.shape[0])]
+        else:
+            assert False, "shape cannot be of type %s" % type(shape)
         self.dtype = parseDType(dtype)
         self.atype = parseAType(atype)
         self.mtype = parseMType(mtype)
 
     def __enter__(self):
         ctx_stack.push()
-        return Var(self.name)
+        return Var(self.name, self.shape)
 
     def __exit__(self, exc_type, exc_value, traceback):
         buf = ffi.Buffer(ffi.Tensor(self.shape, self.dtype), self.atype,
@@ -110,7 +118,7 @@ class _VarDef:
 
 class _VarsDef:
 
-    def __init__(self, defs: Tuple[str, Sequence, DataType, AccessType]):
+    def __init__(self, defs: Tuple[str, Any, DataType, AccessType]):
         self.defs = [VarDef(*d) for d in defs]
 
     def __enter__(self):

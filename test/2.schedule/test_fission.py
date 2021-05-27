@@ -43,7 +43,7 @@ def test_buffer_hoist():
     ]) as (x0, x1, y):
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 8, nid="L2") as j:
-                with ir.VarDef("buf", (8), "int32", "cache", "cpu") as b:
+                with ir.VarDef("buf", (8,), "int32", "cache", "cpu") as b:
                     ir.MarkNid("S0")
                     b[j] = x0[i, j] + x1[i, j]
                     y[i, j] = b[j] * b[j]
@@ -62,7 +62,7 @@ def test_buffer_hoist():
         ("y", (4, 8), "int32", "output", "cpu"),
     ]) as (x0, x1, y):
         with ir.For("i", 0, 4) as i:
-            with ir.VarDef("buf", (8), "int32", "cache", "cpu") as b:
+            with ir.VarDef("buf", (8,), "int32", "cache", "cpu") as b:
                 with ir.For("j", 0, 8) as j:
                     b[j] = x0[i, j] + x1[i, j]
                 with ir.For("j", 0, 8) as j:
@@ -188,7 +188,7 @@ def test_correct_dependency_multi_loop():
 
 
 def test_correct_dependency_real_dep():
-    with ir.VarDef([("x", (4), "int32", "input", "cpu"),
+    with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4, 8), "int32", "output", "cpu")]) as (x, y):
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.VarDef("buf", (1,), "int32", "cache", "cpu") as b:
@@ -205,7 +205,7 @@ def test_correct_dependency_real_dep():
     ast = ir.lower(ast)
     print(ast)
 
-    with ir.VarDef([("x", (4), "int32", "input", "cpu"),
+    with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4, 8), "int32", "output", "cpu")]) as (x, y):
         with ir.VarDef("buf", (4, 1), "int32", "cache", "cpu") as b:
             with ir.For("i", 0, 4) as i:
