@@ -464,14 +464,11 @@ def _get_global_vars(func):
     freevar_names = func.__code__.co_freevars
     closure = func.__closure__
     if closure:
-        freevar_values = []
-        for item in closure:
+        for name, value in zip(freevar_names, closure):
             try:
-                freevar_values.append(item.cell_contents)
+                global_vars[name] = value.cell_contents
             except ValueError:  # ValueError: Cell is empty
                 pass
-        for name, value in zip(freevar_names, freevar_values):
-            global_vars[name] = value
 
     return global_vars
 

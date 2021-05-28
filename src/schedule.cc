@@ -559,13 +559,16 @@ void Schedule::inlining(const std::string &def) {
             if (!checkNotModified(ast, expr, dep.earlier_.cursor_.id(),
                                   dep.later_.cursor_.id())) {
                 throw InvalidSchedule(
-                    "The expression will be modified after inlining");
+                    "The expression will be modified after inlining from " +
+                    toString(dep.earlier_.cursor_.node()) + " into " +
+                    toString(dep.later_.cursor_.node()));
             }
             auto later = dep.later().as<LoadNode>();
             replace[later] = ApplyInlinePlaceholder(later->indices_)(expr);
         };
         findDeps(ast, {{}}, found, FindDepsMode::KillLater, DEP_RAW, filter);
         ast = MakeInline(def, replace)(ast);
+        ast = simplifyPass(ast);
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid inline(" + def + "): " + e.what());
     }

@@ -25,8 +25,8 @@ class Func2Stmt : public Mutator {
     visitStmt(const Stmt &op,
               const std::function<Stmt(const Stmt &)> &visitNode) override {
         auto ret = Mutator::visitStmt(op, visitNode);
-        if (ret->id()[0] != '#') {
-            ret->setId(callSiteId_ + "." + ret->id());
+        if (ret->id() == op->id() && ret->id()[0] != '#') {
+            ret->setId(callSiteId_ + ":" + ret->id());
         }
         return ret;
     }
@@ -80,7 +80,7 @@ class Func2Stmt : public Mutator {
             auto __op = Mutator::visit(_op);
             ASSERT(__op->nodeType() == ASTNodeType::VarDef);
             auto op = __op.as<VarDefNode>();
-            op->name_ = callSiteId_ + "." + op->name_;
+            op->name_ = callSiteId_ + ":" + op->name_;
             return op;
         }
     }
@@ -89,7 +89,7 @@ class Func2Stmt : public Mutator {
         auto __op = Mutator::visit(_op);
         ASSERT(__op->nodeType() == ASTNodeType::For);
         auto op = __op.as<ForNode>();
-        op->iter_ = callSiteId_ + "." + op->iter_;
+        op->iter_ = callSiteId_ + ":" + op->iter_;
         return op;
     }
 
@@ -97,7 +97,7 @@ class Func2Stmt : public Mutator {
         auto __op = Mutator::visit(_op);
         ASSERT(__op->nodeType() == ASTNodeType::Var);
         auto op = __op.as<VarNode>();
-        op->name_ = callSiteId_ + "." + op->name_;
+        op->name_ = callSiteId_ + ":" + op->name_;
         return op;
     }
 
@@ -106,7 +106,7 @@ class Func2Stmt : public Mutator {
         ASSERT(__op->nodeType() == ASTNodeType::Load);
         auto op = __op.as<LoadNode>();
         op->var_ = replace_.count(op->var_) ? replace_.at(op->var_)
-                                            : callSiteId_ + "." + op->var_;
+                                            : callSiteId_ + ":" + op->var_;
         return op;
     }
 
@@ -115,7 +115,7 @@ class Func2Stmt : public Mutator {
         ASSERT(__op->nodeType() == ASTNodeType::Store);
         auto op = __op.as<StoreNode>();
         op->var_ = replace_.count(op->var_) ? replace_.at(op->var_)
-                                            : callSiteId_ + "." + op->var_;
+                                            : callSiteId_ + ":" + op->var_;
         return op;
     }
 
@@ -124,7 +124,7 @@ class Func2Stmt : public Mutator {
         ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
         auto op = __op.as<ReduceToNode>();
         op->var_ = replace_.count(op->var_) ? replace_.at(op->var_)
-                                            : callSiteId_ + "." + op->var_;
+                                            : callSiteId_ + ":" + op->var_;
         return op;
     }
 };
