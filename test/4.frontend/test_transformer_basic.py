@@ -126,3 +126,30 @@ def test_for_range():
     x_std = np.array([2, 3, 4, 5], dtype="int32")
     assert np.array_equal(x_np, x_std)
     assert np.array_equal(x_func, x_std)
+
+
+def test_std_func_alias():
+
+    def test(x):
+        ir.core.declare_var(x, (4, 4), "float32", "output", "cpu")
+        x[2, 3] = 2.0
+        x[1, 0] = 3.0
+
+    func = ir.lower(ir.transform(test), ir.CPU())
+    print(func)
+    code = ir.codegen(func, ir.CPU())
+
+    x_np = np.zeros((4, 4), dtype="float32")
+    x_arr = ir.Array(x_np, ir.Device(ir.CPU()))
+    driver = ir.Driver(func, code, ir.Device(ir.CPU()))
+    driver.set_params({"x": x_arr})
+    driver.run()
+    x_np = x_arr.numpy().reshape(4, 4)
+
+    x_std = np.zeros((4, 4), dtype="float32")
+    x_std[2, 3] = 2.0
+    x_std[1, 0] = 3.0
+    x_func = np.zeros((4, 4), dtype="float32")
+    test(x_func)
+    assert np.array_equal(x_np, x_std)
+    assert np.array_equal(x_func, x_std)

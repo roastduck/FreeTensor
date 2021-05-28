@@ -4,7 +4,7 @@ import inspect
 import sourceinspect as ins
 from typing import Sequence, Optional
 
-from .nodes import _VarDef, Var, pop_ast, For, If, Else, MarkNid, ctx_stack as node_ctx, Func
+from .nodes import _VarDef, Var, pop_ast, For, If, Else, MarkNid, intrinsic, ctx_stack as node_ctx, Func
 from .utils import *
 import ffi
 import sys
@@ -185,6 +185,11 @@ class ASTTransformer(ast.NodeTransformer):
         node.expr_ptr = node.value
         return node
 
+    def visit_Attribute(self, node):
+        self.generic_visit(node)
+        node.expr_ptr = getattr(node.value.expr_ptr, node.attr)
+        return node
+
     def visit_Subscript(self, node):
         self.generic_visit(node)
         var = node.value.expr_ptr
@@ -249,65 +254,54 @@ class ASTTransformer(ast.NodeTransformer):
 
     def visit_Call(self, node):
         self.generic_visit(node)
+        callee = node.func.expr_ptr
         args = node.args
         for arg in args:
             assert hasattr(arg,
                            "expr_ptr"), "call argument should be an expression"
-        if (isinstance(node.func, ast.Attribute) and
-                isinstance(node.func.value, ast.Name) and
-                node.func.value.id == "ir"):
-            func_name = node.func.attr
-            if func_name == "create_var":
-                assert len(args) == 4, "create_var function has 4 arguments"
-                shape = args[0].expr_ptr
-                dtype = args[1].expr_ptr
-                atype = args[2].expr_ptr
-                mtype = args[3].expr_ptr
-                node.expr_ptr = VarCreation(shape, dtype, atype, mtype)
-            elif func_name == "declare_var":
-                assert len(args) == 5, "define_var function has 5 arguments"
-                assert isinstance(args[0], ast.Name)
-                name = args[0].id
-                shape = args[1].expr_ptr
-                dtype = args[2].expr_ptr
-                atype = args[3].expr_ptr
-                mtype = args[4].expr_ptr
-                VarCreation(shape, dtype, atype, mtype, name).execute()
-            elif func_name == "MarkNid":
-                assert len(args) == 1, "MarkNid has one argument"
-                nid = args[0].expr_ptr
-                ctx_stack.set_nid(nid)
-            elif func_name == "intrinsic":
-                assert len(args) >= 1, "intrinsic has at least one argument"
-                expr_args = []
-                for i in args[1:]:
-                    expr_args.append(i.expr_ptr)
-                ret_type = ffi.DataType.Void
-                for item in node.keywords:
-                    assert item.arg == "ret_type", (
-                        "Unrecognized keyword argument %s" % item.arg)
-                    ret_type = parseDType(item.value.expr_ptr)
-                node.expr_ptr = ffi.makeIntrinsic(args[0].expr_ptr, expr_args,
-                                                  ret_type)
-            else:
-                assert False, "Function %s not implemented" % func_name
-        elif isinstance(node.func, ast.Name):
-            func_name = node.func.id
-            inst = self.globals[func_name]
-            if isinstance(inst, ffi.Func):
-                ir_args = []
-                for arg in args:
-                    if isinstance(arg.expr_ptr, Var):
-                        ir_args.append(ffi.FuncArg(arg.expr_ptr.var))
-                    else:
-                        ir_args.append(ffi.FuncArg(ffi.TensorData(
-                            arg.expr_ptr)))
-                node_ctx.top().append_stmt(
-                    ffi.func2stmt(inst, ir_args, ctx_stack.get_nid()))
-            else:
-                assert False, "Function %s not implemented" % func_name
+        if callee is create_var:
+            assert len(args) == 4, "create_var function has 4 arguments"
+            shape = args[0].expr_ptr
+            dtype = args[1].expr_ptr
+            atype = args[2].expr_ptr
+            mtype = args[3].expr_ptr
+            node.expr_ptr = VarCreation(shape, dtype, atype, mtype)
+        elif callee is declare_var:
+            assert len(args) == 5, "define_var function has 5 arguments"
+            assert isinstance(args[0], ast.Name)
+            name = args[0].id
+            shape = args[1].expr_ptr
+            dtype = args[2].expr_ptr
+            atype = args[3].expr_ptr
+            mtype = args[4].expr_ptr
+            VarCreation(shape, dtype, atype, mtype, name).execute()
+        elif callee is MarkNid:
+            assert len(args) == 1, "MarkNid has one argument"
+            nid = args[0].expr_ptr
+            ctx_stack.set_nid(nid)
+        elif callee is intrinsic:
+            assert len(args) >= 1, "intrinsic has at least one argument"
+            expr_args = []
+            for i in args[1:]:
+                expr_args.append(i.expr_ptr)
+            ret_type = ffi.DataType.Void
+            for item in node.keywords:
+                assert item.arg == "ret_type", (
+                    "Unrecognized keyword argument %s" % item.arg)
+                ret_type = parseDType(item.value.expr_ptr)
+            node.expr_ptr = ffi.makeIntrinsic(args[0].expr_ptr, expr_args,
+                                              ret_type)
+        elif isinstance(callee, ffi.Func):
+            ir_args = []
+            for arg in args:
+                if isinstance(arg.expr_ptr, Var):
+                    ir_args.append(ffi.FuncArg(arg.expr_ptr.var))
+                else:
+                    ir_args.append(ffi.FuncArg(ffi.TensorData(arg.expr_ptr)))
+            node_ctx.top().append_stmt(
+                ffi.func2stmt(callee, ir_args, ctx_stack.get_nid()))
         else:
-            assert False, "External call not implemented"
+            assert False, "Function not implemented"
         return node
 
     def visit_Tuple(self, node):
