@@ -1,4 +1,5 @@
 import ir
+import math
 
 # TODO: Currently, a callee function must be in the global scope. Can we support a local scope?
 
@@ -152,5 +153,18 @@ def test_call_with_literal_data():
             with ir.For("i", 0, 2) as i:
                 with ir.For("j", 0, 2) as j:
                     y[i, j] = x[i, j] * 2
+    std = ir.pop_ast()
+    assert std.match(func.body)
+
+
+def test_external_call():
+
+    @ir.transform
+    def func(y):
+        ir.declare_var(y, (), "int32", "output", "cpu")
+        y[()] = math.gcd(10, 15)
+
+    with ir.VarDef("y", (), "int32", "output", "cpu") as y:
+        y[()] = 5
     std = ir.pop_ast()
     assert std.match(func.body)

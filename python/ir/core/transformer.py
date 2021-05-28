@@ -301,7 +301,7 @@ class ASTTransformer(ast.NodeTransformer):
             node_ctx.top().append_stmt(
                 ffi.func2stmt(callee, ir_args, ctx_stack.get_nid()))
         else:
-            assert False, "Function not implemented"
+            node.expr_ptr = callee(*[x.expr_ptr for x in args])
         return node
 
     def visit_Tuple(self, node):
@@ -464,7 +464,12 @@ def _get_global_vars(func):
     freevar_names = func.__code__.co_freevars
     closure = func.__closure__
     if closure:
-        freevar_values = list(map(lambda x: x.cell_contents, closure))
+        freevar_values = []
+        for item in closure:
+            try:
+                freevar_values.append(item.cell_contents)
+            except ValueError:  # ValueError: Cell is empty
+                pass
         for name, value in zip(freevar_names, freevar_values):
             global_vars[name] = value
 
