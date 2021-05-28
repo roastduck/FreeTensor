@@ -116,3 +116,29 @@ def test_var_as_shape():
 
     y_std = x_np * 2
     assert np.array_equal(y_np, y_std)
+
+
+def test_var_as_index():
+    with ir.VarDef([("idx", (2,), "int32", "input", "cpu"),
+                    ("x", (4, 4), "int32", "input", "cpu"),
+                    ("y", (), "int32", "output", "cpu")]) as (idx, x, y):
+        y[()] = x[idx]
+
+    func = ir.lower(ir.Func("main", ["idx", "x", "y"], ir.pop_ast()), ir.CPU())
+    print(func)
+
+    code = ir.codegen(func, ir.CPU())
+    print(code)
+    idx_np = np.array([1, 2]).astype("int32")
+    idx_arr = ir.Array(idx_np, ir.Device(ir.CPU()))
+    x_np = np.random.randint(0, 100, (4, 4)).astype("int32")
+    x_arr = ir.Array(x_np, ir.Device(ir.CPU()))
+    y_np = np.array(0, dtype="int32")
+    y_arr = ir.Array(y_np, ir.Device(ir.CPU()))
+    driver = ir.Driver(func, code, ir.Device(ir.CPU()))
+    driver.set_params({"idx": idx_arr, "x": x_arr, "y": y_arr})
+    driver.run()
+    y_np = y_arr.numpy()[0]
+
+    y_std = x_np[1, 2]
+    assert np.array_equal(y_np, y_std)

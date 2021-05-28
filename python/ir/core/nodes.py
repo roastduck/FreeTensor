@@ -76,15 +76,21 @@ class Var:
         self.shape = shape
 
     def __getitem__(self, key):
-        if type(key) is not tuple and type(key) is not list:
-            key = (key,)
-        return ffi.makeLoad(self.var, key)
+        return ffi.makeLoad(self.var, self._parse_key(key))
 
     def __setitem__(self, key, value):
-        if type(key) is not tuple and type(key) is not list:
-            key = (key,)
         top = ctx_stack.top()
-        top.append_stmt(ffi.makeStore(top.get_next_nid(), self.var, key, value))
+        top.append_stmt(
+            ffi.makeStore(top.get_next_nid(), self.var, self._parse_key(key),
+                          value))
+
+    def _parse_key(self, key):
+        if isinstance(key, collections.abc.Sequence):
+            return key
+        if isinstance(key, Var):
+            assert len(key.shape) == 1, "Shape of an index should be 1-D"
+            return [key[i] for i in range(key.shape[0])]
+        return (key,)
 
 
 class _VarDef:

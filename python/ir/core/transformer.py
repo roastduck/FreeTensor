@@ -187,19 +187,13 @@ class ASTTransformer(ast.NodeTransformer):
 
     def visit_Subscript(self, node):
         self.generic_visit(node)
-        assert isinstance(node.value.expr_ptr, Var), "Invalid subscript"
         var = node.value.expr_ptr
-        value = node.slice.value
-        if isinstance(value, ast.Tuple):
-            tup = value.expr_ptr
-        elif hasattr(value, "expr_ptr"):
-            tup = (value.expr_ptr,)
-        else:
-            assert False, "Invalid subscript value"
+        sub = node.slice.value.expr_ptr
+        assert var is not None
         if isinstance(node.ctx, ast.Load):
-            node.expr_ptr = var[tup]
+            node.expr_ptr = var[sub]
         else:
-            node.expr_ptr = VarSubscript(var, tup)
+            node.expr_ptr = VarSubscript(var, sub)
         return node
 
     def visit_BinOp(self, node):
