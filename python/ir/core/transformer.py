@@ -21,16 +21,6 @@ def create_var(shape, dtype, atype, mtype):
     return np.zeros(shape, dtype)
 
 
-class VarSubscript:
-
-    def __init__(self, var, sub):
-        self.var = var
-        self.sub = sub
-
-    def set(self, value):
-        self.var.__setitem__(self.sub, value)
-
-
 class VarCreation:
 
     def __init__(self, shape: Sequence, dtype, atype, mtype, name=None):
@@ -195,10 +185,7 @@ class ASTTransformer(ast.NodeTransformer):
         var = node.value.expr_ptr
         sub = node.slice.value.expr_ptr
         assert var is not None
-        if isinstance(node.ctx, ast.Load):
-            node.expr_ptr = var[sub]
-        else:
-            node.expr_ptr = VarSubscript(var, sub)
+        node.expr_ptr = var[sub]
         return node
 
     def visit_BinOp(self, node):
@@ -336,9 +323,10 @@ class ASTTransformer(ast.NodeTransformer):
             var_creation = node.value.expr_ptr
             var_creation.add_name(name)
             var_creation.execute()
-        elif isinstance(node.targets[0].expr_ptr, VarSubscript):
-            var = node.targets[0].expr_ptr
-            var.set(node.value.expr_ptr)
+        elif isinstance(node.targets[0], ast.Subscript):
+            var = node.targets[0].value.expr_ptr
+            sub = node.targets[0].slice.value.expr_ptr
+            var[sub] = node.value.expr_ptr
         else:
             assert False, "Invalid assignment"
         return node
@@ -355,10 +343,7 @@ class ASTTransformer(ast.NodeTransformer):
                        "expr_ptr"), "Target to be assigned is not an expression"
         assert hasattr(node.value,
                        "expr_ptr"), "Value to be assigned is not an expression"
-        if isinstance(node.target.expr_ptr, VarSubscript):
-            var = node.target.expr_ptr
-            if var is None:
-                var = ctx_stack.find_var_by_name(node.target.id)
+        if isinstance(node.target, ast.Subscript):
             op = {
                 ast.Add: lambda l, r: l + r,
                 ast.Sub: lambda l, r: l - r,
@@ -367,7 +352,9 @@ class ASTTransformer(ast.NodeTransformer):
                 ast.FloorDiv: lambda l, r: l // r,
                 ast.Mod: lambda l, r: l % r,
             }.get(type(node.op))
-            var.set(op(target_load.expr_ptr, node.value.expr_ptr))
+            var = node.target.value.expr_ptr
+            sub = node.target.slice.value.expr_ptr
+            var[sub] = op(node.target.expr_ptr, node.value.expr_ptr)
         else:
             assert False, "Invalid augmented assignment"
         return node

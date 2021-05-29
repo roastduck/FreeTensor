@@ -71,26 +71,60 @@ def pop_ast():
 
 class Var:
 
-    def __init__(self, name: str, shape: Sequence):
+    def __init__(self, name: str, shape: Sequence, index: Sequence = []):
         self.var = name
         self.shape = shape
+        self.index = list(index)
 
     def __getitem__(self, key):
-        return ffi.makeLoad(self.var, self._parse_key(key))
+        index = self._parse_key(key)
+        if self._is_single_item(index):
+            return ffi.makeLoad(self.var, index)
+        else:
+            return Var(self.var, self.shape, index)
 
     def __setitem__(self, key, value):
+        index = self._parse_key(key)
+        assert self._is_single_item(
+            index), f"Array assignment is not supported for variable {self.var}"
         top = ctx_stack.top()
         top.append_stmt(
-            ffi.makeStore(top.get_next_nid(), self.var, self._parse_key(key),
-                          value))
+            ffi.makeStore(top.get_next_nid(), self.var, index, value))
 
     def _parse_key(self, key):
+        index = self.index
         if isinstance(key, collections.abc.Sequence):
-            return key
-        if isinstance(key, Var):
+            if len(key) > 0:
+                if len(self.index) > 0 and isinstance(self.index[-1], slice):
+                    if self.index[-1].start is not None:
+                        offset = self.index[-1].start
+                    else:
+                        offset = 0
+                    if isinstance(key[0], slice):
+                        if key[0].start is not None:
+                            key[0].start += offset
+                        else:
+                            key[0].start = offset
+                        if key[0].stop is not None:
+                            key[0].stop += offset
+                    else:
+                        key[0] += offset
+                    self.index[-1] = key[0]
+                    key = key[1:]
+            return index + list(key)
+        elif isinstance(key, Var):
             assert len(key.shape) == 1, "Shape of an index should be 1-D"
-            return [key[i] for i in range(key.shape[0])]
-        return (key,)
+            return index + [key[i] for i in range(key.shape[0])]
+        else:
+            return index + [key]
+
+    def _is_single_item(self, index):
+        if len(index) < len(self.shape):
+            return False
+        for idx in index:
+            if isinstance(idx, slice):
+                return False
+        return True
 
 
 class _VarDef:

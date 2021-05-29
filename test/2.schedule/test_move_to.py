@@ -265,9 +265,9 @@ def test_swap_and_fission_forward():
 
 def test_swap_and_fission_backward():
     with ir.VarDef([
-        ("y1", (4,), "int32", "output", "cpu"),
+        ("y1", (4, 4), "int32", "output", "cpu"),
         ("y2", (4, 4), "int32", "output", "cpu"),
-        ("y3", (4, 4), "int32", "output", "cpu"),
+        ("y3", (4,), "int32", "output", "cpu"),
     ]) as (y1, y2, y3):
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 4, nid="L2") as j:
@@ -287,9 +287,9 @@ def test_swap_and_fission_backward():
     print(ast)
 
     with ir.VarDef([
-        ("y1", (4,), "int32", "output", "cpu"),
+        ("y1", (4, 4), "int32", "output", "cpu"),
         ("y2", (4, 4), "int32", "output", "cpu"),
-        ("y3", (4, 4), "int32", "output", "cpu"),
+        ("y3", (4,), "int32", "output", "cpu"),
     ]) as (y1, y2, y3):
         with ir.For("i", 0, 4) as i:
             with ir.For("j", 0, 4) as j:
