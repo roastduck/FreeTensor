@@ -69,62 +69,97 @@ def pop_ast():
     return ret
 
 
-class Var:
+class Var(ffi.FrontendVar):
 
-    def __init__(self, name: str, shape: Sequence, index: Sequence = []):
-        self.var = name
-        self.shape = shape
-        self.index = list(index)
+    def __init__(self, name: str, shape: Sequence, indices: Sequence = []):
+        super(Var, self).__init__(name, shape, indices)
 
     def __getitem__(self, key):
-        index = self._parse_key(key)
-        if self._is_single_item(index):
-            return ffi.makeLoad(self.var, index)
-        else:
-            return Var(self.var, self.shape, index)
+        return Var(self.name, self.shape,
+                   self.chain_indices(self._parse_key(key)))
 
     def __setitem__(self, key, value):
-        index = self._parse_key(key)
-        assert self._is_single_item(
-            index), f"Array assignment is not supported for variable {self.var}"
+        var = Var(self.name, self.shape,
+                  self.chain_indices(self._parse_key(key)))
         top = ctx_stack.top()
-        top.append_stmt(
-            ffi.makeStore(top.get_next_nid(), self.var, index, value))
+        top.append_stmt(var.as_store(top.get_next_nid(), value))
 
     def _parse_key(self, key):
-        index = self.index
-        if isinstance(key, collections.abc.Sequence):
-            if len(key) > 0:
-                if len(self.index) > 0 and isinstance(self.index[-1], slice):
-                    if self.index[-1].start is not None:
-                        offset = self.index[-1].start
-                    else:
-                        offset = 0
-                    if isinstance(key[0], slice):
-                        if key[0].start is not None:
-                            key[0].start += offset
-                        else:
-                            key[0].start = offset
-                        if key[0].stop is not None:
-                            key[0].stop += offset
-                    else:
-                        key[0] += offset
-                    self.index[-1] = key[0]
-                    key = key[1:]
-            return index + list(key)
-        elif isinstance(key, Var):
-            assert len(key.shape) == 1, "Shape of an index should be 1-D"
-            return index + [key[i] for i in range(key.shape[0])]
-        else:
-            return index + [key]
-
-    def _is_single_item(self, index):
-        if len(index) < len(self.shape):
-            return False
-        for idx in index:
+        if not isinstance(key, collections.abc.Sequence):
+            key = (key,)
+        ffiIdx = []
+        for idx, length in zip(key, self.shape):
             if isinstance(idx, slice):
-                return False
-        return True
+                start = idx.start if idx.start is not None else 0
+                stop = idx.stop if idx.stop is not None else length
+                assert idx.step is None or idx.step == 1
+                ffiIdx.append(ffi.FrontendVarIdx(start, stop))
+            elif isinstance(idx, Var):
+                assert len(key) == 1, "Shape of an index should be 1-D"
+                assert type(
+                    idx.shape[0]
+                ) is ffi.IntConst, "Dynamic number of dimensions is not supported"
+                ndim = idx.shape[0].val
+                ffiIdx += [
+                    ffi.FrontendVarIdx(idx[i].as_load()) for i in range(ndim)
+                ]
+            else:
+                ffiIdx.append(ffi.FrontendVarIdx(idx))
+        return ffiIdx
+
+    def __add__(self, other):
+        return self.as_load() + other
+
+    def __radd__(self, other):
+        return other + self.as_load()
+
+    def __sub__(self, other):
+        return self.as_load() - other
+
+    def __rsub__(self, other):
+        return other - self.as_load()
+
+    def __mul__(self, other):
+        return self.as_load() * other
+
+    def __rmul__(self, other):
+        return other * self.as_load()
+
+    def __truediv__(self, other):
+        return self.as_load() / other
+
+    def __rtruediv__(self, other):
+        return other / self.as_load()
+
+    def __floordiv__(self, other):
+        return self.as_load() // other
+
+    def __rfloordiv__(self, other):
+        return other // self.as_load()
+
+    def __mod__(self, other):
+        return self.as_load() % other
+
+    def __rmod__(self, other):
+        return other % self.as_load()
+
+    def __lt__(self, other):
+        return self.as_load() < other
+
+    def __le__(self, other):
+        return self.as_load() <= other
+
+    def __gt__(self, other):
+        return self.as_load() > other
+
+    def __ge__(self, other):
+        return self.as_load() >= other
+
+    def __eq__(self, other):
+        return self.as_load() == other
+
+    def __ne__(self, other):
+        return self.as_load() != other
 
 
 class _VarDef:
@@ -135,7 +170,11 @@ class _VarDef:
             self.shape = shape
         elif isinstance(shape, Var):
             assert len(shape.shape) == 1, "Shape of a shape should be 1-D"
-            self.shape = [shape[i] for i in range(shape.shape[0])]
+            assert type(
+                shape.shape[0]
+            ) is ffi.IntConst, "Dynamic number of dimensions is not supported"
+            ndim = shape.shape[0].val
+            self.shape = [shape[i] for i in range(ndim)]
         else:
             assert False, "shape cannot be of type %s" % type(shape)
         self.dtype = parseDType(dtype)

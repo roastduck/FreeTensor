@@ -250,6 +250,35 @@ def test_call_with_slice():
     assert std.match(func.body)
 
 
+def test_call_with_scalar():
+
+    @ir.transform
+    def g(x1, x2, y):
+        ir.declare_var(x1, (), "float32", "input", "cpu")
+        ir.declare_var(x2, (), "float32", "input", "cpu")
+        ir.declare_var(y, (), "float32", "output", "cpu")
+        y[()] = x1[()] + x2[()]
+
+    @ir.transform
+    def f(x1, x2, y):
+        ir.declare_var(x1, (4,), "float32", "input", "cpu")
+        ir.declare_var(x2, (4,), "float32", "input", "cpu")
+        ir.declare_var(y, (4,), "float32", "output", "cpu")
+        for i in range(4):
+            g(x1[i], x2[i], y[i])
+
+    func = ir.lower(f, ir.CPU())
+    print(func)
+
+    with ir.VarDef([("x1", (4,), "float32", "input", "cpu"),
+                    ("x2", (4,), "float32", "input", "cpu"),
+                    ("y", (4,), "float32", "output", "cpu")]) as (x1, x2, y):
+        with ir.For("i", 0, 4) as i:
+            y[i] = x1[i] + x2[i]
+    std = ir.pop_ast()
+    assert std.match(func.body)
+
+
 def test_external_call():
 
     @ir.transform

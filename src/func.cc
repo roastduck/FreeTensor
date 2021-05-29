@@ -25,11 +25,11 @@ class Func2Stmt : public Mutator {
         if (replace_.count(op->var_)) {
             auto &&arg = replace_.at(op->var_);
             if (arg->type() == FuncArgType::Var) {
-                op->var_ = arg->name();
+                op->var_ = arg->var().name();
                 std::vector<Expr> indices;
                 auto it = op->indices_.begin();
-                for (auto &&idx : arg->indices()) {
-                    if (idx.type() == FuncArgIdxType::Single) {
+                for (auto &&idx : arg->var().indices()) {
+                    if (idx.type() == FrontendVarIdxType::Single) {
                         indices.emplace_back(idx.single());
                     } else {
                         ASSERT(it != op->indices_.end());

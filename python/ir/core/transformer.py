@@ -303,17 +303,7 @@ class ASTTransformer(ast.NodeTransformer):
             ir_args = []
             for arg in args:
                 if isinstance(arg.expr_ptr, Var):
-                    indices = []
-                    for idx, length in zip(arg.expr_ptr.index,
-                                           arg.expr_ptr.shape):
-                        if isinstance(idx, slice):
-                            start = idx.start if idx.start is not None else 0
-                            stop = idx.stop if idx.stop is not None else length
-                            assert idx.step is None or idx.step == 1
-                            indices.append(ffi.FuncArgIdx(start, stop))
-                        else:
-                            indices.append(ffi.FuncArgIdx(idx))
-                    ir_args.append(ffi.FuncArg(arg.expr_ptr.var, indices))
+                    ir_args.append(ffi.FuncArg(arg.expr_ptr))
                 else:
                     ir_args.append(ffi.FuncArg(ffi.TensorData(arg.expr_ptr)))
             node_ctx.top().append_stmt(

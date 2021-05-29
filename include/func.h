@@ -5,6 +5,7 @@
 #include <vector>
 
 #include <ast.h>
+#include <frontend_utils.h>
 #include <stmt.h>
 #include <tensor.h>
 
@@ -30,69 +31,19 @@ Func _makeFunc(const std::string &name, const std::vector<std::string> &params,
     return f;
 }
 
-enum class FuncArgIdxType : int { Single, Slice };
-
-class FuncArgIdx {
-    FuncArgIdxType type_;
-    Expr start_, stop_;
-
-  public:
-    FuncArgIdxType type() const { return type_; }
-
-    const Expr &single() const {
-        ASSERT(type_ == FuncArgIdxType::Single);
-        return start_;
-    }
-
-    const Expr &start() const {
-        ASSERT(type_ == FuncArgIdxType::Slice);
-        return start_;
-    }
-
-    const Expr &stop() const {
-        ASSERT(type_ == FuncArgIdxType::Slice);
-        return stop_;
-    }
-
-    static FuncArgIdx fromSingle(const Expr &single) {
-        FuncArgIdx ret;
-        ret.type_ = FuncArgIdxType::Single;
-        ret.start_ = single;
-        return ret;
-    }
-
-    static FuncArgIdx fromSlice(const Expr &start, const Expr &stop) {
-        FuncArgIdx ret;
-        ret.type_ = FuncArgIdxType::Slice;
-        ret.start_ = start;
-        ret.stop_ = stop;
-        return ret;
-    }
-};
-
 enum class FuncArgType : int { Var, Literal };
 
 class FuncArg {
     FuncArgType type_;
-
-    // For Var
-    std::string name_;
-    std::vector<FuncArgIdx> indices_;
-
-    // For Literal
+    Ref<FrontendVar> var_;
     Ref<TensorData> literal_;
 
   public:
     FuncArgType type() const { return type_; }
 
-    const std::string &name() const {
+    const FrontendVar &var() const {
         ASSERT(type_ == FuncArgType::Var);
-        return name_;
-    }
-
-    const std::vector<FuncArgIdx> &indices() const {
-        ASSERT(type_ == FuncArgType::Var);
-        return indices_;
+        return *var_;
     }
 
     const TensorData &literal() const {
@@ -100,12 +51,10 @@ class FuncArg {
         return *literal_;
     }
 
-    static FuncArg fromVar(const std::string &name,
-                           const std::vector<FuncArgIdx> &indices) {
+    static FuncArg fromVar(const Ref<FrontendVar> &var) {
         FuncArg ret;
         ret.type_ = FuncArgType::Var;
-        ret.name_ = name;
-        ret.indices_ = indices;
+        ret.var_ = var;
         return ret;
     }
 
