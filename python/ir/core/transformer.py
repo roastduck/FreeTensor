@@ -1,13 +1,15 @@
+import ffi
+
+import sys
 import ast
 import numpy as np
 import inspect
 import sourceinspect as ins
 from typing import Sequence, Optional
 
+from . import nodes
 from .nodes import _VarDef, Var, pop_ast, For, If, Else, MarkNid, intrinsic, ctx_stack as node_ctx, Func
 from .utils import *
-import ffi
-import sys
 
 assert sys.version_info >= (3,
                             8), "Python version lower than 3.8 is not supported"
@@ -287,6 +289,16 @@ class ASTTransformer(ast.NodeTransformer):
             assert len(args) == 1, "MarkNid has one argument"
             nid = args[0].expr_ptr
             ctx_stack.set_nid(nid)
+        elif callee is nodes.min:
+            assert len(args) == 2, "min requires 2 arguments"
+            lhs = args[0].expr_ptr
+            rhs = args[1].expr_ptr
+            node.expr_ptr = nodes.min(lhs, rhs)
+        elif callee is nodes.max:
+            assert len(args) == 2, "min requires 2 arguments"
+            lhs = args[0].expr_ptr
+            rhs = args[1].expr_ptr
+            node.expr_ptr = nodes.max(lhs, rhs)
         elif callee is intrinsic:
             assert len(args) >= 1, "intrinsic has at least one argument"
             expr_args = []
