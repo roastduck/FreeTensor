@@ -41,7 +41,7 @@ def test_manual_static():
         A_arr = ir.Array(A_np, device)
         W_arr = ir.Array(W_np, device)
         B_arr = ir.Array(B_np, device)
-        driver.set_params({"A": A_arr, "W": W_arr, "B": B_arr})
+        driver.set_params(A=A_arr, W=W_arr, B=B_arr)
         if time:
             t = driver.time()
             print("time: %s ms" % t)

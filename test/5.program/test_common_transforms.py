@@ -74,7 +74,7 @@ def test_tiling():
     b_arr = ir.Array(b_np, device)
     c_arr = ir.Array(c_np, device)
     driver = ir.Driver(func, code, device)
-    driver.set_params({"a": a_arr, "b": b_arr, "c": c_arr})
+    driver.set_params(a=a_arr, b=b_arr, c=c_arr)
     driver.run()
     c_np = c_arr.numpy().reshape(256, 256)
 
@@ -125,7 +125,7 @@ def test_tiled_reduction():
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
     driver = ir.Driver(func, code, device)
-    driver.set_params({"x": x_arr, "y": y_arr})
+    driver.set_params(x=x_arr, y=y_arr)
     driver.run()
     y_np = y_arr.numpy()
 
@@ -182,7 +182,7 @@ def test_parallel_reduction():
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
     driver = ir.Driver(func, code, device)
-    driver.set_params({"x": x_arr, "y": y_arr})
+    driver.set_params(x=x_arr, y=y_arr)
     driver.run()
     y_np = y_arr.numpy()
 
@@ -245,14 +245,7 @@ def test_dynamic_tiling():
     b_arr = ir.Array(b_np, device)
     c_arr = ir.Array(c_np, device)
     driver = ir.Driver(func, code, device)
-    driver.set_params({
-        "n": n_arr,
-        "k": k_arr,
-        "m": m_arr,
-        "a": a_arr,
-        "b": b_arr,
-        "c": c_arr
-    })
+    driver.set_params(n=n_arr, k=k_arr, m=m_arr, a=a_arr, b=b_arr, c=c_arr)
     driver.run()
     c_np = c_arr.numpy().reshape(300, 500)
 
@@ -307,7 +300,7 @@ def test_collaborative_fetch():
     b_arr = ir.Array(b_np, device)
     c_arr = ir.Array(c_np, device)
     driver = ir.Driver(func, code, device)
-    driver.set_params({"a": a_arr, "b": b_arr, "c": c_arr})
+    driver.set_params(a=a_arr, b=b_arr, c=c_arr)
     driver.run()
     c_np = c_arr.numpy().reshape(32, 32)
 

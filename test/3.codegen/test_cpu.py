@@ -32,7 +32,7 @@ def test_omp_for():
     x_arr = ir.Array(x_np, ir.Device(target))
     y_arr = ir.Array(y_np, ir.Device(target))
     driver = ir.Driver(func, code, device)
-    driver.set_params({"x": x_arr, "y": y_arr})
+    driver.set_params(x=x_arr, y=y_arr)
     driver.run()
     y_np = y_arr.numpy()
 
@@ -73,7 +73,7 @@ def test_parallel_reduction():
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
     driver = ir.Driver(func, code, device)
-    driver.set_params({"x": x_arr, "y": y_arr})
+    driver.set_params(x=x_arr, y=y_arr)
     driver.run()
     y_np = y_arr.numpy()
 
@@ -114,7 +114,7 @@ def test_serial_reduction():
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
     driver = ir.Driver(func, code, device)
-    driver.set_params({"x": x_arr, "y": y_arr})
+    driver.set_params(x=x_arr, y=y_arr)
     driver.run()
     y_np = y_arr.numpy()
 
@@ -150,7 +150,7 @@ def test_unroll_for():
     x_arr = ir.Array(x_np, ir.Device(ir.CPU()))
     y_arr = ir.Array(y_np, ir.Device(ir.CPU()))
     driver = ir.Driver(func, code, ir.Device(ir.CPU()))
-    driver.set_params({"x": x_arr, "y": y_arr})
+    driver.set_params(x=x_arr, y=y_arr)
     driver.run()
     y_np = y_arr.numpy()
 
@@ -186,7 +186,7 @@ def test_vectorize_for():
     x_arr = ir.Array(x_np, ir.Device(ir.CPU()))
     y_arr = ir.Array(y_np, ir.Device(ir.CPU()))
     driver = ir.Driver(func, code, ir.Device(ir.CPU()))
-    driver.set_params({"x": x_arr, "y": y_arr})
+    driver.set_params(x=x_arr, y=y_arr)
     driver.run()
     y_np = y_arr.numpy()
 

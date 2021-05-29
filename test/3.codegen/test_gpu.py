@@ -38,7 +38,7 @@ def test_basic():
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
     driver = ir.Driver(func, code, device)
-    driver.set_params({"x": x_arr, "y": y_arr})
+    driver.set_params(x=x_arr, y=y_arr)
     driver.run()
     y_np = y_arr.numpy()
 
@@ -79,7 +79,7 @@ def test_shmem():
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
     driver = ir.Driver(func, code, device)
-    driver.set_params({"x": x_arr, "y": y_arr})
+    driver.set_params(x=x_arr, y=y_arr)
     driver.run()
     y_np = y_arr.numpy()
 
@@ -126,7 +126,7 @@ def test_global_mem():
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
     driver = ir.Driver(func, code, device)
-    driver.set_params({"x": x_arr, "y": y_arr})
+    driver.set_params(x=x_arr, y=y_arr)
     driver.run()
     y_np = y_arr.numpy()
 
@@ -170,7 +170,7 @@ def test_pass_by_value_0d():
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
     driver = ir.Driver(func, code, device)
-    driver.set_params({"n": n_arr, "x": x_arr, "y": y_arr})
+    driver.set_params(n=n_arr, x=x_arr, y=y_arr)
     driver.run()
     y_np = y_arr.numpy().reshape(5, 4)
 
@@ -214,7 +214,7 @@ def test_pass_by_value_1d():
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
     driver = ir.Driver(func, code, device)
-    driver.set_params({"n": n_arr, "x": x_arr, "y": y_arr})
+    driver.set_params(n=n_arr, x=x_arr, y=y_arr)
     driver.run()
     y_np = y_arr.numpy().reshape(5, 4)
 
@@ -247,7 +247,7 @@ def test_dynamic_2d_array():
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
     driver = ir.Driver(func, code, device)
-    driver.set_params({"n": n_arr, "x": x_arr, "y": y_arr})
+    driver.set_params(n=n_arr, x=x_arr, y=y_arr)
     driver.run()
     y_np = y_arr.numpy().reshape(5, 5)
 
@@ -284,7 +284,7 @@ def test_intrinsic():
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
     driver = ir.Driver(func, code, device)
-    driver.set_params({"x": x_arr, "y": y_arr})
+    driver.set_params(x=x_arr, y=y_arr)
     driver.run()
     y_np = y_arr.numpy()
 
@@ -347,7 +347,7 @@ def test_syncthreads():
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
     driver = ir.Driver(func, code, device)
-    driver.set_params({"x": x_arr, "y": y_arr})
+    driver.set_params(x=x_arr, y=y_arr)
     driver.run()
     y_np = y_arr.numpy().reshape(4, 256)
 
@@ -488,7 +488,7 @@ def test_syncwarp():
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
     driver = ir.Driver(func, code, device)
-    driver.set_params({"x": x_arr, "y": y_arr})
+    driver.set_params(x=x_arr, y=y_arr)
     driver.run()
     y_np = y_arr.numpy().reshape(4, 4)
 
@@ -550,7 +550,7 @@ def test_correct_shared():
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
     driver = ir.Driver(func, code, device)
-    driver.set_params({"x": x_arr, "y": y_arr})
+    driver.set_params(x=x_arr, y=y_arr)
     driver.run()
     y_np = y_arr.numpy().reshape(4, 256)
 
@@ -606,7 +606,7 @@ def test_relax_shared_shape_to_constants():
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
     driver = ir.Driver(func, code, device)
-    driver.set_params({"n": n_arr, "x": x_arr, "y": y_arr})
+    driver.set_params(n=n_arr, x=x_arr, y=y_arr)
     driver.run()
     y_np = y_arr.numpy().reshape(4, 256)
 
@@ -678,7 +678,7 @@ def test_parallel_different_length():
     b_arr = ir.Array(b_np, device)
     c_arr = ir.Array(c_np, device)
     driver = ir.Driver(func, code, device)
-    driver.set_params({"a": a_arr, "b": b_arr, "c": c_arr})
+    driver.set_params(a=a_arr, b=b_arr, c=c_arr)
     driver.run()
     c_np = c_arr.numpy().reshape(4, 8)
 
@@ -742,7 +742,7 @@ def test_parallel_broadcast():
     b_arr = ir.Array(b_np, device)
     c_arr = ir.Array(c_np, device)
     driver = ir.Driver(func, code, device)
-    driver.set_params({"a": a_arr, "b": b_arr, "c": c_arr})
+    driver.set_params(a=a_arr, b=b_arr, c=c_arr)
     driver.run()
     c_np = c_arr.numpy().reshape(4, 8)
 
@@ -812,7 +812,7 @@ def test_parallel_reduction():
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
     driver = ir.Driver(func, code, device)
-    driver.set_params({"x": x_arr, "y": y_arr})
+    driver.set_params(x=x_arr, y=y_arr)
     driver.run()
     y_np = y_arr.numpy()
 
@@ -855,7 +855,7 @@ def test_serial_reduction():
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
     driver = ir.Driver(func, code, device)
-    driver.set_params({"x": x_arr, "y": y_arr})
+    driver.set_params(x=x_arr, y=y_arr)
     driver.run()
     y_np = y_arr.numpy()
 
@@ -899,7 +899,7 @@ def test_unroll_for():
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
     driver = ir.Driver(func, code, device)
-    driver.set_params({"x": x_arr, "y": y_arr})
+    driver.set_params(x=x_arr, y=y_arr)
     driver.run()
     y_np = y_arr.numpy()
 
@@ -932,7 +932,7 @@ def test_vectorize():
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
     driver = ir.Driver(func, code, device)
-    driver.set_params({"x": x_arr, "y": y_arr})
+    driver.set_params(x=x_arr, y=y_arr)
     driver.run()
     y_np = y_arr.numpy().reshape(4, 64)
 
@@ -965,7 +965,7 @@ def test_vectorize_with_non_vector_access():
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
     driver = ir.Driver(func, code, device)
-    driver.set_params({"x": x_arr, "y": y_arr})
+    driver.set_params(x=x_arr, y=y_arr)
     driver.run()
     y_np = y_arr.numpy().reshape(4, 64)
 
@@ -993,7 +993,7 @@ def test_vectorize_use_iter():
     y_np = np.zeros((4, 64), dtype="int32")
     y_arr = ir.Array(y_np, device)
     driver = ir.Driver(func, code, device)
-    driver.set_params({"y": y_arr})
+    driver.set_params(y=y_arr)
     driver.run()
     y_np = y_arr.numpy().reshape(4, 64)
 
@@ -1026,7 +1026,7 @@ def test_vectorize_fallback_to_shorter_when_not_divisible():
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
     driver = ir.Driver(func, code, device)
-    driver.set_params({"x": x_arr, "y": y_arr})
+    driver.set_params(x=x_arr, y=y_arr)
     driver.run()
     y_np = y_arr.numpy().reshape(4, 62)
 
@@ -1059,7 +1059,7 @@ def test_vectorize_fallback_to_shorter_when_not_aligned():
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
     driver = ir.Driver(func, code, device)
-    driver.set_params({"x": x_arr, "y": y_arr})
+    driver.set_params(x=x_arr, y=y_arr)
     driver.run()
     y_np = y_arr.numpy().reshape(4, 64)
 
