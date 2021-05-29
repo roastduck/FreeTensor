@@ -13,12 +13,38 @@ class Func2Stmt : public Mutator {
     std::string callSiteId_;
     const std::vector<FuncArg> &args_;
 
-    std::unordered_map<std::string, std::string> replace_;
+    std::unordered_map<std::string, const FuncArg *> replace_;
 
   public:
     Func2Stmt(const Func &func, const std::string callSiteId,
               const std::vector<FuncArg> &args)
         : func_(func), callSiteId_(callSiteId), args_(args) {}
+
+  private:
+    template <class T> void mutateMemAccess(const T &op) {
+        if (replace_.count(op->var_)) {
+            auto &&arg = replace_.at(op->var_);
+            if (arg->type() == FuncArgType::Var) {
+                op->var_ = arg->name();
+                std::vector<Expr> indices;
+                auto it = op->indices_.begin();
+                for (auto &&idx : arg->indices()) {
+                    if (idx.type() == FuncArgIdxType::Single) {
+                        indices.emplace_back(idx.single());
+                    } else {
+                        ASSERT(it != op->indices_.end());
+                        indices.emplace_back(makeAdd(idx.start(), *it++));
+                    }
+                }
+                for (; it != op->indices_.end(); it++) {
+                    indices.emplace_back(*it);
+                }
+                op->indices_.assign(indices.begin(), indices.end());
+            }
+        } else {
+            op->var_ = callSiteId_ + ":" + op->var_;
+        }
+    }
 
   protected:
     Stmt
@@ -42,9 +68,9 @@ class Func2Stmt : public Mutator {
             }
             auto nth = it - func_->params_.begin();
             const FuncArg &arg = args_.at(nth);
-            if (arg.type() == FuncArgType::Name) {
+            if (arg.type() == FuncArgType::Var) {
                 ASSERT(!replace_.count(_op->name_));
-                replace_[_op->name_] = arg.name();
+                replace_[_op->name_] = &arg;
                 auto ret = (*this)(_op->body_);
                 replace_.erase(_op->name_);
                 return ret;
@@ -62,7 +88,7 @@ class Func2Stmt : public Mutator {
                         "", _op->name_, std::move(indices), data.at(i)));
                 }
                 ASSERT(!replace_.count(_op->name_));
-                replace_[_op->name_] = _op->name_; // Keep it
+                replace_[_op->name_] = &arg;
                 auto __op = Mutator::visit(_op);
                 ASSERT(__op->nodeType() == ASTNodeType::VarDef);
                 auto op = __op.as<VarDefNode>();
@@ -105,8 +131,7 @@ class Func2Stmt : public Mutator {
         auto __op = Mutator::visit(_op);
         ASSERT(__op->nodeType() == ASTNodeType::Load);
         auto op = __op.as<LoadNode>();
-        op->var_ = replace_.count(op->var_) ? replace_.at(op->var_)
-                                            : callSiteId_ + ":" + op->var_;
+        mutateMemAccess(op);
         return op;
     }
 
@@ -114,8 +139,7 @@ class Func2Stmt : public Mutator {
         auto __op = Mutator::visit(_op);
         ASSERT(__op->nodeType() == ASTNodeType::Store);
         auto op = __op.as<StoreNode>();
-        op->var_ = replace_.count(op->var_) ? replace_.at(op->var_)
-                                            : callSiteId_ + ":" + op->var_;
+        mutateMemAccess(op);
         return op;
     }
 
@@ -123,8 +147,7 @@ class Func2Stmt : public Mutator {
         auto __op = Mutator::visit(_op);
         ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
         auto op = __op.as<ReduceToNode>();
-        op->var_ = replace_.count(op->var_) ? replace_.at(op->var_)
-                                            : callSiteId_ + ":" + op->var_;
+        mutateMemAccess(op);
         return op;
     }
 };

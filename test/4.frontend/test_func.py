@@ -157,6 +157,99 @@ def test_call_with_literal_data():
     assert std.match(func.body)
 
 
+def test_call_with_fixed_dim_at_front():
+
+    @ir.transform
+    def g(x1, x2, y):
+        ir.declare_var(x1, (4,), "float32", "input", "cpu")
+        ir.declare_var(x2, (4,), "float32", "input", "cpu")
+        ir.declare_var(y, (4,), "float32", "output", "cpu")
+        for i in range(4):
+            y[i] = x1[i] + x2[i]
+
+    @ir.transform
+    def f(x1, x2, y):
+        ir.declare_var(x1, (4, 4), "float32", "input", "cpu")
+        ir.declare_var(x2, (4, 4), "float32", "input", "cpu")
+        ir.declare_var(y, (4, 4), "float32", "output", "cpu")
+        for i in range(4):
+            g(x1[i], x2[i], y[i])
+
+    func = ir.lower(f, ir.CPU())
+    print(func)
+
+    with ir.VarDef([("x1", (4, 4), "float32", "input", "cpu"),
+                    ("x2", (4, 4), "float32", "input", "cpu"),
+                    ("y", (4, 4), "float32", "output", "cpu")]) as (x1, x2, y):
+        with ir.For("i", 0, 4) as i:
+            with ir.For("j", 0, 4) as j:
+                y[i, j] = x1[i, j] + x2[i, j]
+    std = ir.pop_ast()
+    assert std.match(func.body)
+
+
+def test_call_with_fixed_dim_at_back():
+
+    @ir.transform
+    def g(x1, x2, y):
+        ir.declare_var(x1, (4,), "float32", "input", "cpu")
+        ir.declare_var(x2, (4,), "float32", "input", "cpu")
+        ir.declare_var(y, (4,), "float32", "output", "cpu")
+        for i in range(4):
+            y[i] = x1[i] + x2[i]
+
+    @ir.transform
+    def f(x1, x2, y):
+        ir.declare_var(x1, (4, 4), "float32", "input", "cpu")
+        ir.declare_var(x2, (4, 4), "float32", "input", "cpu")
+        ir.declare_var(y, (4, 4), "float32", "output", "cpu")
+        for i in range(4):
+            g(x1[:, i], x2[:, i], y[:, i])
+
+    func = ir.lower(f, ir.CPU())
+    print(func)
+
+    with ir.VarDef([("x1", (4, 4), "float32", "input", "cpu"),
+                    ("x2", (4, 4), "float32", "input", "cpu"),
+                    ("y", (4, 4), "float32", "output", "cpu")]) as (x1, x2, y):
+        with ir.For("i", 0, 4) as i:
+            with ir.For("j", 0, 4) as j:
+                y[j, i] = x1[j, i] + x2[j, i]
+    std = ir.pop_ast()
+    assert std.match(func.body)
+
+
+def test_call_with_slice():
+
+    @ir.transform
+    def g(x1, x2, y):
+        ir.declare_var(x1, (4,), "float32", "input", "cpu")
+        ir.declare_var(x2, (4,), "float32", "input", "cpu")
+        ir.declare_var(y, (4,), "float32", "output", "cpu")
+        for i in range(4):
+            y[i] = x1[i] + x2[i]
+
+    @ir.transform
+    def f(x1, x2, y):
+        ir.declare_var(x1, (5,), "float32", "input", "cpu")
+        ir.declare_var(x2, (5,), "float32", "input", "cpu")
+        ir.declare_var(y, (5,), "float32", "output", "cpu")
+        y[0] = 0.
+        g(x1[1:], x2[1:], y[1:])
+
+    func = ir.lower(f, ir.CPU())
+    print(func)
+
+    with ir.VarDef([("x1", (5,), "float32", "input", "cpu"),
+                    ("x2", (5,), "float32", "input", "cpu"),
+                    ("y", (5,), "float32", "output", "cpu")]) as (x1, x2, y):
+        y[0] = 0.
+        with ir.For("i", 0, 4) as i:
+            y[i + 1] = x1[i + 1] + x2[i + 1]
+    std = ir.pop_ast()
+    assert std.match(func.body)
+
+
 def test_external_call():
 
     @ir.transform

@@ -30,19 +30,69 @@ Func _makeFunc(const std::string &name, const std::vector<std::string> &params,
     return f;
 }
 
-enum class FuncArgType : int { Name, Literal };
+enum class FuncArgIdxType : int { Single, Slice };
+
+class FuncArgIdx {
+    FuncArgIdxType type_;
+    Expr start_, stop_;
+
+  public:
+    FuncArgIdxType type() const { return type_; }
+
+    const Expr &single() const {
+        ASSERT(type_ == FuncArgIdxType::Single);
+        return start_;
+    }
+
+    const Expr &start() const {
+        ASSERT(type_ == FuncArgIdxType::Slice);
+        return start_;
+    }
+
+    const Expr &stop() const {
+        ASSERT(type_ == FuncArgIdxType::Slice);
+        return stop_;
+    }
+
+    static FuncArgIdx fromSingle(const Expr &single) {
+        FuncArgIdx ret;
+        ret.type_ = FuncArgIdxType::Single;
+        ret.start_ = single;
+        return ret;
+    }
+
+    static FuncArgIdx fromSlice(const Expr &start, const Expr &stop) {
+        FuncArgIdx ret;
+        ret.type_ = FuncArgIdxType::Slice;
+        ret.start_ = start;
+        ret.stop_ = stop;
+        return ret;
+    }
+};
+
+enum class FuncArgType : int { Var, Literal };
 
 class FuncArg {
     FuncArgType type_;
+
+    // For Var
     std::string name_;
+    std::vector<FuncArgIdx> indices_;
+
+    // For Literal
     Ref<TensorData> literal_;
 
   public:
     FuncArgType type() const { return type_; }
 
     const std::string &name() const {
-        ASSERT(type_ == FuncArgType::Name);
+        ASSERT(type_ == FuncArgType::Var);
         return name_;
+    }
+
+    const std::vector<FuncArgIdx> &indices() const {
+        ASSERT(type_ == FuncArgType::Var);
+        return indices_;
     }
 
     const TensorData &literal() const {
@@ -50,10 +100,12 @@ class FuncArg {
         return *literal_;
     }
 
-    static FuncArg fromName(const std::string &name) {
+    static FuncArg fromVar(const std::string &name,
+                           const std::vector<FuncArgIdx> &indices) {
         FuncArg ret;
-        ret.type_ = FuncArgType::Name;
+        ret.type_ = FuncArgType::Var;
         ret.name_ = name;
+        ret.indices_ = indices;
         return ret;
     }
 

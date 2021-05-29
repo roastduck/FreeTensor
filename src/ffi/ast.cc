@@ -64,8 +64,12 @@ void init_ffi_ast(py::module_ &m) {
         .def_property_readonly(
             "body", [](const Func &op) -> Stmt { return op->body_; });
 
+    py::class_<FuncArgIdx>(m, "FuncArgIdx")
+        .def(py::init(&FuncArgIdx::fromSingle))
+        .def(py::init(&FuncArgIdx::fromSlice));
+
     py::class_<FuncArg>(m, "FuncArg")
-        .def(py::init(&FuncArg::fromName))
+        .def(py::init(&FuncArg::fromVar))
         .def(py::init(&FuncArg::fromLiteral));
     m.def("func2stmt", &func2stmt);
 

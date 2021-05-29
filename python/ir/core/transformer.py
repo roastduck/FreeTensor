@@ -180,10 +180,31 @@ class ASTTransformer(ast.NodeTransformer):
         node.expr_ptr = getattr(node.value.expr_ptr, node.attr)
         return node
 
+    def visit_Slice(self, node):
+        self.generic_visit(node)
+        start = node.lower.expr_ptr if getattr(node, "lower",
+                                               None) is not None else None
+        stop = node.lower.expr_ptr if getattr(node, "upper",
+                                              None) is not None else None
+        step = node.lower.expr_ptr if getattr(node, "step",
+                                              None) is not None else None
+        node.expr_ptr = slice(start, stop, step)
+        return node
+
+    def visit_Index(self, node):
+        self.generic_visit(node)
+        node.expr_ptr = node.value.expr_ptr
+        return node
+
+    def visit_ExtSlice(self, node):
+        self.generic_visit(node)
+        node.expr_ptr = tuple(map(lambda x: x.expr_ptr, node.dims))
+        return node
+
     def visit_Subscript(self, node):
         self.generic_visit(node)
         var = node.value.expr_ptr
-        sub = node.slice.value.expr_ptr
+        sub = node.slice.expr_ptr
         assert var is not None
         node.expr_ptr = var[sub]
         return node
@@ -282,7 +303,17 @@ class ASTTransformer(ast.NodeTransformer):
             ir_args = []
             for arg in args:
                 if isinstance(arg.expr_ptr, Var):
-                    ir_args.append(ffi.FuncArg(arg.expr_ptr.var))
+                    indices = []
+                    for idx, length in zip(arg.expr_ptr.index,
+                                           arg.expr_ptr.shape):
+                        if isinstance(idx, slice):
+                            start = idx.start if idx.start is not None else 0
+                            stop = idx.stop if idx.stop is not None else length
+                            assert idx.step is None or idx.step == 1
+                            indices.append(ffi.FuncArgIdx(start, stop))
+                        else:
+                            indices.append(ffi.FuncArgIdx(idx))
+                    ir_args.append(ffi.FuncArg(arg.expr_ptr.var, indices))
                 else:
                     ir_args.append(ffi.FuncArg(ffi.TensorData(arg.expr_ptr)))
             node_ctx.top().append_stmt(
@@ -325,7 +356,7 @@ class ASTTransformer(ast.NodeTransformer):
             var_creation.execute()
         elif isinstance(node.targets[0], ast.Subscript):
             var = node.targets[0].value.expr_ptr
-            sub = node.targets[0].slice.value.expr_ptr
+            sub = node.targets[0].slice.expr_ptr
             var[sub] = node.value.expr_ptr
         else:
             assert False, "Invalid assignment"
@@ -353,7 +384,7 @@ class ASTTransformer(ast.NodeTransformer):
                 ast.Mod: lambda l, r: l % r,
             }.get(type(node.op))
             var = node.target.value.expr_ptr
-            sub = node.target.slice.value.expr_ptr
+            sub = node.target.slice.expr_ptr
             var[sub] = op(node.target.expr_ptr, node.value.expr_ptr)
         else:
             assert False, "Invalid augmented assignment"
