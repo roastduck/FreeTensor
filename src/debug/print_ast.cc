@@ -102,6 +102,9 @@ void PrintVisitor::visit(const ReduceTo &op) {
     case ReduceOp::Add:
         os() << "+=";
         break;
+    case ReduceOp::Mul:
+        os() << "*=";
+        break;
     case ReduceOp::Min:
         os() << "min=";
         break;

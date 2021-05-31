@@ -195,7 +195,7 @@ def test_inner_for():
             y2[0] = y2[0] * 3
         with ir.For("j", 0, x[1]):
             y2[1] = y2[1] * 3
-    std = ir.pop_ast()
+    std = ir.make_reduction(ir.pop_ast())
 
     assert std.match(ast)
 
@@ -229,7 +229,7 @@ def test_inner_for_fuse():
             y1[1] = y1[1] * 2
             y2[0] = y2[0] * 3
             y2[1] = y2[1] * 3
-    std = ir.pop_ast()
+    std = ir.make_reduction(ir.pop_ast())
 
     assert std.match(ast)
 
@@ -263,7 +263,7 @@ def test_inner_for_fuse_different_begin():
             y1[1] = y1[1] * 2
             y2[0] = y2[0] * 3
             y2[1] = y2[1] * 3
-    std = ir.pop_ast()
+    std = ir.make_reduction(ir.pop_ast())
 
     assert std.match(ast)
 

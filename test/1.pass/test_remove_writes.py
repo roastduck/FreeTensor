@@ -158,7 +158,7 @@ def test_type1_read_by_following_write_no_remove():
         y[()] = 10
         y[()] = y[()] * y[()]
         y[()] = y[()] * y[()]
-    std = ir.pop_ast()
+    std = ir.make_reduction(ir.pop_ast())
 
     assert std.match(ast)
 

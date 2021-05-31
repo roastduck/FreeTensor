@@ -201,6 +201,9 @@ void CodeGenC::visit(const ReduceTo &op) {
     case ReduceOp::Add:
         genAddr(), os() << " += ", genExpr();
         break;
+    case ReduceOp::Mul:
+        genAddr(), os() << " *= ", genExpr();
+        break;
     case ReduceOp::Min:
         genAddr(), os() << " = min(";
         genAddr(), os() << ", ", genExpr(), os() << ")";

@@ -23,6 +23,8 @@ Stmt MakeReduction::visit(const Store &_op) {
     switch (op->expr_->nodeType()) {
     case ASTNodeType::Add:
         return doMake<AddNode>(op, ReduceOp::Add);
+    case ASTNodeType::Mul:
+        return doMake<MulNode>(op, ReduceOp::Mul);
     case ASTNodeType::Min:
         return doMake<MinNode>(op, ReduceOp::Min);
     case ASTNodeType::Max:
