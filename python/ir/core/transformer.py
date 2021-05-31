@@ -450,16 +450,27 @@ class ASTTransformer(ast.NodeTransformer):
         self.visit(node.test)
         assert hasattr(node.test,
                        "expr_ptr"), "If condition is not an expression"
-        with If(node.test.expr_ptr):
-            self.ctx_stack.create_scope()
+
+        # static conditions allow illegal accesses in some branches
+        if node.test.expr_ptr is True:
             for i in node.body:
                 self.visit(i)
-            self.ctx_stack.pop_scope()
-        with Else():
-            self.ctx_stack.create_scope()
+        elif node.test.expr_ptr is False:
             for i in node.orelse:
                 self.visit(i)
-            self.ctx_stack.pop_scope()
+        else:
+            with If(node.test.expr_ptr):
+                self.ctx_stack.create_scope()
+                for i in node.body:
+                    self.visit(i)
+                self.ctx_stack.pop_scope()
+            if len(node.orelse) > 0:
+                with Else():
+                    self.ctx_stack.create_scope()
+                    for i in node.orelse:
+                        self.visit(i)
+                    self.ctx_stack.pop_scope()
+
         return node
 
     def visit_Compare(self, node):
