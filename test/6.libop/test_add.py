@@ -8,9 +8,6 @@ import ir.libop
 def test_same_static_shape():
     device = ir.Device(ir.CPU())
 
-    # TODO: Make Python frontend reentrant
-    add = ir.libop.add(2, 2, 2, "cpu", "float32")
-
     @ir.transform
     def f(x, y, out):
         ir.declare_var(x, (4, 4), "float32", "input", "cpu")
@@ -19,7 +16,8 @@ def test_same_static_shape():
         "nid: out_shape"
         out_shape = ir.create_var((2,), "int32", "cache", "cpu")
         "nid: add"
-        add([4, 4], [4, 4], out_shape, x, y, out)
+        ir.libop.add(2, 2, 2, "cpu", "float32")([4, 4], [4, 4], out_shape, x, y,
+                                                out)
 
     print(f)
     s = ir.Schedule(f)
@@ -46,9 +44,6 @@ def test_same_static_shape():
 def test_static_broadcast_shorter():
     device = ir.Device(ir.CPU())
 
-    # TODO: Make Python frontend reentrant
-    add = ir.libop.add(1, 2, 2, "cpu", "float32")
-
     @ir.transform
     def f(x, y, out):
         ir.declare_var(x, (4,), "float32", "input", "cpu")
@@ -57,7 +52,8 @@ def test_static_broadcast_shorter():
         "nid: out_shape"
         out_shape = ir.create_var((2,), "int32", "cache", "cpu")
         "nid: add"
-        add([4], [4, 4], out_shape, x, y, out)
+        ir.libop.add(1, 2, 2, "cpu", "float32")([4], [4, 4], out_shape, x, y,
+                                                out)
 
     print(f)
     s = ir.Schedule(f)
@@ -84,9 +80,6 @@ def test_static_broadcast_shorter():
 def test_static_broadcast_1_at_front():
     device = ir.Device(ir.CPU())
 
-    # TODO: Make Python frontend reentrant
-    add = ir.libop.add(2, 2, 2, "cpu", "float32")
-
     @ir.transform
     def f(x, y, out):
         ir.declare_var(x, (1, 4), "float32", "input", "cpu")
@@ -95,7 +88,8 @@ def test_static_broadcast_1_at_front():
         "nid: out_shape"
         out_shape = ir.create_var((2,), "int32", "cache", "cpu")
         "nid: add"
-        add([1, 4], [4, 4], out_shape, x, y, out)
+        ir.libop.add(2, 2, 2, "cpu", "float32")([1, 4], [4, 4], out_shape, x, y,
+                                                out)
 
     print(f)
     s = ir.Schedule(f)
@@ -122,9 +116,6 @@ def test_static_broadcast_1_at_front():
 def test_static_broadcast_1_at_back():
     device = ir.Device(ir.CPU())
 
-    # TODO: Make Python frontend reentrant
-    add = ir.libop.add(2, 2, 2, "cpu", "float32")
-
     @ir.transform
     def f(x, y, out):
         ir.declare_var(x, (4, 4), "float32", "input", "cpu")
@@ -133,7 +124,8 @@ def test_static_broadcast_1_at_back():
         "nid: out_shape"
         out_shape = ir.create_var((2,), "int32", "cache", "cpu")
         "nid: add"
-        add([4, 4], [4, 1], out_shape, x, y, out)
+        ir.libop.add(2, 2, 2, "cpu", "float32")([4, 4], [4, 1], out_shape, x, y,
+                                                out)
 
     print(f)
     s = ir.Schedule(f)

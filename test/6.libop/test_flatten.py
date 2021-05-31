@@ -8,9 +8,6 @@ import ir.libop
 def test_static():
     device = ir.Device(ir.CPU())
 
-    # TODO: Make Python frontend reentrant
-    flatten = ir.libop.flatten(3, "cpu", "float32")
-
     @ir.transform
     def f(x, y):
         ir.declare_var(x, (3, 4, 5), "float32", "input", "cpu")
@@ -18,7 +15,7 @@ def test_static():
         "nid: y_shape"
         y_shape = ir.create_var((2,), "int32", "cache", "cpu")
         "nid: flatten"
-        flatten([3, 4, 5], y_shape, x, y)
+        ir.libop.flatten(3, "cpu", "float32")([3, 4, 5], y_shape, x, y)
 
     print(f)
     s = ir.Schedule(f)

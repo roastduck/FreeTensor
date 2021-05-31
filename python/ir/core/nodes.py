@@ -58,6 +58,12 @@ class ContextStack:
     def pop(self):
         return self.stack.pop()
 
+    def get_stack(self):
+        return self.stack
+
+    def set_stack(self, stack):
+        self.stack = stack
+
 
 ctx_stack = ContextStack()
 

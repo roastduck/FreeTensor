@@ -23,25 +23,6 @@ def create_var(shape, dtype, atype, mtype):
     return np.zeros(shape, dtype)
 
 
-class VarCreation:
-
-    def __init__(self, shape: Sequence, dtype, atype, mtype, name=None):
-        self.shape = shape
-        self.dtype = dtype
-        self.atype = atype
-        self.mtype = mtype
-        self.name = name
-
-    def add_name(self, name):
-        assert self.name is None, "Bug: Variable name is set more than once"
-        self.name = name
-
-    def execute(self):
-        assert self.name is not None, "Bug: Variable name is not set"
-        ctx_stack.create_variable(self.name, self.shape, self.dtype, self.atype,
-                                  self.mtype)
-
-
 class ASTContext:
 
     def __init__(self):
@@ -57,12 +38,11 @@ class ASTContextStack:
         self.now_var_id = {}
         self.name_set = set()
         self.next_nid = ""
+        self.node_ctx_bak = node_ctx.get_stack()
+        node_ctx.reset()
 
-    def clear(self):
-        self.ctx_stack = []
-        self.now_var_id = {}
-        self.name_set = set()
-        self.next_nid = ""
+    def __del__(self):
+        node_ctx.set_stack(self.node_ctx_bak)
 
     def top(self) -> ASTContext:
         return self.ctx_stack[-1]
@@ -147,13 +127,38 @@ class ASTContextStack:
         return ret
 
 
-ctx_stack = ASTContextStack()
+class VarCreation:
+
+    def __init__(self,
+                 ctx_stack: ASTContextStack,
+                 shape: Sequence,
+                 dtype,
+                 atype,
+                 mtype,
+                 name=None):
+        self.ctx_stack = ctx_stack
+        self.shape = shape
+        self.dtype = dtype
+        self.atype = atype
+        self.mtype = mtype
+        self.name = name
+
+    def add_name(self, name):
+        assert self.name is None, "Bug: Variable name is set more than once"
+        self.name = name
+
+    def execute(self):
+        assert self.name is not None, "Bug: Variable name is not set"
+        self.ctx_stack.create_variable(self.name, self.shape, self.dtype,
+                                       self.atype, self.mtype)
 
 
 class ASTTransformer(ast.NodeTransformer):
 
-    def __init__(self, params: Sequence[str], globals: Mapping[str, Any]):
+    def __init__(self, ctx_stack: ASTContextStack, params: Sequence[str],
+                 globals: Mapping[str, Any]):
         super().__init__()
+        self.ctx_stack = ctx_stack
         self.params = params
         self.globals = globals
         self.allow_undefined = False
@@ -167,7 +172,7 @@ class ASTTransformer(ast.NodeTransformer):
         return ast.parse(expr).body[0].value
 
     def visit_Name(self, node):
-        var = ctx_stack.find_var_by_name(node.id)
+        var = self.ctx_stack.find_var_by_name(node.id)
         if var is None and node.id in self.globals:
             var = self.globals[node.id]
         if not self.allow_undefined and var is None:
@@ -259,9 +264,9 @@ class ASTTransformer(ast.NodeTransformer):
         return node
 
     def visit_FunctionDef(self, node):
-        ctx_stack.create_scope()
+        self.ctx_stack.create_scope()
         self.generic_visit(node)
-        ctx_stack.pop_scope()
+        self.ctx_stack.pop_scope()
         return node
 
     def visit_Call(self, node):
@@ -291,14 +296,16 @@ class ASTTransformer(ast.NodeTransformer):
 
         if callee is create_var:
             shape, dtype, atype, mtype = args
-            node.expr_ptr = VarCreation(shape, dtype, atype, mtype)
+            node.expr_ptr = VarCreation(self.ctx_stack, shape, dtype, atype,
+                                        mtype)
         elif callee is declare_var:
             name, shape, dtype, atype, mtype = args
             assert name in self.params, f"Parameter {name} not found"
-            VarCreation(shape, dtype, atype, mtype, name).execute()
+            VarCreation(self.ctx_stack, shape, dtype, atype, mtype,
+                        name).execute()
         elif callee is MarkNid:
             nid, = args
-            ctx_stack.set_nid(nid)
+            self.ctx_stack.set_nid(nid)
         elif callee is nodes.min:
             lhs, rhs = args
             node.expr_ptr = nodes.min(lhs, rhs)
@@ -320,7 +327,7 @@ class ASTTransformer(ast.NodeTransformer):
                 else:
                     ir_args.append(ffi.FuncArg(ffi.TensorData(arg)))
             node_ctx.top().append_stmt(
-                ffi.func2stmt(callee, ir_args, ctx_stack.get_nid()))
+                ffi.func2stmt(callee, ir_args, self.ctx_stack.get_nid()))
         else:
             node.expr_ptr = callee(*args, **kws)
         return node
@@ -404,7 +411,7 @@ class ASTTransformer(ast.NodeTransformer):
                 node.iter.func.id == "range" and len(node.iter.args) > 0 and
                 len(node.iter.args) <= 2):
 
-            ctx_stack.create_scope()
+            self.ctx_stack.create_scope()
             name = node.target.id
             if len(node.iter.args) == 1:
                 self.visit(node.iter.args[0])
@@ -421,10 +428,10 @@ class ASTTransformer(ast.NodeTransformer):
                                "expr_ptr"), "For range is not expression"
                 begin = node.iter.args[0].expr_ptr
                 end = node.iter.args[1].expr_ptr
-            fr = ctx_stack.create_loop(name, begin, end)
+            fr = self.ctx_stack.create_loop(name, begin, end)
             for i in node.body:
                 self.visit(i)
-            ctx_stack.pop_scope()
+            self.ctx_stack.pop_scope()
             fr.__exit__(None, None, None)
         else:
             assert False, "For statement other than range(a, b) is not implemented"
@@ -436,7 +443,7 @@ class ASTTransformer(ast.NodeTransformer):
                 node.value.value, str):
             s = node.value.value
             if s[0:5] == "nid: ":
-                ctx_stack.set_nid(s[5:])
+                self.ctx_stack.set_nid(s[5:])
         return node
 
     def visit_If(self, node):
@@ -444,15 +451,15 @@ class ASTTransformer(ast.NodeTransformer):
         assert hasattr(node.test,
                        "expr_ptr"), "If condition is not an expression"
         with If(node.test.expr_ptr):
-            ctx_stack.create_scope()
+            self.ctx_stack.create_scope()
             for i in node.body:
                 self.visit(i)
-            ctx_stack.pop_scope()
+            self.ctx_stack.pop_scope()
         with Else():
-            ctx_stack.create_scope()
+            self.ctx_stack.create_scope()
             for i in node.orelse:
                 self.visit(i)
-            ctx_stack.pop_scope()
+            self.ctx_stack.pop_scope()
         return node
 
     def visit_Compare(self, node):
@@ -521,10 +528,10 @@ def _remove_indent(lines):
 
 
 def transform(func):
-    ctx_stack.clear()
+    ctx_stack = ASTContextStack()
     src = _remove_indent(ins.getsource(func))
     tree = ast.parse(src)
     params = list(inspect.signature(func).parameters)
     globals = _get_global_vars(func)
-    ASTTransformer(params, globals).visit(tree)
+    ASTTransformer(ctx_stack, params, globals).visit(tree)
     return Func(func.__name__, params, pop_ast())
