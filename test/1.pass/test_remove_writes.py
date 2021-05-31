@@ -144,6 +144,25 @@ def test_type1_write_then_multiple_reduces():
     assert std.match(ast)
 
 
+def test_type1_read_by_following_write_no_remove():
+    with ir.VarDef("y", (), "int32", "output", "cpu") as y:
+        y[()] = 10
+        y[()] = y[()] * y[()]
+        y[()] = y[()] * y[()]
+    ast = ir.pop_ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef("y", (), "int32", "output", "cpu") as y:
+        y[()] = 10
+        y[()] = y[()] * y[()]
+        y[()] = y[()] * y[()]
+    std = ir.pop_ast()
+
+    assert std.match(ast)
+
+
 def test_type2_inner_loop():
     with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
