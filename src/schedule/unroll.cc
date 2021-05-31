@@ -28,7 +28,7 @@ Stmt ImmediateUnroll::visitStmt(
 
 Expr ImmediateUnroll::visit(const Var &op) {
     if (op->name_ == iter_) {
-        return makeIntConst(curIter_);
+        return makeAdd(begin_, makeIntConst(curIter_));
     } else {
         return Mutator::visit(op);
     }
