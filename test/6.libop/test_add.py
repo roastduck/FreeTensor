@@ -17,7 +17,7 @@ def test_same_static_shape():
         ir.declare_var(y, (4, 4), "float32", "input", "cpu")
         ir.declare_var(out, (4, 4), "float32", "output", "cpu")
         "nid: out_shape"
-        ir.declare_var(out_shape, (2,), "int32", "cache", "cpu")
+        out_shape = ir.create_var((2,), "int32", "cache", "cpu")
         "nid: add"
         add([4, 4], [4, 4], out_shape, x, y, out)
 
@@ -55,7 +55,7 @@ def test_static_broadcast_shorter():
         ir.declare_var(y, (4, 4), "float32", "input", "cpu")
         ir.declare_var(out, (4, 4), "float32", "output", "cpu")
         "nid: out_shape"
-        ir.declare_var(out_shape, (2,), "int32", "cache", "cpu")
+        out_shape = ir.create_var((2,), "int32", "cache", "cpu")
         "nid: add"
         add([4], [4, 4], out_shape, x, y, out)
 
@@ -93,7 +93,7 @@ def test_static_broadcast_1_at_front():
         ir.declare_var(y, (4, 4), "float32", "input", "cpu")
         ir.declare_var(out, (4, 4), "float32", "output", "cpu")
         "nid: out_shape"
-        ir.declare_var(out_shape, (2,), "int32", "cache", "cpu")
+        out_shape = ir.create_var((2,), "int32", "cache", "cpu")
         "nid: add"
         add([1, 4], [4, 4], out_shape, x, y, out)
 
@@ -131,7 +131,7 @@ def test_static_broadcast_1_at_back():
         ir.declare_var(y, (4, 1), "float32", "input", "cpu")
         ir.declare_var(out, (4, 4), "float32", "output", "cpu")
         "nid: out_shape"
-        ir.declare_var(out_shape, (2,), "int32", "cache", "cpu")
+        out_shape = ir.create_var((2,), "int32", "cache", "cpu")
         "nid: add"
         add([4, 4], [4, 1], out_shape, x, y, out)
 

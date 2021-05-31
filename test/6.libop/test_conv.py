@@ -16,7 +16,7 @@ def test_basic():
         ir.declare_var(w, (8, 3, 3, 3), "float32", "input", "cpu")
         ir.declare_var(y, (2, 8, 12, 12), "float32", "output", "cpu")
         "nid: y_shape"
-        ir.declare_var(y_shape, (4,), "int32", "cache", "cpu")
+        y_shape = ir.create_var((4,), "int32", "cache", "cpu")
         "nid: conv"
         conv([2, 3, 14, 14], [8, 3, 3, 3], y_shape, x, w, y)
 
@@ -55,7 +55,7 @@ def test_bias():
         ir.declare_var(b, (8,), "float32", "input", "cpu")
         ir.declare_var(y, (2, 8, 12, 12), "float32", "output", "cpu")
         "nid: y_shape"
-        ir.declare_var(y_shape, (4,), "int32", "cache", "cpu")
+        y_shape = ir.create_var((4,), "int32", "cache", "cpu")
         "nid: conv"
         conv([2, 3, 14, 14], [8, 3, 3, 3], [8], y_shape, x, w, b, y)
 
@@ -99,7 +99,7 @@ def test_same_pad():
         ir.declare_var(w, (8, 3, 3, 3), "float32", "input", "cpu")
         ir.declare_var(y, (2, 8, 14, 14), "float32", "output", "cpu")
         "nid: y_shape"
-        ir.declare_var(y_shape, (4,), "int32", "cache", "cpu")
+        y_shape = ir.create_var((4,), "int32", "cache", "cpu")
         "nid: conv"
         conv([2, 3, 14, 14], [8, 3, 3, 3], y_shape, x, w, y)
 
@@ -137,7 +137,7 @@ def test_stride():
         ir.declare_var(w, (8, 3, 3, 3), "float32", "input", "cpu")
         ir.declare_var(y, (2, 8, 6, 6), "float32", "output", "cpu")
         "nid: y_shape"
-        ir.declare_var(y_shape, (4,), "int32", "cache", "cpu")
+        y_shape = ir.create_var((4,), "int32", "cache", "cpu")
         "nid: conv"
         conv([2, 3, 14, 14], [8, 3, 3, 3], y_shape, x, w, y)
 
@@ -175,7 +175,7 @@ def test_group():
         ir.declare_var(w, (8, 2, 3, 3), "float32", "input", "cpu")
         ir.declare_var(y, (2, 8, 12, 12), "float32", "output", "cpu")
         "nid: y_shape"
-        ir.declare_var(y_shape, (4,), "int32", "cache", "cpu")
+        y_shape = ir.create_var((4,), "int32", "cache", "cpu")
         "nid: conv"
         conv([2, 4, 14, 14], [8, 2, 3, 3], y_shape, x, w, y)
 
@@ -213,7 +213,7 @@ def test_dilation():
         ir.declare_var(w, (8, 3, 3, 3), "float32", "input", "cpu")
         ir.declare_var(y, (2, 8, 10, 10), "float32", "output", "cpu")
         "nid: y_shape"
-        ir.declare_var(y_shape, (4,), "int32", "cache", "cpu")
+        y_shape = ir.create_var((4,), "int32", "cache", "cpu")
         "nid: conv"
         conv([2, 3, 14, 14], [8, 3, 3, 3], y_shape, x, w, y)
 

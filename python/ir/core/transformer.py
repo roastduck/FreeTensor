@@ -5,7 +5,7 @@ import ast
 import numpy as np
 import inspect
 import sourceinspect as ins
-from typing import Sequence, Optional
+from typing import Sequence, Optional, Mapping, Any
 
 from . import nodes
 from .nodes import _VarDef, Var, pop_ast, For, If, Else, MarkNid, intrinsic, ctx_stack as node_ctx, Func
@@ -67,11 +67,10 @@ class ASTContextStack:
     def top(self) -> ASTContext:
         return self.ctx_stack[-1]
 
-    def get_current_name(self, name, prefetch=False):
+    def get_current_name(self, name):
         name_id = self.now_var_id.get(name)
-        if prefetch and name_id is None:
+        if name_id is None:
             return None
-        assert name_id is not None, "Variable %s not found" % name
         if name_id != 0:
             return "___cache_" + name + "_" + str(name_id)
         return name
@@ -96,8 +95,8 @@ class ASTContextStack:
         self.name_set.add(name)
         return name
 
-    def find_var_by_name(self, name, prefetch=False) -> Optional[Var]:
-        name = self.get_current_name(name, prefetch)
+    def find_var_by_name(self, name) -> Optional[Var]:
+        name = self.get_current_name(name)
 
         for ctx in reversed(self.ctx_stack):  # type: ASTContext
             if name in ctx.old_vars:
@@ -108,9 +107,7 @@ class ASTContextStack:
             if var is not None:
                 return var
 
-        if prefetch:
-            return None
-        assert False, "Bug: variable not found by find_var_by_name"
+        return None
 
     def create_scope(self):
         self.ctx_stack.append(ASTContext())
@@ -155,9 +152,11 @@ ctx_stack = ASTContextStack()
 
 class ASTTransformer(ast.NodeTransformer):
 
-    def __init__(self, globals):
+    def __init__(self, params: Sequence[str], globals: Mapping[str, Any]):
         super().__init__()
+        self.params = params
         self.globals = globals
+        self.allow_undefined = False
 
     @staticmethod
     def parse_stmt(stmt):
@@ -168,9 +167,12 @@ class ASTTransformer(ast.NodeTransformer):
         return ast.parse(expr).body[0].value
 
     def visit_Name(self, node):
-        node.expr_ptr = ctx_stack.find_var_by_name(node.id, prefetch=True)
-        if node.expr_ptr is None and node.id in self.globals:
-            node.expr_ptr = self.globals[node.id]
+        var = ctx_stack.find_var_by_name(node.id)
+        if var is None and node.id in self.globals:
+            var = self.globals[node.id]
+        if not self.allow_undefined and var is None:
+            assert False, f"Variable {node.id} used without declaration or creation"
+        node.expr_ptr = var
         return node
 
     def visit_Constant(self, node):
@@ -263,65 +265,64 @@ class ASTTransformer(ast.NodeTransformer):
         return node
 
     def visit_Call(self, node):
-        self.generic_visit(node)
+        self.visit(node.func)
         callee = node.func.expr_ptr
-        args = node.args
-        for arg in args:
-            assert hasattr(arg,
-                           "expr_ptr"), "call argument should be an expression"
+
+        args = []
+        kws = {}
+        if callee is declare_var:
+            assert len(
+                node.args) == 5, "declare_var function requries 5 arguments"
+            assert isinstance(node.args[0], ast.Name)
+            self.allow_undefined = True
+            self.visit(node.args[0])
+            self.allow_undefined = False
+            args.append(node.args[0].id)
+            for i in range(1, 5):
+                self.visit(node.args[i])
+                args.append(node.args[i].expr_ptr)
+        else:
+            for arg in node.args:
+                self.visit(arg)
+                args.append(arg.expr_ptr)
+        for item in node.keywords:
+            self.visit(item)
+            kws[item.arg] = item.value.expr_ptr
+
         if callee is create_var:
-            assert len(args) == 4, "create_var function has 4 arguments"
-            shape = args[0].expr_ptr
-            dtype = args[1].expr_ptr
-            atype = args[2].expr_ptr
-            mtype = args[3].expr_ptr
+            shape, dtype, atype, mtype = args
             node.expr_ptr = VarCreation(shape, dtype, atype, mtype)
         elif callee is declare_var:
-            assert len(args) == 5, "define_var function has 5 arguments"
-            assert isinstance(args[0], ast.Name)
-            name = args[0].id
-            shape = args[1].expr_ptr
-            dtype = args[2].expr_ptr
-            atype = args[3].expr_ptr
-            mtype = args[4].expr_ptr
+            name, shape, dtype, atype, mtype = args
+            assert name in self.params, f"Parameter {name} not found"
             VarCreation(shape, dtype, atype, mtype, name).execute()
         elif callee is MarkNid:
-            assert len(args) == 1, "MarkNid has one argument"
-            nid = args[0].expr_ptr
+            nid, = args
             ctx_stack.set_nid(nid)
         elif callee is nodes.min:
-            assert len(args) == 2, "min requires 2 arguments"
-            lhs = args[0].expr_ptr
-            rhs = args[1].expr_ptr
+            lhs, rhs = args
             node.expr_ptr = nodes.min(lhs, rhs)
         elif callee is nodes.max:
-            assert len(args) == 2, "min requires 2 arguments"
-            lhs = args[0].expr_ptr
-            rhs = args[1].expr_ptr
+            lhs, rhs = args
             node.expr_ptr = nodes.max(lhs, rhs)
         elif callee is intrinsic:
-            assert len(args) >= 1, "intrinsic has at least one argument"
-            expr_args = []
-            for i in args[1:]:
-                expr_args.append(i.expr_ptr)
+            fmt_str = args[0]
+            expr_args = args[1:]
             ret_type = ffi.DataType.Void
-            for item in node.keywords:
-                assert item.arg == "ret_type", (
-                    "Unrecognized keyword argument %s" % item.arg)
-                ret_type = parseDType(item.value.expr_ptr)
-            node.expr_ptr = ffi.makeIntrinsic(args[0].expr_ptr, expr_args,
-                                              ret_type)
+            if "ret_type" in kws:
+                ret_type = parseDType(kws["ret_type"])
+            node.expr_ptr = ffi.makeIntrinsic(fmt_str, expr_args, ret_type)
         elif isinstance(callee, ffi.Func):
             ir_args = []
             for arg in args:
-                if isinstance(arg.expr_ptr, Var):
-                    ir_args.append(ffi.FuncArg(arg.expr_ptr))
+                if isinstance(arg, Var):
+                    ir_args.append(ffi.FuncArg(arg))
                 else:
-                    ir_args.append(ffi.FuncArg(ffi.TensorData(arg.expr_ptr)))
+                    ir_args.append(ffi.FuncArg(ffi.TensorData(arg)))
             node_ctx.top().append_stmt(
                 ffi.func2stmt(callee, ir_args, ctx_stack.get_nid()))
         else:
-            node.expr_ptr = callee(*[x.expr_ptr for x in args])
+            node.expr_ptr = callee(*args, **kws)
         return node
 
     def visit_Tuple(self, node):
@@ -344,7 +345,12 @@ class ASTTransformer(ast.NodeTransformer):
         return node
 
     def visit_Assign(self, node):
-        self.generic_visit(node)
+        self.allow_undefined = True
+        for tgt in node.targets:
+            self.visit(tgt)
+        self.allow_undefined = False
+        self.visit(node.value)
+
         # TODO: (maybe) support for multiple assignment
         assert len(node.targets) == 1, "Multiple assignment is not supported"
         assert hasattr(node.targets[0],
@@ -518,7 +524,7 @@ def transform(func):
     ctx_stack.clear()
     src = _remove_indent(ins.getsource(func))
     tree = ast.parse(src)
-    globals = _get_global_vars(func)
-    ASTTransformer(globals).visit(tree)
     params = list(inspect.signature(func).parameters)
+    globals = _get_global_vars(func)
+    ASTTransformer(params, globals).visit(tree)
     return Func(func.__name__, params, pop_ast())
