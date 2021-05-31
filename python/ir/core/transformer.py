@@ -8,7 +8,8 @@ import sourceinspect as ins
 from typing import Sequence, Optional, Mapping, Any
 
 from . import nodes
-from .nodes import _VarDef, Var, pop_ast, For, If, Else, MarkNid, intrinsic, ctx_stack as node_ctx, Func
+from .nodes import (_VarDef, Var, pop_ast, For, If, Else, MarkNid, intrinsic,
+                    l_and, l_or, l_not, ctx_stack as node_ctx, Func)
 from .utils import *
 
 assert sys.version_info >= (3,
@@ -242,8 +243,8 @@ class ASTTransformer(ast.NodeTransformer):
         assert len(
             node.values) > 1, "Bug: Bool operator has less than one operand"
         op = {
-            ast.And: lambda l, r: ffi.makeLAnd(l, r),
-            ast.Or: lambda l, r: ffi.makeLOr(l, r),
+            ast.And: lambda l, r: l_and(l, r),
+            ast.Or: lambda l, r: l_or(l, r),
         }.get(type(node.op))
         assert op is not None, "Bool operator not implemented"
         expr = op(node.values[0].expr_ptr, node.values[1].expr_ptr)
@@ -257,7 +258,7 @@ class ASTTransformer(ast.NodeTransformer):
         assert hasattr(node.operand,
                        "expr_ptr"), "Unary operand is not expression"
         op = {
-            ast.Not: lambda l: ffi.makeLNot(l),
+            ast.Not: lambda l: l_not(l),
         }.get(type(node.op))
         assert op is not None, "Unary operator not implemented"
         node.expr_ptr = op(node.operand.expr_ptr)
@@ -492,7 +493,7 @@ class ASTTransformer(ast.NodeTransformer):
                                       node.comparators[0].expr_ptr)
         lf = node.comparators[0].expr_ptr
         for op, comparator in zip(node.ops[1:], node.comparators[1:]):
-            expr = ffi.makeLAnd(expr, ops[type(op)](lf, comparator.expr_ptr))
+            expr = l_and(expr, ops[type(op)](lf, comparator.expr_ptr))
             lf = comparator.expr_ptr
         node.expr_ptr = expr
         return node

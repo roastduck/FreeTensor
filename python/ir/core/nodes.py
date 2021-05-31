@@ -331,15 +331,24 @@ def max(lhs, rhs):
 
 
 def l_and(lhs, rhs):
-    return ffi.makeLAnd(lhs, rhs)
+    if type(lhs) is bool and type(rhs) is bool:
+        return lhs and rhs
+    else:
+        return ffi.makeLAnd(lhs, rhs)
 
 
 def l_or(lhs, rhs):
-    return ffi.makeLOr(lhs, rhs)
+    if type(lhs) is bool and type(rhs) is bool:
+        return lhs or rhs
+    else:
+        return ffi.makeLOr(lhs, rhs)
 
 
 def l_not(expr):
-    return ffi.makeLNot(expr)
+    if type(expr) is bool:
+        return not expr
+    else:
+        return ffi.makeLNot(expr)
 
 
 def floor_div(lhs, rhs):
