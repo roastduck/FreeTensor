@@ -37,9 +37,7 @@ def test_same_static_shape():
     y_arr = ir.Array(y_torch.numpy(), device)
     out_torch = torch.zeros(4, 4, dtype=torch.float32)
     out_arr = ir.Array(out_torch.numpy(), device)
-    driver = ir.Driver(f, code, device)
-    driver.set_params(x=x_arr, y=y_arr, out=out_arr)
-    driver.run()
+    ir.Driver(f, code, device)(x_arr, y_arr, out_arr)
     out_torch = torch.Tensor(out_arr.numpy().reshape(4, 4))
 
     assert torch.all(torch.isclose(out_torch, x_torch + y_torch))
@@ -77,9 +75,7 @@ def test_static_broadcast_shorter():
     y_arr = ir.Array(y_torch.numpy(), device)
     out_torch = torch.zeros(4, 4, dtype=torch.float32)
     out_arr = ir.Array(out_torch.numpy(), device)
-    driver = ir.Driver(f, code, device)
-    driver.set_params(x=x_arr, y=y_arr, out=out_arr)
-    driver.run()
+    ir.Driver(f, code, device)(x_arr, y_arr, out_arr)
     out_torch = torch.Tensor(out_arr.numpy().reshape(4, 4))
 
     assert torch.all(torch.isclose(out_torch, x_torch + y_torch))
@@ -117,9 +113,7 @@ def test_static_broadcast_1_at_front():
     y_arr = ir.Array(y_torch.numpy(), device)
     out_torch = torch.zeros(4, 4, dtype=torch.float32)
     out_arr = ir.Array(out_torch.numpy(), device)
-    driver = ir.Driver(f, code, device)
-    driver.set_params(x=x_arr, y=y_arr, out=out_arr)
-    driver.run()
+    ir.Driver(f, code, device)(x_arr, y_arr, out_arr)
     out_torch = torch.Tensor(out_arr.numpy().reshape(4, 4))
 
     assert torch.all(torch.isclose(out_torch, x_torch + y_torch))
@@ -157,9 +151,7 @@ def test_static_broadcast_1_at_back():
     y_arr = ir.Array(y_torch.numpy(), device)
     out_torch = torch.zeros(4, 4, dtype=torch.float32)
     out_arr = ir.Array(out_torch.numpy(), device)
-    driver = ir.Driver(f, code, device)
-    driver.set_params(x=x_arr, y=y_arr, out=out_arr)
-    driver.run()
+    ir.Driver(f, code, device)(x_arr, y_arr, out_arr)
     out_torch = torch.Tensor(out_arr.numpy().reshape(4, 4))
 
     assert torch.all(torch.isclose(out_torch, x_torch + y_torch))

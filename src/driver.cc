@@ -102,9 +102,13 @@ void Driver::buildAndLoad() {
     rmdir(path);
 }
 
-void Driver::setParams(const std::unordered_map<std::string, Array &> &params) {
-    for (auto &&item : params) {
-        params_[name2param_[item.first]] = item.second.raw();
+void Driver::setParams(const std::vector<Array *> &args,
+                       const std::unordered_map<std::string, Array *> &kws) {
+    for (size_t i = 0, iEnd = args.size(); i < iEnd; i++) {
+        params_[i] = args[i]->raw();
+    }
+    for (auto &&item : kws) {
+        params_[name2param_[item.first]] = item.second->raw();
     }
 }
 

@@ -8,5 +8,9 @@ class Driver(ffi.Driver):
     def __init__(self, func, src, dev):
         super(Driver, self).__init__(func, src, dev)
 
-    def set_params(self, **kws):
-        super(Driver, self).set_params(kws)
+    def set_params(self, *args, **kws):
+        super(Driver, self).set_params(args, kws)
+
+    def __call__(self, *args, **kws):
+        self.set_params(*args, **kws)
+        self.run()
