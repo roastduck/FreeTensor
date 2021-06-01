@@ -110,6 +110,11 @@ void Driver::setParams(const std::vector<Array *> &args,
     for (auto &&item : kws) {
         params_[name2param_[item.first]] = item.second->raw();
     }
+    for (size_t i = 0, iEnd = params_.size(); i < iEnd; i++) {
+        if (params_[i] == nullptr) {
+            throw DriverError("Parameter " + std::to_string(i) + " is missing");
+        }
+    }
 }
 
 void Driver::run() { func_(params_.data()); }

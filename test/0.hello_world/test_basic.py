@@ -1,5 +1,6 @@
 import ir
 import numpy as np
+import pytest
 
 
 def test_hello_world():
@@ -142,3 +143,16 @@ def test_var_as_index():
 
     y_std = x_np[1, 2]
     assert np.array_equal(y_np, y_std)
+
+
+def test_error_missing_parameters():
+    with ir.VarDef("x", (4, 4), "float32", "output", "cpu") as x:
+        x[2, 3] = 2.0
+        x[1, 0] = 3.0
+
+    func = ir.lower(ir.Func("main", ["x"], ir.pop_ast()), ir.CPU())
+    code = ir.codegen(func, ir.CPU())
+
+    driver = ir.Driver(func, code, ir.Device(ir.CPU()))
+    with pytest.raises(ir.DriverError):
+        driver()
