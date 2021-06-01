@@ -100,3 +100,43 @@ def max_pool(io_mem,
         # yapf: enable
 
     return f_max_pool_2d
+
+
+def global_avg_pool(io_mem,
+                    data_dtype="float32",
+                    idx_dtype="int32",
+                    n_spatial_dim: int = 2):
+
+    assert n_spatial_dim == 2, "Currently only 2-D pooling is supported"  # TODO
+
+    @core.transform
+    def f_global_avg_pool_2d(X_shape, Y_shape, X, Y):
+        'nid: V_X_shape'
+        core.declare_var(X_shape, (4,), idx_dtype, "input",
+                         io_mem)  # N * C * H * W
+        'nid: V_Y_shape'
+        core.declare_var(Y_shape, (2,), idx_dtype, "output", io_mem)  # N * C
+        'nid: V_X'
+        core.declare_var(X, X_shape, data_dtype, "input", io_mem)
+        'nid: V_Y'
+        core.declare_var(Y, Y_shape, data_dtype, "output", io_mem)
+
+        Y_shape[0] = X_shape[0]
+        Y_shape[1] = X_shape[1]
+
+        'nid: L_n'
+        for n in range(X_shape[0]):
+            'nid: L_c'
+            for c in range(X_shape[1]):
+                'nid: init'
+                Y[n, c] = 0
+                'nid: L_h'
+                for h in range(X_shape[2]):
+                    'nid: L_w'
+                    for w in range(X_shape[3]):
+                        'nid: compute'
+                        Y[n, c] += X[n, c, h, w]
+                'nid: flush'
+                Y[n, c] /= X_shape[2] * X_shape[3]
+
+    return f_global_avg_pool_2d

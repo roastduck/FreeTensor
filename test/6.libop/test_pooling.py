@@ -163,3 +163,38 @@ def test_max_pooling_dilation():
                                            stride=[1, 1],
                                            dilation=[2, 2])
     assert torch.all(torch.isclose(y_torch, y_std))
+
+
+def test_global_avg_pool():
+    device = ir.Device(ir.CPU())
+
+    ga_pool = ir.libop.global_avg_pool("cpu", "float32")
+
+    @ir.transform
+    def f(x, y):
+        ir.declare_var(x, (2, 3, 14, 14), "float32", "input", "cpu")
+        ir.declare_var(y, (2, 3), "float32", "output", "cpu")
+        "nid: y_shape"
+        y_shape = ir.create_var((2,), "int32", "cache", "cpu")
+        "nid: max_pool"
+        ga_pool([2, 3, 14, 14], y_shape, x, y)
+
+    print(f)
+    s = ir.Schedule(f)
+    s.inline("max_pool:V_X_shape")
+    s.inline("y_shape")  # Remove unused output
+    f = ir.lower(s.func(), ir.CPU())
+    print(f)
+
+    code = ir.codegen(f, ir.CPU())
+
+    x_torch = torch.rand(2, 3, 14, 14, dtype=torch.float32)
+    x_arr = ir.Array(x_torch.numpy(), device)
+    y_torch = torch.zeros(2, 3, dtype=torch.float32)
+    y_arr = ir.Array(y_torch.numpy(), device)
+    ir.Driver(f, code, device)(x_arr, y_arr)
+    y_torch = torch.Tensor(y_arr.numpy().reshape(2, 3))
+
+    y_std = torch.nn.functional.avg_pool2d(x_torch,
+                                           kernel_size=[14, 14]).reshape(2, 3)
+    assert torch.all(torch.isclose(y_torch, y_std))
