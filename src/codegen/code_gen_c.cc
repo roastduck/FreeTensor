@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cctype>
+#include <cmath>
 #include <functional>
 #include <vector>
 
@@ -205,11 +206,11 @@ void CodeGenC::visit(const ReduceTo &op) {
         genAddr(), os() << " *= ", genExpr();
         break;
     case ReduceOp::Min:
-        genAddr(), os() << " = min(";
+        genAddr(), os() << " = std::min(";
         genAddr(), os() << ", ", genExpr(), os() << ")";
         break;
     case ReduceOp::Max:
-        genAddr(), os() << " = min(";
+        genAddr(), os() << " = std::max(";
         genAddr(), os() << ", ", genExpr(), os() << ")";
         break;
     default:
@@ -221,7 +222,17 @@ void CodeGenC::visit(const ReduceTo &op) {
 
 void CodeGenC::visit(const IntConst &op) { os() << std::to_string(op->val_); }
 
-void CodeGenC::visit(const FloatConst &op) { os() << std::to_string(op->val_); }
+void CodeGenC::visit(const FloatConst &op) {
+    if (std::isnan(op->val_)) {
+        throw InvalidProgram("NaN literal in the program");
+    } else if (op->val_ == INFINITY) {
+        os() << "INFINITY";
+    } else if (op->val_ == -INFINITY) {
+        os() << "-INFINITY";
+    } else {
+        os() << std::to_string(op->val_);
+    }
+}
 
 void CodeGenC::visit(const BoolConst &op) { os() << std::to_string(op->val_); }
 

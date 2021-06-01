@@ -33,25 +33,25 @@ void CodeGenCUDA::visit(const Max &op) {
 }
 
 void CodeGenCUDA::visit(const ReduceTo &op) {
-    if (op->atomic_) {
-        auto id = normalizeId(op->var_);
-        markUse(id);
-        makeIndent();
+    auto id = normalizeId(op->var_);
+    markUse(id);
+    makeIndent();
 
-        auto genAddr = [&]() {
-            if (op->indices_.empty()) {
-                os() << "*" << id;
-            } else {
-                os() << id;
-                for (auto &&index : op->indices_) {
-                    os() << "[";
-                    (*this)(index);
-                    os() << "]";
-                }
+    auto genAddr = [&]() {
+        if (op->indices_.empty()) {
+            os() << "*" << id;
+        } else {
+            os() << id;
+            for (auto &&index : op->indices_) {
+                os() << "[";
+                (*this)(index);
+                os() << "]";
             }
-        };
-        auto genExpr = [&]() { (*this)(op->expr_); };
+        }
+    };
+    auto genExpr = [&]() { (*this)(op->expr_); };
 
+    if (op->atomic_) {
         switch (op->op_) {
         case ReduceOp::Add:
             os() << "atomicAdd(&", genAddr(), os() << ", ", genExpr();
@@ -69,7 +69,25 @@ void CodeGenCUDA::visit(const ReduceTo &op) {
             ASSERT(false);
         }
     } else {
-        CodeGenC::visit(op);
+        switch (op->op_) {
+        case ReduceOp::Add:
+            genAddr(), os() << " += ", genExpr();
+            break;
+        case ReduceOp::Mul:
+            genAddr(), os() << " *= ", genExpr();
+            break;
+        case ReduceOp::Min:
+            genAddr(), os() << " = min(";
+            genAddr(), os() << ", ", genExpr(), os() << ")";
+            break;
+        case ReduceOp::Max:
+            genAddr(), os() << " = max(";
+            genAddr(), os() << ", ", genExpr(), os() << ")";
+            break;
+        default:
+            ASSERT(false);
+        }
+        os() << ";" << std::endl;
     }
 }
 

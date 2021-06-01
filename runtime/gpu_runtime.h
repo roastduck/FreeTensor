@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <assert.h>
+#include <cmath> // INFINITY
 #include <cstdint>
 
 #include "../3rd-party/cuda-samples/Common/helper_math.h"

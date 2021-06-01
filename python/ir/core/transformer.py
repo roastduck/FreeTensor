@@ -259,6 +259,7 @@ class ASTTransformer(ast.NodeTransformer):
                        "expr_ptr"), "Unary operand is not expression"
         op = {
             ast.Not: lambda l: l_not(l),
+            ast.USub: lambda l: 0 - l,
         }.get(type(node.op))
         assert op is not None, "Unary operator not implemented"
         node.expr_ptr = op(node.operand.expr_ptr)
