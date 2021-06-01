@@ -156,6 +156,12 @@ class Func2Stmt : public Mutator {
 
 Stmt func2stmt(const Func &func, const std::vector<FuncArg> &args,
                const std::string &callSiteId) {
+    if (args.size() != func->params_.size()) {
+        throw InvalidProgram("Function " + func->name_ + " requires " +
+                             std::to_string(func->params_.size()) +
+                             " arguments, but " + std::to_string(args.size()) +
+                             " is/are given");
+    }
     return Func2Stmt(func, callSiteId.empty() ? StmtNode::newId() : callSiteId,
                      args)(func->body_);
 }

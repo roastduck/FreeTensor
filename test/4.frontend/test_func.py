@@ -1,5 +1,6 @@
 import ir
 import math
+import pytest
 
 # TODO: Currently, a callee function must be in the global scope. Can we support a local scope?
 
@@ -290,3 +291,21 @@ def test_external_call():
         y[()] = 5
     std = ir.pop_ast()
     assert std.match(func.body)
+
+
+def test_error_missing_parameters():
+
+    @ir.transform
+    def g(y):
+        ir.declare_var(y, (2,), "float32", "output", "cpu")
+        '''nid: S0'''
+        y[0] = 2.0
+        '''nid: S1'''
+        y[1] = 3.0
+
+    def f(y):
+        ir.declare_var(y, (2,), "float32", "output", "cpu")
+        g()
+
+    with pytest.raises(ir.InvalidProgram):
+        ir.transform(f)
