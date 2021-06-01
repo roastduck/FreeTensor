@@ -48,3 +48,33 @@ def add(a_ndim: int,
                                                b[i % b_shape[0]], out[i])
 
     return f_add
+
+
+def relu(ndim: int, io_mem, data_dtype="float32", idx_dtype="int32"):
+
+    @core.transform
+    def f_relu(x_shape, y_shape, x, y):
+        'nid: V_x_shape'
+        core.declare_var(x_shape, (ndim,), idx_dtype, "input", io_mem)
+        'nid: V_y_shape'
+        core.declare_var(y_shape, (ndim,), idx_dtype, "output", io_mem)
+        'nid: V_x'
+        core.declare_var(x, x_shape, data_dtype, "input", io_mem)
+        'nid: V_y'
+        core.declare_var(y, y_shape, data_dtype, "output", io_mem)
+
+        if ndim == 0:
+            if x[()] > 0:
+                y[()] = x[()]
+            else:
+                y[()] = 0
+        else:
+            y_shape[0] = x_shape[0]
+
+            'nid: L_elem'
+            for i in range(x_shape[0]):
+                'nid: recur'
+                relu(ndim - 1, io_mem, data_dtype,
+                     idx_dtype)(x_shape[1:], y_shape[1:], x[i], y[i])
+
+    return f_relu
