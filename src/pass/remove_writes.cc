@@ -89,8 +89,8 @@ Stmt removeWrites(const Stmt &_op) {
 
     // {(later, earlier)}
     std::set<std::pair<Stmt, Stmt>> overwrites;
-    std::set<std::pair<Expr, Stmt>> usesRAW;
-    std::set<std::pair<Stmt, Expr>> usesWAR;
+    std::set<std::pair<AST, Stmt>> usesRAW;
+    std::set<std::pair<Stmt, AST>> usesWAR;
     auto filterOverwrite = [&](const AccessPoint &later,
                                const AccessPoint &earlier) {
         if (later.op_.get() == earlier.op_.get()) {
@@ -104,21 +104,17 @@ Stmt removeWrites(const Stmt &_op) {
                            d.earlier().as<StmtNode>());
     };
     auto foundUse = [&](const Dependency &d) {
-        if (d.later()->nodeType() == ASTNodeType::Load) {
-            usesRAW.emplace(d.later().as<ExprNode>(),
-                            d.earlier().as<StmtNode>());
-        } else if (d.earlier()->nodeType() == ASTNodeType::Load) {
-            usesWAR.emplace(d.later().as<StmtNode>(),
-                            d.earlier().as<ExprNode>());
-        } else {
-            ASSERT(false);
+        if (d.later()->nodeType() != ASTNodeType::Store) {
+            usesRAW.emplace(d.later(), d.earlier().as<StmtNode>());
+        }
+        if (d.earlier()->nodeType() != ASTNodeType::Store) {
+            usesWAR.emplace(d.later().as<StmtNode>(), d.earlier());
         }
     };
 
     findDeps(op, {{}}, foundOverwrite, FindDepsMode::KillEarlier, DEP_WAW,
              filterOverwrite, false);
-    findDeps(op, {{}}, foundUse, FindDepsMode::Dep, DEP_WAR | DEP_RAW, nullptr,
-             false);
+    findDeps(op, {{}}, foundUse, FindDepsMode::Dep, DEP_ALL, nullptr, false);
 
     std::unordered_set<Stmt> redundant;
     std::unordered_map<Stmt, Stmt> replacement;
@@ -131,14 +127,8 @@ Stmt removeWrites(const Stmt &_op) {
                 return;
             }
             visited.insert(item);
-
             auto &&_later = item.first, &&_earlier = item.second;
-            for (auto &&use : usesRAW) {
-                if (use.second == _earlier &&
-                    usesWAR.count(std::make_pair(_later, use.first))) {
-                    return;
-                }
-            }
+
             for (auto &&use : overwrites) {
                 if (use.second == _earlier && !redundant.count(use.first) &&
                     overwrites.count(std::make_pair(_later, use.first))) {
@@ -150,6 +140,15 @@ Stmt removeWrites(const Stmt &_op) {
                     // we cannot handle (2) then. So, we handle (1)-(2) before
                     // (1)-(3)
                     visitType1(use);
+                }
+            }
+
+            for (auto &&use : usesRAW) {
+                if (use.second == _earlier &&
+                    (use.first->nodeType() == ASTNodeType::Load ||
+                     !redundant.count(use.first.as<StmtNode>())) &&
+                    usesWAR.count(std::make_pair(_later, use.first))) {
+                    return;
                 }
             }
 

@@ -43,7 +43,9 @@ def gemm(io_mem,
                             'nid: L_k'
                             for k in range(A_shape[1]):
                                 'nid: compute'
-                                Y[i, j] += alpha * A[i, k] * B[k, j]
+                                Y[i, j] += A[i, k] * B[k, j]
+                            'nid: bias'
+                            Y[i, j] *= alpha
                 else:
                     Y_shape[0] = A_shape[0]
                     Y_shape[1] = B_shape[0]
@@ -56,7 +58,9 @@ def gemm(io_mem,
                             'nid: L_k'
                             for k in range(A_shape[1]):
                                 'nid: compute'
-                                Y[i, j] += alpha * A[i, k] * B[j, k]
+                                Y[i, j] += A[i, k] * B[j, k]
+                            'nid: bias'
+                            Y[i, j] *= alpha
             else:
                 if not trans_B:
                     Y_shape[0] = A_shape[1]
@@ -70,7 +74,9 @@ def gemm(io_mem,
                             'nid: L_k'
                             for k in range(A_shape[0]):
                                 'nid: compute'
-                                Y[i, j] += alpha * A[k, i] * B[k, j]
+                                Y[i, j] += A[k, i] * B[k, j]
+                            'nid: bias'
+                            Y[i, j] *= alpha
                 else:
                     Y_shape[0] = A_shape[1]
                     Y_shape[1] = B_shape[0]
@@ -83,7 +89,9 @@ def gemm(io_mem,
                             'nid: L_k'
                             for k in range(A_shape[0]):
                                 'nid: compute'
-                                Y[i, j] += alpha * A[k, i] * B[j, k]
+                                Y[i, j] += A[k, i] * B[j, k]
+                            'nid: bias'
+                            Y[i, j] *= alpha
 
     else:
 
@@ -117,20 +125,24 @@ def gemm(io_mem,
                     for i in range(A_shape[0]):
                         'nid: L_j'
                         for j in range(B_shape[1]):
-                            if n_bias_dim == 0:
-                                'nid: init'
-                                Y[i, j] = beta * C[()]
-                            elif n_bias_dim == 1:
-                                'nid: init'
-                                Y[i, j] = beta * C[j % C_shape[0]]
-                            else:
-                                'nid: init'
-                                Y[i,
-                                  j] = beta * C[i % C_shape[0], j % C_shape[1]]
+                            'nid: init'
+                            Y[i, j] = 0
                             'nid: L_k'
                             for k in range(A_shape[1]):
                                 'nid: compute'
-                                Y[i, j] += alpha * A[i, k] * B[k, j]
+                                Y[i, j] += A[i, k] * B[k, j]
+                            if n_bias_dim == 0:
+                                'nid: bias'
+                                Y[i, j] = alpha * Y[i, j] + beta * C[()]
+                            elif n_bias_dim == 1:
+                                'nid: bias'
+                                Y[i,
+                                  j] = alpha * Y[i,
+                                                 j] + beta * C[j % C_shape[0]]
+                            else:
+                                'nid: bias'
+                                Y[i, j] = alpha * Y[i, j] + beta * C[
+                                    i % C_shape[0], j % C_shape[1]]
                 else:
                     Y_shape[0] = A_shape[0]
                     Y_shape[1] = B_shape[0]
@@ -138,20 +150,24 @@ def gemm(io_mem,
                     for i in range(A_shape[0]):
                         'nid: L_j'
                         for j in range(B_shape[0]):
-                            if n_bias_dim == 0:
-                                'nid: init'
-                                Y[i, j] = beta * C[()]
-                            elif n_bias_dim == 1:
-                                'nid: init'
-                                Y[i, j] = beta * C[j % C_shape[0]]
-                            else:
-                                'nid: init'
-                                Y[i,
-                                  j] = beta * C[i % C_shape[0], j % C_shape[1]]
+                            'nid: init'
+                            Y[i, j] = 0
                             'nid: L_k'
                             for k in range(A_shape[1]):
                                 'nid: compute'
-                                Y[i, j] += alpha * A[i, k] * B[j, k]
+                                Y[i, j] += A[i, k] * B[j, k]
+                            if n_bias_dim == 0:
+                                'nid: bias'
+                                Y[i, j] = alpha * Y[i, j] + beta * C[()]
+                            elif n_bias_dim == 1:
+                                'nid: bias'
+                                Y[i,
+                                  j] = alpha * Y[i,
+                                                 j] + beta * C[j % C_shape[0]]
+                            else:
+                                'nid: bias'
+                                Y[i, j] = alpha * Y[i, j] + beta * C[
+                                    i % C_shape[0], j % C_shape[1]]
             else:
                 if not trans_B:
                     Y_shape[0] = A_shape[1]
@@ -160,20 +176,24 @@ def gemm(io_mem,
                     for i in range(A_shape[1]):
                         'nid: L_j'
                         for j in range(B_shape[1]):
-                            if n_bias_dim == 0:
-                                'nid: init'
-                                Y[i, j] = beta * C[()]
-                            elif n_bias_dim == 1:
-                                'nid: init'
-                                Y[i, j] = beta * C[j % C_shape[0]]
-                            else:
-                                'nid: init'
-                                Y[i,
-                                  j] = beta * C[i % C_shape[0], j % C_shape[1]]
+                            'nid: init'
+                            Y[i, j] = 0
                             'nid: L_k'
                             for k in range(A_shape[0]):
                                 'nid: compute'
-                                Y[i, j] += alpha * A[k, i] * B[k, j]
+                                Y[i, j] += A[k, i] * B[k, j]
+                            if n_bias_dim == 0:
+                                'nid: bias'
+                                Y[i, j] = alpha * Y[i, j] + beta * C[()]
+                            elif n_bias_dim == 1:
+                                'nid: bias'
+                                Y[i,
+                                  j] = alpha * Y[i,
+                                                 j] + beta * C[j % C_shape[0]]
+                            else:
+                                'nid: bias'
+                                Y[i, j] = alpha * Y[i, j] + beta * C[
+                                    i % C_shape[0], j % C_shape[1]]
                 else:
                     Y_shape[0] = A_shape[1]
                     Y_shape[1] = B_shape[0]
@@ -181,19 +201,23 @@ def gemm(io_mem,
                     for i in range(A_shape[1]):
                         'nid: L_j'
                         for j in range(B_shape[0]):
-                            if n_bias_dim == 0:
-                                'nid: init'
-                                Y[i, j] = beta * C[()]
-                            elif n_bias_dim == 1:
-                                'nid: init'
-                                Y[i, j] = beta * C[j % C_shape[0]]
-                            else:
-                                'nid: init'
-                                Y[i,
-                                  j] = beta * C[i % C_shape[0], j % C_shape[1]]
+                            'nid: init'
+                            Y[i, j] = 0
                             'nid: L_k'
                             for k in range(A_shape[0]):
                                 'nid: compute'
-                                Y[i, j] += alpha * A[k, i] * B[j, k]
+                                Y[i, j] += A[k, i] * B[j, k]
+                            if n_bias_dim == 0:
+                                'nid: bias'
+                                Y[i, j] = alpha * Y[i, j] + beta * C[()]
+                            elif n_bias_dim == 1:
+                                'nid: bias'
+                                Y[i,
+                                  j] = alpha * Y[i,
+                                                 j] + beta * C[j % C_shape[0]]
+                            else:
+                                'nid: bias'
+                                Y[i, j] = alpha * Y[i, j] + beta * C[
+                                    i % C_shape[0], j % C_shape[1]]
 
     return f_gemm

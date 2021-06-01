@@ -70,6 +70,44 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const Var &op) {
     return BaseClass::visit(op);
 }
 
+template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const Add &_op) {
+    auto __op = BaseClass::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::Add);
+    auto op = __op.template as<AddNode>();
+    if (op->lhs_->nodeType() == ASTNodeType::FloatConst &&
+        op->lhs_.template as<FloatConstNode>()->val_ == 0) {
+        return op->rhs_;
+    }
+    if (op->rhs_->nodeType() == ASTNodeType::FloatConst &&
+        op->rhs_.template as<FloatConstNode>()->val_ == 0) {
+        return op->lhs_;
+    }
+    return op;
+}
+
+template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const Mul &_op) {
+    auto __op = BaseClass::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::Mul);
+    auto op = __op.template as<MulNode>();
+    if (op->lhs_->nodeType() == ASTNodeType::FloatConst &&
+        op->lhs_.template as<FloatConstNode>()->val_ == 1) {
+        return op->rhs_;
+    }
+    if (op->rhs_->nodeType() == ASTNodeType::FloatConst &&
+        op->rhs_.template as<FloatConstNode>()->val_ == 1) {
+        return op->lhs_;
+    }
+    if (op->lhs_->nodeType() == ASTNodeType::FloatConst &&
+        op->lhs_.template as<FloatConstNode>()->val_ == 0) {
+        return makeFloatConst(0);
+    }
+    if (op->rhs_->nodeType() == ASTNodeType::FloatConst &&
+        op->rhs_.template as<FloatConstNode>()->val_ == 0) {
+        return makeFloatConst(0);
+    }
+    return op;
+}
+
 template <class BaseClass>
 Expr SimplifyPass<BaseClass>::visit(const FloorDiv &_op) {
     auto __op = BaseClass::visit(_op);
@@ -427,6 +465,37 @@ Expr SimplifyPass<BaseClass>::visit(const LNot &_op) {
     case ASTNodeType::LNot:
         return markMutated(op->expr_.template as<LNotNode>()->expr_);
     default:;
+    }
+    return op;
+}
+
+template <class BaseClass>
+Stmt SimplifyPass<BaseClass>::visit(const ReduceTo &_op) {
+    auto __op = BaseClass::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
+    auto op = __op.template as<ReduceToNode>();
+    switch (op->op_) {
+    case ReduceOp::Add:
+        if (op->expr_->nodeType() == ASTNodeType::IntConst &&
+            op->expr_.template as<IntConstNode>()->val_ == 0) {
+            return makeStmtSeq("", {});
+        }
+        if (op->expr_->nodeType() == ASTNodeType::FloatConst &&
+            op->expr_.template as<FloatConstNode>()->val_ == 0) {
+            return makeStmtSeq("", {});
+        }
+        break;
+    case ReduceOp::Mul:
+        if (op->expr_->nodeType() == ASTNodeType::IntConst &&
+            op->expr_.template as<IntConstNode>()->val_ == 1) {
+            return makeStmtSeq("", {});
+        }
+        if (op->expr_->nodeType() == ASTNodeType::FloatConst &&
+            op->expr_.template as<FloatConstNode>()->val_ == 1) {
+            return makeStmtSeq("", {});
+        }
+        break;
+    default:; // do nothing
     }
     return op;
 }
