@@ -1,18 +1,20 @@
 from typing import Sequence, Optional
 
 from .. import core
+from .common import StaticType as T
 from .conv_shape_utils import *
 
 
-def max_pool(io_mem,
-             data_dtype="float32",
+def max_pool(t_X: T,
+             io_mem,
              idx_dtype="int32",
-             n_spatial_dim: int = 2,
              auto_pad: str = 'NOTSET',
              dilations: Optional[Sequence[int]] = None,
              kernel_shape: Sequence[int] = None,
              pads: Optional[Sequence[int]] = None,
              strides: Optional[Sequence[int]] = None):
+
+    n_spatial_dim = t_X.ndim - 2
 
     # TODO: ceil_mode
     # TODO: return_indices
@@ -58,9 +60,9 @@ def max_pool(io_mem,
         core.declare_var(Y_shape, (4,), idx_dtype, "output",
                          io_mem)  # N * C * H * W
         'nid: V_X'
-        core.declare_var(X, X_shape, data_dtype, "input", io_mem)
+        core.declare_var(X, X_shape, t_X.elem_type, "input", io_mem)
         'nid: V_Y'
-        core.declare_var(Y, Y_shape, data_dtype, "output", io_mem)
+        core.declare_var(Y, Y_shape, t_X.elem_type, "output", io_mem)
 
         Y_shape[0] = X_shape[0]
         Y_shape[1] = X_shape[1]
@@ -102,10 +104,9 @@ def max_pool(io_mem,
     return f_max_pool_2d
 
 
-def global_avg_pool(io_mem,
-                    data_dtype="float32",
-                    idx_dtype="int32",
-                    n_spatial_dim: int = 2):
+def global_avg_pool(t_X: T, io_mem, idx_dtype="int32"):
+
+    n_spatial_dim = t_X.ndim - 2
 
     assert n_spatial_dim == 2, "Currently only 2-D pooling is supported"  # TODO
 
@@ -117,9 +118,9 @@ def global_avg_pool(io_mem,
         'nid: V_Y_shape'
         core.declare_var(Y_shape, (2,), idx_dtype, "output", io_mem)  # N * C
         'nid: V_X'
-        core.declare_var(X, X_shape, data_dtype, "input", io_mem)
+        core.declare_var(X, X_shape, t_X.elem_type, "input", io_mem)
         'nid: V_Y'
-        core.declare_var(Y, Y_shape, data_dtype, "output", io_mem)
+        core.declare_var(Y, Y_shape, t_X.elem_type, "output", io_mem)
 
         Y_shape[0] = X_shape[0]
         Y_shape[1] = X_shape[1]

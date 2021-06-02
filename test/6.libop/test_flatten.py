@@ -3,6 +3,7 @@ import numpy as np
 
 import ir
 import ir.libop
+from ir.libop import StaticType as T
 
 
 def test_static():
@@ -15,7 +16,7 @@ def test_static():
         "nid: y_shape"
         y_shape = ir.create_var((2,), "int32", "cache", "cpu")
         "nid: flatten"
-        ir.libop.flatten(3, "cpu", "float32")([3, 4, 5], y_shape, x, y)
+        ir.libop.flatten(T("float32", 3), "cpu")([3, 4, 5], y_shape, x, y)
 
     print(f)
     s = ir.Schedule(f)

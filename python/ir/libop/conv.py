@@ -1,20 +1,24 @@
 from typing import Sequence, Optional
 
 from .. import core
+from .common import StaticType as T
 from .conv_shape_utils import *
 
 
-def conv(io_mem,
-         data_dtype="float32",
+def conv(t_X: T,
+         t_W: T,
+         t_B: Optional[T],
+         t_Y: T,
+         io_mem,
          idx_dtype="int32",
-         n_spatial_dim: int = 2,
          auto_pad: str = 'NOTSET',
          dilations: Optional[Sequence[int]] = None,
          group: int = 1,
          kernel_shape: Optional[Sequence[int]] = None,
          pads: Optional[Sequence[int]] = None,
-         strides: Optional[Sequence[int]] = None,
-         with_bias: bool = False):
+         strides: Optional[Sequence[int]] = None):
+
+    n_spatial_dim = t_X.ndim - 2
 
     if dilations is None:
         dilations = [1 for i in range(n_spatial_dim)]
@@ -47,7 +51,7 @@ def conv(io_mem,
 
     assert n_spatial_dim == 2, "Currently only 2-D convolution is supported"  # TODO
 
-    if not with_bias:
+    if t_B is None:
 
         @core.transform
         def f_conv2d(X_shape, W_shape, Y_shape, X, W, Y):
@@ -61,11 +65,11 @@ def conv(io_mem,
             core.declare_var(Y_shape, (4,), idx_dtype, "output",
                              io_mem)  # N * C * H * W
             'nid: V_X'
-            core.declare_var(X, X_shape, data_dtype, "input", io_mem)
+            core.declare_var(X, X_shape, t_X.elem_type, "input", io_mem)
             'nid: V_W'
-            core.declare_var(W, W_shape, data_dtype, "input", io_mem)
+            core.declare_var(W, W_shape, t_W.elem_type, "input", io_mem)
             'nid: V_Y'
-            core.declare_var(Y, Y_shape, data_dtype, "output", io_mem)
+            core.declare_var(Y, Y_shape, t_Y.elem_type, "output", io_mem)
 
             Y_shape[0] = X_shape[0]
             Y_shape[1] = W_shape[0]
@@ -125,13 +129,13 @@ def conv(io_mem,
             core.declare_var(Y_shape, (4,), idx_dtype, "output",
                              io_mem)  # N * C * H * W
             'nid: V_X'
-            core.declare_var(X, X_shape, data_dtype, "input", io_mem)
+            core.declare_var(X, X_shape, t_X.elem_type, "input", io_mem)
             'nid: V_W'
-            core.declare_var(W, W_shape, data_dtype, "input", io_mem)
+            core.declare_var(W, W_shape, t_W.elem_type, "input", io_mem)
             'nid: V_B'
-            core.declare_var(B, B_shape, data_dtype, "input", io_mem)
+            core.declare_var(B, B_shape, t_B.elem_type, "input", io_mem)
             'nid: V_Y'
-            core.declare_var(Y, Y_shape, data_dtype, "output", io_mem)
+            core.declare_var(Y, Y_shape, t_Y.elem_type, "output", io_mem)
 
             Y_shape[0] = X_shape[0]
             Y_shape[1] = W_shape[0]

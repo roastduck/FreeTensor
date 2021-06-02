@@ -1,19 +1,21 @@
 from typing import Optional
 
 from .. import core
+from .common import StaticType as T
 
 
-def gemm(io_mem,
-         data_dtype="float32",
+def gemm(t_A: T,
+         t_B: T,
+         t_C: Optional[T],
+         t_Y: T,
+         io_mem,
          idx_dtype="int32",
          trans_A: bool = False,
          trans_B: bool = False,
          alpha: float = 1.0,
-         beta: float = 1.0,
-         with_bias: bool = False,
-         n_bias_dim: Optional[int] = None):
+         beta: float = 1.0):
 
-    if not with_bias:
+    if t_C is None:
 
         @core.transform
         def f_gemm(A_shape, B_shape, Y_shape, A, B, Y):
@@ -24,11 +26,11 @@ def gemm(io_mem,
             'nid: V_Y_shape'
             core.declare_var(Y_shape, (2,), idx_dtype, "output", io_mem)
             'nid: V_A'
-            core.declare_var(A, A_shape, data_dtype, "input", io_mem)
+            core.declare_var(A, A_shape, t_A.elem_type, "input", io_mem)
             'nid: V_B'
-            core.declare_var(B, B_shape, data_dtype, "input", io_mem)
+            core.declare_var(B, B_shape, t_B.elem_type, "input", io_mem)
             'nid: V_Y'
-            core.declare_var(Y, Y_shape, data_dtype, "output", io_mem)
+            core.declare_var(Y, Y_shape, t_Y.elem_type, "output", io_mem)
 
             if not trans_A:
                 if not trans_B:
@@ -95,7 +97,7 @@ def gemm(io_mem,
 
     else:
 
-        assert n_bias_dim is not None
+        n_bias_dim = t_C.ndim
         assert n_bias_dim <= 2
 
         @core.transform
@@ -109,13 +111,13 @@ def gemm(io_mem,
             'nid: V_Y_shape'
             core.declare_var(Y_shape, (2,), idx_dtype, "output", io_mem)
             'nid: V_A'
-            core.declare_var(A, A_shape, data_dtype, "input", io_mem)
+            core.declare_var(A, A_shape, t_A.elem_type, "input", io_mem)
             'nid: V_B'
-            core.declare_var(B, B_shape, data_dtype, "input", io_mem)
+            core.declare_var(B, B_shape, t_B.elem_type, "input", io_mem)
             'nid: V_C'
-            core.declare_var(C, C_shape, data_dtype, "input", io_mem)
+            core.declare_var(C, C_shape, t_C.elem_type, "input", io_mem)
             'nid: V_Y'
-            core.declare_var(Y, Y_shape, data_dtype, "output", io_mem)
+            core.declare_var(Y, Y_shape, t_Y.elem_type, "output", io_mem)
 
             if not trans_A:
                 if not trans_B:

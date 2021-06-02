@@ -3,13 +3,14 @@ import numpy as np
 
 import ir
 import ir.libop
+from ir.libop import StaticType as T
 
 
 def test_max_pooling_basic():
     device = ir.Device(ir.CPU())
 
-    max_pool = ir.libop.max_pool("cpu",
-                                 "float32",
+    max_pool = ir.libop.max_pool(T("float32", 4),
+                                 "cpu",
                                  auto_pad='VALID',
                                  kernel_shape=[3, 3])
 
@@ -47,8 +48,8 @@ def test_max_pooling_basic():
 def test_max_pooling_same_padding():
     device = ir.Device(ir.CPU())
 
-    max_pool = ir.libop.max_pool("cpu",
-                                 "float32",
+    max_pool = ir.libop.max_pool(T("float32", 4),
+                                 "cpu",
                                  auto_pad='SAME_UPPER',
                                  kernel_shape=[3, 3])
 
@@ -87,8 +88,8 @@ def test_max_pooling_same_padding():
 def test_max_pooling_stride():
     device = ir.Device(ir.CPU())
 
-    max_pool = ir.libop.max_pool("cpu",
-                                 "float32",
+    max_pool = ir.libop.max_pool(T("float32", 4),
+                                 "cpu",
                                  auto_pad='VALID',
                                  kernel_shape=[3, 3],
                                  strides=[3, 3])
@@ -127,8 +128,8 @@ def test_max_pooling_stride():
 def test_max_pooling_dilation():
     device = ir.Device(ir.CPU())
 
-    max_pool = ir.libop.max_pool("cpu",
-                                 "float32",
+    max_pool = ir.libop.max_pool(T("float32", 4),
+                                 "cpu",
                                  auto_pad='VALID',
                                  kernel_shape=[3, 3],
                                  dilations=[2, 2])
@@ -168,7 +169,7 @@ def test_max_pooling_dilation():
 def test_global_avg_pool():
     device = ir.Device(ir.CPU())
 
-    ga_pool = ir.libop.global_avg_pool("cpu", "float32")
+    ga_pool = ir.libop.global_avg_pool(T("float32", 4), "cpu")
 
     @ir.transform
     def f(x, y):

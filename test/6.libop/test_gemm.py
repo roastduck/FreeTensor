@@ -3,12 +3,14 @@ import numpy as np
 
 import ir
 import ir.libop
+from ir.libop import StaticType as T
 
 
 def test_basic():
     device = ir.Device(ir.CPU())
 
-    gemm = ir.libop.gemm("cpu", "float32")
+    t_mat = T("float32", 2)
+    gemm = ir.libop.gemm(t_mat, t_mat, None, t_mat, "cpu")
 
     @ir.transform
     def f(a, b, y):
@@ -46,7 +48,8 @@ def test_basic():
 def test_trans_A():
     device = ir.Device(ir.CPU())
 
-    gemm = ir.libop.gemm("cpu", "float32", trans_A=True)
+    t_mat = T("float32", 2)
+    gemm = ir.libop.gemm(t_mat, t_mat, None, t_mat, "cpu", trans_A=True)
 
     @ir.transform
     def f(a, b, y):
@@ -84,7 +87,8 @@ def test_trans_A():
 def test_trans_B():
     device = ir.Device(ir.CPU())
 
-    gemm = ir.libop.gemm("cpu", "float32", trans_B=True)
+    t_mat = T("float32", 2)
+    gemm = ir.libop.gemm(t_mat, t_mat, None, t_mat, "cpu", trans_B=True)
 
     @ir.transform
     def f(a, b, y):
@@ -122,7 +126,14 @@ def test_trans_B():
 def test_trans_AB():
     device = ir.Device(ir.CPU())
 
-    gemm = ir.libop.gemm("cpu", "float32", trans_A=True, trans_B=True)
+    t_mat = T("float32", 2)
+    gemm = ir.libop.gemm(t_mat,
+                         t_mat,
+                         None,
+                         t_mat,
+                         "cpu",
+                         trans_A=True,
+                         trans_B=True)
 
     @ir.transform
     def f(a, b, y):
@@ -160,7 +171,9 @@ def test_trans_AB():
 def test_bias():
     device = ir.Device(ir.CPU())
 
-    gemm = ir.libop.gemm("cpu", "float32", with_bias=True, n_bias_dim=2)
+    t_mat = T("float32", 2)
+    t_bias = T("float32", 2)
+    gemm = ir.libop.gemm(t_mat, t_mat, t_bias, t_mat, "cpu")
 
     @ir.transform
     def f(a, b, c, y):
@@ -202,7 +215,9 @@ def test_bias():
 def test_bias_broadcast_1():
     device = ir.Device(ir.CPU())
 
-    gemm = ir.libop.gemm("cpu", "float32", with_bias=True, n_bias_dim=2)
+    t_mat = T("float32", 2)
+    t_bias = T("float32", 2)
+    gemm = ir.libop.gemm(t_mat, t_mat, t_bias, t_mat, "cpu")
 
     @ir.transform
     def f(a, b, c, y):
@@ -244,7 +259,9 @@ def test_bias_broadcast_1():
 def test_bias_broadcast_2():
     device = ir.Device(ir.CPU())
 
-    gemm = ir.libop.gemm("cpu", "float32", with_bias=True, n_bias_dim=1)
+    t_mat = T("float32", 2)
+    t_bias = T("float32", 1)
+    gemm = ir.libop.gemm(t_mat, t_mat, t_bias, t_mat, "cpu")
 
     @ir.transform
     def f(a, b, c, y):
@@ -286,10 +303,13 @@ def test_bias_broadcast_2():
 def test_bias_with_coeff():
     device = ir.Device(ir.CPU())
 
-    gemm = ir.libop.gemm("cpu",
-                         "float32",
-                         with_bias=True,
-                         n_bias_dim=2,
+    t_mat = T("float32", 2)
+    t_bias = T("float32", 2)
+    gemm = ir.libop.gemm(t_mat,
+                         t_mat,
+                         t_bias,
+                         t_mat,
+                         "cpu",
                          alpha=2.5,
                          beta=3.8)
 

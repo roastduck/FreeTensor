@@ -3,12 +3,18 @@ import numpy as np
 
 import ir
 import ir.libop
+from ir.libop import StaticType as T
 
 
 def test_basic():
     device = ir.Device(ir.CPU())
 
-    conv = ir.libop.conv("cpu", "float32", auto_pad='VALID')
+    conv = ir.libop.conv(T("float32", 4),
+                         T("float32", 4),
+                         None,
+                         T("float32", 4),
+                         "cpu",
+                         auto_pad='VALID')
 
     @ir.transform
     def f(x, w, y):
@@ -46,7 +52,12 @@ def test_basic():
 def test_bias():
     device = ir.Device(ir.CPU())
 
-    conv = ir.libop.conv("cpu", "float32", auto_pad='VALID', with_bias=True)
+    conv = ir.libop.conv(T("float32", 4),
+                         T("float32", 4),
+                         T("float32", 4),
+                         T("float32", 4),
+                         "cpu",
+                         auto_pad='VALID')
 
     @ir.transform
     def f(x, w, b, y):
@@ -88,8 +99,11 @@ def test_bias():
 def test_same_pad():
     device = ir.Device(ir.CPU())
 
-    conv = ir.libop.conv("cpu",
-                         "float32",
+    conv = ir.libop.conv(T("float32", 4),
+                         T("float32", 4),
+                         None,
+                         T("float32", 4),
+                         "cpu",
                          kernel_shape=(3, 3),
                          auto_pad='SAME_UPPER')
 
@@ -129,7 +143,13 @@ def test_same_pad():
 def test_stride():
     device = ir.Device(ir.CPU())
 
-    conv = ir.libop.conv("cpu", "float32", auto_pad='VALID', strides=(2, 2))
+    conv = ir.libop.conv(T("float32", 4),
+                         T("float32", 4),
+                         None,
+                         T("float32", 4),
+                         "cpu",
+                         auto_pad='VALID',
+                         strides=(2, 2))
 
     @ir.transform
     def f(x, w, y):
@@ -167,7 +187,13 @@ def test_stride():
 def test_group():
     device = ir.Device(ir.CPU())
 
-    conv = ir.libop.conv("cpu", "float32", auto_pad='VALID', group=2)
+    conv = ir.libop.conv(T("float32", 4),
+                         T("float32", 4),
+                         None,
+                         T("float32", 4),
+                         "cpu",
+                         auto_pad='VALID',
+                         group=2)
 
     @ir.transform
     def f(x, w, y):
@@ -205,7 +231,13 @@ def test_group():
 def test_dilation():
     device = ir.Device(ir.CPU())
 
-    conv = ir.libop.conv("cpu", "float32", auto_pad='VALID', dilations=(2, 2))
+    conv = ir.libop.conv(T("float32", 4),
+                         T("float32", 4),
+                         None,
+                         T("float32", 4),
+                         "cpu",
+                         auto_pad='VALID',
+                         dilations=(2, 2))
 
     @ir.transform
     def f(x, w, y):
