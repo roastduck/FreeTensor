@@ -54,9 +54,7 @@ class FrontendVar {
   public:
     FrontendVar(const std::string &name, const std::vector<Expr> &shape,
                 const std::vector<FrontendVarIdx> &indices)
-        : name_(name), shape_(shape), indices_(indices) {
-        ASSERT(shape.size() >= indices_.size());
-    }
+        : name_(name), shape_(shape), indices_(indices) {}
 
     const std::string &name() const { return name_; }
     const std::vector<Expr> &shape() const { return shape_; }

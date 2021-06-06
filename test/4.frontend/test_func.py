@@ -309,3 +309,57 @@ def test_error_missing_parameters():
 
     with pytest.raises(ir.InvalidProgram):
         ir.transform(f)
+
+
+def test_return():
+
+    @ir.transform
+    def test_i(a, b):
+        ir.declare_var(a, (2, 2), "int32", "input", "cpu")
+        ir.declare_var(b, (2, 2), "int32", "output", "cpu")
+        c = ir.create_var((2, 2), "int32", "output", "cpu")
+        d = ir.create_var((2, 2), "int32", "output", "cpu")
+        for i in range(2):
+            for j in range(2):
+                b[i, j] = a[i, j]
+                c[i, j] = b[i, j] * a[i, j]
+                d[i, j] = b[i, j] + a[i, j]
+        return c, d
+
+    @ir.transform
+    def test(y, c, d):
+        ir.declare_var(y, (2, 2), "int32", "output", "cpu")
+        ir.declare_var(c, (2, 2), "int32", "output", "cpu")
+        ir.declare_var(d, (2, 2), "int32", "output", "cpu")
+        c1, d1 = test_i([[1, 2], [3, 4]], y)
+        for i in range(2):
+            for j in range(2):
+                c[i, j] = c1[i, j]
+                d[i, j] = d1[i, j]
+
+    func = ir.lower(test, ir.CPU())
+    print(func)
+
+    with ir.VarDef([("y", (2, 2), "int32", "output", "cpu"),
+                    ("c", (2, 2), "int32", "output", "cpu"),
+                    ("d", (2, 2), "int32", "output", "cpu")]) as (y, c, d):
+        with ir.VarDef("a", (2, 2), "int32", "cache", "cpu") as a:
+            a[0, 0] = 1
+            a[0, 1] = 2
+            a[1, 0] = 3
+            a[1, 1] = 4
+            with ir.VarDef([("c1", (2, 2), "int32", "cache", "cpu"),
+                            ("d1", (2, 2), "int32", "cache", "cpu")]) as (c1,
+                                                                          d1):
+                with ir.For("i", 0, 2) as i:
+                    with ir.For("j", 0, 2) as j:
+                        y[i, j] = a[i, j]
+                        c1[i, j] = y[i, j] * a[i, j]
+                        d1[i, j] = y[i, j] + a[i, j]
+                with ir.For("i1", 0, 2) as i:
+                    with ir.For("j1", 0, 2) as j:
+                        c[i, j] = c1[i, j]
+                        d[i, j] = d1[i, j]
+    std = ir.pop_ast()
+    print(std)
+    assert std.match(func.body)

@@ -274,7 +274,8 @@ Stmt builtinSimplify(const Stmt &op);
 Stmt simplifyPass(const Stmt &op);
 
 inline Func simplifyPass(const Func &func) {
-    return makeFunc(func->name_, func->params_, simplifyPass(func->body_));
+    return makeFunc(func->name_, func->params_, simplifyPass(func->body_),
+                    func->src_);
 }
 
 } // namespace ir
