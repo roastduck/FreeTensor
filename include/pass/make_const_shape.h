@@ -29,7 +29,7 @@ Stmt makeConstShape(const Stmt &op, const std::vector<MemType> &mtypes);
 inline Func makeConstShape(const Func &func,
                            const std::vector<MemType> &mtypes) {
     return makeFunc(func->name_, func->params_,
-                    makeConstShape(func->body_, mtypes));
+                    makeConstShape(func->body_, mtypes), func->src_);
 }
 
 } // namespace ir

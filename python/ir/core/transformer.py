@@ -132,6 +132,7 @@ class ASTContextStack:
         self.now_context_id += 1
         return self.now_context_id
 
+
 class VarCreation:
 
     def __init__(self,
@@ -155,26 +156,34 @@ class VarCreation:
     def execute(self):
         assert self.name is not None, "Bug: Variable name is not set"
         return self.ctx_stack.create_variable(self.name, self.shape, self.dtype,
-                                       self.atype, self.mtype)
+                                              self.atype, self.mtype)
 
 
 class InlineFunction:
-    def __init__(self, tree):
+
+    def __init__(self, tree, params, globals):
         self.tree = tree
+        self.params = params
+        self.globals = globals
 
     def add_targets(self, targets):
-        assert len(targets) == len(self.tree.returns), f"Argument number does not match, function expects {len(self.tree.returns)} arguments, but is given {len(targets)} arguments"
+        assert len(targets) == len(
+            self.tree.returns
+        ), f"Argument number does not match, function expects {len(self.tree.returns)} arguments, but is given {len(targets)} arguments"
         for target, ret in zip(targets, self.tree.returns):
             self.tree.replace[ret] = target
 
-    def expand(self, ctx_stack, params, globals):
-        transformer = ASTTransformer(ctx_stack, params, globals)
-        transformer.set_replace(self.tree.replace, self.tree.arg_data, self.tree.created_vars, ctx_stack.get_nid())
+    def expand(self, ctx_stack):
+        transformer = ASTTransformer(ctx_stack, self.params, self.globals)
+        transformer.set_replace(self.tree.replace, self.tree.arg_var,
+                                self.tree.arg_data, self.tree.created_vars,
+                                ctx_stack.get_nid())
         for stmt in self.tree.body:
             transformer.visit(stmt)
 
 
 class InlinePreprocessor(ast.NodeTransformer):
+
     def __init__(self, globals: Mapping[str, Any], tree):
         super().__init__()
         self.globals = globals
@@ -209,17 +218,8 @@ class InlinePreprocessor(ast.NodeTransformer):
         return node
 
     def visit_Call(self, node):
-        self.visit(node.func)
-        callee = node.func.expr_ptr
-
-        args = []
-
-        for arg in node.args:
-            self.visit(arg)
-            args.append(arg)
-
-        if callee is create_var:
-            shape, dtype, atype, mtype = args
+        self.generic_visit(node)
+        if hasattr(node.func, "expr_ptr") and node.func.expr_ptr is create_var:
             node.var_creation = True
         return node
 
@@ -256,7 +256,6 @@ class InlinePreprocessor(ast.NodeTransformer):
         return node
 
 
-
 class ASTTransformer(ast.NodeTransformer):
 
     def __init__(self, ctx_stack: ASTContextStack, params: Sequence[str],
@@ -267,12 +266,14 @@ class ASTTransformer(ast.NodeTransformer):
         self.globals = globals
         self.allow_undefined = False
         self.replace = {}
+        self.arg_var = {}
         self.arg_data = {}
         self.created_vars = set()
         self.prefix = ""
 
-    def set_replace(self, replace, arg_data, created_vars, prefix):
+    def set_replace(self, replace, arg_var, arg_data, created_vars, prefix):
         self.replace = replace
+        self.arg_var = arg_var
         self.arg_data = arg_data
         self.created_vars = created_vars
         if prefix:
@@ -296,11 +297,10 @@ class ASTTransformer(ast.NodeTransformer):
         return name
 
     def visit_Name(self, node):
+        if node.id in self.arg_var:
+            node.expr_ptr = self.arg_var[node.id]
+            return node
         name = self.get_name(node.id)
-        # if name in self.replace:
-        #   name = self.replace[name]
-        # elif name in self.created_vars:
-        #     name = self.prefix + ':' + name
         var = self.ctx_stack.find_var_by_name(name)
         if var is None and name in self.globals:
             var = self.globals[name]
@@ -443,21 +443,20 @@ class ASTTransformer(ast.NodeTransformer):
             name, shape, dtype, atype, mtype = args
             if self.prefix:
                 if name in self.arg_data:
+                    atype = 'cache'
                     data = self.arg_data[name]
                     self.created_vars.add(name)
                     name = self.prefix + ":" + name
-                    var = VarCreation(self.ctx_stack, shape, dtype, atype, mtype,
-                            name).execute()
-                    print(f"Var creaate: {name}")
+                    var = VarCreation(self.ctx_stack, shape, dtype, atype,
+                                      mtype, name).execute()
                     self.assign_arg(var, shape, data)
                 else:
                     name = self.get_name(name)
                     var = self.ctx_stack.find_var_by_name(name)
-                    # assert var.shape == shape, f"Invalid shape: {var.shape}, {shape}"
             else:
                 assert name in self.params, f"Parameter {name} not found"
                 VarCreation(self.ctx_stack, shape, dtype, atype, mtype,
-                        name).execute()
+                            name).execute()
         elif callee is MarkNid:
             nid, = args
             self.ctx_stack.set_nid(nid)
@@ -474,22 +473,26 @@ class ASTTransformer(ast.NodeTransformer):
             if "ret_type" in kws:
                 ret_type = parseDType(kws["ret_type"])
             node.expr_ptr = ffi.makeIntrinsic(fmt_str, expr_args, ret_type)
-        elif hasattr(callee, "is_func"):
-            # ir_args = []
-            callee = callee.expr_ptr
-            callee.replace = {}
-            callee.arg_data = {}
-            for arg, callee_arg in zip(args, callee.arguments):
+        elif isinstance(callee, ffi.Func):
+            callee_src = _remove_indent(ins.getsource(callee.src))
+            callee_tree = ast.parse(callee_src)
+            callee_params = list(inspect.signature(callee.src).parameters)
+            callee_globals = _get_global_vars(callee.src)
+            InlinePreprocessor(callee_globals, callee_tree).visit(callee_tree)
+            callee_tree.replace = {}
+            callee_tree.arg_var = {}
+            callee_tree.arg_data = {}
+            if len(args) != len(callee_tree.arguments):
+                raise ffi.InvalidProgram(
+                    f"Number of aruments does not match when calling {callee.src.__name__}"
+                )
+            for arg, callee_arg in zip(args, callee_tree.arguments):
                 if isinstance(arg, Var):
-                    callee.replace[callee_arg] = arg.name
-                    # ir_args.append(ffi.FuncArg(arg))
+                    callee_tree.arg_var[callee_arg] = arg
                 else:
-                    callee.arg_data[callee_arg] = arg
-                    # ir_args.append(ffi.FuncArg(ffi.TensorData(arg)))
-            node.expr_ptr = InlineFunction(callee)
-
-            # node_ctx.top().append_stmt(
-            #     ffi.func2stmt(callee, ir_args, self.ctx_stack.get_nid()))
+                    callee_tree.arg_data[callee_arg] = arg
+            node.expr_ptr = InlineFunction(callee_tree, callee_params,
+                                           callee_globals)
         else:
             node.expr_ptr = callee(*args, **kws)
         return node
@@ -523,8 +526,9 @@ class ASTTransformer(ast.NodeTransformer):
         # TODO: (maybe) support for multiple assignment
         assert len(node.targets) == 1, "Multiple assignment is not supported"
         for target in node.targets:
-            assert hasattr(target,
-                       "expr_ptr"), "Target to be assigned is not an expression"
+            assert hasattr(
+                target,
+                "expr_ptr"), "Target to be assigned is not an expression"
         assert hasattr(node.value,
                        "expr_ptr"), "Value to be assigned is not an expression"
         if isinstance(node.value.expr_ptr, InlineFunction):
@@ -535,19 +539,21 @@ class ASTTransformer(ast.NodeTransformer):
                     assert isinstance(target, ast.Name), "Target must be a name"
                     targets.append(target.id)
             else:
-                assert node.targets[0].expr_ptr is None, "Variable already exists"
-                assert isinstance(node.targets[0], ast.Name), "Target must be a name"
+                assert node.targets[
+                    0].expr_ptr is None, "Variable already exists"
+                assert isinstance(node.targets[0],
+                                  ast.Name), "Target must be a name"
                 targets.append(node.targets[0].id)
             node.value.expr_ptr.add_targets(targets)
-            node.value.expr_ptr.expand(self.ctx_stack, self.params, self.globals)
+            node.value.expr_ptr.expand(self.ctx_stack)
         elif isinstance(node.value.expr_ptr, VarCreation):
             name = node.targets[0].id
             if name in self.replace:
                 name = self.replace[name]
             elif name in self.created_vars:
                 name = self.prefix + ':' + name
-            print(name)
             var_creation = node.value.expr_ptr
+            var_creation.atype = 'cache'
             var_creation.add_name(name)
             var_creation.execute()
         elif isinstance(node.targets[0], ast.Subscript):
@@ -597,7 +603,6 @@ class ASTTransformer(ast.NodeTransformer):
             if self.prefix:
                 self.created_vars.add(name)
                 name = self.prefix + ':' + name
-            print(name)
             if len(node.iter.args) == 1:
                 self.visit(node.iter.args[0])
                 assert hasattr(node.iter.args[0],
@@ -628,9 +633,13 @@ class ASTTransformer(ast.NodeTransformer):
                 node.value.value, str):
             s = node.value.value
             if s[0:5] == "nid: ":
-                self.ctx_stack.set_nid(s[5:])
-        elif hasattr(node.value, "expr_ptr") and isinstance(node.value.expr_ptr, InlineFunction):
-            node.value.expr_ptr.expand(self.ctx_stack, self.params, self.globals)
+                name = s[5:]
+                if self.prefix:
+                    name = self.prefix + ':' + name
+                self.ctx_stack.set_nid(name)
+        elif hasattr(node.value, "expr_ptr") and isinstance(
+                node.value.expr_ptr, InlineFunction):
+            node.value.expr_ptr.expand(self.ctx_stack)
         return node
 
     def visit_If(self, node):
@@ -732,18 +741,4 @@ def transform(func):
     params = list(inspect.signature(func).parameters)
     globals = _get_global_vars(func)
     ASTTransformer(ctx_stack, params, globals).visit(tree)
-    return Func(func.__name__, params, pop_ast())
-
-
-def inline(func):
-    ctx_stack = ASTContextStack()
-    src = _remove_indent(ins.getsource(func))
-    tree = ast.parse(src)
-
-    params = list(inspect.signature(func).parameters)
-    globals = _get_global_vars(func)
-    InlinePreprocessor(globals, tree).visit(tree)
-    print(tree.returns)
-    func.expr_ptr = tree
-    func.is_func = True
-    return func
+    return Func(func.__name__, params, pop_ast(), func)
