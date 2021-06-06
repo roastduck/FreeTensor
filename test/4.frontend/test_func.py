@@ -363,3 +363,46 @@ def test_return():
     std = ir.pop_ast()
     print(std)
     assert std.match(func.body)
+
+
+def test_return_returned_value():
+
+    @ir.transform
+    def h():
+        y1 = ir.create_var((4,), "int32", "output", "cpu")
+        y2 = ir.create_var((4,), "int32", "output", "cpu")
+        for i in range(4):
+            y1[i] = i
+            y2[i] = i * 2
+        return y1, y2
+
+    @ir.transform
+    def g():
+        y1, y2 = h()
+        return y2, y1
+
+    @ir.transform
+    def f(w1, w2):
+        ir.declare_var(w1, (4,), "int32", "output", "cpu")
+        ir.declare_var(w2, (4,), "int32", "output", "cpu")
+        y2, y1 = g()
+        for i in range(4):
+            w1[i] = y1[i]
+            w2[i] = y2[i]
+
+    func = ir.lower(f, ir.CPU())
+    print(func)
+
+    with ir.VarDef([("w1", (4,), "int32", "output", "cpu"),
+                    ("w2", (4,), "int32", "output", "cpu"),
+                    ("y1", (4,), "int32", "cache", "cpu"),
+                    ("y2", (4,), "int32", "cache", "cpu")]) as (w1, w2, y1, y2):
+        with ir.For("i1", 0, 4) as i:
+            y1[i] = i
+            y2[i] = i * 2
+        with ir.For("i2", 0, 4) as i:
+            w1[i] = y1[i]
+            w2[i] = y2[i]
+    std = ir.pop_ast()
+    print(std)
+    assert std.match(func.body)

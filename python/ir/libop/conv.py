@@ -1,22 +1,22 @@
 from typing import Sequence, Optional
 
 from .. import core
-from .common import StaticType as T
+from .common import StaticType
 from .conv_shape_utils import *
 
 
-def conv(t_X: T,
-         t_W: T,
-         t_B: Optional[T],
-         t_Y: T,
-         io_mem,
-         idx_dtype="int32",
-         auto_pad: str = 'NOTSET',
-         dilations: Optional[Sequence[int]] = None,
-         group: int = 1,
-         kernel_shape: Optional[Sequence[int]] = None,
-         pads: Optional[Sequence[int]] = None,
-         strides: Optional[Sequence[int]] = None):
+def conv_(t_X: StaticType,
+          t_W: StaticType,
+          t_B: Optional[StaticType],
+          t_Y: StaticType,
+          io_mem,
+          idx_dtype="int32",
+          auto_pad: str = 'NOTSET',
+          dilations: Optional[Sequence[int]] = None,
+          group: int = 1,
+          kernel_shape: Optional[Sequence[int]] = None,
+          pads: Optional[Sequence[int]] = None,
+          strides: Optional[Sequence[int]] = None):
 
     n_spatial_dim = t_X.ndim - 2
 
@@ -62,7 +62,7 @@ def conv(t_X: T,
             core.declare_var(W_shape, (4,), idx_dtype, "input",
                              io_mem)  # C_out * C_in/group * kH * kW
             'nid: V_Y_shape'
-            core.declare_var(Y_shape, (4,), idx_dtype, "output",
+            core.declare_var(Y_shape, (4,), idx_dtype, "input",
                              io_mem)  # N * C * H * W
             'nid: V_X'
             core.declare_var(X, X_shape, t_X.elem_type, "input", io_mem)
@@ -70,13 +70,6 @@ def conv(t_X: T,
             core.declare_var(W, W_shape, t_W.elem_type, "input", io_mem)
             'nid: V_Y'
             core.declare_var(Y, Y_shape, t_Y.elem_type, "output", io_mem)
-
-            Y_shape[0] = X_shape[0]
-            Y_shape[1] = W_shape[0]
-            Y_shape[2] = calc_out_size(X_shape[2], dilations[0], W_shape[2],
-                                       pads[0], pads[2], strides[0])
-            Y_shape[3] = calc_out_size(X_shape[3], dilations[1], W_shape[3],
-                                       pads[1], pads[3], strides[1])
 
             # yapf: disable
             'nid: L_n'
@@ -126,7 +119,7 @@ def conv(t_X: T,
             'nid: V_B_shape'
             core.declare_var(B_shape, (1,), idx_dtype, "input", io_mem)  # C_out
             'nid: V_Y_shape'
-            core.declare_var(Y_shape, (4,), idx_dtype, "output",
+            core.declare_var(Y_shape, (4,), idx_dtype, "input",
                              io_mem)  # N * C * H * W
             'nid: V_X'
             core.declare_var(X, X_shape, t_X.elem_type, "input", io_mem)
@@ -136,13 +129,6 @@ def conv(t_X: T,
             core.declare_var(B, B_shape, t_B.elem_type, "input", io_mem)
             'nid: V_Y'
             core.declare_var(Y, Y_shape, t_Y.elem_type, "output", io_mem)
-
-            Y_shape[0] = X_shape[0]
-            Y_shape[1] = W_shape[0]
-            Y_shape[2] = calc_out_size(X_shape[2], dilations[0], W_shape[2],
-                                       pads[0], pads[2], strides[0])
-            Y_shape[3] = calc_out_size(X_shape[3], dilations[1], W_shape[3],
-                                       pads[1], pads[3], strides[1])
 
             # yapf: disable
             'nid: L_n'
@@ -178,5 +164,128 @@ def conv(t_X: T,
                                                         w * strides[1] + kw * dilations[1] - pads[1]
                                                 ] * W[g * (W_shape[0] // group) + c_out, c_in, kh, kw]
             # yapf: enable
+
+    return f_conv2d
+
+
+def conv(t_X: StaticType,
+         t_W: StaticType,
+         t_B: Optional[StaticType],
+         t_Y: StaticType,
+         io_mem,
+         idx_dtype="int32",
+         auto_pad: str = 'NOTSET',
+         dilations: Optional[Sequence[int]] = None,
+         group: int = 1,
+         kernel_shape: Optional[Sequence[int]] = None,
+         pads: Optional[Sequence[int]] = None,
+         strides: Optional[Sequence[int]] = None):
+
+    n_spatial_dim = t_X.ndim - 2
+
+    if dilations is None:
+        dilations = [1 for i in range(n_spatial_dim)]
+    if strides is None:
+        strides = [1 for i in range(n_spatial_dim)]
+    if pads is None:
+        if auto_pad == 'VALID':
+            pads = list(zip(*[[0, 0] for i in range(n_spatial_dim)]))
+            pads = pads[0] + pads[1]
+        elif auto_pad == 'SAME_UPPER':
+            assert kernel_shape is not None, "SAME_UPPER pad with dynamic kernel_shape is currently not supported"  # TODO
+            pads = list(
+                zip(*[
+                    calc_same_upper_pad(dilations[i], kernel_shape[i],
+                                        strides[i])
+                    for i in range(n_spatial_dim)
+                ]))
+            pads = pads[0] + pads[1]
+        elif auto_pad == 'SAME_LOWER':
+            assert kernel_shape is not None, "SAME_UPPER pad with dynamic kernel_shape is currently not supported"  # TODO
+            pads = list(
+                zip(*[
+                    calc_same_lower_pad(dilations[i], kernel_shape[i],
+                                        strides[i])
+                    for i in range(n_spatial_dim)
+                ]))
+            pads = pads[0] + pads[1]
+        else:
+            assert False, "auto_pad should be set if pads is not specified"
+
+    assert n_spatial_dim == 2, "Currently only 2-D convolution is supported"  # TODO
+
+    if t_B is None:
+
+        @core.transform
+        def f_conv2d(X_shape, W_shape, X, W):
+            'nid: V_X_shape'
+            core.declare_var(X_shape, (4,), idx_dtype, "input",
+                             io_mem)  # N * C * H * W
+            'nid: V_W_shape'
+            core.declare_var(W_shape, (4,), idx_dtype, "input",
+                             io_mem)  # C_out * C_in/group * kH * kW
+            'nid: V_X'
+            core.declare_var(X, X_shape, t_X.elem_type, "input", io_mem)
+            'nid: V_W'
+            core.declare_var(W, W_shape, t_W.elem_type, "input", io_mem)
+
+            'nid: V_Y_shape'
+            Y_shape = core.create_var((4,), idx_dtype, "output",
+                                      io_mem)  # N * C * H * W
+            Y_shape[0] = X_shape[0]
+            Y_shape[1] = W_shape[0]
+            Y_shape[2] = calc_out_size(X_shape[2], dilations[0], W_shape[2],
+                                       pads[0], pads[2], strides[0])
+            Y_shape[3] = calc_out_size(X_shape[3], dilations[1], W_shape[3],
+                                       pads[1], pads[3], strides[1])
+
+            'nid: V_Y'
+            Y = core.create_var(Y_shape, t_Y.elem_type, "output", io_mem)
+
+            'nid: recur'
+            conv_(t_X, t_W, t_B, t_Y, io_mem, idx_dtype, auto_pad, dilations,
+                  group, kernel_shape, pads, strides)(X_shape, W_shape, Y_shape,
+                                                      X, W, Y)
+
+            return Y_shape, Y
+
+    else:
+
+        @core.transform
+        def f_conv2d(X_shape, W_shape, B_shape, X, W, B):
+            'nid: V_X_shape'
+            core.declare_var(X_shape, (4,), idx_dtype, "input",
+                             io_mem)  # N * C * H * W
+            'nid: V_W_shape'
+            core.declare_var(W_shape, (4,), idx_dtype, "input",
+                             io_mem)  # C_out * C_in/group * kH * kW
+            'nid: V_B_shape'
+            core.declare_var(B_shape, (1,), idx_dtype, "input", io_mem)  # C_out
+            'nid: V_X'
+            core.declare_var(X, X_shape, t_X.elem_type, "input", io_mem)
+            'nid: V_W'
+            core.declare_var(W, W_shape, t_W.elem_type, "input", io_mem)
+            'nid: V_B'
+            core.declare_var(B, B_shape, t_B.elem_type, "input", io_mem)
+
+            'nid: V_Y_shape'
+            Y_shape = core.create_var((4,), idx_dtype, "output",
+                                      io_mem)  # N * C * H * W
+            Y_shape[0] = X_shape[0]
+            Y_shape[1] = W_shape[0]
+            Y_shape[2] = calc_out_size(X_shape[2], dilations[0], W_shape[2],
+                                       pads[0], pads[2], strides[0])
+            Y_shape[3] = calc_out_size(X_shape[3], dilations[1], W_shape[3],
+                                       pads[1], pads[3], strides[1])
+
+            'nid: V_Y'
+            Y = core.create_var(Y_shape, t_Y.elem_type, "output", io_mem)
+
+            'nid: recur'
+            conv_(t_X, t_W, t_B, t_Y, io_mem, idx_dtype, auto_pad, dilations,
+                  group, kernel_shape, pads, strides)(X_shape, W_shape, B_shape,
+                                                      Y_shape, X, W, B, Y)
+
+            return Y_shape, Y
 
     return f_conv2d

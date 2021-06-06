@@ -243,14 +243,10 @@ class InlinePreprocessor(ast.NodeTransformer):
         self.returned = True
         if isinstance(node.value, ast.Name):
             name = node.value.id
-            if name not in self.tree.created_vars:
-                assert False, "The returned value is not created in the function."
             self.tree.returns.append(name)
         elif isinstance(node.value, ast.Tuple):
             for value in node.value.elts:
                 name = value.id
-                if name not in self.tree.created_vars:
-                    assert False, "The returned value is not created in the function."
                 self.tree.returns.append(name)
 
         return node
@@ -302,10 +298,11 @@ class ASTTransformer(ast.NodeTransformer):
             return node
         name = self.get_name(node.id)
         var = self.ctx_stack.find_var_by_name(name)
-        if var is None and name in self.globals:
-            var = self.globals[name]
-        if not self.allow_undefined and var is None:
-            assert False, f"Variable {name} used without declaration or creation"
+        if var is None:
+            if name in self.globals:
+                var = self.globals[name]  # self.globals[name] can be None
+            else:
+                assert self.allow_undefined, f"Variable {node.id} (a.k.a {name}) used without declaration or creation"
         node.expr_ptr = var
         return node
 
@@ -535,23 +532,19 @@ class ASTTransformer(ast.NodeTransformer):
             targets = []
             if isinstance(node.targets[0], ast.Tuple):
                 for target in node.targets[0].elts:
-                    assert target.expr_ptr is None, "Variable already exists"
                     assert isinstance(target, ast.Name), "Target must be a name"
-                    targets.append(target.id)
+                    assert target.expr_ptr is None, f"Variable {target.id} already exists"
+                    targets.append(self.get_name(target.id))
             else:
                 assert node.targets[
                     0].expr_ptr is None, "Variable already exists"
                 assert isinstance(node.targets[0],
                                   ast.Name), "Target must be a name"
-                targets.append(node.targets[0].id)
+                targets.append(self.get_name(node.targets[0].id))
             node.value.expr_ptr.add_targets(targets)
             node.value.expr_ptr.expand(self.ctx_stack)
         elif isinstance(node.value.expr_ptr, VarCreation):
-            name = node.targets[0].id
-            if name in self.replace:
-                name = self.replace[name]
-            elif name in self.created_vars:
-                name = self.prefix + ':' + name
+            name = self.get_name(node.targets[0].id)
             var_creation = node.value.expr_ptr
             var_creation.atype = 'cache'
             var_creation.add_name(name)
