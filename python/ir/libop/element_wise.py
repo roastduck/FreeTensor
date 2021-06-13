@@ -3,14 +3,15 @@ from .shape_utils import *
 from .common import StaticType
 
 
-def add_(t_a: StaticType,
-         t_b: StaticType,
-         t_out: StaticType,
-         io_mem,
-         idx_dtype="int32"):
+def _binary_op_(t_a: StaticType,
+                t_b: StaticType,
+                t_out: StaticType,
+                io_mem,
+                op,
+                idx_dtype="int32"):
 
     @core.transform
-    def f_add(a_shape, b_shape, out_shape, a, b, out):
+    def f_binary_op(a_shape, b_shape, out_shape, a, b, out):
         'nid: V_a_shape'
         core.declare_var(a_shape, (t_a.ndim,), idx_dtype, "input", io_mem)
         'nid: V_b_shape'
@@ -25,7 +26,7 @@ def add_(t_a: StaticType,
         core.declare_var(out, out_shape, t_out.elem_type, "output", io_mem)
 
         if t_out.ndim == 0:
-            out[()] = a[()] + b[()]
+            out[()] = op(a[()], b[()])
         else:
             'nid: L_elem'
             for i in range(out_shape[0]):
@@ -47,17 +48,18 @@ def add_(t_a: StaticType,
                                     a[i % a_shape[0]], b[i % b_shape[0]],
                                     out[i])
 
-    return f_add
+    return f_binary_op
 
 
-def add(t_a: StaticType,
-        t_b: StaticType,
-        t_out: StaticType,
-        io_mem,
-        idx_dtype="int32"):
+def _binary_op(t_a: StaticType,
+               t_b: StaticType,
+               t_out: StaticType,
+               io_mem,
+               op,
+               idx_dtype="int32"):
 
     @core.transform
-    def f_add(a_shape, b_shape, a, b):
+    def f_binary_op(a_shape, b_shape, a, b):
         'nid: V_a_shape'
         core.declare_var(a_shape, (t_a.ndim,), idx_dtype, "input", io_mem)
         'nid: V_b_shape'
@@ -72,11 +74,75 @@ def add(t_a: StaticType,
         'nid: V_out'
         out = core.create_var(out_shape, t_out.elem_type, "output", io_mem)
         'nid: recur'
-        add_(t_a, t_b, t_out, io_mem, idx_dtype)(a_shape, b_shape, out_shape, a,
-                                                 b, out)
+        _binary_op_(t_a, t_b, t_out, io_mem, op,
+                    idx_dtype)(a_shape, b_shape, out_shape, a, b, out)
         return out_shape, out
 
-    return f_add
+    return f_binary_op
+
+
+def add_(t_a: StaticType,
+         t_b: StaticType,
+         t_out: StaticType,
+         io_mem,
+         idx_dtype="int32"):
+    return _binary_op_(t_a, t_b, t_out, io_mem, lambda x, y: x + y, idx_dtype)
+
+
+def add(t_a: StaticType,
+        t_b: StaticType,
+        t_out: StaticType,
+        io_mem,
+        idx_dtype="int32"):
+    return _binary_op(t_a, t_b, t_out, io_mem, lambda x, y: x + y, idx_dtype)
+
+
+def sub_(t_a: StaticType,
+         t_b: StaticType,
+         t_out: StaticType,
+         io_mem,
+         idx_dtype="int32"):
+    return _binary_op_(t_a, t_b, t_out, io_mem, lambda x, y: x - y, idx_dtype)
+
+
+def sub(t_a: StaticType,
+        t_b: StaticType,
+        t_out: StaticType,
+        io_mem,
+        idx_dtype="int32"):
+    return _binary_op(t_a, t_b, t_out, io_mem, lambda x, y: x - y, idx_dtype)
+
+
+def mul_(t_a: StaticType,
+         t_b: StaticType,
+         t_out: StaticType,
+         io_mem,
+         idx_dtype="int32"):
+    return _binary_op_(t_a, t_b, t_out, io_mem, lambda x, y: x * y, idx_dtype)
+
+
+def mul(t_a: StaticType,
+        t_b: StaticType,
+        t_out: StaticType,
+        io_mem,
+        idx_dtype="int32"):
+    return _binary_op(t_a, t_b, t_out, io_mem, lambda x, y: x * y, idx_dtype)
+
+
+def div_(t_a: StaticType,
+         t_b: StaticType,
+         t_out: StaticType,
+         io_mem,
+         idx_dtype="int32"):
+    return _binary_op_(t_a, t_b, t_out, io_mem, lambda x, y: x / y, idx_dtype)
+
+
+def div(t_a: StaticType,
+        t_b: StaticType,
+        t_out: StaticType,
+        io_mem,
+        idx_dtype="int32"):
+    return _binary_op(t_a, t_b, t_out, io_mem, lambda x, y: x / y, idx_dtype)
 
 
 def relu_(t_x: StaticType, t_y: StaticType, io_mem, idx_dtype="int32"):
