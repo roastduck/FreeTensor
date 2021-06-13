@@ -1,6 +1,7 @@
 from typing import Sequence, Optional
 
 from .. import core
+from .shape_utils import *
 from .common import StaticType as StaticType
 
 
@@ -203,3 +204,69 @@ def unsqueeze(t_x: StaticType,
         return y_shape, y
 
     return f_unsqueeze
+
+
+def expand_(t_a: StaticType,
+            t_b: StaticType,
+            t_out: StaticType,
+            io_mem,
+            idx_dtype="int32"):
+
+    @core.transform
+    def f_expand(a_shape, b_shape, out_shape, a, out):
+        'nid: V_a_shape'
+        core.declare_var(a_shape, (t_a.ndim,), idx_dtype, "input", io_mem)
+        'nid: V_b_shape'
+        core.declare_var(b_shape, (t_b.ndim,), idx_dtype, "input", io_mem)
+        'nid: V_out_shape'
+        core.declare_var(out_shape, (t_out.ndim,), idx_dtype, "input", io_mem)
+        'nid: V_a'
+        core.declare_var(a, a_shape, t_a.elem_type, "input", io_mem)
+        'nid: V_out'
+        core.declare_var(out, out_shape, t_out.elem_type, "output", io_mem)
+
+        if t_out.ndim == 0:
+            out[()] = a[()]
+        else:
+            'nid: L_elem'
+            for i in range(out_shape[0]):
+                if t_a.ndim < t_out.ndim:
+                    'nid: recur'
+                    expand_(t_a, t_b.one_less_dim(), t_out.one_less_dim(),
+                            io_mem, idx_dtype)(a_shape, b_shape[1:],
+                                               out_shape[1:], a, out[i])
+                else:
+                    'nid: recur'
+                    expand_(t_a.one_less_dim(), t_b.one_less_dim(),
+                            t_out.one_less_dim(), io_mem,
+                            idx_dtype)(a_shape[1:], b_shape[1:], out_shape[1:],
+                                       a[i % a_shape[0]], out[i])
+
+    return f_expand
+
+
+def expand(t_a: StaticType,
+           t_b: StaticType,
+           t_out: StaticType,
+           io_mem,
+           idx_dtype="int32"):
+
+    @core.transform
+    def f_expand(a_shape, b_shape, a):
+        'nid: V_a_shape'
+        core.declare_var(a_shape, (t_a.ndim,), idx_dtype, "input", io_mem)
+        'nid: V_b_shape'
+        core.declare_var(b_shape, (t_b.ndim,), idx_dtype, "input", io_mem)
+        'nid: V_a'
+        core.declare_var(a, a_shape, t_a.elem_type, "input", io_mem)
+        'nid: broadcast_shape'
+        out_shape = broadcast_shape(t_a, t_b, t_out, io_mem, idx_dtype)(a_shape,
+                                                                        b_shape)
+        'nid: V_out'
+        out = core.create_var(out_shape, t_out.elem_type, "output", io_mem)
+        'nid: recur'
+        expand_(t_a, t_b, t_out, io_mem, idx_dtype)(a_shape, b_shape, out_shape,
+                                                    a, out)
+        return out_shape, out
+
+    return f_expand

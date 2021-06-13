@@ -32,21 +32,23 @@ def _binary_op_(t_a: StaticType,
             for i in range(out_shape[0]):
                 if t_a.ndim < t_out.ndim:
                     'nid: recur'
-                    add_(t_a, t_b.one_less_dim(), t_out.one_less_dim(), io_mem,
-                         idx_dtype)(a_shape, b_shape[1:], out_shape[1:], a,
-                                    b[i], out[i])
+                    _binary_op_(t_a, t_b.one_less_dim(), t_out.one_less_dim(),
+                                io_mem, op, idx_dtype)(a_shape, b_shape[1:],
+                                                       out_shape[1:], a, b[i],
+                                                       out[i])
                 elif t_b.ndim < t_out.ndim:
                     'nid: recur'
-                    add_(t_a.one_less_dim(), t_b, t_out.one_less_dim(), io_mem,
-                         idx_dtype)(a_shape[1:], b_shape, out_shape[1:], a[i],
-                                    b, out[i])
+                    _binary_op_(t_a.one_less_dim(), t_b, t_out.one_less_dim(),
+                                io_mem, op, idx_dtype)(a_shape[1:], b_shape,
+                                                       out_shape[1:], a[i], b,
+                                                       out[i])
                 else:
                     'nid: recur'
-                    add_(t_a.one_less_dim(), t_b.one_less_dim(),
-                         t_out.one_less_dim(), io_mem,
-                         idx_dtype)(a_shape[1:], b_shape[1:], out_shape[1:],
-                                    a[i % a_shape[0]], b[i % b_shape[0]],
-                                    out[i])
+                    _binary_op_(t_a.one_less_dim(), t_b.one_less_dim(),
+                                t_out.one_less_dim(), io_mem, op,
+                                idx_dtype)(a_shape[1:], b_shape[1:],
+                                           out_shape[1:], a[i % a_shape[0]],
+                                           b[i % b_shape[0]], out[i])
 
     return f_binary_op
 
