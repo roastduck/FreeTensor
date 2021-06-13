@@ -4,12 +4,14 @@ from .. import core
 from .common import StaticType as StaticType
 
 
-def reduce_sum_(t_x: StaticType,
-                t_y: StaticType,
-                io_mem,
-                idx_dtype="int32",
-                axes: Optional[Sequence[int]] = None,
-                keepdims: bool = True):
+def _general_reduce_(t_x: StaticType,
+                     t_y: StaticType,
+                     io_mem,
+                     op,
+                     neutral_val,
+                     idx_dtype="int32",
+                     axes: Optional[Sequence[int]] = None,
+                     keepdims: bool = True):
 
     # ONNX >= 13 treats axes as a tensor, which we don't support for now
     assert axes is not None, "Currently only unsqueeze for ONNX < 13 is supported"
@@ -21,24 +23,24 @@ def reduce_sum_(t_x: StaticType,
     def all_minus_one(lst):
         return list(map(lambda x: x - 1, lst))
 
-    def zero(t_y: StaticType):
+    def init(t_y: StaticType):
 
         @core.transform
-        def f_zero(y_shape, y):
+        def f_init(y_shape, y):
             'nid: V_y_shape'
             core.declare_var(y_shape, (t_y.ndim,), idx_dtype, "input", io_mem)
             'nid: V_y'
             core.declare_var(y, y_shape, t_x.elem_type, "output", io_mem)
 
             if t_y.ndim == 0:
-                y[()] = 0
+                y[()] = neutral_val
             else:
                 'nid: L'
                 for i in range(y_shape[0]):
                     'nid: recur'
-                    zero(t_y.one_less_dim())(y_shape[1:], y[i])
+                    init(t_y.one_less_dim())(y_shape[1:], y[i])
 
-        return f_zero
+        return f_init
 
     def reduce(t_x: StaticType, t_y: StaticType, axes):
 
@@ -54,7 +56,7 @@ def reduce_sum_(t_x: StaticType,
             core.declare_var(y, y_shape, t_x.elem_type, "inout", io_mem)
 
             if t_x.ndim == 0:
-                y[()] += x[()]
+                y[()] = op(y[()], x[()])
             else:
                 'nid: L'
                 for i in range(x_shape[0]):
@@ -79,7 +81,7 @@ def reduce_sum_(t_x: StaticType,
         return f_reduce
 
     @core.transform
-    def f_reduce_sum(x_shape, y_shape, x, y):
+    def f_reduce(x_shape, y_shape, x, y):
         'nid: V_x_shape'
         core.declare_var(x_shape, (t_x.ndim,), idx_dtype, "input", io_mem)
         'nid: V_y_shape'
@@ -90,19 +92,21 @@ def reduce_sum_(t_x: StaticType,
         core.declare_var(y, y_shape, t_x.elem_type, "output", io_mem)
 
         'nid: init'
-        zero(t_y)(y_shape, y)
+        init(t_y)(y_shape, y)
         'nid: reduce'
         reduce(t_x, t_y, axes)(x_shape, y_shape, x, y)
 
-    return f_reduce_sum
+    return f_reduce
 
 
-def reduce_sum(t_x: StaticType,
-               t_y: StaticType,
-               io_mem,
-               idx_dtype="int32",
-               axes: Optional[Sequence[int]] = None,
-               keepdims: bool = True):
+def _general_reduce(t_x: StaticType,
+                    t_y: StaticType,
+                    io_mem,
+                    op,
+                    neutral_val,
+                    idx_dtype="int32",
+                    axes: Optional[Sequence[int]] = None,
+                    keepdims: bool = True):
 
     # ONNX >= 13 treats axes as a tensor, which we don't support for now
     assert axes is not None, "Currently only unsqueeze for ONNX < 13 is supported"
@@ -142,7 +146,7 @@ def reduce_sum(t_x: StaticType,
         return f_shape
 
     @core.transform
-    def f_reduce_sum(x_shape, x):
+    def f_reduce(x_shape, x):
         'nid: V_x_shape'
         core.declare_var(x_shape, (t_x.ndim,), idx_dtype, "input", io_mem)
         'nid: V_x'
@@ -154,8 +158,50 @@ def reduce_sum(t_x: StaticType,
         'nid: V_y'
         y = core.create_var(y_shape, t_x.elem_type, "output", io_mem)
         'nid: recur'
-        reduce_sum_(t_x, t_y, io_mem, idx_dtype, axes, keepdims)(x_shape,
-                                                                 y_shape, x, y)
+        _general_reduce_(t_x, t_y, io_mem, op, neutral_val, idx_dtype, axes,
+                         keepdims)(x_shape, y_shape, x, y)
         return y_shape, y
 
-    return f_reduce_sum
+    return f_reduce
+
+
+def reduce_sum_(t_x: StaticType,
+                t_y: StaticType,
+                io_mem,
+                idx_dtype="int32",
+                axes: Optional[Sequence[int]] = None,
+                keepdims: bool = True):
+    return _general_reduce_(t_x, t_y, io_mem, lambda x, y: x + y, 0, idx_dtype,
+                            axes, keepdims)
+
+
+def reduce_sum(t_x: StaticType,
+               t_y: StaticType,
+               io_mem,
+               idx_dtype="int32",
+               axes: Optional[Sequence[int]] = None,
+               keepdims: bool = True):
+    return _general_reduce(t_x, t_y, io_mem, lambda x, y: x + y, 0, idx_dtype,
+                           axes, keepdims)
+
+
+def reduce_max_(t_x: StaticType,
+                t_y: StaticType,
+                io_mem,
+                idx_dtype="int32",
+                axes: Optional[Sequence[int]] = None,
+                keepdims: bool = True):
+    return _general_reduce_(t_x, t_y, io_mem, lambda x, y: core.max(x, y),
+                            core.min_value(t_x.elem_type), idx_dtype, axes,
+                            keepdims)
+
+
+def reduce_max(t_x: StaticType,
+               t_y: StaticType,
+               io_mem,
+               idx_dtype="int32",
+               axes: Optional[Sequence[int]] = None,
+               keepdims: bool = True):
+    return _general_reduce(t_x, t_y, io_mem, lambda x, y: core.max(x, y),
+                           core.min_value(t_x.elem_type), idx_dtype, axes,
+                           keepdims)

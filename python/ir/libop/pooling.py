@@ -49,8 +49,6 @@ def max_pool_(t_X: StaticType,
 
     assert n_spatial_dim == 2, "Currently only 2-D pooling is supported"  # TODO
 
-    inf = float("inf")
-
     @core.transform
     def f_max_pool_2d(X_shape, Y_shape, X, Y):
         'nid: V_X_shape'
@@ -74,7 +72,7 @@ def max_pool_(t_X: StaticType,
                     'nid: L_w'
                     for w in range(Y_shape[3]):
                         'nid: init'
-                        Y[n, c, h, w] = -inf
+                        Y[n, c, h, w] = core.min_value(t_X.elem_type)
                         'nid: L_kh'
                         for kh in range(kernel_shape[0]):
                             'nid: L_kw'

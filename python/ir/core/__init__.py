@@ -22,6 +22,8 @@ from .nodes import (
     floor_div,
     ceil_div,
     round_towards_0_div,
+    min_value,
+    max_value,
     intrinsic,
     any,
     Func,
