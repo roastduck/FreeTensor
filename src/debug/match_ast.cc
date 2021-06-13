@@ -248,6 +248,12 @@ void MatchVisitor::visit(const LNot &op) {
     RECURSE(op->expr_, instance->expr_);
 }
 
+void MatchVisitor::visit(const Sqrt &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::Sqrt);
+    auto instance = instance_.as<SqrtNode>();
+    RECURSE(op->expr_, instance->expr_);
+}
+
 void MatchVisitor::visit(const For &op) {
     CHECK(instance_->nodeType() == ASTNodeType::For);
     auto instance = instance_.as<ForNode>();

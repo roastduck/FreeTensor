@@ -463,6 +463,9 @@ class ASTTransformer(ast.NodeTransformer):
         elif callee is nodes.max:
             lhs, rhs = args
             node.expr_ptr = nodes.max(lhs, rhs)
+        elif callee is nodes.sqrt:
+            expr, = args
+            node.expr_ptr = nodes.sqrt(expr)
         elif callee is intrinsic:
             fmt_str = args[0]
             expr_args = args[1:]

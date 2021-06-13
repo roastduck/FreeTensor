@@ -32,6 +32,12 @@ void CodeGenCUDA::visit(const Max &op) {
     }
 }
 
+void CodeGenCUDA::visit(const Sqrt &op) {
+    os() << "runtime_sqrt("; // Defined in runtime/gpu_runtime.h
+    (*this)(op->expr_);
+    os() << ")";
+}
+
 void CodeGenCUDA::visit(const ReduceTo &op) {
     auto id = normalizeId(op->var_);
     markUse(id);

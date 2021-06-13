@@ -363,6 +363,10 @@ def round_towards_0_div(lhs, rhs):
     return ffi.makeRoundTowards0Div(lhs, rhs)
 
 
+def sqrt(expr):
+    return ffi.makeSqrt(expr)
+
+
 def intrinsic(fmt, *params, **kws):
     """
     Invoke whatever target code

@@ -171,6 +171,8 @@ class Visitor {
 
     virtual void visit(const LNot &op) { (*this)(op->expr_); }
 
+    virtual void visit(const Sqrt &op) { (*this)(op->expr_); }
+
     virtual void visit(const For &op) {
         (*this)(op->begin_);
         (*this)(op->end_);

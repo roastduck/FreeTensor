@@ -42,6 +42,7 @@ enum class ASTNodeType : int {
     For,
     If,
     Assert,
+    Sqrt,
     Intrinsic,
     Eval,
 };

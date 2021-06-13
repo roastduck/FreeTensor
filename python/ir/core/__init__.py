@@ -18,6 +18,7 @@ from .nodes import (
     l_and,
     l_or,
     l_not,
+    sqrt,
     floor_div,
     ceil_div,
     round_towards_0_div,

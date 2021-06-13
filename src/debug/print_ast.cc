@@ -280,6 +280,12 @@ void PrintVisitor::visit(const LNot &op) {
     recur(op->expr_);
 }
 
+void PrintVisitor::visit(const Sqrt &op) {
+    os() << "sqrt(";
+    recur(op->expr_);
+    os() << ")";
+}
+
 void PrintVisitor::visit(const For &op) {
     printId(op);
     if (!op->parallel_.empty()) {

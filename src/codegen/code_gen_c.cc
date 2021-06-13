@@ -385,6 +385,12 @@ void CodeGenC::visit(const LNot &op) {
     (*this)(op->expr_);
 }
 
+void CodeGenC::visit(const Sqrt &op) {
+    os() << "sqrt(";
+    (*this)(op->expr_);
+    os() << ")";
+}
+
 void CodeGenC::visit(const For &op) {
     makeIndent();
     os() << "for (int " << normalizeId(op->iter_) << " = ";

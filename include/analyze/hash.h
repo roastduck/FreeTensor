@@ -41,35 +41,43 @@ class GetHash : public Visitor {
         hash_[op] = h = (h * K3 + B3) % P;
     }
 
+    template <class T> void unaryOp(const T &op) {
+        Visitor::visit(op);
+        uint64_t h = ((uint64_t)op->nodeType() * K1 + B1) % P;
+        h = ((h + hash_.at(op->expr_)) * K2 + B2) % P;
+        hash_[op] = h = (h * K3 + B3) % P;
+    }
+
   protected:
     void visitExpr(const Expr &op,
                    const std::function<void(const Expr &)> &visitNode) override;
 
-    virtual void visit(const Var &op) override;
-    virtual void visit(const Load &op) override;
-    virtual void visit(const IntConst &op) override;
-    virtual void visit(const FloatConst &op) override;
-    virtual void visit(const BoolConst &op) override;
-    virtual void visit(const Add &op) override;
-    virtual void visit(const Sub &op) override;
-    virtual void visit(const Mul &op) override;
-    virtual void visit(const RealDiv &op) override;
-    virtual void visit(const FloorDiv &op) override;
-    virtual void visit(const CeilDiv &op) override;
-    virtual void visit(const RoundTowards0Div &op) override;
-    virtual void visit(const Mod &op) override;
-    virtual void visit(const Min &op) override;
-    virtual void visit(const Max &op) override;
-    virtual void visit(const LT &op) override;
-    virtual void visit(const LE &op) override;
-    virtual void visit(const GT &op) override;
-    virtual void visit(const GE &op) override;
-    virtual void visit(const EQ &op) override;
-    virtual void visit(const NE &op) override;
-    virtual void visit(const LAnd &op) override;
-    virtual void visit(const LOr &op) override;
-    virtual void visit(const LNot &op) override;
-    virtual void visit(const Intrinsic &op) override;
+    void visit(const Var &op) override;
+    void visit(const Load &op) override;
+    void visit(const IntConst &op) override;
+    void visit(const FloatConst &op) override;
+    void visit(const BoolConst &op) override;
+    void visit(const Add &op) override;
+    void visit(const Sub &op) override;
+    void visit(const Mul &op) override;
+    void visit(const RealDiv &op) override;
+    void visit(const FloorDiv &op) override;
+    void visit(const CeilDiv &op) override;
+    void visit(const RoundTowards0Div &op) override;
+    void visit(const Mod &op) override;
+    void visit(const Min &op) override;
+    void visit(const Max &op) override;
+    void visit(const LT &op) override;
+    void visit(const LE &op) override;
+    void visit(const GT &op) override;
+    void visit(const GE &op) override;
+    void visit(const EQ &op) override;
+    void visit(const NE &op) override;
+    void visit(const LAnd &op) override;
+    void visit(const LOr &op) override;
+    void visit(const LNot &op) override;
+    void visit(const Sqrt &op) override;
+    void visit(const Intrinsic &op) override;
 
   public:
     const std::unordered_map<Expr, uint64_t> &hash() const { return hash_; }

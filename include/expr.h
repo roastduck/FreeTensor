@@ -359,6 +359,19 @@ template <class T> Expr _makeLNot(T &&expr) {
     return n;
 }
 
+class SqrtNode : public ExprNode {
+  public:
+    SubTree<ExprNode> expr_;
+    DEFINE_NODE_TRAIT(Sqrt);
+};
+typedef Ref<SqrtNode> Sqrt;
+#define makeSqrt(...) makeNode(Sqrt, __VA_ARGS__)
+template <class T> Expr _makeSqrt(T &&expr) {
+    Sqrt s = Sqrt::make();
+    s->expr_ = std::forward<T>(expr);
+    return s;
+}
+
 /**
  * Invoke whatever target code
  */

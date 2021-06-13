@@ -46,6 +46,7 @@ class CodeGenC : public CodeGen {
     virtual void visit(const LAnd &op) override;
     virtual void visit(const LOr &op) override;
     virtual void visit(const LNot &op) override;
+    virtual void visit(const Sqrt &op) override;
     virtual void visit(const For &op) override;
     virtual void visit(const If &op) override;
     virtual void visit(const Assert &op) override;

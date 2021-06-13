@@ -20,6 +20,7 @@ class CodeGenCUDA : public CodeGenC {
   protected:
     void visit(const Min &op) override;
     void visit(const Max &op) override;
+    void visit(const Sqrt &op) override;
     void visit(const ReduceTo &op) override;
     void visit(const Var &op) override;
     void visit(const For &op) override;
