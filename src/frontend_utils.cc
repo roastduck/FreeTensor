@@ -1,9 +1,15 @@
+#include <except.h>
 #include <frontend_utils.h>
 
 namespace ir {
 
 Expr FrontendVar::asLoad() const {
-    ASSERT(indices_.size() == shape_.size());
+    if (indices_.size() != shape_.size()) {
+        throw InvalidProgram(name_ + " is of a " +
+                             std::to_string(shape_.size()) + "-D shape, but " +
+                             std::to_string(indices_.size()) +
+                             "-D indices are given");
+    }
     std::vector<Expr> indices;
     indices.reserve(indices_.size());
     for (auto &&idx : indices_) {
@@ -14,7 +20,12 @@ Expr FrontendVar::asLoad() const {
 }
 
 Stmt FrontendVar::asStore(const std::string &id, const Expr &value) const {
-    ASSERT(indices_.size() == shape_.size());
+    if (indices_.size() != shape_.size()) {
+        throw InvalidProgram(name_ + " is of a " +
+                             std::to_string(shape_.size()) + "-D shape, but " +
+                             std::to_string(indices_.size()) +
+                             "-D indices are given");
+    }
     std::vector<Expr> indices;
     indices.reserve(indices_.size());
     for (auto &&idx : indices_) {

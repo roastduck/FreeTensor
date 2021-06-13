@@ -13,7 +13,7 @@ def test_static():
     def f(x, y):
         ir.declare_var(x, (3, 4, 5), "float32", "input", "cpu")
         ir.declare_var(y, (3, 1, 4, 1, 5), "float32", "output", "cpu")
-        "nid: flatten"
+        "nid: unsqueeze"
         ir.libop.unsqueeze_(T("float32", 3),
                             T("float32", 5),
                             "cpu",
@@ -21,8 +21,8 @@ def test_static():
 
     print(f)
     s = ir.Schedule(f)
-    s.inline("flatten:V_x_shape")
-    s.inline("flatten:V_y_shape")
+    s.inline("unsqueeze:V_x_shape")
+    s.inline("unsqueeze:V_y_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 
@@ -46,7 +46,7 @@ def test_out_of_place():
         ir.declare_var(x, (3, 4, 5), "float32", "input", "cpu")
         ir.declare_var(y_shape, (5,), "int32", "output", "cpu")
         ir.declare_var(y, (3, 1, 4, 1, 5), "float32", "output", "cpu")
-        "nid: flatten"
+        "nid: unsqueeze"
         _y_shape, _y = ir.libop.unsqueeze(T("float32", 3),
                                           T("float32", 5),
                                           "cpu",
@@ -60,7 +60,7 @@ def test_out_of_place():
 
     print(f)
     s = ir.Schedule(f)
-    s.inline("flatten:V_x_shape")
+    s.inline("unsqueeze:V_x_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 

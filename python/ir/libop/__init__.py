@@ -5,3 +5,4 @@ from .conv import *
 from .pooling import *
 from .matmul import *
 from .reshape import *
+from .reduction import *
