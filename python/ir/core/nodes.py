@@ -367,6 +367,10 @@ def sqrt(expr):
     return ffi.makeSqrt(expr)
 
 
+def exp(expr):
+    return ffi.makeExp(expr)
+
+
 def min_value(dtype):
     dtype = parseDType(dtype)
     if dtype == DataType.Float32:

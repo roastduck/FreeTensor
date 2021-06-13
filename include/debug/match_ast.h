@@ -55,6 +55,7 @@ class MatchVisitor : public Visitor {
     void visit(const LOr &op) override;
     void visit(const LNot &op) override;
     void visit(const Sqrt &op) override;
+    void visit(const Exp &op) override;
     void visit(const For &op) override;
     void visit(const If &op) override;
     void visit(const Assert &op) override;

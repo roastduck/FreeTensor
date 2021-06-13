@@ -286,6 +286,12 @@ void PrintVisitor::visit(const Sqrt &op) {
     os() << ")";
 }
 
+void PrintVisitor::visit(const Exp &op) {
+    os() << "exp(";
+    recur(op->expr_);
+    os() << ")";
+}
+
 void PrintVisitor::visit(const For &op) {
     printId(op);
     if (!op->parallel_.empty()) {

@@ -67,6 +67,7 @@ void GetHash::visit(const LAnd &op) { binOpPermutable(op); }
 void GetHash::visit(const LOr &op) { binOpPermutable(op); }
 void GetHash::visit(const LNot &op) { unaryOp(op); }
 void GetHash::visit(const Sqrt &op) { unaryOp(op); }
+void GetHash::visit(const Exp &op) { unaryOp(op); }
 
 void GetHash::visit(const Intrinsic &op) {
     Visitor::visit(op);
