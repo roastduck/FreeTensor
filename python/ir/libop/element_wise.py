@@ -147,34 +147,6 @@ def div(t_a: StaticType,
     return _binary_op(t_a, t_b, t_out, io_mem, lambda x, y: x / y, idx_dtype)
 
 
-def relu_(t_x: StaticType, t_y: StaticType, io_mem, idx_dtype="int32"):
-
-    @core.transform
-    def f_relu(x_shape, y_shape, x, y):
-        'nid: V_x_shape'
-        core.declare_var(x_shape, (t_x.ndim,), idx_dtype, "input", io_mem)
-        'nid: V_y_shape'
-        core.declare_var(y_shape, (t_x.ndim,), idx_dtype, "input", io_mem)
-        'nid: V_x'
-        core.declare_var(x, x_shape, t_x.elem_type, "input", io_mem)
-        'nid: V_y'
-        core.declare_var(y, y_shape, t_x.elem_type, "output", io_mem)
-
-        if t_x.ndim == 0:
-            if x[()] > 0:
-                y[()] = x[()]
-            else:
-                y[()] = 0
-        else:
-            'nid: L_elem'
-            for i in range(x_shape[0]):
-                'nid: recur'
-                relu_(t_x.one_less_dim(), t_y.one_less_dim(), io_mem,
-                      idx_dtype)(x_shape[1:], y_shape[1:], x[i], y[i])
-
-    return f_relu
-
-
 def _unary_op_(t_x: StaticType, t_y: StaticType, io_mem, op, idx_dtype="int32"):
 
     @core.transform
@@ -208,15 +180,41 @@ def _unary_op(t_x: StaticType, t_y: StaticType, io_mem, op, idx_dtype="int32"):
         core.declare_var(x_shape, (t_x.ndim,), idx_dtype, "input", io_mem)
         'nid: V_x'
         core.declare_var(x, x_shape, t_x.elem_type, "input", io_mem)
-        'nid: copy_shape'
-        y_shape = copy_shape(t_x, t_y, io_mem, idx_dtype)(x_shape)
         'nid: V_y'
-        y = core.create_var(y_shape, t_y.elem_type, "output", io_mem)
+        y = core.create_var(x_shape, t_y.elem_type, "output", io_mem)
         'nid: recur'
-        _unary_op_(t_x, t_y, io_mem, op, idx_dtype)(x_shape, y_shape, x, y)
-        return y_shape, y
+        _unary_op_(t_x, t_y, io_mem, op, idx_dtype)(x_shape, x_shape, x, y)
+        return x_shape, y
 
     return f_unary_op
+
+
+def relu_(t_x: StaticType, t_y: StaticType, io_mem, idx_dtype="int32"):
+
+    @core.transform
+    def f_relu(x_shape, y_shape, x, y):
+        'nid: V_x_shape'
+        core.declare_var(x_shape, (t_x.ndim,), idx_dtype, "input", io_mem)
+        'nid: V_y_shape'
+        core.declare_var(y_shape, (t_x.ndim,), idx_dtype, "input", io_mem)
+        'nid: V_x'
+        core.declare_var(x, x_shape, t_x.elem_type, "input", io_mem)
+        'nid: V_y'
+        core.declare_var(y, y_shape, t_x.elem_type, "output", io_mem)
+
+        if t_x.ndim == 0:
+            if x[()] > 0:
+                y[()] = x[()]
+            else:
+                y[()] = 0
+        else:
+            'nid: L_elem'
+            for i in range(x_shape[0]):
+                'nid: recur'
+                relu_(t_x.one_less_dim(), t_y.one_less_dim(), io_mem,
+                      idx_dtype)(x_shape[1:], y_shape[1:], x[i], y[i])
+
+    return f_relu
 
 
 def relu(t_x: StaticType, t_y: StaticType, io_mem, idx_dtype="int32"):
@@ -227,13 +225,11 @@ def relu(t_x: StaticType, t_y: StaticType, io_mem, idx_dtype="int32"):
         core.declare_var(x_shape, (t_x.ndim,), idx_dtype, "input", io_mem)
         'nid: V_x'
         core.declare_var(x, x_shape, t_x.elem_type, "input", io_mem)
-        'nid: copy_shape'
-        y_shape = copy_shape(t_x, t_y, io_mem, idx_dtype)(x_shape)
         'nid: V_y'
-        y = core.create_var(y_shape, t_y.elem_type, "output", io_mem)
+        y = core.create_var(x_shape, t_y.elem_type, "output", io_mem)
         'nid: recur'
-        relu_(t_x, t_y, io_mem, idx_dtype)(x_shape, y_shape, x, y)
-        return y_shape, y
+        relu_(t_x, t_y, io_mem, idx_dtype)(x_shape, x_shape, x, y)
+        return x_shape, y
 
     return f_relu
 

@@ -48,34 +48,3 @@ def broadcast_shape(t_a: T, t_b: T, t_out: T, io_mem, idx_dtype="int32"):
         return out_shape
 
     return f_broadcast_shape
-
-
-def copy_shape_(t_a: T, t_out: T, io_mem, idx_dtype="int32"):
-
-    @core.transform
-    def f_copy_shape(a_shape, out_shape):
-        'nid: V_a_shape'
-        core.declare_var(a_shape, (t_a.ndim,), idx_dtype, "input", io_mem)
-        'nid: V_out_shape'
-        core.declare_var(out_shape, (t_out.ndim,), idx_dtype, "output", io_mem)
-
-        if t_out.ndim > 0:
-            out_shape[0] = a_shape[0]
-            copy_shape_(t_a.one_less_dim(), t_out.one_less_dim(), io_mem,
-                        idx_dtype)(a_shape[1:], out_shape[1:])
-
-    return f_copy_shape
-
-
-def copy_shape(t_a: T, t_out: T, io_mem, idx_dtype="int32"):
-
-    @core.transform
-    def f_copy_shape(a_shape):
-        'nid: V_a_shape'
-        core.declare_var(a_shape, (t_a.ndim,), idx_dtype, "input", io_mem)
-        'nid: V_out_shape'
-        out_shape = core.create_var((t_out.ndim,), idx_dtype, "output", io_mem)
-        copy_shape_(t_a, t_out, io_mem, idx_dtype)(a_shape, out_shape)
-        return out_shape
-
-    return f_copy_shape

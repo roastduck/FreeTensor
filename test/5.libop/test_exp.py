@@ -13,14 +13,14 @@ def test_static_shape():
     def f(x, y):
         ir.declare_var(x, (4, 4), "float32", "input", "cpu")
         ir.declare_var(y, (4, 4), "float32", "output", "cpu")
-        "nid: add"
+        "nid: exp"
         ir.libop.exp_(T("float32", 2), T("float32", 2), "cpu")([4, 4], [4, 4],
                                                                x, y)
 
     print(f)
     s = ir.Schedule(f)
-    s.inline("add:V_x_shape")
-    s.inline("add:V_y_shape")
+    s.inline("exp:V_x_shape")
+    s.inline("exp:V_y_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 
@@ -44,18 +44,18 @@ def test_out_of_place():
         ir.declare_var(x, (4, 4), "float32", "input", "cpu")
         ir.declare_var(y_shape, (2,), "int32", "output", "cpu")
         ir.declare_var(y, (4, 4), "float32", "output", "cpu")
-        "nid: add"
+        "nid: exp"
         _y_shape, _y = ir.libop.exp(T("float32", 2), T("float32", 2),
                                     "cpu")([4, 4], x)
-        for i in range(2):
-            y_shape[i] = _y_shape[i]
+        y_shape[0] = _y_shape[0]
+        y_shape[1] = _y_shape[1]
         for i in range(4):
             for j in range(4):
                 y[i, j] = _y[i, j]
 
     print(f)
     s = ir.Schedule(f)
-    s.inline("add:V_x_shape")
+    s.inline("exp:V_x_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 

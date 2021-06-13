@@ -166,13 +166,6 @@ class InlineFunction:
         self.params = params
         self.globals = globals
 
-    def add_targets(self, targets):
-        assert len(targets) == len(
-            self.tree.returns
-        ), f"Argument number does not match, function expects {len(self.tree.returns)} arguments, but is given {len(targets)} arguments"
-        for target, ret in zip(targets, self.tree.returns):
-            self.tree.replace[ret] = target
-
     def expand(self, ctx_stack):
         transformer = ASTTransformer(ctx_stack, self.params, self.globals)
         transformer.set_replace(self.tree.replace, self.tree.arg_var,
@@ -180,6 +173,7 @@ class InlineFunction:
                                 ctx_stack.get_nid())
         for stmt in self.tree.body:
             transformer.visit(stmt)
+        return transformer.returns
 
 
 class InlinePreprocessor(ast.NodeTransformer):
@@ -190,7 +184,6 @@ class InlinePreprocessor(ast.NodeTransformer):
         self.returned = False
         self.tree = tree
         self.tree.created_vars = set()
-        self.tree.returns = []
         self.tree.is_func = True
         self.tree.arguments = []
 
@@ -241,14 +234,6 @@ class InlinePreprocessor(ast.NodeTransformer):
         if self.returned:
             assert False, "The function must have no more than one return statement"
         self.returned = True
-        if isinstance(node.value, ast.Name):
-            name = node.value.id
-            self.tree.returns.append(name)
-        elif isinstance(node.value, ast.Tuple):
-            for value in node.value.elts:
-                name = value.id
-                self.tree.returns.append(name)
-
         return node
 
 
@@ -265,6 +250,7 @@ class ASTTransformer(ast.NodeTransformer):
         self.arg_var = {}
         self.arg_data = {}
         self.created_vars = set()
+        self.returns = []
         self.prefix = ""
 
     def set_replace(self, replace, arg_var, arg_data, created_vars, prefix):
@@ -539,16 +525,19 @@ class ASTTransformer(ast.NodeTransformer):
             if isinstance(node.targets[0], ast.Tuple):
                 for target in node.targets[0].elts:
                     assert isinstance(target, ast.Name), "Target must be a name"
-                    assert target.expr_ptr is None, f"Variable {target.id} already exists"
-                    targets.append(self.get_name(target.id))
+                    # FIXME
+                    # assert target.expr_ptr is None, f"Variable {target.id} already exists"
+                    targets.append(target.id)
             else:
-                assert node.targets[
-                    0].expr_ptr is None, "Variable already exists"
                 assert isinstance(node.targets[0],
                                   ast.Name), "Target must be a name"
-                targets.append(self.get_name(node.targets[0].id))
-            node.value.expr_ptr.add_targets(targets)
-            node.value.expr_ptr.expand(self.ctx_stack)
+                # FIXME
+                # assert node.targets[
+                #     0].expr_ptr is None, f"Variable {node.targets[0].id} already exists"
+                targets.append(node.targets[0].id)
+            returns = node.value.expr_ptr.expand(self.ctx_stack)
+            for target, ret in zip(targets, returns):
+                self.replace[target] = ret
         elif isinstance(node.value.expr_ptr, VarCreation):
             name = self.get_name(node.targets[0].id)
             var_creation = node.value.expr_ptr
@@ -690,6 +679,18 @@ class ASTTransformer(ast.NodeTransformer):
             expr = l_and(expr, ops[type(op)](lf, comparator.expr_ptr))
             lf = comparator.expr_ptr
         node.expr_ptr = expr
+        return node
+
+    def visit_Return(self, node):
+        self.generic_visit(node)
+        if isinstance(node.value, ast.Name):
+            name = node.value.id
+            self.returns.append(self.get_name(name))
+        elif isinstance(node.value, ast.Tuple):
+            for value in node.value.elts:
+                name = value.id
+                self.returns.append(self.get_name(name))
+
         return node
 
 
