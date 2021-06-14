@@ -16,11 +16,11 @@ assert sys.version_info >= (3,
                             8), "Python version lower than 3.8 is not supported"
 
 
-def declare_var(var, shape, dtype, atype, mtype):
+def declare_var(var, shape, dtype, atype, mtype, name=None):
     pass
 
 
-def create_var(shape, dtype, atype, mtype):
+def create_var(shape, dtype, atype, mtype, name=None):
     return np.zeros(shape, dtype)
 
 
@@ -36,8 +36,7 @@ class ASTContextStack:
 
     def __init__(self):
         self.ctx_stack = []
-        self.now_var_id = {}
-        self.name_set = set()
+        self.name_map = {}
         self.next_nid = ""
         self.node_ctx_bak = node_ctx.get_stack()
         self.now_context_id = 0
@@ -50,32 +49,23 @@ class ASTContextStack:
         return self.ctx_stack[-1]
 
     def get_current_name(self, name):
-        name_id = self.now_var_id.get(name)
-        if name_id is None:
-            return None
-        if name_id != 0:
-            return "___cache_" + name + "_" + str(name_id)
-        return name
+        return self.name_map.get(name)
 
-    def create_current_name(self, name, atype):
-        if atype != "cache":
-            if name in self.name_set:
-                assert False, "Non-cache variables cannot be redefined"
-            self.name_set.add(name)
-            self.now_var_id[name] = 0
-            return name
-        name_id = self.now_var_id.get(name)
-        if name_id is None:
-            name_id = 1
-        else:
+    def create_current_name(self, name, atype, override_name=None):
+        if override_name is not None:
+            if override_name in self.name_map:
+                raise ffi.InvalidProgram(f"Name {override_name} already exists")
+            self.name_map[name] = override_name
+            return override_name
+
+        modify_name = lambda old, i: "$" + old + (""
+                                                  if i == 0 else "_" + str(i))
+        name_id = 0
+        while modify_name(name, name_id) in self.name_map:
             name_id += 1
-        while "___cache_" + name + "_" + str(name_id) in self.name_set:
-            name_id += 1
-        self.now_var_id[name] = name_id
-        if name_id:
-            name = "___cache_" + name + "_" + str(name_id)
-        self.name_set.add(name)
-        return name
+        new_name = modify_name(name, name_id)
+        self.name_map[name] = new_name
+        return new_name
 
     def find_var_by_name(self, name) -> Optional[Var]:
         name = self.get_current_name(name)
@@ -103,8 +93,16 @@ class ASTContextStack:
         for var in reversed(popped.vardef_stack):  # type: _VarDef
             var.__exit__(None, None, None)
 
-    def create_variable(self, name, shape, dtype, atype, mtype):
-        name = self.create_current_name(name, atype)
+    def create_variable(self,
+                        name,
+                        shape,
+                        dtype,
+                        atype,
+                        mtype,
+                        override_name=None):
+        name = self.create_current_name(name,
+                                        atype,
+                                        override_name=override_name)
         vardef = _VarDef(name, shape, dtype, atype, mtype)
         var = vardef.__enter__()
         top = self.top()
@@ -141,13 +139,15 @@ class VarCreation:
                  dtype,
                  atype,
                  mtype,
-                 name=None):
+                 name=None,
+                 override_name=None):
         self.ctx_stack = ctx_stack
         self.shape = shape
         self.dtype = dtype
         self.atype = atype
         self.mtype = mtype
         self.name = name
+        self.override_name = override_name
 
     def add_name(self, name):
         assert self.name is None, "Bug: Variable name is set more than once"
@@ -155,8 +155,12 @@ class VarCreation:
 
     def execute(self):
         assert self.name is not None, "Bug: Variable name is not set"
-        return self.ctx_stack.create_variable(self.name, self.shape, self.dtype,
-                                              self.atype, self.mtype)
+        return self.ctx_stack.create_variable(self.name,
+                                              self.shape,
+                                              self.dtype,
+                                              self.atype,
+                                              self.mtype,
+                                              override_name=self.override_name)
 
 
 class InlineFunction:
@@ -362,26 +366,43 @@ class ASTTransformer(ast.NodeTransformer):
 
         if callee is create_var:
             shape, dtype, atype, mtype = args
-            node.expr_ptr = VarCreation(self.ctx_stack, shape, dtype, atype,
-                                        mtype)
+            override_name = kws.get("name")
+            node.expr_ptr = VarCreation(self.ctx_stack,
+                                        shape,
+                                        dtype,
+                                        atype,
+                                        mtype,
+                                        override_name=override_name)
         elif callee is declare_var:
             name, shape, dtype, atype, mtype = args
+            override_name = kws.get("name")
             if self.prefix:
                 if name in self.arg_data:
                     atype = 'cache'
                     data = self.arg_data[name]
                     self.created_vars.add(name)
                     name = self.prefix + ":" + name
-                    var = VarCreation(self.ctx_stack, shape, dtype, atype,
-                                      mtype, name).execute()
+                    var = VarCreation(self.ctx_stack,
+                                      shape,
+                                      dtype,
+                                      atype,
+                                      mtype,
+                                      name,
+                                      override_name=override_name).execute()
                     self.assign_arg(var, shape, data)
                 else:
                     name = self.get_name(name)
                     var = self.ctx_stack.find_var_by_name(name)
             else:
                 assert name in self.params, f"Parameter {name} not found"
-                VarCreation(self.ctx_stack, shape, dtype, atype, mtype,
-                            name).execute()
+                VarCreation(self.ctx_stack,
+                            shape,
+                            dtype,
+                            atype,
+                            mtype,
+                            name,
+                            override_name=name).execute()
+                # Force using the current name to match the function signature
         elif callee is MarkNid:
             nid, = args
             self.ctx_stack.set_nid(nid)
