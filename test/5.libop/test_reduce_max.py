@@ -45,7 +45,7 @@ def test_out_of_place():
     @ir.transform
     def f(x, y_shape, y):
         ir.declare_var(x, (3, 4, 5), "float32", "input", "cpu")
-        ir.declare_var(y_shape, (5,), "int32", "output", "cpu")
+        ir.declare_var(y_shape, (2,), "int32", "output", "cpu")
         ir.declare_var(y, (3, 5), "float32", "output", "cpu")
         "nid: reduce_max"
         _y = ir.libop.reduce_max(T("float32", 3),

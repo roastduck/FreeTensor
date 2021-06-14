@@ -203,7 +203,8 @@ class InlinePreprocessor(ast.NodeTransformer):
 
     def visit_Attribute(self, node):
         self.generic_visit(node)
-        node.expr_ptr = getattr(node.value.expr_ptr, node.attr)
+        if node.value.expr_ptr is not None:
+            node.expr_ptr = getattr(node.value.expr_ptr, node.attr)
         return node
 
     def visit_Constant(self, node):
