@@ -302,7 +302,7 @@ extern "C" {
                         ASSERT((*it)->nodeType() == ASTNodeType::IntConst);
                         os << ", " << (*it).as<IntConstNode>()->val_ << ">";
                     }
-                    os << " " << visitor.normalizeId(item.first);
+                    os << " " << item.first;
                     break;
 
                 default:
@@ -311,7 +311,7 @@ extern "C" {
                         os << "const ";
                     }
                     os << CodeGenCUDA::gen(tensor.dtype()) << " (*restrict ";
-                    os << visitor.normalizeId(item.first) << ")";
+                    os << item.first << ")";
                     for (size_t i = 1, iEnd = shape.size(); i < iEnd;
                          i++) { // No shape[0]
                         ASSERT(shape[i]->nodeType() == ASTNodeType::IntConst);

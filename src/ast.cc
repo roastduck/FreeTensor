@@ -9,6 +9,7 @@ std::string toString(ASTNodeType type) {
     case ASTNodeType::name:                                                    \
         return #name;
 
+        DISPATCH(Func);
         DISPATCH(StmtSeq);
         DISPATCH(VarDef);
         DISPATCH(Store);
@@ -22,6 +23,7 @@ std::string toString(ASTNodeType type) {
         DISPATCH(Load);
         DISPATCH(IntConst);
         DISPATCH(FloatConst);
+        DISPATCH(BoolConst);
         DISPATCH(Add);
         DISPATCH(Sub);
         DISPATCH(Mul);
@@ -41,7 +43,10 @@ std::string toString(ASTNodeType type) {
         DISPATCH(LAnd);
         DISPATCH(LOr);
         DISPATCH(LNot);
+        DISPATCH(Sqrt);
+        DISPATCH(Exp);
         DISPATCH(Intrinsic);
+        DISPATCH(AnyExpr);
     default:
         ERROR("Unexpected AST node type");
     }

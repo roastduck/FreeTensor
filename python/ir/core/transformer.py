@@ -161,81 +161,20 @@ class VarCreation:
 
 class InlineFunction:
 
-    def __init__(self, tree, params, globals):
-        self.tree = tree
+    def __init__(self, body, params, globals, arg_var, arg_data):
+        self.body = body
         self.params = params
         self.globals = globals
+        self.arg_var = arg_var
+        self.arg_data = arg_data
 
     def expand(self, ctx_stack):
         transformer = ASTTransformer(ctx_stack, self.params, self.globals)
-        transformer.set_replace(self.tree.replace, self.tree.arg_var,
-                                self.tree.arg_data, self.tree.created_vars,
+        transformer.set_replace(self.arg_var, self.arg_data,
                                 ctx_stack.get_nid())
-        for stmt in self.tree.body:
+        for stmt in self.body:
             transformer.visit(stmt)
         return transformer.returns
-
-
-class InlinePreprocessor(ast.NodeTransformer):
-
-    def __init__(self, globals: Mapping[str, Any], tree):
-        super().__init__()
-        self.globals = globals
-        self.returned = False
-        self.tree = tree
-        self.tree.created_vars = set()
-        self.tree.is_func = True
-        self.tree.arguments = []
-
-    def visit_FunctionDef(self, node):
-        self.generic_visit(node)
-
-        for arg in node.args.args:
-            self.tree.arguments.append(arg.arg)
-        self.tree.body = node.body
-
-    def visit_Name(self, node):
-        var = None
-        if node.id in self.globals:
-            var = self.globals[node.id]
-        node.expr_ptr = var
-        return node
-
-    def visit_Attribute(self, node):
-        self.generic_visit(node)
-        if node.value.expr_ptr is not None:
-            node.expr_ptr = getattr(node.value.expr_ptr, node.attr)
-        return node
-
-    def visit_Constant(self, node):
-        node.expr_ptr = node.value
-        return node
-
-    def visit_Call(self, node):
-        self.generic_visit(node)
-        if hasattr(node.func, "expr_ptr") and node.func.expr_ptr is create_var:
-            node.var_creation = True
-        return node
-
-    def visit_Assign(self, node):
-        for tgt in node.targets:
-            self.visit(tgt)
-        self.visit(node.value)
-
-        # TODO: (maybe) support for multiple assignment
-        assert len(node.targets) == 1, "Multiple assignment is not supported"
-        if hasattr(node.value, "var_creation"):
-            name = node.targets[0].id
-            self.tree.created_vars.add(name)
-
-        return node
-
-    def visit_Return(self, node):
-        self.generic_visit(node)
-        if self.returned:
-            assert False, "The function must have no more than one return statement"
-        self.returned = True
-        return node
 
 
 class ASTTransformer(ast.NodeTransformer):
@@ -251,14 +190,13 @@ class ASTTransformer(ast.NodeTransformer):
         self.arg_var = {}
         self.arg_data = {}
         self.created_vars = set()
+        self.returned = False
         self.returns = []
         self.prefix = ""
 
-    def set_replace(self, replace, arg_var, arg_data, created_vars, prefix):
-        self.replace = replace
+    def set_replace(self, arg_var, arg_data, prefix):
         self.arg_var = arg_var
         self.arg_data = arg_data
-        self.created_vars = created_vars
         if prefix:
             self.prefix = prefix
         else:
@@ -286,8 +224,8 @@ class ASTTransformer(ast.NodeTransformer):
         name = self.get_name(node.id)
         var = self.ctx_stack.find_var_by_name(name)
         if var is None:
-            if name in self.globals:
-                var = self.globals[name]  # self.globals[name] can be None
+            if node.id in self.globals:
+                var = self.globals[node.id]  # self.globals[node.id] can be None
             else:
                 assert self.allow_undefined, f"Variable {node.id} (a.k.a {name}) used without declaration or creation"
         node.expr_ptr = var
@@ -471,21 +409,22 @@ class ASTTransformer(ast.NodeTransformer):
             callee_tree = ast.parse(callee_src)
             callee_params = list(inspect.signature(callee.src).parameters)
             callee_globals = _get_global_vars(callee.src)
-            InlinePreprocessor(callee_globals, callee_tree).visit(callee_tree)
-            callee_tree.replace = {}
-            callee_tree.arg_var = {}
-            callee_tree.arg_data = {}
-            if len(args) != len(callee_tree.arguments):
+            funcdef = callee_tree.body[0]
+            assert isinstance(funcdef, ast.FunctionDef)
+            arguments = [arg.arg for arg in funcdef.args.args]
+            arg_var = {}
+            arg_data = {}
+            if len(args) != len(arguments):
                 raise ffi.InvalidProgram(
-                    f"Number of aruments does not match when calling {callee.src.__name__}"
+                    f"Number of arguments does not match when calling {callee.src.__name__}"
                 )
-            for arg, callee_arg in zip(args, callee_tree.arguments):
+            for arg, callee_arg in zip(args, arguments):
                 if isinstance(arg, Var):
-                    callee_tree.arg_var[callee_arg] = arg
+                    arg_var[callee_arg] = arg
                 else:
-                    callee_tree.arg_data[callee_arg] = arg
-            node.expr_ptr = InlineFunction(callee_tree, callee_params,
-                                           callee_globals)
+                    arg_data[callee_arg] = arg
+            node.expr_ptr = InlineFunction(funcdef.body, callee_params,
+                                           callee_globals, arg_var, arg_data)
         else:
             node.expr_ptr = callee(*args, **kws)
         return node
@@ -543,6 +482,7 @@ class ASTTransformer(ast.NodeTransformer):
             for target, ret in zip(targets, returns):
                 self.replace[target] = ret
         elif isinstance(node.value.expr_ptr, VarCreation):
+            self.created_vars.add(node.targets[0].id)
             name = self.get_name(node.targets[0].id)
             var_creation = node.value.expr_ptr
             var_creation.atype = 'cache'
@@ -687,6 +627,9 @@ class ASTTransformer(ast.NodeTransformer):
 
     def visit_Return(self, node):
         self.generic_visit(node)
+        if self.returned:
+            assert False, "The function must have no more than one return statement"
+        self.returned = True
         if isinstance(node.value, ast.Name):
             name = node.value.id
             self.returns.append(self.get_name(name))
