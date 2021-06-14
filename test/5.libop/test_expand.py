@@ -45,11 +45,10 @@ def test_out_of_place():
         ir.declare_var(y_shape, (2,), "int32", "output", "cpu")
         ir.declare_var(y, (3, 5), "float32", "output", "cpu")
         "nid: expand"
-        _y_shape, _y = ir.libop.expand(T("float32", 2), T("float32", 2),
-                                       T("float32", 2), "cpu")([3, 1], [3, 5],
-                                                               x)
+        _y = ir.libop.expand(T("float32", 2), T("float32", 2), T("float32", 2),
+                             "cpu")([3, 1], [3, 5], x)
         for i in range(2):
-            y_shape[i] = _y_shape[i]
+            y_shape[i] = _y.shape[i]
         for i in range(3):
             for j in range(5):
                 y[i, j] = _y[i, j]

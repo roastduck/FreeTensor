@@ -247,7 +247,7 @@ def conv(t_X: StaticType,
                   group, kernel_shape, pads, strides)(X_shape, W_shape, Y_shape,
                                                       X, W, Y)
 
-            return Y_shape, Y
+            return Y
 
     else:
 
@@ -286,6 +286,6 @@ def conv(t_X: StaticType,
                   group, kernel_shape, pads, strides)(X_shape, W_shape, B_shape,
                                                       Y_shape, X, W, B, Y)
 
-            return Y_shape, Y
+            return Y
 
     return f_conv2d

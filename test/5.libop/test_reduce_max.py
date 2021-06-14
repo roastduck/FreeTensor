@@ -48,13 +48,13 @@ def test_out_of_place():
         ir.declare_var(y_shape, (5,), "int32", "output", "cpu")
         ir.declare_var(y, (3, 5), "float32", "output", "cpu")
         "nid: reduce_max"
-        _y_shape, _y = ir.libop.reduce_max(T("float32", 3),
-                                           T("float32", 2),
-                                           "cpu",
-                                           axes=[1],
-                                           keepdims=False)([3, 4, 5], x)
+        _y = ir.libop.reduce_max(T("float32", 3),
+                                 T("float32", 2),
+                                 "cpu",
+                                 axes=[1],
+                                 keepdims=False)([3, 4, 5], x)
         for i in range(2):
-            y_shape[i] = _y_shape[i]
+            y_shape[i] = _y.shape[i]
         for i in range(3):
             for j in range(5):
                 y[i, j] = _y[i, j]

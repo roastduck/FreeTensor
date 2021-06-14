@@ -298,7 +298,10 @@ class ASTTransformer(ast.NodeTransformer):
 
     def visit_Attribute(self, node):
         self.generic_visit(node)
-        node.expr_ptr = getattr(node.value.expr_ptr, node.attr)
+        if isinstance(node.value.expr_ptr, Var) and node.attr == "shape":
+            node.expr_ptr = node.value.expr_ptr.get_shape_var()
+        else:
+            node.expr_ptr = getattr(node.value.expr_ptr, node.attr)
         return node
 
     def visit_Slice(self, node):

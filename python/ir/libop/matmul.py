@@ -253,7 +253,7 @@ def gemm(t_A: StaticType,
             'nid: recur'
             gemm_(t_A, t_B, t_C, t_Y, io_mem, idx_dtype, trans_A, trans_B,
                   alpha, beta)(A_shape, B_shape, Y_shape, A, B, Y)
-            return Y_shape, Y
+            return Y
 
     else:
 
@@ -295,6 +295,6 @@ def gemm(t_A: StaticType,
             'nid: recur'
             gemm_(t_A, t_B, t_C, t_Y, io_mem, idx_dtype, trans_A, trans_B,
                   alpha, beta)(A_shape, B_shape, Y_shape, A, B, Y)
-            return Y_shape, Y
+            return Y
 
     return f_gemm

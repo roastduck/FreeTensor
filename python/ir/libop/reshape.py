@@ -100,7 +100,7 @@ def flatten(t_x: StaticType,
         y = core.create_var(y_shape, t_x.elem_type, "output", io_mem)
         'nid: recur'
         flatten_(t_x, t_y, io_mem, idx_dtype, axis)(x_shape, y_shape, x, y)
-        return y_shape, y
+        return y
 
     return f_flatten
 
@@ -201,7 +201,7 @@ def unsqueeze(t_x: StaticType,
         y = core.create_var(y_shape, t_x.elem_type, "output", io_mem)
         'nid: recur'
         unsqueeze_(t_x, t_y, io_mem, idx_dtype, axes)(x_shape, y_shape, x, y)
-        return y_shape, y
+        return y
 
     return f_unsqueeze
 
@@ -267,6 +267,6 @@ def expand(t_a: StaticType,
         'nid: recur'
         expand_(t_a, t_b, t_out, io_mem, idx_dtype)(a_shape, b_shape, out_shape,
                                                     a, out)
-        return out_shape, out
+        return out
 
     return f_expand

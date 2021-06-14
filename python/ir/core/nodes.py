@@ -77,8 +77,20 @@ def pop_ast():
 
 class Var(ffi.FrontendVar):
 
-    def __init__(self, name: str, shape: Sequence, indices: Sequence = []):
+    def __init__(self,
+                 name: str,
+                 shape: Sequence,
+                 indices: Sequence = [],
+                 shape_var=None):
         super(Var, self).__init__(name, shape, indices)
+        self.shape_var = shape_var
+
+    def get_shape_var(self):
+        if self.shape_var is None:
+            raise ffi.InvalidProgram(
+                f"The shape of {self.name} cannot be retrieved as a variable because it is defined as a literal"
+            )
+        return self.shape_var
 
     def __getitem__(self, key):
         return Var(self.name, self.shape,
@@ -171,9 +183,16 @@ class Var(ffi.FrontendVar):
 class _VarDef:
 
     def __init__(self, name: str, shape, dtype, atype, mtype):
+        '''
+        A variable can be created using a literal shape, or another fixed-length
+        variable as a shape. If using the latter, the shape variable can be retrived
+        using a `.shape` attribute
+        '''
+
         self.name = name
         if isinstance(shape, collections.abc.Sequence):
             self.shape = shape
+            self.shape_var = None
         elif isinstance(shape, Var):
             assert len(shape.shape) == 1, "Shape of a shape should be 1-D"
             assert type(
@@ -181,6 +200,7 @@ class _VarDef:
             ) is ffi.IntConst, "Dynamic number of dimensions is not supported"
             ndim = shape.shape[0].val
             self.shape = [shape[i] for i in range(ndim)]
+            self.shape_var = shape
         else:
             assert False, "shape cannot be of type %s" % type(shape)
         self.dtype = parseDType(dtype)
@@ -189,7 +209,7 @@ class _VarDef:
 
     def __enter__(self):
         ctx_stack.push()
-        return Var(self.name, self.shape)
+        return Var(self.name, self.shape, shape_var=self.shape_var)
 
     def __exit__(self, exc_type, exc_value, traceback):
         buf = ffi.Buffer(ffi.Tensor(self.shape, self.dtype), self.atype,

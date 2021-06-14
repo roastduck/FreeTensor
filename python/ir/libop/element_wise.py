@@ -78,7 +78,7 @@ def _binary_op(t_a: StaticType,
         'nid: recur'
         _binary_op_(t_a, t_b, t_out, io_mem, op,
                     idx_dtype)(a_shape, b_shape, out_shape, a, b, out)
-        return out_shape, out
+        return out
 
     return f_binary_op
 
@@ -184,7 +184,7 @@ def _unary_op(t_x: StaticType, t_y: StaticType, io_mem, op, idx_dtype="int32"):
         y = core.create_var(x_shape, t_y.elem_type, "output", io_mem)
         'nid: recur'
         _unary_op_(t_x, t_y, io_mem, op, idx_dtype)(x_shape, x_shape, x, y)
-        return x_shape, y
+        return y
 
     return f_unary_op
 
@@ -229,7 +229,7 @@ def relu(t_x: StaticType, t_y: StaticType, io_mem, idx_dtype="int32"):
         y = core.create_var(x_shape, t_y.elem_type, "output", io_mem)
         'nid: recur'
         relu_(t_x, t_y, io_mem, idx_dtype)(x_shape, x_shape, x, y)
-        return x_shape, y
+        return y
 
     return f_relu
 

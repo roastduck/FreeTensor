@@ -347,9 +347,9 @@ def test_out_of_place():
         ir.declare_var(y_shape, (2,), "int32", "output", "cpu")
         ir.declare_var(y, (4, 6), "float32", "output", "cpu")
         "nid: gemm"
-        _y_shape, _y = gemm([4, 5], [5, 6], a, b)
+        _y = gemm([4, 5], [5, 6], a, b)
         for i in range(2):
-            y_shape[i] = _y_shape[i]
+            y_shape[i] = _y.shape[i]
         for i in range(4):
             for j in range(6):
                 y[i, j] = _y[i, j]

@@ -174,9 +174,9 @@ def test_max_pooling_out_of_place():
         ir.declare_var(y_shape, (4,), "int32", "output", "cpu")
         ir.declare_var(y, (2, 3, 12, 12), "float32", "output", "cpu")
         "nid: max_pool"
-        _y_shape, _y = max_pool([2, 3, 14, 14], x)
+        _y = max_pool([2, 3, 14, 14], x)
         for i in range(4):
-            y_shape[i] = _y_shape[i]
+            y_shape[i] = _y.shape[i]
         for n in range(2):
             for c in range(3):
                 for h in range(12):
@@ -252,9 +252,9 @@ def test_global_avg_pool_out_of_place():
         ir.declare_var(y_shape, (2,), "int32", "output", "cpu")
         ir.declare_var(y, (2, 3), "float32", "output", "cpu")
         "nid: max_pool"
-        _y_shape, _y = ga_pool([2, 3, 14, 14], x)
+        _y = ga_pool([2, 3, 14, 14], x)
         for i in range(2):
-            y_shape[i] = _y_shape[i]
+            y_shape[i] = _y.shape[i]
         for i in range(2):
             for j in range(3):
                 y[i, j] = _y[i, j]

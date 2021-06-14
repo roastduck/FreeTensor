@@ -160,7 +160,7 @@ def max_pool(t_X: StaticType,
         'nid: recur'
         max_pool_(t_X, io_mem, idx_dtype, auto_pad, dilations, kernel_shape,
                   pads, strides)(X_shape, Y_shape, X, Y)
-        return Y_shape, Y
+        return Y
 
     return f_max_pool_2d
 
@@ -222,6 +222,6 @@ def global_avg_pool(t_X: StaticType, io_mem, idx_dtype="int32"):
         Y = core.create_var(Y_shape, t_X.elem_type, "output", io_mem)
         'nid: recur'
         global_avg_pool_(t_X, io_mem, idx_dtype)(X_shape, Y_shape, X, Y)
-        return Y_shape, Y
+        return Y
 
     return f_global_avg_pool_2d

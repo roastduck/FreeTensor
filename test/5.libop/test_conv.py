@@ -277,9 +277,9 @@ def test_out_of_place():
         ir.declare_var(y_shape, (4,), "int32", "output", "cpu")
         ir.declare_var(y, (2, 8, 12, 12), "float32", "output", "cpu")
         "nid: conv"
-        _y_shape, _y = conv([2, 3, 14, 14], [8, 3, 3, 3], x, w)
+        _y = conv([2, 3, 14, 14], [8, 3, 3, 3], x, w)
         for i in range(4):
-            y_shape[i] = _y_shape[i]
+            y_shape[i] = _y.shape[i]
         for n in range(2):
             for c in range(8):
                 for h in range(12):

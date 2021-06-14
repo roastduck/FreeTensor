@@ -160,7 +160,7 @@ def _general_reduce(t_x: StaticType,
         'nid: recur'
         _general_reduce_(t_x, t_y, io_mem, op, neutral_val, idx_dtype, axes,
                          keepdims)(x_shape, y_shape, x, y)
-        return y_shape, y
+        return y
 
     return f_reduce
 
