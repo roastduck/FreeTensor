@@ -6,6 +6,41 @@ import ir.libop
 from ir.libop import StaticType as T
 
 
+def test_static_shape():
+    device = ir.Device(ir.CPU())
+
+    @ir.transform
+    def f(x, y):
+        ir.declare_var(x, (4, 4), "float32", "input", "cpu")
+        ir.declare_var(y, (4, 4), "float32", "output", "cpu")
+        "nid: softmax"
+        ir.libop.softmax_(T("float32", 2), T("float32", 2), "cpu")([4, 4],
+                                                                   [4, 4], x, y)
+
+    print(f)
+    s = ir.Schedule(f)
+    s.inline("softmax:V_x_shape")
+    s.inline("softmax:V_x:V_y_shape")
+    s.inline("softmax:max:V_y_shape")
+    s.inline("softmax:sub:broadcast_shape:V_out_shape")
+    s.inline("softmax:sum:V_y_shape")
+    s.inline("softmax:div:broadcast_shape:V_out_shape")
+    s.inline("softmax:V_y_shape")
+    f = ir.lower(s.func(), ir.CPU())
+    print(f)
+
+    code = ir.codegen(f, ir.CPU())
+
+    x_torch = torch.rand(4, 4, dtype=torch.float32)
+    x_arr = ir.Array(x_torch.numpy(), device)
+    y_torch = torch.zeros(4, 4, dtype=torch.float32)
+    y_arr = ir.Array(y_torch.numpy(), device)
+    ir.Driver(f, code, device)(x_arr, y_arr)
+    y_torch = torch.Tensor(y_arr.numpy().reshape(4, 4))
+
+    assert torch.all(torch.isclose(y_torch, torch.softmax(x_torch, axis=-1)))
+
+
 def test_out_of_place():
     device = ir.Device(ir.CPU())
 
@@ -26,6 +61,11 @@ def test_out_of_place():
     print(f)
     s = ir.Schedule(f)
     s.inline("softmax:V_x_shape")
+    s.inline("softmax:V_x:V_y_shape")
+    s.inline("softmax:max:V_y_shape")
+    s.inline("softmax:sub:broadcast_shape:V_out_shape")
+    s.inline("softmax:sum:V_y_shape")
+    s.inline("softmax:div:broadcast_shape:V_out_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 
