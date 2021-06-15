@@ -11,6 +11,7 @@ from ffi import seperate_tail
 from ffi import make_reduction
 from ffi import make_atomic
 from ffi import remove_writes
+from ffi import remove_dead_var
 from ffi import make_const_shape
 from ffi import make_1d_var
 from ffi import use_builtin_div
@@ -27,6 +28,7 @@ def lower(ast, target: Optional[ffi.Target] = None):
     ast = merge_and_hoist_if(ast)
     ast = seperate_tail(ast)
     ast = remove_writes(ast)  # After seperate_tail
+    ast = remove_dead_var(ast)  # After remove_writes
     ast = shrink_for(ast)  # After seperate_tail and remove_writes
     ast = make_atomic(ast)
 

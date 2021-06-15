@@ -9,6 +9,7 @@
 #include <pass/make_const_shape.h>
 #include <pass/make_reduction.h>
 #include <pass/merge_and_hoist_if.h>
+#include <pass/remove_dead_var.h>
 #include <pass/remove_writes.h>
 #include <pass/seperate_tail.h>
 #include <pass/shrink_for.h>
@@ -71,6 +72,11 @@ void init_ffi_pass(py::module_ &m) {
           "func"_a);
     m.def("remove_writes", static_cast<Stmt (*)(const Stmt &)>(&removeWrites),
           "stmt"_a);
+
+    m.def("remove_dead_var",
+          static_cast<Func (*)(const Func &)>(&removeDeadVar), "func"_a);
+    m.def("remove_dead_var",
+          static_cast<Stmt (*)(const Stmt &)>(&removeDeadVar), "stmt"_a);
 
     m.def("make_const_shape",
           static_cast<Func (*)(const Func &, const std::vector<MemType> &)>(
