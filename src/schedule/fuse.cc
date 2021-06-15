@@ -7,10 +7,13 @@ namespace {
 
 struct LoopInVarDefs {
     For loop_;
-    std::vector<VarDef> defs_; // inner to outer
+    std::vector<Stmt> surroundings_; // inner to outer
 };
 
-LoopInVarDefs findLoopInVarDefs(const Stmt &stmt, const std::string &id) {
+enum class FindLoopInVarDefsDirection : int { Front, Back };
+
+LoopInVarDefs findLoopInVarDefs(const Stmt &stmt, const std::string &id,
+                                FindLoopInVarDefsDirection direction) {
     if (stmt->id() == id) {
         if (stmt->nodeType() != ASTNodeType::For) {
             throw InvalidSchedule("Statement " + id + " is not a loop");
@@ -18,8 +21,20 @@ LoopInVarDefs findLoopInVarDefs(const Stmt &stmt, const std::string &id) {
         return LoopInVarDefs{stmt.as<ForNode>(), {}};
     }
     if (stmt->nodeType() == ASTNodeType::VarDef) {
-        auto ret = findLoopInVarDefs(stmt.as<VarDefNode>()->body_, id);
-        ret.defs_.emplace_back(stmt.as<VarDefNode>());
+        auto ret =
+            findLoopInVarDefs(stmt.as<VarDefNode>()->body_, id, direction);
+        ret.surroundings_.emplace_back(stmt);
+        return ret;
+    }
+    if (stmt->nodeType() == ASTNodeType::StmtSeq) {
+        auto stmtSeq = stmt.as<StmtSeqNode>();
+        LoopInVarDefs ret;
+        if (direction == FindLoopInVarDefsDirection::Front) {
+            ret = findLoopInVarDefs(stmtSeq->stmts_.front(), id, direction);
+        } else {
+            ret = findLoopInVarDefs(stmtSeq->stmts_.back(), id, direction);
+        }
+        ret.surroundings_.emplace_back(stmt);
         return ret;
     }
     return LoopInVarDefs{nullptr, {}};
@@ -63,13 +78,15 @@ Stmt FuseFor::visit(const StmtSeq &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::StmtSeq);
     auto op = __op.as<StmtSeqNode>();
     for (size_t i = 0, iEnd = op->stmts_.size(); i < iEnd; i++) {
-        auto loop0InVarDefs = findLoopInVarDefs(op->stmts_[i], id0_);
+        auto loop0InVarDefs = findLoopInVarDefs(
+            op->stmts_[i], id0_, FindLoopInVarDefsDirection::Back);
         if (loop0InVarDefs.loop_.isValid()) {
             if (i + 1 == iEnd) {
                 throw InvalidSchedule("Fuse: Loop " + id0_ + " and " + id1_ +
                                       " shuold be directly following");
             }
-            auto loop1InVarDefs = findLoopInVarDefs(op->stmts_[i + 1], id1_);
+            auto loop1InVarDefs = findLoopInVarDefs(
+                op->stmts_[i + 1], id1_, FindLoopInVarDefsDirection::Front);
             if (!loop1InVarDefs.loop_.isValid()) {
                 throw InvalidSchedule("Fuse: Loop " + id0_ + " and " + id1_ +
                                       " shuold be directly following");
@@ -85,15 +102,33 @@ Stmt FuseFor::visit(const StmtSeq &_op) {
             // From inner to outer
             // FIXME: Check the VarDefs can really be hoisted via
             // check_not_modified
-            for (auto &&def : loop1InVarDefs.defs_) {
-                fused =
-                    makeVarDef(def->id(), def->name_, std::move(*def->buffer_),
-                               def->sizeLim_, fused, def->pinned_);
+            for (auto &&stmt : loop1InVarDefs.surroundings_) {
+                if (stmt->nodeType() == ASTNodeType::VarDef) {
+                    auto def = stmt.as<VarDefNode>();
+                    fused = makeVarDef(def->id(), def->name_,
+                                       std::move(*def->buffer_), def->sizeLim_,
+                                       fused, def->pinned_);
+                } else {
+                    auto seq = stmt.as<StmtSeqNode>();
+                    std::vector<Stmt> stmts = {fused};
+                    stmts.insert(stmts.end(), seq->stmts_.begin() + 1,
+                                 seq->stmts_.end());
+                    fused = makeStmtSeq(seq->id(), std::move(stmts));
+                }
             }
-            for (auto &&def : loop0InVarDefs.defs_) {
-                fused =
-                    makeVarDef(def->id(), def->name_, std::move(*def->buffer_),
-                               def->sizeLim_, fused, def->pinned_);
+            for (auto &&stmt : loop0InVarDefs.surroundings_) {
+                if (stmt->nodeType() == ASTNodeType::VarDef) {
+                    auto def = stmt.as<VarDefNode>();
+                    fused = makeVarDef(def->id(), def->name_,
+                                       std::move(*def->buffer_), def->sizeLim_,
+                                       fused, def->pinned_);
+                } else {
+                    auto seq = stmt.as<StmtSeqNode>();
+                    std::vector<Stmt> stmts(seq->stmts_.begin(),
+                                            seq->stmts_.end() - 1);
+                    stmts.emplace_back(fused);
+                    fused = makeStmtSeq(seq->id(), std::move(stmts));
+                }
             }
 
             op->stmts_[i] =
