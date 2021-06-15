@@ -30,7 +30,6 @@ def lower(ast, target: Optional[ffi.Target] = None):
     ast = remove_writes(ast)  # After seperate_tail
     ast = remove_dead_var(ast)  # After remove_writes
     ast = shrink_for(ast)  # After seperate_tail and remove_writes
-    ast = make_atomic(ast)
 
     if target is not None:
         if target.type() == ffi.TargetType.GPU:
@@ -44,6 +43,9 @@ def lower(ast, target: Optional[ffi.Target] = None):
             # cannot get the right thread info
             ast = gpu_normalize_threads(ast)
 
+            # After gpu_correct_shared
+            ast = make_atomic(ast)
+
             # After gpu_normalize_threads
             ast = gpu_make_sync(ast)
 
@@ -51,6 +53,9 @@ def lower(ast, target: Optional[ffi.Target] = None):
 
             # After make_1d_var
             ast = gpu_lower_vector(ast)
+
+        elif target.type() == ffi.TargetType.CPU:
+            ast = make_atomic(ast)
 
     # After passes including architecture-specific ones
     ast = use_builtin_div(ast)
