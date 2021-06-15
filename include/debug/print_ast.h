@@ -6,6 +6,11 @@
 namespace ir {
 
 class PrintVisitor : public CodeGen {
+    bool pretty_ = false;
+
+  public:
+    PrintVisitor(bool pretty = false) : pretty_(pretty) {}
+
   private:
     void recur(const Expr &op);
     void recur(const Stmt &op);
@@ -50,8 +55,6 @@ class PrintVisitor : public CodeGen {
     void visit(const Intrinsic &op) override;
     void visit(const Eval &op) override;
 };
-
-std::string printAST(const AST &op);
 
 } // namespace ir
 

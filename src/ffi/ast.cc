@@ -264,9 +264,12 @@ void init_ffi_ast(py::module_ &m) {
              [](const AST &op, const AST &other) { return match(op, other); })
         .def("type", [](const AST &op) { return toString(op->nodeType()); })
         .def("__str__", [](const AST &op) { return toString(op); })
-        .def("__repr__", [](const AST &op) {
-            return "<" + toString(op->nodeType()) + ": " + toString(op) + ">";
-        });
+        .def("__repr__",
+             [](const AST &op) {
+                 return "<" + toString(op->nodeType()) + ": " + toString(op) +
+                        ">";
+             })
+        .def("pretty_print", [](const AST &op) { return toString(op, true); });
 
     pyExpr.def(py::init([](int val) { return makeIntConst(val); }))
         .def(py::init([](float val) { return makeFloatConst(val); }))

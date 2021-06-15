@@ -11,7 +11,7 @@
 
 namespace ir {
 
-std::string toString(const AST &op);
+std::string toString(const AST &op, bool pretty = false);
 
 bool match(const AST &pattern, const AST &instance);
 
