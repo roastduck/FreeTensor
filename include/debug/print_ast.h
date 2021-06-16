@@ -5,7 +5,7 @@
 
 namespace ir {
 
-class PrintVisitor : public CodeGen {
+class PrintVisitor : public CodeGen<CodeGenStream> {
     bool pretty_ = false;
 
   public:

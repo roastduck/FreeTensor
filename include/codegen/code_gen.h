@@ -11,16 +11,14 @@
 
 namespace ir {
 
-class CodeGen : public Visitor {
-  public:
-    struct Stream {
-        std::string name_;
-        std::ostringstream os_;
-        int nIndent_ = 0;
-        std::unordered_map<std::string, Ref<Buffer>> uses_;
-        std::unordered_map<std::string, int> threadDim_;
-    };
+struct CodeGenStream {
+    std::string name_;
+    std::ostringstream os_;
+    int nIndent_ = 0;
+    std::unordered_map<std::string, Ref<Buffer>> uses_;
+};
 
+template <class Stream> class CodeGen : public Visitor {
   protected:
     std::vector<Stream> streamStack_, poppedStream_;
 

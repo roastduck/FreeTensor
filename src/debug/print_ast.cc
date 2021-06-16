@@ -1,5 +1,7 @@
 #include <debug/print_ast.h>
 
+#include "../codegen/detail/code_gen.h"
+
 namespace ir {
 
 constexpr const char *MAGENTA = "\u001b[35;1m";
@@ -402,7 +404,7 @@ std::string toString(const AST &op, bool pretty) {
     PrintVisitor visitor(pretty);
     visitor(op);
     return visitor.toString(
-        [](const PrintVisitor::Stream &stream) { return stream.os_.str(); });
+        [](const CodeGenStream &stream) { return stream.os_.str(); });
 }
 
 } // namespace ir

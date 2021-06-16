@@ -1,6 +1,8 @@
 #include <codegen/code_gen_cpu.h>
 #include <pass/simplify.h>
 
+#include "detail/code_gen_c.h"
+
 namespace ir {
 
 void CodeGenCPU::visit(const ReduceTo &op) {
@@ -38,7 +40,7 @@ extern "C" {
 }
 )~~~";
 
-    auto body = visitor.toString([&](const CodeGenCPU::Stream &stream) {
+    auto body = visitor.toString([&](const CodeGenStream &stream) {
         return "void run(void **_params) " + stream.os_.str();
     });
     return header + body + tailer;
