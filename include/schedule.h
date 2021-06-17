@@ -19,8 +19,13 @@ class Schedule {
     Stmt ast_;
 
   public:
+    Schedule() = default;
     Schedule(const Func &func) : func_(func), ast_(func->body_) {}
     Schedule(const Stmt &ast) : func_(nullptr), ast_(ast) {}
+
+    Schedule clone() const {
+        return Schedule(deepCopy(func_));
+    }
 
     /**
      * @return : The function being transformed
