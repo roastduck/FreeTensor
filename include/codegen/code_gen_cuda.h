@@ -8,8 +8,18 @@
 
 namespace ir {
 
-class CodeGenCUDA : public CodeGenC {
+struct CodeGenCUDAStream : public CodeGenStream {
+    std::unordered_map<std::string, int> threadDim_;
+    int sharedSize_ = 0;
+};
+
+class CodeGenCUDA : public CodeGenC<CodeGenCUDAStream> {
+  public:
+    typedef CodeGenCUDAStream Stream;
+
+  private:
     int nKernel_ = 0;
+    int sharedStackTop_ = 0;
 
   public:
     CodeGenCUDA(const std::vector<std::string> &params) : CodeGenC(params) {}

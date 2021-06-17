@@ -86,7 +86,7 @@ double AutoSchedule::measure(const Schedule &schedule) {
     auto func = lower(schedule.func(), target);
     std::string code;
     if (target->type() == TargetType::GPU)
-        code = codeGenCPU(func);
+        code = codeGenCUDA(func);
     else
         code = codeGenCPU(func);
     Driver driver(func, code, device);

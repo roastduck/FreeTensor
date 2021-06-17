@@ -1,8 +1,8 @@
 #ifndef MAKE_ATOMIC_H
 #define MAKE_ATOMIC_H
 
+#include <unordered_map>
 #include <unordered_set>
-#include <vector>
 
 #include <func.h>
 #include <mutator.h>
@@ -11,10 +11,13 @@
 namespace ir {
 
 class FindAllParallel : public Visitor {
-    std::vector<std::string> results_;
+    // Loop ID -> parallel type
+    std::unordered_map<std::string, std::string> results_;
 
   public:
-    const std::vector<std::string> &results() const { return results_; }
+    const std::unordered_map<std::string, std::string> &results() const {
+        return results_;
+    }
 
   protected:
     void visit(const For &op) override;

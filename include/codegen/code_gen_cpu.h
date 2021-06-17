@@ -6,7 +6,7 @@
 
 namespace ir {
 
-class CodeGenCPU : public CodeGenC {
+class CodeGenCPU : public CodeGenC<CodeGenStream> {
   public:
     CodeGenCPU(const std::vector<std::string> &params) : CodeGenC(params) {}
 

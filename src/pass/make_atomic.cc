@@ -7,7 +7,7 @@ namespace ir {
 void FindAllParallel::visit(const For &op) {
     Visitor::visit(op);
     if (!op->parallel_.empty()) {
-        results_.emplace_back(op->id());
+        results_[op->id()] = op->parallel_;
     }
 }
 
@@ -28,18 +28,29 @@ Stmt makeAtomic(const Stmt &_op) {
     FindAllParallel finder;
     finder(op);
     for (auto &&loop : finder.results()) {
-        cond.push_back({{loop, DepDirection::Different}});
+        cond.push_back({{loop.first, DepDirection::Different}});
     }
 
     std::unordered_set<std::string> toAlter;
     auto filter = [](const AccessPoint &later, const AccessPoint &earlier) {
+        // TODO: Make these statements device agnostic
+        // This condition is critical to compiling efficiency, so we put it here
+        // rather than at `found` below
         if (later.buffer_->mtype() == MemType::GPULocal) {
-            return false; // TODO: Make this statement device agnostic
+            return false;
         }
+
         return later.op_->nodeType() == ASTNodeType::ReduceTo &&
                earlier.op_->nodeType() == ASTNodeType::ReduceTo;
     };
     auto found = [&](const Dependency &d) {
+        // TODO: Make these statements device agnostic
+        if (d.later_.buffer_->mtype() == MemType::GPUShared &&
+            finder.results().at(d.cond_[0].first).substr(0, 10) !=
+                "threadIdx.") {
+            return;
+        }
+
         toAlter.insert(d.later().as<ReduceToNode>()->id());
         toAlter.insert(d.earlier().as<ReduceToNode>()->id());
     };

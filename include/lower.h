@@ -11,6 +11,7 @@
 #include <pass/merge_and_hoist_if.h>
 #include <pass/seperate_tail.h>
 #include <pass/remove_writes.h>
+#include <pass/remove_dead_var.h>
 #include <pass/shrink_for.h>
 #include <pass/make_atomic.h>
 #include <pass/make_const_shape.h>
@@ -32,17 +33,21 @@ T lower(const T &t, const Ref<Target> &target) {
     func = mergeAndHoistIf(func);
     func = seperateTail(func);
     func = removeWrites(func);
+    func = removeDeadVar(func);
     func = shrinkFor(func);
-    func = makeAtomic(func);
 
     if (target.isValid()) {
         if (target->type() == TargetType::GPU) {
             func = makeConstShape(func,{MemType::GPUShared, MemType::GPULocal} );
             func = gpu::correctShared(func);
             func = gpu::normalizeThreads(func);
+            func = makeAtomic(func);
             func = gpu::makeSync(func);
             func = make1dVar(func);
             func = gpu::lowerVector(func);
+        }
+        else {
+            func = makeAtomic(func);
         }
     }
 

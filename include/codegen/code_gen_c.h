@@ -9,7 +9,7 @@
 
 namespace ir {
 
-class CodeGenC : public CodeGen {
+template <class Stream> class CodeGenC : public CodeGen<Stream> {
     const std::vector<std::string> &params_;
     std::unordered_map<std::string, std::string> idCache_; // IR IDs -> C IDs
     std::unordered_set<std::string> idFlag_;               // C IDs

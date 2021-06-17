@@ -159,3 +159,65 @@ def test_buffer_fuse():
     std = ir.pop_ast()
 
     assert std.match(ast)
+
+
+def test_hoist_var():
+    with ir.For("i", 0, 4, nid="L1") as i:
+        with ir.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
+            with ir.For("j1", 0, 8, nid="L2a") as j:
+                y[i, j] = i + j
+        with ir.VarDef("z", (4, 8), "int32", "output", "cpu") as z:
+            with ir.For("j2", 0, 8, nid="L2b") as j:
+                z[i, j] = i * j
+    ast = ir.pop_ast()
+    print(ast)
+    s = ir.Schedule(ast)
+    s.fuse("L2a", "L2b")
+    ast = s.ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.For("i", 0, 4) as i:
+        with ir.VarDef([
+            ("y", (4, 8), "int32", "output", "cpu"),
+            ("z", (4, 8), "int32", "output", "cpu"),
+        ]) as (y, z):
+            with ir.For("j", 0, 8) as j:
+                y[i, j] = i + j
+                z[i, j] = i * j
+    std = ir.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_hoist_var_in_stmt_seq():
+    with ir.For("i", 0, 4, nid="L1") as i:
+        with ir.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
+            with ir.For("j1", 0, 8, nid="L2a") as j:
+                y[i, j] = i + j
+        with ir.VarDef("z", (4, 8), "int32", "output", "cpu") as z:
+            with ir.For("j2", 0, 8, nid="L2b") as j:
+                z[i, j] = i * j
+            z[0, 0] = -1
+    ast = ir.pop_ast()
+    print(ast)
+    s = ir.Schedule(ast)
+    s.fuse("L2a", "L2b")
+    ast = s.ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.For("i", 0, 4) as i:
+        with ir.VarDef([
+            ("y", (4, 8), "int32", "output", "cpu"),
+            ("z", (4, 8), "int32", "output", "cpu"),
+        ]) as (y, z):
+            with ir.For("j", 0, 8) as j:
+                y[i, j] = i + j
+                z[i, j] = i * j
+            z[0, 0] = -1
+    std = ir.pop_ast()
+
+    assert std.match(ast)
