@@ -1,6 +1,3 @@
-//
-// Created by hitonami on 2021/6/16.
-//
 #include <func.h>
 namespace ir {
 

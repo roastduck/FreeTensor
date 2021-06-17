@@ -1,7 +1,3 @@
-//
-// Created by hitonami on 2021/4/22.
-//
-
 #include <auto_schedule/sketch.h>
 #include <auto_schedule/utils.h>
 namespace ir {

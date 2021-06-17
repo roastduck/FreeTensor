@@ -1,7 +1,3 @@
-//
-// Created by hitonami on 2021/6/16.
-//
-
 #ifndef IR_AUTO_SCHEDULE_H
 #define IR_AUTO_SCHEDULE_H
 

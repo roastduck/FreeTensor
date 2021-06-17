@@ -1,7 +1,3 @@
-//
-// Created by hitonami on 2021/4/18.
-//
-
 #ifndef IR_RULE_H
 #define IR_RULE_H
 

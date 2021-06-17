@@ -1,7 +1,3 @@
-//
-// Created by hitonami on 2021/4/18.
-//
-
 #ifndef IR_FIND_MULTI_LEVEL_TILING_H
 #define IR_FIND_MULTI_LEVEL_TILING_H
 

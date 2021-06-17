@@ -1,7 +1,3 @@
-//
-// Created by hitonami on 2021/4/21.
-//
-
 #include <auto_schedule/rules/multi_level_tiling.h>
 #include <auto_schedule/analyze/find_multi_level_tiling.h>
 #include <auto_schedule/utils.h>
@@ -40,7 +36,6 @@ std::array<std::pair<std::string, int>, n> split_loop(Schedule &schedule, std::s
     for (int i = 0; i < n - 1; i++) {
         try {
             auto t = schedule.split(loop, tiling[i]);
-//        std::cout << "Splitting " << loop << " to " << t.first << " " << t.second << " with " << tiling[i] << std::endl;
             loop = t.first;
             result[n - i - 1] = std::make_pair(t.second, tiling[i]);
         }

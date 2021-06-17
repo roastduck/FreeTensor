@@ -1,7 +1,3 @@
-//
-// Created by hitonami on 2021/4/21.
-//
-
 #ifndef IR_UTILS_H
 #define IR_UTILS_H
 

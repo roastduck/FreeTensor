@@ -1,6 +1,3 @@
-//
-// Created by hitonami on 2021/6/16.
-//
 #include <auto_schedule/auto_schedule.h>
 #include <auto_schedule/rules/multi_level_tiling.h>
 #include <driver.h>

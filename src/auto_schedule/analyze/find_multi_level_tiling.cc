@@ -1,7 +1,3 @@
-//
-// Created by hitonami on 2021/4/18.
-//
-
 #include <auto_schedule/analyze/find_multi_level_tiling.h>
 #include <iostream>
 using std::cout;

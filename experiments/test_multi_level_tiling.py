@@ -13,15 +13,13 @@ def test_multi_level_tiling():
         ir.declare_var(w, (a, b), "int32", "input", "cpu")
         ir.declare_var(x, (b, a), "int32", "input", "cpu")
         ir.declare_var(y, (a, a), "int32", "output", "cpu")
-        "nid: L0"
-        for l in range(2):
-            "nid: L1"
-            for i in range(a):
-                "nid: L2"
-                for j in range(a):
-                    "nid: L3"
-                    for k in range(b):
-                        y[i, j] = y[i, j] + w[i, k] * x[k, j]
+        "nid: L1"
+        for i in range(a):
+            "nid: L2"
+            for j in range(a):
+                "nid: L3"
+                for k in range(b):
+                    y[i, j] = y[i, j] + w[i, k] * x[k, j]
     s = ir.Schedule(test)
     w_np = np.zeros((a, b), dtype="float32")
     x_np = np.zeros((b, a), dtype="float32")

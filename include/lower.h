@@ -1,7 +1,3 @@
-//
-// Created by hitonami on 2021/6/15.
-//
-
 #ifndef IR_LOWER_H
 #define IR_LOWER_H
 #include <driver/target.h>
