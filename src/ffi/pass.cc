@@ -16,6 +16,7 @@
 #include <pass/simplify.h>
 #include <pass/sink_var.h>
 #include <pass/use_builtin_div.h>
+#include <lower.h>
 
 namespace ir {
 
@@ -113,6 +114,11 @@ void init_ffi_pass(py::module_ &m) {
           static_cast<Func (*)(const Func &)>(&gpu::lowerVector), "func"_a);
     m.def("gpu_lower_vector",
           static_cast<Stmt (*)(const Stmt &)>(&gpu::lowerVector), "stmt"_a);
+    m.def("lower",
+          static_cast<Func (*)(const Func &, const Ref<Target> &)>(&lower), "func"_a, "target"_a = nullptr);
+    m.def("lower",
+          static_cast<Stmt (*)(const Stmt &, const Ref<Target> &)>(&lower), "stmt"_a, "target"_a = nullptr);
+
 }
 
 } // namespace ir

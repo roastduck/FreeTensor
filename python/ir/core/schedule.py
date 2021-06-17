@@ -416,3 +416,8 @@ class Schedule(ffi.Schedule):
             not met
         """
         super(Schedule, self).vectorize(toId(loop))
+
+
+class AutoSchedule(ffi.AutoSchedule):
+    def set_params(self, *args, **kws):
+        super(AutoSchedule, self).set_params(args, kws)

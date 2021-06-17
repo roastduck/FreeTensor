@@ -35,6 +35,8 @@ Func _makeFunc(const std::string &name, const std::vector<std::string> &params,
     return f;
 }
 
+Func deepCopy(const Func &func);
+
 } // namespace ir
 
 #endif // FUNC_H
