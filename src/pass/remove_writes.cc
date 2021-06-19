@@ -10,10 +10,11 @@
 namespace ir {
 
 static bool sameParent(const Cursor &x, const Cursor &y) {
-    if (!x.hasOuter() && !y.hasOuter()) {
+    if (!x.hasOuterCtrlFlow() && !y.hasOuterCtrlFlow()) {
         return true;
     }
-    if (x.hasOuter() && y.hasOuter() && x.outer().id() == y.outer().id()) {
+    if (x.hasOuterCtrlFlow() && y.hasOuterCtrlFlow() &&
+        x.outerCtrlFlow().id() == y.outerCtrlFlow().id()) {
         return true;
     }
     return false;
@@ -170,7 +171,9 @@ Stmt removeWrites(const Stmt &_op) {
                                 ? earlier.as<StoreNode>()->expr_
                                 : earlier.as<ReduceToNode>()->expr_;
 
-                if (!checkNotModified(op, expr, earlier->id(), later->id())) {
+                if (!checkNotModified(
+                        op, expr, CheckNotModifiedSide::After, earlier->id(),
+                        CheckNotModifiedSide::Before, later->id())) {
                     return;
                 }
 

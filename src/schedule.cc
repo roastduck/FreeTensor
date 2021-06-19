@@ -489,7 +489,7 @@ std::string Schedule::moveTo(const std::string &_stmt, MoveToSide side,
                     swap(order);
                 } else {
                     while (!s.hasPrev() && movingUp()) {
-                        s = s.outer();
+                        s = s.outerCtrlFlow();
                     }
                     // TODO: Fission IfNode
                     ASSERT(s.node()->nodeType() == ASTNodeType::For);
@@ -510,7 +510,7 @@ std::string Schedule::moveTo(const std::string &_stmt, MoveToSide side,
                     swap(order);
                 } else {
                     while (!s.hasNext() && movingDown()) {
-                        s = s.outer();
+                        s = s.outerCtrlFlow();
                     }
                     // TODO: Fission IfNode
                     ASSERT(s.node()->nodeType() == ASTNodeType::For);
@@ -556,7 +556,9 @@ void Schedule::inlining(const std::string &def) {
                 auto earlier = dep.earlier().as<ReduceToNode>();
                 expr = MakeInlinePlaceholder(earlier->indices_)(earlier->expr_);
             }
-            if (!checkNotModified(ast, expr, dep.earlier_.cursor_.id(),
+            if (!checkNotModified(ast, expr, CheckNotModifiedSide::After,
+                                  dep.earlier_.cursor_.id(),
+                                  CheckNotModifiedSide::Before,
                                   dep.later_.cursor_.id())) {
                 throw InvalidSchedule(
                     "The expression will be modified after inlining from " +

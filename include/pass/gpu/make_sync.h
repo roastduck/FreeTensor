@@ -1,12 +1,9 @@
 #ifndef GPU_MAKE_SYNC_H
 #define GPU_MAKE_SYNC_H
 
-#include <unordered_set>
-
 #include <cursor.h>
 #include <func.h>
 #include <math/bounds.h>
-#include <mutator.h>
 
 namespace ir {
 
@@ -29,25 +26,39 @@ class FindAllThreads : public Visitor {
     void visit(const For &op) override;
 };
 
-struct CrossThreadDep {
-    Cursor later_, earlier_, lcaLoop_;
-    bool inWarp_;
-    bool visiting_, synced_;
-};
-
-class MakeSync : public Mutator {
-    std::vector<CrossThreadDep> deps_;
-    StmtSeq whereToInsert_;
-    std::unordered_set<StmtSeq> needSyncThreads_, needSyncWarp_;
+class CopyPart : public Mutator {
+    Stmt begin_, end_;
+    bool begun_, ended_;
 
   public:
-    MakeSync(std::vector<CrossThreadDep> &&deps) : deps_(std::move(deps)) {}
+    CopyPart(const Stmt &begin, const Stmt &end)
+        : begin_(begin), end_(end), begun_(!begin.isValid()), ended_(false) {}
 
   protected:
     Stmt visitStmt(const Stmt &op,
                    const std::function<Stmt(const Stmt &)> &visitNode) override;
-    Stmt visit(const StmtSeq &op) override;
+};
+
+struct CrossThreadDep {
+    Cursor later_, earlier_, lcaStmt_, lcaLoop_;
+    bool inWarp_;
+    bool visiting_, synced_;
+};
+
+class MakeSync : public MutatorWithCursor {
+    Stmt root_;
+    std::vector<CrossThreadDep> deps_;
+    std::unordered_map<std::string, std::vector<Stmt>> branchSplitters_;
+
+  public:
+    MakeSync(const Stmt root, std::vector<CrossThreadDep> &&deps)
+        : root_(root), deps_(std::move(deps)) {}
+
+  protected:
+    Stmt visitStmt(const Stmt &op,
+                   const std::function<Stmt(const Stmt &)> &visitNode) override;
     Stmt visit(const For &op) override;
+    Stmt visit(const If &op) override;
 };
 
 Stmt makeSync(const Stmt &op);

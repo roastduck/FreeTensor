@@ -11,22 +11,27 @@ Stmt InsertTmpEval::visitStmt(
     if (ret->id() == s0_) {
         auto eval = makeEval("", expr_);
         s0Eval_ = eval->id();
-        return makeStmtSeq("", {ret, eval});
+        return s0Side_ == CheckNotModifiedSide::Before
+                   ? makeStmtSeq("", {eval, ret})
+                   : makeStmtSeq("", {ret, eval});
     }
     if (ret->id() == s1_) {
         auto eval = makeEval("", expr_);
         s1Eval_ = eval->id();
-        return makeStmtSeq("", {eval, ret});
+        return s1Side_ == CheckNotModifiedSide::Before
+                   ? makeStmtSeq("", {eval, ret})
+                   : makeStmtSeq("", {ret, eval});
     }
     return ret;
 }
 
-bool checkNotModified(const Stmt &op, const Expr &expr, const std::string &s0,
-                      const std::string &s1) {
+bool checkNotModified(const Stmt &op, const Expr &expr,
+                      CheckNotModifiedSide s0Side, const std::string &s0,
+                      CheckNotModifiedSide s1Side, const std::string &s1) {
     // First insert temporarily Eval node to the AST, then perform dependency
     // analysis
 
-    InsertTmpEval inserter(expr, s0, s1);
+    InsertTmpEval inserter(expr, s0Side, s0, s1Side, s1);
     auto tmpOp = inserter(op);
 
     std::unordered_set<Stmt> writesWAR, writesRAW;

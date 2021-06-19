@@ -5,6 +5,7 @@
 #include <vector>
 
 #include <except.h>
+#include <mutator.h>
 #include <stack.h>
 #include <stmt.h>
 #include <visitor.h>
@@ -13,6 +14,7 @@ namespace ir {
 
 class Cursor {
     friend class VisitorWithCursor;
+    friend class MutatorWithCursor;
 
     Stack<Stmt> stack_;
 
@@ -22,6 +24,8 @@ class Cursor {
 
   public:
     Cursor() {}
+
+    bool isValid() const { return !stack_.empty(); }
 
     const Stmt &node() const { return stack_.top()->data_; }
     const std::string &id() const { return node()->id(); }
@@ -47,6 +51,10 @@ class Cursor {
     Cursor outer() const;
     bool hasOuter() const;
 
+    /// The parent which is not StmtSeq or VarDef in the AST tree
+    Cursor outerCtrlFlow() const;
+    bool hasOuterCtrlFlow() const;
+
     /// Lowest common ancestor
     friend Cursor lca(const Cursor &lhs, const Cursor &rhs);
 };
@@ -57,6 +65,16 @@ class VisitorWithCursor : public Visitor {
   protected:
     void visitStmt(const Stmt &op,
                    const std::function<void(const Stmt &)> &visitNode) override;
+
+    const Cursor &cursor() const { return cursor_; }
+};
+
+class MutatorWithCursor : public Mutator {
+    Cursor cursor_;
+
+  protected:
+    Stmt visitStmt(const Stmt &op,
+                   const std::function<Stmt(const Stmt &)> &visitNode) override;
 
     const Cursor &cursor() const { return cursor_; }
 };

@@ -101,6 +101,21 @@ Cursor Cursor::next() const {
 
 bool Cursor::hasOuter() const {
     auto t = stack_.top();
+    t = t->prev_;
+    if (!t.isValid()) {
+        return false;
+    }
+    return true;
+}
+
+Cursor Cursor::outer() const {
+    auto ret = *this;
+    ret.pop();
+    return ret;
+}
+
+bool Cursor::hasOuterCtrlFlow() const {
+    auto t = stack_.top();
     do {
         t = t->prev_;
         if (!t.isValid()) {
@@ -111,7 +126,7 @@ bool Cursor::hasOuter() const {
     return true;
 }
 
-Cursor Cursor::outer() const {
+Cursor Cursor::outerCtrlFlow() const {
     auto ret = *this;
     do {
         ret.pop();
@@ -142,6 +157,14 @@ void VisitorWithCursor::visitStmt(
     cursor_.push(op);
     Visitor::visitStmt(op, visitNode);
     cursor_.pop();
+}
+
+Stmt MutatorWithCursor::visitStmt(
+    const Stmt &op, const std::function<Stmt(const Stmt &)> &visitNode) {
+    cursor_.push(op);
+    auto ret = Mutator::visitStmt(op, visitNode);
+    cursor_.pop();
+    return ret;
 }
 
 void GetCursorById::visitStmt(
