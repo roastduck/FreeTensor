@@ -37,6 +37,8 @@ class CopyPart : public Mutator {
   protected:
     Stmt visitStmt(const Stmt &op,
                    const std::function<Stmt(const Stmt &)> &visitNode) override;
+    Stmt visit(const For &op) override;
+    Stmt visit(const VarDef &op) override;
 };
 
 struct CrossThreadDep {
@@ -48,6 +50,7 @@ struct CrossThreadDep {
 class MakeSync : public MutatorWithCursor {
     Stmt root_;
     std::vector<CrossThreadDep> deps_;
+    std::unordered_map<std::string, Stmt> syncBeforeFor_;
     std::unordered_map<std::string, std::vector<Stmt>> branchSplitters_;
 
   public:

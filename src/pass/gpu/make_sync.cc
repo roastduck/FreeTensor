@@ -6,7 +6,6 @@
 #include <analyze/deps.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/gpu/make_sync.h>
-#include <pass/move_out_first_or_last_iter.h>
 
 namespace ir {
 
@@ -51,9 +50,34 @@ Stmt CopyPart::visitStmt(const Stmt &op,
     return ret;
 }
 
+Stmt CopyPart::visit(const For &op) {
+    bool begun = begun_;
+    auto ret = Mutator::visit(op);
+    if (!begun && begun_) {
+        throw InvalidProgram(
+            "Unable to insert a synchronizing statment because it requires "
+            "splitting a loop into two parts");
+    }
+    return ret;
+}
+
+Stmt CopyPart::visit(const VarDef &op) {
+    bool begun = begun_;
+    auto ret = Mutator::visit(op);
+    if (!begun && begun_) {
+        throw InvalidProgram(
+            "Unable to insert a synchronizing statment because it requires "
+            "splitting a VarDef node into two parts"); // TODO
+    }
+    return ret;
+}
+
 Stmt MakeSync::visitStmt(const Stmt &op,
                          const std::function<Stmt(const Stmt &)> &visitNode) {
     auto ret = MutatorWithCursor::visitStmt(op, visitNode);
+    // Please not that we have exited MutatorWithCursor, so `cursor()` is out of
+    // `op`
+
     Cursor target;
     bool needSyncThreads = false, needSyncWarp = false;
     for (const CrossThreadDep &dep : deps_) {
@@ -61,11 +85,6 @@ Stmt MakeSync::visitStmt(const Stmt &op,
             (dep.inWarp_ ? needSyncWarp : needSyncThreads) = true;
             target =
                 dep.lcaStmt_.depth() > target.depth() ? dep.lcaStmt_ : target;
-        }
-    }
-    if (target.isValid()) {
-        while (target.nodeType() == ASTNodeType::If) {
-            target = target.outer();
         }
     }
 
@@ -79,40 +98,25 @@ Stmt MakeSync::visitStmt(const Stmt &op,
                 makeEval("", makeIntrinsic("__syncwarp()", {}, DataType::Void));
         }
 
-        bool metVarDef = false, metFor = false;
+        Cursor whereToInsert;
         for (auto ctx = cursor(); ctx.id() != target.id(); ctx = ctx.outer()) {
-            switch (ctx.nodeType()) {
-            case ASTNodeType::For:
-                metFor = true;
-                sync = makeIf("",
-                              makeEQ(makeVar(ctx.node().as<ForNode>()->iter_),
-                                     ctx.node().as<ForNode>()->begin_),
-                              sync);
-                break;
-
-            case ASTNodeType::If:
-                if (metVarDef) {
-                    ERROR("Cannot split a VarDef"); // TODO
-                }
-                if (metFor) {
-                    ERROR("Cannot split a For"); // TODO
-                }
-                ASSERT(!ctx.node().as<IfNode>()->elseCase_.isValid()); // TODO
-                branchSplitters_[ctx.id()].emplace_back(sync);
-                break;
-
-            case ASTNodeType::VarDef:
-                metVarDef = true;
-                break;
-
-            case ASTNodeType::StmtSeq:
-                break;
-
-            default:
-                ERROR("Unrecognized stmt " + toString(ctx.nodeType()));
+            if (ctx.nodeType() == ASTNodeType::For) {
+                whereToInsert = ctx;
             }
         }
-        ret = makeStmtSeq("", {sync, ret});
+        if (!whereToInsert.isValid()) {
+            ret = makeStmtSeq("", {sync, ret});
+        } else {
+            syncBeforeFor_[whereToInsert.id()] = sync;
+        }
+
+        for (auto ctx = whereToInsert.isValid() ? whereToInsert : cursor();
+             ctx.hasOuter(); ctx = ctx.outer()) {
+            if (ctx.nodeType() == ASTNodeType::If) {
+                ASSERT(!ctx.node().as<IfNode>()->elseCase_.isValid()); // TODO
+                branchSplitters_[ctx.id()].emplace_back(sync);
+            }
+        }
 
         for (CrossThreadDep &dep : deps_) {
             if (dep.visiting_) {
@@ -163,6 +167,9 @@ Stmt MakeSync::visit(const For &_op) {
                 }
             }
         }
+    }
+    if (syncBeforeFor_.count(op->id())) {
+        return makeStmtSeq("", {syncBeforeFor_.at(op->id()), op});
     }
     return op;
 }
@@ -234,8 +241,6 @@ Stmt makeSync(const Stmt &_op) {
 
     MakeSync mutator(op, std::move(deps));
     op = mutator(op);
-
-    op = moveOutFirstOrLastIter(op);
 
     return flattenStmtSeq(op);
 }

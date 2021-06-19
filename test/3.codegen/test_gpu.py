@@ -520,6 +520,46 @@ def test_syncthreads_at_outer_branch():
     assert ir.make_1d_var(ir.pop_ast()).match(func.body)
 
 
+def test_syncthreads_at_outer_loop_and_outer_branch():
+
+    @ir.transform
+    def test(x, y):
+        ir.declare_var(x, (4, 256), "int32", "input", "gpu/global")
+        ir.declare_var(y, (4, 5, 256), "int32", "output", "gpu/global")
+        "nid: L0"
+        for i in range(0, 4):
+            t = ir.create_var((256,), "int32", "cache", "gpu/shared")
+            "nid: L1"
+            for j in range(0, 256):
+                t[j] = x[i, j]
+            for p in range(0, 5):
+                "nid: L2"
+                for j in range(0, 256):
+                    y[i, p, j] = t[255 - j] + 1
+
+    s = ir.Schedule(test)
+    s.parallelize("L0", "blockIdx.x")
+    s.parallelize("L1", "threadIdx.x")
+    func = ir.lower(s.func(), target)
+    print(func)
+
+    with ir.VarDef([
+        ("x", (4, 256), "int32", "input", "gpu/global"),
+        ("y", (4, 5, 256), "int32", "output", "gpu/global"),
+    ]) as (x, y):
+        with ir.For(".blockIdx.x", 0, 4) as i:
+            with ir.For(".threadIdx.x", 0, 256) as j:
+                with ir.VarDef("t", (256,), "int32", "cache",
+                               "gpu/shared") as t:
+                    ir.Any()
+                    ir.Eval(ir.intrinsic(
+                        "__syncthreads()"))  # Here outside p and ouside If
+                    with ir.If(j == 0):
+                        with ir.For("p", 0, 5) as p:
+                            ir.Any()
+    assert ir.make_1d_var(ir.pop_ast()).match(func.body)
+
+
 def test_syncthreads_split_branch():
 
     @ir.transform
