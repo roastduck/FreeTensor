@@ -434,6 +434,58 @@ def test_syncthreads_at_outer_loop():
     assert ir.make_1d_var(ir.pop_ast()).match(func.body)
 
 
+def test_syncthreads_not_at_outer_loop():
+
+    @ir.transform
+    def test(x0, x1, y):
+        ir.declare_var(x0, (4, 256), "int32", "input", "gpu/global")
+        ir.declare_var(x1, (4, 5, 256), "int32", "input", "gpu/global")
+        ir.declare_var(y, (4, 5, 256), "int32", "output", "gpu/global")
+        "nid: L0"
+        for i in range(0, 4):
+            t0 = ir.create_var((256,), "int32", "cache", "gpu/shared")
+            "nid: L1"
+            for j in range(0, 256):
+                t0[j] = x0[i, j]
+            for p in range(0, 5):
+                t1 = ir.create_var((256,), "int32", "cache", "gpu/shared")
+                "nid: L2"
+                for j in range(0, 256):
+                    t1[j] = x1[i, p, j]
+                "nid: L3"
+                for j in range(0, 256):
+                    y[i, p, j] = t0[255 - j] + t1[255 - j]
+
+    s = ir.Schedule(test)
+    s.parallelize("L0", "blockIdx.x")
+    s.parallelize("L1", "threadIdx.x")
+    s.parallelize("L2", "threadIdx.x")
+    s.parallelize("L3", "threadIdx.x")
+    func = ir.lower(s.func(), target)
+    print(func)
+
+    with ir.VarDef([
+        ("x0", (4, 256), "int32", "input", "gpu/global"),
+        ("x1", (4, 5, 256), "int32", "input", "gpu/global"),
+        ("y", (4, 5, 256), "int32", "output", "gpu/global"),
+    ]) as (x0, x1, y):
+        with ir.For(".blockIdx.x", 0, 4) as i:
+            with ir.For(".threadIdx.x", 0, 256) as j:
+                with ir.VarDef("t0", (256,), "int32", "cache",
+                               "gpu/shared") as t0:
+                    ir.Any()  # t0
+                    # Not here
+                    with ir.For("p", 0, 5) as p:
+                        with ir.VarDef("t1", (256,), "int32", "cache",
+                                       "gpu/shared") as t1:
+                            ir.Any()  # t1
+                            ir.Eval(ir.intrinsic(
+                                "__syncthreads()"))  # Here inside p
+                            ir.Any()  # L3
+                        ir.Eval(ir.intrinsic("__syncthreads()"))
+    assert ir.make_1d_var(ir.pop_ast()).match(func.body)
+
+
 def test_syncthreads_at_outer_branch():
 
     @ir.transform

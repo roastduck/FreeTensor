@@ -26,6 +26,7 @@ class Cursor {
     Cursor() {}
 
     bool isValid() const { return !stack_.empty(); }
+    size_t depth() const { return stack_.size(); }
 
     const Stmt &node() const { return stack_.top()->data_; }
     const std::string &id() const { return node()->id(); }

@@ -60,9 +60,15 @@ Stmt MakeSync::visitStmt(const Stmt &op,
         if (!dep.synced_ && dep.visiting_ && dep.later_.node() == op) {
             (dep.inWarp_ ? needSyncWarp : needSyncThreads) = true;
             target =
-                target.isValid() ? lca(target, dep.lcaStmt_) : dep.lcaStmt_;
+                dep.lcaStmt_.depth() > target.depth() ? dep.lcaStmt_ : target;
         }
     }
+    if (target.isValid()) {
+        while (target.nodeType() == ASTNodeType::If) {
+            target = target.outer();
+        }
+    }
+
     if (needSyncThreads || needSyncWarp) {
         Stmt sync;
         if (needSyncThreads) {
