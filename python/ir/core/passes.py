@@ -22,6 +22,4 @@ from ffi import gpu_lower_vector
 
 
 def lower(ast, target: Optional[ffi.Target] = None):
-    if target is not None:
-        return ffi.lower(ast, target)
-    return ffi.lower(ast)
+    return ffi.lower(ast, target)

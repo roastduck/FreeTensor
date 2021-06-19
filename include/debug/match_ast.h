@@ -10,7 +10,8 @@ namespace ir {
 /**
  * Check whether an AST strictly matches a pattern
  *
- * Note that a + b doesn't match b + a
+ * MatchVisitor can tolerate some difference such as a + b will match b + a, but
+ * more complex ones such as (a + b) + c does not match a + (b + c)
  */
 class MatchVisitor : public Visitor {
     bool isMatched_ = true;

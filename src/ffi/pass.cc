@@ -1,4 +1,5 @@
 #include <ffi.h>
+#include <lower.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/gpu/correct_shared.h>
 #include <pass/gpu/lower_vector.h>
@@ -9,6 +10,7 @@
 #include <pass/make_const_shape.h>
 #include <pass/make_reduction.h>
 #include <pass/merge_and_hoist_if.h>
+#include <pass/move_out_first_or_last_iter.h>
 #include <pass/remove_dead_var.h>
 #include <pass/remove_writes.h>
 #include <pass/seperate_tail.h>
@@ -17,7 +19,6 @@
 #include <pass/simplify.h>
 #include <pass/sink_var.h>
 #include <pass/use_builtin_div.h>
-#include <lower.h>
 
 namespace ir {
 
@@ -35,6 +36,13 @@ void init_ffi_pass(py::module_ &m) {
     m.def("flatten_stmt_seq",
           static_cast<Stmt (*)(const Stmt &, bool)>(&flattenStmtSeq), "stmt"_a,
           "popVarDef"_a = false);
+
+    m.def("move_out_first_or_last_iter",
+          static_cast<Func (*)(const Func &)>(&moveOutFirstOrLastIter),
+          "func"_a);
+    m.def("move_out_first_or_last_iter",
+          static_cast<Stmt (*)(const Stmt &)>(&moveOutFirstOrLastIter),
+          "stmt"_a);
 
     m.def("sink_var", static_cast<Func (*)(const Func &)>(&sinkVar), "func"_a);
     m.def("sink_var", static_cast<Stmt (*)(const Stmt &)>(&sinkVar), "stmt"_a);
@@ -120,11 +128,13 @@ void init_ffi_pass(py::module_ &m) {
           static_cast<Func (*)(const Func &)>(&gpu::lowerVector), "func"_a);
     m.def("gpu_lower_vector",
           static_cast<Stmt (*)(const Stmt &)>(&gpu::lowerVector), "stmt"_a);
-    m.def("lower",
-          static_cast<Func (*)(const Func &, const Ref<Target> &)>(&lower), "func"_a, "target"_a = nullptr);
-    m.def("lower",
-          static_cast<Stmt (*)(const Stmt &, const Ref<Target> &)>(&lower), "stmt"_a, "target"_a = nullptr);
 
+    m.def("lower",
+          static_cast<Func (*)(const Func &, const Ref<Target> &)>(&lower),
+          "func"_a, "target"_a = nullptr);
+    m.def("lower",
+          static_cast<Stmt (*)(const Stmt &, const Ref<Target> &)>(&lower),
+          "stmt"_a, "target"_a = nullptr);
 }
 
 } // namespace ir
