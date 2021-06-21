@@ -51,9 +51,9 @@ Stmt CopyPart::visitStmt(const Stmt &op,
 }
 
 Stmt CopyPart::visit(const For &op) {
-    bool begun = begun_;
+    bool begun = begun_, ended = ended_;
     auto ret = Mutator::visit(op);
-    if (!begun && begun_) {
+    if ((!begun && begun_) || (!ended && ended_)) {
         throw InvalidProgram(
             "Unable to insert a synchronizing statment because it requires "
             "splitting a loop into two parts");
@@ -61,15 +61,16 @@ Stmt CopyPart::visit(const For &op) {
     return ret;
 }
 
-Stmt CopyPart::visit(const VarDef &op) {
-    bool begun = begun_;
-    auto ret = Mutator::visit(op);
-    if (!begun && begun_) {
-        throw InvalidProgram(
-            "Unable to insert a synchronizing statment because it requires "
-            "splitting a VarDef node into two parts"); // TODO
+Stmt CopyPart::visit(const VarDef &_op) {
+    bool begun = begun_, ended = ended_;
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::VarDef);
+    auto op = __op.as<VarDefNode>();
+    if ((!begun && begun_) || (!ended && ended_)) {
+        splittedDefs_.emplace_back(op);
+        return op->body_;
     }
-    return ret;
+    return op;
 }
 
 Stmt MakeSync::visitStmt(const Stmt &op,
@@ -191,16 +192,35 @@ Stmt MakeSync::visit(const If &_op) {
         auto &&splitters = branchSplitters_.at(op->id());
         std::vector<Stmt> stmts;
         stmts.reserve(splitters.size() * 2 + 1);
+        std::vector<VarDef> splittedDefs;
         for (size_t i = 0, iEnd = splitters.size() + 1; i < iEnd; i++) {
             Stmt begin = i == 0 ? nullptr : splitters[i - 1];
             Stmt end = i == iEnd - 1 ? nullptr : splitters[i];
-            auto part = CopyPart(begin, end)(op->thenCase_);
+            CopyPart copier(begin, end);
+            auto part = copier(op->thenCase_);
             stmts.emplace_back(makeIf("", op->cond_, part));
             if (i < iEnd - 1) {
                 stmts.emplace_back(splitters[i]);
             }
+            auto &&thisSplittedDefs = copier.splittedDefs();
+            size_t sameCnt = 0;
+            while (sameCnt < splittedDefs.size() &&
+                   sameCnt < thisSplittedDefs.size() &&
+                   splittedDefs[splittedDefs.size() - sameCnt - 1]->id() ==
+                       thisSplittedDefs[thisSplittedDefs.size() - sameCnt - 1]
+                           ->id()) {
+                sameCnt++;
+            }
+            splittedDefs.insert(splittedDefs.end(), thisSplittedDefs.begin(),
+                                thisSplittedDefs.end() - sameCnt);
         }
-        return makeStmtSeq("", std::move(stmts));
+        Stmt ret = makeStmtSeq("", std::move(stmts));
+        for (auto &&def : splittedDefs) {
+            // FIXME: Check the shape is invariant
+            ret = makeVarDef(def->id(), def->name_, std::move(*def->buffer_),
+                             def->sizeLim_, ret, def->pinned_);
+        }
+        return ret;
     }
     return op;
 }

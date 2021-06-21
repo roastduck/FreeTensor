@@ -29,10 +29,13 @@ class FindAllThreads : public Visitor {
 class CopyPart : public Mutator {
     Stmt begin_, end_;
     bool begun_, ended_;
+    std::vector<VarDef> splittedDefs_; // From inner to outer
 
   public:
     CopyPart(const Stmt &begin, const Stmt &end)
         : begin_(begin), end_(end), begun_(!begin.isValid()), ended_(false) {}
+
+    const std::vector<VarDef> &splittedDefs() const { return splittedDefs_; }
 
   protected:
     Stmt visitStmt(const Stmt &op,
