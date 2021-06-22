@@ -14,20 +14,20 @@ class MakeCacheVar : public Mutator {
 
   public:
     MakeCacheVar(const std::string &stmt, const std::string &oldVar,
-                 MemType mtype)
+                 MemType mtype, bool isReduction)
         : stmt_(stmt), oldVar_(oldVar), mtype_(mtype) {
+        newVar_ = oldVar_ + (isReduction ? ".r" : ".c");
         switch (mtype) {
         case MemType::GPULocal:
-            newVar_ = oldVar_ + ".local";
+            newVar_ += ".local";
             break;
         case MemType::GPUShared:
-            newVar_ = oldVar_ + ".shared";
+            newVar_ += ".shared";
             break;
         case MemType::GPUGlobal:
-            newVar_ = oldVar_ + ".global";
+            newVar_ += ".global";
             break;
-        default:
-            newVar_ = oldVar_ + ".cache";
+        default:;
         }
     }
 

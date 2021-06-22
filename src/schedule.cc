@@ -352,7 +352,7 @@ Schedule::cache(const std::string &stmt, const std::string &var,
     auto ast = ast_;
     std::string fillStmt, flushStmt, newVar, oldDef, newDef;
     try {
-        MakeCacheVar makeCacheVar(stmt, var, mtype);
+        MakeCacheVar makeCacheVar(stmt, var, mtype, false);
         ast = makeCacheVar(ast);
         newVar = makeCacheVar.newVar();
         oldDef = makeCacheVar.oldDef();
@@ -393,7 +393,7 @@ Schedule::cacheReduction(const std::string &stmt, const std::string &var,
     try {
         ast = makeReduction(ast);
 
-        MakeCacheVar makeCacheVar(stmt, var, mtype);
+        MakeCacheVar makeCacheVar(stmt, var, mtype, true);
         ast = makeCacheVar(ast);
         newVar = makeCacheVar.newVar();
         oldDef = makeCacheVar.oldDef();
