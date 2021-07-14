@@ -212,6 +212,8 @@ template <class BaseClass> class SimplifyPass : public BaseClass {
                    const std::function<Expr(const Expr &)> &visitNode) override;
 
     Expr visit(const Var &op) override;
+    Expr visit(const Add &op) override;
+    Expr visit(const Mul &op) override;
     Expr visit(const FloorDiv &op) override;
     Expr visit(const CeilDiv &op) override;
     Expr visit(const RoundTowards0Div &op) override;
@@ -227,6 +229,7 @@ template <class BaseClass> class SimplifyPass : public BaseClass {
     Expr visit(const LAnd &op) override;
     Expr visit(const LOr &op) override;
     Expr visit(const LNot &op) override;
+    Stmt visit(const ReduceTo &op) override;
     Stmt visit(const VarDef &op) override;
     Stmt visit(const For &op) override;
     Stmt visit(const If &op) override;
@@ -271,7 +274,8 @@ Stmt builtinSimplify(const Stmt &op);
 Stmt simplifyPass(const Stmt &op);
 
 inline Func simplifyPass(const Func &func) {
-    return makeFunc(func->params_, simplifyPass(func->body_));
+    return makeFunc(func->name_, func->params_, simplifyPass(func->body_),
+                    func->src_);
 }
 
 } // namespace ir

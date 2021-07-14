@@ -8,6 +8,7 @@
 #include <analyze/find_loop_variance.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/make_reduction.h>
+#include <pass/remove_writes.h>
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
 #include <pass/sink_var.h>
@@ -351,7 +352,7 @@ Schedule::cache(const std::string &stmt, const std::string &var,
     auto ast = ast_;
     std::string fillStmt, flushStmt, newVar, oldDef, newDef;
     try {
-        MakeCacheVar makeCacheVar(stmt, var, mtype);
+        MakeCacheVar makeCacheVar(stmt, var, mtype, false);
         ast = makeCacheVar(ast);
         newVar = makeCacheVar.newVar();
         oldDef = makeCacheVar.oldDef();
@@ -392,7 +393,7 @@ Schedule::cacheReduction(const std::string &stmt, const std::string &var,
     try {
         ast = makeReduction(ast);
 
-        MakeCacheVar makeCacheVar(stmt, var, mtype);
+        MakeCacheVar makeCacheVar(stmt, var, mtype, true);
         ast = makeCacheVar(ast);
         newVar = makeCacheVar.newVar();
         oldDef = makeCacheVar.oldDef();
@@ -488,7 +489,7 @@ std::string Schedule::moveTo(const std::string &_stmt, MoveToSide side,
                     swap(order);
                 } else {
                     while (!s.hasPrev() && movingUp()) {
-                        s = s.outer();
+                        s = s.outerCtrlFlow();
                     }
                     // TODO: Fission IfNode
                     ASSERT(s.node()->nodeType() == ASTNodeType::For);
@@ -509,7 +510,7 @@ std::string Schedule::moveTo(const std::string &_stmt, MoveToSide side,
                     swap(order);
                 } else {
                     while (!s.hasNext() && movingDown()) {
-                        s = s.outer();
+                        s = s.outerCtrlFlow();
                     }
                     // TODO: Fission IfNode
                     ASSERT(s.node()->nodeType() == ASTNodeType::For);
@@ -555,16 +556,21 @@ void Schedule::inlining(const std::string &def) {
                 auto earlier = dep.earlier().as<ReduceToNode>();
                 expr = MakeInlinePlaceholder(earlier->indices_)(earlier->expr_);
             }
-            if (!checkNotModified(ast, expr, dep.earlier_.cursor_.id(),
+            if (!checkNotModified(ast, expr, CheckNotModifiedSide::After,
+                                  dep.earlier_.cursor_.id(),
+                                  CheckNotModifiedSide::Before,
                                   dep.later_.cursor_.id())) {
                 throw InvalidSchedule(
-                    "The expression will be modified after inlining");
+                    "The expression will be modified after inlining from " +
+                    toString(dep.earlier_.cursor_.node()) + " into " +
+                    toString(dep.later_.cursor_.node()));
             }
             auto later = dep.later().as<LoadNode>();
             replace[later] = ApplyInlinePlaceholder(later->indices_)(expr);
         };
         findDeps(ast, {{}}, found, FindDepsMode::KillLater, DEP_RAW, filter);
         ast = MakeInline(def, replace)(ast);
+        ast = simplifyPass(ast);
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid inline(" + def + "): " + e.what());
     }
@@ -594,13 +600,22 @@ void Schedule::parallelize(const std::string &loop,
     ast_ = ast;
 }
 
-void Schedule::unroll(const std::string &loop) {
+void Schedule::unroll(const std::string &loop, bool immediate) {
     auto ast = ast_;
-    Unroll mutator(loop);
     try {
         ast = simplifyPass(ast); // Const prop for ForNode::len_
-        ast = mutator(ast);
-        if (!mutator.done()) {
+        bool done = false;
+        if (immediate) {
+            ImmediateUnroll mutator(loop);
+            ast = mutator(ast);
+            done = mutator.done();
+            ast = removeWrites(ast);
+        } else {
+            BackUnroll mutator(loop);
+            ast = mutator(ast);
+            done = mutator.done();
+        }
+        if (!done) {
             throw InvalidSchedule("Loop " + loop + " not found");
         }
     } catch (const InvalidSchedule &e) {

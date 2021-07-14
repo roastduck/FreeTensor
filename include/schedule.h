@@ -19,15 +19,20 @@ class Schedule {
     Stmt ast_;
 
   public:
+    Schedule() = default;
     Schedule(const Func &func) : func_(func), ast_(func->body_) {}
     Schedule(const Stmt &ast) : func_(nullptr), ast_(ast) {}
+
+    Schedule clone() const {
+        return Schedule(deepCopy(func_));
+    }
 
     /**
      * @return : The function being transformed
      */
     Func func() const {
         ASSERT(func_.isValid());
-        return makeFunc(func_->params_, ast_);
+        return makeFunc(func_->name_, func_->params_, ast_, func_->src_);
     }
 
     /**
@@ -286,14 +291,17 @@ class Schedule {
     /**
      * Unroll a loop
      *
-     * The unrolling is postponed to the backend compiler. It is a best-effort
-     * schedule
-     *
      * @param loop : ID of the loop
+     * @param immediate : If false (by default), postpone the unroll procedure
+     * to the backend compiler, which saves scheduling time. If true, unroll the
+     * loop immediately, which may help further simplifications based on the
+     * unrolled result. If your purpose is just to fill the instruction cache,
+     * set it to false. If you are unrolling a loop that computes array indices,
+     * set it to true
      * @throw InvalidSchedule if the loop is not found or length of the loop is
      * not a constant
      */
-    void unroll(const std::string &loop);
+    void unroll(const std::string &loop, bool immediate = false);
 
     /**
      * Vectorize a loop

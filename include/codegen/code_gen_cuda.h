@@ -8,8 +8,18 @@
 
 namespace ir {
 
-class CodeGenCUDA : public CodeGenC {
+struct CodeGenCUDAStream : public CodeGenStream {
+    std::unordered_map<std::string, int> threadDim_;
+    int sharedSize_ = 0;
+};
+
+class CodeGenCUDA : public CodeGenC<CodeGenCUDAStream> {
+  public:
+    typedef CodeGenCUDAStream Stream;
+
+  private:
     int nKernel_ = 0;
+    int sharedStackTop_ = 0;
 
   public:
     CodeGenCUDA(const std::vector<std::string> &params) : CodeGenC(params) {}
@@ -20,6 +30,8 @@ class CodeGenCUDA : public CodeGenC {
   protected:
     void visit(const Min &op) override;
     void visit(const Max &op) override;
+    void visit(const Sqrt &op) override;
+    void visit(const Exp &op) override;
     void visit(const ReduceTo &op) override;
     void visit(const Var &op) override;
     void visit(const For &op) override;

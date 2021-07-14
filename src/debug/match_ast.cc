@@ -133,8 +133,13 @@ void MatchVisitor::visit(const Sub &op) {
 void MatchVisitor::visit(const Mul &op) {
     CHECK(instance_->nodeType() == ASTNodeType::Mul);
     auto instance = instance_.as<MulNode>();
-    RECURSE(op->lhs_, instance->lhs_);
-    RECURSE(op->rhs_, instance->rhs_);
+    TRY_RECURSE(op->lhs_, instance->lhs_);
+    TRY_RECURSE(op->rhs_, instance->rhs_);
+    if (!isMatched_) {
+        isMatched_ = true;
+        RECURSE(op->lhs_, instance->rhs_);
+        RECURSE(op->rhs_, instance->lhs_);
+    }
 }
 
 void MatchVisitor::visit(const RealDiv &op) {
@@ -175,15 +180,25 @@ void MatchVisitor::visit(const Mod &op) {
 void MatchVisitor::visit(const Min &op) {
     CHECK(instance_->nodeType() == ASTNodeType::Min);
     auto instance = instance_.as<MinNode>();
-    RECURSE(op->lhs_, instance->lhs_);
-    RECURSE(op->rhs_, instance->rhs_);
+    TRY_RECURSE(op->lhs_, instance->lhs_);
+    TRY_RECURSE(op->rhs_, instance->rhs_);
+    if (!isMatched_) {
+        isMatched_ = true;
+        RECURSE(op->lhs_, instance->rhs_);
+        RECURSE(op->rhs_, instance->lhs_);
+    }
 }
 
 void MatchVisitor::visit(const Max &op) {
     CHECK(instance_->nodeType() == ASTNodeType::Max);
     auto instance = instance_.as<MaxNode>();
-    RECURSE(op->lhs_, instance->lhs_);
-    RECURSE(op->rhs_, instance->rhs_);
+    TRY_RECURSE(op->lhs_, instance->lhs_);
+    TRY_RECURSE(op->rhs_, instance->rhs_);
+    if (!isMatched_) {
+        isMatched_ = true;
+        RECURSE(op->lhs_, instance->rhs_);
+        RECURSE(op->rhs_, instance->lhs_);
+    }
 }
 
 void MatchVisitor::visit(const LT &op) {
@@ -217,34 +232,66 @@ void MatchVisitor::visit(const GE &op) {
 void MatchVisitor::visit(const EQ &op) {
     CHECK(instance_->nodeType() == ASTNodeType::EQ);
     auto instance = instance_.as<EQNode>();
-    RECURSE(op->lhs_, instance->lhs_);
-    RECURSE(op->rhs_, instance->rhs_);
+    TRY_RECURSE(op->lhs_, instance->lhs_);
+    TRY_RECURSE(op->rhs_, instance->rhs_);
+    if (!isMatched_) {
+        isMatched_ = true;
+        RECURSE(op->lhs_, instance->rhs_);
+        RECURSE(op->rhs_, instance->lhs_);
+    }
 }
 
 void MatchVisitor::visit(const NE &op) {
     CHECK(instance_->nodeType() == ASTNodeType::NE);
     auto instance = instance_.as<NENode>();
-    RECURSE(op->lhs_, instance->lhs_);
-    RECURSE(op->rhs_, instance->rhs_);
+    TRY_RECURSE(op->lhs_, instance->lhs_);
+    TRY_RECURSE(op->rhs_, instance->rhs_);
+    if (!isMatched_) {
+        isMatched_ = true;
+        RECURSE(op->lhs_, instance->rhs_);
+        RECURSE(op->rhs_, instance->lhs_);
+    }
 }
 
 void MatchVisitor::visit(const LAnd &op) {
     CHECK(instance_->nodeType() == ASTNodeType::LAnd);
     auto instance = instance_.as<LAndNode>();
-    RECURSE(op->lhs_, instance->lhs_);
-    RECURSE(op->rhs_, instance->rhs_);
+    TRY_RECURSE(op->lhs_, instance->lhs_);
+    TRY_RECURSE(op->rhs_, instance->rhs_);
+    if (!isMatched_) {
+        isMatched_ = true;
+        RECURSE(op->lhs_, instance->rhs_);
+        RECURSE(op->rhs_, instance->lhs_);
+    }
 }
 
 void MatchVisitor::visit(const LOr &op) {
     CHECK(instance_->nodeType() == ASTNodeType::LOr);
     auto instance = instance_.as<LOrNode>();
-    RECURSE(op->lhs_, instance->lhs_);
-    RECURSE(op->rhs_, instance->rhs_);
+    TRY_RECURSE(op->lhs_, instance->lhs_);
+    TRY_RECURSE(op->rhs_, instance->rhs_);
+    if (!isMatched_) {
+        isMatched_ = true;
+        RECURSE(op->lhs_, instance->rhs_);
+        RECURSE(op->rhs_, instance->lhs_);
+    }
 }
 
 void MatchVisitor::visit(const LNot &op) {
     CHECK(instance_->nodeType() == ASTNodeType::LNot);
     auto instance = instance_.as<LNotNode>();
+    RECURSE(op->expr_, instance->expr_);
+}
+
+void MatchVisitor::visit(const Sqrt &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::Sqrt);
+    auto instance = instance_.as<SqrtNode>();
+    RECURSE(op->expr_, instance->expr_);
+}
+
+void MatchVisitor::visit(const Exp &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::Exp);
+    auto instance = instance_.as<ExpNode>();
     RECURSE(op->expr_, instance->expr_);
 }
 

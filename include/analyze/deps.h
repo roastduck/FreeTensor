@@ -76,6 +76,9 @@ class FindAccessPoint : public VisitorWithCursor {
     template <class T> void visitStoreLike(const T &op) {
         // For a[i] = a[i] + 1, write happens after read
         cur_.emplace_back(makeIntConst(0), makeIntConst(0), makeIntConst(2));
+        Visitor::visit(op);
+
+        cur_.back().iter_ = makeIntConst(1);
         auto ap = Ref<AccessPoint>::make();
         *ap = {op,
                cursor(),
@@ -88,8 +91,6 @@ class FindAccessPoint : public VisitorWithCursor {
         points_.emplace(op, ap);
         writes_.emplace(op->var_, ap);
 
-        cur_.back().iter_ = makeIntConst(1);
-        Visitor::visit(op);
         cur_.pop_back();
     }
 

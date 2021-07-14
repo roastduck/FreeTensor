@@ -1,3 +1,5 @@
+#include <auto_schedule/auto_schedule.h>
+#include <driver/array.h>
 #include <ffi.h>
 #include <schedule.h>
 
@@ -19,6 +21,7 @@ void init_ffi_schedule(py::module_ &m) {
         .def("ast", &Schedule::ast)
         .def("func", &Schedule::func)
         .def("find", &Schedule::find)
+        .def("find_all", &Schedule::findAll)
         .def("split", &Schedule::split, "id"_a, "factor"_a = -1,
              "nparts"_a = -1)
         .def("reorder", &Schedule::reorder, "order"_a)
@@ -36,8 +39,14 @@ void init_ffi_schedule(py::module_ &m) {
         .def("move_to", &Schedule::moveTo, "stmt"_a, "side"_a, "dst"_a)
         .def("inline", &Schedule::inlining, "vardef"_a)
         .def("parallelize", &Schedule::parallelize, "loop"_a, "parallel"_a)
-        .def("unroll", &Schedule::unroll, "loop"_a)
+        .def("unroll", &Schedule::unroll, "loop"_a, "immedate"_a = false)
         .def("vectorize", &Schedule::vectorize, "loop"_a);
+    py::class_<AutoSchedule>(m, "AutoSchedule")
+        .def(py::init<const Schedule &, const Ref<Target> &, const Device &>())
+        .def("set_params", &AutoSchedule::set_params, "args"_a, "kws"_a = std::unordered_map<std::string, Array *>())
+        .def("run", &AutoSchedule::run, "round"_a = 500, "save"_a = 30, "extend"_a = 50);
+
+
 }
 
 } // namespace ir

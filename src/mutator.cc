@@ -36,6 +36,8 @@ Expr Mutator::operator()(const Expr &op) {
         DISPATCH_EXPR_CASE(LAnd);
         DISPATCH_EXPR_CASE(LOr);
         DISPATCH_EXPR_CASE(LNot);
+        DISPATCH_EXPR_CASE(Sqrt);
+        DISPATCH_EXPR_CASE(Exp);
         DISPATCH_EXPR_CASE(Intrinsic);
         DISPATCH_EXPR_CASE(AnyExpr);
 

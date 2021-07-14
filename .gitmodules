@@ -1,6 +1,6 @@
 [submodule "3rd-party/pybind11"]
     path = 3rd-party/pybind11
-    url = https://github.com/pybind/pybind11.git
+    url = git@github.com:pybind/pybind11.git
     branch = v2.6
 [submodule "3rd-party/isl"]
     path = 3rd-party/isl
@@ -9,5 +9,5 @@
     path = 3rd-party/z3
     url = git@github.com:Z3Prover/z3.git
 [submodule "3rd-party/cuda-samples"]
-	path = 3rd-party/cuda-samples
-	url = git@github.com:NVIDIA/cuda-samples.git
+    path = 3rd-party/cuda-samples
+    url = git@github.com:NVIDIA/cuda-samples.git

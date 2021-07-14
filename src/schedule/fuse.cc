@@ -3,6 +3,45 @@
 
 namespace ir {
 
+namespace {
+
+struct LoopInVarDefs {
+    For loop_;
+    std::vector<Stmt> surroundings_; // inner to outer
+};
+
+enum class FindLoopInVarDefsDirection : int { Front, Back };
+
+LoopInVarDefs findLoopInVarDefs(const Stmt &stmt, const std::string &id,
+                                FindLoopInVarDefsDirection direction) {
+    if (stmt->id() == id) {
+        if (stmt->nodeType() != ASTNodeType::For) {
+            throw InvalidSchedule("Statement " + id + " is not a loop");
+        }
+        return LoopInVarDefs{stmt.as<ForNode>(), {}};
+    }
+    if (stmt->nodeType() == ASTNodeType::VarDef) {
+        auto ret =
+            findLoopInVarDefs(stmt.as<VarDefNode>()->body_, id, direction);
+        ret.surroundings_.emplace_back(stmt);
+        return ret;
+    }
+    if (stmt->nodeType() == ASTNodeType::StmtSeq) {
+        auto stmtSeq = stmt.as<StmtSeqNode>();
+        LoopInVarDefs ret;
+        if (direction == FindLoopInVarDefsDirection::Front) {
+            ret = findLoopInVarDefs(stmtSeq->stmts_.front(), id, direction);
+        } else {
+            ret = findLoopInVarDefs(stmtSeq->stmts_.back(), id, direction);
+        }
+        ret.surroundings_.emplace_back(stmt);
+        return ret;
+    }
+    return LoopInVarDefs{nullptr, {}};
+}
+
+} // Anonymous namespace
+
 Expr FuseFor::visit(const Var &_op) {
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Var);
@@ -28,8 +67,7 @@ Stmt FuseFor::visit(const For &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::For);
     auto op = __op.as<ForNode>();
     if (op->id() == id0_ || op->id() == id1_) {
-        auto len = makeSub(op->end_, op->begin_);
-        return makeFor(op->id(), op->iter_, makeIntConst(0), len, len,
+        return makeFor(op->id(), op->iter_, makeIntConst(0), op->len_, op->len_,
                        op->parallel_, op->unroll_, op->vectorize_, op->body_);
     }
     return op;
@@ -40,17 +78,59 @@ Stmt FuseFor::visit(const StmtSeq &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::StmtSeq);
     auto op = __op.as<StmtSeqNode>();
     for (size_t i = 0, iEnd = op->stmts_.size(); i < iEnd; i++) {
-        if (op->stmts_[i]->id() == id0_) {
-            if (i + 1 == iEnd || op->stmts_[i + 1]->id() != id1_) {
+        auto loop0InVarDefs = findLoopInVarDefs(
+            op->stmts_[i], id0_, FindLoopInVarDefsDirection::Back);
+        if (loop0InVarDefs.loop_.isValid()) {
+            if (i + 1 == iEnd) {
                 throw InvalidSchedule("Fuse: Loop " + id0_ + " and " + id1_ +
                                       " shuold be directly following");
             }
-            auto loop0 = op->stmts_[i].as<ForNode>();
-            auto loop1 = op->stmts_[i + 1].as<ForNode>();
+            auto loop1InVarDefs = findLoopInVarDefs(
+                op->stmts_[i + 1], id1_, FindLoopInVarDefsDirection::Front);
+            if (!loop1InVarDefs.loop_.isValid()) {
+                throw InvalidSchedule("Fuse: Loop " + id0_ + " and " + id1_ +
+                                      " shuold be directly following");
+            }
+
+            auto loop0 = loop0InVarDefs.loop_;
+            auto loop1 = loop1InVarDefs.loop_;
             auto fused = makeFor(fused_, iter0_, makeIntConst(0), loop0->end_,
                                  loop0->end_, loop0->parallel_, loop0->unroll_,
                                  loop0->vectorize_,
                                  makeStmtSeq("", {loop0->body_, loop1->body_}));
+
+            // From inner to outer
+            // FIXME: Check the VarDefs can really be hoisted via
+            // check_not_modified
+            for (auto &&stmt : loop1InVarDefs.surroundings_) {
+                if (stmt->nodeType() == ASTNodeType::VarDef) {
+                    auto def = stmt.as<VarDefNode>();
+                    fused = makeVarDef(def->id(), def->name_,
+                                       std::move(*def->buffer_), def->sizeLim_,
+                                       fused, def->pinned_);
+                } else {
+                    auto seq = stmt.as<StmtSeqNode>();
+                    std::vector<Stmt> stmts = {fused};
+                    stmts.insert(stmts.end(), seq->stmts_.begin() + 1,
+                                 seq->stmts_.end());
+                    fused = makeStmtSeq(seq->id(), std::move(stmts));
+                }
+            }
+            for (auto &&stmt : loop0InVarDefs.surroundings_) {
+                if (stmt->nodeType() == ASTNodeType::VarDef) {
+                    auto def = stmt.as<VarDefNode>();
+                    fused = makeVarDef(def->id(), def->name_,
+                                       std::move(*def->buffer_), def->sizeLim_,
+                                       fused, def->pinned_);
+                } else {
+                    auto seq = stmt.as<StmtSeqNode>();
+                    std::vector<Stmt> stmts(seq->stmts_.begin(),
+                                            seq->stmts_.end() - 1);
+                    stmts.emplace_back(fused);
+                    fused = makeStmtSeq(seq->id(), std::move(stmts));
+                }
+            }
+
             op->stmts_[i] =
                 makeAssert("", makeEQ(loop0->end_, loop1->end_), fused);
             op->stmts_.erase(op->stmts_.begin() + i + 1);

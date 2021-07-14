@@ -4,6 +4,7 @@
 #include <algorithm> // min, max
 #include <array>     // ByValue
 #include <cassert>
+#include <cmath> // INFINITY, sqrt
 #include <cstdint>
 #define restrict __restrict__
 #define __ByValArray std::array

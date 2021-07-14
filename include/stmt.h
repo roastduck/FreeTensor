@@ -95,7 +95,7 @@ Stmt _makeStore(const std::string &id, const std::string &var,
     return s;
 }
 
-enum class ReduceOp : int { Add, Min, Max };
+enum class ReduceOp : int { Add, Mul, Min, Max };
 class ReduceToNode : public StmtNode {
   public:
     std::string var_;

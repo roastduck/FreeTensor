@@ -2,6 +2,7 @@
 #include <climits>
 #include <sstream>
 
+#include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/gpu/make_sync.h>
@@ -31,20 +32,93 @@ void FindAllThreads::visit(const For &op) {
     }
 }
 
+Stmt CopyPart::visitStmt(const Stmt &op,
+                         const std::function<Stmt(const Stmt &)> &visitNode) {
+    if (!ended_ && end_.isValid() && op->id() == end_->id()) {
+        ended_ = true;
+    }
+    if (ended_) {
+        return makeStmtSeq("", {});
+    }
+    auto ret = Mutator::visitStmt(op, visitNode);
+    if (!begun_) {
+        ret = makeStmtSeq("", {});
+    }
+    if (!begun_ && begin_.isValid() && op->id() == begin_->id()) {
+        begun_ = true;
+    }
+    return ret;
+}
+
+Stmt CopyPart::visit(const For &op) {
+    bool begun = begun_, ended = ended_;
+    auto ret = Mutator::visit(op);
+    if ((!begun && begun_) || (!ended && ended_)) {
+        throw InvalidProgram(
+            "Unable to insert a synchronizing statment because it requires "
+            "splitting a loop into two parts");
+    }
+    return ret;
+}
+
+Stmt CopyPart::visit(const VarDef &_op) {
+    bool begun = begun_, ended = ended_;
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::VarDef);
+    auto op = __op.as<VarDefNode>();
+    if ((!begun && begun_) || (!ended && ended_)) {
+        splittedDefs_.emplace_back(op);
+        return op->body_;
+    }
+    return op;
+}
+
 Stmt MakeSync::visitStmt(const Stmt &op,
                          const std::function<Stmt(const Stmt &)> &visitNode) {
-    auto ret = Mutator::visitStmt(op, visitNode);
+    auto ret = MutatorWithCursor::visitStmt(op, visitNode);
+    // Please not that we have exited MutatorWithCursor, so `cursor()` is out of
+    // `op`
+
+    Cursor target;
     bool needSyncThreads = false, needSyncWarp = false;
     for (const CrossThreadDep &dep : deps_) {
         if (!dep.synced_ && dep.visiting_ && dep.later_.node() == op) {
-            // Insert the sync as outer of loops as possible, rather than insert
-            // it here before the statement
             (dep.inWarp_ ? needSyncWarp : needSyncThreads) = true;
-            (dep.inWarp_ ? needSyncWarp_ : needSyncThreads_)
-                .insert(whereToInsert_);
+            target =
+                dep.lcaStmt_.depth() > target.depth() ? dep.lcaStmt_ : target;
         }
     }
+
     if (needSyncThreads || needSyncWarp) {
+        Stmt sync;
+        if (needSyncThreads) {
+            sync = makeEval(
+                "", makeIntrinsic("__syncthreads()", {}, DataType::Void));
+        } else {
+            sync =
+                makeEval("", makeIntrinsic("__syncwarp()", {}, DataType::Void));
+        }
+
+        Cursor whereToInsert;
+        for (auto ctx = cursor(); ctx.id() != target.id(); ctx = ctx.outer()) {
+            if (ctx.nodeType() == ASTNodeType::For) {
+                whereToInsert = ctx;
+            }
+        }
+        if (!whereToInsert.isValid()) {
+            ret = makeStmtSeq("", {sync, ret});
+        } else {
+            syncBeforeFor_[whereToInsert.id()] = sync;
+        }
+
+        for (auto ctx = whereToInsert.isValid() ? whereToInsert : cursor();
+             ctx.hasOuter(); ctx = ctx.outer()) {
+            if (ctx.nodeType() == ASTNodeType::If) {
+                ASSERT(!ctx.node().as<IfNode>()->elseCase_.isValid()); // TODO
+                branchSplitters_[ctx.id()].emplace_back(sync);
+            }
+        }
+
         for (CrossThreadDep &dep : deps_) {
             if (dep.visiting_) {
                 if (needSyncThreads) {
@@ -59,33 +133,9 @@ Stmt MakeSync::visitStmt(const Stmt &op,
     for (CrossThreadDep &dep : deps_) {
         if (!dep.synced_ && !dep.visiting_ && dep.earlier_.node() == op) {
             dep.visiting_ = true;
-            whereToInsert_ = nullptr;
         }
     }
     return ret;
-}
-
-Stmt MakeSync::visit(const StmtSeq &op) {
-    std::vector<Stmt> stmts;
-    for (auto &&_stmt : op->stmts_) {
-        if (!whereToInsert_.isValid()) {
-            whereToInsert_ = op;
-        }
-        auto stmt = (*this)(_stmt);
-        if (needSyncThreads_.count(op)) {
-            stmts.emplace_back(makeEval(
-                "", makeIntrinsic("__syncthreads()", {}, DataType::Void)));
-            needSyncWarp_.erase(op);
-            needSyncThreads_.erase(op);
-        }
-        if (needSyncWarp_.count(op)) {
-            stmts.emplace_back(makeEval(
-                "", makeIntrinsic("__syncwarp()", {}, DataType::Void)));
-            needSyncWarp_.erase(op);
-        }
-        stmts.emplace_back(std::move(stmt));
-    }
-    return makeStmtSeq(op->id(), std::move(stmts));
 }
 
 Stmt MakeSync::visit(const For &_op) {
@@ -119,6 +169,59 @@ Stmt MakeSync::visit(const For &_op) {
             }
         }
     }
+    if (syncBeforeFor_.count(op->id())) {
+        return makeStmtSeq("", {syncBeforeFor_.at(op->id()), op});
+    }
+    return op;
+}
+
+Stmt MakeSync::visit(const If &_op) {
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::If);
+    auto op = __op.as<IfNode>();
+
+    if (branchSplitters_.count(op->id())) {
+        if (!checkNotModified(root_, op->cond_, CheckNotModifiedSide::Before,
+                              op->id(), CheckNotModifiedSide::After,
+                              op->id())) {
+            throw InvalidProgram("Unable to insert a synchronizing statment "
+                                 "inside an If node because the condition " +
+                                 toString(op->cond_) + " is being modified");
+        }
+
+        auto &&splitters = branchSplitters_.at(op->id());
+        std::vector<Stmt> stmts;
+        stmts.reserve(splitters.size() * 2 + 1);
+        std::vector<VarDef> splittedDefs;
+        for (size_t i = 0, iEnd = splitters.size() + 1; i < iEnd; i++) {
+            Stmt begin = i == 0 ? nullptr : splitters[i - 1];
+            Stmt end = i == iEnd - 1 ? nullptr : splitters[i];
+            CopyPart copier(begin, end);
+            auto part = copier(op->thenCase_);
+            stmts.emplace_back(makeIf("", op->cond_, part));
+            if (i < iEnd - 1) {
+                stmts.emplace_back(splitters[i]);
+            }
+            auto &&thisSplittedDefs = copier.splittedDefs();
+            size_t sameCnt = 0;
+            while (sameCnt < splittedDefs.size() &&
+                   sameCnt < thisSplittedDefs.size() &&
+                   splittedDefs[splittedDefs.size() - sameCnt - 1]->id() ==
+                       thisSplittedDefs[thisSplittedDefs.size() - sameCnt - 1]
+                           ->id()) {
+                sameCnt++;
+            }
+            splittedDefs.insert(splittedDefs.end(), thisSplittedDefs.begin(),
+                                thisSplittedDefs.end() - sameCnt);
+        }
+        Stmt ret = makeStmtSeq("", std::move(stmts));
+        for (auto &&def : splittedDefs) {
+            // FIXME: Check the shape is invariant
+            ret = makeVarDef(def->id(), def->name_, std::move(*def->buffer_),
+                             def->sizeLim_, ret, def->pinned_);
+        }
+        return ret;
+    }
     return op;
 }
 
@@ -143,19 +246,20 @@ Stmt makeSync(const Stmt &_op) {
     };
     auto found = [&](const Dependency &d) {
         auto i = &d.cond_ - &query[0];
-        auto lcaLoop = lca(d.later_.cursor_, d.earlier_.cursor_);
+        auto lcaStmt = lca(d.later_.cursor_, d.earlier_.cursor_);
+        auto lcaLoop = lcaStmt;
         while (lcaLoop.hasOuter() && lcaLoop.nodeType() != ASTNodeType::For) {
             lcaLoop = lcaLoop.outer();
         }
         ASSERT(lcaLoop.nodeType() == ASTNodeType::For);
         deps.emplace_back(CrossThreadDep{d.later_.cursor_, d.earlier_.cursor_,
-                                         lcaLoop, threads.at(i).inWarp_, false,
-                                         false});
+                                         lcaStmt, lcaLoop,
+                                         threads.at(i).inWarp_, false, false});
     };
     findDeps(op, query, found, FindDepsMode::Dep, DEP_ALL, filter, false,
              false);
 
-    MakeSync mutator(std::move(deps));
+    MakeSync mutator(op, std::move(deps));
     op = mutator(op);
 
     return flattenStmtSeq(op);

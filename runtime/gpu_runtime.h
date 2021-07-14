@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <assert.h>
+#include <cmath> // INFINITY
 #include <cstdint>
 
 #include "../3rd-party/cuda-samples/Common/helper_math.h"
@@ -28,5 +29,11 @@ inline __host__ __device__ int4 make_int4(int4 a) { return a; }
 inline __host__ __device__ int2 make_int2(int2 a) { return a; }
 inline __host__ __device__ float4 make_float4(float4 a) { return a; }
 inline __host__ __device__ float2 make_float2(float2 a) { return a; }
+
+inline __host__ __device__ float runtime_sqrt(float x) { return sqrtf(x); }
+inline __host__ __device__ double runtime_sqrt(double x) { return sqrt(x); }
+
+inline __host__ __device__ float runtime_exp(float x) { return expf(x); }
+inline __host__ __device__ double runtime_exp(double x) { return exp(x); }
 
 #endif // GPU_RUNTIME_H

@@ -21,7 +21,8 @@ inline Stmt flattenStmtSeq(const Stmt &op, bool popVarDef = false) {
 }
 
 inline Func flattenStmtSeq(const Func &func, bool popVarDef = false) {
-    return makeFunc(func->params_, flattenStmtSeq(func->body_, popVarDef));
+    return makeFunc(func->name_, func->params_,
+                    flattenStmtSeq(func->body_, popVarDef), func->src_);
 }
 
 } // namespace ir

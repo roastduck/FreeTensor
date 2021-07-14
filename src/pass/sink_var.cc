@@ -69,6 +69,7 @@ Stmt SinkVar::visit(const VarDef &op) {
             auto loopBody =
                 makeVarDef(op->id(), op->name_, std::move(buffer),
                            std::move(sizeLim), (*this)(loop->body_), false);
+            isFixPoint_ = false;
             return makeFor(loop->id(), loop->iter_, (*this)(loop->begin_),
                            (*this)(loop->end_), (*this)(loop->len_),
                            loop->parallel_, loop->unroll_, loop->vectorize_,

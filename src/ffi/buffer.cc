@@ -22,7 +22,7 @@ void init_ffi_buffer(py::module_ &m) {
         .def_property_readonly(
             "tensor",
             static_cast<const Tensor &(Buffer::*)() const>(&Buffer::tensor))
-        .def_property_readonly("atype", &Buffer ::atype)
+        .def_property_readonly("atype", &Buffer::atype)
         .def_property_readonly("mtype", &Buffer::mtype);
 }
 

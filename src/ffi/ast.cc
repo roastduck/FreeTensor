@@ -44,6 +44,8 @@ void init_ffi_ast(py::module_ &m) {
         .value("LAnd", ASTNodeType::LAnd)
         .value("LOr", ASTNodeType::LOr)
         .value("LNot", ASTNodeType::LNot)
+        .value("Sqrt", ASTNodeType::Sqrt)
+        .value("Exp", ASTNodeType::Exp)
         .value("For", ASTNodeType::For)
         .value("If", ASTNodeType::If)
         .value("Assert", ASTNodeType::Assert)
@@ -59,8 +61,25 @@ void init_ffi_ast(py::module_ &m) {
     pyAST.def_readonly("debug_creator", &ASTNode::debugCreator_);
 #endif
 
-    pyFunc.def_readonly("params", &FuncNode::params_)
-        .def_readonly("body", &FuncNode::body_);
+    pyFunc.def_readonly("name", &FuncNode::name_)
+        .def_readonly("params", &FuncNode::params_)
+        .def_property_readonly("body",
+                               [](const Func &op) -> Stmt { return op->body_; })
+        .def_readonly("src", &FuncNode::src_);
+
+    py::class_<FrontendVarIdx>(m, "FrontendVarIdx")
+        .def(py::init(&FrontendVarIdx::fromSingle))
+        .def(py::init(&FrontendVarIdx::fromSlice));
+
+    py::class_<FrontendVar, Ref<FrontendVar>>(m, "FrontendVar")
+        .def(py::init<const std::string &, const std::vector<Expr> &,
+                      const std::vector<FrontendVarIdx> &>())
+        .def_property_readonly("name", &FrontendVar::name)
+        .def_property_readonly("shape", &FrontendVar::shape)
+        .def_property_readonly("indices", &FrontendVar::indices)
+        .def("as_load", &FrontendVar::asLoad)
+        .def("as_store", &FrontendVar::asStore)
+        .def("chain_indices", &FrontendVar::chainIndices);
 
     pyStmt.def_property_readonly("nid", &StmtNode::id);
 
@@ -122,32 +141,121 @@ void init_ffi_ast(py::module_ &m) {
             "expr", [](const Eval &op) -> Expr { return op->expr_; });
     py::class_<AnyNode, Any> pyAny(m, "Any", pyStmt);
 
-    py::class_<VarNode, Var> pyVar(m, "Var", pyExpr);
-    py::class_<LoadNode, Load> pyLoad(m, "Load", pyExpr);
-    py::class_<IntConstNode, IntConst> pyIntConst(m, "IntConst", pyExpr);
-    py::class_<FloatConstNode, FloatConst> pyFloatConst(m, "FloatConst",
-                                                        pyExpr);
-    py::class_<BoolConstNode, BoolConst> pyBoolConst(m, "BoolConst", pyExpr);
-    py::class_<AddNode, Add> pyAdd(m, "Add", pyExpr);
-    py::class_<SubNode, Sub> pySub(m, "Sub", pyExpr);
-    py::class_<MulNode, Mul> pyMul(m, "Mul", pyExpr);
-    py::class_<RealDivNode, RealDiv> pyRealDiv(m, "RealDiv", pyExpr);
-    py::class_<FloorDivNode, FloorDiv> pyFloorDiv(m, "FloorDiv", pyExpr);
-    py::class_<CeilDivNode, CeilDiv> pyCeilDiv(m, "CeilDiv", pyExpr);
-    py::class_<RoundTowards0DivNode, RoundTowards0Div> pyRoundTowards0Div(
-        m, "RoundTowards0Div", pyExpr);
-    py::class_<ModNode, Mod> pyMod(m, "Mod", pyExpr);
-    py::class_<MinNode, Min> pyMin(m, "Min", pyExpr);
-    py::class_<MaxNode, Max> pyMax(m, "Max", pyExpr);
-    py::class_<LTNode, LT> pyLT(m, "LT", pyExpr);
-    py::class_<LENode, LE> pyLE(m, "LE", pyExpr);
-    py::class_<GTNode, GT> pyGT(m, "GT", pyExpr);
-    py::class_<GENode, GE> pyGE(m, "GE", pyExpr);
-    py::class_<EQNode, EQ> pyEQ(m, "EQ", pyExpr);
-    py::class_<NENode, NE> pyNE(m, "NE", pyExpr);
-    py::class_<LAndNode, LAnd> pyLAnd(m, "LAnd", pyExpr);
-    py::class_<LOrNode, LOr> pyLOr(m, "LOr", pyExpr);
-    py::class_<LNotNode, LNot> pyLNot(m, "LNot", pyExpr);
+    py::class_<VarNode, Var>(m, "Var", pyExpr)
+        .def_readonly("name", &VarNode::name_);
+    py::class_<LoadNode, Load>(m, "Load", pyExpr)
+        .def_readonly("var", &LoadNode::var_)
+        .def_property_readonly(
+            "indices", [](const Load &op) -> std::vector<Expr> {
+                return std::vector<Expr>(op->indices_.begin(),
+                                         op->indices_.end());
+            });
+    py::class_<IntConstNode, IntConst>(m, "IntConst", pyExpr)
+        .def_readonly("val", &IntConstNode::val_);
+    py::class_<FloatConstNode, FloatConst>(m, "FloatConst", pyExpr)
+        .def_readonly("val", &FloatConstNode::val_);
+    py::class_<BoolConstNode, BoolConst>(m, "BoolConst", pyExpr)
+        .def_readonly("val", &BoolConstNode::val_);
+    py::class_<AddNode, Add>(m, "Add", pyExpr)
+        .def_property_readonly("lhs",
+                               [](const Add &op) -> Expr { return op->lhs_; })
+        .def_property_readonly("rhs",
+                               [](const Add &op) -> Expr { return op->rhs_; });
+    py::class_<SubNode, Sub>(m, "Sub", pyExpr)
+        .def_property_readonly("lhs",
+                               [](const Sub &op) -> Expr { return op->lhs_; })
+        .def_property_readonly("rhs",
+                               [](const Sub &op) -> Expr { return op->rhs_; });
+    py::class_<MulNode, Mul>(m, "Mul", pyExpr)
+        .def_property_readonly("lhs",
+                               [](const Mul &op) -> Expr { return op->lhs_; })
+        .def_property_readonly("rhs",
+                               [](const Mul &op) -> Expr { return op->rhs_; });
+    py::class_<RealDivNode, RealDiv>(m, "RealDiv", pyExpr)
+        .def_property_readonly(
+            "lhs", [](const RealDiv &op) -> Expr { return op->lhs_; })
+        .def_property_readonly(
+            "rhs", [](const RealDiv &op) -> Expr { return op->rhs_; });
+    py::class_<FloorDivNode, FloorDiv>(m, "FloorDiv", pyExpr)
+        .def_property_readonly(
+            "lhs", [](const FloorDiv &op) -> Expr { return op->lhs_; })
+        .def_property_readonly(
+            "rhs", [](const FloorDiv &op) -> Expr { return op->rhs_; });
+    py::class_<CeilDivNode, CeilDiv>(m, "CeilDiv", pyExpr)
+        .def_property_readonly(
+            "lhs", [](const CeilDiv &op) -> Expr { return op->lhs_; })
+        .def_property_readonly(
+            "rhs", [](const CeilDiv &op) -> Expr { return op->rhs_; });
+    py::class_<RoundTowards0DivNode, RoundTowards0Div>(m, "RoundTowards0Div",
+                                                       pyExpr)
+        .def_property_readonly(
+            "lhs", [](const RoundTowards0Div &op) -> Expr { return op->lhs_; })
+        .def_property_readonly(
+            "rhs", [](const RoundTowards0Div &op) -> Expr { return op->rhs_; });
+    py::class_<ModNode, Mod>(m, "Mod", pyExpr)
+        .def_property_readonly("lhs",
+                               [](const Mod &op) -> Expr { return op->lhs_; })
+        .def_property_readonly("rhs",
+                               [](const Mod &op) -> Expr { return op->rhs_; });
+    py::class_<MinNode, Min>(m, "Min", pyExpr)
+        .def_property_readonly("lhs",
+                               [](const Min &op) -> Expr { return op->lhs_; })
+        .def_property_readonly("rhs",
+                               [](const Min &op) -> Expr { return op->rhs_; });
+    py::class_<MaxNode, Max>(m, "Max", pyExpr)
+        .def_property_readonly("lhs",
+                               [](const Max &op) -> Expr { return op->lhs_; })
+        .def_property_readonly("rhs",
+                               [](const Max &op) -> Expr { return op->rhs_; });
+    py::class_<LTNode, LT>(m, "LT", pyExpr)
+        .def_property_readonly("lhs",
+                               [](const LT &op) -> Expr { return op->lhs_; })
+        .def_property_readonly("rhs",
+                               [](const LT &op) -> Expr { return op->rhs_; });
+    py::class_<LENode, LE>(m, "LE", pyExpr)
+        .def_property_readonly("lhs",
+                               [](const LE &op) -> Expr { return op->lhs_; })
+        .def_property_readonly("rhs",
+                               [](const LE &op) -> Expr { return op->rhs_; });
+    py::class_<GTNode, GT>(m, "GT", pyExpr)
+        .def_property_readonly("lhs",
+                               [](const GT &op) -> Expr { return op->lhs_; })
+        .def_property_readonly("rhs",
+                               [](const GT &op) -> Expr { return op->rhs_; });
+    py::class_<GENode, GE>(m, "GE", pyExpr)
+        .def_property_readonly("lhs",
+                               [](const GE &op) -> Expr { return op->lhs_; })
+        .def_property_readonly("rhs",
+                               [](const GE &op) -> Expr { return op->rhs_; });
+    py::class_<EQNode, EQ>(m, "EQ", pyExpr)
+        .def_property_readonly("lhs",
+                               [](const EQ &op) -> Expr { return op->lhs_; })
+        .def_property_readonly("rhs",
+                               [](const EQ &op) -> Expr { return op->rhs_; });
+    py::class_<NENode, NE>(m, "NE", pyExpr)
+        .def_property_readonly("lhs",
+                               [](const NE &op) -> Expr { return op->lhs_; })
+        .def_property_readonly("rhs",
+                               [](const NE &op) -> Expr { return op->rhs_; });
+    py::class_<LAndNode, LAnd>(m, "LAnd", pyExpr)
+        .def_property_readonly("lhs",
+                               [](const LAnd &op) -> Expr { return op->lhs_; })
+        .def_property_readonly("rhs",
+                               [](const LAnd &op) -> Expr { return op->rhs_; });
+    py::class_<LOrNode, LOr>(m, "LOr", pyExpr)
+        .def_property_readonly("lhs",
+                               [](const LOr &op) -> Expr { return op->lhs_; })
+        .def_property_readonly("rhs",
+                               [](const LOr &op) -> Expr { return op->rhs_; });
+    py::class_<LNotNode, LNot>(m, "LNot", pyExpr)
+        .def_property_readonly(
+            "expr", [](const LNot &op) -> Expr { return op->expr_; });
+    py::class_<SqrtNode, Sqrt>(m, "Sqrt", pyExpr)
+        .def_property_readonly(
+            "expr", [](const Sqrt &op) -> Expr { return op->expr_; });
+    py::class_<ExpNode, Exp>(m, "Exp", pyExpr)
+        .def_property_readonly("expr",
+                               [](const Exp &op) -> Expr { return op->expr_; });
     py::class_<IntrinsicNode, Intrinsic> pyIntrinsic(m, "Intrinsic", pyExpr);
     py::class_<AnyExprNode, AnyExpr> pyAnyExpr(m, "AnyExpr", pyExpr);
 
@@ -156,13 +264,17 @@ void init_ffi_ast(py::module_ &m) {
              [](const AST &op, const AST &other) { return match(op, other); })
         .def("type", [](const AST &op) { return toString(op->nodeType()); })
         .def("__str__", [](const AST &op) { return toString(op); })
-        .def("__repr__", [](const AST &op) {
-            return "<" + toString(op->nodeType()) + ": " + toString(op) + ">";
-        });
+        .def("__repr__",
+             [](const AST &op) {
+                 return "<" + toString(op->nodeType()) + ": " + toString(op) +
+                        ">";
+             })
+        .def("pretty_print", [](const AST &op) { return toString(op, true); });
 
     pyExpr.def(py::init([](int val) { return makeIntConst(val); }))
         .def(py::init([](float val) { return makeFloatConst(val); }))
         .def(py::init([](bool val) { return makeBoolConst(val); }))
+        .def(py::init([](const FrontendVar &var) { return var.asLoad(); }))
         .def(
             "__add__",
             [](const Expr &lhs, const Expr &rhs) { return makeAdd(lhs, rhs); },
@@ -246,12 +358,14 @@ void init_ffi_ast(py::module_ &m) {
     py::implicitly_convertible<int, ExprNode>();
     py::implicitly_convertible<float, ExprNode>();
     py::implicitly_convertible<bool, ExprNode>();
+    py::implicitly_convertible<FrontendVar, ExprNode>();
 
     // Function
     m.def("makeFunc",
-          static_cast<Func (*)(const std::vector<std::string> &, const Stmt &)>(
-              &_makeFunc),
-          "params"_a, "body"_a);
+          static_cast<Func (*)(const std::string &,
+                               const std::vector<std::string> &, const Stmt &,
+                               const py::object &)>(&_makeFunc),
+          "name"_a, "params"_a, "body"_a, "src"_a);
 
     // Statements
     m.def("makeAny", &_makeAny);
@@ -310,6 +424,9 @@ void init_ffi_ast(py::module_ &m) {
           "rhs"_a);
     m.def("makeLNot", static_cast<Expr (*)(const Expr &)>(&_makeLNot),
           "expr"_a);
+    m.def("makeSqrt", static_cast<Expr (*)(const Expr &)>(&_makeSqrt),
+          "expr"_a);
+    m.def("makeExp", static_cast<Expr (*)(const Expr &)>(&_makeExp), "expr"_a);
     m.def("makeFloorDiv",
           static_cast<Expr (*)(const Expr &, const Expr &)>(&_makeFloorDiv),
           "expr"_a, "expr"_a);
@@ -376,6 +493,8 @@ template <> struct polymorphic_type_hook<ir::ASTNode> {
             DISPATCH(LAnd);
             DISPATCH(LOr);
             DISPATCH(LNot);
+            DISPATCH(Sqrt);
+            DISPATCH(Exp);
             DISPATCH(Intrinsic);
         default:
             ERROR("Unexpected AST node type");
@@ -446,6 +565,8 @@ template <> struct polymorphic_type_hook<ir::ExprNode> {
             DISPATCH(LAnd);
             DISPATCH(LOr);
             DISPATCH(LNot);
+            DISPATCH(Sqrt);
+            DISPATCH(Exp);
             DISPATCH(Intrinsic);
             DISPATCH(AnyExpr);
         default:

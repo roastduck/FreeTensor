@@ -83,7 +83,17 @@ void init_ffi_driver(py::module_ &m) {
 
     py::class_<Driver>(m, "Driver")
         .def(py::init<const Func &, const std::string &, const Device &>())
-        .def("set_params", &Driver::setParams)
+        .def("set_params",
+             static_cast<void (Driver::*)(
+                 const std::vector<Array *> &,
+                 const std::unordered_map<std::string, Array *> &)>(
+                 &Driver::setParams),
+             "args"_a, "kws"_a = std::unordered_map<std::string, Array *>())
+        .def("set_params",
+             static_cast<void (Driver::*)(
+                 const std::unordered_map<std::string, Array *> &)>(
+                 &Driver::setParams),
+             "kws"_a)
         .def("run", &Driver::run)
         .def("time", &Driver::time, "rounds"_a = 10, "warmpups"_a = 3);
 }

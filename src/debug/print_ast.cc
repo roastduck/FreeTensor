@@ -1,6 +1,13 @@
 #include <debug/print_ast.h>
 
+#include "../codegen/detail/code_gen.h"
+
 namespace ir {
+
+constexpr const char *MAGENTA = "\u001b[35;1m";
+constexpr const char *CYAN = "\u001b[36m";
+constexpr const char *RESET = "\u001b[0m";
+constexpr const char *BOLD = "\u001b[1m";
 
 void PrintVisitor::recur(const Expr &op) {
     if (op.isValid()) {
@@ -25,7 +32,11 @@ void PrintVisitor::printId(const Stmt &op) {
     os() << "// By " << op->debugCreator_ << std::endl;
 #endif
     if (op->hasNamedId()) {
-        os() << op->id() << ":" << std::endl;
+        if (pretty_) {
+            os() << CYAN << op->id() << ":" << RESET << std::endl;
+        } else {
+            os() << op->id() << ":" << std::endl;
+        }
     }
 }
 
@@ -102,6 +113,9 @@ void PrintVisitor::visit(const ReduceTo &op) {
     case ReduceOp::Add:
         os() << "+=";
         break;
+    case ReduceOp::Mul:
+        os() << "*=";
+        break;
     case ReduceOp::Min:
         os() << "min=";
         break;
@@ -117,15 +131,27 @@ void PrintVisitor::visit(const ReduceTo &op) {
 }
 
 void PrintVisitor::visit(const IntConst &op) {
-    os() << std::to_string(op->val_);
+    if (pretty_) {
+        os() << MAGENTA << std::to_string(op->val_) << RESET;
+    } else {
+        os() << std::to_string(op->val_);
+    }
 }
 
 void PrintVisitor::visit(const FloatConst &op) {
-    os() << std::to_string(op->val_);
+    if (pretty_) {
+        os() << MAGENTA << std::to_string(op->val_) << RESET;
+    } else {
+        os() << std::to_string(op->val_);
+    }
 }
 
 void PrintVisitor::visit(const BoolConst &op) {
-    os() << (op->val_ ? "true" : "false");
+    if (pretty_) {
+        os() << MAGENTA << (op->val_ ? "true" : "false") << RESET;
+    } else {
+        os() << (op->val_ ? "true" : "false");
+    }
 }
 
 void PrintVisitor::visit(const Add &op) {
@@ -277,6 +303,18 @@ void PrintVisitor::visit(const LNot &op) {
     recur(op->expr_);
 }
 
+void PrintVisitor::visit(const Sqrt &op) {
+    os() << "sqrt(";
+    recur(op->expr_);
+    os() << ")";
+}
+
+void PrintVisitor::visit(const Exp &op) {
+    os() << "exp(";
+    recur(op->expr_);
+    os() << ")";
+}
+
 void PrintVisitor::visit(const For &op) {
     printId(op);
     if (!op->parallel_.empty()) {
@@ -292,7 +330,11 @@ void PrintVisitor::visit(const For &op) {
         os() << "// vectorize" << std::endl;
     }
     makeIndent();
-    os() << "for " << op->iter_ << " = ";
+    if (pretty_) {
+        os() << BOLD << "for " << RESET << op->iter_ << " = ";
+    } else {
+        os() << "for " << op->iter_ << " = ";
+    }
     recur(op->begin_);
     os() << " to ";
     recur(op->end_);
@@ -305,7 +347,11 @@ void PrintVisitor::visit(const For &op) {
 void PrintVisitor::visit(const If &op) {
     printId(op);
     makeIndent();
-    os() << "if ";
+    if (pretty_) {
+        os() << BOLD << "if " << RESET;
+    } else {
+        os() << "if ";
+    }
     recur(op->cond_);
     os() << " ";
     beginBlock();
@@ -313,7 +359,11 @@ void PrintVisitor::visit(const If &op) {
     endBlock();
     if (op->elseCase_.isValid()) {
         makeIndent();
-        os() << "else ";
+        if (pretty_) {
+            os() << BOLD << "else " << RESET;
+        } else {
+            os() << "else ";
+        }
         beginBlock();
         recur(op->elseCase_);
         endBlock();
@@ -350,11 +400,11 @@ void PrintVisitor::visit(const Eval &op) {
     os() << std::endl;
 }
 
-std::string toString(const AST &op) {
-    PrintVisitor visitor;
+std::string toString(const AST &op, bool pretty) {
+    PrintVisitor visitor(pretty);
     visitor(op);
     return visitor.toString(
-        [](const PrintVisitor::Stream &stream) { return stream.os_.str(); });
+        [](const CodeGenStream &stream) { return stream.os_.str(); });
 }
 
 } // namespace ir

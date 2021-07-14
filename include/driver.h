@@ -26,7 +26,12 @@ class Driver {
     Driver(const Func &func, const std::string &src, const Device &dev);
     ~Driver() { unload(); }
 
-    void setParams(const std::unordered_map<std::string, Array &> &params);
+    void setParams(const std::vector<Array *> &args,
+                   const std::unordered_map<std::string, Array *> &kws = {});
+    void setParams(const std::unordered_map<std::string, Array *> &kws) {
+        setParams({}, kws);
+    }
+
     void run();
 
     /**

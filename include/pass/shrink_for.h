@@ -70,7 +70,8 @@ class ShrinkFor : public CompTransientBounds {
 Stmt shrinkFor(const Stmt &op, bool keepConst = false);
 
 inline Func shrinkFor(const Func &func, bool keepConst = false) {
-    return makeFunc(func->params_, shrinkFor(func->body_));
+    return makeFunc(func->name_, func->params_, shrinkFor(func->body_),
+                    func->src_);
 }
 
 } // namespace ir

@@ -2,6 +2,8 @@
 #include <except.h>
 #include <pass/simplify.h>
 
+#include "detail/code_gen_c.h"
+
 namespace ir {
 
 bool CodeGenCUDA::inKernel() const {
@@ -32,26 +34,38 @@ void CodeGenCUDA::visit(const Max &op) {
     }
 }
 
+void CodeGenCUDA::visit(const Sqrt &op) {
+    os() << "runtime_sqrt("; // Defined in runtime/gpu_runtime.h
+    (*this)(op->expr_);
+    os() << ")";
+}
+
+void CodeGenCUDA::visit(const Exp &op) {
+    os() << "runtime_exp("; // Defined in runtime/gpu_runtime.h
+    (*this)(op->expr_);
+    os() << ")";
+}
+
 void CodeGenCUDA::visit(const ReduceTo &op) {
-    if (op->atomic_) {
-        auto id = normalizeId(op->var_);
-        markUse(id);
-        makeIndent();
+    auto id = normalizeId(op->var_);
+    markUse(id);
+    makeIndent();
 
-        auto genAddr = [&]() {
-            if (op->indices_.empty()) {
-                os() << "*" << id;
-            } else {
-                os() << id;
-                for (auto &&index : op->indices_) {
-                    os() << "[";
-                    (*this)(index);
-                    os() << "]";
-                }
+    auto genAddr = [&]() {
+        if (op->indices_.empty()) {
+            os() << "*" << id;
+        } else {
+            os() << id;
+            for (auto &&index : op->indices_) {
+                os() << "[";
+                (*this)(index);
+                os() << "]";
             }
-        };
-        auto genExpr = [&]() { (*this)(op->expr_); };
+        }
+    };
+    auto genExpr = [&]() { (*this)(op->expr_); };
 
+    if (op->atomic_) {
         switch (op->op_) {
         case ReduceOp::Add:
             os() << "atomicAdd(&", genAddr(), os() << ", ", genExpr();
@@ -69,7 +83,25 @@ void CodeGenCUDA::visit(const ReduceTo &op) {
             ASSERT(false);
         }
     } else {
-        CodeGenC::visit(op);
+        switch (op->op_) {
+        case ReduceOp::Add:
+            genAddr(), os() << " += ", genExpr();
+            break;
+        case ReduceOp::Mul:
+            genAddr(), os() << " *= ", genExpr();
+            break;
+        case ReduceOp::Min:
+            genAddr(), os() << " = min(";
+            genAddr(), os() << ", ", genExpr(), os() << ")";
+            break;
+        case ReduceOp::Max:
+            genAddr(), os() << " = max(";
+            genAddr(), os() << ", ", genExpr(), os() << ")";
+            break;
+        default:
+            ASSERT(false);
+        }
+        os() << ";" << std::endl;
     }
 }
 
@@ -119,6 +151,7 @@ void CodeGenCUDA::visit(const For &op) {
             popStream();
             Stream &stream = poppedStream_.back();
             const auto &dim = stream.threadDim_;
+            auto sharedSize = stream.sharedSize_;
 
             makeIndent();
             os() << kernel << "<<<dim3("
@@ -131,7 +164,7 @@ void CodeGenCUDA::visit(const For &op) {
                  << (dim.count("threadIdx.y") ? dim.at("threadIdx.y") : 1)
                  << ", "
                  << (dim.count("threadIdx.z") ? dim.at("threadIdx.z") : 1)
-                 << ")>>>(";
+                 << "), " << std::to_string(sharedSize) << ">>>(";
             bool first = true;
             for (auto &&item : stream.uses_) {
                 os() << (first ? "" : ", ") << item.first;
@@ -195,25 +228,47 @@ void CodeGenCUDA::visit(const VarDef &op) {
         case MemType::GPUShared: {
             markDef(normalizeId(op->name_), op->buffer_);
 
-            makeIndent();
-
-            // e.g. __shared__ float x[5][5][5];
+            // A static shared memory array cannot be larger than 48KB (maybe a
+            // bug of NVCC), so we allocate shared memory dynamically
+            // e.g. float (*x)[5][5] = (float(*)[5][5])(__shmem + 0);
             auto &&tensor = op->buffer_->tensor();
             auto &&shape = tensor.shape();
-            os() << "__shared__ " << gen(tensor.dtype()) << " "
-                 << normalizeId(op->name_);
-            for (auto &&dim : shape) {
-                if (dim->nodeType() != ASTNodeType::IntConst) {
-                    throw Error("Shared memory buffer with dynamic size is not "
-                                "supported yet");
-                }
+            makeIndent();
+            os() << gen(tensor.dtype()) << " (*";
+            os() << normalizeId(op->name_) << ")";
+            for (size_t i = 1, iEnd = shape.size(); i < iEnd;
+                 i++) { // No shape[0]
                 os() << "[";
-                (*this)(dim);
+                (*this)(shape[i]);
                 os() << "]";
             }
-            os() << ";" << std::endl;
+            os() << " = (" << gen(tensor.dtype()) << "(*)";
+            for (size_t i = 1, iEnd = shape.size(); i < iEnd;
+                 i++) { // No shape[0]
+                os() << "[";
+                (*this)(shape[i]);
+                os() << "]";
+            }
+            os() << ")(__shmem + " + std::to_string(sharedStackTop_) << ");"
+                 << std::endl;
 
+            int size = sizeOf(tensor.dtype());
+            for (auto &&dim : shape) {
+                if (dim->nodeType() == ASTNodeType::IntConst) {
+                    size *= dim.as<IntConstNode>()->val_;
+                } else {
+                    throw InvalidProgram("Currently dynamic sized gpu/shared "
+                                         "memory is not supported");
+                }
+            }
+
+            streamStack_.back().sharedSize_ = std::max(
+                streamStack_.back().sharedSize_, sharedStackTop_ + size);
+
+            sharedStackTop_ += size;
             (*this)(op->body_);
+            sharedStackTop_ -= size;
+
             break;
         }
 
@@ -233,6 +288,8 @@ std::string codeGenCUDA(const Func &func) {
 
     const char *header = R"~~~(
 #include <gpu_runtime.h>
+
+extern __shared__ uint8_t __shmem[];
 
 extern "C" {
 )~~~";
@@ -272,7 +329,7 @@ extern "C" {
                         ASSERT((*it)->nodeType() == ASTNodeType::IntConst);
                         os << ", " << (*it).as<IntConstNode>()->val_ << ">";
                     }
-                    os << " " << visitor.normalizeId(item.first);
+                    os << " " << item.first;
                     break;
 
                 default:
@@ -281,7 +338,7 @@ extern "C" {
                         os << "const ";
                     }
                     os << CodeGenCUDA::gen(tensor.dtype()) << " (*restrict ";
-                    os << visitor.normalizeId(item.first) << ")";
+                    os << item.first << ")";
                     for (size_t i = 1, iEnd = shape.size(); i < iEnd;
                          i++) { // No shape[0]
                         ASSERT(shape[i]->nodeType() == ASTNodeType::IntConst);
