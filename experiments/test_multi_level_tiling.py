@@ -29,7 +29,7 @@ def test_multi_level_tiling():
     y_arr = ir.Array(y_np, device)
     s = ir.AutoSchedule(s, target, device)
     s.set_params(w=w_arr, x=x_arr, y=y_arr)
-    s = s.run(500, 30, 60)
+    s = s.run(20)
     func = ir.lower(s.func(), target)
     print(func)
     code = ir.codegen(func, target)

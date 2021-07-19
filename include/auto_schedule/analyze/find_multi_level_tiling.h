@@ -1,8 +1,8 @@
 #ifndef IR_FIND_MULTI_LEVEL_TILING_H
 #define IR_FIND_MULTI_LEVEL_TILING_H
 
-#include <visitor.h>
 #include <vector>
+#include <visitor.h>
 
 namespace ir {
 
@@ -16,19 +16,18 @@ struct ThreeNestedFors {
     ForInfo i, j, k;
 };
 
-class FindMultiLevelTiling: public Visitor {
+class FindMultiLevelTiling : public Visitor {
     std::vector<ForInfo> stack_;
     std::vector<ThreeNestedFors> found_;
     bool innermost_;
 
   public:
-    std::vector<ThreeNestedFors> result() {
-        return found_;
-    }
+    std::vector<ThreeNestedFors> result() { return found_; }
+
   protected:
     void visit(const For &op);
 };
 
-}
+} // namespace ir
 
-#endif //IR_FIND_MULTI_LEVEL_TILING_H
+#endif // IR_FIND_MULTI_LEVEL_TILING_H

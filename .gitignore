@@ -5,3 +5,5 @@ __pycache__
 # Vim
 *.swp
 .ycm_extra_conf.py
+.idea
+cmake-build-debug-remote-host

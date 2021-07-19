@@ -13,24 +13,27 @@ class SketchPartNode {
     virtual SketchPart mutate() { return nullptr; }
     virtual SketchPart crossover(const SketchPart &part) { return nullptr; };
     virtual void apply(Schedule &schedule) = 0;
+    virtual std::vector<int> get_annotation() const = 0;
     virtual ~SketchPartNode() = default;
 };
-
 
 class Sketch {
     Schedule schedule_;
     std::vector<SketchPart> parts_;
     bool annotated;
+
   public:
     Sketch() = default;
     explicit Sketch(const Schedule &schedule);
     Sketch gen_rand_annotation() const;
-    Schedule gen_schedule();
-    void add_part(const SketchPart&);
+    Schedule gen_schedule() const;
+    void add_part(const SketchPart &);
     bool operator<(const Sketch &a) const;
+    std::vector<int> get_annotation() const;
     [[nodiscard]] std::pair<bool, Sketch> gen_mutation() const;
-    [[nodiscard]] std::pair<bool, Sketch> gen_crossover(const Sketch &sketch) const;
+    [[nodiscard]] std::pair<bool, Sketch>
+    gen_crossover(const Sketch &sketch) const;
     double time;
 };
-}
-#endif //IR_SKETCH_H
+} // namespace ir
+#endif // IR_SKETCH_H
