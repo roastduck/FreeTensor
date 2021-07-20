@@ -14,6 +14,7 @@ PYBIND11_MODULE(ffi, m) {
     init_ffi_codegen(m);
     init_ffi_driver(m);
     init_ffi_debug(m);
+    init_ffi_auto_schedule(m);
 }
 
 } // namespace ir

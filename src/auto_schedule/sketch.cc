@@ -3,21 +3,18 @@
 namespace ir {
 Sketch Sketch::gen_rand_annotation() const {
     Sketch sketch = *this;
-    for (auto &part: sketch.parts_) {
+    for (auto &part : sketch.parts_) {
         part->gen_rand_annotation();
     }
     return sketch;
 }
 
-Sketch::Sketch(const Schedule &schedule) : schedule_(schedule), annotated(false) {
+Sketch::Sketch(const Schedule &schedule)
+    : schedule_(schedule), annotated(false) {}
 
-}
+void Sketch::add_part(const SketchPart &p) { parts_.push_back(p); }
 
-void Sketch::add_part(const SketchPart& p) {
-    parts_.push_back(p);
-}
-
-Schedule Sketch::gen_schedule() {
+Schedule Sketch::gen_schedule() const {
     assert(annotated);
     Schedule schedule = schedule_.clone();
     for (const auto &part : parts_)
@@ -45,6 +42,15 @@ std::pair<bool, Sketch> Sketch::gen_crossover(const Sketch &sketch) const {
         return std::make_pair(false, Sketch());
     }
     ret.parts_[mut_part] = mut;
-    return std::make_pair(true, ret);}
-
+    return std::make_pair(true, ret);
 }
+std::vector<int> Sketch::get_annotation() const {
+    std::vector<int> ret;
+    for (const auto &part : parts_) {
+        auto nw = part->get_annotation();
+        ret.insert(ret.end(), nw.begin(), nw.end());
+    }
+    return ret;
+}
+
+} // namespace ir

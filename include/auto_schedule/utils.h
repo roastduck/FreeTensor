@@ -1,20 +1,20 @@
 #ifndef IR_UTILS_H
 #define IR_UTILS_H
 
-#include <array>
-#include <cstdlib>
-#include <cmath>
 #include <algorithm>
+#include <array>
+#include <cmath>
+#include <cstdlib>
 #include <random>
 
 namespace ir {
 
-template<int n>
-std::array<int, n> random_fill_array(int total) {
+template <int n> std::array<int, n> random_fill_array(int total) {
     double log_total = log2(total);
     static std::random_device rd;
     static std::mt19937 gen(rd());
-    std::uniform_real_distribution<> dis(0, std::nextafter(log_total, std::numeric_limits<double>::max()));
+    std::uniform_real_distribution<> dis(
+        0, std::nextafter(log_total, std::numeric_limits<double>::max()));
     std::array<double, n> data;
     for (int i = 0; i < n - 1; i++) {
         data[i] = dis(gen);
@@ -37,7 +37,6 @@ inline int random_int(int mx) {
     return dis(gen);
 }
 
-}
+} // namespace ir
 
-
-#endif //IR_UTILS_H
+#endif // IR_UTILS_H
