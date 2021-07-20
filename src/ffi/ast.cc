@@ -65,7 +65,8 @@ void init_ffi_ast(py::module_ &m) {
         .def_readonly("params", &FuncNode::params_)
         .def_property_readonly("body",
                                [](const Func &op) -> Stmt { return op->body_; })
-        .def_readonly("src", &FuncNode::src_);
+        .def_property_readonly(
+            "src", [](const Func &op) -> py::object { return *op->src_; });
 
     py::class_<FrontendVarIdx>(m, "FrontendVarIdx")
         .def(py::init(&FrontendVarIdx::fromSingle))

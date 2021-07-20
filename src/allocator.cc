@@ -29,7 +29,7 @@ SmallItemBlock *SmallItemBlock::newBlk() {
 
 void SmallItemBlock::delBlk(SmallItemBlock *blk) { free(blk); }
 
-SmallItemAllocator SmallItemAllocator::instance_;
+thread_local SmallItemAllocator SmallItemAllocator::instance_;
 
 SmallItemAllocator::SmallItemAllocator()
     : curBlk(0), blocks_(1, SmallItemBlock::newBlk()) {}
@@ -40,22 +40,39 @@ SmallItemAllocator::~SmallItemAllocator() {
     }
 }
 
+void SmallItemAllocator::lock() {
+    while (spinLock_.test_and_set(std::memory_order_acquire)) {
+        ; // spin
+    }
+}
+
+void SmallItemAllocator::unlock() {
+    spinLock_.clear(std::memory_order_release);
+}
+
 void *SmallItemAllocator::allocate() {
+    lock();
     size_t nBlk = blocks_.size();
     for (size_t i = 0; i < nBlk; i++) {
         if (!blocks_[curBlk]->full()) {
-            return blocks_[curBlk]->allocate();
+            void *ret = blocks_[curBlk]->allocate();
+            unlock();
+            return ret;
         }
         curBlk = (curBlk + 1) % nBlk;
     }
     curBlk = nBlk;
     blocks_.emplace_back(SmallItemBlock::newBlk());
-    return blocks_[curBlk]->allocate();
+    void *ret = blocks_[curBlk]->allocate();
+    unlock();
+    return ret;
 }
 
 void SmallItemAllocator::deallocate(void *p) {
+    lock();
     auto blk = (SmallItemBlock *)((size_t)p & ~(sizeof(SmallItemBlock) - 1));
     blk->deallocate((SmallItem *)p);
+    unlock();
 }
 
 } // namespace ir

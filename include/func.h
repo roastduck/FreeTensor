@@ -18,15 +18,31 @@ class FuncNode : public ASTNode {
     std::string name_;
     std::vector<std::string> params_;
     SubTree<StmtNode> body_;
-    pybind11::object src_;
+    Ref<pybind11::object> src_;
 
     DEFINE_NODE_TRAIT(Func);
+
+    ~FuncNode() {
+#pragma omp critical
+        { src_ = nullptr; }
+    }
 };
 typedef Ref<FuncNode> Func;
 #define makeFunc(...) makeNode(Func, __VA_ARGS__)
 template <class Tbody>
 Func _makeFunc(const std::string &name, const std::vector<std::string> &params,
                Tbody &&body, const pybind11::object &src) {
+    Func f = Func::make();
+    f->name_ = name;
+    f->params_ = params;
+    f->body_ = std::forward<Tbody>(body);
+#pragma omp critical
+    { f->src_ = Ref<pybind11::object>::make(src); }
+    return f;
+}
+template <class Tbody>
+Func _makeFunc(const std::string &name, const std::vector<std::string> &params,
+               Tbody &&body, const Ref<pybind11::object> &src) {
     Func f = Func::make();
     f->name_ = name;
     f->params_ = params;

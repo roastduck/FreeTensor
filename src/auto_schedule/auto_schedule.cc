@@ -16,23 +16,46 @@ void AutoSchedule::set_params(
     params_set = true;
 }
 
-double AutoSchedule::measure(const Schedule &schedule) {
-    auto func = lower(schedule.func(), target);
-    std::string code;
-    if (target->type() == TargetType::GPU)
-        code = codeGenCUDA(func);
-    else
-        code = codeGenCPU(func);
-    Driver driver(func, code, device);
-    driver.setParams(args_, kws_);
-    return driver.time(5, 20);
+std::vector<double>
+AutoSchedule::measure(const std::vector<Schedule> &schedules) {
+    // Compile in parallel, and measure sequentially
+    // TODO: Parallel among computing nodes
+
+    size_t n = schedules.size();
+    std::vector<Func> funcs(n);
+    std::vector<std::string> codes(n);
+
+#pragma omp parallel for
+    for (size_t i = 0; i < n; i++) {
+        auto func = lower(schedules[i].func(), target);
+        std::string code;
+        if (target->type() == TargetType::GPU)
+            code = codeGenCUDA(func);
+        else
+            code = codeGenCPU(func);
+        funcs[i] = std::move(func);
+        codes[i] = std::move(code);
+    }
+
+    std::vector<double> times;
+    times.reserve(n);
+    for (size_t i = 0; i < n; i++) {
+        // TODO: Also parallelize the call to backend compilers
+        Driver driver(funcs[i], codes[i], device);
+        driver.setParams(args_, kws_);
+        times.emplace_back(driver.time(5, 20));
+    }
+    return times;
 }
 
-double AutoSchedule::measure(const Sketch &sketch) {
-    double time = measure(sketch.gen_schedule());
-    std::cout << "\tconsumes " << time << std::endl;
-    return time;
+std::vector<double> AutoSchedule::measure(const std::vector<Sketch> &sketches) {
+    std::vector<Schedule> schedules;
+    for (auto &&sketch : sketches) {
+        schedules.emplace_back(sketch.gen_schedule());
+    }
+    return measure(schedules);
 }
+
 std::pair<std::vector<std::vector<int>>, std::vector<double>>
 AutoSchedule::init(int _n_candidates) {
     n_candidates = _n_candidates;
@@ -40,24 +63,31 @@ AutoSchedule::init(int _n_candidates) {
         std::cout << "Please set params first." << std::endl;
         assert(false);
     }
-    std::vector<std::vector<int>> annotations;
-    std::vector<double> times;
-    double init_time = measure(schedule_);
+
+    double init_time = measure({schedule_}).front();
     std::cout << "Initial time: " << init_time << std::endl;
+
     Sketch sketch(schedule_);
     MultiLevelTilingRule rule;
     int n = rule.analyze(schedule_);
     std::cout << "Found" << n << std::endl;
     sketch.add_part(rule.gen_part(0));
-    candidates.reserve(n);
-    while (candidates.size() < n_candidates) {
-        Sketch nw = sketch.gen_rand_annotation();
-        double time = measure(nw);
-        nw.time = time;
-        candidates.push_back(nw);
-        annotations.push_back(nw.get_annotation());
-        times.push_back(time);
+
+    candidates.reserve(n_candidates);
+    for (size_t i = 0; i < n_candidates; i++) {
+        candidates.emplace_back(sketch.gen_rand_annotation());
     }
+    std::vector<double> times = measure(candidates);
+    for (size_t i = 0; i < n_candidates; i++) {
+        candidates[i].time = times[i];
+    }
+
+    std::vector<std::vector<int>> annotations;
+    annotations.reserve(candidates.size());
+    for (auto &&candidate : candidates) {
+        annotations.emplace_back(candidate.get_annotation());
+    }
+
     std::sort(candidates.begin(), candidates.end());
     std::cout << "Initial: min " << candidates[0].time << " , max "
               << candidates[n_candidates - 1].time << std::endl;
@@ -65,6 +95,7 @@ AutoSchedule::init(int _n_candidates) {
     std::make_heap(candidates.begin(), candidates.begin() + n_candidates);
     return std::make_pair(annotations, times);
 }
+
 std::vector<Sketch> AutoSchedule::get_random_sketches(size_t n) {
     std::vector<Sketch> ret;
     while (ret.size() < n) {
@@ -87,27 +118,28 @@ std::vector<Sketch> AutoSchedule::get_random_sketches(size_t n) {
     }
     return ret;
 }
+
 std::pair<std::vector<std::vector<int>>, std::vector<double>>
 AutoSchedule::test_and_add(const std::vector<Sketch> &sketches) {
+    std::vector<double> times = measure(sketches);
     std::vector<std::vector<int>> annotations;
-    std::vector<double> times;
-    for (auto &sketch : sketches) {
-        double time = measure(sketch);
-        annotations.push_back(sketch.get_annotation());
-        times.push_back(time);
-        if (time < candidates[0].time) {
+    annotations.reserve(sketches.size());
+    for (size_t i = 0, iEnd = sketches.size(); i < iEnd; i++) {
+        annotations.emplace_back(sketches[i].get_annotation());
+        if (times[i] < candidates[0].time) {
             std::pop_heap(candidates.begin(),
                           candidates.begin() + n_candidates);
-            candidates[n_candidates - 1] = sketch;
-            candidates[n_candidates - 1].time = time;
+            candidates[n_candidates - 1] = sketches[i];
+            candidates[n_candidates - 1].time = times[i];
             std::push_heap(candidates.begin(),
                            candidates.begin() + n_candidates);
-            mn_ = std::min(time, mn_);
+            mn_ = std::min(times[i], mn_);
         }
     }
     std::cout << "min " << mn_ << " max " << candidates[0].time << std::endl;
     return std::make_pair(annotations, times);
 }
+
 Schedule AutoSchedule::get_best_schedule() {
     int best = 0;
     int time = candidates[0].time;
