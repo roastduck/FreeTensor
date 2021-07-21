@@ -21,8 +21,7 @@ std::vector<double> AutoSchedule::measure(const std::vector<Sketch> &sketches) {
     // TODO: Parallel among computing nodes
 
     size_t n = sketches.size();
-    std::vector<Func> funcs(n);
-    std::vector<std::string> codes(n);
+    std::vector<Ref<Driver>> drivers(n);
 
 #pragma omp parallel for
     for (size_t i = 0; i < n; i++) {
@@ -32,17 +31,14 @@ std::vector<double> AutoSchedule::measure(const std::vector<Sketch> &sketches) {
             code = codeGenCUDA(func);
         else
             code = codeGenCPU(func);
-        funcs[i] = std::move(func);
-        codes[i] = std::move(code);
+        drivers[i] = Ref<Driver>::make(Driver(func, code, device));
     }
 
     std::vector<double> times;
     times.reserve(n);
     for (size_t i = 0; i < n; i++) {
-        // TODO: Also parallelize the call to backend compilers
-        Driver driver(funcs[i], codes[i], device);
-        driver.setParams(args_, kws_);
-        times.emplace_back(driver.time(5, 20));
+        drivers[i]->setParams(args_, kws_);
+        times.emplace_back(drivers[i]->time(5, 20));
     }
     return times;
 }
