@@ -1,6 +1,8 @@
 #include <auto_schedule/sketch.h>
 #include <auto_schedule/utils.h>
+
 namespace ir {
+
 Sketch Sketch::gen_rand_annotation() const {
     Sketch sketch = *this;
     for (auto &part : sketch.parts_) {
@@ -23,6 +25,7 @@ Schedule Sketch::gen_schedule() const {
 }
 
 bool Sketch::operator<(const Sketch &a) const { return time < a.time; }
+
 std::pair<bool, Sketch> Sketch::gen_mutation() const {
     Sketch ret = *this;
     int mut_part = random_int(ret.parts_.size() - 1);
@@ -44,6 +47,7 @@ std::pair<bool, Sketch> Sketch::gen_crossover(const Sketch &sketch) const {
     ret.parts_[mut_part] = mut;
     return std::make_pair(true, ret);
 }
+
 std::vector<int> Sketch::get_annotation() const {
     std::vector<int> ret;
     for (const auto &part : parts_) {

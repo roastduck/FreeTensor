@@ -30,7 +30,6 @@ class AutoSchedule {
 
     Schedule get_best_schedule();
 
-    std::vector<double> measure(const std::vector<Schedule> &schedules);
     std::vector<double> measure(const std::vector<Sketch> &sketches);
 
   private:

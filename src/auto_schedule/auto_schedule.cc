@@ -16,18 +16,17 @@ void AutoSchedule::set_params(
     params_set = true;
 }
 
-std::vector<double>
-AutoSchedule::measure(const std::vector<Schedule> &schedules) {
+std::vector<double> AutoSchedule::measure(const std::vector<Sketch> &sketches) {
     // Compile in parallel, and measure sequentially
     // TODO: Parallel among computing nodes
 
-    size_t n = schedules.size();
+    size_t n = sketches.size();
     std::vector<Func> funcs(n);
     std::vector<std::string> codes(n);
 
 #pragma omp parallel for
     for (size_t i = 0; i < n; i++) {
-        auto func = lower(schedules[i].func(), target);
+        auto func = lower(sketches[i].gen_schedule().func(), target);
         std::string code;
         if (target->type() == TargetType::GPU)
             code = codeGenCUDA(func);
@@ -48,24 +47,12 @@ AutoSchedule::measure(const std::vector<Schedule> &schedules) {
     return times;
 }
 
-std::vector<double> AutoSchedule::measure(const std::vector<Sketch> &sketches) {
-    std::vector<Schedule> schedules;
-    for (auto &&sketch : sketches) {
-        schedules.emplace_back(sketch.gen_schedule());
-    }
-    return measure(schedules);
-}
-
 std::pair<std::vector<std::vector<int>>, std::vector<double>>
 AutoSchedule::init(int _n_candidates) {
     n_candidates = _n_candidates;
     if (!params_set) {
-        std::cout << "Please set params first." << std::endl;
-        assert(false);
+        ERROR("Please set params first");
     }
-
-    double init_time = measure({schedule_}).front();
-    std::cout << "Initial time: " << init_time << std::endl;
 
     Sketch sketch(schedule_);
     MultiLevelTilingRule rule;

@@ -5,8 +5,11 @@
 #include <vector>
 
 namespace ir {
+
 class SketchPartNode;
+
 typedef Ref<SketchPartNode> SketchPart;
+
 class SketchPartNode {
   public:
     virtual void gen_rand_annotation() = 0;
@@ -35,5 +38,7 @@ class Sketch {
     gen_crossover(const Sketch &sketch) const;
     double time;
 };
+
 } // namespace ir
+
 #endif // IR_SKETCH_H
