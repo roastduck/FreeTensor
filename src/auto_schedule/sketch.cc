@@ -3,30 +3,30 @@
 
 namespace ir {
 
-Sketch Sketch::gen_rand_annotation() const {
+Sketch Sketch::genRandAnnotation() const {
     Sketch sketch = *this;
     for (auto &part : sketch.parts_) {
-        part->gen_rand_annotation();
+        part->genRandAnnotation();
     }
     return sketch;
 }
 
 Sketch::Sketch(const Schedule &schedule)
-    : schedule_(schedule), annotated(false) {}
+    : schedule_(schedule), annotated_(false) {}
 
-void Sketch::add_part(const SketchPart &p) { parts_.push_back(p); }
+void Sketch::addPart(const SketchPart &p) { parts_.push_back(p); }
 
-Schedule Sketch::gen_schedule() const {
-    assert(annotated);
+Schedule Sketch::genSchedule() const {
+    assert(annotated_);
     Schedule schedule = schedule_.clone();
     for (const auto &part : parts_)
         part->apply(schedule);
     return schedule;
 }
 
-bool Sketch::operator<(const Sketch &a) const { return time < a.time; }
+bool Sketch::operator<(const Sketch &a) const { return time_ < a.time_; }
 
-std::pair<bool, Sketch> Sketch::gen_mutation() const {
+std::pair<bool, Sketch> Sketch::genMutation() const {
     Sketch ret = *this;
     int mut_part = random_int(ret.parts_.size() - 1);
     auto mut = ret.parts_[mut_part]->mutate();
@@ -37,7 +37,7 @@ std::pair<bool, Sketch> Sketch::gen_mutation() const {
     return std::make_pair(true, ret);
 }
 
-std::pair<bool, Sketch> Sketch::gen_crossover(const Sketch &sketch) const {
+std::pair<bool, Sketch> Sketch::genCrossover(const Sketch &sketch) const {
     Sketch ret = *this;
     int mut_part = random_int(ret.parts_.size() - 1);
     auto mut = ret.parts_[mut_part]->crossover(sketch.parts_[mut_part]);
@@ -48,10 +48,10 @@ std::pair<bool, Sketch> Sketch::gen_crossover(const Sketch &sketch) const {
     return std::make_pair(true, ret);
 }
 
-std::vector<int> Sketch::get_annotation() const {
+std::vector<int> Sketch::getAnnotation() const {
     std::vector<int> ret;
     for (const auto &part : parts_) {
-        auto nw = part->get_annotation();
+        auto nw = part->getAnnotation();
         ret.insert(ret.end(), nw.begin(), nw.end());
     }
     return ret;

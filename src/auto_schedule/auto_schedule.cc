@@ -8,12 +8,12 @@
 
 namespace ir {
 
-void AutoSchedule::set_params(
+void AutoSchedule::setParams(
     const std::vector<Array *> &args,
     const std::unordered_map<std::string, Array *> &kws) {
     args_ = args;
     kws_ = kws;
-    params_set = true;
+    paramsSet_ = true;
 }
 
 std::vector<double> AutoSchedule::measure(const std::vector<Sketch> &sketches) {
@@ -25,13 +25,19 @@ std::vector<double> AutoSchedule::measure(const std::vector<Sketch> &sketches) {
 
 #pragma omp parallel for
     for (size_t i = 0; i < n; i++) {
-        auto func = lower(sketches[i].gen_schedule().func(), target);
-        std::string code;
-        if (target->type() == TargetType::GPU)
-            code = codeGenCUDA(func);
-        else
-            code = codeGenCPU(func);
-        drivers[i] = Ref<Driver>::make(Driver(func, code, device));
+        try {
+            auto func = lower(sketches[i].genSchedule().func(), target_);
+            std::string code;
+            if (target_->type() == TargetType::GPU)
+                code = codeGenCUDA(func);
+            else
+                code = codeGenCPU(func);
+            drivers[i] = Ref<Driver>::make(Driver(func, code, device_));
+        } catch (const std::exception &e) {
+            // OpenMP threads won't report an exception message
+            std::cerr << "ERROR: " << e.what() << std::endl;
+            exit(-1);
+        }
     }
 
     std::vector<double> times;
@@ -44,9 +50,9 @@ std::vector<double> AutoSchedule::measure(const std::vector<Sketch> &sketches) {
 }
 
 std::pair<std::vector<std::vector<int>>, std::vector<double>>
-AutoSchedule::init(int _n_candidates) {
-    n_candidates = _n_candidates;
-    if (!params_set) {
+AutoSchedule::init(int nCandidates) {
+    nCandidates_ = nCandidates;
+    if (!paramsSet_) {
         ERROR("Please set params first");
     }
 
@@ -54,46 +60,46 @@ AutoSchedule::init(int _n_candidates) {
     MultiLevelTilingRule rule;
     int n = rule.analyze(schedule_);
     std::cout << "Found" << n << std::endl;
-    sketch.add_part(rule.gen_part(0));
+    sketch.addPart(rule.genPart(0));
 
-    candidates.reserve(n_candidates);
-    for (size_t i = 0; i < n_candidates; i++) {
-        candidates.emplace_back(sketch.gen_rand_annotation());
+    candidates_.reserve(nCandidates_);
+    for (size_t i = 0; i < nCandidates_; i++) {
+        candidates_.emplace_back(sketch.genRandAnnotation());
     }
-    std::vector<double> times = measure(candidates);
-    for (size_t i = 0; i < n_candidates; i++) {
-        candidates[i].time = times[i];
+    std::vector<double> times = measure(candidates_);
+    for (size_t i = 0; i < nCandidates_; i++) {
+        candidates_[i].setTime(times[i]);
     }
 
     std::vector<std::vector<int>> annotations;
-    annotations.reserve(candidates.size());
-    for (auto &&candidate : candidates) {
-        annotations.emplace_back(candidate.get_annotation());
+    annotations.reserve(candidates_.size());
+    for (auto &&candidate : candidates_) {
+        annotations.emplace_back(candidate.getAnnotation());
     }
 
-    std::sort(candidates.begin(), candidates.end());
-    std::cout << "Initial: min " << candidates[0].time << " , max "
-              << candidates[n_candidates - 1].time << std::endl;
-    mn_ = candidates[0].time;
-    std::make_heap(candidates.begin(), candidates.begin() + n_candidates);
+    std::sort(candidates_.begin(), candidates_.end());
+    std::cout << "Initial: min " << candidates_[0].time() << " , max "
+              << candidates_[nCandidates_ - 1].time() << std::endl;
+    mn_ = candidates_[0].time();
+    std::make_heap(candidates_.begin(), candidates_.begin() + nCandidates_);
     return std::make_pair(annotations, times);
 }
 
-std::vector<Sketch> AutoSchedule::get_random_sketches(size_t n) {
+std::vector<Sketch> AutoSchedule::getRandomSketches(size_t n) {
     std::vector<Sketch> ret;
     while (ret.size() < n) {
         int mut = random_int(1);
         if (mut) {
-            auto nw = candidates[random_int(n_candidates - 1)].gen_mutation();
+            auto nw = candidates_[random_int(nCandidates_ - 1)].genMutation();
             if (nw.first) {
                 ret.push_back(nw.second);
             }
         } else {
-            int a = random_int(n_candidates - 1);
-            int b = random_int(n_candidates - 1);
+            int a = random_int(nCandidates_ - 1);
+            int b = random_int(nCandidates_ - 1);
             while (b == a)
-                b = random_int(n_candidates - 1);
-            auto nw = candidates[a].gen_crossover(candidates[b]);
+                b = random_int(nCandidates_ - 1);
+            auto nw = candidates_[a].genCrossover(candidates_[b]);
             if (nw.first) {
                 ret.push_back(nw.second);
             }
@@ -103,36 +109,36 @@ std::vector<Sketch> AutoSchedule::get_random_sketches(size_t n) {
 }
 
 std::pair<std::vector<std::vector<int>>, std::vector<double>>
-AutoSchedule::test_and_add(const std::vector<Sketch> &sketches) {
+AutoSchedule::testAndAdd(const std::vector<Sketch> &sketches) {
     std::vector<double> times = measure(sketches);
     std::vector<std::vector<int>> annotations;
     annotations.reserve(sketches.size());
     for (size_t i = 0, iEnd = sketches.size(); i < iEnd; i++) {
-        annotations.emplace_back(sketches[i].get_annotation());
-        if (times[i] < candidates[0].time) {
-            std::pop_heap(candidates.begin(),
-                          candidates.begin() + n_candidates);
-            candidates[n_candidates - 1] = sketches[i];
-            candidates[n_candidates - 1].time = times[i];
-            std::push_heap(candidates.begin(),
-                           candidates.begin() + n_candidates);
+        annotations.emplace_back(sketches[i].getAnnotation());
+        if (times[i] < candidates_[0].time()) {
+            std::pop_heap(candidates_.begin(),
+                          candidates_.begin() + nCandidates_);
+            candidates_[nCandidates_ - 1] = sketches[i];
+            candidates_[nCandidates_ - 1].setTime(times[i]);
+            std::push_heap(candidates_.begin(),
+                           candidates_.begin() + nCandidates_);
             mn_ = std::min(times[i], mn_);
         }
     }
-    std::cout << "min " << mn_ << " max " << candidates[0].time << std::endl;
+    std::cout << "min " << mn_ << " max " << candidates_[0].time() << std::endl;
     return std::make_pair(annotations, times);
 }
 
-Schedule AutoSchedule::get_best_schedule() {
+Schedule AutoSchedule::getBestSchedule() {
     int best = 0;
-    int time = candidates[0].time;
-    for (size_t i = 0; i < candidates.size(); i++) {
-        if (candidates[i].time < time) {
-            time = candidates[i].time;
+    int time = candidates_[0].time();
+    for (size_t i = 0; i < candidates_.size(); i++) {
+        if (candidates_[i].time() < time) {
+            time = candidates_[i].time();
             best = i;
         }
     }
-    return candidates[best].gen_schedule();
+    return candidates_[best].genSchedule();
 }
 
 } // namespace ir

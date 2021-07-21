@@ -19,7 +19,7 @@ class MultiLevelTilingRule : public Rule {
 
   public:
     int analyze(Schedule &schedule) override;
-    SketchPart gen_part(int p) override;
+    SketchPart genPart(int p) override;
 };
 
 class MultiLevelTilingPart : public SketchPartNode {
@@ -27,12 +27,12 @@ class MultiLevelTilingPart : public SketchPartNode {
     MultiLevelTilingAnnotation annotation;
 
   public:
-    void gen_rand_annotation() override;
+    void genRandAnnotation() override;
     explicit MultiLevelTilingPart(ThreeNestedFors);
     void apply(Schedule &schedule) override;
     SketchPart mutate() override;
     SketchPart crossover(const SketchPart &part) override;
-    [[nodiscard]] std::vector<int> get_annotation() const override;
+    [[nodiscard]] std::vector<int> getAnnotation() const override;
 };
 
 } // namespace ir

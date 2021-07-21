@@ -9,7 +9,7 @@ namespace ir {
 class Rule {
   public:
     virtual int analyze(Schedule &schedule) = 0;
-    virtual SketchPart gen_part(int p) = 0;
+    virtual SketchPart genPart(int p) = 0;
 };
 
 } // namespace ir

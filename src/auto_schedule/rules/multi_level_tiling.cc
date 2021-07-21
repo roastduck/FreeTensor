@@ -12,11 +12,11 @@ int MultiLevelTilingRule::analyze(Schedule &schedule) {
     return true;
 }
 
-SketchPart MultiLevelTilingRule::gen_part(int p) {
+SketchPart MultiLevelTilingRule::genPart(int p) {
     return SketchPart(new MultiLevelTilingPart(targets[p]));
 }
 
-void MultiLevelTilingPart::gen_rand_annotation() {
+void MultiLevelTilingPart::genRandAnnotation() {
     annotation = MultiLevelTilingAnnotation{
         random_fill_array<4>(target.i.end - target.i.begin),
         random_fill_array<4>(target.j.end - target.j.begin),
@@ -95,7 +95,7 @@ SketchPart MultiLevelTilingPart::crossover(const SketchPart &part) {
     }
     return Ref<MultiLevelTilingPart>::make(std::move(mut));
 }
-std::vector<int> MultiLevelTilingPart::get_annotation() const {
+std::vector<int> MultiLevelTilingPart::getAnnotation() const {
     std::vector<int> ret;
     ret.insert(ret.end(), annotation.i_tiling.begin(),
                annotation.i_tiling.end());

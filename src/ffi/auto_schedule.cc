@@ -9,15 +9,15 @@ using namespace pybind11::literals;
 
 void init_ffi_auto_schedule(py::module_ &m) {
     py::class_<Sketch>(m, "Sketch")
-        .def("get_annotation", &Sketch::get_annotation);
+        .def("get_annotation", &Sketch::getAnnotation);
     py::class_<AutoSchedule>(m, "AutoSchedule")
         .def(py::init<const Schedule &, const Ref<Target> &, const Device &>())
-        .def("set_params", &AutoSchedule::set_params, "args"_a,
+        .def("set_params", &AutoSchedule::setParams, "args"_a,
              "kws"_a = std::unordered_map<std::string, Array *>())
         .def("init", &AutoSchedule::init, "n_candidates"_a)
-        .def("get_random_sketches", &AutoSchedule::get_random_sketches, "n"_a)
-        .def("test_and_add", &AutoSchedule::test_and_add, "sketches"_a)
-        .def("get_best_schedule", &AutoSchedule::get_best_schedule);
+        .def("get_random_sketches", &AutoSchedule::getRandomSketches, "n"_a)
+        .def("test_and_add", &AutoSchedule::testAndAdd, "sketches"_a)
+        .def("get_best_schedule", &AutoSchedule::getBestSchedule);
 }
 
 } // namespace ir
