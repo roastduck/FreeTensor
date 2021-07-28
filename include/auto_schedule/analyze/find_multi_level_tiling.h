@@ -12,17 +12,18 @@ struct ForInfo {
     int end;
 };
 
-struct ThreeNestedFors {
-    ForInfo i, j, k;
+struct ForsWithDataReuse {
+    std::vector<ForInfo> spaceLoops;
+    std::vector<ForInfo> reductionLoops;
 };
 
 class FindMultiLevelTiling : public Visitor {
     std::vector<ForInfo> stack_;
-    std::vector<ThreeNestedFors> found_;
+    std::vector<ForsWithDataReuse> found_;
     bool innermost_;
 
   public:
-    std::vector<ThreeNestedFors> result() { return found_; }
+    std::vector<ForsWithDataReuse> result() { return found_; }
 
   protected:
     void visit(const For &op);
