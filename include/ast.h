@@ -1,6 +1,7 @@
 #ifndef AST_H
 #define AST_H
 
+#include <atomic>
 #include <string>
 
 #include <ref.h>
@@ -107,7 +108,7 @@ typedef Ref<ExprNode> Expr;
 
 class StmtNode : public ASTNode {
     std::string id_;
-    static uint64_t idCnt_;
+    static std::atomic<uint64_t> idCnt_;
 
   public:
     static std::string newId();

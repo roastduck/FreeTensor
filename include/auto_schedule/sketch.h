@@ -5,32 +5,51 @@
 #include <vector>
 
 namespace ir {
+
 class SketchPartNode;
+
 typedef Ref<SketchPartNode> SketchPart;
+
 class SketchPartNode {
   public:
-    virtual void gen_rand_annotation() = 0;
+    virtual void genRandAnnotation() = 0;
     virtual SketchPart mutate() { return nullptr; }
     virtual SketchPart crossover(const SketchPart &part) { return nullptr; };
     virtual void apply(Schedule &schedule) = 0;
+    virtual std::vector<int> getAnnotation() const = 0;
     virtual ~SketchPartNode() = default;
 };
-
 
 class Sketch {
     Schedule schedule_;
     std::vector<SketchPart> parts_;
-    bool annotated;
+    bool annotated_;
+    double time_;
+
   public:
     Sketch() = default;
+
     explicit Sketch(const Schedule &schedule);
-    Sketch gen_rand_annotation() const;
-    Schedule gen_schedule();
-    void add_part(const SketchPart&);
+
+    Sketch genRandAnnotation() const;
+
+    Schedule genSchedule() const;
+
+    void addPart(const SketchPart &);
+
     bool operator<(const Sketch &a) const;
-    [[nodiscard]] std::pair<bool, Sketch> gen_mutation() const;
-    [[nodiscard]] std::pair<bool, Sketch> gen_crossover(const Sketch &sketch) const;
-    double time;
+
+    std::vector<int> getAnnotation() const;
+
+    [[nodiscard]] std::pair<bool, Sketch> genMutation() const;
+
+    [[nodiscard]] std::pair<bool, Sketch>
+    genCrossover(const Sketch &sketch) const;
+
+    void setTime(double time) { time_ = time; }
+    double time() const { return time_; }
 };
-}
-#endif //IR_SKETCH_H
+
+} // namespace ir
+
+#endif // IR_SKETCH_H

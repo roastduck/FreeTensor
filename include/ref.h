@@ -12,6 +12,11 @@ namespace ir {
 
 /**
  * Ref-counting pointer
+ *
+ * This class is thread-safe (For developers: concurrent accesses through
+ * different `std::shared_ptr`s to the same object is already thread-safe, while
+ * modifying the same `std::shared_ptr` is not. We never modify a `Ref`, so no
+ * locks are needed. See https://en.cppreference.com/w/cpp/memory/shared_ptr)
  */
 template <class T> class Ref {
     template <class U> friend class Ref;

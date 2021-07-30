@@ -45,6 +45,13 @@ set(CMAKE_CXX_EXTENSIONS OFF) # -std=gnu++11 when on, -std=c++11 when off
 
 add_definitions(-DIR_RUNTIME_DIR=${CMAKE_SOURCE_DIR}/runtime)
 
+# OpenMP used to parallelize the compilation of different instances
+find_package(OpenMP)
+if (OPENMP_FOUND)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+endif()
+
 include_directories(${CMAKE_SOURCE_DIR}/include)
 include_directories(${CMAKE_SOURCE_DIR}/3rd-party/pybind11/include)
 include_directories(${CMAKE_SOURCE_DIR}/3rd-party/z3/src/api/c++)

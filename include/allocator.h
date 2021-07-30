@@ -1,6 +1,7 @@
 #ifndef ALLOCATOR_H
 #define ALLOCATOR_H
 
+#include <atomic>
 #include <cstdint>
 #include <cstdlib>
 #include <vector>
@@ -35,8 +36,13 @@ static_assert(sizeof(SmallItemBlock) == SMALL_ITEM_SIZE * SMALL_ITEM_PER_BLOCK);
 class SmallItemAllocator {
     size_t curBlk;
     std::vector<SmallItemBlock *> blocks_;
+    std::atomic_flag spinLock_ = ATOMIC_FLAG_INIT;
 
-    static SmallItemAllocator instance_;
+    static thread_local SmallItemAllocator instance_;
+
+  private:
+    void lock();
+    void unlock();
 
   public:
     SmallItemAllocator();

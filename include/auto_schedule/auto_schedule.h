@@ -1,12 +1,12 @@
 #ifndef IR_AUTO_SCHEDULE_H
 #define IR_AUTO_SCHEDULE_H
 
+#include <auto_schedule/sketch.h>
 #include <driver/array.h>
 #include <driver/device.h>
 #include <driver/target.h>
 #include <schedule.h>
 #include <unordered_map>
-#include <auto_schedule/sketch.h>
 
 namespace ir {
 
@@ -14,28 +14,35 @@ class AutoSchedule {
   public:
     AutoSchedule(const Schedule &schedule, const Ref<Target> &target,
                  const Device &device)
-        : schedule_(schedule), target(target), device(device), params_set(false) {}
+        : schedule_(schedule), target_(target), device_(device),
+          paramsSet_(false) {}
 
-    void set_params(const std::vector<Array *> &args,
-                    const std::unordered_map<std::string, Array *> &kws);
+    void setParams(const std::vector<Array *> &args,
+                   const std::unordered_map<std::string, Array *> &kws);
 
-    Schedule run(unsigned int round = 5, unsigned int save = 20,
-             unsigned int extend = 80);
+    std::pair<std::vector<std::vector<int>>, std::vector<double>>
+    init(int nCandidates);
 
-    double measure(const Schedule &schedule);
+    std::vector<Sketch> getRandomSketches(size_t n);
 
-    double measure(Sketch &sketch);
+    std::pair<std::vector<std::vector<int>>, std::vector<double>>
+    testAndAdd(const std::vector<Sketch> &sketches);
+
+    Schedule getBestSchedule();
+
+    std::vector<double> measure(const std::vector<Sketch> &sketches);
 
   private:
     Schedule schedule_;
-    Ref<Target> target;
-    Device device;
+    Ref<Target> target_;
+    Device device_;
     std::vector<Array *> args_;
     std::unordered_map<std::string, Array *> kws_;
-    bool params_set;
-    std::vector<Sketch> candidates;
-    int n_candidates;
+    bool paramsSet_;
+    std::vector<Sketch> candidates_;
+    size_t nCandidates_;
+    double mn_;
 };
 
-} //namespace ir
+} // namespace ir
 #endif // IR_AUTO_SCHEDULE_H
