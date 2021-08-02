@@ -221,3 +221,19 @@ def test_hoist_var_in_stmt_seq():
     std = ir.pop_ast()
 
     assert std.match(ast)
+
+
+def test_hoist_var_with_modified_shape():
+    with ir.VarDef("n", (), "int32", "output", "cpu") as n:
+        with ir.For("i", 0, 4, nid="L1") as i:
+            n[()] = i
+        with ir.VarDef("x", (n,), "int32", "output", "cpu") as x:
+            with ir.For("i", 0, 4, nid="L2") as i:
+                x[i] = i
+    ast = ir.pop_ast()
+    print(ast)
+    s = ir.Schedule(ast)
+    with pytest.raises(ir.InvalidSchedule):
+        s.fuse("L1", "L2")
+    ast_ = s.ast()  # Should not changed
+    assert ast_.match(ast)
