@@ -1,10 +1,29 @@
 import ir
 
 
+def test_flop():
+    with ir.VarDef([
+        ("x1", (32,), "float32", "input", "cpu"),
+        ("x2", (32,), "float32", "input", "cpu"),
+        ("x3", (32,), "float32", "input", "cpu"),
+        ("y", (32,), "float32", "output", "cpu"),
+    ]) as (x1, x2, x3, y):
+        with ir.For("i", 0, 32, nid='L1') as i:
+            ir.MarkNid('S1')
+            y[i] = x1[i] * x2[i] + x3[i]
+    ast = ir.pop_ast()
+    print(ast)
+
+    features = ir.structural_feature(ast)
+
+    assert features['S1'].opCnt[ir.parseDType('float32')] == 2
+    assert features['L1'].opCnt[ir.parseDType('float32')] == 64
+
+
 def test_access_area():
     with ir.VarDef([
-        ("x", (4,), "int32", "input", "cpu"),
-        ("y", (4,), "int32", "output", "cpu"),
+        ("x", (32,), "int32", "input", "cpu"),
+        ("y", (32,), "int32", "output", "cpu"),
     ]) as (x, y):
         with ir.For("i", 0, 32, nid='L1') as i:
             ir.MarkNid('S1')
@@ -24,9 +43,9 @@ def test_access_area():
 
 def test_access_area_overlap():
     with ir.VarDef([
-        ("x", (4,), "int32", "input", "cpu"),
-        ("y1", (4,), "int32", "output", "cpu"),
-        ("y2", (4,), "int32", "output", "cpu"),
+        ("x", (32,), "int32", "input", "cpu"),
+        ("y1", (32,), "int32", "output", "cpu"),
+        ("y2", (32,), "int32", "output", "cpu"),
     ]) as (x, y1, y2):
         with ir.NamedScope('S1'):
             with ir.For("i", 0, 32, nid='L1') as i:

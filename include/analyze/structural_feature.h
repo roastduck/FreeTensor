@@ -12,6 +12,8 @@ namespace ir {
  * Features of a statement node
  */
 struct NodeFeature {
+    // -1 means unknown
+    std::unordered_map<DataType, int64_t> opCnt_;
     std::unordered_map<MemType, int64_t> loadArea_, storeArea_, accessArea_;
 };
 
@@ -38,6 +40,8 @@ class StructuralFeature : public CompUniqueBounds {
      * Info about an AST node, but not necessarily a feature
      */
     struct NodeInfo {
+        std::unordered_map<DataType, int64_t> opCnt_;
+
         std::unordered_map<MemType, int64_t> innerLoadArea_, innerStoreArea_,
             innerAccessArea_;
         std::unordered_map<std::string, NodeBufferInfo> loads_, stores_,
@@ -63,9 +67,12 @@ class StructuralFeature : public CompUniqueBounds {
     }
 
   private:
+    void updCompInfo(const AST &parent, const AST &child, int repeat = 1);
     void updAreaInfo(const AST &parent, const AST &child);
-    void updInfo(const AST &parent, const AST &child);
+    void updInfo(const AST &parent, const AST &child,
+                 int repeat = 1); // repeat = -1 means unknown
 
+    void calcCompFeatures(const Stmt &parent);
     int64_t calcArea(const NodeBufferInfo &bufInfo);
     void calcAreaFeatures(const Stmt &parent);
     void calcFeatures(const Stmt &parent);
@@ -76,6 +83,7 @@ class StructuralFeature : public CompUniqueBounds {
         auto op = __op.template as<typename T::Object>();
         updInfo(op, op->lhs_);
         updInfo(op, op->rhs_);
+        info_[op].opCnt_[upCast(dtype(op->lhs_), dtype(op->rhs_))]++;
         return op;
     }
 
@@ -84,6 +92,7 @@ class StructuralFeature : public CompUniqueBounds {
         ASSERT(__op->nodeType() == _op->nodeType());
         auto op = __op.template as<typename T::Object>();
         updInfo(op, op->expr_);
+        info_[op].opCnt_[dtype(op->expr_)]++;
         return op;
     }
 

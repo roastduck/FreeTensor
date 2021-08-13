@@ -7,6 +7,7 @@ using namespace pybind11::literals;
 
 void init_ffi_analyze(py::module_ &m) {
     py::class_<NodeFeature>(m, "NodeFeature")
+        .def_readonly("opCnt", &NodeFeature::opCnt_)
         .def_readonly("loadArea", &NodeFeature::loadArea_)
         .def_readonly("storeArea", &NodeFeature::storeArea_)
         .def_readonly("accessArea", &NodeFeature::accessArea_);

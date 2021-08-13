@@ -3,6 +3,18 @@
 
 namespace ir {
 
+void StructuralFeature::updCompInfo(const AST &parent, const AST &child,
+                                    int repeat) {
+    for (auto &&item : info_[child].opCnt_) {
+        if (info_[parent].opCnt_[item.first] == -1 || item.second == -1 ||
+            repeat == -1) {
+            info_[parent].opCnt_[item.first] = -1;
+        } else {
+            info_[parent].opCnt_[item.first] += item.second * repeat;
+        }
+    }
+}
+
 void StructuralFeature::updAreaInfo(const AST &parent, const AST &child) {
     auto filter = [this](NodeBufferInfo &child) -> NodeBufferInfo {
         size_t n = child.lo_.size();
@@ -93,8 +105,14 @@ void StructuralFeature::updAreaInfo(const AST &parent, const AST &child) {
     }
 }
 
-void StructuralFeature::updInfo(const AST &parent, const AST &child) {
+void StructuralFeature::updInfo(const AST &parent, const AST &child,
+                                int repeat) {
+    updCompInfo(parent, child, repeat);
     updAreaInfo(parent, child);
+}
+
+void StructuralFeature::calcCompFeatures(const Stmt &node) {
+    features_[node->id()].opCnt_ = info_[node].opCnt_;
 }
 
 int64_t StructuralFeature::calcArea(const NodeBufferInfo &bufInfo) {
@@ -146,6 +164,7 @@ void StructuralFeature::calcAreaFeatures(const Stmt &node) {
 }
 
 void StructuralFeature::calcFeatures(const Stmt &node) {
+    calcCompFeatures(node);
     calcAreaFeatures(node);
 }
 
@@ -230,6 +249,9 @@ Stmt StructuralFeature::visit(const ReduceTo &_op) {
         accesses.hi_.emplace_back(getUpper(idx));
     }
 
+    info_[op].opCnt_[upCast(buffers_.at(op->var_)->tensor().dtype(),
+                            dtype(op->expr_))]++;
+
     for (auto &&idx : op->indices_) {
         updInfo(op, idx);
     }
@@ -284,7 +306,11 @@ Stmt StructuralFeature::visit(const For &_op) {
 
     updInfo(op, op->begin_);
     updInfo(op, op->end_);
-    updInfo(op, op->body_);
+    if (auto intLen = getInt(op->len_); intLen.isValid()) {
+        updInfo(op, op->body_, *intLen);
+    } else {
+        updInfo(op, op->body_, -1);
+    }
 
     return op;
 }
