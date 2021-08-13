@@ -11,8 +11,7 @@ void FindMultiLevelTiling::visit(const For &op) {
                     "supported.");
     }
     storeBuf();
-    stack_.push_back({op->id(), op->begin_.as<IntConstNode>()->val_,
-                      op->end_.as<IntConstNode>()->val_});
+    stack_.push_back({op->id(), op->len_.as<IntConstNode>()->val_});
     stackMarkBranch_.push_back(false);
     Visitor::visit(op);
     if (stackMarkBranch_.back()) {
@@ -107,8 +106,7 @@ bool FindMultiLevelTiling::hasStore(const For &op) {
 }
 
 void FindHasStore::visit(const For &op) {
-    stack_.push_back({op->id(), op->begin_.as<IntConstNode>()->val_,
-                      op->end_.as<IntConstNode>()->val_});
+    stack_.push_back({op->id(), op->len_.as<IntConstNode>()->val_});
     Visitor::visit(op);
     stack_.pop_back();
 }
