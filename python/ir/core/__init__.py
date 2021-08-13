@@ -29,6 +29,7 @@ from .nodes import (
     any,
     Func,
 )
+from .analyze import *
 from .passes import *
 from .schedule import *
 from .codegen import codegen
