@@ -14,7 +14,10 @@ namespace ir {
 struct NodeFeature {
     // -1 means unknown
     std::unordered_map<DataType, int64_t> opCnt_;
-    std::unordered_map<MemType, int64_t> loadArea_, storeArea_, accessArea_;
+    std::unordered_map<MemType, int64_t> loadCnt_, storeCnt_,
+        accessCnt_; // Memory access count
+    std::unordered_map<MemType, int64_t> loadArea_, storeArea_,
+        accessArea_; // memory footprint
 };
 
 /**
@@ -41,6 +44,7 @@ class StructuralFeature : public CompUniqueBounds {
      */
     struct NodeInfo {
         std::unordered_map<DataType, int64_t> opCnt_;
+        std::unordered_map<MemType, int64_t> loadCnt_, storeCnt_, accessCnt_;
 
         std::unordered_map<MemType, int64_t> innerLoadArea_, innerStoreArea_,
             innerAccessArea_;
@@ -68,11 +72,13 @@ class StructuralFeature : public CompUniqueBounds {
 
   private:
     void updCompInfo(const AST &parent, const AST &child, int repeat = 1);
+    void updAccCntInfo(const AST &parent, const AST &child, int repeat = 1);
     void updAreaInfo(const AST &parent, const AST &child);
     void updInfo(const AST &parent, const AST &child,
                  int repeat = 1); // repeat = -1 means unknown
 
     void calcCompFeatures(const Stmt &parent);
+    void calcAccCntFeatures(const Stmt &parent);
     int64_t calcArea(const NodeBufferInfo &bufInfo);
     void calcAreaFeatures(const Stmt &parent);
     void calcFeatures(const Stmt &parent);

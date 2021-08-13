@@ -15,6 +15,34 @@ void StructuralFeature::updCompInfo(const AST &parent, const AST &child,
     }
 }
 
+void StructuralFeature::updAccCntInfo(const AST &parent, const AST &child,
+                                      int repeat) {
+    for (auto &&item : info_[child].loadCnt_) {
+        if (info_[parent].loadCnt_[item.first] == -1 || item.second == -1 ||
+            repeat == -1) {
+            info_[parent].loadCnt_[item.first] = -1;
+        } else {
+            info_[parent].loadCnt_[item.first] += item.second * repeat;
+        }
+    }
+    for (auto &&item : info_[child].storeCnt_) {
+        if (info_[parent].storeCnt_[item.first] == -1 || item.second == -1 ||
+            repeat == -1) {
+            info_[parent].storeCnt_[item.first] = -1;
+        } else {
+            info_[parent].storeCnt_[item.first] += item.second * repeat;
+        }
+    }
+    for (auto &&item : info_[child].accessCnt_) {
+        if (info_[parent].accessCnt_[item.first] == -1 || item.second == -1 ||
+            repeat == -1) {
+            info_[parent].accessCnt_[item.first] = -1;
+        } else {
+            info_[parent].accessCnt_[item.first] += item.second * repeat;
+        }
+    }
+}
+
 void StructuralFeature::updAreaInfo(const AST &parent, const AST &child) {
     auto filter = [this](NodeBufferInfo &child) -> NodeBufferInfo {
         size_t n = child.lo_.size();
@@ -108,11 +136,18 @@ void StructuralFeature::updAreaInfo(const AST &parent, const AST &child) {
 void StructuralFeature::updInfo(const AST &parent, const AST &child,
                                 int repeat) {
     updCompInfo(parent, child, repeat);
+    updAccCntInfo(parent, child, repeat);
     updAreaInfo(parent, child);
 }
 
 void StructuralFeature::calcCompFeatures(const Stmt &node) {
     features_[node->id()].opCnt_ = info_[node].opCnt_;
+}
+
+void StructuralFeature::calcAccCntFeatures(const Stmt &node) {
+    features_[node->id()].loadCnt_ = info_[node].loadCnt_;
+    features_[node->id()].storeCnt_ = info_[node].storeCnt_;
+    features_[node->id()].accessCnt_ = info_[node].accessCnt_;
 }
 
 int64_t StructuralFeature::calcArea(const NodeBufferInfo &bufInfo) {
@@ -165,6 +200,7 @@ void StructuralFeature::calcAreaFeatures(const Stmt &node) {
 
 void StructuralFeature::calcFeatures(const Stmt &node) {
     calcCompFeatures(node);
+    calcAccCntFeatures(node);
     calcAreaFeatures(node);
 }
 
@@ -193,6 +229,9 @@ Expr StructuralFeature::visit(const Load &_op) {
         accesses.hi_.emplace_back(getUpper(idx));
     }
 
+    info_[op].loadCnt_[buffers_.at(op->var_)->mtype()]++;
+    info_[op].accessCnt_[buffers_.at(op->var_)->mtype()]++;
+
     for (auto &&idx : op->indices_) {
         updInfo(op, idx);
     }
@@ -217,6 +256,9 @@ Stmt StructuralFeature::visit(const Store &_op) {
         accesses.lo_.emplace_back(getLower(idx));
         accesses.hi_.emplace_back(getUpper(idx));
     }
+
+    info_[op].storeCnt_[buffers_.at(op->var_)->mtype()]++;
+    info_[op].accessCnt_[buffers_.at(op->var_)->mtype()]++;
 
     for (auto &&idx : op->indices_) {
         updInfo(op, idx);
@@ -251,6 +293,9 @@ Stmt StructuralFeature::visit(const ReduceTo &_op) {
 
     info_[op].opCnt_[upCast(buffers_.at(op->var_)->tensor().dtype(),
                             dtype(op->expr_))]++;
+    info_[op].loadCnt_[buffers_.at(op->var_)->mtype()]++;
+    info_[op].storeCnt_[buffers_.at(op->var_)->mtype()]++;
+    info_[op].accessCnt_[buffers_.at(op->var_)->mtype()]++;
 
     for (auto &&idx : op->indices_) {
         updInfo(op, idx);
