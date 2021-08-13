@@ -1,11 +1,19 @@
+// #include <analyze/find_all_loops.h>
+#include <analyze/find_loop_variance.h>
 #include <auto_schedule/analyze/find_multi_level_tiling.h>
 #include <auto_schedule/rules/multi_level_tiling.h>
 #include <auto_schedule/utils.h>
 
 namespace ir {
 int MultiLevelTilingRule::analyze(Schedule &schedule) {
-    FindMultiLevelTiling find;
+    FindHasStore findHasStore;
+    findHasStore(schedule.ast());
+    auto forsWithStore = findHasStore.result();
+    auto loopVariExprMap = findLoopVariance(schedule.ast()).first;
+
+    FindMultiLevelTiling find(forsWithStore, loopVariExprMap);
     find(schedule.ast());
+    find.storeBuf();
     targets = find.result();
     if (targets.empty())
         return false;
@@ -105,6 +113,13 @@ SketchPart MultiLevelTilingPart::mutate() {
     // std::cout << "Start mutating...\n";
     MultiLevelTilingPart mut = *this;
     int mut_part = random_int(1);
+    int spaceSize = target.spaceLoops.size();
+    int reduceSize = target.reductionLoops.size();
+    if (!spaceSize) {
+        mut_part = 1;
+    } else if (!reduceSize) {
+        mut_part = 0;
+    }
     if (mut_part == 0) {
         int mut_idx = random_int(target.spaceLoops.size() - 1);
         mut.annotation.spaceLoopTiling[mut_idx] = random_fill_array<4>(
@@ -126,6 +141,13 @@ SketchPart MultiLevelTilingPart::crossover(const SketchPart &part) {
     auto p = part.as<MultiLevelTilingPart>();
     MultiLevelTilingPart mut = *this;
     int mut_part = random_int(1);
+    int spaceSize = target.spaceLoops.size();
+    int reduceSize = target.reductionLoops.size();
+    if (!spaceSize) {
+        mut_part = 1;
+    } else if (!reduceSize) {
+        mut_part = 0;
+    }
     if (mut_part == 0) {
         int mut_idx = random_int(target.spaceLoops.size() - 1);
         mut.annotation.spaceLoopTiling[mut_idx] =

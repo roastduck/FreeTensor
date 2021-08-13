@@ -6,22 +6,89 @@ using std::endl;
 
 namespace ir {
 void FindMultiLevelTiling::visit(const For &op) {
-    innermost_ = true;
-    // cout << "visiting " << op->id() << endl;
-    if (op->begin_->nodeType() != ASTNodeType::IntConst ||
-        op->end_->nodeType() != ASTNodeType::IntConst) {
-        throw Error(
-            "Auto scheduling of non-constant for loop is not yet supported.");
+    if (op->len_->nodeType() != ASTNodeType::IntConst) {
+        throw Error("Auto scheduling of non-constant for loop is not yet "
+                    "supported.");
     }
+    storeBuf();
     stack_.push_back({op->id(), op->begin_.as<IntConstNode>()->val_,
                       op->end_.as<IntConstNode>()->val_});
+    stackMarkBranch_.push_back(false);
     Visitor::visit(op);
-    if (innermost_) {
-        if (stack_.size() >= 3) {
-            auto sz = stack_.size();
-            found_.push_back(
-                {std::vector<ForInfo>{stack_[sz - 3], stack_[sz - 2]},
-                 std::vector<ForInfo>{stack_[sz - 1]}});
+    if (stackMarkBranch_.back()) {
+        storeBuf();
+    }
+    if (hasStore(op)) {
+        storeBuf();
+        buf_.push_back(stack_.back());
+        bufIndices_ = forsWithStore_.at(op->id()).indices;
+        bufCheckDataReuseIndices_ =
+            forsWithStore_.at(op->id()).checkDataReuseIndices;
+    } else if (!buf_.empty()) {
+        buf_.push_back(stack_.back());
+    }
+    stack_.pop_back();
+    stackMarkBranch_.pop_back();
+}
+
+void FindMultiLevelTiling::storeBuf() {
+    if (!buf_.empty()) {
+        bool hasDataReuse = false;
+        for (const auto &infoItem : bufCheckDataReuseIndices_) {
+            std::vector<bool> checkAppear(buf_.size());
+            for (unsigned i = 0; i < infoItem.size(); i++) {
+                const auto &mapItem =
+                    loopVariExprMap_.at(bufIndices_[i].as<ExprNode>());
+                for (unsigned j = 0; j < buf_.size(); j++) {
+                    if (mapItem.count(buf_[j].id) &&
+                        mapItem.at(buf_[j].id) == LoopVariability::Variance) {
+                        checkAppear[j] = true;
+                    }
+                }
+            }
+            for (unsigned i = 0; i < buf_.size(); i++) {
+                if (!checkAppear[i]) {
+                    hasDataReuse = true;
+                    break;
+                }
+            }
+            if (hasDataReuse) {
+                break;
+            }
+        }
+
+        if (hasDataReuse) {
+            ForsWithDataReuse tmp;
+            std::vector<bool> checkAppear(buf_.size());
+            for (unsigned i = 0; i < bufIndices_.size(); i++) {
+                const auto &mapItem =
+                    loopVariExprMap_.at(bufIndices_[i].as<ExprNode>());
+                for (unsigned j = 0; j < buf_.size(); j++) {
+                    if (mapItem.count(buf_[j].id) &&
+                        mapItem.at(buf_[j].id) == LoopVariability::Variance) {
+                        checkAppear[j] = true;
+                    }
+                }
+            }
+            for (unsigned i = 0; i < buf_.size(); i++) {
+                if (checkAppear[i]) {
+                    tmp.spaceLoops.push_back(buf_[i]);
+                } else {
+                    tmp.reductionLoops.push_back(buf_[i]);
+                }
+            }
+            found_.push_back(tmp);
+        }
+
+        buf_.clear();
+        bufIndices_.clear();
+        bufCheckDataReuseIndices_.clear();
+
+        if (!stackMarkBranch_.empty()) {
+            stackMarkBranch_.back() = true;
+        }
+
+        if (hasDataReuse) {
             const auto &nw = found_.back();
             std::cout << "found ";
             for (const auto &loop : nw.spaceLoops) {
@@ -33,7 +100,40 @@ void FindMultiLevelTiling::visit(const For &op) {
             std::cout << std::endl;
         }
     }
-    innermost_ = false;
+}
+
+bool FindMultiLevelTiling::hasStore(const For &op) {
+    return forsWithStore_.count(op->id());
+}
+
+void FindHasStore::visit(const For &op) {
+    stack_.push_back({op->id(), op->begin_.as<IntConstNode>()->val_,
+                      op->end_.as<IntConstNode>()->val_});
+    Visitor::visit(op);
     stack_.pop_back();
+}
+
+void FindHasStore::visit(const Store &op) {
+    if (found_.count(stack_.back().id)) {
+        ForWithStore &forWithStore = found_.at(stack_.back().id);
+        forWithStore.indices.insert(forWithStore.indices.end(),
+                                    op->indices_.begin(), op->indices_.end());
+        forWithStore.checkDataReuseIndices.push_back(op->indices_);
+    } else {
+        found_.insert(
+            {stack_.back().id,
+             {stack_.back().id, op->indices_,
+              std::vector<std::vector<SubTree<ExprNode>>>(1, op->indices_)}});
+    }
+}
+
+void FindHasStore::visit(const Load &op) {
+    if (found_.count(stack_.back().id)) {
+        ForWithStore &forWithStore = found_.at(stack_.back().id);
+        forWithStore.checkDataReuseIndices.push_back(op->indices_);
+    } else {
+        throw Error(
+            "A load node appearing without a store node is not supported yet.");
+    }
 }
 } // namespace ir
