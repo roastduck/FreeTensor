@@ -11,8 +11,12 @@ void FindMultiLevelTiling::visit(const For &op) {
                     "supported.");
     }
     storeBuf();
+    if (!downward && !stackMarkBranch_.empty()) {
+        stackMarkBranch_.back() = true;
+    }
     stack_.push_back({op->id(), op->len_.as<IntConstNode>()->val_});
     stackMarkBranch_.push_back(false);
+    downward = true;
     Visitor::visit(op);
     if (stackMarkBranch_.back()) {
         storeBuf();
@@ -28,6 +32,7 @@ void FindMultiLevelTiling::visit(const For &op) {
     }
     stack_.pop_back();
     stackMarkBranch_.pop_back();
+    downward = false;
 }
 
 void FindMultiLevelTiling::storeBuf() {
@@ -82,10 +87,6 @@ void FindMultiLevelTiling::storeBuf() {
         buf_.clear();
         bufIndices_.clear();
         bufCheckDataReuseIndices_.clear();
-
-        if (!stackMarkBranch_.empty()) {
-            stackMarkBranch_.back() = true;
-        }
 
         if (hasDataReuse) {
             const auto &nw = found_.back();

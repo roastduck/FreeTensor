@@ -46,6 +46,7 @@ class FindMultiLevelTiling : public Visitor {
     std::vector<ForInfo> buf_;
     std::vector<SubTree<ExprNode>> bufIndices_;
     std::vector<std::vector<SubTree<ExprNode>>> bufCheckDataReuseIndices_;
+    bool downward = true;
 
     std::vector<ForsWithDataReuse> found_;
 
