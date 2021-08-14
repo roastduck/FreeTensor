@@ -15,8 +15,9 @@ class AutoSchedule(ffi.AutoSchedule):
         dtrain = xgb.DMatrix(annotations, times)
         params = {}
         booster = xgb.train(params, dtrain)
-        rand_num = min(iteration, 16)
+        block = iteration // 20
         for i in range(iteration):
+            rand_num = max(0, 16 - i // block)
             print("iteration {} rand {}".format(i, rand_num))
             sketches = super(AutoSchedule, self).get_random_sketches(100)
             annotations = []
@@ -34,5 +35,4 @@ class AutoSchedule(ffi.AutoSchedule):
             times = np.array(times)
             dtrain = xgb.DMatrix(annotations, times)
             booster = xgb.train(params, dtrain, xgb_model=booster)
-            rand_num = max(0, rand_num - 1)
         return super(AutoSchedule, self).get_best_schedule()
