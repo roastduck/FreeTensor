@@ -231,6 +231,7 @@ Schedule::fission(const std::string &loop, const std::string &after,
 std::string Schedule::fuse(const std::string &loop0, const std::string &loop1) {
     auto ast = ast_;
     FuseFor mutator(loop0, loop1);
+    CheckAccessible check(loop0, loop1);
     try {
         auto found = [&](const Dependency &d) {
             ASSERT(d.cond_.size() == 1);
@@ -238,6 +239,23 @@ std::string Schedule::fuse(const std::string &loop0, const std::string &loop1) {
                 dep2Str(d.cond_[0].first, d.var_, d.later(), d.earlier()));
         };
         findDeps(ast, {{{loop0, DepDirection::Inv}}}, found);
+
+        check(ast);
+
+        for (auto &&stmt : check.loop1().surroundings_) {
+            if (stmt->nodeType() == ASTNodeType::VarDef) {
+                for (auto shape :
+                     stmt.as<VarDefNode>()->buffer_->tensor().shape()) {
+                    if (!checkNotModified(
+                            ast, shape, CheckNotModifiedSide::Before, loop0,
+                            CheckNotModifiedSide::Before, loop1)) {
+                        throw InvalidSchedule((
+                            std::string) "The shape of Vars in loop1 shouldn't "
+                                         "be changed in loop0");
+                    }
+                }
+            }
+        }
 
         ast = mutator(ast);
 

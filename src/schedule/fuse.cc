@@ -5,13 +5,6 @@ namespace ir {
 
 namespace {
 
-struct LoopInVarDefs {
-    For loop_;
-    std::vector<Stmt> surroundings_; // inner to outer
-};
-
-enum class FindLoopInVarDefsDirection : int { Front, Back };
-
 LoopInVarDefs findLoopInVarDefs(const Stmt &stmt, const std::string &id,
                                 FindLoopInVarDefsDirection direction) {
     if (stmt->id() == id) {
@@ -100,8 +93,6 @@ Stmt FuseFor::visit(const StmtSeq &_op) {
                                  makeStmtSeq("", {loop0->body_, loop1->body_}));
 
             // From inner to outer
-            // FIXME: Check the VarDefs can really be hoisted via
-            // check_not_modified
             for (auto &&stmt : loop1InVarDefs.surroundings_) {
                 if (stmt->nodeType() == ASTNodeType::VarDef) {
                     auto def = stmt.as<VarDefNode>();
@@ -138,6 +129,28 @@ Stmt FuseFor::visit(const StmtSeq &_op) {
         }
     }
     return op;
+}
+
+void CheckAccessible::visit(const StmtSeq &_op) {
+    Visitor::visit(_op);
+    ASSERT(_op->nodeType() == ASTNodeType::StmtSeq);
+    auto op = _op.as<StmtSeqNode>();
+    for (size_t i = 0, iEnd = op->stmts_.size(); i < iEnd; i++) {
+        loop0InVarDefs = findLoopInVarDefs(op->stmts_[i], id0_,
+                                           FindLoopInVarDefsDirection::Back);
+        if (loop0InVarDefs.loop_.isValid()) {
+            if (i + 1 == iEnd) {
+                throw InvalidSchedule("Fuse: Loop " + id0_ + " and " + id1_ +
+                                      " shuold be directly following");
+            }
+            loop1InVarDefs = findLoopInVarDefs(
+                op->stmts_[i + 1], id1_, FindLoopInVarDefsDirection::Front);
+            if (!loop1InVarDefs.loop_.isValid()) {
+                throw InvalidSchedule("Fuse: Loop " + id0_ + " and " + id1_ +
+                                      " shuold be directly following");
+            }
+        }
+    }
 }
 
 } // namespace ir
