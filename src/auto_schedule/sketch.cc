@@ -17,7 +17,7 @@ Sketch::Sketch(const Schedule &schedule)
 void Sketch::addPart(const SketchPart &p) { parts_.push_back(p); }
 
 Schedule Sketch::genSchedule() const {
-    assert(annotated_);
+    // assert(annotated_);
     Schedule schedule = schedule_.clone();
     for (const auto &part : parts_)
         part->apply(schedule);

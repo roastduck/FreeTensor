@@ -1,7 +1,7 @@
 #ifndef IR_MULTI_LEVEL_TILING_H
 #define IR_MULTI_LEVEL_TILING_H
 
-#include <auto_schedule/analyze/find_multi_level_tiling.h>
+#include <analyze/find_multi_level_tiling.h>
 #include <auto_schedule/rule.h>
 #include <auto_schedule/sketch.h>
 
@@ -9,13 +9,12 @@
 
 namespace ir {
 struct MultiLevelTilingAnnotation {
-    std::array<int, 4> i_tiling;
-    std::array<int, 4> j_tiling;
-    std::array<int, 2> k_tiling;
+    std::vector<std::array<int, 4>> spaceLoopTiling;
+    std::vector<std::array<int, 2>> reductionLoopTiling;
 };
 
 class MultiLevelTilingRule : public Rule {
-    std::vector<ThreeNestedFors> targets;
+    std::vector<ForsWithDataReuse> targets;
 
   public:
     int analyze(Schedule &schedule) override;
@@ -23,12 +22,12 @@ class MultiLevelTilingRule : public Rule {
 };
 
 class MultiLevelTilingPart : public SketchPartNode {
-    ThreeNestedFors target;
+    ForsWithDataReuse target;
     MultiLevelTilingAnnotation annotation;
 
   public:
     void genRandAnnotation() override;
-    explicit MultiLevelTilingPart(ThreeNestedFors);
+    explicit MultiLevelTilingPart(ForsWithDataReuse);
     void apply(Schedule &schedule) override;
     SketchPart mutate() override;
     SketchPart crossover(const SketchPart &part) override;
