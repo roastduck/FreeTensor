@@ -1,7 +1,7 @@
 #ifndef IR_MULTI_LEVEL_TILING_H
 #define IR_MULTI_LEVEL_TILING_H
 
-#include <auto_schedule/analyze/find_multi_level_tiling.h>
+#include <analyze/find_multi_level_tiling.h>
 #include <auto_schedule/rule.h>
 #include <auto_schedule/sketch.h>
 

@@ -1,20 +1,11 @@
 // #include <analyze/find_all_loops.h>
-#include <analyze/find_loop_variance.h>
-#include <auto_schedule/analyze/find_multi_level_tiling.h>
+#include <analyze/find_multi_level_tiling.h>
 #include <auto_schedule/rules/multi_level_tiling.h>
 #include <auto_schedule/utils.h>
 
 namespace ir {
 int MultiLevelTilingRule::analyze(Schedule &schedule) {
-    FindHasStore findHasStore;
-    findHasStore(schedule.ast());
-    auto forsWithStore = findHasStore.result();
-    auto loopVariExprMap = findLoopVariance(schedule.ast()).first;
-
-    FindMultiLevelTiling find(forsWithStore, loopVariExprMap);
-    find(schedule.ast());
-    find.storeBuf();
-    targets = find.result();
+    targets = findMultiLevelTiling(schedule.ast());
     if (targets.empty())
         return false;
     return true;

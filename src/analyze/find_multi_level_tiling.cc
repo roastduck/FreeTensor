@@ -1,4 +1,4 @@
-#include <auto_schedule/analyze/find_multi_level_tiling.h>
+#include <analyze/find_multi_level_tiling.h>
 #include <iostream>
 
 using std::cout;
@@ -42,7 +42,7 @@ void FindMultiLevelTiling::storeBuf() {
             std::vector<bool> checkAppear(buf_.size());
             for (unsigned i = 0; i < infoItem.size(); i++) {
                 const auto &mapItem =
-                    loopVariExprMap_.at(bufIndices_[i].as<ExprNode>());
+                    loopVariExprMap_.at(infoItem[i].as<ExprNode>());
                 for (unsigned j = 0; j < buf_.size(); j++) {
                     if (mapItem.count(buf_[j].id) &&
                         mapItem.at(buf_[j].id) == LoopVariability::Variance) {
@@ -88,17 +88,17 @@ void FindMultiLevelTiling::storeBuf() {
         bufIndices_.clear();
         bufCheckDataReuseIndices_.clear();
 
-        if (hasDataReuse) {
-            const auto &nw = found_.back();
-            std::cout << "found ";
-            for (const auto &loop : nw.spaceLoops) {
-                std::cout << "S " << loop.id << " ";
-            }
-            for (const auto &loop : nw.reductionLoops) {
-                std::cout << "R " << loop.id << " ";
-            }
-            std::cout << std::endl;
-        }
+        // if (hasDataReuse) {
+        //     const auto &nw = found_.back();
+        //     std::cout << "found ";
+        //     for (const auto &loop : nw.spaceLoops) {
+        //         std::cout << "S " << loop.id << " ";
+        //     }
+        //     for (const auto &loop : nw.reductionLoops) {
+        //         std::cout << "R " << loop.id << " ";
+        //     }
+        //     std::cout << std::endl;
+        // }
     }
 }
 
@@ -124,6 +124,7 @@ void FindHasStore::visit(const Store &op) {
              {stack_.back().id, op->indices_,
               std::vector<std::vector<SubTree<ExprNode>>>(1, op->indices_)}});
     }
+    Visitor::visit(op);
 }
 
 void FindHasStore::visit(const Load &op) {

@@ -68,6 +68,40 @@ class FindMultiLevelTiling : public Visitor {
     bool hasStore(const For &op);
 };
 
+inline std::vector<ForsWithDataReuse> findMultiLevelTiling(const AST &ast) {
+    FindHasStore findHasStore;
+    findHasStore(ast);
+    auto forsWithStore = findHasStore.result();
+    auto loopVariExprMap = findLoopVariance(ast).first;
+
+    FindMultiLevelTiling find(forsWithStore, loopVariExprMap);
+    find(ast);
+    find.storeBuf();
+    return find.result();
+}
+
+inline std::vector<std::string> fakeFindMultiLevelTiling(const AST &ast) {
+    std::vector<ForsWithDataReuse> src = findMultiLevelTiling(ast);
+    std::vector<std::string> ret;
+    std::string s("S "), r("R "), sp(" ");
+    for (unsigned i = 0; i < src.size(); i++) {
+        std::string item;
+        const ForsWithDataReuse &nw = src[i];
+        for (const auto &loop : nw.spaceLoops) {
+            item.append(s);
+            item.append(loop.id);
+            item.append(sp);
+        }
+        for (const auto &loop : nw.reductionLoops) {
+            item.append(r);
+            item.append(loop.id);
+            item.append(sp);
+        }
+        ret.push_back(item);
+    }
+    return ret;
+}
+
 } // namespace ir
 
 #endif // IR_FIND_MULTI_LEVEL_TILING_H
