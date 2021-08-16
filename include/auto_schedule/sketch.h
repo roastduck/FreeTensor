@@ -21,19 +21,15 @@ class SketchPartNode {
 };
 
 class Sketch {
-    Schedule schedule_;
     std::vector<SketchPart> parts_;
-    bool annotated_;
     double time_;
 
   public:
     Sketch() = default;
 
-    explicit Sketch(const Schedule &schedule);
-
     Sketch genRandAnnotation() const;
 
-    Schedule genSchedule() const;
+    Schedule genSchedule(const Schedule &original) const;
 
     void addPart(const SketchPart &);
 
