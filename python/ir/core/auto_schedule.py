@@ -9,30 +9,27 @@ class AutoSchedule(ffi.AutoSchedule):
         super(AutoSchedule, self).set_params(args, kws)
 
     def run(self, iteration):
-        annotations, times = super(AutoSchedule, self).init(20)
-        annotations = np.array(annotations)
-        times = np.array(times)
-        dtrain = xgb.DMatrix(annotations, times)
-        params = {}
-        booster = xgb.train(params, dtrain)
-        block = iteration // 20
+        xgb_params = {}
+        sketches = self.get_random_sketches(self.n_candidates())
+        schedules = self.gen_schedules(sketches)
+        features = self.gen_features(schedules)
+        times = self.test_and_add(sketches, schedules)
+        dtrain = xgb.DMatrix(np.array(features), np.array(times), missing=-1)
+        booster = xgb.train(xgb_params, dtrain)
         for i in range(iteration):
-            rand_num = max(0, 16 - i // block)
-            print("iteration {} rand {}".format(i, rand_num))
-            sketches = super(AutoSchedule, self).get_random_sketches(100)
-            annotations = []
-            for sketch in sketches:
-                annotations.append(sketch.get_annotation())
-            annotations = np.array(annotations)
-            annotations = xgb.DMatrix(annotations)
-            pred = booster.predict(annotations)
-            sketch_preds = list(zip(pred, sketches))[rand_num:]
-            sketch_preds.sort(key=lambda x: x[0])
-            sketches[rand_num:] = list(zip(*sketch_preds))[1][:20 - rand_num]
-            annotations, times = super(AutoSchedule,
-                                       self).test_and_add(sketches)
-            annotations = np.array(annotations)
-            times = np.array(times)
-            dtrain = xgb.DMatrix(annotations, times)
-            booster = xgb.train(params, dtrain, xgb_model=booster)
+            rand_num = int((iteration - i) * 0.8)
+            print("iteration {}".format(i))
+            sketches = self.get_random_sketches(self.n_predict())
+            schedules = self.gen_schedules(sketches)
+            features = self.gen_features(schedules)
+            pred = booster.predict(xgb.DMatrix(np.array(features), missing=-1))
+            pack = list(zip(pred, sketches, schedules, features))
+            pack[rand_num:].sort(key=lambda x: x[0])
+            pack = pack[:self.n_candidates()]
+            pred, sketches, schedules, features = zip(*pack)
+            times = self.test_and_add(sketches, schedules)
+            dtrain = xgb.DMatrix(np.array(features),
+                                 np.array(times),
+                                 missing=-1)
+            booster = xgb.train(xgb_params, dtrain, xgb_model=booster)
         return super(AutoSchedule, self).get_best_schedule()

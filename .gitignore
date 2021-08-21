@@ -1,6 +1,6 @@
 /build
 __pycache__
-/.vscode/settings.json
+/.vscode
 
 # Vim
 *.swp

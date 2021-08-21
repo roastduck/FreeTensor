@@ -11,14 +11,10 @@ Sketch Sketch::genRandAnnotation() const {
     return sketch;
 }
 
-Sketch::Sketch(const Schedule &schedule)
-    : schedule_(schedule), annotated_(false) {}
-
 void Sketch::addPart(const SketchPart &p) { parts_.push_back(p); }
 
-Schedule Sketch::genSchedule() const {
-    assert(annotated_);
-    Schedule schedule = schedule_.clone();
+Schedule Sketch::genSchedule(const Schedule &original) const {
+    Schedule schedule = original.clone();
     for (const auto &part : parts_)
         part->apply(schedule);
     return schedule;

@@ -1,3 +1,5 @@
+#include <analyze/find_multi_level_tiling.h>
+#include <analyze/fixed_length_feature.h>
 #include <analyze/structural_feature.h>
 #include <ffi.h>
 
@@ -15,6 +17,10 @@ void init_ffi_analyze(py::module_ &m) {
         .def_readonly("store_area", &NodeFeature::storeArea_)
         .def_readonly("access_area", &NodeFeature::accessArea_);
     m.def("structural_feature", structuralFeature);
+
+    m.def("fixed_length_feature", fixedLengthFeature);
+
+    m.def("find_multi_level_tiling", fakeFindMultiLevelTiling);
 }
 
 } // namespace ir
