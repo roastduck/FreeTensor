@@ -113,14 +113,20 @@ class Var(ffi.FrontendVar):
                 assert idx.step is None or idx.step == 1
                 ffiIdx.append(ffi.FrontendVarIdx(start, stop))
             elif isinstance(idx, Var):
-                assert len(key) == 1, "Shape of an index should be 1-D"
-                assert type(
-                    idx.shape[0]
-                ) is ffi.IntConst, "Dynamic number of dimensions is not supported"
-                ndim = idx.shape[0].val
-                ffiIdx += [
-                    ffi.FrontendVarIdx(idx[i].as_load()) for i in range(ndim)
-                ]
+                if len(idx.shape) == len(idx.indices):
+                    ffiIdx.append(ffi.FrontendVarIdx(idx.as_load()))
+                else:
+                    assert len(
+                        key
+                    ) == 1, f"Shape of an index of {self.name} should be 1-D, instead of {idx.name}"
+                    assert type(
+                        idx.shape[0]
+                    ) is ffi.IntConst, "Dynamic number of dimensions is not supported"
+                    ndim = idx.shape[0].val
+                    ffiIdx += [
+                        ffi.FrontendVarIdx(idx[i].as_load())
+                        for i in range(ndim)
+                    ]
             else:
                 ffiIdx.append(ffi.FrontendVarIdx(idx))
         return ffiIdx

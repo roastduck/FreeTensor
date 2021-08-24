@@ -355,6 +355,10 @@ void init_ffi_ast(py::module_ &m) {
         .def(
             "__ne__",
             [](const Expr &lhs, const Expr &rhs) { return makeNE(lhs, rhs); },
+            py::is_operator())
+        .def(
+            "__neg__",
+            [](const Expr &expr) { return makeSub(makeIntConst(0), expr); },
             py::is_operator());
     py::implicitly_convertible<int, ExprNode>();
     py::implicitly_convertible<float, ExprNode>();
