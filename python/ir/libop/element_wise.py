@@ -198,11 +198,11 @@ def relu(t_x: StaticType, t_y: StaticType, io_mem, idx_dtype="int32"):
 
 
 def abs_(t_x: StaticType, t_y: StaticType, io_mem, idx_dtype="int32"):
-    return _unary_op_(t_x, t_y, io_mem, lambda x: core.max(x, -x), idx_dtype)
+    return _unary_op_(t_x, t_y, io_mem, lambda x: core.abs(x), idx_dtype)
 
 
 def abs(t_x: StaticType, t_y: StaticType, io_mem, idx_dtype="int32"):
-    return _unary_op(t_x, t_y, io_mem, lambda x: core.max(x, -x), idx_dtype)
+    return _unary_op(t_x, t_y, io_mem, lambda x: core.abs(x), idx_dtype)
 
 
 def sqrt_(t_x: StaticType, t_y: StaticType, io_mem, idx_dtype="int32"):

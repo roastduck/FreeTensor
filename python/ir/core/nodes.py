@@ -353,6 +353,10 @@ def max(lhs, rhs):
     return ffi.makeMax(lhs, rhs)
 
 
+def abs(expr):
+    return max(expr, -expr)
+
+
 def l_and(lhs, rhs):
     if type(lhs) is bool and type(rhs) is bool:
         return lhs and rhs
