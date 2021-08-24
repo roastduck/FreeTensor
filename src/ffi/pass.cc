@@ -11,6 +11,7 @@
 #include <pass/make_reduction.h>
 #include <pass/merge_and_hoist_if.h>
 #include <pass/move_out_first_or_last_iter.h>
+#include <pass/prop_const.h>
 #include <pass/remove_dead_var.h>
 #include <pass/remove_writes.h>
 #include <pass/seperate_tail.h>
@@ -75,6 +76,11 @@ void init_ffi_pass(py::module_ &m) {
     m.def("make_atomic", static_cast<Func (*)(const Func &)>(&makeAtomic),
           "func"_a);
     m.def("make_atomic", static_cast<Stmt (*)(const Stmt &)>(&makeAtomic),
+          "stmt"_a);
+
+    m.def("prop_const", static_cast<Func (*)(const Func &)>(&propConst),
+          "func"_a);
+    m.def("prop_const", static_cast<Stmt (*)(const Stmt &)>(&propConst),
           "stmt"_a);
 
     m.def("remove_writes", static_cast<Func (*)(const Func &)>(&removeWrites),

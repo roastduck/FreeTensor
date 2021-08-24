@@ -11,6 +11,7 @@
 #include <pass/make_const_shape.h>
 #include <pass/merge_and_hoist_if.h>
 #include <pass/move_out_first_or_last_iter.h>
+#include <pass/prop_const.h>
 #include <pass/remove_dead_var.h>
 #include <pass/remove_writes.h>
 #include <pass/seperate_tail.h>
@@ -30,8 +31,9 @@ template <class T> T lower(const T &t, const Ref<Target> &target) {
     func = shrinkVar(func);
     func = mergeAndHoistIf(func);
     func = seperateTail(func);
+    func = propConst(func);
     func = removeWrites(func);  // After seperate_tail
-    func = removeDeadVar(func); // After remove_writes
+    func = removeDeadVar(func); // After remove_writes and prop_const
     func = shrinkFor(func);     // After seperate_tail and remove_writes
 
     if (target.isValid()) {
