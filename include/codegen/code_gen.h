@@ -22,8 +22,9 @@ template <class Stream> class CodeGen : public Visitor {
   protected:
     std::vector<Stream> streamStack_, poppedStream_;
 
-    // var name -> (stream name, buffer)
-    std::unordered_map<std::string, std::pair<std::string, Ref<Buffer>>> vars_;
+    std::unordered_map<std::string, Ref<Buffer>> buffers_; // var name -> buffer
+    std::unordered_map<std::string, std::string>
+        var2Stream_; // var name -> stream name
 
     void makeIndent();
 
@@ -38,6 +39,7 @@ template <class Stream> class CodeGen : public Visitor {
 
     void markDef(const std::string &name, const Ref<Buffer> &buffer);
     void markUse(const std::string &name);
+    void markUndef(const std::string &name);
 
     void pushStream(const std::string &name);
     void popStream();

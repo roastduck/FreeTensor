@@ -179,6 +179,9 @@ class Var(ffi.FrontendVar):
     def __ne__(self, other):
         return self.as_load() != other
 
+    def __neg__(self):
+        return 0 - self.as_load()
+
 
 class _VarDef:
 

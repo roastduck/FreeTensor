@@ -48,7 +48,7 @@ void CodeGenCUDA::visit(const Exp &op) {
 
 void CodeGenCUDA::visit(const ReduceTo &op) {
     auto id = normalizeId(op->var_);
-    markUse(id);
+    markUse(op->var_);
     makeIndent();
 
     auto genAddr = [&]() {
@@ -167,7 +167,7 @@ void CodeGenCUDA::visit(const For &op) {
                  << "), " << std::to_string(sharedSize) << ">>>(";
             bool first = true;
             for (auto &&item : stream.uses_) {
-                os() << (first ? "" : ", ") << item.first;
+                os() << (first ? "" : ", ") << normalizeId(item.first);
                 first = false;
             }
             os() << ");" << std::endl;
@@ -193,7 +193,7 @@ void CodeGenCUDA::visit(const VarDef &op) {
                             "supported yet");
             }
 
-            markDef(normalizeId(op->name_), op->buffer_);
+            markDef(op->name_, op->buffer_);
 
             // e.g.
             // float (*x)[5][5];  // CUDA does not allow "restrict" here
@@ -222,11 +222,12 @@ void CodeGenCUDA::visit(const VarDef &op) {
 
             makeIndent();
             os() << "cudaFree(" << normalizeId(op->name_) << ");" << std::endl;
+            markUndef(op->name_);
             break;
         }
 
         case MemType::GPUShared: {
-            markDef(normalizeId(op->name_), op->buffer_);
+            markDef(op->name_, op->buffer_);
 
             // A static shared memory array cannot be larger than 48KB (maybe a
             // bug of NVCC), so we allocate shared memory dynamically
@@ -269,6 +270,7 @@ void CodeGenCUDA::visit(const VarDef &op) {
             (*this)(op->body_);
             sharedStackTop_ -= size;
 
+            markUndef(op->name_);
             break;
         }
 
@@ -329,7 +331,7 @@ extern "C" {
                         ASSERT((*it)->nodeType() == ASTNodeType::IntConst);
                         os << ", " << (*it).as<IntConstNode>()->val_ << ">";
                     }
-                    os << " " << item.first;
+                    os << " " << visitor.normalizeId(item.first);
                     break;
 
                 default:
@@ -338,7 +340,7 @@ extern "C" {
                         os << "const ";
                     }
                     os << CodeGenCUDA::gen(tensor.dtype()) << " (*restrict ";
-                    os << item.first << ")";
+                    os << visitor.normalizeId(item.first) << ")";
                     for (size_t i = 1, iEnd = shape.size(); i < iEnd;
                          i++) { // No shape[0]
                         ASSERT(shape[i]->nodeType() == ASTNodeType::IntConst);

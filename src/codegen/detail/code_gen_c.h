@@ -13,6 +13,11 @@
 
 namespace ir {
 
+template <class Stream> DataType CodeGenC<Stream>::dtype(const Expr &op) {
+    typeInfer_(op);
+    return typeInfer_.types().at(op);
+}
+
 template <class Stream> void CodeGenC<Stream>::visit(const StmtSeq &op) {
     for (auto &&stmt : op->stmts_) {
         if (stmt->nodeType() == ASTNodeType::VarDef) {
@@ -27,7 +32,7 @@ template <class Stream> void CodeGenC<Stream>::visit(const StmtSeq &op) {
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
-    this->markDef(normalizeId(op->name_), op->buffer_);
+    this->markDef(op->name_, op->buffer_);
 
     this->makeIndent();
     auto &&tensor = op->buffer_->tensor();
@@ -136,6 +141,8 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
     }
 
     (*this)(op->body_);
+
+    this->markUndef(op->name_);
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const Var &op) {
@@ -145,7 +152,7 @@ template <class Stream> void CodeGenC<Stream>::visit(const Var &op) {
 
 template <class Stream> void CodeGenC<Stream>::visit(const Store &op) {
     auto id = normalizeId(op->var_);
-    this->markUse(id);
+    this->markUse(op->var_);
 
     this->makeIndent();
     if (op->indices_.empty()) {
@@ -165,10 +172,10 @@ template <class Stream> void CodeGenC<Stream>::visit(const Store &op) {
 
 template <class Stream> void CodeGenC<Stream>::visit(const Load &op) {
     auto id = normalizeId(op->var_);
-    this->markUse(id);
+    this->markUse(op->var_);
 
     if (op->indices_.empty()) {
-        if (this->vars_.at(id).second->mtype() == MemType::ByValue) {
+        if (this->buffers_.at(op->var_)->mtype() == MemType::ByValue) {
             this->os() << id;
         } else {
             this->os() << "*" << id;
@@ -185,7 +192,7 @@ template <class Stream> void CodeGenC<Stream>::visit(const Load &op) {
 
 template <class Stream> void CodeGenC<Stream>::visit(const ReduceTo &op) {
     auto id = normalizeId(op->var_);
-    this->markUse(id);
+    this->markUse(op->var_);
 
     this->makeIndent();
 
@@ -211,11 +218,19 @@ template <class Stream> void CodeGenC<Stream>::visit(const ReduceTo &op) {
         genAddr(), this->os() << " *= ", genExpr();
         break;
     case ReduceOp::Min:
-        genAddr(), this->os() << " = std::min(";
+        genAddr(), this->os()
+                       << " = std::min<"
+                       << this->gen(
+                              this->buffers_.at(op->var_)->tensor().dtype())
+                       << ">(";
         genAddr(), this->os() << ", ", genExpr(), this->os() << ")";
         break;
     case ReduceOp::Max:
-        genAddr(), this->os() << " = std::max(";
+        genAddr(), this->os()
+                       << " = std::max<"
+                       << this->gen(
+                              this->buffers_.at(op->var_)->tensor().dtype())
+                       << ">(";
         genAddr(), this->os() << ", ", genExpr(), this->os() << ")";
         break;
     default:
@@ -287,7 +302,7 @@ void CodeGenC<Stream>::visit(const RoundTowards0Div &op) {
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const FloorDiv &op) {
-    this->os() << "floorDiv(";
+    this->os() << "floorDiv<" << this->gen(this->dtype(op)) << ">(";
     (*this)(op->lhs_);
     this->os() << ", ";
     (*this)(op->rhs_);
@@ -295,7 +310,7 @@ template <class Stream> void CodeGenC<Stream>::visit(const FloorDiv &op) {
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const CeilDiv &op) {
-    this->os() << "ceilDiv(";
+    this->os() << "ceilDiv<" << this->gen(this->dtype(op)) << ">(";
     (*this)(op->lhs_);
     this->os() << ", ";
     (*this)(op->rhs_);
@@ -311,7 +326,7 @@ template <class Stream> void CodeGenC<Stream>::visit(const Mod &op) {
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const Min &op) {
-    this->os() << "std::min("; // TODO: Pure C?
+    this->os() << "std::min<" << this->gen(this->dtype(op)) << ">(";
     (*this)(op->lhs_);
     this->os() << ", ";
     (*this)(op->rhs_);
@@ -319,7 +334,7 @@ template <class Stream> void CodeGenC<Stream>::visit(const Min &op) {
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const Max &op) {
-    this->os() << "std::max("; // TODO: Pure C?
+    this->os() << "std::max<" << this->gen(this->dtype(op)) << ">(";
     (*this)(op->lhs_);
     this->os() << ", ";
     (*this)(op->rhs_);
