@@ -116,27 +116,39 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
             break;
 
         default:
-            // e.g.
-            // const float (*restrict x)[5][5] = (float(*)[5][5])_params[0];
-            if (op->buffer_->atype() == AccessType::Input) {
-                this->os() << "const ";
+            if (shape.empty()) {
+                // e.g.
+                // const float &x = *((float*)_params[0]);
+                if (op->buffer_->atype() == AccessType::Input) {
+                    this->os() << "const ";
+                }
+                this->os() << gen(tensor.dtype()) << " &";
+                this->os() << name << " ";
+                this->os() << " = *((" << gen(tensor.dtype()) << "*)_params["
+                           << nthParam << "]);" << std::endl;
+            } else {
+                // e.g.
+                // const float (*restrict x)[5][5] = (float(*)[5][5])_params[0];
+                if (op->buffer_->atype() == AccessType::Input) {
+                    this->os() << "const ";
+                }
+                this->os() << gen(tensor.dtype()) << " (*restrict ";
+                this->os() << name << ")";
+                for (size_t i = 1, iEnd = shape.size(); i < iEnd;
+                     i++) { // No shape[0]
+                    this->os() << "[";
+                    (*this)(shape[i]);
+                    this->os() << "]";
+                }
+                this->os() << " = (" << gen(tensor.dtype()) << "(*)";
+                for (size_t i = 1, iEnd = shape.size(); i < iEnd;
+                     i++) { // No shape[0]
+                    this->os() << "[";
+                    (*this)(shape[i]);
+                    this->os() << "]";
+                }
+                this->os() << ")_params[" << nthParam << "];" << std::endl;
             }
-            this->os() << gen(tensor.dtype()) << " (*restrict ";
-            this->os() << name << ")";
-            for (size_t i = 1, iEnd = shape.size(); i < iEnd;
-                 i++) { // No shape[0]
-                this->os() << "[";
-                (*this)(shape[i]);
-                this->os() << "]";
-            }
-            this->os() << " = (" << gen(tensor.dtype()) << "(*)";
-            for (size_t i = 1, iEnd = shape.size(); i < iEnd;
-                 i++) { // No shape[0]
-                this->os() << "[";
-                (*this)(shape[i]);
-                this->os() << "]";
-            }
-            this->os() << ")_params[" << nthParam << "];" << std::endl;
         }
     }
 
@@ -156,7 +168,19 @@ template <class Stream> void CodeGenC<Stream>::visit(const Store &op) {
 
     this->makeIndent();
     if (op->indices_.empty()) {
-        this->os() << "*" << id;
+        switch (this->buffers_.at(op->var_)->mtype()) {
+        case MemType::ByValue:
+        case MemType::CPU:
+        case MemType::GPULocal:
+            this->os() << id;
+            break;
+        case MemType::GPUGlobal:
+        case MemType::GPUShared:
+            this->os() << "*" << id;
+            break;
+        default:
+            ASSERT(false);
+        }
     } else {
         this->os() << id;
         for (auto &&index : op->indices_) {
@@ -175,10 +199,18 @@ template <class Stream> void CodeGenC<Stream>::visit(const Load &op) {
     this->markUse(op->var_);
 
     if (op->indices_.empty()) {
-        if (this->buffers_.at(op->var_)->mtype() == MemType::ByValue) {
+        switch (this->buffers_.at(op->var_)->mtype()) {
+        case MemType::ByValue:
+        case MemType::CPU:
+        case MemType::GPULocal:
             this->os() << id;
-        } else {
+            break;
+        case MemType::GPUGlobal:
+        case MemType::GPUShared:
             this->os() << "*" << id;
+            break;
+        default:
+            ASSERT(false);
         }
     } else {
         this->os() << id;
@@ -198,7 +230,19 @@ template <class Stream> void CodeGenC<Stream>::visit(const ReduceTo &op) {
 
     auto genAddr = [&]() {
         if (op->indices_.empty()) {
-            this->os() << "*" << id;
+            switch (this->buffers_.at(op->var_)->mtype()) {
+            case MemType::ByValue:
+            case MemType::CPU:
+            case MemType::GPULocal:
+                this->os() << id;
+                break;
+            case MemType::GPUGlobal:
+            case MemType::GPUShared:
+                this->os() << "*" << id;
+                break;
+            default:
+                ASSERT(false);
+            }
         } else {
             this->os() << id;
             for (auto &&index : op->indices_) {

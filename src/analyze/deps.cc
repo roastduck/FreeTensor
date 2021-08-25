@@ -8,6 +8,18 @@
 
 namespace ir {
 
+static bool checkInnerScopeCrossThreads(const std::string &parallel) {
+    if (parallel == "threadIdx.x" || parallel == "threadIdx.y" ||
+        parallel == "threadIdx.z") {
+        return true;
+    }
+    if (parallel == "blockIdx.x" || parallel == "blockIdx.y" ||
+        parallel == "blockIdx.z") {
+        return true;
+    }
+    return false;
+}
+
 void FindAccessPoint::visit(const VarDef &op) {
     defAxis_[op->name_] = cur_.size();
     defs_[op->name_] = op;
@@ -29,7 +41,8 @@ void FindAccessPoint::visit(const StmtSeq &op) {
 
 void FindAccessPoint::visit(const For &op) {
     cur_.emplace_back(makeVar(op->iter_), op->begin_, op->end_,
-                      !op->parallel_.empty());
+                      !op->parallel_.empty(),
+                      checkInnerScopeCrossThreads(op->parallel_));
     scope2coord_[op->id()] = cur_;
     Visitor::visit(op);
     cur_.pop_back();
@@ -263,7 +276,7 @@ std::string AnalyzeDeps::makeIterList(const std::vector<IterAxis> &list,
             if (list[i].iter_->nodeType() == ASTNodeType::Var) {
                 ret +=
                     genISLExpr_.normalizeId(list[i].iter_.as<VarNode>()->name_);
-                if (i < eraseBefore && !list[i].parallel_ &&
+                if (i < eraseBefore && !list[i].innerScopeCrossThreads_ &&
                     eraseOutsideVarDef_) {
                     // FIXME: Should be point = other, instead of = 0
                     ret += " = 0";
