@@ -1,4 +1,4 @@
-from ffi import AccessType, MemType, DataType, ASTNodeType
+from ffi import AccessType, MemType, DataType, ASTNodeType, TargetType
 from ffi import InvalidSchedule, InvalidProgram, DriverError
 
 from .nodes import (
@@ -15,6 +15,7 @@ from .nodes import (
     Any,
     min,
     max,
+    abs,
     l_and,
     l_or,
     l_not,

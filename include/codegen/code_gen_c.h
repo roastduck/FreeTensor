@@ -5,6 +5,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include <analyze/type_infer.h>
 #include <codegen/code_gen.h>
 
 namespace ir {
@@ -13,11 +14,19 @@ template <class Stream> class CodeGenC : public CodeGen<Stream> {
     const std::vector<std::string> &params_;
     std::unordered_map<std::string, std::string> idCache_; // IR IDs -> C IDs
     std::unordered_set<std::string> idFlag_;               // C IDs
+    TypeInfer typeInfer_;
 
   public:
-    CodeGenC(const std::vector<std::string> &params) : params_(params) {}
+    CodeGenC(const std::vector<std::string> &params)
+        : params_(params), typeInfer_(&this->buffers_) {}
+
+    const std::string &normalizeId(const std::string &id);
+
+    static std::string gen(DataType dtype);
 
   protected:
+    DataType dtype(const Expr &op);
+
     virtual void visit(const StmtSeq &op) override;
     virtual void visit(const VarDef &op) override;
     virtual void visit(const Var &op) override;
@@ -53,11 +62,6 @@ template <class Stream> class CodeGenC : public CodeGen<Stream> {
     virtual void visit(const Assert &op) override;
     virtual void visit(const Intrinsic &op) override;
     virtual void visit(const Eval &op) override;
-
-  public:
-    const std::string &normalizeId(const std::string &id);
-
-    static std::string gen(DataType dtype);
 };
 
 } // namespace ir

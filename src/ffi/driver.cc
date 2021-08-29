@@ -47,7 +47,8 @@ void init_ffi_driver(py::module_ &m) {
     // PyBind11
 
     py::class_<Device>(m, "Device")
-        .def(py::init<const Ref<Target> &, size_t>(), "target"_a, "num"_a = 0);
+        .def(py::init<const Ref<Target> &, size_t>(), "target"_a, "num"_a = 0)
+        .def("target", &Device::target);
 
     py::class_<Array>(m, "Array")
         .def(py::init([](py::array_t<float, py::array::c_style> &np,

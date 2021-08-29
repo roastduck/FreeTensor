@@ -168,8 +168,9 @@ def test_type1_write_then_loop_then_reduce_no_remove():
 
 
 def test_type1_read_by_following_write_no_remove():
-    with ir.VarDef("y", (), "int32", "output", "cpu") as y:
-        y[()] = 10
+    with ir.VarDef([("x", (), "int32", "input", "cpu"),
+                    ("y", (), "int32", "output", "cpu")]) as (x, y):
+        y[()] = x[()]
         y[()] = y[()] * y[()]
         y[()] = y[()] * y[()]
     ast = ir.pop_ast()
@@ -177,8 +178,9 @@ def test_type1_read_by_following_write_no_remove():
     ast = ir.lower(ast)
     print(ast)
 
-    with ir.VarDef("y", (), "int32", "output", "cpu") as y:
-        y[()] = 10
+    with ir.VarDef([("x", (), "int32", "input", "cpu"),
+                    ("y", (), "int32", "output", "cpu")]) as (x, y):
+        y[()] = x[()]
         y[()] = y[()] * y[()]
         y[()] = y[()] * y[()]
     std = ir.make_reduction(ir.pop_ast())

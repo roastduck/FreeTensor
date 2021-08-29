@@ -20,10 +20,12 @@ namespace ir {
 
 struct IterAxis {
     Expr iter_, begin_, end_; /// begin_[i] <= iter_[i] < end_[i]
-    bool parallel_;
+    bool parallel_, innerScopeCrossThreads_;
 
-    IterAxis(Expr iter, Expr begin, Expr end, bool parallel = false)
-        : iter_(iter), begin_(begin), end_(end), parallel_(parallel) {}
+    IterAxis(Expr iter, Expr begin, Expr end, bool parallel = false,
+             bool innerScopeCrossThreads = false)
+        : iter_(iter), begin_(begin), end_(end), parallel_(parallel),
+          innerScopeCrossThreads_(innerScopeCrossThreads) {}
 };
 
 struct AccessPoint {

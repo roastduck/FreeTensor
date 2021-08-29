@@ -49,6 +49,23 @@ def test_var_as_index():
         ir.declare_var(x, (4, 4), "int32", "input", "cpu")
         ir.declare_var(y, (), "int32", "output", "cpu")
         y[()] = x[idx]
+        # TODO: Consider x[*idx]
+
+    with ir.VarDef([("idx", (2,), "int32", "input", "cpu"),
+                    ("x", (4, 4), "int32", "input", "cpu"),
+                    ("y", (), "int32", "output", "cpu")]) as (idx, x, y):
+        y[()] = x[idx]
+    assert ir.pop_ast().match(f.body)
+
+
+def test_var_as_index_2():
+
+    @ir.transform
+    def f(idx, x, y):
+        ir.declare_var(idx, (2,), "int32", "input", "cpu")
+        ir.declare_var(x, (4, 4), "int32", "input", "cpu")
+        ir.declare_var(y, (), "int32", "output", "cpu")
+        y[()] = x[idx[0], idx[1]]
 
     with ir.VarDef([("idx", (2,), "int32", "input", "cpu"),
                     ("x", (4, 4), "int32", "input", "cpu"),

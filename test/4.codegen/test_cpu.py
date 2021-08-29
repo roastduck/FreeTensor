@@ -122,6 +122,43 @@ def test_serial_reduction():
     assert np.array_equal(y_np, y_std)
 
 
+def test_serial_reduction_2():
+
+    @ir.transform
+    def test(x, y):
+        ir.declare_var(x, (4, 64), "int32", "input", "cpu")
+        ir.declare_var(y, (4,), "int32", "output", "cpu")
+        "nid: L1"
+        for i in range(0, 4):
+            local_sum = ir.create_var((), "int32", "cache", "cpu")
+            local_sum[()] = 0.
+            "nid: L2"
+            for j in range(0, 64):
+                local_sum[()] += x[i, j]
+            y[i] = local_sum[()] * 2
+
+    s = ir.Schedule(test)
+    s.parallelize("L1", "openmp")
+    func = ir.lower(s.func(), target)
+    print(func)
+
+    code = ir.codegen(func, target)
+    assert "#pragma omp atomic" not in code
+    assert "+=" in code
+    print(code)
+    x_np = np.random.randint(0, 100, (4, 64)).astype("int32")
+    y_np = np.zeros((4,), dtype="int32")
+    x_arr = ir.Array(x_np, device)
+    y_arr = ir.Array(y_np, device)
+    driver = ir.Driver(func, code, device)
+    driver.set_params(x=x_arr, y=y_arr)
+    driver.run()
+    y_np = y_arr.numpy()
+
+    y_std = np.sum(x_np, axis=1) * 2
+    assert np.array_equal(y_np, y_std)
+
+
 def test_unroll_for():
 
     @ir.transform
