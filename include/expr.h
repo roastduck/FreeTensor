@@ -42,6 +42,14 @@ class LoadNode : public ExprNode {
 };
 typedef Ref<LoadNode> Load;
 #define makeLoad(...) makeNode(Load, __VA_ARGS__)
+template <class Tindices>
+Expr _makeLoad(const std::string &var, Tindices &&indices) {
+    Load l = Load::make();
+    l->var_ = var;
+    l->indices_ =
+        std::vector<SubTree<ExprNode>>(indices.begin(), indices.end());
+    return l;
+}
 inline Expr _makeLoad(const std::string &var,
                       const std::vector<Expr> &indices) {
     Load l = Load::make();

@@ -2,6 +2,7 @@ from typing import Optional
 
 import ffi
 
+from ffi import grad
 from ffi import simplify_pass
 from ffi import sink_var
 from ffi import shrink_var

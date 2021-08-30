@@ -390,7 +390,10 @@ void init_ffi_ast(py::module_ &m) {
                                const std::vector<Expr> &, const Expr &)>(
               &_makeStore),
           "nid"_a, "var"_a, "indices"_a, "expr"_a);
-    m.def("makeLoad", &_makeLoad, "var"_a, "indices"_a);
+    m.def("makeLoad",
+          static_cast<Expr (*)(const std::string &, const std::vector<Expr> &)>(
+              &_makeLoad),
+          "var"_a, "indices"_a);
     m.def("makeIntConst", &_makeIntConst, "val"_a);
     m.def("makeFloatConst", &_makeFloatConst, "val"_a);
     m.def("makeFor",

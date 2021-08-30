@@ -5,6 +5,7 @@
 #include <pass/gpu/lower_vector.h>
 #include <pass/gpu/make_sync.h>
 #include <pass/gpu/normalize_threads.h>
+#include <pass/grad.h>
 #include <pass/make_1d_var.h>
 #include <pass/make_atomic.h>
 #include <pass/make_const_shape.h>
@@ -26,6 +27,17 @@ namespace ir {
 using namespace pybind11::literals;
 
 void init_ffi_pass(py::module_ &m) {
+    m.def("grad",
+          static_cast<Func (*)(
+              const Func &,
+              const std::unordered_map<std::string, std::string> &)>(&grad),
+          "func"_a, "grad_names"_a);
+    m.def("grad",
+          static_cast<Stmt (*)(
+              const Stmt &,
+              const std::unordered_map<std::string, std::string> &)>(&grad),
+          "stmt"_a, "grad_names"_a);
+
     m.def("simplify_pass", static_cast<Func (*)(const Func &)>(&simplifyPass),
           "func"_a);
     m.def("simplify_pass", static_cast<Stmt (*)(const Stmt &)>(&simplifyPass),
