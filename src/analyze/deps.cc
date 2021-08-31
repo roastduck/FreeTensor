@@ -111,7 +111,7 @@ void GenISLExpr::visit(const Var &op) { results_[op] = normalizeId(op->name_); }
 
 void GenISLExpr::visit(const IntConst &op) {
     results_[op] = std::to_string(op->val_);
-    constants_.insert(op);
+    constants_[op] = op->val_;
 }
 
 void GenISLExpr::visit(const Load &op) {
@@ -122,7 +122,7 @@ void GenISLExpr::visit(const Load &op) {
     }
     std::string str = op->var_ + ":";
     for (auto &&idx : op->indices_) {
-        str += results_.at(idx) + ",";
+        str += std::to_string(constants_.at(idx)) + ",";
     }
     externals_.insert(results_[op] = normalizeId(str));
 }
@@ -133,7 +133,7 @@ void GenISLExpr::visit(const Add &op) {
         results_[op] =
             "(" + results_.at(op->lhs_) + " + " + results_.at(op->rhs_) + ")";
         if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
-            constants_.insert(op);
+            constants_[op] = constants_.at(op->lhs_) + constants_.at(op->rhs_);
         }
     }
 }
@@ -144,19 +144,24 @@ void GenISLExpr::visit(const Sub &op) {
         results_[op] =
             "(" + results_.at(op->lhs_) + " - " + results_.at(op->rhs_) + ")";
         if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
-            constants_.insert(op);
+            constants_[op] = constants_.at(op->lhs_) - constants_.at(op->rhs_);
         }
     }
 }
 
 void GenISLExpr::visit(const Mul &op) {
     Visitor::visit(op);
-    if (results_.count(op->lhs_) && results_.count(op->rhs_) &&
-        (constants_.count(op->lhs_) || constants_.count(op->rhs_))) {
-        results_[op] =
-            "(" + results_.at(op->lhs_) + " * " + results_.at(op->rhs_) + ")";
+    if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
+        if (constants_.count(op->lhs_)) {
+            results_[op] = "(" + std::to_string(constants_.at(op->lhs_)) +
+                           " * " + results_.at(op->rhs_) + ")";
+        }
+        if (constants_.count(op->rhs_)) {
+            results_[op] = "(" + results_.at(op->lhs_) + " * " +
+                           std::to_string(constants_.at(op->rhs_)) + ")";
+        }
         if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
-            constants_.insert(op);
+            constants_[op] = constants_.at(op->lhs_) * constants_.at(op->rhs_);
         }
     }
 }
@@ -232,7 +237,8 @@ void GenISLExpr::visit(const FloorDiv &op) {
         results_[op] = "floor(" + results_.at(op->lhs_) + " / " +
                        results_.at(op->rhs_) + ")";
         if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
-            constants_.insert(op);
+            constants_[op] =
+                floorDiv(constants_.at(op->lhs_), constants_.at(op->rhs_));
         }
     }
 }
@@ -243,7 +249,8 @@ void GenISLExpr::visit(const CeilDiv &op) {
         results_[op] = "ceil(" + results_.at(op->lhs_) + " / " +
                        results_.at(op->rhs_) + ")";
         if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
-            constants_.insert(op);
+            constants_[op] =
+                ceilDiv(constants_.at(op->lhs_), constants_.at(op->rhs_));
         }
     }
 }
@@ -254,7 +261,7 @@ void GenISLExpr::visit(const Mod &op) {
         results_[op] =
             "(" + results_.at(op->lhs_) + " % " + results_.at(op->rhs_) + ")";
         if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
-            constants_.insert(op);
+            constants_[op] = constants_.at(op->lhs_) % constants_.at(op->rhs_);
         }
     }
 }
@@ -265,7 +272,8 @@ void GenISLExpr::visit(const Min &op) {
         results_[op] =
             "min(" + results_.at(op->lhs_) + ", " + results_.at(op->rhs_) + ")";
         if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
-            constants_.insert(op);
+            constants_[op] =
+                std::min(constants_.at(op->lhs_), constants_.at(op->rhs_));
         }
     }
 }
@@ -276,7 +284,8 @@ void GenISLExpr::visit(const Max &op) {
         results_[op] =
             "max(" + results_.at(op->lhs_) + ", " + results_.at(op->rhs_) + ")";
         if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
-            constants_.insert(op);
+            constants_[op] =
+                std::max(constants_.at(op->lhs_), constants_.at(op->rhs_));
         }
     }
 }

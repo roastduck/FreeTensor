@@ -114,7 +114,8 @@ class FindAccessPoint : public VisitorWithCursor {
  */
 class GenISLExpr : public Visitor {
     std::unordered_map<Expr, std::string> results_;
-    std::unordered_set<Expr> visited_, constants_;
+    std::unordered_set<Expr> visited_;
+    std::unordered_map<Expr, int> constants_;
     std::unordered_set<std::string> externals_;
     std::unordered_map<std::string, std::string> idCache_; // IR IDs -> ISL IDs
     std::unordered_set<std::string> idFlag_;               // ISL IDs
