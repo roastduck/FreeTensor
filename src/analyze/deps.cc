@@ -111,17 +111,18 @@ void GenISLExpr::visit(const Var &op) { results_[op] = normalizeId(op->name_); }
 
 void GenISLExpr::visit(const IntConst &op) {
     results_[op] = std::to_string(op->val_);
+    constants_.insert(op);
 }
 
 void GenISLExpr::visit(const Load &op) {
     for (auto &&idx : op->indices_) {
-        if (idx->nodeType() != ASTNodeType::IntConst) {
+        if (!constants_.count(idx)) {
             return;
         }
     }
     std::string str = op->var_ + ":";
     for (auto &&idx : op->indices_) {
-        str += std::to_string(idx.as<IntConstNode>()->val_) + ",";
+        str += results_.at(idx) + ",";
     }
     externals_.insert(results_[op] = normalizeId(str));
 }
@@ -131,6 +132,9 @@ void GenISLExpr::visit(const Add &op) {
     if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
         results_[op] =
             "(" + results_.at(op->lhs_) + " + " + results_.at(op->rhs_) + ")";
+        if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
+            constants_.insert(op);
+        }
     }
 }
 
@@ -139,16 +143,21 @@ void GenISLExpr::visit(const Sub &op) {
     if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
         results_[op] =
             "(" + results_.at(op->lhs_) + " - " + results_.at(op->rhs_) + ")";
+        if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
+            constants_.insert(op);
+        }
     }
 }
 
 void GenISLExpr::visit(const Mul &op) {
     Visitor::visit(op);
     if (results_.count(op->lhs_) && results_.count(op->rhs_) &&
-        (op->lhs_->nodeType() == ASTNodeType::IntConst ||
-         op->rhs_->nodeType() == ASTNodeType::IntConst)) {
+        (constants_.count(op->lhs_) || constants_.count(op->rhs_))) {
         results_[op] =
             "(" + results_.at(op->lhs_) + " * " + results_.at(op->rhs_) + ")";
+        if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
+            constants_.insert(op);
+        }
     }
 }
 
@@ -219,28 +228,34 @@ void GenISLExpr::visit(const NE &op) {
 
 void GenISLExpr::visit(const FloorDiv &op) {
     Visitor::visit(op);
-    if (results_.count(op->lhs_) &&
-        op->rhs_->nodeType() == ASTNodeType::IntConst) {
+    if (results_.count(op->lhs_) && constants_.count(op->rhs_)) {
         results_[op] = "floor(" + results_.at(op->lhs_) + " / " +
-                       std::to_string(op->rhs_.as<IntConstNode>()->val_) + ")";
+                       results_.at(op->rhs_) + ")";
+        if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
+            constants_.insert(op);
+        }
     }
 }
 
 void GenISLExpr::visit(const CeilDiv &op) {
     Visitor::visit(op);
-    if (results_.count(op->lhs_) &&
-        op->rhs_->nodeType() == ASTNodeType::IntConst) {
+    if (results_.count(op->lhs_) && constants_.count(op->rhs_)) {
         results_[op] = "ceil(" + results_.at(op->lhs_) + " / " +
-                       std::to_string(op->rhs_.as<IntConstNode>()->val_) + ")";
+                       results_.at(op->rhs_) + ")";
+        if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
+            constants_.insert(op);
+        }
     }
 }
 
 void GenISLExpr::visit(const Mod &op) {
     Visitor::visit(op);
-    if (results_.count(op->lhs_) &&
-        op->rhs_->nodeType() == ASTNodeType::IntConst) {
-        results_[op] = "(" + results_.at(op->lhs_) + " % " +
-                       std::to_string(op->rhs_.as<IntConstNode>()->val_) + ")";
+    if (results_.count(op->lhs_) && constants_.count(op->rhs_)) {
+        results_[op] =
+            "(" + results_.at(op->lhs_) + " % " + results_.at(op->rhs_) + ")";
+        if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
+            constants_.insert(op);
+        }
     }
 }
 
@@ -249,6 +264,9 @@ void GenISLExpr::visit(const Min &op) {
     if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
         results_[op] =
             "min(" + results_.at(op->lhs_) + ", " + results_.at(op->rhs_) + ")";
+        if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
+            constants_.insert(op);
+        }
     }
 }
 
@@ -257,6 +275,9 @@ void GenISLExpr::visit(const Max &op) {
     if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
         results_[op] =
             "max(" + results_.at(op->lhs_) + ", " + results_.at(op->rhs_) + ")";
+        if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
+            constants_.insert(op);
+        }
     }
 }
 
