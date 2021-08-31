@@ -1,5 +1,6 @@
 #include <analyze/deps.h>
 #include <pass/prop_const.h>
+#include <pass/simplify.h>
 
 namespace ir {
 
@@ -15,6 +16,8 @@ Stmt propConst(const Stmt &_op) {
     auto op = _op;
 
     for (int i = 0;; i++) {
+        op = simplifyPass(op);
+
         std::unordered_map<Load, int> mayDepCnt;
         std::unordered_map<Load, std::vector<Stmt>> r2w;
         auto foundMay = [&](const Dependency &d) {
