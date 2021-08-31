@@ -35,6 +35,13 @@ class Driver {
     void run();
 
     /**
+     * Sync with the device
+     *
+     * Call this if you are timing without the `time` function
+     */
+    void sync();
+
+    /**
      * Run the program and measure its time cost
      *
      * @param rounds : Run this amount of rounds, and report the average

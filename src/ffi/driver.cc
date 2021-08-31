@@ -96,6 +96,7 @@ void init_ffi_driver(py::module_ &m) {
                  &Driver::setParams),
              "kws"_a)
         .def("run", &Driver::run)
+        .def("sync", &Driver::sync)
         .def("time", &Driver::time, "rounds"_a = 10, "warmpups"_a = 3);
 }
 

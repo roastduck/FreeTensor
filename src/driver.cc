@@ -119,6 +119,14 @@ void Driver::setParams(const std::vector<Array *> &args,
 
 void Driver::run() { func_(params_.data()); }
 
+void Driver::sync() {
+    switch (dev_.type()) {
+    case TargetType::GPU:
+        checkCudaError(cudaDeviceSynchronize());
+    default:;
+    }
+}
+
 double Driver::time(int rounds, int warmups) {
     namespace ch = std::chrono;
 

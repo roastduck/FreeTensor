@@ -108,6 +108,7 @@ def conv(adj, x, w0, w1, w2, w3, y, n_faces, in_feats, out_feats, device, mtype,
         jit_cache[(n_faces, in_feats, out_feats)] = exe
 
     exe.run()
+    exe.sync()
 
 
 if __name__ == '__main__':
