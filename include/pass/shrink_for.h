@@ -14,10 +14,6 @@ class ShrinkFor : public CompTransientBounds {
     std::vector<Var> iterStack_;
     std::vector<std::unordered_set<std::string>> defStack_;
     std::unordered_set<std::string> defs_;
-    bool keepConst_;
-
-  public:
-    ShrinkFor(bool keepConst) : keepConst_(keepConst) {}
 
   private:
     template <class T> Stmt visitSideEffect(const T &op) {
@@ -30,18 +26,12 @@ class ShrinkFor : public CompTransientBounds {
             std::vector<Expr> lower, upper;
             for (auto &&first : bound.lower_) {
                 if (checkAllDefined(defs, first)) {
-                    if (!keepConst_ ||
-                        first->nodeType() == ASTNodeType::IntConst) {
-                        lower.emplace_back(first);
-                    }
+                    lower.emplace_back(first);
                 }
             }
             for (auto &&second : bound.upper_) {
                 if (checkAllDefined(defs, second)) {
-                    if (!keepConst_ ||
-                        second->nodeType() == ASTNodeType::IntConst) {
-                        upper.emplace_back(second);
-                    }
+                    upper.emplace_back(second);
                 }
             }
             newRange_[hash].first.emplace_back(std::move(lower));
@@ -63,13 +53,10 @@ class ShrinkFor : public CompTransientBounds {
 /**
  * Increase the begin and decrease the end index, to remove redundant iterations
  * from For loops
- *
- * @param keepConst : If true, do not transform loops to have variable begins
- * and ends.
  */
-Stmt shrinkFor(const Stmt &op, bool keepConst = false);
+Stmt shrinkFor(const Stmt &op);
 
-inline Func shrinkFor(const Func &func, bool keepConst = false) {
+inline Func shrinkFor(const Func &func) {
     return makeFunc(func->name_, func->params_, shrinkFor(func->body_),
                     func->src_);
 }

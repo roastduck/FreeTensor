@@ -40,9 +40,9 @@ Stmt ShrinkFor::visit(const VarDef &op) {
     return ret;
 }
 
-Stmt shrinkFor(const Stmt &_op, bool keepConst) {
+Stmt shrinkFor(const Stmt &_op) {
     auto op = simplifyPass(_op); // Const prop + eliminate empty loops
-    op = ShrinkFor(keepConst)(op);
+    op = ShrinkFor()(op);
     return z3Simplify(op);
 }
 

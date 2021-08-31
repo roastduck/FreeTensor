@@ -105,21 +105,36 @@ Stmt NormalizeThreads::visit(const Eval &op) {
     return doVisitStmt(Mutator::visit(op));
 }
 
-void CheckThreadNum::visit(const For &op) {
-    Visitor::visit(op);
-    if (!op->parallel_.empty() &&
-        op->end_->nodeType() == ASTNodeType::IntConst &&
-        op->end_.as<IntConstNode>()->val_ == INT_MAX) {
-        throw InvalidProgram("Length of " + op->parallel_ +
-                             " should have a finite bound");
+Stmt CheckThreadNum::visit(const For &_op) {
+    auto __op = CompUniqueBounds::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::For);
+    auto op = __op.as<ForNode>();
+
+    if (!op->parallel_.empty()) {
+        if (op->begin_->nodeType() != ASTNodeType::IntConst) {
+            op->begin_ = makeIntConst(getIntLower(op->begin_));
+        }
+        if (op->end_->nodeType() != ASTNodeType::IntConst) {
+            op->end_ = makeIntConst(getIntUpper(op->end_));
+        }
+        ASSERT(op->begin_->nodeType() == ASTNodeType::IntConst);
+        ASSERT(op->end_->nodeType() == ASTNodeType::IntConst);
+        op->len_ = makeIntConst(op->end_.as<IntConstNode>()->val_ -
+                                op->begin_.as<IntConstNode>()->val_);
+        if (op->end_.as<IntConstNode>()->val_ == INT_MAX) {
+            throw InvalidProgram("Length of " + op->parallel_ +
+                                 " should have a finite bound");
+        }
     }
+
+    return op;
 }
 
 Stmt normalizeThreads(const Stmt &_op) {
     auto op = NormalizeThreads()(_op);
-    op = shrinkFor(op, true);
+    op = shrinkFor(op);
     op = mergeAndHoistIf(op);
-    CheckThreadNum()(op);
+    op = CheckThreadNum()(op);
     return op;
 }
 
