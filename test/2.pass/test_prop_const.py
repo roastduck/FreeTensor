@@ -108,3 +108,26 @@ def test_non_const_no_remove():
     std = ir.pop_ast()
 
     assert std.match(ast)
+
+
+def test_propagate():
+    with ir.VarDef([("y1", (), "int32", "output", "cpu"),
+                    ("y2", (), "int32", "output", "cpu"),
+                    ("y3", (), "int32", "output", "cpu")]) as (y1, y2, y3):
+        y1[()] = 1
+        y2[()] = y1[()]
+        y3[()] = y2[()]
+    ast = ir.pop_ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([("y1", (), "int32", "output", "cpu"),
+                    ("y2", (), "int32", "output", "cpu"),
+                    ("y3", (), "int32", "output", "cpu")]) as (y1, y2, y3):
+        y1[()] = 1
+        y2[()] = 1
+        y3[()] = 1
+    std = ir.pop_ast()
+
+    assert std.match(ast)
