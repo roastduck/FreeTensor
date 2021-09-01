@@ -257,3 +257,50 @@ def test_cache_with_condition():
     std = ir.make_reduction(ir.pop_ast())
 
     assert std.match(ast)
+
+
+def test_cache_with_multiple_conditions():
+    with ir.VarDef([
+        ("n", (), "int32", "input", "cpu"),
+        ("m", (), "int32", "input", "cpu"),
+        ("x", (4, 8), "int32", "input", "cpu"),
+        ("y", (4,), "int32", "output", "cpu"),
+    ]) as (n, m, x, y):
+        with ir.For("i", 0, 4, nid="L1") as i:
+            y[i] = 0
+            with ir.For("j", 0, 8, nid="L2") as j:
+                with ir.If(n[()] > 0):
+                    with ir.If(m[()] > 0):
+                        y[i] = y[i] + x[i, j] * 2
+                with ir.If(n[()] < 0):
+                    y[i] = y[i] + x[i, j] * 3
+    ast = ir.pop_ast()
+    print(ast)
+    s = ir.Schedule(ast)
+    s.cache("L2", "x", "cpu")
+    ast = s.ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([
+        ("n", (), "int32", "input", "cpu"),
+        ("m", (), "int32", "input", "cpu"),
+        ("x", (4, 8), "int32", "input", "cpu"),
+        ("y", (4,), "int32", "output", "cpu"),
+    ]) as (n, m, x, y):
+        with ir.For("i", 0, 4) as i:
+            y[i] = 0
+            with ir.VarDef("b", (1, 8), "int32", "cache", "cpu") as b:
+                with ir.If(ir.l_or(ir.l_and(n[()] > 0, m[()] > 0), n[()] < 0)):
+                    with ir.For("j1", 0, 8) as j:
+                        b[0, j] = x[i, j]
+                with ir.For("j2", 0, 8) as j:
+                    with ir.If(n[()] > 0):
+                        with ir.If(m[()] > 0):
+                            y[i] = y[i] + b[0, j] * 2
+                    with ir.If(n[()] < 0):
+                        y[i] = y[i] + b[0, j] * 3
+    std = ir.make_reduction(ir.pop_ast())
+
+    assert std.match(ast)

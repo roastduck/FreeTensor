@@ -103,13 +103,14 @@ void CompAccessBound::visit(const VarDef &op) {
     }
 
     for (auto &&item : access_) {
+        Expr part;
         for (auto &&cond : item.conds_) {
             if (checkAllDefined(defs_, cond)) {
-                result_.cond_ = result_.cond_.isValid()
-                                    ? makeLAnd(result_.cond_, cond)
-                                    : cond;
+                part = part.isValid() ? makeLAnd(part, cond) : cond;
             }
         }
+        result_.cond_ =
+            result_.cond_.isValid() ? makeLOr(result_.cond_, part) : part;
     }
 }
 
