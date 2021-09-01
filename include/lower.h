@@ -41,9 +41,9 @@ template <class T> T lower(const T &t, const Ref<Target> &target) {
         case TargetType::GPU:
             // TODO: Support dynamic shared memory size, but the size should be
             // determined outside of kernels
+            func = gpu::correctShared(func);
             func =
                 makeConstShape(func, {MemType::GPUShared, MemType::GPULocal});
-            func = gpu::correctShared(func);
 
             // After gpu_make_sync and gpu_correct_shared. Otherwise, these 2
             // passes cannot get the right thread info

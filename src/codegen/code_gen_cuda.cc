@@ -53,7 +53,19 @@ void CodeGenCUDA::visit(const ReduceTo &op) {
 
     auto genAddr = [&]() {
         if (op->indices_.empty()) {
-            os() << "*" << id;
+            switch (this->buffers_.at(op->var_)->mtype()) {
+            case MemType::ByValue:
+            case MemType::CPU:
+            case MemType::GPULocal:
+                this->os() << id;
+                break;
+            case MemType::GPUGlobal:
+            case MemType::GPUShared:
+                this->os() << "*" << id;
+                break;
+            default:
+                ASSERT(false);
+            }
         } else {
             os() << id;
             for (auto &&index : op->indices_) {
