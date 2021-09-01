@@ -318,38 +318,40 @@ Expr Z3Simplify::visit(const NE &_op) {
     return op;
 }
 
-Expr Z3Simplify::visit(const LAnd &op) {
-    auto lhs = (*this)(op->lhs_);
-    auto rhs = (*this)(op->rhs_);
-    if (exists(lhs) && exists(rhs)) {
-        if (prove(lhs)) {
-            return rhs;
+Expr Z3Simplify::visit(const LAnd &_op) {
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::LAnd);
+    auto op = __op.as<LAndNode>();
+    if (exists(op->lhs_) && exists(op->rhs_)) {
+        if (prove(op->lhs_)) {
+            return op->rhs_;
         }
-        if (prove(rhs)) {
-            return lhs;
+        if (prove(op->rhs_)) {
+            return op->lhs_;
         }
         // If one of the operands is always false, visit(If) will deal with
         // it
-        put(op, get(lhs) && get(rhs));
+        put(op, get(op->lhs_) && get(op->rhs_));
     }
-    return makeLAnd(std::move(lhs), std::move(rhs));
+    return op;
 }
 
-Expr Z3Simplify::visit(const LOr &op) {
-    auto lhs = (*this)(op->lhs_);
-    auto rhs = (*this)(op->rhs_);
-    if (exists(lhs) && exists(rhs)) {
-        if (prove((*this)(makeLNot(lhs)))) {
-            return rhs;
+Expr Z3Simplify::visit(const LOr &_op) {
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::LOr);
+    auto op = __op.as<LOrNode>();
+    if (exists(op->lhs_) && exists(op->rhs_)) {
+        if (prove((*this)(makeLNot(op->lhs_)))) {
+            return op->rhs_;
         }
-        if (prove((*this)(makeLNot(rhs)))) {
-            return lhs;
+        if (prove((*this)(makeLNot(op->rhs_)))) {
+            return op->lhs_;
         }
         // If one of the operands is always true, visit(If) will deal with
         // it
-        put(op, get(lhs) || get(rhs));
+        put(op, get(op->lhs_) || get(op->rhs_));
     }
-    return makeLOr(std::move(lhs), std::move(rhs));
+    return op;
 }
 
 Expr Z3Simplify::visit(const LNot &_op) {

@@ -7,6 +7,7 @@
 #include <z3++.h>
 
 #include <analyze/hash.h>
+#include <func.h>
 #include <mutator.h>
 
 namespace ir {
@@ -100,6 +101,11 @@ class Z3Simplify : public Mutator {
 };
 
 Stmt z3Simplify(const Stmt &op);
+
+inline Func z3Simplify(const Func &func) {
+    return makeFunc(func->name_, func->params_, z3Simplify(func->body_),
+                    func->src_);
+}
 
 } // namespace ir
 

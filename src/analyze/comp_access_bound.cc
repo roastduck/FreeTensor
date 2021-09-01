@@ -109,8 +109,10 @@ void CompAccessBound::visit(const VarDef &op) {
                 part = part.isValid() ? makeLAnd(part, cond) : cond;
             }
         }
-        result_.cond_ =
-            result_.cond_.isValid() ? makeLOr(result_.cond_, part) : part;
+        if (part.isValid()) {
+            result_.cond_ =
+                result_.cond_.isValid() ? makeLOr(result_.cond_, part) : part;
+        }
     }
 }
 
