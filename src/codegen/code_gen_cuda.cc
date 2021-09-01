@@ -166,6 +166,10 @@ void CodeGenCUDA::visit(const For &op) {
             auto sharedSize = stream.sharedSize_;
 
             makeIndent();
+            os() << "cudaFuncSetAttribute(" << kernel
+                 << ", cudaFuncAttributeMaxDynamicSharedMemorySize, "
+                 << std::to_string(sharedSize) << ");" << std::endl;
+            makeIndent();
             os() << kernel << "<<<dim3("
                  << (dim.count("blockIdx.x") ? dim.at("blockIdx.x") : 1) << ", "
                  << (dim.count("blockIdx.y") ? dim.at("blockIdx.y") : 1) << ", "
