@@ -416,3 +416,46 @@ class Schedule(ffi.Schedule):
             not met
         """
         super(Schedule, self).vectorize(toId(loop))
+
+    def seperate_tail(self):
+        """
+        Seperate main iterations and tail iterations of a loop
+
+        E.g.
+
+        ```
+        for i = 0 -> 3 {
+          for j = 0 -> 4 {
+             if (i * 4 + j < 10) {
+               ...
+             }
+          }
+        }
+        ```
+
+        Each loop will be seperated into 2 parts: the body and the tail. After
+        simplification, the program will finally be transformed to
+
+        ```
+        for i = 0 -> 2 {
+          for j = 0 -> 4 {
+            ...
+          }
+        }
+        for j = 0 -> 2 {
+          ...
+        }
+        ```
+
+        If there is two VarDef nodes in two branches, it may result in doubled
+        memory use, since different thread may go to different branch. Therefore,
+        this pass will not duplicate VarDef nodes. (TODO: This restriction may be
+        limited to non-local buffers)
+
+        Ideally, all programs can benefit from this schedule. However, this
+        schedule may greatly increase the program size and make the compiling
+        time way too long. Therefore, this transformation is implemented as a
+        schedule, which can be applied optionally. (TODO: Optionally apply this
+        schedule to part of the program)
+        """
+        super(Schedule, self).seperate_tail()

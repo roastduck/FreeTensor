@@ -2,8 +2,8 @@
 
 #include <analyze/check_all_defined.h>
 #include <analyze/hash.h>
-#include <pass/seperate_tail.h>
 #include <pass/z3_simplify.h>
+#include <schedule/seperate_tail.h>
 
 namespace ir {
 
@@ -208,25 +208,6 @@ Stmt SeperateTail::visit(const VarDef &op) {
         *it = true;
     }
     return ret;
-}
-
-Stmt seperateTail(const Stmt &_op) {
-    auto op = _op;
-
-    FindAllIfs finder;
-    finder(op);
-    auto candidates = finder.results();
-
-    while (!candidates.empty()) {
-        SeperateTail mutator(candidates);
-        op = mutator(op);
-        op = z3Simplify(op); // Although Z3 may be slow, if we don't use Z3
-                             // here, there will be too many redundant branches,
-                             // which will make each pass even slower
-        candidates = mutator.nextCandidates();
-    }
-
-    return op;
 }
 
 } // namespace ir

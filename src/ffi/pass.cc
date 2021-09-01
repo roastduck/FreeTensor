@@ -15,7 +15,6 @@
 #include <pass/prop_const.h>
 #include <pass/remove_dead_var.h>
 #include <pass/remove_writes.h>
-#include <pass/seperate_tail.h>
 #include <pass/shrink_for.h>
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
@@ -74,11 +73,6 @@ void init_ffi_pass(py::module_ &m) {
           static_cast<Func (*)(const Func &)>(&mergeAndHoistIf), "func"_a);
     m.def("merge_and_hoist_if",
           static_cast<Stmt (*)(const Stmt &)>(&mergeAndHoistIf), "stmt"_a);
-
-    m.def("seperate_tail", static_cast<Func (*)(const Func &)>(&seperateTail),
-          "func"_a);
-    m.def("seperate_tail", static_cast<Stmt (*)(const Stmt &)>(&seperateTail),
-          "stmt"_a);
 
     m.def("make_reduction", static_cast<Func (*)(const Func &)>(&makeReduction),
           "func"_a);

@@ -12,6 +12,7 @@
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
 #include <pass/sink_var.h>
+#include <pass/z3_simplify.h>
 #include <schedule.h>
 #include <schedule/blend.h>
 #include <schedule/cache.h>
@@ -22,6 +23,7 @@
 #include <schedule/merge.h>
 #include <schedule/parallelize.h>
 #include <schedule/reorder.h>
+#include <schedule/seperate_tail.h>
 #include <schedule/split.h>
 #include <schedule/swap.h>
 #include <schedule/unroll.h>
@@ -658,6 +660,26 @@ void Schedule::vectorize(const std::string &loop) {
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid vectorize(" + loop + "): " + e.what());
     }
+    ast_ = ast;
+}
+
+void Schedule::seperateTail() {
+    auto ast = ast_;
+
+    FindAllIfs finder;
+    finder(ast);
+    auto candidates = finder.results();
+
+    while (!candidates.empty()) {
+        SeperateTail mutator(candidates);
+        ast = mutator(ast);
+        ast =
+            z3Simplify(ast); // Although Z3 may be slow, if we don't use Z3
+                             // here, there will be too many redundant branches,
+                             // which will make each pass even slower
+        candidates = mutator.nextCandidates();
+    }
+
     ast_ = ast;
 }
 
