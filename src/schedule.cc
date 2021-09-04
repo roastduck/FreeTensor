@@ -211,9 +211,9 @@ Schedule::fission(const std::string &loop, const std::string &after,
                 d.later()->nodeType() == ASTNodeType::Load) {
                 return;
             }
-            if (std::find(toAdd[d.var_].begin(), toAdd[d.var_].end(), id) ==
-                toAdd[d.var_].end()) {
-                toAdd[d.var_].emplace_back(id);
+            if (std::find(toAdd[d.defId()].begin(), toAdd[d.defId()].end(),
+                          id) == toAdd[d.defId()].end()) {
+                toAdd[d.defId()].emplace_back(id);
             }
         };
         findDeps(ast, disjunct, found);

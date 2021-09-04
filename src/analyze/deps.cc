@@ -74,7 +74,7 @@ void FindAccessPoint::visit(const Load &op) {
            std::vector<Expr>{op->indices_.begin(), op->indices_.end()},
            cond_};
     points_.emplace(op, ap);
-    reads_.emplace(op->var_, ap);
+    reads_.emplace(defs_.at(op->var_)->id(), ap);
 }
 
 void GenISLExpr::reset() {
@@ -671,11 +671,18 @@ void AnalyzeDeps::checkDep(const AccessPoint &point, const AccessPoint &other) {
     isl_map_free(nearest);
 }
 
+void AnalyzeDeps::visit(const VarDef &op) {
+    ASSERT(!defId_.count(op->name_));
+    defId_[op->name_] = op->id();
+    Visitor::visit(op);
+    defId_.erase(op->name_);
+}
+
 void AnalyzeDeps::visit(const Load &op) {
     Visitor::visit(op);
     if (depType_ & DEP_RAW) {
         auto &&point = points_.at(op);
-        auto range = writes_.equal_range(op->var_);
+        auto range = writes_.equal_range(defId_.at(op->var_));
         for (auto i = range.first; i != range.second; i++) {
             checkDep(*point, *(i->second));
         }

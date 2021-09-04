@@ -91,7 +91,7 @@ class FindAccessPoint : public VisitorWithCursor {
                std::vector<Expr>{op->indices_.begin(), op->indices_.end()},
                cond_};
         points_.emplace(op, ap);
-        writes_.emplace(op->var_, ap);
+        writes_.emplace(defs_.at(op->var_)->id(), ap);
 
         cur_.pop_back();
     }
@@ -173,6 +173,7 @@ struct Dependency {
     // Helper functions
     const AST &later() const { return later_.op_; }
     const AST &earlier() const { return earlier_.op_; }
+    const std::string &defId() const { return earlier_.def_; }
 };
 typedef std::function<void(const Dependency &)> FindDepsCallback;
 
@@ -214,6 +215,9 @@ class AnalyzeDeps : public Visitor {
     DepType depType_;
     bool ignoreReductionWAW_;
     bool eraseOutsideVarDef_;
+
+    std::unordered_map<std::string, std::string>
+        defId_; // var name -> VarDef ID
 
     isl_ctx *isl_;
 
@@ -267,13 +271,13 @@ class AnalyzeDeps : public Visitor {
         Visitor::visit(op);
         auto &&point = points_.at(op);
         if (depType_ & DEP_WAR) {
-            auto range = reads_.equal_range(op->var_);
+            auto range = reads_.equal_range(defId_.at(op->var_));
             for (auto i = range.first; i != range.second; i++) {
                 checkDep(*point, *(i->second));
             }
         }
         if (depType_ & DEP_WAW) {
-            auto range = writes_.equal_range(op->var_);
+            auto range = writes_.equal_range(defId_.at(op->var_));
             for (auto i = range.first; i != range.second; i++) {
                 if (ignoreReductionWAW_ &&
                     op->nodeType() == ASTNodeType::ReduceTo &&
@@ -286,6 +290,7 @@ class AnalyzeDeps : public Visitor {
     }
 
   protected:
+    void visit(const VarDef &op) override;
     void visit(const Store &op) override { visitStoreLike(op); }
     void visit(const ReduceTo &op) override { visitStoreLike(op); }
     void visit(const Load &op) override;
