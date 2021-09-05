@@ -111,12 +111,18 @@ Stmt MakeSync::visitStmt(const Stmt &op,
             syncBeforeFor_[whereToInsert.id()] = sync;
         }
 
+        bool inElseCase = false;
         for (auto ctx = whereToInsert.isValid() ? whereToInsert : cursor();
              ctx.hasOuter(); ctx = ctx.outer()) {
             if (ctx.nodeType() == ASTNodeType::If) {
-                ASSERT(!ctx.node().as<IfNode>()->elseCase_.isValid()); // TODO
-                branchSplitters_[ctx.id()].emplace_back(sync);
+                (inElseCase ? branchSplittersElse_
+                            : branchSplittersThen_)[ctx.id()]
+                    .emplace_back(sync);
             }
+            inElseCase =
+                ctx.outer().isValid() &&
+                ctx.outer().nodeType() == ASTNodeType::If &&
+                ctx.outer().node().as<IfNode>()->elseCase_ == ctx.node();
         }
 
         for (CrossThreadDep &dep : deps_) {
@@ -180,7 +186,8 @@ Stmt MakeSync::visit(const If &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::If);
     auto op = __op.as<IfNode>();
 
-    if (branchSplitters_.count(op->id())) {
+    if (branchSplittersThen_.count(op->id()) ||
+        branchSplittersElse_.count(op->id())) {
         if (!checkNotModified(root_, op->cond_, CheckNotModifiedSide::Before,
                               op->id(), CheckNotModifiedSide::After,
                               op->id())) {
@@ -189,18 +196,20 @@ Stmt MakeSync::visit(const If &_op) {
                                  toString(op->cond_) + " is being modified");
         }
 
-        auto &&splitters = branchSplitters_.at(op->id());
+        auto &&splittersThen = branchSplittersThen_[op->id()];
+        auto &&splittersElse = branchSplittersElse_[op->id()];
         std::vector<Stmt> stmts;
-        stmts.reserve(splitters.size() * 2 + 1);
+        stmts.reserve(splittersThen.size() * 2 + 1 + splittersElse.size() * 2 +
+                      1);
         std::vector<VarDef> splittedDefs;
-        for (size_t i = 0, iEnd = splitters.size() + 1; i < iEnd; i++) {
-            Stmt begin = i == 0 ? nullptr : splitters[i - 1];
-            Stmt end = i == iEnd - 1 ? nullptr : splitters[i];
+        for (size_t i = 0, iEnd = splittersThen.size() + 1; i < iEnd; i++) {
+            Stmt begin = i == 0 ? nullptr : splittersThen[i - 1];
+            Stmt end = i == iEnd - 1 ? nullptr : splittersThen[i];
             CopyPart copier(begin, end);
             auto part = copier(op->thenCase_);
             stmts.emplace_back(makeIf("", op->cond_, part));
             if (i < iEnd - 1) {
-                stmts.emplace_back(splitters[i]);
+                stmts.emplace_back(splittersThen[i]);
             }
             auto &&thisSplittedDefs = copier.splittedDefs();
             size_t sameCnt = 0;
@@ -213,6 +222,31 @@ Stmt MakeSync::visit(const If &_op) {
             }
             splittedDefs.insert(splittedDefs.end(), thisSplittedDefs.begin(),
                                 thisSplittedDefs.end() - sameCnt);
+        }
+        if (op->elseCase_.isValid()) {
+            for (size_t i = 0, iEnd = splittersElse.size() + 1; i < iEnd; i++) {
+                Stmt begin = i == 0 ? nullptr : splittersElse[i - 1];
+                Stmt end = i == iEnd - 1 ? nullptr : splittersElse[i];
+                CopyPart copier(begin, end);
+                auto part = copier(op->elseCase_);
+                stmts.emplace_back(makeIf("", makeLNot(op->cond_), part));
+                if (i < iEnd - 1) {
+                    stmts.emplace_back(splittersElse[i]);
+                }
+                auto &&thisSplittedDefs = copier.splittedDefs();
+                size_t sameCnt = 0;
+                while (
+                    sameCnt < splittedDefs.size() &&
+                    sameCnt < thisSplittedDefs.size() &&
+                    splittedDefs[splittedDefs.size() - sameCnt - 1]->id() ==
+                        thisSplittedDefs[thisSplittedDefs.size() - sameCnt - 1]
+                            ->id()) {
+                    sameCnt++;
+                }
+                splittedDefs.insert(splittedDefs.end(),
+                                    thisSplittedDefs.begin(),
+                                    thisSplittedDefs.end() - sameCnt);
+            }
         }
         Stmt ret = makeStmtSeq("", std::move(stmts));
         for (auto &&def : splittedDefs) {
