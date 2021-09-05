@@ -200,8 +200,7 @@ Stmt MakeSync::visit(const If &_op) {
         auto &&splittersThen = branchSplittersThen_[op->id()];
         auto &&splittersElse = branchSplittersElse_[op->id()];
         std::vector<Stmt> stmts;
-        stmts.reserve(splittersThen.size() * 2 + 1 + splittersElse.size() * 2 +
-                      1);
+        stmts.reserve(splittersThen.size() * 2 + 1);
         std::vector<VarDef> splittedDefs;
         for (size_t i = 0, iEnd = splittersThen.size() + 1; i < iEnd; i++) {
             Stmt begin = i == 0 ? nullptr : splittersThen[i - 1];
@@ -224,7 +223,18 @@ Stmt MakeSync::visit(const If &_op) {
             splittedDefs.insert(splittedDefs.end(), thisSplittedDefs.begin(),
                                 thisSplittedDefs.end() - sameCnt);
         }
+        Stmt thenBody = makeStmtSeq("", std::move(stmts));
+        for (auto &&def : splittedDefs) {
+            // FIXME: Check the shape is invariant
+            thenBody =
+                makeVarDef(def->id(), def->name_, std::move(*def->buffer_),
+                           def->sizeLim_, thenBody, def->pinned_);
+        }
+
         if (op->elseCase_.isValid()) {
+            std::vector<Stmt> stmts;
+            stmts.reserve(splittersElse.size() * 2 + 1);
+            std::vector<VarDef> splittedDefs;
             for (size_t i = 0, iEnd = splittersElse.size() + 1; i < iEnd; i++) {
                 Stmt begin = i == 0 ? nullptr : splittersElse[i - 1];
                 Stmt end = i == iEnd - 1 ? nullptr : splittersElse[i];
@@ -248,14 +258,17 @@ Stmt MakeSync::visit(const If &_op) {
                                     thisSplittedDefs.begin(),
                                     thisSplittedDefs.end() - sameCnt);
             }
+            Stmt elseBody = makeStmtSeq("", std::move(stmts));
+            for (auto &&def : splittedDefs) {
+                // FIXME: Check the shape is invariant
+                elseBody =
+                    makeVarDef(def->id(), def->name_, std::move(*def->buffer_),
+                               def->sizeLim_, elseBody, def->pinned_);
+            }
+            return makeStmtSeq("", {thenBody, elseBody});
+        } else {
+            return thenBody;
         }
-        Stmt ret = makeStmtSeq("", std::move(stmts));
-        for (auto &&def : splittedDefs) {
-            // FIXME: Check the shape is invariant
-            ret = makeVarDef(def->id(), def->name_, std::move(*def->buffer_),
-                             def->sizeLim_, ret, def->pinned_);
-        }
-        return ret;
     }
     return op;
 }
