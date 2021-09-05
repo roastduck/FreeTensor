@@ -6,6 +6,11 @@
 namespace ir {
 int MultiLevelTilingRule::analyze(Schedule &schedule) {
     targets = findMultiLevelTiling(schedule.ast());
+    std::vector<std::string> fakeTargets =
+        fakeFindMultiLevelTiling(schedule.ast());
+    for (auto item : fakeTargets) {
+        std::cout << item << std::endl;
+    }
     if (targets.empty())
         return false;
     return true;
@@ -63,7 +68,7 @@ void MultiLevelTilingPart::apply(Schedule &schedule) {
     std::vector<std::array<std::pair<std::string, int>, 4>> space_split(
         spaceLoopLength);
     std::vector<std::array<std::pair<std::string, int>, 2>> reduction_split(
-        spaceLoopLength);
+        reductionLoopLength);
 
     for (int i = 0; i < spaceLoopLength; i++) {
         space_split[i] = split_loop<4>(schedule, target.spaceLoops[i].id,

@@ -98,6 +98,29 @@ def conv(adj, x, w0, w1, w2, w3, y, n_faces, in_feats, out_feats, device, mtype,
             s.split('Li', 128)
             s.parallelize('Li.0', 'blockIdx.x')
             s.parallelize('Li.1', 'threadIdx.x')
+        # s = ir.AutoSchedule(s, device.target(), device, 20, 100)
+        # adj_np = np.random.uniform(size=(n_faces, 3)).astype("int32")
+        # x_np = np.random.uniform(size=(n_faces, in_feats)).astype("float32")
+        # w0_np = np.random.uniform(size=(in_feats, out_feats)).astype("float32")
+        # w1_np = np.random.uniform(size=(in_feats, out_feats)).astype("float32")
+        # w2_np = np.random.uniform(size=(in_feats, out_feats)).astype("float32")
+        # w3_np = np.random.uniform(size=(in_feats, out_feats)).astype("float32")
+        # y_np = np.zeros((n_faces, out_feats), dtype="float32")
+        # adj_arr = ir.Array(adj_np, device)
+        # x_arr = ir.Array(x_np, device)
+        # w0_arr = ir.Array(w0_np, device)
+        # w1_arr = ir.Array(w1_np, device)
+        # w2_arr = ir.Array(w2_np, device)
+        # w3_arr = ir.Array(w3_np, device)
+        # y_arr = ir.Array(y_np, device)
+        # s.set_params(adj=adj_arr,
+        #              x=x_arr,
+        #              w0=w0_arr,
+        #              w1=w1_arr,
+        #              w2=w2_arr,
+        #              w3=w3_arr,
+        #              y=y_arr)
+        # s = s.run(10)
         f = ir.lower(s.func(), device.target())
         print(f)
         code = ir.codegen(f, device.target())

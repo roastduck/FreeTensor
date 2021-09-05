@@ -2,6 +2,8 @@
 __pycache__
 /.vscode
 
+.z3-trace
+
 # Vim
 *.swp
 .ycm_extra_conf.py

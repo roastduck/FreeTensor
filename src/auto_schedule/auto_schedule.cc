@@ -3,6 +3,7 @@
 #include <analyze/fixed_length_feature.h>
 #include <auto_schedule/auto_schedule.h>
 #include <auto_schedule/rules/multi_level_tiling.h>
+#include <auto_schedule/rules/thread_bind.h>
 #include <auto_schedule/utils.h>
 #include <codegen/code_gen_cpu.h>
 #include <codegen/code_gen_cuda.h>
@@ -16,10 +17,15 @@ AutoSchedule::AutoSchedule(const Schedule &schedule, const Ref<Target> &target,
     : original_(schedule), target_(target), device_(device),
       nCandidates_(nCandidates), nPredict_(nPredict), paramsSet_(false),
       mn_(INFINITY) {
-    MultiLevelTilingRule rule;
-    int n = rule.analyze(original_);
-    std::cout << "Found" << n << std::endl;
-    baseSketch_.addPart(rule.genPart(0));
+    MultiLevelTilingRule multiLevelTilingRule;
+    ThreadBindRule threadBindRule(target_);
+    int n = multiLevelTilingRule.analyze(original_);
+    std::cout << "Found " << n << " multi-level tiling" << std::endl;
+    int m = threadBindRule.analyze(original_);
+    std::cout << "Found " << m << " thread bind" << std::endl;
+    baseSketch_.addPart(multiLevelTilingRule.genPart(0));
+    baseSketch_.addPart(threadBindRule.genPart(0));
+    // TODO: 先变换再生成sketch
 }
 
 void AutoSchedule::setParams(
