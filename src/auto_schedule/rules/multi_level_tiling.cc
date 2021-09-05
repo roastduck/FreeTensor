@@ -52,6 +52,7 @@ split_loop(Schedule &schedule, std::string loop, std::array<int, n> tiling) {
         } catch (const InvalidSchedule &e) {
             if (tiling[i] == 1) {
                 result[n - i - 1] = std::make_pair("", 1);
+                throw e;
             } else {
                 throw e;
             }

@@ -1,6 +1,7 @@
 #ifndef IR_AUTO_SCHEDULE_H
 #define IR_AUTO_SCHEDULE_H
 
+#include <auto_schedule/rule.h>
 #include <auto_schedule/sketch.h>
 #include <driver/array.h>
 #include <driver/device.h>
@@ -20,6 +21,7 @@ class AutoSchedule {
     std::unordered_map<std::string, Array *> kws_;
     bool paramsSet_;
     std::vector<Sketch> candidates_;
+    std::vector<Rule *> rules_;
     double mn_;
 
   private:
@@ -28,6 +30,7 @@ class AutoSchedule {
   public:
     AutoSchedule(const Schedule &schedule, const Ref<Target> &target,
                  const Device &device, int nCandidates, int nPredict);
+    ~AutoSchedule();
 
     size_t nCandidates() const { return nCandidates_; }
     size_t nPredict() const { return nPredict_; }
@@ -46,6 +49,8 @@ class AutoSchedule {
                                    const std::vector<Schedule> &schedules);
 
     Schedule getBestSchedule();
+
+    void addParts();
 };
 
 } // namespace ir

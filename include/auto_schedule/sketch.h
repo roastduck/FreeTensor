@@ -10,6 +10,11 @@ class SketchPartNode;
 
 typedef Ref<SketchPartNode> SketchPart;
 
+/**
+ * A subclass of SketchPartNode must meet the following conditions:
+ * 1. The result of apply can only rely on the structure of the AST,
+ *    but never the specific parameter in the AST.
+ */
 class SketchPartNode {
   public:
     virtual void genRandAnnotation() = 0;

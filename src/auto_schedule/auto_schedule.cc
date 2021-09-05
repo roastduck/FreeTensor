@@ -4,6 +4,7 @@
 #include <auto_schedule/auto_schedule.h>
 #include <auto_schedule/rules/multi_level_tiling.h>
 #include <auto_schedule/rules/thread_bind.h>
+#include <auto_schedule/sketch.h>
 #include <auto_schedule/utils.h>
 #include <codegen/code_gen_cpu.h>
 #include <codegen/code_gen_cuda.h>
@@ -17,15 +18,38 @@ AutoSchedule::AutoSchedule(const Schedule &schedule, const Ref<Target> &target,
     : original_(schedule), target_(target), device_(device),
       nCandidates_(nCandidates), nPredict_(nPredict), paramsSet_(false),
       mn_(INFINITY) {
-    MultiLevelTilingRule multiLevelTilingRule;
-    ThreadBindRule threadBindRule(target_);
-    int n = multiLevelTilingRule.analyze(original_);
-    std::cout << "Found " << n << " multi-level tiling" << std::endl;
-    int m = threadBindRule.analyze(original_);
-    std::cout << "Found " << m << " thread bind" << std::endl;
-    baseSketch_.addPart(multiLevelTilingRule.genPart(0));
-    baseSketch_.addPart(threadBindRule.genPart(0));
+    MultiLevelTilingRule *multiLevelTilingRule = new MultiLevelTilingRule;
+    ThreadBindRule *threadBindRule = new ThreadBindRule(target_);
+    rules_.push_back(multiLevelTilingRule);
+    rules_.push_back(threadBindRule);
+    addParts();
+    // int n = multiLevelTilingRule.analyze(original_);
+    // std::cout << "Found " << n << " multi-level tiling" << std::endl;
+    // int m = threadBindRule.analyze(original_);
+    // std::cout << "Found " << m << " thread bind" << std::endl;
+    // baseSketch_.addPart(multiLevelTilingRule.genPart(0));
+    // baseSketch_.addPart(threadBindRule.genPart(0));
     // TODO: 先变换再生成sketch
+}
+
+AutoSchedule::~AutoSchedule() {
+    int rulesNum = rules_.size();
+    for (int i = 0; i < rulesNum; i++) {
+        delete rules_[i];
+    }
+}
+
+void AutoSchedule::addParts() {
+    int rulesNum = rules_.size();
+    Schedule currentSchedule = original_;
+    for (int i = 0; i < rulesNum; i++) {
+        int n = rules_[i].analyze(currentSchedule);
+        std::cout << "Found " << n << " rule " << i << " targets." << std::endl;
+        SketchPart sketchPart = rules_[i].genPart(0);
+        baseSketch_.addPart(sketchPart);
+        sketchPart->genRandAnnotation();
+        sketchPart->apply(currentSchedule);
+    }
 }
 
 void AutoSchedule::setParams(

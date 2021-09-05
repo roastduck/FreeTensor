@@ -6,6 +6,12 @@
 
 namespace ir {
 
+/**
+ * A subclass of Rule must meet the following conditions:
+ * 1. The result of analyzation can only rely on the structure of the AST,
+ *    but never the specific parameter in the AST.
+ */
+
 class Rule {
   public:
     virtual int analyze(Schedule &schedule) = 0;

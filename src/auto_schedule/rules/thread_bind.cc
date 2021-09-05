@@ -39,6 +39,8 @@ void ThreadBindPart::applyOnCPU(Schedule &schedule) {
     }
 }
 
+// TODO: The result of applyOnGPU rely on the specific parameters
+//       in the AST.
 void ThreadBindPart::applyOnGPU(Schedule &schedule) {
     int cnt = 0;
     size_t i = 0;
