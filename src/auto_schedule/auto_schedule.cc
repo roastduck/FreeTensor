@@ -43,9 +43,9 @@ void AutoSchedule::addParts() {
     int rulesNum = rules_.size();
     Schedule currentSchedule = original_;
     for (int i = 0; i < rulesNum; i++) {
-        int n = rules_[i].analyze(currentSchedule);
+        int n = rules_[i]->analyze(currentSchedule);
         std::cout << "Found " << n << " rule " << i << " targets." << std::endl;
-        SketchPart sketchPart = rules_[i].genPart(0);
+        SketchPart sketchPart = rules_[i]->genPart(0);
         baseSketch_.addPart(sketchPart);
         sketchPart->genRandAnnotation();
         sketchPart->apply(currentSchedule);

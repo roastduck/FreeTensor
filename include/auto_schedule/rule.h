@@ -16,6 +16,7 @@ class Rule {
   public:
     virtual int analyze(Schedule &schedule) = 0;
     virtual SketchPart genPart(int p) = 0;
+    virtual ~Rule() {}
 };
 
 } // namespace ir
