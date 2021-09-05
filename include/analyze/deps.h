@@ -243,8 +243,7 @@ class AnalyzeDeps : public Visitor {
     ~AnalyzeDeps() { isl_ctx_free(isl_); }
 
   private:
-    std::string makeIterList(const std::vector<IterAxis> &list, int eraseBefore,
-                             int n);
+    std::string makeIterList(const std::vector<IterAxis> &list, int n);
     Ref<std::string> makeAccList(const std::vector<Expr> &list,
                                  RelaxMode relax);
     Ref<std::string> makeRange(const std::vector<IterAxis> &point,

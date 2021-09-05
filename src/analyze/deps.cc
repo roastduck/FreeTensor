@@ -307,18 +307,13 @@ Ref<std::string> GenISLExpr::gen(const Expr &op) {
 }
 
 std::string AnalyzeDeps::makeIterList(const std::vector<IterAxis> &list,
-                                      int eraseBefore, int n) {
+                                      int n) {
     std::string ret;
     for (int i = 0; i < n; i++) {
         if (i < (int)list.size()) {
             if (list[i].iter_->nodeType() == ASTNodeType::Var) {
                 ret +=
                     genISLExpr_.normalizeId(list[i].iter_.as<VarNode>()->name_);
-                if (i < eraseBefore && !list[i].innerScopeCrossThreads_ &&
-                    eraseOutsideVarDef_) {
-                    // FIXME: Should be point = other, instead of = 0
-                    ret += " = 0";
-                }
             } else if (list[i].iter_->nodeType() == ASTNodeType::IntConst) {
                 ret += std::to_string(list[i].iter_.as<IntConstNode>()->val_);
             } else {
@@ -401,7 +396,7 @@ Ref<std::string> AnalyzeDeps::makeCond(const Expr &expr, RelaxMode relax) {
 
 Ref<std::string> AnalyzeDeps::makeAccMap(const AccessPoint &p, int iterDim,
                                          int accDim, RelaxMode relax) {
-    auto ret = makeIterList(p.iter_, p.defAxis_, iterDim) + " -> ";
+    auto ret = makeIterList(p.iter_, iterDim) + " -> ";
     if (auto str = makeAccList(p.access_, relax); str.isValid()) {
         ret += *str;
     } else {
@@ -610,6 +605,19 @@ void AnalyzeDeps::checkDep(const AccessPoint &point, const AccessPoint &other) {
     isl_set_free(oIterKilled);
     isl_set_free(pIter);
     isl_set_free(pIterKilled);
+
+    if (eraseOutsideVarDef_) {
+        for (int i = 0; i < point.defAxis_; i++) {
+            if (point.iter_[i].iter_->nodeType() == ASTNodeType::Var &&
+                !point.iter_[i].innerScopeCrossThreads_) { // is a loop and not
+                                                           // crosing threads
+                isl_map *restriction = isl_map_read_from_str(
+                    isl_,
+                    makeIneqBetweenOps(DepDirection::Same, i, iterDim).c_str());
+                nearest = isl_map_intersect(nearest, restriction);
+            }
+        }
+    }
 
     if (isl_map_is_empty(nearest)) {
         isl_map_free(nearest);
