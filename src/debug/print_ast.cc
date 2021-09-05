@@ -40,6 +40,12 @@ void PrintVisitor::printId(const Stmt &op) {
     }
 }
 
+void PrintVisitor::visitStmt(
+    const Stmt &op, const std::function<void(const Stmt &)> &visitNode) {
+    printId(op);
+    Visitor::visitStmt(op, visitNode);
+}
+
 void PrintVisitor::visit(const Func &op) {
     makeIndent();
     os() << "func(";
@@ -60,7 +66,6 @@ void PrintVisitor::visit(const Any &op) {
 void PrintVisitor::visit(const AnyExpr &op) { os() << "<Any>"; }
 
 void PrintVisitor::visit(const VarDef &op) {
-    printId(op);
     makeIndent();
     os() << ::ir::toString(op->buffer_->atype()) << " "
          << ::ir::toString(op->buffer_->mtype()) << " " << op->name_ << ": ";
@@ -84,7 +89,6 @@ void PrintVisitor::visit(const Var &op) {
 }
 
 void PrintVisitor::visit(const Store &op) {
-    printId(op);
     makeIndent();
     os() << op->var_ << "[";
     printList(op->indices_);
@@ -100,7 +104,6 @@ void PrintVisitor::visit(const Load &op) {
 }
 
 void PrintVisitor::visit(const ReduceTo &op) {
-    printId(op);
     if (op->atomic_) {
         makeIndent();
         os() << "// atomic" << std::endl;
@@ -316,7 +319,6 @@ void PrintVisitor::visit(const Exp &op) {
 }
 
 void PrintVisitor::visit(const For &op) {
-    printId(op);
     if (!op->parallel_.empty()) {
         makeIndent();
         os() << "// parallel = " << op->parallel_ << std::endl;
@@ -345,7 +347,6 @@ void PrintVisitor::visit(const For &op) {
 }
 
 void PrintVisitor::visit(const If &op) {
-    printId(op);
     makeIndent();
     if (pretty_) {
         os() << BOLD << "if " << RESET;
@@ -371,7 +372,6 @@ void PrintVisitor::visit(const If &op) {
 }
 
 void PrintVisitor::visit(const Assert &op) {
-    printId(op);
     makeIndent();
     os() << "assert ";
     recur(op->cond_);

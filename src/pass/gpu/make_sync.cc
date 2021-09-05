@@ -56,7 +56,8 @@ Stmt CopyPart::visit(const For &op) {
     if ((!begun && begun_) || (!ended && ended_)) {
         throw InvalidProgram(
             "Unable to insert a synchronizing statment because it requires "
-            "splitting a loop into two parts");
+            "splitting loop " +
+            op->id() + " into two parts");
     }
     return ret;
 }
