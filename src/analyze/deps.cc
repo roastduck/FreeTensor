@@ -568,10 +568,8 @@ void AnalyzeDeps::checkDep(const AccessPoint &point, const AccessPoint &other) {
     ISLMap oa2s = reverse(os2a);
 
     // lex_ge in serialDepAll AND ne in depAll
-    ISLSet serialDomain(isl_, "{" + makeNdList("d", serialIterDim) + "}");
-    ISLMap serialLexGE = lexGE(ISLSpace(serialDomain));
-    ISLSet allDomain(isl_, "{" + makeNdList("d", iterDim) + "}");
-    ISLMap allEQ = identity(spaceMapFromSet(ISLSpace(allDomain)));
+    ISLMap serialLexGE = lexGE(spaceSetAlloc(isl_, 0, serialIterDim));
+    ISLMap allEQ = identity(spaceAlloc(isl_, 0, iterDim, iterDim));
 
     ISLSet oIter = domain(omap);
     ISLSet pIter = domain(pmap);

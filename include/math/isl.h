@@ -205,6 +205,23 @@ inline ISLMap lexGE(const ISLSpace &space) {
     return isl_map_lex_ge(space.copy());
 }
 
+inline ISLSpace spaceAlloc(const ISLCtx &ctx, unsigned nparam, unsigned nIn,
+                           unsigned nOut) {
+    return isl_space_alloc(ctx.get(), nparam, nIn, nOut);
+}
+
+inline ISLSpace spaceSetAlloc(const ISLCtx &ctx, unsigned nparam,
+                              unsigned dim) {
+    return isl_space_set_alloc(ctx.get(), nparam, dim);
+}
+
+inline ISLSet universe(ISLSpace &&space) {
+    return isl_set_universe(space.move());
+}
+inline ISLSet universe(const ISLSpace &space) {
+    return isl_set_universe(space.copy());
+}
+
 inline ISLSet domain(ISLMap &&map) { return isl_map_domain(map.move()); }
 inline ISLSet domain(const ISLMap &map) { return isl_map_domain(map.copy()); }
 
