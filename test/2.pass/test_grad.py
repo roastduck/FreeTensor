@@ -107,9 +107,7 @@ def test_dependent_iterations():
                 with ir.VarDef("d_y.old", (), "int32", "cache",
                                "cpu") as d_y_old:
                     d_y_old[()] = d_y[()]
-                    # FIXME: Why can't remove_writes simplify this?
-                    d_y[()] = 0
-                    d_y[()] += -1 * d_y_old[()]
+                    d_y[()] = -1 * d_y_old[()]
                     d_x[-1 * i + 4] += d_y_old[()]
     std = ir.make_reduction(ir.pop_ast())
 

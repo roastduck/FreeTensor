@@ -18,11 +18,11 @@ Stmt propConst(const Stmt &_op) {
     for (int i = 0;; i++) {
         op = simplifyPass(op);
 
-        std::unordered_map<Load, int> mayDepCnt;
-        std::unordered_map<Load, std::vector<Stmt>> r2w;
+        std::unordered_map<Load, std::vector<Stmt>> r2w, r2wMay;
         auto foundMay = [&](const Dependency &d) {
             ASSERT(d.later()->nodeType() == ASTNodeType::Load);
-            mayDepCnt[d.later().as<LoadNode>()]++;
+            r2wMay[d.later().as<LoadNode>()].emplace_back(
+                d.earlier().as<StmtNode>());
         };
         auto filterMust = [&](const AccessPoint &later,
                               const AccessPoint &earlier) {
@@ -30,8 +30,10 @@ Stmt propConst(const Stmt &_op) {
                 return false;
             }
             ASSERT(later.op_->nodeType() == ASTNodeType::Load);
-            if (!mayDepCnt.count(later.op_.as<LoadNode>()) ||
-                mayDepCnt.at(later.op_.as<LoadNode>()) > 1) {
+            if (!r2wMay.count(later.op_.as<LoadNode>()) ||
+                r2wMay.at(later.op_.as<LoadNode>()).size() > 1 ||
+                r2wMay.at(later.op_.as<LoadNode>())[0] !=
+                    earlier.op_.as<StmtNode>()) {
                 return false;
             }
             auto &&expr = earlier.op_.as<StoreNode>()->expr_;

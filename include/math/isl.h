@@ -53,6 +53,7 @@ class ISLMap {
     isl_map *map_ = nullptr;
 
   public:
+    ISLMap() {}
     ISLMap(isl_map *map) : map_(map) {}
     ISLMap(const ISLCtx &ctx, const std::string &str)
         : map_(isl_map_read_from_str(ctx.get(), str.c_str())) {}
@@ -64,9 +65,23 @@ class ISLMap {
 
     ISLMap(const ISLMap &other) : map_(other.copy()) {}
     ISLMap &operator=(const ISLMap &other) {
+        if (map_ != nullptr) {
+            isl_map_free(map_);
+        }
         map_ = other.copy();
         return *this;
     }
+
+    ISLMap(ISLMap &&other) : map_(other.move()) {}
+    ISLMap &operator=(ISLMap &&other) {
+        if (map_ != nullptr) {
+            isl_map_free(map_);
+        }
+        map_ = other.move();
+        return *this;
+    }
+
+    bool isValid() const { return map_ != nullptr; }
 
     isl_map *get() const { return GET_ISL_PTR(map_); }
     isl_map *copy() const { return COPY_ISL_PTR(map_, map); }
@@ -79,6 +94,7 @@ class ISLVal {
     isl_val *val_ = nullptr;
 
   public:
+    ISLVal() {}
     ISLVal(isl_val *val) : val_(val) {}
     ~ISLVal() {
         if (val_ != nullptr) {
@@ -88,9 +104,23 @@ class ISLVal {
 
     ISLVal(const ISLVal &other) : val_(other.copy()) {}
     ISLVal &operator=(const ISLVal &other) {
+        if (val_ != nullptr) {
+            isl_val_free(val_);
+        }
         val_ = other.copy();
         return *this;
     }
+
+    ISLVal(ISLVal &&other) : val_(other.move()) {}
+    ISLVal &operator=(ISLVal &&other) {
+        if (val_ != nullptr) {
+            isl_val_free(val_);
+        }
+        val_ = other.move();
+        return *this;
+    }
+
+    bool isValid() const { return val_ != nullptr; }
 
     isl_val *get() const { return GET_ISL_PTR(val_); }
     isl_val *copy() const { return COPY_ISL_PTR(val_, val); }
@@ -105,6 +135,7 @@ class ISLSet {
     isl_set *set_ = nullptr;
 
   public:
+    ISLSet() {}
     ISLSet(isl_set *set) : set_(set) {}
     ISLSet(const ISLCtx &ctx, const std::string &str)
         : set_(isl_set_read_from_str(ctx.get(), str.c_str())) {}
@@ -116,9 +147,23 @@ class ISLSet {
 
     ISLSet(const ISLSet &other) : set_(other.copy()) {}
     ISLSet &operator=(const ISLSet &other) {
+        if (set_ != nullptr) {
+            isl_set_free(set_);
+        }
         set_ = other.copy();
         return *this;
     }
+
+    ISLSet(ISLSet &&other) : set_(other.move()) {}
+    ISLSet &operator=(ISLSet &&other) {
+        if (set_ != nullptr) {
+            isl_set_free(set_);
+        }
+        set_ = other.move();
+        return *this;
+    }
+
+    bool isValid() const { return set_ != nullptr; }
 
     isl_set *get() const { return GET_ISL_PTR(set_); }
     isl_set *copy() const { return COPY_ISL_PTR(set_, set); }
@@ -129,6 +174,7 @@ class ISLSpace {
     isl_space *space_ = nullptr;
 
   public:
+    ISLSpace() {}
     ISLSpace(isl_space *space) : space_(space) {}
     ISLSpace(const ISLSet &set) : space_(isl_set_get_space(set.get())) {}
     ~ISLSpace() {
@@ -139,9 +185,23 @@ class ISLSpace {
 
     ISLSpace(const ISLSpace &other) : space_(other.copy()) {}
     ISLSpace &operator=(const ISLSpace &other) {
+        if (space_ != nullptr) {
+            isl_space_free(space_);
+        }
         space_ = other.copy();
         return *this;
     }
+
+    ISLSpace(ISLSpace &&other) : space_(other.move()) {}
+    ISLSpace &operator=(ISLSpace &&other) {
+        if (space_ != nullptr) {
+            isl_space_free(space_);
+        }
+        space_ = other.move();
+        return *this;
+    }
+
+    bool isValid() const { return space_ != nullptr; }
 
     isl_space *get() const { return GET_ISL_PTR(space_); }
     isl_space *copy() const { return COPY_ISL_PTR(space_, space); }
@@ -175,6 +235,19 @@ inline ISLMap intersect(ISLMap &&lhs, const ISLMap &rhs) {
 }
 inline ISLMap intersect(const ISLMap &lhs, const ISLMap &rhs) {
     return isl_map_intersect(lhs.copy(), rhs.copy());
+}
+
+inline ISLMap uni(ISLMap &&lhs, ISLMap &&rhs) {
+    return isl_map_union(lhs.move(), rhs.move());
+}
+inline ISLMap uni(const ISLMap &lhs, ISLMap &&rhs) {
+    return isl_map_union(lhs.copy(), rhs.move());
+}
+inline ISLMap uni(ISLMap &&lhs, const ISLMap &rhs) {
+    return isl_map_union(lhs.move(), rhs.copy());
+}
+inline ISLMap uni(const ISLMap &lhs, const ISLMap &rhs) {
+    return isl_map_union(lhs.copy(), rhs.copy());
 }
 
 inline ISLMap applyRange(ISLMap &&lhs, ISLMap &&rhs) {

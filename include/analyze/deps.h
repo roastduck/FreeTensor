@@ -41,7 +41,8 @@ class FindAccessPoint : public VisitorWithCursor {
     std::vector<IterAxis> cur_; // Current iteration point in the space
     Expr cond_;
     std::unordered_map<AST, Ref<AccessPoint>> points_;
-    std::unordered_multimap<std::string, Ref<AccessPoint>> reads_, writes_;
+    std::unordered_map<std::string, std::vector<Ref<AccessPoint>>> reads_,
+        writes_;
 
     // For or StmtSeq -> coordinate in space
     std::unordered_map<std::string, std::vector<IterAxis>> scope2coord_;
@@ -56,11 +57,11 @@ class FindAccessPoint : public VisitorWithCursor {
     const std::unordered_map<AST, Ref<AccessPoint>> &points() const {
         return points_;
     }
-    const std::unordered_multimap<std::string, Ref<AccessPoint>> &
+    const std::unordered_map<std::string, std::vector<Ref<AccessPoint>>> &
     reads() const {
         return reads_;
     }
-    const std::unordered_multimap<std::string, Ref<AccessPoint>> &
+    const std::unordered_map<std::string, std::vector<Ref<AccessPoint>>> &
     writes() const {
         return writes_;
     }
@@ -86,7 +87,7 @@ class FindAccessPoint : public VisitorWithCursor {
                std::vector<Expr>{op->indices_.begin(), op->indices_.end()},
                cond_};
         points_.emplace(op, ap);
-        writes_.emplace(defs_.at(op->var_)->id(), ap);
+        writes_[defs_.at(op->var_)->id()].emplace_back(ap);
 
         cur_.pop_back();
     }
@@ -197,8 +198,8 @@ typedef std::function<bool(const AccessPoint &later,
  */
 class AnalyzeDeps : public Visitor {
     const std::unordered_map<AST, Ref<AccessPoint>> &points_;
-    const std::unordered_multimap<std::string, Ref<AccessPoint>> &reads_,
-        &writes_;
+    const std::unordered_map<std::string, std::vector<Ref<AccessPoint>>>
+        &reads_, &writes_;
     const std::unordered_map<std::string, std::vector<IterAxis>> &scope2coord_;
     GenISLExpr genISLExpr_;
 
@@ -219,8 +220,10 @@ class AnalyzeDeps : public Visitor {
   public:
     AnalyzeDeps(
         const std::unordered_map<AST, Ref<AccessPoint>> &points,
-        const std::unordered_multimap<std::string, Ref<AccessPoint>> &reads,
-        const std::unordered_multimap<std::string, Ref<AccessPoint>> &writes,
+        const std::unordered_map<std::string, std::vector<Ref<AccessPoint>>>
+            &reads,
+        const std::unordered_map<std::string, std::vector<Ref<AccessPoint>>>
+            &writes,
         const std::unordered_map<std::string, std::vector<IterAxis>>
             &scope2coord,
         const std::vector<FindDepsCond> &cond, const FindDepsCallback &found,
@@ -254,26 +257,30 @@ class AnalyzeDeps : public Visitor {
                                 const std::vector<IterAxis> &point) const;
     static int countSerial(const std::vector<IterAxis> &point);
 
-    void checkDep(const AccessPoint &lhs, const AccessPoint &rhs);
+    void checkDep(const Ref<AccessPoint> &lhs,
+                  const std::vector<Ref<AccessPoint>> &rhs);
 
     template <class T> void visitStoreLike(const T &op) {
         Visitor::visit(op);
         auto &&point = points_.at(op);
+        auto &&defId = defId_.at(op->var_);
         if (depType_ & DEP_WAR) {
-            auto range = reads_.equal_range(defId_.at(op->var_));
-            for (auto i = range.first; i != range.second; i++) {
-                checkDep(*point, *(i->second));
+            if (reads_.count(defId)) {
+                checkDep(point, reads_.at(defId));
             }
         }
         if (depType_ & DEP_WAW) {
-            auto range = writes_.equal_range(defId_.at(op->var_));
-            for (auto i = range.first; i != range.second; i++) {
-                if (ignoreReductionWAW_ &&
-                    op->nodeType() == ASTNodeType::ReduceTo &&
-                    i->second->op_->nodeType() == ASTNodeType::ReduceTo) {
-                    continue;
+            if (writes_.count(defId)) {
+                std::vector<Ref<AccessPoint>> others;
+                for (auto &&item : writes_.at(defId)) {
+                    if (ignoreReductionWAW_ &&
+                        op->nodeType() == ASTNodeType::ReduceTo &&
+                        item->op_->nodeType() == ASTNodeType::ReduceTo) {
+                        continue;
+                    }
+                    others.emplace_back(item);
                 }
-                checkDep(*point, *(i->second));
+                checkDep(point, others);
             }
         }
     }

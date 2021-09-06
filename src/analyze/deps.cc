@@ -74,7 +74,7 @@ void FindAccessPoint::visit(const Load &op) {
            std::vector<Expr>{op->indices_.begin(), op->indices_.end()},
            cond_};
     points_.emplace(op, ap);
-    reads_.emplace(defs_.at(op->var_)->id(), ap);
+    reads_[defs_.at(op->var_)->id()].emplace_back(ap);
 }
 
 void GenISLExpr::reset() {
@@ -526,16 +526,11 @@ int AnalyzeDeps::countSerial(const std::vector<IterAxis> &point) {
     return ret;
 }
 
-void AnalyzeDeps::checkDep(const AccessPoint &point, const AccessPoint &other) {
-    if (filter_ != nullptr && !filter_(point, other)) {
+void AnalyzeDeps::checkDep(const Ref<AccessPoint> &point,
+                           const std::vector<Ref<AccessPoint>> &otherList) {
+    if (otherList.empty()) {
         return;
     }
-
-    int iterDim = std::max(point.iter_.size(), other.iter_.size());
-    int serialIterDim =
-        std::max(countSerial(point.iter_), countSerial(other.iter_));
-    int accDim = point.access_.size();
-    ASSERT((int)other.access_.size() == accDim);
 
     auto pRelax =
         mode_ == FindDepsMode::KillEarlier || mode_ == FindDepsMode::KillBoth
@@ -546,105 +541,166 @@ void AnalyzeDeps::checkDep(const AccessPoint &point, const AccessPoint &other) {
             ? RelaxMode::Necessary
             : RelaxMode::Possible; // earlier
 
-    // We call genISLExpr_ twice. The first time is to warm up the external
-    // list, because all the maps shall have an identical external list
+    int accDim = point->access_.size();
+    int iterDim = point->iter_.size();
+    int serialIterDim = countSerial(point->iter_);
+    std::vector<bool> filteredIn(otherList.size());
+    for (size_t i = 0, n = otherList.size(); i < n; i++) {
+        auto &&other = otherList[i];
+        filteredIn[i] = filter_ == nullptr || filter_(*point, *other);
+        if (!filteredIn[i]) {
+            continue;
+        }
 
-    // 1st time
-    genISLExpr_.reset();
-    if (!makeAccMap(point, iterDim, accDim, pRelax).isValid()) {
+        iterDim = std::max<int>(iterDim, other->iter_.size());
+        serialIterDim = std::max(serialIterDim, countSerial(other->iter_));
+        ASSERT((int)other->access_.size() == accDim);
+    }
+    if (std::find(filteredIn.begin(), filteredIn.end(), true) ==
+        filteredIn.end()) {
         return;
     }
-    if (!makeAccMap(other, iterDim, accDim, oRelax).isValid()) {
-        return;
-    }
-
-    // 2nd time
-    ISLMap pmap(isl_, *makeAccMap(point, iterDim, accDim, pRelax));
-    ISLMap omap(isl_, *makeAccMap(other, iterDim, accDim, oRelax));
-
-    ISLMap ps2a(isl_, makeSerialToAll(iterDim, serialIterDim, point.iter_));
-    ISLMap os2a(isl_, makeSerialToAll(iterDim, serialIterDim, other.iter_));
-    ISLMap pa2s = reverse(ps2a);
-    ISLMap oa2s = reverse(os2a);
 
     // lex_ge in serialDepAll AND ne in depAll
     ISLMap serialLexGE = lexGE(spaceSetAlloc(isl_, 0, serialIterDim));
     ISLMap allEQ = identity(spaceAlloc(isl_, 0, iterDim, iterDim));
 
-    ISLSet oIter = domain(omap);
-    ISLSet pIter = domain(pmap);
+    // We call genISLExpr_ twice. The first time is to warm up the external
+    // list, because all the maps shall have an identical external list
 
-    ISLMap depAll =
-        subtract(applyRange(std::move(pmap), reverse(std::move(omap))),
-                 std::move(allEQ));
-    ISLMap psDepAll = applyRange(depAll, std::move(oa2s));
-    ISLMap ssDepAll = applyRange(std::move(ps2a), psDepAll);
+    // 1st time
+    genISLExpr_.reset();
+    if (!makeAccMap(*point, iterDim, accDim, pRelax).isValid()) {
+        return;
+    }
+    for (size_t i = 0, n = otherList.size(); i < n; i++) {
+        auto &&other = otherList[i];
+        if (!filteredIn[i]) {
+            continue;
+        }
+
+        filteredIn[i] = makeAccMap(*other, iterDim, accDim, oRelax).isValid();
+    }
+    if (std::find(filteredIn.begin(), filteredIn.end(), true) ==
+        filteredIn.end()) {
+        return;
+    }
+
+    // 2nd time
+    ISLMap pmap(isl_, *makeAccMap(*point, iterDim, accDim, pRelax));
+    ISLMap ps2a(isl_, makeSerialToAll(iterDim, serialIterDim, point->iter_));
+    ISLMap pa2s = reverse(ps2a);
+    ISLSet pIter = domain(pmap);
+    std::vector<ISLMap> os2aList(otherList.size()),
+        depAllList(otherList.size());
+    std::vector<ISLSet> oIterList(otherList.size());
+    ISLMap psDepAllUnion;
+    for (size_t i = 0, n = otherList.size(); i < n; i++) {
+        auto &&other = otherList[i];
+        if (!filteredIn[i]) {
+            continue;
+        }
+
+        ISLMap omap(isl_, *makeAccMap(*other, iterDim, accDim, oRelax));
+        ISLMap os2a(isl_,
+                    makeSerialToAll(iterDim, serialIterDim, other->iter_));
+        ISLMap oa2s = reverse(os2a);
+        ISLSet oIter = domain(omap);
+
+        ISLMap depAll =
+            subtract(applyRange(pmap, reverse(std::move(omap))), allEQ);
+        ISLMap psDepAll = applyRange(depAll, std::move(oa2s));
+        psDepAllUnion = psDepAllUnion.isValid()
+                            ? uni(std::move(psDepAllUnion), std::move(psDepAll))
+                            : std::move(psDepAll);
+
+        os2aList[i] = std::move(os2a);
+        oIterList[i] = std::move(oIter);
+        depAllList[i] = std::move(depAll);
+    }
+
+    ISLMap ssDepAll = applyRange(std::move(ps2a), psDepAllUnion);
     ISLMap ssDep = intersect(std::move(ssDepAll), std::move(serialLexGE));
     ISLMap psDep = intersect(applyRange(std::move(pa2s), std::move(ssDep)),
-                             std::move(psDepAll));
+                             std::move(psDepAllUnion));
     ISLMap psNearest = lexmax(std::move(psDep));
-    ISLMap nearest = intersect(
-        applyRange(std::move(psNearest), std::move(os2a)), std::move(depAll));
 
-    bool oFullyKilled = oIter == range(nearest);
-    bool pFullyKilled = pIter == domain(nearest);
-
-    if (eraseOutsideVarDef_) {
-        for (int i = 0; i < point.defAxis_; i++) {
-            if (point.iter_[i].iter_->nodeType() == ASTNodeType::Var &&
-                !point.iter_[i].innerScopeCrossThreads_) { // is a loop and not
-                                                           // crosing threads
-                ISLMap restriction(
-                    isl_, makeIneqBetweenOps(DepDirection::Same, i, iterDim));
-                nearest = intersect(std::move(nearest), std::move(restriction));
-            }
+    for (size_t i = 0, n = otherList.size(); i < n; i++) {
+        auto &&other = otherList[i];
+        if (!filteredIn[i]) {
+            continue;
         }
-    }
 
-    if (nearest.empty()) {
-        return;
-    }
-    if ((mode_ == FindDepsMode::KillEarlier ||
-         mode_ == FindDepsMode::KillBoth) &&
-        !oFullyKilled) {
-        return;
-    }
-    if ((mode_ == FindDepsMode::KillLater || mode_ == FindDepsMode::KillBoth) &&
-        !pFullyKilled) {
-        return;
-    }
+        auto &&os2a = os2aList[i];
+        auto &&oIter = oIterList[i];
+        auto &&depAll = depAllList[i];
+        ISLMap nearest = intersect(applyRange(psNearest, std::move(os2a)),
+                                   std::move(depAll));
 
-    for (auto &&item : cond_) {
-        bool found = true;
-        for (auto &&subitem : item) {
-            auto &&coord = scope2coord_.at(subitem.first);
-            int iterId = coord.size() - 1;
-            DepDirection mode = subitem.second;
-            if (iterId >= iterDim) {
-                found = false;
-                break;
-            }
-            ISLMap res = nearest;
+        bool pFullyKilled = pIter == domain(nearest);
+        bool oFullyKilled = oIter == range(nearest);
 
-            // Position in the outer StmtSeq nodes
-            std::vector<std::pair<int, int>> pos;
-            for (int i = 0; i < iterId; i++) {
-                if (coord[i].iter_->nodeType() == ASTNodeType::IntConst) {
-                    pos.emplace_back(i,
-                                     coord[i].iter_.as<IntConstNode>()->val_);
+        if (eraseOutsideVarDef_) {
+            for (int i = 0; i < point->defAxis_; i++) {
+                if (point->iter_[i].iter_->nodeType() == ASTNodeType::Var &&
+                    !point->iter_[i]
+                         .innerScopeCrossThreads_) { // is a loop and not
+                                                     // crosing threads
+                    ISLMap restriction(
+                        isl_,
+                        makeIneqBetweenOps(DepDirection::Same, i, iterDim));
+                    nearest =
+                        intersect(std::move(nearest), std::move(restriction));
                 }
             }
-            if (!pos.empty()) {
-                ISLMap require(isl_, makeEqForBothOps(pos, iterDim));
-                res = intersect(std::move(res), std::move(require));
-            }
-
-            ISLMap require(isl_, makeIneqBetweenOps(mode, iterId, iterDim));
-            res = intersect(std::move(res), std::move(require));
-            found &= !res.empty();
         }
-        if (found) {
-            found_(Dependency{item, getVar(point.op_), point, other});
+
+        if (nearest.empty()) {
+            continue;
+        }
+        if ((mode_ == FindDepsMode::KillEarlier ||
+             mode_ == FindDepsMode::KillBoth) &&
+            !oFullyKilled) {
+            continue;
+        }
+        if ((mode_ == FindDepsMode::KillLater ||
+             mode_ == FindDepsMode::KillBoth) &&
+            !pFullyKilled) {
+            continue;
+        }
+
+        for (auto &&item : cond_) {
+            bool found = true;
+            for (auto &&subitem : item) {
+                auto &&coord = scope2coord_.at(subitem.first);
+                int iterId = coord.size() - 1;
+                DepDirection mode = subitem.second;
+                if (iterId >= iterDim) {
+                    found = false;
+                    break;
+                }
+                ISLMap res = nearest;
+
+                // Position in the outer StmtSeq nodes
+                std::vector<std::pair<int, int>> pos;
+                for (int i = 0; i < iterId; i++) {
+                    if (coord[i].iter_->nodeType() == ASTNodeType::IntConst) {
+                        pos.emplace_back(
+                            i, coord[i].iter_.as<IntConstNode>()->val_);
+                    }
+                }
+                if (!pos.empty()) {
+                    ISLMap require(isl_, makeEqForBothOps(pos, iterDim));
+                    res = intersect(std::move(res), std::move(require));
+                }
+
+                ISLMap require(isl_, makeIneqBetweenOps(mode, iterId, iterDim));
+                res = intersect(std::move(res), std::move(require));
+                found &= !res.empty();
+            }
+            if (found) {
+                found_(Dependency{item, getVar(point->op_), *point, *other});
+            }
         }
     }
 }
@@ -660,9 +716,9 @@ void AnalyzeDeps::visit(const Load &op) {
     Visitor::visit(op);
     if (depType_ & DEP_RAW) {
         auto &&point = points_.at(op);
-        auto range = writes_.equal_range(defId_.at(op->var_));
-        for (auto i = range.first; i != range.second; i++) {
-            checkDep(*point, *(i->second));
+        auto &&defId = defId_.at(op->var_);
+        if (writes_.count(defId)) {
+            checkDep(point, writes_.at(defId));
         }
     }
 }
