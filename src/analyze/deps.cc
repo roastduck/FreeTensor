@@ -559,79 +559,60 @@ void AnalyzeDeps::checkDep(const AccessPoint &point, const AccessPoint &other) {
     }
 
     // 2nd time
-    isl_map *pmap = isl_map_read_from_str(
-        isl_, makeAccMap(point, iterDim, accDim, pRelax)->c_str());
-    isl_map *omap = isl_map_read_from_str(
-        isl_, makeAccMap(other, iterDim, accDim, oRelax)->c_str());
+    ISLMap pmap(isl_, *makeAccMap(point, iterDim, accDim, pRelax));
+    ISLMap omap(isl_, *makeAccMap(other, iterDim, accDim, oRelax));
 
-    isl_map *ps2a = isl_map_read_from_str(
-        isl_, makeSerialToAll(iterDim, serialIterDim, point.iter_).c_str());
-    isl_map *os2a = isl_map_read_from_str(
-        isl_, makeSerialToAll(iterDim, serialIterDim, other.iter_).c_str());
-    isl_map *pa2s = isl_map_reverse(isl_map_copy(ps2a));
-    isl_map *oa2s = isl_map_reverse(isl_map_copy(os2a));
+    ISLMap ps2a(isl_, makeSerialToAll(iterDim, serialIterDim, point.iter_));
+    ISLMap os2a(isl_, makeSerialToAll(iterDim, serialIterDim, other.iter_));
+    ISLMap pa2s = reverse(ps2a);
+    ISLMap oa2s = reverse(os2a);
 
     // lex_ge in serialDepAll AND ne in depAll
-    isl_set *serialDomain = isl_set_read_from_str(
-        isl_, ("{" + makeNdList("d", serialIterDim) + "}").c_str());
-    isl_space *serialSpace = isl_set_get_space(serialDomain);
-    isl_set_free(serialDomain);
-    isl_map *serialLexGE = isl_map_lex_ge(serialSpace);
-    isl_set *allDomain = isl_set_read_from_str(
-        isl_, ("{" + makeNdList("d", iterDim) + "}").c_str());
-    isl_space *allSpace = isl_set_get_space(allDomain);
-    isl_set_free(allDomain);
-    isl_map *allEQ = isl_map_identity(isl_space_map_from_set(allSpace));
+    ISLSet serialDomain(isl_, "{" + makeNdList("d", serialIterDim) + "}");
+    ISLMap serialLexGE = lexGE(ISLSpace(serialDomain));
+    ISLSet allDomain(isl_, "{" + makeNdList("d", iterDim) + "}");
+    ISLMap allEQ = identity(spaceMapFromSet(ISLSpace(allDomain)));
 
-    isl_set *oIter = isl_map_domain(isl_map_copy(omap));
-    isl_set *pIter = isl_map_domain(isl_map_copy(pmap));
+    ISLSet oIter = domain(omap);
+    ISLSet pIter = domain(pmap);
 
-    isl_map *depAll = isl_map_subtract(
-        isl_map_apply_range(pmap, isl_map_reverse(omap)), allEQ);
-    isl_map *psDepAll = isl_map_apply_range(isl_map_copy(depAll), oa2s);
-    isl_map *ssDepAll = isl_map_apply_range(ps2a, isl_map_copy(psDepAll));
-    isl_map *ssDep = isl_map_intersect(ssDepAll, serialLexGE);
-    isl_map *psDep =
-        isl_map_intersect(isl_map_apply_range(pa2s, ssDep), psDepAll);
-    isl_map *psNearest = isl_map_lexmax(psDep);
-    isl_map *nearest =
-        isl_map_intersect(isl_map_apply_range(psNearest, os2a), depAll);
+    ISLMap depAll =
+        subtract(applyRange(std::move(pmap), reverse(std::move(omap))),
+                 std::move(allEQ));
+    ISLMap psDepAll = applyRange(depAll, std::move(oa2s));
+    ISLMap ssDepAll = applyRange(std::move(ps2a), psDepAll);
+    ISLMap ssDep = intersect(std::move(ssDepAll), std::move(serialLexGE));
+    ISLMap psDep = intersect(applyRange(std::move(pa2s), std::move(ssDep)),
+                             std::move(psDepAll));
+    ISLMap psNearest = lexmax(std::move(psDep));
+    ISLMap nearest = intersect(
+        applyRange(std::move(psNearest), std::move(os2a)), std::move(depAll));
 
-    isl_set *oIterKilled = isl_map_range(isl_map_copy(nearest));
-    isl_set *pIterKilled = isl_map_domain(isl_map_copy(nearest));
-    bool oFullyKilled = isl_set_is_equal(oIter, oIterKilled);
-    bool pFullyKilled = isl_set_is_equal(pIter, pIterKilled);
-    isl_set_free(oIter);
-    isl_set_free(oIterKilled);
-    isl_set_free(pIter);
-    isl_set_free(pIterKilled);
+    bool oFullyKilled = oIter == range(nearest);
+    bool pFullyKilled = pIter == domain(nearest);
 
     if (eraseOutsideVarDef_) {
         for (int i = 0; i < point.defAxis_; i++) {
             if (point.iter_[i].iter_->nodeType() == ASTNodeType::Var &&
                 !point.iter_[i].innerScopeCrossThreads_) { // is a loop and not
                                                            // crosing threads
-                isl_map *restriction = isl_map_read_from_str(
-                    isl_,
-                    makeIneqBetweenOps(DepDirection::Same, i, iterDim).c_str());
-                nearest = isl_map_intersect(nearest, restriction);
+                ISLMap restriction(
+                    isl_, makeIneqBetweenOps(DepDirection::Same, i, iterDim));
+                nearest = intersect(std::move(nearest), std::move(restriction));
             }
         }
     }
 
-    if (isl_map_is_empty(nearest)) {
-        isl_map_free(nearest);
+    if (nearest.empty()) {
         return;
     }
     if ((mode_ == FindDepsMode::KillEarlier ||
          mode_ == FindDepsMode::KillBoth) &&
         !oFullyKilled) {
-        isl_map_free(nearest);
         return;
     }
     if ((mode_ == FindDepsMode::KillLater || mode_ == FindDepsMode::KillBoth) &&
         !pFullyKilled) {
-        isl_map_free(nearest);
         return;
     }
 
@@ -645,7 +626,7 @@ void AnalyzeDeps::checkDep(const AccessPoint &point, const AccessPoint &other) {
                 found = false;
                 break;
             }
-            isl_map *res = isl_map_copy(nearest);
+            ISLMap res = nearest;
 
             // Position in the outer StmtSeq nodes
             std::vector<std::pair<int, int>> pos;
@@ -656,27 +637,18 @@ void AnalyzeDeps::checkDep(const AccessPoint &point, const AccessPoint &other) {
                 }
             }
             if (!pos.empty()) {
-                isl_map *require = isl_map_read_from_str(
-                    isl_, makeEqForBothOps(pos, iterDim).c_str());
-                res = isl_map_intersect(res, require);
+                ISLMap require(isl_, makeEqForBothOps(pos, iterDim));
+                res = intersect(std::move(res), std::move(require));
             }
 
-            isl_map *require = isl_map_read_from_str(
-                isl_, makeIneqBetweenOps(mode, iterId, iterDim).c_str());
-            res = isl_map_intersect(res, require);
-            found &= !isl_map_is_empty(res);
-            isl_map_free(res);
+            ISLMap require(isl_, makeIneqBetweenOps(mode, iterId, iterDim));
+            res = intersect(std::move(res), std::move(require));
+            found &= !res.empty();
         }
         if (found) {
-            try {
-                found_(Dependency{item, getVar(point.op_), point, other});
-            } catch (...) {
-                isl_map_free(nearest);
-                throw;
-            }
+            found_(Dependency{item, getVar(point.op_), point, other});
         }
     }
-    isl_map_free(nearest);
 }
 
 void AnalyzeDeps::visit(const VarDef &op) {

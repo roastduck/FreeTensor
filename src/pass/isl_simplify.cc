@@ -19,13 +19,6 @@ static std::vector<std::string> cat(const std::vector<std::string> &lhs,
     return ret;
 }
 
-ISLCompBounds::ISLCompBounds() {
-    isl_ = isl_ctx_alloc();
-    isl_options_set_on_error(isl_, ISL_ON_ERROR_ABORT);
-}
-
-ISLCompBounds::~ISLCompBounds() { isl_ctx_free(isl_); }
-
 int ISLCompBounds::getVarId(const Expr &op) {
     getHash_(op);
     auto h = getHash_.hash().at(op);
@@ -73,28 +66,26 @@ Expr ISLCompBounds::visitExpr(
             first = false;
         }
         str += "}";
-        isl_map *map = isl_map_read_from_str(isl_, str.c_str());
-        isl_set *image = isl_map_range(map);
-        isl_val *maxVal = isl_set_dim_max_val(isl_set_copy(image), 0);
-        if (isl_val_is_rat(maxVal)) {
+        ISLMap map(isl_, str);
+        ISLSet image = range(std::move(map));
+        ISLVal maxVal = dimMaxVal(image, 0);
+        if (maxVal.isRat()) {
             auto &&list = getUpper(op);
-            int maxP = isl_val_get_num_si(maxVal);
-            int maxQ = isl_val_get_den_si(maxVal);
+            int maxP = maxVal.numSi();
+            int maxQ = maxVal.denSi();
             updUpper(list, UpperBound{LinearExpr<Rational<int>>{
                                {}, Rational<int>{maxP, maxQ}}});
             setUpper(op, std::move(list));
         }
-        isl_val_free(maxVal);
-        isl_val *minVal = isl_set_dim_min_val(image, 0);
-        if (isl_val_is_rat(minVal)) {
+        ISLVal minVal = dimMinVal(image, 0);
+        if (minVal.isRat()) {
             auto &&list = getLower(op);
-            int minP = isl_val_get_num_si(minVal);
-            int minQ = isl_val_get_den_si(minVal);
+            int minP = minVal.numSi();
+            int minQ = minVal.denSi();
             updLower(list, LowerBound{LinearExpr<Rational<int>>{
                                {}, Rational<int>{minP, minQ}}});
             setLower(op, std::move(list));
         }
-        isl_val_free(minVal);
     }
     return op;
 }

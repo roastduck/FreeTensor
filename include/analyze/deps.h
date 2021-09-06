@@ -7,13 +7,8 @@
 #include <unordered_set>
 #include <vector>
 
-#include <isl/ctx.h>
-#include <isl/map.h>
-#include <isl/options.h>
-#include <isl/set.h>
-#include <isl/space.h>
-
 #include <cursor.h>
+#include <math/isl.h>
 #include <visitor.h>
 
 namespace ir {
@@ -219,7 +214,7 @@ class AnalyzeDeps : public Visitor {
     std::unordered_map<std::string, std::string>
         defId_; // var name -> VarDef ID
 
-    isl_ctx *isl_;
+    ISLCtx isl_;
 
   public:
     AnalyzeDeps(
@@ -235,12 +230,7 @@ class AnalyzeDeps : public Visitor {
           scope2coord_(scope2coord), cond_(cond), found_(found),
           filter_(filter), mode_(mode), depType_(depType),
           ignoreReductionWAW_(ignoreReductionWAW),
-          eraseOutsideVarDef_(eraseOutsideVarDef) {
-        isl_ = isl_ctx_alloc();
-        isl_options_set_on_error(isl_, ISL_ON_ERROR_ABORT);
-    }
-
-    ~AnalyzeDeps() { isl_ctx_free(isl_); }
+          eraseOutsideVarDef_(eraseOutsideVarDef) {}
 
   private:
     std::string makeIterList(const std::vector<IterAxis> &list, int n);
