@@ -296,7 +296,8 @@ template <class Stream> void CodeGenC<Stream>::visit(const FloatConst &op) {
     } else if (op->val_ == -INFINITY) {
         this->os() << "-INFINITY";
     } else {
-        this->os() << std::to_string(op->val_);
+        this->os() << std::to_string(op->val_)
+                   << "f"; // FIXME: Determine the actual type
     }
 }
 
