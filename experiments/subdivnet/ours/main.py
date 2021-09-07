@@ -98,6 +98,7 @@ def conv(adj, x, w0, w1, w2, w3, y, n_faces, in_feats, out_feats, device, mtype,
         #     s.split('Li', 128)
         #     s.parallelize('Li.0', 'blockIdx.x')
         #     s.parallelize('Li.1', 'threadIdx.x')
+        # Above is better parameters.
         s = ir.AutoSchedule(s, device.target(), device, 20, 100)
         adj_np = np.random.uniform(size=(n_faces, 3)).astype("int32")
         x_np = np.random.uniform(size=(n_faces, in_feats)).astype("float32")

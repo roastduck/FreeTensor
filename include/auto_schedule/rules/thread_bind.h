@@ -19,7 +19,8 @@ class ThreadBindRule : public Rule {
 };
 
 class ThreadBindPart : public SketchPartNode {
-    static const int THREAD_MAX_NUM = 1024;
+    static const int BLOCK_MIN_NUM = 80;
+    static const int THREAD_MAX_NUM = 512;
     std::vector<std::pair<std::string, int>> targetFor_;
     Ref<Target> target_;
 

@@ -41,40 +41,84 @@ void ThreadBindPart::applyOnCPU(Schedule &schedule) {
 
 // TODO: The result of applyOnGPU rely on the specific parameters
 //       in the AST.
+// TODO: Specific number should not be transferred.
 void ThreadBindPart::applyOnGPU(Schedule &schedule) {
-    int cnt = 0;
-    size_t i = 0;
-    std::vector<std::string> parallel{"blockIdx.x",  "blockIdx.y",
-                                      "blockIdx.z",  "threadIdx.x",
-                                      "threadIdx.y", "threadIdx.z"};
-    int product = 1;
-    for (; i < targetFor_.size() && cnt < 3; i++) {
+    int fuseNum = 0;
+    int targetForLength = targetFor_.size();
+    if (!targetForLength) {
+        return;
+    }
+    std::string fusedFor = targetFor_[0].first;
+    int fusedLength = targetFor_[0].second;
+    try {
+        while (fuseNum < targetForLength - 1) {
+            fusedFor = schedule.fuse(fusedFor, targetFor_[fuseNum + 1].first);
+            fusedLength *= targetFor_[fuseNum + 1].second;
+            fuseNum++;
+        }
+    } catch (const InvalidSchedule &e) {
+        // do nothing
+    }
+    if (fusedLength > BLOCK_MIN_NUM &&
+        fusedLength <= BLOCK_MIN_NUM * THREAD_MAX_NUM) {
         try {
-            schedule.parallelize(targetFor_[i].first, parallel[cnt]);
-            cnt++;
+            std::pair<std::string, std::string> splittedFors =
+                schedule.split(fusedFor, -1, BLOCK_MIN_NUM);
+            schedule.parallelize(splittedFors.first, "blockIdx.x");
+            schedule.parallelize(splittedFors.second, "threadIdx.x");
         } catch (const InvalidSchedule &e) {
-            // do nothing
+            std::cerr << "Auto thread binding failed. 1" << '\n';
         }
-    }
-    for (; i < targetFor_.size() && cnt < 6; i++) {
+    } else if (fusedLength > BLOCK_MIN_NUM * THREAD_MAX_NUM) {
         try {
-            if (product * targetFor_[i].second > THREAD_MAX_NUM) {
-                std::pair<std::string, std::string> newLoops = schedule.split(
-                    targetFor_[i].first, -1, THREAD_MAX_NUM / product);
-                schedule.parallelize(newLoops.first, parallel[cnt]);
-                return;
-            } else {
-                schedule.parallelize(targetFor_[i].first, parallel[cnt]);
-                cnt++;
-                product *= targetFor_[i].second;
-                if (product > THREAD_MAX_NUM / 2) {
-                    return;
-                }
-            }
-        } catch (const std::exception &e) {
-            // do nothing
+            std::pair<std::string, std::string> splittedFors =
+                schedule.split(fusedFor, THREAD_MAX_NUM);
+            schedule.parallelize(splittedFors.first, "blockIdx.x");
+            schedule.parallelize(splittedFors.second, "threadIdx.x");
+        } catch (const InvalidSchedule &e) {
+            std::cerr << "Auto thread binding failed. 2" << '\n';
+        }
+    } else if (fusedLength <= BLOCK_MIN_NUM) {
+        try {
+            schedule.parallelize(fusedFor, "blockIdx.x");
+        } catch (const InvalidSchedule &e) {
+            std::cerr << "Auto thread binding failed. 3" << '\n';
         }
     }
+    // int cnt = 0;
+    // size_t i = 0;
+    // std::vector<std::string> parallel{"blockIdx.x",  "blockIdx.y",
+    //                                   "blockIdx.z",  "threadIdx.x",
+    //                                   "threadIdx.y", "threadIdx.z"};
+    // int product = 1;
+    // for (; i < targetFor_.size() && cnt < 3; i++) {
+    //     try {
+    //         schedule.parallelize(targetFor_[i].first, parallel[cnt]);
+    //         cnt++;
+    //     } catch (const InvalidSchedule &e) {
+    //         // do nothing
+    //     }
+    // }
+    // for (; i < targetFor_.size() && cnt < 6; i++) {
+    //     try {
+    //         if (product * targetFor_[i].second > THREAD_MAX_NUM) {
+    //             std::pair<std::string, std::string> newLoops =
+    //             schedule.split(
+    //                 targetFor_[i].first, -1, THREAD_MAX_NUM / product);
+    //             schedule.parallelize(newLoops.first, parallel[cnt]);
+    //             return;
+    //         } else {
+    //             schedule.parallelize(targetFor_[i].first, parallel[cnt]);
+    //             cnt++;
+    //             product *= targetFor_[i].second;
+    //             if (product > THREAD_MAX_NUM / 2) {
+    //                 return;
+    //             }
+    //         }
+    //     } catch (const std::exception &e) {
+    //         // do nothing
+    //     }
+    // }
 }
 
 SketchPart ThreadBindPart::mutate() { return Ref<ThreadBindPart>::make(*this); }
