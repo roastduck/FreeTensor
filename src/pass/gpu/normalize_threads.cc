@@ -112,9 +112,13 @@ Stmt CheckThreadNum::visit(const For &_op) {
 
     if (!op->parallel_.empty()) {
         if (op->begin_->nodeType() != ASTNodeType::IntConst) {
+            op->body_ =
+                makeIf("", makeGE(makeVar(op->iter_), op->begin_), op->body_);
             op->begin_ = makeIntConst(getIntLower(op->begin_));
         }
         if (op->end_->nodeType() != ASTNodeType::IntConst) {
+            op->body_ =
+                makeIf("", makeLT(makeVar(op->iter_), op->end_), op->body_);
             op->end_ = makeIntConst(getIntUpper(op->end_));
         }
         ASSERT(op->begin_->nodeType() == ASTNodeType::IntConst);
