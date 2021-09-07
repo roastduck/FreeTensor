@@ -46,6 +46,48 @@ def test_basic():
     assert np.array_equal(y_np, y_std)
 
 
+def test_split_by_block_and_bind():
+
+    @ir.transform
+    def test(x, y):
+        ir.declare_var(x, (100,), "int32", "input", "gpu/global")
+        ir.declare_var(y, (100,), "int32", "output", "gpu/global")
+        "nid: L1"
+        for i in range(0, 100):
+            y[i] = x[i] + 1
+
+    s = ir.Schedule(test)
+    outer, inner = s.split("L1", nparts=3)
+    s.parallelize(outer, "blockIdx.x")
+    s.parallelize(inner, "threadIdx.x")
+    func = ir.lower(s.func(), target)
+    print(func)
+
+    with ir.VarDef([
+        ("x", (100,), "int32", "input", "gpu/global"),
+        ("y", (100,), "int32", "output", "gpu/global"),
+    ]) as (x, y):
+        with ir.For(".blockIdx.x", 0, 3) as i:
+            with ir.For(".threadIdx.x", 0, 34) as j:
+                with ir.If(ir.any()):
+                    ir.Any()
+    assert ir.pop_ast().match(func.body)
+
+    code = ir.codegen(func, target)
+    print(ir.debug.with_line_no(code))
+    x_np = np.array(range(0, 100), dtype="int32")
+    y_np = np.zeros((100,), dtype="int32")
+    x_arr = ir.Array(x_np, device)
+    y_arr = ir.Array(y_np, device)
+    driver = ir.Driver(func, code, device)
+    driver.set_params(x=x_arr, y=y_arr)
+    driver.run()
+    y_np = y_arr.numpy()
+
+    y_std = np.array(range(1, 101), dtype="int32")
+    assert np.array_equal(y_np, y_std)
+
+
 def test_shmem():
 
     @ir.transform
