@@ -52,10 +52,12 @@ class HoistVar : public Mutator {
 };
 
 class AddDimToVar : public Mutator {
-    // var name -> for ID
+    // VarDef ID -> for ID
     std::unordered_map<std::string, std::vector<std::string>> toAdd_;
     // for ID -> For
     std::unordered_map<std::string, For> forMap_;
+    // Var name -> VarDef ID
+    std::unordered_map<std::string, std::string> defs_;
 
   public:
     AddDimToVar(
@@ -64,8 +66,8 @@ class AddDimToVar : public Mutator {
 
   private:
     template <class T> T doAdd(T op) {
-        if (toAdd_.count(op->var_)) {
-            for (auto &&loop : toAdd_.at(op->var_)) {
+        if (toAdd_.count(defs_.at(op->var_))) {
+            for (auto &&loop : toAdd_.at(defs_.at(op->var_))) {
                 op->indices_.insert(op->indices_.begin(),
                                     makeVar(forMap_.at(loop)->iter_));
             }

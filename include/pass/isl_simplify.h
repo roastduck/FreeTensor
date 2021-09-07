@@ -4,13 +4,8 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include <isl/ctx.h>
-#include <isl/ilp.h>
-#include <isl/map.h>
-#include <isl/options.h>
-#include <isl/set.h>
-
 #include <analyze/hash.h>
+#include <math/isl.h>
 #include <pass/simplify.h>
 
 namespace ir {
@@ -28,11 +23,7 @@ class ISLCompBounds : public CompUniqueBounds {
 
     std::unordered_map<Expr, ISLExpr> islExprs_;
 
-    isl_ctx *isl_;
-
-  public:
-    ISLCompBounds();
-    ~ISLCompBounds();
+    ISLCtx isl_;
 
   private:
     int getVarId(const Expr &op);

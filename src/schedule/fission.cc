@@ -101,13 +101,17 @@ Stmt AddDimToVar::visit(const For &op) {
 }
 
 Stmt AddDimToVar::visit(const VarDef &_op) {
+    ASSERT(!defs_.count(_op->name_));
+    defs_[_op->name_] = _op->id();
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::VarDef);
+    defs_.erase(_op->name_);
+
     auto op = __op.as<VarDefNode>();
-    if (toAdd_.count(op->name_)) {
+    if (toAdd_.count(op->id())) {
         op->buffer_ = op->buffer_.clone();
         auto &shape = op->buffer_->tensor().shape();
-        for (auto &&loop : toAdd_.at(op->name_)) {
+        for (auto &&loop : toAdd_.at(op->id())) {
             auto len =
                 makeSub(forMap_.at(loop)->end_, forMap_.at(loop)->begin_);
             shape.insert(shape.begin(), len);

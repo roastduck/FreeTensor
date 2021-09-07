@@ -17,6 +17,9 @@ class PrintVisitor : public CodeGen<CodeGenStream> {
     void printId(const Stmt &op);
 
   protected:
+    void visitStmt(const Stmt &op,
+                   const std::function<void(const Stmt &)> &visitNode);
+
     void visit(const Func &op) override;
     void visit(const Any &op) override;
     void visit(const AnyExpr &op) override;
