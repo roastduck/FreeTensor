@@ -28,7 +28,9 @@ Stmt MakeConstShape::visit(const VarDef &_op) {
             for (auto b : upper_.at(oldDim)) {
                 if (b.lin().coeff_.empty()) {
                     auto bias = b.lin().bias_;
-                    result = std::min(result, floorDiv(bias.p_, bias.q_));
+                    result = std::min(
+                        result,
+                        (int)floorDiv(bias.p_, bias.q_)); // FIXME: int64_t
                 }
             }
         }
