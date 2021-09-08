@@ -678,3 +678,39 @@ def test_bound_outdated():
     std = ir.make_reduction(ir.pop_ast())
 
     assert std.match(ast)
+
+
+def test_simplify_sqrt_1():
+    with ir.VarDef([("x", (), "int32", "input", "cpu"),
+                    ("y", (), "int32", "output", "cpu")]) as (x, y):
+        y[()] = ir.sqrt(x[()]) * ir.sqrt(x[()])
+    ast = ir.pop_ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([("x", (), "int32", "input", "cpu"),
+                    ("y", (), "int32", "output", "cpu")]) as (x, y):
+        y[()] = x[()]
+    std = ir.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_simplify_sqrt_2():
+    with ir.VarDef([("x1", (), "int32", "input", "cpu"),
+                    ("x2", (), "int32", "input", "cpu"),
+                    ("y", (), "int32", "output", "cpu")]) as (x1, x2, y):
+        y[()] = ir.min(ir.sqrt(x1[()]), ir.sqrt(x2[()]))
+    ast = ir.pop_ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([("x1", (), "int32", "input", "cpu"),
+                    ("x2", (), "int32", "input", "cpu"),
+                    ("y", (), "int32", "output", "cpu")]) as (x1, x2, y):
+        y[()] = ir.sqrt(ir.min(x1[()], x2[()]))
+    std = ir.pop_ast()
+
+    assert std.match(ast)

@@ -105,6 +105,11 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const Mul &_op) {
         op->rhs_.template as<FloatConstNode>()->val_ == 0) {
         return makeFloatConst(0);
     }
+    if (op->lhs_->nodeType() == ASTNodeType::Sqrt &&
+        op->rhs_->nodeType() == ASTNodeType::Sqrt) {
+        return makeSqrt(makeMul(op->lhs_.template as<SqrtNode>()->expr_,
+                                op->rhs_.template as<SqrtNode>()->expr_));
+    }
     return op;
 }
 
@@ -146,6 +151,19 @@ Expr SimplifyPass<BaseClass>::visit(const RoundTowards0Div &_op) {
         return markMutated(
             makeIntConst(op->lhs_.template as<IntConstNode>()->val_ /
                          op->rhs_.template as<IntConstNode>()->val_));
+    }
+    return op;
+}
+
+template <class BaseClass>
+Expr SimplifyPass<BaseClass>::visit(const RealDiv &_op) {
+    auto __op = BaseClass::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::RealDiv);
+    auto op = __op.template as<RealDivNode>();
+    if (op->lhs_->nodeType() == ASTNodeType::Sqrt &&
+        op->rhs_->nodeType() == ASTNodeType::Sqrt) {
+        return makeSqrt(makeRealDiv(op->lhs_.template as<SqrtNode>()->expr_,
+                                    op->rhs_.template as<SqrtNode>()->expr_));
     }
     return op;
 }
@@ -202,6 +220,14 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const Min &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Min);
     auto op = __op.template as<MinNode>();
+
+    if (op->lhs_->nodeType() == ASTNodeType::Sqrt &&
+        op->rhs_->nodeType() == ASTNodeType::Sqrt) {
+        return makeSqrt(makeMin(op->lhs_.template as<SqrtNode>()->expr_,
+                                op->rhs_.template as<SqrtNode>()->expr_));
+    }
+
+    // Followed by rules only for integers
     if (!isInt(this->dtype(op))) {
         return op;
     }
@@ -247,6 +273,14 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const Max &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Max);
     auto op = __op.template as<MaxNode>();
+
+    if (op->lhs_->nodeType() == ASTNodeType::Sqrt &&
+        op->rhs_->nodeType() == ASTNodeType::Sqrt) {
+        return makeSqrt(makeMax(op->lhs_.template as<SqrtNode>()->expr_,
+                                op->rhs_.template as<SqrtNode>()->expr_));
+    }
+
+    // Followed by rules only for integers
     if (!isInt(this->dtype(op))) {
         return op;
     }
@@ -465,6 +499,21 @@ Expr SimplifyPass<BaseClass>::visit(const LNot &_op) {
     case ASTNodeType::LNot:
         return markMutated(op->expr_.template as<LNotNode>()->expr_);
     default:;
+    }
+    return op;
+}
+
+template <class BaseClass>
+Expr SimplifyPass<BaseClass>::visit(const Sqrt &_op) {
+    auto __op = BaseClass::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::Sqrt);
+    auto op = __op.template as<SqrtNode>();
+    if (op->expr_->nodeType() == ASTNodeType::Mul) {
+        auto &&lhs = op->expr_.template as<MulNode>()->lhs_;
+        auto &&rhs = op->expr_.template as<MulNode>()->rhs_;
+        if (this->alwaysLE(lhs, rhs) && this->alwaysLE(rhs, lhs)) {
+            return lhs;
+        }
     }
     return op;
 }
