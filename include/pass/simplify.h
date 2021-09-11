@@ -205,6 +205,8 @@ template <class BaseClass> class SimplifyPass : public BaseClass {
         return ret;
     }
 
+    template <class T> Expr normalizeRealMulDiv(const T &op);
+
   protected:
     using BaseClass::visit;
 

@@ -20,7 +20,67 @@ inline bool isEmptyStmt(const Stmt &op) {
     return false;
 }
 
+inline Expr reduceMul(const std::vector<Expr> &list) {
+    Expr ret;
+    for (auto &&item : list) {
+        ret = ret.isValid() ? makeMul(ret, item) : item;
+    }
+    return ret;
+}
+
 } // namespace detail
+
+template <class BaseClass>
+template <class T>
+Expr SimplifyPass<BaseClass>::normalizeRealMulDiv(const T &op) {
+    int sqrtCnt = 0, divCnt = 0;
+    std::function<void(const Expr &, std::vector<Expr> &, std::vector<Expr> &,
+                       std::vector<Expr> &, std::vector<Expr> &)>
+        recur = [&recur, &sqrtCnt,
+                 &divCnt](const Expr &expr, std::vector<Expr> &num,
+                          std::vector<Expr> &den, std::vector<Expr> &sqrtNum,
+                          std::vector<Expr> &sqrtDen) {
+            if (expr->nodeType() == ASTNodeType::Mul) {
+                recur(expr.as<MulNode>()->lhs_, num, den, sqrtNum, sqrtDen);
+                recur(expr.as<MulNode>()->rhs_, num, den, sqrtNum, sqrtDen);
+            } else if (expr->nodeType() == ASTNodeType::RealDiv) {
+                recur(expr.as<RealDivNode>()->lhs_, num, den, sqrtNum, sqrtDen);
+                recur(expr.as<RealDivNode>()->rhs_, den, num, sqrtDen, sqrtNum);
+                divCnt++;
+            } else if (expr->nodeType() == ASTNodeType::Sqrt) {
+                sqrtNum.emplace_back(expr.as<SqrtNode>()->expr_);
+                sqrtCnt++;
+            } else {
+                num.emplace_back(expr);
+            }
+        };
+    std::vector<Expr> num, den, sqrtNum, sqrtDen;
+    recur(op, num, den, sqrtNum, sqrtDen);
+    if (sqrtCnt <= 1 && divCnt <= 1) {
+        return op;
+    }
+
+    if (auto x = detail::reduceMul(sqrtNum); x.isValid()) {
+        if (auto y = detail::reduceMul(sqrtDen); y.isValid()) {
+            num.emplace_back(makeSqrt(makeRealDiv(x, y)));
+        } else {
+            num.emplace_back(makeSqrt(x));
+        }
+    } else {
+        if (auto y = detail::reduceMul(sqrtDen); y.isValid()) {
+            den.emplace_back(makeSqrt(y));
+        }
+    }
+    if (auto x = detail::reduceMul(num); x.isValid()) {
+        if (auto y = detail::reduceMul(den); y.isValid()) {
+            return markMutated(makeRealDiv(x, y));
+        } else {
+            return markMutated(x);
+        }
+    } else {
+        ASSERT(false); // Impossible
+    }
+}
 
 template <class BaseClass>
 Expr SimplifyPass<BaseClass>::visitExpr(
@@ -105,12 +165,12 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const Mul &_op) {
         op->rhs_.template as<FloatConstNode>()->val_ == 0) {
         return makeFloatConst(0);
     }
-    if (op->lhs_->nodeType() == ASTNodeType::Sqrt &&
-        op->rhs_->nodeType() == ASTNodeType::Sqrt) {
-        return makeSqrt(makeMul(op->lhs_.template as<SqrtNode>()->expr_,
-                                op->rhs_.template as<SqrtNode>()->expr_));
+
+    if (isFloat(this->dtype(op))) {
+        return normalizeRealMulDiv(op);
+    } else {
+        return op;
     }
-    return op;
 }
 
 template <class BaseClass>
@@ -165,7 +225,12 @@ Expr SimplifyPass<BaseClass>::visit(const RealDiv &_op) {
         return makeSqrt(makeRealDiv(op->lhs_.template as<SqrtNode>()->expr_,
                                     op->rhs_.template as<SqrtNode>()->expr_));
     }
-    return op;
+
+    if (isFloat(this->dtype(op))) {
+        return normalizeRealMulDiv(op);
+    } else {
+        return op;
+    }
 }
 
 template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const Mod &_op) {
@@ -508,14 +573,81 @@ Expr SimplifyPass<BaseClass>::visit(const Sqrt &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Sqrt);
     auto op = __op.template as<SqrtNode>();
-    if (op->expr_->nodeType() == ASTNodeType::Mul) {
-        auto &&lhs = op->expr_.template as<MulNode>()->lhs_;
-        auto &&rhs = op->expr_.template as<MulNode>()->rhs_;
-        if (this->alwaysLE(lhs, rhs) && this->alwaysLE(rhs, lhs)) {
-            return lhs;
+
+    typedef std::unordered_map<uint64_t, std::pair<Expr, int>> Map;
+
+    std::function<void(const Expr &, Map &, Map &)> recur =
+        [&recur, this](const Expr &expr, Map &num, Map &den) {
+            if (expr->nodeType() == ASTNodeType::Mul) {
+                recur(expr.as<MulNode>()->lhs_, num, den);
+                recur(expr.as<MulNode>()->rhs_, num, den);
+            } else if (expr->nodeType() == ASTNodeType::RealDiv) {
+                recur(expr.as<RealDivNode>()->lhs_, num, den);
+                recur(expr.as<RealDivNode>()->rhs_, den, num);
+            } else {
+                auto h = this->getHash(expr);
+                if (!num.count(h)) {
+                    num[h] = std::make_pair(expr, 1);
+                } else {
+                    num[h].second++;
+                }
+            }
+        };
+    Map num, den;
+    recur(op->expr_, num, den);
+    for (auto &&[hash, value] : num) {
+        if (value.second > 1) {
+            goto needSimplify;
+        }
+    }
+    for (auto &&[hash, value] : den) {
+        if (value.second > 1) {
+            goto needSimplify;
         }
     }
     return op;
+
+needSimplify:
+    std::vector<Expr> numList, denList, numSqrtList, denSqrtList;
+    for (auto &&[hash, value] : num) {
+        auto &&[expr, cnt] = value;
+        for (int i = 0; i < cnt / 2; i++) {
+            numList.emplace_back(expr);
+        }
+        if (cnt % 2) {
+            numSqrtList.emplace_back(expr);
+        }
+    }
+    for (auto &&[hash, value] : den) {
+        auto &&[expr, cnt] = value;
+        for (int i = 0; i < cnt / 2; i++) {
+            denList.emplace_back(expr);
+        }
+        if (cnt % 2) {
+            denSqrtList.emplace_back(expr);
+        }
+    }
+
+    if (auto x = detail::reduceMul(numSqrtList); x.isValid()) {
+        if (auto y = detail::reduceMul(denSqrtList); y.isValid()) {
+            numList.emplace_back(makeSqrt(makeRealDiv(x, y)));
+        } else {
+            numList.emplace_back(makeSqrt(x));
+        }
+    } else {
+        if (auto y = detail::reduceMul(denSqrtList); y.isValid()) {
+            denList.emplace_back(makeSqrt(y));
+        }
+    }
+    if (auto x = detail::reduceMul(numList); x.isValid()) {
+        if (auto y = detail::reduceMul(denList); y.isValid()) {
+            return markMutated(makeRealDiv(x, y));
+        } else {
+            return markMutated(x);
+        }
+    } else {
+        ASSERT(false); // Impossible
+    }
 }
 
 template <class BaseClass>
