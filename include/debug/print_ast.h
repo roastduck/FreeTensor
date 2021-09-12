@@ -18,7 +18,7 @@ class PrintVisitor : public CodeGen<CodeGenStream> {
 
   protected:
     void visitStmt(const Stmt &op,
-                   const std::function<void(const Stmt &)> &visitNode);
+                   const std::function<void(const Stmt &)> &visitNode) override;
 
     void visit(const Func &op) override;
     void visit(const Any &op) override;
@@ -53,6 +53,8 @@ class PrintVisitor : public CodeGen<CodeGenStream> {
     void visit(const Sqrt &op) override;
     void visit(const Exp &op) override;
     void visit(const Square &op) override;
+    void visit(const Floor &op) override;
+    void visit(const Ceil &op) override;
     void visit(const For &op) override;
     void visit(const If &op) override;
     void visit(const Assert &op) override;

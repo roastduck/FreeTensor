@@ -408,6 +408,14 @@ def square(expr):
     return ffi.makeSquare(expr)
 
 
+def floor(expr):
+    return ffi.makeFloor(expr)
+
+
+def ceil(expr):
+    return ffi.makeCeil(expr)
+
+
 def min_value(dtype):
     dtype = parseDType(dtype)
     if dtype == DataType.Float32:

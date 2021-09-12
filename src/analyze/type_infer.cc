@@ -203,6 +203,18 @@ void TypeInfer::visit(const Square &op) {
     types_[op] = types_.at(op->expr_);
 }
 
+void TypeInfer::visit(const Floor &op) {
+    Visitor::visit(op);
+    CHK_TYPE(isFloat, types_.at(op->expr_), op);
+    types_[op] = types_.at(op->expr_);
+}
+
+void TypeInfer::visit(const Ceil &op) {
+    Visitor::visit(op);
+    CHK_TYPE(isFloat, types_.at(op->expr_), op);
+    types_[op] = types_.at(op->expr_);
+}
+
 void TypeInfer::visit(const Intrinsic &op) {
     Visitor::visit(op);
     types_[op] = op->retType_;

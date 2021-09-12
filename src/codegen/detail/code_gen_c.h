@@ -473,6 +473,18 @@ template <class Stream> void CodeGenC<Stream>::visit(const Square &op) {
     this->os() << ")";
 }
 
+template <class Stream> void CodeGenC<Stream>::visit(const Floor &op) {
+    this->os() << "std::floor(";
+    (*this)(op->expr_);
+    this->os() << ")";
+}
+
+template <class Stream> void CodeGenC<Stream>::visit(const Ceil &op) {
+    this->os() << "std::ceil(";
+    (*this)(op->expr_);
+    this->os() << ")";
+}
+
 template <class Stream> void CodeGenC<Stream>::visit(const For &op) {
     this->makeIndent();
     this->os() << "for (int " << normalizeId(op->iter_) << " = ";

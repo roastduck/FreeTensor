@@ -46,6 +46,18 @@ void CodeGenCUDA::visit(const Exp &op) {
     os() << ")";
 }
 
+void CodeGenCUDA::visit(const Floor &op) {
+    os() << "runtime_floor("; // Defined in runtime/gpu_runtime.h
+    (*this)(op->expr_);
+    os() << ")";
+}
+
+void CodeGenCUDA::visit(const Ceil &op) {
+    os() << "runtime_ceil("; // Defined in runtime/gpu_runtime.h
+    (*this)(op->expr_);
+    os() << ")";
+}
+
 void CodeGenCUDA::visit(const ReduceTo &op) {
     auto id = normalizeId(op->var_);
     markUse(op->var_);

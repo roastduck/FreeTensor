@@ -406,6 +406,32 @@ template <class T> Expr _makeSquare(T &&expr) {
     return e;
 }
 
+class FloorNode : public ExprNode {
+  public:
+    SubTree<ExprNode> expr_;
+    DEFINE_NODE_TRAIT(Floor);
+};
+typedef Ref<FloorNode> Floor;
+#define makeFloor(...) makeNode(Floor, __VA_ARGS__)
+template <class T> Expr _makeFloor(T &&expr) {
+    Floor e = Floor::make();
+    e->expr_ = std::forward<T>(expr);
+    return e;
+}
+
+class CeilNode : public ExprNode {
+  public:
+    SubTree<ExprNode> expr_;
+    DEFINE_NODE_TRAIT(Ceil);
+};
+typedef Ref<CeilNode> Ceil;
+#define makeCeil(...) makeNode(Ceil, __VA_ARGS__)
+template <class T> Expr _makeCeil(T &&expr) {
+    Ceil e = Ceil::make();
+    e->expr_ = std::forward<T>(expr);
+    return e;
+}
+
 /**
  * Invoke whatever target code
  */

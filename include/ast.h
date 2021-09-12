@@ -9,18 +9,31 @@
 namespace ir {
 
 enum class ASTNodeType : int {
+    // Matching
     Any,
     AnyExpr,
+
+    // Function
     Func,
+
+    // Statements
     StmtSeq,
     VarDef,
-    Var,
+    For,
+    If,
+    Assert,
+    Eval,
     Store,
-    Load,
     ReduceTo,
+
+    // Values
+    Var,
+    Load,
     IntConst,
     FloatConst,
     BoolConst,
+
+    // Binary ops
     Add,
     Sub,
     Mul,
@@ -39,15 +52,17 @@ enum class ASTNodeType : int {
     NE,
     LAnd,
     LOr,
+
+    // Unary ops
     LNot,
-    For,
-    If,
-    Assert,
     Sqrt,
     Exp,
     Square,
+    Floor,
+    Ceil,
+
+    // Other expressions
     Intrinsic,
-    Eval,
 };
 
 std::string toString(ASTNodeType type);

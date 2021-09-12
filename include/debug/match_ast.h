@@ -58,6 +58,8 @@ class MatchVisitor : public Visitor {
     void visit(const Sqrt &op) override;
     void visit(const Exp &op) override;
     void visit(const Square &op) override;
+    void visit(const Floor &op) override;
+    void visit(const Ceil &op) override;
     void visit(const For &op) override;
     void visit(const If &op) override;
     void visit(const Assert &op) override;
