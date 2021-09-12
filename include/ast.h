@@ -62,6 +62,7 @@ enum class ASTNodeType : int {
     Ceil,
 
     // Other expressions
+    Cast,
     Intrinsic,
 };
 

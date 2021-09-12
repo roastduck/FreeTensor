@@ -246,6 +246,10 @@ class Mutator {
             makeAssert(op->id(), (*this)(op->cond_), (*this)(op->body_)), op);
     }
 
+    virtual Expr visit(const Cast &op) {
+        return COPY_DEBUG_INFO(makeCast((*this)(op->expr_), op->dtype_), op);
+    }
+
     virtual Expr visit(const Intrinsic &op) {
         std::vector<Expr> params;
         params.reserve(op->params_.size());

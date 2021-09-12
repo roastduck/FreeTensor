@@ -24,6 +24,7 @@ from .nodes import (
     square,
     floor,
     ceil,
+    cast,
     floor_div,
     ceil_div,
     round_towards_0_div,

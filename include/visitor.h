@@ -201,6 +201,8 @@ class Visitor {
         (*this)(op->body_);
     }
 
+    virtual void visit(const Cast &op) { (*this)(op->expr_); }
+
     virtual void visit(const Intrinsic &op) {
         for (auto &&param : op->params_) {
             (*this)(param);

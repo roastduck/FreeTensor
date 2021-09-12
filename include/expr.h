@@ -432,6 +432,21 @@ template <class T> Expr _makeCeil(T &&expr) {
     return e;
 }
 
+class CastNode : public ExprNode {
+  public:
+    SubTree<ExprNode> expr_;
+    DataType dtype_;
+    DEFINE_NODE_TRAIT(Cast);
+};
+typedef Ref<CastNode> Cast;
+#define makeCast(...) makeNode(Cast, __VA_ARGS__)
+template <class T> Expr _makeCast(T &&expr, DataType dtype) {
+    Cast e = Cast::make();
+    e->expr_ = std::forward<T>(expr);
+    e->dtype_ = dtype;
+    return e;
+}
+
 /**
  * Invoke whatever target code
  */

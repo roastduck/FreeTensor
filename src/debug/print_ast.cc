@@ -336,6 +336,12 @@ void PrintVisitor::visit(const Ceil &op) {
     os() << ")";
 }
 
+void PrintVisitor::visit(const Cast &op) {
+    os() << ::ir::toString(op->dtype_) << "(";
+    recur(op->expr_);
+    os() << ")";
+}
+
 void PrintVisitor::visit(const For &op) {
     if (!op->parallel_.empty()) {
         makeIndent();

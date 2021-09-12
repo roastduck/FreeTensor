@@ -60,6 +60,7 @@ template <class Stream> class CodeGenC : public CodeGen<Stream> {
     virtual void visit(const Square &op) override;
     virtual void visit(const Floor &op) override;
     virtual void visit(const Ceil &op) override;
+    virtual void visit(const Cast &op) override;
     virtual void visit(const For &op) override;
     virtual void visit(const If &op) override;
     virtual void visit(const Assert &op) override;

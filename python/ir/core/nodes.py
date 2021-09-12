@@ -416,6 +416,10 @@ def ceil(expr):
     return ffi.makeCeil(expr)
 
 
+def cast(expr, dtype):
+    return ffi.makeCast(expr, parseDType(dtype))
+
+
 def min_value(dtype):
     dtype = parseDType(dtype)
     if dtype == DataType.Float32:

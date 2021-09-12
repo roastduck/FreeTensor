@@ -485,6 +485,12 @@ template <class Stream> void CodeGenC<Stream>::visit(const Ceil &op) {
     this->os() << ")";
 }
 
+template <class Stream> void CodeGenC<Stream>::visit(const Cast &op) {
+    this->os() << gen(op->dtype_) << "(";
+    (*this)(op->expr_);
+    this->os() << ")";
+}
+
 template <class Stream> void CodeGenC<Stream>::visit(const For &op) {
     this->makeIndent();
     this->os() << "for (int " << normalizeId(op->iter_) << " = ";

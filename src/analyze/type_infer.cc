@@ -215,6 +215,11 @@ void TypeInfer::visit(const Ceil &op) {
     types_[op] = types_.at(op->expr_);
 }
 
+void TypeInfer::visit(const Cast &op) {
+    Visitor::visit(op);
+    types_[op] = op->dtype_;
+}
+
 void TypeInfer::visit(const Intrinsic &op) {
     Visitor::visit(op);
     types_[op] = op->retType_;
