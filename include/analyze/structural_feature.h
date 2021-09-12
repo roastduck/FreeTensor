@@ -133,6 +133,7 @@ class StructuralFeature : public CompUniqueBounds {
     Expr visit(const LNot &op) override { return visitUnaryOp(op); }
     Expr visit(const Sqrt &op) override { return visitUnaryOp(op); }
     Expr visit(const Exp &op) override { return visitUnaryOp(op); }
+    Expr visit(const Square &op) override { return visitUnaryOp(op); }
 
     Stmt visit(const StmtSeq &op) override;
     Stmt visit(const If &op) override;

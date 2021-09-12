@@ -393,6 +393,19 @@ template <class T> Expr _makeExp(T &&expr) {
     return e;
 }
 
+class SquareNode : public ExprNode {
+  public:
+    SubTree<ExprNode> expr_;
+    DEFINE_NODE_TRAIT(Square);
+};
+typedef Ref<SquareNode> Square;
+#define makeSquare(...) makeNode(Square, __VA_ARGS__)
+template <class T> Expr _makeSquare(T &&expr) {
+    Square e = Square::make();
+    e->expr_ = std::forward<T>(expr);
+    return e;
+}
+
 /**
  * Invoke whatever target code
  */
@@ -422,6 +435,65 @@ inline Expr _makeIntrinsic(const std::string &format,
     i->params_ = std::vector<SubTree<ExprNode>>(params.begin(), params.end());
     i->retType_ = retType;
     return i;
+}
+
+template <class T, class U>
+Expr makeBinary(ASTNodeType nodeType, T &&lhs, U &&rhs) {
+    switch (nodeType) {
+    case ASTNodeType::Add:
+        return makeAdd(std::forward<T>(lhs), std::forward<U>(rhs));
+    case ASTNodeType::Sub:
+        return makeSub(std::forward<T>(lhs), std::forward<U>(rhs));
+    case ASTNodeType::Mul:
+        return makeMul(std::forward<T>(lhs), std::forward<U>(rhs));
+    case ASTNodeType::RealDiv:
+        return makeRealDiv(std::forward<T>(lhs), std::forward<U>(rhs));
+    case ASTNodeType::FloorDiv:
+        return makeFloorDiv(std::forward<T>(lhs), std::forward<U>(rhs));
+    case ASTNodeType::CeilDiv:
+        return makeCeilDiv(std::forward<T>(lhs), std::forward<U>(rhs));
+    case ASTNodeType::RoundTowards0Div:
+        return makeRoundTowards0Div(std::forward<T>(lhs), std::forward<U>(rhs));
+    case ASTNodeType::Mod:
+        return makeMod(std::forward<T>(lhs), std::forward<U>(rhs));
+    case ASTNodeType::Min:
+        return makeMin(std::forward<T>(lhs), std::forward<U>(rhs));
+    case ASTNodeType::Max:
+        return makeMax(std::forward<T>(lhs), std::forward<U>(rhs));
+    case ASTNodeType::LT:
+        return makeLT(std::forward<T>(lhs), std::forward<U>(rhs));
+    case ASTNodeType::LE:
+        return makeLE(std::forward<T>(lhs), std::forward<U>(rhs));
+    case ASTNodeType::GT:
+        return makeGT(std::forward<T>(lhs), std::forward<U>(rhs));
+    case ASTNodeType::GE:
+        return makeGE(std::forward<T>(lhs), std::forward<U>(rhs));
+    case ASTNodeType::EQ:
+        return makeEQ(std::forward<T>(lhs), std::forward<U>(rhs));
+    case ASTNodeType::NE:
+        return makeNE(std::forward<T>(lhs), std::forward<U>(rhs));
+    case ASTNodeType::LAnd:
+        return makeLAnd(std::forward<T>(lhs), std::forward<U>(rhs));
+    case ASTNodeType::LOr:
+        return makeLOr(std::forward<T>(lhs), std::forward<U>(rhs));
+    default:
+        ASSERT(false);
+    }
+}
+
+template <class T> Expr makeUnary(ASTNodeType nodeType, T &&expr) {
+    switch (nodeType) {
+    case ASTNodeType::LNot:
+        return makeLNot(std::forward<T>(expr));
+    case ASTNodeType::Sqrt:
+        return makeSqrt(std::forward<T>(expr));
+    case ASTNodeType::Exp:
+        return makeExp(std::forward<T>(expr));
+    case ASTNodeType::Square:
+        return makeSquare(std::forward<T>(expr));
+    default:
+        ASSERT(false);
+    }
 }
 
 } // namespace ir

@@ -318,6 +318,12 @@ void PrintVisitor::visit(const Exp &op) {
     os() << ")";
 }
 
+void PrintVisitor::visit(const Square &op) {
+    os() << "(";
+    recur(op->expr_);
+    os() << ")^2";
+}
+
 void PrintVisitor::visit(const For &op) {
     if (!op->parallel_.empty()) {
         makeIndent();

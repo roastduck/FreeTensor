@@ -55,6 +55,7 @@ class TypeInfer : public Visitor {
     void visit(const LNot &op) override;
     void visit(const Sqrt &op) override;
     void visit(const Exp &op) override;
+    void visit(const Square &op) override;
     void visit(const Intrinsic &op) override;
 
     void visit(const VarDef &op) override;

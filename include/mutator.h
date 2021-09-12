@@ -215,6 +215,10 @@ class Mutator {
         return COPY_DEBUG_INFO(makeExp((*this)(op->expr_)), op);
     }
 
+    virtual Expr visit(const Square &op) {
+        return COPY_DEBUG_INFO(makeSquare((*this)(op->expr_)), op);
+    }
+
     virtual Stmt visit(const For &op) {
         auto ret = makeFor(op->id(), op->iter_, (*this)(op->begin_),
                            (*this)(op->end_), (*this)(op->len_), op->parallel_,

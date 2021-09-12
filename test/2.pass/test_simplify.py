@@ -732,7 +732,7 @@ def test_simplify_sqrt_3():
                     ("x2", (), "float32", "input", "cpu"),
                     ("x3", (), "float32", "input", "cpu"),
                     ("y", (), "float32", "output", "cpu")]) as (x1, x2, x3, y):
-        y[()] = x2[()] * x2[()] * (x1[()] / x3[()])
+        y[()] = ir.square(x2[()]) * (x1[()] / x3[()])
     std = ir.pop_ast()
 
     assert std.match(ast)

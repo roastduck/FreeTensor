@@ -33,7 +33,7 @@ inline Expr reduceMul(const std::vector<Expr> &list) {
 template <class BaseClass>
 template <class T>
 Expr SimplifyPass<BaseClass>::normalizeRealMulDiv(const T &op) {
-    int sqrtCnt = 0, divCnt = 0;
+    int sqrtCnt = 0, divCnt = 0, squareCnt = 0;
     std::function<void(const Expr &, std::vector<Expr> &, std::vector<Expr> &,
                        std::vector<Expr> &, std::vector<Expr> &)>
         recur = [&recur, &sqrtCnt,
@@ -56,7 +56,24 @@ Expr SimplifyPass<BaseClass>::normalizeRealMulDiv(const T &op) {
         };
     std::vector<Expr> num, den, sqrtNum, sqrtDen;
     recur(op, num, den, sqrtNum, sqrtDen);
-    if (sqrtCnt <= 1 && divCnt <= 1) {
+
+    auto trySquare = [this, &squareCnt](std::vector<Expr> &list) {
+        for (size_t i = 0; i + 1 < list.size(); i++) {
+            for (size_t j = i + 1; j < list.size(); j++) {
+                if (this->getHash(list[i]) == this->getHash(list[j])) {
+                    list[i] = makeSquare(list[i]);
+                    std::swap(list[j], list.back());
+                    list.resize(list.size() - 1);
+                    squareCnt++;
+                }
+            }
+        }
+    };
+    trySquare(num);
+    trySquare(den);
+    trySquare(sqrtNum);
+    trySquare(sqrtDen);
+    if (sqrtCnt <= 1 && divCnt <= 1 && squareCnt == 0) {
         return op;
     }
 
@@ -574,73 +591,42 @@ Expr SimplifyPass<BaseClass>::visit(const Sqrt &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::Sqrt);
     auto op = __op.template as<SqrtNode>();
 
-    typedef std::unordered_map<uint64_t, std::pair<Expr, int>> Map;
-
-    std::function<void(const Expr &, Map &, Map &)> recur =
-        [&recur, this](const Expr &expr, Map &num, Map &den) {
+    std::function<void(const Expr &, std::vector<Expr> &, std::vector<Expr> &,
+                       std::vector<Expr> &, std::vector<Expr> &)>
+        recur = [&recur](const Expr &expr, std::vector<Expr> &num,
+                         std::vector<Expr> &den, std::vector<Expr> &sqrtNum,
+                         std::vector<Expr> &sqrtDen) {
             if (expr->nodeType() == ASTNodeType::Mul) {
-                recur(expr.as<MulNode>()->lhs_, num, den);
-                recur(expr.as<MulNode>()->rhs_, num, den);
+                recur(expr.as<MulNode>()->lhs_, num, den, sqrtNum, sqrtDen);
+                recur(expr.as<MulNode>()->rhs_, num, den, sqrtNum, sqrtDen);
             } else if (expr->nodeType() == ASTNodeType::RealDiv) {
-                recur(expr.as<RealDivNode>()->lhs_, num, den);
-                recur(expr.as<RealDivNode>()->rhs_, den, num);
+                recur(expr.as<RealDivNode>()->lhs_, num, den, sqrtNum, sqrtDen);
+                recur(expr.as<RealDivNode>()->rhs_, den, num, sqrtDen, sqrtNum);
+            } else if (expr->nodeType() == ASTNodeType::Square) {
+                num.emplace_back(expr.as<SquareNode>()->expr_);
             } else {
-                auto h = this->getHash(expr);
-                if (!num.count(h)) {
-                    num[h] = std::make_pair(expr, 1);
-                } else {
-                    num[h].second++;
-                }
+                sqrtNum.emplace_back(expr);
             }
         };
-    Map num, den;
-    recur(op->expr_, num, den);
-    for (auto &&[hash, value] : num) {
-        if (value.second > 1) {
-            goto needSimplify;
-        }
-    }
-    for (auto &&[hash, value] : den) {
-        if (value.second > 1) {
-            goto needSimplify;
-        }
-    }
-    return op;
-
-needSimplify:
-    std::vector<Expr> numList, denList, numSqrtList, denSqrtList;
-    for (auto &&[hash, value] : num) {
-        auto &&[expr, cnt] = value;
-        for (int i = 0; i < cnt / 2; i++) {
-            numList.emplace_back(expr);
-        }
-        if (cnt % 2) {
-            numSqrtList.emplace_back(expr);
-        }
-    }
-    for (auto &&[hash, value] : den) {
-        auto &&[expr, cnt] = value;
-        for (int i = 0; i < cnt / 2; i++) {
-            denList.emplace_back(expr);
-        }
-        if (cnt % 2) {
-            denSqrtList.emplace_back(expr);
-        }
+    std::vector<Expr> num, den, sqrtNum, sqrtDen;
+    recur(op->expr_, num, den, sqrtNum, sqrtDen);
+    if (num.empty() && den.empty()) {
+        return op;
     }
 
-    if (auto x = detail::reduceMul(numSqrtList); x.isValid()) {
-        if (auto y = detail::reduceMul(denSqrtList); y.isValid()) {
-            numList.emplace_back(makeSqrt(makeRealDiv(x, y)));
+    if (auto x = detail::reduceMul(sqrtNum); x.isValid()) {
+        if (auto y = detail::reduceMul(sqrtDen); y.isValid()) {
+            num.emplace_back(makeSqrt(makeRealDiv(x, y)));
         } else {
-            numList.emplace_back(makeSqrt(x));
+            num.emplace_back(makeSqrt(x));
         }
     } else {
-        if (auto y = detail::reduceMul(denSqrtList); y.isValid()) {
-            denList.emplace_back(makeSqrt(y));
+        if (auto y = detail::reduceMul(sqrtDen); y.isValid()) {
+            den.emplace_back(makeSqrt(y));
         }
     }
-    if (auto x = detail::reduceMul(numList); x.isValid()) {
-        if (auto y = detail::reduceMul(denList); y.isValid()) {
+    if (auto x = detail::reduceMul(num); x.isValid()) {
+        if (auto y = detail::reduceMul(den); y.isValid()) {
             return markMutated(makeRealDiv(x, y));
         } else {
             return markMutated(x);

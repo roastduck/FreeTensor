@@ -45,6 +45,7 @@ enum class ASTNodeType : int {
     Assert,
     Sqrt,
     Exp,
+    Square,
     Intrinsic,
     Eval,
 };

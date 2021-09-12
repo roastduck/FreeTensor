@@ -21,6 +21,7 @@ from .nodes import (
     l_not,
     sqrt,
     exp,
+    square,
     floor_div,
     ceil_div,
     round_towards_0_div,

@@ -46,6 +46,7 @@ void init_ffi_ast(py::module_ &m) {
         .value("LNot", ASTNodeType::LNot)
         .value("Sqrt", ASTNodeType::Sqrt)
         .value("Exp", ASTNodeType::Exp)
+        .value("Square", ASTNodeType::Square)
         .value("For", ASTNodeType::For)
         .value("If", ASTNodeType::If)
         .value("Assert", ASTNodeType::Assert)
@@ -257,6 +258,9 @@ void init_ffi_ast(py::module_ &m) {
     py::class_<ExpNode, Exp>(m, "Exp", pyExpr)
         .def_property_readonly("expr",
                                [](const Exp &op) -> Expr { return op->expr_; });
+    py::class_<SquareNode, Square>(m, "Square", pyExpr)
+        .def_property_readonly(
+            "expr", [](const Square &op) -> Expr { return op->expr_; });
     py::class_<IntrinsicNode, Intrinsic> pyIntrinsic(m, "Intrinsic", pyExpr);
     py::class_<AnyExprNode, AnyExpr> pyAnyExpr(m, "AnyExpr", pyExpr);
 
@@ -435,6 +439,8 @@ void init_ffi_ast(py::module_ &m) {
     m.def("makeSqrt", static_cast<Expr (*)(const Expr &)>(&_makeSqrt),
           "expr"_a);
     m.def("makeExp", static_cast<Expr (*)(const Expr &)>(&_makeExp), "expr"_a);
+    m.def("makeSquare", static_cast<Expr (*)(const Expr &)>(&_makeSquare),
+          "expr"_a);
     m.def("makeFloorDiv",
           static_cast<Expr (*)(const Expr &, const Expr &)>(&_makeFloorDiv),
           "expr"_a, "expr"_a);
@@ -503,6 +509,7 @@ template <> struct polymorphic_type_hook<ir::ASTNode> {
             DISPATCH(LNot);
             DISPATCH(Sqrt);
             DISPATCH(Exp);
+            DISPATCH(Square);
             DISPATCH(Intrinsic);
         default:
             ERROR("Unexpected AST node type");
@@ -575,6 +582,7 @@ template <> struct polymorphic_type_hook<ir::ExprNode> {
             DISPATCH(LNot);
             DISPATCH(Sqrt);
             DISPATCH(Exp);
+            DISPATCH(Square);
             DISPATCH(Intrinsic);
             DISPATCH(AnyExpr);
         default:
