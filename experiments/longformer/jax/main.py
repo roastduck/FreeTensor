@@ -33,7 +33,7 @@ def dilated_attention(q, k, v, dilation):
     # Tested with JAX 0.2.19
 
     pad_k = jnp.pad(k, ((0, 0), (w * dilation, w * dilation), (0, 0)))
-    pad_v = jnp.pad(k, ((0, 0), (w * dilation, w * dilation), (0, 0)))
+    pad_v = jnp.pad(v, ((0, 0), (w * dilation, w * dilation), (0, 0)))
     assert pad_k.shape == (n_heads, seq_len + 2 * w * dilation, feat_len)
     assert pad_v.shape == (n_heads, seq_len + 2 * w * dilation, feat_len)
     diag_k = jax.vmap(lambda head: jax.vmap(lambda i: jax.vmap(lambda j: head[

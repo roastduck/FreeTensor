@@ -14,7 +14,7 @@ def dilated_attention(q, k, v, w, dilation):
     sqrt_d = math.sqrt(feat_len)
 
     pad_k = torch.nn.functional.pad(k, (0, 0, w * dilation, w * dilation))
-    pad_v = torch.nn.functional.pad(k, (0, 0, w * dilation, w * dilation))
+    pad_v = torch.nn.functional.pad(v, (0, 0, w * dilation, w * dilation))
     assert pad_k.shape == (n_heads, seq_len + 2 * w * dilation, feat_len)
     assert pad_v.shape == (n_heads, seq_len + 2 * w * dilation, feat_len)
     diag_k = pad_k.as_strided(size=(n_heads, seq_len, 2 * w + 1, feat_len),
