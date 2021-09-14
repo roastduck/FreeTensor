@@ -11,7 +11,7 @@ void TypeInfer::visitExpr(const Expr &op,
 
 #define CHK_TYPE(cond, dtype, op)                                              \
     if (!(cond)(dtype) && (dtype) != DataType::Custom) {                       \
-        throw InvalidProgram("Invalud data type " + toString(dtype) + " in " + \
+        throw InvalidProgram("Invalid data type " + toString(dtype) + " in " + \
                              toString(op));                                    \
     }
 
