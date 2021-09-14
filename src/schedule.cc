@@ -156,6 +156,8 @@ std::string Schedule::merge(const std::string &loop1,
 std::pair<Schedule::IDMap, Schedule::IDMap>
 Schedule::fission(const std::string &loop, const std::string &after,
                   const std::string &suffix0, const std::string &suffix1) {
+    // FIXME: Check the condition is not variant when splitting an If
+
     if (suffix0 == suffix1) {
         throw InvalidSchedule(
             "fission: suffix0 cannot be the same with suffix1");
