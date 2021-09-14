@@ -8,6 +8,7 @@
 #include <analyze/find_loop_variance.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/make_reduction.h>
+#include <pass/merge_and_hoist_if.h>
 #include <pass/remove_writes.h>
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
@@ -224,6 +225,7 @@ Schedule::fission(const std::string &loop, const std::string &after,
         ast = adder(ast);
 
         ast = mutator(ast);
+        ast = mergeAndHoistIf(ast);
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid fission(" + loop + ", " + after +
                               "): " + e.what());
@@ -327,7 +329,7 @@ void Schedule::swap(const std::vector<std::string> &order) {
         findDeps(ast, {{{scope->id(), DepDirection::Normal}}}, found,
                  FindDepsMode::Dep, DEP_ALL, filter);
     } catch (const InvalidSchedule &e) {
-        std::string msg = "Invalid reorder(";
+        std::string msg = "Invalid swap(";
         for (size_t i = 0, iEnd = order.size(); i < iEnd; i++) {
             msg += order[i] + (i < iEnd - 1 ? ", " : "");
         }
