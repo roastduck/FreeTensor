@@ -253,6 +253,15 @@ class Schedule {
                   int factor = -1, int nparts = -1);
 
     /**
+     * Reorder the dimensions of a variable
+     *
+     * @param def : ID of the VarDef statement of the specific variable
+     * @param order : new order of the dimensions
+     * @throw InvalidSchedule if the variable or the order is illegal
+     */
+    void varReorder(const std::string &def, const std::vector<int> &order);
+
+    /**
      * Move a statement to a new position
      *
      * This is a composite schedule command, which is implemented with other

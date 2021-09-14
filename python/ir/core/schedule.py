@@ -313,6 +313,24 @@ class Schedule(ffi.Schedule):
         return super(Schedule, self).var_split(toId(vardef), dim, mode, factor,
                                                nparts)
 
+    def var_reorder(self, vardef, order):
+        """
+        Reorder the dimensions of a variable
+
+        Parameters
+        ----------
+        vardef : str, Stmt or Cursor
+            ID of the VarDef statement of the specific variable
+        order : array like of str, Stmt or Cursor
+            Vector of integers. The new order of the dimensions
+
+        Raises
+        ------
+        InvalidSchedule
+            if the variable or the order is illegal
+        """
+        return super(Schedule, self).var_reorder(toId(vardef), order)
+
     def move_to(self, stmt, side, dst):
         """
         Move a statement to a new position

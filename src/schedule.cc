@@ -28,6 +28,7 @@
 #include <schedule/split.h>
 #include <schedule/swap.h>
 #include <schedule/unroll.h>
+#include <schedule/var_reorder.h>
 #include <schedule/var_split.h>
 #include <schedule/vectorize.h>
 
@@ -464,6 +465,25 @@ void Schedule::varSplit(const std::string &def, int dim, VarSplitMode mode,
                                              : ", RelaxedSize") +
             ", factor=" + std::to_string(factor) +
             ", nparts=" + std::to_string(nparts) + "): " + e.what());
+    }
+    ast_ = ast;
+}
+
+void Schedule::varReorder(const std::string &def,
+                          const std::vector<int> &order) {
+    auto ast = ast_;
+    try {
+        VarReorder mutator(def, order);
+        ast = mutator(ast);
+        if (!mutator.found()) {
+            throw InvalidSchedule(def + "not found");
+        }
+    } catch (const InvalidSchedule &e) {
+        std::string msg = "Invalid var_reorder(" + def + ", ";
+        for (size_t i = 0, iEnd = order.size(); i < iEnd; i++) {
+            msg += order[i] + (i < iEnd - 1 ? ", " : "");
+        }
+        throw InvalidSchedule(msg + "): " + e.what());
     }
     ast_ = ast;
 }
