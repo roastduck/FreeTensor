@@ -47,6 +47,21 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
             (*this)(dim);
             this->os() << "]";
         }
+        if (op->buffer_->mtype() == MemType::CPU) {
+            // Alignment (TODO: Move to CodeGenCPU)
+            bool isSingle = true;
+            for (auto &&dim : shape) {
+                if (dim->nodeType() != ASTNodeType::IntConst ||
+                    dim.as<IntConstNode>()->val_ != 1) {
+                    isSingle = false;
+                    break;
+                }
+            }
+            if (!isSingle) {
+                // TODO adjust the value according to the cache line size
+                this->os() << " __attribute__((aligned(64)))";
+            }
+        }
         this->os() << ";" << std::endl;
     } else {
         auto nthParamIter =
