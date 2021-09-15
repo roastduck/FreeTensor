@@ -46,6 +46,18 @@ void CodeGenCUDA::visit(const Exp &op) {
     os() << ")";
 }
 
+void CodeGenCUDA::visit(const Floor &op) {
+    os() << "runtime_floor("; // Defined in runtime/gpu_runtime.h
+    (*this)(op->expr_);
+    os() << ")";
+}
+
+void CodeGenCUDA::visit(const Ceil &op) {
+    os() << "runtime_ceil("; // Defined in runtime/gpu_runtime.h
+    (*this)(op->expr_);
+    os() << ")";
+}
+
 void CodeGenCUDA::visit(const ReduceTo &op) {
     auto id = normalizeId(op->var_);
     markUse(op->var_);
@@ -53,7 +65,19 @@ void CodeGenCUDA::visit(const ReduceTo &op) {
 
     auto genAddr = [&]() {
         if (op->indices_.empty()) {
-            os() << "*" << id;
+            switch (this->buffers_.at(op->var_)->mtype()) {
+            case MemType::ByValue:
+            case MemType::CPU:
+            case MemType::GPULocal:
+                this->os() << id;
+                break;
+            case MemType::GPUGlobal:
+            case MemType::GPUShared:
+                this->os() << "*" << id;
+                break;
+            default:
+                ASSERT(false);
+            }
         } else {
             os() << id;
             for (auto &&index : op->indices_) {
@@ -153,6 +177,10 @@ void CodeGenCUDA::visit(const For &op) {
             const auto &dim = stream.threadDim_;
             auto sharedSize = stream.sharedSize_;
 
+            makeIndent();
+            os() << "cudaFuncSetAttribute(" << kernel
+                 << ", cudaFuncAttributeMaxDynamicSharedMemorySize, "
+                 << std::to_string(sharedSize) << ");" << std::endl;
             makeIndent();
             os() << kernel << "<<<dim3("
                  << (dim.count("blockIdx.x") ? dim.at("blockIdx.x") : 1) << ", "

@@ -225,6 +225,8 @@ def test_dynamic_tiling():
     s.cache(i1, "a", "cpu")
     s.cache(i1, "b", "cpu")
 
+    s.seperate_tail()
+
     func = s.func()
     print(func)
     func = ir.lower(func, target)
@@ -306,3 +308,40 @@ def test_collaborative_fetch():
 
     c_std = a_np @ b_np
     assert np.all(np.isclose(c_np, c_std))
+
+
+def test_vectorize_spmv():
+    with ir.VarDef([("x1", (64, 64), "int32", "input", "cpu"),
+                    ("x2", (64,), "int32", "input", "cpu"),
+                    ("y", (64,), "int32", "output", "cpu")]) as (x1, x2, y):
+        with ir.For("i", 0, 64, nid="Li") as i:
+            ir.MarkNid("S0")
+            y[i] = 0
+            with ir.For("j", 0, 64, nid="Lj") as j:
+                y[i] += x1[i, j] * x2[j]
+    ast = ir.pop_ast()
+    print(ast)
+    s = ir.Schedule(ast)
+    i0, i1 = s.split("Li", 4)
+    s.reorder([i0, "Lj", i1])
+    s.move_to("S0", ir.MoveToSide.Before, "Lj")
+    s.vectorize(i1)
+    s.vectorize(s.find(
+        lambda x: x.nid() == "S0.a").outer())  # FIXME: do not hard-code S0.a
+    ast = s.ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([("x1", (64, 64), "int32", "input", "cpu"),
+                    ("x2", (64,), "int32", "input", "cpu"),
+                    ("y", (64,), "int32", "output", "cpu")]) as (x1, x2, y):
+        with ir.For("i0", 0, 16) as i0:
+            with ir.For("i1", 0, 4) as i1:
+                y[i1 + 4 * i0] = 0
+            with ir.For("j", 0, 64, nid="Lj") as j:
+                with ir.For("i1", 0, 4) as i1:
+                    y[i1 + 4 * i0] += x1[i1 + 4 * i0, j] * x2[j]
+    std = ir.make_reduction(ir.pop_ast())
+
+    assert std.match(ast)

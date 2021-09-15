@@ -205,6 +205,8 @@ template <class BaseClass> class SimplifyPass : public BaseClass {
         return ret;
     }
 
+    template <class T> Expr normalizeRealMulDiv(const T &op);
+
   protected:
     using BaseClass::visit;
 
@@ -217,6 +219,7 @@ template <class BaseClass> class SimplifyPass : public BaseClass {
     Expr visit(const FloorDiv &op) override;
     Expr visit(const CeilDiv &op) override;
     Expr visit(const RoundTowards0Div &op) override;
+    Expr visit(const RealDiv &op) override;
     Expr visit(const Mod &op) override;
     Expr visit(const Min &op) override;
     Expr visit(const Max &op) override;
@@ -229,6 +232,7 @@ template <class BaseClass> class SimplifyPass : public BaseClass {
     Expr visit(const LAnd &op) override;
     Expr visit(const LOr &op) override;
     Expr visit(const LNot &op) override;
+    Expr visit(const Sqrt &op) override;
     Stmt visit(const ReduceTo &op) override;
     Stmt visit(const VarDef &op) override;
     Stmt visit(const For &op) override;

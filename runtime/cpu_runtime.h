@@ -18,4 +18,6 @@ template <class T> T ceilDiv(T a, T b) {
     return res + (rem != 0 && ((rem < 0) == (b < 0)));
 }
 
+template <class T> T runtime_square(T x) { return x * x; }
+
 #endif // CPU_RUNTIME_H

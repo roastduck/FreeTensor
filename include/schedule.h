@@ -23,9 +23,7 @@ class Schedule {
     Schedule(const Func &func) : func_(func), ast_(func->body_) {}
     Schedule(const Stmt &ast) : func_(nullptr), ast_(ast) {}
 
-    Schedule clone() const {
-        return Schedule(deepCopy(func_));
-    }
+    Schedule clone() const { return Schedule(deepCopy(func_)); }
 
     /**
      * @return : The function being transformed
@@ -255,6 +253,15 @@ class Schedule {
                   int factor = -1, int nparts = -1);
 
     /**
+     * Reorder the dimensions of a variable
+     *
+     * @param def : ID of the VarDef statement of the specific variable
+     * @param order : new order of the dimensions
+     * @throw InvalidSchedule if the variable or the order is illegal
+     */
+    void varReorder(const std::string &def, const std::vector<int> &order);
+
+    /**
      * Move a statement to a new position
      *
      * This is a composite schedule command, which is implemented with other
@@ -315,6 +322,48 @@ class Schedule {
      * requirement is not met
      */
     void vectorize(const std::string &loop);
+
+    /**
+     * Seperate main iterations and tail iterations of a loop
+     *
+     * E.g.
+     *
+     * ```
+     * for i = 0 -> 3 {
+     *   for j = 0 -> 4 {
+     *      if (i * 4 + j < 10) {
+     *        ...
+     *      }
+     *   }
+     * }
+     * ```
+     *
+     * Each loop will be seperated into 2 parts: the body and the tail. After
+     * simplification, the program will finally be transformed to
+     *
+     * ```
+     * for i = 0 -> 2 {
+     *   for j = 0 -> 4 {
+     *     ...
+     *   }
+     * }
+     * for j = 0 -> 2 {
+     *   ...
+     * }
+     * ```
+     *
+     * If there is two VarDef nodes in two branches, it may result in doubled
+     * memory use, since different thread may go to different branch. Therefore,
+     * this pass will not duplicate VarDef nodes. (TODO: This restriction may be
+     * limited to non-local buffers)
+     *
+     * Ideally, all programs can benefit from this schedule. However, this
+     * schedule may greatly increase the program size and make the compiling
+     * time way too long. Therefore, this transformation is implemented as a
+     * schedule, which can be applied optionally. (TODO: Optionally apply this
+     * schedule to part of the program)
+     */
+    void seperateTail();
 };
 
 } // namespace ir

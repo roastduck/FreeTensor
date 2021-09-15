@@ -404,6 +404,22 @@ def exp(expr):
     return ffi.makeExp(expr)
 
 
+def square(expr):
+    return ffi.makeSquare(expr)
+
+
+def floor(expr):
+    return ffi.makeFloor(expr)
+
+
+def ceil(expr):
+    return ffi.makeCeil(expr)
+
+
+def cast(expr, dtype):
+    return ffi.makeCast(expr, parseDType(dtype))
+
+
 def min_value(dtype):
     dtype = parseDType(dtype)
     if dtype == DataType.Float32:

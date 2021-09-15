@@ -45,7 +45,7 @@ class Mutator {
     }
 
     virtual Stmt visit(const VarDef &op) {
-        std::vector<Expr> shape;
+        std::vector<SubTree<ExprNode>> shape;
         shape.reserve(op->buffer_->tensor().shape().size());
         for (auto &&dim : op->buffer_->tensor().shape()) {
             shape.emplace_back((*this)(dim));
@@ -215,6 +215,18 @@ class Mutator {
         return COPY_DEBUG_INFO(makeExp((*this)(op->expr_)), op);
     }
 
+    virtual Expr visit(const Square &op) {
+        return COPY_DEBUG_INFO(makeSquare((*this)(op->expr_)), op);
+    }
+
+    virtual Expr visit(const Floor &op) {
+        return COPY_DEBUG_INFO(makeFloor((*this)(op->expr_)), op);
+    }
+
+    virtual Expr visit(const Ceil &op) {
+        return COPY_DEBUG_INFO(makeCeil((*this)(op->expr_)), op);
+    }
+
     virtual Stmt visit(const For &op) {
         auto ret = makeFor(op->id(), op->iter_, (*this)(op->begin_),
                            (*this)(op->end_), (*this)(op->len_), op->parallel_,
@@ -232,6 +244,10 @@ class Mutator {
     virtual Stmt visit(const Assert &op) {
         return COPY_DEBUG_INFO(
             makeAssert(op->id(), (*this)(op->cond_), (*this)(op->body_)), op);
+    }
+
+    virtual Expr visit(const Cast &op) {
+        return COPY_DEBUG_INFO(makeCast((*this)(op->expr_), op->dtype_), op);
     }
 
     virtual Expr visit(const Intrinsic &op) {

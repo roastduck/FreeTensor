@@ -131,15 +131,14 @@ Stmt removeWrites(const Stmt &_op) {
             auto &&_later = item.first, &&_earlier = item.second;
 
             for (auto &&use : overwrites) {
-                if (use.second == _earlier && !redundant.count(use.first) &&
-                    overwrites.count(std::make_pair(_later, use.first))) {
+                if (use.first == _earlier && !redundant.count(use.second)) {
                     // In the case of:
                     // (1) A = X
                     // (2) A += Y
                     // (3) A += Z
-                    // if we handle (1)-(3) first, which resulting to A = X + Z,
-                    // we cannot handle (2) then. So, we handle (1)-(2) before
-                    // (1)-(3)
+                    // if we handle (2)-(3) first, which resulting to `A += Y +
+                    // Z`, we cannot handle (1) then. So, we handle (1)-(2)
+                    // before (2)-(3)
                     visitType1(use);
                 }
             }

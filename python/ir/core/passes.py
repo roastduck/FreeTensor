@@ -2,12 +2,12 @@ from typing import Optional
 
 import ffi
 
+from ffi import grad
 from ffi import simplify_pass
 from ffi import sink_var
 from ffi import shrink_var
 from ffi import shrink_for
 from ffi import merge_and_hoist_if
-from ffi import seperate_tail
 from ffi import make_reduction
 from ffi import make_atomic
 from ffi import remove_writes

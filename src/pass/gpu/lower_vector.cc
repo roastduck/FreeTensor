@@ -78,6 +78,7 @@ Stmt LowerVector::visit(const For &op) {
         varHash_ = getHash(makeVar(op->iter_));
         for (int vecLen : VEC_LEN) {
             var_ = op->iter_;
+            begin_ = op->begin_;
             vecLen_ = vecLen;
             For ret;
             try {
@@ -111,7 +112,8 @@ Stmt LowerVector::visit(const For &op) {
 
 Expr LowerVector::visit(const Var &op) {
     if (!simplifyOnly_ && var_ == op->name_) {
-        auto ret = makeMul(op, makeIntConst(vecLen_));
+        auto ret = makeAdd(makeMul(makeSub(op, begin_), makeIntConst(vecLen_)),
+                           begin_);
         if (!isIndex_) {
             switch (vecLen_) {
             case 4:

@@ -5,6 +5,7 @@
 #include <pass/gpu/lower_vector.h>
 #include <pass/gpu/make_sync.h>
 #include <pass/gpu/normalize_threads.h>
+#include <pass/grad.h>
 #include <pass/make_1d_var.h>
 #include <pass/make_atomic.h>
 #include <pass/make_const_shape.h>
@@ -14,7 +15,6 @@
 #include <pass/prop_const.h>
 #include <pass/remove_dead_var.h>
 #include <pass/remove_writes.h>
-#include <pass/seperate_tail.h>
 #include <pass/shrink_for.h>
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
@@ -26,6 +26,17 @@ namespace ir {
 using namespace pybind11::literals;
 
 void init_ffi_pass(py::module_ &m) {
+    m.def("grad",
+          static_cast<Func (*)(
+              const Func &,
+              const std::unordered_map<std::string, std::string> &)>(&grad),
+          "func"_a, "grad_names"_a);
+    m.def("grad",
+          static_cast<Stmt (*)(
+              const Stmt &,
+              const std::unordered_map<std::string, std::string> &)>(&grad),
+          "stmt"_a, "grad_names"_a);
+
     m.def("simplify_pass", static_cast<Func (*)(const Func &)>(&simplifyPass),
           "func"_a);
     m.def("simplify_pass", static_cast<Stmt (*)(const Stmt &)>(&simplifyPass),
@@ -53,20 +64,15 @@ void init_ffi_pass(py::module_ &m) {
     m.def("shrink_var", static_cast<Stmt (*)(const Stmt &)>(&shrinkVar),
           "stmt"_a);
 
-    m.def("shrink_for", static_cast<Func (*)(const Func &, bool)>(&shrinkFor),
-          "func"_a, "keepConst"_a = false);
-    m.def("shrink_for", static_cast<Stmt (*)(const Stmt &, bool)>(&shrinkFor),
-          "stmt"_a, "keepConst"_a = false);
+    m.def("shrink_for", static_cast<Func (*)(const Func &)>(&shrinkFor),
+          "func"_a);
+    m.def("shrink_for", static_cast<Stmt (*)(const Stmt &)>(&shrinkFor),
+          "stmt"_a);
 
     m.def("merge_and_hoist_if",
           static_cast<Func (*)(const Func &)>(&mergeAndHoistIf), "func"_a);
     m.def("merge_and_hoist_if",
           static_cast<Stmt (*)(const Stmt &)>(&mergeAndHoistIf), "stmt"_a);
-
-    m.def("seperate_tail", static_cast<Func (*)(const Func &)>(&seperateTail),
-          "func"_a);
-    m.def("seperate_tail", static_cast<Stmt (*)(const Stmt &)>(&seperateTail),
-          "stmt"_a);
 
     m.def("make_reduction", static_cast<Func (*)(const Func &)>(&makeReduction),
           "func"_a);

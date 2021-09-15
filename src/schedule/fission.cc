@@ -2,6 +2,13 @@
 
 namespace ir {
 
+Stmt HoistVar::visitStmt(const Stmt &op,
+                         const std::function<Stmt(const Stmt &)> &visitNode) {
+    auto ret = Mutator::visitStmt(op, visitNode);
+    isAfter_ |= op->id() == after_;
+    return ret;
+}
+
 Stmt HoistVar::visit(const For &op) {
     if (op->id() != loop_) {
         auto ret = Mutator::visit(op);
@@ -38,9 +45,9 @@ Stmt HoistVar::visit(const StmtSeq &op) {
     } else {
         std::vector<Stmt> before, after;
         for (auto &&_stmt : op->stmts_) {
+            bool oldIsAfter = isAfter_;
             auto stmt = (*this)(_stmt);
-            (isAfter_ ? after : before).emplace_back(stmt);
-            isAfter_ |= stmt->id() == after_;
+            (oldIsAfter ? after : before).emplace_back(stmt);
         }
         Stmt ret;
         if (after.empty()) {
@@ -101,13 +108,17 @@ Stmt AddDimToVar::visit(const For &op) {
 }
 
 Stmt AddDimToVar::visit(const VarDef &_op) {
+    ASSERT(!defs_.count(_op->name_));
+    defs_[_op->name_] = _op->id();
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::VarDef);
+    defs_.erase(_op->name_);
+
     auto op = __op.as<VarDefNode>();
-    if (toAdd_.count(op->name_)) {
+    if (toAdd_.count(op->id())) {
         op->buffer_ = op->buffer_.clone();
         auto &shape = op->buffer_->tensor().shape();
-        for (auto &&loop : toAdd_.at(op->name_)) {
+        for (auto &&loop : toAdd_.at(op->id())) {
             auto len =
                 makeSub(forMap_.at(loop)->end_, forMap_.at(loop)->begin_);
             shape.insert(shape.begin(), len);
@@ -134,6 +145,15 @@ Stmt AddDimToVar::visit(const ReduceTo &_op) {
     return doAdd(__op.as<ReduceToNode>());
 }
 
+Stmt FissionFor::visitStmt(const Stmt &op,
+                           const std::function<Stmt(const Stmt &)> &visitNode) {
+    auto ret = Mutator::visitStmt(op, visitNode);
+    if (op->id() == after_) {
+        isAfter_ = true;
+    }
+    return ret;
+}
+
 void FissionFor::markNewId(const Stmt &op, bool isPart0) {
     std::string oldId = op->id(), newId;
     if (isPart0) {
@@ -157,9 +177,9 @@ Stmt FissionFor::visit(const For &op) {
         auto end = (*this)(op->end_);
         auto len = (*this)(op->len_);
         inside_ = true;
-        isPart0_ = true, inPart_ = true;
+        isPart0_ = true, inPart_ = true, isAfter_ = false;
         auto part0 = (*this)(op->body_);
-        isPart0_ = false, inPart_ = false;
+        isPart0_ = false, inPart_ = false, isAfter_ = false;
         auto part1 = (*this)(op->body_);
         inside_ = false;
         auto for0 = makeFor(op->id(), op->iter_, begin, end, len, op->parallel_,
@@ -185,9 +205,7 @@ Stmt FissionFor::visit(const StmtSeq &op) {
             if (beforeInPart || afterInPart) {
                 stmts.emplace_back(stmt);
             }
-            if (_stmt->id() == after_) {
-                inPart_ = !isPart0_;
-            }
+            inPart_ = (isAfter_ && !isPart0_) || (!isAfter_ && isPart0_);
         }
         if (stmts.size() == 1) {
             return stmts[0]; // id already modified

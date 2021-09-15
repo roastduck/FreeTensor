@@ -14,7 +14,6 @@
 #include <pass/prop_const.h>
 #include <pass/remove_dead_var.h>
 #include <pass/remove_writes.h>
-#include <pass/seperate_tail.h>
 #include <pass/shrink_for.h>
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
@@ -30,7 +29,6 @@ template <class T> T lower(const T &t, const Ref<Target> &target) {
     func = sinkVar(func);
     func = shrinkVar(func);
     func = mergeAndHoistIf(func);
-    func = seperateTail(func);
     func = propConst(func);
     func = removeWrites(func);  // After seperate_tail
     func = removeDeadVar(func); // After remove_writes and prop_const
@@ -41,9 +39,9 @@ template <class T> T lower(const T &t, const Ref<Target> &target) {
         case TargetType::GPU:
             // TODO: Support dynamic shared memory size, but the size should be
             // determined outside of kernels
+            func = gpu::correctShared(func);
             func =
                 makeConstShape(func, {MemType::GPUShared, MemType::GPULocal});
-            func = gpu::correctShared(func);
 
             // After gpu_make_sync and gpu_correct_shared. Otherwise, these 2
             // passes cannot get the right thread info

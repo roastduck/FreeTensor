@@ -43,19 +43,23 @@ class HoistVar : public Mutator {
     }
 
   protected:
-    virtual Stmt visit(const For &op) override;
-    virtual Stmt visit(const StmtSeq &op) override;
-    virtual Stmt visit(const VarDef &op) override;
-    virtual Stmt visit(const Store &op) override;
-    virtual Expr visit(const Load &op) override;
-    virtual Stmt visit(const ReduceTo &op) override;
+    Stmt visitStmt(const Stmt &op,
+                   const std::function<Stmt(const Stmt &)> &visitNode) override;
+    Stmt visit(const For &op) override;
+    Stmt visit(const StmtSeq &op) override;
+    Stmt visit(const VarDef &op) override;
+    Stmt visit(const Store &op) override;
+    Expr visit(const Load &op) override;
+    Stmt visit(const ReduceTo &op) override;
 };
 
 class AddDimToVar : public Mutator {
-    // var name -> for ID
+    // VarDef ID -> for ID
     std::unordered_map<std::string, std::vector<std::string>> toAdd_;
     // for ID -> For
     std::unordered_map<std::string, For> forMap_;
+    // Var name -> VarDef ID
+    std::unordered_map<std::string, std::string> defs_;
 
   public:
     AddDimToVar(
@@ -64,8 +68,8 @@ class AddDimToVar : public Mutator {
 
   private:
     template <class T> T doAdd(T op) {
-        if (toAdd_.count(op->var_)) {
-            for (auto &&loop : toAdd_.at(op->var_)) {
+        if (toAdd_.count(defs_.at(op->var_))) {
+            for (auto &&loop : toAdd_.at(defs_.at(op->var_))) {
                 op->indices_.insert(op->indices_.begin(),
                                     makeVar(forMap_.at(loop)->iter_));
             }
@@ -74,18 +78,18 @@ class AddDimToVar : public Mutator {
     }
 
   protected:
-    virtual Stmt visit(const For &op) override;
-    virtual Stmt visit(const VarDef &op) override;
-    virtual Stmt visit(const Store &op) override;
-    virtual Stmt visit(const ReduceTo &op) override;
-    virtual Expr visit(const Load &op) override;
+    Stmt visit(const For &op) override;
+    Stmt visit(const VarDef &op) override;
+    Stmt visit(const Store &op) override;
+    Stmt visit(const ReduceTo &op) override;
+    Expr visit(const Load &op) override;
 };
 
 class FissionFor : public Mutator {
     std::string loop_, after_, suffix0_, suffix1_;
     std::unordered_map<std::string, std::string> ids0_, ids1_;
     std::unordered_set<std::string> varUses_;
-    bool inside_ = false, isPart0_ = true, inPart_ = false;
+    bool inside_ = false, isPart0_ = true, inPart_ = false, isAfter_ = false;
 
   public:
     FissionFor(const std::string &loop, const std::string &after,
@@ -104,14 +108,16 @@ class FissionFor : public Mutator {
     void markNewId(const Stmt &op, bool isPart0);
 
   protected:
-    virtual Stmt visit(const For &op) override;
-    virtual Stmt visit(const StmtSeq &op) override;
-    virtual Stmt visit(const VarDef &op) override;
-    virtual Stmt visit(const Store &op) override;
-    virtual Expr visit(const Load &op) override;
-    virtual Stmt visit(const ReduceTo &op) override;
-    virtual Stmt visit(const If &op) override;
-    virtual Stmt visit(const Assert &op) override;
+    Stmt visitStmt(const Stmt &op,
+                   const std::function<Stmt(const Stmt &)> &visitNode) override;
+    Stmt visit(const For &op) override;
+    Stmt visit(const StmtSeq &op) override;
+    Stmt visit(const VarDef &op) override;
+    Stmt visit(const Store &op) override;
+    Expr visit(const Load &op) override;
+    Stmt visit(const ReduceTo &op) override;
+    Stmt visit(const If &op) override;
+    Stmt visit(const Assert &op) override;
 };
 
 } // namespace ir

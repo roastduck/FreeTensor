@@ -175,6 +175,12 @@ class Visitor {
 
     virtual void visit(const Exp &op) { (*this)(op->expr_); }
 
+    virtual void visit(const Square &op) { (*this)(op->expr_); }
+
+    virtual void visit(const Floor &op) { (*this)(op->expr_); }
+
+    virtual void visit(const Ceil &op) { (*this)(op->expr_); }
+
     virtual void visit(const For &op) {
         (*this)(op->begin_);
         (*this)(op->end_);
@@ -194,6 +200,8 @@ class Visitor {
         (*this)(op->cond_);
         (*this)(op->body_);
     }
+
+    virtual void visit(const Cast &op) { (*this)(op->expr_); }
 
     virtual void visit(const Intrinsic &op) {
         for (auto &&param : op->params_) {

@@ -10,8 +10,8 @@ void TypeInfer::visitExpr(const Expr &op,
 }
 
 #define CHK_TYPE(cond, dtype, op)                                              \
-    if (!(cond)(dtype)) {                                                      \
-        throw InvalidProgram("Invalud data type " + toString(dtype) + " in " + \
+    if (!(cond)(dtype) && (dtype) != DataType::Custom) {                       \
+        throw InvalidProgram("Invalid data type " + toString(dtype) + " in " + \
                              toString(op));                                    \
     }
 
@@ -183,6 +183,41 @@ void TypeInfer::visit(const LNot &op) {
     Visitor::visit(op);
     CHK_TYPE(isBool, types_.at(op->expr_), op);
     types_[op] = DataType::Bool;
+}
+
+void TypeInfer::visit(const Sqrt &op) {
+    Visitor::visit(op);
+    CHK_TYPE(isNumber, types_.at(op->expr_), op);
+    types_[op] = types_.at(op->expr_);
+}
+
+void TypeInfer::visit(const Exp &op) {
+    Visitor::visit(op);
+    CHK_TYPE(isNumber, types_.at(op->expr_), op);
+    types_[op] = types_.at(op->expr_);
+}
+
+void TypeInfer::visit(const Square &op) {
+    Visitor::visit(op);
+    CHK_TYPE(isNumber, types_.at(op->expr_), op);
+    types_[op] = types_.at(op->expr_);
+}
+
+void TypeInfer::visit(const Floor &op) {
+    Visitor::visit(op);
+    CHK_TYPE(isFloat, types_.at(op->expr_), op);
+    types_[op] = types_.at(op->expr_);
+}
+
+void TypeInfer::visit(const Ceil &op) {
+    Visitor::visit(op);
+    CHK_TYPE(isFloat, types_.at(op->expr_), op);
+    types_[op] = types_.at(op->expr_);
+}
+
+void TypeInfer::visit(const Cast &op) {
+    Visitor::visit(op);
+    types_[op] = op->dtype_;
 }
 
 void TypeInfer::visit(const Intrinsic &op) {

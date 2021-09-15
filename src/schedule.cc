@@ -8,10 +8,12 @@
 #include <analyze/find_loop_variance.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/make_reduction.h>
+#include <pass/merge_and_hoist_if.h>
 #include <pass/remove_writes.h>
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
 #include <pass/sink_var.h>
+#include <pass/z3_simplify.h>
 #include <schedule.h>
 #include <schedule/blend.h>
 #include <schedule/cache.h>
@@ -22,9 +24,11 @@
 #include <schedule/merge.h>
 #include <schedule/parallelize.h>
 #include <schedule/reorder.h>
+#include <schedule/seperate_tail.h>
 #include <schedule/split.h>
 #include <schedule/swap.h>
 #include <schedule/unroll.h>
+#include <schedule/var_reorder.h>
 #include <schedule/var_split.h>
 #include <schedule/vectorize.h>
 
@@ -154,6 +158,8 @@ std::string Schedule::merge(const std::string &loop1,
 std::pair<Schedule::IDMap, Schedule::IDMap>
 Schedule::fission(const std::string &loop, const std::string &after,
                   const std::string &suffix0, const std::string &suffix1) {
+    // FIXME: Check the condition is not variant when splitting an If
+
     if (suffix0 == suffix1) {
         throw InvalidSchedule(
             "fission: suffix0 cannot be the same with suffix1");
@@ -209,9 +215,9 @@ Schedule::fission(const std::string &loop, const std::string &after,
                 d.later()->nodeType() == ASTNodeType::Load) {
                 return;
             }
-            if (std::find(toAdd[d.var_].begin(), toAdd[d.var_].end(), id) ==
-                toAdd[d.var_].end()) {
-                toAdd[d.var_].emplace_back(id);
+            if (std::find(toAdd[d.defId()].begin(), toAdd[d.defId()].end(),
+                          id) == toAdd[d.defId()].end()) {
+                toAdd[d.defId()].emplace_back(id);
             }
         };
         findDeps(ast, disjunct, found);
@@ -220,6 +226,7 @@ Schedule::fission(const std::string &loop, const std::string &after,
         ast = adder(ast);
 
         ast = mutator(ast);
+        ast = mergeAndHoistIf(ast);
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid fission(" + loop + ", " + after +
                               "): " + e.what());
@@ -323,7 +330,7 @@ void Schedule::swap(const std::vector<std::string> &order) {
         findDeps(ast, {{{scope->id(), DepDirection::Normal}}}, found,
                  FindDepsMode::Dep, DEP_ALL, filter);
     } catch (const InvalidSchedule &e) {
-        std::string msg = "Invalid reorder(";
+        std::string msg = "Invalid swap(";
         for (size_t i = 0, iEnd = order.size(); i < iEnd; i++) {
             msg += order[i] + (i < iEnd - 1 ? ", " : "");
         }
@@ -458,6 +465,25 @@ void Schedule::varSplit(const std::string &def, int dim, VarSplitMode mode,
                                              : ", RelaxedSize") +
             ", factor=" + std::to_string(factor) +
             ", nparts=" + std::to_string(nparts) + "): " + e.what());
+    }
+    ast_ = ast;
+}
+
+void Schedule::varReorder(const std::string &def,
+                          const std::vector<int> &order) {
+    auto ast = ast_;
+    try {
+        VarReorder mutator(def, order);
+        ast = mutator(ast);
+        if (!mutator.found()) {
+            throw InvalidSchedule(def + "not found");
+        }
+    } catch (const InvalidSchedule &e) {
+        std::string msg = "Invalid var_reorder(" + def + ", ";
+        for (size_t i = 0, iEnd = order.size(); i < iEnd; i++) {
+            msg += order[i] + (i < iEnd - 1 ? ", " : "");
+        }
+        throw InvalidSchedule(msg + "): " + e.what());
     }
     ast_ = ast;
 }
@@ -658,6 +684,26 @@ void Schedule::vectorize(const std::string &loop) {
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid vectorize(" + loop + "): " + e.what());
     }
+    ast_ = ast;
+}
+
+void Schedule::seperateTail() {
+    auto ast = ast_;
+
+    FindAllIfs finder;
+    finder(ast);
+    auto candidates = finder.results();
+
+    while (!candidates.empty()) {
+        SeperateTail mutator(candidates);
+        ast = mutator(ast);
+        ast =
+            z3Simplify(ast); // Although Z3 may be slow, if we don't use Z3
+                             // here, there will be too many redundant branches,
+                             // which will make each pass even slower
+        candidates = mutator.nextCandidates();
+    }
+
     ast_ = ast;
 }
 

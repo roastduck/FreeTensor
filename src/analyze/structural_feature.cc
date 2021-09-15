@@ -80,7 +80,7 @@ void StructuralFeature::updAreaInfo(const AST &parent, const AST &child) {
             for (auto &&b1 : parent.lo_[i]) {
                 for (auto &&b2 : child.lo_[i]) {
                     if (b1.lin().coeff_.empty() && b2.lin().coeff_.empty()) {
-                        ret.lo_[i].emplace_back(LinearExpr<Rational<int>>{
+                        ret.lo_[i].emplace_back(LinearExpr<Rational<int64_t>>{
                             {}, std::min(b1.lin().bias_, b2.lin().bias_)});
                     }
                 }
@@ -88,7 +88,7 @@ void StructuralFeature::updAreaInfo(const AST &parent, const AST &child) {
             for (auto &&b1 : parent.hi_[i]) {
                 for (auto &&b2 : child.hi_[i]) {
                     if (b1.lin().coeff_.empty() && b2.lin().coeff_.empty()) {
-                        ret.hi_[i].emplace_back(LinearExpr<Rational<int>>{
+                        ret.hi_[i].emplace_back(LinearExpr<Rational<int64_t>>{
                             {}, std::max(b1.lin().bias_, b2.lin().bias_)});
                     }
                 }
@@ -155,7 +155,7 @@ int64_t StructuralFeature::calcArea(const NodeBufferInfo &bufInfo) {
     ASSERT(bufInfo.hi_.size() == n);
     int64_t area = 1;
     for (size_t i = 0; i < n; i++) {
-        int tightest = INT_MAX;
+        int64_t tightest = LLONG_MAX;
         for (auto &&lo : bufInfo.lo_[i]) {
             for (auto &&hi : bufInfo.hi_[i]) {
                 auto diff = sub(hi, lo);
@@ -166,7 +166,7 @@ int64_t StructuralFeature::calcArea(const NodeBufferInfo &bufInfo) {
                 }
             }
         }
-        if (tightest < INT_MAX) {
+        if (tightest < LLONG_MAX) {
             area *= tightest;
         }
     }

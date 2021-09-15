@@ -72,9 +72,7 @@ class ASTContextStack:
 
         for ctx in reversed(self.ctx_stack):  # type: ASTContext
             if name in ctx.old_vars:
-                if prefetch:
-                    return None
-                assert False, "Variable reassigned in if/for/while"
+                assert False, f"Variable {name} reassigned in if/for/while"
             var = ctx.var_dict.get(name)
             if var is not None:
                 return var

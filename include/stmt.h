@@ -94,6 +94,17 @@ Stmt _makeStore(const std::string &id, const std::string &var,
     s->expr_ = std::forward<Texpr>(expr);
     return s;
 }
+template <class Texpr>
+Stmt _makeStore(const std::string &id, const std::string &var,
+                const std::vector<Expr> &indices, Texpr &&expr) {
+    Store s = Store::make();
+    s->setId(id);
+    s->var_ = var;
+    s->indices_ =
+        std::vector<SubTree<ExprNode>>(indices.begin(), indices.end());
+    s->expr_ = std::forward<Texpr>(expr);
+    return s;
+}
 
 enum class ReduceOp : int { Add, Mul, Min, Max };
 class ReduceToNode : public StmtNode {

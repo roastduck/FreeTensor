@@ -54,7 +54,8 @@ class MakeSync : public MutatorWithCursor {
     Stmt root_;
     std::vector<CrossThreadDep> deps_;
     std::unordered_map<std::string, Stmt> syncBeforeFor_;
-    std::unordered_map<std::string, std::vector<Stmt>> branchSplitters_;
+    std::unordered_map<std::string, std::vector<Stmt>> branchSplittersThen_,
+        branchSplittersElse_;
 
   public:
     MakeSync(const Stmt root, std::vector<CrossThreadDep> &&deps)

@@ -36,4 +36,12 @@ inline __host__ __device__ double runtime_sqrt(double x) { return sqrt(x); }
 inline __host__ __device__ float runtime_exp(float x) { return expf(x); }
 inline __host__ __device__ double runtime_exp(double x) { return exp(x); }
 
+template <class T> __host__ __device__ T runtime_square(T x) { return x * x; }
+
+inline __host__ __device__ float runtime_floor(float x) { return floorf(x); }
+inline __host__ __device__ double runtime_floor(double x) { return floor(x); }
+
+inline __host__ __device__ float runtime_ceil(float x) { return ceilf(x); }
+inline __host__ __device__ double runtime_ceil(double x) { return ceil(x); }
+
 #endif // GPU_RUNTIME_H

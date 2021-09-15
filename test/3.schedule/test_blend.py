@@ -328,11 +328,12 @@ def test_var_def_inside():
 
 
 def test_var_def_inside_no_need_to_split():
-    with ir.VarDef([("x", (2,), "int32", "input", "cpu"),
-                    ("y", (2,), "int32", "output", "cpu")]) as (x, y):
+    with ir.VarDef([("n", (), "int32", "input", "cpu"),
+                    ("x", (2,), "int32", "input", "cpu"),
+                    ("y", (2,), "int32", "output", "cpu")]) as (n, x, y):
         with ir.For("i", 0, 2, nid="L1") as i:
             with ir.VarDef("b", (), "int32", "cache", "cpu") as b:
-                b[()] = 2
+                b[()] = n[()]
                 y[i] = b[()] * x[i]
     ast = ir.pop_ast()
     print(ast)
@@ -343,10 +344,11 @@ def test_var_def_inside_no_need_to_split():
     ast = ir.lower(ast)
     print(ast)
 
-    with ir.VarDef([("x", (2,), "int32", "input", "cpu"),
-                    ("y", (2,), "int32", "output", "cpu")]) as (x, y):
+    with ir.VarDef([("n", (), "int32", "input", "cpu"),
+                    ("x", (2,), "int32", "input", "cpu"),
+                    ("y", (2,), "int32", "output", "cpu")]) as (n, x, y):
         with ir.VarDef("b", (), "int32", "cache", "cpu") as b:
-            b[()] = 2
+            b[()] = n[()]
             y[0] = b[()] * x[0]
             y[1] = b[()] * x[1]
     std = ir.pop_ast()

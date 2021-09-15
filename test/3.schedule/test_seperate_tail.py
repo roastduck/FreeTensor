@@ -15,6 +15,9 @@ def test_basic():
                 y2[i] = 3
     ast = ir.pop_ast()
     print(ast)
+    s = ir.Schedule(ast)
+    s.seperate_tail()
+    ast = s.ast()
     ast = ir.lower(ast)
     print(ast)
 
@@ -45,6 +48,9 @@ def test_multiple_cond():
                 y2[i] = 3
     ast = ir.pop_ast()
     print(ast)
+    s = ir.Schedule(ast)
+    s.seperate_tail()
+    ast = s.ast()
     ast = ir.lower(ast)
     print(ast)
 
@@ -72,6 +78,9 @@ def test_eq():
                 y[i] = 1
     ast = ir.pop_ast()
     print(ast)
+    s = ir.Schedule(ast)
+    s.seperate_tail()
+    ast = s.ast()
     ast = ir.lower(ast)
     print(ast)
 
@@ -94,6 +103,9 @@ def test_tiled():
                     y[4 * i + j] = 4 * i + j
     ast = ir.pop_ast()
     print(ast)
+    s = ir.Schedule(ast)
+    s.seperate_tail()
+    ast = s.ast()
     ast = ir.lower(ast)
     print(ast)
 
@@ -118,6 +130,9 @@ def test_dynamic_tiled():
                             y[4 * i + j] = 4 * i + j
     ast = ir.pop_ast()
     print(ast)
+    s = ir.Schedule(ast)
+    s.seperate_tail()
+    ast = s.ast()
     ast = ir.lower(ast)
     print(ast)
 
@@ -145,6 +160,9 @@ def test_1d_stencil():
                 y[i] = y[i] + x[i + 1]
     ast = ir.pop_ast()
     print(ast)
+    s = ir.Schedule(ast)
+    s.seperate_tail()
+    ast = s.ast()
     ast = ir.lower(ast)
     print(ast)
 
@@ -171,6 +189,9 @@ def test_no_seperate_vardef():
                     y[i] = t[()] + 2
     ast = ir.pop_ast()
     print(ast)
+    s = ir.Schedule(ast)
+    s.seperate_tail()
+    ast = s.ast()
     ast = ir.lower(ast)
     print(ast)
 

@@ -40,6 +40,40 @@ def test_omp_for():
     assert np.array_equal(y_np, y_std)
 
 
+def test_omp_for_2():
+
+    @ir.transform
+    def test(x, y):
+        ir.declare_var(x, (4, 4), "int32", "input", "cpu")
+        ir.declare_var(y, (4, 4), "int32", "output", "cpu")
+        "nid: L1"
+        for i in range(4):
+            "nid: L2"
+            for j in range(4):
+                y[i, j] = x[i, j] + 1
+
+    s = ir.Schedule(test)
+    L12 = s.merge("L1", "L2")
+    s.parallelize(L12, "openmp")
+    func = ir.lower(s.func(), target)
+    print(func)
+    code = ir.codegen(func, target)
+    print(code)
+    x_np = np.array([[i + j for j in range(4)] for i in range(4)],
+                    dtype="int32")
+    y_np = np.zeros((4, 4), dtype="int32")
+    x_arr = ir.Array(x_np, ir.Device(target))
+    y_arr = ir.Array(y_np, ir.Device(target))
+    driver = ir.Driver(func, code, device)
+    driver.set_params(x=x_arr, y=y_arr)
+    driver.run()
+    y_np = y_arr.numpy().reshape(4, 4)
+
+    y_std = np.array([[i + j + 1 for j in range(4)] for i in range(4)],
+                     dtype="int32")
+    assert np.array_equal(y_np, y_std)
+
+
 def test_parallel_reduction():
 
     @ir.transform

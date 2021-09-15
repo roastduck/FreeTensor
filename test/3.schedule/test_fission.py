@@ -35,6 +35,41 @@ def test_basic():
     assert std.match(ast)
 
 
+def test_stmt_in_if():
+    with ir.VarDef([
+        ("y", (4, 8), "int32", "output", "cpu"),
+        ("z", (4, 8), "int32", "output", "cpu"),
+    ]) as (y, z):
+        with ir.For("i", 0, 4, nid="L1") as i:
+            with ir.For("j", 0, 8, nid="L2") as j:
+                with ir.If(i > 1):
+                    ir.MarkNid("S0")
+                    y[i, j] = i + j
+                z[i, j] = i * j
+    ast = ir.pop_ast()
+    print(ast)
+    s = ir.Schedule(ast)
+    s.fission("L2", "S0")
+    ast = s.ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([
+        ("y", (4, 8), "int32", "output", "cpu"),
+        ("z", (4, 8), "int32", "output", "cpu"),
+    ]) as (y, z):
+        with ir.For("i", 0, 4) as i:
+            with ir.If(i > 1):
+                with ir.For("j", 0, 8) as j:
+                    y[i, j] = i + j
+            with ir.For("j", 0, 8) as j:
+                z[i, j] = i * j
+    std = ir.pop_ast()
+
+    assert std.match(ast)
+
+
 def test_buffer_hoist():
     with ir.VarDef([
         ("x0", (4, 8), "int32", "input", "cpu"),
