@@ -2,9 +2,16 @@
 
 namespace ir {
 
-static bool isConst1(const Expr &op) {
+static bool isIntConst1(const Expr &op) {
     return op->nodeType() == ASTNodeType::IntConst &&
            op.as<IntConstNode>()->val_ == 1;
+}
+
+static bool isConst0(const Expr &op) {
+    return (op->nodeType() == ASTNodeType::IntConst &&
+            op.as<IntConstNode>()->val_ == 0) ||
+           (op->nodeType() == ASTNodeType::FloatConst &&
+            op.as<FloatConstNode>()->val_ == 0);
 }
 
 uint64_t AsMatMul::getHash(const Expr &op) {
@@ -15,6 +22,8 @@ uint64_t AsMatMul::getHash(const Expr &op) {
 Stmt AsMatMul::visitStmt(const Stmt &op,
                          const std::function<Stmt(const Stmt &)> &visitNode) {
     if (inside_ && op->nodeType() != ASTNodeType::ReduceTo &&
+        op->nodeType() != ASTNodeType::Store &&
+        op->nodeType() != ASTNodeType::StmtSeq &&
         op->nodeType() != ASTNodeType::For) {
         throw InvalidSchedule("Unexpected " + toString(op->nodeType()) +
                               " node");
@@ -39,16 +48,55 @@ Stmt AsMatMul::visit(const For &op) {
         iterMap_.erase(op->iter_), nestCnt_--;
         inside_ = false;
 
+        Expr alpha, beta;
         if (!foundLeaf_) {
             throw InvalidSchedule("`c += a * b` statement not found");
         }
-        return makeMatMul("", a_, b_, c_, makeIntConst(1), makeIntConst(1), m_,
-                          k_, n_, lda_, ldb_, ldc_, stridea_, strideb_,
-                          stridec_, batchSize_, aIsRowMajor_, bIsRowMajor_,
-                          cIsRowMajor_, ret);
+        alpha = makeIntConst(1);
+        if (foundInit_) {
+            if (c_ != initC_) {
+                throw InvalidSchedule("The initialized matrix " + initC_ +
+                                      " does not match " + c_ +
+                                      ", the matrix being reduced to");
+            }
+            beta = makeIntConst(0);
+        } else {
+            beta = makeIntConst(1);
+        }
+        return makeMatMul("", a_, b_, c_, alpha, beta, m_, k_, n_, lda_, ldb_,
+                          ldc_, stridea_, strideb_, stridec_, batchSize_,
+                          aIsRowMajor_, bIsRowMajor_, cIsRowMajor_, ret);
     } else {
         return Mutator::visit(op);
     }
+}
+
+Stmt AsMatMul::visit(const Store &_op) {
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::Store);
+    auto op = __op.as<StoreNode>();
+
+    if (inside_) {
+        if (foundLeaf_) {
+            throw InvalidSchedule(
+                "a Store node should not be after a ReduceTo node");
+        }
+        foundInit_ = true;
+
+        if (!isConst0(op->expr_)) {
+            throw InvalidSchedule("Matrix c can either be not initialized or "
+                                  "initialized to zeros");
+        }
+
+        std::vector<bool> used = countIterUsed(op);
+        if (std::find(used.begin(), used.end(), false) != used.end()) {
+            throw InvalidSchedule("At least one dimension is not initialized");
+        }
+
+        initC_ = op->var_;
+    }
+
+    return op;
 }
 
 Stmt AsMatMul::visit(const ReduceTo &_op) {
@@ -109,30 +157,30 @@ Stmt AsMatMul::visit(const ReduceTo &_op) {
         std::tie(n_, strideBN) = findLenAndStride(loadB, nAxes);
         std::tie(m_, strideCM) = findLenAndStride(op, mAxes);
         std::tie(n_, strideCN) = findLenAndStride(op, nAxes);
-        if (isConst1(strideAK)) {
+        if (isIntConst1(strideAK)) {
             aIsRowMajor_ = true;
             lda_ = strideAM;
-        } else if (isConst1(strideAM)) {
+        } else if (isIntConst1(strideAM)) {
             aIsRowMajor_ = false;
             lda_ = strideAK;
         } else {
             throw InvalidSchedule(
                 "Eiter m or k dimension of a should be 1-strided");
         }
-        if (isConst1(strideBN)) {
+        if (isIntConst1(strideBN)) {
             bIsRowMajor_ = true;
             ldb_ = strideBK;
-        } else if (isConst1(strideBK)) {
+        } else if (isIntConst1(strideBK)) {
             bIsRowMajor_ = false;
             ldb_ = strideBN;
         } else {
             throw InvalidSchedule(
                 "Eiter k or n dimension of b should be 1-strided");
         }
-        if (isConst1(strideCN)) {
+        if (isIntConst1(strideCN)) {
             cIsRowMajor_ = true;
             ldc_ = strideCM;
-        } else if (isConst1(strideCM)) {
+        } else if (isIntConst1(strideCM)) {
             cIsRowMajor_ = false;
             ldc_ = strideCN;
         } else {

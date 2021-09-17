@@ -233,10 +233,11 @@ class MatMulNode : public StmtNode {
     // b_ is a k_ * n_ matrix
     // c_ is an m_ * n_ matrix
     std::string a_, b_, c_;
-    Expr alpha_, beta_, m_, k_, n_, lda_, ldb_, ldc_, stridea_, strideb_,
-        stridec_, batchSize_;
+    SubTree<ExprNode> alpha_, beta_, m_, k_, n_, lda_, ldb_, ldc_, stridea_,
+        strideb_, stridec_, batchSize_;
     bool aIsRowMajor_, bIsRowMajor_, cIsRowMajor_;
-    Stmt equivalent_; // Equivalent loop statements, to help dependency analysis
+    SubTree<StmtNode>
+        equivalent_; // Equivalent loop statements, to help dependency analysis
     DEFINE_NODE_TRAIT(MatMul);
 };
 typedef Ref<MatMulNode> MatMul;

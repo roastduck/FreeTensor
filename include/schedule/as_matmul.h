@@ -16,8 +16,8 @@ class AsMatMul : public Mutator {
     std::unordered_map<std::string, int> iterMap_; // iter var -> nest cnt
     std::unordered_map<std::string, Ref<Buffer>> buffers_; // var name -> buffer
 
-    bool foundLeaf_ = false, inside_ = false;
-    std::string a_, b_, c_;
+    bool foundInit_ = false, foundLeaf_ = false, inside_ = false;
+    std::string a_, b_, c_, initC_;
     Expr m_, k_, n_, lda_, stridea_, ldb_, strideb_, ldc_, stridec_, batchSize_;
     bool aIsRowMajor_, bIsRowMajor_, cIsRowMajor_;
 
@@ -93,6 +93,7 @@ class AsMatMul : public Mutator {
                    const std::function<Stmt(const Stmt &)> &visitNode) override;
     Stmt visit(const For &op) override;
     Stmt visit(const ReduceTo &op) override;
+    Stmt visit(const Store &op) override;
     Stmt visit(const VarDef &op) override;
 };
 
