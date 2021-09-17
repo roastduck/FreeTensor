@@ -6,6 +6,11 @@
 #include <cassert>
 #include <cmath> // INFINITY, sqrt
 #include <cstdint>
+
+#ifdef WITH_MKL
+#include <mkl.h>
+#endif
+
 #define restrict __restrict__
 #define __ByValArray std::array
 

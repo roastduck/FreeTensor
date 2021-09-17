@@ -62,6 +62,7 @@ void Visitor::operator()(const AST &op) {
         DISPATCH_STMT_CASE(If);
         DISPATCH_STMT_CASE(Assert);
         DISPATCH_STMT_CASE(Eval);
+        DISPATCH_STMT_CASE(MatMul);
         DISPATCH_STMT_CASE(Any);
 
     default:

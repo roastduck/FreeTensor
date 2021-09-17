@@ -5,6 +5,19 @@
 
 namespace ir {
 
+#ifdef WITH_MKL
+
+static char genMKLTypeMark(DataType dtype) {
+    switch (dtype) {
+    case DataType::Float32:
+        return 's';
+    default:
+        ASSERT(false);
+    }
+}
+
+#endif
+
 void CodeGenCPU::visit(const ReduceTo &op) {
     if (op->atomic_) {
         os() << "#pragma omp atomic" << std::endl;
@@ -21,6 +34,67 @@ void CodeGenCPU::visit(const For &op) {
         os() << "#pragma GCC unroll " << op->len_ << std::endl;
     }
     CodeGenC::visit(op);
+}
+
+void CodeGenCPU::visit(const MatMul &op) {
+#ifdef WITH_MKL
+    auto &&aBuffer = buffers_.at(op->a_);
+    auto &&bBuffer = buffers_.at(op->b_);
+    auto &&cBuffer = buffers_.at(op->c_);
+    if (aBuffer->tensor().dtype() != cBuffer->tensor().dtype() ||
+        bBuffer->tensor().dtype() != cBuffer->tensor().dtype()) {
+        throw InvalidProgram(
+            "MKL requires all matrices have the same data type");
+    }
+    auto dtype = cBuffer->tensor().dtype();
+
+    bool transA = !op->aIsRowMajor_, transB = !op->bIsRowMajor_;
+    std::string a = op->a_, b = op->b_, c = op->c_;
+    Expr m = op->m_, k = op->k_, n = op->n_;
+    Expr lda = op->lda_, ldb = op->ldb_, ldc = op->ldc_;
+    Expr stridea = op->stridea_, strideb = op->strideb_, stridec = op->stridec_;
+    if (!op->cIsRowMajor_) {
+        transA = !transA;
+        transB = !transB;
+        std::swap(transA, transB);
+        std::swap(a, b);
+        std::swap(lda, ldb);
+        std::swap(stridea, strideb);
+        std::swap(n, m);
+    }
+
+    makeIndent();
+    os() << "cblas_" << genMKLTypeMark(dtype)
+         << "gemm_batch_strided(CblasRowMajor, "
+         << (transA ? "CblasTrans" : "CblasNoTrans") << ", "
+         << (transB ? "CblasTrans" : "CblasNoTrans") << ", ";
+    (*this)(m);
+    os() << ", ";
+    (*this)(n);
+    os() << ", ";
+    (*this)(k);
+    os() << ", ";
+    (*this)(op->alpha_);
+    os() << ", (const " << gen(dtype) << "*)(" << normalizeId(a) << "), ";
+    (*this)(lda);
+    os() << ", ";
+    (*this)(stridea);
+    os() << ", (const " << gen(dtype) << "*)(" << normalizeId(b) << "), ";
+    (*this)(ldb);
+    os() << ", ";
+    (*this)(strideb);
+    os() << ", ";
+    (*this)(op->beta_);
+    os() << ", (" << gen(dtype) << "*)(" << normalizeId(c) << "), ";
+    (*this)(ldc);
+    os() << ", ";
+    (*this)(stridec);
+    os() << ", ";
+    (*this)(op->batchSize_);
+    os() << ");" << std::endl;
+#else
+    ERROR("Configuring with MKL is needed");
+#endif
 }
 
 std::string codeGenCPU(const Func &func) {

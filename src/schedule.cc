@@ -15,6 +15,7 @@
 #include <pass/sink_var.h>
 #include <pass/z3_simplify.h>
 #include <schedule.h>
+#include <schedule/as_matmul.h>
 #include <schedule/blend.h>
 #include <schedule/cache.h>
 #include <schedule/check_loop_order.h>
@@ -704,6 +705,17 @@ void Schedule::seperateTail() {
         candidates = mutator.nextCandidates();
     }
 
+    ast_ = ast;
+}
+
+void Schedule::asMatMul(const std::string &loop) {
+    auto ast = ast_;
+    try {
+        ast = makeReduction(ast);
+        ast = AsMatMul(loop)(ast);
+    } catch (const InvalidSchedule &e) {
+        throw InvalidSchedule("Invalid as_matmul(" + loop + "): " + e.what());
+    }
     ast_ = ast;
 }
 

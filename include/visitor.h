@@ -210,6 +210,22 @@ class Visitor {
     }
 
     virtual void visit(const Eval &op) { (*this)(op->expr_); }
+
+    virtual void visit(const MatMul &op) {
+        (*this)(op->alpha_);
+        (*this)(op->beta_);
+        (*this)(op->m_);
+        (*this)(op->k_);
+        (*this)(op->n_);
+        (*this)(op->lda_);
+        (*this)(op->ldb_);
+        (*this)(op->ldc_);
+        (*this)(op->stridea_);
+        (*this)(op->strideb_);
+        (*this)(op->stridec_);
+        (*this)(op->batchSize_);
+        (*this)(op->equivalent_);
+    }
 };
 
 } // namespace ir

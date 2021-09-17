@@ -16,19 +16,26 @@ enum class ASTNodeType : int {
     // Function
     Func,
 
-    // Statements
+    // Memory Access
+    Store,
+    ReduceTo,
+    Load,
+
+    // Structral statements
     StmtSeq,
     VarDef,
     For,
     If,
     Assert,
+
+    // Calls to external libs
+    MatMul,
+
+    // Other statements
     Eval,
-    Store,
-    ReduceTo,
 
     // Values
     Var,
-    Load,
     IntConst,
     FloatConst,
     BoolConst,

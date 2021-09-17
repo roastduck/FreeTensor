@@ -61,6 +61,7 @@ class PrintVisitor : public CodeGen<CodeGenStream> {
     void visit(const Assert &op) override;
     void visit(const Intrinsic &op) override;
     void visit(const Eval &op) override;
+    void visit(const MatMul &op) override;
 };
 
 } // namespace ir

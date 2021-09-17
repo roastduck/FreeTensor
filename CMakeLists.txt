@@ -4,6 +4,7 @@ project(IR C CXX)
 include(ExternalProject)
 
 option(IR_DEBUG "Enable debug mode" OFF)
+option(WITH_MKL "Path to MKL (optional)" OFF)
 
 set(DEFAULT_BUILD_TYPE "RelWithDebInfo")
 if(NOT CMAKE_BUILD_TYPE)
@@ -36,6 +37,9 @@ find_package(CUDA REQUIRED)
 
 # THIS PROJECT
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
+if(WITH_MKL)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWITH_MKL=${WITH_MKL}")
+endif()
 if(IR_DEBUG)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DIR_DEBUG")
 endif()

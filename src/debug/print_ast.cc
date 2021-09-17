@@ -424,6 +424,39 @@ void PrintVisitor::visit(const Eval &op) {
     os() << std::endl;
 }
 
+void PrintVisitor::visit(const MatMul &op) {
+    makeIndent();
+    os() << "matmul(" << op->a_ << ", " << op->b_ << ", " << op->c_ << ", ";
+    recur(op->alpha_);
+    os() << ", ";
+    recur(op->beta_);
+    os() << ", ";
+    recur(op->m_);
+    os() << ", ";
+    recur(op->k_);
+    os() << ", ";
+    recur(op->n_);
+    os() << ", ";
+    recur(op->lda_);
+    os() << ", ";
+    recur(op->ldb_);
+    os() << ", ";
+    recur(op->ldc_);
+    os() << ", ";
+    recur(op->stridea_);
+    os() << ", ";
+    recur(op->strideb_);
+    os() << ", ";
+    recur(op->stridec_);
+    os() << ", ";
+    recur(op->batchSize_);
+    os() << ", " << op->aIsRowMajor_ << ", " << op->bIsRowMajor_ << ", "
+         << op->cIsRowMajor_ << ") <==> ";
+    beginBlock();
+    recur(op->equivalent_);
+    endBlock();
+}
+
 std::string toString(const AST &op, bool pretty) {
     PrintVisitor visitor(pretty);
     visitor(op);

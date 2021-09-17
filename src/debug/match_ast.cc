@@ -364,6 +364,30 @@ void MatchVisitor::visit(const Eval &op) {
     RECURSE(op->expr_, instance->expr_);
 }
 
+void MatchVisitor::visit(const MatMul &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::MatMul);
+    auto instance = instance_.as<MatMulNode>();
+    CHECK(matchName(op->a_, instance->a_));
+    CHECK(matchName(op->b_, instance->b_));
+    CHECK(matchName(op->c_, instance->c_));
+    RECURSE(op->alpha_, instance->alpha_);
+    RECURSE(op->beta_, instance->beta_);
+    RECURSE(op->m_, instance->m_);
+    RECURSE(op->k_, instance->k_);
+    RECURSE(op->n_, instance->n_);
+    RECURSE(op->lda_, instance->lda_);
+    RECURSE(op->ldb_, instance->ldb_);
+    RECURSE(op->ldc_, instance->ldc_);
+    RECURSE(op->stridea_, instance->stridea_);
+    RECURSE(op->strideb_, instance->strideb_);
+    RECURSE(op->stridec_, instance->stridec_);
+    RECURSE(op->batchSize_, instance->batchSize_);
+    CHECK(op->aIsRowMajor_ == instance->aIsRowMajor_);
+    CHECK(op->bIsRowMajor_ == instance->bIsRowMajor_);
+    CHECK(op->cIsRowMajor_ == instance->cIsRowMajor_);
+    RECURSE(op->equivalent_, instance->equivalent_);
+}
+
 bool match(const AST &pattern, const AST &instance) {
     MatchVisitor visitor(instance);
     visitor(pattern);

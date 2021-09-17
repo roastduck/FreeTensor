@@ -11,8 +11,10 @@ class CodeGenCPU : public CodeGenC<CodeGenStream> {
     CodeGenCPU(const std::vector<std::string> &params) : CodeGenC(params) {}
 
   protected:
+    using CodeGenC<CodeGenStream>::visit;
     void visit(const ReduceTo &op) override;
     void visit(const For &op) override;
+    void visit(const MatMul &op) override;
 };
 
 /**

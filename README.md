@@ -5,6 +5,7 @@
 - Python (>= 3.8, for the Python frontend)
 - GCC (>= 8, to support C++17 and the "unroll" pragma)
 - CUDA (>= 10.2, to support GCC 8)
+- MKL (Optional)
 
 ## Build
 
@@ -22,6 +23,8 @@ cd build
 cmake ..
 make -j
 ```
+
+If using MKL, add a `-DWITH_MKL=<path/to/mkl/root>` to `cmake`.
 
 It will build a shared library with a name like `ffi.cpython-37m-x86_64-linux-gnu.so`.
 

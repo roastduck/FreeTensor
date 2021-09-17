@@ -364,6 +364,15 @@ class Schedule {
      * schedule to part of the program)
      */
     void seperateTail();
+
+    /**
+     * Transform nested loops to be a external call to a matrix multiplication
+     *
+     * @param loop: ID of the loop
+     * @throw InvalidSchedule if the loop cannot be transformed to be a matrix
+     * multiplication
+     */
+    void asMatMul(const std::string &loop);
 };
 
 } // namespace ir

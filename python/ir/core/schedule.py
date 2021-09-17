@@ -477,3 +477,19 @@ class Schedule(ffi.Schedule):
         schedule to part of the program)
         """
         super(Schedule, self).seperate_tail()
+
+    def as_matmul(self, loop):
+        """
+        Transform nested loops to be a external call to a matrix multiplication
+
+        Parameters
+        ----------
+        loop : str, Stmt or Cursor
+            ID of the loop
+
+        Raises
+        ------
+        InvalidSchedule
+            if the loop cannot be transformed to be a matrix multiplication
+        """
+        super(Schedule, self).as_matmul(toId(loop))
