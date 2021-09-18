@@ -2,7 +2,9 @@
 #define MAKE_MATMUL_H
 
 #include <unordered_map>
+#include <unordered_set>
 
+#include <analyze/check_all_defined.h>
 #include <analyze/hash.h>
 #include <mutator.h>
 
@@ -15,6 +17,7 @@ class AsMatMul : public Mutator {
     std::vector<For> nests_;
     std::unordered_map<std::string, int> iterMap_; // iter var -> nest cnt
     std::unordered_map<std::string, Ref<Buffer>> buffers_; // var name -> buffer
+    std::unordered_set<std::string> outerDefs_;
 
     bool foundInit_ = false, foundLeaf_ = false, inside_ = false;
     Expr a_, b_, c_, initC_, m_, k_, n_, lda_, stridea_, ldb_, strideb_, ldc_,
@@ -36,12 +39,15 @@ class AsMatMul : public Mutator {
         for (size_t i = 0, n = acc->indices_.size(); i < n; i++) {
             auto &&idx = acc->indices_[i];
             if (idx->nodeType() != ASTNodeType::Var) {
-                throw InvalidSchedule("Indices of " + acc->var_ +
-                                      " should be plain loop iterators");
+                if (!checkAllDefined(outerDefs_, idx)) {
+                    throw InvalidSchedule("Indices of " + acc->var_ +
+                                          " should be plain loop iterators");
+                }
+                continue; // not a dim in matmul
             }
             Var var = idx.template as<VarNode>();
             if (!iterMap_.count(var->name_)) {
-                continue;
+                continue; // not a dim in matmul
             } else {
                 baseAddr.as<LoadNode>()->indices_[i] = makeIntConst(0);
             }
@@ -63,27 +69,36 @@ class AsMatMul : public Mutator {
     std::pair<Expr, Expr> findLenAndStride(const T &acc,
                                            const std::vector<bool> &flag) {
         Expr len, stride;
+        bool thisDimIn = false, lastDimIn = false;
         for (size_t i = 0, n = acc->indices_.size(); i < n; i++) {
-            ASSERT(acc->indices_[i]->nodeType() == ASTNodeType::Var);
-            Var var = acc->indices_[i].template as<VarNode>();
-            if (iterMap_.count(var->name_) && flag[iterMap_.at(var->name_)]) {
+            lastDimIn = thisDimIn;
+            thisDimIn = true;
+            if (acc->indices_[i]->nodeType() != ASTNodeType::Var) {
+                thisDimIn = false;
+            } else {
+                Var var = acc->indices_[i].template as<VarNode>();
+                if (!iterMap_.count(var->name_) ||
+                    !flag[iterMap_.at(var->name_)]) {
+                    thisDimIn = false;
+                }
+            }
+            if (thisDimIn) {
                 if (len.isValid()) { // started
-                    ASSERT(acc->indices_[i - 1]->nodeType() ==
-                           ASTNodeType::Var);
-                    Var lastVar = acc->indices_[i - 1].template as<VarNode>();
-                    int lastLoop = iterMap_.at(lastVar->name_);
-                    if (!flag[lastLoop]) {
-                        throw InvalidSchedule("Dimensions " + lastVar->name_ +
-                                              " and " + var->name_ +
-                                              " should be contiguous");
+                    if (!lastDimIn) {
+                        throw InvalidSchedule(
+                            "Dimensions " + toString(acc->indices_[i - 1]) +
+                            " and " + toString(acc->indices_[i]) +
+                            " should be contiguous");
                     }
                 }
                 auto thisLen = buffers_.at(acc->var_)->tensor().shape()[i];
                 len = len.isValid() ? makeMul(len, thisLen) : (Expr)thisLen;
-            } else if (len.isValid()) {
-                auto thisLen = buffers_.at(acc->var_)->tensor().shape()[i];
-                stride =
-                    stride.isValid() ? makeMul(stride, thisLen) : (Expr)thisLen;
+            } else {
+                if (len.isValid()) {
+                    auto thisLen = buffers_.at(acc->var_)->tensor().shape()[i];
+                    stride = stride.isValid() ? makeMul(stride, thisLen)
+                                              : (Expr)thisLen;
+                }
             }
         }
         len = len.isValid() ? len : makeIntConst(1);

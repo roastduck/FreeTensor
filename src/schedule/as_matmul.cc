@@ -68,7 +68,11 @@ Stmt AsMatMul::visit(const For &op) {
                           ldc_, stridea_, strideb_, stridec_, batchSize_,
                           aIsRowMajor_, bIsRowMajor_, cIsRowMajor_, ret);
     } else {
-        return Mutator::visit(op);
+        ASSERT(!outerDefs_.count(op->iter_));
+        outerDefs_.insert(op->iter_);
+        auto ret = Mutator::visit(op);
+        outerDefs_.erase(op->iter_);
+        return ret;
     }
 }
 
@@ -185,10 +189,22 @@ Stmt AsMatMul::visit(const ReduceTo &_op) {
                 "Eiter m or n dimension of c should be 1-strided");
         }
 
-        // If not a batched gemm, fix the strides to satisfy the API requirement
+        // Fix the strides of singleton dimensions to satisfy the API
+        // requirement
+        if (std::find(mAxes.begin(), mAxes.end(), true) == mAxes.end()) {
+            lda_ = aIsRowMajor_ ? k_ : m_;
+            ldc_ = cIsRowMajor_ ? n_ : m_;
+        }
+        if (std::find(kAxes.begin(), kAxes.end(), true) == kAxes.end()) {
+            lda_ = aIsRowMajor_ ? k_ : m_;
+            ldb_ = bIsRowMajor_ ? n_ : k_;
+        }
+        if (std::find(nAxes.begin(), nAxes.end(), true) == nAxes.end()) {
+            ldb_ = bIsRowMajor_ ? n_ : k_;
+            ldc_ = cIsRowMajor_ ? n_ : m_;
+        }
         if (std::find(batchAxes.begin(), batchAxes.end(), true) ==
             batchAxes.end()) {
-            batchSize_ = makeIntConst(1);
             stridea_ = makeMul(lda_, aIsRowMajor_ ? m_ : k_);
             strideb_ = makeMul(ldb_, bIsRowMajor_ ? k_ : n_);
             stridec_ = makeMul(ldc_, cIsRowMajor_ ? m_ : n_);
@@ -200,8 +216,11 @@ Stmt AsMatMul::visit(const ReduceTo &_op) {
 
 Stmt AsMatMul::visit(const VarDef &op) {
     ASSERT(!buffers_.count(op->name_));
+    ASSERT(!outerDefs_.count(op->name_));
     buffers_[op->name_] = op->buffer_;
+    outerDefs_.insert(op->name_);
     auto ret = Mutator::visit(op);
+    outerDefs_.erase(op->name_);
     buffers_.erase(op->name_);
     return ret;
 }

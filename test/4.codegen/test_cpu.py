@@ -554,3 +554,73 @@ def test_mkl_in_parallel():
     c_result = c_arr.numpy().reshape(64, 48, 72)
 
     assert np.all(np.isclose(c_result, c_np + a_np @ b_np))
+
+
+@pytest.mark.skipif(not ir.with_mkl(), reason="requires MKL")
+def test_mkl_matrix_vector():
+
+    @ir.transform
+    def test(a, b, c):
+        ir.declare_var(a, (48, 64), "float32", "input", "cpu")
+        ir.declare_var(b, (64,), "float32", "input", "cpu")
+        ir.declare_var(c, (48,), "float32", "inout", "cpu")
+        "nid: L1"
+        for i in range(48):
+            for k in range(64):
+                c[i] += a[i, k] * b[k]
+
+    s = ir.Schedule(test)
+    s.as_matmul("L1")
+    func = ir.lower(s.func(), target)
+    print(func)
+    code = ir.codegen(func, target)
+    print(code)
+    assert "cblas" in code
+    assert "mkl_set_num_threads_local(0)" in code
+    a_np = np.random.uniform(size=(48, 64)).astype("float32")
+    b_np = np.random.uniform(size=(64,)).astype("float32")
+    c_np = np.random.uniform(size=(48,)).astype("float32")
+    a_arr = ir.Array(a_np, ir.Device(ir.CPU()))
+    b_arr = ir.Array(b_np, ir.Device(ir.CPU()))
+    c_arr = ir.Array(c_np, ir.Device(ir.CPU()))
+    driver = ir.Driver(func, code, ir.Device(ir.CPU()))
+    driver.set_params(a=a_arr, b=b_arr, c=c_arr)
+    driver.run()
+    c_result = c_arr.numpy()
+
+    assert np.all(np.isclose(c_result, c_np + a_np @ b_np))
+
+
+@pytest.mark.skipif(not ir.with_mkl(), reason="requires MKL")
+def test_mkl_vector_matrix():
+
+    @ir.transform
+    def test(a, b, c):
+        ir.declare_var(a, (64,), "float32", "input", "cpu")
+        ir.declare_var(b, (64, 48), "float32", "input", "cpu")
+        ir.declare_var(c, (48,), "float32", "inout", "cpu")
+        "nid: L1"
+        for i in range(48):
+            for k in range(64):
+                c[i] += a[k] * b[k, i]
+
+    s = ir.Schedule(test)
+    s.as_matmul("L1")
+    func = ir.lower(s.func(), target)
+    print(func)
+    code = ir.codegen(func, target)
+    print(code)
+    assert "cblas" in code
+    assert "mkl_set_num_threads_local(0)" in code
+    a_np = np.random.uniform(size=(64,)).astype("float32")
+    b_np = np.random.uniform(size=(64, 48)).astype("float32")
+    c_np = np.random.uniform(size=(48,)).astype("float32")
+    a_arr = ir.Array(a_np, ir.Device(ir.CPU()))
+    b_arr = ir.Array(b_np, ir.Device(ir.CPU()))
+    c_arr = ir.Array(c_np, ir.Device(ir.CPU()))
+    driver = ir.Driver(func, code, ir.Device(ir.CPU()))
+    driver.set_params(a=a_arr, b=b_arr, c=c_arr)
+    driver.run()
+    c_result = c_arr.numpy()
+
+    assert np.all(np.isclose(c_result, c_np + a_np @ b_np))
