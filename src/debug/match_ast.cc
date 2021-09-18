@@ -367,9 +367,9 @@ void MatchVisitor::visit(const Eval &op) {
 void MatchVisitor::visit(const MatMul &op) {
     CHECK(instance_->nodeType() == ASTNodeType::MatMul);
     auto instance = instance_.as<MatMulNode>();
-    CHECK(matchName(op->a_, instance->a_));
-    CHECK(matchName(op->b_, instance->b_));
-    CHECK(matchName(op->c_, instance->c_));
+    RECURSE(op->a_, instance->a_);
+    RECURSE(op->b_, instance->b_);
+    RECURSE(op->c_, instance->c_);
     RECURSE(op->alpha_, instance->alpha_);
     RECURSE(op->beta_, instance->beta_);
     RECURSE(op->m_, instance->m_);

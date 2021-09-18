@@ -17,8 +17,8 @@ class AsMatMul : public Mutator {
     std::unordered_map<std::string, Ref<Buffer>> buffers_; // var name -> buffer
 
     bool foundInit_ = false, foundLeaf_ = false, inside_ = false;
-    std::string a_, b_, c_, initC_;
-    Expr m_, k_, n_, lda_, stridea_, ldb_, strideb_, ldc_, stridec_, batchSize_;
+    Expr a_, b_, c_, initC_, m_, k_, n_, lda_, stridea_, ldb_, strideb_, ldc_,
+        stridec_, batchSize_;
     bool aIsRowMajor_, bIsRowMajor_, cIsRowMajor_;
 
     GetHash getHash_;
@@ -29,8 +29,10 @@ class AsMatMul : public Mutator {
   private:
     uint64_t getHash(const Expr &op);
 
-    template <class T> std::vector<bool> countIterUsed(const T &acc) {
+    template <class T>
+    std::pair<std::vector<bool>, Expr> findIterUsedAndBaseAddr(const T &acc) {
         std::vector<bool> usedBy(nestCnt_, false);
+        Expr baseAddr = makeLoad(acc->var_, acc->indices_);
         for (size_t i = 0, n = acc->indices_.size(); i < n; i++) {
             auto &&idx = acc->indices_[i];
             if (idx->nodeType() != ASTNodeType::Var) {
@@ -39,8 +41,9 @@ class AsMatMul : public Mutator {
             }
             Var var = idx.template as<VarNode>();
             if (!iterMap_.count(var->name_)) {
-                throw InvalidSchedule("Iterator " + var->name_ + " of " +
-                                      acc->var_ + " is outside " + loop_);
+                continue;
+            } else {
+                baseAddr.as<LoadNode>()->indices_[i] = makeIntConst(0);
             }
             int loop = iterMap_.at(var->name_);
             if (getHash(nests_[loop]->len_) !=
@@ -53,7 +56,7 @@ class AsMatMul : public Mutator {
             }
             usedBy[loop] = true;
         }
-        return usedBy;
+        return std::make_pair(usedBy, baseAddr);
     }
 
     template <class T>
@@ -63,8 +66,7 @@ class AsMatMul : public Mutator {
         for (size_t i = 0, n = acc->indices_.size(); i < n; i++) {
             ASSERT(acc->indices_[i]->nodeType() == ASTNodeType::Var);
             Var var = acc->indices_[i].template as<VarNode>();
-            int loop = iterMap_.at(var->name_);
-            if (flag[iterMap_.at(var->name_)]) {
+            if (iterMap_.count(var->name_) && flag[iterMap_.at(var->name_)]) {
                 if (len.isValid()) { // started
                     ASSERT(acc->indices_[i - 1]->nodeType() ==
                            ASTNodeType::Var);
@@ -76,11 +78,12 @@ class AsMatMul : public Mutator {
                                               " should be contiguous");
                     }
                 }
-                len = len.isValid() ? makeMul(len, nests_[loop]->len_)
-                                    : (Expr)nests_[loop]->len_;
+                auto thisLen = buffers_.at(acc->var_)->tensor().shape()[i];
+                len = len.isValid() ? makeMul(len, thisLen) : (Expr)thisLen;
             } else if (len.isValid()) {
-                stride = stride.isValid() ? makeMul(stride, nests_[loop]->len_)
-                                          : (Expr)nests_[loop]->len_;
+                auto thisLen = buffers_.at(acc->var_)->tensor().shape()[i];
+                stride =
+                    stride.isValid() ? makeMul(stride, thisLen) : (Expr)thisLen;
             }
         }
         len = len.isValid() ? len : makeIntConst(1);

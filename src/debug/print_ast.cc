@@ -426,7 +426,13 @@ void PrintVisitor::visit(const Eval &op) {
 
 void PrintVisitor::visit(const MatMul &op) {
     makeIndent();
-    os() << "matmul(" << op->a_ << ", " << op->b_ << ", " << op->c_ << ", ";
+    os() << "matmul(&";
+    recur(op->a_);
+    os() << ", &";
+    recur(op->b_);
+    os() << ", &";
+    recur(op->c_);
+    os() << ", ";
     recur(op->alpha_);
     os() << ", ";
     recur(op->beta_);

@@ -28,6 +28,11 @@ void CodeGenCPU::visit(const ReduceTo &op) {
 void CodeGenCPU::visit(const For &op) {
     if (op->parallel_ == "openmp") {
         os() << "#pragma omp parallel for" << std::endl;
+        bool oldInParallel = inParallel_;
+        inParallel_ = true;
+        CodeGenC::visit(op);
+        inParallel_ = oldInParallel;
+        return;
     } else if (op->vectorize_) {
         os() << "#pragma omp simd" << std::endl;
     } else if (op->unroll_) {
@@ -38,18 +43,22 @@ void CodeGenCPU::visit(const For &op) {
 
 void CodeGenCPU::visit(const MatMul &op) {
 #ifdef WITH_MKL
-    auto &&aBuffer = buffers_.at(op->a_);
-    auto &&bBuffer = buffers_.at(op->b_);
-    auto &&cBuffer = buffers_.at(op->c_);
-    if (aBuffer->tensor().dtype() != cBuffer->tensor().dtype() ||
-        bBuffer->tensor().dtype() != cBuffer->tensor().dtype()) {
+    makeIndent();
+    if (inParallel_) {
+        os() << "mkl_set_num_threads_local(1);" << std::endl;
+        // TODO: set it to max(1, cpu_count / outer_threads_count)
+    } else {
+        os() << "mkl_set_num_threads_local(0); // 0 == reset" << std::endl;
+    }
+
+    auto d = dtype(op->c_);
+    if (dtype(op->a_) != d || dtype(op->b_) != d) {
         throw InvalidProgram(
             "MKL requires all matrices have the same data type");
     }
-    auto dtype = cBuffer->tensor().dtype();
 
     bool transA = !op->aIsRowMajor_, transB = !op->bIsRowMajor_;
-    std::string a = op->a_, b = op->b_, c = op->c_;
+    Expr a = op->a_, b = op->b_, c = op->c_;
     Expr m = op->m_, k = op->k_, n = op->n_;
     Expr lda = op->lda_, ldb = op->ldb_, ldc = op->ldc_;
     Expr stridea = op->stridea_, strideb = op->strideb_, stridec = op->stridec_;
@@ -64,7 +73,7 @@ void CodeGenCPU::visit(const MatMul &op) {
     }
 
     makeIndent();
-    os() << "cblas_" << genMKLTypeMark(dtype)
+    os() << "cblas_" << genMKLTypeMark(d)
          << "gemm_batch_strided(CblasRowMajor, "
          << (transA ? "CblasTrans" : "CblasNoTrans") << ", "
          << (transB ? "CblasTrans" : "CblasNoTrans") << ", ";
@@ -75,17 +84,23 @@ void CodeGenCPU::visit(const MatMul &op) {
     (*this)(k);
     os() << ", ";
     (*this)(op->alpha_);
-    os() << ", (const " << gen(dtype) << "*)(" << normalizeId(a) << "), ";
+    os() << ", &";
+    (*this)(a);
+    os() << ", ";
     (*this)(lda);
     os() << ", ";
     (*this)(stridea);
-    os() << ", (const " << gen(dtype) << "*)(" << normalizeId(b) << "), ";
+    os() << ", &";
+    (*this)(b);
+    os() << ", ";
     (*this)(ldb);
     os() << ", ";
     (*this)(strideb);
     os() << ", ";
     (*this)(op->beta_);
-    os() << ", (" << gen(dtype) << "*)(" << normalizeId(c) << "), ";
+    os() << ", &";
+    (*this)(c);
+    os() << ", ";
     (*this)(ldc);
     os() << ", ";
     (*this)(stridec);

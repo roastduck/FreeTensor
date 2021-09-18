@@ -266,13 +266,13 @@ class Mutator {
 
     virtual Stmt visit(const MatMul &op) {
         return COPY_DEBUG_INFO(
-            makeMatMul(op->id(), op->a_, op->b_, op->c_, (*this)(op->alpha_),
-                       (*this)(op->beta_), (*this)(op->m_), (*this)(op->k_),
-                       (*this)(op->n_), (*this)(op->lda_), (*this)(op->ldb_),
-                       (*this)(op->ldc_), (*this)(op->stridea_),
-                       (*this)(op->strideb_), (*this)(op->stridec_),
-                       (*this)(op->batchSize_), op->aIsRowMajor_,
-                       op->bIsRowMajor_, op->cIsRowMajor_,
+            makeMatMul(op->id(), (*this)(op->a_), (*this)(op->b_),
+                       (*this)(op->c_), (*this)(op->alpha_), (*this)(op->beta_),
+                       (*this)(op->m_), (*this)(op->k_), (*this)(op->n_),
+                       (*this)(op->lda_), (*this)(op->ldb_), (*this)(op->ldc_),
+                       (*this)(op->stridea_), (*this)(op->strideb_),
+                       (*this)(op->stridec_), (*this)(op->batchSize_),
+                       op->aIsRowMajor_, op->bIsRowMajor_, op->cIsRowMajor_,
                        (*this)(op->equivalent_)),
             op);
     }

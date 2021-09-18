@@ -212,6 +212,9 @@ class Visitor {
     virtual void visit(const Eval &op) { (*this)(op->expr_); }
 
     virtual void visit(const MatMul &op) {
+        (*this)(op->a_);
+        (*this)(op->b_);
+        (*this)(op->c_);
         (*this)(op->alpha_);
         (*this)(op->beta_);
         (*this)(op->m_);

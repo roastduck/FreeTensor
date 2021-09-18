@@ -54,10 +54,11 @@ Stmt AsMatMul::visit(const For &op) {
         }
         alpha = makeIntConst(1);
         if (foundInit_) {
-            if (c_ != initC_) {
-                throw InvalidSchedule("The initialized matrix " + initC_ +
-                                      " does not match " + c_ +
-                                      ", the matrix being reduced to");
+            if (getHash(c_) != getHash(initC_)) {
+                throw InvalidSchedule(
+                    "The initialized matrix " + initC_.as<LoadNode>()->var_ +
+                    " does not match " + c_.as<LoadNode>()->var_ +
+                    ", the matrix being reduced to");
             }
             beta = makeIntConst(0);
         } else {
@@ -88,12 +89,11 @@ Stmt AsMatMul::visit(const Store &_op) {
                                   "initialized to zeros");
         }
 
-        std::vector<bool> used = countIterUsed(op);
+        std::vector<bool> used;
+        std::tie(used, initC_) = findIterUsedAndBaseAddr(op);
         if (std::find(used.begin(), used.end(), false) != used.end()) {
             throw InvalidSchedule("At least one dimension is not initialized");
         }
-
-        initC_ = op->var_;
     }
 
     return op;
@@ -123,19 +123,16 @@ Stmt AsMatMul::visit(const ReduceTo &_op) {
             throw InvalidSchedule("Matrix a not found");
         }
         Load loadA = mul->lhs_.as<LoadNode>();
-        a_ = loadA->var_;
 
         if (mul->rhs_->nodeType() != ASTNodeType::Load) {
             throw InvalidSchedule("Matrix b not found");
         }
         Load loadB = mul->rhs_.as<LoadNode>();
-        b_ = loadB->var_;
 
-        c_ = op->var_;
-
-        std::vector<bool> usedByA = countIterUsed(loadA);
-        std::vector<bool> usedByB = countIterUsed(loadB);
-        std::vector<bool> usedByC = countIterUsed(op);
+        std::vector<bool> usedByA, usedByB, usedByC;
+        std::tie(usedByA, a_) = findIterUsedAndBaseAddr(loadA);
+        std::tie(usedByB, b_) = findIterUsedAndBaseAddr(loadB);
+        std::tie(usedByC, c_) = findIterUsedAndBaseAddr(op);
         std::vector<bool> mAxes(nestCnt_, false);
         std::vector<bool> kAxes(nestCnt_, false);
         std::vector<bool> nAxes(nestCnt_, false);

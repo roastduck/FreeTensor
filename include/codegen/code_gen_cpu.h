@@ -7,6 +7,8 @@
 namespace ir {
 
 class CodeGenCPU : public CodeGenC<CodeGenStream> {
+    bool inParallel_ = false;
+
   public:
     CodeGenCPU(const std::vector<std::string> &params) : CodeGenC(params) {}
 
