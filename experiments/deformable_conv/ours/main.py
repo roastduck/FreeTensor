@@ -96,30 +96,22 @@ def conv(x, w1, w2, n, c_in, c_out, h, w, k_h, k_w, device, mtype, local_mtype):
         s = ir.Schedule(f)
         print(s.ast())
         if device.target().type() == ir.TargetType.CPU:
+            Lko = s.move_to("Lko", ir.MoveToSide.After, "Li")
+            _, flush, Y_t = s.cache(Lko, "Y", "cpu")
+            Y_t_def = s.find(lambda x: x.node_type() == ir.ASTNodeType.VarDef
+                             and x.node().name == Y_t)
+            s.var_reorder(Y_t_def, [0, 2, 3, 1])
+            flush_loop = s.find(lambda x: x.nid() == flush).outer().outer(
+            ).outer().outer().node()
+            s.parallelize(flush_loop, 'openmp')
+            s.parallelize(flush_loop.body, 'openmp')
+            s.as_matmul(Lko)
             Lipq = s.merge(s.merge('Li', 'Lp'), 'Lq')
             s.parallelize(Lipq, 'openmp')
             s.unroll("Lri")
             s.unroll("Lsi")
             s.unroll("Lro1")
             s.unroll("Lso1")
-            fill, _, W2_t = s.cache(Lipq, "W2", "cpu")
-            W2_init_c = s.find(
-                lambda x: x.nid() == fill).outer().outer().outer()
-            W2_init_k = W2_init_c.outer()
-            s.reorder([W2_init_c, W2_init_k])
-            s.parallelize(W2_init_c, "openmp")
-            W2_def = s.find(lambda x: x.node_type() == ir.ASTNodeType.VarDef and
-                            x.node().name == W2_t)
-            s.var_split(W2_def, 0, ir.VarSplitMode.FixedSize, 16)
-            s.var_reorder(W2_def, [0, 2, 3, 4, 1])
-            s.move_to("init_Y", ir.MoveToSide.Before, 'Lko')
-            Lko0, Lko1 = s.split("Lko", 16)
-            s.reorder([Lko0, 'Lki3', 'Lro2', 'Lso2', Lko1])
-            fill, flush, _ = s.cache_reduction(
-                s.find(lambda x: x.nid() == Lko0).node().body, "Y", "cpu")
-            s.vectorize(Lko1)
-            s.vectorize(s.find(lambda x: x.nid() == fill).outer())
-            s.vectorize(s.find(lambda x: x.nid() == flush).outer())
         else:
             Lipq = s.merge(s.merge('Li', 'Lp'), 'Lq')
             blk, thr = s.split(Lipq, 128)

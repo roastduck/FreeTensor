@@ -100,6 +100,7 @@ class FindAccessPoint : public VisitorWithCursor {
     void visit(const Store &op) override { visitStoreLike(op); }
     void visit(const ReduceTo &op) override { visitStoreLike(op); }
     void visit(const Load &op) override;
+    void visit(const MatMul &op) override { (*this)(op->equivalent_); }
 };
 
 /**
@@ -291,6 +292,7 @@ class AnalyzeDeps : public Visitor {
     void visit(const Store &op) override { visitStoreLike(op); }
     void visit(const ReduceTo &op) override { visitStoreLike(op); }
     void visit(const Load &op) override;
+    void visit(const MatMul &op) override { (*this)(op->equivalent_); }
 };
 
 /**
