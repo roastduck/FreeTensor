@@ -704,6 +704,7 @@ void Schedule::seperateTail() {
 void Schedule::asMatMul(const std::string &loop) {
     auto ast = ast_;
     try {
+        ast = simplifyPass(ast); // const prop
         ast = makeReduction(ast);
         ast = AsMatMul(loop)(ast);
     } catch (const InvalidSchedule &e) {

@@ -18,6 +18,30 @@ static char genMKLTypeMark(DataType dtype) {
 
 #endif
 
+void CodeGenCPU::visit(const VarDef &op) {
+    if (op->buffer_->atype() == AccessType::Cache) {
+        auto &&tensor = op->buffer_->tensor();
+        auto &&shape = tensor.shape();
+        int64_t size = sizeOf(tensor.dtype());
+        for (auto &&dim : shape) {
+            if (dim->nodeType() == ASTNodeType::IntConst) {
+                size *= dim.as<IntConstNode>()->val_;
+            } else {
+                WARNING(
+                    "Cannot calculate size for a dynamic-sized local "
+                    "(MemType::Cache) array in order to set a stack limit. If "
+                    "this array is large, it may result in a stack overflow");
+            }
+        }
+        stackSize_ = std::max(stackSize_, stackTop_ + size);
+        stackTop_ += size;
+        CodeGenC::visit(op);
+        stackTop_ -= size;
+    } else {
+        CodeGenC::visit(op);
+    }
+}
+
 void CodeGenCPU::visit(const ReduceTo &op) {
     if (op->atomic_) {
         os() << "#pragma omp atomic" << std::endl;
@@ -130,7 +154,16 @@ extern "C" {
 )~~~";
 
     auto body = visitor.toString([&](const CodeGenStream &stream) {
-        return "void run(void **_params) " + stream.os_.str();
+        std::string s =
+            "void __attribute__ ((noinline)) _run(void **_params) " +
+            stream.os_.str();
+        s += "\n";
+        s += "void run(void **_params) {\n";
+        s +=
+            "  set_stack_limit(" + std::to_string(visitor.stackSize()) + ");\n";
+        s += "  _run(_params);\n";
+        s += "}";
+        return s;
     });
     return header + body + tailer;
 }

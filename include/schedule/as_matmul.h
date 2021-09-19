@@ -70,6 +70,7 @@ class AsMatMul : public Mutator {
                                            const std::vector<bool> &flag) {
         Expr len, stride;
         bool thisDimIn = false, lastDimIn = false;
+        Expr lastInDim;
         for (size_t i = 0, n = acc->indices_.size(); i < n; i++) {
             lastDimIn = thisDimIn;
             thisDimIn = true;
@@ -83,16 +84,17 @@ class AsMatMul : public Mutator {
                 }
             }
             if (thisDimIn) {
-                if (len.isValid()) { // started
+                if (lastInDim.isValid()) {
                     if (!lastDimIn) {
-                        throw InvalidSchedule(
-                            "Dimensions " + toString(acc->indices_[i - 1]) +
-                            " and " + toString(acc->indices_[i]) +
-                            " should be contiguous");
+                        throw InvalidSchedule("Dimensions " +
+                                              toString(lastInDim) + " and " +
+                                              toString(acc->indices_[i]) +
+                                              " should be contiguous");
                     }
                 }
                 auto thisLen = buffers_.at(acc->var_)->tensor().shape()[i];
                 len = len.isValid() ? makeMul(len, thisLen) : (Expr)thisLen;
+                lastInDim = acc->indices_[i];
             } else {
                 if (len.isValid()) {
                     auto thisLen = buffers_.at(acc->var_)->tensor().shape()[i];
