@@ -61,8 +61,6 @@ Stmt HoistVar::visit(const StmtSeq &op) {
             auto afterNode =
                 after.size() > 1 ? makeStmtSeq("", std::move(after)) : after[0];
             ret = makeStmtSeq(op->id(), {beforeNode, afterNode});
-        }
-        if (isAfter_ && seqId_.empty()) {
             seqId_ = ret->id();
         }
         return ret;

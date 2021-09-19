@@ -1,6 +1,7 @@
 #ifndef ISL_H
 #define ISL_H
 
+#include <iostream>
 #include <string>
 
 #include <isl/ctx.h>
@@ -88,6 +89,10 @@ class ISLMap {
     isl_map *move() { return MOVE_ISL_PTR(map_); }
 
     bool empty() const { return isl_map_is_empty(get()); }
+
+    friend std::ostream &operator<<(std::ostream &os, const ISLMap &map) {
+        return os << isl_map_to_str(map.map_);
+    }
 };
 
 class ISLVal {
@@ -129,6 +134,10 @@ class ISLVal {
     bool isRat() const { return isl_val_is_rat(get()); }
     int numSi() const { return isl_val_get_num_si(get()); }
     int denSi() const { return isl_val_get_den_si(get()); }
+
+    friend std::ostream &operator<<(std::ostream &os, const ISLVal &val) {
+        return os << isl_val_to_str(val.val_);
+    }
 };
 
 class ISLSet {
@@ -168,6 +177,10 @@ class ISLSet {
     isl_set *get() const { return GET_ISL_PTR(set_); }
     isl_set *copy() const { return COPY_ISL_PTR(set_, set); }
     isl_set *move() { return MOVE_ISL_PTR(set_); }
+
+    friend std::ostream &operator<<(std::ostream &os, const ISLSet &set) {
+        return os << isl_set_to_str(set.set_);
+    }
 };
 
 class ISLSpace {
@@ -206,6 +219,10 @@ class ISLSpace {
     isl_space *get() const { return GET_ISL_PTR(space_); }
     isl_space *copy() const { return COPY_ISL_PTR(space_, space); }
     isl_space *move() { return MOVE_ISL_PTR(space_); }
+
+    friend std::ostream &operator<<(std::ostream &os, const ISLSpace &space) {
+        return os << isl_space_to_str(space.space_);
+    }
 };
 
 inline ISLMap reverse(ISLMap &&map) { return isl_map_reverse(map.move()); }

@@ -67,7 +67,7 @@ void FindAccessPoint::visit(const Load &op) {
     auto ap = Ref<AccessPoint>::make();
     *ap = {op,
            cursor(),
-           defs_.at(op->var_)->id(),
+           defs_.at(op->var_),
            defs_.at(op->var_)->buffer_,
            defAxis_.at(op->var_),
            cur_,

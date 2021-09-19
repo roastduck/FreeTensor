@@ -26,7 +26,7 @@ struct IterAxis {
 struct AccessPoint {
     AST op_;
     Cursor cursor_;
-    std::string def_;
+    VarDef def_;
     Ref<Buffer> buffer_;
     int defAxis_;                /// The position of the VarDef
     std::vector<IterAxis> iter_; /// The temporal location of the access
@@ -80,7 +80,7 @@ class FindAccessPoint : public VisitorWithCursor {
         auto ap = Ref<AccessPoint>::make();
         *ap = {op,
                cursor(),
-               defs_.at(op->var_)->id(),
+               defs_.at(op->var_),
                defs_.at(op->var_)->buffer_,
                defAxis_.at(op->var_),
                cur_,
@@ -169,7 +169,8 @@ struct Dependency {
     // Helper functions
     const AST &later() const { return later_.op_; }
     const AST &earlier() const { return earlier_.op_; }
-    const std::string &defId() const { return earlier_.def_; }
+    const VarDef &def() const { return earlier_.def_; }
+    const std::string &defId() const { return earlier_.def_->id(); }
 };
 typedef std::function<void(const Dependency &)> FindDepsCallback;
 

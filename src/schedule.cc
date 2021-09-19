@@ -187,16 +187,9 @@ Schedule::fission(const std::string &loop, const std::string &after,
                 {hoist.seqId(), DepDirection::Inv}};
             disjunct.emplace_back(std::move(conjunct));
         }
-        auto isRealWrite = [&](const std::string &loop, const AST &op) -> bool {
-            if (op->nodeType() == ASTNodeType::Store) {
-                Expr expr = op.as<StoreNode>()->expr_;
-                return isVariant(variantExpr.first, expr, loop);
-            } else if (op->nodeType() == ASTNodeType::ReduceTo) {
-                Expr expr = op.as<ReduceToNode>()->expr_;
-                return isVariant(variantExpr.first, expr, loop);
-            } else {
-                return false;
-            }
+        auto isRealWrite = [&](const std::string &loop,
+                               const VarDef &def) -> bool {
+            return isVariant(variantExpr.second, def, loop);
         };
         std::unordered_map<std::string, std::vector<std::string>> toAdd;
         auto found = [&](const Dependency &d) {
@@ -208,11 +201,11 @@ Schedule::fission(const std::string &loop, const std::string &after,
                 throw InvalidSchedule(
                     dep2Str(id, d.var_, d.later(), d.earlier()));
             }
-            if (!isRealWrite(id, d.later()) &&
+            if (!isRealWrite(id, d.def()) &&
                 d.earlier()->nodeType() == ASTNodeType::Load) {
                 return;
             }
-            if (!isRealWrite(id, d.earlier()) &&
+            if (!isRealWrite(id, d.def()) &&
                 d.later()->nodeType() == ASTNodeType::Load) {
                 return;
             }
@@ -586,7 +579,7 @@ void Schedule::inlining(const std::string &def) {
         std::unordered_map<Load, Expr> replace;
         auto filter = [&](const AccessPoint &later,
                           const AccessPoint &earlier) {
-            return earlier.def_ == def;
+            return earlier.def_->id() == def;
         };
         auto found = [&](const Dependency &dep) {
             if (replace.count(dep.later().as<LoadNode>())) {

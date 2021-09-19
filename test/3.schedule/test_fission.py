@@ -349,3 +349,46 @@ def test_correct_dependency_no_need_to_modify_broadcast():
     std = ir.pop_ast()
 
     assert std.match(ast)
+
+
+def test_correct_dependency_overwritten_store():
+    with ir.VarDef([
+        ("x0", (4, 8), "int32", "input", "cpu"),
+        ("x1", (4, 8), "int32", "input", "cpu"),
+        ("y", (4, 8), "int32", "output", "cpu"),
+    ]) as (x0, x1, y):
+        with ir.For("i", 0, 4, nid="L1") as i:
+            with ir.For("j", 0, 8, nid="L2") as j:
+                with ir.VarDef("buf", (1,), "int32", "cache", "cpu") as b:
+                    b[0] = 1  # (1)
+                    ir.MarkNid("S0")
+                    with ir.If(j > 1):
+                        b[0] += x0[i, j] + x1[i, j]  # (2)
+                    y[i, j] = b[0] * b[0]  # (3)
+    # Explanation: (3)->(1) is a real dependency, while (3)->(2) is not.
+    # We cannot determine b is loop-invarient just becase b[0] = 1
+    ast = ir.pop_ast()
+    print(ast)
+    s = ir.Schedule(ast)
+    s.fission("L2", "S0")
+    ast = s.ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([
+        ("x0", (4, 8), "int32", "input", "cpu"),
+        ("x1", (4, 8), "int32", "input", "cpu"),
+        ("y", (4, 8), "int32", "output", "cpu"),
+    ]) as (x0, x1, y):
+        with ir.For("i", 0, 4) as i:
+            with ir.VarDef("buf", (8, 1), "int32", "cache", "cpu") as b:
+                with ir.For("j", 0, 8) as j:
+                    b[j, 0] = 1
+                    with ir.If(j > 1):
+                        b[j, 0] = x0[i, j] + x1[i, j] + 1
+                with ir.For("j", 0, 8) as j:
+                    y[i, j] = b[j, 0] * b[j, 0]
+    std = ir.pop_ast()
+
+    assert std.match(ast)
