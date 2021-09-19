@@ -77,6 +77,8 @@ void Driver::buildAndLoad() {
     case TargetType::GPU:
         cmd = "nvcc -I" NAME(
             IR_RUNTIME_DIR) " -shared -Xcompiler -fPIC,-Wall,-O3";
+        cmd += " -o " + so + " " + cpp;
+        cmd += " -lcublas";
         if (auto arch = dev_.target().as<GPU>()->computeCapability();
             arch.isValid()) {
             cmd += " -arch sm_" + std::to_string(arch->first) +
@@ -92,7 +94,6 @@ void Driver::buildAndLoad() {
             WARNING("GPU arch not specified, which may result in suboptimal "
                     "performance ");
         }
-        cmd += " -o " + so + " " + cpp;
         break;
     default:
         ASSERT(false);
@@ -105,7 +106,7 @@ void Driver::buildAndLoad() {
                           dlerror());
     }
 
-    func_ = (void (*)(void **))dlsym(dlHandle_, "run");
+    func_ = (void (*)(void **, void *))dlsym(dlHandle_, "run");
     if (!func_) {
         throw DriverError((std::string) "Target function not found: " +
                           dlerror());
@@ -114,6 +115,17 @@ void Driver::buildAndLoad() {
     remove(cpp.c_str());
     remove(so.c_str());
     rmdir(path);
+
+    switch (dev_.type()) {
+    case TargetType::CPU:
+        curCtx_ = &cpuCtx_;
+        break;
+    case TargetType::GPU:
+        curCtx_ = &gpuCtx_;
+        break;
+    default:
+        ASSERT(false);
+    }
 }
 
 void Driver::setParams(const std::vector<Array *> &args,
@@ -131,7 +143,7 @@ void Driver::setParams(const std::vector<Array *> &args,
     }
 }
 
-void Driver::run() { func_(params_.data()); }
+void Driver::run() { func_(params_.data(), curCtx_); }
 
 void Driver::sync() {
     switch (dev_.type()) {

@@ -6,7 +6,8 @@
 #include <cassert>
 #include <cmath> // INFINITY, sqrt
 #include <cstdint>
-#include <sys/resource.h> // ulimit
+
+#include "cpu_context.h"
 
 #ifdef WITH_MKL
 #include <mkl.h>
@@ -25,16 +26,5 @@ template <class T> T ceilDiv(T a, T b) {
 }
 
 template <class T> T runtime_square(T x) { return x * x; }
-
-inline void set_stack_limit(int64_t bytes) {
-    struct rlimit rlim;
-    auto err = getrlimit(RLIMIT_STACK, &rlim);
-    assert(err == 0);
-    if ((rlim_t)bytes > rlim.rlim_cur) {
-        rlim.rlim_cur = bytes;
-        err = setrlimit(RLIMIT_STACK, &rlim);
-        assert(err == 0);
-    }
-}
 
 #endif // CPU_RUNTIME_H

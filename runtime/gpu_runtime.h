@@ -6,6 +6,8 @@
 #include <cmath> // INFINITY
 #include <cstdint>
 
+#include "gpu_context.h"
+
 #include "../3rd-party/cuda-samples/Common/helper_math.h"
 
 #define restrict __restrict__

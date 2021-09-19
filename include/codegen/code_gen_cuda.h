@@ -28,6 +28,7 @@ class CodeGenCUDA : public CodeGenC<CodeGenCUDAStream> {
     bool inKernel() const;
 
   protected:
+    using CodeGenC<CodeGenCUDAStream>::visit;
     void visit(const Min &op) override;
     void visit(const Max &op) override;
     void visit(const Sqrt &op) override;
@@ -38,6 +39,7 @@ class CodeGenCUDA : public CodeGenC<CodeGenCUDAStream> {
     void visit(const Var &op) override;
     void visit(const For &op) override;
     void visit(const VarDef &op) override;
+    void visit(const MatMul &op) override;
 };
 
 /**

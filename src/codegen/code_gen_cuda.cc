@@ -6,6 +6,17 @@
 
 namespace ir {
 
+static std::string genCUBLASType(DataType dtype) {
+    switch (dtype) {
+    case DataType::Float32:
+        return "CUDA_R_32F";
+    case DataType::Int32:
+        return "CUDA_R_32I";
+    default:
+        ASSERT(false);
+    }
+}
+
 bool CodeGenCUDA::inKernel() const {
     return streamStack_.back().name_ != "default";
 }
@@ -205,7 +216,7 @@ void CodeGenCUDA::visit(const For &op) {
                 op->len_.as<IntConstNode>()->val_;
         }
     } else {
-        throw Error("Unsupported parallel method" + op->parallel_);
+        throw Error("Unsupported parallel method " + op->parallel_);
     }
 }
 
@@ -309,6 +320,66 @@ void CodeGenCUDA::visit(const VarDef &op) {
     }
 }
 
+void CodeGenCUDA::visit(const MatMul &op) {
+    if (inKernel()) {
+        throw InvalidProgram("External call to a matrix multiplication from "
+                             "inside a CUDA kernel is not supported");
+    }
+
+    bool transA = !op->aIsRowMajor_, transB = !op->bIsRowMajor_;
+    Expr a = op->a_, b = op->b_, c = op->c_;
+    Expr m = op->m_, k = op->k_, n = op->n_;
+    Expr lda = op->lda_, ldb = op->ldb_, ldc = op->ldc_;
+    Expr stridea = op->stridea_, strideb = op->strideb_, stridec = op->stridec_;
+    if (op->cIsRowMajor_) {
+        transA = !transA;
+        transB = !transB;
+        std::swap(transA, transB);
+        std::swap(a, b);
+        std::swap(lda, ldb);
+        std::swap(stridea, strideb);
+        std::swap(n, m);
+    }
+
+    makeIndent();
+    os() << gen(dtype(op->c_)) << " _cublasAlpha = ";
+    (*this)(op->alpha_);
+    os() << ", _cublasBeta = ";
+    (*this)(op->beta_);
+    os() << ";" << std::endl;
+    makeIndent();
+    os() << "cublasGemmStridedBatchedEx(_ctx->cublas(), "
+         << (transA ? "CUBLAS_OP_N" : "CUBLAS_OP_T") << ", "
+         << (transB ? "CUBLAS_OP_N" : "CUBLAS_OP_T") << ", ";
+    (*this)(m);
+    os() << ", ";
+    (*this)(n);
+    os() << ", ";
+    (*this)(k);
+    os() << ", &_cublasAlpha, &";
+    (*this)(a);
+    os() << ", " << genCUBLASType(dtype(op->a_)) << ", ";
+    (*this)(lda);
+    os() << ", ";
+    (*this)(stridea);
+    os() << ", &";
+    (*this)(b);
+    os() << ", " << genCUBLASType(dtype(op->b_)) << ", ";
+    (*this)(ldb);
+    os() << ", ";
+    (*this)(strideb);
+    os() << ", &_cublasBeta, &";
+    (*this)(c);
+    os() << ", " << genCUBLASType(dtype(op->c_)) << ", ";
+    (*this)(ldc);
+    os() << ", ";
+    (*this)(stridec);
+    os() << ", ";
+    (*this)(op->batchSize_);
+    os() << ", " << genCUBLASType(dtype(op->c_)) << ", CUBLAS_GEMM_DEFAULT);"
+         << std::endl;
+}
+
 std::string codeGenCUDA(const Func &func) {
     CodeGenCUDA visitor(func->params_);
     auto &&op = func->body_;
@@ -329,7 +400,8 @@ extern "C" {
 
     auto body = visitor.toString([&](const CodeGenCUDA::Stream &stream) {
         if (stream.name_ == "default") {
-            return "void run(void **_params) " + stream.os_.str();
+            return "void run(void **_params, GPUContext_t _ctx) " +
+                   stream.os_.str();
         } else {
             const auto &dim = stream.threadDim_;
             std::ostringstream os;

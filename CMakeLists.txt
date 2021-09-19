@@ -67,5 +67,5 @@ add_dependencies(ffi ISL)
 target_link_libraries(ffi PRIVATE
     ${ISL_DIR}/install/lib/libisl.so
     libz3 # See 3rd-party/z3/src/CMakeLists.txt
-    ${CUDA_LIBRARIES})
+    ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES})
 

@@ -158,9 +158,9 @@ extern "C" {
             "void __attribute__ ((noinline)) _run(void **_params) " +
             stream.os_.str();
         s += "\n";
-        s += "void run(void **_params) {\n";
-        s +=
-            "  set_stack_limit(" + std::to_string(visitor.stackSize()) + ");\n";
+        s += "void run(void **_params, CPUContext_t _ctx) {\n";
+        s += "  _ctx->setStackLim(" + std::to_string(visitor.stackSize()) +
+             ");\n";
         s += "  _run(_params);\n";
         s += "}";
         return s;
