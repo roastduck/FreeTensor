@@ -284,6 +284,24 @@ class Schedule(ffi.Schedule):
         return super(Schedule, self).cache_reduction(toId(stmt), var,
                                                      parseMType(mtype))
 
+    def set_mem_type(self, vardef, mtype):
+        """
+        Change where a variable is stored
+
+        Parameters
+        ----------
+        vardef : str, Stmt or Cursor
+            ID of the VarDef statement of the specific variable
+        mtype : MemType
+            Where the variable should be stored
+
+        Raises
+        ------
+        InvalidSchedule
+            if the variable is not found
+        """
+        super(Schedule, self).set_mem_type(toId(vardef), parseMType(mtype))
+
     def var_split(self, vardef, dim, mode, factor=-1, nparts=-1):
         """
         Split a dimension of a variable into two

@@ -26,6 +26,7 @@
 #include <schedule/parallelize.h>
 #include <schedule/reorder.h>
 #include <schedule/seperate_tail.h>
+#include <schedule/set_mem_type.h>
 #include <schedule/split.h>
 #include <schedule/swap.h>
 #include <schedule/unroll.h>
@@ -442,6 +443,21 @@ Schedule::cacheReduction(const std::string &stmt, const std::string &var,
                            std::move(newVar));
 }
 
+void Schedule::setMemType(const std::string &def, MemType mtype) {
+    auto ast = ast_;
+    try {
+        SetMemType mutator(def, mtype);
+        ast = mutator(ast);
+        if (!mutator.found()) {
+            throw InvalidSchedule(def + " not found");
+        }
+    } catch (const InvalidSchedule &e) {
+        throw InvalidSchedule("Invalid set_mtype(" + def + ", " +
+                              toString(mtype) + "): " + e.what());
+    }
+    ast_ = ast;
+}
+
 void Schedule::varSplit(const std::string &def, int dim, VarSplitMode mode,
                         int factor, int nparts) {
     auto ast = ast_;
@@ -450,7 +466,7 @@ void Schedule::varSplit(const std::string &def, int dim, VarSplitMode mode,
                          nparts);
         ast = mutator(ast);
         if (!mutator.found()) {
-            throw InvalidSchedule(def + "not found");
+            throw InvalidSchedule(def + " not found");
         }
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule(
@@ -470,7 +486,7 @@ void Schedule::varReorder(const std::string &def,
         VarReorder mutator(def, order);
         ast = mutator(ast);
         if (!mutator.found()) {
-            throw InvalidSchedule(def + "not found");
+            throw InvalidSchedule(def + " not found");
         }
     } catch (const InvalidSchedule &e) {
         std::string msg = "Invalid var_reorder(" + def + ", ";

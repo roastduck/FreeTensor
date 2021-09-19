@@ -234,6 +234,15 @@ class Schedule {
                    MemType mtype);
 
     /**
+     * Change where a variable is stored
+     *
+     * @param def : ID of the VarDef statement of the specific variable
+     * @param mtype : Where the variable should be stored
+     * @throw InvalidSchedule if the variable is not found
+     */
+    void setMemType(const std::string &def, MemType mtype);
+
+    /**
      * Split a dimension of a variable into two
      *
      * @param def : ID of the VarDef statement of the specific variable

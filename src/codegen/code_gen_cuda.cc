@@ -266,6 +266,11 @@ void CodeGenCUDA::visit(const VarDef &op) {
         }
 
         case MemType::GPUShared: {
+            if (!inKernel()) {
+                throw InvalidProgram("Allocating a shared buffer outside a "
+                                     "kernel is not allowed");
+            }
+
             markDef(op->name_, op->buffer_);
 
             // A static shared memory array cannot be larger than 48KB (maybe a
@@ -312,6 +317,14 @@ void CodeGenCUDA::visit(const VarDef &op) {
             markUndef(op->name_);
             break;
         }
+
+        case MemType::GPULocal:
+            if (!inKernel()) {
+                throw InvalidProgram("Allocating a local buffer outside a "
+                                     "kernel is not allowed");
+            }
+            CodeGenC::visit(op);
+            break;
 
         default:
             CodeGenC::visit(op);
