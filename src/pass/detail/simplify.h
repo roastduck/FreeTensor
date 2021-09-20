@@ -637,6 +637,21 @@ Expr SimplifyPass<BaseClass>::visit(const Sqrt &_op) {
 }
 
 template <class BaseClass>
+Expr SimplifyPass<BaseClass>::visit(const IfExpr &_op) {
+    auto __op = BaseClass::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::IfExpr);
+    auto op = __op.template as<IfExprNode>();
+    if (op->cond_->nodeType() == ASTNodeType::BoolConst) {
+        if (op->cond_.template as<BoolConstNode>()->val_) {
+            return markMutated(op->thenCase_);
+        } else {
+            return markMutated(op->elseCase_);
+        }
+    }
+    return op;
+}
+
+template <class BaseClass>
 Stmt SimplifyPass<BaseClass>::visit(const ReduceTo &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);

@@ -621,6 +621,39 @@ Expr CompUniqueBounds::visit(const Max &_op) {
     return op;
 }
 
+Expr CompUniqueBounds::visit(const IfExpr &_op) {
+    auto __op = CompTransientBounds::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::IfExpr);
+    auto op = __op.as<IfExprNode>();
+
+    if (!isInt(dtype(op))) {
+        return op;
+    }
+    auto &lower = lower_[op];
+    auto &upper = upper_[op];
+    for (auto &&b1 : getUpper(op->thenCase_)) {
+        for (auto &&b2 : getUpper(op->elseCase_)) {
+            if (b1.lin().coeff_.empty() && b2.lin().coeff_.empty()) {
+                updUpper(upper,
+                         LinearExpr<Rational<int64_t>>{
+                             {}, std::max(b1.lin().bias_, b2.lin().bias_)});
+            }
+        }
+    }
+    for (auto &&b1 : getLower(op->thenCase_)) {
+        for (auto &&b2 : getLower(op->elseCase_)) {
+            if (b1.lin().coeff_.empty() && b2.lin().coeff_.empty()) {
+                updLower(lower,
+                         LinearExpr<Rational<int64_t>>{
+                             {}, std::min(b1.lin().bias_, b2.lin().bias_)});
+            }
+        }
+    }
+    updLower(lower, LowerBound{op});
+    updUpper(upper, UpperBound{op});
+    return op;
+}
+
 void CheckFixedPoint::visitExpr(
     const Expr &op, const std::function<void(const Expr &)> &visitNode) {
     Visitor::visitExpr(op, visitNode);

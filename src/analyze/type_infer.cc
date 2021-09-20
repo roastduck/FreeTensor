@@ -215,6 +215,12 @@ void TypeInfer::visit(const Ceil &op) {
     types_[op] = types_.at(op->expr_);
 }
 
+void TypeInfer::visit(const IfExpr &op) {
+    Visitor::visit(op);
+    CHK_TYPE(isBool, types_.at(op->cond_), op);
+    types_[op] = upCast(types_.at(op->thenCase_), types_.at(op->elseCase_));
+}
+
 void TypeInfer::visit(const Cast &op) {
     Visitor::visit(op);
     types_[op] = op->dtype_;

@@ -15,6 +15,7 @@ from .nodes import (
     Any,
     min,
     max,
+    if_then_else,
     abs,
     l_and,
     l_or,

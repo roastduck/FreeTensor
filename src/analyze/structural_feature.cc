@@ -305,6 +305,17 @@ Stmt StructuralFeature::visit(const ReduceTo &_op) {
     return op;
 }
 
+Expr StructuralFeature::visit(const IfExpr &_op) {
+    auto __op = BaseClass::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::IfExpr);
+    auto op = __op.as<IfExprNode>();
+    updInfo(op, op->cond_);
+    updInfo(op, op->thenCase_);
+    updInfo(op, op->elseCase_);
+    info_[op].opCnt_[dtype(op->cond_)]++;
+    return op;
+}
+
 Stmt StructuralFeature::visit(const StmtSeq &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::StmtSeq);

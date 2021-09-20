@@ -72,6 +72,15 @@ void GetHash::visit(const Square &op) { unaryOp(op); }
 void GetHash::visit(const Floor &op) { unaryOp(op); }
 void GetHash::visit(const Ceil &op) { unaryOp(op); }
 
+void GetHash::visit(const IfExpr &op) {
+    Visitor::visit(op);
+    uint64_t h = ((uint64_t)op->nodeType() * K1 + B1) % P;
+    h = ((h + hash_.at(op->cond_)) * K2 + B2) % P;
+    h = ((h + hash_.at(op->thenCase_)) * K2 + B2) % P;
+    h = ((h + hash_.at(op->elseCase_)) * K2 + B2) % P;
+    hash_[op] = h = (h * K3 + B3) % P;
+}
+
 void GetHash::visit(const Cast &op) {
     Visitor::visit(op);
     uint64_t h = ((uint64_t)op->nodeType() * K1 + B1) % P;

@@ -500,6 +500,16 @@ template <class Stream> void CodeGenC<Stream>::visit(const Ceil &op) {
     this->os() << ")";
 }
 
+template <class Stream> void CodeGenC<Stream>::visit(const IfExpr &op) {
+    this->os() << "(";
+    (*this)(op->cond_);
+    this->os() << " ? ";
+    (*this)(op->thenCase_);
+    this->os() << " : ";
+    (*this)(op->elseCase_);
+    this->os() << ")";
+}
+
 template <class Stream> void CodeGenC<Stream>::visit(const Cast &op) {
     this->os() << gen(op->dtype_) << "(";
     (*this)(op->expr_);

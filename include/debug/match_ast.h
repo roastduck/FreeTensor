@@ -60,6 +60,7 @@ class MatchVisitor : public Visitor {
     void visit(const Square &op) override;
     void visit(const Floor &op) override;
     void visit(const Ceil &op) override;
+    void visit(const IfExpr &op) override;
     void visit(const Cast &op) override;
     void visit(const For &op) override;
     void visit(const If &op) override;

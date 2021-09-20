@@ -432,6 +432,22 @@ template <class T> Expr _makeCeil(T &&expr) {
     return e;
 }
 
+class IfExprNode : public ExprNode {
+  public:
+    SubTree<ExprNode> cond_, thenCase_, elseCase_;
+    DEFINE_NODE_TRAIT(IfExpr);
+};
+typedef Ref<IfExprNode> IfExpr;
+#define makeIfExpr(...) makeNode(IfExpr, __VA_ARGS__)
+template <class T, class U, class V>
+Expr _makeIfExpr(T &&cond, U &&thenCase, V &&elseCase) {
+    IfExpr e = IfExpr::make();
+    e->cond_ = std::forward<T>(cond);
+    e->thenCase_ = std::forward<T>(thenCase);
+    e->elseCase_ = std::forward<T>(elseCase);
+    return e;
+}
+
 class CastNode : public ExprNode {
   public:
     SubTree<ExprNode> expr_;

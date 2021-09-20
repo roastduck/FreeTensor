@@ -58,6 +58,7 @@ class TypeInfer : public Visitor {
     void visit(const Square &op) override;
     void visit(const Floor &op) override;
     void visit(const Ceil &op) override;
+    void visit(const IfExpr &op) override;
     void visit(const Cast &op) override;
     void visit(const Intrinsic &op) override;
 

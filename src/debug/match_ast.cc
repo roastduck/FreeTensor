@@ -313,6 +313,14 @@ void MatchVisitor::visit(const Ceil &op) {
     RECURSE(op->expr_, instance->expr_);
 }
 
+void MatchVisitor::visit(const IfExpr &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::IfExpr);
+    auto instance = instance_.as<IfExprNode>();
+    RECURSE(op->cond_, instance->cond_);
+    RECURSE(op->thenCase_, instance->thenCase_);
+    RECURSE(op->elseCase_, instance->elseCase_);
+}
+
 void MatchVisitor::visit(const Cast &op) {
     CHECK(instance_->nodeType() == ASTNodeType::Cast);
     auto instance = instance_.as<CastNode>();

@@ -92,6 +92,7 @@ class Z3Simplify : public Mutator {
     Expr visit(const LAnd &op) override;
     Expr visit(const LOr &op) override;
     Expr visit(const LNot &op) override;
+    Expr visit(const IfExpr &op) override;
 
     Stmt visit(const If &op) override;
     Stmt visit(const Assert &op) override;

@@ -359,8 +359,12 @@ def max(lhs, rhs):
     return ffi.makeMax(lhs, rhs)
 
 
+def if_then_else(cond, then_case, else_case):
+    return ffi.makeIfExpr(cond, then_case, else_case)
+
+
 def abs(expr):
-    return max(expr, -expr)
+    return if_then_else(expr >= 0, expr, -expr)
 
 
 def l_and(lhs, rhs):

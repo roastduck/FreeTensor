@@ -49,6 +49,7 @@ void init_ffi_ast(py::module_ &m) {
         .value("Square", ASTNodeType::Square)
         .value("Floor", ASTNodeType::Floor)
         .value("Ceil", ASTNodeType::Ceil)
+        .value("IfExpr", ASTNodeType::IfExpr)
         .value("Cast", ASTNodeType::Cast)
         .value("For", ASTNodeType::For)
         .value("If", ASTNodeType::If)
@@ -270,6 +271,14 @@ void init_ffi_ast(py::module_ &m) {
     py::class_<CeilNode, Ceil>(m, "Ceil", pyExpr)
         .def_property_readonly(
             "expr", [](const Ceil &op) -> Expr { return op->expr_; });
+    py::class_<IfExprNode, IfExpr>(m, "IfExpr", pyExpr)
+        .def_property_readonly(
+            "cond", [](const IfExpr &op) -> Expr { return op->cond_; })
+        .def_property_readonly(
+            "then_case", [](const IfExpr &op) -> Expr { return op->thenCase_; })
+        .def_property_readonly("else_case", [](const IfExpr &op) -> Expr {
+            return op->elseCase_;
+        });
     py::class_<CastNode, Cast>(m, "Cast", pyExpr)
         .def_property_readonly("expr",
                                [](const Cast &op) -> Expr { return op->expr_; })
@@ -459,6 +468,10 @@ void init_ffi_ast(py::module_ &m) {
           "expr"_a);
     m.def("makeCeil", static_cast<Expr (*)(const Expr &)>(&_makeCeil),
           "expr"_a);
+    m.def("makeIfExpr",
+          static_cast<Expr (*)(const Expr &, const Expr &, const Expr &)>(
+              &_makeIfExpr),
+          "cond"_a, "thenCase"_a, "elseCase"_a);
     m.def("makeCast", static_cast<Expr (*)(const Expr &, DataType)>(&_makeCast),
           "expr"_a, "dtype"_a);
     m.def("makeFloorDiv",
@@ -532,6 +545,7 @@ template <> struct polymorphic_type_hook<ir::ASTNode> {
             DISPATCH(Square);
             DISPATCH(Floor);
             DISPATCH(Ceil);
+            DISPATCH(IfExpr);
             DISPATCH(Cast);
             DISPATCH(Intrinsic);
         default:
@@ -608,6 +622,7 @@ template <> struct polymorphic_type_hook<ir::ExprNode> {
             DISPATCH(Square);
             DISPATCH(Floor);
             DISPATCH(Ceil);
+            DISPATCH(IfExpr);
             DISPATCH(Cast);
             DISPATCH(Intrinsic);
             DISPATCH(AnyExpr);

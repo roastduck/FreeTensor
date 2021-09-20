@@ -201,6 +201,12 @@ class Visitor {
         (*this)(op->body_);
     }
 
+    virtual void visit(const IfExpr &op) {
+        (*this)(op->cond_);
+        (*this)(op->thenCase_);
+        (*this)(op->elseCase_);
+    }
+
     virtual void visit(const Cast &op) { (*this)(op->expr_); }
 
     virtual void visit(const Intrinsic &op) {

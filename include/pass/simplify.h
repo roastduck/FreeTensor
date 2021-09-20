@@ -183,6 +183,7 @@ class CompUniqueBounds : public CompTransientBounds {
     Expr visit(const Mod &op) override;
     Expr visit(const Min &op) override;
     Expr visit(const Max &op) override;
+    Expr visit(const IfExpr &op) override;
 };
 
 template <class BaseClass> class SimplifyPass : public BaseClass {
@@ -233,6 +234,7 @@ template <class BaseClass> class SimplifyPass : public BaseClass {
     Expr visit(const LOr &op) override;
     Expr visit(const LNot &op) override;
     Expr visit(const Sqrt &op) override;
+    Expr visit(const IfExpr &op) override;
     Stmt visit(const ReduceTo &op) override;
     Stmt visit(const VarDef &op) override;
     Stmt visit(const For &op) override;

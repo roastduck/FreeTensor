@@ -336,6 +336,16 @@ void PrintVisitor::visit(const Ceil &op) {
     os() << ")";
 }
 
+void PrintVisitor::visit(const IfExpr &op) {
+    os() << "(";
+    recur(op->cond_);
+    os() << " ? ";
+    recur(op->thenCase_);
+    os() << " : ";
+    recur(op->elseCase_);
+    os() << ")";
+}
+
 void PrintVisitor::visit(const Cast &op) {
     os() << ::ir::toString(op->dtype_) << "(";
     recur(op->expr_);
