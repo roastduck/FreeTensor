@@ -209,4 +209,27 @@ void Grad::visit(const IfExpr &op) {
     Visitor::visit(op);
 }
 
+void Grad::visit(const Sqrt &op) {
+    if (gradExprs_.count(op)) {
+        gradExprs_[op->expr_] =
+            makeRealDiv(gradExprs_.at(op), makeMul(makeIntConst(2), op));
+    }
+    Visitor::visit(op);
+}
+
+void Grad::visit(const Exp &op) {
+    if (gradExprs_.count(op)) {
+        gradExprs_[op->expr_] = makeMul(gradExprs_.at(op), op);
+    }
+    Visitor::visit(op);
+}
+
+void Grad::visit(const Square &op) {
+    if (gradExprs_.count(op)) {
+        gradExprs_[op->expr_] =
+            makeMul(makeIntConst(2), makeMul(gradExprs_.at(op), op->expr_));
+    }
+    Visitor::visit(op);
+}
+
 } // namespace ir

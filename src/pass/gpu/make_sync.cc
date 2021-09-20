@@ -77,8 +77,8 @@ Stmt CopyPart::visit(const VarDef &_op) {
 Stmt MakeSync::visitStmt(const Stmt &op,
                          const std::function<Stmt(const Stmt &)> &visitNode) {
     auto ret = MutatorWithCursor::visitStmt(op, visitNode);
-    // Please not that we have exited MutatorWithCursor, so `cursor()` is out of
-    // `op`
+    // Please note that we have exited MutatorWithCursor, so `cursor()` is out
+    // of `op`
 
     Cursor target;
     bool needSyncThreads = false, needSyncWarp = false;

@@ -95,6 +95,55 @@ def test_branching_exprs():
     assert std.match(ast)
 
 
+def test_math_funcs():
+    with ir.VarDef([
+        ("x", (), "int32", "input", "cpu"),
+        ("y1", (), "int32", "output", "cpu"),
+        ("y2", (), "int32", "output", "cpu"),
+        ("y3", (), "int32", "output", "cpu"),
+    ]) as (x, y1, y2, y3):
+        y1[()] = ir.sqrt(x[()])
+        y2[()] = ir.exp(x[()])
+        y3[()] = ir.square(x[()])
+    ast = ir.pop_ast()
+    print(ast)
+    ast = ir.grad(ast, {"x": "d_x", "y1": "d_y1", "y2": "d_y2", "y3": "d_y3"})
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([("x", (), "int32", "input", "cpu"),
+                    ("d_x", (), "int32", "output", "cpu"),
+                    ("y1", (), "int32", "input", "cpu"),
+                    ("d_y1", (), "int32", "inout", "cpu"),
+                    ("y2", (), "int32", "input", "cpu"),
+                    ("d_y2", (), "int32", "inout", "cpu"),
+                    ("y3", (), "int32", "input", "cpu"),
+                    ("d_y3", (), "int32", "inout", "cpu")
+                   ]) as (x, d_x, y1, d_y1, y2, d_y2, y3, d_y3):
+        with ir.VarDef("d_y3.old", (), "int32", "cache", "cpu") as d_y3_old:
+            d_y3_old[()] = d_y3[()]
+            d_y3[()] = 0
+            with ir.VarDef("d_y2.old", (), "int32", "cache", "cpu") as d_y2_old:
+                d_y2_old[()] = d_y2[()]
+                d_y2[()] = 0
+                with ir.VarDef("d_y1.old", (), "int32", "cache",
+                               "cpu") as d_y1_old:
+                    d_y1_old[()] = d_y1[()]
+                    d_y1[()] = 0
+                    # FIXME: should be
+                    # d_x[()] = 0 + 2 * d_y3_old[()] * x[()] + d_y2_old[()] * y2[
+                    #     ()] + d_y1_old[()] / (2 * y1[()])
+                    # if possible
+                    d_x[(
+                    )] = 0 + 2 * d_y3_old[()] * x[()] + d_y2_old[()] * ir.exp(x[
+                        ()]) + d_y1_old[()] / (2 * ir.sqrt(x[()]))
+    std = ir.pop_ast()
+
+    print(std)
+    assert std.match(ast)
+
+
 def test_multiple_statements():
     with ir.VarDef([("x1", (), "int32", "input", "cpu"),
                     ("x2", (), "int32", "input", "cpu"),

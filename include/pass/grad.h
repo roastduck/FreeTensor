@@ -48,6 +48,9 @@ class Grad : public Visitor {
     void visit(const Min &op) override;
     void visit(const Max &op) override;
     void visit(const IfExpr &op) override;
+    void visit(const Sqrt &op) override;
+    void visit(const Exp &op) override;
+    void visit(const Square &op) override;
 };
 
 inline Stmt
