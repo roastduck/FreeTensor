@@ -971,8 +971,8 @@ def test_relax_shared_shape_to_constants():
                             t[i, j] = x[i, j] * 2
                         with ir.For("j", 0, n[()]) as j:
                             y[i, j] = t[i, j] + 1
-                        with ir.For("j", n[()], 256) as j:
-                            y[i, j] = 0
+                    with ir.For("j", n[()], 256) as j:
+                        y[i, j] = 0
     assert ir.make_1d_var(ir.pop_ast()).match(func.body)
 
     code = ir.codegen(func, target)

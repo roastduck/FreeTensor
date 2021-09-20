@@ -312,7 +312,8 @@ void CodeGenCUDA::visit(const VarDef &op) {
 
             sharedStackTop_ += size;
             (*this)(op->body_);
-            sharedStackTop_ -= size;
+            // sharedStackTop_ -= size;
+            // FIXME: We have to add some sync before reusing shared buffers
 
             markUndef(op->name_);
             break;

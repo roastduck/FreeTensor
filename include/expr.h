@@ -443,8 +443,8 @@ template <class T, class U, class V>
 Expr _makeIfExpr(T &&cond, U &&thenCase, V &&elseCase) {
     IfExpr e = IfExpr::make();
     e->cond_ = std::forward<T>(cond);
-    e->thenCase_ = std::forward<T>(thenCase);
-    e->elseCase_ = std::forward<T>(elseCase);
+    e->thenCase_ = std::forward<U>(thenCase);
+    e->elseCase_ = std::forward<V>(elseCase);
     return e;
 }
 

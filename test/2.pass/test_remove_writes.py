@@ -281,3 +281,31 @@ def test_type2_dynamic():
     std = ir.pop_ast()
 
     assert std.match(ast)
+
+
+def test_cross_var_def():
+    with ir.VarDef([("x1", (), "int32", "input", "cpu"),
+                    ("x2", (), "int32", "input", "cpu"),
+                    ("y", (), "int32", "output", "cpu")]) as (x1, x2, y):
+        with ir.VarDef("b", (), "int32", "cache", "cpu") as b:
+            b[()] = x1[()] + 1
+            y[()] = b[()] * 2
+        with ir.VarDef("b", (), "int32", "cache", "cpu") as b:
+            b[()] = x2[()] + 2
+            y[()] += b[()] * 2
+    ast = ir.pop_ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([("x1", (), "int32", "input", "cpu"),
+                    ("x2", (), "int32", "input", "cpu"),
+                    ("y", (), "int32", "output", "cpu")]) as (x1, x2, y):
+        with ir.VarDef("b1", (), "int32", "cache", "cpu") as b1:
+            b1[()] = x1[()] + 1
+            with ir.VarDef("b2", (), "int32", "cache", "cpu") as b2:
+                b2[()] = x2[()] + 2
+                y[()] = b1[()] * 2 + b2[()] * 2
+    std = ir.pop_ast()
+
+    assert std.match(ast)

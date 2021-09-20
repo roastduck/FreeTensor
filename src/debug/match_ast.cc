@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include <debug/match_ast.h>
 
 namespace ir {
@@ -114,13 +116,33 @@ void MatchVisitor::visit(const BoolConst &op) {
 void MatchVisitor::visit(const Add &op) {
     CHECK(instance_->nodeType() == ASTNodeType::Add);
     auto instance = instance_.as<AddNode>();
-    TRY_RECURSE(op->lhs_, instance->lhs_);
-    TRY_RECURSE(op->rhs_, instance->rhs_);
-    if (!isMatched_) {
+
+    std::vector<Expr> thisOperands, instanceOperands;
+    std::function<void(const Expr &, std::vector<Expr> &)> recur =
+        [&recur](const Expr op, std::vector<Expr> &operands) {
+            if (op->nodeType() == ASTNodeType::Add) {
+                recur(op.as<AddNode>()->lhs_, operands);
+                recur(op.as<AddNode>()->rhs_, operands);
+            } else {
+                operands.emplace_back(op);
+            }
+        };
+    recur(op, thisOperands);
+    recur(instance, instanceOperands);
+    CHECK(thisOperands.size() == instanceOperands.size());
+
+    std::sort(thisOperands.begin(), thisOperands.end());
+    do {
         isMatched_ = true;
-        RECURSE(op->lhs_, instance->rhs_);
-        RECURSE(op->rhs_, instance->lhs_);
-    }
+        for (size_t i = 0, n = thisOperands.size(); i < n; i++) {
+            TRY_RECURSE(thisOperands[i], instanceOperands[i]);
+            if (!isMatched_) {
+                goto fail;
+            }
+        }
+        return;
+    fail:;
+    } while (std::next_permutation(thisOperands.begin(), thisOperands.end()));
 }
 
 void MatchVisitor::visit(const Sub &op) {
@@ -133,13 +155,33 @@ void MatchVisitor::visit(const Sub &op) {
 void MatchVisitor::visit(const Mul &op) {
     CHECK(instance_->nodeType() == ASTNodeType::Mul);
     auto instance = instance_.as<MulNode>();
-    TRY_RECURSE(op->lhs_, instance->lhs_);
-    TRY_RECURSE(op->rhs_, instance->rhs_);
-    if (!isMatched_) {
+
+    std::vector<Expr> thisOperands, instanceOperands;
+    std::function<void(const Expr &, std::vector<Expr> &)> recur =
+        [&recur](const Expr op, std::vector<Expr> &operands) {
+            if (op->nodeType() == ASTNodeType::Mul) {
+                recur(op.as<MulNode>()->lhs_, operands);
+                recur(op.as<MulNode>()->rhs_, operands);
+            } else {
+                operands.emplace_back(op);
+            }
+        };
+    recur(op, thisOperands);
+    recur(instance, instanceOperands);
+    CHECK(thisOperands.size() == instanceOperands.size());
+
+    std::sort(thisOperands.begin(), thisOperands.end());
+    do {
         isMatched_ = true;
-        RECURSE(op->lhs_, instance->rhs_);
-        RECURSE(op->rhs_, instance->lhs_);
-    }
+        for (size_t i = 0, n = thisOperands.size(); i < n; i++) {
+            TRY_RECURSE(thisOperands[i], instanceOperands[i]);
+            if (!isMatched_) {
+                goto fail;
+            }
+        }
+        return;
+    fail:;
+    } while (std::next_permutation(thisOperands.begin(), thisOperands.end()));
 }
 
 void MatchVisitor::visit(const RealDiv &op) {

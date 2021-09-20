@@ -317,8 +317,8 @@ def test_var_def_inside():
     with ir.VarDef([("x", (2,), "int32", "input", "cpu"),
                     ("y", (2,), "int32", "output", "cpu")]) as (x, y):
         with ir.VarDef("b.0", (), "int32", "cache", "cpu") as b0:
+            b0[()] = x[0] * 2
             with ir.VarDef("b.1", (), "int32", "cache", "cpu") as b1:
-                b0[()] = x[0] * 2
                 b1[()] = x[1] * 2
                 y[0] = b0[()] + 1
                 y[1] = b1[()] + 1
