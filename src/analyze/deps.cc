@@ -564,6 +564,20 @@ void AnalyzeDeps::checkDep(const Ref<AccessPoint> &point,
     // lex_ge in serialDepAll AND ne in depAll
     ISLMap serialLexGE = lexGE(spaceSetAlloc(isl_, 0, serialIterDim));
     ISLMap allEQ = identity(spaceAlloc(isl_, 0, iterDim, iterDim));
+    ISLMap eraseVarDefRestrict =
+        universeMap(spaceAlloc(isl_, 0, iterDim, iterDim));
+    if (eraseOutsideVarDef_) {
+        for (int i = 0; i < point->defAxis_; i++) {
+            if (point->iter_[i].iter_->nodeType() == ASTNodeType::Var &&
+                !point->iter_[i].innerScopeCrossThreads_) { // is a loop and not
+                                                            // crosing threads
+                ISLMap restriction(
+                    isl_, makeIneqBetweenOps(DepDirection::Same, i, iterDim));
+                eraseVarDefRestrict = intersect(std::move(eraseVarDefRestrict),
+                                                std::move(restriction));
+            }
+        }
+    }
 
     // We call genISLExpr_ twice. The first time is to warm up the external
     // list, because all the maps shall have an identical external list
@@ -609,6 +623,7 @@ void AnalyzeDeps::checkDep(const Ref<AccessPoint> &point,
 
         ISLMap depAll =
             subtract(applyRange(pmap, reverse(std::move(omap))), allEQ);
+        depAll = intersect(std::move(depAll), eraseVarDefRestrict);
         ISLMap psDepAll = applyRange(depAll, std::move(oa2s));
         psDepAllUnion = psDepAllUnion.isValid()
                             ? uni(std::move(psDepAllUnion), std::move(psDepAll))
@@ -637,49 +652,31 @@ void AnalyzeDeps::checkDep(const Ref<AccessPoint> &point,
         ISLMap nearest = intersect(applyRange(psNearest, std::move(os2a)),
                                    std::move(depAll));
 
-        bool pFullyKilled = pIter == domain(nearest);
-        bool oFullyKilled = oIter == range(nearest);
-
-        if (eraseOutsideVarDef_) {
-            for (int i = 0; i < point->defAxis_; i++) {
-                if (point->iter_[i].iter_->nodeType() == ASTNodeType::Var &&
-                    !point->iter_[i]
-                         .innerScopeCrossThreads_) { // is a loop and not
-                                                     // crosing threads
-                    ISLMap restriction(
-                        isl_,
-                        makeIneqBetweenOps(DepDirection::Same, i, iterDim));
-                    nearest =
-                        intersect(std::move(nearest), std::move(restriction));
-                }
-            }
-        }
-
         if (nearest.empty()) {
             continue;
         }
         if ((mode_ == FindDepsMode::KillEarlier ||
              mode_ == FindDepsMode::KillBoth) &&
-            !oFullyKilled) {
+            oIter != range(nearest)) {
             continue;
         }
         if ((mode_ == FindDepsMode::KillLater ||
              mode_ == FindDepsMode::KillBoth) &&
-            !pFullyKilled) {
+            pIter != domain(nearest)) {
             continue;
         }
 
         for (auto &&item : cond_) {
-            bool found = true;
+            ISLMap res = nearest;
+            bool fail = false;
             for (auto &&subitem : item) {
                 auto &&coord = scope2coord_.at(subitem.first);
                 int iterId = coord.size() - 1;
                 DepDirection mode = subitem.second;
                 if (iterId >= iterDim) {
-                    found = false;
+                    fail = true;
                     break;
                 }
-                ISLMap res = nearest;
 
                 // Position in the outer StmtSeq nodes
                 std::vector<std::pair<int, int>> pos;
@@ -696,9 +693,12 @@ void AnalyzeDeps::checkDep(const Ref<AccessPoint> &point,
 
                 ISLMap require(isl_, makeIneqBetweenOps(mode, iterId, iterDim));
                 res = intersect(std::move(res), std::move(require));
-                found &= !res.empty();
+                if (res.empty()) {
+                    fail = true;
+                    break;
+                }
             }
-            if (found) {
+            if (!fail) {
                 found_(Dependency{item, getVar(point->op_), *point, *other});
             }
         }

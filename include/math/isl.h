@@ -305,11 +305,18 @@ inline ISLSpace spaceSetAlloc(const ISLCtx &ctx, unsigned nparam,
     return isl_space_set_alloc(ctx.get(), nparam, dim);
 }
 
-inline ISLSet universe(ISLSpace &&space) {
+inline ISLSet universeSet(ISLSpace &&space) {
     return isl_set_universe(space.move());
 }
-inline ISLSet universe(const ISLSpace &space) {
+inline ISLSet universeSet(const ISLSpace &space) {
     return isl_set_universe(space.copy());
+}
+
+inline ISLMap universeMap(ISLSpace &&space) {
+    return isl_map_universe(space.move());
+}
+inline ISLMap universeMap(const ISLSpace &space) {
+    return isl_map_universe(space.copy());
 }
 
 inline ISLSet domain(ISLMap &&map) { return isl_map_domain(map.move()); }
@@ -341,6 +348,10 @@ inline ISLSpace spaceMapFromSet(const ISLSpace &space) {
 
 inline bool operator==(const ISLSet &lhs, const ISLSet &rhs) {
     return isl_set_is_equal(lhs.get(), rhs.get());
+}
+
+inline bool operator!=(const ISLSet &lhs, const ISLSet &rhs) {
+    return !isl_set_is_equal(lhs.get(), rhs.get());
 }
 
 } // namespace ir
