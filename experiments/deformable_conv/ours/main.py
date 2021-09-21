@@ -94,9 +94,7 @@ def conv(x, w1, w2, n, c_in, c_out, h, w, k_h, k_w, device, mtype, local_mtype):
         print(s.ast())
         if device.target().type() == ir.TargetType.CPU:
             Lko = s.move_to("Lko", ir.MoveToSide.After, "Li")
-            _, flush, Y_t = s.cache(Lko, "Y", "cpu")
-            Y_t_def = s.find(lambda x: x.node_type() == ir.ASTNodeType.VarDef
-                             and x.node().name == Y_t)
+            _, flush, _, Y_t_def = s.cache(Lko, "Y", "cpu")
             s.var_reorder(Y_t_def, [0, 2, 3, 1])
             flush_loop = s.find(lambda x: x.nid() == flush).outer().outer(
             ).outer().outer().node()
@@ -112,9 +110,7 @@ def conv(x, w1, w2, n, c_in, c_out, h, w, k_h, k_w, device, mtype, local_mtype):
         else:
             Lko = s.move_to("Lko", ir.MoveToSide.After, "Li")
             s.set_mem_type("V_pixel", "gpu/global")
-            _, flush, Y_t = s.cache(Lko, "Y", "gpu/global")
-            Y_t_def = s.find(lambda x: x.node_type() == ir.ASTNodeType.VarDef
-                             and x.node().name == Y_t)
+            _, flush, _, Y_t_def = s.cache(Lko, "Y", "gpu/global")
             s.var_reorder(Y_t_def, [0, 2, 3, 1])
             flush_loop = s.find(lambda x: x.nid() == flush).outer().outer(
             ).outer().outer().node()

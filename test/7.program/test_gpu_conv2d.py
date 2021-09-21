@@ -111,7 +111,7 @@ def test_manual_static():
 
     s.cache(s.find(lambda x: x.nid() == txz).node().body, "B", "gpu/local")
 
-    fill_AA, _, AA = s.cache(rci, "A", "gpu/shared")
+    fill_AA, _, AA, _ = s.cache(rci, "A", "gpu/shared")
     fill_AA = s.find(lambda x: x.nid() == fill_AA)
     fill_AA_ty, fill_AA_tx = fill_AA.outer().outer(), fill_AA.outer()
     fill_AA_tx, fill_AA_vec = s.split(fill_AA_tx, factor=4)
@@ -119,7 +119,7 @@ def test_manual_static():
     s.parallelize(fill_AA_tx, "threadIdx.x")
     s.vectorize(fill_AA_vec)
 
-    fill_WW, _, WW = s.cache(rci, "W", "gpu/shared")
+    fill_WW, _, WW, _ = s.cache(rci, "W", "gpu/shared")
     fill_WW = s.find(lambda x: x.nid() == fill_WW)
     fill_WW_ty, fill_WW_tx = fill_WW.outer().outer(), fill_WW.outer()
     fill_WW_tx, fill_WW_vec = s.split(fill_WW_tx, factor=4)
@@ -127,8 +127,8 @@ def test_manual_static():
     s.parallelize(fill_WW_tx, "threadIdx.x")
     s.vectorize(fill_WW_vec)
 
-    fill_AL, _, AL = s.cache(fi, AA, "gpu/local")
-    fill_WL, _, WL = s.cache(fi, WW, "gpu/local")
+    fill_AL, _, AL, _ = s.cache(fi, AA, "gpu/local")
+    fill_WL, _, WL, _ = s.cache(fi, WW, "gpu/local")
 
     s.blend(txz)
     s.blend(tyz)

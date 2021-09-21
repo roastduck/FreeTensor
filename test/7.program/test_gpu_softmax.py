@@ -75,7 +75,7 @@ def test_manual_static():
     s.inline("softmax:sub:V_out")
 
     # Store these intermedates to registers
-    load_x, _, _ = s.cache(
+    load_x, _, _, _ = s.cache(
         s.find(lambda x: x.nid() == L_seq_outer).node().body, "x", "gpu/local")
     load_x_loop = s.find(lambda x: x.nid() == load_x).outer()
     s.cache(
@@ -90,13 +90,13 @@ def test_manual_static():
     # Optimize reductions
     def opt_red(def_nid, var, init_nid, loop_nid):
         # Hold result in shared memory
-        _, _, V_sum_shmem = s.cache(
+        _, _, V_sum_shmem, _ = s.cache(
             s.find(lambda x: x.nid() == def_nid).node().body, var, "gpu/shared")
 
         # Parallel reduction
         thr_x, serial = s.split(loop_nid, nparts=thr_x_dim)
-        _, red_final, V_sum_partial = s.cache_reduction(serial, V_sum_shmem,
-                                                        "gpu/shared")
+        _, red_final, V_sum_partial, _ = s.cache_reduction(
+            serial, V_sum_shmem, "gpu/shared")
         red_final = s.move_to(red_final, ir.MoveToSide.After, thr_x)
         init_nid = s.move_to(init_nid, ir.MoveToSide.Before, red_final)
         s.parallelize(thr_x, "threadIdx.x")

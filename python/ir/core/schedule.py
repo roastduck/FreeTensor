@@ -233,9 +233,10 @@ class Schedule(ffi.Schedule):
 
         Returns
         -------
-        (str, str, str)
+        (str, str, str, str)
             (ID of the statement that fills the cache, ID of the statement that
-            flushes from the cache, name of the cache variable)
+            flushes from the cache, name of the cache variable, ID of the VarDef
+            node of the cache variable)
         """
         return super(Schedule, self).cache(toId(stmt), var, parseMType(mtype))
 
@@ -276,10 +277,10 @@ class Schedule(ffi.Schedule):
 
         Returns
         -------
-        (str, str, str)
+        (str, str, str, str)
             (ID of the statement that initialize the cache, ID of the statement
             that reduces the local result to the global result, name of the
-            cache variable)
+            cache variable, ID of the VarDef node of the cache variable)
         """
         return super(Schedule, self).cache_reduction(toId(stmt), var,
                                                      parseMType(mtype))

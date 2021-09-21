@@ -369,7 +369,7 @@ void Schedule::blend(const std::string &loop) {
     ast_ = ast;
 }
 
-std::tuple<std::string, std::string, std::string>
+std::tuple<std::string, std::string, std::string, std::string>
 Schedule::cache(const std::string &stmt, const std::string &var,
                 MemType mtype) {
     auto ast = ast_;
@@ -405,10 +405,10 @@ Schedule::cache(const std::string &stmt, const std::string &var,
     }
     ast_ = ast;
     return std::make_tuple(std::move(fillStmt), std::move(flushStmt),
-                           std::move(newVar));
+                           std::move(newVar), std::move(newDef));
 }
 
-std::tuple<std::string, std::string, std::string>
+std::tuple<std::string, std::string, std::string, std::string>
 Schedule::cacheReduction(const std::string &stmt, const std::string &var,
                          MemType mtype) {
     auto ast = ast_;
@@ -443,7 +443,7 @@ Schedule::cacheReduction(const std::string &stmt, const std::string &var,
     }
     ast_ = ast;
     return std::make_tuple(std::move(initStmt), std::move(reduceStmt),
-                           std::move(newVar));
+                           std::move(newVar), std::move(newDef));
 }
 
 void Schedule::setMemType(const std::string &def, MemType mtype) {

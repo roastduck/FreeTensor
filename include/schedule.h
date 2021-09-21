@@ -195,9 +195,10 @@ class Schedule {
      * @param mtype : where to cache
      * @throw InvalidSchedule if the ID or name is not found
      * @return : (ID of the statement that fills the cache, ID of the statement
-     * that flushes from the cache, name of the cache variable)
+     * that flushes from the cache, name of the cache variable, ID of the VarDef
+     * node of the cache variable)
      */
-    std::tuple<std::string, std::string, std::string>
+    std::tuple<std::string, std::string, std::string, std::string>
     cache(const std::string &stmt, const std::string &var, MemType mtype);
 
     /**
@@ -227,9 +228,9 @@ class Schedule {
      * unsupported reads or writes
      * @return : (ID of the statement that initialize the cache, ID of the
      * statement that reduces the local result to the global result, name of the
-     * cache variable)
+     * cache variable, ID of the VarDef node of the cache variable)
      */
-    std::tuple<std::string, std::string, std::string>
+    std::tuple<std::string, std::string, std::string, std::string>
     cacheReduction(const std::string &stmt, const std::string &var,
                    MemType mtype);
 

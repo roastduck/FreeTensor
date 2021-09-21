@@ -151,7 +151,7 @@ def test_parallel_reduction():
     func = ir.Func("main", ["x", "y"], ir.pop_ast())
     s = ir.Schedule(func)
     i0, i1 = s.split(i, 64)
-    init, final, _ = s.cache_reduction(i1, "y", "cpu")
+    init, final, _, _ = s.cache_reduction(i1, "y", "cpu")
     final = s.move_to(final, ir.MoveToSide.After, i0)
     S0 = s.move_to(S0, ir.MoveToSide.Before, final)
 
@@ -276,8 +276,8 @@ def test_collaborative_fetch():
     func = ir.Func("main", ["a", "b", "c"], ir.pop_ast())
     s = ir.Schedule(func)
     k0, k1 = s.split(k, 32)
-    fill_a, _, _ = s.cache(k1, "a", "gpu/shared")
-    fill_b, _, _ = s.cache(k1, "b", "gpu/shared")
+    fill_a, _, _, _ = s.cache(k1, "a", "gpu/shared")
+    fill_b, _, _, _ = s.cache(k1, "b", "gpu/shared")
     s.parallelize(i, "threadIdx.y")
     s.parallelize(j, "threadIdx.x")
     s.parallelize(
