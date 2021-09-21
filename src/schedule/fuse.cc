@@ -131,23 +131,26 @@ Stmt FuseFor::visit(const StmtSeq &_op) {
     return op;
 }
 
-void CheckAccessible::visit(const StmtSeq &_op) {
-    Visitor::visit(_op);
-    ASSERT(_op->nodeType() == ASTNodeType::StmtSeq);
-    auto op = _op.as<StmtSeqNode>();
-    for (size_t i = 0, iEnd = op->stmts_.size(); i < iEnd; i++) {
-        loop0InVarDefs = findLoopInVarDefs(op->stmts_[i], id0_,
-                                           FindLoopInVarDefsDirection::Back);
-        if (loop0InVarDefs.loop_.isValid()) {
-            if (i + 1 == iEnd) {
-                throw InvalidSchedule("Fuse: Loop " + id0_ + " and " + id1_ +
-                                      " shuold be directly following");
-            }
-            loop1InVarDefs = findLoopInVarDefs(
-                op->stmts_[i + 1], id1_, FindLoopInVarDefsDirection::Front);
-            if (!loop1InVarDefs.loop_.isValid()) {
-                throw InvalidSchedule("Fuse: Loop " + id0_ + " and " + id1_ +
-                                      " shuold be directly following");
+void CheckAccessible::visit(const StmtSeq &op) {
+    Visitor::visit(op);
+    if (!loop0InVarDefs_.loop_.isValid()) {
+        for (size_t i = 0, iEnd = op->stmts_.size(); i < iEnd; i++) {
+            loop0InVarDefs_ = findLoopInVarDefs(
+                op->stmts_[i], id0_, FindLoopInVarDefsDirection::Back);
+            if (loop0InVarDefs_.loop_.isValid()) {
+                if (i + 1 == iEnd) {
+                    throw InvalidSchedule("Fuse: Loop " + id0_ + " and " +
+                                          id1_ +
+                                          " shuold be directly following");
+                }
+                loop1InVarDefs_ = findLoopInVarDefs(
+                    op->stmts_[i + 1], id1_, FindLoopInVarDefsDirection::Front);
+                if (!loop1InVarDefs_.loop_.isValid()) {
+                    throw InvalidSchedule("Fuse: Loop " + id0_ + " and " +
+                                          id1_ +
+                                          " shuold be directly following");
+                }
+                return;
             }
         }
     }

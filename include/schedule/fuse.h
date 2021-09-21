@@ -31,14 +31,14 @@ class FuseFor : public Mutator {
 
 class CheckAccessible : public Visitor {
     std::string id0_, id1_;
-    LoopInVarDefs loop0InVarDefs, loop1InVarDefs;
+    LoopInVarDefs loop0InVarDefs_, loop1InVarDefs_;
 
   public:
     CheckAccessible(const std::string &id0, const std::string &id1)
         : id0_(id0), id1_(id1) {}
 
-    const LoopInVarDefs &loop0() const { return loop0InVarDefs; }
-    const LoopInVarDefs &loop1() const { return loop1InVarDefs; }
+    const LoopInVarDefs &loop0() const { return loop0InVarDefs_; }
+    const LoopInVarDefs &loop1() const { return loop1InVarDefs_; }
 
   protected:
     void visit(const StmtSeq &op) override;

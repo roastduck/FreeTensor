@@ -243,6 +243,9 @@ std::string Schedule::fuse(const std::string &loop0, const std::string &loop1) {
         findDeps(ast, {{{loop0, DepDirection::Inv}}}, found);
 
         check(ast);
+        if (!check.loop0().loop_.isValid()) {
+            throw InvalidSchedule("Loops not found in a StmtSeq");
+        }
 
         for (auto &&stmt : check.loop1().surroundings_) {
             if (stmt->nodeType() == ASTNodeType::VarDef) {

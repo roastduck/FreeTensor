@@ -66,7 +66,7 @@ def test_not_aligned():
     assert std.match(ast)
 
 
-def test_no_following():
+def test_not_following_1():
     with ir.VarDef([
         ("y", (4, 8), "int32", "output", "cpu"),
         ("z", (4, 8), "int32", "output", "cpu"),
@@ -84,6 +84,26 @@ def test_no_following():
     s = ir.Schedule(ast)
     with pytest.raises(ir.InvalidSchedule):
         s.fuse("L2a", "L2c")
+    ast_ = s.ast()  # Should not changed
+    assert ast_.match(ast)
+
+
+def test_not_following_2():
+    with ir.VarDef([
+        ("y", (4, 8), "int32", "output", "cpu"),
+        ("z", (4, 8), "int32", "output", "cpu"),
+    ]) as (y, z):
+        with ir.For("i", 0, 4, nid="L1a") as i:
+            with ir.For("j", 0, 8, nid="L2a") as j:
+                y[i, j] = i + j
+        with ir.For("i", 0, 4, nid="L1b") as i:
+            with ir.For("j", 0, 8, nid="L2b") as j:
+                z[i, j] = i * j
+    ast = ir.pop_ast()
+    print(ast)
+    s = ir.Schedule(ast)
+    with pytest.raises(ir.InvalidSchedule):
+        s.fuse("L2a", "L2b")
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
 
