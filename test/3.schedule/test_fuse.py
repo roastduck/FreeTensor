@@ -136,7 +136,7 @@ def test_dependency_unable_resolve():
             with ir.VarDef("b", (4, 8), "int32", "cache", "cpu") as b:
                 with ir.For("j", 0, 8, nid="L2a") as j:
                     b[i, j] = x[i, j] * 2
-                with ir.For("j", 0, 10, nid="L2b") as j:
+                with ir.For("j", 0, 8, nid="L2b") as j:
                     y[i, j] = b[i, 8 - j]
     ast = ir.pop_ast()
     print(ast)

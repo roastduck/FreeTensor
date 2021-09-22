@@ -87,10 +87,11 @@ Stmt FuseFor::visit(const StmtSeq &_op) {
 
             auto loop0 = loop0InVarDefs.loop_;
             auto loop1 = loop1InVarDefs.loop_;
+            auto seq = makeStmtSeq("", {loop0->body_, loop1->body_});
+            seqId_ = seq->id();
             auto fused = makeFor(fused_, iter0_, makeIntConst(0), loop0->end_,
                                  loop0->end_, loop0->parallel_, loop0->unroll_,
-                                 loop0->vectorize_,
-                                 makeStmtSeq("", {loop0->body_, loop1->body_}));
+                                 loop0->vectorize_, std::move(seq));
 
             // From inner to outer
             for (auto &&stmt : loop1InVarDefs.surroundings_) {

@@ -235,13 +235,6 @@ std::string Schedule::fuse(const std::string &loop0, const std::string &loop1) {
     FuseFor mutator(loop0, loop1);
     CheckAccessible check(loop0, loop1);
     try {
-        auto found = [&](const Dependency &d) {
-            ASSERT(d.cond_.size() == 1);
-            throw InvalidSchedule(
-                dep2Str(d.cond_[0].first, d.var_, d.later(), d.earlier()));
-        };
-        findDeps(ast, {{{loop0, DepDirection::Inv}}}, found);
-
         check(ast);
         if (!check.loop0().loop_.isValid()) {
             throw InvalidSchedule("Loops not found in a StmtSeq");
@@ -263,6 +256,16 @@ std::string Schedule::fuse(const std::string &loop0, const std::string &loop1) {
         }
 
         ast = mutator(ast);
+
+        auto found = [&](const Dependency &d) {
+            ASSERT(d.cond_.size() == 2);
+            throw InvalidSchedule(
+                dep2Str(d.cond_[0].first, d.var_, d.later(), d.earlier()));
+        };
+        findDeps(ast,
+                 {{{mutator.fused(), DepDirection::Normal},
+                   {mutator.seqId(), DepDirection::Inv}}},
+                 found);
 
         try {
             ast = simplifyPass(ast);
