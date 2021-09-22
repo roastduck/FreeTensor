@@ -9,9 +9,10 @@ from ir.libop import StaticType as T
 jit_cache = {}
 
 
-def conv(x, w1, w2, n, c_in, c_out, h, w, k_h, k_w, device, mtype, local_mtype):
-    if (x, w1, w2, n, c_in, c_out, h, w, k_h, k_w) in jit_cache:
-        exe = jit_cache[(x, w1, w2, n, c_in, c_out, h, w, k_h, k_w)]
+def conv(x, w1, w2, y, n, c_in, c_out, h, w, k_h, k_w, device, mtype,
+         local_mtype):
+    if (n, c_in, c_out, h, w, k_h, k_w) in jit_cache:
+        exe = jit_cache[(n, c_in, c_out, h, w, k_h, k_w)]
 
     else:
 
@@ -135,7 +136,7 @@ def conv(x, w1, w2, n, c_in, c_out, h, w, k_h, k_w, device, mtype, local_mtype):
         exe = ir.Driver(f, code, device)
         exe.set_params(x, w1, w2, y)
         # TODO: do not set_params here
-        jit_cache[(x, w1, w2, n, c_in, c_out, h, w, k_h, k_w)] = exe
+        jit_cache[(n, c_in, c_out, h, w, k_h, k_w)] = exe
 
     exe.run()
     exe.sync()
@@ -177,11 +178,11 @@ if __name__ == '__main__':
     y = ir.Array(y, ir_dev)
 
     test_num = 100
-    conv(x, w1, w2, n, c_in, c_out, h, w, k_h, k_w, ir_dev, ir_mtype,
+    conv(x, w1, w2, y, n, c_in, c_out, h, w, k_h, k_w, ir_dev, ir_mtype,
          ir_local_mtype)  # init lazy ops
     t0 = time.time()
     for i in range(test_num):
-        conv(x, w1, w2, n, c_in, c_out, h, w, k_h, k_w, ir_dev, ir_mtype,
+        conv(x, w1, w2, y, n, c_in, c_out, h, w, k_h, k_w, ir_dev, ir_mtype,
              ir_local_mtype)
     t1 = time.time()
 
