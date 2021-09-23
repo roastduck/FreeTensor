@@ -1,12 +1,20 @@
-#include <pass/gpu/correct_shared.h>
+#include <pass/gpu/correct_shared_and_global.h>
 
 namespace ir {
 
 namespace gpu {
 
 void FindAffectingLoops::visit(const For &op) {
-    if (op->parallel_ == "threadIdx.x" || op->parallel_ == "threadIdx.y" ||
-        op->parallel_ == "threadIdx.z") {
+    bool sharedFlag =
+        mode_ == MemType::GPUShared &&
+        (op->parallel_ == "threadIdx.x" || op->parallel_ == "threadIdx.y" ||
+         op->parallel_ == "threadIdx.z");
+    bool globalFlag =
+        mode_ == MemType::GPUGlobal &&
+        (op->parallel_ == "threadIdx.x" || op->parallel_ == "threadIdx.y" ||
+         op->parallel_ == "threadIdx.z" || op->parallel_ == "blockIdx.x" ||
+         op->parallel_ == "blockIdx.y" || op->parallel_ == "blockIdx.z");
+    if (sharedFlag || globalFlag) {
         loops_.insert(op->id());
         Visitor::visit(op);
         loops_.erase(op->id());
@@ -16,7 +24,7 @@ void FindAffectingLoops::visit(const For &op) {
 }
 
 void FindAffectingLoops::visit(const VarDef &op) {
-    if (op->buffer_->mtype() == MemType::GPUShared) {
+    if (op->buffer_->mtype() == mode_) {
         ASSERT(!defs_.count(op->name_));
         defs_[op->name_] = op->id();
         Visitor::visit(op);
@@ -26,9 +34,17 @@ void FindAffectingLoops::visit(const VarDef &op) {
     }
 }
 
-Stmt CorrectShared::visit(const For &op) {
-    if (op->parallel_ == "threadIdx.x" || op->parallel_ == "threadIdx.y" ||
-        op->parallel_ == "threadIdx.z") {
+Stmt CorrectMutator::visit(const For &op) {
+    bool sharedFlag =
+        mode_ == MemType::GPUShared &&
+        (op->parallel_ == "threadIdx.x" || op->parallel_ == "threadIdx.y" ||
+         op->parallel_ == "threadIdx.z");
+    bool globalFlag =
+        mode_ == MemType::GPUGlobal &&
+        (op->parallel_ == "threadIdx.x" || op->parallel_ == "threadIdx.y" ||
+         op->parallel_ == "threadIdx.z" || op->parallel_ == "blockIdx.x" ||
+         op->parallel_ == "blockIdx.y" || op->parallel_ == "blockIdx.z");
+    if (sharedFlag || globalFlag) {
         stack_.emplace_back(op);
         auto ret = Mutator::visit(op);
         stack_.pop_back();
@@ -38,8 +54,8 @@ Stmt CorrectShared::visit(const For &op) {
     }
 }
 
-Stmt CorrectShared::visit(const VarDef &_op) {
-    if (_op->buffer_->mtype() == MemType::GPUShared) {
+Stmt CorrectMutator::visit(const VarDef &_op) {
+    if (_op->buffer_->mtype() == mode_) {
         int pos = defPos_[_op->name_] = stack_.size();
         ASSERT(!defs_.count(_op->name_));
         defs_[_op->name_] = _op->id();
@@ -64,32 +80,37 @@ Stmt CorrectShared::visit(const VarDef &_op) {
     }
 }
 
-Expr CorrectShared::visit(const Load &_op) {
+Expr CorrectMutator::visit(const Load &_op) {
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Load);
     auto op = __op.as<LoadNode>();
     return alterAccess(op);
 }
 
-Stmt CorrectShared::visit(const Store &_op) {
+Stmt CorrectMutator::visit(const Store &_op) {
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Store);
     auto op = __op.as<StoreNode>();
     return alterAccess(op);
 }
 
-Stmt CorrectShared::visit(const ReduceTo &_op) {
+Stmt CorrectMutator::visit(const ReduceTo &_op) {
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
     auto op = __op.as<ReduceToNode>();
     return alterAccess(op);
 }
 
-Stmt correctShared(const Stmt &op) {
+Stmt correctSharedAndGlobal(const Stmt &_op) {
+    auto op = _op;
     auto variants = findLoopVariance(op);
-    FindAffectingLoops finder(variants.first);
-    finder(op);
-    return CorrectShared(finder.results())(op);
+    FindAffectingLoops sharedFinder(variants.first, MemType::GPUShared);
+    sharedFinder(op);
+    op = CorrectMutator(sharedFinder.results(), MemType::GPUShared)(op);
+    FindAffectingLoops globalFinder(variants.first, MemType::GPUGlobal);
+    globalFinder(op);
+    op = CorrectMutator(globalFinder.results(), MemType::GPUGlobal)(op);
+    return op;
 }
 
 } // namespace gpu

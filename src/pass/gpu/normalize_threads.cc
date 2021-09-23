@@ -57,6 +57,9 @@ Stmt NormalizeThreads::doVisitFor(const For &_op) {
         auto op = __op.as<ForNode>();
         varMap_.erase(_op->iter_);
         inside_[_op->parallel_]--;
+        if (!op->noDeps_) {
+            notNoDeps_.insert(_op->parallel_);
+        }
         return makeIf(op->id(),
                       makeLT(makeVar(newIter), makeSub(op->end_, op->begin_)),
                       op->body_);
@@ -75,18 +78,24 @@ Stmt NormalizeThreads::visit(const For &op) {
         inKernel_ = false;
         auto zero = makeIntConst(0);
         auto inf = makeIntConst(INT_MAX);
-        ret = makeFor("", ".threadIdx.x", zero, inf, inf, false, "threadIdx.x",
-                      false, false, ret);
-        ret = makeFor("", ".threadIdx.y", zero, inf, inf, false, "threadIdx.y",
-                      false, false, ret);
-        ret = makeFor("", ".threadIdx.z", zero, inf, inf, false, "threadIdx.z",
-                      false, false, ret);
-        ret = makeFor("", ".blockIdx.x", zero, inf, inf, false, "blockIdx.x",
-                      false, false, ret);
-        ret = makeFor("", ".blockIdx.y", zero, inf, inf, false, "blockIdx.y",
-                      false, false, ret);
-        ret = makeFor("", ".blockIdx.z", zero, inf, inf, false, "blockIdx.z",
-                      false, false, ret);
+        ret = makeFor("", ".threadIdx.x", zero, inf, inf,
+                      !notNoDeps_.count("threadIdx.x"), "threadIdx.x", false,
+                      false, ret);
+        ret = makeFor("", ".threadIdx.y", zero, inf, inf,
+                      !notNoDeps_.count("threadIdx.y"), "threadIdx.y", false,
+                      false, ret);
+        ret = makeFor("", ".threadIdx.z", zero, inf, inf,
+                      !notNoDeps_.count("threadIdx.z"), "threadIdx.z", false,
+                      false, ret);
+        ret = makeFor("", ".blockIdx.x", zero, inf, inf,
+                      !notNoDeps_.count("blockIdx.x"), "blockIdx.x", false,
+                      false, ret);
+        ret = makeFor("", ".blockIdx.y", zero, inf, inf,
+                      !notNoDeps_.count("blockIdx.y"), "blockIdx.y", false,
+                      false, ret);
+        ret = makeFor("", ".blockIdx.z", zero, inf, inf,
+                      !notNoDeps_.count("blockIdx.z"), "blockIdx.z", false,
+                      false, ret);
         return ret;
     } else {
         return doVisitFor(op);

@@ -10,7 +10,7 @@ namespace ir {
 
 struct CodeGenCUDAStream : public CodeGenStream {
     std::unordered_map<std::string, int> threadDim_;
-    int sharedSize_ = 0;
+    int sharedSize_ = 0, globalSize_ = 0;
 };
 
 class CodeGenCUDA : public CodeGenC<CodeGenCUDAStream> {
@@ -19,7 +19,7 @@ class CodeGenCUDA : public CodeGenC<CodeGenCUDAStream> {
 
   private:
     int nKernel_ = 0;
-    int sharedStackTop_ = 0;
+    int sharedStackTop_ = 0, globalStackTop_ = 0;
 
   public:
     CodeGenCUDA(const std::vector<std::string> &params) : CodeGenC(params) {}

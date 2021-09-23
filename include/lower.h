@@ -2,7 +2,7 @@
 #define IR_LOWER_H
 
 #include <driver/target.h>
-#include <pass/gpu/correct_shared.h>
+#include <pass/gpu/correct_shared_and_global.h>
 #include <pass/gpu/lower_vector.h>
 #include <pass/gpu/make_sync.h>
 #include <pass/gpu/normalize_threads.h>
@@ -39,7 +39,7 @@ template <class T> T lower(const T &t, const Ref<Target> &target) {
         case TargetType::GPU:
             // TODO: Support dynamic shared memory size, but the size should be
             // determined outside of kernels
-            func = gpu::correctShared(func);
+            func = gpu::correctSharedAndGlobal(func);
             func =
                 makeConstShape(func, {MemType::GPUShared, MemType::GPULocal});
 

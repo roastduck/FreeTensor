@@ -1,5 +1,5 @@
-#ifndef GPU_CORRECT_SHARED_H
-#define GPU_CORRECT_SHARED_H
+#ifndef GPU_CORRECT_SHARED_AND_GLOBAL_H
+#define GPU_CORRECT_SHARED_AND_GLOBAL_H
 
 #include <unordered_map>
 #include <unordered_set>
@@ -17,6 +17,7 @@ namespace gpu {
 class FindAffectingLoops : public Visitor {
     std::unordered_set<std::string> loops_;             // ID
     std::unordered_map<std::string, std::string> defs_; // name -> ID
+    MemType mode_;
 
     // VarDef ID -> For ID
     std::unordered_map<std::string, std::unordered_set<std::string>> results_;
@@ -27,8 +28,9 @@ class FindAffectingLoops : public Visitor {
   public:
     FindAffectingLoops(
         const std::unordered_map<
-            Expr, std::unordered_map<std::string, LoopVariability>> &variants)
-        : variants_(variants) {}
+            Expr, std::unordered_map<std::string, LoopVariability>> &variants,
+        MemType mode)
+        : mode_(mode), variants_(variants) {}
 
     const std::unordered_map<std::string, std::unordered_set<std::string>> &
     results() const {
@@ -66,18 +68,20 @@ class FindAffectingLoops : public Visitor {
  *
  * E.g. Alter from `shmem[i]` to `shmem[threadIdx.x, i]`
  */
-class CorrectShared : public Mutator {
+class CorrectMutator : public Mutator {
     std::vector<For> stack_;
     std::unordered_map<std::string, int> defPos_;
     std::unordered_map<std::string, std::string> defs_; // name -> ID
     const std::unordered_map<std::string, std::unordered_set<std::string>>
         &affecting_;
+    MemType mode_;
 
   public:
-    CorrectShared(
+    CorrectMutator(
         const std::unordered_map<std::string, std::unordered_set<std::string>>
-            &affecting)
-        : affecting_(affecting) {}
+            &affecting,
+        MemType mode)
+        : affecting_(affecting), mode_(mode) {}
 
   private:
     template <class T> T alterAccess(const T &op) {
@@ -105,15 +109,15 @@ class CorrectShared : public Mutator {
     Stmt visit(const ReduceTo &op) override;
 };
 
-Stmt correctShared(const Stmt &op);
+Stmt correctSharedAndGlobal(const Stmt &op);
 
-inline Func correctShared(const Func &func) {
-    return makeFunc(func->name_, func->params_, correctShared(func->body_),
-                    func->src_);
+inline Func correctSharedAndGlobal(const Func &func) {
+    return makeFunc(func->name_, func->params_,
+                    correctSharedAndGlobal(func->body_), func->src_);
 }
 
 } // namespace gpu
 
 } // namespace ir
 
-#endif // GPU_CORRECT_SHARED_H
+#endif // GPU_CORRECT_SHARED_AND_GLOBAL_H

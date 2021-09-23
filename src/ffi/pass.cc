@@ -1,7 +1,7 @@
 #include <ffi.h>
 #include <lower.h>
 #include <pass/flatten_stmt_seq.h>
-#include <pass/gpu/correct_shared.h>
+#include <pass/gpu/correct_shared_and_global.h>
 #include <pass/gpu/lower_vector.h>
 #include <pass/gpu/make_sync.h>
 #include <pass/gpu/normalize_threads.h>
@@ -131,10 +131,12 @@ void init_ffi_pass(py::module_ &m) {
     m.def("gpu_make_sync", static_cast<Stmt (*)(const Stmt &)>(&gpu::makeSync),
           "stmt"_a);
 
-    m.def("gpu_correct_shared",
-          static_cast<Func (*)(const Func &)>(&gpu::correctShared), "func"_a);
-    m.def("gpu_correct_shared",
-          static_cast<Stmt (*)(const Stmt &)>(&gpu::correctShared), "stmt"_a);
+    m.def("gpu_correct_shared_and_global",
+          static_cast<Func (*)(const Func &)>(&gpu::correctSharedAndGlobal),
+          "func"_a);
+    m.def("gpu_correct_shared_and_global",
+          static_cast<Stmt (*)(const Stmt &)>(&gpu::correctSharedAndGlobal),
+          "stmt"_a);
 
     m.def("gpu_lower_vector",
           static_cast<Func (*)(const Func &)>(&gpu::lowerVector), "func"_a);

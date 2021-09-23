@@ -176,6 +176,39 @@ def test_global_mem():
     assert np.array_equal(y_np, y_std)
 
 
+def test_global_mem_in_kernel():
+
+    @ir.transform
+    def test(x, y):
+        ir.declare_var(x, (4,), "int32", "input", "gpu/global")
+        ir.declare_var(y, (4,), "int32", "output", "gpu/global")
+        "nid: L1"
+        for i in range(0, 4):
+            t = ir.create_var((), "int32", "cache", "gpu/global")
+            t[()] = x[i] * 2
+            y[i] = t[()] + 1
+
+    s = ir.Schedule(test)
+    s.parallelize("L1", "threadIdx.x")
+    func = ir.lower(s.func(), target)
+    print(func)
+    code = ir.codegen(func, target)
+    print(ir.debug.with_line_no(code))
+    assert "cudaMalloc" in code
+    assert "cudaFree" in code
+    x_np = np.array([1, 2, 3, 4], dtype="int32")
+    y_np = np.zeros((4,), dtype="int32")
+    x_arr = ir.Array(x_np, device)
+    y_arr = ir.Array(y_np, device)
+    driver = ir.Driver(func, code, device)
+    driver.set_params(x=x_arr, y=y_arr)
+    driver.run()
+    y_np = y_arr.numpy()
+
+    y_std = np.array([3, 5, 7, 9], dtype="int32")
+    assert np.array_equal(y_np, y_std)
+
+
 def test_pass_by_value_0d():
 
     @ir.transform

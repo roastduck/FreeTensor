@@ -53,7 +53,7 @@ Stmt CopyPart::visitStmt(const Stmt &op,
 Stmt CopyPart::visit(const For &op) {
     bool begun = begun_, ended = ended_;
     auto ret = Mutator::visit(op);
-    if ((!begun && begun_) || (!ended && ended_)) {
+    if (op->parallel_.empty() && ((!begun && begun_) || (!ended && ended_))) {
         throw InvalidProgram(
             "Unable to insert a synchronizing statment because it requires "
             "splitting loop " +
