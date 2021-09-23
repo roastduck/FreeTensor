@@ -151,7 +151,7 @@ def test_parallel_reduction():
     func = ir.Func("main", ["x", "y"], ir.pop_ast())
     s = ir.Schedule(func)
     i0, i1 = s.split(i, 64)
-    init, final, _ = s.cache_reduction(i1, "y", "cpu")
+    init, final, _, _ = s.cache_reduction(i1, "y", "cpu")
     final = s.move_to(final, ir.MoveToSide.After, i0)
     S0 = s.move_to(S0, ir.MoveToSide.Before, final)
 
@@ -276,8 +276,8 @@ def test_collaborative_fetch():
     func = ir.Func("main", ["a", "b", "c"], ir.pop_ast())
     s = ir.Schedule(func)
     k0, k1 = s.split(k, 32)
-    fill_a, _, _ = s.cache(k1, "a", "gpu/shared")
-    fill_b, _, _ = s.cache(k1, "b", "gpu/shared")
+    fill_a, _, _, _ = s.cache(k1, "a", "gpu/shared")
+    fill_b, _, _, _ = s.cache(k1, "b", "gpu/shared")
     s.parallelize(i, "threadIdx.y")
     s.parallelize(j, "threadIdx.x")
     s.parallelize(
@@ -308,3 +308,40 @@ def test_collaborative_fetch():
 
     c_std = a_np @ b_np
     assert np.all(np.isclose(c_np, c_std))
+
+
+def test_vectorize_spmv():
+    with ir.VarDef([("x1", (64, 64), "int32", "input", "cpu"),
+                    ("x2", (64,), "int32", "input", "cpu"),
+                    ("y", (64,), "int32", "output", "cpu")]) as (x1, x2, y):
+        with ir.For("i", 0, 64, nid="Li") as i:
+            ir.MarkNid("S0")
+            y[i] = 0
+            with ir.For("j", 0, 64, nid="Lj") as j:
+                y[i] += x1[i, j] * x2[j]
+    ast = ir.pop_ast()
+    print(ast)
+    s = ir.Schedule(ast)
+    i0, i1 = s.split("Li", 4)
+    s.reorder([i0, "Lj", i1])
+    s.move_to("S0", ir.MoveToSide.Before, "Lj")
+    s.vectorize(i1)
+    s.vectorize(s.find(
+        lambda x: x.nid() == "S0.a").outer())  # FIXME: do not hard-code S0.a
+    ast = s.ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([("x1", (64, 64), "int32", "input", "cpu"),
+                    ("x2", (64,), "int32", "input", "cpu"),
+                    ("y", (64,), "int32", "output", "cpu")]) as (x1, x2, y):
+        with ir.For("i0", 0, 16) as i0:
+            with ir.For("i1", 0, 4) as i1:
+                y[i1 + 4 * i0] = 0
+            with ir.For("j", 0, 64, nid="Lj") as j:
+                with ir.For("i1", 0, 4) as i1:
+                    y[i1 + 4 * i0] += x1[i1 + 4 * i0, j] * x2[j]
+    std = ir.make_reduction(ir.pop_ast())
+
+    assert std.match(ast)

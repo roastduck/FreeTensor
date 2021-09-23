@@ -1,4 +1,5 @@
 import ir
+import ir.debug
 import numpy as np
 
 
@@ -106,3 +107,32 @@ def test_comparison_op():
     y_std = np.array([1, 0, 0, 0], dtype="int32")
     assert np.array_equal(y_np, y_std)
     assert np.array_equal(y_func, y_std)
+
+
+def test_if_expr():
+
+    def test(x1, x2, y):
+        ir.declare_var(x1, (), "int32", "input", "cpu")
+        ir.declare_var(x2, (), "int32", "input", "cpu")
+        ir.declare_var(y, (), "int32", "output", "cpu")
+        y[()] = x1[()] if x1[()] > 2 * x2[()] else x2[()]
+
+    func = ir.lower(ir.transform(test), ir.CPU())
+    code = ir.codegen(func, ir.CPU())
+    print(ir.debug.with_line_no(code))
+    x1_np = np.array(5, dtype="int32")
+    x2_np = np.array(2, dtype="int32")
+    y_np = np.array(0, dtype="int32")
+    x1_arr = ir.Array(x1_np, ir.Device(ir.CPU()))
+    x2_arr = ir.Array(x2_np, ir.Device(ir.CPU()))
+    y_arr = ir.Array(y_np, ir.Device(ir.CPU()))
+    driver = ir.Driver(func, code, ir.Device(ir.CPU()))
+    driver.set_params(x1=x1_arr, x2=x2_arr, y=y_arr)
+    driver.run()
+    y_np = y_arr.numpy()
+    y_func = np.array(0, dtype="int32")
+    test(x1_np, x2_np, y_func)
+
+    y_std = np.array(5, dtype="int32")
+    assert y_np[0] == y_std[()]
+    assert y_func[()] == y_std[()]

@@ -971,8 +971,8 @@ def test_relax_shared_shape_to_constants():
                             t[i, j] = x[i, j] * 2
                         with ir.For("j", 0, n[()]) as j:
                             y[i, j] = t[i, j] + 1
-                        with ir.For("j", n[()], 256) as j:
-                            y[i, j] = 0
+                    with ir.For("j", n[()], 256) as j:
+                        y[i, j] = 0
     assert ir.make_1d_var(ir.pop_ast()).match(func.body)
 
     code = ir.codegen(func, target)
@@ -1443,3 +1443,37 @@ def test_vectorize_fallback_to_shorter_when_not_aligned():
 
     y_std = x_np[:, 2:] * 2
     assert np.array_equal(y_np, y_std)
+
+
+def test_cublas_basic():
+
+    @ir.transform
+    def test(a, b, c):
+        ir.declare_var(a, (48, 64), "float32", "input", "cpu")
+        ir.declare_var(b, (64, 72), "float32", "input", "cpu")
+        ir.declare_var(c, (48, 72), "float32", "inout", "cpu")
+        "nid: L1"
+        for i in range(48):
+            for j in range(72):
+                for k in range(64):
+                    c[i, j] += a[i, k] * b[k, j]
+
+    s = ir.Schedule(test)
+    s.as_matmul("L1")
+    func = ir.lower(s.func(), target)
+    print(func)
+    code = ir.codegen(func, target)
+    print(code)
+    assert "cublas" in code
+    a_np = np.random.uniform(size=(48, 64)).astype("float32")
+    b_np = np.random.uniform(size=(64, 72)).astype("float32")
+    c_np = np.random.uniform(size=(48, 72)).astype("float32")
+    a_arr = ir.Array(a_np, device)
+    b_arr = ir.Array(b_np, device)
+    c_arr = ir.Array(c_np, device)
+    driver = ir.Driver(func, code, device)
+    driver.set_params(a=a_arr, b=b_arr, c=c_arr)
+    driver.run()
+    c_result = c_arr.numpy().reshape(48, 72)
+
+    assert np.all(np.isclose(c_result, c_np + a_np @ b_np))

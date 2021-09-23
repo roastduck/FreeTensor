@@ -223,6 +223,56 @@ template <class T> Stmt _makeEval(const std::string &id, T &&expr) {
     return e;
 }
 
+/**
+ * External call to a batched GEMM
+ */
+class MatMulNode : public StmtNode {
+  public:
+    // c_ = alpha_ * a_ * b_ + beta_ * c_
+    // a_ is an m_ * k_ matrix
+    // b_ is a k_ * n_ matrix
+    // c_ is an m_ * n_ matrix
+    SubTree<ExprNode> a_, b_, c_, alpha_, beta_, m_, k_, n_, lda_, ldb_, ldc_,
+        stridea_, strideb_, stridec_, batchSize_;
+    bool aIsRowMajor_, bIsRowMajor_, cIsRowMajor_;
+    SubTree<StmtNode>
+        equivalent_; // Equivalent loop statements, to help dependency analysis
+    DEFINE_NODE_TRAIT(MatMul);
+};
+typedef Ref<MatMulNode> MatMul;
+#define makeMatMul(...) makeNode(MatMul, __VA_ARGS__)
+inline Stmt _makeMatMul(const std::string &id, const Expr &a, const Expr &b,
+                        const Expr &c, const Expr &alpha, const Expr &beta,
+                        const Expr &m, const Expr &k, const Expr &n,
+                        const Expr &lda, const Expr &ldb, const Expr &ldc,
+                        const Expr &stridea, const Expr &strideb,
+                        const Expr &stridec, const Expr &batchSize,
+                        bool aIsRowMajor, bool bIsRowMajor, bool cIsRowMajor,
+                        const Stmt &equivalent) {
+    MatMul s = MatMul::make();
+    s->setId(id);
+    s->a_ = a;
+    s->b_ = b;
+    s->c_ = c;
+    s->alpha_ = alpha;
+    s->beta_ = beta;
+    s->m_ = m;
+    s->k_ = k;
+    s->n_ = n;
+    s->lda_ = lda;
+    s->ldb_ = ldb;
+    s->ldc_ = ldc;
+    s->stridea_ = stridea;
+    s->strideb_ = strideb;
+    s->stridec_ = stridec;
+    s->batchSize_ = batchSize;
+    s->aIsRowMajor_ = aIsRowMajor;
+    s->bIsRowMajor_ = bIsRowMajor;
+    s->cIsRowMajor_ = cIsRowMajor;
+    s->equivalent_ = equivalent;
+    return s;
+}
+
 } // namespace ir
 
 #endif // STMT_H

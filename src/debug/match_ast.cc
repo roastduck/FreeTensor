@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include <debug/match_ast.h>
 
 namespace ir {
@@ -114,13 +116,33 @@ void MatchVisitor::visit(const BoolConst &op) {
 void MatchVisitor::visit(const Add &op) {
     CHECK(instance_->nodeType() == ASTNodeType::Add);
     auto instance = instance_.as<AddNode>();
-    TRY_RECURSE(op->lhs_, instance->lhs_);
-    TRY_RECURSE(op->rhs_, instance->rhs_);
-    if (!isMatched_) {
+
+    std::vector<Expr> thisOperands, instanceOperands;
+    std::function<void(const Expr &, std::vector<Expr> &)> recur =
+        [&recur](const Expr op, std::vector<Expr> &operands) {
+            if (op->nodeType() == ASTNodeType::Add) {
+                recur(op.as<AddNode>()->lhs_, operands);
+                recur(op.as<AddNode>()->rhs_, operands);
+            } else {
+                operands.emplace_back(op);
+            }
+        };
+    recur(op, thisOperands);
+    recur(instance, instanceOperands);
+    CHECK(thisOperands.size() == instanceOperands.size());
+
+    std::sort(thisOperands.begin(), thisOperands.end());
+    do {
         isMatched_ = true;
-        RECURSE(op->lhs_, instance->rhs_);
-        RECURSE(op->rhs_, instance->lhs_);
-    }
+        for (size_t i = 0, n = thisOperands.size(); i < n; i++) {
+            TRY_RECURSE(thisOperands[i], instanceOperands[i]);
+            if (!isMatched_) {
+                goto fail;
+            }
+        }
+        return;
+    fail:;
+    } while (std::next_permutation(thisOperands.begin(), thisOperands.end()));
 }
 
 void MatchVisitor::visit(const Sub &op) {
@@ -133,13 +155,33 @@ void MatchVisitor::visit(const Sub &op) {
 void MatchVisitor::visit(const Mul &op) {
     CHECK(instance_->nodeType() == ASTNodeType::Mul);
     auto instance = instance_.as<MulNode>();
-    TRY_RECURSE(op->lhs_, instance->lhs_);
-    TRY_RECURSE(op->rhs_, instance->rhs_);
-    if (!isMatched_) {
+
+    std::vector<Expr> thisOperands, instanceOperands;
+    std::function<void(const Expr &, std::vector<Expr> &)> recur =
+        [&recur](const Expr op, std::vector<Expr> &operands) {
+            if (op->nodeType() == ASTNodeType::Mul) {
+                recur(op.as<MulNode>()->lhs_, operands);
+                recur(op.as<MulNode>()->rhs_, operands);
+            } else {
+                operands.emplace_back(op);
+            }
+        };
+    recur(op, thisOperands);
+    recur(instance, instanceOperands);
+    CHECK(thisOperands.size() == instanceOperands.size());
+
+    std::sort(thisOperands.begin(), thisOperands.end());
+    do {
         isMatched_ = true;
-        RECURSE(op->lhs_, instance->rhs_);
-        RECURSE(op->rhs_, instance->lhs_);
-    }
+        for (size_t i = 0, n = thisOperands.size(); i < n; i++) {
+            TRY_RECURSE(thisOperands[i], instanceOperands[i]);
+            if (!isMatched_) {
+                goto fail;
+            }
+        }
+        return;
+    fail:;
+    } while (std::next_permutation(thisOperands.begin(), thisOperands.end()));
 }
 
 void MatchVisitor::visit(const RealDiv &op) {
@@ -295,6 +337,39 @@ void MatchVisitor::visit(const Exp &op) {
     RECURSE(op->expr_, instance->expr_);
 }
 
+void MatchVisitor::visit(const Square &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::Square);
+    auto instance = instance_.as<SquareNode>();
+    RECURSE(op->expr_, instance->expr_);
+}
+
+void MatchVisitor::visit(const Floor &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::Floor);
+    auto instance = instance_.as<FloorNode>();
+    RECURSE(op->expr_, instance->expr_);
+}
+
+void MatchVisitor::visit(const Ceil &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::Ceil);
+    auto instance = instance_.as<CeilNode>();
+    RECURSE(op->expr_, instance->expr_);
+}
+
+void MatchVisitor::visit(const IfExpr &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::IfExpr);
+    auto instance = instance_.as<IfExprNode>();
+    RECURSE(op->cond_, instance->cond_);
+    RECURSE(op->thenCase_, instance->thenCase_);
+    RECURSE(op->elseCase_, instance->elseCase_);
+}
+
+void MatchVisitor::visit(const Cast &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::Cast);
+    auto instance = instance_.as<CastNode>();
+    RECURSE(op->expr_, instance->expr_);
+    CHECK(op->dtype_ == instance->dtype_);
+}
+
 void MatchVisitor::visit(const For &op) {
     CHECK(instance_->nodeType() == ASTNodeType::For);
     auto instance = instance_.as<ForNode>();
@@ -337,6 +412,30 @@ void MatchVisitor::visit(const Eval &op) {
     CHECK(instance_->nodeType() == ASTNodeType::Eval);
     auto instance = instance_.as<EvalNode>();
     RECURSE(op->expr_, instance->expr_);
+}
+
+void MatchVisitor::visit(const MatMul &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::MatMul);
+    auto instance = instance_.as<MatMulNode>();
+    RECURSE(op->a_, instance->a_);
+    RECURSE(op->b_, instance->b_);
+    RECURSE(op->c_, instance->c_);
+    RECURSE(op->alpha_, instance->alpha_);
+    RECURSE(op->beta_, instance->beta_);
+    RECURSE(op->m_, instance->m_);
+    RECURSE(op->k_, instance->k_);
+    RECURSE(op->n_, instance->n_);
+    RECURSE(op->lda_, instance->lda_);
+    RECURSE(op->ldb_, instance->ldb_);
+    RECURSE(op->ldc_, instance->ldc_);
+    RECURSE(op->stridea_, instance->stridea_);
+    RECURSE(op->strideb_, instance->strideb_);
+    RECURSE(op->stridec_, instance->stridec_);
+    RECURSE(op->batchSize_, instance->batchSize_);
+    CHECK(op->aIsRowMajor_ == instance->aIsRowMajor_);
+    CHECK(op->bIsRowMajor_ == instance->bIsRowMajor_);
+    CHECK(op->cIsRowMajor_ == instance->cIsRowMajor_);
+    RECURSE(op->equivalent_, instance->equivalent_);
 }
 
 bool match(const AST &pattern, const AST &instance) {

@@ -19,7 +19,7 @@ Stmt Make1DVar::visit(const VarDef &_op) {
     if (op->sizeLim_.isValid()) {
         len = op->sizeLim_;
     } else {
-        for (auto &&dim : op->buffer_->tensor().shape()) {
+        for (Expr dim : op->buffer_->tensor().shape()) {
             len = len.isValid() ? makeMul(len, dim) : dim;
         }
     }

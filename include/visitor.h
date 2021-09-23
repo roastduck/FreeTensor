@@ -175,6 +175,12 @@ class Visitor {
 
     virtual void visit(const Exp &op) { (*this)(op->expr_); }
 
+    virtual void visit(const Square &op) { (*this)(op->expr_); }
+
+    virtual void visit(const Floor &op) { (*this)(op->expr_); }
+
+    virtual void visit(const Ceil &op) { (*this)(op->expr_); }
+
     virtual void visit(const For &op) {
         (*this)(op->begin_);
         (*this)(op->end_);
@@ -195,6 +201,14 @@ class Visitor {
         (*this)(op->body_);
     }
 
+    virtual void visit(const IfExpr &op) {
+        (*this)(op->cond_);
+        (*this)(op->thenCase_);
+        (*this)(op->elseCase_);
+    }
+
+    virtual void visit(const Cast &op) { (*this)(op->expr_); }
+
     virtual void visit(const Intrinsic &op) {
         for (auto &&param : op->params_) {
             (*this)(param);
@@ -202,6 +216,25 @@ class Visitor {
     }
 
     virtual void visit(const Eval &op) { (*this)(op->expr_); }
+
+    virtual void visit(const MatMul &op) {
+        (*this)(op->a_);
+        (*this)(op->b_);
+        (*this)(op->c_);
+        (*this)(op->alpha_);
+        (*this)(op->beta_);
+        (*this)(op->m_);
+        (*this)(op->k_);
+        (*this)(op->n_);
+        (*this)(op->lda_);
+        (*this)(op->ldb_);
+        (*this)(op->ldc_);
+        (*this)(op->stridea_);
+        (*this)(op->strideb_);
+        (*this)(op->stridec_);
+        (*this)(op->batchSize_);
+        (*this)(op->equivalent_);
+    }
 };
 
 } // namespace ir

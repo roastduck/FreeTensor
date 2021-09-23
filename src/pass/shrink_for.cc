@@ -19,7 +19,9 @@ Stmt ShrinkFor::visit(const For &_op) {
     defStack_.pop_back();
     iterStack_.pop_back();
 
-    ASSERT(newRange_.count(hash));
+    if (!newRange_.count(hash)) {
+        return op->body_;
+    }
     auto newBegin = makeMinMax(newRange_.at(hash).first);
     auto newEndMinus1 = makeMaxMin(newRange_.at(hash).second);
 

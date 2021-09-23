@@ -233,9 +233,10 @@ class Schedule(ffi.Schedule):
 
         Returns
         -------
-        (str, str, str)
+        (str, str, str, str)
             (ID of the statement that fills the cache, ID of the statement that
-            flushes from the cache, name of the cache variable)
+            flushes from the cache, name of the cache variable, ID of the VarDef
+            node of the cache variable)
         """
         return super(Schedule, self).cache(toId(stmt), var, parseMType(mtype))
 
@@ -276,13 +277,31 @@ class Schedule(ffi.Schedule):
 
         Returns
         -------
-        (str, str, str)
+        (str, str, str, str)
             (ID of the statement that initialize the cache, ID of the statement
             that reduces the local result to the global result, name of the
-            cache variable)
+            cache variable, ID of the VarDef node of the cache variable)
         """
         return super(Schedule, self).cache_reduction(toId(stmt), var,
                                                      parseMType(mtype))
+
+    def set_mem_type(self, vardef, mtype):
+        """
+        Change where a variable is stored
+
+        Parameters
+        ----------
+        vardef : str, Stmt or Cursor
+            ID of the VarDef statement of the specific variable
+        mtype : MemType
+            Where the variable should be stored
+
+        Raises
+        ------
+        InvalidSchedule
+            if the variable is not found
+        """
+        super(Schedule, self).set_mem_type(toId(vardef), parseMType(mtype))
 
     def var_split(self, vardef, dim, mode, factor=-1, nparts=-1):
         """
@@ -312,6 +331,24 @@ class Schedule(ffi.Schedule):
         """
         return super(Schedule, self).var_split(toId(vardef), dim, mode, factor,
                                                nparts)
+
+    def var_reorder(self, vardef, order):
+        """
+        Reorder the dimensions of a variable
+
+        Parameters
+        ----------
+        vardef : str, Stmt or Cursor
+            ID of the VarDef statement of the specific variable
+        order : array like of str, Stmt or Cursor
+            Vector of integers. The new order of the dimensions
+
+        Raises
+        ------
+        InvalidSchedule
+            if the variable or the order is illegal
+        """
+        return super(Schedule, self).var_reorder(toId(vardef), order)
 
     def move_to(self, stmt, side, dst):
         """
@@ -459,3 +496,19 @@ class Schedule(ffi.Schedule):
         schedule to part of the program)
         """
         super(Schedule, self).seperate_tail()
+
+    def as_matmul(self, loop):
+        """
+        Transform nested loops to be a external call to a matrix multiplication
+
+        Parameters
+        ----------
+        loop : str, Stmt or Cursor
+            ID of the loop
+
+        Raises
+        ------
+        InvalidSchedule
+            if the loop cannot be transformed to be a matrix multiplication
+        """
+        super(Schedule, self).as_matmul(toId(loop))

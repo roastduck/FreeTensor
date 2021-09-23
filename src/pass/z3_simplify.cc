@@ -364,6 +364,22 @@ Expr Z3Simplify::visit(const LNot &_op) {
     return op;
 }
 
+Expr Z3Simplify::visit(const IfExpr &op) {
+    auto cond = (*this)(op->cond_);
+    auto notCond = (*this)(makeLNot(op->cond_));
+    if (prove(cond)) {
+        return (*this)(op->thenCase_);
+    }
+    if (prove(notCond)) {
+        return (*this)(op->elseCase_);
+    }
+    auto thenCase = (*this)(op->thenCase_);
+    auto elseCase = (*this)(op->elseCase_);
+    auto ret =
+        makeIfExpr(std::move(cond), std::move(thenCase), std::move(elseCase));
+    return COPY_DEBUG_INFO(ret, op);
+}
+
 Stmt Z3Simplify::visit(const If &op) {
     auto cond = (*this)(op->cond_);
     auto notCond = (*this)(makeLNot(op->cond_));

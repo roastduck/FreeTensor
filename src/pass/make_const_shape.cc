@@ -18,7 +18,7 @@ Stmt MakeConstShape::visit(const VarDef &_op) {
 
     size_t ndim = op->buffer_->tensor().shape().size();
     for (size_t i = 0; i < ndim; i++) {
-        Expr &dim = op->buffer_->tensor().shape()[i];
+        auto &dim = op->buffer_->tensor().shape()[i];
         const Expr &oldDim = _op->buffer_->tensor().shape()[i];
         if (dim->nodeType() == ASTNodeType::IntConst) {
             continue;
@@ -28,7 +28,9 @@ Stmt MakeConstShape::visit(const VarDef &_op) {
             for (auto b : upper_.at(oldDim)) {
                 if (b.lin().coeff_.empty()) {
                     auto bias = b.lin().bias_;
-                    result = std::min(result, floorDiv(bias.p_, bias.q_));
+                    result = std::min(
+                        result,
+                        (int)floorDiv(bias.p_, bias.q_)); // FIXME: int64_t
                 }
             }
         }

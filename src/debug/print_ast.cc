@@ -318,6 +318,40 @@ void PrintVisitor::visit(const Exp &op) {
     os() << ")";
 }
 
+void PrintVisitor::visit(const Square &op) {
+    os() << "(";
+    recur(op->expr_);
+    os() << ")^2";
+}
+
+void PrintVisitor::visit(const Floor &op) {
+    os() << "floor(";
+    recur(op->expr_);
+    os() << ")";
+}
+
+void PrintVisitor::visit(const Ceil &op) {
+    os() << "ceil(";
+    recur(op->expr_);
+    os() << ")";
+}
+
+void PrintVisitor::visit(const IfExpr &op) {
+    os() << "(";
+    recur(op->cond_);
+    os() << " ? ";
+    recur(op->thenCase_);
+    os() << " : ";
+    recur(op->elseCase_);
+    os() << ")";
+}
+
+void PrintVisitor::visit(const Cast &op) {
+    os() << ::ir::toString(op->dtype_) << "(";
+    recur(op->expr_);
+    os() << ")";
+}
+
 void PrintVisitor::visit(const For &op) {
     if (!op->parallel_.empty()) {
         makeIndent();
@@ -398,6 +432,45 @@ void PrintVisitor::visit(const Eval &op) {
     makeIndent();
     recur(op->expr_);
     os() << std::endl;
+}
+
+void PrintVisitor::visit(const MatMul &op) {
+    makeIndent();
+    os() << "matmul(&";
+    recur(op->a_);
+    os() << ", &";
+    recur(op->b_);
+    os() << ", &";
+    recur(op->c_);
+    os() << ", ";
+    recur(op->alpha_);
+    os() << ", ";
+    recur(op->beta_);
+    os() << ", ";
+    recur(op->m_);
+    os() << ", ";
+    recur(op->k_);
+    os() << ", ";
+    recur(op->n_);
+    os() << ", ";
+    recur(op->lda_);
+    os() << ", ";
+    recur(op->ldb_);
+    os() << ", ";
+    recur(op->ldc_);
+    os() << ", ";
+    recur(op->stridea_);
+    os() << ", ";
+    recur(op->strideb_);
+    os() << ", ";
+    recur(op->stridec_);
+    os() << ", ";
+    recur(op->batchSize_);
+    os() << ", " << op->aIsRowMajor_ << ", " << op->bIsRowMajor_ << ", "
+         << op->cIsRowMajor_ << ") <==> ";
+    beginBlock();
+    recur(op->equivalent_);
+    endBlock();
 }
 
 std::string toString(const AST &op, bool pretty) {

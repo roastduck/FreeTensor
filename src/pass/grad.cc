@@ -179,4 +179,57 @@ void Grad::visit(const RealDiv &op) {
     Visitor::visit(op);
 }
 
+void Grad::visit(const Min &op) {
+    if (gradExprs_.count(op)) {
+        gradExprs_[op->lhs_] = makeIfExpr(makeLE(op->lhs_, op->rhs_),
+                                          gradExprs_.at(op), makeIntConst(0));
+        gradExprs_[op->rhs_] = makeIfExpr(makeLT(op->rhs_, op->lhs_),
+                                          gradExprs_.at(op), makeIntConst(0));
+    }
+    Visitor::visit(op);
+}
+
+void Grad::visit(const Max &op) {
+    if (gradExprs_.count(op)) {
+        gradExprs_[op->lhs_] = makeIfExpr(makeGE(op->lhs_, op->rhs_),
+                                          gradExprs_.at(op), makeIntConst(0));
+        gradExprs_[op->rhs_] = makeIfExpr(makeGT(op->rhs_, op->lhs_),
+                                          gradExprs_.at(op), makeIntConst(0));
+    }
+    Visitor::visit(op);
+}
+
+void Grad::visit(const IfExpr &op) {
+    if (gradExprs_.count(op)) {
+        gradExprs_[op->thenCase_] =
+            makeIfExpr(op->cond_, gradExprs_.at(op), makeIntConst(0));
+        gradExprs_[op->elseCase_] =
+            makeIfExpr(makeLNot(op->cond_), gradExprs_.at(op), makeIntConst(0));
+    }
+    Visitor::visit(op);
+}
+
+void Grad::visit(const Sqrt &op) {
+    if (gradExprs_.count(op)) {
+        gradExprs_[op->expr_] =
+            makeRealDiv(gradExprs_.at(op), makeMul(makeIntConst(2), op));
+    }
+    Visitor::visit(op);
+}
+
+void Grad::visit(const Exp &op) {
+    if (gradExprs_.count(op)) {
+        gradExprs_[op->expr_] = makeMul(gradExprs_.at(op), op);
+    }
+    Visitor::visit(op);
+}
+
+void Grad::visit(const Square &op) {
+    if (gradExprs_.count(op)) {
+        gradExprs_[op->expr_] =
+            makeMul(makeIntConst(2), makeMul(gradExprs_.at(op), op->expr_));
+    }
+    Visitor::visit(op);
+}
+
 } // namespace ir

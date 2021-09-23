@@ -71,19 +71,19 @@ Expr ISLCompBounds::visitExpr(
         ISLVal maxVal = dimMaxVal(image, 0);
         if (maxVal.isRat()) {
             auto &&list = getUpper(op);
-            int maxP = maxVal.numSi();
-            int maxQ = maxVal.denSi();
-            updUpper(list, UpperBound{LinearExpr<Rational<int>>{
-                               {}, Rational<int>{maxP, maxQ}}});
+            auto maxP = maxVal.numSi();
+            auto maxQ = maxVal.denSi();
+            updUpper(list, UpperBound{LinearExpr<Rational<int64_t>>{
+                               {}, Rational<int64_t>{maxP, maxQ}}});
             setUpper(op, std::move(list));
         }
         ISLVal minVal = dimMinVal(image, 0);
         if (minVal.isRat()) {
             auto &&list = getLower(op);
-            int minP = minVal.numSi();
-            int minQ = minVal.denSi();
-            updLower(list, LowerBound{LinearExpr<Rational<int>>{
-                               {}, Rational<int>{minP, minQ}}});
+            auto minP = minVal.numSi();
+            auto minQ = minVal.denSi();
+            updLower(list, LowerBound{LinearExpr<Rational<int64_t>>{
+                               {}, Rational<int64_t>{minP, minQ}}});
             setLower(op, std::move(list));
         }
     }

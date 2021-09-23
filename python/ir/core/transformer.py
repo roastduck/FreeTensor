@@ -9,7 +9,8 @@ from typing import Sequence, Optional, Mapping, Any
 
 from . import nodes
 from .nodes import (_VarDef, Var, pop_ast, For, If, Else, MarkNid, intrinsic,
-                    l_and, l_or, l_not, ctx_stack as node_ctx, Func)
+                    l_and, l_or, l_not, if_then_else, ctx_stack as node_ctx,
+                    Func)
 from .utils import *
 
 assert sys.version_info >= (3,
@@ -318,6 +319,12 @@ class ASTTransformer(ast.NodeTransformer):
         }.get(type(node.op))
         assert op is not None, "Unary operator not implemented"
         node.expr_ptr = op(node.operand.expr_ptr)
+        return node
+
+    def visit_IfExp(self, node):
+        self.generic_visit(node)
+        node.expr_ptr = if_then_else(node.test.expr_ptr, node.body.expr_ptr,
+                                     node.orelse.expr_ptr)
         return node
 
     def visit_FunctionDef(self, node):

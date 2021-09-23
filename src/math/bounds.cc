@@ -8,8 +8,8 @@
 
 namespace ir {
 
-static LinearExpr<Rational<int>>
-commonDenominator(const LinearExpr<Rational<int>> &_lin) {
+static LinearExpr<Rational<int64_t>>
+commonDenominator(const LinearExpr<Rational<int64_t>> &_lin) {
     auto lin = _lin;
     auto common = lin.bias_.q_;
     for (auto &&item : lin.coeff_) {
@@ -24,7 +24,7 @@ commonDenominator(const LinearExpr<Rational<int>> &_lin) {
     return lin;
 }
 
-static Expr linToExprDivisible(const LinearExpr<Rational<int>> &lin) {
+static Expr linToExprDivisible(const LinearExpr<Rational<int64_t>> &lin) {
     Expr ret;
     for (auto &&item : lin.coeff_) {
         auto k = item.second.k_;
@@ -75,7 +75,7 @@ static Expr linToExprDivisible(const LinearExpr<Rational<int>> &lin) {
     return ret;
 }
 
-static Expr linToExprNumerator(const LinearExpr<Rational<int>> &lin) {
+static Expr linToExprNumerator(const LinearExpr<Rational<int64_t>> &lin) {
     Expr ret;
     for (auto &&item : lin.coeff_) {
         auto k = item.second.k_;
@@ -135,8 +135,9 @@ const Expr &UpperBound::expr() {
     auto nonDivisible = linToExprNumerator(cdLin);
     if (nonDivisible.isValid()) {
         if (nonDivisible->nodeType() == ASTNodeType::IntConst) {
-            nonDivisible = makeIntConst(floorDiv(
-                nonDivisible.as<IntConstNode>()->val_, cdLin.bias_.q_));
+            nonDivisible =
+                makeIntConst(floorDiv(nonDivisible.as<IntConstNode>()->val_,
+                                      (int)cdLin.bias_.q_)); // FIXME: int64_t
         } else {
             nonDivisible =
                 makeFloorDiv(nonDivisible, makeIntConst(cdLin.bias_.q_));
@@ -158,8 +159,9 @@ const Expr &LowerBound::expr() {
     auto nonDivisible = linToExprNumerator(cdLin);
     if (nonDivisible.isValid()) {
         if (nonDivisible->nodeType() == ASTNodeType::IntConst) {
-            nonDivisible = makeIntConst(
-                ceilDiv(nonDivisible.as<IntConstNode>()->val_, cdLin.bias_.q_));
+            nonDivisible =
+                makeIntConst(ceilDiv(nonDivisible.as<IntConstNode>()->val_,
+                                     (int)cdLin.bias_.q_)); // FIXME: int64_t
         } else {
             nonDivisible =
                 makeCeilDiv(nonDivisible, makeIntConst(cdLin.bias_.q_));
@@ -187,10 +189,10 @@ LowerBound sub(const LowerBound &b1, const UpperBound &b2) {
 }
 
 UpperBound mul(const UpperBound &b, int k) {
-    return mul(b.lin(), Rational<int>(k));
+    return mul(b.lin(), Rational<int64_t>(k));
 }
 LowerBound mul(const LowerBound &b, int k) {
-    return mul(b.lin(), Rational<int>(k));
+    return mul(b.lin(), Rational<int64_t>(k));
 }
 
 UpperBound floorDiv(const UpperBound &b, int k) {

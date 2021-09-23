@@ -8,16 +8,23 @@
 #include <driver/array.h>
 #include <func.h>
 
+#include <../runtime/cpu_context.h>
+#include <../runtime/gpu_context.h>
+
 namespace ir {
 
 class Driver {
     void *dlHandle_ = nullptr;
-    void (*func_)(void **) = nullptr;
+    void (*func_)(void **, void *) = nullptr;
 
     std::string src_;
     std::vector<void *> params_;
     std::unordered_map<std::string, size_t> name2param_;
     Device dev_;
+
+    CPUContext cpuCtx_;
+    GPUContext gpuCtx_;
+    void *curCtx_ = nullptr;
 
   private:
     void buildAndLoad();

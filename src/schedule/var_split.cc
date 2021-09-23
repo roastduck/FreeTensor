@@ -28,7 +28,7 @@ Stmt VarSplit::visit(const VarDef &_op) {
         if (fixedSize_) {
             if (!op->sizeLim_.isValid()) {
                 Expr size;
-                for (auto &&dim : op->buffer_->tensor().shape()) {
+                for (Expr dim : op->buffer_->tensor().shape()) {
                     size = size.isValid() ? makeMul(size, dim) : dim;
                 }
                 op->sizeLim_ = size;

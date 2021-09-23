@@ -292,7 +292,7 @@ void CompUniqueBounds::updLower(LowerBoundsList &list,
             auto oldVal = old.lin().bias_;
             auto newVal = bound.lin().bias_;
             if (newVal > oldVal) {
-                old = LowerBound(LinearExpr<Rational<int>>{{}, newVal});
+                old = LowerBound(LinearExpr<Rational<int64_t>>{{}, newVal});
             }
             return;
         }
@@ -312,7 +312,7 @@ void CompUniqueBounds::updUpper(UpperBoundsList &list,
             auto oldVal = old.lin().bias_;
             auto newVal = bound.lin().bias_;
             if (newVal < oldVal) {
-                old = UpperBound(LinearExpr<Rational<int>>{{}, newVal});
+                old = UpperBound(LinearExpr<Rational<int64_t>>{{}, newVal});
             }
             return;
         }
@@ -325,7 +325,8 @@ int CompUniqueBounds::getIntLower(const Expr &op) const {
     for (auto &&b : getLower(op)) {
         if (b.lin().coeff_.empty()) {
             auto bias = b.lin().bias_;
-            ret = std::max(ret, ceilDiv(bias.p_, bias.q_));
+            ret =
+                std::max(ret, (int)ceilDiv(bias.p_, bias.q_)); // FIXME: int64_t
         }
     }
     return ret;
@@ -336,7 +337,8 @@ int CompUniqueBounds::getIntUpper(const Expr &op) const {
     for (auto &&b : getUpper(op)) {
         if (b.lin().coeff_.empty()) {
             auto bias = b.lin().bias_;
-            ret = std::min(ret, floorDiv(bias.p_, bias.q_));
+            ret = std::min(ret,
+                           (int)floorDiv(bias.p_, bias.q_)); // FIXME: int64_t
         }
     }
     return ret;
@@ -413,8 +415,10 @@ Expr CompUniqueBounds::visit(const IntConst &_op) {
     auto __op = CompTransientBounds::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::IntConst);
     auto op = __op.as<IntConstNode>();
-    updLower(lower_[op], LowerBound{LinearExpr<Rational<int>>{{}, op->val_}});
-    updUpper(upper_[op], UpperBound{LinearExpr<Rational<int>>{{}, op->val_}});
+    updLower(lower_[op],
+             LowerBound{LinearExpr<Rational<int64_t>>{{}, op->val_}});
+    updUpper(upper_[op],
+             UpperBound{LinearExpr<Rational<int64_t>>{{}, op->val_}});
     return op;
 }
 
@@ -550,7 +554,7 @@ Expr CompUniqueBounds::visit(const Mod &_op) {
     auto op = __op.as<ModNode>();
     updLower(lower_[op], LowerBound{op});
     updUpper(upper_[op], UpperBound{op});
-    updLower(lower_[op], LowerBound{LinearExpr<Rational<int>>{{}, 0}});
+    updLower(lower_[op], LowerBound{LinearExpr<Rational<int64_t>>{{}, 0}});
     for (auto &&item : getUpper(op->rhs_)) {
         updUpper(upper_[op], item);
     }
@@ -577,7 +581,7 @@ Expr CompUniqueBounds::visit(const Min &_op) {
         for (auto &&b2 : getLower(op->rhs_)) {
             if (b1.lin().coeff_.empty() && b2.lin().coeff_.empty()) {
                 updLower(lower,
-                         LinearExpr<Rational<int>>{
+                         LinearExpr<Rational<int64_t>>{
                              {}, std::min(b1.lin().bias_, b2.lin().bias_)});
             }
         }
@@ -607,8 +611,41 @@ Expr CompUniqueBounds::visit(const Max &_op) {
         for (auto &&b2 : getUpper(op->rhs_)) {
             if (b1.lin().coeff_.empty() && b2.lin().coeff_.empty()) {
                 updUpper(upper,
-                         LinearExpr<Rational<int>>{
+                         LinearExpr<Rational<int64_t>>{
                              {}, std::max(b1.lin().bias_, b2.lin().bias_)});
+            }
+        }
+    }
+    updLower(lower, LowerBound{op});
+    updUpper(upper, UpperBound{op});
+    return op;
+}
+
+Expr CompUniqueBounds::visit(const IfExpr &_op) {
+    auto __op = CompTransientBounds::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::IfExpr);
+    auto op = __op.as<IfExprNode>();
+
+    if (!isInt(dtype(op))) {
+        return op;
+    }
+    auto &lower = lower_[op];
+    auto &upper = upper_[op];
+    for (auto &&b1 : getUpper(op->thenCase_)) {
+        for (auto &&b2 : getUpper(op->elseCase_)) {
+            if (b1.lin().coeff_.empty() && b2.lin().coeff_.empty()) {
+                updUpper(upper,
+                         LinearExpr<Rational<int64_t>>{
+                             {}, std::max(b1.lin().bias_, b2.lin().bias_)});
+            }
+        }
+    }
+    for (auto &&b1 : getLower(op->thenCase_)) {
+        for (auto &&b2 : getLower(op->elseCase_)) {
+            if (b1.lin().coeff_.empty() && b2.lin().coeff_.empty()) {
+                updLower(lower,
+                         LinearExpr<Rational<int64_t>>{
+                             {}, std::min(b1.lin().bias_, b2.lin().bias_)});
             }
         }
     }

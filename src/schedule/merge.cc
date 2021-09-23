@@ -83,10 +83,10 @@ Expr MergeFor::visit(const Var &_op) {
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Var);
     auto op = __op.as<VarNode>();
-    if (op->name_ == oldInner_->iter_) {
+    if (insideInner_ && op->name_ == oldInner_->iter_) {
         return makeMod(makeVar(newIter_), innerLen_);
     }
-    if (op->name_ == oldOuter_->iter_) {
+    if (insideOuter_ && op->name_ == oldOuter_->iter_) {
         return makeFloorDiv(makeVar(newIter_), innerLen_);
     }
     return op;

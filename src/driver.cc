@@ -7,6 +7,7 @@
 #include <sys/stat.h> // mkdir
 #include <unistd.h>   // rmdir
 
+#include <debug.h>
 #include <driver.h>
 #include <driver/gpu.h>
 #include <except.h>
@@ -57,14 +58,27 @@ void Driver::buildAndLoad() {
     switch (dev_.type()) {
     case TargetType::CPU:
         cmd = "c++ -I" NAME(IR_RUNTIME_DIR) " -shared -O3 -fPIC -Wall -fopenmp";
+        cmd += " -o " + so + " " + cpp;
+#ifdef WITH_MKL
+        cmd += " -I\"" NAME(WITH_MKL) "/include\"";
+        cmd += " -Wl,--start-group";
+        cmd += " \"" NAME(WITH_MKL) "/lib/intel64/libmkl_intel_lp64.a\"";
+        cmd += " \"" NAME(WITH_MKL) "/lib/intel64/libmkl_gnu_thread.a\"";
+        cmd += " \"" NAME(WITH_MKL) "/lib/intel64/libmkl_core.a\"";
+        cmd += " -Wl,--end-group";
+        cmd += " -DWITH_MKL=\"" NAME(WITH_MKL) "\"";
+        // Link statically, or there will be dlopen issues
+        // Generated with MKL Link Line Advisor
+#endif
         if (dev_.target()->useNativeArch()) {
             cmd += " -march=native";
         }
-        cmd += " -o " + so + " " + cpp;
         break;
     case TargetType::GPU:
         cmd = "nvcc -I" NAME(
             IR_RUNTIME_DIR) " -shared -Xcompiler -fPIC,-Wall,-O3";
+        cmd += " -o " + so + " " + cpp;
+        cmd += " -lcublas";
         if (auto arch = dev_.target().as<GPU>()->computeCapability();
             arch.isValid()) {
             cmd += " -arch sm_" + std::to_string(arch->first) +
@@ -80,7 +94,6 @@ void Driver::buildAndLoad() {
             WARNING("GPU arch not specified, which may result in suboptimal "
                     "performance ");
         }
-        cmd += " -o " + so + " " + cpp;
         break;
     default:
         ASSERT(false);
@@ -89,17 +102,30 @@ void Driver::buildAndLoad() {
 
     dlHandle_ = dlopen(so.c_str(), RTLD_NOW);
     if (!dlHandle_) {
-        throw DriverError("Unable to load target code");
+        throw DriverError((std::string) "Unable to load target code: " +
+                          dlerror());
     }
 
-    func_ = (void (*)(void **))dlsym(dlHandle_, "run");
+    func_ = (void (*)(void **, void *))dlsym(dlHandle_, "run");
     if (!func_) {
-        throw DriverError("Target function not found");
+        throw DriverError((std::string) "Target function not found: " +
+                          dlerror());
     }
 
     remove(cpp.c_str());
     remove(so.c_str());
     rmdir(path);
+
+    switch (dev_.type()) {
+    case TargetType::CPU:
+        curCtx_ = &cpuCtx_;
+        break;
+    case TargetType::GPU:
+        curCtx_ = &gpuCtx_;
+        break;
+    default:
+        ASSERT(false);
+    }
 }
 
 void Driver::setParams(const std::vector<Array *> &args,
@@ -117,7 +143,7 @@ void Driver::setParams(const std::vector<Array *> &args,
     }
 }
 
-void Driver::run() { func_(params_.data()); }
+void Driver::run() { func_(params_.data(), curCtx_); }
 
 void Driver::sync() {
     switch (dev_.type()) {

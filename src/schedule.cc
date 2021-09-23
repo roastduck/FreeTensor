@@ -8,12 +8,14 @@
 #include <analyze/find_loop_variance.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/make_reduction.h>
+#include <pass/merge_and_hoist_if.h>
 #include <pass/remove_writes.h>
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
 #include <pass/sink_var.h>
 #include <pass/z3_simplify.h>
 #include <schedule.h>
+#include <schedule/as_matmul.h>
 #include <schedule/blend.h>
 #include <schedule/cache.h>
 #include <schedule/check_loop_order.h>
@@ -24,9 +26,11 @@
 #include <schedule/parallelize.h>
 #include <schedule/reorder.h>
 #include <schedule/seperate_tail.h>
+#include <schedule/set_mem_type.h>
 #include <schedule/split.h>
 #include <schedule/swap.h>
 #include <schedule/unroll.h>
+#include <schedule/var_reorder.h>
 #include <schedule/var_split.h>
 #include <schedule/vectorize.h>
 
@@ -156,6 +160,8 @@ std::string Schedule::merge(const std::string &loop1,
 std::pair<Schedule::IDMap, Schedule::IDMap>
 Schedule::fission(const std::string &loop, const std::string &after,
                   const std::string &suffix0, const std::string &suffix1) {
+    // FIXME: Check the condition is not variant when splitting an If
+
     if (suffix0 == suffix1) {
         throw InvalidSchedule(
             "fission: suffix0 cannot be the same with suffix1");
@@ -182,16 +188,9 @@ Schedule::fission(const std::string &loop, const std::string &after,
                 {hoist.seqId(), DepDirection::Inv}};
             disjunct.emplace_back(std::move(conjunct));
         }
-        auto isRealWrite = [&](const std::string &loop, const AST &op) -> bool {
-            if (op->nodeType() == ASTNodeType::Store) {
-                Expr expr = op.as<StoreNode>()->expr_;
-                return isVariant(variantExpr.first, expr, loop);
-            } else if (op->nodeType() == ASTNodeType::ReduceTo) {
-                Expr expr = op.as<ReduceToNode>()->expr_;
-                return isVariant(variantExpr.first, expr, loop);
-            } else {
-                return false;
-            }
+        auto isRealWrite = [&](const std::string &loop,
+                               const VarDef &def) -> bool {
+            return isVariant(variantExpr.second, def, loop);
         };
         std::unordered_map<std::string, std::vector<std::string>> toAdd;
         auto found = [&](const Dependency &d) {
@@ -203,11 +202,11 @@ Schedule::fission(const std::string &loop, const std::string &after,
                 throw InvalidSchedule(
                     dep2Str(id, d.var_, d.later(), d.earlier()));
             }
-            if (!isRealWrite(id, d.later()) &&
+            if (!isRealWrite(id, d.def()) &&
                 d.earlier()->nodeType() == ASTNodeType::Load) {
                 return;
             }
-            if (!isRealWrite(id, d.earlier()) &&
+            if (!isRealWrite(id, d.def()) &&
                 d.later()->nodeType() == ASTNodeType::Load) {
                 return;
             }
@@ -222,6 +221,7 @@ Schedule::fission(const std::string &loop, const std::string &after,
         ast = adder(ast);
 
         ast = mutator(ast);
+        ast = mergeAndHoistIf(ast);
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid fission(" + loop + ", " + after +
                               "): " + e.what());
@@ -235,14 +235,10 @@ std::string Schedule::fuse(const std::string &loop0, const std::string &loop1) {
     FuseFor mutator(loop0, loop1);
     CheckAccessible check(loop0, loop1);
     try {
-        auto found = [&](const Dependency &d) {
-            ASSERT(d.cond_.size() == 1);
-            throw InvalidSchedule(
-                dep2Str(d.cond_[0].first, d.var_, d.later(), d.earlier()));
-        };
-        findDeps(ast, {{{loop0, DepDirection::Inv}}}, found);
-
         check(ast);
+        if (!check.loop0().loop_.isValid()) {
+            throw InvalidSchedule("Loops not found in a StmtSeq");
+        }
 
         for (auto &&stmt : check.loop1().surroundings_) {
             if (stmt->nodeType() == ASTNodeType::VarDef) {
@@ -260,6 +256,16 @@ std::string Schedule::fuse(const std::string &loop0, const std::string &loop1) {
         }
 
         ast = mutator(ast);
+
+        auto found = [&](const Dependency &d) {
+            ASSERT(d.cond_.size() == 2);
+            throw InvalidSchedule(
+                dep2Str(d.cond_[0].first, d.var_, d.later(), d.earlier()));
+        };
+        findDeps(ast,
+                 {{{mutator.fused(), DepDirection::Normal},
+                   {mutator.seqId(), DepDirection::Inv}}},
+                 found);
 
         try {
             ast = simplifyPass(ast);
@@ -325,7 +331,7 @@ void Schedule::swap(const std::vector<std::string> &order) {
         findDeps(ast, {{{scope->id(), DepDirection::Normal}}}, found,
                  FindDepsMode::Dep, DEP_ALL, filter);
     } catch (const InvalidSchedule &e) {
-        std::string msg = "Invalid reorder(";
+        std::string msg = "Invalid swap(";
         for (size_t i = 0, iEnd = order.size(); i < iEnd; i++) {
             msg += order[i] + (i < iEnd - 1 ? ", " : "");
         }
@@ -366,7 +372,7 @@ void Schedule::blend(const std::string &loop) {
     ast_ = ast;
 }
 
-std::tuple<std::string, std::string, std::string>
+std::tuple<std::string, std::string, std::string, std::string>
 Schedule::cache(const std::string &stmt, const std::string &var,
                 MemType mtype) {
     auto ast = ast_;
@@ -402,10 +408,10 @@ Schedule::cache(const std::string &stmt, const std::string &var,
     }
     ast_ = ast;
     return std::make_tuple(std::move(fillStmt), std::move(flushStmt),
-                           std::move(newVar));
+                           std::move(newVar), std::move(newDef));
 }
 
-std::tuple<std::string, std::string, std::string>
+std::tuple<std::string, std::string, std::string, std::string>
 Schedule::cacheReduction(const std::string &stmt, const std::string &var,
                          MemType mtype) {
     auto ast = ast_;
@@ -440,7 +446,22 @@ Schedule::cacheReduction(const std::string &stmt, const std::string &var,
     }
     ast_ = ast;
     return std::make_tuple(std::move(initStmt), std::move(reduceStmt),
-                           std::move(newVar));
+                           std::move(newVar), std::move(newDef));
+}
+
+void Schedule::setMemType(const std::string &def, MemType mtype) {
+    auto ast = ast_;
+    try {
+        SetMemType mutator(def, mtype);
+        ast = mutator(ast);
+        if (!mutator.found()) {
+            throw InvalidSchedule(def + " not found");
+        }
+    } catch (const InvalidSchedule &e) {
+        throw InvalidSchedule("Invalid set_mtype(" + def + ", " +
+                              toString(mtype) + "): " + e.what());
+    }
+    ast_ = ast;
 }
 
 void Schedule::varSplit(const std::string &def, int dim, VarSplitMode mode,
@@ -451,7 +472,7 @@ void Schedule::varSplit(const std::string &def, int dim, VarSplitMode mode,
                          nparts);
         ast = mutator(ast);
         if (!mutator.found()) {
-            throw InvalidSchedule(def + "not found");
+            throw InvalidSchedule(def + " not found");
         }
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule(
@@ -460,6 +481,25 @@ void Schedule::varSplit(const std::string &def, int dim, VarSplitMode mode,
                                              : ", RelaxedSize") +
             ", factor=" + std::to_string(factor) +
             ", nparts=" + std::to_string(nparts) + "): " + e.what());
+    }
+    ast_ = ast;
+}
+
+void Schedule::varReorder(const std::string &def,
+                          const std::vector<int> &order) {
+    auto ast = ast_;
+    try {
+        VarReorder mutator(def, order);
+        ast = mutator(ast);
+        if (!mutator.found()) {
+            throw InvalidSchedule(def + " not found");
+        }
+    } catch (const InvalidSchedule &e) {
+        std::string msg = "Invalid var_reorder(" + def + ", ";
+        for (size_t i = 0, iEnd = order.size(); i < iEnd; i++) {
+            msg += order[i] + (i < iEnd - 1 ? ", " : "");
+        }
+        throw InvalidSchedule(msg + "): " + e.what());
     }
     ast_ = ast;
 }
@@ -561,7 +601,7 @@ void Schedule::inlining(const std::string &def) {
         std::unordered_map<Load, Expr> replace;
         auto filter = [&](const AccessPoint &later,
                           const AccessPoint &earlier) {
-            return earlier.def_ == def;
+            return earlier.def_->id() == def;
         };
         auto found = [&](const Dependency &dep) {
             if (replace.count(dep.later().as<LoadNode>())) {
@@ -680,6 +720,18 @@ void Schedule::seperateTail() {
         candidates = mutator.nextCandidates();
     }
 
+    ast_ = ast;
+}
+
+void Schedule::asMatMul(const std::string &loop) {
+    auto ast = ast_;
+    try {
+        ast = simplifyPass(ast); // const prop
+        ast = makeReduction(ast);
+        ast = AsMatMul(loop)(ast);
+    } catch (const InvalidSchedule &e) {
+        throw InvalidSchedule("Invalid as_matmul(" + loop + "): " + e.what());
+    }
     ast_ = ast;
 }
 

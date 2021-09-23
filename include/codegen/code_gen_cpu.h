@@ -7,12 +7,20 @@
 namespace ir {
 
 class CodeGenCPU : public CodeGenC<CodeGenStream> {
+    bool inParallel_ = false;
+    int64_t stackTop_ = 8192 * 1024, stackSize_ = 0;
+
   public:
     CodeGenCPU(const std::vector<std::string> &params) : CodeGenC(params) {}
 
+    int64_t stackSize() const { return stackSize_; }
+
   protected:
+    using CodeGenC<CodeGenStream>::visit;
+    void visit(const VarDef &op) override;
     void visit(const ReduceTo &op) override;
     void visit(const For &op) override;
+    void visit(const MatMul &op) override;
 };
 
 /**

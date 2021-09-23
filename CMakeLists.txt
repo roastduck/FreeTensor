@@ -4,6 +4,7 @@ project(IR C CXX)
 include(ExternalProject)
 
 option(IR_DEBUG "Enable debug mode" OFF)
+option(WITH_MKL "Path to MKL (optional)" OFF)
 
 set(DEFAULT_BUILD_TYPE "RelWithDebInfo")
 if(NOT CMAKE_BUILD_TYPE)
@@ -36,6 +37,9 @@ find_package(CUDA REQUIRED)
 
 # THIS PROJECT
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
+if(WITH_MKL)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWITH_MKL=${WITH_MKL}")
+endif()
 if(IR_DEBUG)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DIR_DEBUG")
 endif()
@@ -63,5 +67,5 @@ add_dependencies(ffi ISL)
 target_link_libraries(ffi PRIVATE
     ${ISL_DIR}/install/lib/libisl.so
     libz3 # See 3rd-party/z3/src/CMakeLists.txt
-    ${CUDA_LIBRARIES})
+    ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES})
 

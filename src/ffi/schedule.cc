@@ -34,14 +34,17 @@ void init_ffi_schedule(py::module_ &m) {
         .def("cache", &Schedule::cache, "stmt"_a, "var"_a, "mtype"_a)
         .def("cache_reduction", &Schedule::cacheReduction, "stmt"_a, "var"_a,
              "mtype"_a)
+        .def("set_mem_type", &Schedule::setMemType, "def"_a, "mtype"_a)
         .def("var_split", &Schedule::varSplit, "vardef"_a, "dim"_a, "mode"_a,
              "factor"_a = -1, "nparts"_a = -1)
+        .def("var_reorder", &Schedule::varReorder, "vardef"_a, "order"_a)
         .def("move_to", &Schedule::moveTo, "stmt"_a, "side"_a, "dst"_a)
         .def("inline", &Schedule::inlining, "vardef"_a)
         .def("parallelize", &Schedule::parallelize, "loop"_a, "parallel"_a)
         .def("unroll", &Schedule::unroll, "loop"_a, "immedate"_a = false)
         .def("vectorize", &Schedule::vectorize, "loop"_a)
-        .def("seperate_tail", &Schedule::seperateTail);
+        .def("seperate_tail", &Schedule::seperateTail)
+        .def("as_matmul", &Schedule::asMatMul);
 }
 
 } // namespace ir

@@ -47,6 +47,21 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
             (*this)(dim);
             this->os() << "]";
         }
+        if (op->buffer_->mtype() == MemType::CPU) {
+            // Alignment (TODO: Move to CodeGenCPU)
+            bool isSingle = true;
+            for (auto &&dim : shape) {
+                if (dim->nodeType() != ASTNodeType::IntConst ||
+                    dim.as<IntConstNode>()->val_ != 1) {
+                    isSingle = false;
+                    break;
+                }
+            }
+            if (!isSingle) {
+                // TODO adjust the value according to the cache line size
+                this->os() << " __attribute__((aligned(64)))";
+            }
+        }
         this->os() << ";" << std::endl;
     } else {
         auto nthParamIter =
@@ -296,7 +311,8 @@ template <class Stream> void CodeGenC<Stream>::visit(const FloatConst &op) {
     } else if (op->val_ == -INFINITY) {
         this->os() << "-INFINITY";
     } else {
-        this->os() << std::to_string(op->val_);
+        this->os() << std::to_string(op->val_)
+                   << "f"; // FIXME: Determine the actual type
     }
 }
 
@@ -462,6 +478,40 @@ template <class Stream> void CodeGenC<Stream>::visit(const Sqrt &op) {
 
 template <class Stream> void CodeGenC<Stream>::visit(const Exp &op) {
     this->os() << "exp(";
+    (*this)(op->expr_);
+    this->os() << ")";
+}
+
+template <class Stream> void CodeGenC<Stream>::visit(const Square &op) {
+    this->os() << "runtime_square(";
+    (*this)(op->expr_);
+    this->os() << ")";
+}
+
+template <class Stream> void CodeGenC<Stream>::visit(const Floor &op) {
+    this->os() << "std::floor(";
+    (*this)(op->expr_);
+    this->os() << ")";
+}
+
+template <class Stream> void CodeGenC<Stream>::visit(const Ceil &op) {
+    this->os() << "std::ceil(";
+    (*this)(op->expr_);
+    this->os() << ")";
+}
+
+template <class Stream> void CodeGenC<Stream>::visit(const IfExpr &op) {
+    this->os() << "(";
+    (*this)(op->cond_);
+    this->os() << " ? ";
+    (*this)(op->thenCase_);
+    this->os() << " : ";
+    (*this)(op->elseCase_);
+    this->os() << ")";
+}
+
+template <class Stream> void CodeGenC<Stream>::visit(const Cast &op) {
+    this->os() << gen(op->dtype_) << "(";
     (*this)(op->expr_);
     this->os() << ")";
 }

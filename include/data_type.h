@@ -61,6 +61,9 @@ inline bool isNumber(DataType dtype) { return isInt(dtype) || isFloat(dtype); }
 inline bool isBool(DataType dtype) { return dtype == DataType::Bool; }
 
 inline DataType upCast(DataType lhs, DataType rhs) {
+    if (lhs == DataType::Custom || rhs == DataType::Custom) {
+        return DataType::Custom;
+    }
     if (isInt(lhs) && isFloat(rhs)) {
         return rhs;
     }

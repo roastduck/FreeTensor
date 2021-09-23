@@ -20,7 +20,84 @@ inline bool isEmptyStmt(const Stmt &op) {
     return false;
 }
 
+inline Expr reduceMul(const std::vector<Expr> &list) {
+    Expr ret;
+    for (auto &&item : list) {
+        ret = ret.isValid() ? makeMul(ret, item) : item;
+    }
+    return ret;
+}
+
 } // namespace detail
+
+template <class BaseClass>
+template <class T>
+Expr SimplifyPass<BaseClass>::normalizeRealMulDiv(const T &op) {
+    int sqrtCnt = 0, divCnt = 0, squareCnt = 0;
+    std::function<void(const Expr &, std::vector<Expr> &, std::vector<Expr> &,
+                       std::vector<Expr> &, std::vector<Expr> &)>
+        recur = [&recur, &sqrtCnt,
+                 &divCnt](const Expr &expr, std::vector<Expr> &num,
+                          std::vector<Expr> &den, std::vector<Expr> &sqrtNum,
+                          std::vector<Expr> &sqrtDen) {
+            if (expr->nodeType() == ASTNodeType::Mul) {
+                recur(expr.as<MulNode>()->lhs_, num, den, sqrtNum, sqrtDen);
+                recur(expr.as<MulNode>()->rhs_, num, den, sqrtNum, sqrtDen);
+            } else if (expr->nodeType() == ASTNodeType::RealDiv) {
+                recur(expr.as<RealDivNode>()->lhs_, num, den, sqrtNum, sqrtDen);
+                recur(expr.as<RealDivNode>()->rhs_, den, num, sqrtDen, sqrtNum);
+                divCnt++;
+            } else if (expr->nodeType() == ASTNodeType::Sqrt) {
+                sqrtNum.emplace_back(expr.as<SqrtNode>()->expr_);
+                sqrtCnt++;
+            } else {
+                num.emplace_back(expr);
+            }
+        };
+    std::vector<Expr> num, den, sqrtNum, sqrtDen;
+    recur(op, num, den, sqrtNum, sqrtDen);
+
+    auto trySquare = [this, &squareCnt](std::vector<Expr> &list) {
+        for (size_t i = 0; i + 1 < list.size(); i++) {
+            for (size_t j = i + 1; j < list.size(); j++) {
+                if (this->getHash(list[i]) == this->getHash(list[j])) {
+                    list[i] = makeSquare(list[i]);
+                    std::swap(list[j], list.back());
+                    list.resize(list.size() - 1);
+                    squareCnt++;
+                }
+            }
+        }
+    };
+    trySquare(num);
+    trySquare(den);
+    trySquare(sqrtNum);
+    trySquare(sqrtDen);
+    if (sqrtCnt <= 1 && divCnt <= 1 && squareCnt == 0) {
+        return op;
+    }
+
+    if (auto x = detail::reduceMul(sqrtNum); x.isValid()) {
+        if (auto y = detail::reduceMul(sqrtDen); y.isValid()) {
+            num.emplace_back(makeSqrt(makeRealDiv(x, y)));
+        } else {
+            num.emplace_back(makeSqrt(x));
+        }
+    } else {
+        if (auto y = detail::reduceMul(sqrtDen); y.isValid()) {
+            den.emplace_back(makeSqrt(y));
+        }
+    }
+    if (auto x = detail::reduceMul(num); x.isValid()) {
+        if (auto y = detail::reduceMul(den); y.isValid()) {
+            return markMutated(makeRealDiv(x, y));
+        } else {
+            return markMutated(x);
+        }
+    } else {
+        ASSERT(false); // Impossible
+    }
+}
 
 template <class BaseClass>
 Expr SimplifyPass<BaseClass>::visitExpr(
@@ -105,7 +182,12 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const Mul &_op) {
         op->rhs_.template as<FloatConstNode>()->val_ == 0) {
         return makeFloatConst(0);
     }
-    return op;
+
+    if (isFloat(this->dtype(op))) {
+        return normalizeRealMulDiv(op);
+    } else {
+        return op;
+    }
 }
 
 template <class BaseClass>
@@ -148,6 +230,24 @@ Expr SimplifyPass<BaseClass>::visit(const RoundTowards0Div &_op) {
                          op->rhs_.template as<IntConstNode>()->val_));
     }
     return op;
+}
+
+template <class BaseClass>
+Expr SimplifyPass<BaseClass>::visit(const RealDiv &_op) {
+    auto __op = BaseClass::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::RealDiv);
+    auto op = __op.template as<RealDivNode>();
+    if (op->lhs_->nodeType() == ASTNodeType::Sqrt &&
+        op->rhs_->nodeType() == ASTNodeType::Sqrt) {
+        return makeSqrt(makeRealDiv(op->lhs_.template as<SqrtNode>()->expr_,
+                                    op->rhs_.template as<SqrtNode>()->expr_));
+    }
+
+    if (isFloat(this->dtype(op))) {
+        return normalizeRealMulDiv(op);
+    } else {
+        return op;
+    }
 }
 
 template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const Mod &_op) {
@@ -202,6 +302,14 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const Min &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Min);
     auto op = __op.template as<MinNode>();
+
+    if (op->lhs_->nodeType() == ASTNodeType::Sqrt &&
+        op->rhs_->nodeType() == ASTNodeType::Sqrt) {
+        return makeSqrt(makeMin(op->lhs_.template as<SqrtNode>()->expr_,
+                                op->rhs_.template as<SqrtNode>()->expr_));
+    }
+
+    // Followed by rules only for integers
     if (!isInt(this->dtype(op))) {
         return op;
     }
@@ -247,6 +355,14 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const Max &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Max);
     auto op = __op.template as<MaxNode>();
+
+    if (op->lhs_->nodeType() == ASTNodeType::Sqrt &&
+        op->rhs_->nodeType() == ASTNodeType::Sqrt) {
+        return makeSqrt(makeMax(op->lhs_.template as<SqrtNode>()->expr_,
+                                op->rhs_.template as<SqrtNode>()->expr_));
+    }
+
+    // Followed by rules only for integers
     if (!isInt(this->dtype(op))) {
         return op;
     }
@@ -465,6 +581,72 @@ Expr SimplifyPass<BaseClass>::visit(const LNot &_op) {
     case ASTNodeType::LNot:
         return markMutated(op->expr_.template as<LNotNode>()->expr_);
     default:;
+    }
+    return op;
+}
+
+template <class BaseClass>
+Expr SimplifyPass<BaseClass>::visit(const Sqrt &_op) {
+    auto __op = BaseClass::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::Sqrt);
+    auto op = __op.template as<SqrtNode>();
+
+    std::function<void(const Expr &, std::vector<Expr> &, std::vector<Expr> &,
+                       std::vector<Expr> &, std::vector<Expr> &)>
+        recur = [&recur](const Expr &expr, std::vector<Expr> &num,
+                         std::vector<Expr> &den, std::vector<Expr> &sqrtNum,
+                         std::vector<Expr> &sqrtDen) {
+            if (expr->nodeType() == ASTNodeType::Mul) {
+                recur(expr.as<MulNode>()->lhs_, num, den, sqrtNum, sqrtDen);
+                recur(expr.as<MulNode>()->rhs_, num, den, sqrtNum, sqrtDen);
+            } else if (expr->nodeType() == ASTNodeType::RealDiv) {
+                recur(expr.as<RealDivNode>()->lhs_, num, den, sqrtNum, sqrtDen);
+                recur(expr.as<RealDivNode>()->rhs_, den, num, sqrtDen, sqrtNum);
+            } else if (expr->nodeType() == ASTNodeType::Square) {
+                num.emplace_back(expr.as<SquareNode>()->expr_);
+            } else {
+                sqrtNum.emplace_back(expr);
+            }
+        };
+    std::vector<Expr> num, den, sqrtNum, sqrtDen;
+    recur(op->expr_, num, den, sqrtNum, sqrtDen);
+    if (num.empty() && den.empty()) {
+        return op;
+    }
+
+    if (auto x = detail::reduceMul(sqrtNum); x.isValid()) {
+        if (auto y = detail::reduceMul(sqrtDen); y.isValid()) {
+            num.emplace_back(makeSqrt(makeRealDiv(x, y)));
+        } else {
+            num.emplace_back(makeSqrt(x));
+        }
+    } else {
+        if (auto y = detail::reduceMul(sqrtDen); y.isValid()) {
+            den.emplace_back(makeSqrt(y));
+        }
+    }
+    if (auto x = detail::reduceMul(num); x.isValid()) {
+        if (auto y = detail::reduceMul(den); y.isValid()) {
+            return markMutated(makeRealDiv(x, y));
+        } else {
+            return markMutated(x);
+        }
+    } else {
+        ASSERT(false); // Impossible
+    }
+}
+
+template <class BaseClass>
+Expr SimplifyPass<BaseClass>::visit(const IfExpr &_op) {
+    auto __op = BaseClass::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::IfExpr);
+    auto op = __op.template as<IfExprNode>();
+    if (op->cond_->nodeType() == ASTNodeType::BoolConst) {
+        if (op->cond_.template as<BoolConstNode>()->val_) {
+            return markMutated(op->thenCase_);
+        } else {
+            return markMutated(op->elseCase_);
+        }
     }
     return op;
 }

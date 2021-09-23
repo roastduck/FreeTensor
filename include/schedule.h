@@ -195,9 +195,10 @@ class Schedule {
      * @param mtype : where to cache
      * @throw InvalidSchedule if the ID or name is not found
      * @return : (ID of the statement that fills the cache, ID of the statement
-     * that flushes from the cache, name of the cache variable)
+     * that flushes from the cache, name of the cache variable, ID of the VarDef
+     * node of the cache variable)
      */
-    std::tuple<std::string, std::string, std::string>
+    std::tuple<std::string, std::string, std::string, std::string>
     cache(const std::string &stmt, const std::string &var, MemType mtype);
 
     /**
@@ -227,11 +228,20 @@ class Schedule {
      * unsupported reads or writes
      * @return : (ID of the statement that initialize the cache, ID of the
      * statement that reduces the local result to the global result, name of the
-     * cache variable)
+     * cache variable, ID of the VarDef node of the cache variable)
      */
-    std::tuple<std::string, std::string, std::string>
+    std::tuple<std::string, std::string, std::string, std::string>
     cacheReduction(const std::string &stmt, const std::string &var,
                    MemType mtype);
+
+    /**
+     * Change where a variable is stored
+     *
+     * @param def : ID of the VarDef statement of the specific variable
+     * @param mtype : Where the variable should be stored
+     * @throw InvalidSchedule if the variable is not found
+     */
+    void setMemType(const std::string &def, MemType mtype);
 
     /**
      * Split a dimension of a variable into two
@@ -251,6 +261,15 @@ class Schedule {
      */
     void varSplit(const std::string &def, int dim, VarSplitMode mode,
                   int factor = -1, int nparts = -1);
+
+    /**
+     * Reorder the dimensions of a variable
+     *
+     * @param def : ID of the VarDef statement of the specific variable
+     * @param order : new order of the dimensions
+     * @throw InvalidSchedule if the variable or the order is illegal
+     */
+    void varReorder(const std::string &def, const std::vector<int> &order);
 
     /**
      * Move a statement to a new position
@@ -355,6 +374,15 @@ class Schedule {
      * schedule to part of the program)
      */
     void seperateTail();
+
+    /**
+     * Transform nested loops to be a external call to a matrix multiplication
+     *
+     * @param loop: ID of the loop
+     * @throw InvalidSchedule if the loop cannot be transformed to be a matrix
+     * multiplication
+     */
+    void asMatMul(const std::string &loop);
 };
 
 } // namespace ir

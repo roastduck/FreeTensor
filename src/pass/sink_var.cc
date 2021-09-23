@@ -38,23 +38,36 @@ Stmt SinkVar::visit(const VarDef &op) {
     switch (op->body_->nodeType()) {
     case ASTNodeType::StmtSeq: {
         auto seq = op->body_.as<StmtSeqNode>();
-        size_t lastUse = 0, useCnt = 0;
+        int firstUse = -1, lastUse = -1;
         std::vector<Stmt> stmts;
         stmts.reserve(seq->stmts_.size());
         for (size_t i = 0, iEnd = seq->stmts_.size(); i < iEnd; i++) {
             used_.erase(op->name_);
             stmts.emplace_back((*this)(seq->stmts_[i]));
             if (used_.count(op->name_)) {
-                lastUse = i, useCnt++;
+                if (firstUse == -1) {
+                    firstUse = i;
+                }
+                lastUse = i;
             }
         }
-        if (useCnt == 0) {
+        if (firstUse == -1) {
             isFixPoint_ = false;
             return makeStmtSeq(seq->id(), std::move(stmts));
-        } else if (useCnt == 1) {
-            stmts[lastUse] =
-                makeVarDef(op->id(), op->name_, std::move(buffer),
-                           std::move(sizeLim), stmts[lastUse], false);
+        } else if (firstUse > 0 || lastUse < (int)seq->stmts_.size() - 1) {
+            Stmt segment;
+            if (firstUse == lastUse) {
+                segment = stmts[firstUse];
+            } else {
+                segment = makeStmtSeq(
+                    "", std::vector<Stmt>(stmts.begin() + firstUse,
+                                          stmts.begin() + lastUse + 1));
+            }
+            stmts.erase(stmts.begin() + firstUse, stmts.begin() + lastUse + 1);
+            stmts.insert(stmts.begin() + firstUse,
+                         makeVarDef(op->id(), op->name_, std::move(buffer),
+                                    std::move(sizeLim), std::move(segment),
+                                    false));
             isFixPoint_ = false;
             return makeStmtSeq(seq->id(), std::move(stmts));
         } else {

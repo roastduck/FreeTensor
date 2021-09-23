@@ -45,7 +45,7 @@ class Mutator {
     }
 
     virtual Stmt visit(const VarDef &op) {
-        std::vector<Expr> shape;
+        std::vector<SubTree<ExprNode>> shape;
         shape.reserve(op->buffer_->tensor().shape().size());
         for (auto &&dim : op->buffer_->tensor().shape()) {
             shape.emplace_back((*this)(dim));
@@ -215,6 +215,18 @@ class Mutator {
         return COPY_DEBUG_INFO(makeExp((*this)(op->expr_)), op);
     }
 
+    virtual Expr visit(const Square &op) {
+        return COPY_DEBUG_INFO(makeSquare((*this)(op->expr_)), op);
+    }
+
+    virtual Expr visit(const Floor &op) {
+        return COPY_DEBUG_INFO(makeFloor((*this)(op->expr_)), op);
+    }
+
+    virtual Expr visit(const Ceil &op) {
+        return COPY_DEBUG_INFO(makeCeil((*this)(op->expr_)), op);
+    }
+
     virtual Stmt visit(const For &op) {
         auto ret = makeFor(op->id(), op->iter_, (*this)(op->begin_),
                            (*this)(op->end_), (*this)(op->len_), op->parallel_,
@@ -234,6 +246,17 @@ class Mutator {
             makeAssert(op->id(), (*this)(op->cond_), (*this)(op->body_)), op);
     }
 
+    virtual Expr visit(const IfExpr &op) {
+        return COPY_DEBUG_INFO(makeIfExpr((*this)(op->cond_),
+                                          (*this)(op->thenCase_),
+                                          (*this)(op->elseCase_)),
+                               op);
+    }
+
+    virtual Expr visit(const Cast &op) {
+        return COPY_DEBUG_INFO(makeCast((*this)(op->expr_), op->dtype_), op);
+    }
+
     virtual Expr visit(const Intrinsic &op) {
         std::vector<Expr> params;
         params.reserve(op->params_.size());
@@ -246,6 +269,19 @@ class Mutator {
 
     virtual Stmt visit(const Eval &op) {
         return COPY_DEBUG_INFO(makeEval(op->id(), (*this)(op->expr_)), op);
+    }
+
+    virtual Stmt visit(const MatMul &op) {
+        return COPY_DEBUG_INFO(
+            makeMatMul(op->id(), (*this)(op->a_), (*this)(op->b_),
+                       (*this)(op->c_), (*this)(op->alpha_), (*this)(op->beta_),
+                       (*this)(op->m_), (*this)(op->k_), (*this)(op->n_),
+                       (*this)(op->lda_), (*this)(op->ldb_), (*this)(op->ldc_),
+                       (*this)(op->stridea_), (*this)(op->strideb_),
+                       (*this)(op->stridec_), (*this)(op->batchSize_),
+                       op->aIsRowMajor_, op->bIsRowMajor_, op->cIsRowMajor_,
+                       (*this)(op->equivalent_)),
+            op);
     }
 };
 

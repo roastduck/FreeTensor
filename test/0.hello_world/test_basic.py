@@ -46,6 +46,26 @@ def test_scalar_op():
     assert y_np[()] == 11
 
 
+def test_cast():
+    with ir.VarDef([("x", (), "float32", "input", "cpu"),
+                    ("y", (), "int32", "output", "cpu")]) as (x, y):
+        y[()] = ir.cast(x[()], "int32") * 2
+
+    func = ir.lower(ir.Func("main", ["x", "y"], ir.pop_ast()), ir.CPU())
+    code = ir.codegen(func, ir.CPU())
+    print(code)
+    x_np = np.array(2.5, dtype="float32")
+    y_np = np.array(0, dtype="int32")
+    x_arr = ir.Array(x_np, ir.Device(ir.CPU()))
+    y_arr = ir.Array(y_np, ir.Device(ir.CPU()))
+    driver = ir.Driver(func, code, ir.Device(ir.CPU()))
+    driver.set_params(x=x_arr, y=y_arr)
+    driver.run()
+    y_np = y_arr.numpy()
+
+    assert y_np[()] == 4
+
+
 def test_for():
     with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):

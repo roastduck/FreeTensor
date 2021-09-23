@@ -26,7 +26,7 @@ struct IterAxis {
 struct AccessPoint {
     AST op_;
     Cursor cursor_;
-    std::string def_;
+    VarDef def_;
     Ref<Buffer> buffer_;
     int defAxis_;                /// The position of the VarDef
     std::vector<IterAxis> iter_; /// The temporal location of the access
@@ -80,7 +80,7 @@ class FindAccessPoint : public VisitorWithCursor {
         auto ap = Ref<AccessPoint>::make();
         *ap = {op,
                cursor(),
-               defs_.at(op->var_)->id(),
+               defs_.at(op->var_),
                defs_.at(op->var_)->buffer_,
                defAxis_.at(op->var_),
                cur_,
@@ -100,6 +100,7 @@ class FindAccessPoint : public VisitorWithCursor {
     void visit(const Store &op) override { visitStoreLike(op); }
     void visit(const ReduceTo &op) override { visitStoreLike(op); }
     void visit(const Load &op) override;
+    void visit(const MatMul &op) override { (*this)(op->equivalent_); }
 };
 
 /**
@@ -169,7 +170,8 @@ struct Dependency {
     // Helper functions
     const AST &later() const { return later_.op_; }
     const AST &earlier() const { return earlier_.op_; }
-    const std::string &defId() const { return earlier_.def_; }
+    const VarDef &def() const { return earlier_.def_; }
+    const std::string &defId() const { return earlier_.def_->id(); }
 };
 typedef std::function<void(const Dependency &)> FindDepsCallback;
 
@@ -290,6 +292,7 @@ class AnalyzeDeps : public Visitor {
     void visit(const Store &op) override { visitStoreLike(op); }
     void visit(const ReduceTo &op) override { visitStoreLike(op); }
     void visit(const Load &op) override;
+    void visit(const MatMul &op) override { (*this)(op->equivalent_); }
 };
 
 /**

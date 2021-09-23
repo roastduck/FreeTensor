@@ -47,6 +47,11 @@ void Visitor::operator()(const AST &op) {
         DISPATCH_EXPR_CASE(LNot);
         DISPATCH_EXPR_CASE(Sqrt);
         DISPATCH_EXPR_CASE(Exp);
+        DISPATCH_EXPR_CASE(Square);
+        DISPATCH_EXPR_CASE(Floor);
+        DISPATCH_EXPR_CASE(Ceil);
+        DISPATCH_EXPR_CASE(IfExpr);
+        DISPATCH_EXPR_CASE(Cast);
         DISPATCH_EXPR_CASE(Intrinsic);
         DISPATCH_EXPR_CASE(AnyExpr);
 
@@ -58,6 +63,7 @@ void Visitor::operator()(const AST &op) {
         DISPATCH_STMT_CASE(If);
         DISPATCH_STMT_CASE(Assert);
         DISPATCH_STMT_CASE(Eval);
+        DISPATCH_STMT_CASE(MatMul);
         DISPATCH_STMT_CASE(Any);
 
     default:
