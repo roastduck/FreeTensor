@@ -29,3 +29,22 @@ def test_not_found():
         s.parallelize("L1", "openmp")
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
+
+
+def test_no_deps():
+
+    @ir.transform
+    def test(ptr, edge1, edge2):
+        ir.declare_var(ptr, (11,), "int32", "input", "cpu")
+        ir.declare_var(edge1, (50,), "int32", "input", "cpu")
+        ir.declare_var(edge2, (50,), "int32", "output", "cpu")
+        'nid: Li'
+        'no_deps'
+        for i in range(10):
+            for j in range(ptr[i], ptr[i + 1]):
+                edge2[j] = edge1[j] + i
+
+    print(test)
+    s = ir.Schedule(test)
+    s.parallelize("Li", "openmp")  # No exception here
+    print(s.ast())

@@ -11,7 +11,8 @@ Stmt MergeFor::visit(const For &_op) {
         auto op = __op.as<ForNode>();
         auto len = makeMul(innerLen_, outerLen_);
         return makeFor(newId_, newIter_, makeIntConst(0), len, len,
-                       op->parallel_, op->unroll_, op->vectorize_, op->body_);
+                       op->noDeps_ && innerNoDeps_, op->parallel_, op->unroll_,
+                       op->vectorize_, op->body_);
     } else if (_op->id() == oldInner_->id()) {
         insideInner_ = true;
         auto __op = Mutator::visit(_op);
@@ -19,6 +20,7 @@ Stmt MergeFor::visit(const For &_op) {
         visitedInner_ = true;
         ASSERT(__op->nodeType() == ASTNodeType::For);
         auto op = __op.as<ForNode>();
+        innerNoDeps_ = op->noDeps_;
         return op->body_;
     } else {
         return Mutator::visit(_op);

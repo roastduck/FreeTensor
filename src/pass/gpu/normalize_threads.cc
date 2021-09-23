@@ -75,18 +75,18 @@ Stmt NormalizeThreads::visit(const For &op) {
         inKernel_ = false;
         auto zero = makeIntConst(0);
         auto inf = makeIntConst(INT_MAX);
-        ret = makeFor("", ".threadIdx.x", zero, inf, inf, "threadIdx.x", false,
-                      false, ret);
-        ret = makeFor("", ".threadIdx.y", zero, inf, inf, "threadIdx.y", false,
-                      false, ret);
-        ret = makeFor("", ".threadIdx.z", zero, inf, inf, "threadIdx.z", false,
-                      false, ret);
-        ret = makeFor("", ".blockIdx.x", zero, inf, inf, "blockIdx.x", false,
-                      false, ret);
-        ret = makeFor("", ".blockIdx.y", zero, inf, inf, "blockIdx.y", false,
-                      false, ret);
-        ret = makeFor("", ".blockIdx.z", zero, inf, inf, "blockIdx.z", false,
-                      false, ret);
+        ret = makeFor("", ".threadIdx.x", zero, inf, inf, false, "threadIdx.x",
+                      false, false, ret);
+        ret = makeFor("", ".threadIdx.y", zero, inf, inf, false, "threadIdx.y",
+                      false, false, ret);
+        ret = makeFor("", ".threadIdx.z", zero, inf, inf, false, "threadIdx.z",
+                      false, false, ret);
+        ret = makeFor("", ".blockIdx.x", zero, inf, inf, false, "blockIdx.x",
+                      false, false, ret);
+        ret = makeFor("", ".blockIdx.y", zero, inf, inf, false, "blockIdx.y",
+                      false, false, ret);
+        ret = makeFor("", ".blockIdx.z", zero, inf, inf, false, "blockIdx.z",
+                      false, false, ret);
         return ret;
     } else {
         return doVisitFor(op);

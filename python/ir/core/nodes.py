@@ -1,5 +1,5 @@
 import collections
-from typing import Sequence, Tuple, Any
+from typing import Sequence, Tuple, Any, Optional
 
 import ffi
 
@@ -10,29 +10,62 @@ class Context:
 
     def __init__(self):
         self.stmt_seq = []
-        self.lastIf = None  # To handle else case
-        self.nextNid = ""
+        self.last_if = None  # To handle else case
+        self.next_nid = ""
+        self.next_no_deps = False
 
     def append_stmt(self, stmt: ffi.Stmt):
         self.stmt_seq.append(stmt)
-        self.lastIf = None
-        self.nextNid = ""
+        self.last_if = None
+        self.next_nid = ""
+        self.next_no_deps = False
 
     def append_if_then_stmt(self, cond, body: ffi.Stmt):
-        nextNid = self.nextNid
-        self.append_stmt(ffi.makeIf(nextNid, cond, body))
-        self.lastIf = (nextNid, cond, body)
+        next_nid = self.next_nid
+        self.append_stmt(ffi.makeIf(next_nid, cond, body))
+        self.last_if = (next_nid, cond, body)
 
     def append_if_else_stmt(self, elseCase: ffi.Stmt):
-        nid, cond, thenCase = self.lastIf
+        nid, cond, thenCase = self.last_if
         self.stmt_seq.pop()
         self.append_stmt(ffi.makeIf(nid, cond, thenCase, elseCase))
 
+    def append_for_stmt(self,
+                        iter_var,
+                        begin,
+                        end,
+                        body,
+                        nid: str = "",
+                        no_deps: Optional[bool] = None):
+        if nid == "":
+            nid = self.next_nid
+        if no_deps is None:
+            no_deps = self.next_no_deps
+        self.append_stmt(
+            ffi.makeFor(
+                nid,
+                iter_var,
+                begin,
+                end,
+                end - begin,
+                no_deps,
+                "",
+                False,
+                False,
+                body,
+            ))
+
     def set_next_nid(self, nid: str):
-        self.nextNid = nid
+        self.next_nid = nid
 
     def get_next_nid(self):
-        return self.nextNid
+        return self.next_nid
+
+    def set_next_no_deps(self, no_deps: bool = True):
+        self.next_no_deps = no_deps
+
+    def get_next_no_deps(self):
+        return self.next_no_deps
 
     def make_stmt(self, nid: str = ""):
         if len(self.stmt_seq) == 1 and nid == "":
@@ -253,11 +286,17 @@ def VarDef(*args):
 
 class For:
 
-    def __init__(self, iter_var: str, begin, end, nid: str = ""):
+    def __init__(self,
+                 iter_var: str,
+                 begin,
+                 end,
+                 nid: str = "",
+                 no_deps: Optional[bool] = None):
         self.iter_var = iter_var
         self.begin = begin
         self.end = end
         self.nid = nid
+        self.no_deps = no_deps
 
     def __enter__(self):
         ctx_stack.push()
@@ -266,21 +305,12 @@ class For:
     def __exit__(self, exc_type, exc_value, traceback):
         body = ctx_stack.pop().make_stmt()
         top = ctx_stack.top()
-        nid = top.get_next_nid()
-        if self.nid != "":
-            nid = self.nid
-        top.append_stmt(
-            ffi.makeFor(
-                nid,
-                self.iter_var,
-                self.begin,
-                self.end,
-                self.end - self.begin,
-                "",
-                False,
-                False,
-                body,
-            ))
+        top.append_for_stmt(self.iter_var,
+                            self.begin,
+                            self.end,
+                            body,
+                            nid=self.nid,
+                            no_deps=self.no_deps)
 
 
 class If:

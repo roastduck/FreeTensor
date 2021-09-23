@@ -135,7 +135,7 @@ Stmt MakeFillAndFlush::visitStmt(
         for (int i = nDim - 1; i >= 0; i--) {
             fill = makeFor("", iters[i], rRange_.lower_[i],
                            makeAdd(rRange_.lower_[i], rRange_.len_[i]),
-                           rRange_.len_[i], "", false, false, fill);
+                           rRange_.len_[i], false, "", false, false, fill);
         }
         if (rRange_.cond_.isValid()) {
             fill = makeIf("", rRange_.cond_, fill);
@@ -150,7 +150,7 @@ Stmt MakeFillAndFlush::visitStmt(
         for (int i = nDim - 1; i >= 0; i--) {
             flush = makeFor("", iters[i], wRange_.lower_[i],
                             makeAdd(wRange_.lower_[i], wRange_.len_[i]),
-                            wRange_.len_[i], "", false, false, flush);
+                            wRange_.len_[i], false, "", false, false, flush);
         }
         if (wRange_.cond_.isValid()) {
             flush = makeIf("", wRange_.cond_, flush);
@@ -208,7 +208,7 @@ Stmt MakeInitAndReduce::visitStmt(
         for (int i = nDim - 1; i >= 0; i--) {
             init = makeFor("", iters[i], range_.lower_[i],
                            makeAdd(range_.lower_[i], range_.len_[i]),
-                           range_.len_[i], "", false, false, init);
+                           range_.len_[i], false, "", false, false, init);
         }
 
         Stmt reduce = makeReduceTo("", oldVar_, indices, reduce_->op_,
@@ -220,7 +220,7 @@ Stmt MakeInitAndReduce::visitStmt(
         for (int i = nDim - 1; i >= 0; i--) {
             reduce = makeFor("", iters[i], range_.lower_[i],
                              makeAdd(range_.lower_[i], range_.len_[i]),
-                             range_.len_[i], "", false, false, reduce);
+                             range_.len_[i], false, "", false, false, reduce);
         }
 
         op = makeStmtSeq("", {init, op, reduce});

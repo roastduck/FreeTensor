@@ -34,6 +34,16 @@ struct AccessPoint {
     Expr cond_;                  /// The condition (predicate) of the access
 };
 
+class FindAllNoDeps : public Visitor {
+    std::vector<std::string> results_;
+
+  public:
+    const std::vector<std::string> &results() const { return results_; }
+
+  protected:
+    void visit(const For &op) override;
+};
+
 /**
  * Find read and write points
  */
@@ -203,6 +213,7 @@ class AnalyzeDeps : public Visitor {
     const std::unordered_map<std::string, std::vector<Ref<AccessPoint>>>
         &reads_, &writes_;
     const std::unordered_map<std::string, std::vector<IterAxis>> &scope2coord_;
+    const std::vector<std::string> &noDepsList_;
     GenISLExpr genISLExpr_;
 
     const std::vector<FindDepsCond> &cond_;
@@ -228,12 +239,13 @@ class AnalyzeDeps : public Visitor {
             &writes,
         const std::unordered_map<std::string, std::vector<IterAxis>>
             &scope2coord,
+        const std::vector<std::string> &noDepsList,
         const std::vector<FindDepsCond> &cond, const FindDepsCallback &found,
         FindDepsMode mode, DepType depType, const FindDepsFilter &filter,
         bool ignoreReductionWAW, bool eraseOutsideVarDef)
         : points_(points), reads_(reads), writes_(writes),
-          scope2coord_(scope2coord), cond_(cond), found_(found),
-          filter_(filter), mode_(mode), depType_(depType),
+          scope2coord_(scope2coord), noDepsList_(noDepsList), cond_(cond),
+          found_(found), filter_(filter), mode_(mode), depType_(depType),
           ignoreReductionWAW_(ignoreReductionWAW),
           eraseOutsideVarDef_(eraseOutsideVarDef) {}
 

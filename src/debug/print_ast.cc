@@ -353,6 +353,10 @@ void PrintVisitor::visit(const Cast &op) {
 }
 
 void PrintVisitor::visit(const For &op) {
+    if (op->noDeps_) {
+        makeIndent();
+        os() << "// no dependency" << std::endl;
+    }
     if (!op->parallel_.empty()) {
         makeIndent();
         os() << "// parallel = " << op->parallel_ << std::endl;

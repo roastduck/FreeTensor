@@ -180,10 +180,10 @@ Stmt FissionFor::visit(const For &op) {
         isPart0_ = false, inPart_ = false, isAfter_ = false;
         auto part1 = (*this)(op->body_);
         inside_ = false;
-        auto for0 = makeFor(op->id(), op->iter_, begin, end, len, op->parallel_,
-                            op->unroll_, op->vectorize_, part0);
-        auto for1 = makeFor(op->id(), op->iter_, begin, end, len, op->parallel_,
-                            op->unroll_, op->vectorize_, part1);
+        auto for0 = makeFor(op->id(), op->iter_, begin, end, len, op->noDeps_,
+                            op->parallel_, op->unroll_, op->vectorize_, part0);
+        auto for1 = makeFor(op->id(), op->iter_, begin, end, len, op->noDeps_,
+                            op->parallel_, op->unroll_, op->vectorize_, part1);
         markNewId(for0, true);
         markNewId(for1, false);
         return makeStmtSeq("", {for0, for1});

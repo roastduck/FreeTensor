@@ -20,6 +20,13 @@ static bool checkInnerScopeCrossThreads(const std::string &parallel) {
     return false;
 }
 
+void FindAllNoDeps::visit(const For &op) {
+    Visitor::visit(op);
+    if (op->noDeps_) {
+        results_.emplace_back(op->id());
+    }
+}
+
 void FindAccessPoint::visit(const VarDef &op) {
     defAxis_[op->name_] = cur_.size();
     defs_[op->name_] = op;
@@ -698,6 +705,41 @@ void AnalyzeDeps::checkDep(const Ref<AccessPoint> &point,
                     break;
                 }
             }
+            if (fail) {
+                continue;
+            }
+            for (auto &&noDepsLoop : noDepsList_) {
+                auto &&coord = scope2coord_.at(noDepsLoop);
+                int iterId = coord.size() - 1;
+                if (iterId >= iterDim) {
+                    fail = true;
+                    break;
+                }
+
+                auto noDep = universeMap(spaceAlloc(isl_, 0, iterDim, iterDim));
+
+                // Position in the outer StmtSeq nodes
+                std::vector<std::pair<int, int>> pos;
+                for (int i = 0; i < iterId; i++) {
+                    if (coord[i].iter_->nodeType() == ASTNodeType::IntConst) {
+                        pos.emplace_back(
+                            i, coord[i].iter_.as<IntConstNode>()->val_);
+                    }
+                }
+                if (!pos.empty()) {
+                    ISLMap require(isl_, makeEqForBothOps(pos, iterDim));
+                    noDep = intersect(std::move(noDep), std::move(require));
+                }
+
+                ISLMap require(isl_, makeIneqBetweenOps(DepDirection::Different,
+                                                        iterId, iterDim));
+                noDep = intersect(std::move(noDep), std::move(require));
+                res = subtract(std::move(res), std::move(noDep));
+                if (res.empty()) {
+                    fail = true;
+                    break;
+                }
+            }
             if (!fail) {
                 found_(Dependency{item, getVar(point->op_), *point, *other});
             }
@@ -733,10 +775,13 @@ void findDeps(
         return;
     }
 
-    FindAccessPoint finder;
-    finder(op);
-    AnalyzeDeps analyzer(finder.points(), finder.reads(), finder.writes(),
-                         finder.scope2coord(), cond, found, mode, depType,
+    FindAccessPoint accFinder;
+    accFinder(op);
+    FindAllNoDeps noDepsFinder;
+    noDepsFinder(op);
+    AnalyzeDeps analyzer(accFinder.points(), accFinder.reads(),
+                         accFinder.writes(), accFinder.scope2coord(),
+                         noDepsFinder.results(), cond, found, mode, depType,
                          filter, ignoreReductionWAW, eraseOutsideVarDef);
     analyzer(op);
 }

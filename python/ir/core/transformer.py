@@ -111,7 +111,7 @@ class ASTContextStack:
 
     def create_loop(self, name, begin, end):
         name = self.create_current_name(name, "cache")
-        fr = For(name, begin, end, self.get_nid())
+        fr = For(name, begin, end, self.get_nid(), self.get_no_deps())
         var = fr.__enter__()
         top = self.top()
         top.var_dict[name] = var
@@ -123,6 +123,14 @@ class ASTContextStack:
     def get_nid(self):
         ret = node_ctx.top().get_next_nid()
         MarkNid("")
+        return ret
+
+    def set_no_deps(self):
+        node_ctx.top().set_next_no_deps(True)
+
+    def get_no_deps(self):
+        ret = node_ctx.top().get_next_no_deps()
+        node_ctx.top().set_next_no_deps(False)
         return ret
 
     def new_context_id(self):
@@ -598,6 +606,8 @@ class ASTTransformer(ast.NodeTransformer):
                 if self.prefix:
                     name = self.prefix + ':' + name
                 self.ctx_stack.set_nid(name)
+            if s == "no_deps":
+                self.ctx_stack.set_no_deps()
         elif hasattr(node.value, "expr_ptr") and isinstance(
                 node.value.expr_ptr, InlineFunction):
             node.value.expr_ptr.expand(self.ctx_stack)

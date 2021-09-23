@@ -34,13 +34,13 @@ void Grad::visit(const For &op) {
     Visitor::visit(op);
     if (oriStmts_.count(op->body_)) {
         oriStmts_[op] = makeFor("", op->iter_, op->begin_, op->end_, op->len_,
-                                op->parallel_, op->unroll_, op->vectorize_,
-                                oriStmts_.at(op->body_));
+                                op->noDeps_, op->parallel_, op->unroll_,
+                                op->vectorize_, oriStmts_.at(op->body_));
     }
     if (gradStmts_.count(op->body_)) {
         gradStmts_[op] = makeFor(
-            "", op->iter_, op->begin_, op->end_, op->len_, op->parallel_,
-            op->unroll_, op->vectorize_,
+            "", op->iter_, op->begin_, op->end_, op->len_, op->noDeps_,
+            op->parallel_, op->unroll_, op->vectorize_,
             ReplaceVar(op->iter_, makeSub(op->end_, makeVar(op->iter_)))(
                 gradStmts_.at(op->body_)));
     }
@@ -73,8 +73,8 @@ void Grad::visit(const VarDef &op) {
             for (int i = nDim - 1; i >= 0; i--) {
                 init = makeFor("", iters[i], makeIntConst(0),
                                op->buffer_->tensor().shape()[i],
-                               op->buffer_->tensor().shape()[i], "", false,
-                               false, init);
+                               op->buffer_->tensor().shape()[i], false, "",
+                               false, false, init);
             }
             grad = makeStmtSeq("", {init, grad});
         }
