@@ -42,7 +42,9 @@ void PrintVisitor::printId(const Stmt &op) {
 
 void PrintVisitor::visitStmt(
     const Stmt &op, const std::function<void(const Stmt &)> &visitNode) {
-    printId(op);
+    if (op->nodeType() != ASTNodeType::Any) {
+        printId(op);
+    }
     Visitor::visitStmt(op, visitNode);
 }
 

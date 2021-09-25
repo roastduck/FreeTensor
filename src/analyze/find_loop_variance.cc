@@ -153,9 +153,11 @@ void FindLoopVariance::visit(const Load &op) {
     }
 }
 
-void FindLoopVariance::visit(const LNot &op) {
+void FindLoopVariance::visit(const IfExpr &op) {
     Visitor::visit(op);
-    copyInfo(op->expr_, op);
+    copyInfo(op->cond_, op);
+    mergeInfo(op->thenCase_, op);
+    mergeInfo(op->elseCase_, op);
 }
 
 bool isVariant(const LoopVariExprMap &exprInfo, const Expr &expr,

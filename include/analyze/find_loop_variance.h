@@ -96,6 +96,11 @@ class FindLoopVariance : public Visitor {
         mergeInfo(op->rhs_, op);
     }
 
+    template <class T> void visitUnaryOp(const T &op) {
+        Visitor::visit(op);
+        copyInfo(op->expr_, op);
+    }
+
   protected:
     void visit(const For &op) override;
     void visit(const If &op) override;
@@ -124,7 +129,14 @@ class FindLoopVariance : public Visitor {
     void visit(const NE &op) override { visitBinOp(op); }
     void visit(const LAnd &op) override { visitBinOp(op); }
     void visit(const LOr &op) override { visitBinOp(op); }
-    void visit(const LNot &op) override;
+    void visit(const LNot &op) override { visitUnaryOp(op); }
+    void visit(const Sqrt &op) override { visitUnaryOp(op); }
+    void visit(const Exp &op) override { visitUnaryOp(op); }
+    void visit(const Square &op) override { visitUnaryOp(op); }
+    void visit(const Floor &op) override { visitUnaryOp(op); }
+    void visit(const Ceil &op) override { visitUnaryOp(op); }
+    void visit(const IfExpr &op) override;
+    void visit(const Cast &op) override { visitUnaryOp(op); }
 };
 
 bool isVariant(const LoopVariExprMap &exprInfo, const Expr &expr,

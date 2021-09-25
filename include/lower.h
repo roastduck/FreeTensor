@@ -40,6 +40,8 @@ template <class T> T lower(const T &t, const Ref<Target> &target) {
             // TODO: Support dynamic shared memory size, but the size should be
             // determined outside of kernels
             func = gpu::correctSharedAndGlobal(func);
+            // FIXME: MemType::GPUGlobal should also be make const, but only
+            // inside a kernel
             func =
                 makeConstShape(func, {MemType::GPUShared, MemType::GPULocal});
 

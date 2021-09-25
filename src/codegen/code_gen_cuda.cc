@@ -267,7 +267,7 @@ void CodeGenCUDA::visit(const VarDef &op) {
                 os() << ")(__glmem + " + std::to_string(globalStackTop_) << ");"
                      << std::endl;
 
-                int size = sizeOf(tensor.dtype());
+                int64_t size = sizeOf(tensor.dtype());
                 for (auto &&dim : shape) {
                     if (dim->nodeType() == ASTNodeType::IntConst) {
                         size *= dim.as<IntConstNode>()->val_;
@@ -353,7 +353,7 @@ void CodeGenCUDA::visit(const VarDef &op) {
             os() << ")(__shmem + " + std::to_string(sharedStackTop_) << ");"
                  << std::endl;
 
-            int size = sizeOf(tensor.dtype());
+            int64_t size = sizeOf(tensor.dtype());
             for (auto &&dim : shape) {
                 if (dim->nodeType() == ASTNodeType::IntConst) {
                     size *= dim.as<IntConstNode>()->val_;
