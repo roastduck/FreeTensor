@@ -907,7 +907,7 @@ def test_syncwarp():
     assert np.array_equal(y_np, y_std)
 
 
-def test_correct_shared():
+def test_correct_shared_1():
 
     @ir.transform
     def test(x, y):
@@ -967,6 +967,43 @@ def test_correct_shared():
 
     y_std = np.array([range(1, 513, 2)] * 4, dtype="int32")
     assert np.array_equal(y_np, y_std)
+
+
+def test_correct_shared_2():
+
+    @ir.transform
+    def test(x, y):
+        ir.declare_var(x, (4, 256), "int32", "input", "gpu/global")
+        ir.declare_var(y, (4, 256), "int32", "output", "gpu/global")
+        "nid: L0"
+        for i in range(0, 4):
+            t = ir.create_var((256,), "int32", "cache", "gpu/shared")
+            "nid: L1"
+            for j in range(i * 64, (i + 1) * 64):
+                t[j] = x[i, j] * 2
+                # No need to hoist over i, although i is not present here
+            "nid: L2"
+            for j in range(i * 64, (i + 1) * 64):
+                y[i, j] = t[j] + 1
+
+    s = ir.Schedule(test)
+    s.parallelize("L0", "threadIdx.y")
+    s.parallelize("L1", "threadIdx.x")
+    s.parallelize("L2", "threadIdx.x")
+    func = ir.lower(s.func(), target)
+    print(func)
+
+    with ir.VarDef([
+        ("x", (4, 256), "int32", "input", "gpu/global"),
+        ("y", (4, 256), "int32", "output", "gpu/global"),
+    ]) as (x, y):
+        with ir.For(".threadIdx.y", 0, 4) as i:
+            with ir.For(".threadIdx.x", 0, 64) as j:
+                with ir.VarDef("t", (256,), "int32", "cache",
+                               "gpu/shared") as t:
+                    t[j + i * 64] = x[i, j + i * 64] * 2
+                    y[i, j + i * 64] = t[j + i * 64] + 1
+    assert ir.make_1d_var(ir.pop_ast()).match(func.body)
 
 
 def test_relax_shared_shape_to_constants():

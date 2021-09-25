@@ -5,7 +5,6 @@
 #include <unordered_set>
 #include <vector>
 
-#include <analyze/find_loop_variance.h>
 #include <func.h>
 #include <mutator.h>
 #include <visitor.h>
@@ -14,53 +13,20 @@ namespace ir {
 
 namespace gpu {
 
-class FindAffectingLoops : public Visitor {
-    std::unordered_set<std::string> loops_;             // ID
-    std::unordered_map<std::string, std::string> defs_; // name -> ID
-    MemType mode_;
-
-    // VarDef ID -> For ID
-    std::unordered_map<std::string, std::unordered_set<std::string>> results_;
-    // Expr -> For ID
-    const std::unordered_map<
-        Expr, std::unordered_map<std::string, LoopVariability>> &variants_;
+class FindParallelLoops : public Visitor {
+    std::vector<For> loops_, stack_;
+    std::unordered_map<std::string, std::unordered_set<std::string>> affecting_;
 
   public:
-    FindAffectingLoops(
-        const std::unordered_map<
-            Expr, std::unordered_map<std::string, LoopVariability>> &variants,
-        MemType mode)
-        : mode_(mode), variants_(variants) {}
-
+    const std::vector<For> &loops() const { return loops_; }
     const std::unordered_map<std::string, std::unordered_set<std::string>> &
-    results() const {
-        return results_;
-    }
-
-  private:
-    template <class T> void visitMemWrite(const T &op) {
-        Visitor::visit(op);
-        if (defs_.count(op->var_)) {
-            for (auto &&idx : op->indices_) {
-                for (auto &&loop : loops_) {
-                    if (isVariant(variants_, idx, loop)) {
-                        results_[defs_.at(op->var_)].insert(loop);
-                    }
-                }
-            }
-            for (auto &&loop : loops_) {
-                if (isVariant(variants_, op->expr_, loop)) {
-                    results_[defs_.at(op->var_)].insert(loop);
-                }
-            }
-        }
+    affecting() const {
+        return affecting_;
     }
 
   protected:
     void visit(const For &op) override;
     void visit(const VarDef &op) override;
-    void visit(const Store &op) override { visitMemWrite(op); }
-    void visit(const ReduceTo &op) override { visitMemWrite(op); }
 };
 
 /**
@@ -73,15 +39,13 @@ class CorrectMutator : public Mutator {
     std::unordered_map<std::string, int> defPos_;
     std::unordered_map<std::string, std::string> defs_; // name -> ID
     const std::unordered_map<std::string, std::unordered_set<std::string>>
-        &affecting_;
-    MemType mode_;
+        &affecting_; // VarDef ID -> For ID
 
   public:
     CorrectMutator(
         const std::unordered_map<std::string, std::unordered_set<std::string>>
-            &affecting,
-        MemType mode)
-        : affecting_(affecting), mode_(mode) {}
+            &affecting)
+        : affecting_(affecting) {}
 
   private:
     template <class T> T alterAccess(const T &op) {

@@ -14,7 +14,7 @@ Expr NormalizeThreads::visit(const Var &_op) {
     auto op = __op.as<VarNode>();
     if (varMap_.count(op->name_)) {
         auto &&info = varMap_.at(op->name_);
-        return makeAdd(makeVar(info.newIter_), info.offset_);
+        return makeAdd(makeVar(info.newIter_), (*this)(info.offset_));
     }
     return op;
 }
@@ -60,9 +60,7 @@ Stmt NormalizeThreads::doVisitFor(const For &_op) {
         if (!op->noDeps_) {
             notNoDeps_.insert(_op->parallel_);
         }
-        return makeIf(op->id(),
-                      makeLT(makeVar(newIter), makeSub(op->end_, op->begin_)),
-                      op->body_);
+        return makeIf(op->id(), makeLT(makeVar(newIter), op->len_), op->body_);
     } else {
         return Mutator::visit(_op);
     }
