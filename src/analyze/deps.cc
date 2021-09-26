@@ -8,6 +8,12 @@
 
 namespace ir {
 
+template <class T>
+static void unionTo(std::unordered_set<T> &target,
+                    const std::unordered_set<T> &other) {
+    target.insert(other.begin(), other.end());
+}
+
 static bool checkInnerScopeCrossThreads(const std::string &parallel) {
     if (parallel == "threadIdx.x" || parallel == "threadIdx.y" ||
         parallel == "threadIdx.z") {
@@ -84,44 +90,18 @@ void FindAccessPoint::visit(const Load &op) {
     reads_[defs_.at(op->var_)->id()].emplace_back(ap);
 }
 
-void GenISLExpr::reset() {
-    visited_.clear();
-    externals_.clear();
-}
-
-std::string GenISLExpr::normalizeId(const std::string &old) {
-    if (idCache_.count(old)) {
-        return idCache_.at(old);
-    }
-    std::string ret = old;
-    for (char &c : ret) {
-        if (!isalnum(c) && c != '_') {
-            c = '_';
-        }
-    }
-    while (idFlag_.count(ret)) {
-        ret += "_";
-    }
-    idFlag_.insert(ret);
-    return idCache_[old] = ret;
-}
-
-void GenISLExpr::visitExpr(const Expr &op,
-                           const std::function<void(const Expr &)> &visitNode) {
-    if (!visited_.count(op)) {
-        Visitor::visitExpr(op, visitNode);
-        visited_.insert(op);
+void GenISLExprDeps::visitExpr(
+    const Expr &op, const std::function<void(const Expr &)> &visitNode) {
+    auto oldParent = parent_;
+    parent_ = op;
+    GenISLExpr::visitExpr(op, visitNode);
+    parent_ = oldParent;
+    if (parent_.isValid()) {
+        unionTo(externals_[parent_], externals_[op]);
     }
 }
 
-void GenISLExpr::visit(const Var &op) { results_[op] = normalizeId(op->name_); }
-
-void GenISLExpr::visit(const IntConst &op) {
-    results_[op] = std::to_string(op->val_);
-    constants_[op] = op->val_;
-}
-
-void GenISLExpr::visit(const Load &op) {
+void GenISLExprDeps::visit(const Load &op) {
     for (auto &&idx : op->indices_) {
         if (!constants_.count(idx)) {
             return;
@@ -131,186 +111,7 @@ void GenISLExpr::visit(const Load &op) {
     for (auto &&idx : op->indices_) {
         str += results_.at(idx) + ",";
     }
-    externals_.insert(results_[op] = normalizeId(str));
-}
-
-void GenISLExpr::visit(const Add &op) {
-    Visitor::visit(op);
-    if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
-        results_[op] =
-            "(" + results_.at(op->lhs_) + " + " + results_.at(op->rhs_) + ")";
-        if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
-            results_[op] =
-                std::to_string(constants_[op] = constants_.at(op->lhs_) +
-                                                constants_.at(op->rhs_));
-        }
-    }
-}
-
-void GenISLExpr::visit(const Sub &op) {
-    Visitor::visit(op);
-    if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
-        results_[op] =
-            "(" + results_.at(op->lhs_) + " - " + results_.at(op->rhs_) + ")";
-        if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
-            results_[op] =
-                std::to_string(constants_[op] = constants_.at(op->lhs_) -
-                                                constants_.at(op->rhs_));
-        }
-    }
-}
-
-void GenISLExpr::visit(const Mul &op) {
-    Visitor::visit(op);
-    if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
-        if (constants_.count(op->lhs_) || constants_.count(op->rhs_)) {
-            results_[op] = "(" + results_.at(op->lhs_) + " * " +
-                           results_.at(op->rhs_) + ")";
-        }
-        if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
-            results_[op] =
-                std::to_string(constants_[op] = constants_.at(op->lhs_) *
-                                                constants_.at(op->rhs_));
-        }
-    }
-}
-
-void GenISLExpr::visit(const LAnd &op) {
-    Visitor::visit(op);
-    if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
-        results_[op] =
-            "(" + results_.at(op->lhs_) + " and " + results_.at(op->rhs_) + ")";
-    }
-}
-
-void GenISLExpr::visit(const LOr &op) {
-    Visitor::visit(op);
-    if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
-        results_[op] =
-            "(" + results_.at(op->lhs_) + " or " + results_.at(op->rhs_) + ")";
-    }
-}
-
-void GenISLExpr::visit(const LNot &op) {
-    Visitor::visit(op);
-    if (results_.count(op->expr_)) {
-        results_[op] = "not " + results_.at(op->expr_);
-    }
-}
-
-void GenISLExpr::visit(const LT &op) {
-    Visitor::visit(op);
-    if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
-        results_[op] = results_.at(op->lhs_) + " < " + results_.at(op->rhs_);
-    }
-}
-
-void GenISLExpr::visit(const LE &op) {
-    Visitor::visit(op);
-    if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
-        results_[op] = results_.at(op->lhs_) + " <= " + results_.at(op->rhs_);
-    }
-}
-
-void GenISLExpr::visit(const GT &op) {
-    Visitor::visit(op);
-    if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
-        results_[op] = results_.at(op->lhs_) + " > " + results_.at(op->rhs_);
-    }
-}
-
-void GenISLExpr::visit(const GE &op) {
-    Visitor::visit(op);
-    if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
-        results_[op] = results_.at(op->lhs_) + " >= " + results_.at(op->rhs_);
-    }
-}
-
-void GenISLExpr::visit(const EQ &op) {
-    Visitor::visit(op);
-    if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
-        results_[op] = results_.at(op->lhs_) + " = " + results_.at(op->rhs_);
-    }
-}
-
-void GenISLExpr::visit(const NE &op) {
-    Visitor::visit(op);
-    if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
-        results_[op] = results_.at(op->lhs_) + " != " + results_.at(op->rhs_);
-    }
-}
-
-void GenISLExpr::visit(const FloorDiv &op) {
-    Visitor::visit(op);
-    if (results_.count(op->lhs_) && constants_.count(op->rhs_)) {
-        results_[op] = "floor(" + results_.at(op->lhs_) + " / " +
-                       results_.at(op->rhs_) + ")";
-        if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
-            results_[op] = std::to_string(
-                constants_[op] =
-                    floorDiv(constants_.at(op->lhs_), constants_.at(op->rhs_)));
-        }
-    }
-}
-
-void GenISLExpr::visit(const CeilDiv &op) {
-    Visitor::visit(op);
-    if (results_.count(op->lhs_) && constants_.count(op->rhs_)) {
-        results_[op] = "ceil(" + results_.at(op->lhs_) + " / " +
-                       results_.at(op->rhs_) + ")";
-        if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
-            results_[op] = std::to_string(
-                constants_[op] =
-                    ceilDiv(constants_.at(op->lhs_), constants_.at(op->rhs_)));
-        }
-    }
-}
-
-void GenISLExpr::visit(const Mod &op) {
-    Visitor::visit(op);
-    if (results_.count(op->lhs_) && constants_.count(op->rhs_)) {
-        results_[op] =
-            "(" + results_.at(op->lhs_) + " % " + results_.at(op->rhs_) + ")";
-        if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
-            results_[op] =
-                std::to_string(constants_[op] = constants_.at(op->lhs_) %
-                                                constants_.at(op->rhs_));
-        }
-    }
-}
-
-void GenISLExpr::visit(const Min &op) {
-    Visitor::visit(op);
-    if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
-        results_[op] =
-            "min(" + results_.at(op->lhs_) + ", " + results_.at(op->rhs_) + ")";
-        if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
-            results_[op] = std::to_string(
-                constants_[op] =
-                    std::min(constants_.at(op->lhs_), constants_.at(op->rhs_)));
-        }
-    }
-}
-
-void GenISLExpr::visit(const Max &op) {
-    Visitor::visit(op);
-    if (results_.count(op->lhs_) && results_.count(op->rhs_)) {
-        results_[op] =
-            "max(" + results_.at(op->lhs_) + ", " + results_.at(op->rhs_) + ")";
-        if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
-            results_[op] = std::to_string(
-                constants_[op] =
-                    std::max(constants_.at(op->lhs_), constants_.at(op->rhs_)));
-        }
-    }
-}
-
-Ref<std::string> GenISLExpr::gen(const Expr &op) {
-    (*this)(op);
-    if (results_.count(op)) {
-        return Ref<std::string>::make(results_.at(op));
-    }
-    return nullptr;
+    externals_[op].insert(results_[op] = normalizeId(str));
 }
 
 std::string AnalyzeDeps::makeIterList(const std::vector<IterAxis> &list,
@@ -336,12 +137,14 @@ std::string AnalyzeDeps::makeIterList(const std::vector<IterAxis> &list,
     return "[" + ret + "]";
 }
 
-Ref<std::string> AnalyzeDeps::makeAccList(const std::vector<Expr> &list,
-                                          RelaxMode relax) {
+Ref<std::string>
+AnalyzeDeps::makeAccList(const std::vector<Expr> &list, RelaxMode relax,
+                         std::unordered_set<std::string> &externals) {
     std::string ret;
     for (int i = 0, iEnd = list.size(); i < iEnd; i++) {
         if (auto linstr = genISLExpr_.gen(list[i]); linstr.isValid()) {
             ret += *linstr;
+            unionTo(externals, genISLExpr_.externals(list[i]));
         } else if (relax == RelaxMode::Possible) {
             ret += genISLExpr_.normalizeId("free" + std::to_string(i));
         } else {
@@ -354,8 +157,9 @@ Ref<std::string> AnalyzeDeps::makeAccList(const std::vector<Expr> &list,
     return Ref<std::string>::make("[" + ret + "]");
 }
 
-Ref<std::string> AnalyzeDeps::makeRange(const std::vector<IterAxis> &point,
-                                        RelaxMode relax) {
+Ref<std::string>
+AnalyzeDeps::makeRange(const std::vector<IterAxis> &point, RelaxMode relax,
+                       std::unordered_set<std::string> &externals) {
     std::vector<std::string> ineqs;
     for (size_t i = 0, iEnd = point.size(); i < iEnd; i++) {
         if (point[i].iter_->nodeType() == ASTNodeType::Var) {
@@ -365,6 +169,7 @@ Ref<std::string> AnalyzeDeps::makeRange(const std::vector<IterAxis> &point,
             if (auto linstr = genISLExpr_.gen(point[i].begin_);
                 linstr.isValid()) {
                 ineq = *linstr + " <= " + ineq;
+                unionTo(externals, genISLExpr_.externals(point[i].begin_));
             } else {
                 ineq = "free_lo <= " + ineq;
                 bounded = false;
@@ -372,6 +177,7 @@ Ref<std::string> AnalyzeDeps::makeRange(const std::vector<IterAxis> &point,
             if (auto linstr = genISLExpr_.gen(point[i].end_);
                 linstr.isValid()) {
                 ineq = ineq + " < " + *linstr;
+                unionTo(externals, genISLExpr_.externals(point[i].end_));
             } else {
                 ineq = ineq + " < free_hi";
                 bounded = false;
@@ -390,9 +196,12 @@ Ref<std::string> AnalyzeDeps::makeRange(const std::vector<IterAxis> &point,
     return Ref<std::string>::make(std::move(ret));
 }
 
-Ref<std::string> AnalyzeDeps::makeCond(const Expr &expr, RelaxMode relax) {
+Ref<std::string>
+AnalyzeDeps::makeCond(const Expr &expr, RelaxMode relax,
+                      std::unordered_set<std::string> &externals) {
     if (expr.isValid()) {
         if (auto str = genISLExpr_.gen(expr); str.isValid()) {
+            unionTo(externals, genISLExpr_.externals(expr));
             return Ref<std::string>::make(*str);
         } else if (relax == RelaxMode::Necessary) {
             return nullptr;
@@ -403,19 +212,20 @@ Ref<std::string> AnalyzeDeps::makeCond(const Expr &expr, RelaxMode relax) {
 
 Ref<std::string> AnalyzeDeps::makeAccMap(const AccessPoint &p, int iterDim,
                                          int accDim, RelaxMode relax) {
+    std::unordered_set<std::string> externals;
     auto ret = makeIterList(p.iter_, iterDim) + " -> ";
-    if (auto str = makeAccList(p.access_, relax); str.isValid()) {
+    if (auto str = makeAccList(p.access_, relax, externals); str.isValid()) {
         ret += *str;
     } else {
         return nullptr;
     }
     std::string cond;
-    if (auto str = makeRange(p.iter_, relax); str.isValid()) {
+    if (auto str = makeRange(p.iter_, relax, externals); str.isValid()) {
         cond += *str;
     } else {
         return nullptr;
     }
-    if (auto str = makeCond(p.cond_, relax); str.isValid()) {
+    if (auto str = makeCond(p.cond_, relax, externals); str.isValid()) {
         cond += (cond.empty() || str->empty() ? "" : " and ") + *str;
     } else {
         return nullptr;
@@ -424,7 +234,7 @@ Ref<std::string> AnalyzeDeps::makeAccMap(const AccessPoint &p, int iterDim,
         ret += ": " + cond;
     }
     std::string ext = "free_lo, free_hi";
-    for (auto &&item : genISLExpr_.externals()) {
+    for (auto &&item : externals) {
         ext += ", " + item;
     }
     return Ref<std::string>::make("[" + ext + "] -> {" + ret + "}");
@@ -586,29 +396,12 @@ void AnalyzeDeps::checkDep(const Ref<AccessPoint> &point,
         }
     }
 
-    // We call genISLExpr_ twice. The first time is to warm up the external
-    // list, because all the maps shall have an identical external list
-
-    // 1st time
-    genISLExpr_.reset();
-    if (!makeAccMap(*point, iterDim, accDim, pRelax).isValid()) {
+    ISLMap pmap;
+    if (auto str = makeAccMap(*point, iterDim, accDim, pRelax); str.isValid()) {
+        pmap = ISLMap(isl_, *str);
+    } else {
         return;
     }
-    for (size_t i = 0, n = otherList.size(); i < n; i++) {
-        auto &&other = otherList[i];
-        if (!filteredIn[i]) {
-            continue;
-        }
-
-        filteredIn[i] = makeAccMap(*other, iterDim, accDim, oRelax).isValid();
-    }
-    if (std::find(filteredIn.begin(), filteredIn.end(), true) ==
-        filteredIn.end()) {
-        return;
-    }
-
-    // 2nd time
-    ISLMap pmap(isl_, *makeAccMap(*point, iterDim, accDim, pRelax));
     ISLMap ps2a(isl_, makeSerialToAll(iterDim, serialIterDim, point->iter_));
     ISLMap pa2s = reverse(ps2a);
     ISLSet pIter = domain(pmap);
@@ -622,7 +415,14 @@ void AnalyzeDeps::checkDep(const Ref<AccessPoint> &point,
             continue;
         }
 
-        ISLMap omap(isl_, *makeAccMap(*other, iterDim, accDim, oRelax));
+        ISLMap omap;
+        if (auto str = makeAccMap(*other, iterDim, accDim, oRelax);
+            str.isValid()) {
+            omap = ISLMap(isl_, *str);
+        } else {
+            filteredIn[i] = false;
+            continue;
+        }
         ISLMap os2a(isl_,
                     makeSerialToAll(iterDim, serialIterDim, other->iter_));
         ISLMap oa2s = reverse(os2a);

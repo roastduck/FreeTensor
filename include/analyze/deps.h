@@ -8,6 +8,7 @@
 #include <vector>
 
 #include <cursor.h>
+#include <math/gen_isl_expr.h>
 #include <math/isl.h>
 #include <visitor.h>
 
@@ -114,52 +115,22 @@ class FindAccessPoint : public VisitorWithCursor {
 };
 
 /**
- * Serialize expressions to an ISL input string
- *
- * It returns nullptr for unsupported expressions, because ISL reports errors on
- * them
+ * GenISLExpr specialized for handling external variables
  */
-class GenISLExpr : public Visitor {
-    std::unordered_map<Expr, std::string> results_;
-    std::unordered_set<Expr> visited_;
-    std::unordered_map<Expr, int> constants_;
-    std::unordered_set<std::string> externals_;
-    std::unordered_map<std::string, std::string> idCache_; // IR IDs -> ISL IDs
-    std::unordered_set<std::string> idFlag_;               // ISL IDs
+class GenISLExprDeps : public GenISLExpr {
+    std::unordered_map<Expr, std::unordered_set<std::string>> externals_;
+    Expr parent_ = nullptr;
 
   public:
-    std::string normalizeId(const std::string &id);
-
-    void reset();
-    Ref<std::string> gen(const Expr &op);
-
-    const std::unordered_set<std::string> &externals() const {
-        return externals_;
+    const std::unordered_set<std::string> &externals(const Expr &op) {
+        return externals_[op];
     }
 
   protected:
+    using GenISLExpr::visit;
     void visitExpr(const Expr &op,
                    const std::function<void(const Expr &)> &visitNode) override;
-    void visit(const Var &op) override;
-    void visit(const IntConst &op) override;
     void visit(const Load &op) override;
-    void visit(const Add &op) override;
-    void visit(const Sub &op) override;
-    void visit(const Mul &op) override;
-    void visit(const LAnd &op) override;
-    void visit(const LOr &op) override;
-    void visit(const LNot &op) override;
-    void visit(const LT &op) override;
-    void visit(const LE &op) override;
-    void visit(const GT &op) override;
-    void visit(const GE &op) override;
-    void visit(const EQ &op) override;
-    void visit(const NE &op) override;
-    void visit(const FloorDiv &op) override;
-    void visit(const CeilDiv &op) override;
-    void visit(const Mod &op) override;
-    void visit(const Min &op) override;
-    void visit(const Max &op) override;
 };
 
 enum class DepDirection : int {
@@ -214,7 +185,7 @@ class AnalyzeDeps : public Visitor {
         &reads_, &writes_;
     const std::unordered_map<std::string, std::vector<IterAxis>> &scope2coord_;
     const std::vector<std::string> &noDepsList_;
-    GenISLExpr genISLExpr_;
+    GenISLExprDeps genISLExpr_;
 
     const std::vector<FindDepsCond> &cond_;
     const FindDepsCallback &found_;
@@ -251,11 +222,13 @@ class AnalyzeDeps : public Visitor {
 
   private:
     std::string makeIterList(const std::vector<IterAxis> &list, int n);
-    Ref<std::string> makeAccList(const std::vector<Expr> &list,
-                                 RelaxMode relax);
+    Ref<std::string> makeAccList(const std::vector<Expr> &list, RelaxMode relax,
+                                 std::unordered_set<std::string> &externals);
     Ref<std::string> makeRange(const std::vector<IterAxis> &point,
-                               RelaxMode relax);
-    Ref<std::string> makeCond(const Expr &cond, RelaxMode relax);
+                               RelaxMode relax,
+                               std::unordered_set<std::string> &externals);
+    Ref<std::string> makeCond(const Expr &cond, RelaxMode relax,
+                              std::unordered_set<std::string> &externals);
     Ref<std::string> makeAccMap(const AccessPoint &p, int iterDim, int accDim,
                                 RelaxMode relax);
 
