@@ -227,6 +227,7 @@ class AnalyzeDeps : public Visitor {
 
   private:
     std::string makeIterList(const std::vector<IterAxis> &list, int n);
+    std::string makeNdList(const std::string &name, int n) const;
     Ref<std::string>
     makeAccList(const std::vector<Expr> &list, RelaxMode relax,
                 std::unordered_map<Expr, std::string> &externals);
@@ -235,23 +236,21 @@ class AnalyzeDeps : public Visitor {
               std::unordered_map<Expr, std::string> &externals);
     Ref<std::string> makeCond(const Expr &cond, RelaxMode relax,
                               std::unordered_map<Expr, std::string> &externals);
-    Ref<std::string>
-    makeAccMap(const AccessPoint &p, int iterDim, int accDim, RelaxMode relax,
-               const std::string &extSuffix,
-               std::unordered_map<Expr, std::string> &externals);
 
-    std::string makeNdList(const std::string &name, int n) const;
-    std::string makeEqForBothOps(const std::vector<std::pair<int, int>> &coord,
-                                 int iterDim) const;
-    std::string makeIneqBetweenOps(DepDirection mode, int iterId,
-                                   int iterDim) const;
+    ISLMap makeAccMap(const AccessPoint &p, int iterDim, int accDim,
+                      RelaxMode relax, const std::string &extSuffix,
+                      std::unordered_map<Expr, std::string> &externals);
 
-    std::string makeSerialToAll(int iterDim, int serialIterDim,
-                                const std::vector<IterAxis> &point) const;
+    ISLMap makeEqForBothOps(const std::vector<std::pair<int, int>> &coord,
+                            int iterDim) const;
+    ISLMap makeIneqBetweenOps(DepDirection mode, int iterId, int iterDim) const;
+
+    ISLMap makeSerialToAll(int iterDim, int serialIterDim,
+                           const std::vector<IterAxis> &point) const;
     static int countSerial(const std::vector<IterAxis> &point);
 
-    std::string makeExternalEq(int iterDim, const std::string &ext1,
-                               const std::string &ext2);
+    ISLMap makeExternalEq(int iterDim, const std::string &ext1,
+                          const std::string &ext2);
 
     ISLMap makeConstraintOfSingleLoop(const std::string &loop,
                                       DepDirection mode, int iterDim);
