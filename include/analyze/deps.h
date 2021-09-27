@@ -238,14 +238,25 @@ class AnalyzeDeps : public Visitor {
     std::string makeIneqBetweenOps(DepDirection mode, int iterId,
                                    int iterDim) const;
 
+    ISLMap makeConstraintOfSingleLoop(const std::string &loop,
+                                      DepDirection mode, int iterDim);
+
     static const std::string &getVar(const AST &op);
 
     std::string makeSerialToAll(int iterDim, int serialIterDim,
                                 const std::vector<IterAxis> &point) const;
     static int countSerial(const std::vector<IterAxis> &point);
 
-    void checkDep(const Ref<AccessPoint> &lhs,
-                  const std::vector<Ref<AccessPoint>> &rhs);
+    /**
+     * Check the dependencies between a later memory access `point` and many
+     * earlier memory accesses in `otherList`, filter them via the `filter_`
+     * callback, and report then via the `found_` callback. Earlier memory
+     * accesses may overwrite each other, and the overwritten ones will not
+     * result in a dependency. All visitors to memory access nodes will call
+     * `checkDep`
+     */
+    void checkDep(const Ref<AccessPoint> &point,
+                  const std::vector<Ref<AccessPoint>> &otherList);
 
     template <class T> void visitStoreLike(const T &op) {
         Visitor::visit(op);

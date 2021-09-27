@@ -292,6 +292,32 @@ std::string AnalyzeDeps::makeIneqBetweenOps(DepDirection mode, int iterId,
            ": d_" + idStr + " " + ineq + " d" + idStr + "}";
 }
 
+ISLMap AnalyzeDeps::makeConstraintOfSingleLoop(const std::string &loop,
+                                               DepDirection mode, int iterDim) {
+    auto &&coord = scope2coord_.at(loop);
+    int iterId = coord.size() - 1;
+    if (iterId >= iterDim) {
+        return emptyMap(spaceAlloc(isl_, 0, iterDim, iterDim));
+    }
+
+    auto ret = universeMap(spaceAlloc(isl_, 0, iterDim, iterDim));
+
+    // Position in the outer StmtSeq nodes
+    std::vector<std::pair<int, int>> pos;
+    for (int i = 0; i < iterId; i++) {
+        if (coord[i].iter_->nodeType() == ASTNodeType::IntConst) {
+            pos.emplace_back(i, coord[i].iter_.as<IntConstNode>()->val_);
+        }
+    }
+    if (!pos.empty()) {
+        ISLMap require(isl_, makeEqForBothOps(pos, iterDim));
+        ret = intersect(std::move(ret), std::move(require));
+    }
+
+    ISLMap require(isl_, makeIneqBetweenOps(mode, iterId, iterDim));
+    return intersect(std::move(ret), std::move(require));
+}
+
 const std::string &AnalyzeDeps::getVar(const AST &op) {
     switch (op->nodeType()) {
     case ASTNodeType::Load:
@@ -477,28 +503,8 @@ void AnalyzeDeps::checkDep(const Ref<AccessPoint> &point,
             ISLMap res = nearest;
             bool fail = false;
             for (auto &&subitem : item) {
-                auto &&coord = scope2coord_.at(subitem.first);
-                int iterId = coord.size() - 1;
-                DepDirection mode = subitem.second;
-                if (iterId >= iterDim) {
-                    fail = true;
-                    break;
-                }
-
-                // Position in the outer StmtSeq nodes
-                std::vector<std::pair<int, int>> pos;
-                for (int i = 0; i < iterId; i++) {
-                    if (coord[i].iter_->nodeType() == ASTNodeType::IntConst) {
-                        pos.emplace_back(
-                            i, coord[i].iter_.as<IntConstNode>()->val_);
-                    }
-                }
-                if (!pos.empty()) {
-                    ISLMap require(isl_, makeEqForBothOps(pos, iterDim));
-                    res = intersect(std::move(res), std::move(require));
-                }
-
-                ISLMap require(isl_, makeIneqBetweenOps(mode, iterId, iterDim));
+                auto require = makeConstraintOfSingleLoop(
+                    subitem.first, subitem.second, iterDim);
                 res = intersect(std::move(res), std::move(require));
                 if (res.empty()) {
                     fail = true;
@@ -509,31 +515,8 @@ void AnalyzeDeps::checkDep(const Ref<AccessPoint> &point,
                 continue;
             }
             for (auto &&noDepsLoop : noDepsList_) {
-                auto &&coord = scope2coord_.at(noDepsLoop);
-                int iterId = coord.size() - 1;
-                if (iterId >= iterDim) {
-                    fail = true;
-                    break;
-                }
-
-                auto noDep = universeMap(spaceAlloc(isl_, 0, iterDim, iterDim));
-
-                // Position in the outer StmtSeq nodes
-                std::vector<std::pair<int, int>> pos;
-                for (int i = 0; i < iterId; i++) {
-                    if (coord[i].iter_->nodeType() == ASTNodeType::IntConst) {
-                        pos.emplace_back(
-                            i, coord[i].iter_.as<IntConstNode>()->val_);
-                    }
-                }
-                if (!pos.empty()) {
-                    ISLMap require(isl_, makeEqForBothOps(pos, iterDim));
-                    noDep = intersect(std::move(noDep), std::move(require));
-                }
-
-                ISLMap require(isl_, makeIneqBetweenOps(DepDirection::Different,
-                                                        iterId, iterDim));
-                noDep = intersect(std::move(noDep), std::move(require));
+                auto noDep = makeConstraintOfSingleLoop(
+                    noDepsLoop, DepDirection::Different, iterDim);
                 res = subtract(std::move(res), std::move(noDep));
                 if (res.empty()) {
                     fail = true;

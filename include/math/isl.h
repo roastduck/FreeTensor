@@ -305,6 +305,16 @@ inline ISLSpace spaceSetAlloc(const ISLCtx &ctx, unsigned nparam,
     return isl_space_set_alloc(ctx.get(), nparam, dim);
 }
 
+inline ISLSet emptySet(ISLSpace &&space) { return isl_set_empty(space.move()); }
+inline ISLSet emptySet(const ISLSpace &space) {
+    return isl_set_empty(space.copy());
+}
+
+inline ISLMap emptyMap(ISLSpace &&space) { return isl_map_empty(space.move()); }
+inline ISLMap emptyMap(const ISLSpace &space) {
+    return isl_map_empty(space.copy());
+}
+
 inline ISLSet universeSet(ISLSpace &&space) {
     return isl_set_universe(space.move());
 }
