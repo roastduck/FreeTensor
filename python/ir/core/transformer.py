@@ -670,8 +670,6 @@ class ASTTransformer(ast.NodeTransformer):
         return node
 
     def visit_Expr(self, node):
-        self.nid = self.ctx_stack.get_nid()
-        self.generic_visit(node)
         if isinstance(node.value, ast.Constant) and isinstance(
                 node.value.value, str):
             s = node.value.value
@@ -682,7 +680,11 @@ class ASTTransformer(ast.NodeTransformer):
                 self.ctx_stack.set_nid(name)
             if s == "no_deps":
                 self.ctx_stack.set_no_deps()
-        elif hasattr(node.value, "expr_ptr") and isinstance(
+            return node
+
+        self.nid = self.ctx_stack.get_nid()
+        self.generic_visit(node)
+        if hasattr(node.value, "expr_ptr") and isinstance(
                 node.value.expr_ptr, InlineFunction):
             node.value.expr_ptr.expand(self.ctx_stack, self.nid)
         return node

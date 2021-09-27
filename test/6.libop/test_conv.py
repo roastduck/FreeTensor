@@ -26,9 +26,9 @@ def test_basic():
 
     print(f)
     s = ir.Schedule(f)
-    s.inline("conv:V_X_shape")
-    s.inline("conv:V_W_shape")
-    s.inline("conv:V_Y_shape")
+    s.inline("conv:X_shape")
+    s.inline("conv:W_shape")
+    s.inline("conv:Y_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 
@@ -68,10 +68,10 @@ def test_bias():
 
     print(f)
     s = ir.Schedule(f)
-    s.inline("conv:V_X_shape")
-    s.inline("conv:V_W_shape")
-    s.inline("conv:V_B_shape")
-    s.inline("conv:V_Y_shape")
+    s.inline("conv:X_shape")
+    s.inline("conv:W_shape")
+    s.inline("conv:B_shape")
+    s.inline("conv:Y_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 
@@ -113,9 +113,9 @@ def test_same_pad():
 
     print(f)
     s = ir.Schedule(f)
-    s.inline("conv:V_X_shape")
-    s.inline("conv:V_W_shape")
-    s.inline("conv:V_Y_shape")
+    s.inline("conv:X_shape")
+    s.inline("conv:W_shape")
+    s.inline("conv:Y_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 
@@ -155,9 +155,9 @@ def test_stride():
 
     print(f)
     s = ir.Schedule(f)
-    s.inline("conv:V_X_shape")
-    s.inline("conv:V_W_shape")
-    s.inline("conv:V_Y_shape")
+    s.inline("conv:X_shape")
+    s.inline("conv:W_shape")
+    s.inline("conv:Y_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 
@@ -197,9 +197,9 @@ def test_group():
 
     print(f)
     s = ir.Schedule(f)
-    s.inline("conv:V_X_shape")
-    s.inline("conv:V_W_shape")
-    s.inline("conv:V_Y_shape")
+    s.inline("conv:X_shape")
+    s.inline("conv:W_shape")
+    s.inline("conv:Y_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 
@@ -239,9 +239,9 @@ def test_dilation():
 
     print(f)
     s = ir.Schedule(f)
-    s.inline("conv:V_X_shape")
-    s.inline("conv:V_W_shape")
-    s.inline("conv:V_Y_shape")
+    s.inline("conv:X_shape")
+    s.inline("conv:W_shape")
+    s.inline("conv:Y_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 
@@ -288,8 +288,8 @@ def test_out_of_place():
 
     print(f)
     s = ir.Schedule(f)
-    s.inline("conv:V_X_shape")
-    s.inline("conv:V_W_shape")
+    s.inline("conv:X_shape")
+    s.inline("conv:W_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 
