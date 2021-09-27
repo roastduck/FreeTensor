@@ -76,7 +76,7 @@ class CorrectMutator : public Mutator {
 Stmt correctSharedAndGlobal(const Stmt &op);
 
 inline Func correctSharedAndGlobal(const Func &func) {
-    return makeFunc(func->name_, func->params_,
+    return makeFunc(func->name_, func->params_, func->buffers_,
                     correctSharedAndGlobal(func->body_), func->src_);
 }
 

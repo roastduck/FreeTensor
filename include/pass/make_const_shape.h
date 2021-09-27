@@ -28,7 +28,7 @@ Stmt makeConstShape(const Stmt &op, const std::vector<MemType> &mtypes);
 
 inline Func makeConstShape(const Func &func,
                            const std::vector<MemType> &mtypes) {
-    return makeFunc(func->name_, func->params_,
+    return makeFunc(func->name_, func->params_, func->buffers_,
                     makeConstShape(func->body_, mtypes), func->src_);
 }
 

@@ -45,7 +45,7 @@ class CheckThreadNum : public CompUniqueBounds {
 Stmt normalizeThreads(const Stmt &op);
 
 inline Func normalizeThreads(const Func &func) {
-    return makeFunc(func->name_, func->params_, normalizeThreads(func->body_),
+    return makeFunc(func->name_, func->params_, func->buffers_, normalizeThreads(func->body_),
                     func->src_);
 }
 

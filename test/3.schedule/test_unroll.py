@@ -4,6 +4,7 @@ import pytest
 target = ir.CPU()
 device = ir.Device(target)
 
+
 # Please refer to test/codegen for some architecture dependent test cases
 
 
@@ -12,7 +13,9 @@ def test_not_found():
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ir.For("i", 0, 4, nid="L1") as i:
             y[i] = x[i] + 1
-    func = ir.Func("main", ["x", "y"], ir.pop_ast())
+    func = ir.Func("main", ["x", "y"],
+                   ir.getBuffers([("x", (4,), "int32", "input", "cpu"), ("y", (4,), "int32", "output", "cpu")]),
+                   ir.pop_ast())
 
     s = ir.Schedule(func)
     code = ir.codegen(s.func(), target)
@@ -29,7 +32,9 @@ def test_not_constant():
         with ir.For("i", 0, n[()], nid="L1") as i:
             y[i] = i
 
-    func = ir.Func("main", ["n", "y"], ir.pop_ast())
+    func = ir.Func("main", ["n", "y"],
+                   ir.getBuffers([("n", (), "int32", "input", "cpu"), ("y", (4,), "int32", "output", "cpu")]),
+                   ir.pop_ast())
     print(func)
     s = ir.Schedule(func)
     code = ir.codegen(s.func(), target)
@@ -47,7 +52,9 @@ def test_unbounded_length():
             with ir.For("j", i, 4, nid="L2") as j:
                 x[i, j] = 1
 
-    func = ir.Func("main", ["n", "x"], ir.pop_ast())
+    func = ir.Func("main", ["n", "x"],
+                   ir.getBuffers([("n", (), "int32", "input", "cpu"), ("x", (4, 4), "int32", "output", "cpu")]),
+                   ir.pop_ast())
     print(func)
     s = ir.Schedule(func)
     code = ir.codegen(s.func(), target)
@@ -64,7 +71,9 @@ def test_constant_length():
         with ir.For("i", n[()], n[()] + 4, nid="L1") as i:
             x[i] = 1
 
-    func = ir.Func("main", ["n", "x"], ir.pop_ast())
+    func = ir.Func("main", ["n", "x"],
+                   ir.getBuffers([("n", (), "int32", "input", "cpu"), ("x", (8,), "int32", "output", "cpu")]),
+                   ir.pop_ast())
     print(func)
     s = ir.Schedule(func)
     code = ir.codegen(s.func(), target)

@@ -499,5 +499,5 @@ def any():
     return ffi.makeAnyExpr()
 
 
-def Func(name, params, body, src=None):
-    return ffi.makeFunc(name, params, body, src)
+def Func(name, params, buffers, body, src=None):
+    return ffi.makeFunc(name, params, buffers, body, src)

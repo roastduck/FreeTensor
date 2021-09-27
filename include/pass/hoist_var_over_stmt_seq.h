@@ -27,7 +27,7 @@ class HoistVarOverStmtSeq : public Mutator {
 Stmt hoistVarOverStmtSeq(const Stmt &op);
 
 inline Func hoistVarOverStmtSeq(const Func &func) {
-    return makeFunc(func->name_, func->params_,
+    return makeFunc(func->name_, func->params_, func->buffers_,
                     hoistVarOverStmtSeq(func->body_), func->src_);
 }
 
