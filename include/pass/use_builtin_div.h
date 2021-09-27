@@ -18,7 +18,7 @@ class UseBuiltinDiv : public CompUniqueBounds {
 Stmt useBuiltinDiv(const Stmt &op);
 
 inline Func useBuiltinDiv(const Func &func) {
-    return makeFunc(func->name_, func->params_, useBuiltinDiv(func->body_),
+    return makeFunc(func->name_, func->params_, func->buffers_, useBuiltinDiv(func->body_),
                     func->src_);
 }
 

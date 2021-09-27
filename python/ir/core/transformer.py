@@ -1,3 +1,4 @@
+import collections
 import ffi
 
 import sys
@@ -23,6 +24,25 @@ def declare_var(var, shape, dtype, atype, mtype, name=None):
 
 def create_var(shape, dtype, atype, mtype, name=None):
     return np.zeros(shape, dtype)
+
+
+def getBuffer(shape, dtype, atype, mtype):
+    if isinstance(shape, Var):
+        assert len(shape.shape) == 1, "Shape of a shape should be 1-D"
+        assert type(
+            shape.shape[0]
+        ) is ffi.IntConst, "Dynamic number of dimensions is not supported"
+        ndim = shape.shape[0].val
+        shape = [shape[i] for i in range(ndim)]
+    return ffi.Buffer(ffi.Tensor(shape, parseDType(dtype)), parseAType(atype),
+                      parseMType(mtype))
+
+
+def getBuffers(arr):
+    buffers = {}
+    for i in arr:
+        buffers[i[0]] = getBuffer(i[1], i[2], i[3], i[4])
+    return buffers
 
 
 class ASTContext:
@@ -179,10 +199,9 @@ class InlineFunction:
         self.arg_var = arg_var
         self.arg_data = arg_data
 
-    def expand(self, ctx_stack):
+    def expand(self, ctx_stack, nid):
         transformer = ASTTransformer(ctx_stack, self.params, self.globals)
-        transformer.set_replace(self.arg_var, self.arg_data,
-                                ctx_stack.get_nid())
+        transformer.set_replace(self.arg_var, self.arg_data, nid)
         for stmt in self.body:
             transformer.visit(stmt)
         return transformer.returns
@@ -204,6 +223,8 @@ class ASTTransformer(ast.NodeTransformer):
         self.returned = False
         self.returns = []
         self.prefix = ""
+        self.buffers = {}
+        self.nid = ""
 
     def set_replace(self, arg_var, arg_data, prefix):
         self.arg_var = arg_var
@@ -223,7 +244,8 @@ class ASTTransformer(ast.NodeTransformer):
 
     def get_name(self, name):
         if name in self.replace:
-            name = self.replace[name]
+            while name in self.replace:
+                name = self.replace[name]
         elif name in self.created_vars:
             name = self.prefix + ':' + name
         return name
@@ -352,7 +374,17 @@ class ASTTransformer(ast.NodeTransformer):
                 now_pos[now_dim] = i
                 self.assign_arg(var, shape, data[i], now_dim + 1, now_pos)
 
+    def get_shape(self, data, shape=None):
+        if shape is None:
+            shape = []
+        if isinstance(data, collections.abc.Sequence):
+            shape.append(len(data))
+            if len(data):
+                self.get_shape(data[0], shape)
+        return shape
+
     def visit_Call(self, node):
+
         self.visit(node.func)
         callee = node.func.expr_ptr
 
@@ -379,6 +411,7 @@ class ASTTransformer(ast.NodeTransformer):
 
         if callee is create_var:
             shape, dtype, atype, mtype = args
+
             override_name = kws.get("name")
             node.expr_ptr = VarCreation(self.ctx_stack,
                                         shape,
@@ -389,6 +422,10 @@ class ASTTransformer(ast.NodeTransformer):
         elif callee is declare_var:
             name, shape, dtype, atype, mtype = args
             override_name = kws.get("name")
+            nid = name
+            if self.prefix:
+                nid = self.prefix + ':' + nid
+            MarkNid(nid)
             if self.prefix:
                 if name in self.arg_data:
                     atype = 'cache'
@@ -415,6 +452,17 @@ class ASTTransformer(ast.NodeTransformer):
                             mtype,
                             name,
                             override_name=name).execute()
+                if isinstance(shape, Var):
+                    assert len(
+                        shape.shape) == 1, "Shape of a shape should be 1-D"
+                    assert type(
+                        shape.shape[0]
+                    ) is ffi.IntConst, "Dynamic number of dimensions is not supported"
+                    ndim = shape.shape[0].val
+                    shape = [shape[i] for i in range(ndim)]
+                self.buffers[name] = ffi.Buffer(
+                    ffi.Tensor(shape, parseDType(dtype)), parseAType(atype),
+                    parseMType(mtype))
                 # Force using the current name to match the function signature
         elif callee is MarkNid:
             nid, = args
@@ -442,6 +490,7 @@ class ASTTransformer(ast.NodeTransformer):
                 ret_type = parseDType(kws["ret_type"])
             node.expr_ptr = ffi.makeIntrinsic(fmt_str, expr_args, ret_type)
         elif isinstance(callee, ffi.Func):
+            nid = '#' + str(self.ctx_stack.new_context_id())
             callee_src = _remove_indent(ins.getsource(callee.src))
             callee_tree = ast.parse(callee_src)
             callee_params = list(inspect.signature(callee.src).parameters)
@@ -451,15 +500,35 @@ class ASTTransformer(ast.NodeTransformer):
             arguments = [arg.arg for arg in funcdef.args.args]
             arg_var = {}
             arg_data = {}
+
             if len(args) != len(arguments):
                 raise ffi.InvalidProgram(
                     f"Number of arguments does not match when calling {callee.src.__name__}"
                 )
             for arg, callee_arg in zip(args, arguments):
+                if self.nid:
+                    name = self.nid + ":" + callee_arg
+                else:
+                    name = nid + ":" + callee_arg
+                MarkNid(name)
+                buf = callee.buffers[callee_arg]
                 if isinstance(arg, Var):
                     arg_var[callee_arg] = arg
+                elif isinstance(arg, InlineFunction):
+                    # only support single return value now
+                    returns = arg.expand(self.ctx_stack, name)
+                    assert len(returns) == 1, "only support single return value"
+                    arg_var[callee_arg] = self.ctx_stack.find_var_by_name(
+                        returns[0])
+                elif isinstance(arg, collections.abc.Sequence) or len(
+                        buf.tensor.shape) == 0:
+                    shape = tuple(self.get_shape(arg))
+                    var = VarCreation(self.ctx_stack, shape, buf.tensor.dtype,
+                                      "cache", buf.mtype, name).execute()
+                    arg_var[callee_arg] = var
+                    self.assign_arg(var, shape, arg)
                 else:
-                    arg_data[callee_arg] = arg
+                    assert False, "Invalid function argument"
             node.expr_ptr = InlineFunction(funcdef.body, callee_params,
                                            callee_globals, arg_var, arg_data)
         else:
@@ -486,6 +555,7 @@ class ASTTransformer(ast.NodeTransformer):
         return node
 
     def visit_Assign(self, node):
+        self.nid = self.ctx_stack.get_nid()
         self.allow_undefined = True
         for tgt in node.targets:
             self.visit(tgt)
@@ -515,17 +585,20 @@ class ASTTransformer(ast.NodeTransformer):
                 # assert node.targets[
                 #     0].expr_ptr is None, f"Variable {node.targets[0].id} already exists"
                 targets.append(node.targets[0].id)
-            returns = node.value.expr_ptr.expand(self.ctx_stack)
+            returns = node.value.expr_ptr.expand(self.ctx_stack, self.nid)
             for target, ret in zip(targets, returns):
                 self.replace[target] = ret
         elif isinstance(node.value.expr_ptr, VarCreation):
             self.created_vars.add(node.targets[0].id)
             name = self.get_name(node.targets[0].id)
+            nid = name
+            MarkNid(nid)
             var_creation = node.value.expr_ptr
             var_creation.atype = 'cache'
             var_creation.add_name(name)
             var_creation.execute()
         elif isinstance(node.targets[0], ast.Subscript):
+            MarkNid(self.nid)
             var = node.targets[0].value.expr_ptr
             sub = node.targets[0].slice.expr_ptr
             var[sub] = node.value.expr_ptr
@@ -597,6 +670,7 @@ class ASTTransformer(ast.NodeTransformer):
         return node
 
     def visit_Expr(self, node):
+        self.nid = self.ctx_stack.get_nid()
         self.generic_visit(node)
         if isinstance(node.value, ast.Constant) and isinstance(
                 node.value.value, str):
@@ -610,7 +684,7 @@ class ASTTransformer(ast.NodeTransformer):
                 self.ctx_stack.set_no_deps()
         elif hasattr(node.value, "expr_ptr") and isinstance(
                 node.value.expr_ptr, InlineFunction):
-            node.value.expr_ptr.expand(self.ctx_stack)
+            node.value.expr_ptr.expand(self.ctx_stack, self.nid)
         return node
 
     def visit_If(self, node):
@@ -726,5 +800,6 @@ def transform(func):
     tree = ast.parse(src)
     params = list(inspect.signature(func).parameters)
     globals = _get_global_vars(func)
-    ASTTransformer(ctx_stack, params, globals).visit(tree)
-    return Func(func.__name__, params, pop_ast(), func)
+    transformer = ASTTransformer(ctx_stack, params, globals)
+    transformer.visit(tree)
+    return Func(func.__name__, params, transformer.buffers, pop_ast(), func)

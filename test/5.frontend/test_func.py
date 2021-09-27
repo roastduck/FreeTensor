@@ -1,6 +1,7 @@
 import ir
 import math
 import pytest
+import numpy as np
 
 # TODO: Currently, a callee function must be in the global scope. Can we support a local scope?
 
@@ -406,3 +407,36 @@ def test_return_returned_value():
     std = ir.pop_ast()
     print(std)
     assert std.match(func.body)
+
+def test_func_in_args():
+    @ir.transform
+    def plus_one(x):
+        ir.declare_var(x, (4,), "int32", "input", "cpu")
+        y = ir.create_var((4,), "int32", "cache", "cpu")
+        for i in range(4):
+            y[i] = x[i] + 1
+        return y
+
+    @ir.transform
+    def test(x, y):
+        ir.declare_var(x, (4,), "int32", "input", "cpu")
+        ir.declare_var(y, (4,), "int32", "output", "cpu")
+        c = plus_one(plus_one(plus_one(x)))
+        for i in range(4):
+            y[i] = c[i]
+
+    func = ir.lower(test, ir.CPU())
+    print(func)
+    code = ir.codegen(func, ir.CPU())
+    print(code)
+    x_np = np.array([1, 2, 3, 4], dtype="int32")
+    y_np = np.array([0, 0, 0, 0], dtype="int32")
+    x_arr = ir.Array(x_np, ir.Device(ir.CPU()))
+    y_arr = ir.Array(y_np, ir.Device(ir.CPU()))
+    driver = ir.Driver(func, code, ir.Device(ir.CPU()))
+    driver.set_params(x=x_arr, y=y_arr)
+    driver.run()
+    y_np = y_arr.numpy()
+
+    y_std = np.array([4, 5, 6, 7], dtype="int32")
+    assert np.array_equal(y_np, y_std)

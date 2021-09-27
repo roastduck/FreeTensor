@@ -71,7 +71,7 @@ grad(const Func &func,
             params.emplace_back(gradNames.at(param));
         }
     }
-    return makeFunc(func->name_, std::move(params),
+    return makeFunc(func->name_, params, func->buffers_,
                     grad(func->body_, gradNames), nullptr);
 }
 

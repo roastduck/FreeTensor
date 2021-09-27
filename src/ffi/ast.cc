@@ -68,6 +68,8 @@ void init_ffi_ast(py::module_ &m) {
 
     pyFunc.def_readonly("name", &FuncNode::name_)
         .def_readonly("params", &FuncNode::params_)
+        .def_property_readonly("buffers",
+                               [](const Func &op) { return op->buffers_; })
         .def_property_readonly("body",
                                [](const Func &op) -> Stmt { return op->body_; })
         .def_property_readonly(
@@ -394,10 +396,11 @@ void init_ffi_ast(py::module_ &m) {
 
     // Function
     m.def("makeFunc",
-          static_cast<Func (*)(const std::string &,
-                               const std::vector<std::string> &, const Stmt &,
-                               const py::object &)>(&_makeFunc),
-          "name"_a, "params"_a, "body"_a, "src"_a);
+          static_cast<Func (*)(
+              const std::string &, const std::vector<std::string> &,
+              const std::unordered_map<std::string, Ref<Buffer>> &,
+              const Stmt &, const py::object &)>(&_makeFunc),
+          "name"_a, "params"_a, "buffers"_a, "body"_a, "src"_a);
 
     // Statements
     m.def("makeAny", &_makeAny);

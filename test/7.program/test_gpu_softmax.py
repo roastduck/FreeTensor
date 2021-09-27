@@ -43,13 +43,13 @@ def test_manual_static():
     s = ir.Schedule(f)
 
     # Inline shape inference
-    s.inline("softmax:V_x_shape")
+    s.inline("softmax:x_shape")
     s.inline("softmax:V_x:V_y_shape")
-    s.inline("softmax:max:V_y_shape")
-    s.inline("softmax:sub:broadcast_shape:V_out_shape")
-    s.inline("softmax:sum:V_y_shape")
-    s.inline("softmax:div:broadcast_shape:V_out_shape")
-    s.inline("softmax:V_y_shape")
+    s.inline("softmax:max:y_shape")
+    s.inline("softmax:sub:broadcast_shape:out_shape")
+    s.inline("softmax:sum:y_shape")
+    s.inline("softmax:div:broadcast_shape:out_shape")
+    s.inline("softmax:y_shape")
 
     # L_head
     L_head = s.fuse("softmax:max:recur:init:recur:L",
@@ -72,14 +72,14 @@ def test_manual_static():
     # ----------------
 
     # Don't store these intermediates
-    s.inline("softmax:sub:V_out")
+    s.inline("softmax:sub:out")
 
     # Store these intermedates to registers
     load_x, _, _, _ = s.cache(
         s.find(lambda x: x.nid() == L_seq_outer).node().body, "x", "gpu/local")
     load_x_loop = s.find(lambda x: x.nid() == load_x).outer()
     s.cache(
-        s.find(lambda x: x.nid() == "softmax:exp:V_y").node().body,
+        s.find(lambda x: x.nid() == "softmax:exp:y").node().body,
         "$softmax:exp:y", "gpu/local")
 
     # ----------------
@@ -109,11 +109,11 @@ def test_manual_static():
 
         return V_sum_shmem
 
-    V_sum_shmem = opt_red("softmax:sum:V_y", "$softmax:sum:y",
-                          "softmax:sum:recur:init:recur:recur:recur:recur:V_y",
+    V_sum_shmem = opt_red("softmax:sum:y", "$softmax:sum:y",
+                          "softmax:sum:recur:init:recur:recur:recur:recur:exec",
                           "softmax:sum:recur:reduce:recur:recur:recur:L")
-    V_max_shmem = opt_red("softmax:max:V_y", "$softmax:max:y",
-                          "softmax:max:recur:init:recur:recur:recur:recur:V_y",
+    V_max_shmem = opt_red("softmax:max:y", "$softmax:max:y",
+                          "softmax:max:recur:init:recur:recur:recur:recur:exec",
                           "softmax:max:recur:reduce:recur:recur:recur:L")
 
     # Parallelize data-parall loops

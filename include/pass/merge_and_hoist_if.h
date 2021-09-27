@@ -62,7 +62,7 @@ class MergeAndHoistIf : public Mutator {
 Stmt mergeAndHoistIf(const Stmt &op);
 
 inline Func mergeAndHoistIf(const Func &func) {
-    return makeFunc(func->name_, func->params_, mergeAndHoistIf(func->body_),
+    return makeFunc(func->name_, func->params_, func->buffers_, mergeAndHoistIf(func->body_),
                     func->src_);
 }
 

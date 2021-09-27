@@ -40,7 +40,7 @@ inline Stmt moveOutFirstOrLastIter(const Stmt &op) {
 }
 
 inline Func moveOutFirstOrLastIter(const Func &func) {
-    return makeFunc(func->name_, func->params_,
+    return makeFunc(func->name_, func->params_, func->buffers_,
                     moveOutFirstOrLastIter(func->body_), func->src_);
 }
 

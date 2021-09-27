@@ -33,6 +33,7 @@ def _general_reduce_(t_x: StaticType,
             core.declare_var(y, y_shape, t_x.elem_type, "output", io_mem)
 
             if t_y.ndim == 0:
+                'nid: exec'
                 y[()] = neutral_val
             else:
                 'nid: L'
@@ -56,6 +57,7 @@ def _general_reduce_(t_x: StaticType,
             core.declare_var(y, y_shape, t_x.elem_type, "inout", io_mem)
 
             if t_x.ndim == 0:
+                'nid: exec'
                 y[()] = op(y[()], x[()])
             else:
                 'nid: L'

@@ -47,7 +47,7 @@ class MakeAtomic : public Mutator {
 Stmt makeAtomic(const Stmt &op);
 
 inline Func makeAtomic(const Func &func) {
-    return makeFunc(func->name_, func->params_, makeAtomic(func->body_),
+    return makeFunc(func->name_, func->params_, func->buffers_, makeAtomic(func->body_),
                     func->src_);
 }
 
