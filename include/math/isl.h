@@ -225,6 +225,19 @@ class ISLSpace {
     }
 };
 
+inline ISLSet complement(ISLSet &&set) {
+    return isl_set_complement(set.move());
+}
+inline ISLSet complement(const ISLSet &set) {
+    return isl_set_complement(set.copy());
+}
+inline ISLMap complement(ISLMap &&map) {
+    return isl_map_complement(map.move());
+}
+inline ISLMap complement(const ISLMap &map) {
+    return isl_map_complement(map.copy());
+}
+
 inline ISLMap reverse(ISLMap &&map) { return isl_map_reverse(map.move()); }
 inline ISLMap reverse(const ISLMap &map) { return isl_map_reverse(map.copy()); }
 

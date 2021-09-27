@@ -7,6 +7,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include <analyze/find_loop_variance.h>
 #include <cursor.h>
 #include <math/gen_isl_expr.h>
 #include <math/isl.h>
@@ -118,11 +119,11 @@ class FindAccessPoint : public VisitorWithCursor {
  * GenISLExpr specialized for handling external variables
  */
 class GenISLExprDeps : public GenISLExpr {
-    std::unordered_map<Expr, std::unordered_set<std::string>> externals_;
+    std::unordered_map<Expr, std::unordered_map<Expr, std::string>> externals_;
     Expr parent_ = nullptr;
 
   public:
-    const std::unordered_set<std::string> &externals(const Expr &op) {
+    const std::unordered_map<Expr, std::string> &externals(const Expr &op) {
         return externals_[op];
     }
 
@@ -185,6 +186,8 @@ class AnalyzeDeps : public Visitor {
         &reads_, &writes_;
     const std::unordered_map<std::string, std::vector<IterAxis>> &scope2coord_;
     const std::vector<std::string> &noDepsList_;
+    const LoopVariExprMap &variantExpr_;
+
     GenISLExprDeps genISLExpr_;
 
     const std::vector<FindDepsCond> &cond_;
@@ -211,26 +214,31 @@ class AnalyzeDeps : public Visitor {
         const std::unordered_map<std::string, std::vector<IterAxis>>
             &scope2coord,
         const std::vector<std::string> &noDepsList,
+        const LoopVariExprMap &variantExpr,
         const std::vector<FindDepsCond> &cond, const FindDepsCallback &found,
         FindDepsMode mode, DepType depType, const FindDepsFilter &filter,
         bool ignoreReductionWAW, bool eraseOutsideVarDef)
         : points_(points), reads_(reads), writes_(writes),
-          scope2coord_(scope2coord), noDepsList_(noDepsList), cond_(cond),
-          found_(found), filter_(filter), mode_(mode), depType_(depType),
+          scope2coord_(scope2coord), noDepsList_(noDepsList),
+          variantExpr_(variantExpr), cond_(cond), found_(found),
+          filter_(filter), mode_(mode), depType_(depType),
           ignoreReductionWAW_(ignoreReductionWAW),
           eraseOutsideVarDef_(eraseOutsideVarDef) {}
 
   private:
     std::string makeIterList(const std::vector<IterAxis> &list, int n);
-    Ref<std::string> makeAccList(const std::vector<Expr> &list, RelaxMode relax,
-                                 std::unordered_set<std::string> &externals);
-    Ref<std::string> makeRange(const std::vector<IterAxis> &point,
-                               RelaxMode relax,
-                               std::unordered_set<std::string> &externals);
+    Ref<std::string>
+    makeAccList(const std::vector<Expr> &list, RelaxMode relax,
+                std::unordered_map<Expr, std::string> &externals);
+    Ref<std::string>
+    makeRange(const std::vector<IterAxis> &point, RelaxMode relax,
+              std::unordered_map<Expr, std::string> &externals);
     Ref<std::string> makeCond(const Expr &cond, RelaxMode relax,
-                              std::unordered_set<std::string> &externals);
-    Ref<std::string> makeAccMap(const AccessPoint &p, int iterDim, int accDim,
-                                RelaxMode relax);
+                              std::unordered_map<Expr, std::string> &externals);
+    Ref<std::string>
+    makeAccMap(const AccessPoint &p, int iterDim, int accDim, RelaxMode relax,
+               const std::string &extSuffix,
+               std::unordered_map<Expr, std::string> &externals);
 
     std::string makeNdList(const std::string &name, int n) const;
     std::string makeEqForBothOps(const std::vector<std::pair<int, int>> &coord,
@@ -238,14 +246,17 @@ class AnalyzeDeps : public Visitor {
     std::string makeIneqBetweenOps(DepDirection mode, int iterId,
                                    int iterDim) const;
 
+    std::string makeSerialToAll(int iterDim, int serialIterDim,
+                                const std::vector<IterAxis> &point) const;
+    static int countSerial(const std::vector<IterAxis> &point);
+
+    std::string makeExternalEq(int iterDim, const std::string &ext1,
+                               const std::string &ext2);
+
     ISLMap makeConstraintOfSingleLoop(const std::string &loop,
                                       DepDirection mode, int iterDim);
 
     static const std::string &getVar(const AST &op);
-
-    std::string makeSerialToAll(int iterDim, int serialIterDim,
-                                const std::vector<IterAxis> &point) const;
-    static int countSerial(const std::vector<IterAxis> &point);
 
     /**
      * Check the dependencies between a later memory access `point` and many

@@ -194,6 +194,54 @@ def test_serial_reduction_2():
     assert np.array_equal(y_np, y_std)
 
 
+def test_parallelize_parametric_access_1():
+
+    @ir.transform
+    def test(idx, y):
+        ir.declare_var(idx, (10,), "int32", "input", "cpu")
+        ir.declare_var(y, (100,), "int32", "inout", "cpu")
+        "nid: L1"
+        for i in range(10):
+            "nid: L2"
+            for j in range(10):
+                y[idx[i] + j] += j
+
+    s = ir.Schedule(test)
+    s.parallelize("L1", "openmp")
+    func = ir.lower(s.func(), target)
+    print(func)
+
+    # idx[i] + j for different i may be the same, so we need atomic
+    code = ir.codegen(func, target)
+    print(code)
+    assert "#pragma omp atomic" in code
+    assert "+=" in code
+
+
+def test_parallelize_parametric_access_2():
+
+    @ir.transform
+    def test(idx, y):
+        ir.declare_var(idx, (10,), "int32", "input", "cpu")
+        ir.declare_var(y, (100,), "int32", "inout", "cpu")
+        "nid: L1"
+        for i in range(10):
+            "nid: L2"
+            for j in range(10):
+                y[idx[i] + j] += j
+
+    s = ir.Schedule(test)
+    s.parallelize("L2", "openmp")
+    func = ir.lower(s.func(), target)
+    print(func)
+
+    # idx[i] + j for the same i but different j must be different, so we do not need atomic
+    code = ir.codegen(func, target)
+    print(code)
+    assert "#pragma omp atomic" not in code
+    assert "+=" in code
+
+
 def test_unroll_for():
 
     @ir.transform

@@ -648,11 +648,14 @@ void Schedule::parallelize(const std::string &loop,
         if (!mutator.done()) {
             throw InvalidSchedule("Loop " + loop + " not found");
         }
-        findDeps(oldAst, {{{loop, DepDirection::Normal}}},
-                 [&](const Dependency &d) {
-                     throw InvalidSchedule(
-                         dep2Str(loop, d.var_, d.later(), d.earlier()));
-                 });
+        FindDepsCond findDepsCond{{loop, DepDirection::Normal}};
+        for (auto &&outerLoop : mutator.outerLoops()) {
+            findDepsCond.push_back({outerLoop, DepDirection::Same});
+        }
+        findDeps(oldAst, {findDepsCond}, [&](const Dependency &d) {
+            throw InvalidSchedule(
+                dep2Str(loop, d.var_, d.later(), d.earlier()));
+        });
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid parallelize(" + loop + ", " + parallel +
                               "): " + e.what());

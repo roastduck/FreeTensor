@@ -7,6 +7,7 @@ namespace ir {
 
 class Parallelize : public Mutator {
     std::string loop_, parallel_;
+    std::vector<std::string> outerLoops_, loopStack_;
     bool done_ = false;
 
   public:
@@ -14,6 +15,7 @@ class Parallelize : public Mutator {
         : loop_(loop), parallel_(parallel) {}
 
     bool done() const { return done_; }
+    const std::vector<std::string> outerLoops() const { return outerLoops_; }
 
   protected:
     Stmt visit(const For &op) override;
