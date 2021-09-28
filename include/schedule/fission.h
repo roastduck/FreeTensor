@@ -10,7 +10,7 @@
 namespace ir {
 
 class HoistVar : public Mutator {
-    std::string loop_, after_, seqId_;
+    std::string loop_, after_, beforeId_, afterId_;
     std::unordered_set<std::string> part0Vars_, part1Vars_;
     std::vector<VarDef> defStack_;
     std::vector<std::string> outerScopes_, innerLoops_;
@@ -24,7 +24,8 @@ class HoistVar : public Mutator {
     HoistVar(const std::string &loop, const std::string &after)
         : loop_(loop), after_(after) {}
 
-    const std::string &seqId() const { return seqId_; }
+    const std::string &beforeId() const { return beforeId_; }
+    const std::string &afterId() const { return afterId_; }
     bool found() const { return isAfter_; }
 
     const std::vector<std::string> &outerScopes() const { return outerScopes_; }

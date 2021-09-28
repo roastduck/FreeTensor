@@ -14,7 +14,7 @@ struct LoopInVarDefs {
 enum class FindLoopInVarDefsDirection : int { Front, Back };
 
 class FuseFor : public Mutator {
-    std::string id0_, id1_, fused_, iter0_, iter1_, seqId_;
+    std::string id0_, id1_, fused_, iter0_, iter1_, beforeId_, afterId_;
     Expr begin0_, begin1_;
 
   public:
@@ -22,7 +22,8 @@ class FuseFor : public Mutator {
         : id0_(id0), id1_(id1), fused_("fused." + id0 + "." + id1) {}
 
     const std::string &fused() const { return fused_; }
-    const std::string &seqId() const { return seqId_; }
+    const std::string &beforeId() const { return beforeId_; }
+    const std::string &afterId() const { return afterId_; }
 
   protected:
     Expr visit(const Var &op) override;
