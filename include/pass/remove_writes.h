@@ -14,8 +14,10 @@ namespace ir {
 class FindLoopInvariantWrites : public Visitor {
     std::vector<For> loopStack_;
     std::vector<If> ifStack_;
-    std::vector<std::pair<Store, Expr>> results_; /// (store, extraCond)
+    std::vector<std::tuple<VarDef, Store, Expr>>
+        results_; /// (store, extraCond)
     std::unordered_map<std::string, int> defDepth_;
+    std::unordered_map<std::string, VarDef> defs_;
     const std::unordered_map<
         Expr, std::unordered_map<std::string, LoopVariability>> &variantExpr_;
 
@@ -26,7 +28,7 @@ class FindLoopInvariantWrites : public Visitor {
             &variantExpr)
         : variantExpr_(variantExpr) {}
 
-    const std::vector<std::pair<Store, Expr>> &results() const {
+    const std::vector<std::tuple<VarDef, Store, Expr>> &results() const {
         return results_;
     }
 
@@ -100,8 +102,8 @@ class RemoveWrites : public Mutator {
 Stmt removeWrites(const Stmt &op);
 
 inline Func removeWrites(const Func &func) {
-    return makeFunc(func->name_, func->params_, func->buffers_, removeWrites(func->body_),
-                    func->src_);
+    return makeFunc(func->name_, func->params_, func->buffers_,
+                    removeWrites(func->body_), func->src_);
 }
 
 } // namespace ir
