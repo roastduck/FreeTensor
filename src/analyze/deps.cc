@@ -114,11 +114,10 @@ void GenISLExprDeps::visitExpr(
 }
 
 void GenISLExprDeps::visit(const Load &op) {
-    auto h = (int64_t)op.get();
-    // We use address instead of hash here, because identical
-    // expressions in different statement are not the same
+    getHash_(op);
+    auto h = getHash_.hash().at(op);
     auto str = normalizeId("ext" + std::to_string(h)) + "!!placeholder!!";
-    externals_[op][op] = str;
+    externals_[op][h] = std::make_pair(op, str);
     results_[op] = str;
 }
 
@@ -145,9 +144,9 @@ std::string AnalyzeDeps::makeIterList(const std::vector<IterAxis> &list,
     return "[" + ret + "]";
 }
 
-Ref<std::string>
-AnalyzeDeps::makeAccList(const std::vector<Expr> &list, RelaxMode relax,
-                         std::unordered_map<Expr, std::string> &externals) {
+Ref<std::string> AnalyzeDeps::makeAccList(const std::vector<Expr> &list,
+                                          RelaxMode relax,
+                                          ExternalMap &externals) {
     std::string ret;
     for (int i = 0, iEnd = list.size(); i < iEnd; i++) {
         if (auto linstr = genISLExpr_.gen(list[i]); linstr.isValid()) {
@@ -165,9 +164,9 @@ AnalyzeDeps::makeAccList(const std::vector<Expr> &list, RelaxMode relax,
     return Ref<std::string>::make("[" + ret + "]");
 }
 
-Ref<std::string>
-AnalyzeDeps::makeRange(const std::vector<IterAxis> &point, RelaxMode relax,
-                       std::unordered_map<Expr, std::string> &externals) {
+Ref<std::string> AnalyzeDeps::makeRange(const std::vector<IterAxis> &point,
+                                        RelaxMode relax,
+                                        ExternalMap &externals) {
     std::vector<std::string> ineqs;
     for (size_t i = 0, iEnd = point.size(); i < iEnd; i++) {
         if (point[i].iter_->nodeType() == ASTNodeType::Var) {
@@ -204,9 +203,8 @@ AnalyzeDeps::makeRange(const std::vector<IterAxis> &point, RelaxMode relax,
     return Ref<std::string>::make(std::move(ret));
 }
 
-Ref<std::string>
-AnalyzeDeps::makeCond(const Expr &expr, RelaxMode relax,
-                      std::unordered_map<Expr, std::string> &externals) {
+Ref<std::string> AnalyzeDeps::makeCond(const Expr &expr, RelaxMode relax,
+                                       ExternalMap &externals) {
     if (expr.isValid()) {
         if (auto str = genISLExpr_.gen(expr); str.isValid()) {
             unionTo(externals, genISLExpr_.externals(expr));
@@ -218,10 +216,9 @@ AnalyzeDeps::makeCond(const Expr &expr, RelaxMode relax,
     return Ref<std::string>::make("");
 }
 
-ISLMap
-AnalyzeDeps::makeAccMap(const AccessPoint &p, int iterDim, int accDim,
-                        RelaxMode relax, const std::string &extSuffix,
-                        std::unordered_map<Expr, std::string> &externals) {
+ISLMap AnalyzeDeps::makeAccMap(const AccessPoint &p, int iterDim, int accDim,
+                               RelaxMode relax, const std::string &extSuffix,
+                               ExternalMap &externals) {
     auto ret = makeIterList(p.iter_, iterDim) + " -> ";
     if (auto str = makeAccList(p.access_, relax, externals); str.isValid()) {
         ret += *str;
@@ -243,8 +240,8 @@ AnalyzeDeps::makeAccMap(const AccessPoint &p, int iterDim, int accDim,
         ret += ": " + cond;
     }
     std::string ext = "free_lo, free_hi";
-    for (auto &&[expr, islName] : externals) {
-        ext += ", " + islName;
+    for (auto &&[hash, item] : externals) {
+        ext += ", " + item.second;
     }
     ret = "[" + ext + "] -> {" + ret + "}";
     ret = replaceAll(ret, "!!placeholder!!", extSuffix);
@@ -386,6 +383,90 @@ int AnalyzeDeps::countSerial(const std::vector<IterAxis> &point) {
     return ret;
 }
 
+ISLMap AnalyzeDeps::makeEraseVarDefConstraint(const Ref<AccessPoint> &point,
+                                              int iterDim) {
+    ISLMap ret = universeMap(spaceAlloc(isl_, 0, iterDim, iterDim));
+    if (eraseOutsideVarDef_) {
+        for (int i = 0; i < point->defAxis_; i++) {
+            if (point->iter_[i].iter_->nodeType() == ASTNodeType::Var &&
+                !point->iter_[i].innerScopeCrossThreads_) { // is a loop and not
+                                                            // crosing threads
+                ret = intersect(
+                    std::move(ret),
+                    makeIneqBetweenOps(DepDirection::Same, i, iterDim));
+            }
+        }
+    }
+    return ret;
+}
+
+ISLMap AnalyzeDeps::makeNoDepsConstraint(int iterDim) {
+    ISLMap ret = universeMap(spaceAlloc(isl_, 0, iterDim, iterDim));
+    for (auto &&noDepsLoop : noDepsList_) {
+        auto noDep = makeConstraintOfSingleLoop(
+            noDepsLoop, DepDirection::Different, iterDim);
+        ret = subtract(std::move(ret), std::move(noDep));
+    }
+    return ret;
+}
+
+ISLMap AnalyzeDeps::makeExternalVarConstraint(const Ref<AccessPoint> &point,
+                                              const Ref<AccessPoint> &other,
+                                              const ExternalMap &pExternals,
+                                              const ExternalMap &oExternals,
+                                              int iterDim) {
+    ISLMap ret = universeMap(spaceAlloc(isl_, 0, iterDim, iterDim));
+    auto opExternals = pExternals;
+    unionTo(opExternals, oExternals);
+    // We only have to add constraint for common loops of both accesses
+    auto common = lca(point->cursor_, other->cursor_);
+
+    // If all of the loops are variant, we don't have to make the constarint at
+    // all. This will save time for ISL
+    for (auto c = common;; c = c.outer()) {
+        if (c.nodeType() == ASTNodeType::For) {
+            for (auto &&[hash, item] : opExternals) {
+                if (isVariant(variantExpr_, item.first, c.id())) {
+                    goto found;
+                }
+            }
+            goto do_compute_constarint;
+        found:;
+        }
+        if (!c.hasOuter()) {
+            break;
+        }
+    }
+    return ret;
+
+    // Compute the constraint
+do_compute_constarint:
+    for (auto c = common;; c = c.outer()) {
+        if (c.nodeType() == ASTNodeType::For) {
+            for (auto &&[hash, item] : opExternals) {
+                if (isVariant(variantExpr_, item.first, c.id())) {
+                    // Since idx[i] must be inside loop i, we only have
+                    // to call makeIneqBetweenOps, but no need to call
+                    // makeConstraintOfSingleLoop
+                    auto diffIter = makeIneqBetweenOps(
+                        DepDirection::Different,
+                        scope2coord_.at(c.id()).size() - 1, iterDim);
+                    auto sameExt = makeExternalEq(
+                        iterDim,
+                        replaceAll(item.second, "!!placeholder!!", "__ext_p"),
+                        replaceAll(item.second, "!!placeholder!!", "__ext_o"));
+                    auto require = uni(std::move(diffIter), std::move(sameExt));
+                    ret = intersect(std::move(ret), std::move(require));
+                }
+            }
+        }
+        if (!c.hasOuter()) {
+            break;
+        }
+    }
+    return ret;
+}
+
 void AnalyzeDeps::checkDep(const Ref<AccessPoint> &point,
                            const std::vector<Ref<AccessPoint>> &otherList) {
     if (otherList.empty()) {
@@ -424,21 +505,10 @@ void AnalyzeDeps::checkDep(const Ref<AccessPoint> &point,
     // lex_ge in serialDepAll AND ne in depAll
     ISLMap serialLexGE = lexGE(spaceSetAlloc(isl_, 0, serialIterDim));
     ISLMap allEQ = identity(spaceAlloc(isl_, 0, iterDim, iterDim));
-    ISLMap eraseVarDefRestrict =
-        universeMap(spaceAlloc(isl_, 0, iterDim, iterDim));
-    if (eraseOutsideVarDef_) {
-        for (int i = 0; i < point->defAxis_; i++) {
-            if (point->iter_[i].iter_->nodeType() == ASTNodeType::Var &&
-                !point->iter_[i].innerScopeCrossThreads_) { // is a loop and not
-                                                            // crosing threads
-                eraseVarDefRestrict = intersect(
-                    std::move(eraseVarDefRestrict),
-                    makeIneqBetweenOps(DepDirection::Same, i, iterDim));
-            }
-        }
-    }
+    ISLMap eraseVarDefConstraint = makeEraseVarDefConstraint(point, iterDim);
+    ISLMap noDepsConstraint = makeNoDepsConstraint(iterDim);
 
-    std::unordered_map<Expr, std::string> pExternals;
+    ExternalMap pExternals;
     ISLMap pmap =
         makeAccMap(*point, iterDim, accDim, pRelax, "__ext_p", pExternals);
     if (pmap.empty()) {
@@ -457,7 +527,7 @@ void AnalyzeDeps::checkDep(const Ref<AccessPoint> &point,
             continue;
         }
 
-        std::unordered_map<Expr, std::string> oExternals;
+        ExternalMap oExternals;
         ISLMap omap =
             makeAccMap(*other, iterDim, accDim, oRelax, "__ext_o", oExternals);
         if (omap.empty()) {
@@ -470,46 +540,12 @@ void AnalyzeDeps::checkDep(const Ref<AccessPoint> &point,
 
         ISLMap depAll =
             subtract(applyRange(pmap, reverse(std::move(omap))), allEQ);
-        depAll = intersect(std::move(depAll), eraseVarDefRestrict);
 
-        auto opExternals = pExternals;
-        unionTo(opExternals, oExternals);
-        auto addLoopVariantConstraint = [&](const std::string &loop) {
-            for (auto &&[expr, islName] : opExternals) {
-                if (isVariant(variantExpr_, expr, loop)) {
-                    auto sameIter = makeConstraintOfSingleLoop(
-                        loop, DepDirection::Same, iterDim);
-                    auto sameExt = makeExternalEq(
-                        iterDim,
-                        replaceAll(islName, "!!placeholder!!", "__ext_p"),
-                        replaceAll(islName, "!!placeholder!!", "__ext_o"));
-                    auto require =
-                        uni(complement(sameIter), std::move(sameExt));
-                    depAll = intersect(std::move(depAll), std::move(require));
-                }
-            }
-        };
-        auto common = lca(point->cursor_, other->cursor_);
-        for (auto c = point->cursor_; c.node() != common.node();
-             c = c.outer()) {
-            if (c.nodeType() == ASTNodeType::For) {
-                addLoopVariantConstraint(c.id());
-            }
-        }
-        for (auto c = other->cursor_; c.node() != common.node();
-             c = c.outer()) {
-            if (c.nodeType() == ASTNodeType::For) {
-                addLoopVariantConstraint(c.id());
-            }
-        }
-        for (auto c = common;; c = c.outer()) {
-            if (c.nodeType() == ASTNodeType::For) {
-                addLoopVariantConstraint(c.id());
-            }
-            if (!c.hasOuter()) {
-                break;
-            }
-        }
+        depAll = intersect(std::move(depAll), eraseVarDefConstraint);
+        depAll = intersect(std::move(depAll), noDepsConstraint);
+        depAll = intersect(std::move(depAll),
+                           makeExternalVarConstraint(point, other, pExternals,
+                                                     oExternals, iterDim));
 
         ISLMap psDepAll = applyRange(depAll, std::move(oa2s));
         psDepAllUnion = psDepAllUnion.isValid()
@@ -560,18 +596,6 @@ void AnalyzeDeps::checkDep(const Ref<AccessPoint> &point,
                 auto require = makeConstraintOfSingleLoop(
                     subitem.first, subitem.second, iterDim);
                 res = intersect(std::move(res), std::move(require));
-                if (res.empty()) {
-                    fail = true;
-                    break;
-                }
-            }
-            if (fail) {
-                continue;
-            }
-            for (auto &&noDepsLoop : noDepsList_) {
-                auto noDep = makeConstraintOfSingleLoop(
-                    noDepsLoop, DepDirection::Different, iterDim);
-                res = subtract(std::move(res), std::move(noDep));
                 if (res.empty()) {
                     fail = true;
                     break;

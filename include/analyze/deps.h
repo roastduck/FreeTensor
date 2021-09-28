@@ -8,6 +8,7 @@
 #include <vector>
 
 #include <analyze/find_loop_variance.h>
+#include <analyze/hash.h>
 #include <cursor.h>
 #include <math/gen_isl_expr.h>
 #include <math/isl.h>
@@ -115,17 +116,19 @@ class FindAccessPoint : public VisitorWithCursor {
     void visit(const MatMul &op) override { (*this)(op->equivalent_); }
 };
 
+// hash -> (expr, isl name)
+typedef std::unordered_map<uint64_t, std::pair<Expr, std::string>> ExternalMap;
+
 /**
  * GenISLExpr specialized for handling external variables
  */
 class GenISLExprDeps : public GenISLExpr {
-    std::unordered_map<Expr, std::unordered_map<Expr, std::string>> externals_;
+    std::unordered_map<Expr, ExternalMap> externals_;
+    GetHash getHash_;
     Expr parent_ = nullptr;
 
   public:
-    const std::unordered_map<Expr, std::string> &externals(const Expr &op) {
-        return externals_[op];
-    }
+    const ExternalMap &externals(const Expr &op) { return externals_[op]; }
 
   protected:
     using GenISLExpr::visit;
@@ -228,18 +231,16 @@ class AnalyzeDeps : public Visitor {
   private:
     std::string makeIterList(const std::vector<IterAxis> &list, int n);
     std::string makeNdList(const std::string &name, int n) const;
-    Ref<std::string>
-    makeAccList(const std::vector<Expr> &list, RelaxMode relax,
-                std::unordered_map<Expr, std::string> &externals);
-    Ref<std::string>
-    makeRange(const std::vector<IterAxis> &point, RelaxMode relax,
-              std::unordered_map<Expr, std::string> &externals);
+    Ref<std::string> makeAccList(const std::vector<Expr> &list, RelaxMode relax,
+                                 ExternalMap &externals);
+    Ref<std::string> makeRange(const std::vector<IterAxis> &point,
+                               RelaxMode relax, ExternalMap &externals);
     Ref<std::string> makeCond(const Expr &cond, RelaxMode relax,
-                              std::unordered_map<Expr, std::string> &externals);
+                              ExternalMap &externals);
 
     ISLMap makeAccMap(const AccessPoint &p, int iterDim, int accDim,
                       RelaxMode relax, const std::string &extSuffix,
-                      std::unordered_map<Expr, std::string> &externals);
+                      ExternalMap &externals);
 
     ISLMap makeEqForBothOps(const std::vector<std::pair<int, int>> &coord,
                             int iterDim) const;
@@ -254,6 +255,38 @@ class AnalyzeDeps : public Visitor {
 
     ISLMap makeConstraintOfSingleLoop(const std::string &loop,
                                       DepDirection mode, int iterDim);
+
+    /**
+     * Constraint for variables defined inside some loops
+     * E.g.
+     * for i
+     *   var def a
+     *     a[0] = i
+     *     ... = a[0]
+     * There will be no dependencies of a[0] across i
+     */
+    ISLMap makeEraseVarDefConstraint(const Ref<AccessPoint> &point,
+                                     int iterDim);
+
+    /**
+     * Constraint for loops that explicitly marked as no_deps by users
+     */
+    ISLMap makeNoDepsConstraint(int iterDim);
+
+    /*
+     * Constraint for external variables inside loop
+     * E.g.
+     * for i
+     *   for j
+     *     a[idx[i] + j]
+     * idx[i] + j must be different for the same i but different j, but
+     * idx[i] + j may be the same for different i
+     */
+    ISLMap makeExternalVarConstraint(const Ref<AccessPoint> &point,
+                                     const Ref<AccessPoint> &other,
+                                     const ExternalMap &pExternals,
+                                     const ExternalMap &oExternals,
+                                     int iterDim);
 
     static const std::string &getVar(const AST &op);
 
