@@ -104,6 +104,15 @@ void Schedule::reorder(const std::vector<std::string> &dstOrder) {
         for (size_t i = 0; i < n; i++) {
             for (size_t j = 0; j + 1 < n; j++) {
                 if (index[j] > index[j + 1]) {
+                    auto filter = [&](const AccessPoint &later,
+                                      const AccessPoint &earlier) {
+                        return earlier.cursor_
+                                   .getParentById(curOrder[j + 1]->id())
+                                   .isValid() &&
+                               later.cursor_
+                                   .getParentById(curOrder[j + 1]->id())
+                                   .isValid();
+                    };
                     auto found = [&](const Dependency &d) {
                         ASSERT(d.cond_.size() == 1);
                         std::ostringstream os;
@@ -116,7 +125,7 @@ void Schedule::reorder(const std::vector<std::string> &dstOrder) {
                     findDeps(ast,
                              {{{curOrder[j]->id(), DepDirection::Inv}},
                               {{curOrder[j + 1]->id(), DepDirection::Inv}}},
-                             found);
+                             found, FindDepsMode::Dep, DEP_ALL, filter);
 
                     SwapFor swapper(curOrder[j], curOrder[j + 1]);
                     ast = swapper(ast);
@@ -361,12 +370,17 @@ void Schedule::blend(const std::string &loop) {
             cond.push_back(
                 {{loop, DepDirection::Normal}, {item, DepDirection::Inv}});
         }
+        auto filter = [&](const AccessPoint &later,
+                          const AccessPoint &earlier) {
+            return earlier.cursor_.getParentById(loop).isValid() &&
+                   later.cursor_.getParentById(loop).isValid();
+        };
         auto found = [&](const Dependency &d) {
             ASSERT(d.cond_.size() == 2);
             throw InvalidSchedule(
                 dep2Str(d.cond_[1].first, d.var_, d.later(), d.earlier()));
         };
-        findDeps(ast, cond, found);
+        findDeps(ast, cond, found, FindDepsMode::Dep, DEP_ALL, filter);
 
         auto loopVari = findLoopVariance(ast);
         ast = BlendPass(loop, loopVari.first, loopVari.second)(ast);
@@ -657,10 +671,17 @@ void Schedule::parallelize(const std::string &loop,
         for (auto &&outerLoop : mutator.outerLoops()) {
             findDepsCond.push_back({outerLoop, DepDirection::Same});
         }
-        findDeps(oldAst, {findDepsCond}, [&](const Dependency &d) {
+        auto filter = [&](const AccessPoint &later,
+                          const AccessPoint &earlier) {
+            return earlier.cursor_.getParentById(loop).isValid() &&
+                   later.cursor_.getParentById(loop).isValid();
+        };
+        auto found = [&](const Dependency &d) {
             throw InvalidSchedule(
                 dep2Str(loop, d.var_, d.later(), d.earlier()));
-        });
+        };
+        findDeps(oldAst, {findDepsCond}, found, FindDepsMode::Dep, DEP_ALL,
+                 filter);
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid parallelize(" + loop + ", " + parallel +
                               "): " + e.what());
@@ -700,11 +721,17 @@ void Schedule::vectorize(const std::string &loop) {
         if (!mutator.done()) {
             throw InvalidSchedule("Loop " + loop + " not found");
         }
+        auto filter = [&](const AccessPoint &later,
+                          const AccessPoint &earlier) {
+            return earlier.cursor_.getParentById(loop).isValid() &&
+                   later.cursor_.getParentById(loop).isValid();
+        };
         auto found = [&](const Dependency &d) {
             throw InvalidSchedule(
                 dep2Str(loop, d.var_, d.later(), d.earlier()));
         };
-        findDeps(ast, {{{loop, DepDirection::Normal}}}, found);
+        findDeps(ast, {{{loop, DepDirection::Normal}}}, found,
+                 FindDepsMode::Dep, DEP_ALL, filter);
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid vectorize(" + loop + "): " + e.what());
     }
