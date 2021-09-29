@@ -1,6 +1,7 @@
 #include <ffi.h>
 #include <lower.h>
 #include <pass/flatten_stmt_seq.h>
+#include <pass/float_simplify.h>
 #include <pass/gpu/correct_shared_and_global.h>
 #include <pass/gpu/lower_vector.h>
 #include <pass/gpu/make_sync.h>
@@ -40,6 +41,11 @@ void init_ffi_pass(py::module_ &m) {
     m.def("simplify_pass", static_cast<Func (*)(const Func &)>(&simplifyPass),
           "func"_a);
     m.def("simplify_pass", static_cast<Stmt (*)(const Stmt &)>(&simplifyPass),
+          "stmt"_a);
+
+    m.def("float_simplify", static_cast<Func (*)(const Func &)>(&floatSimplify),
+          "func"_a);
+    m.def("float_simplify", static_cast<Stmt (*)(const Stmt &)>(&floatSimplify),
           "stmt"_a);
 
     m.def("flatten_stmt_seq",

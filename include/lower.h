@@ -2,6 +2,7 @@
 #define IR_LOWER_H
 
 #include <driver/target.h>
+#include <pass/float_simplify.h>
 #include <pass/gpu/correct_shared_and_global.h>
 #include <pass/gpu/lower_vector.h>
 #include <pass/gpu/make_sync.h>
@@ -24,6 +25,7 @@ namespace ir {
 
 template <class T> T lower(const T &t, const Ref<Target> &target) {
     T func = t;
+    func = floatSimplify(func);
     func = simplifyPass(func);
     func = moveOutFirstOrLastIter(func);
     func = sinkVar(func);
