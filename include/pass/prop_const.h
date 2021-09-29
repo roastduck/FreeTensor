@@ -36,10 +36,7 @@ class ReplaceLoads : public Mutator {
  */
 Stmt propConst(const Stmt &op);
 
-inline Func propConst(const Func &func) {
-    return makeFunc(func->name_, func->params_, func->buffers_, propConst(func->body_),
-                    func->src_);
-}
+DEFINE_PASS_FOR_FUNC(propConst)
 
 } // namespace ir
 

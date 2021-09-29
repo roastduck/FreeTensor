@@ -29,10 +29,7 @@ class RemoveDeadVar : public Mutator {
 
 inline Stmt removeDeadVar(const Stmt &op) { return RemoveDeadVar()(op); }
 
-inline Func removeDeadVar(const Func &func) {
-    return makeFunc(func->name_, func->params_, func->buffers_, removeDeadVar(func->body_),
-                    func->src_);
-}
+DEFINE_PASS_FOR_FUNC(removeDeadVar)
 
 } // namespace ir
 

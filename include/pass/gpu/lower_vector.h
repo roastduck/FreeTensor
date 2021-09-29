@@ -42,10 +42,7 @@ class LowerVector : public Z3Simplify {
 
 Stmt lowerVector(const Stmt &op);
 
-inline Func lowerVector(const Func &func) {
-    return makeFunc(func->name_, func->params_, func->buffers_, lowerVector(func->body_),
-                    func->src_);
-}
+DEFINE_PASS_FOR_FUNC(lowerVector)
 
 } // namespace gpu
 

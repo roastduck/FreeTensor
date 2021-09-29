@@ -8,13 +8,12 @@
 #include <pybind11/pybind11.h>
 
 #include <ast.h>
+#include <buffer.h>
 #include <frontend_utils.h>
 #include <stmt.h>
 #include <tensor.h>
-#include <buffer.h>
 
 namespace ir {
-
 
 class FuncNode : public ASTNode {
   public:
@@ -60,6 +59,13 @@ Func _makeFunc(const std::string &name, const std::vector<std::string> &params,
 }
 
 Func deepCopy(const Func &func);
+
+#define DEFINE_PASS_FOR_FUNC(pass)                                             \
+    template <typename... T> Func pass(const Func &func, T &&...args) {        \
+        return makeFunc(func->name_, func->params_, func->buffers_,            \
+                        pass(func->body_, std::forward<T>(args)...),           \
+                        func->src_);                                           \
+    }
 
 } // namespace ir
 

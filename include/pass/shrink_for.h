@@ -56,10 +56,7 @@ class ShrinkFor : public CompTransientBounds {
  */
 Stmt shrinkFor(const Stmt &op);
 
-inline Func shrinkFor(const Func &func) {
-    return makeFunc(func->name_, func->params_, func->buffers_, shrinkFor(func->body_),
-                    func->src_);
-}
+DEFINE_PASS_FOR_FUNC(shrinkFor)
 
 } // namespace ir
 

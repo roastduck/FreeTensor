@@ -45,7 +45,8 @@ template <class T> T lower(const T &t, const Ref<Target> &target) {
             // FIXME: MemType::GPUGlobal should also be make const, but only
             // inside a kernel
             func =
-                makeConstShape(func, {MemType::GPUShared, MemType::GPULocal});
+                makeConstShape(func, std::vector<MemType>{MemType::GPUShared,
+                                                          MemType::GPULocal});
 
             // After gpu_make_sync and gpu_correct_shared. Otherwise, these 2
             // passes cannot get the right thread info

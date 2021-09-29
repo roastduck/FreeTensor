@@ -58,10 +58,7 @@ Stmt shrinkVar(const Stmt &op);
  */
 Stmt shrinkSingleVar(const Stmt &op, const std::string &varDefId);
 
-inline Func shrinkVar(const Func &func) {
-    return makeFunc(func->name_, func->params_, func->buffers_, shrinkVar(func->body_),
-                    func->src_);
-}
+DEFINE_PASS_FOR_FUNC(shrinkVar)
 
 } // namespace ir
 

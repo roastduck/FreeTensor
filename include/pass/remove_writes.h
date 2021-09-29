@@ -101,10 +101,7 @@ class RemoveWrites : public Mutator {
  */
 Stmt removeWrites(const Stmt &op);
 
-inline Func removeWrites(const Func &func) {
-    return makeFunc(func->name_, func->params_, func->buffers_,
-                    removeWrites(func->body_), func->src_);
-}
+DEFINE_PASS_FOR_FUNC(removeWrites)
 
 } // namespace ir
 

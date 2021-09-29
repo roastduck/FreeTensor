@@ -20,10 +20,7 @@ inline Stmt flattenStmtSeq(const Stmt &op, bool popVarDef = false) {
     return FlattenStmtSeq(popVarDef)(op);
 }
 
-inline Func flattenStmtSeq(const Func &func, bool popVarDef = false) {
-    return makeFunc(func->name_, func->params_, func->buffers_,
-                    flattenStmtSeq(func->body_, popVarDef), func->src_);
-}
+DEFINE_PASS_FOR_FUNC(flattenStmtSeq)
 
 } // namespace ir
 

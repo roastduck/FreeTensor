@@ -62,10 +62,7 @@ class FloatSimplify : public Mutator {
  */
 Stmt floatSimplify(const Stmt &op);
 
-inline Func floatSimplify(const Func &func) {
-    return makeFunc(func->name_, func->params_, func->buffers_,
-                    floatSimplify(func->body_), func->src_);
-}
+DEFINE_PASS_FOR_FUNC(floatSimplify)
 
 } // namespace ir
 
