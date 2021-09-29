@@ -343,6 +343,12 @@ void MatchVisitor::visit(const Square &op) {
     RECURSE(op->expr_, instance->expr_);
 }
 
+void MatchVisitor::visit(const Abs &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::Abs);
+    auto instance = instance_.as<AbsNode>();
+    RECURSE(op->expr_, instance->expr_);
+}
+
 void MatchVisitor::visit(const Floor &op) {
     CHECK(instance_->nodeType() == ASTNodeType::Floor);
     auto instance = instance_.as<FloorNode>();

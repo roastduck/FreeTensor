@@ -394,7 +394,7 @@ def if_then_else(cond, then_case, else_case):
 
 
 def abs(expr):
-    return if_then_else(expr >= 0, expr, -expr)
+    return ffi.makeAbs(expr)
 
 
 def l_and(lhs, rhs):

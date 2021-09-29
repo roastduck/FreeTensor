@@ -326,6 +326,12 @@ void PrintVisitor::visit(const Square &op) {
     os() << ")^2";
 }
 
+void PrintVisitor::visit(const Abs &op) {
+    os() << "abs(";
+    recur(op->expr_);
+    os() << ")";
+}
+
 void PrintVisitor::visit(const Floor &op) {
     os() << "floor(";
     recur(op->expr_);

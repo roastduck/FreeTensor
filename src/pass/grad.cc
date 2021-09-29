@@ -232,4 +232,13 @@ void Grad::visit(const Square &op) {
     Visitor::visit(op);
 }
 
+void Grad::visit(const Abs &op) {
+    if (gradExprs_.count(op)) {
+        gradExprs_[op->expr_] =
+            makeIfExpr(makeGE(op->expr_, makeIntConst(0)), gradExprs_.at(op),
+                       makeSub(makeIntConst(0), gradExprs_.at(op)));
+    }
+    Visitor::visit(op);
+}
+
 } // namespace ir

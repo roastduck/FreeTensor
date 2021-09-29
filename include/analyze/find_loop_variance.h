@@ -133,6 +133,7 @@ class FindLoopVariance : public Visitor {
     void visit(const Sqrt &op) override { visitUnaryOp(op); }
     void visit(const Exp &op) override { visitUnaryOp(op); }
     void visit(const Square &op) override { visitUnaryOp(op); }
+    void visit(const Abs &op) override { visitUnaryOp(op); }
     void visit(const Floor &op) override { visitUnaryOp(op); }
     void visit(const Ceil &op) override { visitUnaryOp(op); }
     void visit(const IfExpr &op) override;

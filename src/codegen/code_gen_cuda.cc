@@ -57,6 +57,12 @@ void CodeGenCUDA::visit(const Exp &op) {
     os() << ")";
 }
 
+void CodeGenCUDA::visit(const Abs &op) {
+    os() << "runtime_abs("; // Defined in runtime/gpu_runtime.h
+    (*this)(op->expr_);
+    os() << ")";
+}
+
 void CodeGenCUDA::visit(const Floor &op) {
     os() << "runtime_floor("; // Defined in runtime/gpu_runtime.h
     (*this)(op->expr_);

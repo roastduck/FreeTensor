@@ -33,6 +33,7 @@ class CodeGenCUDA : public CodeGenC<CodeGenCUDAStream> {
     void visit(const Max &op) override;
     void visit(const Sqrt &op) override;
     void visit(const Exp &op) override;
+    void visit(const Abs &op) override;
     void visit(const Floor &op) override;
     void visit(const Ceil &op) override;
     void visit(const ReduceTo &op) override;
