@@ -102,11 +102,17 @@ def rasterize(vertices, faces, y, h, w, n_verts, n_faces, device, mtype,
                 v2[1] = vertices[faces[i, 1], 1]
                 v3[0] = vertices[faces[i, 2], 0]
                 v3[1] = vertices[faces[i, 2], 1]
+                "nid: V_e1"
                 e1 = sub(v2, v1)
+                "nid: V_e2"
                 e2 = sub(v3, v2)
+                "nid: V_e3"
                 e3 = sub(v1, v3)
+                "nid: V_len1"
                 len1 = norm(e1)
+                "nid: V_len2"
                 len2 = norm(e2)
+                "nid: V_len3"
                 len3 = norm(e3)
 
                 "nid: Lj"
@@ -141,39 +147,34 @@ def rasterize(vertices, faces, y, h, w, n_verts, n_faces, device, mtype,
                                 ir.abs(cp3[()]) / len3[()]),
                             ir.min(ir.min(dist1[()], dist2[()]), dist3[()]))
 
-                        coeff = ir.create_var((), "int32", "cache", local_mtype)
-                        if cp1[()] < 0 and cp2[()] < 0 and cp3[()] < 0:
-                            coeff[()] = 1
-                        else:
-                            coeff[()] = -1
-                        y[i, j, k] = coeff[()] * dist[()] * dist[()] / sigma
+                        y[i, j, k] = ir.if_then_else(
+                            cp1[()] < 0 and cp2[()] < 0 and cp3[()] < 0, 1,
+                            -1) * dist[()] * dist[()] / sigma
 
         s = ir.Schedule(f)
         if device.target().type() == ir.TargetType.CPU:
             s.parallelize('Li', 'openmp')
-            s.inline(
-                s.find(lambda x: x.node_type() == ir.ASTNodeType.VarDef and x.
-                       node().name == '$V_dist1:y'))
-            s.inline(
-                s.find(lambda x: x.node_type() == ir.ASTNodeType.VarDef and x.
-                       node().name == '$V_dist2:y'))
-            s.inline(
-                s.find(lambda x: x.node_type() == ir.ASTNodeType.VarDef and x.
-                       node().name == '$V_dist3:y'))
+            s.inline('V_dist1:y')
+            s.inline('V_dist2:y')
+            s.inline('V_dist3:y')
         else:
-            blk, thr = s.split('Li', 128)
-            s.parallelize(blk, 'blockIdx.x')
+            s.inline('V_e1:y')
+            s.inline('V_e2:y')
+            s.inline('V_e3:y')
+            s.inline('V_len1:y')
+            s.inline('V_len2:y')
+            s.inline('V_len3:y')
+            s.inline('V_dist1:y')
+            s.inline('V_dist2:y')
+            s.inline('V_dist3:y')
+            s.inline(':dist')
+            Ljk = s.merge('Lj', 'Lk')
+            serial, thr = s.split(Ljk, 1024)
             s.parallelize(thr, 'threadIdx.x')
-            s.cache('Lj', 'faces', 'gpu/local')
-            s.inline(
-                s.find(lambda x: x.node_type() == ir.ASTNodeType.VarDef and x.
-                       node().name == '$V_dist1:y'))
-            s.inline(
-                s.find(lambda x: x.node_type() == ir.ASTNodeType.VarDef and x.
-                       node().name == '$V_dist2:y'))
-            s.inline(
-                s.find(lambda x: x.node_type() == ir.ASTNodeType.VarDef and x.
-                       node().name == '$V_dist3:y'))
+            s.set_mem_type(":v1", "gpu/shared")
+            s.set_mem_type(":v2", "gpu/shared")
+            s.set_mem_type(":v3", "gpu/shared")
+            s.parallelize('Li', 'blockIdx.x')
         f = ir.lower(s.func(), device.target())
         print(f)
         code = ir.codegen(f, device.target())
