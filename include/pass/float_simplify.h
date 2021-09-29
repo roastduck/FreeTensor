@@ -2,6 +2,7 @@
 #define FLOAT_SIMPLIFY_H
 
 #include <unordered_map>
+#include <unordered_set>
 
 #include <analyze/hash.h>
 #include <analyze/type_infer.h>
@@ -12,6 +13,7 @@ namespace ir {
 
 class FloatSimplify : public Mutator {
     std::unordered_map<Expr, double> constants_;
+    std::unordered_set<Expr> nonNeg_, nonPosi_;
     std::unordered_map<std::string, Ref<Buffer>> buffers_;
     GetHash getHash_;
     TypeInfer typeInfer_;
@@ -21,6 +23,17 @@ class FloatSimplify : public Mutator {
     FloatSimplify() : typeInfer_(&buffers_) {}
 
     bool isFixPoint() const { return isFixPoint_; }
+
+    void setNonNeg(const Expr &op) { nonNeg_.insert(op); }
+    void setNonPosi(const Expr &op) { nonPosi_.insert(op); }
+    bool nonNeg(const Expr &op) const {
+        return nonNeg_.count(op) ||
+               (constants_.count(op) && constants_.at(op) >= 0);
+    }
+    bool nonPosi(const Expr &op) const {
+        return nonPosi_.count(op) ||
+               (constants_.count(op) && constants_.at(op) <= 0);
+    }
 
   private:
     uint64_t getHash(const Expr &op);

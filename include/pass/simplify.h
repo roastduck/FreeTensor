@@ -57,7 +57,7 @@ class OutDatedBoundsRemover : public Visitor {
 };
 
 /**
- * Compute bounds of IDENTICAL (sub)expressions AT A POSITION in the AST
+ * Compute bounds of IDENTICAL INTEGER (sub)expressions AT A POSITION in the AST
  *
  * E.g.
  *
@@ -108,7 +108,7 @@ class CompTransientBounds : public Mutator {
 };
 
 /**
- * Compute bounds of each UNIQUE (sub)expression
+ * Compute bounds of each UNIQUE INTEGER (sub)expression
  *
  * E.g.
  *
@@ -178,6 +178,7 @@ class CompUniqueBounds : public CompTransientBounds {
     Expr visit(const Add &op) override;
     Expr visit(const Sub &op) override;
     Expr visit(const Mul &op) override;
+    Expr visit(const Square &op) override;
     Expr visit(const FloorDiv &op) override;
     Expr visit(const CeilDiv &op) override;
     Expr visit(const Mod &op) override;
