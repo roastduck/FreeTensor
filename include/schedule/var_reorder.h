@@ -51,6 +51,7 @@ class VarReorder : public Mutator {
     Stmt visit(const Store &op) override;
     Stmt visit(const ReduceTo &op) override;
     Expr visit(const Load &op) override;
+    Stmt visit(const MatMul &op) override;
 };
 
 } // namespace ir
