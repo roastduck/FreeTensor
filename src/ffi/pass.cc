@@ -28,15 +28,19 @@ using namespace pybind11::literals;
 
 void init_ffi_pass(py::module_ &m) {
     m.def("grad",
-          static_cast<Func (*)(
-              const Func &,
-              const std::unordered_map<std::string, std::string> &)>(&grad),
-          "func"_a, "grad_names"_a);
+          static_cast<
+              std::tuple<Func, std::unordered_map<std::string, std::string>,
+                         std::unordered_map<std::string, std::string>> (*)(
+                  const Func &, const std::unordered_set<std::string> &,
+                  const std::unordered_set<std::string> &)>(&grad),
+          "func"_a, "requires"_a, "provides"_a);
     m.def("grad",
-          static_cast<Stmt (*)(
-              const Stmt &,
-              const std::unordered_map<std::string, std::string> &)>(&grad),
-          "stmt"_a, "grad_names"_a);
+          static_cast<
+              std::tuple<Stmt, std::unordered_map<std::string, std::string>,
+                         std::unordered_map<std::string, std::string>> (*)(
+                  const Stmt &, const std::unordered_set<std::string> &,
+                  const std::unordered_set<std::string> &)>(&grad),
+          "stmt"_a, "requires"_a, "provides"_a);
 
     m.def("simplify_pass", static_cast<Func (*)(const Func &)>(&simplifyPass),
           "func"_a);
