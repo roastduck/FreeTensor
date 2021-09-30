@@ -129,10 +129,12 @@ Stmt removeWrites(const Stmt &_op) {
         return suspect.count(later.def_);
     };
     auto foundUse = [&](const Dependency &d) {
-        if (d.later()->nodeType() != ASTNodeType::Store) {
+        if (d.later()->nodeType() != ASTNodeType::Store &&
+            d.earlier()->nodeType() != ASTNodeType::Load) {
             usesRAW.emplace(d.later(), d.earlier().as<StmtNode>());
         }
-        if (d.earlier()->nodeType() != ASTNodeType::Store) {
+        if (d.earlier()->nodeType() != ASTNodeType::Store &&
+            d.later()->nodeType() != ASTNodeType::Load) {
             usesWAR.emplace(d.later().as<StmtNode>(), d.earlier());
         }
     };
