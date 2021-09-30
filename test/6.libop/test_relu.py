@@ -19,8 +19,8 @@ def test_static_shape():
 
     print(f)
     s = ir.Schedule(f)
-    s.inline("relu:V_x_shape")
-    s.inline("relu:V_y_shape")
+    s.inline("relu:x_shape")
+    s.inline("relu:y_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 
@@ -54,7 +54,7 @@ def test_out_of_place():
 
     print(f)
     s = ir.Schedule(f)
-    s.inline("relu:V_x_shape")
+    s.inline("relu:x_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 

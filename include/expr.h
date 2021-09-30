@@ -406,6 +406,19 @@ template <class T> Expr _makeSquare(T &&expr) {
     return e;
 }
 
+class AbsNode : public ExprNode {
+  public:
+    SubTree<ExprNode> expr_;
+    DEFINE_NODE_TRAIT(Abs);
+};
+typedef Ref<AbsNode> Abs;
+#define makeAbs(...) makeNode(Abs, __VA_ARGS__)
+template <class T> Expr _makeAbs(T &&expr) {
+    Abs e = Abs::make();
+    e->expr_ = std::forward<T>(expr);
+    return e;
+}
+
 class FloorNode : public ExprNode {
   public:
     SubTree<ExprNode> expr_;

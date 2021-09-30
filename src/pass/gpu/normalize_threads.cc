@@ -14,7 +14,7 @@ Expr NormalizeThreads::visit(const Var &_op) {
     auto op = __op.as<VarNode>();
     if (varMap_.count(op->name_)) {
         auto &&info = varMap_.at(op->name_);
-        return makeAdd(makeVar(info.newIter_), info.offset_);
+        return makeAdd(makeVar(info.newIter_), (*this)(info.offset_));
     }
     return op;
 }
@@ -57,9 +57,10 @@ Stmt NormalizeThreads::doVisitFor(const For &_op) {
         auto op = __op.as<ForNode>();
         varMap_.erase(_op->iter_);
         inside_[_op->parallel_]--;
-        return makeIf(op->id(),
-                      makeLT(makeVar(newIter), makeSub(op->end_, op->begin_)),
-                      op->body_);
+        if (!op->noDeps_) {
+            notNoDeps_.insert(_op->parallel_);
+        }
+        return makeIf(op->id(), makeLT(makeVar(newIter), op->len_), op->body_);
     } else {
         return Mutator::visit(_op);
     }
@@ -75,17 +76,23 @@ Stmt NormalizeThreads::visit(const For &op) {
         inKernel_ = false;
         auto zero = makeIntConst(0);
         auto inf = makeIntConst(INT_MAX);
-        ret = makeFor("", ".threadIdx.x", zero, inf, inf, "threadIdx.x", false,
+        ret = makeFor("", ".threadIdx.x", zero, inf, inf,
+                      !notNoDeps_.count("threadIdx.x"), "threadIdx.x", false,
                       false, ret);
-        ret = makeFor("", ".threadIdx.y", zero, inf, inf, "threadIdx.y", false,
+        ret = makeFor("", ".threadIdx.y", zero, inf, inf,
+                      !notNoDeps_.count("threadIdx.y"), "threadIdx.y", false,
                       false, ret);
-        ret = makeFor("", ".threadIdx.z", zero, inf, inf, "threadIdx.z", false,
+        ret = makeFor("", ".threadIdx.z", zero, inf, inf,
+                      !notNoDeps_.count("threadIdx.z"), "threadIdx.z", false,
                       false, ret);
-        ret = makeFor("", ".blockIdx.x", zero, inf, inf, "blockIdx.x", false,
+        ret = makeFor("", ".blockIdx.x", zero, inf, inf,
+                      !notNoDeps_.count("blockIdx.x"), "blockIdx.x", false,
                       false, ret);
-        ret = makeFor("", ".blockIdx.y", zero, inf, inf, "blockIdx.y", false,
+        ret = makeFor("", ".blockIdx.y", zero, inf, inf,
+                      !notNoDeps_.count("blockIdx.y"), "blockIdx.y", false,
                       false, ret);
-        ret = makeFor("", ".blockIdx.z", zero, inf, inf, "blockIdx.z", false,
+        ret = makeFor("", ".blockIdx.z", zero, inf, inf,
+                      !notNoDeps_.count("blockIdx.z"), "blockIdx.z", false,
                       false, ret);
         return ret;
     } else {

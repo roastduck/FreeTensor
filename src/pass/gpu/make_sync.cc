@@ -53,7 +53,7 @@ Stmt CopyPart::visitStmt(const Stmt &op,
 Stmt CopyPart::visit(const For &op) {
     bool begun = begun_, ended = ended_;
     auto ret = Mutator::visit(op);
-    if ((!begun && begun_) || (!ended && ended_)) {
+    if (op->parallel_.empty() && ((!begun && begun_) || (!ended && ended_))) {
         throw InvalidProgram(
             "Unable to insert a synchronizing statment because it requires "
             "splitting loop " +
@@ -211,17 +211,14 @@ Stmt MakeSync::visit(const If &_op) {
             if (i < iEnd - 1) {
                 stmts.emplace_back(splittersThen[i]);
             }
-            auto &&thisSplittedDefs = copier.splittedDefs();
-            size_t sameCnt = 0;
-            while (sameCnt < splittedDefs.size() &&
-                   sameCnt < thisSplittedDefs.size() &&
-                   splittedDefs[splittedDefs.size() - sameCnt - 1]->id() ==
-                       thisSplittedDefs[thisSplittedDefs.size() - sameCnt - 1]
-                           ->id()) {
-                sameCnt++;
+            for (auto &&item : copier.splittedDefs()) {
+                if (std::find_if(splittedDefs.begin(), splittedDefs.end(),
+                                 [&](const VarDef &x) {
+                                     return x->id() == item->id();
+                                 }) == splittedDefs.end()) {
+                    splittedDefs.emplace_back(item);
+                }
             }
-            splittedDefs.insert(splittedDefs.end(), thisSplittedDefs.begin(),
-                                thisSplittedDefs.end() - sameCnt);
         }
         Stmt thenBody = makeStmtSeq("", std::move(stmts));
         for (auto &&def : splittedDefs) {
@@ -244,19 +241,14 @@ Stmt MakeSync::visit(const If &_op) {
                 if (i < iEnd - 1) {
                     stmts.emplace_back(splittersElse[i]);
                 }
-                auto &&thisSplittedDefs = copier.splittedDefs();
-                size_t sameCnt = 0;
-                while (
-                    sameCnt < splittedDefs.size() &&
-                    sameCnt < thisSplittedDefs.size() &&
-                    splittedDefs[splittedDefs.size() - sameCnt - 1]->id() ==
-                        thisSplittedDefs[thisSplittedDefs.size() - sameCnt - 1]
-                            ->id()) {
-                    sameCnt++;
+                for (auto &&item : copier.splittedDefs()) {
+                    if (std::find_if(splittedDefs.begin(), splittedDefs.end(),
+                                     [&](const VarDef &x) {
+                                         return x->id() == item->id();
+                                     }) == splittedDefs.end()) {
+                        splittedDefs.emplace_back(item);
+                    }
                 }
-                splittedDefs.insert(splittedDefs.end(),
-                                    thisSplittedDefs.begin(),
-                                    thisSplittedDefs.end() - sameCnt);
             }
             Stmt elseBody = makeStmtSeq("", std::move(stmts));
             for (auto &&def : splittedDefs) {

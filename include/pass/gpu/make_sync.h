@@ -70,10 +70,7 @@ class MakeSync : public MutatorWithCursor {
 
 Stmt makeSync(const Stmt &op);
 
-inline Func makeSync(const Func &func) {
-    return makeFunc(func->name_, func->params_, makeSync(func->body_),
-                    func->src_);
-}
+DEFINE_PASS_FOR_FUNC(makeSync)
 
 } // namespace gpu
 

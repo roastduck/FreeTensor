@@ -10,12 +10,19 @@
 
 namespace ir {
 
+struct ParallelInfo {
+    std::string type_;                    // parallel type
+    std::vector<std::string> outerLoops_; // outer loop ID
+};
+
 class FindAllParallel : public Visitor {
-    // Loop ID -> parallel type
-    std::unordered_map<std::string, std::string> results_;
+    // Loop ID -> ParallelInfo
+    std::unordered_map<std::string, ParallelInfo> results_;
+
+    std::vector<std::string> loopStack_;
 
   public:
-    const std::unordered_map<std::string, std::string> &results() const {
+    const std::unordered_map<std::string, ParallelInfo> &results() const {
         return results_;
     }
 
@@ -39,10 +46,7 @@ class MakeAtomic : public Mutator {
  */
 Stmt makeAtomic(const Stmt &op);
 
-inline Func makeAtomic(const Func &func) {
-    return makeFunc(func->name_, func->params_, makeAtomic(func->body_),
-                    func->src_);
-}
+DEFINE_PASS_FOR_FUNC(makeAtomic)
 
 } // namespace ir
 

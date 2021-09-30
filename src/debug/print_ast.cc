@@ -42,7 +42,9 @@ void PrintVisitor::printId(const Stmt &op) {
 
 void PrintVisitor::visitStmt(
     const Stmt &op, const std::function<void(const Stmt &)> &visitNode) {
-    printId(op);
+    if (op->nodeType() != ASTNodeType::Any) {
+        printId(op);
+    }
     Visitor::visitStmt(op, visitNode);
 }
 
@@ -324,6 +326,12 @@ void PrintVisitor::visit(const Square &op) {
     os() << ")^2";
 }
 
+void PrintVisitor::visit(const Abs &op) {
+    os() << "abs(";
+    recur(op->expr_);
+    os() << ")";
+}
+
 void PrintVisitor::visit(const Floor &op) {
     os() << "floor(";
     recur(op->expr_);
@@ -353,6 +361,10 @@ void PrintVisitor::visit(const Cast &op) {
 }
 
 void PrintVisitor::visit(const For &op) {
+    if (op->noDeps_) {
+        makeIndent();
+        os() << "// no dependency" << std::endl;
+    }
     if (!op->parallel_.empty()) {
         makeIndent();
         os() << "// parallel = " << op->parallel_ << std::endl;

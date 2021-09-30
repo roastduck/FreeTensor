@@ -5,46 +5,42 @@
 #include <unordered_set>
 
 #include <analyze/hash.h>
+#include <math/gen_isl_expr.h>
 #include <math/isl.h>
 #include <pass/simplify.h>
 
 namespace ir {
 
-struct ISLExpr {
-    std::unordered_set<int> var_;
-    std::vector<std::string> cond_;
-    std::string expr_;
+/**
+ * GenISLExpr specialized for handling external variables and bounds
+ */
+class GenISLExprSimplify : public GenISLExpr {
+    std::unordered_map<Expr, std::unordered_set<std::string>> vars_;
+    std::unordered_map<Expr, std::vector<std::string>> cond_;
+    GetHash getHash_;
+    Expr parent_ = nullptr;
+
+  public:
+    std::unordered_set<std::string> &vars(const Expr &op) { return vars_[op]; }
+    std::vector<std::string> &cond(const Expr &op) { return cond_[op]; }
+
+  protected:
+    using GenISLExpr::visit;
+    void visitExpr(const Expr &op,
+                   const std::function<void(const Expr &)> &visitNode) override;
+    void visit(const Var &op) override;
+    void visit(const Load &op) override;
 };
 
 class ISLCompBounds : public CompUniqueBounds {
-    int varCnt_ = 0;
-    std::unordered_map<uint64_t, int> varId_;
-    GetHash getHash_;
-
-    std::unordered_map<Expr, ISLExpr> islExprs_;
-
+    GenISLExprSimplify genISLExpr_;
     ISLCtx isl_;
-
-  private:
-    int getVarId(const Expr &op);
 
   protected:
     using CompUniqueBounds::visit;
 
     Expr visitExpr(const Expr &op,
                    const std::function<Expr(const Expr &)> &visitNode) override;
-
-    Expr visit(const Var &op) override;
-    Expr visit(const Load &op) override;
-    Expr visit(const IntConst &op) override;
-    Expr visit(const Add &op) override;
-    Expr visit(const Sub &op) override;
-    Expr visit(const Mul &op) override;
-    Expr visit(const FloorDiv &op) override;
-    Expr visit(const CeilDiv &op) override;
-    Expr visit(const Mod &op) override;
-    Expr visit(const Min &op) override;
-    Expr visit(const Max &op) override;
 };
 
 class ISLSimplify : public SimplifyPass<ISLCompBounds> {};

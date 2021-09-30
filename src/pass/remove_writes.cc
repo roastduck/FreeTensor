@@ -50,7 +50,9 @@ void FindLoopInvariantWrites::visit(const If &op) {
 
 void FindLoopInvariantWrites::visit(const VarDef &op) {
     defDepth_[op->name_] = loopStack_.size();
+    defs_[op->name_] = op;
     Visitor::visit(op);
+    defs_.erase(op->name_);
     defDepth_.erase(op->name_);
 }
 
@@ -82,7 +84,7 @@ void FindLoopInvariantWrites::visit(const Store &op) {
     }
 
     if (cond.isValid()) {
-        results_.emplace_back(op, cond);
+        results_.emplace_back(defs_.at(op->var_), op, cond);
     }
 }
 
@@ -96,6 +98,15 @@ Stmt removeWrites(const Stmt &_op) {
     // nodes, and finally we call sinkVars to adjust the scope of the VarDef
     // nodes back to a proper size.
     op = hoistVarOverStmtSeq(op);
+
+    auto variantExpr = findLoopVariance(op);
+    FindLoopInvariantWrites type2Finder(variantExpr.first);
+    type2Finder(op);
+
+    std::unordered_set<VarDef> suspect;
+    for (auto &&[def, store, cond] : type2Finder.results()) {
+        suspect.insert(def);
+    }
 
     // {(later, earlier)}
     std::set<std::pair<Stmt, Stmt>> overwrites;
@@ -112,19 +123,25 @@ Stmt removeWrites(const Stmt &_op) {
     auto foundOverwrite = [&](const Dependency &d) {
         overwrites.emplace(d.later().as<StmtNode>(),
                            d.earlier().as<StmtNode>());
+        suspect.insert(d.def());
+    };
+    auto filterUse = [&](const AccessPoint &later, const AccessPoint &earlier) {
+        return suspect.count(later.def_);
     };
     auto foundUse = [&](const Dependency &d) {
-        if (d.later()->nodeType() != ASTNodeType::Store) {
+        if (d.later()->nodeType() != ASTNodeType::Store &&
+            d.earlier()->nodeType() != ASTNodeType::Load) {
             usesRAW.emplace(d.later(), d.earlier().as<StmtNode>());
         }
-        if (d.earlier()->nodeType() != ASTNodeType::Store) {
+        if (d.earlier()->nodeType() != ASTNodeType::Store &&
+            d.later()->nodeType() != ASTNodeType::Load) {
             usesWAR.emplace(d.later().as<StmtNode>(), d.earlier());
         }
     };
 
     findDeps(op, {{}}, foundOverwrite, FindDepsMode::KillEarlier, DEP_WAW,
              filterOverwrite, false);
-    findDeps(op, {{}}, foundUse, FindDepsMode::Dep, DEP_ALL, nullptr, false);
+    findDeps(op, {{}}, foundUse, FindDepsMode::Dep, DEP_ALL, filterUse, false);
 
     std::unordered_set<Stmt> redundant;
     std::unordered_map<Stmt, Stmt> replacement;
@@ -207,12 +224,8 @@ Stmt removeWrites(const Stmt &_op) {
     }
 
     // Type 2
-    auto variantExpr = findLoopVariance(op);
-    FindLoopInvariantWrites finder(variantExpr.first);
-    finder(op);
-    for (auto &&item : finder.results()) {
-        auto &&store = item.first.as<StmtNode>();
-        auto &&cond = item.second;
+    for (auto &&[def, _store, cond] : type2Finder.results()) {
+        auto store = _store.as<StmtNode>();
         for (auto &&use : usesRAW) {
             if (use.second == store &&
                 usesWAR.count(std::make_pair(store, use.first))) {

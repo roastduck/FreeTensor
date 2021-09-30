@@ -61,7 +61,8 @@ Stmt FuseFor::visit(const For &_op) {
     auto op = __op.as<ForNode>();
     if (op->id() == id0_ || op->id() == id1_) {
         return makeFor(op->id(), op->iter_, makeIntConst(0), op->len_, op->len_,
-                       op->parallel_, op->unroll_, op->vectorize_, op->body_);
+                       op->noDeps_, op->parallel_, op->unroll_, op->vectorize_,
+                       op->body_);
     }
     return op;
 }
@@ -87,10 +88,12 @@ Stmt FuseFor::visit(const StmtSeq &_op) {
 
             auto loop0 = loop0InVarDefs.loop_;
             auto loop1 = loop1InVarDefs.loop_;
+            beforeId_ = loop0->body_->id();
+            afterId_ = loop1->body_->id();
             auto seq = makeStmtSeq("", {loop0->body_, loop1->body_});
-            seqId_ = seq->id();
             auto fused = makeFor(fused_, iter0_, makeIntConst(0), loop0->end_,
-                                 loop0->end_, loop0->parallel_, loop0->unroll_,
+                                 loop0->end_, loop0->noDeps_ && loop1->noDeps_,
+                                 loop0->parallel_, loop0->unroll_,
                                  loop0->vectorize_, std::move(seq));
 
             // From inner to outer

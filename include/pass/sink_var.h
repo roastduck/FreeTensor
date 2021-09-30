@@ -5,6 +5,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include <analyze/find_loop_variance.h>
 #include <func.h>
 #include <mutator.h>
 #include <visitor.h>
@@ -18,12 +19,14 @@ namespace ir {
  */
 class SinkVar : public Mutator {
     const std::set<std::pair<std::string, std::string>> &deps_; // {(var, loop)}
+    const LoopVariUniqVarMap &variantMap_;
     std::unordered_set<std::string> used_;
     bool isFixPoint_ = true;
 
   public:
-    SinkVar(const std::set<std::pair<std::string, std::string>> &deps)
-        : deps_(deps) {}
+    SinkVar(const std::set<std::pair<std::string, std::string>> &deps,
+            const LoopVariUniqVarMap &variantMap)
+        : deps_(deps), variantMap_(variantMap) {}
 
     bool isFixPoint() const { return isFixPoint_; }
 
@@ -36,10 +39,7 @@ class SinkVar : public Mutator {
 
 Stmt sinkVar(const Stmt &op);
 
-inline Func sinkVar(const Func &func) {
-    return makeFunc(func->name_, func->params_, sinkVar(func->body_),
-                    func->src_);
-}
+DEFINE_PASS_FOR_FUNC(sinkVar)
 
 } // namespace ir
 

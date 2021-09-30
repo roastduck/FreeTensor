@@ -36,10 +36,7 @@ class MakeReduction : public Mutator {
 
 inline Stmt makeReduction(const Stmt &op) { return MakeReduction()(op); }
 
-inline Func makeReduction(const Func &func) {
-    return makeFunc(func->name_, func->params_, makeReduction(func->body_),
-                    func->src_);
-}
+DEFINE_PASS_FOR_FUNC(makeReduction)
 
 } // namespace ir
 

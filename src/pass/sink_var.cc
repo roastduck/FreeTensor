@@ -78,15 +78,20 @@ Stmt SinkVar::visit(const VarDef &op) {
 
     case ASTNodeType::For: {
         auto loop = op->body_.as<ForNode>();
-        if (!deps_.count(std::make_pair(op->name_, loop->id()))) {
+        // Criteria:
+        // 1. All accesses to a variable is indenpendent between each other
+        // OR
+        // 2. All writes to this variable write the same value
+        if (!deps_.count(std::make_pair(op->name_, loop->id())) ||
+            !isVariant(variantMap_, op, loop->id())) {
             auto loopBody =
                 makeVarDef(op->id(), op->name_, std::move(buffer),
                            std::move(sizeLim), (*this)(loop->body_), false);
             isFixPoint_ = false;
             return makeFor(loop->id(), loop->iter_, (*this)(loop->begin_),
                            (*this)(loop->end_), (*this)(loop->len_),
-                           loop->parallel_, loop->unroll_, loop->vectorize_,
-                           std::move(loopBody));
+                           loop->noDeps_, loop->parallel_, loop->unroll_,
+                           loop->vectorize_, std::move(loopBody));
         } else {
             body = (*this)(op->body_);
         }
@@ -123,7 +128,12 @@ Stmt sinkVar(const Stmt &_op) {
             WARNING("SinkVar iterates over 100 rounds. Maybe there is a bug");
             break;
         }
-        SinkVar mutator(deps);
+
+        // findLoopVariance returns AST node reference instead of IDs, so we
+        // need it once per mutation
+        LoopVariUniqVarMap variantMap = findLoopVariance(op).second;
+
+        SinkVar mutator(deps, variantMap);
         op = mutator(op);
         if (mutator.isFixPoint()) {
             break;

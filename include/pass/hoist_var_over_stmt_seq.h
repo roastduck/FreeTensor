@@ -26,10 +26,7 @@ class HoistVarOverStmtSeq : public Mutator {
 
 Stmt hoistVarOverStmtSeq(const Stmt &op);
 
-inline Func hoistVarOverStmtSeq(const Func &func) {
-    return makeFunc(func->name_, func->params_,
-                    hoistVarOverStmtSeq(func->body_), func->src_);
-}
+DEFINE_PASS_FOR_FUNC(hoistVarOverStmtSeq)
 
 } // namespace ir
 

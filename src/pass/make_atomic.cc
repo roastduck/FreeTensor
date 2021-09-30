@@ -5,9 +5,12 @@
 namespace ir {
 
 void FindAllParallel::visit(const For &op) {
+    loopStack_.emplace_back(op->id());
     Visitor::visit(op);
+    loopStack_.pop_back();
+
     if (!op->parallel_.empty()) {
-        results_[op->id()] = op->parallel_;
+        results_[op->id()] = {op->parallel_, loopStack_};
     }
 }
 
@@ -27,8 +30,12 @@ Stmt makeAtomic(const Stmt &_op) {
     std::vector<std::vector<std::pair<std::string, DepDirection>>> cond;
     FindAllParallel finder;
     finder(op);
-    for (auto &&loop : finder.results()) {
-        cond.push_back({{loop.first, DepDirection::Different}});
+    for (auto &&[loop, info] : finder.results()) {
+        FindDepsCond findDepsCond{{loop, DepDirection::Different}};
+        for (auto &&outerLoop : info.outerLoops_) {
+            findDepsCond.push_back({outerLoop, DepDirection::Same});
+        }
+        cond.emplace_back(std::move(findDepsCond));
     }
 
     std::unordered_set<std::string> toAlter;
@@ -46,7 +53,7 @@ Stmt makeAtomic(const Stmt &_op) {
     auto found = [&](const Dependency &d) {
         // TODO: Make these statements device agnostic
         if (d.later_.buffer_->mtype() == MemType::GPUShared &&
-            finder.results().at(d.cond_[0].first).substr(0, 10) !=
+            finder.results().at(d.cond_[0].first).type_.substr(0, 10) !=
                 "threadIdx.") {
             return;
         }

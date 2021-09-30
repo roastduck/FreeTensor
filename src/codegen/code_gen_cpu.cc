@@ -45,6 +45,7 @@ void CodeGenCPU::visit(const VarDef &op) {
 void CodeGenCPU::visit(const ReduceTo &op) {
     if (op->atomic_) {
         os() << "#pragma omp atomic" << std::endl;
+        // FIXME: OpenMP supports atomic min and max only for FORTRAN
     }
     CodeGenC::visit(op);
 }

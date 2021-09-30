@@ -35,10 +35,13 @@ def conv(x, w1, w2, y, n, c_in, c_out, h, w, k_h, k_w, device, mtype,
                         col = ir.create_var((k_h, k_w), "float32", "cache", local_mtype)
                         row_int = ir.create_var((k_h, k_w), "int32", "cache", local_mtype)
                         col_int = ir.create_var((k_h, k_w), "int32", "cache", local_mtype)
+                        "nid: Lro0"
                         for ro in range(k_h):
+                            "nid: Lso0"
                             for so in range(k_w):
                                 row[ro, so] = 0
                                 col[ro, so] = 0
+                                "nid: Lki0"
                                 for ki in range(c_in):
                                     "nid: Lri"
                                     for ri in range(k_h):
@@ -52,8 +55,8 @@ def conv(x, w1, w2, y, n, c_in, c_out, h, w, k_h, k_w, device, mtype,
                                 row_int[ro, so] = ir.cast(ir.floor(row[ro, so]), "int32")
                                 col_int[ro, so] = ir.cast(ir.floor(col[ro, so]), "int32")
 
-                        "nid: V_pixel"
                         pixel = ir.create_var((c_in, k_h, k_w), "float32", "cache", local_mtype)
+                        "nid: Lki1"
                         for ki in range(c_in):
                             "nid: Lro1"
                             for ro in range(k_h):
@@ -110,7 +113,7 @@ def conv(x, w1, w2, y, n, c_in, c_out, h, w, k_h, k_w, device, mtype,
             s.unroll("Lso1")
         else:
             Lko = s.move_to("Lko", ir.MoveToSide.After, "Li")
-            s.set_mem_type("V_pixel", "gpu/global")
+            s.set_mem_type(":pixel", "gpu/global")
             _, flush, _, Y_t_def = s.cache(Lko, "Y", "gpu/global")
             s.var_reorder(Y_t_def, [0, 2, 3, 1])
             flush_loop = s.find(lambda x: x.nid() == flush).outer().outer(
@@ -120,15 +123,20 @@ def conv(x, w1, w2, y, n, c_in, c_out, h, w, k_h, k_w, device, mtype,
             blk, thr = s.split(flush_loop, 128)
             s.parallelize(blk, 'blockIdx.x')
             s.parallelize(thr, 'threadIdx.x')
+            s.var_reorder(":pixel", [3, 4, 5, 0, 1, 2])
             s.as_matmul(Lko)
+
+            s.reorder(['Lro1', 'Lso1', 'Lki1'])
+            Lro = s.fuse('Lro0', 'Lro1')
+            Lso = s.fuse('Lso0', 'Lso1')
+            s.parallelize(Lro, 'threadIdx.y')
+            s.parallelize(Lso, 'threadIdx.z')
             Lipq = s.merge(s.merge('Li', 'Lp'), 'Lq')
-            blk, thr = s.split(Lipq, 128)
+            blk, thr = s.split(Lipq, 16)
             s.parallelize(blk, 'blockIdx.x')
             s.parallelize(thr, 'threadIdx.x')
             s.unroll("Lri")
             s.unroll("Lsi")
-            s.unroll("Lro1")
-            s.unroll("Lso1")
         f = ir.lower(s.func(), device.target())
         print(f)
         code = ir.codegen(f, device.target())

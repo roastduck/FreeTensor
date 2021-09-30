@@ -19,11 +19,11 @@ def test_static():
 
     print(f)
     s = ir.Schedule(f)
-    s.inline("flatten:V_x_shape")
-    s.inline("flatten:V_y_shape")
-    s.inline("flatten:V_recur_y_shape")
-    s.inline("flatten:recur:recur:V_recur_y_shape")
-    s.inline("flatten:recur:recur:recur:V_recur_y_shape")
+    s.inline("flatten:x_shape")
+    s.inline("flatten:y_shape")
+    s.inline("flatten:recur_y_shape")
+    s.inline("flatten:recur:recur:recur_y_shape")
+    s.inline("flatten:recur:recur:recur:recur_y_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 
@@ -52,11 +52,11 @@ def test_axis():
 
     print(f)
     s = ir.Schedule(f)
-    s.inline("flatten:V_x_shape")
-    s.inline("flatten:V_y_shape")
-    s.inline("flatten:V_recur_y_shape")
-    s.inline("flatten:recur:V_recur_y_shape")
-    s.inline("flatten:recur:recur:recur:V_recur_y_shape")
+    s.inline("flatten:x_shape")
+    s.inline("flatten:y_shape")
+    s.inline("flatten:recur_y_shape")
+    s.inline("flatten:recur:recur_y_shape")
+    s.inline("flatten:recur:recur:recur:recur_y_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 

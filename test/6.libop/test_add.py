@@ -20,9 +20,9 @@ def test_same_static_shape():
 
     print(f)
     s = ir.Schedule(f)
-    s.inline("add:V_a_shape")
-    s.inline("add:V_b_shape")
-    s.inline("add:V_out_shape")
+    s.inline("add:a_shape")
+    s.inline("add:b_shape")
+    s.inline("add:out_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 
@@ -54,9 +54,9 @@ def test_static_broadcast_shorter():
 
     print(f)
     s = ir.Schedule(f)
-    s.inline("add:V_a_shape")
-    s.inline("add:V_b_shape")
-    s.inline("add:V_out_shape")
+    s.inline("add:a_shape")
+    s.inline("add:b_shape")
+    s.inline("add:out_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 
@@ -90,9 +90,9 @@ def test_static_broadcast_1_at_front():
 
     print(f)
     s = ir.Schedule(f)
-    s.inline("add:V_a_shape")
-    s.inline("add:V_b_shape")
-    s.inline("add:V_out_shape")
+    s.inline("add:a_shape")
+    s.inline("add:b_shape")
+    s.inline("add:out_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 
@@ -126,9 +126,9 @@ def test_static_broadcast_1_at_back():
 
     print(f)
     s = ir.Schedule(f)
-    s.inline("add:V_a_shape")
-    s.inline("add:V_b_shape")
-    s.inline("add:V_out_shape")
+    s.inline("add:a_shape")
+    s.inline("add:b_shape")
+    s.inline("add:out_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 
@@ -162,9 +162,9 @@ def test_different_dtype():
 
     print(f)
     s = ir.Schedule(f)
-    s.inline("add:V_a_shape")
-    s.inline("add:V_b_shape")
-    s.inline("add:V_out_shape")
+    s.inline("add:a_shape")
+    s.inline("add:b_shape")
+    s.inline("add:out_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 
@@ -202,8 +202,8 @@ def test_out_of_place():
 
     print(f)
     s = ir.Schedule(f)
-    s.inline("add:V_a_shape")
-    s.inline("add:V_b_shape")
+    s.inline("add:a_shape")
+    s.inline("add:b_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 

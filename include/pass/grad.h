@@ -2,12 +2,38 @@
 #define GRAD_H
 
 #include <unordered_map>
+#include <unordered_set>
 
 #include <func.h>
 #include <mutator.h>
 #include <visitor.h>
 
 namespace ir {
+
+class PropagateRequire : public Visitor {
+    const std::unordered_set<std::string> &requires_; // input var names
+    const std::unordered_set<std::string> &provides_; // output var names
+
+    std::unordered_set<std::string> affectedDefs_; // all VarDef IDs
+
+    std::unordered_map<std::string, VarDef> defs_;
+    std::string curTarget_; // VarDef ID of current var being written to
+
+  public:
+    PropagateRequire(const std::unordered_set<std::string> &requires,
+                     const std::unordered_set<std::string> &provides)
+        : requires_(requires), provides_(provides) {}
+
+    const std::unordered_set<std::string> &affectedDefs() const {
+        return affectedDefs_;
+    }
+
+  protected:
+    void visit(const Load &op) override;
+    void visit(const Store &op) override;
+    void visit(const ReduceTo &op) override;
+    void visit(const VarDef &op) override;
+};
 
 class ReplaceVar : public Mutator {
     std::string from_;
@@ -22,6 +48,13 @@ class ReplaceVar : public Mutator {
 };
 
 class Grad : public Visitor {
+    const std::unordered_set<std::string> &requires_;
+    const std::unordered_set<std::string> &provides_;
+    const std::unordered_set<std::string> &affectedDefs_;
+
+    std::unordered_map<std::string, std::string> requireGrads_; // var name map
+    std::unordered_map<std::string, std::string> provideGrads_; // var name map
+
     std::unordered_map<std::string, std::string> gradNames_; // x -> dy/dx
     std::unordered_map<Expr, Expr> gradExprs_;               // x -> dy/dx
     std::unordered_map<Stmt, Stmt> gradStmts_;               // x -> dy/dx
@@ -30,10 +63,20 @@ class Grad : public Visitor {
     std::unordered_map<std::string, Ref<Buffer>> buffers_;
 
   public:
-    Grad(const std::unordered_map<std::string, std::string> &gradNames)
-        : gradNames_(gradNames) {}
+    Grad(const std::unordered_set<std::string> &requires,
+         const std::unordered_set<std::string> &provides,
+         const std::unordered_set<std::string> &affectedDefs)
+        : requires_(requires), provides_(provides),
+          affectedDefs_(affectedDefs) {}
 
     Stmt grad(const Stmt &root) const { return gradStmts_.at(root); }
+
+    const std::unordered_map<std::string, std::string> &requireGrads() const {
+        return requireGrads_;
+    }
+    const std::unordered_map<std::string, std::string> &provideGrads() const {
+        return provideGrads_;
+    }
 
   protected:
     void visit(const StmtSeq &op) override;
@@ -51,28 +94,41 @@ class Grad : public Visitor {
     void visit(const Sqrt &op) override;
     void visit(const Exp &op) override;
     void visit(const Square &op) override;
+    void visit(const Abs &op) override;
 };
 
-inline Stmt
-grad(const Stmt &op,
-     const std::unordered_map<std::string, std::string> &gradNames) {
-    Grad visitor(gradNames);
-    visitor(op);
-    return visitor.grad(op);
-}
+/**
+ * Auto differentiation
+ *
+ * @param op : Original AST
+ * @param requires : Name of input variables that need gradients
+ * @param provides : Name of output variables whose gradients are known
+ * @return : (
+ *  Backward AST,
+ *  Mapping from names in requries to its gradient name,
+ *  Mapping from names in provides to its gradient name
+ * )
+ */
+std::tuple<Stmt, std::unordered_map<std::string, std::string>,
+           std::unordered_map<std::string, std::string>>
+grad(const Stmt &op, const std::unordered_set<std::string> &requires,
+     const std::unordered_set<std::string> &provides);
 
-inline Func
-grad(const Func &func,
-     const std::unordered_map<std::string, std::string> &gradNames) {
-    std::vector<std::string> params;
-    for (auto &&param : func->params_) {
-        params.emplace_back(param);
-        if (gradNames.count(param)) {
-            params.emplace_back(gradNames.at(param));
-        }
+inline std::tuple<Func, std::unordered_map<std::string, std::string>,
+                  std::unordered_map<std::string, std::string>>
+grad(const Func &func, const std::unordered_set<std::string> &requires,
+     const std::unordered_set<std::string> &provides) {
+    auto [ast, requireGrads, provideGrads] =
+        grad(func->body_, requires, provides);
+    std::vector<std::string> params = func->params_;
+    for (auto &&[x, dzdx] : requireGrads) {
+        params.emplace_back(dzdx);
     }
-    return makeFunc(func->name_, std::move(params),
-                    grad(func->body_, gradNames), nullptr);
+    for (auto &&[y, dzdy] : provideGrads) {
+        params.emplace_back(dzdy);
+    }
+    return std::make_tuple(makeFunc(func->name_, params, {}, ast, nullptr),
+                           requireGrads, provideGrads);
 }
 
 } // namespace ir

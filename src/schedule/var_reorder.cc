@@ -1,3 +1,5 @@
+#include <analyze/all_reads.h>
+#include <analyze/all_writes.h>
 #include <schedule/var_reorder.h>
 
 namespace ir {
@@ -48,6 +50,14 @@ Expr VarReorder::visit(const Load &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::Load);
     auto op = __op.as<LoadNode>();
     return reorderMemAcc(op);
+}
+
+Stmt VarReorder::visit(const MatMul &op) {
+    if (!var_.empty() && (allReads(op->equivalent_).count(var_) ||
+                          allWrites(op->equivalent_).count(var_))) {
+        throw InvalidSchedule("Please call var_reorder before as_matmul");
+    }
+    return Mutator::visit(op);
 }
 
 } // namespace ir

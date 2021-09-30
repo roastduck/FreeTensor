@@ -16,6 +16,7 @@ class MergeFor : public Mutator {
 
     bool insideOuter_ = false, insideInner_ = false;
     bool visitedInner_ = false;
+    bool innerNoDeps_ = false;
 
   public:
     MergeFor(const For oldOuter, const For &oldInner)

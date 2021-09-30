@@ -1,7 +1,8 @@
 #include <ffi.h>
 #include <lower.h>
 #include <pass/flatten_stmt_seq.h>
-#include <pass/gpu/correct_shared.h>
+#include <pass/float_simplify.h>
+#include <pass/gpu/correct_shared_and_global.h>
 #include <pass/gpu/lower_vector.h>
 #include <pass/gpu/make_sync.h>
 #include <pass/gpu/normalize_threads.h>
@@ -27,24 +28,33 @@ using namespace pybind11::literals;
 
 void init_ffi_pass(py::module_ &m) {
     m.def("grad",
-          static_cast<Func (*)(
-              const Func &,
-              const std::unordered_map<std::string, std::string> &)>(&grad),
-          "func"_a, "grad_names"_a);
+          static_cast<
+              std::tuple<Func, std::unordered_map<std::string, std::string>,
+                         std::unordered_map<std::string, std::string>> (*)(
+                  const Func &, const std::unordered_set<std::string> &,
+                  const std::unordered_set<std::string> &)>(&grad),
+          "func"_a, "requires"_a, "provides"_a);
     m.def("grad",
-          static_cast<Stmt (*)(
-              const Stmt &,
-              const std::unordered_map<std::string, std::string> &)>(&grad),
-          "stmt"_a, "grad_names"_a);
+          static_cast<
+              std::tuple<Stmt, std::unordered_map<std::string, std::string>,
+                         std::unordered_map<std::string, std::string>> (*)(
+                  const Stmt &, const std::unordered_set<std::string> &,
+                  const std::unordered_set<std::string> &)>(&grad),
+          "stmt"_a, "requires"_a, "provides"_a);
 
     m.def("simplify_pass", static_cast<Func (*)(const Func &)>(&simplifyPass),
           "func"_a);
     m.def("simplify_pass", static_cast<Stmt (*)(const Stmt &)>(&simplifyPass),
           "stmt"_a);
 
+    m.def("float_simplify", static_cast<Func (*)(const Func &)>(&floatSimplify),
+          "func"_a);
+    m.def("float_simplify", static_cast<Stmt (*)(const Stmt &)>(&floatSimplify),
+          "stmt"_a);
+
     m.def("flatten_stmt_seq",
-          static_cast<Func (*)(const Func &, bool)>(&flattenStmtSeq), "func"_a,
-          "popVarDef"_a = false);
+          static_cast<Func (*)(const Func &, bool &&)>(&flattenStmtSeq),
+          "func"_a, "popVarDef"_a = false);
     m.def("flatten_stmt_seq",
           static_cast<Stmt (*)(const Stmt &, bool)>(&flattenStmtSeq), "stmt"_a,
           "popVarDef"_a = false);
@@ -131,10 +141,12 @@ void init_ffi_pass(py::module_ &m) {
     m.def("gpu_make_sync", static_cast<Stmt (*)(const Stmt &)>(&gpu::makeSync),
           "stmt"_a);
 
-    m.def("gpu_correct_shared",
-          static_cast<Func (*)(const Func &)>(&gpu::correctShared), "func"_a);
-    m.def("gpu_correct_shared",
-          static_cast<Stmt (*)(const Stmt &)>(&gpu::correctShared), "stmt"_a);
+    m.def("gpu_correct_shared_and_global",
+          static_cast<Func (*)(const Func &)>(&gpu::correctSharedAndGlobal),
+          "func"_a);
+    m.def("gpu_correct_shared_and_global",
+          static_cast<Stmt (*)(const Stmt &)>(&gpu::correctSharedAndGlobal),
+          "stmt"_a);
 
     m.def("gpu_lower_vector",
           static_cast<Func (*)(const Func &)>(&gpu::lowerVector), "func"_a);

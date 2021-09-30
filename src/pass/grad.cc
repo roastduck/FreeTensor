@@ -2,6 +2,41 @@
 
 namespace ir {
 
+void PropagateRequire::visit(const Load &op) {
+    if (!curTarget_.empty()) {
+        affectedDefs_.insert(defs_.at(op->var_)->id());
+        // No need to recurse deeper
+    }
+}
+
+void PropagateRequire::visit(const Store &op) {
+    if (affectedDefs_.count(defs_.at(op->var_)->id())) {
+        curTarget_ = defs_.at(op->var_)->id();
+        (*this)(op->expr_);
+        // No need to recurse into indices
+        curTarget_ = "";
+    }
+}
+
+void PropagateRequire::visit(const ReduceTo &op) {
+    if (affectedDefs_.count(defs_.at(op->var_)->id())) {
+        curTarget_ = defs_.at(op->var_)->id();
+        (*this)(op->expr_);
+        // No need to recurse into indices
+        curTarget_ = "";
+    }
+}
+
+void PropagateRequire::visit(const VarDef &op) {
+    if (requires_.count(op->name_) || provides_.count(op->name_)) {
+        affectedDefs_.insert(op->id());
+    }
+    ASSERT(!defs_.count(op->name_));
+    defs_[op->name_] = op;
+    Visitor::visit(op);
+    defs_.erase(op->name_);
+}
+
 Expr ReplaceVar::visit(const Var &op) {
     if (op->name_ == from_) {
         return to_;
@@ -34,28 +69,36 @@ void Grad::visit(const For &op) {
     Visitor::visit(op);
     if (oriStmts_.count(op->body_)) {
         oriStmts_[op] = makeFor("", op->iter_, op->begin_, op->end_, op->len_,
-                                op->parallel_, op->unroll_, op->vectorize_,
-                                oriStmts_.at(op->body_));
+                                op->noDeps_, op->parallel_, op->unroll_,
+                                op->vectorize_, oriStmts_.at(op->body_));
     }
     if (gradStmts_.count(op->body_)) {
         gradStmts_[op] = makeFor(
-            "", op->iter_, op->begin_, op->end_, op->len_, op->parallel_,
-            op->unroll_, op->vectorize_,
+            "", op->iter_, op->begin_, op->end_, op->len_, op->noDeps_,
+            op->parallel_, op->unroll_, op->vectorize_,
             ReplaceVar(op->iter_, makeSub(op->end_, makeVar(op->iter_)))(
                 gradStmts_.at(op->body_)));
     }
 }
 
 void Grad::visit(const VarDef &op) {
-    ASSERT(!buffers_.count(op->name_));
-    buffers_[op->name_] = op->buffer_;
-    Visitor::visit(op);
-    buffers_.erase(op->name_);
+    if (affectedDefs_.count(op->id())) {
+        ASSERT(!gradNames_.count(op->name_));
+        ASSERT(!buffers_.count(op->name_));
+        auto gradName = gradNames_[op->name_] = op->name_ + ".grad";
+        buffers_[op->name_] = op->buffer_;
+        Visitor::visit(op);
+        buffers_.erase(op->name_);
+        gradNames_.erase(op->name_);
 
-    auto grad = gradStmts_.at(op->body_);
-    if (gradNames_.count(op->name_)) {
-        auto &&gradName = gradNames_.at(op->name_);
+        if (requires_.count(op->name_)) {
+            requireGrads_[op->name_] = gradName;
+        }
+        if (provides_.count(op->name_)) {
+            provideGrads_[op->name_] = gradName;
+        }
 
+        auto grad = gradStmts_.at(op->body_);
         if (op->buffer_->atype() != AccessType::Output &&
             op->buffer_->atype() != AccessType::InOut) {
             std::vector<std::string> iters;
@@ -73,8 +116,8 @@ void Grad::visit(const VarDef &op) {
             for (int i = nDim - 1; i >= 0; i--) {
                 init = makeFor("", iters[i], makeIntConst(0),
                                op->buffer_->tensor().shape()[i],
-                               op->buffer_->tensor().shape()[i], "", false,
-                               false, init);
+                               op->buffer_->tensor().shape()[i], false, "",
+                               false, false, init);
             }
             grad = makeStmtSeq("", {init, grad});
         }
@@ -98,8 +141,12 @@ void Grad::visit(const VarDef &op) {
         case AccessType::Cache:
             break; // do nothing
         }
+
+        gradStmts_[op] = grad;
+    } else {
+        Visitor::visit(op);
+        gradStmts_[op] = gradStmts_.at(op->body_);
     }
-    gradStmts_[op] = grad;
 }
 
 void Grad::visit(const Store &op) {
@@ -230,6 +277,32 @@ void Grad::visit(const Square &op) {
             makeMul(makeIntConst(2), makeMul(gradExprs_.at(op), op->expr_));
     }
     Visitor::visit(op);
+}
+
+void Grad::visit(const Abs &op) {
+    if (gradExprs_.count(op)) {
+        gradExprs_[op->expr_] =
+            makeIfExpr(makeGE(op->expr_, makeIntConst(0)), gradExprs_.at(op),
+                       makeSub(makeIntConst(0), gradExprs_.at(op)));
+    }
+    Visitor::visit(op);
+}
+
+std::tuple<Stmt, std::unordered_map<std::string, std::string>,
+           std::unordered_map<std::string, std::string>>
+grad(const Stmt &op, const std::unordered_set<std::string> &requires,
+     const std::unordered_set<std::string> &provides) {
+    PropagateRequire propagator(requires, provides);
+    size_t affectCnt;
+    do {
+        affectCnt = propagator.affectedDefs().size();
+        propagator(op);
+    } while (propagator.affectedDefs().size() > affectCnt);
+
+    Grad visitor(requires, provides, propagator.affectedDefs());
+    visitor(op);
+    return std::make_tuple(visitor.grad(op), visitor.requireGrads(),
+                           visitor.provideGrads());
 }
 
 } // namespace ir

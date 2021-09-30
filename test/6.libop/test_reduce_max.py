@@ -22,8 +22,8 @@ def test_static():
 
     print(f)
     s = ir.Schedule(f)
-    s.inline("reduce_max:V_x_shape")
-    s.inline("reduce_max:V_y_shape")
+    s.inline("reduce_max:x_shape")
+    s.inline("reduce_max:y_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 
@@ -61,7 +61,7 @@ def test_out_of_place():
 
     print(f)
     s = ir.Schedule(f)
-    s.inline("reduce_max:V_x_shape")
+    s.inline("reduce_max:x_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 

@@ -140,6 +140,7 @@ class ForNode : public StmtNode {
     // every time and call simplifyPass to propagate the constants, it is very
     // time consuming
     SubTree<ExprNode> begin_, end_, len_;
+    bool noDeps_;
 
     std::string parallel_;
     bool unroll_, vectorize_;
@@ -151,14 +152,15 @@ typedef Ref<ForNode> For;
 #define makeFor(...) makeNode(For, __VA_ARGS__)
 template <class Tbegin, class Tend, class Tlen, class Tbody>
 Stmt _makeFor(const std::string &id, const std::string &iter, Tbegin &&begin,
-              Tend &&end, Tlen &&len, const std::string &parallel, bool unroll,
-              bool vectorize, Tbody &&body) {
+              Tend &&end, Tlen &&len, bool noDeps, const std::string &parallel,
+              bool unroll, bool vectorize, Tbody &&body) {
     For f = For::make();
     f->setId(id);
     f->iter_ = iter;
     f->begin_ = std::forward<Tbegin>(begin);
     f->end_ = std::forward<Tend>(end);
     f->len_ = std::forward<Tlen>(len);
+    f->noDeps_ = noDeps;
     f->parallel_ = parallel;
     f->unroll_ = unroll;
     f->vectorize_ = vectorize;

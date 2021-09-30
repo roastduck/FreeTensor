@@ -7,7 +7,10 @@
 #include <unordered_set>
 #include <vector>
 
+#include <analyze/find_loop_variance.h>
+#include <analyze/hash.h>
 #include <cursor.h>
+#include <math/gen_isl_expr.h>
 #include <math/isl.h>
 #include <visitor.h>
 
@@ -32,6 +35,16 @@ struct AccessPoint {
     std::vector<IterAxis> iter_; /// The temporal location of the access
     std::vector<Expr> access_;   /// The spacial location of the access
     Expr cond_;                  /// The condition (predicate) of the access
+};
+
+class FindAllNoDeps : public Visitor {
+    std::vector<std::string> results_;
+
+  public:
+    const std::vector<std::string> &results() const { return results_; }
+
+  protected:
+    void visit(const For &op) override;
 };
 
 /**
@@ -103,53 +116,25 @@ class FindAccessPoint : public VisitorWithCursor {
     void visit(const MatMul &op) override { (*this)(op->equivalent_); }
 };
 
+// hash -> (expr, isl name)
+typedef std::unordered_map<uint64_t, std::pair<Expr, std::string>> ExternalMap;
+
 /**
- * Serialize expressions to an ISL input string
- *
- * It returns nullptr for unsupported expressions, because ISL reports errors on
- * them
+ * GenISLExpr specialized for handling external variables
  */
-class GenISLExpr : public Visitor {
-    std::unordered_map<Expr, std::string> results_;
-    std::unordered_set<Expr> visited_;
-    std::unordered_map<Expr, int> constants_;
-    std::unordered_set<std::string> externals_;
-    std::unordered_map<std::string, std::string> idCache_; // IR IDs -> ISL IDs
-    std::unordered_set<std::string> idFlag_;               // ISL IDs
+class GenISLExprDeps : public GenISLExpr {
+    std::unordered_map<Expr, ExternalMap> externals_;
+    GetHash getHash_;
+    Expr parent_ = nullptr;
 
   public:
-    std::string normalizeId(const std::string &id);
-
-    void reset();
-    Ref<std::string> gen(const Expr &op);
-
-    const std::unordered_set<std::string> &externals() const {
-        return externals_;
-    }
+    const ExternalMap &externals(const Expr &op) { return externals_[op]; }
 
   protected:
+    using GenISLExpr::visit;
     void visitExpr(const Expr &op,
                    const std::function<void(const Expr &)> &visitNode) override;
-    void visit(const Var &op) override;
-    void visit(const IntConst &op) override;
     void visit(const Load &op) override;
-    void visit(const Add &op) override;
-    void visit(const Sub &op) override;
-    void visit(const Mul &op) override;
-    void visit(const LAnd &op) override;
-    void visit(const LOr &op) override;
-    void visit(const LNot &op) override;
-    void visit(const LT &op) override;
-    void visit(const LE &op) override;
-    void visit(const GT &op) override;
-    void visit(const GE &op) override;
-    void visit(const EQ &op) override;
-    void visit(const NE &op) override;
-    void visit(const FloorDiv &op) override;
-    void visit(const CeilDiv &op) override;
-    void visit(const Mod &op) override;
-    void visit(const Min &op) override;
-    void visit(const Max &op) override;
 };
 
 enum class DepDirection : int {
@@ -203,7 +188,10 @@ class AnalyzeDeps : public Visitor {
     const std::unordered_map<std::string, std::vector<Ref<AccessPoint>>>
         &reads_, &writes_;
     const std::unordered_map<std::string, std::vector<IterAxis>> &scope2coord_;
-    GenISLExpr genISLExpr_;
+    const std::vector<std::string> &noDepsList_;
+    const LoopVariExprMap &variantExpr_;
+
+    GenISLExprDeps genISLExpr_;
 
     const std::vector<FindDepsCond> &cond_;
     const FindDepsCallback &found_;
@@ -228,39 +216,90 @@ class AnalyzeDeps : public Visitor {
             &writes,
         const std::unordered_map<std::string, std::vector<IterAxis>>
             &scope2coord,
+        const std::vector<std::string> &noDepsList,
+        const LoopVariExprMap &variantExpr,
         const std::vector<FindDepsCond> &cond, const FindDepsCallback &found,
         FindDepsMode mode, DepType depType, const FindDepsFilter &filter,
         bool ignoreReductionWAW, bool eraseOutsideVarDef)
         : points_(points), reads_(reads), writes_(writes),
-          scope2coord_(scope2coord), cond_(cond), found_(found),
+          scope2coord_(scope2coord), noDepsList_(noDepsList),
+          variantExpr_(variantExpr), cond_(cond), found_(found),
           filter_(filter), mode_(mode), depType_(depType),
           ignoreReductionWAW_(ignoreReductionWAW),
           eraseOutsideVarDef_(eraseOutsideVarDef) {}
 
   private:
     std::string makeIterList(const std::vector<IterAxis> &list, int n);
-    Ref<std::string> makeAccList(const std::vector<Expr> &list,
-                                 RelaxMode relax);
-    Ref<std::string> makeRange(const std::vector<IterAxis> &point,
-                               RelaxMode relax);
-    Ref<std::string> makeCond(const Expr &cond, RelaxMode relax);
-    Ref<std::string> makeAccMap(const AccessPoint &p, int iterDim, int accDim,
-                                RelaxMode relax);
-
     std::string makeNdList(const std::string &name, int n) const;
-    std::string makeEqForBothOps(const std::vector<std::pair<int, int>> &coord,
-                                 int iterDim) const;
-    std::string makeIneqBetweenOps(DepDirection mode, int iterId,
-                                   int iterDim) const;
+    Ref<std::string> makeAccList(const std::vector<Expr> &list, RelaxMode relax,
+                                 ExternalMap &externals);
+    Ref<std::string> makeRange(const std::vector<IterAxis> &point,
+                               RelaxMode relax, ExternalMap &externals);
+    Ref<std::string> makeCond(const Expr &cond, RelaxMode relax,
+                              ExternalMap &externals);
+
+    ISLMap makeAccMap(const AccessPoint &p, int iterDim, int accDim,
+                      RelaxMode relax, const std::string &extSuffix,
+                      ExternalMap &externals);
+
+    ISLMap makeEqForBothOps(const std::vector<std::pair<int, int>> &coord,
+                            int iterDim) const;
+    ISLMap makeIneqBetweenOps(DepDirection mode, int iterId, int iterDim) const;
+
+    ISLMap makeSerialToAll(int iterDim, int serialIterDim,
+                           const std::vector<IterAxis> &point) const;
+    static int countSerial(const std::vector<IterAxis> &point);
+
+    ISLMap makeExternalEq(int iterDim, const std::string &ext1,
+                          const std::string &ext2);
+
+    ISLMap makeConstraintOfSingleLoop(const std::string &loop,
+                                      DepDirection mode, int iterDim);
+
+    /**
+     * Constraint for variables defined inside some loops
+     * E.g.
+     * for i
+     *   var def a
+     *     a[0] = i
+     *     ... = a[0]
+     * There will be no dependencies of a[0] across i
+     */
+    ISLMap makeEraseVarDefConstraint(const Ref<AccessPoint> &point,
+                                     int iterDim);
+
+    /**
+     * Constraint for loops that explicitly marked as no_deps by users
+     */
+    ISLMap makeNoDepsConstraint(int iterDim);
+
+    /*
+     * Constraint for external variables inside loop
+     * E.g.
+     * for i
+     *   for j
+     *     a[idx[i] + j]
+     * idx[i] + j must be different for the same i but different j, but
+     * idx[i] + j may be the same for different i
+     */
+    ISLMap makeExternalVarConstraint(const Ref<AccessPoint> &point,
+                                     const Ref<AccessPoint> &other,
+                                     const ExternalMap &pExternals,
+                                     const ExternalMap &oExternals,
+                                     int iterDim);
 
     static const std::string &getVar(const AST &op);
 
-    std::string makeSerialToAll(int iterDim, int serialIterDim,
-                                const std::vector<IterAxis> &point) const;
-    static int countSerial(const std::vector<IterAxis> &point);
-
-    void checkDep(const Ref<AccessPoint> &lhs,
-                  const std::vector<Ref<AccessPoint>> &rhs);
+    /**
+     * Check the dependencies between a later memory access `point` and many
+     * earlier memory accesses in `otherList`, filter them via the `filter_`
+     * callback, and report then via the `found_` callback. Earlier memory
+     * accesses may overwrite each other, and the overwritten ones will not
+     * result in a dependency. All visitors to memory access nodes will call
+     * `checkDep`
+     */
+    void checkDep(const Ref<AccessPoint> &point,
+                  const std::vector<Ref<AccessPoint>> &otherList);
 
     template <class T> void visitStoreLike(const T &op) {
         Visitor::visit(op);

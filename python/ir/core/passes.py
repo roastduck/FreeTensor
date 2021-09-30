@@ -16,7 +16,7 @@ from ffi import make_const_shape
 from ffi import make_1d_var
 from ffi import use_builtin_div
 from ffi import gpu_make_sync
-from ffi import gpu_correct_shared
+from ffi import gpu_correct_shared_and_global
 from ffi import gpu_normalize_threads
 from ffi import gpu_lower_vector
 

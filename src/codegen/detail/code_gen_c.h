@@ -488,6 +488,12 @@ template <class Stream> void CodeGenC<Stream>::visit(const Square &op) {
     this->os() << ")";
 }
 
+template <class Stream> void CodeGenC<Stream>::visit(const Abs &op) {
+    this->os() << "std::abs(";
+    (*this)(op->expr_);
+    this->os() << ")";
+}
+
 template <class Stream> void CodeGenC<Stream>::visit(const Floor &op) {
     this->os() << "std::floor(";
     (*this)(op->expr_);

@@ -11,7 +11,7 @@ def test_basic():
         y[()] = (x1[()] + x2[()]) * x3[()]
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.grad(ast, {"x1": "d_x1", "x2": "d_x2", "x3": "d_x3", "y": "d_y"})
+    ast, _, _ = ir.grad(ast, set(["x1", "x2", "x3"]), set(["y"]))
     print(ast)
     ast = ir.lower(ast)
     print(ast)
@@ -49,13 +49,7 @@ def test_branching_exprs():
         y3[()] = ir.if_then_else(x1[()] > 0, x1[()], x2[()])
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.grad(ast, {
-        "x1": "d_x1",
-        "x2": "d_x2",
-        "y1": "d_y1",
-        "y2": "d_y2",
-        "y3": "d_y3"
-    })
+    ast, _, _ = ir.grad(ast, set(["x1", "x2"]), set(["y1", "y2", "y3"]))
     print(ast)
     ast = ir.lower(ast)
     print(ast)
@@ -107,7 +101,7 @@ def test_math_funcs():
         y3[()] = ir.square(x[()])
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.grad(ast, {"x": "d_x", "y1": "d_y1", "y2": "d_y2", "y3": "d_y3"})
+    ast, _, _ = ir.grad(ast, set(["x"]), set(["y1", "y2", "y3"]))
     print(ast)
     ast = ir.lower(ast)
     print(ast)
@@ -154,14 +148,7 @@ def test_multiple_statements():
             y[()] = t[()] * x3[()]
     ast = ir.pop_ast()
     print(ast)
-    # TODO: Derive t -> d_t automatically
-    ast = ir.grad(ast, {
-        "x1": "d_x1",
-        "x2": "d_x2",
-        "x3": "d_x3",
-        "y": "d_y",
-        "t": "d_t"
-    })
+    ast, _, _ = ir.grad(ast, set(["x1", "x2", "x3"]), set(["y"]))
     print(ast)
     ast = ir.lower(ast)
     print(ast)
@@ -202,7 +189,7 @@ def test_dependent_iterations():
             y[()] = -y[()] + x[i]
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.grad(ast, {"x": "d_x", "y": "d_y"})
+    ast, _, _ = ir.grad(ast, set(["x"]), set(["y"]))
     print(ast)
     ast = ir.lower(ast)
     print(ast)

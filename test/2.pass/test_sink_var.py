@@ -51,7 +51,7 @@ def test_sink_stmt_seq_front():
     assert std.match(ast)
 
 
-def test_sink_for():
+def test_sink_for_no_deps():
     with ir.VarDef([("x", (5,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ir.VarDef("b", (4,), "int32", "cache", "cpu") as b:
@@ -69,6 +69,30 @@ def test_sink_for():
             # Also shrinked
             with ir.VarDef("b", (1,), "int32", "cache", "cpu") as b:
                 b[0] = x[i] + x[i + 1]
+                y[i] = b[0] * i
+    std = ir.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_sink_for_invariant():
+    with ir.VarDef([("x", (5,), "int32", "input", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+        with ir.VarDef("b", (), "int32", "cache", "cpu") as b:
+            with ir.For("i", 0, 4) as i:
+                b[()] = x[0] + x[1]
+                y[i] = b[()] * i
+    ast = ir.pop_ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([("x", (5,), "int32", "input", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+        with ir.For("i", 0, 4) as i:
+            # Also shrinked
+            with ir.VarDef("b", (), "int32", "cache", "cpu") as b:
+                b[()] = x[0] + x[1]
                 y[i] = b[0] * i
     std = ir.pop_ast()
 

@@ -57,7 +57,7 @@ class OutDatedBoundsRemover : public Visitor {
 };
 
 /**
- * Compute bounds of IDENTICAL (sub)expressions AT A POSITION in the AST
+ * Compute bounds of IDENTICAL INTEGER (sub)expressions AT A POSITION in the AST
  *
  * E.g.
  *
@@ -108,7 +108,7 @@ class CompTransientBounds : public Mutator {
 };
 
 /**
- * Compute bounds of each UNIQUE (sub)expression
+ * Compute bounds of each UNIQUE INTEGER (sub)expression
  *
  * E.g.
  *
@@ -178,6 +178,7 @@ class CompUniqueBounds : public CompTransientBounds {
     Expr visit(const Add &op) override;
     Expr visit(const Sub &op) override;
     Expr visit(const Mul &op) override;
+    Expr visit(const Square &op) override;
     Expr visit(const FloorDiv &op) override;
     Expr visit(const CeilDiv &op) override;
     Expr visit(const Mod &op) override;
@@ -206,8 +207,6 @@ template <class BaseClass> class SimplifyPass : public BaseClass {
         return ret;
     }
 
-    template <class T> Expr normalizeRealMulDiv(const T &op);
-
   protected:
     using BaseClass::visit;
 
@@ -215,12 +214,9 @@ template <class BaseClass> class SimplifyPass : public BaseClass {
                    const std::function<Expr(const Expr &)> &visitNode) override;
 
     Expr visit(const Var &op) override;
-    Expr visit(const Add &op) override;
-    Expr visit(const Mul &op) override;
     Expr visit(const FloorDiv &op) override;
     Expr visit(const CeilDiv &op) override;
     Expr visit(const RoundTowards0Div &op) override;
-    Expr visit(const RealDiv &op) override;
     Expr visit(const Mod &op) override;
     Expr visit(const Min &op) override;
     Expr visit(const Max &op) override;
@@ -233,7 +229,6 @@ template <class BaseClass> class SimplifyPass : public BaseClass {
     Expr visit(const LAnd &op) override;
     Expr visit(const LOr &op) override;
     Expr visit(const LNot &op) override;
-    Expr visit(const Sqrt &op) override;
     Expr visit(const IfExpr &op) override;
     Stmt visit(const ReduceTo &op) override;
     Stmt visit(const VarDef &op) override;
@@ -279,10 +274,7 @@ Stmt builtinSimplify(const Stmt &op);
 
 Stmt simplifyPass(const Stmt &op);
 
-inline Func simplifyPass(const Func &func) {
-    return makeFunc(func->name_, func->params_, simplifyPass(func->body_),
-                    func->src_);
-}
+DEFINE_PASS_FOR_FUNC(simplifyPass)
 
 } // namespace ir
 

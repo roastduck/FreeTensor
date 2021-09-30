@@ -39,10 +39,7 @@ inline Stmt moveOutFirstOrLastIter(const Stmt &op) {
     return MoveOutFirstOrLastIter()(op);
 }
 
-inline Func moveOutFirstOrLastIter(const Func &func) {
-    return makeFunc(func->name_, func->params_,
-                    moveOutFirstOrLastIter(func->body_), func->src_);
-}
+DEFINE_PASS_FOR_FUNC(moveOutFirstOrLastIter)
 
 } // namespace ir
 

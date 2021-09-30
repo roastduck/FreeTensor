@@ -2,7 +2,8 @@
 #define IR_LOWER_H
 
 #include <driver/target.h>
-#include <pass/gpu/correct_shared.h>
+#include <pass/float_simplify.h>
+#include <pass/gpu/correct_shared_and_global.h>
 #include <pass/gpu/lower_vector.h>
 #include <pass/gpu/make_sync.h>
 #include <pass/gpu/normalize_threads.h>
@@ -24,6 +25,7 @@ namespace ir {
 
 template <class T> T lower(const T &t, const Ref<Target> &target) {
     T func = t;
+    func = floatSimplify(func);
     func = simplifyPass(func);
     func = moveOutFirstOrLastIter(func);
     func = sinkVar(func);
@@ -39,9 +41,12 @@ template <class T> T lower(const T &t, const Ref<Target> &target) {
         case TargetType::GPU:
             // TODO: Support dynamic shared memory size, but the size should be
             // determined outside of kernels
-            func = gpu::correctShared(func);
+            func = gpu::correctSharedAndGlobal(func);
+            // FIXME: MemType::GPUGlobal should also be make const, but only
+            // inside a kernel
             func =
-                makeConstShape(func, {MemType::GPUShared, MemType::GPULocal});
+                makeConstShape(func, std::vector<MemType>{MemType::GPUShared,
+                                                          MemType::GPULocal});
 
             // After gpu_make_sync and gpu_correct_shared. Otherwise, these 2
             // passes cannot get the right thread info

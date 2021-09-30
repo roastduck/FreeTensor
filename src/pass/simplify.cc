@@ -492,6 +492,20 @@ Expr CompUniqueBounds::visit(const Mul &_op) {
     return op;
 }
 
+Expr CompUniqueBounds::visit(const Square &_op) {
+    auto __op = CompTransientBounds::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::Square);
+    auto op = __op.as<SquareNode>();
+
+    auto &lower = lower_[op];
+    auto &upper = upper_[op];
+    if (auto k = getInt(op->expr_); k.isValid()) {
+        updLower(lower, LowerBound{LinearExpr<Rational<int64_t>>{{}, *k * *k}});
+        updUpper(upper, UpperBound{LinearExpr<Rational<int64_t>>{{}, *k * *k}});
+    }
+    return op;
+}
+
 Expr CompUniqueBounds::visit(const FloorDiv &_op) {
     auto __op = CompTransientBounds::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::FloorDiv);

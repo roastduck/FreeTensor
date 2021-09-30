@@ -21,6 +21,7 @@ class NormalizeThreads : public Mutator {
     std::unordered_map<std::string, int>
         inside_; // Multiple nested `threadIdx.x`s are possible. See
                  // test/program/common_transforms::test_collaborative_fetch
+    std::unordered_set<std::string> notNoDeps_;
     bool inKernel_ = false;
 
   private:
@@ -43,10 +44,7 @@ class CheckThreadNum : public CompUniqueBounds {
 
 Stmt normalizeThreads(const Stmt &op);
 
-inline Func normalizeThreads(const Func &func) {
-    return makeFunc(func->name_, func->params_, normalizeThreads(func->body_),
-                    func->src_);
-}
+DEFINE_PASS_FOR_FUNC(normalizeThreads)
 
 } // namespace gpu
 

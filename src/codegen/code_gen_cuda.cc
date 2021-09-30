@@ -57,6 +57,12 @@ void CodeGenCUDA::visit(const Exp &op) {
     os() << ")";
 }
 
+void CodeGenCUDA::visit(const Abs &op) {
+    os() << "runtime_abs("; // Defined in runtime/gpu_runtime.h
+    (*this)(op->expr_);
+    os() << ")";
+}
+
 void CodeGenCUDA::visit(const Floor &op) {
     os() << "runtime_floor("; // Defined in runtime/gpu_runtime.h
     (*this)(op->expr_);
@@ -187,7 +193,17 @@ void CodeGenCUDA::visit(const For &op) {
             Stream &stream = poppedStream_.back();
             const auto &dim = stream.threadDim_;
             auto sharedSize = stream.sharedSize_;
+            auto globalSize = stream.globalSize_;
 
+            makeIndent();
+            beginBlock();
+            makeIndent();
+            os() << "uint8_t *__glmem = NULL;" << std::endl;
+            if (globalSize > 0) {
+                makeIndent();
+                os() << "cudaMalloc(&__glmem, " << globalSize << ");"
+                     << std::endl;
+            }
             makeIndent();
             os() << "cudaFuncSetAttribute(" << kernel
                  << ", cudaFuncAttributeMaxDynamicSharedMemorySize, "
@@ -209,7 +225,12 @@ void CodeGenCUDA::visit(const For &op) {
                 os() << (first ? "" : ", ") << normalizeId(item.first);
                 first = false;
             }
-            os() << ");" << std::endl;
+            os() << ", __glmem);" << std::endl;
+            if (globalSize > 0) {
+                makeIndent();
+                os() << "cudaFree(__glmem);" << std::endl;
+            }
+            endBlock();
         } else {
             (*this)(op->body_);
             streamStack_.back().threadDim_[op->parallel_] =
@@ -227,40 +248,81 @@ void CodeGenCUDA::visit(const VarDef &op) {
     } else {
         switch (op->buffer_->mtype()) {
         case MemType::GPUGlobal: {
-            if (inKernel()) {
-                throw Error("Allocating a global buffer inside a kernel is not "
-                            "supported yet");
-            }
-
             markDef(op->name_, op->buffer_);
 
-            // e.g.
-            // float (*x)[5][5];  // CUDA does not allow "restrict" here
-            // cudaMalloc(&x, 5 * 5 * 5 * sizeof(float)); ...; cudaFree(x);
-            auto &&tensor = op->buffer_->tensor();
-            auto &&shape = tensor.shape();
-            makeIndent();
-            os() << gen(tensor.dtype()) << " (*";
-            os() << normalizeId(op->name_) << ")";
-            for (size_t i = 1, iEnd = shape.size(); i < iEnd;
-                 i++) { // No shape[0]
-                os() << "[";
-                (*this)(shape[i]);
-                os() << "]";
-            }
-            os() << ";" << std::endl;
-            makeIndent();
-            os() << "cudaMalloc(&" << normalizeId(op->name_) << ", ";
-            for (auto &&dim : shape) {
-                (*this)(dim);
-                os() << " * ";
-            }
-            os() << "sizeof(" << gen(tensor.dtype()) << "));" << std::endl;
+            if (inKernel()) {
+                // e.g. float (*x)[5][5] = (float(*)[5][5])(__glmem + 0);
+                auto &&tensor = op->buffer_->tensor();
+                auto &&shape = tensor.shape();
+                makeIndent();
+                os() << gen(tensor.dtype()) << " (*";
+                os() << normalizeId(op->name_) << ")";
+                for (size_t i = 1, iEnd = shape.size(); i < iEnd;
+                     i++) { // No shape[0]
+                    os() << "[";
+                    (*this)(shape[i]);
+                    os() << "]";
+                }
+                os() << " = (" << gen(tensor.dtype()) << "(*)";
+                for (size_t i = 1, iEnd = shape.size(); i < iEnd;
+                     i++) { // No shape[0]
+                    os() << "[";
+                    (*this)(shape[i]);
+                    os() << "]";
+                }
+                os() << ")(__glmem + " + std::to_string(globalStackTop_) << ");"
+                     << std::endl;
 
-            (*this)(op->body_);
+                int64_t size = sizeOf(tensor.dtype());
+                for (auto &&dim : shape) {
+                    if (dim->nodeType() == ASTNodeType::IntConst) {
+                        size *= dim.as<IntConstNode>()->val_;
+                    } else {
+                        throw InvalidProgram(
+                            "Currently dynamic sized gpu/global "
+                            "memory allocated from inside a kernel is not "
+                            "supported");
+                    }
+                }
 
-            makeIndent();
-            os() << "cudaFree(" << normalizeId(op->name_) << ");" << std::endl;
+                streamStack_.back().globalSize_ = std::max(
+                    streamStack_.back().globalSize_, globalStackTop_ + size);
+
+                globalStackTop_ += size;
+                (*this)(op->body_);
+                // globalStackTop_ -= size;
+                // FIXME: We have to add some sync before reusing global buffers
+            } else {
+                // e.g.
+                // float (*x)[5][5];  // CUDA does not allow "restrict" here
+                // cudaMalloc(&x, 5 * 5 * 5 * sizeof(float)); ...; cudaFree(x);
+                auto &&tensor = op->buffer_->tensor();
+                auto &&shape = tensor.shape();
+                makeIndent();
+                os() << gen(tensor.dtype()) << " (*";
+                os() << normalizeId(op->name_) << ")";
+                for (size_t i = 1, iEnd = shape.size(); i < iEnd;
+                     i++) { // No shape[0]
+                    os() << "[";
+                    (*this)(shape[i]);
+                    os() << "]";
+                }
+                os() << ";" << std::endl;
+                makeIndent();
+                os() << "cudaMalloc(&" << normalizeId(op->name_) << ", ";
+                for (auto &&dim : shape) {
+                    (*this)(dim);
+                    os() << " * ";
+                }
+                os() << "sizeof(" << gen(tensor.dtype()) << "));" << std::endl;
+
+                (*this)(op->body_);
+
+                makeIndent();
+                os() << "cudaFree(" << normalizeId(op->name_) << ");"
+                     << std::endl;
+            }
+
             markUndef(op->name_);
             break;
         }
@@ -297,7 +359,7 @@ void CodeGenCUDA::visit(const VarDef &op) {
             os() << ")(__shmem + " + std::to_string(sharedStackTop_) << ");"
                  << std::endl;
 
-            int size = sizeOf(tensor.dtype());
+            int64_t size = sizeOf(tensor.dtype());
             for (auto &&dim : shape) {
                 if (dim->nodeType() == ASTNodeType::IntConst) {
                     size *= dim.as<IntConstNode>()->val_;
@@ -463,7 +525,7 @@ extern "C" {
                 }
                 first = false;
             }
-            os << ") ";
+            os << ", uint8_t *__glmem) ";
             os << stream.os_.str() << std::endl;
             return os.str();
         }

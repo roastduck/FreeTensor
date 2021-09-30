@@ -225,6 +225,19 @@ class ISLSpace {
     }
 };
 
+inline ISLSet complement(ISLSet &&set) {
+    return isl_set_complement(set.move());
+}
+inline ISLSet complement(const ISLSet &set) {
+    return isl_set_complement(set.copy());
+}
+inline ISLMap complement(ISLMap &&map) {
+    return isl_map_complement(map.move());
+}
+inline ISLMap complement(const ISLMap &map) {
+    return isl_map_complement(map.copy());
+}
+
 inline ISLMap reverse(ISLMap &&map) { return isl_map_reverse(map.move()); }
 inline ISLMap reverse(const ISLMap &map) { return isl_map_reverse(map.copy()); }
 
@@ -303,6 +316,16 @@ inline ISLSpace spaceAlloc(const ISLCtx &ctx, unsigned nparam, unsigned nIn,
 inline ISLSpace spaceSetAlloc(const ISLCtx &ctx, unsigned nparam,
                               unsigned dim) {
     return isl_space_set_alloc(ctx.get(), nparam, dim);
+}
+
+inline ISLSet emptySet(ISLSpace &&space) { return isl_set_empty(space.move()); }
+inline ISLSet emptySet(const ISLSpace &space) {
+    return isl_set_empty(space.copy());
+}
+
+inline ISLMap emptyMap(ISLSpace &&space) { return isl_map_empty(space.move()); }
+inline ISLMap emptyMap(const ISLSpace &space) {
+    return isl_map_empty(space.copy());
 }
 
 inline ISLSet universeSet(ISLSpace &&space) {

@@ -23,8 +23,8 @@ def test_max_pooling_basic():
 
     print(f)
     s = ir.Schedule(f)
-    s.inline("max_pool:V_X_shape")
-    s.inline("max_pool:V_Y_shape")
+    s.inline("max_pool:X_shape")
+    s.inline("max_pool:Y_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 
@@ -62,8 +62,8 @@ def test_max_pooling_same_padding():
 
     print(f)
     s = ir.Schedule(f)
-    s.inline("max_pool:V_X_shape")
-    s.inline("max_pool:V_Y_shape")
+    s.inline("max_pool:X_shape")
+    s.inline("max_pool:Y_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 
@@ -101,8 +101,8 @@ def test_max_pooling_stride():
 
     print(f)
     s = ir.Schedule(f)
-    s.inline("max_pool:V_X_shape")
-    s.inline("max_pool:V_Y_shape")
+    s.inline("max_pool:X_shape")
+    s.inline("max_pool:Y_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 
@@ -139,8 +139,8 @@ def test_max_pooling_dilation():
 
     print(f)
     s = ir.Schedule(f)
-    s.inline("max_pool:V_X_shape")
-    s.inline("max_pool:V_Y_shape")
+    s.inline("max_pool:X_shape")
+    s.inline("max_pool:Y_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 
@@ -185,7 +185,7 @@ def test_max_pooling_out_of_place():
 
     print(f)
     s = ir.Schedule(f)
-    s.inline("max_pool:V_X_shape")
+    s.inline("max_pool:X_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 
@@ -222,8 +222,8 @@ def test_global_avg_pool():
 
     print(f)
     s = ir.Schedule(f)
-    s.inline("max_pool:V_X_shape")
-    s.inline("max_pool:V_Y_shape")
+    s.inline("max_pool:X_shape")
+    s.inline("max_pool:Y_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 
@@ -261,7 +261,7 @@ def test_global_avg_pool_out_of_place():
 
     print(f)
     s = ir.Schedule(f)
-    s.inline("max_pool:V_X_shape")
+    s.inline("max_pool:X_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 

@@ -22,8 +22,8 @@ def test_static():
 
     print(f)
     s = ir.Schedule(f)
-    s.inline("reduce_sum:V_x_shape")
-    s.inline("reduce_sum:V_y_shape")
+    s.inline("reduce_sum:x_shape")
+    s.inline("reduce_sum:y_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 
@@ -55,8 +55,8 @@ def test_keepdims():
 
     print(f)
     s = ir.Schedule(f)
-    s.inline("reduce_sum:V_x_shape")
-    s.inline("reduce_sum:V_y_shape")
+    s.inline("reduce_sum:x_shape")
+    s.inline("reduce_sum:y_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 
@@ -94,7 +94,7 @@ def test_out_of_place():
 
     print(f)
     s = ir.Schedule(f)
-    s.inline("reduce_sum:V_x_shape")
+    s.inline("reduce_sum:x_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 
@@ -136,7 +136,7 @@ def test_out_of_place_keepdims():
 
     print(f)
     s = ir.Schedule(f)
-    s.inline("reduce_sum:V_x_shape")
+    s.inline("reduce_sum:x_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 

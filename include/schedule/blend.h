@@ -55,16 +55,18 @@ class BlendPass : public Mutator {
                 } else if (stmt->nodeType() == ASTNodeType::ReduceTo) {
                     stmt = visitMemAccess(stmt.template as<ReduceToNode>());
                 }
+                stmt->setId(stmt->id() + "." + std::to_string(curIter_));
 
                 for (auto it = envStack_.rbegin(); it != envStack_.rend();
                      it++) {
                     switch ((*it)->nodeType()) {
                     case ASTNodeType::For: {
                         auto env = it->as<ForNode>();
-                        stmt = makeFor("", env->iter_, (*this)(env->begin_),
-                                       (*this)(env->end_), (*this)(env->len_),
-                                       env->parallel_, env->unroll_,
-                                       env->vectorize_, std::move(stmt));
+                        stmt =
+                            makeFor("", env->iter_, (*this)(env->begin_),
+                                    (*this)(env->end_), (*this)(env->len_),
+                                    env->noDeps_, env->parallel_, env->unroll_,
+                                    env->vectorize_, std::move(stmt));
                         break;
                     }
                     case ASTNodeType::If: {

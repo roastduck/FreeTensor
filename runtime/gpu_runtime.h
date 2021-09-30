@@ -40,6 +40,9 @@ inline __host__ __device__ double runtime_exp(double x) { return exp(x); }
 
 template <class T> __host__ __device__ T runtime_square(T x) { return x * x; }
 
+inline __host__ __device__ float runtime_abs(float x) { return fabsf(x); }
+inline __host__ __device__ double runtime_abs(double x) { return fabs(x); }
+
 inline __host__ __device__ float runtime_floor(float x) { return floorf(x); }
 inline __host__ __device__ double runtime_floor(double x) { return floor(x); }
 

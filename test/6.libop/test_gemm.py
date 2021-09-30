@@ -22,9 +22,9 @@ def test_basic():
 
     print(f)
     s = ir.Schedule(f)
-    s.inline("gemm:V_A_shape")
-    s.inline("gemm:V_B_shape")
-    s.inline("gemm:V_Y_shape")
+    s.inline("gemm:A_shape")
+    s.inline("gemm:B_shape")
+    s.inline("gemm:Y_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 
@@ -59,9 +59,9 @@ def test_trans_A():
 
     print(f)
     s = ir.Schedule(f)
-    s.inline("gemm:V_A_shape")
-    s.inline("gemm:V_B_shape")
-    s.inline("gemm:V_Y_shape")
+    s.inline("gemm:A_shape")
+    s.inline("gemm:B_shape")
+    s.inline("gemm:Y_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 
@@ -96,9 +96,9 @@ def test_trans_B():
 
     print(f)
     s = ir.Schedule(f)
-    s.inline("gemm:V_A_shape")
-    s.inline("gemm:V_B_shape")
-    s.inline("gemm:V_Y_shape")
+    s.inline("gemm:A_shape")
+    s.inline("gemm:B_shape")
+    s.inline("gemm:Y_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 
@@ -139,9 +139,9 @@ def test_trans_AB():
 
     print(f)
     s = ir.Schedule(f)
-    s.inline("gemm:V_A_shape")
-    s.inline("gemm:V_B_shape")
-    s.inline("gemm:V_Y_shape")
+    s.inline("gemm:A_shape")
+    s.inline("gemm:B_shape")
+    s.inline("gemm:Y_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 
@@ -178,10 +178,10 @@ def test_bias():
 
     print(f)
     s = ir.Schedule(f)
-    s.inline("gemm:V_A_shape")
-    s.inline("gemm:V_B_shape")
-    s.inline("gemm:V_C_shape")
-    s.inline("gemm:V_Y_shape")
+    s.inline("gemm:A_shape")
+    s.inline("gemm:B_shape")
+    s.inline("gemm:C_shape")
+    s.inline("gemm:Y_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 
@@ -220,10 +220,10 @@ def test_bias_broadcast_1():
 
     print(f)
     s = ir.Schedule(f)
-    s.inline("gemm:V_A_shape")
-    s.inline("gemm:V_B_shape")
-    s.inline("gemm:V_C_shape")
-    s.inline("gemm:V_Y_shape")
+    s.inline("gemm:A_shape")
+    s.inline("gemm:B_shape")
+    s.inline("gemm:C_shape")
+    s.inline("gemm:Y_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 
@@ -262,10 +262,10 @@ def test_bias_broadcast_2():
 
     print(f)
     s = ir.Schedule(f)
-    s.inline("gemm:V_A_shape")
-    s.inline("gemm:V_B_shape")
-    s.inline("gemm:V_C_shape")
-    s.inline("gemm:V_Y_shape")
+    s.inline("gemm:A_shape")
+    s.inline("gemm:B_shape")
+    s.inline("gemm:C_shape")
+    s.inline("gemm:Y_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 
@@ -310,10 +310,10 @@ def test_bias_with_coeff():
 
     print(f)
     s = ir.Schedule(f)
-    s.inline("gemm:V_A_shape")
-    s.inline("gemm:V_B_shape")
-    s.inline("gemm:V_C_shape")
-    s.inline("gemm:V_Y_shape")
+    s.inline("gemm:A_shape")
+    s.inline("gemm:B_shape")
+    s.inline("gemm:C_shape")
+    s.inline("gemm:Y_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 
@@ -356,8 +356,8 @@ def test_out_of_place():
 
     print(f)
     s = ir.Schedule(f)
-    s.inline("gemm:V_A_shape")
-    s.inline("gemm:V_B_shape")
+    s.inline("gemm:A_shape")
+    s.inline("gemm:B_shape")
     f = ir.lower(s.func(), ir.CPU())
     print(f)
 

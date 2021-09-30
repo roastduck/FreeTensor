@@ -176,6 +176,39 @@ def test_global_mem():
     assert np.array_equal(y_np, y_std)
 
 
+def test_global_mem_in_kernel():
+
+    @ir.transform
+    def test(x, y):
+        ir.declare_var(x, (4,), "int32", "input", "gpu/global")
+        ir.declare_var(y, (4,), "int32", "output", "gpu/global")
+        "nid: L1"
+        for i in range(0, 4):
+            t = ir.create_var((), "int32", "cache", "gpu/global")
+            t[()] = x[i] * 2
+            y[i] = t[()] + 1
+
+    s = ir.Schedule(test)
+    s.parallelize("L1", "threadIdx.x")
+    func = ir.lower(s.func(), target)
+    print(func)
+    code = ir.codegen(func, target)
+    print(ir.debug.with_line_no(code))
+    assert "cudaMalloc" in code
+    assert "cudaFree" in code
+    x_np = np.array([1, 2, 3, 4], dtype="int32")
+    y_np = np.zeros((4,), dtype="int32")
+    x_arr = ir.Array(x_np, device)
+    y_arr = ir.Array(y_np, device)
+    driver = ir.Driver(func, code, device)
+    driver.set_params(x=x_arr, y=y_arr)
+    driver.run()
+    y_np = y_arr.numpy()
+
+    y_std = np.array([3, 5, 7, 9], dtype="int32")
+    assert np.array_equal(y_np, y_std)
+
+
 def test_pass_by_value_0d():
 
     @ir.transform
@@ -274,7 +307,14 @@ def test_dynamic_2d_array():
                 with ir.For("j", 0, n[()], nid="L2") as j:
                     y[i, j] = x[i, j] + 1
 
-    s = ir.Schedule(ir.Func("main", ["n", "x", "y"], ir.pop_ast()))
+    s = ir.Schedule(
+        ir.Func(
+            "main", ["n", "x", "y"],
+            ir.getBuffers([
+                ("n", (), "int32", "input", "byvalue"),
+                ("x", (n[()], n[()]), "int32", "input", "gpu/global"),
+                ("y", (n[()], n[()]), "int32", "output", "gpu/global")
+            ]), ir.pop_ast()))
     outer, inner = s.split("L1", 4)
     s.reorder([inner, outer])
     s.parallelize(inner, "threadIdx.x")
@@ -874,7 +914,7 @@ def test_syncwarp():
     assert np.array_equal(y_np, y_std)
 
 
-def test_correct_shared():
+def test_correct_shared_1():
 
     @ir.transform
     def test(x, y):
@@ -936,6 +976,43 @@ def test_correct_shared():
     assert np.array_equal(y_np, y_std)
 
 
+def test_correct_shared_2():
+
+    @ir.transform
+    def test(x, y):
+        ir.declare_var(x, (4, 256), "int32", "input", "gpu/global")
+        ir.declare_var(y, (4, 256), "int32", "output", "gpu/global")
+        "nid: L0"
+        for i in range(0, 4):
+            t = ir.create_var((256,), "int32", "cache", "gpu/shared")
+            "nid: L1"
+            for j in range(i * 64, (i + 1) * 64):
+                t[j] = x[i, j] * 2
+                # No need to hoist over i, although i is not present here
+            "nid: L2"
+            for j in range(i * 64, (i + 1) * 64):
+                y[i, j] = t[j] + 1
+
+    s = ir.Schedule(test)
+    s.parallelize("L0", "threadIdx.y")
+    s.parallelize("L1", "threadIdx.x")
+    s.parallelize("L2", "threadIdx.x")
+    func = ir.lower(s.func(), target)
+    print(func)
+
+    with ir.VarDef([
+        ("x", (4, 256), "int32", "input", "gpu/global"),
+        ("y", (4, 256), "int32", "output", "gpu/global"),
+    ]) as (x, y):
+        with ir.For(".threadIdx.y", 0, 4) as i:
+            with ir.For(".threadIdx.x", 0, 64) as j:
+                with ir.VarDef("t", (256,), "int32", "cache",
+                               "gpu/shared") as t:
+                    t[j + i * 64] = x[i, j + i * 64] * 2
+                    y[i, j + i * 64] = t[j + i * 64] + 1
+    assert ir.make_1d_var(ir.pop_ast()).match(func.body)
+
+
 def test_relax_shared_shape_to_constants():
     with ir.VarDef("n", (), "int32", "input", "byvalue") as n:
         with ir.VarDef([
@@ -953,7 +1030,13 @@ def test_relax_shared_shape_to_constants():
                         with ir.For("j", n[()], 256, nid="L3") as j:
                             y[i, j] = 0
 
-    s = ir.Schedule(ir.Func("main", ["n", "x", "y"], ir.pop_ast()))
+    s = ir.Schedule(
+        ir.Func(
+            "main", ["n", "x", "y"],
+            ir.getBuffers([("n", (), "int32", "input", "byvalue"),
+                           ("x", (4, 256), "int32", "input", "gpu/global"),
+                           ("y", (4, 256), "int32", "output", "gpu/global")]),
+            ir.pop_ast()))
     s.parallelize("L0", "threadIdx.x")
     func = ir.lower(s.func(), target)
     print(func)
@@ -1293,7 +1376,11 @@ def test_vectorize():
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 64, nid="L2") as j:
                 y[i, j] = x[i, j] * 2
-    func = ir.Func("main", ["x", "y"], ir.pop_ast())
+    func = ir.Func(
+        "main", ["x", "y"],
+        ir.getBuffers([("x", (4, 64), "int32", "input", "gpu/global"),
+                       ("y", (4, 64), "int32", "output", "gpu/global")]),
+        ir.pop_ast())
 
     s = ir.Schedule(func)
     s.parallelize("L1", "blockIdx.x")
@@ -1326,7 +1413,11 @@ def test_vectorize_with_non_vector_access():
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 64, nid="L2") as j:
                 y[i, j] = x[i] * 2
-    func = ir.Func("main", ["x", "y"], ir.pop_ast())
+    func = ir.Func(
+        "main", ["x", "y"],
+        ir.getBuffers([("x", (4,), "int32", "input", "gpu/global"),
+                       ("y", (4, 64), "int32", "output", "gpu/global")]),
+        ir.pop_ast())
 
     s = ir.Schedule(func)
     s.parallelize("L1", "blockIdx.x")
@@ -1356,7 +1447,10 @@ def test_vectorize_use_iter():
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 64, nid="L2") as j:
                 y[i, j] = i + j
-    func = ir.Func("main", ["y"], ir.pop_ast())
+    func = ir.Func(
+        "main", ["y"],
+        ir.getBuffers([("y", (4, 64), "int32", "output", "gpu/global")]),
+        ir.pop_ast())
 
     s = ir.Schedule(func)
     s.parallelize("L1", "blockIdx.x")
@@ -1387,7 +1481,11 @@ def test_vectorize_fallback_to_shorter_when_not_divisible():
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 62, nid="L2") as j:
                 y[i, j] = x[i, j] * 2
-    func = ir.Func("main", ["x", "y"], ir.pop_ast())
+    func = ir.Func(
+        "main", ["x", "y"],
+        ir.getBuffers([("x", (4, 62), "int32", "input", "gpu/global"),
+                       ("y", (4, 62), "int32", "output", "gpu/global")]),
+        ir.pop_ast())
 
     s = ir.Schedule(func)
     s.parallelize("L1", "blockIdx.x")
@@ -1420,7 +1518,11 @@ def test_vectorize_fallback_to_shorter_when_not_aligned():
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 64, nid="L2") as j:
                 y[i, j] = x[i, j + 2] * 2
-    func = ir.Func("main", ["x", "y"], ir.pop_ast())
+    func = ir.Func(
+        "main", ["x", "y"],
+        ir.getBuffers([("x", (4, 66), "int32", "input", "gpu/global"),
+                       ("y", (4, 64), "int32", "output", "gpu/global")]),
+        ir.pop_ast())
 
     s = ir.Schedule(func)
     s.parallelize("L1", "blockIdx.x")
