@@ -68,7 +68,7 @@ class FindMultiLevelTiling : public Visitor {
     bool hasStore(const For &op);
 };
 
-inline std::vector<ForsWithDataReuse> findMultiLevelTiling(const AST &ast) {
+inline std::vector<ForsWithDataReuse> findMultiLevelTiling(const Stmt &ast) {
     FindHasStore findHasStore;
     findHasStore(ast);
     auto forsWithStore = findHasStore.result();
@@ -80,7 +80,7 @@ inline std::vector<ForsWithDataReuse> findMultiLevelTiling(const AST &ast) {
     return find.result();
 }
 
-inline std::vector<std::string> fakeFindMultiLevelTiling(const AST &ast) {
+inline std::vector<std::string> fakeFindMultiLevelTiling(const Stmt &ast) {
     std::vector<ForsWithDataReuse> src = findMultiLevelTiling(ast);
     std::vector<std::string> ret;
     std::string s("S "), r("R "), sp(" ");

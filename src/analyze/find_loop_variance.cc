@@ -182,10 +182,10 @@ bool isVariant(const LoopVariUniqVarMap &varInfo, const VarDef &def,
     return varInfo.at(def).at(loop) == LoopVariability::Variance;
 }
 
-std::pair<LoopVariExprMap, LoopVariUniqVarMap> findLoopVariance(const AST &op) {
-    FindAllLoops finder;
-    finder(op);
-    FindLoopVariance visitor(finder.loops());
+std::pair<LoopVariExprMap, LoopVariUniqVarMap>
+findLoopVariance(const Stmt &op) {
+    auto allLoops = findAllLoops(op);
+    FindLoopVariance visitor(allLoops);
     int lastCnt = 0;
     while (true) {
         visitor(op);

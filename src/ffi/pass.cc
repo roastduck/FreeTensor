@@ -13,6 +13,7 @@
 #include <pass/make_reduction.h>
 #include <pass/merge_and_hoist_if.h>
 #include <pass/move_out_first_or_last_iter.h>
+#include <pass/output_intermediates.h>
 #include <pass/prop_const.h>
 #include <pass/remove_dead_var.h>
 #include <pass/remove_writes.h>
@@ -41,6 +42,9 @@ void init_ffi_pass(py::module_ &m) {
                   const Stmt &, const std::unordered_set<std::string> &,
                   const std::unordered_set<std::string> &)>(&grad),
           "stmt"_a, "requires"_a, "provides"_a);
+
+    m.def("output_intermediates", &outputIntermediates, "stmt"_a,
+          "intermediates"_a);
 
     m.def("simplify_pass", static_cast<Func (*)(const Func &)>(&simplifyPass),
           "func"_a);

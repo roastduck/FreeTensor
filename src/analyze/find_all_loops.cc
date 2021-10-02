@@ -7,5 +7,11 @@ void FindAllLoops::visit(const For &op) {
     loops_.emplace_back(op->id());
 }
 
+std::vector<std::string> findAllLoops(const Stmt &op) {
+    FindAllLoops visitor;
+    visitor(op);
+    return visitor.loops();
+}
+
 } // namespace ir
 

@@ -145,7 +145,7 @@ bool isVariant(const LoopVariExprMap &exprInfo, const Expr &expr,
 bool isVariant(const LoopVariUniqVarMap &varInfo, const VarDef &def,
                const std::string &loop);
 
-std::pair<LoopVariExprMap, LoopVariUniqVarMap> findLoopVariance(const AST &op);
+std::pair<LoopVariExprMap, LoopVariUniqVarMap> findLoopVariance(const Stmt &op);
 
 } // namespace ir
 

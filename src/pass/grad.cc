@@ -305,4 +305,21 @@ grad(const Stmt &op, const std::unordered_set<std::string> &requires,
                            visitor.provideGrads());
 }
 
+std::tuple<Func, std::unordered_map<std::string, std::string>,
+           std::unordered_map<std::string, std::string>>
+grad(const Func &func, const std::unordered_set<std::string> &requires,
+     const std::unordered_set<std::string> &provides) {
+    auto [ast, requireGrads, provideGrads] =
+        grad(func->body_, requires, provides);
+    std::vector<std::string> params = func->params_;
+    for (auto &&[x, dzdx] : requireGrads) {
+        params.emplace_back(dzdx);
+    }
+    for (auto &&[y, dzdy] : provideGrads) {
+        params.emplace_back(dzdy);
+    }
+    return std::make_tuple(makeFunc(func->name_, params, {}, ast, nullptr),
+                           requireGrads, provideGrads);
+}
+
 } // namespace ir
