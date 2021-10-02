@@ -1,5 +1,7 @@
 #include <cmath>
 
+#include <iostream>
+
 #include <analyze/fixed_length_feature.h>
 #include <auto_schedule/auto_schedule.h>
 #include <auto_schedule/rules/multi_level_tiling.h>
@@ -15,14 +17,14 @@ namespace ir {
 
 AutoSchedule::AutoSchedule(const Schedule &schedule, const Ref<Target> &target,
                            const Device &device, int nCandidates, int nPredict)
-    : original_(schedule), target_(target), device_(device),
+    : original_(schedule), current_(schedule), target_(target), device_(device),
       nCandidates_(nCandidates), nPredict_(nPredict), paramsSet_(false),
       mn_(INFINITY) {
     MultiLevelTilingRule *multiLevelTilingRule = new MultiLevelTilingRule;
     ThreadBindRule *threadBindRule = new ThreadBindRule(target_);
-    rules_.push_back(multiLevelTilingRule);
-    rules_.push_back(threadBindRule);
-    addParts();
+    rules_.push_back(std::shared_ptr<Rule>(multiLevelTilingRule));
+    rules_.push_back(std::shared_ptr<Rule>(threadBindRule));
+    // addParts();
     // int n = multiLevelTilingRule.analyze(original_);
     // std::cout << "Found " << n << " multi-level tiling" << std::endl;
     // int m = threadBindRule.analyze(original_);
@@ -33,10 +35,10 @@ AutoSchedule::AutoSchedule(const Schedule &schedule, const Ref<Target> &target,
 }
 
 AutoSchedule::~AutoSchedule() {
-    int rulesNum = rules_.size();
-    for (int i = 0; i < rulesNum; i++) {
-        delete rules_[i];
-    }
+    // int rulesNum = rules_.size();
+    // for (int i = 0; i < rulesNum; i++) {
+    //     delete rules_[i];
+    // }
 }
 
 void AutoSchedule::addParts() {
@@ -68,15 +70,19 @@ AutoSchedule::measure(const std::vector<Schedule> &schedules) {
     size_t n = schedules.size();
     std::vector<Ref<Driver>> drivers(n);
 
-#pragma omp parallel for
+    // #pragma omp parallel for
     for (size_t i = 0; i < n; i++) {
         try {
+            std::cout << "Start lowering the func." << std::endl;
             auto func = lower(schedules[i].func(), target_);
+            std::cout << "Finish lowering the func." << std::endl;
             std::string code;
+            std::cout << "Ready to generate codes." << std::endl;
             if (target_->type() == TargetType::GPU)
                 code = codeGenCUDA(func);
             else
                 code = codeGenCPU(func);
+            std::cout << "Successfully generate codes." << std::endl;
             drivers[i] = Ref<Driver>::make(Driver(func, code, device_));
         } catch (const std::exception &e) {
             // OpenMP threads won't report an exception message
@@ -162,7 +168,9 @@ AutoSchedule::testAndAdd(const std::vector<Sketch> &sketches,
                          const std::vector<Schedule> &schedules) {
     size_t n = schedules.size();
     ASSERT(sketches.size() == n);
+    std::cout << "Start mesuring schedules." << std::endl;
     std::vector<double> times = measure(schedules);
+    std::cout << "Successfully mesure all schedules." << std::endl;
     for (size_t i = 0; i < n; i++) {
         if (candidates_.size() < nCandidates_) {
             candidates_.emplace_back(sketches[i]);
@@ -190,6 +198,37 @@ Schedule AutoSchedule::getBestSchedule() {
         }
     }
     return candidates_[best].genSchedule(original_);
+}
+
+int AutoSchedule::getBestTime() {
+    int time = candidates_[0].time();
+    for (size_t i = 0; i < candidates_.size(); i++) {
+        if (candidates_[i].time() < time) {
+            time = candidates_[i].time();
+        }
+    }
+    return time;
+}
+
+int AutoSchedule::getRulesNum() { return rules_.size(); }
+
+int AutoSchedule::ruleAnalyse(int idx) {
+    return rules_[idx]->analyze(current_);
+}
+
+void AutoSchedule::ruleApply(int idx, std::vector<int> sketchPartIdx) {
+    for (unsigned i = 0; i < sketchPartIdx.size(); i++) {
+        SketchPart sketchPart = rules_[idx]->genPart(sketchPartIdx[i]);
+        baseSketch_.addPart(sketchPart);
+        sketchPart->genRandAnnotation();
+        sketchPart->apply(current_);
+    }
+}
+
+std::shared_ptr<Rule> AutoSchedule::getRule(int idx) { return rules_[idx]; }
+
+void AutoSchedule::setRule(int idx, std::shared_ptr<Rule> rule) {
+    rules_[idx] = rule;
 }
 
 } // namespace ir

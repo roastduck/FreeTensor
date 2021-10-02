@@ -6,6 +6,7 @@
 #include <driver/array.h>
 #include <driver/device.h>
 #include <driver/target.h>
+#include <memory>
 #include <schedule.h>
 #include <unordered_map>
 
@@ -13,6 +14,7 @@ namespace ir {
 
 class AutoSchedule {
     Schedule original_;
+    Schedule current_;
     Ref<Target> target_;
     Device device_;
     size_t nCandidates_, nPredict_;
@@ -21,7 +23,7 @@ class AutoSchedule {
     std::unordered_map<std::string, Array *> kws_;
     bool paramsSet_;
     std::vector<Sketch> candidates_;
-    std::vector<Rule *> rules_;
+    std::vector<std::shared_ptr<Rule>> rules_;
     double mn_;
 
   private:
@@ -51,6 +53,17 @@ class AutoSchedule {
     Schedule getBestSchedule();
 
     void addParts();
+
+    int getRulesNum();
+    int ruleAnalyse(int idx);
+    void ruleApply(int idx, std::vector<int> sketchPartIdx);
+    std::shared_ptr<Rule> getRule(int idx);
+    void setRule(int idx, std::shared_ptr<Rule> rule);
+    int getBestTime();
+    Schedule getCurrent() { return current_; }
+    void setCurrent(Schedule current) { current_ = current; }
+    Sketch getBaseSketch() { return baseSketch_; }
+    void setBaseSketch(Sketch baseSketch) { baseSketch_ = baseSketch; }
 };
 
 } // namespace ir

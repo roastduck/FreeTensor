@@ -26,15 +26,25 @@ namespace ir {
 template <class T> T lower(const T &t, const Ref<Target> &target) {
     T func = t;
     func = floatSimplify(func);
+    std::cout << "Finish #1" << std::endl;
     func = simplifyPass(func);
+    std::cout << "Finish #2" << std::endl;
     func = moveOutFirstOrLastIter(func);
+    std::cout << "Finish #3" << std::endl;
     func = sinkVar(func);
+    std::cout << "Finish #4" << std::endl;
     func = shrinkVar(func);
+    std::cout << "Finish #5" << std::endl;
     func = mergeAndHoistIf(func);
+    std::cout << "Finish #6" << std::endl;
     func = propConst(func);
-    func = removeWrites(func);  // After seperate_tail
+    std::cout << "Finish #7" << std::endl;
+    func = removeWrites(func); // After seperate_tail
+    std::cout << "Finish #8" << std::endl;
     func = removeDeadVar(func); // After remove_writes and prop_const
-    func = shrinkFor(func);     // After seperate_tail and remove_writes
+    std::cout << "Finish #9" << std::endl;
+    func = shrinkFor(func); // After seperate_tail and remove_writes
+    std::cout << "Finish #10" << std::endl;
 
     if (target.isValid()) {
         switch (target->type()) {

@@ -7,7 +7,7 @@ int ThreadBindRule::analyze(Schedule &schedule) {
     target = findThreadBind(schedule.ast());
     if (target.empty())
         return false;
-    return true;
+    return 1;
 }
 
 SketchPart ThreadBindRule::genPart(int p) {

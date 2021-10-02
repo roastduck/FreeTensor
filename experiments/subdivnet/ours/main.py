@@ -92,6 +92,8 @@ def conv(adj, x, w0, w1, w2, w3, y, n_faces, in_feats, out_feats, device, mtype,
 
         s = ir.Schedule(f)
         # if device.target().type() == ir.TargetType.CPU:
+        #     s.split('#7', 2, -1)
+        #     s.reorder(['#7.0', '#7.1'])
         #     s.parallelize('Li', 'openmp')
         # else:
         #     s.cache_reduction('Lk', 'y', 'gpu/local')
@@ -99,7 +101,7 @@ def conv(adj, x, w0, w1, w2, w3, y, n_faces, in_feats, out_feats, device, mtype,
         #     s.parallelize('Li.0', 'blockIdx.x')
         #     s.parallelize('Li.1', 'threadIdx.x')
         # Above is better parameters.
-        s = ir.AutoSchedule(s, device.target(), device, 20, 100)
+        s = ir.AutoSchedule(s, device.target(), device, 1, 100)
         adj_np = np.random.uniform(size=(n_faces, 3)).astype("int32")
         x_np = np.random.uniform(size=(n_faces, in_feats)).astype("float32")
         w0_np = np.random.uniform(size=(in_feats, out_feats)).astype("float32")

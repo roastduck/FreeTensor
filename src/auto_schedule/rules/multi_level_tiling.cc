@@ -13,7 +13,7 @@ int MultiLevelTilingRule::analyze(Schedule &schedule) {
     }
     if (targets.empty())
         return false;
-    return true;
+    return targets.size();
 }
 
 SketchPart MultiLevelTilingRule::genPart(int p) {
