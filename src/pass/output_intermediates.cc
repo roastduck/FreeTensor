@@ -2,6 +2,7 @@
 #include <analyze/find_all_scopes.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/output_intermediates.h>
+#include <pass/undo_make_reduction.h>
 
 namespace ir {
 
@@ -19,13 +20,6 @@ static MemType toGlobalMemType(MemType mtype) {
 }
 
 void CountScopeLen::visit(const Store &op) {
-    Visitor::visit(op);
-    if (op->var_ == var_) {
-        scopeLen_[op] = makeIntConst(1);
-    }
-}
-
-void CountScopeLen::visit(const ReduceTo &op) {
     Visitor::visit(op);
     if (op->var_ == var_) {
         scopeLen_[op] = makeIntConst(1);
@@ -96,6 +90,38 @@ void CountScopeLen::visit(const Assert &op) {
     }
 }
 
+Expr AddExtraDim::visit(const Load &_op) {
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::Load);
+    auto op = __op.as<LoadNode>();
+    if (loadMap_.count(_op)) {
+        loadMap_[op] = loadMap_.at(_op);
+        loadMap_.erase(_op);
+    }
+    if (op->var_ == var_) {
+        std::vector<Expr> newIndices(1, offset_);
+        newIndices.insert(newIndices.end(), op->indices_.begin(),
+                          op->indices_.end());
+        loadMap_[op] = makeLoad(op->var_ + ".tape", std::move(newIndices));
+    }
+    return op;
+}
+
+Stmt AddExtraDim::visit(const Store &_op) {
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::Store);
+    auto op = __op.as<StoreNode>();
+    if (op->var_ == var_) {
+        std::vector<Expr> newIndices(1, offset_);
+        newIndices.insert(newIndices.end(), op->indices_.begin(),
+                          op->indices_.end());
+        auto newStore = makeStore("", op->var_ + ".tape", std::move(newIndices),
+                                  makeLoad(op->var_, op->indices_));
+        return makeStmtSeq("", {op, newStore});
+    }
+    return op;
+}
+
 Stmt AddExtraDim::visit(const VarDef &_op) {
     if (_op->id() == def_) {
         // FIXME: What if the scopeLen_ is a loop-variant temporary?
@@ -160,10 +186,12 @@ Stmt AddExtraDim::visit(const StmtSeq &op) {
     }
 }
 
-std::pair<Stmt, std::unordered_map<std::string, std::string>>
+std::tuple<Stmt, std::unordered_map<std::string, std::string>,
+           std::unordered_map<Load, Expr>>
 outputIntermediates(const Stmt &_op,
                     const std::unordered_set<std::string> &intermediates) {
     auto op = flattenStmtSeq(_op); // Make the added dim simpler
+    op = undoMakeReduction(op);    // Because we need to record loadMap
 
     std::vector<FindDepsCond> conds;
     for (auto &&scope : findAllScopes(op)) {
@@ -181,16 +209,17 @@ outputIntermediates(const Stmt &_op,
     findDeps(op, conds, found, FindDepsMode::Dep, DEP_WAR, filter, true, false);
 
     std::unordered_map<std::string, std::string> nameMap;
+    std::unordered_map<Load, Expr> loadMap;
     for (auto &&defId : intermediates) {
         auto &&scopes = affectingScopes[defId];
         CountScopeLen counter(defId, scopes);
         counter(op);
         auto &&scopeLen = counter.scopeLen();
-        AddExtraDim adder(defId, scopes, scopeLen, scopeLen.at(op));
+        AddExtraDim adder(defId, scopes, scopeLen, scopeLen.at(op), loadMap);
         op = adder(op);
         nameMap[defId] = adder.tapeName();
     }
-    return std::make_pair(op, nameMap);
+    return std::make_tuple(op, nameMap, loadMap);
 }
 
 } // namespace ir

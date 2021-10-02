@@ -28,23 +28,35 @@ namespace ir {
 using namespace pybind11::literals;
 
 void init_ffi_pass(py::module_ &m) {
-    m.def("grad",
-          static_cast<
-              std::tuple<Func, std::unordered_map<std::string, std::string>,
-                         std::unordered_map<std::string, std::string>> (*)(
-                  const Func &, const std::unordered_set<std::string> &,
-                  const std::unordered_set<std::string> &)>(&grad),
-          "func"_a, "requires"_a, "provides"_a);
-    m.def("grad",
-          static_cast<
-              std::tuple<Stmt, std::unordered_map<std::string, std::string>,
-                         std::unordered_map<std::string, std::string>> (*)(
-                  const Stmt &, const std::unordered_set<std::string> &,
-                  const std::unordered_set<std::string> &)>(&grad),
-          "stmt"_a, "requires"_a, "provides"_a);
+    m.def(
+        "grad",
+        static_cast<
+            std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
+                       std::unordered_map<std::string, std::string>,
+                       std::unordered_map<std::string, std::string>> (*)(
+                const Func &, const std::unordered_set<std::string> &,
+                const std::unordered_set<std::string> &,
+                const std::unordered_set<std::string> &)>(&grad),
+        "stmt"_a, "requires"_a, "provides"_a, "tapes"_a);
+    m.def(
+        "grad",
+        static_cast<
+            std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
+                       std::unordered_map<std::string, std::string>,
+                       std::unordered_map<std::string, std::string>> (*)(
+                const Stmt &, const std::unordered_set<std::string> &,
+                const std::unordered_set<std::string> &,
+                const std::unordered_set<std::string> &)>(&grad),
+        "func"_a, "requires"_a, "provides"_a, "tapes"_a);
 
-    m.def("output_intermediates", &outputIntermediates, "stmt"_a,
-          "intermediates"_a);
+    // std::unordered_map<Load, Expr> cannot be exported to Python
+    m.def(
+        "output_intermediates",
+        [](const Stmt &op,
+           const std::unordered_set<std::string> &intermediates) {
+            return std::get<0>(outputIntermediates(op, intermediates));
+        },
+        "stmt"_a, "intermediates"_a);
 
     m.def("simplify_pass", static_cast<Func (*)(const Func &)>(&simplifyPass),
           "func"_a);

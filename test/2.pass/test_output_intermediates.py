@@ -16,7 +16,7 @@ def test_reuse_over_loop():
                     y[i, k] = t[k] * 2
     ast = ir.pop_ast()
     print(ast)
-    ast, _ = ir.output_intermediates(ast, set(["V_t"]))
+    ast = ir.output_intermediates(ast, set(["V_t"]))
     print(ast)
     ast = ir.lower(ast)
     print(ast)
@@ -56,7 +56,7 @@ def test_reuse_over_stmt_seq():
                 y[k] *= t[k]
     ast = ir.pop_ast()
     print(ast)
-    ast, _ = ir.output_intermediates(ast, set(["V_t"]))
+    ast = ir.output_intermediates(ast, set(["V_t"]))
     print(ast)
     ast = ir.lower(ast)
     print(ast)
@@ -106,7 +106,7 @@ def test_reuse_different_lengths():
                     y2[i, k] = t[k] * 2
     ast = ir.pop_ast()
     print(ast)
-    ast, _ = ir.output_intermediates(ast, set(["V_t"]))
+    ast = ir.output_intermediates(ast, set(["V_t"]))
     print(ast)
     ast = ir.lower(ast)
     print(ast)
@@ -158,7 +158,7 @@ def test_no_need_to_copy():
                     y[i, k] = t[i, k] * 2
     ast = ir.pop_ast()
     print(ast)
-    ast, _ = ir.output_intermediates(ast, set(["V_t"]))
+    ast = ir.output_intermediates(ast, set(["V_t"]))
     print(ast)
     ast = ir.lower(ast)
     print(ast)

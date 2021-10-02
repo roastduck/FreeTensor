@@ -24,7 +24,7 @@ class CountScopeLen : public Visitor {
 
   protected:
     void visit(const Store &op) override;
-    void visit(const ReduceTo &op) override;
+    void visit(const ReduceTo &op) override { ASSERT(false); }
     void visit(const VarDef &op) override;
     void visit(const For &op) override;
     void visit(const StmtSeq &op) override;
@@ -38,6 +38,7 @@ class AddExtraDim : public Mutator {
         &affectingScopes_; // For or StmtSeq IDs
     const std::unordered_map<Stmt, Expr> &scopeLen_;
     Expr totLen_;
+    std::unordered_map<Load, Expr> &loadMap_;
     std::string tapeName_;
     Expr offset_ = makeIntConst(0);
 
@@ -45,32 +46,16 @@ class AddExtraDim : public Mutator {
     AddExtraDim(const std::string &def,
                 const std::unordered_set<std::string> &affectingScopes,
                 const std::unordered_map<Stmt, Expr> &scopeLen,
-                const Expr &totLen)
+                const Expr &totLen, std::unordered_map<Load, Expr> &loadMap)
         : def_(def), affectingScopes_(affectingScopes), scopeLen_(scopeLen),
-          totLen_(totLen) {}
+          totLen_(totLen), loadMap_(loadMap) {}
 
     const std::string &tapeName() const { return tapeName_; }
 
-  private:
-    template <class T> Stmt visitStoreLike(const T &_op) {
-        auto __op = Mutator::visit(_op);
-        ASSERT(__op->nodeType() == _op->nodeType());
-        auto op = __op.template as<typename T::Object>();
-        if (op->var_ == var_) {
-            std::vector<Expr> newIndices(1, offset_);
-            newIndices.insert(newIndices.end(), op->indices_.begin(),
-                              op->indices_.end());
-            auto newStore =
-                makeStore("", op->var_ + ".tape", std::move(newIndices),
-                          makeLoad(op->var_, op->indices_));
-            return makeStmtSeq("", {op, newStore});
-        }
-        return op;
-    }
-
   protected:
-    Stmt visit(const Store &op) override { return visitStoreLike(op); }
-    Stmt visit(const ReduceTo &op) override { return visitStoreLike(op); }
+    Expr visit(const Load &op) override;
+    Stmt visit(const Store &op) override;
+    Stmt visit(const ReduceTo &op) override { ASSERT(false); }
     Stmt visit(const VarDef &op) override;
     Stmt visit(const For &op) override;
     Stmt visit(const StmtSeq &op) override;
@@ -90,9 +75,12 @@ class AddExtraDim : public Mutator {
  * @return : (
  *  The transformed program
  *  Mapping from VarDef IDs of intermediate variables to output names
+ *  Mapping from Load nodes of intermediate variables to Load nodes of the
+ * corresponding output variables
  * )
  */
-std::pair<Stmt, std::unordered_map<std::string, std::string>>
+std::tuple<Stmt, std::unordered_map<std::string, std::string>,
+           std::unordered_map<Load, Expr>>
 outputIntermediates(const Stmt &op,
                     const std::unordered_set<std::string> &intermediates);
 
