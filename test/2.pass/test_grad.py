@@ -130,7 +130,6 @@ def test_math_funcs():
                         ()] + d_y1_old[()] / (2 * y1[()])
     std = ir.pop_ast()
 
-    print(std)
     assert std.match(ast)
 
 
@@ -194,13 +193,11 @@ def test_dependent_iterations():
                     ("d_x", (4,), "int32", "output", "cpu"),
                     ("y", (), "int32", "input", "cpu"),
                     ("d_y", (), "int32", "inout", "cpu")]) as (x, d_x, y, d_y):
-        with ir.For("i1", 0, 4) as i:
-            d_x[i] = 0
         with ir.For("i", 0, 4) as i:
             with ir.VarDef("d_y.old", (), "int32", "cache", "cpu") as d_y_old:
                 d_y_old[()] = d_y[()]
                 d_y[()] = -1 * d_y_old[()]
-                d_x[-1 * i + 3] += d_y_old[()]
+                d_x[-1 * i + 3] = d_y_old[()]
     std = ir.make_reduction(ir.pop_ast())
 
     assert std.match(ast)
@@ -292,12 +289,6 @@ def test_tape_2():
                     ("y", (4,), "int32", "input", "cpu"),
                     ("d_y", (4,), "int32", "inout", "cpu")
                    ]) as (x1, d_x1, x2, d_x2, x3, d_x3, y, d_y):
-        with ir.For("i1", 0, 4) as i:
-            d_x1[i] = 0
-        with ir.For("i2", 0, 4) as i:
-            d_x2[i] = 0
-        with ir.For("i3", 0, 4) as i:
-            d_x3[i] = 0
         with ir.For("i", 0, 4) as i:
             with ir.VarDef("t.tape", (4,), "int32", "input", "cpu") as t:
                 with ir.VarDef("d_t", (), "int32", "cache", "cpu") as d_t:
@@ -306,14 +297,13 @@ def test_tape_2():
                         d_y_old[()] = d_y[-1 * i + 3]
                         d_y[-1 * i + 3] = 0
                         d_t[()] = 0 + d_y_old[()] * x3[-1 * i + 3]
-                        d_x3[-1 * i + 3] += d_y_old[()] * t[-1 * i + 3]
+                        d_x3[-1 * i + 3] = 0 + d_y_old[()] * t[-1 * i + 3]
                     with ir.VarDef("d_t.old", (), "int32", "cache",
                                    "cpu") as d_t_old:
                         d_t_old[()] = d_t[()]
                         d_t[()] = 0
-                        d_x1[-1 * i + 3] += d_t_old[()]
-                        d_x2[-1 * i + 3] += d_t_old[()]
-                        # FIXME: Eliminate these reductions
+                        d_x1[-1 * i + 3] = d_t_old[()]
+                        d_x2[-1 * i + 3] = d_t_old[()]
     std = ir.make_reduction(ir.pop_ast())
 
     assert std.match(backward)
