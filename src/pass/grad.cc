@@ -1,3 +1,5 @@
+#include <analyze/all_defs.h>
+#include <analyze/all_no_reuse_defs.h>
 #include <pass/grad.h>
 #include <pass/output_intermediates.h>
 
@@ -386,6 +388,42 @@ grad(const Func &func, const std::unordered_set<std::string> &requires,
 
     return std::make_tuple(forwardFunc, backwardFunc, requireGrads,
                            provideGrads, tapeMap);
+}
+
+static std::vector<std::string> _findTapeDefs(const Stmt &op,
+                                              GradTapeMode mode) {
+    switch (mode) {
+    case GradTapeMode::All:
+        return allDefs(op, {AccessType::Cache});
+    case GradTapeMode::Nothing:
+        return {};
+    case GradTapeMode::NoReuseOnly:
+        return allNoReuseDefs(op, {AccessType::Cache});
+    default:
+        ASSERT(false);
+    }
+}
+
+static std::unordered_set<std::string> findTapeDefs(const Stmt &op,
+                                                    GradTapeMode mode) {
+    auto ret = _findTapeDefs(op, mode);
+    return std::unordered_set<std::string>(ret.begin(), ret.end());
+}
+
+std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
+           std::unordered_map<std::string, std::string>,
+           std::unordered_map<std::string, std::string>>
+grad(const Stmt &op, const std::unordered_set<std::string> &requires,
+     const std::unordered_set<std::string> &provides, GradTapeMode tapeMode) {
+    return grad(op, requires, provides, findTapeDefs(op, tapeMode));
+}
+
+std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
+           std::unordered_map<std::string, std::string>,
+           std::unordered_map<std::string, std::string>>
+grad(const Func &func, const std::unordered_set<std::string> &requires,
+     const std::unordered_set<std::string> &provides, GradTapeMode tapeMode) {
+    return grad(func, requires, provides, findTapeDefs(func->body_, tapeMode));
 }
 
 } // namespace ir

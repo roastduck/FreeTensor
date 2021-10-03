@@ -144,7 +144,9 @@ class Grad : public Visitor {
  *  Mapping from names in requries to its gradient name,
  *  Mapping from names in provides to its gradient name
  *  Mapping from VarDef IDs of intermediate variables being stored to its
- * corresponding output names
+ * corresponding output names. Currently all output variables must be stored,
+ * and should not be specified in tapes (TODO: allow not storing an output
+ * variable)
  * )
  */
 std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
@@ -160,6 +162,39 @@ std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
 grad(const Func &func, const std::unordered_set<std::string> &requires,
      const std::unordered_set<std::string> &provides,
      const std::unordered_set<std::string> &tapes);
+
+enum class GradTapeMode : int { All, Nothing, NoReuseOnly };
+
+/**
+ * Auto differentiation
+ *
+ * @param op : Original AST
+ * @param requires : Name of input variables that need gradients
+ * @param provides : Name of output variables whose gradients are known
+ * @param tapes : VarDef IDs of intermediate variables that need to be stored in
+ * the forward pass
+ * @return : (
+ *  Forward AST
+ *  Backward AST,
+ *  Mapping from names in requries to its gradient name,
+ *  Mapping from names in provides to its gradient name,
+ *  Mode of which intermediate variables should be stored. All: store all
+ * variables including local scalars; None: store nothing; NoReuseOnly: store
+ * variables that only hold one version of data, which means we do not have to
+ * store each version of them in their history
+ * )
+ */
+std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
+           std::unordered_map<std::string, std::string>,
+           std::unordered_map<std::string, std::string>>
+grad(const Stmt &op, const std::unordered_set<std::string> &requires,
+     const std::unordered_set<std::string> &provides, GradTapeMode tapeMode);
+
+std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
+           std::unordered_map<std::string, std::string>,
+           std::unordered_map<std::string, std::string>>
+grad(const Func &func, const std::unordered_set<std::string> &requires,
+     const std::unordered_set<std::string> &provides, GradTapeMode tapeMode);
 
 } // namespace ir
 
