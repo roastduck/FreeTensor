@@ -76,6 +76,16 @@ class Grad : public Visitor {
     std::vector<Stmt> appends_;
     std::unordered_map<std::string, Ref<Buffer>> buffers_;
     std::unordered_set<std::string> taped_;
+    std::unordered_map<Expr, Expr> equLoads_;
+
+  private:
+    Expr replaceByLoadY(const Expr &op) {
+        return equLoads_.count(op) ? equLoads_.at(op) : op;
+    }
+
+    Expr useForwardVal(const Expr &op) {
+        return replaceByTape_(replaceByLoadY(op));
+    }
 
   public:
     Grad(const std::unordered_set<std::string> &requires,

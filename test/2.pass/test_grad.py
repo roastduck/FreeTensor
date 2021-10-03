@@ -126,13 +126,8 @@ def test_math_funcs():
                                "cpu") as d_y1_old:
                     d_y1_old[()] = d_y1[()]
                     d_y1[()] = 0
-                    # FIXME: should be
-                    # d_x[()] = 0 + 2 * d_y3_old[()] * x[()] + d_y2_old[()] * y2[
-                    #     ()] + d_y1_old[()] / (2 * y1[()])
-                    # if possible
-                    d_x[(
-                    )] = 0 + 2 * d_y3_old[()] * x[()] + d_y2_old[()] * ir.exp(x[
-                        ()]) + d_y1_old[()] / (2 * ir.sqrt(x[()]))
+                    d_x[()] = 0 + 2 * d_y3_old[()] * x[()] + d_y2_old[()] * y2[
+                        ()] + d_y1_old[()] / (2 * y1[()])
     std = ir.pop_ast()
 
     print(std)
