@@ -24,22 +24,9 @@ AutoSchedule::AutoSchedule(const Schedule &schedule, const Ref<Target> &target,
     ThreadBindRule *threadBindRule = new ThreadBindRule(target_);
     rules_.push_back(std::shared_ptr<Rule>(multiLevelTilingRule));
     rules_.push_back(std::shared_ptr<Rule>(threadBindRule));
-    // addParts();
-    // int n = multiLevelTilingRule.analyze(original_);
-    // std::cout << "Found " << n << " multi-level tiling" << std::endl;
-    // int m = threadBindRule.analyze(original_);
-    // std::cout << "Found " << m << " thread bind" << std::endl;
-    // baseSketch_.addPart(multiLevelTilingRule.genPart(0));
-    // baseSketch_.addPart(threadBindRule.genPart(0));
-    // TODO: 先变换再生成sketch
 }
 
-AutoSchedule::~AutoSchedule() {
-    // int rulesNum = rules_.size();
-    // for (int i = 0; i < rulesNum; i++) {
-    //     delete rules_[i];
-    // }
-}
+AutoSchedule::~AutoSchedule() {}
 
 void AutoSchedule::addParts() {
     int rulesNum = rules_.size();
@@ -73,16 +60,12 @@ AutoSchedule::measure(const std::vector<Schedule> &schedules) {
     // #pragma omp parallel for
     for (size_t i = 0; i < n; i++) {
         try {
-            std::cout << "Start lowering the func." << std::endl;
             auto func = lower(schedules[i].func(), target_);
-            std::cout << "Finish lowering the func." << std::endl;
             std::string code;
-            std::cout << "Ready to generate codes." << std::endl;
             if (target_->type() == TargetType::GPU)
                 code = codeGenCUDA(func);
             else
                 code = codeGenCPU(func);
-            std::cout << "Successfully generate codes." << std::endl;
             drivers[i] = Ref<Driver>::make(Driver(func, code, device_));
         } catch (const std::exception &e) {
             // OpenMP threads won't report an exception message
@@ -168,9 +151,7 @@ AutoSchedule::testAndAdd(const std::vector<Sketch> &sketches,
                          const std::vector<Schedule> &schedules) {
     size_t n = schedules.size();
     ASSERT(sketches.size() == n);
-    std::cout << "Start mesuring schedules." << std::endl;
     std::vector<double> times = measure(schedules);
-    std::cout << "Successfully mesure all schedules." << std::endl;
     for (size_t i = 0; i < n; i++) {
         if (candidates_.size() < nCandidates_) {
             candidates_.emplace_back(sketches[i]);

@@ -30,10 +30,6 @@ class AutoSchedule:
                 rule = sketch_item.get_rule(idx)
                 current = sketch_item.get_current()
                 base_sketch = sketch_item.get_base_sketch()
-                # for tmp_idx in range(idx + 1):
-                #     rule = sketch_item.get_rule(tmp_idx)
-                #     for tmp_tmp_sketches_item in tmp_tmp_sketches:
-                #         tmp_tmp_sketches_item.set_rule(tmp_idx, rule)
                 for tmp_tmp_sketches_item in tmp_tmp_sketches:
                     tmp_tmp_sketches_item.set_rule(idx, rule)
                     tmp_tmp_sketches_item.set_current(current)
@@ -79,9 +75,7 @@ class Sketch(ffi.AutoSchedule):
         sketches = self.get_random_sketches(self.n_candidates())
         schedules = self.gen_schedules(sketches)
         features = self.gen_features(schedules)
-        print("Before test and add.")
         times = self.test_and_add(sketches, schedules)
-        print("After test and add.")
         dtrain = xgb.DMatrix(np.array(features), np.array(times), missing=-1)
         booster = xgb.train(xgb_params, dtrain)
         for i in range(iteration):

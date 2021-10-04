@@ -67,8 +67,8 @@ Cursor Schedule::find(const std::function<bool(const Cursor &)> &filter) const {
 
 std::pair<std::string, std::string> Schedule::split(const std::string &id,
                                                     int factor, int nparts) {
-    std::cout << "Schedule split called. id=" << id << " factor=" << factor
-              << " nparts=" << nparts << std::endl;
+    // std::cout << "Schedule split called. id=" << id << " factor=" << factor
+    //           << " nparts=" << nparts << std::endl;
     auto ast = ast_;
     Splitter mutator(id, factor, nparts);
     try {
@@ -87,11 +87,11 @@ std::pair<std::string, std::string> Schedule::split(const std::string &id,
 }
 
 void Schedule::reorder(const std::vector<std::string> &dstOrder) {
-    std::cout << "Schedule reorder called. dstOrder=";
-    for (size_t i = 0; i < dstOrder.size(); i++) {
-        std::cout << dstOrder[i] << " ";
-    }
-    std::cout << std::endl;
+    // std::cout << "Schedule reorder called. dstOrder=";
+    // for (size_t i = 0; i < dstOrder.size(); i++) {
+    //     std::cout << dstOrder[i] << " ";
+    // }
+    // std::cout << std::endl;
 
     auto ast = ast_;
     try {
@@ -157,8 +157,9 @@ void Schedule::reorder(const std::vector<std::string> &dstOrder) {
 
 std::string Schedule::merge(const std::string &loop1,
                             const std::string &loop2) {
-    std::cout << "Schedule merge called. loop1=" << loop1 << " loop2=" << loop2
-              << std::endl;
+    // std::cout << "Schedule merge called. loop1=" << loop1 << " loop2=" <<
+    // loop2
+    //           << std::endl;
     auto ast = ast_;
     std::string ret;
     try {
@@ -183,8 +184,10 @@ Schedule::fission(const std::string &loop, const std::string &after,
                   const std::string &suffix0, const std::string &suffix1) {
     // FIXME: Check the condition is not variant when splitting an If
 
-    std::cout << "Schedule fission called. loop=" << loop << " after=" << after
-              << " suffix0=" << suffix0 << " suffix1=" << suffix1 << std::endl;
+    // std::cout << "Schedule fission called. loop=" << loop << " after=" <<
+    // after
+    //           << " suffix0=" << suffix0 << " suffix1=" << suffix1 <<
+    //           std::endl;
     if (suffix0 == suffix1) {
         throw InvalidSchedule(
             "fission: suffix0 cannot be the same with suffix1");
@@ -256,8 +259,9 @@ Schedule::fission(const std::string &loop, const std::string &after,
 }
 
 std::string Schedule::fuse(const std::string &loop0, const std::string &loop1) {
-    std::cout << "Schedule fuse called. loop0=" << loop0 << " loop1=" << loop1
-              << std::endl;
+    // std::cout << "Schedule fuse called. loop0=" << loop0 << " loop1=" <<
+    // loop1
+    //           << std::endl;
     auto ast = ast_;
     FuseFor mutator(loop0, loop1);
     CheckAccessible check(loop0, loop1);
@@ -315,7 +319,7 @@ std::string Schedule::fuse(const std::string &loop0, const std::string &loop1) {
 }
 
 void Schedule::swap(const std::vector<std::string> &order) {
-    std::cout << "Schedule swap called. order=";
+    // std::cout << "Schedule swap called. order=";
     for (size_t i = 0; i < order.size(); i++) {
         std::cout << order[i] << " ";
     }
@@ -376,7 +380,7 @@ void Schedule::swap(const std::vector<std::string> &order) {
 }
 
 void Schedule::blend(const std::string &loop) {
-    std::cout << "Schedule blend called. loop" << loop << std::endl;
+    // std::cout << "Schedule blend called. loop" << loop << std::endl;
     auto ast = ast_;
     try {
         ast = simplifyPass(ast); // Const prop for ForNode::len_
@@ -416,8 +420,8 @@ void Schedule::blend(const std::string &loop) {
 std::tuple<std::string, std::string, std::string, std::string>
 Schedule::cache(const std::string &stmt, const std::string &var,
                 MemType mtype) {
-    std::cout << "Schedule cache called. stmt=" << stmt << " var=" << var
-              << " mtype=" << int(mtype) << std::endl;
+    // std::cout << "Schedule cache called. stmt=" << stmt << " var=" << var
+    //           << " mtype=" << int(mtype) << std::endl;
     auto ast = ast_;
     std::string fillStmt, flushStmt, newVar, oldDef, newDef;
     try {
@@ -457,8 +461,8 @@ Schedule::cache(const std::string &stmt, const std::string &var,
 std::tuple<std::string, std::string, std::string, std::string>
 Schedule::cacheReduction(const std::string &stmt, const std::string &var,
                          MemType mtype) {
-    std::cout << "Schedule cacheReduction called. stmt=" << stmt
-              << " var=" << var << " mtype=" << int(mtype) << std::endl;
+    // std::cout << "Schedule cacheReduction called. stmt=" << stmt
+    //           << " var=" << var << " mtype=" << int(mtype) << std::endl;
     auto ast = ast_;
     std::string initStmt, reduceStmt, newVar, oldDef, newDef;
     try {
@@ -495,8 +499,8 @@ Schedule::cacheReduction(const std::string &stmt, const std::string &var,
 }
 
 void Schedule::setMemType(const std::string &def, MemType mtype) {
-    std::cout << "Schedule setMemType called. def=" << def
-              << " mtype=" << int(mtype) << std::endl;
+    // std::cout << "Schedule setMemType called. def=" << def
+    //           << " mtype=" << int(mtype) << std::endl;
     auto ast = ast_;
     try {
         SetMemType mutator(def, mtype);
@@ -513,9 +517,9 @@ void Schedule::setMemType(const std::string &def, MemType mtype) {
 
 void Schedule::varSplit(const std::string &def, int dim, VarSplitMode mode,
                         int factor, int nparts) {
-    std::cout << "Schedule varSplit called. def=" << def << " dim=" << dim
-              << " mode=" << int(mode) << " factor=" << factor
-              << " nparts=" << nparts << std::endl;
+    // std::cout << "Schedule varSplit called. def=" << def << " dim=" << dim
+    //           << " mode=" << int(mode) << " factor=" << factor
+    //           << " nparts=" << nparts << std::endl;
     auto ast = ast_;
     try {
         VarSplit mutator(def, dim, mode == VarSplitMode::FixedSize, factor,
@@ -537,7 +541,7 @@ void Schedule::varSplit(const std::string &def, int dim, VarSplitMode mode,
 
 void Schedule::varReorder(const std::string &def,
                           const std::vector<int> &order) {
-    std::cout << "Schedule varReorder called. def=" << def << " order=";
+    // std::cout << "Schedule varReorder called. def=" << def << " order=";
     for (size_t i = 0; i < order.size(); i++) {
         std::cout << order[i] << " ";
     }
@@ -561,8 +565,8 @@ void Schedule::varReorder(const std::string &def,
 
 std::string Schedule::moveTo(const std::string &_stmt, MoveToSide side,
                              const std::string &_dst) {
-    std::cout << "Schedule moveTo called. _stmt=" << _stmt
-              << " side=" << int(side) << " _dst=" << _dst << std::endl;
+    // std::cout << "Schedule moveTo called. _stmt=" << _stmt
+    //           << " side=" << int(side) << " _dst=" << _dst << std::endl;
     auto bak = ast_;
     try {
         auto stmt = _stmt, dst = _dst;
@@ -653,7 +657,7 @@ std::string Schedule::moveTo(const std::string &_stmt, MoveToSide side,
 }
 
 void Schedule::inlining(const std::string &def) {
-    std::cout << "Schedule inlining called. def=" << def << std::endl;
+    // std::cout << "Schedule inlining called. def=" << def << std::endl;
     auto ast = ast_;
     try {
         std::unordered_map<Load, Expr> replace;
@@ -698,8 +702,8 @@ void Schedule::inlining(const std::string &def) {
 
 void Schedule::parallelize(const std::string &loop,
                            const std::string &parallel) {
-    std::cout << "Schedule parallelize called. loop=" << loop
-              << " parallel=" << parallel << std::endl;
+    // std::cout << "Schedule parallelize called. loop=" << loop
+    //           << " parallel=" << parallel << std::endl;
     auto ast = ast_;
     Parallelize mutator(loop, parallel);
     try {
@@ -732,8 +736,8 @@ void Schedule::parallelize(const std::string &loop,
 }
 
 void Schedule::unroll(const std::string &loop, bool immediate) {
-    std::cout << "Schedule unroll called. loop=" << loop
-              << " immediate=" << immediate << std::endl;
+    // std::cout << "Schedule unroll called. loop=" << loop
+    //           << " immediate=" << immediate << std::endl;
     auto ast = ast_;
     try {
         ast = simplifyPass(ast); // Const prop for ForNode::len_
@@ -758,7 +762,7 @@ void Schedule::unroll(const std::string &loop, bool immediate) {
 }
 
 void Schedule::vectorize(const std::string &loop) {
-    std::cout << "Schedule vectorize called. loop=" << loop << std::endl;
+    // std::cout << "Schedule vectorize called. loop=" << loop << std::endl;
     auto ast = ast_;
     Vectorize mutator(loop);
     try {
@@ -784,7 +788,7 @@ void Schedule::vectorize(const std::string &loop) {
 }
 
 void Schedule::seperateTail() {
-    std::cout << "Schedule seperateTail called." << std::endl;
+    // std::cout << "Schedule seperateTail called." << std::endl;
     auto ast = ast_;
 
     FindAllIfs finder;
@@ -805,7 +809,7 @@ void Schedule::seperateTail() {
 }
 
 void Schedule::asMatMul(const std::string &loop) {
-    std::cout << "Schedule asMatMul called. loop=" << loop << std::endl;
+    // std::cout << "Schedule asMatMul called. loop=" << loop << std::endl;
     auto ast = ast_;
     try {
         ast = simplifyPass(ast); // const prop

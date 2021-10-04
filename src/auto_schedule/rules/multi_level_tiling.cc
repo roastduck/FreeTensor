@@ -106,7 +106,6 @@ void MultiLevelTilingPart::apply(Schedule &schedule) {
 }
 
 SketchPart MultiLevelTilingPart::mutate() {
-    // std::cout << "Start mutating...\n";
     MultiLevelTilingPart mut = *this;
     int mut_part = random_int(1);
     int spaceSize = target.spaceLoops.size();
@@ -126,12 +125,10 @@ SketchPart MultiLevelTilingPart::mutate() {
         mut.annotation.reductionLoopTiling[mut_idx] =
             random_fill_array<2>(target.reductionLoops[mut_idx].length);
     }
-    // std::cout << "End mutating...\n";
     return Ref<MultiLevelTilingPart>::make(std::move(mut));
 }
 
 SketchPart MultiLevelTilingPart::crossover(const SketchPart &part) {
-    // std::cout << "Start crossover...\n";
     if (typeid(*(part.get())) != typeid(MultiLevelTilingPart))
         return nullptr;
     auto p = part.as<MultiLevelTilingPart>();
@@ -153,7 +150,6 @@ SketchPart MultiLevelTilingPart::crossover(const SketchPart &part) {
         mut.annotation.reductionLoopTiling[mut_idx] =
             p->annotation.reductionLoopTiling[mut_idx];
     }
-    // std::cout << "End crossover...\n";
     return Ref<MultiLevelTilingPart>::make(std::move(mut));
 }
 
@@ -165,11 +161,6 @@ std::vector<int> MultiLevelTilingPart::getAnnotation() const {
     for (auto &item : annotation.reductionLoopTiling) {
         ret.insert(ret.end(), item.begin(), item.end());
     }
-    // std::cout << "Annotation: ";
-    // for (int item : ret) {
-    //     std::cout << item << " ";
-    // }
-    // std::cout << "\n";
     return ret;
 }
 
