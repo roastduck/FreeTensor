@@ -1,4 +1,7 @@
+#include <analyze/all_defs.h>
+#include <analyze/all_no_reuse_defs.h>
 #include <pass/grad.h>
+#include <pass/output_intermediates.h>
 
 namespace ir {
 
@@ -45,6 +48,14 @@ Expr ReplaceVar::visit(const Var &op) {
     }
 }
 
+Expr ReplaceByTape::visit(const Load &op) {
+    if (loadMap_.count(op)) {
+        return (*this)(loadMap_.at(op));
+    } else {
+        return Mutator::visit(op);
+    }
+}
+
 void Grad::visit(const StmtSeq &op) {
     Visitor::visit(op);
     std::vector<Stmt> oriStmts, gradStmts;
@@ -76,8 +87,9 @@ void Grad::visit(const For &op) {
         gradStmts_[op] = makeFor(
             "", op->iter_, op->begin_, op->end_, op->len_, op->noDeps_,
             op->parallel_, op->unroll_, op->vectorize_,
-            ReplaceVar(op->iter_, makeSub(op->end_, makeVar(op->iter_)))(
-                gradStmts_.at(op->body_)));
+            ReplaceVar(op->iter_,
+                       makeSub(makeSub(op->end_, makeIntConst(1)),
+                               makeVar(op->iter_)))(gradStmts_.at(op->body_)));
     }
 }
 
@@ -87,7 +99,11 @@ void Grad::visit(const VarDef &op) {
         ASSERT(!buffers_.count(op->name_));
         auto gradName = gradNames_[op->name_] = op->name_ + ".grad";
         buffers_[op->name_] = op->buffer_;
+        if (tapes_.count(op->id())) {
+            taped_.insert(op->name_);
+        }
         Visitor::visit(op);
+        taped_.erase(op->name_);
         buffers_.erase(op->name_);
         gradNames_.erase(op->name_);
 
@@ -99,8 +115,9 @@ void Grad::visit(const VarDef &op) {
         }
 
         auto grad = gradStmts_.at(op->body_);
-        if (op->buffer_->atype() != AccessType::Output &&
-            op->buffer_->atype() != AccessType::InOut) {
+        if ((op->buffer_->atype() != AccessType::Output &&
+             op->buffer_->atype() != AccessType::InOut) ||
+            isTape_.count(op->name_)) {
             std::vector<std::string> iters;
             std::vector<Expr> indices;
             int nDim = op->buffer_->tensor().shape().size();
@@ -136,7 +153,8 @@ void Grad::visit(const VarDef &op) {
         case AccessType::InOut:
             grad.as<VarDefNode>()->buffer_->setAtype(AccessType::Input);
             grad.as<VarDefNode>()->body_.as<VarDefNode>()->buffer_->setAtype(
-                AccessType::InOut);
+                !isTape_.count(op->name_) ? AccessType::InOut
+                                          : AccessType::Cache);
             break;
         case AccessType::Cache:
             break; // do nothing
@@ -144,15 +162,35 @@ void Grad::visit(const VarDef &op) {
 
         gradStmts_[op] = grad;
     } else {
+        buffers_[op->name_] = op->buffer_;
+        if (tapes_.count(op->id())) {
+            taped_.insert(op->name_);
+        }
         Visitor::visit(op);
-        gradStmts_[op] = gradStmts_.at(op->body_);
+        taped_.erase(op->name_);
+        buffers_.erase(op->name_);
+
+        auto grad = gradStmts_.at(op->body_);
+        grad = makeVarDef(op->id(), op->name_, *op->buffer_, op->sizeLim_, grad,
+                          op->pinned_);
+
+        switch (op->buffer_->atype()) {
+        case AccessType::Output:
+        case AccessType::InOut:
+            grad.as<VarDefNode>()->buffer_->setAtype(AccessType::Input);
+            break;
+        default:
+            break; // do nothing
+        }
+
+        gradStmts_[op] = grad;
     }
 }
 
 void Grad::visit(const Store &op) {
     auto &&buffer = buffers_.at(op->var_);
-    if (buffer->atype() == AccessType::Cache) {
-        oriStmts_[op] = op;
+    if (buffer->atype() == AccessType::Cache && !taped_.count(op->var_)) {
+        oriStmts_[op] = replaceByTape_(op);
     }
 
     std::vector<Stmt> stmts;
@@ -161,6 +199,8 @@ void Grad::visit(const Store &op) {
         // d_y.old = d_y[i]
         // d_y[i] = 0
         // deduce d_x[i] and d_y[i] using d_y.old
+
+        equLoads_[op->expr_] = makeLoad(op->var_, op->indices_);
 
         auto &&grad = gradNames_.at(op->var_);
         auto oldGrad = grad + ".old";
@@ -210,38 +250,46 @@ void Grad::visit(const Sub &op) {
 
 void Grad::visit(const Mul &op) {
     if (gradExprs_.count(op)) {
-        gradExprs_[op->lhs_] = makeMul(gradExprs_.at(op), op->rhs_);
-        gradExprs_[op->rhs_] = makeMul(gradExprs_.at(op), op->lhs_);
+        gradExprs_[op->lhs_] =
+            makeMul(gradExprs_.at(op), useForwardVal(op->rhs_));
+        gradExprs_[op->rhs_] =
+            makeMul(gradExprs_.at(op), useForwardVal(op->lhs_));
     }
     Visitor::visit(op);
 }
 
 void Grad::visit(const RealDiv &op) {
     if (gradExprs_.count(op)) {
-        gradExprs_[op->lhs_] = makeRealDiv(gradExprs_.at(op), op->rhs_);
+        auto lhs = useForwardVal(op->lhs_);
+        auto rhs = useForwardVal(op->rhs_);
+        gradExprs_[op->lhs_] = makeRealDiv(gradExprs_.at(op), rhs);
         gradExprs_[op->rhs_] = makeSub(
-            makeIntConst(0), makeRealDiv(makeMul(gradExprs_.at(op), op->lhs_),
-                                         makeMul(op->rhs_, op->rhs_)));
+            makeIntConst(0),
+            makeRealDiv(makeMul(gradExprs_.at(op), lhs), makeMul(rhs, rhs)));
     }
     Visitor::visit(op);
 }
 
 void Grad::visit(const Min &op) {
     if (gradExprs_.count(op)) {
-        gradExprs_[op->lhs_] = makeIfExpr(makeLE(op->lhs_, op->rhs_),
-                                          gradExprs_.at(op), makeIntConst(0));
-        gradExprs_[op->rhs_] = makeIfExpr(makeLT(op->rhs_, op->lhs_),
-                                          gradExprs_.at(op), makeIntConst(0));
+        auto lhs = useForwardVal(op->lhs_);
+        auto rhs = useForwardVal(op->rhs_);
+        gradExprs_[op->lhs_] =
+            makeIfExpr(makeLE(lhs, rhs), gradExprs_.at(op), makeIntConst(0));
+        gradExprs_[op->rhs_] =
+            makeIfExpr(makeLT(rhs, lhs), gradExprs_.at(op), makeIntConst(0));
     }
     Visitor::visit(op);
 }
 
 void Grad::visit(const Max &op) {
     if (gradExprs_.count(op)) {
-        gradExprs_[op->lhs_] = makeIfExpr(makeGE(op->lhs_, op->rhs_),
-                                          gradExprs_.at(op), makeIntConst(0));
-        gradExprs_[op->rhs_] = makeIfExpr(makeGT(op->rhs_, op->lhs_),
-                                          gradExprs_.at(op), makeIntConst(0));
+        auto lhs = useForwardVal(op->lhs_);
+        auto rhs = useForwardVal(op->rhs_);
+        gradExprs_[op->lhs_] =
+            makeIfExpr(makeGE(lhs, rhs), gradExprs_.at(op), makeIntConst(0));
+        gradExprs_[op->rhs_] =
+            makeIfExpr(makeGT(rhs, lhs), gradExprs_.at(op), makeIntConst(0));
     }
     Visitor::visit(op);
 }
@@ -258,15 +306,15 @@ void Grad::visit(const IfExpr &op) {
 
 void Grad::visit(const Sqrt &op) {
     if (gradExprs_.count(op)) {
-        gradExprs_[op->expr_] =
-            makeRealDiv(gradExprs_.at(op), makeMul(makeIntConst(2), op));
+        gradExprs_[op->expr_] = makeRealDiv(
+            gradExprs_.at(op), makeMul(makeIntConst(2), useForwardVal(op)));
     }
     Visitor::visit(op);
 }
 
 void Grad::visit(const Exp &op) {
     if (gradExprs_.count(op)) {
-        gradExprs_[op->expr_] = makeMul(gradExprs_.at(op), op);
+        gradExprs_[op->expr_] = makeMul(gradExprs_.at(op), useForwardVal(op));
     }
     Visitor::visit(op);
 }
@@ -274,35 +322,108 @@ void Grad::visit(const Exp &op) {
 void Grad::visit(const Square &op) {
     if (gradExprs_.count(op)) {
         gradExprs_[op->expr_] =
-            makeMul(makeIntConst(2), makeMul(gradExprs_.at(op), op->expr_));
+            makeMul(makeIntConst(2),
+                    makeMul(gradExprs_.at(op), useForwardVal(op->expr_)));
     }
     Visitor::visit(op);
 }
 
 void Grad::visit(const Abs &op) {
     if (gradExprs_.count(op)) {
-        gradExprs_[op->expr_] =
-            makeIfExpr(makeGE(op->expr_, makeIntConst(0)), gradExprs_.at(op),
-                       makeSub(makeIntConst(0), gradExprs_.at(op)));
+        gradExprs_[op->expr_] = makeIfExpr(
+            makeGE(useForwardVal(op->expr_), makeIntConst(0)),
+            gradExprs_.at(op), makeSub(makeIntConst(0), gradExprs_.at(op)));
     }
     Visitor::visit(op);
 }
 
-std::tuple<Stmt, std::unordered_map<std::string, std::string>,
+std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
+           std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>>
 grad(const Stmt &op, const std::unordered_set<std::string> &requires,
-     const std::unordered_set<std::string> &provides) {
+     const std::unordered_set<std::string> &provides,
+     const std::unordered_set<std::string> &tapes) {
+    auto [forward, tapeMap, loadMap] = outputIntermediates(op, tapes);
+
     PropagateRequire propagator(requires, provides);
     size_t affectCnt;
     do {
         affectCnt = propagator.affectedDefs().size();
-        propagator(op);
+        propagator(forward);
     } while (propagator.affectedDefs().size() > affectCnt);
 
-    Grad visitor(requires, provides, propagator.affectedDefs());
-    visitor(op);
-    return std::make_tuple(visitor.grad(op), visitor.requireGrads(),
-                           visitor.provideGrads());
+    Grad visitor(requires, provides, tapes, propagator.affectedDefs(), tapeMap,
+                 loadMap);
+    visitor(forward);
+    return std::make_tuple(forward, visitor.grad(forward),
+                           visitor.requireGrads(), visitor.provideGrads(),
+                           tapeMap);
+}
+
+std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
+           std::unordered_map<std::string, std::string>,
+           std::unordered_map<std::string, std::string>>
+grad(const Func &func, const std::unordered_set<std::string> &requires,
+     const std::unordered_set<std::string> &provides,
+     const std::unordered_set<std::string> &tapes) {
+    auto [forward, backward, requireGrads, provideGrads, tapeMap] =
+        grad(func->body_, requires, provides, tapes);
+
+    std::vector<std::string> forwardParams = func->params_;
+    for (auto &&[oriDef, tapeName] : tapeMap) {
+        forwardParams.emplace_back(tapeName);
+    }
+    auto forwardFunc =
+        makeFunc(func->name_, forwardParams, {}, forward, nullptr);
+
+    std::vector<std::string> backwardParams = forwardParams;
+    for (auto &&[x, dzdx] : requireGrads) {
+        backwardParams.emplace_back(dzdx);
+    }
+    for (auto &&[y, dzdy] : provideGrads) {
+        backwardParams.emplace_back(dzdy);
+    }
+    auto backwardFunc =
+        makeFunc(func->name_ + ".grad", backwardParams, {}, backward, nullptr);
+
+    return std::make_tuple(forwardFunc, backwardFunc, requireGrads,
+                           provideGrads, tapeMap);
+}
+
+static std::vector<std::string> _findTapeDefs(const Stmt &op,
+                                              GradTapeMode mode) {
+    switch (mode) {
+    case GradTapeMode::All:
+        return allDefs(op, {AccessType::Cache});
+    case GradTapeMode::Nothing:
+        return {};
+    case GradTapeMode::NoReuseOnly:
+        return allNoReuseDefs(op, {AccessType::Cache});
+    default:
+        ASSERT(false);
+    }
+}
+
+static std::unordered_set<std::string> findTapeDefs(const Stmt &op,
+                                                    GradTapeMode mode) {
+    auto ret = _findTapeDefs(op, mode);
+    return std::unordered_set<std::string>(ret.begin(), ret.end());
+}
+
+std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
+           std::unordered_map<std::string, std::string>,
+           std::unordered_map<std::string, std::string>>
+grad(const Stmt &op, const std::unordered_set<std::string> &requires,
+     const std::unordered_set<std::string> &provides, GradTapeMode tapeMode) {
+    return grad(op, requires, provides, findTapeDefs(op, tapeMode));
+}
+
+std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
+           std::unordered_map<std::string, std::string>,
+           std::unordered_map<std::string, std::string>>
+grad(const Func &func, const std::unordered_set<std::string> &requires,
+     const std::unordered_set<std::string> &provides, GradTapeMode tapeMode) {
+    return grad(func, requires, provides, findTapeDefs(func->body_, tapeMode));
 }
 
 } // namespace ir

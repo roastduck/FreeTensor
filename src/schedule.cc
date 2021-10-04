@@ -659,7 +659,8 @@ void Schedule::inlining(const std::string &def) {
         std::unordered_map<Load, Expr> replace;
         auto filter = [&](const AccessPoint &later,
                           const AccessPoint &earlier) {
-            return earlier.def_->id() == def;
+            return later.op_->nodeType() == ASTNodeType::Load &&
+                   earlier.def_->id() == def;
         };
         auto found = [&](const Dependency &dep) {
             if (replace.count(dep.later().as<LoadNode>())) {

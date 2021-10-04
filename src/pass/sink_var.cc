@@ -109,11 +109,10 @@ Stmt SinkVar::visit(const VarDef &op) {
 Stmt sinkVar(const Stmt &_op) {
     auto op = _op;
 
-    FindAllLoops finder;
-    finder(op);
+    auto allLoops = findAllLoops(op);
     std::vector<std::vector<std::pair<std::string, DepDirection>>> cond;
-    cond.reserve(finder.loops().size());
-    for (auto &&loop : finder.loops()) {
+    cond.reserve(allLoops.size());
+    for (auto &&loop : allLoops) {
         cond.push_back({{loop, DepDirection::Normal}});
     }
     std::set<std::pair<std::string, std::string>> deps; // {(var, loop)}
