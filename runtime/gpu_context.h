@@ -41,11 +41,34 @@ inline const char *cublasGetErrorString(cublasStatus_t error) {
 }
 
 class GPUContext {
+    bool initialized_ = false;
     cublasHandle_t cublas_;
 
   public:
-    GPUContext() { checkCublasError(cublasCreate(&cublas_)); }
-    ~GPUContext() { checkCublasError(cublasDestroy(cublas_)); }
+    GPUContext() {
+        checkCublasError(cublasCreate(&cublas_));
+        initialized_ = true;
+    }
+    ~GPUContext() {
+        if (initialized_) {
+            checkCublasError(cublasDestroy(cublas_));
+            initialized_ = false;
+        }
+    }
+
+    GPUContext(const GPUContext &) = delete;
+    GPUContext &operator=(const GPUContext &) = delete;
+
+    GPUContext(GPUContext &&other)
+        : initialized_(other.initialized_), cublas_(other.cublas_) {
+        other.initialized_ = false;
+    }
+    GPUContext &operator=(GPUContext &&other) {
+        initialized_ = other.initialized_;
+        cublas_ = other.cublas_;
+        other.initialized_ = false;
+        return *this;
+    }
 
     cublasHandle_t cublas() const { return cublas_; }
 };

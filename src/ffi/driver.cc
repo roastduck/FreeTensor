@@ -82,7 +82,7 @@ void init_ffi_driver(py::module_ &m) {
             }
         });
 
-    py::class_<Driver>(m, "Driver")
+    py::class_<Driver, Ref<Driver>>(m, "Driver")
         .def(py::init<const Func &, const std::string &, const Device &>())
         .def("set_params",
              static_cast<void (Driver::*)(

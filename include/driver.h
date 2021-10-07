@@ -33,6 +33,12 @@ class Driver {
     Driver(const Func &func, const std::string &src, const Device &dev);
     ~Driver() { unload(); }
 
+    Driver(const Driver &) = delete;
+    Driver &operator=(const Driver &) = delete;
+
+    Driver(Driver &&) = default;
+    Driver &operator=(Driver &&) = default;
+
     void setParams(const std::vector<Array *> &args,
                    const std::unordered_map<std::string, Array *> &kws = {});
     void setParams(const std::unordered_map<std::string, Array *> &kws) {

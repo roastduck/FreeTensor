@@ -310,7 +310,8 @@ class AnalyzeDeps : public Visitor {
                 checkDep(point, reads_.at(defId));
             }
         }
-        if (depType_ & DEP_WAW) {
+        if ((depType_ & DEP_WAW) ||
+            ((depType_ & DEP_RAW) && op->nodeType() == ASTNodeType::ReduceTo)) {
             if (writes_.count(defId)) {
                 std::vector<Ref<AccessPoint>> others;
                 for (auto &&item : writes_.at(defId)) {
