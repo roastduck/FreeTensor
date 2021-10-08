@@ -1,4 +1,5 @@
 import collections
+import numpy as np
 from typing import Sequence, Tuple, Any, Optional
 
 import ffi
@@ -499,5 +500,12 @@ def any():
     return ffi.makeAnyExpr()
 
 
-def Func(name, params, buffers, body, src=None):
-    return ffi.makeFunc(name, params, buffers, body, src)
+def Func(name, params, body, src=None):
+    return ffi.makeFunc(name, params, body, src)
+
+
+class Tensor(ffi.TensorData):
+
+    def __init__(self, data, mtype):
+        super(Tensor, self).__init__(np.array(data))
+        self.mtype = parseMType(mtype)

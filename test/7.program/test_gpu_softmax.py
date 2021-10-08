@@ -34,10 +34,10 @@ def test_manual_static():
                        "gpu/global",
                        name="y")
         "nid: softmax"
-        ir.libop.softmax_(T("float32", 4), T("float32", 4),
-                          "gpu/global")([batch_size, n_heads, seq_len, seq_len],
-                                        [batch_size, n_heads, seq_len, seq_len],
-                                        x, y)
+        ir.libop.softmax_(T("float32", 4), T("float32", 4), "gpu/global")(
+            ir.Tensor([batch_size, n_heads, seq_len, seq_len], "gpu/global"),
+            ir.Tensor([batch_size, n_heads, seq_len, seq_len],
+                      "gpu/global"), x, y)
 
     print(f.pretty_print())
     s = ir.Schedule(f)
@@ -109,12 +109,14 @@ def test_manual_static():
 
         return V_sum_shmem
 
-    V_sum_shmem = opt_red("softmax:sum:y", "$softmax:sum:y",
-                          "softmax:sum:recur:init:recur:recur:recur:recur:exec",
-                          "softmax:sum:recur:reduce:recur:recur:recur:L")
-    V_max_shmem = opt_red("softmax:max:y", "$softmax:max:y",
-                          "softmax:max:recur:init:recur:recur:recur:recur:exec",
-                          "softmax:max:recur:reduce:recur:recur:recur:L")
+    V_sum_shmem = opt_red(
+        "softmax:sum:y", "$softmax:sum:y",
+        "softmax:sum:recur:init:recur:recur:recur:recur:exec",
+        "softmax:sum:recur:reduce:recur:recur:recur:L")
+    V_max_shmem = opt_red(
+        "softmax:max:y", "$softmax:max:y",
+        "softmax:max:recur:init:recur:recur:recur:recur:exec",
+        "softmax:max:recur:reduce:recur:recur:recur:L")
 
     # Parallelize data-parall loops
     def opt_elemwise(loop_nid):

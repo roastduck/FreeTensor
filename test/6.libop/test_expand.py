@@ -15,7 +15,9 @@ def test_static():
         ir.declare_var(y, (3, 5), "float32", "output", "cpu")
         "nid: expand"
         ir.libop.expand_(T("float32", 2), T("float32", 2), T("float32", 2),
-                         "cpu")([3, 1], [3, 5], [3, 5], x, y)
+                         "cpu")(ir.Tensor([3, 1], "cpu"),
+                                ir.Tensor([3, 5], "cpu"),
+                                ir.Tensor([3, 5], "cpu"), x, y)
 
     print(f)
     s = ir.Schedule(f)
@@ -46,7 +48,8 @@ def test_out_of_place():
         ir.declare_var(y, (3, 5), "float32", "output", "cpu")
         "nid: expand"
         _y = ir.libop.expand(T("float32", 2), T("float32", 2), T("float32", 2),
-                             "cpu")([3, 1], [3, 5], x)
+                             "cpu")(ir.Tensor([3, 1], "cpu"),
+                                    ir.Tensor([3, 5], "cpu"), x)
         for i in range(2):
             y_shape[i] = _y.shape[i]
         for i in range(3):

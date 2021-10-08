@@ -34,6 +34,7 @@ from .nodes import (
     intrinsic,
     any,
     Func,
+    Tensor,
 )
 from .analyze import *
 from .passes import *
@@ -42,5 +43,5 @@ from .codegen import codegen
 from .driver import *
 from .config import *
 
-from .transformer import transform, create_var, declare_var, getBuffers
+from .transformer import transform, create_var, declare_var
 from .auto_schedule import *

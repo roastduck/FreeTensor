@@ -30,7 +30,7 @@ class Schedule {
      */
     Func func() const {
         ASSERT(func_.isValid());
-        return makeFunc(func_->name_, func_->params_, func_->buffers_, ast_, func_->src_);
+        return makeFunc(func_->name_, func_->params_, ast_, func_->src_);
     }
 
     /**

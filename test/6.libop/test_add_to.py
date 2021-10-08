@@ -14,8 +14,9 @@ def test_same_static_shape():
         ir.declare_var(x, (4, 4), "float32", "input", "cpu")
         ir.declare_var(y, (4, 4), "float32", "output", "cpu")
         "nid: add_to"
-        ir.libop.add_to(T("float32", 2), T("float32", 2), "cpu")([4, 4], [4, 4],
-                                                                 y, x)
+        ir.libop.add_to(T("float32", 2),
+                        T("float32", 2), "cpu")(ir.Tensor([4, 4], "cpu"),
+                                                ir.Tensor([4, 4], "cpu"), y, x)
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -41,8 +42,9 @@ def test_static_broadcast_shorter():
         ir.declare_var(x, (4,), "float32", "input", "cpu")
         ir.declare_var(y, (4, 4), "float32", "output", "cpu")
         "nid: add_to"
-        ir.libop.add_to(T("float32", 2), T("float32", 1), "cpu")([4, 4], [4], y,
-                                                                 x)
+        ir.libop.add_to(T("float32", 2),
+                        T("float32", 1), "cpu")(ir.Tensor([4, 4], "cpu"),
+                                                ir.Tensor([4], "cpu"), y, x)
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -68,8 +70,9 @@ def test_static_broadcast_1_at_front():
         ir.declare_var(x, (1, 4), "float32", "input", "cpu")
         ir.declare_var(y, (4, 4), "float32", "output", "cpu")
         "nid: add_to"
-        ir.libop.add_to(T("float32", 2), T("float32", 2), "cpu")([4, 4], [1, 4],
-                                                                 y, x)
+        ir.libop.add_to(T("float32", 2),
+                        T("float32", 2), "cpu")(ir.Tensor([4, 4], "cpu"),
+                                                ir.Tensor([1, 4], "cpu"), y, x)
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -95,8 +98,9 @@ def test_static_broadcast_1_at_back():
         ir.declare_var(x, (4, 1), "float32", "input", "cpu")
         ir.declare_var(y, (4, 4), "float32", "output", "cpu")
         "nid: add_to"
-        ir.libop.add_to(T("float32", 2), T("float32", 2), "cpu")([4, 4], [4, 1],
-                                                                 y, x)
+        ir.libop.add_to(T("float32", 2),
+                        T("float32", 2), "cpu")(ir.Tensor([4, 4], "cpu"),
+                                                ir.Tensor([4, 1], "cpu"), y, x)
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -122,8 +126,9 @@ def test_different_dtype():
         ir.declare_var(x, (4, 4), "int32", "input", "cpu")
         ir.declare_var(y, (4, 4), "float32", "output", "cpu")
         "nid: add_to"
-        ir.libop.add_to(T("float32", 2), T("int32", 2), "cpu")([4, 4], [4, 4],
-                                                               y, x)
+        ir.libop.add_to(T("float32", 2),
+                        T("int32", 2), "cpu")(ir.Tensor([4, 4], "cpu"),
+                                              ir.Tensor([4, 4], "cpu"), y, x)
 
     print(f)
     f = ir.lower(f, ir.CPU())

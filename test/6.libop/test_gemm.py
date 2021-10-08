@@ -18,7 +18,8 @@ def test_basic():
         ir.declare_var(b, (5, 6), "float32", "input", "cpu")
         ir.declare_var(y, (4, 6), "float32", "output", "cpu")
         "nid: gemm"
-        gemm_([4, 5], [5, 6], [4, 6], a, b, y)
+        gemm_(ir.Tensor([4, 5], "cpu"), ir.Tensor([5, 6], "cpu"),
+              ir.Tensor([4, 6], "cpu"), a, b, y)
 
     print(f)
     s = ir.Schedule(f)
@@ -55,7 +56,8 @@ def test_trans_A():
         ir.declare_var(b, (5, 6), "float32", "input", "cpu")
         ir.declare_var(y, (4, 6), "float32", "output", "cpu")
         "nid: gemm"
-        gemm_([5, 4], [5, 6], [4, 6], a, b, y)
+        gemm_(ir.Tensor([5, 4], "cpu"), ir.Tensor([5, 6], "cpu"),
+              ir.Tensor([4, 6], "cpu"), a, b, y)
 
     print(f)
     s = ir.Schedule(f)
@@ -92,7 +94,8 @@ def test_trans_B():
         ir.declare_var(b, (6, 5), "float32", "input", "cpu")
         ir.declare_var(y, (4, 6), "float32", "output", "cpu")
         "nid: gemm"
-        gemm_([4, 5], [6, 5], [4, 6], a, b, y)
+        gemm_(ir.Tensor([4, 5], "cpu"), ir.Tensor([6, 5], "cpu"),
+              ir.Tensor([4, 6], "cpu"), a, b, y)
 
     print(f)
     s = ir.Schedule(f)
@@ -135,7 +138,8 @@ def test_trans_AB():
         ir.declare_var(b, (6, 5), "float32", "input", "cpu")
         ir.declare_var(y, (4, 6), "float32", "output", "cpu")
         "nid: gemm"
-        gemm_([5, 4], [6, 5], [4, 6], a, b, y)
+        gemm_(ir.Tensor([5, 4], "cpu"), ir.Tensor([6, 5], "cpu"),
+              ir.Tensor([4, 6], "cpu"), a, b, y)
 
     print(f)
     s = ir.Schedule(f)
@@ -174,7 +178,8 @@ def test_bias():
         ir.declare_var(c, (4, 6), "float32", "input", "cpu")
         ir.declare_var(y, (4, 6), "float32", "output", "cpu")
         "nid: gemm"
-        gemm_([4, 5], [5, 6], [4, 6], [4, 6], a, b, c, y)
+        gemm_(ir.Tensor([4, 5], "cpu"), ir.Tensor([5, 6], "cpu"),
+              ir.Tensor([4, 6], "cpu"), ir.Tensor([4, 6], "cpu"), a, b, c, y)
 
     print(f)
     s = ir.Schedule(f)
@@ -216,7 +221,8 @@ def test_bias_broadcast_1():
         ir.declare_var(c, (4, 1), "float32", "input", "cpu")
         ir.declare_var(y, (4, 6), "float32", "output", "cpu")
         "nid: gemm"
-        gemm_([4, 5], [5, 6], [4, 1], [4, 6], a, b, c, y)
+        gemm_(ir.Tensor([4, 5], "cpu"), ir.Tensor([5, 6], "cpu"),
+              ir.Tensor([4, 1], "cpu"), ir.Tensor([4, 6], "cpu"), a, b, c, y)
 
     print(f)
     s = ir.Schedule(f)
@@ -258,7 +264,8 @@ def test_bias_broadcast_2():
         ir.declare_var(c, (6,), "float32", "input", "cpu")
         ir.declare_var(y, (4, 6), "float32", "output", "cpu")
         "nid: gemm"
-        gemm_([4, 5], [5, 6], [6], [4, 6], a, b, c, y)
+        gemm_(ir.Tensor([4, 5], "cpu"), ir.Tensor([5, 6], "cpu"),
+              ir.Tensor([6], "cpu"), ir.Tensor([4, 6], "cpu"), a, b, c, y)
 
     print(f)
     s = ir.Schedule(f)
@@ -306,7 +313,8 @@ def test_bias_with_coeff():
         ir.declare_var(c, (4, 6), "float32", "input", "cpu")
         ir.declare_var(y, (4, 6), "float32", "output", "cpu")
         "nid: gemm"
-        gemm_([4, 5], [5, 6], [4, 6], [4, 6], a, b, c, y)
+        gemm_(ir.Tensor([4, 5], "cpu"), ir.Tensor([5, 6], "cpu"),
+              ir.Tensor([4, 6], "cpu"), ir.Tensor([4, 6], "cpu"), a, b, c, y)
 
     print(f)
     s = ir.Schedule(f)
@@ -347,7 +355,7 @@ def test_out_of_place():
         ir.declare_var(y_shape, (2,), "int32", "output", "cpu")
         ir.declare_var(y, (4, 6), "float32", "output", "cpu")
         "nid: gemm"
-        _y = gemm([4, 5], [5, 6], a, b)
+        _y = gemm(ir.Tensor([4, 5], "cpu"), ir.Tensor([5, 6], "cpu"), a, b)
         for i in range(2):
             y_shape[i] = _y.shape[i]
         for i in range(4):

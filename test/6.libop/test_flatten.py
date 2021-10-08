@@ -15,7 +15,8 @@ def test_static():
         ir.declare_var(y, (3, 20), "float32", "output", "cpu")
         "nid: flatten"
         ir.libop.flatten_(T("float32", 3), T("float32", 2),
-                          "cpu")([3, 4, 5], [3, 20], x, y)
+                          "cpu")(ir.Tensor([3, 4, 5], "cpu"),
+                                 ir.Tensor([3, 20], "cpu"), x, y)
 
     print(f)
     s = ir.Schedule(f)
@@ -48,7 +49,8 @@ def test_axis():
         ir.declare_var(y, (12, 5), "float32", "output", "cpu")
         "nid: flatten"
         ir.libop.flatten_(T("float32", 3), T("float32", 2), "cpu",
-                          axis=2)([3, 4, 5], [12, 5], x, y)
+                          axis=2)(ir.Tensor([3, 4, 5], "cpu"),
+                                  ir.Tensor([12, 5], "cpu"), x, y)
 
     print(f)
     s = ir.Schedule(f)
@@ -82,7 +84,7 @@ def test_out_of_place():
         ir.declare_var(y, (3, 20), "float32", "output", "cpu")
         "nid: flatten"
         _y = ir.libop.flatten(T("float32", 3), T("float32", 2),
-                              "cpu")([3, 4, 5], x)
+                              "cpu")(ir.Tensor([3, 4, 5], "cpu"), x)
         for i in range(2):
             y_shape[i] = _y.shape[i]
         for i in range(3):

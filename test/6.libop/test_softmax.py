@@ -14,8 +14,9 @@ def test_static_shape():
         ir.declare_var(x, (4, 4), "float32", "input", "cpu")
         ir.declare_var(y, (4, 4), "float32", "output", "cpu")
         "nid: softmax"
-        ir.libop.softmax_(T("float32", 2), T("float32", 2), "cpu")([4, 4],
-                                                                   [4, 4], x, y)
+        ir.libop.softmax_(T("float32", 2), T("float32", 2),
+                          "cpu")(ir.Tensor([4, 4], "cpu"),
+                                 ir.Tensor([4, 4], "cpu"), x, y)
 
     print(f)
     s = ir.Schedule(f)
@@ -51,7 +52,7 @@ def test_out_of_place():
         ir.declare_var(y, (4, 4), "float32", "output", "cpu")
         "nid: softmax"
         _y = ir.libop.softmax(T("float32", 2), T("float32", 2), "cpu",
-                              axis=-1)([4, 4], x)
+                              axis=-1)(ir.Tensor([4, 4], "cpu"), x)
         y_shape[0] = _y.shape[0]
         y_shape[1] = _y.shape[1]
         for i in range(4):

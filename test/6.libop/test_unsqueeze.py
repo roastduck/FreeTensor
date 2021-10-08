@@ -17,7 +17,9 @@ def test_static():
         ir.libop.unsqueeze_(T("float32", 3),
                             T("float32", 5),
                             "cpu",
-                            axes=[1, 3])([3, 4, 5], [3, 1, 4, 1, 5], x, y)
+                            axes=[1, 3])(ir.Tensor([3, 4, 5], "cpu"),
+                                         ir.Tensor([3, 1, 4, 1, 5], "cpu"), x,
+                                         y)
 
     print(f)
     s = ir.Schedule(f)
@@ -50,7 +52,7 @@ def test_out_of_place():
         _y = ir.libop.unsqueeze(T("float32", 3),
                                 T("float32", 5),
                                 "cpu",
-                                axes=[1, 3])([3, 4, 5], x)
+                                axes=[1, 3])(ir.Tensor([3, 4, 5], "cpu"), x)
         for i in range(5):
             y_shape[i] = _y.shape[i]
         for i in range(3):

@@ -22,7 +22,8 @@ def test_basic():
         ir.declare_var(w, (8, 3, 3, 3), "float32", "input", "cpu")
         ir.declare_var(y, (2, 8, 12, 12), "float32", "output", "cpu")
         "nid: conv"
-        conv_([2, 3, 14, 14], [8, 3, 3, 3], [2, 8, 12, 12], x, w, y)
+        conv_(ir.Tensor([2, 3, 14, 14], "cpu"), ir.Tensor([8, 3, 3, 3], "cpu"),
+              ir.Tensor([2, 8, 12, 12], "cpu"), x, w, y)
 
     print(f)
     s = ir.Schedule(f)
@@ -64,7 +65,9 @@ def test_bias():
         ir.declare_var(b, (8,), "float32", "input", "cpu")
         ir.declare_var(y, (2, 8, 12, 12), "float32", "output", "cpu")
         "nid: conv"
-        conv_([2, 3, 14, 14], [8, 3, 3, 3], [8], [2, 8, 12, 12], x, w, b, y)
+        conv_(ir.Tensor([2, 3, 14, 14], "cpu"), ir.Tensor([8, 3, 3, 3], "cpu"),
+              ir.Tensor([8], "cpu"), ir.Tensor([2, 8, 12, 12], "cpu"), x, w, b,
+              y)
 
     print(f)
     s = ir.Schedule(f)
@@ -109,7 +112,8 @@ def test_same_pad():
         ir.declare_var(w, (8, 3, 3, 3), "float32", "input", "cpu")
         ir.declare_var(y, (2, 8, 14, 14), "float32", "output", "cpu")
         "nid: conv"
-        conv_([2, 3, 14, 14], [8, 3, 3, 3], [2, 8, 14, 14], x, w, y)
+        conv_(ir.Tensor([2, 3, 14, 14], "cpu"), ir.Tensor([8, 3, 3, 3], "cpu"),
+              ir.Tensor([2, 8, 14, 14], "cpu"), x, w, y)
 
     print(f)
     s = ir.Schedule(f)
@@ -151,7 +155,8 @@ def test_stride():
         ir.declare_var(w, (8, 3, 3, 3), "float32", "input", "cpu")
         ir.declare_var(y, (2, 8, 6, 6), "float32", "output", "cpu")
         "nid: conv"
-        conv_([2, 3, 14, 14], [8, 3, 3, 3], [2, 8, 6, 6], x, w, y)
+        conv_(ir.Tensor([2, 3, 14, 14], "cpu"), ir.Tensor([8, 3, 3, 3], "cpu"),
+              ir.Tensor([2, 8, 6, 6], "cpu"), x, w, y)
 
     print(f)
     s = ir.Schedule(f)
@@ -193,7 +198,8 @@ def test_group():
         ir.declare_var(w, (8, 2, 3, 3), "float32", "input", "cpu")
         ir.declare_var(y, (2, 8, 12, 12), "float32", "output", "cpu")
         "nid: conv"
-        conv_([2, 4, 14, 14], [8, 2, 3, 3], [2, 8, 12, 12], x, w, y)
+        conv_(ir.Tensor([2, 4, 14, 14], "cpu"), ir.Tensor([8, 2, 3, 3], "cpu"),
+              ir.Tensor([2, 8, 12, 12], "cpu"), x, w, y)
 
     print(f)
     s = ir.Schedule(f)
@@ -235,7 +241,8 @@ def test_dilation():
         ir.declare_var(w, (8, 3, 3, 3), "float32", "input", "cpu")
         ir.declare_var(y, (2, 8, 10, 10), "float32", "output", "cpu")
         "nid: conv"
-        conv_([2, 3, 14, 14], [8, 3, 3, 3], [2, 8, 10, 10], x, w, y)
+        conv_(ir.Tensor([2, 3, 14, 14], "cpu"), ir.Tensor([8, 3, 3, 3], "cpu"),
+              ir.Tensor([2, 8, 10, 10], "cpu"), x, w, y)
 
     print(f)
     s = ir.Schedule(f)
@@ -277,7 +284,8 @@ def test_out_of_place():
         ir.declare_var(y_shape, (4,), "int32", "output", "cpu")
         ir.declare_var(y, (2, 8, 12, 12), "float32", "output", "cpu")
         "nid: conv"
-        _y = conv([2, 3, 14, 14], [8, 3, 3, 3], x, w)
+        _y = conv(ir.Tensor([2, 3, 14, 14], "cpu"),
+                  ir.Tensor([8, 3, 3, 3], "cpu"), x, w)
         for i in range(4):
             y_shape[i] = _y.shape[i]
         for n in range(2):

@@ -16,7 +16,8 @@ def test_same_static_shape():
         ir.declare_var(out, (4, 4), "float32", "output", "cpu")
         "nid: add"
         ir.libop.add_(T("float32", 2), T("float32", 2), T("float32", 2),
-                      "cpu")([4, 4], [4, 4], [4, 4], x, y, out)
+                      "cpu")(ir.Tensor([4, 4], "cpu"), ir.Tensor([4, 4], "cpu"),
+                             ir.Tensor([4, 4], "cpu"), x, y, out)
 
     print(f)
     s = ir.Schedule(f)
@@ -50,7 +51,8 @@ def test_static_broadcast_shorter():
         ir.declare_var(out, (4, 4), "float32", "output", "cpu")
         "nid: add"
         ir.libop.add_(T("float32", 1), T("float32", 2), T("float32", 2),
-                      "cpu")([4], [4, 4], [4, 4], x, y, out)
+                      "cpu")(ir.Tensor([4], "cpu"), ir.Tensor([4, 4], "cpu"),
+                             ir.Tensor([4, 4], "cpu"), x, y, out)
 
     print(f)
     s = ir.Schedule(f)
@@ -86,7 +88,8 @@ def test_static_broadcast_1_at_front():
         out_shape = ir.create_var((2,), "int32", "cache", "cpu")
         "nid: add"
         ir.libop.add_(T("float32", 2), T("float32", 2), T("float32", 2),
-                      "cpu")([1, 4], [4, 4], [4, 4], x, y, out)
+                      "cpu")(ir.Tensor([1, 4], "cpu"), ir.Tensor([4, 4], "cpu"),
+                             ir.Tensor([4, 4], "cpu"), x, y, out)
 
     print(f)
     s = ir.Schedule(f)
@@ -122,7 +125,8 @@ def test_static_broadcast_1_at_back():
         out_shape = ir.create_var((2,), "int32", "cache", "cpu")
         "nid: add"
         ir.libop.add_(T("float32", 2), T("float32", 2), T("float32", 2),
-                      "cpu")([4, 4], [4, 1], [4, 4], x, y, out)
+                      "cpu")(ir.Tensor([4, 4], "cpu"), ir.Tensor([4, 1], "cpu"),
+                             ir.Tensor([4, 4], "cpu"), x, y, out)
 
     print(f)
     s = ir.Schedule(f)
@@ -158,7 +162,8 @@ def test_different_dtype():
         out_shape = ir.create_var((2,), "int32", "cache", "cpu")
         "nid: add"
         ir.libop.add_(T("int32", 2), T("float32", 2), T("float32", 2),
-                      "cpu")([4, 4], [4, 4], [4, 4], x, y, out)
+                      "cpu")(ir.Tensor([4, 4], "cpu"), ir.Tensor([4, 4], "cpu"),
+                             ir.Tensor([4, 4], "cpu"), x, y, out)
 
     print(f)
     s = ir.Schedule(f)
@@ -193,7 +198,8 @@ def test_out_of_place():
         ir.declare_var(out, (4, 4), "float32", "output", "cpu")
         "nid: add"
         _out = ir.libop.add(T("float32", 2), T("float32", 2), T("float32", 2),
-                            "cpu")([4, 4], [4, 4], x, y)
+                            "cpu")(ir.Tensor([4, 4], "cpu"),
+                                   ir.Tensor([4, 4], "cpu"), x, y)
         for i in range(2):
             out_shape[i] = _out.shape[i]
         for i in range(4):

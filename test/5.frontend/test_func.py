@@ -97,7 +97,7 @@ def test_called_multiple_times():
 
 
 def test_call_with_external_data():
-    data = [[0, 1], [2, 3]]
+    data = ir.Tensor([[0, 1], [2, 3]], "cpu")
 
     @ir.transform
     def g(x, y):
@@ -141,7 +141,7 @@ def test_call_with_literal_data():
     @ir.transform
     def f(y):
         ir.declare_var(y, (2, 2), "int32", "output", "cpu")
-        g([[0, 1], [2, 3]], y)
+        g(ir.Tensor([[0, 1], [2, 3]], "cpu"), y)
 
     func = ir.lower(f, ir.CPU())
     print(func)
@@ -332,7 +332,7 @@ def test_return():
         ir.declare_var(y, (2, 2), "int32", "output", "cpu")
         ir.declare_var(c, (2, 2), "int32", "output", "cpu")
         ir.declare_var(d, (2, 2), "int32", "output", "cpu")
-        c1, d1 = test_i([[1, 2], [3, 4]], y)
+        c1, d1 = test_i(ir.Tensor([[1, 2], [3, 4]], "cpu"), y)
         for i in range(2):
             for j in range(2):
                 c[i, j] = c1[i, j]
@@ -408,7 +408,9 @@ def test_return_returned_value():
     print(std)
     assert std.match(func.body)
 
+
 def test_func_in_args():
+
     @ir.transform
     def plus_one(x):
         ir.declare_var(x, (4,), "int32", "input", "cpu")

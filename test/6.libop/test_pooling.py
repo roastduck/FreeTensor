@@ -19,7 +19,8 @@ def test_max_pooling_basic():
         ir.declare_var(x, (2, 3, 14, 14), "float32", "input", "cpu")
         ir.declare_var(y, (2, 3, 12, 12), "float32", "output", "cpu")
         "nid: max_pool"
-        max_pool_([2, 3, 14, 14], [2, 3, 12, 12], x, y)
+        max_pool_(ir.Tensor([2, 3, 14, 14], "cpu"),
+                  ir.Tensor([2, 3, 12, 12], "cpu"), x, y)
 
     print(f)
     s = ir.Schedule(f)
@@ -58,7 +59,8 @@ def test_max_pooling_same_padding():
         "nid: y_shape"
         y_shape = ir.create_var((4,), "int32", "cache", "cpu")
         "nid: max_pool"
-        max_pool_([2, 3, 14, 14], [2, 3, 14, 14], x, y)
+        max_pool_(ir.Tensor([2, 3, 14, 14], "cpu"),
+                  ir.Tensor([2, 3, 14, 14], "cpu"), x, y)
 
     print(f)
     s = ir.Schedule(f)
@@ -97,7 +99,8 @@ def test_max_pooling_stride():
         ir.declare_var(x, (2, 3, 12, 12), "float32", "input", "cpu")
         ir.declare_var(y, (2, 3, 4, 4), "float32", "output", "cpu")
         "nid: max_pool"
-        max_pool_([2, 3, 14, 14], [2, 3, 4, 4], x, y)
+        max_pool_(ir.Tensor([2, 3, 14, 14], "cpu"),
+                  ir.Tensor([2, 3, 4, 4], "cpu"), x, y)
 
     print(f)
     s = ir.Schedule(f)
@@ -135,7 +138,8 @@ def test_max_pooling_dilation():
         ir.declare_var(x, (2, 3, 14, 14), "float32", "input", "cpu")
         ir.declare_var(y, (2, 3, 10, 10), "float32", "output", "cpu")
         "nid: max_pool"
-        max_pool_([2, 3, 14, 14], [2, 3, 10, 10], x, y)
+        max_pool_(ir.Tensor([2, 3, 14, 14], "cpu"),
+                  ir.Tensor([2, 3, 10, 10], "cpu"), x, y)
 
     print(f)
     s = ir.Schedule(f)
@@ -174,7 +178,7 @@ def test_max_pooling_out_of_place():
         ir.declare_var(y_shape, (4,), "int32", "output", "cpu")
         ir.declare_var(y, (2, 3, 12, 12), "float32", "output", "cpu")
         "nid: max_pool"
-        _y = max_pool([2, 3, 14, 14], x)
+        _y = max_pool(ir.Tensor([2, 3, 14, 14], "cpu"), x)
         for i in range(4):
             y_shape[i] = _y.shape[i]
         for n in range(2):
@@ -218,7 +222,8 @@ def test_global_avg_pool():
         ir.declare_var(x, (2, 3, 14, 14), "float32", "input", "cpu")
         ir.declare_var(y, (2, 3), "float32", "output", "cpu")
         "nid: max_pool"
-        ga_pool_([2, 3, 14, 14], [2, 3], x, y)
+        ga_pool_(ir.Tensor([2, 3, 14, 14], "cpu"), ir.Tensor([2, 3], "cpu"), x,
+                 y)
 
     print(f)
     s = ir.Schedule(f)
@@ -252,7 +257,7 @@ def test_global_avg_pool_out_of_place():
         ir.declare_var(y_shape, (2,), "int32", "output", "cpu")
         ir.declare_var(y, (2, 3), "float32", "output", "cpu")
         "nid: max_pool"
-        _y = ga_pool([2, 3, 14, 14], x)
+        _y = ga_pool(ir.Tensor([2, 3, 14, 14], "cpu"), x)
         for i in range(2):
             y_shape[i] = _y.shape[i]
         for i in range(2):

@@ -20,17 +20,18 @@ static std::vector<Expr> vals2exprs(const std::vector<double> &vals) {
     return exprs;
 }
 
-TensorData::TensorData(const std::vector<int> &shape,
+TensorData::TensorData(DataType dtype, const std::vector<int> &shape,
                        const std::vector<Expr> &data)
-    : shape_(shape), data_(data) {
+    : dtype_(dtype), shape_(shape), data_(data) {
     size_ = 1;
     for (auto dim : shape) {
         size_ *= dim;
     }
 }
 
-TensorData::TensorData(const std::vector<int> &shape, std::vector<Expr> &&data)
-    : shape_(shape), data_(std::move(data)) {
+TensorData::TensorData(DataType dtype, const std::vector<int> &shape,
+                       std::vector<Expr> &&data)
+    : dtype_(dtype), shape_(shape), data_(std::move(data)) {
     size_ = 1;
     for (auto dim : shape) {
         size_ *= dim;
@@ -39,11 +40,11 @@ TensorData::TensorData(const std::vector<int> &shape, std::vector<Expr> &&data)
 
 TensorData::TensorData(const std::vector<int> &shape,
                        const std::vector<int> &data)
-    : TensorData(shape, vals2exprs(data)) {}
+    : TensorData(DataType::Int32, shape, vals2exprs(data)) {}
 
 TensorData::TensorData(const std::vector<int> &shape,
                        const std::vector<double> &data)
-    : TensorData(shape, vals2exprs(data)) {}
+    : TensorData(DataType::Float32, shape, vals2exprs(data)) {}
 
 std::vector<int> TensorData::indices(int offset) const {
     std::vector<int> ret(shape_.size(), 0);

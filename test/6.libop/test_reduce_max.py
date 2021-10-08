@@ -18,7 +18,8 @@ def test_static():
                              T("float32", 2),
                              "cpu",
                              axes=[1],
-                             keepdims=False)([3, 4, 5], [3, 5], x, y)
+                             keepdims=False)(ir.Tensor([3, 4, 5], "cpu"),
+                                             ir.Tensor([3, 5], "cpu"), x, y)
 
     print(f)
     s = ir.Schedule(f)
@@ -52,7 +53,7 @@ def test_out_of_place():
                                  T("float32", 2),
                                  "cpu",
                                  axes=[1],
-                                 keepdims=False)([3, 4, 5], x)
+                                 keepdims=False)(ir.Tensor([3, 4, 5], "cpu"), x)
         for i in range(2):
             y_shape[i] = _y.shape[i]
         for i in range(3):
