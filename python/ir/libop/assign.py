@@ -5,7 +5,7 @@ from .common import StaticType
 
 def _assign_op(t_y: StaticType, t_x: StaticType, io_mem, op, idx_dtype="int32"):
 
-    @core.transform
+    @core.inline
     def f_binary_op(y_shape, x_shape, y, x):
         'nid: V_y_shape'
         core.declare_var(y_shape, (t_y.ndim,), idx_dtype, "input", io_mem)

@@ -4,7 +4,7 @@ from .common import StaticType as T
 
 def broadcast_shape_(t_a: T, t_b: T, t_out: T, io_mem, idx_dtype="int32"):
 
-    @core.transform
+    @core.inline
     def f_broadcast_shape(a_shape, b_shape, out_shape):
         'nid: V_a_shape'
         core.declare_var(a_shape, (t_a.ndim,), idx_dtype, "input", io_mem)
@@ -34,7 +34,7 @@ def broadcast_shape_(t_a: T, t_b: T, t_out: T, io_mem, idx_dtype="int32"):
 
 def broadcast_shape(t_a: T, t_b: T, t_out: T, io_mem, idx_dtype="int32"):
 
-    @core.transform
+    @core.inline
     def f_broadcast_shape(a_shape, b_shape):
         'nid: V_a_shape'
         core.declare_var(a_shape, (t_a.ndim,), idx_dtype, "input", io_mem)

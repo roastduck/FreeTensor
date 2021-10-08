@@ -17,7 +17,7 @@ def gemm_(t_A: StaticType,
 
     if t_C is None:
 
-        @core.transform
+        @core.inline
         def f_gemm(A_shape, B_shape, Y_shape, A, B, Y):
             'nid: V_A_shape'
             core.declare_var(A_shape, (2,), idx_dtype, "input", io_mem)
@@ -92,7 +92,7 @@ def gemm_(t_A: StaticType,
         n_bias_dim = t_C.ndim
         assert n_bias_dim <= 2
 
-        @core.transform
+        @core.inline
         def f_gemm(A_shape, B_shape, C_shape, Y_shape, A, B, C, Y):
             'nid: V_A_shape'
             core.declare_var(A_shape, (2,), idx_dtype, "input", io_mem)
@@ -222,7 +222,7 @@ def gemm(t_A: StaticType,
 
     if t_C is None:
 
-        @core.transform
+        @core.inline
         def f_gemm(A_shape, B_shape, A, B):
             'nid: V_A_shape'
             core.declare_var(A_shape, (2,), idx_dtype, "input", io_mem)
@@ -260,7 +260,7 @@ def gemm(t_A: StaticType,
         n_bias_dim = t_C.ndim
         assert n_bias_dim <= 2
 
-        @core.transform
+        @core.inline
         def f_gemm(A_shape, B_shape, C_shape, A, B, C):
             'nid: V_A_shape'
             core.declare_var(A_shape, (2,), idx_dtype, "input", io_mem)

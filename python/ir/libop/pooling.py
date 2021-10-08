@@ -49,7 +49,7 @@ def max_pool_(t_X: StaticType,
 
     assert n_spatial_dim == 2, "Currently only 2-D pooling is supported"  # TODO
 
-    @core.transform
+    @core.inline
     def f_max_pool_2d(X_shape, Y_shape, X, Y):
         'nid: V_X_shape'
         core.declare_var(X_shape, (4,), idx_dtype, "input",
@@ -139,7 +139,7 @@ def max_pool(t_X: StaticType,
 
     assert n_spatial_dim == 2, "Currently only 2-D pooling is supported"  # TODO
 
-    @core.transform
+    @core.inline
     def f_max_pool_2d(X_shape, X):
         'nid: V_X_shape'
         core.declare_var(X_shape, (4,), idx_dtype, "input",
@@ -171,7 +171,7 @@ def global_avg_pool_(t_X: StaticType, io_mem, idx_dtype="int32"):
 
     assert n_spatial_dim == 2, "Currently only 2-D pooling is supported"  # TODO
 
-    @core.transform
+    @core.inline
     def f_global_avg_pool_2d(X_shape, Y_shape, X, Y):
         'nid: V_X_shape'
         core.declare_var(X_shape, (4,), idx_dtype, "input",
@@ -207,7 +207,7 @@ def global_avg_pool(t_X: StaticType, io_mem, idx_dtype="int32"):
 
     assert n_spatial_dim == 2, "Currently only 2-D pooling is supported"  # TODO
 
-    @core.transform
+    @core.inline
     def f_global_avg_pool_2d(X_shape, X):
         'nid: V_X_shape'
         core.declare_var(X_shape, (4,), idx_dtype, "input",

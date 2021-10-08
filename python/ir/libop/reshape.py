@@ -10,7 +10,7 @@ def _flatten_inner_(t_x: StaticType,
                     io_mem,
                     idx_dtype="int32"):
 
-    @core.transform
+    @core.inline
     def f_flatten(x_shape, y_shape, x, y):
         'nid: V_x_shape'
         core.declare_var(x_shape, (t_x.ndim,), idx_dtype, "input", io_mem)
@@ -44,7 +44,7 @@ def flatten_(t_x: StaticType,
              idx_dtype="int32",
              axis=1):
 
-    @core.transform
+    @core.inline
     def f_flatten(x_shape, y_shape, x, y):
         'nid: V_x_shape'
         core.declare_var(x_shape, (t_x.ndim,), idx_dtype, "input", io_mem)
@@ -80,7 +80,7 @@ def flatten(t_x: StaticType,
             idx_dtype="int32",
             axis=1):
 
-    @core.transform
+    @core.inline
     def f_flatten(x_shape, x):
         'nid: V_x_shape'
         core.declare_var(x_shape, (t_x.ndim,), idx_dtype, "input", io_mem)
@@ -121,7 +121,7 @@ def unsqueeze_(t_x: StaticType,
     def all_minus_one(lst):
         return list(map(lambda x: x - 1, lst))
 
-    @core.transform
+    @core.inline
     def f_unsqueeze(x_shape, y_shape, x, y):
         'nid: V_x_shape'
         core.declare_var(x_shape, (t_x.ndim,), idx_dtype, "input", io_mem)
@@ -168,7 +168,7 @@ def unsqueeze(t_x: StaticType,
 
     def comp_shape(t_x: StaticType, t_y: StaticType, axes):
 
-        @core.transform
+        @core.inline
         def f_shape(x_shape, y_shape):
             'nid: V_x_shape'
             core.declare_var(x_shape, (t_x.ndim,), idx_dtype, "input", io_mem)
@@ -187,7 +187,7 @@ def unsqueeze(t_x: StaticType,
 
         return f_shape
 
-    @core.transform
+    @core.inline
     def f_unsqueeze(x_shape, x):
         'nid: V_x_shape'
         core.declare_var(x_shape, (t_x.ndim,), idx_dtype, "input", io_mem)
@@ -212,7 +212,7 @@ def expand_(t_a: StaticType,
             io_mem,
             idx_dtype="int32"):
 
-    @core.transform
+    @core.inline
     def f_expand(a_shape, b_shape, out_shape, a, out):
         'nid: V_a_shape'
         core.declare_var(a_shape, (t_a.ndim,), idx_dtype, "input", io_mem)
@@ -251,7 +251,7 @@ def expand(t_a: StaticType,
            io_mem,
            idx_dtype="int32"):
 
-    @core.transform
+    @core.inline
     def f_expand(a_shape, b_shape, a):
         'nid: V_a_shape'
         core.declare_var(a_shape, (t_a.ndim,), idx_dtype, "input", io_mem)

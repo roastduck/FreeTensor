@@ -10,7 +10,7 @@ def softmax_(t_x: StaticType,
              idx_dtype="int32",
              axis=-1):
 
-    @core.transform
+    @core.inline
     def f_softmax(x_shape, y_shape, x, y):
         'nid: V_x_shape'
         core.declare_var(x_shape, (t_x.ndim,), idx_dtype, "input", io_mem)
@@ -53,7 +53,7 @@ def softmax(t_x: StaticType,
             idx_dtype="int32",
             axis=-1):
 
-    @core.transform
+    @core.inline
     def f_softmax(x_shape, x):
         'nid: V_x_shape'
         core.declare_var(x_shape, (t_x.ndim,), idx_dtype, "input", io_mem)

@@ -185,13 +185,18 @@ class VarCreation:
 
 class InlineFunction:
 
-    def __init__(self, body, params, globals, arg_var):
+    def __init__(self, name, body, params, globals):
+        self.name = name
         self.body = body
         self.params = params
         self.globals = globals
+        self.arg_var = None
+
+    def set_arg_var(self, arg_var):
         self.arg_var = arg_var
 
     def expand(self, ctx_stack, nid):
+        assert self.arg_var is not None
         transformer = ASTTransformer(ctx_stack, self.params, self.globals)
         transformer.set_replace(self.arg_var, nid)
         for stmt in self.body:
@@ -451,44 +456,38 @@ class ASTTransformer(ast.NodeTransformer):
                 ret_type = parseDType(kws["ret_type"])
             node.expr_ptr = ffi.makeIntrinsic(fmt_str, expr_args, ret_type)
         elif isinstance(callee, ffi.Func):
-            nid = '#' + str(self.ctx_stack.new_context_id())
-            callee_src = _remove_indent(ins.getsource(callee.src))
-            callee_tree = ast.parse(callee_src)
-            callee_params = list(inspect.signature(callee.src).parameters)
-            callee_globals = _get_global_vars(callee.src)
-            funcdef = callee_tree.body[0]
-            assert isinstance(funcdef, ast.FunctionDef)
-            arguments = [arg.arg for arg in funcdef.args.args]
-            arg_var = {}
-
-            if len(args) != len(arguments):
+            raise ffi.InvalidProgram("Please use @ir.inline for subroutines")
+        elif isinstance(callee, InlineFunction):
+            if len(args) != len(callee.params):
                 raise ffi.InvalidProgram(
-                    f"Number of arguments does not match when calling {callee.src.__name__}"
+                    f"Number of arguments does not match when calling {callee.name}"
                 )
-            for arg, callee_arg in zip(args, arguments):
+
+            nid = '#' + str(self.ctx_stack.new_context_id())
+            arg_var = {}
+            for arg, param in zip(args, callee.params):
                 if self.nid:
-                    name = self.nid + ":" + callee_arg
+                    name = self.nid + ":" + param
                 else:
-                    name = nid + ":" + callee_arg
+                    name = nid + ":" + param
                 MarkNid(name)
                 if isinstance(arg, Var):
-                    arg_var[callee_arg] = arg
+                    arg_var[param] = arg
                 elif isinstance(arg, InlineFunction):
                     # only support single return value now
                     returns = arg.expand(self.ctx_stack, name)
                     assert len(returns) == 1, "only support single return value"
-                    arg_var[callee_arg] = self.ctx_stack.find_var_by_name(
-                        returns[0])
+                    arg_var[param] = self.ctx_stack.find_var_by_name(returns[0])
                 elif isinstance(arg, Tensor):
                     var = VarCreation(self.ctx_stack, arg.shape(), arg.dtype(),
                                       "cache", arg.mtype, name).execute()
-                    arg_var[callee_arg] = var
+                    arg_var[param] = var
                     for i in range(arg.size()):
                         var[arg.indices(i)] = arg.at(i)
                 else:
                     assert False, "Invalid function argument"
-            node.expr_ptr = InlineFunction(funcdef.body, callee_params,
-                                           callee_globals, arg_var)
+            callee.set_arg_var(arg_var)
+            node.expr_ptr = callee
         else:
             node.expr_ptr = callee(*args, **kws)
         return node
@@ -763,3 +762,13 @@ def transform(func):
     transformer = ASTTransformer(ctx_stack, params, globals)
     transformer.visit(tree)
     return Func(func.__name__, params, pop_ast(), func)
+
+
+def inline(func):
+    src = _remove_indent(ins.getsource(func))
+    tree = ast.parse(src)
+    params = list(inspect.signature(func).parameters)
+    globals = _get_global_vars(func)
+    funcdef = tree.body[0]
+    assert isinstance(funcdef, ast.FunctionDef)
+    return InlineFunction(func.__name__, funcdef.body, params, globals)

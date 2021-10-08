@@ -10,7 +10,7 @@ def _binary_op_(t_a: StaticType,
                 op,
                 idx_dtype="int32"):
 
-    @core.transform
+    @core.inline
     def f_binary_op(a_shape, b_shape, out_shape, a, b, out):
         'nid: V_a_shape'
         core.declare_var(a_shape, (t_a.ndim,), idx_dtype, "input", io_mem)
@@ -60,7 +60,7 @@ def _binary_op(t_a: StaticType,
                op,
                idx_dtype="int32"):
 
-    @core.transform
+    @core.inline
     def f_binary_op(a_shape, b_shape, a, b):
         'nid: V_a_shape'
         core.declare_var(a_shape, (t_a.ndim,), idx_dtype, "input", io_mem)
@@ -149,7 +149,7 @@ def div(t_a: StaticType,
 
 def _unary_op_(t_x: StaticType, t_y: StaticType, io_mem, op, idx_dtype="int32"):
 
-    @core.transform
+    @core.inline
     def f_unary_op(x_shape, y_shape, x, y):
         'nid: V_x_shape'
         core.declare_var(x_shape, (t_x.ndim,), idx_dtype, "input", io_mem)
@@ -174,7 +174,7 @@ def _unary_op_(t_x: StaticType, t_y: StaticType, io_mem, op, idx_dtype="int32"):
 
 def _unary_op(t_x: StaticType, t_y: StaticType, io_mem, op, idx_dtype="int32"):
 
-    @core.transform
+    @core.inline
     def f_unary_op(x_shape, x):
         'nid: V_x_shape'
         core.declare_var(x_shape, (t_x.ndim,), idx_dtype, "input", io_mem)

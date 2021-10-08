@@ -53,7 +53,7 @@ def conv_(t_X: StaticType,
 
     if t_B is None:
 
-        @core.transform
+        @core.inline
         def f_conv2d(X_shape, W_shape, Y_shape, X, W, Y):
             'nid: V_X_shape'
             core.declare_var(X_shape, (4,), idx_dtype, "input",
@@ -108,7 +108,7 @@ def conv_(t_X: StaticType,
 
     else:
 
-        @core.transform
+        @core.inline
         def f_conv2d(X_shape, W_shape, B_shape, Y_shape, X, W, B, Y):
             'nid: V_X_shape'
             core.declare_var(X_shape, (4,), idx_dtype, "input",
@@ -216,7 +216,7 @@ def conv(t_X: StaticType,
 
     if t_B is None:
 
-        @core.transform
+        @core.inline
         def f_conv2d(X_shape, W_shape, X, W):
             'nid: V_X_shape'
             core.declare_var(X_shape, (4,), idx_dtype, "input",
@@ -251,7 +251,7 @@ def conv(t_X: StaticType,
 
     else:
 
-        @core.transform
+        @core.inline
         def f_conv2d(X_shape, W_shape, B_shape, X, W, B):
             'nid: V_X_shape'
             core.declare_var(X_shape, (4,), idx_dtype, "input",

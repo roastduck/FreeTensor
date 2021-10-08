@@ -25,7 +25,7 @@ def _general_reduce_(t_x: StaticType,
 
     def init(t_y: StaticType):
 
-        @core.transform
+        @core.inline
         def f_init(y_shape, y):
             'nid: V_y_shape'
             core.declare_var(y_shape, (t_y.ndim,), idx_dtype, "input", io_mem)
@@ -45,7 +45,7 @@ def _general_reduce_(t_x: StaticType,
 
     def reduce(t_x: StaticType, t_y: StaticType, axes):
 
-        @core.transform
+        @core.inline
         def f_reduce(x_shape, y_shape, x, y):
             'nid: V_x_shape'
             core.declare_var(x_shape, (t_x.ndim,), idx_dtype, "input", io_mem)
@@ -82,7 +82,7 @@ def _general_reduce_(t_x: StaticType,
 
         return f_reduce
 
-    @core.transform
+    @core.inline
     def f_reduce(x_shape, y_shape, x, y):
         'nid: V_x_shape'
         core.declare_var(x_shape, (t_x.ndim,), idx_dtype, "input", io_mem)
@@ -122,7 +122,7 @@ def _general_reduce(t_x: StaticType,
 
     def comp_shape(t_x: StaticType, t_y: StaticType, axes):
 
-        @core.transform
+        @core.inline
         def f_shape(x_shape, y_shape):
             'nid: V_x_shape'
             core.declare_var(x_shape, (t_x.ndim,), idx_dtype, "input", io_mem)
@@ -147,7 +147,7 @@ def _general_reduce(t_x: StaticType,
 
         return f_shape
 
-    @core.transform
+    @core.inline
     def f_reduce(x_shape, x):
         'nid: V_x_shape'
         core.declare_var(x_shape, (t_x.ndim,), idx_dtype, "input", io_mem)

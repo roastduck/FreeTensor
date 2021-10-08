@@ -6,7 +6,7 @@ import numpy as np
 # TODO: Currently, a callee function must be in the global scope. Can we support a local scope?
 
 
-@ir.transform
+@ir.inline
 def g_global(y):
     ir.declare_var(y, (2,), "float32", "output", "cpu")
     '''nid: S0'''
@@ -23,7 +23,7 @@ def f_global(y):
 
 def test_basic_call():
 
-    @ir.transform
+    @ir.inline
     def g(y):
         ir.declare_var(y, (2,), "float32", "output", "cpu")
         '''nid: S0'''
@@ -60,7 +60,7 @@ def test_global_functions():
 
 def test_called_multiple_times():
 
-    @ir.transform
+    @ir.inline
     def g(y):
         ir.declare_var(y, (2,), "float32", "output", "cpu")
         '''nid: S0'''
@@ -99,7 +99,7 @@ def test_called_multiple_times():
 def test_call_with_external_data():
     data = ir.Tensor([[0, 1], [2, 3]], "cpu")
 
-    @ir.transform
+    @ir.inline
     def g(x, y):
         ir.declare_var(x, (2, 2), "int32", "input", "cpu")
         ir.declare_var(y, (2, 2), "int32", "output", "cpu")
@@ -130,7 +130,7 @@ def test_call_with_external_data():
 
 def test_call_with_literal_data():
 
-    @ir.transform
+    @ir.inline
     def g(x, y):
         ir.declare_var(x, (2, 2), "int32", "input", "cpu")
         ir.declare_var(y, (2, 2), "int32", "output", "cpu")
@@ -161,7 +161,7 @@ def test_call_with_literal_data():
 
 def test_call_with_fixed_dim_at_front():
 
-    @ir.transform
+    @ir.inline
     def g(x1, x2, y):
         ir.declare_var(x1, (4,), "float32", "input", "cpu")
         ir.declare_var(x2, (4,), "float32", "input", "cpu")
@@ -192,7 +192,7 @@ def test_call_with_fixed_dim_at_front():
 
 def test_call_with_fixed_dim_at_back():
 
-    @ir.transform
+    @ir.inline
     def g(x1, x2, y):
         ir.declare_var(x1, (4,), "float32", "input", "cpu")
         ir.declare_var(x2, (4,), "float32", "input", "cpu")
@@ -223,7 +223,7 @@ def test_call_with_fixed_dim_at_back():
 
 def test_call_with_slice():
 
-    @ir.transform
+    @ir.inline
     def g(x1, x2, y):
         ir.declare_var(x1, (4,), "float32", "input", "cpu")
         ir.declare_var(x2, (4,), "float32", "input", "cpu")
@@ -254,7 +254,7 @@ def test_call_with_slice():
 
 def test_call_with_scalar():
 
-    @ir.transform
+    @ir.inline
     def g(x1, x2, y):
         ir.declare_var(x1, (), "float32", "input", "cpu")
         ir.declare_var(x2, (), "float32", "input", "cpu")
@@ -296,7 +296,7 @@ def test_external_call():
 
 def test_error_missing_parameters():
 
-    @ir.transform
+    @ir.inline
     def g(y):
         ir.declare_var(y, (2,), "float32", "output", "cpu")
         '''nid: S0'''
@@ -314,7 +314,7 @@ def test_error_missing_parameters():
 
 def test_return():
 
-    @ir.transform
+    @ir.inline
     def test_i(a, b):
         ir.declare_var(a, (2, 2), "int32", "input", "cpu")
         ir.declare_var(b, (2, 2), "int32", "output", "cpu")
@@ -368,7 +368,7 @@ def test_return():
 
 def test_return_returned_value():
 
-    @ir.transform
+    @ir.inline
     def h():
         y1 = ir.create_var((4,), "int32", "output", "cpu")
         y2 = ir.create_var((4,), "int32", "output", "cpu")
@@ -377,7 +377,7 @@ def test_return_returned_value():
             y2[i] = i * 2
         return y1, y2
 
-    @ir.transform
+    @ir.inline
     def g():
         y1, y2 = h()
         return y2, y1
@@ -411,7 +411,7 @@ def test_return_returned_value():
 
 def test_func_in_args():
 
-    @ir.transform
+    @ir.inline
     def plus_one(x):
         ir.declare_var(x, (4,), "int32", "input", "cpu")
         y = ir.create_var((4,), "int32", "cache", "cpu")
