@@ -127,7 +127,6 @@ def conv_(io_mem,
 
 def conv(io_mem,
          has_bias: bool = False,
-         idx_dtype="int32",
          auto_pad: str = 'NOTSET',
          dilations: Optional[Sequence[int]] = None,
          group: int = 1,
@@ -170,18 +169,15 @@ def conv(io_mem,
 
         @core.inline
         def f_conv2d(X, W):
-            Y_shape = core.create_var((4,), idx_dtype, "output",
-                                      io_mem)  # N * C * H * W
-            Y_shape[0] = X.shape(0)
-            Y_shape[1] = W.shape(0)
-            Y_shape[2] = calc_out_size(X.shape(2), dilations[0], W.shape(2),
-                                       pads[0], pads[2], strides[0])
-            Y_shape[3] = calc_out_size(X.shape(3), dilations[1], W.shape(3),
-                                       pads[1], pads[3], strides[1])
-
             'nid: V_Y'
-            Y = core.create_var(Y_shape, core.up_cast(X.dtype, W.dtype),
-                                "output", io_mem)
+            Y = core.create_var([
+                X.shape(0),
+                W.shape(0),
+                calc_out_size(X.shape(2), dilations[0], W.shape(2), pads[0],
+                              pads[2], strides[0]),
+                calc_out_size(X.shape(3), dilations[1], W.shape(3), pads[1],
+                              pads[3], strides[1])
+            ], core.up_cast(X.dtype, W.dtype), "output", io_mem)
 
             'nid: recur'
             conv_(io_mem, has_bias, auto_pad, dilations, group, kernel_shape,
@@ -193,19 +189,16 @@ def conv(io_mem,
 
         @core.inline
         def f_conv2d(X, W, B):
-            Y_shape = core.create_var((4,), idx_dtype, "output",
-                                      io_mem)  # N * C * H * W
-            Y_shape[0] = X.shape(0)
-            Y_shape[1] = W.shape(0)
-            Y_shape[2] = calc_out_size(X.shape(2), dilations[0], W.shape(2),
-                                       pads[0], pads[2], strides[0])
-            Y_shape[3] = calc_out_size(X.shape(3), dilations[1], W.shape(3),
-                                       pads[1], pads[3], strides[1])
-
             'nid: V_Y'
-            Y = core.create_var(
-                Y_shape, core.up_cast(core.up_cast(X.dtype, W.dtype), B.dtype),
-                "output", io_mem)
+            Y = core.create_var([
+                X.shape(0),
+                W.shape(0),
+                calc_out_size(X.shape(2), dilations[0], W.shape(2), pads[0],
+                              pads[2], strides[0]),
+                calc_out_size(X.shape(3), dilations[1], W.shape(3), pads[1],
+                              pads[3], strides[1])
+            ], core.up_cast(core.up_cast(X.dtype, W.dtype), B.dtype), "output",
+                                io_mem)
 
             'nid: recur'
             conv_(io_mem, has_bias, auto_pad, dilations, group, kernel_shape,

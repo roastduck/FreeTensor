@@ -80,7 +80,6 @@ def max_pool_(io_mem,
 
 
 def max_pool(io_mem,
-             idx_dtype="int32",
              auto_pad: str = 'NOTSET',
              dilations: Optional[Sequence[int]] = None,
              kernel_shape: Sequence[int] = None,
@@ -122,16 +121,14 @@ def max_pool(io_mem,
 
     @core.inline
     def f_max_pool_2d(X):
-        Y_shape = core.create_var((4,), idx_dtype, "output",
-                                  io_mem)  # N * C * H * W
-        Y_shape[0] = X.shape(0)
-        Y_shape[1] = X.shape(1)
-        Y_shape[2] = calc_out_size(X.shape(2), dilations[0], kernel_shape[0],
-                                   pads[0], pads[2], strides[0])
-        Y_shape[3] = calc_out_size(X.shape(3), dilations[1], kernel_shape[1],
-                                   pads[1], pads[3], strides[1])
-        'nid: V_Y'
-        Y = core.create_var(Y_shape, X.dtype, "output", io_mem)
+        Y = core.create_var([
+            X.shape(0),
+            X.shape(1),
+            calc_out_size(X.shape(2), dilations[0], kernel_shape[0], pads[0],
+                          pads[2], strides[0]),
+            calc_out_size(X.shape(3), dilations[1], kernel_shape[1], pads[1],
+                          pads[3], strides[1])
+        ], X.dtype, "output", io_mem)
         'nid: recur'
         max_pool_(io_mem, auto_pad, dilations, kernel_shape, pads, strides)(X,
                                                                             Y)
@@ -164,16 +161,13 @@ def global_avg_pool_(io_mem):
     return f_global_avg_pool_2d
 
 
-def global_avg_pool(io_mem, idx_dtype="int32"):
+def global_avg_pool(io_mem):
 
     n_spatial_dim = 2  # Currently only 2-D convolution is supported (TODO)
 
     @core.inline
     def f_global_avg_pool_2d(X):
-        Y_shape = core.create_var((2,), idx_dtype, "output", io_mem)  # N * C
-        Y_shape[0] = X.shape(0)
-        Y_shape[1] = X.shape(1)
-        Y = core.create_var(Y_shape, X.dtype, "output", io_mem)
+        Y = core.create_var([X.shape(0), X.shape(1)], X.dtype, "output", io_mem)
         'nid: recur'
         global_avg_pool_(io_mem)(X, Y)
         return Y

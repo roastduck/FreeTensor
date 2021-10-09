@@ -1,6 +1,5 @@
 from ffi import AccessType, MemType, DataType, ASTNodeType, TargetType
 from ffi import InvalidSchedule, InvalidProgram, DriverError
-from ffi import up_cast
 
 from .nodes import (
     pop_ast,
@@ -30,8 +29,6 @@ from .nodes import (
     floor_div,
     ceil_div,
     round_towards_0_div,
-    min_value,
-    max_value,
     intrinsic,
     any,
     Func,
@@ -43,6 +40,6 @@ from .schedule import *
 from .codegen import codegen
 from .driver import *
 from .config import *
-
 from .transformer import transform, inline, create_var, declare_var
+from .meta import *
 from .auto_schedule import *

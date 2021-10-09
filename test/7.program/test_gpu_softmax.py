@@ -38,16 +38,6 @@ def test_manual_static():
     print(f.pretty_print())
     s = ir.Schedule(f)
 
-    # Inline shape inference
-    s.inline("softmax:x_shape")
-    s.inline("softmax:V_x:V_y_shape")
-    s.inline("softmax:max:impl:y_shape")
-    s.inline("softmax:sub:broadcast_shape:out_shape")
-    s.inline("softmax:exp:copy_shape:y_shape")
-    s.inline("softmax:sum:y_shape")
-    s.inline("softmax:div:broadcast_shape:out_shape")
-    s.inline("softmax:y_shape")
-
     # L_head
     L_head = s.fuse("softmax:max:impl:recur:init:recur:L",
                     "softmax:max:impl:recur:reduce:recur:L")

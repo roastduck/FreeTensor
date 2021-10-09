@@ -26,18 +26,6 @@ def create_var(shape, dtype, atype, mtype, name=None):
     return np.zeros(shape, dtype)
 
 
-def getBuffer(shape, dtype, atype, mtype):
-    if isinstance(shape, Var):
-        assert len(shape.shape) == 1, "Shape of a shape should be 1-D"
-        assert type(
-            shape.shape[0]
-        ) is ffi.IntConst, "Dynamic number of dimensions is not supported"
-        ndim = shape.shape[0].val
-        shape = [shape[i] for i in range(ndim)]
-    return ffi.Buffer(ffi.Tensor(shape, parseDType(dtype)), parseAType(atype),
-                      parseMType(mtype))
-
-
 class ASTContext:
 
     def __init__(self):
@@ -265,11 +253,13 @@ class ASTTransformer(ast.NodeTransformer):
     def visit_Attribute(self, node):
         self.generic_visit(node)
         if isinstance(node.value.expr_ptr, Var) and node.attr == "shape":
-            node.expr_ptr = lambda idx: node.value.expr_ptr.shape_at(idx)
+            node.expr_ptr = lambda idx: node.value.expr_ptr.shape(idx)
         elif isinstance(node.value.expr_ptr, Var) and node.attr == "ndim":
             node.expr_ptr = node.value.expr_ptr.ndim
         elif isinstance(node.value.expr_ptr, Var) and node.attr == "dtype":
             node.expr_ptr = node.value.expr_ptr.dtype
+        elif isinstance(node.value.expr_ptr, Var) and node.attr == "mtype":
+            node.expr_ptr = node.value.expr_ptr.mtype
         else:
             node.expr_ptr = getattr(node.value.expr_ptr, node.attr)
         return node
@@ -425,15 +415,6 @@ class ASTTransformer(ast.NodeTransformer):
                             mtype,
                             name,
                             override_name=name).execute()
-                if isinstance(shape, Var):
-                    assert len(
-                        shape.shape) == 1, "Shape of a shape should be 1-D"
-                    assert type(
-                        shape.shape[0]
-                    ) is ffi.IntConst, "Dynamic number of dimensions is not supported"
-                    ndim = shape.shape[0].val
-                    shape = [shape[i] for i in range(ndim)]
-                # Force using the current name to match the function signature
         elif callee is MarkNid:
             nid, = args
             self.ctx_stack.set_nid(nid)

@@ -1,11 +1,10 @@
 from typing import Sequence, Optional
-import builtins
 
 from .. import core
 from .shape_utils import *
 
 
-def _flatten_inner_(io_mem, idx_dtype="int32"):
+def _flatten_inner_(io_mem):
 
     @core.inline
     def f_flatten(x, y):
@@ -15,25 +14,25 @@ def _flatten_inner_(io_mem, idx_dtype="int32"):
             'nid: L_inner'
             for i in range(x.shape(0)):
                 'nid: recur'
-                _flatten_inner_(io_mem, idx_dtype)(
+                _flatten_inner_(io_mem)(
                     x[i], y[i * (y.shape(0) // x.shape(0)):(i + 1) *
                             (y.shape(0) // x.shape(0))])
 
     return f_flatten
 
 
-def flatten_(io_mem, idx_dtype="int32", axis=1):
+def flatten_(io_mem, axis=1):
 
     @core.inline
     def f_flatten(x, y):
         if axis == 0:
             'nid: recur'
-            _flatten_inner_(io_mem, idx_dtype)(x, y[0])
+            _flatten_inner_(io_mem)(x, y[0])
         else:
             'nid: L_outer'
             for i in range(x.shape(0)):
                 'nid: recur'
-                flatten_(io_mem, idx_dtype,
+                flatten_(io_mem,
                          axis - 1)(x[i],
                                    y[i * (y.shape(0) // x.shape(0)):(i + 1) *
                                      (y.shape(0) // x.shape(0))])
@@ -41,22 +40,21 @@ def flatten_(io_mem, idx_dtype="int32", axis=1):
     return f_flatten
 
 
-def flatten(io_mem, idx_dtype="int32", axis=1):
+def flatten(io_mem, axis=1):
+
+    def comp_shape(x, axis):
+        y_shape = [1, 1]
+        for i in range(axis):
+            y_shape[0] *= x.shape(i)
+        for i in range(axis, x.ndim):
+            y_shape[1] *= x.shape(i)
+        return y_shape
 
     @core.inline
     def f_flatten(x):
-        y_shape = core.create_var((2,), idx_dtype, "output", io_mem)
-        y_shape[0] = 1
-        'nid: L_shape_0'
-        for i in range(axis):
-            y_shape[0] *= x.shape(i)
-        y_shape[1] = 1
-        'nid: L_shape_1'
-        for i in range(axis, x.ndim):
-            y_shape[1] *= x.shape(i)
-        y = core.create_var(y_shape, x.dtype, "output", io_mem)
+        y = core.create_var(comp_shape(x, axis), x.dtype, "output", io_mem)
         'nid: recur'
-        flatten_(io_mem, idx_dtype, axis)(x, y)
+        flatten_(io_mem, axis)(x, y)
         return y
 
     return f_flatten
@@ -95,60 +93,31 @@ def unsqueeze_(io_mem, axes: Sequence[int]):
 
     @core.inline
     def f_unsqueeze(x, y):
+        'nid: impl'
         _unsqueeze_(io_mem, circular_axes(axes, x.ndim))(x, y)
 
     return f_unsqueeze
 
 
-def _unsqueeze(io_mem, axes: Sequence[int], idx_dtype="int32"):
-
-    def y_ndim(x_ndim, axes):
-        return x_ndim + len(axes)
-
-    def begin_with_0(lst):
-        return len(lst) > 0 and lst[0] == 0
-
-    def all_minus_one(lst):
-        return list(map(lambda x: x - 1, lst))
-
-    def comp_shape(axes):
-
-        @core.inline
-        def f_shape(x, y_shape):
-            if y_ndim(x.ndim, axes) > 0:
-                if begin_with_0(axes):
-                    y_shape[0] = 1
-                    comp_shape(all_minus_one(axes[1:]))(x, y_shape[1:])
-                else:
-                    y_shape[0] = x.shape(0)
-                    comp_shape(all_minus_one(axes))(x[0], y_shape[1:])
-
-        return f_shape
-
-    @core.inline
-    def f_unsqueeze(x):
-        y_shape = core.create_var((x.ndim + builtins.len(axes),), idx_dtype,
-                                  "output", io_mem)
-        'nid: shape'
-        comp_shape(axes)(x, y_shape)
-        y = core.create_var(y_shape, x.dtype, "output", io_mem)
-        'nid: recur'
-        _unsqueeze_(io_mem, axes)(x, y)
-        return y
-
-    return f_unsqueeze
-
-
-def unsqueeze(io_mem, axes: Sequence[int], idx_dtype="int32"):
+def unsqueeze(io_mem, axes: Sequence[int]):
 
     def circular_axes(axes, x_ndim):
         # ONNX >= 13 treats axes as a tensor, which we don't support for now
         return sorted(
             map(lambda x: x if x >= 0 else x.ndim + len(axes) + x, axes))
 
+    def comp_shape(axes, x):
+        y_shape = copy_shape(x)
+        for item in axes:
+            y_shape.insert(item, 1)
+        return y_shape
+
     @core.inline
-    def f_unsqueeze(y):
-        y = _unsqueeze(io_mem, circular_axes(axes, x.ndim), idx_dtype)(y)
+    def f_unsqueeze(x):
+        y = core.create_var(comp_shape(circular_axes(axes, x.ndim), x), x.dtype,
+                            "output", io_mem)
+        'nid: recur'
+        _unsqueeze_(io_mem, circular_axes(axes, x.ndim))(x, y)
         return y
 
     return f_unsqueeze
@@ -173,7 +142,7 @@ def expand_(io_mem):
     return f_expand
 
 
-def expand(io_mem, idx_dtype="int32"):
+def expand(io_mem):
 
     @core.inline
     def f_expand(a, expand_shape):

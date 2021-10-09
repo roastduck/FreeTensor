@@ -79,7 +79,7 @@ def test_not_following_1():
                 z[i, j] = i * j
             with ir.For("j", 0, 8, nid="L2c") as j:
                 w[i, j] = i - j
-    ast = ir.pop_ast()
+    ast = ir.simplify_pass(ir.pop_ast())
     print(ast)
     s = ir.Schedule(ast)
     with pytest.raises(ir.InvalidSchedule):
@@ -138,7 +138,7 @@ def test_dependency_unable_resolve():
                     b[i, j] = x[i, j] * 2
                 with ir.For("j", 0, 8, nid="L2b") as j:
                     y[i, j] = b[i, 8 - j]
-    ast = ir.pop_ast()
+    ast = ir.simplify_pass(ir.pop_ast())
     print(ast)
     s = ir.Schedule(ast)
     with pytest.raises(ir.InvalidSchedule):

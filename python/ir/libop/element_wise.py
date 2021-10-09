@@ -25,14 +25,13 @@ def _binary_op_(io_mem, op):
     return f_binary_op
 
 
-def _binary_op(io_mem, op, idx_dtype="int32"):
+def _binary_op(io_mem, op):
 
     @core.inline
     def f_binary_op(a, b):
         'nid: broadcast_shape'
-        out_shape = broadcast_shape(io_mem, idx_dtype)(a, b)
-        out = core.create_var(out_shape, core.up_cast(a.dtype, b.dtype),
-                              "output", io_mem)
+        out = core.create_var(broadcast_shape(a, b),
+                              core.up_cast(a.dtype, b.dtype), "output", io_mem)
         'nid: recur'
         _binary_op_(io_mem, op)(a, b, out)
         return out
@@ -44,32 +43,32 @@ def add_(io_mem):
     return _binary_op_(io_mem, lambda x, y: x + y)
 
 
-def add(io_mem, idx_dtype="int32"):
-    return _binary_op(io_mem, lambda x, y: x + y, idx_dtype)
+def add(io_mem):
+    return _binary_op(io_mem, lambda x, y: x + y)
 
 
 def sub_(io_mem):
     return _binary_op_(io_mem, lambda x, y: x - y)
 
 
-def sub(io_mem, idx_dtype="int32"):
-    return _binary_op(io_mem, lambda x, y: x - y, idx_dtype)
+def sub(io_mem):
+    return _binary_op(io_mem, lambda x, y: x - y)
 
 
 def mul_(io_mem):
     return _binary_op_(io_mem, lambda x, y: x * y)
 
 
-def mul(io_mem, idx_dtype="int32"):
-    return _binary_op(io_mem, lambda x, y: x * y, idx_dtype)
+def mul(io_mem):
+    return _binary_op(io_mem, lambda x, y: x * y)
 
 
 def div_(io_mem):
     return _binary_op_(io_mem, lambda x, y: x / y)
 
 
-def div(io_mem, idx_dtype="int32"):
-    return _binary_op(io_mem, lambda x, y: x / y, idx_dtype)
+def div(io_mem):
+    return _binary_op(io_mem, lambda x, y: x / y)
 
 
 def _unary_op_(io_mem, op):
@@ -87,13 +86,11 @@ def _unary_op_(io_mem, op):
     return f_unary_op
 
 
-def _unary_op(io_mem, op, idx_dtype="int32"):
+def _unary_op(io_mem, op):
 
     @core.inline
     def f_unary_op(x):
-        'nid: copy_shape'
-        y_shape = copy_shape(io_mem, idx_dtype)(x)
-        y = core.create_var(y_shape, x.dtype, "output", io_mem)
+        y = core.create_var(copy_shape(x), x.dtype, "output", io_mem)
         'nid: recur'
         _unary_op_(io_mem, op)(x, y)
         return y
@@ -105,29 +102,29 @@ def relu_(io_mem):
     return _unary_op_(io_mem, lambda x: core.max(x, 0))
 
 
-def relu(io_mem, idx_dtype="int32"):
-    return _unary_op(io_mem, lambda x: core.max(x, 0), idx_dtype)
+def relu(io_mem):
+    return _unary_op(io_mem, lambda x: core.max(x, 0))
 
 
 def abs_(io_mem):
     return _unary_op_(io_mem, lambda x: core.abs(x))
 
 
-def abs(io_mem, idx_dtype="int32"):
-    return _unary_op(io_mem, lambda x: core.abs(x), idx_dtype)
+def abs(io_mem):
+    return _unary_op(io_mem, lambda x: core.abs(x))
 
 
 def sqrt_(io_mem):
     return _unary_op_(io_mem, lambda x: core.sqrt(x))
 
 
-def sqrt(io_mem, idx_dtype="int32"):
-    return _unary_op(io_mem, lambda x: core.sqrt(x), idx_dtype)
+def sqrt(io_mem):
+    return _unary_op(io_mem, lambda x: core.sqrt(x))
 
 
 def exp_(io_mem):
     return _unary_op_(io_mem, lambda x: core.exp(x))
 
 
-def exp(io_mem, idx_dtype="int32"):
-    return _unary_op(io_mem, lambda x: core.exp(x), idx_dtype)
+def exp(io_mem):
+    return _unary_op(io_mem, lambda x: core.exp(x))

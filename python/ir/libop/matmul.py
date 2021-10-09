@@ -176,29 +176,26 @@ def gemm(io_mem,
          trans_A: bool = False,
          trans_B: bool = False,
          alpha: float = 1.0,
-         beta: float = 1.0,
-         idx_dtype="int32"):
+         beta: float = 1.0):
+
+    def comp_shape(A, B):
+        if not trans_A:
+            if not trans_B:
+                return [A.shape(0), B.shape(1)]
+            else:
+                return [A.shape(0), B.shape(0)]
+        else:
+            if not trans_B:
+                return [A.shape(1), B.shape(1)]
+            else:
+                return [A.shape(1), B.shape(0)]
 
     if not has_bias:
 
         @core.inline
         def f_gemm(A, B):
-            Y_shape = core.create_var((2,), idx_dtype, "output", io_mem)
-            if not trans_A:
-                if not trans_B:
-                    Y_shape[0] = A.shape(0)
-                    Y_shape[1] = B.shape(1)
-                else:
-                    Y_shape[0] = A.shape(0)
-                    Y_shape[1] = B.shape(0)
-            else:
-                if not trans_B:
-                    Y_shape[0] = A.shape(1)
-                    Y_shape[1] = B.shape(1)
-                else:
-                    Y_shape[0] = A.shape(1)
-                    Y_shape[1] = B.shape(0)
-            Y = core.create_var(Y_shape, core.up_cast(A.dtype, B.dtype),
+            Y = core.create_var(comp_shape(A,
+                                           B), core.up_cast(A.dtype, B.dtype),
                                 "output", io_mem)
             'nid: recur'
             gemm_(io_mem, has_bias, trans_A, trans_B, alpha, beta)(A, B, Y)
@@ -208,22 +205,8 @@ def gemm(io_mem,
 
         @core.inline
         def f_gemm(A, B, C):
-            Y_shape = core.create_var((2,), idx_dtype, "output", io_mem)
-            if not trans_A:
-                if not trans_B:
-                    Y_shape[0] = A.shape(0)
-                    Y_shape[1] = B.shape(1)
-                else:
-                    Y_shape[0] = A.shape(0)
-                    Y_shape[1] = B.shape(0)
-            else:
-                if not trans_B:
-                    Y_shape[0] = A.shape(1)
-                    Y_shape[1] = B.shape(1)
-                else:
-                    Y_shape[0] = A.shape(1)
-                    Y_shape[1] = B.shape(0)
-            Y = core.create_var(Y_shape, core.up_cast(A.dtype, B.dtype),
+            Y = core.create_var(comp_shape(A,
+                                           B), core.up_cast(A.dtype, B.dtype),
                                 "output", io_mem)
             'nid: recur'
             gemm_(io_mem, has_bias, trans_A, trans_B, alpha, beta)(A, B, Y)

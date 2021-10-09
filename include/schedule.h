@@ -20,8 +20,8 @@ class Schedule {
 
   public:
     Schedule() = default;
-    Schedule(const Func &func) : func_(func), ast_(func->body_) {}
-    Schedule(const Stmt &ast) : func_(nullptr), ast_(ast) {}
+    Schedule(const Stmt &ast);
+    Schedule(const Func &func) : Schedule(func->body_) { func_ = func; }
 
     Schedule clone() const { return Schedule(deepCopy(func_)); }
 
