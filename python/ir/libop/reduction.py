@@ -3,8 +3,7 @@ from typing import Sequence, Optional
 from .. import core
 
 
-def _general_reduce_(io_mem,
-                     op,
+def _general_reduce_(op,
                      neutral_val,
                      axes: Optional[Sequence[int]] = None,
                      keepdims: bool = True):
@@ -71,8 +70,7 @@ def _general_reduce_(io_mem,
     return f_reduce
 
 
-def _general_reduce(io_mem,
-                    op,
+def _general_reduce(op,
                     neutral_val,
                     axes: Optional[Sequence[int]] = None,
                     keepdims: bool = True):
@@ -99,43 +97,41 @@ def _general_reduce(io_mem,
     @core.inline
     def f_reduce(x):
         y = core.create_var(comp_shape(circular_axes(axes, x.ndim), x), x.dtype,
-                            "output", io_mem)
+                            "output", x.mtype)
         'nid: recur'
-        _general_reduce_(io_mem, op, neutral_val, circular_axes(axes, x.ndim),
+        _general_reduce_(op, neutral_val, circular_axes(axes, x.ndim),
                          keepdims)(x, y)
         return y
 
     return f_reduce
 
 
-def reduce_sum_(io_mem, axes: Sequence[int], keepdims: bool = True):
-    return _general_reduce_(io_mem, lambda x, y: x + y, 0, axes, keepdims)
+def reduce_sum_(axes: Sequence[int], keepdims: bool = True):
+    return _general_reduce_(lambda x, y: x + y, 0, axes, keepdims)
 
 
-def reduce_sum(io_mem, axes: Sequence[int], keepdims: bool = True):
-    return _general_reduce(io_mem, lambda x, y: x + y, 0, axes, keepdims)
+def reduce_sum(axes: Sequence[int], keepdims: bool = True):
+    return _general_reduce(lambda x, y: x + y, 0, axes, keepdims)
 
 
-def reduce_max_(io_mem, axes: Sequence[int], keepdims: bool = True):
+def reduce_max_(axes: Sequence[int], keepdims: bool = True):
     op = lambda x, y: core.max(x, y)
 
     @core.inline
     def f(x, y):
         'nid: impl'
-        _general_reduce_(io_mem, op, core.min_value(x.dtype), axes, keepdims)(x,
-                                                                              y)
+        _general_reduce_(op, core.min_value(x.dtype), axes, keepdims)(x, y)
 
     return f
 
 
-def reduce_max(io_mem, axes: Sequence[int], keepdims: bool = True):
+def reduce_max(axes: Sequence[int], keepdims: bool = True):
     op = lambda x, y: core.max(x, y)
 
     @core.inline
     def f(x):
         'nid: impl'
-        y = _general_reduce(io_mem, op, core.min_value(x.dtype), axes,
-                            keepdims)(x)
+        y = _general_reduce(op, core.min_value(x.dtype), axes, keepdims)(x)
         return y
 
     return f

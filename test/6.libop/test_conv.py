@@ -8,15 +8,13 @@ import ir.libop
 def test_basic():
     device = ir.Device(ir.CPU())
 
-    conv_ = ir.libop.conv_("cpu", auto_pad='VALID')
-
     @ir.transform
     def f(x, w, y):
         ir.declare_var(x, (2, 3, 14, 14), "float32", "input", "cpu")
         ir.declare_var(w, (8, 3, 3, 3), "float32", "input", "cpu")
         ir.declare_var(y, (2, 8, 12, 12), "float32", "output", "cpu")
         "nid: conv"
-        conv_(x, w, y)
+        ir.libop.conv_(auto_pad='VALID')(x, w, y)
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -40,8 +38,6 @@ def test_basic():
 def test_bias():
     device = ir.Device(ir.CPU())
 
-    conv_ = ir.libop.conv_("cpu", has_bias=True, auto_pad='VALID')
-
     @ir.transform
     def f(x, w, b, y):
         ir.declare_var(x, (2, 3, 14, 14), "float32", "input", "cpu")
@@ -49,7 +45,7 @@ def test_bias():
         ir.declare_var(b, (8,), "float32", "input", "cpu")
         ir.declare_var(y, (2, 8, 12, 12), "float32", "output", "cpu")
         "nid: conv"
-        conv_(x, w, b, y)
+        ir.libop.conv_(has_bias=True, auto_pad='VALID')(x, w, b, y)
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -75,15 +71,13 @@ def test_bias():
 def test_same_pad():
     device = ir.Device(ir.CPU())
 
-    conv_ = ir.libop.conv_("cpu", kernel_shape=(3, 3), auto_pad='SAME_UPPER')
-
     @ir.transform
     def f(x, w, y):
         ir.declare_var(x, (2, 3, 14, 14), "float32", "input", "cpu")
         ir.declare_var(w, (8, 3, 3, 3), "float32", "input", "cpu")
         ir.declare_var(y, (2, 8, 14, 14), "float32", "output", "cpu")
         "nid: conv"
-        conv_(x, w, y)
+        ir.libop.conv_(kernel_shape=(3, 3), auto_pad='SAME_UPPER')(x, w, y)
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -107,15 +101,13 @@ def test_same_pad():
 def test_stride():
     device = ir.Device(ir.CPU())
 
-    conv_ = ir.libop.conv_("cpu", auto_pad='VALID', strides=(2, 2))
-
     @ir.transform
     def f(x, w, y):
         ir.declare_var(x, (2, 3, 14, 14), "float32", "input", "cpu")
         ir.declare_var(w, (8, 3, 3, 3), "float32", "input", "cpu")
         ir.declare_var(y, (2, 8, 6, 6), "float32", "output", "cpu")
         "nid: conv"
-        conv_(x, w, y)
+        ir.libop.conv_(auto_pad='VALID', strides=(2, 2))(x, w, y)
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -139,15 +131,13 @@ def test_stride():
 def test_group():
     device = ir.Device(ir.CPU())
 
-    conv_ = ir.libop.conv_("cpu", auto_pad='VALID', group=2)
-
     @ir.transform
     def f(x, w, y):
         ir.declare_var(x, (2, 4, 14, 14), "float32", "input", "cpu")
         ir.declare_var(w, (8, 2, 3, 3), "float32", "input", "cpu")
         ir.declare_var(y, (2, 8, 12, 12), "float32", "output", "cpu")
         "nid: conv"
-        conv_(x, w, y)
+        ir.libop.conv_(auto_pad='VALID', group=2)(x, w, y)
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -171,15 +161,13 @@ def test_group():
 def test_dilation():
     device = ir.Device(ir.CPU())
 
-    conv_ = ir.libop.conv_("cpu", auto_pad='VALID', dilations=(2, 2))
-
     @ir.transform
     def f(x, w, y):
         ir.declare_var(x, (2, 3, 14, 14), "float32", "input", "cpu")
         ir.declare_var(w, (8, 3, 3, 3), "float32", "input", "cpu")
         ir.declare_var(y, (2, 8, 10, 10), "float32", "output", "cpu")
         "nid: conv"
-        conv_(x, w, y)
+        ir.libop.conv_(auto_pad='VALID', dilations=(2, 2))(x, w, y)
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -203,8 +191,6 @@ def test_dilation():
 def test_out_of_place():
     device = ir.Device(ir.CPU())
 
-    conv = ir.libop.conv("cpu", auto_pad='VALID')
-
     @ir.transform
     def f(x, w, y_shape, y):
         ir.declare_var(x, (2, 3, 14, 14), "float32", "input", "cpu")
@@ -212,7 +198,7 @@ def test_out_of_place():
         ir.declare_var(y_shape, (4,), "int32", "output", "cpu")
         ir.declare_var(y, (2, 8, 12, 12), "float32", "output", "cpu")
         "nid: conv"
-        _y = conv(x, w)
+        _y = ir.libop.conv(auto_pad='VALID')(x, w)
         for i in range(4):
             y_shape[i] = _y.shape(i)
         for n in range(2):

@@ -13,7 +13,7 @@ def test_static():
         ir.declare_var(x, (3, 4, 5), "float32", "input", "cpu")
         ir.declare_var(y, (3, 5), "float32", "output", "cpu")
         "nid: reduce_max"
-        ir.libop.reduce_max_("cpu", axes=[1], keepdims=False)(x, y)
+        ir.libop.reduce_max_(axes=[1], keepdims=False)(x, y)
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -40,7 +40,7 @@ def test_out_of_place():
         ir.declare_var(y_shape, (2,), "int32", "output", "cpu")
         ir.declare_var(y, (3, 5), "float32", "output", "cpu")
         "nid: reduce_max"
-        _y = ir.libop.reduce_max("cpu", axes=[1], keepdims=False)(x)
+        _y = ir.libop.reduce_max(axes=[1], keepdims=False)(x)
         for i in range(2):
             y_shape[i] = _y.shape(i)
         for i in range(3):

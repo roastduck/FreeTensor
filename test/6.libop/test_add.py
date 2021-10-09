@@ -14,7 +14,7 @@ def test_same_static_shape():
         ir.declare_var(y, (4, 4), "float32", "input", "cpu")
         ir.declare_var(out, (4, 4), "float32", "output", "cpu")
         "nid: add"
-        ir.libop.add_("cpu")(x, y, out)
+        ir.libop.add_(x, y, out)
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -43,7 +43,7 @@ def test_static_broadcast_shorter():
         ir.declare_var(y, (4, 4), "float32", "input", "cpu")
         ir.declare_var(out, (4, 4), "float32", "output", "cpu")
         "nid: add"
-        ir.libop.add_("cpu")(x, y, out)
+        ir.libop.add_(x, y, out)
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -74,7 +74,7 @@ def test_static_broadcast_1_at_front():
         "nid: out_shape"
         out_shape = ir.create_var((2,), "int32", "cache", "cpu")
         "nid: add"
-        ir.libop.add_("cpu")(x, y, out)
+        ir.libop.add_(x, y, out)
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -105,7 +105,7 @@ def test_static_broadcast_1_at_back():
         "nid: out_shape"
         out_shape = ir.create_var((2,), "int32", "cache", "cpu")
         "nid: add"
-        ir.libop.add_("cpu")(x, y, out)
+        ir.libop.add_(x, y, out)
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -136,7 +136,7 @@ def test_different_dtype():
         "nid: out_shape"
         out_shape = ir.create_var((2,), "int32", "cache", "cpu")
         "nid: add"
-        ir.libop.add_("cpu")(x, y, out)
+        ir.libop.add_(x, y, out)
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -166,7 +166,7 @@ def test_out_of_place():
         ir.declare_var(out_shape, (2,), "int32", "output", "cpu")
         ir.declare_var(out, (4, 4), "float32", "output", "cpu")
         "nid: add"
-        _out = ir.libop.add("cpu")(x, y)
+        _out = ir.libop.add(x, y)
         for i in range(2):
             out_shape[i] = _out.shape(i)
         for i in range(4):

@@ -445,7 +445,7 @@ class ASTTransformer(ast.NodeTransformer):
         elif isinstance(callee, InlineFunction):
             if len(args) != len(callee.params):
                 raise ffi.InvalidProgram(
-                    f"Number of arguments does not match when calling {callee.name}"
+                    f"Number of arguments does not match when calling {callee.name}, {len(callee.params)} needed, but {len(args)} provided"
                 )
 
             nid = '#' + str(self.ctx_stack.new_context_id())

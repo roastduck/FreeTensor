@@ -4,8 +4,7 @@ from .. import core
 from .conv_shape_utils import *
 
 
-def conv_(io_mem,
-          has_bias: bool = False,
+def conv_(has_bias: bool = False,
           auto_pad: str = 'NOTSET',
           dilations: Optional[Sequence[int]] = None,
           group: int = 1,
@@ -125,8 +124,7 @@ def conv_(io_mem,
     return f_conv2d
 
 
-def conv(io_mem,
-         has_bias: bool = False,
+def conv(has_bias: bool = False,
          auto_pad: str = 'NOTSET',
          dilations: Optional[Sequence[int]] = None,
          group: int = 1,
@@ -177,11 +175,12 @@ def conv(io_mem,
                               pads[2], strides[0]),
                 calc_out_size(X.shape(3), dilations[1], W.shape(3), pads[1],
                               pads[3], strides[1])
-            ], core.up_cast(X.dtype, W.dtype), "output", io_mem)
+            ], core.up_cast(X.dtype, W.dtype), "output",
+                                core.same_mtype(X.mtype, W.mtype))
 
             'nid: recur'
-            conv_(io_mem, has_bias, auto_pad, dilations, group, kernel_shape,
-                  pads, strides)(X, W, Y)
+            conv_(has_bias, auto_pad, dilations, group, kernel_shape, pads,
+                  strides)(X, W, Y)
 
             return Y
 
@@ -198,11 +197,12 @@ def conv(io_mem,
                 calc_out_size(X.shape(3), dilations[1], W.shape(3), pads[1],
                               pads[3], strides[1])
             ], core.up_cast(core.up_cast(X.dtype, W.dtype), B.dtype), "output",
-                                io_mem)
+                                core.same_mtype(
+                                    core.same_mtype(X.mtype, W.mtype), B.mtype))
 
             'nid: recur'
-            conv_(io_mem, has_bias, auto_pad, dilations, group, kernel_shape,
-                  pads, strides)(X, W, B, Y)
+            conv_(has_bias, auto_pad, dilations, group, kernel_shape, pads,
+                  strides)(X, W, B, Y)
 
             return Y
 

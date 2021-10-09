@@ -3,8 +3,7 @@ from typing import Optional
 from .. import core
 
 
-def gemm_(io_mem,
-          has_bias: bool = False,
+def gemm_(has_bias: bool = False,
           trans_A: bool = False,
           trans_B: bool = False,
           alpha: float = 1.0,
@@ -171,8 +170,7 @@ def gemm_(io_mem,
     return f_gemm
 
 
-def gemm(io_mem,
-         has_bias: bool = False,
+def gemm(has_bias: bool = False,
          trans_A: bool = False,
          trans_B: bool = False,
          alpha: float = 1.0,
@@ -194,22 +192,23 @@ def gemm(io_mem,
 
         @core.inline
         def f_gemm(A, B):
-            Y = core.create_var(comp_shape(A,
-                                           B), core.up_cast(A.dtype, B.dtype),
-                                "output", io_mem)
+            Y = core.create_var(comp_shape(A, B),
+                                core.up_cast(A.dtype, B.dtype), "output",
+                                core.same_mtype(A.mtype, B.mtype))
             'nid: recur'
-            gemm_(io_mem, has_bias, trans_A, trans_B, alpha, beta)(A, B, Y)
+            gemm_(has_bias, trans_A, trans_B, alpha, beta)(A, B, Y)
             return Y
 
     else:
 
         @core.inline
         def f_gemm(A, B, C):
-            Y = core.create_var(comp_shape(A,
-                                           B), core.up_cast(A.dtype, B.dtype),
-                                "output", io_mem)
+            Y = core.create_var(
+                comp_shape(A, B),
+                core.up_cast(core.up_cast(A.dtype, B.dtype), C.dtype), "output",
+                core.same_mtype(core.same_mtype(A.mtype, B.mtype), C.mtype))
             'nid: recur'
-            gemm_(io_mem, has_bias, trans_A, trans_B, alpha, beta)(A, B, Y)
+            gemm_(has_bias, trans_A, trans_B, alpha, beta)(A, B, Y)
             return Y
 
     return f_gemm

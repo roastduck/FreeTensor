@@ -21,3 +21,8 @@ def max_value(dtype):
         return 0x7fffffff
     else:
         assert False, "Unrecognized data type %s" % dtype
+
+
+def same_mtype(lhs, rhs):
+    assert lhs == rhs, "Variables must be on the same memory"
+    return lhs

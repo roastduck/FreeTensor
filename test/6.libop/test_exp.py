@@ -13,7 +13,7 @@ def test_static_shape():
         ir.declare_var(x, (4, 4), "float32", "input", "cpu")
         ir.declare_var(y, (4, 4), "float32", "output", "cpu")
         "nid: exp"
-        ir.libop.exp_("cpu")(x, y)
+        ir.libop.exp_(x, y)
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -40,7 +40,7 @@ def test_out_of_place():
         ir.declare_var(y_shape, (2,), "int32", "output", "cpu")
         ir.declare_var(y, (4, 4), "float32", "output", "cpu")
         "nid: exp"
-        _y = ir.libop.exp("cpu")(x)
+        _y = ir.libop.exp(x)
         y_shape[0] = _y.shape(0)
         y_shape[1] = _y.shape(1)
         for i in range(4):

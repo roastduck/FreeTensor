@@ -2,7 +2,7 @@ from .. import core
 from .shape_utils import *
 
 
-def _binary_op_(io_mem, op):
+def _binary_op_(op):
 
     @core.inline
     def f_binary_op(a, b, out):
@@ -13,65 +13,47 @@ def _binary_op_(io_mem, op):
             for i in range(out.shape(0)):
                 if a.ndim < out.ndim:
                     'nid: recur'
-                    _binary_op_(io_mem, op)(a, b[i], out[i])
+                    _binary_op_(op)(a, b[i], out[i])
                 elif b.ndim < out.ndim:
                     'nid: recur'
-                    _binary_op_(io_mem, op)(a[i], b, out[i])
+                    _binary_op_(op)(a[i], b, out[i])
                 else:
                     'nid: recur'
-                    _binary_op_(io_mem, op)(a[i % a.shape(0)],
-                                            b[i % b.shape(0)], out[i])
+                    _binary_op_(op)(a[i % a.shape(0)], b[i % b.shape(0)],
+                                    out[i])
 
     return f_binary_op
 
 
-def _binary_op(io_mem, op):
+def _binary_op(op):
 
     @core.inline
     def f_binary_op(a, b):
         'nid: broadcast_shape'
         out = core.create_var(broadcast_shape(a, b),
-                              core.up_cast(a.dtype, b.dtype), "output", io_mem)
+                              core.up_cast(a.dtype, b.dtype), "output",
+                              core.same_mtype(a.mtype, b.mtype))
         'nid: recur'
-        _binary_op_(io_mem, op)(a, b, out)
+        _binary_op_(op)(a, b, out)
         return out
 
     return f_binary_op
 
 
-def add_(io_mem):
-    return _binary_op_(io_mem, lambda x, y: x + y)
+add_ = _binary_op_(lambda x, y: x + y)
+add = _binary_op(lambda x, y: x + y)
+
+sub_ = _binary_op_(lambda x, y: x - y)
+sub = _binary_op(lambda x, y: x - y)
+
+mul_ = _binary_op_(lambda x, y: x * y)
+mul = _binary_op(lambda x, y: x * y)
+
+div_ = _binary_op_(lambda x, y: x / y)
+div = _binary_op(lambda x, y: x / y)
 
 
-def add(io_mem):
-    return _binary_op(io_mem, lambda x, y: x + y)
-
-
-def sub_(io_mem):
-    return _binary_op_(io_mem, lambda x, y: x - y)
-
-
-def sub(io_mem):
-    return _binary_op(io_mem, lambda x, y: x - y)
-
-
-def mul_(io_mem):
-    return _binary_op_(io_mem, lambda x, y: x * y)
-
-
-def mul(io_mem):
-    return _binary_op(io_mem, lambda x, y: x * y)
-
-
-def div_(io_mem):
-    return _binary_op_(io_mem, lambda x, y: x / y)
-
-
-def div(io_mem):
-    return _binary_op(io_mem, lambda x, y: x / y)
-
-
-def _unary_op_(io_mem, op):
+def _unary_op_(op):
 
     @core.inline
     def f_unary_op(x, y):
@@ -81,50 +63,31 @@ def _unary_op_(io_mem, op):
             'nid: L_elem'
             for i in range(x.shape(0)):
                 'nid: recur'
-                _unary_op_(io_mem, op)(x[i], y[i])
+                _unary_op_(op)(x[i], y[i])
 
     return f_unary_op
 
 
-def _unary_op(io_mem, op):
+def _unary_op(op):
 
     @core.inline
     def f_unary_op(x):
-        y = core.create_var(copy_shape(x), x.dtype, "output", io_mem)
+        y = core.create_var(copy_shape(x), x.dtype, "output", x.mtype)
         'nid: recur'
-        _unary_op_(io_mem, op)(x, y)
+        _unary_op_(op)(x, y)
         return y
 
     return f_unary_op
 
 
-def relu_(io_mem):
-    return _unary_op_(io_mem, lambda x: core.max(x, 0))
+relu_ = _unary_op_(lambda x: core.max(x, 0))
+relu = _unary_op(lambda x: core.max(x, 0))
 
+abs_ = _unary_op_(lambda x: core.abs(x))
+abs = _unary_op(lambda x: core.abs(x))
 
-def relu(io_mem):
-    return _unary_op(io_mem, lambda x: core.max(x, 0))
+sqrt_ = _unary_op_(lambda x: core.sqrt(x))
+sqrt = _unary_op(lambda x: core.sqrt(x))
 
-
-def abs_(io_mem):
-    return _unary_op_(io_mem, lambda x: core.abs(x))
-
-
-def abs(io_mem):
-    return _unary_op(io_mem, lambda x: core.abs(x))
-
-
-def sqrt_(io_mem):
-    return _unary_op_(io_mem, lambda x: core.sqrt(x))
-
-
-def sqrt(io_mem):
-    return _unary_op(io_mem, lambda x: core.sqrt(x))
-
-
-def exp_(io_mem):
-    return _unary_op_(io_mem, lambda x: core.exp(x))
-
-
-def exp(io_mem):
-    return _unary_op(io_mem, lambda x: core.exp(x))
+exp_ = _unary_op_(lambda x: core.exp(x))
+exp = _unary_op(lambda x: core.exp(x))

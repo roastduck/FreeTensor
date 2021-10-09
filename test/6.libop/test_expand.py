@@ -13,7 +13,7 @@ def test_static():
         ir.declare_var(x, (3, 1), "float32", "input", "cpu")
         ir.declare_var(y, (3, 5), "float32", "output", "cpu")
         "nid: expand"
-        ir.libop.expand_("cpu")(x, y)
+        ir.libop.expand_(x, y)
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -40,7 +40,7 @@ def test_out_of_place():
         ir.declare_var(y_shape, (2,), "int32", "output", "cpu")
         ir.declare_var(y, (3, 5), "float32", "output", "cpu")
         "nid: expand"
-        _y = ir.libop.expand("cpu")(x, ir.Tensor([3, 5], "cpu"))
+        _y = ir.libop.expand(x, ir.Tensor([3, 5], "cpu"))
         for i in range(2):
             y_shape[i] = _y.shape(i)
         for i in range(3):

@@ -4,8 +4,7 @@ from .. import core
 from .conv_shape_utils import *
 
 
-def max_pool_(io_mem,
-              auto_pad: str = 'NOTSET',
+def max_pool_(auto_pad: str = 'NOTSET',
               dilations: Optional[Sequence[int]] = None,
               kernel_shape: Sequence[int] = None,
               pads: Optional[Sequence[int]] = None,
@@ -79,8 +78,7 @@ def max_pool_(io_mem,
     return f_max_pool_2d
 
 
-def max_pool(io_mem,
-             auto_pad: str = 'NOTSET',
+def max_pool(auto_pad: str = 'NOTSET',
              dilations: Optional[Sequence[int]] = None,
              kernel_shape: Sequence[int] = None,
              pads: Optional[Sequence[int]] = None,
@@ -128,16 +126,15 @@ def max_pool(io_mem,
                           pads[2], strides[0]),
             calc_out_size(X.shape(3), dilations[1], kernel_shape[1], pads[1],
                           pads[3], strides[1])
-        ], X.dtype, "output", io_mem)
+        ], X.dtype, "output", X.mtype)
         'nid: recur'
-        max_pool_(io_mem, auto_pad, dilations, kernel_shape, pads, strides)(X,
-                                                                            Y)
+        max_pool_(auto_pad, dilations, kernel_shape, pads, strides)(X, Y)
         return Y
 
     return f_max_pool_2d
 
 
-def global_avg_pool_(io_mem):
+def _global_avg_pool_():
 
     n_spatial_dim = 2  # Currently only 2-D convolution is supported (TODO)
 
@@ -161,15 +158,20 @@ def global_avg_pool_(io_mem):
     return f_global_avg_pool_2d
 
 
-def global_avg_pool(io_mem):
+def _global_avg_pool():
 
     n_spatial_dim = 2  # Currently only 2-D convolution is supported (TODO)
 
     @core.inline
     def f_global_avg_pool_2d(X):
-        Y = core.create_var([X.shape(0), X.shape(1)], X.dtype, "output", io_mem)
+        Y = core.create_var([X.shape(0), X.shape(1)], X.dtype, "output",
+                            X.mtype)
         'nid: recur'
-        global_avg_pool_(io_mem)(X, Y)
+        global_avg_pool_(X, Y)
         return Y
 
     return f_global_avg_pool_2d
+
+
+global_avg_pool_ = _global_avg_pool_()
+global_avg_pool = _global_avg_pool()

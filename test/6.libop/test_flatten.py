@@ -13,7 +13,7 @@ def test_static():
         ir.declare_var(x, (3, 4, 5), "float32", "input", "cpu")
         ir.declare_var(y, (3, 20), "float32", "output", "cpu")
         "nid: flatten"
-        ir.libop.flatten_("cpu")(x, y)
+        ir.libop.flatten_()(x, y)
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -39,7 +39,7 @@ def test_axis():
         ir.declare_var(x, (3, 4, 5), "float32", "input", "cpu")
         ir.declare_var(y, (12, 5), "float32", "output", "cpu")
         "nid: flatten"
-        ir.libop.flatten_("cpu", axis=2)(x, y)
+        ir.libop.flatten_(axis=2)(x, y)
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -66,7 +66,7 @@ def test_out_of_place():
         ir.declare_var(y_shape, (2,), "int32", "output", "cpu")
         ir.declare_var(y, (3, 20), "float32", "output", "cpu")
         "nid: flatten"
-        _y = ir.libop.flatten("cpu")(x)
+        _y = ir.libop.flatten()(x)
         for i in range(2):
             y_shape[i] = _y.shape(i)
         for i in range(3):

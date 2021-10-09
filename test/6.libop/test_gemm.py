@@ -14,7 +14,7 @@ def test_basic():
         ir.declare_var(b, (5, 6), "float32", "input", "cpu")
         ir.declare_var(y, (4, 6), "float32", "output", "cpu")
         "nid: gemm"
-        ir.libop.gemm_("cpu")(a, b, y)
+        ir.libop.gemm_()(a, b, y)
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -44,7 +44,7 @@ def test_trans_A():
         ir.declare_var(b, (5, 6), "float32", "input", "cpu")
         ir.declare_var(y, (4, 6), "float32", "output", "cpu")
         "nid: gemm"
-        ir.libop.gemm_("cpu", trans_A=True)(a, b, y)
+        ir.libop.gemm_(trans_A=True)(a, b, y)
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -74,7 +74,7 @@ def test_trans_B():
         ir.declare_var(b, (6, 5), "float32", "input", "cpu")
         ir.declare_var(y, (4, 6), "float32", "output", "cpu")
         "nid: gemm"
-        ir.libop.gemm_("cpu", trans_B=True)(a, b, y)
+        ir.libop.gemm_(trans_B=True)(a, b, y)
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -104,7 +104,7 @@ def test_trans_AB():
         ir.declare_var(b, (6, 5), "float32", "input", "cpu")
         ir.declare_var(y, (4, 6), "float32", "output", "cpu")
         "nid: gemm"
-        ir.libop.gemm_("cpu", trans_A=True, trans_B=True)(a, b, y)
+        ir.libop.gemm_(trans_A=True, trans_B=True)(a, b, y)
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -135,7 +135,7 @@ def test_bias():
         ir.declare_var(c, (4, 6), "float32", "input", "cpu")
         ir.declare_var(y, (4, 6), "float32", "output", "cpu")
         "nid: gemm"
-        ir.libop.gemm_("cpu", has_bias=True)(a, b, c, y)
+        ir.libop.gemm_(has_bias=True)(a, b, c, y)
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -168,7 +168,7 @@ def test_bias_broadcast_1():
         ir.declare_var(c, (4, 1), "float32", "input", "cpu")
         ir.declare_var(y, (4, 6), "float32", "output", "cpu")
         "nid: gemm"
-        ir.libop.gemm_("cpu", has_bias=True)(a, b, c, y)
+        ir.libop.gemm_(has_bias=True)(a, b, c, y)
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -201,7 +201,7 @@ def test_bias_broadcast_2():
         ir.declare_var(c, (6,), "float32", "input", "cpu")
         ir.declare_var(y, (4, 6), "float32", "output", "cpu")
         "nid: gemm"
-        ir.libop.gemm_("cpu", has_bias=True)(a, b, c, y)
+        ir.libop.gemm_(has_bias=True)(a, b, c, y)
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -234,7 +234,7 @@ def test_bias_with_coeff():
         ir.declare_var(c, (4, 6), "float32", "input", "cpu")
         ir.declare_var(y, (4, 6), "float32", "output", "cpu")
         "nid: gemm"
-        ir.libop.gemm_("cpu", has_bias=True, alpha=2.5, beta=3.8)(a, b, c, y)
+        ir.libop.gemm_(has_bias=True, alpha=2.5, beta=3.8)(a, b, c, y)
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -267,7 +267,7 @@ def test_out_of_place():
         ir.declare_var(y_shape, (2,), "int32", "output", "cpu")
         ir.declare_var(y, (4, 6), "float32", "output", "cpu")
         "nid: gemm"
-        _y = ir.libop.gemm("cpu")(a, b)
+        _y = ir.libop.gemm()(a, b)
         for i in range(2):
             y_shape[i] = _y.shape(i)
         for i in range(4):

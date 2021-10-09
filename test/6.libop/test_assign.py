@@ -13,7 +13,7 @@ def test_same_static_shape():
         ir.declare_var(x, (4, 4), "float32", "input", "cpu")
         ir.declare_var(y, (4, 4), "float32", "output", "cpu")
         "nid: assign"
-        ir.libop.assign("cpu")(y, x)
+        ir.libop.assign(y, x)
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -39,7 +39,7 @@ def test_static_broadcast_shorter():
         ir.declare_var(x, (4,), "float32", "input", "cpu")
         ir.declare_var(y, (4, 4), "float32", "output", "cpu")
         "nid: assign"
-        ir.libop.assign("cpu")(y, x)
+        ir.libop.assign(y, x)
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -65,7 +65,7 @@ def test_static_broadcast_1_at_front():
         ir.declare_var(x, (1, 4), "float32", "input", "cpu")
         ir.declare_var(y, (4, 4), "float32", "output", "cpu")
         "nid: assign"
-        ir.libop.assign("cpu")(y, x)
+        ir.libop.assign(y, x)
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -91,7 +91,7 @@ def test_static_broadcast_1_at_back():
         ir.declare_var(x, (4, 1), "float32", "input", "cpu")
         ir.declare_var(y, (4, 4), "float32", "output", "cpu")
         "nid: assign"
-        ir.libop.assign("cpu")(y, x)
+        ir.libop.assign(y, x)
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -117,7 +117,7 @@ def test_different_dtype():
         ir.declare_var(x, (4, 4), "int32", "input", "cpu")
         ir.declare_var(y, (4, 4), "float32", "output", "cpu")
         "nid: assign"
-        ir.libop.assign("cpu")(y, x)
+        ir.libop.assign(y, x)
 
     print(f)
     f = ir.lower(f, ir.CPU())

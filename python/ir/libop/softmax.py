@@ -3,38 +3,38 @@ from .element_wise import exp, exp_, sub, sub_, div, div_
 from .reduction import reduce_max, reduce_max_, reduce_sum, reduce_sum_
 
 
-def softmax_(io_mem, axis=-1):
+def softmax_(axis=-1):
 
     @core.inline
     def f_softmax(x, y):
         'nid: max'
-        maxval = reduce_max(io_mem, axes=[axis], keepdims=True)(x)
+        maxval = reduce_max(axes=[axis], keepdims=True)(x)
         'nid: sub'
-        corrected = sub(io_mem)(x, maxval)
+        corrected = sub(x, maxval)
         'nid: exp'
-        exponent = exp(io_mem)(corrected)
+        exponent = exp(corrected)
         'nid: sum'
-        summation = reduce_sum(io_mem, axes=[axis], keepdims=True)(exponent)
+        summation = reduce_sum(axes=[axis], keepdims=True)(exponent)
         'nid: div'
-        div_(io_mem)(exponent, summation, y)
+        div_(exponent, summation, y)
 
     return f_softmax
 
 
-def softmax(io_mem, axis=-1):
+def softmax(axis=-1):
 
     @core.inline
     def f_softmax(x):
         'nid: max'
-        maxval = reduce_max(io_mem, axes=[axis], keepdims=True)(x)
+        maxval = reduce_max(axes=[axis], keepdims=True)(x)
         'nid: sub'
-        corrected = sub(io_mem)(x, maxval)
+        corrected = sub(x, maxval)
         'nid: exp'
-        exponent = exp(io_mem)(corrected)
+        exponent = exp(corrected)
         'nid: sum'
-        summation = reduce_sum(io_mem, axes=[axis], keepdims=True)(exponent)
+        summation = reduce_sum(axes=[axis], keepdims=True)(exponent)
         'nid: div'
-        out = div(io_mem)(exponent, summation)
+        out = div(exponent, summation)
         return out
 
     return f_softmax
