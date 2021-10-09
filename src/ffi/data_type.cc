@@ -9,6 +9,8 @@ void init_ffi_data_type(py::module_ &m) {
         .value("Int32", DataType::Int32)
         .value("Bool", DataType::Bool)
         .value("Void", DataType::Void);
+
+    m.def("up_cast", &upCast);
 }
 
 } // namespace ir

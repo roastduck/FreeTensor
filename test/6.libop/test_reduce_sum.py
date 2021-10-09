@@ -3,7 +3,6 @@ import numpy as np
 
 import ir
 import ir.libop
-from ir.libop import StaticType as T
 
 
 def test_static():
@@ -14,18 +13,10 @@ def test_static():
         ir.declare_var(x, (3, 4, 5), "float32", "input", "cpu")
         ir.declare_var(y, (3, 5), "float32", "output", "cpu")
         "nid: reduce_sum"
-        ir.libop.reduce_sum_(T("float32", 3),
-                             T("float32", 2),
-                             "cpu",
-                             axes=[1],
-                             keepdims=False)(ir.Tensor([3, 4, 5], "cpu"),
-                                             ir.Tensor([3, 5], "cpu"), x, y)
+        ir.libop.reduce_sum_("cpu", axes=[1], keepdims=False)(x, y)
 
     print(f)
-    s = ir.Schedule(f)
-    s.inline("reduce_sum:x_shape")
-    s.inline("reduce_sum:y_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())
@@ -48,18 +39,10 @@ def test_keepdims():
         ir.declare_var(x, (3, 4, 5), "float32", "input", "cpu")
         ir.declare_var(y, (3, 1, 5), "float32", "output", "cpu")
         "nid: reduce_sum"
-        ir.libop.reduce_sum_(T("float32", 3),
-                             T("float32", 3),
-                             "cpu",
-                             axes=[1],
-                             keepdims=True)(ir.Tensor([3, 4, 5], "cpu"),
-                                            ir.Tensor([3, 1, 5], "cpu"), x, y)
+        ir.libop.reduce_sum_("cpu", axes=[1], keepdims=True)(x, y)
 
     print(f)
-    s = ir.Schedule(f)
-    s.inline("reduce_sum:x_shape")
-    s.inline("reduce_sum:y_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())
@@ -83,21 +66,15 @@ def test_out_of_place():
         ir.declare_var(y_shape, (2,), "int32", "output", "cpu")
         ir.declare_var(y, (3, 5), "float32", "output", "cpu")
         "nid: reduce_sum"
-        _y = ir.libop.reduce_sum(T("float32", 3),
-                                 T("float32", 2),
-                                 "cpu",
-                                 axes=[1],
-                                 keepdims=False)(ir.Tensor([3, 4, 5], "cpu"), x)
+        _y = ir.libop.reduce_sum("cpu", axes=[1], keepdims=False)(x)
         for i in range(2):
-            y_shape[i] = _y.shape[i]
+            y_shape[i] = _y.shape(i)
         for i in range(3):
             for j in range(5):
                 y[i, j] = _y[i, j]
 
     print(f)
-    s = ir.Schedule(f)
-    s.inline("reduce_sum:x_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())
@@ -125,21 +102,15 @@ def test_out_of_place_keepdims():
         ir.declare_var(y_shape, (3,), "int32", "output", "cpu")
         ir.declare_var(y, (3, 1, 5), "float32", "output", "cpu")
         "nid: reduce_sum"
-        _y = ir.libop.reduce_sum(T("float32", 3),
-                                 T("float32", 3),
-                                 "cpu",
-                                 axes=[1],
-                                 keepdims=True)(ir.Tensor([3, 4, 5], "cpu"), x)
+        _y = ir.libop.reduce_sum("cpu", axes=[1], keepdims=True)(x)
         for i in range(3):
-            y_shape[i] = _y.shape[i]
+            y_shape[i] = _y.shape(i)
         for i in range(3):
             for j in range(5):
                 y[i, 0, j] = _y[i, 0, j]
 
     print(f)
-    s = ir.Schedule(f)
-    s.inline("reduce_sum:x_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())

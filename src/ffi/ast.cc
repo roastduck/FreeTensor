@@ -81,11 +81,14 @@ void init_ffi_ast(py::module_ &m) {
         .def(py::init(&FrontendVarIdx::fromSlice));
 
     py::class_<FrontendVar, Ref<FrontendVar>>(m, "FrontendVar")
-        .def(py::init<const std::string &, const std::vector<Expr> &,
+        .def(py::init<const std::string &, const std::vector<Expr> &, DataType,
                       const std::vector<FrontendVarIdx> &>())
         .def_property_readonly("name", &FrontendVar::name)
         .def_property_readonly("shape", &FrontendVar::shape)
         .def_property_readonly("indices", &FrontendVar::indices)
+        .def_property_readonly("dtype", &FrontendVar::dtype)
+        .def_property_readonly("ndim", &FrontendVar::ndim)
+        .def("shape_at", &FrontendVar::shapeAt)
         .def("as_load", &FrontendVar::asLoad)
         .def("as_store", &FrontendVar::asStore)
         .def("chain_indices", &FrontendVar::chainIndices);

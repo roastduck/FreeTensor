@@ -3,6 +3,45 @@
 
 namespace ir {
 
+int FrontendVar::ndim() const {
+    int ndim = shape_.size();
+    for (auto &&idx : indices_) {
+        if (idx.type() == FrontendVarIdxType::Single) {
+            ndim--;
+        }
+    }
+    return ndim;
+}
+
+Expr FrontendVar::shapeAt(const Expr &idx) const {
+    Expr ret;
+    size_t j = 0, k = 0;
+    for (size_t i = 0, n = shape_.size(); i < n; i++) {
+        Expr dimLen = shape_.at(i);
+        while (j < indices_.size() &&
+               indices_[j].type() == FrontendVarIdxType::Slice) {
+            dimLen = makeSub(indices_[j].stop(), indices_[j].start());
+            j++;
+        }
+        if (j < indices_.size() &&
+            indices_[j].type() == FrontendVarIdxType::Single) {
+            j++;
+            continue;
+        }
+        if (idx->nodeType() == ASTNodeType::IntConst &&
+            (size_t)idx.as<IntConstNode>()->val_ == k) {
+            return dimLen;
+        } else {
+            ret = ret.isValid()
+                      ? makeIfExpr(makeEQ(idx, makeIntConst(k)), dimLen, ret)
+                      : dimLen;
+        }
+        k++;
+    }
+    ASSERT(ret.isValid());
+    return ret;
+}
+
 Expr FrontendVar::asLoad() const {
     if (indices_.size() != shape_.size()) {
         throw InvalidProgram(name_ + " is of a " +

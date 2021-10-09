@@ -3,14 +3,10 @@ import numpy as np
 
 import ir
 import ir.libop
-from ir.libop import StaticType as T
 
 
 def test_basic():
     device = ir.Device(ir.CPU())
-
-    t_mat = T("float32", 2)
-    gemm_ = ir.libop.gemm_(t_mat, t_mat, None, t_mat, "cpu")
 
     @ir.transform
     def f(a, b, y):
@@ -18,15 +14,10 @@ def test_basic():
         ir.declare_var(b, (5, 6), "float32", "input", "cpu")
         ir.declare_var(y, (4, 6), "float32", "output", "cpu")
         "nid: gemm"
-        gemm_(ir.Tensor([4, 5], "cpu"), ir.Tensor([5, 6], "cpu"),
-              ir.Tensor([4, 6], "cpu"), a, b, y)
+        ir.libop.gemm_("cpu")(a, b, y)
 
     print(f)
-    s = ir.Schedule(f)
-    s.inline("gemm:A_shape")
-    s.inline("gemm:B_shape")
-    s.inline("gemm:Y_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())
@@ -47,24 +38,16 @@ def test_basic():
 def test_trans_A():
     device = ir.Device(ir.CPU())
 
-    t_mat = T("float32", 2)
-    gemm_ = ir.libop.gemm_(t_mat, t_mat, None, t_mat, "cpu", trans_A=True)
-
     @ir.transform
     def f(a, b, y):
         ir.declare_var(a, (5, 4), "float32", "input", "cpu")
         ir.declare_var(b, (5, 6), "float32", "input", "cpu")
         ir.declare_var(y, (4, 6), "float32", "output", "cpu")
         "nid: gemm"
-        gemm_(ir.Tensor([5, 4], "cpu"), ir.Tensor([5, 6], "cpu"),
-              ir.Tensor([4, 6], "cpu"), a, b, y)
+        ir.libop.gemm_("cpu", trans_A=True)(a, b, y)
 
     print(f)
-    s = ir.Schedule(f)
-    s.inline("gemm:A_shape")
-    s.inline("gemm:B_shape")
-    s.inline("gemm:Y_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())
@@ -85,24 +68,16 @@ def test_trans_A():
 def test_trans_B():
     device = ir.Device(ir.CPU())
 
-    t_mat = T("float32", 2)
-    gemm_ = ir.libop.gemm_(t_mat, t_mat, None, t_mat, "cpu", trans_B=True)
-
     @ir.transform
     def f(a, b, y):
         ir.declare_var(a, (4, 5), "float32", "input", "cpu")
         ir.declare_var(b, (6, 5), "float32", "input", "cpu")
         ir.declare_var(y, (4, 6), "float32", "output", "cpu")
         "nid: gemm"
-        gemm_(ir.Tensor([4, 5], "cpu"), ir.Tensor([6, 5], "cpu"),
-              ir.Tensor([4, 6], "cpu"), a, b, y)
+        ir.libop.gemm_("cpu", trans_B=True)(a, b, y)
 
     print(f)
-    s = ir.Schedule(f)
-    s.inline("gemm:A_shape")
-    s.inline("gemm:B_shape")
-    s.inline("gemm:Y_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())
@@ -123,30 +98,16 @@ def test_trans_B():
 def test_trans_AB():
     device = ir.Device(ir.CPU())
 
-    t_mat = T("float32", 2)
-    gemm_ = ir.libop.gemm_(t_mat,
-                           t_mat,
-                           None,
-                           t_mat,
-                           "cpu",
-                           trans_A=True,
-                           trans_B=True)
-
     @ir.transform
     def f(a, b, y):
         ir.declare_var(a, (5, 4), "float32", "input", "cpu")
         ir.declare_var(b, (6, 5), "float32", "input", "cpu")
         ir.declare_var(y, (4, 6), "float32", "output", "cpu")
         "nid: gemm"
-        gemm_(ir.Tensor([5, 4], "cpu"), ir.Tensor([6, 5], "cpu"),
-              ir.Tensor([4, 6], "cpu"), a, b, y)
+        ir.libop.gemm_("cpu", trans_A=True, trans_B=True)(a, b, y)
 
     print(f)
-    s = ir.Schedule(f)
-    s.inline("gemm:A_shape")
-    s.inline("gemm:B_shape")
-    s.inline("gemm:Y_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())
@@ -167,10 +128,6 @@ def test_trans_AB():
 def test_bias():
     device = ir.Device(ir.CPU())
 
-    t_mat = T("float32", 2)
-    t_bias = T("float32", 2)
-    gemm_ = ir.libop.gemm_(t_mat, t_mat, t_bias, t_mat, "cpu")
-
     @ir.transform
     def f(a, b, c, y):
         ir.declare_var(a, (4, 5), "float32", "input", "cpu")
@@ -178,16 +135,10 @@ def test_bias():
         ir.declare_var(c, (4, 6), "float32", "input", "cpu")
         ir.declare_var(y, (4, 6), "float32", "output", "cpu")
         "nid: gemm"
-        gemm_(ir.Tensor([4, 5], "cpu"), ir.Tensor([5, 6], "cpu"),
-              ir.Tensor([4, 6], "cpu"), ir.Tensor([4, 6], "cpu"), a, b, c, y)
+        ir.libop.gemm_("cpu", has_bias=True)(a, b, c, y)
 
     print(f)
-    s = ir.Schedule(f)
-    s.inline("gemm:A_shape")
-    s.inline("gemm:B_shape")
-    s.inline("gemm:C_shape")
-    s.inline("gemm:Y_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())
@@ -210,10 +161,6 @@ def test_bias():
 def test_bias_broadcast_1():
     device = ir.Device(ir.CPU())
 
-    t_mat = T("float32", 2)
-    t_bias = T("float32", 2)
-    gemm_ = ir.libop.gemm_(t_mat, t_mat, t_bias, t_mat, "cpu")
-
     @ir.transform
     def f(a, b, c, y):
         ir.declare_var(a, (4, 5), "float32", "input", "cpu")
@@ -221,16 +168,10 @@ def test_bias_broadcast_1():
         ir.declare_var(c, (4, 1), "float32", "input", "cpu")
         ir.declare_var(y, (4, 6), "float32", "output", "cpu")
         "nid: gemm"
-        gemm_(ir.Tensor([4, 5], "cpu"), ir.Tensor([5, 6], "cpu"),
-              ir.Tensor([4, 1], "cpu"), ir.Tensor([4, 6], "cpu"), a, b, c, y)
+        ir.libop.gemm_("cpu", has_bias=True)(a, b, c, y)
 
     print(f)
-    s = ir.Schedule(f)
-    s.inline("gemm:A_shape")
-    s.inline("gemm:B_shape")
-    s.inline("gemm:C_shape")
-    s.inline("gemm:Y_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())
@@ -253,10 +194,6 @@ def test_bias_broadcast_1():
 def test_bias_broadcast_2():
     device = ir.Device(ir.CPU())
 
-    t_mat = T("float32", 2)
-    t_bias = T("float32", 1)
-    gemm_ = ir.libop.gemm_(t_mat, t_mat, t_bias, t_mat, "cpu")
-
     @ir.transform
     def f(a, b, c, y):
         ir.declare_var(a, (4, 5), "float32", "input", "cpu")
@@ -264,16 +201,10 @@ def test_bias_broadcast_2():
         ir.declare_var(c, (6,), "float32", "input", "cpu")
         ir.declare_var(y, (4, 6), "float32", "output", "cpu")
         "nid: gemm"
-        gemm_(ir.Tensor([4, 5], "cpu"), ir.Tensor([5, 6], "cpu"),
-              ir.Tensor([6], "cpu"), ir.Tensor([4, 6], "cpu"), a, b, c, y)
+        ir.libop.gemm_("cpu", has_bias=True)(a, b, c, y)
 
     print(f)
-    s = ir.Schedule(f)
-    s.inline("gemm:A_shape")
-    s.inline("gemm:B_shape")
-    s.inline("gemm:C_shape")
-    s.inline("gemm:Y_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())
@@ -296,16 +227,6 @@ def test_bias_broadcast_2():
 def test_bias_with_coeff():
     device = ir.Device(ir.CPU())
 
-    t_mat = T("float32", 2)
-    t_bias = T("float32", 2)
-    gemm_ = ir.libop.gemm_(t_mat,
-                           t_mat,
-                           t_bias,
-                           t_mat,
-                           "cpu",
-                           alpha=2.5,
-                           beta=3.8)
-
     @ir.transform
     def f(a, b, c, y):
         ir.declare_var(a, (4, 5), "float32", "input", "cpu")
@@ -313,16 +234,10 @@ def test_bias_with_coeff():
         ir.declare_var(c, (4, 6), "float32", "input", "cpu")
         ir.declare_var(y, (4, 6), "float32", "output", "cpu")
         "nid: gemm"
-        gemm_(ir.Tensor([4, 5], "cpu"), ir.Tensor([5, 6], "cpu"),
-              ir.Tensor([4, 6], "cpu"), ir.Tensor([4, 6], "cpu"), a, b, c, y)
+        ir.libop.gemm_("cpu", has_bias=True, alpha=2.5, beta=3.8)(a, b, c, y)
 
     print(f)
-    s = ir.Schedule(f)
-    s.inline("gemm:A_shape")
-    s.inline("gemm:B_shape")
-    s.inline("gemm:C_shape")
-    s.inline("gemm:Y_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())
@@ -345,9 +260,6 @@ def test_bias_with_coeff():
 def test_out_of_place():
     device = ir.Device(ir.CPU())
 
-    t_mat = T("float32", 2)
-    gemm = ir.libop.gemm(t_mat, t_mat, None, t_mat, "cpu")
-
     @ir.transform
     def f(a, b, y_shape, y):
         ir.declare_var(a, (4, 5), "float32", "input", "cpu")
@@ -355,18 +267,15 @@ def test_out_of_place():
         ir.declare_var(y_shape, (2,), "int32", "output", "cpu")
         ir.declare_var(y, (4, 6), "float32", "output", "cpu")
         "nid: gemm"
-        _y = gemm(ir.Tensor([4, 5], "cpu"), ir.Tensor([5, 6], "cpu"), a, b)
+        _y = ir.libop.gemm("cpu")(a, b)
         for i in range(2):
-            y_shape[i] = _y.shape[i]
+            y_shape[i] = _y.shape(i)
         for i in range(4):
             for j in range(6):
                 y[i, j] = _y[i, j]
 
     print(f)
-    s = ir.Schedule(f)
-    s.inline("gemm:A_shape")
-    s.inline("gemm:B_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())

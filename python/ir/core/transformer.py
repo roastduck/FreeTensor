@@ -265,7 +265,11 @@ class ASTTransformer(ast.NodeTransformer):
     def visit_Attribute(self, node):
         self.generic_visit(node)
         if isinstance(node.value.expr_ptr, Var) and node.attr == "shape":
-            node.expr_ptr = node.value.expr_ptr.get_shape_var()
+            node.expr_ptr = lambda idx: node.value.expr_ptr.shape_at(idx)
+        elif isinstance(node.value.expr_ptr, Var) and node.attr == "ndim":
+            node.expr_ptr = node.value.expr_ptr.ndim
+        elif isinstance(node.value.expr_ptr, Var) and node.attr == "dtype":
+            node.expr_ptr = node.value.expr_ptr.dtype
         else:
             node.expr_ptr = getattr(node.value.expr_ptr, node.attr)
         return node
@@ -274,10 +278,10 @@ class ASTTransformer(ast.NodeTransformer):
         self.generic_visit(node)
         start = node.lower.expr_ptr if getattr(node, "lower",
                                                None) is not None else None
-        stop = node.lower.expr_ptr if getattr(node, "upper",
+        stop = node.upper.expr_ptr if getattr(node, "upper",
                                               None) is not None else None
-        step = node.lower.expr_ptr if getattr(node, "step",
-                                              None) is not None else None
+        step = node.step.expr_ptr if getattr(node, "step",
+                                             None) is not None else None
         node.expr_ptr = slice(start, stop, step)
         return node
 

@@ -3,7 +3,6 @@ import numpy as np
 
 import ir
 import ir.libop
-from ir.libop import StaticType as T
 
 
 def test_static_shape():
@@ -14,20 +13,10 @@ def test_static_shape():
         ir.declare_var(x, (4, 4), "float32", "input", "cpu")
         ir.declare_var(y, (4, 4), "float32", "output", "cpu")
         "nid: softmax"
-        ir.libop.softmax_(T("float32", 2), T("float32", 2),
-                          "cpu")(ir.Tensor([4, 4], "cpu"),
-                                 ir.Tensor([4, 4], "cpu"), x, y)
+        ir.libop.softmax_("cpu")(x, y)
 
     print(f)
-    s = ir.Schedule(f)
-    s.inline("softmax:x_shape")
-    s.inline("softmax:x:y_shape")
-    s.inline("softmax:max:y_shape")
-    s.inline("softmax:sub:broadcast_shape:out_shape")
-    s.inline("softmax:sum:y_shape")
-    s.inline("softmax:div:broadcast_shape:out_shape")
-    s.inline("softmax:y_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())
@@ -51,23 +40,15 @@ def test_out_of_place():
         ir.declare_var(y_shape, (2,), "int32", "output", "cpu")
         ir.declare_var(y, (4, 4), "float32", "output", "cpu")
         "nid: softmax"
-        _y = ir.libop.softmax(T("float32", 2), T("float32", 2), "cpu",
-                              axis=-1)(ir.Tensor([4, 4], "cpu"), x)
-        y_shape[0] = _y.shape[0]
-        y_shape[1] = _y.shape[1]
+        _y = ir.libop.softmax("cpu", axis=-1)(x)
+        y_shape[0] = _y.shape(0)
+        y_shape[1] = _y.shape(1)
         for i in range(4):
             for j in range(4):
                 y[i, j] = _y[i, j]
 
     print(f)
-    s = ir.Schedule(f)
-    s.inline("softmax:x_shape")
-    s.inline("softmax:x:y_shape")
-    s.inline("softmax:max:y_shape")
-    s.inline("softmax:sub:broadcast_shape:out_shape")
-    s.inline("softmax:sum:y_shape")
-    s.inline("softmax:div:broadcast_shape:out_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())

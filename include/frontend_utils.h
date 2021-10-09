@@ -49,16 +49,21 @@ class FrontendVarIdx {
 class FrontendVar {
     std::string name_;
     std::vector<Expr> shape_;
+    DataType dtype_;
     std::vector<FrontendVarIdx> indices_;
 
   public:
     FrontendVar(const std::string &name, const std::vector<Expr> &shape,
-                const std::vector<FrontendVarIdx> &indices)
-        : name_(name), shape_(shape), indices_(indices) {}
+                DataType dtype, const std::vector<FrontendVarIdx> &indices)
+        : name_(name), shape_(shape), dtype_(dtype), indices_(indices) {}
 
     const std::string &name() const { return name_; }
     const std::vector<Expr> &shape() const { return shape_; }
+    DataType dtype() const { return dtype_; }
+    int ndim() const;
     const std::vector<FrontendVarIdx> &indices() const { return indices_; }
+
+    Expr shapeAt(const Expr &idx) const;
 
     Expr asLoad() const;
     Stmt asStore(const std::string &id, const Expr &value) const;

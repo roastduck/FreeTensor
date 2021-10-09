@@ -1,5 +1,6 @@
 from ffi import AccessType, MemType, DataType, ASTNodeType, TargetType
 from ffi import InvalidSchedule, InvalidProgram, DriverError
+from ffi import up_cast
 
 from .nodes import (
     pop_ast,

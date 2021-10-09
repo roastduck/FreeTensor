@@ -8,7 +8,6 @@ import numpy as np
 
 @ir.inline
 def g_global(y):
-    ir.declare_var(y, (2,), "float32", "output", "cpu")
     '''nid: S0'''
     y[0] = 2.0
     '''nid: S1'''
@@ -25,7 +24,6 @@ def test_basic_call():
 
     @ir.inline
     def g(y):
-        ir.declare_var(y, (2,), "float32", "output", "cpu")
         '''nid: S0'''
         y[0] = 2.0
         '''nid: S1'''
@@ -62,7 +60,6 @@ def test_called_multiple_times():
 
     @ir.inline
     def g(y):
-        ir.declare_var(y, (2,), "float32", "output", "cpu")
         '''nid: S0'''
         y[0] = 2.0
         '''nid: S1'''
@@ -101,8 +98,6 @@ def test_call_with_external_data():
 
     @ir.inline
     def g(x, y):
-        ir.declare_var(x, (2, 2), "int32", "input", "cpu")
-        ir.declare_var(y, (2, 2), "int32", "output", "cpu")
         for i in range(2):
             for j in range(2):
                 y[i, j] = x[i, j] * 2
@@ -132,8 +127,6 @@ def test_call_with_literal_data():
 
     @ir.inline
     def g(x, y):
-        ir.declare_var(x, (2, 2), "int32", "input", "cpu")
-        ir.declare_var(y, (2, 2), "int32", "output", "cpu")
         for i in range(2):
             for j in range(2):
                 y[i, j] = x[i, j] * 2
@@ -163,9 +156,6 @@ def test_call_with_fixed_dim_at_front():
 
     @ir.inline
     def g(x1, x2, y):
-        ir.declare_var(x1, (4,), "float32", "input", "cpu")
-        ir.declare_var(x2, (4,), "float32", "input", "cpu")
-        ir.declare_var(y, (4,), "float32", "output", "cpu")
         for i in range(4):
             y[i] = x1[i] + x2[i]
 
@@ -194,9 +184,6 @@ def test_call_with_fixed_dim_at_back():
 
     @ir.inline
     def g(x1, x2, y):
-        ir.declare_var(x1, (4,), "float32", "input", "cpu")
-        ir.declare_var(x2, (4,), "float32", "input", "cpu")
-        ir.declare_var(y, (4,), "float32", "output", "cpu")
         for i in range(4):
             y[i] = x1[i] + x2[i]
 
@@ -225,9 +212,6 @@ def test_call_with_slice():
 
     @ir.inline
     def g(x1, x2, y):
-        ir.declare_var(x1, (4,), "float32", "input", "cpu")
-        ir.declare_var(x2, (4,), "float32", "input", "cpu")
-        ir.declare_var(y, (4,), "float32", "output", "cpu")
         for i in range(4):
             y[i] = x1[i] + x2[i]
 
@@ -256,9 +240,6 @@ def test_call_with_scalar():
 
     @ir.inline
     def g(x1, x2, y):
-        ir.declare_var(x1, (), "float32", "input", "cpu")
-        ir.declare_var(x2, (), "float32", "input", "cpu")
-        ir.declare_var(y, (), "float32", "output", "cpu")
         y[()] = x1[()] + x2[()]
 
     @ir.transform
@@ -298,7 +279,6 @@ def test_error_missing_parameters():
 
     @ir.inline
     def g(y):
-        ir.declare_var(y, (2,), "float32", "output", "cpu")
         '''nid: S0'''
         y[0] = 2.0
         '''nid: S1'''
@@ -316,8 +296,6 @@ def test_return():
 
     @ir.inline
     def test_i(a, b):
-        ir.declare_var(a, (2, 2), "int32", "input", "cpu")
-        ir.declare_var(b, (2, 2), "int32", "output", "cpu")
         c = ir.create_var((2, 2), "int32", "output", "cpu")
         d = ir.create_var((2, 2), "int32", "output", "cpu")
         for i in range(2):
@@ -413,7 +391,6 @@ def test_func_in_args():
 
     @ir.inline
     def plus_one(x):
-        ir.declare_var(x, (4,), "int32", "input", "cpu")
         y = ir.create_var((4,), "int32", "cache", "cpu")
         for i in range(4):
             y[i] = x[i] + 1

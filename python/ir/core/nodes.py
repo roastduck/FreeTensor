@@ -114,24 +114,16 @@ class Var(ffi.FrontendVar):
     def __init__(self,
                  name: str,
                  shape: Sequence,
-                 indices: Sequence = [],
-                 shape_var=None):
-        super(Var, self).__init__(name, shape, indices)
-        self.shape_var = shape_var
-
-    def get_shape_var(self):
-        if self.shape_var is None:
-            raise ffi.InvalidProgram(
-                f"The shape of {self.name} cannot be retrieved as a variable because it is defined as a literal"
-            )
-        return self.shape_var
+                 dtype: ffi.DataType,
+                 indices: Sequence = []):
+        super(Var, self).__init__(name, shape, dtype, indices)
 
     def __getitem__(self, key):
-        return Var(self.name, self.shape,
+        return Var(self.name, self.shape, self.dtype,
                    self.chain_indices(self._parse_key(key)))
 
     def __setitem__(self, key, value):
-        var = Var(self.name, self.shape,
+        var = Var(self.name, self.shape, self.dtype,
                   self.chain_indices(self._parse_key(key)))
         top = ctx_stack.top()
         top.append_stmt(var.as_store(top.get_next_nid(), value))
@@ -235,7 +227,6 @@ class _VarDef:
         self.name = name
         if isinstance(shape, collections.abc.Sequence):
             self.shape = shape
-            self.shape_var = None
         elif isinstance(shape, Var):
             assert len(shape.shape) == 1, "Shape of a shape should be 1-D"
             assert type(
@@ -243,7 +234,6 @@ class _VarDef:
             ) is ffi.IntConst, "Dynamic number of dimensions is not supported"
             ndim = shape.shape[0].val
             self.shape = [shape[i] for i in range(ndim)]
-            self.shape_var = shape
         else:
             assert False, "shape cannot be of type %s" % type(shape)
         self.dtype = parseDType(dtype)
@@ -252,7 +242,7 @@ class _VarDef:
 
     def __enter__(self):
         ctx_stack.push()
-        return Var(self.name, self.shape, shape_var=self.shape_var)
+        return Var(self.name, self.shape, self.dtype)
 
     def __exit__(self, exc_type, exc_value, traceback):
         buf = ffi.Buffer(ffi.Tensor(self.shape, self.dtype), self.atype,
