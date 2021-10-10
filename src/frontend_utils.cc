@@ -43,10 +43,10 @@ Expr FrontendVar::shape(const Expr &idx) const {
 }
 
 Expr FrontendVar::asLoad() const {
-    if (indices_.size() != fullShape_.size()) {
+    if (ndim() != 0) {
         throw InvalidProgram(
             name_ + " is of a " + std::to_string(fullShape_.size()) +
-            "-D shape, but " + std::to_string(indices_.size()) +
+            "-D shape, but " + std::to_string((int)fullShape_.size() - ndim()) +
             "-D indices are given");
     }
     std::vector<Expr> indices;
@@ -59,10 +59,10 @@ Expr FrontendVar::asLoad() const {
 }
 
 Stmt FrontendVar::asStore(const std::string &id, const Expr &value) const {
-    if (indices_.size() != fullShape_.size()) {
+    if (ndim() != 0) {
         throw InvalidProgram(
             name_ + " is of a " + std::to_string(fullShape_.size()) +
-            "-D shape, but " + std::to_string(indices_.size()) +
+            "-D shape, but " + std::to_string((int)fullShape_.size() - ndim()) +
             "-D indices are given");
     }
     std::vector<Expr> indices;
