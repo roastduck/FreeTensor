@@ -33,7 +33,7 @@ def test_manual_static():
                        "gpu/global",
                        name="y")
         "nid: softmax"
-        ir.libop.softmax_("gpu/global")(x, y)
+        ir.libop.softmax_()(x, y)
 
     print(f.pretty_print())
     s = ir.Schedule(f)

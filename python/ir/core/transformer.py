@@ -40,12 +40,8 @@ class ASTContextStack:
         self.ctx_stack = []
         self.name_map = {}
         self.next_nid = ""
-        self.node_ctx_bak = node_ctx.get_stack()
         self.now_context_id = 0
         node_ctx.reset()
-
-    def __del__(self):
-        node_ctx.set_stack(self.node_ctx_bak)
 
     def top(self) -> ASTContext:
         return self.ctx_stack[-1]
