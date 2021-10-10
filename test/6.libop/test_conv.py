@@ -3,18 +3,10 @@ import numpy as np
 
 import ir
 import ir.libop
-from ir.libop import StaticType as T
 
 
 def test_basic():
     device = ir.Device(ir.CPU())
-
-    conv_ = ir.libop.conv_(T("float32", 4),
-                           T("float32", 4),
-                           None,
-                           T("float32", 4),
-                           "cpu",
-                           auto_pad='VALID')
 
     @ir.transform
     def f(x, w, y):
@@ -22,14 +14,10 @@ def test_basic():
         ir.declare_var(w, (8, 3, 3, 3), "float32", "input", "cpu")
         ir.declare_var(y, (2, 8, 12, 12), "float32", "output", "cpu")
         "nid: conv"
-        conv_([2, 3, 14, 14], [8, 3, 3, 3], [2, 8, 12, 12], x, w, y)
+        ir.libop.conv_(auto_pad='VALID')(x, w, y)
 
     print(f)
-    s = ir.Schedule(f)
-    s.inline("conv:X_shape")
-    s.inline("conv:W_shape")
-    s.inline("conv:Y_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())
@@ -50,13 +38,6 @@ def test_basic():
 def test_bias():
     device = ir.Device(ir.CPU())
 
-    conv_ = ir.libop.conv_(T("float32", 4),
-                           T("float32", 4),
-                           T("float32", 4),
-                           T("float32", 4),
-                           "cpu",
-                           auto_pad='VALID')
-
     @ir.transform
     def f(x, w, b, y):
         ir.declare_var(x, (2, 3, 14, 14), "float32", "input", "cpu")
@@ -64,15 +45,10 @@ def test_bias():
         ir.declare_var(b, (8,), "float32", "input", "cpu")
         ir.declare_var(y, (2, 8, 12, 12), "float32", "output", "cpu")
         "nid: conv"
-        conv_([2, 3, 14, 14], [8, 3, 3, 3], [8], [2, 8, 12, 12], x, w, b, y)
+        ir.libop.conv_(has_bias=True, auto_pad='VALID')(x, w, b, y)
 
     print(f)
-    s = ir.Schedule(f)
-    s.inline("conv:X_shape")
-    s.inline("conv:W_shape")
-    s.inline("conv:B_shape")
-    s.inline("conv:Y_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())
@@ -95,28 +71,16 @@ def test_bias():
 def test_same_pad():
     device = ir.Device(ir.CPU())
 
-    conv_ = ir.libop.conv_(T("float32", 4),
-                           T("float32", 4),
-                           None,
-                           T("float32", 4),
-                           "cpu",
-                           kernel_shape=(3, 3),
-                           auto_pad='SAME_UPPER')
-
     @ir.transform
     def f(x, w, y):
         ir.declare_var(x, (2, 3, 14, 14), "float32", "input", "cpu")
         ir.declare_var(w, (8, 3, 3, 3), "float32", "input", "cpu")
         ir.declare_var(y, (2, 8, 14, 14), "float32", "output", "cpu")
         "nid: conv"
-        conv_([2, 3, 14, 14], [8, 3, 3, 3], [2, 8, 14, 14], x, w, y)
+        ir.libop.conv_(kernel_shape=(3, 3), auto_pad='SAME_UPPER')(x, w, y)
 
     print(f)
-    s = ir.Schedule(f)
-    s.inline("conv:X_shape")
-    s.inline("conv:W_shape")
-    s.inline("conv:Y_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())
@@ -137,28 +101,16 @@ def test_same_pad():
 def test_stride():
     device = ir.Device(ir.CPU())
 
-    conv_ = ir.libop.conv_(T("float32", 4),
-                           T("float32", 4),
-                           None,
-                           T("float32", 4),
-                           "cpu",
-                           auto_pad='VALID',
-                           strides=(2, 2))
-
     @ir.transform
     def f(x, w, y):
         ir.declare_var(x, (2, 3, 14, 14), "float32", "input", "cpu")
         ir.declare_var(w, (8, 3, 3, 3), "float32", "input", "cpu")
         ir.declare_var(y, (2, 8, 6, 6), "float32", "output", "cpu")
         "nid: conv"
-        conv_([2, 3, 14, 14], [8, 3, 3, 3], [2, 8, 6, 6], x, w, y)
+        ir.libop.conv_(auto_pad='VALID', strides=(2, 2))(x, w, y)
 
     print(f)
-    s = ir.Schedule(f)
-    s.inline("conv:X_shape")
-    s.inline("conv:W_shape")
-    s.inline("conv:Y_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())
@@ -179,28 +131,16 @@ def test_stride():
 def test_group():
     device = ir.Device(ir.CPU())
 
-    conv_ = ir.libop.conv_(T("float32", 4),
-                           T("float32", 4),
-                           None,
-                           T("float32", 4),
-                           "cpu",
-                           auto_pad='VALID',
-                           group=2)
-
     @ir.transform
     def f(x, w, y):
         ir.declare_var(x, (2, 4, 14, 14), "float32", "input", "cpu")
         ir.declare_var(w, (8, 2, 3, 3), "float32", "input", "cpu")
         ir.declare_var(y, (2, 8, 12, 12), "float32", "output", "cpu")
         "nid: conv"
-        conv_([2, 4, 14, 14], [8, 2, 3, 3], [2, 8, 12, 12], x, w, y)
+        ir.libop.conv_(auto_pad='VALID', group=2)(x, w, y)
 
     print(f)
-    s = ir.Schedule(f)
-    s.inline("conv:X_shape")
-    s.inline("conv:W_shape")
-    s.inline("conv:Y_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())
@@ -221,28 +161,16 @@ def test_group():
 def test_dilation():
     device = ir.Device(ir.CPU())
 
-    conv_ = ir.libop.conv_(T("float32", 4),
-                           T("float32", 4),
-                           None,
-                           T("float32", 4),
-                           "cpu",
-                           auto_pad='VALID',
-                           dilations=(2, 2))
-
     @ir.transform
     def f(x, w, y):
         ir.declare_var(x, (2, 3, 14, 14), "float32", "input", "cpu")
         ir.declare_var(w, (8, 3, 3, 3), "float32", "input", "cpu")
         ir.declare_var(y, (2, 8, 10, 10), "float32", "output", "cpu")
         "nid: conv"
-        conv_([2, 3, 14, 14], [8, 3, 3, 3], [2, 8, 10, 10], x, w, y)
+        ir.libop.conv_(auto_pad='VALID', dilations=(2, 2))(x, w, y)
 
     print(f)
-    s = ir.Schedule(f)
-    s.inline("conv:X_shape")
-    s.inline("conv:W_shape")
-    s.inline("conv:Y_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())
@@ -263,13 +191,6 @@ def test_dilation():
 def test_out_of_place():
     device = ir.Device(ir.CPU())
 
-    conv = ir.libop.conv(T("float32", 4),
-                         T("float32", 4),
-                         None,
-                         T("float32", 4),
-                         "cpu",
-                         auto_pad='VALID')
-
     @ir.transform
     def f(x, w, y_shape, y):
         ir.declare_var(x, (2, 3, 14, 14), "float32", "input", "cpu")
@@ -277,9 +198,9 @@ def test_out_of_place():
         ir.declare_var(y_shape, (4,), "int32", "output", "cpu")
         ir.declare_var(y, (2, 8, 12, 12), "float32", "output", "cpu")
         "nid: conv"
-        _y = conv([2, 3, 14, 14], [8, 3, 3, 3], x, w)
+        _y = ir.libop.conv(auto_pad='VALID')(x, w)
         for i in range(4):
-            y_shape[i] = _y.shape[i]
+            y_shape[i] = _y.shape(i)
         for n in range(2):
             for c in range(8):
                 for h in range(12):
@@ -287,10 +208,7 @@ def test_out_of_place():
                         y[n, c, h, w] = _y[n, c, h, w]
 
     print(f)
-    s = ir.Schedule(f)
-    s.inline("conv:X_shape")
-    s.inline("conv:W_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())

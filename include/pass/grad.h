@@ -173,15 +173,19 @@ enum class GradTapeMode : int { All, Nothing, NoReuseOnly };
  * @param provides : Name of output variables whose gradients are known
  * @param tapes : VarDef IDs of intermediate variables that need to be stored in
  * the forward pass
+ * @param tapeMode : Mode of which intermediate variables should be stored. All:
+ * store all variables including local scalars; None: store nothing;
+ * NoReuseOnly: store variables that only hold one version of data, which means
+ * we do not have to store each version of them in their history
  * @return : (
  *  Forward AST
  *  Backward AST,
  *  Mapping from names in requries to its gradient name,
  *  Mapping from names in provides to its gradient name,
- *  Mode of which intermediate variables should be stored. All: store all
- * variables including local scalars; None: store nothing; NoReuseOnly: store
- * variables that only hold one version of data, which means we do not have to
- * store each version of them in their history
+ *  Mapping from VarDef IDs of intermediate variables being stored to its
+ * corresponding output names. Currently all output variables must be stored,
+ * and should not be specified in tapes (TODO: allow not storing an output
+ * variable)
  * )
  */
 std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,

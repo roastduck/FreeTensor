@@ -3,7 +3,6 @@ import numpy as np
 
 import ir
 import ir.libop
-from ir.libop import StaticType as T
 
 
 def test_static():
@@ -14,16 +13,10 @@ def test_static():
         ir.declare_var(x, (3, 4, 5), "float32", "input", "cpu")
         ir.declare_var(y, (3, 1, 4, 1, 5), "float32", "output", "cpu")
         "nid: unsqueeze"
-        ir.libop.unsqueeze_(T("float32", 3),
-                            T("float32", 5),
-                            "cpu",
-                            axes=[1, 3])([3, 4, 5], [3, 1, 4, 1, 5], x, y)
+        ir.libop.unsqueeze_(axes=[1, 3])(x, y)
 
     print(f)
-    s = ir.Schedule(f)
-    s.inline("unsqueeze:x_shape")
-    s.inline("unsqueeze:y_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())
@@ -47,21 +40,16 @@ def test_out_of_place():
         ir.declare_var(y_shape, (5,), "int32", "output", "cpu")
         ir.declare_var(y, (3, 1, 4, 1, 5), "float32", "output", "cpu")
         "nid: unsqueeze"
-        _y = ir.libop.unsqueeze(T("float32", 3),
-                                T("float32", 5),
-                                "cpu",
-                                axes=[1, 3])([3, 4, 5], x)
+        _y = ir.libop.unsqueeze(axes=[1, 3])(x)
         for i in range(5):
-            y_shape[i] = _y.shape[i]
+            y_shape[i] = _y.shape(i)
         for i in range(3):
             for j in range(4):
                 for k in range(5):
                     y[i, 0, j, 0, k] = _y[i, 0, j, 0, k]
 
     print(f)
-    s = ir.Schedule(f)
-    s.inline("unsqueeze:x_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())

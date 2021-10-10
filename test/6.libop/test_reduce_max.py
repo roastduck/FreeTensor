@@ -3,7 +3,6 @@ import numpy as np
 
 import ir
 import ir.libop
-from ir.libop import StaticType as T
 
 
 def test_static():
@@ -14,17 +13,10 @@ def test_static():
         ir.declare_var(x, (3, 4, 5), "float32", "input", "cpu")
         ir.declare_var(y, (3, 5), "float32", "output", "cpu")
         "nid: reduce_max"
-        ir.libop.reduce_max_(T("float32", 3),
-                             T("float32", 2),
-                             "cpu",
-                             axes=[1],
-                             keepdims=False)([3, 4, 5], [3, 5], x, y)
+        ir.libop.reduce_max_(axes=[1], keepdims=False)(x, y)
 
     print(f)
-    s = ir.Schedule(f)
-    s.inline("reduce_max:x_shape")
-    s.inline("reduce_max:y_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())
@@ -48,21 +40,15 @@ def test_out_of_place():
         ir.declare_var(y_shape, (2,), "int32", "output", "cpu")
         ir.declare_var(y, (3, 5), "float32", "output", "cpu")
         "nid: reduce_max"
-        _y = ir.libop.reduce_max(T("float32", 3),
-                                 T("float32", 2),
-                                 "cpu",
-                                 axes=[1],
-                                 keepdims=False)([3, 4, 5], x)
+        _y = ir.libop.reduce_max(axes=[1], keepdims=False)(x)
         for i in range(2):
-            y_shape[i] = _y.shape[i]
+            y_shape[i] = _y.shape(i)
         for i in range(3):
             for j in range(5):
                 y[i, j] = _y[i, j]
 
     print(f)
-    s = ir.Schedule(f)
-    s.inline("reduce_max:x_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())

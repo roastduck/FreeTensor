@@ -41,18 +41,23 @@ class Tensor {
 
 class TensorData {
     int size_;
+    DataType dtype_;
     std::vector<int> shape_;
     std::vector<Expr> data_;
 
   public:
-    TensorData(const std::vector<int> &shape, const std::vector<Expr> &data);
-    TensorData(const std::vector<int> &shape, std::vector<Expr> &&data);
+    TensorData(DataType dtype, const std::vector<int> &shape,
+               const std::vector<Expr> &data);
+    TensorData(DataType dtype, const std::vector<int> &shape,
+               std::vector<Expr> &&data);
 
     TensorData(const std::vector<int> &shape, const std::vector<int> &data);
     TensorData(const std::vector<int> &shape, const std::vector<double> &data);
 
     int ndim() const { return shape_.size(); }
     int size() const { return size_; }
+    DataType dtype() const { return dtype_; }
+    const std::vector<int> &shape() const { return shape_; }
 
     std::vector<int> indices(int offset) const;
 

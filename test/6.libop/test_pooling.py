@@ -3,29 +3,20 @@ import numpy as np
 
 import ir
 import ir.libop
-from ir.libop import StaticType as T
 
 
 def test_max_pooling_basic():
     device = ir.Device(ir.CPU())
-
-    max_pool_ = ir.libop.max_pool_(T("float32", 4),
-                                   "cpu",
-                                   auto_pad='VALID',
-                                   kernel_shape=[3, 3])
 
     @ir.transform
     def f(x, y):
         ir.declare_var(x, (2, 3, 14, 14), "float32", "input", "cpu")
         ir.declare_var(y, (2, 3, 12, 12), "float32", "output", "cpu")
         "nid: max_pool"
-        max_pool_([2, 3, 14, 14], [2, 3, 12, 12], x, y)
+        ir.libop.max_pool_(auto_pad='VALID', kernel_shape=[3, 3])(x, y)
 
     print(f)
-    s = ir.Schedule(f)
-    s.inline("max_pool:X_shape")
-    s.inline("max_pool:Y_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())
@@ -46,11 +37,6 @@ def test_max_pooling_basic():
 def test_max_pooling_same_padding():
     device = ir.Device(ir.CPU())
 
-    max_pool_ = ir.libop.max_pool_(T("float32", 4),
-                                   "cpu",
-                                   auto_pad='SAME_UPPER',
-                                   kernel_shape=[3, 3])
-
     @ir.transform
     def f(x, y):
         ir.declare_var(x, (2, 3, 14, 14), "float32", "input", "cpu")
@@ -58,13 +44,10 @@ def test_max_pooling_same_padding():
         "nid: y_shape"
         y_shape = ir.create_var((4,), "int32", "cache", "cpu")
         "nid: max_pool"
-        max_pool_([2, 3, 14, 14], [2, 3, 14, 14], x, y)
+        ir.libop.max_pool_(auto_pad='SAME_UPPER', kernel_shape=[3, 3])(x, y)
 
     print(f)
-    s = ir.Schedule(f)
-    s.inline("max_pool:X_shape")
-    s.inline("max_pool:Y_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())
@@ -86,9 +69,7 @@ def test_max_pooling_same_padding():
 def test_max_pooling_stride():
     device = ir.Device(ir.CPU())
 
-    max_pool_ = ir.libop.max_pool_(T("float32", 4),
-                                   "cpu",
-                                   auto_pad='VALID',
+    max_pool_ = ir.libop.max_pool_(auto_pad='VALID',
                                    kernel_shape=[3, 3],
                                    strides=[3, 3])
 
@@ -97,13 +78,10 @@ def test_max_pooling_stride():
         ir.declare_var(x, (2, 3, 12, 12), "float32", "input", "cpu")
         ir.declare_var(y, (2, 3, 4, 4), "float32", "output", "cpu")
         "nid: max_pool"
-        max_pool_([2, 3, 14, 14], [2, 3, 4, 4], x, y)
+        max_pool_(x, y)
 
     print(f)
-    s = ir.Schedule(f)
-    s.inline("max_pool:X_shape")
-    s.inline("max_pool:Y_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())
@@ -124,9 +102,7 @@ def test_max_pooling_stride():
 def test_max_pooling_dilation():
     device = ir.Device(ir.CPU())
 
-    max_pool_ = ir.libop.max_pool_(T("float32", 4),
-                                   "cpu",
-                                   auto_pad='VALID',
+    max_pool_ = ir.libop.max_pool_(auto_pad='VALID',
                                    kernel_shape=[3, 3],
                                    dilations=[2, 2])
 
@@ -135,13 +111,10 @@ def test_max_pooling_dilation():
         ir.declare_var(x, (2, 3, 14, 14), "float32", "input", "cpu")
         ir.declare_var(y, (2, 3, 10, 10), "float32", "output", "cpu")
         "nid: max_pool"
-        max_pool_([2, 3, 14, 14], [2, 3, 10, 10], x, y)
+        max_pool_(x, y)
 
     print(f)
-    s = ir.Schedule(f)
-    s.inline("max_pool:X_shape")
-    s.inline("max_pool:Y_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())
@@ -163,10 +136,7 @@ def test_max_pooling_dilation():
 def test_max_pooling_out_of_place():
     device = ir.Device(ir.CPU())
 
-    max_pool = ir.libop.max_pool(T("float32", 4),
-                                 "cpu",
-                                 auto_pad='VALID',
-                                 kernel_shape=[3, 3])
+    max_pool = ir.libop.max_pool(auto_pad='VALID', kernel_shape=[3, 3])
 
     @ir.transform
     def f(x, y_shape, y):
@@ -174,9 +144,9 @@ def test_max_pooling_out_of_place():
         ir.declare_var(y_shape, (4,), "int32", "output", "cpu")
         ir.declare_var(y, (2, 3, 12, 12), "float32", "output", "cpu")
         "nid: max_pool"
-        _y = max_pool([2, 3, 14, 14], x)
+        _y = max_pool(x)
         for i in range(4):
-            y_shape[i] = _y.shape[i]
+            y_shape[i] = _y.shape(i)
         for n in range(2):
             for c in range(3):
                 for h in range(12):
@@ -184,9 +154,7 @@ def test_max_pooling_out_of_place():
                         y[n, c, h, w] = _y[n, c, h, w]
 
     print(f)
-    s = ir.Schedule(f)
-    s.inline("max_pool:X_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())
@@ -211,20 +179,15 @@ def test_max_pooling_out_of_place():
 def test_global_avg_pool():
     device = ir.Device(ir.CPU())
 
-    ga_pool_ = ir.libop.global_avg_pool_(T("float32", 4), "cpu")
-
     @ir.transform
     def f(x, y):
         ir.declare_var(x, (2, 3, 14, 14), "float32", "input", "cpu")
         ir.declare_var(y, (2, 3), "float32", "output", "cpu")
         "nid: max_pool"
-        ga_pool_([2, 3, 14, 14], [2, 3], x, y)
+        ir.libop.global_avg_pool_(x, y)
 
     print(f)
-    s = ir.Schedule(f)
-    s.inline("max_pool:X_shape")
-    s.inline("max_pool:Y_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())
@@ -244,25 +207,21 @@ def test_global_avg_pool():
 def test_global_avg_pool_out_of_place():
     device = ir.Device(ir.CPU())
 
-    ga_pool = ir.libop.global_avg_pool(T("float32", 4), "cpu")
-
     @ir.transform
     def f(x, y_shape, y):
         ir.declare_var(x, (2, 3, 14, 14), "float32", "input", "cpu")
         ir.declare_var(y_shape, (2,), "int32", "output", "cpu")
         ir.declare_var(y, (2, 3), "float32", "output", "cpu")
         "nid: max_pool"
-        _y = ga_pool([2, 3, 14, 14], x)
+        _y = ir.libop.global_avg_pool(x)
         for i in range(2):
-            y_shape[i] = _y.shape[i]
+            y_shape[i] = _y.shape(i)
         for i in range(2):
             for j in range(3):
                 y[i, j] = _y[i, j]
 
     print(f)
-    s = ir.Schedule(f)
-    s.inline("max_pool:X_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())

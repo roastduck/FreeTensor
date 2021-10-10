@@ -53,7 +53,13 @@ void init_ffi_tensor(py::module_ &m) {
             return Ref<TensorData>::make(
                 TensorData(std::vector<int>(shapePtr, shapePtr + ndim),
                            std::vector<double>(dataPtr, dataPtr + size)));
-        }));
+        }))
+        .def("ndim", &TensorData::ndim)
+        .def("size", &TensorData::size)
+        .def("dtype", &TensorData::dtype)
+        .def("shape", &TensorData::shape)
+        .def("indices", &TensorData::indices)
+        .def("at", &TensorData::at);
 }
 
 } // namespace ir

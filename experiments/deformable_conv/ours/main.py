@@ -4,7 +4,6 @@ import math
 import numpy as np
 import ir
 import ir.debug
-from ir.libop import StaticType as T
 
 jit_cache = {}
 

@@ -22,9 +22,7 @@ def test_tiling():
 
     i, j = "Li", "Lj"
 
-    func = ir.Func("main", ["a", "b", "c"], ir.getBuffers(
-        [("a", (256, 256), "float32", "input", "cpu"), ("b", (256, 256), "float32", "input", "cpu"),
-         ("c", (256, 256), "float32", "output", "cpu")]), ir.pop_ast())
+    func = ir.Func("main", ["a", "b", "c"], ir.pop_ast())
     s = ir.Schedule(func)
     i0, i1 = s.split(i, 32)
     j0, j1 = s.split(j, 32)
@@ -98,9 +96,7 @@ def test_tiled_reduction():
 
     i = "Li"
 
-    func = ir.Func("main", ["x", "y"],
-                   ir.getBuffers([("x", (256,), "float32", "input", "cpu"), ("y", (1,), "float32", "output", "cpu")]),
-                   ir.pop_ast())
+    func = ir.Func("main", ["x", "y"], ir.pop_ast())
     s = ir.Schedule(func)
     i0, i1 = s.split(i, 64)
     s.cache_reduction(i1, "y", "cpu")
@@ -152,9 +148,7 @@ def test_parallel_reduction():
 
     i, S0 = "Li", "S0"
 
-    func = ir.Func("main", ["x", "y"],
-                   ir.getBuffers([("x", (256,), "float32", "input", "cpu"), ("y", (1,), "float32", "output", "cpu")]),
-                   ir.pop_ast())
+    func = ir.Func("main", ["x", "y"], ir.pop_ast())
     s = ir.Schedule(func)
     i0, i1 = s.split(i, 64)
     init, final, _, _ = s.cache_reduction(i1, "y", "cpu")
@@ -221,11 +215,7 @@ def test_dynamic_tiling():
 
     i, j = "Li", "Lj"
 
-    func = ir.Func("main", ["n", "k", "m", "a", "b", "c"], ir.getBuffers(
-        [("n", (), "int32", "input", "byvalue"), ("k", (), "int32", "input", "byvalue"),
-         ("m", (), "int32", "input", "byvalue"), ("a", (n[()], k[()]), "float32", "input", "cpu"),
-         ("b", (k[()], m[()]), "float32", "input", "cpu"), ("c", (n[()], m[()]), "float32", "output", "cpu")]),
-                   ir.pop_ast())
+    func = ir.Func("main", ["n", "k", "m", "a", "b", "c"], ir.pop_ast())
     s = ir.Schedule(func)
     i0, i1 = s.split(i, 32)
     j0, j1 = s.split(j, 32)
@@ -283,9 +273,7 @@ def test_collaborative_fetch():
 
     i, j, k = "Li", "Lj", "Lk"
 
-    func = ir.Func("main", ["a", "b", "c"], ir.getBuffers(
-        [("a", (32, 256), "float32", "input", "cpu"), ("b", (256, 32), "float32", "input", "cpu"),
-         ("c", (32, 32), "float32", "output", "cpu")]), ir.pop_ast())
+    func = ir.Func("main", ["a", "b", "c"], ir.pop_ast())
     s = ir.Schedule(func)
     k0, k1 = s.split(k, 32)
     fill_a, _, _, _ = s.cache(k1, "a", "gpu/shared")

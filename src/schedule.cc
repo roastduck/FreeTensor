@@ -48,6 +48,8 @@ static std::string dep2Str(const std::string &scope, const std::string &var,
     return std::regex_replace(os.str(), std::regex("\n"), "");
 }
 
+Schedule::Schedule(const Stmt &ast) : ast_(ast) { ast_ = simplifyPass(ast_); }
+
 std::vector<Cursor>
 Schedule::findAll(const std::function<bool(const Cursor &)> &filter) const {
     return getCursorByFilter(ast_, filter);

@@ -3,7 +3,6 @@ import numpy as np
 
 import ir
 import ir.libop
-from ir.libop import StaticType as T
 
 
 def test_same_static_shape():
@@ -15,15 +14,10 @@ def test_same_static_shape():
         ir.declare_var(y, (4, 4), "float32", "input", "cpu")
         ir.declare_var(out, (4, 4), "float32", "output", "cpu")
         "nid: add"
-        ir.libop.add_(T("float32", 2), T("float32", 2), T("float32", 2),
-                      "cpu")([4, 4], [4, 4], [4, 4], x, y, out)
+        ir.libop.add_(x, y, out)
 
     print(f)
-    s = ir.Schedule(f)
-    s.inline("add:a_shape")
-    s.inline("add:b_shape")
-    s.inline("add:out_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())
@@ -49,15 +43,10 @@ def test_static_broadcast_shorter():
         ir.declare_var(y, (4, 4), "float32", "input", "cpu")
         ir.declare_var(out, (4, 4), "float32", "output", "cpu")
         "nid: add"
-        ir.libop.add_(T("float32", 1), T("float32", 2), T("float32", 2),
-                      "cpu")([4], [4, 4], [4, 4], x, y, out)
+        ir.libop.add_(x, y, out)
 
     print(f)
-    s = ir.Schedule(f)
-    s.inline("add:a_shape")
-    s.inline("add:b_shape")
-    s.inline("add:out_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())
@@ -85,15 +74,10 @@ def test_static_broadcast_1_at_front():
         "nid: out_shape"
         out_shape = ir.create_var((2,), "int32", "cache", "cpu")
         "nid: add"
-        ir.libop.add_(T("float32", 2), T("float32", 2), T("float32", 2),
-                      "cpu")([1, 4], [4, 4], [4, 4], x, y, out)
+        ir.libop.add_(x, y, out)
 
     print(f)
-    s = ir.Schedule(f)
-    s.inline("add:a_shape")
-    s.inline("add:b_shape")
-    s.inline("add:out_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())
@@ -121,15 +105,10 @@ def test_static_broadcast_1_at_back():
         "nid: out_shape"
         out_shape = ir.create_var((2,), "int32", "cache", "cpu")
         "nid: add"
-        ir.libop.add_(T("float32", 2), T("float32", 2), T("float32", 2),
-                      "cpu")([4, 4], [4, 1], [4, 4], x, y, out)
+        ir.libop.add_(x, y, out)
 
     print(f)
-    s = ir.Schedule(f)
-    s.inline("add:a_shape")
-    s.inline("add:b_shape")
-    s.inline("add:out_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())
@@ -157,15 +136,10 @@ def test_different_dtype():
         "nid: out_shape"
         out_shape = ir.create_var((2,), "int32", "cache", "cpu")
         "nid: add"
-        ir.libop.add_(T("int32", 2), T("float32", 2), T("float32", 2),
-                      "cpu")([4, 4], [4, 4], [4, 4], x, y, out)
+        ir.libop.add_(x, y, out)
 
     print(f)
-    s = ir.Schedule(f)
-    s.inline("add:a_shape")
-    s.inline("add:b_shape")
-    s.inline("add:out_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())
@@ -192,19 +166,15 @@ def test_out_of_place():
         ir.declare_var(out_shape, (2,), "int32", "output", "cpu")
         ir.declare_var(out, (4, 4), "float32", "output", "cpu")
         "nid: add"
-        _out = ir.libop.add(T("float32", 2), T("float32", 2), T("float32", 2),
-                            "cpu")([4, 4], [4, 4], x, y)
+        _out = ir.libop.add(x, y)
         for i in range(2):
-            out_shape[i] = _out.shape[i]
+            out_shape[i] = _out.shape(i)
         for i in range(4):
             for j in range(4):
                 out[i, j] = _out[i, j]
 
     print(f)
-    s = ir.Schedule(f)
-    s.inline("add:a_shape")
-    s.inline("add:b_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())

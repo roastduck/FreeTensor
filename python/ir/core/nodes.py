@@ -1,4 +1,5 @@
 import collections
+import numpy as np
 from typing import Sequence, Tuple, Any, Optional
 
 import ffi
@@ -112,25 +113,18 @@ class Var(ffi.FrontendVar):
 
     def __init__(self,
                  name: str,
-                 shape: Sequence,
-                 indices: Sequence = [],
-                 shape_var=None):
-        super(Var, self).__init__(name, shape, indices)
-        self.shape_var = shape_var
-
-    def get_shape_var(self):
-        if self.shape_var is None:
-            raise ffi.InvalidProgram(
-                f"The shape of {self.name} cannot be retrieved as a variable because it is defined as a literal"
-            )
-        return self.shape_var
+                 full_shape: Sequence,
+                 dtype: ffi.DataType,
+                 mtype: ffi.MemType,
+                 indices: Sequence = []):
+        super(Var, self).__init__(name, full_shape, dtype, mtype, indices)
 
     def __getitem__(self, key):
-        return Var(self.name, self.shape,
+        return Var(self.name, self.full_shape, self.dtype, self.mtype,
                    self.chain_indices(self._parse_key(key)))
 
     def __setitem__(self, key, value):
-        var = Var(self.name, self.shape,
+        var = Var(self.name, self.full_shape, self.dtype, self.mtype,
                   self.chain_indices(self._parse_key(key)))
         top = ctx_stack.top()
         top.append_stmt(var.as_store(top.get_next_nid(), value))
@@ -139,23 +133,23 @@ class Var(ffi.FrontendVar):
         if not isinstance(key, collections.abc.Sequence):
             key = (key,)
         ffiIdx = []
-        for idx, length in zip(key, self.shape):
+        for idx, length in zip(key, self.full_shape):
             if isinstance(idx, slice):
                 start = idx.start if idx.start is not None else 0
                 stop = idx.stop if idx.stop is not None else length
                 assert idx.step is None or idx.step == 1
                 ffiIdx.append(ffi.FrontendVarIdx(start, stop))
             elif isinstance(idx, Var):
-                if len(idx.shape) == len(idx.indices):
+                if len(idx.full_shape) == len(idx.indices):
                     ffiIdx.append(ffi.FrontendVarIdx(idx.as_load()))
                 else:
                     assert len(
                         key
                     ) == 1, f"Shape of an index of {self.name} should be 1-D, instead of {idx.name}"
                     assert type(
-                        idx.shape[0]
+                        idx.full_shape[0]
                     ) is ffi.IntConst, "Dynamic number of dimensions is not supported"
-                    ndim = idx.shape[0].val
+                    ndim = idx.full_shape[0].val
                     ffiIdx += [
                         ffi.FrontendVarIdx(idx[i].as_load())
                         for i in range(ndim)
@@ -234,15 +228,13 @@ class _VarDef:
         self.name = name
         if isinstance(shape, collections.abc.Sequence):
             self.shape = shape
-            self.shape_var = None
         elif isinstance(shape, Var):
-            assert len(shape.shape) == 1, "Shape of a shape should be 1-D"
+            assert shape.ndim == 1, "Shape of a shape should be 1-D"
             assert type(
-                shape.shape[0]
+                shape.shape(0)
             ) is ffi.IntConst, "Dynamic number of dimensions is not supported"
-            ndim = shape.shape[0].val
+            ndim = shape.shape(0).val
             self.shape = [shape[i] for i in range(ndim)]
-            self.shape_var = shape
         else:
             assert False, "shape cannot be of type %s" % type(shape)
         self.dtype = parseDType(dtype)
@@ -251,7 +243,7 @@ class _VarDef:
 
     def __enter__(self):
         ctx_stack.push()
-        return Var(self.name, self.shape, shape_var=self.shape_var)
+        return Var(self.name, self.shape, self.dtype, self.mtype)
 
     def __exit__(self, exc_type, exc_value, traceback):
         buf = ffi.Buffer(ffi.Tensor(self.shape, self.dtype), self.atype,
@@ -454,26 +446,6 @@ def cast(expr, dtype):
     return ffi.makeCast(expr, parseDType(dtype))
 
 
-def min_value(dtype):
-    dtype = parseDType(dtype)
-    if dtype == DataType.Float32:
-        return -float("inf")
-    elif dtype == DataType.Int32:
-        return 0x80000000
-    else:
-        assert False, "Unrecognized data type %s" % dtype
-
-
-def max_value(dtype):
-    dtype = parseDType(dtype)
-    if dtype == DataType.Float32:
-        return float("inf")
-    elif dtype == DataType.Int32:
-        return 0x7fffffff
-    else:
-        assert False, "Unrecognized data type %s" % dtype
-
-
 def intrinsic(fmt, *params, **kws):
     """
     Invoke whatever target code
@@ -499,5 +471,12 @@ def any():
     return ffi.makeAnyExpr()
 
 
-def Func(name, params, buffers, body, src=None):
-    return ffi.makeFunc(name, params, buffers, body, src)
+def Func(name, params, body, src=None):
+    return ffi.makeFunc(name, params, body, src)
+
+
+class Tensor(ffi.TensorData):
+
+    def __init__(self, data, mtype):
+        super(Tensor, self).__init__(np.array(data))
+        self.mtype = parseMType(mtype)

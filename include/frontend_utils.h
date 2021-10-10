@@ -48,17 +48,34 @@ class FrontendVarIdx {
 
 class FrontendVar {
     std::string name_;
-    std::vector<Expr> shape_;
+    std::vector<Expr> fullShape_;
+    DataType dtype_;
+    MemType mtype_;
     std::vector<FrontendVarIdx> indices_;
 
   public:
-    FrontendVar(const std::string &name, const std::vector<Expr> &shape,
+    FrontendVar(const std::string &name, const std::vector<Expr> &fullShape,
+                DataType dtype, MemType mtype,
                 const std::vector<FrontendVarIdx> &indices)
-        : name_(name), shape_(shape), indices_(indices) {}
+        : name_(name), fullShape_(fullShape), dtype_(dtype), mtype_(mtype),
+          indices_(indices) {}
 
     const std::string &name() const { return name_; }
-    const std::vector<Expr> &shape() const { return shape_; }
+
+    /**
+     * shape of the original variable before slicing
+     */
+    const std::vector<Expr> &fullShape() const { return fullShape_; }
+
+    DataType dtype() const { return dtype_; }
+    MemType mtype() const { return mtype_; }
+    int ndim() const;
     const std::vector<FrontendVarIdx> &indices() const { return indices_; }
+
+    /**
+     * shape of each dimension after slicing
+     */
+    Expr shape(const Expr &idx) const;
 
     Expr asLoad() const;
     Stmt asStore(const std::string &id, const Expr &value) const;

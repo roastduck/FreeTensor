@@ -29,11 +29,10 @@ from .nodes import (
     floor_div,
     ceil_div,
     round_towards_0_div,
-    min_value,
-    max_value,
     intrinsic,
     any,
     Func,
+    Tensor,
 )
 from .analyze import *
 from .passes import *
@@ -41,6 +40,6 @@ from .schedule import *
 from .codegen import codegen
 from .driver import *
 from .config import *
-
-from .transformer import transform, create_var, declare_var, getBuffers
+from .transformer import transform, inline, create_var, declare_var
+from .meta import *
 from .auto_schedule import *

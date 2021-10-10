@@ -3,7 +3,6 @@ import numpy as np
 
 import ir
 import ir.libop
-from ir.libop import StaticType as T
 
 
 def test_static():
@@ -14,17 +13,10 @@ def test_static():
         ir.declare_var(x, (3, 4, 5), "float32", "input", "cpu")
         ir.declare_var(y, (3, 20), "float32", "output", "cpu")
         "nid: flatten"
-        ir.libop.flatten_(T("float32", 3), T("float32", 2),
-                          "cpu")([3, 4, 5], [3, 20], x, y)
+        ir.libop.flatten_()(x, y)
 
     print(f)
-    s = ir.Schedule(f)
-    s.inline("flatten:x_shape")
-    s.inline("flatten:y_shape")
-    s.inline("flatten:recur_y_shape")
-    s.inline("flatten:recur:recur:recur_y_shape")
-    s.inline("flatten:recur:recur:recur:recur_y_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())
@@ -47,17 +39,10 @@ def test_axis():
         ir.declare_var(x, (3, 4, 5), "float32", "input", "cpu")
         ir.declare_var(y, (12, 5), "float32", "output", "cpu")
         "nid: flatten"
-        ir.libop.flatten_(T("float32", 3), T("float32", 2), "cpu",
-                          axis=2)([3, 4, 5], [12, 5], x, y)
+        ir.libop.flatten_(axis=2)(x, y)
 
     print(f)
-    s = ir.Schedule(f)
-    s.inline("flatten:x_shape")
-    s.inline("flatten:y_shape")
-    s.inline("flatten:recur_y_shape")
-    s.inline("flatten:recur:recur_y_shape")
-    s.inline("flatten:recur:recur:recur:recur_y_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())
@@ -81,18 +66,15 @@ def test_out_of_place():
         ir.declare_var(y_shape, (2,), "int32", "output", "cpu")
         ir.declare_var(y, (3, 20), "float32", "output", "cpu")
         "nid: flatten"
-        _y = ir.libop.flatten(T("float32", 3), T("float32", 2),
-                              "cpu")([3, 4, 5], x)
+        _y = ir.libop.flatten()(x)
         for i in range(2):
-            y_shape[i] = _y.shape[i]
+            y_shape[i] = _y.shape(i)
         for i in range(3):
             for j in range(20):
                 y[i, j] = _y[i, j]
 
     print(f)
-    s = ir.Schedule(f)
-    #s.inline("flatten:V_x_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())

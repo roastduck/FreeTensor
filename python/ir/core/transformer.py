@@ -11,7 +11,7 @@ from typing import Sequence, Optional, Mapping, Any
 from . import nodes
 from .nodes import (_VarDef, Var, pop_ast, For, If, Else, MarkNid, intrinsic,
                     l_and, l_or, l_not, if_then_else, ctx_stack as node_ctx,
-                    Func)
+                    Func, Tensor)
 from .utils import *
 
 assert sys.version_info >= (3,
@@ -24,25 +24,6 @@ def declare_var(var, shape, dtype, atype, mtype, name=None):
 
 def create_var(shape, dtype, atype, mtype, name=None):
     return np.zeros(shape, dtype)
-
-
-def getBuffer(shape, dtype, atype, mtype):
-    if isinstance(shape, Var):
-        assert len(shape.shape) == 1, "Shape of a shape should be 1-D"
-        assert type(
-            shape.shape[0]
-        ) is ffi.IntConst, "Dynamic number of dimensions is not supported"
-        ndim = shape.shape[0].val
-        shape = [shape[i] for i in range(ndim)]
-    return ffi.Buffer(ffi.Tensor(shape, parseDType(dtype)), parseAType(atype),
-                      parseMType(mtype))
-
-
-def getBuffers(arr):
-    buffers = {}
-    for i in arr:
-        buffers[i[0]] = getBuffer(i[1], i[2], i[3], i[4])
-    return buffers
 
 
 class ASTContext:
@@ -59,12 +40,8 @@ class ASTContextStack:
         self.ctx_stack = []
         self.name_map = {}
         self.next_nid = ""
-        self.node_ctx_bak = node_ctx.get_stack()
         self.now_context_id = 0
         node_ctx.reset()
-
-    def __del__(self):
-        node_ctx.set_stack(self.node_ctx_bak)
 
     def top(self) -> ASTContext:
         return self.ctx_stack[-1]
@@ -192,16 +169,20 @@ class VarCreation:
 
 class InlineFunction:
 
-    def __init__(self, body, params, globals, arg_var, arg_data):
+    def __init__(self, name, body, params, globals):
+        self.name = name
         self.body = body
         self.params = params
         self.globals = globals
+        self.arg_var = None
+
+    def set_arg_var(self, arg_var):
         self.arg_var = arg_var
-        self.arg_data = arg_data
 
     def expand(self, ctx_stack, nid):
+        assert self.arg_var is not None
         transformer = ASTTransformer(ctx_stack, self.params, self.globals)
-        transformer.set_replace(self.arg_var, self.arg_data, nid)
+        transformer.set_replace(self.arg_var, nid)
         for stmt in self.body:
             transformer.visit(stmt)
         return transformer.returns
@@ -218,17 +199,14 @@ class ASTTransformer(ast.NodeTransformer):
         self.allow_undefined = False
         self.replace = {}
         self.arg_var = {}
-        self.arg_data = {}
         self.created_vars = set()
         self.returned = False
         self.returns = []
         self.prefix = ""
-        self.buffers = {}
         self.nid = ""
 
-    def set_replace(self, arg_var, arg_data, prefix):
+    def set_replace(self, arg_var, prefix):
         self.arg_var = arg_var
-        self.arg_data = arg_data
         if prefix:
             self.prefix = prefix
         else:
@@ -271,7 +249,13 @@ class ASTTransformer(ast.NodeTransformer):
     def visit_Attribute(self, node):
         self.generic_visit(node)
         if isinstance(node.value.expr_ptr, Var) and node.attr == "shape":
-            node.expr_ptr = node.value.expr_ptr.get_shape_var()
+            node.expr_ptr = lambda idx: node.value.expr_ptr.shape(idx)
+        elif isinstance(node.value.expr_ptr, Var) and node.attr == "ndim":
+            node.expr_ptr = node.value.expr_ptr.ndim
+        elif isinstance(node.value.expr_ptr, Var) and node.attr == "dtype":
+            node.expr_ptr = node.value.expr_ptr.dtype
+        elif isinstance(node.value.expr_ptr, Var) and node.attr == "mtype":
+            node.expr_ptr = node.value.expr_ptr.mtype
         else:
             node.expr_ptr = getattr(node.value.expr_ptr, node.attr)
         return node
@@ -280,10 +264,10 @@ class ASTTransformer(ast.NodeTransformer):
         self.generic_visit(node)
         start = node.lower.expr_ptr if getattr(node, "lower",
                                                None) is not None else None
-        stop = node.lower.expr_ptr if getattr(node, "upper",
+        stop = node.upper.expr_ptr if getattr(node, "upper",
                                               None) is not None else None
-        step = node.lower.expr_ptr if getattr(node, "step",
-                                              None) is not None else None
+        step = node.step.expr_ptr if getattr(node, "step",
+                                             None) is not None else None
         node.expr_ptr = slice(start, stop, step)
         return node
 
@@ -363,17 +347,6 @@ class ASTTransformer(ast.NodeTransformer):
         self.ctx_stack.pop_scope()
         return node
 
-    def assign_arg(self, var, shape, data, now_dim=0, now_pos=None):
-        if now_dim == 0:
-            now_pos = [0] * len(shape)
-        if now_dim == len(shape):
-            var[tuple(now_pos)] = data
-        else:
-            assert len(data) == shape[now_dim], "Input data shape invalid"
-            for i in range(shape[now_dim]):
-                now_pos[now_dim] = i
-                self.assign_arg(var, shape, data[i], now_dim + 1, now_pos)
-
     def get_shape(self, data, shape=None):
         if shape is None:
             shape = []
@@ -427,22 +400,8 @@ class ASTTransformer(ast.NodeTransformer):
                 nid = self.prefix + ':' + nid
             MarkNid(nid)
             if self.prefix:
-                if name in self.arg_data:
-                    atype = 'cache'
-                    data = self.arg_data[name]
-                    self.created_vars.add(name)
-                    name = self.prefix + ":" + name
-                    var = VarCreation(self.ctx_stack,
-                                      shape,
-                                      dtype,
-                                      atype,
-                                      mtype,
-                                      name,
-                                      override_name=override_name).execute()
-                    self.assign_arg(var, shape, data)
-                else:
-                    name = self.get_name(name)
-                    var = self.ctx_stack.find_var_by_name(name)
+                name = self.get_name(name)
+                var = self.ctx_stack.find_var_by_name(name)
             else:
                 assert name in self.params, f"Parameter {name} not found"
                 VarCreation(self.ctx_stack,
@@ -452,18 +411,6 @@ class ASTTransformer(ast.NodeTransformer):
                             mtype,
                             name,
                             override_name=name).execute()
-                if isinstance(shape, Var):
-                    assert len(
-                        shape.shape) == 1, "Shape of a shape should be 1-D"
-                    assert type(
-                        shape.shape[0]
-                    ) is ffi.IntConst, "Dynamic number of dimensions is not supported"
-                    ndim = shape.shape[0].val
-                    shape = [shape[i] for i in range(ndim)]
-                self.buffers[name] = ffi.Buffer(
-                    ffi.Tensor(shape, parseDType(dtype)), parseAType(atype),
-                    parseMType(mtype))
-                # Force using the current name to match the function signature
         elif callee is MarkNid:
             nid, = args
             self.ctx_stack.set_nid(nid)
@@ -490,47 +437,38 @@ class ASTTransformer(ast.NodeTransformer):
                 ret_type = parseDType(kws["ret_type"])
             node.expr_ptr = ffi.makeIntrinsic(fmt_str, expr_args, ret_type)
         elif isinstance(callee, ffi.Func):
-            nid = '#' + str(self.ctx_stack.new_context_id())
-            callee_src = _remove_indent(ins.getsource(callee.src))
-            callee_tree = ast.parse(callee_src)
-            callee_params = list(inspect.signature(callee.src).parameters)
-            callee_globals = _get_global_vars(callee.src)
-            funcdef = callee_tree.body[0]
-            assert isinstance(funcdef, ast.FunctionDef)
-            arguments = [arg.arg for arg in funcdef.args.args]
-            arg_var = {}
-            arg_data = {}
-
-            if len(args) != len(arguments):
+            raise ffi.InvalidProgram("Please use @ir.inline for subroutines")
+        elif isinstance(callee, InlineFunction):
+            if len(args) != len(callee.params):
                 raise ffi.InvalidProgram(
-                    f"Number of arguments does not match when calling {callee.src.__name__}"
+                    f"Number of arguments does not match when calling {callee.name}, {len(callee.params)} needed, but {len(args)} provided"
                 )
-            for arg, callee_arg in zip(args, arguments):
+
+            nid = '#' + str(self.ctx_stack.new_context_id())
+            arg_var = {}
+            for arg, param in zip(args, callee.params):
                 if self.nid:
-                    name = self.nid + ":" + callee_arg
+                    name = self.nid + ":" + param
                 else:
-                    name = nid + ":" + callee_arg
+                    name = nid + ":" + param
                 MarkNid(name)
-                buf = callee.buffers[callee_arg]
                 if isinstance(arg, Var):
-                    arg_var[callee_arg] = arg
+                    arg_var[param] = arg
                 elif isinstance(arg, InlineFunction):
                     # only support single return value now
                     returns = arg.expand(self.ctx_stack, name)
                     assert len(returns) == 1, "only support single return value"
-                    arg_var[callee_arg] = self.ctx_stack.find_var_by_name(
-                        returns[0])
-                elif isinstance(arg, collections.abc.Sequence) or len(
-                        buf.tensor.shape) == 0:
-                    shape = tuple(self.get_shape(arg))
-                    var = VarCreation(self.ctx_stack, shape, buf.tensor.dtype,
-                                      "cache", buf.mtype, name).execute()
-                    arg_var[callee_arg] = var
-                    self.assign_arg(var, shape, arg)
+                    arg_var[param] = self.ctx_stack.find_var_by_name(returns[0])
+                elif isinstance(arg, Tensor):
+                    var = VarCreation(self.ctx_stack, arg.shape(), arg.dtype(),
+                                      "cache", arg.mtype, name).execute()
+                    arg_var[param] = var
+                    for i in range(arg.size()):
+                        var[arg.indices(i)] = arg.at(i)
                 else:
                     assert False, "Invalid function argument"
-            node.expr_ptr = InlineFunction(funcdef.body, callee_params,
-                                           callee_globals, arg_var, arg_data)
+            callee.set_arg_var(arg_var)
+            node.expr_ptr = callee
         else:
             node.expr_ptr = callee(*args, **kws)
         return node
@@ -804,4 +742,14 @@ def transform(func):
     globals = _get_global_vars(func)
     transformer = ASTTransformer(ctx_stack, params, globals)
     transformer.visit(tree)
-    return Func(func.__name__, params, transformer.buffers, pop_ast(), func)
+    return Func(func.__name__, params, pop_ast(), func)
+
+
+def inline(func):
+    src = _remove_indent(ins.getsource(func))
+    tree = ast.parse(src)
+    params = list(inspect.signature(func).parameters)
+    globals = _get_global_vars(func)
+    funcdef = tree.body[0]
+    assert isinstance(funcdef, ast.FunctionDef)
+    return InlineFunction(func.__name__, funcdef.body, params, globals)

@@ -3,7 +3,6 @@ import numpy as np
 
 import ir
 import ir.libop
-from ir.libop import StaticType as T
 
 
 def test_static():
@@ -14,14 +13,10 @@ def test_static():
         ir.declare_var(x, (3, 1), "float32", "input", "cpu")
         ir.declare_var(y, (3, 5), "float32", "output", "cpu")
         "nid: expand"
-        ir.libop.expand_(T("float32", 2), T("float32", 2), T("float32", 2),
-                         "cpu")([3, 1], [3, 5], [3, 5], x, y)
+        ir.libop.expand_(x, y)
 
     print(f)
-    s = ir.Schedule(f)
-    s.inline("expand:x_shape")
-    s.inline("expand:y_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())
@@ -45,18 +40,15 @@ def test_out_of_place():
         ir.declare_var(y_shape, (2,), "int32", "output", "cpu")
         ir.declare_var(y, (3, 5), "float32", "output", "cpu")
         "nid: expand"
-        _y = ir.libop.expand(T("float32", 2), T("float32", 2), T("float32", 2),
-                             "cpu")([3, 1], [3, 5], x)
+        _y = ir.libop.expand(x, ir.Tensor([3, 5], "cpu"))
         for i in range(2):
-            y_shape[i] = _y.shape[i]
+            y_shape[i] = _y.shape(i)
         for i in range(3):
             for j in range(5):
                 y[i, j] = _y[i, j]
 
     print(f)
-    s = ir.Schedule(f)
-    s.inline("expand:x_shape")
-    f = ir.lower(s.func(), ir.CPU())
+    f = ir.lower(f, ir.CPU())
     print(f)
 
     code = ir.codegen(f, ir.CPU())
