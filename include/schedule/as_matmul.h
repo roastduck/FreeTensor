@@ -117,6 +117,8 @@ class AsMatMul : public Mutator {
     Stmt visit(const VarDef &op) override;
 };
 
+Stmt asMatMul(const Stmt &ast, const std::string &loop);
+
 } // namespace ir
 
 #endif // MAKE_MATMUL_H

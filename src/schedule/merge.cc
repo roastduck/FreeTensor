@@ -1,3 +1,4 @@
+#include <schedule/check_loop_order.h>
 #include <schedule/merge.h>
 
 namespace ir {
@@ -92,6 +93,19 @@ Expr MergeFor::visit(const Var &_op) {
         return makeFloorDiv(makeVar(newIter_), innerLen_);
     }
     return op;
+}
+
+std::pair<Stmt, std::string> merge(const Stmt &_ast, const std::string &loop1,
+                                   const std::string &loop2) {
+
+    CheckLoopOrder checker({loop1, loop2});
+    checker(_ast); // Check they are nested
+    auto &&curOrder = checker.order();
+    auto outer = curOrder[0], inner = curOrder[1];
+
+    MergeFor mutator(outer, inner);
+    auto ast = mutator(_ast);
+    return std::make_pair(ast, mutator.newId());
 }
 
 } // namespace ir

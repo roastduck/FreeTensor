@@ -6,13 +6,12 @@
 
 #include <cursor.h>
 #include <func.h>
+#include <schedule/var_split.h>
 #include <stmt.h>
 
 namespace ir {
 
 enum MoveToSide : int { Before, After };
-
-enum VarSplitMode : int { FixedSize, RelaxedSize };
 
 class Schedule {
     Func func_;
@@ -107,7 +106,7 @@ class Schedule {
      */
     std::pair<IDMap, IDMap> fission(const std::string &loop,
                                     const std::string &after,
-                                    const std::string &suffx0 = ".a",
+                                    const std::string &suffix0 = ".a",
                                     const std::string &suffix1 = ".b");
 
     /**

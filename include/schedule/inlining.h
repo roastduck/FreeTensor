@@ -51,6 +51,8 @@ class MakeInline : public Mutator {
     Stmt visit(const VarDef &op) override;
 };
 
+Stmt inlining(const Stmt &ast, const std::string &def);
+
 } // namespace ir
 
 #endif // INLINING_H

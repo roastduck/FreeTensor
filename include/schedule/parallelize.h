@@ -21,6 +21,9 @@ class Parallelize : public Mutator {
     Stmt visit(const For &op) override;
 };
 
+Stmt parallelize(const Stmt &ast, const std::string &loop,
+                 const std::string &parallel);
+
 } // namespace ir
 
 #endif // PARALLELIZE_H

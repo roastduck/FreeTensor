@@ -21,6 +21,8 @@ class Swap : public Mutator {
     Stmt visit(const StmtSeq &op) override;
 };
 
+Stmt swap(const Stmt &ast, const std::vector<std::string> &order);
+
 } // namespace ir
 
 #endif // SWAP_H

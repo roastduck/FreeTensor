@@ -60,5 +60,15 @@ Stmt VarReorder::visit(const MatMul &op) {
     return Mutator::visit(op);
 }
 
+Stmt varReorder(const Stmt &_ast, const std::string &def,
+                const std::vector<int> &order) {
+    VarReorder mutator(def, order);
+    auto ast = mutator(_ast);
+    if (!mutator.found()) {
+        throw InvalidSchedule(def + " not found");
+    }
+    return ast;
+}
+
 } // namespace ir
 

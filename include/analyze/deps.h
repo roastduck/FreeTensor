@@ -2,6 +2,8 @@
 #define DEPS_H
 
 #include <functional>
+#include <iostream>
+#include <regex>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -356,6 +358,18 @@ void findDeps(const Stmt &op, const std::vector<FindDepsCond> &cond,
               FindDepsMode mode = FindDepsMode::Dep, DepType depType = DEP_ALL,
               const FindDepsFilter &filter = nullptr,
               bool ignoreReductionWAW = true, bool eraseOutsideVarDef = true);
+
+inline std::string dep2Str(const std::string &scope, const std::string &var,
+                           const AST &later, const AST &earlier) {
+    std::ostringstream os;
+    os << "Dependency "
+       << (later->nodeType() == ASTNodeType::Load ? "READ " : "WRITE ") << later
+       << " after "
+       << (earlier->nodeType() == ASTNodeType::Load ? "READ " : "WRITE ")
+       << earlier << " along loop or statement block " << scope
+       << " cannot be resolved";
+    return std::regex_replace(os.str(), std::regex("\n"), "");
+}
 
 }; // namespace ir
 

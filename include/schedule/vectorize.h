@@ -18,6 +18,8 @@ class Vectorize : public Mutator {
     Stmt visit(const For &op) override;
 };
 
+Stmt vectorize(const Stmt &ast, const std::string &loop);
+
 } // namespace ir
 
 #endif // VECTORIZE_H

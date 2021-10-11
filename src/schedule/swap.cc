@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <unordered_map>
 
+#include <analyze/deps.h>
 #include <schedule/swap.h>
 
 namespace ir {
@@ -32,6 +33,52 @@ Stmt Swap::visit(const StmtSeq &_op) {
     }
     scope_ = _op; // the old one
     return makeStmtSeq(op->id(), std::move(stmts));
+}
+
+Stmt swap(const Stmt &_ast, const std::vector<std::string> &order) {
+    Swap mutator(order);
+    auto ast = mutator(_ast);
+    auto scope = mutator.scope();
+    if (!scope.isValid()) {
+        throw InvalidSchedule("Statements not found or not consecutive");
+    }
+
+    auto findParentStmt = [&](const Cursor &cursor) -> Stmt {
+        for (auto &&item : order) {
+            auto stmt = cursor.getParentById(item);
+            if (stmt.isValid()) {
+                return stmt;
+            }
+        }
+        return nullptr;
+    };
+    auto filter = [&](const AccessPoint &later, const AccessPoint &earlier) {
+        auto s0 = findParentStmt(later.cursor_);
+        auto s1 = findParentStmt(earlier.cursor_);
+        if (!s0.isValid() || !s1.isValid()) {
+            return false;
+        }
+        auto old0 =
+            std::find_if(scope->stmts_.begin(), scope->stmts_.end(),
+                         [&](const Stmt &s) { return s->id() == s0->id(); });
+        auto old1 =
+            std::find_if(scope->stmts_.begin(), scope->stmts_.end(),
+                         [&](const Stmt &s) { return s->id() == s1->id(); });
+        auto new0 =
+            std::find_if(order.begin(), order.end(),
+                         [&](const std::string &id) { return id == s0->id(); });
+        auto new1 =
+            std::find_if(order.begin(), order.end(),
+                         [&](const std::string &id) { return id == s1->id(); });
+        return (old0 < old1) != (new0 < new1);
+    };
+    auto found = [&](const Dependency &d) {
+        throw InvalidSchedule(
+            dep2Str(scope->id(), d.var_, d.later(), d.earlier()));
+    };
+    findDeps(ast, {{{scope->id(), DepDirection::Normal}}}, found,
+             FindDepsMode::Dep, DEP_ALL, filter);
+    return ast;
 }
 
 } // namespace ir

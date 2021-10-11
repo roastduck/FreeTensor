@@ -44,6 +44,8 @@ class ImmediateUnroll : public Mutator {
     Stmt visit(const For &op) override;
 };
 
+Stmt unroll(const Stmt &ast, const std::string &loop, bool immediate);
+
 } // namespace ir
 
 #endif // UNROLL_H

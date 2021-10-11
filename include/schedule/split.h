@@ -30,6 +30,9 @@ class Splitter : public Mutator {
     Expr visit(const Var &op) override;
 };
 
+std::pair<Stmt, std::pair<std::string, std::string>>
+split(const Stmt &ast, const std::string &id, int factor, int nparts);
+
 } // namespace ir
 
 #endif // SPLIT_H

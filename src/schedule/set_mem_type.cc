@@ -13,4 +13,13 @@ Stmt SetMemType::visit(const VarDef &_op) {
     return op;
 }
 
+Stmt setMemType(const Stmt &_ast, const std::string &def, MemType mtype) {
+    SetMemType mutator(def, mtype);
+    auto ast = mutator(_ast);
+    if (!mutator.found()) {
+        throw InvalidSchedule(def + " not found");
+    }
+    return ast;
+}
+
 } // namespace ir

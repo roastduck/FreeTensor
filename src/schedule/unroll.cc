@@ -1,3 +1,5 @@
+#include <pass/remove_writes.h>
+#include <pass/simplify.h>
 #include <schedule/unroll.h>
 
 namespace ir {
@@ -54,6 +56,25 @@ Stmt ImmediateUnroll::visit(const For &op) {
     } else {
         return Mutator::visit(op);
     }
+}
+
+Stmt unroll(const Stmt &_ast, const std::string &loop, bool immediate) {
+    auto ast = simplifyPass(_ast); // Const prop for ForNode::len_
+    bool done = false;
+    if (immediate) {
+        ImmediateUnroll mutator(loop);
+        ast = mutator(ast);
+        done = mutator.done();
+        ast = removeWrites(ast);
+    } else {
+        BackUnroll mutator(loop);
+        ast = mutator(ast);
+        done = mutator.done();
+    }
+    if (!done) {
+        throw InvalidSchedule("Loop " + loop + " not found");
+    }
+    return ast;
 }
 
 } // namespace ir

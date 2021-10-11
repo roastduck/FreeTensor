@@ -25,6 +25,8 @@ class SwapFor : public Mutator {
     Stmt visit(const StmtSeq &op) override;
 };
 
+Stmt reorder(const Stmt &ast, const std::vector<std::string> &order);
+
 } // namespace ir
 
 #endif // REORDER_H

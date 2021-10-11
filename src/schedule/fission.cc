@@ -1,3 +1,6 @@
+#include <analyze/deps.h>
+#include <analyze/find_loop_variance.h>
+#include <pass/merge_and_hoist_if.h>
 #include <schedule/fission.h>
 
 namespace ir {
@@ -273,6 +276,72 @@ Stmt FissionFor::visit(const Assert &op) {
         markNewId(ret, isPart0_);
     }
     return ret;
+}
+
+std::pair<Stmt, std::pair<std::unordered_map<std::string, std::string>,
+                          std::unordered_map<std::string, std::string>>>
+fission(const Stmt &_ast, const std::string &loop, const std::string &after,
+        const std::string &suffix0, const std::string &suffix1) {
+    // FIXME: Check the condition is not variant when splitting an If
+
+    if (suffix0 == suffix1) {
+        throw InvalidSchedule("suffix0 cannot be the same with suffix1");
+    }
+
+    HoistVar hoist(loop, after);
+    FissionFor mutator(loop, after, suffix0, suffix1);
+
+    auto ast = hoist(_ast);
+    if (!hoist.found()) {
+        throw InvalidSchedule("Split point " + after + " not found inside " +
+                              loop);
+    }
+    auto &&xLoops = hoist.xLoops();
+
+    auto variantExpr = findLoopVariance(ast);
+
+    // var name -> loop id
+    std::vector<std::vector<std::pair<std::string, DepDirection>>> disjunct;
+    for (const std::string &inner : hoist.innerLoops()) {
+        disjunct.push_back({{inner, DepDirection::Normal}});
+    }
+    auto isRealWrite = [&](const std::string &loop, const VarDef &def) -> bool {
+        return isVariant(variantExpr.second, def, loop);
+    };
+    auto filter = [&](const AccessPoint &later, const AccessPoint &earlier) {
+        return earlier.cursor_.getParentById(hoist.afterId()).isValid() &&
+               later.cursor_.getParentById(hoist.beforeId()).isValid();
+    };
+    std::unordered_map<std::string, std::vector<std::string>> toAdd;
+    auto found = [&](const Dependency &d) {
+        ASSERT(d.cond_.size() == 1);
+        auto &&id = d.cond_[0].first;
+        if (!xLoops.count(d.var_) ||
+            std::find(xLoops.at(d.var_).begin(), xLoops.at(d.var_).end(), id) ==
+                xLoops.at(d.var_).end()) {
+            throw InvalidSchedule(dep2Str(id, d.var_, d.later(), d.earlier()));
+        }
+        if (!isRealWrite(id, d.def()) &&
+            d.earlier()->nodeType() == ASTNodeType::Load) {
+            return;
+        }
+        if (!isRealWrite(id, d.def()) &&
+            d.later()->nodeType() == ASTNodeType::Load) {
+            return;
+        }
+        if (std::find(toAdd[d.defId()].begin(), toAdd[d.defId()].end(), id) ==
+            toAdd[d.defId()].end()) {
+            toAdd[d.defId()].emplace_back(id);
+        }
+    };
+    findDeps(ast, disjunct, found, FindDepsMode::Dep, DEP_ALL, filter);
+
+    AddDimToVar adder(toAdd);
+    ast = adder(ast);
+
+    ast = mutator(ast);
+    ast = mergeAndHoistIf(ast);
+    return std::make_pair(ast, std::make_pair(mutator.ids0(), mutator.ids1()));
 }
 
 } // namespace ir

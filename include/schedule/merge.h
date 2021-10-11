@@ -35,6 +35,9 @@ class MergeFor : public Mutator {
     Expr visit(const Var &op) override;
 };
 
+std::pair<Stmt, std::string> merge(const Stmt &ast, const std::string &loop1,
+                                   const std::string &loop2);
+
 } // namespace ir
 
 #endif // MERGE_H
