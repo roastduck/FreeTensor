@@ -1,3 +1,6 @@
+#include <algorithm>
+
+#include <analyze/count_contig_access_loops.h>
 #include <analyze/get_loop_nest_tree.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/simplify.h>
@@ -341,8 +344,38 @@ void Schedule::asMatMul(const std::string &loop) {
 }
 
 void Schedule::autoParallelize(const Target &target) {
-    // Try to merge and parallelize as many outer loops as possible
+    auto isParallelLoop = [](const Cursor &c) {
+        return c.nodeType() == ASTNodeType::For &&
+               !c.node().as<ForNode>()->parallel_.empty();
+    };
 
+    // [GPU only] Try to parallelize loops accessing contiguous items as warps
+    if (target.type() == TargetType::GPU) {
+        CountContigAccessLoops contigFinder;
+        contigFinder(ast_);
+        std::vector<std::pair<std::string, int>> contigLoops(
+            contigFinder.counts().begin(), contigFinder.counts().end());
+        std::sort(contigLoops.begin(), contigLoops.end(),
+                  [](const std::pair<std::string, int> &lhs,
+                     const std::pair<std::string, int> &rhs) {
+                      return lhs.second > rhs.second;
+                  });
+        for (auto &&[loopId, cnt] : contigLoops) {
+            auto loop = find(loopId);
+            if (getCursorByFilter(loop.node(), isParallelLoop).empty()) {
+                // No children loops are parallel
+                try {
+                    // FIXME: Do not hard-code 32
+                    auto [l0, l1] = split(loop.id(), 32);
+                    parallelize(l1, "threadIdx.x");
+                } catch (const InvalidSchedule &e) {
+                    // do nothing
+                }
+            }
+        }
+    }
+
+    // Try to merge and parallelize as many outer loops as possible
     auto loopNestTree = getLoopNestTree(ast_);
     for (const Ref<LoopNest> &root : loopNestTree->subLoops_) {
         auto latestSuccess = ast_;
@@ -365,12 +398,15 @@ void Schedule::autoParallelize(const Target &target) {
                     break;
 
                 case TargetType::GPU: {
+                    auto loop = find(loopId);
+                    bool childrenAllSerial =
+                        getCursorByFilter(loop.node(), isParallelLoop).empty();
                     // 1. make sure all SMs are used
                     // 2. make sure blockDim is not too large
                     std::string l1, l2, l3;
                     // TODO: do not hard-code these numbers
                     std::tie(l1, l2) = split(loopId, -1, 80);
-                    std::tie(l2, l3) = split(l2, 1024);
+                    std::tie(l2, l3) = split(l2, childrenAllSerial ? 1024 : 32);
                     if (!findAll(l1).empty()) {
                         parallelize(l1, "blockIdx.y");
                     }
@@ -378,7 +414,8 @@ void Schedule::autoParallelize(const Target &target) {
                         parallelize(l2, "blockIdx.x");
                     }
                     if (!findAll(l3).empty()) {
-                        parallelize(l3, "threadIdx.x");
+                        parallelize(l3, childrenAllSerial ? "threadIdx.x"
+                                                          : "threadIdx.y");
                     }
                     break;
                 }
