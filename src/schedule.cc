@@ -1,5 +1,6 @@
 #include <algorithm>
 
+#include <analyze/all_defs.h>
 #include <analyze/count_contig_access_loops.h>
 #include <analyze/get_loop_nest_tree.h>
 #include <pass/flatten_stmt_seq.h>
@@ -160,7 +161,7 @@ Schedule::cacheReduction(const std::string &stmt, const std::string &var,
 }
 
 void Schedule::setMemType(const std::string &def, MemType mtype) {
-    auto log = "set_mtype(" + def + ", " + toString(mtype) + ")";
+    auto log = "set_mem_type(" + def + ", " + toString(mtype) + ")";
     try {
         ast_ = ir::setMemType(ast_, def, mtype);
         logs_.emplace_back(log);
@@ -437,6 +438,22 @@ void Schedule::autoParallelize(const Target &target) {
         }
 
         ast_ = latestSuccess, logs_ = successLogs;
+    }
+}
+
+void Schedule::autoSetMemType(const Target &target) {
+    if (target.type() == TargetType::GPU) {
+        for (auto &&defId : allDefs(ast_, {AccessType::Cache})) {
+            try {
+                setMemType(defId, MemType::GPULocal);
+            } catch (const InvalidSchedule &e) {
+                try {
+                    setMemType(defId, MemType::GPUShared);
+                } catch (const InvalidSchedule &e) {
+                    // do nothing
+                }
+            }
+        }
     }
 }
 

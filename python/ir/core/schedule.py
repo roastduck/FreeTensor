@@ -526,3 +526,14 @@ class Schedule(ffi.Schedule):
             Target architecture
         """
         super(Schedule, self).auto_parallelize(target)
+
+    def auto_set_mem_type(self, target):
+        """
+        Automatically set memory types using some heuristics
+
+        Parameters
+        ----------
+        target : Target
+            Target architecture
+        """
+        super(Schedule, self).auto_set_mem_type(target)

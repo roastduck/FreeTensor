@@ -416,6 +416,11 @@ class Schedule {
      * @param target : Target architecture
      */
     void autoParallelize(const Target &target);
+
+    /**
+     * Automatically set memory types using some heuristics
+     */
+    void autoSetMemType(const Target &target);
 };
 
 } // namespace ir
