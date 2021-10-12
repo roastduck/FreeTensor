@@ -62,12 +62,9 @@ def test_manual_static():
     s.inline("softmax:sub:out")
 
     # Store these intermedates to registers
-    load_x, _, _, _ = s.cache(
-        s.find(lambda x: x.nid() == L_seq_outer).node().body, "x", "gpu/local")
+    load_x, _, _, x_local_def = s.cache(
+        s.find(lambda x: x.nid() == L_seq_outer).node().body, "x", "gpu/global")
     load_x_loop = s.find(lambda x: x.nid() == load_x).outer()
-    s.cache(
-        s.find(lambda x: x.nid() == "softmax:exp:y").node().body,
-        "$softmax:exp:y", "gpu/local")
 
     # ----------------
 
@@ -123,6 +120,11 @@ def test_manual_static():
     L_blk, L_thr_y = s.split(L_indep, thr_y_dim)
     s.parallelize(L_blk, "blockIdx.x")
     s.parallelize(L_thr_y, "threadIdx.y")
+
+    # ----------------
+
+    s.set_mem_type(x_local_def, "gpu/local")
+    s.set_mem_type(s.find(lambda x: x.nid() == "softmax:exp:y"), "gpu/local")
 
     f = ir.lower(s.func(), target)
     print(f.pretty_print())

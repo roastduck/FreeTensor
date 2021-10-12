@@ -105,6 +105,7 @@ def transformer(q, k, v, y, w, dilation, dilation_heads, n_heads, seq_len,
             s.reorder([p1, p0])
             init, final, _, _ = s.cache_reduction(p0, "$:dot", "gpu/shared")
             final = s.move_to(final, ir.MoveToSide.After, p1)
+            s.set_mem_type(':attn', 'gpu/shared')
             p0, p1 = s.split('Lp3', 32)
             p0, p1 = s.split('Lp4', 32)
             p0, p1 = s.split('Lp5', 32)

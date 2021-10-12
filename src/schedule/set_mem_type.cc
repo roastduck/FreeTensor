@@ -1,3 +1,4 @@
+#include <schedule/check_var_cross_parallel.h>
 #include <schedule/set_mem_type.h>
 
 namespace ir {
@@ -19,6 +20,7 @@ Stmt setMemType(const Stmt &_ast, const std::string &def, MemType mtype) {
     if (!mutator.found()) {
         throw InvalidSchedule(def + " not found");
     }
+    checkVarCrossParallel(ast, def, mtype);
     return ast;
 }
 

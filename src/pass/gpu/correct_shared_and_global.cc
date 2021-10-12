@@ -117,13 +117,13 @@ Stmt correctSharedAndGlobal(const Stmt &op) {
     auto found = [&](const Dependency &d) {
         ASSERT(d.cond_.size() == 1);
         if (finder.affecting().count(d.defId()) &&
-            finder.affecting().at(d.defId()).count(d.cond_[0].first)) {
-            if (isVariant(variantMap, d.def(), d.cond_[0].first)) {
-                affecting[d.defId()].insert(d.cond_[0].first);
+            finder.affecting().at(d.defId()).count(d.cond_[0].first.name_)) {
+            if (isVariant(variantMap, d.def(), d.cond_[0].first.name_)) {
+                affecting[d.defId()].insert(d.cond_[0].first.name_);
             }
         }
     };
-    findDeps(op, conds, found, FindDepsMode::Dep, DEP_ALL, filter);
+    findDeps(op, conds, found, FindDepsMode::Dep, DEP_ALL, filter, true, false);
 
     return CorrectMutator(affecting)(op);
 }

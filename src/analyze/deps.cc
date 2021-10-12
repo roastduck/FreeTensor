@@ -14,18 +14,6 @@ static void unionTo(std::unordered_map<T, V> &target,
     target.insert(other.begin(), other.end());
 }
 
-static bool checkInnerScopeCrossThreads(const std::string &parallel) {
-    if (parallel == "threadIdx.x" || parallel == "threadIdx.y" ||
-        parallel == "threadIdx.z") {
-        return true;
-    }
-    if (parallel == "blockIdx.x" || parallel == "blockIdx.y" ||
-        parallel == "blockIdx.z") {
-        return true;
-    }
-    return false;
-}
-
 static std::string replaceAll(const std::string &str,
                               const std::string &toSearch,
                               const std::string &replaceStr) {
@@ -65,9 +53,7 @@ void FindAccessPoint::visit(const StmtSeq &op) {
 }
 
 void FindAccessPoint::visit(const For &op) {
-    cur_.emplace_back(makeVar(op->iter_), op->begin_, op->end_,
-                      !op->parallel_.empty(),
-                      checkInnerScopeCrossThreads(op->parallel_));
+    cur_.emplace_back(makeVar(op->iter_), op->begin_, op->end_, op->parallel_);
     scope2coord_[op->id()] = cur_;
     Visitor::visit(op);
     cur_.pop_back();
@@ -325,6 +311,54 @@ ISLMap AnalyzeDeps::makeConstraintOfSingleLoop(const std::string &loop,
     return intersect(std::move(ret), makeIneqBetweenOps(mode, iterId, iterDim));
 }
 
+ISLMap AnalyzeDeps::makeConstraintOfParallelScope(
+    const std::string &parallel, DepDirection mode, int iterDim,
+    const Ref<AccessPoint> &point, const Ref<AccessPoint> &other) {
+    int pointDim = -1, otherDim = -1;
+    for (int i = (int)point->iter_.size() - 1; i >= 0; i--) {
+        if (point->iter_[i].parallel_ == parallel) {
+            pointDim = i;
+            break;
+        }
+    }
+    for (int i = (int)other->iter_.size() - 1; i >= 0; i--) {
+        if (other->iter_[i].parallel_ == parallel) {
+            otherDim = i;
+            break;
+        }
+    }
+    if (otherDim == -1 && pointDim == -1) {
+        return emptyMap(spaceAlloc(isl_, 0, iterDim, iterDim));
+    }
+    if (otherDim == -1 || pointDim == -1) {
+        return universeMap(spaceAlloc(isl_, 0, iterDim, iterDim));
+    }
+
+    std::string ineq;
+    switch (mode) {
+    case DepDirection::Inv:
+        ineq = ">";
+        break;
+    case DepDirection::Normal:
+        ineq = "<";
+        break;
+    case DepDirection::Same:
+        ineq = "=";
+        break;
+    case DepDirection::Different:
+        ineq = "!=";
+        break;
+    default:
+        ASSERT(false);
+    }
+    // FIXME: parallel loop of the same parallel scope of point and other may
+    // have different `begin`, we must substract `begin` before compareing
+    return ISLMap(isl_, "{" + makeNdList("d", iterDim) + " -> " +
+                            makeNdList("d_", iterDim) + ": d_" +
+                            std::to_string(otherDim) + " " + ineq + " d" +
+                            std::to_string(pointDim) + "}");
+}
+
 ISLMap AnalyzeDeps::makeExternalEq(int iterDim, const std::string &ext1,
                                    const std::string &ext2) {
     std::string mapping =
@@ -354,7 +388,7 @@ ISLMap AnalyzeDeps::makeSerialToAll(int iterDim, int serialIterDim,
     int j = 0;
     for (int i = 0; i < iterDim; i++) {
         if (i < (int)point.size()) {
-            if (!point[i].parallel_) {
+            if (point[i].parallel_.empty()) {
                 ret += first ? ": " : " and ";
                 ret += "d" + std::to_string(j++) + " = d_" + std::to_string(i);
                 first = false;
@@ -376,7 +410,7 @@ ISLMap AnalyzeDeps::makeSerialToAll(int iterDim, int serialIterDim,
 int AnalyzeDeps::countSerial(const std::vector<IterAxis> &point) {
     int ret = 0;
     for (auto &&item : point) {
-        if (!item.parallel_) {
+        if (item.parallel_.empty()) {
             ret++;
         }
     }
@@ -388,13 +422,8 @@ ISLMap AnalyzeDeps::makeEraseVarDefConstraint(const Ref<AccessPoint> &point,
     ISLMap ret = universeMap(spaceAlloc(isl_, 0, iterDim, iterDim));
     if (eraseOutsideVarDef_) {
         for (int i = 0; i < point->defAxis_; i++) {
-            if (point->iter_[i].iter_->nodeType() == ASTNodeType::Var &&
-                !point->iter_[i].innerScopeCrossThreads_) { // is a loop and not
-                                                            // crosing threads
-                ret = intersect(
-                    std::move(ret),
-                    makeIneqBetweenOps(DepDirection::Same, i, iterDim));
-            }
+            ret = intersect(std::move(ret),
+                            makeIneqBetweenOps(DepDirection::Same, i, iterDim));
         }
     }
     return ret;
@@ -592,9 +621,15 @@ void AnalyzeDeps::checkDep(const Ref<AccessPoint> &point,
         for (auto &&item : cond_) {
             ISLMap res = nearest;
             bool fail = false;
-            for (auto &&subitem : item) {
-                auto require = makeConstraintOfSingleLoop(
-                    subitem.first, subitem.second, iterDim);
+            for (auto &&[nodeOrParallel, dir] : item) {
+                ISLMap require;
+                if (nodeOrParallel.isNode_) {
+                    require = makeConstraintOfSingleLoop(nodeOrParallel.name_,
+                                                         dir, iterDim);
+                } else {
+                    require = makeConstraintOfParallelScope(
+                        nodeOrParallel.name_, dir, iterDim, point, other);
+                }
                 res = intersect(std::move(res), std::move(require));
                 if (res.empty()) {
                     fail = true;
@@ -626,12 +661,10 @@ void AnalyzeDeps::visit(const Load &op) {
     }
 }
 
-void findDeps(
-    const Stmt &op,
-    const std::vector<std::vector<std::pair<std::string, DepDirection>>> &cond,
-    const FindDepsCallback &found, FindDepsMode mode, DepType depType,
-    const FindDepsFilter &filter, bool ignoreReductionWAW,
-    bool eraseOutsideVarDef) {
+void findDeps(const Stmt &op, const std::vector<FindDepsCond> &cond,
+              const FindDepsCallback &found, FindDepsMode mode, DepType depType,
+              const FindDepsFilter &filter, bool ignoreReductionWAW,
+              bool eraseOutsideVarDef) {
     if (cond.empty()) {
         return;
     }

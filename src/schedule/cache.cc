@@ -5,6 +5,7 @@
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
 #include <schedule/cache.h>
+#include <schedule/check_var_cross_parallel.h>
 
 namespace ir {
 
@@ -305,6 +306,7 @@ cache(const Stmt &_ast, const std::string &stmt, const std::string &var,
     flushStmt = makeFillAndFlush.flushStmt();
 
     ast = shrinkSingleVar(ast, newDef);
+    checkVarCrossParallel(ast, newDef, mtype);
     return std::make_pair(
         ast, std::make_tuple(std::move(fillStmt), std::move(flushStmt),
                              std::move(newVar), std::move(newDef)));
@@ -336,6 +338,7 @@ cacheReduction(const Stmt &_ast, const std::string &stmt,
     reduceStmt = makeInitAndReduce.reduceStmt();
 
     ast = shrinkSingleVar(ast, newDef);
+    checkVarCrossParallel(ast, newDef, mtype);
     return std::make_pair(
         ast, std::make_tuple(std::move(initStmt), std::move(reduceStmt),
                              std::move(newVar), std::move(newDef)));

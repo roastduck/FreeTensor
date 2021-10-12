@@ -204,7 +204,7 @@ outputIntermediates(const Stmt &_op,
     };
     auto found = [&](const Dependency &d) {
         ASSERT(d.cond_.size() == 1);
-        affectingScopes[d.defId()].insert(d.cond_[0].first);
+        affectingScopes[d.defId()].insert(d.cond_[0].first.name_);
     };
     findDeps(op, conds, found, FindDepsMode::Dep, DEP_WAR, filter, true, false);
 

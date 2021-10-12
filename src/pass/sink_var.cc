@@ -110,7 +110,7 @@ Stmt sinkVar(const Stmt &_op) {
     auto op = _op;
 
     auto allLoops = findAllLoops(op);
-    std::vector<std::vector<std::pair<std::string, DepDirection>>> cond;
+    std::vector<FindDepsCond> cond;
     cond.reserve(allLoops.size());
     for (auto &&loop : allLoops) {
         cond.push_back({{loop, DepDirection::Normal}});
@@ -118,7 +118,7 @@ Stmt sinkVar(const Stmt &_op) {
     std::set<std::pair<std::string, std::string>> deps; // {(var, loop)}
     auto found = [&](const Dependency &d) {
         ASSERT(d.cond_.size() == 1);
-        deps.emplace(d.var_, d.cond_[0].first);
+        deps.emplace(d.var_, d.cond_[0].first.name_);
     };
     findDeps(op, cond, found);
 

@@ -155,7 +155,7 @@ Stmt blend(const Stmt &_ast, const std::string &loop) {
         throw InvalidSchedule("Loop " + loop + " not found");
     }
 
-    std::vector<std::vector<std::pair<std::string, DepDirection>>> cond;
+    std::vector<FindDepsCond> cond;
     for (auto &&item : finder.scopes()) {
         cond.push_back(
             {{loop, DepDirection::Normal}, {item, DepDirection::Inv}});

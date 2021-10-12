@@ -301,7 +301,7 @@ fission(const Stmt &_ast, const std::string &loop, const std::string &after,
     auto variantExpr = findLoopVariance(ast);
 
     // var name -> loop id
-    std::vector<std::vector<std::pair<std::string, DepDirection>>> disjunct;
+    std::vector<FindDepsCond> disjunct;
     for (const std::string &inner : hoist.innerLoops()) {
         disjunct.push_back({{inner, DepDirection::Normal}});
     }
@@ -315,7 +315,7 @@ fission(const Stmt &_ast, const std::string &loop, const std::string &after,
     std::unordered_map<std::string, std::vector<std::string>> toAdd;
     auto found = [&](const Dependency &d) {
         ASSERT(d.cond_.size() == 1);
-        auto &&id = d.cond_[0].first;
+        auto &&id = d.cond_[0].first.name_;
         if (!xLoops.count(d.var_) ||
             std::find(xLoops.at(d.var_).begin(), xLoops.at(d.var_).end(), id) ==
                 xLoops.at(d.var_).end()) {
