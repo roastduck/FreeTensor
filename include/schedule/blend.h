@@ -115,6 +115,8 @@ class BlendPass : public Mutator {
     Expr visit(const Load &op) override;
 };
 
+Stmt blend(const Stmt &ast, const std::string &loop);
+
 } // namespace ir
 
 #endif // BLEND_H

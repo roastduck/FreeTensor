@@ -76,5 +76,15 @@ Expr VarSplit::visit(const Load &_op) {
     return splitMemAcc(op);
 }
 
+Stmt varSplit(const Stmt &_ast, const std::string &def, int dim,
+              VarSplitMode mode, int factor, int nparts) {
+    VarSplit mutator(def, dim, mode == VarSplitMode::FixedSize, factor, nparts);
+    auto ast = mutator(_ast);
+    if (!mutator.found()) {
+        throw InvalidSchedule(def + " not found");
+    }
+    return ast;
+}
+
 } // namespace ir
 

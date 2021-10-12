@@ -1,4 +1,8 @@
-#include <except.h>
+#include <analyze/check_not_modified.h>
+#include <analyze/deps.h>
+#include <pass/shrink_var.h>
+#include <pass/simplify.h>
+#include <pass/sink_var.h>
 #include <schedule/fuse.h>
 
 namespace ir {
@@ -158,6 +162,56 @@ void CheckAccessible::visit(const StmtSeq &op) {
             }
         }
     }
+}
+
+std::pair<Stmt, std::string> fuse(const Stmt &_ast, const std::string &loop0,
+                                  const std::string &loop1) {
+    FuseFor mutator(loop0, loop1);
+    CheckAccessible check(loop0, loop1);
+    check(_ast);
+    if (!check.loop0().loop_.isValid()) {
+        throw InvalidSchedule("Loops not found in a StmtSeq");
+    }
+
+    for (auto &&stmt : check.loop1().surroundings_) {
+        if (stmt->nodeType() == ASTNodeType::VarDef) {
+            for (auto shape :
+                 stmt.as<VarDefNode>()->buffer_->tensor().shape()) {
+                if (!checkNotModified(_ast, shape, CheckNotModifiedSide::Before,
+                                      loop0, CheckNotModifiedSide::Before,
+                                      loop1)) {
+                    throw InvalidSchedule(
+                        (std::string) "The shape of Vars in loop1 shouldn't "
+                                      "be changed in loop0");
+                }
+            }
+        }
+    }
+
+    auto ast = mutator(_ast);
+
+    auto filter = [&](const AccessPoint &later, const AccessPoint &earlier) {
+        return earlier.cursor_.getParentById(mutator.afterId()).isValid() &&
+               later.cursor_.getParentById(mutator.beforeId()).isValid();
+    };
+    auto found = [&](const Dependency &d) {
+        ASSERT(d.cond_.size() == 1);
+        throw InvalidSchedule(
+            dep2Str(d.cond_[0].first, d.var_, d.later(), d.earlier()));
+    };
+    findDeps(ast, {{{mutator.fused(), DepDirection::Normal}}}, found,
+             FindDepsMode::Dep, DEP_ALL, filter);
+
+    try {
+        ast = simplifyPass(ast);
+    } catch (const InvalidProgram &e) {
+        throw InvalidSchedule((std::string) "Fusing " + loop0 + " and " +
+                              loop1 + " loop1 with different lengths? " +
+                              e.what());
+    }
+
+    ast = shrinkVar(sinkVar(ast));
+    return std::make_pair(ast, mutator.fused());
 }
 
 } // namespace ir

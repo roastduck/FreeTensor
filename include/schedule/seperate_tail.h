@@ -93,6 +93,8 @@ class SeperateTail : public Mutator {
     Stmt visit(const VarDef &op) override;
 };
 
+Stmt seperateTail(const Stmt &ast);
+
 } // namespace ir
 
 #endif // SEPERATE_TAIL_H

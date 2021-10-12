@@ -1,4 +1,7 @@
+#include <analyze/check_not_modified.h>
+#include <analyze/deps.h>
 #include <analyze/hash.h>
+#include <pass/simplify.h>
 #include <schedule/inlining.h>
 
 namespace ir {
@@ -71,6 +74,43 @@ Stmt MakeInline::visit(const VarDef &_op) {
     } else {
         return Mutator::visit(_op);
     }
+}
+
+Stmt inlining(const Stmt &_ast, const std::string &def) {
+    std::unordered_map<Load, Expr> replace;
+    auto filter = [&](const AccessPoint &later, const AccessPoint &earlier) {
+        return later.op_->nodeType() == ASTNodeType::Load &&
+               earlier.def_->id() == def;
+    };
+    auto found = [&](const Dependency &dep) {
+        if (replace.count(dep.later().as<LoadNode>())) {
+            throw InvalidSchedule("Multiple writes correspond to one read");
+        }
+        Expr expr;
+        if (dep.earlier()->nodeType() == ASTNodeType::Store) {
+            auto earlier = dep.earlier().as<StoreNode>();
+            expr = MakeInlinePlaceholder(earlier->indices_)(earlier->expr_);
+        } else {
+            ASSERT(dep.earlier()->nodeType() == ASTNodeType::ReduceTo);
+            auto earlier = dep.earlier().as<ReduceToNode>();
+            expr = MakeInlinePlaceholder(earlier->indices_)(earlier->expr_);
+        }
+        if (!checkNotModified(_ast, expr, CheckNotModifiedSide::After,
+                              dep.earlier_.cursor_.id(),
+                              CheckNotModifiedSide::Before,
+                              dep.later_.cursor_.id())) {
+            throw InvalidSchedule(
+                "The expression will be modified after inlining from " +
+                toString(dep.earlier_.cursor_.node()) + " into " +
+                toString(dep.later_.cursor_.node()));
+        }
+        auto later = dep.later().as<LoadNode>();
+        replace[later] = ApplyInlinePlaceholder(later->indices_)(expr);
+    };
+    findDeps(_ast, {{}}, found, FindDepsMode::KillLater, DEP_RAW, filter);
+    auto ast = MakeInline(def, replace)(_ast);
+    ast = simplifyPass(ast);
+    return ast;
 }
 
 } // namespace ir

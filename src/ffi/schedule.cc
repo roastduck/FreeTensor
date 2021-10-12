@@ -20,8 +20,19 @@ void init_ffi_schedule(py::module_ &m) {
         .def(py::init<const Func &>())
         .def("ast", &Schedule::ast)
         .def("func", &Schedule::func)
-        .def("find", &Schedule::find)
-        .def("find_all", &Schedule::findAll)
+        .def("logs", &Schedule::logs)
+        .def("find", static_cast<Cursor (Schedule::*)(
+                         const std::function<bool(const Cursor &)> &) const>(
+                         &Schedule::find))
+        .def("find",
+             static_cast<Cursor (Schedule::*)(const std::string &) const>(
+                 &Schedule::find))
+        .def("find_all",
+             static_cast<std::vector<Cursor> (Schedule::*)(
+                 const std::function<bool(const Cursor &)> &) const>(
+                 &Schedule::findAll))
+        .def("find_all", static_cast<std::vector<Cursor> (Schedule::*)(
+                             const std::string &) const>(&Schedule::findAll))
         .def("split", &Schedule::split, "id"_a, "factor"_a = -1,
              "nparts"_a = -1)
         .def("reorder", &Schedule::reorder, "order"_a)
@@ -44,7 +55,8 @@ void init_ffi_schedule(py::module_ &m) {
         .def("unroll", &Schedule::unroll, "loop"_a, "immedate"_a = false)
         .def("vectorize", &Schedule::vectorize, "loop"_a)
         .def("seperate_tail", &Schedule::seperateTail)
-        .def("as_matmul", &Schedule::asMatMul);
+        .def("as_matmul", &Schedule::asMatMul)
+        .def("auto_parallelize", &Schedule::autoParallelize);
 }
 
 } // namespace ir

@@ -93,6 +93,14 @@ class MakeInitAndReduce : public Mutator {
     Expr visit(const Load &op) override;
 };
 
+std::pair<Stmt, std::tuple<std::string, std::string, std::string, std::string>>
+cache(const Stmt &ast, const std::string &stmt, const std::string &var,
+      MemType mtype);
+
+std::pair<Stmt, std::tuple<std::string, std::string, std::string, std::string>>
+cacheReduction(const Stmt &ast, const std::string &stmt, const std::string &var,
+               MemType mtype);
+
 } // namespace ir
 
 #endif // CACHE_H

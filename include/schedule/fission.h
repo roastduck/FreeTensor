@@ -121,6 +121,11 @@ class FissionFor : public Mutator {
     Stmt visit(const Assert &op) override;
 };
 
+std::pair<Stmt, std::pair<std::unordered_map<std::string, std::string>,
+                          std::unordered_map<std::string, std::string>>>
+fission(const Stmt &ast, const std::string &loop, const std::string &after,
+        const std::string &suffix0, const std::string &suffix1);
+
 } // namespace ir
 
 #endif // FISSION_H

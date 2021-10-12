@@ -1,3 +1,6 @@
+#include <analyze/deps.h>
+#include <pass/flatten_stmt_seq.h>
+#include <pass/simplify.h>
 #include <schedule/blend.h>
 
 namespace ir {
@@ -141,6 +144,37 @@ Expr BlendPass::visit(const Load &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::Load);
     auto op = __op.as<LoadNode>();
     return visitMemAccess(op);
+}
+
+Stmt blend(const Stmt &_ast, const std::string &loop) {
+    auto ast = simplifyPass(_ast); // Const prop for ForNode::len_
+
+    FindAllScopesInside finder(loop);
+    finder(ast);
+    if (!finder.found()) {
+        throw InvalidSchedule("Loop " + loop + " not found");
+    }
+
+    std::vector<FindDepsCond> cond;
+    for (auto &&item : finder.scopes()) {
+        cond.push_back(
+            {{loop, DepDirection::Normal}, {item, DepDirection::Inv}});
+    }
+    auto filter = [&](const AccessPoint &later, const AccessPoint &earlier) {
+        return earlier.cursor_.getParentById(loop).isValid() &&
+               later.cursor_.getParentById(loop).isValid();
+    };
+    auto found = [&](const Dependency &d) {
+        ASSERT(d.cond_.size() == 2);
+        throw InvalidSchedule(
+            dep2Str(d.cond_[1].first, d.var_, d.later(), d.earlier()));
+    };
+    findDeps(ast, cond, found, FindDepsMode::Dep, DEP_ALL, filter);
+
+    auto loopVari = findLoopVariance(ast);
+    ast = BlendPass(loop, loopVari.first, loopVari.second)(ast);
+    ast = flattenStmtSeq(ast);
+    return ast;
 }
 
 } // namespace ir

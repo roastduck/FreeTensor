@@ -1,5 +1,7 @@
+#include <analyze/deps.h>
 #include <analyze/hash.h>
-#include <except.h>
+#include <pass/make_reduction.h>
+#include <schedule/check_loop_order.h>
 #include <schedule/reorder.h>
 
 namespace ir {
@@ -76,6 +78,58 @@ Stmt SwapFor::visit(const StmtSeq &_op) {
     } else {
         return Mutator::visit(_op);
     }
+}
+
+Stmt reorder(const Stmt &_ast, const std::vector<std::string> &dstOrder) {
+    auto ast = makeReduction(_ast);
+
+    CheckLoopOrder checker(dstOrder);
+    checker(ast);
+    auto curOrder = checker.order();
+
+    std::vector<int> index;
+    index.reserve(curOrder.size());
+    for (auto &&loop : curOrder) {
+        index.emplace_back(
+            std::find(dstOrder.begin(), dstOrder.end(), loop->id()) -
+            dstOrder.begin());
+    }
+
+    // Bubble Sort
+    size_t n = index.size();
+    for (size_t i = 0; i < n; i++) {
+        for (size_t j = 0; j + 1 < n; j++) {
+            if (index[j] > index[j + 1]) {
+                auto filter = [&](const AccessPoint &later,
+                                  const AccessPoint &earlier) {
+                    return earlier.cursor_.getParentById(curOrder[j + 1]->id())
+                               .isValid() &&
+                           later.cursor_.getParentById(curOrder[j + 1]->id())
+                               .isValid();
+                };
+                auto found = [&](const Dependency &d) {
+                    ASSERT(d.cond_.size() == 1);
+                    std::ostringstream os;
+                    os << "Loop " << curOrder[j]->id() << " and "
+                       << curOrder[j + 1]->id() << " are not permutable: "
+                       << dep2Str(d.cond_[0].first, d.var_, d.later(),
+                                  d.earlier());
+                    throw InvalidSchedule(os.str());
+                };
+                findDeps(ast,
+                         {{{curOrder[j]->id(), DepDirection::Inv}},
+                          {{curOrder[j + 1]->id(), DepDirection::Inv}}},
+                         found, FindDepsMode::Dep, DEP_ALL, filter);
+
+                SwapFor swapper(curOrder[j], curOrder[j + 1]);
+                ast = swapper(ast);
+                std::swap(index[j], index[j + 1]);
+                std::swap(curOrder[j], curOrder[j + 1]);
+            }
+        }
+    }
+
+    return ast;
 }
 
 } // namespace ir

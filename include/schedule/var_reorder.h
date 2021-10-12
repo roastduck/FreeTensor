@@ -54,6 +54,9 @@ class VarReorder : public Mutator {
     Stmt visit(const MatMul &op) override;
 };
 
+Stmt varReorder(const Stmt &ast, const std::string &def,
+                const std::vector<int> &order);
+
 } // namespace ir
 
 #endif // VAR_REORDER_H

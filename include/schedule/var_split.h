@@ -5,6 +5,8 @@
 
 namespace ir {
 
+enum VarSplitMode : int { FixedSize, RelaxedSize };
+
 class VarSplit : public Mutator {
     std::string def_, var_;
     int dim_;
@@ -38,6 +40,9 @@ class VarSplit : public Mutator {
     Stmt visit(const ReduceTo &op) override;
     Expr visit(const Load &op) override;
 };
+
+Stmt varSplit(const Stmt &ast, const std::string &def, int dim,
+              VarSplitMode mode, int factor, int nparts);
 
 } // namespace ir
 

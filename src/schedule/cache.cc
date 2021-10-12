@@ -1,7 +1,11 @@
 #include <climits>
 #include <cmath>
 
+#include <pass/make_reduction.h>
+#include <pass/shrink_var.h>
+#include <pass/simplify.h>
 #include <schedule/cache.h>
+#include <schedule/check_var_cross_parallel.h>
 
 namespace ir {
 
@@ -273,6 +277,71 @@ Expr MakeInitAndReduce::visit(const Load &op) {
             "Any Load node in a cache_reduce region is not allowed");
     }
     return Mutator::visit(op);
+}
+
+std::pair<Stmt, std::tuple<std::string, std::string, std::string, std::string>>
+cache(const Stmt &_ast, const std::string &stmt, const std::string &var,
+      MemType mtype) {
+    std::string fillStmt, flushStmt, newVar, oldDef, newDef;
+    MakeCacheVar makeCacheVar(stmt, var, mtype, false);
+    auto ast = makeCacheVar(_ast);
+    newVar = makeCacheVar.newVar();
+    oldDef = makeCacheVar.oldDef();
+    newDef = makeCacheVar.newDef();
+    if (newDef.empty()) {
+        throw InvalidSchedule("Statement " + stmt + " not found");
+    }
+
+    BuiltinSimplify::LowerBoundsMap lower;
+    BuiltinSimplify::UpperBoundsMap upper;
+    std::tie(ast, lower, upper) = simplifyAndGetBounds<BuiltinSimplify>(ast);
+    auto rBound =
+        compAccessBound(ast, newDef, lower, upper, COMP_ACCESS_BOUND_READ);
+    auto wBound =
+        compAccessBound(ast, newDef, lower, upper, COMP_ACCESS_BOUND_WRITE);
+    MakeFillAndFlush makeFillAndFlush(stmt, var, newVar, oldDef, rBound,
+                                      wBound);
+    ast = makeFillAndFlush(ast);
+    fillStmt = makeFillAndFlush.fillStmt();
+    flushStmt = makeFillAndFlush.flushStmt();
+
+    ast = shrinkSingleVar(ast, newDef);
+    checkVarCrossParallel(ast, newDef, mtype);
+    return std::make_pair(
+        ast, std::make_tuple(std::move(fillStmt), std::move(flushStmt),
+                             std::move(newVar), std::move(newDef)));
+}
+
+std::pair<Stmt, std::tuple<std::string, std::string, std::string, std::string>>
+cacheReduction(const Stmt &_ast, const std::string &stmt,
+               const std::string &var, MemType mtype) {
+    std::string initStmt, reduceStmt, newVar, oldDef, newDef;
+    auto ast = makeReduction(_ast);
+
+    MakeCacheVar makeCacheVar(stmt, var, mtype, true);
+    ast = makeCacheVar(ast);
+    newVar = makeCacheVar.newVar();
+    oldDef = makeCacheVar.oldDef();
+    newDef = makeCacheVar.newDef();
+    if (newDef.empty()) {
+        throw InvalidSchedule("Statement " + stmt + " not found");
+    }
+
+    BuiltinSimplify::LowerBoundsMap lower;
+    BuiltinSimplify::UpperBoundsMap upper;
+    std::tie(ast, lower, upper) = simplifyAndGetBounds<BuiltinSimplify>(ast);
+    auto bound = compAccessBound(ast, newDef, lower, upper);
+    MakeInitAndReduce makeInitAndReduce(stmt, var, newVar, oldDef, newDef,
+                                        bound);
+    ast = makeInitAndReduce(ast);
+    initStmt = makeInitAndReduce.initStmt();
+    reduceStmt = makeInitAndReduce.reduceStmt();
+
+    ast = shrinkSingleVar(ast, newDef);
+    checkVarCrossParallel(ast, newDef, mtype);
+    return std::make_pair(
+        ast, std::make_tuple(std::move(initStmt), std::move(reduceStmt),
+                             std::move(newVar), std::move(newDef)));
 }
 
 } // namespace ir

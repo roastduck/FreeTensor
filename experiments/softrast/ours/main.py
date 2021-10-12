@@ -61,25 +61,20 @@ def rasterize(vertices, faces, y, h, w, n_verts, n_faces, device, mtype,
 
         sigma = 1e-4
 
-        @ir.transform
+        @ir.inline
         def cross_product(v1, v2):
-            ir.declare_var(v1, (2,), "float32", "input", local_mtype)
-            ir.declare_var(v2, (2,), "float32", "input", local_mtype)
             y = ir.create_var((), "float32", "output", local_mtype)
             y[()] = v1[0] * v2[1] - v1[1] * v2[0]
             return y
 
-        @ir.transform
+        @ir.inline
         def norm(v):
-            ir.declare_var(v, (2,), "float32", "input", local_mtype)
             y = ir.create_var((), "float32", "output", local_mtype)
             y[()] = ir.sqrt(v[0] * v[0] + v[1] * v[1])
             return y
 
-        @ir.transform
+        @ir.inline
         def sub(v1, v2):
-            ir.declare_var(v1, (2,), "float32", "input", local_mtype)
-            ir.declare_var(v2, (2,), "float32", "input", local_mtype)
             y = ir.create_var((2,), "float32", "output", local_mtype)
             y[0] = v1[0] - v2[0]
             y[1] = v1[1] - v2[1]
@@ -170,10 +165,10 @@ def rasterize(vertices, faces, y, h, w, n_verts, n_faces, device, mtype,
             s.inline(':dist')
             Ljk = s.merge('Lj', 'Lk')
             serial, thr = s.split(Ljk, 1024)
-            s.parallelize(thr, 'threadIdx.x')
             s.set_mem_type(":v1", "gpu/shared")
             s.set_mem_type(":v2", "gpu/shared")
             s.set_mem_type(":v3", "gpu/shared")
+            s.parallelize(thr, 'threadIdx.x')
             s.parallelize('Li', 'blockIdx.x')
         f = ir.lower(s.func(), device.target())
         print(f)

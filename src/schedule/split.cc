@@ -1,3 +1,4 @@
+#include <pass/simplify.h>
 #include <schedule/split.h>
 
 namespace ir {
@@ -51,6 +52,19 @@ Expr Splitter::visit(const Var &op) {
     } else {
         return Mutator::visit(op);
     }
+}
+
+std::pair<Stmt, std::pair<std::string, std::string>>
+split(const Stmt &_ast, const std::string &id, int factor, int nparts) {
+    Splitter mutator(id, factor, nparts);
+    auto ast = mutator(_ast);
+    if (!mutator.found()) {
+        throw InvalidSchedule("Loop not found");
+    }
+    ast = simplifyPass(ast); // try to remove divisions, or it will hinder
+                             // the dependency analysis
+    return std::make_pair(ast,
+                          std::make_pair(mutator.outerId(), mutator.innerId()));
 }
 
 } // namespace ir

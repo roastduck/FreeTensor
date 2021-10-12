@@ -20,6 +20,8 @@ class SetMemType : public Mutator {
     Stmt visit(const VarDef &op) override;
 };
 
+Stmt setMemType(const Stmt &ast, const std::string &def, MemType mtype);
+
 } // namespace ir
 
 #endif // SET_MEM_TYPE_H

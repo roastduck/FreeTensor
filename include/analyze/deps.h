@@ -2,6 +2,8 @@
 #define DEPS_H
 
 #include <functional>
+#include <iostream>
+#include <regex>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -18,12 +20,10 @@ namespace ir {
 
 struct IterAxis {
     Expr iter_, begin_, end_; /// begin_[i] <= iter_[i] < end_[i]
-    bool parallel_, innerScopeCrossThreads_;
+    std::string parallel_;
 
-    IterAxis(Expr iter, Expr begin, Expr end, bool parallel = false,
-             bool innerScopeCrossThreads = false)
-        : iter_(iter), begin_(begin), end_(end), parallel_(parallel),
-          innerScopeCrossThreads_(innerScopeCrossThreads) {}
+    IterAxis(Expr iter, Expr begin, Expr end, const std::string &parallel = "")
+        : iter_(iter), begin_(begin), end_(end), parallel_(parallel) {}
 };
 
 struct AccessPoint {
@@ -144,11 +144,19 @@ enum class DepDirection : int {
     Different,
 };
 
-typedef std::vector<std::pair<std::string, DepDirection>> FindDepsCond;
+struct NodeIDOrParallelScope {
+    std::string name_;
+    bool isNode_;
+
+    NodeIDOrParallelScope(const std::string &name, bool isNode = true)
+        : name_(name), isNode_(isNode) {}
+};
+
+typedef std::vector<std::pair<NodeIDOrParallelScope, DepDirection>>
+    FindDepsCond;
 
 struct Dependency {
-    const std::vector<std::pair<std::string, DepDirection>>
-        &cond_; /// sub-condition that fails
+    const FindDepsCond &cond_; /// sub-condition that fails
     const std::string &var_;
     const AccessPoint &later_, &earlier_;
 
@@ -256,6 +264,11 @@ class AnalyzeDeps : public Visitor {
     ISLMap makeConstraintOfSingleLoop(const std::string &loop,
                                       DepDirection mode, int iterDim);
 
+    ISLMap makeConstraintOfParallelScope(const std::string &parallel,
+                                         DepDirection mode, int iterDim,
+                                         const Ref<AccessPoint> &point,
+                                         const Ref<AccessPoint> &other);
+
     /**
      * Constraint for variables defined inside some loops
      * E.g.
@@ -356,6 +369,18 @@ void findDeps(const Stmt &op, const std::vector<FindDepsCond> &cond,
               FindDepsMode mode = FindDepsMode::Dep, DepType depType = DEP_ALL,
               const FindDepsFilter &filter = nullptr,
               bool ignoreReductionWAW = true, bool eraseOutsideVarDef = true);
+
+inline std::string dep2Str(const NodeIDOrParallelScope &scope,
+                           const std::string &var, const AST &later,
+                           const AST &earlier) {
+    std::ostringstream os;
+    os << "Dependency "
+       << (later->nodeType() == ASTNodeType::Load ? "READ " : "WRITE ") << later
+       << " after "
+       << (earlier->nodeType() == ASTNodeType::Load ? "READ " : "WRITE ")
+       << earlier << " along " << scope.name_ << " cannot be resolved";
+    return std::regex_replace(os.str(), std::regex("\n"), "");
+}
 
 }; // namespace ir
 

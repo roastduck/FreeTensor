@@ -271,7 +271,7 @@ Stmt makeSync(const Stmt &_op) {
     finder(op);
     auto &&threads = finder.results();
 
-    std::vector<std::vector<std::pair<std::string, DepDirection>>> query;
+    std::vector<FindDepsCond> query;
     query.reserve(threads.size());
     for (auto &&thr : threads) {
         query.push_back({{thr.loop_->id(), DepDirection::Different}});

@@ -46,6 +46,9 @@ class CheckAccessible : public Visitor {
     void visit(const StmtSeq &op) override;
 };
 
+std::pair<Stmt, std::string> fuse(const Stmt &ast, const std::string &loop0,
+                                  const std::string &loop1);
+
 } // namespace ir
 
 #endif // FUSE_H

@@ -18,6 +18,24 @@ def test_unsolvable_dependency():
     assert ast_.match(ast)
 
 
+def test_sharing_locals():
+    with ir.VarDef([("x", (100,), "int32", "input", "gpu/global"),
+                    ("t", (100,), "int32", "cache", "gpu/local"),
+                    ("y", (100,), "int32", "output", "gpu/global")]) as (x, t,
+                                                                         y):
+        with ir.For("i", 0, 100, nid="L1") as i:
+            t[i] = x[i] * 2
+        with ir.For("i", 0, 100, nid="L2") as i:
+            y[i] = t[i] + 1
+    ast = ir.pop_ast()
+    print(ast)
+    s = ir.Schedule(ast)
+    with pytest.raises(ir.InvalidSchedule):
+        s.parallelize("L1", "threadIdx.x")
+    ast_ = s.ast()  # Should not changed
+    assert ast_.match(ast)
+
+
 def test_not_found():
     with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ir.For("i", 0, 4) as i:

@@ -1,3 +1,5 @@
+#include <pass/make_reduction.h>
+#include <pass/simplify.h>
 #include <schedule/as_matmul.h>
 
 namespace ir {
@@ -223,6 +225,13 @@ Stmt AsMatMul::visit(const VarDef &op) {
     outerDefs_.erase(op->name_);
     buffers_.erase(op->name_);
     return ret;
+}
+
+Stmt asMatMul(const Stmt &_ast, const std::string &loop) {
+    auto ast = simplifyPass(_ast); // const prop
+    ast = makeReduction(ast);
+    ast = AsMatMul(loop)(ast);
+    return ast;
 }
 
 } // namespace ir

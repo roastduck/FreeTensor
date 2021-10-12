@@ -27,7 +27,7 @@ Stmt MakeAtomic::visit(const ReduceTo &_op) {
 Stmt makeAtomic(const Stmt &_op) {
     auto op = makeReduction(_op);
 
-    std::vector<std::vector<std::pair<std::string, DepDirection>>> cond;
+    std::vector<FindDepsCond> cond;
     FindAllParallel finder;
     finder(op);
     for (auto &&[loop, info] : finder.results()) {
@@ -53,7 +53,7 @@ Stmt makeAtomic(const Stmt &_op) {
     auto found = [&](const Dependency &d) {
         // TODO: Make these statements device agnostic
         if (d.later_.buffer_->mtype() == MemType::GPUShared &&
-            finder.results().at(d.cond_[0].first).type_.substr(0, 10) !=
+            finder.results().at(d.cond_[0].first.name_).type_.substr(0, 10) !=
                 "threadIdx.") {
             return;
         }

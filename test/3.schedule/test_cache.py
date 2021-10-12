@@ -191,6 +191,25 @@ def test_no_stmt():
     assert ast_.match(ast)
 
 
+def test_sharing_locals():
+    with ir.VarDef([
+        ("x", (4, 8), "int32", "input", "gpu/global"),
+        ("y", (4, 8), "int32", "output", "gpu/global"),
+    ]) as (x, y):
+        with ir.For("i", 0, 4, nid="L1") as i:
+            with ir.For("j", 0, 8, nid="L2") as j:
+                y[i, j] = x[i, j] * 2
+    ast = ir.pop_ast()
+    print(ast)
+    s = ir.Schedule(ast)
+    s.parallelize("L2", "threadIdx.x")
+    ast = s.ast()
+    with pytest.raises(ir.InvalidSchedule):
+        s.cache("L2", "y", "gpu/local")
+    ast_ = s.ast()  # Should not changed
+    assert ast_.match(ast)
+
+
 def test_local_var_as_index():
     with ir.VarDef([("x", (4, 8), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
