@@ -516,6 +516,17 @@ class Schedule(ffi.Schedule):
         """
         super(Schedule, self).as_matmul(toId(loop))
 
+    def auto_schedule(self, target):
+        """
+        Automatic scheduling using some heuristics
+
+        Parameters
+        ----------
+        target : Target
+            Target architecture
+        """
+        super(Schedule, self).auto_schedule(target)
+
     def auto_parallelize(self, target):
         """
         Automatically parallelize some loops using some heuristics

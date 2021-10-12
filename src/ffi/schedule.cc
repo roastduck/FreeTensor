@@ -56,6 +56,7 @@ void init_ffi_schedule(py::module_ &m) {
         .def("vectorize", &Schedule::vectorize, "loop"_a)
         .def("seperate_tail", &Schedule::seperateTail)
         .def("as_matmul", &Schedule::asMatMul)
+        .def("auto_schedule", &Schedule::autoSchedule)
         .def("auto_parallelize", &Schedule::autoParallelize)
         .def("auto_set_mem_type", &Schedule::autoSetMemType);
 }

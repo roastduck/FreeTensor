@@ -344,12 +344,12 @@ void Schedule::asMatMul(const std::string &loop) {
     }
 }
 
-void Schedule::autoParallelize(const Target &target) {
-    auto isParallelLoop = [](const Cursor &c) {
-        return c.nodeType() == ASTNodeType::For &&
-               !c.node().as<ForNode>()->parallel_.empty();
-    };
+void Schedule::autoSchedule(const Target &target) {
+    autoParallelize(target);
+    autoSetMemType(target);
+}
 
+void Schedule::autoParallelize(const Target &target) {
     // [GPU only] Try to parallelize loops accessing contiguous items as warps
     if (target.type() == TargetType::GPU) {
         CountContigAccessLoops contigFinder;
@@ -363,15 +363,12 @@ void Schedule::autoParallelize(const Target &target) {
                   });
         for (auto &&[loopId, cnt] : contigLoops) {
             auto loop = find(loopId);
-            if (getCursorByFilter(loop.node(), isParallelLoop).empty()) {
-                // No children loops are parallel
-                try {
-                    // FIXME: Do not hard-code 32
-                    auto [l0, l1] = split(loop.id(), 32);
-                    parallelize(l1, "threadIdx.x");
-                } catch (const InvalidSchedule &e) {
-                    // do nothing
-                }
+            try {
+                // FIXME: Do not hard-code 32
+                auto [l0, l1] = split(loop.id(), 32);
+                parallelize(l1, "threadIdx.x");
+            } catch (const InvalidSchedule &e) {
+                // do nothing
             }
         }
     }
@@ -400,6 +397,10 @@ void Schedule::autoParallelize(const Target &target) {
 
                 case TargetType::GPU: {
                     auto loop = find(loopId);
+                    auto isParallelLoop = [](const Cursor &c) {
+                        return c.nodeType() == ASTNodeType::For &&
+                               !c.node().as<ForNode>()->parallel_.empty();
+                    };
                     bool childrenAllSerial =
                         getCursorByFilter(loop.node(), isParallelLoop).empty();
                     // 1. make sure all SMs are used

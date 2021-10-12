@@ -5,11 +5,30 @@
 namespace ir {
 
 Stmt Parallelize::visit(const For &_op) {
+    auto thisParallel = _op->id() == loop_ ? parallel_ : _op->parallel_;
+    Stmt __op;
     loopStack_.emplace_back(_op->id());
-    auto __op = Mutator::visit(_op);
+    if (thisParallel.substr(0, 10) == "threadIdx." ||
+        thisParallel.substr(0, 9) == "blockIdx.") {
+        if (para2var_.count(thisParallel)) {
+            auto oldVar = para2var_.at(thisParallel);
+            para2var_[thisParallel] = _op->iter_;
+            hiddenVars_.insert(oldVar);
+            __op = Mutator::visit(_op);
+            hiddenVars_.erase(oldVar);
+            para2var_[thisParallel] = oldVar;
+        } else {
+            para2var_[thisParallel] = _op->iter_;
+            __op = Mutator::visit(_op);
+            para2var_.erase(thisParallel);
+        }
+    } else {
+        __op = Mutator::visit(_op);
+    }
+    loopStack_.pop_back();
+
     ASSERT(__op->nodeType() == ASTNodeType::For);
     auto op = __op.as<ForNode>();
-    loopStack_.pop_back();
 
     if (op->id() == loop_) {
         op->parallel_ = parallel_;
@@ -17,6 +36,15 @@ Stmt Parallelize::visit(const For &_op) {
         done_ = true;
     }
     return op;
+}
+
+Expr Parallelize::visit(const Var &op) {
+    if (hiddenVars_.count(op->name_)) {
+        throw InvalidSchedule("Unable to bind multiple loops, which are used "
+                              "simultaneously, all to " +
+                              parallel_);
+    }
+    return Mutator::visit(op);
 }
 
 Stmt parallelize(const Stmt &_ast, const std::string &loop,

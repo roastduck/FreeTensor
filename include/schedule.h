@@ -411,6 +411,11 @@ class Schedule {
     void asMatMul(const std::string &loop);
 
     /**
+     * Automatic scheduling using some heuristics
+     */
+    void autoSchedule(const Target &target);
+
+    /**
      * Automatically parallelize some loops using some heuristics
      *
      * @param target : Target architecture
