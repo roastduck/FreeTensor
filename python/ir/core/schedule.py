@@ -60,6 +60,9 @@ class Schedule(ffi.Schedule):
 
         To fuse consecutive loops, use `fuse` instead
 
+        `parallelize`, `unroll` and `vectorize` properties will be reset on the
+        fused loop
+
         Parameters
         ----------
         loop1, loop2 : str, Stmt or Cursor
@@ -512,3 +515,14 @@ class Schedule(ffi.Schedule):
             if the loop cannot be transformed to be a matrix multiplication
         """
         super(Schedule, self).as_matmul(toId(loop))
+
+    def auto_parallelize(self, target):
+        """
+        Automatically parallelize some loops using some heuristics
+
+        Parameters
+        ----------
+        target : Target
+            Target architecture
+        """
+        super(Schedule, self).auto_parallelize(target)

@@ -5,6 +5,7 @@
 #include <unordered_map>
 
 #include <cursor.h>
+#include <driver/target.h>
 #include <func.h>
 #include <schedule/var_split.h>
 #include <stmt.h>
@@ -16,6 +17,8 @@ enum MoveToSide : int { Before, After };
 class Schedule {
     Func func_;
     Stmt ast_;
+
+    std::vector<std::string> logs_;
 
   public:
     Schedule() = default;
@@ -38,6 +41,11 @@ class Schedule {
     Stmt ast() const { return ast_; }
 
     /**
+     * @return : Logs of all schedules applied
+     */
+    std::vector<std::string> logs() const { return logs_; }
+
+    /**
      * Find all nodes in the current AST satisfying a given condition
      * @param filter : A callback. Return true for acceptance
      */
@@ -50,6 +58,22 @@ class Schedule {
      * @throw Error : if there is more than one, or there is no node found
      */
     Cursor find(const std::function<bool(const Cursor &)> &filter) const;
+
+    /**
+     * Find a (maybe non-existing) node in the current AST by ID
+     * @param id: ID
+     */
+    std::vector<Cursor> findAll(const std::string &id) const {
+        return findAll([&id](const Cursor &c) { return c.id() == id; });
+    }
+
+    /**
+     * Find a node in the current AST by ID
+     * @param id: ID
+     */
+    Cursor find(const std::string &id) const {
+        return find([&id](const Cursor &c) { return c.id() == id; });
+    }
 
     /**
      * Split a loop into two nested loops
@@ -80,6 +104,9 @@ class Schedule {
      * Merge two directly nested loops into one
      *
      * To fuse consecutive loops, use `fuse` instead
+     *
+     * `parallelize`, `unroll` and `vectorize` properties will be reset on the
+     * fused loop
      *
      * @param loop1, loop2 : ID of the loops to be merged, can be in any order
      * @throw InvalidSchedule if the loops are not directly nested
@@ -382,6 +409,13 @@ class Schedule {
      * multiplication
      */
     void asMatMul(const std::string &loop);
+
+    /**
+     * Automatically parallelize some loops using some heuristics
+     *
+     * @param target : Target architecture
+     */
+    void autoParallelize(const Target &target);
 };
 
 } // namespace ir
