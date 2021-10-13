@@ -47,8 +47,7 @@ def load_faces(path: str):
 jit_cache = {}
 
 
-def conv(adj, x, w0, w1, w2, w3, y, n_faces, in_feats, out_feats, device, mtype,
-         local_mtype):
+def conv(adj, x, w0, w1, w2, w3, y, n_faces, in_feats, out_feats, device):
     # TODO: Dilation
     # TODO: Stride
     # TODO: Batch
@@ -57,6 +56,7 @@ def conv(adj, x, w0, w1, w2, w3, y, n_faces, in_feats, out_feats, device, mtype,
         exe = jit_cache[(n_faces, in_feats, out_feats)]
 
     else:
+        mtype = device.main_mem_type()
 
         @ir.transform
         def f(adj, x, w0, w1, w2, w3, y):
@@ -67,7 +67,7 @@ def conv(adj, x, w0, w1, w2, w3, y, n_faces, in_feats, out_feats, device, mtype,
             ir.declare_var(w2, (in_feats, out_feats), "float32", "input", mtype)
             ir.declare_var(w3, (in_feats, out_feats), "float32", "input", mtype)
             ir.declare_var(y, (n_faces, out_feats), "float32", "output", mtype)
-            '''nid: Li'''
+
             for i in range(n_faces):
                 sum1 = lop.zeros((in_feats,), "float32", mtype)()
                 sum2 = lop.zeros((in_feats,), "float32", mtype)()
@@ -80,7 +80,6 @@ def conv(adj, x, w0, w1, w2, w3, y, n_faces, in_feats, out_feats, device, mtype,
                     lop.add_to(sum3, lop.abs(lop.sub(x[adj[i, p]], x[i])))
                 for j in range(out_feats):
                     y[i, j] = 0.
-                    '''nid: Lk'''
                     for k in range(in_feats):
                         y[i, j] += x[i, k] * w0[k, j] + sum1[k] * w1[
                             k, j] + sum2[k] * w2[k, j] + sum3[k] * w3[k, j]
@@ -120,13 +119,9 @@ if __name__ == '__main__':
 
     if device == 'gpu':
         ir_dev = ir.Device(ir.GPU())
-        ir_mtype = 'gpu/global'
-        ir_local_mtype = 'gpu/local'
     else:
         assert device == 'cpu'
         ir_dev = ir.Device(ir.CPU())
-        ir_mtype = 'cpu'
-        ir_local_mtype = 'cpu'
 
     adj = ir.Array(adj, ir_dev)
     x = ir.Array(x, ir_dev)
@@ -137,12 +132,11 @@ if __name__ == '__main__':
     y = ir.Array(y, ir_dev)
 
     test_num = 1000
-    conv(adj, x, w0, w1, w2, w3, y, n_faces, in_feats, out_feats, ir_dev,
-         ir_mtype, ir_local_mtype)  # init lazy ops
+    conv(adj, x, w0, w1, w2, w3, y, n_faces, in_feats, out_feats,
+         ir_dev)  # init lazy ops
     t0 = time.time()
     for i in range(test_num):
-        conv(adj, x, w0, w1, w2, w3, y, n_faces, in_feats, out_feats, ir_dev,
-             ir_mtype, ir_local_mtype)
+        conv(adj, x, w0, w1, w2, w3, y, n_faces, in_feats, out_feats, ir_dev)
     t1 = time.time()
 
     print(f"Time = {(t1 - t0) / test_num * 1000} ms")

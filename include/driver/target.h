@@ -3,6 +3,7 @@
 
 #include <string>
 
+#include <buffer.h>
 #include <ref.h>
 
 namespace ir {
@@ -23,6 +24,7 @@ class Target {
     ~Target() = default;
     virtual TargetType type() const = 0;
     virtual std::string toString() const = 0;
+    virtual MemType mainMemType() const = 0;
 };
 
 class CPU : public Target {
@@ -31,6 +33,7 @@ class CPU : public Target {
 
     TargetType type() const override { return TargetType::CPU; }
     std::string toString() const override { return "CPU"; }
+    MemType mainMemType() const override { return MemType::CPU; }
 };
 
 class GPU : public Target {
@@ -41,6 +44,7 @@ class GPU : public Target {
 
     TargetType type() const override { return TargetType::GPU; }
     std::string toString() const override { return "GPU"; }
+    MemType mainMemType() const override { return MemType::GPUGlobal; }
 
     /// E.g. (7, 0) for compute capability 7.0 (sm_70)
     void setComputeCapability(int major, int minor) {

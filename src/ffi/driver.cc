@@ -23,10 +23,9 @@ void init_ffi_driver(py::module_ &m) {
                 target->setUseNativeArch(useNativeArch);
             },
             "useNativeArch"_a = true)
-        .def("use_native_arch",
-             [](const Ref<Target> &target) { return target->useNativeArch(); })
-        .def("__str__",
-             [](const Ref<Target> &target) { return target->toString(); });
+        .def("use_native_arch", &Target::useNativeArch)
+        .def("__str__", &Target::toString)
+        .def("main_mem_type", &Target::mainMemType);
     py::class_<CPU, Ref<CPU>>(m, "CPU", pyTarget)
         .def(py::init([](bool useNativeArch) {
                  return Ref<CPU>::make(useNativeArch);
@@ -48,7 +47,8 @@ void init_ffi_driver(py::module_ &m) {
 
     py::class_<Device>(m, "Device")
         .def(py::init<const Ref<Target> &, size_t>(), "target"_a, "num"_a = 0)
-        .def("target", &Device::target);
+        .def("target", &Device::target)
+        .def("main_mem_type", &Device::mainMemType);
 
     py::class_<Array>(m, "Array")
         .def(py::init([](py::array_t<float, py::array::c_style> &np,
