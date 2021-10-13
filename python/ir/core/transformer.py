@@ -466,7 +466,7 @@ class ASTTransformer(ast.NodeTransformer):
                     for i in range(arg.size()):
                         var[arg.indices(i)] = arg.at(i)
                 else:
-                    assert False, "Invalid function argument"
+                    assert False, f"Invalid function argument calling {callee.name}"
             callee.set_arg_var(arg_var)
             node.expr_ptr = callee
         else:

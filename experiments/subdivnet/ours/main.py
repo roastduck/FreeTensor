@@ -3,6 +3,7 @@ import time
 import itertools
 import numpy as np
 import ir
+import ir.libop as lop
 import ir.debug
 
 
@@ -68,21 +69,15 @@ def conv(adj, x, w0, w1, w2, w3, y, n_faces, in_feats, out_feats, device, mtype,
             ir.declare_var(y, (n_faces, out_feats), "float32", "output", mtype)
             '''nid: Li'''
             for i in range(n_faces):
-                sum1 = ir.create_var((in_feats,), "float32", "cache",
-                                     local_mtype)
-                sum2 = ir.create_var((in_feats,), "float32", "cache",
-                                     local_mtype)
-                sum3 = ir.create_var((in_feats,), "float32", "cache",
-                                     local_mtype)
-                for k in range(in_feats):
-                    sum1[k] = 0.
-                    sum2[k] = 0.
-                    sum3[k] = 0.
-                    for p in range(3):
-                        sum1[k] += x[adj[i, p], k]
-                        sum2[k] += ir.abs(x[adj[i, p], k] -
-                                          x[adj[i, (p + 1) % 3], k])
-                        sum3[k] += ir.abs(x[adj[i, p], k] - x[i, k])
+                sum1 = lop.zeros((in_feats,), "float32", mtype)()
+                sum2 = lop.zeros((in_feats,), "float32", mtype)()
+                sum3 = lop.zeros((in_feats,), "float32", mtype)()
+                for p in range(3):
+                    lop.add_to(sum1, x[adj[i, p]])
+                    lop.add_to(
+                        sum2,
+                        lop.abs(lop.sub(x[adj[i, p]], x[adj[i, (p + 1) % 3]])))
+                    lop.add_to(sum3, lop.abs(lop.sub(x[adj[i, p]], x[i])))
                 for j in range(out_feats):
                     y[i, j] = 0.
                     '''nid: Lk'''
@@ -91,13 +86,7 @@ def conv(adj, x, w0, w1, w2, w3, y, n_faces, in_feats, out_feats, device, mtype,
                             k, j] + sum2[k] * w2[k, j] + sum3[k] * w3[k, j]
 
         s = ir.Schedule(f)
-        if device.target().type() == ir.TargetType.CPU:
-            s.parallelize('Li', 'openmp')
-        else:
-            s.cache_reduction('Lk', 'y', 'gpu/local')
-            s.split('Li', 128)
-            s.parallelize('Li.0', 'blockIdx.x')
-            s.parallelize('Li.1', 'threadIdx.x')
+        s.auto_schedule(device.target())
         f = ir.lower(s.func(), device.target())
         print(f)
         code = ir.codegen(f, device.target())
