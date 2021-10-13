@@ -527,6 +527,17 @@ class Schedule(ffi.Schedule):
         """
         super(Schedule, self).auto_schedule(target)
 
+    def auto_fuse(self, target):
+        """
+        Automatically fuse consecutive loops using some heuristics
+
+        Parameters
+        ----------
+        target : Target
+            Target architecture
+        """
+        super(Schedule, self).auto_fuse(target)
+
     def auto_parallelize(self, target):
         """
         Automatically parallelize some loops using some heuristics

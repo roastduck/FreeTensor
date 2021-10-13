@@ -345,8 +345,30 @@ void Schedule::asMatMul(const std::string &loop) {
 }
 
 void Schedule::autoSchedule(const Target &target) {
+    autoFuse(target);
     autoParallelize(target);
     autoSetMemType(target);
+}
+
+void Schedule::autoFuse(const Target &target) {
+    // Try to fuse each pair of consecutive loops
+    std::function<void(const Ref<LoopNest> &nest)> visitNest =
+        [&, this](const Ref<LoopNest> &nest) {
+            std::string lastId;
+            for (auto &&subNest : nest->subLoops_) {
+                visitNest(subNest);
+                auto thisId = subNest->loop_->id();
+                if (!lastId.empty()) {
+                    try {
+                        thisId = fuse(lastId, thisId);
+                    } catch (InvalidSchedule &e) {
+                        // do nothing
+                    }
+                }
+                lastId = thisId;
+            }
+        };
+    visitNest(getLoopNestTree(ast_));
 }
 
 void Schedule::autoParallelize(const Target &target) {
@@ -443,6 +465,7 @@ void Schedule::autoParallelize(const Target &target) {
 }
 
 void Schedule::autoSetMemType(const Target &target) {
+    // Try to put each VarDef as near to processor as possible
     if (target.type() == TargetType::GPU) {
         for (auto &&defId : allDefs(ast_, {AccessType::Cache})) {
             try {

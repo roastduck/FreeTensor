@@ -412,8 +412,15 @@ class Schedule {
 
     /**
      * Automatic scheduling using some heuristics
+     *
+     * @param target : Target architecture
      */
     void autoSchedule(const Target &target);
+
+    /**
+     * Automatically fuse consecutive loops using some heuristics
+     */
+    void autoFuse(const Target &target);
 
     /**
      * Automatically parallelize some loops using some heuristics
