@@ -354,18 +354,25 @@ void Schedule::autoFuse(const Target &target) {
     // Try to fuse each pair of consecutive loops
     std::function<void(const Ref<LoopNest> &nest)> visitNest =
         [&, this](const Ref<LoopNest> &nest) {
+            Ref<LoopNest> last;
             std::string lastId;
             for (auto &&subNest : nest->subLoops_) {
-                visitNest(subNest);
                 auto thisId = subNest->loop_->id();
-                if (!lastId.empty()) {
+                if (last.isValid()) {
                     try {
                         thisId = fuse(lastId, thisId);
+                        subNest->subLoops_.insert(subNest->subLoops_.begin(),
+                                                  last->subLoops_.begin(),
+                                                  last->subLoops_.end());
+                        last->subLoops_.clear();
                     } catch (InvalidSchedule &e) {
-                        // do nothing
+                        visitNest(last);
                     }
                 }
-                lastId = thisId;
+                lastId = thisId, last = subNest;
+            }
+            if (last.isValid()) {
+                visitNest(last);
             }
         };
     visitNest(getLoopNestTree(ast_));
