@@ -151,13 +151,15 @@ def test_local_var():
     with ir.VarDef([
         ("x0", (4, 8), "int32", "input", "cpu"),
         ("x1", (4, 8), "int32", "input", "cpu"),
-        ("y", (4, 8), "int32", "output", "cpu"),
-    ]) as (x0, x1, y):
+        ("y1", (4, 8), "int32", "output", "cpu"),
+        ("y2", (4, 8), "int32", "output", "cpu"),
+    ]) as (x0, x1, y1, y2):
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 8, nid="L2") as j:
                 with ir.VarDef("buf", (1,), "int32", "cache", "cpu") as buf:
                     buf[0] = x0[i, j] + x1[i, j]
-                    y[i, j] = buf[0] * 2
+                    y1[i, j] = buf[0] * 2
+                    y2[i, j] = buf[0] * 3
     ast = ir.pop_ast()
     print(ast)
     s = ir.Schedule(ast)
@@ -170,13 +172,15 @@ def test_local_var():
     with ir.VarDef([
         ("x0", (4, 8), "int32", "input", "cpu"),
         ("x1", (4, 8), "int32", "input", "cpu"),
-        ("y", (4, 8), "int32", "output", "cpu"),
-    ]) as (x0, x1, y):
+        ("y1", (4, 8), "int32", "output", "cpu"),
+        ("y2", (4, 8), "int32", "output", "cpu"),
+    ]) as (x0, x1, y1, y2):
         with ir.For("j", 0, 8) as j:
             with ir.For("i", 0, 4) as i:
                 with ir.VarDef("buf", (1,), "int32", "cache", "cpu") as buf:
                     buf[0] = x0[i, j] + x1[i, j]
-                    y[i, j] = buf[0] * 2
+                    y1[i, j] = buf[0] * 2
+                    y2[i, j] = buf[0] * 3
     std = ir.pop_ast()
 
     assert std.match(ast)

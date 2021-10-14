@@ -13,6 +13,7 @@
 #include <pass/merge_and_hoist_if.h>
 #include <pass/move_out_first_or_last_iter.h>
 #include <pass/prop_const.h>
+#include <pass/prop_one_time_use.h>
 #include <pass/remove_dead_var.h>
 #include <pass/remove_writes.h>
 #include <pass/shrink_for.h>
@@ -25,7 +26,8 @@ namespace ir {
 
 template <class T> T lower(const T &t, const Ref<Target> &target) {
     T func = t;
-    func = floatSimplify(func);
+    func = propOneTimeUse(func);
+    func = floatSimplify(func); // After propOneTimeUse
     func = simplifyPass(func);
     func = moveOutFirstOrLastIter(func);
     func = sinkVar(func);

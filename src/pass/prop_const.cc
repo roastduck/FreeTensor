@@ -1,40 +1,9 @@
 #include <analyze/deps.h>
 #include <pass/prop_const.h>
+#include <pass/replace_uses.h>
 #include <pass/simplify.h>
 
 namespace ir {
-
-static Expr makeReduce(ReduceOp reduceOp, const Expr &lhs, const Expr &rhs) {
-    switch (reduceOp) {
-    case ReduceOp::Add:
-        return makeAdd(lhs, rhs);
-    case ReduceOp::Mul:
-        return makeMul(lhs, rhs);
-    case ReduceOp::Max:
-        return makeMax(lhs, rhs);
-    case ReduceOp::Min:
-        return makeMin(lhs, rhs);
-    default:
-        ASSERT(false);
-    }
-}
-
-Expr ReplaceUses::visit(const Load &op) {
-    if (replaceLoad_.count(op)) {
-        return (*this)(replaceLoad_.at(op));
-    } else {
-        return Mutator::visit(op);
-    }
-}
-
-Stmt ReplaceUses::visit(const ReduceTo &op) {
-    if (replaceReduceTo_.count(op)) {
-        return makeStore(op->id(), op->var_, op->indices_,
-                         (*this)(replaceReduceTo_.at(op)));
-    } else {
-        return Mutator::visit(op);
-    }
-}
 
 Stmt propConst(const Stmt &_op) {
     auto op = _op;
@@ -80,8 +49,7 @@ Stmt propConst(const Stmt &_op) {
             } else {
                 ASSERT(item.first->nodeType() == ASTNodeType::ReduceTo);
                 auto &&reduceTo = item.first.as<ReduceToNode>();
-                replaceReduceTo[reduceTo] =
-                    makeReduce(reduceTo->op_, store->expr_, reduceTo->expr_);
+                replaceReduceTo[reduceTo] = store->expr_;
             }
         }
 

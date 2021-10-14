@@ -137,13 +137,17 @@ def test_multiple_statements():
     with ir.VarDef([("x1", (), "int32", "input", "cpu"),
                     ("x2", (), "int32", "input", "cpu"),
                     ("x3", (), "int32", "input", "cpu"),
-                    ("y", (), "int32", "output", "cpu")]) as (x1, x2, x3, y):
+                    ("y1", (), "int32", "output", "cpu"),
+                    ("y2", (), "int32", "output", "cpu")]) as (x1, x2, x3, y1,
+                                                               y2):
         with ir.VarDef("t", (), "int32", "cache", "cpu") as t:
             t[()] = x1[()] + x2[()]
-            y[()] = t[()] * x3[()]
+            y1[()] = t[()] * x3[()]
+            y2[()] = t[()] + x3[()]
     ast = ir.pop_ast()
     print(ast)
-    _, ast, _, _, _ = ir.grad(ast, set(["x1", "x2", "x3"]), set(["y"]), set())
+    _, ast, _, _, _ = ir.grad(ast, set(["x1", "x2", "x3"]), set(["y1", "y2"]),
+                              set())
     print(ast)
     ast = ir.lower(ast)
     print(ast)
@@ -154,24 +158,26 @@ def test_multiple_statements():
                     ("d_x2", (), "int32", "output", "cpu"),
                     ("x3", (), "int32", "input", "cpu"),
                     ("d_x3", (), "int32", "output", "cpu"),
-                    ("y", (), "int32", "input", "cpu"),
-                    ("d_y", (), "int32", "inout", "cpu")
-                   ]) as (x1, d_x1, x2, d_x2, x3, d_x3, y, d_y):
-        with ir.VarDef("t", (), "int32", "cache", "cpu") as t:
-            t[()] = x1[()] + x2[()]
-            with ir.VarDef("d_t", (), "int32", "cache", "cpu") as d_t:
-                with ir.VarDef("d_y.old", (), "int32", "cache",
-                               "cpu") as d_y_old:
-                    d_y_old[()] = d_y[()]
-                    d_y[()] = 0
-                    d_t[()] = 0 + d_y_old[()] * x3[()]
-                    d_x3[()] = 0 + d_y_old[()] * t[()]
-                with ir.VarDef("d_t.old", (), "int32", "cache",
-                               "cpu") as d_t_old:
-                    d_t_old[()] = d_t[()]
-                    d_t[()] = 0
-                    d_x1[()] = d_t_old[()]
-                    d_x2[()] = d_t_old[()]
+                    ("y1", (), "int32", "input", "cpu"),
+                    ("d_y1", (), "int32", "inout", "cpu"),
+                    ("y2", (), "int32", "input", "cpu"),
+                    ("d_y2", (), "int32", "inout", "cpu")
+                   ]) as (x1, d_x1, x2, d_x2, x3, d_x3, y1, d_y1, y2, d_y2):
+        with ir.VarDef("d_t", (), "int32", "cache", "cpu") as d_t:
+            with ir.VarDef("d_y2.old", (), "int32", "cache", "cpu") as d_y2_old:
+                d_y2_old[()] = d_y2[()]
+                d_y2[()] = 0
+                with ir.VarDef("d_y1.old", (), "int32", "cache",
+                               "cpu") as d_y1_old:
+                    d_y1_old[()] = d_y1[()]
+                    d_y1[()] = 0
+                    d_t[()] = d_y2_old[()] + d_y1_old[()] * x3[()]
+                    d_x3[()] = d_y2_old[()] + d_y1_old[()] * (x1[()] + x2[()])
+            with ir.VarDef("d_t.old", (), "int32", "cache", "cpu") as d_t_old:
+                d_t_old[()] = d_t[()]
+                d_t[()] = 0
+                d_x1[()] = d_t_old[()]
+                d_x2[()] = d_t_old[()]
     std = ir.pop_ast()
 
     assert std.match(ast)
@@ -415,22 +421,20 @@ def test_tape_mode_nothing():
                 t[i] = x1[i] + x2[i]
             with ir.VarDef("d_t", (4,), "int32", "cache", "cpu") as d_t:
                 with ir.For("i", 0, 4) as i:
-                    with ir.VarDef("u", (), "int32", "cache", "cpu") as u:
-                        u[()] = x2[-1 * i + 3] + x3[-1 * i + 3]
-                        with ir.VarDef("d_u", (), "int32", "cache",
-                                       "cpu") as d_u:
-                            with ir.VarDef("d_y.old", (), "int32", "cache",
-                                           "cpu") as d_y_old:
-                                d_y_old[()] = d_y[-1 * i + 3]
-                                d_y[-1 * i + 3] = 0
-                                d_u[()] = 0 + d_y_old[()] * t[-1 * i + 3]
-                                d_t[-1 * i + 3] = 0 + d_y_old[()] * u[()]
-                            with ir.VarDef("d_u.old", (), "int32", "cache",
-                                           "cpu") as d_u_old:
-                                d_u_old[()] = d_u[()]
-                                d_u[()] = 0
-                                d_x2[-1 * i + 3] = d_u_old[()]
-                                d_x3[-1 * i + 3] = d_u_old[()]
+                    with ir.VarDef("d_u", (), "int32", "cache", "cpu") as d_u:
+                        with ir.VarDef("d_y.old", (), "int32", "cache",
+                                       "cpu") as d_y_old:
+                            d_y_old[()] = d_y[-1 * i + 3]
+                            d_y[-1 * i + 3] = 0
+                            d_u[()] = 0 + d_y_old[()] * t[-1 * i + 3]
+                            d_t[-1 * i + 3] = 0 + d_y_old[
+                                ()] * (x2[-1 * i + 3] + x3[-1 * i + 3])
+                        with ir.VarDef("d_u.old", (), "int32", "cache",
+                                       "cpu") as d_u_old:
+                            d_u_old[()] = d_u[()]
+                            d_u[()] = 0
+                            d_x2[-1 * i + 3] = d_u_old[()]
+                            d_x3[-1 * i + 3] = d_u_old[()]
                 with ir.For("i", 0, 4) as i:
                     with ir.VarDef("d_t.old", (), "int32", "cache",
                                    "cpu") as d_t_old:
@@ -483,21 +487,20 @@ def test_tape_mode_no_reuse_only():
         with ir.VarDef([("t.tape", (4,), "int32", "input", "cpu"),
                         ("d_t", (4,), "int32", "cache", "cpu")]) as (t, d_t):
             with ir.For("i", 0, 4) as i:
-                with ir.VarDef("u", (), "int32", "cache", "cpu") as u:
-                    u[()] = x2[-1 * i + 3] + x3[-1 * i + 3]
-                    with ir.VarDef("d_u", (), "int32", "cache", "cpu") as d_u:
-                        with ir.VarDef("d_y.old", (), "int32", "cache",
-                                       "cpu") as d_y_old:
-                            d_y_old[()] = d_y[-1 * i + 3]
-                            d_y[-1 * i + 3] = 0
-                            d_u[()] = 0 + d_y_old[()] * t[-1 * i + 3]
-                            d_t[-1 * i + 3] = 0 + d_y_old[()] * u[()]
-                        with ir.VarDef("d_u.old", (), "int32", "cache",
-                                       "cpu") as d_u_old:
-                            d_u_old[()] = d_u[()]
-                            d_u[()] = 0
-                            d_x2[-1 * i + 3] = d_u_old[()]
-                            d_x3[-1 * i + 3] = d_u_old[()]
+                with ir.VarDef("d_u", (), "int32", "cache", "cpu") as d_u:
+                    with ir.VarDef("d_y.old", (), "int32", "cache",
+                                   "cpu") as d_y_old:
+                        d_y_old[()] = d_y[-1 * i + 3]
+                        d_y[-1 * i + 3] = 0
+                        d_u[()] = 0 + d_y_old[()] * t[-1 * i + 3]
+                        d_t[-1 * i + 3] = 0 + d_y_old[
+                            ()] * (x2[-1 * i + 3] + x3[-1 * i + 3])
+                    with ir.VarDef("d_u.old", (), "int32", "cache",
+                                   "cpu") as d_u_old:
+                        d_u_old[()] = d_u[()]
+                        d_u[()] = 0
+                        d_x2[-1 * i + 3] = d_u_old[()]
+                        d_x3[-1 * i + 3] = d_u_old[()]
             with ir.For("i", 0, 4) as i:
                 with ir.VarDef("d_t.old", (), "int32", "cache",
                                "cpu") as d_t_old:

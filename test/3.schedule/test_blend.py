@@ -300,11 +300,13 @@ def test_loop_not_found():
 
 def test_var_def_inside():
     with ir.VarDef([("x", (2,), "int32", "input", "cpu"),
-                    ("y", (2,), "int32", "output", "cpu")]) as (x, y):
+                    ("y1", (2,), "int32", "output", "cpu"),
+                    ("y2", (2,), "int32", "output", "cpu")]) as (x, y1, y2):
         with ir.For("i", 0, 2, nid="L1") as i:
             with ir.VarDef("b", (), "int32", "cache", "cpu") as b:
                 b[()] = x[i] * 2
-                y[i] = b[()] + 1
+                y1[i] = b[()] + 1
+                y2[i] = b[()] + 2
     ast = ir.pop_ast()
     print(ast)
     s = ir.Schedule(ast)
@@ -315,13 +317,16 @@ def test_var_def_inside():
     print(ast)
 
     with ir.VarDef([("x", (2,), "int32", "input", "cpu"),
-                    ("y", (2,), "int32", "output", "cpu")]) as (x, y):
+                    ("y1", (2,), "int32", "output", "cpu"),
+                    ("y2", (2,), "int32", "output", "cpu")]) as (x, y1, y2):
         with ir.VarDef("b.0", (), "int32", "cache", "cpu") as b0:
             b0[()] = x[0] * 2
             with ir.VarDef("b.1", (), "int32", "cache", "cpu") as b1:
                 b1[()] = x[1] * 2
-                y[0] = b0[()] + 1
-                y[1] = b1[()] + 1
+                y1[0] = b0[()] + 1
+                y1[1] = b1[()] + 1
+                y2[0] = b0[()] + 2
+                y2[1] = b1[()] + 2
     std = ir.pop_ast()
 
     assert std.match(ast)
