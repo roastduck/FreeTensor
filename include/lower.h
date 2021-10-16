@@ -43,7 +43,9 @@ template <class T> T lower(const T &t, const Ref<Target> &target) {
     if (target.isValid()) {
         switch (target->type()) {
         case TargetType::GPU:
+            // Before gpu_nromalize_threads
             func = gpu::lowerParallelReduction(func);
+
             // TODO: Support dynamic shared memory size, but the size should be
             // determined outside of kernels
             func = gpu::correctSharedAndGlobal(func);
