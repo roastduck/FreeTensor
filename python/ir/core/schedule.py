@@ -61,7 +61,7 @@ class Schedule(ffi.Schedule):
         To fuse consecutive loops, use `fuse` instead
 
         `parallelize`, `unroll` and `vectorize` properties will be reset on the
-        fused loop
+        merged loop
 
         Parameters
         ----------
@@ -118,6 +118,9 @@ class Schedule(ffi.Schedule):
         Fuse two directly following loops with the same length into one
 
         To merge nested loops into one, use `merge` instead
+
+        `parallelize`, `unroll` and `vectorize` properties will be reset on the
+        fused loop
 
         Parameters
         ----------

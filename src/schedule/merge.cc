@@ -13,7 +13,7 @@ Stmt MergeFor::visit(const For &_op) {
         auto len = makeMul(innerLen_, outerLen_);
         auto ret =
             makeFor(newId_, newIter_, makeIntConst(0), len, len,
-                    op->noDeps_ && innerNoDeps_, "", false, false, op->body_);
+                    op->noDeps_ && innerNoDeps_, ForProperty(), op->body_);
         for (auto &&def : intermediateDefs_) {
             ret = makeVarDef(def->id(), def->name_, *def->buffer_,
                              def->sizeLim_, ret, def->pinned_);

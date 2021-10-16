@@ -165,19 +165,20 @@ void CodeGenCUDA::visit(const Var &op) {
 }
 
 void CodeGenCUDA::visit(const For &op) {
-    if (op->parallel_.empty()) {
-        if (op->unroll_) {
+    if (op->property_.parallel_.empty()) {
+        if (op->property_.unroll_) {
             os() << "#pragma unroll " << op->len_ << std::endl;
         }
         CodeGenC::visit(op);
-    } else if (op->parallel_ == "blockIdx.x" || op->parallel_ == "blockIdx.y" ||
-               op->parallel_ == "blockIdx.z" ||
-               op->parallel_ == "threadIdx.x" ||
-               op->parallel_ == "threadIdx.y" ||
-               op->parallel_ == "threadIdx.z") {
+    } else if (op->property_.parallel_ == "blockIdx.x" ||
+               op->property_.parallel_ == "blockIdx.y" ||
+               op->property_.parallel_ == "blockIdx.z" ||
+               op->property_.parallel_ == "threadIdx.x" ||
+               op->property_.parallel_ == "threadIdx.y" ||
+               op->property_.parallel_ == "threadIdx.z") {
         if (op->len_->nodeType() != ASTNodeType::IntConst) {
             std::ostringstream msg;
-            msg << "Length of " << op->parallel_
+            msg << "Length of " << op->property_.parallel_
                 << " should be constant, instead of " << op->len_;
             throw Error(msg.str());
         }
@@ -186,7 +187,7 @@ void CodeGenCUDA::visit(const For &op) {
             pushStream(kernel);
             beginBlock();
             (*this)(op->body_);
-            streamStack_.back().threadDim_[op->parallel_] =
+            streamStack_.back().threadDim_[op->property_.parallel_] =
                 op->len_.as<IntConstNode>()->val_;
             endBlock();
             popStream();
@@ -233,11 +234,11 @@ void CodeGenCUDA::visit(const For &op) {
             endBlock();
         } else {
             (*this)(op->body_);
-            streamStack_.back().threadDim_[op->parallel_] =
+            streamStack_.back().threadDim_[op->property_.parallel_] =
                 op->len_.as<IntConstNode>()->val_;
         }
     } else {
-        throw Error("Unsupported parallel method " + op->parallel_);
+        throw Error("Unsupported parallel method " + op->property_.parallel_);
     }
 }
 

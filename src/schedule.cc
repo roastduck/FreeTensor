@@ -428,7 +428,9 @@ void Schedule::autoParallelize(const Target &target) {
                     auto loop = find(loopId);
                     auto isParallelLoop = [](const Cursor &c) {
                         return c.nodeType() == ASTNodeType::For &&
-                               !c.node().as<ForNode>()->parallel_.empty();
+                               !c.node()
+                                    .as<ForNode>()
+                                    ->property_.parallel_.empty();
                     };
                     bool childrenAllSerial =
                         getCursorByFilter(loop.node(), isParallelLoop).empty();

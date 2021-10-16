@@ -25,7 +25,7 @@ Stmt ShrinkFor::visit(const For &_op) {
     auto newBegin = makeMinMax(newRange_.at(hash).first);
     auto newEndMinus1 = makeMaxMin(newRange_.at(hash).second);
 
-    if (op->unroll_) {
+    if (op->property_.unroll_) {
         // We can't give an unrolled loop a variable length
         if (newBegin.isValid() &&
             newBegin->nodeType() != ASTNodeType::IntConst) {

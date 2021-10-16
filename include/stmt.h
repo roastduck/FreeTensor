@@ -132,6 +132,29 @@ Stmt _makeReduceTo(const std::string &id, const std::string &var,
     return a;
 }
 
+struct ForProperty {
+    std::string parallel_;
+    bool unroll_, vectorize_;
+
+    ForProperty() : parallel_(), unroll_(false), vectorize_(false) {}
+
+    ForProperty withParallel(const std::string &parallel) {
+        auto ret = *this;
+        ret.parallel_ = parallel;
+        return ret;
+    }
+    ForProperty withUnroll(bool unroll = true) {
+        auto ret = *this;
+        ret.unroll_ = unroll;
+        return ret;
+    }
+    ForProperty withVectorize(bool vectorize = true) {
+        auto ret = *this;
+        ret.vectorize_ = vectorize;
+        return ret;
+    }
+};
+
 class ForNode : public StmtNode {
   public:
     std::string iter_;
@@ -141,9 +164,7 @@ class ForNode : public StmtNode {
     // time consuming
     SubTree<ExprNode> begin_, end_, len_;
     bool noDeps_;
-
-    std::string parallel_;
-    bool unroll_, vectorize_;
+    ForProperty property_;
     SubTree<StmtNode> body_;
 
     DEFINE_NODE_TRAIT(For);
@@ -152,8 +173,8 @@ typedef Ref<ForNode> For;
 #define makeFor(...) makeNode(For, __VA_ARGS__)
 template <class Tbegin, class Tend, class Tlen, class Tbody>
 Stmt _makeFor(const std::string &id, const std::string &iter, Tbegin &&begin,
-              Tend &&end, Tlen &&len, bool noDeps, const std::string &parallel,
-              bool unroll, bool vectorize, Tbody &&body) {
+              Tend &&end, Tlen &&len, bool noDeps, const ForProperty &property,
+              Tbody &&body) {
     For f = For::make();
     f->setId(id);
     f->iter_ = iter;
@@ -161,9 +182,7 @@ Stmt _makeFor(const std::string &id, const std::string &iter, Tbegin &&begin,
     f->end_ = std::forward<Tend>(end);
     f->len_ = std::forward<Tlen>(len);
     f->noDeps_ = noDeps;
-    f->parallel_ = parallel;
-    f->unroll_ = unroll;
-    f->vectorize_ = vectorize;
+    f->property_ = property;
     f->body_ = std::forward<Tbody>(body);
     return f;
 }

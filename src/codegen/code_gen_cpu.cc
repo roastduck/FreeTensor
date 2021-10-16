@@ -51,16 +51,16 @@ void CodeGenCPU::visit(const ReduceTo &op) {
 }
 
 void CodeGenCPU::visit(const For &op) {
-    if (op->parallel_ == "openmp") {
+    if (op->property_.parallel_ == "openmp") {
         os() << "#pragma omp parallel for" << std::endl;
         bool oldInParallel = inParallel_;
         inParallel_ = true;
         CodeGenC::visit(op);
         inParallel_ = oldInParallel;
         return;
-    } else if (op->vectorize_) {
+    } else if (op->property_.vectorize_) {
         os() << "#pragma omp simd" << std::endl;
-    } else if (op->unroll_) {
+    } else if (op->property_.unroll_) {
         os() << "#pragma GCC unroll " << op->len_ << std::endl;
     }
     CodeGenC::visit(op);

@@ -128,13 +128,18 @@ void init_ffi_ast(py::module_ &m) {
         .def_readonly("op", &ReduceToNode::op_)
         .def_property_readonly(
             "expr", [](const ReduceTo &op) -> Expr { return op->expr_; });
+    py::class_<ForProperty>(m, "ForProperty")
+        .def(py::init<>())
+        .def_readonly("parallel", &ForProperty::parallel_)
+        .def_readonly("unroll", &ForProperty::unroll_)
+        .def_readonly("vectorize", &ForProperty::vectorize_);
     py::class_<ForNode, For>(m, "For", pyStmt)
         .def_readonly("iter", &ForNode::iter_)
         .def_property_readonly("begin",
                                [](const For &op) -> Expr { return op->begin_; })
         .def_property_readonly("end",
                                [](const For &op) -> Expr { return op->end_; })
-        .def_readonly("parallel", &ForNode::parallel_)
+        .def_readonly("property", &ForNode::property_)
         .def_property_readonly("body",
                                [](const For &op) -> Stmt { return op->body_; });
     py::class_<IfNode, If>(m, "If", pyStmt)
@@ -436,10 +441,9 @@ void init_ffi_ast(py::module_ &m) {
     m.def("makeFor",
           static_cast<Stmt (*)(const std::string &, const std::string &,
                                const Expr &, const Expr &, const Expr &, bool,
-                               const std::string &, bool, bool, const Stmt &)>(
-              &_makeFor),
+                               const ForProperty &, const Stmt &)>(&_makeFor),
           "nid"_a, "iter"_a, "begin"_a, "end"_a, "len"_a, "no_deps"_a,
-          "parallel"_a, "unroll"_a, "vectorize"_a, "body"_a);
+          "property"_a, "body"_a);
     m.def("makeIf",
           static_cast<Stmt (*)(const std::string &, const Expr &, const Stmt &,
                                const Stmt &)>(&_makeIf),

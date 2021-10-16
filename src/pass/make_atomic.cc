@@ -9,8 +9,8 @@ void FindAllParallel::visit(const For &op) {
     Visitor::visit(op);
     loopStack_.pop_back();
 
-    if (!op->parallel_.empty()) {
-        results_[op->id()] = {op->parallel_, loopStack_};
+    if (!op->property_.parallel_.empty()) {
+        results_[op->id()] = {op->property_.parallel_, loopStack_};
     }
 }
 

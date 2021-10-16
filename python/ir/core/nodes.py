@@ -50,9 +50,7 @@ class Context:
                 end,
                 end - begin,
                 no_deps,
-                "",
-                False,
-                False,
+                ffi.ForProperty(),
                 body,
             ))
 
