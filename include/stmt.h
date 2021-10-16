@@ -131,6 +131,20 @@ Stmt _makeReduceTo(const std::string &id, const std::string &var,
     a->atomic_ = atomic;
     return a;
 }
+template <class Texpr>
+Stmt _makeReduceTo(const std::string &id, const std::string &var,
+                   const std::vector<Expr> &indices, ReduceOp op, Texpr &&expr,
+                   bool atomic) {
+    ReduceTo a = ReduceTo::make();
+    a->setId(id);
+    a->var_ = var;
+    a->indices_ =
+        std::vector<SubTree<ExprNode>>(indices.begin(), indices.end());
+    a->op_ = op;
+    a->expr_ = std::forward<Texpr>(expr);
+    a->atomic_ = atomic;
+    return a;
+}
 
 struct ForProperty {
     std::string parallel_;

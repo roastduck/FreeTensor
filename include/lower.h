@@ -4,6 +4,7 @@
 #include <driver/target.h>
 #include <pass/float_simplify.h>
 #include <pass/gpu/correct_shared_and_global.h>
+#include <pass/gpu/lower_parallel_reduction.h>
 #include <pass/gpu/lower_vector.h>
 #include <pass/gpu/make_sync.h>
 #include <pass/gpu/normalize_threads.h>
@@ -42,6 +43,7 @@ template <class T> T lower(const T &t, const Ref<Target> &target) {
     if (target.isValid()) {
         switch (target->type()) {
         case TargetType::GPU:
+            func = gpu::lowerParallelReduction(func);
             // TODO: Support dynamic shared memory size, but the size should be
             // determined outside of kernels
             func = gpu::correctSharedAndGlobal(func);

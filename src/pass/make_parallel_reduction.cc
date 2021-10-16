@@ -20,10 +20,8 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
     auto op = __op.as<ReduceToNode>();
     if (toAlter_.count(op->id())) {
         for (auto &&loopId : toAlter_.at(op->id())) {
-            if (paraScopes_.at(loopId).substr(0, 9) == "blockIdx." ||
-                paraScopes_.at(loopId).substr(0, 10) == "threadIdx.") {
+            if (paraScopes_.at(loopId).substr(0, 9) == "blockIdx.") {
                 // Race-free reduction among thread blocks are impossible
-                // TODO: Race-free reduction among threads
                 goto use_atomic;
             }
             for (auto &&idx : _op->indices_) {
