@@ -239,9 +239,12 @@ class Mutator {
     }
 
     virtual Stmt visit(const If &op) {
-        auto ret =
-            makeIf(op->id(), (*this)(op->cond_), (*this)(op->thenCase_),
-                   op->elseCase_.isValid() ? (*this)(op->elseCase_) : nullptr);
+        auto cond = (*this)(op->cond_);
+        auto thenCase = (*this)(op->thenCase_); // Visit then BEFORE else!
+        auto elseCase =
+            op->elseCase_.isValid() ? (*this)(op->elseCase_) : nullptr;
+        auto ret = makeIf(op->id(), std::move(cond), std::move(thenCase),
+                          std::move(elseCase));
         return COPY_DEBUG_INFO(ret, op);
     }
 

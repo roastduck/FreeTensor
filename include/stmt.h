@@ -135,6 +135,7 @@ Stmt _makeReduceTo(const std::string &id, const std::string &var,
 struct ForProperty {
     std::string parallel_;
     bool unroll_, vectorize_;
+    std::vector<std::pair<ReduceOp, Expr>> reductions_;
 
     ForProperty() : parallel_(), unroll_(false), vectorize_(false) {}
 

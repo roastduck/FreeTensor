@@ -52,7 +52,33 @@ void CodeGenCPU::visit(const ReduceTo &op) {
 
 void CodeGenCPU::visit(const For &op) {
     if (op->property_.parallel_ == "openmp") {
-        os() << "#pragma omp parallel for" << std::endl;
+        os() << "#pragma omp parallel for";
+        if (!op->property_.reductions_.empty()) {
+            if (op->property_.reductions_.size() > 1) {
+                ERROR("Only one reduction variable per parallel loop is "
+                      "supported by OpenMP");
+            }
+            os() << " reduction(";
+            switch (op->property_.reductions_.front().first) {
+            case ReduceOp::Add:
+                os() << "+: ";
+                break;
+            case ReduceOp::Mul:
+                os() << "*: ";
+                break;
+            case ReduceOp::Min:
+                os() << "min: ";
+                break;
+            case ReduceOp::Max:
+                os() << "max: ";
+                break;
+            default:
+                ASSERT(false);
+            }
+            (*this)(op->property_.reductions_.front().second);
+            os() << ")";
+        }
+        os() << std::endl;
         bool oldInParallel = inParallel_;
         inParallel_ = true;
         CodeGenC::visit(op);

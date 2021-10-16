@@ -11,7 +11,7 @@ from ffi import shrink_var
 from ffi import shrink_for
 from ffi import merge_and_hoist_if
 from ffi import make_reduction
-from ffi import make_atomic
+from ffi import make_parallel_reduction
 from ffi import remove_writes
 from ffi import remove_dead_var
 from ffi import make_const_shape

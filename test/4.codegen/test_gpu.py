@@ -727,6 +727,10 @@ def test_syncthreads_split_branch_with_else():
                     with ir.If(i < 2):
                         with ir.If(j == 0):
                             ir.Any()  # y[i]
+
+                    # We need a sync here because we first do then-case and THEN do else-case
+                    ir.Eval(ir.intrinsic("__syncthreads()"))  # Here outside If
+
                     with ir.If(i >= 2):
                         ir.Any()
                         with ir.If(j == 0):
@@ -848,6 +852,11 @@ def test_syncthreads_split_branch_and_vardef_with_else():
                                 ir.Any()  # z2[i]
                     with ir.VarDef("u2", (1,), "int32", "cache",
                                    "gpu/shared") as u:
+
+                        # We need a sync here because we first do then-case and THEN do else-case
+                        ir.Eval(
+                            ir.intrinsic("__syncthreads()"))  # Here outside If
+
                         with ir.If(i >= 2):
                             ir.Any()
                             with ir.If(j == 0):

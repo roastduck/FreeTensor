@@ -95,7 +95,7 @@ void GenISLExpr::visit(const LOr &op) {
 void GenISLExpr::visit(const LNot &op) {
     Visitor::visit(op);
     if (results_.count(op->expr_)) {
-        results_[op] = "not " + results_.at(op->expr_);
+        results_[op] = "(not " + results_.at(op->expr_) + ")";
     }
 }
 
