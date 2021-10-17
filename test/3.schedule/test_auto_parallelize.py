@@ -88,6 +88,7 @@ def test_gpu_warp():
     print(s.logs())
     assert s.logs() == [
         "split(Lk, factor=32, nparts=-1)", "parallelize(Lk.1, threadIdx.x)",
-        "split(Li, factor=-1, nparts=80)", "split(Li.1, factor=32, nparts=-1)",
-        "parallelize(Li.0, blockIdx.y)", "parallelize(Li.1.1, threadIdx.y)"
+        "reorder(Lk.1, Lk.0)", "split(Li, factor=-1, nparts=80)",
+        "split(Li.1, factor=32, nparts=-1)", "parallelize(Li.0, blockIdx.y)",
+        "parallelize(Li.1.1, threadIdx.y)"
     ]
