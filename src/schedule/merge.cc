@@ -11,9 +11,14 @@ Stmt MergeFor::visit(const For &_op) {
         ASSERT(__op->nodeType() == ASTNodeType::For);
         auto op = __op.as<ForNode>();
         auto len = makeMul(innerLen_, outerLen_);
-        return makeFor(newId_, newIter_, makeIntConst(0), len, len,
-                       op->noDeps_ && innerNoDeps_, "", false, false,
-                       op->body_);
+        auto ret =
+            makeFor(newId_, newIter_, makeIntConst(0), len, len,
+                    op->noDeps_ && innerNoDeps_, ForProperty(), op->body_);
+        for (auto &&def : intermediateDefs_) {
+            ret = makeVarDef(def->id(), def->name_, *def->buffer_,
+                             def->sizeLim_, ret, def->pinned_);
+        }
+        return ret;
     } else if (_op->id() == oldInner_->id()) {
         insideInner_ = true;
         auto __op = Mutator::visit(_op);
@@ -93,6 +98,18 @@ Expr MergeFor::visit(const Var &_op) {
         return makeFloorDiv(makeVar(newIter_), innerLen_);
     }
     return op;
+}
+
+Stmt MergeFor::visit(const VarDef &_op) {
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::VarDef);
+    auto op = __op.as<VarDefNode>();
+    if (insideOuter_ && !insideInner_) {
+        intermediateDefs_.emplace_back(op);
+        return op->body_;
+    } else {
+        return op;
+    }
 }
 
 std::pair<Stmt, std::string> merge(const Stmt &_ast, const std::string &loop1,

@@ -232,17 +232,19 @@ class Mutator {
     }
 
     virtual Stmt visit(const For &op) {
-        auto ret =
-            makeFor(op->id(), op->iter_, (*this)(op->begin_), (*this)(op->end_),
-                    (*this)(op->len_), op->noDeps_, op->parallel_, op->unroll_,
-                    op->vectorize_, (*this)(op->body_));
+        auto ret = makeFor(op->id(), op->iter_, (*this)(op->begin_),
+                           (*this)(op->end_), (*this)(op->len_), op->noDeps_,
+                           op->property_, (*this)(op->body_));
         return COPY_DEBUG_INFO(ret, op);
     }
 
     virtual Stmt visit(const If &op) {
-        auto ret =
-            makeIf(op->id(), (*this)(op->cond_), (*this)(op->thenCase_),
-                   op->elseCase_.isValid() ? (*this)(op->elseCase_) : nullptr);
+        auto cond = (*this)(op->cond_);
+        auto thenCase = (*this)(op->thenCase_); // Visit then BEFORE else!
+        auto elseCase =
+            op->elseCase_.isValid() ? (*this)(op->elseCase_) : nullptr;
+        auto ret = makeIf(op->id(), std::move(cond), std::move(thenCase),
+                          std::move(elseCase));
         return COPY_DEBUG_INFO(ret, op);
     }
 

@@ -18,6 +18,7 @@ class Device {
     size_t num() const { return num_; }
 
     TargetType type() const { return target_->type(); }
+    MemType mainMemType() const { return target_->mainMemType(); }
 };
 
 } // namespace ir

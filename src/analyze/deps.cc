@@ -53,7 +53,8 @@ void FindAccessPoint::visit(const StmtSeq &op) {
 }
 
 void FindAccessPoint::visit(const For &op) {
-    cur_.emplace_back(makeVar(op->iter_), op->begin_, op->end_, op->parallel_);
+    cur_.emplace_back(makeVar(op->iter_), op->begin_, op->end_,
+                      op->property_.parallel_);
     scope2coord_[op->id()] = cur_;
     Visitor::visit(op);
     cur_.pop_back();
@@ -62,15 +63,27 @@ void FindAccessPoint::visit(const For &op) {
 void FindAccessPoint::visit(const If &op) {
     (*this)(op->cond_);
 
-    auto oldCond = cond_;
-    cond_ = oldCond.isValid() ? makeLAnd(oldCond, op->cond_) : (Expr)op->cond_;
-    (*this)(op->thenCase_);
-    if (op->elseCase_.isValid()) {
+    if (!op->elseCase_.isValid()) {
+        auto oldCond = cond_;
+        cond_ =
+            oldCond.isValid() ? makeLAnd(oldCond, op->cond_) : (Expr)op->cond_;
+        (*this)(op->thenCase_);
+        cond_ = oldCond;
+    } else {
+        cur_.emplace_back(nullptr, makeIntConst(0), makeIntConst(2));
+        scope2coord_[op->id()] = cur_;
+        cur_.back().iter_ = makeIntConst(0);
+        auto oldCond = cond_;
+        cond_ =
+            oldCond.isValid() ? makeLAnd(oldCond, op->cond_) : (Expr)op->cond_;
+        (*this)(op->thenCase_);
+        cur_.back().iter_ = makeIntConst(1);
         cond_ = oldCond.isValid() ? makeLAnd(oldCond, makeLNot(op->cond_))
                                   : makeLNot(op->cond_);
         (*this)(op->elseCase_);
+        cond_ = oldCond;
+        cur_.pop_back();
     }
-    cond_ = oldCond;
 }
 
 void FindAccessPoint::visit(const Load &op) {

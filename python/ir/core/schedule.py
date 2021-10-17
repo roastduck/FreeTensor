@@ -61,7 +61,7 @@ class Schedule(ffi.Schedule):
         To fuse consecutive loops, use `fuse` instead
 
         `parallelize`, `unroll` and `vectorize` properties will be reset on the
-        fused loop
+        merged loop
 
         Parameters
         ----------
@@ -118,6 +118,9 @@ class Schedule(ffi.Schedule):
         Fuse two directly following loops with the same length into one
 
         To merge nested loops into one, use `merge` instead
+
+        `parallelize`, `unroll` and `vectorize` properties will be reset on the
+        fused loop
 
         Parameters
         ----------
@@ -516,6 +519,28 @@ class Schedule(ffi.Schedule):
         """
         super(Schedule, self).as_matmul(toId(loop))
 
+    def auto_schedule(self, target):
+        """
+        Automatic scheduling using some heuristics
+
+        Parameters
+        ----------
+        target : Target
+            Target architecture
+        """
+        super(Schedule, self).auto_schedule(target)
+
+    def auto_fuse(self, target):
+        """
+        Automatically fuse consecutive loops using some heuristics
+
+        Parameters
+        ----------
+        target : Target
+            Target architecture
+        """
+        super(Schedule, self).auto_fuse(target)
+
     def auto_parallelize(self, target):
         """
         Automatically parallelize some loops using some heuristics
@@ -526,3 +551,14 @@ class Schedule(ffi.Schedule):
             Target architecture
         """
         super(Schedule, self).auto_parallelize(target)
+
+    def auto_set_mem_type(self, target):
+        """
+        Automatically set memory types using some heuristics
+
+        Parameters
+        ----------
+        target : Target
+            Target architecture
+        """
+        super(Schedule, self).auto_set_mem_type(target)

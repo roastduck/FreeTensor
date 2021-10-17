@@ -70,7 +70,7 @@ Expr LowerVector::getIndex(const Expr &index) {
 }
 
 Stmt LowerVector::visit(const For &op) {
-    if (op->vectorize_) {
+    if (op->property_.vectorize_) {
         if (!var_.empty()) {
             throw InvalidSchedule("Nested vectorized loops is not supported");
         }
@@ -103,7 +103,7 @@ Stmt LowerVector::visit(const For &op) {
                 continue;
             }
             var_.clear();
-            ret->vectorize_ = false; // done
+            ret->property_.vectorize_ = false; // done
             return ret;
         }
     }

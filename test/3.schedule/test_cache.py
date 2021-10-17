@@ -9,7 +9,7 @@ def test_cache_read():
             y[i] = 0
             with ir.For("j", 0, 8, nid="L2") as j:
                 ir.MarkNid("S0")
-                y[i] = y[i] + x[i, j] * 2
+                y[i] = y[i] + x[i, j] * (x[i, j] + 1)
     ast = ir.pop_ast()
     print(ast)
     s = ir.Schedule(ast)
@@ -26,7 +26,7 @@ def test_cache_read():
             with ir.For("j", 0, 8) as j:
                 with ir.VarDef("b", (1, 1), "int32", "cache", "cpu") as b:
                     b[0, 0] = x[i, j]
-                    y[i] = y[i] + b[0, 0] * 2
+                    y[i] = y[i] + b[0, 0] * (b[0, 0] + 1)
     std = ir.make_reduction(ir.pop_ast())
 
     assert std.match(ast)
@@ -35,16 +35,16 @@ def test_cache_read():
 def test_cache_write():
     with ir.VarDef([
         ("x", (4, 8), "int32", "input", "cpu"),
-        ("y", (4, 8), "int32", "output", "cpu"),
+        ("y", (4,), "int32", "output", "cpu"),
     ]) as (x, y):
         with ir.For("i", 0, 4, nid="L1") as i:
+            y[i] = 0
             with ir.For("j", 0, 8, nid="L2") as j:
-                ir.MarkNid("S0")
-                y[i, j] = x[i, j] * 2
+                y[i] += x[i, j] * 2
     ast = ir.pop_ast()
     print(ast)
     s = ir.Schedule(ast)
-    s.cache("S0", "y", "cpu")
+    s.cache(s.find("L1").node().body, "y", "cpu")
     ast = s.ast()
     print(ast)
     ast = ir.lower(ast)
@@ -52,14 +52,15 @@ def test_cache_write():
 
     with ir.VarDef([
         ("x", (4, 8), "int32", "input", "cpu"),
-        ("y", (4, 8), "int32", "output", "cpu"),
+        ("y", (4,), "int32", "output", "cpu"),
     ]) as (x, y):
         with ir.For("i", 0, 4) as i:
-            with ir.For("j", 0, 8) as j:
-                with ir.VarDef("b", (1, 1), "int32", "cache", "cpu") as b:
-                    b[0, 0] = x[i, j] * 2
-                    y[i, j] = b[0, 0]
-    std = ir.pop_ast()
+            with ir.VarDef("b", (1,), "int32", "cache", "cpu") as b:
+                b[0] = 0
+                with ir.For("j", 0, 8) as j:
+                    b[0] += x[i, j] * 2
+                y[i] = b[0]
+    std = ir.make_reduction(ir.pop_ast())
 
     assert std.match(ast)
 
@@ -108,8 +109,6 @@ def test_cache_read_and_write():
     s = ir.Schedule(ast)
     s.cache("S0", "y", "cpu")
     ast = s.ast()
-    print(ast)
-    ast = ir.lower(ast)
     print(ast)
 
     with ir.VarDef([

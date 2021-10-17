@@ -13,8 +13,7 @@ Stmt SwapFor::visit(const For &_op) {
         insideOuter_ = false;
         return makeFor(oldInner_->id(), oldInner_->iter_, oldInner_->begin_,
                        oldInner_->end_, oldInner_->len_, oldInner_->noDeps_,
-                       oldInner_->parallel_, oldInner_->unroll_,
-                       oldInner_->vectorize_, body);
+                       oldInner_->property_, body);
     } else if (_op->id() == oldInner_->id()) {
         insideInner_ = true;
         auto __op = Mutator::visit(_op);

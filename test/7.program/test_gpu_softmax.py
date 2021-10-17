@@ -78,18 +78,12 @@ def test_manual_static():
             s.find(lambda x: x.nid() == def_nid).node().body, var, "gpu/shared")
 
         # Parallel reduction
-        thr_x, serial = s.split(loop_nid, nparts=thr_x_dim)
-        _, red_final, V_sum_partial, _ = s.cache_reduction(
-            serial, V_sum_shmem, "gpu/shared")
-        red_final = s.move_to(red_final, ir.MoveToSide.After, thr_x)
-        init_nid = s.move_to(init_nid, ir.MoveToSide.Before, red_final)
+        serial, thr_x = s.split(loop_nid, thr_x_dim)
+        s.reorder([thr_x, serial])
         s.parallelize(thr_x, "threadIdx.x")
 
         # Reduce partial results in registers
-        s.cache_reduction(serial, V_sum_partial, "gpu/local")
-
-        # Reduce global results in registers
-        s.cache_reduction(red_final, V_sum_shmem, "gpu/local")
+        s.cache_reduction(serial, V_sum_shmem, "gpu/local")
 
         return V_sum_shmem
 
@@ -104,7 +98,8 @@ def test_manual_static():
 
     # Parallelize data-parall loops
     def opt_elemwise(loop_nid):
-        thr_x, serial = s.split(loop_nid, nparts=thr_x_dim)
+        serial, thr_x = s.split(loop_nid, thr_x_dim)
+        s.reorder([thr_x, serial])
         s.parallelize(thr_x, "threadIdx.x")
         return thr_x, serial
 

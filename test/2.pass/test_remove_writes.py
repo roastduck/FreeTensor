@@ -19,21 +19,25 @@ def test_type1_basic():
 
 def test_type1_before_read():
     with ir.VarDef([("x", (), "int32", "input", "cpu"),
-                    ("y", (), "int32", "output", "cpu")]) as (x, y):
+                    ("y1", (), "int32", "output", "cpu"),
+                    ("y2", (), "int32", "output", "cpu")]) as (x, y1, y2):
         with ir.VarDef("b", (), "int32", "cache", "cpu") as b:
             b[()] = 1
             b[()] = x[()]
-            y[()] = b[()] * 2
+            y1[()] = b[()] * 2
+            y2[()] = b[()] * 3
     ast = ir.pop_ast()
     print(ast)
     ast = ir.lower(ast)
     print(ast)
 
     with ir.VarDef([("x", (), "int32", "input", "cpu"),
-                    ("y", (), "int32", "output", "cpu")]) as (x, y):
+                    ("y1", (), "int32", "output", "cpu"),
+                    ("y2", (), "int32", "output", "cpu")]) as (x, y1, y2):
         with ir.VarDef("b", (), "int32", "cache", "cpu") as b:
             b[()] = x[()]
-            y[()] = b[()] * 2
+            y1[()] = b[()] * 2
+            y2[()] = b[()] * 3
     std = ir.pop_ast()
 
     assert std.match(ast)
@@ -232,22 +236,26 @@ def test_type2_outer_loop():
 
 def test_type2_used_no_remove():
     with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
-                    ("z", (4,), "int32", "output", "cpu")]) as (x, z):
+                    ("z", (4,), "int32", "output", "cpu"),
+                    ("w", (4,), "int32", "output", "cpu")]) as (x, z, w):
         with ir.VarDef("y", (1,), "int32", "cache", "cpu") as y:
             with ir.For("i", 0, 4) as i:
                 y[0] = x[i] * 2
                 z[i] = y[0] + 1
+                w[i] = y[0] + 2
     ast = ir.pop_ast()
     print(ast)
     ast = ir.lower(ast)
     print(ast)
 
     with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
-                    ("z", (4,), "int32", "output", "cpu")]) as (x, z):
+                    ("z", (4,), "int32", "output", "cpu"),
+                    ("w", (4,), "int32", "output", "cpu")]) as (x, z, w):
         with ir.VarDef("y", (1,), "int32", "cache", "cpu") as y:
             with ir.For("i", 0, 4) as i:
                 y[0] = x[i] * 2
                 z[i] = y[0] + 1
+                w[i] = y[0] + 2
     std = ir.pop_ast()
 
     assert std.match(ast)
@@ -286,13 +294,16 @@ def test_type2_dynamic():
 def test_cross_var_def():
     with ir.VarDef([("x1", (), "int32", "input", "cpu"),
                     ("x2", (), "int32", "input", "cpu"),
-                    ("y", (), "int32", "output", "cpu")]) as (x1, x2, y):
+                    ("y1", (), "int32", "output", "cpu"),
+                    ("y2", (), "int32", "output", "cpu")]) as (x1, x2, y1, y2):
         with ir.VarDef("b", (), "int32", "cache", "cpu") as b:
             b[()] = x1[()] + 1
-            y[()] = b[()] * 2
+            y1[()] = b[()] * 2
+            y2[()] = b[()] * 3
         with ir.VarDef("b", (), "int32", "cache", "cpu") as b:
             b[()] = x2[()] + 2
-            y[()] += b[()] * 2
+            y1[()] += b[()] * 2
+            y2[()] += b[()] * 3
     ast = ir.pop_ast()
     print(ast)
     ast = ir.lower(ast)
@@ -300,12 +311,14 @@ def test_cross_var_def():
 
     with ir.VarDef([("x1", (), "int32", "input", "cpu"),
                     ("x2", (), "int32", "input", "cpu"),
-                    ("y", (), "int32", "output", "cpu")]) as (x1, x2, y):
+                    ("y1", (), "int32", "output", "cpu"),
+                    ("y2", (), "int32", "output", "cpu")]) as (x1, x2, y1, y2):
         with ir.VarDef("b1", (), "int32", "cache", "cpu") as b1:
             b1[()] = x1[()] + 1
             with ir.VarDef("b2", (), "int32", "cache", "cpu") as b2:
                 b2[()] = x2[()] + 2
-                y[()] = b1[()] * 2 + b2[()] * 2
+                y1[()] = b1[()] * 2 + b2[()] * 2
+                y2[()] = b1[()] * 3 + b2[()] * 3
     std = ir.pop_ast()
 
     assert std.match(ast)

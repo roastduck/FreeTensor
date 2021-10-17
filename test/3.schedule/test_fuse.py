@@ -150,14 +150,16 @@ def test_dependency_unable_resolve():
 def test_buffer_fuse():
     with ir.VarDef([
         ("x", (4, 8), "int32", "input", "cpu"),
-        ("y", (4, 8), "int32", "output", "cpu"),
-    ]) as (x, y):
+        ("y1", (4, 8), "int32", "output", "cpu"),
+        ("y2", (4, 8), "int32", "output", "cpu"),
+    ]) as (x, y1, y2):
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.VarDef("b", (4, 8), "int32", "cache", "cpu") as b:
                 with ir.For("j", 0, 8, nid="L2a") as j:
                     b[i, j] = x[i, j] * 2
                 with ir.For("j", 0, 8, nid="L2b") as j:
-                    y[i, j] = b[i, j]
+                    y1[i, j] = b[i, j] + 1
+                    y2[i, j] = b[i, j] + 2
     ast = ir.pop_ast()
     print(ast)
     s = ir.Schedule(ast)
@@ -169,13 +171,15 @@ def test_buffer_fuse():
 
     with ir.VarDef([
         ("x", (4, 8), "int32", "input", "cpu"),
-        ("y", (4, 8), "int32", "output", "cpu"),
-    ]) as (x, y):
+        ("y1", (4, 8), "int32", "output", "cpu"),
+        ("y2", (4, 8), "int32", "output", "cpu"),
+    ]) as (x, y1, y2):
         with ir.For("i", 0, 4) as i:
             with ir.For("j", 0, 8) as j:
                 with ir.VarDef("b", (1, 1), "int32", "cache", "cpu") as b:
                     b[0, 0] = x[i, j] * 2
-                    y[i, j] = b[0, 0]
+                    y1[i, j] = b[0, 0] + 1
+                    y2[i, j] = b[0, 0] + 2
     std = ir.pop_ast()
 
     assert std.match(ast)

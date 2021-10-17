@@ -12,22 +12,22 @@ namespace ir {
 namespace gpu {
 
 void FindAllThreads::visit(const For &op) {
-    if (op->parallel_ == "threadIdx.x") {
+    if (op->property_.parallel_ == "threadIdx.x") {
         ASSERT(op->len_->nodeType() == ASTNodeType::IntConst);
         thx_ = op->len_.as<IntConstNode>()->val_;
-    } else if (op->parallel_ == "threadIdx.y") {
+    } else if (op->property_.parallel_ == "threadIdx.y") {
         ASSERT(op->len_->nodeType() == ASTNodeType::IntConst);
         thy_ = op->len_.as<IntConstNode>()->val_;
-    } else if (op->parallel_ == "threadIdx.z") {
+    } else if (op->property_.parallel_ == "threadIdx.z") {
         ASSERT(op->len_->nodeType() == ASTNodeType::IntConst);
         thz_ = op->len_.as<IntConstNode>()->val_;
     }
     Visitor::visit(op);
-    if (op->parallel_ == "threadIdx.x") {
+    if (op->property_.parallel_ == "threadIdx.x") {
         results_.emplace_back(ThreadInfo{op, thx_ <= warpSize_});
-    } else if (op->parallel_ == "threadIdx.y") {
+    } else if (op->property_.parallel_ == "threadIdx.y") {
         results_.emplace_back(ThreadInfo{op, thx_ * thy_ <= warpSize_});
-    } else if (op->parallel_ == "threadIdx.z") {
+    } else if (op->property_.parallel_ == "threadIdx.z") {
         results_.emplace_back(ThreadInfo{op, thx_ * thy_ <= warpSize_});
     }
 }
@@ -53,7 +53,8 @@ Stmt CopyPart::visitStmt(const Stmt &op,
 Stmt CopyPart::visit(const For &op) {
     bool begun = begun_, ended = ended_;
     auto ret = Mutator::visit(op);
-    if (op->parallel_.empty() && ((!begun && begun_) || (!ended && ended_))) {
+    if (op->property_.parallel_.empty() &&
+        ((!begun && begun_) || (!ended && ended_))) {
         throw InvalidProgram(
             "Unable to insert a synchronizing statment because it requires "
             "splitting loop " +

@@ -49,6 +49,22 @@ def test_not_found():
     assert ast_.match(ast)
 
 
+def test_nested_thread_idx():
+    with ir.VarDef("y", (4, 4), "int32", "output", "cpu") as y:
+        with ir.For("i", 0, 4, nid='L1') as i:
+            with ir.For("j", 0, 4, nid='L2') as j:
+                y[i, j] = i + j
+    ast = ir.pop_ast()
+    print(ast)
+    s = ir.Schedule(ast)
+    s.parallelize("L1", "threadIdx.x")
+    ast = s.ast()
+    with pytest.raises(ir.InvalidSchedule):
+        s.parallelize("L2", "threadIdx.x")
+    ast_ = s.ast()  # Should not changed
+    assert ast_.match(ast)
+
+
 def test_no_deps():
 
     @ir.transform

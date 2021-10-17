@@ -1,3 +1,7 @@
+#include <algorithm>
+
+#include <analyze/all_defs.h>
+#include <analyze/count_contig_access_loops.h>
 #include <analyze/get_loop_nest_tree.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/simplify.h>
@@ -157,7 +161,7 @@ Schedule::cacheReduction(const std::string &stmt, const std::string &var,
 }
 
 void Schedule::setMemType(const std::string &def, MemType mtype) {
-    auto log = "set_mtype(" + def + ", " + toString(mtype) + ")";
+    auto log = "set_mem_type(" + def + ", " + toString(mtype) + ")";
     try {
         ast_ = ir::setMemType(ast_, def, mtype);
         logs_.emplace_back(log);
@@ -340,9 +344,65 @@ void Schedule::asMatMul(const std::string &loop) {
     }
 }
 
-void Schedule::autoParallelize(const Target &target) {
-    // Try to merge and parallelize as many outer loops as possible
+void Schedule::autoSchedule(const Target &target) {
+    autoFuse(target);
+    autoParallelize(target);
+    autoSetMemType(target);
+}
 
+void Schedule::autoFuse(const Target &target) {
+    // Try to fuse each pair of consecutive loops
+    std::function<void(const Ref<LoopNest> &nest)> visitNest =
+        [&, this](const Ref<LoopNest> &nest) {
+            Ref<LoopNest> last;
+            std::string lastId;
+            for (auto &&subNest : nest->subLoops_) {
+                auto thisId = subNest->loop_->id();
+                if (last.isValid()) {
+                    try {
+                        thisId = fuse(lastId, thisId);
+                        subNest->subLoops_.insert(subNest->subLoops_.begin(),
+                                                  last->subLoops_.begin(),
+                                                  last->subLoops_.end());
+                        last->subLoops_.clear();
+                    } catch (InvalidSchedule &e) {
+                        visitNest(last);
+                    }
+                }
+                lastId = thisId, last = subNest;
+            }
+            if (last.isValid()) {
+                visitNest(last);
+            }
+        };
+    visitNest(getLoopNestTree(ast_));
+}
+
+void Schedule::autoParallelize(const Target &target) {
+    // [GPU only] Try to parallelize loops accessing contiguous items as warps
+    if (target.type() == TargetType::GPU) {
+        CountContigAccessLoops contigFinder;
+        contigFinder(ast_);
+        std::vector<std::pair<std::string, int>> contigLoops(
+            contigFinder.counts().begin(), contigFinder.counts().end());
+        std::sort(contigLoops.begin(), contigLoops.end(),
+                  [](const std::pair<std::string, int> &lhs,
+                     const std::pair<std::string, int> &rhs) {
+                      return lhs.second > rhs.second;
+                  });
+        for (auto &&[loopId, cnt] : contigLoops) {
+            auto loop = find(loopId);
+            try {
+                // FIXME: Do not hard-code 32
+                auto [l0, l1] = split(loop.id(), 32);
+                parallelize(l1, "threadIdx.x");
+            } catch (const InvalidSchedule &e) {
+                // do nothing
+            }
+        }
+    }
+
+    // Try to merge and parallelize as many outer loops as possible
     auto loopNestTree = getLoopNestTree(ast_);
     for (const Ref<LoopNest> &root : loopNestTree->subLoops_) {
         auto latestSuccess = ast_;
@@ -365,12 +425,21 @@ void Schedule::autoParallelize(const Target &target) {
                     break;
 
                 case TargetType::GPU: {
+                    auto loop = find(loopId);
+                    auto isParallelLoop = [](const Cursor &c) {
+                        return c.nodeType() == ASTNodeType::For &&
+                               !c.node()
+                                    .as<ForNode>()
+                                    ->property_.parallel_.empty();
+                    };
+                    bool childrenAllSerial =
+                        getCursorByFilter(loop.node(), isParallelLoop).empty();
                     // 1. make sure all SMs are used
                     // 2. make sure blockDim is not too large
                     std::string l1, l2, l3;
                     // TODO: do not hard-code these numbers
                     std::tie(l1, l2) = split(loopId, -1, 80);
-                    std::tie(l2, l3) = split(l2, 1024);
+                    std::tie(l2, l3) = split(l2, childrenAllSerial ? 1024 : 32);
                     if (!findAll(l1).empty()) {
                         parallelize(l1, "blockIdx.y");
                     }
@@ -378,7 +447,8 @@ void Schedule::autoParallelize(const Target &target) {
                         parallelize(l2, "blockIdx.x");
                     }
                     if (!findAll(l3).empty()) {
-                        parallelize(l3, "threadIdx.x");
+                        parallelize(l3, childrenAllSerial ? "threadIdx.x"
+                                                          : "threadIdx.y");
                     }
                     break;
                 }
@@ -400,6 +470,23 @@ void Schedule::autoParallelize(const Target &target) {
         }
 
         ast_ = latestSuccess, logs_ = successLogs;
+    }
+}
+
+void Schedule::autoSetMemType(const Target &target) {
+    // Try to put each VarDef as near to processor as possible
+    if (target.type() == TargetType::GPU) {
+        for (auto &&defId : allDefs(ast_, {AccessType::Cache})) {
+            try {
+                setMemType(defId, MemType::GPULocal);
+            } catch (const InvalidSchedule &e) {
+                try {
+                    setMemType(defId, MemType::GPUShared);
+                } catch (const InvalidSchedule &e) {
+                    // do nothing
+                }
+            }
+        }
     }
 }
 

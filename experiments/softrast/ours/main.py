@@ -39,8 +39,7 @@ def load_faces(path: str):
 jit_cache = {}
 
 
-def rasterize(vertices, faces, y, h, w, n_verts, n_faces, device, mtype,
-              local_mtype):
+def rasterize(vertices, faces, y, h, w, n_verts, n_faces, device):
     """
     Compute soft rasterization of each faces
 
@@ -58,24 +57,25 @@ def rasterize(vertices, faces, y, h, w, n_verts, n_faces, device, mtype,
         exe = jit_cache[(h, w, n_verts, n_faces)]
 
     else:
+        mtype = device.main_mem_type()
 
         sigma = 1e-4
 
         @ir.inline
         def cross_product(v1, v2):
-            y = ir.create_var((), "float32", "output", local_mtype)
+            y = ir.create_var((), "float32", "output", mtype)
             y[()] = v1[0] * v2[1] - v1[1] * v2[0]
             return y
 
         @ir.inline
         def norm(v):
-            y = ir.create_var((), "float32", "output", local_mtype)
+            y = ir.create_var((), "float32", "output", mtype)
             y[()] = ir.sqrt(v[0] * v[0] + v[1] * v[1])
             return y
 
         @ir.inline
         def sub(v1, v2):
-            y = ir.create_var((2,), "float32", "output", local_mtype)
+            y = ir.create_var((2,), "float32", "output", mtype)
             y[0] = v1[0] - v2[0]
             y[1] = v1[1] - v2[1]
             return y
@@ -88,34 +88,25 @@ def rasterize(vertices, faces, y, h, w, n_verts, n_faces, device, mtype,
 
             "nid: Li"
             for i in range(n_faces):
-                v1 = ir.create_var((2,), "float32", "cache", local_mtype)
-                v2 = ir.create_var((2,), "float32", "cache", local_mtype)
-                v3 = ir.create_var((2,), "float32", "cache", local_mtype)
+                v1 = ir.create_var((2,), "float32", "cache", mtype)
+                v2 = ir.create_var((2,), "float32", "cache", mtype)
+                v3 = ir.create_var((2,), "float32", "cache", mtype)
                 v1[0] = vertices[faces[i, 0], 0]
                 v1[1] = vertices[faces[i, 0], 1]
                 v2[0] = vertices[faces[i, 1], 0]
                 v2[1] = vertices[faces[i, 1], 1]
                 v3[0] = vertices[faces[i, 2], 0]
                 v3[1] = vertices[faces[i, 2], 1]
-                "nid: V_e1"
                 e1 = sub(v2, v1)
-                "nid: V_e2"
                 e2 = sub(v3, v2)
-                "nid: V_e3"
                 e3 = sub(v1, v3)
-                "nid: V_len1"
                 len1 = norm(e1)
-                "nid: V_len2"
                 len2 = norm(e2)
-                "nid: V_len3"
                 len3 = norm(e3)
 
-                "nid: Lj"
                 for j in range(h):
-                    "nid: Lk"
                     for k in range(w):
-                        pixel = ir.create_var((2,), "float32", "cache",
-                                              local_mtype)
+                        pixel = ir.create_var((2,), "float32", "cache", mtype)
                         pixel[0] = 1. / (h - 1) * j
                         pixel[1] = 1. / (w - 1) * k
 
@@ -125,15 +116,11 @@ def rasterize(vertices, faces, y, h, w, n_verts, n_faces, device, mtype,
                         cp1 = cross_product(p1, e1)
                         cp2 = cross_product(p2, e2)
                         cp3 = cross_product(p3, e3)
-                        "nid: V_dist1"
                         dist1 = norm(p1)
-                        "nid: V_dist2"
                         dist2 = norm(p2)
-                        "nid: V_dist3"
                         dist3 = norm(p3)
 
-                        dist = ir.create_var((), "float32", "cache",
-                                             local_mtype)
+                        dist = ir.create_var((), "float32", "cache", mtype)
                         dist[()] = ir.min(
                             ir.min(
                                 ir.min(
@@ -147,29 +134,7 @@ def rasterize(vertices, faces, y, h, w, n_verts, n_faces, device, mtype,
                             -1) * dist[()] * dist[()] / sigma
 
         s = ir.Schedule(f)
-        if device.target().type() == ir.TargetType.CPU:
-            s.parallelize('Li', 'openmp')
-            s.inline('V_dist1:y')
-            s.inline('V_dist2:y')
-            s.inline('V_dist3:y')
-        else:
-            s.inline('V_e1:y')
-            s.inline('V_e2:y')
-            s.inline('V_e3:y')
-            s.inline('V_len1:y')
-            s.inline('V_len2:y')
-            s.inline('V_len3:y')
-            s.inline('V_dist1:y')
-            s.inline('V_dist2:y')
-            s.inline('V_dist3:y')
-            s.inline(':dist')
-            Ljk = s.merge('Lj', 'Lk')
-            serial, thr = s.split(Ljk, 1024)
-            s.set_mem_type(":v1", "gpu/shared")
-            s.set_mem_type(":v2", "gpu/shared")
-            s.set_mem_type(":v3", "gpu/shared")
-            s.parallelize(thr, 'threadIdx.x')
-            s.parallelize('Li', 'blockIdx.x')
+        s.auto_schedule(device.target())
         f = ir.lower(s.func(), device.target())
         print(f)
         code = ir.codegen(f, device.target())
@@ -199,25 +164,20 @@ if __name__ == '__main__':
 
     if device == 'gpu':
         ir_dev = ir.Device(ir.GPU())
-        ir_mtype = 'gpu/global'
-        ir_local_mtype = 'gpu/local'
     else:
         assert device == 'cpu'
         ir_dev = ir.Device(ir.CPU())
-        ir_mtype = 'cpu'
-        ir_local_mtype = 'cpu'
 
     vertices = ir.Array(vertices, ir_dev)
     faces = ir.Array(faces, ir_dev)
     y = ir.Array(y, ir_dev)
 
     test_num = 100
-    rasterize(vertices, faces, y, h, w, n_verts, n_faces, ir_dev, ir_mtype,
-              ir_local_mtype)  # init lazy ops
+    rasterize(vertices, faces, y, h, w, n_verts, n_faces,
+              ir_dev)  # init lazy ops
     t0 = time.time()
     for i in range(test_num):
-        rasterize(vertices, faces, y, h, w, n_verts, n_faces, ir_dev, ir_mtype,
-                  ir_local_mtype)
+        rasterize(vertices, faces, y, h, w, n_verts, n_faces, ir_dev)
     t1 = time.time()
 
     print(f"Time = {(t1 - t0) / test_num * 1000} ms")

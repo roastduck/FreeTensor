@@ -7,9 +7,12 @@ namespace ir {
 namespace gpu {
 
 void FindParallelLoops::visit(const For &op) {
-    if (op->parallel_ == "threadIdx.x" || op->parallel_ == "threadIdx.y" ||
-        op->parallel_ == "threadIdx.z" || op->parallel_ == "blockIdx.x" ||
-        op->parallel_ == "blockIdx.y" || op->parallel_ == "blockIdx.z") {
+    if (op->property_.parallel_ == "threadIdx.x" ||
+        op->property_.parallel_ == "threadIdx.y" ||
+        op->property_.parallel_ == "threadIdx.z" ||
+        op->property_.parallel_ == "blockIdx.x" ||
+        op->property_.parallel_ == "blockIdx.y" ||
+        op->property_.parallel_ == "blockIdx.z") {
         loops_.emplace_back(op);
         stack_.emplace_back(op);
         Visitor::visit(op);
@@ -27,7 +30,7 @@ void FindParallelLoops::visit(const VarDef &op) {
         }
     } else if (op->buffer_->mtype() == MemType::GPUShared) {
         for (auto &&outer : stack_) {
-            if (outer->parallel_.substr(0, 10) == "threadIdx.") {
+            if (outer->property_.parallel_.substr(0, 10) == "threadIdx.") {
                 affecting_[op->id()].insert(outer->id());
             }
         }
@@ -35,9 +38,12 @@ void FindParallelLoops::visit(const VarDef &op) {
 }
 
 Stmt CorrectMutator::visit(const For &op) {
-    if (op->parallel_ == "threadIdx.x" || op->parallel_ == "threadIdx.y" ||
-        op->parallel_ == "threadIdx.z" || op->parallel_ == "blockIdx.x" ||
-        op->parallel_ == "blockIdx.y" || op->parallel_ == "blockIdx.z") {
+    if (op->property_.parallel_ == "threadIdx.x" ||
+        op->property_.parallel_ == "threadIdx.y" ||
+        op->property_.parallel_ == "threadIdx.z" ||
+        op->property_.parallel_ == "blockIdx.x" ||
+        op->property_.parallel_ == "blockIdx.y" ||
+        op->property_.parallel_ == "blockIdx.z") {
         stack_.emplace_back(op);
         auto ret = Mutator::visit(op);
         stack_.pop_back();
@@ -106,7 +112,7 @@ Stmt correctSharedAndGlobal(const Stmt &op) {
         parallelScopes; // For ID -> parallel
     for (auto &&loop : finder.loops()) {
         conds.emplace_back(FindDepsCond{{loop->id(), DepDirection::Different}});
-        parallelScopes[loop->id()] = loop->parallel_;
+        parallelScopes[loop->id()] = loop->property_.parallel_;
     }
     std::unordered_map<std::string, std::unordered_set<std::string>>
         affecting; // VarDef ID -> For ID

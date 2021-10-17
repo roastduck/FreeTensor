@@ -1,5 +1,6 @@
 from .element_wise import *
 from .assign import *
+from .constant import *
 from .conv import *
 from .pooling import *
 from .matmul import *

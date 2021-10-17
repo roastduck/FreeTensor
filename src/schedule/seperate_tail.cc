@@ -160,7 +160,7 @@ Stmt SeperateTail::visit(const For &_op) {
         return op;
     }
 
-    if (!op->parallel_.empty()) {
+    if (!op->property_.parallel_.empty()) {
         return op;
     }
 
@@ -182,14 +182,12 @@ Stmt SeperateTail::visit(const For &_op) {
             return old;
         }
         auto &&sep = seperations[i];
-        auto front =
-            makeFor(old->id(), old->iter_, old->begin_, sep,
-                    makeSub(sep, old->begin_), old->noDeps_, old->parallel_,
-                    old->unroll_, old->vectorize_, old->body_);
-        auto back =
-            makeFor(old->id(), old->iter_, sep, old->end_,
-                    makeSub(old->end_, sep), old->noDeps_, old->parallel_,
-                    old->unroll_, old->vectorize_, old->body_);
+        auto front = makeFor(old->id(), old->iter_, old->begin_, sep,
+                             makeSub(sep, old->begin_), old->noDeps_,
+                             old->property_, old->body_);
+        auto back = makeFor(old->id(), old->iter_, sep, old->end_,
+                            makeSub(old->end_, sep), old->noDeps_,
+                            old->property_, old->body_);
         front = dfs(i + 1, AppendIDs(".front")(front).as<ForNode>());
         back = dfs(i + 1, AppendIDs(".back")(back).as<ForNode>());
         auto seperated = makeStmtSeq("", {front, back});

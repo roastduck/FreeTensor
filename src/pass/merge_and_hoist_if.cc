@@ -95,8 +95,7 @@ Stmt MergeAndHoistIf::visit(const For &_op) {
                              })) {
                 return makeIf(branch->id(), branch->cond_,
                               makeFor(op->id(), op->iter_, op->begin_, op->end_,
-                                      op->len_, op->noDeps_, op->parallel_,
-                                      op->unroll_, op->vectorize_,
+                                      op->len_, op->noDeps_, op->property_,
                                       branch->thenCase_));
             }
         }

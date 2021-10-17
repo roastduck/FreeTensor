@@ -106,7 +106,7 @@ class Schedule {
      * To fuse consecutive loops, use `fuse` instead
      *
      * `parallelize`, `unroll` and `vectorize` properties will be reset on the
-     * fused loop
+     * merged loop
      *
      * @param loop1, loop2 : ID of the loops to be merged, can be in any order
      * @throw InvalidSchedule if the loops are not directly nested
@@ -140,6 +140,9 @@ class Schedule {
      * Fuse two directly following loops with the same length into one
      *
      * To merge nested loops into one, use `merge` instead
+     *
+     * `parallelize`, `unroll` and `vectorize` properties will be reset on the
+     * fused loop
      *
      * @param loop0 : ID of the leading loop
      * @param loop1 : ID of the following loop
@@ -411,11 +414,28 @@ class Schedule {
     void asMatMul(const std::string &loop);
 
     /**
+     * Automatic scheduling using some heuristics
+     *
+     * @param target : Target architecture
+     */
+    void autoSchedule(const Target &target);
+
+    /**
+     * Automatically fuse consecutive loops using some heuristics
+     */
+    void autoFuse(const Target &target);
+
+    /**
      * Automatically parallelize some loops using some heuristics
      *
      * @param target : Target architecture
      */
     void autoParallelize(const Target &target);
+
+    /**
+     * Automatically set memory types using some heuristics
+     */
+    void autoSetMemType(const Target &target);
 };
 
 } // namespace ir

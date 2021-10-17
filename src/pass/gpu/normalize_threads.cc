@@ -46,19 +46,22 @@ Stmt NormalizeThreads::doVisitStmt(const Stmt &_op) {
 }
 
 Stmt NormalizeThreads::doVisitFor(const For &_op) {
-    if (_op->parallel_ == "blockIdx.x" || _op->parallel_ == "blockIdx.y" ||
-        _op->parallel_ == "blockIdx.z" || _op->parallel_ == "threadIdx.x" ||
-        _op->parallel_ == "threadIdx.y" || _op->parallel_ == "threadIdx.z") {
-        auto newIter = "." + _op->parallel_;
+    if (_op->property_.parallel_ == "blockIdx.x" ||
+        _op->property_.parallel_ == "blockIdx.y" ||
+        _op->property_.parallel_ == "blockIdx.z" ||
+        _op->property_.parallel_ == "threadIdx.x" ||
+        _op->property_.parallel_ == "threadIdx.y" ||
+        _op->property_.parallel_ == "threadIdx.z") {
+        auto newIter = "." + _op->property_.parallel_;
         varMap_[_op->iter_] = {newIter, _op->begin_};
-        inside_[_op->parallel_]++;
+        inside_[_op->property_.parallel_]++;
         auto __op = Mutator::visit(_op);
         ASSERT(__op->nodeType() == ASTNodeType::For);
         auto op = __op.as<ForNode>();
         varMap_.erase(_op->iter_);
-        inside_[_op->parallel_]--;
+        inside_[_op->property_.parallel_]--;
         if (!op->noDeps_) {
-            notNoDeps_.insert(_op->parallel_);
+            notNoDeps_.insert(_op->property_.parallel_);
         }
         return makeIf(op->id(), makeLT(makeVar(newIter), op->len_), op->body_);
     } else {
@@ -67,33 +70,35 @@ Stmt NormalizeThreads::doVisitFor(const For &_op) {
 }
 
 Stmt NormalizeThreads::visit(const For &op) {
-    if (!inKernel_ &&
-        (op->parallel_ == "blockIdx.x" || op->parallel_ == "blockIdx.y" ||
-         op->parallel_ == "blockIdx.z" || op->parallel_ == "threadIdx.x" ||
-         op->parallel_ == "threadIdx.y" || op->parallel_ == "threadIdx.z")) {
+    if (!inKernel_ && (op->property_.parallel_ == "blockIdx.x" ||
+                       op->property_.parallel_ == "blockIdx.y" ||
+                       op->property_.parallel_ == "blockIdx.z" ||
+                       op->property_.parallel_ == "threadIdx.x" ||
+                       op->property_.parallel_ == "threadIdx.y" ||
+                       op->property_.parallel_ == "threadIdx.z")) {
         inKernel_ = true;
         auto ret = doVisitFor(op);
         inKernel_ = false;
         auto zero = makeIntConst(0);
         auto inf = makeIntConst(INT_MAX);
         ret = makeFor("", ".threadIdx.x", zero, inf, inf,
-                      !notNoDeps_.count("threadIdx.x"), "threadIdx.x", false,
-                      false, ret);
+                      !notNoDeps_.count("threadIdx.x"),
+                      ForProperty().withParallel("threadIdx.x"), ret);
         ret = makeFor("", ".threadIdx.y", zero, inf, inf,
-                      !notNoDeps_.count("threadIdx.y"), "threadIdx.y", false,
-                      false, ret);
+                      !notNoDeps_.count("threadIdx.y"),
+                      ForProperty().withParallel("threadIdx.y"), ret);
         ret = makeFor("", ".threadIdx.z", zero, inf, inf,
-                      !notNoDeps_.count("threadIdx.z"), "threadIdx.z", false,
-                      false, ret);
+                      !notNoDeps_.count("threadIdx.z"),
+                      ForProperty().withParallel("threadIdx.z"), ret);
         ret = makeFor("", ".blockIdx.x", zero, inf, inf,
-                      !notNoDeps_.count("blockIdx.x"), "blockIdx.x", false,
-                      false, ret);
+                      !notNoDeps_.count("blockIdx.x"),
+                      ForProperty().withParallel("blockIdx.x"), ret);
         ret = makeFor("", ".blockIdx.y", zero, inf, inf,
-                      !notNoDeps_.count("blockIdx.y"), "blockIdx.y", false,
-                      false, ret);
+                      !notNoDeps_.count("blockIdx.y"),
+                      ForProperty().withParallel("blockIdx.y"), ret);
         ret = makeFor("", ".blockIdx.z", zero, inf, inf,
-                      !notNoDeps_.count("blockIdx.z"), "blockIdx.z", false,
-                      false, ret);
+                      !notNoDeps_.count("blockIdx.z"),
+                      ForProperty().withParallel("blockIdx.z"), ret);
         return ret;
     } else {
         return doVisitFor(op);
@@ -117,7 +122,7 @@ Stmt CheckThreadNum::visit(const For &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::For);
     auto op = __op.as<ForNode>();
 
-    if (!op->parallel_.empty()) {
+    if (!op->property_.parallel_.empty()) {
         if (op->begin_->nodeType() != ASTNodeType::IntConst) {
             op->body_ =
                 makeIf("", makeGE(makeVar(op->iter_), op->begin_), op->body_);
@@ -133,7 +138,7 @@ Stmt CheckThreadNum::visit(const For &_op) {
         op->len_ = makeIntConst(op->end_.as<IntConstNode>()->val_ -
                                 op->begin_.as<IntConstNode>()->val_);
         if (op->end_.as<IntConstNode>()->val_ == INT_MAX) {
-            throw InvalidProgram("Length of " + op->parallel_ +
+            throw InvalidProgram("Length of " + op->property_.parallel_ +
                                  " should have a finite bound");
         }
     }

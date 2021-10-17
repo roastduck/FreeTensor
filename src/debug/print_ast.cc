@@ -365,15 +365,37 @@ void PrintVisitor::visit(const For &op) {
         makeIndent();
         os() << "// no dependency" << std::endl;
     }
-    if (!op->parallel_.empty()) {
+    if (!op->property_.parallel_.empty()) {
         makeIndent();
-        os() << "// parallel = " << op->parallel_ << std::endl;
+        os() << "// parallel = " << op->property_.parallel_ << std::endl;
     }
-    if (op->unroll_) {
+    for (auto &&reduction : op->property_.reductions_) {
+        makeIndent();
+        os() << "// reduction ";
+        switch (reduction.first) {
+        case ReduceOp::Add:
+            os() << "+: ";
+            break;
+        case ReduceOp::Mul:
+            os() << "*: ";
+            break;
+        case ReduceOp::Min:
+            os() << "min: ";
+            break;
+        case ReduceOp::Max:
+            os() << "max: ";
+            break;
+        default:
+            ASSERT(false);
+        }
+        recur(reduction.second);
+        os() << std::endl;
+    }
+    if (op->property_.unroll_) {
         makeIndent();
         os() << "// unroll" << std::endl;
     }
-    if (op->vectorize_) {
+    if (op->property_.vectorize_) {
         makeIndent();
         os() << "// vectorize" << std::endl;
     }
