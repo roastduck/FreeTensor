@@ -458,7 +458,7 @@ void Schedule::autoParallelize(const Target &target) {
                     std::tie(l1, l3) = split(loopId, -1, 80);
                     if (!findAll(l3).empty()) {
                         std::tie(l2, l3) =
-                            split(l3, childrenAllSerial ? 1024 : 32);
+                            split(l3, childrenAllSerial ? 256 : 8);
                     }
                     if (!findAll(l1).empty()) {
                         parallelize(l1, "blockIdx.y");
