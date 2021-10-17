@@ -52,6 +52,10 @@ namespace ir {
  */
 class MergeAndHoistIf : public Mutator {
     std::unordered_set<std::string> def_;
+    bool isFixPoint_ = true;
+
+  public:
+    bool isFixPoint() const { return isFixPoint_; }
 
   protected:
     Stmt visit(const StmtSeq &op) override;

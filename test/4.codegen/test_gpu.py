@@ -722,7 +722,7 @@ def test_syncthreads_split_branch_out_of_const_loop():
                             with ir.If(ir.any()):
                                 with ir.If(p == 0):
                                     ir.Any()  # y
-                            ir.Eval(ir.intrinsic("__syncwarp()"))
+                        ir.Eval(ir.intrinsic("__syncwarp()"))
     assert ir.pop_ast().match(func.body)
 
 
@@ -882,10 +882,11 @@ def test_syncthreads_split_branch_and_vardef_with_else():
         with ir.For(".blockIdx.x", 0, 4) as i:
             with ir.For(".threadIdx.x", 0, 256) as j:
                 with ir.VarDef("t", (2,), "int32", "cache", "gpu/shared") as t:
+                    with ir.If(i < 2):
+                        ir.Any()
                     with ir.VarDef("u1", (1,), "int32", "cache",
                                    "gpu/shared") as u:
                         with ir.If(i < 2):
-                            ir.Any()
                             with ir.If(j == 0):
                                 ir.Any()  # u[0]
                         ir.Eval(
@@ -895,15 +896,15 @@ def test_syncthreads_split_branch_and_vardef_with_else():
                                 ir.Any()  # y[i]
                                 ir.Any()  # z1[i]
                                 ir.Any()  # z2[i]
+
+                    # We need a sync here because we first do then-case and THEN do else-case
+                    ir.Eval(ir.intrinsic("__syncthreads()"))  # Here outside If
+
+                    with ir.If(i >= 2):
+                        ir.Any()
                     with ir.VarDef("u2", (1,), "int32", "cache",
                                    "gpu/shared") as u:
-
-                        # We need a sync here because we first do then-case and THEN do else-case
-                        ir.Eval(
-                            ir.intrinsic("__syncthreads()"))  # Here outside If
-
                         with ir.If(i >= 2):
-                            ir.Any()
                             with ir.If(j == 0):
                                 ir.Any()  # u[0]
                         ir.Eval(

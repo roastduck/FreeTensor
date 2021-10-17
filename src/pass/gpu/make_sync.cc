@@ -4,8 +4,8 @@
 
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
-#include <pass/flatten_stmt_seq.h>
 #include <pass/gpu/make_sync.h>
+#include <pass/merge_and_hoist_if.h>
 
 namespace ir {
 
@@ -32,53 +32,31 @@ void FindAllThreads::visit(const For &op) {
     }
 }
 
-Stmt CopyPart::visitStmt(const Stmt &op,
-                         const std::function<Stmt(const Stmt &)> &visitNode) {
-    if (!ended_ && end_.isValid() && op->id() == end_->id()) {
-        ended_ = true;
-    }
-    if (ended_) {
-        return makeStmtSeq("", {});
-    }
+Stmt CopyParts::visitStmt(const Stmt &op,
+                          const std::function<Stmt(const Stmt &)> &visitNode) {
     auto ret = Mutator::visitStmt(op, visitNode);
-    if (!begun_) {
-        ret = makeStmtSeq("", {});
-    }
-    if (!begun_ && begin_.isValid() && op->id() == begin_->id()) {
-        begun_ = true;
-        if (!splittedForsRecorded_) {
-            for (auto it = loopStack_.rbegin(); it != loopStack_.rend(); it++) {
-                splittedFors_.emplace_back(*it);
-            }
-            splittedForsRecorded_ = true;
-        } else {
-            if (loopStack_.size() != splittedFors_.size()) {
-                throw InvalidProgram(
-                    "Unable to insert a synchronizing statement in a loop, "
-                    "where the loop is in an if, and there is some other "
-                    "statment in the if");
-            }
-            for (size_t i = 0, n = loopStack_.size(); i < n; i++) {
-                if (loopStack_[i]->id() != splittedFors_[n - 1 - i]->id()) {
-                    throw InvalidProgram(
-                        "Unable to insert a synchronizing statement in a loop, "
-                        "where the loop is in an if, and there is some other "
-                        "statment in the if");
-                }
-            }
+    if (ret->nodeType() == ASTNodeType::Store ||
+        ret->nodeType() == ASTNodeType::ReduceTo ||
+        ret->nodeType() == ASTNodeType::Eval) {
+        // leaf node
+        if (std::find_if(splitters_.begin(), splitters_.end(),
+                         [&](const Stmt &item) {
+                             return item->id() == ret->id();
+                         }) == splitters_.end()) {
+            // not a splitter
+            fullParts_.insert(ret);
         }
     }
     return ret;
 }
 
-Stmt CopyPart::visit(const For &_op) {
-    bool begun = begun_, ended = ended_;
-    loopStack_.emplace_back(_op);
+Stmt CopyParts::visit(const For &_op) {
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::For);
     auto op = __op.as<ForNode>();
-    loopStack_.pop_back();
-    if (((!begun && begun_) || (!ended && ended_))) {
+    if (fullParts_.count(op->body_)) {
+        fullParts_.insert(op);
+    } else {
         if (op->property_.parallel_.empty() &&
             (op->begin_->nodeType() != ASTNodeType::IntConst ||
              op->end_->nodeType() != ASTNodeType::IntConst)) {
@@ -87,24 +65,58 @@ Stmt CopyPart::visit(const For &_op) {
                 "splitting a dynamic loop " +
                 op->id() + " into two parts");
         }
-        return op->body_;
     }
     return op;
 }
 
-Stmt CopyPart::visit(const VarDef &_op) {
-    bool begun = begun_, ended = ended_;
+Stmt CopyParts::visit(const If &_op) {
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::If);
+    auto op = __op.as<IfNode>();
+    if (fullParts_.count(op->thenCase_) &&
+        (!op->elseCase_.isValid() || fullParts_.count(op->elseCase_))) {
+        fullParts_.insert(op);
+    }
+    return op;
+}
+
+Stmt CopyParts::visit(const Assert &_op) {
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::Assert);
+    auto op = __op.as<AssertNode>();
+    if (fullParts_.count(op->body_)) {
+        fullParts_.insert(op);
+    }
+    return op;
+}
+
+Stmt CopyParts::visit(const VarDef &_op) {
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::VarDef);
     auto op = __op.as<VarDefNode>();
-    if ((!begun && begun_) || (!ended && ended_)) {
-        if (std::find_if(splittedDefs_.begin(), splittedDefs_.end(),
-                         [&](const VarDef &x) {
-                             return x->id() == op->id();
-                         }) == splittedDefs_.end()) {
-            splittedDefs_.emplace_back(op);
+    if (fullParts_.count(op->body_)) {
+        fullParts_.insert(op);
+    }
+    return op;
+}
+
+Stmt CopyParts::visit(const StmtSeq &_op) {
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::StmtSeq);
+    auto op = __op.as<StmtSeqNode>();
+    for (auto &&stmt : op->stmts_) {
+        if (!fullParts_.count(stmt)) {
+            goto split_this_level;
         }
-        return op->body_;
+    }
+    fullParts_.insert(op);
+    return op;
+
+split_this_level:
+    for (auto &stmt : op->stmts_) {
+        if (fullParts_.count(stmt)) {
+            stmt = makeIf("", cond_, stmt);
+        }
     }
     return op;
 }
@@ -235,58 +247,17 @@ Stmt MakeSync::visit(const If &_op) {
                                  toString(op->cond_) + " is being modified");
         }
 
-        auto &&splittersThen = branchSplittersThen_[op->id()];
-        auto &&splittersElse = branchSplittersElse_[op->id()];
-        std::vector<Stmt> stmts;
-        stmts.reserve(splittersThen.size() * 2 + 1);
-        CopyPart copier;
-        for (size_t i = 0, iEnd = splittersThen.size() + 1; i < iEnd; i++) {
-            Stmt begin = i == 0 ? nullptr : splittersThen[i - 1];
-            Stmt end = i == iEnd - 1 ? nullptr : splittersThen[i];
-            copier.setPart(begin, end);
-            auto part = copier(op->thenCase_);
-            stmts.emplace_back(makeIf("", op->cond_, part));
-            if (i < iEnd - 1) {
-                stmts.emplace_back(splittersThen[i]);
-            }
-        }
-        Stmt thenBody = makeStmtSeq("", std::move(stmts));
-        for (auto &&def : copier.splittedDefs()) {
-            // FIXME: Check the shape is invariant
-            thenBody =
-                makeVarDef(def->id(), def->name_, std::move(*def->buffer_),
-                           def->sizeLim_, thenBody, def->pinned_);
-        }
-        for (auto &&loop : copier.splittedFors()) {
-            thenBody =
-                makeFor(loop->id(), loop->iter_, loop->begin_, loop->end_,
-                        loop->len_, loop->noDeps_, loop->property_, thenBody);
+        Stmt thenBody = op->thenCase_;
+        if (branchSplittersThen_.count(op->id())) {
+            CopyParts thenCopier(op->cond_, branchSplittersThen_.at(op->id()));
+            thenBody = thenCopier(thenBody);
         }
         if (op->elseCase_.isValid()) {
-            std::vector<Stmt> stmts;
-            stmts.reserve(splittersElse.size() * 2 + 1);
-            CopyPart copier;
-            for (size_t i = 0, iEnd = splittersElse.size() + 1; i < iEnd; i++) {
-                Stmt begin = i == 0 ? nullptr : splittersElse[i - 1];
-                Stmt end = i == iEnd - 1 ? nullptr : splittersElse[i];
-                copier.setPart(begin, end);
-                auto part = copier(op->elseCase_);
-                stmts.emplace_back(makeIf("", makeLNot(op->cond_), part));
-                if (i < iEnd - 1) {
-                    stmts.emplace_back(splittersElse[i]);
-                }
-            }
-            Stmt elseBody = makeStmtSeq("", std::move(stmts));
-            for (auto &&def : copier.splittedDefs()) {
-                // FIXME: Check the shape is invariant
-                elseBody =
-                    makeVarDef(def->id(), def->name_, std::move(*def->buffer_),
-                               def->sizeLim_, elseBody, def->pinned_);
-            }
-            for (auto &&loop : copier.splittedFors()) {
-                elseBody = makeFor(loop->id(), loop->iter_, loop->begin_,
-                                   loop->end_, loop->len_, loop->noDeps_,
-                                   loop->property_, elseBody);
+            Stmt elseBody = op->elseCase_;
+            if (branchSplittersElse_.count(op->id())) {
+                CopyParts elseCopier(makeLNot(op->cond_),
+                                     branchSplittersElse_.at(op->id()));
+                elseBody = elseCopier(elseBody);
             }
             return makeStmtSeq("", {thenBody, elseBody});
         } else {
@@ -333,7 +304,7 @@ Stmt makeSync(const Stmt &_op) {
     MakeSync mutator(op, std::move(deps));
     op = mutator(op);
 
-    return flattenStmtSeq(op);
+    return mergeAndHoistIf(op);
 }
 
 } // namespace gpu

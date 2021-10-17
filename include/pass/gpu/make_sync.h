@@ -26,30 +26,23 @@ class FindAllThreads : public Visitor {
     void visit(const For &op) override;
 };
 
-class CopyPart : public Mutator {
-    Stmt begin_, end_;
-    bool begun_, ended_;
-    std::vector<For> loopStack_;
-    std::vector<VarDef> splittedDefs_; // From inner to outer
-    std::vector<For> splittedFors_;    // From inner to outer
-    bool splittedForsRecorded_ = false;
+class CopyParts : public Mutator {
+    Expr cond_;
+    const std::vector<Stmt> &splitters_;
+    std::unordered_set<Stmt> fullParts_;
 
   public:
-    void setPart(const Stmt &begin, const Stmt &end) {
-        begin_ = begin;
-        end_ = end;
-        begun_ = !begin.isValid();
-        ended_ = false;
-    }
-
-    const std::vector<VarDef> &splittedDefs() const { return splittedDefs_; }
-    const std::vector<For> &splittedFors() const { return splittedFors_; }
+    CopyParts(const Expr &cond, const std::vector<Stmt> &splitters)
+        : cond_(cond), splitters_(splitters) {}
 
   protected:
     Stmt visitStmt(const Stmt &op,
                    const std::function<Stmt(const Stmt &)> &visitNode) override;
     Stmt visit(const For &op) override;
+    Stmt visit(const If &op) override;
+    Stmt visit(const Assert &op) override;
     Stmt visit(const VarDef &op) override;
+    Stmt visit(const StmtSeq &op) override;
 };
 
 struct CrossThreadDep {
