@@ -29,13 +29,21 @@ class FindAllThreads : public Visitor {
 class CopyPart : public Mutator {
     Stmt begin_, end_;
     bool begun_, ended_;
+    std::vector<For> loopStack_;
     std::vector<VarDef> splittedDefs_; // From inner to outer
+    std::vector<For> splittedFors_;    // From inner to outer
+    bool splittedForsRecorded_ = false;
 
   public:
-    CopyPart(const Stmt &begin, const Stmt &end)
-        : begin_(begin), end_(end), begun_(!begin.isValid()), ended_(false) {}
+    void setPart(const Stmt &begin, const Stmt &end) {
+        begin_ = begin;
+        end_ = end;
+        begun_ = !begin.isValid();
+        ended_ = false;
+    }
 
     const std::vector<VarDef> &splittedDefs() const { return splittedDefs_; }
+    const std::vector<For> &splittedFors() const { return splittedFors_; }
 
   protected:
     Stmt visitStmt(const Stmt &op,
@@ -60,6 +68,9 @@ class MakeSync : public MutatorWithCursor {
   public:
     MakeSync(const Stmt root, std::vector<CrossThreadDep> &&deps)
         : root_(root), deps_(std::move(deps)) {}
+
+  private:
+    void markSyncForSplitting(const Stmt &sync);
 
   protected:
     Stmt visitStmt(const Stmt &op,

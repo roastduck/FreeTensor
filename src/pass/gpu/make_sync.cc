@@ -46,21 +46,50 @@ Stmt CopyPart::visitStmt(const Stmt &op,
     }
     if (!begun_ && begin_.isValid() && op->id() == begin_->id()) {
         begun_ = true;
+        if (!splittedForsRecorded_) {
+            for (auto it = loopStack_.rbegin(); it != loopStack_.rend(); it++) {
+                splittedFors_.emplace_back(*it);
+            }
+            splittedForsRecorded_ = true;
+        } else {
+            if (loopStack_.size() != splittedFors_.size()) {
+                throw InvalidProgram(
+                    "Unable to insert a synchronizing statement in a loop, "
+                    "where the loop is in an if, and there is some other "
+                    "statment in the if");
+            }
+            for (size_t i = 0, n = loopStack_.size(); i < n; i++) {
+                if (loopStack_[i]->id() != splittedFors_[n - 1 - i]->id()) {
+                    throw InvalidProgram(
+                        "Unable to insert a synchronizing statement in a loop, "
+                        "where the loop is in an if, and there is some other "
+                        "statment in the if");
+                }
+            }
+        }
     }
     return ret;
 }
 
-Stmt CopyPart::visit(const For &op) {
+Stmt CopyPart::visit(const For &_op) {
     bool begun = begun_, ended = ended_;
-    auto ret = Mutator::visit(op);
-    if (op->property_.parallel_.empty() &&
-        ((!begun && begun_) || (!ended && ended_))) {
-        throw InvalidProgram(
-            "Unable to insert a synchronizing statment because it requires "
-            "splitting loop " +
-            op->id() + " into two parts");
+    loopStack_.emplace_back(_op);
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::For);
+    auto op = __op.as<ForNode>();
+    loopStack_.pop_back();
+    if (((!begun && begun_) || (!ended && ended_))) {
+        if (op->property_.parallel_.empty() &&
+            (op->begin_->nodeType() != ASTNodeType::IntConst ||
+             op->end_->nodeType() != ASTNodeType::IntConst)) {
+            throw InvalidProgram(
+                "Unable to insert a synchronizing statment because it requires "
+                "splitting a dynamic loop " +
+                op->id() + " into two parts");
+        }
+        return op->body_;
     }
-    return ret;
+    return op;
 }
 
 Stmt CopyPart::visit(const VarDef &_op) {
@@ -69,10 +98,28 @@ Stmt CopyPart::visit(const VarDef &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::VarDef);
     auto op = __op.as<VarDefNode>();
     if ((!begun && begun_) || (!ended && ended_)) {
-        splittedDefs_.emplace_back(op);
+        if (std::find_if(splittedDefs_.begin(), splittedDefs_.end(),
+                         [&](const VarDef &x) {
+                             return x->id() == op->id();
+                         }) == splittedDefs_.end()) {
+            splittedDefs_.emplace_back(op);
+        }
         return op->body_;
     }
     return op;
+}
+
+void MakeSync::markSyncForSplitting(const Stmt &sync) {
+    bool inElseCase = false;
+    for (auto ctx = cursor(); ctx.hasOuter(); ctx = ctx.outer()) {
+        if (ctx.nodeType() == ASTNodeType::If) {
+            (inElseCase ? branchSplittersElse_ : branchSplittersThen_)[ctx.id()]
+                .emplace_back(sync);
+        }
+        inElseCase = ctx.outer().isValid() &&
+                     ctx.outer().nodeType() == ASTNodeType::If &&
+                     ctx.outer().node().as<IfNode>()->elseCase_ == ctx.node();
+    }
 }
 
 Stmt MakeSync::visitStmt(const Stmt &op,
@@ -109,22 +156,9 @@ Stmt MakeSync::visitStmt(const Stmt &op,
         }
         if (!whereToInsert.isValid()) {
             ret = makeStmtSeq("", {sync, ret});
+            markSyncForSplitting(sync);
         } else {
             syncBeforeFor_[whereToInsert.id()] = sync;
-        }
-
-        bool inElseCase = false;
-        for (auto ctx = whereToInsert.isValid() ? whereToInsert : cursor();
-             ctx.hasOuter(); ctx = ctx.outer()) {
-            if (ctx.nodeType() == ASTNodeType::If) {
-                (inElseCase ? branchSplittersElse_
-                            : branchSplittersThen_)[ctx.id()]
-                    .emplace_back(sync);
-            }
-            inElseCase =
-                ctx.outer().isValid() &&
-                ctx.outer().nodeType() == ASTNodeType::If &&
-                ctx.outer().node().as<IfNode>()->elseCase_ == ctx.node();
         }
 
         for (CrossThreadDep &dep : deps_) {
@@ -156,16 +190,17 @@ Stmt MakeSync::visit(const For &_op) {
             (dep.inWarp_ ? needSyncWarp : needSyncThreads) = true;
         }
     }
-    if (needSyncThreads) {
-        op->body_ = makeStmtSeq(
-            "", {op->body_, makeEval("", makeIntrinsic("__syncthreads()", {},
-                                                       DataType::Void))});
-    } else if (needSyncWarp) {
-        op->body_ = makeStmtSeq(
-            "", {op->body_, makeEval("", makeIntrinsic("__syncwarp()", {},
-                                                       DataType::Void))});
-    }
     if (needSyncThreads || needSyncWarp) {
+        Stmt sync;
+        if (needSyncThreads) {
+            sync = makeEval(
+                "", makeIntrinsic("__syncthreads()", {}, DataType::Void));
+        } else if (needSyncWarp) {
+            sync =
+                makeEval("", makeIntrinsic("__syncwarp()", {}, DataType::Void));
+        }
+        op->body_ = makeStmtSeq("", {op->body_, sync});
+        markSyncForSplitting(sync);
         for (CrossThreadDep &dep : deps_) {
             if (dep.visiting_) {
                 if (needSyncThreads) {
@@ -178,7 +213,9 @@ Stmt MakeSync::visit(const For &_op) {
         }
     }
     if (syncBeforeFor_.count(op->id())) {
-        return makeStmtSeq("", {syncBeforeFor_.at(op->id()), op});
+        auto &&sync = syncBeforeFor_.at(op->id());
+        markSyncForSplitting(sync);
+        return makeStmtSeq("", {sync, op});
     }
     return op;
 }
@@ -202,61 +239,54 @@ Stmt MakeSync::visit(const If &_op) {
         auto &&splittersElse = branchSplittersElse_[op->id()];
         std::vector<Stmt> stmts;
         stmts.reserve(splittersThen.size() * 2 + 1);
-        std::vector<VarDef> splittedDefs;
+        CopyPart copier;
         for (size_t i = 0, iEnd = splittersThen.size() + 1; i < iEnd; i++) {
             Stmt begin = i == 0 ? nullptr : splittersThen[i - 1];
             Stmt end = i == iEnd - 1 ? nullptr : splittersThen[i];
-            CopyPart copier(begin, end);
+            copier.setPart(begin, end);
             auto part = copier(op->thenCase_);
             stmts.emplace_back(makeIf("", op->cond_, part));
             if (i < iEnd - 1) {
                 stmts.emplace_back(splittersThen[i]);
             }
-            for (auto &&item : copier.splittedDefs()) {
-                if (std::find_if(splittedDefs.begin(), splittedDefs.end(),
-                                 [&](const VarDef &x) {
-                                     return x->id() == item->id();
-                                 }) == splittedDefs.end()) {
-                    splittedDefs.emplace_back(item);
-                }
-            }
         }
         Stmt thenBody = makeStmtSeq("", std::move(stmts));
-        for (auto &&def : splittedDefs) {
+        for (auto &&def : copier.splittedDefs()) {
             // FIXME: Check the shape is invariant
             thenBody =
                 makeVarDef(def->id(), def->name_, std::move(*def->buffer_),
                            def->sizeLim_, thenBody, def->pinned_);
         }
-
+        for (auto &&loop : copier.splittedFors()) {
+            thenBody =
+                makeFor(loop->id(), loop->iter_, loop->begin_, loop->end_,
+                        loop->len_, loop->noDeps_, loop->property_, thenBody);
+        }
         if (op->elseCase_.isValid()) {
             std::vector<Stmt> stmts;
             stmts.reserve(splittersElse.size() * 2 + 1);
-            std::vector<VarDef> splittedDefs;
+            CopyPart copier;
             for (size_t i = 0, iEnd = splittersElse.size() + 1; i < iEnd; i++) {
                 Stmt begin = i == 0 ? nullptr : splittersElse[i - 1];
                 Stmt end = i == iEnd - 1 ? nullptr : splittersElse[i];
-                CopyPart copier(begin, end);
+                copier.setPart(begin, end);
                 auto part = copier(op->elseCase_);
                 stmts.emplace_back(makeIf("", makeLNot(op->cond_), part));
                 if (i < iEnd - 1) {
                     stmts.emplace_back(splittersElse[i]);
                 }
-                for (auto &&item : copier.splittedDefs()) {
-                    if (std::find_if(splittedDefs.begin(), splittedDefs.end(),
-                                     [&](const VarDef &x) {
-                                         return x->id() == item->id();
-                                     }) == splittedDefs.end()) {
-                        splittedDefs.emplace_back(item);
-                    }
-                }
             }
             Stmt elseBody = makeStmtSeq("", std::move(stmts));
-            for (auto &&def : splittedDefs) {
+            for (auto &&def : copier.splittedDefs()) {
                 // FIXME: Check the shape is invariant
                 elseBody =
                     makeVarDef(def->id(), def->name_, std::move(*def->buffer_),
                                def->sizeLim_, elseBody, def->pinned_);
+            }
+            for (auto &&loop : copier.splittedFors()) {
+                elseBody = makeFor(loop->id(), loop->iter_, loop->begin_,
+                                   loop->end_, loop->len_, loop->noDeps_,
+                                   loop->property_, elseBody);
             }
             return makeStmtSeq("", {thenBody, elseBody});
         } else {

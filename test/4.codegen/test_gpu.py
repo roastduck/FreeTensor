@@ -681,6 +681,51 @@ def test_syncthreads_split_branch():
     assert ir.make_1d_var(ir.pop_ast()).match(func.body)
 
 
+def test_syncthreads_split_branch_out_of_const_loop():
+
+    @ir.transform
+    def test(x, y):
+        ir.declare_var(x, (10, 10, 32), "int32", "input", "gpu/global")
+        ir.declare_var(y, (10, 10), "int32", "output", "gpu/global")
+        'nid: L0'
+        for i in range(3):
+            'nid: L1'
+            for j in range(4):
+                if i * 4 + j < 10:
+                    'nid: L2'
+                    for k in range(10):
+                        t = ir.create_var((2,), "int32", "cache", "gpu/shared")
+                        'nid: L3'
+                        for p in range(32):
+                            t[p % 2] += x[i * 4 + j, k, p]
+                        y[i * 4 + j, k] = t[0]
+
+    s = ir.Schedule(test)
+    s.parallelize("L0", "blockIdx.x")
+    s.parallelize("L1", "threadIdx.y")
+    s.parallelize("L3", "threadIdx.x")
+    func = ir.lower(s.func(), target)
+    print(func)
+
+    with ir.VarDef([("x", (10 * 10 * 32,), "int32", "input", "gpu/global"),
+                    ("y", (10 * 10,), "int32", "output", "gpu/global")]) as (x,
+                                                                             y):
+        with ir.For(".blockIdx.x", 0, 3) as i:
+            with ir.For(".threadIdx.y", 0, 4) as j:
+                with ir.For(".threadIdx.x", 0, 32) as p:
+                    with ir.For("k", 0, 10) as k:
+                        with ir.VarDef("t", (4 * 2,), "int32", "cache",
+                                       "gpu/shared") as t:
+                            with ir.If(ir.any()):
+                                ir.Any()  # t
+                            ir.Eval(ir.intrinsic("__syncwarp()"))
+                            with ir.If(ir.any()):
+                                with ir.If(p == 0):
+                                    ir.Any()  # y
+                            ir.Eval(ir.intrinsic("__syncwarp()"))
+    assert ir.pop_ast().match(func.body)
+
+
 def test_syncthreads_split_branch_with_else():
 
     @ir.transform
