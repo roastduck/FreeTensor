@@ -93,6 +93,19 @@ class FrontendVar {
     chainIndices(const std::vector<FrontendVarIdx> &next) const;
 };
 
+inline std::string toString(const FrontendVar &var) {
+    std::string ret = var.name() + "[";
+    bool first = true;
+    for (auto &&idx : var.indices()) {
+        if (!first) {
+            ret += ", ";
+        }
+        ret += toString(idx);
+    }
+    ret += "]";
+    return ret;
+}
+
 } // namespace ir
 
 #endif // FRONTEND_UTILS

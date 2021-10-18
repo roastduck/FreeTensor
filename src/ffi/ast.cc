@@ -94,7 +94,8 @@ void init_ffi_ast(py::module_ &m) {
         .def("shape", &FrontendVar::shape)
         .def("as_load", &FrontendVar::asLoad)
         .def("as_store", &FrontendVar::asStore)
-        .def("chain_indices", &FrontendVar::chainIndices);
+        .def("chain_indices", &FrontendVar::chainIndices)
+        .def("__repr__", [](const FrontendVar &var) { return toString(var); });
 
     pyStmt.def_property_readonly("nid", &StmtNode::id);
 

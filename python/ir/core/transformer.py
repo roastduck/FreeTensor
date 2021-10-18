@@ -6,6 +6,7 @@ import ast
 import numpy as np
 import inspect
 import sourceinspect as ins
+import copy
 from typing import Sequence, Optional, Mapping, Any
 
 from . import nodes
@@ -442,6 +443,8 @@ class ASTTransformer(ast.NodeTransformer):
         elif isinstance(callee, ffi.Func):
             raise ffi.InvalidProgram("Please use @ir.inline for subroutines")
         elif isinstance(callee, InlineFunction):
+            callee = copy.copy(
+                callee)  # Different call sites should be different
             if len(args) != len(callee.params):
                 raise ffi.InvalidProgram(
                     f"Number of arguments does not match when calling {callee.name}, {len(callee.params)} needed, but {len(args)} provided"
