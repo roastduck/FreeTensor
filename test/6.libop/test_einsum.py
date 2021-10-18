@@ -35,6 +35,36 @@ def test_basic():
     assert torch.all(torch.isclose(y_torch, y_std))
 
 
+def test_broadcast():
+    device = ir.Device(ir.CPU())
+
+    @ir.transform
+    def f(a, b, y):
+        ir.declare_var(a, (4, 1), "float32", "input", "cpu")
+        ir.declare_var(b, (5,), "float32", "input", "cpu")
+        ir.declare_var(y, (4,), "float32", "output", "cpu")
+        "nid: einsum"
+        ir.libop.einsum_("ij,j->i")(a, b, y)
+
+    print(f)
+    f = ir.lower(f, ir.CPU())
+    print(f)
+
+    code = ir.codegen(f, ir.CPU())
+
+    a_torch = torch.rand(4, 1, dtype=torch.float32)
+    a_arr = ir.Array(a_torch.numpy(), device)
+    b_torch = torch.rand(5, dtype=torch.float32)
+    b_arr = ir.Array(b_torch.numpy(), device)
+    y_torch = torch.zeros(4, dtype=torch.float32)
+    y_arr = ir.Array(y_torch.numpy(), device)
+    ir.Driver(f, code, device)(a_arr, b_arr, y_arr)
+    y_torch = torch.Tensor(y_arr.numpy())
+
+    y_std = torch.einsum("ij,j->i", a_torch, b_torch)
+    assert torch.all(torch.isclose(y_torch, y_std))
+
+
 def test_out_of_place():
     device = ir.Device(ir.CPU())
 

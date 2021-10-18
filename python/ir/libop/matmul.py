@@ -25,12 +25,15 @@ def f_einsum({','.join(params)}):
         # -1 = not found
         offsets = [left.find(v) for left in lefts] + [right.find(v)]
         arguments = [
-            param if offset == -1 else f"{param}.select(i, {offset})"
+            param if offset == -1 else
+            f"{param}.select(i % {param}.shape({offset}), {offset})"
             for param, offset in zip(params, offsets)
         ]
+        length = None
         for param, offset in zip(params, offsets):
             if offset != -1:
-                length = f"{param}.shape({offset})"
+                thisLength = f"{param}.shape({offset})"
+                length = thisLength if length is None else f"core.max({length}, {thisLength})"
         # TODO: Assert lengths of each arguments are consistent
         init_stmt = ''
         next_init = init
@@ -84,6 +87,40 @@ def f_einsum({', '.join(params)}):
     _locals = locals()
     exec(code, globals(), _locals)
     return core.inline(_locals['f_einsum'], code)
+
+
+def _make_matmul_format(a_ndim, b_ndim):
+    a_fmt = 'z'
+    b_fmt = 'z'
+    y_fmt = ''
+    if a_ndim > 1:
+        a_fmt = 'x' + a_fmt
+        y_fmt = 'x' + y_fmt
+    if b_ndim > 1:
+        b_fmt += 'y'
+        y_fmt += 'y'
+    for i in range(2, max(a_ndim, b_ndim)):
+        d = chr(ord('a') + i - 2)
+        assert ord('d') < ord('x')
+        if i < a_ndim:
+            a_fmt = d + a_fmt
+        if i < b_ndim:
+            b_fmt = d + b_fmt
+        y_fmt = d + y_fmt
+    return a_fmt + "," + b_fmt + "->" + y_fmt
+
+
+@core.inline
+def matmul_(A, B, Y):
+    'nid: einsum'
+    einsum_(_make_matmul_format(A.ndim, B.ndim))(A, B, Y)
+
+
+@core.inline
+def matmul(A, B):
+    'nid: einsum'
+    Y = einsum(_make_matmul_format(A.ndim, B.ndim))(A, B)
+    return Y
 
 
 def gemm_(has_bias: bool = False,
