@@ -1,6 +1,126 @@
+import itertools
 from typing import Optional
 
 from .. import core
+from .assign import add_to, mul_to
+from .element_wise import add, mul
+
+
+def _einsum_(lefts: str, right: str, order: str, init: bool):
+    params = [f"X{i}" for i in range(len(lefts))] + ["Y"]
+
+    if len(order) == 0:
+        Xs = [f"X{i}[()]" for i in range(len(lefts))]
+
+        code = f'''
+def f_einsum({','.join(params)}):
+    Y[()] += {' * '.join(Xs)}
+'''
+
+    else:
+        v = order[0]
+        next_lefts = ["'" + left.replace(v, '') + "'" for left in lefts]
+        next_right = "'" + right.replace(v, '') + "'"
+        next_order = "'" + order[1:] + "'"
+        # -1 = not found
+        offsets = [left.find(v) for left in lefts] + [right.find(v)]
+        arguments = [
+            param if offset == -1 else
+            f"{param}.select(i % {param}.shape({offset}), {offset})"
+            for param, offset in zip(params, offsets)
+        ]
+        length = None
+        for param, offset in zip(params, offsets):
+            if offset != -1:
+                thisLength = f"{param}.shape({offset})"
+                length = thisLength if length is None else f"core.max({length}, {thisLength})"
+        # TODO: Assert lengths of each arguments are consistent
+        init_stmt = ''
+        next_init = init
+        if init and right == '':
+            init_stmt = 'Y[()] = 0'
+            next_init = False
+
+        code = f'''
+def f_einsum({', '.join(params)}):
+    {init_stmt}
+    for i in range({length}):
+        _einsum_([{", ".join(next_lefts)}], {next_right}, {next_order}, {next_init})({', '.join(arguments)})
+'''
+
+    _locals = locals()
+    exec(code, globals(), _locals)
+    return core.inline(_locals['f_einsum'], code)
+
+
+def einsum_(format):
+    lefts, right = format.split('->')
+    lefts = lefts.split(',')
+    order = right
+    for left in lefts:
+        for idx in left:
+            if idx not in order:
+                order += idx
+    return _einsum_(lefts, right, order, True)
+
+
+def einsum(format):
+    lefts, right = format.split('->')
+    lefts = lefts.split(',')
+    params = [f"X{i}" for i in range(len(lefts))]
+    shape = []
+    for v in right:
+        offsets = [left.find(v) for left in lefts]
+        for param, offset in zip(params, offsets):
+            if offset != -1:
+                length = f"{param}.shape({offset})"
+        shape.append(length)
+
+    # FIXME: compute dtype and mtype from every inputs
+    code = f'''
+def f_einsum({', '.join(params)}):
+    Y = core.create_var([{", ".join(shape)}], X0.dtype, "output", X0.mtype)
+    einsum_('{format}')({', '.join(params)}, Y)
+    return Y
+'''
+
+    _locals = locals()
+    exec(code, globals(), _locals)
+    return core.inline(_locals['f_einsum'], code)
+
+
+def _make_matmul_format(a_ndim, b_ndim):
+    a_fmt = 'z'
+    b_fmt = 'z'
+    y_fmt = ''
+    if a_ndim > 1:
+        a_fmt = 'x' + a_fmt
+        y_fmt = 'x' + y_fmt
+    if b_ndim > 1:
+        b_fmt += 'y'
+        y_fmt += 'y'
+    for i in range(2, max(a_ndim, b_ndim)):
+        d = chr(ord('a') + i - 2)
+        assert ord('d') < ord('x')
+        if i < a_ndim:
+            a_fmt = d + a_fmt
+        if i < b_ndim:
+            b_fmt = d + b_fmt
+        y_fmt = d + y_fmt
+    return a_fmt + "," + b_fmt + "->" + y_fmt
+
+
+@core.inline
+def matmul_(A, B, Y):
+    'nid: einsum'
+    einsum_(_make_matmul_format(A.ndim, B.ndim))(A, B, Y)
+
+
+@core.inline
+def matmul(A, B):
+    'nid: einsum'
+    Y = einsum(_make_matmul_format(A.ndim, B.ndim))(A, B)
+    return Y
 
 
 def gemm_(has_bias: bool = False,
@@ -9,163 +129,29 @@ def gemm_(has_bias: bool = False,
           alpha: float = 1.0,
           beta: float = 1.0):
 
+    a_format = 'ki' if trans_A else 'ik'
+    b_format = 'jk' if trans_B else 'kj'
+    format = f"{a_format},{b_format}->ij"
+
     if not has_bias:
 
         @core.inline
         def f_gemm(A, B, Y):
-            if not trans_A:
-                if not trans_B:
-                    'nid: L_i'
-                    for i in range(A.shape(0)):
-                        'nid: L_j'
-                        for j in range(B.shape(1)):
-                            'nid: init'
-                            Y[i, j] = 0
-                            'nid: L_k'
-                            for k in range(A.shape(1)):
-                                'nid: compute'
-                                Y[i, j] += A[i, k] * B[k, j]
-                            'nid: bias'
-                            Y[i, j] *= alpha
-                else:
-                    'nid: L_i'
-                    for i in range(A.shape(0)):
-                        'nid: L_j'
-                        for j in range(B.shape(0)):
-                            'nid: init'
-                            Y[i, j] = 0
-                            'nid: L_k'
-                            for k in range(A.shape(1)):
-                                'nid: compute'
-                                Y[i, j] += A[i, k] * B[j, k]
-                            'nid: bias'
-                            Y[i, j] *= alpha
-            else:
-                if not trans_B:
-                    'nid: L_i'
-                    for i in range(A.shape(1)):
-                        'nid: L_j'
-                        for j in range(B.shape(1)):
-                            'nid: init'
-                            Y[i, j] = 0
-                            'nid: L_k'
-                            for k in range(A.shape(0)):
-                                'nid: compute'
-                                Y[i, j] += A[k, i] * B[k, j]
-                            'nid: bias'
-                            Y[i, j] *= alpha
-                else:
-                    'nid: L_i'
-                    for i in range(A.shape(1)):
-                        'nid: L_j'
-                        for j in range(B.shape(0)):
-                            'nid: init'
-                            Y[i, j] = 0
-                            'nid: L_k'
-                            for k in range(A.shape(0)):
-                                'nid: compute'
-                                Y[i, j] += A[k, i] * B[j, k]
-                            'nid: bias'
-                            Y[i, j] *= alpha
+            'nid: einsum'
+            einsum_(format)(A, B, Y)
+            'nid: mul_to'
+            mul_to(Y, core.Tensor(alpha, Y.mtype))
 
     else:
 
         @core.inline
         def f_gemm(A, B, C, Y):
-            if not trans_A:
-                if not trans_B:
-                    'nid: L_i'
-                    for i in range(A.shape(0)):
-                        'nid: L_j'
-                        for j in range(B.shape(1)):
-                            'nid: init'
-                            Y[i, j] = 0
-                            'nid: L_k'
-                            for k in range(A.shape(1)):
-                                'nid: compute'
-                                Y[i, j] += A[i, k] * B[k, j]
-                            if C.ndim == 0:
-                                'nid: bias'
-                                Y[i, j] = alpha * Y[i, j] + beta * C[()]
-                            elif C.ndim == 1:
-                                'nid: bias'
-                                Y[i,
-                                  j] = alpha * Y[i,
-                                                 j] + beta * C[j % C.shape(0)]
-                            else:
-                                'nid: bias'
-                                Y[i, j] = alpha * Y[i, j] + beta * C[
-                                    i % C.shape(0), j % C.shape(1)]
-                else:
-                    'nid: L_i'
-                    for i in range(A.shape(0)):
-                        'nid: L_j'
-                        for j in range(B.shape(0)):
-                            'nid: init'
-                            Y[i, j] = 0
-                            'nid: L_k'
-                            for k in range(A.shape(1)):
-                                'nid: compute'
-                                Y[i, j] += A[i, k] * B[j, k]
-                            if C.ndim == 0:
-                                'nid: bias'
-                                Y[i, j] = alpha * Y[i, j] + beta * C[()]
-                            elif C.ndim == 1:
-                                'nid: bias'
-                                Y[i,
-                                  j] = alpha * Y[i,
-                                                 j] + beta * C[j % C.shape(0)]
-                            else:
-                                'nid: bias'
-                                Y[i, j] = alpha * Y[i, j] + beta * C[
-                                    i % C.shape(0), j % C.shape(1)]
-            else:
-                if not trans_B:
-                    'nid: L_i'
-                    for i in range(A.shape(1)):
-                        'nid: L_j'
-                        for j in range(B.shape(1)):
-                            'nid: init'
-                            Y[i, j] = 0
-                            'nid: L_k'
-                            for k in range(A.shape(0)):
-                                'nid: compute'
-                                Y[i, j] += A[k, i] * B[k, j]
-                            if C.ndim == 0:
-                                'nid: bias'
-                                Y[i, j] = alpha * Y[i, j] + beta * C[()]
-                            elif C.ndim == 1:
-                                'nid: bias'
-                                Y[i,
-                                  j] = alpha * Y[i,
-                                                 j] + beta * C[j % C.shape(0)]
-                            else:
-                                'nid: bias'
-                                Y[i, j] = alpha * Y[i, j] + beta * C[
-                                    i % C.shape(0), j % C.shape(1)]
-                else:
-                    'nid: L_i'
-                    for i in range(A.shape(1)):
-                        'nid: L_j'
-                        for j in range(B.shape(0)):
-                            'nid: init'
-                            Y[i, j] = 0
-                            'nid: L_k'
-                            for k in range(A.shape(0)):
-                                'nid: compute'
-                                Y[i, j] += A[k, i] * B[j, k]
-                            if C.ndim == 0:
-                                'nid: bias'
-                                Y[i, j] = alpha * Y[i, j] + beta * C[()]
-                            elif C.ndim == 1:
-                                'nid: bias'
-                                Y[i,
-                                  j] = alpha * Y[i,
-                                                 j] + beta * C[j % C.shape(0)]
-                            else:
-                                'nid: bias'
-                                Y[i, j] = alpha * Y[i, j] + beta * C[
-                                    i % C.shape(0), j % C.shape(1)]
+            'nid: einsum'
+            einsum_(format)(A, B, Y)
+            'nid: mul_to'
+            mul_to(Y, core.Tensor(alpha, Y.mtype))
+            'nid: add_to'
+            add_to(Y, mul(core.Tensor(beta, Y.mtype), C))
 
     return f_gemm
 

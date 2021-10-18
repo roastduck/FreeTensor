@@ -16,6 +16,18 @@ static bool isConst0(const Expr &op) {
             op.as<FloatConstNode>()->val_ == 0);
 }
 
+static std::vector<int> filter(const std::vector<int> &order,
+                               const std::vector<bool> &flag) {
+    std::vector<int> ret;
+    ret.reserve(order.size());
+    for (int item : order) {
+        if (flag.at(item)) {
+            ret.emplace_back(item);
+        }
+    }
+    return ret;
+}
+
 uint64_t AsMatMul::getHash(const Expr &op) {
     getHash_(op);
     return getHash_.hash().at(op);
@@ -96,10 +108,7 @@ Stmt AsMatMul::visit(const Store &_op) {
         }
 
         std::vector<bool> used;
-        std::tie(used, initC_) = findIterUsedAndBaseAddr(op);
-        if (std::find(used.begin(), used.end(), false) != used.end()) {
-            throw InvalidSchedule("At least one dimension is not initialized");
-        }
+        std::tie(used, orderInit_, initC_) = findIterUsedAndBaseAddr(op);
     }
 
     return op;
@@ -136,9 +145,10 @@ Stmt AsMatMul::visit(const ReduceTo &_op) {
         Load loadB = mul->rhs_.as<LoadNode>();
 
         std::vector<bool> usedByA, usedByB, usedByC;
-        std::tie(usedByA, a_) = findIterUsedAndBaseAddr(loadA);
-        std::tie(usedByB, b_) = findIterUsedAndBaseAddr(loadB);
-        std::tie(usedByC, c_) = findIterUsedAndBaseAddr(op);
+        std::vector<int> orderA, orderB, orderC;
+        std::tie(usedByA, orderA, a_) = findIterUsedAndBaseAddr(loadA);
+        std::tie(usedByB, orderB, b_) = findIterUsedAndBaseAddr(loadB);
+        std::tie(usedByC, orderC, c_) = findIterUsedAndBaseAddr(op);
         std::vector<bool> mAxes(nestCnt_, false);
         std::vector<bool> kAxes(nestCnt_, false);
         std::vector<bool> nAxes(nestCnt_, false);
@@ -148,6 +158,41 @@ Stmt AsMatMul::visit(const ReduceTo &_op) {
             mAxes[i] = usedByA[i] && !usedByB[i] && usedByC[i];
             kAxes[i] = usedByA[i] && usedByB[i] && !usedByC[i];
             nAxes[i] = !usedByA[i] && usedByB[i] && usedByC[i];
+        }
+
+        if (filter(orderA, batchAxes) != filter(orderB, batchAxes) ||
+            filter(orderA, batchAxes) != filter(orderC, batchAxes)) {
+            throw InvalidSchedule("Order of each indices in the batch axis "
+                                  "should be the same in each matrices");
+        }
+        if (filter(orderA, mAxes) != filter(orderC, mAxes)) {
+            throw InvalidSchedule("Order of each indices in the m axis "
+                                  "should be the same in each matrices");
+        }
+        if (filter(orderA, kAxes) != filter(orderB, kAxes)) {
+            throw InvalidSchedule("Order of each indices in the k axis "
+                                  "should be the same in each matrices");
+        }
+        if (filter(orderB, nAxes) != filter(orderC, nAxes)) {
+            throw InvalidSchedule("Order of each indices in the n axis "
+                                  "should be the same in each matrices");
+        }
+        if (foundInit_) {
+            if (filter(orderInit_, batchAxes) != filter(orderC, batchAxes)) {
+                throw InvalidSchedule(
+                    "Order of each indices in the batch axis "
+                    "should be the same in initialization and reduction");
+            }
+            if (filter(orderInit_, mAxes) != filter(orderC, mAxes)) {
+                throw InvalidSchedule(
+                    "Order of each indices in the m axis "
+                    "should be the same in initialization and reduction");
+            }
+            if (filter(orderInit_, nAxes) != filter(orderC, nAxes)) {
+                throw InvalidSchedule(
+                    "Order of each indices in the n axis "
+                    "should be the same in initialization and reduction");
+            }
         }
 
         Expr strideAM, strideAK, strideBK, strideBN, strideCM, strideCN;

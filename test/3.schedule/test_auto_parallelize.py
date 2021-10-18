@@ -32,7 +32,7 @@ def test_gpu_basic():
     print(s.logs())
     assert s.logs() == [
         "merge(Li, Lj)", "split(merged.Li.Lj, factor=-1, nparts=80)",
-        "split(merged.Li.Lj.1, factor=1024, nparts=-1)",
+        "split(merged.Li.Lj.1, factor=256, nparts=-1)",
         "parallelize(merged.Li.Lj.0, blockIdx.y)",
         "parallelize(merged.Li.Lj.1.0, blockIdx.x)",
         "parallelize(merged.Li.Lj.1.1, threadIdx.x)"
@@ -88,6 +88,7 @@ def test_gpu_warp():
     print(s.logs())
     assert s.logs() == [
         "split(Lk, factor=32, nparts=-1)", "parallelize(Lk.1, threadIdx.x)",
-        "split(Li, factor=-1, nparts=80)", "split(Li.1, factor=32, nparts=-1)",
-        "parallelize(Li.0, blockIdx.y)", "parallelize(Li.1.1, threadIdx.y)"
+        "reorder(Lk.1, Lk.0)", "split(Li, factor=-1, nparts=80)",
+        "split(Li.1, factor=8, nparts=-1)", "parallelize(Li.0, blockIdx.y)",
+        "parallelize(Li.1.0, blockIdx.x)", "parallelize(Li.1.1, threadIdx.y)"
     ]

@@ -58,14 +58,16 @@ std::pair<std::string, std::string> Schedule::split(const std::string &id,
 }
 
 void Schedule::reorder(const std::vector<std::string> &order) {
+    std::string log = "reorder(";
+    for (size_t i = 0, iEnd = order.size(); i < iEnd; i++) {
+        log += order[i] + (i < iEnd - 1 ? ", " : "");
+    }
+    log += ")";
     try {
         ast_ = ir::reorder(ast_, order);
+        logs_.emplace_back(log);
     } catch (const InvalidSchedule &e) {
-        std::string msg = "Invalid reorder(";
-        for (size_t i = 0, iEnd = order.size(); i < iEnd; i++) {
-            msg += order[i] + (i < iEnd - 1 ? ", " : "");
-        }
-        throw InvalidSchedule(msg + "): " + e.what());
+        throw InvalidSchedule(log + ": " + e.what());
     }
 }
 
@@ -359,13 +361,17 @@ void Schedule::autoFuse(const Target &target) {
             for (auto &&subNest : nest->subLoops_) {
                 auto thisId = subNest->loop_->id();
                 if (last.isValid()) {
+                    auto bak = ast_;
+                    auto logBak = logs_;
                     try {
+                        lastId = moveTo(lastId, MoveToSide::Before, thisId);
                         thisId = fuse(lastId, thisId);
                         subNest->subLoops_.insert(subNest->subLoops_.begin(),
                                                   last->subLoops_.begin(),
                                                   last->subLoops_.end());
                         last->subLoops_.clear();
                     } catch (InvalidSchedule &e) {
+                        ast_ = std::move(bak), logs_ = std::move(logBak);
                         visitNest(last);
                     }
                 }
@@ -396,6 +402,21 @@ void Schedule::autoParallelize(const Target &target) {
                 // FIXME: Do not hard-code 32
                 auto [l0, l1] = split(loop.id(), 32);
                 parallelize(l1, "threadIdx.x");
+
+                // Reorder this scope to as outer as possible
+                auto c = find(l1);
+                if (c.hasOuter()) {
+                    for (c = c.outer(); c.hasOuter(); c = c.outer()) {
+                        if (c.nodeType() == ASTNodeType::For) {
+                            try {
+                                reorder({l1, c.id()});
+                                l1 = c.id();
+                            } catch (InvalidSchedule &e) {
+                                break;
+                            }
+                        }
+                    }
+                }
             } catch (const InvalidSchedule &e) {
                 // do nothing
             }
@@ -438,8 +459,11 @@ void Schedule::autoParallelize(const Target &target) {
                     // 2. make sure blockDim is not too large
                     std::string l1, l2, l3;
                     // TODO: do not hard-code these numbers
-                    std::tie(l1, l2) = split(loopId, -1, 80);
-                    std::tie(l2, l3) = split(l2, childrenAllSerial ? 1024 : 32);
+                    std::tie(l1, l3) = split(loopId, -1, 80);
+                    if (!findAll(l3).empty()) {
+                        std::tie(l2, l3) =
+                            split(l3, childrenAllSerial ? 256 : 8);
+                    }
                     if (!findAll(l1).empty()) {
                         parallelize(l1, "blockIdx.y");
                     }

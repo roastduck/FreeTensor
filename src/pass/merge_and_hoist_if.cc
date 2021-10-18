@@ -4,6 +4,7 @@
 #include <analyze/all_writes.h>
 #include <analyze/check_all_defined.h>
 #include <analyze/hash.h>
+#include <pass/flatten_stmt_seq.h>
 #include <pass/merge_and_hoist_if.h>
 
 namespace ir {
@@ -43,6 +44,7 @@ Stmt MergeAndHoistIf::visit(const StmtSeq &_op) {
                     stmts.emplace_back(makeIf("", if1->cond_,
                                               std::move(thenCase),
                                               std::move(elseCase)));
+                    isFixPoint_ = false;
                     continue;
                 }
             }
@@ -51,6 +53,7 @@ Stmt MergeAndHoistIf::visit(const StmtSeq &_op) {
     }
     op->stmts_ = std::vector<SubTree<StmtNode>>(stmts.begin(), stmts.end());
     if (op->stmts_.size() == 1) {
+        isFixPoint_ = false;
         return op->stmts_[0];
     }
     return op;
@@ -67,6 +70,7 @@ Stmt MergeAndHoistIf::visit(const VarDef &_op) {
         auto branch = op->body_.as<IfNode>();
         if (!branch->elseCase_.isValid() &&
             checkAllDefined(def_, branch->cond_)) {
+            isFixPoint_ = false;
             return makeIf(branch->id(), branch->cond_,
                           makeVarDef(op->id(), op->name_,
                                      std::move(*op->buffer_), op->sizeLim_,
@@ -93,6 +97,7 @@ Stmt MergeAndHoistIf::visit(const For &_op) {
                              [&writes](const std::string &var) -> bool {
                                  return writes.count(var);
                              })) {
+                isFixPoint_ = false;
                 return makeIf(branch->id(), branch->cond_,
                               makeFor(op->id(), op->iter_, op->begin_, op->end_,
                                       op->len_, op->noDeps_, op->property_,
@@ -103,7 +108,23 @@ Stmt MergeAndHoistIf::visit(const For &_op) {
     return op;
 }
 
-Stmt mergeAndHoistIf(const Stmt &op) { return MergeAndHoistIf()(op); }
+Stmt mergeAndHoistIf(const Stmt &_op) {
+    auto op = flattenStmtSeq(_op);
+    for (int i = 0;; i++) {
+        if (i > 100) {
+            WARNING("MergeAndHoistIf iterates over 100 rounds. Maybe there is "
+                    "a bug");
+            break;
+        }
+
+        MergeAndHoistIf mutator;
+        op = mutator(op);
+        if (mutator.isFixPoint()) {
+            break;
+        }
+    }
+    return op;
+}
 
 } // namespace ir
 

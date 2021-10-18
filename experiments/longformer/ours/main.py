@@ -9,11 +9,12 @@ jit_cache = {}
 
 
 def transformer(q, k, v, y, w, dilation, dilation_heads, n_heads, seq_len,
-                feat_len, device, mtype, local_mtype):
+                feat_len, device):
     if (w, n_heads, seq_len, feat_len) in jit_cache:
         exe = jit_cache[(w, n_heads, seq_len, feat_len)]
 
     else:
+        mtype = device.main_mem_type()
 
         sqrt_d = math.sqrt(feat_len)
         inf = float("inf")
@@ -32,8 +33,7 @@ def transformer(q, k, v, y, w, dilation, dilation_heads, n_heads, seq_len,
             for i in range(n_heads):
                 "nid: Lj"
                 for j in range(seq_len):
-                    dot = ir.create_var((2 * w + 1,), "float32", "cache",
-                                        local_mtype)
+                    dot = ir.create_var((2 * w + 1,), "float32", "cache", mtype)
                     "nid: Lk1"
                     for k in range(-w, w + 1):
                         dot[k + w] = 0
@@ -50,23 +50,23 @@ def transformer(q, k, v, y, w, dilation, dilation_heads, n_heads, seq_len,
                                         w] += Q[i, j,
                                                 p] * K[i, j + k * dilation, p]
 
-                    maxval = ir.create_var((), "float32", "cache", local_mtype)
+                    maxval = ir.create_var((), "float32", "cache", mtype)
                     maxval[()] = -inf
                     "nid: Lk2"
                     for k in range(2 * w + 1):
                         maxval[()] = ir.max(maxval, dot[k])
                     expval = ir.create_var((2 * w + 1,), "float32", "cache",
-                                           local_mtype)
+                                           mtype)
                     "nid: Lk3"
                     for k in range(2 * w + 1):
                         expval[k] = ir.exp(dot[k] - maxval[k])
-                    expsum = ir.create_var((), "float32", "cache", local_mtype)
+                    expsum = ir.create_var((), "float32", "cache", mtype)
                     expsum[()] = 0
                     "nid: Lk4"
                     for k in range(2 * w + 1):
                         expsum[()] += expval[k]
                     attn = ir.create_var((2 * w + 1,), "float32", "cache",
-                                         local_mtype)
+                                         mtype)
                     "nid: Lk5"
                     for k in range(2 * w + 1):
                         attn[k] = expval[k] / expsum[()] / sqrt_d
@@ -92,42 +92,8 @@ def transformer(q, k, v, y, w, dilation, dilation_heads, n_heads, seq_len,
                                                             p]
 
         s = ir.Schedule(f)
+        s.auto_schedule(device.target())
         print(s.ast())
-        if device.target().type() == ir.TargetType.CPU:
-            Lij = s.merge('Li', 'Lj')
-            s.parallelize(Lij, 'openmp')
-        else:
-            p0, p1 = s.split('Lp1', 32)
-            s.reorder([p1, p0])
-            init, final, _, _ = s.cache_reduction(p0, "$:dot", "gpu/shared")
-            final = s.move_to(final, ir.MoveToSide.After, p1)
-            p0, p1 = s.split('Lp2', 32)
-            s.reorder([p1, p0])
-            init, final, _, _ = s.cache_reduction(p0, "$:dot", "gpu/shared")
-            final = s.move_to(final, ir.MoveToSide.After, p1)
-            s.set_mem_type(':attn', 'gpu/shared')
-            p0, p1 = s.split('Lp3', 32)
-            p0, p1 = s.split('Lp4', 32)
-            p0, p1 = s.split('Lp5', 32)
-            s.cache(
-                s.find(lambda x: x.nid() == 'Lj').node().body, 'Y',
-                'gpu/shared')
-            s.unroll('Lk1')
-            s.unroll('Lk2')
-            s.unroll('Lk3')
-            s.unroll('Lk4')
-            s.unroll('Lk5')
-            s.unroll('Lk6')
-            s.unroll('Lk7')
-            Lij = s.merge('Li', 'Lj')
-            blk, thr = s.split(Lij, 8)
-            s.parallelize(blk, 'blockIdx.x')
-            s.parallelize(thr, 'threadIdx.y')
-            s.parallelize('Lp1.1', 'threadIdx.x')
-            s.parallelize('Lp2.1', 'threadIdx.x')
-            s.parallelize('Lp3.1', 'threadIdx.x')
-            s.parallelize('Lp4.1', 'threadIdx.x')
-            s.parallelize('Lp5.1', 'threadIdx.x')
         f = ir.lower(s.func(), device.target())
         print(f)
         code = ir.codegen(f, device.target())
@@ -160,13 +126,9 @@ if __name__ == '__main__':
 
     if device == 'gpu':
         ir_dev = ir.Device(ir.GPU())
-        ir_mtype = 'gpu/global'
-        ir_local_mtype = 'gpu/local'
     else:
         assert device == 'cpu'
         ir_dev = ir.Device(ir.CPU())
-        ir_mtype = 'cpu'
-        ir_local_mtype = 'cpu'
 
     q = ir.Array(q, ir_dev)
     k = ir.Array(k, ir_dev)
@@ -175,11 +137,11 @@ if __name__ == '__main__':
 
     test_num = 100
     transformer(q, k, v, y, w, dilation, dilation_heads, n_heads, seq_len,
-                feat_len, ir_dev, ir_mtype, ir_local_mtype)  # init lazy ops
+                feat_len, ir_dev)  # init lazy ops
     t0 = time.time()
     for i in range(test_num):
         transformer(q, k, v, y, w, dilation, dilation_heads, n_heads, seq_len,
-                    feat_len, ir_dev, ir_mtype, ir_local_mtype)
+                    feat_len, ir_dev)
     t1 = time.time()
 
     print(f"Time = {(t1 - t0) / test_num * 1000} ms")

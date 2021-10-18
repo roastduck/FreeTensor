@@ -1,6 +1,7 @@
 #ifndef FRONTEND_UTILIS
 #define FRONTEND_UTILIS
 
+#include <debug.h>
 #include <expr.h>
 #include <stmt.h>
 
@@ -46,6 +47,14 @@ class FrontendVarIdx {
     }
 };
 
+inline std::string toString(const FrontendVarIdx &idx) {
+    if (idx.type() == FrontendVarIdxType::Single) {
+        return toString(idx.single());
+    } else {
+        return "(" + toString(idx.start()) + ", " + toString(idx.stop()) + ")";
+    }
+}
+
 class FrontendVar {
     std::string name_;
     std::vector<Expr> fullShape_;
@@ -83,6 +92,19 @@ class FrontendVar {
     std::vector<FrontendVarIdx>
     chainIndices(const std::vector<FrontendVarIdx> &next) const;
 };
+
+inline std::string toString(const FrontendVar &var) {
+    std::string ret = var.name() + "[";
+    bool first = true;
+    for (auto &&idx : var.indices()) {
+        if (!first) {
+            ret += ", ";
+        }
+        ret += toString(idx);
+    }
+    ret += "]";
+    return ret;
+}
 
 } // namespace ir
 

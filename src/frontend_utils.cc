@@ -15,18 +15,16 @@ int FrontendVar::ndim() const {
 
 Expr FrontendVar::shape(const Expr &idx) const {
     Expr ret;
-    size_t j = 0, k = 0;
+    size_t k = 0;
     for (size_t i = 0, n = fullShape_.size(); i < n; i++) {
-        Expr dimLen = fullShape_.at(i);
-        while (j < indices_.size() &&
-               indices_[j].type() == FrontendVarIdxType::Slice) {
-            dimLen = makeSub(indices_[j].stop(), indices_[j].start());
-            j++;
-        }
-        if (j < indices_.size() &&
-            indices_[j].type() == FrontendVarIdxType::Single) {
-            j++;
+        if (i < indices_.size() &&
+            indices_[i].type() == FrontendVarIdxType::Single) {
             continue;
+        }
+        Expr dimLen = fullShape_.at(i);
+        if (i < indices_.size() &&
+            indices_[i].type() == FrontendVarIdxType::Slice) {
+            dimLen = makeSub(indices_[i].stop(), indices_[i].start());
         }
         if (idx->nodeType() == ASTNodeType::IntConst &&
             (size_t)idx.as<IntConstNode>()->val_ == k) {

@@ -78,7 +78,9 @@ void init_ffi_ast(py::module_ &m) {
 
     py::class_<FrontendVarIdx>(m, "FrontendVarIdx")
         .def(py::init(&FrontendVarIdx::fromSingle))
-        .def(py::init(&FrontendVarIdx::fromSlice));
+        .def(py::init(&FrontendVarIdx::fromSlice))
+        .def("__repr__",
+             [](const FrontendVarIdx &idx) { return toString(idx); });
 
     py::class_<FrontendVar, Ref<FrontendVar>>(m, "FrontendVar")
         .def(py::init<const std::string &, const std::vector<Expr> &, DataType,
@@ -92,7 +94,8 @@ void init_ffi_ast(py::module_ &m) {
         .def("shape", &FrontendVar::shape)
         .def("as_load", &FrontendVar::asLoad)
         .def("as_store", &FrontendVar::asStore)
-        .def("chain_indices", &FrontendVar::chainIndices);
+        .def("chain_indices", &FrontendVar::chainIndices)
+        .def("__repr__", [](const FrontendVar &var) { return toString(var); });
 
     pyStmt.def_property_readonly("nid", &StmtNode::id);
 

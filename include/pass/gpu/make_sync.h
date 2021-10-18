@@ -26,22 +26,23 @@ class FindAllThreads : public Visitor {
     void visit(const For &op) override;
 };
 
-class CopyPart : public Mutator {
-    Stmt begin_, end_;
-    bool begun_, ended_;
-    std::vector<VarDef> splittedDefs_; // From inner to outer
+class CopyParts : public Mutator {
+    Expr cond_;
+    const std::vector<Stmt> &splitters_;
+    std::unordered_set<Stmt> fullParts_;
 
   public:
-    CopyPart(const Stmt &begin, const Stmt &end)
-        : begin_(begin), end_(end), begun_(!begin.isValid()), ended_(false) {}
-
-    const std::vector<VarDef> &splittedDefs() const { return splittedDefs_; }
+    CopyParts(const Expr &cond, const std::vector<Stmt> &splitters)
+        : cond_(cond), splitters_(splitters) {}
 
   protected:
     Stmt visitStmt(const Stmt &op,
                    const std::function<Stmt(const Stmt &)> &visitNode) override;
     Stmt visit(const For &op) override;
+    Stmt visit(const If &op) override;
+    Stmt visit(const Assert &op) override;
     Stmt visit(const VarDef &op) override;
+    Stmt visit(const StmtSeq &op) override;
 };
 
 struct CrossThreadDep {
@@ -60,6 +61,9 @@ class MakeSync : public MutatorWithCursor {
   public:
     MakeSync(const Stmt root, std::vector<CrossThreadDep> &&deps)
         : root_(root), deps_(std::move(deps)) {}
+
+  private:
+    void markSyncForSplitting(const Stmt &sync);
 
   protected:
     Stmt visitStmt(const Stmt &op,

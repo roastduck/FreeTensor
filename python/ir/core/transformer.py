@@ -6,6 +6,7 @@ import ast
 import numpy as np
 import inspect
 import sourceinspect as ins
+import copy
 from typing import Sequence, Optional, Mapping, Any
 
 from . import nodes
@@ -256,6 +257,9 @@ class ASTTransformer(ast.NodeTransformer):
             node.expr_ptr = node.value.expr_ptr.dtype
         elif isinstance(node.value.expr_ptr, Var) and node.attr == "mtype":
             node.expr_ptr = node.value.expr_ptr.mtype
+        elif isinstance(node.value.expr_ptr, Var) and node.attr == "select":
+            node.expr_ptr = lambda idx, dim: node.value.expr_ptr.select(
+                idx, dim)
         else:
             node.expr_ptr = getattr(node.value.expr_ptr, node.attr)
         return node
@@ -439,6 +443,8 @@ class ASTTransformer(ast.NodeTransformer):
         elif isinstance(callee, ffi.Func):
             raise ffi.InvalidProgram("Please use @ir.inline for subroutines")
         elif isinstance(callee, InlineFunction):
+            callee = copy.copy(
+                callee)  # Different call sites should be different
             if len(args) != len(callee.params):
                 raise ffi.InvalidProgram(
                     f"Number of arguments does not match when calling {callee.name}, {len(callee.params)} needed, but {len(args)} provided"
@@ -745,8 +751,9 @@ def transform(func):
     return Func(func.__name__, params, pop_ast(), func)
 
 
-def inline(func):
-    src = _remove_indent(ins.getsource(func))
+def inline(func, src=None):
+    if src is None:
+        src = _remove_indent(ins.getsource(func))
     tree = ast.parse(src)
     params = list(inspect.signature(func).parameters)
     globals = _get_global_vars(func)

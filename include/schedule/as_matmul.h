@@ -18,6 +18,7 @@ class AsMatMul : public Mutator {
     std::unordered_map<std::string, int> iterMap_; // iter var -> nest cnt
     std::unordered_map<std::string, Ref<Buffer>> buffers_; // var name -> buffer
     std::unordered_set<std::string> outerDefs_;
+    std::vector<int> orderInit_;
 
     bool foundInit_ = false, foundLeaf_ = false, inside_ = false;
     Expr a_, b_, c_, initC_, m_, k_, n_, lda_, stridea_, ldb_, strideb_, ldc_,
@@ -33,8 +34,10 @@ class AsMatMul : public Mutator {
     uint64_t getHash(const Expr &op);
 
     template <class T>
-    std::pair<std::vector<bool>, Expr> findIterUsedAndBaseAddr(const T &acc) {
+    std::tuple<std::vector<bool>, std::vector<int>, Expr>
+    findIterUsedAndBaseAddr(const T &acc) {
         std::vector<bool> usedBy(nestCnt_, false);
+        std::vector<int> order;
         Expr baseAddr = makeLoad(acc->var_, acc->indices_);
         for (size_t i = 0, n = acc->indices_.size(); i < n; i++) {
             auto &&idx = acc->indices_[i];
@@ -61,8 +64,9 @@ class AsMatMul : public Mutator {
                     "), instead of " + toString(nests_[loop]->len_));
             }
             usedBy[loop] = true;
+            order.emplace_back(loop);
         }
-        return std::make_pair(usedBy, baseAddr);
+        return std::make_tuple(usedBy, order, baseAddr);
     }
 
     template <class T>
