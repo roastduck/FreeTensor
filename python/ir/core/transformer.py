@@ -256,6 +256,9 @@ class ASTTransformer(ast.NodeTransformer):
             node.expr_ptr = node.value.expr_ptr.dtype
         elif isinstance(node.value.expr_ptr, Var) and node.attr == "mtype":
             node.expr_ptr = node.value.expr_ptr.mtype
+        elif isinstance(node.value.expr_ptr, Var) and node.attr == "select":
+            node.expr_ptr = lambda idx, dim: node.value.expr_ptr.select(
+                idx, dim)
         else:
             node.expr_ptr = getattr(node.value.expr_ptr, node.attr)
         return node
@@ -745,8 +748,9 @@ def transform(func):
     return Func(func.__name__, params, pop_ast(), func)
 
 
-def inline(func):
-    src = _remove_indent(ins.getsource(func))
+def inline(func, src=None):
+    if src is None:
+        src = _remove_indent(ins.getsource(func))
     tree = ast.parse(src)
     params = list(inspect.signature(func).parameters)
     globals = _get_global_vars(func)

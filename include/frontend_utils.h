@@ -1,6 +1,7 @@
 #ifndef FRONTEND_UTILIS
 #define FRONTEND_UTILIS
 
+#include <debug.h>
 #include <expr.h>
 #include <stmt.h>
 
@@ -45,6 +46,14 @@ class FrontendVarIdx {
         return ret;
     }
 };
+
+inline std::string toString(const FrontendVarIdx &idx) {
+    if (idx.type() == FrontendVarIdxType::Single) {
+        return toString(idx.single());
+    } else {
+        return "(" + toString(idx.start()) + ", " + toString(idx.stop()) + ")";
+    }
+}
 
 class FrontendVar {
     std::string name_;

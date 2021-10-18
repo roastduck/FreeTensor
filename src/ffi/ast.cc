@@ -78,7 +78,9 @@ void init_ffi_ast(py::module_ &m) {
 
     py::class_<FrontendVarIdx>(m, "FrontendVarIdx")
         .def(py::init(&FrontendVarIdx::fromSingle))
-        .def(py::init(&FrontendVarIdx::fromSlice));
+        .def(py::init(&FrontendVarIdx::fromSlice))
+        .def("__repr__",
+             [](const FrontendVarIdx &idx) { return toString(idx); });
 
     py::class_<FrontendVar, Ref<FrontendVar>>(m, "FrontendVar")
         .def(py::init<const std::string &, const std::vector<Expr> &, DataType,

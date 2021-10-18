@@ -23,3 +23,4 @@ def _assign_op(op):
 
 assign = _assign_op(lambda y, x: x)
 add_to = _assign_op(lambda y, x: x + y)
+mul_to = _assign_op(lambda y, x: x * y)

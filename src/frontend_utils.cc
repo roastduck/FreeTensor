@@ -17,16 +17,16 @@ Expr FrontendVar::shape(const Expr &idx) const {
     Expr ret;
     size_t j = 0, k = 0;
     for (size_t i = 0, n = fullShape_.size(); i < n; i++) {
+        if (j < indices_.size() &&
+            indices_[j].type() == FrontendVarIdxType::Single) {
+            j++;
+            continue;
+        }
         Expr dimLen = fullShape_.at(i);
         while (j < indices_.size() &&
                indices_[j].type() == FrontendVarIdxType::Slice) {
             dimLen = makeSub(indices_[j].stop(), indices_[j].start());
             j++;
-        }
-        if (j < indices_.size() &&
-            indices_[j].type() == FrontendVarIdxType::Single) {
-            j++;
-            continue;
         }
         if (idx->nodeType() == ASTNodeType::IntConst &&
             (size_t)idx.as<IntConstNode>()->val_ == k) {

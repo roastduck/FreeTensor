@@ -5,9 +5,9 @@ def broadcast_shape(a, b):
     out_shape = []
     out_ndim = max(a.ndim, b.ndim)
     for i in range(out_ndim):
-        if i > a.ndim:
+        if i - out_ndim + a.ndim < 0:
             out_shape.append(b.shape(i))
-        elif i > b.ndim:
+        elif i - out_ndim + b.ndim < 0:
             out_shape.append(a.shape(i))
         else:
             out_shape.append(

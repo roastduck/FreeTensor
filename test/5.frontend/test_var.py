@@ -21,6 +21,28 @@ def test_chained_subscript():
     assert ir.pop_ast().match(f.body)
 
 
+def test_select():
+
+    @ir.transform
+    def f(x, y):
+        ir.declare_var(x, (4, 4), "int32", "input", "cpu")
+        ir.declare_var(y, (4, 4), "int32", "output", "cpu")
+        for i in range(4):
+            for j in range(4):
+                y.select(j, 1).select(i,
+                                      0)[()] = x.select(i, 0).select(j, 0) * 2
+
+    f = ir.simplify_pass(f)
+    print(f)
+
+    with ir.VarDef([("x", (4, 4), "int32", "input", "cpu"),
+                    ("y", (4, 4), "int32", "output", "cpu")]) as (x, y):
+        with ir.For("i", 0, 4) as i:
+            with ir.For("j", 0, 4) as j:
+                y[i, j] = x[i, j] * 2
+    assert ir.pop_ast().match(f.body)
+
+
 def test_var_as_shape():
 
     @ir.transform

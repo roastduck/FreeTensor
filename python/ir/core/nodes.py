@@ -127,6 +127,14 @@ class Var(ffi.FrontendVar):
         top = ctx_stack.top()
         top.append_stmt(var.as_store(top.get_next_nid(), value))
 
+    def select(self, idx, dim):
+        assert isinstance(dim, int)
+        assert dim >= 0 and dim < self.ndim
+        indices = [
+            slice(None, None) if d != dim else idx for d in range(self.ndim)
+        ]
+        return self[indices]
+
     def _parse_key(self, key):
         if not isinstance(key, collections.abc.Sequence):
             key = (key,)
