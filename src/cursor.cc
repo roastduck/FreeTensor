@@ -28,6 +28,9 @@ bool Cursor::isBefore(const Cursor &other) const {
         if (l.top()->prev_.isValid() && r.top()->prev_.isValid() &&
             l.top()->prev_->data_->id() == r.top()->prev_->data_->id()) {
             auto &&prev = l.top()->prev_->data_;
+            if (prev->nodeType() == ASTNodeType::If) {
+                return false;
+            }
             ASSERT(prev->nodeType() == ASTNodeType::StmtSeq);
             auto seq = prev.as<StmtSeqNode>();
             auto il = std::find_if(

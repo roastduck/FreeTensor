@@ -89,9 +89,13 @@ Stmt LowerParallelReduction::visit(const For &_op) {
         // body
         stmts.emplace_back(op->body_);
         for (int k = 1; k < len; k <<= 1) {
-            // if (nth % k == 0) workspace[nth] += workspace[nth + k]
+            // if (nth % k == 0 && nth + k < len)
+            //   workspace[nth] += workspace[nth + k]
             stmts.emplace_back(makeIf(
-                "", makeEQ(makeMod(nth, makeIntConst(k << 1)), makeIntConst(0)),
+                "",
+                makeLAnd(
+                    makeEQ(makeMod(nth, makeIntConst(k << 1)), makeIntConst(0)),
+                    makeLT(makeAdd(nth, makeIntConst(k)), op->len_)),
                 makeReduceTo(
                     "", workspace, {nth}, redOp,
                     makeLoad(workspace, {makeAdd(nth, makeIntConst(k))}),

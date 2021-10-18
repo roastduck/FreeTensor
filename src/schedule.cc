@@ -364,7 +364,8 @@ void Schedule::autoFuse(const Target &target) {
                     auto bak = ast_;
                     auto logBak = logs_;
                     try {
-                        lastId = moveTo(lastId, MoveToSide::Before, thisId);
+                        // FIXME: This makes longformer slow
+                        // lastId = moveTo(lastId, MoveToSide::Before, thisId);
                         thisId = fuse(lastId, thisId);
                         subNest->subLoops_.insert(subNest->subLoops_.begin(),
                                                   last->subLoops_.begin(),
