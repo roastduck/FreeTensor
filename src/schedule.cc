@@ -361,13 +361,17 @@ void Schedule::autoFuse(const Target &target) {
             for (auto &&subNest : nest->subLoops_) {
                 auto thisId = subNest->loop_->id();
                 if (last.isValid()) {
+                    auto bak = ast_;
+                    auto logBak = logs_;
                     try {
+                        lastId = moveTo(lastId, MoveToSide::Before, thisId);
                         thisId = fuse(lastId, thisId);
                         subNest->subLoops_.insert(subNest->subLoops_.begin(),
                                                   last->subLoops_.begin(),
                                                   last->subLoops_.end());
                         last->subLoops_.clear();
                     } catch (InvalidSchedule &e) {
+                        ast_ = std::move(bak), logs_ = std::move(logBak);
                         visitNest(last);
                     }
                 }

@@ -3,7 +3,7 @@ import time
 import itertools
 import numpy as np
 import ir
-import ir.libop as lop
+from ir.libop import *
 import ir.debug
 
 
@@ -69,20 +69,18 @@ def conv(adj, x, w0, w1, w2, w3, y, n_faces, in_feats, out_feats, device):
             ir.declare_var(y, (n_faces, out_feats), "float32", "output", mtype)
 
             for i in range(n_faces):
-                sum1 = lop.zeros((in_feats,), "float32", mtype)()
-                sum2 = lop.zeros((in_feats,), "float32", mtype)()
-                sum3 = lop.zeros((in_feats,), "float32", mtype)()
+                sum1 = zeros((in_feats,), "float32", mtype)()
+                sum2 = zeros((in_feats,), "float32", mtype)()
+                sum3 = zeros((in_feats,), "float32", mtype)()
                 for p in range(3):
-                    lop.add_to(sum1, x[adj[i, p]])
-                    lop.add_to(
-                        sum2,
-                        lop.abs(lop.sub(x[adj[i, p]], x[adj[i, (p + 1) % 3]])))
-                    lop.add_to(sum3, lop.abs(lop.sub(x[adj[i, p]], x[i])))
-                for j in range(out_feats):
-                    y[i, j] = 0.
-                    for k in range(in_feats):
-                        y[i, j] += x[i, k] * w0[k, j] + sum1[k] * w1[
-                            k, j] + sum2[k] * w2[k, j] + sum3[k] * w3[k, j]
+                    add_to(sum1, x[adj[i, p]])
+                    add_to(sum2, abs(sub(x[adj[i, p]], x[adj[i, (p + 1) % 3]])))
+                    add_to(sum3, abs(sub(x[adj[i, p]], x[i])))
+                y0 = matmul(x[i], w0)
+                y1 = matmul(sum1, w1)
+                y2 = matmul(sum2, w2)
+                y3 = matmul(sum3, w3)
+                assign(y[i], add(add(add(y0, y1), y2), y3))
 
         s = ir.Schedule(f)
         s.auto_schedule(device.target())
