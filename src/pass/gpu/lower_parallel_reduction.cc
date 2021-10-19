@@ -88,19 +88,26 @@ Stmt LowerParallelReduction::visit(const For &_op) {
             makeStore("", workspace, {nth}, makeNeutralVal(dtype, redOp)));
         // body
         stmts.emplace_back(op->body_);
-        for (int k = 1; k < len; k <<= 1) {
-            // if (nth % k == 0 && nth + k < len)
-            //   workspace[nth] += workspace[nth + k]
-            stmts.emplace_back(makeIf(
-                "",
-                makeLAnd(
-                    makeEQ(makeMod(nth, makeIntConst(k << 1)), makeIntConst(0)),
-                    makeLT(makeAdd(nth, makeIntConst(k)), op->len_)),
-                makeReduceTo(
-                    "", workspace, {nth}, redOp,
-                    makeLoad(workspace, {makeAdd(nth, makeIntConst(k))}),
-                    false)));
-        }
+        // for (int k = 1; k < len; k <<= 1)
+        //   if (nth % k == 0 && nth + k < len)
+        //     workspace[nth] += workspace[nth + k]
+        // where k = 2^p
+        //   => 2^p < len
+        //   => p < log_2 len
+        //   => p < floor(log_2(len - 1)) + 1
+        auto count = (63 - __builtin_clzll((unsigned long long)(len - 1))) + 1;
+        auto k =
+            makeIntrinsic("1 << (%)", {makeVar("__reduce_p")}, DataType::Int32);
+        auto reduceStmt =
+            makeIf("",
+                   makeLAnd(makeEQ(makeMod(nth, makeMul(k, makeIntConst(2))),
+                                   makeIntConst(0)),
+                            makeLT(makeAdd(nth, k), op->len_)),
+                   makeReduceTo("", workspace, {nth}, redOp,
+                                makeLoad(workspace, {makeAdd(nth, k)}), false));
+        stmts.emplace_back(makeFor("", "__reduce_p", makeIntConst(0),
+                                   makeIntConst(count), makeIntConst(count),
+                                   false, ForProperty(), reduceStmt));
         stmts.emplace_back(makeReduceTo("", load->var_, load->indices_, redOp,
                                         makeLoad(workspace, {makeIntConst(0)}),
                                         false));
