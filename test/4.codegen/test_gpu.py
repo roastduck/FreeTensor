@@ -979,7 +979,7 @@ def test_syncwarp():
     assert np.array_equal(y_np, y_std)
 
 
-def test_correct_shared_1():
+def test_multiplex_shared_1():
 
     @ir.transform
     def test(x, y):
@@ -1041,7 +1041,7 @@ def test_correct_shared_1():
     assert np.array_equal(y_np, y_std)
 
 
-def test_correct_shared_2():
+def test_multiplex_shared_2():
 
     @ir.transform
     def test(x, y):
@@ -1076,6 +1076,116 @@ def test_correct_shared_2():
                     t[j + i * 64] = x[i, j + i * 64] * 2
                     y[i, j + i * 64] = t[j + i * 64] + 1
     assert ir.make_1d_var(ir.pop_ast()).match(func.body)
+
+
+def test_simplex_local_1():
+
+    @ir.transform
+    def test(x, y, z):
+        ir.declare_var(x, (10, 10, 10), "int32", "input", "gpu/global")
+        ir.declare_var(y, (10, 10, 10), "int32", "output", "gpu/global")
+        ir.declare_var(z, (10, 10, 10), "int32", "output", "gpu/global")
+        t = ir.create_var((10, 10, 10), "int32", "cache", "gpu/global")
+        'nid: Lb'
+        for b in range(10):
+            'nid: L0'
+            for i in range(10):
+                for j in range(10):
+                    t[b, i, j] = x[b, i, j] * 2
+            'nid: L1'
+            for i in range(10):
+                for j in range(10):
+                    y[b, i, j] = t[b, i, j] + 1
+            'nid: L2'
+            for i in range(10):
+                for j in range(10):
+                    z[b, i, j] = t[b, i, j] + 2
+
+    s = ir.Schedule(test)
+    s.parallelize("Lb", "blockIdx.x")
+    s.parallelize("L0", "threadIdx.x")
+    s.parallelize("L1", "threadIdx.x")
+    s.parallelize("L2", "threadIdx.x")
+    s.set_mem_type(":t", "gpu/local")
+    func = ir.lower(s.func(), target)
+    print(func)
+
+    with ir.VarDef([("x", (10, 10, 10), "int32", "input", "gpu/global"),
+                    ("y", (10, 10, 10), "int32", "output", "gpu/global"),
+                    ("z", (10, 10, 10), "int32", "output", "gpu/global")
+                   ]) as (x, y, z):
+        with ir.For(".blockIdx", 0, 10) as b:
+            with ir.For(".threadIdx.x", 0, 10) as i:
+                with ir.VarDef("t", (10,), "int32", "cache", "gpu/local") as t:
+                    with ir.For("j", 0, 10) as j:
+                        t[j] = x[b, i, j] * 2
+                    with ir.For("j", 0, 10) as j:
+                        y[b, i, j] = t[j] + 1
+                    with ir.For("j", 0, 10) as j:
+                        z[b, i, j] = t[j] + 2
+    assert ir.make_1d_var(ir.pop_ast()).match(func.body)
+
+    code = ir.codegen(func, target)
+    print(ir.debug.with_line_no(code))
+    x_np = np.random.randint(0, 100, (10, 10, 10)).astype("int32")
+    y_np = np.zeros((10, 10, 10), dtype="int32")
+    z_np = np.zeros((10, 10, 10), dtype="int32")
+    x_arr = ir.Array(x_np, device)
+    y_arr = ir.Array(y_np, device)
+    z_arr = ir.Array(z_np, device)
+    driver = ir.Driver(func, code, device)
+    driver.set_params(x=x_arr, y=y_arr, z=z_arr)
+    driver.run()
+    y_np = y_arr.numpy().reshape(10, 10, 10)
+    z_np = z_arr.numpy().reshape(10, 10, 10)
+
+    assert np.array_equal(y_np, x_np * 2 + 1)
+    assert np.array_equal(z_np, x_np * 2 + 2)
+
+
+def test_simplex_local_2():
+
+    @ir.transform
+    def test(x, y, z):
+        ir.declare_var(x, (10, 10, 10), "int32", "input", "gpu/global")
+        ir.declare_var(y, (10, 10, 10), "int32", "output", "gpu/global")
+        t = ir.create_var((10, 10, 10), "int32", "cache", "gpu/global")
+        'nid: Lb'
+        for b in range(10):
+            'nid: L0'
+            for i in range(10):
+                for j in range(10):
+                    t[b, i, j] = x[b, i, j] * 2
+                for j in range(10):
+                    t[b, i, j] += t[b, i, i]
+                    # The last dimension can be removed although accessed with i
+            'nid: L1'
+            for i in range(10):
+                for j in range(10):
+                    y[b, i, j] = t[b, i, j] + 1
+
+    s = ir.Schedule(test)
+    s.parallelize("Lb", "blockIdx.x")
+    s.parallelize("L0", "threadIdx.x")
+    s.parallelize("L1", "threadIdx.x")
+    s.set_mem_type(":t", "gpu/local")
+    func = ir.lower(s.func(), target)
+    print(func)
+
+    with ir.VarDef([
+        ("x", (10, 10, 10), "int32", "input", "gpu/global"),
+        ("y", (10, 10, 10), "int32", "output", "gpu/global"),
+    ]) as (x, y):
+        with ir.For(".blockIdx", 0, 10) as b:
+            with ir.For(".threadIdx.x", 0, 10) as i:
+                with ir.VarDef("t", (10,), "int32", "cache", "gpu/local") as t:
+                    with ir.For("j", 0, 10) as j:
+                        t[j] = x[b, i, j] * 2
+                    with ir.For("j", 0, 10) as j:
+                        t[j] += t[i]
+                    with ir.For("j", 0, 10) as j:
+                        y[b, i, j] = t[j] + 1
+    assert ir.make_1d_var(ir.make_reduction(ir.pop_ast())).match(func.body)
 
 
 def test_relax_shared_shape_to_constants():

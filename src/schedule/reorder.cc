@@ -51,12 +51,20 @@ Stmt SwapFor::visit(const StmtSeq &_op) {
         }
 
         if (!beforeStmts.empty()) {
+            if (!oldInner_->property_.parallel_.empty()) {
+                throw InvalidSchedule("Imperfect nesting is not allowed when "
+                                      "the inner loop is parallelized");
+            }
             before =
                 makeIf("", makeEQ(makeVar(oldInner_->iter_), oldInner_->begin_),
                        beforeStmts.size() == 1 ? beforeStmts[0]
                                                : makeStmtSeq("", beforeStmts));
         }
         if (!afterStmts.empty()) {
+            if (!oldInner_->property_.parallel_.empty()) {
+                throw InvalidSchedule("Imperfect nesting is not allowed when "
+                                      "the inner loop is parallelized");
+            }
             after =
                 makeIf("", makeEQ(makeVar(oldInner_->iter_), oldInner_->begin_),
                        afterStmts.size() == 1 ? afterStmts[0]

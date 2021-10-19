@@ -1,5 +1,5 @@
-#ifndef GPU_CORRECT_SHARED_AND_GLOBAL_H
-#define GPU_CORRECT_SHARED_AND_GLOBAL_H
+#ifndef GPU_MULTIPLEX_BUFFERS_H
+#define GPU_MULTIPLEX_BUFFERS_H
 
 #include <unordered_map>
 #include <unordered_set>
@@ -29,12 +29,7 @@ class FindParallelLoops : public Visitor {
     void visit(const VarDef &op) override;
 };
 
-/**
- * Correct dimensions of shared memory buffers defined in local scope
- *
- * E.g. Alter from `shmem[i]` to `shmem[threadIdx.x, i]`
- */
-class CorrectMutator : public Mutator {
+class MultiplexMutator : public Mutator {
     std::vector<For> stack_;
     std::unordered_map<std::string, int> defPos_;
     std::unordered_map<std::string, std::string> defs_; // name -> ID
@@ -42,7 +37,7 @@ class CorrectMutator : public Mutator {
         &affecting_; // VarDef ID -> For ID
 
   public:
-    CorrectMutator(
+    MultiplexMutator(
         const std::unordered_map<std::string, std::unordered_set<std::string>>
             &affecting)
         : affecting_(affecting) {}
@@ -73,12 +68,18 @@ class CorrectMutator : public Mutator {
     Stmt visit(const ReduceTo &op) override;
 };
 
-Stmt correctSharedAndGlobal(const Stmt &op);
+/**
+ * If a shared or global VarDef is inside a parallel For region, it should be
+ * enlarged so that each thread or block will access different parts of it
+ *
+ * E.g. Alter from `shmem[i]` to `shmem[threadIdx.x, i]`
+ */
+Stmt multiplexBuffers(const Stmt &op);
 
-DEFINE_PASS_FOR_FUNC(correctSharedAndGlobal)
+DEFINE_PASS_FOR_FUNC(multiplexBuffers)
 
 } // namespace gpu
 
 } // namespace ir
 
-#endif // GPU_CORRECT_SHARED_AND_GLOBAL_H
+#endif // GPU_MULTIPLEX_BUFFERS_H

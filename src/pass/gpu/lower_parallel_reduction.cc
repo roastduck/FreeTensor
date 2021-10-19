@@ -107,7 +107,8 @@ Stmt LowerParallelReduction::visit(const For &_op) {
                                 makeLoad(workspace, {makeAdd(nth, k)}), false));
         stmts.emplace_back(makeFor("", "__reduce_p", makeIntConst(0),
                                    makeIntConst(count), makeIntConst(count),
-                                   false, ForProperty(), reduceStmt));
+                                   false, ForProperty().withUnroll(),
+                                   reduceStmt));
         stmts.emplace_back(makeReduceTo("", load->var_, load->indices_, redOp,
                                         makeLoad(workspace, {makeIntConst(0)}),
                                         false));
@@ -130,13 +131,6 @@ Stmt LowerParallelReduction::visit(const For &_op) {
     }
 
     return ret;
-}
-
-Stmt LowerParallelReduction::visit(const If &op) {
-    if (!expr2for_.empty()) {
-        ERROR("Parallel reduction inside an `if` is not supported yet");
-    }
-    return Mutator::visit(op);
 }
 
 Stmt LowerParallelReduction::visit(const ReduceTo &_op) {

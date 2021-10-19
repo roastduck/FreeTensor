@@ -22,7 +22,6 @@ class LowerParallelReduction : public Mutator {
   protected:
     Stmt visit(const VarDef &op) override;
     Stmt visit(const For &op) override;
-    Stmt visit(const If &op) override;
     Stmt visit(const ReduceTo &op) override;
 };
 

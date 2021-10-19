@@ -2,10 +2,11 @@
 #include <lower.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/float_simplify.h>
-#include <pass/gpu/correct_shared_and_global.h>
 #include <pass/gpu/lower_vector.h>
 #include <pass/gpu/make_sync.h>
+#include <pass/gpu/multiplex_buffers.h>
 #include <pass/gpu/normalize_threads.h>
+#include <pass/gpu/simplex_buffers.h>
 #include <pass/grad.h>
 #include <pass/make_1d_var.h>
 #include <pass/make_const_shape.h>
@@ -188,12 +189,17 @@ void init_ffi_pass(py::module_ &m) {
     m.def("gpu_make_sync", static_cast<Stmt (*)(const Stmt &)>(&gpu::makeSync),
           "stmt"_a);
 
-    m.def("gpu_correct_shared_and_global",
-          static_cast<Func (*)(const Func &)>(&gpu::correctSharedAndGlobal),
+    m.def("gpu_multiplex_buffers",
+          static_cast<Func (*)(const Func &)>(&gpu::multiplexBuffers),
           "func"_a);
-    m.def("gpu_correct_shared_and_global",
-          static_cast<Stmt (*)(const Stmt &)>(&gpu::correctSharedAndGlobal),
+    m.def("gpu_multiplex_buffers",
+          static_cast<Stmt (*)(const Stmt &)>(&gpu::multiplexBuffers),
           "stmt"_a);
+
+    m.def("gpu_simplex_buffers",
+          static_cast<Func (*)(const Func &)>(&gpu::simplexBuffers), "func"_a);
+    m.def("gpu_simplex_buffers",
+          static_cast<Stmt (*)(const Stmt &)>(&gpu::simplexBuffers), "stmt"_a);
 
     m.def("gpu_lower_vector",
           static_cast<Func (*)(const Func &)>(&gpu::lowerVector), "func"_a);
