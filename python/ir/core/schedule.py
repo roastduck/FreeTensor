@@ -562,3 +562,14 @@ class Schedule(ffi.Schedule):
             Target architecture
         """
         super(Schedule, self).auto_set_mem_type(target)
+
+    def auto_unroll(self, target):
+        """
+        Automatically unroll loops using some heuristics
+
+        Parameters
+        ----------
+        target : Target
+            Target architecture
+        """
+        super(Schedule, self).auto_unroll(target)

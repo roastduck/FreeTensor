@@ -436,6 +436,11 @@ class Schedule {
      * Automatically set memory types using some heuristics
      */
     void autoSetMemType(const Target &target);
+
+    /**
+     * Automatically unroll loops using some heuristics
+     */
+    void autoUnroll(const Target &target);
 };
 
 } // namespace ir
