@@ -27,11 +27,12 @@ jit_cache = {}
 
 
 def gat_layer(ptr, idx, feat, weight, attn_l, attn_r, y, num_v, num_e, feat_len,
-              device, mtype, shared_mtype, local_mtype):
+              device):
     if (num_v, num_e, feat_len) in jit_cache:
         exe = jit_cache[(num_v, num_e, feat_len)]
 
     else:
+        mtype = device.main_mem_type()
 
         inf = float("inf")
 
@@ -73,16 +74,16 @@ def gat_layer(ptr, idx, feat, weight, attn_l, attn_r, y, num_v, num_e, feat_len,
             'nid: Li'
             'no_deps'
             for i in range(num_v):
-                edge_max = ir.create_var((), "float32", "cache", shared_mtype)
+                edge_max = ir.create_var((), "float32", "cache", mtype)
                 edge_max[()] = -inf
                 'nid: Lk1'
                 for k in range(ptr[i], ptr[i + 1]):
-                    e = ir.create_var((), "float32", "cache", local_mtype)
+                    e = ir.create_var((), "float32", "cache", mtype)
                     e[()] = att_l[idx[k]] + att_r[i]
                     edge_exp[k] = ir.exp(
                         ir.if_then_else(e[()] >= 0, e[()], e[()] * 0.1))
                     edge_max[()] = ir.max(edge_max[()], edge_exp[k])
-                edge_sum = ir.create_var((), "float32", "cache", shared_mtype)
+                edge_sum = ir.create_var((), "float32", "cache", mtype)
                 edge_sum[()] = 0
                 'nid: Lk2'
                 for k in range(ptr[i], ptr[i + 1]):
@@ -97,42 +98,8 @@ def gat_layer(ptr, idx, feat, weight, attn_l, attn_r, y, num_v, num_e, feat_len,
                           j] += feat2[idx[k], j] * edge_norm[k] / edge_sum[()]
 
         s = ir.Schedule(f)
-        if device.target().type() == ir.TargetType.CPU:
-            s.as_matmul('L_feat2')
-            s.as_matmul('L_att_l')
-            s.as_matmul('L_att_r')
-            s.parallelize('Li', 'openmp')
-        else:
-            s.as_matmul('L_feat2')
-            s.as_matmul('L_att_l')
-            s.as_matmul('L_att_r')
-
-            blk, thr_y = s.split('Li', 4)
-            s.parallelize(blk, 'blockIdx.x')
-            s.parallelize(thr_y, 'threadIdx.y')
-
-            inner, outer = s.split('Lk1', 32)
-            s.reorder([outer, inner])
-            init, final, red_shared, _ = s.cache_reduction(
-                inner, "$:edge_max", "gpu/shared")
-            final = s.move_to(final, ir.MoveToSide.After, outer)
-            s.cache_reduction(inner, red_shared, "gpu/local")
-            s.cache_reduction(final, '$:edge_max', 'gpu/local')
-            s.parallelize(outer, 'threadIdx.x')
-
-            s.cache('Lk3', '$:edge_max', 'gpu/local')
-            inner, outer = s.split('Lk2', 32)
-            s.reorder([outer, inner])
-            init, final, red_shared, _ = s.cache_reduction(
-                inner, "$:edge_sum", "gpu/shared")
-            final = s.move_to(final, ir.MoveToSide.After, outer)
-            s.cache_reduction(inner, red_shared, "gpu/local")
-            s.cache_reduction(final, '$:edge_sum', 'gpu/local')
-            s.parallelize(outer, 'threadIdx.x')
-
-            s.parallelize('Lj', 'threadIdx.x')
-            s.cache('Lk3', 'y', 'gpu/local')
-            s.cache('Lk3', '$:edge_sum', 'gpu/local')
+        s.auto_schedule(device.target())
+        print(s.ast())
         f = ir.lower(s.func(), device.target())
         print(f)
         code = ir.codegen(f, device.target())
@@ -166,15 +133,9 @@ if __name__ == '__main__':
 
     if device == 'gpu':
         ir_dev = ir.Device(ir.GPU())
-        ir_mtype = 'gpu/global'
-        ir_shared_mtype = 'gpu/shared'
-        ir_local_mtype = 'gpu/local'
     else:
         assert device == 'cpu'
         ir_dev = ir.Device(ir.CPU())
-        ir_mtype = 'cpu'
-        ir_shared_mtype = 'cpu'
-        ir_local_mtype = 'cpu'
 
     ptr = ir.Array(ptr, ir_dev)
     idx = ir.Array(idx, ir_dev)
@@ -186,12 +147,11 @@ if __name__ == '__main__':
 
     test_num = 1000
     gat_layer(ptr, idx, x, w, w_attn_1, w_attn_2, y, num_v, num_e, feat_len,
-              ir_dev, ir_mtype, ir_shared_mtype,
-              ir_local_mtype)  # init lazy ops
+              ir_dev)  # init lazy ops
     t0 = time.time()
     for i in range(test_num):
         gat_layer(ptr, idx, x, w, w_attn_1, w_attn_2, y, num_v, num_e, feat_len,
-                  ir_dev, ir_mtype, ir_shared_mtype, ir_local_mtype)
+                  ir_dev)
     t1 = time.time()
 
     print(f"Time = {(t1 - t0) / test_num * 1000} ms")

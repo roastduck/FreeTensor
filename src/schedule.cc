@@ -348,10 +348,23 @@ void Schedule::asMatMul(const std::string &loop) {
 }
 
 void Schedule::autoSchedule(const Target &target) {
+    autoUseLib(target);
     autoFuse(target);
     autoParallelize(target);
     autoSetMemType(target);
     autoUnroll(target);
+}
+
+void Schedule::autoUseLib(const Target &target) {
+    // Try to implement each top-level loops with lib calls
+    auto loopNestTree = getLoopNestTree(ast_);
+    for (auto &&loop : loopNestTree->subLoops_) {
+        try {
+            asMatMul(loop->loop_->id());
+        } catch (const InvalidSchedule &e) {
+            // do nothing
+        }
+    }
 }
 
 void Schedule::autoFuse(const Target &target) {
@@ -389,38 +402,49 @@ void Schedule::autoFuse(const Target &target) {
 void Schedule::autoParallelize(const Target &target) {
     // [GPU only] Try to parallelize loops accessing contiguous items as warps
     if (target.type() == TargetType::GPU) {
+        // We try to parallelize the loop with most contiguous access count
+        // first. If the counts are equal, we try to parallel the out-most loop
+        // with the same count first
         CountContigAccessLoops contigFinder;
         contigFinder(ast_);
-        std::vector<std::pair<std::string, int>> contigLoops(
-            contigFinder.counts().begin(), contigFinder.counts().end());
-        std::sort(contigLoops.begin(), contigLoops.end(),
-                  [](const std::pair<std::string, int> &lhs,
-                     const std::pair<std::string, int> &rhs) {
-                      return lhs.second > rhs.second;
-                  });
+        std::vector<std::pair<std::string, std::pair<int64_t, int>>>
+            contigLoops(contigFinder.counts().begin(),
+                        contigFinder.counts().end());
+        std::sort(
+            contigLoops.begin(), contigLoops.end(),
+            [](const std::pair<std::string, std::pair<int64_t, int>> &lhs,
+               const std::pair<std::string, std::pair<int64_t, int>> &rhs) {
+                return lhs.second > rhs.second;
+            });
         for (auto &&[loopId, cnt] : contigLoops) {
             auto loop = find(loopId);
+            auto bak = ast_;
+            auto logBak = logs_;
             try {
                 // FIXME: Do not hard-code 32
                 auto [l0, l1] = split(loop.id(), 32);
                 parallelize(l1, "threadIdx.x");
 
-                // Reorder this scope to as outer as possible
-                auto c = find(l1);
-                if (c.hasOuter()) {
-                    for (c = c.outer(); c.hasOuter(); c = c.outer()) {
-                        if (c.nodeType() == ASTNodeType::For) {
-                            try {
-                                reorder({l1, c.id()});
-                                l1 = c.id();
-                            } catch (InvalidSchedule &e) {
-                                break;
+                try {
+                    // Reorder this scope to as outer as possible
+                    auto c = find(l1);
+                    if (c.hasOuter()) {
+                        for (c = c.outer(); c.hasOuter(); c = c.outer()) {
+                            if (c.nodeType() == ASTNodeType::For) {
+                                try {
+                                    reorder({l1, c.id()});
+                                    l1 = c.id();
+                                } catch (InvalidSchedule &e) {
+                                    break;
+                                }
                             }
                         }
                     }
+                } catch (const InvalidSchedule &e) {
+                    // do nothing
                 }
             } catch (const InvalidSchedule &e) {
-                // do nothing
+                ast_ = std::move(bak), logs_ = std::move(logBak);
             }
         }
     }
@@ -459,21 +483,21 @@ void Schedule::autoParallelize(const Target &target) {
                         getCursorByFilter(loop.node(), isParallelLoop).empty();
                     // 1. make sure all SMs are used
                     // 2. make sure blockDim is not too large
-                    std::string l1, l2, l3;
+                    std::string l1, l1b, l2;
                     // TODO: do not hard-code these numbers
-                    std::tie(l1, l3) = split(loopId, -1, 80);
-                    if (!findAll(l3).empty()) {
-                        std::tie(l2, l3) =
-                            split(l3, childrenAllSerial ? 256 : 8);
+                    std::tie(l1, l2) = split(loopId, -1, 80);
+                    if (!findAll(l2).empty()) {
+                        std::tie(l1b, l2) =
+                            split(l2, childrenAllSerial ? 256 : 8);
+                        if (!findAll(l1b).empty()) {
+                            l1 = merge(l1, l1b);
+                        }
                     }
                     if (!findAll(l1).empty()) {
-                        parallelize(l1, "blockIdx.y");
+                        parallelize(l1, "blockIdx.x");
                     }
                     if (!findAll(l2).empty()) {
-                        parallelize(l2, "blockIdx.x");
-                    }
-                    if (!findAll(l3).empty()) {
-                        parallelize(l3, childrenAllSerial ? "threadIdx.x"
+                        parallelize(l2, childrenAllSerial ? "threadIdx.x"
                                                           : "threadIdx.y");
                     }
                     break;

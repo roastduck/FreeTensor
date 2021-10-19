@@ -421,7 +421,16 @@ class Schedule {
     void autoSchedule(const Target &target);
 
     /**
+     * Automatically use external libs using some heuristics
+     *
+     * @param target : Target architecture
+     */
+    void autoUseLib(const Target &target);
+
+    /**
      * Automatically fuse consecutive loops using some heuristics
+     *
+     * @param target : Target architecture
      */
     void autoFuse(const Target &target);
 
@@ -434,11 +443,15 @@ class Schedule {
 
     /**
      * Automatically set memory types using some heuristics
+     *
+     * @param target : Target architecture
      */
     void autoSetMemType(const Target &target);
 
     /**
      * Automatically unroll loops using some heuristics
+     *
+     * @param target : Target architecture
      */
     void autoUnroll(const Target &target);
 };

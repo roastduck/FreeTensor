@@ -20,6 +20,7 @@ class GetLoopNestTree : public Visitor {
 
   protected:
     void visit(const For &op) override;
+    void visit(const MatMul &op) override {} // do nothing
 };
 
 inline Ref<LoopNest> getLoopNestTree(const Stmt &op) {

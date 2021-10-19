@@ -530,6 +530,17 @@ class Schedule(ffi.Schedule):
         """
         super(Schedule, self).auto_schedule(target)
 
+    def auto_use_lib(self, target):
+        """
+        Automatically use external libs using some heuristics
+
+        Parameters
+        ----------
+        target : Target
+            Target architecture
+        """
+        super(Schedule, self).auto_use_lib(target)
+
     def auto_fuse(self, target):
         """
         Automatically fuse consecutive loops using some heuristics
