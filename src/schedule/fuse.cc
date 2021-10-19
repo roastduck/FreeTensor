@@ -43,10 +43,10 @@ Expr FuseFor::visit(const Var &_op) {
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Var);
     auto op = __op.as<VarNode>();
-    if (op->name_ == iter0_) {
+    if (inLoop0_ && op->name_ == iter0_) {
         return makeAdd(makeVar(iter0_), begin0_);
     }
-    if (op->name_ == iter1_) {
+    if (inLoop1_ && op->name_ == iter1_) {
         // Yes, use iter0_
         return makeAdd(makeVar(iter0_), begin1_);
     }
@@ -56,14 +56,17 @@ Expr FuseFor::visit(const Var &_op) {
 Stmt FuseFor::visit(const For &_op) {
     if (_op->id() == id0_) {
         iter0_ = _op->iter_, begin0_ = _op->begin_;
+        inLoop0_ = true;
     }
     if (_op->id() == id1_) {
         iter1_ = _op->iter_, begin1_ = _op->begin_;
+        inLoop1_ = true;
     }
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::For);
     auto op = __op.as<ForNode>();
     if (op->id() == id0_ || op->id() == id1_) {
+        inLoop0_ = inLoop1_ = false;
         return makeFor(op->id(), op->iter_, makeIntConst(0), op->len_, op->len_,
                        op->noDeps_, op->property_, op->body_);
     }

@@ -16,6 +16,7 @@ enum class FindLoopInVarDefsDirection : int { Front, Back };
 class FuseFor : public Mutator {
     std::string id0_, id1_, fused_, iter0_, iter1_, beforeId_, afterId_;
     Expr begin0_, begin1_;
+    bool inLoop0_ = false, inLoop1_ = false;
 
   public:
     FuseFor(const std::string &id0, const std::string &id1)

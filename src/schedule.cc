@@ -2,6 +2,7 @@
 
 #include <analyze/all_defs.h>
 #include <analyze/count_contig_access_loops.h>
+#include <analyze/find_indexing_loops.h>
 #include <analyze/get_loop_nest_tree.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/simplify.h>
@@ -350,6 +351,7 @@ void Schedule::autoSchedule(const Target &target) {
     autoFuse(target);
     autoParallelize(target);
     autoSetMemType(target);
+    autoUnroll(target);
 }
 
 void Schedule::autoFuse(const Target &target) {
@@ -509,6 +511,32 @@ void Schedule::autoSetMemType(const Target &target) {
                 } catch (const InvalidSchedule &e) {
                     // do nothing
                 }
+            }
+        }
+    }
+}
+
+void Schedule::autoUnroll(const Target &target) {
+    if (target.type() == TargetType::GPU) {
+        // Try to unroll loops that accessing local arrays, to help nvcc put
+        // these arrays to registers
+        for (auto &&[loop, defs] : findIndexingLoops(ast_)) {
+            if (!loop->property_.parallel_.empty() ||
+                loop->property_.vectorize_) {
+                continue;
+            }
+
+            for (auto &&def : defs) {
+                if (def->buffer_->mtype() == MemType::GPULocal) {
+                    goto do_unroll;
+                }
+            }
+            continue;
+        do_unroll:
+            try {
+                unroll(loop->id());
+            } catch (InvalidSchedule &e) {
+                // do nothing
             }
         }
     }
