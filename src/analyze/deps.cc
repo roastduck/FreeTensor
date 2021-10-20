@@ -120,14 +120,15 @@ void GenISLExprDeps::visit(const Load &op) {
     results_[op] = str;
 }
 
-std::string AnalyzeDeps::makeIterList(const std::vector<IterAxis> &list,
+std::string AnalyzeDeps::makeIterList(GenISLExprDeps &genISLExpr,
+                                      const std::vector<IterAxis> &list,
                                       int n) {
     std::string ret;
     for (int i = 0; i < n; i++) {
         if (i < (int)list.size()) {
             if (list[i].iter_->nodeType() == ASTNodeType::Var) {
                 ret +=
-                    genISLExpr_.normalizeId(list[i].iter_.as<VarNode>()->name_);
+                    genISLExpr.normalizeId(list[i].iter_.as<VarNode>()->name_);
             } else if (list[i].iter_->nodeType() == ASTNodeType::IntConst) {
                 ret += std::to_string(list[i].iter_.as<IntConstNode>()->val_);
             } else {
@@ -143,16 +144,17 @@ std::string AnalyzeDeps::makeIterList(const std::vector<IterAxis> &list,
     return "[" + ret + "]";
 }
 
-Ref<std::string> AnalyzeDeps::makeAccList(const std::vector<Expr> &list,
+Ref<std::string> AnalyzeDeps::makeAccList(GenISLExprDeps &genISLExpr,
+                                          const std::vector<Expr> &list,
                                           RelaxMode relax,
                                           ExternalMap &externals) {
     std::string ret;
     for (int i = 0, iEnd = list.size(); i < iEnd; i++) {
-        if (auto linstr = genISLExpr_.gen(list[i]); linstr.isValid()) {
+        if (auto linstr = genISLExpr.gen(list[i]); linstr.isValid()) {
             ret += *linstr;
-            unionTo(externals, genISLExpr_.externals(list[i]));
+            unionTo(externals, genISLExpr.externals(list[i]));
         } else if (relax == RelaxMode::Possible) {
-            ret += genISLExpr_.normalizeId("free" + std::to_string(i));
+            ret += genISLExpr.normalizeId("free" + std::to_string(i));
         } else {
             return nullptr;
         }
@@ -163,27 +165,27 @@ Ref<std::string> AnalyzeDeps::makeAccList(const std::vector<Expr> &list,
     return Ref<std::string>::make("[" + ret + "]");
 }
 
-Ref<std::string> AnalyzeDeps::makeRange(const std::vector<IterAxis> &point,
+Ref<std::string> AnalyzeDeps::makeRange(GenISLExprDeps &genISLExpr,
+                                        const std::vector<IterAxis> &point,
                                         RelaxMode relax,
                                         ExternalMap &externals) {
     std::vector<std::string> ineqs;
     for (size_t i = 0, iEnd = point.size(); i < iEnd; i++) {
         if (point[i].iter_->nodeType() == ASTNodeType::Var) {
             std::string ineq =
-                genISLExpr_.normalizeId(point[i].iter_.as<VarNode>()->name_);
+                genISLExpr.normalizeId(point[i].iter_.as<VarNode>()->name_);
             bool bounded = true;
-            if (auto linstr = genISLExpr_.gen(point[i].begin_);
+            if (auto linstr = genISLExpr.gen(point[i].begin_);
                 linstr.isValid()) {
                 ineq = *linstr + " <= " + ineq;
-                unionTo(externals, genISLExpr_.externals(point[i].begin_));
+                unionTo(externals, genISLExpr.externals(point[i].begin_));
             } else {
                 ineq = "free_lo <= " + ineq;
                 bounded = false;
             }
-            if (auto linstr = genISLExpr_.gen(point[i].end_);
-                linstr.isValid()) {
+            if (auto linstr = genISLExpr.gen(point[i].end_); linstr.isValid()) {
                 ineq = ineq + " < " + *linstr;
-                unionTo(externals, genISLExpr_.externals(point[i].end_));
+                unionTo(externals, genISLExpr.externals(point[i].end_));
             } else {
                 ineq = ineq + " < free_hi";
                 bounded = false;
@@ -202,11 +204,12 @@ Ref<std::string> AnalyzeDeps::makeRange(const std::vector<IterAxis> &point,
     return Ref<std::string>::make(std::move(ret));
 }
 
-Ref<std::string> AnalyzeDeps::makeCond(const Expr &expr, RelaxMode relax,
+Ref<std::string> AnalyzeDeps::makeCond(GenISLExprDeps &genISLExpr,
+                                       const Expr &expr, RelaxMode relax,
                                        ExternalMap &externals) {
     if (expr.isValid()) {
-        if (auto str = genISLExpr_.gen(expr); str.isValid()) {
-            unionTo(externals, genISLExpr_.externals(expr));
+        if (auto str = genISLExpr.gen(expr); str.isValid()) {
+            unionTo(externals, genISLExpr.externals(expr));
             return Ref<std::string>::make(*str);
         } else if (relax == RelaxMode::Necessary) {
             return nullptr;
@@ -215,25 +218,29 @@ Ref<std::string> AnalyzeDeps::makeCond(const Expr &expr, RelaxMode relax,
     return Ref<std::string>::make("");
 }
 
-ISLMap AnalyzeDeps::makeAccMap(const AccessPoint &p, int iterDim, int accDim,
+ISLMap AnalyzeDeps::makeAccMap(ISLCtx &isl, GenISLExprDeps &genISLExpr,
+                               const AccessPoint &p, int iterDim, int accDim,
                                RelaxMode relax, const std::string &extSuffix,
                                ExternalMap &externals) {
-    auto ret = makeIterList(p.iter_, iterDim) + " -> ";
-    if (auto str = makeAccList(p.access_, relax, externals); str.isValid()) {
+    auto ret = makeIterList(genISLExpr, p.iter_, iterDim) + " -> ";
+    if (auto str = makeAccList(genISLExpr, p.access_, relax, externals);
+        str.isValid()) {
         ret += *str;
     } else {
-        return emptyMap(spaceAlloc(isl_, 0, iterDim, accDim));
+        return emptyMap(spaceAlloc(isl, 0, iterDim, accDim));
     }
     std::string cond;
-    if (auto str = makeRange(p.iter_, relax, externals); str.isValid()) {
+    if (auto str = makeRange(genISLExpr, p.iter_, relax, externals);
+        str.isValid()) {
         cond += *str;
     } else {
-        return emptyMap(spaceAlloc(isl_, 0, iterDim, accDim));
+        return emptyMap(spaceAlloc(isl, 0, iterDim, accDim));
     }
-    if (auto str = makeCond(p.cond_, relax, externals); str.isValid()) {
+    if (auto str = makeCond(genISLExpr, p.cond_, relax, externals);
+        str.isValid()) {
         cond += (cond.empty() || str->empty() ? "" : " and ") + *str;
     } else {
-        return emptyMap(spaceAlloc(isl_, 0, iterDim, accDim));
+        return emptyMap(spaceAlloc(isl, 0, iterDim, accDim));
     }
     if (!cond.empty()) {
         ret += ": " + cond;
@@ -244,7 +251,7 @@ ISLMap AnalyzeDeps::makeAccMap(const AccessPoint &p, int iterDim, int accDim,
     }
     ret = "[" + ext + "] -> {" + ret + "}";
     ret = replaceAll(ret, "!!placeholder!!", extSuffix);
-    return ISLMap(isl_, ret);
+    return ISLMap(isl, ret);
 }
 
 std::string AnalyzeDeps::makeNdList(const std::string &name, int n) const {
@@ -259,7 +266,8 @@ std::string AnalyzeDeps::makeNdList(const std::string &name, int n) const {
 }
 
 ISLMap
-AnalyzeDeps::makeEqForBothOps(const std::vector<std::pair<int, int>> &coord,
+AnalyzeDeps::makeEqForBothOps(ISLCtx &isl,
+                              const std::vector<std::pair<int, int>> &coord,
                               int iterDim) const {
     std::ostringstream os;
     os << "{" << makeNdList("d", iterDim) << " -> " << makeNdList("d_", iterDim)
@@ -272,11 +280,11 @@ AnalyzeDeps::makeEqForBothOps(const std::vector<std::pair<int, int>> &coord,
            << "d_" << coord[i].first << " = " << coord[i].second;
     }
     os << "}";
-    return ISLMap(isl_, os.str());
+    return ISLMap(isl, os.str());
 }
 
-ISLMap AnalyzeDeps::makeIneqBetweenOps(DepDirection mode, int iterId,
-                                       int iterDim) const {
+ISLMap AnalyzeDeps::makeIneqBetweenOps(ISLCtx &isl, DepDirection mode,
+                                       int iterId, int iterDim) const {
     auto idStr = std::to_string(iterId);
     std::string ineq;
     switch (mode) {
@@ -295,20 +303,21 @@ ISLMap AnalyzeDeps::makeIneqBetweenOps(DepDirection mode, int iterId,
     default:
         ASSERT(false);
     }
-    return ISLMap(isl_, "{" + makeNdList("d", iterDim) + " -> " +
-                            makeNdList("d_", iterDim) + ": d_" + idStr + " " +
-                            ineq + " d" + idStr + "}");
+    return ISLMap(isl, "{" + makeNdList("d", iterDim) + " -> " +
+                           makeNdList("d_", iterDim) + ": d_" + idStr + " " +
+                           ineq + " d" + idStr + "}");
 }
 
-ISLMap AnalyzeDeps::makeConstraintOfSingleLoop(const std::string &loop,
+ISLMap AnalyzeDeps::makeConstraintOfSingleLoop(ISLCtx &isl,
+                                               const std::string &loop,
                                                DepDirection mode, int iterDim) {
     auto &&coord = scope2coord_.at(loop);
     int iterId = coord.size() - 1;
     if (iterId >= iterDim) {
-        return emptyMap(spaceAlloc(isl_, 0, iterDim, iterDim));
+        return emptyMap(spaceAlloc(isl, 0, iterDim, iterDim));
     }
 
-    auto ret = universeMap(spaceAlloc(isl_, 0, iterDim, iterDim));
+    auto ret = universeMap(spaceAlloc(isl, 0, iterDim, iterDim));
 
     // Position in the outer StmtSeq nodes
     std::vector<std::pair<int, int>> pos;
@@ -318,14 +327,15 @@ ISLMap AnalyzeDeps::makeConstraintOfSingleLoop(const std::string &loop,
         }
     }
     if (!pos.empty()) {
-        ret = intersect(std::move(ret), makeEqForBothOps(pos, iterDim));
+        ret = intersect(std::move(ret), makeEqForBothOps(isl, pos, iterDim));
     }
 
-    return intersect(std::move(ret), makeIneqBetweenOps(mode, iterId, iterDim));
+    return intersect(std::move(ret),
+                     makeIneqBetweenOps(isl, mode, iterId, iterDim));
 }
 
 ISLMap AnalyzeDeps::makeConstraintOfParallelScope(
-    const std::string &parallel, DepDirection mode, int iterDim,
+    ISLCtx &isl, const std::string &parallel, DepDirection mode, int iterDim,
     const Ref<AccessPoint> &point, const Ref<AccessPoint> &other) {
     int pointDim = -1, otherDim = -1;
     for (int i = (int)point->iter_.size() - 1; i >= 0; i--) {
@@ -341,10 +351,10 @@ ISLMap AnalyzeDeps::makeConstraintOfParallelScope(
         }
     }
     if (otherDim == -1 && pointDim == -1) {
-        return emptyMap(spaceAlloc(isl_, 0, iterDim, iterDim));
+        return emptyMap(spaceAlloc(isl, 0, iterDim, iterDim));
     }
     if (otherDim == -1 || pointDim == -1) {
-        return universeMap(spaceAlloc(isl_, 0, iterDim, iterDim));
+        return universeMap(spaceAlloc(isl, 0, iterDim, iterDim));
     }
 
     std::string ineq;
@@ -366,18 +376,19 @@ ISLMap AnalyzeDeps::makeConstraintOfParallelScope(
     }
     // FIXME: parallel loop of the same parallel scope of point and other may
     // have different `begin`, we must substract `begin` before compareing
-    return ISLMap(isl_, "{" + makeNdList("d", iterDim) + " -> " +
-                            makeNdList("d_", iterDim) + ": d_" +
-                            std::to_string(otherDim) + " " + ineq + " d" +
-                            std::to_string(pointDim) + "}");
+    return ISLMap(isl, "{" + makeNdList("d", iterDim) + " -> " +
+                           makeNdList("d_", iterDim) + ": d_" +
+                           std::to_string(otherDim) + " " + ineq + " d" +
+                           std::to_string(pointDim) + "}");
 }
 
-ISLMap AnalyzeDeps::makeExternalEq(int iterDim, const std::string &ext1,
+ISLMap AnalyzeDeps::makeExternalEq(ISLCtx &isl, int iterDim,
+                                   const std::string &ext1,
                                    const std::string &ext2) {
     std::string mapping =
         makeNdList("d", iterDim) + " -> " + makeNdList("d_", iterDim);
-    return ISLMap(isl_, "[" + ext1 + ", " + ext2 + "] -> {" + mapping + ": " +
-                            ext1 + " = " + ext2 + "}");
+    return ISLMap(isl, "[" + ext1 + ", " + ext2 + "] -> {" + mapping + ": " +
+                           ext1 + " = " + ext2 + "}");
 }
 
 const std::string &AnalyzeDeps::getVar(const AST &op) {
@@ -393,7 +404,7 @@ const std::string &AnalyzeDeps::getVar(const AST &op) {
     }
 }
 
-ISLMap AnalyzeDeps::makeSerialToAll(int iterDim, int serialIterDim,
+ISLMap AnalyzeDeps::makeSerialToAll(ISLCtx &isl, int iterDim, int serialIterDim,
                                     const std::vector<IterAxis> &point) const {
     std::string ret =
         makeNdList("d", serialIterDim) + " -> " + makeNdList("d_", iterDim);
@@ -417,7 +428,7 @@ ISLMap AnalyzeDeps::makeSerialToAll(int iterDim, int serialIterDim,
         ret += "d" + std::to_string(j++) + " = 0";
         first = false;
     }
-    return ISLMap(isl_, "{" + ret + "}");
+    return ISLMap(isl, "{" + ret + "}");
 }
 
 int AnalyzeDeps::countSerial(const std::vector<IterAxis> &point) {
@@ -430,34 +441,34 @@ int AnalyzeDeps::countSerial(const std::vector<IterAxis> &point) {
     return ret;
 }
 
-ISLMap AnalyzeDeps::makeEraseVarDefConstraint(const Ref<AccessPoint> &point,
+ISLMap AnalyzeDeps::makeEraseVarDefConstraint(ISLCtx &isl,
+                                              const Ref<AccessPoint> &point,
                                               int iterDim) {
-    ISLMap ret = universeMap(spaceAlloc(isl_, 0, iterDim, iterDim));
+    ISLMap ret = universeMap(spaceAlloc(isl, 0, iterDim, iterDim));
     if (eraseOutsideVarDef_) {
         for (int i = 0; i < point->defAxis_; i++) {
-            ret = intersect(std::move(ret),
-                            makeIneqBetweenOps(DepDirection::Same, i, iterDim));
+            ret = intersect(
+                std::move(ret),
+                makeIneqBetweenOps(isl, DepDirection::Same, i, iterDim));
         }
     }
     return ret;
 }
 
-ISLMap AnalyzeDeps::makeNoDepsConstraint(int iterDim) {
-    ISLMap ret = universeMap(spaceAlloc(isl_, 0, iterDim, iterDim));
+ISLMap AnalyzeDeps::makeNoDepsConstraint(ISLCtx &isl, int iterDim) {
+    ISLMap ret = universeMap(spaceAlloc(isl, 0, iterDim, iterDim));
     for (auto &&noDepsLoop : noDepsList_) {
         auto noDep = makeConstraintOfSingleLoop(
-            noDepsLoop, DepDirection::Different, iterDim);
+            isl, noDepsLoop, DepDirection::Different, iterDim);
         ret = subtract(std::move(ret), std::move(noDep));
     }
     return ret;
 }
 
-ISLMap AnalyzeDeps::makeExternalVarConstraint(const Ref<AccessPoint> &point,
-                                              const Ref<AccessPoint> &other,
-                                              const ExternalMap &pExternals,
-                                              const ExternalMap &oExternals,
-                                              int iterDim) {
-    ISLMap ret = universeMap(spaceAlloc(isl_, 0, iterDim, iterDim));
+ISLMap AnalyzeDeps::makeExternalVarConstraint(
+    ISLCtx &isl, const Ref<AccessPoint> &point, const Ref<AccessPoint> &other,
+    const ExternalMap &pExternals, const ExternalMap &oExternals, int iterDim) {
+    ISLMap ret = universeMap(spaceAlloc(isl, 0, iterDim, iterDim));
     auto opExternals = pExternals;
     unionTo(opExternals, oExternals);
     // We only have to add constraint for common loops of both accesses
@@ -491,10 +502,10 @@ do_compute_constarint:
                     // to call makeIneqBetweenOps, but no need to call
                     // makeConstraintOfSingleLoop
                     auto diffIter = makeIneqBetweenOps(
-                        DepDirection::Different,
+                        isl, DepDirection::Different,
                         scope2coord_.at(c.id()).size() - 1, iterDim);
                     auto sameExt = makeExternalEq(
-                        iterDim,
+                        isl, iterDim,
                         replaceAll(item.second, "!!placeholder!!", "__ext_p"),
                         replaceAll(item.second, "!!placeholder!!", "__ext_o"));
                     auto require = uni(std::move(diffIter), std::move(sameExt));
@@ -511,6 +522,16 @@ do_compute_constarint:
 
 void AnalyzeDeps::checkDep(const Ref<AccessPoint> &point,
                            const std::vector<Ref<AccessPoint>> &otherList) {
+    tasks_.emplace_back([point, otherList, this]() {
+        ISLCtx isl;
+        GenISLExprDeps genISLExpr;
+        checkDepImpl(isl, genISLExpr, point, otherList);
+    });
+}
+
+void AnalyzeDeps::checkDepImpl(ISLCtx &isl, GenISLExprDeps &genISLExpr,
+                               const Ref<AccessPoint> &point,
+                               const std::vector<Ref<AccessPoint>> &otherList) {
     if (otherList.empty()) {
         return;
     }
@@ -530,7 +551,12 @@ void AnalyzeDeps::checkDep(const Ref<AccessPoint> &point,
     std::vector<bool> filteredIn(otherList.size());
     for (size_t i = 0, n = otherList.size(); i < n; i++) {
         auto &&other = otherList[i];
-        filteredIn[i] = filter_ == nullptr || filter_(*point, *other);
+        if (filter_ == nullptr) {
+            filteredIn[i] = true;
+        } else {
+            std::lock_guard<std::mutex> guard(lock_);
+            filteredIn[i] = filter_(*point, *other);
+        }
         if (!filteredIn[i]) {
             continue;
         }
@@ -545,18 +571,19 @@ void AnalyzeDeps::checkDep(const Ref<AccessPoint> &point,
     }
 
     // lex_ge in serialDepAll AND ne in depAll
-    ISLMap serialLexGE = lexGE(spaceSetAlloc(isl_, 0, serialIterDim));
-    ISLMap allEQ = identity(spaceAlloc(isl_, 0, iterDim, iterDim));
-    ISLMap eraseVarDefConstraint = makeEraseVarDefConstraint(point, iterDim);
-    ISLMap noDepsConstraint = makeNoDepsConstraint(iterDim);
+    ISLMap serialLexGE = lexGE(spaceSetAlloc(isl, 0, serialIterDim));
+    ISLMap allEQ = identity(spaceAlloc(isl, 0, iterDim, iterDim));
+    ISLMap eraseVarDefConstraint =
+        makeEraseVarDefConstraint(isl, point, iterDim);
+    ISLMap noDepsConstraint = makeNoDepsConstraint(isl, iterDim);
 
     ExternalMap pExternals;
-    ISLMap pmap =
-        makeAccMap(*point, iterDim, accDim, pRelax, "__ext_p", pExternals);
+    ISLMap pmap = makeAccMap(isl, genISLExpr, *point, iterDim, accDim, pRelax,
+                             "__ext_p", pExternals);
     if (pmap.empty()) {
         return;
     }
-    ISLMap ps2a = makeSerialToAll(iterDim, serialIterDim, point->iter_);
+    ISLMap ps2a = makeSerialToAll(isl, iterDim, serialIterDim, point->iter_);
     ISLMap pa2s = reverse(ps2a);
     ISLSet pIter = domain(pmap);
     std::vector<ISLMap> os2aList(otherList.size()),
@@ -570,13 +597,14 @@ void AnalyzeDeps::checkDep(const Ref<AccessPoint> &point,
         }
 
         ExternalMap oExternals;
-        ISLMap omap =
-            makeAccMap(*other, iterDim, accDim, oRelax, "__ext_o", oExternals);
+        ISLMap omap = makeAccMap(isl, genISLExpr, *other, iterDim, accDim,
+                                 oRelax, "__ext_o", oExternals);
         if (omap.empty()) {
             filteredIn[i] = false;
             continue;
         }
-        ISLMap os2a = makeSerialToAll(iterDim, serialIterDim, other->iter_);
+        ISLMap os2a =
+            makeSerialToAll(isl, iterDim, serialIterDim, other->iter_);
         ISLMap oa2s = reverse(os2a);
         ISLSet oIter = domain(omap);
 
@@ -585,9 +613,10 @@ void AnalyzeDeps::checkDep(const Ref<AccessPoint> &point,
 
         depAll = intersect(std::move(depAll), eraseVarDefConstraint);
         depAll = intersect(std::move(depAll), noDepsConstraint);
-        depAll = intersect(std::move(depAll),
-                           makeExternalVarConstraint(point, other, pExternals,
-                                                     oExternals, iterDim));
+        depAll =
+            intersect(std::move(depAll),
+                      makeExternalVarConstraint(isl, point, other, pExternals,
+                                                oExternals, iterDim));
 
         ISLMap psDepAll = applyRange(depAll, std::move(oa2s));
         psDepAllUnion = psDepAllUnion.isValid()
@@ -637,11 +666,11 @@ void AnalyzeDeps::checkDep(const Ref<AccessPoint> &point,
             for (auto &&[nodeOrParallel, dir] : item) {
                 ISLMap require;
                 if (nodeOrParallel.isNode_) {
-                    require = makeConstraintOfSingleLoop(nodeOrParallel.name_,
-                                                         dir, iterDim);
+                    require = makeConstraintOfSingleLoop(
+                        isl, nodeOrParallel.name_, dir, iterDim);
                 } else {
                     require = makeConstraintOfParallelScope(
-                        nodeOrParallel.name_, dir, iterDim, point, other);
+                        isl, nodeOrParallel.name_, dir, iterDim, point, other);
                 }
                 res = intersect(std::move(res), std::move(require));
                 if (res.empty()) {
@@ -650,6 +679,7 @@ void AnalyzeDeps::checkDep(const Ref<AccessPoint> &point,
                 }
             }
             if (!fail) {
+                std::lock_guard<std::mutex> guard(lock_);
                 found_(Dependency{item, getVar(point->op_), *point, *other});
             }
         }
@@ -692,6 +722,21 @@ void findDeps(const Stmt &op, const std::vector<FindDepsCond> &cond,
         accFinder.scope2coord(), noDepsFinder.results(), variantExpr, cond,
         found, mode, depType, filter, ignoreReductionWAW, eraseOutsideVarDef);
     analyzer(op);
+    size_t n = analyzer.tasks().size();
+    std::vector<std::exception_ptr> exceptions(n, nullptr);
+#pragma omp parallel for schedule(dynamic)
+    for (size_t i = 0; i < n; i++) {
+        try {
+            analyzer.tasks()[i]();
+        } catch (...) {
+            exceptions[i] = std::current_exception();
+        }
+    }
+    for (size_t i = 0; i < n; i++) {
+        if (exceptions[i]) {
+            std::rethrow_exception(exceptions[i]);
+        }
+    }
 }
 
 } // namespace ir
