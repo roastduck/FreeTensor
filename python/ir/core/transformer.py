@@ -43,6 +43,7 @@ class ASTContextStack:
         self.next_nid = ""
         self.now_context_id = 0
         node_ctx.reset()
+        self.transformers = []
 
     def top(self) -> ASTContext:
         return self.ctx_stack[-1]
@@ -53,7 +54,7 @@ class ASTContextStack:
     def create_current_name(self, name, atype, override_name=None):
         if override_name is not None:
             if override_name in self.name_map:
-                raise ffi.InvalidProgram(f"Name {override_name} already exists")
+                self.assert_(False, f"Name {override_name} already exists")
             self.name_map[name] = override_name
             return override_name
 
@@ -71,7 +72,7 @@ class ASTContextStack:
 
         for ctx in reversed(self.ctx_stack):  # type: ASTContext
             if name in ctx.old_vars:
-                assert False, f"Variable {name} reassigned in if/for/while"
+                self.assert_(False, f"Variable {name} reassigned in if/for/while")
             var = ctx.var_dict.get(name)
             if var is not None:
                 return var
@@ -82,7 +83,7 @@ class ASTContextStack:
         self.ctx_stack.append(ASTContext())
 
     def pop_scope(self):
-        assert self.ctx_stack, "Bug: scope stack is empty when pop_scope"
+        self.assert_(self.ctx_stack, "Bug: scope stack is empty when pop_scope")
         popped = self.ctx_stack.pop()  # type: ASTContext
         if self.ctx_stack:
             top = self.top()
@@ -135,6 +136,20 @@ class ASTContextStack:
         self.now_context_id += 1
         return self.now_context_id
 
+    def push_transformer(self, transformer):
+        self.transformers.append(transformer)
+
+    def pop_transformer(self):
+        self.transformers.pop()
+
+    def assert_(self, value, message="Assertion Failed"):
+        if not value:
+            msg = "\n"
+            for transformer in self.transformers:
+                msg += transformer.frame_info()
+            msg += message
+            raise ffi.InvalidProgram(msg)
+
 
 class VarCreation:
 
@@ -155,11 +170,11 @@ class VarCreation:
         self.override_name = override_name
 
     def add_name(self, name):
-        assert self.name is None, "Bug: Variable name is set more than once"
+        self.ctx_stack.assert_(self.name is None, "Bug: Variable name is set more than once")
         self.name = name
 
     def execute(self):
-        assert self.name is not None, "Bug: Variable name is not set"
+        self.ctx_stack.assert_(self.name is not None, "Bug: Variable name is not set")
         return self.ctx_stack.create_variable(self.name,
                                               self.shape,
                                               self.dtype,
@@ -170,29 +185,34 @@ class VarCreation:
 
 class InlineFunction:
 
-    def __init__(self, name, body, params, globals):
+    def __init__(self, name, body, params, globals, file, src, lineno):
         self.name = name
         self.body = body
         self.params = params
         self.globals = globals
         self.arg_var = None
+        self.src = src
+        self.lineno = lineno
+        self.file = file
 
     def set_arg_var(self, arg_var):
         self.arg_var = arg_var
 
     def expand(self, ctx_stack, nid):
-        assert self.arg_var is not None
-        transformer = ASTTransformer(ctx_stack, self.params, self.globals)
+        ctx_stack.assert_(self.arg_var is not None)
+        transformer = ASTTransformer(ctx_stack, self.params, self.globals, self.file, self.src, self.lineno)
         transformer.set_replace(self.arg_var, nid)
+        ctx_stack.push_transformer(transformer)
         for stmt in self.body:
             transformer.visit(stmt)
+        ctx_stack.pop_transformer()
         return transformer.returns
 
 
 class ASTTransformer(ast.NodeTransformer):
 
     def __init__(self, ctx_stack: ASTContextStack, params: Sequence[str],
-                 globals: Mapping[str, Any]):
+                 globals: Mapping[str, Any], file, src, lineno):
         super().__init__()
         self.ctx_stack = ctx_stack
         self.params = params
@@ -205,6 +225,29 @@ class ASTTransformer(ast.NodeTransformer):
         self.returns = []
         self.prefix = ""
         self.nid = ""
+        self.now_pos = 0
+        self.file = file
+        self.src = []
+        for line in src:
+            if len(line) and line[-1] != '\n':
+                line += '\n'
+            self.src.append(line)
+        self.start_from = lineno
+
+    def visit(self, node):
+        """Visit a node."""
+        prev_pos = self.now_pos
+        if hasattr(node, "lineno"):
+            self.now_pos = node.lineno
+        method = 'visit_' + node.__class__.__name__
+        visitor = getattr(self, method, self.generic_visit)
+        ret = visitor(node)
+        self.now_pos = prev_pos
+        return ret
+
+    def frame_info(self):
+        lineno = self.now_pos - 1
+        return f"On line {lineno + self.start_from} in file {self.file}: \n{self.src[lineno]}"
 
     def set_replace(self, arg_var, prefix):
         self.arg_var = arg_var
@@ -239,7 +282,7 @@ class ASTTransformer(ast.NodeTransformer):
             if node.id in self.globals:
                 var = self.globals[node.id]  # self.globals[node.id] can be None
             else:
-                assert self.allow_undefined, f"Variable {node.id} (a.k.a {name}) used without declaration or creation"
+                self.ctx_stack.assert_(self.allow_undefined, f"Variable {node.id} (a.k.a {name}) used without declaration or creation")
         node.expr_ptr = var
         return node
 
@@ -289,15 +332,15 @@ class ASTTransformer(ast.NodeTransformer):
         self.generic_visit(node)
         var = node.value.expr_ptr
         sub = node.slice.expr_ptr
-        assert var is not None
+        self.ctx_stack.assert_(var is not None)
         node.expr_ptr = var[sub]
         return node
 
     def visit_BinOp(self, node):
         self.generic_visit(node)
-        assert hasattr(node.left, "expr_ptr"), "left operand is not expression"
-        assert hasattr(node.right,
-                       "expr_ptr"), "right operand is not expression"
+        self.ctx_stack.assert_(hasattr(node.left, "expr_ptr"), "left operand is not expression")
+        self.ctx_stack.assert_(hasattr(node.right,
+                       "expr_ptr"), "right operand is not expression")
         op = {
             ast.Add: lambda l, r: l + r,
             ast.Sub: lambda l, r: l - r,
@@ -306,21 +349,21 @@ class ASTTransformer(ast.NodeTransformer):
             ast.FloorDiv: lambda l, r: l // r,
             ast.Mod: lambda l, r: l % r,
         }.get(type(node.op))
-        assert op is not None, "Binary operator not implemented"
+        self.ctx_stack.assert_(op is not None, "Binary operator not implemented")
         node.expr_ptr = op(node.left.expr_ptr, node.right.expr_ptr)
         return node
 
     def visit_BoolOp(self, node):
         self.generic_visit(node)
         for i in node.values:
-            assert hasattr(i, "expr_ptr"), "Bool operand is not expression"
-        assert len(
-            node.values) > 1, "Bug: Bool operator has less than one operand"
+            self.ctx_stack.assert_(hasattr(i, "expr_ptr"), "Bool operand is not expression")
+        self.ctx_stack.assert_(len(
+            node.values) > 1, "Bug: Bool operator has less than one operand")
         op = {
             ast.And: lambda l, r: l_and(l, r),
             ast.Or: lambda l, r: l_or(l, r),
         }.get(type(node.op))
-        assert op is not None, "Bool operator not implemented"
+        self.ctx_stack.assert_(op is not None, "Bool operator not implemented")
         expr = op(node.values[0].expr_ptr, node.values[1].expr_ptr)
         for i in node.values[2:]:
             expr = op(expr, i.expr_ptr)
@@ -329,13 +372,13 @@ class ASTTransformer(ast.NodeTransformer):
 
     def visit_UnaryOp(self, node):
         self.generic_visit(node)
-        assert hasattr(node.operand,
-                       "expr_ptr"), "Unary operand is not expression"
+        self.ctx_stack.assert_(hasattr(node.operand,
+                       "expr_ptr"), "Unary operand is not expression")
         op = {
             ast.Not: lambda l: l_not(l),
             ast.USub: lambda l: 0 - l,
         }.get(type(node.op))
-        assert op is not None, "Unary operator not implemented"
+        self.ctx_stack.assert_(op is not None, "Unary operator not implemented")
         node.expr_ptr = op(node.operand.expr_ptr)
         return node
 
@@ -368,9 +411,9 @@ class ASTTransformer(ast.NodeTransformer):
         args = []
         kws = {}
         if callee is declare_var:
-            assert len(
-                node.args) == 5, "declare_var function requries 5 arguments"
-            assert isinstance(node.args[0], ast.Name)
+            self.ctx_stack.assert_(len(
+                node.args) == 5, "declare_var function requries 5 arguments")
+            self.ctx_stack.assert_(isinstance(node.args[0], ast.Name))
             self.allow_undefined = True
             self.visit(node.args[0])
             self.allow_undefined = False
@@ -407,7 +450,7 @@ class ASTTransformer(ast.NodeTransformer):
                 name = self.get_name(name)
                 var = self.ctx_stack.find_var_by_name(name)
             else:
-                assert name in self.params, f"Parameter {name} not found"
+                self.ctx_stack.assert_(name in self.params, f"Parameter {name} not found")
                 VarCreation(self.ctx_stack,
                             shape,
                             dtype,
@@ -441,12 +484,12 @@ class ASTTransformer(ast.NodeTransformer):
                 ret_type = parseDType(kws["ret_type"])
             node.expr_ptr = ffi.makeIntrinsic(fmt_str, expr_args, ret_type)
         elif isinstance(callee, ffi.Func):
-            raise ffi.InvalidProgram("Please use @ir.inline for subroutines")
+            self.ctx_stack.assert_(False, "Please use @ir.inline for subroutines")
         elif isinstance(callee, InlineFunction):
             callee = copy.copy(
                 callee)  # Different call sites should be different
             if len(args) != len(callee.params):
-                raise ffi.InvalidProgram(
+                self.ctx_stack.assert_(False,
                     f"Number of arguments does not match when calling {callee.name}, {len(callee.params)} needed, but {len(args)} provided"
                 )
 
@@ -463,7 +506,7 @@ class ASTTransformer(ast.NodeTransformer):
                 elif isinstance(arg, InlineFunction):
                     # only support single return value now
                     returns = arg.expand(self.ctx_stack, name)
-                    assert len(returns) == 1, "only support single return value"
+                    self.ctx_stack.assert_(len(returns) == 1, "only support single return value")
                     arg_var[param] = self.ctx_stack.find_var_by_name(returns[0])
                 elif isinstance(arg, Tensor):
                     var = VarCreation(self.ctx_stack, arg.shape(), arg.dtype(),
@@ -472,7 +515,7 @@ class ASTTransformer(ast.NodeTransformer):
                     for i in range(arg.size()):
                         var[arg.indices(i)] = arg.at(i)
                 else:
-                    assert False, f"Invalid function argument calling {callee.name}"
+                    self.ctx_stack.assert_(False, f"Invalid function argument calling {callee.name}")
             callee.set_arg_var(arg_var)
             node.expr_ptr = callee
         else:
@@ -483,7 +526,7 @@ class ASTTransformer(ast.NodeTransformer):
         self.generic_visit(node)
         tup = []
         for i in node.elts:
-            assert hasattr(i, "expr_ptr"), "Invalid tuple"
+            self.ctx_stack.assert_(hasattr(i, "expr_ptr"), "Invalid tuple")
             tup.append(i.expr_ptr)
         tup = tuple(tup)
         node.expr_ptr = tup
@@ -493,7 +536,7 @@ class ASTTransformer(ast.NodeTransformer):
         self.generic_visit(node)
         lst = []
         for i in node.elts:
-            assert hasattr(i, "expr_ptr"), "Invalid list"
+            self.ctx_stack.assert_(hasattr(i, "expr_ptr"), "Invalid list")
             lst.append(i.expr_ptr)
         node.expr_ptr = lst
         return node
@@ -507,24 +550,24 @@ class ASTTransformer(ast.NodeTransformer):
         self.visit(node.value)
 
         # TODO: (maybe) support for multiple assignment
-        assert len(node.targets) == 1, "Multiple assignment is not supported"
+        self.ctx_stack.assert_(len(node.targets) == 1, "Multiple assignment is not supported")
         for target in node.targets:
-            assert hasattr(
+            self.ctx_stack.assert_(hasattr(
                 target,
-                "expr_ptr"), "Target to be assigned is not an expression"
-        assert hasattr(node.value,
-                       "expr_ptr"), "Value to be assigned is not an expression"
+                "expr_ptr"), "Target to be assigned is not an expression")
+        self.ctx_stack.assert_(hasattr(node.value,
+                       "expr_ptr"), "Value to be assigned is not an expression")
         if isinstance(node.value.expr_ptr, InlineFunction):
             targets = []
             if isinstance(node.targets[0], ast.Tuple):
                 for target in node.targets[0].elts:
-                    assert isinstance(target, ast.Name), "Target must be a name"
+                    self.ctx_stack.assert_(isinstance(target, ast.Name), "Target must be a name")
                     # FIXME
                     # assert target.expr_ptr is None, f"Variable {target.id} already exists"
                     targets.append(target.id)
             else:
-                assert isinstance(node.targets[0],
-                                  ast.Name), "Target must be a name"
+                self.ctx_stack.assert_(isinstance(node.targets[0],
+                                  ast.Name), "Target must be a name")
                 # FIXME
                 # assert node.targets[
                 #     0].expr_ptr is None, f"Variable {node.targets[0].id} already exists"
@@ -547,7 +590,7 @@ class ASTTransformer(ast.NodeTransformer):
             sub = node.targets[0].slice.expr_ptr
             var[sub] = node.value.expr_ptr
         else:
-            assert False, "Invalid assignment"
+            self.ctx_stack.assert_(False, "Invalid assignment")
         return node
 
     def visit_AugAssign(self, node):
@@ -558,10 +601,10 @@ class ASTTransformer(ast.NodeTransformer):
         target_load = self.visit(target_load)
 
         self.generic_visit(node)
-        assert hasattr(node.target,
-                       "expr_ptr"), "Target to be assigned is not an expression"
-        assert hasattr(node.value,
-                       "expr_ptr"), "Value to be assigned is not an expression"
+        self.ctx_stack.assert_(hasattr(node.target,
+                       "expr_ptr"), "Target to be assigned is not an expression")
+        self.ctx_stack.assert_(hasattr(node.value,
+                       "expr_ptr"), "Value to be assigned is not an expression")
         if isinstance(node.target, ast.Subscript):
             op = {
                 ast.Add: lambda l, r: l + r,
@@ -575,7 +618,7 @@ class ASTTransformer(ast.NodeTransformer):
             sub = node.target.slice.expr_ptr
             var[sub] = op(node.target.expr_ptr, node.value.expr_ptr)
         else:
-            assert False, "Invalid augmented assignment"
+            self.ctx_stack.assert_(False, "Invalid augmented assignment")
         return node
 
     def visit_For(self, node):
@@ -591,17 +634,17 @@ class ASTTransformer(ast.NodeTransformer):
                 name = self.prefix + ':' + name
             if len(node.iter.args) == 1:
                 self.visit(node.iter.args[0])
-                assert hasattr(node.iter.args[0],
-                               "expr_ptr"), "For range is not expression"
+                self.ctx_stack.assert_(hasattr(node.iter.args[0],
+                               "expr_ptr"), "For range is not expression")
                 begin = 0
                 end = node.iter.args[0].expr_ptr
             else:
                 self.visit(node.iter.args[0])
                 self.visit(node.iter.args[1])
-                assert hasattr(node.iter.args[0],
-                               "expr_ptr"), "For range is not expression"
-                assert hasattr(node.iter.args[1],
-                               "expr_ptr"), "For range is not expression"
+                self.ctx_stack.assert_(hasattr(node.iter.args[0],
+                               "expr_ptr"), "For range is not expression")
+                self.ctx_stack.assert_(hasattr(node.iter.args[1],
+                               "expr_ptr"), "For range is not expression")
                 begin = node.iter.args[0].expr_ptr
                 end = node.iter.args[1].expr_ptr
             fr = self.ctx_stack.create_loop(name, begin, end)
@@ -610,7 +653,7 @@ class ASTTransformer(ast.NodeTransformer):
             self.ctx_stack.pop_scope()
             fr.__exit__(None, None, None)
         else:
-            assert False, "For statement other than range(a, b) is not implemented"
+            self.ctx_stack.assert_(False, "For statement other than range(a, b) is not implemented")
         return node
 
     def visit_Expr(self, node):
@@ -635,8 +678,8 @@ class ASTTransformer(ast.NodeTransformer):
 
     def visit_If(self, node):
         self.visit(node.test)
-        assert hasattr(node.test,
-                       "expr_ptr"), "If condition is not an expression"
+        self.ctx_stack.assert_(hasattr(node.test,
+                       "expr_ptr"), "If condition is not an expression")
 
         # static conditions allow illegal accesses in some branches
         if node.test.expr_ptr is True:
@@ -663,8 +706,8 @@ class ASTTransformer(ast.NodeTransformer):
     def visit_Compare(self, node):
         self.generic_visit(node)
         for i in node.comparators:
-            assert hasattr(i, "expr_ptr"), "Comparator is not an expression"
-        assert hasattr(node.left, "expr_ptr"), "Comparator is not an expression"
+            self.ctx_stack.assert_(hasattr(i, "expr_ptr"), "Comparator is not an expression")
+        self.ctx_stack.assert_(hasattr(node.left, "expr_ptr"), "Comparator is not an expression")
         ops = {
             ast.Eq: lambda x, y: x == y,
             ast.NotEq: lambda x, y: x != y,
@@ -674,7 +717,7 @@ class ASTTransformer(ast.NodeTransformer):
             ast.GtE: lambda x, y: x >= y,
         }
         for i in node.ops:
-            assert type(i) in ops, "Compare operator not supported"
+            self.ctx_stack.assert_(type(i) in ops, "Compare operator not supported")
         expr = ops[type(node.ops[0])](node.left.expr_ptr,
                                       node.comparators[0].expr_ptr)
         lf = node.comparators[0].expr_ptr
@@ -687,7 +730,7 @@ class ASTTransformer(ast.NodeTransformer):
     def visit_Return(self, node):
         self.generic_visit(node)
         if self.returned:
-            assert False, "The function must have no more than one return statement"
+            self.ctx_stack.assert_(False, "The function must have no more than one return statement")
         self.returned = True
         if isinstance(node.value, ast.Name):
             name = node.value.id
@@ -744,19 +787,30 @@ def transform(func):
     ctx_stack = ASTContextStack()
     src = _remove_indent(ins.getsource(func))
     tree = ast.parse(src)
+    src, lineno = ins.getsourcelines(func)
+    file = ins.getfile(func)
     params = list(inspect.signature(func).parameters)
     globals = _get_global_vars(func)
-    transformer = ASTTransformer(ctx_stack, params, globals)
+    transformer = ASTTransformer(ctx_stack, params, globals, file, src, lineno)
+    ctx_stack.push_transformer(transformer)
     transformer.visit(tree)
+    ctx_stack.pop_transformer()
     return Func(func.__name__, params, pop_ast(), func)
 
 
 def inline(func, src=None):
     if src is None:
         src = _remove_indent(ins.getsource(func))
-    tree = ast.parse(src)
+        tree = ast.parse(src)
+        src, lineno = ins.getsourcelines(func)
+        file = ins.getfile(func)
+    else:
+        tree = ast.parse(src)
+        src = src.splitlines()
+        lineno = 1
+        file = func.__name__
     params = list(inspect.signature(func).parameters)
     globals = _get_global_vars(func)
     funcdef = tree.body[0]
     assert isinstance(funcdef, ast.FunctionDef)
-    return InlineFunction(func.__name__, funcdef.body, params, globals)
+    return InlineFunction(func.__name__, funcdef.body, params, globals, file, src, lineno)
