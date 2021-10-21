@@ -192,7 +192,7 @@ void Schedule::varReorder(const std::string &def,
                           const std::vector<int> &order) {
     std::string log = "var_reorder(" + def + ", ";
     for (size_t i = 0, iEnd = order.size(); i < iEnd; i++) {
-        log += order[i] + (i < iEnd - 1 ? ", " : "");
+        log += std::to_string(order[i]) + (i < iEnd - 1 ? ", " : "");
     }
     log += ")";
     try {
@@ -433,7 +433,6 @@ void Schedule::autoParallelize(const Target &target) {
                             if (c.nodeType() == ASTNodeType::For) {
                                 try {
                                     reorder({l1, c.id()});
-                                    l1 = c.id();
                                 } catch (InvalidSchedule &e) {
                                     break;
                                 }
@@ -457,9 +456,23 @@ void Schedule::autoParallelize(const Target &target) {
 
         try {
             Ref<LoopNest> loop = root;
+
+            bool parentIsWarp = false;
+            while (!loop->loop_->property_.parallel_.empty() &&
+                   loop->subLoops_.size() == 1) {
+                loop = loop->subLoops_.front();
+                parentIsWarp = true;
+            }
+
             std::string loopId, outerId;
             while (true) {
                 loopId = loop->loop_->id();
+                if (!find(loopId)
+                         .node()
+                         .as<ForNode>()
+                         ->property_.parallel_.empty()) {
+                    break;
+                }
                 if (!outerId.empty()) {
                     loopId = merge(outerId, loopId);
                 }
@@ -479,16 +492,16 @@ void Schedule::autoParallelize(const Target &target) {
                                     .as<ForNode>()
                                     ->property_.parallel_.empty();
                     };
-                    bool childrenAllSerial =
-                        getCursorByFilter(loop.node(), isParallelLoop).empty();
+                    bool childIsWarp =
+                        !getCursorByFilter(loop.node(), isParallelLoop).empty();
                     // 1. make sure all SMs are used
                     // 2. make sure blockDim is not too large
                     std::string l1, l1b, l2;
                     // TODO: do not hard-code these numbers
                     std::tie(l1, l2) = split(loopId, -1, 80);
                     if (!findAll(l2).empty()) {
-                        std::tie(l1b, l2) =
-                            split(l2, childrenAllSerial ? 256 : 8);
+                        std::tie(l1b, l2) = split(
+                            l2, (!parentIsWarp && !childIsWarp) ? 256 : 8);
                         if (!findAll(l1b).empty()) {
                             l1 = merge(l1, l1b);
                         }
@@ -497,8 +510,9 @@ void Schedule::autoParallelize(const Target &target) {
                         parallelize(l1, "blockIdx.x");
                     }
                     if (!findAll(l2).empty()) {
-                        parallelize(l2, childrenAllSerial ? "threadIdx.x"
-                                                          : "threadIdx.y");
+                        parallelize(l2, (!parentIsWarp && !childIsWarp)
+                                            ? "threadIdx.x"
+                                            : "threadIdx.y");
                     }
                     break;
                 }
@@ -564,6 +578,24 @@ void Schedule::autoUnroll(const Target &target) {
             }
         }
     }
+
+    // Unroll very short loops
+    std::function<void(const Ref<LoopNest> &nest)> visitNest =
+        [&, this](const Ref<LoopNest> &nest) {
+            auto &&loop = nest->loop_;
+            if (loop.isValid()) { // not root
+                if (loop->property_.parallel_.empty() &&
+                    !loop->property_.vectorize_ && !loop->property_.unroll_ &&
+                    loop->len_->nodeType() == ASTNodeType::IntConst &&
+                    loop->len_.as<IntConstNode>()->val_ <= 4) {
+                    unroll(loop->id());
+                }
+            }
+            for (auto &&subNest : nest->subLoops_) {
+                visitNest(subNest);
+            }
+        };
+    visitNest(getLoopNestTree(ast_));
 }
 
 } // namespace ir

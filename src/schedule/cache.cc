@@ -2,6 +2,7 @@
 #include <cmath>
 
 #include <pass/make_reduction.h>
+#include <pass/remove_writes.h>
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
 #include <schedule/cache.h>
@@ -306,6 +307,7 @@ cache(const Stmt &_ast, const std::string &stmt, const std::string &var,
     flushStmt = makeFillAndFlush.flushStmt();
 
     ast = shrinkSingleVar(ast, newDef);
+    ast = removeWrites(ast, newDef);
     checkVarCrossParallel(ast, newDef, mtype);
     return std::make_pair(
         ast, std::make_tuple(std::move(fillStmt), std::move(flushStmt),
@@ -338,6 +340,7 @@ cacheReduction(const Stmt &_ast, const std::string &stmt,
     reduceStmt = makeInitAndReduce.reduceStmt();
 
     ast = shrinkSingleVar(ast, newDef);
+    ast = removeWrites(ast, newDef);
     checkVarCrossParallel(ast, newDef, mtype);
     return std::make_pair(
         ast, std::make_tuple(std::move(initStmt), std::move(reduceStmt),

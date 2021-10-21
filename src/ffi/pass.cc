@@ -147,10 +147,14 @@ void init_ffi_pass(py::module_ &m) {
     m.def("prop_one_time_use",
           static_cast<Stmt (*)(const Stmt &)>(&propOneTimeUse), "stmt"_a);
 
-    m.def("remove_writes", static_cast<Func (*)(const Func &)>(&removeWrites),
-          "func"_a);
-    m.def("remove_writes", static_cast<Stmt (*)(const Stmt &)>(&removeWrites),
-          "stmt"_a);
+    m.def(
+        "remove_writes",
+        static_cast<Func (*)(const Func &, const std::string &)>(&removeWrites),
+        "func"_a, "single_def_id"_a = "");
+    m.def(
+        "remove_writes",
+        static_cast<Stmt (*)(const Stmt &, const std::string &)>(&removeWrites),
+        "stmt"_a, "single_def_id"_a = "");
 
     m.def("remove_dead_var",
           static_cast<Func (*)(const Func &)>(&removeDeadVar), "func"_a);

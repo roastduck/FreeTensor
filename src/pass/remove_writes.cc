@@ -58,6 +58,9 @@ void FindLoopInvariantWrites::visit(const VarDef &op) {
 
 void FindLoopInvariantWrites::visit(const Store &op) {
     Visitor::visit(op);
+    if (!singleDefId_.empty() && defs_.at(op->var_)->id() != singleDefId_) {
+        return;
+    }
     Expr cond;
     for (int i = (int)(loopStack_.size()) - 1, iEnd = defDepth_.at(op->var_);
          i >= iEnd; i--) {
@@ -88,7 +91,54 @@ void FindLoopInvariantWrites::visit(const Store &op) {
     }
 }
 
-Stmt removeWrites(const Stmt &_op) {
+Stmt RemoveWrites::visit(const StmtSeq &_op) {
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::StmtSeq);
+    auto op = __op.as<StmtSeqNode>();
+    std::vector<SubTree<StmtNode>> stmts;
+    for (auto &&stmt : op->stmts_) {
+        if (stmt->nodeType() != ASTNodeType::StmtSeq ||
+            !stmt.as<StmtSeqNode>()->stmts_.empty()) {
+            stmts.emplace_back(stmt);
+        }
+    }
+    op->stmts_ = std::move(stmts);
+    return op;
+}
+
+Stmt RemoveWrites::visit(const For &_op) {
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::For);
+    auto op = __op.as<ForNode>();
+    if (op->body_->nodeType() == ASTNodeType::StmtSeq &&
+        op->body_.as<StmtSeqNode>()->stmts_.empty()) {
+        return makeStmtSeq("", {});
+    }
+    return op;
+}
+
+Stmt RemoveWrites::visit(const If &_op) {
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::If);
+    auto op = __op.as<IfNode>();
+    auto thenValid = op->thenCase_->nodeType() != ASTNodeType::StmtSeq ||
+                     !op->thenCase_.as<StmtSeqNode>()->stmts_.empty();
+    auto elseValid = op->elseCase_.isValid() &&
+                     (op->elseCase_->nodeType() != ASTNodeType::StmtSeq ||
+                      !op->elseCase_.as<StmtSeqNode>()->stmts_.empty());
+    if (!thenValid && !elseValid) {
+        return makeStmtSeq("", {});
+    }
+    if (!elseValid) {
+        return makeIf(op->id(), op->cond_, op->thenCase_);
+    }
+    if (!thenValid) {
+        return makeIf(op->id(), makeLNot(op->cond_), op->elseCase_);
+    }
+    return op;
+}
+
+Stmt removeWrites(const Stmt &_op, const std::string &singleDefId) {
     auto op = makeReduction(_op);
 
     // A new Store/ReduceTo node may contain Load nodes out of their VarDef
@@ -100,7 +150,7 @@ Stmt removeWrites(const Stmt &_op) {
     op = hoistVarOverStmtSeq(op);
 
     auto variantExpr = findLoopVariance(op);
-    FindLoopInvariantWrites type2Finder(variantExpr.first);
+    FindLoopInvariantWrites type2Finder(variantExpr.first, singleDefId);
     type2Finder(op);
 
     std::unordered_set<VarDef> suspect;
@@ -114,6 +164,9 @@ Stmt removeWrites(const Stmt &_op) {
     std::set<std::pair<Stmt, AST>> usesWAR;
     auto filterOverwrite = [&](const AccessPoint &later,
                                const AccessPoint &earlier) {
+        if (!singleDefId.empty() && later.def_->id() != singleDefId) {
+            return false;
+        }
         if (later.op_.get() == earlier.op_.get()) {
             return false;
         }
