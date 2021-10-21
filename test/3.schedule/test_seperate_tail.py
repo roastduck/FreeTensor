@@ -143,7 +143,7 @@ def test_dynamic_tiled():
                     with ir.For("j", 0, 4) as j:
                         y[4 * i + j] = 4 * i + j
                 with ir.For("j", 0, ir.any()) as j:
-                    y[ir.any() + j] = ir.any() + j
+                    y[ir.any()] = ir.any()
     std = ir.pop_ast()
 
     assert std.match(ast)

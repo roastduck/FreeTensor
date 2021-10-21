@@ -477,6 +477,21 @@ Expr CompUniqueBounds::visit(const Mul &_op) {
                 for (auto &&b : getUpper(e1)) {
                     updUpper(upper, mul(b, *k));
                 }
+                if (e1->nodeType() == ASTNodeType::FloorDiv) {
+                    auto div = e1.as<FloorDivNode>();
+                    if (auto k1 = getInt(div->rhs_);
+                        k1.isValid() && *k1 % *k == 0) {
+                        auto equ = (*this)(
+                            makeSub(div->lhs_, makeMod(div->lhs_, div->rhs_)));
+                        for (auto &&b : getLower(equ)) {
+                            updLower(lower, mul(b, *k1 / *k));
+                        }
+                        for (auto &&b : getUpper(equ)) {
+                            updUpper(upper, mul(b, *k1 / *k));
+                        }
+                    }
+                }
+                // FIXME: Mod for negative
             } else {
                 for (auto &&b : getLower(e1)) {
                     updUpper(upper, mul(UpperBound{b.lin()}, *k));

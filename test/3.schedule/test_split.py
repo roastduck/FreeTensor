@@ -80,3 +80,21 @@ def test_not_found():
         s.split("L1", 4)
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
+
+
+def test_simplify_split_then_merge():
+    with ir.VarDef("y", (10,), "int32", "output", "cpu") as y:
+        with ir.For("i", 0, 10, nid="L") as i:
+            y[i] = i
+
+    ast = ir.pop_ast()
+    std = ast
+    s = ir.Schedule(ast)
+    L0, L1 = s.split("L", 4)
+    L = s.merge(L0, L1)
+    ast = s.ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    assert std.match(ast)

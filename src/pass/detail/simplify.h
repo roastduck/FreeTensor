@@ -20,6 +20,34 @@ inline bool isEmptyStmt(const Stmt &op) {
     return false;
 }
 
+class CountHeavyOps : public Visitor {
+    int cnt_ = 0;
+
+  public:
+    int cnt() const { return cnt_; }
+
+  private:
+    template <class T> void visitHeavy(const T &op) {
+        Visitor::visit(op);
+        cnt_++;
+    }
+
+  protected:
+    void visit(const RealDiv &op) override { visitHeavy(op); }
+    void visit(const FloorDiv &op) override { visitHeavy(op); }
+    void visit(const CeilDiv &op) override { visitHeavy(op); }
+    void visit(const RoundTowards0Div &op) override { visitHeavy(op); }
+    void visit(const Mod &op) override { visitHeavy(op); }
+    void visit(const Sqrt &op) override { visitHeavy(op); }
+    void visit(const Exp &op) override { visitHeavy(op); }
+};
+
+inline int countHeavyOps(const Expr &op) {
+    CountHeavyOps visitor;
+    visitor(op);
+    return visitor.cnt();
+}
+
 } // namespace detail
 
 template <class BaseClass>
@@ -36,7 +64,7 @@ Expr SimplifyPass<BaseClass>::visitExpr(
     }
 
     Expr best = nullptr;
-    auto bestScope = -1;
+    auto bestScope = -1, bestHeavyOps = -1;
     for (auto &&lower : this->getLower(op)) {
         for (auto &&upper : this->getUpper(op)) {
             if (ir::alwaysLE(upper, lower)) { // upper <= lower ==> equal
@@ -50,8 +78,10 @@ Expr SimplifyPass<BaseClass>::visitExpr(
                     expr = upper.expr();
                 }
                 auto scope = findInnerMostScope(varScope_, expr);
-                if (!best.isValid() || scope < bestScope) {
-                    best = expr, bestScope = scope;
+                auto heavyOps = detail::countHeavyOps(expr);
+                if (!best.isValid() || scope < bestScope ||
+                    (scope == bestScope && heavyOps < bestHeavyOps)) {
+                    best = expr, bestScope = scope, bestHeavyOps = heavyOps;
                 }
                 break;
             }
