@@ -506,6 +506,8 @@ void init_ffi_ast(py::module_ &m) {
           static_cast<Expr (*)(const std::string &, const std::vector<Expr> &,
                                DataType)>(&_makeIntrinsic),
           "fmt"_a, "params"_a, "retType"_a = DataType::Void);
+
+    m.def("neutral_val", &neutralVal);
 }
 
 } // namespace ir

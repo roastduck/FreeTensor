@@ -1,5 +1,5 @@
 import ffi
-from ffi import up_cast
+from ffi import up_cast, neutral_val
 from .utils import *
 
 

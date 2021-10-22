@@ -309,6 +309,8 @@ inline Stmt _makeMatMul(const std::string &id, const Expr &a, const Expr &b,
     return s;
 }
 
+Expr neutralVal(DataType dtype, ReduceOp op);
+
 } // namespace ir
 
 #endif // STMT_H

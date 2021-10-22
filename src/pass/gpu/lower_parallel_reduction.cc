@@ -4,37 +4,6 @@ namespace ir {
 
 namespace gpu {
 
-static Expr makeNeutralVal(DataType dtype, ReduceOp op) {
-    switch (dtype) {
-    case DataType::Float32:
-        switch (op) {
-        case ReduceOp::Add:
-            return makeFloatConst(0.);
-        case ReduceOp::Max:
-            return makeFloatConst(-INFINITY);
-        case ReduceOp::Min:
-            return makeFloatConst(INFINITY);
-        default:
-            ASSERT(false);
-        }
-
-    case DataType::Int32:
-        switch (op) {
-        case ReduceOp::Add:
-            return makeIntConst(0);
-        case ReduceOp::Max:
-            return makeIntConst(INT_MIN);
-        case ReduceOp::Min:
-            return makeIntConst(INT_MAX);
-        default:
-            ASSERT(false);
-        }
-
-    default:
-        ASSERT(false);
-    }
-}
-
 uint64_t LowerParallelReduction::getHash(const Expr &op) {
     getHash_(op);
     return getHash_.hash().at(op);
@@ -85,7 +54,7 @@ Stmt LowerParallelReduction::visit(const For &_op) {
         std::vector<Stmt> stmts;
         // workspace[nth] = 0
         stmts.emplace_back(
-            makeStore("", workspace, {nth}, makeNeutralVal(dtype, redOp)));
+            makeStore("", workspace, {nth}, neutralVal(dtype, redOp)));
         // body
         stmts.emplace_back(op->body_);
         // for (int k = 1; k < len; k <<= 1)

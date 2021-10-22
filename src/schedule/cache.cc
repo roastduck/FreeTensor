@@ -10,37 +10,6 @@
 
 namespace ir {
 
-static Expr makeNeutralVal(DataType dtype, ReduceOp op) {
-    switch (dtype) {
-    case DataType::Float32:
-        switch (op) {
-        case ReduceOp::Add:
-            return makeFloatConst(0.);
-        case ReduceOp::Max:
-            return makeFloatConst(-INFINITY);
-        case ReduceOp::Min:
-            return makeFloatConst(INFINITY);
-        default:
-            ASSERT(false);
-        }
-
-    case DataType::Int32:
-        switch (op) {
-        case ReduceOp::Add:
-            return makeIntConst(0);
-        case ReduceOp::Max:
-            return makeIntConst(INT_MIN);
-        case ReduceOp::Min:
-            return makeIntConst(INT_MAX);
-        default:
-            ASSERT(false);
-        }
-
-    default:
-        ASSERT(false);
-    }
-}
-
 Stmt MakeCacheVar::visitStmt(
     const Stmt &op, const std::function<Stmt(const Stmt &)> &visitNode) {
     if (op->id() == stmt_) {
@@ -205,7 +174,7 @@ Stmt MakeInitAndReduce::visitStmt(
 
         Stmt init = makeStore(
             "", newVar_, indices,
-            makeNeutralVal(def_->buffer_->tensor().dtype(), reduce_->op_));
+            neutralVal(def_->buffer_->tensor().dtype(), reduce_->op_));
         initStmt_ = init->id();
         if (idx1d.isValid()) {
             init = makeIf("", makeLT(idx1d, def_->sizeLim_), init);
