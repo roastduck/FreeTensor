@@ -49,6 +49,7 @@ void FindLoopInvariantWrites::visit(const If &op) {
 }
 
 void FindLoopInvariantWrites::visit(const VarDef &op) {
+    ASSERT(!defs_.count(op->name_));
     defDepth_[op->name_] = loopStack_.size();
     defs_[op->name_] = op;
     Visitor::visit(op);

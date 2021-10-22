@@ -63,7 +63,7 @@ Stmt shrinkVar(const Stmt &_op) {
 
     // (2)
     std::unordered_map<std::string, AccessBound> bounds;
-    for (auto &&varDefId : allDefs(op, {AccessType::Cache})) {
+    for (auto &&[varDefId, name] : allDefs(op, {AccessType::Cache})) {
         bounds[varDefId] = compAccessBound(op, varDefId, lower, upper);
     }
 

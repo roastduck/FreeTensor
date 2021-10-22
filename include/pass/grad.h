@@ -192,13 +192,15 @@ std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>>
 grad(const Stmt &op, const std::unordered_set<std::string> &requires,
-     const std::unordered_set<std::string> &provides, GradTapeMode tapeMode);
+     const std::unordered_set<std::string> &provides,
+     GradTapeMode tapeMode = GradTapeMode::NoReuseOnly);
 
 std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>>
 grad(const Func &func, const std::unordered_set<std::string> &requires,
-     const std::unordered_set<std::string> &provides, GradTapeMode tapeMode);
+     const std::unordered_set<std::string> &provides,
+     GradTapeMode tapeMode = GradTapeMode::NoReuseOnly);
 
 } // namespace ir
 

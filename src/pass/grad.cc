@@ -2,6 +2,11 @@
 #include <analyze/all_no_reuse_defs.h>
 #include <pass/grad.h>
 #include <pass/output_intermediates.h>
+#include <pass/prop_const.h>
+#include <pass/prop_one_time_use.h>
+#include <pass/remove_dead_var.h>
+#include <pass/remove_writes.h>
+#include <pass/simplify.h>
 
 namespace ir {
 
@@ -355,9 +360,17 @@ grad(const Stmt &op, const std::unordered_set<std::string> &requires,
     Grad visitor(requires, provides, tapes, propagator.affectedDefs(), tapeMap,
                  loadMap);
     visitor(forward);
-    return std::make_tuple(forward, visitor.grad(forward),
-                           visitor.requireGrads(), visitor.provideGrads(),
-                           tapeMap);
+    auto backward = visitor.grad(forward);
+
+    // We do some basic simplifications here, to reduce burden on auto-schedule
+    backward = propOneTimeUse(backward);
+    backward = simplifyPass(backward);
+    backward = propConst(backward);
+    backward = removeWrites(backward);
+    backward = removeDeadVar(backward);
+
+    return std::make_tuple(forward, backward, visitor.requireGrads(),
+                           visitor.provideGrads(), tapeMap);
 }
 
 std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
@@ -392,8 +405,13 @@ grad(const Func &func, const std::unordered_set<std::string> &requires,
 static std::vector<std::string> _findTapeDefs(const Stmt &op,
                                               GradTapeMode mode) {
     switch (mode) {
-    case GradTapeMode::All:
-        return allDefs(op, {AccessType::Cache});
+    case GradTapeMode::All: {
+        std::vector<std::string> ret;
+        for (auto &&[id, name] : allDefs(op, {AccessType::Cache})) {
+            ret.emplace_back(id);
+        }
+        return ret;
+    }
     case GradTapeMode::Nothing:
         return {};
     case GradTapeMode::NoReuseOnly:

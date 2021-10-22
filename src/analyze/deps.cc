@@ -34,6 +34,7 @@ void FindAllNoDeps::visit(const For &op) {
 }
 
 void FindAccessPoint::visit(const VarDef &op) {
+    ASSERT(!defs_.count(op->name_));
     defAxis_[op->name_] = cur_.size();
     defs_[op->name_] = op;
     Visitor::visit(op);

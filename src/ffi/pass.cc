@@ -63,7 +63,8 @@ void init_ffi_pass(py::module_ &m) {
                        std::unordered_map<std::string, std::string>> (*)(
                 const Func &, const std::unordered_set<std::string> &,
                 const std::unordered_set<std::string> &, GradTapeMode)>(&grad),
-        "stmt"_a, "requires"_a, "provides"_a, "tapes"_a);
+        "stmt"_a, "requires"_a, "provides"_a,
+        "tape_mode"_a = GradTapeMode::NoReuseOnly);
     m.def(
         "grad",
         static_cast<
@@ -72,7 +73,8 @@ void init_ffi_pass(py::module_ &m) {
                        std::unordered_map<std::string, std::string>> (*)(
                 const Stmt &, const std::unordered_set<std::string> &,
                 const std::unordered_set<std::string> &, GradTapeMode)>(&grad),
-        "func"_a, "requires"_a, "provides"_a, "tapes"_a);
+        "func"_a, "requires"_a, "provides"_a,
+        "tape_mode"_a = GradTapeMode::NoReuseOnly);
 
     // std::unordered_map<Load, Expr> cannot be exported to Python
     m.def(
