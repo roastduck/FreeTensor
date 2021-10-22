@@ -117,6 +117,48 @@ def test_parallel_reduction():
     assert np.array_equal(y_np, y_std)
 
 
+def test_parallel_reduction_on_2_vars():
+
+    @ir.transform
+    def test(x, y, z):
+        ir.declare_var(x, (4, 64), "int32", "input", "cpu")
+        ir.declare_var(y, (4,), "int32", "inout", "cpu")
+        ir.declare_var(z, (4,), "int32", "inout", "cpu")
+        "nid: L1"
+        for i in range(0, 4):
+            "nid: L2"
+            for j in range(0, 64):
+                y[i] = y[i] + x[i, j]
+                z[i] = z[i] + 2 * x[i, j]
+
+    s = ir.Schedule(test)
+    s.parallelize("L2", "openmp")
+    func = ir.lower(s.func(), target)
+    print(func)
+
+    code = ir.codegen(func, target)
+    print(code)
+    assert "#pragma omp parallel for reduction(+: y[_i], z[_i])" in code
+    assert "#pragma omp atomic" not in code
+    assert "+=" in code
+    x_np = np.random.randint(0, 100, (4, 64)).astype("int32")
+    y_np = np.zeros((4,), dtype="int32")
+    z_np = np.zeros((4,), dtype="int32")
+    x_arr = ir.Array(x_np, device)
+    y_arr = ir.Array(y_np, device)
+    z_arr = ir.Array(y_np, device)
+    driver = ir.Driver(func, code, device)
+    driver.set_params(x=x_arr, y=y_arr, z=z_arr)
+    driver.run()
+    y_np = y_arr.numpy()
+    z_np = z_arr.numpy()
+
+    y_std = np.sum(x_np, axis=1)
+    z_std = np.sum(x_np, axis=1) * 2
+    assert np.array_equal(y_np, y_std)
+    assert np.array_equal(z_np, z_std)
+
+
 def test_atomic_reduction():
 
     @ir.transform

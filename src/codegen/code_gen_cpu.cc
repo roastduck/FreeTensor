@@ -54,9 +54,14 @@ void CodeGenCPU::visit(const For &op) {
     if (op->property_.parallel_ == "openmp") {
         os() << "#pragma omp parallel for";
         if (!op->property_.reductions_.empty()) {
-            if (op->property_.reductions_.size() > 1) {
-                ERROR("Only one reduction variable per parallel loop is "
-                      "supported by OpenMP");
+            for (size_t i = 1, n = op->property_.reductions_.size(); i < n;
+                 i++) {
+                if (op->property_.reductions_[i].first !=
+                    op->property_.reductions_.front().first) {
+                    throw InvalidProgram(
+                        "Reduction operators of each parallel reduction "
+                        "variables should be the same in a single OpenMP loop");
+                }
             }
             os() << " reduction(";
             switch (op->property_.reductions_.front().first) {
@@ -75,7 +80,14 @@ void CodeGenCPU::visit(const For &op) {
             default:
                 ASSERT(false);
             }
-            (*this)(op->property_.reductions_.front().second);
+            bool first = true;
+            for (auto &&[redOp, var] : op->property_.reductions_) {
+                if (!first) {
+                    os() << ", ";
+                }
+                first = false;
+                (*this)(var);
+            }
             os() << ")";
         }
         os() << std::endl;
