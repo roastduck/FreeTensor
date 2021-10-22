@@ -748,7 +748,7 @@ def transform(func):
     globals = _get_global_vars(func)
     transformer = ASTTransformer(ctx_stack, params, globals)
     transformer.visit(tree)
-    return Func(func.__name__, params, pop_ast(), func)
+    return Func(func.__name__, params, pop_ast())
 
 
 def inline(func, src=None):

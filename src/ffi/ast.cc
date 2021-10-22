@@ -71,10 +71,8 @@ void init_ffi_ast(py::module_ &m) {
         .def_readonly("params", &FuncNode::params_)
         .def_property_readonly("buffers",
                                [](const Func &op) { return op->buffers_; })
-        .def_property_readonly("body",
-                               [](const Func &op) -> Stmt { return op->body_; })
         .def_property_readonly(
-            "src", [](const Func &op) -> py::object { return *op->src_; });
+            "body", [](const Func &op) -> Stmt { return op->body_; });
 
     py::class_<FrontendVarIdx>(m, "FrontendVarIdx")
         .def(py::init(&FrontendVarIdx::fromSingle))
@@ -413,9 +411,9 @@ void init_ffi_ast(py::module_ &m) {
     // Function
     m.def("makeFunc",
           static_cast<Func (*)(const std::string &,
-                               const std::vector<std::string> &, const Stmt &,
-                               const py::object &)>(&_makeFunc),
-          "name"_a, "params"_a, "body"_a, "src"_a);
+                               const std::vector<std::string> &, const Stmt &)>(
+              &_makeFunc),
+          "name"_a, "params"_a, "body"_a);
 
     // Statements
     m.def("makeAny", &_makeAny);

@@ -477,8 +477,8 @@ def any():
     return ffi.makeAnyExpr()
 
 
-def Func(name, params, body, src=None):
-    return ffi.makeFunc(name, params, body, src)
+def Func(name, params, body):
+    return ffi.makeFunc(name, params, body)
 
 
 class Tensor(ffi.TensorData):
