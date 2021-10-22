@@ -40,6 +40,9 @@ class MakeParallelReduction : public Mutator {
         paraScopes_; // For Id -> parallel
     std::unordered_map<std::string, std::vector<std::pair<ReduceOp, Expr>>>
         forReductions_;
+    std::unordered_set<std::string> defined_;
+    std::unordered_map<std::string, std::unordered_set<std::string>>
+        scopeDefined_; // For ID -> definitions at that scope
 
   public:
     MakeParallelReduction(
@@ -51,6 +54,7 @@ class MakeParallelReduction : public Mutator {
   protected:
     Stmt visit(const ReduceTo &op) override;
     Stmt visit(const For &op) override;
+    Stmt visit(const VarDef &op) override;
 };
 
 /**

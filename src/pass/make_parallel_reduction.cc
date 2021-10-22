@@ -1,3 +1,4 @@
+#include <analyze/check_all_defined.h>
 #include <analyze/deps.h>
 #include <pass/make_parallel_reduction.h>
 #include <pass/make_reduction.h>
@@ -29,6 +30,9 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
                 if (isVariant(variantMap_, idx, loopId)) {
                     goto use_atomic;
                 }
+                if (!checkAllDefined(scopeDefined_.at(loopId), idx)) {
+                    goto use_atomic;
+                }
             }
         }
         for (auto &&loopId : toAlter_.at(op->id())) {
@@ -44,10 +48,15 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
 }
 
 Stmt MakeParallelReduction::visit(const For &_op) {
+    ASSERT(!defined_.count(_op->iter_));
     ASSERT(!paraScopes_.count(_op->id()));
+    defined_.insert(_op->iter_);
     paraScopes_[_op->id()] = _op->property_.parallel_;
+    scopeDefined_[_op->id()] = defined_;
     auto __op = Mutator::visit(_op);
+    scopeDefined_.erase(_op->id());
     paraScopes_.erase(_op->id());
+    defined_.erase(_op->iter_);
 
     ASSERT(__op->nodeType() == ASTNodeType::For);
     auto op = __op.as<ForNode>();
@@ -57,6 +66,14 @@ Stmt MakeParallelReduction::visit(const For &_op) {
         }
     }
     return op;
+}
+
+Stmt MakeParallelReduction::visit(const VarDef &op) {
+    ASSERT(!defined_.count(op->name_));
+    defined_.insert(op->name_);
+    auto ret = Mutator::visit(op);
+    defined_.erase(op->name_);
+    return ret;
 }
 
 Stmt makeParallelReduction(const Stmt &_op) {
