@@ -1,5 +1,5 @@
 import ffi
-from ffi import MoveToSide, VarSplitMode
+from ffi import FissionSide, MoveToSide, VarSplitMode
 
 from .utils import *
 
@@ -80,7 +80,7 @@ class Schedule(ffi.Schedule):
         """
         return super(Schedule, self).merge(toId(loop1), toId(loop2))
 
-    def fission(self, loop, after, suffix0=".a", suffix1=".b"):
+    def fission(self, loop, side, splitter, suffix0=".a", suffix1=".b"):
         """
         Fission a loop into two loops each containing part of the statements, one
         followed by another
@@ -91,8 +91,11 @@ class Schedule(ffi.Schedule):
         ----------
         loop : str, Stmt or Cursor
             The loop to be fissioned
-        after : str, Stmt or Cursor
-            The last statement of the first loop
+        side : FissionSide
+            If `After`, `splitter` is the last statement of the first loop. If `Before`,
+            `splitter` is the first statement of the second loop
+        splitter : str, Stmt or Cursor
+            Where to fission the loop
         suffix0 : str
             ID suffix of the statements in the first loop, default to ".a", can be
             "" for convenience, but cannot be the same with suffix1
@@ -110,8 +113,8 @@ class Schedule(ffi.Schedule):
         (map, map)
             ({old ID -> new ID in 1st loop}, {old ID -> new ID in 2nd loop})
         """
-        return super(Schedule, self).fission(toId(loop), toId(after), suffix0,
-                                             suffix1)
+        return super(Schedule, self).fission(toId(loop), side, toId(splitter),
+                                             suffix0, suffix1)
 
     def fuse(self, loop0, loop1):
         """

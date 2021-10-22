@@ -2,7 +2,7 @@ import ir
 import pytest
 
 
-def test_basic():
+def test_fission_after():
     with ir.VarDef([
         ("y", (4, 8), "int32", "output", "cpu"),
         ("z", (4, 8), "int32", "output", "cpu"),
@@ -15,7 +15,40 @@ def test_basic():
     ast = ir.pop_ast()
     print(ast)
     s = ir.Schedule(ast)
-    s.fission("L2", "S0")
+    s.fission("L2", ir.FissionSide.After, "S0")
+    ast = s.ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([
+        ("y", (4, 8), "int32", "output", "cpu"),
+        ("z", (4, 8), "int32", "output", "cpu"),
+    ]) as (y, z):
+        with ir.For("i", 0, 4) as i:
+            with ir.For("j", 0, 8) as j:
+                y[i, j] = i + j
+            with ir.For("j", 0, 8) as j:
+                z[i, j] = i * j
+    std = ir.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_fission_before():
+    with ir.VarDef([
+        ("y", (4, 8), "int32", "output", "cpu"),
+        ("z", (4, 8), "int32", "output", "cpu"),
+    ]) as (y, z):
+        with ir.For("i", 0, 4, nid="L1") as i:
+            with ir.For("j", 0, 8, nid="L2") as j:
+                y[i, j] = i + j
+                ir.MarkNid("S0")
+                z[i, j] = i * j
+    ast = ir.pop_ast()
+    print(ast)
+    s = ir.Schedule(ast)
+    s.fission("L2", ir.FissionSide.Before, "S0")
     ast = s.ast()
     print(ast)
     ast = ir.lower(ast)
@@ -49,7 +82,7 @@ def test_stmt_in_if():
     ast = ir.pop_ast()
     print(ast)
     s = ir.Schedule(ast)
-    s.fission("L2", "S0")
+    s.fission("L2", ir.FissionSide.After, "S0")
     ast = s.ast()
     print(ast)
     ast = ir.lower(ast)
@@ -85,7 +118,7 @@ def test_buffer_hoist():
     ast = ir.pop_ast()
     print(ast)
     s = ir.Schedule(ast)
-    s.fission("L2", "S0")
+    s.fission("L2", ir.FissionSide.After, "S0")
     ast = s.ast()
     print(ast)
     ast = ir.lower(ast)
@@ -124,7 +157,7 @@ def test_buffer_no_hoist():
     ast = ir.pop_ast()
     print(ast)
     s = ir.Schedule(ast)
-    s.fission("L2", "S0")
+    s.fission("L2", ir.FissionSide.After, "S0")
     ast = s.ast()
     print(ast)
     ast = ir.lower(ast)
@@ -147,7 +180,7 @@ def test_buffer_no_hoist():
     assert std.match(ast)
 
 
-def test_correct_dependency_basic():
+def test_correct_dependency_after():
     with ir.VarDef([
         ("x0", (4, 8), "int32", "input", "cpu"),
         ("x1", (4, 8), "int32", "input", "cpu"),
@@ -162,7 +195,44 @@ def test_correct_dependency_basic():
     ast = ir.pop_ast()
     print(ast)
     s = ir.Schedule(ast)
-    s.fission("L2", "S0")
+    s.fission("L2", ir.FissionSide.After, "S0")
+    ast = s.ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([
+        ("x0", (4, 8), "int32", "input", "cpu"),
+        ("x1", (4, 8), "int32", "input", "cpu"),
+        ("y", (4, 8), "int32", "output", "cpu"),
+    ]) as (x0, x1, y):
+        with ir.For("i", 0, 4) as i:
+            with ir.VarDef("buf", (8, 1), "int32", "cache", "cpu") as b:
+                with ir.For("j", 0, 8) as j:
+                    b[j, 0] = x0[i, j] + x1[i, j]
+                with ir.For("j", 0, 8) as j:
+                    y[i, j] = b[j, 0] * b[j, 0]
+    std = ir.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_correct_dependency_before():
+    with ir.VarDef([
+        ("x0", (4, 8), "int32", "input", "cpu"),
+        ("x1", (4, 8), "int32", "input", "cpu"),
+        ("y", (4, 8), "int32", "output", "cpu"),
+    ]) as (x0, x1, y):
+        with ir.For("i", 0, 4, nid="L1") as i:
+            with ir.For("j", 0, 8, nid="L2") as j:
+                with ir.VarDef("buf", (1,), "int32", "cache", "cpu") as b:
+                    b[0] = x0[i, j] + x1[i, j]
+                    ir.MarkNid("S0")
+                    y[i, j] = b[0] * b[0]
+    ast = ir.pop_ast()
+    print(ast)
+    s = ir.Schedule(ast)
+    s.fission("L2", ir.FissionSide.Before, "S0")
     ast = s.ast()
     print(ast)
     ast = ir.lower(ast)
@@ -199,7 +269,7 @@ def test_correct_dependency_multi_loop():
     ast = ir.pop_ast()
     print(ast)
     s = ir.Schedule(ast)
-    s.fission("L1", "S0")
+    s.fission("L1", ir.FissionSide.After, "S0")
     ast = s.ast()
     print(ast)
     ast = ir.lower(ast)
@@ -234,7 +304,7 @@ def test_correct_dependency_real_dep():
     ast = ir.pop_ast()
     print(ast)
     s = ir.Schedule(ast)
-    s.fission("L1", "S0")
+    s.fission("L1", ir.FissionSide.After, "S0")
     ast = s.ast()
     print(ast)
     ast = ir.lower(ast)
@@ -269,7 +339,7 @@ def test_correct_dependency_unable_resolve():
     print(ast)
     s = ir.Schedule(ast)
     with pytest.raises(ir.InvalidSchedule):
-        s.fission("L2", "S0")
+        s.fission("L2", ir.FissionSide.After, "S0")
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
 
@@ -290,7 +360,7 @@ def test_correct_dependency_no_need_to_modify_no_dep():
     ast = ir.pop_ast()
     print(ast)
     s = ir.Schedule(ast)
-    s.fission("L2", "S0")
+    s.fission("L2", ir.FissionSide.After, "S0")
     ast = s.ast()
     print(ast)
     ast = ir.lower(ast)
@@ -329,7 +399,7 @@ def test_correct_dependency_no_need_to_modify_broadcast():
     ast = ir.pop_ast()
     print(ast)
     s = ir.Schedule(ast)
-    s.fission("L2", "S0")
+    s.fission("L2", ir.FissionSide.After, "S0")
     ast = s.ast()
     print(ast)
     ast = ir.lower(ast)
@@ -370,7 +440,7 @@ def test_correct_dependency_overwritten_store():
     ast = ir.pop_ast()
     print(ast)
     s = ir.Schedule(ast)
-    s.fission("L2", "S0")
+    s.fission("L2", ir.FissionSide.After, "S0")
     ast = s.ast()
     print(ast)
     ast = ir.lower(ast)

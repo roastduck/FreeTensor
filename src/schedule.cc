@@ -86,11 +86,14 @@ std::string Schedule::merge(const std::string &loop1,
 }
 
 std::pair<Schedule::IDMap, Schedule::IDMap>
-Schedule::fission(const std::string &loop, const std::string &after,
-                  const std::string &suffix0, const std::string &suffix1) {
-    auto log = "fission(" + loop + ", " + after + ")";
+Schedule::fission(const std::string &loop, FissionSide side,
+                  const std::string &splitter, const std::string &suffix0,
+                  const std::string &suffix1) {
+    auto log = "fission(" + loop + ", " +
+               (side == FissionSide::Before ? "BEFORE, " : "AFTER, ") +
+               splitter + ")";
     try {
-        auto ret = ir::fission(ast_, loop, after, suffix0, suffix1);
+        auto ret = ir::fission(ast_, loop, side, splitter, suffix0, suffix1);
         ast_ = ret.first;
         logs_.emplace_back(log);
         return ret.second;
@@ -253,7 +256,9 @@ std::string Schedule::moveTo(const std::string &_stmt, MoveToSide side,
                     // TODO: Fission IfNode
                     ASSERT(s.node()->nodeType() == ASTNodeType::For);
                     // Leave IDs of the other statements unchanged
-                    auto idMap = fission(s.id(), stmt, ".a", "").first;
+                    auto idMap =
+                        fission(s.id(), FissionSide::After, stmt, ".a", "")
+                            .first;
                     stmt = idMap.at(s.id());
                 }
                 // TODO: Fuse if d is inner of s
@@ -273,11 +278,9 @@ std::string Schedule::moveTo(const std::string &_stmt, MoveToSide side,
                     }
                     // TODO: Fission IfNode
                     ASSERT(s.node()->nodeType() == ASTNodeType::For);
-                    Cursor stmtCursor = getCursorById(ast_, stmt);
-                    ASSERT(stmtCursor.hasPrev());
                     // Leave IDs of the other statements unchanged
                     auto idMap =
-                        fission(s.id(), stmtCursor.prev().id(), "", ".b")
+                        fission(s.id(), FissionSide::Before, stmt, "", ".b")
                             .second;
                     stmt = idMap.at(s.id());
                 }

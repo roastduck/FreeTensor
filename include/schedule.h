@@ -7,12 +7,13 @@
 #include <cursor.h>
 #include <driver/target.h>
 #include <func.h>
+#include <schedule/fission.h>
 #include <schedule/var_split.h>
 #include <stmt.h>
 
 namespace ir {
 
-enum MoveToSide : int { Before, After };
+enum class MoveToSide : int { Before, After };
 
 class Schedule {
     Func func_;
@@ -122,7 +123,9 @@ class Schedule {
      * To split loop into two nested loops, use `split` instead
      *
      * @param loop : ID of the loop to be fissioned
-     * @param after : ID of the last statement of the first loop
+     * @param side : If `After`, `splitter` is the last statement of the first
+     * loop. If `Before`, `splitter` is the first statement of the second loop
+     * @param splitter : Where to fission the loop
      * @param suffix0 : ID suffix of the statements in the first loop, default
      * to ".a", can be "" for convenience, but cannot be the same with suffix1
      * @param suffix1 : ID suffix of the statements in the second loop, default
@@ -131,8 +134,8 @@ class Schedule {
      * @return : ({old ID -> new ID in 1st loop}, {old ID -> new ID in 2nd
      * loop})
      */
-    std::pair<IDMap, IDMap> fission(const std::string &loop,
-                                    const std::string &after,
+    std::pair<IDMap, IDMap> fission(const std::string &loop, FissionSide side,
+                                    const std::string &splitter,
                                     const std::string &suffix0 = ".a",
                                     const std::string &suffix1 = ".b");
 
