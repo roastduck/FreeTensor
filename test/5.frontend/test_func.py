@@ -296,8 +296,8 @@ def test_return():
 
     @ir.inline
     def test_i(a, b):
-        c = ir.create_var((2, 2), "int32", "cache", "cpu")
-        d = ir.create_var((2, 2), "int32", "cache", "cpu")
+        c = ir.create_var((2, 2), "int32", "cpu")
+        d = ir.create_var((2, 2), "int32", "cpu")
         for i in range(2):
             for j in range(2):
                 b[i, j] = a[i, j]
@@ -348,8 +348,8 @@ def test_return_returned_value():
 
     @ir.inline
     def h():
-        y1 = ir.create_var((4,), "int32", "cache", "cpu")
-        y2 = ir.create_var((4,), "int32", "cache", "cpu")
+        y1 = ir.create_var((4,), "int32", "cpu")
+        y2 = ir.create_var((4,), "int32", "cpu")
         for i in range(4):
             y1[i] = i
             y2[i] = i * 2
@@ -391,7 +391,7 @@ def test_func_in_args():
 
     @ir.inline
     def plus_one(x):
-        y = ir.create_var((4,), "int32", "cache", "cpu")
+        y = ir.create_var((4,), "int32", "cpu")
         for i in range(4):
             y[i] = x[i] + 1
         return y

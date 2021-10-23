@@ -111,19 +111,21 @@ class Var(ffi.FrontendVar):
 
     def __init__(self,
                  name: str,
+                 vardef,
                  full_shape: Sequence,
                  dtype: ffi.DataType,
                  mtype: ffi.MemType,
                  indices: Sequence = []):
         super(Var, self).__init__(name, full_shape, dtype, mtype, indices)
+        self.vardef = vardef
 
     def __getitem__(self, key):
-        return Var(self.name, self.full_shape, self.dtype, self.mtype,
-                   self.chain_indices(self._parse_key(key)))
+        return Var(self.name, self.vardef, self.full_shape, self.dtype,
+                   self.mtype, self.chain_indices(self._parse_key(key)))
 
     def __setitem__(self, key, value):
-        var = Var(self.name, self.full_shape, self.dtype, self.mtype,
-                  self.chain_indices(self._parse_key(key)))
+        var = Var(self.name, self.vardef, self.full_shape, self.dtype,
+                  self.mtype, self.chain_indices(self._parse_key(key)))
         top = ctx_stack.top()
         top.append_stmt(var.as_store(top.get_next_nid(), value))
 
@@ -247,9 +249,12 @@ class _VarDef:
         self.atype = parseAType(atype)
         self.mtype = parseMType(mtype)
 
+    def set_atype(self, atype):
+        self.atype = parseAType(atype)
+
     def __enter__(self):
         ctx_stack.push()
-        return Var(self.name, self.shape, self.dtype, self.mtype)
+        return Var(self.name, self, self.shape, self.dtype, self.mtype)
 
     def __exit__(self, exc_type, exc_value, traceback):
         buf = ffi.Buffer(ffi.Tensor(self.shape, self.dtype), self.atype,

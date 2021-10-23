@@ -31,7 +31,7 @@ def _binary_op(op):
     def f_binary_op(a, b):
         'nid: broadcast_shape'
         out = core.create_var(broadcast_shape(a, b),
-                              core.up_cast(a.dtype, b.dtype), "cache",
+                              core.up_cast(a.dtype, b.dtype),
                               core.same_mtype(a.mtype, b.mtype))
         'nid: recur'
         _binary_op_(op)(a, b, out)
@@ -72,7 +72,7 @@ def _unary_op(op):
 
     @core.inline
     def f_unary_op(x):
-        y = core.create_var(copy_shape(x), x.dtype, "cache", x.mtype)
+        y = core.create_var(copy_shape(x), x.dtype, x.mtype)
         'nid: recur'
         _unary_op_(op)(x, y)
         return y

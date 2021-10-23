@@ -33,7 +33,7 @@ def transformer(q, k, v, y, w, dilation, dilation_heads, n_heads, seq_len,
             for i in range(n_heads):
                 "nid: Lj"
                 for j in range(seq_len):
-                    dot = ir.create_var((2 * w + 1,), "float32", "cache", mtype)
+                    dot = ir.create_var((2 * w + 1,), "float32", mtype)
                     "nid: Lk1"
                     for k in range(-w, w + 1):
                         dot[k + w] = 0
@@ -50,23 +50,21 @@ def transformer(q, k, v, y, w, dilation, dilation_heads, n_heads, seq_len,
                                         w] += Q[i, j,
                                                 p] * K[i, j + k * dilation, p]
 
-                    maxval = ir.create_var((), "float32", "cache", mtype)
+                    maxval = ir.create_var((), "float32", mtype)
                     maxval[()] = -inf
                     "nid: Lk2"
                     for k in range(2 * w + 1):
                         maxval[()] = ir.max(maxval, dot[k])
-                    expval = ir.create_var((2 * w + 1,), "float32", "cache",
-                                           mtype)
+                    expval = ir.create_var((2 * w + 1,), "float32", mtype)
                     "nid: Lk3"
                     for k in range(2 * w + 1):
                         expval[k] = ir.exp(dot[k] - maxval[k])
-                    expsum = ir.create_var((), "float32", "cache", mtype)
+                    expsum = ir.create_var((), "float32", mtype)
                     expsum[()] = 0
                     "nid: Lk4"
                     for k in range(2 * w + 1):
                         expsum[()] += expval[k]
-                    attn = ir.create_var((2 * w + 1,), "float32", "cache",
-                                         mtype)
+                    attn = ir.create_var((2 * w + 1,), "float32", mtype)
                     "nid: Lk5"
                     for k in range(2 * w + 1):
                         attn[k] = expval[k] / expsum[()] / sqrt_d

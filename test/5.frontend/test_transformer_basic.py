@@ -59,7 +59,7 @@ def test_return_value_and_runtime_allocation():
     @ir.transform
     def test(x):
         ir.declare_var(x, (), "int32", "input", "cpu")
-        y = ir.create_var((), "int32", "output", "cpu")
+        y = ir.create_var((), "int32", "cpu")
         y[()] = x[()] * 2 + 1
         return y
 

@@ -126,7 +126,7 @@ def max_pool(auto_pad: str = 'NOTSET',
                           pads[2], strides[0]),
             calc_out_size(X.shape(3), dilations[1], kernel_shape[1], pads[1],
                           pads[3], strides[1])
-        ], X.dtype, "cache", X.mtype)
+        ], X.dtype, X.mtype)
         'nid: recur'
         max_pool_(auto_pad, dilations, kernel_shape, pads, strides)(X, Y)
         return Y
@@ -164,7 +164,7 @@ def _global_avg_pool():
 
     @core.inline
     def f_global_avg_pool_2d(X):
-        Y = core.create_var([X.shape(0), X.shape(1)], X.dtype, "cache", X.mtype)
+        Y = core.create_var([X.shape(0), X.shape(1)], X.dtype, X.mtype)
         'nid: recur'
         global_avg_pool_(X, Y)
         return Y

@@ -47,7 +47,7 @@ def gat_layer(ptr, idx, feat, weight, attn_l, attn_r, y, num_v, num_e, feat_len,
             ir.declare_var(attn_r, (feat_len,), "float32", "input", mtype)
             ir.declare_var(y, (num_v, feat_len), "float32", "output", mtype)
 
-            feat2 = ir.create_var((num_v, feat_len), "float32", "cache", mtype)
+            feat2 = ir.create_var((num_v, feat_len), "float32", mtype)
             'nid: L_feat2'
             for i in range(num_v):
                 for j in range(feat_len):
@@ -55,35 +55,35 @@ def gat_layer(ptr, idx, feat, weight, attn_l, attn_r, y, num_v, num_e, feat_len,
                     for k in range(feat_len):
                         feat2[i, j] += feat[i, k] * weight[k, j]
 
-            att_l = ir.create_var((num_v,), "float32", "cache", mtype)
+            att_l = ir.create_var((num_v,), "float32", mtype)
             'nid: L_att_l'
             for i in range(num_v):
                 att_l[i] = 0
                 for j in range(feat_len):
                     att_l[i] += feat2[i, j] * attn_l[j]
 
-            att_r = ir.create_var((num_v,), "float32", "cache", mtype)
+            att_r = ir.create_var((num_v,), "float32", mtype)
             'nid: L_att_r'
             for i in range(num_v):
                 att_r[i] = 0
                 for j in range(feat_len):
                     att_r[i] += feat2[i, j] * attn_r[j]
 
-            edge_exp = ir.create_var((num_e,), "float32", "cache", mtype)
-            edge_norm = ir.create_var((num_e,), "float32", "cache", mtype)
+            edge_exp = ir.create_var((num_e,), "float32", mtype)
+            edge_norm = ir.create_var((num_e,), "float32", mtype)
             'nid: Li'
             'no_deps'
             for i in range(num_v):
-                edge_max = ir.create_var((), "float32", "cache", mtype)
+                edge_max = ir.create_var((), "float32", mtype)
                 edge_max[()] = -inf
                 'nid: Lk1'
                 for k in range(ptr[i], ptr[i + 1]):
-                    e = ir.create_var((), "float32", "cache", mtype)
+                    e = ir.create_var((), "float32", mtype)
                     e[()] = att_l[idx[k]] + att_r[i]
                     edge_exp[k] = ir.exp(
                         ir.if_then_else(e[()] >= 0, e[()], e[()] * 0.1))
                     edge_max[()] = ir.max(edge_max[()], edge_exp[k])
-                edge_sum = ir.create_var((), "float32", "cache", mtype)
+                edge_sum = ir.create_var((), "float32", mtype)
                 edge_sum[()] = 0
                 'nid: Lk2'
                 for k in range(ptr[i], ptr[i + 1]):

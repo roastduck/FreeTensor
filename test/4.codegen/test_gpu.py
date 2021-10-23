@@ -135,7 +135,7 @@ def test_global_mem():
     def test(x, y):
         ir.declare_var(x, (4,), "int32", "input", "gpu/global")
         ir.declare_var(y, (4,), "int32", "output", "gpu/global")
-        t = ir.create_var((4,), "int32", "cache", "gpu/global")
+        t = ir.create_var((4,), "int32", "gpu/global")
         "nid: L1"
         for i in range(0, 4):
             t[i] = x[i] * 2
@@ -185,7 +185,7 @@ def test_global_mem_in_kernel():
         ir.declare_var(y2, (4,), "int32", "output", "gpu/global")
         "nid: L1"
         for i in range(0, 4):
-            t = ir.create_var((), "int32", "cache", "gpu/global")
+            t = ir.create_var((), "int32", "gpu/global")
             t[()] = x[i] * 2
             y1[i] = t[()] + 1
             y2[i] = t[()] + 2
@@ -382,7 +382,7 @@ def test_syncthreads():
         ir.declare_var(y, (4, 256), "int32", "output", "gpu/global")
         "nid: L0"
         for i in range(0, 4):
-            t = ir.create_var((256,), "int32", "cache", "gpu/shared")
+            t = ir.create_var((256,), "int32", "gpu/shared")
             "nid: L1"
             for j in range(0, 256):
                 t[j] = x[i, j] * 2
@@ -446,7 +446,7 @@ def test_syncthreads_in_loop():
         "nid: L0"
         for i in range(0, 4):
             for p in range(0, 5):
-                t = ir.create_var((256,), "int32", "cache", "gpu/shared")
+                t = ir.create_var((256,), "int32", "gpu/shared")
                 "nid: L1"
                 for j in range(0, 256):
                     t[j] = x[i, j] * p
@@ -485,7 +485,7 @@ def test_syncthreads_at_outer_loop():
         ir.declare_var(y, (4, 5, 256), "int32", "output", "gpu/global")
         "nid: L0"
         for i in range(0, 4):
-            t = ir.create_var((256,), "int32", "cache", "gpu/shared")
+            t = ir.create_var((256,), "int32", "gpu/shared")
             "nid: L1"
             for j in range(0, 256):
                 t[j] = x[i, j]
@@ -525,12 +525,12 @@ def test_syncthreads_not_at_outer_loop():
         ir.declare_var(y, (4, 5, 256), "int32", "output", "gpu/global")
         "nid: L0"
         for i in range(0, 4):
-            t0 = ir.create_var((256,), "int32", "cache", "gpu/shared")
+            t0 = ir.create_var((256,), "int32", "gpu/shared")
             "nid: L1"
             for j in range(0, 256):
                 t0[j] = x0[i, j]
             for p in range(0, 5):
-                t1 = ir.create_var((256,), "int32", "cache", "gpu/shared")
+                t1 = ir.create_var((256,), "int32", "gpu/shared")
                 "nid: L2"
                 for j in range(0, 256):
                     t1[j] = x1[i, p, j]
@@ -576,7 +576,7 @@ def test_syncthreads_at_outer_branch():
         ir.declare_var(y, (4,), "int32", "output", "gpu/global")
         "nid: L0"
         for i in range(0, 4):
-            t = ir.create_var((1,), "int32", "cache", "gpu/shared")
+            t = ir.create_var((1,), "int32", "gpu/shared")
             "nid: L1"
             for j in range(0, 256):
                 t[0] = t[0] + x[i, j]  # Atomic reduction
@@ -610,7 +610,7 @@ def test_syncthreads_at_outer_loop_and_outer_branch():
         ir.declare_var(y, (4, 5, 256), "int32", "output", "gpu/global")
         "nid: L0"
         for i in range(0, 4):
-            t = ir.create_var((256,), "int32", "cache", "gpu/shared")
+            t = ir.create_var((256,), "int32", "gpu/shared")
             "nid: L1"
             for j in range(0, 256):
                 t[j] = x[i, j]
@@ -651,7 +651,7 @@ def test_syncthreads_split_branch():
         ir.declare_var(z, (4,), "int32", "inout", "gpu/global")
         "nid: L0"
         for i in range(0, 4):
-            t = ir.create_var((1,), "int32", "cache", "gpu/shared")
+            t = ir.create_var((1,), "int32", "gpu/shared")
             "nid: L1"
             for j in range(0, 256):
                 t[0] = t[0] + x[i, j]  # Atomic reduction
@@ -694,7 +694,7 @@ def test_syncthreads_split_branch_out_of_const_loop():
                 if i * 4 + j < 10:
                     'nid: L2'
                     for k in range(10):
-                        t = ir.create_var((2,), "int32", "cache", "gpu/shared")
+                        t = ir.create_var((2,), "int32", "gpu/shared")
                         'nid: L3'
                         for p in range(32):
                             t[p % 2] += x[i * 4 + j, k, p]
@@ -735,7 +735,7 @@ def test_syncthreads_split_branch_with_else():
         ir.declare_var(z, (4,), "int32", "inout", "gpu/global")
         "nid: L0"
         for i in range(0, 4):
-            t = ir.create_var((2,), "int32", "cache", "gpu/shared")
+            t = ir.create_var((2,), "int32", "gpu/shared")
             if i < 2:
                 "nid: L1"
                 for j in range(0, 256):
@@ -797,11 +797,11 @@ def test_syncthreads_split_branch_and_vardef():
         ir.declare_var(z2, (4,), "int32", "inout", "gpu/global")
         "nid: L0"
         for i in range(0, 4):
-            t = ir.create_var((1,), "int32", "cache", "gpu/shared")
+            t = ir.create_var((1,), "int32", "gpu/shared")
             "nid: L1"
             for j in range(0, 256):
                 t[0] = t[0] + x[i, j]  # Atomic reduction
-            u = ir.create_var((1,), "int32", "cache", "gpu/local")
+            u = ir.create_var((1,), "int32", "gpu/local")
             u[0] = z1[i] * 2
             y[i] = t[0]
             z1[i] = u[0] + 1
@@ -846,12 +846,12 @@ def test_syncthreads_split_branch_and_vardef_with_else():
         ir.declare_var(z2, (4,), "int32", "inout", "gpu/global")
         "nid: L0"
         for i in range(0, 4):
-            t = ir.create_var((2,), "int32", "cache", "gpu/shared")
+            t = ir.create_var((2,), "int32", "gpu/shared")
             if i < 2:
                 "nid: L1"
                 for j in range(0, 256):
                     t[j % 2] += x[i, j]  # Atomic reduction
-                u1 = ir.create_var((1,), "int32", "cache", "gpu/local")
+                u1 = ir.create_var((1,), "int32", "gpu/local")
                 u1[0] = z1[i] * 2
                 y[i] = t[0]
                 z1[i] = u1[0] + 1
@@ -860,7 +860,7 @@ def test_syncthreads_split_branch_and_vardef_with_else():
                 "nid: L2"
                 for j in range(0, 256):
                     t[j % 2] += x[i, j] * 2  # Atomic reduction
-                u2 = ir.create_var((1,), "int32", "cache", "gpu/local")
+                u2 = ir.create_var((1,), "int32", "gpu/local")
                 u2[0] = z1[i] * 2
                 y[i] = t[0]
                 z1[i] = u2[0] + 1
@@ -925,7 +925,7 @@ def test_syncwarp():
         ir.declare_var(y, (4, 4), "int32", "output", "gpu/global")
         "nid: L0"
         for i in range(0, 4):
-            t = ir.create_var((4,), "int32", "cache", "gpu/shared")
+            t = ir.create_var((4,), "int32", "gpu/shared")
             "nid: L1"
             for j in range(0, 4):
                 t[j] = x[i, j] * 2
@@ -987,7 +987,7 @@ def test_multiplex_shared_1():
         ir.declare_var(y, (4, 256), "int32", "output", "gpu/global")
         "nid: L0"
         for i in range(0, 4):
-            t = ir.create_var((256,), "int32", "cache", "gpu/shared")
+            t = ir.create_var((256,), "int32", "gpu/shared")
             "nid: L1"
             for j in range(0, 256):
                 t[j] = x[i, j] * 2
@@ -1049,7 +1049,7 @@ def test_multiplex_shared_2():
         ir.declare_var(y, (4, 256), "int32", "output", "gpu/global")
         "nid: L0"
         for i in range(0, 4):
-            t = ir.create_var((256,), "int32", "cache", "gpu/shared")
+            t = ir.create_var((256,), "int32", "gpu/shared")
             "nid: L1"
             for j in range(i * 64, (i + 1) * 64):
                 t[j] = x[i, j] * 2
@@ -1085,7 +1085,7 @@ def test_simplex_local_1():
         ir.declare_var(x, (10, 10, 10), "int32", "input", "gpu/global")
         ir.declare_var(y, (10, 10, 10), "int32", "output", "gpu/global")
         ir.declare_var(z, (10, 10, 10), "int32", "output", "gpu/global")
-        t = ir.create_var((10, 10, 10), "int32", "cache", "gpu/global")
+        t = ir.create_var((10, 10, 10), "int32", "gpu/global")
         'nid: Lb'
         for b in range(10):
             'nid: L0'
@@ -1149,7 +1149,7 @@ def test_simplex_local_2():
     def test(x, y, z):
         ir.declare_var(x, (10, 10, 10), "int32", "input", "gpu/global")
         ir.declare_var(y, (10, 10, 10), "int32", "output", "gpu/global")
-        t = ir.create_var((10, 10, 10), "int32", "cache", "gpu/global")
+        t = ir.create_var((10, 10, 10), "int32", "gpu/global")
         'nid: Lb'
         for b in range(10):
             'nid: L0'
@@ -1253,7 +1253,7 @@ def test_parallel_different_length():
         ir.declare_var(c, (4, 8), "int32", "output", "gpu/global")
         "nid: L0"
         for i in range(0, 4):
-            t = ir.create_var((4,), "int32", "cache", "gpu/shared")
+            t = ir.create_var((4,), "int32", "gpu/shared")
             "nid: L1"
             for j in range(0, 4):
                 t[j] = a[i, j]
@@ -1325,7 +1325,7 @@ def test_parallel_broadcast():
         ir.declare_var(c, (4, 8), "int32", "output", "gpu/global")
         "nid: L0"
         for i in range(0, 4):
-            t = ir.create_var((1,), "int32", "cache", "gpu/shared")
+            t = ir.create_var((1,), "int32", "gpu/shared")
             t[0] = a[i, 0]
             "nid: L1"
             for k in range(0, 8):

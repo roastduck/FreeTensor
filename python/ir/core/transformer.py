@@ -182,7 +182,7 @@ class InlineFunction:
 
     def expand(self, ctx_stack, nid):
         assert self.arg_var is not None
-        transformer = ASTTransformer(ctx_stack, self.params, self.globals)
+        transformer = ASTTransformer(ctx_stack, self.params, self.globals, True)
         transformer.set_replace(self.arg_var, nid)
         for stmt in self.body:
             transformer.visit(stmt)
@@ -191,12 +191,16 @@ class InlineFunction:
 
 class ASTTransformer(ast.NodeTransformer):
 
-    def __init__(self, ctx_stack: ASTContextStack, params: Sequence[str],
-                 globals: Mapping[str, Any]):
+    def __init__(self,
+                 ctx_stack: ASTContextStack,
+                 params: Sequence[str],
+                 globals: Mapping[str, Any],
+                 is_inline: bool = False):
         super().__init__()
         self.ctx_stack = ctx_stack
         self.params = params
         self.globals = globals
+        self.is_inline = is_inline
         self.allow_undefined = False
         self.replace = {}
         self.arg_var = {}
@@ -387,13 +391,13 @@ class ASTTransformer(ast.NodeTransformer):
             kws[item.arg] = item.value.expr_ptr
 
         if callee is create_var:
-            shape, dtype, atype, mtype = args
+            shape, dtype, mtype = args
 
             override_name = kws.get("name")
             node.expr_ptr = VarCreation(self.ctx_stack,
                                         shape,
                                         dtype,
-                                        atype,
+                                        "cache",
                                         mtype,
                                         override_name=override_name)
         elif callee is declare_var:
@@ -691,11 +695,15 @@ class ASTTransformer(ast.NodeTransformer):
         if isinstance(node.value, ast.Name):
             name = self.get_name(node.value.id)
             var = self.ctx_stack.find_var_by_name(name)
+            if not self.is_inline:
+                var.vardef.set_atype("output")
             self.returns.append((name, var))
         elif isinstance(node.value, ast.Tuple):
             for value in node.value.elts:
                 name = self.get_name(value.id)
                 var = self.ctx_stack.find_var_by_name(name)
+                if not self.is_inline:
+                    var.vardef.set_atype("output")
                 self.returns.append((name, var))
 
         return node

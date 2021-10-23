@@ -296,7 +296,7 @@ def test_serial_reduction_2():
         ir.declare_var(y, (4,), "int32", "output", "cpu")
         "nid: L1"
         for i in range(0, 4):
-            local_sum = ir.create_var((), "int32", "cache", "cpu")
+            local_sum = ir.create_var((), "int32", "cpu")
             local_sum[()] = 0.
             "nid: L2"
             for j in range(0, 64):
