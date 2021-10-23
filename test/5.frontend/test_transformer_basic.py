@@ -1,4 +1,5 @@
 import ir
+import ir.debug
 import numpy as np
 
 
@@ -51,6 +52,30 @@ def test_scalar_op():
 
     assert y_np[()] == 11
     assert y_func[()] == 11
+
+
+def test_return_value_and_runtime_allocation():
+
+    @ir.transform
+    def test(x):
+        ir.declare_var(x, (), "int32", "input", "cpu")
+        y = ir.create_var((), "int32", "output", "cpu")
+        y[()] = x[()] * 2 + 1
+        return y
+
+    print(test)
+    func = ir.lower(test, ir.CPU())
+    code = ir.codegen(func, ir.CPU())
+    print(ir.debug.with_line_no(code))
+    x_np = np.array(5, dtype="int32")
+    x_arr = ir.Array(x_np, ir.Device(ir.CPU()))
+    driver = ir.Driver(func, code, ir.Device(ir.CPU()))
+    driver.set_params(x=x_arr)
+    driver.run()
+    y_arr, = driver.collect_returns()
+    y_np = y_arr.numpy()
+
+    assert y_np[()] == 11
 
 
 def test_for():

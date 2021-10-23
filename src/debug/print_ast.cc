@@ -55,6 +55,18 @@ void PrintVisitor::visit(const Func &op) {
         os() << (i > 0 ? ", " : "") << op->params_[i];
     }
     os() << ") ";
+    if (!op->returns_.empty()) {
+        os() << "-> ";
+        bool first = true;
+        for (auto &&[name, dtype] : op->returns_) {
+            if (!first) {
+                os() << ", ";
+            }
+            first = false;
+            os() << name << ": " << ::ir::toString(dtype);
+        }
+        os() << " ";
+    }
     beginBlock();
     recur(op->body_);
     endBlock();

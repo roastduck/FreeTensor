@@ -2,7 +2,8 @@
 namespace ir {
 
 Func deepCopy(const Func &func) {
-    return _makeFunc(func->name_, func->params_, deepCopy(func->body_));
+    return _makeFunc(func->name_, func->params_, func->returns_,
+                     deepCopy(func->body_));
 }
 
 } // namespace ir

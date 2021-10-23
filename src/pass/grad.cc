@@ -386,7 +386,8 @@ grad(const Func &func, const std::unordered_set<std::string> &requires,
     for (auto &&[oriDef, tapeName] : tapeMap) {
         forwardParams.emplace_back(tapeName);
     }
-    auto forwardFunc = makeFunc(func->name_, forwardParams, forward);
+    auto forwardFunc =
+        makeFunc(func->name_, forwardParams, func->returns_, forward);
 
     std::vector<std::string> backwardParams = forwardParams;
     for (auto &&[x, dzdx] : requireGrads) {
@@ -395,8 +396,8 @@ grad(const Func &func, const std::unordered_set<std::string> &requires,
     for (auto &&[y, dzdy] : provideGrads) {
         backwardParams.emplace_back(dzdy);
     }
-    auto backwardFunc =
-        makeFunc(func->name_ + ".grad", backwardParams, backward);
+    auto backwardFunc = makeFunc(func->name_ + ".grad", backwardParams,
+                                 func->returns_, backward);
 
     return std::make_tuple(forwardFunc, backwardFunc, requireGrads,
                            provideGrads, tapeMap);

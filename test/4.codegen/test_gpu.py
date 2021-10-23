@@ -314,7 +314,7 @@ def test_dynamic_2d_array():
                 with ir.For("j", 0, n[()], nid="L2") as j:
                     y[i, j] = x[i, j] + 1
 
-    s = ir.Schedule(ir.Func("main", ["n", "x", "y"], ir.pop_ast()))
+    s = ir.Schedule(ir.Func("main", ["n", "x", "y"], [], ir.pop_ast()))
     outer, inner = s.split("L1", 4)
     s.reorder([inner, outer])
     s.parallelize(inner, "threadIdx.x")
@@ -1205,7 +1205,7 @@ def test_relax_shared_shape_to_constants():
                         with ir.For("j", n[()], 256, nid="L3") as j:
                             y[i, j] = 0
 
-    s = ir.Schedule(ir.Func("main", ["n", "x", "y"], ir.pop_ast()))
+    s = ir.Schedule(ir.Func("main", ["n", "x", "y"], [], ir.pop_ast()))
     s.parallelize("L0", "threadIdx.x")
     func = ir.lower(s.func(), target)
     print(func)
@@ -1629,7 +1629,7 @@ def test_vectorize():
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 64, nid="L2") as j:
                 y[i, j] = x[i, j] * 2
-    func = ir.Func("main", ["x", "y"], ir.pop_ast())
+    func = ir.Func("main", ["x", "y"], [], ir.pop_ast())
 
     s = ir.Schedule(func)
     s.parallelize("L1", "blockIdx.x")
@@ -1662,7 +1662,7 @@ def test_vectorize_with_non_vector_access():
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 64, nid="L2") as j:
                 y[i, j] = x[i] * 2
-    func = ir.Func("main", ["x", "y"], ir.pop_ast())
+    func = ir.Func("main", ["x", "y"], [], ir.pop_ast())
 
     s = ir.Schedule(func)
     s.parallelize("L1", "blockIdx.x")
@@ -1692,7 +1692,7 @@ def test_vectorize_use_iter():
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 64, nid="L2") as j:
                 y[i, j] = i + j
-    func = ir.Func("main", ["y"], ir.pop_ast())
+    func = ir.Func("main", ["y"], [], ir.pop_ast())
 
     s = ir.Schedule(func)
     s.parallelize("L1", "blockIdx.x")
@@ -1723,7 +1723,7 @@ def test_vectorize_fallback_to_shorter_when_not_divisible():
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 62, nid="L2") as j:
                 y[i, j] = x[i, j] * 2
-    func = ir.Func("main", ["x", "y"], ir.pop_ast())
+    func = ir.Func("main", ["x", "y"], [], ir.pop_ast())
 
     s = ir.Schedule(func)
     s.parallelize("L1", "blockIdx.x")
@@ -1756,7 +1756,7 @@ def test_vectorize_fallback_to_shorter_when_not_aligned():
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 64, nid="L2") as j:
                 y[i, j] = x[i, j + 2] * 2
-    func = ir.Func("main", ["x", "y"], ir.pop_ast())
+    func = ir.Func("main", ["x", "y"], [], ir.pop_ast())
 
     s = ir.Schedule(func)
     s.parallelize("L1", "blockIdx.x")

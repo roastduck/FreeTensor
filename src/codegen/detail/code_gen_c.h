@@ -66,11 +66,37 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
     } else {
         auto nthParamIter =
             std::find(params_.begin(), params_.end(), op->name_);
-        if (nthParamIter == params_.end()) {
+        auto nthReturnsIter =
+            std::find_if(returns_.begin(), returns_.end(),
+                         [&](const std::pair<std::string, DataType> &item) {
+                             return item.first == op->name_;
+                         });
+        bool isParam = nthParamIter != params_.end();
+        bool isReturn = nthReturnsIter != returns_.end();
+        if (!isParam && !isReturn) {
             throw InvalidProgram("I/O variable " + op->name_ +
-                                 " used but not defined in a function");
+                                 " used but not defined as a function's "
+                                 "parameters or return values");
         }
-        int nthParam = nthParamIter - params_.begin();
+        std::string rawPtr;
+        if (isParam) {
+            int nthParam = nthParamIter - params_.begin();
+            rawPtr = "_params[" + std::to_string(nthParam) + "]";
+        } else {
+            if (op->buffer_->atype() != AccessType::Output) {
+                throw InvalidProgram(
+                    "Only output variable can be as a return value");
+            }
+            int nthReturn = nthReturnsIter - returns_.begin();
+            rawPtr = "_returns[" + std::to_string(nthReturn) + "]";
+            std::string sizePtr =
+                "_retSizes[" + std::to_string(nthReturn) + "]";
+            this->os() << "if (" + rawPtr + " == NULL) ";
+            this->beginBlock();
+            this->genAlloc(op->buffer_->tensor(), rawPtr, sizePtr);
+            this->endBlock();
+            this->makeIndent();
+        }
 
         switch (op->buffer_->mtype()) {
         case MemType::ByValue:
@@ -96,8 +122,8 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
             }
             if (shape.empty()) {
                 this->os() << gen(tensor.dtype()) << " " << name << " = *(("
-                           << gen(tensor.dtype()) << "*)_params[" << nthParam
-                           << "]);" << std::endl;
+                           << gen(tensor.dtype()) << "*)" << rawPtr << ");"
+                           << std::endl;
             } else {
                 for (size_t i = 0, iEnd = shape.size(); i < iEnd; i++) {
                     this->os() << "__ByValArray<";
@@ -116,8 +142,8 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
                             this->os() << "[" << x << "]";
                         }
                         this->os()
-                            << " = ((" << gen(tensor.dtype()) << "*)_params["
-                            << nthParam << "])[" << offset << "];" << std::endl;
+                            << " = ((" << gen(tensor.dtype()) << "*)" << rawPtr
+                            << ")[" << offset << "];" << std::endl;
                         return;
                     }
                     for (int j = 0, jEnd = shape[i].as<IntConstNode>()->val_;
@@ -139,8 +165,8 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
                 }
                 this->os() << gen(tensor.dtype()) << " &";
                 this->os() << name << " ";
-                this->os() << " = *((" << gen(tensor.dtype()) << "*)_params["
-                           << nthParam << "]);" << std::endl;
+                this->os() << " = *((" << gen(tensor.dtype()) << "*)" << rawPtr
+                           << ");" << std::endl;
             } else {
                 // e.g.
                 // const float (*restrict x)[5][5] = (float(*)[5][5])_params[0];
@@ -162,7 +188,7 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
                     (*this)(shape[i]);
                     this->os() << "]";
                 }
-                this->os() << ")_params[" << nthParam << "];" << std::endl;
+                this->os() << ")" << rawPtr << ";" << std::endl;
             }
         }
     }

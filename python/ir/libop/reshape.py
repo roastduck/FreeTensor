@@ -51,7 +51,7 @@ def flatten(axis=1):
 
     @core.inline
     def f_flatten(x):
-        y = core.create_var(comp_shape(x, axis), x.dtype, "output", x.mtype)
+        y = core.create_var(comp_shape(x, axis), x.dtype, "cache", x.mtype)
         'nid: recur'
         flatten_(axis)(x, y)
         return y
@@ -114,7 +114,7 @@ def unsqueeze(axes: Sequence[int]):
     @core.inline
     def f_unsqueeze(x):
         y = core.create_var(comp_shape(circular_axes(axes, x.ndim), x), x.dtype,
-                            "output", x.mtype)
+                            "cache", x.mtype)
         'nid: recur'
         _unsqueeze_(circular_axes(axes, x.ndim))(x, y)
         return y
@@ -146,7 +146,7 @@ def _expand():
     @core.inline
     def f_expand(a, expand_shape):
         # FIXME: out_shape = broadcast(a.shape, expand_shape)
-        out = core.create_var(expand_shape, a.dtype, "output", a.mtype)
+        out = core.create_var(expand_shape, a.dtype, "cache", a.mtype)
         'nid: recur'
         expand_(a, out)
         return out

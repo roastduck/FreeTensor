@@ -97,7 +97,7 @@ def _general_reduce(op,
     @core.inline
     def f_reduce(x):
         y = core.create_var(comp_shape(circular_axes(axes, x.ndim), x), x.dtype,
-                            "output", x.mtype)
+                            "cache", x.mtype)
         'nid: recur'
         _general_reduce_(op, neutral_val, circular_axes(axes, x.ndim),
                          keepdims)(x, y)

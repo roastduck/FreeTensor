@@ -175,7 +175,7 @@ def conv(has_bias: bool = False,
                               pads[2], strides[0]),
                 calc_out_size(X.shape(3), dilations[1], W.shape(3), pads[1],
                               pads[3], strides[1])
-            ], core.up_cast(X.dtype, W.dtype), "output",
+            ], core.up_cast(X.dtype, W.dtype), "cache",
                                 core.same_mtype(X.mtype, W.mtype))
 
             'nid: recur'
@@ -196,7 +196,7 @@ def conv(has_bias: bool = False,
                               pads[2], strides[0]),
                 calc_out_size(X.shape(3), dilations[1], W.shape(3), pads[1],
                               pads[3], strides[1])
-            ], core.up_cast(core.up_cast(X.dtype, W.dtype), B.dtype), "output",
+            ], core.up_cast(core.up_cast(X.dtype, W.dtype), B.dtype), "cache",
                                 core.same_mtype(
                                     core.same_mtype(X.mtype, W.mtype), B.mtype))
 

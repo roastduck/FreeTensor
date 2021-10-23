@@ -464,7 +464,7 @@ class ASTTransformer(ast.NodeTransformer):
                     # only support single return value now
                     returns = arg.expand(self.ctx_stack, name)
                     assert len(returns) == 1, "only support single return value"
-                    arg_var[param] = self.ctx_stack.find_var_by_name(returns[0])
+                    arg_var[param] = returns[0][1]
                 elif isinstance(arg, Tensor):
                     var = VarCreation(self.ctx_stack, arg.shape(), arg.dtype(),
                                       "cache", arg.mtype, name).execute()
@@ -531,14 +531,13 @@ class ASTTransformer(ast.NodeTransformer):
                 targets.append(node.targets[0].id)
             returns = node.value.expr_ptr.expand(self.ctx_stack, self.nid)
             for target, ret in zip(targets, returns):
-                self.replace[target] = ret
+                self.replace[target] = ret[0]
         elif isinstance(node.value.expr_ptr, VarCreation):
             self.created_vars.add(node.targets[0].id)
             name = self.get_name(node.targets[0].id)
             nid = name
             MarkNid(nid)
             var_creation = node.value.expr_ptr
-            var_creation.atype = 'cache'
             var_creation.add_name(name)
             var_creation.execute()
         elif isinstance(node.targets[0], ast.Subscript):
@@ -690,12 +689,14 @@ class ASTTransformer(ast.NodeTransformer):
             assert False, "The function must have no more than one return statement"
         self.returned = True
         if isinstance(node.value, ast.Name):
-            name = node.value.id
-            self.returns.append(self.get_name(name))
+            name = self.get_name(node.value.id)
+            var = self.ctx_stack.find_var_by_name(name)
+            self.returns.append((name, var))
         elif isinstance(node.value, ast.Tuple):
             for value in node.value.elts:
-                name = value.id
-                self.returns.append(self.get_name(name))
+                name = self.get_name(value.id)
+                var = self.ctx_stack.find_var_by_name(name)
+                self.returns.append((name, var))
 
         return node
 
@@ -748,7 +749,9 @@ def transform(func):
     globals = _get_global_vars(func)
     transformer = ASTTransformer(ctx_stack, params, globals)
     transformer.visit(tree)
-    return Func(func.__name__, params, pop_ast())
+    returns = list(
+        map(lambda var: (var[1].name, var[1].dtype), transformer.returns))
+    return Func(func.__name__, params, returns, pop_ast())
 
 
 def inline(func, src=None):

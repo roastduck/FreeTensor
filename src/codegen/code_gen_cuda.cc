@@ -17,6 +17,17 @@ static std::string genCUBLASType(DataType dtype) {
     }
 }
 
+void CodeGenCUDA::genAlloc(const Tensor &tensor, const std::string &rawPtr,
+                           const std::string &sizePtr) {
+    makeIndent();
+    os() << "cudaMalloc(&" << rawPtr << ", " << sizePtr << " = ";
+    for (auto &&dim : tensor.shape()) {
+        (*this)(dim);
+        os() << " * ";
+    }
+    os() << "sizeof(" << gen(tensor.dtype()) << "));" << std::endl;
+}
+
 bool CodeGenCUDA::inKernel() const {
     return streamStack_.back().name_ != "default";
 }
@@ -458,7 +469,7 @@ void CodeGenCUDA::visit(const MatMul &op) {
 }
 
 std::string codeGenCUDA(const Func &func) {
-    CodeGenCUDA visitor(func->params_);
+    CodeGenCUDA visitor(func->params_, func->returns_);
     auto &&op = func->body_;
     visitor.beginBlock();
     visitor(op);
@@ -477,7 +488,8 @@ extern "C" {
 
     auto body = visitor.toString([&](const CodeGenCUDA::Stream &stream) {
         if (stream.name_ == "default") {
-            return "void run(void **_params, GPUContext_t _ctx) " +
+            return "void run(void **_params, void **_returns, size_t "
+                   "*_retSizes, GPUContext_t _ctx) " +
                    stream.os_.str();
         } else {
             const auto &dim = stream.threadDim_;

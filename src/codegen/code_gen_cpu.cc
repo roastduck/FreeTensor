@@ -18,6 +18,17 @@ static char genMKLTypeMark(DataType dtype) {
 
 #endif
 
+void CodeGenCPU::genAlloc(const Tensor &tensor, const std::string &rawPtr,
+                          const std::string &sizePtr) {
+    makeIndent();
+    os() << rawPtr << " = malloc(" << sizePtr << " = ";
+    for (auto &&dim : tensor.shape()) {
+        (*this)(dim);
+        os() << " * ";
+    }
+    os() << "sizeof(" << gen(tensor.dtype()) << "));" << std::endl;
+}
+
 void CodeGenCPU::visit(const VarDef &op) {
     if (op->buffer_->atype() == AccessType::Cache) {
         auto &&tensor = op->buffer_->tensor();
@@ -176,7 +187,7 @@ void CodeGenCPU::visit(const MatMul &op) {
 }
 
 std::string codeGenCPU(const Func &func) {
-    CodeGenCPU visitor(func->params_);
+    CodeGenCPU visitor(func->params_, func->returns_);
     auto &&op = func->body_;
     visitor.beginBlock();
     visitor(op);
@@ -193,14 +204,15 @@ extern "C" {
 )~~~";
 
     auto body = visitor.toString([&](const CodeGenStream &stream) {
-        std::string s =
-            "void __attribute__ ((noinline)) _run(void **_params) " +
-            stream.os_.str();
+        std::string s = "void __attribute__ ((noinline)) _run(void **_params, "
+                        "void **_returns, size_t *_retSizes) " +
+                        stream.os_.str();
         s += "\n";
-        s += "void run(void **_params, CPUContext_t _ctx) {\n";
+        s += "void run(void **_params, void **_returns, size_t *_retSizes, "
+             "CPUContext_t _ctx) {\n";
         s += "  _ctx->setStackLim(" + std::to_string(visitor.stackSize()) +
              ");\n";
-        s += "  _run(_params);\n";
+        s += "  _run(_params, _returns, _retSizes);\n";
         s += "}";
         return s;
     });

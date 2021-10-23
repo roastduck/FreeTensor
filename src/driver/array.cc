@@ -21,6 +21,11 @@ Array::Array(size_t nElem, DataType dtype, const Device &device)
     }
 }
 
+// Move from raw pointer. Use with cautious
+Array::Array(void *ptr, size_t size, DataType dtype, const Device &device)
+    : ptr_((uint8_t *)ptr), size_(size), nElem_(size / sizeOf(dtype)),
+      dtype_(dtype), device_(device) {}
+
 Array::~Array() {
     if (ptr_ != nullptr) {
         switch (device_.type()) {
