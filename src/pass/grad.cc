@@ -1,5 +1,6 @@
 #include <analyze/all_defs.h>
 #include <analyze/all_no_reuse_defs.h>
+#include <cursor.h>
 #include <pass/grad.h>
 #include <pass/output_intermediates.h>
 #include <pass/prop_const.h>
@@ -382,22 +383,33 @@ grad(const Func &func, const std::unordered_set<std::string> &requires,
     auto [forward, backward, requireGrads, provideGrads, tapeMap] =
         grad(func->body_, requires, provides, tapes);
 
-    std::vector<std::string> forwardParams = func->params_;
-    for (auto &&[oriDef, tapeName] : tapeMap) {
-        forwardParams.emplace_back(tapeName);
+    auto backwardParams = func->params_;
+    auto forwardReturns = func->returns_;
+    auto closure = func->closure_;
+    for (auto &&[_oriDef, tapeName] : tapeMap) {
+        auto &&oriDef = _oriDef;
+        auto def = getCursorByFilter(
+            func->body_, [&](const Cursor &c) { return c.id() == oriDef; });
+        ASSERT(def.size() == 1 &&
+               def.front().nodeType() == ASTNodeType::VarDef);
+        auto tapeDType =
+            def.front().node().as<VarDefNode>()->buffer_->tensor().dtype();
+        forwardReturns.emplace_back(tapeName, tapeDType);
+        backwardParams.emplace_back(tapeName);
+        closure[tapeName] = Ref<Ref<Array>>::make(nullptr);
     }
-    auto forwardFunc =
-        makeFunc(func->name_, forwardParams, func->returns_, forward);
+    auto forwardFunc = makeFunc(func->name_, func->params_,
+                                std::move(forwardReturns), forward, closure);
 
-    std::vector<std::string> backwardParams = forwardParams;
     for (auto &&[x, dzdx] : requireGrads) {
         backwardParams.emplace_back(dzdx);
     }
     for (auto &&[y, dzdy] : provideGrads) {
         backwardParams.emplace_back(dzdy);
     }
-    auto backwardFunc = makeFunc(func->name_ + ".grad", backwardParams,
-                                 func->returns_, backward);
+    auto backwardFunc =
+        makeFunc(func->name_ + ".grad", std::move(backwardParams),
+                 func->returns_, backward, closure);
 
     return std::make_tuple(forwardFunc, backwardFunc, requireGrads,
                            provideGrads, tapeMap);

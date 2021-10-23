@@ -15,9 +15,7 @@ def test_hello_world():
 
     x_np = np.zeros((4, 4), dtype="float32")
     x_arr = ir.Array(x_np, ir.Device(ir.CPU()))
-    driver = ir.Driver(func, code, ir.Device(ir.CPU()))
-    driver.set_params(x=x_arr)
-    driver.run()
+    ir.Driver(func, code, ir.Device(ir.CPU()))(x=x_arr)
     x_np = x_arr.numpy().reshape(4, 4)
 
     x_std = np.zeros((4, 4), dtype="float32")
@@ -38,9 +36,7 @@ def test_scalar_op():
     y_np = np.array(0, dtype="int32")
     x_arr = ir.Array(x_np, ir.Device(ir.CPU()))
     y_arr = ir.Array(y_np, ir.Device(ir.CPU()))
-    driver = ir.Driver(func, code, ir.Device(ir.CPU()))
-    driver.set_params(x=x_arr, y=y_arr)
-    driver.run()
+    ir.Driver(func, code, ir.Device(ir.CPU()))(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     assert y_np[()] == 11
@@ -58,9 +54,7 @@ def test_cast():
     y_np = np.array(0, dtype="int32")
     x_arr = ir.Array(x_np, ir.Device(ir.CPU()))
     y_arr = ir.Array(y_np, ir.Device(ir.CPU()))
-    driver = ir.Driver(func, code, ir.Device(ir.CPU()))
-    driver.set_params(x=x_arr, y=y_arr)
-    driver.run()
+    ir.Driver(func, code, ir.Device(ir.CPU()))(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     assert y_np[()] == 4
@@ -79,9 +73,7 @@ def test_for():
     y_np = np.zeros((4,), dtype="int32")
     x_arr = ir.Array(x_np, ir.Device(ir.CPU()))
     y_arr = ir.Array(y_np, ir.Device(ir.CPU()))
-    driver = ir.Driver(func, code, ir.Device(ir.CPU()))
-    driver.set_params(x=x_arr, y=y_arr)
-    driver.run()
+    ir.Driver(func, code, ir.Device(ir.CPU()))(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.array([2, 3, 4, 5], dtype="int32")
@@ -101,9 +93,7 @@ def test_if():
     print(code)
     y_np = np.zeros((4,), dtype="int32")
     y_arr = ir.Array(y_np, ir.Device(ir.CPU()))
-    driver = ir.Driver(func, code, ir.Device(ir.CPU()))
-    driver.set_params(y=y_arr)
-    driver.run()
+    ir.Driver(func, code, ir.Device(ir.CPU()))(y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.array([0, 0, 1, 1], dtype="int32")
@@ -130,9 +120,9 @@ def test_var_as_shape():
     x_arr = ir.Array(x_np, ir.Device(ir.CPU()))
     y_np = np.zeros((4, 4), dtype="int32")
     y_arr = ir.Array(y_np, ir.Device(ir.CPU()))
-    driver = ir.Driver(func, code, ir.Device(ir.CPU()))
-    driver.set_params(shape=shape_arr, x=x_arr, y=y_arr)
-    driver.run()
+    ir.Driver(func, code, ir.Device(ir.CPU()))(shape=shape_arr,
+                                               x=x_arr,
+                                               y=y_arr)
     y_np = y_arr.numpy().reshape(4, 4)
 
     y_std = x_np * 2
@@ -157,9 +147,7 @@ def test_var_as_index():
     x_arr = ir.Array(x_np, ir.Device(ir.CPU()))
     y_np = np.array(0, dtype="int32")
     y_arr = ir.Array(y_np, ir.Device(ir.CPU()))
-    driver = ir.Driver(func, code, ir.Device(ir.CPU()))
-    driver.set_params(idx=idx_arr, x=x_arr, y=y_arr)
-    driver.run()
+    ir.Driver(func, code, ir.Device(ir.CPU()))(idx=idx_arr, x=x_arr, y=y_arr)
     y_np = y_arr.numpy()[0]
 
     y_std = x_np[1, 2]

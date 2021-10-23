@@ -136,13 +136,25 @@ void Driver::buildAndLoad() {
 
 void Driver::setParams(const std::vector<Ref<Array>> &args,
                        const std::unordered_map<std::string, Ref<Array>> &kws) {
-    for (size_t i = 0, iEnd = args.size(); i < iEnd; i++) {
-        params_[i] = args[i]->raw();
+    for (size_t i = 0, iEnd = args.size(), j = 0; i < iEnd; i++) {
+        while (j < params_.size() && f_->closure_.count(f_->params_[j])) {
+            j++;
+        }
+        if (j >= params_.size()) {
+            throw DriverError("More arguments are given than required");
+        }
+        params_[j++] = args[i]->raw();
     }
-    for (auto &&item : kws) {
-        params_[name2param_[item.first]] = item.second->raw();
+    for (auto &&[key, value] : kws) {
+        if (f_->closure_.count(key)) {
+            throw DriverError("Enclosed parameter " + key + " cannot be set");
+        }
+        params_[name2param_[key]] = value->raw();
     }
     for (size_t i = 0, iEnd = params_.size(); i < iEnd; i++) {
+        if (f_->closure_.count(f_->params_[i])) {
+            params_[i] = (*f_->closure_.at(f_->params_[i]))->raw();
+        }
         if (params_[i] == nullptr) {
             throw DriverError("Parameter " + std::to_string(i) + " is missing");
         }
@@ -162,11 +174,15 @@ void Driver::sync() {
 }
 
 std::vector<Ref<Array>> Driver::collectReturns() {
-    sync();
     std::vector<Ref<Array>> ret;
     for (size_t i = 0, n = f_->returns_.size(); i < n; i++) {
-        ret.emplace_back(Ref<Array>::make(
-            Array(returns_[i], retSizes_[i], f_->returns_[i].second, dev_)));
+        auto val = Ref<Array>::make(
+            Array(returns_[i], retSizes_[i], f_->returns_[i].second, dev_));
+        if (f_->closure_.count(f_->returns_[i].first)) {
+            *f_->closure_.at(f_->returns_[i].first) = val;
+        } else {
+            ret.emplace_back(val);
+        }
         returns_[i] = nullptr;
         retSizes_[i] = 0;
     }

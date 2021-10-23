@@ -408,12 +408,14 @@ void init_ffi_ast(py::module_ &m) {
     py::implicitly_convertible<FrontendVar, ExprNode>();
 
     // Function
-    m.def("makeFunc",
-          static_cast<Func (*)(
-              const std::string &, const std::vector<std::string> &,
-              const std::vector<std::pair<std::string, DataType>> &,
-              const Stmt &)>(&_makeFunc),
-          "name"_a, "params"_a, "returns"_a, "body"_a);
+    m.def(
+        "makeFunc",
+        [](const std::string &name, const std::vector<std::string> &params,
+           const std::vector<std::pair<std::string, DataType>> &returns,
+           const Stmt &body) {
+            return makeFunc(name, params, returns, body, {});
+        },
+        "name"_a, "params"_a, "returns"_a, "body"_a); // no closure
 
     // Statements
     m.def("makeAny", &_makeAny);

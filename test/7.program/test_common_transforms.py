@@ -73,9 +73,7 @@ def test_tiling():
     a_arr = ir.Array(a_np, device)
     b_arr = ir.Array(b_np, device)
     c_arr = ir.Array(c_np, device)
-    driver = ir.Driver(func, code, device)
-    driver.set_params(a=a_arr, b=b_arr, c=c_arr)
-    driver.run()
+    ir.Driver(func, code, device)(a=a_arr, b=b_arr, c=c_arr)
     c_np = c_arr.numpy().reshape(256, 256)
 
     c_std = a_np @ b_np
@@ -124,9 +122,7 @@ def test_tiled_reduction():
     y_np = np.zeros((1,), dtype="float32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(func, code, device)
-    driver.set_params(x=x_arr, y=y_arr)
-    driver.run()
+    ir.Driver(func, code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.sum(x_np, keepdims=True)
@@ -181,9 +177,7 @@ def test_parallel_reduction():
     y_np = np.zeros((1,), dtype="float32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(func, code, device)
-    driver.set_params(x=x_arr, y=y_arr)
-    driver.run()
+    ir.Driver(func, code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.sum(x_np, keepdims=True)
@@ -247,8 +241,7 @@ def test_dynamic_tiling():
     b_arr = ir.Array(b_np, device)
     c_arr = ir.Array(c_np, device)
     driver = ir.Driver(func, code, device)
-    driver.set_params(n=n_arr, k=k_arr, m=m_arr, a=a_arr, b=b_arr, c=c_arr)
-    driver.run()
+    driver(n=n_arr, k=k_arr, m=m_arr, a=a_arr, b=b_arr, c=c_arr)
     c_np = c_arr.numpy().reshape(300, 500)
 
     c_std = a_np @ b_np
@@ -301,9 +294,7 @@ def test_collaborative_fetch():
     a_arr = ir.Array(a_np, device)
     b_arr = ir.Array(b_np, device)
     c_arr = ir.Array(c_np, device)
-    driver = ir.Driver(func, code, device)
-    driver.set_params(a=a_arr, b=b_arr, c=c_arr)
-    driver.run()
+    ir.Driver(func, code, device)(a=a_arr, b=b_arr, c=c_arr)
     c_np = c_arr.numpy().reshape(32, 32)
 
     c_std = a_np @ b_np
