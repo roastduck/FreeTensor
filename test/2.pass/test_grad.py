@@ -180,6 +180,63 @@ def test_multiple_statements():
     assert std.match(ast)
 
 
+def test_nested_local_def():
+    with ir.VarDef([("x1", (), "int32", "input", "cpu"),
+                    ("x2", (), "int32", "input", "cpu"),
+                    ("x3", (), "int32", "input", "cpu"),
+                    ("y1", (), "int32", "output", "cpu"),
+                    ("y2", (), "int32", "output", "cpu")]) as (x1, x2, x3, y1,
+                                                               y2):
+        with ir.VarDef("t", (), "int32", "cache", "cpu") as t:
+            with ir.VarDef("u", (), "int32", "cache", "cpu") as u:
+                u[()] = x1[()] + x2[()]
+                t[()] = u[()] * x3[()]
+                y1[()] = u[()] * x1[()]
+            y2[()] = t[()] * x2[()]
+    ast = ir.pop_ast()
+    print(ast)
+    _, ast, _, _, _ = ir.grad(ast, set(["x1", "x2", "x3"]), set(["y1", "y2"]),
+                              set())
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([("x1", (), "int32", "input", "cpu"),
+                    ("d_x1", (), "int32", "output", "cpu"),
+                    ("x2", (), "int32", "input", "cpu"),
+                    ("d_x2", (), "int32", "output", "cpu"),
+                    ("x3", (), "int32", "input", "cpu"),
+                    ("d_x3", (), "int32", "output", "cpu"),
+                    ("y1", (), "int32", "input", "cpu"),
+                    ("d_y1", (), "int32", "inout", "cpu"),
+                    ("y2", (), "int32", "input", "cpu"),
+                    ("d_y2", (), "int32", "inout", "cpu")
+                   ]) as (x1, d_x1, x2, d_x2, x3, d_x3, y1, d_y1, y2, d_y2):
+        with ir.VarDef("u", (), "int32", "cache", "cpu") as u:
+            u[()] = x1[()] + x2[()]
+            with ir.VarDef("d_y2.old", (), "int32", "cache", "cpu") as d_y2_old:
+                d_y2_old[()] = d_y2[()]
+                d_y2[()] = 0
+                with ir.VarDef("d_y1.old", (), "int32", "cache",
+                               "cpu") as d_y1_old:
+                    d_y1_old[()] = d_y1[()]
+                    d_y1[()] = 0
+                    with ir.VarDef("d_t", (), "int32", "cache", "cpu") as d_t:
+                        d_t[()] = d_y2_old[()] * x2[()] + 0
+                        d_x3[()] = d_t[()] * u[()] + 0
+                        with ir.VarDef("d_u", (), "int32", "cache",
+                                       "cpu") as d_u:
+                            d_u[(
+                            )] = d_y1_old[()] * x1[()] + 0 + d_t[()] * x3[()]
+                            d_x1[()] = d_y1_old[()] * u[()] + 0 + d_u[()]
+                            d_x2[(
+                            )] = d_y2_old[()] * (u[()] * x3[()]) + 0 + d_u[()]
+    std = ir.pop_ast()
+    print(std)
+
+    assert std.match(ast)
+
+
 def test_dependent_iterations():
     with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):

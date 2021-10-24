@@ -58,6 +58,12 @@ class ReplaceByTape : public Mutator {
     Expr visit(const Load &op) override;
 };
 
+class MakeUniqueID : public Mutator {
+  protected:
+    Stmt visitStmt(const Stmt &op,
+                   const std::function<Stmt(const Stmt &)> &visitNode) override;
+};
+
 class Grad : public Visitor {
     const std::unordered_set<std::string> &requires_;
     const std::unordered_set<std::string> &provides_;

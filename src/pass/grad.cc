@@ -2,6 +2,7 @@
 #include <analyze/all_no_reuse_defs.h>
 #include <cursor.h>
 #include <pass/grad.h>
+#include <pass/hoist_var_over_stmt_seq.h>
 #include <pass/output_intermediates.h>
 #include <pass/prop_const.h>
 #include <pass/prop_one_time_use.h>
@@ -62,6 +63,13 @@ Expr ReplaceByTape::visit(const Load &op) {
     }
 }
 
+Stmt MakeUniqueID::visitStmt(
+    const Stmt &op, const std::function<Stmt(const Stmt &)> &visitNode) {
+    auto ret = Mutator::visitStmt(op, visitNode);
+    ret->setId("");
+    return ret;
+}
+
 void Grad::visit(const StmtSeq &op) {
     Visitor::visit(op);
     std::vector<Stmt> oriStmts, gradStmts;
@@ -70,7 +78,7 @@ void Grad::visit(const StmtSeq &op) {
     for (auto it = op->stmts_.begin(); it != op->stmts_.end(); it++) {
         if (oriStmts_.count(*it)) {
             oriStmts.emplace_back(oriStmts_.at(*it));
-            gradStmts.emplace_back(oriStmts_.at(*it));
+            gradStmts.emplace_back(MakeUniqueID()(oriStmts_.at(*it)));
         }
     }
     for (auto it = op->stmts_.rbegin(); it != op->stmts_.rend(); it++) {
@@ -190,6 +198,12 @@ void Grad::visit(const VarDef &op) {
         }
 
         gradStmts_[op] = grad;
+    }
+
+    if (oriStmts_.count(op->body_)) {
+        oriStmts_[op] =
+            makeVarDef(op->id(), op->name_, *op->buffer_, op->sizeLim_,
+                       oriStmts_.at(op->body_), op->pinned_);
     }
 }
 
@@ -346,10 +360,15 @@ void Grad::visit(const Abs &op) {
 std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>>
-grad(const Stmt &op, const std::unordered_set<std::string> &requires,
+grad(const Stmt &_op, const std::unordered_set<std::string> &requires,
      const std::unordered_set<std::string> &provides,
      const std::unordered_set<std::string> &tapes) {
+
+    // expand the scope of each local variable, to avoid unnecessary recomputing
+    auto op = hoistVarOverStmtSeq(_op);
+
     auto [forward, tapeMap, loadMap] = outputIntermediates(op, tapes);
+    // loadMap contains pointers to forward. Do not modify forward
 
     PropagateRequire propagator(requires, provides);
     size_t affectCnt;
