@@ -263,6 +263,73 @@ def test_dependent_iterations():
     assert std.match(ast)
 
 
+def test_nested_loops():
+    with ir.VarDef([("x", (4,), "float32", "input", "cpu"),
+                    ("w0", (4, 4), "float32", "input", "cpu"),
+                    ("w1", (4, 4), "float32", "input", "cpu"),
+                    ("y", (4,), "float32", "output", "cpu")]) as (x, w0, w1, y):
+        with ir.VarDef("t", (4,), "float32", "cache", "cpu") as t:
+            with ir.For("i", 0, 4) as i:
+                t[i] = 0
+                with ir.For("j", 0, 4) as j:
+                    t[i] += x[j] * w0[i, j]
+            with ir.For("i", 0, 4) as i:
+                y[i] = 0
+                with ir.For("j", 0, 4) as j:
+                    y[i] += t[j] * w1[i, j]
+    ast = ir.pop_ast()
+    print(ast)
+    _, ast, _, _, _ = ir.grad(ast, set(["x", "w0", "w1"]), set(["y"]), set())
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([("x", (4,), "float32", "input", "cpu"),
+                    ("d_x", (4,), "float32", "output", "cpu"),
+                    ("w0", (4, 4), "float32", "input", "cpu"),
+                    ("d_w0", (4, 4), "float32", "output", "cpu"),
+                    ("w1", (4, 4), "float32", "input", "cpu"),
+                    ("d_w1", (4, 4), "float32", "output", "cpu"),
+                    ("y", (4,), "float32", "input", "cpu"),
+                    ("d_y", (4,), "float32", "inout", "cpu")
+                   ]) as (x, d_x, w0, d_w0, w1, d_w1, y, d_y):
+        with ir.For("i0", 0, 4) as i:
+            d_x[i] = 0
+        with ir.VarDef("t", (4,), "float32", "cache", "cpu") as t:
+            with ir.VarDef("d_t", (4,), "float32", "cache", "cpu") as d_t:
+                with ir.For("i1", 0, 4) as i:
+                    d_t[i] = 0
+                with ir.For("i", 0, 4) as i:
+                    t[i] = 0
+                    with ir.For("j", 0, 4) as j:
+                        t[i] += x[j] * w0[i, j]
+                with ir.For("i", 0, 4) as i:
+                    with ir.For("j", 0, 4) as j:
+                        with ir.VarDef("d_y_old", (), "float32", "cache",
+                                       "cpu") as d_y_old:
+                            d_y_old[()] = d_y[-1 * i + 3]
+                            d_y[-1 * i + 3] = d_y_old[()]
+                            d_t[-1 * j +
+                                3] += d_y_old[()] * w1[-1 * i + 3, -1 * j + 3]
+                            d_w1[-1 * i + 3,
+                                 -1 * j + 3] = d_y_old[()] * t[-1 * j + 3]
+                    d_y[-1 * i + 3] = 0
+                with ir.For("i", 0, 4) as i:
+                    with ir.For("j", 0, 4) as j:
+                        with ir.VarDef("d_t_old", (), "float32", "cache",
+                                       "cpu") as d_t_old:
+                            d_t_old[()] = d_t[-1 * i + 3]
+                            d_t[-1 * i + 3] = d_t_old[()]
+                            d_x[-1 * j +
+                                3] += d_t_old[()] * w0[-1 * i + 3, -1 * j + 3]
+                            d_w0[-1 * i + 3,
+                                 -1 * j + 3] = d_t_old[()] * x[-1 * j + 3]
+                    d_t[-1 * i + 3] = 0
+    std = ir.make_reduction(ir.pop_ast())
+
+    assert std.match(ast)
+
+
 def test_tape_1():
     with ir.VarDef([("x1", (), "int32", "input", "cpu"),
                     ("x2", (), "int32", "input", "cpu"),
