@@ -15,6 +15,11 @@ void FindAllParallel::visit(const For &op) {
     }
 }
 
+uint64_t MakeParallelReduction::getHash(const Expr &op) {
+    getHash_(op);
+    return getHash_.hash().at(op);
+}
+
 Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
@@ -39,9 +44,29 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
             }
         }
         for (auto &&loopId : toAlter_.at(op->id())) {
-            // TODO: Check for duplication
+            for (auto &[redOp, var, oldIndices] : forReductions_[loopId]) {
+                if (redOp == op->op_ && var == op->var_) {
+                    ASSERT(oldIndices.size() == indices.size());
+                    std::vector<SubTree<ExprNode, Nullable>> newIndices;
+                    for (size_t i = 0, n = indices.size(); i < n; i++) {
+                        if (oldIndices[i].isValid() && indices[i].isValid()) {
+                            if (getHash(oldIndices[i]) == getHash(indices[i])) {
+                                newIndices.emplace_back(indices[i]);
+                            } else {
+                                goto mismatch;
+                            }
+                        } else {
+                            newIndices.emplace_back(nullptr);
+                        }
+                    }
+                    oldIndices = std::move(newIndices);
+                    goto done;
+                }
+            mismatch:;
+            }
             forReductions_[loopId].emplace_back(
                 ReductionItem{op->op_, op->var_, std::move(indices)});
+        done:;
         }
         return op;
 
