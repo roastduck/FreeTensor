@@ -9,16 +9,6 @@
 
 namespace ir {
 
-class FindAllCacheVarDefs : public Visitor {
-    std::vector<std::string> results_;
-
-  public:
-    const std::vector<std::string> &results() const { return results_; }
-
-  protected:
-    void visit(const VarDef &op) override;
-};
-
 class ShrinkVar : public Mutator {
     std::unordered_map<std::string, std::vector<Expr>> offset_;
     const std::unordered_map<std::string, AccessBound> &newRange_;

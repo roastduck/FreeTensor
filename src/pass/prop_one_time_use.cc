@@ -1,7 +1,10 @@
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
+#include <pass/hoist_var_over_stmt_seq.h>
+#include <pass/make_reduction.h>
 #include <pass/prop_one_time_use.h>
 #include <pass/replace_uses.h>
+#include <pass/sink_var.h>
 
 namespace ir {
 
@@ -16,7 +19,17 @@ static bool sameParent(const Cursor &x, const Cursor &y) {
     return false;
 }
 
-Stmt propOneTimeUse(const Stmt &op) {
+Stmt propOneTimeUse(const Stmt &_op) {
+    auto op = makeReduction(_op);
+
+    // A new Store/ReduceTo node may contain Load nodes out of their VarDef
+    // scopes, so we have to expand those VarDef nodes. We first call
+    // hoistVarDefOverStmtSeq to expand the VarDef nodes over all the statment
+    // in a StmtSeq, and then we call RemoveWrites to update the Store/ReduceTo
+    // nodes, and finally we call sinkVars to adjust the scope of the VarDef
+    // nodes back to a proper size.
+    op = hoistVarOverStmtSeq(op);
+
     std::unordered_map<AST, std::vector<Stmt>> r2w, r2wMay;
     std::unordered_map<Stmt, std::vector<AST>> w2rMay;
     auto foundMay = [&](const Dependency &d) {
@@ -73,7 +86,8 @@ Stmt propOneTimeUse(const Stmt &op) {
         }
     }
 
-    return ReplaceUses(replaceLoad, replaceReduceTo)(op);
+    op = ReplaceUses(replaceLoad, replaceReduceTo)(op);
+    return sinkVar(op);
 }
 
 } // namespace ir

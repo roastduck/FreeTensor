@@ -1,6 +1,9 @@
 #ifndef GEN_ISL_EXPR_H
 #define GEN_ISL_EXPR_H
 
+#include <unordered_map>
+#include <unordered_set>
+
 #include <math/isl.h>
 #include <visitor.h>
 

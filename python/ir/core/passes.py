@@ -17,8 +17,11 @@ from ffi import remove_dead_var
 from ffi import make_const_shape
 from ffi import make_1d_var
 from ffi import use_builtin_div
+from ffi import cpu_lower_parallel_reduction
+from ffi import gpu_lower_parallel_reduction
 from ffi import gpu_make_sync
-from ffi import gpu_correct_shared_and_global
+from ffi import gpu_multiplex_buffers
+from ffi import gpu_simplex_buffers
 from ffi import gpu_normalize_threads
 from ffi import gpu_lower_vector
 

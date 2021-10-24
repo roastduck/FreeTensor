@@ -1,3 +1,5 @@
+#include <climits>
+
 #include <analyze/check_all_defined.h>
 #include <analyze/structural_feature.h>
 

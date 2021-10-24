@@ -7,12 +7,13 @@
 #include <cursor.h>
 #include <driver/target.h>
 #include <func.h>
+#include <schedule/fission.h>
 #include <schedule/var_split.h>
 #include <stmt.h>
 
 namespace ir {
 
-enum MoveToSide : int { Before, After };
+enum class MoveToSide : int { Before, After };
 
 class Schedule {
     Func func_;
@@ -32,7 +33,8 @@ class Schedule {
      */
     Func func() const {
         ASSERT(func_.isValid());
-        return makeFunc(func_->name_, func_->params_, ast_, func_->src_);
+        return makeFunc(func_->name_, func_->params_, func_->returns_, ast_,
+                        func_->closure_);
     }
 
     /**
@@ -122,7 +124,9 @@ class Schedule {
      * To split loop into two nested loops, use `split` instead
      *
      * @param loop : ID of the loop to be fissioned
-     * @param after : ID of the last statement of the first loop
+     * @param side : If `After`, `splitter` is the last statement of the first
+     * loop. If `Before`, `splitter` is the first statement of the second loop
+     * @param splitter : Where to fission the loop
      * @param suffix0 : ID suffix of the statements in the first loop, default
      * to ".a", can be "" for convenience, but cannot be the same with suffix1
      * @param suffix1 : ID suffix of the statements in the second loop, default
@@ -131,8 +135,8 @@ class Schedule {
      * @return : ({old ID -> new ID in 1st loop}, {old ID -> new ID in 2nd
      * loop})
      */
-    std::pair<IDMap, IDMap> fission(const std::string &loop,
-                                    const std::string &after,
+    std::pair<IDMap, IDMap> fission(const std::string &loop, FissionSide side,
+                                    const std::string &splitter,
                                     const std::string &suffix0 = ".a",
                                     const std::string &suffix1 = ".b");
 
@@ -421,7 +425,16 @@ class Schedule {
     void autoSchedule(const Target &target);
 
     /**
+     * Automatically use external libs using some heuristics
+     *
+     * @param target : Target architecture
+     */
+    void autoUseLib(const Target &target);
+
+    /**
      * Automatically fuse consecutive loops using some heuristics
+     *
+     * @param target : Target architecture
      */
     void autoFuse(const Target &target);
 
@@ -434,11 +447,15 @@ class Schedule {
 
     /**
      * Automatically set memory types using some heuristics
+     *
+     * @param target : Target architecture
      */
     void autoSetMemType(const Target &target);
 
     /**
      * Automatically unroll loops using some heuristics
+     *
+     * @param target : Target architecture
      */
     void autoUnroll(const Target &target);
 };

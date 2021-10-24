@@ -23,8 +23,8 @@ AutoSchedule::AutoSchedule(const Schedule &schedule, const Ref<Target> &target,
 }
 
 void AutoSchedule::setParams(
-    const std::vector<Array *> &args,
-    const std::unordered_map<std::string, Array *> &kws) {
+    const std::vector<Ref<Array>> &args,
+    const std::unordered_map<std::string, Ref<Array>> &kws) {
     args_ = args;
     kws_ = kws;
     paramsSet_ = true;

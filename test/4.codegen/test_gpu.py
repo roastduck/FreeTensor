@@ -37,9 +37,7 @@ def test_basic():
     y_np = np.zeros((4,), dtype="int32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(func, code, device)
-    driver.set_params(x=x_arr, y=y_arr)
-    driver.run()
+    ir.Driver(func, code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.array([2, 3, 4, 5], dtype="int32")
@@ -79,9 +77,7 @@ def test_split_by_block_and_bind():
     y_np = np.zeros((100,), dtype="int32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(func, code, device)
-    driver.set_params(x=x_arr, y=y_arr)
-    driver.run()
+    ir.Driver(func, code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.array(range(1, 101), dtype="int32")
@@ -120,9 +116,7 @@ def test_shmem():
     y_np = np.zeros((4,), dtype="int32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(func, code, device)
-    driver.set_params(x=x_arr, y=y_arr)
-    driver.run()
+    ir.Driver(func, code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.array([2, 3, 4, 5], dtype="int32")
@@ -135,7 +129,7 @@ def test_global_mem():
     def test(x, y):
         ir.declare_var(x, (4,), "int32", "input", "gpu/global")
         ir.declare_var(y, (4,), "int32", "output", "gpu/global")
-        t = ir.create_var((4,), "int32", "cache", "gpu/global")
+        t = ir.create_var((4,), "int32", "gpu/global")
         "nid: L1"
         for i in range(0, 4):
             t[i] = x[i] * 2
@@ -167,9 +161,7 @@ def test_global_mem():
     y_np = np.zeros((4,), dtype="int32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(func, code, device)
-    driver.set_params(x=x_arr, y=y_arr)
-    driver.run()
+    ir.Driver(func, code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.array([3, 5, 7, 9], dtype="int32")
@@ -185,7 +177,7 @@ def test_global_mem_in_kernel():
         ir.declare_var(y2, (4,), "int32", "output", "gpu/global")
         "nid: L1"
         for i in range(0, 4):
-            t = ir.create_var((), "int32", "cache", "gpu/global")
+            t = ir.create_var((), "int32", "gpu/global")
             t[()] = x[i] * 2
             y1[i] = t[()] + 1
             y2[i] = t[()] + 2
@@ -204,9 +196,7 @@ def test_global_mem_in_kernel():
     x_arr = ir.Array(x_np, device)
     y1_arr = ir.Array(y1_np, device)
     y2_arr = ir.Array(y2_np, device)
-    driver = ir.Driver(func, code, device)
-    driver.set_params(x=x_arr, y1=y1_arr, y2=y2_arr)
-    driver.run()
+    ir.Driver(func, code, device)(x=x_arr, y1=y1_arr, y2=y2_arr)
     y1_np = y1_arr.numpy()
     y2_np = y2_arr.numpy()
 
@@ -251,9 +241,7 @@ def test_pass_by_value_0d():
     n_arr = ir.Array(n_np, host)
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(func, code, device)
-    driver.set_params(n=n_arr, x=x_arr, y=y_arr)
-    driver.run()
+    ir.Driver(func, code, device)(n=n_arr, x=x_arr, y=y_arr)
     y_np = y_arr.numpy().reshape(5, 4)
 
     y_std = np.array([[2, 3, 4, 5]] * 5, dtype="int32")
@@ -295,9 +283,7 @@ def test_pass_by_value_1d():
     n_arr = ir.Array(n_np, host)
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(func, code, device)
-    driver.set_params(n=n_arr, x=x_arr, y=y_arr)
-    driver.run()
+    ir.Driver(func, code, device)(n=n_arr, x=x_arr, y=y_arr)
     y_np = y_arr.numpy().reshape(5, 4)
 
     y_std = np.array([[2, 3, 4, 5]] * 5, dtype="int32")
@@ -314,7 +300,7 @@ def test_dynamic_2d_array():
                 with ir.For("j", 0, n[()], nid="L2") as j:
                     y[i, j] = x[i, j] + 1
 
-    s = ir.Schedule(ir.Func("main", ["n", "x", "y"], ir.pop_ast()))
+    s = ir.Schedule(ir.Func("main", ["n", "x", "y"], [], ir.pop_ast()))
     outer, inner = s.split("L1", 4)
     s.reorder([inner, outer])
     s.parallelize(inner, "threadIdx.x")
@@ -328,9 +314,7 @@ def test_dynamic_2d_array():
     n_arr = ir.Array(n_np, host)
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(func, code, device)
-    driver.set_params(n=n_arr, x=x_arr, y=y_arr)
-    driver.run()
+    ir.Driver(func, code, device)(n=n_arr, x=x_arr, y=y_arr)
     y_np = y_arr.numpy().reshape(5, 5)
 
     y_std = x_np + 1
@@ -365,9 +349,7 @@ def test_intrinsic():
     y_np = np.zeros((4,), dtype="float32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(func, code, device)
-    driver.set_params(x=x_arr, y=y_arr)
-    driver.run()
+    ir.Driver(func, code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.array(np.sin(x_np), dtype="float32")
@@ -382,7 +364,7 @@ def test_syncthreads():
         ir.declare_var(y, (4, 256), "int32", "output", "gpu/global")
         "nid: L0"
         for i in range(0, 4):
-            t = ir.create_var((256,), "int32", "cache", "gpu/shared")
+            t = ir.create_var((256,), "int32", "gpu/shared")
             "nid: L1"
             for j in range(0, 256):
                 t[j] = x[i, j] * 2
@@ -428,9 +410,7 @@ def test_syncthreads():
     y_np = np.zeros((4, 256), dtype="int32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(func, code, device)
-    driver.set_params(x=x_arr, y=y_arr)
-    driver.run()
+    ir.Driver(func, code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy().reshape(4, 256)
 
     y_std = np.array([range(511, -1, -2)] * 4, dtype="int32")
@@ -446,7 +426,7 @@ def test_syncthreads_in_loop():
         "nid: L0"
         for i in range(0, 4):
             for p in range(0, 5):
-                t = ir.create_var((256,), "int32", "cache", "gpu/shared")
+                t = ir.create_var((256,), "int32", "gpu/shared")
                 "nid: L1"
                 for j in range(0, 256):
                     t[j] = x[i, j] * p
@@ -485,7 +465,7 @@ def test_syncthreads_at_outer_loop():
         ir.declare_var(y, (4, 5, 256), "int32", "output", "gpu/global")
         "nid: L0"
         for i in range(0, 4):
-            t = ir.create_var((256,), "int32", "cache", "gpu/shared")
+            t = ir.create_var((256,), "int32", "gpu/shared")
             "nid: L1"
             for j in range(0, 256):
                 t[j] = x[i, j]
@@ -525,12 +505,12 @@ def test_syncthreads_not_at_outer_loop():
         ir.declare_var(y, (4, 5, 256), "int32", "output", "gpu/global")
         "nid: L0"
         for i in range(0, 4):
-            t0 = ir.create_var((256,), "int32", "cache", "gpu/shared")
+            t0 = ir.create_var((256,), "int32", "gpu/shared")
             "nid: L1"
             for j in range(0, 256):
                 t0[j] = x0[i, j]
             for p in range(0, 5):
-                t1 = ir.create_var((256,), "int32", "cache", "gpu/shared")
+                t1 = ir.create_var((256,), "int32", "gpu/shared")
                 "nid: L2"
                 for j in range(0, 256):
                     t1[j] = x1[i, p, j]
@@ -576,7 +556,7 @@ def test_syncthreads_at_outer_branch():
         ir.declare_var(y, (4,), "int32", "output", "gpu/global")
         "nid: L0"
         for i in range(0, 4):
-            t = ir.create_var((1,), "int32", "cache", "gpu/shared")
+            t = ir.create_var((1,), "int32", "gpu/shared")
             "nid: L1"
             for j in range(0, 256):
                 t[0] = t[0] + x[i, j]  # Atomic reduction
@@ -610,7 +590,7 @@ def test_syncthreads_at_outer_loop_and_outer_branch():
         ir.declare_var(y, (4, 5, 256), "int32", "output", "gpu/global")
         "nid: L0"
         for i in range(0, 4):
-            t = ir.create_var((256,), "int32", "cache", "gpu/shared")
+            t = ir.create_var((256,), "int32", "gpu/shared")
             "nid: L1"
             for j in range(0, 256):
                 t[j] = x[i, j]
@@ -651,7 +631,7 @@ def test_syncthreads_split_branch():
         ir.declare_var(z, (4,), "int32", "inout", "gpu/global")
         "nid: L0"
         for i in range(0, 4):
-            t = ir.create_var((1,), "int32", "cache", "gpu/shared")
+            t = ir.create_var((1,), "int32", "gpu/shared")
             "nid: L1"
             for j in range(0, 256):
                 t[0] = t[0] + x[i, j]  # Atomic reduction
@@ -694,7 +674,7 @@ def test_syncthreads_split_branch_out_of_const_loop():
                 if i * 4 + j < 10:
                     'nid: L2'
                     for k in range(10):
-                        t = ir.create_var((2,), "int32", "cache", "gpu/shared")
+                        t = ir.create_var((2,), "int32", "gpu/shared")
                         'nid: L3'
                         for p in range(32):
                             t[p % 2] += x[i * 4 + j, k, p]
@@ -735,7 +715,7 @@ def test_syncthreads_split_branch_with_else():
         ir.declare_var(z, (4,), "int32", "inout", "gpu/global")
         "nid: L0"
         for i in range(0, 4):
-            t = ir.create_var((2,), "int32", "cache", "gpu/shared")
+            t = ir.create_var((2,), "int32", "gpu/shared")
             if i < 2:
                 "nid: L1"
                 for j in range(0, 256):
@@ -797,11 +777,11 @@ def test_syncthreads_split_branch_and_vardef():
         ir.declare_var(z2, (4,), "int32", "inout", "gpu/global")
         "nid: L0"
         for i in range(0, 4):
-            t = ir.create_var((1,), "int32", "cache", "gpu/shared")
+            t = ir.create_var((1,), "int32", "gpu/shared")
             "nid: L1"
             for j in range(0, 256):
                 t[0] = t[0] + x[i, j]  # Atomic reduction
-            u = ir.create_var((1,), "int32", "cache", "gpu/local")
+            u = ir.create_var((1,), "int32", "gpu/local")
             u[0] = z1[i] * 2
             y[i] = t[0]
             z1[i] = u[0] + 1
@@ -846,12 +826,12 @@ def test_syncthreads_split_branch_and_vardef_with_else():
         ir.declare_var(z2, (4,), "int32", "inout", "gpu/global")
         "nid: L0"
         for i in range(0, 4):
-            t = ir.create_var((2,), "int32", "cache", "gpu/shared")
+            t = ir.create_var((2,), "int32", "gpu/shared")
             if i < 2:
                 "nid: L1"
                 for j in range(0, 256):
                     t[j % 2] += x[i, j]  # Atomic reduction
-                u1 = ir.create_var((1,), "int32", "cache", "gpu/local")
+                u1 = ir.create_var((1,), "int32", "gpu/local")
                 u1[0] = z1[i] * 2
                 y[i] = t[0]
                 z1[i] = u1[0] + 1
@@ -860,7 +840,7 @@ def test_syncthreads_split_branch_and_vardef_with_else():
                 "nid: L2"
                 for j in range(0, 256):
                     t[j % 2] += x[i, j] * 2  # Atomic reduction
-                u2 = ir.create_var((1,), "int32", "cache", "gpu/local")
+                u2 = ir.create_var((1,), "int32", "gpu/local")
                 u2[0] = z1[i] * 2
                 y[i] = t[0]
                 z1[i] = u2[0] + 1
@@ -925,7 +905,7 @@ def test_syncwarp():
         ir.declare_var(y, (4, 4), "int32", "output", "gpu/global")
         "nid: L0"
         for i in range(0, 4):
-            t = ir.create_var((4,), "int32", "cache", "gpu/shared")
+            t = ir.create_var((4,), "int32", "gpu/shared")
             "nid: L1"
             for j in range(0, 4):
                 t[j] = x[i, j] * 2
@@ -970,16 +950,14 @@ def test_syncwarp():
     y_np = np.zeros((4, 4), dtype="int32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(func, code, device)
-    driver.set_params(x=x_arr, y=y_arr)
-    driver.run()
+    ir.Driver(func, code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy().reshape(4, 4)
 
     y_std = np.array([[7, 5, 3, 1]] * 4, dtype="int32")
     assert np.array_equal(y_np, y_std)
 
 
-def test_correct_shared_1():
+def test_multiplex_shared_1():
 
     @ir.transform
     def test(x, y):
@@ -987,7 +965,7 @@ def test_correct_shared_1():
         ir.declare_var(y, (4, 256), "int32", "output", "gpu/global")
         "nid: L0"
         for i in range(0, 4):
-            t = ir.create_var((256,), "int32", "cache", "gpu/shared")
+            t = ir.create_var((256,), "int32", "gpu/shared")
             "nid: L1"
             for j in range(0, 256):
                 t[j] = x[i, j] * 2
@@ -1032,16 +1010,14 @@ def test_correct_shared_1():
     y_np = np.zeros((4, 256), dtype="int32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(func, code, device)
-    driver.set_params(x=x_arr, y=y_arr)
-    driver.run()
+    ir.Driver(func, code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy().reshape(4, 256)
 
     y_std = np.array([range(1, 513, 2)] * 4, dtype="int32")
     assert np.array_equal(y_np, y_std)
 
 
-def test_correct_shared_2():
+def test_multiplex_shared_2():
 
     @ir.transform
     def test(x, y):
@@ -1049,7 +1025,7 @@ def test_correct_shared_2():
         ir.declare_var(y, (4, 256), "int32", "output", "gpu/global")
         "nid: L0"
         for i in range(0, 4):
-            t = ir.create_var((256,), "int32", "cache", "gpu/shared")
+            t = ir.create_var((256,), "int32", "gpu/shared")
             "nid: L1"
             for j in range(i * 64, (i + 1) * 64):
                 t[j] = x[i, j] * 2
@@ -1078,6 +1054,114 @@ def test_correct_shared_2():
     assert ir.make_1d_var(ir.pop_ast()).match(func.body)
 
 
+def test_simplex_local_1():
+
+    @ir.transform
+    def test(x, y, z):
+        ir.declare_var(x, (10, 10, 10), "int32", "input", "gpu/global")
+        ir.declare_var(y, (10, 10, 10), "int32", "output", "gpu/global")
+        ir.declare_var(z, (10, 10, 10), "int32", "output", "gpu/global")
+        t = ir.create_var((10, 10, 10), "int32", "gpu/global")
+        'nid: Lb'
+        for b in range(10):
+            'nid: L0'
+            for i in range(10):
+                for j in range(10):
+                    t[b, i, j] = x[b, i, j] * 2
+            'nid: L1'
+            for i in range(10):
+                for j in range(10):
+                    y[b, i, j] = t[b, i, j] + 1
+            'nid: L2'
+            for i in range(10):
+                for j in range(10):
+                    z[b, i, j] = t[b, i, j] + 2
+
+    s = ir.Schedule(test)
+    s.parallelize("Lb", "blockIdx.x")
+    s.parallelize("L0", "threadIdx.x")
+    s.parallelize("L1", "threadIdx.x")
+    s.parallelize("L2", "threadIdx.x")
+    s.set_mem_type(":t", "gpu/local")
+    func = ir.lower(s.func(), target)
+    print(func)
+
+    with ir.VarDef([("x", (10, 10, 10), "int32", "input", "gpu/global"),
+                    ("y", (10, 10, 10), "int32", "output", "gpu/global"),
+                    ("z", (10, 10, 10), "int32", "output", "gpu/global")
+                   ]) as (x, y, z):
+        with ir.For(".blockIdx", 0, 10) as b:
+            with ir.For(".threadIdx.x", 0, 10) as i:
+                with ir.VarDef("t", (10,), "int32", "cache", "gpu/local") as t:
+                    with ir.For("j", 0, 10) as j:
+                        t[j] = x[b, i, j] * 2
+                    with ir.For("j", 0, 10) as j:
+                        y[b, i, j] = t[j] + 1
+                    with ir.For("j", 0, 10) as j:
+                        z[b, i, j] = t[j] + 2
+    assert ir.make_1d_var(ir.pop_ast()).match(func.body)
+
+    code = ir.codegen(func, target)
+    print(ir.debug.with_line_no(code))
+    x_np = np.random.randint(0, 100, (10, 10, 10)).astype("int32")
+    y_np = np.zeros((10, 10, 10), dtype="int32")
+    z_np = np.zeros((10, 10, 10), dtype="int32")
+    x_arr = ir.Array(x_np, device)
+    y_arr = ir.Array(y_np, device)
+    z_arr = ir.Array(z_np, device)
+    ir.Driver(func, code, device)(x=x_arr, y=y_arr, z=z_arr)
+    y_np = y_arr.numpy().reshape(10, 10, 10)
+    z_np = z_arr.numpy().reshape(10, 10, 10)
+
+    assert np.array_equal(y_np, x_np * 2 + 1)
+    assert np.array_equal(z_np, x_np * 2 + 2)
+
+
+def test_simplex_local_2():
+
+    @ir.transform
+    def test(x, y, z):
+        ir.declare_var(x, (10, 10, 10), "int32", "input", "gpu/global")
+        ir.declare_var(y, (10, 10, 10), "int32", "output", "gpu/global")
+        t = ir.create_var((10, 10, 10), "int32", "gpu/global")
+        'nid: Lb'
+        for b in range(10):
+            'nid: L0'
+            for i in range(10):
+                for j in range(10):
+                    t[b, i, j] = x[b, i, j] * 2
+                for j in range(10):
+                    t[b, i, j] += t[b, i, i]
+                    # The last dimension can be removed although accessed with i
+            'nid: L1'
+            for i in range(10):
+                for j in range(10):
+                    y[b, i, j] = t[b, i, j] + 1
+
+    s = ir.Schedule(test)
+    s.parallelize("Lb", "blockIdx.x")
+    s.parallelize("L0", "threadIdx.x")
+    s.parallelize("L1", "threadIdx.x")
+    s.set_mem_type(":t", "gpu/local")
+    func = ir.lower(s.func(), target)
+    print(func)
+
+    with ir.VarDef([
+        ("x", (10, 10, 10), "int32", "input", "gpu/global"),
+        ("y", (10, 10, 10), "int32", "output", "gpu/global"),
+    ]) as (x, y):
+        with ir.For(".blockIdx", 0, 10) as b:
+            with ir.For(".threadIdx.x", 0, 10) as i:
+                with ir.VarDef("t", (10,), "int32", "cache", "gpu/local") as t:
+                    with ir.For("j", 0, 10) as j:
+                        t[j] = x[b, i, j] * 2
+                    with ir.For("j", 0, 10) as j:
+                        t[j] += t[i]
+                    with ir.For("j", 0, 10) as j:
+                        y[b, i, j] = t[j] + 1
+    assert ir.make_1d_var(ir.make_reduction(ir.pop_ast())).match(func.body)
+
+
 def test_relax_shared_shape_to_constants():
     with ir.VarDef("n", (), "int32", "input", "byvalue") as n:
         with ir.VarDef([
@@ -1095,7 +1179,7 @@ def test_relax_shared_shape_to_constants():
                         with ir.For("j", n[()], 256, nid="L3") as j:
                             y[i, j] = 0
 
-    s = ir.Schedule(ir.Func("main", ["n", "x", "y"], ir.pop_ast()))
+    s = ir.Schedule(ir.Func("main", ["n", "x", "y"], [], ir.pop_ast()))
     s.parallelize("L0", "threadIdx.x")
     func = ir.lower(s.func(), target)
     print(func)
@@ -1125,9 +1209,7 @@ def test_relax_shared_shape_to_constants():
     n_arr = ir.Array(n_np, host)
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(func, code, device)
-    driver.set_params(n=n_arr, x=x_arr, y=y_arr)
-    driver.run()
+    ir.Driver(func, code, device)(n=n_arr, x=x_arr, y=y_arr)
     y_np = y_arr.numpy().reshape(4, 256)
 
     y_std = np.array([list(range(1, 401, 2)) + [0] * 56] * 4, dtype="int32")
@@ -1143,7 +1225,7 @@ def test_parallel_different_length():
         ir.declare_var(c, (4, 8), "int32", "output", "gpu/global")
         "nid: L0"
         for i in range(0, 4):
-            t = ir.create_var((4,), "int32", "cache", "gpu/shared")
+            t = ir.create_var((4,), "int32", "gpu/shared")
             "nid: L1"
             for j in range(0, 4):
                 t[j] = a[i, j]
@@ -1197,9 +1279,7 @@ def test_parallel_different_length():
     a_arr = ir.Array(a_np, device)
     b_arr = ir.Array(b_np, device)
     c_arr = ir.Array(c_np, device)
-    driver = ir.Driver(func, code, device)
-    driver.set_params(a=a_arr, b=b_arr, c=c_arr)
-    driver.run()
+    ir.Driver(func, code, device)(a=a_arr, b=b_arr, c=c_arr)
     c_np = c_arr.numpy().reshape(4, 8)
 
     c_std = a_np @ b_np
@@ -1215,7 +1295,7 @@ def test_parallel_broadcast():
         ir.declare_var(c, (4, 8), "int32", "output", "gpu/global")
         "nid: L0"
         for i in range(0, 4):
-            t = ir.create_var((1,), "int32", "cache", "gpu/shared")
+            t = ir.create_var((1,), "int32", "gpu/shared")
             t[0] = a[i, 0]
             "nid: L1"
             for k in range(0, 8):
@@ -1261,9 +1341,7 @@ def test_parallel_broadcast():
     a_arr = ir.Array(a_np, device)
     b_arr = ir.Array(b_np, device)
     c_arr = ir.Array(c_np, device)
-    driver = ir.Driver(func, code, device)
-    driver.set_params(a=a_arr, b=b_arr, c=c_arr)
-    driver.run()
+    ir.Driver(func, code, device)(a=a_arr, b=b_arr, c=c_arr)
     c_np = c_arr.numpy().reshape(4, 8)
 
     c_std = a_np @ b_np
@@ -1330,10 +1408,81 @@ def test_parallel_reduction():
     y_np = np.zeros((4,), dtype="int32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(func, code, device)
-    driver.set_params(x=x_arr, y=y_arr)
-    driver.run()
+    ir.Driver(func, code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
+
+    y_std = np.sum(x_np, axis=1)
+    assert np.array_equal(y_np, y_std)
+
+
+def test_parallel_reduction_on_2_vars():
+
+    @ir.transform
+    def test(x, y, z):
+        ir.declare_var(x, (4, 64), "int32", "input", "gpu/global")
+        ir.declare_var(y, (4,), "int32", "output", "gpu/global")
+        ir.declare_var(z, (4,), "int32", "output", "gpu/global")
+        "nid: L1"
+        for i in range(0, 4):
+            "nid: L2"
+            for j in range(0, 64):
+                y[i] = y[i] + x[i, j]
+                z[i] = z[i] + x[i, j] * 2
+
+    s = ir.Schedule(test)
+    s.parallelize("L1", "blockIdx.x")
+    s.parallelize("L2", "threadIdx.x")
+    func = ir.lower(s.func(), target)
+    print(func)
+
+    code = ir.codegen(func, target)
+    assert "atomicAdd" not in code
+    print(ir.debug.with_line_no(code))
+    x_np = np.random.randint(0, 100, (4, 64)).astype("int32")
+    y_np = np.zeros((4,), dtype="int32")
+    z_np = np.zeros((4,), dtype="int32")
+    x_arr = ir.Array(x_np, device)
+    y_arr = ir.Array(y_np, device)
+    z_arr = ir.Array(z_np, device)
+    ir.Driver(func, code, device)(x=x_arr, y=y_arr, z=z_arr)
+    y_np = y_arr.numpy()
+    z_np = z_arr.numpy()
+
+    y_std = np.sum(x_np, axis=1)
+    z_std = np.sum(x_np, axis=1) * 2
+    assert np.array_equal(y_np, y_std)
+    assert np.array_equal(z_np, z_std)
+
+
+def test_parallel_reduction_on_array():
+
+    @ir.transform
+    def test(x, y):
+        ir.declare_var(x, (4, 64, 64), "int32", "input", "gpu/global")
+        ir.declare_var(y, (4, 64), "int32", "output", "gpu/global")
+        "nid: L1"
+        for i in range(0, 4):
+            "nid: L2"
+            for j in range(0, 64):
+                "nid: L3"
+                for k in range(0, 64):
+                    y[i, k] = y[i, k] + x[i, j, k]
+
+    s = ir.Schedule(test)
+    s.parallelize("L1", "blockIdx.x")
+    s.parallelize("L2", "threadIdx.x")
+    func = ir.lower(s.func(), target)
+    print(func)
+
+    code = ir.codegen(func, target)
+    assert "atomicAdd" not in code
+    print(ir.debug.with_line_no(code))
+    x_np = np.random.randint(0, 100, (4, 64, 64)).astype("int32")
+    y_np = np.zeros((4, 64), dtype="int32")
+    x_arr = ir.Array(x_np, device)
+    y_arr = ir.Array(y_np, device)
+    ir.Driver(func, code, device)(x=x_arr, y=y_arr)
+    y_np = y_arr.numpy().reshape(4, 64)
 
     y_std = np.sum(x_np, axis=1)
     assert np.array_equal(y_np, y_std)
@@ -1374,9 +1523,7 @@ def test_atomic_reduction():
     y_np = np.zeros((4, 2), dtype="int32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(func, code, device)
-    driver.set_params(x=x_arr, y=y_arr)
-    driver.run()
+    ir.Driver(func, code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy().reshape(4, 2)
 
     y_std = np.sum(x_np.reshape((4, 32, 2)), axis=1)
@@ -1417,9 +1564,7 @@ def test_serial_reduction():
     y_np = np.zeros((4,), dtype="int32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(func, code, device)
-    driver.set_params(x=x_arr, y=y_arr)
-    driver.run()
+    ir.Driver(func, code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.sum(x_np, axis=1)
@@ -1461,9 +1606,7 @@ def test_unroll_for():
     y_np = np.zeros((4,), dtype="int32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(func, code, device)
-    driver.set_params(x=x_arr, y=y_arr)
-    driver.run()
+    ir.Driver(func, code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.sum(x_np, axis=1)
@@ -1478,7 +1621,7 @@ def test_vectorize():
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 64, nid="L2") as j:
                 y[i, j] = x[i, j] * 2
-    func = ir.Func("main", ["x", "y"], ir.pop_ast())
+    func = ir.Func("main", ["x", "y"], [], ir.pop_ast())
 
     s = ir.Schedule(func)
     s.parallelize("L1", "blockIdx.x")
@@ -1494,9 +1637,7 @@ def test_vectorize():
     y_np = np.zeros((4, 64), dtype="int32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(func, code, device)
-    driver.set_params(x=x_arr, y=y_arr)
-    driver.run()
+    ir.Driver(func, code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy().reshape(4, 64)
 
     y_std = x_np * 2
@@ -1511,7 +1652,7 @@ def test_vectorize_with_non_vector_access():
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 64, nid="L2") as j:
                 y[i, j] = x[i] * 2
-    func = ir.Func("main", ["x", "y"], ir.pop_ast())
+    func = ir.Func("main", ["x", "y"], [], ir.pop_ast())
 
     s = ir.Schedule(func)
     s.parallelize("L1", "blockIdx.x")
@@ -1527,9 +1668,7 @@ def test_vectorize_with_non_vector_access():
     y_np = np.zeros((4, 64), dtype="int32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(func, code, device)
-    driver.set_params(x=x_arr, y=y_arr)
-    driver.run()
+    ir.Driver(func, code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy().reshape(4, 64)
 
     y_std = np.broadcast_to(x_np * 2, (64, 4)).transpose()
@@ -1541,7 +1680,7 @@ def test_vectorize_use_iter():
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 64, nid="L2") as j:
                 y[i, j] = i + j
-    func = ir.Func("main", ["y"], ir.pop_ast())
+    func = ir.Func("main", ["y"], [], ir.pop_ast())
 
     s = ir.Schedule(func)
     s.parallelize("L1", "blockIdx.x")
@@ -1555,9 +1694,7 @@ def test_vectorize_use_iter():
 
     y_np = np.zeros((4, 64), dtype="int32")
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(func, code, device)
-    driver.set_params(y=y_arr)
-    driver.run()
+    driver = ir.Driver(func, code, device)(y=y_arr)
     y_np = y_arr.numpy().reshape(4, 64)
 
     y_std = np.array([[i + j for j in range(64)] for i in range(4)])
@@ -1572,7 +1709,7 @@ def test_vectorize_fallback_to_shorter_when_not_divisible():
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 62, nid="L2") as j:
                 y[i, j] = x[i, j] * 2
-    func = ir.Func("main", ["x", "y"], ir.pop_ast())
+    func = ir.Func("main", ["x", "y"], [], ir.pop_ast())
 
     s = ir.Schedule(func)
     s.parallelize("L1", "blockIdx.x")
@@ -1588,9 +1725,7 @@ def test_vectorize_fallback_to_shorter_when_not_divisible():
     y_np = np.zeros((4, 62), dtype="int32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(func, code, device)
-    driver.set_params(x=x_arr, y=y_arr)
-    driver.run()
+    ir.Driver(func, code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy().reshape(4, 62)
 
     y_std = x_np * 2
@@ -1605,7 +1740,7 @@ def test_vectorize_fallback_to_shorter_when_not_aligned():
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 64, nid="L2") as j:
                 y[i, j] = x[i, j + 2] * 2
-    func = ir.Func("main", ["x", "y"], ir.pop_ast())
+    func = ir.Func("main", ["x", "y"], [], ir.pop_ast())
 
     s = ir.Schedule(func)
     s.parallelize("L1", "blockIdx.x")
@@ -1621,9 +1756,7 @@ def test_vectorize_fallback_to_shorter_when_not_aligned():
     y_np = np.zeros((4, 64), dtype="int32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    driver = ir.Driver(func, code, device)
-    driver.set_params(x=x_arr, y=y_arr)
-    driver.run()
+    ir.Driver(func, code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy().reshape(4, 64)
 
     y_std = x_np[:, 2:] * 2
@@ -1656,9 +1789,7 @@ def test_cublas_basic():
     a_arr = ir.Array(a_np, device)
     b_arr = ir.Array(b_np, device)
     c_arr = ir.Array(c_np, device)
-    driver = ir.Driver(func, code, device)
-    driver.set_params(a=a_arr, b=b_arr, c=c_arr)
-    driver.run()
+    ir.Driver(func, code, device)(a=a_arr, b=b_arr, c=c_arr)
     c_result = c_arr.numpy().reshape(48, 72)
 
     assert np.all(np.isclose(c_result, c_np + a_np @ b_np))

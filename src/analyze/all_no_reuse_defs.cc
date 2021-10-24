@@ -12,9 +12,9 @@ allNoReuseDefs(const Stmt &_op, const std::unordered_set<AccessType> &atypes) {
     auto found = [&](const Dependency &d) { reusing.insert(d.defId()); };
     findDeps(op, {{}}, found, FindDepsMode::Dep, DEP_WAR, nullptr, true, false);
     std::vector<std::string> ret;
-    for (auto &&item : allDefs(op, atypes)) {
-        if (!reusing.count(item)) {
-            ret.emplace_back(item);
+    for (auto &&[id, name] : allDefs(op, atypes)) {
+        if (!reusing.count(id)) {
+            ret.emplace_back(id);
         }
     }
     return ret;

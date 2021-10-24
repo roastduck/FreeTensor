@@ -1,8 +1,8 @@
-#include <pass/gpu/lower_parallel_reduction.h>
+#include <pass/cpu/lower_parallel_reduction.h>
 
 namespace ir {
 
-namespace gpu {
+namespace cpu {
 
 uint64_t LowerParallelReduction::getHash(const Expr &op) {
     getHash_(op);
@@ -50,18 +50,7 @@ Stmt LowerParallelReduction::visit(const For &_op) {
     auto op = __op.as<ForNode>();
     loopStack_.pop_back();
 
-    if (op->len_->nodeType() != ASTNodeType::IntConst) {
-        ERROR("Parallel reduction on a dynamic-lengthed loop is not "
-              "supported yet");
-    }
-    auto len = op->len_.as<IntConstNode>()->val_;
-    auto nth = makeSub(makeVar(op->iter_), op->begin_);
-
-    // Note that we are before normalize_threads, so there will be no
-    // cross-thread dependencies except the reduction we are working on.
-    // Therefore, we don't have to immediately reduce the values at the ReduceTo
-    // node, and we can deal with the reduction at the end of the parallel
-    // scope.
+    std::vector<Stmt> initStmts, flushStmts;
 
     std::vector<std::string> workspaces;
     std::vector<std::vector<SubTree<ExprNode>>> workspaceShapes;
@@ -71,7 +60,6 @@ Stmt LowerParallelReduction::visit(const For &_op) {
         auto dtype = buffers_.at(var)->tensor().dtype();
         auto workspace = "__reduce_" + op->id() + "_" + std::to_string(i);
         std::vector<SubTree<ExprNode>> workspaceShape;
-        workspaceShape.emplace_back(op->len_);
         ASSERT(varIndices.size() == buffers_.at(var)->tensor().shape().size());
         for (size_t j = 0, m = varIndices.size(); j < m; j++) {
             if (!varIndices[j].isValid()) {
@@ -80,13 +68,9 @@ Stmt LowerParallelReduction::visit(const For &_op) {
             }
         }
 
-        std::vector<SubTree<ExprNode>> wIndices, wFirstIndices, flushVIndices;
-        wIndices.emplace_back(nth);
-        wFirstIndices.emplace_back(makeIntConst(0));
-        for (size_t j = 0, m = workspaceShape.size(); j < m - 1; j++) {
-            auto iter = makeVar(workspace + "." + std::to_string(j));
-            wIndices.emplace_back(iter);
-            wFirstIndices.emplace_back(iter);
+        std::vector<SubTree<ExprNode>> wIndices, flushVIndices;
+        for (size_t j = 0, m = workspaceShape.size(); j < m; j++) {
+            wIndices.emplace_back(makeVar(workspace + "." + std::to_string(j)));
         }
         for (size_t j = 0, m = varIndices.size(), k = 0; j < m; j++) {
             if (varIndices[j].isValid()) {
@@ -100,56 +84,45 @@ Stmt LowerParallelReduction::visit(const For &_op) {
             makeStore("", workspace, wIndices, neutralVal(dtype, redOp));
         auto flushStmt =
             makeReduceTo("", var, std::move(flushVIndices), redOp,
-                         makeLoad(workspace, wFirstIndices), false);
-
-        // for (int k = 1; k < len; k <<= 1)
-        //   if (nth % k == 0 && nth + k < len)
-        //     workspace[nth] += workspace[nth + k]
-        // where k = 2^p
-        //   => 2^p < len
-        //   => p < log_2 len
-        //   => p < floor(log_2(len - 1)) + 1
-        auto count = (63 - __builtin_clzll((unsigned long long)(len - 1))) + 1;
-        auto k =
-            makeIntrinsic("1 << (%)", {makeVar("__reduce_p")}, DataType::Int32);
-        auto wNextIndices = wIndices;
-        wNextIndices[0] = makeAdd(nth, k);
-        auto reduceStmt =
-            makeIf("",
-                   makeLAnd(makeEQ(makeMod(nth, makeMul(k, makeIntConst(2))),
-                                   makeIntConst(0)),
-                            makeLT(makeAdd(nth, k), op->len_)),
-                   makeReduceTo("", workspace, wIndices, redOp,
-                                makeLoad(workspace, wNextIndices), false));
-        reduceStmt = makeFor("", "__reduce_p", makeIntConst(0),
-                             makeIntConst(count), makeIntConst(count), false,
-                             ForProperty().withUnroll(), std::move(reduceStmt));
-        flushStmt = makeStmtSeq("", {reduceStmt, flushStmt});
-
-        for (size_t j = workspaceShape.size() - 2; ~j; j--) {
-            initStmt = makeFor("", workspace + "." + std::to_string(j),
-                               makeIntConst(0), workspaceShape[j + 1],
-                               workspaceShape[j + 1], false, ForProperty(),
-                               std::move(initStmt));
-            flushStmt = makeFor("", workspace + "." + std::to_string(j),
-                                makeIntConst(0), workspaceShape[j + 1],
-                                workspaceShape[j + 1], false, ForProperty(),
-                                std::move(flushStmt));
+                         makeLoad(workspace, std::move(wIndices)), false);
+        for (size_t j = workspaceShape.size() - 1; ~j; j--) {
+            initStmt =
+                makeFor("", workspace + "." + std::to_string(j),
+                        makeIntConst(0), workspaceShape[j], workspaceShape[j],
+                        false, ForProperty(), std::move(initStmt));
+            flushStmt =
+                makeFor("", workspace + "." + std::to_string(j),
+                        makeIntConst(0), workspaceShape[j], workspaceShape[j],
+                        false, ForProperty(), std::move(flushStmt));
         }
 
-        op->body_ = makeStmtSeq("", {initStmt, op->body_, flushStmt});
+        initStmts.emplace_back(std::move(initStmt));
+        flushStmts.emplace_back(std::move(flushStmt));
+
+        std::vector<SubTree<ExprNode, Nullable>> workspaceIndices;
+        ASSERT(varIndices.size() == buffers_.at(var)->tensor().shape().size());
+        for (size_t j = 0, m = varIndices.size(); j < m; j++) {
+            if (!varIndices[j].isValid()) {
+                workspaceIndices.emplace_back(varIndices[j]);
+            }
+        }
+        var = workspace;
+        varIndices = std::move(std::move(workspaceIndices));
 
         workspaces.emplace_back(std::move(workspace));
         workspaceShapes.emplace_back(std::move(workspaceShape));
         dtypes.emplace_back(dtype);
     }
 
-    op->property_.reductions_.clear();
-    Stmt ret = op;
-    for (size_t i = 0, n = workspaces.size(); i < n; i++) {
+    std::vector<Stmt> stmts;
+    stmts.insert(stmts.end(), initStmts.begin(), initStmts.end());
+    stmts.emplace_back(op);
+    stmts.insert(stmts.end(), flushStmts.begin(), flushStmts.end());
+    Stmt ret = makeStmtSeq("", std::move(stmts));
+    for (size_t i = 0, n = op->property_.reductions_.size(); i < n; i++) {
         ret = makeVarDef("", workspaces[i],
                          Buffer(Tensor(workspaceShapes[i], dtypes[i]),
-                                AccessType::Cache, MemType::GPUShared),
+                                AccessType::Cache, MemType::CPU),
                          nullptr, ret, false);
     }
 
@@ -170,10 +143,7 @@ Stmt LowerParallelReduction::visit(const ReduceTo &_op) {
         auto &&redLoop = redLoops.front();
         auto workspace = "__reduce_" + redLoop.first->id() + "_" +
                          std::to_string(redLoop.second);
-        auto nth =
-            makeSub(makeVar(redLoop.first->iter_), redLoop.first->begin_);
         std::vector<SubTree<ExprNode>> indices;
-        indices.emplace_back(nth);
         auto &&redIndices =
             redLoop.first->property_.reductions_[redLoop.second].indices_;
         ASSERT(op->indices_.size() == redIndices.size());
@@ -189,6 +159,6 @@ Stmt LowerParallelReduction::visit(const ReduceTo &_op) {
     return op;
 }
 
-} // namespace gpu
+} // namespace cpu
 
 } // namespace ir

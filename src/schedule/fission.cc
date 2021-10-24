@@ -7,8 +7,13 @@ namespace ir {
 
 Stmt HoistVar::visitStmt(const Stmt &op,
                          const std::function<Stmt(const Stmt &)> &visitNode) {
+    if (!before_.empty()) {
+        isAfter_ |= op->id() == before_;
+    }
     auto ret = Mutator::visitStmt(op, visitNode);
-    isAfter_ |= op->id() == after_;
+    if (!after_.empty()) {
+        isAfter_ |= op->id() == after_;
+    }
     return ret;
 }
 
@@ -48,9 +53,15 @@ Stmt HoistVar::visit(const StmtSeq &op) {
     } else {
         std::vector<Stmt> before, after;
         for (auto &&_stmt : op->stmts_) {
-            bool oldIsAfter = isAfter_;
+            bool thisIsAfter = false;
+            if (!after.empty()) {
+                thisIsAfter = isAfter_;
+            }
             auto stmt = (*this)(_stmt);
-            (oldIsAfter ? after : before).emplace_back(stmt);
+            if (!before.empty()) {
+                thisIsAfter = isAfter_;
+            }
+            (thisIsAfter ? after : before).emplace_back(stmt);
         }
         Stmt ret;
         if (after.empty()) {
@@ -149,9 +160,15 @@ Stmt AddDimToVar::visit(const ReduceTo &_op) {
 
 Stmt FissionFor::visitStmt(const Stmt &op,
                            const std::function<Stmt(const Stmt &)> &visitNode) {
+    if (!before_.empty()) {
+        isAfter_ |= op->id() == before_;
+    }
+    if (inside_) {
+        anyInside_ |= (isPart0_ && !isAfter_) || (!isPart0_ && isAfter_);
+    }
     auto ret = Mutator::visitStmt(op, visitNode);
-    if (op->id() == after_) {
-        isAfter_ = true;
+    if (!after_.empty()) {
+        isAfter_ |= op->id() == after_;
     }
     return ret;
 }
@@ -179,9 +196,9 @@ Stmt FissionFor::visit(const For &op) {
         auto end = (*this)(op->end_);
         auto len = (*this)(op->len_);
         inside_ = true;
-        isPart0_ = true, inPart_ = true, isAfter_ = false;
+        isPart0_ = true, isAfter_ = false, anyInside_ = false;
         auto part0 = (*this)(op->body_);
-        isPart0_ = false, inPart_ = false, isAfter_ = false;
+        isPart0_ = false, isAfter_ = false, anyInside_ = false;
         auto part1 = (*this)(op->body_);
         inside_ = false;
         auto for0 = makeFor(op->id(), op->iter_, begin, end, len, op->noDeps_,
@@ -201,13 +218,13 @@ Stmt FissionFor::visit(const StmtSeq &op) {
         std::vector<Stmt> stmts;
         stmts.reserve(op->stmts_.size());
         for (auto &&_stmt : op->stmts_) {
-            bool beforeInPart = inPart_;
+            auto oldAnyInside = anyInside_;
+            anyInside_ = false;
             auto stmt = (*this)(_stmt);
-            bool afterInPart = inPart_;
-            if (beforeInPart || afterInPart) {
+            if (anyInside_) {
                 stmts.emplace_back(stmt);
             }
-            inPart_ = (isAfter_ && !isPart0_) || (!isAfter_ && isPart0_);
+            anyInside_ |= oldAnyInside;
         }
         if (stmts.size() == 1) {
             return stmts[0]; // id already modified
@@ -234,7 +251,7 @@ Stmt FissionFor::visit(const VarDef &_op) {
 }
 
 Stmt FissionFor::visit(const Store &op) {
-    if (inPart_) {
+    if (inPart()) {
         varUses_.insert(op->var_);
     }
     auto ret = Mutator::visit(op);
@@ -245,14 +262,14 @@ Stmt FissionFor::visit(const Store &op) {
 }
 
 Expr FissionFor::visit(const Load &op) {
-    if (inPart_) {
+    if (inPart()) {
         varUses_.insert(op->var_);
     }
     return Mutator::visit(op);
 }
 
 Stmt FissionFor::visit(const ReduceTo &op) {
-    if (inPart_) {
+    if (inPart()) {
         varUses_.insert(op->var_);
     }
     auto ret = Mutator::visit(op);
@@ -280,20 +297,24 @@ Stmt FissionFor::visit(const Assert &op) {
 
 std::pair<Stmt, std::pair<std::unordered_map<std::string, std::string>,
                           std::unordered_map<std::string, std::string>>>
-fission(const Stmt &_ast, const std::string &loop, const std::string &after,
-        const std::string &suffix0, const std::string &suffix1) {
+fission(const Stmt &_ast, const std::string &loop, FissionSide side,
+        const std::string &splitter, const std::string &suffix0,
+        const std::string &suffix1) {
     // FIXME: Check the condition is not variant when splitting an If
 
     if (suffix0 == suffix1) {
         throw InvalidSchedule("suffix0 cannot be the same with suffix1");
     }
 
-    HoistVar hoist(loop, after);
-    FissionFor mutator(loop, after, suffix0, suffix1);
+    HoistVar hoist(loop, side == FissionSide::Before ? splitter : "",
+                   side == FissionSide::After ? splitter : "");
+    FissionFor mutator(loop, side == FissionSide::Before ? splitter : "",
+                       side == FissionSide::After ? splitter : "", suffix0,
+                       suffix1);
 
     auto ast = hoist(_ast);
     if (!hoist.found()) {
-        throw InvalidSchedule("Split point " + after + " not found inside " +
+        throw InvalidSchedule("Split point " + splitter + " not found inside " +
                               loop);
     }
     auto &&xLoops = hoist.xLoops();

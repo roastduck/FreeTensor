@@ -2,12 +2,14 @@
 #define IR_LOWER_H
 
 #include <driver/target.h>
+#include <pass/cpu/lower_parallel_reduction.h>
 #include <pass/float_simplify.h>
-#include <pass/gpu/correct_shared_and_global.h>
 #include <pass/gpu/lower_parallel_reduction.h>
 #include <pass/gpu/lower_vector.h>
 #include <pass/gpu/make_sync.h>
+#include <pass/gpu/multiplex_buffers.h>
 #include <pass/gpu/normalize_threads.h>
+#include <pass/gpu/simplex_buffers.h>
 #include <pass/make_1d_var.h>
 #include <pass/make_const_shape.h>
 #include <pass/make_parallel_reduction.h>
@@ -48,20 +50,21 @@ template <class T> T lower(const T &t, const Ref<Target> &target) {
 
             // TODO: Support dynamic shared memory size, but the size should be
             // determined outside of kernels
-            func = gpu::correctSharedAndGlobal(func);
+            func = gpu::multiplexBuffers(func);
+            func = gpu::simplexBuffers(func);
             // FIXME: MemType::GPUGlobal should also be make const, but only
             // inside a kernel
             func =
                 makeConstShape(func, std::vector<MemType>{MemType::GPUShared,
                                                           MemType::GPULocal});
-            func = gpu::normalizeThreads(func); // After gpu_correct_shared
+            func = gpu::normalizeThreads(func); // After gpu_multiplex_buffers
             func = gpu::makeSync(func);         // After gpu_normalize_threads
             func = make1dVar(func);
             func = gpu::lowerVector(func); // After make_1d_var
             break;
 
         case TargetType::CPU:
-            // do nothing
+            func = cpu::lowerParallelReduction(func);
             break;
 
         default:

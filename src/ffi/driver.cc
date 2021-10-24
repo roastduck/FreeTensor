@@ -50,7 +50,7 @@ void init_ffi_driver(py::module_ &m) {
         .def("target", &Device::target)
         .def("main_mem_type", &Device::mainMemType);
 
-    py::class_<Array>(m, "Array")
+    py::class_<Array, Ref<Array>>(m, "Array")
         .def(py::init([](py::array_t<float, py::array::c_style> &np,
                          const Device &device) {
             Array arr(np.size(), DataType::Float32, device);
@@ -86,17 +86,18 @@ void init_ffi_driver(py::module_ &m) {
         .def(py::init<const Func &, const std::string &, const Device &>())
         .def("set_params",
              static_cast<void (Driver::*)(
-                 const std::vector<Array *> &,
-                 const std::unordered_map<std::string, Array *> &)>(
+                 const std::vector<Ref<Array>> &,
+                 const std::unordered_map<std::string, Ref<Array>> &)>(
                  &Driver::setParams),
-             "args"_a, "kws"_a = std::unordered_map<std::string, Array *>())
+             "args"_a, "kws"_a = std::unordered_map<std::string, Ref<Array>>())
         .def("set_params",
              static_cast<void (Driver::*)(
-                 const std::unordered_map<std::string, Array *> &)>(
+                 const std::unordered_map<std::string, Ref<Array>> &)>(
                  &Driver::setParams),
              "kws"_a)
         .def("run", &Driver::run)
         .def("sync", &Driver::sync)
+        .def("collect_returns", &Driver::collectReturns)
         .def("time", &Driver::time, "rounds"_a = 10, "warmpups"_a = 3);
 }
 

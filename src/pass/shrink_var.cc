@@ -1,16 +1,10 @@
+#include <analyze/all_defs.h>
 #include <pass/isl_simplify.h>
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
 #include <pass/z3_simplify.h>
 
 namespace ir {
-
-void FindAllCacheVarDefs::visit(const VarDef &op) {
-    Visitor::visit(op);
-    if (op->buffer_->atype() == AccessType::Cache) {
-        results_.emplace_back(op->id());
-    }
-}
 
 Stmt ShrinkVar::visit(const VarDef &_op) {
     if (_op->buffer_->atype() != AccessType::Cache || _op->sizeLim_.isValid() ||
@@ -69,9 +63,7 @@ Stmt shrinkVar(const Stmt &_op) {
 
     // (2)
     std::unordered_map<std::string, AccessBound> bounds;
-    FindAllCacheVarDefs finder;
-    finder(op);
-    for (auto &&varDefId : finder.results()) {
+    for (auto &&[varDefId, name] : allDefs(op, {AccessType::Cache})) {
         bounds[varDefId] = compAccessBound(op, varDefId, lower, upper);
     }
 

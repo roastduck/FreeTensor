@@ -3,6 +3,7 @@
 
 #include <functional>
 #include <iostream>
+#include <mutex>
 #include <regex>
 #include <string>
 #include <unordered_map>
@@ -199,21 +200,20 @@ class AnalyzeDeps : public Visitor {
     const std::vector<std::string> &noDepsList_;
     const LoopVariExprMap &variantExpr_;
 
-    GenISLExprDeps genISLExpr_;
-
     const std::vector<FindDepsCond> &cond_;
     const FindDepsCallback &found_;
     const FindDepsFilter &filter_;
 
-    FindDepsMode mode_;
-    DepType depType_;
-    bool ignoreReductionWAW_;
-    bool eraseOutsideVarDef_;
+    const FindDepsMode mode_;
+    const DepType depType_;
+    const bool ignoreReductionWAW_;
+    const bool eraseOutsideVarDef_;
 
     std::unordered_map<std::string, std::string>
         defId_; // var name -> VarDef ID
 
-    ISLCtx isl_;
+    std::vector<std::function<void()>> tasks_;
+    std::mutex lock_;
 
   public:
     AnalyzeDeps(
@@ -236,35 +236,44 @@ class AnalyzeDeps : public Visitor {
           ignoreReductionWAW_(ignoreReductionWAW),
           eraseOutsideVarDef_(eraseOutsideVarDef) {}
 
-  private:
-    std::string makeIterList(const std::vector<IterAxis> &list, int n);
-    std::string makeNdList(const std::string &name, int n) const;
-    Ref<std::string> makeAccList(const std::vector<Expr> &list, RelaxMode relax,
-                                 ExternalMap &externals);
-    Ref<std::string> makeRange(const std::vector<IterAxis> &point,
-                               RelaxMode relax, ExternalMap &externals);
-    Ref<std::string> makeCond(const Expr &cond, RelaxMode relax,
-                              ExternalMap &externals);
+    const std::vector<std::function<void()>> &tasks() const { return tasks_; }
 
-    ISLMap makeAccMap(const AccessPoint &p, int iterDim, int accDim,
+  private:
+    std::string makeIterList(GenISLExprDeps &genISLExpr,
+                             const std::vector<IterAxis> &list, int n);
+    std::string makeNdList(const std::string &name, int n) const;
+    Ref<std::string> makeAccList(GenISLExprDeps &genISLExpr,
+                                 const std::vector<Expr> &list, RelaxMode relax,
+                                 ExternalMap &externals);
+    Ref<std::string> makeRange(GenISLExprDeps &genISLExpr,
+                               const std::vector<IterAxis> &point,
+                               RelaxMode relax, ExternalMap &externals);
+    Ref<std::string> makeCond(GenISLExprDeps &genISLExpr, const Expr &cond,
+                              RelaxMode relax, ExternalMap &externals);
+
+    ISLMap makeAccMap(ISLCtx &isl, GenISLExprDeps &genISLExpr,
+                      const AccessPoint &p, int iterDim, int accDim,
                       RelaxMode relax, const std::string &extSuffix,
                       ExternalMap &externals);
 
-    ISLMap makeEqForBothOps(const std::vector<std::pair<int, int>> &coord,
+    ISLMap makeEqForBothOps(ISLCtx &isl,
+                            const std::vector<std::pair<int, int>> &coord,
                             int iterDim) const;
-    ISLMap makeIneqBetweenOps(DepDirection mode, int iterId, int iterDim) const;
+    ISLMap makeIneqBetweenOps(ISLCtx &isl, DepDirection mode, int iterId,
+                              int iterDim) const;
 
-    ISLMap makeSerialToAll(int iterDim, int serialIterDim,
+    ISLMap makeSerialToAll(ISLCtx &isl, int iterDim, int serialIterDim,
                            const std::vector<IterAxis> &point) const;
     static int countSerial(const std::vector<IterAxis> &point);
 
-    ISLMap makeExternalEq(int iterDim, const std::string &ext1,
+    ISLMap makeExternalEq(ISLCtx &isl, int iterDim, const std::string &ext1,
                           const std::string &ext2);
 
-    ISLMap makeConstraintOfSingleLoop(const std::string &loop,
+    ISLMap makeConstraintOfSingleLoop(ISLCtx &isl, const std::string &loop,
                                       DepDirection mode, int iterDim);
 
-    ISLMap makeConstraintOfParallelScope(const std::string &parallel,
+    ISLMap makeConstraintOfParallelScope(ISLCtx &isl,
+                                         const std::string &parallel,
                                          DepDirection mode, int iterDim,
                                          const Ref<AccessPoint> &point,
                                          const Ref<AccessPoint> &other);
@@ -278,13 +287,13 @@ class AnalyzeDeps : public Visitor {
      *     ... = a[0]
      * There will be no dependencies of a[0] across i
      */
-    ISLMap makeEraseVarDefConstraint(const Ref<AccessPoint> &point,
+    ISLMap makeEraseVarDefConstraint(ISLCtx &isl, const Ref<AccessPoint> &point,
                                      int iterDim);
 
     /**
      * Constraint for loops that explicitly marked as no_deps by users
      */
-    ISLMap makeNoDepsConstraint(int iterDim);
+    ISLMap makeNoDepsConstraint(ISLCtx &isl, int iterDim);
 
     /*
      * Constraint for external variables inside loop
@@ -295,7 +304,7 @@ class AnalyzeDeps : public Visitor {
      * idx[i] + j must be different for the same i but different j, but
      * idx[i] + j may be the same for different i
      */
-    ISLMap makeExternalVarConstraint(const Ref<AccessPoint> &point,
+    ISLMap makeExternalVarConstraint(ISLCtx &isl, const Ref<AccessPoint> &point,
                                      const Ref<AccessPoint> &other,
                                      const ExternalMap &pExternals,
                                      const ExternalMap &oExternals,
@@ -313,6 +322,9 @@ class AnalyzeDeps : public Visitor {
      */
     void checkDep(const Ref<AccessPoint> &point,
                   const std::vector<Ref<AccessPoint>> &otherList);
+    void checkDepImpl(ISLCtx &isl, GenISLExprDeps &genISLExpr,
+                      const Ref<AccessPoint> &point,
+                      const std::vector<Ref<AccessPoint>> &otherList);
 
     template <class T> void visitStoreLike(const T &op) {
         Visitor::visit(op);

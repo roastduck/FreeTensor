@@ -5,6 +5,7 @@
 #include <unordered_set>
 
 #include <analyze/find_loop_variance.h>
+#include <analyze/hash.h>
 #include <func.h>
 #include <mutator.h>
 #include <visitor.h>
@@ -38,8 +39,14 @@ class MakeParallelReduction : public Mutator {
 
     std::unordered_map<std::string, std::string>
         paraScopes_; // For Id -> parallel
-    std::unordered_map<std::string, std::vector<std::pair<ReduceOp, Expr>>>
-        forReductions_;
+    std::unordered_map<std::string, std::vector<ReductionItem>> forReductions_;
+    std::unordered_set<std::string> defined_;
+    std::unordered_map<std::string, std::unordered_set<std::string>>
+        scopeDefined_; // For ID -> definitions at that scope
+    GetHash getHash_;
+
+  private:
+    uint64_t getHash(const Expr &op);
 
   public:
     MakeParallelReduction(
@@ -51,6 +58,7 @@ class MakeParallelReduction : public Mutator {
   protected:
     Stmt visit(const ReduceTo &op) override;
     Stmt visit(const For &op) override;
+    Stmt visit(const VarDef &op) override;
 };
 
 /**

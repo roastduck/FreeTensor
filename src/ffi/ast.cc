@@ -69,12 +69,9 @@ void init_ffi_ast(py::module_ &m) {
 
     pyFunc.def_readonly("name", &FuncNode::name_)
         .def_readonly("params", &FuncNode::params_)
-        .def_property_readonly("buffers",
-                               [](const Func &op) { return op->buffers_; })
-        .def_property_readonly("body",
-                               [](const Func &op) -> Stmt { return op->body_; })
+        .def_readonly("returns", &FuncNode::returns_)
         .def_property_readonly(
-            "src", [](const Func &op) -> py::object { return *op->src_; });
+            "body", [](const Func &op) -> Stmt { return op->body_; });
 
     py::class_<FrontendVarIdx>(m, "FrontendVarIdx")
         .def(py::init(&FrontendVarIdx::fromSingle))
@@ -411,11 +408,14 @@ void init_ffi_ast(py::module_ &m) {
     py::implicitly_convertible<FrontendVar, ExprNode>();
 
     // Function
-    m.def("makeFunc",
-          static_cast<Func (*)(const std::string &,
-                               const std::vector<std::string> &, const Stmt &,
-                               const py::object &)>(&_makeFunc),
-          "name"_a, "params"_a, "body"_a, "src"_a);
+    m.def(
+        "makeFunc",
+        [](const std::string &name, const std::vector<std::string> &params,
+           const std::vector<std::pair<std::string, DataType>> &returns,
+           const Stmt &body) {
+            return makeFunc(name, params, returns, body, {});
+        },
+        "name"_a, "params"_a, "returns"_a, "body"_a); // no closure
 
     // Statements
     m.def("makeAny", &_makeAny);
@@ -506,6 +506,8 @@ void init_ffi_ast(py::module_ &m) {
           static_cast<Expr (*)(const std::string &, const std::vector<Expr> &,
                                DataType)>(&_makeIntrinsic),
           "fmt"_a, "params"_a, "retType"_a = DataType::Void);
+
+    m.def("neutral_val", &neutralVal);
 }
 
 } // namespace ir

@@ -1,6 +1,6 @@
 #include <analyze/deps.h>
 #include <analyze/find_loop_variance.h>
-#include <pass/gpu/correct_shared_and_global.h>
+#include <pass/gpu/multiplex_buffers.h>
 
 namespace ir {
 
@@ -37,7 +37,7 @@ void FindParallelLoops::visit(const VarDef &op) {
     }
 }
 
-Stmt CorrectMutator::visit(const For &op) {
+Stmt MultiplexMutator::visit(const For &op) {
     if (op->property_.parallel_ == "threadIdx.x" ||
         op->property_.parallel_ == "threadIdx.y" ||
         op->property_.parallel_ == "threadIdx.z" ||
@@ -53,7 +53,7 @@ Stmt CorrectMutator::visit(const For &op) {
     }
 }
 
-Stmt CorrectMutator::visit(const VarDef &_op) {
+Stmt MultiplexMutator::visit(const VarDef &_op) {
     int pos = defPos_[_op->name_] = stack_.size();
     ASSERT(!defs_.count(_op->name_));
     defs_[_op->name_] = _op->id();
@@ -75,28 +75,28 @@ Stmt CorrectMutator::visit(const VarDef &_op) {
     return op;
 }
 
-Expr CorrectMutator::visit(const Load &_op) {
+Expr MultiplexMutator::visit(const Load &_op) {
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Load);
     auto op = __op.as<LoadNode>();
     return alterAccess(op);
 }
 
-Stmt CorrectMutator::visit(const Store &_op) {
+Stmt MultiplexMutator::visit(const Store &_op) {
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Store);
     auto op = __op.as<StoreNode>();
     return alterAccess(op);
 }
 
-Stmt CorrectMutator::visit(const ReduceTo &_op) {
+Stmt MultiplexMutator::visit(const ReduceTo &_op) {
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
     auto op = __op.as<ReduceToNode>();
     return alterAccess(op);
 }
 
-Stmt correctSharedAndGlobal(const Stmt &op) {
+Stmt multiplexBuffers(const Stmt &op) {
     FindParallelLoops finder;
     finder(op);
 
@@ -131,7 +131,7 @@ Stmt correctSharedAndGlobal(const Stmt &op) {
     };
     findDeps(op, conds, found, FindDepsMode::Dep, DEP_ALL, filter, true, false);
 
-    return CorrectMutator(affecting)(op);
+    return MultiplexMutator(affecting)(op);
 }
 
 } // namespace gpu
