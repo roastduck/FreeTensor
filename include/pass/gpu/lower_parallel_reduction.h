@@ -12,12 +12,14 @@ namespace ir {
 namespace gpu {
 
 class LowerParallelReduction : public Mutator {
-    std::unordered_map<uint64_t, For> expr2for_; // hash of reducing expr -> for
     std::unordered_map<std::string, Ref<Buffer>> buffers_;
+    std::vector<For> loopStack_;
     GetHash getHash_;
 
   private:
     uint64_t getHash(const Expr &op);
+
+    std::vector<std::pair<For, int>> reducedBy(const ReduceTo &op);
 
   protected:
     Stmt visit(const VarDef &op) override;

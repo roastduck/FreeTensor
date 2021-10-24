@@ -38,8 +38,7 @@ class MakeParallelReduction : public Mutator {
 
     std::unordered_map<std::string, std::string>
         paraScopes_; // For Id -> parallel
-    std::unordered_map<std::string, std::vector<std::pair<ReduceOp, Expr>>>
-        forReductions_;
+    std::unordered_map<std::string, std::vector<ReductionItem>> forReductions_;
     std::unordered_set<std::string> defined_;
     std::unordered_map<std::string, std::unordered_set<std::string>>
         scopeDefined_; // For ID -> definitions at that scope

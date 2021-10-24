@@ -67,15 +67,15 @@ void CodeGenCPU::visit(const For &op) {
         if (!op->property_.reductions_.empty()) {
             for (size_t i = 1, n = op->property_.reductions_.size(); i < n;
                  i++) {
-                if (op->property_.reductions_[i].first !=
-                    op->property_.reductions_.front().first) {
+                if (op->property_.reductions_[i].op_ !=
+                    op->property_.reductions_.front().op_) {
                     throw InvalidProgram(
                         "Reduction operators of each parallel reduction "
                         "variables should be the same in a single OpenMP loop");
                 }
             }
             os() << " reduction(";
-            switch (op->property_.reductions_.front().first) {
+            switch (op->property_.reductions_.front().op_) {
             case ReduceOp::Add:
                 os() << "+: ";
                 break;
@@ -92,12 +92,28 @@ void CodeGenCPU::visit(const For &op) {
                 ASSERT(false);
             }
             bool first = true;
-            for (auto &&[redOp, var] : op->property_.reductions_) {
+            for (auto &&[redOp, var, indices] : op->property_.reductions_) {
                 if (!first) {
                     os() << ", ";
                 }
                 first = false;
-                (*this)(var);
+                os() << var;
+                if (!indices.empty()) {
+                    os() << "[";
+                    bool first_2 = true;
+                    for (auto &&idx : indices) {
+                        if (!first_2) {
+                            os() << ", ";
+                        }
+                        first_2 = false;
+                        if (idx.isValid()) {
+                            (*this)(idx);
+                        } else {
+                            os() << ":";
+                        }
+                    }
+                    os() << "]";
+                }
             }
             os() << ")";
         }

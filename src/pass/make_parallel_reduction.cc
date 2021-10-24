@@ -20,6 +20,7 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
     auto op = __op.as<ReduceToNode>();
     if (toAlter_.count(op->id())) {
+        std::vector<SubTree<ExprNode, Nullable>> indices;
         for (auto &&loopId : toAlter_.at(op->id())) {
             if (paraScopes_.at(loopId).substr(0, 9) == "blockIdx.") {
                 // Race-free reduction among thread blocks are impossible
@@ -31,13 +32,16 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
                     goto use_atomic;
                 }
                 if (!checkAllDefined(scopeDefined_.at(loopId), idx)) {
-                    goto use_atomic;
+                    indices.emplace_back(nullptr);
+                } else {
+                    indices.emplace_back(idx);
                 }
             }
         }
         for (auto &&loopId : toAlter_.at(op->id())) {
+            // TODO: Check for duplication
             forReductions_[loopId].emplace_back(
-                op->op_, makeLoad(op->var_, op->indices_));
+                ReductionItem{op->op_, op->var_, std::move(indices)});
         }
         return op;
 
