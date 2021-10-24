@@ -97,22 +97,17 @@ void CodeGenCPU::visit(const For &op) {
                     os() << ", ";
                 }
                 first = false;
-                os() << var;
+                os() << normalizeId(var);
                 if (!indices.empty()) {
-                    os() << "[";
-                    bool first_2 = true;
                     for (auto &&idx : indices) {
-                        if (!first_2) {
-                            os() << ", ";
-                        }
-                        first_2 = false;
+                        os() << "[";
                         if (idx.isValid()) {
                             (*this)(idx);
                         } else {
                             os() << ":";
                         }
+                        os() << "]";
                     }
-                    os() << "]";
                 }
             }
             os() << ")";
