@@ -48,10 +48,31 @@ class FindAllNoDeps : public Visitor {
     void visit(const For &op) override;
 };
 
+class CountBandNodeWidth : public Visitor {
+    int width_ = 0;
+    bool lastIsLoad_ = false;
+
+  public:
+    int width() const { return width_; }
+
+  protected:
+    void visit(const Load &op) override;
+    void visit(const For &op) override;
+    void visit(const Store &op) override;
+    void visit(const ReduceTo &op) override;
+};
+
+inline int countBandNodeWidth(const Stmt &op) {
+    CountBandNodeWidth visitor;
+    visitor(op);
+    return visitor.width();
+}
+
 /**
  * Find read and write points
  */
 class FindAccessPoint : public VisitorWithCursor {
+    bool lastIsLoad_ = false;
     std::vector<IterAxis> cur_; // Current iteration point in the space
     Expr cond_;
     std::unordered_map<AST, Ref<AccessPoint>> points_;
@@ -68,6 +89,8 @@ class FindAccessPoint : public VisitorWithCursor {
     std::unordered_map<std::string, VarDef> defs_;
 
   public:
+    FindAccessPoint(const Stmt &root);
+
     const std::unordered_map<AST, Ref<AccessPoint>> &points() const {
         return points_;
     }
@@ -86,11 +109,16 @@ class FindAccessPoint : public VisitorWithCursor {
 
   private:
     template <class T> void visitStoreLike(const T &op) {
-        // For a[i] = a[i] + 1, write happens after read
-        cur_.emplace_back(makeIntConst(0), makeIntConst(0), makeIntConst(2));
         Visitor::visit(op);
 
-        cur_.back().iter_ = makeIntConst(1);
+        if (!cur_.empty() &&
+            cur_.back().iter_->nodeType() == ASTNodeType::IntConst) {
+            // top is band node
+            cur_.back().iter_ =
+                makeIntConst(cur_.back().iter_.as<IntConstNode>()->val_ + 1);
+        }
+        lastIsLoad_ = false;
+
         auto ap = Ref<AccessPoint>::make();
         *ap = {op,
                cursor(),
@@ -102,8 +130,6 @@ class FindAccessPoint : public VisitorWithCursor {
                cond_};
         points_.emplace(op, ap);
         writes_[defs_.at(op->var_)->id()].emplace_back(ap);
-
-        cur_.pop_back();
     }
 
   protected:

@@ -33,9 +33,47 @@ void FindAllNoDeps::visit(const For &op) {
     }
 }
 
+void CountBandNodeWidth::visit(const Load &op) {
+    // No recursion
+    if (!lastIsLoad_) {
+        width_++;
+        lastIsLoad_ = true;
+    }
+}
+
+void CountBandNodeWidth::visit(const For &op) {
+    (*this)(op->begin_);
+    (*this)(op->end_);
+    (*this)(op->len_);
+    width_++;
+    lastIsLoad_ = false;
+}
+
+void CountBandNodeWidth::visit(const Store &op) {
+    Visitor::visit(op);
+    width_++;
+    lastIsLoad_ = false;
+}
+
+void CountBandNodeWidth::visit(const ReduceTo &op) {
+    Visitor::visit(op);
+    width_++;
+    lastIsLoad_ = false;
+}
+
+FindAccessPoint::FindAccessPoint(const Stmt &root) {
+    if (int width = countBandNodeWidth(root); width > 1) {
+        cur_.emplace_back(makeIntConst(0), makeIntConst(0),
+                          makeIntConst(width));
+    }
+}
+
 void FindAccessPoint::visit(const VarDef &op) {
     ASSERT(!defs_.count(op->name_));
-    defAxis_[op->name_] = cur_.size();
+    defAxis_[op->name_] =
+        !cur_.empty() && cur_.back().iter_->nodeType() == ASTNodeType::IntConst
+            ? cur_.size() - 1
+            : cur_.size();
     defs_[op->name_] = op;
     Visitor::visit(op);
     defAxis_.erase(op->name_);
@@ -43,21 +81,37 @@ void FindAccessPoint::visit(const VarDef &op) {
 }
 
 void FindAccessPoint::visit(const StmtSeq &op) {
-    cur_.emplace_back(nullptr, makeIntConst(0),
-                      makeIntConst(op->stmts_.size()));
-    scope2coord_[op->id()] = cur_;
-    for (size_t i = 0, iEnd = op->stmts_.size(); i < iEnd; i++) {
-        cur_.back().iter_ = makeIntConst(i);
-        (*this)(op->stmts_[i]);
+    if (!cur_.empty() &&
+        cur_.back().iter_->nodeType() == ASTNodeType::IntConst) {
+        scope2coord_[op->id()] = cur_;
     }
-    cur_.pop_back();
+    Visitor::visit(op);
 }
 
 void FindAccessPoint::visit(const For &op) {
+    (*this)(op->begin_);
+    (*this)(op->end_);
+    (*this)(op->len_);
+
+    if (!cur_.empty() &&
+        cur_.back().iter_->nodeType() == ASTNodeType::IntConst) {
+        // top is band node
+        cur_.back().iter_ =
+            makeIntConst(cur_.back().iter_.as<IntConstNode>()->val_ + 1);
+    }
+    lastIsLoad_ = false;
+
     cur_.emplace_back(makeVar(op->iter_), op->begin_, op->end_,
                       op->property_.parallel_);
     scope2coord_[op->id()] = cur_;
-    Visitor::visit(op);
+    if (int width = countBandNodeWidth(op->body_); width > 1) {
+        cur_.emplace_back(makeIntConst(-1), makeIntConst(0),
+                          makeIntConst(width));
+        (*this)(op->body_);
+        cur_.pop_back();
+    } else {
+        (*this)(op->body_);
+    }
     cur_.pop_back();
 }
 
@@ -71,23 +125,28 @@ void FindAccessPoint::visit(const If &op) {
         (*this)(op->thenCase_);
         cond_ = oldCond;
     } else {
-        cur_.emplace_back(nullptr, makeIntConst(0), makeIntConst(2));
-        scope2coord_[op->id()] = cur_;
-        cur_.back().iter_ = makeIntConst(0);
         auto oldCond = cond_;
         cond_ =
             oldCond.isValid() ? makeLAnd(oldCond, op->cond_) : (Expr)op->cond_;
         (*this)(op->thenCase_);
-        cur_.back().iter_ = makeIntConst(1);
         cond_ = oldCond.isValid() ? makeLAnd(oldCond, makeLNot(op->cond_))
                                   : makeLNot(op->cond_);
         (*this)(op->elseCase_);
         cond_ = oldCond;
-        cur_.pop_back();
     }
 }
 
 void FindAccessPoint::visit(const Load &op) {
+    if (!cur_.empty() &&
+        cur_.back().iter_->nodeType() == ASTNodeType::IntConst) {
+        // top is band node
+        if (!lastIsLoad_) {
+            cur_.back().iter_ =
+                makeIntConst(cur_.back().iter_.as<IntConstNode>()->val_ + 1);
+        }
+    }
+    lastIsLoad_ = true;
+
     Visitor::visit(op);
     auto ap = Ref<AccessPoint>::make();
     *ap = {op,
@@ -713,7 +772,7 @@ void findDeps(const Stmt &op, const std::vector<FindDepsCond> &cond,
         return;
     }
 
-    FindAccessPoint accFinder;
+    FindAccessPoint accFinder(op);
     accFinder(op);
     FindAllNoDeps noDepsFinder;
     noDepsFinder(op);
