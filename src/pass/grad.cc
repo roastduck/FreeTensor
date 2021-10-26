@@ -131,6 +131,8 @@ Stmt Grad::visit(const VarDef &_op) {
             if ((op->buffer_->atype() != AccessType::Output &&
                  op->buffer_->atype() != AccessType::InOut) ||
                 isTape_.count(op->name_)) {
+                // We use reverse order in the init, so it can be better fused
+                // with the backward pass
                 std::vector<std::string> iters;
                 std::vector<Expr> indices;
                 int nDim = op->buffer_->tensor().shape().size();
@@ -139,7 +141,10 @@ Stmt Grad::visit(const VarDef &_op) {
                 for (int i = 0; i < nDim; i++) {
                     std::string iter =
                         "." + gradName + ".i" + std::to_string(i);
-                    indices.emplace_back(makeVar(iter));
+                    indices.emplace_back(
+                        makeSub(makeSub(op->buffer_->tensor().shape()[i],
+                                        makeIntConst(1)),
+                                makeVar(iter)));
                     iters.emplace_back(std::move(iter));
                 }
                 auto init = makeStore("", gradName, std::move(indices),

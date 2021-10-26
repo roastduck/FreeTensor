@@ -294,11 +294,11 @@ def test_nested_loops():
                     ("d_y", (4,), "float32", "inout", "cpu")
                    ]) as (x, d_x, w0, d_w0, w1, d_w1, y, d_y):
         with ir.For("i0", 0, 4) as i:
-            d_x[i] = 0
+            d_x[-1 * i + 3] = 0
         with ir.VarDef("t", (4,), "float32", "cache", "cpu") as t:
             with ir.VarDef("d_t", (4,), "float32", "cache", "cpu") as d_t:
                 with ir.For("i1", 0, 4) as i:
-                    d_t[i] = 0
+                    d_t[-1 * i + 3] = 0
                 with ir.For("i", 0, 4) as i:
                     t[i] = 0
                     with ir.For("j", 0, 4) as j:
