@@ -14,6 +14,18 @@ static void unionTo(std::unordered_map<T, V> &target,
     target.insert(other.begin(), other.end());
 }
 
+template <class T, class V>
+static std::unordered_map<T, V> intersect(const std::unordered_map<T, V> &lhs,
+                                          const std::unordered_map<T, V> &rhs) {
+    std::unordered_map<T, V> ret;
+    for (auto &&[key, value] : lhs) {
+        if (rhs.count(key)) {
+            ret.emplace(key, value);
+        }
+    }
+    return ret;
+}
+
 static std::string replaceAll(const std::string &str,
                               const std::string &toSearch,
                               const std::string &replaceStr) {
@@ -527,10 +539,10 @@ ISLMap AnalyzeDeps::makeNoDepsConstraint(ISLCtx &isl, int iterDim) {
 
 ISLMap AnalyzeDeps::makeExternalVarConstraint(
     ISLCtx &isl, const Ref<AccessPoint> &point, const Ref<AccessPoint> &other,
-    const ExternalMap &pExternals, const ExternalMap &oExternals, int iterDim) {
+    const ExternalMap &pExternals, const ExternalMap &oExternals, int iterDim,
+    const std::string &extSuffixP, const std::string &extSuffixO) {
     ISLMap ret = universeMap(spaceAlloc(isl, 0, iterDim, iterDim));
-    auto opExternals = pExternals;
-    unionTo(opExternals, oExternals);
+    auto opExternals = intersect(pExternals, oExternals);
     // We only have to add constraint for common loops of both accesses
     auto common = lca(point->cursor_, other->cursor_);
 
@@ -543,7 +555,7 @@ ISLMap AnalyzeDeps::makeExternalVarConstraint(
                     goto found;
                 }
             }
-            goto do_compute_constarint;
+            goto do_compute_constraint;
         found:;
         }
         if (!c.hasOuter()) {
@@ -553,7 +565,7 @@ ISLMap AnalyzeDeps::makeExternalVarConstraint(
     return ret;
 
     // Compute the constraint
-do_compute_constarint:
+do_compute_constraint:
     for (auto c = common;; c = c.outer()) {
         if (c.nodeType() == ASTNodeType::For) {
             for (auto &&[hash, item] : opExternals) {
@@ -566,8 +578,8 @@ do_compute_constarint:
                         scope2coord_.at(c.id()).size() - 1, iterDim);
                     auto sameExt = makeExternalEq(
                         isl, iterDim,
-                        replaceAll(item.second, "!!placeholder!!", "__ext_p"),
-                        replaceAll(item.second, "!!placeholder!!", "__ext_o"));
+                        replaceAll(item.second, "!!placeholder!!", extSuffixP),
+                        replaceAll(item.second, "!!placeholder!!", extSuffixO));
                     auto require = uni(std::move(diffIter), std::move(sameExt));
                     ret = intersect(std::move(ret), std::move(require));
                 }
@@ -657,8 +669,9 @@ void AnalyzeDeps::checkDepImpl(ISLCtx &isl, GenISLExprDeps &genISLExpr,
         }
 
         ExternalMap oExternals;
-        ISLMap omap = makeAccMap(isl, genISLExpr, *other, iterDim, accDim,
-                                 oRelax, "__ext_o", oExternals);
+        ISLMap omap =
+            makeAccMap(isl, genISLExpr, *other, iterDim, accDim, oRelax,
+                       "__ext_o" + std::to_string(i), oExternals);
         if (omap.empty()) {
             filteredIn[i] = false;
             continue;
@@ -676,7 +689,8 @@ void AnalyzeDeps::checkDepImpl(ISLCtx &isl, GenISLExprDeps &genISLExpr,
         depAll =
             intersect(std::move(depAll),
                       makeExternalVarConstraint(isl, point, other, pExternals,
-                                                oExternals, iterDim));
+                                                oExternals, iterDim, "__ext_p",
+                                                "__ext_o" + std::to_string(i)));
 
         ISLMap psDepAll = applyRange(depAll, std::move(oa2s));
         psDepAllUnion = psDepAllUnion.isValid()

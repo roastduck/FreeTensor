@@ -333,8 +333,9 @@ class AnalyzeDeps : public Visitor {
     ISLMap makeExternalVarConstraint(ISLCtx &isl, const Ref<AccessPoint> &point,
                                      const Ref<AccessPoint> &other,
                                      const ExternalMap &pExternals,
-                                     const ExternalMap &oExternals,
-                                     int iterDim);
+                                     const ExternalMap &oExternals, int iterDim,
+                                     const std::string &extSuffixP,
+                                     const std::string &extSuffixO);
 
     static const std::string &getVar(const AST &op);
 
