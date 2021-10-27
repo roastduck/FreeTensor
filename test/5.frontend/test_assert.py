@@ -8,9 +8,9 @@ def test_assert_in_ctx_stack():
 
     @ir.inline
     def bar():
-        c = ir.create_var((1,), "int32", "input", "cpu")
+        c = ir.create_var((1,), "int32", "cpu")
         for i in range(1):
-            c = ir.create_var((1,), "int32", "input", "cpu")
+            c = ir.create_var((1,), "int32", "cpu")
         c[0]
 
     @ir.inline
