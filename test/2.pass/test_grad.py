@@ -263,6 +263,32 @@ def test_dependent_iterations():
     assert std.match(ast)
 
 
+def test_atypical_loop():
+    with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("y", (), "int32", "output", "cpu")]) as (x, y):
+        with ir.For("i", -2, 2) as i:
+            y[()] = -y[()] + x[i + 2]
+    ast = ir.pop_ast()
+    print(ast)
+    _, ast, _, _, _ = ir.grad(ast, set(["x"]), set(["y"]), set())
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("d_x", (4,), "int32", "output", "cpu"),
+                    ("y", (), "int32", "input", "cpu"),
+                    ("d_y", (), "int32", "inout", "cpu")]) as (x, d_x, y, d_y):
+        with ir.For("i", -2, 2) as i:
+            with ir.VarDef("d_y.old", (), "int32", "cache", "cpu") as d_y_old:
+                d_y_old[()] = d_y[()]
+                d_y[()] = -1 * d_y_old[()]
+                d_x[-1 * i + 1] = d_y_old[()]
+    std = ir.make_reduction(ir.pop_ast())
+
+    assert std.match(ast)
+
+
 def test_nested_loops():
     with ir.VarDef([("x", (4,), "float32", "input", "cpu"),
                     ("w0", (4, 4), "float32", "input", "cpu"),

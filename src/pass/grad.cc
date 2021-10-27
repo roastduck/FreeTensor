@@ -92,9 +92,10 @@ Stmt Grad::visit(const For &op) {
         return makeFor(
             "", op->iter_, op->begin_, op->end_, op->len_, op->noDeps_,
             op->property_,
-            ReplaceVar(op->iter_,
-                       makeSub(makeSub(op->end_, makeIntConst(1)),
-                               makeVar(op->iter_)))((*this)(op->body_)));
+            ReplaceVar(
+                op->iter_,
+                makeSub(makeSub(makeAdd(op->begin_, op->end_), makeIntConst(1)),
+                        makeVar(op->iter_)))((*this)(op->body_)));
     }
 }
 
