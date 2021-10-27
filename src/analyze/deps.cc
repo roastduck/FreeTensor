@@ -542,33 +542,34 @@ ISLMap AnalyzeDeps::makeExternalVarConstraint(
     const ExternalMap &pExternals, const ExternalMap &oExternals, int iterDim,
     const std::string &extSuffixP, const std::string &extSuffixO) {
     ISLMap ret = universeMap(spaceAlloc(isl, 0, iterDim, iterDim));
-    auto opExternals = intersect(pExternals, oExternals);
     // We only have to add constraint for common loops of both accesses
     auto common = lca(point->cursor_, other->cursor_);
 
-    // If all of the loops are variant, we don't have to make the constarint at
-    // all. This will save time for ISL
-    for (auto c = common;; c = c.outer()) {
-        if (c.nodeType() == ASTNodeType::For) {
-            for (auto &&[hash, item] : opExternals) {
+    for (auto &&[hash, item] : intersect(pExternals, oExternals)) {
+        // If all of the loops are variant, we don't have to make the constraint
+        // at all. This will save time for ISL
+        for (auto c = common;; c = c.outer()) {
+            if (c.nodeType() == ASTNodeType::For) {
                 if (isVariant(variantExpr_, item.first, c.id())) {
                     goto found;
                 }
+                goto do_compute_constraint;
+            found:;
             }
-            goto do_compute_constraint;
-        found:;
+            if (!c.hasOuter()) {
+                break;
+            }
         }
-        if (!c.hasOuter()) {
-            break;
-        }
-    }
-    return ret;
+        continue;
 
-    // Compute the constraint
-do_compute_constraint:
-    for (auto c = common;; c = c.outer()) {
-        if (c.nodeType() == ASTNodeType::For) {
-            for (auto &&[hash, item] : opExternals) {
+        // Compute the constraint
+    do_compute_constraint:
+        auto require = makeExternalEq(
+            isl, iterDim,
+            replaceAll(item.second, "!!placeholder!!", extSuffixP),
+            replaceAll(item.second, "!!placeholder!!", extSuffixO));
+        for (auto c = common;; c = c.outer()) {
+            if (c.nodeType() == ASTNodeType::For) {
                 if (isVariant(variantExpr_, item.first, c.id())) {
                     // Since idx[i] must be inside loop i, we only have
                     // to call makeIneqBetweenOps, but no need to call
@@ -576,18 +577,14 @@ do_compute_constraint:
                     auto diffIter = makeIneqBetweenOps(
                         isl, DepDirection::Different,
                         scope2coord_.at(c.id()).size() - 1, iterDim);
-                    auto sameExt = makeExternalEq(
-                        isl, iterDim,
-                        replaceAll(item.second, "!!placeholder!!", extSuffixP),
-                        replaceAll(item.second, "!!placeholder!!", extSuffixO));
-                    auto require = uni(std::move(diffIter), std::move(sameExt));
-                    ret = intersect(std::move(ret), std::move(require));
+                    require = uni(std::move(diffIter), std::move(require));
                 }
             }
+            if (!c.hasOuter()) {
+                break;
+            }
         }
-        if (!c.hasOuter()) {
-            break;
-        }
+        ret = intersect(std::move(ret), std::move(require));
     }
     return ret;
 }

@@ -501,20 +501,48 @@ void Schedule::autoParallelize(const Target &target) {
                     };
                     bool childIsWarp =
                         !getCursorByFilter(loop.node(), isParallelLoop).empty();
+                    // We guarantee the following requirements in order:
                     // 1. make sure all SMs are used
-                    // 2. make sure blockDim is not too large
-                    std::string l1, l1b, l2;
+                    // 2. if there are enough threads, make sure blockDim is not
+                    // too large
+                    // If the loop length is constant, we split it only once, to
+                    // reduce redundant guards, and save time for dependency
+                    // analysis. If not, we split it twice, and merge once
+                    int numSM = 80;
+                    int maxThreads = (!parentIsWarp && !childIsWarp) ? 256 : 8;
                     // TODO: do not hard-code these numbers
-                    std::tie(l1, l2) = split(loopId, -1, 80);
-                    if (!findAll(l2).empty()) {
-                        std::tie(l1b, l2) = split(
-                            l2, (!parentIsWarp && !childIsWarp) ? 256 : 8);
-                        if (!findAll(l1b).empty()) {
-                            l1 = merge(l1, l1b);
+                    std::string l1, l1b, l2;
+                    if (auto loopNode = loop.node().as<ForNode>();
+                        loopNode->len_->nodeType() == ASTNodeType::IntConst) {
+                        auto len = loopNode->len_.as<IntConstNode>()->val_;
+                        if (len < numSM * maxThreads) {
+                            std::tie(l1, l2) = split(loopId, -1, numSM);
+                        } else {
+                            std::tie(l1, l2) = split(loopId, maxThreads);
+                        }
+                    } else {
+                        // We don't use the `nparts` mode of `split`, because it
+                        // will hinder dependency analysis. Instead, we use the
+                        // `factor` mode and then reorder. See the doc string of
+                        // `split` for details
+                        std::tie(l2, l1) = split(loopId, numSM);
+                        reorder({l1, l2});
+                        if (!findAll(l2).empty()) {
+                            std::tie(l1b, l2) = split(l2, maxThreads);
                         }
                     }
                     if (!findAll(l1).empty()) {
-                        parallelize(l1, "blockIdx.x");
+                        if (!l1b.empty() && !findAll(l1b).empty()) {
+                            // We are unable to fuse `l1` and `l1b` back to one
+                            // loop. Because the length of `l1b` is not a
+                            // constant, a division by this length will be
+                            // introduced, which is not supported by ISL and may
+                            // probably lead to false dependencies
+                            parallelize(l1, "blockIdx.y");
+                            parallelize(l1b, "blockIdx.x");
+                        } else {
+                            parallelize(l1, "blockIdx.x");
+                        }
                     }
                     if (!findAll(l2).empty()) {
                         parallelize(l2, (!parentIsWarp && !childIsWarp)
