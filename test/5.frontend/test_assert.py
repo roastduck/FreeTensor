@@ -37,6 +37,7 @@ On line {line_bar} in file {file}:
 On line {line_c} in file {file}: 
         c[0]
 """
+    print(e.value.args[0])
     assert e.value.args[0][:len(msg)] == msg
 
 
@@ -72,5 +73,6 @@ On line {line_bar} in file {file}:
         bar(a, b)
 On line {line_ab} in file {file}: 
         a @ b
-Binary operator not implemented"""
+AssertionError: Binary operator not implemented"""
+    print(e.value.args[0])
     assert e.value.args[0] == msg
