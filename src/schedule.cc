@@ -253,8 +253,12 @@ std::string Schedule::moveTo(const std::string &_stmt, MoveToSide side,
                     while (!s.hasPrev() && movingUp()) {
                         s = s.outerCtrlFlow();
                     }
-                    // TODO: Fission IfNode
-                    ASSERT(s.node()->nodeType() == ASTNodeType::For);
+                    if (s.node()->nodeType() != ASTNodeType::For) {
+                        throw InvalidSchedule(
+                            "Fission a If node in a StmtSeq is not currently "
+                            "supported in moveTo");
+                        // TODO: Fission IfNode
+                    }
                     // Leave IDs of the other statements unchanged
                     auto idMap =
                         fission(s.id(), FissionSide::After, stmt, ".a", "")
@@ -276,8 +280,12 @@ std::string Schedule::moveTo(const std::string &_stmt, MoveToSide side,
                     while (!s.hasNext() && movingDown()) {
                         s = s.outerCtrlFlow();
                     }
-                    // TODO: Fission IfNode
-                    ASSERT(s.node()->nodeType() == ASTNodeType::For);
+                    if (s.node()->nodeType() != ASTNodeType::For) {
+                        throw InvalidSchedule(
+                            "Fission a If node in a StmtSeq is not currently "
+                            "supported in moveTo");
+                        // TODO: Fission IfNode
+                    }
                     // Leave IDs of the other statements unchanged
                     auto idMap =
                         fission(s.id(), FissionSide::Before, stmt, "", ".b")
@@ -456,8 +464,7 @@ void Schedule::autoParallelize(const Target &target) {
     }
 
     // Try to merge and parallelize as many outer loops as possible
-    auto loopNestTree = getLoopNestTree(ast_);
-    for (const Ref<LoopNest> &root : loopNestTree->subLoops_) {
+    auto autoParallelizeOuter = [&](const Ref<LoopNest> &root) {
         auto latestSuccess = ast_;
         auto successLogs = logs_;
 
@@ -569,6 +576,20 @@ void Schedule::autoParallelize(const Target &target) {
         }
 
         ast_ = latestSuccess, logs_ = successLogs;
+    };
+    auto loopNestTree = getLoopNestTree(ast_);
+    for (const Ref<LoopNest> &root : loopNestTree->subLoops_) {
+        // If the outer most loop is too short, we try the second outer loops
+        // instead
+        if (root->subLoops_.size() > 1 &&
+            root->loop_->len_->nodeType() == ASTNodeType::IntConst &&
+            root->loop_->len_.as<IntConstNode>()->val_ < 32) {
+            for (const Ref<LoopNest> &root2 : root->subLoops_) {
+                autoParallelizeOuter(root2);
+            }
+        } else {
+            autoParallelizeOuter(root);
+        }
     }
 }
 

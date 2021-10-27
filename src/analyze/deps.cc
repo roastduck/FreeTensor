@@ -698,6 +698,9 @@ void AnalyzeDeps::checkDepImpl(ISLCtx &isl, GenISLExprDeps &genISLExpr,
         oIterList[i] = std::move(oIter);
         depAllList[i] = std::move(depAll);
     }
+    if (!psDepAllUnion.isValid()) {
+        return;
+    }
 
     ISLMap ssDepAll = applyRange(std::move(ps2a), psDepAllUnion);
     ISLMap ssDep = intersect(std::move(ssDepAll), std::move(serialLexGE));

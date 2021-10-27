@@ -174,8 +174,11 @@ if __name__ == '__main__':
     inference, forward, backward = compile_all(n_faces, in_feats, out_feats,
                                                ir_dev)
 
+    warmup_num = 10
     test_num = 1000
-    inference(adj, x, w0, w1, w2, w3, y)  # init lazy ops
+
+    for i in range(warmup_num):
+        inference(adj, x, w0, w1, w2, w3, y)
     t0 = time.time()
     for i in range(test_num):
         inference(adj, x, w0, w1, w2, w3, y)
@@ -183,8 +186,8 @@ if __name__ == '__main__':
 
     print(f"Inference Time = {(t1 - t0) / test_num * 1000} ms")
 
-    test_num = 1000
-    forward(adj, x, w0, w1, w2, w3, y)  # init lazy ops
+    for i in range(warmup_num):
+        forward(adj, x, w0, w1, w2, w3, y)
     t0 = time.time()
     for i in range(test_num):
         forward(adj, x, w0, w1, w2, w3, y)
@@ -192,9 +195,8 @@ if __name__ == '__main__':
 
     print(f"Forward Time = {(t1 - t0) / test_num * 1000} ms")
 
-    test_num = 1000
-    backward(adj, x, w0, w1, w2, w3, y, d_y, d_x, d_w0, d_w1, d_w2,
-             d_w3)  # init lazy ops
+    for i in range(warmup_num):
+        backward(adj, x, w0, w1, w2, w3, y, d_y, d_x, d_w0, d_w1, d_w2, d_w3)
     t0 = time.time()
     for i in range(test_num):
         backward(adj, x, w0, w1, w2, w3, y, d_y, d_x, d_w0, d_w1, d_w2, d_w3)

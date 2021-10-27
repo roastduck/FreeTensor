@@ -160,3 +160,22 @@ def test_gpu_warp_dynamic():
         "parallelize(Li.1, blockIdx.y)", "parallelize(Li.0.0, blockIdx.x)",
         "parallelize(Li.0.1, threadIdx.y)"
     ]
+
+
+def test_outer_loop_too_short():
+    with ir.VarDef([("x", (8, 1000), "int32", "input", "cpu"),
+                    ("y", (8, 1000), "int32", "output", "cpu"),
+                    ("z", (8, 1000), "int32", "output", "cpu")]) as (x, y, z):
+        with ir.For("i", 0, 8, nid="Li") as i:
+            with ir.For("j", 0, 1000, nid="Lj1") as j:
+                y[i, j] = x[i, j] + x[i, (j + 1) % 1000]
+            with ir.For("j", 0, 1000, nid="Lj2") as j:
+                z[i, j] = y[i, j] + y[i, (j + 1) % 1000]
+
+    ast = ir.pop_ast()
+    print(ast)
+    s = ir.Schedule(ast)
+    s.auto_parallelize(ir.CPU())
+    print(s.ast())
+    print(s.logs())
+    assert s.logs() == ["parallelize(Lj1, openmp)", "parallelize(Lj2, openmp)"]

@@ -127,9 +127,11 @@ if __name__ == '__main__':
     else:
         assert device == 'cpu'
 
+    warmup_num = 10
     test_num = 1000
 
-    y = conv_impl1(adj, x, w0, w1, w2, w3)  # init lazy ops
+    for i in range(warmup_num):
+        y = conv_impl1(adj, x, w0, w1, w2, w3)
     t0 = time.time()
     for i in range(test_num):
         y = conv_impl1(adj, x, w0, w1, w2, w3)
@@ -137,7 +139,8 @@ if __name__ == '__main__':
     assert y.shape == (n_faces, out_feats)
     print(f"Impl1 Inference Time = {(t1 - t0) / test_num * 1000} ms")
 
-    y = conv_impl2(adj, x, w0, w1, w2, w3)  # init lazy ops
+    for i in range(warmup_num):
+        y = conv_impl2(adj, x, w0, w1, w2, w3)
     t0 = time.time()
     for i in range(test_num):
         y = conv_impl2(adj, x, w0, w1, w2, w3)
@@ -151,7 +154,8 @@ if __name__ == '__main__':
     w2.requires_grad = True
     w3.requires_grad = True
 
-    y = conv_impl1(adj, x, w0, w1, w2, w3)  # init lazy ops
+    for i in range(warmup_num):
+        y = conv_impl1(adj, x, w0, w1, w2, w3)
     t0 = time.time()
     for i in range(test_num):
         y = conv_impl1(adj, x, w0, w1, w2, w3)
@@ -159,14 +163,16 @@ if __name__ == '__main__':
     assert y.shape == (n_faces, out_feats)
     print(f"Impl1 Forward Time = {(t1 - t0) / test_num * 1000} ms")
 
-    y.backward(d_y, retain_graph=True)
+    for i in range(warmup_num):
+        y.backward(d_y, retain_graph=True)
     t0 = time.time()
     for i in range(test_num):
         y.backward(d_y, retain_graph=True)
     t1 = time.time()
     print(f"Impl1 Backward Time = {(t1 - t0) / test_num * 1000} ms")
 
-    y = conv_impl2(adj, x, w0, w1, w2, w3)  # init lazy ops
+    for i in range(warmup_num):
+        y = conv_impl2(adj, x, w0, w1, w2, w3)
     t0 = time.time()
     for i in range(test_num):
         y = conv_impl2(adj, x, w0, w1, w2, w3)
@@ -174,7 +180,8 @@ if __name__ == '__main__':
     assert y.shape == (n_faces, out_feats)
     print(f"Impl2 Forward Time = {(t1 - t0) / test_num * 1000} ms")
 
-    y.backward(d_y, retain_graph=True)
+    for i in range(warmup_num):
+        y.backward(d_y, retain_graph=True)
     t0 = time.time()
     for i in range(test_num):
         y.backward(d_y, retain_graph=True)
