@@ -11,11 +11,16 @@ class CodeGenCPU : public CodeGenC<CodeGenStream> {
     int64_t stackTop_ = 8192 * 1024, stackSize_ = 0;
 
   public:
-    CodeGenCPU(const std::vector<std::string> &params) : CodeGenC(params) {}
+    CodeGenCPU(const std::vector<std::string> &params,
+               const std::vector<std::pair<std::string, DataType>> &returns)
+        : CodeGenC(params, returns) {}
 
     int64_t stackSize() const { return stackSize_; }
 
   protected:
+    void genAlloc(const Tensor &tensor, const std::string &rawPtr,
+                  const std::string &sizePtr) override;
+
     using CodeGenC<CodeGenStream>::visit;
     void visit(const VarDef &op) override;
     void visit(const ReduceTo &op) override;

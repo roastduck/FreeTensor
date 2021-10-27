@@ -79,7 +79,7 @@ def einsum(format):
     # FIXME: compute dtype and mtype from every inputs
     code = f'''
 def f_einsum({', '.join(params)}):
-    Y = core.create_var([{", ".join(shape)}], X0.dtype, "output", X0.mtype)
+    Y = core.create_var([{", ".join(shape)}], X0.dtype, X0.mtype)
     einsum_('{format}')({', '.join(params)}, Y)
     return Y
 '''
@@ -179,7 +179,7 @@ def gemm(has_bias: bool = False,
         @core.inline
         def f_gemm(A, B):
             Y = core.create_var(comp_shape(A, B),
-                                core.up_cast(A.dtype, B.dtype), "output",
+                                core.up_cast(A.dtype, B.dtype),
                                 core.same_mtype(A.mtype, B.mtype))
             'nid: recur'
             gemm_(has_bias, trans_A, trans_B, alpha, beta)(A, B, Y)
@@ -191,7 +191,7 @@ def gemm(has_bias: bool = False,
         def f_gemm(A, B, C):
             Y = core.create_var(
                 comp_shape(A, B),
-                core.up_cast(core.up_cast(A.dtype, B.dtype), C.dtype), "output",
+                core.up_cast(core.up_cast(A.dtype, B.dtype), C.dtype),
                 core.same_mtype(core.same_mtype(A.mtype, B.mtype), C.mtype))
             'nid: recur'
             gemm_(has_bias, trans_A, trans_B, alpha, beta)(A, B, Y)

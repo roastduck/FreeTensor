@@ -146,10 +146,18 @@ Stmt _makeReduceTo(const std::string &id, const std::string &var,
     return a;
 }
 
+struct ReductionItem {
+    ReduceOp op_;
+    std::string var_;
+    std::vector<SubTree<ExprNode, Nullable>> indices_;
+    // A null index means the full range of that dimension
+    // TODO: Support slicing
+};
+
 struct ForProperty {
     std::string parallel_;
     bool unroll_, vectorize_;
-    std::vector<std::pair<ReduceOp, Expr>> reductions_;
+    std::vector<ReductionItem> reductions_;
 
     ForProperty() : parallel_(), unroll_(false), vectorize_(false) {}
 
@@ -308,6 +316,8 @@ inline Stmt _makeMatMul(const std::string &id, const Expr &a, const Expr &b,
     s->equivalent_ = equivalent;
     return s;
 }
+
+Expr neutralVal(DataType dtype, ReduceOp op);
 
 } // namespace ir
 

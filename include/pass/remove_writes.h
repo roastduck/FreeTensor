@@ -20,13 +20,15 @@ class FindLoopInvariantWrites : public Visitor {
     std::unordered_map<std::string, VarDef> defs_;
     const std::unordered_map<
         Expr, std::unordered_map<std::string, LoopVariability>> &variantExpr_;
+    const std::string &singleDefId_;
 
   public:
     FindLoopInvariantWrites(
         const std::unordered_map<
             Expr, std::unordered_map<std::string, LoopVariability>>
-            &variantExpr)
-        : variantExpr_(variantExpr) {}
+            &variantExpr,
+        const std::string &singleDefId)
+        : variantExpr_(variantExpr), singleDefId_(singleDefId) {}
 
     const std::vector<std::tuple<VarDef, Store, Expr>> &results() const {
         return results_;
@@ -63,6 +65,9 @@ class RemoveWrites : public Mutator {
   protected:
     Stmt visit(const Store &op) override { return doVisit(op); }
     Stmt visit(const ReduceTo &op) override { return doVisit(op); }
+    Stmt visit(const StmtSeq &op) override;
+    Stmt visit(const For &op) override;
+    Stmt visit(const If &op) override;
 };
 
 /**
@@ -99,7 +104,7 @@ class RemoveWrites : public Mutator {
  * }
  * ```
  */
-Stmt removeWrites(const Stmt &op);
+Stmt removeWrites(const Stmt &op, const std::string &singleDefId = "");
 
 DEFINE_PASS_FOR_FUNC(removeWrites)
 

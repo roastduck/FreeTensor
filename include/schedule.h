@@ -7,12 +7,13 @@
 #include <cursor.h>
 #include <driver/target.h>
 #include <func.h>
+#include <schedule/fission.h>
 #include <schedule/var_split.h>
 #include <stmt.h>
 
 namespace ir {
 
-enum MoveToSide : int { Before, After };
+enum class MoveToSide : int { Before, After };
 
 class Schedule {
     Func func_;
@@ -32,7 +33,8 @@ class Schedule {
      */
     Func func() const {
         ASSERT(func_.isValid());
-        return makeFunc(func_->name_, func_->params_, ast_, func_->src_);
+        return makeFunc(func_->name_, func_->params_, func_->returns_, ast_,
+                        func_->closure_);
     }
 
     /**
@@ -80,6 +82,25 @@ class Schedule {
      *
      * To fission a loop into two consecutive loops, use `fission` instead
      *
+     * Two modes are provided:
+     *
+     * 1. Specify `factor` and leave `nparts` to -1. It will result in an outer
+     * loop with length `ceil(n / factor)`, and an inner loop with length
+     * `factor`, where `n` is the original loop length. The original iterator
+     * `i` will be transformed to `i0 * factor + i1`, where `i0` and `i1` are
+     * the iterators of the new outer and inner loops, respectively
+     * 2. Specify `nparts` and leave `factor` to -1. It will result in an
+     * outer loop with length `nparts`, and an inner loop with length `ceil(n /
+     * nparts)`, where `n` is the original loop length. The original iterator
+     * `i` will be transformed to `i0 * ceil(n / nparts) + i1`, where `i0` and
+     * `i1` are the iterators of the new outer and inner loops, respectively
+     *
+     * Please note that the second mode will introduce an `i0 * ceil(n /
+     * nparts)` factor into the program, which cannot be recognized by
+     * polyhedral analysis, which may hinder some following schedules. If
+     * possible, plese use the first mode, and then reorder the inner and outer
+     * loops
+     *
      * @param id : ID of the loop to be split
      * @param factor : Length of the inner loop. Set to -1 if using `nparts`
      * @param nparts : Length of the outer loop. Set to -1 if using `factor`
@@ -122,7 +143,9 @@ class Schedule {
      * To split loop into two nested loops, use `split` instead
      *
      * @param loop : ID of the loop to be fissioned
-     * @param after : ID of the last statement of the first loop
+     * @param side : If `After`, `splitter` is the last statement of the first
+     * loop. If `Before`, `splitter` is the first statement of the second loop
+     * @param splitter : Where to fission the loop
      * @param suffix0 : ID suffix of the statements in the first loop, default
      * to ".a", can be "" for convenience, but cannot be the same with suffix1
      * @param suffix1 : ID suffix of the statements in the second loop, default
@@ -131,8 +154,8 @@ class Schedule {
      * @return : ({old ID -> new ID in 1st loop}, {old ID -> new ID in 2nd
      * loop})
      */
-    std::pair<IDMap, IDMap> fission(const std::string &loop,
-                                    const std::string &after,
+    std::pair<IDMap, IDMap> fission(const std::string &loop, FissionSide side,
+                                    const std::string &splitter,
                                     const std::string &suffix0 = ".a",
                                     const std::string &suffix1 = ".b");
 

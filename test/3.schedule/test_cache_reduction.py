@@ -7,12 +7,11 @@ def test_reduce_sum():
                     ("y", (4, 8), "int32", "inout", "cpu")]) as (x, y):
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.For("j", 0, 8, nid="L2") as j:
-                ir.MarkNid("S0")
                 y[i, j] = y[i, j] + x[i, j] * 2
     ast = ir.pop_ast()
     print(ast)
     s = ir.Schedule(ast)
-    s.cache_reduction("S0", "y", "cpu")
+    s.cache_reduction("L2", "y", "cpu")
     ast = s.ast()
     print(ast)
     ast = ir.lower(ast)
@@ -21,10 +20,11 @@ def test_reduce_sum():
     with ir.VarDef([("x", (4, 8), "int32", "input", "cpu"),
                     ("y", (4, 8), "int32", "inout", "cpu")]) as (x, y):
         with ir.For("i", 0, 4) as i:
-            with ir.For("j", 0, 8) as j:
-                with ir.VarDef("b", (1, 1), "int32", "cache", "cpu") as b:
-                    b[0, 0] = 2 * x[i, j]  # After remove_writes pass
-                    y[i, j] = y[i, j] + b[0, 0]
+            with ir.VarDef("b", (1, 8), "int32", "cache", "cpu") as b:
+                with ir.For("j", 0, 8) as j:
+                    b[0, j] = 2 * x[i, j]  # After remove_writes pass
+                with ir.For("j1", 0, 8) as j:
+                    y[i, j] += b[0, j]
     std = ir.make_reduction(ir.pop_ast())
 
     assert std.match(ast)

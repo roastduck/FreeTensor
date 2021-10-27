@@ -14,6 +14,18 @@ static void unionTo(std::unordered_map<T, V> &target,
     target.insert(other.begin(), other.end());
 }
 
+template <class T, class V>
+static std::unordered_map<T, V> intersect(const std::unordered_map<T, V> &lhs,
+                                          const std::unordered_map<T, V> &rhs) {
+    std::unordered_map<T, V> ret;
+    for (auto &&[key, value] : lhs) {
+        if (rhs.count(key)) {
+            ret.emplace(key, value);
+        }
+    }
+    return ret;
+}
+
 static std::string replaceAll(const std::string &str,
                               const std::string &toSearch,
                               const std::string &replaceStr) {
@@ -33,8 +45,47 @@ void FindAllNoDeps::visit(const For &op) {
     }
 }
 
+void CountBandNodeWidth::visit(const Load &op) {
+    // No recursion
+    if (!lastIsLoad_) {
+        width_++;
+        lastIsLoad_ = true;
+    }
+}
+
+void CountBandNodeWidth::visit(const For &op) {
+    (*this)(op->begin_);
+    (*this)(op->end_);
+    (*this)(op->len_);
+    width_++;
+    lastIsLoad_ = false;
+}
+
+void CountBandNodeWidth::visit(const Store &op) {
+    Visitor::visit(op);
+    width_++;
+    lastIsLoad_ = false;
+}
+
+void CountBandNodeWidth::visit(const ReduceTo &op) {
+    Visitor::visit(op);
+    width_++;
+    lastIsLoad_ = false;
+}
+
+FindAccessPoint::FindAccessPoint(const Stmt &root) {
+    if (int width = countBandNodeWidth(root); width > 1) {
+        cur_.emplace_back(makeIntConst(0), makeIntConst(0),
+                          makeIntConst(width));
+    }
+}
+
 void FindAccessPoint::visit(const VarDef &op) {
-    defAxis_[op->name_] = cur_.size();
+    ASSERT(!defs_.count(op->name_));
+    defAxis_[op->name_] =
+        !cur_.empty() && cur_.back().iter_->nodeType() == ASTNodeType::IntConst
+            ? cur_.size() - 1
+            : cur_.size();
     defs_[op->name_] = op;
     Visitor::visit(op);
     defAxis_.erase(op->name_);
@@ -42,21 +93,37 @@ void FindAccessPoint::visit(const VarDef &op) {
 }
 
 void FindAccessPoint::visit(const StmtSeq &op) {
-    cur_.emplace_back(nullptr, makeIntConst(0),
-                      makeIntConst(op->stmts_.size()));
-    scope2coord_[op->id()] = cur_;
-    for (size_t i = 0, iEnd = op->stmts_.size(); i < iEnd; i++) {
-        cur_.back().iter_ = makeIntConst(i);
-        (*this)(op->stmts_[i]);
+    if (!cur_.empty() &&
+        cur_.back().iter_->nodeType() == ASTNodeType::IntConst) {
+        scope2coord_[op->id()] = cur_;
     }
-    cur_.pop_back();
+    Visitor::visit(op);
 }
 
 void FindAccessPoint::visit(const For &op) {
+    (*this)(op->begin_);
+    (*this)(op->end_);
+    (*this)(op->len_);
+
+    if (!cur_.empty() &&
+        cur_.back().iter_->nodeType() == ASTNodeType::IntConst) {
+        // top is band node
+        cur_.back().iter_ =
+            makeIntConst(cur_.back().iter_.as<IntConstNode>()->val_ + 1);
+    }
+    lastIsLoad_ = false;
+
     cur_.emplace_back(makeVar(op->iter_), op->begin_, op->end_,
                       op->property_.parallel_);
     scope2coord_[op->id()] = cur_;
-    Visitor::visit(op);
+    if (int width = countBandNodeWidth(op->body_); width > 1) {
+        cur_.emplace_back(makeIntConst(-1), makeIntConst(0),
+                          makeIntConst(width));
+        (*this)(op->body_);
+        cur_.pop_back();
+    } else {
+        (*this)(op->body_);
+    }
     cur_.pop_back();
 }
 
@@ -70,23 +137,28 @@ void FindAccessPoint::visit(const If &op) {
         (*this)(op->thenCase_);
         cond_ = oldCond;
     } else {
-        cur_.emplace_back(nullptr, makeIntConst(0), makeIntConst(2));
-        scope2coord_[op->id()] = cur_;
-        cur_.back().iter_ = makeIntConst(0);
         auto oldCond = cond_;
         cond_ =
             oldCond.isValid() ? makeLAnd(oldCond, op->cond_) : (Expr)op->cond_;
         (*this)(op->thenCase_);
-        cur_.back().iter_ = makeIntConst(1);
         cond_ = oldCond.isValid() ? makeLAnd(oldCond, makeLNot(op->cond_))
                                   : makeLNot(op->cond_);
         (*this)(op->elseCase_);
         cond_ = oldCond;
-        cur_.pop_back();
     }
 }
 
 void FindAccessPoint::visit(const Load &op) {
+    if (!cur_.empty() &&
+        cur_.back().iter_->nodeType() == ASTNodeType::IntConst) {
+        // top is band node
+        if (!lastIsLoad_) {
+            cur_.back().iter_ =
+                makeIntConst(cur_.back().iter_.as<IntConstNode>()->val_ + 1);
+        }
+    }
+    lastIsLoad_ = true;
+
     Visitor::visit(op);
     auto ap = Ref<AccessPoint>::make();
     *ap = {op,
@@ -467,36 +539,37 @@ ISLMap AnalyzeDeps::makeNoDepsConstraint(ISLCtx &isl, int iterDim) {
 
 ISLMap AnalyzeDeps::makeExternalVarConstraint(
     ISLCtx &isl, const Ref<AccessPoint> &point, const Ref<AccessPoint> &other,
-    const ExternalMap &pExternals, const ExternalMap &oExternals, int iterDim) {
+    const ExternalMap &pExternals, const ExternalMap &oExternals, int iterDim,
+    const std::string &extSuffixP, const std::string &extSuffixO) {
     ISLMap ret = universeMap(spaceAlloc(isl, 0, iterDim, iterDim));
-    auto opExternals = pExternals;
-    unionTo(opExternals, oExternals);
     // We only have to add constraint for common loops of both accesses
     auto common = lca(point->cursor_, other->cursor_);
 
-    // If all of the loops are variant, we don't have to make the constarint at
-    // all. This will save time for ISL
-    for (auto c = common;; c = c.outer()) {
-        if (c.nodeType() == ASTNodeType::For) {
-            for (auto &&[hash, item] : opExternals) {
+    for (auto &&[hash, item] : intersect(pExternals, oExternals)) {
+        // If all of the loops are variant, we don't have to make the constraint
+        // at all. This will save time for ISL
+        for (auto c = common;; c = c.outer()) {
+            if (c.nodeType() == ASTNodeType::For) {
                 if (isVariant(variantExpr_, item.first, c.id())) {
                     goto found;
                 }
+                goto do_compute_constraint;
+            found:;
             }
-            goto do_compute_constarint;
-        found:;
+            if (!c.hasOuter()) {
+                break;
+            }
         }
-        if (!c.hasOuter()) {
-            break;
-        }
-    }
-    return ret;
+        continue;
 
-    // Compute the constraint
-do_compute_constarint:
-    for (auto c = common;; c = c.outer()) {
-        if (c.nodeType() == ASTNodeType::For) {
-            for (auto &&[hash, item] : opExternals) {
+        // Compute the constraint
+    do_compute_constraint:
+        auto require = makeExternalEq(
+            isl, iterDim,
+            replaceAll(item.second, "!!placeholder!!", extSuffixP),
+            replaceAll(item.second, "!!placeholder!!", extSuffixO));
+        for (auto c = common;; c = c.outer()) {
+            if (c.nodeType() == ASTNodeType::For) {
                 if (isVariant(variantExpr_, item.first, c.id())) {
                     // Since idx[i] must be inside loop i, we only have
                     // to call makeIneqBetweenOps, but no need to call
@@ -504,18 +577,14 @@ do_compute_constarint:
                     auto diffIter = makeIneqBetweenOps(
                         isl, DepDirection::Different,
                         scope2coord_.at(c.id()).size() - 1, iterDim);
-                    auto sameExt = makeExternalEq(
-                        isl, iterDim,
-                        replaceAll(item.second, "!!placeholder!!", "__ext_p"),
-                        replaceAll(item.second, "!!placeholder!!", "__ext_o"));
-                    auto require = uni(std::move(diffIter), std::move(sameExt));
-                    ret = intersect(std::move(ret), std::move(require));
+                    require = uni(std::move(diffIter), std::move(require));
                 }
             }
+            if (!c.hasOuter()) {
+                break;
+            }
         }
-        if (!c.hasOuter()) {
-            break;
-        }
+        ret = intersect(std::move(ret), std::move(require));
     }
     return ret;
 }
@@ -597,8 +666,9 @@ void AnalyzeDeps::checkDepImpl(ISLCtx &isl, GenISLExprDeps &genISLExpr,
         }
 
         ExternalMap oExternals;
-        ISLMap omap = makeAccMap(isl, genISLExpr, *other, iterDim, accDim,
-                                 oRelax, "__ext_o", oExternals);
+        ISLMap omap =
+            makeAccMap(isl, genISLExpr, *other, iterDim, accDim, oRelax,
+                       "__ext_o" + std::to_string(i), oExternals);
         if (omap.empty()) {
             filteredIn[i] = false;
             continue;
@@ -616,7 +686,8 @@ void AnalyzeDeps::checkDepImpl(ISLCtx &isl, GenISLExprDeps &genISLExpr,
         depAll =
             intersect(std::move(depAll),
                       makeExternalVarConstraint(isl, point, other, pExternals,
-                                                oExternals, iterDim));
+                                                oExternals, iterDim, "__ext_p",
+                                                "__ext_o" + std::to_string(i)));
 
         ISLMap psDepAll = applyRange(depAll, std::move(oa2s));
         psDepAllUnion = psDepAllUnion.isValid()
@@ -712,7 +783,7 @@ void findDeps(const Stmt &op, const std::vector<FindDepsCond> &cond,
         return;
     }
 
-    FindAccessPoint accFinder;
+    FindAccessPoint accFinder(op);
     accFinder(op);
     FindAllNoDeps noDepsFinder;
     noDepsFinder(op);

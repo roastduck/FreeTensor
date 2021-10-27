@@ -76,8 +76,7 @@ Stmt swap(const Stmt &_ast, const std::vector<std::string> &order) {
         throw InvalidSchedule(
             dep2Str(scope->id(), d.var_, d.later(), d.earlier()));
     };
-    findDeps(ast, {{{scope->id(), DepDirection::Normal}}}, found,
-             FindDepsMode::Dep, DEP_ALL, filter);
+    findDeps(ast, {{}}, found, FindDepsMode::Dep, DEP_ALL, filter);
     return ast;
 }
 

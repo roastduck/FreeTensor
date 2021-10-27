@@ -1,3 +1,4 @@
+#include <analyze/all_defs.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/hoist_var_over_stmt_seq.h>
 
@@ -47,10 +48,8 @@ Stmt HoistVarOverStmtSeq::visit(const StmtSeq &op) {
     std::unordered_map<std::string, int> namesCnt, renameCnt;
     std::vector<Stmt> stmts;
     std::vector<VarDef> defs;
-    for (auto &&stmt : op->stmts_) {
-        if (stmt->nodeType() == ASTNodeType::VarDef) {
-            namesCnt[stmt.as<VarDefNode>()->name_]++;
-        }
+    for (auto &&[id, name] : allDefs(op)) {
+        namesCnt[name]++;
     }
     for (auto &&stmt : op->stmts_) {
         if (stmt->nodeType() == ASTNodeType::VarDef) {

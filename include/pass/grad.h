@@ -58,64 +58,33 @@ class ReplaceByTape : public Mutator {
     Expr visit(const Load &op) override;
 };
 
-class Grad : public Visitor {
-    const std::unordered_set<std::string> &requires_;
-    const std::unordered_set<std::string> &provides_;
-    const std::unordered_set<std::string> &tapes_;
-    const std::unordered_set<std::string> &affectedDefs_;
-    std::unordered_set<std::string> isTape_;
+class GradExpr : public Visitor {
+    const std::unordered_map<std::string, std::string>
+        &gradNames_;                           // x -> dy/dx
+    std::unordered_map<Expr, Expr> gradExprs_; // x -> dy/dx
+    Expr root_, equLoad_;
     ReplaceByTape replaceByTape_;
-
-    std::unordered_map<std::string, std::string> requireGrads_; // var name map
-    std::unordered_map<std::string, std::string> provideGrads_; // var name map
-
-    std::unordered_map<std::string, std::string> gradNames_; // x -> dy/dx
-    std::unordered_map<Expr, Expr> gradExprs_;               // x -> dy/dx
-    std::unordered_map<Stmt, Stmt> gradStmts_;               // x -> dy/dx
-    std::unordered_map<Stmt, Stmt> oriStmts_;                // x -> x
     std::vector<Stmt> appends_;
-    std::unordered_map<std::string, Ref<Buffer>> buffers_;
-    std::unordered_set<std::string> taped_;
-    std::unordered_map<Expr, Expr> equLoads_;
+
+  public:
+    GradExpr(const std::unordered_map<Load, Expr> &loadMap,
+             const std::unordered_map<std::string, std::string> &gradNames,
+             const Expr &root, const Expr &grad, const Expr &equLoad)
+        : gradNames_(gradNames), root_(root), equLoad_(equLoad),
+          replaceByTape_(loadMap) {
+        gradExprs_[root] = grad;
+    }
+
+    const std::vector<Stmt> &appends() const { return appends_; }
 
   private:
-    Expr replaceByLoadY(const Expr &op) {
-        return equLoads_.count(op) ? equLoads_.at(op) : op;
-    }
+    Expr replaceByLoadY(const Expr &op) { return op == root_ ? equLoad_ : op; }
 
     Expr useForwardVal(const Expr &op) {
         return replaceByTape_(replaceByLoadY(op));
     }
 
-  public:
-    Grad(const std::unordered_set<std::string> &requires,
-         const std::unordered_set<std::string> &provides,
-         const std::unordered_set<std::string> &tapes,
-         const std::unordered_set<std::string> &affectedDefs,
-         const std::unordered_map<std::string, std::string> &tapeMap,
-         const std::unordered_map<Load, Expr> &loadMap)
-        : requires_(requires), provides_(provides), tapes_(tapes),
-          affectedDefs_(affectedDefs), replaceByTape_(loadMap) {
-        for (auto &&[oriDef, tapeVar] : tapeMap) {
-            isTape_.insert(tapeVar);
-        }
-    }
-
-    Stmt grad(const Stmt &root) const { return gradStmts_.at(root); }
-
-    const std::unordered_map<std::string, std::string> &requireGrads() const {
-        return requireGrads_;
-    }
-    const std::unordered_map<std::string, std::string> &provideGrads() const {
-        return provideGrads_;
-    }
-
   protected:
-    void visit(const StmtSeq &op) override;
-    void visit(const For &op) override;
-    void visit(const VarDef &op) override;
-    void visit(const Store &op) override;
-    void visit(const ReduceTo &op) override { ASSERT(false); }
     void visit(const Load &op) override;
     void visit(const Add &op) override;
     void visit(const Sub &op) override;
@@ -128,6 +97,56 @@ class Grad : public Visitor {
     void visit(const Exp &op) override;
     void visit(const Square &op) override;
     void visit(const Abs &op) override;
+};
+
+class Grad : public Mutator {
+    const std::unordered_set<std::string> &requires_;
+    const std::unordered_set<std::string> &provides_;
+    const std::unordered_set<std::string> &tapes_;
+    const std::unordered_set<std::string> &affectedDefs_;
+    const std::unordered_map<Load, Expr> &loadMap_;
+    std::unordered_set<std::string> isTape_;
+    ReplaceByTape replaceByTape_;
+
+    std::unordered_map<std::string, std::string> requireGrads_; // var name map
+    std::unordered_map<std::string, std::string> provideGrads_; // var name map
+
+    std::unordered_map<std::string, std::string> gradNames_; // x -> dy/dx
+    std::unordered_map<std::string, Ref<Buffer>> buffers_;
+    std::unordered_set<std::string> taped_;
+    std::unordered_map<Expr, Expr> equLoads_;
+    std::unordered_map<std::string, std::unordered_set<Stmt>>
+        recomputed_; // var name -> set{stmt}
+    bool isRecompute_ = false;
+
+  public:
+    Grad(const std::unordered_set<std::string> &requires,
+         const std::unordered_set<std::string> &provides,
+         const std::unordered_set<std::string> &tapes,
+         const std::unordered_set<std::string> &affectedDefs,
+         const std::unordered_map<std::string, std::string> &tapeMap,
+         const std::unordered_map<Load, Expr> &loadMap)
+        : requires_(requires), provides_(provides), tapes_(tapes),
+          affectedDefs_(affectedDefs), loadMap_(loadMap),
+          replaceByTape_(loadMap) {
+        for (auto &&[oriDef, tapeVar] : tapeMap) {
+            isTape_.insert(tapeVar);
+        }
+    }
+
+    const std::unordered_map<std::string, std::string> &requireGrads() const {
+        return requireGrads_;
+    }
+    const std::unordered_map<std::string, std::string> &provideGrads() const {
+        return provideGrads_;
+    }
+
+  protected:
+    Stmt visit(const StmtSeq &op) override;
+    Stmt visit(const For &op) override;
+    Stmt visit(const VarDef &op) override;
+    Stmt visit(const Store &op) override;
+    Stmt visit(const ReduceTo &op) override { ASSERT(false); }
 };
 
 /**
@@ -192,13 +211,15 @@ std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>>
 grad(const Stmt &op, const std::unordered_set<std::string> &requires,
-     const std::unordered_set<std::string> &provides, GradTapeMode tapeMode);
+     const std::unordered_set<std::string> &provides,
+     GradTapeMode tapeMode = GradTapeMode::NoReuseOnly);
 
 std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>>
 grad(const Func &func, const std::unordered_set<std::string> &requires,
-     const std::unordered_set<std::string> &provides, GradTapeMode tapeMode);
+     const std::unordered_set<std::string> &provides,
+     GradTapeMode tapeMode = GradTapeMode::NoReuseOnly);
 
 } // namespace ir
 

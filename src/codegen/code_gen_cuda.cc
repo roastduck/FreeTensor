@@ -17,6 +17,17 @@ static std::string genCUBLASType(DataType dtype) {
     }
 }
 
+void CodeGenCUDA::genAlloc(const Tensor &tensor, const std::string &rawPtr,
+                           const std::string &sizePtr) {
+    makeIndent();
+    os() << "cudaMalloc(&" << rawPtr << ", " << sizePtr << " = ";
+    for (auto &&dim : tensor.shape()) {
+        (*this)(dim);
+        os() << " * ";
+    }
+    os() << "sizeof(" << gen(tensor.dtype()) << "));" << std::endl;
+}
+
 bool CodeGenCUDA::inKernel() const {
     return streamStack_.back().name_ != "default";
 }
@@ -77,7 +88,7 @@ void CodeGenCUDA::visit(const Ceil &op) {
 
 void CodeGenCUDA::visit(const ReduceTo &op) {
     auto id = normalizeId(op->var_);
-    markUse(op->var_);
+    markUseBuffer(op->var_);
     makeIndent();
 
     auto genAddr = [&]() {
@@ -222,8 +233,12 @@ void CodeGenCUDA::visit(const For &op) {
                  << (dim.count("threadIdx.z") ? dim.at("threadIdx.z") : 1)
                  << "), " << std::to_string(sharedSize) << ">>>(";
             bool first = true;
-            for (auto &&item : stream.uses_) {
-                os() << (first ? "" : ", ") << normalizeId(item.first);
+            for (auto &&[name, buffer] : stream.useBuffers_) {
+                os() << (first ? "" : ", ") << normalizeId(name);
+                first = false;
+            }
+            for (auto &&name : stream.useIters_) {
+                os() << (first ? "" : ", ") << normalizeId(name);
                 first = false;
             }
             os() << ", __glmem);" << std::endl;
@@ -249,7 +264,7 @@ void CodeGenCUDA::visit(const VarDef &op) {
     } else {
         switch (op->buffer_->mtype()) {
         case MemType::GPUGlobal: {
-            markDef(op->name_, op->buffer_);
+            markDefBuffer(op->name_, op->buffer_);
 
             if (inKernel()) {
                 // e.g. float (*x)[5][5] = (float(*)[5][5])(__glmem + 0);
@@ -324,7 +339,7 @@ void CodeGenCUDA::visit(const VarDef &op) {
                      << std::endl;
             }
 
-            markUndef(op->name_);
+            markUndefBuffer(op->name_);
             break;
         }
 
@@ -334,7 +349,7 @@ void CodeGenCUDA::visit(const VarDef &op) {
                                      "kernel is not allowed");
             }
 
-            markDef(op->name_, op->buffer_);
+            markDefBuffer(op->name_, op->buffer_);
 
             // A static shared memory array cannot be larger than 48KB (maybe a
             // bug of NVCC), so we allocate shared memory dynamically
@@ -378,7 +393,7 @@ void CodeGenCUDA::visit(const VarDef &op) {
             // sharedStackTop_ -= size;
             // FIXME: We have to add some sync before reusing shared buffers
 
-            markUndef(op->name_);
+            markUndefBuffer(op->name_);
             break;
         }
 
@@ -458,7 +473,7 @@ void CodeGenCUDA::visit(const MatMul &op) {
 }
 
 std::string codeGenCUDA(const Func &func) {
-    CodeGenCUDA visitor(func->params_);
+    CodeGenCUDA visitor(func->params_, func->returns_);
     auto &&op = func->body_;
     visitor.beginBlock();
     visitor(op);
@@ -477,7 +492,8 @@ extern "C" {
 
     auto body = visitor.toString([&](const CodeGenCUDA::Stream &stream) {
         if (stream.name_ == "default") {
-            return "void run(void **_params, GPUContext_t _ctx) " +
+            return "void run(void **_params, void **_returns, size_t "
+                   "*_retSizes, GPUContext_t _ctx) " +
                    stream.os_.str();
         } else {
             const auto &dim = stream.threadDim_;
@@ -490,9 +506,8 @@ extern "C" {
             os << (dim.count("threadIdx.z") ? dim.at("threadIdx.z") : 1);
             os << ") " << stream.name_ << "(";
             bool first = true;
-            for (auto &&item : stream.uses_) {
+            for (auto &&[name, buffer] : stream.useBuffers_) {
                 os << (first ? "" : ", ");
-                auto &&buffer = item.second;
                 auto &&tensor = buffer->tensor();
                 auto &&shape = tensor.shape();
 
@@ -508,7 +523,7 @@ extern "C" {
                         ASSERT((*it)->nodeType() == ASTNodeType::IntConst);
                         os << ", " << (*it).as<IntConstNode>()->val_ << ">";
                     }
-                    os << " " << visitor.normalizeId(item.first);
+                    os << " " << visitor.normalizeId(name);
                     break;
 
                 default:
@@ -517,13 +532,18 @@ extern "C" {
                         os << "const ";
                     }
                     os << CodeGenCUDA::gen(tensor.dtype()) << " (*restrict ";
-                    os << visitor.normalizeId(item.first) << ")";
+                    os << visitor.normalizeId(name) << ")";
                     for (size_t i = 1, iEnd = shape.size(); i < iEnd;
                          i++) { // No shape[0]
                         ASSERT(shape[i]->nodeType() == ASTNodeType::IntConst);
                         os << "[" << shape[i].as<IntConstNode>()->val_ << "]";
                     }
                 }
+                first = false;
+            }
+            for (auto &&name : stream.useIters_) {
+                os << (first ? "" : ", ") << "int "
+                   << visitor.normalizeId(name);
                 first = false;
             }
             os << ", uint8_t *__glmem) ";

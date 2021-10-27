@@ -86,11 +86,14 @@ std::string Schedule::merge(const std::string &loop1,
 }
 
 std::pair<Schedule::IDMap, Schedule::IDMap>
-Schedule::fission(const std::string &loop, const std::string &after,
-                  const std::string &suffix0, const std::string &suffix1) {
-    auto log = "fission(" + loop + ", " + after + ")";
+Schedule::fission(const std::string &loop, FissionSide side,
+                  const std::string &splitter, const std::string &suffix0,
+                  const std::string &suffix1) {
+    auto log = "fission(" + loop + ", " +
+               (side == FissionSide::Before ? "BEFORE, " : "AFTER, ") +
+               splitter + ")";
     try {
-        auto ret = ir::fission(ast_, loop, after, suffix0, suffix1);
+        auto ret = ir::fission(ast_, loop, side, splitter, suffix0, suffix1);
         ast_ = ret.first;
         logs_.emplace_back(log);
         return ret.second;
@@ -192,7 +195,7 @@ void Schedule::varReorder(const std::string &def,
                           const std::vector<int> &order) {
     std::string log = "var_reorder(" + def + ", ";
     for (size_t i = 0, iEnd = order.size(); i < iEnd; i++) {
-        log += order[i] + (i < iEnd - 1 ? ", " : "");
+        log += std::to_string(order[i]) + (i < iEnd - 1 ? ", " : "");
     }
     log += ")";
     try {
@@ -253,7 +256,9 @@ std::string Schedule::moveTo(const std::string &_stmt, MoveToSide side,
                     // TODO: Fission IfNode
                     ASSERT(s.node()->nodeType() == ASTNodeType::For);
                     // Leave IDs of the other statements unchanged
-                    auto idMap = fission(s.id(), stmt, ".a", "").first;
+                    auto idMap =
+                        fission(s.id(), FissionSide::After, stmt, ".a", "")
+                            .first;
                     stmt = idMap.at(s.id());
                 }
                 // TODO: Fuse if d is inner of s
@@ -273,11 +278,9 @@ std::string Schedule::moveTo(const std::string &_stmt, MoveToSide side,
                     }
                     // TODO: Fission IfNode
                     ASSERT(s.node()->nodeType() == ASTNodeType::For);
-                    Cursor stmtCursor = getCursorById(ast_, stmt);
-                    ASSERT(stmtCursor.hasPrev());
                     // Leave IDs of the other statements unchanged
                     auto idMap =
-                        fission(s.id(), stmtCursor.prev().id(), "", ".b")
+                        fission(s.id(), FissionSide::Before, stmt, "", ".b")
                             .second;
                     stmt = idMap.at(s.id());
                 }
@@ -379,13 +382,17 @@ void Schedule::autoFuse(const Target &target) {
                     auto bak = ast_;
                     auto logBak = logs_;
                     try {
-                        lastId = moveTo(lastId, MoveToSide::Before, thisId);
+                        try {
+                            lastId = moveTo(lastId, MoveToSide::Before, thisId);
+                        } catch (const InvalidSchedule &e) {
+                            thisId = moveTo(thisId, MoveToSide::After, lastId);
+                        }
                         thisId = fuse(lastId, thisId);
                         subNest->subLoops_.insert(subNest->subLoops_.begin(),
                                                   last->subLoops_.begin(),
                                                   last->subLoops_.end());
                         last->subLoops_.clear();
-                    } catch (InvalidSchedule &e) {
+                    } catch (const InvalidSchedule &e) {
                         ast_ = std::move(bak), logs_ = std::move(logBak);
                         visitNest(last);
                     }
@@ -433,7 +440,6 @@ void Schedule::autoParallelize(const Target &target) {
                             if (c.nodeType() == ASTNodeType::For) {
                                 try {
                                     reorder({l1, c.id()});
-                                    l1 = c.id();
                                 } catch (InvalidSchedule &e) {
                                     break;
                                 }
@@ -457,9 +463,23 @@ void Schedule::autoParallelize(const Target &target) {
 
         try {
             Ref<LoopNest> loop = root;
+
+            bool parentIsWarp = false;
+            while (!loop->loop_->property_.parallel_.empty() &&
+                   loop->subLoops_.size() == 1) {
+                loop = loop->subLoops_.front();
+                parentIsWarp = true;
+            }
+
             std::string loopId, outerId;
             while (true) {
                 loopId = loop->loop_->id();
+                if (!find(loopId)
+                         .node()
+                         .as<ForNode>()
+                         ->property_.parallel_.empty()) {
+                    break;
+                }
                 if (!outerId.empty()) {
                     loopId = merge(outerId, loopId);
                 }
@@ -479,26 +499,55 @@ void Schedule::autoParallelize(const Target &target) {
                                     .as<ForNode>()
                                     ->property_.parallel_.empty();
                     };
-                    bool childrenAllSerial =
-                        getCursorByFilter(loop.node(), isParallelLoop).empty();
+                    bool childIsWarp =
+                        !getCursorByFilter(loop.node(), isParallelLoop).empty();
+                    // We guarantee the following requirements in order:
                     // 1. make sure all SMs are used
-                    // 2. make sure blockDim is not too large
-                    std::string l1, l1b, l2;
+                    // 2. if there are enough threads, make sure blockDim is not
+                    // too large
+                    // If the loop length is constant, we split it only once, to
+                    // reduce redundant guards, and save time for dependency
+                    // analysis. If not, we split it twice, and merge once
+                    int numSM = 80;
+                    int maxThreads = (!parentIsWarp && !childIsWarp) ? 256 : 8;
                     // TODO: do not hard-code these numbers
-                    std::tie(l1, l2) = split(loopId, -1, 80);
-                    if (!findAll(l2).empty()) {
-                        std::tie(l1b, l2) =
-                            split(l2, childrenAllSerial ? 256 : 8);
-                        if (!findAll(l1b).empty()) {
-                            l1 = merge(l1, l1b);
+                    std::string l1, l1b, l2;
+                    if (auto loopNode = loop.node().as<ForNode>();
+                        loopNode->len_->nodeType() == ASTNodeType::IntConst) {
+                        auto len = loopNode->len_.as<IntConstNode>()->val_;
+                        if (len < numSM * maxThreads) {
+                            std::tie(l1, l2) = split(loopId, -1, numSM);
+                        } else {
+                            std::tie(l1, l2) = split(loopId, maxThreads);
+                        }
+                    } else {
+                        // We don't use the `nparts` mode of `split`, because it
+                        // will hinder dependency analysis. Instead, we use the
+                        // `factor` mode and then reorder. See the doc string of
+                        // `split` for details
+                        std::tie(l2, l1) = split(loopId, numSM);
+                        reorder({l1, l2});
+                        if (!findAll(l2).empty()) {
+                            std::tie(l1b, l2) = split(l2, maxThreads);
                         }
                     }
                     if (!findAll(l1).empty()) {
-                        parallelize(l1, "blockIdx.x");
+                        if (!l1b.empty() && !findAll(l1b).empty()) {
+                            // We are unable to fuse `l1` and `l1b` back to one
+                            // loop. Because the length of `l1b` is not a
+                            // constant, a division by this length will be
+                            // introduced, which is not supported by ISL and may
+                            // probably lead to false dependencies
+                            parallelize(l1, "blockIdx.y");
+                            parallelize(l1b, "blockIdx.x");
+                        } else {
+                            parallelize(l1, "blockIdx.x");
+                        }
                     }
                     if (!findAll(l2).empty()) {
-                        parallelize(l2, childrenAllSerial ? "threadIdx.x"
-                                                          : "threadIdx.y");
+                        parallelize(l2, (!parentIsWarp && !childIsWarp)
+                                            ? "threadIdx.x"
+                                            : "threadIdx.y");
                     }
                     break;
                 }
@@ -526,7 +575,7 @@ void Schedule::autoParallelize(const Target &target) {
 void Schedule::autoSetMemType(const Target &target) {
     // Try to put each VarDef as near to processor as possible
     if (target.type() == TargetType::GPU) {
-        for (auto &&defId : allDefs(ast_, {AccessType::Cache})) {
+        for (auto &&[defId, name] : allDefs(ast_, {AccessType::Cache})) {
             try {
                 setMemType(defId, MemType::GPULocal);
             } catch (const InvalidSchedule &e) {
@@ -564,6 +613,24 @@ void Schedule::autoUnroll(const Target &target) {
             }
         }
     }
+
+    // Unroll very short loops
+    std::function<void(const Ref<LoopNest> &nest)> visitNest =
+        [&, this](const Ref<LoopNest> &nest) {
+            auto &&loop = nest->loop_;
+            if (loop.isValid()) { // not root
+                if (loop->property_.parallel_.empty() &&
+                    !loop->property_.vectorize_ && !loop->property_.unroll_ &&
+                    loop->len_->nodeType() == ASTNodeType::IntConst &&
+                    loop->len_.as<IntConstNode>()->val_ <= 4) {
+                    unroll(loop->id());
+                }
+            }
+            for (auto &&subNest : nest->subLoops_) {
+                visitNest(subNest);
+            }
+        };
+    visitNest(getLoopNestTree(ast_));
 }
 
 } // namespace ir

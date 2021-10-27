@@ -10,7 +10,11 @@ Stmt MergeFor::visit(const For &_op) {
         insideOuter_ = false;
         ASSERT(__op->nodeType() == ASTNodeType::For);
         auto op = __op.as<ForNode>();
-        auto len = makeMul(innerLen_, outerLen_);
+        auto len = innerLen_->nodeType() == ASTNodeType::IntConst &&
+                           outerLen_->nodeType() == ASTNodeType::IntConst
+                       ? makeIntConst(innerLen_.as<IntConstNode>()->val_ *
+                                      outerLen_.as<IntConstNode>()->val_)
+                       : makeMul(innerLen_, outerLen_);
         auto ret =
             makeFor(newId_, newIter_, makeIntConst(0), len, len,
                     op->noDeps_ && innerNoDeps_, ForProperty(), op->body_);

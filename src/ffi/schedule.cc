@@ -8,6 +8,9 @@ namespace ir {
 using namespace pybind11::literals;
 
 void init_ffi_schedule(py::module_ &m) {
+    py::enum_<FissionSide>(m, "FissionSide")
+        .value("Before", FissionSide::Before)
+        .value("After", FissionSide::After);
     py::enum_<MoveToSide>(m, "MoveToSide")
         .value("Before", MoveToSide::Before)
         .value("After", MoveToSide::After);
@@ -37,7 +40,7 @@ void init_ffi_schedule(py::module_ &m) {
              "nparts"_a = -1)
         .def("reorder", &Schedule::reorder, "order"_a)
         .def("merge", &Schedule::merge, "loop1"_a, "loop2"_a)
-        .def("fission", &Schedule::fission, "loop"_a, "after"_a,
+        .def("fission", &Schedule::fission, "loop"_a, "side"_a, "splitter"_a,
              "suffix0"_a = ".a", "suffix1"_a = ".b")
         .def("fuse", &Schedule::fuse, "loop0"_a, "loop1"_a)
         .def("swap", &Schedule::swap, "order"_a)

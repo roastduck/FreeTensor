@@ -1,7 +1,8 @@
-#ifndef GPU_LOWER_PARALLEL_REDUCTION_H
-#define GPU_LOWER_PARALLEL_REDUCTION_H
+#ifndef CPU_LOWER_PARALLEL_REDUCTION_H
+#define CPU_LOWER_PARALLEL_REDUCTION_H
 
 #include <unordered_map>
+#include <unordered_set>
 
 #include <analyze/hash.h>
 #include <func.h>
@@ -9,7 +10,7 @@
 
 namespace ir {
 
-namespace gpu {
+namespace cpu {
 
 class LowerParallelReduction : public Mutator {
     std::unordered_map<std::string, Ref<Buffer>> buffers_;
@@ -27,14 +28,19 @@ class LowerParallelReduction : public Mutator {
     Stmt visit(const ReduceTo &op) override;
 };
 
+/**
+ * Although parallel reduction enjoys a native support by OpenMP, it does not
+ * support using parallel reduction and atomic reduction simulteneously.
+ * Therefore, we need to make some transformations
+ */
 inline Stmt lowerParallelReduction(const Stmt &op) {
     return LowerParallelReduction()(op);
 }
 
 DEFINE_PASS_FOR_FUNC(lowerParallelReduction)
 
-} // namespace gpu
+} // namespace cpu
 
 } // namespace ir
 
-#endif // GPU_LOWER_PARALLEL_REDUCTION_H
+#endif // CPU_LOWER_PARALLEL_REDUCTION_H

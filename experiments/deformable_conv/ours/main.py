@@ -30,10 +30,10 @@ def conv(x, w1, w2, y, n, c_in, c_out, h, w, k_h, k_w, device, mtype,
                 for p in range(h):
                     "nid: Lq"
                     for q in range(w):
-                        row = ir.create_var((k_h, k_w), "float32", "cache", local_mtype)
-                        col = ir.create_var((k_h, k_w), "float32", "cache", local_mtype)
-                        row_int = ir.create_var((k_h, k_w), "int32", "cache", local_mtype)
-                        col_int = ir.create_var((k_h, k_w), "int32", "cache", local_mtype)
+                        row = ir.create_var((k_h, k_w), "float32",  local_mtype)
+                        col = ir.create_var((k_h, k_w), "float32",  local_mtype)
+                        row_int = ir.create_var((k_h, k_w), "int32", local_mtype)
+                        col_int = ir.create_var((k_h, k_w), "int32", local_mtype)
                         "nid: Lro0"
                         for ro in range(k_h):
                             "nid: Lso0"
@@ -54,15 +54,15 @@ def conv(x, w1, w2, y, n, c_in, c_out, h, w, k_h, k_w, device, mtype,
                                 row_int[ro, so] = ir.cast(ir.floor(row[ro, so]), "int32")
                                 col_int[ro, so] = ir.cast(ir.floor(col[ro, so]), "int32")
 
-                        pixel = ir.create_var((c_in, k_h, k_w), "float32", "cache", local_mtype)
+                        pixel = ir.create_var((c_in, k_h, k_w), "float32", local_mtype)
                         "nid: Lki1"
                         for ki in range(c_in):
                             "nid: Lro1"
                             for ro in range(k_h):
                                 "nid: Lso1"
                                 for so in range(k_w):
-                                    x = ir.create_var((), "int32", "cache", local_mtype)
-                                    y = ir.create_var((), "int32", "cache", local_mtype)
+                                    x = ir.create_var((), "int32", local_mtype)
+                                    y = ir.create_var((), "int32", local_mtype)
                                     x[()] = p + ro + row_int[ro, so]
                                     y[()] = q + so + col_int[ro, so]
                                     pixel[ki, ro, so] = 0

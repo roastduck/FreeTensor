@@ -55,6 +55,18 @@ void PrintVisitor::visit(const Func &op) {
         os() << (i > 0 ? ", " : "") << op->params_[i];
     }
     os() << ") ";
+    if (!op->returns_.empty()) {
+        os() << "-> ";
+        bool first = true;
+        for (auto &&[name, dtype] : op->returns_) {
+            if (!first) {
+                os() << ", ";
+            }
+            first = false;
+            os() << name << ": " << ::ir::toString(dtype);
+        }
+        os() << " ";
+    }
     beginBlock();
     recur(op->body_);
     endBlock();
@@ -372,7 +384,7 @@ void PrintVisitor::visit(const For &op) {
     for (auto &&reduction : op->property_.reductions_) {
         makeIndent();
         os() << "// reduction ";
-        switch (reduction.first) {
+        switch (reduction.op_) {
         case ReduceOp::Add:
             os() << "+: ";
             break;
@@ -388,7 +400,24 @@ void PrintVisitor::visit(const For &op) {
         default:
             ASSERT(false);
         }
-        recur(reduction.second);
+
+        os() << reduction.var_;
+        if (!reduction.indices_.empty()) {
+            os() << "[";
+            bool first_2 = true;
+            for (auto &&idx : reduction.indices_) {
+                if (!first_2) {
+                    os() << ", ";
+                }
+                first_2 = false;
+                if (idx.isValid()) {
+                    (*this)(idx);
+                } else {
+                    os() << ":";
+                }
+            }
+            os() << "]";
+        }
         os() << std::endl;
     }
     if (op->property_.unroll_) {

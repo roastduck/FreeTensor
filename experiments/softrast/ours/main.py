@@ -63,19 +63,19 @@ def rasterize(vertices, faces, y, h, w, n_verts, n_faces, device):
 
         @ir.inline
         def cross_product(v1, v2):
-            y = ir.create_var((), "float32", "output", mtype)
+            y = ir.create_var((), "float32", mtype)
             y[()] = v1[0] * v2[1] - v1[1] * v2[0]
             return y
 
         @ir.inline
         def norm(v):
-            y = ir.create_var((), "float32", "output", mtype)
+            y = ir.create_var((), "float32", mtype)
             y[()] = ir.sqrt(v[0] * v[0] + v[1] * v[1])
             return y
 
         @ir.inline
         def sub(v1, v2):
-            y = ir.create_var((2,), "float32", "output", mtype)
+            y = ir.create_var((2,), "float32", mtype)
             y[0] = v1[0] - v2[0]
             y[1] = v1[1] - v2[1]
             return y
@@ -88,9 +88,9 @@ def rasterize(vertices, faces, y, h, w, n_verts, n_faces, device):
 
             "nid: Li"
             for i in range(n_faces):
-                v1 = ir.create_var((2,), "float32", "cache", mtype)
-                v2 = ir.create_var((2,), "float32", "cache", mtype)
-                v3 = ir.create_var((2,), "float32", "cache", mtype)
+                v1 = ir.create_var((2,), "float32", mtype)
+                v2 = ir.create_var((2,), "float32", mtype)
+                v3 = ir.create_var((2,), "float32", mtype)
                 v1[0] = vertices[faces[i, 0], 0]
                 v1[1] = vertices[faces[i, 0], 1]
                 v2[0] = vertices[faces[i, 1], 0]
@@ -106,7 +106,7 @@ def rasterize(vertices, faces, y, h, w, n_verts, n_faces, device):
 
                 for j in range(h):
                     for k in range(w):
-                        pixel = ir.create_var((2,), "float32", "cache", mtype)
+                        pixel = ir.create_var((2,), "float32", mtype)
                         pixel[0] = 1. / (h - 1) * j
                         pixel[1] = 1. / (w - 1) * k
 
@@ -120,7 +120,7 @@ def rasterize(vertices, faces, y, h, w, n_verts, n_faces, device):
                         dist2 = norm(p2)
                         dist3 = norm(p3)
 
-                        dist = ir.create_var((), "float32", "cache", mtype)
+                        dist = ir.create_var((), "float32", mtype)
                         dist[()] = ir.min(
                             ir.min(
                                 ir.min(

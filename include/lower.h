@@ -2,6 +2,7 @@
 #define IR_LOWER_H
 
 #include <driver/target.h>
+#include <pass/cpu/lower_parallel_reduction.h>
 #include <pass/float_simplify.h>
 #include <pass/gpu/lower_parallel_reduction.h>
 #include <pass/gpu/lower_vector.h>
@@ -63,7 +64,7 @@ template <class T> T lower(const T &t, const Ref<Target> &target) {
             break;
 
         case TargetType::CPU:
-            // do nothing
+            func = cpu::lowerParallelReduction(func);
             break;
 
         default:

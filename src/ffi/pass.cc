@@ -1,7 +1,9 @@
 #include <ffi.h>
 #include <lower.h>
+#include <pass/cpu/lower_parallel_reduction.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/float_simplify.h>
+#include <pass/gpu/lower_parallel_reduction.h>
 #include <pass/gpu/lower_vector.h>
 #include <pass/gpu/make_sync.h>
 #include <pass/gpu/multiplex_buffers.h>
@@ -63,7 +65,8 @@ void init_ffi_pass(py::module_ &m) {
                        std::unordered_map<std::string, std::string>> (*)(
                 const Func &, const std::unordered_set<std::string> &,
                 const std::unordered_set<std::string> &, GradTapeMode)>(&grad),
-        "stmt"_a, "requires"_a, "provides"_a, "tapes"_a);
+        "stmt"_a, "requires"_a, "provides"_a,
+        "tape_mode"_a = GradTapeMode::NoReuseOnly);
     m.def(
         "grad",
         static_cast<
@@ -72,7 +75,8 @@ void init_ffi_pass(py::module_ &m) {
                        std::unordered_map<std::string, std::string>> (*)(
                 const Stmt &, const std::unordered_set<std::string> &,
                 const std::unordered_set<std::string> &, GradTapeMode)>(&grad),
-        "func"_a, "requires"_a, "provides"_a, "tapes"_a);
+        "func"_a, "requires"_a, "provides"_a,
+        "tape_mode"_a = GradTapeMode::NoReuseOnly);
 
     // std::unordered_map<Load, Expr> cannot be exported to Python
     m.def(
@@ -147,10 +151,14 @@ void init_ffi_pass(py::module_ &m) {
     m.def("prop_one_time_use",
           static_cast<Stmt (*)(const Stmt &)>(&propOneTimeUse), "stmt"_a);
 
-    m.def("remove_writes", static_cast<Func (*)(const Func &)>(&removeWrites),
-          "func"_a);
-    m.def("remove_writes", static_cast<Stmt (*)(const Stmt &)>(&removeWrites),
-          "stmt"_a);
+    m.def(
+        "remove_writes",
+        static_cast<Func (*)(const Func &, const std::string &)>(&removeWrites),
+        "func"_a, "single_def_id"_a = "");
+    m.def(
+        "remove_writes",
+        static_cast<Stmt (*)(const Stmt &, const std::string &)>(&removeWrites),
+        "stmt"_a, "single_def_id"_a = "");
 
     m.def("remove_dead_var",
           static_cast<Func (*)(const Func &)>(&removeDeadVar), "func"_a);
@@ -176,7 +184,18 @@ void init_ffi_pass(py::module_ &m) {
     m.def("use_builtin_div",
           static_cast<Stmt (*)(const Stmt &)>(&useBuiltinDiv), "stmt"_a);
 
+    // CPU
+    m.def("cpu_lower_parallel_reduction",
+          static_cast<Func (*)(const Func &)>(&cpu::lowerParallelReduction));
+    m.def("cpu_lower_parallel_reduction",
+          static_cast<Stmt (*)(const Stmt &)>(&cpu::lowerParallelReduction));
+
     // GPU
+    m.def("gpu_lower_parallel_reduction",
+          static_cast<Func (*)(const Func &)>(&gpu::lowerParallelReduction));
+    m.def("gpu_lower_parallel_reduction",
+          static_cast<Stmt (*)(const Stmt &)>(&gpu::lowerParallelReduction));
+
     m.def("gpu_normalize_threads",
           static_cast<Func (*)(const Func &)>(&gpu::normalizeThreads),
           "func"_a);
