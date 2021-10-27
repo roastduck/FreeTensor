@@ -215,8 +215,14 @@ class InlineFunction:
 
 class ASTTransformer(ast.NodeTransformer):
 
-    def __init__(self, ctx_stack: ASTContextStack, params: Sequence[str],
-                 globals: Mapping[str, Any], file, src, lineno, is_inline: bool = False):
+    def __init__(self,
+                 ctx_stack: ASTContextStack,
+                 params: Sequence[str],
+                 globals: Mapping[str, Any],
+                 file,
+                 src,
+                 lineno,
+                 is_inline: bool = False):
         super().__init__()
         self.ctx_stack = ctx_stack
         self.params = params
@@ -494,12 +500,14 @@ class ASTTransformer(ast.NodeTransformer):
                 ret_type = parseDType(kws["ret_type"])
             node.expr_ptr = ffi.makeIntrinsic(fmt_str, expr_args, ret_type)
         elif isinstance(callee, ffi.Func):
-            assert False, "Please use @ir.inline for subroutines"
+            raise ffi.InvalidProgram("Please use @ir.inline for subroutines")
         elif isinstance(callee, InlineFunction):
             callee = copy.copy(
                 callee)  # Different call sites should be different
             if len(args) != len(callee.params):
-                assert False, f"Number of arguments does not match when calling {callee.name}, {len(callee.params)} needed, but {len(args)} provided"
+                raise ffi.InvalidProgram(
+                    f"Number of arguments does not match when calling {callee.name}, {len(callee.params)} needed, but {len(args)} provided"
+                )
 
             nid = '#' + str(self.ctx_stack.new_context_id())
             arg_var = {}
