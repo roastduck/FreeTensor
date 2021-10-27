@@ -321,6 +321,28 @@ def test_dynamic_2d_array():
     assert np.array_equal(y_np, y_std)
 
 
+def test_use_cpu_iters():
+    with ir.VarDef("y", (4, 1000), "int32", "output", "gpu/global") as y:
+        with ir.For("i", 0, 4, nid="Li") as i:
+            with ir.For("j", 0, 1000, nid="Lj") as j:
+                y[i, j] = i + j
+
+    s = ir.Schedule(ir.Func("main", ["y"], [], ir.pop_ast()))
+    s.parallelize('Lj', "threadIdx.x")
+    func = ir.lower(s.func(), target)
+    print(func)
+    code = ir.codegen(func, target)
+    print(ir.debug.with_line_no(code))
+    y_np = np.zeros((4, 1000), dtype="int32")
+    y_arr = ir.Array(y_np, device)
+    ir.Driver(func, code, device)(y_arr)
+    y_np = y_arr.numpy().reshape(4, 1000)
+
+    y_std = np.array([[i + j for j in range(1000)] for i in range(4)],
+                     dtype="int32")
+    assert np.array_equal(y_np, y_std)
+
+
 def test_intrinsic():
 
     @ir.transform

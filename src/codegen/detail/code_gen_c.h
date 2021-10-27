@@ -32,7 +32,7 @@ template <class Stream> void CodeGenC<Stream>::visit(const StmtSeq &op) {
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
-    this->markDef(op->name_, op->buffer_);
+    this->markDefBuffer(op->name_, op->buffer_);
 
     this->makeIndent();
     auto &&tensor = op->buffer_->tensor();
@@ -195,17 +195,18 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
 
     (*this)(op->body_);
 
-    this->markUndef(op->name_);
+    this->markUndefBuffer(op->name_);
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const Var &op) {
+    this->markUseIter(op->name_);
     this->os() << normalizeId(op->name_);
     CodeGen<Stream>::visit(op);
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const Store &op) {
     auto id = normalizeId(op->var_);
-    this->markUse(op->var_);
+    this->markUseBuffer(op->var_);
 
     this->makeIndent();
     if (op->indices_.empty()) {
@@ -237,7 +238,7 @@ template <class Stream> void CodeGenC<Stream>::visit(const Store &op) {
 
 template <class Stream> void CodeGenC<Stream>::visit(const Load &op) {
     auto id = normalizeId(op->var_);
-    this->markUse(op->var_);
+    this->markUseBuffer(op->var_);
 
     if (op->indices_.empty()) {
         switch (this->buffers_.at(op->var_)->mtype()) {
@@ -265,7 +266,7 @@ template <class Stream> void CodeGenC<Stream>::visit(const Load &op) {
 
 template <class Stream> void CodeGenC<Stream>::visit(const ReduceTo &op) {
     auto id = normalizeId(op->var_);
-    this->markUse(op->var_);
+    this->markUseBuffer(op->var_);
 
     this->makeIndent();
 
@@ -549,6 +550,7 @@ template <class Stream> void CodeGenC<Stream>::visit(const Cast &op) {
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const For &op) {
+    this->markDefIter(op->iter_);
     this->makeIndent();
     this->os() << "for (int " << normalizeId(op->iter_) << " = ";
     (*this)(op->begin_);
@@ -558,6 +560,7 @@ template <class Stream> void CodeGenC<Stream>::visit(const For &op) {
     this->beginBlock();
     (*this)(op->body_);
     this->endBlock();
+    this->markUndefIter(op->iter_);
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const If &op) {
