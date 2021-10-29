@@ -128,12 +128,12 @@ class ASTContextStack:
         MarkNid("")
         return ret
 
-    def set_no_deps(self):
-        node_ctx.top().set_next_no_deps(True)
+    def set_no_deps(self, name):
+        node_ctx.top().add_next_no_deps(name)
 
     def get_no_deps(self):
         ret = node_ctx.top().get_next_no_deps()
-        node_ctx.top().set_next_no_deps(False)
+        node_ctx.top().reset_next_no_deps()
         return ret
 
     def new_context_id(self):
@@ -680,8 +680,10 @@ class ASTTransformer(ast.NodeTransformer):
                 if self.prefix:
                     name = self.prefix + ':' + name
                 self.ctx_stack.set_nid(name)
-            if s == "no_deps":
-                self.ctx_stack.set_no_deps()
+            if s[0:9] == "no_deps: ":
+                name = self.get_name(s[9:])
+                var = self.ctx_stack.find_var_by_name(name)
+                self.ctx_stack.set_no_deps(var.name)
             return node
 
         self.nid = self.ctx_stack.get_nid()

@@ -64,8 +64,7 @@ class BlendPass : public Mutator {
                         auto env = it->as<ForNode>();
                         stmt = makeFor("", env->iter_, (*this)(env->begin_),
                                        (*this)(env->end_), (*this)(env->len_),
-                                       env->noDeps_, env->property_,
-                                       std::move(stmt));
+                                       env->property_, std::move(stmt));
                         break;
                     }
                     case ASTNodeType::If: {

@@ -89,11 +89,11 @@ Stmt LowerParallelReduction::visit(const For &_op) {
             initStmt =
                 makeFor("", workspace + "." + std::to_string(j),
                         makeIntConst(0), workspaceShape[j], workspaceShape[j],
-                        false, ForProperty(), std::move(initStmt));
+                        ForProperty(), std::move(initStmt));
             flushStmt =
                 makeFor("", workspace + "." + std::to_string(j),
                         makeIntConst(0), workspaceShape[j], workspaceShape[j],
-                        false, ForProperty(), std::move(flushStmt));
+                        ForProperty(), std::move(flushStmt));
         }
 
         initStmts.emplace_back(std::move(initStmt));

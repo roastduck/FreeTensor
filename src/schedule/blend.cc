@@ -53,7 +53,7 @@ Stmt BlendPass::visit(const For &op) {
                 offset_.erase(op->iter_);
                 auto len = (*this)(op->len_);
                 ret = makeFor(op->id(), op->iter_, makeIntConst(0), len, len,
-                              op->noDeps_, op->property_, std::move(ret));
+                              op->property_, std::move(ret));
             }
             return ret;
         } else {

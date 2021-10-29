@@ -3,6 +3,17 @@
 
 namespace ir {
 
+static std::vector<std::string> intersect(const std::vector<std::string> &lhs,
+                                          const std::vector<std::string> &rhs) {
+    std::vector<std::string> ret;
+    for (auto &&item : lhs) {
+        if (std::find(rhs.begin(), rhs.end(), item) != rhs.end()) {
+            ret.emplace_back(item);
+        }
+    }
+    return ret;
+}
+
 Stmt MergeFor::visit(const For &_op) {
     if (_op->id() == oldOuter_->id()) {
         insideOuter_ = true;
@@ -15,9 +26,10 @@ Stmt MergeFor::visit(const For &_op) {
                        ? makeIntConst(innerLen_.as<IntConstNode>()->val_ *
                                       outerLen_.as<IntConstNode>()->val_)
                        : makeMul(innerLen_, outerLen_);
-        auto ret =
-            makeFor(newId_, newIter_, makeIntConst(0), len, len,
-                    op->noDeps_ && innerNoDeps_, ForProperty(), op->body_);
+        auto ret = makeFor(newId_, newIter_, makeIntConst(0), len, len,
+                           ForProperty().withNoDeps(
+                               intersect(op->property_.noDeps_, innerNoDeps_)),
+                           op->body_);
         for (auto &&def : intermediateDefs_) {
             ret = makeVarDef(def->id(), def->name_, *def->buffer_,
                              def->sizeLim_, ret, def->pinned_);
@@ -30,7 +42,7 @@ Stmt MergeFor::visit(const For &_op) {
         visitedInner_ = true;
         ASSERT(__op->nodeType() == ASTNodeType::For);
         auto op = __op.as<ForNode>();
-        innerNoDeps_ = op->noDeps_;
+        innerNoDeps_ = op->property_.noDeps_;
         return op->body_;
     } else {
         return Mutator::visit(_op);

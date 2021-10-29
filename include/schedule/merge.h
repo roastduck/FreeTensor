@@ -16,7 +16,7 @@ class MergeFor : public Mutator {
 
     bool insideOuter_ = false, insideInner_ = false;
     bool visitedInner_ = false;
-    bool innerNoDeps_ = false;
+    std::vector<std::string> innerNoDeps_;
 
     std::vector<VarDef> intermediateDefs_; // from inner to outer
 

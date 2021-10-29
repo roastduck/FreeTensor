@@ -90,8 +90,7 @@ Stmt Grad::visit(const For &op) {
         return ret;
     } else {
         return makeFor(
-            "", op->iter_, op->begin_, op->end_, op->len_, op->noDeps_,
-            op->property_,
+            "", op->iter_, op->begin_, op->end_, op->len_, op->property_,
             ReplaceVar(
                 op->iter_,
                 makeSub(makeSub(makeAdd(op->begin_, op->end_), makeIntConst(1)),
@@ -153,7 +152,7 @@ Stmt Grad::visit(const VarDef &_op) {
                 for (int i = nDim - 1; i >= 0; i--) {
                     init = makeFor("", iters[i], makeIntConst(0),
                                    op->buffer_->tensor().shape()[i],
-                                   op->buffer_->tensor().shape()[i], false,
+                                   op->buffer_->tensor().shape()[i],
                                    ForProperty(), init);
                 }
                 grad = makeStmtSeq("", {init, grad});

@@ -8,6 +8,17 @@ namespace ir {
 
 namespace gpu {
 
+static std::vector<std::string> intersect(const std::vector<std::string> &lhs,
+                                          const std::vector<std::string> &rhs) {
+    std::vector<std::string> ret;
+    for (auto &&item : lhs) {
+        if (std::find(rhs.begin(), rhs.end(), item) != rhs.end()) {
+            ret.emplace_back(item);
+        }
+    }
+    return ret;
+}
+
 Expr NormalizeThreads::visit(const Var &_op) {
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Var);
@@ -60,8 +71,11 @@ Stmt NormalizeThreads::doVisitFor(const For &_op) {
         auto op = __op.as<ForNode>();
         varMap_.erase(_op->iter_);
         inside_[_op->property_.parallel_]--;
-        if (!op->noDeps_) {
-            notNoDeps_.insert(_op->property_.parallel_);
+        if (!noDeps_.count(_op->property_.parallel_)) {
+            noDeps_[_op->property_.parallel_] = _op->property_.noDeps_;
+        } else {
+            noDeps_[_op->property_.parallel_] = intersect(
+                noDeps_.at(_op->property_.parallel_), _op->property_.noDeps_);
         }
         return makeIf(op->id(), makeLT(makeVar(newIter), op->len_), op->body_);
     } else {
@@ -82,23 +96,35 @@ Stmt NormalizeThreads::visit(const For &op) {
         auto zero = makeIntConst(0);
         auto inf = makeIntConst(INT_MAX);
         ret = makeFor("", ".threadIdx.x", zero, inf, inf,
-                      !notNoDeps_.count("threadIdx.x"),
-                      ForProperty().withParallel("threadIdx.x"), ret);
+                      ForProperty()
+                          .withParallel("threadIdx.x")
+                          .withNoDeps(noDeps_["threadIdx.x"]),
+                      ret);
         ret = makeFor("", ".threadIdx.y", zero, inf, inf,
-                      !notNoDeps_.count("threadIdx.y"),
-                      ForProperty().withParallel("threadIdx.y"), ret);
+                      ForProperty()
+                          .withParallel("threadIdx.y")
+                          .withNoDeps(noDeps_["threadIdx.y"]),
+                      ret);
         ret = makeFor("", ".threadIdx.z", zero, inf, inf,
-                      !notNoDeps_.count("threadIdx.z"),
-                      ForProperty().withParallel("threadIdx.z"), ret);
+                      ForProperty()
+                          .withParallel("threadIdx.z")
+                          .withNoDeps(noDeps_["threadIdx.z"]),
+                      ret);
         ret = makeFor("", ".blockIdx.x", zero, inf, inf,
-                      !notNoDeps_.count("blockIdx.x"),
-                      ForProperty().withParallel("blockIdx.x"), ret);
+                      ForProperty()
+                          .withParallel("blockIdx.x")
+                          .withNoDeps(noDeps_["blockIdx.x"]),
+                      ret);
         ret = makeFor("", ".blockIdx.y", zero, inf, inf,
-                      !notNoDeps_.count("blockIdx.y"),
-                      ForProperty().withParallel("blockIdx.y"), ret);
+                      ForProperty()
+                          .withParallel("blockIdx.y")
+                          .withNoDeps(noDeps_["blockIdx.y"]),
+                      ret);
         ret = makeFor("", ".blockIdx.z", zero, inf, inf,
-                      !notNoDeps_.count("blockIdx.z"),
-                      ForProperty().withParallel("blockIdx.z"), ret);
+                      ForProperty()
+                          .withParallel("blockIdx.z")
+                          .withNoDeps(noDeps_["blockIdx.z"]),
+                      ret);
         return ret;
     } else {
         return doVisitFor(op);

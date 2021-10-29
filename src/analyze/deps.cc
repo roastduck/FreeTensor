@@ -40,8 +40,8 @@ static std::string replaceAll(const std::string &str,
 
 void FindAllNoDeps::visit(const For &op) {
     Visitor::visit(op);
-    if (op->noDeps_) {
-        results_.emplace_back(op->id());
+    for (auto &&var : op->property_.noDeps_) {
+        results_[var].emplace_back(op->id());
     }
 }
 
@@ -527,12 +527,15 @@ ISLMap AnalyzeDeps::makeEraseVarDefConstraint(ISLCtx &isl,
     return ret;
 }
 
-ISLMap AnalyzeDeps::makeNoDepsConstraint(ISLCtx &isl, int iterDim) {
+ISLMap AnalyzeDeps::makeNoDepsConstraint(ISLCtx &isl, const std::string &var,
+                                         int iterDim) {
     ISLMap ret = universeMap(spaceAlloc(isl, 0, iterDim, iterDim));
-    for (auto &&noDepsLoop : noDepsList_) {
-        auto noDep = makeConstraintOfSingleLoop(
-            isl, noDepsLoop, DepDirection::Different, iterDim);
-        ret = subtract(std::move(ret), std::move(noDep));
+    if (noDepsLists_.count(var)) {
+        for (auto &&noDepsLoop : noDepsLists_.at(var)) {
+            auto noDep = makeConstraintOfSingleLoop(
+                isl, noDepsLoop, DepDirection::Different, iterDim);
+            ret = subtract(std::move(ret), std::move(noDep));
+        }
     }
     return ret;
 }
@@ -644,7 +647,8 @@ void AnalyzeDeps::checkDepImpl(ISLCtx &isl, GenISLExprDeps &genISLExpr,
     ISLMap allEQ = identity(spaceAlloc(isl, 0, iterDim, iterDim));
     ISLMap eraseVarDefConstraint =
         makeEraseVarDefConstraint(isl, point, iterDim);
-    ISLMap noDepsConstraint = makeNoDepsConstraint(isl, iterDim);
+    ISLMap noDepsConstraint =
+        makeNoDepsConstraint(isl, point->def_->name_, iterDim);
 
     ExternalMap pExternals;
     ISLMap pmap = makeAccMap(isl, genISLExpr, *point, iterDim, accDim, pRelax,

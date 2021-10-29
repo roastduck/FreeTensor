@@ -39,10 +39,19 @@ struct AccessPoint {
 };
 
 class FindAllNoDeps : public Visitor {
-    std::vector<std::string> results_;
+    std::unordered_map<std::string, std::vector<std::string>>
+        results_; // Var name -> [loop ID]
+    // FIXME: Currently, we record a var name to loop ID relation, which is not
+    // rigorous because there will be different vars with the same name.
+    // Recording a VarDef ID to loop ID relation may be a better choice.
+    // However, VarDef may be INSIDE a loop after pass/gpu/normalize_threads,
+    // and we are unable to find the VarDef ID
 
   public:
-    const std::vector<std::string> &results() const { return results_; }
+    const std::unordered_map<std::string, std::vector<std::string>> &
+    results() const {
+        return results_;
+    }
 
   protected:
     void visit(const For &op) override;
@@ -223,7 +232,8 @@ class AnalyzeDeps : public Visitor {
     const std::unordered_map<std::string, std::vector<Ref<AccessPoint>>>
         &reads_, &writes_;
     const std::unordered_map<std::string, std::vector<IterAxis>> &scope2coord_;
-    const std::vector<std::string> &noDepsList_;
+    const std::unordered_map<std::string, std::vector<std::string>>
+        &noDepsLists_; // Var name -> [loop ID]
     const LoopVariExprMap &variantExpr_;
 
     const std::vector<FindDepsCond> &cond_;
@@ -250,13 +260,14 @@ class AnalyzeDeps : public Visitor {
             &writes,
         const std::unordered_map<std::string, std::vector<IterAxis>>
             &scope2coord,
-        const std::vector<std::string> &noDepsList,
+        const std::unordered_map<std::string, std::vector<std::string>>
+            &noDepsLists,
         const LoopVariExprMap &variantExpr,
         const std::vector<FindDepsCond> &cond, const FindDepsCallback &found,
         FindDepsMode mode, DepType depType, const FindDepsFilter &filter,
         bool ignoreReductionWAW, bool eraseOutsideVarDef)
         : points_(points), reads_(reads), writes_(writes),
-          scope2coord_(scope2coord), noDepsList_(noDepsList),
+          scope2coord_(scope2coord), noDepsLists_(noDepsLists),
           variantExpr_(variantExpr), cond_(cond), found_(found),
           filter_(filter), mode_(mode), depType_(depType),
           ignoreReductionWAW_(ignoreReductionWAW),
@@ -319,7 +330,8 @@ class AnalyzeDeps : public Visitor {
     /**
      * Constraint for loops that explicitly marked as no_deps by users
      */
-    ISLMap makeNoDepsConstraint(ISLCtx &isl, int iterDim);
+    ISLMap makeNoDepsConstraint(ISLCtx &isl, const std::string &var,
+                                int iterDim);
 
     /*
      * Constraint for external variables inside loop

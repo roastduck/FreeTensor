@@ -90,7 +90,7 @@ Stmt SinkVar::visit(const VarDef &op) {
             isFixPoint_ = false;
             return makeFor(loop->id(), loop->iter_, (*this)(loop->begin_),
                            (*this)(loop->end_), (*this)(loop->len_),
-                           loop->noDeps_, loop->property_, std::move(loopBody));
+                           loop->property_, std::move(loopBody));
         } else {
             body = (*this)(op->body_);
         }

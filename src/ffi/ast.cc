@@ -132,7 +132,13 @@ void init_ffi_ast(py::module_ &m) {
         .def(py::init<>())
         .def_readonly("parallel", &ForProperty::parallel_)
         .def_readonly("unroll", &ForProperty::unroll_)
-        .def_readonly("vectorize", &ForProperty::vectorize_);
+        .def_readonly("vectorize", &ForProperty::vectorize_)
+        .def_readonly("no_deps", &ForProperty::noDeps_)
+        .def("with_parallel", &ForProperty::withParallel, "parallel"_a)
+        .def("with_unroll", &ForProperty::withUnroll, "unroll"_a = true)
+        .def("with_vectorize", &ForProperty::withVectorize,
+             "vectorize"_a = true)
+        .def("with_no_deps", &ForProperty::withNoDeps, "var"_a);
     py::class_<ForNode, For>(m, "For", pyStmt)
         .def_readonly("iter", &ForNode::iter_)
         .def_property_readonly("begin",
@@ -443,10 +449,10 @@ void init_ffi_ast(py::module_ &m) {
     m.def("makeFloatConst", &_makeFloatConst, "val"_a);
     m.def("makeFor",
           static_cast<Stmt (*)(const std::string &, const std::string &,
-                               const Expr &, const Expr &, const Expr &, bool,
+                               const Expr &, const Expr &, const Expr &,
                                const ForProperty &, const Stmt &)>(&_makeFor),
-          "nid"_a, "iter"_a, "begin"_a, "end"_a, "len"_a, "no_deps"_a,
-          "property"_a, "body"_a);
+          "nid"_a, "iter"_a, "begin"_a, "end"_a, "len"_a, "property"_a,
+          "body"_a);
     m.def("makeIf",
           static_cast<Stmt (*)(const std::string &, const Expr &, const Stmt &,
                                const Stmt &)>(&_makeIf),
