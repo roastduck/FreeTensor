@@ -75,8 +75,7 @@ void CountBandNodeWidth::visit(const ReduceTo &op) {
 
 FindAccessPoint::FindAccessPoint(const Stmt &root) {
     if (int width = countBandNodeWidth(root); width > 1) {
-        cur_.emplace_back(makeIntConst(0), makeIntConst(0),
-                          makeIntConst(width));
+        cur_.emplace_back(makeIntConst(0));
     }
 }
 
@@ -113,38 +112,37 @@ void FindAccessPoint::visit(const For &op) {
     }
     lastIsLoad_ = false;
 
-    cur_.emplace_back(makeVar(op->iter_), op->begin_, op->end_,
-                      op->property_.parallel_);
+    auto iter = makeVar(op->iter_);
+    conds_.emplace_back(makeGE(iter, op->begin_));
+    conds_.emplace_back(makeLT(iter, op->end_));
+    cur_.emplace_back(iter, op->property_.parallel_);
     scope2coord_[op->id()] = cur_;
     if (int width = countBandNodeWidth(op->body_); width > 1) {
-        cur_.emplace_back(makeIntConst(-1), makeIntConst(0),
-                          makeIntConst(width));
+        cur_.emplace_back(makeIntConst(-1));
         (*this)(op->body_);
         cur_.pop_back();
     } else {
         (*this)(op->body_);
     }
     cur_.pop_back();
+    conds_.pop_back();
+    conds_.pop_back();
 }
 
 void FindAccessPoint::visit(const If &op) {
     (*this)(op->cond_);
 
     if (!op->elseCase_.isValid()) {
-        auto oldCond = cond_;
-        cond_ =
-            oldCond.isValid() ? makeLAnd(oldCond, op->cond_) : (Expr)op->cond_;
+        conds_.emplace_back(op->cond_);
         (*this)(op->thenCase_);
-        cond_ = oldCond;
+        conds_.pop_back();
     } else {
-        auto oldCond = cond_;
-        cond_ =
-            oldCond.isValid() ? makeLAnd(oldCond, op->cond_) : (Expr)op->cond_;
+        conds_.emplace_back(op->cond_);
         (*this)(op->thenCase_);
-        cond_ = oldCond.isValid() ? makeLAnd(oldCond, makeLNot(op->cond_))
-                                  : makeLNot(op->cond_);
+        conds_.pop_back();
+        conds_.emplace_back(makeLNot(op->cond_));
         (*this)(op->elseCase_);
-        cond_ = oldCond;
+        conds_.pop_back();
     }
 }
 
@@ -168,7 +166,7 @@ void FindAccessPoint::visit(const Load &op) {
            defAxis_.at(op->var_),
            cur_,
            std::vector<Expr>{op->indices_.begin(), op->indices_.end()},
-           cond_};
+           conds_};
     points_.emplace(op, ap);
     reads_[defs_.at(op->var_)->id()].emplace_back(ap);
 }
@@ -237,57 +235,23 @@ Ref<std::string> AnalyzeDeps::makeAccList(GenISLExprDeps &genISLExpr,
     return Ref<std::string>::make("[" + ret + "]");
 }
 
-Ref<std::string> AnalyzeDeps::makeRange(GenISLExprDeps &genISLExpr,
-                                        const std::vector<IterAxis> &point,
-                                        RelaxMode relax,
-                                        ExternalMap &externals) {
-    std::vector<std::string> ineqs;
-    for (size_t i = 0, iEnd = point.size(); i < iEnd; i++) {
-        if (point[i].iter_->nodeType() == ASTNodeType::Var) {
-            std::string ineq =
-                genISLExpr.normalizeId(point[i].iter_.as<VarNode>()->name_);
-            bool bounded = true;
-            if (auto linstr = genISLExpr.gen(point[i].begin_);
-                linstr.isValid()) {
-                ineq = *linstr + " <= " + ineq;
-                unionTo(externals, genISLExpr.externals(point[i].begin_));
-            } else {
-                ineq = "free_lo <= " + ineq;
-                bounded = false;
-            }
-            if (auto linstr = genISLExpr.gen(point[i].end_); linstr.isValid()) {
-                ineq = ineq + " < " + *linstr;
-                unionTo(externals, genISLExpr.externals(point[i].end_));
-            } else {
-                ineq = ineq + " < free_hi";
-                bounded = false;
-            }
-            if (!bounded && relax == RelaxMode::Necessary) {
-                return nullptr;
-            }
-            ineqs.emplace_back(std::move(ineq));
-        }
-    }
-    std::string ret;
-    for (size_t i = 0, iEnd = ineqs.size(); i < iEnd; i++) {
-        ret += i == 0 ? "" : " and ";
-        ret += ineqs[i];
-    }
-    return Ref<std::string>::make(std::move(ret));
-}
-
 Ref<std::string> AnalyzeDeps::makeCond(GenISLExprDeps &genISLExpr,
-                                       const Expr &expr, RelaxMode relax,
+                                       const std::vector<Expr> &conds,
+                                       RelaxMode relax,
                                        ExternalMap &externals) {
-    if (expr.isValid()) {
-        if (auto str = genISLExpr.gen(expr); str.isValid()) {
-            unionTo(externals, genISLExpr.externals(expr));
-            return Ref<std::string>::make(*str);
+    std::string ret;
+    for (auto &&cond : conds) {
+        if (auto str = genISLExpr.gen(cond); str.isValid()) {
+            unionTo(externals, genISLExpr.externals(cond));
+            if (!ret.empty()) {
+                ret += " and ";
+            }
+            ret += *str;
         } else if (relax == RelaxMode::Necessary) {
             return nullptr;
         }
     }
-    return Ref<std::string>::make("");
+    return Ref<std::string>::make(ret);
 }
 
 ISLMap AnalyzeDeps::makeAccMap(ISLCtx &isl, GenISLExprDeps &genISLExpr,
@@ -302,13 +266,7 @@ ISLMap AnalyzeDeps::makeAccMap(ISLCtx &isl, GenISLExprDeps &genISLExpr,
         return emptyMap(spaceAlloc(isl, 0, iterDim, accDim));
     }
     std::string cond;
-    if (auto str = makeRange(genISLExpr, p.iter_, relax, externals);
-        str.isValid()) {
-        cond += *str;
-    } else {
-        return emptyMap(spaceAlloc(isl, 0, iterDim, accDim));
-    }
-    if (auto str = makeCond(genISLExpr, p.cond_, relax, externals);
+    if (auto str = makeCond(genISLExpr, p.conds_, relax, externals);
         str.isValid()) {
         cond += (cond.empty() || str->empty() ? "" : " and ") + *str;
     } else {
@@ -317,11 +275,16 @@ ISLMap AnalyzeDeps::makeAccMap(ISLCtx &isl, GenISLExprDeps &genISLExpr,
     if (!cond.empty()) {
         ret += ": " + cond;
     }
-    std::string ext = "free_lo, free_hi";
-    for (auto &&[hash, item] : externals) {
-        ext += ", " + item.second;
+    std::string ext;
+    if (!externals.empty()) {
+        bool first = true;
+        for (auto &&[hash, item] : externals) {
+            ext += (first ? "" : ", ") + item.second;
+            first = false;
+        }
+        ext = "[" + ext + "] -> ";
     }
-    ret = "[" + ext + "] -> {" + ret + "}";
+    ret = ext + "{" + ret + "}";
     ret = replaceAll(ret, "!!placeholder!!", extSuffix);
     return ISLMap(isl, ret);
 }

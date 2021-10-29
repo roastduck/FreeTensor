@@ -20,11 +20,11 @@
 namespace ir {
 
 struct IterAxis {
-    Expr iter_, begin_, end_; /// begin_[i] <= iter_[i] < end_[i]
+    Expr iter_;
     std::string parallel_;
 
-    IterAxis(Expr iter, Expr begin, Expr end, const std::string &parallel = "")
-        : iter_(iter), begin_(begin), end_(end), parallel_(parallel) {}
+    IterAxis(Expr iter, const std::string &parallel = "")
+        : iter_(iter), parallel_(parallel) {}
 };
 
 struct AccessPoint {
@@ -35,7 +35,7 @@ struct AccessPoint {
     int defAxis_;                /// The position of the VarDef
     std::vector<IterAxis> iter_; /// The temporal location of the access
     std::vector<Expr> access_;   /// The spacial location of the access
-    Expr cond_;                  /// The condition (predicate) of the access
+    std::vector<Expr> conds_;    /// The condition (predicate) of the access
 };
 
 class FindAllNoDeps : public Visitor {
@@ -83,7 +83,7 @@ inline int countBandNodeWidth(const Stmt &op) {
 class FindAccessPoint : public VisitorWithCursor {
     bool lastIsLoad_ = false;
     std::vector<IterAxis> cur_; // Current iteration point in the space
-    Expr cond_;
+    std::vector<Expr> conds_;
     std::unordered_map<AST, Ref<AccessPoint>> points_;
     std::unordered_map<std::string, std::vector<Ref<AccessPoint>>> reads_,
         writes_;
@@ -136,7 +136,7 @@ class FindAccessPoint : public VisitorWithCursor {
                defAxis_.at(op->var_),
                cur_,
                std::vector<Expr>{op->indices_.begin(), op->indices_.end()},
-               cond_};
+               conds_};
         points_.emplace(op, ap);
         writes_[defs_.at(op->var_)->id()].emplace_back(ap);
     }
@@ -282,11 +282,9 @@ class AnalyzeDeps : public Visitor {
     Ref<std::string> makeAccList(GenISLExprDeps &genISLExpr,
                                  const std::vector<Expr> &list, RelaxMode relax,
                                  ExternalMap &externals);
-    Ref<std::string> makeRange(GenISLExprDeps &genISLExpr,
-                               const std::vector<IterAxis> &point,
-                               RelaxMode relax, ExternalMap &externals);
-    Ref<std::string> makeCond(GenISLExprDeps &genISLExpr, const Expr &cond,
-                              RelaxMode relax, ExternalMap &externals);
+    Ref<std::string> makeCond(GenISLExprDeps &genISLExpr,
+                              const std::vector<Expr> &conds, RelaxMode relax,
+                              ExternalMap &externals);
 
     ISLMap makeAccMap(ISLCtx &isl, GenISLExprDeps &genISLExpr,
                       const AccessPoint &p, int iterDim, int accDim,
