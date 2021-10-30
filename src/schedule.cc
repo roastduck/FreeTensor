@@ -433,6 +433,11 @@ void Schedule::autoParallelize(const Target &target) {
             });
         for (auto &&[loopId, cnt] : contigLoops) {
             auto loop = find(loopId);
+            if (auto len = loop.node().as<ForNode>()->len_;
+                len->nodeType() == ASTNodeType::IntConst &&
+                len.as<IntConstNode>()->val_ < 32) {
+                continue;
+            }
             auto bak = ast_;
             auto logBak = logs_;
             try {
