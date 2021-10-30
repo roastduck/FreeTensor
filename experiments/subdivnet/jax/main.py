@@ -136,18 +136,22 @@ if __name__ == '__main__':
 
     for i in range(warmup_num):
         y = conv_impl1_inference(adj, x, w0, w1, w2, w3)
+    y = y.block_until_ready()
     t0 = time.time()
     for i in range(test_num):
         y = conv_impl1_inference(adj, x, w0, w1, w2, w3)
+    y = y.block_until_ready()
     t1 = time.time()
     assert y.shape == (n_faces, out_feats)
     print(f"Impl1 Inference Time = {(t1 - t0) / test_num * 1000} ms")
 
     for i in range(warmup_num):
         y = conv_impl2_inference(adj, x, w0, w1, w2, w3)
+    y = y.block_until_ready()
     t0 = time.time()
     for i in range(test_num):
         y = conv_impl2_inference(adj, x, w0, w1, w2, w3)
+    y = y.block_until_ready()
     t1 = time.time()
     assert y.shape == (n_faces, out_feats)
     print(f"Impl2 Inference Time = {(t1 - t0) / test_num * 1000} ms")
@@ -155,10 +159,12 @@ if __name__ == '__main__':
     for i in range(warmup_num):
         d_x, d_w0, d_w1, d_w2, d_w3 = conv_impl1_forward_backward(
             adj, x, w0, w1, w2, w3)
+    y = y.block_until_ready()
     t0 = time.time()
     for i in range(test_num):
         d_x, d_w0, d_w1, d_w2, d_w3 = conv_impl1_forward_backward(
             adj, x, w0, w1, w2, w3)
+    y = y.block_until_ready()
     t1 = time.time()
     assert d_x.shape == x.shape
     assert d_w0.shape == w0.shape
@@ -170,10 +176,12 @@ if __name__ == '__main__':
     for i in range(warmup_num):
         d_x, d_w0, d_w1, d_w2, d_w3 = conv_impl2_forward_backward(
             adj, x, w0, w1, w2, w3)
+    y = y.block_until_ready()
     t0 = time.time()
     for i in range(test_num):
         d_x, d_w0, d_w1, d_w2, d_w3 = conv_impl2_forward_backward(
             adj, x, w0, w1, w2, w3)
+    y = y.block_until_ready()
     t1 = time.time()
     assert d_x.shape == x.shape
     assert d_w0.shape == w0.shape

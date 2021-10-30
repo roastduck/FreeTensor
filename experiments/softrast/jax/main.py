@@ -125,18 +125,22 @@ if __name__ == '__main__':
 
     for i in range(warmup_num):
         y = rasterize_inference(vertices, faces)
+    y = y.block_until_ready()
     t0 = time.time()
     for i in range(test_num):
         y = rasterize_inference(vertices, faces)
+    y = y.block_until_ready()
     t1 = time.time()
     assert y.shape == (n_faces, h, w)
     print(f"Time = {(t1 - t0) / test_num * 1000} ms")
 
     for i in range(warmup_num):
         d_vertices, = rasterize_forward_backward(vertices, faces)
+    y = y.block_until_ready()
     t0 = time.time()
     for i in range(test_num):
         d_vertices, = rasterize_forward_backward(vertices, faces)
+    y = y.block_until_ready()
     t1 = time.time()
     assert d_vertices.shape == vertices.shape
     print(f"Forward+Backward Time = {(t1 - t0) / test_num * 1000} ms")

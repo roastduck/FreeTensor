@@ -78,18 +78,22 @@ if __name__ == '__main__':
 
     for i in range(warmup_num):
         y = transformer_impl1_inference(q, k, v)
+    y = y.block_until_ready()
     t0 = time.time()
     for i in range(test_num):
         y = transformer_impl1_inference(q, k, v)
+    y = y.block_until_ready()
     t1 = time.time()
     assert y.shape == (n_heads, seq_len, feat_len)
     print(f"Inference Time = {(t1 - t0) / test_num * 1000} ms")
 
     for i in range(warmup_num):
         d_q, d_k, d_v = transformer_impl1_forward_backward(q, k, v)
+    y = y.block_until_ready()
     t0 = time.time()
     for i in range(test_num):
         d_q, d_k, d_v = transformer_impl1_forward_backward(q, k, v)
+    y = y.block_until_ready()
     t1 = time.time()
     assert d_q.shape == q.shape
     assert d_k.shape == k.shape

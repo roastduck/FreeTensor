@@ -19,6 +19,8 @@ class Device {
 
     TargetType type() const { return target_->type(); }
     MemType mainMemType() const { return target_->mainMemType(); }
+
+    void sync();
 };
 
 } // namespace ir

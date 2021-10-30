@@ -169,13 +169,7 @@ void Driver::run() {
     func_(params_.data(), returns_.data(), retSizes_.data(), curCtx_);
 }
 
-void Driver::sync() {
-    switch (dev_.type()) {
-    case TargetType::GPU:
-        checkCudaError(cudaDeviceSynchronize());
-    default:;
-    }
-}
+void Driver::sync() { dev_.sync(); }
 
 std::vector<Ref<Array>> Driver::collectReturns() {
     std::vector<Ref<Array>> ret;

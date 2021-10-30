@@ -157,22 +157,13 @@ def compile_all(h, w, n_verts, n_faces, device):
     print(ir.debug.with_line_no(code))
     backward_exe = ir.Driver(backward, code, device)
 
-    def run_inference(vertices, faces, y):
-        inference_exe(vertices, faces, y)
-        inference_exe.sync()
-
-    def run_forward(vertices, faces, y):
-        forward_exe(vertices, faces, y)
-        forward_exe.sync()
-
     def run_backward(vertices, faces, y, d_y, d_vertices):
         kvs = {}
         kvs[privdes['y']] = d_y
         kvs[requires['vertices']] = d_vertices
         backward_exe(vertices, faces, y, **kvs)
-        backward_exe.sync()
 
-    return run_inference, run_forward, run_backward
+    return inference_exe, forward_exe, run_backward
 
 
 if __name__ == '__main__':
@@ -210,27 +201,33 @@ if __name__ == '__main__':
 
     for i in range(warmup_num):
         inference(vertices, faces, y)
+    ir_dev.sync()
     t0 = time.time()
     for i in range(test_num):
         inference(vertices, faces, y)
+    ir_dev.sync()
     t1 = time.time()
 
     print(f"Inference Time = {(t1 - t0) / test_num * 1000} ms")
 
     for i in range(warmup_num):
         forward(vertices, faces, y)
+    ir_dev.sync()
     t0 = time.time()
     for i in range(test_num):
         forward(vertices, faces, y)
+    ir_dev.sync()
     t1 = time.time()
 
     print(f"Forward Time = {(t1 - t0) / test_num * 1000} ms")
 
     for i in range(warmup_num):
         backward(vertices, faces, y, d_y, d_vertices)
+    ir_dev.sync()
     t0 = time.time()
     for i in range(test_num):
         backward(vertices, faces, y, d_y, d_vertices)
+    ir_dev.sync()
     t1 = time.time()
 
     print(f"Backward Time = {(t1 - t0) / test_num * 1000} ms")

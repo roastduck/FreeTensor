@@ -61,17 +61,21 @@ if __name__ == '__main__':
         k = k.cuda()
         v = v.cuda()
         d_y = d_y.cuda()
+        sync = torch.cuda.synchronize
     else:
         assert device == 'cpu'
+        sync = lambda: None
 
     warmup_num = 10
     test_num = 100
 
     for i in range(warmup_num):
         y = transformer_impl1(q, k, v, w, dilation, dilation_heads)
+    sync()
     t0 = time.time()
     for i in range(test_num):
         y = transformer_impl1(q, k, v, w, dilation, dilation_heads)
+    sync()
     t1 = time.time()
     assert y.shape == (n_heads, seq_len, feat_len)
     print(f"Impl1 Inference Time = {(t1 - t0) / test_num * 1000} ms")
@@ -82,17 +86,21 @@ if __name__ == '__main__':
 
     for i in range(warmup_num):
         y = transformer_impl1(q, k, v, w, dilation, dilation_heads)
+    sync()
     t0 = time.time()
     for i in range(test_num):
         y = transformer_impl1(q, k, v, w, dilation, dilation_heads)
+    sync()
     t1 = time.time()
     assert y.shape == (n_heads, seq_len, feat_len)
     print(f"Impl1 Forward Time = {(t1 - t0) / test_num * 1000} ms")
 
     for i in range(warmup_num):
         y.backward(d_y, retain_graph=True)
+    sync()
     t0 = time.time()
     for i in range(test_num):
         y.backward(d_y, retain_graph=True)
+    sync()
     t1 = time.time()
     print(f"Impl2 Backward Time = {(t1 - t0) / test_num * 1000} ms")

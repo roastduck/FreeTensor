@@ -104,14 +104,6 @@ def compile_all(n_faces, in_feats, out_feats, device):
     print(ir.debug.with_line_no(code))
     backward_exe = ir.Driver(backward, code, device)
 
-    def run_inference(adj, x, w0, w1, w2, w3, y):
-        inference_exe(adj, x, w0, w1, w2, w3, y)
-        inference_exe.sync()
-
-    def run_forward(adj, x, w0, w1, w2, w3, y):
-        forward_exe(adj, x, w0, w1, w2, w3, y)
-        forward_exe.sync()
-
     def run_backward(adj, x, w0, w1, w2, w3, y, d_y, d_x, d_w0, d_w1, d_w2,
                      d_w3):
         kvs = {}
@@ -122,9 +114,8 @@ def compile_all(n_faces, in_feats, out_feats, device):
         kvs[requires['w2']] = d_w2
         kvs[requires['w3']] = d_w3
         backward_exe(adj, x, w0, w1, w2, w3, y, **kvs)
-        backward_exe.sync()
 
-    return run_inference, run_forward, run_backward
+    return inference_exe, forward_exe, run_backward
 
 
 if __name__ == '__main__':
@@ -179,27 +170,33 @@ if __name__ == '__main__':
 
     for i in range(warmup_num):
         inference(adj, x, w0, w1, w2, w3, y)
+    ir_dev.sync()
     t0 = time.time()
     for i in range(test_num):
         inference(adj, x, w0, w1, w2, w3, y)
+    ir_dev.sync()
     t1 = time.time()
 
     print(f"Inference Time = {(t1 - t0) / test_num * 1000} ms")
 
     for i in range(warmup_num):
         forward(adj, x, w0, w1, w2, w3, y)
+    ir_dev.sync()
     t0 = time.time()
     for i in range(test_num):
         forward(adj, x, w0, w1, w2, w3, y)
+    ir_dev.sync()
     t1 = time.time()
 
     print(f"Forward Time = {(t1 - t0) / test_num * 1000} ms")
 
     for i in range(warmup_num):
         backward(adj, x, w0, w1, w2, w3, y, d_y, d_x, d_w0, d_w1, d_w2, d_w3)
+    ir_dev.sync()
     t0 = time.time()
     for i in range(test_num):
         backward(adj, x, w0, w1, w2, w3, y, d_y, d_x, d_w0, d_w1, d_w2, d_w3)
+    ir_dev.sync()
     t1 = time.time()
 
     print(f"Backward Time = {(t1 - t0) / test_num * 1000} ms")
