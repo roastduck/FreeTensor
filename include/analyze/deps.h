@@ -297,7 +297,7 @@ class AnalyzeDeps : public Visitor {
     ISLMap makeIneqBetweenOps(ISLCtx &isl, DepDirection mode, int iterId,
                               int iterDim) const;
 
-    ISLMap makeSerialToAll(ISLCtx &isl, int iterDim, int serialIterDim,
+    ISLMap makeSerialToAll(ISLCtx &isl, int iterDim,
                            const std::vector<IterAxis> &point) const;
     static int countSerial(const std::vector<IterAxis> &point);
 

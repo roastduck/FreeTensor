@@ -439,41 +439,18 @@ const std::string &AnalyzeDeps::getVar(const AST &op) {
     }
 }
 
-ISLMap AnalyzeDeps::makeSerialToAll(ISLCtx &isl, int iterDim, int serialIterDim,
+ISLMap AnalyzeDeps::makeSerialToAll(ISLCtx &isl, int iterDim,
                                     const std::vector<IterAxis> &point) const {
-    std::string ret =
-        makeNdList("d", serialIterDim) + " -> " + makeNdList("d_", iterDim);
-    bool first = true;
-    int j = 0;
+    std::string to = makeNdList("d", iterDim), from;
     for (int i = 0; i < iterDim; i++) {
-        if (i < (int)point.size()) {
-            if (point[i].parallel_.empty()) {
-                ret += first ? ": " : " and ";
-                ret += "d" + std::to_string(j++) + " = d_" + std::to_string(i);
-                first = false;
-            }
+        if (i < (int)point.size() && !point[i].parallel_.empty()) {
+            from += std::string(i > 0 ? ", " : "") + "0";
         } else {
-            ret += first ? ": " : " and ";
-            ret += "d_" + std::to_string(i) + " = 0";
-            first = false;
+            from += std::string(i > 0 ? ", " : "") + "d" + std::to_string(i);
         }
     }
-    while (j < serialIterDim) {
-        ret += first ? ": " : " and ";
-        ret += "d" + std::to_string(j++) + " = 0";
-        first = false;
-    }
-    return ISLMap(isl, "{" + ret + "}");
-}
-
-int AnalyzeDeps::countSerial(const std::vector<IterAxis> &point) {
-    int ret = 0;
-    for (auto &&item : point) {
-        if (item.parallel_.empty()) {
-            ret++;
-        }
-    }
-    return ret;
+    from = "[" + from + "]";
+    return ISLMap(isl, "{" + from + " -> " + to + "}");
 }
 
 ISLMap AnalyzeDeps::makeEraseVarDefConstraint(ISLCtx &isl,
@@ -615,7 +592,6 @@ void AnalyzeDeps::checkDepImpl(ISLCtx &isl, GenISLExprDeps &genISLExpr,
 
     int accDim = point->access_.size();
     int iterDim = point->iter_.size();
-    int serialIterDim = countSerial(point->iter_);
     std::vector<bool> filteredIn(otherList.size());
     for (size_t i = 0, n = otherList.size(); i < n; i++) {
         auto &&other = otherList[i];
@@ -630,7 +606,6 @@ void AnalyzeDeps::checkDepImpl(ISLCtx &isl, GenISLExprDeps &genISLExpr,
         }
 
         iterDim = std::max<int>(iterDim, other->iter_.size());
-        serialIterDim = std::max(serialIterDim, countSerial(other->iter_));
         ASSERT((int)other->access_.size() == accDim);
     }
     if (std::find(filteredIn.begin(), filteredIn.end(), true) ==
@@ -661,7 +636,7 @@ void AnalyzeDeps::checkDepImpl(ISLCtx &isl, GenISLExprDeps &genISLExpr,
     }
 
     // lex_ge in serialDepAll AND ne in depAll
-    ISLMap serialLexGE = lexGE(spaceSetAlloc(isl, 0, serialIterDim));
+    ISLMap serialLexGE = lexGE(spaceSetAlloc(isl, 0, iterDim));
     ISLMap allEQ = identity(spaceAlloc(isl, 0, iterDim, iterDim));
     ISLMap eraseVarDefConstraint =
         makeEraseVarDefConstraint(isl, point, iterDim);
@@ -680,7 +655,7 @@ void AnalyzeDeps::checkDepImpl(ISLCtx &isl, GenISLExprDeps &genISLExpr,
             applyDomain(std::move(pmap),
                         projectOutPrivateAxis(isl, iterDim, pCommonDims + 1));
     }
-    ISLMap ps2a = makeSerialToAll(isl, iterDim, serialIterDim, point->iter_);
+    ISLMap ps2a = makeSerialToAll(isl, iterDim, point->iter_);
     ISLMap pa2s = reverse(ps2a);
     ISLSet pIter = domain(pmap);
     std::vector<ISLMap> os2aList(otherList.size()),
@@ -707,8 +682,7 @@ void AnalyzeDeps::checkDepImpl(ISLCtx &isl, GenISLExprDeps &genISLExpr,
                 std::move(omap),
                 projectOutPrivateAxis(isl, iterDim, oCommonDims[i] + 1));
         }
-        ISLMap os2a =
-            makeSerialToAll(isl, iterDim, serialIterDim, other->iter_);
+        ISLMap os2a = makeSerialToAll(isl, iterDim, other->iter_);
         ISLMap oa2s = reverse(os2a);
         ISLSet oIter = domain(omap);
 
