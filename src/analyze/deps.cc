@@ -75,7 +75,7 @@ void CountBandNodeWidth::visit(const ReduceTo &op) {
 
 FindAccessPoint::FindAccessPoint(const Stmt &root) {
     if (int width = countBandNodeWidth(root); width > 1) {
-        cur_.emplace_back(makeIntConst(0));
+        cur_.emplace_back(makeIntConst(-1));
     }
 }
 
@@ -555,6 +555,39 @@ ISLMap AnalyzeDeps::makeExternalVarConstraint(
     return ret;
 }
 
+ISLMap AnalyzeDeps::projectOutPrivateAxis(ISLCtx &isl, int iterDim, int since) {
+    std::string from = makeNdList("d", iterDim);
+    std::string to;
+    for (int i = 0; i < iterDim; i++) {
+        to += (i > 0 ? ", " : "") + (i < since ? "d" + std::to_string(i) : "0");
+    }
+    to = "[" + to + "]";
+    return ISLMap(isl, "{" + from + " -> " + to + "}");
+}
+
+int AnalyzeDeps::numCommonDims(const Ref<AccessPoint> &p1,
+                               const Ref<AccessPoint> &p2) {
+    int n = std::min(p1->iter_.size(), p2->iter_.size());
+    for (int i = 0; i < n; i++) {
+        auto &&iter1 = p1->iter_[i].iter_;
+        auto &&iter2 = p2->iter_[i].iter_;
+        if (iter1->nodeType() == ASTNodeType::IntConst &&
+            iter2->nodeType() == ASTNodeType::IntConst &&
+            iter1.as<IntConstNode>()->val_ != iter2.as<IntConstNode>()->val_) {
+            for (int j = n - 1; j >= i; j--) {
+                if ((j < (int)p1->iter_.size() &&
+                     !p1->iter_[j].parallel_.empty()) ||
+                    (j < (int)p2->iter_.size() &&
+                     !p2->iter_[j].parallel_.empty())) {
+                    return j + 1;
+                }
+            }
+            return i;
+        }
+    }
+    return n;
+}
+
 void AnalyzeDeps::checkDep(const Ref<AccessPoint> &point,
                            const std::vector<Ref<AccessPoint>> &otherList) {
     tasks_.emplace_back([point, otherList, this]() {
@@ -605,6 +638,28 @@ void AnalyzeDeps::checkDepImpl(ISLCtx &isl, GenISLExprDeps &genISLExpr,
         return;
     }
 
+    int pCommonDims = 0;
+    std::vector<int> oCommonDims(otherList.size(), 0);
+    for (size_t i = 0, n = otherList.size(); i < n; i++) {
+        auto &&other = otherList[i];
+        if (!filteredIn[i]) {
+            continue;
+        }
+
+        int cpo = numCommonDims(point, other);
+        pCommonDims = std::max(pCommonDims, cpo);
+        oCommonDims[i] = std::max(oCommonDims[i], cpo);
+        auto j = i + 1;
+        while (j < n && !filteredIn[j]) {
+            j++;
+        }
+        if (j < n) {
+            int co1o2 = numCommonDims(other, otherList[j]);
+            oCommonDims[i] = std::max(oCommonDims[i], co1o2);
+            oCommonDims[j] = std::max(oCommonDims[j], co1o2);
+        }
+    }
+
     // lex_ge in serialDepAll AND ne in depAll
     ISLMap serialLexGE = lexGE(spaceSetAlloc(isl, 0, serialIterDim));
     ISLMap allEQ = identity(spaceAlloc(isl, 0, iterDim, iterDim));
@@ -618,6 +673,12 @@ void AnalyzeDeps::checkDepImpl(ISLCtx &isl, GenISLExprDeps &genISLExpr,
                              "__ext_p", pExternals);
     if (pmap.empty()) {
         return;
+    }
+    if (mode_ == FindDepsMode::Dep &&
+        pCommonDims + 1 < (int)point->iter_.size()) {
+        pmap =
+            applyDomain(std::move(pmap),
+                        projectOutPrivateAxis(isl, iterDim, pCommonDims + 1));
     }
     ISLMap ps2a = makeSerialToAll(isl, iterDim, serialIterDim, point->iter_);
     ISLMap pa2s = reverse(ps2a);
@@ -639,6 +700,12 @@ void AnalyzeDeps::checkDepImpl(ISLCtx &isl, GenISLExprDeps &genISLExpr,
         if (omap.empty()) {
             filteredIn[i] = false;
             continue;
+        }
+        if (mode_ == FindDepsMode::Dep &&
+            oCommonDims[i] + 1 < (int)other->iter_.size()) {
+            omap = applyDomain(
+                std::move(omap),
+                projectOutPrivateAxis(isl, iterDim, oCommonDims[i] + 1));
         }
         ISLMap os2a =
             makeSerialToAll(isl, iterDim, serialIterDim, other->iter_);

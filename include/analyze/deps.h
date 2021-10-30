@@ -347,6 +347,21 @@ class AnalyzeDeps : public Visitor {
                                      const std::string &extSuffixP,
                                      const std::string &extSuffixO);
 
+    /**
+     * If we are analyzing the dependency between A and B, e.g.
+     * for i
+     *   for j
+     *     A
+     *   for k
+     *     B
+     * Analyzing the value of j and k will spend a great amount of time, but in
+     * FindDepsMode::Dep mode, we do not care about the result. Therefore, we
+     * project out these dimensions
+     */
+    ISLMap projectOutPrivateAxis(ISLCtx &isl, int iterDim, int since);
+
+    int numCommonDims(const Ref<AccessPoint> &p1, const Ref<AccessPoint> &p2);
+
     static const std::string &getVar(const AST &op);
 
     /**

@@ -280,6 +280,19 @@ inline ISLMap uni(const ISLMap &lhs, const ISLMap &rhs) {
     return isl_map_union(lhs.copy(), rhs.copy());
 }
 
+inline ISLMap applyDomain(ISLMap &&lhs, ISLMap &&rhs) {
+    return isl_map_apply_domain(lhs.move(), rhs.move());
+}
+inline ISLMap applyDomain(const ISLMap &lhs, ISLMap &&rhs) {
+    return isl_map_apply_domain(lhs.copy(), rhs.move());
+}
+inline ISLMap applyDomain(ISLMap &&lhs, const ISLMap &rhs) {
+    return isl_map_apply_domain(lhs.move(), rhs.copy());
+}
+inline ISLMap applyDomain(const ISLMap &lhs, const ISLMap &rhs) {
+    return isl_map_apply_domain(lhs.copy(), rhs.copy());
+}
+
 inline ISLMap applyRange(ISLMap &&lhs, ISLMap &&rhs) {
     return isl_map_apply_range(lhs.move(), rhs.move());
 }
