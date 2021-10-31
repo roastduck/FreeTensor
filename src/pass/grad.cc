@@ -89,8 +89,16 @@ Stmt Grad::visit(const For &op) {
         ret->setId("");
         return ret;
     } else {
+        auto noDeps = op->property_.noDeps_;
+        for (auto &&fwdVar : op->property_.noDeps_) {
+            if (defs_.count(fwdVar) &&
+                affectedDefs_.count(defs_.at(fwdVar)->id())) {
+                noDeps.emplace_back(fwdVar + ".grad");
+            }
+        }
         return makeFor(
-            "", op->iter_, op->begin_, op->end_, op->len_, op->property_,
+            op->id(), op->iter_, op->begin_, op->end_, op->len_,
+            op->property_.withNoDeps(noDeps),
             ReplaceVar(
                 op->iter_,
                 makeSub(makeSub(makeAdd(op->begin_, op->end_), makeIntConst(1)),
@@ -100,10 +108,10 @@ Stmt Grad::visit(const For &op) {
 
 Stmt Grad::visit(const VarDef &_op) {
     ASSERT(!gradNames_.count(_op->name_));
-    ASSERT(!buffers_.count(_op->name_));
+    ASSERT(!defs_.count(_op->name_));
     ASSERT(!recomputed_.count(_op->name_));
     auto gradName = gradNames_[_op->name_] = _op->name_ + ".grad";
-    buffers_[_op->name_] = _op->buffer_;
+    defs_[_op->name_] = _op;
     if (tapes_.count(_op->id())) {
         taped_.insert(_op->name_);
     }
@@ -111,7 +119,7 @@ Stmt Grad::visit(const VarDef &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::VarDef);
     auto op = __op.as<VarDefNode>();
     taped_.erase(op->name_);
-    buffers_.erase(op->name_);
+    defs_.erase(op->name_);
     gradNames_.erase(op->name_);
     recomputed_.erase(op->name_);
 
@@ -184,7 +192,7 @@ Stmt Grad::visit(const VarDef &_op) {
 
             return grad;
         } else {
-            buffers_[_op->name_] = _op->buffer_;
+            defs_[_op->name_] = _op;
             if (tapes_.count(_op->id())) {
                 taped_.insert(_op->name_);
             }
@@ -192,7 +200,7 @@ Stmt Grad::visit(const VarDef &_op) {
             ASSERT(__op->nodeType() == ASTNodeType::VarDef);
             auto op = __op.as<VarDefNode>();
             taped_.erase(op->name_);
-            buffers_.erase(op->name_);
+            defs_.erase(op->name_);
 
             auto grad = op->body_;
             grad = makeVarDef(op->id(), op->name_, *op->buffer_, op->sizeLim_,
@@ -213,7 +221,7 @@ Stmt Grad::visit(const VarDef &_op) {
 }
 
 Stmt Grad::visit(const Store &op) {
-    auto &&buffer = buffers_.at(op->var_);
+    auto &&buffer = defs_.at(op->var_)->buffer_;
     if (isRecompute_) {
         bool recomputed =
             recomputed_.count(op->var_) && recomputed_.at(op->var_).count(op);

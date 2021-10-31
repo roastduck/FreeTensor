@@ -112,7 +112,7 @@ class Grad : public Mutator {
     std::unordered_map<std::string, std::string> provideGrads_; // var name map
 
     std::unordered_map<std::string, std::string> gradNames_; // x -> dy/dx
-    std::unordered_map<std::string, Ref<Buffer>> buffers_;
+    std::unordered_map<std::string, VarDef> defs_;
     std::unordered_set<std::string> taped_;
     std::unordered_map<Expr, Expr> equLoads_;
     std::unordered_map<std::string, std::unordered_set<Stmt>>

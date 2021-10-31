@@ -639,3 +639,24 @@ def test_tape_mode_no_reuse_only():
     std = ir.make_reduction(ir.pop_ast())
 
     assert std.match(backward)
+
+
+def test_no_deps():
+
+    @ir.transform
+    def test(ptr, edge1, edge2):
+        ir.declare_var(ptr, (11,), "int32", "input", "cpu")
+        ir.declare_var(edge1, (50,), "int32", "input", "cpu")
+        ir.declare_var(edge2, (50,), "int32", "output", "cpu")
+        'nid: Li'
+        'no_deps: edge2'
+        for i in range(10):
+            for j in range(ptr[i], ptr[i + 1]):
+                edge2[j] = edge1[j] + i
+
+    print(test)
+    _, backward, _, _, _ = ir.grad(test, set(["edge1"]), set(["edge2"]), set())
+    print(backward)
+    s = ir.Schedule(backward)
+    s.parallelize("Li", "openmp")  # No exception here
+    print(s.ast())
