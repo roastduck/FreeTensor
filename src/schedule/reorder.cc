@@ -1,3 +1,5 @@
+#include <sstream>
+
 #include <analyze/deps.h>
 #include <analyze/hash.h>
 #include <pass/make_reduction.h>
@@ -118,9 +120,9 @@ Stmt reorder(const Stmt &_ast, const std::vector<std::string> &dstOrder) {
                     ASSERT(d.cond_.size() == 1);
                     std::ostringstream os;
                     os << "Loop " << curOrder[j]->id() << " and "
-                       << curOrder[j + 1]->id() << " are not permutable: "
-                       << dep2Str(d.cond_[0].first, d.var_, d.later(),
-                                  d.earlier());
+                       << curOrder[j + 1]->id()
+                       << " are not permutable: " << toString(d)
+                       << " cannot be resolved";
                     throw InvalidSchedule(os.str());
                 };
                 findDeps(ast,

@@ -213,8 +213,7 @@ std::pair<Stmt, std::string> fuse(const Stmt &_ast, const std::string &loop0,
     };
     auto found = [&](const Dependency &d) {
         ASSERT(d.cond_.size() == 1);
-        throw InvalidSchedule(
-            dep2Str(d.cond_[0].first, d.var_, d.later(), d.earlier()));
+        throw InvalidSchedule(toString(d) + " cannot be resolved");
     };
     findDeps(ast, {{{mutator.fused(), DepDirection::Normal}}}, found,
              FindDepsMode::Dep, DEP_ALL, filter);

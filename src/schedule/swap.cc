@@ -73,8 +73,7 @@ Stmt swap(const Stmt &_ast, const std::vector<std::string> &order) {
         return (old0 < old1) != (new0 < new1);
     };
     auto found = [&](const Dependency &d) {
-        throw InvalidSchedule(
-            dep2Str(scope->id(), d.var_, d.later(), d.earlier()));
+        throw InvalidSchedule(toString(d) + " cannot be resolved");
     };
     findDeps(ast, {{}}, found, FindDepsMode::Dep, DEP_ALL, filter);
     return ast;

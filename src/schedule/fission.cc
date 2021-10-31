@@ -340,7 +340,7 @@ fission(const Stmt &_ast, const std::string &loop, FissionSide side,
         if (!xLoops.count(d.var_) ||
             std::find(xLoops.at(d.var_).begin(), xLoops.at(d.var_).end(), id) ==
                 xLoops.at(d.var_).end()) {
-            throw InvalidSchedule(dep2Str(id, d.var_, d.later(), d.earlier()));
+            throw InvalidSchedule(toString(d) + " cannot be resolved");
         }
         if (!isRealWrite(id, d.def()) &&
             d.earlier()->nodeType() == ASTNodeType::Load) {

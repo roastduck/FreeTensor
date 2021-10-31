@@ -165,8 +165,7 @@ Stmt blend(const Stmt &_ast, const std::string &loop) {
     };
     auto found = [&](const Dependency &d) {
         ASSERT(d.cond_.size() == 2);
-        throw InvalidSchedule(
-            dep2Str(d.cond_[1].first, d.var_, d.later(), d.earlier()));
+        throw InvalidSchedule(toString(d) + " cannot be resolved");
     };
     findDeps(ast, cond, found, FindDepsMode::Dep, DEP_ALL, filter);
 

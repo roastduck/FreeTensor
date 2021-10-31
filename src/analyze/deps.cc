@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <regex>
 #include <sstream>
 
 #include <analyze/deps.h>
@@ -819,6 +820,23 @@ void findDeps(const Stmt &op, const std::vector<FindDepsCond> &cond,
             std::rethrow_exception(exceptions[i]);
         }
     }
+}
+
+std::string toString(const Dependency &dep) {
+    std::ostringstream os;
+    os << "Dependency ";
+    os << (dep.later()->nodeType() == ASTNodeType::Load ? "READ " : "WRITE ")
+       << dep.later() << " in " << dep.later_.cursor_.node();
+    os << " after ";
+    os << (dep.earlier()->nodeType() == ASTNodeType::Load ? "READ " : "WRITE ")
+       << dep.earlier() << " in " << dep.earlier_.cursor_.node();
+    bool first = true;
+    for (auto &&[scope, dir] : dep.cond_) {
+        os << (first ? " along " : " and ");
+        first = false;
+        os << scope.name_;
+    }
+    return std::regex_replace(os.str(), std::regex("\n"), "");
 }
 
 } // namespace ir

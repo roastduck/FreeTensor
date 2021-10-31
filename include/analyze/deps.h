@@ -4,7 +4,6 @@
 #include <functional>
 #include <iostream>
 #include <mutex>
-#include <regex>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -434,17 +433,7 @@ void findDeps(const Stmt &op, const std::vector<FindDepsCond> &cond,
               const FindDepsFilter &filter = nullptr,
               bool ignoreReductionWAW = true, bool eraseOutsideVarDef = true);
 
-inline std::string dep2Str(const NodeIDOrParallelScope &scope,
-                           const std::string &var, const AST &later,
-                           const AST &earlier) {
-    std::ostringstream os;
-    os << "Dependency "
-       << (later->nodeType() == ASTNodeType::Load ? "READ " : "WRITE ") << later
-       << " after "
-       << (earlier->nodeType() == ASTNodeType::Load ? "READ " : "WRITE ")
-       << earlier << " along " << scope.name_ << " cannot be resolved";
-    return std::regex_replace(os.str(), std::regex("\n"), "");
-}
+std::string toString(const Dependency &dep);
 
 }; // namespace ir
 
