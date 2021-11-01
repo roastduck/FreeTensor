@@ -533,6 +533,40 @@ def test_mkl_basic():
 
 
 @pytest.mark.skipif(not ir.with_mkl(), reason="requires MKL")
+def test_mkl_reverse_idx():
+
+    @ir.transform
+    def test(a, b, c):
+        ir.declare_var(a, (48, 64), "float32", "input", "cpu")
+        ir.declare_var(b, (64, 72), "float32", "input", "cpu")
+        ir.declare_var(c, (48, 72), "float32", "inout", "cpu")
+        "nid: L1"
+        for i in range(48):
+            for j in range(72):
+                for k in range(64):
+                    c[47 - i, 71 - j] += a[47 - i, 63 - k] * b[63 - k, 71 - j]
+
+    s = ir.Schedule(test)
+    s.as_matmul("L1")
+    func = ir.lower(s.func(), target)
+    print(func)
+    code = ir.codegen(func, target)
+    print(code)
+    assert "cblas" in code
+    assert "mkl_set_num_threads_local(0)" in code
+    a_np = np.random.uniform(size=(48, 64)).astype("float32")
+    b_np = np.random.uniform(size=(64, 72)).astype("float32")
+    c_np = np.random.uniform(size=(48, 72)).astype("float32")
+    a_arr = ir.Array(a_np, ir.Device(ir.CPU()))
+    b_arr = ir.Array(b_np, ir.Device(ir.CPU()))
+    c_arr = ir.Array(c_np, ir.Device(ir.CPU()))
+    ir.Driver(func, code, ir.Device(ir.CPU()))(a=a_arr, b=b_arr, c=c_arr)
+    c_result = c_arr.numpy().reshape(48, 72)
+
+    assert np.all(np.isclose(c_result, c_np + a_np @ b_np))
+
+
+@pytest.mark.skipif(not ir.with_mkl(), reason="requires MKL")
 def test_mkl_trans_a():
 
     @ir.transform
