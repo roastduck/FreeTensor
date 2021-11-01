@@ -12,7 +12,8 @@ namespace ir {
 enum class FissionSide : int { Before, After };
 
 class HoistVar : public Mutator {
-    std::string loop_, before_, after_, beforeId_, afterId_;
+    std::string loop_, before_, after_;
+    std::vector<std::pair<std::string, std::string>> scopePairs_;
     std::unordered_set<std::string> part0Vars_, part1Vars_;
     std::vector<VarDef> defStack_;
     std::vector<std::string> outerScopes_, innerLoops_;
@@ -27,8 +28,10 @@ class HoistVar : public Mutator {
              const std::string &after)
         : loop_(loop), before_(before), after_(after) {}
 
-    const std::string &beforeId() const { return beforeId_; }
-    const std::string &afterId() const { return afterId_; }
+    const std::vector<std::pair<std::string, std::string>> &scopePairs() const {
+        return scopePairs_;
+    }
+
     bool found() const { return isAfter_; }
 
     const std::vector<std::string> &outerScopes() const { return outerScopes_; }

@@ -74,8 +74,7 @@ Stmt HoistVar::visit(const StmtSeq &op) {
                                   : before[0];
             auto afterNode =
                 after.size() > 1 ? makeStmtSeq("", std::move(after)) : after[0];
-            beforeId_ = beforeNode->id();
-            afterId_ = afterNode->id();
+            scopePairs_.emplace_back(beforeNode->id(), afterNode->id());
             ret = makeStmtSeq(op->id(), {beforeNode, afterNode});
         }
         return ret;
@@ -321,8 +320,13 @@ fission(const Stmt &_ast, const std::string &loop, FissionSide side,
         return isVariant(variantExpr.second, def, loop);
     };
     auto filter = [&](const AccessPoint &later, const AccessPoint &earlier) {
-        return earlier.cursor_.getParentById(hoist.afterId()).isValid() &&
-               later.cursor_.getParentById(hoist.beforeId()).isValid();
+        for (auto &&[beforeId, afterId] : hoist.scopePairs()) {
+            if (earlier.cursor_.getParentById(afterId).isValid() &&
+                later.cursor_.getParentById(beforeId).isValid()) {
+                return true;
+            }
+        }
+        return false;
     };
     std::unordered_map<std::string, std::vector<std::string>> toAdd;
     auto found = [&](const Dependency &d) {

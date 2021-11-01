@@ -302,7 +302,7 @@ def test_correct_dependency_before():
     assert std.match(ast)
 
 
-def test_correct_dependency_multi_loop():
+def test_correct_dependency_multi_loop_1():
     with ir.VarDef([
         ("x0", (4, 8), "int32", "input", "cpu"),
         ("x1", (4, 8), "int32", "input", "cpu"),
@@ -336,6 +336,53 @@ def test_correct_dependency_multi_loop():
                 with ir.For("j", 0, 8) as j:
                     y[i, j] = b[i, j, 0] * b[i, j, 0]
     std = ir.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_correct_dependency_multi_loop_2():
+    with ir.VarDef([("a", (4, 4), "float32", "input", "cpu"),
+                    ("b", (4,), "float32", "input", "cpu"),
+                    ("d_y", (4,), "float32", "inout", "cpu"),
+                    ("d_a", (4, 4), "float32", "inout", "cpu"),
+                    ("d_b", (4,), "float32", "inout", "cpu")]) as (a, b, d_y,
+                                                                   d_a, d_b):
+        with ir.For("i", 0, 4, nid="L1") as i:
+            with ir.For("j", 0, 4) as j:
+                with ir.VarDef("d_y_old", (), "float32", "cache",
+                               "cpu") as d_y_old:
+                    d_y_old[()] = d_y[i]
+                    d_y[i] = d_y_old[()]
+                    ir.MarkNid("S0")
+                    d_a[i, j] += d_y_old[()] * b[j]
+                    d_b[j] += d_y_old[()] * a[i, j]
+            d_y[i] = 0
+    ast = ir.make_reduction(ir.pop_ast())
+    print(ast)
+    s = ir.Schedule(ast)
+    s.fission("L1", ir.FissionSide.Before, "S0")
+    ast = s.ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([("a", (4, 4), "float32", "input", "cpu"),
+                    ("b", (4,), "float32", "input", "cpu"),
+                    ("d_y", (4,), "float32", "inout", "cpu"),
+                    ("d_a", (4, 4), "float32", "inout", "cpu"),
+                    ("d_b", (4,), "float32", "inout", "cpu"),
+                    ("d_y_old", (4, 4), "float32", "cache", "cpu")
+                   ]) as (a, b, d_y, d_a, d_b, d_y_old):
+        with ir.For("i", 0, 4) as i:
+            with ir.For("j", 0, 4) as j:
+                d_y_old[i, j] = d_y[i]
+                d_y[i] = d_y_old[i, j]
+        with ir.For("i", 0, 4) as i:
+            with ir.For("j", 0, 4) as j:
+                d_a[i, j] += d_y_old[i, j] * b[j]
+                d_b[j] += d_y_old[i, j] * a[i, j]
+            d_y[i] = 0
+    std = ir.make_reduction(ir.pop_ast())
 
     assert std.match(ast)
 
