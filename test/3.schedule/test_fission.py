@@ -68,6 +68,54 @@ def test_fission_before():
     assert std.match(ast)
 
 
+def test_fission_after_empty():
+    with ir.VarDef("z", (4, 8), "int32", "output", "cpu") as z:
+        with ir.For("i", 0, 4, nid="L1") as i:
+            with ir.For("j", 0, 8, nid="L2") as j:
+                ir.MarkNid("S0")
+                z[i, j] = i * j
+    ast = ir.pop_ast()
+    print(ast)
+    s = ir.Schedule(ast)
+    s.fission("L2", ir.FissionSide.After, "S0")
+    ast = s.ast()
+    print(ast)
+    ast = ir.simplify_pass(ast)
+    print(ast)
+
+    with ir.VarDef("z", (4, 8), "int32", "output", "cpu") as z:
+        with ir.For("i", 0, 4) as i:
+            with ir.For("j", 0, 8) as j:
+                z[i, j] = i * j
+    std = ir.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_fission_before_empty():
+    with ir.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
+        with ir.For("i", 0, 4, nid="L1") as i:
+            with ir.For("j", 0, 8, nid="L2") as j:
+                ir.MarkNid("S0")
+                y[i, j] = i + j
+    ast = ir.pop_ast()
+    print(ast)
+    s = ir.Schedule(ast)
+    s.fission("L2", ir.FissionSide.Before, "S0")
+    ast = s.ast()
+    print(ast)
+    ast = ir.simplify_pass(ast)
+    print(ast)
+
+    with ir.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
+        with ir.For("i", 0, 4) as i:
+            with ir.For("j", 0, 8) as j:
+                y[i, j] = i + j
+    std = ir.pop_ast()
+
+    assert std.match(ast)
+
+
 def test_stmt_in_if():
     with ir.VarDef([
         ("y", (4, 8), "int32", "output", "cpu"),

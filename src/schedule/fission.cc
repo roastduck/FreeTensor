@@ -160,17 +160,25 @@ Stmt AddDimToVar::visit(const ReduceTo &_op) {
 
 Stmt FissionFor::visitStmt(const Stmt &op,
                            const std::function<Stmt(const Stmt &)> &visitNode) {
-    if (!before_.empty()) {
-        isAfter_ |= op->id() == before_;
-    }
-    if (inside_) {
+    if (!inside_) {
+        return Mutator::visitStmt(op, visitNode);
+    } else {
+        auto oldAnyInside = anyInside_;
+        anyInside_ = false;
+        if (!before_.empty()) {
+            isAfter_ |= op->id() == before_;
+        }
         anyInside_ |= (isPart0_ && !isAfter_) || (!isPart0_ && isAfter_);
+        auto ret = Mutator::visitStmt(op, visitNode);
+        if (!after_.empty()) {
+            isAfter_ |= op->id() == after_;
+        }
+        if (!anyInside_) {
+            ret = makeStmtSeq("", {});
+        }
+        anyInside_ |= oldAnyInside;
+        return ret;
     }
-    auto ret = Mutator::visitStmt(op, visitNode);
-    if (!after_.empty()) {
-        isAfter_ |= op->id() == after_;
-    }
-    return ret;
 }
 
 void FissionFor::markNewId(const Stmt &op, bool isPart0) {
@@ -212,28 +220,11 @@ Stmt FissionFor::visit(const For &op) {
 }
 
 Stmt FissionFor::visit(const StmtSeq &op) {
-    if (!inside_) {
-        return Mutator::visit(op);
-    } else {
-        std::vector<Stmt> stmts;
-        stmts.reserve(op->stmts_.size());
-        for (auto &&_stmt : op->stmts_) {
-            auto oldAnyInside = anyInside_;
-            anyInside_ = false;
-            auto stmt = (*this)(_stmt);
-            if (anyInside_) {
-                stmts.emplace_back(stmt);
-            }
-            anyInside_ |= oldAnyInside;
-        }
-        if (stmts.size() == 1) {
-            return stmts[0]; // id already modified
-        } else {
-            Stmt ret = makeStmtSeq(op->id(), std::move(stmts));
-            markNewId(ret, isPart0_);
-            return ret;
-        }
+    auto ret = Mutator::visit(op);
+    if (inside_) {
+        markNewId(ret, isPart0_);
     }
+    return ret;
 }
 
 Stmt FissionFor::visit(const VarDef &_op) {
