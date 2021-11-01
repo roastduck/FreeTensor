@@ -16,10 +16,10 @@ namespace ir {
  */
 class AnalyzeLinear : public Visitor {
     GetHash getHash_;
-    std::unordered_map<AST, LinearExpr<int>> result_;
+    std::unordered_map<AST, LinearExpr<int64_t>> result_;
 
   public:
-    const std::unordered_map<AST, LinearExpr<int>> &result() const {
+    const std::unordered_map<AST, LinearExpr<int64_t>> &result() const {
         return result_;
     }
 

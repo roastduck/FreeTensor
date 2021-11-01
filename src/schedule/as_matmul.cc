@@ -33,7 +33,7 @@ uint64_t AsMatMul::getHash(const Expr &op) {
     return getHash_.hash().at(op);
 }
 
-const LinearExpr<int> &AsMatMul::analyzeLinear(const Expr &expr) {
+const LinearExpr<int64_t> &AsMatMul::analyzeLinear(const Expr &expr) {
     analyzeLinear_(expr);
     return analyzeLinear_.result().at(expr);
 }

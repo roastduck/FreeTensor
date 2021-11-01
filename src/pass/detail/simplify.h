@@ -63,6 +63,75 @@ Expr SimplifyPass<BaseClass>::visitExpr(
     return op;
 }
 
+template <class BaseClass>
+Expr SimplifyPass<BaseClass>::visit(const IntConst &_op) {
+    auto __op = BaseClass::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::IntConst);
+    auto op = __op.template as<IntConstNode>();
+    constants_[op] = op->val_;
+    return op;
+}
+
+template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const Add &_op) {
+    auto __op = BaseClass::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::Add);
+    auto op = __op.template as<AddNode>();
+
+    if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
+        return markMutated(
+            makeIntConst(constants_.at(op->lhs_) + constants_.at(op->rhs_)));
+    }
+    if (constants_.count(op->lhs_) && constants_.at(op->lhs_) == 0) {
+        return markMutated(op->rhs_);
+    }
+    if (constants_.count(op->rhs_) && constants_.at(op->rhs_) == 0) {
+        return markMutated(op->lhs_);
+    }
+
+    return op;
+}
+
+template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const Sub &_op) {
+    auto __op = BaseClass::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::Sub);
+    auto op = __op.template as<SubNode>();
+
+    if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
+        return markMutated(
+            makeIntConst(constants_.at(op->lhs_) - constants_.at(op->rhs_)));
+    }
+    if (constants_.count(op->rhs_) && constants_.at(op->rhs_) == 0) {
+        return markMutated(op->lhs_);
+    }
+
+    return op;
+}
+
+template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const Mul &_op) {
+    auto __op = BaseClass::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::Mul);
+    auto op = __op.template as<MulNode>();
+
+    if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
+        return markMutated(
+            makeIntConst(constants_.at(op->lhs_) * constants_.at(op->rhs_)));
+    }
+    if (constants_.count(op->lhs_) && constants_.at(op->lhs_) == 1) {
+        return markMutated(op->rhs_);
+    }
+    if (constants_.count(op->rhs_) && constants_.at(op->rhs_) == 1) {
+        return markMutated(op->lhs_);
+    }
+    if (constants_.count(op->lhs_) && constants_.at(op->lhs_) == 0) {
+        return markMutated(makeIntConst(0));
+    }
+    if (constants_.count(op->rhs_) && constants_.at(op->rhs_) == 0) {
+        return markMutated(makeIntConst(0));
+    }
+
+    return op;
+}
+
 template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const Var &op) {
     if (replace_.count(op->name_)) {
         return (*this)(replace_.at(op->name_));
@@ -75,11 +144,9 @@ Expr SimplifyPass<BaseClass>::visit(const FloorDiv &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::FloorDiv);
     auto op = __op.template as<FloorDivNode>();
-    if (op->lhs_->nodeType() == ASTNodeType::IntConst &&
-        op->rhs_->nodeType() == ASTNodeType::IntConst) {
-        return markMutated(
-            makeIntConst(floorDiv(op->lhs_.template as<IntConstNode>()->val_,
-                                  op->rhs_.template as<IntConstNode>()->val_)));
+    if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
+        return markMutated(makeIntConst(
+            floorDiv(constants_.at(op->lhs_), constants_.at(op->rhs_))));
     }
     return op;
 }
@@ -89,11 +156,9 @@ Expr SimplifyPass<BaseClass>::visit(const CeilDiv &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::CeilDiv);
     auto op = __op.template as<CeilDivNode>();
-    if (op->lhs_->nodeType() == ASTNodeType::IntConst &&
-        op->rhs_->nodeType() == ASTNodeType::IntConst) {
-        return markMutated(
-            makeIntConst(ceilDiv(op->lhs_.template as<IntConstNode>()->val_,
-                                 op->rhs_.template as<IntConstNode>()->val_)));
+    if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
+        return markMutated(makeIntConst(
+            ceilDiv(constants_.at(op->lhs_), constants_.at(op->rhs_))));
     }
     return op;
 }
@@ -103,11 +168,9 @@ Expr SimplifyPass<BaseClass>::visit(const RoundTowards0Div &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::RoundTowards0Div);
     auto op = __op.template as<RoundTowards0DivNode>();
-    if (op->lhs_->nodeType() == ASTNodeType::IntConst &&
-        op->rhs_->nodeType() == ASTNodeType::IntConst) {
+    if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
         return markMutated(
-            makeIntConst(op->lhs_.template as<IntConstNode>()->val_ /
-                         op->rhs_.template as<IntConstNode>()->val_));
+            makeIntConst(constants_.at(op->lhs_) / constants_.at(op->rhs_)));
     }
     return op;
 }
@@ -122,12 +185,13 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const Mod &_op) {
         return markMutated(op->lhs_);
     }
 
-    if (op->rhs_->nodeType() == ASTNodeType::IntConst) {
-        auto k = op->rhs_.template as<IntConstNode>()->val_;
+    if (constants_.count(op->rhs_)) {
+        auto k = constants_.at(op->rhs_);
 
-        if (op->lhs_->nodeType() == ASTNodeType::IntConst) {
-            return markMutated(
-                makeIntConst(op->lhs_.template as<IntConstNode>()->val_ % k));
+        if (constants_.count(op->lhs_)) {
+            // FIXME: % (remainder) in C++ is different from the definition of
+            // modulo
+            return markMutated(makeIntConst(constants_.at(op->lhs_) % k));
         }
 
         bool mutated = false;

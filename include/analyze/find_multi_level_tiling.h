@@ -10,7 +10,7 @@ namespace ir {
 
 struct ForInfo {
     std::string id;
-    int length;
+    int64_t length;
 };
 
 struct ForsWithDataReuse {

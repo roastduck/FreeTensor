@@ -34,7 +34,7 @@ class AsMatMul : public Mutator {
 
   private:
     uint64_t getHash(const Expr &op);
-    const LinearExpr<int> &analyzeLinear(const Expr &expr);
+    const LinearExpr<int64_t> &analyzeLinear(const Expr &expr);
 
     template <class T>
     std::tuple<std::vector<bool>, std::vector<int>, Expr>

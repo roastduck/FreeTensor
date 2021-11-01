@@ -320,7 +320,7 @@ void init_ffi_ast(py::module_ &m) {
              })
         .def("pretty_print", [](const AST &op) { return toString(op, true); });
 
-    pyExpr.def(py::init([](int val) { return makeIntConst(val); }))
+    pyExpr.def(py::init([](int64_t val) { return makeIntConst(val); }))
         .def(py::init([](float val) { return makeFloatConst(val); }))
         .def(py::init([](bool val) { return makeBoolConst(val); }))
         .def(py::init([](const FrontendVar &var) { return var.asLoad(); }))
