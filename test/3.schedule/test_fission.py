@@ -352,7 +352,7 @@ def test_correct_dependency_multi_loop_2():
                 with ir.VarDef("d_y_old", (), "float32", "cache",
                                "cpu") as d_y_old:
                     d_y_old[()] = d_y[i]
-                    d_y[i] = d_y_old[()]
+                    d_y[i] = 2 * d_y_old[()]
                     ir.MarkNid("S0")
                     d_a[i, j] += d_y_old[()] * b[j]
                     d_b[j] += d_y_old[()] * a[i, j]
@@ -376,7 +376,7 @@ def test_correct_dependency_multi_loop_2():
         with ir.For("i", 0, 4) as i:
             with ir.For("j", 0, 4) as j:
                 d_y_old[i, j] = d_y[i]
-                d_y[i] = d_y_old[i, j]
+                d_y[i] = 2 * d_y_old[i, j]
         with ir.For("i", 0, 4) as i:
             with ir.For("j", 0, 4) as j:
                 d_a[i, j] += d_y_old[i, j] * b[j]

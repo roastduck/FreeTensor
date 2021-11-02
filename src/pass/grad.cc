@@ -6,6 +6,7 @@
 #include <pass/output_intermediates.h>
 #include <pass/prop_const.h>
 #include <pass/prop_one_time_use.h>
+#include <pass/remove_cyclic_assign.h>
 #include <pass/remove_dead_var.h>
 #include <pass/remove_writes.h>
 #include <pass/simplify.h>
@@ -410,6 +411,7 @@ grad(const Stmt &_op, const std::unordered_set<std::string> &requires,
     backward = simplifyPass(backward);
     backward = propConst(backward);
     backward = removeWrites(backward);
+    backward = removeCyclicAssign(backward);
     backward = removeDeadVar(backward);
 
     return std::make_tuple(forward, backward, mutator.requireGrads(),

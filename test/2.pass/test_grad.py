@@ -332,7 +332,6 @@ def test_nested_loops():
                         with ir.VarDef("d_y_old", (), "float32", "cache",
                                        "cpu") as d_y_old:
                             d_y_old[()] = d_y[-1 * i + 3]
-                            d_y[-1 * i + 3] = d_y_old[()]
                             d_t[-1 * j +
                                 3] += d_y_old[()] * w1[-1 * i + 3, -1 * j + 3]
                             d_w1[-1 * i + 3,
@@ -343,7 +342,6 @@ def test_nested_loops():
                         with ir.VarDef("d_t_old", (), "float32", "cache",
                                        "cpu") as d_t_old:
                             d_t_old[()] = d_t[-1 * i + 3]
-                            d_t[-1 * i + 3] = d_t_old[()]
                             d_x[-1 * j +
                                 3] += d_t_old[()] * w0[-1 * i + 3, -1 * j + 3]
                             d_w0[-1 * i + 3,
