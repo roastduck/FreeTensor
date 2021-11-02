@@ -111,7 +111,10 @@ Stmt Grad::visit(const VarDef &_op) {
     ASSERT(!gradNames_.count(_op->name_));
     ASSERT(!defs_.count(_op->name_));
     ASSERT(!recomputed_.count(_op->name_));
-    auto gradName = gradNames_[_op->name_] = _op->name_ + ".grad";
+    std::string gradName;
+    if (affectedDefs_.count(_op->id())) {
+        gradName = gradNames_[_op->name_] = _op->name_ + ".grad";
+    }
     defs_[_op->name_] = _op;
     if (tapes_.count(_op->id())) {
         taped_.insert(_op->name_);
@@ -193,30 +196,16 @@ Stmt Grad::visit(const VarDef &_op) {
 
             return grad;
         } else {
-            defs_[_op->name_] = _op;
-            if (tapes_.count(_op->id())) {
-                taped_.insert(_op->name_);
-            }
-            auto __op = Mutator::visit(_op);
-            ASSERT(__op->nodeType() == ASTNodeType::VarDef);
-            auto op = __op.as<VarDefNode>();
-            taped_.erase(op->name_);
-            defs_.erase(op->name_);
-
-            auto grad = op->body_;
-            grad = makeVarDef(op->id(), op->name_, *op->buffer_, op->sizeLim_,
-                              grad, op->pinned_);
-
             switch (op->buffer_->atype()) {
             case AccessType::Output:
             case AccessType::InOut:
-                grad.as<VarDefNode>()->buffer_->setAtype(AccessType::Input);
+                op.as<VarDefNode>()->buffer_->setAtype(AccessType::Input);
                 break;
             default:
                 break; // do nothing
             }
 
-            return grad;
+            return op;
         }
     }
 }
