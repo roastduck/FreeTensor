@@ -1308,6 +1308,35 @@ def test_parallel_different_length():
     assert np.array_equal(c_np, c_std)
 
 
+def test_bounded_length():
+
+    @ir.transform
+    def test(a, b):
+        ir.declare_var(a, (100, 100), "int32", "input", "gpu/global")
+        ir.declare_var(b, (100, 100), "int32", "output", "gpu/global")
+        'nid: Li'
+        for i in range(100):
+            'nid: Lj'
+            for j in range(i):
+                b[i, j] = a[i, j] + 1
+
+    s = ir.Schedule(test)
+    s.parallelize("Lj", "threadIdx.y")
+    s.parallelize("Li", "threadIdx.x")
+    func = ir.lower(s.func(), target)
+    print(func)
+
+    with ir.VarDef([
+        ("a", (100, 100), "int32", "input", "gpu/global"),
+        ("b", (100, 100), "int32", "output", "gpu/global"),
+    ]) as (a, b):
+        with ir.For(".threadIdx.y", 0, 99) as thy:
+            with ir.For(".threadIdx.x", 1, 100) as thx:
+                with ir.If(thx >= thy + 1):
+                    b[thx, thy] = a[thx, thy] + 1
+    assert ir.make_1d_var(ir.pop_ast()).match(func.body)
+
+
 def test_parallel_broadcast():
 
     @ir.transform
