@@ -41,8 +41,9 @@ template <class T> T lower(const T &t, const Ref<Target> &target) {
     func = removeWrites(func);       // After seperate_tail
     func = removeCyclicAssign(func); // After remove_writes
     func = removeDeadVar(func);      // After remove_writes and prop_const
-    func = shrinkFor(func);          // After seperate_tail and remove_writes
     func = makeParallelReduction(func);
+    func = shrinkFor(
+        func); // After seperate_tail, remove_writes and make_parallel_reduction
 
     if (target.isValid()) {
         switch (target->type()) {
