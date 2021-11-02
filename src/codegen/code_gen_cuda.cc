@@ -434,6 +434,8 @@ void CodeGenCUDA::visit(const MatMul &op) {
     }
 
     makeIndent();
+    beginBlock();
+    makeIndent();
     os() << gen(dtype(op->c_)) << " _cublasAlpha = ";
     (*this)(op->alpha_);
     os() << ", _cublasBeta = ";
@@ -470,6 +472,7 @@ void CodeGenCUDA::visit(const MatMul &op) {
     (*this)(op->batchSize_);
     os() << ", " << genCUBLASType(dtype(op->c_)) << ", CUBLAS_GEMM_DEFAULT);"
          << std::endl;
+    endBlock();
 }
 
 std::string codeGenCUDA(const Func &func) {
