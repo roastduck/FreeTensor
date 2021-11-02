@@ -383,7 +383,13 @@ class AnalyzeDeps : public Visitor {
         auto &&defId = defId_.at(op->var_);
         if (depType_ & DEP_WAR) {
             if (reads_.count(defId)) {
-                checkDep(point, reads_.at(defId));
+                // Earlier reads do not overwrite each other, but later writes
+                // do. Currently we analyze each pair of write-after-read
+                // seperately. TODO: Implement a more general `checkDep` that
+                // receives either a list of `point` or a list of `other`
+                for (auto &&read : reads_.at(defId)) {
+                    checkDep(point, {read});
+                }
             }
         }
         if ((depType_ & DEP_WAW) ||
