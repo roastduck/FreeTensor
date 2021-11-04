@@ -114,6 +114,7 @@ if __name__ == '__main__':
     w1 = torch.rand(in_feats, out_feats, dtype=torch.float)
     w2 = torch.rand(in_feats, out_feats, dtype=torch.float)
     w3 = torch.rand(in_feats, out_feats, dtype=torch.float)
+    d_y = torch.rand(n_faces, out_feats, dtype=torch.float)
 
     if device == 'gpu':
         adj = adj.cuda()
@@ -122,23 +123,81 @@ if __name__ == '__main__':
         w1 = w1.cuda()
         w2 = w2.cuda()
         w3 = w3.cuda()
+        d_y = d_y.cuda()
+        sync = torch.cuda.synchronize
     else:
         assert device == 'cpu'
+        sync = lambda: None
 
+    warmup_num = 10
     test_num = 1000
 
-    y = conv_impl1(adj, x, w0, w1, w2, w3)  # init lazy ops
+    for i in range(warmup_num):
+        y = conv_impl1(adj, x, w0, w1, w2, w3)
+    sync()
     t0 = time.time()
     for i in range(test_num):
         y = conv_impl1(adj, x, w0, w1, w2, w3)
+    sync()
     t1 = time.time()
     assert y.shape == (n_faces, out_feats)
-    print(f"Impl1 Time = {(t1 - t0) / test_num * 1000} ms")
+    print(f"Impl1 Inference Time = {(t1 - t0) / test_num * 1000} ms")
 
-    y = conv_impl2(adj, x, w0, w1, w2, w3)  # init lazy ops
+    for i in range(warmup_num):
+        y = conv_impl2(adj, x, w0, w1, w2, w3)
+    sync()
     t0 = time.time()
     for i in range(test_num):
         y = conv_impl2(adj, x, w0, w1, w2, w3)
+    sync()
     t1 = time.time()
     assert y.shape == (n_faces, out_feats)
-    print(f"Impl2 Time = {(t1 - t0) / test_num * 1000} ms")
+    print(f"Impl2 Inference Time = {(t1 - t0) / test_num * 1000} ms")
+
+    x.requires_grad = True
+    w0.requires_grad = True
+    w1.requires_grad = True
+    w2.requires_grad = True
+    w3.requires_grad = True
+
+    for i in range(warmup_num):
+        y = conv_impl1(adj, x, w0, w1, w2, w3)
+    sync()
+    t0 = time.time()
+    for i in range(test_num):
+        y = conv_impl1(adj, x, w0, w1, w2, w3)
+    sync()
+    t1 = time.time()
+    assert y.shape == (n_faces, out_feats)
+    print(f"Impl1 Forward Time = {(t1 - t0) / test_num * 1000} ms")
+
+    for i in range(warmup_num):
+        y.backward(d_y, retain_graph=True)
+    sync()
+    t0 = time.time()
+    for i in range(test_num):
+        y.backward(d_y, retain_graph=True)
+    sync()
+    t1 = time.time()
+    print(f"Impl1 Backward Time = {(t1 - t0) / test_num * 1000} ms")
+
+    for i in range(warmup_num):
+        y = conv_impl2(adj, x, w0, w1, w2, w3)
+    sync()
+    t0 = time.time()
+    for i in range(test_num):
+        y = conv_impl2(adj, x, w0, w1, w2, w3)
+    sync()
+    t1 = time.time()
+    assert y.shape == (n_faces, out_feats)
+    print(f"Impl2 Forward Time = {(t1 - t0) / test_num * 1000} ms")
+
+    for i in range(warmup_num):
+        y.backward(d_y, retain_graph=True)
+    sync()
+    t0 = time.time()
+    for i in range(test_num):
+        y.backward(d_y, retain_graph=True)
+    sync()
+    t1 = time.time()
+    print(f"Impl2 Backward Time = {(t1 - t0) / test_num * 1000} ms")

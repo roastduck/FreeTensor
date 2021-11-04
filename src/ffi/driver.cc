@@ -48,7 +48,8 @@ void init_ffi_driver(py::module_ &m) {
     py::class_<Device>(m, "Device")
         .def(py::init<const Ref<Target> &, size_t>(), "target"_a, "num"_a = 0)
         .def("target", &Device::target)
-        .def("main_mem_type", &Device::mainMemType);
+        .def("main_mem_type", &Device::mainMemType)
+        .def("sync", &Device::sync);
 
     py::class_<Array, Ref<Array>>(m, "Array")
         .def(py::init([](py::array_t<float, py::array::c_style> &np,

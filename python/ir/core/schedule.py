@@ -15,6 +15,25 @@ class Schedule(ffi.Schedule):
 
         To fission a loop into two consecutive loops, use `fission` instead
 
+        Two modes are provided:
+
+        1. Specify `factor` and leave `nparts` to -1. It will result in an outer
+        loop with length `ceil(n / factor)`, and an inner loop with length
+        `factor`, where `n` is the original loop length. The original iterator
+        `i` will be transformed to `i0 * factor + i1`, where `i0` and `i1` are
+        the iterators of the new outer and inner loops, respectively
+        2. Specify `nparts` and leave `factor` to -1. It will result in an
+        outer loop with length `nparts`, and an inner loop with length `ceil(n /
+        nparts)`, where `n` is the original loop length. The original iterator
+        `i` will be transformed to `i0 * ceil(n / nparts) + i1`, where `i0` and
+        `i1` are the iterators of the new outer and inner loops, respectively
+
+        Please note that the second mode will introduce an `i0 * ceil(n /
+        nparts)` factor into the program, which cannot be recognized by
+        polyhedral analysis, which may hinder some following schedules. If
+        possible, plese use the first mode, and then reorder the inner and outer
+        loops
+
         Parameters
         ----------
         node : str, Stmt or Cursor

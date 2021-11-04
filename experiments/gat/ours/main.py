@@ -72,7 +72,8 @@ def gat_layer(ptr, idx, feat, weight, attn_l, attn_r, y, num_v, num_e, feat_len,
             edge_exp = ir.create_var((num_e,), "float32", mtype)
             edge_norm = ir.create_var((num_e,), "float32", mtype)
             'nid: Li'
-            'no_deps'
+            'no_deps: edge_exp'
+            'no_deps: edge_norm'
             for i in range(num_v):
                 edge_max = ir.create_var((), "float32", mtype)
                 edge_max[()] = -inf

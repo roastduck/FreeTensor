@@ -35,6 +35,10 @@ class ASTContext:
         self.old_vars = []
 
 
+class IRError(ffi.InvalidProgram):
+    pass
+
+
 class ASTContextStack:
 
     def __init__(self):
@@ -43,6 +47,7 @@ class ASTContextStack:
         self.next_nid = ""
         self.now_context_id = 0
         node_ctx.reset()
+        self.transformers = []
 
     def top(self) -> ASTContext:
         return self.ctx_stack[-1]
@@ -53,7 +58,7 @@ class ASTContextStack:
     def create_current_name(self, name, atype, override_name=None):
         if override_name is not None:
             if override_name in self.name_map:
-                raise ffi.InvalidProgram(f"Name {override_name} already exists")
+                assert False, f"Name {override_name} already exists"
             self.name_map[name] = override_name
             return override_name
 
@@ -123,17 +128,30 @@ class ASTContextStack:
         MarkNid("")
         return ret
 
-    def set_no_deps(self):
-        node_ctx.top().set_next_no_deps(True)
+    def set_no_deps(self, name):
+        node_ctx.top().add_next_no_deps(name)
 
     def get_no_deps(self):
         ret = node_ctx.top().get_next_no_deps()
-        node_ctx.top().set_next_no_deps(False)
+        node_ctx.top().reset_next_no_deps()
         return ret
 
     def new_context_id(self):
         self.now_context_id += 1
         return self.now_context_id
+
+    def push_transformer(self, transformer):
+        self.transformers.append(transformer)
+
+    def pop_transformer(self):
+        self.transformers.pop()
+
+    def error(self, message="Assertion Failed"):
+        msg = "\n"
+        for transformer in self.transformers:
+            msg += transformer.frame_info()
+        msg += message
+        raise IRError(msg)
 
 
 class VarCreation:
@@ -170,22 +188,28 @@ class VarCreation:
 
 class InlineFunction:
 
-    def __init__(self, name, body, params, globals):
+    def __init__(self, name, body, params, globals, file, src, lineno):
         self.name = name
         self.body = body
         self.params = params
         self.globals = globals
         self.arg_var = None
+        self.src = src
+        self.lineno = lineno
+        self.file = file
 
     def set_arg_var(self, arg_var):
         self.arg_var = arg_var
 
     def expand(self, ctx_stack, nid):
         assert self.arg_var is not None
-        transformer = ASTTransformer(ctx_stack, self.params, self.globals, True)
+        transformer = ASTTransformer(ctx_stack, self.params, self.globals,
+                                     self.file, self.src, self.lineno, True)
         transformer.set_replace(self.arg_var, nid)
+        ctx_stack.push_transformer(transformer)
         for stmt in self.body:
             transformer.visit(stmt)
+        ctx_stack.pop_transformer()
         return transformer.returns
 
 
@@ -195,6 +219,9 @@ class ASTTransformer(ast.NodeTransformer):
                  ctx_stack: ASTContextStack,
                  params: Sequence[str],
                  globals: Mapping[str, Any],
+                 file,
+                 src,
+                 lineno,
                  is_inline: bool = False):
         super().__init__()
         self.ctx_stack = ctx_stack
@@ -209,6 +236,34 @@ class ASTTransformer(ast.NodeTransformer):
         self.returns = []
         self.prefix = ""
         self.nid = ""
+        self.now_pos = 0
+        self.file = file
+        self.src = []
+        for line in src:
+            if len(line) and line[-1] != '\n':
+                line += '\n'
+            self.src.append(line)
+        self.start_from = lineno
+
+    def visit(self, node):
+        """Visit a node."""
+        prev_pos = self.now_pos
+        if hasattr(node, "lineno"):
+            self.now_pos = node.lineno
+        method = 'visit_' + node.__class__.__name__
+        visitor = getattr(self, method, self.generic_visit)
+        try:
+            ret = visitor(node)
+            self.now_pos = prev_pos
+            return ret
+        except IRError as e:
+            raise e
+        except Exception as e:
+            self.ctx_stack.error(type(e).__name__ + ": " + e.args[0])
+
+    def frame_info(self):
+        lineno = self.now_pos - 1
+        return f"On line {lineno + self.start_from} in file {self.file}: \n{self.src[lineno]}"
 
     def set_replace(self, arg_var, prefix):
         self.arg_var = arg_var
@@ -625,8 +680,10 @@ class ASTTransformer(ast.NodeTransformer):
                 if self.prefix:
                     name = self.prefix + ':' + name
                 self.ctx_stack.set_nid(name)
-            if s == "no_deps":
-                self.ctx_stack.set_no_deps()
+            if s[0:9] == "no_deps: ":
+                name = self.get_name(s[9:])
+                var = self.ctx_stack.find_var_by_name(name)
+                self.ctx_stack.set_no_deps(var.name)
             return node
 
         self.nid = self.ctx_stack.get_nid()
@@ -753,10 +810,14 @@ def transform(func):
     ctx_stack = ASTContextStack()
     src = _remove_indent(ins.getsource(func))
     tree = ast.parse(src)
+    src, lineno = ins.getsourcelines(func)
+    file = ins.getfile(func)
     params = list(inspect.signature(func).parameters)
     globals = _get_global_vars(func)
-    transformer = ASTTransformer(ctx_stack, params, globals)
+    transformer = ASTTransformer(ctx_stack, params, globals, file, src, lineno)
+    ctx_stack.push_transformer(transformer)
     transformer.visit(tree)
+    ctx_stack.pop_transformer()
     returns = list(
         map(lambda var: (var[1].name, var[1].dtype), transformer.returns))
     return Func(func.__name__, params, returns, pop_ast())
@@ -765,9 +826,17 @@ def transform(func):
 def inline(func, src=None):
     if src is None:
         src = _remove_indent(ins.getsource(func))
-    tree = ast.parse(src)
+        tree = ast.parse(src)
+        src, lineno = ins.getsourcelines(func)
+        file = ins.getfile(func)
+    else:
+        tree = ast.parse(src)
+        src = src.splitlines()
+        lineno = 1
+        file = func.__name__
     params = list(inspect.signature(func).parameters)
     globals = _get_global_vars(func)
     funcdef = tree.body[0]
     assert isinstance(funcdef, ast.FunctionDef)
-    return InlineFunction(func.__name__, funcdef.body, params, globals)
+    return InlineFunction(func.__name__, funcdef.body, params, globals, file,
+                          src, lineno)

@@ -74,8 +74,7 @@ Stmt HoistVar::visit(const StmtSeq &op) {
                                   : before[0];
             auto afterNode =
                 after.size() > 1 ? makeStmtSeq("", std::move(after)) : after[0];
-            beforeId_ = beforeNode->id();
-            afterId_ = afterNode->id();
+            scopePairs_.emplace_back(beforeNode->id(), afterNode->id());
             ret = makeStmtSeq(op->id(), {beforeNode, afterNode});
         }
         return ret;
@@ -160,17 +159,25 @@ Stmt AddDimToVar::visit(const ReduceTo &_op) {
 
 Stmt FissionFor::visitStmt(const Stmt &op,
                            const std::function<Stmt(const Stmt &)> &visitNode) {
-    if (!before_.empty()) {
-        isAfter_ |= op->id() == before_;
-    }
-    if (inside_) {
+    if (!inside_) {
+        return Mutator::visitStmt(op, visitNode);
+    } else {
+        auto oldAnyInside = anyInside_;
+        anyInside_ = false;
+        if (!before_.empty()) {
+            isAfter_ |= op->id() == before_;
+        }
         anyInside_ |= (isPart0_ && !isAfter_) || (!isPart0_ && isAfter_);
+        auto ret = Mutator::visitStmt(op, visitNode);
+        if (!after_.empty()) {
+            isAfter_ |= op->id() == after_;
+        }
+        if (!anyInside_) {
+            ret = makeStmtSeq("", {});
+        }
+        anyInside_ |= oldAnyInside;
+        return ret;
     }
-    auto ret = Mutator::visitStmt(op, visitNode);
-    if (!after_.empty()) {
-        isAfter_ |= op->id() == after_;
-    }
-    return ret;
 }
 
 void FissionFor::markNewId(const Stmt &op, bool isPart0) {
@@ -201,10 +208,10 @@ Stmt FissionFor::visit(const For &op) {
         isPart0_ = false, isAfter_ = false, anyInside_ = false;
         auto part1 = (*this)(op->body_);
         inside_ = false;
-        auto for0 = makeFor(op->id(), op->iter_, begin, end, len, op->noDeps_,
-                            op->property_, part0);
-        auto for1 = makeFor(op->id(), op->iter_, begin, end, len, op->noDeps_,
-                            op->property_, part1);
+        auto for0 =
+            makeFor(op->id(), op->iter_, begin, end, len, op->property_, part0);
+        auto for1 =
+            makeFor(op->id(), op->iter_, begin, end, len, op->property_, part1);
         markNewId(for0, true);
         markNewId(for1, false);
         return makeStmtSeq("", {for0, for1});
@@ -212,28 +219,11 @@ Stmt FissionFor::visit(const For &op) {
 }
 
 Stmt FissionFor::visit(const StmtSeq &op) {
-    if (!inside_) {
-        return Mutator::visit(op);
-    } else {
-        std::vector<Stmt> stmts;
-        stmts.reserve(op->stmts_.size());
-        for (auto &&_stmt : op->stmts_) {
-            auto oldAnyInside = anyInside_;
-            anyInside_ = false;
-            auto stmt = (*this)(_stmt);
-            if (anyInside_) {
-                stmts.emplace_back(stmt);
-            }
-            anyInside_ |= oldAnyInside;
-        }
-        if (stmts.size() == 1) {
-            return stmts[0]; // id already modified
-        } else {
-            Stmt ret = makeStmtSeq(op->id(), std::move(stmts));
-            markNewId(ret, isPart0_);
-            return ret;
-        }
+    auto ret = Mutator::visit(op);
+    if (inside_) {
+        markNewId(ret, isPart0_);
     }
+    return ret;
 }
 
 Stmt FissionFor::visit(const VarDef &_op) {
@@ -330,8 +320,13 @@ fission(const Stmt &_ast, const std::string &loop, FissionSide side,
         return isVariant(variantExpr.second, def, loop);
     };
     auto filter = [&](const AccessPoint &later, const AccessPoint &earlier) {
-        return earlier.cursor_.getParentById(hoist.afterId()).isValid() &&
-               later.cursor_.getParentById(hoist.beforeId()).isValid();
+        for (auto &&[beforeId, afterId] : hoist.scopePairs()) {
+            if (earlier.cursor_.getParentById(afterId).isValid() &&
+                later.cursor_.getParentById(beforeId).isValid()) {
+                return true;
+            }
+        }
+        return false;
     };
     std::unordered_map<std::string, std::vector<std::string>> toAdd;
     auto found = [&](const Dependency &d) {
@@ -340,7 +335,7 @@ fission(const Stmt &_ast, const std::string &loop, FissionSide side,
         if (!xLoops.count(d.var_) ||
             std::find(xLoops.at(d.var_).begin(), xLoops.at(d.var_).end(), id) ==
                 xLoops.at(d.var_).end()) {
-            throw InvalidSchedule(dep2Str(id, d.var_, d.later(), d.earlier()));
+            throw InvalidSchedule(toString(d) + " cannot be resolved");
         }
         if (!isRealWrite(id, d.def()) &&
             d.earlier()->nodeType() == ASTNodeType::Load) {

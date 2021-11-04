@@ -31,11 +31,7 @@ Stmt propOneTimeUse(const Stmt &_op) {
     op = hoistVarOverStmtSeq(op);
 
     std::unordered_map<AST, std::vector<Stmt>> r2w, r2wMay;
-    std::unordered_map<Stmt, std::vector<AST>> w2rMay;
-    auto foundMay = [&](const Dependency &d) {
-        r2wMay[d.later()].emplace_back(d.earlier().as<StmtNode>());
-        w2rMay[d.earlier().as<StmtNode>()].emplace_back(d.later());
-    };
+    std::unordered_map<Stmt, std::vector<AST>> w2r, w2rMay;
     auto filterMust = [&](const AccessPoint &later,
                           const AccessPoint &earlier) {
         if (earlier.op_->nodeType() != ASTNodeType::Store) {
@@ -48,15 +44,6 @@ Stmt propOneTimeUse(const Stmt &_op) {
             // Definition of each vars may differ
             return false;
         }
-        if (!r2wMay.count(later.op_) || r2wMay.at(later.op_).size() > 1 ||
-            r2wMay.at(later.op_)[0] != earlier.op_.as<StmtNode>()) {
-            return false;
-        }
-        if (!w2rMay.count(earlier.op_.as<StmtNode>()) ||
-            w2rMay.at(earlier.op_.as<StmtNode>()).size() > 1 ||
-            w2rMay.at(earlier.op_.as<StmtNode>())[0] != later.op_) {
-            return false;
-        }
         return true;
     };
     auto foundMust = [&](const Dependency &d) {
@@ -65,15 +52,35 @@ Stmt propOneTimeUse(const Stmt &_op) {
                 CheckNotModifiedSide::After, d.earlier_.cursor_.id(),
                 CheckNotModifiedSide::Before, d.later_.cursor_.id())) {
             r2w[d.later()].emplace_back(d.earlier().as<StmtNode>());
+            w2r[d.earlier().as<StmtNode>()].emplace_back(d.later());
         }
     };
-    findDeps(op, {{}}, foundMay, FindDepsMode::Dep, DEP_RAW, nullptr, false);
+    auto filterMay = [&](const AccessPoint &later, const AccessPoint &earlier) {
+        return r2w.count(later.op_) || w2r.count(earlier.op_.as<StmtNode>());
+    };
+    auto foundMay = [&](const Dependency &d) {
+        r2wMay[d.later()].emplace_back(d.earlier().as<StmtNode>());
+        w2rMay[d.earlier().as<StmtNode>()].emplace_back(d.later());
+    };
     findDeps(op, {{}}, foundMust, FindDepsMode::KillLater, DEP_RAW, filterMust);
+    findDeps(op, {{}}, foundMay, FindDepsMode::Dep, DEP_RAW, filterMay, false);
 
     std::unordered_map<Load, Expr> replaceLoad;
     std::unordered_map<ReduceTo, Expr> replaceReduceTo;
     for (auto &&item : r2w) {
+        if (item.second.size() > 1) {
+            continue;
+        }
         ASSERT(item.second.size() == 1);
+        if (!r2wMay.count(item.first) || r2wMay.at(item.first).size() > 1 ||
+            r2wMay.at(item.first)[0] != item.second.front()) {
+            continue;
+        }
+        if (!w2rMay.count(item.second.front()) ||
+            w2rMay.at(item.second.front()).size() > 1 ||
+            w2rMay.at(item.second.front())[0] != item.first) {
+            continue;
+        }
         ASSERT(item.second.front()->nodeType() == ASTNodeType::Store);
         auto &&store = item.second.front().as<StoreNode>();
         if (item.first->nodeType() == ASTNodeType::Load) {

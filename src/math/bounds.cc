@@ -135,9 +135,8 @@ const Expr &UpperBound::expr() {
     auto nonDivisible = linToExprNumerator(cdLin);
     if (nonDivisible.isValid()) {
         if (nonDivisible->nodeType() == ASTNodeType::IntConst) {
-            nonDivisible =
-                makeIntConst(floorDiv(nonDivisible.as<IntConstNode>()->val_,
-                                      (int)cdLin.bias_.q_)); // FIXME: int64_t
+            nonDivisible = makeIntConst(floorDiv(
+                nonDivisible.as<IntConstNode>()->val_, cdLin.bias_.q_));
         } else {
             nonDivisible =
                 makeFloorDiv(nonDivisible, makeIntConst(cdLin.bias_.q_));
@@ -159,9 +158,8 @@ const Expr &LowerBound::expr() {
     auto nonDivisible = linToExprNumerator(cdLin);
     if (nonDivisible.isValid()) {
         if (nonDivisible->nodeType() == ASTNodeType::IntConst) {
-            nonDivisible =
-                makeIntConst(ceilDiv(nonDivisible.as<IntConstNode>()->val_,
-                                     (int)cdLin.bias_.q_)); // FIXME: int64_t
+            nonDivisible = makeIntConst(
+                ceilDiv(nonDivisible.as<IntConstNode>()->val_, cdLin.bias_.q_));
         } else {
             nonDivisible =
                 makeCeilDiv(nonDivisible, makeIntConst(cdLin.bias_.q_));

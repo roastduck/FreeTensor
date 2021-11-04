@@ -7,7 +7,7 @@
 
 namespace ir {
 
-class ShrinkFor : public CompTransientBounds {
+class ShrinkFor : public CompUniqueBounds {
     std::unordered_map<uint64_t, std::pair<std::vector<std::vector<Expr>>,
                                            std::vector<std::vector<Expr>>>>
         newRange_;
@@ -22,16 +22,30 @@ class ShrinkFor : public CompTransientBounds {
             auto &&var = iterStack_[i];
             auto &&defs = defStack_[i];
             auto hash = getHash(var);
-            auto bound = transient(var);
+            auto tr = transient(var);
             std::vector<Expr> lower, upper;
-            for (auto &&first : bound.lower_) {
+            for (auto &&first : tr.lower_) {
                 if (checkAllDefined(defs, first)) {
                     lower.emplace_back(first);
+                } else {
+                    for (auto &&l : getLower((*this)(first))) {
+                        if (auto &&expr = l.expr();
+                            checkAllDefined(defs, expr)) {
+                            lower.emplace_back(expr);
+                        }
+                    }
                 }
             }
-            for (auto &&second : bound.upper_) {
+            for (auto &&second : tr.upper_) {
                 if (checkAllDefined(defs, second)) {
                     upper.emplace_back(second);
+                } else {
+                    for (auto &&u : getUpper((*this)(second))) {
+                        if (auto &&expr = u.expr();
+                            checkAllDefined(defs, expr)) {
+                            upper.emplace_back(expr);
+                        }
+                    }
                 }
             }
             newRange_[hash].first.emplace_back(std::move(lower));

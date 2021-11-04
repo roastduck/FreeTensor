@@ -452,9 +452,8 @@ Stmt Z3Simplify::visit(const For &op) {
     pop();
     pop();
 
-    auto ret =
-        makeFor(op->id(), op->iter_, std::move(begin), std::move(end),
-                std::move(len), op->noDeps_, op->property_, std::move(body));
+    auto ret = makeFor(op->id(), op->iter_, std::move(begin), std::move(end),
+                       std::move(len), op->property_, std::move(body));
     return COPY_DEBUG_INFO(ret, op);
 }
 

@@ -122,18 +122,18 @@ Stmt LowerParallelReduction::visit(const For &_op) {
                    makeReduceTo("", workspace, wIndices, redOp,
                                 makeLoad(workspace, wNextIndices), false));
         reduceStmt = makeFor("", "__reduce_p", makeIntConst(0),
-                             makeIntConst(count), makeIntConst(count), false,
+                             makeIntConst(count), makeIntConst(count),
                              ForProperty().withUnroll(), std::move(reduceStmt));
         flushStmt = makeStmtSeq("", {reduceStmt, flushStmt});
 
         for (size_t j = workspaceShape.size() - 2; ~j; j--) {
             initStmt = makeFor("", workspace + "." + std::to_string(j),
                                makeIntConst(0), workspaceShape[j + 1],
-                               workspaceShape[j + 1], false, ForProperty(),
+                               workspaceShape[j + 1], ForProperty(),
                                std::move(initStmt));
             flushStmt = makeFor("", workspace + "." + std::to_string(j),
                                 makeIntConst(0), workspaceShape[j + 1],
-                                workspaceShape[j + 1], false, ForProperty(),
+                                workspaceShape[j + 1], ForProperty(),
                                 std::move(flushStmt));
         }
 

@@ -33,6 +33,11 @@ uint64_t AsMatMul::getHash(const Expr &op) {
     return getHash_.hash().at(op);
 }
 
+const LinearExpr<int64_t> &AsMatMul::analyzeLinear(const Expr &expr) {
+    analyzeLinear_(expr);
+    return analyzeLinear_.result().at(expr);
+}
+
 Stmt AsMatMul::visitStmt(const Stmt &op,
                          const std::function<Stmt(const Stmt &)> &visitNode) {
     if (inside_ && op->nodeType() != ASTNodeType::ReduceTo &&

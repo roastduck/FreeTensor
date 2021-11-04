@@ -115,19 +115,50 @@ if __name__ == '__main__':
     n_faces = faces.shape[0]
     h = 64
     w = 64
+    d_y = torch.rand(n_faces, h, w, dtype=torch.float)
 
     if device == 'gpu':
         vertices = vertices.cuda()
         faces = faces.cuda()
+        d_y = d_y.cuda()
+        sync = torch.cuda.synchronize
     else:
         assert device == 'cpu'
+        sync = lambda: None
 
+    warmup_num = 10
     test_num = 100
 
-    y = rasterize(vertices, faces, h, w)  # init lazy ops
+    for i in range(warmup_num):
+        y = rasterize(vertices, faces, h, w)
+    sync()
     t0 = time.time()
     for i in range(test_num):
         y = rasterize(vertices, faces, h, w)
+    sync()
     t1 = time.time()
     assert y.shape == (n_faces, h, w)
-    print(f"Impl1 Time = {(t1 - t0) / test_num * 1000} ms")
+    print(f"Inference Time = {(t1 - t0) / test_num * 1000} ms")
+
+    vertices.requires_grad = True
+
+    for i in range(warmup_num):
+        y = rasterize(vertices, faces, h, w)
+    sync()
+    t0 = time.time()
+    for i in range(test_num):
+        y = rasterize(vertices, faces, h, w)
+    sync()
+    t1 = time.time()
+    assert y.shape == (n_faces, h, w)
+    print(f"Forward Time = {(t1 - t0) / test_num * 1000} ms")
+
+    for i in range(warmup_num):
+        y.backward(d_y, retain_graph=True)
+    sync()
+    t0 = time.time()
+    for i in range(test_num):
+        y.backward(d_y, retain_graph=True)
+    sync()
+    t1 = time.time()
+    print(f"Backward Time = {(t1 - t0) / test_num * 1000} ms")

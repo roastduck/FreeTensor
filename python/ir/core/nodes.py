@@ -13,13 +13,13 @@ class Context:
         self.stmt_seq = []
         self.last_if = None  # To handle else case
         self.next_nid = ""
-        self.next_no_deps = False
+        self.next_no_deps = []
 
     def append_stmt(self, stmt: ffi.Stmt):
         self.stmt_seq.append(stmt)
         self.last_if = None
         self.next_nid = ""
-        self.next_no_deps = False
+        self.next_no_deps = []
 
     def append_if_then_stmt(self, cond, body: ffi.Stmt):
         next_nid = self.next_nid
@@ -37,7 +37,7 @@ class Context:
                         end,
                         body,
                         nid: str = "",
-                        no_deps: Optional[bool] = None):
+                        no_deps: Optional[Sequence] = None):
         if nid == "":
             nid = self.next_nid
         if no_deps is None:
@@ -49,8 +49,7 @@ class Context:
                 begin,
                 end,
                 end - begin,
-                no_deps,
-                ffi.ForProperty(),
+                ffi.ForProperty().with_no_deps(no_deps),
                 body,
             ))
 
@@ -60,8 +59,11 @@ class Context:
     def get_next_nid(self):
         return self.next_nid
 
-    def set_next_no_deps(self, no_deps: bool = True):
-        self.next_no_deps = no_deps
+    def add_next_no_deps(self, var):
+        self.next_no_deps.append(var)
+
+    def reset_next_no_deps(self):
+        self.next_no_deps = []
 
     def get_next_no_deps(self):
         return self.next_no_deps
@@ -294,7 +296,7 @@ class For:
                  begin,
                  end,
                  nid: str = "",
-                 no_deps: Optional[bool] = None):
+                 no_deps: Optional[Sequence] = None):
         self.iter_var = iter_var
         self.begin = begin
         self.end = end

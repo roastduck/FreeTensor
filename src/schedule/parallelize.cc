@@ -69,8 +69,7 @@ Stmt parallelize(const Stmt &_ast, const std::string &loop,
                    later.cursor_.getParentById(loop).isValid();
         };
         auto found = [&](const Dependency &d) {
-            throw InvalidSchedule(
-                dep2Str(loop, d.var_, d.later(), d.earlier()));
+            throw InvalidSchedule(toString(d) + " cannot be resolved");
         };
         findDeps(oldAst, {findDepsCond}, found, FindDepsMode::Dep, DEP_ALL,
                  filter);
@@ -95,8 +94,7 @@ Stmt parallelize(const Stmt &_ast, const std::string &loop,
         };
         auto found = [&](const Dependency &d) {
             ASSERT(d.cond_.size() == 1);
-            throw InvalidSchedule(
-                dep2Str(d.cond_[0].first, d.var_, d.later(), d.earlier()));
+            throw InvalidSchedule(toString(d) + " cannot be resolved");
         };
         findDeps(ast,
                  {{{NodeIDOrParallelScope(parallel, false),

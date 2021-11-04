@@ -61,12 +61,12 @@ inline Expr _makeLoad(const std::string &var,
 
 class IntConstNode : public ExprNode {
   public:
-    int val_; // FIXME: Make it int64_t
+    int64_t val_;
     DEFINE_NODE_TRAIT(IntConst);
 };
 typedef Ref<IntConstNode> IntConst;
 #define makeIntConst(...) makeNode(IntConst, __VA_ARGS__)
-inline Expr _makeIntConst(int val) {
+inline Expr _makeIntConst(int64_t val) {
     IntConst c = IntConst::make();
     c->val_ = val;
     return c;

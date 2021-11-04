@@ -36,7 +36,8 @@ void Driver::buildAndLoad() {
     char path[64];
     ASSERT(path_string.size() < 64);
     strncpy(path, path_string.c_str(), 63);
-    mkdtemp(path);
+    auto mkdtempPtr = mkdtemp(path);
+    ASSERT(mkdtempPtr != nullptr);
 
     std::string srcSuffix;
     switch (dev_.type()) {
@@ -103,7 +104,10 @@ void Driver::buildAndLoad() {
     default:
         ASSERT(false);
     }
-    system(cmd.c_str());
+    auto compilerErr = system(cmd.c_str());
+    if (compilerErr != 0) {
+        throw DriverError("Backend compiler reports error");
+    }
 
     dlHandle_ = dlopen(so.c_str(), RTLD_NOW);
     if (!dlHandle_) {
@@ -165,13 +169,7 @@ void Driver::run() {
     func_(params_.data(), returns_.data(), retSizes_.data(), curCtx_);
 }
 
-void Driver::sync() {
-    switch (dev_.type()) {
-    case TargetType::GPU:
-        checkCudaError(cudaDeviceSynchronize());
-    default:;
-    }
-}
+void Driver::sync() { dev_.sync(); }
 
 std::vector<Ref<Array>> Driver::collectReturns() {
     std::vector<Ref<Array>> ret;

@@ -1,5 +1,8 @@
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
+#include <pass/prop_const.h>
+#include <pass/prop_one_time_use.h>
+#include <pass/remove_dead_var.h>
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
 #include <pass/sink_var.h>
@@ -8,6 +11,17 @@
 namespace ir {
 
 namespace {
+
+std::vector<std::string> intersect(const std::vector<std::string> &lhs,
+                                   const std::vector<std::string> &rhs) {
+    std::vector<std::string> ret;
+    for (auto &&item : lhs) {
+        if (std::find(rhs.begin(), rhs.end(), item) != rhs.end()) {
+            ret.emplace_back(item);
+        }
+    }
+    return ret;
+}
 
 LoopInVarDefs findLoopInVarDefs(const Stmt &stmt, const std::string &id,
                                 FindLoopInVarDefsDirection direction) {
@@ -68,7 +82,7 @@ Stmt FuseFor::visit(const For &_op) {
     if (op->id() == id0_ || op->id() == id1_) {
         inLoop0_ = inLoop1_ = false;
         return makeFor(op->id(), op->iter_, makeIntConst(0), op->len_, op->len_,
-                       op->noDeps_, op->property_, op->body_);
+                       op->property_, op->body_);
     }
     return op;
 }
@@ -97,9 +111,11 @@ Stmt FuseFor::visit(const StmtSeq &_op) {
             beforeId_ = loop0->body_->id();
             afterId_ = loop1->body_->id();
             auto seq = makeStmtSeq("", {loop0->body_, loop1->body_});
-            auto fused = makeFor(fused_, iter0_, makeIntConst(0), loop0->end_,
-                                 loop0->end_, loop0->noDeps_ && loop1->noDeps_,
-                                 ForProperty(), std::move(seq));
+            auto fused = makeFor(
+                fused_, iter0_, makeIntConst(0), loop0->end_, loop0->end_,
+                ForProperty().withNoDeps(intersect(loop0->property_.noDeps_,
+                                                   loop1->property_.noDeps_)),
+                std::move(seq));
 
             // From inner to outer
             for (auto &&stmt : loop1InVarDefs.surroundings_) {
@@ -197,8 +213,7 @@ std::pair<Stmt, std::string> fuse(const Stmt &_ast, const std::string &loop0,
     };
     auto found = [&](const Dependency &d) {
         ASSERT(d.cond_.size() == 1);
-        throw InvalidSchedule(
-            dep2Str(d.cond_[0].first, d.var_, d.later(), d.earlier()));
+        throw InvalidSchedule(toString(d) + " cannot be resolved");
     };
     findDeps(ast, {{{mutator.fused(), DepDirection::Normal}}}, found,
              FindDepsMode::Dep, DEP_ALL, filter);
@@ -211,7 +226,11 @@ std::pair<Stmt, std::string> fuse(const Stmt &_ast, const std::string &loop0,
                               e.what());
     }
 
-    ast = shrinkVar(sinkVar(ast));
+    ast = propOneTimeUse(ast);
+    ast = propConst(ast);
+    ast = sinkVar(ast);
+    ast = shrinkVar(ast);
+    ast = removeDeadVar(ast);
     return std::make_pair(ast, mutator.fused());
 }
 

@@ -373,9 +373,16 @@ void PrintVisitor::visit(const Cast &op) {
 }
 
 void PrintVisitor::visit(const For &op) {
-    if (op->noDeps_) {
+    if (!op->property_.noDeps_.empty()) {
         makeIndent();
-        os() << "// no dependency" << std::endl;
+        os() << "// no_deps = ";
+        bool first = true;
+        for (auto &&var : op->property_.noDeps_) {
+            os() << (first ? "" : ", ");
+            first = false;
+            os() << var;
+        }
+        os() << std::endl;
     }
     if (!op->property_.parallel_.empty()) {
         makeIndent();

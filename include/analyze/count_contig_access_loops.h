@@ -48,7 +48,8 @@ class CountContigAccessLoops : public Visitor {
             auto idx = op->indices_.back();
             analyzeLinear_(idx);
             for (auto &&[h, s] : analyzeLinear_.result().at(idx).coeff_) {
-                if (s.k_ == 1 && s.a_->nodeType() == ASTNodeType::Var) {
+                if ((s.k_ == 1 || s.k_ == -1) &&
+                    s.a_->nodeType() == ASTNodeType::Var) {
                     auto &&var = s.a_.template as<VarNode>();
                     counts_[var2for_.at(var->name_)->id()].first += repeat_;
                 }

@@ -10,8 +10,7 @@ void checkVarCrossParallel(const Stmt &ast, const std::string &def,
     };
     auto found = [&](const Dependency &d) {
         ASSERT(d.cond_.size() == 1);
-        throw InvalidSchedule(
-            dep2Str(d.cond_[0].first, d.var_, d.later(), d.earlier()));
+        throw InvalidSchedule(toString(d) + " cannot be resolved");
     };
     std::vector<FindDepsCond> conds;
     switch (mtype) {

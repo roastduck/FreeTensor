@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include <analyze/analyze_linear.h>
 #include <analyze/check_all_defined.h>
 #include <analyze/hash.h>
 #include <mutator.h>
@@ -26,12 +27,14 @@ class AsMatMul : public Mutator {
     bool aIsRowMajor_, bIsRowMajor_, cIsRowMajor_;
 
     GetHash getHash_;
+    AnalyzeLinear analyzeLinear_;
 
   public:
     AsMatMul(const std::string &loop) : loop_(loop) {}
 
   private:
     uint64_t getHash(const Expr &op);
+    const LinearExpr<int64_t> &analyzeLinear(const Expr &expr);
 
     template <class T>
     std::tuple<std::vector<bool>, std::vector<int>, Expr>
@@ -41,14 +44,17 @@ class AsMatMul : public Mutator {
         Expr baseAddr = makeLoad(acc->var_, acc->indices_);
         for (size_t i = 0, n = acc->indices_.size(); i < n; i++) {
             auto &&idx = acc->indices_[i];
-            if (idx->nodeType() != ASTNodeType::Var) {
+            auto &&lin = analyzeLinear(idx);
+            if (lin.coeff_.size() != 1 ||
+                std::abs(lin.coeff_.front().second.k_) != 1 ||
+                lin.coeff_.front().second.a_->nodeType() != ASTNodeType::Var) {
                 if (!checkAllDefined(outerDefs_, idx)) {
                     throw InvalidSchedule("Indices of " + acc->var_ +
                                           " should be plain loop iterators");
                 }
                 continue; // not a dim in matmul
             }
-            Var var = idx.template as<VarNode>();
+            Var var = lin.coeff_.front().second.a_.template as<VarNode>();
             if (!iterMap_.count(var->name_)) {
                 continue; // not a dim in matmul
             } else {
@@ -76,12 +82,16 @@ class AsMatMul : public Mutator {
         bool thisDimIn = false, lastDimIn = false;
         Expr lastInDim;
         for (size_t i = 0, n = acc->indices_.size(); i < n; i++) {
+            auto &&idx = acc->indices_[i];
+            auto &&lin = analyzeLinear(idx);
             lastDimIn = thisDimIn;
             thisDimIn = true;
-            if (acc->indices_[i]->nodeType() != ASTNodeType::Var) {
+            if (lin.coeff_.size() != 1 ||
+                std::abs(lin.coeff_.front().second.k_) != 1 ||
+                lin.coeff_.front().second.a_->nodeType() != ASTNodeType::Var) {
                 thisDimIn = false;
             } else {
-                Var var = acc->indices_[i].template as<VarNode>();
+                Var var = lin.coeff_.front().second.a_.template as<VarNode>();
                 if (!iterMap_.count(var->name_) ||
                     !flag[iterMap_.at(var->name_)]) {
                     thisDimIn = false;
@@ -90,15 +100,14 @@ class AsMatMul : public Mutator {
             if (thisDimIn) {
                 if (lastInDim.isValid()) {
                     if (!lastDimIn) {
-                        throw InvalidSchedule("Dimensions " +
-                                              toString(lastInDim) + " and " +
-                                              toString(acc->indices_[i]) +
-                                              " should be contiguous");
+                        throw InvalidSchedule(
+                            "Dimensions " + toString(lastInDim) + " and " +
+                            toString(idx) + " should be contiguous");
                     }
                 }
                 auto thisLen = buffers_.at(acc->var_)->tensor().shape()[i];
                 len = len.isValid() ? makeMul(len, thisLen) : (Expr)thisLen;
-                lastInDim = acc->indices_[i];
+                lastInDim = idx;
             } else {
                 if (len.isValid()) {
                     auto thisLen = buffers_.at(acc->var_)->tensor().shape()[i];

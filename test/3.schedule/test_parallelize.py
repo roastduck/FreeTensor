@@ -73,7 +73,7 @@ def test_no_deps():
         ir.declare_var(edge1, (50,), "int32", "input", "cpu")
         ir.declare_var(edge2, (50,), "int32", "output", "cpu")
         'nid: Li'
-        'no_deps'
+        'no_deps: edge2'
         for i in range(10):
             for j in range(ptr[i], ptr[i + 1]):
                 edge2[j] = edge1[j] + i
