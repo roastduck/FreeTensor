@@ -109,12 +109,12 @@ if __name__ == '__main__':
     n_faces = adj.shape[0]
     in_feats = 13
     out_feats = 64
-    x = torch.rand(n_faces, in_feats, dtype=torch.float)
-    w0 = torch.rand(in_feats, out_feats, dtype=torch.float)
-    w1 = torch.rand(in_feats, out_feats, dtype=torch.float)
-    w2 = torch.rand(in_feats, out_feats, dtype=torch.float)
-    w3 = torch.rand(in_feats, out_feats, dtype=torch.float)
-    d_y = torch.rand(n_faces, out_feats, dtype=torch.float)
+    x = torch.tensor(np.loadtxt("../x.in"), dtype=torch.float)
+    w0 = torch.tensor(np.loadtxt("../w0.in"), dtype=torch.float)
+    w1 = torch.tensor(np.loadtxt("../w1.in"), dtype=torch.float)
+    w2 = torch.tensor(np.loadtxt("../w2.in"), dtype=torch.float)
+    w3 = torch.tensor(np.loadtxt("../w3.in"), dtype=torch.float)
+    d_y = torch.tensor(np.loadtxt("../d_y.in"), dtype=torch.float)
 
     if device == 'gpu':
         adj = adj.cuda()
@@ -134,6 +134,8 @@ if __name__ == '__main__':
 
     for i in range(warmup_num):
         y = conv_impl1(adj, x, w0, w1, w2, w3)
+        if i == 0:
+            np.savetxt("y.out", y.numpy())
     sync()
     t0 = time.time()
     for i in range(test_num):
@@ -173,6 +175,12 @@ if __name__ == '__main__':
 
     for i in range(warmup_num):
         y.backward(d_y, retain_graph=True)
+        if i == 0:
+            np.savetxt("d_x.out", x.grad.numpy())
+            np.savetxt("d_w0.out", w0.grad.numpy())
+            np.savetxt("d_w1.out", w1.grad.numpy())
+            np.savetxt("d_w2.out", w2.grad.numpy())
+            np.savetxt("d_w3.out", w3.grad.numpy())
     sync()
     t0 = time.time()
     for i in range(test_num):
