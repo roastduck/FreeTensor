@@ -105,6 +105,7 @@ class Grad : public Mutator {
     const std::unordered_set<std::string> &tapes_;
     const std::unordered_set<std::string> &affectedDefs_;
     const std::unordered_map<Load, Expr> &loadMap_;
+    const std::unordered_set<Stmt> &notSingleWrite_;
     std::unordered_set<std::string> isTape_;
     ReplaceByTape replaceByTape_;
 
@@ -125,10 +126,11 @@ class Grad : public Mutator {
          const std::unordered_set<std::string> &tapes,
          const std::unordered_set<std::string> &affectedDefs,
          const std::unordered_map<std::string, std::string> &tapeMap,
-         const std::unordered_map<Load, Expr> &loadMap)
+         const std::unordered_map<Load, Expr> &loadMap,
+         const std::unordered_set<Stmt> &notSingleWrite)
         : requires_(requires), provides_(provides), tapes_(tapes),
           affectedDefs_(affectedDefs), loadMap_(loadMap),
-          replaceByTape_(loadMap) {
+          notSingleWrite_(notSingleWrite), replaceByTape_(loadMap) {
         for (auto &&[oriDef, tapeVar] : tapeMap) {
             isTape_.insert(tapeVar);
         }

@@ -1,8 +1,11 @@
 #include <analyze/all_defs.h>
 #include <analyze/all_no_reuse_defs.h>
+#include <analyze/all_reads.h>
+#include <analyze/deps.h>
 #include <cursor.h>
 #include <pass/grad.h>
 #include <pass/hoist_var_over_stmt_seq.h>
+#include <pass/make_reduction.h>
 #include <pass/output_intermediates.h>
 #include <pass/prop_const.h>
 #include <pass/prop_one_time_use.h>
@@ -12,6 +15,21 @@
 #include <pass/simplify.h>
 
 namespace ir {
+
+static Expr canonicalReduceSumExpr(const Store &store) {
+    // Check if var[indices] = expr is a canonical reduce sum, which can be
+    // written as var[indices] = var[indices] + X, where there is no access to
+    // var in X
+    if (auto _reduce = makeReduction(store);
+        _reduce->nodeType() == ASTNodeType::ReduceTo) {
+        auto &&reduce = _reduce.as<ReduceToNode>();
+        if (reduce->op_ == ReduceOp::Add &&
+            !allReads(reduce->expr_).count(store->var_)) {
+            return reduce->expr_;
+        }
+    }
+    return nullptr;
+}
 
 void PropagateRequire::visit(const Load &op) {
     if (!curTarget_.empty()) {
@@ -227,31 +245,61 @@ Stmt Grad::visit(const Store &op) {
     } else {
         std::vector<Stmt> stmts;
         if (gradNames_.count(op->var_)) {
-            // Gradient of y[i] = f(x[i], y[i]) is:
-            // d_y.old = d_y[i]
-            // d_y[i] = 0
-            // deduce d_x[i] and d_y[i] using d_y.old
-
             auto &&grad = gradNames_.at(op->var_);
-            auto oldGrad = grad + ".old";
             auto &&indices = op->indices_;
-            stmts.emplace_back(
-                makeStore("", oldGrad, {}, makeLoad(grad, indices)));
-            stmts.emplace_back(makeStore("", grad, indices, makeIntConst(0)));
+            if (!allReads(op->expr_).count(op->var_)) {
+                // Quick path for acyclic assignment
+                GradExpr exprVisitor(loadMap_, gradNames_, op->expr_,
+                                     makeLoad(grad, indices),
+                                     makeLoad(op->var_, indices));
+                exprVisitor(op->expr_);
 
-            GradExpr exprVisitor(loadMap_, gradNames_, op->expr_,
-                                 makeLoad(oldGrad, {}),
-                                 makeLoad(op->var_, op->indices_));
-            exprVisitor(op->expr_);
+                for (auto &&stmt : exprVisitor.appends()) {
+                    stmts.emplace_back(stmt);
+                }
+                if (notSingleWrite_.count(op)) {
+                    stmts.emplace_back(
+                        makeStore("", grad, indices, makeIntConst(0)));
+                }
+                return makeStmtSeq("", std::move(stmts));
+            } else if (auto &&expr = canonicalReduceSumExpr(op);
+                       expr.isValid()) {
+                // Quick path for canonical reduce sum
+                GradExpr exprVisitor(loadMap_, gradNames_, expr,
+                                     makeLoad(grad, indices),
+                                     makeLoad(op->var_, indices));
+                exprVisitor(expr);
 
-            for (auto &&stmt : exprVisitor.appends()) {
-                stmts.emplace_back(stmt);
+                for (auto &&stmt : exprVisitor.appends()) {
+                    stmts.emplace_back(stmt);
+                }
+                return makeStmtSeq("", std::move(stmts));
+            } else {
+                // General case
+                // Gradient of y[i] = f(x[i], y[i]) is:
+                // d_y.old = d_y[i]
+                // d_y[i] = 0
+                // deduce d_x[i] and d_y[i] using d_y.old
+                auto oldGrad = grad + ".old";
+                stmts.emplace_back(
+                    makeStore("", oldGrad, {}, makeLoad(grad, indices)));
+                stmts.emplace_back(
+                    makeStore("", grad, indices, makeIntConst(0)));
+
+                GradExpr exprVisitor(loadMap_, gradNames_, op->expr_,
+                                     makeLoad(oldGrad, {}),
+                                     makeLoad(op->var_, indices));
+                exprVisitor(op->expr_);
+
+                for (auto &&stmt : exprVisitor.appends()) {
+                    stmts.emplace_back(stmt);
+                }
+                return makeVarDef("", oldGrad,
+                                  Buffer(Tensor({}, buffer->tensor().dtype()),
+                                         AccessType::Cache, buffer->mtype()),
+                                  nullptr, makeStmtSeq("", std::move(stmts)),
+                                  false);
             }
-            return makeVarDef("", oldGrad,
-                              Buffer(Tensor({}, buffer->tensor().dtype()),
-                                     AccessType::Cache, buffer->mtype()),
-                              nullptr, makeStmtSeq("", std::move(stmts)),
-                              false);
         } else {
             return makeStmtSeq("", {});
         }
@@ -391,8 +439,15 @@ grad(const Stmt &_op, const std::unordered_set<std::string> &requires,
         propagator(forward);
     } while (propagator.affectedDefs().size() > affectCnt);
 
+    std::unordered_set<Stmt> notSingleWrite;
+    auto foundWAW = [&](const Dependency &d) {
+        notSingleWrite.insert(d.earlier().as<StmtNode>());
+    };
+    findDeps(forward, {{}}, foundWAW, FindDepsMode::Dep, DEP_WAW, nullptr,
+             false);
+
     Grad mutator(requires, provides, tapes, propagator.affectedDefs(), tapeMap,
-                 loadMap);
+                 loadMap, notSingleWrite);
     auto backward = mutator(forward);
 
     // We do some basic simplifications here, to reduce burden on auto-schedule
