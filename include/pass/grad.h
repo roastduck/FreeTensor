@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include <analyze/type_infer.h>
 #include <func.h>
 #include <mutator.h>
 #include <visitor.h>
@@ -13,20 +14,25 @@ namespace ir {
 class PropagateRequire : public Visitor {
     const std::unordered_set<std::string> &requires_; // input var names
     const std::unordered_set<std::string> &provides_; // output var names
+    TypeInfer typeInfer_;
 
     std::unordered_set<std::string> affectedDefs_; // all VarDef IDs
 
     std::unordered_map<std::string, VarDef> defs_;
+    std::unordered_map<std::string, Ref<Buffer>> buffers_;
     std::string curTarget_; // VarDef ID of current var being written to
 
   public:
     PropagateRequire(const std::unordered_set<std::string> &requires,
                      const std::unordered_set<std::string> &provides)
-        : requires_(requires), provides_(provides) {}
+        : requires_(requires), provides_(provides), typeInfer_(&buffers_) {}
 
     const std::unordered_set<std::string> &affectedDefs() const {
         return affectedDefs_;
     }
+
+  private:
+    DataType dtype(const Expr &op);
 
   protected:
     void visit(const Load &op) override;

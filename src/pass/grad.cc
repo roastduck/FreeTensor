@@ -31,8 +31,13 @@ static Expr canonicalReduceSumExpr(const Store &store) {
     return nullptr;
 }
 
+DataType PropagateRequire::dtype(const Expr &op) {
+    typeInfer_(op);
+    return typeInfer_.types().at(op);
+}
+
 void PropagateRequire::visit(const Load &op) {
-    if (!curTarget_.empty()) {
+    if (isFloat(dtype(op)) && !curTarget_.empty()) {
         affectedDefs_.insert(defs_.at(op->var_)->id());
         // No need to recurse deeper
     }
@@ -62,8 +67,10 @@ void PropagateRequire::visit(const VarDef &op) {
     }
     ASSERT(!defs_.count(op->name_));
     defs_[op->name_] = op;
+    buffers_[op->name_] = op->buffer_;
     Visitor::visit(op);
     defs_.erase(op->name_);
+    buffers_.erase(op->name_);
 }
 
 Expr ReplaceVar::visit(const Var &op) {
