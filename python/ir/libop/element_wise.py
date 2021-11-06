@@ -91,3 +91,6 @@ sqrt = _unary_op(lambda x: core.sqrt(x))
 
 exp_ = _unary_op_(lambda x: core.exp(x))
 exp = _unary_op(lambda x: core.exp(x))
+
+sigmoid_ = _unary_op_(lambda x: 1. / (1. + core.exp(-x)))
+sigmoid = _unary_op(lambda x: 1. / (1. + core.exp(-x)))
