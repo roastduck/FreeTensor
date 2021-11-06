@@ -58,6 +58,7 @@ if __name__ == '__main__':
     w3 = np.random.uniform(size=(in_feats, out_feats)).astype("float32")
     d_y = np.random.uniform(size=(n_faces, out_feats)).astype('float32')
 
+    np.savetxt("adj.in", adj)
     np.savetxt("x.in", x)
     np.savetxt("w0.in", w0)
     np.savetxt("w1.in", w1)

@@ -1,45 +1,7 @@
 import sys
 import time
-import itertools
 import numpy as np
 import torch
-
-
-def load_faces(path: str):
-    """
-    Load a 3D object and returns the adjacency array of the faces
-
-
-    Parameters
-    ----------
-    path: str
-        Path to a 3D object file, where a `f <i> <j> <k>` line means there is a face among point i, j and k
-
-
-    Returns
-    -------
-    np.array
-        An n*3-shaped numpy array, where n is the number of faces. array[i][j] = ID of the j-th adjacent face of the i-th face
-    """
-
-    faces = []
-    for line in open(path):
-        if line.startswith('f'):
-            faces.append(tuple(map(int, line.split()[1:])))
-
-    edgeToFaces = {}
-    for face, i in zip(faces, itertools.count()):
-        edgeToFaces[(face[0], face[1])] = i
-        edgeToFaces[(face[1], face[2])] = i
-        edgeToFaces[(face[2], face[0])] = i
-
-    ret = []
-    for face, i in zip(faces, itertools.count()):
-        ret.append(
-            (edgeToFaces[(face[1], face[0])], edgeToFaces[(face[2], face[1])],
-             edgeToFaces[(face[0], face[2])]))
-
-    return np.array(ret, dtype=np.int32)
 
 
 def conv_impl1(adj, x, w0, w1, w2, w3):
@@ -70,42 +32,13 @@ def conv_impl1(adj, x, w0, w1, w2, w3):
     return y0 + y1 + y2 + y3
 
 
-def conv_impl2(adj, x, w0, w1, w2, w3):
-    # TODO: Dilation
-    # TODO: Stride
-    # TODO: Batch
-
-    n_faces = x.shape[0]
-    in_feats = x.shape[1]
-    out_feats = w0.shape[1]
-    assert adj.shape == (n_faces, 3)
-    assert x.shape == (n_faces, in_feats)
-    assert w0.shape == (in_feats, out_feats)
-    assert w1.shape == (in_feats, out_feats)
-    assert w2.shape == (in_feats, out_feats)
-    assert w3.shape == (in_feats, out_feats)
-
-    adj_feat = torch.index_select(x, 0,
-                                  adj.flatten()).reshape(n_faces, 3, in_feats)
-    sum1 = torch.zeros_like(x)
-    sum2 = torch.zeros_like(x)
-    sum3 = torch.zeros_like(x)
-    for p in range(3):
-        sum1 += adj_feat[:, p]
-        sum2 += torch.abs(adj_feat[:, p] - adj_feat[:, (p + 1) % 3])
-        sum3 += torch.abs(adj_feat[:, p] - x)
-
-    return x @ w0 + sum1 @ w1 + sum2 @ w2 + sum3 @ w3
-
-
 if __name__ == '__main__':
-    if len(sys.argv) != 3:
-        print(f"Usage: {sys.argv[0]} <cpu/gpu> <obj-file>")
+    if len(sys.argv) != 2:
+        print(f"Usage: {sys.argv[0]} <cpu/gpu>")
         exit(-1)
     device = sys.argv[1]
-    obj_file = sys.argv[2]
 
-    adj = torch.tensor(load_faces(obj_file))
+    adj = torch.tensor(np.loadtxt("../adj.in", dtype=np.int32))
     n_faces = adj.shape[0]
     in_feats = 13
     out_feats = 64
@@ -145,17 +78,6 @@ if __name__ == '__main__':
     assert y.shape == (n_faces, out_feats)
     print(f"Impl1 Inference Time = {(t1 - t0) / test_num * 1000} ms")
 
-    for i in range(warmup_num):
-        y = conv_impl2(adj, x, w0, w1, w2, w3)
-    sync()
-    t0 = time.time()
-    for i in range(test_num):
-        y = conv_impl2(adj, x, w0, w1, w2, w3)
-    sync()
-    t1 = time.time()
-    assert y.shape == (n_faces, out_feats)
-    print(f"Impl2 Inference Time = {(t1 - t0) / test_num * 1000} ms")
-
     x.requires_grad = True
     w0.requires_grad = True
     w1.requires_grad = True
@@ -188,24 +110,3 @@ if __name__ == '__main__':
     sync()
     t1 = time.time()
     print(f"Impl1 Backward Time = {(t1 - t0) / test_num * 1000} ms")
-
-    for i in range(warmup_num):
-        y = conv_impl2(adj, x, w0, w1, w2, w3)
-    sync()
-    t0 = time.time()
-    for i in range(test_num):
-        y = conv_impl2(adj, x, w0, w1, w2, w3)
-    sync()
-    t1 = time.time()
-    assert y.shape == (n_faces, out_feats)
-    print(f"Impl2 Forward Time = {(t1 - t0) / test_num * 1000} ms")
-
-    for i in range(warmup_num):
-        y.backward(d_y, retain_graph=True)
-    sync()
-    t0 = time.time()
-    for i in range(test_num):
-        y.backward(d_y, retain_graph=True)
-    sync()
-    t1 = time.time()
-    print(f"Impl2 Backward Time = {(t1 - t0) / test_num * 1000} ms")

@@ -12,7 +12,7 @@ if __name__ == '__main__':
 
     for name in ['y', 'd_x', 'd_w0', 'd_w1', 'd_w2', 'd_w3']:
         print(f"Comparing {name}")
-        data1 = np.loadtxt(f"{dir1}/y.out")
-        data2 = np.loadtxt(f"{dir2}/y.out")
-        assert np.all(np.isclose(data2, data1)), f"{name} differs"
+        data1 = np.loadtxt(f"{dir1}/{name}.out")
+        data2 = np.loadtxt(f"{dir2}/{name}.out")
+        assert np.all(np.isclose(data2, data1, 1e-4, 1e-4)), f"{name} differs"
     print("All output matches")
