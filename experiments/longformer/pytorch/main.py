@@ -51,10 +51,10 @@ if __name__ == '__main__':
     w = 32
     dilation = 4  # counts from 1
     dilation_heads = 2
-    q = torch.rand(n_heads, seq_len, feat_len, dtype=torch.float)
-    k = torch.rand(n_heads, seq_len, feat_len, dtype=torch.float)
-    v = torch.rand(n_heads, seq_len, feat_len, dtype=torch.float)
-    d_y = torch.rand(n_heads, seq_len, feat_len, dtype=torch.float)
+    q = torch.tensor(np.load("../q.in.npy"), dtype=torch.float)
+    k = torch.tensor(np.load("../k.in.npy"), dtype=torch.float)
+    v = torch.tensor(np.load("../v.in.npy"), dtype=torch.float)
+    d_y = torch.tensor(np.load("../d_y.in.npy"), dtype=torch.float)
 
     if device == 'gpu':
         q = q.cuda()
@@ -71,6 +71,8 @@ if __name__ == '__main__':
 
     for i in range(warmup_num):
         y = transformer_impl1(q, k, v, w, dilation, dilation_heads)
+        if i == 0:
+            np.save("y.out.npy", y.numpy(), allow_pickle=False)
     sync()
     t0 = time.time()
     for i in range(test_num):
@@ -97,6 +99,10 @@ if __name__ == '__main__':
 
     for i in range(warmup_num):
         y.backward(d_y, retain_graph=True)
+        if i == 0:
+            np.save("d_q.out.npy", q.grad.numpy(), allow_pickle=False)
+            np.save("d_k.out.npy", k.grad.numpy(), allow_pickle=False)
+            np.save("d_v.out.npy", v.grad.numpy(), allow_pickle=False)
     sync()
     t0 = time.time()
     for i in range(test_num):
