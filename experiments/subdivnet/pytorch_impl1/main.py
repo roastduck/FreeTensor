@@ -68,7 +68,7 @@ if __name__ == '__main__':
     for i in range(warmup_num):
         y = conv_impl1(adj, x, w0, w1, w2, w3)
         if i == 0:
-            np.savetxt("y.out", y.numpy())
+            np.savetxt("y.out", y.cpu().numpy())
     sync()
     t0 = time.time()
     for i in range(test_num):
@@ -98,11 +98,11 @@ if __name__ == '__main__':
     for i in range(warmup_num):
         y.backward(d_y, retain_graph=True)
         if i == 0:
-            np.savetxt("d_x.out", x.grad.numpy())
-            np.savetxt("d_w0.out", w0.grad.numpy())
-            np.savetxt("d_w1.out", w1.grad.numpy())
-            np.savetxt("d_w2.out", w2.grad.numpy())
-            np.savetxt("d_w3.out", w3.grad.numpy())
+            np.savetxt("d_x.out", x.grad.cpu().numpy())
+            np.savetxt("d_w0.out", w0.grad.cpu().numpy())
+            np.savetxt("d_w1.out", w1.grad.cpu().numpy())
+            np.savetxt("d_w2.out", w2.grad.cpu().numpy())
+            np.savetxt("d_w3.out", w3.grad.cpu().numpy())
     sync()
     t0 = time.time()
     for i in range(test_num):

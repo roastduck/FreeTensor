@@ -72,7 +72,7 @@ if __name__ == '__main__':
     for i in range(warmup_num):
         y = transformer_impl1(q, k, v, w, dilation, dilation_heads)
         if i == 0:
-            np.save("y.out.npy", y.numpy(), allow_pickle=False)
+            np.save("y.out.npy", y.cpu().numpy(), allow_pickle=False)
     sync()
     t0 = time.time()
     for i in range(test_num):
@@ -100,9 +100,9 @@ if __name__ == '__main__':
     for i in range(warmup_num):
         y.backward(d_y, retain_graph=True)
         if i == 0:
-            np.save("d_q.out.npy", q.grad.numpy(), allow_pickle=False)
-            np.save("d_k.out.npy", k.grad.numpy(), allow_pickle=False)
-            np.save("d_v.out.npy", v.grad.numpy(), allow_pickle=False)
+            np.save("d_q.out.npy", q.grad.cpu().numpy(), allow_pickle=False)
+            np.save("d_k.out.npy", k.grad.cpu().numpy(), allow_pickle=False)
+            np.save("d_v.out.npy", v.grad.cpu().numpy(), allow_pickle=False)
     sync()
     t0 = time.time()
     for i in range(test_num):
