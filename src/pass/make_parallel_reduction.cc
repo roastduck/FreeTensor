@@ -121,7 +121,7 @@ Stmt makeParallelReduction(const Stmt &_op) {
 
     std::unordered_map<std::string, std::unordered_set<std::string>> toAlter;
     auto filter = [](const AccessPoint &later, const AccessPoint &earlier) {
-        return later.op_ == earlier.op_ &&
+        return earlier.op_->nodeType() == ASTNodeType::ReduceTo &&
                later.op_->nodeType() == ASTNodeType::ReduceTo;
     };
     auto found = [&](const Dependency &d) {
@@ -129,6 +129,7 @@ Stmt makeParallelReduction(const Stmt &_op) {
         ASSERT(d.cond_.front().first.isNode_);
         auto &&loopId = d.cond_.front().first.name_;
         toAlter[d.later().as<ReduceToNode>()->id()].insert(loopId);
+        toAlter[d.earlier().as<ReduceToNode>()->id()].insert(loopId);
     };
     findDeps(op, cond, found, FindDepsMode::Dep, DEP_ALL, filter, false);
 
