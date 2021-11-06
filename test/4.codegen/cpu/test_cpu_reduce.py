@@ -234,6 +234,106 @@ def test_atomic_reduction_2_stmts_on_1_var():
     assert np.array_equal(y_np, y_std)
 
 
+def test_atomic_reduction_cache():
+
+    @ir.transform
+    def test(x, y):
+        ir.declare_var(x, (4, 64, 10), "int32", "input", "cpu")
+        ir.declare_var(y, (4, 2), "int32", "inout", "cpu")
+        "nid: L1"
+        for i in range(0, 4):
+            "nid: L2"
+            for j in range(0, 64):
+                "nid: L3"
+                for k in range(10):
+                    y[i, j % 2] += x[i, j, k]
+
+    s = ir.Schedule(test)
+    s.parallelize("L2", "openmp")
+    func = ir.lower(s.func(), target)
+    print(func)
+
+    code = ir.codegen(func, target)
+    print(code)
+    assert "reduction" not in code
+    assert code.count("#pragma omp atomic") == 1
+    assert code.count("+=") == 2
+    x_np = np.random.randint(0, 100, (4, 64, 10)).astype("int32")
+    y_np = np.zeros((4, 2), dtype="int32")
+    x_arr = ir.Array(x_np, device)
+    y_arr = ir.Array(y_np, device)
+    ir.Driver(func, code, device)(x=x_arr, y=y_arr)
+    y_np = y_arr.numpy().reshape(4, 2)
+
+    y_std = np.sum(np.sum(x_np, axis=-1).reshape((4, 32, 2)), axis=1)
+    assert np.array_equal(y_np, y_std)
+
+
+def test_atomic_reduction_cache_array():
+
+    @ir.transform
+    def test(x, y):
+        ir.declare_var(x, (4, 64, 10, 3), "int32", "input", "cpu")
+        ir.declare_var(y, (4, 2, 3), "int32", "inout", "cpu")
+        "nid: L1"
+        for i in range(0, 4):
+            "nid: L2"
+            for j in range(0, 64):
+                "nid: L3"
+                for k in range(10):
+                    "nid: L4"
+                    for p in range(3):
+                        y[i, j % 2, p] += x[i, j, k, p]
+
+    s = ir.Schedule(test)
+    s.parallelize("L2", "openmp")
+    func = ir.lower(s.func(), target)
+    print(func)
+
+    code = ir.codegen(func, target)
+    print(code)
+    assert "reduction" not in code
+    assert code.count("#pragma omp atomic") == 1
+    assert code.count("+=") == 2
+    x_np = np.random.randint(0, 100, (4, 64, 10, 3)).astype("int32")
+    y_np = np.zeros((4, 2, 3), dtype="int32")
+    x_arr = ir.Array(x_np, device)
+    y_arr = ir.Array(y_np, device)
+    ir.Driver(func, code, device)(x=x_arr, y=y_arr)
+    y_np = y_arr.numpy().reshape(4, 2, 3)
+
+    y_std = np.sum(np.sum(x_np, axis=-2).reshape((4, 32, 2, 3)), axis=1)
+    assert np.array_equal(y_np, y_std)
+
+
+def test_atomic_reduction_no_cache_array():
+
+    @ir.transform
+    def test(x, y):
+        ir.declare_var(x, (4, 64, 10, 3), "int32", "input", "cpu")
+        ir.declare_var(y, (4, 2, 300), "int32", "inout", "cpu")
+        "nid: L1"
+        for i in range(0, 4):
+            "nid: L2"
+            for j in range(0, 64):
+                "nid: L3"
+                for k in range(10):
+                    "nid: L4"
+                    for p in range(3):
+                        y[i, j % 2, p * 100] += x[i, j, k, p]
+
+    s = ir.Schedule(test)
+    s.parallelize("L2", "openmp")
+    func = ir.lower(s.func(), target)
+    print(func)
+
+    code = ir.codegen(func, target)
+    print(code)
+    assert "reduction" not in code
+    assert code.count("#pragma omp atomic") == 1
+    assert code.count("+=") == 1
+
+
 def test_simultenous_parallel_and_atomic_reduction():
 
     @ir.transform

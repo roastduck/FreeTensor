@@ -129,4 +129,4 @@ def test_grad():
     ir.Driver(g, g_code, device)(x_arr, y_arr, **kvs)
     x_grad_torch_ours = torch.Tensor(d_x_arr.numpy().reshape(4, 4))
     y_torch.backward(y_torch.grad)
-    assert torch.all(torch.isclose(x_grad_torch_ours, x_torch.grad))
+    assert torch.all(torch.isclose(x_grad_torch_ours, x_torch.grad, 1e-4, 1e-7))
