@@ -406,6 +406,19 @@ template <class T> Expr _makeSquare(T &&expr) {
     return e;
 }
 
+class SigmoidNode : public ExprNode {
+  public:
+    SubTree<ExprNode> expr_;
+    DEFINE_NODE_TRAIT(Sigmoid);
+};
+typedef Ref<SigmoidNode> Sigmoid;
+#define makeSigmoid(...) makeNode(Sigmoid, __VA_ARGS__)
+template <class T> Expr _makeSigmoid(T &&expr) {
+    Sigmoid e = Sigmoid::make();
+    e->expr_ = std::forward<T>(expr);
+    return e;
+}
+
 class AbsNode : public ExprNode {
   public:
     SubTree<ExprNode> expr_;
@@ -561,6 +574,8 @@ template <class T> Expr makeUnary(ASTNodeType nodeType, T &&expr) {
         return makeExp(std::forward<T>(expr));
     case ASTNodeType::Square:
         return makeSquare(std::forward<T>(expr));
+    case ASTNodeType::Sigmoid:
+        return makeSigmoid(std::forward<T>(expr));
     default:
         ASSERT(false);
     }

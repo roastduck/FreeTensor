@@ -515,6 +515,12 @@ template <class Stream> void CodeGenC<Stream>::visit(const Square &op) {
     this->os() << ")";
 }
 
+template <class Stream> void CodeGenC<Stream>::visit(const Sigmoid &op) {
+    this->os() << "runtime_sigmoid(";
+    (*this)(op->expr_);
+    this->os() << ")";
+}
+
 template <class Stream> void CodeGenC<Stream>::visit(const Abs &op) {
     this->os() << "std::abs(";
     (*this)(op->expr_);

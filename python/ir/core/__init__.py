@@ -23,6 +23,7 @@ from .nodes import (
     sqrt,
     exp,
     square,
+    sigmoid,
     floor,
     ceil,
     cast,
