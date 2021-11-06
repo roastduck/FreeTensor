@@ -29,12 +29,12 @@ def compile_all(w, dilation, dilation_heads, n_heads, seq_len, feat_len,
                 for k in range(-w, w + 1):
                     dot[k + w] = 0
                     if j + ir.if_then_else(
-                            i < dilation_heads, k,
+                            i >= dilation_heads, k,
                             k * dilation) >= 0 and j + ir.if_then_else(
-                                i < dilation_heads, k, k * dilation) < seq_len:
+                                i >= dilation_heads, k, k * dilation) < seq_len:
                         for p in range(feat_len):
                             dot[k + w] += Q[i, j, p] * K[i, j + ir.if_then_else(
-                                i < dilation_heads, k, k * dilation), p]
+                                i >= dilation_heads, k, k * dilation), p]
 
                 maxval = ir.create_var((), "float32", mtype)
                 maxval[()] = -inf
@@ -55,13 +55,13 @@ def compile_all(w, dilation, dilation_heads, n_heads, seq_len, feat_len,
                     Y[i, j, p] = 0
                 for k in range(-w, w + 1):
                     if j + ir.if_then_else(
-                            i < dilation_heads, k,
+                            i >= dilation_heads, k,
                             k * dilation) >= 0 and j + ir.if_then_else(
-                                i < dilation_heads, k, k * dilation) < seq_len:
+                                i >= dilation_heads, k, k * dilation) < seq_len:
                         for p in range(feat_len):
                             Y[i, j,
                               p] += attn[k + w] * V[i, j + ir.if_then_else(
-                                  i < dilation_heads, k, k * dilation), p]
+                                  i >= dilation_heads, k, k * dilation), p]
 
     forward, backward, requires, privdes, _ = ir.grad(inference,
                                                       set(["Q", "K", "V"]),
@@ -120,14 +120,14 @@ if __name__ == '__main__':
     w = 32
     dilation = 4  # counts from 1
     dilation_heads = 2
-    q = np.random.uniform(size=(n_heads, seq_len, feat_len)).astype("float32")
-    k = np.random.uniform(size=(n_heads, seq_len, feat_len)).astype("float32")
-    v = np.random.uniform(size=(n_heads, seq_len, feat_len)).astype("float32")
+    q = np.load("../q.in.npy").astype("float32")
+    k = np.load("../k.in.npy").astype("float32")
+    v = np.load("../v.in.npy").astype("float32")
     y = np.zeros((n_heads, seq_len, feat_len), dtype="float32")
     d_q = np.zeros(q.shape, dtype='float32')
     d_k = np.zeros(k.shape, dtype='float32')
     d_v = np.zeros(v.shape, dtype='float32')
-    d_y = np.random.uniform(size=y.shape).astype('float32')
+    d_y = np.load("../d_y.in.npy").astype("float32")
 
     if device == 'gpu':
         ir_dev = ir.Device(ir.GPU())
@@ -153,6 +153,10 @@ if __name__ == '__main__':
 
     for i in range(warmup_num):
         inference(q, k, v, y)
+        if i == 0:
+            np.save("y.out.npy",
+                    y.numpy().reshape((n_heads, seq_len, feat_len)),
+                    allow_pickle=False)
     ir_dev.sync()
     t0 = time.time()
     for i in range(test_num):
@@ -175,6 +179,16 @@ if __name__ == '__main__':
 
     for i in range(warmup_num):
         backward(q, k, v, y, d_y, d_q, d_k, d_v)
+        if i == 0:
+            np.save("d_q.out.npy",
+                    d_q.numpy().reshape((n_heads, seq_len, feat_len)),
+                    allow_pickle=False)
+            np.save("d_k.out.npy",
+                    d_k.numpy().reshape((n_heads, seq_len, feat_len)),
+                    allow_pickle=False)
+            np.save("d_v.out.npy",
+                    d_v.numpy().reshape((n_heads, seq_len, feat_len)),
+                    allow_pickle=False)
     ir_dev.sync()
     t0 = time.time()
     for i in range(test_num):

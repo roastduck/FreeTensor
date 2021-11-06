@@ -7,43 +7,6 @@ from ir.libop import *
 import ir.debug
 
 
-def load_faces(path: str):
-    """
-    Load a 3D object and returns the adjacency array of the faces
-
-
-    Parameters
-    ----------
-    path: str
-        Path to a 3D object file, where a `f <i> <j> <k>` line means there is a face among point i, j and k
-
-
-    Returns
-    -------
-    np.array
-        An n*3-shaped numpy array, where n is the number of faces. array[i][j] = ID of the j-th adjacent face of the i-th face
-    """
-
-    faces = []
-    for line in open(path):
-        if line.startswith('f'):
-            faces.append(tuple(map(int, line.split()[1:])))
-
-    edgeToFaces = {}
-    for face, i in zip(faces, itertools.count()):
-        edgeToFaces[(face[0], face[1])] = i
-        edgeToFaces[(face[1], face[2])] = i
-        edgeToFaces[(face[2], face[0])] = i
-
-    ret = []
-    for face, i in zip(faces, itertools.count()):
-        ret.append(
-            (edgeToFaces[(face[1], face[0])], edgeToFaces[(face[2], face[1])],
-             edgeToFaces[(face[0], face[2])]))
-
-    return np.array(ret, dtype=np.int32)
-
-
 def compile_all(n_faces, in_feats, out_feats, device):
     mtype = device.main_mem_type()
 
@@ -119,28 +82,27 @@ def compile_all(n_faces, in_feats, out_feats, device):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 3:
-        print(f"Usage: {sys.argv[0]} <cpu/gpu> <obj-file>")
+    if len(sys.argv) != 2:
+        print(f"Usage: {sys.argv[0]} <cpu/gpu>")
         exit(-1)
     device = sys.argv[1]
-    obj_file = sys.argv[2]
 
-    adj = load_faces(obj_file)
+    adj = np.loadtxt("../adj.in", dtype=np.int32)
     n_faces = adj.shape[0]
     in_feats = 13
     out_feats = 64
-    x = np.random.uniform(size=(n_faces, in_feats)).astype("float32")
-    w0 = np.random.uniform(size=(in_feats, out_feats)).astype("float32")
-    w1 = np.random.uniform(size=(in_feats, out_feats)).astype("float32")
-    w2 = np.random.uniform(size=(in_feats, out_feats)).astype("float32")
-    w3 = np.random.uniform(size=(in_feats, out_feats)).astype("float32")
+    x = np.loadtxt("../x.in").astype("float32")
+    w0 = np.loadtxt("../w0.in").astype("float32")
+    w1 = np.loadtxt("../w1.in").astype("float32")
+    w2 = np.loadtxt("../w2.in").astype("float32")
+    w3 = np.loadtxt("../w3.in").astype("float32")
     y = np.zeros((n_faces, out_feats), dtype="float32")
     d_x = np.zeros(x.shape, dtype='float32')
     d_w0 = np.zeros(w0.shape, dtype='float32')
     d_w1 = np.zeros(w1.shape, dtype='float32')
     d_w2 = np.zeros(w2.shape, dtype='float32')
     d_w3 = np.zeros(w3.shape, dtype='float32')
-    d_y = np.random.uniform(size=y.shape).astype('float32')
+    d_y = np.loadtxt("../d_y.in").astype("float32")
 
     if device == 'gpu':
         ir_dev = ir.Device(ir.GPU())
@@ -170,6 +132,8 @@ if __name__ == '__main__':
 
     for i in range(warmup_num):
         inference(adj, x, w0, w1, w2, w3, y)
+        if i == 0:
+            np.savetxt("y.out", y.numpy().reshape((n_faces, out_feats)))
     ir_dev.sync()
     t0 = time.time()
     for i in range(test_num):
@@ -192,6 +156,12 @@ if __name__ == '__main__':
 
     for i in range(warmup_num):
         backward(adj, x, w0, w1, w2, w3, y, d_y, d_x, d_w0, d_w1, d_w2, d_w3)
+        if i == 0:
+            np.savetxt("d_x.out", d_x.numpy().reshape((n_faces, in_feats)))
+            np.savetxt("d_w0.out", d_w0.numpy().reshape((in_feats, out_feats)))
+            np.savetxt("d_w1.out", d_w1.numpy().reshape((in_feats, out_feats)))
+            np.savetxt("d_w2.out", d_w2.numpy().reshape((in_feats, out_feats)))
+            np.savetxt("d_w3.out", d_w3.numpy().reshape((in_feats, out_feats)))
     ir_dev.sync()
     t0 = time.time()
     for i in range(test_num):
