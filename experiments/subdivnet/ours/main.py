@@ -7,43 +7,6 @@ from ir.libop import *
 import ir.debug
 
 
-def load_faces(path: str):
-    """
-    Load a 3D object and returns the adjacency array of the faces
-
-
-    Parameters
-    ----------
-    path: str
-        Path to a 3D object file, where a `f <i> <j> <k>` line means there is a face among point i, j and k
-
-
-    Returns
-    -------
-    np.array
-        An n*3-shaped numpy array, where n is the number of faces. array[i][j] = ID of the j-th adjacent face of the i-th face
-    """
-
-    faces = []
-    for line in open(path):
-        if line.startswith('f'):
-            faces.append(tuple(map(int, line.split()[1:])))
-
-    edgeToFaces = {}
-    for face, i in zip(faces, itertools.count()):
-        edgeToFaces[(face[0], face[1])] = i
-        edgeToFaces[(face[1], face[2])] = i
-        edgeToFaces[(face[2], face[0])] = i
-
-    ret = []
-    for face, i in zip(faces, itertools.count()):
-        ret.append(
-            (edgeToFaces[(face[1], face[0])], edgeToFaces[(face[2], face[1])],
-             edgeToFaces[(face[0], face[2])]))
-
-    return np.array(ret, dtype=np.int32)
-
-
 def compile_all(n_faces, in_feats, out_feats, device):
     mtype = device.main_mem_type()
 
@@ -119,13 +82,12 @@ def compile_all(n_faces, in_feats, out_feats, device):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 3:
-        print(f"Usage: {sys.argv[0]} <cpu/gpu> <obj-file>")
+    if len(sys.argv) != 2:
+        print(f"Usage: {sys.argv[0]} <cpu/gpu>")
         exit(-1)
     device = sys.argv[1]
-    obj_file = sys.argv[2]
 
-    adj = load_faces(obj_file)
+    adj = np.loadtxt("../adj.in", dtype=np.int32)
     n_faces = adj.shape[0]
     in_feats = 13
     out_feats = 64
