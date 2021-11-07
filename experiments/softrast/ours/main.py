@@ -6,36 +6,6 @@ import ir
 import ir.debug
 
 
-def load_faces(path: str):
-    """
-    Load a 3D object and returns the adjacency array of the faces
-
-
-    Parameters
-    ----------
-    path: str
-        Path to a 3D object file, where a `v <x> <y> <z>` line means there is a vertex at coordinate (x, y, z),
-        a `f <i> <j> <k>` line means there is a face among vertices i, j and k. Faces are stored in conter-clockwise
-        order
-
-
-    Returns
-    -------
-    (np.array, np.array)
-        ret[0] is an n*3-shaped numpy array, where n is the number of vertices. array[i] = the coordinate (x, y, z)
-        ret[1] is an m*3-shaped numpy array, where m is the number of faces. array[i] = each vertices of the face
-    """
-
-    vertices = []
-    faces = []
-    for line in open(path):
-        if line.startswith('v'):
-            vertices.append(tuple(map(float, line.split()[1:])))
-        if line.startswith('f'):
-            faces.append(tuple(map(lambda x: int(x) - 1, line.split()[1:])))
-    return np.array(vertices, dtype=np.float32), np.array(faces, dtype=np.int32)
-
-
 def compile_all(h, w, n_verts, n_faces, device):
     """
     Compute soft rasterization of each faces
@@ -50,11 +20,18 @@ def compile_all(h, w, n_verts, n_faces, device):
     mtype = device.main_mem_type()
 
     sigma = 1e-4
+    inf = float("inf")
 
     @ir.inline
     def cross_product(v1, v2):
         y = ir.create_var((), "float32", mtype)
         y[()] = v1[0] * v2[1] - v1[1] * v2[0]
+        return y
+
+    @ir.inline
+    def dot_product(v1, v2):
+        y = ir.create_var((), "float32", mtype)
+        y[()] = v1[0] * v2[0] + v1[1] * v2[1]
         return y
 
     @ir.inline
@@ -78,21 +55,10 @@ def compile_all(h, w, n_verts, n_faces, device):
 
         "nid: Li"
         for i in range(n_faces):
-            v1 = ir.create_var((2,), "float32", mtype)
-            v2 = ir.create_var((2,), "float32", mtype)
-            v3 = ir.create_var((2,), "float32", mtype)
-            v1[0] = vertices[faces[i, 0], 0]
-            v1[1] = vertices[faces[i, 0], 1]
-            v2[0] = vertices[faces[i, 1], 0]
-            v2[1] = vertices[faces[i, 1], 1]
-            v3[0] = vertices[faces[i, 2], 0]
-            v3[1] = vertices[faces[i, 2], 1]
-            e1 = sub(v2, v1)
-            e2 = sub(v3, v2)
-            e3 = sub(v1, v3)
-            len1 = norm(e1)
-            len2 = norm(e2)
-            len3 = norm(e3)
+            v = ir.create_var((3, 2), "float32", mtype)
+            for p in range(3):
+                v[p, 0] = vertices[faces[i, p], 0]
+                v[p, 1] = vertices[faces[i, p], 1]
 
             for j in range(h):
                 for k in range(w):
@@ -100,28 +66,35 @@ def compile_all(h, w, n_verts, n_faces, device):
                     pixel[0] = 1. / (h - 1) * j
                     pixel[1] = 1. / (w - 1) * k
 
-                    p1 = sub(pixel, v1)
-                    p2 = sub(pixel, v2)
-                    p3 = sub(pixel, v3)
-                    cp1 = cross_product(p1, e1)
-                    cp2 = cross_product(p2, e2)
-                    cp3 = cross_product(p3, e3)
-                    dist1 = norm(p1)
-                    dist2 = norm(p2)
-                    dist3 = norm(p3)
+                    e_cp = ir.create_var((3,), "float32", mtype)
+                    e_dist = ir.create_var((3,), "float32", mtype)
+                    for p in range(3):
+                        cp = cross_product(sub(pixel, v[p]),
+                                           sub(v[(p + 1) % 3], v[p]))
+                        e_cp[p] = cp[()]
 
+                        dp1 = dot_product(sub(pixel, v[p]),
+                                          sub(v[(p + 1) % 3], v[p]))
+                        if dp1[()] >= 0:
+                            dp2 = dot_product(sub(pixel, v[(p + 1) % 3]),
+                                              sub(v[p], v[(p + 1) % 3]))
+                            if dp2[()] >= 0:
+                                len = norm(sub(v[(p + 1) % 3], v[p]))
+                                e_dist[p] = ir.abs(cp[()]) / len[()]
+                            else:
+                                p2_dist = norm(sub(pixel, v[(p + 1) % 3]))
+                                e_dist[p] = p2_dist[()]
+                        else:
+                            p1_dist = norm(sub(pixel, v[p]))
+                            e_dist[p] = p1_dist[()]
+
+                    inside = ir.create_var((), "int32", mtype)
+                    inside[()] = ir.if_then_else(
+                        e_cp[0] < 0 and e_cp[1] < 0 and e_cp[2] < 0, 1, -1)
                     dist = ir.create_var((), "float32", mtype)
-                    dist[()] = ir.min(
-                        ir.min(
-                            ir.min(
-                                ir.abs(cp1[()]) / len1[()],
-                                ir.abs(cp2[()]) / len2[()]),
-                            ir.abs(cp3[()]) / len3[()]),
-                        ir.min(ir.min(dist1[()], dist2[()]), dist3[()]))
-
-                    y[i, j, k] = ir.if_then_else(
-                        cp1[()] < 0 and cp2[()] < 0 and cp3[()] < 0, 1,
-                        -1) * dist[()] * dist[()] / sigma
+                    dist[()] = ir.min(ir.min(e_dist[0], e_dist[1]), e_dist[2])
+                    y[i, j,
+                      k] = ir.sigmoid(inside[()] * dist[()] * dist[()] / sigma)
 
     forward, backward, requires, privdes, _ = ir.grad(inference,
                                                       set(["vertices"]),
@@ -167,20 +140,20 @@ def compile_all(h, w, n_verts, n_faces, device):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 3:
-        print(f"Usage: {sys.argv[0]} <cpu/gpu> <obj-file>")
+    if len(sys.argv) != 2:
+        print(f"Usage: {sys.argv[0]} <cpu/gpu>")
         exit(-1)
     device = sys.argv[1]
-    obj_file = sys.argv[2]
 
-    vertices, faces = load_faces(obj_file)
+    vertices = np.load("../vertices.in.npy").astype("float32")
+    faces = np.load("../faces.in.npy").astype("int32")
     n_verts = vertices.shape[0]
     n_faces = faces.shape[0]
     h = 64
     w = 64
     y = np.zeros((n_faces, h, w), dtype="float32")
     d_vertices = np.zeros(vertices.shape, dtype='float32')
-    d_y = np.random.uniform(size=y.shape).astype('float32')
+    d_y = np.load("../d_y.in.npy").astype("float32")
 
     if device == 'gpu':
         ir_dev = ir.Device(ir.GPU())
@@ -201,6 +174,10 @@ if __name__ == '__main__':
 
     for i in range(warmup_num):
         inference(vertices, faces, y)
+        if i == 0:
+            np.save("y.out.npy",
+                    y.numpy().reshape((n_faces, h, w)),
+                    allow_pickle=False)
     ir_dev.sync()
     t0 = time.time()
     for i in range(test_num):
@@ -223,6 +200,10 @@ if __name__ == '__main__':
 
     for i in range(warmup_num):
         backward(vertices, faces, y, d_y, d_vertices)
+        if i == 0:
+            np.save("d_vertices.out.npy",
+                    d_vertices.numpy().reshape((n_verts, 3)),
+                    allow_pickle=False)
     ir_dev.sync()
     t0 = time.time()
     for i in range(test_num):

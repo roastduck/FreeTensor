@@ -67,6 +67,7 @@ def rasterize(vertices, faces):
 
     norm = lambda v: jnp.sqrt(v[0] * v[0] + v[1] * v[1])
     cross_product = lambda v1, v2: v1[0] * v2[1] - v1[1] * v2[0]
+    dot_product = lambda v1, v2: v1[0] * v2[0] + v1[1] * v2[1]
 
     vert_clockwise = lambda v1, v2, pixel: cross_product(pixel - v1, v2 - v1
                                                         ) < 0
@@ -79,18 +80,16 @@ def rasterize(vertices, faces):
             face[0], face[1], face[2], pixel))(row))(pixels))(face_verts)
     assert is_inside.shape == (n_faces, h, w)
 
-    dist_pixel_to_line = lambda v1, v2, pixel: jnp.abs(
-        cross_product(pixel - v1, v2 - v1)) / norm(v2 - v1)
-    dist_pixel_to_vert = lambda v, pixel: norm(pixel - v)
+    dist_pixel_to_seg = lambda v1, v2, pixel: jnp.where(
+        dot_product(pixel - v1, v2 - v1) >= 0,
+        jnp.where(
+            dot_product(pixel - v2, v1 - v2) >= 0,
+            jnp.abs(cross_product(pixel - v1, v2 - v1)) / norm(v2 - v1),
+            norm(pixel - v2)), norm(pixel - v1))
     dist_pixel_to_face = lambda v1, v2, v3, pixel: jnp.minimum(
-        jnp.minimum(
-            jnp.minimum(dist_pixel_to_line(v1, v2, pixel),
-                        dist_pixel_to_line(v2, v3, pixel)),
-            dist_pixel_to_line(v3, v1, pixel)),
-        jnp.minimum(
-            jnp.minimum(dist_pixel_to_vert(v1, pixel),
-                        dist_pixel_to_vert(v2, pixel)),
-            dist_pixel_to_vert(v3, pixel)))
+        jnp.minimum(dist_pixel_to_seg(v1, v2, pixel),
+                    dist_pixel_to_seg(v2, v3, pixel)),
+        dist_pixel_to_seg(v3, v1, pixel))
     dist = jax.vmap(lambda face: jax.vmap(lambda row: jax.vmap(
         lambda pixel: dist_pixel_to_face(face[0], face[1], face[2], pixel))
                                           (row))(pixels))(face_verts)
