@@ -24,6 +24,27 @@ def test_hello_world():
     assert np.array_equal(x_np, x_std)
 
 
+def test_hello_world_float64():
+    with ir.VarDef("x", (4, 4), "float64", "output", "cpu") as x:
+        x[2, 3] = 2.0
+        x[1, 0] = 3.0
+
+    func = ir.lower(ir.Func("main", ["x"], [], ir.pop_ast()), ir.CPU())
+    print(func)
+    code = ir.codegen(func, ir.CPU())
+    print(code)
+
+    x_np = np.zeros((4, 4), dtype="float64")
+    x_arr = ir.Array(x_np, ir.Device(ir.CPU()))
+    ir.Driver(func, code, ir.Device(ir.CPU()))(x=x_arr)
+    x_np = x_arr.numpy().reshape(4, 4)
+
+    x_std = np.zeros((4, 4), dtype="float64")
+    x_std[2, 3] = 2.0
+    x_std[1, 0] = 3.0
+    assert np.array_equal(x_np, x_std)
+
+
 def test_scalar_op():
     with ir.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):

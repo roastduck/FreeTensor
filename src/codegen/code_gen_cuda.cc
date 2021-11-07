@@ -8,6 +8,8 @@ namespace ir {
 
 static std::string genCUBLASType(DataType dtype) {
     switch (dtype) {
+    case DataType::Float64:
+        return "CUDA_R_64F";
     case DataType::Float32:
         return "CUDA_R_32F";
     case DataType::Int32:

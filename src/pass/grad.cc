@@ -3,6 +3,7 @@
 #include <analyze/all_reads.h>
 #include <analyze/deps.h>
 #include <cursor.h>
+#include <pass/float_simplify.h>
 #include <pass/grad.h>
 #include <pass/hoist_var_over_stmt_seq.h>
 #include <pass/make_reduction.h>
@@ -445,6 +446,9 @@ grad(const Stmt &_op, const std::unordered_set<std::string> &requires,
 
     // expand the scope of each local variable, to avoid unnecessary recomputing
     auto op = hoistVarOverStmtSeq(_op);
+
+    // Simplify before grad. E.g. grad of x^2 is much simpler than x * x
+    op = floatSimplify(op);
 
     auto [forward, tapeMap, loadMap] = outputIntermediates(op, tapes);
     // loadMap contains pointers to forward. Do not modify forward

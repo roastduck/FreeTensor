@@ -9,6 +9,8 @@ namespace ir {
 
 static char genMKLTypeMark(DataType dtype) {
     switch (dtype) {
+    case DataType::Float64:
+        return 'd';
     case DataType::Float32:
         return 's';
     default:

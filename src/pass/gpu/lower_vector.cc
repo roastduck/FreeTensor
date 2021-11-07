@@ -11,6 +11,9 @@ namespace gpu {
 std::string LowerVector::vecType(DataType dtype) const {
     std::string ret;
     switch (dtype) {
+    case DataType::Float64:
+        ret = "double";
+        break;
     case DataType::Float32:
         ret = "float";
         break;

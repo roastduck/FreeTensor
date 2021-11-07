@@ -16,7 +16,9 @@ def parseDType(dtype):
     if type(dtype) is DataType:
         return dtype
     elif type(dtype) is str:
-        if dtype.lower() == "float32":
+        if dtype.lower() == "float64":
+            return DataType.Float64
+        elif dtype.lower() == "float32":
             return DataType.Float32
         elif dtype.lower() == "int32":
             return DataType.Int32

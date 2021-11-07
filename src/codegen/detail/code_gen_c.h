@@ -633,6 +633,8 @@ const std::string &CodeGenC<Stream>::normalizeId(const std::string &old) {
 
 template <class Stream> std::string CodeGenC<Stream>::gen(DataType dtype) {
     switch (dtype) {
+    case DataType::Float64:
+        return "double";
     case DataType::Float32:
         return "float";
     case DataType::Int32:
