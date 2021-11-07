@@ -38,7 +38,8 @@ DataType PropagateRequire::dtype(const Expr &op) {
 }
 
 void PropagateRequire::visit(const Load &op) {
-    if (isFloat(dtype(op)) && !curTarget_.empty()) {
+    if (isFloat(dtype(op)) && !curTarget_.empty() &&
+        defs_.at(op->var_)->buffer_->atype() == AccessType::Cache) {
         affectedDefs_.insert(defs_.at(op->var_)->id());
         // No need to recurse deeper
     }
@@ -239,6 +240,8 @@ Stmt Grad::visit(const VarDef &_op) {
 Stmt Grad::visit(const Store &op) {
     auto &&buffer = defs_.at(op->var_)->buffer_;
     if (isRecompute_) {
+        // FIXME: What if an intermediate variable is assigned and used multiple
+        // times? E.g. a = x; use a; a = y; use a;
         bool recomputed =
             recomputed_.count(op->var_) && recomputed_.at(op->var_).count(op);
         if (!recomputed && buffer->atype() == AccessType::Cache &&
@@ -453,7 +456,13 @@ grad(const Stmt &_op, const std::unordered_set<std::string> &requires,
     auto [forward, tapeMap, loadMap] = outputIntermediates(op, tapes);
     // loadMap contains pointers to forward. Do not modify forward
 
-    PropagateRequire propagator(requires, provides);
+    // TODO: Are every tape vars requiring grad?
+    auto requiresAndTapes = requires;
+    for (auto &&[defId, name] : tapeMap) {
+        requiresAndTapes.insert(name);
+    }
+
+    PropagateRequire propagator(requiresAndTapes, provides);
     size_t affectCnt;
     do {
         affectCnt = propagator.affectedDefs().size();

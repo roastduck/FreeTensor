@@ -33,6 +33,34 @@ def test_basic():
     assert std.match(ast)
 
 
+def test_partial_gradient():
+    with ir.VarDef([
+        ("x1", (), "float32", "input", "cpu"),
+        ("x2", (), "float32", "input", "cpu"),
+        ("x3", (), "float32", "input", "cpu"),
+        ("y", (), "float32", "output", "cpu"),
+    ]) as (x1, x2, x3, y):
+        y[()] = (x1[()] + x2[()]) * x3[()]
+    ast = ir.pop_ast()
+    print(ast)
+    _, ast, _, _, _ = ir.grad(ast, set(["x1"]), set(["y"]), set())
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([("x1", (), "float32", "input", "cpu"),
+                    ("d_x1", (), "float32", "output", "cpu"),
+                    ("x2", (), "float32", "input", "cpu"),
+                    ("x3", (), "float32", "input", "cpu"),
+                    ("y", (), "float32", "input", "cpu"),
+                    ("d_y", (), "float32", "inout", "cpu")]) as (x1, d_x1, x2,
+                                                                 x3, y, d_y):
+        d_x1[()] = d_y[()] * x3[()]
+    std = ir.pop_ast()
+
+    assert std.match(ast)
+
+
 def test_branching_exprs():
     with ir.VarDef([
         ("x1", (), "float32", "input", "cpu"),
