@@ -20,6 +20,7 @@ VarDefNode &VarDefNode::operator=(const VarDefNode &other) {
 
 Expr neutralVal(DataType dtype, ReduceOp op) {
     switch (dtype) {
+    case DataType::Float64:
     case DataType::Float32:
         switch (op) {
         case ReduceOp::Add:

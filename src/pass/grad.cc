@@ -3,6 +3,7 @@
 #include <analyze/all_reads.h>
 #include <analyze/deps.h>
 #include <cursor.h>
+#include <pass/float_simplify.h>
 #include <pass/grad.h>
 #include <pass/hoist_var_over_stmt_seq.h>
 #include <pass/make_reduction.h>
@@ -37,7 +38,8 @@ DataType PropagateRequire::dtype(const Expr &op) {
 }
 
 void PropagateRequire::visit(const Load &op) {
-    if (isFloat(dtype(op)) && !curTarget_.empty()) {
+    if (isFloat(dtype(op)) && !curTarget_.empty() &&
+        defs_.at(op->var_)->buffer_->atype() == AccessType::Cache) {
         affectedDefs_.insert(defs_.at(op->var_)->id());
         // No need to recurse deeper
     }
@@ -238,6 +240,8 @@ Stmt Grad::visit(const VarDef &_op) {
 Stmt Grad::visit(const Store &op) {
     auto &&buffer = defs_.at(op->var_)->buffer_;
     if (isRecompute_) {
+        // FIXME: What if an intermediate variable is assigned and used multiple
+        // times? E.g. a = x; use a; a = y; use a;
         bool recomputed =
             recomputed_.count(op->var_) && recomputed_.at(op->var_).count(op);
         if (!recomputed && buffer->atype() == AccessType::Cache &&
@@ -417,6 +421,16 @@ void GradExpr::visit(const Square &op) {
     Visitor::visit(op);
 }
 
+void GradExpr::visit(const Sigmoid &op) {
+    if (gradExprs_.count(op)) {
+        gradExprs_[op->expr_] =
+            makeMul(gradExprs_.at(op),
+                    makeMul(makeSub(makeIntConst(1), useForwardVal(op)),
+                            useForwardVal(op)));
+    }
+    Visitor::visit(op);
+}
+
 void GradExpr::visit(const Abs &op) {
     if (gradExprs_.count(op)) {
         gradExprs_[op->expr_] = makeIfExpr(
@@ -436,10 +450,19 @@ grad(const Stmt &_op, const std::unordered_set<std::string> &requires,
     // expand the scope of each local variable, to avoid unnecessary recomputing
     auto op = hoistVarOverStmtSeq(_op);
 
+    // Simplify before grad. E.g. grad of x^2 is much simpler than x * x
+    op = floatSimplify(op);
+
     auto [forward, tapeMap, loadMap] = outputIntermediates(op, tapes);
     // loadMap contains pointers to forward. Do not modify forward
 
-    PropagateRequire propagator(requires, provides);
+    // TODO: Are every tape vars requiring grad?
+    auto requiresAndTapes = requires;
+    for (auto &&[defId, name] : tapeMap) {
+        requiresAndTapes.insert(name);
+    }
+
+    PropagateRequire propagator(requiresAndTapes, provides);
     size_t affectCnt;
     do {
         affectCnt = propagator.affectedDefs().size();

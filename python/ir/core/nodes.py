@@ -447,6 +447,10 @@ def square(expr):
     return ffi.makeSquare(expr)
 
 
+def sigmoid(expr):
+    return ffi.makeSigmoid(expr)
+
+
 def floor(expr):
     return ffi.makeFloor(expr)
 

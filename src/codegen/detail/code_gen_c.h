@@ -515,6 +515,12 @@ template <class Stream> void CodeGenC<Stream>::visit(const Square &op) {
     this->os() << ")";
 }
 
+template <class Stream> void CodeGenC<Stream>::visit(const Sigmoid &op) {
+    this->os() << "runtime_sigmoid(";
+    (*this)(op->expr_);
+    this->os() << ")";
+}
+
 template <class Stream> void CodeGenC<Stream>::visit(const Abs &op) {
     this->os() << "std::abs(";
     (*this)(op->expr_);
@@ -627,6 +633,8 @@ const std::string &CodeGenC<Stream>::normalizeId(const std::string &old) {
 
 template <class Stream> std::string CodeGenC<Stream>::gen(DataType dtype) {
     switch (dtype) {
+    case DataType::Float64:
+        return "double";
     case DataType::Float32:
         return "float";
     case DataType::Int32:

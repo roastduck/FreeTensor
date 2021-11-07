@@ -177,6 +177,8 @@ class Visitor {
 
     virtual void visit(const Square &op) { (*this)(op->expr_); }
 
+    virtual void visit(const Sigmoid &op) { (*this)(op->expr_); }
+
     virtual void visit(const Abs &op) { (*this)(op->expr_); }
 
     virtual void visit(const Floor &op) { (*this)(op->expr_); }

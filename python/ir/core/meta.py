@@ -5,7 +5,7 @@ from .utils import *
 
 def min_value(dtype):
     dtype = parseDType(dtype)
-    if dtype == DataType.Float32:
+    if dtype == DataType.Float32 or dtype == DataType.Float64:
         return -float("inf")
     elif dtype == DataType.Int32:
         return 0x80000000
@@ -15,7 +15,7 @@ def min_value(dtype):
 
 def max_value(dtype):
     dtype = parseDType(dtype)
-    if dtype == DataType.Float32:
+    if dtype == DataType.Float32 or dtype == DataType.Float64:
         return float("inf")
     elif dtype == DataType.Int32:
         return 0x7fffffff

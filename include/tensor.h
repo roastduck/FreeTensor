@@ -52,6 +52,7 @@ class TensorData {
                std::vector<Expr> &&data);
 
     TensorData(const std::vector<int> &shape, const std::vector<int> &data);
+    TensorData(const std::vector<int> &shape, const std::vector<float> &data);
     TensorData(const std::vector<int> &shape, const std::vector<double> &data);
 
     int ndim() const { return shape_.size(); }

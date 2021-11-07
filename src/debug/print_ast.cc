@@ -338,6 +338,12 @@ void PrintVisitor::visit(const Square &op) {
     os() << ")^2";
 }
 
+void PrintVisitor::visit(const Sigmoid &op) {
+    os() << "sigmoid(";
+    recur(op->expr_);
+    os() << ")";
+}
+
 void PrintVisitor::visit(const Abs &op) {
     os() << "abs(";
     recur(op->expr_);

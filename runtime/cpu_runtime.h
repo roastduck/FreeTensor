@@ -27,4 +27,6 @@ template <class T> T ceilDiv(T a, T b) {
 
 template <class T> T runtime_square(T x) { return x * x; }
 
+template <class T> T runtime_sigmoid(T x) { return 1.0 / (1.0 + std::exp(-x)); }
+
 #endif // CPU_RUNTIME_H
