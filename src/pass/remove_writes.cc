@@ -36,6 +36,12 @@ static Expr makeReduce(ReduceOp reduceOp, const Expr &lhs, const Expr &rhs) {
     }
 }
 
+static bool isConst(const Expr &expr) {
+    return expr->nodeType() == ASTNodeType::IntConst ||
+           expr->nodeType() == ASTNodeType::FloatConst ||
+           expr->nodeType() == ASTNodeType::BoolConst;
+}
+
 void FindLoopInvariantWrites::visit(const For &op) {
     loopStack_.emplace_back(op);
     Visitor::visit(op);
@@ -168,16 +174,36 @@ Stmt removeWrites(const Stmt &_op, const std::string &singleDefId) {
         if (!singleDefId.empty() && later.def_->id() != singleDefId) {
             return false;
         }
-        if (later.op_.get() == earlier.op_.get()) {
-            return false;
-        }
-        return later.op_->nodeType() == ASTNodeType::Store ||
-               sameParent(later.cursor_, earlier.cursor_);
+        return true;
     };
-    auto foundOverwrite = [&](const Dependency &d) {
-        overwrites.emplace(d.later().as<StmtNode>(),
-                           d.earlier().as<StmtNode>());
-        suspect.insert(d.def());
+    auto foundOverwriteStore = [&](const Dependency &d) {
+        if (d.later() != d.earlier() &&
+            d.later()->nodeType() == ASTNodeType::Store) {
+            overwrites.emplace(d.later().as<StmtNode>(),
+                               d.earlier().as<StmtNode>());
+            suspect.insert(d.def());
+        }
+    };
+    auto foundOverwriteReduce = [&](const Dependency &d) {
+        if (d.later() != d.earlier() &&
+            d.later()->nodeType() == ASTNodeType::ReduceTo) {
+            if (d.earlier()->nodeType() == ASTNodeType::Store &&
+                isConst(d.earlier().as<StoreNode>()->expr_)) {
+                overwrites.emplace(d.later().as<StmtNode>(),
+                                   d.earlier().as<StmtNode>());
+                suspect.insert(d.def());
+            } else if (d.earlier()->nodeType() == ASTNodeType::ReduceTo &&
+                       isConst(d.earlier().as<ReduceToNode>()->expr_)) {
+                overwrites.emplace(d.later().as<StmtNode>(),
+                                   d.earlier().as<StmtNode>());
+                suspect.insert(d.def());
+            } else if (sameParent(d.later_.cursor_, d.earlier_.cursor_)) {
+
+                overwrites.emplace(d.later().as<StmtNode>(),
+                                   d.earlier().as<StmtNode>());
+                suspect.insert(d.def());
+            }
+        }
     };
     auto filterUse = [&](const AccessPoint &later, const AccessPoint &earlier) {
         return suspect.count(later.def_);
@@ -193,7 +219,9 @@ Stmt removeWrites(const Stmt &_op, const std::string &singleDefId) {
         }
     };
 
-    findDeps(op, {{}}, foundOverwrite, FindDepsMode::KillEarlier, DEP_WAW,
+    findDeps(op, {{}}, foundOverwriteStore, FindDepsMode::KillEarlier, DEP_WAW,
+             filterOverwrite, false);
+    findDeps(op, {{}}, foundOverwriteReduce, FindDepsMode::KillBoth, DEP_WAW,
              filterOverwrite, false);
     findDeps(op, {{}}, foundUse, FindDepsMode::Dep, DEP_ALL, filterUse, false);
 

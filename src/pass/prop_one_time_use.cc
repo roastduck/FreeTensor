@@ -40,6 +40,9 @@ Stmt propOneTimeUse(const Stmt &_op) {
         if (earlier.def_->buffer_->atype() != AccessType::Cache) {
             return false;
         }
+        if (later.op_->nodeType() == ASTNodeType::ReduceTo) {
+            return false; // pass/remove_write will deal with it
+        }
         if (!sameParent(later.cursor_, earlier.cursor_)) {
             // Definition of each vars may differ
             return false;
@@ -66,7 +69,6 @@ Stmt propOneTimeUse(const Stmt &_op) {
     findDeps(op, {{}}, foundMay, FindDepsMode::Dep, DEP_RAW, filterMay, false);
 
     std::unordered_map<Load, Expr> replaceLoad;
-    std::unordered_map<ReduceTo, Expr> replaceReduceTo;
     for (auto &&item : r2w) {
         if (item.second.size() > 1) {
             continue;
@@ -83,17 +85,12 @@ Stmt propOneTimeUse(const Stmt &_op) {
         }
         ASSERT(item.second.front()->nodeType() == ASTNodeType::Store);
         auto &&store = item.second.front().as<StoreNode>();
-        if (item.first->nodeType() == ASTNodeType::Load) {
-            auto &&load = item.first.as<LoadNode>();
-            replaceLoad[load] = store->expr_;
-        } else {
-            ASSERT(item.first->nodeType() == ASTNodeType::ReduceTo);
-            auto &&reduceTo = item.first.as<ReduceToNode>();
-            replaceReduceTo[reduceTo] = store->expr_;
-        }
+        ASSERT(item.first->nodeType() == ASTNodeType::Load);
+        auto &&load = item.first.as<LoadNode>();
+        replaceLoad[load] = store->expr_;
     }
 
-    op = ReplaceUses(replaceLoad, replaceReduceTo)(op);
+    op = ReplaceUses(replaceLoad)(op);
     return sinkVar(op);
 }
 
