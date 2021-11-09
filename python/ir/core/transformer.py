@@ -12,7 +12,7 @@ from typing import Sequence, Optional, Mapping, Any
 from . import nodes
 from .nodes import (_VarDef, Var, pop_ast, For, If, Else, MarkNid, intrinsic,
                     l_and, l_or, l_not, if_then_else, ctx_stack as node_ctx,
-                    Func, Tensor)
+                    Func, Tensor, Assert)
 from .utils import *
 
 assert sys.version_info >= (3,
@@ -92,7 +92,7 @@ class ASTContextStack:
         if self.ctx_stack:
             top = self.top()
             top.old_vars.extend(popped.var_dict.keys())
-        for var in reversed(popped.vardef_stack):  # type: _VarDef
+        for var in reversed(popped.vardef_stack):
             var.__exit__(None, None, None)
 
     def create_variable(self,
@@ -111,6 +111,12 @@ class ASTContextStack:
         top.vardef_stack.append(vardef)
         top.var_dict[name] = var
         return var
+
+    def create_assert(self, cond):
+        assrt = Assert(cond)
+        assrt.__enter__()
+        top = self.top()
+        top.vardef_stack.append(assrt)
 
     def create_loop(self, name, begin, end):
         name = self.create_current_name(name, "cache")
@@ -300,6 +306,11 @@ class ASTTransformer(ast.NodeTransformer):
             else:
                 assert self.allow_undefined, f"Variable {node.id} (a.k.a {name}) used without declaration or creation"
         node.expr_ptr = var
+        return node
+
+    def visit_Assert(self, node):
+        self.generic_visit(node)
+        self.ctx_stack.create_assert(node.test.expr_ptr)
         return node
 
     def visit_Constant(self, node):

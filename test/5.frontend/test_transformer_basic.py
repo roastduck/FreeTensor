@@ -163,3 +163,27 @@ def test_std_func_alias():
     test(x_func)
     assert np.array_equal(x_np, x_std)
     assert np.array_equal(x_func, x_std)
+
+
+def test_assert():
+
+    @ir.transform
+    def test(x, y):
+        ir.core.declare_var(x, (10,), "int32", "input", "cpu")
+        ir.core.declare_var(y, (10,), "int32", "output", "cpu")
+        y[0] = 0
+        y[1] = 1
+        for i in range(2, 10):
+            y[i] = y[i - 1] + y[i - 2]
+            assert (x[i] == y[i])
+        assert (y[9] == 34)
+
+    func = ir.lower(test, ir.CPU())
+    code = ir.codegen(func, ir.CPU())
+    print(code)
+    x_np = np.array([0, 1, 1, 2, 3, 5, 8, 13, 21, 34], dtype="int32")
+    x = ir.Array(x_np, ir.Device(ir.CPU()))
+    y = ir.Array(np.zeros((10,), dtype="int32"), ir.Device(ir.CPU()))
+    ir.Driver(func, code, ir.Device(ir.CPU()))(x=x, y=y)
+    y_np = y.numpy()
+    assert np.array_equal(x_np, y_np)
