@@ -165,28 +165,47 @@ Stmt removeWrites(const Stmt &_op, const std::string &singleDefId) {
         suspect.insert(def);
     }
 
+    // Used to prune
+    std::unordered_set<Stmt> selfDependentReduces;
+    auto filterSelfDependent = [&](const AccessPoint &later,
+                                   const AccessPoint &earlier) {
+        return later.op_->nodeType() == ASTNodeType::ReduceTo &&
+               earlier.op_ == later.op_;
+    };
+    auto foundSelfDependent = [&](const Dependency &d) {
+        selfDependentReduces.insert(d.later().as<StmtNode>());
+    };
+    findDeps(op, {{}}, foundSelfDependent, FindDepsMode::Dep, DEP_WAW,
+             filterSelfDependent, false);
+
     // {(later, earlier)}
     std::set<std::pair<Stmt, Stmt>> overwrites;
     std::set<std::pair<AST, Stmt>> usesRAW;
     std::set<std::pair<Stmt, AST>> usesWAR;
-    auto filterOverwrite = [&](const AccessPoint &later,
-                               const AccessPoint &earlier) {
+    auto filterOverwriteStore = [&](const AccessPoint &later,
+                                    const AccessPoint &earlier) {
         if (!singleDefId.empty() && later.def_->id() != singleDefId) {
             return false;
         }
-        return true;
+        return later.op_->nodeType() == ASTNodeType::Store &&
+               later.op_ != earlier.op_;
+    };
+    auto filterOverwriteReduce = [&](const AccessPoint &later,
+                                     const AccessPoint &earlier) {
+        if (!singleDefId.empty() && later.def_->id() != singleDefId) {
+            return false;
+        }
+        return later.op_->nodeType() == ASTNodeType::ReduceTo &&
+               (!selfDependentReduces.count(later.op_.as<StmtNode>()) ||
+                sameParent(later.cursor_, earlier.cursor_));
     };
     auto foundOverwriteStore = [&](const Dependency &d) {
-        if (d.later() != d.earlier() &&
-            d.later()->nodeType() == ASTNodeType::Store) {
-            overwrites.emplace(d.later().as<StmtNode>(),
-                               d.earlier().as<StmtNode>());
-            suspect.insert(d.def());
-        }
+        overwrites.emplace(d.later().as<StmtNode>(),
+                           d.earlier().as<StmtNode>());
+        suspect.insert(d.def());
     };
     auto foundOverwriteReduce = [&](const Dependency &d) {
-        if (d.later() != d.earlier() &&
-            d.later()->nodeType() == ASTNodeType::ReduceTo) {
+        if (d.later() != d.earlier()) {
             if (d.earlier()->nodeType() == ASTNodeType::Store &&
                 isConst(d.earlier().as<StoreNode>()->expr_)) {
                 overwrites.emplace(d.later().as<StmtNode>(),
@@ -220,9 +239,9 @@ Stmt removeWrites(const Stmt &_op, const std::string &singleDefId) {
     };
 
     findDeps(op, {{}}, foundOverwriteStore, FindDepsMode::KillEarlier, DEP_WAW,
-             filterOverwrite, false);
+             filterOverwriteStore, false);
     findDeps(op, {{}}, foundOverwriteReduce, FindDepsMode::KillBoth, DEP_WAW,
-             filterOverwrite, false);
+             filterOverwriteReduce, false);
     findDeps(op, {{}}, foundUse, FindDepsMode::Dep, DEP_ALL, filterUse, false);
 
     std::unordered_set<Stmt> redundant;
