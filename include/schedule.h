@@ -169,12 +169,15 @@ class Schedule {
      *
      * @param loop0 : ID of the leading loop
      * @param loop1 : ID of the following loop
+     * @param strict : If true, throw an error if unable to determine whether
+     * the two loops are of the same length
      * @throw InvalidSchedule if the two loops are not directly following, the
-     * two loops are not with the same length, or there is any dependency cannot
+     * two loops are not of the same length, or there is any dependency cannot
      * be resolved
      * @return : ID of the result loop
      */
-    std::string fuse(const std::string &loop0, const std::string &loop1);
+    std::string fuse(const std::string &loop0, const std::string &loop1,
+                     bool strict = false);
 
     /**
      * Swap statements in the same block

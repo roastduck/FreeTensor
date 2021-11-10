@@ -16,11 +16,12 @@ enum class FindLoopInVarDefsDirection : int { Front, Back };
 class FuseFor : public Mutator {
     std::string id0_, id1_, fused_, iter0_, iter1_, beforeId_, afterId_;
     Expr begin0_, begin1_;
-    bool inLoop0_ = false, inLoop1_ = false;
+    bool strict_, inLoop0_ = false, inLoop1_ = false;
 
   public:
-    FuseFor(const std::string &id0, const std::string &id1)
-        : id0_(id0), id1_(id1), fused_("fused." + id0 + "." + id1) {}
+    FuseFor(const std::string &id0, const std::string &id1, bool strict)
+        : id0_(id0), id1_(id1), fused_("fused." + id0 + "." + id1),
+          strict_(strict) {}
 
     const std::string &fused() const { return fused_; }
     const std::string &beforeId() const { return beforeId_; }
@@ -48,7 +49,7 @@ class CheckAccessible : public Visitor {
 };
 
 std::pair<Stmt, std::string> fuse(const Stmt &ast, const std::string &loop0,
-                                  const std::string &loop1);
+                                  const std::string &loop1, bool strict);
 
 } // namespace ir
 

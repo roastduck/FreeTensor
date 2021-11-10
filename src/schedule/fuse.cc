@@ -1,5 +1,6 @@
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
+#include <analyze/hash.h>
 #include <pass/prop_const.h>
 #include <pass/prop_one_time_use.h>
 #include <pass/remove_dead_var.h>
@@ -147,8 +148,18 @@ Stmt FuseFor::visit(const StmtSeq &_op) {
                 }
             }
 
-            op->stmts_[i] =
-                makeAssert("", makeEQ(loop0->end_, loop1->end_), fused);
+            if (strict_) {
+                if (getHash(loop0->end_) != getHash(loop1->end_)) {
+                    throw InvalidSchedule(
+                        "Unable to determine whether the two loops are of the "
+                        "same length. If you are sure that they are the same, "
+                        "please disable the strict mode");
+                }
+                op->stmts_[i] = fused;
+            } else {
+                op->stmts_[i] =
+                    makeAssert("", makeEQ(loop0->end_, loop1->end_), fused);
+            }
             op->stmts_.erase(op->stmts_.begin() + i + 1);
             break;
         }
@@ -182,8 +193,8 @@ void CheckAccessible::visit(const StmtSeq &op) {
 }
 
 std::pair<Stmt, std::string> fuse(const Stmt &_ast, const std::string &loop0,
-                                  const std::string &loop1) {
-    FuseFor mutator(loop0, loop1);
+                                  const std::string &loop1, bool strict) {
+    FuseFor mutator(loop0, loop1, strict);
     CheckAccessible check(loop0, loop1);
     check(_ast);
     if (!check.loop0().loop_.isValid()) {

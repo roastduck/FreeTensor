@@ -103,10 +103,11 @@ Schedule::fission(const std::string &loop, FissionSide side,
     }
 }
 
-std::string Schedule::fuse(const std::string &loop0, const std::string &loop1) {
+std::string Schedule::fuse(const std::string &loop0, const std::string &loop1,
+                           bool strict) {
     auto log = "fuse(" + loop0 + ", " + loop1 + ")";
     try {
-        auto ret = ir::fuse(ast_, loop0, loop1);
+        auto ret = ir::fuse(ast_, loop0, loop1, strict);
         ast_ = ret.first;
         logs_.emplace_back(log);
         return ret.second;
@@ -439,7 +440,7 @@ void Schedule::autoFuse(const Target &target) {
                         } catch (const InvalidSchedule &e) {
                             thisId = moveTo(thisId, MoveToSide::After, lastId);
                         }
-                        thisId = fuse(lastId, thisId);
+                        thisId = fuse(lastId, thisId, true);
                         subNest->subLoops_.insert(subNest->subLoops_.begin(),
                                                   last->subLoops_.begin(),
                                                   last->subLoops_.end());
