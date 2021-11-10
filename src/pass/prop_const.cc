@@ -17,6 +17,9 @@ Stmt propConst(const Stmt &_op) {
             if (earlier.op_->nodeType() != ASTNodeType::Store) {
                 return false;
             }
+            if (later.op_->nodeType() == ASTNodeType::ReduceTo) {
+                return false; // pass/remove_write will deal with it
+            }
             auto &&expr = earlier.op_.as<StoreNode>()->expr_;
             return expr->nodeType() == ASTNodeType::IntConst ||
                    expr->nodeType() == ASTNodeType::FloatConst ||
@@ -38,7 +41,6 @@ Stmt propConst(const Stmt &_op) {
                  false);
 
         std::unordered_map<Load, Expr> replaceLoad;
-        std::unordered_map<ReduceTo, Expr> replaceReduceTo;
         for (auto &&item : r2w) {
             if (item.second.size() > 1) {
                 continue;
@@ -50,24 +52,19 @@ Stmt propConst(const Stmt &_op) {
             }
             ASSERT(item.second.front()->nodeType() == ASTNodeType::Store);
             auto &&store = item.second.front().as<StoreNode>();
-            if (item.first->nodeType() == ASTNodeType::Load) {
-                auto &&load = item.first.as<LoadNode>();
-                replaceLoad[load] = store->expr_;
-            } else {
-                ASSERT(item.first->nodeType() == ASTNodeType::ReduceTo);
-                auto &&reduceTo = item.first.as<ReduceToNode>();
-                replaceReduceTo[reduceTo] = store->expr_;
-            }
+            ASSERT(item.first->nodeType() == ASTNodeType::Load);
+            auto &&load = item.first.as<LoadNode>();
+            replaceLoad[load] = store->expr_;
         }
 
-        if ((replaceLoad.empty() && replaceReduceTo.empty()) || i > 100) {
+        if (replaceLoad.empty() || i > 100) {
             if (i > 100) {
                 WARNING(
                     "propConst iterates over 100 rounds. Maybe there is a bug");
             }
             break;
         }
-        op = ReplaceUses(replaceLoad, replaceReduceTo)(op);
+        op = ReplaceUses(replaceLoad)(op);
     }
 
     return op;
