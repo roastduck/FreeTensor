@@ -135,11 +135,13 @@ void init_ffi_ast(py::module_ &m) {
         .def_readonly("unroll", &ForProperty::unroll_)
         .def_readonly("vectorize", &ForProperty::vectorize_)
         .def_readonly("no_deps", &ForProperty::noDeps_)
+        .def_readonly("prefer_libs", &ForProperty::preferLibs_)
         .def("with_parallel", &ForProperty::withParallel, "parallel"_a)
         .def("with_unroll", &ForProperty::withUnroll, "unroll"_a = true)
         .def("with_vectorize", &ForProperty::withVectorize,
              "vectorize"_a = true)
-        .def("with_no_deps", &ForProperty::withNoDeps, "var"_a);
+        .def("with_no_deps", &ForProperty::withNoDeps, "var"_a)
+        .def("with_prefer_libs", &ForProperty::withPreferLibs, "prefer_libs"_a);
     py::class_<ForNode, For>(m, "For", pyStmt)
         .def_readonly("iter", &ForNode::iter_)
         .def_property_readonly("begin",
