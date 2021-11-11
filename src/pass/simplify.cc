@@ -2,6 +2,7 @@
 #include <climits>
 #include <unordered_set>
 
+#include <analyze/all_names.h>
 #include <analyze/all_reads.h>
 #include <analyze/hash.h>
 #include <except.h>
@@ -12,6 +13,16 @@
 #include "detail/simplify.h"
 
 namespace ir {
+
+static bool noIntersect(const std::unordered_set<std::string> &set1,
+                        const std::unordered_set<std::string> &set2) {
+    for (auto &&x : set1) {
+        if (set2.count(x)) {
+            return false;
+        }
+    }
+    return true;
+}
 
 void FindInnerMostScope::visit(const Var &op) {
     Visitor::visit(op);
@@ -380,12 +391,18 @@ Expr CompUniqueBounds::visitExpr(
     auto &upper = upper_[op];
     for (auto &&first : tr.lower_) {
         for (auto &&item : getLower(first)) {
-            updLower(lower, item);
+            if (noIntersect(allNames(op), allNames(item.expr()))) {
+                // No loop bounds: X cannot bound X itself
+                updLower(lower, item);
+            }
         }
     }
     for (auto &&second : tr.upper_) {
         for (auto &&item : getUpper(second)) {
-            updUpper(upper, item);
+            if (noIntersect(allNames(op), allNames(item.expr()))) {
+                // No loop bounds: X cannot bound X itself
+                updUpper(upper, item);
+            }
         }
     }
     return op;
