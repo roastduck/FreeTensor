@@ -39,10 +39,10 @@ def compile_all(w, dilation, dilation_heads, n_heads, seq_len, feat_len,
                 maxval = ir.create_var((), "float32", mtype)
                 maxval[()] = -inf
                 for k in range(2 * w + 1):
-                    maxval[()] = ir.max(maxval, dot[k])
+                    maxval[()] = ir.max(maxval[()], dot[k])
                 expval = ir.create_var((2 * w + 1,), "float32", mtype)
                 for k in range(2 * w + 1):
-                    expval[k] = ir.exp(dot[k] - maxval[k])
+                    expval[k] = ir.exp(dot[k] - maxval[()])
                 expsum = ir.create_var((), "float32", mtype)
                 expsum[()] = 0
                 for k in range(2 * w + 1):
