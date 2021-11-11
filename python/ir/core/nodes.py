@@ -14,12 +14,14 @@ class Context:
         self.last_if = None  # To handle else case
         self.next_nid = ""
         self.next_no_deps = []
+        self.next_prefer_libs = False
 
     def append_stmt(self, stmt: ffi.Stmt):
         self.stmt_seq.append(stmt)
         self.last_if = None
         self.next_nid = ""
         self.next_no_deps = []
+        self.next_prefer_libs = False
 
     def append_if_then_stmt(self, cond, body: ffi.Stmt):
         next_nid = self.next_nid
@@ -37,11 +39,14 @@ class Context:
                         end,
                         body,
                         nid: str = "",
-                        no_deps: Optional[Sequence] = None):
+                        no_deps: Optional[Sequence] = None,
+                        prefer_libs: Optional[bool] = None):
         if nid == "":
             nid = self.next_nid
         if no_deps is None:
             no_deps = self.next_no_deps
+        if prefer_libs is None:
+            prefer_libs = self.next_prefer_libs
         self.append_stmt(
             ffi.makeFor(
                 nid,
@@ -49,7 +54,8 @@ class Context:
                 begin,
                 end,
                 end - begin,
-                ffi.ForProperty().with_no_deps(no_deps),
+                ffi.ForProperty().with_no_deps(no_deps).with_prefer_libs(
+                    prefer_libs),
                 body,
             ))
 
@@ -67,6 +73,12 @@ class Context:
 
     def get_next_no_deps(self):
         return self.next_no_deps
+
+    def set_next_prefer_libs(self, prefer_libs=True):
+        self.next_prefer_libs = prefer_libs
+
+    def get_next_prefer_libs(self):
+        return self.next_prefer_libs
 
     def make_stmt(self, nid: str = ""):
         if len(self.stmt_seq) == 1 and nid == "":
@@ -296,12 +308,14 @@ class For:
                  begin,
                  end,
                  nid: str = "",
-                 no_deps: Optional[Sequence] = None):
+                 no_deps: Optional[Sequence] = None,
+                 prefer_libs: Optional[bool] = None):
         self.iter_var = iter_var
         self.begin = begin
         self.end = end
         self.nid = nid
         self.no_deps = no_deps
+        self.prefer_libs = prefer_libs
 
     def __enter__(self):
         ctx_stack.push()
@@ -315,7 +329,8 @@ class For:
                             self.end,
                             body,
                             nid=self.nid,
-                            no_deps=self.no_deps)
+                            no_deps=self.no_deps,
+                            prefer_libs=self.prefer_libs)
 
 
 class If:

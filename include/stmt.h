@@ -160,8 +160,11 @@ struct ForProperty {
     std::vector<ReductionItem> reductions_;
     std::vector<std::string> noDeps_; // vars that are explicitly marked to have
                                       // no dependencies over this loop
+    bool preferLibs_; // Aggresively transform to external library calls in
+                      // auto-schedule
 
-    ForProperty() : parallel_(), unroll_(false), vectorize_(false) {}
+    ForProperty()
+        : parallel_(), unroll_(false), vectorize_(false), preferLibs_(false) {}
 
     ForProperty withParallel(const std::string &parallel) {
         auto ret = *this;
@@ -181,6 +184,11 @@ struct ForProperty {
     ForProperty withNoDeps(const std::vector<std::string> &noDeps) {
         auto ret = *this;
         ret.noDeps_ = noDeps;
+        return ret;
+    }
+    ForProperty withPreferLibs(bool preferLibs = true) {
+        auto ret = *this;
+        ret.preferLibs_ = preferLibs;
         return ret;
     }
 };

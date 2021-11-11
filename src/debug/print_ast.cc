@@ -441,6 +441,10 @@ void PrintVisitor::visit(const For &op) {
         makeIndent();
         os() << "// vectorize" << std::endl;
     }
+    if (op->property_.preferLibs_) {
+        makeIndent();
+        os() << "// prefer libs" << std::endl;
+    }
     makeIndent();
     if (pretty_) {
         os() << BOLD << "for " << RESET << op->iter_ << " = ";

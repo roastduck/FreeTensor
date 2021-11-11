@@ -120,7 +120,8 @@ class ASTContextStack:
 
     def create_loop(self, name, begin, end):
         name = self.create_current_name(name, "cache")
-        fr = For(name, begin, end, self.get_nid(), self.get_no_deps())
+        fr = For(name, begin, end, self.get_nid(), self.get_no_deps(),
+                 self.get_prefer_libs())
         var = fr.__enter__()
         top = self.top()
         top.var_dict[name] = var
@@ -140,6 +141,14 @@ class ASTContextStack:
     def get_no_deps(self):
         ret = node_ctx.top().get_next_no_deps()
         node_ctx.top().reset_next_no_deps()
+        return ret
+
+    def set_prefer_libs(self, prefer_libs=True):
+        node_ctx.top().set_next_prefer_libs(prefer_libs)
+
+    def get_prefer_libs(self):
+        ret = node_ctx.top().get_next_prefer_libs()
+        node_ctx.top().set_next_prefer_libs(False)
         return ret
 
     def new_context_id(self):
@@ -695,6 +704,8 @@ class ASTTransformer(ast.NodeTransformer):
                 name = self.get_name(s[9:])
                 var = self.ctx_stack.find_var_by_name(name)
                 self.ctx_stack.set_no_deps(var.name)
+            if s == "prefer_libs":
+                self.ctx_stack.set_prefer_libs(True)
             return node
 
         self.nid = self.ctx_stack.get_nid()

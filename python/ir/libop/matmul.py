@@ -44,6 +44,7 @@ def f_einsum({','.join(params)}):
         code = f'''
 def f_einsum({', '.join(params)}):
     {init_stmt}
+    'prefer_libs'
     for i in range({length}):
         _einsum_([{", ".join(next_lefts)}], {next_right}, {next_order}, {next_init})({', '.join(arguments)})
 '''

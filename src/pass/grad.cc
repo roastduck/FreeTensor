@@ -197,8 +197,8 @@ Stmt Grad::visit(const VarDef &_op) {
                 grad = makeStmtSeq("", {init, grad});
             }
 
-            grad = makeVarDef("", gradName, *op->buffer_, op->sizeLim_, grad,
-                              op->pinned_);
+            grad = makeVarDef(op->id() + ".grad", gradName, *op->buffer_,
+                              op->sizeLim_, grad, op->pinned_);
             grad = makeVarDef(op->id(), op->name_, *op->buffer_, op->sizeLim_,
                               grad, op->pinned_);
 

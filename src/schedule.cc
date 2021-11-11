@@ -1,6 +1,7 @@
 #include <algorithm>
 
 #include <analyze/all_defs.h>
+#include <analyze/all_stmts.h>
 #include <analyze/count_contig_access_loops.h>
 #include <analyze/find_indexing_loops.h>
 #include <analyze/get_loop_nest_tree.h>
@@ -102,10 +103,11 @@ Schedule::fission(const std::string &loop, FissionSide side,
     }
 }
 
-std::string Schedule::fuse(const std::string &loop0, const std::string &loop1) {
+std::string Schedule::fuse(const std::string &loop0, const std::string &loop1,
+                           bool strict) {
     auto log = "fuse(" + loop0 + ", " + loop1 + ")";
     try {
-        auto ret = ir::fuse(ast_, loop0, loop1);
+        auto ret = ir::fuse(ast_, loop0, loop1, strict);
         ast_ = ret.first;
         logs_.emplace_back(log);
         return ret.second;
@@ -373,7 +375,50 @@ void Schedule::autoUseLib(const Target &target) {
         try {
             asMatMul(loop->loop_->id());
         } catch (const InvalidSchedule &e) {
-            // do nothing
+            // If the loop is marked as preferLibs, we inline all local
+            // variables, fission all the statments apart, and try applying to
+            // each of them
+            bool isPreferLibs = false;
+            for (For l = loop->loop_;;) {
+                if (l->property_.preferLibs_) {
+                    isPreferLibs = true;
+                    break;
+                }
+                if (l->body_->nodeType() != ASTNodeType::For) {
+                    break;
+                } else {
+                    l = l->body_.as<ForNode>();
+                }
+            }
+            if (isPreferLibs) {
+                for (auto &&[defId, name] :
+                     allDefs(loop->loop_, {AccessType::Cache})) {
+                    try {
+                        inlining(defId);
+                    } catch (const InvalidSchedule &e) {
+                        // do nothing
+                    }
+                }
+                auto stmts = allStmts(
+                    loop->loop_, {ASTNodeType::Store, ASTNodeType::ReduceTo});
+                for (size_t i = 0, n = stmts.size(); i < n; i++) {
+                    auto &&stmt = stmts[i];
+                    auto bak = ast_;
+                    auto logBak = logs_;
+                    try {
+                        fission(loop->loop_->id(), FissionSide::Before,
+                                stmt->id(), "." + std::to_string(i), "");
+                        auto libStmtId =
+                            fission(loop->loop_->id(), FissionSide::After,
+                                    stmt->id(),
+                                    "." + std::to_string(i) + ".lib", "")
+                                .first.at(loop->loop_->id());
+                        asMatMul(libStmtId);
+                    } catch (const InvalidSchedule &e) {
+                        ast_ = std::move(bak), logs_ = std::move(logBak);
+                    }
+                }
+            }
         }
     }
 }
@@ -395,7 +440,7 @@ void Schedule::autoFuse(const Target &target) {
                         } catch (const InvalidSchedule &e) {
                             thisId = moveTo(thisId, MoveToSide::After, lastId);
                         }
-                        thisId = fuse(lastId, thisId);
+                        thisId = fuse(lastId, thisId, true);
                         subNest->subLoops_.insert(subNest->subLoops_.begin(),
                                                   last->subLoops_.begin(),
                                                   last->subLoops_.end());
