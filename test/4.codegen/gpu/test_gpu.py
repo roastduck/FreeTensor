@@ -482,21 +482,21 @@ def test_simplex_local_1():
         ir.declare_var(x, (10, 10, 10), "int32", "input", "gpu/global")
         ir.declare_var(y, (10, 10, 10), "int32", "output", "gpu/global")
         ir.declare_var(z, (10, 10, 10), "int32", "output", "gpu/global")
-        t = ir.create_var((10, 10, 10), "int32", "gpu/global")
         'nid: Lb'
         for b in range(10):
+            t = ir.create_var((10, 10), "int32", "gpu/global")
             'nid: L0'
             for i in range(10):
                 for j in range(10):
-                    t[b, i, j] = x[b, i, j] * 2
+                    t[i, j] = x[b, i, j] * 2
             'nid: L1'
             for i in range(10):
                 for j in range(10):
-                    y[b, i, j] = t[b, i, j] + 1
+                    y[b, i, j] = t[i, j] + 1
             'nid: L2'
             for i in range(10):
                 for j in range(10):
-                    z[b, i, j] = t[b, i, j] + 2
+                    z[b, i, j] = t[i, j] + 2
 
     s = ir.Schedule(test)
     s.parallelize("Lb", "blockIdx.x")
@@ -544,20 +544,20 @@ def test_simplex_local_2():
     def test(x, y, z):
         ir.declare_var(x, (10, 10, 10), "int32", "input", "gpu/global")
         ir.declare_var(y, (10, 10, 10), "int32", "output", "gpu/global")
-        t = ir.create_var((10, 10, 10), "int32", "gpu/global")
         'nid: Lb'
         for b in range(10):
+            t = ir.create_var((10, 10), "int32", "gpu/global")
             'nid: L0'
             for i in range(10):
                 for j in range(10):
-                    t[b, i, j] = x[b, i, j] * 2
+                    t[i, j] = x[b, i, j] * 2
                 for j in range(10):
-                    t[b, i, j] += t[b, i, i]
+                    t[i, j] += t[i, i]
                     # The last dimension can be removed although accessed with i
             'nid: L1'
             for i in range(10):
                 for j in range(10):
-                    y[b, i, j] = t[b, i, j] + 1
+                    y[b, i, j] = t[i, j] + 1
 
     s = ir.Schedule(test)
     s.parallelize("Lb", "blockIdx.x")
