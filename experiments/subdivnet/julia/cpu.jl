@@ -13,6 +13,9 @@
     np.array
         An n*3-shaped numpy array, where n is the number of faces. array[i][j] = ID of the j-th adjacent face of the i-th face
 """
+
+using DelimitedFiles, Printf;
+
 function load_face(file)
     n = 0
     faces = []
@@ -31,62 +34,72 @@ function load_face(file)
         edgeToFaces[faces[i][3], faces[i][1]] = i
     end
 
-    ret = zeros(Int, (length(faces), 3))
+    ret = zeros(Int, (3, length(faces)))
     for i = 1:length(faces)
-        ret[i, 1] = edgeToFaces[faces[i][2], faces[i][1]]
-        ret[i, 2] = edgeToFaces[faces[i][3], faces[i][2]]
-        ret[i, 3] = edgeToFaces[faces[i][1], faces[i][3]]
+        ret[1, i] = edgeToFaces[faces[i][2], faces[i][1]]
+        ret[2, i] = edgeToFaces[faces[i][3], faces[i][2]]
+        ret[3, i] = edgeToFaces[faces[i][1], faces[i][3]]
     end
 
     return ret
 end
 
-function conv(adj, x, w0, w1, w2, w3, y, n_faces, in_feats, out_feats)
+function conv!(adj, x, w0, w1, w2, w3, y, n_faces, in_feats, out_feats)
+    y .= 0
     Threads.@threads for i = 1:n_faces
         sum1 = zeros(Float32, in_feats)
         sum2 = zeros(Float32, in_feats)
         sum3 = zeros(Float32, in_feats)
-        for k = 1:in_feats
-            for p = 1:3
-                sum1[k] += x[k, adj[i,p]]
-                sum2[k] += abs(x[k, adj[i, p]] - x[k, adj[i, p % 3 + 1]])
-                sum3[k] += abs(x[k, adj[i, p]] - x[k, i])
+        for p = 1:3
+            for k = 1:in_feats
+                sum1[k] += x[k, adj[p, i]]
+                sum2[k] += abs(x[k, adj[p, i]] - x[k, adj[p % 3 + 1, i]])
+                sum3[k] += abs(x[k, adj[p, i]] - x[k, i])
             end
         end
-        for j = 1:out_feats
-            y[j, i] = 0.
-            for k = 1:in_feats
-                y[j, i] += x[k, i] * w0[k, j] + sum1[k] * w1[k, j] + sum2[k] * w2[k, j] + sum3[k] * w3[k, j]
-            end
+        # y[:, i] = (x[:, i]' * w0 + sum1' * w1 + sum2' * w2 + sum3' * w3)
+        for j = 1:out_feats, k = 1:in_feats
+            y[j, i] += x[k, i] * w0[k, j] + sum1[k] * w1[k, j] + sum2[k] * w2[k, j] + sum3[k] * w3[k, j]
         end
     end
 end
 
 function main()
     if length(ARGS) != 1
-        println("Usage: " * PROGRAM_FILE * " <obj-file>")
+        println("Usage: " * PROGRAM_FILE)
         exit(-1)
     end
-    obj_file = open(ARGS[1])
 
-    adj = load_face(obj_file)
-    n_faces = size(adj)[1]
+    adj = copy(readdlm(open("../adj.in"), Int)') .+ 1
+    n_faces = size(adj)[2]
     in_feats = 13
     out_feats = 64
-    x = rand(Float32, (in_feats, n_faces))
-    w0 = rand(Float32, (in_feats, out_feats))
-    w1 = rand(Float32, (in_feats, out_feats))
-    w2 = rand(Float32, (in_feats, out_feats))
-    w3 = rand(Float32, (in_feats, out_feats))
+    x = copy(readdlm(open("../x.in"), Float32)')      # (n_faces, in_feats) -> (in_feats, n_faces)
+    w0 = readdlm(open("../w0.in"), Float32)     # (in_feats, out_feats)
+    w1 = readdlm(open("../w1.in"), Float32)
+    w2 = readdlm(open("../w2.in"), Float32)
+    w3 = readdlm(open("../w3.in"), Float32)
     y = zeros(Float32, (out_feats, n_faces))
+    if size(adj) != (3, n_faces)
+        println("adj error")
+    elseif size(x) != (in_feats, n_faces)
+        println("x error")
+    elseif size(w0) != (in_feats, out_feats) || size(w1) != (in_feats, out_feats)
+        println("w error")
+    end
 
+    warmup_num = 10
     test_num = 1000
-    conv(adj, x, w0, w1, w2, w3, y, n_faces, in_feats, out_feats)
+
+    for i = 1:warmup_num
+        conv!(adj, x, w0, w1, w2, w3, y, n_faces, in_feats, out_feats)
+    end
     time = @timed begin
         for i = 1:test_num
-            conv(adj, x, w0, w1, w2, w3, y, n_faces, in_feats, out_feats)
+            conv!(adj, x, w0, w1, w2, w3, y, n_faces, in_feats, out_feats)
         end
     end
+    writedlm("y.out", [@sprintf("%.18e", i) for i in Array(y')], ' ')
     println("Time = " * string(time.time / test_num * 1000) * " ms")
 end
 
