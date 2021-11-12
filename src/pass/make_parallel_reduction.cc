@@ -246,7 +246,8 @@ Stmt makeParallelReduction(const Stmt &_op) {
     std::vector<FindDepsCond> cond;
     FindAllParallel parallelFinder;
     parallelFinder(op);
-    for (auto &&[loop, info] : parallelFinder.results()) {
+    auto &&paraInfo = parallelFinder.results();
+    for (auto &&[loop, info] : paraInfo) {
         FindDepsCond findDepsCond{{loop, DepDirection::Different}};
         for (auto &&outerLoop : info.outerLoops_) {
             findDepsCond.push_back({outerLoop, DepDirection::Same});
@@ -263,6 +264,11 @@ Stmt makeParallelReduction(const Stmt &_op) {
         ASSERT(d.cond_.size() >= 1);
         ASSERT(d.cond_.front().first.isNode_);
         auto &&loopId = d.cond_.front().first.name_;
+        if (paraInfo.at(loopId).type_.substr(0, 10) == "threadIdx." &&
+            d.later() != d.earlier()) {
+            // No need to use atomic because we can sync
+            return;
+        }
         toAlter[d.later().as<ReduceToNode>()->id()].insert(loopId);
         toAlter[d.earlier().as<ReduceToNode>()->id()].insert(loopId);
     };

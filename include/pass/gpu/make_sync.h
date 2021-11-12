@@ -1,6 +1,8 @@
 #ifndef GPU_MAKE_SYNC_H
 #define GPU_MAKE_SYNC_H
 
+#include <unordered_set>
+
 #include <cursor.h>
 #include <func.h>
 #include <math/bounds.h>
