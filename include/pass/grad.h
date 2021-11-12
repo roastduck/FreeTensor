@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include <analyze/hash.h>
 #include <analyze/type_infer.h>
 #include <func.h>
 #include <mutator.h>
@@ -68,7 +69,8 @@ class GradExpr : public Visitor {
     const std::unordered_map<std::string, std::string>
         &gradNames_;                           // x -> dy/dx
     std::unordered_map<Expr, Expr> gradExprs_; // x -> dy/dx
-    Expr root_, equLoad_;
+    uint64_t rootHash_;
+    Expr equLoad_;
     ReplaceByTape replaceByTape_;
     std::vector<Stmt> appends_;
 
@@ -76,7 +78,7 @@ class GradExpr : public Visitor {
     GradExpr(const std::unordered_map<Load, Expr> &loadMap,
              const std::unordered_map<std::string, std::string> &gradNames,
              const Expr &root, const Expr &grad, const Expr &equLoad)
-        : gradNames_(gradNames), root_(root), equLoad_(equLoad),
+        : gradNames_(gradNames), rootHash_(getHash(root)), equLoad_(equLoad),
           replaceByTape_(loadMap) {
         gradExprs_[root] = grad;
     }
@@ -84,10 +86,12 @@ class GradExpr : public Visitor {
     const std::vector<Stmt> &appends() const { return appends_; }
 
   private:
-    Expr replaceByLoadY(const Expr &op) { return op == root_ ? equLoad_ : op; }
+    Expr replaceByLoadY(const Expr &op) {
+        return getHash(op) == rootHash_ ? equLoad_ : op;
+    }
 
     Expr useForwardVal(const Expr &op) {
-        return replaceByTape_(replaceByLoadY(op));
+        return replaceByLoadY(replaceByTape_(op));
     }
 
   protected:
