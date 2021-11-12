@@ -72,6 +72,15 @@ void PrintVisitor::visit(const Func &op) {
     endBlock();
 }
 
+void PrintVisitor::visit(const StmtSeq &op) {
+    if (op->stmts_.empty()) {
+        makeIndent();
+        os() << "/* empty */" << std::endl;
+    } else {
+        Visitor::visit(op);
+    }
+}
+
 void PrintVisitor::visit(const Any &op) {
     makeIndent();
     os() << "<Any>" << std::endl;

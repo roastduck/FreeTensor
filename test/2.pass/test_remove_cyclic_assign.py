@@ -1,7 +1,7 @@
 import ir
 
 
-def test_type1_basic():
+def test_basic():
     with ir.VarDef([("a", (), "int32", "inout", "cpu"),
                     ("b", (), "int32", "output", "cpu")]) as (a, b):
         b[()] = a[()]
