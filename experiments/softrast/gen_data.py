@@ -49,3 +49,6 @@ if __name__ == '__main__':
     np.save("vertices.in.npy", vertices, allow_pickle=False)
     np.save("faces.in.npy", faces, allow_pickle=False)
     np.save("d_y.in.npy", d_y, allow_pickle=False)
+    np.savetxt("vertices.in", vertices)
+    np.savetxt("faces.in", faces, fmt="%d")
+    # np.savetxt("d_y.in", d_y)

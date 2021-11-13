@@ -1,3 +1,5 @@
+using DelimitedFiles, Printf
+
 """
     Load a 3D object and returns the adjacency array of the faces
 
@@ -42,67 +44,76 @@ function load_face(file)
     return vertices, faces
 end
 
-function cross_product(v1::Tuple{Float32,Float32}, v2::Tuple{Float32,Float32})
+function cross_product(v1::Tuple{Float32,Float32}, v2::Tuple{Float32,Float32})::Float32
     return v1[1] * v2[2] - v1[2] * v2[1]
 end
 
+function dot_product(v1::Tuple{Float32,Float32}, v2::Tuple{Float32,Float32})::Float32
+    return v1[1] * v2[1] + v1[2] * v2[2]
+end
+
 using LinearAlgebra
+using Flux
 const sigma = 1e-4
 
-function rasterize(vertices::Matrix{Float32}, faces::Matrix{Int}, y::Array{Float32, 3}, h::Int, w::Int, n_verts::Int, n_faces::Int)
+function rasterize(vertices, faces, y, h, w, n_verts, n_faces)
     Threads.@threads for i = 1:n_faces
+        # v = Vector{Tuple{Float32, Float32}}(undef, 3)
+        # for p = 1:3
+        #     v[p] = (vertices[1, faces[p, i]], vertices[2, faces[p, i]])
+        # end
         v1 = (vertices[1, faces[1, i]], vertices[2, faces[1, i]])
         v2 = (vertices[1, faces[2, i]], vertices[2, faces[2, i]])
         v3 = (vertices[1, faces[3, i]], vertices[2, faces[3, i]])
-        e1 = v2 .- v1
-        e2 = v3 .- v2
-        e3 = v1 .- v3
-        len1 = norm(e1)::Float32
-        len2 = norm(e2)::Float32
-        len3 = norm(e3)::Float32
-        for j = 1:h, k = 1:w
-            pixel = (one(Float32) / (h - 1) * j, one(Float32) / (w - 1) * k)
 
-            p1 = pixel .- v1
-            p2 = pixel .- v2
-            p3 = pixel .- v3
-            cp1 = cross_product(p1, e1)::Float32
-            cp2 = cross_product(p2, e2)::Float32
-            cp3 = cross_product(p3, e3)::Float32
-            dist1 = norm(p1)::Float32
-            dist2 = norm(p2)::Float32
-            dist3 = norm(p3)::Float32
-
-            dist = min(min(abs(cp1) / len1, abs(cp2) / len2, abs(cp3) / len3), min(dist1, dist2, dist3))
-
-            if cp1 < 0 && cp2 < 0 && cp3 < 0
-                coeff = 1
-            else
-                coeff = -1
-            end
-            y[k, j, i] = coeff * dist * dist / sigma
+        for j = 0:h-1, k=0:w-1
+            pixel = (one(Float32) / (h-1) * j, one(Float32) / (w-1) * k)
+            cp1 = cross_product(pixel .- v1, v2 .- v1)
+            cp2 = cross_product(pixel .- v2, v3 .- v2)
+            cp3 = cross_product(pixel .- v3, v1 .- v3)
+            dist1 = dot_product(pixel .- v1, v2 .- v1) >= 0 ? (
+                dot_product(pixel .- v2, v1 .- v2) >= 0 ?
+                    abs(cp1) / norm(v2 .- v1) : norm(pixel .- v2)
+                ) : norm(pixel .- v1)
+            dist2 = dot_product(pixel .- v2, v3 .- v2) >= 0 ? (
+                dot_product(pixel .- v3, v2 .- v3) >= 0 ?
+                    abs(cp2) / norm(v3 .- v2) : norm(pixel .- v3)
+                ) : norm(pixel .- v2)
+            dist3 = dot_product(pixel .- v3, v1 .- v3) >= 0 ? (
+                dot_product(pixel .- v1, v3 .- v1) >= 0 ?
+                    abs(cp3) / norm(v1 .- v3) : norm(pixel .- v1)
+                ) : norm(pixel .- v3)
+            coeff = (cp1 < 0 && cp2 < 0 && cp3 < 0) ? 1 : -1
+            dist = min(dist1, dist2, dist3)
+            y[k+1, j+1, i] = sigmoid(coeff * dist * dist / sigma)
         end
     end
 end
 
-if length(ARGS) != 1
-    println("Usage: " * PROGRAM_FILE * " <obj-file>")
+if length(ARGS) != 0
+    println("Usage: " * PROGRAM_FILE)
     exit(-1)
 end
-const obj_file = ARGS[1]
 
-const vertices, faces = load_face(obj_file)
+vertices = copy(readdlm(open("../vertices.in"), Float32)')
+faces = copy(readdlm(open("../faces.in"), Int)') .+ 1
 const n_verts = size(vertices)[2]
 const n_faces = size(faces)[2]
 const h = 64
 const w = 64
 y = zeros(Float32, (w, h, n_faces))
 
+warmup_num = 10
 test_num = 100
-rasterize(vertices, faces, y, h, w, n_verts, n_faces)
+for i = 1:warmup_num
+    rasterize(vertices, faces, y, h, w, n_verts, n_faces)
+    # writedlm("y.out", [@sprintf("%.10f", i) for i in reshape(y, (1, :))], '\n')
+    # exit(0)
+end
 time = @timed begin
     for i = 1:test_num
         rasterize(vertices, faces, y, h, w, n_verts, n_faces)
     end
 end
+writedlm("y.out", [@sprintf("%.10f", i) for i in reshape(y, (1, :))], '\n')
 println("Time = " * string(time.time / test_num * 1000) * " ms")

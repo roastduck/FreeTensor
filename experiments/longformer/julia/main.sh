@@ -8,4 +8,6 @@ fi
 if [ $1 == 'cpu' ]; then
     threads=`cat /proc/cpuinfo | grep "processor" | wc -l`
     JULIA_NUM_THREADS=$threads julia cpu.jl
+elif [ $1 == 'gpu' ]; then
+    julia gpu.jl
 fi

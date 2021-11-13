@@ -175,9 +175,10 @@ if __name__ == '__main__':
     for i in range(warmup_num):
         inference(vertices, faces, y)
         if i == 0:
-            np.save("y.out.npy",
-                    y.numpy().reshape((n_faces, h, w)),
-                    allow_pickle=False)
+            # np.save("y.out.npy",
+            #         y.numpy().reshape((n_faces, h, w)),
+            #         allow_pickle=False)
+            y.numpy().reshape((n_faces, h, w)).tofile("y.out", sep='\n', format='%.10f')
     ir_dev.sync()
     t0 = time.time()
     for i in range(test_num):

@@ -80,8 +80,8 @@ if __name__ == '__main__':
         exit(-1)
     device = sys.argv[1]
 
-    vertices = torch.tensor(np.load("../vertices.in.npy"), dtype=torch.float)
-    faces = torch.tensor(np.load("../faces.in.npy"))
+    vertices = torch.tensor(np.loadtxt("../vertices.in"), dtype=torch.float)
+    faces = torch.tensor(np.loadtxt("../faces.in"), dtype=torch.int)
     n_verts = vertices.shape[0]
     n_faces = faces.shape[0]
     h = 64
@@ -103,7 +103,8 @@ if __name__ == '__main__':
     for i in range(warmup_num):
         y = rasterize(vertices, faces, h, w)
         if i == 0:
-            np.save("y.out.npy", y.cpu().numpy(), allow_pickle=False)
+            y.cpu().numpy().tofile("y.out", sep='\n', format='%.10f')
+            # np.save("y.out.npy", y.cpu().numpy(), allow_pickle=False)
     sync()
     t0 = time.time()
     for i in range(test_num):

@@ -51,10 +51,18 @@ if __name__ == '__main__':
     w = 32
     dilation = 4  # counts from 1
     dilation_heads = 2
-    q = torch.tensor(np.load("../q.in.npy"), dtype=torch.float)
-    k = torch.tensor(np.load("../k.in.npy"), dtype=torch.float)
-    v = torch.tensor(np.load("../v.in.npy"), dtype=torch.float)
-    d_y = torch.tensor(np.load("../d_y.in.npy"), dtype=torch.float)
+    # q = torch.tensor(np.load("../q.in.npy"), dtype=torch.float)
+    # k = torch.tensor(np.load("../k.in.npy"), dtype=torch.float)
+    # v = torch.tensor(np.load("../v.in.npy"), dtype=torch.float)
+    # d_y = torch.tensor(np.load("../d_y.in.npy"), dtype=torch.float)
+    q = np.reshape(np.fromfile("../q.in", sep=' ', dtype=np.float32), (n_heads, seq_len, feat_len))
+    k = np.reshape(np.fromfile("../k.in", sep=' ', dtype=np.float32), (n_heads, seq_len, feat_len))
+    v = np.reshape(np.fromfile("../v.in", sep=' ', dtype=np.float32), (n_heads, seq_len, feat_len))
+    d_y = np.reshape(np.fromfile("../d_y.in", sep=' ', dtype=np.float32), (n_heads, seq_len, feat_len))
+    q = torch.tensor(q)
+    k = torch.tensor(k)
+    v = torch.tensor(v)
+    d_y = torch.tensor(d_y)
 
     if device == 'gpu':
         q = q.cuda()
@@ -72,7 +80,8 @@ if __name__ == '__main__':
     for i in range(warmup_num):
         y = transformer_impl1(q, k, v, w, dilation, dilation_heads)
         if i == 0:
-            np.save("y.out.npy", y.cpu().numpy(), allow_pickle=False)
+            # np.save("y.out.npy", y.cpu().numpy(), allow_pickle=False)
+            y.cpu().numpy().tofile("y.out", sep=' ', format='%.10f')
     sync()
     t0 = time.time()
     for i in range(test_num):
