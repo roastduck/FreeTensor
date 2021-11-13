@@ -474,6 +474,56 @@ def test_tape_2():
     assert std.match(backward)
 
 
+def test_tape_3():
+    with ir.VarDef([("x1", (4, 5, 6), "float32", "input", "cpu"),
+                    ("x2", (4, 5, 6), "float32", "input", "cpu"),
+                    ("y", (4, 6), "float32", "output", "cpu")]) as (x1, x2, y):
+        with ir.For("i", 0, 4, nid="Li") as i:
+            ir.MarkNid("V_t")
+            with ir.VarDef("t", (6,), "float32", "cache", "cpu") as t:
+                with ir.For("k", 0, 6, nid="Lk0") as k:
+                    t[k] = 0
+                with ir.For("j", 0, 5, nid="Lj") as j:
+                    with ir.For("k", 0, 6, nid="Lk1") as k:
+                        t[k] += x1[i, j, k]
+                with ir.For("k", 0, 6, nid="Lk2"):
+                    y[i, k] = 0
+                    with ir.For("j", 0, 5, nid="Lj") as j:
+                        y[i, k] += t[k] * x2[i, j, k]
+    ast = ir.pop_ast()
+    print(ast)
+    forward, backward, _, _, _ = ir.grad(ast, set(["x2"]), set(["y"]),
+                                         set(["V_t"]))
+    print("Forward:")
+    print(forward)
+    print("Backward:")
+    print(backward)
+    forward = ir.lower(forward)
+    backward = ir.lower(backward)
+    print("Forward:")
+    print(forward)
+    print("Backward:")
+    print(backward)
+
+    with ir.VarDef([("x1", (4, 5, 6), "float32", "input", "cpu"),
+                    ("x2", (4, 5, 6), "float32", "input", "cpu"),
+                    ("d_x2", (4, 5, 6), "float32", "output", "cpu"),
+                    ("y", (4, 6), "float32", "input", "cpu"),
+                    ("d_y", (4, 6), "float32", "inout", "cpu")
+                   ]) as (x1, x2, d_x2, y, d_y):
+        with ir.For("i", 0, 4, nid="Li") as i:
+            with ir.VarDef("t", (4, 6), "float32", "input", "cpu") as t:
+                with ir.For("k", 0, 6, nid="Lk2"):
+                    with ir.For("j", 0, 5, nid="Lj") as j:
+                        d_x2[-1 * i + 3, -1 * j + 4, -1 * k +
+                             5] = d_y[-1 * i + 3, -1 * k + 5] * t[-1 * i + 3,
+                                                                  -1 * k + 5]
+                    d_y[-1 * i + 3, -1 * k + 5] = 0
+    std = ir.make_reduction(ir.pop_ast())
+
+    assert std.match(backward)
+
+
 def test_tape_mode_all():
     with ir.VarDef([("x1", (4,), "float32", "input", "cpu"),
                     ("x2", (4,), "float32", "input", "cpu"),

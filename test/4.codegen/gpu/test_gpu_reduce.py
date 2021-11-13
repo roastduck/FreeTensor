@@ -163,6 +163,77 @@ def test_atomic_reduction():
     assert np.array_equal(y_np, y_std)
 
 
+def test_atomic_reduction_2_stmts_on_1_var_across_blocks():
+
+    @ir.transform
+    def test(x, y):
+        ir.declare_var(x, (4, 64), "int32", "input", "gpu/global")
+        ir.declare_var(y, (4, 64), "int32", "inout", "gpu/global")
+        "nid: L1"
+        for i in range(0, 4):
+            "nid: L2"
+            for j in range(0, 64):
+                y[i, j] += x[i, j]
+                if j > 0:
+                    y[i, j - 1] += x[i, j]
+
+    s = ir.Schedule(test)
+    s.parallelize("L2", "blockIdx.x")
+    func = ir.lower(s.func(), target)
+    print(func)
+
+    code = ir.codegen(func, target)
+    print(code)
+    assert code.count("atomicAdd") == 2
+    assert "+=" not in code
+    x_np = np.random.randint(0, 100, (4, 64)).astype("int32")
+    y_np = np.zeros((4, 64), dtype="int32")
+    x_arr = ir.Array(x_np, device)
+    y_arr = ir.Array(y_np, device)
+    ir.Driver(func, code, device)(x=x_arr, y=y_arr)
+    y_np = y_arr.numpy().reshape(4, 64)
+
+    y_std = x_np
+    y_std[:, :-1] += x_np[:, 1:]
+    assert np.array_equal(y_np, y_std)
+
+
+def test_no_atomic_reduction_2_stmts_on_1_var_across_threads():
+
+    @ir.transform
+    def test(x, y):
+        ir.declare_var(x, (4, 64), "int32", "input", "gpu/global")
+        ir.declare_var(y, (4, 64), "int32", "inout", "gpu/global")
+        "nid: L1"
+        for i in range(0, 4):
+            "nid: L2"
+            for j in range(0, 64):
+                y[i, j] += x[i, j]
+                if j > 0:
+                    y[i, j - 1] += x[i, j]
+
+    s = ir.Schedule(test)
+    s.parallelize("L2", "threadIdx.x")
+    func = ir.lower(s.func(), target)
+    print(func)
+
+    code = ir.codegen(func, target)
+    print(code)
+    assert "atomicAdd" not in code
+    assert "__syncthreads" in code
+    assert "+=" in code
+    x_np = np.random.randint(0, 100, (4, 64)).astype("int32")
+    y_np = np.zeros((4, 64), dtype="int32")
+    x_arr = ir.Array(x_np, device)
+    y_arr = ir.Array(y_np, device)
+    ir.Driver(func, code, device)(x=x_arr, y=y_arr)
+    y_np = y_arr.numpy().reshape(4, 64)
+
+    y_std = x_np
+    y_std[:, :-1] += x_np[:, 1:]
+    assert np.array_equal(y_np, y_std)
+
+
 def test_serial_reduction():
 
     @ir.transform

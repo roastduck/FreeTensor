@@ -43,7 +43,8 @@ Stmt AsMatMul::visitStmt(const Stmt &op,
     if (inside_ && op->nodeType() != ASTNodeType::ReduceTo &&
         op->nodeType() != ASTNodeType::Store &&
         op->nodeType() != ASTNodeType::StmtSeq &&
-        op->nodeType() != ASTNodeType::For) {
+        op->nodeType() != ASTNodeType::For &&
+        op->nodeType() != ASTNodeType::VarDef) {
         throw InvalidSchedule("Unexpected " + toString(op->nodeType()) +
                               " node");
     }
@@ -83,9 +84,14 @@ Stmt AsMatMul::visit(const For &op) {
         } else {
             beta = makeIntConst(1);
         }
-        return makeMatMul("", a_, b_, c_, alpha, beta, m_, k_, n_, lda_, ldb_,
-                          ldc_, stridea_, strideb_, stridec_, batchSize_,
-                          aIsRowMajor_, bIsRowMajor_, cIsRowMajor_, ret);
+        ret = makeMatMul("", a_, b_, c_, alpha, beta, m_, k_, n_, lda_, ldb_,
+                         ldc_, stridea_, strideb_, stridec_, batchSize_,
+                         aIsRowMajor_, bIsRowMajor_, cIsRowMajor_, ret);
+        for (auto &&def : innerDefs_) {
+            ret = makeVarDef(def->id(), def->name_, *def->buffer_,
+                             def->sizeLim_, ret, def->pinned_);
+        }
+        return ret;
     } else {
         ASSERT(!outerDefs_.count(op->iter_));
         outerDefs_.insert(op->iter_);
@@ -274,7 +280,12 @@ Stmt AsMatMul::visit(const VarDef &op) {
     auto ret = Mutator::visit(op);
     outerDefs_.erase(op->name_);
     buffers_.erase(op->name_);
-    return ret;
+    if (inside_) {
+        innerDefs_.emplace_back(op);
+        return op->body_;
+    } else {
+        return ret;
+    }
 }
 
 Stmt asMatMul(const Stmt &_ast, const std::string &loop) {

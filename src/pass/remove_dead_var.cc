@@ -24,10 +24,27 @@ Stmt RemoveDeadVar::visit(const VarDef &_op) {
     auto op = __op.as<VarDefNode>();
 
     if (op->buffer_->atype() == AccessType::Cache && !uses_.count(op->name_)) {
+        isFixPoint_ = false;
         return RemoveAllWrites(op->name_)(op->body_);
     }
 
     uses_.erase(_op->name_);
+    return op;
+}
+
+Stmt removeDeadVar(const Stmt &_op) {
+    auto op = _op;
+    for (int i = 0;; i++) {
+        RemoveDeadVar mutator;
+        op = mutator(op);
+        if (mutator.isFixPoint() || i > 100) {
+            if (i > 100) {
+                WARNING("removeDeadVar iterates over 100 rounds. Maybe there "
+                        "is a bug");
+            }
+            break;
+        }
+    }
     return op;
 }
 

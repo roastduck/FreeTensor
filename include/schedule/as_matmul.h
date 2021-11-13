@@ -19,6 +19,7 @@ class AsMatMul : public Mutator {
     std::unordered_map<std::string, int> iterMap_; // iter var -> nest cnt
     std::unordered_map<std::string, Ref<Buffer>> buffers_; // var name -> buffer
     std::unordered_set<std::string> outerDefs_;
+    std::vector<VarDef> innerDefs_;
     std::vector<int> orderInit_;
 
     bool foundInit_ = false, foundLeaf_ = false, inside_ = false;

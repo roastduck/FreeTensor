@@ -6,7 +6,6 @@
 #include <pass/float_simplify.h>
 #include <pass/grad.h>
 #include <pass/hoist_var_over_stmt_seq.h>
-#include <pass/make_reduction.h>
 #include <pass/output_intermediates.h>
 #include <pass/prop_const.h>
 #include <pass/prop_one_time_use.h>
@@ -17,16 +16,34 @@
 
 namespace ir {
 
+static bool isSameElem(const Store &s, const Load &l) {
+    if (s->var_ != l->var_) {
+        return false;
+    }
+    ASSERT(s->indices_.size() == l->indices_.size());
+    for (size_t i = 0, iEnd = s->indices_.size(); i < iEnd; i++) {
+        if (getHash(s->indices_[i]) != getHash(l->indices_[i])) {
+            return false;
+        }
+    }
+    return true;
+}
+
 static Expr canonicalReduceSumExpr(const Store &store) {
     // Check if var[indices] = expr is a canonical reduce sum, which can be
     // written as var[indices] = var[indices] + X, where there is no access to
     // var in X
-    if (auto _reduce = makeReduction(store);
-        _reduce->nodeType() == ASTNodeType::ReduceTo) {
-        auto &&reduce = _reduce.as<ReduceToNode>();
-        if (reduce->op_ == ReduceOp::Add &&
-            !allReads(reduce->expr_).count(store->var_)) {
-            return reduce->expr_;
+
+    // NOTE: Do not copy the AST because `loadMap` requires the address
+    if (store->expr_->nodeType() == ASTNodeType::Add) {
+        auto expr = store->expr_.as<AddNode>();
+        if (expr->lhs_->nodeType() == ASTNodeType::Load &&
+            isSameElem(store, expr->lhs_.template as<LoadNode>())) {
+            return expr->rhs_;
+        }
+        if (expr->rhs_->nodeType() == ASTNodeType::Load &&
+            isSameElem(store, expr->rhs_.template as<LoadNode>())) {
+            return expr->lhs_;
         }
     }
     return nullptr;

@@ -384,10 +384,14 @@ void Schedule::autoUseLib(const Target &target) {
                     isPreferLibs = true;
                     break;
                 }
-                if (l->body_->nodeType() != ASTNodeType::For) {
+                auto body = l->body_;
+                while (body->nodeType() == ASTNodeType::VarDef) {
+                    body = body.as<VarDefNode>()->body_;
+                }
+                if (body->nodeType() != ASTNodeType::For) {
                     break;
                 } else {
-                    l = l->body_.as<ForNode>();
+                    l = body.as<ForNode>();
                 }
             }
             if (isPreferLibs) {
