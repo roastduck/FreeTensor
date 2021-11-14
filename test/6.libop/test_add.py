@@ -193,3 +193,10 @@ def test_out_of_place():
 
     assert np.array_equal(out_shape_numpy, [4, 4])
     assert torch.all(torch.isclose(out_torch, x_torch + y_torch))
+
+
+def test_fallback():
+    x = torch.rand(4, 4, dtype=torch.float32)
+    y = torch.rand(4, 4, dtype=torch.float32)
+    out = ir.libop.add(x, y)
+    assert torch.all(torch.isclose(out, x + y))
