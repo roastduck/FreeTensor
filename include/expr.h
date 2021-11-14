@@ -419,6 +419,19 @@ template <class T> Expr _makeSigmoid(T &&expr) {
     return e;
 }
 
+class TanhNode : public ExprNode {
+  public:
+    SubTree<ExprNode> expr_;
+    DEFINE_NODE_TRAIT(Tanh);
+};
+typedef Ref<TanhNode> Tanh;
+#define makeTanh(...) makeNode(Tanh, __VA_ARGS__)
+template <class T> Expr _makeTanh(T &&expr) {
+    Tanh e = Tanh::make();
+    e->expr_ = std::forward<T>(expr);
+    return e;
+}
+
 class AbsNode : public ExprNode {
   public:
     SubTree<ExprNode> expr_;

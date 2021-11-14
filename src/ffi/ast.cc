@@ -48,6 +48,7 @@ void init_ffi_ast(py::module_ &m) {
         .value("Exp", ASTNodeType::Exp)
         .value("Square", ASTNodeType::Square)
         .value("Sigmoid", ASTNodeType::Sigmoid)
+        .value("Tanh", ASTNodeType::Tanh)
         .value("Abs", ASTNodeType::Abs)
         .value("Floor", ASTNodeType::Floor)
         .value("Ceil", ASTNodeType::Ceil)
@@ -289,6 +290,9 @@ void init_ffi_ast(py::module_ &m) {
     py::class_<SigmoidNode, Sigmoid>(m, "Sigmoid", pyExpr)
         .def_property_readonly(
             "expr", [](const Sigmoid &op) -> Expr { return op->expr_; });
+    py::class_<TanhNode, Tanh>(m, "Tanh", pyExpr)
+        .def_property_readonly(
+            "expr", [](const Tanh &op) -> Expr { return op->expr_; });
     py::class_<AbsNode, Abs>(m, "Abs", pyExpr)
         .def_property_readonly("expr",
                                [](const Abs &op) -> Expr { return op->expr_; });
@@ -495,6 +499,8 @@ void init_ffi_ast(py::module_ &m) {
           "expr"_a);
     m.def("makeSigmoid", static_cast<Expr (*)(const Expr &)>(&_makeSigmoid),
           "expr"_a);
+    m.def("makeTanh", static_cast<Expr (*)(const Expr &)>(&_makeTanh),
+          "expr"_a);
     m.def("makeAbs", static_cast<Expr (*)(const Expr &)>(&_makeAbs), "expr"_a);
     m.def("makeFloor", static_cast<Expr (*)(const Expr &)>(&_makeFloor),
           "expr"_a);
@@ -578,6 +584,7 @@ template <> struct polymorphic_type_hook<ir::ASTNode> {
             DISPATCH(Exp);
             DISPATCH(Square);
             DISPATCH(Sigmoid);
+            DISPATCH(Tanh);
             DISPATCH(Abs);
             DISPATCH(Floor);
             DISPATCH(Ceil);
@@ -657,6 +664,7 @@ template <> struct polymorphic_type_hook<ir::ExprNode> {
             DISPATCH(Exp);
             DISPATCH(Square);
             DISPATCH(Sigmoid);
+            DISPATCH(Tanh);
             DISPATCH(Abs);
             DISPATCH(Floor);
             DISPATCH(Ceil);

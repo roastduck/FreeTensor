@@ -466,6 +466,10 @@ def sigmoid(expr):
     return ffi.makeSigmoid(expr)
 
 
+def tanh(expr):
+    return ffi.makeTanh(expr)
+
+
 def floor(expr):
     return ffi.makeFloor(expr)
 

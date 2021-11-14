@@ -66,6 +66,7 @@ enum class ASTNodeType : int {
     Exp,
     Square,
     Sigmoid,
+    Tanh,
     Abs,
     Floor,
     Ceil,

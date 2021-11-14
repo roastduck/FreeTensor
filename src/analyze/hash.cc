@@ -70,6 +70,7 @@ void GetHash::visit(const Sqrt &op) { unaryOp(op); }
 void GetHash::visit(const Exp &op) { unaryOp(op); }
 void GetHash::visit(const Square &op) { unaryOp(op); }
 void GetHash::visit(const Sigmoid &op) { unaryOp(op); }
+void GetHash::visit(const Tanh &op) { unaryOp(op); }
 void GetHash::visit(const Abs &op) { unaryOp(op); }
 void GetHash::visit(const Floor &op) { unaryOp(op); }
 void GetHash::visit(const Ceil &op) { unaryOp(op); }

@@ -209,6 +209,12 @@ void TypeInfer::visit(const Sigmoid &op) {
     types_[op] = types_.at(op->expr_);
 }
 
+void TypeInfer::visit(const Tanh &op) {
+    Visitor::visit(op);
+    CHK_TYPE(isNumber, types_.at(op->expr_), op);
+    types_[op] = types_.at(op->expr_);
+}
+
 void TypeInfer::visit(const Abs &op) {
     Visitor::visit(op);
     CHK_TYPE(isNumber, types_.at(op->expr_), op);

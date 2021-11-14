@@ -98,3 +98,6 @@ exp = _unary_op(lambda x: core.exp(x))
 
 sigmoid_ = _unary_op_(lambda x: core.sigmoid(x))
 sigmoid = _unary_op(lambda x: core.sigmoid(x))
+
+tanh_ = _unary_op_(lambda x: core.tanh(x))
+tanh = _unary_op(lambda x: core.tanh(x))
