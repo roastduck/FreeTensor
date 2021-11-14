@@ -6,23 +6,8 @@ import torch.nn as nn
 import torch._VF as vf
 
 def nn_lstm(x, lstm_layer, h, c):
-    # TODO: Dilation
-    # TODO: Stride
-    # TODO: Batch
-    length = x.shape[0]
-    in_feats = x.shape[1]
-    hidden_feats = 256
-    n_layers = 1
-
-    lstm_layer = nn.LSTM(in_feats, hidden_feats, n_layers, batch_first=True)
-    batch_size = 1
-
-
-    inp = x.reshape((1, length, in_feats))
-    hidden_state = torch.zeros(n_layers, batch_size, hidden_feats)
-    cell_state = torch.zeros(n_layers, batch_size, hidden_feats)
-    hidden = (hidden_state, cell_state)
-    out, hidden = lstm_layer(inp, hidden)
+    hidden = (h, c)
+    out, hidden = lstm_layer(x, hidden)
     out = out.squeeze()[-1, :]
     return out
 
@@ -45,8 +30,8 @@ if __name__ == '__main__':
         print(f"Usage: {sys.argv[0]} <cpu/gpu>")
         exit(-1)
     device = sys.argv[1]
-    hidden_feats = 256
     x = torch.tensor(np.loadtxt("../x.in"), dtype=torch.float)
+    # x = x[0:1]
     d_y = torch.tensor(np.loadtxt("../d_y.in"), dtype=torch.float)
     wi = torch.tensor(np.loadtxt("../wi.in"), dtype=torch.float)
     wc = torch.tensor(np.loadtxt("../wc.in"), dtype=torch.float)
@@ -60,8 +45,20 @@ if __name__ == '__main__':
     bc = torch.tensor(np.loadtxt("../bc.in"), dtype=torch.float)
     bf = torch.tensor(np.loadtxt("../bf.in"), dtype=torch.float)
     bo = torch.tensor(np.loadtxt("../bo.in"), dtype=torch.float)
-    h = torch.zeros(hidden_feats, dtype=torch.float)
-    c = torch.zeros(hidden_feats, dtype=torch.float)
+    hidden_feats = uf.shape[0]
+    n_layers = 1
+    print(wf)
+    length = x.shape[0]
+    in_feats = x.shape[1]
+    print(f"length {x.shape[0]} in {x.shape[1]}")
+    batch_size = 1
+    # h = torch.zeros(n_layers, batch_size, hidden_feats)
+    # x = x.reshape((1, length, in_feats))
+    # c = torch.zeros(n_layers, batch_size, hidden_feats)
+    h = torch.ones(hidden_feats,) / 2
+    c = torch.ones(hidden_feats,) / 2
+    # c = torch.zeros(n_layers, batch_size, hidden_feats)
+    lstm_layer = nn.LSTM(in_feats, hidden_feats, n_layers, batch_first=True)
 
     if device == 'gpu':
         x = x.cuda()
@@ -80,6 +77,7 @@ if __name__ == '__main__':
         d_y = d_y.cuda()
         h = h.cuda()
         c = c.cuda()
+        lstm_layer = lstm_layer.cuda()
         sync = torch.cuda.synchronize
     else:
         assert device == 'cpu'
@@ -87,20 +85,32 @@ if __name__ == '__main__':
 
     warmup_num = 10
     test_num = 1000
-
+# with torch.eval():
+#     xxx
+#     torch.no_grad()
+    with torch.no_grad():
+        lstm_nograd = nn.LSTM(in_feats, hidden_feats, n_layers, batch_first=True).cuda()
     for i in range(warmup_num):
         y = lstm(x, wi, ui, bi, wf, uf, bf, wc, uc, bc, wo, uo, bo, h, c)
+        # with torch.no_grad():
+        #     y = nn_lstm(x, lstm_nograd, h, c)
+
         if i == 0:
+            print(x)
+            print(uf)
+            print(y)
             np.savetxt("y.out", y.cpu().detach().numpy())
     sync()
     t0 = time.time()
     for i in range(test_num):
         y = lstm(x, wi, ui, bi, wf, uf, bf, wc, uc, bc, wo, uo, bo, h, c)
+        # with torch.no_grad():
+        #     y = nn_lstm(x, lstm_nograd, h, c)
     sync()
     t1 = time.time()
     assert y.shape == (hidden_feats, )
     print(f"Pytorch Inference Time = {(t1 - t0) / test_num * 1000} ms")
-
+'''
     x.requires_grad = True
     wi.requires_grad = True
     wc.requires_grad = True
@@ -115,11 +125,13 @@ if __name__ == '__main__':
     bf.requires_grad = True
     bo.requires_grad = True
     for i in range(warmup_num):
-        y = lstm(x, wi, ui, bi, wf, uf, bf, wc, uc, bc, wo, uo, bo, h, c)
+        #y = lstm(x, wi, ui, bi, wf, uf, bf, wc, uc, bc, wo, uo, bo, h, c)
+        y = nn_lstm(x, lstm_layer, h, c)
     sync()
     t0 = time.time()
     for i in range(test_num):
-        y = lstm(x, wi, ui, bi, wf, uf, bf, wc, uc, bc, wo, uo, bo, h, c)
+        #y = lstm(x, wi, ui, bi, wf, uf, bf, wc, uc, bc, wo, uo, bo, h, c)
+        y = nn_lstm(x, lstm_layer, h, c)
     sync()
     t1 = time.time()
     assert y.shape == (hidden_feats,)
@@ -128,6 +140,7 @@ if __name__ == '__main__':
     for i in range(warmup_num):
         y.backward(d_y, retain_graph=True)
         if i == 0:
+            ''''''
             np.savetxt("d_x.out", x.grad.cpu().numpy())
             np.savetxt("d_wi.out", wi.grad.cpu().numpy())
             np.savetxt("d_wc.out", wc.grad.cpu().numpy())
@@ -141,6 +154,7 @@ if __name__ == '__main__':
             np.savetxt("d_bc.out", bc.grad.cpu().numpy())
             np.savetxt("d_bf.out", bf.grad.cpu().numpy())
             np.savetxt("d_bo.out", bo.grad.cpu().numpy())
+            ''''''
     sync()
     t0 = time.time()
     for i in range(test_num):
@@ -148,3 +162,4 @@ if __name__ == '__main__':
     sync()
     t1 = time.time()
     print(f"Pytorch Backward Time = {(t1 - t0) / test_num * 1000} ms")
+'''

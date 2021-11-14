@@ -362,8 +362,11 @@ void Schedule::asMatMul(const std::string &loop) {
 
 void Schedule::autoSchedule(const Target &target) {
     autoUseLib(target);
+//    std::cout << "before fuse: " << ast_;
     autoFuse(target);
+//    std::cout << "before: " << ast_;
     autoParallelize(target);
+//    std::cout << "after: " << ast_;
     autoSetMemType(target);
     autoUnroll(target);
 }
@@ -482,6 +485,11 @@ void Schedule::autoParallelize(const Target &target) {
             });
         for (auto &&[loopId, cnt] : contigLoops) {
             auto loop = find(loopId);
+            std::cout << "has " << loop.id() << " " << cnt.first << " " << cnt.second << std::endl;
+        }
+        for (auto &&[loopId, cnt] : contigLoops) {
+            auto loop = find(loopId);
+            std::cout << "parallizing " << loop.id() << std::endl;
 
             // Ignore if too short
             if (auto len = loop.node().as<ForNode>()->len_;
@@ -512,6 +520,7 @@ void Schedule::autoParallelize(const Target &target) {
                         }
                     }
                 } catch (const InvalidSchedule &e) {
+                    e.what();
                     // do nothing
                 }
             } catch (const InvalidSchedule &e) {
