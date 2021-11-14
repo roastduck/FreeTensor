@@ -404,3 +404,30 @@ def test_cross_var_def():
     std = ir.pop_ast()
 
     assert std.match(ast)
+
+
+def test_same_parent_but_something_in_between():
+    with ir.VarDef("y", (10,), "float32", "output", "cpu") as y:
+        with ir.For("l", 0, 10) as l:
+            with ir.For("j", 0, 10) as j:
+                y[j] = 0
+                with ir.For("k", 0, 10) as k:
+                    y[j] += 1
+                    y[j] += 1
+                y[j] += 1
+    ast = ir.pop_ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef("y", (10,), "float32", "output", "cpu") as y:
+        with ir.For("l", 0, 10) as l:
+            with ir.For("j", 0, 10) as j:
+                with ir.If(l == 9):
+                    y[j] = 0
+                with ir.For("k", 0, 10) as k:
+                    y[j] += 2
+                y[j] += 1
+    std = ir.make_reduction(ir.pop_ast())
+
+    assert std.match(ast)
