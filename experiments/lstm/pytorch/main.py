@@ -16,11 +16,17 @@ def lstm(x, wi, ui, bi, wf, uf, bf, wc, uc, bc, wo, uo, bo, h, c):
 
     for k in range(length):
         f = torch.sigmoid(wf @ x[k] + uf @ h + bf)
+        print("f: ", f)
         i = torch.sigmoid(wi @ x[k] + ui @ h + bi)
+        print("i: ", i)
         o = torch.sigmoid(wo @ x[k] + uo @ h + bo)
+        print("o: ", o)
         cc = torch.tanh(wc @ x[k] + uc @ h + bc)
+        print("cc: ", cc)
         c = f * c + i * cc
+        print("c: ", c)
         h = o * torch.tanh(c)
+        print("h: ", h)
 
     return h
 
@@ -50,13 +56,13 @@ if __name__ == '__main__':
     print(wf)
     length = x.shape[0]
     in_feats = x.shape[1]
-    print(f"length {x.shape[0]} in {x.shape[1]}")
+    print(f"length {x.shape[0]} in {x.shape[1]} hidden {hidden_feats}")
     batch_size = 1
     # h = torch.zeros(n_layers, batch_size, hidden_feats)
     # x = x.reshape((1, length, in_feats))
     # c = torch.zeros(n_layers, batch_size, hidden_feats)
-    h = torch.ones(hidden_feats,) / 2
-    c = torch.ones(hidden_feats,) / 2
+    h = torch.zeros(hidden_feats,)
+    c = torch.zeros(hidden_feats,)
     # c = torch.zeros(n_layers, batch_size, hidden_feats)
     lstm_layer = nn.LSTM(in_feats, hidden_feats, n_layers, batch_first=True)
 
@@ -83,8 +89,8 @@ if __name__ == '__main__':
         assert device == 'cpu'
         sync = lambda: None
 
-    warmup_num = 10
-    test_num = 1000
+    warmup_num = 1
+    test_num = 0
 # with torch.eval():
 #     xxx
 #     torch.no_grad()

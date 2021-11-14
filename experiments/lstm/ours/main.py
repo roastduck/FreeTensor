@@ -6,6 +6,47 @@ import ir
 from ir.libop import *
 import ir.debug
 
+len = 256
+@ir.transform
+def foo(y, h, c):
+    ir.declare_var(y, (len, ), "float32", "input", "cpu")
+    ir.declare_var(h, (len, ), "float32", "input", "cpu")
+    ir.declare_var(c, (len, ), "float32", "output", "cpu")
+    f = zeros((len, ), "float32", "cpu")()
+    for l in range(len):
+        for j in range(len):
+            f[j] = 0
+            for k in range(len):
+                f[j] += 1
+        for j in range(len):
+            for k in range(len):
+                f[j] += 1
+        for j in range(len):
+            f[j] += 1
+    assign(y, f)
+    return y
+#
+# a = np.zeros((len,))
+# b = np.zeros((len,))
+# c = np.zeros((len,))
+# d = np.zeros((len,))
+# e = np.zeros((len,))
+# f = np.zeros((len,))
+device = ir_dev = ir.Device(ir.CPU())
+# a = ir.Array(a, ir_dev)
+# b = ir.Array(b, ir_dev)
+# c = ir.Array(c, ir_dev)
+# d = ir.Array(d, ir_dev)
+# e = ir.Array(e, ir_dev)
+# f = ir.Array(f, ir_dev)
+#
+s = ir.Schedule(foo)
+s.auto_schedule(ir.CPU())
+print(s.ast())
+f = ir.lower(s.func(), device.target())
+print(f)
+code = ir.codegen(f, device.target())
+print(ir.debug.with_line_no(code))
 
 def compile_all(in_feats, hidden_feats, length, device):
     mtype = device.main_mem_type()
@@ -29,9 +70,9 @@ def compile_all(in_feats, hidden_feats, length, device):
         h = zeros((hidden_feats, ), "float32", mtype)()
         c = zeros((hidden_feats, ), "float32", mtype)()
         f = zeros((4, hidden_feats, ), "float32", mtype)()
-        for i in range(hidden_feats):
-            h[i] = 0.5
-            c[i] = 0.5
+        # for i in range(hidden_feats):
+        #     h[i] = 0.5
+        #     c[i] = 0.5
         "nid: K"
         for k in range(length):
             # i = zeros((hidden_feats, ), "float32", mtype)()
@@ -66,8 +107,8 @@ def compile_all(in_feats, hidden_feats, length, device):
                 # assign(h[l], mul(o[l], tanh(c[l])))
             "nid: ch"
             for l in range(hidden_feats):
-                c[l] = ir.sigmoid(f[0][l]) * c[l] + ir.sigmoid(f[1][l]) * (ir.exp(f[3][l]) - ir.exp(-f[3][l])) / (ir.exp(f[3][l]) + ir.exp(-f[3][l]))
-                h[l] = ir.sigmoid(f[2][l]) * (ir.exp(c[l]) - ir.exp(-c[l])) / (ir.exp(c[l]) + ir.exp(-c[l]))
+                c[l] = ir.sigmoid(f[0][l]) * c[l] + ir.sigmoid(f[1][l]) * ir.tanh(f[3][l])
+                h[l] = ir.sigmoid(f[2][l]) * ir.tanh(c[l])
                 # assign(h[l], mul(sigmoid(f[2][l]), tanh(c[l])))
             # assign(c, add(mul(sigmoid(f[0]), c), mul(sigmoid(f[1]), tanh(f[3]))))
             # f = sigmoid(add(add(matmul(wf, x[k]), matmul(uf, h)), bf))
@@ -77,7 +118,7 @@ def compile_all(in_feats, hidden_feats, length, device):
             # assign(c, add(mul(f, c), mul(i, cc)))
             # assign(h, mul(o, tanh(c)))
 
-        assign(y, h)
+        assign(y, f[0])
 
     forward, backward, requires, provides, _ = ir.grad(
         inference, {"x", "wf", "wi", "wo", "wc", "uf", "ui", "uo", "uc", "bf", "bi", "bo", "bc"}, {"y"})
@@ -99,8 +140,7 @@ def compile_all(in_feats, hidden_feats, length, device):
     s.parallelize("fused.fused.m_in.m_hidden.m_b", "blockIdx.y")
     s.parallelize("fused.#2:recur:L_elem.#6:recur:L_elem", "threadIdx.x")
     s.parallelize("ch", "threadIdx.x")
-    s.parallelize("#10:L_elem", "threadIdx.x")
-    '''
+    s.parallelize("#15:L_elem", "threadIdx.x")'''
     s.auto_set_mem_type(device.target())
     s.auto_unroll(device.target())
     print(s.ast())
@@ -193,7 +233,7 @@ def compile_all(in_feats, hidden_feats, length, device):
 
     return inference_exe#, forward_exe#, run_backward
 
-if __name__ == '__main__':
+if 0 and __name__ == '__main__':
     if len(sys.argv) != 2:
         print(f"Usage: {sys.argv[0]} <cpu/gpu>")
         exit(-1)
@@ -294,11 +334,11 @@ if __name__ == '__main__':
     for i in range(warmup_num):
         inference(x, y, w, u, b)
         if i == 0:
-            print(x.numpy())
-            print(w.numpy().reshape(4, in_feats, hidden_feats))
-            print(u.numpy().reshape(4, hidden_feats, hidden_feats))
-            print(b.numpy().reshape(4, hidden_feats))
-            print(y.numpy())
+            # print(x.numpy().tolist())
+            # print(w.numpy().reshape(4, in_feats, hidden_feats).tolist())
+            # print(u.numpy().reshape(4, hidden_feats, hidden_feats).tolist())
+            # print(b.numpy().reshape(4, hidden_feats).tolist())
+            # print(y.numpy().tolist())
             np.savetxt("y.out", y.numpy().reshape((hidden_feats, )))
     ir_dev.sync()
     t0 = time.time()

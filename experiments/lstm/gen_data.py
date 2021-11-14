@@ -1,7 +1,7 @@
 import numpy as np
 if __name__ == '__main__':
 
-    length = 2
+    length = 100
     in_feats = 4
     hidden_feats = 256
 
