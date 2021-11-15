@@ -382,13 +382,23 @@ class AnalyzeDeps : public Visitor {
         auto &&point = points_.at(op);
         auto &&defId = defId_.at(op->var_);
         if (depType_ & DEP_WAR) {
+            // Earlier reads do not overwrite each other, but later writes do.
+            // Currently we analyze each pair of write-after-read seperately.
+            // TODO: Implement a more general `checkDep` that receives either a
+            // list of `point` or a list of `other`
             if (reads_.count(defId)) {
-                // Earlier reads do not overwrite each other, but later writes
-                // do. Currently we analyze each pair of write-after-read
-                // seperately. TODO: Implement a more general `checkDep` that
-                // receives either a list of `point` or a list of `other`
                 for (auto &&read : reads_.at(defId)) {
                     checkDep(point, {read});
+                }
+            }
+            if (writes_.count(defId)) {
+                for (auto &&write : writes_.at(defId)) {
+                    if (write->op_->nodeType() == ASTNodeType::ReduceTo) {
+                        if (op->nodeType() != ASTNodeType::ReduceTo ||
+                            !ignoreReductionWAW_) {
+                            checkDep(point, {write});
+                        }
+                    }
                 }
             }
         }
