@@ -16,17 +16,11 @@ def lstm(x, wi, ui, bi, wf, uf, bf, wc, uc, bc, wo, uo, bo, h, c):
 
     for k in range(length):
         f = torch.sigmoid(wf @ x[k] + uf @ h + bf)
-        print("f: ", f)
         i = torch.sigmoid(wi @ x[k] + ui @ h + bi)
-        print("i: ", i)
         o = torch.sigmoid(wo @ x[k] + uo @ h + bo)
-        print("o: ", o)
         cc = torch.tanh(wc @ x[k] + uc @ h + bc)
-        print("cc: ", cc)
         c = f * c + i * cc
-        print("c: ", c)
         h = o * torch.tanh(c)
-        print("h: ", h)
 
     return h
 
@@ -89,8 +83,8 @@ if __name__ == '__main__':
         assert device == 'cpu'
         sync = lambda: None
 
-    warmup_num = 1
-    test_num = 0
+    warmup_num = 10
+    test_num = 1000
 # with torch.eval():
 #     xxx
 #     torch.no_grad()
@@ -102,9 +96,7 @@ if __name__ == '__main__':
         #     y = nn_lstm(x, lstm_nograd, h, c)
 
         if i == 0:
-            print(x)
-            print(uf)
-            print(y)
+            print(y.cpu().detach().numpy())
             np.savetxt("y.out", y.cpu().detach().numpy())
     sync()
     t0 = time.time()

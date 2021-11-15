@@ -6,19 +6,19 @@ if __name__ == '__main__':
     hidden_feats = 256
 
     x = np.random.uniform(size=(length, in_feats)).astype("float32")
-    wf = np.random.uniform(size=(hidden_feats, in_feats)).astype("float32")
-    wi = np.random.uniform(size=(hidden_feats, in_feats)).astype("float32")
-    wo = np.random.uniform(size=(hidden_feats, in_feats)).astype("float32")
-    wc = np.random.uniform(size=(hidden_feats, in_feats)).astype("float32")
-    uf = np.random.uniform(size=(hidden_feats, hidden_feats)).astype("float32")
-    ui = np.random.uniform(size=(hidden_feats, hidden_feats)).astype("float32")
-    uo = np.random.uniform(size=(hidden_feats, hidden_feats)).astype("float32")
-    uc = np.random.uniform(size=(hidden_feats, hidden_feats)).astype("float32")
-    bf = np.random.uniform(size=(hidden_feats, )).astype("float32")
-    bi = np.random.uniform(size=(hidden_feats, )).astype("float32")
-    bo = np.random.uniform(size=(hidden_feats, )).astype("float32")
-    bc = np.random.uniform(size=(hidden_feats, )).astype("float32")
-    d_y = np.random.uniform(size=(hidden_feats, )).astype('float32')
+    wf = np.random.uniform(size=(hidden_feats, in_feats)).astype("float32") / 100
+    wi = np.random.uniform(size=(hidden_feats, in_feats)).astype("float32") / 100
+    wo = np.random.uniform(size=(hidden_feats, in_feats)).astype("float32") / 100
+    wc = np.random.uniform(size=(hidden_feats, in_feats)).astype("float32") / 100
+    uf = np.random.uniform(size=(hidden_feats, hidden_feats)).astype("float32") / 100
+    ui = np.random.uniform(size=(hidden_feats, hidden_feats)).astype("float32") / 100
+    uo = np.random.uniform(size=(hidden_feats, hidden_feats)).astype("float32") / 100
+    uc = np.random.uniform(size=(hidden_feats, hidden_feats)).astype("float32") / 100
+    bf = np.random.uniform(size=(hidden_feats, )).astype("float32") / 100
+    bi = np.random.uniform(size=(hidden_feats, )).astype("float32") / 100
+    bo = np.random.uniform(size=(hidden_feats, )).astype("float32") / 100
+    bc = np.random.uniform(size=(hidden_feats, )).astype("float32") / 100
+    d_y = np.random.uniform(size=(hidden_feats, )).astype('float32') / 100
 
     np.savetxt("x.in", x)
     np.savetxt("wf.in", wf)

@@ -13,16 +13,14 @@ def foo(y, h, c):
     ir.declare_var(h, (len, ), "float32", "input", "cpu")
     ir.declare_var(c, (len, ), "float32", "output", "cpu")
     f = zeros((len, ), "float32", "cpu")()
+    u = zeros((len, ), "float32", "cpu")()
     for l in range(len):
         for j in range(len):
             f[j] = 0
             for k in range(len):
+                f[j] += u[j]
                 f[j] += 1
-        for j in range(len):
-            for k in range(len):
-                f[j] += 1
-        for j in range(len):
-            f[j] += 1
+            u[j] = f[j]
     assign(y, f)
     return y
 #
@@ -118,7 +116,7 @@ def compile_all(in_feats, hidden_feats, length, device):
             # assign(c, add(mul(f, c), mul(i, cc)))
             # assign(h, mul(o, tanh(c)))
 
-        assign(y, f[0])
+        assign(y, h)
 
     forward, backward, requires, provides, _ = ir.grad(
         inference, {"x", "wf", "wi", "wo", "wc", "uf", "ui", "uo", "uc", "bf", "bi", "bo", "bc"}, {"y"})
@@ -133,18 +131,18 @@ def compile_all(in_feats, hidden_feats, length, device):
     s.auto_fuse(device.target())
     # s.parallelize("j_hidden", "threadIdx.y")
     print(s.ast())
-    '''
+
     s.split("fused.fused.l_in.l_hidden.l_b", 8)
     s.parallelize("fused.fused.l_in.l_hidden.l_b.0", "blockIdx.x")
     s.parallelize("fused.fused.l_in.l_hidden.l_b.1", "threadIdx.x")
     s.parallelize("fused.fused.m_in.m_hidden.m_b", "blockIdx.y")
     s.parallelize("fused.#2:recur:L_elem.#6:recur:L_elem", "threadIdx.x")
     s.parallelize("ch", "threadIdx.x")
-    s.parallelize("#15:L_elem", "threadIdx.x")'''
+    s.parallelize("#15:L_elem", "threadIdx.x")
     s.auto_set_mem_type(device.target())
     s.auto_unroll(device.target())
     print(s.ast())
-    #s.set_mem_type("#6:y", "gpu/global")
+    s.set_mem_type("#6:y", "gpu/global")
     # s.set_mem_type("#53:x:out", "gpu/global")
     # s.set_mem_type("#40:x:y", "gpu/global")
     # s.set_mem_type("#11.1_3", "gpu/global")
@@ -334,11 +332,11 @@ if 0 and __name__ == '__main__':
     for i in range(warmup_num):
         inference(x, y, w, u, b)
         if i == 0:
-            # print(x.numpy().tolist())
+            print(x.numpy().tolist())
             # print(w.numpy().reshape(4, in_feats, hidden_feats).tolist())
             # print(u.numpy().reshape(4, hidden_feats, hidden_feats).tolist())
             # print(b.numpy().reshape(4, hidden_feats).tolist())
-            # print(y.numpy().tolist())
+            print(y.numpy().tolist())
             np.savetxt("y.out", y.numpy().reshape((hidden_feats, )))
     ir_dev.sync()
     t0 = time.time()
