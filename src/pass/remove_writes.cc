@@ -229,11 +229,13 @@ Stmt removeWrites(const Stmt &_op, const std::string &singleDefId) {
     };
     auto foundUse = [&](const Dependency &d) {
         if (d.later()->nodeType() != ASTNodeType::Store &&
-            d.earlier()->nodeType() != ASTNodeType::Load) {
+            d.earlier()->nodeType() != ASTNodeType::Load &&
+            d.earlier() != d.later()) {
             usesRAW.emplace(d.later(), d.earlier().as<StmtNode>());
         }
         if (d.earlier()->nodeType() != ASTNodeType::Store &&
-            d.later()->nodeType() != ASTNodeType::Load) {
+            d.later()->nodeType() != ASTNodeType::Load &&
+            d.earlier() != d.later()) {
             usesWAR.emplace(d.later().as<StmtNode>(), d.earlier());
         }
     };

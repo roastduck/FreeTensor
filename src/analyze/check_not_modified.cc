@@ -6,21 +6,22 @@
 namespace ir {
 
 Stmt InsertTmpEval::visitStmt(
-    const Stmt &op, const std::function<Stmt(const Stmt &)> &visitNode) {
-    auto ret = Mutator::visitStmt(op, visitNode);
-    if (ret->id() == s0_) {
+    const Stmt &_op, const std::function<Stmt(const Stmt &)> &visitNode) {
+    auto op = Mutator::visitStmt(_op, visitNode);
+    auto ret = op;
+    if (op->id() == s0_) {
         auto eval = makeEval("", expr_);
         s0Eval_ = eval->id();
-        return s0Side_ == CheckNotModifiedSide::Before
-                   ? makeStmtSeq("", {eval, ret})
-                   : makeStmtSeq("", {ret, eval});
+        ret = s0Side_ == CheckNotModifiedSide::Before
+                  ? makeStmtSeq("", {eval, ret})
+                  : makeStmtSeq("", {ret, eval});
     }
-    if (ret->id() == s1_) {
+    if (op->id() == s1_) {
         auto eval = makeEval("", expr_);
         s1Eval_ = eval->id();
-        return s1Side_ == CheckNotModifiedSide::Before
-                   ? makeStmtSeq("", {eval, ret})
-                   : makeStmtSeq("", {ret, eval});
+        ret = s1Side_ == CheckNotModifiedSide::Before
+                  ? makeStmtSeq("", {eval, ret})
+                  : makeStmtSeq("", {ret, eval});
     }
     return ret;
 }
@@ -33,13 +34,19 @@ bool checkNotModified(const Stmt &op, const Expr &expr,
 
     InsertTmpEval inserter(expr, s0Side, s0, s1Side, s1);
     auto tmpOp = inserter(op);
+    ASSERT(!inserter.s0Eval().empty());
+    ASSERT(!inserter.s1Eval().empty());
+    auto common = lca(getCursorById(tmpOp, inserter.s0Eval()),
+                      getCursorById(tmpOp, inserter.s1Eval()));
 
     std::unordered_set<Stmt> writesWAR, writesRAW;
     auto filterWAR = [&](const AccessPoint &later, const AccessPoint &earlier) {
-        return earlier.cursor_.id() == inserter.s0Eval();
+        return earlier.cursor_.id() == inserter.s0Eval() &&
+               lca(later.cursor_, common).id() == common.id();
     };
     auto filterRAW = [&](const AccessPoint &later, const AccessPoint &earlier) {
-        return later.cursor_.id() == inserter.s1Eval();
+        return later.cursor_.id() == inserter.s1Eval() &&
+               lca(earlier.cursor_, common).id() == common.id();
     };
     auto foundWAR = [&](const Dependency &dep) {
         writesWAR.insert(dep.later_.cursor_.node());
