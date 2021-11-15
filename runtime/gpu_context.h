@@ -4,6 +4,8 @@
 #include <cublas_v2.h>
 #include <iostream>
 
+#include "context.h"
+
 #define checkCublasError(call)                                                 \
     {                                                                          \
         auto err = call;                                                       \
@@ -40,7 +42,7 @@ inline const char *cublasGetErrorString(cublasStatus_t error) {
     return "<unknown>";
 }
 
-class GPUContext {
+class GPUContext : public Context {
     bool initialized_ = false;
     cublasHandle_t cublas_;
 
