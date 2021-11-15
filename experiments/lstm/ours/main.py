@@ -6,23 +6,23 @@ import ir
 from ir.libop import *
 import ir.debug
 
-len = 256
-@ir.transform
-def foo(y, h, c):
-    ir.declare_var(y, (len, ), "float32", "input", "cpu")
-    ir.declare_var(h, (len, ), "float32", "input", "cpu")
-    ir.declare_var(c, (len, ), "float32", "output", "cpu")
-    f = zeros((len, ), "float32", "cpu")()
-    u = zeros((len, ), "float32", "cpu")()
-    for l in range(len):
-        for j in range(len):
-            f[j] = 0
-            for k in range(len):
-                f[j] += u[j]
-                f[j] += 1
-            u[j] = f[j]
-    assign(y, f)
-    return y
+# len = 256
+# @ir.transform
+# def foo(y, h, c):
+#     ir.declare_var(y, (len, ), "float32", "input", "cpu")
+#     ir.declare_var(h, (len, ), "float32", "input", "cpu")
+#     ir.declare_var(c, (len, ), "float32", "output", "cpu")
+#     f = zeros((len, ), "float32", "cpu")()
+#     u = zeros((len, ), "float32", "cpu")()
+#     for l in range(len):
+#         for j in range(len):
+#             f[j] = 0
+#             for k in range(len):
+#                 f[j] += u[j]
+#                 f[j] += 1
+#             u[j] = f[j]
+#     assign(y, f)
+#     return y
 #
 # a = np.zeros((len,))
 # b = np.zeros((len,))
@@ -30,7 +30,7 @@ def foo(y, h, c):
 # d = np.zeros((len,))
 # e = np.zeros((len,))
 # f = np.zeros((len,))
-device = ir_dev = ir.Device(ir.CPU())
+# device = ir_dev = ir.Device(ir.CPU())
 # a = ir.Array(a, ir_dev)
 # b = ir.Array(b, ir_dev)
 # c = ir.Array(c, ir_dev)
@@ -38,13 +38,13 @@ device = ir_dev = ir.Device(ir.CPU())
 # e = ir.Array(e, ir_dev)
 # f = ir.Array(f, ir_dev)
 #
-s = ir.Schedule(foo)
-s.auto_schedule(ir.CPU())
-print(s.ast())
-f = ir.lower(s.func(), device.target())
-print(f)
-code = ir.codegen(f, device.target())
-print(ir.debug.with_line_no(code))
+# s = ir.Schedule(foo)
+# s.auto_schedule(ir.CPU())
+# print(s.ast())
+# f = ir.lower(s.func(), device.target())
+# print(f)
+# code = ir.codegen(f, device.target())
+# print(ir.debug.with_line_no(code))
 
 def compile_all(in_feats, hidden_feats, length, device):
     mtype = device.main_mem_type()
@@ -119,19 +119,14 @@ def compile_all(in_feats, hidden_feats, length, device):
         assign(y, h)
 
     forward, backward, requires, provides, _ = ir.grad(
-        inference, {"x", "wf", "wi", "wo", "wc", "uf", "ui", "uo", "uc", "bf", "bi", "bo", "bc"}, {"y"})
+        inference, {"x", "w", "u", "b"}, {"y"}, ir.GradTapeMode.All)
 
     print("# Inference:")
     print(inference)
     s = ir.Schedule(inference)
-    # s.as_matmul("m_in")
-    # s.as_matmul("m_hidden")
-    # s.auto_schedule(device.target())
+    '''
     s.auto_use_lib(device.target())
     s.auto_fuse(device.target())
-    # s.parallelize("j_hidden", "threadIdx.y")
-    print(s.ast())
-
     s.split("fused.fused.l_in.l_hidden.l_b", 8)
     s.parallelize("fused.fused.l_in.l_hidden.l_b.0", "blockIdx.x")
     s.parallelize("fused.fused.l_in.l_hidden.l_b.1", "threadIdx.x")
@@ -141,97 +136,88 @@ def compile_all(in_feats, hidden_feats, length, device):
     s.parallelize("#15:L_elem", "threadIdx.x")
     s.auto_set_mem_type(device.target())
     s.auto_unroll(device.target())
-    print(s.ast())
     s.set_mem_type("#6:y", "gpu/global")
-    # s.set_mem_type("#53:x:out", "gpu/global")
-    # s.set_mem_type("#40:x:y", "gpu/global")
-    # s.set_mem_type("#11.1_3", "gpu/global")
-    # s.set_mem_type("#11.1_2", "gpu/global")
-    # s.set_mem_type("#11.1_1", "gpu/global")
-    # s.set_mem_type("#11.1_0", "gpu/global")
-    # s.set_mem_type("#126:b:y", "gpu/global")
-    # s.set_mem_type("#129:x:out", "gpu/global")
-    # s.set_mem_type("#89:a:einsum:Y", "gpu/global")
-    # s.set_mem_type("#89:b:einsum:Y", "gpu/global")
-    # s.set_mem_type("#107:x:out", "gpu/global")
-    # s.set_mem_type("#115:a:out", "gpu/global")
+    '''
+    f = ir.lower(s.func(), device.target())
+    code = ir.codegen(f, device.target())
+    print(ir.debug.with_line_no(code))
+    inference_exe = ir.Driver(inference, code, device)
+
+    print("# Forward:")
+    print(forward)
+    s = ir.Schedule(forward)
+    '''
+    s.auto_use_lib(device.target())
+    s.auto_fuse(device.target())
+    s.split("fused.fused.l_in.l_hidden.l_b", 8)
+    s.parallelize("fused.fused.l_in.l_hidden.l_b.0", "blockIdx.x")
+    s.parallelize("fused.fused.l_in.l_hidden.l_b.1", "threadIdx.x")
+    s.parallelize("fused.fused.m_in.m_hidden.m_b", "blockIdx.y")
+    s.parallelize("fused.#2:recur:L_elem.#6:recur:L_elem", "threadIdx.x")
+    s.parallelize("ch", "threadIdx.x")
+    s.parallelize("#15:L_elem", "threadIdx.x")
+    s.auto_set_mem_type(device.target())
+    s.auto_unroll(device.target())
+    s.set_mem_type("#6:y", "gpu/global")
+    '''
     f = ir.lower(s.func(), device.target())
     print(f)
     code = ir.codegen(f, device.target())
     print(ir.debug.with_line_no(code))
-    inference_exe = ir.Driver(inference, code, device)
-    #
-    # print("# Forward:")
-    # print(forward)
-    # s = ir.Schedule(forward)
-    # s.auto_schedule(device.target())
-    # s.set_mem_type("#2:y", "gpu/global")
-    # s.set_mem_type("#6:y", "gpu/global")
-    # s.set_mem_type("#10:y", "gpu/global")
-    # s.set_mem_type("#14:y", "gpu/global")
-    # s.set_mem_type("#18:y", "gpu/global")
-    # s.set_mem_type("#22:y", "gpu/global")
-    # s.set_mem_type("#48:b:y", "gpu/global")
-    # s.set_mem_type("#36:a:out", "gpu/global")
-    # s.set_mem_type("#53:x:out", "gpu/global")
+    forward_exe = ir.Driver(forward, code, device)
 
-# s.set_mem_type("#28:x:y", "gpu/global")
-    # s.set_mem_type("#32:x:y", "gpu/global")
-    # s.set_mem_type("#36:x:y", "gpu/global")
-    # s.set_mem_type("#40:x:y", "gpu/global")
-    # s.set_mem_type("#2:y", "gpu/global")
-    # s.set_mem_type("#6:y", "gpu/global")
-    # s.set_mem_type("#11:a:einsum:Y", "gpu/global")
-    # s.set_mem_type("#11:b:einsum:Y", "gpu/global")
-    # s.set_mem_type("#37:a:einsum:Y", "gpu/global")
-    # s.set_mem_type("#37:b:einsum:Y", "gpu/global")
-    # s.set_mem_type("#63:a:einsum:Y", "gpu/global")
-    # s.set_mem_type("#63:b:einsum:Y", "gpu/global")
-    # s.set_mem_type("#126:b:y", "gpu/global")
-    # s.set_mem_type("#129:x:out", "gpu/global")
-    # s.set_mem_type("#89:a:einsum:Y", "gpu/global")
-    # s.set_mem_type("#89:b:einsum:Y", "gpu/global")
-    # s.set_mem_type("#107:x:out", "gpu/global")
-    # s.set_mem_type("#115:a:out", "gpu/global")
-    # f = ir.lower(s.func(), device.target())
-    # print(f)
-    # code = ir.codegen(f, device.target())
-    # print(ir.debug.with_line_no(code))
-    # forward_exe = ir.Driver(forward, code, device)
-    #
-    # print("# Backward:")
-    # print(backward)
-    # s = ir.Schedule(backward)
+    print("# Backward:")
+    print(backward)
+    s = ir.Schedule(backward)
+    print(s.ast())
+    # s.auto_use_lib(device.target())
+    # s.auto_fuse(device.target())
+    # print(s.ast())
+    '''
+    s.parallelize("#133", "threadIdx.y")
+    s.parallelize("#132", "threadIdx.x")
+    s.parallelize("#128", "blockIdx.x")
+    s.parallelize("#127", "threadIdx.x")
+    s.parallelize("fused.#123.#118", "threadIdx.x")
+    s.parallelize("#112", "threadIdx.x")
+    s.parallelize("#109", "blockIdx.x")
+    s.parallelize("#108", "threadIdx.x")
+    s.parallelize("fused.#28.#30", "threadIdx.x")
+    s.split("fused.fused.#38.#42.#45", 16)
+    s.parallelize("fused.fused.#38.#42.#45.0", "blockIdx.x")
+    s.parallelize("fused.fused.#38.#42.#45.1", "threadIdx.x")
+    s.parallelize("fused.fused.#39.#43.#46", "blockIdx.y")
+    s.parallelize("#50", "threadIdx.x")
+    s.parallelize("#15:L_elem", "threadIdx.x")
+    s.parallelize("ch", "threadIdx.x")
+    s.split("fused.fused.l_b.l_hidden.l_in", 16)
+    s.parallelize("fused.fused.l_b.l_hidden.l_in.0", "blockIdx.x")
+    s.parallelize("fused.fused.l_b.l_hidden.l_in.1", "threadIdx.x")
+    s.parallelize("fused.fused.m_b.m_hidden.m_in", "blockIdx.y")
+    s.parallelize("#10:recur:recur:L_elem", "threadIdx.x")
+    s.parallelize("#10:recur:L_elem", "threadIdx.y")
+    s.parallelize("fused.#6:recur:L_elem.#2:recur:L_elem", "threadIdx.x")
+    '''
     # s.auto_set_mem_type(device.target())
-    # s.auto_schedule(device.target())
-    # f = ir.lower(s.func(), device.target())
-    # print(f)
-    # code = ir.codegen(f, device.target())
-    # print(ir.debug.with_line_no(code))
-    # backward_exe = ir.Driver(backward, code, device)
-    # #
-    # def run_backward(x, y, wi, ui, bi, wf, uf, bf, wc, uc, bc, wo, uo, bo,
-    #                  d_wi, d_ui, d_bi, d_wf, d_uf, d_bf, d_wc, d_uc, d_bc, d_wo, d_uo, d_bo, d_x, d_y):
-    #     kvs = {}
-    #     kvs[provides['y']] = d_y
-    #     kvs[requires['x']] = d_x
-    #     kvs[requires['wf']] = d_wf
-    #     kvs[requires['wi']] = d_wi
-    #     kvs[requires['wo']] = d_wo
-    #     kvs[requires['wc']] = d_wc
-    #     kvs[requires['uf']] = d_uf
-    #     kvs[requires['ui']] = d_ui
-    #     kvs[requires['uo']] = d_uo
-    #     kvs[requires['uc']] = d_uc
-    #     kvs[requires['bf']] = d_bf
-    #     kvs[requires['bi']] = d_bi
-    #     kvs[requires['bo']] = d_bo
-    #     kvs[requires['bc']] = d_bc
-    #     backward_exe(x, y, wi, ui, bi, wf, uf, bf, wc, uc, bc, wo, uo, bo, **kvs)
+    # s.auto_unroll(device.target())
+    f = ir.lower(s.func(), device.target())
+    print(f)
+    code = ir.codegen(f, device.target())
+    print(ir.debug.with_line_no(code))
+    backward_exe = ir.Driver(backward, code, device)
+    #
+    def run_backward(x, y, w, u, b, d_w, d_u, d_b, d_x, d_y):
+        kvs = {}
+        kvs[provides['y']] = d_y
+        kvs[requires['x']] = d_x
+        kvs[requires['w']] = d_w
+        kvs[requires['u']] = d_u
+        kvs[requires['b']] = d_b
+        backward_exe(x, y, w, u, b, **kvs)
 
-    return inference_exe#, forward_exe#, run_backward
+    return inference_exe, forward_exe, run_backward
 
-if 0 and __name__ == '__main__':
+if __name__ == '__main__':
     if len(sys.argv) != 2:
         print(f"Usage: {sys.argv[0]} <cpu/gpu>")
         exit(-1)
@@ -271,18 +257,9 @@ if 0 and __name__ == '__main__':
     b[3] = bc
 
     d_x = np.zeros(x.shape, dtype='float32')
-    d_wf = np.zeros(wf.shape, dtype='float32')
-    d_wi = np.zeros(wi.shape, dtype='float32')
-    d_wo = np.zeros(wo.shape, dtype='float32')
-    d_wc = np.zeros(wc.shape, dtype='float32')
-    d_uf = np.zeros(uf.shape, dtype='float32')
-    d_ui = np.zeros(ui.shape, dtype='float32')
-    d_uo = np.zeros(uo.shape, dtype='float32')
-    d_uc = np.zeros(uc.shape, dtype='float32')
-    d_bf = np.zeros(bf.shape, dtype='float32')
-    d_bi = np.zeros(bi.shape, dtype='float32')
-    d_bo = np.zeros(bo.shape, dtype='float32')
-    d_bc = np.zeros(bc.shape, dtype='float32')
+    d_w = np.zeros(w.shape, dtype='float32')
+    d_u = np.zeros(u.shape, dtype='float32')
+    d_b = np.zeros(b.shape, dtype='float32')
     d_y = np.loadtxt("../d_y.in").astype("float32")
 
     print(w[0])
@@ -297,46 +274,25 @@ if 0 and __name__ == '__main__':
     w = ir.Array(w, ir_dev)
     u = ir.Array(u, ir_dev)
     b = ir.Array(b, ir_dev)
-    wf = ir.Array(wf, ir_dev)
-    wi = ir.Array(wi, ir_dev)
-    wo = ir.Array(wo, ir_dev)
-    wc = ir.Array(wc, ir_dev)
-    uf = ir.Array(uf, ir_dev)
-    ui = ir.Array(ui, ir_dev)
-    uo = ir.Array(uo, ir_dev)
-    uc = ir.Array(uc, ir_dev)
-    bf = ir.Array(bf, ir_dev)
-    bi = ir.Array(bi, ir_dev)
-    bo = ir.Array(bo, ir_dev)
-    bc = ir.Array(bc, ir_dev)
     y = ir.Array(y, ir_dev)
     d_x = ir.Array(d_x, ir_dev)
-    d_wf = ir.Array(d_wf, ir_dev)
-    d_wi = ir.Array(d_wi, ir_dev)
-    d_wo = ir.Array(d_wo, ir_dev)
-    d_wc = ir.Array(d_wc, ir_dev)
-    d_uf = ir.Array(d_uf, ir_dev)
-    d_ui = ir.Array(d_ui, ir_dev)
-    d_uo = ir.Array(d_uo, ir_dev)
-    d_uc = ir.Array(d_uc, ir_dev)
-    d_bf = ir.Array(d_bf, ir_dev)
-    d_bi = ir.Array(d_bi, ir_dev)
-    d_bo = ir.Array(d_bo, ir_dev)
-    d_bc = ir.Array(d_bc, ir_dev)
+    d_w = ir.Array(d_w, ir_dev)
+    d_u = ir.Array(d_u, ir_dev)
+    d_b = ir.Array(d_b, ir_dev)
     d_y = ir.Array(d_y, ir_dev)
 
-    inference = compile_all(in_feats, hidden_feats, length, ir_dev)
+    inference, forward, backward = compile_all(in_feats, hidden_feats, length, ir_dev)
     warmup_num = 10
     test_num = 1000
-
+    '''
     for i in range(warmup_num):
         inference(x, y, w, u, b)
         if i == 0:
-            print(x.numpy().tolist())
+            # print(x.numpy().tolist())
             # print(w.numpy().reshape(4, in_feats, hidden_feats).tolist())
             # print(u.numpy().reshape(4, hidden_feats, hidden_feats).tolist())
             # print(b.numpy().reshape(4, hidden_feats).tolist())
-            print(y.numpy().tolist())
+            # print(y.numpy().tolist())
             np.savetxt("y.out", y.numpy().reshape((hidden_feats, )))
     ir_dev.sync()
     t0 = time.time()
@@ -347,40 +303,38 @@ if 0 and __name__ == '__main__':
 
     print(f"Inference Time = {(t1 - t0) / test_num * 1000} ms")
     #
-    # for i in range(warmup_num):
-    #     forward(x, y, wi, ui, bi, wf, uf, bf, wc, uc, bc, wo, uo, bo)
-    # ir_dev.sync()
-    # t0 = time.time()
-    # for i in range(test_num):
-    #     forward(x, y, wi, ui, bi, wf, uf, bf, wc, uc, bc, wo, uo, bo)
-    # ir_dev.sync()
-    # t1 = time.time()
-    #
-    # print(f"Forward Time = {(t1 - t0) / test_num * 1000} ms")
+    for i in range(warmup_num):
+        forward(x, y, w, u, b)
+    ir_dev.sync()
+    t0 = time.time()
+    for i in range(test_num):
+        forward(x, y, w, u, b)
+    ir_dev.sync()
+    t1 = time.time()
 
-    # for i in range(warmup_num):
-    #     backward(x, y, wi, ui, bi, wf, uf, bf, wc, uc, bc, wo, uo, bo,
-    #                  d_wi, d_ui, d_bi, d_wf, d_uf, d_bf, d_wc, d_uc, d_bc, d_wo, d_uo, d_bo, d_x, d_y)
-    #     if i == 0:
-    #         np.savetxt("d_x.out", d_x.numpy().reshape((length, in_feats)))
-    #         np.savetxt("d_wf.out", d_wf.numpy().reshape((hidden_feats, in_feats)))
-    #         np.savetxt("d_wi.out", d_wi.numpy().reshape((hidden_feats, in_feats)))
-    #         np.savetxt("d_wo.out", d_wo.numpy().reshape((hidden_feats, in_feats)))
-    #         np.savetxt("d_wc.out", d_wc.numpy().reshape((hidden_feats, in_feats)))
-    #         np.savetxt("d_uf.out", d_uf.numpy().reshape((hidden_feats, hidden_feats)))
-    #         np.savetxt("d_ui.out", d_ui.numpy().reshape((hidden_feats, hidden_feats)))
-    #         np.savetxt("d_uo.out", d_uo.numpy().reshape((hidden_feats, hidden_feats)))
-    #         np.savetxt("d_uc.out", d_uc.numpy().reshape((hidden_feats, hidden_feats)))
-    #         np.savetxt("d_bf.out", d_bf.numpy().reshape((hidden_feats, )))
-    #         np.savetxt("d_bi.out", d_bi.numpy().reshape((hidden_feats, )))
-    #         np.savetxt("d_bo.out", d_bo.numpy().reshape((hidden_feats, )))
-    #         np.savetxt("d_bc.out", d_bc.numpy().reshape((hidden_feats, )))
-    # ir_dev.sync()
-    # t0 = time.time()
-    # for i in range(test_num):
-    #     backward(x, y, wi, ui, bi, wf, uf, bf, wc, uc, bc, wo, uo, bo,
-    #                  d_wi, d_ui, d_bi, d_wf, d_uf, d_bf, d_wc, d_uc, d_bc, d_wo, d_uo, d_bo, d_x, d_y)
-    # ir_dev.sync()
-    # t1 = time.time()
-    #
-    # print(f"Backward Time = {(t1 - t0) / test_num * 1000} ms")
+    print(f"Forward Time = {(t1 - t0) / test_num * 1000} ms")
+    '''
+    for i in range(warmup_num):
+        backward(x, y, w, u, b, d_w, d_u, d_b, d_x, d_y)
+        if i == 0:
+            np.savetxt("d_x.out", d_x.numpy().reshape((length, in_feats)))
+            np.savetxt("d_wf.out", d_w.numpy().reshape((4, in_feats, hidden_feats))[0].transpose())
+            np.savetxt("d_wi.out", d_w.numpy().reshape((4, in_feats, hidden_feats))[1].transpose())
+            np.savetxt("d_wo.out", d_w.numpy().reshape((4, in_feats, hidden_feats))[2].transpose())
+            np.savetxt("d_wc.out", d_w.numpy().reshape((4, in_feats, hidden_feats))[3].transpose())
+            np.savetxt("d_uf.out", d_u.numpy().reshape((4, hidden_feats, hidden_feats))[0].transpose())
+            np.savetxt("d_ui.out", d_u.numpy().reshape((4, hidden_feats, hidden_feats))[1].transpose())
+            np.savetxt("d_uo.out", d_u.numpy().reshape((4, hidden_feats, hidden_feats))[2].transpose())
+            np.savetxt("d_uc.out", d_u.numpy().reshape((4, hidden_feats, hidden_feats))[3].transpose())
+            np.savetxt("d_bf.out", d_b.numpy().reshape((4, hidden_feats, ))[0])
+            np.savetxt("d_bi.out", d_b.numpy().reshape((4, hidden_feats, ))[1])
+            np.savetxt("d_bo.out", d_b.numpy().reshape((4, hidden_feats, ))[2])
+            np.savetxt("d_bc.out", d_b.numpy().reshape((4, hidden_feats, ))[3])
+    ir_dev.sync()
+    t0 = time.time()
+    for i in range(test_num):
+        backward(x, y, w, u, b, d_w, d_u, d_b, d_x, d_y)
+    ir_dev.sync()
+    t1 = time.time()
+
+    print(f"Backward Time = {(t1 - t0) / test_num * 1000} ms")

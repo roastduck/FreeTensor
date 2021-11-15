@@ -60,6 +60,8 @@ if __name__ == '__main__':
     # c = torch.zeros(n_layers, batch_size, hidden_feats)
     lstm_layer = nn.LSTM(in_feats, hidden_feats, n_layers, batch_first=True)
 
+    with torch.no_grad():
+        lstm_nograd = nn.LSTM(in_feats, hidden_feats, n_layers, batch_first=True).cuda()
     if device == 'gpu':
         x = x.cuda()
         wi = wi.cuda()
@@ -78,6 +80,7 @@ if __name__ == '__main__':
         h = h.cuda()
         c = c.cuda()
         lstm_layer = lstm_layer.cuda()
+        lstm_nograd = lstm_nograd.cuda()
         sync = torch.cuda.synchronize
     else:
         assert device == 'cpu'
@@ -88,8 +91,6 @@ if __name__ == '__main__':
 # with torch.eval():
 #     xxx
 #     torch.no_grad()
-    with torch.no_grad():
-        lstm_nograd = nn.LSTM(in_feats, hidden_feats, n_layers, batch_first=True).cuda()
     for i in range(warmup_num):
         y = lstm(x, wi, ui, bi, wf, uf, bf, wc, uc, bc, wo, uo, bo, h, c)
         # with torch.no_grad():
@@ -108,7 +109,6 @@ if __name__ == '__main__':
     t1 = time.time()
     assert y.shape == (hidden_feats, )
     print(f"Pytorch Inference Time = {(t1 - t0) / test_num * 1000} ms")
-'''
     x.requires_grad = True
     wi.requires_grad = True
     wc.requires_grad = True
@@ -123,13 +123,13 @@ if __name__ == '__main__':
     bf.requires_grad = True
     bo.requires_grad = True
     for i in range(warmup_num):
-        #y = lstm(x, wi, ui, bi, wf, uf, bf, wc, uc, bc, wo, uo, bo, h, c)
-        y = nn_lstm(x, lstm_layer, h, c)
+        y = lstm(x, wi, ui, bi, wf, uf, bf, wc, uc, bc, wo, uo, bo, h, c)
+        #y = nn_lstm(x, lstm_layer, h, c)
     sync()
     t0 = time.time()
     for i in range(test_num):
-        #y = lstm(x, wi, ui, bi, wf, uf, bf, wc, uc, bc, wo, uo, bo, h, c)
-        y = nn_lstm(x, lstm_layer, h, c)
+        y = lstm(x, wi, ui, bi, wf, uf, bf, wc, uc, bc, wo, uo, bo, h, c)
+        #y = nn_lstm(x, lstm_layer, h, c)
     sync()
     t1 = time.time()
     assert y.shape == (hidden_feats,)
@@ -138,7 +138,6 @@ if __name__ == '__main__':
     for i in range(warmup_num):
         y.backward(d_y, retain_graph=True)
         if i == 0:
-            ''''''
             np.savetxt("d_x.out", x.grad.cpu().numpy())
             np.savetxt("d_wi.out", wi.grad.cpu().numpy())
             np.savetxt("d_wc.out", wc.grad.cpu().numpy())
@@ -152,7 +151,6 @@ if __name__ == '__main__':
             np.savetxt("d_bc.out", bc.grad.cpu().numpy())
             np.savetxt("d_bf.out", bf.grad.cpu().numpy())
             np.savetxt("d_bo.out", bo.grad.cpu().numpy())
-            ''''''
     sync()
     t0 = time.time()
     for i in range(test_num):
@@ -160,4 +158,3 @@ if __name__ == '__main__':
     sync()
     t1 = time.time()
     print(f"Pytorch Backward Time = {(t1 - t0) / test_num * 1000} ms")
-'''
