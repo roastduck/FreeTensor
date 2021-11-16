@@ -87,7 +87,7 @@ if __name__ == '__main__':
         sync = lambda: None
 
     warmup_num = 10
-    test_num = 1000
+    test_num = 10
 # with torch.eval():
 #     xxx
 #     torch.no_grad()

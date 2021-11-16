@@ -54,29 +54,13 @@ def compile_all(in_feats, hidden_feats, length, device):
         ir.declare_var(x, (length, in_feats), "float32", "input", mtype)
         ir.declare_var(y, (hidden_feats, ), "float32", "output", mtype)
         ir.declare_var(w, (4, in_feats, hidden_feats), "float32", "input", mtype)
-        # ir.declare_var(wi, (in_feats, hidden_feats), "float32", "input", mtype)
-        # ir.declare_var(wo, (in_feats, hidden_feats), "float32", "input", mtype)
-        # ir.declare_var(wc, (in_feats, hidden_feats), "float32", "input", mtype)
         ir.declare_var(u, (4, hidden_feats, hidden_feats), "float32", "input", mtype)
-        # ir.declare_var(ui, (hidden_feats, hidden_feats), "float32", "input", mtype)
-        # ir.declare_var(uo, (hidden_feats, hidden_feats), "float32", "input", mtype)
-        # ir.declare_var(uc, (hidden_feats, hidden_feats), "float32", "input", mtype)
         ir.declare_var(b, (4, hidden_feats, ), "float32", "input", mtype)
-        # ir.declare_var(bi, (hidden_feats, ), "float32", "input", mtype)
-        # ir.declare_var(bo, (hidden_feats, ), "float32", "input", mtype)
-        # ir.declare_var(bc, (hidden_feats, ), "float32", "input", mtype)
         h = zeros((hidden_feats, ), "float32", mtype)()
         c = zeros((hidden_feats, ), "float32", mtype)()
         f = zeros((4, hidden_feats, ), "float32", mtype)()
-        # for i in range(hidden_feats):
-        #     h[i] = 0.5
-        #     c[i] = 0.5
         "nid: K"
         for k in range(length):
-            # i = zeros((hidden_feats, ), "float32", mtype)()
-            # o = zeros((hidden_feats, ), "float32", mtype)()
-            # cc = zeros((hidden_feats, ), "float32", mtype)()
-            #
             'nid: m_in'
             for m in range(4):
                 'nid: l_in'
@@ -97,29 +81,14 @@ def compile_all(in_feats, hidden_feats, length, device):
                 'nid: l_b'
                 for l in range(hidden_feats):
                     f[m][l] += b[m][l]
-                # assign(f[l], sigmoid(f[l]))
-                # assign(i[l], sigmoid(i[l]))
-                # assign(o[l], sigmoid(o[l]))
-                # assign(cc[l], tanh(cc[l]))
-                # c[l] = sigmoid(f[l]) * c[l] + i[l] * cc[l]
-                # assign(h[l], mul(o[l], tanh(c[l])))
             "nid: ch"
             for l in range(hidden_feats):
                 c[l] = ir.sigmoid(f[0][l]) * c[l] + ir.sigmoid(f[1][l]) * ir.tanh(f[3][l])
                 h[l] = ir.sigmoid(f[2][l]) * ir.tanh(c[l])
-                # assign(h[l], mul(sigmoid(f[2][l]), tanh(c[l])))
-            # assign(c, add(mul(sigmoid(f[0]), c), mul(sigmoid(f[1]), tanh(f[3]))))
-            # f = sigmoid(add(add(matmul(wf, x[k]), matmul(uf, h)), bf))
-            # i = sigmoid(add(add(matmul(wi, x[k]), matmul(ui, h)), bi))
-            # o = sigmoid(add(add(matmul(wo, x[k]), matmul(uo, h)), bo))
-            # cc = tanh(add(add(matmul(wc, x[k]), matmul(uc, h)), bc))
-            # assign(c, add(mul(f, c), mul(i, cc)))
-            # assign(h, mul(o, tanh(c)))
-
         assign(y, h)
 
     forward, backward, requires, provides, _ = ir.grad(
-        inference, {"x", "w", "u", "b"}, {"y"}, ir.GradTapeMode.All)
+        inference, {"x", "w", "u", "b"}, {"y"})
 
     print("# Inference:")
     print(inference)
@@ -170,10 +139,10 @@ def compile_all(in_feats, hidden_feats, length, device):
     print(backward)
     s = ir.Schedule(backward)
     print(s.ast())
-    # s.auto_use_lib(device.target())
-    # s.auto_fuse(device.target())
-    # print(s.ast())
     '''
+    s.auto_use_lib(device.target())
+    s.auto_fuse(device.target())
+    print(s.ast())
     s.parallelize("#133", "threadIdx.y")
     s.parallelize("#132", "threadIdx.x")
     s.parallelize("#128", "blockIdx.x")
@@ -197,9 +166,9 @@ def compile_all(in_feats, hidden_feats, length, device):
     s.parallelize("#10:recur:recur:L_elem", "threadIdx.x")
     s.parallelize("#10:recur:L_elem", "threadIdx.y")
     s.parallelize("fused.#6:recur:L_elem.#2:recur:L_elem", "threadIdx.x")
+    s.auto_set_mem_type(device.target())
+    s.auto_unroll(device.target())
     '''
-    # s.auto_set_mem_type(device.target())
-    # s.auto_unroll(device.target())
     f = ir.lower(s.func(), device.target())
     print(f)
     code = ir.codegen(f, device.target())
@@ -283,8 +252,7 @@ if __name__ == '__main__':
 
     inference, forward, backward = compile_all(in_feats, hidden_feats, length, ir_dev)
     warmup_num = 10
-    test_num = 1000
-    '''
+    test_num = 10
     for i in range(warmup_num):
         inference(x, y, w, u, b)
         if i == 0:
@@ -313,7 +281,6 @@ if __name__ == '__main__':
     t1 = time.time()
 
     print(f"Forward Time = {(t1 - t0) / test_num * 1000} ms")
-    '''
     for i in range(warmup_num):
         backward(x, y, w, u, b, d_w, d_u, d_b, d_x, d_y)
         if i == 0:
