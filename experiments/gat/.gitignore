@@ -1,2 +1,4 @@
+*.in
+*.out
 /data
 /data.zip
