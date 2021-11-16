@@ -70,6 +70,12 @@ void CodeGenCUDA::visit(const Exp &op) {
     os() << ")";
 }
 
+void CodeGenCUDA::visit(const Tanh &op) {
+    os() << "runtime_tanh("; // Defined in runtime/gpu_runtime.h
+    (*this)(op->expr_);
+    os() << ")";
+}
+
 void CodeGenCUDA::visit(const Abs &op) {
     os() << "runtime_abs("; // Defined in runtime/gpu_runtime.h
     (*this)(op->expr_);

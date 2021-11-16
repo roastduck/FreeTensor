@@ -24,6 +24,7 @@ from .nodes import (
     exp,
     square,
     sigmoid,
+    tanh,
     floor,
     ceil,
     cast,

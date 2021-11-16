@@ -448,6 +448,15 @@ void GradExpr::visit(const Sigmoid &op) {
     Visitor::visit(op);
 }
 
+void GradExpr::visit(const Tanh &op) {
+    if (gradExprs_.count(op)) {
+        gradExprs_[op->expr_] =
+            makeMul(gradExprs_.at(op),
+                    makeSub(makeIntConst(1), makeSquare(useForwardVal(op))));
+    }
+    Visitor::visit(op);
+}
+
 void GradExpr::visit(const Abs &op) {
     if (gradExprs_.count(op)) {
         gradExprs_[op->expr_] = makeIfExpr(

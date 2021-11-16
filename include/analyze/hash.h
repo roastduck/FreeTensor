@@ -80,6 +80,7 @@ class GetHash : public Visitor {
     void visit(const Exp &op) override;
     void visit(const Square &op) override;
     void visit(const Sigmoid &op) override;
+    void visit(const Tanh &op) override;
     void visit(const Abs &op) override;
     void visit(const Floor &op) override;
     void visit(const Ceil &op) override;

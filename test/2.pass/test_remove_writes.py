@@ -404,3 +404,31 @@ def test_cross_var_def():
     std = ir.pop_ast()
 
     assert std.match(ast)
+
+
+def test_same_parent_but_dep_and_circular_dependency_on_init():
+    with ir.VarDef([("f", (10,), "float32", "output", "cpu"),
+                    ("u", (10,), "float32", "cache", "cpu")]) as (f, u):
+        with ir.For("l", 0, 10) as l:
+            with ir.For("j", 0, 10) as j:
+                f[j] = 0
+                with ir.For("k", 0, 10) as k:
+                    f[j] += u[j]
+                    f[j] += 1
+                u[j] = f[j]
+    ast = ir.pop_ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([("f", (10,), "float32", "output", "cpu"),
+                    ("u", (10,), "float32", "cache", "cpu")]) as (f, u):
+        with ir.For("l", 0, 10) as l:
+            with ir.For("j", 0, 10) as j:
+                f[j] = 0
+                with ir.For("k", 0, 10) as k:
+                    f[j] += u[j] + 1
+                u[j] = f[j]
+    std = ir.make_reduction(ir.pop_ast())
+
+    assert std.match(ast)

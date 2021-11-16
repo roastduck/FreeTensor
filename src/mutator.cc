@@ -40,6 +40,7 @@ Expr Mutator::operator()(const Expr &op) {
         DISPATCH_EXPR_CASE(Exp);
         DISPATCH_EXPR_CASE(Square);
         DISPATCH_EXPR_CASE(Sigmoid);
+        DISPATCH_EXPR_CASE(Tanh);
         DISPATCH_EXPR_CASE(Abs);
         DISPATCH_EXPR_CASE(Floor);
         DISPATCH_EXPR_CASE(Ceil);

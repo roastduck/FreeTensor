@@ -353,6 +353,12 @@ void PrintVisitor::visit(const Sigmoid &op) {
     os() << ")";
 }
 
+void PrintVisitor::visit(const Tanh &op) {
+    os() << "tanh(";
+    recur(op->expr_);
+    os() << ")";
+}
+
 void PrintVisitor::visit(const Abs &op) {
     os() << "abs(";
     recur(op->expr_);

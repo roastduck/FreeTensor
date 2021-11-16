@@ -47,6 +47,7 @@ std::string toString(ASTNodeType type) {
         DISPATCH(Exp);
         DISPATCH(Square);
         DISPATCH(Sigmoid);
+        DISPATCH(Tanh);
         DISPATCH(Abs);
         DISPATCH(Floor);
         DISPATCH(Ceil);

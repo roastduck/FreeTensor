@@ -195,9 +195,7 @@ Stmt removeWrites(const Stmt &_op, const std::string &singleDefId) {
         if (!singleDefId.empty() && later.def_->id() != singleDefId) {
             return false;
         }
-        return later.op_->nodeType() == ASTNodeType::ReduceTo &&
-               (!selfDependentReduces.count(later.op_.as<StmtNode>()) ||
-                sameParent(later.cursor_, earlier.cursor_));
+        return later.op_->nodeType() == ASTNodeType::ReduceTo;
     };
     auto foundOverwriteStore = [&](const Dependency &d) {
         overwrites.emplace(d.later().as<StmtNode>(),
@@ -205,7 +203,9 @@ Stmt removeWrites(const Stmt &_op, const std::string &singleDefId) {
         suspect.insert(d.def());
     };
     auto foundOverwriteReduce = [&](const Dependency &d) {
-        if (d.later() != d.earlier()) {
+        if (d.later() != d.earlier() &&
+            (!selfDependentReduces.count(d.later().as<StmtNode>()) ||
+             sameParent(d.later_.cursor_, d.earlier_.cursor_))) {
             if (d.earlier()->nodeType() == ASTNodeType::Store &&
                 isConst(d.earlier().as<StoreNode>()->expr_)) {
                 overwrites.emplace(d.later().as<StmtNode>(),
@@ -229,11 +229,13 @@ Stmt removeWrites(const Stmt &_op, const std::string &singleDefId) {
     };
     auto foundUse = [&](const Dependency &d) {
         if (d.later()->nodeType() != ASTNodeType::Store &&
-            d.earlier()->nodeType() != ASTNodeType::Load) {
+            d.earlier()->nodeType() != ASTNodeType::Load &&
+            d.earlier() != d.later()) {
             usesRAW.emplace(d.later(), d.earlier().as<StmtNode>());
         }
         if (d.earlier()->nodeType() != ASTNodeType::Store &&
-            d.later()->nodeType() != ASTNodeType::Load) {
+            d.later()->nodeType() != ASTNodeType::Load &&
+            d.earlier() != d.later()) {
             usesWAR.emplace(d.later().as<StmtNode>(), d.earlier());
         }
     };

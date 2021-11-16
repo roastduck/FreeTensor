@@ -213,6 +213,9 @@ class InlineFunction:
         self.lineno = lineno
         self.file = file
 
+        # Fall back to op-based manner if run from outside of a compiled region
+        self.fallback = None
+
     def set_arg_var(self, arg_var):
         self.arg_var = arg_var
 
@@ -226,6 +229,16 @@ class InlineFunction:
             transformer.visit(stmt)
         ctx_stack.pop_transformer()
         return transformer.returns
+
+    def set_fallback(self, fallback):
+        self.fallback = fallback
+
+    def __call__(self, *args, **kvs):
+        if self.fallback is None:
+            raise ffi.InvalidProgram(
+                "A fallback function should be specified is you want to "
+                "directly run a InlineFunction without compilation")
+        return self.fallback(*args, **kvs)
 
 
 class ASTTransformer(ast.NodeTransformer):
