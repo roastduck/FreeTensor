@@ -179,3 +179,24 @@ def test_outer_loop_too_short():
     print(s.ast())
     print(s.logs())
     assert s.logs() == ["parallelize(Lj1, openmp)", "parallelize(Lj2, openmp)"]
+
+
+def test_outer_loop_not_parallelizable():
+    with ir.VarDef([("x", (100,), "float32", "inout", "cpu"),
+                    ("w", (100, 100), "float32", "input", "cpu")]) as (x, w):
+        with ir.For("p", 0, 1000, nid="Lp") as p:
+            with ir.VarDef("y", (100,), "float32", "cache", "cpu") as y:
+                with ir.For("i", 0, 100, nid="Li0") as i:
+                    y[i] = 0
+                    with ir.For("j", 0, 100, nid="Lj") as j:
+                        y[i] += x[j] * w[i, j]
+                with ir.For("i", 0, 100, nid="Li1") as i:
+                    x[i] = y[i]
+
+    ast = ir.pop_ast()
+    print(ast)
+    s = ir.Schedule(ast)
+    s.auto_parallelize(ir.CPU())
+    print(s.ast())
+    print(s.logs())
+    assert s.logs() == ["parallelize(Li0, openmp)", "parallelize(Li1, openmp)"]

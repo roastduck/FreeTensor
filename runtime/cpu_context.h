@@ -6,7 +6,9 @@
 #include <iostream>
 #include <sys/resource.h> // rlimit
 
-class CPUContext {
+#include "context.h"
+
+class CPUContext : public Context {
     int64_t curStackSize_ = 0;
 
   public:

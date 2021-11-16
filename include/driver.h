@@ -24,9 +24,7 @@ class Driver {
     std::unordered_map<std::string, size_t> name2param_;
     Device dev_;
 
-    CPUContext cpuCtx_;
-    GPUContext gpuCtx_;
-    void *curCtx_ = nullptr;
+    Context *ctx_ = nullptr;
 
   private:
     void buildAndLoad();
@@ -41,6 +39,9 @@ class Driver {
             }
         }
         unload();
+        if (ctx_ != nullptr) {
+            delete ctx_;
+        }
     }
 
     Driver(const Driver &) = delete;

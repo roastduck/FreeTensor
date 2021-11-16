@@ -530,119 +530,135 @@ void Schedule::autoParallelize(const Target &target) {
     }
 
     // Try to merge and parallelize as many outer loops as possible
-    auto autoParallelizeOuter = [&](const Ref<LoopNest> &root) {
-        auto latestSuccess = ast_;
-        auto successLogs = logs_;
+    std::function<void(const Ref<LoopNest> &)> autoParallelizeOuter =
+        [&](const Ref<LoopNest> &root) {
+            auto latestSuccess = ast_;
+            auto successLogs = logs_;
 
-        try {
-            Ref<LoopNest> loop = root;
+            bool atLeastOne = false; // if at least one loop is parallelized
+            try {
+                Ref<LoopNest> loop = root;
 
-            bool parentIsWarp = false;
-            while (!loop->loop_->property_.parallel_.empty() &&
-                   loop->subLoops_.size() == 1) {
-                loop = loop->subLoops_.front();
-                parentIsWarp = true;
-            }
-
-            std::string loopId, outerId;
-            while (true) {
-                loopId = loop->loop_->id();
-                if (!find(loopId)
-                         .node()
-                         .as<ForNode>()
-                         ->property_.parallel_.empty()) {
-                    break;
-                }
-                if (!outerId.empty()) {
-                    loopId = merge(outerId, loopId);
-                }
-
-                auto bak = ast_;
-                auto logBak = logs_;
-                switch (target.type()) {
-                case TargetType::CPU:
-                    parallelize(loopId, "openmp");
-                    break;
-
-                case TargetType::GPU: {
-                    auto loop = find(loopId);
-                    auto isParallelLoop = [](const Cursor &c) {
-                        return c.nodeType() == ASTNodeType::For &&
-                               !c.node()
-                                    .as<ForNode>()
-                                    ->property_.parallel_.empty();
-                    };
-                    bool childIsWarp =
-                        !getCursorByFilter(loop.node(), isParallelLoop).empty();
-                    // We guarantee the following requirements in order:
-                    // 1. make sure all SMs are used
-                    // 2. if there are enough threads, make sure blockDim is not
-                    // too large
-                    // If the loop length is constant, we split it only once, to
-                    // reduce redundant guards, and save time for dependency
-                    // analysis. If not, we split it twice, and merge once
-                    int numSM = 80;
-                    int maxThreads = (!parentIsWarp && !childIsWarp) ? 256 : 8;
-                    // TODO: do not hard-code these numbers
-                    std::string l1, l1b, l2;
-                    if (auto loopNode = loop.node().as<ForNode>();
-                        loopNode->len_->nodeType() == ASTNodeType::IntConst) {
-                        auto len = loopNode->len_.as<IntConstNode>()->val_;
-                        if (len < numSM * maxThreads) {
-                            std::tie(l1, l2) = split(loopId, -1, numSM);
-                        } else {
-                            std::tie(l1, l2) = split(loopId, maxThreads);
-                        }
-                    } else {
-                        // We don't use the `nparts` mode of `split`, because it
-                        // will hinder dependency analysis. Instead, we use the
-                        // `factor` mode and then reorder. See the doc string of
-                        // `split` for details
-                        std::tie(l2, l1) = split(loopId, numSM);
-                        reorder({l1, l2});
-                        if (!findAll(l2).empty()) {
-                            std::tie(l1b, l2) = split(l2, maxThreads);
-                        }
-                    }
-                    if (!findAll(l1).empty()) {
-                        if (!l1b.empty() && !findAll(l1b).empty()) {
-                            // We are unable to fuse `l1` and `l1b` back to one
-                            // loop. Because the length of `l1b` is not a
-                            // constant, a division by this length will be
-                            // introduced, which is not supported by ISL and may
-                            // probably lead to false dependencies
-                            parallelize(l1, "blockIdx.y");
-                            parallelize(l1b, "blockIdx.x");
-                        } else {
-                            parallelize(l1, "blockIdx.x");
-                        }
-                    }
-                    if (!findAll(l2).empty()) {
-                        parallelize(l2, (!parentIsWarp && !childIsWarp)
-                                            ? "threadIdx.x"
-                                            : "threadIdx.y");
-                    }
-                    break;
-                }
-                default:
-                    ASSERT(false);
-                }
-                latestSuccess = ast_, successLogs = logs_;
-                ast_ = std::move(bak), logs_ = std::move(logBak);
-
-                if (loop->subLoops_.size() == 1) {
-                    outerId = loopId;
+                bool parentIsWarp = false;
+                while (!loop->loop_->property_.parallel_.empty() &&
+                       loop->subLoops_.size() == 1) {
                     loop = loop->subLoops_.front();
-                } else {
-                    break;
+                    parentIsWarp = true;
+                }
+
+                std::string loopId, outerId;
+                while (true) {
+                    loopId = loop->loop_->id();
+                    if (!find(loopId)
+                             .node()
+                             .as<ForNode>()
+                             ->property_.parallel_.empty()) {
+                        break;
+                    }
+                    if (!outerId.empty()) {
+                        loopId = merge(outerId, loopId);
+                    }
+
+                    auto bak = ast_;
+                    auto logBak = logs_;
+                    switch (target.type()) {
+                    case TargetType::CPU:
+                        parallelize(loopId, "openmp");
+                        atLeastOne = true;
+                        break;
+
+                    case TargetType::GPU: {
+                        auto loop = find(loopId);
+                        auto isParallelLoop = [](const Cursor &c) {
+                            return c.nodeType() == ASTNodeType::For &&
+                                   !c.node()
+                                        .as<ForNode>()
+                                        ->property_.parallel_.empty();
+                        };
+                        bool childIsWarp =
+                            !getCursorByFilter(loop.node(), isParallelLoop)
+                                 .empty();
+                        // We guarantee the following requirements in order:
+                        // 1. make sure all SMs are used
+                        // 2. if there are enough threads, make sure blockDim is
+                        // not too large If the loop length is constant, we
+                        // split it only once, to reduce redundant guards, and
+                        // save time for dependency analysis. If not, we split
+                        // it twice, and merge once
+                        int numSM = 80;
+                        int maxThreads =
+                            (!parentIsWarp && !childIsWarp) ? 256 : 8;
+                        // TODO: do not hard-code these numbers
+                        std::string l1, l1b, l2;
+                        if (auto loopNode = loop.node().as<ForNode>();
+                            loopNode->len_->nodeType() ==
+                            ASTNodeType::IntConst) {
+                            auto len = loopNode->len_.as<IntConstNode>()->val_;
+                            if (len < numSM * maxThreads) {
+                                std::tie(l1, l2) = split(loopId, -1, numSM);
+                            } else {
+                                std::tie(l1, l2) = split(loopId, maxThreads);
+                            }
+                        } else {
+                            // We don't use the `nparts` mode of `split`,
+                            // because it will hinder dependency analysis.
+                            // Instead, we use the `factor` mode and then
+                            // reorder. See the doc string of `split` for
+                            // details
+                            std::tie(l2, l1) = split(loopId, numSM);
+                            reorder({l1, l2});
+                            if (!findAll(l2).empty()) {
+                                std::tie(l1b, l2) = split(l2, maxThreads);
+                            }
+                        }
+                        if (!findAll(l1).empty()) {
+                            if (!l1b.empty() && !findAll(l1b).empty()) {
+                                // We are unable to fuse `l1` and `l1b` back to
+                                // one loop. Because the length of `l1b` is not
+                                // a constant, a division by this length will be
+                                // introduced, which is not supported by ISL and
+                                // may probably lead to false dependencies
+                                parallelize(l1, "blockIdx.y");
+                                atLeastOne = true;
+                                parallelize(l1b, "blockIdx.x");
+                            } else {
+                                parallelize(l1, "blockIdx.x");
+                                atLeastOne = true;
+                            }
+                        }
+                        if (!findAll(l2).empty()) {
+                            parallelize(l2, (!parentIsWarp && !childIsWarp)
+                                                ? "threadIdx.x"
+                                                : "threadIdx.y");
+                            atLeastOne = true;
+                        }
+                        break;
+                    }
+                    default:
+                        ASSERT(false);
+                    }
+                    latestSuccess = ast_, successLogs = logs_;
+                    ast_ = std::move(bak), logs_ = std::move(logBak);
+
+                    if (loop->subLoops_.size() == 1) {
+                        outerId = loopId;
+                        loop = loop->subLoops_.front();
+                    } else {
+                        break;
+                    }
+                }
+            } catch (InvalidSchedule &e) {
+                // do nothing
+            }
+
+            ast_ = latestSuccess, logs_ = successLogs;
+
+            if (!atLeastOne) {
+                for (auto &&subLoop : root->subLoops_) {
+                    autoParallelizeOuter(subLoop);
                 }
             }
-        } catch (InvalidSchedule &e) {
-            // do nothing
-        }
-
-        ast_ = latestSuccess, logs_ = successLogs;
-    };
+        };
     auto loopNestTree = getLoopNestTree(ast_);
     for (const Ref<LoopNest> &root : loopNestTree->subLoops_) {
         // If the outer most loop is too short, we try the second outer loops
