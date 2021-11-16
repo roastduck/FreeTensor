@@ -10,17 +10,31 @@ import tvm.testing
 import tvm.auto_scheduler as auto_scheduler
 from tvm.autotvm.tuner import XGBTuner
 from tvm import autotvm
+import sys
+from datetime import datetime
 import logging
+# Enable debug logs
 logging.basicConfig()
 logging.getLogger().setLevel(logging.DEBUG)
 
 ######################################################################
 # Define Neural Network in Relay
 
-# target_name = 'llvm -libs=mkl'
-target_name = 'cuda -libs=cublas'
+if len(sys.argv) != 2:
+    print(f"Usage: {sys.argv[0]} <cpu/gpu>")
+    exit(-1)
+if sys.argv[1]=='cpu':
+    target_name = 'llvm -libs=mkl -mcpu=core-avx2'
+elif sys.argv[1]=='gpu':
+    target_name = 'cuda -libs=cublas'
+else:
+    assert(False)
+
+tuning_rounds=1000
 target = tvm.target.Target(target_name)
 dtype, itype = 'float32', 'int32'
+time_now = datetime.now().strftime('%Y-%m-%d.%H-%M-%S')
+log_file=f'ansor.{sys.argv[1]}.{time_now}.json'
 
 d_adj = np.loadtxt("../adj.in", dtype=np.int32)
 n_faces, in_feats, out_feats = d_adj.shape[0], 13, 64
@@ -61,7 +75,7 @@ args = relay.analysis.free_vars(y)
 net = relay.Function(args, y)
 mod = tvm.IRModule.from_expr(net)
 mod = relay.transform.InferType()(mod)
-print(mod.astext(show_meta_data=False))
+# print(mod.astext(show_meta_data=False))
 
 ######################################################################
 # Compilation
@@ -91,7 +105,7 @@ else:
 ################################################################################
 # Tune the model
 
-if True:
+if False:
     number = 10
     repeat = 1
     min_repeat_ms = 0  # since we're tuning on a CPU, can be set to 0
@@ -143,19 +157,17 @@ if True:
     dev = tvm.device(str(target), 0)
     module = graph_executor.GraphModule(lib["default"](dev))
 
-# buggy Ansor
-if False:
+if True:
     tasks, task_weights = auto_scheduler.extract_tasks(
         mod["main"], params, target, include_simple_tasks=True)
-    print(tasks)
-    log_file='ansor.json'
-    measure_ctx = auto_scheduler.LocalRPCMeasureContext(
-        number=5, repeat=1, min_repeat_ms=1000, timeout=120)
     tuner = auto_scheduler.TaskScheduler(tasks, task_weights)
-    tune_option = auto_scheduler.TuningOptions(num_measure_trials=2000,
-                                               runner=measure_ctx.runner,
-                                               measure_callbacks=[
-                                                   auto_scheduler.RecordToFile(log_file)],)
+    print('#Tuning trials', tuning_rounds*len(tasks))
+    print(task_weights)
+    tune_option = auto_scheduler.TuningOptions(
+        num_measure_trials=tuning_rounds*len(tasks),
+        measure_callbacks=[auto_scheduler.RecordToFile(log_file)],
+        verbose=2,
+    )
     tuner.tune(tune_option)
     with auto_scheduler.ApplyHistoryBest(log_file):
         with tvm.transform.PassContext(opt_level=3, config={"relay.backend.use_auto_scheduler": True}):
