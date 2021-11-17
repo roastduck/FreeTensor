@@ -5,15 +5,19 @@ import torch
 import torch.nn as nn
 import torch._VF as vf
 
+
 def nn_lstm(x, lstm_layer, h, c):
     hidden = (h, c)
     out, hidden = lstm_layer(x, hidden)
     out = out.squeeze()[-1, :]
     return out
 
-def lstm(x, wi, ui, bi, wf, uf, bf, wc, uc, bc, wo, uo, bo, h, c):
+
+def lstm(x, wi, ui, bi, wf, uf, bf, wc, uc, bc, wo, uo, bo):
     length = x.shape[0]
 
+    h = torch.zeros(hidden_feats,)
+    c = torch.zeros(hidden_feats,)
     for k in range(length):
         f = torch.sigmoid(wf @ x[k] + uf @ h + bf)
         i = torch.sigmoid(wi @ x[k] + ui @ h + bi)
@@ -55,13 +59,14 @@ if __name__ == '__main__':
     # h = torch.zeros(n_layers, batch_size, hidden_feats)
     # x = x.reshape((1, length, in_feats))
     # c = torch.zeros(n_layers, batch_size, hidden_feats)
-    h = torch.zeros(hidden_feats,)
-    c = torch.zeros(hidden_feats,)
     # c = torch.zeros(n_layers, batch_size, hidden_feats)
     lstm_layer = nn.LSTM(in_feats, hidden_feats, n_layers, batch_first=True)
 
     with torch.no_grad():
-        lstm_nograd = nn.LSTM(in_feats, hidden_feats, n_layers, batch_first=True).cuda()
+        lstm_nograd = nn.LSTM(in_feats,
+                              hidden_feats,
+                              n_layers,
+                              batch_first=True).cuda()
     if device == 'gpu':
         x = x.cuda()
         wi = wi.cuda()
@@ -88,11 +93,11 @@ if __name__ == '__main__':
 
     warmup_num = 10
     test_num = 10
-# with torch.eval():
-#     xxx
-#     torch.no_grad()
+    # with torch.eval():
+    #     xxx
+    #     torch.no_grad()
     for i in range(warmup_num):
-        y = lstm(x, wi, ui, bi, wf, uf, bf, wc, uc, bc, wo, uo, bo, h, c)
+        y = lstm(x, wi, ui, bi, wf, uf, bf, wc, uc, bc, wo, uo, bo)
         # with torch.no_grad():
         #     y = nn_lstm(x, lstm_nograd, h, c)
 
@@ -102,12 +107,12 @@ if __name__ == '__main__':
     sync()
     t0 = time.time()
     for i in range(test_num):
-        y = lstm(x, wi, ui, bi, wf, uf, bf, wc, uc, bc, wo, uo, bo, h, c)
+        y = lstm(x, wi, ui, bi, wf, uf, bf, wc, uc, bc, wo, uo, bo)
         # with torch.no_grad():
         #     y = nn_lstm(x, lstm_nograd, h, c)
     sync()
     t1 = time.time()
-    assert y.shape == (hidden_feats, )
+    assert y.shape == (hidden_feats,)
     print(f"Pytorch Inference Time = {(t1 - t0) / test_num * 1000} ms")
     x.requires_grad = True
     wi.requires_grad = True
@@ -123,12 +128,12 @@ if __name__ == '__main__':
     bf.requires_grad = True
     bo.requires_grad = True
     for i in range(warmup_num):
-        y = lstm(x, wi, ui, bi, wf, uf, bf, wc, uc, bc, wo, uo, bo, h, c)
+        y = lstm(x, wi, ui, bi, wf, uf, bf, wc, uc, bc, wo, uo, bo)
         #y = nn_lstm(x, lstm_layer, h, c)
     sync()
     t0 = time.time()
     for i in range(test_num):
-        y = lstm(x, wi, ui, bi, wf, uf, bf, wc, uc, bc, wo, uo, bo, h, c)
+        y = lstm(x, wi, ui, bi, wf, uf, bf, wc, uc, bc, wo, uo, bo)
         #y = nn_lstm(x, lstm_layer, h, c)
     sync()
     t1 = time.time()

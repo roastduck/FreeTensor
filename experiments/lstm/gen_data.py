@@ -1,25 +1,37 @@
 import numpy as np
+import torch
+
 if __name__ == '__main__':
 
     length = 100
     in_feats = 4
     hidden_feats = 256
-    div = 300
 
-    x = np.random.uniform(size=(length, in_feats)).astype("float32")
-    wf = np.random.uniform(size=(hidden_feats, in_feats)).astype("float32") / div
-    wi = np.random.uniform(size=(hidden_feats, in_feats)).astype("float32") / div
-    wo = np.random.uniform(size=(hidden_feats, in_feats)).astype("float32") / div
-    wc = np.random.uniform(size=(hidden_feats, in_feats)).astype("float32") / div
-    uf = np.random.uniform(size=(hidden_feats, hidden_feats)).astype("float32") / div
-    ui = np.random.uniform(size=(hidden_feats, hidden_feats)).astype("float32") / div
-    uo = np.random.uniform(size=(hidden_feats, hidden_feats)).astype("float32") / div
-    uc = np.random.uniform(size=(hidden_feats, hidden_feats)).astype("float32") / div
-    bf = np.random.uniform(size=(hidden_feats, )).astype("float32") / div
-    bi = np.random.uniform(size=(hidden_feats, )).astype("float32") / div
-    bo = np.random.uniform(size=(hidden_feats, )).astype("float32") / div
-    bc = np.random.uniform(size=(hidden_feats, )).astype("float32") / div
-    d_y = np.random.uniform(size=(hidden_feats, )).astype('float32') / div
+    # NOTE: LSTM requires special initialization for numerical stability
+
+
+    def init_weight(shape):
+        w = torch.empty(shape, dtype=torch.float)
+        torch.nn.init.xavier_uniform_(w)
+        return w.numpy()
+
+    def init_norm(shape):
+        return torch.randn(shape, dtype=torch.float).numpy()
+
+    x = init_norm((length, in_feats))
+    wf = init_weight((hidden_feats, in_feats))
+    wi = init_weight((hidden_feats, in_feats))
+    wo = init_weight((hidden_feats, in_feats))
+    wc = init_weight((hidden_feats, in_feats))
+    uf = init_weight((hidden_feats, hidden_feats))
+    ui = init_weight((hidden_feats, hidden_feats))
+    uo = init_weight((hidden_feats, hidden_feats))
+    uc = init_weight((hidden_feats, hidden_feats))
+    bf = init_norm((hidden_feats,))
+    bi = init_norm((hidden_feats,))
+    bo = init_norm((hidden_feats,))
+    bc = init_norm((hidden_feats,))
+    d_y = init_norm((hidden_feats,))
 
     np.savetxt("x.in", x)
     np.savetxt("wf.in", wf)

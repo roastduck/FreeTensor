@@ -10,11 +10,12 @@ if __name__ == '__main__':
     dir1 = sys.argv[1]
     dir2 = sys.argv[2]
 
-    for name in ['y', 'd_x', 'd_wi', 'd_wf', 'd_wo', 'd_ui', 'd_uc', 'd_uf', 'd_uo', 'd_bi', 'd_bf', 'd_bo', 'd_wc', 'd_bc']:
+    for name in [
+            'y', 'd_x', 'd_wi', 'd_wf', 'd_wo', 'd_ui', 'd_uc', 'd_uf', 'd_uo',
+            'd_bi', 'd_bf', 'd_bo', 'd_wc', 'd_bc'
+    ]:
         print(f"Comparing {name}")
         data1 = np.loadtxt(f"{dir1}/{name}.out")
         data2 = np.loadtxt(f"{dir2}/{name}.out")
-        print(data1)
-        print(data2)
         assert np.all(np.isclose(data2, data1, 1e-4, 1e-4)), f"{name} differs"
     print("All output matches")
