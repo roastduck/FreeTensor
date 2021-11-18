@@ -368,61 +368,33 @@ class AnalyzeDeps : public Visitor {
      * earlier memory accesses in `otherList`, filter them via the `filter_`
      * callback, and report then via the `found_` callback. Earlier memory
      * accesses may overwrite each other, and the overwritten ones will not
-     * result in a dependency. All visitors to memory access nodes will call
-     * `checkDep`
+     * result in a dependency. Used for RAW and WAW dependencies
      */
-    void checkDep(const Ref<AccessPoint> &point,
-                  const std::vector<Ref<AccessPoint>> &otherList);
-    void checkDepImpl(ISLCtx &isl, GenISLExprDeps &genISLExpr,
-                      const Ref<AccessPoint> &point,
-                      const std::vector<Ref<AccessPoint>> &otherList);
+    void checkDepLatestEarlier(const Ref<AccessPoint> &point,
+                               const std::vector<Ref<AccessPoint>> &otherList);
+    void
+    checkDepLatestEarlierImpl(ISLCtx &isl, GenISLExprDeps &genISLExpr,
+                              const Ref<AccessPoint> &point,
+                              const std::vector<Ref<AccessPoint>> &otherList);
 
-    template <class T> void visitStoreLike(const T &op) {
-        Visitor::visit(op);
-        auto &&point = points_.at(op);
-        auto &&defId = defId_.at(op->var_);
-        if (depType_ & DEP_WAR) {
-            // Earlier reads do not overwrite each other, but later writes do.
-            // Currently we analyze each pair of write-after-read seperately.
-            // TODO: Implement a more general `checkDep` that receives either a
-            // list of `point` or a list of `other`
-            if (reads_.count(defId)) {
-                for (auto &&read : reads_.at(defId)) {
-                    checkDep(point, {read});
-                }
-            }
-            if (writes_.count(defId)) {
-                for (auto &&write : writes_.at(defId)) {
-                    if (write->op_->nodeType() == ASTNodeType::ReduceTo) {
-                        if (op->nodeType() != ASTNodeType::ReduceTo ||
-                            !ignoreReductionWAW_) {
-                            checkDep(point, {write});
-                        }
-                    }
-                }
-            }
-        }
-        if ((depType_ & DEP_WAW) ||
-            ((depType_ & DEP_RAW) && op->nodeType() == ASTNodeType::ReduceTo)) {
-            if (writes_.count(defId)) {
-                std::vector<Ref<AccessPoint>> others;
-                for (auto &&item : writes_.at(defId)) {
-                    if (ignoreReductionWAW_ &&
-                        op->nodeType() == ASTNodeType::ReduceTo &&
-                        item->op_->nodeType() == ASTNodeType::ReduceTo) {
-                        continue;
-                    }
-                    others.emplace_back(item);
-                }
-                checkDep(point, others);
-            }
-        }
-    }
+    /**
+     * Check the dependencies between many later memory access in `pointList`
+     * and a earlier memory accesses `other`, filter them via the `filter_`
+     * callback, and report then via the `found_` callback. Later memory
+     * accesses may overwrite each other, and the overwritten ones will not
+     * result in a dependency. Used for WAR dependencies
+     */
+    void checkDepEarliestLater(const std::vector<Ref<AccessPoint>> &pointList,
+                               const Ref<AccessPoint> &other);
+    void
+    checkDepEarliestLaterImpl(ISLCtx &isl, GenISLExprDeps &genISLExpr,
+                              const std::vector<Ref<AccessPoint>> &pointList,
+                              const Ref<AccessPoint> &other);
 
   protected:
     void visit(const VarDef &op) override;
-    void visit(const Store &op) override { visitStoreLike(op); }
-    void visit(const ReduceTo &op) override { visitStoreLike(op); }
+    void visit(const Store &op) override;
+    void visit(const ReduceTo &op) override;
     void visit(const Load &op) override;
     void visit(const MatMul &op) override { (*this)(op->equivalent_); }
 };

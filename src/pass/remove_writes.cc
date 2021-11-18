@@ -43,9 +43,9 @@ static bool isConst(const Expr &expr) {
 }
 
 void FindLoopInvariantWrites::visit(const For &op) {
-    loopStack_.emplace_back(op);
+    cursorStack_.emplace_back(cursor());
     Visitor::visit(op);
-    loopStack_.pop_back();
+    cursorStack_.pop_back();
 }
 
 void FindLoopInvariantWrites::visit(const If &op) {
@@ -56,7 +56,7 @@ void FindLoopInvariantWrites::visit(const If &op) {
 
 void FindLoopInvariantWrites::visit(const VarDef &op) {
     ASSERT(!defs_.count(op->name_));
-    defDepth_[op->name_] = loopStack_.size();
+    defDepth_[op->name_] = cursorStack_.size();
     defs_[op->name_] = op;
     Visitor::visit(op);
     defs_.erase(op->name_);
@@ -69,9 +69,13 @@ void FindLoopInvariantWrites::visit(const Store &op) {
         return;
     }
     Expr cond;
-    for (int i = (int)(loopStack_.size()) - 1, iEnd = defDepth_.at(op->var_);
+    Cursor innerMostLoopCursor;
+
+    for (int i = (int)(cursorStack_.size()) - 1, iEnd = defDepth_.at(op->var_);
          i >= iEnd; i--) {
-        auto &&item = loopStack_[i];
+        auto &&loopCursor = cursorStack_[i];
+        ASSERT(loopCursor.nodeType() == ASTNodeType::For);
+        auto &&item = loopCursor.node().as<ForNode>();
         if (!item->property_.parallel_.empty()) {
             continue;
         }
@@ -88,13 +92,19 @@ void FindLoopInvariantWrites::visit(const Store &op) {
         }
         thisCond =
             makeEQ(makeVar(item->iter_), makeSub(item->end_, makeIntConst(1)));
-        cond = cond.isValid() ? makeLAnd(cond, thisCond) : thisCond;
+        if (!cond.isValid()) {
+            innerMostLoopCursor = loopCursor;
+            cond = thisCond;
+        } else {
+            cond = makeLAnd(cond, thisCond);
+        }
         continue;
     fail:;
     }
 
     if (cond.isValid()) {
-        results_.emplace_back(defs_.at(op->var_), op, cond);
+        results_[op] =
+            std::make_tuple(defs_.at(op->var_), cond, innerMostLoopCursor);
     }
 }
 
@@ -159,9 +169,11 @@ Stmt removeWrites(const Stmt &_op, const std::string &singleDefId) {
     auto variantExpr = findLoopVariance(op);
     FindLoopInvariantWrites type2Finder(variantExpr.first, singleDefId);
     type2Finder(op);
+    auto type2Results = type2Finder.results();
 
     std::unordered_set<VarDef> suspect;
-    for (auto &&[def, store, cond] : type2Finder.results()) {
+    for (auto &&[store, item] : type2Results) {
+        auto &&[def, cond, cursor] = item;
         suspect.insert(def);
     }
 
@@ -237,6 +249,18 @@ Stmt removeWrites(const Stmt &_op, const std::string &singleDefId) {
             d.later()->nodeType() != ASTNodeType::Load &&
             d.earlier() != d.later()) {
             usesWAR.emplace(d.later().as<StmtNode>(), d.earlier());
+        }
+
+        if (d.later()->nodeType() != ASTNodeType::Store &&
+            d.earlier()->nodeType() == ASTNodeType::Store &&
+            d.earlier() != d.later()) {
+            if (type2Results.count(d.earlier().as<StoreNode>())) {
+                auto &&[def, cond, cursor] =
+                    type2Results.at(d.earlier().as<StoreNode>());
+                if (lca(cursor, d.later_.cursor_).id() == cursor.id()) {
+                    type2Results.erase(d.earlier().as<StoreNode>());
+                }
+            }
         }
     };
 
@@ -327,17 +351,10 @@ Stmt removeWrites(const Stmt &_op, const std::string &singleDefId) {
     }
 
     // Type 2
-    for (auto &&[def, _store, cond] : type2Finder.results()) {
+    for (auto &&[_store, item] : type2Results) {
+        auto &&[def, cond, cursor] = item;
         auto store = _store.as<StmtNode>();
-        for (auto &&use : usesRAW) {
-            if (use.second == store &&
-                usesWAR.count(std::make_pair(store, use.first))) {
-                goto type2Fail;
-            }
-        }
         replacement.emplace(store, makeIf("", cond, store));
-        continue;
-    type2Fail:;
     }
 
     op = RemoveWrites(redundant, replacement)(op);

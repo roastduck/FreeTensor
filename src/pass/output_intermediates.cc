@@ -1,6 +1,7 @@
 #include <analyze/deps.h>
 #include <analyze/find_all_scopes.h>
 #include <pass/flatten_stmt_seq.h>
+#include <pass/make_reduction.h>
 #include <pass/output_intermediates.h>
 #include <pass/undo_make_reduction.h>
 
@@ -173,13 +174,18 @@ Stmt AddExtraDim::visit(const For &op) {
 Stmt AddExtraDim::visit(const StmtSeq &op) {
     if (affectingScopes_.count(op->id())) {
         auto oldOffset = offset_;
+        auto nextOffset = offset_;
         std::vector<Stmt> stmts;
         for (auto &&stmt : op->stmts_) {
-            stmts.emplace_back((*this)(stmt));
             if (scopeLen_.count(stmt)) {
-                offset_ = makeAdd(offset_, scopeLen_.at(stmt));
+                offset_ = nextOffset;
+                stmts.emplace_back((*this)(stmt));
+                nextOffset = makeAdd(offset_, scopeLen_.at(stmt));
+            } else {
+                stmts.emplace_back((*this)(stmt));
             }
         }
+        offset_ = oldOffset;
         return makeStmtSeq(op->id(), std::move(stmts));
     } else {
         return Mutator::visit(op);
@@ -191,7 +197,10 @@ std::tuple<Stmt, std::unordered_map<std::string, std::string>,
 outputIntermediates(const Stmt &_op,
                     const std::unordered_set<std::string> &intermediates) {
     auto op = flattenStmtSeq(_op); // Make the added dim simpler
-    op = undoMakeReduction(op);    // Because we need to record loadMap
+
+    // Reduce min and reduce max may need the intermediate value for
+    // gradients, but reduce max does not
+    op = makeReduction(op, {ReduceOp::Add});
 
     std::vector<FindDepsCond> conds;
     for (auto &&scope : findAllScopes(op)) {
@@ -203,10 +212,16 @@ outputIntermediates(const Stmt &_op,
         return intermediates.count(earlier.def_->id());
     };
     auto found = [&](const Dependency &d) {
-        ASSERT(d.cond_.size() == 1);
-        affectingScopes[d.defId()].insert(d.cond_[0].first.name_);
+        if (d.earlier()->nodeType() != ASTNodeType::ReduceTo &&
+            d.later()->nodeType() != ASTNodeType::ReduceTo) {
+            ASSERT(d.cond_.size() == 1);
+            affectingScopes[d.defId()].insert(d.cond_[0].first.name_);
+        }
     };
-    findDeps(op, conds, found, FindDepsMode::Dep, DEP_WAR, filter, true, false);
+    findDeps(op, conds, found, FindDepsMode::Dep, DEP_WAR | DEP_RAW, filter,
+             true, false);
+
+    op = undoMakeReduction(op); // Because we need to record loadMap
 
     std::unordered_map<std::string, std::string> nameMap;
     std::unordered_map<Load, Expr> loadMap;

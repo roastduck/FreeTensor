@@ -177,3 +177,50 @@ def test_no_need_to_copy():
     std = ir.make_reduction(ir.pop_ast())
 
     assert std.match(ast)
+
+
+def test_circular_reuse():
+    with ir.VarDef("y", (128,), "float32", "output", "cpu") as y:
+        ir.MarkNid("V_c")
+        with ir.VarDef("c", (128,), "float32", "cache", "cpu") as c:
+            ir.MarkNid("V_h")
+            with ir.VarDef("h", (128,), "float32", "cache", "cpu") as h:
+                with ir.For("i", 0, 128, nid='Li0') as i:
+                    c[i] = 0
+                    h[i] = 0
+                with ir.For("p", 0, 100, nid='Lp') as p:
+                    with ir.For("i", 0, 128, nid='Li1') as i:
+                        c[i] = h[i] / 2 - 1
+                        h[i] = c[i] * 2 + 1
+                with ir.For("i", 0, 128, nid='Li2') as i:
+                    y[i] = h[i]
+    ast = ir.pop_ast()
+    print(ast)
+    ast = ir.output_intermediates(ast, set(["V_c", "V_h"]))
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef("y", (128,), "float32", "output", "cpu") as y:
+        with ir.VarDef("c.tape", (100, 128), "float32", "output",
+                       "cpu") as c_tape:
+            ir.MarkNid("V_c")
+            with ir.VarDef("c", (128,), "float32", "cache", "cpu") as c:
+                with ir.VarDef("h.tape", (101, 128), "float32", "output",
+                               "cpu") as h_tape:
+                    ir.MarkNid("V_h")
+                    with ir.VarDef("h", (128,), "float32", "cache", "cpu") as h:
+                        with ir.For("i", 0, 128, nid='Li0') as i:
+                            h[i] = 0
+                            h_tape[0, i] = 0
+                        with ir.For("p", 0, 100, nid='Lp') as p:
+                            with ir.For("i", 0, 128, nid='Li1') as i:
+                                c[i] = h[i] / 2 - 1
+                                c_tape[p, i] = c[i]
+                                h[i] = c[i] * 2 + 1
+                                h_tape[1 + p, i] = h[i]
+                        with ir.For("i", 0, 128, nid='Li2') as i:
+                            y[i] = h[i]
+    std = ir.make_reduction(ir.pop_ast())
+
+    assert std.match(ast)

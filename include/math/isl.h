@@ -57,7 +57,11 @@ class ISLMap {
     ISLMap() {}
     ISLMap(isl_map *map) : map_(map) {}
     ISLMap(const ISLCtx &ctx, const std::string &str)
-        : map_(isl_map_read_from_str(ctx.get(), str.c_str())) {}
+        : map_(isl_map_read_from_str(ctx.get(), str.c_str())) {
+        if (map_ == nullptr) {
+            ERROR("Unable to construct an ISLMap from " + str);
+        }
+    }
     ~ISLMap() {
         if (map_ != nullptr) {
             isl_map_free(map_);
@@ -147,7 +151,11 @@ class ISLSet {
     ISLSet() {}
     ISLSet(isl_set *set) : set_(set) {}
     ISLSet(const ISLCtx &ctx, const std::string &str)
-        : set_(isl_set_read_from_str(ctx.get(), str.c_str())) {}
+        : set_(isl_set_read_from_str(ctx.get(), str.c_str())) {
+        if (set_ == nullptr) {
+            ERROR("Unable to construct an ISLSet from " + str);
+        }
+    }
     ~ISLSet() {
         if (set_ != nullptr) {
             isl_set_free(set_);
@@ -308,6 +316,9 @@ inline ISLMap applyRange(const ISLMap &lhs, const ISLMap &rhs) {
 
 inline ISLMap lexmax(ISLMap &&map) { return isl_map_lexmax(map.move()); }
 inline ISLMap lexmax(const ISLMap &map) { return isl_map_lexmax(map.copy()); }
+
+inline ISLMap lexmin(ISLMap &&map) { return isl_map_lexmin(map.move()); }
+inline ISLMap lexmin(const ISLMap &map) { return isl_map_lexmin(map.copy()); }
 
 inline ISLMap identity(ISLSpace &&space) {
     return isl_map_identity(space.move());

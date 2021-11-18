@@ -5,17 +5,18 @@
 #include <unordered_set>
 
 #include <analyze/find_loop_variance.h>
+#include <cursor.h>
 #include <func.h>
 #include <mutator.h>
 #include <visitor.h>
 
 namespace ir {
 
-class FindLoopInvariantWrites : public Visitor {
-    std::vector<For> loopStack_;
+class FindLoopInvariantWrites : public VisitorWithCursor {
+    std::vector<Cursor> cursorStack_;
     std::vector<If> ifStack_;
-    std::vector<std::tuple<VarDef, Store, Expr>>
-        results_; /// (store, extraCond)
+    std::unordered_map<Store, std::tuple<VarDef, Expr, Cursor>>
+        results_; /// (store, extraCond, cursor to loop)
     std::unordered_map<std::string, int> defDepth_;
     std::unordered_map<std::string, VarDef> defs_;
     const std::unordered_map<
@@ -30,7 +31,8 @@ class FindLoopInvariantWrites : public Visitor {
         const std::string &singleDefId)
         : variantExpr_(variantExpr), singleDefId_(singleDefId) {}
 
-    const std::vector<std::tuple<VarDef, Store, Expr>> &results() const {
+    const std::unordered_map<Store, std::tuple<VarDef, Expr, Cursor>> &
+    results() const {
         return results_;
     }
 

@@ -39,13 +39,15 @@ def gat_layer(g, feat, weight, attn_l, attn_r):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 3:
-        print(f"Usage: {sys.argv[0]} <cpu/gpu> <data_name>")
+    if len(sys.argv) != 2:
+        print(f"Usage: {sys.argv[0]} <cpu/gpu>")
         exit(-1)
     device = sys.argv[1]
-    data_name = sys.argv[2]
 
-    num_v, num_e, ptr, idx = load_data(data_name)
+    ptr = np.loadtxt("../ptr.in", dtype=np.int32)
+    idx = np.loadtxt("../idx.in", dtype=np.int32)
+    num_v = ptr.shape[0] - 1
+    num_e = idx.shape[0]
     src_list = []
     dst_list = []
     for which in range(num_v):
@@ -55,10 +57,11 @@ if __name__ == '__main__':
     g = dgl.graph((src_list, dst_list))
 
     feat_len = 32
-    x = torch.rand(num_v, feat_len, dtype=torch.float)
-    w = torch.rand(feat_len, feat_len, dtype=torch.float)
-    w_attn_1 = torch.rand(feat_len, dtype=torch.float)
-    w_attn_2 = torch.rand(feat_len, dtype=torch.float)
+    x = torch.tensor(np.loadtxt("../x.in"), dtype=torch.float)
+    w = torch.tensor(np.loadtxt("../w.in"), dtype=torch.float)
+    w_attn_1 = torch.tensor(np.loadtxt("../w_attn_1.in"), dtype=torch.float)
+    w_attn_2 = torch.tensor(np.loadtxt("../w_attn_2.in"), dtype=torch.float)
+    d_y = torch.tensor(np.loadtxt("../d_y.in"), dtype=torch.float)
 
     if device == 'gpu':
         x = x.cuda()
@@ -66,15 +69,55 @@ if __name__ == '__main__':
         w_attn_1 = w_attn_1.cuda()
         w_attn_2 = w_attn_2.cuda()
         g = g.to(x.device)
+        d_y = d_y.cuda()
+        sync = torch.cuda.synchronize
     else:
         assert device == 'cpu'
+        sync = lambda: None
 
+    warmup_num = 10
     test_num = 1000
 
-    y = gat_layer(g, x, w, w_attn_1, w_attn_2)  # init lazy ops
+    for i in range(warmup_num):
+        y = gat_layer(g, x, w, w_attn_1, w_attn_2)
+        if i == 0:
+            np.savetxt("y.out", y.cpu().numpy())
+    sync()
     t0 = time.time()
     for i in range(test_num):
         y = gat_layer(g, x, w, w_attn_1, w_attn_2)
+    sync()
     t1 = time.time()
     assert y.shape == (num_v, feat_len)
-    print(f"Impl1 Time = {(t1 - t0) / test_num * 1000} ms")
+    print(f"Inference Time = {(t1 - t0) / test_num * 1000} ms")
+
+    x.requires_grad = True
+    w.requires_grad = True
+    w_attn_1.requires_grad = True
+    w_attn_2.requires_grad = True
+
+    for i in range(warmup_num):
+        y = gat_layer(g, x, w, w_attn_1, w_attn_2)
+    sync()
+    t0 = time.time()
+    for i in range(test_num):
+        y = gat_layer(g, x, w, w_attn_1, w_attn_2)
+    sync()
+    t1 = time.time()
+    assert y.shape == (num_v, feat_len)
+    print(f"Forward Time = {(t1 - t0) / test_num * 1000} ms")
+
+    for i in range(warmup_num):
+        y.backward(d_y, retain_graph=True)
+        if i == 0:
+            np.savetxt("d_x.out", x.grad.cpu().numpy())
+            np.savetxt("d_w.out", w.grad.cpu().numpy())
+            np.savetxt("d_w_attn_1.out", w_attn_1.grad.cpu().numpy())
+            np.savetxt("d_w_attn_2.out", w_attn_2.grad.cpu().numpy())
+    sync()
+    t0 = time.time()
+    for i in range(test_num):
+        y.backward(d_y, retain_graph=True)
+    sync()
+    t1 = time.time()
+    print(f"Backward Time = {(t1 - t0) / test_num * 1000} ms")
