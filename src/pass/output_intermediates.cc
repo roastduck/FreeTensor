@@ -108,19 +108,31 @@ Expr AddExtraDim::visit(const Load &_op) {
     return op;
 }
 
-Stmt AddExtraDim::visit(const Store &_op) {
-    auto __op = Mutator::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::Store);
-    auto op = __op.as<StoreNode>();
+Stmt AddExtraDim::visit(const Store &op) {
     if (op->var_ == var_) {
+        auto oldOffset = offset_;
+        offset_ = makeSub(offset_, makeIntConst(1));
+
+        std::vector<Expr> indices;
+        indices.reserve(op->indices_.size());
+        for (auto &&index : op->indices_) {
+            indices.emplace_back((*this)(index));
+        }
+        auto oldStore = makeStore(op->id(), op->var_, std::move(indices),
+                                  (*this)(op->expr_));
+
+        offset_ = oldOffset;
+
         std::vector<Expr> newIndices(1, offset_);
         newIndices.insert(newIndices.end(), op->indices_.begin(),
                           op->indices_.end());
         auto newStore = makeStore("", op->var_ + ".tape", std::move(newIndices),
                                   makeLoad(op->var_, op->indices_));
-        return makeStmtSeq("", {op, newStore});
+
+        return makeStmtSeq("", {oldStore, newStore});
+    } else {
+        return Mutator::visit(op);
     }
-    return op;
 }
 
 Stmt AddExtraDim::visit(const VarDef &_op) {
