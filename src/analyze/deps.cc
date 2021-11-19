@@ -572,14 +572,7 @@ void AnalyzeDeps::checkDepLatestEarlier(
     tasks_.emplace_back([point, otherList, this]() {
         ISLCtx isl;
         GenISLExprDeps genISLExpr;
-        try {
-            checkDepLatestEarlierImpl(isl, genISLExpr, point, otherList);
-        } catch (const std::exception &e) {
-            // Print error messages here because ISLCtx will terminate the
-            // program
-            std::cerr << e.what() << std::endl;
-            throw;
-        }
+        checkDepLatestEarlierImpl(isl, genISLExpr, point, otherList);
     });
 }
 
@@ -589,14 +582,7 @@ void AnalyzeDeps::checkDepEarliestLater(
     tasks_.emplace_back([pointList, other, this]() {
         ISLCtx isl;
         GenISLExprDeps genISLExpr;
-        try {
-            checkDepEarliestLaterImpl(isl, genISLExpr, pointList, other);
-        } catch (const std::exception &e) {
-            // Print error messages here because ISLCtx will terminate the
-            // program
-            std::cerr << e.what() << std::endl;
-            throw;
-        }
+        checkDepEarliestLaterImpl(isl, genISLExpr, pointList, other);
     });
 }
 

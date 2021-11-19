@@ -524,6 +524,50 @@ def test_tape_3():
     assert std.match(backward)
 
 
+def test_tape_4():
+    with ir.VarDef([("x", (100,), "float32", "input", "cpu"),
+                    ("y", (), "float32", "output", "cpu")]) as (x, y):
+        ir.MarkNid("V_t")
+        with ir.VarDef("t", (), "float32", "cache", "cpu") as t:
+            t[()] = 1
+            with ir.For("i", 0, 100) as i:
+                t[()] = t[()] * x[i] + 1
+            y[()] = t[()]
+    ast = ir.pop_ast()
+    print(ast)
+    forward, backward, _, _, _ = ir.grad(ast, set(["x"]), set(["y"]),
+                                         set(["V_t"]))
+    print("Forward:")
+    print(forward)
+    print("Backward:")
+    print(backward)
+    forward = ir.lower(forward)
+    backward = ir.lower(backward)
+    print("Forward:")
+    print(forward)
+    print("Backward:")
+    print(backward)
+
+    with ir.VarDef([("x", (100,), "float32", "input", "cpu"),
+                    ("d_x", (100,), "float32", "output", "cpu"),
+                    ("y", (), "float32", "input", "cpu"),
+                    ("d_y", (), "float32", "inout", "cpu")]) as (x, d_x, y,
+                                                                 d_y):
+        with ir.VarDef([("t", (101,), "float32", "input", "cpu"),
+                        ("d_t", (), "float32", "cache", "cpu")]) as (t, d_t):
+            d_t[()] = d_y[()]
+            with ir.For("i", 0, 100) as i:
+                with ir.VarDef("d_t_old", (), "float32", "cache",
+                               "cpu") as d_t_old:
+                    d_t_old[()] = d_t[()]
+                    d_t[()] = d_t_old[()] * x[-1 * i + 99]
+                    d_x[-1 * i + 99] = d_t_old[()] * t[-1 * i + 99]
+            d_t[()] = 0
+    std = ir.make_reduction(ir.pop_ast())
+
+    assert std.match(backward)
+
+
 def test_tape_mode_all():
     with ir.VarDef([("x1", (4,), "float32", "input", "cpu"),
                     ("x2", (4,), "float32", "input", "cpu"),
