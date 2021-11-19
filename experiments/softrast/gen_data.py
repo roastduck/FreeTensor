@@ -44,11 +44,12 @@ if __name__ == '__main__':
     n_faces = faces.shape[0]
     h = 64
     w = 64
-    d_y = torch.rand(n_faces, h, w, dtype=torch.float)
+    # d_y = torch.rand(n_faces, h, w, dtype=torch.float)
+    d_y = np.random.uniform(size=(n_faces, h, w)).astype('float32')
 
     np.save("vertices.in.npy", vertices, allow_pickle=False)
     np.save("faces.in.npy", faces, allow_pickle=False)
     np.save("d_y.in.npy", d_y, allow_pickle=False)
     np.savetxt("vertices.in", vertices)
     np.savetxt("faces.in", faces, fmt="%d")
-    # np.savetxt("d_y.in", d_y)
+    d_y.tofile("d_y.in", sep=' ', format='%.10f')

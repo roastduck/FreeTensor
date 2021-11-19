@@ -1,48 +1,6 @@
 using DelimitedFiles, Printf
-
-"""
-    Load a 3D object and returns the adjacency array of the faces
-
-
-    Parameters
-    ----------
-    path: str
-        Path to a 3D object file, where a `v <x> <y> <z>` line means there is a vertex at coordinate (x, y, z),
-        a `f <i> <j> <k>` line means there is a face among vertices i, j and k. Faces are stored in conter-clockwise
-        order
-
-
-    Returns
-    -------
-    (np.array, np.array)
-        ret[0] is an n*3-shaped numpy array, where n is the number of vertices. array[i] = the coordinate (x, y, z)
-        ret[1] is an m*3-shaped numpy array, where m is the number of faces. array[i] = each vertices of the face
-"""
-function load_face(file)
-    words = readlines(file)
-    faces_size = 0
-    vertices_size = 0
-    for line in words
-        if line[1] == 'f'
-            faces_size += 1
-        elseif line[1] == 'v'
-            vertices_size += 1
-        end
-    end
-    faces = zeros(Int, (3, faces_size))
-    vertices = zeros(Float32, (3, vertices_size))
-    faces_size, vertices_size = 0, 0
-    for line in words
-        if line[1] == 'f'
-            faces_size += 1
-            faces[:, faces_size] = map(x -> parse(Int, x), split(line, ' ')[2:end])
-        elseif line[1] == 'v'
-            vertices_size += 1
-            vertices[:, vertices_size] = map(x -> parse(Float32, x), split(line, ' ')[2:end])
-        end
-    end
-    return vertices, faces
-end
+using Zygote, Flux
+using IterTools
 
 function cross_product(v1::Tuple{Float32,Float32}, v2::Tuple{Float32,Float32})::Float32
     return v1[1] * v2[2] - v1[2] * v2[1]
@@ -56,12 +14,9 @@ using LinearAlgebra
 using Flux
 const sigma = 1e-4
 
-function rasterize(vertices, faces, y, h, w, n_verts, n_faces)
+function para_rasterize(vertices, faces, h, w, n_verts, n_faces)
+    y = zeros(Float32, (w, h, n_faces))
     Threads.@threads for i = 1:n_faces
-        # v = Vector{Tuple{Float32, Float32}}(undef, 3)
-        # for p = 1:3
-        #     v[p] = (vertices[1, faces[p, i]], vertices[2, faces[p, i]])
-        # end
         v1 = (vertices[1, faces[1, i]], vertices[2, faces[1, i]])
         v2 = (vertices[1, faces[2, i]], vertices[2, faces[2, i]])
         v3 = (vertices[1, faces[3, i]], vertices[2, faces[3, i]])
@@ -88,32 +43,122 @@ function rasterize(vertices, faces, y, h, w, n_verts, n_faces)
             y[k+1, j+1, i] = sigmoid(coeff * dist * dist / sigma)
         end
     end
+    return y
 end
 
-if length(ARGS) != 0
-    println("Usage: " * PROGRAM_FILE)
-    exit(-1)
+function rasterize(vertices, faces, pixels, h, w, n_verts, n_faces)
+    sigma = 1e-4
+
+    # pixels = CuArray{Int}(undef, (2, w, h))
+
+    face_verts = reshape(vertices[:, reshape(faces, (:))], (3, 3, n_faces))[1:2, :, :]
+
+    norm(v) = sqrt.(selectdim(v, 1, 1) .^ 2 .+ selectdim(v, 1, 2) .^ 2)
+    cross_product(v1, v2) = selectdim(v1, 1, 1) .* selectdim(v2, 1, 2) .- selectdim(v1, 1, 2) .* selectdim(v2, 1, 1)
+    dot_product(v1, v2) = selectdim(v1, 1, 1) .* selectdim(v2, 1, 1) .+ selectdim(v1, 1, 2) .* selectdim(v2, 1, 2)
+    vert_clockwise(v1, v2, pixel) = (cross_product(pixel .- v1, v2 .- v1) .< 0)
+    inside_face(v1, v2, v3, pixel) = vert_clockwise(v1, v2, pixel) .& vert_clockwise(v2, v3, pixel) .& vert_clockwise(v3, v1, pixel)
+    is_inside = inside_face(reshape(face_verts[:, 1, :], (2, 1, 1, n_faces)), reshape(face_verts[:, 2, :], (2, 1, 1, n_faces)), reshape(face_verts[:, 3, :], (2, 1, 1, n_faces)), reshape(pixels, (2, w, h, 1)))
+
+    ternary(cond, val1, val2) = cond ? val1 : val2
+
+    dist_pixel_to_seg(v1, v2, pixel) = ternary.(dot_product(pixel .- v1, v2 .- v1) .>= 0,
+        ternary.(dot_product(pixel .- v2, v1 .- v2) .>= 0,
+            abs.(cross_product(pixel .- v1, v2 .- v1)) ./ norm(v2 .- v1),
+            norm(pixel .- v2)
+        ), norm(pixel .- v1))
+    dist_pixel_to_face(v1, v2, v3, pixel) = min.(
+        dist_pixel_to_seg(v1, v2, pixel),
+        dist_pixel_to_seg(v2, v3, pixel),
+        dist_pixel_to_seg(v3, v1, pixel)
+    )
+    dist = dist_pixel_to_face(reshape(face_verts[:, 1, :], (2, 1, 1, n_faces)), reshape(face_verts[:, 2, :], (2, 1, 1, n_faces)), reshape(face_verts[:, 3, :], (2, 1, 1, n_faces)), reshape(pixels, (2, w, h, 1)))
+
+    d = ternary.(is_inside, 1, -1) .* (dist .^ 2) ./ sigma
+    d = sigmoid.(d)
+    return d
 end
 
-vertices = copy(readdlm(open("../vertices.in"), Float32)')
-faces = copy(readdlm(open("../faces.in"), Int)') .+ 1
-const n_verts = size(vertices)[2]
-const n_faces = size(faces)[2]
-const h = 64
-const w = 64
-y = zeros(Float32, (w, h, n_faces))
+function main()
+    if length(ARGS) != 2
+        println("Usage: " * PROGRAM_FILE * " Inf/For/Bac")
+        exit(-1)
+    end
 
-warmup_num = 10
-test_num = 100
-for i = 1:warmup_num
-    rasterize(vertices, faces, y, h, w, n_verts, n_faces)
-    # writedlm("y.out", [@sprintf("%.10f", i) for i in reshape(y, (1, :))], '\n')
-    # exit(0)
-end
-time = @timed begin
-    for i = 1:test_num
-        rasterize(vertices, faces, y, h, w, n_verts, n_faces)
+    vertices = copy(readdlm(open("../vertices.in"), Float32)')
+    faces = copy(readdlm(open("../faces.in"), Int)') .+ 1
+    n_verts = size(vertices)[2]
+    n_faces = size(faces)[2]
+    h = 64
+    w = 64
+    pixel1 = getindex.(product(range(0, 1, length=w), range(0, 1, length=h)), 1)
+    pixel2 = getindex.(product(range(0, 1, length=w), range(0, 1, length=h)), 2)
+    pixels = cat(reshape(pixel1, (1, w, h)), reshape(pixel2, (1, w, h)), dims=1)
+    d_y = reshape(readdlm(open("../d_y.in"), Float32), (w, h, n_faces))
+
+    if ARGS[2] == "Inf"
+        warmup_num = 10
+        test_num = 100
+        for i = 1:warmup_num
+            y = para_rasterize(vertices, faces, h, w, n_verts, n_faces)
+            if i == 1
+                writedlm("y.out", [@sprintf("%.10f", i) for i in reshape(y, (1, :))], '\n')
+            end
+            println("warmup: [" * string(i) * "/" * string(warmup_num) * "]  Done.")
+        end
+        time = @timed begin
+            for i = 1:test_num
+                y = para_rasterize(vertices, faces, h, w, n_verts, n_faces)
+                println("test: [" * string(i) * "/" * string(test_num) * "]  Done.")
+            end
+        end
+        println("Inference Time = " * string(time.time / test_num * 1000) * " ms")
+    elseif ARGS[2] == "For"
+        warmup_num = 2
+        test_num = 5
+        for i = 1:warmup_num
+            z, back = Zygote.pullback(
+                (vertices) -> sum(rasterize(vertices, faces, pixels, h, w, n_verts, n_faces) .* d_y),
+                vertices
+            )
+            println("warmup: [" * string(i) * "/" * string(warmup_num) * "]  Done.")
+            # exit(0)
+        end
+        time = @timed begin
+            for i = 1:test_num
+                z, back = Zygote.pullback(
+                    (vertices) -> sum(rasterize(vertices, faces, pixels, h, w, n_verts, n_faces) .* d_y),
+                    vertices
+                )
+                println("test: [" * string(i) * "/" * string(test_num) * "]  Done.")
+            end
+        end
+        println("Forward Time = " * string(time.time / test_num * 1000) * " ms")
+    elseif ARGS[2] == "Bac"
+        warmup_num = 2
+        test_num = 10
+        z, back = Zygote.pullback(
+            (vertices) -> sum(rasterize(vertices, faces, pixels, h, w, n_verts, n_faces) .* d_y),
+            vertices
+        )
+        for i = 1:warmup_num
+            back_array = back(1)
+            if i == 1
+                writedlm("d_vertices.out", [@sprintf("%.18e", i) for i in reshape(Array(back_array[1]), :)], ' ')
+            end
+            println("warmup: [" * string(i) * "/" * string(warmup_num) * "]  Done.")
+        end
+        time = @timed begin
+            for i = 1:test_num
+                back(1)
+                println("test: [" * string(i) * "/" * string(test_num) * "]  Done.")
+            end
+        end
+        println("Backward Time = " * string(time.time / test_num * 1000) * " ms")
+    else
+        println("Usage: " * PROGRAM_FILE * " Inf/For/Bac")
+        exit(-1)
     end
 end
-writedlm("y.out", [@sprintf("%.10f", i) for i in reshape(y, (1, :))], '\n')
-println("Time = " * string(time.time / test_num * 1000) * " ms")
+
+main()

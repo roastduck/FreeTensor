@@ -1,15 +1,12 @@
 using DelimitedFiles, Printf
 
-using CUDA, Flux
+using CUDA, Flux, Zygote
 using IterTools
 
-function rasterize(vertices, faces, h, w, n_verts, n_faces)
+function rasterize(vertices, faces, pixels, h, w, n_verts, n_faces)
     sigma = 1e-4
 
     # pixels = CuArray{Int}(undef, (2, w, h))
-    pixel1 = getindex.(product(range(0, 1, length=w), range(0, 1, length=h)), 1)
-    pixel2 = getindex.(product(range(0, 1, length=w), range(0, 1, length=h)), 2)
-    pixels = CuArray(cat(reshape(pixel1, (1, w, h)), reshape(pixel2, (1, w, h)), dims=1))
 
     face_verts = reshape(vertices[:, reshape(faces, (:))], (3, 3, n_faces))[1:2, :, :]
 
@@ -40,8 +37,8 @@ function rasterize(vertices, faces, h, w, n_verts, n_faces)
 end
 
 function main()
-    if length(ARGS) != 0
-        println("Usage: " * PROGRAM_FILE)
+    if length(ARGS) != 2
+        println("Usage: " * PROGRAM_FILE * "  Inf/For/Bac")
         exit(-1)
     end
 
@@ -51,26 +48,78 @@ function main()
     n_faces = size(faces)[2]
     h = 64
     w = 64
+    pixel1 = getindex.(product(range(0, 1, length=w), range(0, 1, length=h)), 1)
+    pixel2 = getindex.(product(range(0, 1, length=w), range(0, 1, length=h)), 2)
+    pixels = CuArray(cat(reshape(pixel1, (1, w, h)), reshape(pixel2, (1, w, h)), dims=1))
     y = zeros(Float32, (w, h, n_faces))
+    d_y = reshape(readdlm(open("../d_y.in"), Float32), (w, h, n_faces))
 
     vertices = CuArray(vertices)
     faces = CuArray(faces)
     y = CuArray(y)
+    pixels = CuArray(pixels)
 
-    warmup_num = 10
-    test_num = 10
-    for i = 1:warmup_num
-        y = rasterize(vertices, faces, h, w, n_verts, n_faces)
-        # writedlm("y.out", [@sprintf("%.10f", i) for i in reshape(Array(y), (1, :))], '\n')
-        # exit(0)
-    end
-    time = @timed begin
-        for i = 1:test_num
-            y = rasterize(vertices, faces, h, w, n_verts, n_faces)
+    if ARGS[2] == "Inf"
+        warmup_num = 10
+        test_num = 100
+        for i = 1:warmup_num
+            y = rasterize(vertices, faces, pixels, h, w, n_verts, n_faces)
+            println("warmup: [" * string(i) * "/" * string(warmup_num) * "]  Done.")
         end
+        time = @timed begin
+            for i = 1:test_num
+                y = rasterize(vertices, faces, pixels, h, w, n_verts, n_faces)
+                println("test: [" * string(i) * "/" * string(test_num) * "]  Done.")
+            end
+        end
+        writedlm("y.out", [@sprintf("%.10f", i) for i in reshape(Array(y), (1, :))], '\n')
+        println("Inference Time = " * string(time.time / test_num * 1000) * " ms")
+    elseif ARGS[2] == "For"
+        warmup_num = 10
+        test_num = 10
+        for i = 1:warmup_num
+            z, back = Zygote.pullback(
+                (vertices) -> sum(rasterize(vertices, faces, pixels, h, w, n_verts, n_faces) .* d_y),
+                vertices
+            )
+            println("warmup: [" * string(i) * "/" * string(warmup_num) * "]  Done.")
+            # exit(0)
+        end
+        time = @timed begin
+            for i = 1:test_num
+                z, back = Zygote.pullback(
+                    (vertices) -> sum(rasterize(vertices, faces, pixels, h, w, n_verts, n_faces) .* d_y),
+                    vertices
+                )
+                println("test: [" * string(i) * "/" * string(test_num) * "]  Done.")
+            end
+        end
+        println("Forward Time = " * string(time.time / test_num * 1000) * " ms")
+    elseif ARGS[2] == "Bac"
+        warmup_num = 10
+        test_num = 10
+        z, back = Zygote.pullback(
+            (vertices) -> sum(rasterize(vertices, faces, pixels, h, w, n_verts, n_faces) .* d_y),
+            vertices
+        )
+        for i = 1:warmup_num
+            back_array = back(1)
+            if i == 1
+                writedlm("d_vertices.out", [@sprintf("%.18e", i) for i in reshape(Array(back_array[1]), :)], ' ')
+            end
+            println("warmup: [" * string(i) * "/" * string(warmup_num) * "]  Done.")
+        end
+        time = @timed begin
+            for i = 1:test_num
+                back_array = back(1)
+                println("test: [" * string(i) * "/" * string(test_num) * "]  Done.")
+            end
+        end
+        println("Backward Time = " * string(time.time / test_num * 1000) * " ms")
+    else
+        println("Usage: " * PROGRAM_FILE * "  Inf/For/Bac")
+        exit(-1)
     end
-    writedlm("y.out", [@sprintf("%.10f", i) for i in reshape(Array(y), (1, :))], '\n')
-    println("Time = " * string(time.time / test_num * 1000) * " ms")
 end
 
 main()

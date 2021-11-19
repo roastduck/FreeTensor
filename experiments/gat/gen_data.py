@@ -37,8 +37,8 @@ if __name__ == '__main__':
     w_attn_2 = np.random.uniform(size=(feat_len,)).astype("float32")
     d_y = np.random.uniform(size=(num_v, feat_len)).astype('float32')
 
-    np.savetxt("ptr.in", ptr)
-    np.savetxt("idx.in", idx)
+    np.savetxt("ptr.in", ptr, fmt="%d")
+    np.savetxt("idx.in", idx, fmt="%d")
     np.savetxt("x.in", x)
     np.savetxt("w.in", w)
     np.savetxt("w_attn_1.in", w_attn_1)
