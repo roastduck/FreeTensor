@@ -42,7 +42,7 @@ println("# edges = ", g.num_edges)
 model = GNNChain(GATConv(feat_len_in => feat_len_out)) |> device
 
 warmup_num = 10
-test_num = 10 # 1000 rounds spend too long for this case
+test_num = 1000
 
 y = model(g, X)
 writedlm("y.out", [@sprintf("%.18e", i) for i in Array(y')], ' ')
