@@ -1,5 +1,5 @@
-#ifndef UNDO_MAKE_REDUCTION
-#define UNDO_MAKE_REDUCTION
+#ifndef UNDO_MAKE_REDUCTION_H
+#define UNDO_MAKE_REDUCTION_H
 
 #include <mutator.h>
 
@@ -19,4 +19,4 @@ inline Stmt undoMakeReduction(const Stmt &op) {
 
 } // namespace ir
 
-#endif // UNDO_MAKE_REDUCTION
+#endif // UNDO_MAKE_REDUCTION_H

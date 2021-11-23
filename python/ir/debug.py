@@ -1,6 +1,6 @@
 import itertools
 
-from ffi import logger
+from ffi import logger, dump_as_test
 
 
 def with_line_no(s: str):
