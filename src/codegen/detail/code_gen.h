@@ -5,7 +5,10 @@
 
 namespace ir {
 
-template <class Stream> CodeGen<Stream>::CodeGen() { pushStream("default"); }
+template <class Stream>
+CodeGen<Stream>::CodeGen(int indentSize) : indentSize_(indentSize) {
+    pushStream("default");
+}
 
 template <class Stream> void CodeGen<Stream>::beginBlock() {
     os() << "{" << std::endl;
@@ -19,8 +22,8 @@ template <class Stream> void CodeGen<Stream>::endBlock() {
 }
 
 template <class Stream> void CodeGen<Stream>::makeIndent() {
-    for (int i = 0, iEnd = nIndent(); i < iEnd; i++) {
-        os() << "  ";
+    for (int i = 0, iEnd = nIndent() * indentSize_; i < iEnd; i++) {
+        os() << " ";
     }
 }
 

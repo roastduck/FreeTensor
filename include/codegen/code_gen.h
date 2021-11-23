@@ -22,6 +22,7 @@ struct CodeGenStream {
 
 template <class Stream> class CodeGen : public Visitor {
   protected:
+    int indentSize_;
     std::vector<Stream> streamStack_, poppedStream_;
 
     std::unordered_map<std::string, Ref<Buffer>> buffers_; // var name -> buffer
@@ -37,7 +38,7 @@ template <class Stream> class CodeGen : public Visitor {
         }
     }
 
-    CodeGen();
+    CodeGen(int indentSize = 2);
 
     void markDefBuffer(const std::string &name, const Ref<Buffer> &buffer);
     void markUseBuffer(const std::string &name);
