@@ -7,6 +7,7 @@ namespace ir {
 
 void DumpAsTest::printId(const Stmt &op) {
     if (op->hasNamedId()) {
+        makeIndent();
         os() << "ir.MarkNid(\"" << op->id() << "\")" << std::endl;
     }
 }
@@ -364,7 +365,7 @@ void DumpAsTest::visit(const For &op) {
     (*this)(op->begin_);
     os() << ", ";
     (*this)(op->end_);
-    os() << ") as " << normalizeId(op->iter_) << std::endl;
+    os() << ") as " << normalizeId(op->iter_) << ":" << std::endl;
     nIndent()++;
     (*this)(op->body_);
     nIndent()--;

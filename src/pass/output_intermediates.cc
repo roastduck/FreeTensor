@@ -100,7 +100,7 @@ Expr AddExtraDim::visit(const Load &_op) {
         loadMap_.erase(_op);
     }
     if (op->var_ == var_) {
-        std::vector<Expr> newIndices(1, offset_);
+        std::vector<Expr> newIndices(1, makeSub(offset_, makeIntConst(1)));
         newIndices.insert(newIndices.end(), op->indices_.begin(),
                           op->indices_.end());
         loadMap_[op] = makeLoad(op->var_ + ".tape", std::move(newIndices));
@@ -110,9 +110,6 @@ Expr AddExtraDim::visit(const Load &_op) {
 
 Stmt AddExtraDim::visit(const Store &op) {
     if (op->var_ == var_) {
-        auto oldOffset = offset_;
-        offset_ = makeSub(offset_, makeIntConst(1));
-
         std::vector<Expr> indices;
         indices.reserve(op->indices_.size());
         for (auto &&index : op->indices_) {
@@ -120,8 +117,6 @@ Stmt AddExtraDim::visit(const Store &op) {
         }
         auto oldStore = makeStore(op->id(), op->var_, std::move(indices),
                                   (*this)(op->expr_));
-
-        offset_ = oldOffset;
 
         std::vector<Expr> newIndices(1, offset_);
         newIndices.insert(newIndices.end(), op->indices_.begin(),
@@ -186,13 +181,11 @@ Stmt AddExtraDim::visit(const For &op) {
 Stmt AddExtraDim::visit(const StmtSeq &op) {
     if (affectingScopes_.count(op->id())) {
         auto oldOffset = offset_;
-        auto nextOffset = offset_;
         std::vector<Stmt> stmts;
         for (auto &&stmt : op->stmts_) {
             if (scopeLen_.count(stmt)) {
-                offset_ = nextOffset;
                 stmts.emplace_back((*this)(stmt));
-                nextOffset = makeAdd(offset_, scopeLen_.at(stmt));
+                offset_ = makeAdd(offset_, scopeLen_.at(stmt));
             } else {
                 stmts.emplace_back((*this)(stmt));
             }
@@ -200,7 +193,19 @@ Stmt AddExtraDim::visit(const StmtSeq &op) {
         offset_ = oldOffset;
         return makeStmtSeq(op->id(), std::move(stmts));
     } else {
-        return Mutator::visit(op);
+        auto oldOffset = offset_;
+        std::vector<Stmt> stmts;
+        for (auto &&stmt : op->stmts_) {
+            if (scopeLen_.count(stmt)) {
+                offset_ = oldOffset;
+                stmts.emplace_back((*this)(stmt));
+                offset_ = makeAdd(oldOffset, scopeLen_.at(stmt));
+            } else {
+                stmts.emplace_back((*this)(stmt));
+            }
+        }
+        offset_ = oldOffset;
+        return makeStmtSeq(op->id(), std::move(stmts));
     }
 }
 
