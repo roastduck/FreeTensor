@@ -642,7 +642,6 @@ def test_tape_5():
                                              -1 * k + 99, -1 * j + 255]
                             dh[-1 * j + 255] = dh[-1 * j + 255] + df[
                                 -1 * l + 255] * u[-1 * j + 255, -1 * l + 255]
-                        ir.Any()  # df_tape, can be removed in the future
                         df[-1 * l + 255] = 0
         with ir.For("l", 0, 256) as l:
             dh[-1 * l + 255] = 0
