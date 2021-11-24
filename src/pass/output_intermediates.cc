@@ -1,5 +1,5 @@
 #include <analyze/deps.h>
-#include <analyze/find_all_scopes.h>
+#include <analyze/find_all_loops.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/make_reduction.h>
 #include <pass/output_intermediates.h>
@@ -22,7 +22,14 @@ static MemType toGlobalMemType(MemType mtype) {
 
 void CountScopeLen::visit(const Store &op) {
     Visitor::visit(op);
-    if (op->var_ == var_) {
+    if (op->var_ == var_ && needTapes_.count(op->id())) {
+        scopeLen_[op] = makeIntConst(1);
+    }
+}
+
+void CountScopeLen::visit(const ReduceTo &op) {
+    Visitor::visit(op);
+    if (op->var_ == var_ && needTapes_.count(op->id())) {
         scopeLen_[op] = makeIntConst(1);
     }
 }
@@ -56,12 +63,8 @@ void CountScopeLen::visit(const StmtSeq &op) {
     Expr len;
     for (auto &&stmt : op->stmts_) {
         if (scopeLen_.count(stmt)) {
-            if (affectingScopes_.count(op->id())) {
-                len = len.isValid() ? makeAdd(len, scopeLen_.at(stmt))
-                                    : scopeLen_.at(stmt);
-            } else {
-                len = scopeLen_.at(stmt);
-            }
+            len = len.isValid() ? makeAdd(len, scopeLen_.at(stmt))
+                                : scopeLen_.at(stmt);
         }
     }
     if (len.isValid()) {
@@ -100,7 +103,7 @@ Expr AddExtraDim::visit(const Load &_op) {
         loadMap_.erase(_op);
     }
     if (op->var_ == var_) {
-        std::vector<Expr> newIndices(1, offset_);
+        std::vector<Expr> newIndices(1, makeSub(offset_, makeIntConst(1)));
         newIndices.insert(newIndices.end(), op->indices_.begin(),
                           op->indices_.end());
         loadMap_[op] = makeLoad(op->var_ + ".tape", std::move(newIndices));
@@ -109,10 +112,7 @@ Expr AddExtraDim::visit(const Load &_op) {
 }
 
 Stmt AddExtraDim::visit(const Store &op) {
-    if (op->var_ == var_) {
-        auto oldOffset = offset_;
-        offset_ = makeSub(offset_, makeIntConst(1));
-
+    if (op->var_ == var_ && needTapes_.count(op->id())) {
         std::vector<Expr> indices;
         indices.reserve(op->indices_.size());
         for (auto &&index : op->indices_) {
@@ -120,8 +120,6 @@ Stmt AddExtraDim::visit(const Store &op) {
         }
         auto oldStore = makeStore(op->id(), op->var_, std::move(indices),
                                   (*this)(op->expr_));
-
-        offset_ = oldOffset;
 
         std::vector<Expr> newIndices(1, offset_);
         newIndices.insert(newIndices.end(), op->indices_.begin(),
@@ -184,24 +182,18 @@ Stmt AddExtraDim::visit(const For &op) {
 }
 
 Stmt AddExtraDim::visit(const StmtSeq &op) {
-    if (affectingScopes_.count(op->id())) {
-        auto oldOffset = offset_;
-        auto nextOffset = offset_;
-        std::vector<Stmt> stmts;
-        for (auto &&stmt : op->stmts_) {
-            if (scopeLen_.count(stmt)) {
-                offset_ = nextOffset;
-                stmts.emplace_back((*this)(stmt));
-                nextOffset = makeAdd(offset_, scopeLen_.at(stmt));
-            } else {
-                stmts.emplace_back((*this)(stmt));
-            }
+    auto oldOffset = offset_;
+    std::vector<Stmt> stmts;
+    for (auto &&stmt : op->stmts_) {
+        if (scopeLen_.count(stmt)) {
+            stmts.emplace_back((*this)(stmt));
+            offset_ = makeAdd(offset_, scopeLen_.at(stmt));
+        } else {
+            stmts.emplace_back((*this)(stmt));
         }
-        offset_ = oldOffset;
-        return makeStmtSeq(op->id(), std::move(stmts));
-    } else {
-        return Mutator::visit(op);
     }
+    offset_ = oldOffset;
+    return makeStmtSeq(op->id(), std::move(stmts));
 }
 
 std::tuple<Stmt, std::unordered_map<std::string, std::string>,
@@ -211,26 +203,41 @@ outputIntermediates(const Stmt &_op,
     auto op = flattenStmtSeq(_op); // Make the added dim simpler
 
     // Reduce min and reduce max may need the intermediate value for
-    // gradients, but reduce max does not
+    // gradients, but reduce add does not
     op = makeReduction(op, {ReduceOp::Add});
 
     std::vector<FindDepsCond> conds;
-    for (auto &&scope : findAllScopes(op)) {
+    for (auto &&scope : findAllLoops(op)) {
         conds.push_back({{scope, DepDirection::Normal}});
     }
     std::unordered_map<std::string, std::unordered_set<std::string>>
-        affectingScopes;
-    auto filter = [&](const AccessPoint &later, const AccessPoint &earlier) {
+        affectingScopes, needTapes;
+    auto filter1 = [&](const AccessPoint &later, const AccessPoint &earlier) {
         return intermediates.count(earlier.def_->id());
     };
-    auto found = [&](const Dependency &d) {
-        if (d.earlier()->nodeType() != ASTNodeType::ReduceTo &&
-            d.later()->nodeType() != ASTNodeType::ReduceTo) {
+    auto found1 = [&](const Dependency &d) {
+        ASSERT(d.earlier()->nodeType() != ASTNodeType::Load);
+        if (d.later()->nodeType() != ASTNodeType::ReduceTo) {
+            needTapes[d.defId()].insert(d.earlier().as<StmtNode>()->id());
+        }
+    };
+    auto filter2 = [&](const AccessPoint &later, const AccessPoint &earlier) {
+        return needTapes.count(earlier.def_->id()) &&
+               (needTapes.at(earlier.def_->id()).count(earlier.cursor_.id()) ||
+                needTapes.at(earlier.def_->id()).count(later.cursor_.id()));
+    };
+    auto found2 = [&](const Dependency &d) {
+        if ((d.earlier()->nodeType() == ASTNodeType::Load &&
+             d.later()->nodeType() != ASTNodeType::Load) ||
+            (d.later()->nodeType() == ASTNodeType::Load &&
+             d.earlier()->nodeType() != ASTNodeType::Load)) {
             ASSERT(d.cond_.size() == 1);
             affectingScopes[d.defId()].insert(d.cond_[0].first.name_);
         }
     };
-    findDeps(op, conds, found, FindDepsMode::Dep, DEP_WAR | DEP_RAW, filter,
+    findDeps(op, {{}}, found1, FindDepsMode::Dep, DEP_RAW, filter1, true,
+             false);
+    findDeps(op, conds, found2, FindDepsMode::Dep, DEP_RAW | DEP_WAR, filter2,
              true, false);
 
     op = undoMakeReduction(op); // Because we need to record loadMap
@@ -239,10 +246,13 @@ outputIntermediates(const Stmt &_op,
     std::unordered_map<Load, Expr> loadMap;
     for (auto &&defId : intermediates) {
         auto &&scopes = affectingScopes[defId];
-        CountScopeLen counter(defId, scopes);
+        auto &&needTape = needTapes[defId];
+        CountScopeLen counter(defId, scopes, needTape);
         counter(op);
         auto &&scopeLen = counter.scopeLen();
-        AddExtraDim adder(defId, scopes, scopeLen, scopeLen.at(op), loadMap);
+        AddExtraDim adder(
+            defId, scopes, needTape, scopeLen,
+            scopeLen.count(op) ? scopeLen.at(op) : makeIntConst(1), loadMap);
         op = adder(op);
         nameMap[defId] = adder.tapeName();
     }

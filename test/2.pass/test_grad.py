@@ -1,4 +1,5 @@
 import ir
+import ir.debug
 
 
 def test_basic():
@@ -563,6 +564,87 @@ def test_tape_4():
                     d_t[()] = d_t_old[()] * x[-1 * i + 99]
                     d_x[-1 * i + 99] = d_t_old[()] * t[-1 * i + 99]
             d_t[()] = 0
+    std = ir.make_reduction(ir.pop_ast())
+
+    assert std.match(backward)
+
+
+def test_tape_5():
+    with ir.VarDef([("x", (100, 4), "float32", "input", "cpu"),
+                    ("y", (256,), "float32", "output", "cpu"),
+                    ("u", (256, 256), "float32", "input", "cpu")]) as (x, y, u):
+        ir.MarkNid(":h")
+        with ir.VarDef("h", (256,), "float32", "cache", "cpu") as h:
+            ir.MarkNid(":f")
+            with ir.VarDef("f", (256,), "float32", "cache", "cpu") as f:
+                with ir.For("l", 0, 256, nid="Ll0") as l:
+                    h[l] = 0
+                with ir.For("k", 0, 100, nid="Lk") as k:
+                    with ir.For("l", 0, 256, nid="Ll1") as l:
+                        f[l] = 0
+                        with ir.For("j", 0, 256, nid="Lj") as j:
+                            f[l] += u[j, l] * h[j]
+                    with ir.For("l", 0, 256, nid="Ll2") as l:
+                        h[l] = f[l]
+                with ir.For("i", 0, 256) as i:
+                    y[i] = h[i]
+
+    ast = ir.pop_ast()
+    print(ast)
+    forward, backward, _, _, _ = ir.grad(ast, set(["x", "u"]), set(["y"]),
+                                         set([":h", ":f"]))
+    print("Forward:")
+    print(forward)
+    print("Backward:")
+    print(backward)
+    forward = ir.lower(forward)
+    backward = ir.lower(backward)
+    print("Forward:")
+    print(forward)
+    print("Backward:")
+    print(backward)
+
+    with ir.VarDef([("x", (100, 4), "float32", "input", "cpu"),
+                    ("x.grad", (100, 4), "float32", "output", "cpu"),
+                    ("y", (256,), "float32", "input", "cpu"),
+                    ("y.grad", (256,), "float32", "inout", "cpu"),
+                    ("u", (256, 256), "float32", "input", "cpu"),
+                    ("u.grad", (256, 256), "float32", "output", "cpu"),
+                    ("h.tape", (101, 256), "float32", "input", "cpu"),
+                    ("h.grad", (256,), "float32", "cache", "cpu"),
+                    ("f.tape", (100, 256), "float32", "input", "cpu")
+                   ]) as (x, x_grad, y, dy, u, du, h_tape, dh, f_tape):
+        with ir.For(".x.grad.i0", 0, 100) as _x_grad_i0:
+            with ir.For(".x.grad.i1", 0, 4) as _x_grad_i1:
+                x_grad[-1 * _x_grad_i0 + 99, -1 * _x_grad_i1 + 3] = 0
+        with ir.For(".u.grad.i0", 0, 256) as _du_i0:
+            with ir.For(".u.grad.i1", 0, 256) as _du_i1:
+                du[-1 * _du_i0 + 255, -1 * _du_i1 + 255] = 0
+        with ir.VarDef("f.tape.grad", (100, 256), "float32", "cache",
+                       "cpu") as df_tape:
+            ir.Any()  # df_tape, can be removed in the future
+            with ir.VarDef("f.grad", (256,), "float32", "cache", "cpu") as df:
+                with ir.For(".f.grad.i0", 0, 256) as _df_i0:
+                    df[-1 * _df_i0 + 255] = 0
+                with ir.For("i", 0, 256) as i:
+                    dh[-1 * i + 255] = dy[-1 * i + 255]
+                with ir.For("k", 0, 100) as k:
+                    with ir.For("l", 0, 256) as l:
+                        df[-1 * l + 255] = df[-1 * l + 255] + dh[-1 * l + 255]
+                        dh[-1 * l + 255] = 0
+                    with ir.For("l", 0, 256) as l:
+                        with ir.For("j", 0, 256) as j:
+                            ir.Any()  # df_tape, can be removed in the future
+                            ir.Any()  # df_tape, can be removed in the future
+                            du[-1 * j + 255, -1 * l +
+                               255] = du[-1 * j + 255, -1 * l +
+                                         255] + df[-1 * l + 255] * h_tape[
+                                             -1 * k + 99, -1 * j + 255]
+                            dh[-1 * j + 255] = dh[-1 * j + 255] + df[
+                                -1 * l + 255] * u[-1 * j + 255, -1 * l + 255]
+                        df[-1 * l + 255] = 0
+        with ir.For("l", 0, 256) as l:
+            dh[-1 * l + 255] = 0
     std = ir.make_reduction(ir.pop_ast())
 
     assert std.match(backward)
