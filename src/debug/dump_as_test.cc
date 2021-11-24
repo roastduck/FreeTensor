@@ -180,7 +180,7 @@ void DumpAsTest::visit(const RealDiv &op) {
 void DumpAsTest::visit(const FloorDiv &op) {
     os() << "(";
     (*this)(op->lhs_);
-    os() << " / ";
+    os() << " // ";
     (*this)(op->rhs_);
     os() << ")";
 }

@@ -332,6 +332,11 @@ inline ISLMap lexGE(const ISLSpace &space) {
     return isl_map_lex_ge(space.copy());
 }
 
+inline ISLMap lexGT(ISLSpace &&space) { return isl_map_lex_gt(space.move()); }
+inline ISLMap lexGT(const ISLSpace &space) {
+    return isl_map_lex_gt(space.copy());
+}
+
 inline ISLSpace spaceAlloc(const ISLCtx &ctx, unsigned nparam, unsigned nIn,
                            unsigned nOut) {
     return isl_space_alloc(ctx.get(), nparam, nIn, nOut);

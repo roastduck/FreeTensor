@@ -647,8 +647,6 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
         }
     }
 
-    // lex_ge in serialDepAll AND ne in depAll
-    ISLMap serialLexGE = lexGE(spaceSetAlloc(isl, 0, iterDim));
     ISLMap allEQ = identity(spaceAlloc(isl, 0, iterDim, iterDim));
     ISLMap eraseVarDefConstraint =
         makeEraseVarDefConstraint(isl, point, iterDim);
@@ -722,11 +720,15 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
         return;
     }
 
+    ISLMap serialLexGT = lexGT(spaceSetAlloc(isl, 0, iterDim));
+    ISLMap serialEQ = identity(spaceAlloc(isl, 0, iterDim, iterDim));
     ISLMap ssDepAll = applyRange(std::move(ps2a), psDepAllUnion);
-    ISLMap ssDep = intersect(std::move(ssDepAll), std::move(serialLexGE));
-    ISLMap psDep = intersect(applyRange(std::move(pa2s), std::move(ssDep)),
-                             std::move(psDepAllUnion));
-    ISLMap psNearest = lexmax(std::move(psDep));
+    ISLMap ssDep = intersect(ssDepAll, std::move(serialLexGT));
+    ISLMap ssSelf = intersect(ssDepAll, std::move(serialEQ));
+    ISLMap psDep = intersect(applyRange(pa2s, std::move(ssDep)), psDepAllUnion);
+    ISLMap psSelf = intersect(applyRange(std::move(pa2s), std::move(ssSelf)),
+                              std::move(psDepAllUnion));
+    ISLMap psNearest = uni(lexmax(std::move(psDep)), std::move(psSelf));
 
     for (size_t i = 0, n = otherList.size(); i < n; i++) {
         auto &&other = otherList[i];
@@ -842,8 +844,6 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
         }
     }
 
-    // lex_ge in serialDepAll AND ne in depAll
-    ISLMap serialLexGE = lexGE(spaceSetAlloc(isl, 0, iterDim));
     ISLMap allEQ = identity(spaceAlloc(isl, 0, iterDim, iterDim));
     ISLMap eraseVarDefConstraint =
         makeEraseVarDefConstraint(isl, other, iterDim);
@@ -917,11 +917,16 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
         return;
     }
 
+    ISLMap serialLexGT = lexGT(spaceSetAlloc(isl, 0, iterDim));
+    ISLMap serialEQ = identity(spaceAlloc(isl, 0, iterDim, iterDim));
     ISLMap ssDepAll = applyRange(spDepAllUnion, std::move(oa2s));
-    ISLMap ssDep = intersect(std::move(ssDepAll), std::move(serialLexGE));
-    ISLMap spDep = intersect(applyRange(std::move(ssDep), std::move(os2a)),
-                             std::move(spDepAllUnion));
-    ISLMap spNearest = reverse(lexmin(reverse(std::move(spDep))));
+    ISLMap ssDep = intersect(ssDepAll, std::move(serialLexGT));
+    ISLMap ssSelf = intersect(ssDepAll, std::move(serialEQ));
+    ISLMap spDep = intersect(applyRange(std::move(ssDep), os2a), spDepAllUnion);
+    ISLMap spSelf = intersect(applyRange(std::move(ssSelf), std::move(os2a)),
+                              std::move(spDepAllUnion));
+    ISLMap spNearest =
+        uni(reverse(lexmin(reverse(std::move(spDep)))), std::move(spSelf));
 
     for (size_t i = 0, n = pointList.size(); i < n; i++) {
         auto &&point = pointList[i];
