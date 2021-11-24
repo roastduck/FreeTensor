@@ -18,16 +18,10 @@ def compile_all(in_feats, hidden_feats, length, device):
                        mtype)
         ir.declare_var(u, (4, hidden_feats, hidden_feats), "float32", "input",
                        mtype)
-        ir.declare_var(b, (
-            4,
-            hidden_feats,
-        ), "float32", "input", mtype)
+        ir.declare_var(b, (4, hidden_feats), "float32", "input", mtype)
         h = ir.create_var((hidden_feats,), "float32", mtype)
         c = ir.create_var((hidden_feats,), "float32", mtype)
-        f = ir.create_var((
-            4,
-            hidden_feats,
-        ), "float32", mtype)
+        f = ir.create_var((4, hidden_feats), "float32", mtype)
 
         for l in range(hidden_feats):
             c[l] = 0
@@ -70,20 +64,7 @@ def compile_all(in_feats, hidden_feats, length, device):
     print("# Forward:")
     print(forward)
     s = ir.Schedule(forward)
-    '''
-    s.auto_use_lib(device.target())
-    s.auto_fuse(device.target())
-    s.split("fused.fused.l_in.l_hidden.l_b", 8)
-    s.parallelize("fused.fused.l_in.l_hidden.l_b.0", "blockIdx.x")
-    s.parallelize("fused.fused.l_in.l_hidden.l_b.1", "threadIdx.x")
-    s.parallelize("fused.fused.m_in.m_hidden.m_b", "blockIdx.y")
-    s.parallelize("fused.#2:recur:L_elem.#6:recur:L_elem", "threadIdx.x")
-    s.parallelize("ch", "threadIdx.x")
-    s.parallelize("#15:L_elem", "threadIdx.x")
-    s.auto_set_mem_type(device.target())
-    s.auto_unroll(device.target())
-    s.set_mem_type("#6:y", "gpu/global")
-    '''
+    #s.auto_schedule(device.target())
     f = ir.lower(s.func(), device.target())
     print(f)
     code = ir.codegen(f, device.target())
@@ -93,37 +74,8 @@ def compile_all(in_feats, hidden_feats, length, device):
     print("# Backward:")
     print(backward)
     s = ir.Schedule(backward)
+    #s.auto_schedule(device.target())
     print(s.ast())
-    '''
-    s.auto_use_lib(device.target())
-    s.auto_fuse(device.target())
-    print(s.ast())
-    s.parallelize("#133", "threadIdx.y")
-    s.parallelize("#132", "threadIdx.x")
-    s.parallelize("#128", "blockIdx.x")
-    s.parallelize("#127", "threadIdx.x")
-    s.parallelize("fused.#123.#118", "threadIdx.x")
-    s.parallelize("#112", "threadIdx.x")
-    s.parallelize("#109", "blockIdx.x")
-    s.parallelize("#108", "threadIdx.x")
-    s.parallelize("fused.#28.#30", "threadIdx.x")
-    s.split("fused.fused.#38.#42.#45", 16)
-    s.parallelize("fused.fused.#38.#42.#45.0", "blockIdx.x")
-    s.parallelize("fused.fused.#38.#42.#45.1", "threadIdx.x")
-    s.parallelize("fused.fused.#39.#43.#46", "blockIdx.y")
-    s.parallelize("#50", "threadIdx.x")
-    s.parallelize("#15:L_elem", "threadIdx.x")
-    s.parallelize("ch", "threadIdx.x")
-    s.split("fused.fused.l_b.l_hidden.l_in", 16)
-    s.parallelize("fused.fused.l_b.l_hidden.l_in.0", "blockIdx.x")
-    s.parallelize("fused.fused.l_b.l_hidden.l_in.1", "threadIdx.x")
-    s.parallelize("fused.fused.m_b.m_hidden.m_in", "blockIdx.y")
-    s.parallelize("#10:recur:recur:L_elem", "threadIdx.x")
-    s.parallelize("#10:recur:L_elem", "threadIdx.y")
-    s.parallelize("fused.#6:recur:L_elem.#2:recur:L_elem", "threadIdx.x")
-    s.auto_set_mem_type(device.target())
-    s.auto_unroll(device.target())
-    '''
     f = ir.lower(s.func(), device.target())
     print(f)
     code = ir.codegen(f, device.target())
@@ -213,11 +165,6 @@ if __name__ == '__main__':
     for i in range(warmup_num):
         inference(x, y, w, u, b)
         if i == 0:
-            # print(x.numpy().tolist())
-            # print(w.numpy().reshape(4, in_feats, hidden_feats).tolist())
-            # print(u.numpy().reshape(4, hidden_feats, hidden_feats).tolist())
-            # print(b.numpy().reshape(4, hidden_feats).tolist())
-            # print(y.numpy().tolist())
             np.savetxt("y.out", y.numpy().reshape((hidden_feats,)))
     ir_dev.sync()
     t0 = time.time()
@@ -270,26 +217,10 @@ if __name__ == '__main__':
                 "d_uc.out",
                 d_u.numpy().reshape(
                     (4, hidden_feats, hidden_feats))[3].transpose())
-            np.savetxt("d_bf.out",
-                       d_b.numpy().reshape((
-                           4,
-                           hidden_feats,
-                       ))[0])
-            np.savetxt("d_bi.out",
-                       d_b.numpy().reshape((
-                           4,
-                           hidden_feats,
-                       ))[1])
-            np.savetxt("d_bo.out",
-                       d_b.numpy().reshape((
-                           4,
-                           hidden_feats,
-                       ))[2])
-            np.savetxt("d_bc.out",
-                       d_b.numpy().reshape((
-                           4,
-                           hidden_feats,
-                       ))[3])
+            np.savetxt("d_bf.out", d_b.numpy().reshape((4, hidden_feats))[0])
+            np.savetxt("d_bi.out", d_b.numpy().reshape((4, hidden_feats))[1])
+            np.savetxt("d_bo.out", d_b.numpy().reshape((4, hidden_feats))[2])
+            np.savetxt("d_bc.out", d_b.numpy().reshape((4, hidden_feats))[3])
     ir_dev.sync()
     t0 = time.time()
     for i in range(test_num):
