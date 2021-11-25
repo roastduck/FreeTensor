@@ -54,7 +54,7 @@ def compile_all(in_feats, hidden_feats, length, device):
     print("# Inference:")
     print(inference)
     s = ir.Schedule(inference)
-    #s.auto_schedule(device.target())
+    s.auto_schedule(device.target())
     f = ir.lower(s.func(), device.target())
     print(f)
     code = ir.codegen(f, device.target())
@@ -64,7 +64,7 @@ def compile_all(in_feats, hidden_feats, length, device):
     print("# Forward:")
     print(forward)
     s = ir.Schedule(forward)
-    #s.auto_schedule(device.target())
+    s.auto_schedule(device.target())
     f = ir.lower(s.func(), device.target())
     print(f)
     code = ir.codegen(f, device.target())
@@ -74,7 +74,7 @@ def compile_all(in_feats, hidden_feats, length, device):
     print("# Backward:")
     print(backward)
     s = ir.Schedule(backward)
-    #s.auto_schedule(device.target())
+    s.auto_schedule(device.target())
     print(s.ast())
     f = ir.lower(s.func(), device.target())
     print(f)
@@ -139,8 +139,6 @@ if __name__ == '__main__':
     d_b = np.zeros(b.shape, dtype='float32')
     d_y = np.loadtxt("../d_y.in").astype("float32")
 
-    print(w[0])
-    print("Test begin")
     if device == 'gpu':
         ir_dev = ir.Device(ir.GPU())
     else:

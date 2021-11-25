@@ -242,7 +242,6 @@ std::pair<Stmt, std::string> fuse(const Stmt &_ast, const std::string &loop0,
     ast = sinkVar(ast);
     ast = shrinkVar(ast);
     ast = removeDeadVar(ast);
-//    std::cout << "Fuse end " << loop0 << " " << loop1 << " " << _ast << std::endl;
     return std::make_pair(ast, mutator.fused());
 }
 

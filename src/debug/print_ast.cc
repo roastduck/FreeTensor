@@ -31,13 +31,13 @@ void PrintVisitor::printId(const Stmt &op) {
     makeIndent();
     os() << "// By " << op->debugCreator_ << std::endl;
 #endif
-//    if (op->hasNamedId()) {
+    if (op->hasNamedId()) {
         if (pretty_) {
             os() << CYAN << op->id() << ":" << RESET << std::endl;
         } else {
             os() << op->id() << ":" << std::endl;
         }
-//    }
+    }
 }
 
 void PrintVisitor::visitStmt(
