@@ -129,6 +129,8 @@ void MatchVisitor::visit(const Add &op) {
         };
     recur(op, thisOperands);
     recur(instance, instanceOperands);
+    // FIXME: If the expression contains `AnyExpr`, this assertion may lead to
+    // false mismatch
     CHECK(thisOperands.size() == instanceOperands.size());
 
     std::sort(thisOperands.begin(), thisOperands.end());
