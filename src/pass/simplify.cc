@@ -497,7 +497,7 @@ Expr CompUniqueBounds::visit(const Mul &_op) {
                 if (e1->nodeType() == ASTNodeType::FloorDiv) {
                     auto div = e1.as<FloorDivNode>();
                     if (auto k1 = getInt(div->rhs_);
-                        k1.isValid() && *k1 % *k == 0) {
+                        k1.isValid() && *k1 > 0 && *k1 % *k == 0) {
                         auto equ = (*this)(
                             makeSub(div->lhs_, makeMod(div->lhs_, div->rhs_)));
                         for (auto &&b : getLower(equ)) {
@@ -508,13 +508,26 @@ Expr CompUniqueBounds::visit(const Mul &_op) {
                         }
                     }
                 }
-                // FIXME: Mod for negative
             } else {
                 for (auto &&b : getLower(e1)) {
                     updUpper(upper, mul(UpperBound{b.lin()}, *k));
                 }
                 for (auto &&b : getUpper(e1)) {
                     updLower(lower, mul(LowerBound{b.lin()}, *k));
+                }
+                if (e1->nodeType() == ASTNodeType::FloorDiv) {
+                    auto div = e1.as<FloorDivNode>();
+                    if (auto k1 = getInt(div->rhs_);
+                        k1.isValid() && *k1 > 0 && *k1 % *k == 0) {
+                        auto equ = (*this)(
+                            makeSub(div->lhs_, makeMod(div->lhs_, div->rhs_)));
+                        for (auto &&b : getLower(equ)) {
+                            updUpper(upper, mul(UpperBound{b.lin()}, *k1 / *k));
+                        }
+                        for (auto &&b : getUpper(equ)) {
+                            updLower(lower, mul(LowerBound{b.lin()}, *k1 / *k));
+                        }
+                    }
                 }
             }
         }
