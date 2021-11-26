@@ -16,6 +16,15 @@ template <class T> T ceilDiv(T a, T b) {
     return res + (rem != 0 && ((rem < 0) == (b < 0)));
 }
 
+template <class T> T mod(T a, T b) {
+    T m = a % b;
+    if (m < 0) {
+        // m += (b < 0) ? -b : b; // avoid this form: it is UB when b == INT_MIN
+        m = (b < 0) ? m - b : m + b;
+    }
+    return m;
+}
+
 template <class T> T gcd(T x, T y) {
     x = std::abs(x), y = std::abs(y);
     if (x < y) {

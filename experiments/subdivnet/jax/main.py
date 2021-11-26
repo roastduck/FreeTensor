@@ -43,7 +43,6 @@ def load_faces(path: str):
     return np.array(ret, dtype=np.int32)
 
 
-@jax.jit
 def conv_impl1(adj, x, w0, w1, w2, w3):
     # TODO: Dilation
     # TODO: Stride
@@ -71,7 +70,6 @@ def conv_impl1(adj, x, w0, w1, w2, w3):
     return y0 + y1 + y2 + y3
 
 
-@jax.jit
 def conv_impl2(adj, x, w0, w1, w2, w3):
     # TODO: Dilation
     # TODO: Stride
@@ -125,20 +123,69 @@ if __name__ == '__main__':
     w2 = jax.device_put(w2)
     w3 = jax.device_put(w3)
 
+    warmup_num = 10
     test_num = 1000
 
-    y = conv_impl1(adj, x, w0, w1, w2, w3)  # init lazy ops
-    t0 = time.time()
-    for i in range(test_num):
-        y = conv_impl1(adj, x, w0, w1, w2, w3)
-    t1 = time.time()
-    assert y.shape == (n_faces, out_feats)
-    print(f"Time = {(t1 - t0) / test_num * 1000} ms")
+    conv_impl1_inference = jax.jit(conv_impl1)
+    conv_impl2_inference = jax.jit(conv_impl2)
+    # FIXME: Can we remove the `jnp.sum`?
+    conv_impl1_forward_backward = jax.grad(
+        lambda *args: jnp.sum(conv_impl1(*args)), argnums=(1, 2, 3, 4, 5))
+    conv_impl2_forward_backward = jax.grad(
+        lambda *args: jnp.sum(conv_impl2(*args)), argnums=(1, 2, 3, 4, 5))
 
-    y = conv_impl2(adj, x, w0, w1, w2, w3)  # init lazy ops
+    for i in range(warmup_num):
+        y = conv_impl1_inference(adj, x, w0, w1, w2, w3)
+    y = y.block_until_ready()
     t0 = time.time()
     for i in range(test_num):
-        y = conv_impl2(adj, x, w0, w1, w2, w3)
+        y = conv_impl1_inference(adj, x, w0, w1, w2, w3)
+    y = y.block_until_ready()
     t1 = time.time()
     assert y.shape == (n_faces, out_feats)
-    print(f"Time = {(t1 - t0) / test_num * 1000} ms")
+    print(f"Impl1 Inference Time = {(t1 - t0) / test_num * 1000} ms")
+
+    for i in range(warmup_num):
+        y = conv_impl2_inference(adj, x, w0, w1, w2, w3)
+    y = y.block_until_ready()
+    t0 = time.time()
+    for i in range(test_num):
+        y = conv_impl2_inference(adj, x, w0, w1, w2, w3)
+    y = y.block_until_ready()
+    t1 = time.time()
+    assert y.shape == (n_faces, out_feats)
+    print(f"Impl2 Inference Time = {(t1 - t0) / test_num * 1000} ms")
+
+    for i in range(warmup_num):
+        d_x, d_w0, d_w1, d_w2, d_w3 = conv_impl1_forward_backward(
+            adj, x, w0, w1, w2, w3)
+    y = y.block_until_ready()
+    t0 = time.time()
+    for i in range(test_num):
+        d_x, d_w0, d_w1, d_w2, d_w3 = conv_impl1_forward_backward(
+            adj, x, w0, w1, w2, w3)
+    y = y.block_until_ready()
+    t1 = time.time()
+    assert d_x.shape == x.shape
+    assert d_w0.shape == w0.shape
+    assert d_w1.shape == w1.shape
+    assert d_w2.shape == w2.shape
+    assert d_w3.shape == w3.shape
+    print(f"Impl1 Forward+Backward Time = {(t1 - t0) / test_num * 1000} ms")
+
+    for i in range(warmup_num):
+        d_x, d_w0, d_w1, d_w2, d_w3 = conv_impl2_forward_backward(
+            adj, x, w0, w1, w2, w3)
+    y = y.block_until_ready()
+    t0 = time.time()
+    for i in range(test_num):
+        d_x, d_w0, d_w1, d_w2, d_w3 = conv_impl2_forward_backward(
+            adj, x, w0, w1, w2, w3)
+    y = y.block_until_ready()
+    t1 = time.time()
+    assert d_x.shape == x.shape
+    assert d_w0.shape == w0.shape
+    assert d_w1.shape == w1.shape
+    assert d_w2.shape == w2.shape
+    assert d_w3.shape == w3.shape
+    print(f"Impl2 Forward+Backward Time = {(t1 - t0) / test_num * 1000} ms")

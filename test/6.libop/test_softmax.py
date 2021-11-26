@@ -78,8 +78,8 @@ def test_grad():
         ir.libop.softmax_()(x, y)
 
     print(f)
-    f, g, requires, privdes, intermediates = ir.grad(
-        f, set(["x"]), set(["y"]), ir.GradTapeMode.NoReuseOnly)
+    f, g, requires, privdes, _ = ir.grad(f, set(["x"]), set(["y"]),
+                                         ir.GradTapeMode.NoReuseOnly)
     print("Forward:")
     print(f)
     print("Backward:")
@@ -109,19 +109,12 @@ def test_grad():
             assert False
         return shape, dtype
 
-    tmps = {}
-    for nid in intermediates:
-        name = intermediates[nid]
-        shape, dtype = get_shape_and_dtype(f, nid)
-        t = torch.zeros(*shape, dtype=dtype)
-        tmps[name] = ir.Array(t.numpy(), device)
-
     x_torch = torch.rand(4, 4, dtype=torch.float32)
     x_arr = ir.Array(x_torch.numpy(), device)
     x_torch.requires_grad = True
     y_torch_ours = torch.zeros(4, 4, dtype=torch.float32)
     y_arr = ir.Array(y_torch_ours.numpy(), device)
-    ir.Driver(f, f_code, device)(x_arr, y_arr, **tmps)
+    ir.Driver(f, f_code, device)(x_arr, y_arr)
     y_torch_ours = torch.Tensor(y_arr.numpy().reshape(4, 4))
     y_torch = torch.softmax(x_torch, axis=-1)
     assert torch.all(torch.isclose(y_torch_ours, y_torch))
@@ -133,7 +126,7 @@ def test_grad():
     kvs = {}
     kvs[privdes['y']] = d_y_arr
     kvs[requires['x']] = d_x_arr
-    ir.Driver(g, g_code, device)(x_arr, y_arr, **kvs, **tmps)
+    ir.Driver(g, g_code, device)(x_arr, y_arr, **kvs)
     x_grad_torch_ours = torch.Tensor(d_x_arr.numpy().reshape(4, 4))
     y_torch.backward(y_torch.grad)
-    assert torch.all(torch.isclose(x_grad_torch_ours, x_torch.grad))
+    assert torch.all(torch.isclose(x_grad_torch_ours, x_torch.grad, 1e-4, 1e-7))

@@ -221,6 +221,13 @@ void MatchVisitor::visit(const Mod &op) {
     RECURSE(op->rhs_, instance->rhs_);
 }
 
+void MatchVisitor::visit(const Remainder &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::Remainder);
+    auto instance = instance_.as<RemainderNode>();
+    RECURSE(op->lhs_, instance->lhs_);
+    RECURSE(op->rhs_, instance->rhs_);
+}
+
 void MatchVisitor::visit(const Min &op) {
     CHECK(instance_->nodeType() == ASTNodeType::Min);
     auto instance = instance_.as<MinNode>();
@@ -342,6 +349,18 @@ void MatchVisitor::visit(const Exp &op) {
 void MatchVisitor::visit(const Square &op) {
     CHECK(instance_->nodeType() == ASTNodeType::Square);
     auto instance = instance_.as<SquareNode>();
+    RECURSE(op->expr_, instance->expr_);
+}
+
+void MatchVisitor::visit(const Sigmoid &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::Sigmoid);
+    auto instance = instance_.as<SigmoidNode>();
+    RECURSE(op->expr_, instance->expr_);
+}
+
+void MatchVisitor::visit(const Tanh &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::Tanh);
+    auto instance = instance_.as<TanhNode>();
     RECURSE(op->expr_, instance->expr_);
 }
 

@@ -5,6 +5,7 @@
 #include <sstream>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include <visitor.h>
@@ -15,11 +16,13 @@ struct CodeGenStream {
     std::string name_;
     std::ostringstream os_;
     int nIndent_ = 0;
-    std::unordered_map<std::string, Ref<Buffer>> uses_;
+    std::unordered_map<std::string, Ref<Buffer>> useBuffers_;
+    std::unordered_set<std::string> useIters_;
 };
 
 template <class Stream> class CodeGen : public Visitor {
   protected:
+    int indentSize_;
     std::vector<Stream> streamStack_, poppedStream_;
 
     std::unordered_map<std::string, Ref<Buffer>> buffers_; // var name -> buffer
@@ -35,11 +38,15 @@ template <class Stream> class CodeGen : public Visitor {
         }
     }
 
-    CodeGen();
+    CodeGen(int indentSize = 2);
 
-    void markDef(const std::string &name, const Ref<Buffer> &buffer);
-    void markUse(const std::string &name);
-    void markUndef(const std::string &name);
+    void markDefBuffer(const std::string &name, const Ref<Buffer> &buffer);
+    void markUseBuffer(const std::string &name);
+    void markUndefBuffer(const std::string &name);
+
+    void markDefIter(const std::string &name);
+    void markUseIter(const std::string &name);
+    void markUndefIter(const std::string &name);
 
     void pushStream(const std::string &name);
     void popStream();

@@ -42,7 +42,7 @@ def test_max_pooling_same_padding():
         ir.declare_var(x, (2, 3, 14, 14), "float32", "input", "cpu")
         ir.declare_var(y, (2, 3, 14, 14), "float32", "output", "cpu")
         "nid: y_shape"
-        y_shape = ir.create_var((4,), "int32", "cache", "cpu")
+        y_shape = ir.create_var((4,), "int32", "cpu")
         "nid: max_pool"
         ir.libop.max_pool_(auto_pad='SAME_UPPER', kernel_shape=[3, 3])(x, y)
 

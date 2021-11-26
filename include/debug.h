@@ -13,6 +13,8 @@ namespace ir {
 
 std::string toString(const AST &op, bool pretty = false);
 
+std::string dumpAsTest(const Stmt &op);
+
 bool match(const AST &pattern, const AST &instance);
 
 inline std::ostream &operator<<(std::ostream &os, const AST &op) {

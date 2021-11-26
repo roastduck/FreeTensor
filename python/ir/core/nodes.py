@@ -13,13 +13,15 @@ class Context:
         self.stmt_seq = []
         self.last_if = None  # To handle else case
         self.next_nid = ""
-        self.next_no_deps = False
+        self.next_no_deps = []
+        self.next_prefer_libs = False
 
     def append_stmt(self, stmt: ffi.Stmt):
         self.stmt_seq.append(stmt)
         self.last_if = None
         self.next_nid = ""
-        self.next_no_deps = False
+        self.next_no_deps = []
+        self.next_prefer_libs = False
 
     def append_if_then_stmt(self, cond, body: ffi.Stmt):
         next_nid = self.next_nid
@@ -37,11 +39,14 @@ class Context:
                         end,
                         body,
                         nid: str = "",
-                        no_deps: Optional[bool] = None):
+                        no_deps: Optional[Sequence] = None,
+                        prefer_libs: Optional[bool] = None):
         if nid == "":
             nid = self.next_nid
         if no_deps is None:
             no_deps = self.next_no_deps
+        if prefer_libs is None:
+            prefer_libs = self.next_prefer_libs
         self.append_stmt(
             ffi.makeFor(
                 nid,
@@ -49,8 +54,8 @@ class Context:
                 begin,
                 end,
                 end - begin,
-                no_deps,
-                ffi.ForProperty(),
+                ffi.ForProperty().with_no_deps(no_deps).with_prefer_libs(
+                    prefer_libs),
                 body,
             ))
 
@@ -60,11 +65,20 @@ class Context:
     def get_next_nid(self):
         return self.next_nid
 
-    def set_next_no_deps(self, no_deps: bool = True):
-        self.next_no_deps = no_deps
+    def add_next_no_deps(self, var):
+        self.next_no_deps.append(var)
+
+    def reset_next_no_deps(self):
+        self.next_no_deps = []
 
     def get_next_no_deps(self):
         return self.next_no_deps
+
+    def set_next_prefer_libs(self, prefer_libs=True):
+        self.next_prefer_libs = prefer_libs
+
+    def get_next_prefer_libs(self):
+        return self.next_prefer_libs
 
     def make_stmt(self, nid: str = ""):
         if len(self.stmt_seq) == 1 and nid == "":
@@ -111,19 +125,21 @@ class Var(ffi.FrontendVar):
 
     def __init__(self,
                  name: str,
+                 vardef,
                  full_shape: Sequence,
                  dtype: ffi.DataType,
                  mtype: ffi.MemType,
                  indices: Sequence = []):
         super(Var, self).__init__(name, full_shape, dtype, mtype, indices)
+        self.vardef = vardef
 
     def __getitem__(self, key):
-        return Var(self.name, self.full_shape, self.dtype, self.mtype,
-                   self.chain_indices(self._parse_key(key)))
+        return Var(self.name, self.vardef, self.full_shape, self.dtype,
+                   self.mtype, self.chain_indices(self._parse_key(key)))
 
     def __setitem__(self, key, value):
-        var = Var(self.name, self.full_shape, self.dtype, self.mtype,
-                  self.chain_indices(self._parse_key(key)))
+        var = Var(self.name, self.vardef, self.full_shape, self.dtype,
+                  self.mtype, self.chain_indices(self._parse_key(key)))
         top = ctx_stack.top()
         top.append_stmt(var.as_store(top.get_next_nid(), value))
 
@@ -247,9 +263,12 @@ class _VarDef:
         self.atype = parseAType(atype)
         self.mtype = parseMType(mtype)
 
+    def set_atype(self, atype):
+        self.atype = parseAType(atype)
+
     def __enter__(self):
         ctx_stack.push()
-        return Var(self.name, self.shape, self.dtype, self.mtype)
+        return Var(self.name, self, self.shape, self.dtype, self.mtype)
 
     def __exit__(self, exc_type, exc_value, traceback):
         buf = ffi.Buffer(ffi.Tensor(self.shape, self.dtype), self.atype,
@@ -289,12 +308,14 @@ class For:
                  begin,
                  end,
                  nid: str = "",
-                 no_deps: Optional[bool] = None):
+                 no_deps: Optional[Sequence] = None,
+                 prefer_libs: Optional[bool] = None):
         self.iter_var = iter_var
         self.begin = begin
         self.end = end
         self.nid = nid
         self.no_deps = no_deps
+        self.prefer_libs = prefer_libs
 
     def __enter__(self):
         ctx_stack.push()
@@ -308,7 +329,8 @@ class For:
                             self.end,
                             body,
                             nid=self.nid,
-                            no_deps=self.no_deps)
+                            no_deps=self.no_deps,
+                            prefer_libs=self.prefer_libs)
 
 
 class If:
@@ -379,6 +401,10 @@ def Any():
     ctx_stack.top().append_stmt(ffi.makeAny())
 
 
+def remainder(lhs, rhs):
+    return ffi.makeRemainder(lhs, rhs)
+
+
 def min(lhs, rhs):
     return ffi.makeMin(lhs, rhs)
 
@@ -440,6 +466,14 @@ def square(expr):
     return ffi.makeSquare(expr)
 
 
+def sigmoid(expr):
+    return ffi.makeSigmoid(expr)
+
+
+def tanh(expr):
+    return ffi.makeTanh(expr)
+
+
 def floor(expr):
     return ffi.makeFloor(expr)
 
@@ -477,8 +511,8 @@ def any():
     return ffi.makeAnyExpr()
 
 
-def Func(name, params, body, src=None):
-    return ffi.makeFunc(name, params, body, src)
+def Func(name, params, returns, body):
+    return ffi.makeFunc(name, params, returns, body)
 
 
 class Tensor(ffi.TensorData):

@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <regex>
 #include <sstream>
 
 #include <analyze/deps.h>
@@ -12,6 +13,18 @@ template <class T, class V>
 static void unionTo(std::unordered_map<T, V> &target,
                     const std::unordered_map<T, V> &other) {
     target.insert(other.begin(), other.end());
+}
+
+template <class T, class V>
+static std::unordered_map<T, V> intersect(const std::unordered_map<T, V> &lhs,
+                                          const std::unordered_map<T, V> &rhs) {
+    std::unordered_map<T, V> ret;
+    for (auto &&[key, value] : lhs) {
+        if (rhs.count(key)) {
+            ret.emplace(key, value);
+        }
+    }
+    return ret;
 }
 
 static std::string replaceAll(const std::string &str,
@@ -28,13 +41,51 @@ static std::string replaceAll(const std::string &str,
 
 void FindAllNoDeps::visit(const For &op) {
     Visitor::visit(op);
-    if (op->noDeps_) {
-        results_.emplace_back(op->id());
+    for (auto &&var : op->property_.noDeps_) {
+        results_[var].emplace_back(op->id());
+    }
+}
+
+void CountBandNodeWidth::visit(const Load &op) {
+    // No recursion
+    if (!lastIsLoad_) {
+        width_++;
+        lastIsLoad_ = true;
+    }
+}
+
+void CountBandNodeWidth::visit(const For &op) {
+    (*this)(op->begin_);
+    (*this)(op->end_);
+    (*this)(op->len_);
+    width_++;
+    lastIsLoad_ = false;
+}
+
+void CountBandNodeWidth::visit(const Store &op) {
+    Visitor::visit(op);
+    width_++;
+    lastIsLoad_ = false;
+}
+
+void CountBandNodeWidth::visit(const ReduceTo &op) {
+    Visitor::visit(op);
+    width_++;
+    lastIsLoad_ = false;
+}
+
+FindAccessPoint::FindAccessPoint(const Stmt &root) {
+    if (int width = countBandNodeWidth(root); width > 1) {
+        cur_.emplace_back(makeIntConst(-1));
     }
 }
 
 void FindAccessPoint::visit(const VarDef &op) {
-    defAxis_[op->name_] = cur_.size();
+    ASSERT(!defs_.count(op->name_));
+    defAxis_[op->name_] =
+        !cur_.empty() && cur_.back().iter_->nodeType() == ASTNodeType::IntConst
+            ? cur_.size() - 1
+            : cur_.size();
     defs_[op->name_] = op;
     Visitor::visit(op);
     defAxis_.erase(op->name_);
@@ -42,51 +93,71 @@ void FindAccessPoint::visit(const VarDef &op) {
 }
 
 void FindAccessPoint::visit(const StmtSeq &op) {
-    cur_.emplace_back(nullptr, makeIntConst(0),
-                      makeIntConst(op->stmts_.size()));
-    scope2coord_[op->id()] = cur_;
-    for (size_t i = 0, iEnd = op->stmts_.size(); i < iEnd; i++) {
-        cur_.back().iter_ = makeIntConst(i);
-        (*this)(op->stmts_[i]);
+    if (!cur_.empty() &&
+        cur_.back().iter_->nodeType() == ASTNodeType::IntConst) {
+        scope2coord_[op->id()] = cur_;
     }
-    cur_.pop_back();
+    Visitor::visit(op);
 }
 
 void FindAccessPoint::visit(const For &op) {
-    cur_.emplace_back(makeVar(op->iter_), op->begin_, op->end_,
-                      op->property_.parallel_);
+    (*this)(op->begin_);
+    (*this)(op->end_);
+    (*this)(op->len_);
+
+    if (!cur_.empty() &&
+        cur_.back().iter_->nodeType() == ASTNodeType::IntConst) {
+        // top is band node
+        cur_.back().iter_ =
+            makeIntConst(cur_.back().iter_.as<IntConstNode>()->val_ + 1);
+    }
+    lastIsLoad_ = false;
+
+    auto iter = makeVar(op->iter_);
+    conds_.emplace_back(makeGE(iter, op->begin_));
+    conds_.emplace_back(makeLT(iter, op->end_));
+    cur_.emplace_back(iter, op->property_.parallel_);
     scope2coord_[op->id()] = cur_;
-    Visitor::visit(op);
+    if (int width = countBandNodeWidth(op->body_); width > 1) {
+        cur_.emplace_back(makeIntConst(-1));
+        (*this)(op->body_);
+        cur_.pop_back();
+    } else {
+        (*this)(op->body_);
+    }
     cur_.pop_back();
+    conds_.pop_back();
+    conds_.pop_back();
 }
 
 void FindAccessPoint::visit(const If &op) {
     (*this)(op->cond_);
 
     if (!op->elseCase_.isValid()) {
-        auto oldCond = cond_;
-        cond_ =
-            oldCond.isValid() ? makeLAnd(oldCond, op->cond_) : (Expr)op->cond_;
+        conds_.emplace_back(op->cond_);
         (*this)(op->thenCase_);
-        cond_ = oldCond;
+        conds_.pop_back();
     } else {
-        cur_.emplace_back(nullptr, makeIntConst(0), makeIntConst(2));
-        scope2coord_[op->id()] = cur_;
-        cur_.back().iter_ = makeIntConst(0);
-        auto oldCond = cond_;
-        cond_ =
-            oldCond.isValid() ? makeLAnd(oldCond, op->cond_) : (Expr)op->cond_;
+        conds_.emplace_back(op->cond_);
         (*this)(op->thenCase_);
-        cur_.back().iter_ = makeIntConst(1);
-        cond_ = oldCond.isValid() ? makeLAnd(oldCond, makeLNot(op->cond_))
-                                  : makeLNot(op->cond_);
+        conds_.pop_back();
+        conds_.emplace_back(makeLNot(op->cond_));
         (*this)(op->elseCase_);
-        cond_ = oldCond;
-        cur_.pop_back();
+        conds_.pop_back();
     }
 }
 
 void FindAccessPoint::visit(const Load &op) {
+    if (!cur_.empty() &&
+        cur_.back().iter_->nodeType() == ASTNodeType::IntConst) {
+        // top is band node
+        if (!lastIsLoad_) {
+            cur_.back().iter_ =
+                makeIntConst(cur_.back().iter_.as<IntConstNode>()->val_ + 1);
+        }
+    }
+    lastIsLoad_ = true;
+
     Visitor::visit(op);
     auto ap = Ref<AccessPoint>::make();
     *ap = {op,
@@ -96,7 +167,7 @@ void FindAccessPoint::visit(const Load &op) {
            defAxis_.at(op->var_),
            cur_,
            std::vector<Expr>{op->indices_.begin(), op->indices_.end()},
-           cond_};
+           conds_};
     points_.emplace(op, ap);
     reads_[defs_.at(op->var_)->id()].emplace_back(ap);
 }
@@ -165,57 +236,23 @@ Ref<std::string> AnalyzeDeps::makeAccList(GenISLExprDeps &genISLExpr,
     return Ref<std::string>::make("[" + ret + "]");
 }
 
-Ref<std::string> AnalyzeDeps::makeRange(GenISLExprDeps &genISLExpr,
-                                        const std::vector<IterAxis> &point,
-                                        RelaxMode relax,
-                                        ExternalMap &externals) {
-    std::vector<std::string> ineqs;
-    for (size_t i = 0, iEnd = point.size(); i < iEnd; i++) {
-        if (point[i].iter_->nodeType() == ASTNodeType::Var) {
-            std::string ineq =
-                genISLExpr.normalizeId(point[i].iter_.as<VarNode>()->name_);
-            bool bounded = true;
-            if (auto linstr = genISLExpr.gen(point[i].begin_);
-                linstr.isValid()) {
-                ineq = *linstr + " <= " + ineq;
-                unionTo(externals, genISLExpr.externals(point[i].begin_));
-            } else {
-                ineq = "free_lo <= " + ineq;
-                bounded = false;
-            }
-            if (auto linstr = genISLExpr.gen(point[i].end_); linstr.isValid()) {
-                ineq = ineq + " < " + *linstr;
-                unionTo(externals, genISLExpr.externals(point[i].end_));
-            } else {
-                ineq = ineq + " < free_hi";
-                bounded = false;
-            }
-            if (!bounded && relax == RelaxMode::Necessary) {
-                return nullptr;
-            }
-            ineqs.emplace_back(std::move(ineq));
-        }
-    }
-    std::string ret;
-    for (size_t i = 0, iEnd = ineqs.size(); i < iEnd; i++) {
-        ret += i == 0 ? "" : " and ";
-        ret += ineqs[i];
-    }
-    return Ref<std::string>::make(std::move(ret));
-}
-
 Ref<std::string> AnalyzeDeps::makeCond(GenISLExprDeps &genISLExpr,
-                                       const Expr &expr, RelaxMode relax,
+                                       const std::vector<Expr> &conds,
+                                       RelaxMode relax,
                                        ExternalMap &externals) {
-    if (expr.isValid()) {
-        if (auto str = genISLExpr.gen(expr); str.isValid()) {
-            unionTo(externals, genISLExpr.externals(expr));
-            return Ref<std::string>::make(*str);
+    std::string ret;
+    for (auto &&cond : conds) {
+        if (auto str = genISLExpr.gen(cond); str.isValid()) {
+            unionTo(externals, genISLExpr.externals(cond));
+            if (!ret.empty()) {
+                ret += " and ";
+            }
+            ret += *str;
         } else if (relax == RelaxMode::Necessary) {
             return nullptr;
         }
     }
-    return Ref<std::string>::make("");
+    return Ref<std::string>::make(ret);
 }
 
 ISLMap AnalyzeDeps::makeAccMap(ISLCtx &isl, GenISLExprDeps &genISLExpr,
@@ -230,13 +267,7 @@ ISLMap AnalyzeDeps::makeAccMap(ISLCtx &isl, GenISLExprDeps &genISLExpr,
         return emptyMap(spaceAlloc(isl, 0, iterDim, accDim));
     }
     std::string cond;
-    if (auto str = makeRange(genISLExpr, p.iter_, relax, externals);
-        str.isValid()) {
-        cond += *str;
-    } else {
-        return emptyMap(spaceAlloc(isl, 0, iterDim, accDim));
-    }
-    if (auto str = makeCond(genISLExpr, p.cond_, relax, externals);
+    if (auto str = makeCond(genISLExpr, p.conds_, relax, externals);
         str.isValid()) {
         cond += (cond.empty() || str->empty() ? "" : " and ") + *str;
     } else {
@@ -245,11 +276,16 @@ ISLMap AnalyzeDeps::makeAccMap(ISLCtx &isl, GenISLExprDeps &genISLExpr,
     if (!cond.empty()) {
         ret += ": " + cond;
     }
-    std::string ext = "free_lo, free_hi";
-    for (auto &&[hash, item] : externals) {
-        ext += ", " + item.second;
+    std::string ext;
+    if (!externals.empty()) {
+        bool first = true;
+        for (auto &&[hash, item] : externals) {
+            ext += (first ? "" : ", ") + item.second;
+            first = false;
+        }
+        ext = "[" + ext + "] -> ";
     }
-    ret = "[" + ext + "] -> {" + ret + "}";
+    ret = ext + "{" + ret + "}";
     ret = replaceAll(ret, "!!placeholder!!", extSuffix);
     return ISLMap(isl, ret);
 }
@@ -404,41 +440,18 @@ const std::string &AnalyzeDeps::getVar(const AST &op) {
     }
 }
 
-ISLMap AnalyzeDeps::makeSerialToAll(ISLCtx &isl, int iterDim, int serialIterDim,
+ISLMap AnalyzeDeps::makeSerialToAll(ISLCtx &isl, int iterDim,
                                     const std::vector<IterAxis> &point) const {
-    std::string ret =
-        makeNdList("d", serialIterDim) + " -> " + makeNdList("d_", iterDim);
-    bool first = true;
-    int j = 0;
+    std::string to = makeNdList("d", iterDim), from;
     for (int i = 0; i < iterDim; i++) {
-        if (i < (int)point.size()) {
-            if (point[i].parallel_.empty()) {
-                ret += first ? ": " : " and ";
-                ret += "d" + std::to_string(j++) + " = d_" + std::to_string(i);
-                first = false;
-            }
+        if (i < (int)point.size() && !point[i].parallel_.empty()) {
+            from += std::string(i > 0 ? ", " : "") + "0";
         } else {
-            ret += first ? ": " : " and ";
-            ret += "d_" + std::to_string(i) + " = 0";
-            first = false;
+            from += std::string(i > 0 ? ", " : "") + "d" + std::to_string(i);
         }
     }
-    while (j < serialIterDim) {
-        ret += first ? ": " : " and ";
-        ret += "d" + std::to_string(j++) + " = 0";
-        first = false;
-    }
-    return ISLMap(isl, "{" + ret + "}");
-}
-
-int AnalyzeDeps::countSerial(const std::vector<IterAxis> &point) {
-    int ret = 0;
-    for (auto &&item : point) {
-        if (item.parallel_.empty()) {
-            ret++;
-        }
-    }
-    return ret;
+    from = "[" + from + "]";
+    return ISLMap(isl, "{" + from + " -> " + to + "}");
 }
 
 ISLMap AnalyzeDeps::makeEraseVarDefConstraint(ISLCtx &isl,
@@ -455,48 +468,52 @@ ISLMap AnalyzeDeps::makeEraseVarDefConstraint(ISLCtx &isl,
     return ret;
 }
 
-ISLMap AnalyzeDeps::makeNoDepsConstraint(ISLCtx &isl, int iterDim) {
+ISLMap AnalyzeDeps::makeNoDepsConstraint(ISLCtx &isl, const std::string &var,
+                                         int iterDim) {
     ISLMap ret = universeMap(spaceAlloc(isl, 0, iterDim, iterDim));
-    for (auto &&noDepsLoop : noDepsList_) {
-        auto noDep = makeConstraintOfSingleLoop(
-            isl, noDepsLoop, DepDirection::Different, iterDim);
-        ret = subtract(std::move(ret), std::move(noDep));
+    if (noDepsLists_.count(var)) {
+        for (auto &&noDepsLoop : noDepsLists_.at(var)) {
+            auto noDep = makeConstraintOfSingleLoop(
+                isl, noDepsLoop, DepDirection::Different, iterDim);
+            ret = subtract(std::move(ret), std::move(noDep));
+        }
     }
     return ret;
 }
 
 ISLMap AnalyzeDeps::makeExternalVarConstraint(
     ISLCtx &isl, const Ref<AccessPoint> &point, const Ref<AccessPoint> &other,
-    const ExternalMap &pExternals, const ExternalMap &oExternals, int iterDim) {
+    const ExternalMap &pExternals, const ExternalMap &oExternals, int iterDim,
+    const std::string &extSuffixP, const std::string &extSuffixO) {
     ISLMap ret = universeMap(spaceAlloc(isl, 0, iterDim, iterDim));
-    auto opExternals = pExternals;
-    unionTo(opExternals, oExternals);
     // We only have to add constraint for common loops of both accesses
     auto common = lca(point->cursor_, other->cursor_);
 
-    // If all of the loops are variant, we don't have to make the constarint at
-    // all. This will save time for ISL
-    for (auto c = common;; c = c.outer()) {
-        if (c.nodeType() == ASTNodeType::For) {
-            for (auto &&[hash, item] : opExternals) {
+    for (auto &&[hash, item] : intersect(pExternals, oExternals)) {
+        // If all of the loops are variant, we don't have to make the constraint
+        // at all. This will save time for ISL
+        for (auto c = common;; c = c.outer()) {
+            if (c.nodeType() == ASTNodeType::For) {
                 if (isVariant(variantExpr_, item.first, c.id())) {
                     goto found;
                 }
+                goto do_compute_constraint;
+            found:;
             }
-            goto do_compute_constarint;
-        found:;
+            if (!c.hasOuter()) {
+                break;
+            }
         }
-        if (!c.hasOuter()) {
-            break;
-        }
-    }
-    return ret;
+        continue;
 
-    // Compute the constraint
-do_compute_constarint:
-    for (auto c = common;; c = c.outer()) {
-        if (c.nodeType() == ASTNodeType::For) {
-            for (auto &&[hash, item] : opExternals) {
+        // Compute the constraint
+    do_compute_constraint:
+        auto require = makeExternalEq(
+            isl, iterDim,
+            replaceAll(item.second, "!!placeholder!!", extSuffixP),
+            replaceAll(item.second, "!!placeholder!!", extSuffixO));
+        for (auto c = common;; c = c.outer()) {
+            if (c.nodeType() == ASTNodeType::For) {
                 if (isVariant(variantExpr_, item.first, c.id())) {
                     // Since idx[i] must be inside loop i, we only have
                     // to call makeIneqBetweenOps, but no need to call
@@ -504,34 +521,74 @@ do_compute_constarint:
                     auto diffIter = makeIneqBetweenOps(
                         isl, DepDirection::Different,
                         scope2coord_.at(c.id()).size() - 1, iterDim);
-                    auto sameExt = makeExternalEq(
-                        isl, iterDim,
-                        replaceAll(item.second, "!!placeholder!!", "__ext_p"),
-                        replaceAll(item.second, "!!placeholder!!", "__ext_o"));
-                    auto require = uni(std::move(diffIter), std::move(sameExt));
-                    ret = intersect(std::move(ret), std::move(require));
+                    require = uni(std::move(diffIter), std::move(require));
                 }
             }
+            if (!c.hasOuter()) {
+                break;
+            }
         }
-        if (!c.hasOuter()) {
-            break;
-        }
+        ret = intersect(std::move(ret), std::move(require));
     }
     return ret;
 }
 
-void AnalyzeDeps::checkDep(const Ref<AccessPoint> &point,
-                           const std::vector<Ref<AccessPoint>> &otherList) {
+ISLMap AnalyzeDeps::projectOutPrivateAxis(ISLCtx &isl, int iterDim, int since) {
+    std::string from = makeNdList("d", iterDim);
+    std::string to;
+    for (int i = 0; i < iterDim; i++) {
+        to += (i > 0 ? ", " : "") + (i < since ? "d" + std::to_string(i) : "0");
+    }
+    to = "[" + to + "]";
+    return ISLMap(isl, "{" + from + " -> " + to + "}");
+}
+
+int AnalyzeDeps::numCommonDims(const Ref<AccessPoint> &p1,
+                               const Ref<AccessPoint> &p2) {
+    int n = std::min(p1->iter_.size(), p2->iter_.size());
+    for (int i = 0; i < n; i++) {
+        auto &&iter1 = p1->iter_[i].iter_;
+        auto &&iter2 = p2->iter_[i].iter_;
+        if (iter1->nodeType() == ASTNodeType::IntConst &&
+            iter2->nodeType() == ASTNodeType::IntConst &&
+            iter1.as<IntConstNode>()->val_ != iter2.as<IntConstNode>()->val_) {
+            for (int j = n - 1; j >= i; j--) {
+                if ((j < (int)p1->iter_.size() &&
+                     !p1->iter_[j].parallel_.empty()) ||
+                    (j < (int)p2->iter_.size() &&
+                     !p2->iter_[j].parallel_.empty())) {
+                    return j + 1;
+                }
+            }
+            return i;
+        }
+    }
+    return n;
+}
+
+void AnalyzeDeps::checkDepLatestEarlier(
+    const Ref<AccessPoint> &point,
+    const std::vector<Ref<AccessPoint>> &otherList) {
     tasks_.emplace_back([point, otherList, this]() {
         ISLCtx isl;
         GenISLExprDeps genISLExpr;
-        checkDepImpl(isl, genISLExpr, point, otherList);
+        checkDepLatestEarlierImpl(isl, genISLExpr, point, otherList);
     });
 }
 
-void AnalyzeDeps::checkDepImpl(ISLCtx &isl, GenISLExprDeps &genISLExpr,
-                               const Ref<AccessPoint> &point,
-                               const std::vector<Ref<AccessPoint>> &otherList) {
+void AnalyzeDeps::checkDepEarliestLater(
+    const std::vector<Ref<AccessPoint>> &pointList,
+    const Ref<AccessPoint> &other) {
+    tasks_.emplace_back([pointList, other, this]() {
+        ISLCtx isl;
+        GenISLExprDeps genISLExpr;
+        checkDepEarliestLaterImpl(isl, genISLExpr, pointList, other);
+    });
+}
+
+void AnalyzeDeps::checkDepLatestEarlierImpl(
+    ISLCtx &isl, GenISLExprDeps &genISLExpr, const Ref<AccessPoint> &point,
+    const std::vector<Ref<AccessPoint>> &otherList) {
     if (otherList.empty()) {
         return;
     }
@@ -547,7 +604,6 @@ void AnalyzeDeps::checkDepImpl(ISLCtx &isl, GenISLExprDeps &genISLExpr,
 
     int accDim = point->access_.size();
     int iterDim = point->iter_.size();
-    int serialIterDim = countSerial(point->iter_);
     std::vector<bool> filteredIn(otherList.size());
     for (size_t i = 0, n = otherList.size(); i < n; i++) {
         auto &&other = otherList[i];
@@ -562,7 +618,6 @@ void AnalyzeDeps::checkDepImpl(ISLCtx &isl, GenISLExprDeps &genISLExpr,
         }
 
         iterDim = std::max<int>(iterDim, other->iter_.size());
-        serialIterDim = std::max(serialIterDim, countSerial(other->iter_));
         ASSERT((int)other->access_.size() == accDim);
     }
     if (std::find(filteredIn.begin(), filteredIn.end(), true) ==
@@ -570,12 +625,33 @@ void AnalyzeDeps::checkDepImpl(ISLCtx &isl, GenISLExprDeps &genISLExpr,
         return;
     }
 
-    // lex_ge in serialDepAll AND ne in depAll
-    ISLMap serialLexGE = lexGE(spaceSetAlloc(isl, 0, serialIterDim));
+    int pCommonDims = 0;
+    std::vector<int> oCommonDims(otherList.size(), 0);
+    for (size_t i = 0, n = otherList.size(); i < n; i++) {
+        auto &&other = otherList[i];
+        if (!filteredIn[i]) {
+            continue;
+        }
+
+        int cpo = numCommonDims(point, other);
+        pCommonDims = std::max(pCommonDims, cpo);
+        oCommonDims[i] = std::max(oCommonDims[i], cpo);
+        auto j = i + 1;
+        while (j < n && !filteredIn[j]) {
+            j++;
+        }
+        if (j < n) {
+            int co1o2 = numCommonDims(other, otherList[j]);
+            oCommonDims[i] = std::max(oCommonDims[i], co1o2);
+            oCommonDims[j] = std::max(oCommonDims[j], co1o2);
+        }
+    }
+
     ISLMap allEQ = identity(spaceAlloc(isl, 0, iterDim, iterDim));
     ISLMap eraseVarDefConstraint =
         makeEraseVarDefConstraint(isl, point, iterDim);
-    ISLMap noDepsConstraint = makeNoDepsConstraint(isl, iterDim);
+    ISLMap noDepsConstraint =
+        makeNoDepsConstraint(isl, point->def_->name_, iterDim);
 
     ExternalMap pExternals;
     ISLMap pmap = makeAccMap(isl, genISLExpr, *point, iterDim, accDim, pRelax,
@@ -583,7 +659,13 @@ void AnalyzeDeps::checkDepImpl(ISLCtx &isl, GenISLExprDeps &genISLExpr,
     if (pmap.empty()) {
         return;
     }
-    ISLMap ps2a = makeSerialToAll(isl, iterDim, serialIterDim, point->iter_);
+    if (mode_ == FindDepsMode::Dep &&
+        pCommonDims + 1 < (int)point->iter_.size()) {
+        pmap =
+            applyDomain(std::move(pmap),
+                        projectOutPrivateAxis(isl, iterDim, pCommonDims + 1));
+    }
+    ISLMap ps2a = makeSerialToAll(isl, iterDim, point->iter_);
     ISLMap pa2s = reverse(ps2a);
     ISLSet pIter = domain(pmap);
     std::vector<ISLMap> os2aList(otherList.size()),
@@ -597,14 +679,20 @@ void AnalyzeDeps::checkDepImpl(ISLCtx &isl, GenISLExprDeps &genISLExpr,
         }
 
         ExternalMap oExternals;
-        ISLMap omap = makeAccMap(isl, genISLExpr, *other, iterDim, accDim,
-                                 oRelax, "__ext_o", oExternals);
+        ISLMap omap =
+            makeAccMap(isl, genISLExpr, *other, iterDim, accDim, oRelax,
+                       "__ext_o" + std::to_string(i), oExternals);
         if (omap.empty()) {
             filteredIn[i] = false;
             continue;
         }
-        ISLMap os2a =
-            makeSerialToAll(isl, iterDim, serialIterDim, other->iter_);
+        if (mode_ == FindDepsMode::Dep &&
+            oCommonDims[i] + 1 < (int)other->iter_.size()) {
+            omap = applyDomain(
+                std::move(omap),
+                projectOutPrivateAxis(isl, iterDim, oCommonDims[i] + 1));
+        }
+        ISLMap os2a = makeSerialToAll(isl, iterDim, other->iter_);
         ISLMap oa2s = reverse(os2a);
         ISLSet oIter = domain(omap);
 
@@ -616,7 +704,8 @@ void AnalyzeDeps::checkDepImpl(ISLCtx &isl, GenISLExprDeps &genISLExpr,
         depAll =
             intersect(std::move(depAll),
                       makeExternalVarConstraint(isl, point, other, pExternals,
-                                                oExternals, iterDim));
+                                                oExternals, iterDim, "__ext_p",
+                                                "__ext_o" + std::to_string(i)));
 
         ISLMap psDepAll = applyRange(depAll, std::move(oa2s));
         psDepAllUnion = psDepAllUnion.isValid()
@@ -627,12 +716,19 @@ void AnalyzeDeps::checkDepImpl(ISLCtx &isl, GenISLExprDeps &genISLExpr,
         oIterList[i] = std::move(oIter);
         depAllList[i] = std::move(depAll);
     }
+    if (!psDepAllUnion.isValid()) {
+        return;
+    }
 
+    ISLMap serialLexGT = lexGT(spaceSetAlloc(isl, 0, iterDim));
+    ISLMap serialEQ = identity(spaceAlloc(isl, 0, iterDim, iterDim));
     ISLMap ssDepAll = applyRange(std::move(ps2a), psDepAllUnion);
-    ISLMap ssDep = intersect(std::move(ssDepAll), std::move(serialLexGE));
-    ISLMap psDep = intersect(applyRange(std::move(pa2s), std::move(ssDep)),
-                             std::move(psDepAllUnion));
-    ISLMap psNearest = lexmax(std::move(psDep));
+    ISLMap ssDep = intersect(ssDepAll, std::move(serialLexGT));
+    ISLMap ssSelf = intersect(ssDepAll, std::move(serialEQ));
+    ISLMap psDep = intersect(applyRange(pa2s, std::move(ssDep)), psDepAllUnion);
+    ISLMap psSelf = intersect(applyRange(std::move(pa2s), std::move(ssSelf)),
+                              std::move(psDepAllUnion));
+    ISLMap psNearest = uni(lexmax(std::move(psDep)), std::move(psSelf));
 
     for (size_t i = 0, n = otherList.size(); i < n; i++) {
         auto &&other = otherList[i];
@@ -686,6 +782,204 @@ void AnalyzeDeps::checkDepImpl(ISLCtx &isl, GenISLExprDeps &genISLExpr,
     }
 }
 
+void AnalyzeDeps::checkDepEarliestLaterImpl(
+    ISLCtx &isl, GenISLExprDeps &genISLExpr,
+    const std::vector<Ref<AccessPoint>> &pointList,
+    const Ref<AccessPoint> &other) {
+    if (pointList.empty()) {
+        return;
+    }
+
+    auto pRelax =
+        mode_ == FindDepsMode::KillEarlier || mode_ == FindDepsMode::KillBoth
+            ? RelaxMode::Necessary
+            : RelaxMode::Possible; // later
+    auto oRelax =
+        mode_ == FindDepsMode::KillLater || mode_ == FindDepsMode::KillBoth
+            ? RelaxMode::Necessary
+            : RelaxMode::Possible; // earlier
+
+    int accDim = other->access_.size();
+    int iterDim = other->iter_.size();
+    std::vector<bool> filteredIn(pointList.size());
+    for (size_t i = 0, n = pointList.size(); i < n; i++) {
+        auto &&point = pointList[i];
+        if (filter_ == nullptr) {
+            filteredIn[i] = true;
+        } else {
+            std::lock_guard<std::mutex> guard(lock_);
+            filteredIn[i] = filter_(*point, *other);
+        }
+        if (!filteredIn[i]) {
+            continue;
+        }
+
+        iterDim = std::max<int>(iterDim, point->iter_.size());
+        ASSERT((int)point->access_.size() == accDim);
+    }
+    if (std::find(filteredIn.begin(), filteredIn.end(), true) ==
+        filteredIn.end()) {
+        return;
+    }
+
+    int oCommonDims = 0;
+    std::vector<int> pCommonDims(pointList.size(), 0);
+    for (size_t i = 0, n = pointList.size(); i < n; i++) {
+        auto &&point = pointList[i];
+        if (!filteredIn[i]) {
+            continue;
+        }
+
+        int cpo = numCommonDims(point, other);
+        oCommonDims = std::max(oCommonDims, cpo);
+        pCommonDims[i] = std::max(pCommonDims[i], cpo);
+        auto j = i + 1;
+        while (j < n && !filteredIn[j]) {
+            j++;
+        }
+        if (j < n) {
+            int cp1p2 = numCommonDims(point, pointList[j]);
+            pCommonDims[i] = std::max(pCommonDims[i], cp1p2);
+            pCommonDims[j] = std::max(pCommonDims[j], cp1p2);
+        }
+    }
+
+    ISLMap allEQ = identity(spaceAlloc(isl, 0, iterDim, iterDim));
+    ISLMap eraseVarDefConstraint =
+        makeEraseVarDefConstraint(isl, other, iterDim);
+    ISLMap noDepsConstraint =
+        makeNoDepsConstraint(isl, other->def_->name_, iterDim);
+
+    ExternalMap oExternals;
+    ISLMap omap = makeAccMap(isl, genISLExpr, *other, iterDim, accDim, oRelax,
+                             "__ext_o", oExternals);
+    if (omap.empty()) {
+        return;
+    }
+    if (mode_ == FindDepsMode::Dep &&
+        oCommonDims + 1 < (int)other->iter_.size()) {
+        omap =
+            applyDomain(std::move(omap),
+                        projectOutPrivateAxis(isl, iterDim, oCommonDims + 1));
+    }
+    ISLMap os2a = makeSerialToAll(isl, iterDim, other->iter_);
+    ISLMap oa2s = reverse(os2a);
+    ISLSet oIter = domain(omap);
+    std::vector<ISLMap> ps2aList(pointList.size()),
+        depAllList(pointList.size());
+    std::vector<ISLSet> pIterList(pointList.size());
+    ISLMap spDepAllUnion;
+    for (size_t i = 0, n = pointList.size(); i < n; i++) {
+        auto &&point = pointList[i];
+        if (!filteredIn[i]) {
+            continue;
+        }
+
+        ExternalMap pExternals;
+        ISLMap pmap =
+            makeAccMap(isl, genISLExpr, *point, iterDim, accDim, pRelax,
+                       "__ext_p" + std::to_string(i), pExternals);
+        if (pmap.empty()) {
+            filteredIn[i] = false;
+            continue;
+        }
+        if (mode_ == FindDepsMode::Dep &&
+            pCommonDims[i] + 1 < (int)point->iter_.size()) {
+            pmap = applyDomain(
+                std::move(pmap),
+                projectOutPrivateAxis(isl, iterDim, pCommonDims[i] + 1));
+        }
+        ISLMap ps2a = makeSerialToAll(isl, iterDim, point->iter_);
+        ISLMap pa2s = reverse(ps2a);
+        ISLSet pIter = domain(pmap);
+
+        ISLMap depAll =
+            subtract(applyRange(std::move(pmap), reverse(omap)), allEQ);
+
+        depAll = intersect(std::move(depAll), eraseVarDefConstraint);
+        depAll = intersect(std::move(depAll), noDepsConstraint);
+        depAll =
+            intersect(std::move(depAll),
+                      makeExternalVarConstraint(
+                          isl, point, other, pExternals, oExternals, iterDim,
+                          "__ext_p" + std::to_string(i), "__ext_o"));
+
+        ISLMap spDepAll = applyDomain(depAll, std::move(pa2s));
+        spDepAllUnion = spDepAllUnion.isValid()
+                            ? uni(std::move(spDepAllUnion), std::move(spDepAll))
+                            : std::move(spDepAll);
+
+        ps2aList[i] = std::move(ps2a);
+        pIterList[i] = std::move(pIter);
+        depAllList[i] = std::move(depAll);
+    }
+    if (!spDepAllUnion.isValid()) {
+        return;
+    }
+
+    ISLMap serialLexGT = lexGT(spaceSetAlloc(isl, 0, iterDim));
+    ISLMap serialEQ = identity(spaceAlloc(isl, 0, iterDim, iterDim));
+    ISLMap ssDepAll = applyRange(spDepAllUnion, std::move(oa2s));
+    ISLMap ssDep = intersect(ssDepAll, std::move(serialLexGT));
+    ISLMap ssSelf = intersect(ssDepAll, std::move(serialEQ));
+    ISLMap spDep = intersect(applyRange(std::move(ssDep), os2a), spDepAllUnion);
+    ISLMap spSelf = intersect(applyRange(std::move(ssSelf), std::move(os2a)),
+                              std::move(spDepAllUnion));
+    ISLMap spNearest =
+        uni(reverse(lexmin(reverse(std::move(spDep)))), std::move(spSelf));
+
+    for (size_t i = 0, n = pointList.size(); i < n; i++) {
+        auto &&point = pointList[i];
+        if (!filteredIn[i]) {
+            continue;
+        }
+
+        auto &&ps2a = ps2aList[i];
+        auto &&pIter = pIterList[i];
+        auto &&depAll = depAllList[i];
+        ISLMap nearest = intersect(applyDomain(spNearest, std::move(ps2a)),
+                                   std::move(depAll));
+
+        if (nearest.empty()) {
+            continue;
+        }
+        if ((mode_ == FindDepsMode::KillEarlier ||
+             mode_ == FindDepsMode::KillBoth) &&
+            oIter != range(nearest)) {
+            continue;
+        }
+        if ((mode_ == FindDepsMode::KillLater ||
+             mode_ == FindDepsMode::KillBoth) &&
+            pIter != domain(nearest)) {
+            continue;
+        }
+
+        for (auto &&item : cond_) {
+            ISLMap res = nearest;
+            bool fail = false;
+            for (auto &&[nodeOrParallel, dir] : item) {
+                ISLMap require;
+                if (nodeOrParallel.isNode_) {
+                    require = makeConstraintOfSingleLoop(
+                        isl, nodeOrParallel.name_, dir, iterDim);
+                } else {
+                    require = makeConstraintOfParallelScope(
+                        isl, nodeOrParallel.name_, dir, iterDim, point, other);
+                }
+                res = intersect(std::move(res), std::move(require));
+                if (res.empty()) {
+                    fail = true;
+                    break;
+                }
+            }
+            if (!fail) {
+                std::lock_guard<std::mutex> guard(lock_);
+                found_(Dependency{item, getVar(point->op_), *point, *other});
+            }
+        }
+    }
+}
+
 void AnalyzeDeps::visit(const VarDef &op) {
     ASSERT(!defId_.count(op->name_));
     defId_[op->name_] = op->id();
@@ -695,11 +989,63 @@ void AnalyzeDeps::visit(const VarDef &op) {
 
 void AnalyzeDeps::visit(const Load &op) {
     Visitor::visit(op);
+    auto &&defId = defId_.at(op->var_);
     if (depType_ & DEP_RAW) {
         auto &&point = points_.at(op);
-        auto &&defId = defId_.at(op->var_);
         if (writes_.count(defId)) {
-            checkDep(point, writes_.at(defId));
+            checkDepLatestEarlier(point, writes_.at(defId));
+        }
+    }
+    if (depType_ & DEP_WAR) {
+        auto &other = points_.at(op);
+        if (writes_.count(defId)) {
+            checkDepEarliestLater(writes_.at(defId), other);
+        }
+    }
+}
+
+void AnalyzeDeps::visit(const Store &op) {
+    Visitor::visit(op);
+    auto &&defId = defId_.at(op->var_);
+    if (depType_ & DEP_WAW) {
+        auto &&point = points_.at(op);
+        if (writes_.count(defId)) {
+            checkDepLatestEarlier(point, writes_.at(defId));
+        }
+    }
+}
+
+void AnalyzeDeps::visit(const ReduceTo &op) {
+    Visitor::visit(op);
+    auto &&defId = defId_.at(op->var_);
+
+    if ((depType_ & DEP_RAW) || (depType_ & DEP_WAW)) {
+        auto &&point = points_.at(op);
+        if (writes_.count(defId)) {
+            std::vector<Ref<AccessPoint>> others;
+            for (auto &&item : writes_.at(defId)) {
+                if (ignoreReductionWAW_ &&
+                    item->op_->nodeType() == ASTNodeType::ReduceTo) {
+                    continue;
+                }
+                others.emplace_back(item);
+            }
+            checkDepLatestEarlier(point, others);
+        }
+    }
+
+    if (depType_ & DEP_WAR) {
+        auto &&other = points_.at(op);
+        if (writes_.count(defId)) {
+            std::vector<Ref<AccessPoint>> points;
+            for (auto &&item : writes_.at(defId)) {
+                if (ignoreReductionWAW_ &&
+                    item->op_->nodeType() == ASTNodeType::ReduceTo) {
+                    continue;
+                }
+                points.emplace_back(item);
+            }
+            checkDepEarliestLater(points, other);
         }
     }
 }
@@ -712,7 +1058,7 @@ void findDeps(const Stmt &op, const std::vector<FindDepsCond> &cond,
         return;
     }
 
-    FindAccessPoint accFinder;
+    FindAccessPoint accFinder(op);
     accFinder(op);
     FindAllNoDeps noDepsFinder;
     noDepsFinder(op);
@@ -737,6 +1083,23 @@ void findDeps(const Stmt &op, const std::vector<FindDepsCond> &cond,
             std::rethrow_exception(exceptions[i]);
         }
     }
+}
+
+std::string toString(const Dependency &dep) {
+    std::ostringstream os;
+    os << "Dependency ";
+    os << (dep.later()->nodeType() == ASTNodeType::Load ? "READ " : "WRITE ")
+       << dep.later() << " in " << dep.later_.cursor_.node();
+    os << " after ";
+    os << (dep.earlier()->nodeType() == ASTNodeType::Load ? "READ " : "WRITE ")
+       << dep.earlier() << " in " << dep.earlier_.cursor_.node();
+    bool first = true;
+    for (auto &&[scope, dir] : dep.cond_) {
+        os << (first ? " along " : " and ");
+        first = false;
+        os << scope.name_;
+    }
+    return std::regex_replace(os.str(), std::regex("\n"), "");
 }
 
 } // namespace ir

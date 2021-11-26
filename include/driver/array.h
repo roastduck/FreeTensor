@@ -16,6 +16,10 @@ class Array {
 
   public:
     Array(size_t nElem, DataType dtype, const Device &device);
+
+    // Move from raw pointer. Use with cautious
+    Array(void *ptr, size_t size, DataType dtype, const Device &device);
+
     ~Array();
 
     Array(Array &&);

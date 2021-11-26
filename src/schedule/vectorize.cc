@@ -25,7 +25,7 @@ Stmt vectorize(const Stmt &_ast, const std::string &loop) {
                later.cursor_.getParentById(loop).isValid();
     };
     auto found = [&](const Dependency &d) {
-        throw InvalidSchedule(dep2Str(loop, d.var_, d.later(), d.earlier()));
+        throw InvalidSchedule(toString(d) + " cannot be resolved");
     };
     findDeps(ast, {{{loop, DepDirection::Normal}}}, found, FindDepsMode::Dep,
              DEP_ALL, filter);

@@ -1,5 +1,5 @@
 import ffi
-from ffi import MoveToSide, VarSplitMode
+from ffi import FissionSide, MoveToSide, VarSplitMode
 
 from .utils import *
 
@@ -14,6 +14,25 @@ class Schedule(ffi.Schedule):
         Split a loop into two nested loops
 
         To fission a loop into two consecutive loops, use `fission` instead
+
+        Two modes are provided:
+
+        1. Specify `factor` and leave `nparts` to -1. It will result in an outer
+        loop with length `ceil(n / factor)`, and an inner loop with length
+        `factor`, where `n` is the original loop length. The original iterator
+        `i` will be transformed to `i0 * factor + i1`, where `i0` and `i1` are
+        the iterators of the new outer and inner loops, respectively
+        2. Specify `nparts` and leave `factor` to -1. It will result in an
+        outer loop with length `nparts`, and an inner loop with length `ceil(n /
+        nparts)`, where `n` is the original loop length. The original iterator
+        `i` will be transformed to `i0 * ceil(n / nparts) + i1`, where `i0` and
+        `i1` are the iterators of the new outer and inner loops, respectively
+
+        Please note that the second mode will introduce an `i0 * ceil(n /
+        nparts)` factor into the program, which cannot be recognized by
+        polyhedral analysis, which may hinder some following schedules. If
+        possible, plese use the first mode, and then reorder the inner and outer
+        loops
 
         Parameters
         ----------
@@ -80,7 +99,7 @@ class Schedule(ffi.Schedule):
         """
         return super(Schedule, self).merge(toId(loop1), toId(loop2))
 
-    def fission(self, loop, after, suffix0=".a", suffix1=".b"):
+    def fission(self, loop, side, splitter, suffix0=".a", suffix1=".b"):
         """
         Fission a loop into two loops each containing part of the statements, one
         followed by another
@@ -91,8 +110,11 @@ class Schedule(ffi.Schedule):
         ----------
         loop : str, Stmt or Cursor
             The loop to be fissioned
-        after : str, Stmt or Cursor
-            The last statement of the first loop
+        side : FissionSide
+            If `After`, `splitter` is the last statement of the first loop. If `Before`,
+            `splitter` is the first statement of the second loop
+        splitter : str, Stmt or Cursor
+            Where to fission the loop
         suffix0 : str
             ID suffix of the statements in the first loop, default to ".a", can be
             "" for convenience, but cannot be the same with suffix1
@@ -110,10 +132,10 @@ class Schedule(ffi.Schedule):
         (map, map)
             ({old ID -> new ID in 1st loop}, {old ID -> new ID in 2nd loop})
         """
-        return super(Schedule, self).fission(toId(loop), toId(after), suffix0,
-                                             suffix1)
+        return super(Schedule, self).fission(toId(loop), side, toId(splitter),
+                                             suffix0, suffix1)
 
-    def fuse(self, loop0, loop1):
+    def fuse(self, loop0, loop1, strict=False):
         """
         Fuse two directly following loops with the same length into one
 
@@ -128,11 +150,14 @@ class Schedule(ffi.Schedule):
             The leading loop
         loop1 : str, Stmt or Cursor
             The following loop
+        strict : bool
+            If true, throw an error if unable to determine whether the two loops
+            are of the same length
 
         Raises
         ------
         InvalidSchedule
-            if the two loops are not directly following, the two loops are not with
+            if the two loops are not directly following, the two loops are not of
             the same length, or there is any dependency cannot be resolved
 
         Returns
@@ -140,7 +165,7 @@ class Schedule(ffi.Schedule):
         str
             ID of the result loop
         """
-        return super(Schedule, self).fuse(toId(loop0), toId(loop1))
+        return super(Schedule, self).fuse(toId(loop0), toId(loop1), strict)
 
     def swap(self, order):
         """

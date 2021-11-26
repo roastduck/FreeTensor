@@ -36,10 +36,16 @@ static Expr makeReduce(ReduceOp reduceOp, const Expr &lhs, const Expr &rhs) {
     }
 }
 
+static bool isConst(const Expr &expr) {
+    return expr->nodeType() == ASTNodeType::IntConst ||
+           expr->nodeType() == ASTNodeType::FloatConst ||
+           expr->nodeType() == ASTNodeType::BoolConst;
+}
+
 void FindLoopInvariantWrites::visit(const For &op) {
-    loopStack_.emplace_back(op);
+    cursorStack_.emplace_back(cursor());
     Visitor::visit(op);
-    loopStack_.pop_back();
+    cursorStack_.pop_back();
 }
 
 void FindLoopInvariantWrites::visit(const If &op) {
@@ -49,7 +55,8 @@ void FindLoopInvariantWrites::visit(const If &op) {
 }
 
 void FindLoopInvariantWrites::visit(const VarDef &op) {
-    defDepth_[op->name_] = loopStack_.size();
+    ASSERT(!defs_.count(op->name_));
+    defDepth_[op->name_] = cursorStack_.size();
     defs_[op->name_] = op;
     Visitor::visit(op);
     defs_.erase(op->name_);
@@ -58,10 +65,17 @@ void FindLoopInvariantWrites::visit(const VarDef &op) {
 
 void FindLoopInvariantWrites::visit(const Store &op) {
     Visitor::visit(op);
+    if (!singleDefId_.empty() && defs_.at(op->var_)->id() != singleDefId_) {
+        return;
+    }
     Expr cond;
-    for (int i = (int)(loopStack_.size()) - 1, iEnd = defDepth_.at(op->var_);
+    Cursor innerMostLoopCursor;
+
+    for (int i = (int)(cursorStack_.size()) - 1, iEnd = defDepth_.at(op->var_);
          i >= iEnd; i--) {
-        auto &&item = loopStack_[i];
+        auto &&loopCursor = cursorStack_[i];
+        ASSERT(loopCursor.nodeType() == ASTNodeType::For);
+        auto &&item = loopCursor.node().as<ForNode>();
         if (!item->property_.parallel_.empty()) {
             continue;
         }
@@ -78,17 +92,70 @@ void FindLoopInvariantWrites::visit(const Store &op) {
         }
         thisCond =
             makeEQ(makeVar(item->iter_), makeSub(item->end_, makeIntConst(1)));
-        cond = cond.isValid() ? makeLAnd(cond, thisCond) : thisCond;
+        if (!cond.isValid()) {
+            innerMostLoopCursor = loopCursor;
+            cond = thisCond;
+        } else {
+            cond = makeLAnd(cond, thisCond);
+        }
         continue;
     fail:;
     }
 
     if (cond.isValid()) {
-        results_.emplace_back(defs_.at(op->var_), op, cond);
+        results_[op] =
+            std::make_tuple(defs_.at(op->var_), cond, innerMostLoopCursor);
     }
 }
 
-Stmt removeWrites(const Stmt &_op) {
+Stmt RemoveWrites::visit(const StmtSeq &_op) {
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::StmtSeq);
+    auto op = __op.as<StmtSeqNode>();
+    std::vector<SubTree<StmtNode>> stmts;
+    for (auto &&stmt : op->stmts_) {
+        if (stmt->nodeType() != ASTNodeType::StmtSeq ||
+            !stmt.as<StmtSeqNode>()->stmts_.empty()) {
+            stmts.emplace_back(stmt);
+        }
+    }
+    op->stmts_ = std::move(stmts);
+    return op;
+}
+
+Stmt RemoveWrites::visit(const For &_op) {
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::For);
+    auto op = __op.as<ForNode>();
+    if (op->body_->nodeType() == ASTNodeType::StmtSeq &&
+        op->body_.as<StmtSeqNode>()->stmts_.empty()) {
+        return makeStmtSeq("", {});
+    }
+    return op;
+}
+
+Stmt RemoveWrites::visit(const If &_op) {
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::If);
+    auto op = __op.as<IfNode>();
+    auto thenValid = op->thenCase_->nodeType() != ASTNodeType::StmtSeq ||
+                     !op->thenCase_.as<StmtSeqNode>()->stmts_.empty();
+    auto elseValid = op->elseCase_.isValid() &&
+                     (op->elseCase_->nodeType() != ASTNodeType::StmtSeq ||
+                      !op->elseCase_.as<StmtSeqNode>()->stmts_.empty());
+    if (!thenValid && !elseValid) {
+        return makeStmtSeq("", {});
+    }
+    if (!elseValid) {
+        return makeIf(op->id(), op->cond_, op->thenCase_);
+    }
+    if (!thenValid) {
+        return makeIf(op->id(), makeLNot(op->cond_), op->elseCase_);
+    }
+    return op;
+}
+
+Stmt removeWrites(const Stmt &_op, const std::string &singleDefId) {
     auto op = makeReduction(_op);
 
     // A new Store/ReduceTo node may contain Load nodes out of their VarDef
@@ -100,47 +167,107 @@ Stmt removeWrites(const Stmt &_op) {
     op = hoistVarOverStmtSeq(op);
 
     auto variantExpr = findLoopVariance(op);
-    FindLoopInvariantWrites type2Finder(variantExpr.first);
+    FindLoopInvariantWrites type2Finder(variantExpr.first, singleDefId);
     type2Finder(op);
+    auto type2Results = type2Finder.results();
 
     std::unordered_set<VarDef> suspect;
-    for (auto &&[def, store, cond] : type2Finder.results()) {
+    for (auto &&[store, item] : type2Results) {
+        auto &&[def, cond, cursor] = item;
         suspect.insert(def);
     }
+
+    // Used to prune
+    std::unordered_set<Stmt> selfDependentReduces;
+    auto filterSelfDependent = [&](const AccessPoint &later,
+                                   const AccessPoint &earlier) {
+        return later.op_->nodeType() == ASTNodeType::ReduceTo &&
+               earlier.op_ == later.op_;
+    };
+    auto foundSelfDependent = [&](const Dependency &d) {
+        selfDependentReduces.insert(d.later().as<StmtNode>());
+    };
+    findDeps(op, {{}}, foundSelfDependent, FindDepsMode::Dep, DEP_WAW,
+             filterSelfDependent, false);
 
     // {(later, earlier)}
     std::set<std::pair<Stmt, Stmt>> overwrites;
     std::set<std::pair<AST, Stmt>> usesRAW;
     std::set<std::pair<Stmt, AST>> usesWAR;
-    auto filterOverwrite = [&](const AccessPoint &later,
-                               const AccessPoint &earlier) {
-        if (later.op_.get() == earlier.op_.get()) {
+    auto filterOverwriteStore = [&](const AccessPoint &later,
+                                    const AccessPoint &earlier) {
+        if (!singleDefId.empty() && later.def_->id() != singleDefId) {
             return false;
         }
-        return later.op_->nodeType() == ASTNodeType::Store ||
-               sameParent(later.cursor_, earlier.cursor_);
+        return later.op_->nodeType() == ASTNodeType::Store &&
+               later.op_ != earlier.op_;
     };
-    auto foundOverwrite = [&](const Dependency &d) {
+    auto filterOverwriteReduce = [&](const AccessPoint &later,
+                                     const AccessPoint &earlier) {
+        if (!singleDefId.empty() && later.def_->id() != singleDefId) {
+            return false;
+        }
+        return later.op_->nodeType() == ASTNodeType::ReduceTo;
+    };
+    auto foundOverwriteStore = [&](const Dependency &d) {
         overwrites.emplace(d.later().as<StmtNode>(),
                            d.earlier().as<StmtNode>());
         suspect.insert(d.def());
+    };
+    auto foundOverwriteReduce = [&](const Dependency &d) {
+        if (d.later() != d.earlier() &&
+            (!selfDependentReduces.count(d.later().as<StmtNode>()) ||
+             sameParent(d.later_.cursor_, d.earlier_.cursor_))) {
+            if (d.earlier()->nodeType() == ASTNodeType::Store &&
+                isConst(d.earlier().as<StoreNode>()->expr_)) {
+                overwrites.emplace(d.later().as<StmtNode>(),
+                                   d.earlier().as<StmtNode>());
+                suspect.insert(d.def());
+            } else if (d.earlier()->nodeType() == ASTNodeType::ReduceTo &&
+                       isConst(d.earlier().as<ReduceToNode>()->expr_)) {
+                overwrites.emplace(d.later().as<StmtNode>(),
+                                   d.earlier().as<StmtNode>());
+                suspect.insert(d.def());
+            } else if (sameParent(d.later_.cursor_, d.earlier_.cursor_)) {
+
+                overwrites.emplace(d.later().as<StmtNode>(),
+                                   d.earlier().as<StmtNode>());
+                suspect.insert(d.def());
+            }
+        }
     };
     auto filterUse = [&](const AccessPoint &later, const AccessPoint &earlier) {
         return suspect.count(later.def_);
     };
     auto foundUse = [&](const Dependency &d) {
         if (d.later()->nodeType() != ASTNodeType::Store &&
-            d.earlier()->nodeType() != ASTNodeType::Load) {
+            d.earlier()->nodeType() != ASTNodeType::Load &&
+            d.earlier() != d.later()) {
             usesRAW.emplace(d.later(), d.earlier().as<StmtNode>());
         }
         if (d.earlier()->nodeType() != ASTNodeType::Store &&
-            d.later()->nodeType() != ASTNodeType::Load) {
+            d.later()->nodeType() != ASTNodeType::Load &&
+            d.earlier() != d.later()) {
             usesWAR.emplace(d.later().as<StmtNode>(), d.earlier());
+        }
+
+        if (d.later()->nodeType() != ASTNodeType::Store &&
+            d.earlier()->nodeType() == ASTNodeType::Store &&
+            d.earlier() != d.later()) {
+            if (type2Results.count(d.earlier().as<StoreNode>())) {
+                auto &&[def, cond, cursor] =
+                    type2Results.at(d.earlier().as<StoreNode>());
+                if (lca(cursor, d.later_.cursor_).id() == cursor.id()) {
+                    type2Results.erase(d.earlier().as<StoreNode>());
+                }
+            }
         }
     };
 
-    findDeps(op, {{}}, foundOverwrite, FindDepsMode::KillEarlier, DEP_WAW,
-             filterOverwrite, false);
+    findDeps(op, {{}}, foundOverwriteStore, FindDepsMode::KillEarlier, DEP_WAW,
+             filterOverwriteStore, false);
+    findDeps(op, {{}}, foundOverwriteReduce, FindDepsMode::KillBoth, DEP_WAW,
+             filterOverwriteReduce, false);
     findDeps(op, {{}}, foundUse, FindDepsMode::Dep, DEP_ALL, filterUse, false);
 
     std::unordered_set<Stmt> redundant;
@@ -224,17 +351,10 @@ Stmt removeWrites(const Stmt &_op) {
     }
 
     // Type 2
-    for (auto &&[def, _store, cond] : type2Finder.results()) {
+    for (auto &&[_store, item] : type2Results) {
+        auto &&[def, cond, cursor] = item;
         auto store = _store.as<StmtNode>();
-        for (auto &&use : usesRAW) {
-            if (use.second == store &&
-                usesWAR.count(std::make_pair(store, use.first))) {
-                goto type2Fail;
-            }
-        }
         replacement.emplace(store, makeIf("", cond, store));
-        continue;
-    type2Fail:;
     }
 
     op = RemoveWrites(redundant, replacement)(op);

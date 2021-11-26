@@ -20,6 +20,15 @@ static std::vector<Expr> vals2exprs(const std::vector<double> &vals) {
     return exprs;
 }
 
+static std::vector<Expr> vals2exprs(const std::vector<float> &vals) {
+    std::vector<Expr> exprs;
+    exprs.reserve(vals.size());
+    for (auto &&val : vals) {
+        exprs.emplace_back(makeFloatConst(val));
+    }
+    return exprs;
+}
+
 TensorData::TensorData(DataType dtype, const std::vector<int> &shape,
                        const std::vector<Expr> &data)
     : dtype_(dtype), shape_(shape), data_(data) {
@@ -44,6 +53,10 @@ TensorData::TensorData(const std::vector<int> &shape,
 
 TensorData::TensorData(const std::vector<int> &shape,
                        const std::vector<double> &data)
+    : TensorData(DataType::Float64, shape, vals2exprs(data)) {}
+
+TensorData::TensorData(const std::vector<int> &shape,
+                       const std::vector<float> &data)
     : TensorData(DataType::Float32, shape, vals2exprs(data)) {}
 
 std::vector<int> TensorData::indices(int offset) const {

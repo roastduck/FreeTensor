@@ -44,6 +44,27 @@ Expr UseBuiltinDiv::visit(const CeilDiv &_op) {
     return op;
 }
 
+Expr UseBuiltinDiv::visit(const Mod &_op) {
+    auto __op = CompUniqueBounds::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::Mod);
+    auto op = __op.as<ModNode>();
+    if (getIntLower(op->lhs_) >= 0 && getIntLower(op->rhs_) >= 0) {
+        return makeRemainder(op->lhs_, op->rhs_);
+    }
+    if (getIntLower(op->lhs_) >= 0 && getIntUpper(op->rhs_) <= 0) {
+        return makeAdd(
+            makeRemainder(op->lhs_, makeSub(makeIntConst(0), op->rhs_)),
+            op->rhs_);
+    }
+    if (getIntUpper(op->lhs_) <= 0 && getIntLower(op->lhs_) >= 0) {
+        return makeAdd(makeRemainder(op->lhs_, op->rhs_), op->rhs_);
+    }
+    if (getIntUpper(op->lhs_) <= 0 && getIntUpper(op->rhs_) <= 0) {
+        return makeRemainder(op->lhs_, op->rhs_);
+    }
+    return op;
+}
+
 Stmt useBuiltinDiv(const Stmt &_op) { return UseBuiltinDiv()(_op); }
 
 } // namespace ir

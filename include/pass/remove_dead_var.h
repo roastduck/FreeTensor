@@ -21,13 +21,17 @@ class RemoveAllWrites : public Mutator {
 
 class RemoveDeadVar : public Mutator {
     std::unordered_set<std::string> uses_;
+    bool isFixPoint_ = true;
+
+  public:
+    bool isFixPoint() const { return isFixPoint_; }
 
   protected:
     Expr visit(const Load &op) override;
     Stmt visit(const VarDef &op) override;
 };
 
-inline Stmt removeDeadVar(const Stmt &op) { return RemoveDeadVar()(op); }
+Stmt removeDeadVar(const Stmt &op);
 
 DEFINE_PASS_FOR_FUNC(removeDeadVar)
 

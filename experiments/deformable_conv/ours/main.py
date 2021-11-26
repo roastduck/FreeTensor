@@ -8,12 +8,12 @@ import ir.debug
 jit_cache = {}
 
 
-def conv(x, w1, w2, y, n, c_in, c_out, h, w, k_h, k_w, device, mtype,
-         local_mtype):
+def conv(x, w1, w2, y, n, c_in, c_out, h, w, k_h, k_w, device):
     if (n, c_in, c_out, h, w, k_h, k_w) in jit_cache:
         exe = jit_cache[(n, c_in, c_out, h, w, k_h, k_w)]
 
     else:
+        mtype = device.main_mem_type()
 
         # yapf: disable
 
@@ -30,10 +30,10 @@ def conv(x, w1, w2, y, n, c_in, c_out, h, w, k_h, k_w, device, mtype,
                 for p in range(h):
                     "nid: Lq"
                     for q in range(w):
-                        row = ir.create_var((k_h, k_w), "float32", "cache", local_mtype)
-                        col = ir.create_var((k_h, k_w), "float32", "cache", local_mtype)
-                        row_int = ir.create_var((k_h, k_w), "int32", "cache", local_mtype)
-                        col_int = ir.create_var((k_h, k_w), "int32", "cache", local_mtype)
+                        row = ir.create_var((k_h, k_w), "float32", mtype)
+                        col = ir.create_var((k_h, k_w), "float32", mtype)
+                        row_int = ir.create_var((k_h, k_w), "int32", mtype)
+                        col_int = ir.create_var((k_h, k_w), "int32", mtype)
                         "nid: Lro0"
                         for ro in range(k_h):
                             "nid: Lso0"
@@ -54,15 +54,15 @@ def conv(x, w1, w2, y, n, c_in, c_out, h, w, k_h, k_w, device, mtype,
                                 row_int[ro, so] = ir.cast(ir.floor(row[ro, so]), "int32")
                                 col_int[ro, so] = ir.cast(ir.floor(col[ro, so]), "int32")
 
-                        pixel = ir.create_var((c_in, k_h, k_w), "float32", "cache", local_mtype)
+                        pixel = ir.create_var((c_in, k_h, k_w), "float32", mtype)
                         "nid: Lki1"
                         for ki in range(c_in):
                             "nid: Lro1"
                             for ro in range(k_h):
                                 "nid: Lso1"
                                 for so in range(k_w):
-                                    x = ir.create_var((), "int32", "cache", local_mtype)
-                                    y = ir.create_var((), "int32", "cache", local_mtype)
+                                    x = ir.create_var((), "int32", mtype)
+                                    y = ir.create_var((), "int32", mtype)
                                     x[()] = p + ro + row_int[ro, so]
                                     y[()] = q + so + col_int[ro, so]
                                     pixel[ki, ro, so] = 0
@@ -97,45 +97,15 @@ def conv(x, w1, w2, y, n, c_in, c_out, h, w, k_h, k_w, device, mtype,
         print(s.ast())
         if device.target().type() == ir.TargetType.CPU:
             Lko = s.move_to("Lko", ir.MoveToSide.After, "Li")
-            _, flush, _, Y_t_def = s.cache(Lko, "Y", "cpu")
+            _, _, _, Y_t_def = s.cache(Lko, "Y", "cpu")
             s.var_reorder(Y_t_def, [0, 2, 3, 1])
-            flush_loop = s.find(lambda x: x.nid() == flush).outer().outer(
-            ).outer().outer().node()
-            flush_loop = s.merge(flush_loop, flush_loop.body)
-            s.parallelize(flush_loop, 'openmp')
-            s.as_matmul(Lko)
-            Lipq = s.merge(s.merge('Li', 'Lp'), 'Lq')
-            s.parallelize(Lipq, 'openmp')
-            s.unroll("Lri")
-            s.unroll("Lsi")
-            s.unroll("Lro1")
-            s.unroll("Lso1")
+            s.auto_schedule(device.target())
         else:
             Lko = s.move_to("Lko", ir.MoveToSide.After, "Li")
-            s.set_mem_type(":pixel", "gpu/global")
-            _, flush, _, Y_t_def = s.cache(Lko, "Y", "gpu/global")
+            _, _, _, Y_t_def = s.cache(Lko, "Y", "gpu/global")
             s.var_reorder(Y_t_def, [0, 2, 3, 1])
-            flush_loop = s.find(lambda x: x.nid() == flush).outer().outer(
-            ).outer().outer().node()
-            flush_loop = s.merge(s.merge(flush_loop, flush_loop.body),
-                                 flush_loop.body.body)
-            blk, thr = s.split(flush_loop, 128)
-            s.parallelize(blk, 'blockIdx.x')
-            s.parallelize(thr, 'threadIdx.x')
             s.var_reorder(":pixel", [3, 4, 5, 0, 1, 2])
-            s.as_matmul(Lko)
-
-            s.reorder(['Lro1', 'Lso1', 'Lki1'])
-            Lro = s.fuse('Lro0', 'Lro1')
-            Lso = s.fuse('Lso0', 'Lso1')
-            s.parallelize(Lro, 'threadIdx.y')
-            s.parallelize(Lso, 'threadIdx.z')
-            Lipq = s.merge(s.merge('Li', 'Lp'), 'Lq')
-            blk, thr = s.split(Lipq, 16)
-            s.parallelize(blk, 'blockIdx.x')
-            s.parallelize(thr, 'threadIdx.x')
-            s.unroll("Lri")
-            s.unroll("Lsi")
+            s.auto_schedule(device.target())
         f = ir.lower(s.func(), device.target())
         print(f)
         code = ir.codegen(f, device.target())
@@ -185,12 +155,10 @@ if __name__ == '__main__':
     y = ir.Array(y, ir_dev)
 
     test_num = 100
-    conv(x, w1, w2, y, n, c_in, c_out, h, w, k_h, k_w, ir_dev, ir_mtype,
-         ir_local_mtype)  # init lazy ops
+    conv(x, w1, w2, y, n, c_in, c_out, h, w, k_h, k_w, ir_dev)  # init lazy ops
     t0 = time.time()
     for i in range(test_num):
-        conv(x, w1, w2, y, n, c_in, c_out, h, w, k_h, k_w, ir_dev, ir_mtype,
-             ir_local_mtype)
+        conv(x, w1, w2, y, n, c_in, c_out, h, w, k_h, k_w, ir_dev)
     t1 = time.time()
 
     print(f"Time = {(t1 - t0) / test_num * 1000} ms")

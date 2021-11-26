@@ -9,6 +9,8 @@ namespace ir {
 
 static char genMKLTypeMark(DataType dtype) {
     switch (dtype) {
+    case DataType::Float64:
+        return 'd';
     case DataType::Float32:
         return 's';
     default:
@@ -17,6 +19,17 @@ static char genMKLTypeMark(DataType dtype) {
 }
 
 #endif
+
+void CodeGenCPU::genAlloc(const Tensor &tensor, const std::string &rawPtr,
+                          const std::string &sizePtr) {
+    makeIndent();
+    os() << rawPtr << " = malloc(" << sizePtr << " = ";
+    for (auto &&dim : tensor.shape()) {
+        (*this)(dim);
+        os() << " * ";
+    }
+    os() << "sizeof(" << gen(tensor.dtype()) << "));" << std::endl;
+}
 
 void CodeGenCPU::visit(const VarDef &op) {
     if (op->buffer_->atype() == AccessType::Cache) {
@@ -54,12 +67,17 @@ void CodeGenCPU::visit(const For &op) {
     if (op->property_.parallel_ == "openmp") {
         os() << "#pragma omp parallel for";
         if (!op->property_.reductions_.empty()) {
-            if (op->property_.reductions_.size() > 1) {
-                ERROR("Only one reduction variable per parallel loop is "
-                      "supported by OpenMP");
+            for (size_t i = 1, n = op->property_.reductions_.size(); i < n;
+                 i++) {
+                if (op->property_.reductions_[i].op_ !=
+                    op->property_.reductions_.front().op_) {
+                    throw InvalidProgram(
+                        "Reduction operators of each parallel reduction "
+                        "variables should be the same in a single OpenMP loop");
+                }
             }
             os() << " reduction(";
-            switch (op->property_.reductions_.front().first) {
+            switch (op->property_.reductions_.front().op_) {
             case ReduceOp::Add:
                 os() << "+: ";
                 break;
@@ -75,7 +93,25 @@ void CodeGenCPU::visit(const For &op) {
             default:
                 ASSERT(false);
             }
-            (*this)(op->property_.reductions_.front().second);
+            bool first = true;
+            for (auto &&[redOp, var, indices] : op->property_.reductions_) {
+                if (!first) {
+                    os() << ", ";
+                }
+                first = false;
+                os() << normalizeId(var);
+                if (!indices.empty()) {
+                    for (auto &&idx : indices) {
+                        os() << "[";
+                        if (idx.isValid()) {
+                            (*this)(idx);
+                        } else {
+                            os() << ":";
+                        }
+                        os() << "]";
+                    }
+                }
+            }
             os() << ")";
         }
         os() << std::endl;
@@ -164,7 +200,7 @@ void CodeGenCPU::visit(const MatMul &op) {
 }
 
 std::string codeGenCPU(const Func &func) {
-    CodeGenCPU visitor(func->params_);
+    CodeGenCPU visitor(func->params_, func->returns_);
     auto &&op = func->body_;
     visitor.beginBlock();
     visitor(op);
@@ -181,14 +217,15 @@ extern "C" {
 )~~~";
 
     auto body = visitor.toString([&](const CodeGenStream &stream) {
-        std::string s =
-            "void __attribute__ ((noinline)) _run(void **_params) " +
-            stream.os_.str();
+        std::string s = "void __attribute__ ((noinline)) _run(void **_params, "
+                        "void **_returns, size_t *_retSizes) " +
+                        stream.os_.str();
         s += "\n";
-        s += "void run(void **_params, CPUContext_t _ctx) {\n";
+        s += "void run(void **_params, void **_returns, size_t *_retSizes, "
+             "CPUContext_t _ctx) {\n";
         s += "  _ctx->setStackLim(" + std::to_string(visitor.stackSize()) +
              ");\n";
-        s += "  _run(_params);\n";
+        s += "  _run(_params, _returns, _retSizes);\n";
         s += "}";
         return s;
     });

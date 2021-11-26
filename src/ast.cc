@@ -32,6 +32,7 @@ std::string toString(ASTNodeType type) {
         DISPATCH(CeilDiv);
         DISPATCH(RoundTowards0Div);
         DISPATCH(Mod);
+        DISPATCH(Remainder);
         DISPATCH(Min);
         DISPATCH(Max);
         DISPATCH(LT);
@@ -45,6 +46,14 @@ std::string toString(ASTNodeType type) {
         DISPATCH(LNot);
         DISPATCH(Sqrt);
         DISPATCH(Exp);
+        DISPATCH(Square);
+        DISPATCH(Sigmoid);
+        DISPATCH(Tanh);
+        DISPATCH(Abs);
+        DISPATCH(Floor);
+        DISPATCH(Ceil);
+        DISPATCH(IfExpr);
+        DISPATCH(Cast);
         DISPATCH(Intrinsic);
         DISPATCH(AnyExpr);
     default:

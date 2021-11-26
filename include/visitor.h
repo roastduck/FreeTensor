@@ -119,6 +119,11 @@ class Visitor {
         (*this)(op->rhs_);
     }
 
+    virtual void visit(const Remainder &op) {
+        (*this)(op->lhs_);
+        (*this)(op->rhs_);
+    }
+
     virtual void visit(const Min &op) {
         (*this)(op->lhs_);
         (*this)(op->rhs_);
@@ -176,6 +181,10 @@ class Visitor {
     virtual void visit(const Exp &op) { (*this)(op->expr_); }
 
     virtual void visit(const Square &op) { (*this)(op->expr_); }
+
+    virtual void visit(const Sigmoid &op) { (*this)(op->expr_); }
+
+    virtual void visit(const Tanh &op) { (*this)(op->expr_); }
 
     virtual void visit(const Abs &op) { (*this)(op->expr_); }
 

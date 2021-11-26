@@ -31,9 +31,11 @@ function load_face(file)
         edgeToFaces[faces[i][3], faces[i][1]] = i
     end
 
-    ret = []
+    ret = zeros(Int, (length(faces), 3))
     for i = 1:length(faces)
-        append!(ret, [(edgeToFaces[faces[i][2], faces[i][1]], edgeToFaces[faces[i][3], faces[i][2]], edgeToFaces[faces[i][1], faces[i][3]])])
+        ret[i, 1] = edgeToFaces[faces[i][2], faces[i][1]]
+        ret[i, 2] = edgeToFaces[faces[i][3], faces[i][2]]
+        ret[i, 3] = edgeToFaces[faces[i][1], faces[i][3]]
     end
 
     return ret
@@ -46,42 +48,46 @@ function conv(adj, x, w0, w1, w2, w3, y, n_faces, in_feats, out_feats)
         sum3 = zeros(Float32, in_feats)
         for k = 1:in_feats
             for p = 1:3
-                sum1[k] += x[adj[i][p], k]
-                sum2[k] += abs(x[adj[i][p], k] - x[adj[i][p % 3 + 1], k])
-                sum3[k] += abs(x[adj[i][p], k] - x[i, k])
+                sum1[k] += x[k, adj[i,p]]
+                sum2[k] += abs(x[k, adj[i, p]] - x[k, adj[i, p % 3 + 1]])
+                sum3[k] += abs(x[k, adj[i, p]] - x[k, i])
             end
         end
         for j = 1:out_feats
-            y[i, j] = 0.
+            y[j, i] = 0.
             for k = 1:in_feats
-                y[i, j] += x[i, k] * w0[k, j] + sum1[k] * w1[k, j] + sum2[k] * w2[k, j] + sum3[k] * w3[k, j]
+                y[j, i] += x[k, i] * w0[k, j] + sum1[k] * w1[k, j] + sum2[k] * w2[k, j] + sum3[k] * w3[k, j]
             end
         end
     end
 end
 
-if length(ARGS) != 1
-    println("Usage: " * PROGRAM_FILE * " <obj-file>")
-    exit(-1)
-end
-obj_file = open(ARGS[1])
-
-adj = load_face(obj_file)
-n_faces = size(adj)[1]
-in_feats = 13
-out_feats = 64
-x = rand(Float32, (n_faces, in_feats))
-w0 = rand(Float32, (in_feats, out_feats))
-w1 = rand(Float32, (in_feats, out_feats))
-w2 = rand(Float32, (in_feats, out_feats))
-w3 = rand(Float32, (in_feats, out_feats))
-y = zeros(Float32, (n_faces, out_feats))
-
-test_num = 1000
-conv(adj, x, w0, w1, w2, w3, y, n_faces, in_feats, out_feats)
-time = @timed begin
-    for i = 1:test_num
-        conv(adj, x, w0, w1, w2, w3, y, n_faces, in_feats, out_feats)
+function main()
+    if length(ARGS) != 1
+        println("Usage: " * PROGRAM_FILE * " <obj-file>")
+        exit(-1)
     end
+    obj_file = open(ARGS[1])
+
+    adj = load_face(obj_file)
+    n_faces = size(adj)[1]
+    in_feats = 13
+    out_feats = 64
+    x = rand(Float32, (in_feats, n_faces))
+    w0 = rand(Float32, (in_feats, out_feats))
+    w1 = rand(Float32, (in_feats, out_feats))
+    w2 = rand(Float32, (in_feats, out_feats))
+    w3 = rand(Float32, (in_feats, out_feats))
+    y = zeros(Float32, (out_feats, n_faces))
+
+    test_num = 1000
+    conv(adj, x, w0, w1, w2, w3, y, n_faces, in_feats, out_feats)
+    time = @timed begin
+        for i = 1:test_num
+            conv(adj, x, w0, w1, w2, w3, y, n_faces, in_feats, out_feats)
+        end
+    end
+    println("Time = " * string(time.time / test_num * 1000) * " ms")
 end
-println("Time = " * string(time.time / test_num * 1000) * " ms")
+
+main()

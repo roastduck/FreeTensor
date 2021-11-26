@@ -25,8 +25,10 @@ Stmt ShrinkFor::visit(const For &_op) {
     auto newBegin = makeMinMax(newRange_.at(hash).first);
     auto newEndMinus1 = makeMaxMin(newRange_.at(hash).second);
 
-    if (op->property_.unroll_) {
-        // We can't give an unrolled loop a variable length
+    if (op->property_.unroll_ ||
+        (op->property_.parallel_.substr(0, 10) == "threadIdx." &&
+         !op->property_.reductions_.empty())) {
+        // Backends do not support these loops to be of variable lengths
         if (newBegin.isValid() &&
             newBegin->nodeType() != ASTNodeType::IntConst) {
             return op;

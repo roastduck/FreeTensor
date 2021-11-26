@@ -50,7 +50,6 @@ def dilated_attention(q, k, v, dilation):
     return jnp.einsum("ijk,ijkp->ijp", attn, diag_v)
 
 
-@jax.jit
 def transformer_impl1(q, k, v):
     front_heads = dilated_attention(q[:dilation_heads], k[:dilation_heads],
                                     v[:dilation_heads], dilation)
@@ -69,12 +68,34 @@ if __name__ == '__main__':
     k = jax.device_put(k)
     v = jax.device_put(v)
 
+    warmup_num = 10
     test_num = 100
 
-    y = transformer_impl1(q, k, v)  # init lazy ops
+    transformer_impl1_inference = jax.jit(transformer_impl1)
+    # FIXME: Can we remove the `jnp.sum`?
+    transformer_impl1_forward_backward = jax.grad(
+        lambda *args: jnp.sum(transformer_impl1(*args)), argnums=(0, 1, 2))
+
+    for i in range(warmup_num):
+        y = transformer_impl1_inference(q, k, v)
+    y = y.block_until_ready()
     t0 = time.time()
     for i in range(test_num):
-        y = transformer_impl1(q, k, v)
+        y = transformer_impl1_inference(q, k, v)
+    y = y.block_until_ready()
     t1 = time.time()
     assert y.shape == (n_heads, seq_len, feat_len)
-    print(f"Time = {(t1 - t0) / test_num * 1000} ms")
+    print(f"Inference Time = {(t1 - t0) / test_num * 1000} ms")
+
+    for i in range(warmup_num):
+        d_q, d_k, d_v = transformer_impl1_forward_backward(q, k, v)
+    y = y.block_until_ready()
+    t0 = time.time()
+    for i in range(test_num):
+        d_q, d_k, d_v = transformer_impl1_forward_backward(q, k, v)
+    y = y.block_until_ready()
+    t1 = time.time()
+    assert d_q.shape == q.shape
+    assert d_k.shape == k.shape
+    assert d_v.shape == v.shape
+    print(f"Forward+Backward Time = {(t1 - t0) / test_num * 1000} ms")

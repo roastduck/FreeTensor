@@ -16,15 +16,14 @@ class MergeFor : public Mutator {
 
     bool insideOuter_ = false, insideInner_ = false;
     bool visitedInner_ = false;
-    bool innerNoDeps_ = false;
+    std::vector<std::string> innerNoDeps_;
 
     std::vector<VarDef> intermediateDefs_; // from inner to outer
 
   public:
     MergeFor(const For oldOuter, const For &oldInner)
-        : oldOuter_(oldOuter), oldInner_(oldInner),
-          outerLen_(makeSub(oldOuter_->end_, oldOuter_->begin_)),
-          innerLen_(makeSub(oldInner_->end_, oldInner_->begin_)),
+        : oldOuter_(oldOuter), oldInner_(oldInner), outerLen_(oldOuter_->len_),
+          innerLen_(oldInner_->len_),
           newIter_("m." + oldOuter_->iter_ + "." + oldInner_->iter_),
           newId_("merged." + oldOuter_->id() + "." + oldInner_->id()) {}
 

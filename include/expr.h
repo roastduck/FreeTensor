@@ -61,12 +61,12 @@ inline Expr _makeLoad(const std::string &var,
 
 class IntConstNode : public ExprNode {
   public:
-    int val_; // FIXME: Make it int64_t
+    int64_t val_;
     DEFINE_NODE_TRAIT(IntConst);
 };
 typedef Ref<IntConstNode> IntConst;
 #define makeIntConst(...) makeNode(IntConst, __VA_ARGS__)
-inline Expr _makeIntConst(int val) {
+inline Expr _makeIntConst(int64_t val) {
     IntConst c = IntConst::make();
     c->val_ = val;
     return c;
@@ -210,7 +210,11 @@ template <class T, class U> Expr _makeRoundTowards0Div(T &&lhs, U &&rhs) {
     return a;
 }
 
-// FIXME: Deal with negative numbers in Mod
+/** Modulo
+ *
+ * Mod(3, 5) = 3
+ * Mod(-3, 5) = 2
+ */
 class ModNode : public ExprNode {
   public:
     SubTree<ExprNode> lhs_, rhs_;
@@ -220,6 +224,24 @@ typedef Ref<ModNode> Mod;
 #define makeMod(...) makeNode(Mod, __VA_ARGS__)
 template <class T, class U> Expr _makeMod(T &&lhs, U &&rhs) {
     Mod a = Mod::make();
+    a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
+    return a;
+}
+
+/** Remainder
+ *
+ * Remainder(3, 5) = 3
+ * Remainder(-3, 5) = -3
+ */
+class RemainderNode : public ExprNode {
+  public:
+    SubTree<ExprNode> lhs_, rhs_;
+    DEFINE_NODE_TRAIT(Remainder);
+};
+typedef Ref<RemainderNode> Remainder;
+#define makeRemainder(...) makeNode(Remainder, __VA_ARGS__)
+template <class T, class U> Expr _makeRemainder(T &&lhs, U &&rhs) {
+    Remainder a = Remainder::make();
     a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
     return a;
 }
@@ -406,6 +428,32 @@ template <class T> Expr _makeSquare(T &&expr) {
     return e;
 }
 
+class SigmoidNode : public ExprNode {
+  public:
+    SubTree<ExprNode> expr_;
+    DEFINE_NODE_TRAIT(Sigmoid);
+};
+typedef Ref<SigmoidNode> Sigmoid;
+#define makeSigmoid(...) makeNode(Sigmoid, __VA_ARGS__)
+template <class T> Expr _makeSigmoid(T &&expr) {
+    Sigmoid e = Sigmoid::make();
+    e->expr_ = std::forward<T>(expr);
+    return e;
+}
+
+class TanhNode : public ExprNode {
+  public:
+    SubTree<ExprNode> expr_;
+    DEFINE_NODE_TRAIT(Tanh);
+};
+typedef Ref<TanhNode> Tanh;
+#define makeTanh(...) makeNode(Tanh, __VA_ARGS__)
+template <class T> Expr _makeTanh(T &&expr) {
+    Tanh e = Tanh::make();
+    e->expr_ = std::forward<T>(expr);
+    return e;
+}
+
 class AbsNode : public ExprNode {
   public:
     SubTree<ExprNode> expr_;
@@ -561,6 +609,8 @@ template <class T> Expr makeUnary(ASTNodeType nodeType, T &&expr) {
         return makeExp(std::forward<T>(expr));
     case ASTNodeType::Square:
         return makeSquare(std::forward<T>(expr));
+    case ASTNodeType::Sigmoid:
+        return makeSigmoid(std::forward<T>(expr));
     default:
         ASSERT(false);
     }

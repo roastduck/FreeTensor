@@ -12,7 +12,7 @@ from typing import Sequence, Optional, Mapping, Any
 from . import nodes
 from .nodes import (_VarDef, Var, pop_ast, For, If, Else, MarkNid, intrinsic,
                     l_and, l_or, l_not, if_then_else, ctx_stack as node_ctx,
-                    Func, Tensor)
+                    Func, Tensor, Assert)
 from .utils import *
 
 assert sys.version_info >= (3,
@@ -35,6 +35,10 @@ class ASTContext:
         self.old_vars = []
 
 
+class IRError(ffi.InvalidProgram):
+    pass
+
+
 class ASTContextStack:
 
     def __init__(self):
@@ -43,6 +47,7 @@ class ASTContextStack:
         self.next_nid = ""
         self.now_context_id = 0
         node_ctx.reset()
+        self.transformers = []
 
     def top(self) -> ASTContext:
         return self.ctx_stack[-1]
@@ -53,7 +58,7 @@ class ASTContextStack:
     def create_current_name(self, name, atype, override_name=None):
         if override_name is not None:
             if override_name in self.name_map:
-                raise ffi.InvalidProgram(f"Name {override_name} already exists")
+                assert False, f"Name {override_name} already exists"
             self.name_map[name] = override_name
             return override_name
 
@@ -87,7 +92,7 @@ class ASTContextStack:
         if self.ctx_stack:
             top = self.top()
             top.old_vars.extend(popped.var_dict.keys())
-        for var in reversed(popped.vardef_stack):  # type: _VarDef
+        for var in reversed(popped.vardef_stack):
             var.__exit__(None, None, None)
 
     def create_variable(self,
@@ -107,9 +112,16 @@ class ASTContextStack:
         top.var_dict[name] = var
         return var
 
+    def create_assert(self, cond):
+        assrt = Assert(cond)
+        assrt.__enter__()
+        top = self.top()
+        top.vardef_stack.append(assrt)
+
     def create_loop(self, name, begin, end):
         name = self.create_current_name(name, "cache")
-        fr = For(name, begin, end, self.get_nid(), self.get_no_deps())
+        fr = For(name, begin, end, self.get_nid(), self.get_no_deps(),
+                 self.get_prefer_libs())
         var = fr.__enter__()
         top = self.top()
         top.var_dict[name] = var
@@ -123,17 +135,38 @@ class ASTContextStack:
         MarkNid("")
         return ret
 
-    def set_no_deps(self):
-        node_ctx.top().set_next_no_deps(True)
+    def set_no_deps(self, name):
+        node_ctx.top().add_next_no_deps(name)
 
     def get_no_deps(self):
         ret = node_ctx.top().get_next_no_deps()
-        node_ctx.top().set_next_no_deps(False)
+        node_ctx.top().reset_next_no_deps()
+        return ret
+
+    def set_prefer_libs(self, prefer_libs=True):
+        node_ctx.top().set_next_prefer_libs(prefer_libs)
+
+    def get_prefer_libs(self):
+        ret = node_ctx.top().get_next_prefer_libs()
+        node_ctx.top().set_next_prefer_libs(False)
         return ret
 
     def new_context_id(self):
         self.now_context_id += 1
         return self.now_context_id
+
+    def push_transformer(self, transformer):
+        self.transformers.append(transformer)
+
+    def pop_transformer(self):
+        self.transformers.pop()
+
+    def error(self, message="Assertion Failed"):
+        msg = "\n"
+        for transformer in self.transformers:
+            msg += transformer.frame_info()
+        msg += message
+        raise IRError(msg)
 
 
 class VarCreation:
@@ -170,33 +203,59 @@ class VarCreation:
 
 class InlineFunction:
 
-    def __init__(self, name, body, params, globals):
+    def __init__(self, name, body, params, globals, file, src, lineno):
         self.name = name
         self.body = body
         self.params = params
         self.globals = globals
         self.arg_var = None
+        self.src = src
+        self.lineno = lineno
+        self.file = file
+
+        # Fall back to op-based manner if run from outside of a compiled region
+        self.fallback = None
 
     def set_arg_var(self, arg_var):
         self.arg_var = arg_var
 
     def expand(self, ctx_stack, nid):
         assert self.arg_var is not None
-        transformer = ASTTransformer(ctx_stack, self.params, self.globals)
+        transformer = ASTTransformer(ctx_stack, self.params, self.globals,
+                                     self.file, self.src, self.lineno, True)
         transformer.set_replace(self.arg_var, nid)
+        ctx_stack.push_transformer(transformer)
         for stmt in self.body:
             transformer.visit(stmt)
+        ctx_stack.pop_transformer()
         return transformer.returns
+
+    def set_fallback(self, fallback):
+        self.fallback = fallback
+
+    def __call__(self, *args, **kvs):
+        if self.fallback is None:
+            raise ffi.InvalidProgram(
+                "A fallback function should be specified is you want to "
+                "directly run a InlineFunction without compilation")
+        return self.fallback(*args, **kvs)
 
 
 class ASTTransformer(ast.NodeTransformer):
 
-    def __init__(self, ctx_stack: ASTContextStack, params: Sequence[str],
-                 globals: Mapping[str, Any]):
+    def __init__(self,
+                 ctx_stack: ASTContextStack,
+                 params: Sequence[str],
+                 globals: Mapping[str, Any],
+                 file,
+                 src,
+                 lineno,
+                 is_inline: bool = False):
         super().__init__()
         self.ctx_stack = ctx_stack
         self.params = params
         self.globals = globals
+        self.is_inline = is_inline
         self.allow_undefined = False
         self.replace = {}
         self.arg_var = {}
@@ -205,6 +264,34 @@ class ASTTransformer(ast.NodeTransformer):
         self.returns = []
         self.prefix = ""
         self.nid = ""
+        self.now_pos = 0
+        self.file = file
+        self.src = []
+        for line in src:
+            if len(line) and line[-1] != '\n':
+                line += '\n'
+            self.src.append(line)
+        self.start_from = lineno
+
+    def visit(self, node):
+        """Visit a node."""
+        prev_pos = self.now_pos
+        if hasattr(node, "lineno"):
+            self.now_pos = node.lineno
+        method = 'visit_' + node.__class__.__name__
+        visitor = getattr(self, method, self.generic_visit)
+        try:
+            ret = visitor(node)
+            self.now_pos = prev_pos
+            return ret
+        except IRError as e:
+            raise e
+        except Exception as e:
+            self.ctx_stack.error(type(e).__name__ + ": " + e.args[0])
+
+    def frame_info(self):
+        lineno = self.now_pos - 1
+        return f"On line {lineno + self.start_from} in file {self.file}: \n{self.src[lineno]}"
 
     def set_replace(self, arg_var, prefix):
         self.arg_var = arg_var
@@ -241,6 +328,11 @@ class ASTTransformer(ast.NodeTransformer):
             else:
                 assert self.allow_undefined, f"Variable {node.id} (a.k.a {name}) used without declaration or creation"
         node.expr_ptr = var
+        return node
+
+    def visit_Assert(self, node):
+        self.generic_visit(node)
+        self.ctx_stack.create_assert(node.test.expr_ptr)
         return node
 
     def visit_Constant(self, node):
@@ -387,13 +479,13 @@ class ASTTransformer(ast.NodeTransformer):
             kws[item.arg] = item.value.expr_ptr
 
         if callee is create_var:
-            shape, dtype, atype, mtype = args
+            shape, dtype, mtype = args
 
             override_name = kws.get("name")
             node.expr_ptr = VarCreation(self.ctx_stack,
                                         shape,
                                         dtype,
-                                        atype,
+                                        "cache",
                                         mtype,
                                         override_name=override_name)
         elif callee is declare_var:
@@ -464,7 +556,7 @@ class ASTTransformer(ast.NodeTransformer):
                     # only support single return value now
                     returns = arg.expand(self.ctx_stack, name)
                     assert len(returns) == 1, "only support single return value"
-                    arg_var[param] = self.ctx_stack.find_var_by_name(returns[0])
+                    arg_var[param] = returns[0][1]
                 elif isinstance(arg, Tensor):
                     var = VarCreation(self.ctx_stack, arg.shape(), arg.dtype(),
                                       "cache", arg.mtype, name).execute()
@@ -531,14 +623,13 @@ class ASTTransformer(ast.NodeTransformer):
                 targets.append(node.targets[0].id)
             returns = node.value.expr_ptr.expand(self.ctx_stack, self.nid)
             for target, ret in zip(targets, returns):
-                self.replace[target] = ret
+                self.replace[target] = ret[0]
         elif isinstance(node.value.expr_ptr, VarCreation):
             self.created_vars.add(node.targets[0].id)
             name = self.get_name(node.targets[0].id)
             nid = name
             MarkNid(nid)
             var_creation = node.value.expr_ptr
-            var_creation.atype = 'cache'
             var_creation.add_name(name)
             var_creation.execute()
         elif isinstance(node.targets[0], ast.Subscript):
@@ -622,8 +713,12 @@ class ASTTransformer(ast.NodeTransformer):
                 if self.prefix:
                     name = self.prefix + ':' + name
                 self.ctx_stack.set_nid(name)
-            if s == "no_deps":
-                self.ctx_stack.set_no_deps()
+            if s[0:9] == "no_deps: ":
+                name = self.get_name(s[9:])
+                var = self.ctx_stack.find_var_by_name(name)
+                self.ctx_stack.set_no_deps(var.name)
+            if s == "prefer_libs":
+                self.ctx_stack.set_prefer_libs(True)
             return node
 
         self.nid = self.ctx_stack.get_nid()
@@ -690,12 +785,18 @@ class ASTTransformer(ast.NodeTransformer):
             assert False, "The function must have no more than one return statement"
         self.returned = True
         if isinstance(node.value, ast.Name):
-            name = node.value.id
-            self.returns.append(self.get_name(name))
+            name = self.get_name(node.value.id)
+            var = self.ctx_stack.find_var_by_name(name)
+            if not self.is_inline:
+                var.vardef.set_atype("output")
+            self.returns.append((name, var))
         elif isinstance(node.value, ast.Tuple):
             for value in node.value.elts:
-                name = value.id
-                self.returns.append(self.get_name(name))
+                name = self.get_name(value.id)
+                var = self.ctx_stack.find_var_by_name(name)
+                if not self.is_inline:
+                    var.vardef.set_atype("output")
+                self.returns.append((name, var))
 
         return node
 
@@ -744,19 +845,33 @@ def transform(func):
     ctx_stack = ASTContextStack()
     src = _remove_indent(ins.getsource(func))
     tree = ast.parse(src)
+    src, lineno = ins.getsourcelines(func)
+    file = ins.getfile(func)
     params = list(inspect.signature(func).parameters)
     globals = _get_global_vars(func)
-    transformer = ASTTransformer(ctx_stack, params, globals)
+    transformer = ASTTransformer(ctx_stack, params, globals, file, src, lineno)
+    ctx_stack.push_transformer(transformer)
     transformer.visit(tree)
-    return Func(func.__name__, params, pop_ast(), func)
+    ctx_stack.pop_transformer()
+    returns = list(
+        map(lambda var: (var[1].name, var[1].dtype), transformer.returns))
+    return Func(func.__name__, params, returns, pop_ast())
 
 
 def inline(func, src=None):
     if src is None:
         src = _remove_indent(ins.getsource(func))
-    tree = ast.parse(src)
+        tree = ast.parse(src)
+        src, lineno = ins.getsourcelines(func)
+        file = ins.getfile(func)
+    else:
+        tree = ast.parse(src)
+        src = src.splitlines()
+        lineno = 1
+        file = func.__name__
     params = list(inspect.signature(func).parameters)
     globals = _get_global_vars(func)
     funcdef = tree.body[0]
     assert isinstance(funcdef, ast.FunctionDef)
-    return InlineFunction(func.__name__, funcdef.body, params, globals)
+    return InlineFunction(func.__name__, funcdef.body, params, globals, file,
+                          src, lineno)

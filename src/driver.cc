@@ -17,12 +17,14 @@
 
 namespace ir {
 
-Driver::Driver(const Func &func, const std::string &src, const Device &dev)
-    : src_(src), params_(func->params_.size(), nullptr), dev_(dev) {
-    auto nParams = func->params_.size();
+Driver::Driver(const Func &f, const std::string &src, const Device &dev)
+    : f_(f), src_(src), params_(f->params_.size(), nullptr),
+      returns_(f->returns_.size(), nullptr), retSizes_(f->returns_.size(), 0),
+      dev_(dev) {
+    auto nParams = f->params_.size();
     name2param_.reserve(nParams);
     for (size_t i = 0; i < nParams; i++) {
-        name2param_[func->params_[i]] = i;
+        name2param_[f->params_[i]] = i;
     }
     buildAndLoad();
 }
@@ -34,7 +36,8 @@ void Driver::buildAndLoad() {
     char path[64];
     ASSERT(path_string.size() < 64);
     strncpy(path, path_string.c_str(), 63);
-    mkdtemp(path);
+    auto mkdtempPtr = mkdtemp(path);
+    ASSERT(mkdtempPtr != nullptr);
 
     std::string srcSuffix;
     switch (dev_.type()) {
@@ -101,7 +104,10 @@ void Driver::buildAndLoad() {
     default:
         ASSERT(false);
     }
-    system(cmd.c_str());
+    auto compilerErr = system(cmd.c_str());
+    if (compilerErr != 0) {
+        throw DriverError("Backend compiler reports error");
+    }
 
     dlHandle_ = dlopen(so.c_str(), RTLD_NOW);
     if (!dlHandle_) {
@@ -109,7 +115,8 @@ void Driver::buildAndLoad() {
                           dlerror());
     }
 
-    func_ = (void (*)(void **, void *))dlsym(dlHandle_, "run");
+    func_ =
+        (void (*)(void **, void **, size_t *, void *))dlsym(dlHandle_, "run");
     if (!func_) {
         throw DriverError((std::string) "Target function not found: " +
                           dlerror());
@@ -121,39 +128,63 @@ void Driver::buildAndLoad() {
 
     switch (dev_.type()) {
     case TargetType::CPU:
-        curCtx_ = &cpuCtx_;
+        ctx_ = new CPUContext();
         break;
     case TargetType::GPU:
-        curCtx_ = &gpuCtx_;
+        ctx_ = new GPUContext();
         break;
     default:
         ASSERT(false);
     }
 }
 
-void Driver::setParams(const std::vector<Array *> &args,
-                       const std::unordered_map<std::string, Array *> &kws) {
-    for (size_t i = 0, iEnd = args.size(); i < iEnd; i++) {
-        params_[i] = args[i]->raw();
+void Driver::setParams(const std::vector<Ref<Array>> &args,
+                       const std::unordered_map<std::string, Ref<Array>> &kws) {
+    for (size_t i = 0, iEnd = args.size(), j = 0; i < iEnd; i++) {
+        while (j < params_.size() && f_->closure_.count(f_->params_[j])) {
+            j++;
+        }
+        if (j >= params_.size()) {
+            throw DriverError("More arguments are given than required");
+        }
+        params_[j++] = args[i]->raw();
     }
-    for (auto &&item : kws) {
-        params_[name2param_[item.first]] = item.second->raw();
+    for (auto &&[key, value] : kws) {
+        if (f_->closure_.count(key)) {
+            throw DriverError("Enclosed parameter " + key + " cannot be set");
+        }
+        params_[name2param_[key]] = value->raw();
     }
     for (size_t i = 0, iEnd = params_.size(); i < iEnd; i++) {
+        if (f_->closure_.count(f_->params_[i])) {
+            params_[i] = (*f_->closure_.at(f_->params_[i]))->raw();
+        }
         if (params_[i] == nullptr) {
             throw DriverError("Parameter " + std::to_string(i) + " is missing");
         }
     }
 }
 
-void Driver::run() { func_(params_.data(), curCtx_); }
+void Driver::run() {
+    func_(params_.data(), returns_.data(), retSizes_.data(), ctx_);
+}
 
-void Driver::sync() {
-    switch (dev_.type()) {
-    case TargetType::GPU:
-        checkCudaError(cudaDeviceSynchronize());
-    default:;
+void Driver::sync() { dev_.sync(); }
+
+std::vector<Ref<Array>> Driver::collectReturns() {
+    std::vector<Ref<Array>> ret;
+    for (size_t i = 0, n = f_->returns_.size(); i < n; i++) {
+        auto val = Ref<Array>::make(
+            Array(returns_[i], retSizes_[i], f_->returns_[i].second, dev_));
+        if (f_->closure_.count(f_->returns_[i].first)) {
+            *f_->closure_.at(f_->returns_[i].first) = val;
+        } else {
+            ret.emplace_back(val);
+        }
+        returns_[i] = nullptr;
+        retSizes_[i] = 0;
     }
+    return ret;
 }
 
 double Driver::time(int rounds, int warmups) {

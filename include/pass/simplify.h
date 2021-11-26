@@ -188,6 +188,11 @@ class CompUniqueBounds : public CompTransientBounds {
 };
 
 template <class BaseClass> class SimplifyPass : public BaseClass {
+    // We cannot rely the bound analysis for constant propagation.
+    // E.g f(x) + 0, where f(x) is a complex expression and it does not have a
+    // bound. The "+ 0" cannot be removed by bound analysis
+    std::unordered_map<Expr, int64_t> constants_;
+
     // defining scope table
     std::unordered_map<std::string, int> varScope_;
     int curScope_ = 0;
@@ -213,11 +218,16 @@ template <class BaseClass> class SimplifyPass : public BaseClass {
     Expr visitExpr(const Expr &op,
                    const std::function<Expr(const Expr &)> &visitNode) override;
 
+    Expr visit(const IntConst &op) override;
     Expr visit(const Var &op) override;
+    Expr visit(const Add &op) override;
+    Expr visit(const Sub &op) override;
+    Expr visit(const Mul &op) override;
     Expr visit(const FloorDiv &op) override;
     Expr visit(const CeilDiv &op) override;
     Expr visit(const RoundTowards0Div &op) override;
     Expr visit(const Mod &op) override;
+    Expr visit(const Remainder &op) override;
     Expr visit(const Min &op) override;
     Expr visit(const Max &op) override;
     Expr visit(const LT &op) override;

@@ -26,6 +26,14 @@ template <class T> __host__ __device__ T ceilDiv(T a, T b) {
     T res = a / b, rem = a % b;
     return res + (rem != 0 && ((rem < 0) == (b < 0)));
 }
+template <class T> __host__ __device__ T runtime_mod(T a, T b) {
+    T m = a % b;
+    if (m < 0) {
+        // m += (b < 0) ? -b : b; // avoid this form: it is UB when b == INT_MIN
+        m = (b < 0) ? m - b : m + b;
+    }
+    return m;
+}
 
 inline __host__ __device__ int4 make_int4(int4 a) { return a; }
 inline __host__ __device__ int2 make_int2(int2 a) { return a; }
@@ -38,7 +46,14 @@ inline __host__ __device__ double runtime_sqrt(double x) { return sqrt(x); }
 inline __host__ __device__ float runtime_exp(float x) { return expf(x); }
 inline __host__ __device__ double runtime_exp(double x) { return exp(x); }
 
+inline __host__ __device__ float runtime_tanh(float x) { return tanhf(x); }
+inline __host__ __device__ double runtime_tanh(double x) { return tanh(x); }
+
 template <class T> __host__ __device__ T runtime_square(T x) { return x * x; }
+
+template <class T> __host__ __device__ T runtime_sigmoid(T x) {
+    return 1.0 / (1.0 + runtime_exp(-x));
+}
 
 inline __host__ __device__ float runtime_abs(float x) { return fabsf(x); }
 inline __host__ __device__ double runtime_abs(double x) { return fabs(x); }

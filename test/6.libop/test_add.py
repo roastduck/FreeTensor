@@ -72,7 +72,7 @@ def test_static_broadcast_1_at_front():
         ir.declare_var(y, (4, 4), "float32", "input", "cpu")
         ir.declare_var(out, (4, 4), "float32", "output", "cpu")
         "nid: out_shape"
-        out_shape = ir.create_var((2,), "int32", "cache", "cpu")
+        out_shape = ir.create_var((2,), "int32", "cpu")
         "nid: add"
         ir.libop.add_(x, y, out)
 
@@ -103,7 +103,7 @@ def test_static_broadcast_1_at_back():
         ir.declare_var(y, (4, 1), "float32", "input", "cpu")
         ir.declare_var(out, (4, 4), "float32", "output", "cpu")
         "nid: out_shape"
-        out_shape = ir.create_var((2,), "int32", "cache", "cpu")
+        out_shape = ir.create_var((2,), "int32", "cpu")
         "nid: add"
         ir.libop.add_(x, y, out)
 
@@ -134,7 +134,7 @@ def test_different_dtype():
         ir.declare_var(y, (4, 4), "float32", "input", "cpu")
         ir.declare_var(out, (4, 4), "float32", "output", "cpu")
         "nid: out_shape"
-        out_shape = ir.create_var((2,), "int32", "cache", "cpu")
+        out_shape = ir.create_var((2,), "int32", "cpu")
         "nid: add"
         ir.libop.add_(x, y, out)
 
@@ -193,3 +193,10 @@ def test_out_of_place():
 
     assert np.array_equal(out_shape_numpy, [4, 4])
     assert torch.all(torch.isclose(out_torch, x_torch + y_torch))
+
+
+def test_fallback():
+    x = torch.rand(4, 4, dtype=torch.float32)
+    y = torch.rand(4, 4, dtype=torch.float32)
+    out = ir.libop.add(x, y)
+    assert torch.all(torch.isclose(out, x + y))

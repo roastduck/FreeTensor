@@ -146,12 +146,25 @@ Stmt _makeReduceTo(const std::string &id, const std::string &var,
     return a;
 }
 
+struct ReductionItem {
+    ReduceOp op_;
+    std::string var_;
+    std::vector<SubTree<ExprNode, Nullable>> indices_;
+    // A null index means the full range of that dimension
+    // TODO: Support slicing
+};
+
 struct ForProperty {
     std::string parallel_;
     bool unroll_, vectorize_;
-    std::vector<std::pair<ReduceOp, Expr>> reductions_;
+    std::vector<ReductionItem> reductions_;
+    std::vector<std::string> noDeps_; // vars that are explicitly marked to have
+                                      // no dependencies over this loop
+    bool preferLibs_; // Aggresively transform to external library calls in
+                      // auto-schedule
 
-    ForProperty() : parallel_(), unroll_(false), vectorize_(false) {}
+    ForProperty()
+        : parallel_(), unroll_(false), vectorize_(false), preferLibs_(false) {}
 
     ForProperty withParallel(const std::string &parallel) {
         auto ret = *this;
@@ -168,6 +181,16 @@ struct ForProperty {
         ret.vectorize_ = vectorize;
         return ret;
     }
+    ForProperty withNoDeps(const std::vector<std::string> &noDeps) {
+        auto ret = *this;
+        ret.noDeps_ = noDeps;
+        return ret;
+    }
+    ForProperty withPreferLibs(bool preferLibs = true) {
+        auto ret = *this;
+        ret.preferLibs_ = preferLibs;
+        return ret;
+    }
 };
 
 class ForNode : public StmtNode {
@@ -178,7 +201,6 @@ class ForNode : public StmtNode {
     // every time and call simplifyPass to propagate the constants, it is very
     // time consuming
     SubTree<ExprNode> begin_, end_, len_;
-    bool noDeps_;
     ForProperty property_;
     SubTree<StmtNode> body_;
 
@@ -188,7 +210,7 @@ typedef Ref<ForNode> For;
 #define makeFor(...) makeNode(For, __VA_ARGS__)
 template <class Tbegin, class Tend, class Tlen, class Tbody>
 Stmt _makeFor(const std::string &id, const std::string &iter, Tbegin &&begin,
-              Tend &&end, Tlen &&len, bool noDeps, const ForProperty &property,
+              Tend &&end, Tlen &&len, const ForProperty &property,
               Tbody &&body) {
     For f = For::make();
     f->setId(id);
@@ -196,7 +218,6 @@ Stmt _makeFor(const std::string &id, const std::string &iter, Tbegin &&begin,
     f->begin_ = std::forward<Tbegin>(begin);
     f->end_ = std::forward<Tend>(end);
     f->len_ = std::forward<Tlen>(len);
-    f->noDeps_ = noDeps;
     f->property_ = property;
     f->body_ = std::forward<Tbody>(body);
     return f;
@@ -308,6 +329,8 @@ inline Stmt _makeMatMul(const std::string &id, const Expr &a, const Expr &b,
     s->equivalent_ = equivalent;
     return s;
 }
+
+Expr neutralVal(DataType dtype, ReduceOp op);
 
 } // namespace ir
 

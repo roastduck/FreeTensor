@@ -33,6 +33,7 @@ void init_ffi_ast(py::module_ &m) {
         .value("CeilDiv", ASTNodeType::CeilDiv)
         .value("RoundTowards0Div", ASTNodeType::RoundTowards0Div)
         .value("Mod", ASTNodeType::Mod)
+        .value("Remainder", ASTNodeType::Remainder)
         .value("Min", ASTNodeType::Min)
         .value("Max", ASTNodeType::Max)
         .value("LT", ASTNodeType::LT)
@@ -47,6 +48,8 @@ void init_ffi_ast(py::module_ &m) {
         .value("Sqrt", ASTNodeType::Sqrt)
         .value("Exp", ASTNodeType::Exp)
         .value("Square", ASTNodeType::Square)
+        .value("Sigmoid", ASTNodeType::Sigmoid)
+        .value("Tanh", ASTNodeType::Tanh)
         .value("Abs", ASTNodeType::Abs)
         .value("Floor", ASTNodeType::Floor)
         .value("Ceil", ASTNodeType::Ceil)
@@ -69,12 +72,9 @@ void init_ffi_ast(py::module_ &m) {
 
     pyFunc.def_readonly("name", &FuncNode::name_)
         .def_readonly("params", &FuncNode::params_)
-        .def_property_readonly("buffers",
-                               [](const Func &op) { return op->buffers_; })
-        .def_property_readonly("body",
-                               [](const Func &op) -> Stmt { return op->body_; })
+        .def_readonly("returns", &FuncNode::returns_)
         .def_property_readonly(
-            "src", [](const Func &op) -> py::object { return *op->src_; });
+            "body", [](const Func &op) -> Stmt { return op->body_; });
 
     py::class_<FrontendVarIdx>(m, "FrontendVarIdx")
         .def(py::init(&FrontendVarIdx::fromSingle))
@@ -135,7 +135,15 @@ void init_ffi_ast(py::module_ &m) {
         .def(py::init<>())
         .def_readonly("parallel", &ForProperty::parallel_)
         .def_readonly("unroll", &ForProperty::unroll_)
-        .def_readonly("vectorize", &ForProperty::vectorize_);
+        .def_readonly("vectorize", &ForProperty::vectorize_)
+        .def_readonly("no_deps", &ForProperty::noDeps_)
+        .def_readonly("prefer_libs", &ForProperty::preferLibs_)
+        .def("with_parallel", &ForProperty::withParallel, "parallel"_a)
+        .def("with_unroll", &ForProperty::withUnroll, "unroll"_a = true)
+        .def("with_vectorize", &ForProperty::withVectorize,
+             "vectorize"_a = true)
+        .def("with_no_deps", &ForProperty::withNoDeps, "var"_a)
+        .def("with_prefer_libs", &ForProperty::withPreferLibs, "prefer_libs"_a);
     py::class_<ForNode, For>(m, "For", pyStmt)
         .def_readonly("iter", &ForNode::iter_)
         .def_property_readonly("begin",
@@ -218,6 +226,11 @@ void init_ffi_ast(py::module_ &m) {
                                [](const Mod &op) -> Expr { return op->lhs_; })
         .def_property_readonly("rhs",
                                [](const Mod &op) -> Expr { return op->rhs_; });
+    py::class_<RemainderNode, Remainder>(m, "Remainder", pyExpr)
+        .def_property_readonly(
+            "lhs", [](const Remainder &op) -> Expr { return op->lhs_; })
+        .def_property_readonly(
+            "rhs", [](const Remainder &op) -> Expr { return op->rhs_; });
     py::class_<MinNode, Min>(m, "Min", pyExpr)
         .def_property_readonly("lhs",
                                [](const Min &op) -> Expr { return op->lhs_; })
@@ -280,6 +293,12 @@ void init_ffi_ast(py::module_ &m) {
     py::class_<SquareNode, Square>(m, "Square", pyExpr)
         .def_property_readonly(
             "expr", [](const Square &op) -> Expr { return op->expr_; });
+    py::class_<SigmoidNode, Sigmoid>(m, "Sigmoid", pyExpr)
+        .def_property_readonly(
+            "expr", [](const Sigmoid &op) -> Expr { return op->expr_; });
+    py::class_<TanhNode, Tanh>(m, "Tanh", pyExpr)
+        .def_property_readonly(
+            "expr", [](const Tanh &op) -> Expr { return op->expr_; });
     py::class_<AbsNode, Abs>(m, "Abs", pyExpr)
         .def_property_readonly("expr",
                                [](const Abs &op) -> Expr { return op->expr_; });
@@ -317,7 +336,7 @@ void init_ffi_ast(py::module_ &m) {
              })
         .def("pretty_print", [](const AST &op) { return toString(op, true); });
 
-    pyExpr.def(py::init([](int val) { return makeIntConst(val); }))
+    pyExpr.def(py::init([](int64_t val) { return makeIntConst(val); }))
         .def(py::init([](float val) { return makeFloatConst(val); }))
         .def(py::init([](bool val) { return makeBoolConst(val); }))
         .def(py::init([](const FrontendVar &var) { return var.asLoad(); }))
@@ -411,11 +430,14 @@ void init_ffi_ast(py::module_ &m) {
     py::implicitly_convertible<FrontendVar, ExprNode>();
 
     // Function
-    m.def("makeFunc",
-          static_cast<Func (*)(const std::string &,
-                               const std::vector<std::string> &, const Stmt &,
-                               const py::object &)>(&_makeFunc),
-          "name"_a, "params"_a, "body"_a, "src"_a);
+    m.def(
+        "makeFunc",
+        [](const std::string &name, const std::vector<std::string> &params,
+           const std::vector<std::pair<std::string, DataType>> &returns,
+           const Stmt &body) {
+            return makeFunc(name, params, returns, body, {});
+        },
+        "name"_a, "params"_a, "returns"_a, "body"_a); // no closure
 
     // Statements
     m.def("makeAny", &_makeAny);
@@ -443,10 +465,10 @@ void init_ffi_ast(py::module_ &m) {
     m.def("makeFloatConst", &_makeFloatConst, "val"_a);
     m.def("makeFor",
           static_cast<Stmt (*)(const std::string &, const std::string &,
-                               const Expr &, const Expr &, const Expr &, bool,
+                               const Expr &, const Expr &, const Expr &,
                                const ForProperty &, const Stmt &)>(&_makeFor),
-          "nid"_a, "iter"_a, "begin"_a, "end"_a, "len"_a, "no_deps"_a,
-          "property"_a, "body"_a);
+          "nid"_a, "iter"_a, "begin"_a, "end"_a, "len"_a, "property"_a,
+          "body"_a);
     m.def("makeIf",
           static_cast<Stmt (*)(const std::string &, const Expr &, const Stmt &,
                                const Stmt &)>(&_makeIf),
@@ -462,6 +484,9 @@ void init_ffi_ast(py::module_ &m) {
 
     // Expressions
     m.def("makeAnyExpr", &_makeAnyExpr);
+    m.def("makeRemainder",
+          static_cast<Expr (*)(const Expr &, const Expr &)>(&_makeRemainder),
+          "lhs"_a, "rhs"_a);
     m.def("makeMin",
           static_cast<Expr (*)(const Expr &, const Expr &)>(&_makeMin), "lhs"_a,
           "rhs"_a);
@@ -480,6 +505,10 @@ void init_ffi_ast(py::module_ &m) {
           "expr"_a);
     m.def("makeExp", static_cast<Expr (*)(const Expr &)>(&_makeExp), "expr"_a);
     m.def("makeSquare", static_cast<Expr (*)(const Expr &)>(&_makeSquare),
+          "expr"_a);
+    m.def("makeSigmoid", static_cast<Expr (*)(const Expr &)>(&_makeSigmoid),
+          "expr"_a);
+    m.def("makeTanh", static_cast<Expr (*)(const Expr &)>(&_makeTanh),
           "expr"_a);
     m.def("makeAbs", static_cast<Expr (*)(const Expr &)>(&_makeAbs), "expr"_a);
     m.def("makeFloor", static_cast<Expr (*)(const Expr &)>(&_makeFloor),
@@ -506,6 +535,8 @@ void init_ffi_ast(py::module_ &m) {
           static_cast<Expr (*)(const std::string &, const std::vector<Expr> &,
                                DataType)>(&_makeIntrinsic),
           "fmt"_a, "params"_a, "retType"_a = DataType::Void);
+
+    m.def("neutral_val", &neutralVal);
 }
 
 } // namespace ir
@@ -547,6 +578,7 @@ template <> struct polymorphic_type_hook<ir::ASTNode> {
             DISPATCH(CeilDiv);
             DISPATCH(RoundTowards0Div);
             DISPATCH(Mod);
+            DISPATCH(Remainder);
             DISPATCH(Min);
             DISPATCH(Max);
             DISPATCH(LT);
@@ -561,6 +593,8 @@ template <> struct polymorphic_type_hook<ir::ASTNode> {
             DISPATCH(Sqrt);
             DISPATCH(Exp);
             DISPATCH(Square);
+            DISPATCH(Sigmoid);
+            DISPATCH(Tanh);
             DISPATCH(Abs);
             DISPATCH(Floor);
             DISPATCH(Ceil);
@@ -625,6 +659,7 @@ template <> struct polymorphic_type_hook<ir::ExprNode> {
             DISPATCH(CeilDiv);
             DISPATCH(RoundTowards0Div);
             DISPATCH(Mod);
+            DISPATCH(Remainder);
             DISPATCH(Min);
             DISPATCH(Max);
             DISPATCH(LT);
@@ -639,6 +674,8 @@ template <> struct polymorphic_type_hook<ir::ExprNode> {
             DISPATCH(Sqrt);
             DISPATCH(Exp);
             DISPATCH(Square);
+            DISPATCH(Sigmoid);
+            DISPATCH(Tanh);
             DISPATCH(Abs);
             DISPATCH(Floor);
             DISPATCH(Ceil);

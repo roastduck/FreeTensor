@@ -51,23 +51,62 @@ if __name__ == '__main__':
     w = 32
     dilation = 4  # counts from 1
     dilation_heads = 2
-    q = torch.rand(n_heads, seq_len, feat_len, dtype=torch.float)
-    k = torch.rand(n_heads, seq_len, feat_len, dtype=torch.float)
-    v = torch.rand(n_heads, seq_len, feat_len, dtype=torch.float)
+    q = torch.tensor(np.load("../q.in.npy"), dtype=torch.float)
+    k = torch.tensor(np.load("../k.in.npy"), dtype=torch.float)
+    v = torch.tensor(np.load("../v.in.npy"), dtype=torch.float)
+    d_y = torch.tensor(np.load("../d_y.in.npy"), dtype=torch.float)
 
     if device == 'gpu':
         q = q.cuda()
         k = k.cuda()
         v = v.cuda()
+        d_y = d_y.cuda()
+        sync = torch.cuda.synchronize
     else:
         assert device == 'cpu'
+        sync = lambda: None
 
+    warmup_num = 10
     test_num = 100
 
-    y = transformer_impl1(q, k, v, w, dilation, dilation_heads)  # init lazy ops
+    for i in range(warmup_num):
+        y = transformer_impl1(q, k, v, w, dilation, dilation_heads)
+        if i == 0:
+            np.save("y.out.npy", y.cpu().numpy(), allow_pickle=False)
+    sync()
     t0 = time.time()
     for i in range(test_num):
         y = transformer_impl1(q, k, v, w, dilation, dilation_heads)
+    sync()
     t1 = time.time()
     assert y.shape == (n_heads, seq_len, feat_len)
-    print(f"Impl1 Time = {(t1 - t0) / test_num * 1000} ms")
+    print(f"Impl1 Inference Time = {(t1 - t0) / test_num * 1000} ms")
+
+    q.requires_grad = True
+    k.requires_grad = True
+    v.requires_grad = True
+
+    for i in range(warmup_num):
+        y = transformer_impl1(q, k, v, w, dilation, dilation_heads)
+    sync()
+    t0 = time.time()
+    for i in range(test_num):
+        y = transformer_impl1(q, k, v, w, dilation, dilation_heads)
+    sync()
+    t1 = time.time()
+    assert y.shape == (n_heads, seq_len, feat_len)
+    print(f"Impl1 Forward Time = {(t1 - t0) / test_num * 1000} ms")
+
+    for i in range(warmup_num):
+        y.backward(d_y, retain_graph=True)
+        if i == 0:
+            np.save("d_q.out.npy", q.grad.cpu().numpy(), allow_pickle=False)
+            np.save("d_k.out.npy", k.grad.cpu().numpy(), allow_pickle=False)
+            np.save("d_v.out.npy", v.grad.cpu().numpy(), allow_pickle=False)
+    sync()
+    t0 = time.time()
+    for i in range(test_num):
+        y.backward(d_y, retain_graph=True)
+    sync()
+    t1 = time.time()
+    print(f"Impl2 Backward Time = {(t1 - t0) / test_num * 1000} ms")

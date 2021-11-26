@@ -11,6 +11,9 @@ namespace gpu {
 std::string LowerVector::vecType(DataType dtype) const {
     std::string ret;
     switch (dtype) {
+    case DataType::Float64:
+        ret = "double";
+        break;
     case DataType::Float32:
         ret = "float";
         break;
@@ -28,10 +31,11 @@ bool LowerVector::hasVectorIndex(const Expr &index) {
     analyzeLinear_(index);
     auto &&lin = analyzeLinear_.result().at(index);
 
-    auto it = std::find_if(lin.coeff_.begin(), lin.coeff_.end(),
-                           [this](const std::pair<uint64_t, Scale<int>> &item) {
-                               return item.first == varHash_;
-                           });
+    auto it =
+        std::find_if(lin.coeff_.begin(), lin.coeff_.end(),
+                     [this](const std::pair<uint64_t, Scale<int64_t>> &item) {
+                         return item.first == varHash_;
+                     });
     if (it != lin.coeff_.end()) {
         // TODO: k_ can be -1
         if (it->second.k_ != 1) {

@@ -16,8 +16,8 @@ class AutoSchedule {
     Device device_;
     size_t nCandidates_, nPredict_;
     Sketch baseSketch_;
-    std::vector<Array *> args_;
-    std::unordered_map<std::string, Array *> kws_;
+    std::vector<Ref<Array>> args_;
+    std::unordered_map<std::string, Ref<Array>> kws_;
     bool paramsSet_;
     std::vector<Sketch> candidates_;
     double mn_;
@@ -32,8 +32,8 @@ class AutoSchedule {
     size_t nCandidates() const { return nCandidates_; }
     size_t nPredict() const { return nPredict_; }
 
-    void setParams(const std::vector<Array *> &args,
-                   const std::unordered_map<std::string, Array *> &kws);
+    void setParams(const std::vector<Ref<Array>> &args,
+                   const std::unordered_map<std::string, Ref<Array>> &kws);
 
     std::vector<Sketch> getRandomSketches(size_t n);
 

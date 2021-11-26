@@ -38,7 +38,6 @@ def load_faces(path: str):
     return np.array(vertices, dtype=np.float32), np.array(faces, dtype=np.int32)
 
 
-@jax.jit
 def rasterize(vertices, faces):
     """
     Compute soft rasterization of each faces
@@ -68,6 +67,7 @@ def rasterize(vertices, faces):
 
     norm = lambda v: jnp.sqrt(v[0] * v[0] + v[1] * v[1])
     cross_product = lambda v1, v2: v1[0] * v2[1] - v1[1] * v2[0]
+    dot_product = lambda v1, v2: v1[0] * v2[0] + v1[1] * v2[1]
 
     vert_clockwise = lambda v1, v2, pixel: cross_product(pixel - v1, v2 - v1
                                                         ) < 0
@@ -80,18 +80,16 @@ def rasterize(vertices, faces):
             face[0], face[1], face[2], pixel))(row))(pixels))(face_verts)
     assert is_inside.shape == (n_faces, h, w)
 
-    dist_pixel_to_line = lambda v1, v2, pixel: jnp.abs(
-        cross_product(pixel - v1, v2 - v1)) / norm(v2 - v1)
-    dist_pixel_to_vert = lambda v, pixel: norm(pixel - v)
+    dist_pixel_to_seg = lambda v1, v2, pixel: jnp.where(
+        dot_product(pixel - v1, v2 - v1) >= 0,
+        jnp.where(
+            dot_product(pixel - v2, v1 - v2) >= 0,
+            jnp.abs(cross_product(pixel - v1, v2 - v1)) / norm(v2 - v1),
+            norm(pixel - v2)), norm(pixel - v1))
     dist_pixel_to_face = lambda v1, v2, v3, pixel: jnp.minimum(
-        jnp.minimum(
-            jnp.minimum(dist_pixel_to_line(v1, v2, pixel),
-                        dist_pixel_to_line(v2, v3, pixel)),
-            dist_pixel_to_line(v3, v1, pixel)),
-        jnp.minimum(
-            jnp.minimum(dist_pixel_to_vert(v1, pixel),
-                        dist_pixel_to_vert(v2, pixel)),
-            dist_pixel_to_vert(v3, pixel)))
+        jnp.minimum(dist_pixel_to_seg(v1, v2, pixel),
+                    dist_pixel_to_seg(v2, v3, pixel)),
+        dist_pixel_to_seg(v3, v1, pixel))
     dist = jax.vmap(lambda face: jax.vmap(lambda row: jax.vmap(
         lambda pixel: dist_pixel_to_face(face[0], face[1], face[2], pixel))
                                           (row))(pixels))(face_verts)
@@ -116,12 +114,32 @@ if __name__ == '__main__':
     vertices = jax.device_put(vertices)
     faces = jax.device_put(faces)
 
+    warmup_num = 10
     test_num = 100
 
-    y = rasterize(vertices, faces)  # init lazy ops
+    rasterize_inference = jax.jit(rasterize)
+    # FIXME: Can we remove the `jnp.sum`?
+    rasterize_forward_backward = jax.grad(
+        lambda *args: jnp.sum(rasterize(*args)), argnums=(0,))
+
+    for i in range(warmup_num):
+        y = rasterize_inference(vertices, faces)
+    y = y.block_until_ready()
     t0 = time.time()
     for i in range(test_num):
-        y = rasterize(vertices, faces)
+        y = rasterize_inference(vertices, faces)
+    y = y.block_until_ready()
     t1 = time.time()
     assert y.shape == (n_faces, h, w)
     print(f"Time = {(t1 - t0) / test_num * 1000} ms")
+
+    for i in range(warmup_num):
+        d_vertices, = rasterize_forward_backward(vertices, faces)
+    y = y.block_until_ready()
+    t0 = time.time()
+    for i in range(test_num):
+        d_vertices, = rasterize_forward_backward(vertices, faces)
+    y = y.block_until_ready()
+    t1 = time.time()
+    assert d_vertices.shape == vertices.shape
+    print(f"Forward+Backward Time = {(t1 - t0) / test_num * 1000} ms")

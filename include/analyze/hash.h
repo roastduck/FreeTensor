@@ -65,6 +65,7 @@ class GetHash : public Visitor {
     void visit(const CeilDiv &op) override;
     void visit(const RoundTowards0Div &op) override;
     void visit(const Mod &op) override;
+    void visit(const Remainder &op) override;
     void visit(const Min &op) override;
     void visit(const Max &op) override;
     void visit(const LT &op) override;
@@ -79,6 +80,8 @@ class GetHash : public Visitor {
     void visit(const Sqrt &op) override;
     void visit(const Exp &op) override;
     void visit(const Square &op) override;
+    void visit(const Sigmoid &op) override;
+    void visit(const Tanh &op) override;
     void visit(const Abs &op) override;
     void visit(const Floor &op) override;
     void visit(const Ceil &op) override;

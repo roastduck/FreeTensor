@@ -31,7 +31,7 @@ def _binary_op(op):
     def f_binary_op(a, b):
         'nid: broadcast_shape'
         out = core.create_var(broadcast_shape(a, b),
-                              core.up_cast(a.dtype, b.dtype), "output",
+                              core.up_cast(a.dtype, b.dtype),
                               core.same_mtype(a.mtype, b.mtype))
         'nid: recur'
         _binary_op_(op)(a, b, out)
@@ -42,15 +42,19 @@ def _binary_op(op):
 
 add_ = _binary_op_(lambda x, y: x + y)
 add = _binary_op(lambda x, y: x + y)
+add.set_fallback(lambda x, y: x + y)
 
 sub_ = _binary_op_(lambda x, y: x - y)
 sub = _binary_op(lambda x, y: x - y)
+sub.set_fallback(lambda x, y: x - y)
 
 mul_ = _binary_op_(lambda x, y: x * y)
 mul = _binary_op(lambda x, y: x * y)
+mul.set_fallback(lambda x, y: x * y)
 
 div_ = _binary_op_(lambda x, y: x / y)
 div = _binary_op(lambda x, y: x / y)
+div.set_fallback(lambda x, y: x / y)
 
 
 def _unary_op_(op):
@@ -72,7 +76,7 @@ def _unary_op(op):
 
     @core.inline
     def f_unary_op(x):
-        y = core.create_var(copy_shape(x), x.dtype, "output", x.mtype)
+        y = core.create_var(copy_shape(x), x.dtype, x.mtype)
         'nid: recur'
         _unary_op_(op)(x, y)
         return y
@@ -91,3 +95,9 @@ sqrt = _unary_op(lambda x: core.sqrt(x))
 
 exp_ = _unary_op_(lambda x: core.exp(x))
 exp = _unary_op(lambda x: core.exp(x))
+
+sigmoid_ = _unary_op_(lambda x: core.sigmoid(x))
+sigmoid = _unary_op(lambda x: core.sigmoid(x))
+
+tanh_ = _unary_op_(lambda x: core.tanh(x))
+tanh = _unary_op(lambda x: core.tanh(x))

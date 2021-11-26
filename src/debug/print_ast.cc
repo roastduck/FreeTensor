@@ -55,9 +55,30 @@ void PrintVisitor::visit(const Func &op) {
         os() << (i > 0 ? ", " : "") << op->params_[i];
     }
     os() << ") ";
+    if (!op->returns_.empty()) {
+        os() << "-> ";
+        bool first = true;
+        for (auto &&[name, dtype] : op->returns_) {
+            if (!first) {
+                os() << ", ";
+            }
+            first = false;
+            os() << name << ": " << ::ir::toString(dtype);
+        }
+        os() << " ";
+    }
     beginBlock();
     recur(op->body_);
     endBlock();
+}
+
+void PrintVisitor::visit(const StmtSeq &op) {
+    if (op->stmts_.empty()) {
+        makeIndent();
+        os() << "/* empty */" << std::endl;
+    } else {
+        Visitor::visit(op);
+    }
 }
 
 void PrintVisitor::visit(const Any &op) {
@@ -223,6 +244,14 @@ void PrintVisitor::visit(const Mod &op) {
     os() << ")";
 }
 
+void PrintVisitor::visit(const Remainder &op) {
+    os() << "(";
+    recur(op->lhs_);
+    os() << " %% ";
+    recur(op->rhs_);
+    os() << ")";
+}
+
 void PrintVisitor::visit(const Min &op) {
     os() << "min(";
     recur(op->lhs_);
@@ -326,6 +355,18 @@ void PrintVisitor::visit(const Square &op) {
     os() << ")^2";
 }
 
+void PrintVisitor::visit(const Sigmoid &op) {
+    os() << "sigmoid(";
+    recur(op->expr_);
+    os() << ")";
+}
+
+void PrintVisitor::visit(const Tanh &op) {
+    os() << "tanh(";
+    recur(op->expr_);
+    os() << ")";
+}
+
 void PrintVisitor::visit(const Abs &op) {
     os() << "abs(";
     recur(op->expr_);
@@ -361,9 +402,16 @@ void PrintVisitor::visit(const Cast &op) {
 }
 
 void PrintVisitor::visit(const For &op) {
-    if (op->noDeps_) {
+    if (!op->property_.noDeps_.empty()) {
         makeIndent();
-        os() << "// no dependency" << std::endl;
+        os() << "// no_deps = ";
+        bool first = true;
+        for (auto &&var : op->property_.noDeps_) {
+            os() << (first ? "" : ", ");
+            first = false;
+            os() << var;
+        }
+        os() << std::endl;
     }
     if (!op->property_.parallel_.empty()) {
         makeIndent();
@@ -372,7 +420,7 @@ void PrintVisitor::visit(const For &op) {
     for (auto &&reduction : op->property_.reductions_) {
         makeIndent();
         os() << "// reduction ";
-        switch (reduction.first) {
+        switch (reduction.op_) {
         case ReduceOp::Add:
             os() << "+: ";
             break;
@@ -388,7 +436,24 @@ void PrintVisitor::visit(const For &op) {
         default:
             ASSERT(false);
         }
-        recur(reduction.second);
+
+        os() << reduction.var_;
+        if (!reduction.indices_.empty()) {
+            os() << "[";
+            bool first_2 = true;
+            for (auto &&idx : reduction.indices_) {
+                if (!first_2) {
+                    os() << ", ";
+                }
+                first_2 = false;
+                if (idx.isValid()) {
+                    (*this)(idx);
+                } else {
+                    os() << ":";
+                }
+            }
+            os() << "]";
+        }
         os() << std::endl;
     }
     if (op->property_.unroll_) {
@@ -398,6 +463,10 @@ void PrintVisitor::visit(const For &op) {
     if (op->property_.vectorize_) {
         makeIndent();
         os() << "// vectorize" << std::endl;
+    }
+    if (op->property_.preferLibs_) {
+        makeIndent();
+        os() << "// prefer libs" << std::endl;
     }
     makeIndent();
     if (pretty_) {

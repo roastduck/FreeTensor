@@ -9,8 +9,11 @@
 
 namespace ir {
 
+enum class FissionSide : int { Before, After };
+
 class HoistVar : public Mutator {
-    std::string loop_, after_, beforeId_, afterId_;
+    std::string loop_, before_, after_;
+    std::vector<std::pair<std::string, std::string>> scopePairs_;
     std::unordered_set<std::string> part0Vars_, part1Vars_;
     std::vector<VarDef> defStack_;
     std::vector<std::string> outerScopes_, innerLoops_;
@@ -21,11 +24,14 @@ class HoistVar : public Mutator {
     bool inside_ = false, isAfter_ = false;
 
   public:
-    HoistVar(const std::string &loop, const std::string &after)
-        : loop_(loop), after_(after) {}
+    HoistVar(const std::string &loop, const std::string &before,
+             const std::string &after)
+        : loop_(loop), before_(before), after_(after) {}
 
-    const std::string &beforeId() const { return beforeId_; }
-    const std::string &afterId() const { return afterId_; }
+    const std::vector<std::pair<std::string, std::string>> &scopePairs() const {
+        return scopePairs_;
+    }
+
     bool found() const { return isAfter_; }
 
     const std::vector<std::string> &outerScopes() const { return outerScopes_; }
@@ -87,16 +93,17 @@ class AddDimToVar : public Mutator {
 };
 
 class FissionFor : public Mutator {
-    std::string loop_, after_, suffix0_, suffix1_;
+    std::string loop_, before_, after_, suffix0_, suffix1_;
     std::unordered_map<std::string, std::string> ids0_, ids1_;
     std::unordered_set<std::string> varUses_;
-    bool inside_ = false, isPart0_ = true, inPart_ = false, isAfter_ = false;
+    bool inside_ = false, isPart0_ = true, anyInside_ = false, isAfter_ = false;
 
   public:
-    FissionFor(const std::string &loop, const std::string &after,
-               const std::string &suffix0 = ".a",
+    FissionFor(const std::string &loop, const std::string &before,
+               const std::string &after, const std::string &suffix0 = ".a",
                const std::string &suffix1 = ".b")
-        : loop_(loop), after_(after), suffix0_(suffix0), suffix1_(suffix1) {}
+        : loop_(loop), before_(before), after_(after), suffix0_(suffix0),
+          suffix1_(suffix1) {}
 
     const std::unordered_map<std::string, std::string> &ids0() const {
         return ids0_;
@@ -107,6 +114,10 @@ class FissionFor : public Mutator {
 
   private:
     void markNewId(const Stmt &op, bool isPart0);
+
+    bool inPart() const {
+        return inside_ && ((isPart0_ && !isAfter_) || (!isPart0_ && isAfter_));
+    }
 
   protected:
     Stmt visitStmt(const Stmt &op,
@@ -123,8 +134,9 @@ class FissionFor : public Mutator {
 
 std::pair<Stmt, std::pair<std::unordered_map<std::string, std::string>,
                           std::unordered_map<std::string, std::string>>>
-fission(const Stmt &ast, const std::string &loop, const std::string &after,
-        const std::string &suffix0, const std::string &suffix1);
+fission(const Stmt &ast, const std::string &loop, FissionSide side,
+        const std::string &splitter, const std::string &suffix0,
+        const std::string &suffix1);
 
 } // namespace ir
 

@@ -153,6 +153,11 @@ class Mutator {
                                op);
     }
 
+    virtual Expr visit(const Remainder &op) {
+        return COPY_DEBUG_INFO(
+            makeRemainder((*this)(op->lhs_), (*this)(op->rhs_)), op);
+    }
+
     virtual Expr visit(const Min &op) {
         return COPY_DEBUG_INFO(makeMin((*this)(op->lhs_), (*this)(op->rhs_)),
                                op);
@@ -219,6 +224,14 @@ class Mutator {
         return COPY_DEBUG_INFO(makeSquare((*this)(op->expr_)), op);
     }
 
+    virtual Expr visit(const Sigmoid &op) {
+        return COPY_DEBUG_INFO(makeSigmoid((*this)(op->expr_)), op);
+    }
+
+    virtual Expr visit(const Tanh &op) {
+        return COPY_DEBUG_INFO(makeTanh((*this)(op->expr_)), op);
+    }
+
     virtual Expr visit(const Abs &op) {
         return COPY_DEBUG_INFO(makeAbs((*this)(op->expr_)), op);
     }
@@ -232,9 +245,9 @@ class Mutator {
     }
 
     virtual Stmt visit(const For &op) {
-        auto ret = makeFor(op->id(), op->iter_, (*this)(op->begin_),
-                           (*this)(op->end_), (*this)(op->len_), op->noDeps_,
-                           op->property_, (*this)(op->body_));
+        auto ret =
+            makeFor(op->id(), op->iter_, (*this)(op->begin_), (*this)(op->end_),
+                    (*this)(op->len_), op->property_, (*this)(op->body_));
         return COPY_DEBUG_INFO(ret, op);
     }
 

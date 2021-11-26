@@ -15,23 +15,34 @@ namespace ir {
 
 class Driver {
     void *dlHandle_ = nullptr;
-    void (*func_)(void **, void *) = nullptr;
+    void (*func_)(void **, void **, size_t *, void *) = nullptr;
 
+    Func f_;
     std::string src_;
-    std::vector<void *> params_;
+    std::vector<void *> params_, returns_;
+    std::vector<size_t> retSizes_;
     std::unordered_map<std::string, size_t> name2param_;
     Device dev_;
 
-    CPUContext cpuCtx_;
-    GPUContext gpuCtx_;
-    void *curCtx_ = nullptr;
+    Context *ctx_ = nullptr;
 
   private:
     void buildAndLoad();
 
   public:
     Driver(const Func &func, const std::string &src, const Device &dev);
-    ~Driver() { unload(); }
+    ~Driver() {
+        for (void *retVal : returns_) {
+            if (retVal != nullptr) {
+                WARNING("Return values must be collected, or there will be "
+                        "memory leaks");
+            }
+        }
+        unload();
+        if (ctx_ != nullptr) {
+            delete ctx_;
+        }
+    }
 
     Driver(const Driver &) = delete;
     Driver &operator=(const Driver &) = delete;
@@ -39,9 +50,9 @@ class Driver {
     Driver(Driver &&) = default;
     Driver &operator=(Driver &&) = default;
 
-    void setParams(const std::vector<Array *> &args,
-                   const std::unordered_map<std::string, Array *> &kws = {});
-    void setParams(const std::unordered_map<std::string, Array *> &kws) {
+    void setParams(const std::vector<Ref<Array>> &args,
+                   const std::unordered_map<std::string, Ref<Array>> &kws = {});
+    void setParams(const std::unordered_map<std::string, Ref<Array>> &kws) {
         setParams({}, kws);
     }
 
@@ -53,6 +64,8 @@ class Driver {
      * Call this if you are timing without the `time` function
      */
     void sync();
+
+    std::vector<Ref<Array>> collectReturns();
 
     /**
      * Run the program and measure its time cost

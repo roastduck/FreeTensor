@@ -2,6 +2,7 @@
 #define IR_LOWER_H
 
 #include <driver/target.h>
+#include <pass/cpu/lower_parallel_reduction.h>
 #include <pass/float_simplify.h>
 #include <pass/gpu/lower_parallel_reduction.h>
 #include <pass/gpu/lower_vector.h>
@@ -16,6 +17,7 @@
 #include <pass/move_out_first_or_last_iter.h>
 #include <pass/prop_const.h>
 #include <pass/prop_one_time_use.h>
+#include <pass/remove_cyclic_assign.h>
 #include <pass/remove_dead_var.h>
 #include <pass/remove_writes.h>
 #include <pass/shrink_for.h>
@@ -36,10 +38,12 @@ template <class T> T lower(const T &t, const Ref<Target> &target) {
     func = shrinkVar(func);
     func = mergeAndHoistIf(func);
     func = propConst(func);
-    func = removeWrites(func);  // After seperate_tail
-    func = removeDeadVar(func); // After remove_writes and prop_const
-    func = shrinkFor(func);     // After seperate_tail and remove_writes
+    func = removeWrites(func);       // After seperate_tail
+    func = removeCyclicAssign(func); // After remove_writes
+    func = removeDeadVar(func);      // After remove_writes and prop_const
     func = makeParallelReduction(func);
+    func = shrinkFor(
+        func); // After seperate_tail, remove_writes and make_parallel_reduction
 
     if (target.isValid()) {
         switch (target->type()) {
@@ -63,7 +67,7 @@ template <class T> T lower(const T &t, const Ref<Target> &target) {
             break;
 
         case TargetType::CPU:
-            // do nothing
+            func = cpu::lowerParallelReduction(func);
             break;
 
         default:

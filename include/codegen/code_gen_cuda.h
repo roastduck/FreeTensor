@@ -22,17 +22,23 @@ class CodeGenCUDA : public CodeGenC<CodeGenCUDAStream> {
     int64_t sharedStackTop_ = 0, globalStackTop_ = 0;
 
   public:
-    CodeGenCUDA(const std::vector<std::string> &params) : CodeGenC(params) {}
+    CodeGenCUDA(const std::vector<std::string> &params,
+                const std::vector<std::pair<std::string, DataType>> &returns)
+        : CodeGenC(params, returns) {}
 
   private:
     bool inKernel() const;
 
   protected:
+    void genAlloc(const Tensor &tensor, const std::string &rawPtr,
+                  const std::string &sizePtr) override;
+
     using CodeGenC<CodeGenCUDAStream>::visit;
     void visit(const Min &op) override;
     void visit(const Max &op) override;
     void visit(const Sqrt &op) override;
     void visit(const Exp &op) override;
+    void visit(const Tanh &op) override;
     void visit(const Abs &op) override;
     void visit(const Floor &op) override;
     void visit(const Ceil &op) override;
