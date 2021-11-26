@@ -34,6 +34,7 @@ void Visitor::operator()(const AST &op) {
         DISPATCH_EXPR_CASE(CeilDiv);
         DISPATCH_EXPR_CASE(RoundTowards0Div);
         DISPATCH_EXPR_CASE(Mod);
+        DISPATCH_EXPR_CASE(Remainder);
         DISPATCH_EXPR_CASE(Min);
         DISPATCH_EXPR_CASE(Max);
         DISPATCH_EXPR_CASE(LT);

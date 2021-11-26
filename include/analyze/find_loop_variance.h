@@ -119,6 +119,7 @@ class FindLoopVariance : public Visitor {
     void visit(const CeilDiv &op) override { visitBinOp(op); }
     void visit(const RoundTowards0Div &op) override { visitBinOp(op); }
     void visit(const Mod &op) override { visitBinOp(op); }
+    void visit(const Remainder &op) override { visitBinOp(op); }
     void visit(const Min &op) override { visitBinOp(op); }
     void visit(const Max &op) override { visitBinOp(op); }
     void visit(const LT &op) override { visitBinOp(op); }

@@ -13,6 +13,7 @@ from .nodes import (
     NamedScope,
     Eval,
     Any,
+    remainder,
     min,
     max,
     if_then_else,

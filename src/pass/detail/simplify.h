@@ -180,8 +180,12 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const Mod &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::Mod);
     auto op = __op.template as<ModNode>();
 
-    if (this->getIntLower(op->lhs_) >= 0 &&
+    if (this->getIntLower(op->rhs_) > 0 && this->getIntLower(op->lhs_) >= 0 &&
         this->alwaysLT(op->lhs_, op->rhs_)) {
+        return markMutated(op->lhs_);
+    }
+    if (this->getIntUpper(op->rhs_) < 0 && this->getIntUpper(op->rhs_) <= 0 &&
+        this->alwaysLT(op->rhs_, op->lhs_)) {
         return markMutated(op->lhs_);
     }
 
@@ -189,9 +193,7 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const Mod &_op) {
         auto k = constants_.at(op->rhs_);
 
         if (constants_.count(op->lhs_)) {
-            // FIXME: % (remainder) in C++ is different from the definition of
-            // modulo
-            return markMutated(makeIntConst(constants_.at(op->lhs_) % k));
+            return markMutated(makeIntConst(mod(constants_.at(op->lhs_), k)));
         }
 
         bool mutated = false;
@@ -199,8 +201,8 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const Mod &_op) {
             switch (x->nodeType()) {
             case ASTNodeType::IntConst: {
                 auto val = x.as<IntConstNode>()->val_;
-                mutated = (val % k != val);
-                return makeIntConst(val % k);
+                mutated = (mod(val, k) != val);
+                return makeIntConst(mod(val, k));
             }
             case ASTNodeType::Add:
                 return makeAdd(f(x.as<AddNode>()->lhs_),
@@ -219,6 +221,20 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const Mod &_op) {
         if (mutated) {
             return markMutated(makeMod(newLhs, op->rhs_));
         }
+    }
+
+    return op;
+}
+
+template <class BaseClass>
+Expr SimplifyPass<BaseClass>::visit(const Remainder &_op) {
+    auto __op = BaseClass::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::Remainder);
+    auto op = __op.template as<RemainderNode>();
+
+    if (constants_.count(op->rhs_) && constants_.count(op->lhs_)) {
+        return markMutated(
+            makeIntConst(constants_.at(op->lhs_) % constants_.at(op->rhs_)));
     }
 
     return op;

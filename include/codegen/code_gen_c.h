@@ -49,6 +49,7 @@ template <class Stream> class CodeGenC : public CodeGen<Stream> {
     virtual void visit(const CeilDiv &op) override;
     virtual void visit(const RoundTowards0Div &op) override;
     virtual void visit(const Mod &op) override;
+    virtual void visit(const Remainder &op) override;
     virtual void visit(const Min &op) override;
     virtual void visit(const Max &op) override;
     virtual void visit(const LT &op) override;

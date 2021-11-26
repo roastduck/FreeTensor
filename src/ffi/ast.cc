@@ -33,6 +33,7 @@ void init_ffi_ast(py::module_ &m) {
         .value("CeilDiv", ASTNodeType::CeilDiv)
         .value("RoundTowards0Div", ASTNodeType::RoundTowards0Div)
         .value("Mod", ASTNodeType::Mod)
+        .value("Remainder", ASTNodeType::Remainder)
         .value("Min", ASTNodeType::Min)
         .value("Max", ASTNodeType::Max)
         .value("LT", ASTNodeType::LT)
@@ -225,6 +226,11 @@ void init_ffi_ast(py::module_ &m) {
                                [](const Mod &op) -> Expr { return op->lhs_; })
         .def_property_readonly("rhs",
                                [](const Mod &op) -> Expr { return op->rhs_; });
+    py::class_<RemainderNode, Remainder>(m, "Remainder", pyExpr)
+        .def_property_readonly(
+            "lhs", [](const Remainder &op) -> Expr { return op->lhs_; })
+        .def_property_readonly(
+            "rhs", [](const Remainder &op) -> Expr { return op->rhs_; });
     py::class_<MinNode, Min>(m, "Min", pyExpr)
         .def_property_readonly("lhs",
                                [](const Min &op) -> Expr { return op->lhs_; })
@@ -478,6 +484,9 @@ void init_ffi_ast(py::module_ &m) {
 
     // Expressions
     m.def("makeAnyExpr", &_makeAnyExpr);
+    m.def("makeRemainder",
+          static_cast<Expr (*)(const Expr &, const Expr &)>(&_makeRemainder),
+          "lhs"_a, "rhs"_a);
     m.def("makeMin",
           static_cast<Expr (*)(const Expr &, const Expr &)>(&_makeMin), "lhs"_a,
           "rhs"_a);
@@ -569,6 +578,7 @@ template <> struct polymorphic_type_hook<ir::ASTNode> {
             DISPATCH(CeilDiv);
             DISPATCH(RoundTowards0Div);
             DISPATCH(Mod);
+            DISPATCH(Remainder);
             DISPATCH(Min);
             DISPATCH(Max);
             DISPATCH(LT);
@@ -649,6 +659,7 @@ template <> struct polymorphic_type_hook<ir::ExprNode> {
             DISPATCH(CeilDiv);
             DISPATCH(RoundTowards0Div);
             DISPATCH(Mod);
+            DISPATCH(Remainder);
             DISPATCH(Min);
             DISPATCH(Max);
             DISPATCH(LT);

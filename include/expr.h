@@ -210,7 +210,11 @@ template <class T, class U> Expr _makeRoundTowards0Div(T &&lhs, U &&rhs) {
     return a;
 }
 
-// FIXME: Deal with negative numbers in Mod
+/** Modulo
+ *
+ * Mod(3, 5) = 3
+ * Mod(-3, 5) = 2
+ */
 class ModNode : public ExprNode {
   public:
     SubTree<ExprNode> lhs_, rhs_;
@@ -220,6 +224,24 @@ typedef Ref<ModNode> Mod;
 #define makeMod(...) makeNode(Mod, __VA_ARGS__)
 template <class T, class U> Expr _makeMod(T &&lhs, U &&rhs) {
     Mod a = Mod::make();
+    a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
+    return a;
+}
+
+/** Remainder
+ *
+ * Remainder(3, 5) = 3
+ * Remainder(-3, 5) = -3
+ */
+class RemainderNode : public ExprNode {
+  public:
+    SubTree<ExprNode> lhs_, rhs_;
+    DEFINE_NODE_TRAIT(Remainder);
+};
+typedef Ref<RemainderNode> Remainder;
+#define makeRemainder(...) makeNode(Remainder, __VA_ARGS__)
+template <class T, class U> Expr _makeRemainder(T &&lhs, U &&rhs) {
+    Remainder a = Remainder::make();
     a->lhs_ = std::forward<T>(lhs), a->rhs_ = std::forward<U>(rhs);
     return a;
 }

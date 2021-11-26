@@ -109,6 +109,13 @@ void TypeInfer::visit(const Mod &op) {
     types_[op] = upCast(types_.at(op->lhs_), types_.at(op->rhs_));
 }
 
+void TypeInfer::visit(const Remainder &op) {
+    Visitor::visit(op);
+    CHK_TYPE(isInt, types_.at(op->lhs_), op);
+    CHK_TYPE(isInt, types_.at(op->rhs_), op);
+    types_[op] = upCast(types_.at(op->lhs_), types_.at(op->rhs_));
+}
+
 void TypeInfer::visit(const Min &op) {
     Visitor::visit(op);
     CHK_TYPE(isNumber, types_.at(op->lhs_), op);

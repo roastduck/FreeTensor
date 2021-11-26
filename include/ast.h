@@ -49,6 +49,7 @@ enum class ASTNodeType : int {
     CeilDiv,
     RoundTowards0Div,
     Mod,
+    Remainder,
     Min,
     Max,
     LT,

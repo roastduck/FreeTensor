@@ -153,6 +153,11 @@ class Mutator {
                                op);
     }
 
+    virtual Expr visit(const Remainder &op) {
+        return COPY_DEBUG_INFO(
+            makeRemainder((*this)(op->lhs_), (*this)(op->rhs_)), op);
+    }
+
     virtual Expr visit(const Min &op) {
         return COPY_DEBUG_INFO(makeMin((*this)(op->lhs_), (*this)(op->rhs_)),
                                op);

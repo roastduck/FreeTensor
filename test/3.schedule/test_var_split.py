@@ -19,7 +19,7 @@ def test_factor():
     with ir.VarDef("y", (2, 4), "int32", "output", "cpu") as y:
         with ir.For("i", 0, 8) as i:
             y[ir.round_towards_0_div(i, 4), i % 4] = i
-    std = ir.pop_ast()
+    std = ir.use_builtin_div(ir.pop_ast())
 
     assert std.match(ast)
 
@@ -41,7 +41,7 @@ def test_nparts():
     with ir.VarDef("y", (4, 2), "int32", "output", "cpu") as y:
         with ir.For("i", 0, 8) as i:
             y[ir.round_towards_0_div(i, 2), i % 2] = i
-    std = ir.pop_ast()
+    std = ir.use_builtin_div(ir.pop_ast())
 
     assert std.match(ast)
 
@@ -63,7 +63,7 @@ def test_non_divisible():
     with ir.VarDef("y", (3, 4), "int32", "output", "cpu") as y:
         with ir.For("i", 0, 10) as i:
             y[ir.round_towards_0_div(i, 4), i % 4] = i
-    std = ir.pop_ast()
+    std = ir.use_builtin_div(ir.pop_ast())
 
     assert std.match(ast)
 

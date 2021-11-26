@@ -209,6 +209,14 @@ void DumpAsTest::visit(const Mod &op) {
     os() << ")";
 }
 
+void DumpAsTest::visit(const Remainder &op) {
+    os() << "ir.remainder(";
+    (*this)(op->lhs_);
+    os() << ", ";
+    (*this)(op->rhs_);
+    os() << ")";
+}
+
 void DumpAsTest::visit(const Min &op) {
     os() << "ir.min(";
     (*this)(op->lhs_);

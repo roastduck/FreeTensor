@@ -227,6 +227,7 @@ template <class BaseClass> class SimplifyPass : public BaseClass {
     Expr visit(const CeilDiv &op) override;
     Expr visit(const RoundTowards0Div &op) override;
     Expr visit(const Mod &op) override;
+    Expr visit(const Remainder &op) override;
     Expr visit(const Min &op) override;
     Expr visit(const Max &op) override;
     Expr visit(const LT &op) override;

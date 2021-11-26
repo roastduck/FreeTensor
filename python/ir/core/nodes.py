@@ -401,6 +401,10 @@ def Any():
     ctx_stack.top().append_stmt(ffi.makeAny())
 
 
+def remainder(lhs, rhs):
+    return ffi.makeRemainder(lhs, rhs)
+
+
 def min(lhs, rhs):
     return ffi.makeMin(lhs, rhs)
 

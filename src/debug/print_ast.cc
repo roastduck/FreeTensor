@@ -244,6 +244,14 @@ void PrintVisitor::visit(const Mod &op) {
     os() << ")";
 }
 
+void PrintVisitor::visit(const Remainder &op) {
+    os() << "(";
+    recur(op->lhs_);
+    os() << " %% ";
+    recur(op->rhs_);
+    os() << ")";
+}
+
 void PrintVisitor::visit(const Min &op) {
     os() << "min(";
     recur(op->lhs_);

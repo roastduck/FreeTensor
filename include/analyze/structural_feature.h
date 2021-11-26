@@ -120,6 +120,7 @@ class StructuralFeature : public CompUniqueBounds {
     Expr visit(const CeilDiv &op) override { return visitBinOp(op); }
     Expr visit(const RoundTowards0Div &op) override { return visitBinOp(op); }
     Expr visit(const Mod &op) override { return visitBinOp(op); }
+    Expr visit(const Remainder &op) override { return visitBinOp(op); }
     Expr visit(const Min &op) override { return visitBinOp(op); }
     Expr visit(const Max &op) override { return visitBinOp(op); }
     Expr visit(const LT &op) override { return visitBinOp(op); }

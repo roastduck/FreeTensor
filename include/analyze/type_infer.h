@@ -42,6 +42,7 @@ class TypeInfer : public Visitor {
     void visit(const CeilDiv &op) override;
     void visit(const RoundTowards0Div &op) override;
     void visit(const Mod &op) override;
+    void visit(const Remainder &op) override;
     void visit(const Min &op) override;
     void visit(const Max &op) override;
     void visit(const LT &op) override;

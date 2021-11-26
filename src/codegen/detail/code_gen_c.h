@@ -405,6 +405,14 @@ template <class Stream> void CodeGenC<Stream>::visit(const CeilDiv &op) {
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const Mod &op) {
+    this->os() << "runtime_mod(";
+    (*this)(op->lhs_);
+    this->os() << ", ";
+    (*this)(op->rhs_);
+    this->os() << ")";
+}
+
+template <class Stream> void CodeGenC<Stream>::visit(const Remainder &op) {
     this->os() << "(";
     (*this)(op->lhs_);
     this->os() << " % ";

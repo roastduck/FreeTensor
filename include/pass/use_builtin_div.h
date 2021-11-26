@@ -10,6 +10,7 @@ class UseBuiltinDiv : public CompUniqueBounds {
   protected:
     Expr visit(const FloorDiv &op) override;
     Expr visit(const CeilDiv &op) override;
+    Expr visit(const Mod &op) override;
 };
 
 /**

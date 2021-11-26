@@ -119,6 +119,11 @@ class Visitor {
         (*this)(op->rhs_);
     }
 
+    virtual void visit(const Remainder &op) {
+        (*this)(op->lhs_);
+        (*this)(op->rhs_);
+    }
+
     virtual void visit(const Min &op) {
         (*this)(op->lhs_);
         (*this)(op->rhs_);
