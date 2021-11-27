@@ -124,5 +124,5 @@ def test_if_expr():
     test(x1_np, x2_np, y_func)
 
     y_std = np.array(5, dtype="int32")
-    assert y_np[0] == y_std[()]
+    assert y_np[()] == y_std[()]
     assert y_func[()] == y_std[()]

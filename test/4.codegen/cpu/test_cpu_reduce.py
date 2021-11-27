@@ -115,7 +115,7 @@ def test_parallel_reduction_on_array():
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
     ir.Driver(func, code, device)(x=x_arr, y=y_arr)
-    y_np = y_arr.numpy().reshape(4, 64)
+    y_np = y_arr.numpy()
 
     y_std = np.sum(x_np, axis=1)
     assert np.array_equal(y_np, y_std)
@@ -151,7 +151,7 @@ def test_parallel_reduction_multiple_statements():
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
     ir.Driver(func, code, device)(x=x_arr, y=y_arr)
-    y_np = y_arr.numpy().reshape(4, 64)
+    y_np = y_arr.numpy()
 
     y_std = np.sum(x_np, axis=1)
     y_std[:, 0] += np.sum(x_np[:, :, 0], axis=1)
@@ -192,7 +192,7 @@ def test_atomic_reduction():
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
     ir.Driver(func, code, device)(x=x_arr, y=y_arr)
-    y_np = y_arr.numpy().reshape(4, 2)
+    y_np = y_arr.numpy()
 
     y_std = np.sum(x_np.reshape((4, 32, 2)), axis=1)
     assert np.array_equal(y_np, y_std)
@@ -227,7 +227,7 @@ def test_atomic_reduction_2_stmts_on_1_var():
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
     ir.Driver(func, code, device)(x=x_arr, y=y_arr)
-    y_np = y_arr.numpy().reshape(4, 64)
+    y_np = y_arr.numpy()
 
     y_std = x_np
     y_std[:, :-1] += x_np[:, 1:]
@@ -263,7 +263,7 @@ def test_atomic_reduction_cache():
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
     ir.Driver(func, code, device)(x=x_arr, y=y_arr)
-    y_np = y_arr.numpy().reshape(4, 2)
+    y_np = y_arr.numpy()
 
     y_std = np.sum(np.sum(x_np, axis=-1).reshape((4, 32, 2)), axis=1)
     assert np.array_equal(y_np, y_std)
@@ -300,7 +300,7 @@ def test_atomic_reduction_cache_array():
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
     ir.Driver(func, code, device)(x=x_arr, y=y_arr)
-    y_np = y_arr.numpy().reshape(4, 2, 3)
+    y_np = y_arr.numpy()
 
     y_std = np.sum(np.sum(x_np, axis=-2).reshape((4, 32, 2, 3)), axis=1)
     assert np.array_equal(y_np, y_std)
@@ -370,7 +370,7 @@ def test_simultenous_parallel_and_atomic_reduction():
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
     ir.Driver(func, code, device)(x=x_arr, y=y_arr)
-    y_np = y_arr.numpy().reshape(4, 2)
+    y_np = y_arr.numpy()
 
     y_std = np.sum(x_np.reshape((4, 32, 2)), axis=1)
     y_std[:, 0] += np.sum(x_np, axis=1)

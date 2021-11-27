@@ -89,11 +89,12 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
             }
             int nthReturn = nthReturnsIter - returns_.begin();
             rawPtr = "_returns[" + std::to_string(nthReturn) + "]";
-            std::string sizePtr =
-                "_retSizes[" + std::to_string(nthReturn) + "]";
+            std::string shapePtr =
+                "_retShapes[" + std::to_string(nthReturn) + "]";
+            std::string dimPtr = "_retDims[" + std::to_string(nthReturn) + "]";
             this->os() << "if (" + rawPtr + " == NULL) ";
             this->beginBlock();
-            this->genAlloc(op->buffer_->tensor(), rawPtr, sizePtr);
+            this->genAlloc(op->buffer_->tensor(), rawPtr, shapePtr, dimPtr);
             this->endBlock();
             this->makeIndent();
         }

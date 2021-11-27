@@ -35,7 +35,7 @@ def test_mkl_basic():
     b_arr = ir.Array(b_np, ir.Device(ir.CPU()))
     c_arr = ir.Array(c_np, ir.Device(ir.CPU()))
     ir.Driver(func, code, ir.Device(ir.CPU()))(a=a_arr, b=b_arr, c=c_arr)
-    c_result = c_arr.numpy().reshape(48, 72)
+    c_result = c_arr.numpy()
 
     assert np.all(np.isclose(c_result, c_np + a_np @ b_np))
 
@@ -69,7 +69,7 @@ def test_mkl_reverse_idx():
     b_arr = ir.Array(b_np, ir.Device(ir.CPU()))
     c_arr = ir.Array(c_np, ir.Device(ir.CPU()))
     ir.Driver(func, code, ir.Device(ir.CPU()))(a=a_arr, b=b_arr, c=c_arr)
-    c_result = c_arr.numpy().reshape(48, 72)
+    c_result = c_arr.numpy()
 
     assert np.all(np.isclose(c_result, c_np + a_np @ b_np))
 
@@ -102,7 +102,7 @@ def test_mkl_trans_a():
     b_arr = ir.Array(b_np, ir.Device(ir.CPU()))
     c_arr = ir.Array(c_np, ir.Device(ir.CPU()))
     ir.Driver(func, code, ir.Device(ir.CPU()))(a=a_arr, b=b_arr, c=c_arr)
-    c_result = c_arr.numpy().reshape(48, 72)
+    c_result = c_arr.numpy()
 
     assert np.all(np.isclose(c_result, c_np + a_np.transpose() @ b_np))
 
@@ -135,7 +135,7 @@ def test_mkl_trans_b():
     b_arr = ir.Array(b_np, ir.Device(ir.CPU()))
     c_arr = ir.Array(c_np, ir.Device(ir.CPU()))
     ir.Driver(func, code, ir.Device(ir.CPU()))(a=a_arr, b=b_arr, c=c_arr)
-    c_result = c_arr.numpy().reshape(48, 72)
+    c_result = c_arr.numpy()
 
     assert np.all(np.isclose(c_result, c_np + a_np @ b_np.transpose()))
 
@@ -168,7 +168,7 @@ def test_mkl_trans_c():
     b_arr = ir.Array(b_np, ir.Device(ir.CPU()))
     c_arr = ir.Array(c_np, ir.Device(ir.CPU()))
     ir.Driver(func, code, ir.Device(ir.CPU()))(a=a_arr, b=b_arr, c=c_arr)
-    c_result = c_arr.numpy().reshape(72, 48)
+    c_result = c_arr.numpy()
 
     assert np.all(np.isclose(c_result, c_np + (a_np @ b_np).transpose()))
 
@@ -202,7 +202,7 @@ def test_mkl_batch():
     b_arr = ir.Array(b_np, ir.Device(ir.CPU()))
     c_arr = ir.Array(c_np, ir.Device(ir.CPU()))
     ir.Driver(func, code, ir.Device(ir.CPU()))(a=a_arr, b=b_arr, c=c_arr)
-    c_result = c_arr.numpy().reshape(4, 48, 72)
+    c_result = c_arr.numpy()
 
     assert np.all(np.isclose(c_result, c_np + a_np @ b_np))
 
@@ -236,7 +236,7 @@ def test_mkl_splitted_dim():
     b_arr = ir.Array(b_np, ir.Device(ir.CPU()))
     c_arr = ir.Array(c_np, ir.Device(ir.CPU()))
     ir.Driver(func, code, ir.Device(ir.CPU()))(a=a_arr, b=b_arr, c=c_arr)
-    c_result = c_arr.numpy().reshape(48, 72)
+    c_result = c_arr.numpy()
 
     assert np.all(
         np.isclose(c_result,
@@ -272,7 +272,7 @@ def test_mkl_with_init():
     b_arr = ir.Array(b_np, ir.Device(ir.CPU()))
     c_arr = ir.Array(c_np, ir.Device(ir.CPU()))
     ir.Driver(func, code, ir.Device(ir.CPU()))(a=a_arr, b=b_arr, c=c_arr)
-    c_result = c_arr.numpy().reshape(48, 72)
+    c_result = c_arr.numpy()
 
     assert np.all(np.isclose(c_result, a_np @ b_np))
 
@@ -309,7 +309,7 @@ def test_mkl_in_parallel():
     b_arr = ir.Array(b_np, ir.Device(ir.CPU()))
     c_arr = ir.Array(c_np, ir.Device(ir.CPU()))
     ir.Driver(func, code, ir.Device(ir.CPU()))(a=a_arr, b=b_arr, c=c_arr)
-    c_result = c_arr.numpy().reshape(64, 48, 72)
+    c_result = c_arr.numpy()
 
     assert np.all(np.isclose(c_result, c_np + a_np @ b_np))
 
@@ -410,6 +410,6 @@ def test_mkl_vardef_in_loop():
     b_arr = ir.Array(b_np, ir.Device(ir.CPU()))
     c_arr = ir.Array(c_np, ir.Device(ir.CPU()))
     ir.Driver(func, code, ir.Device(ir.CPU()))(a=a_arr, b=b_arr, c=c_arr)
-    c_result = c_arr.numpy().reshape(48, 72)
+    c_result = c_arr.numpy()
 
     assert np.all(np.isclose(c_result, c_np + a_np @ b_np))

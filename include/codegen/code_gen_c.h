@@ -28,7 +28,8 @@ template <class Stream> class CodeGenC : public CodeGen<Stream> {
 
   protected:
     virtual void genAlloc(const Tensor &tensor, const std::string &rawPtr,
-                          const std::string &sizePtr) = 0;
+                          const std::string &shapePtr,
+                          const std::string &dimPtr) = 0;
 
     DataType dtype(const Expr &op);
 

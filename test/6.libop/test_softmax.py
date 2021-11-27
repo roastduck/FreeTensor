@@ -26,7 +26,7 @@ def test_static_shape():
     y_torch = torch.zeros(4, 4, dtype=torch.float32)
     y_arr = ir.Array(y_torch.numpy(), device)
     ir.Driver(f, code, device)(x_arr, y_arr)
-    y_torch = torch.Tensor(y_arr.numpy().reshape(4, 4))
+    y_torch = torch.Tensor(y_arr.numpy())
 
     assert torch.all(torch.isclose(y_torch, torch.softmax(x_torch, axis=-1)))
 
@@ -61,7 +61,7 @@ def test_out_of_place():
     y_arr = ir.Array(y_torch.numpy(), device)
     ir.Driver(f, code, device)(x_arr, y_shape_arr, y_arr)
     y_shape_np = y_shape_arr.numpy()
-    y_torch = torch.Tensor(y_arr.numpy().reshape(4, 4))
+    y_torch = torch.Tensor(y_arr.numpy())
 
     assert np.array_equal(y_shape_np, [4, 4])
     assert torch.all(torch.isclose(y_torch, torch.softmax(x_torch, axis=-1)))
@@ -115,7 +115,7 @@ def test_grad():
     y_torch_ours = torch.zeros(4, 4, dtype=torch.float32)
     y_arr = ir.Array(y_torch_ours.numpy(), device)
     ir.Driver(f, f_code, device)(x_arr, y_arr)
-    y_torch_ours = torch.Tensor(y_arr.numpy().reshape(4, 4))
+    y_torch_ours = torch.Tensor(y_arr.numpy())
     y_torch = torch.softmax(x_torch, axis=-1)
     assert torch.all(torch.isclose(y_torch_ours, y_torch))
 
@@ -127,6 +127,6 @@ def test_grad():
     kvs[privdes['y']] = d_y_arr
     kvs[requires['x']] = d_x_arr
     ir.Driver(g, g_code, device)(x_arr, y_arr, **kvs)
-    x_grad_torch_ours = torch.Tensor(d_x_arr.numpy().reshape(4, 4))
+    x_grad_torch_ours = torch.Tensor(d_x_arr.numpy())
     y_torch.backward(y_torch.grad)
     assert torch.all(torch.isclose(x_grad_torch_ours, x_torch.grad, 1e-4, 1e-7))

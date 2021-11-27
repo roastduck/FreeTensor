@@ -47,7 +47,7 @@ def test_manual_static():
             print("time: %s ms" % t)
         else:
             driver.run()
-        B_np = B_arr.numpy().reshape(out_size, out_size, out_channel, batch)
+        B_np = B_arr.numpy()
         return B_np
 
     @ir.transform

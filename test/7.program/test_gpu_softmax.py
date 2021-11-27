@@ -140,7 +140,6 @@ def test_manual_static():
                           dtype=torch.float32)
     y_arr = ir.Array(y_torch.numpy(), device)
     ir.Driver(f, code, device)(x_arr, y_arr)
-    y_torch = torch.Tensor(y_arr.numpy().reshape(batch_size, n_heads, seq_len,
-                                                 seq_len))
+    y_torch = torch.Tensor(y_arr.numpy())
 
     assert torch.all(torch.isclose(y_torch, torch.softmax(x_torch, axis=-1)))

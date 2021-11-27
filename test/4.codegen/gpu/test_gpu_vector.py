@@ -32,7 +32,7 @@ def test_vectorize():
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
     ir.Driver(func, code, device)(x=x_arr, y=y_arr)
-    y_np = y_arr.numpy().reshape(4, 64)
+    y_np = y_arr.numpy()
 
     y_std = x_np * 2
     assert np.array_equal(y_np, y_std)
@@ -63,7 +63,7 @@ def test_vectorize_with_non_vector_access():
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
     ir.Driver(func, code, device)(x=x_arr, y=y_arr)
-    y_np = y_arr.numpy().reshape(4, 64)
+    y_np = y_arr.numpy()
 
     y_std = np.broadcast_to(x_np * 2, (64, 4)).transpose()
     assert np.array_equal(y_np, y_std)
@@ -89,7 +89,7 @@ def test_vectorize_use_iter():
     y_np = np.zeros((4, 64), dtype="int32")
     y_arr = ir.Array(y_np, device)
     driver = ir.Driver(func, code, device)(y=y_arr)
-    y_np = y_arr.numpy().reshape(4, 64)
+    y_np = y_arr.numpy()
 
     y_std = np.array([[i + j for j in range(64)] for i in range(4)])
     assert np.array_equal(y_np, y_std)
@@ -120,7 +120,7 @@ def test_vectorize_fallback_to_shorter_when_not_divisible():
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
     ir.Driver(func, code, device)(x=x_arr, y=y_arr)
-    y_np = y_arr.numpy().reshape(4, 62)
+    y_np = y_arr.numpy()
 
     y_std = x_np * 2
     assert np.array_equal(y_np, y_std)
@@ -151,7 +151,7 @@ def test_vectorize_fallback_to_shorter_when_not_aligned():
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
     ir.Driver(func, code, device)(x=x_arr, y=y_arr)
-    y_np = y_arr.numpy().reshape(4, 64)
+    y_np = y_arr.numpy()
 
     y_std = x_np[:, 2:] * 2
     assert np.array_equal(y_np, y_std)

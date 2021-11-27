@@ -17,7 +17,7 @@ def test_hello_world():
     x_np = np.zeros((4, 4), dtype="float32")
     x_arr = ir.Array(x_np, ir.Device(ir.CPU()))
     ir.Driver(func, code, ir.Device(ir.CPU()))(x=x_arr)
-    x_np = x_arr.numpy().reshape(4, 4)
+    x_np = x_arr.numpy()
 
     x_std = np.zeros((4, 4), dtype="float32")
     x_std[2, 3] = 2.0
@@ -154,7 +154,7 @@ def test_std_func_alias():
     x_np = np.zeros((4, 4), dtype="float32")
     x_arr = ir.Array(x_np, ir.Device(ir.CPU()))
     ir.Driver(func, code, ir.Device(ir.CPU()))(x=x_arr)
-    x_np = x_arr.numpy().reshape(4, 4)
+    x_np = x_arr.numpy()
 
     x_std = np.zeros((4, 4), dtype="float32")
     x_std[2, 3] = 2.0

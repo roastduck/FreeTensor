@@ -26,7 +26,7 @@ def test_max_pooling_basic():
     y_torch = torch.zeros(2, 3, 12, 12, dtype=torch.float32)
     y_arr = ir.Array(y_torch.numpy(), device)
     ir.Driver(f, code, device)(x_arr, y_arr)
-    y_torch = torch.Tensor(y_arr.numpy().reshape(2, 3, 12, 12))
+    y_torch = torch.Tensor(y_arr.numpy())
 
     y_std = torch.nn.functional.max_pool2d(x_torch,
                                            kernel_size=[3, 3],
@@ -57,7 +57,7 @@ def test_max_pooling_same_padding():
     y_torch = torch.zeros(2, 3, 14, 14, dtype=torch.float32)
     y_arr = ir.Array(y_torch.numpy(), device)
     ir.Driver(f, code, device)(x_arr, y_arr)
-    y_torch = torch.Tensor(y_arr.numpy().reshape(2, 3, 14, 14))
+    y_torch = torch.Tensor(y_arr.numpy())
 
     y_std = torch.nn.functional.max_pool2d(x_torch,
                                            padding=[1, 1],
@@ -91,7 +91,7 @@ def test_max_pooling_stride():
     y_torch = torch.zeros(2, 3, 4, 4, dtype=torch.float32)
     y_arr = ir.Array(y_torch.numpy(), device)
     ir.Driver(f, code, device)(x_arr, y_arr)
-    y_torch = torch.Tensor(y_arr.numpy().reshape(2, 3, 4, 4))
+    y_torch = torch.Tensor(y_arr.numpy())
 
     y_std = torch.nn.functional.max_pool2d(x_torch,
                                            kernel_size=[3, 3],
@@ -124,7 +124,7 @@ def test_max_pooling_dilation():
     y_torch = torch.zeros(2, 3, 10, 10, dtype=torch.float32)
     y_arr = ir.Array(y_torch.numpy(), device)
     ir.Driver(f, code, device)(x_arr, y_arr)
-    y_torch = torch.Tensor(y_arr.numpy().reshape(2, 3, 10, 10))
+    y_torch = torch.Tensor(y_arr.numpy())
 
     y_std = torch.nn.functional.max_pool2d(x_torch,
                                            kernel_size=[3, 3],
@@ -167,7 +167,7 @@ def test_max_pooling_out_of_place():
     y_arr = ir.Array(y_torch.numpy(), device)
     ir.Driver(f, code, device)(x_arr, y_shape_arr, y_arr)
     y_shape_np = y_shape_arr.numpy()
-    y_torch = torch.Tensor(y_arr.numpy().reshape(2, 3, 12, 12))
+    y_torch = torch.Tensor(y_arr.numpy())
 
     y_std = torch.nn.functional.max_pool2d(x_torch,
                                            kernel_size=[3, 3],
@@ -197,7 +197,7 @@ def test_global_avg_pool():
     y_torch = torch.zeros(2, 3, dtype=torch.float32)
     y_arr = ir.Array(y_torch.numpy(), device)
     ir.Driver(f, code, device)(x_arr, y_arr)
-    y_torch = torch.Tensor(y_arr.numpy().reshape(2, 3))
+    y_torch = torch.Tensor(y_arr.numpy())
 
     y_std = torch.nn.functional.avg_pool2d(x_torch,
                                            kernel_size=[14, 14]).reshape(2, 3)
@@ -234,7 +234,7 @@ def test_global_avg_pool_out_of_place():
     y_arr = ir.Array(y_torch.numpy(), device)
     ir.Driver(f, code, device)(x_arr, y_shape_arr, y_arr)
     y_shape_np = y_shape_arr.numpy()
-    y_torch = torch.Tensor(y_arr.numpy().reshape(2, 3))
+    y_torch = torch.Tensor(y_arr.numpy())
 
     y_std = torch.nn.functional.avg_pool2d(x_torch,
                                            kernel_size=[14, 14]).reshape(2, 3)

@@ -26,7 +26,7 @@ def test_same_static_shape():
     y_torch = torch.zeros(4, 4, dtype=torch.float32)
     y_arr = ir.Array(y_torch.numpy(), device)
     ir.Driver(f, code, device)(x_arr, y_arr)
-    y_torch = torch.Tensor(y_arr.numpy().reshape(4, 4))
+    y_torch = torch.Tensor(y_arr.numpy())
 
     assert torch.all(torch.isclose(y_torch, x_torch))
 
@@ -52,7 +52,7 @@ def test_static_broadcast_shorter():
     y_torch = torch.zeros(4, 4, dtype=torch.float32)
     y_arr = ir.Array(y_torch.numpy(), device)
     ir.Driver(f, code, device)(x_arr, y_arr)
-    y_torch = torch.Tensor(y_arr.numpy().reshape(4, 4))
+    y_torch = torch.Tensor(y_arr.numpy())
 
     assert torch.all(torch.isclose(y_torch, x_torch))
 
@@ -78,7 +78,7 @@ def test_static_broadcast_1_at_front():
     y_torch = torch.zeros(4, 4, dtype=torch.float32)
     y_arr = ir.Array(y_torch.numpy(), device)
     ir.Driver(f, code, device)(x_arr, y_arr)
-    y_torch = torch.Tensor(y_arr.numpy().reshape(4, 4))
+    y_torch = torch.Tensor(y_arr.numpy())
 
     assert torch.all(torch.isclose(y_torch, x_torch))
 
@@ -104,7 +104,7 @@ def test_static_broadcast_1_at_back():
     y_torch = torch.zeros(4, 4, dtype=torch.float32)
     y_arr = ir.Array(y_torch.numpy(), device)
     ir.Driver(f, code, device)(x_arr, y_arr)
-    y_torch = torch.Tensor(y_arr.numpy().reshape(4, 4))
+    y_torch = torch.Tensor(y_arr.numpy())
 
     assert torch.all(torch.isclose(y_torch, x_torch))
 
@@ -130,6 +130,6 @@ def test_different_dtype():
     y_torch = torch.zeros(4, 4, dtype=torch.float32)
     y_arr = ir.Array(y_torch.numpy(), device)
     ir.Driver(f, code, device)(x_arr, y_arr)
-    y_torch = torch.Tensor(y_arr.numpy().reshape(4, 4))
+    y_torch = torch.Tensor(y_arr.numpy())
 
     assert torch.all(torch.isclose(y_torch, x_torch.float()))

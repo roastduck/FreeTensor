@@ -15,12 +15,15 @@ namespace ir {
 
 class Driver {
     void *dlHandle_ = nullptr;
-    void (*func_)(void **, void **, size_t *, void *) = nullptr;
+    void (*func_)(void ** /* params */, void ** /* retRaw */,
+                  size_t ** /* retShapes */, size_t * /* retDims */,
+                  void * /* ctx */) = nullptr;
 
     Func f_;
     std::string src_;
     std::vector<void *> params_, returns_;
-    std::vector<size_t> retSizes_;
+    std::vector<size_t *> retShapes_;
+    std::vector<size_t> retDims_;
     std::unordered_map<std::string, size_t> name2param_;
     Device dev_;
 

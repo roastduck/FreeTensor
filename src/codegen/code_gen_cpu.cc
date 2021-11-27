@@ -21,12 +21,19 @@ static char genMKLTypeMark(DataType dtype) {
 #endif
 
 void CodeGenCPU::genAlloc(const Tensor &tensor, const std::string &rawPtr,
-                          const std::string &sizePtr) {
+                          const std::string &shapePtr,
+                          const std::string &dimPtr) {
+    auto ndim = tensor.shape().size();
     makeIndent();
-    os() << rawPtr << " = malloc(" << sizePtr << " = ";
-    for (auto &&dim : tensor.shape()) {
+    os() << shapePtr << " = " << ndim << " > 0 ? (size_t*)malloc((" << dimPtr
+         << " = " << ndim << ") * sizeof(size_t)) : NULL;" << std::endl;
+    makeIndent();
+    os() << rawPtr << " = malloc(";
+    for (size_t i = 0; i < ndim; i++) {
+        auto &&dim = tensor.shape()[i];
+        os() << "(" << shapePtr << "[" << i << "] = ";
         (*this)(dim);
-        os() << " * ";
+        os() << ") * ";
     }
     os() << "sizeof(" << gen(tensor.dtype()) << "));" << std::endl;
 }
@@ -217,15 +224,16 @@ extern "C" {
 )~~~";
 
     auto body = visitor.toString([&](const CodeGenStream &stream) {
-        std::string s = "void __attribute__ ((noinline)) _run(void **_params, "
-                        "void **_returns, size_t *_retSizes) " +
-                        stream.os_.str();
+        std::string s =
+            "void __attribute__ ((noinline)) _run(void **_params, "
+            "void **_returns, size_t **_retShapes, size_t *_retDims) " +
+            stream.os_.str();
         s += "\n";
-        s += "void run(void **_params, void **_returns, size_t *_retSizes, "
-             "CPUContext_t _ctx) {\n";
+        s += "void run(void **_params, void **_returns, size_t **_retShapes, "
+             "size_t *_retDims, CPUContext_t _ctx) {\n";
         s += "  _ctx->setStackLim(" + std::to_string(visitor.stackSize()) +
              ");\n";
-        s += "  _run(_params, _returns, _retSizes);\n";
+        s += "  _run(_params, _returns, _retShapes, _retDims);\n";
         s += "}";
         return s;
     });

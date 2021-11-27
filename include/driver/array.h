@@ -2,6 +2,7 @@
 #define ARRAY_H
 
 #include <cstdint>
+#include <vector>
 
 #include <driver/device.h>
 #include <tensor.h>
@@ -11,14 +12,17 @@ namespace ir {
 class Array {
     uint8_t *ptr_ = nullptr;
     size_t size_ = 0, nElem_ = 0;
+    std::vector<size_t> shape_;
     DataType dtype_;
     Device device_;
 
   public:
-    Array(size_t nElem, DataType dtype, const Device &device);
+    Array(const std::vector<size_t> &shape, DataType dtype,
+          const Device &device);
 
     // Move from raw pointer. Use with cautious
-    Array(void *ptr, size_t size, DataType dtype, const Device &device);
+    Array(void *ptr, const std::vector<size_t> &shape, DataType dtype,
+          const Device &device);
 
     ~Array();
 
@@ -30,6 +34,7 @@ class Array {
 
     size_t size() const { return size_; }
     size_t nElem() const { return nElem_; }
+    const std::vector<size_t> &shape() const { return shape_; }
     DataType dtype() const { return dtype_; }
 
     void fromCPU(const void *other, size_t size);

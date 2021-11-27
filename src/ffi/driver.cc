@@ -54,39 +54,39 @@ void init_ffi_driver(py::module_ &m) {
     py::class_<Array, Ref<Array>>(m, "Array")
         .def(py::init([](py::array_t<double, py::array::c_style> &np,
                          const Device &device) {
-            Array arr(np.size(), DataType::Float64, device);
+            std::vector<size_t> shape(np.shape(), np.shape() + np.ndim());
+            Array arr(shape, DataType::Float64, device);
             arr.fromCPU(np.unchecked().data(), np.nbytes());
             return arr;
         }))
         .def(py::init([](py::array_t<float, py::array::c_style> &np,
                          const Device &device) {
-            Array arr(np.size(), DataType::Float32, device);
+            std::vector<size_t> shape(np.shape(), np.shape() + np.ndim());
+            Array arr(shape, DataType::Float32, device);
             arr.fromCPU(np.unchecked().data(), np.nbytes());
             return arr;
         }))
         .def(py::init([](py::array_t<int32_t, py::array::c_style> &np,
                          const Device &device) {
-            Array arr(np.size(), DataType::Int32, device);
+            std::vector<size_t> shape(np.shape(), np.shape() + np.ndim());
+            Array arr(shape, DataType::Int32, device);
             arr.fromCPU(np.unchecked().data(), np.nbytes());
             return arr;
         }))
         .def("numpy", [](Array &arr) -> py::object {
             switch (arr.dtype()) {
             case DataType::Int32: {
-                std::vector<size_t> shape(1, arr.nElem());
-                py::array_t<int32_t, py::array::c_style> np(shape);
+                py::array_t<int32_t, py::array::c_style> np(arr.shape());
                 arr.toCPU(np.mutable_unchecked().mutable_data(), np.nbytes());
                 return std::move(np); // construct an py::object by move
             }
             case DataType::Float64: {
-                std::vector<size_t> shape(1, arr.nElem());
-                py::array_t<double, py::array::c_style> np(shape);
+                py::array_t<double, py::array::c_style> np(arr.shape());
                 arr.toCPU(np.mutable_unchecked().mutable_data(), np.nbytes());
                 return std::move(np);
             }
             case DataType::Float32: {
-                std::vector<size_t> shape(1, arr.nElem());
-                py::array_t<float, py::array::c_style> np(shape);
+                py::array_t<float, py::array::c_style> np(arr.shape());
                 arr.toCPU(np.mutable_unchecked().mutable_data(), np.nbytes());
                 return std::move(np);
             }

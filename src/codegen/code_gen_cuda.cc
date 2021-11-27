@@ -20,12 +20,19 @@ static std::string genCUBLASType(DataType dtype) {
 }
 
 void CodeGenCUDA::genAlloc(const Tensor &tensor, const std::string &rawPtr,
-                           const std::string &sizePtr) {
+                           const std::string &shapePtr,
+                           const std::string &dimPtr) {
+    auto ndim = tensor.shape().size();
     makeIndent();
-    os() << "cudaMalloc(&" << rawPtr << ", " << sizePtr << " = ";
-    for (auto &&dim : tensor.shape()) {
+    os() << shapePtr << " = " << ndim << " > 0 ? (size_t*)malloc((" << dimPtr
+         << " = " << ndim << ") * sizeof(size_t)) : NULL;" << std::endl;
+    makeIndent();
+    os() << "cudaMalloc(&" << rawPtr << ", ";
+    for (size_t i = 0; i < ndim; i++) {
+        auto &&dim = tensor.shape()[i];
+        os() << "(" << shapePtr << "[" << i << "] = ";
         (*this)(dim);
-        os() << " * ";
+        os() << ") * ";
     }
     os() << "sizeof(" << gen(tensor.dtype()) << "));" << std::endl;
 }
@@ -504,7 +511,7 @@ extern "C" {
     auto body = visitor.toString([&](const CodeGenCUDA::Stream &stream) {
         if (stream.name_ == "default") {
             return "void run(void **_params, void **_returns, size_t "
-                   "*_retSizes, GPUContext_t _ctx) " +
+                   "**_retShapes, size_t *_retDims, GPUContext_t _ctx) " +
                    stream.os_.str();
         } else {
             const auto &dim = stream.threadDim_;

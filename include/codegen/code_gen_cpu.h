@@ -19,7 +19,8 @@ class CodeGenCPU : public CodeGenC<CodeGenStream> {
 
   protected:
     void genAlloc(const Tensor &tensor, const std::string &rawPtr,
-                  const std::string &sizePtr) override;
+                  const std::string &shapePtr,
+                  const std::string &dimPtr) override;
 
     using CodeGenC<CodeGenStream>::visit;
     void visit(const VarDef &op) override;

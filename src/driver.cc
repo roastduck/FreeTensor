@@ -19,7 +19,8 @@ namespace ir {
 
 Driver::Driver(const Func &f, const std::string &src, const Device &dev)
     : f_(f), src_(src), params_(f->params_.size(), nullptr),
-      returns_(f->returns_.size(), nullptr), retSizes_(f->returns_.size(), 0),
+      returns_(f->returns_.size(), nullptr),
+      retShapes_(f->returns_.size(), nullptr), retDims_(f->returns_.size(), 0),
       dev_(dev) {
     auto nParams = f->params_.size();
     name2param_.reserve(nParams);
@@ -115,8 +116,8 @@ void Driver::buildAndLoad() {
                           dlerror());
     }
 
-    func_ =
-        (void (*)(void **, void **, size_t *, void *))dlsym(dlHandle_, "run");
+    func_ = (void (*)(void **, void **, size_t **, size_t *, void *))dlsym(
+        dlHandle_, "run");
     if (!func_) {
         throw DriverError((std::string) "Target function not found: " +
                           dlerror());
@@ -166,7 +167,8 @@ void Driver::setParams(const std::vector<Ref<Array>> &args,
 }
 
 void Driver::run() {
-    func_(params_.data(), returns_.data(), retSizes_.data(), ctx_);
+    func_(params_.data(), returns_.data(), retShapes_.data(), retDims_.data(),
+          ctx_);
 }
 
 void Driver::sync() { dev_.sync(); }
@@ -174,15 +176,21 @@ void Driver::sync() { dev_.sync(); }
 std::vector<Ref<Array>> Driver::collectReturns() {
     std::vector<Ref<Array>> ret;
     for (size_t i = 0, n = f_->returns_.size(); i < n; i++) {
+        std::vector<size_t> shape(retShapes_[i], retShapes_[i] + retDims_[i]);
         auto val = Ref<Array>::make(
-            Array(returns_[i], retSizes_[i], f_->returns_[i].second, dev_));
+            Array(returns_[i], shape, f_->returns_[i].second, dev_));
         if (f_->closure_.count(f_->returns_[i].first)) {
             *f_->closure_.at(f_->returns_[i].first) = val;
         } else {
             ret.emplace_back(val);
         }
+
+        if (retShapes_[i] != nullptr) {
+            free(retShapes_[i]);
+        }
         returns_[i] = nullptr;
-        retSizes_[i] = 0;
+        retShapes_[i] = nullptr;
+        retDims_[i] = 0;
     }
     return ret;
 }

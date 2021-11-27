@@ -26,7 +26,7 @@ def test_static():
     y_torch = torch.zeros(3, 20, dtype=torch.float32)
     y_arr = ir.Array(y_torch.numpy(), device)
     ir.Driver(f, code, device)(x_arr, y_arr)
-    y_torch = torch.Tensor(y_arr.numpy().reshape(3, 20))
+    y_torch = torch.Tensor(y_arr.numpy())
 
     assert torch.all(torch.isclose(y_torch, x_torch.reshape(3, -1)))
 
@@ -52,7 +52,7 @@ def test_axis():
     y_torch = torch.zeros(12, 5, dtype=torch.float32)
     y_arr = ir.Array(y_torch.numpy(), device)
     ir.Driver(f, code, device)(x_arr, y_arr)
-    y_torch = torch.Tensor(y_arr.numpy().reshape(12, 5))
+    y_torch = torch.Tensor(y_arr.numpy())
 
     assert torch.all(torch.isclose(y_torch, x_torch.reshape(-1, 5)))
 
@@ -87,7 +87,7 @@ def test_out_of_place():
     y_arr = ir.Array(y_torch.numpy(), device)
     ir.Driver(f, code, device)(x_arr, y_shape_arr, y_arr)
     y_shape_np = y_shape_arr.numpy()
-    y_torch = torch.Tensor(y_arr.numpy().reshape(3, 20))
+    y_torch = torch.Tensor(y_arr.numpy())
 
     assert np.array_equal(y_shape_np, [3, 20])
     assert torch.all(torch.isclose(y_torch, x_torch.reshape(3, -1)))
