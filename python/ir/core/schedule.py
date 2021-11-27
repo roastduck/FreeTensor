@@ -363,6 +363,18 @@ class Schedule(ffi.Schedule):
         return super(Schedule, self).var_split(toId(vardef), dim, mode, factor,
                                                nparts)
 
+    def var_merge(self, vardef, dim):
+        """
+        Merge two dimensions of a variable
+        Parameters
+        ----------
+        vardef : str, Stmt or Cursor
+            ID of the VarDef statement of the specific variable
+        dim : int
+            Merge the `dim`-th and the `(dim + 1)`-th dimension
+        """
+        return super(Schedule, self).var_merge(toId(vardef), dim)
+
     def var_reorder(self, vardef, order):
         """
         Reorder the dimensions of a variable

@@ -23,6 +23,7 @@
 #include <schedule/split.h>
 #include <schedule/swap.h>
 #include <schedule/unroll.h>
+#include <schedule/var_merge.h>
 #include <schedule/var_reorder.h>
 #include <schedule/vectorize.h>
 
@@ -187,6 +188,16 @@ void Schedule::varSplit(const std::string &def, int dim, VarSplitMode mode,
         ", nparts=" + std::to_string(nparts) + ")";
     try {
         ast_ = ir::varSplit(ast_, def, dim, mode, factor, nparts);
+        logs_.emplace_back(log);
+    } catch (const InvalidSchedule &e) {
+        throw InvalidSchedule("Invalid " + log + ": " + e.what());
+    }
+}
+
+void Schedule::varMerge(const std::string &def, int dim) {
+    auto log = "var_merge(" + def + ", " + std::to_string(dim) + ")";
+    try {
+        ast_ = ir::varMerge(ast_, def, dim);
         logs_.emplace_back(log);
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid " + log + ": " + e.what());

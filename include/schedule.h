@@ -318,6 +318,14 @@ class Schedule {
                   int factor = -1, int nparts = -1);
 
     /**
+     * Merge two dimensions of a variable
+     *
+     * @param def : ID of the VarDef statement of the specific variable
+     * @param dim : Merge the `dim`-th and the `(dim + 1)`-th dimension
+     */
+    void varMerge(const std::string &def, int dim);
+
+    /**
      * Reorder the dimensions of a variable
      *
      * @param def : ID of the VarDef statement of the specific variable
