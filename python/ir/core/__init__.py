@@ -35,7 +35,6 @@ from .nodes import (
     intrinsic,
     any,
     Func,
-    Tensor,
 )
 from .analyze import *
 from .passes import *

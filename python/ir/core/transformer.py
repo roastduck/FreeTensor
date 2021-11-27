@@ -12,7 +12,7 @@ from typing import Sequence, Optional, Mapping, Any
 from . import nodes
 from .nodes import (_VarDef, Var, pop_ast, For, If, Else, MarkNid, intrinsic,
                     l_and, l_or, l_not, if_then_else, ctx_stack as node_ctx,
-                    Func, Tensor, Assert)
+                    Func, Assert)
 from .utils import *
 
 assert sys.version_info >= (3,
@@ -262,6 +262,7 @@ class ASTTransformer(ast.NodeTransformer):
         self.created_vars = set()
         self.returned = False
         self.returns = []
+        self.closure = {}
         self.prefix = ""
         self.nid = ""
         self.now_pos = 0
@@ -557,12 +558,33 @@ class ASTTransformer(ast.NodeTransformer):
                     returns = arg.expand(self.ctx_stack, name)
                     assert len(returns) == 1, "only support single return value"
                     arg_var[param] = returns[0][1]
-                elif isinstance(arg, Tensor):
-                    var = VarCreation(self.ctx_stack, arg.shape(), arg.dtype(),
-                                      "cache", arg.mtype, name).execute()
+                elif isinstance(arg, ffi.Array):
+                    var = VarCreation(self.ctx_stack,
+                                      arg.shape,
+                                      arg.dtype,
+                                      "input",
+                                      arg.device.main_mem_type(),
+                                      name,
+                                      override_name=name).execute()
+                    self.closure[name] = arg
                     arg_var[param] = var
-                    for i in range(arg.size()):
-                        var[arg.indices(i)] = arg.at(i)
+                elif isinstance(arg, int):
+                    # FIXME: int64?
+                    var = VarCreation(self.ctx_stack, (), "int32", "cache",
+                                      "byvalue", name).execute()
+                    arg_var[param] = var
+                    var[()] = arg
+                elif isinstance(arg, float):
+                    # FIXME: float64
+                    var = VarCreation(self.ctx_stack, (), "float32", "cache",
+                                      "byvalue", name).execute()
+                    arg_var[param] = var
+                    var[()] = arg
+                elif isinstance(arg, bool):
+                    var = VarCreation(self.ctx_stack, (), "bool", "cache",
+                                      "byvalue", name).execute()
+                    arg_var[param] = var
+                    var[()] = arg
                 else:
                     assert False, f"Invalid function argument calling {callee.name}"
             callee.set_arg_var(arg_var)
@@ -849,13 +871,15 @@ def transform(func):
     file = ins.getfile(func)
     params = list(inspect.signature(func).parameters)
     globals = _get_global_vars(func)
+    closure = {}
     transformer = ASTTransformer(ctx_stack, params, globals, file, src, lineno)
     ctx_stack.push_transformer(transformer)
     transformer.visit(tree)
     ctx_stack.pop_transformer()
     returns = list(
         map(lambda var: (var[1].name, var[1].dtype), transformer.returns))
-    return Func(func.__name__, params, returns, pop_ast())
+    return Func(func.__name__, params + list(transformer.closure.keys()),
+                returns, pop_ast(), transformer.closure)
 
 
 def inline(func, src=None):

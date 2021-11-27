@@ -141,7 +141,7 @@ def gemm_(has_bias: bool = False,
             'nid: einsum'
             einsum_(format)(A, B, Y)
             'nid: mul_to'
-            mul_to(Y, core.Tensor(alpha, Y.mtype))
+            mul_to(Y, alpha)
 
     else:
 
@@ -150,9 +150,9 @@ def gemm_(has_bias: bool = False,
             'nid: einsum'
             einsum_(format)(A, B, Y)
             'nid: mul_to'
-            mul_to(Y, core.Tensor(alpha, Y.mtype))
+            mul_to(Y, alpha)
             'nid: add_to'
-            add_to(Y, mul(core.Tensor(beta, Y.mtype), C))
+            add_to(Y, mul(beta, C))
 
     return f_gemm
 

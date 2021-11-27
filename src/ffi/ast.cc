@@ -434,10 +434,15 @@ void init_ffi_ast(py::module_ &m) {
         "makeFunc",
         [](const std::string &name, const std::vector<std::string> &params,
            const std::vector<std::pair<std::string, DataType>> &returns,
-           const Stmt &body) {
-            return makeFunc(name, params, returns, body, {});
+           const Stmt &body,
+           const std::unordered_map<std::string, Ref<Array>> &_closure) {
+            std::unordered_map<std::string, Ref<Ref<Array>>> closure;
+            for (auto &&[name, var] : _closure) {
+                closure[name] = Ref<Ref<Array>>::make(var);
+            }
+            return makeFunc(name, params, returns, body, closure);
         },
-        "name"_a, "params"_a, "returns"_a, "body"_a); // no closure
+        "name"_a, "params"_a, "returns"_a, "body"_a, "closure"_a);
 
     // Statements
     m.def("makeAny", &_makeAny);

@@ -16,58 +16,6 @@ void init_ffi_tensor(py::module_ &m) {
                                                             t.shape().end());
                                })
         .def_property_readonly("dtype", &Tensor::dtype);
-
-    py::class_<TensorData, Ref<TensorData>>(m, "TensorData")
-        .def(py::init([](int32_t val) {
-            return Ref<TensorData>::make(
-                TensorData({}, std::vector<int>({val})));
-        }))
-        .def(py::init([](double val) {
-            return Ref<TensorData>::make(
-                TensorData({}, std::vector<double>({val})));
-        }))
-        .def(py::init([](py::array_t<int32_t, py::array::c_style> &np) {
-            auto ndim = np.ndim();
-            auto size = np.size();
-            auto shapePtr = np.shape();
-            auto dataPtr = np.unchecked().data();
-            return Ref<TensorData>::make(
-                TensorData(std::vector<int>(shapePtr, shapePtr + ndim),
-                           std::vector<int>(dataPtr, dataPtr + size)));
-        }))
-        .def(py::init([](py::array_t<int64_t, py::array::c_style> &np) {
-            auto ndim = np.ndim();
-            auto size = np.size();
-            auto shapePtr = np.shape();
-            auto dataPtr = np.unchecked().data();
-            return Ref<TensorData>::make(
-                TensorData(std::vector<int>(shapePtr, shapePtr + ndim),
-                           std::vector<int>(dataPtr, dataPtr + size)));
-        }))
-        .def(py::init([](py::array_t<float, py::array::c_style> &np) {
-            auto ndim = np.ndim();
-            auto size = np.size();
-            auto shapePtr = np.shape();
-            auto dataPtr = np.unchecked().data();
-            return Ref<TensorData>::make(
-                TensorData(std::vector<int>(shapePtr, shapePtr + ndim),
-                           std::vector<double>(dataPtr, dataPtr + size)));
-        }))
-        .def(py::init([](py::array_t<double, py::array::c_style> &np) {
-            auto ndim = np.ndim();
-            auto size = np.size();
-            auto shapePtr = np.shape();
-            auto dataPtr = np.unchecked().data();
-            return Ref<TensorData>::make(
-                TensorData(std::vector<int>(shapePtr, shapePtr + ndim),
-                           std::vector<double>(dataPtr, dataPtr + size)));
-        }))
-        .def("ndim", &TensorData::ndim)
-        .def("size", &TensorData::size)
-        .def("dtype", &TensorData::dtype)
-        .def("shape", &TensorData::shape)
-        .def("indices", &TensorData::indices)
-        .def("at", &TensorData::at);
 }
 
 } // namespace ir

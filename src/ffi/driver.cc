@@ -73,27 +73,34 @@ void init_ffi_driver(py::module_ &m) {
             arr.fromCPU(np.unchecked().data(), np.nbytes());
             return arr;
         }))
-        .def("numpy", [](Array &arr) -> py::object {
-            switch (arr.dtype()) {
-            case DataType::Int32: {
-                py::array_t<int32_t, py::array::c_style> np(arr.shape());
-                arr.toCPU(np.mutable_unchecked().mutable_data(), np.nbytes());
-                return std::move(np); // construct an py::object by move
-            }
-            case DataType::Float64: {
-                py::array_t<double, py::array::c_style> np(arr.shape());
-                arr.toCPU(np.mutable_unchecked().mutable_data(), np.nbytes());
-                return std::move(np);
-            }
-            case DataType::Float32: {
-                py::array_t<float, py::array::c_style> np(arr.shape());
-                arr.toCPU(np.mutable_unchecked().mutable_data(), np.nbytes());
-                return std::move(np);
-            }
-            default:
-                ASSERT(false);
-            }
-        });
+        .def("numpy",
+             [](Array &arr) -> py::object {
+                 switch (arr.dtype()) {
+                 case DataType::Int32: {
+                     py::array_t<int32_t, py::array::c_style> np(arr.shape());
+                     arr.toCPU(np.mutable_unchecked().mutable_data(),
+                               np.nbytes());
+                     return std::move(np); // construct an py::object by move
+                 }
+                 case DataType::Float64: {
+                     py::array_t<double, py::array::c_style> np(arr.shape());
+                     arr.toCPU(np.mutable_unchecked().mutable_data(),
+                               np.nbytes());
+                     return std::move(np);
+                 }
+                 case DataType::Float32: {
+                     py::array_t<float, py::array::c_style> np(arr.shape());
+                     arr.toCPU(np.mutable_unchecked().mutable_data(),
+                               np.nbytes());
+                     return std::move(np);
+                 }
+                 default:
+                     ASSERT(false);
+                 }
+             })
+        .def_property_readonly("shape", &Array::shape)
+        .def_property_readonly("dtype", &Array::dtype)
+        .def_property_readonly("device", &Array::device);
 
     py::class_<Driver, Ref<Driver>>(m, "Driver")
         .def(py::init<const Func &, const std::string &, const Device &>())

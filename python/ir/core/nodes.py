@@ -511,12 +511,5 @@ def any():
     return ffi.makeAnyExpr()
 
 
-def Func(name, params, returns, body):
-    return ffi.makeFunc(name, params, returns, body)
-
-
-class Tensor(ffi.TensorData):
-
-    def __init__(self, data, mtype):
-        super(Tensor, self).__init__(np.array(data))
-        self.mtype = parseMType(mtype)
+def Func(name, params, returns, body, closure={}):
+    return ffi.makeFunc(name, params, returns, body, closure)

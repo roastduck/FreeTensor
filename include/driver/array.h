@@ -36,6 +36,7 @@ class Array {
     size_t nElem() const { return nElem_; }
     const std::vector<size_t> &shape() const { return shape_; }
     DataType dtype() const { return dtype_; }
+    const Device &device() const { return device_; }
 
     void fromCPU(const void *other, size_t size);
     void toCPU(void *other, size_t size);
