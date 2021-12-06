@@ -33,13 +33,14 @@ Stmt MoveOutFirstOrLastIter::visit(const For &_op) {
             }
             if (seq->stmts_.back()->nodeType() == ASTNodeType::If) {
                 auto &&branch = seq->stmts_.back().as<IfNode>();
+                auto rbegin = makeAdd(
+                    op->begin_,
+                    makeMul(makeSub(op->len_, makeIntConst(1)), op->step_));
                 if (!branch->elseCase_.isValid() &&
-                    prove((*this)(
-                        makeEQ(branch->cond_,
-                               makeEQ(makeVar(op->iter_),
-                                      makeSub(op->end_, makeIntConst(1))))))) {
+                    prove((*this)(makeEQ(
+                        branch->cond_, makeEQ(makeVar(op->iter_), rbegin))))) {
                     ASSERT(!replace_.count(op->iter_));
-                    replace_[op->iter_] = makeSub(op->end_, makeIntConst(1));
+                    replace_[op->iter_] = rbegin;
                     toBack = (*this)(branch->thenCase_);
                     replace_.erase(op->iter_);
                     seq->stmts_.pop_back();

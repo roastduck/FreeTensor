@@ -42,18 +42,6 @@ class PropagateRequire : public Visitor {
     void visit(const VarDef &op) override;
 };
 
-class ReplaceVar : public Mutator {
-    std::string from_;
-    Expr to_;
-
-  public:
-    ReplaceVar(const std::string &from, const Expr &to)
-        : from_(from), to_(to) {}
-
-  protected:
-    Expr visit(const Var &op) override;
-};
-
 class ReplaceByTape : public Mutator {
     const std::unordered_map<Load, Expr> &loadMap_;
 

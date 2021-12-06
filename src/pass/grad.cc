@@ -92,14 +92,6 @@ void PropagateRequire::visit(const VarDef &op) {
     buffers_.erase(op->name_);
 }
 
-Expr ReplaceVar::visit(const Var &op) {
-    if (op->name_ == from_) {
-        return to_;
-    } else {
-        return Mutator::visit(op);
-    }
-}
-
 Expr ReplaceByTape::visit(const Load &op) {
     if (loadMap_.count(op)) {
         return (*this)(loadMap_.at(op));
@@ -141,13 +133,13 @@ Stmt Grad::visit(const For &op) {
                 noDeps.emplace_back(fwdVar + ".grad");
             }
         }
-        return makeFor(
-            op->id(), op->iter_, op->begin_, op->end_, op->step_, op->len_,
-            op->property_.withNoDeps(noDeps),
-            ReplaceVar(
-                op->iter_,
-                makeSub(makeSub(makeAdd(op->begin_, op->end_), makeIntConst(1)),
-                        makeVar(op->iter_)))((*this)(op->body_)));
+        auto rbegin = makeAdd(
+            op->begin_, makeMul(op->step_, makeSub(op->len_, makeIntConst(1))));
+        auto rend = makeSub(op->begin_, op->step_);
+        auto rstep = makeSub(makeIntConst(0), op->step_);
+        return makeFor(op->id(), op->iter_, std::move(rbegin), std::move(rend),
+                       std::move(rstep), op->len_,
+                       op->property_.withNoDeps(noDeps), (*this)(op->body_));
     }
 }
 
@@ -197,19 +189,18 @@ Stmt Grad::visit(const VarDef &_op) {
                 for (int i = 0; i < nDim; i++) {
                     std::string iter =
                         "." + gradName + ".i" + std::to_string(i);
-                    indices.emplace_back(
-                        makeSub(makeSub(op->buffer_->tensor().shape()[i],
-                                        makeIntConst(1)),
-                                makeVar(iter)));
+                    indices.emplace_back(makeVar(iter));
                     iters.emplace_back(std::move(iter));
                 }
                 auto init = makeStore("", gradName, std::move(indices),
                                       makeIntConst(0));
                 for (int i = nDim - 1; i >= 0; i--) {
-                    init = makeFor(
-                        "", iters[i], makeIntConst(0),
-                        op->buffer_->tensor().shape()[i], makeIntConst(1),
-                        op->buffer_->tensor().shape()[i], ForProperty(), init);
+                    init = makeFor("", iters[i],
+                                   makeSub(op->buffer_->tensor().shape()[i],
+                                           makeIntConst(1)),
+                                   makeIntConst(-1), makeIntConst(-1),
+                                   op->buffer_->tensor().shape()[i],
+                                   ForProperty(), init);
                 }
                 grad = makeStmtSeq("", {init, grad});
             }

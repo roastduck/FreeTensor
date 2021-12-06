@@ -115,18 +115,10 @@ void FindAccessPoint::visit(const For &op) {
 
     auto iter = makeVar(op->iter_);
     auto oldCondsSize = conds_.size();
-    if (op->step_->nodeType() == ASTNodeType::IntConst) {
-        auto step = op->step_.as<IntConstNode>()->val_;
-        if (step > 0) {
-            conds_.emplace_back(makeGE(iter, op->begin_));
-            conds_.emplace_back(makeLT(iter, op->end_));
-        } else if (step < 0) {
-            conds_.emplace_back(makeLE(iter, op->begin_));
-            conds_.emplace_back(makeGT(iter, op->end_));
-        } else {
-            conds_.emplace_back(makeEQ(iter, op->begin_));
-        }
-    }
+    auto rbegin = makeAdd(
+        op->begin_, makeMul(makeSub(op->len_, makeIntConst(1)), op->step_));
+    conds_.emplace_back(makeGE(iter, makeMin(op->begin_, rbegin)));
+    conds_.emplace_back(makeLE(iter, makeMax(rbegin, op->begin_)));
     cur_.emplace_back(iter, op->property_.parallel_);
     scope2coord_[op->id()] = cur_;
     if (int width = countBandNodeWidth(op->body_); width > 1) {

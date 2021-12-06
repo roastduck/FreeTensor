@@ -79,6 +79,9 @@ void FindLoopInvariantWrites::visit(const Store &op) {
         if (!item->property_.parallel_.empty()) {
             continue;
         }
+        auto rbegin =
+            makeAdd(item->begin_,
+                    makeMul(makeSub(item->len_, makeIntConst(1)), item->step_));
         Expr thisCond;
         for (auto &&idx : op->indices_) {
             if (isVariant(variantExpr_, idx, item->id())) {
@@ -90,8 +93,7 @@ void FindLoopInvariantWrites::visit(const Store &op) {
                 goto fail;
             }
         }
-        thisCond =
-            makeEQ(makeVar(item->iter_), makeSub(item->end_, makeIntConst(1)));
+        thisCond = makeEQ(makeVar(item->iter_), rbegin);
         if (!cond.isValid()) {
             innerMostLoopCursor = loopCursor;
             cond = thisCond;

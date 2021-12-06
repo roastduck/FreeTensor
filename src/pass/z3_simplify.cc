@@ -447,11 +447,29 @@ Stmt Z3Simplify::visit(const For &op) {
         return body;
     }
 
-    push((*this)(makeGE(var, begin)));
-    push((*this)(makeLT(var, end)));
-    auto body = (*this)(op->body_);
-    pop();
-    pop();
+    Stmt body;
+    if (op->step_->nodeType() == ASTNodeType::IntConst) {
+        auto step = op->step_.as<IntConstNode>()->val_;
+        if (step > 0) {
+            push((*this)(makeGE(var, begin)));
+            push((*this)(makeLT(var, end)));
+            body = (*this)(op->body_);
+            pop();
+            pop();
+        } else if (step < 0) {
+            push((*this)(makeLE(var, begin)));
+            push((*this)(makeGT(var, end)));
+            body = (*this)(op->body_);
+            pop();
+            pop();
+        } else {
+            push((*this)(makeEQ(var, begin)));
+            body = (*this)(op->body_);
+            pop();
+        }
+    } else {
+        body = (*this)(op->body_);
+    }
 
     auto ret = makeFor(op->id(), op->iter_, std::move(begin), std::move(end),
                        std::move(step), std::move(len), op->property_,
