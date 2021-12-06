@@ -200,7 +200,7 @@ class ForNode : public StmtNode {
     // We also record len_ because it is used in may passes. If we computes len_
     // every time and call simplifyPass to propagate the constants, it is very
     // time consuming
-    SubTree<ExprNode> begin_, end_, len_;
+    SubTree<ExprNode> begin_, end_, step_, len_;
     ForProperty property_;
     SubTree<StmtNode> body_;
 
@@ -208,15 +208,16 @@ class ForNode : public StmtNode {
 };
 typedef Ref<ForNode> For;
 #define makeFor(...) makeNode(For, __VA_ARGS__)
-template <class Tbegin, class Tend, class Tlen, class Tbody>
+template <class Tbegin, class Tend, class Tstep, class Tlen, class Tbody>
 Stmt _makeFor(const std::string &id, const std::string &iter, Tbegin &&begin,
-              Tend &&end, Tlen &&len, const ForProperty &property,
+              Tend &&end, Tstep &&step, Tlen &&len, const ForProperty &property,
               Tbody &&body) {
     For f = For::make();
     f->setId(id);
     f->iter_ = iter;
     f->begin_ = std::forward<Tbegin>(begin);
     f->end_ = std::forward<Tend>(end);
+    f->step_ = std::forward<Tstep>(step);
     f->len_ = std::forward<Tlen>(len);
     f->property_ = property;
     f->body_ = std::forward<Tbody>(body);

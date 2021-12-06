@@ -150,6 +150,10 @@ void init_ffi_ast(py::module_ &m) {
                                [](const For &op) -> Expr { return op->begin_; })
         .def_property_readonly("end",
                                [](const For &op) -> Expr { return op->end_; })
+        .def_property_readonly("step",
+                               [](const For &op) -> Expr { return op->step_; })
+        .def_property_readonly("len",
+                               [](const For &op) -> Expr { return op->len_; })
         .def_readonly("property", &ForNode::property_)
         .def_property_readonly("body",
                                [](const For &op) -> Stmt { return op->body_; });
@@ -468,12 +472,14 @@ void init_ffi_ast(py::module_ &m) {
           "var"_a, "indices"_a);
     m.def("makeIntConst", &_makeIntConst, "val"_a);
     m.def("makeFloatConst", &_makeFloatConst, "val"_a);
-    m.def("makeFor",
-          static_cast<Stmt (*)(const std::string &, const std::string &,
-                               const Expr &, const Expr &, const Expr &,
-                               const ForProperty &, const Stmt &)>(&_makeFor),
-          "nid"_a, "iter"_a, "begin"_a, "end"_a, "len"_a, "property"_a,
-          "body"_a);
+    m.def(
+        "makeFor",
+        static_cast<Stmt (*)(const std::string &, const std::string &,
+                             const Expr &, const Expr &, const Expr &,
+                             const Expr &, const ForProperty &, const Stmt &)>(
+            &_makeFor),
+        "nid"_a, "iter"_a, "begin"_a, "end"_a, "step"_a, "len"_a, "property"_a,
+        "body"_a);
     m.def("makeIf",
           static_cast<Stmt (*)(const std::string &, const Expr &, const Stmt &,
                                const Stmt &)>(&_makeIf),

@@ -94,33 +94,34 @@ Stmt NormalizeThreads::visit(const For &op) {
         auto ret = doVisitFor(op);
         inKernel_ = false;
         auto zero = makeIntConst(0);
+        auto one = makeIntConst(1);
         auto inf = makeIntConst(INT_MAX);
-        ret = makeFor("", ".threadIdx.x", zero, inf, inf,
+        ret = makeFor("", ".threadIdx.x", zero, inf, one, inf,
                       ForProperty()
                           .withParallel("threadIdx.x")
                           .withNoDeps(noDeps_["threadIdx.x"]),
                       ret);
-        ret = makeFor("", ".threadIdx.y", zero, inf, inf,
+        ret = makeFor("", ".threadIdx.y", zero, inf, one, inf,
                       ForProperty()
                           .withParallel("threadIdx.y")
                           .withNoDeps(noDeps_["threadIdx.y"]),
                       ret);
-        ret = makeFor("", ".threadIdx.z", zero, inf, inf,
+        ret = makeFor("", ".threadIdx.z", zero, inf, one, inf,
                       ForProperty()
                           .withParallel("threadIdx.z")
                           .withNoDeps(noDeps_["threadIdx.z"]),
                       ret);
-        ret = makeFor("", ".blockIdx.x", zero, inf, inf,
+        ret = makeFor("", ".blockIdx.x", zero, inf, one, inf,
                       ForProperty()
                           .withParallel("blockIdx.x")
                           .withNoDeps(noDeps_["blockIdx.x"]),
                       ret);
-        ret = makeFor("", ".blockIdx.y", zero, inf, inf,
+        ret = makeFor("", ".blockIdx.y", zero, inf, one, inf,
                       ForProperty()
                           .withParallel("blockIdx.y")
                           .withNoDeps(noDeps_["blockIdx.y"]),
                       ret);
-        ret = makeFor("", ".blockIdx.z", zero, inf, inf,
+        ret = makeFor("", ".blockIdx.z", zero, inf, one, inf,
                       ForProperty()
                           .withParallel("blockIdx.z")
                           .withNoDeps(noDeps_["blockIdx.z"]),

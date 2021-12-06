@@ -22,30 +22,41 @@ Stmt ShrinkFor::visit(const For &_op) {
     if (!newRange_.count(hash)) {
         return op->body_;
     }
-    auto newBegin = makeMinMax(newRange_.at(hash).first);
-    auto newEndMinus1 = makeMaxMin(newRange_.at(hash).second);
+    auto lower = makeMinMax(newRange_.at(hash).first);
+    auto upper = makeMaxMin(newRange_.at(hash).second);
 
     if (op->property_.unroll_ ||
         (op->property_.parallel_.substr(0, 10) == "threadIdx." &&
          !op->property_.reductions_.empty())) {
         // Backends do not support these loops to be of variable lengths
-        if (newBegin.isValid() &&
-            newBegin->nodeType() != ASTNodeType::IntConst) {
+        if (lower.isValid() && lower->nodeType() != ASTNodeType::IntConst) {
             return op;
         }
-        if (newEndMinus1.isValid() &&
-            newEndMinus1->nodeType() != ASTNodeType::IntConst) {
+        if (upper.isValid() && upper->nodeType() != ASTNodeType::IntConst) {
             return op;
         }
     }
 
-    if (newBegin.isValid()) {
-        op->begin_ = newBegin;
+    if (op->step_->nodeType() == ASTNodeType::IntConst) {
+        auto step = op->step_.as<IntConstNode>()->val_;
+        if (step > 0) {
+            if (lower.isValid()) {
+                op->begin_ = lower;
+            }
+            if (upper.isValid()) {
+                op->end_ = makeAdd(upper, op->step_);
+            }
+            op->len_ = makeFloorDiv(makeSub(op->end_, op->begin_), op->step_);
+        } else if (step < 0) {
+            if (upper.isValid()) {
+                op->begin_ = upper;
+            }
+            if (lower.isValid()) {
+                op->end_ = makeAdd(lower, op->step_);
+            }
+            op->len_ = makeFloorDiv(makeSub(op->end_, op->begin_), op->step_);
+        }
     }
-    if (newEndMinus1.isValid()) {
-        op->end_ = makeAdd(newEndMinus1, makeIntConst(1));
-    }
-    op->len_ = makeSub(op->end_, op->begin_);
 
     return op;
 }

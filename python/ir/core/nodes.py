@@ -37,6 +37,7 @@ class Context:
                         iter_var,
                         begin,
                         end,
+                        step,
                         body,
                         nid: str = "",
                         no_deps: Optional[Sequence] = None,
@@ -53,7 +54,8 @@ class Context:
                 iter_var,
                 begin,
                 end,
-                end - begin,
+                step,
+                (end - begin) // step,
                 ffi.ForProperty().with_no_deps(no_deps).with_prefer_libs(
                     prefer_libs),
                 body,
@@ -307,12 +309,14 @@ class For:
                  iter_var: str,
                  begin,
                  end,
+                 step=1,
                  nid: str = "",
                  no_deps: Optional[Sequence] = None,
                  prefer_libs: Optional[bool] = None):
         self.iter_var = iter_var
         self.begin = begin
         self.end = end
+        self.step = step
         self.nid = nid
         self.no_deps = no_deps
         self.prefer_libs = prefer_libs
@@ -327,6 +331,7 @@ class For:
         top.append_for_stmt(self.iter_var,
                             self.begin,
                             self.end,
+                            self.step,
                             body,
                             nid=self.nid,
                             no_deps=self.no_deps,

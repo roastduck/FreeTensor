@@ -31,11 +31,11 @@ class BlendPass : public Mutator {
     std::string loop_;
     bool inLoop_ = false;
     std::string iter_;
-    Expr begin_;
+    Expr begin_, step_;
     int len_ = 0, curIter_ = 0;
     std::vector<Stmt> envStack_;
     std::vector<VarDef> defs_;
-    std::unordered_map<std::string, Expr> offset_;
+    std::unordered_map<std::string, std::pair<Expr, Expr>> offset_;
     const LoopVariExprMap &exprVari_;
     const LoopVariUniqVarMap &varVari_;
 
@@ -63,8 +63,9 @@ class BlendPass : public Mutator {
                     case ASTNodeType::For: {
                         auto env = it->as<ForNode>();
                         stmt = makeFor("", env->iter_, (*this)(env->begin_),
-                                       (*this)(env->end_), (*this)(env->len_),
-                                       env->property_, std::move(stmt));
+                                       (*this)(env->end_), (*this)(env->step_),
+                                       (*this)(env->len_), env->property_,
+                                       std::move(stmt));
                         break;
                     }
                     case ASTNodeType::If: {

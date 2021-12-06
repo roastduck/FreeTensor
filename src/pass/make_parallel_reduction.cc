@@ -212,11 +212,11 @@ Stmt MakeParallelReduction::visit(const For &_op) {
                              makeLoad(cacheName, cacheIndices), true);
             for (size_t i = newShape.size() - 1; ~i; i--) {
                 init = makeFor("", cacheName + ".i" + std::to_string(i),
-                               makeIntConst(0), newShape[i], newShape[i],
-                               ForProperty(), init);
+                               makeIntConst(0), newShape[i], makeIntConst(1),
+                               newShape[i], ForProperty(), init);
                 flush = makeFor("", cacheName + ".i" + std::to_string(i),
-                                makeIntConst(0), newShape[i], newShape[i],
-                                ForProperty(), flush);
+                                makeIntConst(0), newShape[i], makeIntConst(1),
+                                newShape[i], ForProperty(), flush);
             }
             ret = makeVarDef(
                 "", cacheName,

@@ -107,9 +107,10 @@ Stmt MakeFillAndFlush::visitStmt(
             fill = makeIf("", makeLT(idx1d, def_->sizeLim_), fill);
         }
         for (int i = nDim - 1; i >= 0; i--) {
-            fill = makeFor("", iters[i], rRange_.lower_[i],
-                           makeAdd(rRange_.lower_[i], rRange_.len_[i]),
-                           rRange_.len_[i], ForProperty(), fill);
+            fill =
+                makeFor("", iters[i], rRange_.lower_[i],
+                        makeAdd(rRange_.lower_[i], rRange_.len_[i]),
+                        makeIntConst(1), rRange_.len_[i], ForProperty(), fill);
         }
         if (rRange_.cond_.isValid()) {
             fill = makeIf("", rRange_.cond_, fill);
@@ -122,9 +123,10 @@ Stmt MakeFillAndFlush::visitStmt(
             flush = makeIf("", makeLT(idx1d, def_->sizeLim_), flush);
         }
         for (int i = nDim - 1; i >= 0; i--) {
-            flush = makeFor("", iters[i], wRange_.lower_[i],
-                            makeAdd(wRange_.lower_[i], wRange_.len_[i]),
-                            wRange_.len_[i], ForProperty(), flush);
+            flush =
+                makeFor("", iters[i], wRange_.lower_[i],
+                        makeAdd(wRange_.lower_[i], wRange_.len_[i]),
+                        makeIntConst(1), wRange_.len_[i], ForProperty(), flush);
         }
         if (wRange_.cond_.isValid()) {
             flush = makeIf("", wRange_.cond_, flush);
@@ -180,9 +182,10 @@ Stmt MakeInitAndReduce::visitStmt(
             init = makeIf("", makeLT(idx1d, def_->sizeLim_), init);
         }
         for (int i = nDim - 1; i >= 0; i--) {
-            init = makeFor("", iters[i], range_.lower_[i],
-                           makeAdd(range_.lower_[i], range_.len_[i]),
-                           range_.len_[i], ForProperty(), init);
+            init =
+                makeFor("", iters[i], range_.lower_[i],
+                        makeAdd(range_.lower_[i], range_.len_[i]),
+                        makeIntConst(1), range_.len_[i], ForProperty(), init);
         }
 
         Stmt reduce = makeReduceTo("", oldVar_, indices, reduce_->op_,
@@ -192,9 +195,10 @@ Stmt MakeInitAndReduce::visitStmt(
             reduce = makeIf("", makeLT(idx1d, def_->sizeLim_), reduce);
         }
         for (int i = nDim - 1; i >= 0; i--) {
-            reduce = makeFor("", iters[i], range_.lower_[i],
-                             makeAdd(range_.lower_[i], range_.len_[i]),
-                             range_.len_[i], ForProperty(), reduce);
+            reduce =
+                makeFor("", iters[i], range_.lower_[i],
+                        makeAdd(range_.lower_[i], range_.len_[i]),
+                        makeIntConst(1), range_.len_[i], ForProperty(), reduce);
         }
 
         op = makeStmtSeq("", {init, op, reduce});

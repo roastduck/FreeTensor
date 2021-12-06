@@ -572,15 +572,33 @@ template <class Stream> void CodeGenC<Stream>::visit(const Cast &op) {
 
 template <class Stream> void CodeGenC<Stream>::visit(const For &op) {
     this->markDefIter(op->iter_);
-    this->makeIndent();
-    this->os() << "for (int " << normalizeId(op->iter_) << " = ";
-    (*this)(op->begin_);
-    this->os() << "; " << normalizeId(op->iter_) << " < ";
-    (*this)(op->end_);
-    this->os() << "; " << normalizeId(op->iter_) << "++) ";
-    this->beginBlock();
-    (*this)(op->body_);
-    this->endBlock();
+    if (op->step_->nodeType() == ASTNodeType::IntConst &&
+        op->step_.as<IntConstNode>()->val_ == 1) {
+        this->makeIndent();
+        this->os() << "for (int " << normalizeId(op->iter_) << " = ";
+        (*this)(op->begin_);
+        this->os() << "; " << normalizeId(op->iter_) << " < ";
+        (*this)(op->end_);
+        this->os() << "; " << normalizeId(op->iter_) << "++) ";
+        this->beginBlock();
+        (*this)(op->body_);
+        this->endBlock();
+    } else {
+        auto iterCnt = normalizeId(op->iter_ + ".cnt");
+        this->makeIndent();
+        this->os() << "for (int " << iterCnt << " = 0; " << iterCnt << " < ";
+        (*this)(op->len_);
+        this->os() << "; " << iterCnt << "++) ";
+        this->beginBlock();
+        this->makeIndent();
+        this->os() << "int " << normalizeId(op->iter_) << " = ";
+        (*this)(op->begin_);
+        this->os() << " + " << iterCnt << " * ";
+        (*this)(op->step_);
+        this->os() << ";" << std::endl;
+        (*this)(op->body_);
+        this->endBlock();
+    }
     this->markUndefIter(op->iter_);
 }
 

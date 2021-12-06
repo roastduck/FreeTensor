@@ -30,7 +30,7 @@ Stmt ImmediateUnroll::visitStmt(
 
 Expr ImmediateUnroll::visit(const Var &op) {
     if (op->name_ == iter_) {
-        return makeAdd(begin_, makeIntConst(curIter_));
+        return makeAdd(begin_, makeMul(makeIntConst(curIter_), step_));
     } else {
         return Mutator::visit(op);
     }
@@ -42,11 +42,11 @@ Stmt ImmediateUnroll::visit(const For &op) {
             auto len = op->len_.as<IntConstNode>()->val_;
             std::vector<Stmt> stmts;
             iter_ = op->iter_;
-            begin_ = op->begin_;
+            begin_ = op->begin_, step_ = op->step_;
             for (curIter_ = 0; curIter_ < len; curIter_++) {
                 stmts.emplace_back((*this)(op->body_));
             }
-            begin_ = nullptr;
+            begin_ = step_ = nullptr;
             iter_.clear();
             done_ = true;
             return makeStmtSeq("", std::move(stmts));

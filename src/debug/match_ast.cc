@@ -403,6 +403,7 @@ void MatchVisitor::visit(const For &op) {
     CHECK(matchName(op->iter_, instance->iter_));
     RECURSE(op->begin_, instance->begin_);
     RECURSE(op->end_, instance->end_);
+    RECURSE(op->step_, instance->step_);
     RECURSE(op->body_, instance->body_);
 }
 

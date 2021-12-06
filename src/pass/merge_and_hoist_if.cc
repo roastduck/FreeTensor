@@ -100,7 +100,7 @@ Stmt MergeAndHoistIf::visit(const For &_op) {
                 isFixPoint_ = false;
                 return makeIf(branch->id(), branch->cond_,
                               makeFor(op->id(), op->iter_, op->begin_, op->end_,
-                                      op->len_, op->property_,
+                                      op->step_, op->len_, op->property_,
                                       branch->thenCase_));
             }
         }

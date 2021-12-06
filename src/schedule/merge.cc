@@ -26,7 +26,8 @@ Stmt MergeFor::visit(const For &_op) {
                        ? makeIntConst(innerLen_.as<IntConstNode>()->val_ *
                                       outerLen_.as<IntConstNode>()->val_)
                        : makeMul(innerLen_, outerLen_);
-        auto ret = makeFor(newId_, newIter_, makeIntConst(0), len, len,
+        auto ret = makeFor(newId_, newIter_, makeIntConst(0), len,
+                           makeIntConst(1), len,
                            ForProperty().withNoDeps(
                                intersect(op->property_.noDeps_, innerNoDeps_)),
                            op->body_);
@@ -108,10 +109,14 @@ Expr MergeFor::visit(const Var &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::Var);
     auto op = __op.as<VarNode>();
     if (insideInner_ && op->name_ == oldInner_->iter_) {
-        return makeMod(makeVar(newIter_), innerLen_);
+        return makeAdd(
+            oldInner_->begin_,
+            makeMul(makeMod(makeVar(newIter_), innerLen_), oldInner_->step_));
     }
     if (insideOuter_ && op->name_ == oldOuter_->iter_) {
-        return makeFloorDiv(makeVar(newIter_), innerLen_);
+        return makeAdd(oldOuter_->begin_,
+                       makeMul(makeFloorDiv(makeVar(newIter_), innerLen_),
+                               oldOuter_->step_));
     }
     return op;
 }

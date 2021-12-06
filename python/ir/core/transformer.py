@@ -118,9 +118,9 @@ class ASTContextStack:
         top = self.top()
         top.vardef_stack.append(assrt)
 
-    def create_loop(self, name, begin, end):
+    def create_loop(self, name, begin, end, step):
         name = self.create_current_name(name, "cache")
-        fr = For(name, begin, end, self.get_nid(), self.get_no_deps(),
+        fr = For(name, begin, end, step, self.get_nid(), self.get_no_deps(),
                  self.get_prefer_libs())
         var = fr.__enter__()
         top = self.top()
@@ -708,7 +708,8 @@ class ASTTransformer(ast.NodeTransformer):
                                "expr_ptr"), "For range is not expression"
                 begin = 0
                 end = node.iter.args[0].expr_ptr
-            else:
+                step = 1
+            elif len(node.iter.args) == 2:
                 self.visit(node.iter.args[0])
                 self.visit(node.iter.args[1])
                 assert hasattr(node.iter.args[0],
@@ -717,13 +718,27 @@ class ASTTransformer(ast.NodeTransformer):
                                "expr_ptr"), "For range is not expression"
                 begin = node.iter.args[0].expr_ptr
                 end = node.iter.args[1].expr_ptr
-            fr = self.ctx_stack.create_loop(name, begin, end)
+                step = 1
+            else:
+                self.visit(node.iter.args[0])
+                self.visit(node.iter.args[1])
+                self.visit(node.iter.args[2])
+                assert hasattr(node.iter.args[0],
+                               "expr_ptr"), "For range is not expression"
+                assert hasattr(node.iter.args[1],
+                               "expr_ptr"), "For range is not expression"
+                assert hasattr(node.iter.args[2],
+                               "expr_ptr"), "For range is not expression"
+                begin = node.iter.args[0].expr_ptr
+                end = node.iter.args[1].expr_ptr
+                step = node.iter.args[2].expr_ptr
+            fr = self.ctx_stack.create_loop(name, begin, end, step)
             for i in node.body:
                 self.visit(i)
             self.ctx_stack.pop_scope()
             fr.__exit__(None, None, None)
         else:
-            assert False, "For statement other than range(a, b) is not implemented"
+            assert False, "Only ranged for statement is not supported"
         return node
 
     def visit_Expr(self, node):

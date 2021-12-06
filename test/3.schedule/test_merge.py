@@ -28,6 +28,51 @@ def test_basic():
     assert std.match(ast)
 
 
+def test_non_zero_begin():
+    with ir.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
+        with ir.For("i", 2, 6, nid="L1") as i:
+            with ir.For("j", 4, 12, nid="L2") as j:
+                y[i - 2, j - 4] = i * j
+    ast = ir.pop_ast()
+    print(ast)
+    s = ir.Schedule(ast)
+    s.merge("L1", "L2")
+    ast = s.ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
+        with ir.For("i", 0, 32) as i:
+            y[div(i, 8), i % 8] = (div(i, 8) + 2) * ((i % 8) + 4)
+    std = ir.use_builtin_div(ir.pop_ast())
+
+    assert std.match(ast)
+
+
+def test_step():
+    with ir.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
+        with ir.For("i", 2, -2, -2, nid="L1") as i:
+            with ir.For("j", 6, -2, -2, nid="L2") as j:
+                y[i, j] = i * j
+    ast = ir.pop_ast()
+    print(ast)
+    s = ir.Schedule(ast)
+    s.merge("L1", "L2")
+    ast = s.ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
+        with ir.For("i", 0, 8) as i:
+            y[2 + div(i, 4) * -2,
+              6 + i % 4 * -2] = (2 + div(i, 4) * -2) * (6 + i % 4 * -2)
+    std = ir.use_builtin_div(ir.pop_ast())
+
+    assert std.match(ast)
+
+
 def test_invalid():
     with ir.VarDef("y", (4, 4, 4), "int32", "output", "cpu") as y:
         with ir.For("i", 0, 4, nid="L1") as i:

@@ -59,22 +59,24 @@ Expr FuseFor::visit(const Var &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::Var);
     auto op = __op.as<VarNode>();
     if (inLoop0_ && op->name_ == iter0_) {
-        return makeAdd(makeVar(iter0_), begin0_);
+        return makeAdd(makeMul(makeVar(iter0_), step0_), begin0_);
     }
     if (inLoop1_ && op->name_ == iter1_) {
         // Yes, use iter0_
-        return makeAdd(makeVar(iter0_), begin1_);
+        return makeAdd(makeMul(makeVar(iter0_), step1_), begin1_);
     }
     return op;
 }
 
 Stmt FuseFor::visit(const For &_op) {
     if (_op->id() == id0_) {
-        iter0_ = _op->iter_, begin0_ = _op->begin_;
+        iter0_ = _op->iter_;
+        begin0_ = _op->begin_, step0_ = _op->step_;
         inLoop0_ = true;
     }
     if (_op->id() == id1_) {
-        iter1_ = _op->iter_, begin1_ = _op->begin_;
+        iter1_ = _op->iter_;
+        begin1_ = _op->begin_, step1_ = _op->step_;
         inLoop1_ = true;
     }
     auto __op = Mutator::visit(_op);
@@ -82,8 +84,8 @@ Stmt FuseFor::visit(const For &_op) {
     auto op = __op.as<ForNode>();
     if (op->id() == id0_ || op->id() == id1_) {
         inLoop0_ = inLoop1_ = false;
-        return makeFor(op->id(), op->iter_, makeIntConst(0), op->len_, op->len_,
-                       op->property_, op->body_);
+        return makeFor(op->id(), op->iter_, makeIntConst(0), op->len_,
+                       makeIntConst(1), op->len_, op->property_, op->body_);
     }
     return op;
 }
@@ -113,7 +115,8 @@ Stmt FuseFor::visit(const StmtSeq &_op) {
             afterId_ = loop1->body_->id();
             auto seq = makeStmtSeq("", {loop0->body_, loop1->body_});
             auto fused = makeFor(
-                fused_, iter0_, makeIntConst(0), loop0->end_, loop0->end_,
+                fused_, iter0_, makeIntConst(0), loop0->end_, makeIntConst(1),
+                loop0->end_,
                 ForProperty().withNoDeps(intersect(loop0->property_.noDeps_,
                                                    loop1->property_.noDeps_)),
                 std::move(seq));

@@ -241,7 +241,19 @@ Stmt CompTransientBounds::visit(const For &op) {
         throw InvalidProgram(
             "iterators with the same name in nested loops are not allowed");
     }
-    transients_[hash] = {var, {(*this)(op->begin_)}, {(*this)(sub1(op->end_))}};
+    if (op->step_->nodeType() == ASTNodeType::IntConst) {
+        auto step = op->step_.as<IntConstNode>()->val_;
+        if (step > 0) {
+            transients_[hash] = {
+                var, {(*this)(op->begin_)}, {(*this)(sub1(op->end_))}};
+        } else if (step < 0) {
+            transients_[hash] = {
+                var, {(*this)(add1(op->end_))}, {(*this)(op->begin_)}};
+        } else {
+            transients_[hash] = {
+                var, {(*this)(op->begin_)}, {(*this)(op->begin_)}};
+        }
+    }
     auto ret = Mutator::visit(op);
     transients_.erase(hash);
     return ret;
@@ -497,14 +509,14 @@ Expr CompUniqueBounds::visit(const Mul &_op) {
                 if (e1->nodeType() == ASTNodeType::FloorDiv) {
                     auto div = e1.as<FloorDivNode>();
                     if (auto k1 = getInt(div->rhs_);
-                        k1.isValid() && *k1 > 0 && *k1 % *k == 0) {
+                        k1.isValid() && *k1 > 0 && *k % *k1 == 0) {
                         auto equ = (*this)(
                             makeSub(div->lhs_, makeMod(div->lhs_, div->rhs_)));
                         for (auto &&b : getLower(equ)) {
-                            updLower(lower, mul(b, *k1 / *k));
+                            updLower(lower, mul(b, *k / *k1));
                         }
                         for (auto &&b : getUpper(equ)) {
-                            updUpper(upper, mul(b, *k1 / *k));
+                            updUpper(upper, mul(b, *k / *k1));
                         }
                     }
                 }
@@ -518,14 +530,14 @@ Expr CompUniqueBounds::visit(const Mul &_op) {
                 if (e1->nodeType() == ASTNodeType::FloorDiv) {
                     auto div = e1.as<FloorDivNode>();
                     if (auto k1 = getInt(div->rhs_);
-                        k1.isValid() && *k1 > 0 && *k1 % *k == 0) {
+                        k1.isValid() && *k1 > 0 && *k % *k1 == 0) {
                         auto equ = (*this)(
                             makeSub(div->lhs_, makeMod(div->lhs_, div->rhs_)));
                         for (auto &&b : getLower(equ)) {
-                            updUpper(upper, mul(UpperBound{b.lin()}, *k1 / *k));
+                            updUpper(upper, mul(UpperBound{b.lin()}, *k / *k1));
                         }
                         for (auto &&b : getUpper(equ)) {
-                            updLower(lower, mul(LowerBound{b.lin()}, *k1 / *k));
+                            updLower(lower, mul(LowerBound{b.lin()}, *k / *k1));
                         }
                     }
                 }

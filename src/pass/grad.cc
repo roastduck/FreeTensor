@@ -142,7 +142,7 @@ Stmt Grad::visit(const For &op) {
             }
         }
         return makeFor(
-            op->id(), op->iter_, op->begin_, op->end_, op->len_,
+            op->id(), op->iter_, op->begin_, op->end_, op->step_, op->len_,
             op->property_.withNoDeps(noDeps),
             ReplaceVar(
                 op->iter_,
@@ -206,10 +206,10 @@ Stmt Grad::visit(const VarDef &_op) {
                 auto init = makeStore("", gradName, std::move(indices),
                                       makeIntConst(0));
                 for (int i = nDim - 1; i >= 0; i--) {
-                    init = makeFor("", iters[i], makeIntConst(0),
-                                   op->buffer_->tensor().shape()[i],
-                                   op->buffer_->tensor().shape()[i],
-                                   ForProperty(), init);
+                    init = makeFor(
+                        "", iters[i], makeIntConst(0),
+                        op->buffer_->tensor().shape()[i], makeIntConst(1),
+                        op->buffer_->tensor().shape()[i], ForProperty(), init);
                 }
                 grad = makeStmtSeq("", {init, grad});
             }

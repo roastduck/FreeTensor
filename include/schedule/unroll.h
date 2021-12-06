@@ -29,7 +29,7 @@ class ImmediateUnroll : public Mutator {
     bool done_ = false;
 
     std::string iter_;
-    Expr begin_;
+    Expr begin_, step_;
     int curIter_;
 
   public:

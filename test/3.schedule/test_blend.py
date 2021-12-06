@@ -32,6 +32,36 @@ def test_basic():
     assert std.match(ast)
 
 
+def test_begin_and_step():
+    with ir.VarDef([("y1", (8,), "int32", "output", "cpu"),
+                    ("y2", (8,), "int32", "output", "cpu")]) as (y1, y2):
+        with ir.For("i", 6, -2, -2, nid="L1") as i:
+            y1[i] = i + 1
+            y2[i] = i + 2
+    ast = ir.pop_ast()
+    print(ast)
+    s = ir.Schedule(ast)
+    s.blend("L1")
+    ast = s.ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([("y1", (8,), "int32", "output", "cpu"),
+                    ("y2", (8,), "int32", "output", "cpu")]) as (y1, y2):
+        y1[6] = 7
+        y1[4] = 5
+        y1[2] = 3
+        y1[0] = 1
+        y2[6] = 8
+        y2[4] = 6
+        y2[2] = 4
+        y2[0] = 2
+    std = ir.pop_ast()
+
+    assert std.match(ast)
+
+
 def test_inner_if():
     with ir.VarDef([
         ("x", (4,), "int32", "input", "cpu"),

@@ -121,20 +121,21 @@ Stmt LowerParallelReduction::visit(const For &_op) {
                             makeLT(makeAdd(nth, k), op->len_)),
                    makeReduceTo("", workspace, wIndices, redOp,
                                 makeLoad(workspace, wNextIndices), false));
-        reduceStmt = makeFor("", "__reduce_p", makeIntConst(0),
-                             makeIntConst(count), makeIntConst(count),
-                             ForProperty().withUnroll(), std::move(reduceStmt));
+        reduceStmt =
+            makeFor("", "__reduce_p", makeIntConst(0), makeIntConst(count),
+                    makeIntConst(1), makeIntConst(count),
+                    ForProperty().withUnroll(), std::move(reduceStmt));
         flushStmt = makeStmtSeq("", {reduceStmt, flushStmt});
 
         for (size_t j = workspaceShape.size() - 2; ~j; j--) {
             initStmt = makeFor("", workspace + "." + std::to_string(j),
                                makeIntConst(0), workspaceShape[j + 1],
-                               workspaceShape[j + 1], ForProperty(),
-                               std::move(initStmt));
+                               makeIntConst(1), workspaceShape[j + 1],
+                               ForProperty(), std::move(initStmt));
             flushStmt = makeFor("", workspace + "." + std::to_string(j),
                                 makeIntConst(0), workspaceShape[j + 1],
-                                workspaceShape[j + 1], ForProperty(),
-                                std::move(flushStmt));
+                                makeIntConst(1), workspaceShape[j + 1],
+                                ForProperty(), std::move(flushStmt));
         }
 
         op->body_ = makeStmtSeq("", {initStmt, op->body_, flushStmt});

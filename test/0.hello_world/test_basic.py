@@ -101,6 +101,26 @@ def test_for():
     assert np.array_equal(y_np, y_std)
 
 
+def test_reversed_for():
+    with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+        with ir.For("i", 3, -1, -1) as i:
+            y[i] = x[i] + 1
+
+    func = ir.lower(ir.Func("main", ["x", "y"], [], ir.pop_ast()), ir.CPU())
+    code = ir.codegen(func, ir.CPU())
+    print(code)
+    x_np = np.array([1, 2, 3, 4], dtype="int32")
+    y_np = np.zeros((4,), dtype="int32")
+    x_arr = ir.Array(x_np, ir.Device(ir.CPU()))
+    y_arr = ir.Array(y_np, ir.Device(ir.CPU()))
+    ir.Driver(func, code, ir.Device(ir.CPU()))(x=x_arr, y=y_arr)
+    y_np = y_arr.numpy()
+
+    y_std = np.array([2, 3, 4, 5], dtype="int32")
+    assert np.array_equal(y_np, y_std)
+
+
 def test_if():
     with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ir.For("i", 0, 4) as i:

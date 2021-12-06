@@ -470,13 +470,15 @@ void PrintVisitor::visit(const For &op) {
     }
     makeIndent();
     if (pretty_) {
-        os() << BOLD << "for " << RESET << op->iter_ << " = ";
+        os() << BOLD << "for " << RESET << op->iter_ << " in ";
     } else {
-        os() << "for " << op->iter_ << " = ";
+        os() << "for " << op->iter_ << " in ";
     }
     recur(op->begin_);
-    os() << " to ";
+    os() << " : ";
     recur(op->end_);
+    os() << " : ";
+    recur(op->step_);
     os() << " ";
     beginBlock();
     recur(op->body_);
