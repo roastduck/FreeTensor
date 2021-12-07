@@ -14,7 +14,7 @@ def test_reuse_over_loop():
                         t[k] += x[i, j, k]
                 with ir.For("k", 0, 6, nid="Lk2"):
                     y[i, k] = t[k] * 2
-    ast = ir.pop_ast()
+    ast = ir.make_reduction(ir.pop_ast())
     print(ast)
     ast = ir.output_intermediates(ast, set(["V_t"]))
     print(ast)
@@ -54,7 +54,7 @@ def test_reuse_over_stmt_seq():
                 t[k] = x[5 - k] * k
             with ir.For("k", 0, 6, nid="Lk2"):
                 y[k] *= t[k]
-    ast = ir.pop_ast()
+    ast = ir.make_reduction(ir.pop_ast())
     print(ast)
     ast = ir.output_intermediates(ast, set(["V_t"]))
     print(ast)
@@ -104,7 +104,7 @@ def test_reuse_different_lengths():
                         t[k] += x2[i, j, k]
                 with ir.For("k", 0, 6):
                     y2[i, k] = t[k] * 2
-    ast = ir.pop_ast()
+    ast = ir.make_reduction(ir.pop_ast())
     print(ast)
     ast = ir.output_intermediates(ast, set(["V_t"]))
     print(ast)
@@ -156,7 +156,7 @@ def test_no_need_to_copy():
                         t[i, k] += x[i, j, k]
                 with ir.For("k", 0, 6, nid="Lk2"):
                     y[i, k] = t[i, k] * 2
-    ast = ir.pop_ast()
+    ast = ir.make_reduction(ir.pop_ast())
     print(ast)
     ast = ir.output_intermediates(ast, set(["V_t"]))
     print(ast)
@@ -194,7 +194,7 @@ def test_circular_reuse():
                         h[i] = c[i] * 2 + 1
                 with ir.For("i", 0, 128, nid='Li2') as i:
                     y[i] = h[i]
-    ast = ir.pop_ast()
+    ast = ir.make_reduction(ir.pop_ast())
     print(ast)
     ast = ir.output_intermediates(ast, set(["V_c", "V_h"]))
     print(ast)

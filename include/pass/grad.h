@@ -43,11 +43,15 @@ class PropagateRequire : public Visitor {
 };
 
 class ReplaceByTape : public Mutator {
-    const std::unordered_map<Load, Expr> &loadMap_;
+    const std::unordered_map<std::string, VarDef> &defs_;
+    const std::unordered_map<std::string, std::string> &tapeMap_;
+    const std::unordered_map<AST, Expr> &versions_;
 
   public:
-    ReplaceByTape(const std::unordered_map<Load, Expr> &loadMap)
-        : loadMap_(loadMap) {}
+    ReplaceByTape(const std::unordered_map<std::string, VarDef> &defs,
+                  const std::unordered_map<std::string, std::string> &tapeMap,
+                  const std::unordered_map<AST, Expr> &versions)
+        : defs_(defs), tapeMap_(tapeMap), versions_(versions) {}
 
   protected:
     Expr visit(const Load &op) override;
@@ -59,15 +63,15 @@ class GradExpr : public Visitor {
     std::unordered_map<Expr, Expr> gradExprs_; // x -> dy/dx
     uint64_t rootHash_;
     Expr equLoad_;
-    ReplaceByTape replaceByTape_;
+    ReplaceByTape &replaceByTape_;
     std::vector<Stmt> appends_;
 
   public:
-    GradExpr(const std::unordered_map<Load, Expr> &loadMap,
+    GradExpr(ReplaceByTape &replaceByTape,
              const std::unordered_map<std::string, std::string> &gradNames,
              const Expr &root, const Expr &grad, const Expr &equLoad)
         : gradNames_(gradNames), rootHash_(getHash(root)), equLoad_(equLoad),
-          replaceByTape_(loadMap) {
+          replaceByTape_(replaceByTape) {
         gradExprs_[root] = grad;
     }
 
@@ -104,9 +108,10 @@ class Grad : public Mutator {
     const std::unordered_set<std::string> &provides_;
     const std::unordered_set<std::string> &tapes_;
     const std::unordered_set<std::string> &affectedDefs_;
-    const std::unordered_map<Load, Expr> &loadMap_;
+    const std::unordered_map<std::string, std::string> &tapeMap_;
+    const std::unordered_map<AST, Expr> &versions_;
+    const std::unordered_map<std::string, Expr> &totLens_;
     const std::unordered_set<Stmt> &notSingleWrite_;
-    std::unordered_set<std::string> isTape_;
     ReplaceByTape replaceByTape_;
 
     std::unordered_map<std::string, std::string> requireGrads_; // var name map
@@ -126,15 +131,13 @@ class Grad : public Mutator {
          const std::unordered_set<std::string> &tapes,
          const std::unordered_set<std::string> &affectedDefs,
          const std::unordered_map<std::string, std::string> &tapeMap,
-         const std::unordered_map<Load, Expr> &loadMap,
+         const std::unordered_map<AST, Expr> &versions,
+         const std::unordered_map<std::string, Expr> &totLens,
          const std::unordered_set<Stmt> &notSingleWrite)
         : requires_(requires), provides_(provides), tapes_(tapes),
-          affectedDefs_(affectedDefs), loadMap_(loadMap),
-          notSingleWrite_(notSingleWrite), replaceByTape_(loadMap) {
-        for (auto &&[oriDef, tapeVar] : tapeMap) {
-            isTape_.insert(tapeVar);
-        }
-    }
+          affectedDefs_(affectedDefs), tapeMap_(tapeMap), versions_(versions),
+          totLens_(totLens), notSingleWrite_(notSingleWrite),
+          replaceByTape_(defs_, tapeMap_, versions) {}
 
     const std::unordered_map<std::string, std::string> &requireGrads() const {
         return requireGrads_;
@@ -148,7 +151,7 @@ class Grad : public Mutator {
     Stmt visit(const For &op) override;
     Stmt visit(const VarDef &op) override;
     Stmt visit(const Store &op) override;
-    Stmt visit(const ReduceTo &op) override { ASSERT(false); }
+    Stmt visit(const ReduceTo &op) override;
 };
 
 /**

@@ -6,6 +6,7 @@
 #include <pass/float_simplify.h>
 #include <pass/grad.h>
 #include <pass/hoist_var_over_stmt_seq.h>
+#include <pass/make_reduction.h>
 #include <pass/output_intermediates.h>
 #include <pass/prop_const.h>
 #include <pass/prop_one_time_use.h>
@@ -13,41 +14,9 @@
 #include <pass/remove_dead_var.h>
 #include <pass/remove_writes.h>
 #include <pass/simplify.h>
+#include <pass/undo_make_reduction.h>
 
 namespace ir {
-
-static bool isSameElem(const Store &s, const Load &l) {
-    if (s->var_ != l->var_) {
-        return false;
-    }
-    ASSERT(s->indices_.size() == l->indices_.size());
-    for (size_t i = 0, iEnd = s->indices_.size(); i < iEnd; i++) {
-        if (getHash(s->indices_[i]) != getHash(l->indices_[i])) {
-            return false;
-        }
-    }
-    return true;
-}
-
-static Expr canonicalReduceSumExpr(const Store &store) {
-    // Check if var[indices] = expr is a canonical reduce sum, which can be
-    // written as var[indices] = var[indices] + X, where there is no access to
-    // var in X
-
-    // NOTE: Do not copy the AST because `loadMap` requires the address
-    if (store->expr_->nodeType() == ASTNodeType::Add) {
-        auto expr = store->expr_.as<AddNode>();
-        if (expr->lhs_->nodeType() == ASTNodeType::Load &&
-            isSameElem(store, expr->lhs_.template as<LoadNode>())) {
-            return expr->rhs_;
-        }
-        if (expr->rhs_->nodeType() == ASTNodeType::Load &&
-            isSameElem(store, expr->rhs_.template as<LoadNode>())) {
-            return expr->lhs_;
-        }
-    }
-    return nullptr;
-}
 
 DataType PropagateRequire::dtype(const Expr &op) {
     typeInfer_(op);
@@ -92,12 +61,18 @@ void PropagateRequire::visit(const VarDef &op) {
     buffers_.erase(op->name_);
 }
 
-Expr ReplaceByTape::visit(const Load &op) {
-    if (loadMap_.count(op)) {
-        return (*this)(loadMap_.at(op));
-    } else {
-        return Mutator::visit(op);
+Expr ReplaceByTape::visit(const Load &_op) {
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::Load);
+    auto op = __op.as<LoadNode>();
+    if (tapeMap_.count(defs_.at(_op->var_)->id())) {
+        auto tapeVar = tapeMap_.at(defs_.at(_op->var_)->id());
+        if (tapeVar != op->var_) {
+            op->var_ = tapeVar;
+            op->indices_.insert(op->indices_.begin(), versions_.at(_op));
+        }
     }
+    return op;
 }
 
 Stmt Grad::visit(const StmtSeq &op) {
@@ -167,6 +142,8 @@ Stmt Grad::visit(const VarDef &_op) {
         op->setId("");
         return op;
     } else {
+        VarDef ret = op;
+
         if (affectedDefs_.count(_op->id())) {
             if (requires_.count(op->name_)) {
                 requireGrads_[op->name_] = gradName;
@@ -177,8 +154,7 @@ Stmt Grad::visit(const VarDef &_op) {
 
             auto grad = op->body_;
             if ((op->buffer_->atype() != AccessType::Output &&
-                 op->buffer_->atype() != AccessType::InOut) ||
-                isTape_.count(op->name_)) {
+                 op->buffer_->atype() != AccessType::InOut)) {
                 // We use reverse order in the init, so it can be better fused
                 // with the backward pass
                 std::vector<std::string> iters;
@@ -207,41 +183,40 @@ Stmt Grad::visit(const VarDef &_op) {
 
             grad = makeVarDef(op->id() + ".grad", gradName, *op->buffer_,
                               op->sizeLim_, grad, op->pinned_);
-            grad = makeVarDef(op->id(), op->name_, *op->buffer_, op->sizeLim_,
-                              grad, op->pinned_);
-
             switch (op->buffer_->atype()) {
             case AccessType::Input:
-                grad.as<VarDefNode>()
-                    ->body_.as<VarDefNode>()
-                    ->buffer_->setAtype(AccessType::Output);
+                grad.as<VarDefNode>()->buffer_->setAtype(AccessType::Output);
                 break;
             case AccessType::Output:
             case AccessType::InOut:
-                grad.as<VarDefNode>()->buffer_->setAtype(AccessType::Input);
-                grad.as<VarDefNode>()
-                    ->body_.as<VarDefNode>()
-                    ->buffer_->setAtype(!isTape_.count(op->name_)
-                                            ? AccessType::InOut
-                                            : AccessType::Cache);
+                grad.as<VarDefNode>()->buffer_->setAtype(AccessType::InOut);
                 break;
             case AccessType::Cache:
                 break; // do nothing
             }
 
-            return grad;
-        } else {
-            switch (op->buffer_->atype()) {
-            case AccessType::Output:
-            case AccessType::InOut:
-                op.as<VarDefNode>()->buffer_->setAtype(AccessType::Input);
-                break;
-            default:
-                break; // do nothing
-            }
-
-            return op;
+            ret = makeVarDef(op->id(), op->name_, *op->buffer_, op->sizeLim_,
+                             grad, op->pinned_)
+                      .as<VarDefNode>();
         }
+
+        if (ret->buffer_->atype() == AccessType::Output ||
+            ret->buffer_->atype() == AccessType::InOut) {
+            ret->buffer_->setAtype(AccessType::Input);
+        }
+        if (tapeMap_.count(op->id())) {
+            auto tapeVar = tapeMap_.at(op->id());
+            if (tapeVar != ret->name_) {
+                ret = makeVarDef(ret->id() + ".tape", tapeVar, *ret->buffer_,
+                                 ret->sizeLim_, ret, ret->pinned_)
+                          .as<VarDefNode>();
+                auto &shape = ret->buffer_->tensor().shape();
+                shape.insert(shape.begin(), totLens_.at(op->id()));
+            }
+            ret.as<VarDefNode>()->buffer_->setAtype(AccessType::Input);
+        }
+
+        return ret;
     }
 }
 
@@ -268,7 +243,7 @@ Stmt Grad::visit(const Store &op) {
             auto &&indices = op->indices_;
             if (!allReads(op->expr_).count(op->var_)) {
                 // Quick path for acyclic assignment
-                GradExpr exprVisitor(loadMap_, gradNames_, op->expr_,
+                GradExpr exprVisitor(replaceByTape_, gradNames_, op->expr_,
                                      makeLoad(grad, indices),
                                      makeLoad(op->var_, indices));
                 exprVisitor(op->expr_);
@@ -279,18 +254,6 @@ Stmt Grad::visit(const Store &op) {
                 if (notSingleWrite_.count(op)) {
                     stmts.emplace_back(
                         makeStore("", grad, indices, makeIntConst(0)));
-                }
-                return makeStmtSeq("", std::move(stmts));
-            } else if (auto &&expr = canonicalReduceSumExpr(op);
-                       expr.isValid()) {
-                // Quick path for canonical reduce sum
-                GradExpr exprVisitor(loadMap_, gradNames_, expr,
-                                     makeLoad(grad, indices),
-                                     makeLoad(op->var_, indices));
-                exprVisitor(expr);
-
-                for (auto &&stmt : exprVisitor.appends()) {
-                    stmts.emplace_back(stmt);
                 }
                 return makeStmtSeq("", std::move(stmts));
             } else {
@@ -305,7 +268,7 @@ Stmt Grad::visit(const Store &op) {
                 stmts.emplace_back(
                     makeStore("", grad, indices, makeIntConst(0)));
 
-                GradExpr exprVisitor(loadMap_, gradNames_, op->expr_,
+                GradExpr exprVisitor(replaceByTape_, gradNames_, op->expr_,
                                      makeLoad(oldGrad, {}),
                                      makeLoad(op->var_, indices));
                 exprVisitor(op->expr_);
@@ -318,6 +281,48 @@ Stmt Grad::visit(const Store &op) {
                                          AccessType::Cache, buffer->mtype()),
                                   nullptr, makeStmtSeq("", std::move(stmts)),
                                   false);
+            }
+        } else {
+            return makeStmtSeq("", {});
+        }
+    }
+}
+
+Stmt Grad::visit(const ReduceTo &op) {
+    auto &&buffer = defs_.at(op->var_)->buffer_;
+    if (isRecompute_) {
+        // FIXME: What if an intermediate variable is assigned and used multiple
+        // times? E.g. a = x; use a; a = y; use a;
+        bool recomputed =
+            recomputed_.count(op->var_) && recomputed_.at(op->var_).count(op);
+        if (!recomputed && buffer->atype() == AccessType::Cache &&
+            !taped_.count(op->var_)) {
+            recomputed_[op->var_].insert(op);
+            auto ret = replaceByTape_(op);
+            ret->setId("");
+            return ret;
+        } else {
+            return makeStmtSeq("", {});
+        }
+    } else {
+        std::vector<Stmt> stmts;
+        if (gradNames_.count(op->var_)) {
+            auto &&grad = gradNames_.at(op->var_);
+            auto &&indices = op->indices_;
+            if (op->op_ == ReduceOp::Add &&
+                !allReads(op->expr_).count(op->var_)) {
+                // Quick path for canonical reduce sum
+                GradExpr exprVisitor(replaceByTape_, gradNames_, op->expr_,
+                                     makeLoad(grad, indices),
+                                     makeLoad(op->var_, indices));
+                exprVisitor(op->expr_);
+
+                for (auto &&stmt : exprVisitor.appends()) {
+                    stmts.emplace_back(stmt);
+                }
+                return makeStmtSeq("", std::move(stmts));
+            } else {
+                ASSERT(false);
             }
         } else {
             return makeStmtSeq("", {});
@@ -470,32 +475,30 @@ grad(const Stmt &_op, const std::unordered_set<std::string> &requires,
     // Simplify before grad. E.g. grad of x^2 is much simpler than x * x
     op = floatSimplify(op);
 
-    auto [forward, tapeMap, loadMap] = outputIntermediates(op, tapes);
-    // loadMap contains pointers to forward. Do not modify forward
+    // Reduce min and reduce max may need the intermediate value for
+    // gradients, but reduce add does not
+    op = undoMakeReduction(op); // Because we need to record loadMap
+    op = makeReduction(op, {ReduceOp::Add}, true);
 
-    // TODO: Are every tape vars requiring grad?
-    auto requiresAndTapes = requires;
-    for (auto &&[defId, name] : tapeMap) {
-        requiresAndTapes.insert(name);
-    }
+    auto [forward, tapeMap, versions, totLens] = outputIntermediates(op, tapes);
+    // versions contains pointers to op. Do not modify op
 
-    PropagateRequire propagator(requiresAndTapes, provides);
+    PropagateRequire propagator(requires, provides);
     size_t affectCnt;
     do {
         affectCnt = propagator.affectedDefs().size();
-        propagator(forward);
+        propagator(op);
     } while (propagator.affectedDefs().size() > affectCnt);
 
     std::unordered_set<Stmt> notSingleWrite;
     auto foundWAW = [&](const Dependency &d) {
         notSingleWrite.insert(d.earlier().as<StmtNode>());
     };
-    findDeps(forward, {{}}, foundWAW, FindDepsMode::Dep, DEP_WAW, nullptr,
-             false);
+    findDeps(op, {{}}, foundWAW, FindDepsMode::Dep, DEP_WAW, nullptr, false);
 
     Grad mutator(requires, provides, tapes, propagator.affectedDefs(), tapeMap,
-                 loadMap, notSingleWrite);
-    auto backward = mutator(forward);
+                 versions, totLens, notSingleWrite);
+    auto backward = mutator(op);
 
     // We do some basic simplifications here, to reduce burden on auto-schedule
     backward = propOneTimeUse(backward);

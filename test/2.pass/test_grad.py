@@ -267,8 +267,8 @@ def test_assign_quick_path():
                     ("d_y", (), "float32", "inout", "cpu")]) as (x, d_x, y,
                                                                  d_y):
         with ir.For("i", 3, -1, -1) as i:
-            d_x[i] = d_y[i]
-            d_y[i] = 0
+            d_x[i] = d_y[()]
+            d_y[()] = 0
     std = ir.make_reduction(ir.pop_ast())
 
     assert std.match(ast)
@@ -292,7 +292,7 @@ def test_reduce_sum_quick_path():
                     ("d_y", (), "float32", "inout", "cpu")]) as (x, d_x, y,
                                                                  d_y):
         with ir.For("i", 3, -1, -1) as i:
-            d_x[i] = d_y[i]
+            d_x[i] = d_y[()]
     std = ir.make_reduction(ir.pop_ast())
 
     assert std.match(ast)
@@ -614,25 +614,20 @@ def test_tape_5():
         with ir.For(".u.grad.i0", 255, -1, -1) as _du_i0:
             with ir.For(".u.grad.i1", 255, -1, -1) as _du_i1:
                 du[_du_i0, _du_i1] = 0
-        with ir.VarDef("f.tape.grad", (100, 256), "float32", "cache",
-                       "cpu") as df_tape:
-            ir.Any()  # df_tape, can be removed in the future
-            with ir.VarDef("f.grad", (256,), "float32", "cache", "cpu") as df:
-                with ir.For(".f.grad.i0", 255, -1, -1) as _df_i0:
-                    df[_df_i0] = 0
-                with ir.For("i", 255, -1, -1) as i:
-                    dh[i] = dy[i]
-                with ir.For("k", 99, -1, -1) as k:
-                    with ir.For("l", 255, -1, -1) as l:
-                        df[l] = df[l] + dh[l]
-                        dh[l] = 0
-                    with ir.For("l", 255, -1, -1) as l:
-                        with ir.For("j", 255, -1, -1) as j:
-                            ir.Any()  # df_tape, can be removed in the future
-                            ir.Any()  # df_tape, can be removed in the future
-                            du[j, l] = du[j, l] + df[l] * h_tape[k, j]
-                            dh[j] = dh[j] + df[l] * u[j, l]
-                        df[l] = 0
+        with ir.VarDef("f.grad", (256,), "float32", "cache", "cpu") as df:
+            with ir.For(".f.grad.i0", 255, -1, -1) as _df_i0:
+                df[_df_i0] = 0
+            with ir.For("i", 255, -1, -1) as i:
+                dh[i] = dy[i]
+            with ir.For("k", 99, -1, -1) as k:
+                with ir.For("l", 255, -1, -1) as l:
+                    df[l] = df[l] + dh[l]
+                    dh[l] = 0
+                with ir.For("l", 255, -1, -1) as l:
+                    with ir.For("j", 255, -1, -1) as j:
+                        du[j, l] = du[j, l] + df[l] * h_tape[k, j]
+                        dh[j] = dh[j] + df[l] * u[j, l]
+                    df[l] = 0
         with ir.For("l", 255, -1, -1) as l:
             dh[l] = 0
     std = ir.make_reduction(ir.pop_ast())
