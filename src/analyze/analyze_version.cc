@@ -112,8 +112,11 @@ void AnalyzeVersion::visit(const VarDef &op) {
 void AnalyzeVersion::visit(const For &op) {
     if (affectingScopes_.count(op->id())) {
         auto oldOffset = offset_;
-        offset_ = makeAdd(offset_,
-                          makeMul(makeVar(op->iter_), scopeLen_.at(op->body_)));
+        offset_ = makeAdd(
+            offset_,
+            makeMul(makeFloorDiv(makeSub(makeVar(op->iter_), op->begin_),
+                                 op->step_),
+                    scopeLen_.at(op->body_)));
         Visitor::visit(op);
         offset_ = oldOffset;
     } else {

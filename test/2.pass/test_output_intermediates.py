@@ -41,6 +41,46 @@ def test_reuse_over_loop():
     assert std.match(ast)
 
 
+def test_reuse_over_loop_with_offset():
+    with ir.VarDef([("x", (4, 5, 6), "float32", "input", "cpu"),
+                    ("y", (4, 6), "float32", "output", "cpu")]) as (x, y):
+        with ir.For("i", 2, 6, nid="Li") as i:
+            ir.MarkNid("V_t")
+            with ir.VarDef("t", (6,), "float32", "cache", "cpu") as t:
+                with ir.For("k", 0, 6, nid="Lk0") as k:
+                    t[k] = 0
+                with ir.For("j", 0, 5, nid="Lj") as j:
+                    with ir.For("k", 0, 6, nid="Lk1") as k:
+                        t[k] += x[i - 2, j, k]
+                with ir.For("k", 0, 6, nid="Lk2"):
+                    y[i - 2, k] = t[k] * 2
+    ast = ir.make_reduction(ir.pop_ast())
+    print(ast)
+    ast = ir.output_intermediates(ast, set(["V_t"]))
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([("x", (4, 5, 6), "float32", "input", "cpu"),
+                    ("y", (4, 6), "float32", "output", "cpu")]) as (x, y):
+        with ir.For("i", 2, 6) as i:
+            with ir.VarDef("t.tape", (4, 6), "float32", "output",
+                           "cpu") as t_tape:
+                with ir.VarDef("t", (6,), "float32", "cache", "cpu") as t:
+                    with ir.For("k", 0, 6) as k:
+                        t[k] = 0
+                    with ir.For("j", 0, 5) as j:
+                        with ir.For("k", 0, 6) as k:
+                            t[k] += x[i + -2, j, k]
+                            with ir.If(j == 4):
+                                t_tape[i + -2, k] = t[k]
+                    with ir.For("k", 0, 6):
+                        y[i + -2, k] = t[k] * 2
+    std = ir.make_reduction(ir.pop_ast())
+
+    assert std.match(ast)
+
+
 def test_reuse_over_stmt_seq():
     with ir.VarDef([("x", (6,), "float32", "input", "cpu"),
                     ("y", (6,), "float32", "inout", "cpu")]) as (x, y):
