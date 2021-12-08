@@ -83,63 +83,20 @@ class StructuralFeature : public CompUniqueBounds {
     void calcAreaFeatures(const Stmt &parent);
     void calcFeatures(const Stmt &parent);
 
-    template <class T> Expr visitBinOp(const T &_op) {
-        auto __op = BaseClass::visit(_op);
-        ASSERT(__op->nodeType() == _op->nodeType());
-        auto op = __op.template as<typename T::Object>();
-        updInfo(op, op->lhs_);
-        updInfo(op, op->rhs_);
-        info_[op].opCnt_[upCast(dtype(op->lhs_), dtype(op->rhs_))]++;
-        return op;
-    }
-
-    template <class T> Expr visitUnaryOp(const T &_op) {
-        auto __op = BaseClass::visit(_op);
-        ASSERT(__op->nodeType() == _op->nodeType());
-        auto op = __op.template as<typename T::Object>();
-        updInfo(op, op->expr_);
-        info_[op].opCnt_[dtype(op->expr_)]++;
-        return op;
-    }
+    Expr visitBinOp(const BinaryExpr &_op);
+    Expr visitUnaryOp(const UnaryExpr &_op);
 
   protected:
     using CompUniqueBounds::visit;
 
     Stmt visitStmt(const Stmt &op) override;
+    Expr visitExpr(const Expr &op) override;
 
     Expr visit(const Load &op) override;
     Stmt visit(const Store &op) override;
     Stmt visit(const ReduceTo &op) override;
 
-    Expr visit(const Add &op) override { return visitBinOp(op); }
-    Expr visit(const Sub &op) override { return visitBinOp(op); }
-    Expr visit(const Mul &op) override { return visitBinOp(op); }
-    Expr visit(const RealDiv &op) override { return visitBinOp(op); }
-    Expr visit(const FloorDiv &op) override { return visitBinOp(op); }
-    Expr visit(const CeilDiv &op) override { return visitBinOp(op); }
-    Expr visit(const RoundTowards0Div &op) override { return visitBinOp(op); }
-    Expr visit(const Mod &op) override { return visitBinOp(op); }
-    Expr visit(const Remainder &op) override { return visitBinOp(op); }
-    Expr visit(const Min &op) override { return visitBinOp(op); }
-    Expr visit(const Max &op) override { return visitBinOp(op); }
-    Expr visit(const LT &op) override { return visitBinOp(op); }
-    Expr visit(const LE &op) override { return visitBinOp(op); }
-    Expr visit(const GT &op) override { return visitBinOp(op); }
-    Expr visit(const GE &op) override { return visitBinOp(op); }
-    Expr visit(const EQ &op) override { return visitBinOp(op); }
-    Expr visit(const NE &op) override { return visitBinOp(op); }
-    Expr visit(const LAnd &op) override { return visitBinOp(op); }
-    Expr visit(const LOr &op) override { return visitBinOp(op); }
-    Expr visit(const LNot &op) override { return visitUnaryOp(op); }
-    Expr visit(const Sqrt &op) override { return visitUnaryOp(op); }
-    Expr visit(const Exp &op) override { return visitUnaryOp(op); }
-    Expr visit(const Square &op) override { return visitUnaryOp(op); }
-    Expr visit(const Sigmoid &op) override { return visitUnaryOp(op); }
-    Expr visit(const Tanh &op) override { return visitUnaryOp(op); }
-    Expr visit(const Abs &op) override { return visitUnaryOp(op); }
-    Expr visit(const Floor &op) override { return visitUnaryOp(op); }
-    Expr visit(const Ceil &op) override { return visitUnaryOp(op); }
-    Expr visit(const Cast &op) override { return visitUnaryOp(op); }
+    Expr visit(const Cast &op) override;
     Expr visit(const IfExpr &op) override;
 
     Stmt visit(const StmtSeq &op) override;

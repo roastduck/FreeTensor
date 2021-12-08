@@ -83,64 +83,20 @@ class FindLoopVariance : public Visitor {
     void copyInfo(const Expr &from, const Expr &to);
     void mergeInfo(const Expr &from, const Expr &to);
 
-    template <class T> void visitConst(const T &op) {
-        Visitor::visit(op);
-        for (auto &&loop : allLoops_) {
-            exprInfo_[op][loop] = LoopVariability::Invariance;
-        }
-    }
-
-    template <class T> void visitBinOp(const T &op) {
-        Visitor::visit(op);
-        copyInfo(op->lhs_, op);
-        mergeInfo(op->rhs_, op);
-    }
-
-    template <class T> void visitUnaryOp(const T &op) {
-        Visitor::visit(op);
-        copyInfo(op->expr_, op);
-    }
+    void visitConst(const Const &op);
+    void visitBinOp(const BinaryExpr &op);
+    void visitUnaryOp(const UnaryExpr &op);
 
   protected:
     void visit(const For &op) override;
     void visit(const If &op) override;
     void visit(const VarDef &op) override;
 
+    void visitExpr(const Expr &op) override;
     void visit(const Var &op) override;
-    void visit(const IntConst &op) override { visitConst(op); }
-    void visit(const FloatConst &op) override { visitConst(op); }
-    void visit(const BoolConst &op) override { visitConst(op); }
     void visit(const Load &op) override;
-    void visit(const Add &op) override { visitBinOp(op); }
-    void visit(const Sub &op) override { visitBinOp(op); }
-    void visit(const Mul &op) override { visitBinOp(op); }
-    void visit(const RealDiv &op) override { visitBinOp(op); }
-    void visit(const FloorDiv &op) override { visitBinOp(op); }
-    void visit(const CeilDiv &op) override { visitBinOp(op); }
-    void visit(const RoundTowards0Div &op) override { visitBinOp(op); }
-    void visit(const Mod &op) override { visitBinOp(op); }
-    void visit(const Remainder &op) override { visitBinOp(op); }
-    void visit(const Min &op) override { visitBinOp(op); }
-    void visit(const Max &op) override { visitBinOp(op); }
-    void visit(const LT &op) override { visitBinOp(op); }
-    void visit(const LE &op) override { visitBinOp(op); }
-    void visit(const GT &op) override { visitBinOp(op); }
-    void visit(const GE &op) override { visitBinOp(op); }
-    void visit(const EQ &op) override { visitBinOp(op); }
-    void visit(const NE &op) override { visitBinOp(op); }
-    void visit(const LAnd &op) override { visitBinOp(op); }
-    void visit(const LOr &op) override { visitBinOp(op); }
-    void visit(const LNot &op) override { visitUnaryOp(op); }
-    void visit(const Sqrt &op) override { visitUnaryOp(op); }
-    void visit(const Exp &op) override { visitUnaryOp(op); }
-    void visit(const Square &op) override { visitUnaryOp(op); }
-    void visit(const Sigmoid &op) override { visitUnaryOp(op); }
-    void visit(const Tanh &op) override { visitUnaryOp(op); }
-    void visit(const Abs &op) override { visitUnaryOp(op); }
-    void visit(const Floor &op) override { visitUnaryOp(op); }
-    void visit(const Ceil &op) override { visitUnaryOp(op); }
     void visit(const IfExpr &op) override;
-    void visit(const Cast &op) override { visitUnaryOp(op); }
+    void visit(const Cast &op) override;
 };
 
 bool isVariant(const LoopVariExprMap &exprInfo, const Expr &expr,

@@ -138,6 +138,10 @@ class ExprNode : public ASTNode {
   public:
     bool isExpr() const override { return true; }
 
+    virtual bool isConst() const { return false; }
+    virtual bool isBinary() const { return false; }
+    virtual bool isUnary() const { return false; }
+
     DEFINE_NODE_ACCESS(Expr);
 };
 typedef Ref<ExprNode> Expr;

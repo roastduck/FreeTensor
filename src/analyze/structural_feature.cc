@@ -206,10 +206,39 @@ void StructuralFeature::calcFeatures(const Stmt &node) {
     calcAreaFeatures(node);
 }
 
+Expr StructuralFeature::visitBinOp(const BinaryExpr &_op) {
+    auto __op = BaseClass::visitExpr(_op);
+    ASSERT(__op->nodeType() == _op->nodeType());
+    auto op = __op.as<BinaryExprNode>();
+    updInfo(op, op->lhs_);
+    updInfo(op, op->rhs_);
+    info_[op].opCnt_[upCast(dtype(op->lhs_), dtype(op->rhs_))]++;
+    return op;
+}
+
+Expr StructuralFeature::visitUnaryOp(const UnaryExpr &_op) {
+    auto __op = BaseClass::visitExpr(_op);
+    ASSERT(__op->nodeType() == _op->nodeType());
+    auto op = __op.as<UnaryExprNode>();
+    updInfo(op, op->expr_);
+    info_[op].opCnt_[dtype(op->expr_)]++;
+    return op;
+}
+
 Stmt StructuralFeature::visitStmt(const Stmt &_op) {
     auto op = BaseClass::visitStmt(_op);
     calcFeatures(op);
     return op;
+}
+
+Expr StructuralFeature::visitExpr(const Expr &op) {
+    if (op->isBinary()) {
+        return visitBinOp(op.as<BinaryExprNode>());
+    } else if (op->isUnary()) {
+        return visitUnaryOp(op.as<UnaryExprNode>());
+    } else {
+        return BaseClass::visitExpr(op);
+    }
 }
 
 Expr StructuralFeature::visit(const Load &_op) {
@@ -314,6 +343,15 @@ Expr StructuralFeature::visit(const IfExpr &_op) {
     updInfo(op, op->thenCase_);
     updInfo(op, op->elseCase_);
     info_[op].opCnt_[dtype(op->cond_)]++;
+    return op;
+}
+
+Expr StructuralFeature::visit(const Cast &_op) {
+    auto __op = BaseClass::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::Cast);
+    auto op = __op.as<CastNode>();
+    updInfo(op, op->expr_);
+    info_[op].opCnt_[dtype(op->expr_)]++;
     return op;
 }
 
