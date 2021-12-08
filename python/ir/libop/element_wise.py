@@ -12,12 +12,16 @@ def _binary_op_(op):
             'nid: L_elem'
             for i in range(out.shape(0)):
                 if a.ndim < out.ndim:
+                    assert b.shape(0) == out.shape(0)
                     'nid: recur'
                     _binary_op_(op)(a, b[i], out[i])
                 elif b.ndim < out.ndim:
+                    assert a.shape(0) == out.shape(0)
                     'nid: recur'
                     _binary_op_(op)(a[i], b, out[i])
                 else:
+                    assert a.shape(0) == out.shape(0) or a.shape(0) == 1
+                    assert b.shape(0) == out.shape(0) or b.shape(0) == 1
                     'nid: recur'
                     _binary_op_(op)(a[i % a.shape(0)], b[i % b.shape(0)],
                                     out[i])
@@ -64,6 +68,7 @@ def _unary_op_(op):
         if x.ndim == 0:
             y[()] = op(x[()])
         else:
+            assert x.shape(0) == y.shape(0)
             'nid: L_elem'
             for i in range(x.shape(0)):
                 'nid: recur'

@@ -49,12 +49,14 @@ def _general_reduce_(op,
                 for i in range(x.shape(0)):
                     if begin_with_0(axes):
                         if keepdims:
+                            assert y.shape(0) == 1
                             'nid: recur'
                             reduce(all_minus_one(axes[1:]))(x[i], y[0])
                         else:
                             'nid: recur'
                             reduce(all_minus_one(axes[1:]))(x[i], y)
                     else:
+                        assert y.shape(0) == x.shape(0)
                         'nid: recur'
                         reduce(all_minus_one(axes))(x[i], y[i])
 
