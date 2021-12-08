@@ -2,10 +2,9 @@
 
 namespace ir {
 
-void TypeInfer::visitExpr(const Expr &op,
-                          const std::function<void(const Expr &)> &visitNode) {
+void TypeInfer::visitExpr(const Expr &op) {
     if (!types_.count(op)) {
-        Visitor::visitExpr(op, visitNode);
+        Visitor::visitExpr(op);
     }
 }
 

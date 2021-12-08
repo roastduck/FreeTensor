@@ -74,10 +74,9 @@ const std::string &DumpAsTest::normalizeId(const std::string &old) {
     return idCache_[old] = ret;
 }
 
-void DumpAsTest::visitStmt(const Stmt &op,
-                           const std::function<void(const Stmt &)> &visitNode) {
+void DumpAsTest::visitStmt(const Stmt &op) {
     printId(op);
-    Visitor::visitStmt(op, visitNode);
+    Visitor::visitStmt(op);
 }
 
 void DumpAsTest::visit(const StmtSeq &op) {

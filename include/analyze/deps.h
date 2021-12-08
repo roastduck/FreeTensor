@@ -167,8 +167,7 @@ class GenISLExprDeps : public GenISLExpr {
 
   protected:
     using GenISLExpr::visit;
-    void visitExpr(const Expr &op,
-                   const std::function<void(const Expr &)> &visitNode) override;
+    void visitExpr(const Expr &op) override;
     void visit(const Load &op) override;
 };
 

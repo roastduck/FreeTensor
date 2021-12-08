@@ -26,8 +26,7 @@ class TypeInfer : public Visitor {
     const std::unordered_map<Expr, DataType> types() const { return types_; }
 
   protected:
-    void visitExpr(const Expr &op,
-                   const std::function<void(const Expr &)> &visitNode) override;
+    void visitExpr(const Expr &op) override;
 
     void visit(const Var &op) override;
     void visit(const Load &op) override;

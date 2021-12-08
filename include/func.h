@@ -27,6 +27,8 @@ class FuncNode : public ASTNode {
     // them to `Driver`
     std::unordered_map<std::string, Ref<Ref<Array>>> closure_;
 
+    bool isFunc() const override { return true; }
+
     DEFINE_NODE_TRAIT(Func);
 };
 typedef Ref<FuncNode> Func;

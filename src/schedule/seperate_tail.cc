@@ -27,9 +27,8 @@ void FindAllIfs::visit(const If &op) {
     results_.insert(op->id());
 }
 
-Stmt AppendIDs::visitStmt(const Stmt &op,
-                          const std::function<Stmt(const Stmt &)> &visitNode) {
-    auto ret = Mutator::visitStmt(op, visitNode);
+Stmt AppendIDs::visitStmt(const Stmt &op) {
+    auto ret = Mutator::visitStmt(op);
     ret->setId(op->id() + suffix_);
     return ret;
 }

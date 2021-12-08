@@ -38,8 +38,7 @@ const LinearExpr<int64_t> &AsMatMul::analyzeLinear(const Expr &expr) {
     return analyzeLinear_.result().at(expr);
 }
 
-Stmt AsMatMul::visitStmt(const Stmt &op,
-                         const std::function<Stmt(const Stmt &)> &visitNode) {
+Stmt AsMatMul::visitStmt(const Stmt &op) {
     if (inside_ && op->nodeType() != ASTNodeType::ReduceTo &&
         op->nodeType() != ASTNodeType::Store &&
         op->nodeType() != ASTNodeType::StmtSeq &&
@@ -48,7 +47,7 @@ Stmt AsMatMul::visitStmt(const Stmt &op,
         throw InvalidSchedule("Unexpected " + toString(op->nodeType()) +
                               " node");
     }
-    return Mutator::visitStmt(op, visitNode);
+    return Mutator::visitStmt(op);
 }
 
 Stmt AsMatMul::visit(const For &op) {

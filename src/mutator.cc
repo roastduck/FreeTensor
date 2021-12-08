@@ -3,14 +3,12 @@
 
 namespace ir {
 
-Expr Mutator::operator()(const Expr &op) {
+Expr Mutator::visitExpr(const Expr &op) {
     switch (op->nodeType()) {
 
 #define DISPATCH_EXPR_CASE(name)                                               \
     case ASTNodeType::name:                                                    \
-        return visitExpr(op.as<ExprNode>(), [this](const Expr &_op) {          \
-            return visit(_op.as<name##Node>());                                \
-        });
+        return visit(op.as<name##Node>());
 
         DISPATCH_EXPR_CASE(Var);
         DISPATCH_EXPR_CASE(Load);
@@ -55,14 +53,14 @@ Expr Mutator::operator()(const Expr &op) {
     }
 }
 
-Stmt Mutator::operator()(const Stmt &op) {
+Expr Mutator::operator()(const Expr &op) { return visitExpr(op); }
+
+Stmt Mutator::visitStmt(const Stmt &op) {
     switch (op->nodeType()) {
 
 #define DISPATCH_STMT_CASE(name)                                               \
     case ASTNodeType::name:                                                    \
-        return visitStmt(op.as<StmtNode>(), [this](const Stmt &_op) {          \
-            return visit(_op.as<name##Node>());                                \
-        });
+        return visit(op.as<name##Node>());
 
         DISPATCH_STMT_CASE(StmtSeq);
         DISPATCH_STMT_CASE(VarDef);
@@ -79,5 +77,7 @@ Stmt Mutator::operator()(const Stmt &op) {
         ERROR("Unexpected Stmt node type");
     }
 }
+
+Stmt Mutator::operator()(const Stmt &op) { return visitStmt(op); }
 
 } // namespace ir

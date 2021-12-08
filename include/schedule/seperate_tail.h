@@ -28,8 +28,7 @@ class AppendIDs : public Mutator {
     AppendIDs(const std::string &suffix) : suffix_(suffix) {}
 
   protected:
-    Stmt visitStmt(const Stmt &op,
-                   const std::function<Stmt(const Stmt &)> &visitNode) override;
+    Stmt visitStmt(const Stmt &op) override;
 };
 
 /**

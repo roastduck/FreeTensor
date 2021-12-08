@@ -16,11 +16,10 @@ static void appendTo(std::vector<T> &target, const std::vector<T> &other) {
     target.insert(target.end(), other.begin(), other.end());
 }
 
-void GenISLExprSimplify::visitExpr(
-    const Expr &op, const std::function<void(const Expr &)> &visitNode) {
+void GenISLExprSimplify::visitExpr(const Expr &op) {
     auto oldParent = parent_;
     parent_ = op;
-    GenISLExpr::visitExpr(op, visitNode);
+    GenISLExpr::visitExpr(op);
     parent_ = oldParent;
     if (parent_.isValid()) {
         unionTo(vars_[parent_], vars_[op]);
@@ -42,9 +41,8 @@ void GenISLExprSimplify::visit(const Load &op) {
     results_[op] = str;
 }
 
-Expr ISLCompBounds::visitExpr(
-    const Expr &_op, const std::function<Expr(const Expr &)> &visitNode) {
-    auto op = CompUniqueBounds::visitExpr(_op, visitNode);
+Expr ISLCompBounds::visitExpr(const Expr &_op) {
+    auto op = CompUniqueBounds::visitExpr(_op);
     if (!isInt(dtype(op))) {
         return op;
     }

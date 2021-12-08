@@ -5,12 +5,11 @@
 
 namespace ir {
 
-Stmt HoistVar::visitStmt(const Stmt &op,
-                         const std::function<Stmt(const Stmt &)> &visitNode) {
+Stmt HoistVar::visitStmt(const Stmt &op) {
     if (!before_.empty()) {
         isAfter_ |= op->id() == before_;
     }
-    auto ret = Mutator::visitStmt(op, visitNode);
+    auto ret = Mutator::visitStmt(op);
     if (!after_.empty()) {
         isAfter_ |= op->id() == after_;
     }
@@ -157,10 +156,9 @@ Stmt AddDimToVar::visit(const ReduceTo &_op) {
     return doAdd(__op.as<ReduceToNode>());
 }
 
-Stmt FissionFor::visitStmt(const Stmt &op,
-                           const std::function<Stmt(const Stmt &)> &visitNode) {
+Stmt FissionFor::visitStmt(const Stmt &op) {
     if (!inside_) {
-        return Mutator::visitStmt(op, visitNode);
+        return Mutator::visitStmt(op);
     } else {
         auto oldAnyInside = anyInside_;
         anyInside_ = false;
@@ -168,7 +166,7 @@ Stmt FissionFor::visitStmt(const Stmt &op,
             isAfter_ |= op->id() == before_;
         }
         anyInside_ |= (isPart0_ && !isAfter_) || (!isPart0_ && isAfter_);
-        auto ret = Mutator::visitStmt(op, visitNode);
+        auto ret = Mutator::visitStmt(op);
         if (!after_.empty()) {
             isAfter_ |= op->id() == after_;
         }

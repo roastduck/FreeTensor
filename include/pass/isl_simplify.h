@@ -26,8 +26,7 @@ class GenISLExprSimplify : public GenISLExpr {
 
   protected:
     using GenISLExpr::visit;
-    void visitExpr(const Expr &op,
-                   const std::function<void(const Expr &)> &visitNode) override;
+    void visitExpr(const Expr &op) override;
     void visit(const Var &op) override;
     void visit(const Load &op) override;
 };
@@ -39,8 +38,7 @@ class ISLCompBounds : public CompUniqueBounds {
   protected:
     using CompUniqueBounds::visit;
 
-    Expr visitExpr(const Expr &op,
-                   const std::function<Expr(const Expr &)> &visitNode) override;
+    Expr visitExpr(const Expr &op) override;
 };
 
 class ISLSimplify : public SimplifyPass<ISLCompBounds> {};

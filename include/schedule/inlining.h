@@ -17,8 +17,7 @@ class MakeInlinePlaceholder : public Mutator {
               std::vector<Expr>(indices.begin(), indices.end())) {}
 
   protected:
-    Expr visitExpr(const Expr &op,
-                   const std::function<Expr(const Expr &)> &visitNode) override;
+    Expr visitExpr(const Expr &op) override;
 };
 
 class ApplyInlinePlaceholder : public Mutator {

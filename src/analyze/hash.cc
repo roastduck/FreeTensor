@@ -2,10 +2,9 @@
 
 namespace ir {
 
-void GetHash::visitExpr(const Expr &op,
-                        const std::function<void(const Expr &)> &visitNode) {
+void GetHash::visitExpr(const Expr &op) {
     if (!hash_.count(op)) {
-        Visitor::visitExpr(op, visitNode);
+        Visitor::visitExpr(op);
     }
 }
 

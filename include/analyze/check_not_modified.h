@@ -22,8 +22,7 @@ class InsertTmpEval : public Mutator {
     const std::string &s1Eval() const { return s1Eval_; }
 
   protected:
-    Stmt visitStmt(const Stmt &op,
-                   const std::function<Stmt(const Stmt &)> &visitNode) override;
+    Stmt visitStmt(const Stmt &op) override;
 };
 
 /**

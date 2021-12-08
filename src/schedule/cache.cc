@@ -10,14 +10,13 @@
 
 namespace ir {
 
-Stmt MakeCacheVar::visitStmt(
-    const Stmt &op, const std::function<Stmt(const Stmt &)> &visitNode) {
+Stmt MakeCacheVar::visitStmt(const Stmt &op) {
     if (op->id() == stmt_) {
         if (!def_.isValid()) {
             throw InvalidSchedule("Variable " + oldVar_ + " not found");
         }
         inStmt_ = true;
-        auto ret = Mutator::visitStmt(op, visitNode);
+        auto ret = Mutator::visitStmt(op);
         inStmt_ = false;
         Buffer newBuffer(def_->buffer_->tensor(), AccessType::Cache, mtype_);
         ret = makeVarDef("", newVar_, std::move(newBuffer), nullptr,
@@ -26,7 +25,7 @@ Stmt MakeCacheVar::visitStmt(
         newDef_ = ret->id();
         return ret;
     } else {
-        return Mutator::visitStmt(op, visitNode);
+        return Mutator::visitStmt(op);
     }
 }
 
@@ -74,9 +73,8 @@ Stmt MakeCacheVar::visit(const ReduceTo &_op) {
     return op;
 }
 
-Stmt MakeFillAndFlush::visitStmt(
-    const Stmt &_op, const std::function<Stmt(const Stmt &)> &visitNode) {
-    auto op = Mutator::visitStmt(_op, visitNode);
+Stmt MakeFillAndFlush::visitStmt(const Stmt &_op) {
+    auto op = Mutator::visitStmt(_op);
     if (op->id() == stmt_) {
         std::vector<std::string> iters;
         std::vector<Expr> indices;
@@ -148,9 +146,8 @@ Stmt MakeFillAndFlush::visit(const VarDef &op) {
     }
 }
 
-Stmt MakeInitAndReduce::visitStmt(
-    const Stmt &_op, const std::function<Stmt(const Stmt &)> &visitNode) {
-    auto op = Mutator::visitStmt(_op, visitNode);
+Stmt MakeInitAndReduce::visitStmt(const Stmt &_op) {
+    auto op = Mutator::visitStmt(_op);
     if (op->id() == stmt_) {
         std::vector<std::string> iters;
         std::vector<Expr> indices;

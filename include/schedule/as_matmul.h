@@ -123,8 +123,7 @@ class AsMatMul : public Mutator {
     }
 
   protected:
-    Stmt visitStmt(const Stmt &op,
-                   const std::function<Stmt(const Stmt &)> &visitNode) override;
+    Stmt visitStmt(const Stmt &op) override;
     Stmt visit(const For &op) override;
     Stmt visit(const ReduceTo &op) override;
     Stmt visit(const Store &op) override;

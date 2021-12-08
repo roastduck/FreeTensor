@@ -38,8 +38,7 @@ class ImmediateUnroll : public Mutator {
     bool done() const { return done_; }
 
   protected:
-    Stmt visitStmt(const Stmt &op,
-                   const std::function<Stmt(const Stmt &)> &visitNode) override;
+    Stmt visitStmt(const Stmt &op) override;
     Expr visit(const Var &op) override;
     Stmt visit(const For &op) override;
 };

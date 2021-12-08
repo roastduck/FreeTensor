@@ -2,10 +2,9 @@
 
 namespace ir {
 
-void AnalyzeLinear::visitExpr(
-    const Expr &op, const std::function<void(const Expr &)> &visitNode) {
+void AnalyzeLinear::visitExpr(const Expr &op) {
     if (!result_.count(op)) {
-        Visitor::visitExpr(op, visitNode);
+        Visitor::visitExpr(op);
         if (!result_.count(op)) {
             getHash_(op);
             result_[op] = {{{getHash_.hash().at(op), {1, op}}}, 0};

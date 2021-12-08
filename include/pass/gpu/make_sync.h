@@ -38,8 +38,7 @@ class CopyParts : public Mutator {
         : cond_(cond), splitters_(splitters) {}
 
   protected:
-    Stmt visitStmt(const Stmt &op,
-                   const std::function<Stmt(const Stmt &)> &visitNode) override;
+    Stmt visitStmt(const Stmt &op) override;
     Stmt visit(const For &op) override;
     Stmt visit(const If &op) override;
     Stmt visit(const Assert &op) override;
@@ -68,8 +67,7 @@ class MakeSync : public MutatorWithCursor {
     void markSyncForSplitting(const Stmt &sync);
 
   protected:
-    Stmt visitStmt(const Stmt &op,
-                   const std::function<Stmt(const Stmt &)> &visitNode) override;
+    Stmt visitStmt(const Stmt &op) override;
     Stmt visit(const For &op) override;
     Stmt visit(const If &op) override;
 };

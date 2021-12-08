@@ -1,8 +1,6 @@
 #ifndef VISITOR_H
 #define VISITOR_H
 
-#include <functional>
-
 #include <debug.h>
 #include <expr.h>
 #include <func.h>
@@ -17,17 +15,19 @@ class Visitor {
     virtual void operator()(const AST &op) final;
 
   protected:
-    // Additional hook for any expressions
-    virtual void visitExpr(const Expr &op,
-                           const std::function<void(const Expr &)> &visitNode) {
-        visitNode(op);
-    }
+    /* Additional hook for any expressions
+     *
+     * Cautious when one visitor B inherits another visitor A, the calling order
+     * is B::visitExpr -> A::visitExpr -> B::visit -> A::visit
+     */
+    virtual void visitExpr(const Expr &op);
 
-    // Additional hook for any statements
-    virtual void visitStmt(const Stmt &op,
-                           const std::function<void(const Stmt &)> &visitNode) {
-        visitNode(op);
-    }
+    /* Additional hook for any statements
+     *
+     * Cautious when one visitor B inherits another visitor A, the calling order
+     * is B::visitStmt -> A::visitStmt -> B::visit -> A::visit
+     */
+    virtual void visitStmt(const Stmt &op);
 
     // Hooks for each node
     virtual void visit(const Any &op) {}

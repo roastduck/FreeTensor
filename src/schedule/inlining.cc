@@ -13,15 +13,14 @@ MakeInlinePlaceholder::MakeInlinePlaceholder(const std::vector<Expr> &indices) {
     }
 }
 
-Expr MakeInlinePlaceholder::visitExpr(
-    const Expr &op, const std::function<Expr(const Expr &)> &visitNode) {
+Expr MakeInlinePlaceholder::visitExpr(const Expr &op) {
     auto h = getHash(op);
     for (size_t i = 0, iEnd = indexHashes_.size(); i < iEnd; i++) {
         if (indexHashes_[i] == h) {
             return makeVar(".inline_placeholder." + std::to_string(i));
         }
     }
-    return Mutator::visitExpr(op, visitNode);
+    return Mutator::visitExpr(op);
 }
 
 Expr ApplyInlinePlaceholder::visit(const Var &op) {

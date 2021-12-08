@@ -105,8 +105,7 @@ class StructuralFeature : public CompUniqueBounds {
   protected:
     using CompUniqueBounds::visit;
 
-    Stmt visitStmt(const Stmt &op,
-                   const std::function<Stmt(const Stmt &)> &visitNode) override;
+    Stmt visitStmt(const Stmt &op) override;
 
     Expr visit(const Load &op) override;
     Stmt visit(const Store &op) override;

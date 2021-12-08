@@ -50,8 +50,7 @@ class HoistVar : public Mutator {
     }
 
   protected:
-    Stmt visitStmt(const Stmt &op,
-                   const std::function<Stmt(const Stmt &)> &visitNode) override;
+    Stmt visitStmt(const Stmt &op) override;
     Stmt visit(const For &op) override;
     Stmt visit(const StmtSeq &op) override;
     Stmt visit(const VarDef &op) override;
@@ -120,8 +119,7 @@ class FissionFor : public Mutator {
     }
 
   protected:
-    Stmt visitStmt(const Stmt &op,
-                   const std::function<Stmt(const Stmt &)> &visitNode) override;
+    Stmt visitStmt(const Stmt &op) override;
     Stmt visit(const For &op) override;
     Stmt visit(const StmtSeq &op) override;
     Stmt visit(const VarDef &op) override;

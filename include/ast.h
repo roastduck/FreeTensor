@@ -107,6 +107,10 @@ class ASTNode {
     void setIsSubTree(bool isSubTree = true) { isSubTree_ = isSubTree; }
     bool isSubTree() const { return isSubTree_; }
 
+    virtual bool isFunc() const { return false; }
+    virtual bool isStmt() const { return false; }
+    virtual bool isExpr() const { return false; }
+
     DEFINE_NODE_ACCESS(AST);
 };
 typedef Ref<ASTNode> AST;
@@ -131,6 +135,9 @@ typedef Ref<ASTNode> AST;
 #endif
 
 class ExprNode : public ASTNode {
+  public:
+    bool isExpr() const override { return true; }
+
     DEFINE_NODE_ACCESS(Expr);
 };
 typedef Ref<ExprNode> Expr;
@@ -145,6 +152,8 @@ class StmtNode : public ASTNode {
     void setId(const std::string &id);
     const std::string &id() const;
     bool hasNamedId() const;
+
+    bool isStmt() const override { return true; }
 
     DEFINE_NODE_ACCESS(Stmt);
 };

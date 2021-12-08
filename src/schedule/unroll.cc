@@ -19,9 +19,8 @@ Stmt BackUnroll::visit(const For &_op) {
     return op;
 }
 
-Stmt ImmediateUnroll::visitStmt(
-    const Stmt &op, const std::function<Stmt(const Stmt &)> &visitNode) {
-    auto ret = Mutator::visitStmt(op, visitNode);
+Stmt ImmediateUnroll::visitStmt(const Stmt &op) {
+    auto ret = Mutator::visitStmt(op);
     if (!iter_.empty()) {
         ret->setId(ret->id() + "." + std::to_string(curIter_));
     }

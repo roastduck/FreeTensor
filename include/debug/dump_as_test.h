@@ -22,8 +22,7 @@ class DumpAsTest : public CodeGen<CodeGenStream> {
     const std::string &normalizeId(const std::string &id);
 
   protected:
-    void visitStmt(const Stmt &op,
-                   const std::function<void(const Stmt &)> &visitNode) override;
+    void visitStmt(const Stmt &op) override;
 
     void visit(const StmtSeq &op) override;
     void visit(const VarDef &op) override;

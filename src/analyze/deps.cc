@@ -174,11 +174,10 @@ void FindAccessPoint::visit(const Load &op) {
     reads_[defs_.at(op->var_)->id()].emplace_back(ap);
 }
 
-void GenISLExprDeps::visitExpr(
-    const Expr &op, const std::function<void(const Expr &)> &visitNode) {
+void GenISLExprDeps::visitExpr(const Expr &op) {
     auto oldParent = parent_;
     parent_ = op;
-    GenISLExpr::visitExpr(op, visitNode);
+    GenISLExpr::visitExpr(op);
     parent_ = oldParent;
     if (parent_.isValid()) {
         unionTo(externals_[parent_], externals_[op]);

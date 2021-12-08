@@ -155,44 +155,38 @@ Cursor lca(const Cursor &lhs, const Cursor &rhs) {
     return ret;
 }
 
-void VisitorWithCursor::visitStmt(
-    const Stmt &op, const std::function<void(const Stmt &)> &visitNode) {
+void VisitorWithCursor::visitStmt(const Stmt &op) {
     cursor_.push(op);
-    Visitor::visitStmt(op, visitNode);
+    Visitor::visitStmt(op);
     cursor_.pop();
 }
 
-Stmt MutatorWithCursor::visitStmt(
-    const Stmt &op, const std::function<Stmt(const Stmt &)> &visitNode) {
+Stmt MutatorWithCursor::visitStmt(const Stmt &op) {
     cursor_.push(op);
-    auto ret = Mutator::visitStmt(op, visitNode);
+    auto ret = Mutator::visitStmt(op);
     cursor_.pop();
     return ret;
 }
 
-void GetCursorById::visitStmt(
-    const Stmt &op, const std::function<void(const Stmt &)> &visitNode) {
+void GetCursorById::visitStmt(const Stmt &op) {
     if (!found_) {
-        VisitorWithCursor::visitStmt(op, [&visitNode, this](const Stmt &_op) {
-            visitNode(_op);
-            if (_op->id() == id_) {
-                result_ = cursor();
-                ASSERT(result_.id() == id_);
-                found_ = true;
-            }
-        });
+        VisitorWithCursor::visitStmt(op);
+        if (op->id() == id_) {
+            result_ = cursor();
+            result_.push(op);
+            ASSERT(result_.id() == id_);
+            found_ = true;
+        }
     }
 }
 
-void GetCursorByFilter::visitStmt(
-    const Stmt &op, const std::function<void(const Stmt &)> &visitNode) {
-    VisitorWithCursor::visitStmt(op, [&visitNode, this](const Stmt &_op) {
-        visitNode(_op);
-        auto &&c = cursor();
-        if (filter_(c)) {
-            results_.emplace_back(c);
-        }
-    });
+void GetCursorByFilter::visitStmt(const Stmt &op) {
+    VisitorWithCursor::visitStmt(op);
+    auto c = cursor();
+    c.push(op);
+    if (filter_(c)) {
+        results_.emplace_back(c);
+    }
 }
 
 } // namespace ir

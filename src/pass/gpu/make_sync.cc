@@ -32,9 +32,8 @@ void FindAllThreads::visit(const For &op) {
     }
 }
 
-Stmt CopyParts::visitStmt(const Stmt &op,
-                          const std::function<Stmt(const Stmt &)> &visitNode) {
-    auto ret = Mutator::visitStmt(op, visitNode);
+Stmt CopyParts::visitStmt(const Stmt &op) {
+    auto ret = Mutator::visitStmt(op);
     if (ret->nodeType() == ASTNodeType::Store ||
         ret->nodeType() == ASTNodeType::ReduceTo ||
         ret->nodeType() == ASTNodeType::Eval) {
@@ -134,9 +133,8 @@ void MakeSync::markSyncForSplitting(const Stmt &sync) {
     }
 }
 
-Stmt MakeSync::visitStmt(const Stmt &op,
-                         const std::function<Stmt(const Stmt &)> &visitNode) {
-    auto ret = MutatorWithCursor::visitStmt(op, visitNode);
+Stmt MakeSync::visitStmt(const Stmt &op) {
+    auto ret = MutatorWithCursor::visitStmt(op);
     // Please note that we have exited MutatorWithCursor, so `cursor()` is out
     // of `op`
 

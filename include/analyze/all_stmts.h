@@ -17,8 +17,7 @@ class AllStmts : public Visitor {
     const std::vector<Stmt> &results() { return results_; }
 
   protected:
-    void visitStmt(const Stmt &op,
-                   const std::function<void(const Stmt &)> &visitNode) override;
+    void visitStmt(const Stmt &op) override;
 };
 
 /**

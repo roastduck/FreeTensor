@@ -36,8 +36,7 @@ class MakeCacheVar : public Mutator {
     const std::string &newDef() const { return newDef_; }
 
   protected:
-    Stmt visitStmt(const Stmt &op,
-                   const std::function<Stmt(const Stmt &)> &visitNode) override;
+    Stmt visitStmt(const Stmt &op) override;
     Stmt visit(const VarDef &op) override;
     Expr visit(const Load &op) override;
     Stmt visit(const Store &op) override;
@@ -61,8 +60,7 @@ class MakeFillAndFlush : public Mutator {
     const std::string &flushStmt() const { return flushStmt_; }
 
   protected:
-    Stmt visitStmt(const Stmt &op,
-                   const std::function<Stmt(const Stmt &)> &visitNode) override;
+    Stmt visitStmt(const Stmt &op) override;
     Stmt visit(const VarDef &op) override;
 };
 
@@ -85,8 +83,7 @@ class MakeInitAndReduce : public Mutator {
     const std::string &reduceStmt() const { return reduceStmt_; }
 
   protected:
-    Stmt visitStmt(const Stmt &op,
-                   const std::function<Stmt(const Stmt &)> &visitNode) override;
+    Stmt visitStmt(const Stmt &op) override;
     Stmt visit(const VarDef &op) override;
     Stmt visit(const ReduceTo &op) override;
     Stmt visit(const Store &op) override;

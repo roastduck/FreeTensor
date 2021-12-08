@@ -1,8 +1,6 @@
 #ifndef MUTATOR_H
 #define MUTATOR_H
 
-#include <functional>
-
 #include <debug.h>
 #include <except.h>
 #include <expr.h>
@@ -21,17 +19,19 @@ class Mutator {
     // NOTE: Do NOT std::move from the original op! The original op may be
     // duplicated around the AST!
 
-    // Additional hook for any expressions
-    virtual Expr visitExpr(const Expr &op,
-                           const std::function<Expr(const Expr &)> &visitNode) {
-        return visitNode(op);
-    }
+    /* Additional hook for any expressions
+     *
+     * Cautious when one visitor B inherits another visitor A, the calling order
+     * is B::visitExpr -> A::visitExpr -> B::visit -> A::visit
+     */
+    virtual Expr visitExpr(const Expr &op);
 
-    // Additional hook for any statements
-    virtual Stmt visitStmt(const Stmt &op,
-                           const std::function<Stmt(const Stmt &)> &visitNode) {
-        return visitNode(op);
-    }
+    /* Additional hook for any statements
+     *
+     * Cautious when one visitor B inherits another visitor A, the calling order
+     * is B::visitStmt -> A::visitStmt -> B::visit -> A::visit
+     */
+    virtual Stmt visitStmt(const Stmt &op);
 
     virtual Stmt visit(const Any &op) { return COPY_DEBUG_INFO(makeAny(), op); }
 

@@ -206,9 +206,8 @@ void StructuralFeature::calcFeatures(const Stmt &node) {
     calcAreaFeatures(node);
 }
 
-Stmt StructuralFeature::visitStmt(
-    const Stmt &_op, const std::function<Stmt(const Stmt &)> &visitNode) {
-    auto op = BaseClass::visitStmt(_op, visitNode);
+Stmt StructuralFeature::visitStmt(const Stmt &_op) {
+    auto op = BaseClass::visitStmt(_op);
     calcFeatures(op);
     return op;
 }

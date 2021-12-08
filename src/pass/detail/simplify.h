@@ -51,9 +51,8 @@ inline int countHeavyOps(const Expr &op) {
 } // namespace detail
 
 template <class BaseClass>
-Expr SimplifyPass<BaseClass>::visitExpr(
-    const Expr &_op, const std::function<Expr(const Expr &)> &visitNode) {
-    auto op = BaseClass::visitExpr(_op, visitNode);
+Expr SimplifyPass<BaseClass>::visitExpr(const Expr &_op) {
+    auto op = BaseClass::visitExpr(_op);
 
     // To avoid divergence
     if (this->getHash(op) != this->getHash(_op)) {

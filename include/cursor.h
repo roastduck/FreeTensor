@@ -15,6 +15,8 @@ namespace ir {
 class Cursor {
     friend class VisitorWithCursor;
     friend class MutatorWithCursor;
+    friend class GetCursorById;
+    friend class GetCursorByFilter;
 
     Stack<Stmt> stack_;
 
@@ -64,8 +66,7 @@ class VisitorWithCursor : public Visitor {
     Cursor cursor_;
 
   protected:
-    void visitStmt(const Stmt &op,
-                   const std::function<void(const Stmt &)> &visitNode) override;
+    void visitStmt(const Stmt &op) override;
 
     const Cursor &cursor() const { return cursor_; }
 };
@@ -74,8 +75,7 @@ class MutatorWithCursor : public Mutator {
     Cursor cursor_;
 
   protected:
-    Stmt visitStmt(const Stmt &op,
-                   const std::function<Stmt(const Stmt &)> &visitNode) override;
+    Stmt visitStmt(const Stmt &op) override;
 
     const Cursor &cursor() const { return cursor_; }
 };
@@ -92,8 +92,7 @@ class GetCursorById : public VisitorWithCursor {
     bool found() const { return found_; }
 
   protected:
-    void visitStmt(const Stmt &op,
-                   const std::function<void(const Stmt &)> &visitNode) override;
+    void visitStmt(const Stmt &op) override;
 };
 
 inline Cursor getCursorById(const Stmt &ast, const std::string &id) {
@@ -115,8 +114,7 @@ class GetCursorByFilter : public VisitorWithCursor {
     const std::vector<Cursor> &results() const { return results_; }
 
   protected:
-    void visitStmt(const Stmt &op,
-                   const std::function<void(const Stmt &)> &visitNode) override;
+    void visitStmt(const Stmt &op) override;
 };
 
 inline std::vector<Cursor>

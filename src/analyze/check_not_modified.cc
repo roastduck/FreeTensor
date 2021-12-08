@@ -5,9 +5,8 @@
 
 namespace ir {
 
-Stmt InsertTmpEval::visitStmt(
-    const Stmt &_op, const std::function<Stmt(const Stmt &)> &visitNode) {
-    auto op = Mutator::visitStmt(_op, visitNode);
+Stmt InsertTmpEval::visitStmt(const Stmt &_op) {
+    auto op = Mutator::visitStmt(_op);
     auto ret = op;
     if (op->id() == s0_) {
         auto eval = makeEval("", expr_);

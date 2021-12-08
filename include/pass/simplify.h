@@ -169,8 +169,7 @@ class CompUniqueBounds : public CompTransientBounds {
   protected:
     using CompTransientBounds::visit; // Avoid hiding virtual functions
 
-    Expr visitExpr(const Expr &op,
-                   const std::function<Expr(const Expr &)> &visitNode) override;
+    Expr visitExpr(const Expr &op) override;
 
     Expr visit(const Var &op) override;
     Expr visit(const Load &op) override;
@@ -215,8 +214,7 @@ template <class BaseClass> class SimplifyPass : public BaseClass {
   protected:
     using BaseClass::visit;
 
-    Expr visitExpr(const Expr &op,
-                   const std::function<Expr(const Expr &)> &visitNode) override;
+    Expr visitExpr(const Expr &op) override;
 
     Expr visit(const IntConst &op) override;
     Expr visit(const Var &op) override;
@@ -261,10 +259,8 @@ class CheckFixedPoint : public Visitor {
     bool isFixPoint() const { return isFixPoint_; }
 
   protected:
-    void visitExpr(const Expr &op,
-                   const std::function<void(const Expr &)> &visitNode) override;
-    void visitStmt(const Stmt &op,
-                   const std::function<void(const Stmt &)> &visitNode) override;
+    void visitExpr(const Expr &op) override;
+    void visitStmt(const Stmt &op) override;
 };
 
 /**

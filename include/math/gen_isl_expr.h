@@ -29,8 +29,7 @@ class GenISLExpr : public Visitor {
     Ref<std::string> gen(const Expr &op);
 
   protected:
-    void visitExpr(const Expr &op,
-                   const std::function<void(const Expr &)> &visitNode) override;
+    void visitExpr(const Expr &op) override;
     void visit(const Var &op) override;
     void visit(const IntConst &op) override;
     void visit(const Add &op) override;

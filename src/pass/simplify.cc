@@ -395,9 +395,8 @@ bool CompUniqueBounds::alwaysLE(const Expr &lhs, const Expr &rhs) const {
     return false;
 }
 
-Expr CompUniqueBounds::visitExpr(
-    const Expr &_op, const std::function<Expr(const Expr &)> &visitNode) {
-    auto op = CompTransientBounds::visitExpr(_op, visitNode);
+Expr CompUniqueBounds::visitExpr(const Expr &_op) {
+    auto op = CompTransientBounds::visitExpr(_op);
     auto tr = transient(op);
     auto &lower = lower_[op];
     auto &upper = upper_[op];
@@ -725,17 +724,15 @@ Expr CompUniqueBounds::visit(const IfExpr &_op) {
     return op;
 }
 
-void CheckFixedPoint::visitExpr(
-    const Expr &op, const std::function<void(const Expr &)> &visitNode) {
-    Visitor::visitExpr(op, visitNode);
+void CheckFixedPoint::visitExpr(const Expr &op) {
+    Visitor::visitExpr(op);
     if (mutated_.count(op)) {
         isFixPoint_ = false;
     }
 }
 
-void CheckFixedPoint::visitStmt(
-    const Stmt &op, const std::function<void(const Stmt &)> &visitNode) {
-    Visitor::visitStmt(op, visitNode);
+void CheckFixedPoint::visitStmt(const Stmt &op) {
+    Visitor::visitStmt(op);
     if (mutated_.count(op)) {
         isFixPoint_ = false;
     }

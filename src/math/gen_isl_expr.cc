@@ -20,10 +20,9 @@ std::string GenISLExpr::normalizeId(const std::string &old) {
     return idCache_[old] = ret;
 }
 
-void GenISLExpr::visitExpr(const Expr &op,
-                           const std::function<void(const Expr &)> &visitNode) {
+void GenISLExpr::visitExpr(const Expr &op) {
     if (!visited_.count(op)) {
-        Visitor::visitExpr(op, visitNode);
+        Visitor::visitExpr(op);
         visited_.insert(op);
     }
 }
