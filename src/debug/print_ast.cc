@@ -27,7 +27,7 @@ void PrintVisitor::recur(const Stmt &op) {
 }
 
 void PrintVisitor::printId(const Stmt &op) {
-#ifdef IR_DEBUG
+#ifdef IR_DEBUG_LOG_NODE
     makeIndent();
     os() << "// By " << op->debugCreator_ << std::endl;
 #endif

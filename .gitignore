@@ -1,6 +1,7 @@
 /build
 __pycache__
 *.log
+*.csv
 
 # Editors
 /.vscode

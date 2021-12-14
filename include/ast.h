@@ -97,7 +97,7 @@ class ASTNode {
     bool isSubTree_ = false;
 
   public:
-#ifdef IR_DEBUG
+#ifdef IR_DEBUG_LOG_NODE
     std::string debugCreator_ = "Python API";
 #endif
 
@@ -115,7 +115,7 @@ class ASTNode {
 };
 typedef Ref<ASTNode> AST;
 
-#ifdef IR_DEBUG
+#ifdef IR_DEBUG_LOG_NODE
 #define makeNode(type, ...)                                                    \
     ({                                                                         \
         auto __x = _make##type(__VA_ARGS__);                                   \

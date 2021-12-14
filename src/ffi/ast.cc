@@ -66,7 +66,7 @@ void init_ffi_ast(py::module_ &m) {
     py::class_<StmtNode, Stmt> pyStmt(m, "Stmt", pyAST);
     py::class_<ExprNode, Expr> pyExpr(m, "Expr", pyAST);
 
-#ifdef IR_DEBUG
+#ifdef IR_DEBUG_LOG_NODE
     pyAST.def_readonly("debug_creator", &ASTNode::debugCreator_);
 #endif
 

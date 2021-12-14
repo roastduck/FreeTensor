@@ -28,9 +28,7 @@ If using MKL, add a `-DWITH_MKL=<path/to/mkl/root>` to `cmake`.
 
 It will build a shared library with a name like `ffi.cpython-37m-x86_64-linux-gnu.so`.
 
-You can also replace `cmake ..` with `cmake -DIR_DEBUG=ON ..` to enable some debugging features. Currently, this includes:
-
-- Enable tracing to tell by which pass a specific AST node is modified.
+There are some debugging options. Adding `-DIR_DEBUG_LOG_NODE=ON` to `cmake` enables tracing to tell by which pass a specific AST node is modified. Adding `-DIR_DEBUG_PROFILE` to `cmake` profiles some heavy functions in the compiler.
 
 ## Run
 

@@ -11,6 +11,7 @@
 #include <isl/set.h>
 #include <isl/space.h>
 
+#include <debug/profile.h>
 #include <except.h>
 
 namespace ir {
@@ -92,12 +93,19 @@ class ISLMap {
     isl_map *copy() const { return COPY_ISL_PTR(map_, map); }
     isl_map *move() { return MOVE_ISL_PTR(map_); }
 
-    bool empty() const { return isl_map_is_empty(get()); }
+    bool empty() const {
+        DEBUG_PROFILE("empty");
+        return isl_map_is_empty(get());
+    }
 
-    friend std::ostream &operator<<(std::ostream &os, const ISLMap &map) {
-        return os << isl_map_to_str(map.map_);
+    friend std::string toString(const ISLMap &map) {
+        return isl_map_to_str(map.map_);
     }
 };
+
+inline std::ostream &operator<<(std::ostream &os, const ISLMap &map) {
+    return os << toString(map);
+}
 
 class ISLVal {
     isl_val *val_ = nullptr;
@@ -139,10 +147,14 @@ class ISLVal {
     int numSi() const { return isl_val_get_num_si(get()); }
     int denSi() const { return isl_val_get_den_si(get()); }
 
-    friend std::ostream &operator<<(std::ostream &os, const ISLVal &val) {
-        return os << isl_val_to_str(val.val_);
+    friend std::string toString(const ISLVal &val) {
+        return isl_val_to_str(val.val_);
     }
 };
+
+inline std::ostream &operator<<(std::ostream &os, const ISLVal &val) {
+    return os << toString(val);
+}
 
 class ISLSet {
     isl_set *set_ = nullptr;
@@ -186,10 +198,14 @@ class ISLSet {
     isl_set *copy() const { return COPY_ISL_PTR(set_, set); }
     isl_set *move() { return MOVE_ISL_PTR(set_); }
 
-    friend std::ostream &operator<<(std::ostream &os, const ISLSet &set) {
-        return os << isl_set_to_str(set.set_);
+    friend std::string toString(const ISLSet &set) {
+        return isl_set_to_str(set.set_);
     }
 };
+
+inline std::ostream &operator<<(std::ostream &os, const ISLSet &set) {
+    return os << toString(set);
+}
 
 class ISLSpace {
     isl_space *space_ = nullptr;
@@ -228,112 +244,168 @@ class ISLSpace {
     isl_space *copy() const { return COPY_ISL_PTR(space_, space); }
     isl_space *move() { return MOVE_ISL_PTR(space_); }
 
-    friend std::ostream &operator<<(std::ostream &os, const ISLSpace &space) {
-        return os << isl_space_to_str(space.space_);
+    friend std::string toString(const ISLSpace &space) {
+        return isl_space_to_str(space.space_);
     }
 };
 
+inline std::ostream &operator<<(std::ostream &os, const ISLSpace &space) {
+    return os << toString(space);
+}
+
 inline ISLSet complement(ISLSet &&set) {
+    DEBUG_PROFILE("complement");
     return isl_set_complement(set.move());
 }
 inline ISLSet complement(const ISLSet &set) {
+    DEBUG_PROFILE("complement");
     return isl_set_complement(set.copy());
 }
 inline ISLMap complement(ISLMap &&map) {
+    DEBUG_PROFILE("complement");
     return isl_map_complement(map.move());
 }
 inline ISLMap complement(const ISLMap &map) {
+    DEBUG_PROFILE("complement");
     return isl_map_complement(map.copy());
 }
 
-inline ISLMap reverse(ISLMap &&map) { return isl_map_reverse(map.move()); }
-inline ISLMap reverse(const ISLMap &map) { return isl_map_reverse(map.copy()); }
+inline ISLMap reverse(ISLMap &&map) {
+    DEBUG_PROFILE("reverse");
+    return isl_map_reverse(map.move());
+}
+inline ISLMap reverse(const ISLMap &map) {
+    DEBUG_PROFILE("reverse");
+    return isl_map_reverse(map.copy());
+}
 
 inline ISLMap subtract(ISLMap &&lhs, ISLMap &&rhs) {
+    DEBUG_PROFILE("subtract");
     return isl_map_subtract(lhs.move(), rhs.move());
 }
 inline ISLMap subtract(const ISLMap &lhs, ISLMap &&rhs) {
+    DEBUG_PROFILE("subtract");
     return isl_map_subtract(lhs.copy(), rhs.move());
 }
 inline ISLMap subtract(ISLMap &&lhs, const ISLMap &rhs) {
+    DEBUG_PROFILE("subtract");
     return isl_map_subtract(lhs.move(), rhs.copy());
 }
 inline ISLMap subtract(const ISLMap &lhs, const ISLMap &rhs) {
+    DEBUG_PROFILE("subtract");
     return isl_map_subtract(lhs.copy(), rhs.copy());
 }
 
 inline ISLMap intersect(ISLMap &&lhs, ISLMap &&rhs) {
+    DEBUG_PROFILE("intersect");
     return isl_map_intersect(lhs.move(), rhs.move());
 }
 inline ISLMap intersect(const ISLMap &lhs, ISLMap &&rhs) {
+    DEBUG_PROFILE("intersect");
     return isl_map_intersect(lhs.copy(), rhs.move());
 }
 inline ISLMap intersect(ISLMap &&lhs, const ISLMap &rhs) {
+    DEBUG_PROFILE("intersect");
     return isl_map_intersect(lhs.move(), rhs.copy());
 }
 inline ISLMap intersect(const ISLMap &lhs, const ISLMap &rhs) {
+    DEBUG_PROFILE("intersect");
     return isl_map_intersect(lhs.copy(), rhs.copy());
 }
 
 inline ISLMap uni(ISLMap &&lhs, ISLMap &&rhs) {
+    DEBUG_PROFILE("uni");
     return isl_map_union(lhs.move(), rhs.move());
 }
 inline ISLMap uni(const ISLMap &lhs, ISLMap &&rhs) {
+    DEBUG_PROFILE("uni");
     return isl_map_union(lhs.copy(), rhs.move());
 }
 inline ISLMap uni(ISLMap &&lhs, const ISLMap &rhs) {
+    DEBUG_PROFILE("uni");
     return isl_map_union(lhs.move(), rhs.copy());
 }
 inline ISLMap uni(const ISLMap &lhs, const ISLMap &rhs) {
+    DEBUG_PROFILE("uni");
     return isl_map_union(lhs.copy(), rhs.copy());
 }
 
 inline ISLMap applyDomain(ISLMap &&lhs, ISLMap &&rhs) {
+    DEBUG_PROFILE("applyDomain");
     return isl_map_apply_domain(lhs.move(), rhs.move());
 }
 inline ISLMap applyDomain(const ISLMap &lhs, ISLMap &&rhs) {
+    DEBUG_PROFILE("applyDomain");
     return isl_map_apply_domain(lhs.copy(), rhs.move());
 }
 inline ISLMap applyDomain(ISLMap &&lhs, const ISLMap &rhs) {
+    DEBUG_PROFILE("applyDomain");
     return isl_map_apply_domain(lhs.move(), rhs.copy());
 }
 inline ISLMap applyDomain(const ISLMap &lhs, const ISLMap &rhs) {
+    DEBUG_PROFILE("applyDomain");
     return isl_map_apply_domain(lhs.copy(), rhs.copy());
 }
 
 inline ISLMap applyRange(ISLMap &&lhs, ISLMap &&rhs) {
+    DEBUG_PROFILE("applyRange");
     return isl_map_apply_range(lhs.move(), rhs.move());
 }
 inline ISLMap applyRange(const ISLMap &lhs, ISLMap &&rhs) {
+    DEBUG_PROFILE("applyRange");
     return isl_map_apply_range(lhs.copy(), rhs.move());
 }
 inline ISLMap applyRange(ISLMap &&lhs, const ISLMap &rhs) {
+    DEBUG_PROFILE("applyRange");
     return isl_map_apply_range(lhs.move(), rhs.copy());
 }
 inline ISLMap applyRange(const ISLMap &lhs, const ISLMap &rhs) {
+    DEBUG_PROFILE("applyRange");
     return isl_map_apply_range(lhs.copy(), rhs.copy());
 }
 
-inline ISLMap lexmax(ISLMap &&map) { return isl_map_lexmax(map.move()); }
-inline ISLMap lexmax(const ISLMap &map) { return isl_map_lexmax(map.copy()); }
+inline ISLMap lexmax(ISLMap &&map) {
+    DEBUG_PROFILE("lexmax");
+    return isl_map_lexmax(map.move());
+}
+inline ISLMap lexmax(const ISLMap &map) {
+    DEBUG_PROFILE("lexmax");
+    return isl_map_lexmax(map.copy());
+}
 
-inline ISLMap lexmin(ISLMap &&map) { return isl_map_lexmin(map.move()); }
-inline ISLMap lexmin(const ISLMap &map) { return isl_map_lexmin(map.copy()); }
+inline ISLMap lexmin(ISLMap &&map) {
+    DEBUG_PROFILE("lexmin");
+    return isl_map_lexmin(map.move());
+}
+inline ISLMap lexmin(const ISLMap &map) {
+    DEBUG_PROFILE("lexmin");
+    return isl_map_lexmin(map.copy());
+}
 
 inline ISLMap identity(ISLSpace &&space) {
+    DEBUG_PROFILE("identity");
     return isl_map_identity(space.move());
 }
 inline ISLMap identity(const ISLSpace &space) {
+    DEBUG_PROFILE("identity");
     return isl_map_identity(space.copy());
 }
 
-inline ISLMap lexGE(ISLSpace &&space) { return isl_map_lex_ge(space.move()); }
+inline ISLMap lexGE(ISLSpace &&space) {
+    DEBUG_PROFILE("lexGE");
+    return isl_map_lex_ge(space.move());
+}
 inline ISLMap lexGE(const ISLSpace &space) {
+    DEBUG_PROFILE("lexGE");
     return isl_map_lex_ge(space.copy());
 }
 
-inline ISLMap lexGT(ISLSpace &&space) { return isl_map_lex_gt(space.move()); }
+inline ISLMap lexGT(ISLSpace &&space) {
+    DEBUG_PROFILE("lexGT");
+    return isl_map_lex_gt(space.move());
+}
 inline ISLMap lexGT(const ISLSpace &space) {
+    DEBUG_PROFILE("lexGT");
     return isl_map_lex_gt(space.copy());
 }
 
@@ -399,10 +471,12 @@ inline ISLSpace spaceMapFromSet(const ISLSpace &space) {
 }
 
 inline bool operator==(const ISLSet &lhs, const ISLSet &rhs) {
+    DEBUG_PROFILE("equal");
     return isl_set_is_equal(lhs.get(), rhs.get());
 }
 
 inline bool operator!=(const ISLSet &lhs, const ISLSet &rhs) {
+    DEBUG_PROFILE("inequal");
     return !isl_set_is_equal(lhs.get(), rhs.get());
 }
 
