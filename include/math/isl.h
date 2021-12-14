@@ -98,6 +98,8 @@ class ISLMap {
         return isl_map_is_empty(get());
     }
 
+    isl_size nBasic() const { return isl_map_n_basic_map(map_); }
+
     friend std::string toString(const ISLMap &map) {
         return isl_map_to_str(map.map_);
     }
@@ -198,6 +200,8 @@ class ISLSet {
     isl_set *copy() const { return COPY_ISL_PTR(set_, set); }
     isl_set *move() { return MOVE_ISL_PTR(set_); }
 
+    isl_size nBasic() const { return isl_set_n_basic_set(set_); }
+
     friend std::string toString(const ISLSet &set) {
         return isl_set_to_str(set.set_);
     }
@@ -280,53 +284,69 @@ inline ISLMap reverse(const ISLMap &map) {
 }
 
 inline ISLMap subtract(ISLMap &&lhs, ISLMap &&rhs) {
-    DEBUG_PROFILE("subtract");
+    DEBUG_PROFILE_VERBOSE("subtract", "nBasic=" + std::to_string(lhs.nBasic()) +
+                                          "," + std::to_string(rhs.nBasic()));
     return isl_map_subtract(lhs.move(), rhs.move());
 }
 inline ISLMap subtract(const ISLMap &lhs, ISLMap &&rhs) {
-    DEBUG_PROFILE("subtract");
+    DEBUG_PROFILE_VERBOSE("subtract", "nBasic=" + std::to_string(lhs.nBasic()) +
+                                          "," + std::to_string(rhs.nBasic()));
     return isl_map_subtract(lhs.copy(), rhs.move());
 }
 inline ISLMap subtract(ISLMap &&lhs, const ISLMap &rhs) {
-    DEBUG_PROFILE("subtract");
+    DEBUG_PROFILE_VERBOSE("subtract", "nBasic=" + std::to_string(lhs.nBasic()) +
+                                          "," + std::to_string(rhs.nBasic()));
     return isl_map_subtract(lhs.move(), rhs.copy());
 }
 inline ISLMap subtract(const ISLMap &lhs, const ISLMap &rhs) {
-    DEBUG_PROFILE("subtract");
+    DEBUG_PROFILE_VERBOSE("subtract", "nBasic=" + std::to_string(lhs.nBasic()) +
+                                          "," + std::to_string(rhs.nBasic()));
     return isl_map_subtract(lhs.copy(), rhs.copy());
 }
 
 inline ISLMap intersect(ISLMap &&lhs, ISLMap &&rhs) {
-    DEBUG_PROFILE("intersect");
+    DEBUG_PROFILE_VERBOSE("intersect",
+                          "nBasic=" + std::to_string(lhs.nBasic()) + "," +
+                              std::to_string(rhs.nBasic()));
     return isl_map_intersect(lhs.move(), rhs.move());
 }
 inline ISLMap intersect(const ISLMap &lhs, ISLMap &&rhs) {
-    DEBUG_PROFILE("intersect");
+    DEBUG_PROFILE_VERBOSE("intersect",
+                          "nBasic=" + std::to_string(lhs.nBasic()) + "," +
+                              std::to_string(rhs.nBasic()));
     return isl_map_intersect(lhs.copy(), rhs.move());
 }
 inline ISLMap intersect(ISLMap &&lhs, const ISLMap &rhs) {
-    DEBUG_PROFILE("intersect");
+    DEBUG_PROFILE_VERBOSE("intersect",
+                          "nBasic=" + std::to_string(lhs.nBasic()) + "," +
+                              std::to_string(rhs.nBasic()));
     return isl_map_intersect(lhs.move(), rhs.copy());
 }
 inline ISLMap intersect(const ISLMap &lhs, const ISLMap &rhs) {
-    DEBUG_PROFILE("intersect");
+    DEBUG_PROFILE_VERBOSE("intersect",
+                          "nBasic=" + std::to_string(lhs.nBasic()) + "," +
+                              std::to_string(rhs.nBasic()));
     return isl_map_intersect(lhs.copy(), rhs.copy());
 }
 
 inline ISLMap uni(ISLMap &&lhs, ISLMap &&rhs) {
-    DEBUG_PROFILE("uni");
+    DEBUG_PROFILE_VERBOSE("uni", "nBasic=" + std::to_string(lhs.nBasic()) +
+                                     "," + std::to_string(rhs.nBasic()));
     return isl_map_union(lhs.move(), rhs.move());
 }
 inline ISLMap uni(const ISLMap &lhs, ISLMap &&rhs) {
-    DEBUG_PROFILE("uni");
+    DEBUG_PROFILE_VERBOSE("uni", "nBasic=" + std::to_string(lhs.nBasic()) +
+                                     "," + std::to_string(rhs.nBasic()));
     return isl_map_union(lhs.copy(), rhs.move());
 }
 inline ISLMap uni(ISLMap &&lhs, const ISLMap &rhs) {
-    DEBUG_PROFILE("uni");
+    DEBUG_PROFILE_VERBOSE("uni", "nBasic=" + std::to_string(lhs.nBasic()) +
+                                     "," + std::to_string(rhs.nBasic()));
     return isl_map_union(lhs.move(), rhs.copy());
 }
 inline ISLMap uni(const ISLMap &lhs, const ISLMap &rhs) {
-    DEBUG_PROFILE("uni");
+    DEBUG_PROFILE_VERBOSE("uni", "nBasic=" + std::to_string(lhs.nBasic()) +
+                                     "," + std::to_string(rhs.nBasic()));
     return isl_map_union(lhs.copy(), rhs.copy());
 }
 
@@ -365,20 +385,20 @@ inline ISLMap applyRange(const ISLMap &lhs, const ISLMap &rhs) {
 }
 
 inline ISLMap lexmax(ISLMap &&map) {
-    DEBUG_PROFILE("lexmax");
+    DEBUG_PROFILE_VERBOSE("lexmax", "nBasic=" + std::to_string(map.nBasic()));
     return isl_map_lexmax(map.move());
 }
 inline ISLMap lexmax(const ISLMap &map) {
-    DEBUG_PROFILE("lexmax");
+    DEBUG_PROFILE_VERBOSE("lexmax", "nBasic=" + std::to_string(map.nBasic()));
     return isl_map_lexmax(map.copy());
 }
 
 inline ISLMap lexmin(ISLMap &&map) {
-    DEBUG_PROFILE("lexmin");
+    DEBUG_PROFILE_VERBOSE("lexmin", "nBasic=" + std::to_string(map.nBasic()));
     return isl_map_lexmin(map.move());
 }
 inline ISLMap lexmin(const ISLMap &map) {
-    DEBUG_PROFILE("lexmin");
+    DEBUG_PROFILE_VERBOSE("lexmin", "nBasic=" + std::to_string(map.nBasic()));
     return isl_map_lexmin(map.copy());
 }
 
@@ -471,12 +491,14 @@ inline ISLSpace spaceMapFromSet(const ISLSpace &space) {
 }
 
 inline bool operator==(const ISLSet &lhs, const ISLSet &rhs) {
-    DEBUG_PROFILE("equal");
+    DEBUG_PROFILE_VERBOSE("equal", "nBasic=" + std::to_string(lhs.nBasic()) +
+                                       "," + std::to_string(rhs.nBasic()));
     return isl_set_is_equal(lhs.get(), rhs.get());
 }
 
 inline bool operator!=(const ISLSet &lhs, const ISLSet &rhs) {
-    DEBUG_PROFILE("inequal");
+    DEBUG_PROFILE_VERBOSE("inequal", "nBasic=" + std::to_string(lhs.nBasic()) +
+                                         "," + std::to_string(rhs.nBasic()));
     return !isl_set_is_equal(lhs.get(), rhs.get());
 }
 

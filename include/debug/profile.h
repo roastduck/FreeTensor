@@ -34,9 +34,15 @@ class ProfileGuard {
 #define DEBUG_PROFILE(name)                                                    \
     ProfileGuard __profGuard(name, __FILE__ ":" + std::to_string(__LINE__))
 
+#define DEBUG_PROFILE_VERBOSE(name, detail)                                    \
+    ProfileGuard __profGuard(name, __FILE__ ":" + std::to_string(__LINE__) +   \
+                                       ": " + detail)
+
 #else // IR_DEBUG_PROFILE
 
 #define DEBUG_PROFILE(name)
+
+#define DEBUG_PROFILE_VERBOSE(name, detail)
 
 #endif // IR_DEBUG_PROFILE
 
