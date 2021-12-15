@@ -1,20 +1,20 @@
-#ifndef ISL_SIMPLIFY_H
-#define ISL_SIMPLIFY_H
+#ifndef PB_SIMPLIFY_H
+#define PB_SIMPLIFY_H
 
 #include <unordered_map>
 #include <unordered_set>
 
 #include <analyze/hash.h>
-#include <math/gen_isl_expr.h>
-#include <math/isl.h>
+#include <math/gen_pb_expr.h>
+#include <math/presburger.h>
 #include <pass/simplify.h>
 
 namespace ir {
 
 /**
- * GenISLExpr specialized for handling external variables and bounds
+ * GenPBExpr specialized for handling external variables and bounds
  */
-class GenISLExprSimplify : public GenISLExpr {
+class GenPBExprSimplify : public GenPBExpr {
     std::unordered_map<Expr, std::unordered_set<std::string>> vars_;
     std::unordered_map<Expr, std::vector<std::string>> cond_;
     GetHash getHash_;
@@ -25,15 +25,15 @@ class GenISLExprSimplify : public GenISLExpr {
     std::vector<std::string> &cond(const Expr &op) { return cond_[op]; }
 
   protected:
-    using GenISLExpr::visit;
+    using GenPBExpr::visit;
     void visitExpr(const Expr &op) override;
     void visit(const Var &op) override;
     void visit(const Load &op) override;
 };
 
-class ISLCompBounds : public CompUniqueBounds {
-    GenISLExprSimplify genISLExpr_;
-    ISLCtx isl_;
+class PBCompBounds : public CompUniqueBounds {
+    GenPBExprSimplify genPBExpr_;
+    PBCtx isl_;
 
   protected:
     using CompUniqueBounds::visit;
@@ -41,10 +41,10 @@ class ISLCompBounds : public CompUniqueBounds {
     Expr visitExpr(const Expr &op) override;
 };
 
-class ISLSimplify : public SimplifyPass<ISLCompBounds> {};
+class PBSimplify : public SimplifyPass<PBCompBounds> {};
 
-Stmt islSimplify(const Stmt &op);
+Stmt pbSimplify(const Stmt &op);
 
 } // namespace ir
 
-#endif // ISL_SIMPLIFY_H
+#endif // PB_SIMPLIFY_H

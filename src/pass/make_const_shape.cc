@@ -1,8 +1,8 @@
 #include <algorithm>
 #include <climits>
 
-#include <pass/isl_simplify.h>
 #include <pass/make_const_shape.h>
+#include <pass/pb_simplify.h>
 
 namespace ir {
 
@@ -50,7 +50,7 @@ Stmt makeConstShape(const Stmt &_op, const std::vector<MemType> &mtypes) {
     Stmt op;
     BuiltinSimplify::LowerBoundsMap lower;
     BuiltinSimplify::UpperBoundsMap upper;
-    std::tie(op, lower, upper) = simplifyAndGetBounds<ISLSimplify>(_op);
+    std::tie(op, lower, upper) = simplifyAndGetBounds<PBSimplify>(_op);
     op = MakeConstShape(mtypes, upper)(op);
     return op;
 }

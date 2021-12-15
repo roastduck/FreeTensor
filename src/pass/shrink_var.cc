@@ -1,5 +1,5 @@
 #include <analyze/all_defs.h>
-#include <pass/isl_simplify.h>
+#include <pass/pb_simplify.h>
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
 #include <pass/z3_simplify.h>
@@ -59,7 +59,7 @@ Stmt shrinkVar(const Stmt &_op) {
     Stmt op;
     BuiltinSimplify::LowerBoundsMap lower;
     BuiltinSimplify::UpperBoundsMap upper;
-    std::tie(op, lower, upper) = simplifyAndGetBounds<ISLSimplify>(_op);
+    std::tie(op, lower, upper) = simplifyAndGetBounds<PBSimplify>(_op);
 
     // (2)
     std::unordered_map<std::string, AccessBound> bounds;
@@ -79,7 +79,7 @@ Stmt shrinkSingleVar(const Stmt &_op, const std::string &varDefId) {
     Stmt op;
     BuiltinSimplify::LowerBoundsMap lower;
     BuiltinSimplify::UpperBoundsMap upper;
-    std::tie(op, lower, upper) = simplifyAndGetBounds<ISLSimplify>(_op);
+    std::tie(op, lower, upper) = simplifyAndGetBounds<PBSimplify>(_op);
 
     // (2)
     std::unordered_map<std::string, AccessBound> bounds;

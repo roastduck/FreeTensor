@@ -12,8 +12,8 @@
 #include <analyze/find_loop_variance.h>
 #include <analyze/hash.h>
 #include <cursor.h>
-#include <math/gen_isl_expr.h>
-#include <math/isl.h>
+#include <math/gen_pb_expr.h>
+#include <math/presburger.h>
 #include <visitor.h>
 
 namespace ir {
@@ -151,13 +151,13 @@ class FindAccessPoint : public VisitorWithCursor {
     void visit(const MatMul &op) override { (*this)(op->equivalent_); }
 };
 
-// hash -> (expr, isl name)
+// hash -> (expr, presburger name)
 typedef std::unordered_map<uint64_t, std::pair<Expr, std::string>> ExternalMap;
 
 /**
- * GenISLExpr specialized for handling external variables
+ * GenPBExpr specialized for handling external variables
  */
-class GenISLExprDeps : public GenISLExpr {
+class GenPBExprDeps : public GenPBExpr {
     std::unordered_map<Expr, ExternalMap> externals_;
     GetHash getHash_;
     Expr parent_ = nullptr;
@@ -166,7 +166,7 @@ class GenISLExprDeps : public GenISLExpr {
     const ExternalMap &externals(const Expr &op) { return externals_[op]; }
 
   protected:
-    using GenISLExpr::visit;
+    using GenPBExpr::visit;
     void visitExpr(const Expr &op) override;
     void visit(const Load &op) override;
 };
@@ -274,42 +274,42 @@ class AnalyzeDeps : public Visitor {
     const std::vector<std::function<void()>> &tasks() const { return tasks_; }
 
   private:
-    std::string makeIterList(GenISLExprDeps &genISLExpr,
+    std::string makeIterList(GenPBExprDeps &genPBExpr,
                              const std::vector<IterAxis> &list, int n);
     std::string makeNdList(const std::string &name, int n) const;
-    Ref<std::string> makeAccList(GenISLExprDeps &genISLExpr,
+    Ref<std::string> makeAccList(GenPBExprDeps &genPBExpr,
                                  const std::vector<Expr> &list, RelaxMode relax,
                                  ExternalMap &externals);
-    Ref<std::string> makeCond(GenISLExprDeps &genISLExpr,
+    Ref<std::string> makeCond(GenPBExprDeps &genPBExpr,
                               const std::vector<Expr> &conds, RelaxMode relax,
                               ExternalMap &externals);
 
-    ISLMap makeAccMap(ISLCtx &isl, GenISLExprDeps &genISLExpr,
-                      const AccessPoint &p, int iterDim, int accDim,
-                      RelaxMode relax, const std::string &extSuffix,
-                      ExternalMap &externals);
+    PBMap makeAccMap(PBCtx &presburger, GenPBExprDeps &genPBExpr,
+                     const AccessPoint &p, int iterDim, int accDim,
+                     RelaxMode relax, const std::string &extSuffix,
+                     ExternalMap &externals);
 
-    ISLMap makeEqForBothOps(ISLCtx &isl,
-                            const std::vector<std::pair<int, int>> &coord,
-                            int iterDim) const;
-    ISLMap makeIneqBetweenOps(ISLCtx &isl, DepDirection mode, int iterId,
-                              int iterDim) const;
+    PBMap makeEqForBothOps(PBCtx &presburger,
+                           const std::vector<std::pair<int, int>> &coord,
+                           int iterDim) const;
+    PBMap makeIneqBetweenOps(PBCtx &presburger, DepDirection mode, int iterId,
+                             int iterDim) const;
 
-    ISLMap makeSerialToAll(ISLCtx &isl, int iterDim,
-                           const std::vector<IterAxis> &point) const;
+    PBMap makeSerialToAll(PBCtx &presburger, int iterDim,
+                          const std::vector<IterAxis> &point) const;
     static int countSerial(const std::vector<IterAxis> &point);
 
-    ISLMap makeExternalEq(ISLCtx &isl, int iterDim, const std::string &ext1,
-                          const std::string &ext2);
+    PBMap makeExternalEq(PBCtx &presburger, int iterDim,
+                         const std::string &ext1, const std::string &ext2);
 
-    ISLMap makeConstraintOfSingleLoop(ISLCtx &isl, const std::string &loop,
-                                      DepDirection mode, int iterDim);
+    PBMap makeConstraintOfSingleLoop(PBCtx &presburger, const std::string &loop,
+                                     DepDirection mode, int iterDim);
 
-    ISLMap makeConstraintOfParallelScope(ISLCtx &isl,
-                                         const std::string &parallel,
-                                         DepDirection mode, int iterDim,
-                                         const Ref<AccessPoint> &point,
-                                         const Ref<AccessPoint> &other);
+    PBMap makeConstraintOfParallelScope(PBCtx &presburger,
+                                        const std::string &parallel,
+                                        DepDirection mode, int iterDim,
+                                        const Ref<AccessPoint> &point,
+                                        const Ref<AccessPoint> &other);
 
     /**
      * Constraint for variables defined inside some loops
@@ -320,14 +320,14 @@ class AnalyzeDeps : public Visitor {
      *     ... = a[0]
      * There will be no dependencies of a[0] across i
      */
-    ISLMap makeEraseVarDefConstraint(ISLCtx &isl, const Ref<AccessPoint> &point,
-                                     int iterDim);
+    PBMap makeEraseVarDefConstraint(PBCtx &presburger,
+                                    const Ref<AccessPoint> &point, int iterDim);
 
     /**
      * Constraint for loops that explicitly marked as no_deps by users
      */
-    ISLMap makeNoDepsConstraint(ISLCtx &isl, const std::string &var,
-                                int iterDim);
+    PBMap makeNoDepsConstraint(PBCtx &presburger, const std::string &var,
+                               int iterDim);
 
     /*
      * Constraint for external variables inside loop
@@ -338,12 +338,13 @@ class AnalyzeDeps : public Visitor {
      * idx[i] + j must be different for the same i but different j, but
      * idx[i] + j may be the same for different i
      */
-    ISLMap makeExternalVarConstraint(ISLCtx &isl, const Ref<AccessPoint> &point,
-                                     const Ref<AccessPoint> &other,
-                                     const ExternalMap &pExternals,
-                                     const ExternalMap &oExternals, int iterDim,
-                                     const std::string &extSuffixP,
-                                     const std::string &extSuffixO);
+    PBMap makeExternalVarConstraint(PBCtx &presburger,
+                                    const Ref<AccessPoint> &point,
+                                    const Ref<AccessPoint> &other,
+                                    const ExternalMap &pExternals,
+                                    const ExternalMap &oExternals, int iterDim,
+                                    const std::string &extSuffixP,
+                                    const std::string &extSuffixO);
 
     /**
      * If we are analyzing the dependency between A and B, e.g.
@@ -356,7 +357,7 @@ class AnalyzeDeps : public Visitor {
      * FindDepsMode::Dep mode, we do not care about the result. Therefore, we
      * project out these dimensions
      */
-    ISLMap projectOutPrivateAxis(ISLCtx &isl, int iterDim, int since);
+    PBMap projectOutPrivateAxis(PBCtx &presburger, int iterDim, int since);
 
     int numCommonDims(const Ref<AccessPoint> &p1, const Ref<AccessPoint> &p2);
 
@@ -372,7 +373,7 @@ class AnalyzeDeps : public Visitor {
     void checkDepLatestEarlier(const Ref<AccessPoint> &point,
                                const std::vector<Ref<AccessPoint>> &otherList);
     void
-    checkDepLatestEarlierImpl(ISLCtx &isl, GenISLExprDeps &genISLExpr,
+    checkDepLatestEarlierImpl(PBCtx &presburger, GenPBExprDeps &genPBExpr,
                               const Ref<AccessPoint> &point,
                               const std::vector<Ref<AccessPoint>> &otherList);
 
@@ -386,7 +387,7 @@ class AnalyzeDeps : public Visitor {
     void checkDepEarliestLater(const std::vector<Ref<AccessPoint>> &pointList,
                                const Ref<AccessPoint> &other);
     void
-    checkDepEarliestLaterImpl(ISLCtx &isl, GenISLExprDeps &genISLExpr,
+    checkDepEarliestLaterImpl(PBCtx &presburger, GenPBExprDeps &genPBExpr,
                               const std::vector<Ref<AccessPoint>> &pointList,
                               const Ref<AccessPoint> &other);
 

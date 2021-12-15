@@ -1,27 +1,26 @@
-#ifndef GEN_ISL_EXPR_H
-#define GEN_ISL_EXPR_H
+#ifndef GEN_PB_EXPR_H
+#define GEN_PB_EXPR_H
 
 #include <unordered_map>
 #include <unordered_set>
 
-#include <math/isl.h>
+#include <math/presburger.h>
 #include <visitor.h>
 
 namespace ir {
 
 /**
- * Serialize expressions to an ISL input string
+ * Serialize expressions to an Presburger expression string
  *
- * It returns nullptr for unsupported expressions, because ISL reports errors on
- * them
+ * Returns nullptr for non-Presburger expressions
  */
-class GenISLExpr : public Visitor {
+class GenPBExpr : public Visitor {
   protected:
     std::unordered_map<Expr, std::string> results_;
     std::unordered_set<Expr> visited_;
     std::unordered_map<Expr, int> constants_;
-    std::unordered_map<std::string, std::string> idCache_; // IR IDs -> ISL IDs
-    std::unordered_set<std::string> idFlag_;               // ISL IDs
+    std::unordered_map<std::string, std::string> idCache_; // IR IDs -> PB IDs
+    std::unordered_set<std::string> idFlag_;               // PB IDs
 
   public:
     std::string normalizeId(const std::string &id);
@@ -53,4 +52,4 @@ class GenISLExpr : public Visitor {
 
 } // namespace ir
 
-#endif // GEN_ISL_EXPR_H
+#endif // GEN_PB_EXPR_H

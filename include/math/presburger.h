@@ -1,5 +1,5 @@
-#ifndef ISL_H
-#define ISL_H
+#ifndef PRESBURGER_H
+#define PRESBURGER_H
 
 #include <iostream>
 #include <string>
@@ -16,7 +16,7 @@
 
 namespace ir {
 
-// A C++ style wrapper over ISL
+// Presburger arithmetic, currently implemented with ISL
 
 template <class T> T *GET_ISL_PTR(T *ptr) {
     ASSERT(ptr != nullptr);
@@ -36,41 +36,41 @@ template <class T> T *MOVE_ISL_PTR(T *&ptr) {
     return ret;
 }
 
-class ISLCtx {
+class PBCtx {
     isl_ctx *ctx_ = nullptr;
 
   public:
-    ISLCtx() : ctx_(isl_ctx_alloc()) {
+    PBCtx() : ctx_(isl_ctx_alloc()) {
         isl_options_set_on_error(ctx_, ISL_ON_ERROR_ABORT);
     }
-    ~ISLCtx() { isl_ctx_free(ctx_); }
+    ~PBCtx() { isl_ctx_free(ctx_); }
 
-    ISLCtx(const ISLCtx &other) = delete;
-    ISLCtx &operator=(const ISLCtx &other) = delete;
+    PBCtx(const PBCtx &other) = delete;
+    PBCtx &operator=(const PBCtx &other) = delete;
 
     isl_ctx *get() const { return GET_ISL_PTR(ctx_); }
 };
 
-class ISLMap {
+class PBMap {
     isl_map *map_ = nullptr;
 
   public:
-    ISLMap() {}
-    ISLMap(isl_map *map) : map_(map) {}
-    ISLMap(const ISLCtx &ctx, const std::string &str)
+    PBMap() {}
+    PBMap(isl_map *map) : map_(map) {}
+    PBMap(const PBCtx &ctx, const std::string &str)
         : map_(isl_map_read_from_str(ctx.get(), str.c_str())) {
         if (map_ == nullptr) {
-            ERROR("Unable to construct an ISLMap from " + str);
+            ERROR("Unable to construct an PBMap from " + str);
         }
     }
-    ~ISLMap() {
+    ~PBMap() {
         if (map_ != nullptr) {
             isl_map_free(map_);
         }
     }
 
-    ISLMap(const ISLMap &other) : map_(other.copy()) {}
-    ISLMap &operator=(const ISLMap &other) {
+    PBMap(const PBMap &other) : map_(other.copy()) {}
+    PBMap &operator=(const PBMap &other) {
         if (map_ != nullptr) {
             isl_map_free(map_);
         }
@@ -78,8 +78,8 @@ class ISLMap {
         return *this;
     }
 
-    ISLMap(ISLMap &&other) : map_(other.move()) {}
-    ISLMap &operator=(ISLMap &&other) {
+    PBMap(PBMap &&other) : map_(other.move()) {}
+    PBMap &operator=(PBMap &&other) {
         if (map_ != nullptr) {
             isl_map_free(map_);
         }
@@ -100,29 +100,29 @@ class ISLMap {
 
     isl_size nBasic() const { return isl_map_n_basic_map(map_); }
 
-    friend std::string toString(const ISLMap &map) {
+    friend std::string toString(const PBMap &map) {
         return isl_map_to_str(map.map_);
     }
 };
 
-inline std::ostream &operator<<(std::ostream &os, const ISLMap &map) {
+inline std::ostream &operator<<(std::ostream &os, const PBMap &map) {
     return os << toString(map);
 }
 
-class ISLVal {
+class PBVal {
     isl_val *val_ = nullptr;
 
   public:
-    ISLVal() {}
-    ISLVal(isl_val *val) : val_(val) {}
-    ~ISLVal() {
+    PBVal() {}
+    PBVal(isl_val *val) : val_(val) {}
+    ~PBVal() {
         if (val_ != nullptr) {
             isl_val_free(val_);
         }
     }
 
-    ISLVal(const ISLVal &other) : val_(other.copy()) {}
-    ISLVal &operator=(const ISLVal &other) {
+    PBVal(const PBVal &other) : val_(other.copy()) {}
+    PBVal &operator=(const PBVal &other) {
         if (val_ != nullptr) {
             isl_val_free(val_);
         }
@@ -130,8 +130,8 @@ class ISLVal {
         return *this;
     }
 
-    ISLVal(ISLVal &&other) : val_(other.move()) {}
-    ISLVal &operator=(ISLVal &&other) {
+    PBVal(PBVal &&other) : val_(other.move()) {}
+    PBVal &operator=(PBVal &&other) {
         if (val_ != nullptr) {
             isl_val_free(val_);
         }
@@ -149,35 +149,35 @@ class ISLVal {
     int numSi() const { return isl_val_get_num_si(get()); }
     int denSi() const { return isl_val_get_den_si(get()); }
 
-    friend std::string toString(const ISLVal &val) {
+    friend std::string toString(const PBVal &val) {
         return isl_val_to_str(val.val_);
     }
 };
 
-inline std::ostream &operator<<(std::ostream &os, const ISLVal &val) {
+inline std::ostream &operator<<(std::ostream &os, const PBVal &val) {
     return os << toString(val);
 }
 
-class ISLSet {
+class PBSet {
     isl_set *set_ = nullptr;
 
   public:
-    ISLSet() {}
-    ISLSet(isl_set *set) : set_(set) {}
-    ISLSet(const ISLCtx &ctx, const std::string &str)
+    PBSet() {}
+    PBSet(isl_set *set) : set_(set) {}
+    PBSet(const PBCtx &ctx, const std::string &str)
         : set_(isl_set_read_from_str(ctx.get(), str.c_str())) {
         if (set_ == nullptr) {
-            ERROR("Unable to construct an ISLSet from " + str);
+            ERROR("Unable to construct an PBSet from " + str);
         }
     }
-    ~ISLSet() {
+    ~PBSet() {
         if (set_ != nullptr) {
             isl_set_free(set_);
         }
     }
 
-    ISLSet(const ISLSet &other) : set_(other.copy()) {}
-    ISLSet &operator=(const ISLSet &other) {
+    PBSet(const PBSet &other) : set_(other.copy()) {}
+    PBSet &operator=(const PBSet &other) {
         if (set_ != nullptr) {
             isl_set_free(set_);
         }
@@ -185,8 +185,8 @@ class ISLSet {
         return *this;
     }
 
-    ISLSet(ISLSet &&other) : set_(other.move()) {}
-    ISLSet &operator=(ISLSet &&other) {
+    PBSet(PBSet &&other) : set_(other.move()) {}
+    PBSet &operator=(PBSet &&other) {
         if (set_ != nullptr) {
             isl_set_free(set_);
         }
@@ -202,30 +202,30 @@ class ISLSet {
 
     isl_size nBasic() const { return isl_set_n_basic_set(set_); }
 
-    friend std::string toString(const ISLSet &set) {
+    friend std::string toString(const PBSet &set) {
         return isl_set_to_str(set.set_);
     }
 };
 
-inline std::ostream &operator<<(std::ostream &os, const ISLSet &set) {
+inline std::ostream &operator<<(std::ostream &os, const PBSet &set) {
     return os << toString(set);
 }
 
-class ISLSpace {
+class PBSpace {
     isl_space *space_ = nullptr;
 
   public:
-    ISLSpace() {}
-    ISLSpace(isl_space *space) : space_(space) {}
-    ISLSpace(const ISLSet &set) : space_(isl_set_get_space(set.get())) {}
-    ~ISLSpace() {
+    PBSpace() {}
+    PBSpace(isl_space *space) : space_(space) {}
+    PBSpace(const PBSet &set) : space_(isl_set_get_space(set.get())) {}
+    ~PBSpace() {
         if (space_ != nullptr) {
             isl_space_free(space_);
         }
     }
 
-    ISLSpace(const ISLSpace &other) : space_(other.copy()) {}
-    ISLSpace &operator=(const ISLSpace &other) {
+    PBSpace(const PBSpace &other) : space_(other.copy()) {}
+    PBSpace &operator=(const PBSpace &other) {
         if (space_ != nullptr) {
             isl_space_free(space_);
         }
@@ -233,8 +233,8 @@ class ISLSpace {
         return *this;
     }
 
-    ISLSpace(ISLSpace &&other) : space_(other.move()) {}
-    ISLSpace &operator=(ISLSpace &&other) {
+    PBSpace(PBSpace &&other) : space_(other.move()) {}
+    PBSpace &operator=(PBSpace &&other) {
         if (space_ != nullptr) {
             isl_space_free(space_);
         }
@@ -248,255 +248,255 @@ class ISLSpace {
     isl_space *copy() const { return COPY_ISL_PTR(space_, space); }
     isl_space *move() { return MOVE_ISL_PTR(space_); }
 
-    friend std::string toString(const ISLSpace &space) {
+    friend std::string toString(const PBSpace &space) {
         return isl_space_to_str(space.space_);
     }
 };
 
-inline std::ostream &operator<<(std::ostream &os, const ISLSpace &space) {
+inline std::ostream &operator<<(std::ostream &os, const PBSpace &space) {
     return os << toString(space);
 }
 
-inline ISLSet complement(ISLSet &&set) {
+inline PBSet complement(PBSet &&set) {
     DEBUG_PROFILE("complement");
     return isl_set_complement(set.move());
 }
-inline ISLSet complement(const ISLSet &set) {
+inline PBSet complement(const PBSet &set) {
     DEBUG_PROFILE("complement");
     return isl_set_complement(set.copy());
 }
-inline ISLMap complement(ISLMap &&map) {
+inline PBMap complement(PBMap &&map) {
     DEBUG_PROFILE("complement");
     return isl_map_complement(map.move());
 }
-inline ISLMap complement(const ISLMap &map) {
+inline PBMap complement(const PBMap &map) {
     DEBUG_PROFILE("complement");
     return isl_map_complement(map.copy());
 }
 
-inline ISLMap reverse(ISLMap &&map) {
+inline PBMap reverse(PBMap &&map) {
     DEBUG_PROFILE("reverse");
     return isl_map_reverse(map.move());
 }
-inline ISLMap reverse(const ISLMap &map) {
+inline PBMap reverse(const PBMap &map) {
     DEBUG_PROFILE("reverse");
     return isl_map_reverse(map.copy());
 }
 
-inline ISLMap subtract(ISLMap &&lhs, ISLMap &&rhs) {
+inline PBMap subtract(PBMap &&lhs, PBMap &&rhs) {
     DEBUG_PROFILE_VERBOSE("subtract", "nBasic=" + std::to_string(lhs.nBasic()) +
                                           "," + std::to_string(rhs.nBasic()));
     return isl_map_subtract(lhs.move(), rhs.move());
 }
-inline ISLMap subtract(const ISLMap &lhs, ISLMap &&rhs) {
+inline PBMap subtract(const PBMap &lhs, PBMap &&rhs) {
     DEBUG_PROFILE_VERBOSE("subtract", "nBasic=" + std::to_string(lhs.nBasic()) +
                                           "," + std::to_string(rhs.nBasic()));
     return isl_map_subtract(lhs.copy(), rhs.move());
 }
-inline ISLMap subtract(ISLMap &&lhs, const ISLMap &rhs) {
+inline PBMap subtract(PBMap &&lhs, const PBMap &rhs) {
     DEBUG_PROFILE_VERBOSE("subtract", "nBasic=" + std::to_string(lhs.nBasic()) +
                                           "," + std::to_string(rhs.nBasic()));
     return isl_map_subtract(lhs.move(), rhs.copy());
 }
-inline ISLMap subtract(const ISLMap &lhs, const ISLMap &rhs) {
+inline PBMap subtract(const PBMap &lhs, const PBMap &rhs) {
     DEBUG_PROFILE_VERBOSE("subtract", "nBasic=" + std::to_string(lhs.nBasic()) +
                                           "," + std::to_string(rhs.nBasic()));
     return isl_map_subtract(lhs.copy(), rhs.copy());
 }
 
-inline ISLMap intersect(ISLMap &&lhs, ISLMap &&rhs) {
+inline PBMap intersect(PBMap &&lhs, PBMap &&rhs) {
     DEBUG_PROFILE_VERBOSE("intersect",
                           "nBasic=" + std::to_string(lhs.nBasic()) + "," +
                               std::to_string(rhs.nBasic()));
     return isl_map_intersect(lhs.move(), rhs.move());
 }
-inline ISLMap intersect(const ISLMap &lhs, ISLMap &&rhs) {
+inline PBMap intersect(const PBMap &lhs, PBMap &&rhs) {
     DEBUG_PROFILE_VERBOSE("intersect",
                           "nBasic=" + std::to_string(lhs.nBasic()) + "," +
                               std::to_string(rhs.nBasic()));
     return isl_map_intersect(lhs.copy(), rhs.move());
 }
-inline ISLMap intersect(ISLMap &&lhs, const ISLMap &rhs) {
+inline PBMap intersect(PBMap &&lhs, const PBMap &rhs) {
     DEBUG_PROFILE_VERBOSE("intersect",
                           "nBasic=" + std::to_string(lhs.nBasic()) + "," +
                               std::to_string(rhs.nBasic()));
     return isl_map_intersect(lhs.move(), rhs.copy());
 }
-inline ISLMap intersect(const ISLMap &lhs, const ISLMap &rhs) {
+inline PBMap intersect(const PBMap &lhs, const PBMap &rhs) {
     DEBUG_PROFILE_VERBOSE("intersect",
                           "nBasic=" + std::to_string(lhs.nBasic()) + "," +
                               std::to_string(rhs.nBasic()));
     return isl_map_intersect(lhs.copy(), rhs.copy());
 }
 
-inline ISLMap uni(ISLMap &&lhs, ISLMap &&rhs) {
+inline PBMap uni(PBMap &&lhs, PBMap &&rhs) {
     DEBUG_PROFILE_VERBOSE("uni", "nBasic=" + std::to_string(lhs.nBasic()) +
                                      "," + std::to_string(rhs.nBasic()));
     return isl_map_union(lhs.move(), rhs.move());
 }
-inline ISLMap uni(const ISLMap &lhs, ISLMap &&rhs) {
+inline PBMap uni(const PBMap &lhs, PBMap &&rhs) {
     DEBUG_PROFILE_VERBOSE("uni", "nBasic=" + std::to_string(lhs.nBasic()) +
                                      "," + std::to_string(rhs.nBasic()));
     return isl_map_union(lhs.copy(), rhs.move());
 }
-inline ISLMap uni(ISLMap &&lhs, const ISLMap &rhs) {
+inline PBMap uni(PBMap &&lhs, const PBMap &rhs) {
     DEBUG_PROFILE_VERBOSE("uni", "nBasic=" + std::to_string(lhs.nBasic()) +
                                      "," + std::to_string(rhs.nBasic()));
     return isl_map_union(lhs.move(), rhs.copy());
 }
-inline ISLMap uni(const ISLMap &lhs, const ISLMap &rhs) {
+inline PBMap uni(const PBMap &lhs, const PBMap &rhs) {
     DEBUG_PROFILE_VERBOSE("uni", "nBasic=" + std::to_string(lhs.nBasic()) +
                                      "," + std::to_string(rhs.nBasic()));
     return isl_map_union(lhs.copy(), rhs.copy());
 }
 
-inline ISLMap applyDomain(ISLMap &&lhs, ISLMap &&rhs) {
+inline PBMap applyDomain(PBMap &&lhs, PBMap &&rhs) {
     DEBUG_PROFILE("applyDomain");
     return isl_map_apply_domain(lhs.move(), rhs.move());
 }
-inline ISLMap applyDomain(const ISLMap &lhs, ISLMap &&rhs) {
+inline PBMap applyDomain(const PBMap &lhs, PBMap &&rhs) {
     DEBUG_PROFILE("applyDomain");
     return isl_map_apply_domain(lhs.copy(), rhs.move());
 }
-inline ISLMap applyDomain(ISLMap &&lhs, const ISLMap &rhs) {
+inline PBMap applyDomain(PBMap &&lhs, const PBMap &rhs) {
     DEBUG_PROFILE("applyDomain");
     return isl_map_apply_domain(lhs.move(), rhs.copy());
 }
-inline ISLMap applyDomain(const ISLMap &lhs, const ISLMap &rhs) {
+inline PBMap applyDomain(const PBMap &lhs, const PBMap &rhs) {
     DEBUG_PROFILE("applyDomain");
     return isl_map_apply_domain(lhs.copy(), rhs.copy());
 }
 
-inline ISLMap applyRange(ISLMap &&lhs, ISLMap &&rhs) {
+inline PBMap applyRange(PBMap &&lhs, PBMap &&rhs) {
     DEBUG_PROFILE("applyRange");
     return isl_map_apply_range(lhs.move(), rhs.move());
 }
-inline ISLMap applyRange(const ISLMap &lhs, ISLMap &&rhs) {
+inline PBMap applyRange(const PBMap &lhs, PBMap &&rhs) {
     DEBUG_PROFILE("applyRange");
     return isl_map_apply_range(lhs.copy(), rhs.move());
 }
-inline ISLMap applyRange(ISLMap &&lhs, const ISLMap &rhs) {
+inline PBMap applyRange(PBMap &&lhs, const PBMap &rhs) {
     DEBUG_PROFILE("applyRange");
     return isl_map_apply_range(lhs.move(), rhs.copy());
 }
-inline ISLMap applyRange(const ISLMap &lhs, const ISLMap &rhs) {
+inline PBMap applyRange(const PBMap &lhs, const PBMap &rhs) {
     DEBUG_PROFILE("applyRange");
     return isl_map_apply_range(lhs.copy(), rhs.copy());
 }
 
-inline ISLMap lexmax(ISLMap &&map) {
+inline PBMap lexmax(PBMap &&map) {
     DEBUG_PROFILE_VERBOSE("lexmax", "nBasic=" + std::to_string(map.nBasic()));
     return isl_map_lexmax(map.move());
 }
-inline ISLMap lexmax(const ISLMap &map) {
+inline PBMap lexmax(const PBMap &map) {
     DEBUG_PROFILE_VERBOSE("lexmax", "nBasic=" + std::to_string(map.nBasic()));
     return isl_map_lexmax(map.copy());
 }
 
-inline ISLMap lexmin(ISLMap &&map) {
+inline PBMap lexmin(PBMap &&map) {
     DEBUG_PROFILE_VERBOSE("lexmin", "nBasic=" + std::to_string(map.nBasic()));
     return isl_map_lexmin(map.move());
 }
-inline ISLMap lexmin(const ISLMap &map) {
+inline PBMap lexmin(const PBMap &map) {
     DEBUG_PROFILE_VERBOSE("lexmin", "nBasic=" + std::to_string(map.nBasic()));
     return isl_map_lexmin(map.copy());
 }
 
-inline ISLMap identity(ISLSpace &&space) {
+inline PBMap identity(PBSpace &&space) {
     DEBUG_PROFILE("identity");
     return isl_map_identity(space.move());
 }
-inline ISLMap identity(const ISLSpace &space) {
+inline PBMap identity(const PBSpace &space) {
     DEBUG_PROFILE("identity");
     return isl_map_identity(space.copy());
 }
 
-inline ISLMap lexGE(ISLSpace &&space) {
+inline PBMap lexGE(PBSpace &&space) {
     DEBUG_PROFILE("lexGE");
     return isl_map_lex_ge(space.move());
 }
-inline ISLMap lexGE(const ISLSpace &space) {
+inline PBMap lexGE(const PBSpace &space) {
     DEBUG_PROFILE("lexGE");
     return isl_map_lex_ge(space.copy());
 }
 
-inline ISLMap lexGT(ISLSpace &&space) {
+inline PBMap lexGT(PBSpace &&space) {
     DEBUG_PROFILE("lexGT");
     return isl_map_lex_gt(space.move());
 }
-inline ISLMap lexGT(const ISLSpace &space) {
+inline PBMap lexGT(const PBSpace &space) {
     DEBUG_PROFILE("lexGT");
     return isl_map_lex_gt(space.copy());
 }
 
-inline ISLSpace spaceAlloc(const ISLCtx &ctx, unsigned nparam, unsigned nIn,
+inline PBSpace spaceAlloc(const PBCtx &ctx, unsigned nparam, unsigned nIn,
                            unsigned nOut) {
     return isl_space_alloc(ctx.get(), nparam, nIn, nOut);
 }
 
-inline ISLSpace spaceSetAlloc(const ISLCtx &ctx, unsigned nparam,
+inline PBSpace spaceSetAlloc(const PBCtx &ctx, unsigned nparam,
                               unsigned dim) {
     return isl_space_set_alloc(ctx.get(), nparam, dim);
 }
 
-inline ISLSet emptySet(ISLSpace &&space) { return isl_set_empty(space.move()); }
-inline ISLSet emptySet(const ISLSpace &space) {
+inline PBSet emptySet(PBSpace &&space) { return isl_set_empty(space.move()); }
+inline PBSet emptySet(const PBSpace &space) {
     return isl_set_empty(space.copy());
 }
 
-inline ISLMap emptyMap(ISLSpace &&space) { return isl_map_empty(space.move()); }
-inline ISLMap emptyMap(const ISLSpace &space) {
+inline PBMap emptyMap(PBSpace &&space) { return isl_map_empty(space.move()); }
+inline PBMap emptyMap(const PBSpace &space) {
     return isl_map_empty(space.copy());
 }
 
-inline ISLSet universeSet(ISLSpace &&space) {
+inline PBSet universeSet(PBSpace &&space) {
     return isl_set_universe(space.move());
 }
-inline ISLSet universeSet(const ISLSpace &space) {
+inline PBSet universeSet(const PBSpace &space) {
     return isl_set_universe(space.copy());
 }
 
-inline ISLMap universeMap(ISLSpace &&space) {
+inline PBMap universeMap(PBSpace &&space) {
     return isl_map_universe(space.move());
 }
-inline ISLMap universeMap(const ISLSpace &space) {
+inline PBMap universeMap(const PBSpace &space) {
     return isl_map_universe(space.copy());
 }
 
-inline ISLSet domain(ISLMap &&map) { return isl_map_domain(map.move()); }
-inline ISLSet domain(const ISLMap &map) { return isl_map_domain(map.copy()); }
+inline PBSet domain(PBMap &&map) { return isl_map_domain(map.move()); }
+inline PBSet domain(const PBMap &map) { return isl_map_domain(map.copy()); }
 
-inline ISLSet range(ISLMap &&map) { return isl_map_range(map.move()); }
-inline ISLSet range(const ISLMap &map) { return isl_map_range(map.copy()); }
+inline PBSet range(PBMap &&map) { return isl_map_range(map.move()); }
+inline PBSet range(const PBMap &map) { return isl_map_range(map.copy()); }
 
-inline ISLVal dimMaxVal(ISLSet &&set, int pos) {
+inline PBVal dimMaxVal(PBSet &&set, int pos) {
     return isl_set_dim_max_val(set.move(), pos);
 }
-inline ISLVal dimMaxVal(const ISLSet &set, int pos) {
+inline PBVal dimMaxVal(const PBSet &set, int pos) {
     return isl_set_dim_max_val(set.copy(), pos);
 }
 
-inline ISLVal dimMinVal(ISLSet &&set, int pos) {
+inline PBVal dimMinVal(PBSet &&set, int pos) {
     return isl_set_dim_min_val(set.move(), pos);
 }
-inline ISLVal dimMinVal(const ISLSet &set, int pos) {
+inline PBVal dimMinVal(const PBSet &set, int pos) {
     return isl_set_dim_min_val(set.copy(), pos);
 }
 
-inline ISLSpace spaceMapFromSet(ISLSpace &&space) {
+inline PBSpace spaceMapFromSet(PBSpace &&space) {
     return isl_space_map_from_set(space.move());
 }
-inline ISLSpace spaceMapFromSet(const ISLSpace &space) {
+inline PBSpace spaceMapFromSet(const PBSpace &space) {
     return isl_space_map_from_set(space.copy());
 }
 
-inline bool operator==(const ISLSet &lhs, const ISLSet &rhs) {
+inline bool operator==(const PBSet &lhs, const PBSet &rhs) {
     DEBUG_PROFILE_VERBOSE("equal", "nBasic=" + std::to_string(lhs.nBasic()) +
                                        "," + std::to_string(rhs.nBasic()));
     return isl_set_is_equal(lhs.get(), rhs.get());
 }
 
-inline bool operator!=(const ISLSet &lhs, const ISLSet &rhs) {
+inline bool operator!=(const PBSet &lhs, const PBSet &rhs) {
     DEBUG_PROFILE_VERBOSE("inequal", "nBasic=" + std::to_string(lhs.nBasic()) +
                                          "," + std::to_string(rhs.nBasic()));
     return !isl_set_is_equal(lhs.get(), rhs.get());
@@ -504,4 +504,4 @@ inline bool operator!=(const ISLSet &lhs, const ISLSet &rhs) {
 
 } // namespace ir
 
-#endif // ISL_H
+#endif // PRESBURGER_H
