@@ -62,6 +62,8 @@ template <class T> class Ref {
 
     bool isValid() const { return ptr_ != nullptr; }
 
+    long useCount() const { return ptr_.use_count(); }
+
     T &operator*() const {
         ASSERT(isValid());
         return *ptr_;

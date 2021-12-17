@@ -1,505 +1,532 @@
 #ifndef PRESBURGER_H
 #define PRESBURGER_H
 
-#include <iostream>
-#include <string>
+#include <functional>
 
-#include <isl/ctx.h>
-#include <isl/ilp.h>
-#include <isl/map.h>
-#include <isl/options.h>
-#include <isl/set.h>
-#include <isl/space.h>
-
-#include <debug/profile.h>
-#include <except.h>
+#include <math/isl.h>
+#include <ref.h>
 
 namespace ir {
 
-// Presburger arithmetic, currently implemented with ISL
+/**
+ * Presburger arithmetic
+ *
+ * Currently implemented with ISL
+ *
+ * Operations are evaluated in a lazy manner to perform some runtime
+ * optimizations
+ */
 
-template <class T> T *GET_ISL_PTR(T *ptr) {
-    ASSERT(ptr != nullptr);
-    return ptr;
-}
+class PBMapOp;
+class PBSetOp;
 
-#define COPY_ISL_PTR(ptr, type) _COPY_ISL_PTR(ptr, isl_##type##_copy)
-template <class T> T *_COPY_ISL_PTR(const T *ptr, T *(copy)(T *)) {
-    ASSERT(ptr != nullptr);
-    return copy(const_cast<T *>(ptr));
-}
-
-template <class T> T *MOVE_ISL_PTR(T *&ptr) {
-    ASSERT(ptr != nullptr);
-    auto ret = ptr;
-    ptr = nullptr;
-    return ret;
-}
+enum class PBOpType : int {
+    None = 0,
+    Complement,
+    Reverse,
+    LexMin,
+    LexMax,
+    Subtract,
+    Intersect,
+    Union,
+    ApplyRange,
+    ApplyDomain,
+    Identity,
+    LexGE,
+    LexGT,
+    Empty,
+    Universe,
+    Domain,
+    Range,
+};
 
 class PBCtx {
-    isl_ctx *ctx_ = nullptr;
+    ISLCtx ctx_;
 
   public:
-    PBCtx() : ctx_(isl_ctx_alloc()) {
-        isl_options_set_on_error(ctx_, ISL_ON_ERROR_ABORT);
-    }
-    ~PBCtx() { isl_ctx_free(ctx_); }
+    const ISLCtx &get() const { return ctx_; }
+};
 
-    PBCtx(const PBCtx &other) = delete;
-    PBCtx &operator=(const PBCtx &other) = delete;
-
-    isl_ctx *get() const { return GET_ISL_PTR(ctx_); }
+struct PBMapNode {
+    Ref<PBMapOp> eval_;
+    ISLMap map_;
 };
 
 class PBMap {
-    isl_map *map_ = nullptr;
+    Ref<PBMapNode> node_;
 
   public:
     PBMap() {}
-    PBMap(isl_map *map) : map_(map) {}
-    PBMap(const PBCtx &ctx, const std::string &str)
-        : map_(isl_map_read_from_str(ctx.get(), str.c_str())) {
-        if (map_ == nullptr) {
-            ERROR("Unable to construct an PBMap from " + str);
-        }
-    }
-    ~PBMap() {
-        if (map_ != nullptr) {
-            isl_map_free(map_);
-        }
-    }
+    PBMap(const PBCtx &ctx, const std::string &str);
+    PBMap(const Ref<PBMapOp> &op);
 
-    PBMap(const PBMap &other) : map_(other.copy()) {}
-    PBMap &operator=(const PBMap &other) {
-        if (map_ != nullptr) {
-            isl_map_free(map_);
-        }
-        map_ = other.copy();
-        return *this;
-    }
+    bool isValid() const { return node_.isValid(); }
+    long useCount() const { return node_.useCount(); }
 
-    PBMap(PBMap &&other) : map_(other.move()) {}
-    PBMap &operator=(PBMap &&other) {
-        if (map_ != nullptr) {
-            isl_map_free(map_);
-        }
-        map_ = other.move();
-        return *this;
-    }
+    PBOpType opType() const;
+    Ref<PBMapOp> op() const;
 
-    bool isValid() const { return map_ != nullptr; }
+    void exec() const;
 
-    isl_map *get() const { return GET_ISL_PTR(map_); }
-    isl_map *copy() const { return COPY_ISL_PTR(map_, map); }
-    isl_map *move() { return MOVE_ISL_PTR(map_); }
+    const ISLMap &copy() const;
+    ISLMap &&move() const;
 
-    bool empty() const {
-        DEBUG_PROFILE("empty");
-        return isl_map_is_empty(get());
-    }
-
-    isl_size nBasic() const { return isl_map_n_basic_map(map_); }
-
-    friend std::string toString(const PBMap &map) {
-        return isl_map_to_str(map.map_);
-    }
+    bool empty() const { return copy().empty(); }
 };
+
+inline std::string toString(const PBMap &map) { return toString(map.copy()); }
 
 inline std::ostream &operator<<(std::ostream &os, const PBMap &map) {
     return os << toString(map);
 }
 
-class PBVal {
-    isl_val *val_ = nullptr;
-
-  public:
-    PBVal() {}
-    PBVal(isl_val *val) : val_(val) {}
-    ~PBVal() {
-        if (val_ != nullptr) {
-            isl_val_free(val_);
-        }
-    }
-
-    PBVal(const PBVal &other) : val_(other.copy()) {}
-    PBVal &operator=(const PBVal &other) {
-        if (val_ != nullptr) {
-            isl_val_free(val_);
-        }
-        val_ = other.copy();
-        return *this;
-    }
-
-    PBVal(PBVal &&other) : val_(other.move()) {}
-    PBVal &operator=(PBVal &&other) {
-        if (val_ != nullptr) {
-            isl_val_free(val_);
-        }
-        val_ = other.move();
-        return *this;
-    }
-
-    bool isValid() const { return val_ != nullptr; }
-
-    isl_val *get() const { return GET_ISL_PTR(val_); }
-    isl_val *copy() const { return COPY_ISL_PTR(val_, val); }
-    isl_val *move() { return MOVE_ISL_PTR(val_); }
-
-    bool isRat() const { return isl_val_is_rat(get()); }
-    int numSi() const { return isl_val_get_num_si(get()); }
-    int denSi() const { return isl_val_get_den_si(get()); }
-
-    friend std::string toString(const PBVal &val) {
-        return isl_val_to_str(val.val_);
-    }
+struct PBSetNode {
+    Ref<PBSetOp> eval_;
+    ISLSet set_;
 };
 
-inline std::ostream &operator<<(std::ostream &os, const PBVal &val) {
-    return os << toString(val);
-}
-
 class PBSet {
-    isl_set *set_ = nullptr;
+    Ref<PBSetNode> node_;
 
   public:
     PBSet() {}
-    PBSet(isl_set *set) : set_(set) {}
-    PBSet(const PBCtx &ctx, const std::string &str)
-        : set_(isl_set_read_from_str(ctx.get(), str.c_str())) {
-        if (set_ == nullptr) {
-            ERROR("Unable to construct an PBSet from " + str);
-        }
-    }
-    ~PBSet() {
-        if (set_ != nullptr) {
-            isl_set_free(set_);
-        }
-    }
+    PBSet(const PBCtx &ctx, const std::string &str);
+    PBSet(const Ref<PBSetOp> &op);
 
-    PBSet(const PBSet &other) : set_(other.copy()) {}
-    PBSet &operator=(const PBSet &other) {
-        if (set_ != nullptr) {
-            isl_set_free(set_);
-        }
-        set_ = other.copy();
-        return *this;
-    }
+    bool isValid() const { return node_.isValid(); }
+    long useCount() const { return node_.useCount(); }
 
-    PBSet(PBSet &&other) : set_(other.move()) {}
-    PBSet &operator=(PBSet &&other) {
-        if (set_ != nullptr) {
-            isl_set_free(set_);
-        }
-        set_ = other.move();
-        return *this;
-    }
+    PBOpType opType() const;
+    Ref<PBSetOp> op() const;
 
-    bool isValid() const { return set_ != nullptr; }
+    void exec() const;
 
-    isl_set *get() const { return GET_ISL_PTR(set_); }
-    isl_set *copy() const { return COPY_ISL_PTR(set_, set); }
-    isl_set *move() { return MOVE_ISL_PTR(set_); }
-
-    isl_size nBasic() const { return isl_set_n_basic_set(set_); }
-
-    friend std::string toString(const PBSet &set) {
-        return isl_set_to_str(set.set_);
-    }
+    const ISLSet &copy() const;
+    ISLSet &&move() const;
 };
+
+inline std::string toString(const PBSet &set) { return toString(set.copy()); }
 
 inline std::ostream &operator<<(std::ostream &os, const PBSet &set) {
     return os << toString(set);
 }
 
+struct PBSpaceNode {
+    ISLSpace space_;
+};
+
 class PBSpace {
-    isl_space *space_ = nullptr;
+    Ref<PBSpaceNode> node_;
 
   public:
     PBSpace() {}
-    PBSpace(isl_space *space) : space_(space) {}
-    PBSpace(const PBSet &set) : space_(isl_set_get_space(set.get())) {}
-    ~PBSpace() {
-        if (space_ != nullptr) {
-            isl_space_free(space_);
-        }
-    }
 
-    PBSpace(const PBSpace &other) : space_(other.copy()) {}
-    PBSpace &operator=(const PBSpace &other) {
-        if (space_ != nullptr) {
-            isl_space_free(space_);
-        }
-        space_ = other.copy();
-        return *this;
-    }
+    bool isValid() const { return node_.isValid(); }
+    long useCount() const { return node_.useCount(); }
 
-    PBSpace(PBSpace &&other) : space_(other.move()) {}
-    PBSpace &operator=(PBSpace &&other) {
-        if (space_ != nullptr) {
-            isl_space_free(space_);
-        }
-        space_ = other.move();
-        return *this;
-    }
+    const ISLSpace &copy() const;
+    ISLSpace &&move() const;
 
-    bool isValid() const { return space_ != nullptr; }
+    friend PBSpace spaceAlloc(const PBCtx &ctx, unsigned nparam, unsigned nIn,
+                              unsigned nOut);
+    friend PBSpace spaceSetAlloc(const PBCtx &ctx, unsigned nparam,
+                                 unsigned dim);
 
-    isl_space *get() const { return GET_ISL_PTR(space_); }
-    isl_space *copy() const { return COPY_ISL_PTR(space_, space); }
-    isl_space *move() { return MOVE_ISL_PTR(space_); }
-
-    friend std::string toString(const PBSpace &space) {
-        return isl_space_to_str(space.space_);
+    template <class T> friend PBSpace spaceMapFromSet(T &&other) {
+        PBSpace space;
+        space.node_ = Ref<PBSpaceNode>::make();
+        space.node_->space_ = spaceMapFromSet(other.copy());
+        return space;
     }
 };
+
+inline PBSpace spaceAlloc(const PBCtx &ctx, unsigned nparam, unsigned nIn,
+                          unsigned nOut) {
+    PBSpace space;
+    space.node_ = Ref<PBSpaceNode>::make();
+    space.node_->space_ = spaceAlloc(ctx.get(), nparam, nIn, nOut);
+    return space;
+}
+
+inline PBSpace spaceSetAlloc(const PBCtx &ctx, unsigned nparam, unsigned dim) {
+    PBSpace space;
+    space.node_ = Ref<PBSpaceNode>::make();
+    space.node_->space_ = spaceSetAlloc(ctx.get(), nparam, dim);
+    return space;
+}
+
+inline std::string toString(const PBSpace &space) {
+    return toString(space.copy());
+}
 
 inline std::ostream &operator<<(std::ostream &os, const PBSpace &space) {
     return os << toString(space);
 }
 
-inline PBSet complement(PBSet &&set) {
-    DEBUG_PROFILE("complement");
-    return isl_set_complement(set.move());
+typedef ISLVal PBVal;
+
+class PBMapOp {
+  public:
+    virtual ~PBMapOp() {}
+    virtual PBOpType type() const = 0;
+    virtual ISLMap exec() = 0;
+};
+
+class PBMapComplement : public PBMapOp {
+    PBMap map_;
+
+  public:
+    template <class T> PBMapComplement(T &&map) : map_(std::forward<T>(map)) {}
+    PBOpType type() const override { return PBOpType::Complement; }
+    ISLMap exec() override;
+};
+
+class PBMapReverse : public PBMapOp {
+    PBMap map_;
+
+  public:
+    template <class T> PBMapReverse(T &&map) : map_(std::forward<T>(map)) {}
+    PBOpType type() const override { return PBOpType::Reverse; }
+    ISLMap exec() override;
+};
+
+class PBMapLexMin : public PBMapOp {
+    PBMap map_;
+
+  public:
+    template <class T> PBMapLexMin(T &&map) : map_(std::forward<T>(map)) {}
+    PBOpType type() const override { return PBOpType::LexMin; }
+    ISLMap exec() override;
+};
+
+class PBMapLexMax : public PBMapOp {
+    PBMap map_;
+
+  public:
+    template <class T> PBMapLexMax(T &&map) : map_(std::forward<T>(map)) {}
+    PBOpType type() const override { return PBOpType::LexMax; }
+    ISLMap exec() override;
+};
+
+class PBMapSubtract : public PBMapOp {
+    PBMap lhs_, rhs_;
+
+  public:
+    template <class T, class U>
+    PBMapSubtract(T &&lhs, U &&rhs)
+        : lhs_(std::forward<T>(lhs)), rhs_(std::forward<U>(rhs)) {}
+    PBOpType type() const override { return PBOpType::Subtract; }
+    ISLMap exec() override;
+};
+
+class PBMapIntersect : public PBMapOp {
+    PBMap lhs_, rhs_;
+
+  public:
+    template <class T, class U>
+    PBMapIntersect(T &&lhs, U &&rhs)
+        : lhs_(std::forward<T>(lhs)), rhs_(std::forward<U>(rhs)) {}
+    PBOpType type() const override { return PBOpType::Intersect; }
+    ISLMap exec() override;
+};
+
+class PBMapUnion : public PBMapOp {
+    PBMap lhs_, rhs_;
+
+  public:
+    template <class T, class U>
+    PBMapUnion(T &&lhs, U &&rhs)
+        : lhs_(std::forward<T>(lhs)), rhs_(std::forward<U>(rhs)) {}
+    PBOpType type() const override { return PBOpType::Union; }
+    ISLMap exec() override;
+};
+
+class PBMapApplyDomain : public PBMapOp {
+    PBMap lhs_, rhs_;
+
+  public:
+    template <class T, class U>
+    PBMapApplyDomain(T &&lhs, U &&rhs)
+        : lhs_(std::forward<T>(lhs)), rhs_(std::forward<U>(rhs)) {}
+    PBOpType type() const override { return PBOpType::ApplyDomain; }
+    ISLMap exec() override;
+};
+
+class PBMapApplyRange : public PBMapOp {
+    PBMap lhs_, rhs_;
+
+  public:
+    template <class T, class U>
+    PBMapApplyRange(T &&lhs, U &&rhs)
+        : lhs_(std::forward<T>(lhs)), rhs_(std::forward<U>(rhs)) {}
+    PBOpType type() const override { return PBOpType::ApplyRange; }
+    ISLMap exec() override;
+};
+
+class PBMapIdentity : public PBMapOp {
+    PBSpace space_;
+
+  public:
+    template <class T>
+    PBMapIdentity(T &&space) : space_(std::forward<T>(space)) {}
+    PBOpType type() const override { return PBOpType::Identity; }
+    ISLMap exec() override;
+};
+
+class PBMapLexGE : public PBMapOp {
+    PBSpace space_;
+
+  public:
+    template <class T> PBMapLexGE(T &&space) : space_(std::forward<T>(space)) {}
+    PBOpType type() const override { return PBOpType::LexGE; }
+    ISLMap exec() override;
+};
+
+class PBMapLexGT : public PBMapOp {
+    PBSpace space_;
+
+  public:
+    template <class T> PBMapLexGT(T &&space) : space_(std::forward<T>(space)) {}
+    PBOpType type() const override { return PBOpType::LexGT; }
+    ISLMap exec() override;
+};
+
+class PBMapEmpty : public PBMapOp {
+    PBSpace space_;
+
+  public:
+    template <class T> PBMapEmpty(T &&space) : space_(std::forward<T>(space)) {}
+    PBOpType type() const override { return PBOpType::Empty; }
+    ISLMap exec() override;
+};
+
+class PBMapUniverse : public PBMapOp {
+    PBSpace space_;
+
+  public:
+    template <class T>
+    PBMapUniverse(T &&space) : space_(std::forward<T>(space)) {}
+    PBOpType type() const override { return PBOpType::Universe; }
+    ISLMap exec() override;
+};
+
+class PBSetOp {
+  public:
+    virtual ~PBSetOp() {}
+    virtual PBOpType type() const = 0;
+    virtual ISLSet exec() = 0;
+};
+
+class PBSetComplement : public PBSetOp {
+    PBSet set_;
+
+  public:
+    template <class T> PBSetComplement(T &&set) : set_(std::forward<T>(set)) {}
+    PBOpType type() const override { return PBOpType::Complement; }
+    ISLSet exec() override;
+};
+
+class PBSetEmpty : public PBSetOp {
+    PBSpace space_;
+
+  public:
+    template <class T> PBSetEmpty(T &&space) : space_(std::forward<T>(space)) {}
+    PBOpType type() const override { return PBOpType::Empty; }
+    ISLSet exec() override;
+};
+
+class PBSetUniverse : public PBSetOp {
+    PBSpace space_;
+
+  public:
+    template <class T>
+    PBSetUniverse(T &&space) : space_(std::forward<T>(space)) {}
+    PBOpType type() const override { return PBOpType::Universe; }
+    ISLSet exec() override;
+};
+
+class PBSetDomain : public PBSetOp {
+    PBMap map_;
+
+  public:
+    template <class T> PBSetDomain(T &&map) : map_(std::forward<T>(map)) {}
+    PBOpType type() const override { return PBOpType::Domain; }
+    ISLSet exec() override;
+};
+
+class PBSetRange : public PBSetOp {
+    PBMap map_;
+
+  public:
+    template <class T> PBSetRange(T &&map) : map_(std::forward<T>(map)) {}
+    PBOpType type() const override { return PBOpType::Range; }
+    ISLSet exec() override;
+};
+
+template <class T, typename std::enable_if_t<
+                       std::is_same_v<std::decay_t<T>, PBSet>> * = nullptr>
+PBSet complement(T &&set) {
+    return PBSet(
+        Ref<PBSetComplement>::make(PBSetComplement(std::forward<T>(set))));
 }
-inline PBSet complement(const PBSet &set) {
-    DEBUG_PROFILE("complement");
-    return isl_set_complement(set.copy());
-}
-inline PBMap complement(PBMap &&map) {
-    DEBUG_PROFILE("complement");
-    return isl_map_complement(map.move());
-}
-inline PBMap complement(const PBMap &map) {
-    DEBUG_PROFILE("complement");
-    return isl_map_complement(map.copy());
+template <class T, typename std::enable_if_t<
+                       std::is_same_v<std::decay_t<T>, PBMap>> * = nullptr>
+PBMap complement(T &&map) {
+    return PBMap(
+        Ref<PBMapComplement>::make(PBMapComplement(std::forward<T>(map))));
 }
 
-inline PBMap reverse(PBMap &&map) {
-    DEBUG_PROFILE("reverse");
-    return isl_map_reverse(map.move());
-}
-inline PBMap reverse(const PBMap &map) {
-    DEBUG_PROFILE("reverse");
-    return isl_map_reverse(map.copy());
+template <class T, typename std::enable_if_t<
+                       std::is_same_v<std::decay_t<T>, PBMap>> * = nullptr>
+PBMap reverse(T &&map) {
+    return PBMap(Ref<PBMapReverse>::make(PBMapReverse(std::forward<T>(map))));
 }
 
-inline PBMap subtract(PBMap &&lhs, PBMap &&rhs) {
-    DEBUG_PROFILE_VERBOSE("subtract", "nBasic=" + std::to_string(lhs.nBasic()) +
-                                          "," + std::to_string(rhs.nBasic()));
-    return isl_map_subtract(lhs.move(), rhs.move());
-}
-inline PBMap subtract(const PBMap &lhs, PBMap &&rhs) {
-    DEBUG_PROFILE_VERBOSE("subtract", "nBasic=" + std::to_string(lhs.nBasic()) +
-                                          "," + std::to_string(rhs.nBasic()));
-    return isl_map_subtract(lhs.copy(), rhs.move());
-}
-inline PBMap subtract(PBMap &&lhs, const PBMap &rhs) {
-    DEBUG_PROFILE_VERBOSE("subtract", "nBasic=" + std::to_string(lhs.nBasic()) +
-                                          "," + std::to_string(rhs.nBasic()));
-    return isl_map_subtract(lhs.move(), rhs.copy());
-}
-inline PBMap subtract(const PBMap &lhs, const PBMap &rhs) {
-    DEBUG_PROFILE_VERBOSE("subtract", "nBasic=" + std::to_string(lhs.nBasic()) +
-                                          "," + std::to_string(rhs.nBasic()));
-    return isl_map_subtract(lhs.copy(), rhs.copy());
+template <class T, typename std::enable_if_t<
+                       std::is_same_v<std::decay_t<T>, PBMap>> * = nullptr>
+PBMap lexmin(T &&map) {
+    return PBMap(Ref<PBMapLexMin>::make(PBMapLexMin(std::forward<T>(map))));
 }
 
-inline PBMap intersect(PBMap &&lhs, PBMap &&rhs) {
-    DEBUG_PROFILE_VERBOSE("intersect",
-                          "nBasic=" + std::to_string(lhs.nBasic()) + "," +
-                              std::to_string(rhs.nBasic()));
-    return isl_map_intersect(lhs.move(), rhs.move());
-}
-inline PBMap intersect(const PBMap &lhs, PBMap &&rhs) {
-    DEBUG_PROFILE_VERBOSE("intersect",
-                          "nBasic=" + std::to_string(lhs.nBasic()) + "," +
-                              std::to_string(rhs.nBasic()));
-    return isl_map_intersect(lhs.copy(), rhs.move());
-}
-inline PBMap intersect(PBMap &&lhs, const PBMap &rhs) {
-    DEBUG_PROFILE_VERBOSE("intersect",
-                          "nBasic=" + std::to_string(lhs.nBasic()) + "," +
-                              std::to_string(rhs.nBasic()));
-    return isl_map_intersect(lhs.move(), rhs.copy());
-}
-inline PBMap intersect(const PBMap &lhs, const PBMap &rhs) {
-    DEBUG_PROFILE_VERBOSE("intersect",
-                          "nBasic=" + std::to_string(lhs.nBasic()) + "," +
-                              std::to_string(rhs.nBasic()));
-    return isl_map_intersect(lhs.copy(), rhs.copy());
+template <class T, typename std::enable_if_t<
+                       std::is_same_v<std::decay_t<T>, PBMap>> * = nullptr>
+PBMap lexmax(T &&map) {
+    return PBMap(Ref<PBMapLexMax>::make(PBMapLexMax(std::forward<T>(map))));
 }
 
-inline PBMap uni(PBMap &&lhs, PBMap &&rhs) {
-    DEBUG_PROFILE_VERBOSE("uni", "nBasic=" + std::to_string(lhs.nBasic()) +
-                                     "," + std::to_string(rhs.nBasic()));
-    return isl_map_union(lhs.move(), rhs.move());
-}
-inline PBMap uni(const PBMap &lhs, PBMap &&rhs) {
-    DEBUG_PROFILE_VERBOSE("uni", "nBasic=" + std::to_string(lhs.nBasic()) +
-                                     "," + std::to_string(rhs.nBasic()));
-    return isl_map_union(lhs.copy(), rhs.move());
-}
-inline PBMap uni(PBMap &&lhs, const PBMap &rhs) {
-    DEBUG_PROFILE_VERBOSE("uni", "nBasic=" + std::to_string(lhs.nBasic()) +
-                                     "," + std::to_string(rhs.nBasic()));
-    return isl_map_union(lhs.move(), rhs.copy());
-}
-inline PBMap uni(const PBMap &lhs, const PBMap &rhs) {
-    DEBUG_PROFILE_VERBOSE("uni", "nBasic=" + std::to_string(lhs.nBasic()) +
-                                     "," + std::to_string(rhs.nBasic()));
-    return isl_map_union(lhs.copy(), rhs.copy());
+template <class T, typename std::enable_if_t<
+                       std::is_same_v<std::decay_t<T>, PBMap>> * = nullptr>
+PBSet domain(T &&map) {
+    return PBSet(Ref<PBSetDomain>::make(PBSetDomain(std::forward<T>(map))));
 }
 
-inline PBMap applyDomain(PBMap &&lhs, PBMap &&rhs) {
-    DEBUG_PROFILE("applyDomain");
-    return isl_map_apply_domain(lhs.move(), rhs.move());
-}
-inline PBMap applyDomain(const PBMap &lhs, PBMap &&rhs) {
-    DEBUG_PROFILE("applyDomain");
-    return isl_map_apply_domain(lhs.copy(), rhs.move());
-}
-inline PBMap applyDomain(PBMap &&lhs, const PBMap &rhs) {
-    DEBUG_PROFILE("applyDomain");
-    return isl_map_apply_domain(lhs.move(), rhs.copy());
-}
-inline PBMap applyDomain(const PBMap &lhs, const PBMap &rhs) {
-    DEBUG_PROFILE("applyDomain");
-    return isl_map_apply_domain(lhs.copy(), rhs.copy());
+template <class T, typename std::enable_if_t<
+                       std::is_same_v<std::decay_t<T>, PBMap>> * = nullptr>
+PBSet range(T &&map) {
+    return PBSet(Ref<PBSetRange>::make(PBSetRange(std::forward<T>(map))));
 }
 
-inline PBMap applyRange(PBMap &&lhs, PBMap &&rhs) {
-    DEBUG_PROFILE("applyRange");
-    return isl_map_apply_range(lhs.move(), rhs.move());
-}
-inline PBMap applyRange(const PBMap &lhs, PBMap &&rhs) {
-    DEBUG_PROFILE("applyRange");
-    return isl_map_apply_range(lhs.copy(), rhs.move());
-}
-inline PBMap applyRange(PBMap &&lhs, const PBMap &rhs) {
-    DEBUG_PROFILE("applyRange");
-    return isl_map_apply_range(lhs.move(), rhs.copy());
-}
-inline PBMap applyRange(const PBMap &lhs, const PBMap &rhs) {
-    DEBUG_PROFILE("applyRange");
-    return isl_map_apply_range(lhs.copy(), rhs.copy());
+template <class T, class U,
+          typename std::enable_if_t<std::is_same_v<std::decay_t<T>, PBMap>> * =
+              nullptr,
+          typename std::enable_if_t<std::is_same_v<std::decay_t<U>, PBMap>> * =
+              nullptr>
+PBMap subtract(T &&lhs, U &&rhs) {
+    return PBMap(Ref<PBMapSubtract>::make(
+        PBMapSubtract(std::forward<T>(lhs), std::forward<U>(rhs))));
 }
 
-inline PBMap lexmax(PBMap &&map) {
-    DEBUG_PROFILE_VERBOSE("lexmax", "nBasic=" + std::to_string(map.nBasic()));
-    return isl_map_lexmax(map.move());
-}
-inline PBMap lexmax(const PBMap &map) {
-    DEBUG_PROFILE_VERBOSE("lexmax", "nBasic=" + std::to_string(map.nBasic()));
-    return isl_map_lexmax(map.copy());
-}
-
-inline PBMap lexmin(PBMap &&map) {
-    DEBUG_PROFILE_VERBOSE("lexmin", "nBasic=" + std::to_string(map.nBasic()));
-    return isl_map_lexmin(map.move());
-}
-inline PBMap lexmin(const PBMap &map) {
-    DEBUG_PROFILE_VERBOSE("lexmin", "nBasic=" + std::to_string(map.nBasic()));
-    return isl_map_lexmin(map.copy());
+template <class T, class U,
+          typename std::enable_if_t<std::is_same_v<std::decay_t<T>, PBMap>> * =
+              nullptr,
+          typename std::enable_if_t<std::is_same_v<std::decay_t<U>, PBMap>> * =
+              nullptr>
+PBMap intersect(T &&lhs, U &&rhs) {
+    return PBMap(Ref<PBMapIntersect>::make(
+        PBMapIntersect(std::forward<T>(lhs), std::forward<U>(rhs))));
 }
 
-inline PBMap identity(PBSpace &&space) {
-    DEBUG_PROFILE("identity");
-    return isl_map_identity(space.move());
-}
-inline PBMap identity(const PBSpace &space) {
-    DEBUG_PROFILE("identity");
-    return isl_map_identity(space.copy());
-}
-
-inline PBMap lexGE(PBSpace &&space) {
-    DEBUG_PROFILE("lexGE");
-    return isl_map_lex_ge(space.move());
-}
-inline PBMap lexGE(const PBSpace &space) {
-    DEBUG_PROFILE("lexGE");
-    return isl_map_lex_ge(space.copy());
+template <class T, class U,
+          typename std::enable_if_t<std::is_same_v<std::decay_t<T>, PBMap>> * =
+              nullptr,
+          typename std::enable_if_t<std::is_same_v<std::decay_t<U>, PBMap>> * =
+              nullptr>
+PBMap uni(T &&lhs, U &&rhs) {
+    return PBMap(Ref<PBMapUnion>::make(
+        PBMapUnion(std::forward<T>(lhs), std::forward<U>(rhs))));
 }
 
-inline PBMap lexGT(PBSpace &&space) {
-    DEBUG_PROFILE("lexGT");
-    return isl_map_lex_gt(space.move());
-}
-inline PBMap lexGT(const PBSpace &space) {
-    DEBUG_PROFILE("lexGT");
-    return isl_map_lex_gt(space.copy());
-}
-
-inline PBSpace spaceAlloc(const PBCtx &ctx, unsigned nparam, unsigned nIn,
-                           unsigned nOut) {
-    return isl_space_alloc(ctx.get(), nparam, nIn, nOut);
+template <class T, class U,
+          typename std::enable_if_t<std::is_same_v<std::decay_t<T>, PBMap>> * =
+              nullptr,
+          typename std::enable_if_t<std::is_same_v<std::decay_t<U>, PBMap>> * =
+              nullptr>
+PBMap applyDomain(T &&lhs, U &&rhs) {
+    return PBMap(Ref<PBMapApplyDomain>::make(
+        PBMapApplyDomain(std::forward<T>(lhs), std::forward<U>(rhs))));
 }
 
-inline PBSpace spaceSetAlloc(const PBCtx &ctx, unsigned nparam,
-                              unsigned dim) {
-    return isl_space_set_alloc(ctx.get(), nparam, dim);
+template <class T, class U,
+          typename std::enable_if_t<std::is_same_v<std::decay_t<T>, PBMap>> * =
+              nullptr,
+          typename std::enable_if_t<std::is_same_v<std::decay_t<U>, PBMap>> * =
+              nullptr>
+PBMap applyRange(T &&lhs, U &&rhs) {
+    return PBMap(Ref<PBMapApplyRange>::make(
+        PBMapApplyRange(std::forward<T>(lhs), std::forward<U>(rhs))));
 }
 
-inline PBSet emptySet(PBSpace &&space) { return isl_set_empty(space.move()); }
-inline PBSet emptySet(const PBSpace &space) {
-    return isl_set_empty(space.copy());
+template <class T, typename std::enable_if_t<
+                       std::is_same_v<std::decay_t<T>, PBSpace>> * = nullptr>
+PBMap identity(T &&space) {
+    return PBMap(
+        Ref<PBMapIdentity>::make(PBMapIdentity(std::forward<T>(space))));
 }
 
-inline PBMap emptyMap(PBSpace &&space) { return isl_map_empty(space.move()); }
-inline PBMap emptyMap(const PBSpace &space) {
-    return isl_map_empty(space.copy());
+template <class T, typename std::enable_if_t<
+                       std::is_same_v<std::decay_t<T>, PBSpace>> * = nullptr>
+PBMap lexGE(T &&space) {
+    return PBMap(Ref<PBMapLexGE>::make(PBMapLexGE(std::forward<T>(space))));
 }
 
-inline PBSet universeSet(PBSpace &&space) {
-    return isl_set_universe(space.move());
-}
-inline PBSet universeSet(const PBSpace &space) {
-    return isl_set_universe(space.copy());
-}
-
-inline PBMap universeMap(PBSpace &&space) {
-    return isl_map_universe(space.move());
-}
-inline PBMap universeMap(const PBSpace &space) {
-    return isl_map_universe(space.copy());
+template <class T, typename std::enable_if_t<
+                       std::is_same_v<std::decay_t<T>, PBSpace>> * = nullptr>
+PBMap lexGT(T &&space) {
+    return PBMap(Ref<PBMapLexGT>::make(PBMapLexGT(std::forward<T>(space))));
 }
 
-inline PBSet domain(PBMap &&map) { return isl_map_domain(map.move()); }
-inline PBSet domain(const PBMap &map) { return isl_map_domain(map.copy()); }
-
-inline PBSet range(PBMap &&map) { return isl_map_range(map.move()); }
-inline PBSet range(const PBMap &map) { return isl_map_range(map.copy()); }
-
-inline PBVal dimMaxVal(PBSet &&set, int pos) {
-    return isl_set_dim_max_val(set.move(), pos);
+template <class T, typename std::enable_if_t<
+                       std::is_same_v<std::decay_t<T>, PBSpace>> * = nullptr>
+PBMap emptyMap(T &&space) {
+    return PBMap(Ref<PBMapEmpty>::make(PBMapEmpty(std::forward<T>(space))));
 }
-inline PBVal dimMaxVal(const PBSet &set, int pos) {
-    return isl_set_dim_max_val(set.copy(), pos);
+template <class T, typename std::enable_if_t<
+                       std::is_same_v<std::decay_t<T>, PBSpace>> * = nullptr>
+PBSet emptySet(T &&space) {
+    return PBSet(Ref<PBSetEmpty>::make(PBSetEmpty(std::forward<T>(space))));
 }
 
-inline PBVal dimMinVal(PBSet &&set, int pos) {
-    return isl_set_dim_min_val(set.move(), pos);
+template <class T, typename std::enable_if_t<
+                       std::is_same_v<std::decay_t<T>, PBSpace>> * = nullptr>
+PBMap universeMap(T &&space) {
+    return PBMap(
+        Ref<PBMapUniverse>::make(PBMapUniverse(std::forward<T>(space))));
 }
-inline PBVal dimMinVal(const PBSet &set, int pos) {
-    return isl_set_dim_min_val(set.copy(), pos);
-}
-
-inline PBSpace spaceMapFromSet(PBSpace &&space) {
-    return isl_space_map_from_set(space.move());
-}
-inline PBSpace spaceMapFromSet(const PBSpace &space) {
-    return isl_space_map_from_set(space.copy());
-}
-
-inline bool operator==(const PBSet &lhs, const PBSet &rhs) {
-    DEBUG_PROFILE_VERBOSE("equal", "nBasic=" + std::to_string(lhs.nBasic()) +
-                                       "," + std::to_string(rhs.nBasic()));
-    return isl_set_is_equal(lhs.get(), rhs.get());
+template <class T, typename std::enable_if_t<
+                       std::is_same_v<std::decay_t<T>, PBSpace>> * = nullptr>
+PBSet universeSet(T &&space) {
+    return PBSet(
+        Ref<PBSetUniverse>::make(PBSetUniverse(std::forward<T>(space))));
 }
 
-inline bool operator!=(const PBSet &lhs, const PBSet &rhs) {
-    DEBUG_PROFILE_VERBOSE("inequal", "nBasic=" + std::to_string(lhs.nBasic()) +
-                                         "," + std::to_string(rhs.nBasic()));
-    return !isl_set_is_equal(lhs.get(), rhs.get());
+template <class T, typename std::enable_if_t<
+                       std::is_same_v<std::decay_t<T>, PBSet>> * = nullptr>
+PBVal dimMaxVal(T &&set, int pos) {
+    return dimMaxVal(set.copy(), pos);
+}
+
+template <class T, typename std::enable_if_t<
+                       std::is_same_v<std::decay_t<T>, PBSet>> * = nullptr>
+PBVal dimMinVal(T &&set, int pos) {
+    return dimMinVal(set.copy(), pos);
+}
+
+template <class T, class U,
+          typename std::enable_if_t<std::is_same_v<std::decay_t<T>, PBSet>> * =
+              nullptr,
+          typename std::enable_if_t<std::is_same_v<std::decay_t<U>, PBSet>> * =
+              nullptr>
+inline bool operator==(T &&lhs, U &&rhs) {
+    return lhs.copy() == rhs.copy();
+}
+
+template <class T, class U,
+          typename std::enable_if_t<std::is_same_v<std::decay_t<T>, PBSet>> * =
+              nullptr,
+          typename std::enable_if_t<std::is_same_v<std::decay_t<U>, PBSet>> * =
+              nullptr>
+inline bool operator!=(T &&lhs, U &&rhs) {
+    return lhs.copy() != rhs.copy();
 }
 
 } // namespace ir
