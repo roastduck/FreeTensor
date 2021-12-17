@@ -83,9 +83,9 @@ class FindAccessPoint : public VisitorWithCursor {
     bool lastIsLoad_ = false;
     std::vector<IterAxis> cur_; // Current iteration point in the space
     std::vector<Expr> conds_;
-    std::unordered_map<AST, Ref<AccessPoint>> points_;
     std::unordered_map<std::string, std::vector<Ref<AccessPoint>>> reads_,
         writes_;
+    std::vector<VarDef> allDefs_;
 
     // For or StmtSeq -> coordinate in space
     std::unordered_map<std::string, std::vector<IterAxis>> scope2coord_;
@@ -99,9 +99,6 @@ class FindAccessPoint : public VisitorWithCursor {
   public:
     FindAccessPoint(const Stmt &root);
 
-    const std::unordered_map<AST, Ref<AccessPoint>> &points() const {
-        return points_;
-    }
     const std::unordered_map<std::string, std::vector<Ref<AccessPoint>>> &
     reads() const {
         return reads_;
@@ -110,6 +107,7 @@ class FindAccessPoint : public VisitorWithCursor {
     writes() const {
         return writes_;
     }
+    const std::vector<VarDef> &allDefs() const { return allDefs_; }
     const std::unordered_map<std::string, std::vector<IterAxis>> &
     scope2coord() const {
         return scope2coord_;
@@ -136,7 +134,6 @@ class FindAccessPoint : public VisitorWithCursor {
                cur_,
                std::vector<Expr>{op->indices_.begin(), op->indices_.end()},
                conds_};
-        points_.emplace(op, ap);
         writes_[defs_.at(op->var_)->id()].emplace_back(ap);
     }
 
@@ -225,10 +222,10 @@ typedef std::function<bool(const AccessPoint &later,
 /**
  * Find RAW, WAR and WAW dependencies
  */
-class AnalyzeDeps : public Visitor {
-    const std::unordered_map<AST, Ref<AccessPoint>> &points_;
+class AnalyzeDeps {
     const std::unordered_map<std::string, std::vector<Ref<AccessPoint>>>
         &reads_, &writes_;
+    const std::vector<VarDef> &allDefs_;
     const std::unordered_map<std::string, std::vector<IterAxis>> &scope2coord_;
     const std::unordered_map<std::string, std::vector<std::string>>
         &noDepsLists_; // Var name -> [loop ID]
@@ -248,11 +245,11 @@ class AnalyzeDeps : public Visitor {
 
   public:
     AnalyzeDeps(
-        const std::unordered_map<AST, Ref<AccessPoint>> &points,
         const std::unordered_map<std::string, std::vector<Ref<AccessPoint>>>
             &reads,
         const std::unordered_map<std::string, std::vector<Ref<AccessPoint>>>
             &writes,
+        const std::vector<VarDef> &allDefs,
         const std::unordered_map<std::string, std::vector<IterAxis>>
             &scope2coord,
         const std::unordered_map<std::string, std::vector<std::string>>
@@ -261,12 +258,14 @@ class AnalyzeDeps : public Visitor {
         const std::vector<FindDepsCond> &cond, const FindDepsCallback &found,
         FindDepsMode mode, DepType depType, const FindDepsFilter &filter,
         bool ignoreReductionWAW, bool eraseOutsideVarDef)
-        : points_(points), reads_(reads), writes_(writes),
+        : reads_(reads), writes_(writes), allDefs_(allDefs),
           scope2coord_(scope2coord), noDepsLists_(noDepsLists),
           variantExpr_(variantExpr), cond_(cond), found_(found),
           filter_(filter), mode_(mode), depType_(depType),
           ignoreReductionWAW_(ignoreReductionWAW),
           eraseOutsideVarDef_(eraseOutsideVarDef) {}
+
+    void genTasks();
 
     const std::vector<std::function<void()>> &tasks() const { return tasks_; }
 
@@ -387,12 +386,6 @@ class AnalyzeDeps : public Visitor {
     checkDepEarliestLaterImpl(PBCtx &presburger, GenPBExprDeps &genPBExpr,
                               const std::vector<Ref<AccessPoint>> &pointList,
                               const Ref<AccessPoint> &other);
-
-  protected:
-    void visit(const Store &op) override;
-    void visit(const ReduceTo &op) override;
-    void visit(const Load &op) override;
-    void visit(const MatMul &op) override { (*this)(op->equivalent_); }
 };
 
 /**

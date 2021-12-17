@@ -82,6 +82,7 @@ FindAccessPoint::FindAccessPoint(const Stmt &root) {
 
 void FindAccessPoint::visit(const VarDef &op) {
     ASSERT(!defs_.count(op->name_));
+    allDefs_.emplace_back(op);
     defAxis_[op->name_] =
         !cur_.empty() && cur_.back().iter_->nodeType() == ASTNodeType::IntConst
             ? cur_.size() - 1
@@ -170,7 +171,6 @@ void FindAccessPoint::visit(const Load &op) {
            cur_,
            std::vector<Expr>{op->indices_.begin(), op->indices_.end()},
            conds_};
-    points_.emplace(op, ap);
     reads_[defs_.at(op->var_)->id()].emplace_back(ap);
 }
 
@@ -983,67 +983,56 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
     }
 }
 
-void AnalyzeDeps::visit(const Load &op) {
-    Visitor::visit(op);
-    if (depType_ & DEP_RAW) {
-        auto &&point = points_.at(op);
-        auto &&defId = point->def_->id();
-        if (writes_.count(defId)) {
-            checkDepLatestEarlier(point, writes_.at(defId));
-        }
-    }
-    if (depType_ & DEP_WAR) {
-        auto &other = points_.at(op);
-        auto &&defId = other->def_->id();
-        if (writes_.count(defId)) {
-            checkDepEarliestLater(writes_.at(defId), other);
-        }
-    }
-}
-
-void AnalyzeDeps::visit(const Store &op) {
-    Visitor::visit(op);
-    if (depType_ & DEP_WAW) {
-        auto &&point = points_.at(op);
-        auto &&defId = point->def_->id();
-        if (writes_.count(defId)) {
-            checkDepLatestEarlier(point, writes_.at(defId));
-        }
-    }
-}
-
-void AnalyzeDeps::visit(const ReduceTo &op) {
-    Visitor::visit(op);
-
-    if ((depType_ & DEP_RAW) || (depType_ & DEP_WAW)) {
-        auto &&point = points_.at(op);
-        auto &&defId = point->def_->id();
-        if (writes_.count(defId)) {
-            std::vector<Ref<AccessPoint>> others;
-            for (auto &&item : writes_.at(defId)) {
-                if (ignoreReductionWAW_ &&
-                    item->op_->nodeType() == ASTNodeType::ReduceTo) {
-                    continue;
+void AnalyzeDeps::genTasks() {
+    for (auto &&def : allDefs_) {
+        if (writes_.count(def->id())) {
+            auto &&allWrites = writes_.at(def->id());
+            if (reads_.count(def->id())) {
+                for (auto &&read : reads_.at(def->id())) {
+                    if (depType_ & DEP_RAW) {
+                        checkDepLatestEarlier(read, allWrites);
+                    }
+                    if (depType_ & DEP_WAR) {
+                        checkDepEarliestLater(allWrites, read);
+                    }
                 }
-                others.emplace_back(item);
             }
-            checkDepLatestEarlier(point, others);
-        }
-    }
 
-    if (depType_ & DEP_WAR) {
-        auto &&other = points_.at(op);
-        auto &&defId = other->def_->id();
-        if (writes_.count(defId)) {
-            std::vector<Ref<AccessPoint>> points;
-            for (auto &&item : writes_.at(defId)) {
-                if (ignoreReductionWAW_ &&
-                    item->op_->nodeType() == ASTNodeType::ReduceTo) {
-                    continue;
+            for (auto &&write : allWrites) {
+                if (write->op_->nodeType() == ASTNodeType::Store) {
+                    if (depType_ & DEP_WAW) {
+                        checkDepLatestEarlier(write, allWrites);
+                    }
+
+                } else {
+                    ASSERT(write->op_->nodeType() == ASTNodeType::ReduceTo);
+                    if ((depType_ & DEP_RAW) || (depType_ & DEP_WAW)) {
+                        std::vector<Ref<AccessPoint>> others;
+                        for (auto &&item : allWrites) {
+                            if (ignoreReductionWAW_ &&
+                                item->op_->nodeType() ==
+                                    ASTNodeType::ReduceTo) {
+                                continue;
+                            }
+                            others.emplace_back(item);
+                        }
+                        checkDepLatestEarlier(write, others);
+                    }
+
+                    if (depType_ & DEP_WAR) {
+                        std::vector<Ref<AccessPoint>> points;
+                        for (auto &&item : allWrites) {
+                            if (ignoreReductionWAW_ &&
+                                item->op_->nodeType() ==
+                                    ASTNodeType::ReduceTo) {
+                                continue;
+                            }
+                            points.emplace_back(item);
+                        }
+                        checkDepEarliestLater(points, write);
+                    }
                 }
-                points.emplace_back(item);
             }
-            checkDepEarliestLater(points, other);
         }
     }
 }
@@ -1062,10 +1051,10 @@ void findDeps(const Stmt &op, const std::vector<FindDepsCond> &cond,
     noDepsFinder(op);
     auto variantExpr = findLoopVariance(op).first;
     AnalyzeDeps analyzer(
-        accFinder.points(), accFinder.reads(), accFinder.writes(),
+        accFinder.reads(), accFinder.writes(), accFinder.allDefs(),
         accFinder.scope2coord(), noDepsFinder.results(), variantExpr, cond,
         found, mode, depType, filter, ignoreReductionWAW, eraseOutsideVarDef);
-    analyzer(op);
+    analyzer.genTasks();
     size_t n = analyzer.tasks().size();
     std::vector<std::exception_ptr> exceptions(n, nullptr);
 #pragma omp parallel for schedule(dynamic)
