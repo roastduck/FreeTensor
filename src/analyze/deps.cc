@@ -571,8 +571,17 @@ int AnalyzeDeps::numCommonDims(const Ref<AccessPoint> &p1,
 
 void AnalyzeDeps::checkDepLatestEarlier(
     const Ref<AccessPoint> &point,
-    const std::vector<Ref<AccessPoint>> &otherList) {
-    tasks_.emplace_back([point, otherList, this]() {
+    const std::vector<Ref<AccessPoint>> &_otherList) {
+    std::vector<Ref<AccessPoint>> otherList;
+    for (auto &&other : _otherList) {
+        if (filter_ == nullptr || filter_(*point, *other)) {
+            otherList.emplace_back(other);
+        }
+    }
+    if (otherList.empty()) {
+        return;
+    }
+    tasks_.emplace_back([point, otherList = std::move(otherList), this]() {
         PBCtx presburger;
         GenPBExprDeps genPBExpr;
         checkDepLatestEarlierImpl(presburger, genPBExpr, point, otherList);
@@ -580,9 +589,18 @@ void AnalyzeDeps::checkDepLatestEarlier(
 }
 
 void AnalyzeDeps::checkDepEarliestLater(
-    const std::vector<Ref<AccessPoint>> &pointList,
+    const std::vector<Ref<AccessPoint>> &_pointList,
     const Ref<AccessPoint> &other) {
-    tasks_.emplace_back([pointList, other, this]() {
+    std::vector<Ref<AccessPoint>> pointList;
+    for (auto &&point : _pointList) {
+        if (filter_ == nullptr || filter_(*point, *other)) {
+            pointList.emplace_back(point);
+        }
+    }
+    if (pointList.empty()) {
+        return;
+    }
+    tasks_.emplace_back([pointList = std::move(pointList), other, this]() {
         PBCtx presburger;
         GenPBExprDeps genPBExpr;
         checkDepEarliestLaterImpl(presburger, genPBExpr, pointList, other);
@@ -592,10 +610,6 @@ void AnalyzeDeps::checkDepEarliestLater(
 void AnalyzeDeps::checkDepLatestEarlierImpl(
     PBCtx &presburger, GenPBExprDeps &genPBExpr, const Ref<AccessPoint> &point,
     const std::vector<Ref<AccessPoint>> &otherList) {
-    if (otherList.empty()) {
-        return;
-    }
-
     auto pRelax =
         mode_ == FindDepsMode::KillEarlier || mode_ == FindDepsMode::KillBoth
             ? RelaxMode::Necessary
@@ -607,46 +621,23 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
 
     int accDim = point->access_.size();
     int iterDim = point->iter_.size();
-    std::vector<bool> filteredIn(otherList.size());
     for (size_t i = 0, n = otherList.size(); i < n; i++) {
         auto &&other = otherList[i];
-        if (filter_ == nullptr) {
-            filteredIn[i] = true;
-        } else {
-            std::lock_guard<std::mutex> guard(lock_);
-            filteredIn[i] = filter_(*point, *other);
-        }
-        if (!filteredIn[i]) {
-            continue;
-        }
-
         iterDim = std::max<int>(iterDim, other->iter_.size());
         ASSERT((int)other->access_.size() == accDim);
-    }
-    if (std::find(filteredIn.begin(), filteredIn.end(), true) ==
-        filteredIn.end()) {
-        return;
     }
 
     int pCommonDims = 0;
     std::vector<int> oCommonDims(otherList.size(), 0);
     for (size_t i = 0, n = otherList.size(); i < n; i++) {
         auto &&other = otherList[i];
-        if (!filteredIn[i]) {
-            continue;
-        }
-
         int cpo = numCommonDims(point, other);
         pCommonDims = std::max(pCommonDims, cpo);
         oCommonDims[i] = std::max(oCommonDims[i], cpo);
-        auto j = i + 1;
-        while (j < n && !filteredIn[j]) {
-            j++;
-        }
-        if (j < n) {
-            int co1o2 = numCommonDims(other, otherList[j]);
+        if (i + 1 < n) {
+            int co1o2 = numCommonDims(other, otherList[i + 1]);
             oCommonDims[i] = std::max(oCommonDims[i], co1o2);
-            oCommonDims[j] = std::max(oCommonDims[j], co1o2);
+            oCommonDims[i + 1] = std::max(oCommonDims[i + 1], co1o2);
         }
     }
 
@@ -674,12 +665,9 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
     std::vector<PBMap> os2aList(otherList.size()), depAllList(otherList.size());
     std::vector<PBSet> oIterList(otherList.size());
     PBMap psDepAllUnion;
+    std::vector<bool> filteredIn(otherList.size(), true);
     for (size_t i = 0, n = otherList.size(); i < n; i++) {
         auto &&other = otherList[i];
-        if (!filteredIn[i]) {
-            continue;
-        }
-
         ExternalMap oExternals;
         PBMap omap =
             makeAccMap(presburger, genPBExpr, *other, iterDim, accDim, oRelax,
@@ -789,10 +777,6 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
     PBCtx &presburger, GenPBExprDeps &genPBExpr,
     const std::vector<Ref<AccessPoint>> &pointList,
     const Ref<AccessPoint> &other) {
-    if (pointList.empty()) {
-        return;
-    }
-
     auto pRelax =
         mode_ == FindDepsMode::KillEarlier || mode_ == FindDepsMode::KillBoth
             ? RelaxMode::Necessary
@@ -804,46 +788,23 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
 
     int accDim = other->access_.size();
     int iterDim = other->iter_.size();
-    std::vector<bool> filteredIn(pointList.size());
     for (size_t i = 0, n = pointList.size(); i < n; i++) {
         auto &&point = pointList[i];
-        if (filter_ == nullptr) {
-            filteredIn[i] = true;
-        } else {
-            std::lock_guard<std::mutex> guard(lock_);
-            filteredIn[i] = filter_(*point, *other);
-        }
-        if (!filteredIn[i]) {
-            continue;
-        }
-
         iterDim = std::max<int>(iterDim, point->iter_.size());
         ASSERT((int)point->access_.size() == accDim);
-    }
-    if (std::find(filteredIn.begin(), filteredIn.end(), true) ==
-        filteredIn.end()) {
-        return;
     }
 
     int oCommonDims = 0;
     std::vector<int> pCommonDims(pointList.size(), 0);
     for (size_t i = 0, n = pointList.size(); i < n; i++) {
         auto &&point = pointList[i];
-        if (!filteredIn[i]) {
-            continue;
-        }
-
         int cpo = numCommonDims(point, other);
         oCommonDims = std::max(oCommonDims, cpo);
         pCommonDims[i] = std::max(pCommonDims[i], cpo);
-        auto j = i + 1;
-        while (j < n && !filteredIn[j]) {
-            j++;
-        }
-        if (j < n) {
-            int cp1p2 = numCommonDims(point, pointList[j]);
+        if (i + 1 < n) {
+            int cp1p2 = numCommonDims(point, pointList[i + 1]);
             pCommonDims[i] = std::max(pCommonDims[i], cp1p2);
-            pCommonDims[j] = std::max(pCommonDims[j], cp1p2);
+            pCommonDims[i + 1] = std::max(pCommonDims[i + 1], cp1p2);
         }
     }
 
@@ -871,12 +832,9 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
     std::vector<PBMap> ps2aList(pointList.size()), depAllList(pointList.size());
     std::vector<PBSet> pIterList(pointList.size());
     PBMap spDepAllUnion;
+    std::vector<bool> filteredIn(pointList.size(), true);
     for (size_t i = 0, n = pointList.size(); i < n; i++) {
         auto &&point = pointList[i];
-        if (!filteredIn[i]) {
-            continue;
-        }
-
         ExternalMap pExternals;
         PBMap pmap =
             makeAccMap(presburger, genPBExpr, *point, iterDim, accDim, pRelax,
