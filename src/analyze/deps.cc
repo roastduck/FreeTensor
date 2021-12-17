@@ -983,24 +983,18 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
     }
 }
 
-void AnalyzeDeps::visit(const VarDef &op) {
-    ASSERT(!defId_.count(op->name_));
-    defId_[op->name_] = op->id();
-    Visitor::visit(op);
-    defId_.erase(op->name_);
-}
-
 void AnalyzeDeps::visit(const Load &op) {
     Visitor::visit(op);
-    auto &&defId = defId_.at(op->var_);
     if (depType_ & DEP_RAW) {
         auto &&point = points_.at(op);
+        auto &&defId = point->def_->id();
         if (writes_.count(defId)) {
             checkDepLatestEarlier(point, writes_.at(defId));
         }
     }
     if (depType_ & DEP_WAR) {
         auto &other = points_.at(op);
+        auto &&defId = other->def_->id();
         if (writes_.count(defId)) {
             checkDepEarliestLater(writes_.at(defId), other);
         }
@@ -1009,9 +1003,9 @@ void AnalyzeDeps::visit(const Load &op) {
 
 void AnalyzeDeps::visit(const Store &op) {
     Visitor::visit(op);
-    auto &&defId = defId_.at(op->var_);
     if (depType_ & DEP_WAW) {
         auto &&point = points_.at(op);
+        auto &&defId = point->def_->id();
         if (writes_.count(defId)) {
             checkDepLatestEarlier(point, writes_.at(defId));
         }
@@ -1020,10 +1014,10 @@ void AnalyzeDeps::visit(const Store &op) {
 
 void AnalyzeDeps::visit(const ReduceTo &op) {
     Visitor::visit(op);
-    auto &&defId = defId_.at(op->var_);
 
     if ((depType_ & DEP_RAW) || (depType_ & DEP_WAW)) {
         auto &&point = points_.at(op);
+        auto &&defId = point->def_->id();
         if (writes_.count(defId)) {
             std::vector<Ref<AccessPoint>> others;
             for (auto &&item : writes_.at(defId)) {
@@ -1039,6 +1033,7 @@ void AnalyzeDeps::visit(const ReduceTo &op) {
 
     if (depType_ & DEP_WAR) {
         auto &&other = points_.at(op);
+        auto &&defId = other->def_->id();
         if (writes_.count(defId)) {
             std::vector<Ref<AccessPoint>> points;
             for (auto &&item : writes_.at(defId)) {

@@ -243,9 +243,6 @@ class AnalyzeDeps : public Visitor {
     const bool ignoreReductionWAW_;
     const bool eraseOutsideVarDef_;
 
-    std::unordered_map<std::string, std::string>
-        defId_; // var name -> VarDef ID
-
     std::vector<std::function<void()>> tasks_;
     std::mutex lock_;
 
@@ -392,7 +389,6 @@ class AnalyzeDeps : public Visitor {
                               const Ref<AccessPoint> &other);
 
   protected:
-    void visit(const VarDef &op) override;
     void visit(const Store &op) override;
     void visit(const ReduceTo &op) override;
     void visit(const Load &op) override;
