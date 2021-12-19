@@ -546,6 +546,42 @@ PBMap AnalyzeDeps::projectOutPrivateAxis(PBCtx &presburger, int iterDim,
     return PBMap(presburger, "{" + from + " -> " + to + "}");
 }
 
+void AnalyzeDeps::projectOutPrivateAxis(
+    PBCtx &presburger, const Ref<AccessPoint> &point,
+    const std::vector<Ref<AccessPoint>> &otherList, PBMap &pmap,
+    std::vector<PBMap> &omapList, int iterDim) {
+    if (mode_ == FindDepsMode::Dep) {
+        int pCommonDims = 0;
+        std::vector<int> oCommonDims(otherList.size(), 0);
+        for (size_t i = 0, n = otherList.size(); i < n; i++) {
+            auto &&other = otherList[i];
+            int cpo = numCommonDims(point, other);
+            pCommonDims = std::max(pCommonDims, cpo);
+            oCommonDims[i] = std::max(oCommonDims[i], cpo);
+            if (i + 1 < n) {
+                int co1o2 = numCommonDims(other, otherList[i + 1]);
+                oCommonDims[i] = std::max(oCommonDims[i], co1o2);
+                oCommonDims[i + 1] = std::max(oCommonDims[i + 1], co1o2);
+            }
+        }
+
+        if (pCommonDims + 1 < (int)point->iter_.size()) {
+            pmap = applyDomain(
+                std::move(pmap),
+                projectOutPrivateAxis(presburger, iterDim, pCommonDims + 1));
+        }
+        for (size_t i = 0, n = otherList.size(); i < n; i++) {
+            auto &other = otherList[i];
+            auto &omap = omapList[i];
+            if (oCommonDims[i] + 1 < (int)other->iter_.size()) {
+                omap = applyDomain(std::move(omap),
+                                   projectOutPrivateAxis(presburger, iterDim,
+                                                         oCommonDims[i] + 1));
+            }
+        }
+    }
+}
+
 int AnalyzeDeps::numCommonDims(const Ref<AccessPoint> &p1,
                                const Ref<AccessPoint> &p2) {
     int n = std::min(p1->iter_.size(), p2->iter_.size());
@@ -627,20 +663,6 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
         ASSERT((int)other->access_.size() == accDim);
     }
 
-    int pCommonDims = 0;
-    std::vector<int> oCommonDims(otherList.size(), 0);
-    for (size_t i = 0, n = otherList.size(); i < n; i++) {
-        auto &&other = otherList[i];
-        int cpo = numCommonDims(point, other);
-        pCommonDims = std::max(pCommonDims, cpo);
-        oCommonDims[i] = std::max(oCommonDims[i], cpo);
-        if (i + 1 < n) {
-            int co1o2 = numCommonDims(other, otherList[i + 1]);
-            oCommonDims[i] = std::max(oCommonDims[i], co1o2);
-            oCommonDims[i + 1] = std::max(oCommonDims[i + 1], co1o2);
-        }
-    }
-
     PBMap allEQ = identity(spaceAlloc(presburger, 0, iterDim, iterDim));
     PBMap eraseVarDefConstraint =
         makeEraseVarDefConstraint(presburger, point, iterDim);
@@ -653,41 +675,42 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
     if (pmap.empty()) {
         return;
     }
-    if (mode_ == FindDepsMode::Dep &&
-        pCommonDims + 1 < (int)point->iter_.size()) {
-        pmap = applyDomain(
-            std::move(pmap),
-            projectOutPrivateAxis(presburger, iterDim, pCommonDims + 1));
-    }
     PBMap ps2a = makeSerialToAll(presburger, iterDim, point->iter_);
     PBMap pa2s = reverse(ps2a);
     PBSet pIter = domain(pmap);
+    std::vector<PBMap> omapList(otherList.size());
+    std::vector<ExternalMap> oExternalsList(otherList.size());
     std::vector<PBMap> os2aList(otherList.size()), depAllList(otherList.size());
     std::vector<PBSet> oIterList(otherList.size());
     PBMap psDepAllUnion;
     std::vector<bool> filteredIn(otherList.size(), true);
     for (size_t i = 0, n = otherList.size(); i < n; i++) {
-        auto &&other = otherList[i];
-        ExternalMap oExternals;
-        PBMap omap =
-            makeAccMap(presburger, genPBExpr, *other, iterDim, accDim, oRelax,
-                       "__ext_o" + std::to_string(i), oExternals);
+        auto &other = otherList[i];
+        auto &omap = omapList[i];
+        auto &oExternals = oExternalsList[i];
+        omap = makeAccMap(presburger, genPBExpr, *other, iterDim, accDim,
+                          oRelax, "__ext_o" + std::to_string(i), oExternals);
         if (omap.empty()) {
             filteredIn[i] = false;
+        }
+    }
+    projectOutPrivateAxis(presburger, point, otherList, pmap, omapList,
+                          iterDim);
+    for (size_t i = 0, n = otherList.size(); i < n; i++) {
+        auto &other = otherList[i];
+        auto &omap = omapList[i];
+        auto &oExternals = oExternalsList[i];
+        auto &os2a = os2aList[i];
+        auto &oIter = oIterList[i];
+        auto &depAll = depAllList[i];
+        if (!filteredIn[i]) {
             continue;
         }
-        if (mode_ == FindDepsMode::Dep &&
-            oCommonDims[i] + 1 < (int)other->iter_.size()) {
-            omap = applyDomain(
-                std::move(omap),
-                projectOutPrivateAxis(presburger, iterDim, oCommonDims[i] + 1));
-        }
-        PBMap os2a = makeSerialToAll(presburger, iterDim, other->iter_);
+        os2a = makeSerialToAll(presburger, iterDim, other->iter_);
         PBMap oa2s = reverse(os2a);
-        PBSet oIter = domain(omap);
+        oIter = domain(omap);
 
-        PBMap depAll =
-            subtract(applyRange(pmap, reverse(std::move(omap))), allEQ);
+        depAll = subtract(applyRange(pmap, reverse(std::move(omap))), allEQ);
 
         depAll = intersect(std::move(depAll), eraseVarDefConstraint);
         depAll = intersect(std::move(depAll), noDepsConstraint);
@@ -701,10 +724,6 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
         psDepAllUnion = psDepAllUnion.isValid()
                             ? uni(std::move(psDepAllUnion), std::move(psDepAll))
                             : std::move(psDepAll);
-
-        os2aList[i] = std::move(os2a);
-        oIterList[i] = std::move(oIter);
-        depAllList[i] = std::move(depAll);
     }
     if (!psDepAllUnion.isValid()) {
         return;
@@ -794,20 +813,6 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
         ASSERT((int)point->access_.size() == accDim);
     }
 
-    int oCommonDims = 0;
-    std::vector<int> pCommonDims(pointList.size(), 0);
-    for (size_t i = 0, n = pointList.size(); i < n; i++) {
-        auto &&point = pointList[i];
-        int cpo = numCommonDims(point, other);
-        oCommonDims = std::max(oCommonDims, cpo);
-        pCommonDims[i] = std::max(pCommonDims[i], cpo);
-        if (i + 1 < n) {
-            int cp1p2 = numCommonDims(point, pointList[i + 1]);
-            pCommonDims[i] = std::max(pCommonDims[i], cp1p2);
-            pCommonDims[i + 1] = std::max(pCommonDims[i + 1], cp1p2);
-        }
-    }
-
     PBMap allEQ = identity(spaceAlloc(presburger, 0, iterDim, iterDim));
     PBMap eraseVarDefConstraint =
         makeEraseVarDefConstraint(presburger, other, iterDim);
@@ -820,41 +825,42 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
     if (omap.empty()) {
         return;
     }
-    if (mode_ == FindDepsMode::Dep &&
-        oCommonDims + 1 < (int)other->iter_.size()) {
-        omap = applyDomain(
-            std::move(omap),
-            projectOutPrivateAxis(presburger, iterDim, oCommonDims + 1));
-    }
     PBMap os2a = makeSerialToAll(presburger, iterDim, other->iter_);
     PBMap oa2s = reverse(os2a);
     PBSet oIter = domain(omap);
+    std::vector<PBMap> pmapList(pointList.size());
+    std::vector<ExternalMap> pExternalsList(pointList.size());
     std::vector<PBMap> ps2aList(pointList.size()), depAllList(pointList.size());
     std::vector<PBSet> pIterList(pointList.size());
     PBMap spDepAllUnion;
     std::vector<bool> filteredIn(pointList.size(), true);
     for (size_t i = 0, n = pointList.size(); i < n; i++) {
-        auto &&point = pointList[i];
-        ExternalMap pExternals;
-        PBMap pmap =
-            makeAccMap(presburger, genPBExpr, *point, iterDim, accDim, pRelax,
-                       "__ext_p" + std::to_string(i), pExternals);
+        auto &point = pointList[i];
+        auto &pmap = pmapList[i];
+        auto &pExternals = pExternalsList[i];
+        pmap = makeAccMap(presburger, genPBExpr, *point, iterDim, accDim,
+                          pRelax, "__ext_p" + std::to_string(i), pExternals);
         if (pmap.empty()) {
             filteredIn[i] = false;
+        }
+    }
+    projectOutPrivateAxis(presburger, other, pointList, omap, pmapList,
+                          iterDim);
+    for (size_t i = 0, n = pointList.size(); i < n; i++) {
+        auto &point = pointList[i];
+        auto &pmap = pmapList[i];
+        auto &pExternals = pExternalsList[i];
+        auto &ps2a = ps2aList[i];
+        auto &pIter = pIterList[i];
+        auto &depAll = depAllList[i];
+        if (!filteredIn[i]) {
             continue;
         }
-        if (mode_ == FindDepsMode::Dep &&
-            pCommonDims[i] + 1 < (int)point->iter_.size()) {
-            pmap = applyDomain(
-                std::move(pmap),
-                projectOutPrivateAxis(presburger, iterDim, pCommonDims[i] + 1));
-        }
-        PBMap ps2a = makeSerialToAll(presburger, iterDim, point->iter_);
+        ps2a = makeSerialToAll(presburger, iterDim, point->iter_);
         PBMap pa2s = reverse(ps2a);
-        PBSet pIter = domain(pmap);
+        pIter = domain(pmap);
 
-        PBMap depAll =
-            subtract(applyRange(std::move(pmap), reverse(omap)), allEQ);
+        depAll = subtract(applyRange(std::move(pmap), reverse(omap)), allEQ);
 
         depAll = intersect(std::move(depAll), eraseVarDefConstraint);
         depAll = intersect(std::move(depAll), noDepsConstraint);
@@ -868,10 +874,6 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
         spDepAllUnion = spDepAllUnion.isValid()
                             ? uni(std::move(spDepAllUnion), std::move(spDepAll))
                             : std::move(spDepAll);
-
-        ps2aList[i] = std::move(ps2a);
-        pIterList[i] = std::move(pIter);
-        depAllList[i] = std::move(depAll);
     }
     if (!spDepAllUnion.isValid()) {
         return;

@@ -354,7 +354,10 @@ class AnalyzeDeps {
      * project out these dimensions
      */
     PBMap projectOutPrivateAxis(PBCtx &presburger, int iterDim, int since);
-
+    void projectOutPrivateAxis(PBCtx &presburger, const Ref<AccessPoint> &point,
+                               const std::vector<Ref<AccessPoint>> &otherList,
+                               PBMap &pmap, std::vector<PBMap> &omapList,
+                               int iterDim);
     int numCommonDims(const Ref<AccessPoint> &p1, const Ref<AccessPoint> &p2);
 
     static const std::string &getVar(const AST &op);
