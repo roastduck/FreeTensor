@@ -1,5 +1,7 @@
 #include <algorithm>
 
+#include <itertools.hpp>
+
 #include <analyze/all_defs.h>
 #include <analyze/all_stmts.h>
 #include <analyze/count_contig_access_loops.h>
@@ -62,8 +64,8 @@ std::pair<std::string, std::string> Schedule::split(const std::string &id,
 
 void Schedule::reorder(const std::vector<std::string> &order) {
     std::string log = "reorder(";
-    for (size_t i = 0, iEnd = order.size(); i < iEnd; i++) {
-        log += order[i] + (i < iEnd - 1 ? ", " : "");
+    for (auto &&[i, item] : iter::enumerate(order)) {
+        log += (i > 0 ? ", " : "") + item;
     }
     log += ")";
     try {
@@ -119,8 +121,8 @@ std::string Schedule::fuse(const std::string &loop0, const std::string &loop1,
 
 void Schedule::swap(const std::vector<std::string> &order) {
     std::string log = "swap(";
-    for (size_t i = 0, iEnd = order.size(); i < iEnd; i++) {
-        log += order[i] + (i < iEnd - 1 ? ", " : "");
+    for (auto &&[i, item] : iter::enumerate(order)) {
+        log += (i > 0 ? ", " : "") + item;
     }
     log += ")";
     try {
@@ -207,8 +209,8 @@ void Schedule::varMerge(const std::string &def, int dim) {
 void Schedule::varReorder(const std::string &def,
                           const std::vector<int> &order) {
     std::string log = "var_reorder(" + def + ", ";
-    for (size_t i = 0, iEnd = order.size(); i < iEnd; i++) {
-        log += std::to_string(order[i]) + (i < iEnd - 1 ? ", " : "");
+    for (auto &&[i, item] : iter::enumerate(order)) {
+        log += (i > 0 ? ", " : "") + std::to_string(item);
     }
     log += ")";
     try {
@@ -416,8 +418,7 @@ void Schedule::autoUseLib(const Target &target) {
                 }
                 auto stmts = allStmts(
                     loop->loop_, {ASTNodeType::Store, ASTNodeType::ReduceTo});
-                for (size_t i = 0, n = stmts.size(); i < n; i++) {
-                    auto &&stmt = stmts[i];
+                for (auto &&[i, stmt] : iter::enumerate(stmts)) {
                     auto bak = ast_;
                     auto logBak = logs_;
                     try {

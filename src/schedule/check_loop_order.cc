@@ -1,5 +1,7 @@
 #include <algorithm>
 
+#include <itertools.hpp>
+
 #include <schedule/check_loop_order.h>
 
 namespace ir {
@@ -32,8 +34,8 @@ void CheckLoopOrder::visit(const For &op) {
 const std::vector<For> &CheckLoopOrder::order() const {
     if (curOrder_.size() != dstOrder_.size()) {
         std::string msg = "Loops ";
-        for (size_t i = 0, iEnd = dstOrder_.size(); i < iEnd; i++) {
-            msg += dstOrder_[i] + (i < iEnd - 1 ? ", " : " ");
+        for (auto &&[i, item] : iter::enumerate(dstOrder_)) {
+            msg += (i > 0 ? ", " : "") + item;
         }
         msg += "should be directly nested";
         throw InvalidSchedule(msg);

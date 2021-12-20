@@ -37,8 +37,8 @@ class VarReorder : public Mutator {
                 throw InvalidSchedule("Number of dimensions in the order does "
                                       "not match the variable");
             }
-            for (size_t i = 0, n = order_.size(); i < n; i++) {
-                indices.emplace_back(op->indices_[order_[i]]);
+            for (auto &&nth : order_) {
+                indices.emplace_back(op->indices_[nth]);
             }
             op->indices_ =
                 std::vector<SubTree<ExprNode>>(indices.begin(), indices.end());

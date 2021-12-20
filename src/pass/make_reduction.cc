@@ -1,3 +1,5 @@
+#include <itertools.hpp>
+
 #include <analyze/hash.h>
 #include <pass/make_reduction.h>
 
@@ -8,8 +10,8 @@ bool MakeReduction::isSameElem(const Store &s, const Load &l) {
         return false;
     }
     ASSERT(s->indices_.size() == l->indices_.size());
-    for (size_t i = 0, iEnd = s->indices_.size(); i < iEnd; i++) {
-        if (getHash(s->indices_[i]) != getHash(l->indices_[i])) {
+    for (auto &&[sIdx, lIdx] : iter::zip(s->indices_, l->indices_)) {
+        if (getHash(sIdx) != getHash(lIdx)) {
             return false;
         }
     }

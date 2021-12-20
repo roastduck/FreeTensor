@@ -1,6 +1,8 @@
 #ifndef SHRINK_FOR_H
 #define SHRINK_FOR_H
 
+#include <itertools.hpp>
+
 #include <analyze/check_all_defined.h>
 #include <func.h>
 #include <pass/simplify.h>
@@ -18,9 +20,7 @@ class ShrinkFor : public CompUniqueBounds {
   private:
     template <class T> Stmt visitSideEffect(const T &op) {
         auto ret = CompTransientBounds::visit(op);
-        for (size_t i = 0, iEnd = iterStack_.size(); i < iEnd; i++) {
-            auto &&var = iterStack_[i];
-            auto &&defs = defStack_[i];
+        for (auto &&[var, defs] : iter::zip(iterStack_, defStack_)) {
             auto hash = getHash(var);
             auto tr = transient(var);
             std::vector<Expr> lower, upper;

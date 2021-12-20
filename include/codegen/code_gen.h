@@ -8,6 +8,8 @@
 #include <unordered_set>
 #include <vector>
 
+#include <itertools.hpp>
+
 #include <visitor.h>
 
 namespace ir {
@@ -32,9 +34,9 @@ template <class Stream> class CodeGen : public Visitor {
     void makeIndent();
 
     template <class T> void printList(T &&list) {
-        for (size_t i = 0, iEnd = list.size(); i < iEnd; i++) {
-            (*this)(list[i]);
-            os() << (i < iEnd - 1 ? ", " : "");
+        for (auto &&[i, item] : iter::enumerate(list)) {
+            os() << (i > 0 ? ", " : "");
+            (*this)(item);
         }
     }
 

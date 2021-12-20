@@ -3,6 +3,8 @@
 
 #include <unordered_set>
 
+#include <itertools.hpp>
+
 #include <analyze/analyze_linear.h>
 #include <func.h>
 #include <mutator.h>
@@ -76,12 +78,11 @@ class FindSimplexOffset : public Visitor {
             offsets_[defId] = thisOffsets;
         } else {
             ASSERT(offsets_.at(defId).size() == thisOffsets.size());
-            for (size_t i = 0, n = thisOffsets.size(); i < n; i++) {
-                auto &&old = offsets_.at(defId)[i];
-                auto &&cur = thisOffsets[i];
+            for (auto &&[old, cur] :
+                 iter::zip(offsets_.at(defId), thisOffsets)) {
                 if (old.isValid() &&
                     (!cur.isValid() || old->offset_ != cur->offset_)) {
-                    offsets_.at(defId)[i] = nullptr;
+                    old = nullptr;
                 }
             }
         }
@@ -117,13 +118,12 @@ class ApplySimplexOffset : public Mutator {
         if (offsets_.count(defId)) {
             auto &&offset = offsets_.at(defId);
             ASSERT(offset.size() == op->indices_.size());
-            for (size_t i = 0, n = offset.size(); i < n; i++) {
-                if (offset[i].isValid()) {
-                    for (auto &&[scope, k] : offset[i]->offset_) {
-                        op->indices_[i] =
-                            makeSub(op->indices_[i],
-                                    makeMul(makeIntConst(k),
-                                            makeVar(para2var_.at(scope))));
+            for (auto &&[off, idx] : iter::zip(offset, op->indices_)) {
+                if (off.isValid()) {
+                    for (auto &&[scope, k] : off->offset_) {
+                        idx =
+                            makeSub(idx, makeMul(makeIntConst(k),
+                                                 makeVar(para2var_.at(scope))));
                     }
                 }
             }

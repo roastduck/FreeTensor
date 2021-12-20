@@ -1,3 +1,5 @@
+#include <itertools.hpp>
+
 #include <codegen/code_gen_cpu.h>
 #include <pass/simplify.h>
 
@@ -29,8 +31,7 @@ void CodeGenCPU::genAlloc(const Tensor &tensor, const std::string &rawPtr,
          << " = " << ndim << ") * sizeof(size_t)) : NULL;" << std::endl;
     makeIndent();
     os() << rawPtr << " = malloc(";
-    for (size_t i = 0; i < ndim; i++) {
-        auto &&dim = tensor.shape()[i];
+    for (auto &&[i, dim] : iter::enumerate(tensor.shape())) {
         os() << "(" << shapePtr << "[" << i << "] = ";
         (*this)(dim);
         os() << ") * ";

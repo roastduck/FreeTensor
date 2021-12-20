@@ -3,6 +3,8 @@
 
 #include <unordered_map>
 
+#include <itertools.hpp>
+
 #include <analyze/comp_access_bound.h>
 #include <func.h>
 #include <mutator.h>
@@ -22,8 +24,8 @@ class ShrinkVar : public Mutator {
         if (offset_.count(op->var_)) {
             auto &&offset = offset_.at(op->var_);
             ASSERT(offset.size() == op->indices_.size());
-            for (size_t i = 0, iEnd = offset.size(); i < iEnd; i++) {
-                op->indices_[i] = makeSub(op->indices_[i], offset[i]);
+            for (auto &&[idx, off] : iter::zip(op->indices_, offset)) {
+                idx = makeSub(idx, off);
             }
         }
         return op;

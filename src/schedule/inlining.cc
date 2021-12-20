@@ -1,3 +1,5 @@
+#include <itertools.hpp>
+
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
 #include <analyze/hash.h>
@@ -15,8 +17,8 @@ MakeInlinePlaceholder::MakeInlinePlaceholder(const std::vector<Expr> &indices) {
 
 Expr MakeInlinePlaceholder::visitExpr(const Expr &op) {
     auto h = getHash(op);
-    for (size_t i = 0, iEnd = indexHashes_.size(); i < iEnd; i++) {
-        if (indexHashes_[i] == h) {
+    for (auto &&[i, indexHash] : iter::enumerate(indexHashes_)) {
+        if (indexHash == h) {
             return makeVar(".inline_placeholder." + std::to_string(i));
         }
     }

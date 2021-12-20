@@ -2,6 +2,8 @@
 #include <regex>
 #include <sstream>
 
+#include <itertools.hpp>
+
 #include <analyze/deps.h>
 #include <except.h>
 #include <mutator.h>
@@ -308,12 +310,12 @@ PBMap AnalyzeDeps::makeEqForBothOps(
     std::ostringstream os;
     os << "{" << makeNdList("d", iterDim) << " -> " << makeNdList("d_", iterDim)
        << ": ";
-    for (size_t i = 0, iEnd = coord.size(); i < iEnd; i++) {
+    for (auto &&[i, crd] : iter::enumerate(coord)) {
         if (i > 0) {
             os << " and ";
         }
-        os << "d" << coord[i].first << " = " << coord[i].second << " and "
-           << "d_" << coord[i].first << " = " << coord[i].second;
+        os << "d" << crd.first << " = " << crd.second << " and "
+           << "d_" << crd.first << " = " << crd.second;
     }
     os << "}";
     return PBMap(presburger, os.str());
@@ -570,13 +572,12 @@ void AnalyzeDeps::projectOutPrivateAxis(
                 std::move(pmap),
                 projectOutPrivateAxis(presburger, iterDim, pCommonDims + 1));
         }
-        for (size_t i = 0, n = otherList.size(); i < n; i++) {
-            auto &other = otherList[i];
-            auto &omap = omapList[i];
-            if (oCommonDims[i] + 1 < (int)other->iter_.size()) {
-                omap = applyDomain(std::move(omap),
-                                   projectOutPrivateAxis(presburger, iterDim,
-                                                         oCommonDims[i] + 1));
+        for (auto &&[common, other, omap] :
+             iter::zip(oCommonDims, otherList, omapList)) {
+            if (common + 1 < (int)other->iter_.size()) {
+                omap = applyDomain(
+                    std::move(omap),
+                    projectOutPrivateAxis(presburger, iterDim, common + 1));
             }
         }
     }
@@ -657,8 +658,7 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
 
     int accDim = point->access_.size();
     int iterDim = point->iter_.size();
-    for (size_t i = 0, n = otherList.size(); i < n; i++) {
-        auto &&other = otherList[i];
+    for (auto &&other : otherList) {
         iterDim = std::max<int>(iterDim, other->iter_.size());
         ASSERT((int)other->access_.size() == accDim);
     }
@@ -683,34 +683,24 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
     std::vector<PBMap> os2aList(otherList.size()), depAllList(otherList.size());
     std::vector<PBSet> oIterList(otherList.size());
     PBMap psDepAllUnion;
-    std::vector<bool> filteredIn(otherList.size(), true);
-    for (size_t i = 0, n = otherList.size(); i < n; i++) {
-        auto &other = otherList[i];
-        auto &omap = omapList[i];
-        auto &oExternals = oExternalsList[i];
+    for (auto &&[i, other, omap, oExternals] :
+         iter::zip(iter::count(), otherList, omapList, oExternalsList)) {
         omap = makeAccMap(presburger, genPBExpr, *other, iterDim, accDim,
                           oRelax, "__ext_o" + std::to_string(i), oExternals);
-        if (omap.empty()) {
-            filteredIn[i] = false;
-        }
     }
     projectOutPrivateAxis(presburger, point, otherList, pmap, omapList,
                           iterDim);
-    for (size_t i = 0, n = otherList.size(); i < n; i++) {
-        auto &other = otherList[i];
-        auto &omap = omapList[i];
-        auto &oExternals = oExternalsList[i];
-        auto &os2a = os2aList[i];
-        auto &oIter = oIterList[i];
-        auto &depAll = depAllList[i];
-        if (!filteredIn[i]) {
+    for (auto &&[i, other, omap, oExternals, os2a, oIter, depAll] :
+         iter::zip(iter::count(), otherList, omapList, oExternalsList, os2aList,
+                   oIterList, depAllList)) {
+        if (omap.empty()) {
             continue;
         }
         os2a = makeSerialToAll(presburger, iterDim, other->iter_);
         PBMap oa2s = reverse(os2a);
         oIter = domain(omap);
 
-        depAll = subtract(applyRange(pmap, reverse(std::move(omap))), allEQ);
+        depAll = subtract(applyRange(pmap, reverse(omap)), allEQ);
 
         depAll = intersect(std::move(depAll), eraseVarDefConstraint);
         depAll = intersect(std::move(depAll), noDepsConstraint);
@@ -739,18 +729,14 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
                              std::move(psDepAllUnion));
     PBMap psNearest = uni(lexmax(std::move(psDep)), std::move(psSelf));
 
-    for (size_t i = 0, n = otherList.size(); i < n; i++) {
-        auto &&other = otherList[i];
-        if (!filteredIn[i]) {
+    for (auto &&[other, omap, os2a, oIter, depAll] :
+         iter::zip(otherList, omapList, os2aList, oIterList, depAllList)) {
+        if (omap.empty()) {
             continue;
         }
 
-        auto &&os2a = os2aList[i];
-        auto &&oIter = oIterList[i];
-        auto &&depAll = depAllList[i];
         PBMap nearest = intersect(applyRange(psNearest, std::move(os2a)),
                                   std::move(depAll));
-
         if (nearest.empty()) {
             continue;
         }
@@ -807,8 +793,7 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
 
     int accDim = other->access_.size();
     int iterDim = other->iter_.size();
-    for (size_t i = 0, n = pointList.size(); i < n; i++) {
-        auto &&point = pointList[i];
+    for (auto &&point : pointList) {
         iterDim = std::max<int>(iterDim, point->iter_.size());
         ASSERT((int)point->access_.size() == accDim);
     }
@@ -834,33 +819,24 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
     std::vector<PBSet> pIterList(pointList.size());
     PBMap spDepAllUnion;
     std::vector<bool> filteredIn(pointList.size(), true);
-    for (size_t i = 0, n = pointList.size(); i < n; i++) {
-        auto &point = pointList[i];
-        auto &pmap = pmapList[i];
-        auto &pExternals = pExternalsList[i];
+    for (auto &&[i, point, pmap, pExternals] :
+         iter::zip(iter::count(), pointList, pmapList, pExternalsList)) {
         pmap = makeAccMap(presburger, genPBExpr, *point, iterDim, accDim,
                           pRelax, "__ext_p" + std::to_string(i), pExternals);
-        if (pmap.empty()) {
-            filteredIn[i] = false;
-        }
     }
     projectOutPrivateAxis(presburger, other, pointList, omap, pmapList,
                           iterDim);
-    for (size_t i = 0, n = pointList.size(); i < n; i++) {
-        auto &point = pointList[i];
-        auto &pmap = pmapList[i];
-        auto &pExternals = pExternalsList[i];
-        auto &ps2a = ps2aList[i];
-        auto &pIter = pIterList[i];
-        auto &depAll = depAllList[i];
-        if (!filteredIn[i]) {
+    for (auto &&[i, point, pmap, pExternals, ps2a, pIter, depAll] :
+         iter::zip(iter::count(), pointList, pmapList, pExternalsList, ps2aList,
+                   pIterList, depAllList)) {
+        if (pmap.empty()) {
             continue;
         }
         ps2a = makeSerialToAll(presburger, iterDim, point->iter_);
         PBMap pa2s = reverse(ps2a);
         pIter = domain(pmap);
 
-        depAll = subtract(applyRange(std::move(pmap), reverse(omap)), allEQ);
+        depAll = subtract(applyRange(pmap, reverse(omap)), allEQ);
 
         depAll = intersect(std::move(depAll), eraseVarDefConstraint);
         depAll = intersect(std::move(depAll), noDepsConstraint);
@@ -890,18 +866,14 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
     PBMap spNearest =
         uni(reverse(lexmin(reverse(std::move(spDep)))), std::move(spSelf));
 
-    for (size_t i = 0, n = pointList.size(); i < n; i++) {
-        auto &&point = pointList[i];
-        if (!filteredIn[i]) {
+    for (auto &&[point, pmap, ps2a, pIter, depAll] :
+         iter::zip(pointList, pmapList, ps2aList, pIterList, depAllList)) {
+        if (pmap.empty()) {
             continue;
         }
 
-        auto &&ps2a = ps2aList[i];
-        auto &&pIter = pIterList[i];
-        auto &&depAll = depAllList[i];
         PBMap nearest = intersect(applyDomain(spNearest, std::move(ps2a)),
                                   std::move(depAll));
-
         if (nearest.empty()) {
             continue;
         }

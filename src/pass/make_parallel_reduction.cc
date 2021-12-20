@@ -1,3 +1,5 @@
+#include <itertools.hpp>
+
 #include <analyze/analyze_linear.h>
 #include <analyze/check_all_defined.h>
 #include <analyze/deps.h>
@@ -93,10 +95,11 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
                 if (redOp == op->op_ && var == op->var_) {
                     ASSERT(oldIndices.size() == indices.size());
                     std::vector<SubTree<ExprNode, Nullable>> newIndices;
-                    for (size_t i = 0, n = indices.size(); i < n; i++) {
-                        if (oldIndices[i].isValid() && indices[i].isValid()) {
-                            if (getHash(oldIndices[i]) == getHash(indices[i])) {
-                                newIndices.emplace_back(indices[i]);
+                    for (auto &&[oldIdx, idx] :
+                         iter::zip(oldIndices, indices)) {
+                        if (oldIdx.isValid() && idx.isValid()) {
+                            if (getHash(oldIdx) == getHash(idx)) {
+                                newIndices.emplace_back(idx);
                             } else {
                                 goto mismatch;
                             }
@@ -128,12 +131,12 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
         if (serialOverRed_.count(op->id())) {
             for (auto &&loop : serialOverRed_.at(op->id())) {
                 bool noPreserve = true;
-                for (size_t i = 0, n = _op->indices_.size(); i < n; i++) {
-                    auto &&idx = _op->indices_[i];
+                for (auto &&[idx, preserve] :
+                     iter::zip(_op->indices_, preserveDim)) {
                     // use _op because isVariant needs it
                     if (isVariant(variantMap_, idx, loop->id())) {
                         if (isDenseOver(idx, loop->iter_)) {
-                            preserveDim[i] = true;
+                            preserve = true;
                             noPreserve = false;
                         } else {
                             goto found_loop_to_cache;
@@ -150,14 +153,15 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
             std::vector<Expr> newShape, newTargetIndices;
             op->var_ += ".atomic_cache." + op->id();
             op->indices_ = {};
-            for (size_t i = 0, n = _op->indices_.size(); i < n; i++) {
-                if (preserveDim[i]) {
-                    op->indices_.emplace_back(_op->indices_[i]);
-                    newShape.emplace_back(
-                        buffers_.at(_op->var_)->tensor().shape()[i]);
+            for (auto &&[preserve, idx, dim] :
+                 iter::zip(preserveDim, _op->indices_,
+                           buffers_.at(_op->var_)->tensor().shape())) {
+                if (preserve) {
+                    op->indices_.emplace_back(idx);
+                    newShape.emplace_back(dim);
                     newTargetIndices.emplace_back(nullptr);
                 } else {
-                    newTargetIndices.emplace_back(_op->indices_[i]);
+                    newTargetIndices.emplace_back(idx);
                 }
             }
             cacheAtomic_[loopToCache].emplace_back(_op, newShape,

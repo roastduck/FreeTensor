@@ -1,3 +1,5 @@
+#include <itertools.hpp>
+
 #include <pass/cpu/lower_parallel_reduction.h>
 
 namespace ir {
@@ -13,13 +15,12 @@ std::vector<std::pair<For, int>>
 LowerParallelReduction::reducedBy(const ReduceTo &op) {
     std::vector<std::pair<For, int>> ret;
     for (auto &&loop : loopStack_) {
-        for (size_t k = 0, m = loop->property_.reductions_.size(); k < m; k++) {
-            auto &&item = loop->property_.reductions_[k];
+        for (auto &&[k, item] : iter::enumerate(loop->property_.reductions_)) {
             if (item.var_ == op->var_) {
                 ASSERT(item.indices_.size() == op->indices_.size());
-                for (size_t i = 0, n = item.indices_.size(); i < n; i++) {
-                    if (item.indices_[i].isValid() &&
-                        getHash(item.indices_[i]) != getHash(op->indices_[i])) {
+                for (auto &&[lIdx, oIdx] :
+                     iter::zip(item.indices_, op->indices_)) {
+                    if (lIdx.isValid() && getHash(lIdx) != getHash(oIdx)) {
                         goto mismatch;
                     }
                 }
@@ -61,10 +62,10 @@ Stmt LowerParallelReduction::visit(const For &_op) {
         auto workspace = "__reduce_" + op->id() + "_" + std::to_string(i);
         std::vector<SubTree<ExprNode>> workspaceShape;
         ASSERT(varIndices.size() == buffers_.at(var)->tensor().shape().size());
-        for (size_t j = 0, m = varIndices.size(); j < m; j++) {
-            if (!varIndices[j].isValid()) {
-                workspaceShape.emplace_back(
-                    buffers_.at(var)->tensor().shape()[j]);
+        for (auto &&[idx, dim] :
+             iter::zip(varIndices, buffers_.at(var)->tensor().shape())) {
+            if (!idx.isValid()) {
+                workspaceShape.emplace_back(dim);
             }
         }
 
@@ -100,10 +101,9 @@ Stmt LowerParallelReduction::visit(const For &_op) {
         flushStmts.emplace_back(std::move(flushStmt));
 
         std::vector<SubTree<ExprNode, Nullable>> workspaceIndices;
-        ASSERT(varIndices.size() == buffers_.at(var)->tensor().shape().size());
-        for (size_t j = 0, m = varIndices.size(); j < m; j++) {
-            if (!varIndices[j].isValid()) {
-                workspaceIndices.emplace_back(varIndices[j]);
+        for (auto &&idx : varIndices) {
+            if (!idx.isValid()) {
+                workspaceIndices.emplace_back(idx);
             }
         }
         var = workspace;
@@ -119,11 +119,12 @@ Stmt LowerParallelReduction::visit(const For &_op) {
     stmts.emplace_back(op);
     stmts.insert(stmts.end(), flushStmts.begin(), flushStmts.end());
     Stmt ret = makeStmtSeq("", std::move(stmts));
-    for (size_t i = 0, n = op->property_.reductions_.size(); i < n; i++) {
-        ret = makeVarDef("", workspaces[i],
-                         Buffer(Tensor(workspaceShapes[i], dtypes[i]),
-                                AccessType::Cache, MemType::CPU),
-                         nullptr, ret, false);
+    for (auto &&[workspace, wsShape, dtype] :
+         iter::zip(workspaces, workspaceShapes, dtypes)) {
+        ret = makeVarDef(
+            "", workspace,
+            Buffer(Tensor(wsShape, dtype), AccessType::Cache, MemType::CPU),
+            nullptr, ret, false);
     }
 
     return ret;
@@ -147,9 +148,9 @@ Stmt LowerParallelReduction::visit(const ReduceTo &_op) {
         auto &&redIndices =
             redLoop.first->property_.reductions_[redLoop.second].indices_;
         ASSERT(op->indices_.size() == redIndices.size());
-        for (size_t i = 0, n = op->indices_.size(); i < n; i++) {
-            if (!redIndices[i].isValid()) {
-                indices.emplace_back(op->indices_[i]);
+        for (auto &&[lIdx, oIdx] : iter::zip(redIndices, op->indices_)) {
+            if (!lIdx.isValid()) {
+                indices.emplace_back(oIdx);
             }
         }
         return makeReduceTo(op->id(), workspace, std::move(indices), op->op_,

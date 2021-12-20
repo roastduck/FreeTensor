@@ -1,3 +1,5 @@
+#include <itertools.hpp>
+
 #include <analyze/fixed_length_feature.h>
 
 namespace ir {
@@ -18,14 +20,13 @@ static std::vector<double> interpolate(const std::vector<double> &bodyFeat,
     } else {
         size_t n = bodyFeat.size();
         std::vector<double> ret(n);
-        for (size_t i = 0; i < n; i++) {
-            if (bodyFeat[i] == -1 || totFeat[i] == -1) {
-                ret[i] = -1;
+        for (auto &&[r, body, tot] : iter::zip(ret, bodyFeat, totFeat)) {
+            if (body == -1 || tot == -1) {
+                r = -1;
             } else {
-                auto perReqIter = bodyFeat[i] + (totFeat[i] - bodyFeat[i]) *
-                                                    (reqIter - bodyIter) /
-                                                    (totIter - bodyIter);
-                ret[i] = perReqIter / reqIter * totIter;
+                auto perReqIter = body + (tot - body) * (reqIter - bodyIter) /
+                                             (totIter - bodyIter);
+                r = perReqIter / reqIter * totIter;
             }
         }
         return ret;
@@ -44,11 +45,11 @@ static std::vector<double> scale(const std::vector<double> &feat, int64_t k) {
 static void mixTo(std::vector<double> &parent,
                   const std::vector<double> &child) {
     ASSERT(parent.size() == child.size());
-    for (size_t i = 0, n = child.size(); i < n; i++) {
-        if (child[i] == -1 || parent[i] == -1) {
-            parent[i] = -1;
+    for (auto &&[ch, par] : iter::zip(child, parent)) {
+        if (ch == -1 || par == -1) {
+            par = -1;
         } else {
-            parent[i] += child[i];
+            par += ch;
         }
     }
 }

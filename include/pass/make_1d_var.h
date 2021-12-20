@@ -3,6 +3,8 @@
 
 #include <unordered_map>
 
+#include <itertools.hpp>
+
 #include <func.h>
 #include <mutator.h>
 
@@ -26,9 +28,9 @@ class Make1DVar : public Mutator {
         ASSERT(shape.size() == ndim);
 
         Expr res;
-        for (size_t i = 0; i < ndim; i++) {
-            res = res.isValid() ? makeMul(res, shape[i]) : res;
-            res = res.isValid() ? makeAdd(res, indices[i]) : (Expr)indices[i];
+        for (auto &&[dim, idx] : iter::zip(shape, indices)) {
+            res = res.isValid() ? makeMul(res, dim) : res;
+            res = res.isValid() ? makeAdd(res, idx) : (Expr)idx;
         }
         op->indices_ = std::vector<SubTree<ExprNode>>({res});
         return op;
