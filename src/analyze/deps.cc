@@ -606,6 +606,50 @@ int AnalyzeDeps::numCommonDims(const Ref<AccessPoint> &p1,
     return n;
 }
 
+void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
+                                   const Ref<AccessPoint> &point,
+                                   const Ref<AccessPoint> &other,
+                                   const PBMap &nearest, const PBSet &pIter,
+                                   const PBSet &oIter, int iterDim) {
+    if (nearest.empty()) {
+        return;
+    }
+    if ((mode_ == FindDepsMode::KillEarlier ||
+         mode_ == FindDepsMode::KillBoth) &&
+        oIter != range(nearest)) {
+        return;
+    }
+    if ((mode_ == FindDepsMode::KillLater || mode_ == FindDepsMode::KillBoth) &&
+        pIter != domain(nearest)) {
+        return;
+    }
+
+    for (auto &&item : cond_) {
+        PBMap res = nearest;
+        bool fail = false;
+        for (auto &&[nodeOrParallel, dir] : item) {
+            PBMap require;
+            if (nodeOrParallel.isNode_) {
+                require = makeConstraintOfSingleLoop(
+                    presburger, nodeOrParallel.name_, dir, iterDim);
+            } else {
+                require = makeConstraintOfParallelScope(
+                    presburger, nodeOrParallel.name_, dir, iterDim, point,
+                    other);
+            }
+            res = intersect(std::move(res), std::move(require));
+            if (res.empty()) {
+                fail = true;
+                break;
+            }
+        }
+        if (!fail) {
+            std::lock_guard<std::mutex> guard(lock_);
+            found_(Dependency{item, getVar(point->op_), *point, *other});
+        }
+    }
+}
+
 void AnalyzeDeps::checkDepLatestEarlier(
     const Ref<AccessPoint> &point,
     const std::vector<Ref<AccessPoint>> &_otherList) {
@@ -647,15 +691,6 @@ void AnalyzeDeps::checkDepEarliestLater(
 void AnalyzeDeps::checkDepLatestEarlierImpl(
     PBCtx &presburger, GenPBExprDeps &genPBExpr, const Ref<AccessPoint> &point,
     const std::vector<Ref<AccessPoint>> &otherList) {
-    auto pRelax =
-        mode_ == FindDepsMode::KillEarlier || mode_ == FindDepsMode::KillBoth
-            ? RelaxMode::Necessary
-            : RelaxMode::Possible; // later
-    auto oRelax =
-        mode_ == FindDepsMode::KillLater || mode_ == FindDepsMode::KillBoth
-            ? RelaxMode::Necessary
-            : RelaxMode::Possible; // earlier
-
     int accDim = point->access_.size();
     int iterDim = point->iter_.size();
     for (auto &&other : otherList) {
@@ -671,7 +706,7 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
 
     ExternalMap pExternals;
     PBMap pmap = makeAccMap(presburger, genPBExpr, *point, iterDim, accDim,
-                            pRelax, "__ext_p", pExternals);
+                            laterRelax_, "__ext_p", pExternals);
     if (pmap.empty()) {
         return;
     }
@@ -686,7 +721,8 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
     for (auto &&[i, other, omap, oExternals] :
          iter::zip(iter::count(), otherList, omapList, oExternalsList)) {
         omap = makeAccMap(presburger, genPBExpr, *other, iterDim, accDim,
-                          oRelax, "__ext_o" + std::to_string(i), oExternals);
+                          earlierRelax_, "__ext_o" + std::to_string(i),
+                          oExternals);
     }
     projectOutPrivateAxis(presburger, point, otherList, pmap, omapList,
                           iterDim);
@@ -731,49 +767,11 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
 
     for (auto &&[other, omap, os2a, oIter, depAll] :
          iter::zip(otherList, omapList, os2aList, oIterList, depAllList)) {
-        if (omap.empty()) {
-            continue;
-        }
-
-        PBMap nearest = intersect(applyRange(psNearest, std::move(os2a)),
-                                  std::move(depAll));
-        if (nearest.empty()) {
-            continue;
-        }
-        if ((mode_ == FindDepsMode::KillEarlier ||
-             mode_ == FindDepsMode::KillBoth) &&
-            oIter != range(nearest)) {
-            continue;
-        }
-        if ((mode_ == FindDepsMode::KillLater ||
-             mode_ == FindDepsMode::KillBoth) &&
-            pIter != domain(nearest)) {
-            continue;
-        }
-
-        for (auto &&item : cond_) {
-            PBMap res = nearest;
-            bool fail = false;
-            for (auto &&[nodeOrParallel, dir] : item) {
-                PBMap require;
-                if (nodeOrParallel.isNode_) {
-                    require = makeConstraintOfSingleLoop(
-                        presburger, nodeOrParallel.name_, dir, iterDim);
-                } else {
-                    require = makeConstraintOfParallelScope(
-                        presburger, nodeOrParallel.name_, dir, iterDim, point,
-                        other);
-                }
-                res = intersect(std::move(res), std::move(require));
-                if (res.empty()) {
-                    fail = true;
-                    break;
-                }
-            }
-            if (!fail) {
-                std::lock_guard<std::mutex> guard(lock_);
-                found_(Dependency{item, getVar(point->op_), *point, *other});
-            }
+        if (!omap.empty()) {
+            checkAgainstCond(presburger, point, other,
+                             intersect(applyRange(psNearest, std::move(os2a)),
+                                       std::move(depAll)),
+                             pIter, oIter, iterDim);
         }
     }
 }
@@ -782,15 +780,6 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
     PBCtx &presburger, GenPBExprDeps &genPBExpr,
     const std::vector<Ref<AccessPoint>> &pointList,
     const Ref<AccessPoint> &other) {
-    auto pRelax =
-        mode_ == FindDepsMode::KillEarlier || mode_ == FindDepsMode::KillBoth
-            ? RelaxMode::Necessary
-            : RelaxMode::Possible; // later
-    auto oRelax =
-        mode_ == FindDepsMode::KillLater || mode_ == FindDepsMode::KillBoth
-            ? RelaxMode::Necessary
-            : RelaxMode::Possible; // earlier
-
     int accDim = other->access_.size();
     int iterDim = other->iter_.size();
     for (auto &&point : pointList) {
@@ -806,7 +795,7 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
 
     ExternalMap oExternals;
     PBMap omap = makeAccMap(presburger, genPBExpr, *other, iterDim, accDim,
-                            oRelax, "__ext_o", oExternals);
+                            earlierRelax_, "__ext_o", oExternals);
     if (omap.empty()) {
         return;
     }
@@ -821,8 +810,9 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
     std::vector<bool> filteredIn(pointList.size(), true);
     for (auto &&[i, point, pmap, pExternals] :
          iter::zip(iter::count(), pointList, pmapList, pExternalsList)) {
-        pmap = makeAccMap(presburger, genPBExpr, *point, iterDim, accDim,
-                          pRelax, "__ext_p" + std::to_string(i), pExternals);
+        pmap =
+            makeAccMap(presburger, genPBExpr, *point, iterDim, accDim,
+                       laterRelax_, "__ext_p" + std::to_string(i), pExternals);
     }
     projectOutPrivateAxis(presburger, other, pointList, omap, pmapList,
                           iterDim);
@@ -868,49 +858,11 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
 
     for (auto &&[point, pmap, ps2a, pIter, depAll] :
          iter::zip(pointList, pmapList, ps2aList, pIterList, depAllList)) {
-        if (pmap.empty()) {
-            continue;
-        }
-
-        PBMap nearest = intersect(applyDomain(spNearest, std::move(ps2a)),
-                                  std::move(depAll));
-        if (nearest.empty()) {
-            continue;
-        }
-        if ((mode_ == FindDepsMode::KillEarlier ||
-             mode_ == FindDepsMode::KillBoth) &&
-            oIter != range(nearest)) {
-            continue;
-        }
-        if ((mode_ == FindDepsMode::KillLater ||
-             mode_ == FindDepsMode::KillBoth) &&
-            pIter != domain(nearest)) {
-            continue;
-        }
-
-        for (auto &&item : cond_) {
-            PBMap res = nearest;
-            bool fail = false;
-            for (auto &&[nodeOrParallel, dir] : item) {
-                PBMap require;
-                if (nodeOrParallel.isNode_) {
-                    require = makeConstraintOfSingleLoop(
-                        presburger, nodeOrParallel.name_, dir, iterDim);
-                } else {
-                    require = makeConstraintOfParallelScope(
-                        presburger, nodeOrParallel.name_, dir, iterDim, point,
-                        other);
-                }
-                res = intersect(std::move(res), std::move(require));
-                if (res.empty()) {
-                    fail = true;
-                    break;
-                }
-            }
-            if (!fail) {
-                std::lock_guard<std::mutex> guard(lock_);
-                found_(Dependency{item, getVar(point->op_), *point, *other});
-            }
+        if (!pmap.empty()) {
+            checkAgainstCond(presburger, point, other,
+                             intersect(applyDomain(spNearest, std::move(ps2a)),
+                                       std::move(depAll)),
+                             pIter, oIter, iterDim);
         }
     }
 }

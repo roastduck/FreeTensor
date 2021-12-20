@@ -236,6 +236,7 @@ class AnalyzeDeps {
     const FindDepsFilter &filter_;
 
     const FindDepsMode mode_;
+    const RelaxMode earlierRelax_, laterRelax_;
     const DepType depType_;
     const bool ignoreReductionWAW_;
     const bool eraseOutsideVarDef_;
@@ -261,8 +262,16 @@ class AnalyzeDeps {
         : reads_(reads), writes_(writes), allDefs_(allDefs),
           scope2coord_(scope2coord), noDepsLists_(noDepsLists),
           variantExpr_(variantExpr), cond_(cond), found_(found),
-          filter_(filter), mode_(mode), depType_(depType),
-          ignoreReductionWAW_(ignoreReductionWAW),
+          filter_(filter), mode_(mode),
+          earlierRelax_(mode_ == FindDepsMode::KillLater ||
+                                mode_ == FindDepsMode::KillBoth
+                            ? RelaxMode::Necessary
+                            : RelaxMode::Possible),
+          laterRelax_(mode_ == FindDepsMode::KillEarlier ||
+                              mode_ == FindDepsMode::KillBoth
+                          ? RelaxMode::Necessary
+                          : RelaxMode::Possible),
+          depType_(depType), ignoreReductionWAW_(ignoreReductionWAW),
           eraseOutsideVarDef_(eraseOutsideVarDef) {}
 
     void genTasks();
@@ -359,6 +368,10 @@ class AnalyzeDeps {
                                PBMap &pmap, std::vector<PBMap> &omapList,
                                int iterDim);
     int numCommonDims(const Ref<AccessPoint> &p1, const Ref<AccessPoint> &p2);
+
+    void checkAgainstCond(PBCtx &presburger, const Ref<AccessPoint> &point,
+                          const Ref<AccessPoint> &other, const PBMap &nearest,
+                          const PBSet &pIter, const PBSet &oIter, int iterDim);
 
     static const std::string &getVar(const AST &op);
 

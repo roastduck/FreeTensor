@@ -63,6 +63,7 @@ endif()
 include_directories(${CMAKE_SOURCE_DIR}/include)
 include_directories(${CMAKE_SOURCE_DIR}/3rd-party/pybind11/include)
 include_directories(${CMAKE_SOURCE_DIR}/3rd-party/z3/src/api/c++)
+include_directories(${CMAKE_SOURCE_DIR}/3rd-party/cppitertools)
 file(GLOB_RECURSE SRC ${CMAKE_SOURCE_DIR}/src/*.cc)
 
 # Target
