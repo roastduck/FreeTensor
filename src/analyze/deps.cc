@@ -626,7 +626,6 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
 
     for (auto &&item : cond_) {
         PBMap res = nearest;
-        bool fail = false;
         for (auto &&[nodeOrParallel, dir] : item) {
             PBMap require;
             if (nodeOrParallel.isNode_) {
@@ -639,14 +638,14 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
             }
             res = intersect(std::move(res), std::move(require));
             if (res.empty()) {
-                fail = true;
-                break;
+                goto fail;
             }
         }
-        if (!fail) {
+        {
             std::lock_guard<std::mutex> guard(lock_);
             found_(Dependency{item, getVar(point->op_), *point, *other});
         }
+    fail:;
     }
 }
 
@@ -736,7 +735,7 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
         PBMap oa2s = reverse(os2a);
         oIter = domain(omap);
 
-        depAll = subtract(applyRange(pmap, reverse(omap)), allEQ);
+        depAll = subtract(applyRange(pmap, reverse(std::move(omap))), allEQ);
 
         depAll = intersect(std::move(depAll), eraseVarDefConstraint);
         depAll = intersect(std::move(depAll), noDepsConstraint);
@@ -765,9 +764,9 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
                              std::move(psDepAllUnion));
     PBMap psNearest = uni(lexmax(std::move(psDep)), std::move(psSelf));
 
-    for (auto &&[other, omap, os2a, oIter, depAll] :
-         iter::zip(otherList, omapList, os2aList, oIterList, depAllList)) {
-        if (!omap.empty()) {
+    for (auto &&[other, os2a, oIter, depAll] :
+         iter::zip(otherList, os2aList, oIterList, depAllList)) {
+        if (depAll.isValid()) {
             checkAgainstCond(presburger, point, other,
                              intersect(applyRange(psNearest, std::move(os2a)),
                                        std::move(depAll)),
@@ -807,7 +806,6 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
     std::vector<PBMap> ps2aList(pointList.size()), depAllList(pointList.size());
     std::vector<PBSet> pIterList(pointList.size());
     PBMap spDepAllUnion;
-    std::vector<bool> filteredIn(pointList.size(), true);
     for (auto &&[i, point, pmap, pExternals] :
          iter::zip(iter::count(), pointList, pmapList, pExternalsList)) {
         pmap =
@@ -826,7 +824,7 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
         PBMap pa2s = reverse(ps2a);
         pIter = domain(pmap);
 
-        depAll = subtract(applyRange(pmap, reverse(omap)), allEQ);
+        depAll = subtract(applyRange(std::move(pmap), reverse(omap)), allEQ);
 
         depAll = intersect(std::move(depAll), eraseVarDefConstraint);
         depAll = intersect(std::move(depAll), noDepsConstraint);
@@ -856,9 +854,9 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
     PBMap spNearest =
         uni(reverse(lexmin(reverse(std::move(spDep)))), std::move(spSelf));
 
-    for (auto &&[point, pmap, ps2a, pIter, depAll] :
-         iter::zip(pointList, pmapList, ps2aList, pIterList, depAllList)) {
-        if (!pmap.empty()) {
+    for (auto &&[point, ps2a, pIter, depAll] :
+         iter::zip(pointList, ps2aList, pIterList, depAllList)) {
+        if (depAll.isValid()) {
             checkAgainstCond(presburger, point, other,
                              intersect(applyDomain(spNearest, std::move(ps2a)),
                                        std::move(depAll)),
