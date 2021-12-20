@@ -370,8 +370,9 @@ class AnalyzeDeps {
     int numCommonDims(const Ref<AccessPoint> &p1, const Ref<AccessPoint> &p2);
 
     void checkAgainstCond(PBCtx &presburger, const Ref<AccessPoint> &point,
-                          const Ref<AccessPoint> &other, const PBMap &nearest,
-                          const PBSet &pIter, const PBSet &oIter, int iterDim);
+                          const Ref<AccessPoint> &other, const PBMap &depAll,
+                          const PBMap &nearest, const PBSet &pIter,
+                          const PBSet &oIter, int iterDim);
 
     static const std::string &getVar(const AST &op);
 

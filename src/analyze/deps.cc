@@ -609,8 +609,9 @@ int AnalyzeDeps::numCommonDims(const Ref<AccessPoint> &p1,
 void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
                                    const Ref<AccessPoint> &point,
                                    const Ref<AccessPoint> &other,
-                                   const PBMap &nearest, const PBSet &pIter,
-                                   const PBSet &oIter, int iterDim) {
+                                   const PBMap &depAll, const PBMap &nearest,
+                                   const PBSet &pIter, const PBSet &oIter,
+                                   int iterDim) {
     if (nearest.empty()) {
         return;
     }
@@ -625,17 +626,30 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
     }
 
     for (auto &&item : cond_) {
-        PBMap res = nearest;
+        std::vector<PBMap> requires;
         for (auto &&[nodeOrParallel, dir] : item) {
-            PBMap require;
             if (nodeOrParallel.isNode_) {
-                require = makeConstraintOfSingleLoop(
-                    presburger, nodeOrParallel.name_, dir, iterDim);
+                requires.emplace_back(makeConstraintOfSingleLoop(
+                    presburger, nodeOrParallel.name_, dir, iterDim));
             } else {
-                require = makeConstraintOfParallelScope(
+                requires.emplace_back(makeConstraintOfParallelScope(
                     presburger, nodeOrParallel.name_, dir, iterDim, point,
-                    other);
+                    other));
             }
+        }
+
+        // Early exit: if there is no intersection on `depAll`, there must
+        // be no intersection on `nearest`. Computing on `nearest` is much
+        // heavier because it contains more basic maps
+        PBMap res = nearest, possible = depAll;
+        for (auto &&require : requires) {
+            possible = intersect(std::move(possible), require);
+            if (possible.empty()) {
+                goto fail;
+            }
+        }
+
+        for (auto &&require : requires) {
             res = intersect(std::move(res), std::move(require));
             if (res.empty()) {
                 goto fail;
@@ -767,10 +781,10 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
     for (auto &&[other, os2a, oIter, depAll] :
          iter::zip(otherList, os2aList, oIterList, depAllList)) {
         if (depAll.isValid()) {
-            checkAgainstCond(presburger, point, other,
-                             intersect(applyRange(psNearest, std::move(os2a)),
-                                       std::move(depAll)),
-                             pIter, oIter, iterDim);
+            checkAgainstCond(
+                presburger, point, other, depAll,
+                intersect(applyRange(psNearest, std::move(os2a)), depAll),
+                pIter, oIter, iterDim);
         }
     }
 }
@@ -857,10 +871,10 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
     for (auto &&[point, ps2a, pIter, depAll] :
          iter::zip(pointList, ps2aList, pIterList, depAllList)) {
         if (depAll.isValid()) {
-            checkAgainstCond(presburger, point, other,
-                             intersect(applyDomain(spNearest, std::move(ps2a)),
-                                       std::move(depAll)),
-                             pIter, oIter, iterDim);
+            checkAgainstCond(
+                presburger, point, other, depAll,
+                intersect(applyDomain(spNearest, std::move(ps2a)), depAll),
+                pIter, oIter, iterDim);
         }
     }
 }
