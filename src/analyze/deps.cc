@@ -668,6 +668,11 @@ void AnalyzeDeps::checkDepLatestEarlier(
     const std::vector<Ref<AccessPoint>> &_otherList) {
     std::vector<Ref<AccessPoint>> otherList;
     for (auto &&other : _otherList) {
+        if (ignoreReductionWAW_ &&
+            point->op_->nodeType() == ASTNodeType::ReduceTo &&
+            other->op_->nodeType() == ASTNodeType::ReduceTo) {
+            continue;
+        }
         if (filter_ == nullptr || filter_(*point, *other)) {
             otherList.emplace_back(other);
         }
@@ -687,6 +692,11 @@ void AnalyzeDeps::checkDepEarliestLater(
     const Ref<AccessPoint> &other) {
     std::vector<Ref<AccessPoint>> pointList;
     for (auto &&point : _pointList) {
+        if (ignoreReductionWAW_ &&
+            point->op_->nodeType() == ASTNodeType::ReduceTo &&
+            other->op_->nodeType() == ASTNodeType::ReduceTo) {
+            continue;
+        }
         if (filter_ == nullptr || filter_(*point, *other)) {
             pointList.emplace_back(point);
         }
@@ -895,37 +905,20 @@ void AnalyzeDeps::genTasks() {
             }
 
             for (auto &&write : allWrites) {
-                if (write->op_->nodeType() == ASTNodeType::Store) {
-                    if (depType_ & DEP_WAW) {
+                // Store    -> Store    : WAW
+                // ReduceTo -> Store    : WAW, WAR
+                // Store    -> ReduceTo : WAW, RAW
+                // ReduceTo -> ReduceTo : WAW, RAW, WAR
+                if (depType_ & DEP_WAW) {
+                    // Every Store checks its immediate predecessor, so we do
+                    // not have to check its follower
+                    checkDepLatestEarlier(write, allWrites);
+                } else if (write->op_->nodeType() == ASTNodeType::ReduceTo) {
+                    if (depType_ & DEP_RAW) {
                         checkDepLatestEarlier(write, allWrites);
                     }
-
-                } else {
-                    ASSERT(write->op_->nodeType() == ASTNodeType::ReduceTo);
-                    if ((depType_ & DEP_RAW) || (depType_ & DEP_WAW)) {
-                        std::vector<Ref<AccessPoint>> others;
-                        for (auto &&item : allWrites) {
-                            if (ignoreReductionWAW_ &&
-                                item->op_->nodeType() ==
-                                    ASTNodeType::ReduceTo) {
-                                continue;
-                            }
-                            others.emplace_back(item);
-                        }
-                        checkDepLatestEarlier(write, others);
-                    }
-
                     if (depType_ & DEP_WAR) {
-                        std::vector<Ref<AccessPoint>> points;
-                        for (auto &&item : allWrites) {
-                            if (ignoreReductionWAW_ &&
-                                item->op_->nodeType() ==
-                                    ASTNodeType::ReduceTo) {
-                                continue;
-                            }
-                            points.emplace_back(item);
-                        }
-                        checkDepEarliestLater(points, write);
+                        checkDepEarliestLater(allWrites, write);
                     }
                 }
             }
