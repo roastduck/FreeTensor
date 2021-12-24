@@ -1,3 +1,4 @@
+import os
 from ffi import AccessType, MemType, DataType, ASTNodeType, TargetType
 from ffi import InvalidSchedule, InvalidProgram, DriverError
 
@@ -42,6 +43,11 @@ from .schedule import *
 from .codegen import codegen
 from .driver import *
 from .config import *
-from .transformer import transform, inline, create_var, declare_var
+
+if os.getenv('USE_NEW_TRANSFORMER'):
+    from .new_transformer import transform, inline, create_var, declare_var
+else:
+    from .transformer import transform, inline, create_var, declare_var
+
 from .meta import *
 from .auto_schedule import *
