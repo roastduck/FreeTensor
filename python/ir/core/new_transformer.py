@@ -2,7 +2,6 @@
 New transformer implementation based on generating a staging function.
 '''
 
-import ir
 import collections
 
 import ffi
@@ -24,8 +23,6 @@ from .utils import *
 
 assert sys.version_info >= (3,
                             8), "Python version lower than 3.8 is not supported"
-
-# Required for staging code to run
 
 
 class TransformError(Exception):
@@ -107,7 +104,7 @@ class StagingContext:
         return StagingScope(namepsace, is_static_control_flow)
 
     @staticmethod
-    def register_implicit_scope(scope: _VarDef):
+    def register_implicit_scope(scope):
         StagingContext.implicit_scopes.append(scope)
         return scope.__enter__()
 
@@ -208,6 +205,7 @@ def return_stmt(value):
             'Return is only allowed in statically deterministic control flow.')
     return value
 
+
 def assert_stmt(test):
     '''Assert staging tool.'''
     if isinstance(test, ffi.Expr):
@@ -243,6 +241,15 @@ def location_helper(new_nodes, old_node):
     for n in new_nodes:
         ast.copy_location(n, old_node)
     return new_nodes
+
+
+def capture_preprocess_helper(globals_dict: Dict[str, Any]):
+    ffi_arrays = {}
+    for k, v in globals_dict.items():
+        if isinstance(v, ffi.Array):
+            ffi_arrays[k] = StagingContext.register_implicit_scope(
+                _VarDef(k, v, v.shape, v.dtype, "input", v.device.main_mem_type()))
+    globals_dict.update(ffi_arrays)
 
 
 class Transformer(ast.NodeTransformer):
@@ -340,12 +347,12 @@ class Transformer(ast.NodeTransformer):
         node = self.generic_visit(old_node)
         node = ast.Return(call_helper(return_stmt, node.value))
         return location_helper(node, old_node)
-    
+
     def visit_FunctionDef(self, old_node: ast.FunctionDef) -> Any:
         node: ast.FunctionDef = self.generic_visit(old_node)
         node.decorator_list = []
         return location_helper(node, old_node)
-    
+
     def visit_Assert(self, old_node: ast.Assert) -> Any:
         node: ast.Assert = self.generic_visit(old_node)
         node = ast.Expr(call_helper(assert_stmt, node.test))
@@ -357,6 +364,19 @@ def _remove_indent(src: str) -> str:
     spaces_to_remove = next(
         (i for i, x in enumerate(lines[0]) if x != ' '), len(lines[0]))
     return '\n'.join(line[spaces_to_remove:] for line in lines)
+
+
+def _get_caller_env(depth: int):
+    frame = inspect.currentframe()
+    try:
+        parent = frame
+        for _ in range(depth + 1):
+            parent = parent.f_back
+        caller_env = copy.copy(parent.f_globals)
+        caller_env.update(parent.f_locals)
+    finally:
+        del frame
+    return caller_env
 
 
 def into_staging(func, src=None):
@@ -371,17 +391,23 @@ def into_staging(func, src=None):
         lineno = 1
         file = func.__name__
     tree = ast.fix_missing_locations(Transformer().visit(tree))
-    new_scope = {}
-    exec(compile(tree, filename='<staging>', mode='exec'), globals(), new_scope)
-    return new_scope[func.__name__]
+    caller_env = _get_caller_env(2)
+    exec(compile(tree, filename='<staging>', mode='exec'), caller_env)
+    return caller_env[func.__name__]
 
 
 def transform(func):
     params = list(inspect.signature(func).parameters)
+    params_list_code = ', '.join(f'"{p}"' for p in params)
 
     staging_func = into_staging(func)
+    caller_env = _get_caller_env(1)
+    caller_env[func.__name__] = staging_func
+
     with StagingContext.scope(func.__name__, True):
-        returns = staging_func(*params)
+        # TODO: maybe only capture `ffi.Array`s to be used?
+        capture_preprocess_helper(caller_env)
+        returns = eval(f'{func.__name__}({params_list_code})', caller_env)
         if isinstance(returns, Var):
             returns = [returns]
         elif isinstance(returns, tuple):
