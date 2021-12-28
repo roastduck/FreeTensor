@@ -387,12 +387,17 @@ class Transformer(ast.NodeTransformer):
         if_then_else_stmt(pred, then_body, else_body)
         ```
         '''
-        node = self.generic_visit(old_node)
-        node = [function_helper('then_body', [], node.body),
-                function_helper('else_body', [], node.orelse),
-                ast.Expr(call_helper(if_then_else_stmt, node.test, ast.Name(
-                    'then_body', ast.Load()), ast.Name('else_body', ast.Load())))]
-        return location_helper(node, old_node)
+        node: ast.If = self.generic_visit(old_node)
+        new_node = [function_helper('then_body', [], node.body)]
+        then_body = ast.Name('then_body', ast.Load())
+        if node.orelse:
+            new_node.append(function_helper('else_body', [], node.orelse))
+            else_body = ast.Name('else_body', ast.Load())
+        else:
+            else_body = ast.Constant(None)
+        new_node.append(ast.Expr(call_helper(
+            if_then_else_stmt, node.test, then_body, else_body)))
+        return location_helper(new_node, old_node)
 
     def visit_IfExp(self, old_node: ast.IfExp):
         '''Rule: `body if test else orelse` -> `if_then_else_expr(test, body, orelse)`'''
