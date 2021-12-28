@@ -83,16 +83,18 @@ class StagingScope:
             raise StagingError(
                 'StagingScope enter/exit not match, must be FILO')
 
-    def fullname(self, name: str):
+    def fullname(self, name: str, update_count: bool = True):
         if self.namespace:
             name = f'{self.namespace}:{name}'
 
         if name in self.names:
             suffix = '$' + str(self.names[name])
-            self.names[name] += 1
+            if update_count:
+                self.names[name] += 1
         else:
             suffix = ''
-            self.names[name] = 1
+            if update_count:
+                self.names[name] = 1
 
         return name + suffix
 
@@ -119,9 +121,9 @@ class StagingContext:
         return StagingContext.scope_stack.pop()
 
     @staticmethod
-    def fullname(name: str) -> str:
+    def fullname(name: str, update_count: bool = True) -> str:
         '''Get namespace-prepended full name of given short name.'''
-        return StagingContext.top().fullname(name)
+        return StagingContext.top().fullname(name, update_count)
 
     @staticmethod
     def scope(namepsace: str, allow_return: bool, borrow: bool = False):
@@ -138,6 +140,15 @@ class StagingContext:
         StagingContext.closure = {}
 
 
+def prepare_vardef(name: str, override: bool = False, capture: Optional[ffi.Array] = None):
+    fullname = StagingContext.fullname(name) if not override else name
+    if capture:
+        StagingContext.closure[fullname] = capture
+    if ctx_stack.top().get_next_nid() == '':
+        ctx_stack.top().set_next_nid(':' + fullname)
+    return fullname
+
+
 @dataclass
 class create_var:
     '''Create a IR variable. Available in python function to transform.'''
@@ -148,20 +159,19 @@ class create_var:
 
     def assign(self, name: str) -> Var:
         '''Customized assign behavior. Creates a VarDef with its full name.'''
-        return StagingContext.register_implicit_scope(
-            _VarDef(StagingContext.fullname(name), self.shape, self.dtype, self.atype, self.mtype))
+        return StagingContext.register_implicit_scope(_VarDef(
+            prepare_vardef(name), self.shape, self.dtype, self.atype, self.mtype))
 
 
-def declare_var(var_name, shape, dtype, atype, mtype):
+def declare_var(name, shape, dtype, atype, mtype):
     '''Declare parameter as a variable.'''
-    return StagingContext.register_implicit_scope(_VarDef(var_name, shape, dtype, atype, mtype))
+    return StagingContext.register_implicit_scope(_VarDef(
+        prepare_vardef(name, override=True), shape, dtype, atype, mtype))
 
 
 def capture_var(arr: ffi.Array, name: str = 'captured') -> Var:
-    name = StagingContext.fullname(name)
-    StagingContext.closure[name] = arr
     return StagingContext.register_implicit_scope(_VarDef(
-        name,
+        prepare_vardef(name, capture=arr),
         arr.shape,
         arr.dtype,
         'input',
@@ -196,8 +206,9 @@ class dynamic_range:
 
     def foreach(self, name: str, body: Callable[[Any], None]) -> None:
         '''Customized foreach behavior. Creates a For loop.'''
-        with For(StagingContext.fullname(name), self.start, self.stop, self.step) as iter_var:
+        with For(StagingContext.fullname(name, update_count=False), self.start, self.stop, self.step) as iter_var:
             with StagingContext.scope(None, False):
+                StagingContext.top().names[name] = 1
                 body(iter_var)
 
 
@@ -490,12 +501,14 @@ def transform(func):
             for ret in returns:
                 ret.vardef.set_atype('output')
             returns = [(ret.vardef.name, ret.vardef.dtype) for ret in returns]
+
+            closure = StagingContext.closure
     finally:
         StagingContext.reset()
         staged_ast = pop_ast()
 
-    staged = Func(func.__name__, params + list(StagingContext.closure.keys()),
-                  returns, staged_ast, StagingContext.closure)
+    staged = Func(func.__name__, params + list(closure.keys()),
+                  returns, staged_ast, closure)
 
     return staged
 
