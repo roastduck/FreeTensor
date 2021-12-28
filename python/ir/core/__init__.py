@@ -45,7 +45,7 @@ from .driver import *
 from .config import *
 
 if os.getenv('USE_NEW_TRANSFORMER'):
-    from .new_transformer import transform, inline, create_var, declare_var
+    from .new_transformer import transform, inline, create_var, declare_var, capture_var
 else:
     from .transformer import transform, inline, create_var, declare_var
 

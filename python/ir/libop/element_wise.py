@@ -46,19 +46,19 @@ def _binary_op(op):
 
 add_ = _binary_op_(lambda x, y: x + y)
 add = _binary_op(lambda x, y: x + y)
-add.set_fallback(lambda x, y: x + y)
+# add.set_fallback(lambda x, y: x + y)
 
 sub_ = _binary_op_(lambda x, y: x - y)
 sub = _binary_op(lambda x, y: x - y)
-sub.set_fallback(lambda x, y: x - y)
+# sub.set_fallback(lambda x, y: x - y)
 
 mul_ = _binary_op_(lambda x, y: x * y)
 mul = _binary_op(lambda x, y: x * y)
-mul.set_fallback(lambda x, y: x * y)
+# mul.set_fallback(lambda x, y: x * y)
 
 div_ = _binary_op_(lambda x, y: x / y)
 div = _binary_op(lambda x, y: x / y)
-div.set_fallback(lambda x, y: x / y)
+# div.set_fallback(lambda x, y: x / y)
 
 
 def _unary_op_(op):

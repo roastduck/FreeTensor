@@ -12,7 +12,7 @@ import numpy as np
 import inspect
 import sourceinspect as ins
 import copy
-from typing import Callable, Dict, List, Sequence, Optional, Mapping, Any, Union
+from typing import Callable, Dict, List, Sequence, Optional, Mapping, Any, Tuple, Union
 from dataclasses import dataclass
 
 from . import nodes
@@ -42,71 +42,100 @@ class StagingError(Exception):
         super().__init__(message)
 
 
-@dataclass
 class StagingScope:
     '''Helper class managing scopes in staging an IR tree.'''
-    appended_namespace: str
-    is_static_control_flow: bool
-    previous_namespace: str = None
-    previous_names: Mapping[str, int] = None
-    previous_is_static_control_flow: bool = None
-    previous_implicit_scopes: List[_VarDef] = None
+
+    def __init__(self, namespace: str, allow_return: bool, borrow: bool):
+        previous = StagingContext.top()
+
+        if borrow:
+            self.names = previous.names
+        else:
+            self.names = {}
+
+        prev_ns = previous.namespace if previous else None
+        if namespace:
+            if prev_ns is None:
+                self.namespace = namespace
+            else:
+                self.namespace = prev_ns + ':' + namespace
+        else:
+            self.namespace = prev_ns
+
+        self.allow_return = allow_return
+
+        if borrow:
+            self.implicit_scopes = previous.implicit_scopes
+        else:
+            self.implicit_scopes = []
+
+        self.borrow = borrow
 
     def __enter__(self):
-        '''
-        Entering a new scope.
-        It updates current full namespace with the new scope name, stashes previous names,
-        and prepares a clean variable name environment.
-        '''
-        self.previous_namespace = StagingContext.namespace
-        self.previous_names = StagingContext.names
-        self.previous_is_static_control_flow = StagingContext.is_static_control_flow
-        self.previous_implicit_scopes = StagingContext.implicit_scopes
-        StagingContext.namespace += ':' + self.appended_namespace
-        StagingContext.names = {}
-        StagingContext.is_static_control_flow = self.is_static_control_flow
-        StagingContext.implicit_scopes = []
+        StagingContext.push(self)
 
     def __exit__(self, _1, _2, _3):
-        '''
-        Leaving this scope.
-        It recovers names list and namespace to previous level.
-        '''
-        StagingContext.namespace = self.previous_namespace
-        StagingContext.names = self.previous_names
-        StagingContext.is_static_control_flow = self.previous_is_static_control_flow
-        for vd in reversed(StagingContext.implicit_scopes):
-            vd.__exit__(None, None, None)
-        StagingContext.implicit_scopes = self.previous_implicit_scopes
+        if not self.borrow:
+            for scope in reversed(self.implicit_scopes):
+                scope.__exit__(None, None, None)
+        popped = StagingContext.pop()
+        if popped is not self:
+            raise StagingError(
+                'StagingScope enter/exit not match, must be FILO')
+
+    def fullname(self, name: str):
+        if self.namespace:
+            name = f'{self.namespace}:{name}'
+
+        if name in self.names:
+            suffix = '$' + str(self.names[name])
+            self.names[name] += 1
+        else:
+            suffix = ''
+            self.names[name] = 1
+
+        return name + suffix
+
+    def register_implicit_scope(self, scope):
+        self.implicit_scopes.append(scope)
+        return scope.__enter__()
 
 
 class StagingContext:
     '''Helper class managing context in IR staging.'''
-    namespace = ''
-    names = {}
-    is_static_control_flow = True
-    implicit_scopes = []
+    scope_stack: List[StagingScope] = []
+    closure: Dict[str, Any] = {}
+
+    @staticmethod
+    def top():
+        return StagingContext.scope_stack[-1] if len(StagingContext.scope_stack) > 0 else None
+
+    @staticmethod
+    def push(scope: StagingScope):
+        StagingContext.scope_stack.append(scope)
+
+    @staticmethod
+    def pop():
+        return StagingContext.scope_stack.pop()
 
     @staticmethod
     def fullname(name: str) -> str:
         '''Get namespace-prepended full name of given short name.'''
-        if name in StagingContext.names:
-            suffix = '_' + str(StagingContext.names[name])
-            StagingContext.names[name] += 1
-        else:
-            suffix = ''
-            StagingContext.names[name] = 0
-        return f'{StagingContext.namespace}:{name}{suffix}'
+        return StagingContext.top().fullname(name)
 
     @staticmethod
-    def scope(namepsace: str, is_static_control_flow: bool) -> StagingScope:
+    def scope(namepsace: str, allow_return: bool, borrow: bool = False):
         '''Enter a new scope with given namespace. Return object is RAII and should be used with `with`.'''
-        return StagingScope(namepsace, is_static_control_flow)
+        return StagingScope(namepsace, allow_return, borrow)
 
     @staticmethod
     def register_implicit_scope(scope):
-        StagingContext.implicit_scopes.append(scope)
-        return scope.__enter__()
+        return StagingContext.top().register_implicit_scope(scope)
+
+    @staticmethod
+    def reset():
+        StagingContext.scope_stack.clear()
+        StagingContext.closure = {}
 
 
 @dataclass
@@ -117,7 +146,7 @@ class create_var:
     mtype: str
     atype: str = 'cache'
 
-    def assign(self, name: str) -> _VarDef:
+    def assign(self, name: str) -> Var:
         '''Customized assign behavior. Creates a VarDef with its full name.'''
         return StagingContext.register_implicit_scope(
             _VarDef(StagingContext.fullname(name), self.shape, self.dtype, self.atype, self.mtype))
@@ -126,6 +155,18 @@ class create_var:
 def declare_var(var_name, shape, dtype, atype, mtype):
     '''Declare parameter as a variable.'''
     return StagingContext.register_implicit_scope(_VarDef(var_name, shape, dtype, atype, mtype))
+
+
+def capture_var(arr: ffi.Array, name: str = 'captured') -> Var:
+    name = StagingContext.fullname(name)
+    StagingContext.closure[name] = arr
+    return StagingContext.register_implicit_scope(_VarDef(
+        name,
+        arr.shape,
+        arr.dtype,
+        'input',
+        arr.device.main_mem_type()
+    ))
 
 
 def assign(name: str, value):
@@ -156,7 +197,7 @@ class dynamic_range:
     def foreach(self, name: str, body: Callable[[Any], None]) -> None:
         '''Customized foreach behavior. Creates a For loop.'''
         with For(StagingContext.fullname(name), self.start, self.stop, self.step) as iter_var:
-            with StagingContext.scope(f'for-{name}', False):
+            with StagingContext.scope(None, False):
                 body(iter_var)
 
 
@@ -185,11 +226,11 @@ def if_then_else_stmt(predicate, then_body, else_body=None):
             else_body()
     else:
         with If(predicate):
-            with StagingContext.scope('if_then', False):
+            with StagingContext.scope(None, False):
                 then_body()
         if else_body:
             with Else():
-                with StagingContext.scope('if_else', False):
+                with StagingContext.scope(None, False):
                     return else_body()
 
 
@@ -200,7 +241,7 @@ def if_then_else_expr(predicate, then_expr, else_expr):
 
 def return_stmt(value):
     '''Return staging tool. Only allow return in static control flow.'''
-    if not StagingContext.is_static_control_flow:
+    if not StagingContext.top().allow_return:
         raise StagingError(
             'Return is only allowed in statically deterministic control flow.')
     return value
@@ -212,6 +253,22 @@ def assert_stmt(test):
         StagingContext.register_implicit_scope(Assert(test))
     else:
         assert test
+
+
+def functiondef_wrapper():
+    return StagingContext.scope(ctx_stack.top().get_next_nid(), True, True)
+
+
+def mark_nid(nid: str):
+    ctx_stack.top().set_next_nid(StagingContext.fullname(nid))
+
+
+def mark_no_deps(no_deps: str):
+    ctx_stack.top().add_next_no_deps(no_deps)
+
+
+def mark_prefer_libs():
+    ctx_stack.top().set_next_prefer_libs()
 
 
 def module_helper(name: str):
@@ -243,15 +300,6 @@ def location_helper(new_nodes, old_node):
     return new_nodes
 
 
-def capture_preprocess_helper(globals_dict: Dict[str, Any]):
-    ffi_arrays = {}
-    for k, v in globals_dict.items():
-        if isinstance(v, ffi.Array):
-            ffi_arrays[k] = StagingContext.register_implicit_scope(
-                _VarDef(k, v, v.shape, v.dtype, "input", v.device.main_mem_type()))
-    globals_dict.update(ffi_arrays)
-
-
 class Transformer(ast.NodeTransformer):
     def visit_Expr(self, old_node: ast.Expr) -> Any:
         '''Rule:
@@ -271,11 +319,22 @@ class Transformer(ast.NodeTransformer):
                         'declare_var is only allowed on top-level parameter', target)
                 target = ast.Name(target.id, ast.Store())
                 node = ast.Assign([target], node.value)
+        elif isinstance(node.value, ast.Constant) and isinstance(node.value.value, str):
+            text = node.value.value
+            if text.startswith('nid: '):
+                node = ast.Expr(call_helper(
+                    mark_nid, ast.Constant(text[5:], kind=None)))
+            elif text.startswith('no_deps: '):
+                node = ast.Expr(call_helper(
+                    mark_no_deps, ast.Constant(text[9:], kind=None)))
+            elif text.startswith('prefer_libs'):
+                node = ast.Expr(call_helper(mark_prefer_libs))
         return location_helper(node, old_node)
 
     def visit_Assign(self, old_node: ast.Assign) -> ast.Assign:
         '''Rule: `lhs = rhs` -> `lhs = assign('lhs', rhs)`'''
         node = self.generic_visit(old_node)
+        # FIXME: multi-assign not implemented
         if len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
             node = ast.Assign(node.targets, call_helper(
                 assign, ast.Constant(node.targets[0].id), node.value))
@@ -342,15 +401,18 @@ class Transformer(ast.NodeTransformer):
                            node.body, node.orelse)
         return location_helper(node, old_node)
 
-    def visit_Return(self, old_node: ast.Return) -> Any:
-        '''Rule: `return x` -> `return return_stmt(x)`'''
-        node = self.generic_visit(old_node)
-        node = ast.Return(call_helper(return_stmt, node.value))
-        return location_helper(node, old_node)
-
     def visit_FunctionDef(self, old_node: ast.FunctionDef) -> Any:
         node: ast.FunctionDef = self.generic_visit(old_node)
         node.decorator_list = []
+        old_body = node.body
+        node.body = [
+            ast.With(
+                items=[
+                    ast.withitem(context_expr=call_helper(
+                        functiondef_wrapper), optional_vars=None)
+                ],
+                body=old_body)
+        ]
         return location_helper(node, old_node)
 
     def visit_Assert(self, old_node: ast.Assert) -> Any:
@@ -391,6 +453,8 @@ def into_staging(func, src=None):
         lineno = 1
         file = func.__name__
     tree = ast.fix_missing_locations(Transformer().visit(tree))
+    import astor
+    print(astor.to_source(tree))
     caller_env = _get_caller_env(2)
     exec(compile(tree, filename='<staging>', mode='exec'), caller_env)
     return caller_env[func.__name__]
@@ -398,35 +462,37 @@ def into_staging(func, src=None):
 
 def transform(func):
     params = list(inspect.signature(func).parameters)
-    params_list_code = ', '.join(f'"{p}"' for p in params)
-
     staging_func = into_staging(func)
-    caller_env = _get_caller_env(1)
-    caller_env[func.__name__] = staging_func
 
-    with StagingContext.scope(func.__name__, True):
-        # TODO: maybe only capture `ffi.Array`s to be used?
-        capture_preprocess_helper(caller_env)
-        returns = eval(f'{func.__name__}({params_list_code})', caller_env)
-        if isinstance(returns, Var):
-            returns = [returns]
-        elif isinstance(returns, tuple):
+    try:
+        with StagingContext.scope(None, True):
+            for p in params:
+                StagingContext.top().names[p] = 1
+            returns = staging_func(*params)
+            if isinstance(returns, Var):
+                returns = [returns]
+            elif isinstance(returns, tuple):
+                for ret in returns:
+                    if not isinstance(ret, Var):
+                        raise StagingError(
+                            'Illegal return at top level, need to be a `Var` or a tuple of `Var`s')
+                returns = list(returns)
+            elif returns is None:
+                returns = []
+            else:
+                raise StagingError(
+                    'Illegal return at top level, need to be a `Var` or a tuple of `Var`s')
             for ret in returns:
-                if not isinstance(ret, Var):
-                    raise StagingError(
-                        'Illegal return at top level, need to be a `Var` or a tuple of `Var`s')
-            returns = list(returns)
-        elif returns is None:
-            returns = []
-        else:
-            raise StagingError(
-                'Illegal return at top level, need to be a `Var` or a tuple of `Var`s')
-        for ret in returns:
-            ret.vardef.set_atype('output')
-        returns = [(ret.vardef.name, ret.vardef.dtype) for ret in returns]
+                ret.vardef.set_atype('output')
+            returns = [(ret.vardef.name, ret.vardef.dtype) for ret in returns]
+    finally:
+        StagingContext.reset()
+        staged_ast = pop_ast()
 
-    # TODO: handle closure
-    return Func(func.__name__, params, returns, pop_ast())
+    staged = Func(func.__name__, params + list(StagingContext.closure.keys()),
+                  returns, staged_ast, StagingContext.closure)
+
+    return staged
 
 
 def inline(func, src=None):
