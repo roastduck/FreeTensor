@@ -571,6 +571,7 @@ void AnalyzeDeps::projectOutPrivateAxis(
             pmap = applyDomain(
                 std::move(pmap),
                 projectOutPrivateAxis(presburger, iterDim, pCommonDims + 1));
+            pmap = coalesce(std::move(pmap));
         }
         for (auto &&[common, other, omap] :
              iter::zip(oCommonDims, otherList, omapList)) {
@@ -578,6 +579,7 @@ void AnalyzeDeps::projectOutPrivateAxis(
                 omap = applyDomain(
                     std::move(omap),
                     projectOutPrivateAxis(presburger, iterDim, common + 1));
+                omap = coalesce(std::move(omap));
             }
         }
     }
