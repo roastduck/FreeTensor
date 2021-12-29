@@ -768,6 +768,7 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
                       makeExternalVarConstraint(
                           presburger, point, other, pExternals, oExternals,
                           iterDim, "__ext_p", "__ext_o" + std::to_string(i)));
+        depAll = coalesce(std::move(depAll));
 
         PBMap psDepAll = applyRange(depAll, std::move(oa2s));
         psDepAllUnion = psDepAllUnion.isValid()
@@ -787,6 +788,7 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
     PBMap psSelf = intersect(applyRange(std::move(pa2s), std::move(ssSelf)),
                              std::move(psDepAllUnion));
     PBMap psNearest = uni(lexmax(std::move(psDep)), std::move(psSelf));
+    psNearest = coalesce(std::move(psNearest));
 
     for (auto &&[other, os2a, oIter, depAll] :
          iter::zip(otherList, os2aList, oIterList, depAllList)) {
@@ -857,6 +859,7 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
                       makeExternalVarConstraint(
                           presburger, point, other, pExternals, oExternals,
                           iterDim, "__ext_p" + std::to_string(i), "__ext_o"));
+        depAll = coalesce(std::move(depAll));
 
         PBMap spDepAll = applyDomain(depAll, std::move(pa2s));
         spDepAllUnion = spDepAllUnion.isValid()
@@ -877,6 +880,7 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
                              std::move(spDepAllUnion));
     PBMap spNearest =
         uni(reverse(lexmin(reverse(std::move(spDep)))), std::move(spSelf));
+    spNearest = coalesce(std::move(spNearest));
 
     for (auto &&[point, ps2a, pIter, depAll] :
          iter::zip(pointList, ps2aList, pIterList, depAllList)) {

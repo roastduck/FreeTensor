@@ -430,12 +430,11 @@ inline PBMap lexGT(const PBSpace &space) {
 }
 
 inline PBSpace spaceAlloc(const PBCtx &ctx, unsigned nparam, unsigned nIn,
-                           unsigned nOut) {
+                          unsigned nOut) {
     return isl_space_alloc(ctx.get(), nparam, nIn, nOut);
 }
 
-inline PBSpace spaceSetAlloc(const PBCtx &ctx, unsigned nparam,
-                              unsigned dim) {
+inline PBSpace spaceSetAlloc(const PBCtx &ctx, unsigned nparam, unsigned dim) {
     return isl_space_set_alloc(ctx.get(), nparam, dim);
 }
 
@@ -468,6 +467,24 @@ inline PBSet domain(const PBMap &map) { return isl_map_domain(map.copy()); }
 
 inline PBSet range(PBMap &&map) { return isl_map_range(map.move()); }
 inline PBSet range(const PBMap &map) { return isl_map_range(map.copy()); }
+
+inline PBSet coalesce(PBSet &&set) {
+    DEBUG_PROFILE("coalesce");
+    return isl_set_coalesce(set.move());
+}
+inline PBSet coalesce(const PBSet &set) {
+    DEBUG_PROFILE("coalesce");
+    return isl_set_coalesce(set.copy());
+}
+
+inline PBMap coalesce(PBMap &&map) {
+    DEBUG_PROFILE("coalesce");
+    return isl_map_coalesce(map.move());
+}
+inline PBMap coalesce(const PBMap &map) {
+    DEBUG_PROFILE("coalesce");
+    return isl_map_coalesce(map.copy());
+}
 
 inline PBVal dimMaxVal(PBSet &&set, int pos) {
     return isl_set_dim_max_val(set.move(), pos);
