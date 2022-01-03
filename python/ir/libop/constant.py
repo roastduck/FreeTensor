@@ -6,11 +6,11 @@ def zeros_():
 
     @core.inline
     def f_zeros(y):
-        if y.ndim == 0:
+        if core.ndim(y) == 0:
             y[()] = 0
         else:
             'nid: L_elem'
-            for i in range(y.shape(0)):
+            for i in range(core.shape(y, 0)):
                 'nid: recur'
                 zeros_()(y[i])
 

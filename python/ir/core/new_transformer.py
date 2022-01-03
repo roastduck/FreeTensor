@@ -277,7 +277,6 @@ def or_expr(*lazy_args):
 
 
 def not_expr(arg):
-    print(f'not_expr: arg type is {type(arg)}, arg = {arg}')
     if isinstance(arg, ffi.Expr):
         return l_not(arg)
     else:

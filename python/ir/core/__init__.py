@@ -36,6 +36,10 @@ from .nodes import (
     intrinsic,
     any,
     Func,
+    ndim,
+    shape,
+    dtype,
+    mtype,
 )
 from .analyze import *
 from .passes import *
@@ -44,8 +48,9 @@ from .codegen import codegen
 from .driver import *
 from .config import *
 
-if os.getenv('USE_NEW_TRANSFORMER'):
-    from .new_transformer import transform, inline, create_var, declare_var, capture_var
+USE_NEW_TRANSFORMER=os.getenv('USE_NEW_TRANSFORMER')
+if USE_NEW_TRANSFORMER:
+    from .new_transformer import transform, inline, create_var, declare_var, capture_var, StagingError
 else:
     from .transformer import transform, inline, create_var, declare_var
 
