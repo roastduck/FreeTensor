@@ -42,101 +42,94 @@ class StagingError(Exception):
         super().__init__(message)
 
 
-class StagingScope:
-    '''Helper class managing scopes in staging an IR tree.'''
-
-    def __init__(self, namespace: str, allow_return: bool, borrow: bool):
-        previous = StagingContext.top()
-
-        if borrow:
-            self.names = previous.names
-        else:
-            self.names = {}
-
-        prev_ns = previous.namespace if previous else None
-        if namespace:
-            if prev_ns is None:
-                self.namespace = namespace
-            else:
-                self.namespace = prev_ns + ':' + namespace
-        else:
-            self.namespace = prev_ns
-
-        self.allow_return = allow_return
-
-        if borrow:
-            self.implicit_scopes = previous.implicit_scopes
-        else:
-            self.implicit_scopes = []
-
-        self.borrow = borrow
+class NamingScope:
+    def __init__(self, namespace: Optional[str]) -> None:
+        if len(StagingContext.naming_stack) > 0 and namespace is None:
+            raise StagingError('Namespace must not be None for inner levels.')
+        self.namespace = namespace
+        self.names = {}
 
     def __enter__(self):
-        StagingContext.push(self)
+        StagingContext.naming_stack.append(self)
+        StagingContext.allow_return_stack.append(True)
 
     def __exit__(self, _1, _2, _3):
-        if not self.borrow:
-            for scope in reversed(self.implicit_scopes):
-                scope.__exit__(None, None, None)
-        popped = StagingContext.pop()
-        if popped is not self:
+        popped = StagingContext.naming_stack.pop()
+        if popped != self:
             raise StagingError(
-                'StagingScope enter/exit not match, must be FILO')
+                'NamingScope enter/exit not match, must be FILO')
+        StagingContext.allow_return_stack.pop()
 
-    def fullname(self, name: str, update_count: bool = True):
-        if self.namespace:
-            name = f'{self.namespace}:{name}'
+    def fullname(self, name: str):
+        if self.namespace is not None:
+            prefix = self.namespace + ':'
+        else:
+            prefix = ''
 
         if name in self.names:
             suffix = '$' + str(self.names[name])
-            if update_count:
-                self.names[name] += 1
+            self.names[name] += 1
         else:
             suffix = ''
-            if update_count:
-                self.names[name] = 1
+            self.names[name] = 1
 
-        return name + suffix
+        return prefix + name + suffix
+
+
+class LifetimeScope:
+    def __init__(self):
+        self.implicit_scopes = []
+
+    def __enter__(self):
+        StagingContext.lifetime_stack.append(self)
+        StagingContext.allow_return_stack.append(False)
+
+    def __exit__(self, _1, _2, _3):
+        for scope in reversed(self.implicit_scopes):
+            scope.__exit__(None, None, None)
+        popped = StagingContext.lifetime_stack.pop()
+        if popped != self:
+            raise StagingError(
+                'LifetimeScope enter/exit not match, must be FILO')
+        StagingContext.allow_return_stack.pop()
 
     def register_implicit_scope(self, scope):
         self.implicit_scopes.append(scope)
         return scope.__enter__()
 
 
+class DummyScope:
+    def __enter__(self):
+        pass
+
+    def __exit__(self, _1, _2, _3):
+        pass
+
+
 class StagingContext:
     '''Helper class managing context in IR staging.'''
-    scope_stack: List[StagingScope] = []
+    naming_stack: List[NamingScope] = []
+    lifetime_stack: List[LifetimeScope] = []
+    allow_return_stack: List[bool] = []
     closure: Dict[str, Any] = {}
 
     @staticmethod
-    def top():
-        return StagingContext.scope_stack[-1] if len(StagingContext.scope_stack) > 0 else None
-
-    @staticmethod
-    def push(scope: StagingScope):
-        StagingContext.scope_stack.append(scope)
-
-    @staticmethod
-    def pop():
-        return StagingContext.scope_stack.pop()
-
-    @staticmethod
-    def fullname(name: str, update_count: bool = True) -> str:
-        '''Get namespace-prepended full name of given short name.'''
-        return StagingContext.top().fullname(name, update_count)
-
-    @staticmethod
-    def scope(namepsace: str, allow_return: bool, borrow: bool = False):
-        '''Enter a new scope with given namespace. Return object is RAII and should be used with `with`.'''
-        return StagingScope(namepsace, allow_return, borrow)
-
-    @staticmethod
     def register_implicit_scope(scope):
-        return StagingContext.top().register_implicit_scope(scope)
+        return StagingContext.lifetime_stack[-1].register_implicit_scope(scope)
+
+    @staticmethod
+    def fullname(name: str) -> str:
+        '''Get namespace-prepended full name of given short name.'''
+        return StagingContext.naming_stack[-1].fullname(name)
+
+    @staticmethod
+    def allow_return():
+        return StagingContext.allow_return_stack[-1]
 
     @staticmethod
     def reset():
-        StagingContext.scope_stack.clear()
+        StagingContext.naming_stack.clear()
+        StagingContext.lifetime_stack.clear()
         StagingContext.closure = {}
 
 
@@ -206,9 +199,8 @@ class dynamic_range:
 
     def foreach(self, name: str, body: Callable[[Any], None]) -> None:
         '''Customized foreach behavior. Creates a For loop.'''
-        with For(StagingContext.fullname(name, update_count=False), self.start, self.stop, self.step) as iter_var:
-            with StagingContext.scope(None, False):
-                StagingContext.top().names[name] = 1
+        with For(StagingContext.fullname(name), self.start, self.stop, self.step) as iter_var:
+            with LifetimeScope():
                 body(iter_var)
 
 
@@ -237,11 +229,11 @@ def if_then_else_stmt(predicate, then_body, else_body=None):
             else_body()
     else:
         with If(predicate):
-            with StagingContext.scope(None, False):
+            with LifetimeScope():
                 then_body()
         if else_body:
             with Else():
-                with StagingContext.scope(None, False):
+                with LifetimeScope():
                     return else_body()
 
 
@@ -252,7 +244,7 @@ def if_then_else_expr(predicate, then_expr, else_expr):
 
 def return_stmt(value):
     '''Return staging tool. Only allow return in static control flow.'''
-    if not StagingContext.top().allow_return:
+    if not StagingContext.allow_return():
         raise StagingError(
             'Return is only allowed in statically deterministic control flow.')
     return value
@@ -292,8 +284,13 @@ def not_expr(arg):
         return not arg
 
 
-def functiondef_wrapper():
-    return StagingContext.scope(ctx_stack.top().get_next_nid(), True, True)
+def functiondef_wrapper(func_name):
+    namespace = ctx_stack.top().get_next_nid()
+    ctx_stack.top().set_next_nid('')
+    if namespace == '':
+        return DummyScope()
+    else:
+        return NamingScope(namespace)
 
 
 def mark_nid(nid: str):
@@ -451,7 +448,7 @@ class Transformer(ast.NodeTransformer):
             ast.With(
                 items=[
                     ast.withitem(context_expr=call_helper(
-                        functiondef_wrapper), optional_vars=None)
+                        functiondef_wrapper, ast.Constant(node.name)), optional_vars=None)
                 ],
                 body=old_body)
         ]
@@ -471,16 +468,17 @@ class Transformer(ast.NodeTransformer):
         else:
             return location_helper(node, old_node)
         empty_args = ast.arguments(args=[], vararg=None, kwarg=None, posonlyargs=[],
-                             defaults=[], kwonlyargs=[], kw_defaults=[])
-        node = call_helper(libfunc, *[ast.Lambda(empty_args, v) for v in node.values])
+                                   defaults=[], kwonlyargs=[], kw_defaults=[])
+        node = call_helper(
+            libfunc, *[ast.Lambda(empty_args, v) for v in node.values])
         return location_helper(node, old_node)
-    
+
     def visit_UnaryOp(self, old_node: ast.UnaryOp) -> Any:
         node: ast.UnaryOp = self.generic_visit(old_node)
         if isinstance(node.op, ast.Not):
             node = call_helper(not_expr, node.operand)
         return location_helper(node, old_node)
-    
+
     def visit_Compare(self, old_node: ast.Compare) -> Any:
         '''Expand multiple comparison into `and` expression.'''
         if len(old_node.comparators) == 1:
@@ -526,8 +524,13 @@ def into_staging(func, src=None):
         file = func.__name__
     tree = ast.fix_missing_locations(Transformer().visit(tree))
     import astor
-    print(astor.to_source(tree))
+    from pygments import highlight
+    from pygments.lexers import PythonLexer
+    from pygments.formatters import TerminalFormatter
+    print(highlight(astor.to_source(tree), PythonLexer(),
+          TerminalFormatter(bg='dark', linenos=True)))
     caller_env = _get_caller_env(2)
+    caller_env['ir'] = sys.modules['ir']
     exec(compile(tree, filename='<staging>', mode='exec'), caller_env)
     return caller_env[func.__name__]
 
@@ -537,28 +540,30 @@ def transform(func):
     staging_func = into_staging(func)
 
     try:
-        with StagingContext.scope(None, True):
-            for p in params:
-                StagingContext.top().names[p] = 1
-            returns = staging_func(*params)
-            if isinstance(returns, Var):
-                returns = [returns]
-            elif isinstance(returns, tuple):
+        with LifetimeScope():
+            with NamingScope(None):
+                for p in params:
+                    StagingContext.naming_stack[-1].names[p] = 1
+                returns = staging_func(*params)
+                if isinstance(returns, Var):
+                    returns = [returns]
+                elif isinstance(returns, tuple):
+                    for ret in returns:
+                        if not isinstance(ret, Var):
+                            raise StagingError(
+                                'Illegal return at top level, need to be a `Var` or a tuple of `Var`s')
+                    returns = list(returns)
+                elif returns is None:
+                    returns = []
+                else:
+                    raise StagingError(
+                        'Illegal return at top level, need to be a `Var` or a tuple of `Var`s')
                 for ret in returns:
-                    if not isinstance(ret, Var):
-                        raise StagingError(
-                            'Illegal return at top level, need to be a `Var` or a tuple of `Var`s')
-                returns = list(returns)
-            elif returns is None:
-                returns = []
-            else:
-                raise StagingError(
-                    'Illegal return at top level, need to be a `Var` or a tuple of `Var`s')
-            for ret in returns:
-                ret.vardef.set_atype('output')
-            returns = [(ret.vardef.name, ret.vardef.dtype) for ret in returns]
+                    ret.vardef.set_atype('output')
+                returns = [(ret.vardef.name, ret.vardef.dtype)
+                           for ret in returns]
 
-            closure = StagingContext.closure
+                closure = StagingContext.closure
     finally:
         StagingContext.reset()
         staged_ast = pop_ast()
