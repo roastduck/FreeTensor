@@ -266,6 +266,32 @@ def assert_stmt(test):
         assert test
 
 
+def boolop_expr(native_reducer, ir_reducer, lazy_args):
+    result = lazy_args[0]()
+    for f in lazy_args[1:]:
+        if isinstance(result, ffi.Expr):
+            result = ir_reducer(result, f)
+        else:
+            result = native_reducer(result, f)
+    return result
+
+
+def and_expr(*lazy_args):
+    return boolop_expr(lambda a, fb: a and fb(), lambda a, fb: l_and(a, fb()), lazy_args)
+
+
+def or_expr(*lazy_args):
+    return boolop_expr(lambda a, fb: a or fb(), lambda a, fb: l_or(a, fb()), lazy_args)
+
+
+def not_expr(arg):
+    print(f'not_expr: arg type is {type(arg)}, arg = {arg}')
+    if isinstance(arg, ffi.Expr):
+        return l_not(arg)
+    else:
+        return not arg
+
+
 def functiondef_wrapper():
     return StagingContext.scope(ctx_stack.top().get_next_nid(), True, True)
 
@@ -435,6 +461,36 @@ class Transformer(ast.NodeTransformer):
         node: ast.Assert = self.generic_visit(old_node)
         node = ast.Expr(call_helper(assert_stmt, node.test))
         return location_helper(node, old_node)
+
+    def visit_BoolOp(self, old_node: ast.BoolOp) -> Any:
+        node: ast.BoolOp = self.generic_visit(old_node)
+        if isinstance(node.op, ast.And):
+            libfunc = and_expr
+        elif isinstance(node.op, ast.Or):
+            libfunc = or_expr
+        else:
+            return location_helper(node, old_node)
+        empty_args = ast.arguments(args=[], vararg=None, kwarg=None, posonlyargs=[],
+                             defaults=[], kwonlyargs=[], kw_defaults=[])
+        node = call_helper(libfunc, *[ast.Lambda(empty_args, v) for v in node.values])
+        return location_helper(node, old_node)
+    
+    def visit_UnaryOp(self, old_node: ast.UnaryOp) -> Any:
+        node: ast.UnaryOp = self.generic_visit(old_node)
+        if isinstance(node.op, ast.Not):
+            node = call_helper(not_expr, node.operand)
+        return location_helper(node, old_node)
+    
+    def visit_Compare(self, old_node: ast.Compare) -> Any:
+        '''Expand multiple comparison into `and` expression.'''
+        if len(old_node.comparators) == 1:
+            return self.generic_visit(old_node)
+        lhs = old_node.left
+        node = ast.BoolOp(ast.And(), [])
+        for op, rhs in zip(old_node.ops, old_node.comparators):
+            node.values.append(ast.Compare(lhs, [op], [rhs]))
+            lhs = rhs
+        return self.visit(location_helper(node, old_node))
 
 
 def _remove_indent(src: str) -> str:
