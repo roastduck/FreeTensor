@@ -2,6 +2,7 @@
 
 #include <codegen/code_gen_cuda.h>
 #include <except.h>
+#include <mangle.h>
 #include <pass/simplify.h>
 
 #include "detail/code_gen_c.h"
@@ -103,7 +104,7 @@ void CodeGenCUDA::visit(const Ceil &op) {
 }
 
 void CodeGenCUDA::visit(const ReduceTo &op) {
-    auto id = normalizeId(op->var_);
+    auto id = mangle(op->var_);
     markUseBuffer(op->var_);
     makeIndent();
 
@@ -250,11 +251,11 @@ void CodeGenCUDA::visit(const For &op) {
                  << "), " << std::to_string(sharedSize) << ">>>(";
             bool first = true;
             for (auto &&[name, buffer] : stream.useBuffers_) {
-                os() << (first ? "" : ", ") << normalizeId(name);
+                os() << (first ? "" : ", ") << mangle(name);
                 first = false;
             }
             for (auto &&name : stream.useIters_) {
-                os() << (first ? "" : ", ") << normalizeId(name);
+                os() << (first ? "" : ", ") << mangle(name);
                 first = false;
             }
             os() << ", __glmem);" << std::endl;
@@ -288,7 +289,7 @@ void CodeGenCUDA::visit(const VarDef &op) {
                 auto &&shape = tensor.shape();
                 makeIndent();
                 os() << gen(tensor.dtype()) << " (*";
-                os() << normalizeId(op->name_) << ")";
+                os() << mangle(op->name_) << ")";
                 for (size_t i = 1, iEnd = shape.size(); i < iEnd;
                      i++) { // No shape[0]
                     os() << "[";
@@ -332,7 +333,7 @@ void CodeGenCUDA::visit(const VarDef &op) {
                 auto &&shape = tensor.shape();
                 makeIndent();
                 os() << gen(tensor.dtype()) << " (*";
-                os() << normalizeId(op->name_) << ")";
+                os() << mangle(op->name_) << ")";
                 for (size_t i = 1, iEnd = shape.size(); i < iEnd;
                      i++) { // No shape[0]
                     os() << "[";
@@ -341,7 +342,7 @@ void CodeGenCUDA::visit(const VarDef &op) {
                 }
                 os() << ";" << std::endl;
                 makeIndent();
-                os() << "cudaMalloc(&" << normalizeId(op->name_) << ", ";
+                os() << "cudaMalloc(&" << mangle(op->name_) << ", ";
                 for (auto &&dim : shape) {
                     (*this)(dim);
                     os() << " * ";
@@ -351,8 +352,7 @@ void CodeGenCUDA::visit(const VarDef &op) {
                 (*this)(op->body_);
 
                 makeIndent();
-                os() << "cudaFree(" << normalizeId(op->name_) << ");"
-                     << std::endl;
+                os() << "cudaFree(" << mangle(op->name_) << ");" << std::endl;
             }
 
             markUndefBuffer(op->name_);
@@ -374,7 +374,7 @@ void CodeGenCUDA::visit(const VarDef &op) {
             auto &&shape = tensor.shape();
             makeIndent();
             os() << gen(tensor.dtype()) << " (*";
-            os() << normalizeId(op->name_) << ")";
+            os() << mangle(op->name_) << ")";
             for (size_t i = 1, iEnd = shape.size(); i < iEnd;
                  i++) { // No shape[0]
                 os() << "[";
@@ -542,7 +542,7 @@ extern "C" {
                         ASSERT((*it)->nodeType() == ASTNodeType::IntConst);
                         os << ", " << (*it).as<IntConstNode>()->val_ << ">";
                     }
-                    os << " " << visitor.normalizeId(name);
+                    os << " " << mangle(name);
                     break;
 
                 default:
@@ -551,7 +551,7 @@ extern "C" {
                         os << "const ";
                     }
                     os << CodeGenCUDA::gen(tensor.dtype()) << " (*restrict ";
-                    os << visitor.normalizeId(name) << ")";
+                    os << mangle(name) << ")";
                     for (size_t i = 1, iEnd = shape.size(); i < iEnd;
                          i++) { // No shape[0]
                         ASSERT(shape[i]->nodeType() == ASTNodeType::IntConst);
@@ -561,8 +561,7 @@ extern "C" {
                 first = false;
             }
             for (auto &&name : stream.useIters_) {
-                os << (first ? "" : ", ") << "int "
-                   << visitor.normalizeId(name);
+                os << (first ? "" : ", ") << "int " << mangle(name);
                 first = false;
             }
             os << ", uint8_t *__glmem) ";

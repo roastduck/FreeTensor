@@ -1,4 +1,5 @@
 #include <debug/dump_as_test.h>
+#include <mangle.h>
 #include <pass/undo_make_reduction.h>
 
 #include "../codegen/detail/code_gen.h"
@@ -57,23 +58,6 @@ std::string DumpAsTest::asTest(MemType mtype) const {
     }
 }
 
-const std::string &DumpAsTest::normalizeId(const std::string &old) {
-    if (idCache_.count(old)) {
-        return idCache_.at(old);
-    }
-    std::string ret = old;
-    for (char &c : ret) {
-        if (!isalnum(c) && c != '_') {
-            c = '_';
-        }
-    }
-    while (idFlag_.count(ret)) {
-        ret += "_";
-    }
-    idFlag_.insert(ret);
-    return idCache_[old] = ret;
-}
-
 void DumpAsTest::visitStmt(const Stmt &op) {
     printId(op);
     Visitor::visitStmt(op);
@@ -98,20 +82,20 @@ void DumpAsTest::visit(const VarDef &op) {
     }
     os() << "), " << asTest(tensor.dtype()) << ", "
          << asTest(op->buffer_->atype()) << ", " << asTest(op->buffer_->mtype())
-         << ") as " << normalizeId(op->name_) << ": " << std::endl;
+         << ") as " << mangle(op->name_) << ": " << std::endl;
     nIndent()++;
     (*this)(op->body_);
     nIndent()--;
 }
 
 void DumpAsTest::visit(const Var &op) {
-    os() << normalizeId(op->name_);
+    os() << mangle(op->name_);
     Visitor::visit(op);
 }
 
 void DumpAsTest::visit(const Store &op) {
     makeIndent();
-    os() << normalizeId(op->var_) << "[";
+    os() << mangle(op->var_) << "[";
     if (op->indices_.empty()) {
         os() << "()";
     } else {
@@ -123,7 +107,7 @@ void DumpAsTest::visit(const Store &op) {
 }
 
 void DumpAsTest::visit(const Load &op) {
-    os() << normalizeId(op->var_) << "[";
+    os() << mangle(op->var_) << "[";
     if (op->indices_.empty()) {
         os() << "()";
     } else {
@@ -372,7 +356,7 @@ void DumpAsTest::visit(const For &op) {
     (*this)(op->begin_);
     os() << ", ";
     (*this)(op->end_);
-    os() << ") as " << normalizeId(op->iter_) << ":" << std::endl;
+    os() << ") as " << mangle(op->iter_) << ":" << std::endl;
     nIndent()++;
     (*this)(op->body_);
     nIndent()--;

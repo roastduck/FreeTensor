@@ -6,6 +6,7 @@
 
 #include <analyze/deps.h>
 #include <except.h>
+#include <mangle.h>
 #include <mutator.h>
 #include <pass/simplify.h>
 
@@ -189,7 +190,7 @@ void GenPBExprDeps::visitExpr(const Expr &op) {
 void GenPBExprDeps::visit(const Load &op) {
     getHash_(op);
     auto h = getHash_.hash().at(op);
-    auto str = normalizeId("ext" + std::to_string(h)) + "!!placeholder!!";
+    auto str = mangle("ext" + std::to_string(h)) + "!!placeholder!!";
     externals_[op][h] = std::make_pair(op, str);
     results_[op] = str;
 }
@@ -201,8 +202,7 @@ std::string AnalyzeDeps::makeIterList(GenPBExprDeps &genPBExpr,
     for (int i = 0; i < n; i++) {
         if (i < (int)list.size()) {
             if (list[i].iter_->nodeType() == ASTNodeType::Var) {
-                ret +=
-                    genPBExpr.normalizeId(list[i].iter_.as<VarNode>()->name_);
+                ret += mangle(list[i].iter_.as<VarNode>()->name_);
             } else if (list[i].iter_->nodeType() == ASTNodeType::IntConst) {
                 ret += std::to_string(list[i].iter_.as<IntConstNode>()->val_);
             } else {
@@ -228,7 +228,7 @@ Ref<std::string> AnalyzeDeps::makeAccList(GenPBExprDeps &genPBExpr,
             ret += *linstr;
             unionTo(externals, genPBExpr.externals(list[i]));
         } else if (relax == RelaxMode::Possible) {
-            ret += genPBExpr.normalizeId("free" + std::to_string(i));
+            ret += mangle("free" + std::to_string(i));
         } else {
             return nullptr;
         }

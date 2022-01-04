@@ -1,24 +1,8 @@
+#include <mangle.h>
 #include <math/gen_pb_expr.h>
 #include <math/utils.h>
 
 namespace ir {
-
-std::string GenPBExpr::normalizeId(const std::string &old) {
-    if (idCache_.count(old)) {
-        return idCache_.at(old);
-    }
-    std::string ret = old;
-    for (char &c : ret) {
-        if (!isalnum(c) && c != '_') {
-            c = '_';
-        }
-    }
-    while (idFlag_.count(ret)) {
-        ret += "_";
-    }
-    idFlag_.insert(ret);
-    return idCache_[old] = ret;
-}
 
 void GenPBExpr::visitExpr(const Expr &op) {
     if (!visited_.count(op)) {
@@ -27,7 +11,7 @@ void GenPBExpr::visitExpr(const Expr &op) {
     }
 }
 
-void GenPBExpr::visit(const Var &op) { results_[op] = normalizeId(op->name_); }
+void GenPBExpr::visit(const Var &op) { results_[op] = mangle(op->name_); }
 
 void GenPBExpr::visit(const IntConst &op) {
     results_[op] = std::to_string(op->val_);

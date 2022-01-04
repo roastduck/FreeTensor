@@ -1,3 +1,4 @@
+#include <mangle.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/pb_simplify.h>
 
@@ -29,7 +30,7 @@ void GenPBExprSimplify::visitExpr(const Expr &op) {
 }
 
 void GenPBExprSimplify::visit(const Var &op) {
-    auto str = normalizeId(op->name_);
+    auto str = mangle(op->name_);
     vars_[op].insert(str);
     results_[op] = str;
 }
@@ -37,7 +38,7 @@ void GenPBExprSimplify::visit(const Var &op) {
 void GenPBExprSimplify::visit(const Load &op) {
     getHash_(op);
     auto h = getHash_.hash().at(op);
-    auto str = normalizeId("load" + std::to_string(h));
+    auto str = mangle("load" + std::to_string(h));
     vars_[op].insert(str);
     results_[op] = str;
 }

@@ -19,12 +19,8 @@ class GenPBExpr : public Visitor {
     std::unordered_map<Expr, std::string> results_;
     std::unordered_set<Expr> visited_;
     std::unordered_map<Expr, int> constants_;
-    std::unordered_map<std::string, std::string> idCache_; // IR IDs -> PB IDs
-    std::unordered_set<std::string> idFlag_;               // PB IDs
 
   public:
-    std::string normalizeId(const std::string &id);
-
     Ref<std::string> gen(const Expr &op);
 
   protected:
