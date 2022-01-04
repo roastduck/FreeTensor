@@ -16,13 +16,13 @@ namespace ir {
  */
 class GenPBExprSimplify : public GenPBExpr {
     std::unordered_map<Expr, std::unordered_set<std::string>> vars_;
-    std::unordered_map<Expr, std::vector<std::string>> cond_;
     GetHash getHash_;
     Expr parent_ = nullptr;
 
   public:
-    std::unordered_set<std::string> &vars(const Expr &op) { return vars_[op]; }
-    std::vector<std::string> &cond(const Expr &op) { return cond_[op]; }
+    const std::unordered_set<std::string> &vars(const Expr &op) {
+        return vars_[op];
+    }
 
   protected:
     using GenPBExpr::visit;

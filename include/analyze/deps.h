@@ -82,7 +82,8 @@ inline int countBandNodeWidth(const Stmt &op) {
 class FindAccessPoint : public VisitorWithCursor {
     bool lastIsLoad_ = false;
     std::vector<IterAxis> cur_; // Current iteration point in the space
-    std::vector<Expr> conds_;
+    std::vector<Expr> conds_;   // FIXME: There may be out-dated conditions. See
+                                // OutDatedRemover in pass/simplify
     std::unordered_map<std::string, std::vector<Ref<AccessPoint>>> reads_,
         writes_;
     std::vector<VarDef> allDefs_;

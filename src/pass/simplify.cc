@@ -56,15 +56,22 @@ void OutDatedBoundsRemover::remove(const std::string &name) {
              i != item.second.lower_.end();) {
             if (allReads(*i).count(name)) {
                 item.second.lower_.erase(i);
-            } else
+            } else {
                 i++;
+            }
         }
         for (auto i = item.second.upper_.begin();
              i != item.second.upper_.end();) {
             if (allReads(*i).count(name)) {
                 i = item.second.upper_.erase(i);
-            } else
+            } else {
                 i++;
+            }
+        }
+    }
+    for (auto i = conds_.begin(); i != conds_.end(); i++) {
+        if (i->isValid() && allReads(*i).count(name)) {
+            *i = nullptr;
         }
     }
 }
@@ -220,6 +227,7 @@ void CompTransientBounds::applyCond(const Expr &cond) {
                       lin2expr(l));
         }
     }
+    conds_.emplace_back(cond);
 }
 
 Stmt CompTransientBounds::visit(const VarDef &op) {
@@ -233,7 +241,7 @@ Stmt CompTransientBounds::visit(const VarDef &op) {
 }
 
 Stmt CompTransientBounds::visit(const For &op) {
-    OutDatedBoundsRemover localRemover(transients_);
+    OutDatedBoundsRemover localRemover(transients_, conds_);
     localRemover(op);
     auto var = makeVar(op->iter_);
     auto hash = getHash(var);
@@ -254,7 +262,13 @@ Stmt CompTransientBounds::visit(const For &op) {
                 var, {(*this)(op->begin_)}, {(*this)(op->begin_)}};
         }
     }
+    auto rbegin = makeAdd(
+        op->begin_, makeMul(makeSub(op->len_, makeIntConst(1)), op->step_));
+    conds_.emplace_back(makeGE(var, makeMin(op->begin_, rbegin)));
+    conds_.emplace_back(makeLE(var, makeMax(rbegin, op->begin_)));
     auto ret = Mutator::visit(op);
+    conds_.pop_back();
+    conds_.pop_back();
     transients_.erase(hash);
     return ret;
 }
@@ -264,15 +278,19 @@ Stmt CompTransientBounds::visit(const If &op) {
     auto notCond = (*this)(makeLNot(cond));
 
     auto oldMap = transients_;
+    auto oldCondsSize = conds_.size();
     applyCond(cond);
     auto thenCase = (*this)(op->thenCase_);
     transients_ = oldMap;
+    conds_.resize(oldCondsSize);
 
     Stmt elseCase = nullptr;
     if (op->elseCase_.isValid()) {
+        auto oldCondsSize = conds_.size();
         applyCond(notCond);
         elseCase = (*this)(op->elseCase_);
         transients_ = oldMap;
+        conds_.resize(oldCondsSize);
     }
 
     auto ret = makeIf(op->id(), std::move(cond), std::move(thenCase),
@@ -284,9 +302,11 @@ Stmt CompTransientBounds::visit(const Assert &op) {
     auto cond = (*this)(op->cond_);
 
     auto oldMap = transients_;
+    auto oldCondsSize = conds_.size();
     applyCond(cond);
     auto body = (*this)(op->body_);
     transients_ = oldMap;
+    conds_.resize(oldCondsSize);
 
     return makeAssert(op->id(), std::move(cond), std::move(body));
 }
