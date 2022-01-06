@@ -159,8 +159,11 @@ class GenPBExprDeps : public GenPBExpr {
     std::unordered_map<Expr, ExternalMap> externals_;
     GetHash getHash_;
     Expr parent_ = nullptr;
+    std::string extSuffix_;
 
   public:
+    GenPBExprDeps(const std::string &extSuffix) : extSuffix_(extSuffix) {}
+
     const ExternalMap &externals(const Expr &op) { return externals_[op]; }
 
   protected:
@@ -280,8 +283,7 @@ class AnalyzeDeps {
     const std::vector<std::function<void()>> &tasks() const { return tasks_; }
 
   private:
-    std::string makeIterList(GenPBExprDeps &genPBExpr,
-                             const std::vector<IterAxis> &list, int n);
+    std::string makeIterList(const std::vector<IterAxis> &list, int n);
     std::string makeNdList(const std::string &name, int n) const;
     Ref<std::string> makeAccList(GenPBExprDeps &genPBExpr,
                                  const std::vector<Expr> &list, RelaxMode relax,
@@ -290,9 +292,8 @@ class AnalyzeDeps {
                               const std::vector<Expr> &conds, RelaxMode relax,
                               ExternalMap &externals);
 
-    PBMap makeAccMap(PBCtx &presburger, GenPBExprDeps &genPBExpr,
-                     const AccessPoint &p, int iterDim, int accDim,
-                     RelaxMode relax, const std::string &extSuffix,
+    PBMap makeAccMap(PBCtx &presburger, const AccessPoint &p, int iterDim,
+                     int accDim, RelaxMode relax, const std::string &extSuffix,
                      ExternalMap &externals);
 
     PBMap makeEqForBothOps(PBCtx &presburger,
@@ -348,9 +349,7 @@ class AnalyzeDeps {
                                     const Ref<AccessPoint> &point,
                                     const Ref<AccessPoint> &other,
                                     const ExternalMap &pExternals,
-                                    const ExternalMap &oExternals, int iterDim,
-                                    const std::string &extSuffixP,
-                                    const std::string &extSuffixO);
+                                    const ExternalMap &oExternals, int iterDim);
 
     /**
      * If we are analyzing the dependency between A and B, e.g.
@@ -387,8 +386,7 @@ class AnalyzeDeps {
     void checkDepLatestEarlier(const Ref<AccessPoint> &point,
                                const std::vector<Ref<AccessPoint>> &otherList);
     void
-    checkDepLatestEarlierImpl(PBCtx &presburger, GenPBExprDeps &genPBExpr,
-                              const Ref<AccessPoint> &point,
+    checkDepLatestEarlierImpl(PBCtx &presburger, const Ref<AccessPoint> &point,
                               const std::vector<Ref<AccessPoint>> &otherList);
 
     /**
@@ -401,7 +399,7 @@ class AnalyzeDeps {
     void checkDepEarliestLater(const std::vector<Ref<AccessPoint>> &pointList,
                                const Ref<AccessPoint> &other);
     void
-    checkDepEarliestLaterImpl(PBCtx &presburger, GenPBExprDeps &genPBExpr,
+    checkDepEarliestLaterImpl(PBCtx &presburger,
                               const std::vector<Ref<AccessPoint>> &pointList,
                               const Ref<AccessPoint> &other);
 };
