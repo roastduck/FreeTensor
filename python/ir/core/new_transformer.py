@@ -10,6 +10,7 @@ import sys
 import ast
 import numpy as np
 import inspect
+import traceback
 import sourceinspect as ins
 import copy
 from typing import Callable, Dict, List, Sequence, Optional, Mapping, Any, Tuple, Union
@@ -28,32 +29,49 @@ assert sys.version_info >= (3,
 class TransformError(Exception):
     '''Error occurred during AST transforming from python function to staging function that generates IR tree.'''
 
-    def __init__(self, message: str, error_node: ast.AST) -> None:
-        # TODO: better error report
+    def __init__(self, message: str, filename: str, base_lineno: int, error_node: ast.AST) -> None:
         super().__init__(
-            f'At line {error_node.lineno}, column {error_node.col_offset}: {message}')
+            f'At {filename}:{base_lineno + error_node.lineno}:\n    {message}.')
 
 
 class StagingError(Exception):
     '''Error occurred during staging function execution (i.e. IR tree generation).'''
 
     def __init__(self, message: str) -> None:
-        # TODO: better error report
-        super().__init__(message)
+        # TODO: add output of StagingContext.call_stack
+        super().__init__(
+            f'{message}:\n{"".join(traceback.format_list(StagingContext.call_stack[1:]))}'.lstrip())
 
 
-class NamingScope:
-    def __init__(self, namespace: Optional[str]) -> None:
+@dataclass
+class FunctionScope:
+    filename: str
+    funcname: str
+
+    def __enter__(self):
+        StagingContext.call_stack.append(
+            traceback.FrameSummary(self.filename, 1, self.funcname))
+
+    def __exit__(self, exc_class, exc_value, traceback):
+        if exc_class is None:
+            StagingContext.call_stack.pop()
+
+
+class NamingScope(FunctionScope):
+    def __init__(self, filename: str, funcname: str, namespace: Optional[str]) -> None:
+        super().__init__(filename, funcname)
         if len(StagingContext.naming_stack) > 0 and namespace is None:
             raise StagingError('Namespace must not be None for inner levels.')
         self.namespace = namespace
         self.names = {}
 
     def __enter__(self):
+        super().__enter__()
         StagingContext.naming_stack.append(self)
         StagingContext.allow_return_stack.append(True)
 
     def __exit__(self, _1, _2, _3):
+        super().__exit__(_1, _2, _3)
         popped = StagingContext.naming_stack.pop()
         if popped != self:
             raise StagingError(
@@ -98,20 +116,13 @@ class LifetimeScope:
         return scope.__enter__()
 
 
-class DummyScope:
-    def __enter__(self):
-        pass
-
-    def __exit__(self, _1, _2, _3):
-        pass
-
-
 class StagingContext:
     '''Helper class managing context in IR staging.'''
     naming_stack: List[NamingScope] = []
     lifetime_stack: List[LifetimeScope] = []
     allow_return_stack: List[bool] = []
     closure: Dict[str, Any] = {}
+    call_stack: List[traceback.FrameSummary] = []
 
     @staticmethod
     def register_implicit_scope(scope):
@@ -131,6 +142,7 @@ class StagingContext:
         StagingContext.naming_stack.clear()
         StagingContext.lifetime_stack.clear()
         StagingContext.closure = {}
+        StagingContext.call_stack = []
 
 
 def prepare_vardef(name: str, override: bool = False, capture: Optional[ffi.Array] = None):
@@ -283,13 +295,13 @@ def not_expr(arg):
         return not arg
 
 
-def functiondef_wrapper(func_name):
+def functiondef_wrapper(filename, funcname):
     namespace = ctx_stack.top().get_next_nid()
     ctx_stack.top().set_next_nid('')
     if namespace == '':
-        return DummyScope()
+        return FunctionScope(filename, funcname)
     else:
-        return NamingScope(namespace)
+        return NamingScope(filename, funcname, namespace)
 
 
 def mark_nid(nid: str):
@@ -302,6 +314,13 @@ def mark_no_deps(no_deps: str):
 
 def mark_prefer_libs():
     ctx_stack.top().set_next_prefer_libs()
+
+
+def mark_position(base_lineno: int, line_offset: int):
+    original = StagingContext.call_stack[-1]
+    lineno = base_lineno + line_offset - 1
+    StagingContext.call_stack[-1] = traceback.FrameSummary(
+        original.filename, lineno, original.name)
 
 
 def module_helper(name: str):
@@ -333,7 +352,20 @@ def location_helper(new_nodes, old_node):
     return new_nodes
 
 
+@dataclass
 class Transformer(ast.NodeTransformer):
+    filename: str
+    base_lineno: int
+
+    def visit(self, node: ast.AST):
+        new_node = super().visit(node)
+        if isinstance(node, ast.stmt) and not isinstance(node, ast.FunctionDef):
+            if not isinstance(new_node, list):
+                new_node = [new_node]
+            return location_helper([ast.Expr(call_helper(mark_position, ast.Constant(
+                self.base_lineno), ast.Constant(node.lineno)))] + new_node, node)
+        return new_node
+
     def visit_Expr(self, old_node: ast.Expr) -> Any:
         '''Rule:
         `declare_var(x, ...)` -> `x = declare_var(x, ...)`: x is changed from a name string to a Var
@@ -349,7 +381,8 @@ class Transformer(ast.NodeTransformer):
                 target = node.value.args[0]
                 if not isinstance(target, ast.Name):
                     raise TransformError(
-                        'declare_var is only allowed on top-level parameter', target)
+                        'declare_var is only allowed on top-level parameter',
+                        self.filename, self.base_lineno, target)
                 target = ast.Name(target.id, ast.Store())
                 node = ast.Assign([target], node.value)
         elif isinstance(node.value, ast.Constant) and isinstance(node.value.value, str):
@@ -446,8 +479,11 @@ class Transformer(ast.NodeTransformer):
         node.body = [
             ast.With(
                 items=[
-                    ast.withitem(context_expr=call_helper(
-                        functiondef_wrapper, ast.Constant(node.name)), optional_vars=None)
+                    ast.withitem(
+                        context_expr=call_helper(functiondef_wrapper,
+                                                 ast.Constant(self.filename),
+                                                 ast.Constant(node.name)),
+                        optional_vars=None)
                 ],
                 body=old_body)
         ]
@@ -520,27 +556,30 @@ def into_staging(func, src=None):
         tree = ast.parse(src)
         src = src.splitlines()
         lineno = 1
-        file = func.__name__
-    tree = ast.fix_missing_locations(Transformer().visit(tree))
+        file = f'<staging:{func.__name__}>'
+    tree = ast.fix_missing_locations(Transformer(file, lineno).visit(tree))
+
     import astor
     from pygments import highlight
     from pygments.lexers import PythonLexer
     from pygments.formatters import TerminalFormatter
-    print(highlight(astor.to_source(tree), PythonLexer(),
+    source = astor.to_source(tree)
+    print(highlight(source, PythonLexer(),
           TerminalFormatter(bg='dark', linenos=True)))
+
     caller_env = _get_caller_env(2)
     caller_env['ir'] = sys.modules['ir']
-    exec(compile(tree, filename='<staging>', mode='exec'), caller_env)
-    return caller_env[func.__name__]
+    exec(source, caller_env)
+    return caller_env[func.__name__], file, func.__name__
 
 
 def transform(func):
     params = list(inspect.signature(func).parameters)
-    staging_func = into_staging(func)
+    staging_func, filename, funcname = into_staging(func)
 
     try:
         with LifetimeScope():
-            with NamingScope(None):
+            with NamingScope(filename, funcname, None):
                 for p in params:
                     StagingContext.naming_stack[-1].names[p] = 1
                 returns = staging_func(*params)
@@ -563,6 +602,8 @@ def transform(func):
                            for ret in returns]
 
                 closure = StagingContext.closure
+    except Exception as e:
+        raise StagingError('Exception occurred in staging') from e
     finally:
         StagingContext.reset()
         staged_ast = pop_ast()
@@ -574,4 +615,4 @@ def transform(func):
 
 
 def inline(func, src=None):
-    return into_staging(func, src)
+    return into_staging(func, src)[0]
