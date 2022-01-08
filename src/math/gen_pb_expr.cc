@@ -4,14 +4,42 @@
 
 namespace ir {
 
+template <class T, class V>
+static void unionTo(std::unordered_map<T, V> &target,
+                    const std::unordered_map<T, V> &other) {
+    target.insert(other.begin(), other.end());
+}
+
 void GenPBExpr::visitExpr(const Expr &op) {
+    auto oldParent = parent_;
+    parent_ = op;
+
     if (!visited_.count(op)) {
         Visitor::visitExpr(op);
         visited_.insert(op);
     }
+
+    parent_ = oldParent;
+    if (parent_.isValid()) {
+        unionTo(vars_[parent_], vars_[op]);
+    }
 }
 
-void GenPBExpr::visit(const Var &op) { results_[op] = mangle(op->name_); }
+void GenPBExpr::visit(const Var &op) {
+    getHash_(op);
+    auto h = getHash_.hash().at(op);
+    auto str = mangle(op->name_);
+    vars_[op][h] = std::make_pair(op, str);
+    results_[op] = str;
+}
+
+void GenPBExpr::visit(const Load &op) {
+    getHash_(op);
+    auto h = getHash_.hash().at(op);
+    auto str = mangle("ext" + std::to_string(h)) + varSuffix_;
+    vars_[op][h] = std::make_pair(op, str);
+    results_[op] = str;
+}
 
 void GenPBExpr::visit(const IntConst &op) {
     results_[op] = std::to_string(op->val_);

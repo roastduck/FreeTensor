@@ -9,38 +9,8 @@
 namespace ir {
 
 template <class T>
-static void unionTo(std::unordered_set<T> &target,
-                    const std::unordered_set<T> &other) {
-    target.insert(other.begin(), other.end());
-}
-
-template <class T>
 static void appendTo(std::vector<T> &target, const std::vector<T> &other) {
     target.insert(target.end(), other.begin(), other.end());
-}
-
-void GenPBExprSimplify::visitExpr(const Expr &op) {
-    auto oldParent = parent_;
-    parent_ = op;
-    GenPBExpr::visitExpr(op);
-    parent_ = oldParent;
-    if (parent_.isValid()) {
-        unionTo(vars_[parent_], vars_[op]);
-    }
-}
-
-void GenPBExprSimplify::visit(const Var &op) {
-    auto str = mangle(op->name_);
-    vars_[op].insert(str);
-    results_[op] = str;
-}
-
-void GenPBExprSimplify::visit(const Load &op) {
-    getHash_(op);
-    auto h = getHash_.hash().at(op);
-    auto str = mangle("load" + std::to_string(h));
-    vars_[op].insert(str);
-    results_[op] = str;
 }
 
 Expr PBCompBounds::visitExpr(const Expr &_op) {
@@ -61,7 +31,7 @@ Expr PBCompBounds::visitExpr(const Expr &_op) {
                 if (auto &&condExpr = genPBExpr_.gen(cond);
                     condExpr.isValid()) {
                     for (auto &&var : genPBExpr_.vars(cond)) {
-                        if (!vars.count(var)) {
+                        if (!vars.count(var.first)) {
                             goto ignore;
                         }
                     }
@@ -73,7 +43,7 @@ Expr PBCompBounds::visitExpr(const Expr &_op) {
 
         std::string str = "{[";
         for (auto &&[i, var] : iter::enumerate(vars)) {
-            str += (i == 0 ? "" : ", ") + var;
+            str += (i == 0 ? "" : ", ") + var.second.second;
         }
         str += "] -> [" + *expr + "]";
         for (auto &&[i, cond] : iter::enumerate(condExprs)) {

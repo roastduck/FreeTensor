@@ -12,12 +12,6 @@
 
 namespace ir {
 
-template <class T, class V>
-static void unionTo(std::unordered_map<T, V> &target,
-                    const std::unordered_map<T, V> &other) {
-    target.insert(other.begin(), other.end());
-}
-
 template <class T, class V1, class V2>
 static std::unordered_map<T, std::pair<V1, V2>>
 intersect(const std::unordered_map<T, V1> &lhs,
@@ -166,24 +160,6 @@ void FindAccessPoint::visit(const Load &op) {
     reads_[defs_.at(op->var_)->id()].emplace_back(ap);
 }
 
-void GenPBExprDeps::visitExpr(const Expr &op) {
-    auto oldParent = parent_;
-    parent_ = op;
-    GenPBExpr::visitExpr(op);
-    parent_ = oldParent;
-    if (parent_.isValid()) {
-        unionTo(externals_[parent_], externals_[op]);
-    }
-}
-
-void GenPBExprDeps::visit(const Load &op) {
-    getHash_(op);
-    auto h = getHash_.hash().at(op);
-    auto str = mangle("ext" + std::to_string(h)) + extSuffix_;
-    externals_[op][h] = std::make_pair(op, str);
-    results_[op] = str;
-}
-
 std::string AnalyzeDeps::makeIterList(const std::vector<IterAxis> &list,
                                       int n) {
     std::string ret;
@@ -206,15 +182,19 @@ std::string AnalyzeDeps::makeIterList(const std::vector<IterAxis> &list,
     return "[" + ret + "]";
 }
 
-Ref<std::string> AnalyzeDeps::makeAccList(GenPBExprDeps &genPBExpr,
+Ref<std::string> AnalyzeDeps::makeAccList(GenPBExpr &genPBExpr,
                                           const std::vector<Expr> &list,
                                           RelaxMode relax,
-                                          ExternalMap &externals) {
+                                          GenPBExpr::VarMap &externals) {
     std::string ret;
     for (int i = 0, iEnd = list.size(); i < iEnd; i++) {
         if (auto linstr = genPBExpr.gen(list[i]); linstr.isValid()) {
             ret += *linstr;
-            unionTo(externals, genPBExpr.externals(list[i]));
+            for (auto &&[h, item] : genPBExpr.vars(list[i])) {
+                if (item.first->nodeType() == ASTNodeType::Load) {
+                    externals[h] = item;
+                }
+            }
         } else if (relax == RelaxMode::Possible) {
             ret += mangle("free" + std::to_string(i));
         } else {
@@ -227,14 +207,18 @@ Ref<std::string> AnalyzeDeps::makeAccList(GenPBExprDeps &genPBExpr,
     return Ref<std::string>::make("[" + ret + "]");
 }
 
-Ref<std::string> AnalyzeDeps::makeCond(GenPBExprDeps &genPBExpr,
+Ref<std::string> AnalyzeDeps::makeCond(GenPBExpr &genPBExpr,
                                        const std::vector<Expr> &conds,
                                        RelaxMode relax,
-                                       ExternalMap &externals) {
+                                       GenPBExpr::VarMap &externals) {
     std::string ret;
     for (auto &&cond : conds) {
         if (auto str = genPBExpr.gen(cond); str.isValid()) {
-            unionTo(externals, genPBExpr.externals(cond));
+            for (auto &&[h, item] : genPBExpr.vars(cond)) {
+                if (item.first->nodeType() == ASTNodeType::Load) {
+                    externals[h] = item;
+                }
+            }
             if (!ret.empty()) {
                 ret += " and ";
             }
@@ -249,8 +233,8 @@ Ref<std::string> AnalyzeDeps::makeCond(GenPBExprDeps &genPBExpr,
 PBMap AnalyzeDeps::makeAccMap(PBCtx &presburger, const AccessPoint &p,
                               int iterDim, int accDim, RelaxMode relax,
                               const std::string &extSuffix,
-                              ExternalMap &externals) {
-    GenPBExprDeps genPBExpr(extSuffix);
+                              GenPBExpr::VarMap &externals) {
+    GenPBExpr genPBExpr(extSuffix);
     auto ret = makeIterList(p.iter_, iterDim) + " -> ";
     if (auto str = makeAccList(genPBExpr, p.access_, relax, externals);
         str.isValid()) {
@@ -472,12 +456,10 @@ PBMap AnalyzeDeps::makeNoDepsConstraint(PBCtx &presburger,
     return ret;
 }
 
-PBMap AnalyzeDeps::makeExternalVarConstraint(PBCtx &presburger,
-                                             const Ref<AccessPoint> &point,
-                                             const Ref<AccessPoint> &other,
-                                             const ExternalMap &pExternals,
-                                             const ExternalMap &oExternals,
-                                             int iterDim) {
+PBMap AnalyzeDeps::makeExternalVarConstraint(
+    PBCtx &presburger, const Ref<AccessPoint> &point,
+    const Ref<AccessPoint> &other, const GenPBExpr::VarMap &pExternals,
+    const GenPBExpr::VarMap &oExternals, int iterDim) {
     PBMap ret = universeMap(spaceAlloc(presburger, 0, iterDim, iterDim));
     // We only have to add constraint for common loops of both accesses
     auto common = lca(point->cursor_, other->cursor_);
@@ -715,7 +697,7 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
     PBMap noDepsConstraint =
         makeNoDepsConstraint(presburger, point->def_->name_, iterDim);
 
-    ExternalMap pExternals;
+    GenPBExpr::VarMap pExternals;
     PBMap pmap = makeAccMap(presburger, *point, iterDim, accDim, laterRelax_,
                             "__ext_p", pExternals);
     if (pmap.empty()) {
@@ -725,7 +707,7 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
     PBMap pa2s = reverse(ps2a);
     PBSet pIter = domain(pmap);
     std::vector<PBMap> omapList(otherList.size());
-    std::vector<ExternalMap> oExternalsList(otherList.size());
+    std::vector<GenPBExpr::VarMap> oExternalsList(otherList.size());
     std::vector<PBMap> os2aList(otherList.size()), depAllList(otherList.size());
     std::vector<PBSet> oIterList(otherList.size());
     PBMap psDepAllUnion;
@@ -803,7 +785,7 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
     PBMap noDepsConstraint =
         makeNoDepsConstraint(presburger, other->def_->name_, iterDim);
 
-    ExternalMap oExternals;
+    GenPBExpr::VarMap oExternals;
     PBMap omap = makeAccMap(presburger, *other, iterDim, accDim, earlierRelax_,
                             "__ext_o", oExternals);
     if (omap.empty()) {
@@ -813,7 +795,7 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
     PBMap oa2s = reverse(os2a);
     PBSet oIter = domain(omap);
     std::vector<PBMap> pmapList(pointList.size());
-    std::vector<ExternalMap> pExternalsList(pointList.size());
+    std::vector<GenPBExpr::VarMap> pExternalsList(pointList.size());
     std::vector<PBMap> ps2aList(pointList.size()), depAllList(pointList.size());
     std::vector<PBSet> pIterList(pointList.size());
     PBMap spDepAllUnion;

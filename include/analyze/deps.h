@@ -10,7 +10,6 @@
 #include <vector>
 
 #include <analyze/find_loop_variance.h>
-#include <analyze/hash.h>
 #include <cursor.h>
 #include <math/gen_pb_expr.h>
 #include <math/presburger.h>
@@ -149,29 +148,6 @@ class FindAccessPoint : public VisitorWithCursor {
     void visit(const MatMul &op) override { (*this)(op->equivalent_); }
 };
 
-// hash -> (expr, presburger name)
-typedef std::unordered_map<uint64_t, std::pair<Expr, std::string>> ExternalMap;
-
-/**
- * GenPBExpr specialized for handling external variables
- */
-class GenPBExprDeps : public GenPBExpr {
-    std::unordered_map<Expr, ExternalMap> externals_;
-    GetHash getHash_;
-    Expr parent_ = nullptr;
-    std::string extSuffix_;
-
-  public:
-    GenPBExprDeps(const std::string &extSuffix) : extSuffix_(extSuffix) {}
-
-    const ExternalMap &externals(const Expr &op) { return externals_[op]; }
-
-  protected:
-    using GenPBExpr::visit;
-    void visitExpr(const Expr &op) override;
-    void visit(const Load &op) override;
-};
-
 enum class DepDirection : int {
     Normal,
     Inv,
@@ -285,16 +261,16 @@ class AnalyzeDeps {
   private:
     std::string makeIterList(const std::vector<IterAxis> &list, int n);
     std::string makeNdList(const std::string &name, int n) const;
-    Ref<std::string> makeAccList(GenPBExprDeps &genPBExpr,
+    Ref<std::string> makeAccList(GenPBExpr &genPBExpr,
                                  const std::vector<Expr> &list, RelaxMode relax,
-                                 ExternalMap &externals);
-    Ref<std::string> makeCond(GenPBExprDeps &genPBExpr,
+                                 GenPBExpr::VarMap &externals);
+    Ref<std::string> makeCond(GenPBExpr &genPBExpr,
                               const std::vector<Expr> &conds, RelaxMode relax,
-                              ExternalMap &externals);
+                              GenPBExpr::VarMap &externals);
 
     PBMap makeAccMap(PBCtx &presburger, const AccessPoint &p, int iterDim,
                      int accDim, RelaxMode relax, const std::string &extSuffix,
-                     ExternalMap &externals);
+                     GenPBExpr::VarMap &externals);
 
     PBMap makeEqForBothOps(PBCtx &presburger,
                            const std::vector<std::pair<int, int>> &coord,
@@ -348,8 +324,9 @@ class AnalyzeDeps {
     PBMap makeExternalVarConstraint(PBCtx &presburger,
                                     const Ref<AccessPoint> &point,
                                     const Ref<AccessPoint> &other,
-                                    const ExternalMap &pExternals,
-                                    const ExternalMap &oExternals, int iterDim);
+                                    const GenPBExpr::VarMap &pExternals,
+                                    const GenPBExpr::VarMap &oExternals,
+                                    int iterDim);
 
     /**
      * If we are analyzing the dependency between A and B, e.g.
