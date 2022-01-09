@@ -77,7 +77,8 @@ class NamingScope(FunctionScope):
         super().__exit__(_1, _2, _3)
         popped = StagingContext.naming_stack.pop()
         if popped != self:
-            raise StagingError('NamingScope enter/exit not match, must be FILO')
+            raise StagingError(
+                'NamingScope enter/exit not match, must be FILO')
         StagingContext.allow_return_stack.pop()
 
     def fullname(self, name: str):
@@ -159,47 +160,109 @@ def prepare_vardef(name: str,
     return fullname
 
 
-@dataclass
-class create_var:
-    '''Create a IR variable. Available in python function to transform.'''
-    shape: Union[Sequence, Var]
-    dtype: str
-    mtype: str
-    atype: str = 'cache'
+class StagedCallable:
+    def call(self, *args, **kwargs):
+        raise NotImplementedError()
 
+
+def call(f, *args, **kwargs):
+    if isinstance(f, StagedCallable):
+        return f.call(*args, **kwargs)
+    else:
+        return f(*args, **kwargs)
+
+
+class StagedAssignable:
     def assign(self, name: str) -> Var:
-        '''Customized assign behavior. Creates a VarDef with its full name.'''
-        return StagingContext.register_implicit_scope(
-            _VarDef(prepare_vardef(name), self.shape, self.dtype, self.atype,
-                    self.mtype))
-
-
-def declare_var(name, shape, dtype, atype, mtype):
-    '''Declare parameter as a variable.'''
-    return StagingContext.register_implicit_scope(
-        _VarDef(prepare_vardef(name, override=True), shape, dtype, atype,
-                mtype))
-
-
-def capture_var(arr: ffi.Array, name: str = 'captured') -> Var:
-    return StagingContext.register_implicit_scope(
-        _VarDef(prepare_vardef(name, capture=arr), arr.shape, arr.dtype,
-                'input', arr.device.main_mem_type()))
+        raise NotImplementedError()
 
 
 def assign(name: str, value):
     '''Customized assign wrapper.
-    If `value` has member function `assign`, it's regarded as a customized assign behavior and
+    If `value` is instance of `StagedAssignable`, it's regarded as a customized assign behavior and
     gets executed with the assigned target variable name.
     This wrapper is used for initializing a variable.
     '''
-    if hasattr(value, 'assign'):
+    if isinstance(value, StagedAssignable):
         return value.assign(name)
     else:
         return value
 
 
-class dynamic_range:
+class StagedIterable:
+    def foreach(self, name: str, f: Callable[[Any], None]):
+        raise NotImplementedError()
+
+
+def foreach(name: str, iter, body: Callable[[Any], None]) -> None:
+    '''Customized foreach wrapper.
+    If `value` is instance of `StagedIterable`, its regarded as a customized foreach behavior and
+    used to generate code for the python for loop.
+    Otherwise, we try to execute the loop as usual.
+    '''
+    if isinstance(iter, StagedIterable):
+        iter.foreach(name, body)
+    else:
+        for iter_var in iter:
+            body(iter_var)
+
+
+@dataclass
+class VarCreator(StagedAssignable):
+    shape: Union[Sequence, Var]
+    dtype: str
+    mtype: str
+
+    def assign(self, name: str) -> Var:
+        '''Customized assign behavior. Creates a VarDef with its full name.'''
+        return StagingContext.register_implicit_scope(
+            _VarDef(prepare_vardef(name), self.shape, self.dtype, 'cache', self.mtype))
+
+
+class create_var_(StagedCallable):
+    '''Create a IR variable.'''
+
+    def __call__(self, shape, dtype, mtype):
+        return np.zeros(shape, dtype)
+
+    def call(self, shape, dtype, mtype):
+        return VarCreator(shape, dtype, mtype)
+
+
+create_var = create_var_()
+
+
+class declare_var_(StagedCallable):
+    '''Declare parameter as a variable.'''
+
+    def __call__(self, name, shape, dtype, atype, mtype):
+        pass
+
+    def call(self, name, shape, dtype, atype, mtype):
+        return StagingContext.register_implicit_scope(
+            _VarDef(prepare_vardef(name, override=True), shape, dtype, atype,
+                    mtype))
+
+
+declare_var = declare_var_()
+
+
+class capture_var_(StagedCallable):
+    '''Capture external array as tensor variable.'''
+
+    def __call__(self, arr: ffi.Array, name: str = 'captured'):
+        return arr.numpy()
+
+    def call(self, arr: ffi.Array, name: str = 'captured'):
+        return StagingContext.register_implicit_scope(
+            _VarDef(prepare_vardef(name, capture=arr), arr.shape, arr.dtype,
+                    'input', arr.device.main_mem_type()))
+
+
+capture_var = capture_var_()
+
+
+class dynamic_range(StagedIterable):
     '''Dynamic range that generates For loop in IR tree.'''
 
     def __init__(self, start, stop=None, step=1) -> None:
@@ -218,19 +281,6 @@ class dynamic_range:
                  self.step) as iter_var:
             with LifetimeScope():
                 body(iter_var)
-
-
-def foreach(name: str, iter, body: Callable[[Any], None]) -> None:
-    '''Customized foreach wrapper.
-    If `value` has member function `foreach`, its regarded as a customized foreach behavior and
-    used to generate code for the python for loop.
-    Otherwise, we try to execute the loop as usual.
-    '''
-    if hasattr(iter, 'foreach'):
-        iter.foreach(name, body)
-    else:
-        for iter_var in iter:
-            body(iter_var)
 
 
 def if_then_else_stmt(predicate, then_body, else_body=None):
@@ -329,16 +379,16 @@ def mark_position(base_lineno: int, line_offset: int):
         original.filename, lineno, original.name)
 
 
-def module_helper(name: str):
-    '''Helper to get an AST node with full path to given name, which should be a symbol in current module.'''
+def module_helper(callee):
+    '''Helper to get an AST node with full path to given symbol, which should be in current module.'''
     return ast.Attribute(
         ast.Attribute(ast.Name('ir', ast.Load()), 'new_transformer',
-                      ast.Load()), name, ast.Load())
+                      ast.Load()), callee.__name__, ast.Load())
 
 
 def call_helper(callee, *args: ast.expr, **kwargs: ast.expr):
     '''Call helper that generates a python AST Call node with given callee and arguments AST node.'''
-    return ast.Call(module_helper(callee.__name__), list(args),
+    return ast.Call(module_helper(callee), list(args),
                     [ast.keyword(k, w) for k, w in kwargs.items()])
 
 
@@ -388,19 +438,19 @@ class Transformer(ast.NodeTransformer):
         `declare_var(x, ...)` -> `x = declare_var(x, ...)`: x is changed from a name string to a Var
         '''
         node: ast.Expr = self.generic_visit(old_node)
-        if isinstance(node.value, ast.Call):
-            func = node.value.func
+        if isinstance(node.value, ast.Call) and ast.dump(node.value.func) == ast.dump(module_helper(call)):
+            func = node.value.args[0]
             if isinstance(func, ast.Attribute):
                 func = func.attr
             elif isinstance(func, ast.Name):
                 func = func.id
             if func == 'declare_var':
-                target = node.value.args[0]
+                target = node.value.args[1]
                 if not isinstance(target, ast.Name):
                     raise TransformError(
                         'declare_var is only allowed on top-level parameter',
                         self.filename, self.base_lineno, target)
-                node.value.args[0] = ast.Constant(target.id)
+                node.value.args[1] = ast.Constant(target.id)
                 target = ast.Name(target.id, ast.Store())
                 node = ast.Assign([target], node.value)
         elif isinstance(node.value, ast.Constant) and isinstance(
@@ -453,12 +503,16 @@ class Transformer(ast.NodeTransformer):
     def visit_Call(self, old_node: ast.Call):
         '''Rule:
         `range(...)` -> `dynamic_range(...)`
+        `f(...)` -> `call(f, ...)`
         '''
-        node = self.generic_visit(old_node)
+        node: ast.Call = self.generic_visit(old_node)
         if isinstance(node.func, ast.Name):
             if node.func.id == 'range':
-                node = ast.Call(module_helper(dynamic_range.__name__),
+                node = ast.Call(module_helper(dynamic_range),
                                 node.args, node.keywords)
+        node.args.insert(0, node.func)
+        node.func = module_helper(call)
+        ast.dump(node)
         return location_helper(node, old_node)
 
     def visit_If(self, old_node: ast.If):
@@ -495,7 +549,8 @@ class Transformer(ast.NodeTransformer):
     def visit_IfExp(self, old_node: ast.IfExp):
         '''Rule: `body if test else orelse` -> `if_then_else_expr(test, body, orelse)`'''
         node = self.generic_visit(old_node)
-        node = call_helper(if_then_else_expr, node.test, node.body, node.orelse)
+        node = call_helper(if_then_else_expr, node.test,
+                           node.body, node.orelse)
         return location_helper(node, old_node)
 
     def visit_FunctionDef(self, old_node: ast.FunctionDef) -> Any:
@@ -507,9 +562,9 @@ class Transformer(ast.NodeTransformer):
                 ast.withitem(context_expr=call_helper(
                     functiondef_wrapper, ast.Constant(self.filename),
                     ast.Constant(node.name)),
-                             optional_vars=None)
+                    optional_vars=None)
             ],
-                     body=old_body)
+                body=old_body)
         ]
         return location_helper(node, old_node)
 
@@ -647,5 +702,20 @@ def transform(func):
     return staged
 
 
+@dataclass
+class InlineFunction(StagedCallable):
+    python_function: Callable
+    staging_function: Callable
+
+    def call(self, *args, **kwargs):
+        return self.staging_function(*args, **kwargs)
+
+    def __call__(self, *args, **kwargs):
+        return self.python_function(*args, **kwargs)
+    
+    def set_fallback(self, f):
+        self.python_function = f
+
+
 def inline(func, src=None):
-    return into_staging(func, src)[0]
+    return InlineFunction(func, into_staging(func, src)[0])
