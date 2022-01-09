@@ -361,7 +361,9 @@ void Schedule::vectorize(const std::string &loop) {
     }
 }
 
-void Schedule::separateTail() { ast_ = ir::separateTail(ast_); }
+void Schedule::separateTail(bool noDuplicateVarDefs) {
+    ast_ = ir::separateTail(ast_, noDuplicateVarDefs);
+}
 
 void Schedule::asMatMul(const std::string &loop) {
     auto log = "as_matmul(" + loop + ")";

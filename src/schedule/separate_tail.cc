@@ -155,7 +155,7 @@ Stmt SeperateTail::visit(const For &_op) {
     ifStack_.pop_back();
     hasVarDefStack_.pop_back();
 
-    if (hasVarDef) {
+    if (noDuplicateVarDefs_ && hasVarDef) {
         return op;
     }
 
@@ -215,7 +215,7 @@ Stmt SeperateTail::visit(const VarDef &op) {
     return ret;
 }
 
-Stmt separateTail(const Stmt &_ast) {
+Stmt separateTail(const Stmt &_ast, bool noDuplicateVarDefs) {
     auto ast = _ast;
 
     FindAllIfs finder;
@@ -223,7 +223,7 @@ Stmt separateTail(const Stmt &_ast) {
     auto candidates = finder.results();
 
     while (!candidates.empty()) {
-        SeperateTail mutator(candidates);
+        SeperateTail mutator(noDuplicateVarDefs, candidates);
         ast = mutator(ast);
         ast =
             z3Simplify(ast); // Although Z3 may be slow, if we don't use Z3

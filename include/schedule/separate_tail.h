@@ -59,13 +59,10 @@ class AppendIDs : public Mutator {
  *   ...
  * }
  * ```
- *
- * If there is two VarDef nodes in two branches, it may result in doubled memory
- * use, since different thread may go to different branch. Therefore, this pass
- * will not duplicate VarDef nodes. (TODO: This restriction may be limited to
- * non-local buffers)
  */
 class SeperateTail : public Mutator {
+    bool noDuplicateVarDefs_;
+
     const std::unordered_set<std::string> &candidates_;
     std::unordered_set<std::string> nextCandidates_;
 
@@ -75,8 +72,9 @@ class SeperateTail : public Mutator {
     AnalyzeLinear analyzeLinear_;
 
   public:
-    SeperateTail(const std::unordered_set<std::string> &candidates)
-        : candidates_(candidates) {}
+    SeperateTail(bool noDuplicateVarDefs,
+                 const std::unordered_set<std::string> &candidates)
+        : noDuplicateVarDefs_(noDuplicateVarDefs), candidates_(candidates) {}
 
     const std::unordered_set<std::string> &nextCandidates() const {
         return nextCandidates_;
@@ -92,7 +90,7 @@ class SeperateTail : public Mutator {
     Stmt visit(const VarDef &op) override;
 };
 
-Stmt separateTail(const Stmt &ast);
+Stmt separateTail(const Stmt &ast, bool noDuplicateVarDefs);
 
 } // namespace ir
 

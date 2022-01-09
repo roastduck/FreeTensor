@@ -180,12 +180,14 @@ def test_1d_stencil():
     assert std.match(ast)
 
 
-def test_no_separate_vardef():
+def test_duplicate_vardef():
     with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ir.For("i", 0, 4) as i:
             with ir.VarDef("t", (), "int32", "cache", "cpu") as t:
                 t[()] = x[i]
+                with ir.If(t[()] < 0):
+                    t[()] *= -1
                 with ir.If(i < 2):
                     y[i] = t[()] + 1
                 with ir.Else():
@@ -200,13 +202,54 @@ def test_no_separate_vardef():
 
     with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+        with ir.For("i", 0, 2) as i:
+            with ir.VarDef("t", (), "int32", "cache", "cpu") as t:
+                t[()] = x[i]
+                with ir.If(t[()] < 0):
+                    t[()] *= -1
+                y[i] = t[()] + 1
+        with ir.For("i", 2, 4) as i:
+            with ir.VarDef("t", (), "int32", "cache", "cpu") as t:
+                t[()] = x[i]
+                with ir.If(t[()] < 0):
+                    t[()] *= -1
+                y[i] = t[()] + 2
+    std = ir.make_reduction(ir.pop_ast())
+
+    assert std.match(ast)
+
+
+def test_no_duplicate_vardef():
+    with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ir.For("i", 0, 4) as i:
             with ir.VarDef("t", (), "int32", "cache", "cpu") as t:
                 t[()] = x[i]
+                with ir.If(t[()] < 0):
+                    t[()] *= -1
                 with ir.If(i < 2):
                     y[i] = t[()] + 1
                 with ir.Else():
                     y[i] = t[()] + 2
-    std = ir.pop_ast()
+    ast = ir.pop_ast()
+    print(ast)
+    s = ir.Schedule(ast)
+    s.separate_tail(True)
+    ast = s.ast()
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+        with ir.For("i", 0, 4) as i:
+            with ir.VarDef("t", (), "int32", "cache", "cpu") as t:
+                t[()] = x[i]
+                with ir.If(t[()] < 0):
+                    t[()] *= -1
+                with ir.If(i < 2):
+                    y[i] = t[()] + 1
+                with ir.Else():
+                    y[i] = t[()] + 2
+    std = ir.make_reduction(ir.pop_ast())
 
     assert std.match(ast)
