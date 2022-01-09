@@ -503,7 +503,7 @@ def test_simplex_local_1():
     s.parallelize("L0", "threadIdx.x")
     s.parallelize("L1", "threadIdx.x")
     s.parallelize("L2", "threadIdx.x")
-    s.set_mem_type(":t", "gpu/local")
+    s.set_mem_type("t", "gpu/local")
     func = ir.lower(s.func(), target)
     print(func)
 
@@ -563,7 +563,7 @@ def test_simplex_local_2():
     s.parallelize("Lb", "blockIdx.x")
     s.parallelize("L0", "threadIdx.x")
     s.parallelize("L1", "threadIdx.x")
-    s.set_mem_type(":t", "gpu/local")
+    s.set_mem_type("t", "gpu/local")
     func = ir.lower(s.func(), target)
     print(func)
 

@@ -33,7 +33,6 @@ def _binary_op(op):
 
     @core.inline
     def f_binary_op(a, b):
-        'nid: broadcast_shape'
         out = core.create_var(broadcast_shape(a, b),
                               core.up_cast(core.dtype(a), core.dtype(b)),
                               core.same_mtype(core.mtype(a), core.mtype(b)))

@@ -18,8 +18,7 @@ from dataclasses import dataclass
 
 from . import nodes
 from .nodes import (_VarDef, Var, pop_ast, For, If, Else, MarkNid, intrinsic,
-                    l_and, l_or, l_not, if_then_else, ctx_stack,
-                    Func, Assert)
+                    l_and, l_or, l_not, if_then_else, ctx_stack, Func, Assert)
 from .utils import *
 
 assert sys.version_info >= (3,
@@ -29,7 +28,8 @@ assert sys.version_info >= (3,
 class TransformError(Exception):
     '''Error occurred during AST transforming from python function to staging function that generates IR tree.'''
 
-    def __init__(self, message: str, filename: str, base_lineno: int, error_node: ast.AST) -> None:
+    def __init__(self, message: str, filename: str, base_lineno: int,
+                 error_node: ast.AST) -> None:
         super().__init__(
             f'At {filename}:{base_lineno + error_node.lineno}:\n    {message}.')
 
@@ -40,7 +40,8 @@ class StagingError(Exception):
     def __init__(self, message: str) -> None:
         # TODO: add output of StagingContext.call_stack
         super().__init__(
-            f'{message}:\n{"".join(traceback.format_list(StagingContext.call_stack[1:]))}'.lstrip())
+            f'{message}:\n{"".join(traceback.format_list(StagingContext.call_stack[1:]))}'
+            .lstrip())
 
 
 @dataclass
@@ -58,7 +59,9 @@ class FunctionScope:
 
 
 class NamingScope(FunctionScope):
-    def __init__(self, filename: str, funcname: str, namespace: Optional[str]) -> None:
+
+    def __init__(self, filename: str, funcname: str,
+                 namespace: Optional[str]) -> None:
         super().__init__(filename, funcname)
         if len(StagingContext.naming_stack) > 0 and namespace is None:
             raise StagingError('Namespace must not be None for inner levels.')
@@ -74,8 +77,7 @@ class NamingScope(FunctionScope):
         super().__exit__(_1, _2, _3)
         popped = StagingContext.naming_stack.pop()
         if popped != self:
-            raise StagingError(
-                'NamingScope enter/exit not match, must be FILO')
+            raise StagingError('NamingScope enter/exit not match, must be FILO')
         StagingContext.allow_return_stack.pop()
 
     def fullname(self, name: str):
@@ -95,6 +97,7 @@ class NamingScope(FunctionScope):
 
 
 class LifetimeScope:
+
     def __init__(self):
         self.implicit_scopes = []
 
@@ -145,12 +148,14 @@ class StagingContext:
         StagingContext.call_stack = []
 
 
-def prepare_vardef(name: str, override: bool = False, capture: Optional[ffi.Array] = None):
+def prepare_vardef(name: str,
+                   override: bool = False,
+                   capture: Optional[ffi.Array] = None):
     fullname = StagingContext.fullname(name) if not override else name
     if capture:
         StagingContext.closure[fullname] = capture
     if ctx_stack.top().get_next_nid() == '':
-        ctx_stack.top().set_next_nid(':' + fullname)
+        ctx_stack.top().set_next_nid(fullname)
     return fullname
 
 
@@ -164,24 +169,22 @@ class create_var:
 
     def assign(self, name: str) -> Var:
         '''Customized assign behavior. Creates a VarDef with its full name.'''
-        return StagingContext.register_implicit_scope(_VarDef(
-            prepare_vardef(name), self.shape, self.dtype, self.atype, self.mtype))
+        return StagingContext.register_implicit_scope(
+            _VarDef(prepare_vardef(name), self.shape, self.dtype, self.atype,
+                    self.mtype))
 
 
 def declare_var(name, shape, dtype, atype, mtype):
     '''Declare parameter as a variable.'''
-    return StagingContext.register_implicit_scope(_VarDef(
-        prepare_vardef(name, override=True), shape, dtype, atype, mtype))
+    return StagingContext.register_implicit_scope(
+        _VarDef(prepare_vardef(name, override=True), shape, dtype, atype,
+                mtype))
 
 
 def capture_var(arr: ffi.Array, name: str = 'captured') -> Var:
-    return StagingContext.register_implicit_scope(_VarDef(
-        prepare_vardef(name, capture=arr),
-        arr.shape,
-        arr.dtype,
-        'input',
-        arr.device.main_mem_type()
-    ))
+    return StagingContext.register_implicit_scope(
+        _VarDef(prepare_vardef(name, capture=arr), arr.shape, arr.dtype,
+                'input', arr.device.main_mem_type()))
 
 
 def assign(name: str, value):
@@ -211,7 +214,8 @@ class dynamic_range:
 
     def foreach(self, name: str, body: Callable[[Any], None]) -> None:
         '''Customized foreach behavior. Creates a For loop.'''
-        with For(StagingContext.fullname(name), self.start, self.stop, self.step) as iter_var:
+        with For(StagingContext.fullname(name), self.start, self.stop,
+                 self.step) as iter_var:
             with LifetimeScope():
                 body(iter_var)
 
@@ -281,11 +285,13 @@ def boolop_expr(native_reducer, ir_reducer, lazy_args):
 
 
 def and_expr(*lazy_args):
-    return boolop_expr(lambda a, fb: a and fb(), lambda a, fb: l_and(a, fb()), lazy_args)
+    return boolop_expr(lambda a, fb: a and fb(), lambda a, fb: l_and(a, fb()),
+                       lazy_args)
 
 
 def or_expr(*lazy_args):
-    return boolop_expr(lambda a, fb: a or fb(), lambda a, fb: l_or(a, fb()), lazy_args)
+    return boolop_expr(lambda a, fb: a or fb(), lambda a, fb: l_or(a, fb()),
+                       lazy_args)
 
 
 def not_expr(arg):
@@ -325,23 +331,31 @@ def mark_position(base_lineno: int, line_offset: int):
 
 def module_helper(name: str):
     '''Helper to get an AST node with full path to given name, which should be a symbol in current module.'''
-    return ast.Attribute(ast.Attribute(ast.Name('ir', ast.Load()), 'new_transformer', ast.Load()), name, ast.Load())
+    return ast.Attribute(
+        ast.Attribute(ast.Name('ir', ast.Load()), 'new_transformer',
+                      ast.Load()), name, ast.Load())
 
 
 def call_helper(callee, *args: ast.expr, **kwargs: ast.expr):
     '''Call helper that generates a python AST Call node with given callee and arguments AST node.'''
-    return ast.Call(module_helper(callee.__name__), list(args), [ast.keyword(k, w) for k, w in kwargs.items()])
+    return ast.Call(module_helper(callee.__name__), list(args),
+                    [ast.keyword(k, w) for k, w in kwargs.items()])
 
 
 def function_helper(name: str, args: Sequence[str], body: List[ast.stmt]):
     '''Function helper that generates a python AST FunctionDef node with given name, arguments name, and body.'''
-    return ast.FunctionDef(
-        name=name,
-        args=ast.arguments(args=[], vararg=None, kwarg=None, posonlyargs=[ast.arg(a, None) for a in args],
-                           defaults=[], kwonlyargs=[], kw_defaults=[]),
-        body=body,
-        returns=None,
-        decorator_list=[])
+    return ast.FunctionDef(name=name,
+                           args=ast.arguments(
+                               args=[],
+                               vararg=None,
+                               kwarg=None,
+                               posonlyargs=[ast.arg(a, None) for a in args],
+                               defaults=[],
+                               kwonlyargs=[],
+                               kw_defaults=[]),
+                           body=body,
+                           returns=None,
+                           decorator_list=[])
 
 
 def location_helper(new_nodes, old_node):
@@ -362,8 +376,11 @@ class Transformer(ast.NodeTransformer):
         if isinstance(node, ast.stmt) and not isinstance(node, ast.FunctionDef):
             if not isinstance(new_node, list):
                 new_node = [new_node]
-            return location_helper([ast.Expr(call_helper(mark_position, ast.Constant(
-                self.base_lineno), ast.Constant(node.lineno)))] + new_node, node)
+            return location_helper([
+                ast.Expr(
+                    call_helper(mark_position, ast.Constant(self.base_lineno),
+                                ast.Constant(node.lineno)))
+            ] + new_node, node)
         return new_node
 
     def visit_Expr(self, old_node: ast.Expr) -> Any:
@@ -386,14 +403,16 @@ class Transformer(ast.NodeTransformer):
                 node.value.args[0] = ast.Constant(target.id)
                 target = ast.Name(target.id, ast.Store())
                 node = ast.Assign([target], node.value)
-        elif isinstance(node.value, ast.Constant) and isinstance(node.value.value, str):
+        elif isinstance(node.value, ast.Constant) and isinstance(
+                node.value.value, str):
             text = node.value.value
             if text.startswith('nid: '):
-                node = ast.Expr(call_helper(
-                    mark_nid, ast.Constant(text[5:], kind=None)))
+                node = ast.Expr(
+                    call_helper(mark_nid, ast.Constant(text[5:], kind=None)))
             elif text.startswith('no_deps: '):
-                node = ast.Expr(call_helper(
-                    mark_no_deps, ast.Constant(text[9:], kind=None)))
+                node = ast.Expr(
+                    call_helper(mark_no_deps, ast.Constant(text[9:],
+                                                           kind=None)))
             elif text.startswith('prefer_libs'):
                 node = ast.Expr(call_helper(mark_prefer_libs))
         return location_helper(node, old_node)
@@ -403,8 +422,10 @@ class Transformer(ast.NodeTransformer):
         node = self.generic_visit(old_node)
         # FIXME: multi-assign not implemented
         if len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
-            node = ast.Assign(node.targets, call_helper(
-                assign, ast.Constant(node.targets[0].id), node.value))
+            node = ast.Assign(
+                node.targets,
+                call_helper(assign, ast.Constant(node.targets[0].id),
+                            node.value))
         return location_helper(node, old_node)
 
     def visit_For(self, old_node: ast.For):
@@ -421,9 +442,12 @@ class Transformer(ast.NodeTransformer):
         ```'''
         node = self.generic_visit(old_node)
         if isinstance(node.target, ast.Name) and len(node.orelse) == 0:
-            node = [function_helper('for_body', [node.target.id], node.body),
-                    ast.Expr(call_helper(foreach, ast.Constant(
-                        node.target.id), node.iter, ast.Name('for_body', ast.Load())))]
+            node = [
+                function_helper('for_body', [node.target.id], node.body),
+                ast.Expr(
+                    call_helper(foreach, ast.Constant(node.target.id),
+                                node.iter, ast.Name('for_body', ast.Load())))
+            ]
         return location_helper(node, old_node)
 
     def visit_Call(self, old_node: ast.Call):
@@ -433,8 +457,8 @@ class Transformer(ast.NodeTransformer):
         node = self.generic_visit(old_node)
         if isinstance(node.func, ast.Name):
             if node.func.id == 'range':
-                node = ast.Call(module_helper(
-                    dynamic_range.__name__), node.args, node.keywords)
+                node = ast.Call(module_helper(dynamic_range.__name__),
+                                node.args, node.keywords)
         return location_helper(node, old_node)
 
     def visit_If(self, old_node: ast.If):
@@ -462,15 +486,16 @@ class Transformer(ast.NodeTransformer):
             else_body = ast.Name('else_body', ast.Load())
         else:
             else_body = ast.Constant(None)
-        new_node.append(ast.Expr(call_helper(
-            if_then_else_stmt, node.test, then_body, else_body)))
+        new_node.append(
+            ast.Expr(
+                call_helper(if_then_else_stmt, node.test, then_body,
+                            else_body)))
         return location_helper(new_node, old_node)
 
     def visit_IfExp(self, old_node: ast.IfExp):
         '''Rule: `body if test else orelse` -> `if_then_else_expr(test, body, orelse)`'''
         node = self.generic_visit(old_node)
-        node = call_helper(if_then_else_expr, node.test,
-                           node.body, node.orelse)
+        node = call_helper(if_then_else_expr, node.test, node.body, node.orelse)
         return location_helper(node, old_node)
 
     def visit_FunctionDef(self, old_node: ast.FunctionDef) -> Any:
@@ -478,15 +503,13 @@ class Transformer(ast.NodeTransformer):
         node.decorator_list = []
         old_body = node.body
         node.body = [
-            ast.With(
-                items=[
-                    ast.withitem(
-                        context_expr=call_helper(functiondef_wrapper,
-                                                 ast.Constant(self.filename),
-                                                 ast.Constant(node.name)),
-                        optional_vars=None)
-                ],
-                body=old_body)
+            ast.With(items=[
+                ast.withitem(context_expr=call_helper(
+                    functiondef_wrapper, ast.Constant(self.filename),
+                    ast.Constant(node.name)),
+                             optional_vars=None)
+            ],
+                     body=old_body)
         ]
         return location_helper(node, old_node)
 
@@ -503,10 +526,15 @@ class Transformer(ast.NodeTransformer):
             libfunc = or_expr
         else:
             return location_helper(node, old_node)
-        empty_args = ast.arguments(args=[], vararg=None, kwarg=None, posonlyargs=[],
-                                   defaults=[], kwonlyargs=[], kw_defaults=[])
-        node = call_helper(
-            libfunc, *[ast.Lambda(empty_args, v) for v in node.values])
+        empty_args = ast.arguments(args=[],
+                                   vararg=None,
+                                   kwarg=None,
+                                   posonlyargs=[],
+                                   defaults=[],
+                                   kwonlyargs=[],
+                                   kw_defaults=[])
+        node = call_helper(libfunc,
+                           *[ast.Lambda(empty_args, v) for v in node.values])
         return location_helper(node, old_node)
 
     def visit_UnaryOp(self, old_node: ast.UnaryOp) -> Any:
@@ -529,8 +557,8 @@ class Transformer(ast.NodeTransformer):
 
 def _remove_indent(src: str) -> str:
     lines = src.split('\n')
-    spaces_to_remove = next(
-        (i for i, x in enumerate(lines[0]) if x != ' '), len(lines[0]))
+    spaces_to_remove = next((i for i, x in enumerate(lines[0]) if x != ' '),
+                            len(lines[0]))
     return '\n'.join(line[spaces_to_remove:] for line in lines)
 
 
@@ -565,8 +593,9 @@ def into_staging(func, src=None):
     from pygments.lexers import PythonLexer
     from pygments.formatters import TerminalFormatter
     source = astor.to_source(tree)
-    print(highlight(source, PythonLexer(),
-          TerminalFormatter(bg='dark', linenos=True)))
+    print(
+        highlight(source, PythonLexer(),
+                  TerminalFormatter(bg='dark', linenos=True)))
 
     caller_env = _get_caller_env(2)
     caller_env['ir'] = sys.modules['ir']
@@ -590,17 +619,20 @@ def transform(func):
                     for ret in returns:
                         if not isinstance(ret, Var):
                             raise StagingError(
-                                'Illegal return at top level, need to be a `Var` or a tuple of `Var`s')
+                                'Illegal return at top level, need to be a `Var` or a tuple of `Var`s'
+                            )
                     returns = list(returns)
                 elif returns is None:
                     returns = []
                 else:
                     raise StagingError(
-                        'Illegal return at top level, need to be a `Var` or a tuple of `Var`s')
+                        'Illegal return at top level, need to be a `Var` or a tuple of `Var`s'
+                    )
                 for ret in returns:
                     ret.vardef.set_atype('output')
-                returns = [(ret.vardef.name, ret.vardef.dtype)
-                           for ret in returns]
+                returns = [
+                    (ret.vardef.name, ret.vardef.dtype) for ret in returns
+                ]
 
                 closure = StagingContext.closure
     except Exception as e:
@@ -609,8 +641,8 @@ def transform(func):
         StagingContext.reset()
         staged_ast = pop_ast()
 
-    staged = Func(func.__name__, params + list(closure.keys()),
-                  returns, staged_ast, closure)
+    staged = Func(func.__name__, params + list(closure.keys()), returns,
+                  staged_ast, closure)
 
     return staged
 
