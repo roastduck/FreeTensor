@@ -4,7 +4,7 @@ from .shape_utils import *
 
 def _binary_op_(op):
 
-    @core.inline
+    @core.inline(fallback=op)
     def f_binary_op(a, b, out):
         if core.ndim(out) == 0:
             out[()] = op(a, b)
@@ -31,7 +31,7 @@ def _binary_op_(op):
 
 def _binary_op(op):
 
-    @core.inline
+    @core.inline(fallback=op)
     def f_binary_op(a, b):
         out = core.create_var(broadcast_shape(a, b),
                               core.up_cast(core.dtype(a), core.dtype(b)),
@@ -45,19 +45,15 @@ def _binary_op(op):
 
 add_ = _binary_op_(lambda x, y: x + y)
 add = _binary_op(lambda x, y: x + y)
-add.set_fallback(lambda x, y: x + y)
 
 sub_ = _binary_op_(lambda x, y: x - y)
 sub = _binary_op(lambda x, y: x - y)
-sub.set_fallback(lambda x, y: x - y)
 
 mul_ = _binary_op_(lambda x, y: x * y)
 mul = _binary_op(lambda x, y: x * y)
-mul.set_fallback(lambda x, y: x * y)
 
 div_ = _binary_op_(lambda x, y: x / y)
 div = _binary_op(lambda x, y: x / y)
-div.set_fallback(lambda x, y: x / y)
 
 
 def _unary_op_(op):

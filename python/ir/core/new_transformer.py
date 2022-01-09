@@ -142,6 +142,10 @@ class StagingContext:
         return StagingContext.allow_return_stack[-1]
 
     @staticmethod
+    def in_staging():
+        return len(StagingContext.lifetime_stack) > 0
+
+    @staticmethod
     def reset():
         StagingContext.naming_stack.clear()
         StagingContext.lifetime_stack.clear()
@@ -160,16 +164,13 @@ def prepare_vardef(name: str,
     return fullname
 
 
-class StagedCallable:
-    def call(self, *args, **kwargs):
-        raise NotImplementedError()
-
-
-def call(f, *args, **kwargs):
-    if isinstance(f, StagedCallable):
-        return f.call(*args, **kwargs)
-    else:
-        return f(*args, **kwargs)
+def staged_callable(staging, original):
+    def impl(*args, **kwargs):
+        if StagingContext.in_staging():
+            return staging(*args, **kwargs)
+        else:
+            return original(*args, **kwargs)
+    return impl
 
 
 class StagedAssignable:
@@ -219,47 +220,44 @@ class VarCreator(StagedAssignable):
             _VarDef(prepare_vardef(name), self.shape, self.dtype, 'cache', self.mtype))
 
 
-class create_var_(StagedCallable):
-    '''Create a IR variable.'''
-
-    def __call__(self, shape, dtype, mtype):
-        return np.zeros(shape, dtype)
-
-    def call(self, shape, dtype, mtype):
-        return VarCreator(shape, dtype, mtype)
+def create_var_staging(shape, dtype, mtype):
+    return VarCreator(shape, dtype, mtype)
 
 
-create_var = create_var_()
+def create_var_fallback(shape, dtype, mtype):
+    return np.zeros(shape, dtype)
 
 
-class declare_var_(StagedCallable):
-    '''Declare parameter as a variable.'''
-
-    def __call__(self, name, shape, dtype, atype, mtype):
-        pass
-
-    def call(self, name, shape, dtype, atype, mtype):
-        return StagingContext.register_implicit_scope(
-            _VarDef(prepare_vardef(name, override=True), shape, dtype, atype,
-                    mtype))
+create_var = staged_callable(create_var_staging, create_var_fallback)
+'''Create a IR variable.'''
 
 
-declare_var = declare_var_()
+def declare_var_staging(name, shape, dtype, atype, mtype):
+    return StagingContext.register_implicit_scope(
+        _VarDef(prepare_vardef(name, override=True), shape, dtype, atype,
+                mtype))
 
 
-class capture_var_(StagedCallable):
-    '''Capture external array as tensor variable.'''
-
-    def __call__(self, arr: ffi.Array, name: str = 'captured'):
-        return arr.numpy()
-
-    def call(self, arr: ffi.Array, name: str = 'captured'):
-        return StagingContext.register_implicit_scope(
-            _VarDef(prepare_vardef(name, capture=arr), arr.shape, arr.dtype,
-                    'input', arr.device.main_mem_type()))
+def declare_var_fallback(name, shape, dtype, atype, mtype):
+    pass
 
 
-capture_var = capture_var_()
+declare_var = staged_callable(declare_var_staging, declare_var_fallback)
+'''Declare parameter as a variable.'''
+
+
+def capture_var_fallback(arr: ffi.Array, name: str = 'captured'):
+    return arr.numpy()
+
+
+def capture_var_staging(arr: ffi.Array, name: str = 'captured'):
+    return StagingContext.register_implicit_scope(
+        _VarDef(prepare_vardef(name, capture=arr), arr.shape, arr.dtype,
+                'input', arr.device.main_mem_type()))
+
+
+capture_var = staged_callable(capture_var_staging, capture_var_fallback)
+'''Capture external array as tensor variable.'''
 
 
 class dynamic_range(StagedIterable):
@@ -438,19 +436,19 @@ class Transformer(ast.NodeTransformer):
         `declare_var(x, ...)` -> `x = declare_var(x, ...)`: x is changed from a name string to a Var
         '''
         node: ast.Expr = self.generic_visit(old_node)
-        if isinstance(node.value, ast.Call) and ast.dump(node.value.func) == ast.dump(module_helper(call)):
-            func = node.value.args[0]
+        if isinstance(node.value, ast.Call):
+            func = node.value.func
             if isinstance(func, ast.Attribute):
                 func = func.attr
             elif isinstance(func, ast.Name):
                 func = func.id
             if func == 'declare_var':
-                target = node.value.args[1]
+                target = node.value.args[0]
                 if not isinstance(target, ast.Name):
                     raise TransformError(
                         'declare_var is only allowed on top-level parameter',
                         self.filename, self.base_lineno, target)
-                node.value.args[1] = ast.Constant(target.id)
+                node.value.args[0] = ast.Constant(target.id)
                 target = ast.Name(target.id, ast.Store())
                 node = ast.Assign([target], node.value)
         elif isinstance(node.value, ast.Constant) and isinstance(
@@ -503,16 +501,12 @@ class Transformer(ast.NodeTransformer):
     def visit_Call(self, old_node: ast.Call):
         '''Rule:
         `range(...)` -> `dynamic_range(...)`
-        `f(...)` -> `call(f, ...)`
         '''
         node: ast.Call = self.generic_visit(old_node)
         if isinstance(node.func, ast.Name):
             if node.func.id == 'range':
                 node = ast.Call(module_helper(dynamic_range),
                                 node.args, node.keywords)
-        node.args.insert(0, node.func)
-        node.func = module_helper(call)
-        ast.dump(node)
         return location_helper(node, old_node)
 
     def visit_If(self, old_node: ast.If):
@@ -630,7 +624,7 @@ def _get_caller_env(depth: int):
     return caller_env
 
 
-def into_staging(func, src=None):
+def into_staging(func, caller_env, src=None):
     if src is None:
         src = _remove_indent(ins.getsource(func))
         tree = ast.parse(src)
@@ -652,7 +646,6 @@ def into_staging(func, src=None):
         highlight(source, PythonLexer(),
                   TerminalFormatter(bg='dark', linenos=True)))
 
-    caller_env = _get_caller_env(2)
     caller_env['ir'] = sys.modules['ir']
     exec(source, caller_env)
     return caller_env[func.__name__], file, func.__name__
@@ -660,7 +653,8 @@ def into_staging(func, src=None):
 
 def transform(func):
     params = list(inspect.signature(func).parameters)
-    staging_func, filename, funcname = into_staging(func)
+    caller_env = _get_caller_env(1)
+    staging_func, filename, funcname = into_staging(func, caller_env)
 
     try:
         with LifetimeScope():
@@ -702,20 +696,13 @@ def transform(func):
     return staged
 
 
-@dataclass
-class InlineFunction(StagedCallable):
-    python_function: Callable
-    staging_function: Callable
+def inline(func=None, src=None, fallback=None):
+    caller_env = _get_caller_env(1)
 
-    def call(self, *args, **kwargs):
-        return self.staging_function(*args, **kwargs)
+    def decorator(func):
+        return staged_callable(into_staging(func, caller_env, src)[0], fallback or func)
 
-    def __call__(self, *args, **kwargs):
-        return self.python_function(*args, **kwargs)
-    
-    def set_fallback(self, f):
-        self.python_function = f
-
-
-def inline(func, src=None):
-    return InlineFunction(func, into_staging(func, src)[0])
+    if callable(func):
+        return decorator(func)
+    else:
+        return decorator
