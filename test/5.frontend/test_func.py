@@ -143,7 +143,9 @@ def test_call_with_literal_data():
     @ir.transform
     def f(y):
         ir.declare_var(y, (2, 2), "int32", "output", "cpu")
-        g(ir.capture_var(ir.Array(np.array([[0, 1], [2, 3]], dtype=np.int32), dev)), y)
+        g(
+            ir.capture_var(
+                ir.Array(np.array([[0, 1], [2, 3]], dtype=np.int32), dev)), y)
 
     func = ir.lower(f, ir.CPU())
     print(func)
@@ -325,7 +327,7 @@ def test_error_missing_parameters():
         ir.declare_var(y, (2,), "float32", "output", "cpu")
         g()
 
-    with pytest.raises(TypeError):
+    with pytest.raises(ir.StagingError):
         ir.transform(f)
 
 
@@ -349,7 +351,8 @@ def test_return():
         ir.declare_var(c, (2, 2), "int32", "output", "cpu")
         ir.declare_var(d, (2, 2), "int32", "output", "cpu")
         c1, d1 = test_i(
-            ir.capture_var(ir.Array(np.array([[1, 2], [3, 4]], dtype=np.int32), dev)), y)
+            ir.capture_var(
+                ir.Array(np.array([[1, 2], [3, 4]], dtype=np.int32), dev)), y)
         for i in range(2):
             for j in range(2):
                 c[i, j] = c1[i, j]

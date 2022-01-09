@@ -4,20 +4,18 @@ import inspect
 
 
 # DO NOT ADD LINES IN THIS FUNCTION
-def test_assert_in_ctx_stack():
+def test_illegal_assign():
 
     @ir.inline
     def bar():
-        c = ir.create_var((1,), "int32", "cpu")
-        for i in range(1):
-            c = ir.create_var((1,), "int32", "cpu")
-        c[0]
+        c = ir.create_var((1, 1), "int32", "cpu")
+        c[0] = 1
 
     @ir.inline
     def foo():
         bar()
 
-    with pytest.raises(ir.InvalidProgram) as e:
+    with pytest.raises(ir.StagingError) as e:
 
         @ir.transform
         def test():
@@ -29,20 +27,14 @@ def test_assert_in_ctx_stack():
     line_c = frame_info.lineno - 12
     file = frame_info.filename
 
-    msg = f"""
-On line {line_foo} in file {file}: 
-            foo()
-On line {line_bar} in file {file}: 
-        bar()
-On line {line_c} in file {file}: 
-        c[0]
-"""
     print(e.value.args[0])
-    assert e.value.args[0][:len(msg)] == msg
+    assert f"File \"{file}\", line {line_foo}" in e.value.args[0]
+    assert f"File \"{file}\", line {line_bar}" in e.value.args[0]
+    assert f"File \"{file}\", line {line_c}" in e.value.args[0]
 
 
 # DO NOT ADD LINES IN THIS FUNCTION
-def test_assert_in_transformer():
+def test_illegal_bin_op():
 
     @ir.inline
     def bar(a, b):
@@ -52,7 +44,7 @@ def test_assert_in_transformer():
     def foo(a, b):
         bar(a, b)
 
-    with pytest.raises(ir.InvalidProgram) as e:
+    with pytest.raises(ir.StagingError) as e:
 
         @ir.transform
         def test(a, b):
@@ -66,13 +58,7 @@ def test_assert_in_transformer():
     line_ab = frame_info.lineno - 14
     file = frame_info.filename
 
-    msg = f"""
-On line {line_foo} in file {file}: 
-            foo(a, b)
-On line {line_bar} in file {file}: 
-        bar(a, b)
-On line {line_ab} in file {file}: 
-        a @ b
-AssertionError: Binary operator not implemented"""
     print(e.value.args[0])
-    assert e.value.args[0] == msg
+    assert f"File \"{file}\", line {line_foo}" in e.value.args[0]
+    assert f"File \"{file}\", line {line_bar}" in e.value.args[0]
+    assert f"File \"{file}\", line {line_ab}" in e.value.args[0]
