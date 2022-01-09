@@ -411,7 +411,7 @@ class Schedule {
      * }
      * ```
      *
-     * Each loop will be seperated into 2 parts: the body and the tail. After
+     * Each loop will be separated into 2 parts: the body and the tail. After
      * simplification, the program will finally be transformed to
      *
      * ```
@@ -425,18 +425,18 @@ class Schedule {
      * }
      * ```
      *
-     * If there is two VarDef nodes in two branches, it may result in doubled
-     * memory use, since different thread may go to different branch. Therefore,
-     * this pass will not duplicate VarDef nodes. (TODO: This restriction may be
-     * limited to non-local buffers)
-     *
      * Ideally, all programs can benefit from this schedule. However, this
      * schedule may greatly increase the program size and make the compiling
      * time way too long. Therefore, this transformation is implemented as a
      * schedule, which can be applied optionally. (TODO: Optionally apply this
      * schedule to part of the program)
+     *
+     * @param noDuplicateVarDefs : If there is two VarDef nodes in two branches,
+     * it may result in doubled memory use, since different thread may go to
+     * different branch. Set this parameter to true to stop duplicating VarDef
+     * nodes.
      */
-    void seperateTail();
+    void separateTail(bool noDuplicateVarDefs = false);
 
     /**
      * Transform nested loops to be a external call to a matrix multiplication

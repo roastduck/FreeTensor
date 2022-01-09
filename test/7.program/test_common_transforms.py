@@ -219,7 +219,7 @@ def test_dynamic_tiling():
     s.cache(i1, "a", "cpu")
     s.cache(i1, "b", "cpu")
 
-    s.seperate_tail()
+    s.separate_tail(True)
 
     func = s.func()
     print(func)

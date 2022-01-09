@@ -3,7 +3,7 @@
 #include <analyze/check_all_defined.h>
 #include <analyze/hash.h>
 #include <pass/z3_simplify.h>
-#include <schedule/seperate_tail.h>
+#include <schedule/separate_tail.h>
 
 namespace ir {
 
@@ -155,7 +155,7 @@ Stmt SeperateTail::visit(const For &_op) {
     ifStack_.pop_back();
     hasVarDefStack_.pop_back();
 
-    if (hasVarDef) {
+    if (noDuplicateVarDefs_ && hasVarDef) {
         return op;
     }
 
@@ -195,10 +195,10 @@ Stmt SeperateTail::visit(const For &_op) {
             old->body_);
         front = dfs(i + 1, AppendIDs(".front")(front).as<ForNode>());
         back = dfs(i + 1, AppendIDs(".back")(back).as<ForNode>());
-        auto seperated = makeStmtSeq("", {front, back});
+        auto separated = makeStmtSeq("", {front, back});
         auto ret = makeIf(
             "", makeLAnd(makeGE(sep, old->begin_), makeLE(sep, old->end_)),
-            seperated, dfs(i + 1, old));
+            separated, dfs(i + 1, old));
         nextCandidates_.insert(ret->id());
         return ret;
     };
@@ -215,7 +215,7 @@ Stmt SeperateTail::visit(const VarDef &op) {
     return ret;
 }
 
-Stmt seperateTail(const Stmt &_ast) {
+Stmt separateTail(const Stmt &_ast, bool noDuplicateVarDefs) {
     auto ast = _ast;
 
     FindAllIfs finder;
@@ -223,7 +223,7 @@ Stmt seperateTail(const Stmt &_ast) {
     auto candidates = finder.results();
 
     while (!candidates.empty()) {
-        SeperateTail mutator(candidates);
+        SeperateTail mutator(noDuplicateVarDefs, candidates);
         ast = mutator(ast);
         ast =
             z3Simplify(ast); // Although Z3 may be slow, if we don't use Z3
