@@ -234,7 +234,7 @@ std::pair<Stmt, std::string> fuse(const Stmt &_ast, const std::string &loop0,
 
     try {
         ast = simplifyPass(ast);
-    } catch (const InvalidProgram &e) {
+    } catch (const AssertAlwaysFalse &e) {
         throw InvalidSchedule((std::string) "Fusing " + loop0 + " and " +
                               loop1 + " loop1 with different lengths? " +
                               e.what());

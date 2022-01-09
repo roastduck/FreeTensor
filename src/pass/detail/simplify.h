@@ -660,24 +660,31 @@ template <class BaseClass> Stmt SimplifyPass<BaseClass>::visit(const For &_op) {
 }
 
 template <class BaseClass> Stmt SimplifyPass<BaseClass>::visit(const If &_op) {
-    auto __op = BaseClass::visit(_op);
+    // Simplify the condition first to determine a possible dead branch, so we
+    // can avoid recurse into the dead branch. This allows assertion false in
+    // the dead branch
+    auto cond = (*this)(_op->cond_);
+    if (cond->nodeType() == ASTNodeType::BoolConst) {
+        if (cond.template as<BoolConstNode>()->val_) {
+            return markMutated((*this)(_op->thenCase_));
+        } else {
+            if (_op->elseCase_.isValid()) {
+                return markMutated((*this)(_op->elseCase_));
+            } else {
+                return markMutated(makeStmtSeq("", {}));
+            }
+        }
+    }
+
+    auto __op = BaseClass::visit(
+        makeIf(_op->id(), std::move(cond), _op->thenCase_, _op->elseCase_)
+            .template as<IfNode>());
     ASSERT(__op->nodeType() == ASTNodeType::If);
     auto op = __op.template as<IfNode>();
     bool emptyThen = detail::isEmptyStmt(op->thenCase_);
     bool emptyElse = detail::isEmptyStmt(op->elseCase_);
     if (emptyThen && emptyElse) {
         return makeStmtSeq("", {});
-    }
-    if (op->cond_->nodeType() == ASTNodeType::BoolConst) {
-        if (op->cond_.template as<BoolConstNode>()->val_) {
-            return markMutated(op->thenCase_);
-        } else {
-            if (op->elseCase_.isValid()) {
-                return markMutated(op->elseCase_);
-            } else {
-                return markMutated(makeStmtSeq("", {}));
-            }
-        }
     }
     if (op->elseCase_.isValid()) {
         if (emptyThen) {
@@ -699,10 +706,8 @@ Stmt SimplifyPass<BaseClass>::visit(const Assert &_op) {
         if (op->cond_.template as<BoolConstNode>()->val_) {
             return markMutated(op->body_);
         } else {
-            std::ostringstream os;
             // Print the unchanged _op
-            os << "Assertion always false: " << _op;
-            throw InvalidProgram(os.str());
+            throw AssertAlwaysFalse("Assertion always false: " + toString(_op));
         }
     }
     return op;

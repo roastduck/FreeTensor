@@ -22,6 +22,8 @@ def parseDType(dtype):
             return DataType.Float32
         elif dtype.lower() == "int32":
             return DataType.Int32
+        elif dtype.lower() == "bool":
+            return DataType.Bool
     assert False, "Unrecognized data type %s" % dtype
 
 
