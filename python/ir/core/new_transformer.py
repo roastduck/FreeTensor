@@ -383,6 +383,7 @@ class Transformer(ast.NodeTransformer):
                     raise TransformError(
                         'declare_var is only allowed on top-level parameter',
                         self.filename, self.base_lineno, target)
+                node.value.args[0] = ast.Constant(target.id)
                 target = ast.Name(target.id, ast.Store())
                 node = ast.Assign([target], node.value)
         elif isinstance(node.value, ast.Constant) and isinstance(node.value.value, str):
