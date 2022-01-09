@@ -42,11 +42,13 @@ struct TransientBound {
 
 class OutDatedBoundsRemover : public Visitor {
     std::unordered_map<uint64_t, TransientBound> &transients_;
+    std::vector<Expr> &conds_;
 
   public:
     OutDatedBoundsRemover(
-        std::unordered_map<uint64_t, TransientBound> &transients)
-        : transients_(transients) {}
+        std::unordered_map<uint64_t, TransientBound> &transients,
+        std::vector<Expr> &conds)
+        : transients_(transients), conds_(conds) {}
 
   private:
     void remove(const std::string &name);
@@ -73,8 +75,12 @@ class OutDatedBoundsRemover : public Visitor {
  * Inherit this pass to use it
  */
 class CompTransientBounds : public Mutator {
+    // Bounds related to certain expressions
     // Bounds in transients_ has already been recursed with (*this)(...)
     std::unordered_map<uint64_t, TransientBound> transients_;
+
+    // Original bounds
+    std::vector<Expr> conds_;
 
     std::unordered_map<std::string, Ref<Buffer>> buffers_;
     AnalyzeLinear analyzeLinear_;
@@ -83,9 +89,11 @@ class CompTransientBounds : public Mutator {
     OutDatedBoundsRemover remover_;
 
   protected:
-    CompTransientBounds() : typeInfer_(&buffers_), remover_(transients_) {}
+    CompTransientBounds()
+        : typeInfer_(&buffers_), remover_(transients_, conds_) {}
 
     TransientBound transient(const Expr &op);
+    const std::vector<Expr> &conds() const { return conds_; }
     DataType dtype(const Expr &op);
     uint64_t getHash(const Expr &op);
 

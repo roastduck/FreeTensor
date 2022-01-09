@@ -6,9 +6,6 @@
 namespace ir {
 
 class DumpAsTest : public CodeGen<CodeGenStream> {
-    std::unordered_map<std::string, std::string> idCache_; // IR IDs -> C IDs
-    std::unordered_set<std::string> idFlag_;               // C IDs
-
   public:
     DumpAsTest() : CodeGen<CodeGenStream>(4) {}
 
@@ -18,8 +15,6 @@ class DumpAsTest : public CodeGen<CodeGenStream> {
     std::string asTest(DataType dtype) const;
     std::string asTest(AccessType atype) const;
     std::string asTest(MemType mtype) const;
-
-    const std::string &normalizeId(const std::string &id);
 
   protected:
     void visitStmt(const Stmt &op) override;

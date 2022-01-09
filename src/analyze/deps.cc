@@ -6,39 +6,23 @@
 
 #include <analyze/deps.h>
 #include <except.h>
+#include <mangle.h>
 #include <mutator.h>
 #include <pass/simplify.h>
 
 namespace ir {
 
-template <class T, class V>
-static void unionTo(std::unordered_map<T, V> &target,
-                    const std::unordered_map<T, V> &other) {
-    target.insert(other.begin(), other.end());
-}
-
-template <class T, class V>
-static std::unordered_map<T, V> intersect(const std::unordered_map<T, V> &lhs,
-                                          const std::unordered_map<T, V> &rhs) {
-    std::unordered_map<T, V> ret;
-    for (auto &&[key, value] : lhs) {
+template <class T, class V1, class V2>
+static std::unordered_map<T, std::pair<V1, V2>>
+intersect(const std::unordered_map<T, V1> &lhs,
+          const std::unordered_map<T, V2> &rhs) {
+    std::unordered_map<T, std::pair<V1, V2>> ret;
+    for (auto &&[key, v1] : lhs) {
         if (rhs.count(key)) {
-            ret.emplace(key, value);
+            ret.emplace(key, std::make_pair(v1, rhs.at(key)));
         }
     }
     return ret;
-}
-
-static std::string replaceAll(const std::string &str,
-                              const std::string &toSearch,
-                              const std::string &replaceStr) {
-    auto data = str;
-    size_t pos = data.find(toSearch);
-    while (pos != std::string::npos) {
-        data.replace(pos, toSearch.size(), replaceStr);
-        pos = data.find(toSearch, pos + replaceStr.size());
-    }
-    return data;
 }
 
 void FindAllNoDeps::visit(const For &op) {
@@ -176,33 +160,13 @@ void FindAccessPoint::visit(const Load &op) {
     reads_[defs_.at(op->var_)->id()].emplace_back(ap);
 }
 
-void GenPBExprDeps::visitExpr(const Expr &op) {
-    auto oldParent = parent_;
-    parent_ = op;
-    GenPBExpr::visitExpr(op);
-    parent_ = oldParent;
-    if (parent_.isValid()) {
-        unionTo(externals_[parent_], externals_[op]);
-    }
-}
-
-void GenPBExprDeps::visit(const Load &op) {
-    getHash_(op);
-    auto h = getHash_.hash().at(op);
-    auto str = normalizeId("ext" + std::to_string(h)) + "!!placeholder!!";
-    externals_[op][h] = std::make_pair(op, str);
-    results_[op] = str;
-}
-
-std::string AnalyzeDeps::makeIterList(GenPBExprDeps &genPBExpr,
-                                      const std::vector<IterAxis> &list,
+std::string AnalyzeDeps::makeIterList(const std::vector<IterAxis> &list,
                                       int n) {
     std::string ret;
     for (int i = 0; i < n; i++) {
         if (i < (int)list.size()) {
             if (list[i].iter_->nodeType() == ASTNodeType::Var) {
-                ret +=
-                    genPBExpr.normalizeId(list[i].iter_.as<VarNode>()->name_);
+                ret += mangle(list[i].iter_.as<VarNode>()->name_);
             } else if (list[i].iter_->nodeType() == ASTNodeType::IntConst) {
                 ret += std::to_string(list[i].iter_.as<IntConstNode>()->val_);
             } else {
@@ -218,17 +182,21 @@ std::string AnalyzeDeps::makeIterList(GenPBExprDeps &genPBExpr,
     return "[" + ret + "]";
 }
 
-Ref<std::string> AnalyzeDeps::makeAccList(GenPBExprDeps &genPBExpr,
+Ref<std::string> AnalyzeDeps::makeAccList(GenPBExpr &genPBExpr,
                                           const std::vector<Expr> &list,
                                           RelaxMode relax,
-                                          ExternalMap &externals) {
+                                          GenPBExpr::VarMap &externals) {
     std::string ret;
     for (int i = 0, iEnd = list.size(); i < iEnd; i++) {
         if (auto linstr = genPBExpr.gen(list[i]); linstr.isValid()) {
             ret += *linstr;
-            unionTo(externals, genPBExpr.externals(list[i]));
+            for (auto &&[h, item] : genPBExpr.vars(list[i])) {
+                if (item.first->nodeType() == ASTNodeType::Load) {
+                    externals[h] = item;
+                }
+            }
         } else if (relax == RelaxMode::Possible) {
-            ret += genPBExpr.normalizeId("free" + std::to_string(i));
+            ret += mangle("free" + std::to_string(i));
         } else {
             return nullptr;
         }
@@ -239,14 +207,18 @@ Ref<std::string> AnalyzeDeps::makeAccList(GenPBExprDeps &genPBExpr,
     return Ref<std::string>::make("[" + ret + "]");
 }
 
-Ref<std::string> AnalyzeDeps::makeCond(GenPBExprDeps &genPBExpr,
+Ref<std::string> AnalyzeDeps::makeCond(GenPBExpr &genPBExpr,
                                        const std::vector<Expr> &conds,
                                        RelaxMode relax,
-                                       ExternalMap &externals) {
+                                       GenPBExpr::VarMap &externals) {
     std::string ret;
     for (auto &&cond : conds) {
         if (auto str = genPBExpr.gen(cond); str.isValid()) {
-            unionTo(externals, genPBExpr.externals(cond));
+            for (auto &&[h, item] : genPBExpr.vars(cond)) {
+                if (item.first->nodeType() == ASTNodeType::Load) {
+                    externals[h] = item;
+                }
+            }
             if (!ret.empty()) {
                 ret += " and ";
             }
@@ -258,11 +230,12 @@ Ref<std::string> AnalyzeDeps::makeCond(GenPBExprDeps &genPBExpr,
     return Ref<std::string>::make(ret);
 }
 
-PBMap AnalyzeDeps::makeAccMap(PBCtx &presburger, GenPBExprDeps &genPBExpr,
-                              const AccessPoint &p, int iterDim, int accDim,
-                              RelaxMode relax, const std::string &extSuffix,
-                              ExternalMap &externals) {
-    auto ret = makeIterList(genPBExpr, p.iter_, iterDim) + " -> ";
+PBMap AnalyzeDeps::makeAccMap(PBCtx &presburger, const AccessPoint &p,
+                              int iterDim, int accDim, RelaxMode relax,
+                              const std::string &extSuffix,
+                              GenPBExpr::VarMap &externals) {
+    GenPBExpr genPBExpr(extSuffix);
+    auto ret = makeIterList(p.iter_, iterDim) + " -> ";
     if (auto str = makeAccList(genPBExpr, p.access_, relax, externals);
         str.isValid()) {
         ret += *str;
@@ -289,7 +262,6 @@ PBMap AnalyzeDeps::makeAccMap(PBCtx &presburger, GenPBExprDeps &genPBExpr,
         ext = "[" + ext + "] -> ";
     }
     ret = ext + "{" + ret + "}";
-    ret = replaceAll(ret, "!!placeholder!!", extSuffix);
     return PBMap(presburger, ret);
 }
 
@@ -486,19 +458,19 @@ PBMap AnalyzeDeps::makeNoDepsConstraint(PBCtx &presburger,
 
 PBMap AnalyzeDeps::makeExternalVarConstraint(
     PBCtx &presburger, const Ref<AccessPoint> &point,
-    const Ref<AccessPoint> &other, const ExternalMap &pExternals,
-    const ExternalMap &oExternals, int iterDim, const std::string &extSuffixP,
-    const std::string &extSuffixO) {
+    const Ref<AccessPoint> &other, const GenPBExpr::VarMap &pExternals,
+    const GenPBExpr::VarMap &oExternals, int iterDim) {
     PBMap ret = universeMap(spaceAlloc(presburger, 0, iterDim, iterDim));
     // We only have to add constraint for common loops of both accesses
     auto common = lca(point->cursor_, other->cursor_);
 
     for (auto &&[hash, item] : intersect(pExternals, oExternals)) {
+        auto &&[pItem, oItem] = item;
         // If all of the loops are variant, we don't have to make the constraint
         // at all. This will save time for Presburger solver
         for (auto c = common;; c = c.outer()) {
             if (c.nodeType() == ASTNodeType::For) {
-                if (isVariant(variantExpr_, item.first, c.id())) {
+                if (isVariant(variantExpr_, pItem.first, c.id())) {
                     goto found;
                 }
                 goto do_compute_constraint;
@@ -512,13 +484,11 @@ PBMap AnalyzeDeps::makeExternalVarConstraint(
 
         // Compute the constraint
     do_compute_constraint:
-        auto require = makeExternalEq(
-            presburger, iterDim,
-            replaceAll(item.second, "!!placeholder!!", extSuffixP),
-            replaceAll(item.second, "!!placeholder!!", extSuffixO));
+        auto require =
+            makeExternalEq(presburger, iterDim, pItem.second, oItem.second);
         for (auto c = common;; c = c.outer()) {
             if (c.nodeType() == ASTNodeType::For) {
-                if (isVariant(variantExpr_, item.first, c.id())) {
+                if (isVariant(variantExpr_, pItem.first, c.id())) {
                     // Since idx[i] must be inside loop i, we only have
                     // to call makeIneqBetweenOps, but no need to call
                     // makeConstraintOfSingleLoop
@@ -571,6 +541,7 @@ void AnalyzeDeps::projectOutPrivateAxis(
             pmap = applyDomain(
                 std::move(pmap),
                 projectOutPrivateAxis(presburger, iterDim, pCommonDims + 1));
+            pmap = coalesce(std::move(pmap));
         }
         for (auto &&[common, other, omap] :
              iter::zip(oCommonDims, otherList, omapList)) {
@@ -578,6 +549,7 @@ void AnalyzeDeps::projectOutPrivateAxis(
                 omap = applyDomain(
                     std::move(omap),
                     projectOutPrivateAxis(presburger, iterDim, common + 1));
+                omap = coalesce(std::move(omap));
             }
         }
     }
@@ -682,8 +654,7 @@ void AnalyzeDeps::checkDepLatestEarlier(
     }
     tasks_.emplace_back([point, otherList = std::move(otherList), this]() {
         PBCtx presburger;
-        GenPBExprDeps genPBExpr;
-        checkDepLatestEarlierImpl(presburger, genPBExpr, point, otherList);
+        checkDepLatestEarlierImpl(presburger, point, otherList);
     });
 }
 
@@ -706,13 +677,12 @@ void AnalyzeDeps::checkDepEarliestLater(
     }
     tasks_.emplace_back([pointList = std::move(pointList), other, this]() {
         PBCtx presburger;
-        GenPBExprDeps genPBExpr;
-        checkDepEarliestLaterImpl(presburger, genPBExpr, pointList, other);
+        checkDepEarliestLaterImpl(presburger, pointList, other);
     });
 }
 
 void AnalyzeDeps::checkDepLatestEarlierImpl(
-    PBCtx &presburger, GenPBExprDeps &genPBExpr, const Ref<AccessPoint> &point,
+    PBCtx &presburger, const Ref<AccessPoint> &point,
     const std::vector<Ref<AccessPoint>> &otherList) {
     int accDim = point->access_.size();
     int iterDim = point->iter_.size();
@@ -727,9 +697,9 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
     PBMap noDepsConstraint =
         makeNoDepsConstraint(presburger, point->def_->name_, iterDim);
 
-    ExternalMap pExternals;
-    PBMap pmap = makeAccMap(presburger, genPBExpr, *point, iterDim, accDim,
-                            laterRelax_, "__ext_p", pExternals);
+    GenPBExpr::VarMap pExternals;
+    PBMap pmap = makeAccMap(presburger, *point, iterDim, accDim, laterRelax_,
+                            "__ext_p", pExternals);
     if (pmap.empty()) {
         return;
     }
@@ -737,15 +707,14 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
     PBMap pa2s = reverse(ps2a);
     PBSet pIter = domain(pmap);
     std::vector<PBMap> omapList(otherList.size());
-    std::vector<ExternalMap> oExternalsList(otherList.size());
+    std::vector<GenPBExpr::VarMap> oExternalsList(otherList.size());
     std::vector<PBMap> os2aList(otherList.size()), depAllList(otherList.size());
     std::vector<PBSet> oIterList(otherList.size());
     PBMap psDepAllUnion;
     for (auto &&[i, other, omap, oExternals] :
          iter::zip(iter::count(), otherList, omapList, oExternalsList)) {
-        omap = makeAccMap(presburger, genPBExpr, *other, iterDim, accDim,
-                          earlierRelax_, "__ext_o" + std::to_string(i),
-                          oExternals);
+        omap = makeAccMap(presburger, *other, iterDim, accDim, earlierRelax_,
+                          "__ext_o" + std::to_string(i), oExternals);
     }
     projectOutPrivateAxis(presburger, point, otherList, pmap, omapList,
                           iterDim);
@@ -763,11 +732,11 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
 
         depAll = intersect(std::move(depAll), eraseVarDefConstraint);
         depAll = intersect(std::move(depAll), noDepsConstraint);
-        depAll =
-            intersect(std::move(depAll),
-                      makeExternalVarConstraint(
-                          presburger, point, other, pExternals, oExternals,
-                          iterDim, "__ext_p", "__ext_o" + std::to_string(i)));
+        depAll = intersect(std::move(depAll),
+                           makeExternalVarConstraint(presburger, point, other,
+                                                     pExternals, oExternals,
+                                                     iterDim));
+        depAll = coalesce(std::move(depAll));
 
         PBMap psDepAll = applyRange(depAll, std::move(oa2s));
         psDepAllUnion = psDepAllUnion.isValid()
@@ -787,6 +756,7 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
     PBMap psSelf = intersect(applyRange(std::move(pa2s), std::move(ssSelf)),
                              std::move(psDepAllUnion));
     PBMap psNearest = uni(lexmax(std::move(psDep)), std::move(psSelf));
+    psNearest = coalesce(std::move(psNearest));
 
     for (auto &&[other, os2a, oIter, depAll] :
          iter::zip(otherList, os2aList, oIterList, depAllList)) {
@@ -800,8 +770,7 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
 }
 
 void AnalyzeDeps::checkDepEarliestLaterImpl(
-    PBCtx &presburger, GenPBExprDeps &genPBExpr,
-    const std::vector<Ref<AccessPoint>> &pointList,
+    PBCtx &presburger, const std::vector<Ref<AccessPoint>> &pointList,
     const Ref<AccessPoint> &other) {
     int accDim = other->access_.size();
     int iterDim = other->iter_.size();
@@ -816,9 +785,9 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
     PBMap noDepsConstraint =
         makeNoDepsConstraint(presburger, other->def_->name_, iterDim);
 
-    ExternalMap oExternals;
-    PBMap omap = makeAccMap(presburger, genPBExpr, *other, iterDim, accDim,
-                            earlierRelax_, "__ext_o", oExternals);
+    GenPBExpr::VarMap oExternals;
+    PBMap omap = makeAccMap(presburger, *other, iterDim, accDim, earlierRelax_,
+                            "__ext_o", oExternals);
     if (omap.empty()) {
         return;
     }
@@ -826,15 +795,14 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
     PBMap oa2s = reverse(os2a);
     PBSet oIter = domain(omap);
     std::vector<PBMap> pmapList(pointList.size());
-    std::vector<ExternalMap> pExternalsList(pointList.size());
+    std::vector<GenPBExpr::VarMap> pExternalsList(pointList.size());
     std::vector<PBMap> ps2aList(pointList.size()), depAllList(pointList.size());
     std::vector<PBSet> pIterList(pointList.size());
     PBMap spDepAllUnion;
     for (auto &&[i, point, pmap, pExternals] :
          iter::zip(iter::count(), pointList, pmapList, pExternalsList)) {
-        pmap =
-            makeAccMap(presburger, genPBExpr, *point, iterDim, accDim,
-                       laterRelax_, "__ext_p" + std::to_string(i), pExternals);
+        pmap = makeAccMap(presburger, *point, iterDim, accDim, laterRelax_,
+                          "__ext_p" + std::to_string(i), pExternals);
     }
     projectOutPrivateAxis(presburger, other, pointList, omap, pmapList,
                           iterDim);
@@ -852,11 +820,11 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
 
         depAll = intersect(std::move(depAll), eraseVarDefConstraint);
         depAll = intersect(std::move(depAll), noDepsConstraint);
-        depAll =
-            intersect(std::move(depAll),
-                      makeExternalVarConstraint(
-                          presburger, point, other, pExternals, oExternals,
-                          iterDim, "__ext_p" + std::to_string(i), "__ext_o"));
+        depAll = intersect(std::move(depAll),
+                           makeExternalVarConstraint(presburger, point, other,
+                                                     pExternals, oExternals,
+                                                     iterDim));
+        depAll = coalesce(std::move(depAll));
 
         PBMap spDepAll = applyDomain(depAll, std::move(pa2s));
         spDepAllUnion = spDepAllUnion.isValid()
@@ -877,6 +845,7 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
                              std::move(spDepAllUnion));
     PBMap spNearest =
         uni(reverse(lexmin(reverse(std::move(spDep)))), std::move(spSelf));
+    spNearest = coalesce(std::move(spNearest));
 
     for (auto &&[point, ps2a, pIter, depAll] :
          iter::zip(pointList, ps2aList, pIterList, depAllList)) {

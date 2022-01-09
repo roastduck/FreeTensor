@@ -10,7 +10,6 @@
 #include <vector>
 
 #include <analyze/find_loop_variance.h>
-#include <analyze/hash.h>
 #include <cursor.h>
 #include <math/gen_pb_expr.h>
 #include <math/presburger.h>
@@ -82,7 +81,8 @@ inline int countBandNodeWidth(const Stmt &op) {
 class FindAccessPoint : public VisitorWithCursor {
     bool lastIsLoad_ = false;
     std::vector<IterAxis> cur_; // Current iteration point in the space
-    std::vector<Expr> conds_;
+    std::vector<Expr> conds_;   // FIXME: There may be out-dated conditions. See
+                                // OutDatedRemover in pass/simplify
     std::unordered_map<std::string, std::vector<Ref<AccessPoint>>> reads_,
         writes_;
     std::vector<VarDef> allDefs_;
@@ -146,26 +146,6 @@ class FindAccessPoint : public VisitorWithCursor {
     void visit(const ReduceTo &op) override { visitStoreLike(op); }
     void visit(const Load &op) override;
     void visit(const MatMul &op) override { (*this)(op->equivalent_); }
-};
-
-// hash -> (expr, presburger name)
-typedef std::unordered_map<uint64_t, std::pair<Expr, std::string>> ExternalMap;
-
-/**
- * GenPBExpr specialized for handling external variables
- */
-class GenPBExprDeps : public GenPBExpr {
-    std::unordered_map<Expr, ExternalMap> externals_;
-    GetHash getHash_;
-    Expr parent_ = nullptr;
-
-  public:
-    const ExternalMap &externals(const Expr &op) { return externals_[op]; }
-
-  protected:
-    using GenPBExpr::visit;
-    void visitExpr(const Expr &op) override;
-    void visit(const Load &op) override;
 };
 
 enum class DepDirection : int {
@@ -279,20 +259,18 @@ class AnalyzeDeps {
     const std::vector<std::function<void()>> &tasks() const { return tasks_; }
 
   private:
-    std::string makeIterList(GenPBExprDeps &genPBExpr,
-                             const std::vector<IterAxis> &list, int n);
+    std::string makeIterList(const std::vector<IterAxis> &list, int n);
     std::string makeNdList(const std::string &name, int n) const;
-    Ref<std::string> makeAccList(GenPBExprDeps &genPBExpr,
+    Ref<std::string> makeAccList(GenPBExpr &genPBExpr,
                                  const std::vector<Expr> &list, RelaxMode relax,
-                                 ExternalMap &externals);
-    Ref<std::string> makeCond(GenPBExprDeps &genPBExpr,
+                                 GenPBExpr::VarMap &externals);
+    Ref<std::string> makeCond(GenPBExpr &genPBExpr,
                               const std::vector<Expr> &conds, RelaxMode relax,
-                              ExternalMap &externals);
+                              GenPBExpr::VarMap &externals);
 
-    PBMap makeAccMap(PBCtx &presburger, GenPBExprDeps &genPBExpr,
-                     const AccessPoint &p, int iterDim, int accDim,
-                     RelaxMode relax, const std::string &extSuffix,
-                     ExternalMap &externals);
+    PBMap makeAccMap(PBCtx &presburger, const AccessPoint &p, int iterDim,
+                     int accDim, RelaxMode relax, const std::string &extSuffix,
+                     GenPBExpr::VarMap &externals);
 
     PBMap makeEqForBothOps(PBCtx &presburger,
                            const std::vector<std::pair<int, int>> &coord,
@@ -346,10 +324,9 @@ class AnalyzeDeps {
     PBMap makeExternalVarConstraint(PBCtx &presburger,
                                     const Ref<AccessPoint> &point,
                                     const Ref<AccessPoint> &other,
-                                    const ExternalMap &pExternals,
-                                    const ExternalMap &oExternals, int iterDim,
-                                    const std::string &extSuffixP,
-                                    const std::string &extSuffixO);
+                                    const GenPBExpr::VarMap &pExternals,
+                                    const GenPBExpr::VarMap &oExternals,
+                                    int iterDim);
 
     /**
      * If we are analyzing the dependency between A and B, e.g.
@@ -386,8 +363,7 @@ class AnalyzeDeps {
     void checkDepLatestEarlier(const Ref<AccessPoint> &point,
                                const std::vector<Ref<AccessPoint>> &otherList);
     void
-    checkDepLatestEarlierImpl(PBCtx &presburger, GenPBExprDeps &genPBExpr,
-                              const Ref<AccessPoint> &point,
+    checkDepLatestEarlierImpl(PBCtx &presburger, const Ref<AccessPoint> &point,
                               const std::vector<Ref<AccessPoint>> &otherList);
 
     /**
@@ -400,7 +376,7 @@ class AnalyzeDeps {
     void checkDepEarliestLater(const std::vector<Ref<AccessPoint>> &pointList,
                                const Ref<AccessPoint> &other);
     void
-    checkDepEarliestLaterImpl(PBCtx &presburger, GenPBExprDeps &genPBExpr,
+    checkDepEarliestLaterImpl(PBCtx &presburger,
                               const std::vector<Ref<AccessPoint>> &pointList,
                               const Ref<AccessPoint> &other);
 };

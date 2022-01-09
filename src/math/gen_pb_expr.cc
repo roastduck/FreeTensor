@@ -1,33 +1,45 @@
+#include <mangle.h>
 #include <math/gen_pb_expr.h>
 #include <math/utils.h>
 
 namespace ir {
 
-std::string GenPBExpr::normalizeId(const std::string &old) {
-    if (idCache_.count(old)) {
-        return idCache_.at(old);
-    }
-    std::string ret = old;
-    for (char &c : ret) {
-        if (!isalnum(c) && c != '_') {
-            c = '_';
-        }
-    }
-    while (idFlag_.count(ret)) {
-        ret += "_";
-    }
-    idFlag_.insert(ret);
-    return idCache_[old] = ret;
+template <class T, class V>
+static void unionTo(std::unordered_map<T, V> &target,
+                    const std::unordered_map<T, V> &other) {
+    target.insert(other.begin(), other.end());
 }
 
 void GenPBExpr::visitExpr(const Expr &op) {
+    auto oldParent = parent_;
+    parent_ = op;
+
     if (!visited_.count(op)) {
         Visitor::visitExpr(op);
         visited_.insert(op);
     }
+
+    parent_ = oldParent;
+    if (parent_.isValid()) {
+        unionTo(vars_[parent_], vars_[op]);
+    }
 }
 
-void GenPBExpr::visit(const Var &op) { results_[op] = normalizeId(op->name_); }
+void GenPBExpr::visit(const Var &op) {
+    getHash_(op);
+    auto h = getHash_.hash().at(op);
+    auto str = mangle(op->name_);
+    vars_[op][h] = std::make_pair(op, str);
+    results_[op] = str;
+}
+
+void GenPBExpr::visit(const Load &op) {
+    getHash_(op);
+    auto h = getHash_.hash().at(op);
+    auto str = mangle("ext" + std::to_string(h)) + varSuffix_;
+    vars_[op][h] = std::make_pair(op, str);
+    results_[op] = str;
+}
 
 void GenPBExpr::visit(const IntConst &op) {
     results_[op] = std::to_string(op->val_);

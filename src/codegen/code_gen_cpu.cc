@@ -1,6 +1,7 @@
 #include <itertools.hpp>
 
 #include <codegen/code_gen_cpu.h>
+#include <mangle.h>
 #include <pass/simplify.h>
 
 #include "detail/code_gen_c.h"
@@ -107,7 +108,7 @@ void CodeGenCPU::visit(const For &op) {
                     os() << ", ";
                 }
                 first = false;
-                os() << normalizeId(var);
+                os() << mangle(var);
                 if (!indices.empty()) {
                     for (auto &&idx : indices) {
                         os() << "[";

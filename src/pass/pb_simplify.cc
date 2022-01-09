@@ -1,44 +1,16 @@
+#include <mangle.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/pb_simplify.h>
+
+#include <itertools.hpp>
 
 #include "detail/simplify.h"
 
 namespace ir {
 
 template <class T>
-static void unionTo(std::unordered_set<T> &target,
-                    const std::unordered_set<T> &other) {
-    target.insert(other.begin(), other.end());
-}
-
-template <class T>
 static void appendTo(std::vector<T> &target, const std::vector<T> &other) {
     target.insert(target.end(), other.begin(), other.end());
-}
-
-void GenPBExprSimplify::visitExpr(const Expr &op) {
-    auto oldParent = parent_;
-    parent_ = op;
-    GenPBExpr::visitExpr(op);
-    parent_ = oldParent;
-    if (parent_.isValid()) {
-        unionTo(vars_[parent_], vars_[op]);
-        appendTo(cond_[parent_], cond_[op]);
-    }
-}
-
-void GenPBExprSimplify::visit(const Var &op) {
-    auto str = normalizeId(op->name_);
-    vars_[op].insert(str);
-    results_[op] = str;
-}
-
-void GenPBExprSimplify::visit(const Load &op) {
-    getHash_(op);
-    auto h = getHash_.hash().at(op);
-    auto str = normalizeId("load" + std::to_string(h));
-    vars_[op].insert(str);
-    results_[op] = str;
 }
 
 Expr PBCompBounds::visitExpr(const Expr &_op) {
@@ -47,36 +19,35 @@ Expr PBCompBounds::visitExpr(const Expr &_op) {
         return op;
     }
     if (auto &&expr = genPBExpr_.gen(op); expr.isValid()) {
-        auto tr = transient(op);
-        for (auto &&first : tr.lower_) {
-            if (auto &&lowerExpr = genPBExpr_.gen(first); lowerExpr.isValid()) {
-                for (auto &&var : genPBExpr_.vars(first)) {
-                    genPBExpr_.vars(op).insert(var);
+        auto &&vars = genPBExpr_.vars(op);
+
+        // We use the original conditions instead of relying on transient bounds
+        // here. E.g., for x + y <= 2, and we are computing the maximum value of
+        // x + y, we shall not rely on x < 2 - y and y < 2 - x. Instead, we use
+        // x + y < 2 directly
+        std::vector<std::string> condExprs;
+        for (auto &&cond : conds()) {
+            if (cond.isValid()) {
+                if (auto &&condExpr = genPBExpr_.gen(cond);
+                    condExpr.isValid()) {
+                    for (auto &&var : genPBExpr_.vars(cond)) {
+                        if (!vars.count(var.first)) {
+                            goto ignore;
+                        }
+                    }
+                    condExprs.emplace_back(*condExpr);
+                ignore:;
                 }
-                genPBExpr_.cond(op).emplace_back(*expr + " >= " + *lowerExpr);
-            }
-        }
-        for (auto &&second : tr.upper_) {
-            if (auto &&upperExpr = genPBExpr_.gen(second);
-                upperExpr.isValid()) {
-                for (auto &&var : genPBExpr_.vars(second)) {
-                    genPBExpr_.vars(op).insert(var);
-                }
-                genPBExpr_.cond(op).emplace_back(*expr + " <= " + *upperExpr);
             }
         }
 
         std::string str = "{[";
-        bool first = true;
-        for (auto &&var : genPBExpr_.vars(op)) {
-            str += (first ? "" : ", ") + var;
-            first = false;
+        for (auto &&[i, var] : iter::enumerate(vars)) {
+            str += (i == 0 ? "" : ", ") + var.second.second;
         }
         str += "] -> [" + *expr + "]";
-        first = true;
-        for (auto &&cond : genPBExpr_.cond(op)) {
-            str += (first ? ": " : " and ") + cond;
-            first = false;
+        for (auto &&[i, cond] : iter::enumerate(condExprs)) {
+            str += (i == 0 ? ": " : " and ") + cond;
         }
         str += "}";
         PBMap map(isl_, str);
