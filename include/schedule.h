@@ -411,7 +411,7 @@ class Schedule {
      * }
      * ```
      *
-     * Each loop will be seperated into 2 parts: the body and the tail. After
+     * Each loop will be separated into 2 parts: the body and the tail. After
      * simplification, the program will finally be transformed to
      *
      * ```
@@ -436,7 +436,7 @@ class Schedule {
      * schedule, which can be applied optionally. (TODO: Optionally apply this
      * schedule to part of the program)
      */
-    void seperateTail();
+    void separateTail();
 
     /**
      * Transform nested loops to be a external call to a matrix multiplication

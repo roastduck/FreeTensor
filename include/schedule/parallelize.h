@@ -26,7 +26,7 @@ class Parallelize : public Mutator {
     //     for k
     //       compute block C[i, j] = A[i, k] * B[k, j]
     //
-    // We have no way to seperate these nested loops. However, some nesting is
+    // We have no way to separate these nested loops. However, some nesting is
     // illegal. For example:
     //
     // for i : threadIdx.x

@@ -46,7 +46,7 @@ class AppendIDs : public Mutator {
  * }
  * ```
  *
- * Each loop will be seperated into 2 parts: the body and the tail. After
+ * Each loop will be separated into 2 parts: the body and the tail. After
  * simplification, the program will finally be transformed to
  *
  * ```
@@ -92,7 +92,7 @@ class SeperateTail : public Mutator {
     Stmt visit(const VarDef &op) override;
 };
 
-Stmt seperateTail(const Stmt &ast);
+Stmt separateTail(const Stmt &ast);
 
 } // namespace ir
 

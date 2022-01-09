@@ -58,7 +58,7 @@ void init_ffi_schedule(py::module_ &m) {
         .def("parallelize", &Schedule::parallelize, "loop"_a, "parallel"_a)
         .def("unroll", &Schedule::unroll, "loop"_a, "immedate"_a = false)
         .def("vectorize", &Schedule::vectorize, "loop"_a)
-        .def("seperate_tail", &Schedule::seperateTail)
+        .def("separate_tail", &Schedule::separateTail)
         .def("as_matmul", &Schedule::asMatMul)
         .def("auto_schedule", &Schedule::autoSchedule)
         .def("auto_use_lib", &Schedule::autoUseLib)

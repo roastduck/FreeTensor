@@ -16,7 +16,7 @@ def test_basic():
     ast = ir.pop_ast()
     print(ast)
     s = ir.Schedule(ast)
-    s.seperate_tail()
+    s.separate_tail()
     ast = s.ast()
     ast = ir.lower(ast)
     print(ast)
@@ -49,7 +49,7 @@ def test_multiple_cond():
     ast = ir.pop_ast()
     print(ast)
     s = ir.Schedule(ast)
-    s.seperate_tail()
+    s.separate_tail()
     ast = s.ast()
     ast = ir.lower(ast)
     print(ast)
@@ -79,7 +79,7 @@ def test_eq():
     ast = ir.pop_ast()
     print(ast)
     s = ir.Schedule(ast)
-    s.seperate_tail()
+    s.separate_tail()
     ast = s.ast()
     ast = ir.lower(ast)
     print(ast)
@@ -104,7 +104,7 @@ def test_tiled():
     ast = ir.pop_ast()
     print(ast)
     s = ir.Schedule(ast)
-    s.seperate_tail()
+    s.separate_tail()
     ast = s.ast()
     ast = ir.lower(ast)
     print(ast)
@@ -132,8 +132,8 @@ def test_dynamic_tiled():
     print(ast)
     s = ir.Schedule(ast)
     # FIXME: Why do we need to call it twice??? It happens after we propagates the constants
-    s.seperate_tail()
-    s.seperate_tail()
+    s.separate_tail()
+    s.separate_tail()
     ast = s.ast()
     print(ast)
     ast = ir.lower(ast)
@@ -164,7 +164,7 @@ def test_1d_stencil():
     ast = ir.pop_ast()
     print(ast)
     s = ir.Schedule(ast)
-    s.seperate_tail()
+    s.separate_tail()
     ast = s.ast()
     ast = ir.lower(ast)
     print(ast)
@@ -180,7 +180,7 @@ def test_1d_stencil():
     assert std.match(ast)
 
 
-def test_no_seperate_vardef():
+def test_no_separate_vardef():
     with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ir.For("i", 0, 4) as i:
@@ -193,7 +193,7 @@ def test_no_seperate_vardef():
     ast = ir.pop_ast()
     print(ast)
     s = ir.Schedule(ast)
-    s.seperate_tail()
+    s.separate_tail()
     ast = s.ast()
     ast = ir.lower(ast)
     print(ast)

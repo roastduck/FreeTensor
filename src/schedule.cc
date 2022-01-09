@@ -20,7 +20,7 @@
 #include <schedule/merge.h>
 #include <schedule/parallelize.h>
 #include <schedule/reorder.h>
-#include <schedule/seperate_tail.h>
+#include <schedule/separate_tail.h>
 #include <schedule/set_mem_type.h>
 #include <schedule/split.h>
 #include <schedule/swap.h>
@@ -361,7 +361,7 @@ void Schedule::vectorize(const std::string &loop) {
     }
 }
 
-void Schedule::seperateTail() { ast_ = ir::seperateTail(ast_); }
+void Schedule::separateTail() { ast_ = ir::separateTail(ast_); }
 
 void Schedule::asMatMul(const std::string &loop) {
     auto log = "as_matmul(" + loop + ")";

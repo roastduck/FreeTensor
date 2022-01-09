@@ -497,7 +497,7 @@ class Schedule(ffi.Schedule):
         """
         super(Schedule, self).vectorize(toId(loop))
 
-    def seperate_tail(self):
+    def separate_tail(self):
         """
         Seperate main iterations and tail iterations of a loop
 
@@ -513,7 +513,7 @@ class Schedule(ffi.Schedule):
         }
         ```
 
-        Each loop will be seperated into 2 parts: the body and the tail. After
+        Each loop will be separated into 2 parts: the body and the tail. After
         simplification, the program will finally be transformed to
 
         ```
@@ -538,7 +538,7 @@ class Schedule(ffi.Schedule):
         schedule, which can be applied optionally. (TODO: Optionally apply this
         schedule to part of the program)
         """
-        super(Schedule, self).seperate_tail()
+        super(Schedule, self).separate_tail()
 
     def as_matmul(self, loop):
         """

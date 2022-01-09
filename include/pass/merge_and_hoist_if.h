@@ -48,7 +48,7 @@ namespace ir {
  * ```
  *
  * We do not handle else-cases in this pass. Otherwise, the resulting code will
- * be too long. This is different from pass/seperate_tail
+ * be too long. This is different from schedule/separate_tail
  */
 class MergeAndHoistIf : public Mutator {
     std::unordered_set<std::string> def_;
