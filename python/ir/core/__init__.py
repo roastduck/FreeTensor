@@ -48,7 +48,9 @@ from .codegen import codegen
 from .driver import *
 from .config import *
 
-from .new_transformer import transform, inline, create_var, declare_var, capture_var, StagingError, StagedAssignable, StagedIterable
+from .transformer import (transform, inline, create_var, declare_var,
+                          capture_var, StagingError, StagedAssignable,
+                          StagedIterable)
 
 from .meta import *
 from .auto_schedule import *
