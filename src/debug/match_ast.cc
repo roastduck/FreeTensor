@@ -9,10 +9,20 @@ namespace ir {
 bool MatchVisitor::matchName(const std::string &thisName,
                              const std::string &otherName) {
     if (!nameMap_.count(thisName)) {
+        if (nameMapImage_.count(otherName)) {
+            return false;
+        }
         nameMap_[thisName] = otherName;
+        nameMapImage_.insert(otherName);
         return true;
     }
     return nameMap_.at(thisName) == otherName;
+}
+
+void MatchVisitor::clearName(const std::string &thisName) {
+    ASSERT(nameMap_.count(thisName));
+    nameMapImage_.erase(nameMap_.at(thisName));
+    nameMap_.erase(thisName);
 }
 
 #define CHECK(expr)                                                            \
@@ -59,6 +69,7 @@ void MatchVisitor::visit(const VarDef &op) {
         RECURSE(ldim, rdim);
     }
     RECURSE(op->body_, instance->body_);
+    clearName(op->name_);
 }
 
 void MatchVisitor::visit(const Var &op) {
@@ -407,6 +418,7 @@ void MatchVisitor::visit(const For &op) {
     RECURSE(op->end_, instance->end_);
     RECURSE(op->step_, instance->step_);
     RECURSE(op->body_, instance->body_);
+    clearName(op->iter_);
 }
 
 void MatchVisitor::visit(const If &op) {

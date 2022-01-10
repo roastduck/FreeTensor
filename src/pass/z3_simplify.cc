@@ -414,9 +414,7 @@ Stmt Z3Simplify::visit(const Assert &op) {
         return op->body_;
     }
     if (prove(notCond)) {
-        std::ostringstream os;
-        os << "Assertion always false: " << op;
-        throw InvalidProgram(os.str());
+        throw AssertAlwaysFalse("Assertion always false: " + toString(op));
     }
 
     push(cond);

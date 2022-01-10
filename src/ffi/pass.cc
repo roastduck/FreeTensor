@@ -10,6 +10,7 @@
 #include <pass/gpu/normalize_threads.h>
 #include <pass/gpu/simplex_buffers.h>
 #include <pass/grad.h>
+#include <pass/hoist_var_over_stmt_seq.h>
 #include <pass/make_1d_var.h>
 #include <pass/make_const_shape.h>
 #include <pass/make_parallel_reduction.h>
@@ -183,6 +184,11 @@ void init_ffi_pass(py::module_ &m) {
           static_cast<Func (*)(const Func &)>(&useBuiltinDiv), "func"_a);
     m.def("use_builtin_div",
           static_cast<Stmt (*)(const Stmt &)>(&useBuiltinDiv), "stmt"_a);
+
+    m.def("hoist_var_over_stmt_seq",
+          static_cast<Func (*)(const Func &)>(&hoistVarOverStmtSeq), "func"_a);
+    m.def("hoist_var_over_stmt_seq",
+          static_cast<Stmt (*)(const Stmt &)>(&hoistVarOverStmtSeq), "stmt"_a);
 
     // CPU
     m.def("cpu_lower_parallel_reduction",

@@ -17,6 +17,7 @@ from ffi import remove_dead_var
 from ffi import make_const_shape
 from ffi import make_1d_var
 from ffi import use_builtin_div
+from ffi import hoist_var_over_stmt_seq
 from ffi import cpu_lower_parallel_reduction
 from ffi import gpu_lower_parallel_reduction
 from ffi import gpu_make_sync

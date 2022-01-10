@@ -654,6 +654,8 @@ template <class Stream> std::string CodeGenC<Stream>::gen(DataType dtype) {
         return "float";
     case DataType::Int32:
         return "int32_t";
+    case DataType::Bool:
+        return "bool";
     default:
         ASSERT(false);
     }
