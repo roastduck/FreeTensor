@@ -470,14 +470,22 @@ class Transformer(ast.NodeTransformer):
         return location_helper(node, old_node)
 
     def visit_Assign(self, old_node: ast.Assign) -> ast.Assign:
-        '''Rule: `lhs = rhs` -> `lhs = assign('lhs', rhs)`'''
-        node = self.generic_visit(old_node)
+        '''Rule:
+        `lhs = rhs` -> `lhs = assign('lhs', rhs)`
+        `x.lhs = rhs` -> `x.lhs = assign('lhs', rhs)`
+        '''
+        node: ast.Assign = self.generic_visit(old_node)
         # FIXME: multi-assign not implemented
         if len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
-            node = ast.Assign(
-                node.targets,
-                call_helper(assign, ast.Constant(node.targets[0].id),
-                            node.value))
+            name = None
+            if isinstance(node.targets[0], ast.Name):
+                name = node.targets[0].id
+            elif isinstance(node.targets[0], ast.Attribute):
+                name = node.targets[0].attr
+            if name is not None:
+                node = ast.Assign(
+                    node.targets,
+                    call_helper(assign, ast.Constant(name), node.value))
         return location_helper(node, old_node)
 
     def visit_For(self, old_node: ast.For):
@@ -650,7 +658,7 @@ def into_staging(func, caller_env, src=None):
                   TerminalFormatter(bg='dark', linenos=True)))
 
     caller_env['ir'] = sys.modules['ir']
-    exec(source, caller_env)
+    exec(compile(source, f'<staging:{func.__name__}>', 'exec'), caller_env)
     return caller_env[func.__name__], file, func.__name__
 
 
