@@ -1,4 +1,3 @@
-#include <analyze/all_defs.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/hoist_var_over_stmt_seq.h>
 
@@ -45,12 +44,15 @@ Stmt HoistVarOverStmtSeq::visit(const ReduceTo &_op) {
 }
 
 Stmt HoistVarOverStmtSeq::visit(const StmtSeq &op) {
-    std::unordered_map<std::string, int> namesCnt, renameCnt;
+    std::unordered_map<std::string, int> namesCnt;
+    for (auto &&stmt : op->stmts_) {
+        if (stmt->nodeType() == ASTNodeType::VarDef) {
+            namesCnt[stmt.as<VarDefNode>()->name_]++;
+        }
+    }
+
     std::vector<Stmt> stmts;
     std::vector<VarDef> defs;
-    for (auto &&[id, name] : allDefs(op)) {
-        namesCnt[name]++;
-    }
     for (auto &&stmt : op->stmts_) {
         if (stmt->nodeType() == ASTNodeType::VarDef) {
             isFixPoint_ = false;
@@ -58,8 +60,7 @@ Stmt HoistVarOverStmtSeq::visit(const StmtSeq &op) {
             Stmt _newDef;
             if (namesCnt.at(def->name_) > 1) {
                 ASSERT(!rename_.count(def->name_));
-                rename_[def->name_] =
-                    def->name_ + "." + std::to_string(renameCnt[def->name_]++);
+                rename_[def->name_] = def->name_ + "." + def->id();
                 _newDef = (*this)(stmt);
                 rename_.erase(def->name_);
             } else {
