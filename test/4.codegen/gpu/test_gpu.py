@@ -503,7 +503,7 @@ def test_simplex_local_1():
     s.parallelize("L0", "threadIdx.x")
     s.parallelize("L1", "threadIdx.x")
     s.parallelize("L2", "threadIdx.x")
-    s.set_mem_type(":t", "gpu/local")
+    s.set_mem_type("t", "gpu/local")
     func = ir.lower(s.func(), target)
     print(func)
 
@@ -516,9 +516,9 @@ def test_simplex_local_1():
                 with ir.VarDef("t", (10,), "int32", "cache", "gpu/local") as t:
                     with ir.For("j", 0, 10) as j:
                         t[j] = x[b, i, j] * 2
-                    with ir.For("j", 0, 10) as j:
+                    with ir.For("j$1", 0, 10) as j:
                         y[b, i, j] = t[j] + 1
-                    with ir.For("j", 0, 10) as j:
+                    with ir.For("j$2", 0, 10) as j:
                         z[b, i, j] = t[j] + 2
     assert ir.make_1d_var(ir.pop_ast()).match(func.body)
 
@@ -563,7 +563,7 @@ def test_simplex_local_2():
     s.parallelize("Lb", "blockIdx.x")
     s.parallelize("L0", "threadIdx.x")
     s.parallelize("L1", "threadIdx.x")
-    s.set_mem_type(":t", "gpu/local")
+    s.set_mem_type("t", "gpu/local")
     func = ir.lower(s.func(), target)
     print(func)
 
@@ -576,9 +576,9 @@ def test_simplex_local_2():
                 with ir.VarDef("t", (10,), "int32", "cache", "gpu/local") as t:
                     with ir.For("j", 0, 10) as j:
                         t[j] = x[b, i, j] * 2
-                    with ir.For("j", 0, 10) as j:
+                    with ir.For("j$1", 0, 10) as j:
                         t[j] += t[i]
-                    with ir.For("j", 0, 10) as j:
+                    with ir.For("j$2", 0, 10) as j:
                         y[b, i, j] = t[j] + 1
     assert ir.make_1d_var(ir.make_reduction(ir.pop_ast())).match(func.body)
 

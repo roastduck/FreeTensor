@@ -1,903 +1,641 @@
+'''
+New transformer implementation based on generating a staging function.
+'''
+
 import collections
+
 import ffi
 
 import sys
 import ast
 import numpy as np
 import inspect
+import traceback
 import sourceinspect as ins
 import copy
-from typing import Sequence, Optional, Mapping, Any
+from typing import Callable, Dict, List, Sequence, Optional, Mapping, Any, Tuple, Union
+from dataclasses import dataclass
 
 from . import nodes
 from .nodes import (_VarDef, Var, pop_ast, For, If, Else, MarkNid, intrinsic,
-                    l_and, l_or, l_not, if_then_else, ctx_stack as node_ctx,
-                    Func, Assert)
+                    l_and, l_or, l_not, if_then_else, ctx_stack, Func, Assert)
 from .utils import *
 
 assert sys.version_info >= (3,
                             8), "Python version lower than 3.8 is not supported"
 
 
-def declare_var(var, shape, dtype, atype, mtype, name=None):
-    pass
+class TransformError(Exception):
+    '''Error occurred during AST transforming from python function to staging function that generates IR tree.'''
+
+    def __init__(self, message: str, filename: str, base_lineno: int,
+                 error_node: ast.AST) -> None:
+        super().__init__(
+            f'At {filename}:{base_lineno + error_node.lineno}:\n    {message}.')
 
 
-def create_var(shape, dtype, atype, mtype, name=None):
+class StagingError(Exception):
+    '''Error occurred during staging function execution (i.e. IR tree generation).'''
+
+    def __init__(self, message: str) -> None:
+        # TODO: add output of StagingContext.call_stack
+        super().__init__(
+            f'{message}:\n{"".join(traceback.format_list(StagingContext.call_stack[1:]))}'
+            .lstrip())
+
+
+@dataclass
+class FunctionScope:
+    filename: str
+    funcname: str
+
+    def __enter__(self):
+        StagingContext.call_stack.append(
+            traceback.FrameSummary(self.filename, 1, self.funcname))
+
+    def __exit__(self, exc_class, exc_value, traceback):
+        if exc_class is None:
+            StagingContext.call_stack.pop()
+
+
+class NamingScope(FunctionScope):
+
+    def __init__(self, filename: str, funcname: str,
+                 namespace: Optional[str]) -> None:
+        super().__init__(filename, funcname)
+        if len(StagingContext.naming_stack) > 0 and namespace is None:
+            raise StagingError('Namespace must not be None for inner levels.')
+        self.namespace = namespace
+        self.names = {}
+
+    def __enter__(self):
+        super().__enter__()
+        StagingContext.naming_stack.append(self)
+        StagingContext.allow_return_stack.append(True)
+
+    def __exit__(self, _1, _2, _3):
+        super().__exit__(_1, _2, _3)
+        popped = StagingContext.naming_stack.pop()
+        if popped != self:
+            raise StagingError('NamingScope enter/exit not match, must be FILO')
+        StagingContext.allow_return_stack.pop()
+
+    def fullname(self, name: str):
+        if self.namespace is not None:
+            prefix = self.namespace + ':'
+        else:
+            prefix = ''
+
+        if name in self.names:
+            suffix = '$' + str(self.names[name])
+            self.names[name] += 1
+        else:
+            suffix = ''
+            self.names[name] = 1
+
+        return prefix + name + suffix
+
+
+class LifetimeScope:
+
+    def __init__(self):
+        self.implicit_scopes = []
+
+    def __enter__(self):
+        StagingContext.lifetime_stack.append(self)
+        StagingContext.allow_return_stack.append(False)
+
+    def __exit__(self, _1, _2, _3):
+        for scope in reversed(self.implicit_scopes):
+            scope.__exit__(None, None, None)
+        popped = StagingContext.lifetime_stack.pop()
+        if popped != self:
+            raise StagingError(
+                'LifetimeScope enter/exit not match, must be FILO')
+        StagingContext.allow_return_stack.pop()
+
+    def register_implicit_scope(self, scope):
+        self.implicit_scopes.append(scope)
+        return scope.__enter__()
+
+
+class StagingContext:
+    '''Helper class managing context in IR staging.'''
+    naming_stack: List[NamingScope] = []
+    lifetime_stack: List[LifetimeScope] = []
+    allow_return_stack: List[bool] = []
+    closure: Dict[str, Any] = {}
+    call_stack: List[traceback.FrameSummary] = []
+
+    @staticmethod
+    def register_implicit_scope(scope):
+        return StagingContext.lifetime_stack[-1].register_implicit_scope(scope)
+
+    @staticmethod
+    def fullname(name: str) -> str:
+        '''Get namespace-prepended full name of given short name.'''
+        return StagingContext.naming_stack[-1].fullname(name)
+
+    @staticmethod
+    def allow_return():
+        return StagingContext.allow_return_stack[-1]
+
+    @staticmethod
+    def in_staging():
+        return len(StagingContext.lifetime_stack) > 0
+
+    @staticmethod
+    def reset():
+        StagingContext.naming_stack.clear()
+        StagingContext.lifetime_stack.clear()
+        StagingContext.closure = {}
+        StagingContext.call_stack = []
+
+
+def prepare_vardef(name: str,
+                   override: bool = False,
+                   capture: Optional[ffi.Array] = None):
+    fullname = StagingContext.fullname(name) if not override else name
+    if capture:
+        StagingContext.closure[fullname] = capture
+    if ctx_stack.top().get_next_nid() == '':
+        ctx_stack.top().set_next_nid(fullname)
+    return fullname
+
+
+def staged_callable(staging, original):
+
+    def impl(*args, **kwargs):
+        if StagingContext.in_staging():
+            return staging(*args, **kwargs)
+        else:
+            return original(*args, **kwargs)
+
+    return impl
+
+
+class StagedAssignable:
+
+    def assign(self, name: str) -> Var:
+        raise NotImplementedError()
+
+
+def assign(name: str, value):
+    '''Customized assign wrapper.
+    If `value` is instance of `StagedAssignable`, it's regarded as a customized assign behavior and
+    gets executed with the assigned target variable name.
+    This wrapper is used for initializing a variable.
+    '''
+    if isinstance(value, StagedAssignable):
+        return value.assign(name)
+    else:
+        return value
+
+
+class StagedIterable:
+
+    def foreach(self, name: str, f: Callable[[Any], None]):
+        raise NotImplementedError()
+
+
+def foreach(name: str, iter, body: Callable[[Any], None]) -> None:
+    '''Customized foreach wrapper.
+    If `value` is instance of `StagedIterable`, its regarded as a customized foreach behavior and
+    used to generate code for the python for loop.
+    Otherwise, we try to execute the loop as usual.
+    '''
+    if isinstance(iter, StagedIterable):
+        iter.foreach(name, body)
+    else:
+        for iter_var in iter:
+            body(iter_var)
+
+
+@dataclass
+class VarCreator(StagedAssignable):
+    shape: Union[Sequence, Var]
+    dtype: str
+    mtype: str
+
+    def assign(self, name: str) -> Var:
+        '''Customized assign behavior. Creates a VarDef with its full name.'''
+        return StagingContext.register_implicit_scope(
+            _VarDef(prepare_vardef(name), self.shape, self.dtype, 'cache',
+                    self.mtype))
+
+
+def create_var_staging(shape, dtype, mtype):
+    return VarCreator(shape, dtype, mtype)
+
+
+def create_var_fallback(shape, dtype, mtype):
     return np.zeros(shape, dtype)
 
 
-class ASTContext:
-
-    def __init__(self):
-        self.vardef_stack = []
-        self.var_dict = {}
-        self.old_vars = []
+create_var = staged_callable(create_var_staging, create_var_fallback)
+'''Create a IR variable.'''
 
 
-class IRError(ffi.InvalidProgram):
+def declare_var_staging(name, shape, dtype, atype, mtype):
+    return StagingContext.register_implicit_scope(
+        _VarDef(prepare_vardef(name, override=True), shape, dtype, atype,
+                mtype))
+
+
+def declare_var_fallback(name, shape, dtype, atype, mtype):
     pass
 
 
-class ASTContextStack:
-
-    def __init__(self):
-        self.ctx_stack = []
-        self.name_map = {}
-        self.next_nid = ""
-        self.now_context_id = 0
-        node_ctx.reset()
-        self.transformers = []
-
-    def top(self) -> ASTContext:
-        return self.ctx_stack[-1]
-
-    def get_current_name(self, name):
-        return self.name_map.get(name)
-
-    def create_current_name(self, name, atype, override_name=None):
-        if override_name is not None:
-            if override_name in self.name_map:
-                assert False, f"Name {override_name} already exists"
-            self.name_map[name] = override_name
-            return override_name
-
-        modify_name = lambda old, i: "$" + old + (""
-                                                  if i == 0 else "_" + str(i))
-        name_id = 0
-        while modify_name(name, name_id) in self.name_map:
-            name_id += 1
-        new_name = modify_name(name, name_id)
-        self.name_map[name] = new_name
-        return new_name
-
-    def find_var_by_name(self, name) -> Optional[Var]:
-        name = self.get_current_name(name)
-
-        for ctx in reversed(self.ctx_stack):  # type: ASTContext
-            if name in ctx.old_vars:
-                assert False, f"Variable {name} reassigned in if/for/while"
-            var = ctx.var_dict.get(name)
-            if var is not None:
-                return var
-
-        return None
-
-    def create_scope(self):
-        self.ctx_stack.append(ASTContext())
-
-    def pop_scope(self):
-        assert self.ctx_stack, "Bug: scope stack is empty when pop_scope"
-        popped = self.ctx_stack.pop()  # type: ASTContext
-        if self.ctx_stack:
-            top = self.top()
-            top.old_vars.extend(popped.var_dict.keys())
-        for var in reversed(popped.vardef_stack):
-            var.__exit__(None, None, None)
-
-    def create_variable(self,
-                        name,
-                        shape,
-                        dtype,
-                        atype,
-                        mtype,
-                        override_name=None):
-        name = self.create_current_name(name,
-                                        atype,
-                                        override_name=override_name)
-        vardef = _VarDef(name, shape, dtype, atype, mtype)
-        var = vardef.__enter__()
-        top = self.top()
-        top.vardef_stack.append(vardef)
-        top.var_dict[name] = var
-        return var
-
-    def create_assert(self, cond):
-        assrt = Assert(cond)
-        assrt.__enter__()
-        top = self.top()
-        top.vardef_stack.append(assrt)
-
-    def create_loop(self, name, begin, end, step):
-        name = self.create_current_name(name, "cache")
-        fr = For(name, begin, end, step, self.get_nid(), self.get_no_deps(),
-                 self.get_prefer_libs())
-        var = fr.__enter__()
-        top = self.top()
-        top.var_dict[name] = var
-        return fr
-
-    def set_nid(self, name: str):
-        MarkNid(name)
-
-    def get_nid(self):
-        ret = node_ctx.top().get_next_nid()
-        MarkNid("")
-        return ret
-
-    def set_no_deps(self, name):
-        node_ctx.top().add_next_no_deps(name)
-
-    def get_no_deps(self):
-        ret = node_ctx.top().get_next_no_deps()
-        node_ctx.top().reset_next_no_deps()
-        return ret
-
-    def set_prefer_libs(self, prefer_libs=True):
-        node_ctx.top().set_next_prefer_libs(prefer_libs)
-
-    def get_prefer_libs(self):
-        ret = node_ctx.top().get_next_prefer_libs()
-        node_ctx.top().set_next_prefer_libs(False)
-        return ret
-
-    def new_context_id(self):
-        self.now_context_id += 1
-        return self.now_context_id
-
-    def push_transformer(self, transformer):
-        self.transformers.append(transformer)
-
-    def pop_transformer(self):
-        self.transformers.pop()
-
-    def error(self, message="Assertion Failed"):
-        msg = "\n"
-        for transformer in self.transformers:
-            msg += transformer.frame_info()
-        msg += message
-        raise IRError(msg)
+declare_var = staged_callable(declare_var_staging, declare_var_fallback)
+'''Declare parameter as a variable.'''
 
 
-class VarCreation:
-
-    def __init__(self,
-                 ctx_stack: ASTContextStack,
-                 shape: Sequence,
-                 dtype,
-                 atype,
-                 mtype,
-                 name=None,
-                 override_name=None):
-        self.ctx_stack = ctx_stack
-        self.shape = shape
-        self.dtype = dtype
-        self.atype = atype
-        self.mtype = mtype
-        self.name = name
-        self.override_name = override_name
-
-    def add_name(self, name):
-        assert self.name is None, "Bug: Variable name is set more than once"
-        self.name = name
-
-    def execute(self):
-        assert self.name is not None, "Bug: Variable name is not set"
-        return self.ctx_stack.create_variable(self.name,
-                                              self.shape,
-                                              self.dtype,
-                                              self.atype,
-                                              self.mtype,
-                                              override_name=self.override_name)
+def capture_var_fallback(arr: ffi.Array, name: str = 'captured'):
+    return arr.numpy()
 
 
-class InlineFunction:
-
-    def __init__(self, name, body, params, globals, file, src, lineno):
-        self.name = name
-        self.body = body
-        self.params = params
-        self.globals = globals
-        self.arg_var = None
-        self.src = src
-        self.lineno = lineno
-        self.file = file
-
-        # Fall back to op-based manner if run from outside of a compiled region
-        self.fallback = None
-
-    def set_arg_var(self, arg_var):
-        self.arg_var = arg_var
-
-    def expand(self, ctx_stack, nid):
-        assert self.arg_var is not None
-        transformer = ASTTransformer(ctx_stack, self.params, self.globals,
-                                     self.file, self.src, self.lineno, True)
-        transformer.set_replace(self.arg_var, nid)
-        ctx_stack.push_transformer(transformer)
-        for stmt in self.body:
-            transformer.visit(stmt)
-        ctx_stack.pop_transformer()
-        return transformer.returns
-
-    def set_fallback(self, fallback):
-        self.fallback = fallback
-
-    def __call__(self, *args, **kvs):
-        if self.fallback is None:
-            raise ffi.InvalidProgram(
-                "A fallback function should be specified is you want to "
-                "directly run a InlineFunction without compilation")
-        return self.fallback(*args, **kvs)
+def capture_var_staging(arr: ffi.Array, name: str = 'captured'):
+    return StagingContext.register_implicit_scope(
+        _VarDef(prepare_vardef(name, capture=arr), arr.shape, arr.dtype,
+                'input', arr.device.main_mem_type()))
 
 
-class ASTTransformer(ast.NodeTransformer):
+capture_var = staged_callable(capture_var_staging, capture_var_fallback)
+'''Capture external array as tensor variable.'''
 
-    def __init__(self,
-                 ctx_stack: ASTContextStack,
-                 params: Sequence[str],
-                 globals: Mapping[str, Any],
-                 file,
-                 src,
-                 lineno,
-                 is_inline: bool = False):
-        super().__init__()
-        self.ctx_stack = ctx_stack
-        self.params = params
-        self.globals = globals
-        self.is_inline = is_inline
-        self.allow_undefined = False
-        self.replace = {}
-        self.arg_var = {}
-        self.created_vars = set()
-        self.returned = False
-        self.returns = []
-        self.closure = {}
-        self.prefix = ""
-        self.nid = ""
-        self.now_pos = 0
-        self.file = file
-        self.src = []
-        for line in src:
-            if len(line) and line[-1] != '\n':
-                line += '\n'
-            self.src.append(line)
-        self.start_from = lineno
 
-    def visit(self, node):
-        """Visit a node."""
-        prev_pos = self.now_pos
-        if hasattr(node, "lineno"):
-            self.now_pos = node.lineno
-        method = 'visit_' + node.__class__.__name__
-        visitor = getattr(self, method, self.generic_visit)
-        try:
-            ret = visitor(node)
-            self.now_pos = prev_pos
-            return ret
-        except IRError as e:
-            raise e
-        except Exception as e:
-            self.ctx_stack.error(type(e).__name__ + ": " + e.args[0])
+class dynamic_range(StagedIterable):
+    '''Dynamic range that generates For loop in IR tree.'''
 
-    def frame_info(self):
-        lineno = self.now_pos - 1
-        return f"On line {lineno + self.start_from} in file {self.file}: \n{self.src[lineno]}"
-
-    def set_replace(self, arg_var, prefix):
-        self.arg_var = arg_var
-        if prefix:
-            self.prefix = prefix
+    def __init__(self, start, stop=None, step=1) -> None:
+        '''Initialize a dynamic range. Arguments semantic identical to builtin `range`.'''
+        if stop:
+            self.start = start
+            self.stop = stop
         else:
-            self.prefix = '#' + str(self.ctx_stack.new_context_id())
+            self.start = 0
+            self.stop = start
+        self.step = step
 
-    @staticmethod
-    def parse_stmt(stmt):
-        return ast.parse(stmt).body[0]
+    def foreach(self, name: str, body: Callable[[Any], None]) -> None:
+        '''Customized foreach behavior. Creates a For loop.'''
+        with For(StagingContext.fullname(name), self.start, self.stop,
+                 self.step) as iter_var:
+            with LifetimeScope():
+                body(iter_var)
 
-    @staticmethod
-    def parse_expr(expr):
-        return ast.parse(expr).body[0].value
 
-    def get_name(self, name):
-        if name in self.replace:
-            while name in self.replace:
-                name = self.replace[name]
-        elif name in self.created_vars:
-            name = self.prefix + ':' + name
-        return name
+def if_then_else_stmt(predicate, then_body, else_body=None):
+    '''If-then-else statement staging tool.
+    When predicate is deterministic in staging, only one branch is generated.
+    Otherwise, a If node in IR is generated.
+    '''
+    if type(predicate) == bool:
+        if predicate:
+            then_body()
+        elif else_body:
+            else_body()
+    else:
+        with If(predicate):
+            with LifetimeScope():
+                then_body()
+        if else_body:
+            with Else():
+                with LifetimeScope():
+                    return else_body()
 
-    def visit_Name(self, node):
-        if node.id in self.arg_var:
-            node.expr_ptr = self.arg_var[node.id]
-            return node
-        name = self.get_name(node.id)
-        var = self.ctx_stack.find_var_by_name(name)
-        if var is None:
-            if node.id in self.globals:
-                var = self.globals[node.id]  # self.globals[node.id] can be None
-            else:
-                assert self.allow_undefined, f"Variable {node.id} (a.k.a {name}) used without declaration or creation"
-        node.expr_ptr = var
-        return node
 
-    def visit_Assert(self, node):
-        self.generic_visit(node)
-        self.ctx_stack.create_assert(node.test.expr_ptr)
-        return node
+def if_then_else_expr(predicate, then_expr, else_expr):
+    '''If-then-else expression staging tool.'''
+    return if_then_else(predicate, then_expr, else_expr)
 
-    def visit_Constant(self, node):
-        node.expr_ptr = node.value
-        return node
 
-    def visit_Attribute(self, node):
-        self.generic_visit(node)
-        if isinstance(node.value.expr_ptr, Var) and node.attr == "shape":
-            node.expr_ptr = lambda idx: node.value.expr_ptr.shape(idx)
-        elif isinstance(node.value.expr_ptr, Var) and node.attr == "ndim":
-            node.expr_ptr = node.value.expr_ptr.ndim
-        elif isinstance(node.value.expr_ptr, Var) and node.attr == "dtype":
-            node.expr_ptr = node.value.expr_ptr.dtype
-        elif isinstance(node.value.expr_ptr, Var) and node.attr == "mtype":
-            node.expr_ptr = node.value.expr_ptr.mtype
-        elif isinstance(node.value.expr_ptr, Var) and node.attr == "select":
-            node.expr_ptr = lambda idx, dim: node.value.expr_ptr.select(
-                idx, dim)
+def return_stmt(value):
+    '''Return staging tool. Only allow return in static control flow.'''
+    if not StagingContext.allow_return():
+        raise StagingError(
+            'Return is only allowed in statically deterministic control flow.')
+    return value
+
+
+def assert_stmt(test):
+    '''Assert staging tool.'''
+    if isinstance(test, ffi.Expr):
+        StagingContext.register_implicit_scope(Assert(test))
+    else:
+        assert test
+
+
+def boolop_expr(native_reducer, ir_reducer, lazy_args):
+    result = lazy_args[0]()
+    for f in lazy_args[1:]:
+        if isinstance(result, ffi.Expr):
+            result = ir_reducer(result, f)
         else:
-            node.expr_ptr = getattr(node.value.expr_ptr, node.attr)
-        return node
+            result = native_reducer(result, f)
+    return result
 
-    def visit_Slice(self, node):
-        self.generic_visit(node)
-        start = node.lower.expr_ptr if getattr(node, "lower",
-                                               None) is not None else None
-        stop = node.upper.expr_ptr if getattr(node, "upper",
-                                              None) is not None else None
-        step = node.step.expr_ptr if getattr(node, "step",
-                                             None) is not None else None
-        node.expr_ptr = slice(start, stop, step)
-        return node
 
-    def visit_Index(self, node):
-        self.generic_visit(node)
-        node.expr_ptr = node.value.expr_ptr
-        return node
+def and_expr(*lazy_args):
+    return boolop_expr(lambda a, fb: a and fb(), lambda a, fb: l_and(a, fb()),
+                       lazy_args)
 
-    def visit_ExtSlice(self, node):
-        self.generic_visit(node)
-        node.expr_ptr = tuple(map(lambda x: x.expr_ptr, node.dims))
-        return node
 
-    def visit_Subscript(self, node):
-        self.generic_visit(node)
-        var = node.value.expr_ptr
-        sub = node.slice.expr_ptr
-        assert var is not None
-        node.expr_ptr = var[sub]
-        return node
+def or_expr(*lazy_args):
+    return boolop_expr(lambda a, fb: a or fb(), lambda a, fb: l_or(a, fb()),
+                       lazy_args)
 
-    def visit_BinOp(self, node):
-        self.generic_visit(node)
-        assert hasattr(node.left, "expr_ptr"), "left operand is not expression"
-        assert hasattr(node.right,
-                       "expr_ptr"), "right operand is not expression"
-        op = {
-            ast.Add: lambda l, r: l + r,
-            ast.Sub: lambda l, r: l - r,
-            ast.Mult: lambda l, r: l * r,
-            ast.Div: lambda l, r: l / r,
-            ast.FloorDiv: lambda l, r: l // r,
-            ast.Mod: lambda l, r: l % r,
-        }.get(type(node.op))
-        assert op is not None, "Binary operator not implemented"
-        node.expr_ptr = op(node.left.expr_ptr, node.right.expr_ptr)
-        return node
 
-    def visit_BoolOp(self, node):
-        self.generic_visit(node)
-        for i in node.values:
-            assert hasattr(i, "expr_ptr"), "Bool operand is not expression"
-        assert len(
-            node.values) > 1, "Bug: Bool operator has less than one operand"
-        op = {
-            ast.And: lambda l, r: l_and(l, r),
-            ast.Or: lambda l, r: l_or(l, r),
-        }.get(type(node.op))
-        assert op is not None, "Bool operator not implemented"
-        expr = op(node.values[0].expr_ptr, node.values[1].expr_ptr)
-        for i in node.values[2:]:
-            expr = op(expr, i.expr_ptr)
-        node.expr_ptr = expr
-        return node
+def not_expr(arg):
+    if isinstance(arg, ffi.Expr):
+        return l_not(arg)
+    else:
+        return not arg
 
-    def visit_UnaryOp(self, node):
-        self.generic_visit(node)
-        assert hasattr(node.operand,
-                       "expr_ptr"), "Unary operand is not expression"
-        op = {
-            ast.Not: lambda l: l_not(l),
-            ast.USub: lambda l: 0 - l,
-        }.get(type(node.op))
-        assert op is not None, "Unary operator not implemented"
-        node.expr_ptr = op(node.operand.expr_ptr)
-        return node
 
-    def visit_IfExp(self, node):
-        self.generic_visit(node)
-        node.expr_ptr = if_then_else(node.test.expr_ptr, node.body.expr_ptr,
-                                     node.orelse.expr_ptr)
-        return node
+def functiondef_wrapper(filename, funcname):
+    namespace = ctx_stack.top().get_next_nid()
+    ctx_stack.top().set_next_nid('')
+    if namespace == '':
+        return FunctionScope(filename, funcname)
+    else:
+        return NamingScope(filename, funcname, namespace)
 
-    def visit_FunctionDef(self, node):
-        self.ctx_stack.create_scope()
-        self.generic_visit(node)
-        self.ctx_stack.pop_scope()
-        return node
 
-    def get_shape(self, data, shape=None):
-        if shape is None:
-            shape = []
-        if isinstance(data, collections.abc.Sequence):
-            shape.append(len(data))
-            if len(data):
-                self.get_shape(data[0], shape)
-        return shape
+def mark_nid(nid: str):
+    ctx_stack.top().set_next_nid(StagingContext.fullname(nid))
 
-    def visit_Call(self, node):
 
-        self.visit(node.func)
-        callee = node.func.expr_ptr
+def mark_no_deps(no_deps: str):
+    ctx_stack.top().add_next_no_deps(no_deps)
 
-        args = []
-        kws = {}
-        if callee is declare_var:
-            assert len(
-                node.args) == 5, "declare_var function requries 5 arguments"
-            assert isinstance(node.args[0], ast.Name)
-            self.allow_undefined = True
-            self.visit(node.args[0])
-            self.allow_undefined = False
-            args.append(node.args[0].id)
-            for i in range(1, 5):
-                self.visit(node.args[i])
-                args.append(node.args[i].expr_ptr)
-        else:
-            for arg in node.args:
-                self.visit(arg)
-                args.append(arg.expr_ptr)
-        for item in node.keywords:
-            self.visit(item)
-            kws[item.arg] = item.value.expr_ptr
 
-        if callee is create_var:
-            shape, dtype, mtype = args
+def mark_prefer_libs():
+    ctx_stack.top().set_next_prefer_libs()
 
-            override_name = kws.get("name")
-            node.expr_ptr = VarCreation(self.ctx_stack,
-                                        shape,
-                                        dtype,
-                                        "cache",
-                                        mtype,
-                                        override_name=override_name)
-        elif callee is declare_var:
-            name, shape, dtype, atype, mtype = args
-            override_name = kws.get("name")
-            nid = name
-            if self.prefix:
-                nid = self.prefix + ':' + nid
-            MarkNid(nid)
-            if self.prefix:
-                name = self.get_name(name)
-                var = self.ctx_stack.find_var_by_name(name)
-            else:
-                assert name in self.params, f"Parameter {name} not found"
-                VarCreation(self.ctx_stack,
-                            shape,
-                            dtype,
-                            atype,
-                            mtype,
-                            name,
-                            override_name=name).execute()
-        elif callee is MarkNid:
-            nid, = args
-            self.ctx_stack.set_nid(nid)
-        elif callee is nodes.min:
-            lhs, rhs = args
-            node.expr_ptr = nodes.min(lhs, rhs)
-        elif callee is nodes.max:
-            lhs, rhs = args
-            node.expr_ptr = nodes.max(lhs, rhs)
-        elif callee is nodes.abs:
-            expr, = args
-            node.expr_ptr = nodes.abs(expr)
-        elif callee is nodes.sqrt:
-            expr, = args
-            node.expr_ptr = nodes.sqrt(expr)
-        elif callee is nodes.exp:
-            expr, = args
-            node.expr_ptr = nodes.exp(expr)
-        elif callee is intrinsic:
-            fmt_str = args[0]
-            expr_args = args[1:]
-            ret_type = ffi.DataType.Void
-            if "ret_type" in kws:
-                ret_type = parseDType(kws["ret_type"])
-            node.expr_ptr = ffi.makeIntrinsic(fmt_str, expr_args, ret_type)
-        elif isinstance(callee, ffi.Func):
-            raise ffi.InvalidProgram("Please use @ir.inline for subroutines")
-        elif isinstance(callee, InlineFunction):
-            callee = copy.copy(
-                callee)  # Different call sites should be different
-            if len(args) != len(callee.params):
-                raise ffi.InvalidProgram(
-                    f"Number of arguments does not match when calling {callee.name}, {len(callee.params)} needed, but {len(args)} provided"
-                )
 
-            nid = '#' + str(self.ctx_stack.new_context_id())
-            arg_var = {}
-            for arg, param in zip(args, callee.params):
-                if self.nid:
-                    name = self.nid + ":" + param
-                else:
-                    name = nid + ":" + param
-                MarkNid(name)
-                if isinstance(arg, Var):
-                    arg_var[param] = arg
-                elif isinstance(arg, InlineFunction):
-                    # only support single return value now
-                    returns = arg.expand(self.ctx_stack, name)
-                    assert len(returns) == 1, "only support single return value"
-                    arg_var[param] = returns[0][1]
-                elif isinstance(arg, ffi.Array):
-                    var = VarCreation(self.ctx_stack,
-                                      arg.shape,
-                                      arg.dtype,
-                                      "input",
-                                      arg.device.main_mem_type(),
-                                      name,
-                                      override_name=name).execute()
-                    self.closure[name] = arg
-                    arg_var[param] = var
-                elif isinstance(arg, int):
-                    # FIXME: int64?
-                    var = VarCreation(self.ctx_stack, (), "int32", "cache",
-                                      "byvalue", name).execute()
-                    arg_var[param] = var
-                    var[()] = arg
-                elif isinstance(arg, float):
-                    # FIXME: float64
-                    var = VarCreation(self.ctx_stack, (), "float32", "cache",
-                                      "byvalue", name).execute()
-                    arg_var[param] = var
-                    var[()] = arg
-                elif isinstance(arg, bool):
-                    var = VarCreation(self.ctx_stack, (), "bool", "cache",
-                                      "byvalue", name).execute()
-                    arg_var[param] = var
-                    var[()] = arg
-                else:
-                    assert False, f"Invalid function argument calling {callee.name}"
-            callee.set_arg_var(arg_var)
-            node.expr_ptr = callee
-        else:
-            node.expr_ptr = callee(*args, **kws)
-        return node
+def mark_position(base_lineno: int, line_offset: int):
+    original = StagingContext.call_stack[-1]
+    lineno = base_lineno + line_offset - 1
+    StagingContext.call_stack[-1] = traceback.FrameSummary(
+        original.filename, lineno, original.name)
 
-    def visit_Tuple(self, node):
-        self.generic_visit(node)
-        tup = []
-        for i in node.elts:
-            assert hasattr(i, "expr_ptr"), "Invalid tuple"
-            tup.append(i.expr_ptr)
-        tup = tuple(tup)
-        node.expr_ptr = tup
-        return node
 
-    def visit_List(self, node):
-        self.generic_visit(node)
-        lst = []
-        for i in node.elts:
-            assert hasattr(i, "expr_ptr"), "Invalid list"
-            lst.append(i.expr_ptr)
-        node.expr_ptr = lst
-        return node
+def module_helper(callee):
+    '''Helper to get an AST node with full path to given symbol, which should be in current module.'''
+    return ast.Attribute(
+        ast.Attribute(ast.Name('ir', ast.Load()), 'transformer', ast.Load()),
+        callee.__name__, ast.Load())
 
-    def visit_Assign(self, node):
-        self.nid = self.ctx_stack.get_nid()
-        self.allow_undefined = True
-        for tgt in node.targets:
-            self.visit(tgt)
-        self.allow_undefined = False
-        self.visit(node.value)
 
-        # TODO: (maybe) support for multiple assignment
-        assert len(node.targets) == 1, "Multiple assignment is not supported"
-        for target in node.targets:
-            assert hasattr(
-                target,
-                "expr_ptr"), "Target to be assigned is not an expression"
-        assert hasattr(node.value,
-                       "expr_ptr"), "Value to be assigned is not an expression"
-        if isinstance(node.value.expr_ptr, InlineFunction):
-            targets = []
-            if isinstance(node.targets[0], ast.Tuple):
-                for target in node.targets[0].elts:
-                    assert isinstance(target, ast.Name), "Target must be a name"
-                    # FIXME
-                    # assert target.expr_ptr is None, f"Variable {target.id} already exists"
-                    targets.append(target.id)
-            else:
-                assert isinstance(node.targets[0],
-                                  ast.Name), "Target must be a name"
-                # FIXME
-                # assert node.targets[
-                #     0].expr_ptr is None, f"Variable {node.targets[0].id} already exists"
-                targets.append(node.targets[0].id)
-            returns = node.value.expr_ptr.expand(self.ctx_stack, self.nid)
-            for target, ret in zip(targets, returns):
-                self.replace[target] = ret[0]
-        elif isinstance(node.value.expr_ptr, VarCreation):
-            self.created_vars.add(node.targets[0].id)
-            name = self.get_name(node.targets[0].id)
-            nid = name
-            MarkNid(nid)
-            var_creation = node.value.expr_ptr
-            var_creation.add_name(name)
-            var_creation.execute()
-        elif isinstance(node.targets[0], ast.Subscript):
-            MarkNid(self.nid)
-            var = node.targets[0].value.expr_ptr
-            sub = node.targets[0].slice.expr_ptr
-            var[sub] = node.value.expr_ptr
-        else:
-            assert False, "Invalid assignment"
-        return node
+def call_helper(callee, *args: ast.expr, **kwargs: ast.expr):
+    '''Call helper that generates a python AST Call node with given callee and arguments AST node.'''
+    return ast.Call(module_helper(callee), list(args),
+                    [ast.keyword(k, w) for k, w in kwargs.items()])
 
-    def visit_AugAssign(self, node):
-        import copy
 
-        target_load = copy.copy(node.target)
-        target_load.ctx = ast.Load()
-        target_load = self.visit(target_load)
+def function_helper(name: str, args: Sequence[str], body: List[ast.stmt]):
+    '''Function helper that generates a python AST FunctionDef node with given name, arguments name, and body.'''
+    return ast.FunctionDef(name=name,
+                           args=ast.arguments(
+                               args=[],
+                               vararg=None,
+                               kwarg=None,
+                               posonlyargs=[ast.arg(a, None) for a in args],
+                               defaults=[],
+                               kwonlyargs=[],
+                               kw_defaults=[]),
+                           body=body,
+                           returns=None,
+                           decorator_list=[])
 
-        self.generic_visit(node)
-        assert hasattr(node.target,
-                       "expr_ptr"), "Target to be assigned is not an expression"
-        assert hasattr(node.value,
-                       "expr_ptr"), "Value to be assigned is not an expression"
-        if isinstance(node.target, ast.Subscript):
-            op = {
-                ast.Add: lambda l, r: l + r,
-                ast.Sub: lambda l, r: l - r,
-                ast.Mult: lambda l, r: l * r,
-                ast.Div: lambda l, r: l / r,
-                ast.FloorDiv: lambda l, r: l // r,
-                ast.Mod: lambda l, r: l % r,
-            }.get(type(node.op))
-            var = node.target.value.expr_ptr
-            sub = node.target.slice.expr_ptr
-            var[sub] = op(node.target.expr_ptr, node.value.expr_ptr)
-        else:
-            assert False, "Invalid augmented assignment"
-        return node
 
-    def visit_For(self, node):
-        if (isinstance(node.iter, ast.Call) and
-                isinstance(node.iter.func, ast.Name) and
-                node.iter.func.id == "range" and len(node.iter.args) > 0 and
-                len(node.iter.args) <= 2):
+def location_helper(new_nodes, old_node):
+    if not isinstance(new_nodes, list):
+        return ast.copy_location(new_nodes, old_node)
+    for n in new_nodes:
+        ast.copy_location(n, old_node)
+    return new_nodes
 
-            self.ctx_stack.create_scope()
-            name = node.target.id
-            if self.prefix:
-                self.created_vars.add(name)
-                name = self.prefix + ':' + name
-            if len(node.iter.args) == 1:
-                self.visit(node.iter.args[0])
-                assert hasattr(node.iter.args[0],
-                               "expr_ptr"), "For range is not expression"
-                begin = 0
-                end = node.iter.args[0].expr_ptr
-                step = 1
-            elif len(node.iter.args) == 2:
-                self.visit(node.iter.args[0])
-                self.visit(node.iter.args[1])
-                assert hasattr(node.iter.args[0],
-                               "expr_ptr"), "For range is not expression"
-                assert hasattr(node.iter.args[1],
-                               "expr_ptr"), "For range is not expression"
-                begin = node.iter.args[0].expr_ptr
-                end = node.iter.args[1].expr_ptr
-                step = 1
-            else:
-                self.visit(node.iter.args[0])
-                self.visit(node.iter.args[1])
-                self.visit(node.iter.args[2])
-                assert hasattr(node.iter.args[0],
-                               "expr_ptr"), "For range is not expression"
-                assert hasattr(node.iter.args[1],
-                               "expr_ptr"), "For range is not expression"
-                assert hasattr(node.iter.args[2],
-                               "expr_ptr"), "For range is not expression"
-                begin = node.iter.args[0].expr_ptr
-                end = node.iter.args[1].expr_ptr
-                step = node.iter.args[2].expr_ptr
-            fr = self.ctx_stack.create_loop(name, begin, end, step)
-            for i in node.body:
-                self.visit(i)
-            self.ctx_stack.pop_scope()
-            fr.__exit__(None, None, None)
-        else:
-            assert False, "Only ranged for statement is not supported"
-        return node
 
-    def visit_Expr(self, node):
-        if isinstance(node.value, ast.Constant) and isinstance(
+@dataclass
+class Transformer(ast.NodeTransformer):
+    filename: str
+    base_lineno: int
+
+    def visit(self, node: ast.AST):
+        new_node = super().visit(node)
+        if isinstance(node, ast.stmt) and not isinstance(node, ast.FunctionDef):
+            if not isinstance(new_node, list):
+                new_node = [new_node]
+            return location_helper([
+                ast.Expr(
+                    call_helper(mark_position, ast.Constant(self.base_lineno),
+                                ast.Constant(node.lineno)))
+            ] + new_node, node)
+        return new_node
+
+    def visit_Expr(self, old_node: ast.Expr) -> Any:
+        '''Rule:
+        `declare_var(x, ...)` -> `x = declare_var(x, ...)`: x is changed from a name string to a Var
+        '''
+        node: ast.Expr = self.generic_visit(old_node)
+        if isinstance(node.value, ast.Call):
+            func = node.value.func
+            if isinstance(func, ast.Attribute):
+                func = func.attr
+            elif isinstance(func, ast.Name):
+                func = func.id
+            if func == 'declare_var':
+                target = node.value.args[0]
+                if not isinstance(target, ast.Name):
+                    raise TransformError(
+                        'declare_var is only allowed on top-level parameter',
+                        self.filename, self.base_lineno, target)
+                node.value.args[0] = ast.Constant(target.id)
+                target = ast.Name(target.id, ast.Store())
+                node = ast.Assign([target], node.value)
+        elif isinstance(node.value, ast.Constant) and isinstance(
                 node.value.value, str):
-            s = node.value.value
-            if s[0:5] == "nid: ":
-                name = s[5:]
-                if self.prefix:
-                    name = self.prefix + ':' + name
-                self.ctx_stack.set_nid(name)
-            if s[0:9] == "no_deps: ":
-                name = self.get_name(s[9:])
-                var = self.ctx_stack.find_var_by_name(name)
-                self.ctx_stack.set_no_deps(var.name)
-            if s == "prefer_libs":
-                self.ctx_stack.set_prefer_libs(True)
-            return node
+            text = node.value.value
+            if text.startswith('nid: '):
+                node = ast.Expr(
+                    call_helper(mark_nid, ast.Constant(text[5:], kind=None)))
+            elif text.startswith('no_deps: '):
+                node = ast.Expr(
+                    call_helper(mark_no_deps, ast.Constant(text[9:],
+                                                           kind=None)))
+            elif text.startswith('prefer_libs'):
+                node = ast.Expr(call_helper(mark_prefer_libs))
+        return location_helper(node, old_node)
 
-        self.nid = self.ctx_stack.get_nid()
-        self.generic_visit(node)
-        if hasattr(node.value, "expr_ptr") and isinstance(
-                node.value.expr_ptr, InlineFunction):
-            node.value.expr_ptr.expand(self.ctx_stack, self.nid)
-        return node
+    def visit_Assign(self, old_node: ast.Assign) -> ast.Assign:
+        '''Rule:
+        `lhs = rhs` -> `lhs = assign('lhs', rhs)`
+        `x.lhs = rhs` -> `x.lhs = assign('lhs', rhs)`
+        '''
+        node: ast.Assign = self.generic_visit(old_node)
+        # FIXME: multi-assign not implemented
+        if len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
+            name = None
+            if isinstance(node.targets[0], ast.Name):
+                name = node.targets[0].id
+            elif isinstance(node.targets[0], ast.Attribute):
+                name = node.targets[0].attr
+            if name is not None:
+                node = ast.Assign(
+                    node.targets,
+                    call_helper(assign, ast.Constant(name), node.value))
+        return location_helper(node, old_node)
 
-    def visit_If(self, node):
-        self.visit(node.test)
-        assert hasattr(node.test,
-                       "expr_ptr"), "If condition is not an expression"
+    def visit_For(self, old_node: ast.For):
+        '''Rule:
+        ```
+        for x in iter:
+            body
+        ```
+        ->
+        ```
+        def for_body(x):
+            body
+        foreach('x', iter, for_body)
+        ```'''
+        node = self.generic_visit(old_node)
+        if isinstance(node.target, ast.Name) and len(node.orelse) == 0:
+            node = [
+                function_helper('for_body', [node.target.id], node.body),
+                ast.Expr(
+                    call_helper(foreach, ast.Constant(node.target.id),
+                                node.iter, ast.Name('for_body', ast.Load())))
+            ]
+        return location_helper(node, old_node)
 
-        # static conditions allow illegal accesses in some branches
-        if node.test.expr_ptr is True:
-            for i in node.body:
-                self.visit(i)
-        elif node.test.expr_ptr is False:
-            for i in node.orelse:
-                self.visit(i)
+    def visit_Call(self, old_node: ast.Call):
+        '''Rule:
+        `range(...)` -> `dynamic_range(...)`
+        '''
+        node: ast.Call = self.generic_visit(old_node)
+        if isinstance(node.func, ast.Name):
+            if node.func.id == 'range':
+                node = ast.Call(module_helper(dynamic_range), node.args,
+                                node.keywords)
+        return location_helper(node, old_node)
+
+    def visit_If(self, old_node: ast.If):
+        '''Rule:
+        ```
+        if pred:
+            body
         else:
-            with If(node.test.expr_ptr):
-                self.ctx_stack.create_scope()
-                for i in node.body:
-                    self.visit(i)
-                self.ctx_stack.pop_scope()
-            if len(node.orelse) > 0:
-                with Else():
-                    self.ctx_stack.create_scope()
-                    for i in node.orelse:
-                        self.visit(i)
-                    self.ctx_stack.pop_scope()
-
-        return node
-
-    def visit_Compare(self, node):
-        self.generic_visit(node)
-        for i in node.comparators:
-            assert hasattr(i, "expr_ptr"), "Comparator is not an expression"
-        assert hasattr(node.left, "expr_ptr"), "Comparator is not an expression"
-        ops = {
-            ast.Eq: lambda x, y: x == y,
-            ast.NotEq: lambda x, y: x != y,
-            ast.Lt: lambda x, y: x < y,
-            ast.LtE: lambda x, y: x <= y,
-            ast.Gt: lambda x, y: x > y,
-            ast.GtE: lambda x, y: x >= y,
-        }
-        for i in node.ops:
-            assert type(i) in ops, "Compare operator not supported"
-        expr = ops[type(node.ops[0])](node.left.expr_ptr,
-                                      node.comparators[0].expr_ptr)
-        lf = node.comparators[0].expr_ptr
-        for op, comparator in zip(node.ops[1:], node.comparators[1:]):
-            expr = l_and(expr, ops[type(op)](lf, comparator.expr_ptr))
-            lf = comparator.expr_ptr
-        node.expr_ptr = expr
-        return node
-
-    def visit_Return(self, node):
-        self.generic_visit(node)
-        if self.returned:
-            assert False, "The function must have no more than one return statement"
-        self.returned = True
-        if isinstance(node.value, ast.Name):
-            name = self.get_name(node.value.id)
-            var = self.ctx_stack.find_var_by_name(name)
-            if not self.is_inline:
-                var.vardef.set_atype("output")
-            self.returns.append((name, var))
-        elif isinstance(node.value, ast.Tuple):
-            for value in node.value.elts:
-                name = self.get_name(value.id)
-                var = self.ctx_stack.find_var_by_name(name)
-                if not self.is_inline:
-                    var.vardef.set_atype("output")
-                self.returns.append((name, var))
-
-        return node
-
-
-def _get_global_vars(func):
-    # From Taichi
-    # Discussions: https://github.com/taichi-dev/taichi/issues/282
-    import copy
-
-    global_vars = copy.copy(func.__globals__)
-
-    freevar_names = func.__code__.co_freevars
-    closure = func.__closure__
-    if closure:
-        for name, value in zip(freevar_names, closure):
-            try:
-                global_vars[name] = value.cell_contents
-            except ValueError:  # ValueError: Cell is empty
-                pass
-
-    return global_vars
-
-
-def _remove_indent(lines):
-    # From Taichi
-
-    lines = lines.split("\n")
-    to_remove = 0
-    for i in range(len(lines[0])):
-        if lines[0][i] == " ":
-            to_remove = i + 1
+            orelse
+        ```
+        ->
+        ```
+        def then_body():
+            body
+        def else_body():
+            orelse
+        if_then_else_stmt(pred, then_body, else_body)
+        ```
+        '''
+        node: ast.If = self.generic_visit(old_node)
+        new_node = [function_helper('then_body', [], node.body)]
+        then_body = ast.Name('then_body', ast.Load())
+        if node.orelse:
+            new_node.append(function_helper('else_body', [], node.orelse))
+            else_body = ast.Name('else_body', ast.Load())
         else:
-            break
+            else_body = ast.Constant(None)
+        new_node.append(
+            ast.Expr(
+                call_helper(if_then_else_stmt, node.test, then_body,
+                            else_body)))
+        return location_helper(new_node, old_node)
 
-    cleaned = []
-    for l in lines:
-        cleaned.append(l[to_remove:])
-        if len(l) >= to_remove:
-            for i in range(to_remove):
-                assert l[i] == " "
+    def visit_IfExp(self, old_node: ast.IfExp):
+        '''Rule: `body if test else orelse` -> `if_then_else_expr(test, body, orelse)`'''
+        node = self.generic_visit(old_node)
+        node = call_helper(if_then_else_expr, node.test, node.body, node.orelse)
+        return location_helper(node, old_node)
 
-    return "\n".join(cleaned)
+    def visit_FunctionDef(self, old_node: ast.FunctionDef) -> Any:
+        node: ast.FunctionDef = self.generic_visit(old_node)
+        node.decorator_list = []
+        old_body = node.body
+        node.body = [
+            ast.With(items=[
+                ast.withitem(context_expr=call_helper(
+                    functiondef_wrapper, ast.Constant(self.filename),
+                    ast.Constant(node.name)),
+                             optional_vars=None)
+            ],
+                     body=old_body)
+        ]
+        return location_helper(node, old_node)
+
+    def visit_Assert(self, old_node: ast.Assert) -> Any:
+        node: ast.Assert = self.generic_visit(old_node)
+        node = ast.Expr(call_helper(assert_stmt, node.test))
+        return location_helper(node, old_node)
+
+    def visit_BoolOp(self, old_node: ast.BoolOp) -> Any:
+        node: ast.BoolOp = self.generic_visit(old_node)
+        if isinstance(node.op, ast.And):
+            libfunc = and_expr
+        elif isinstance(node.op, ast.Or):
+            libfunc = or_expr
+        else:
+            return location_helper(node, old_node)
+        empty_args = ast.arguments(args=[],
+                                   vararg=None,
+                                   kwarg=None,
+                                   posonlyargs=[],
+                                   defaults=[],
+                                   kwonlyargs=[],
+                                   kw_defaults=[])
+        node = call_helper(libfunc,
+                           *[ast.Lambda(empty_args, v) for v in node.values])
+        return location_helper(node, old_node)
+
+    def visit_UnaryOp(self, old_node: ast.UnaryOp) -> Any:
+        node: ast.UnaryOp = self.generic_visit(old_node)
+        if isinstance(node.op, ast.Not):
+            node = call_helper(not_expr, node.operand)
+        return location_helper(node, old_node)
+
+    def visit_Compare(self, old_node: ast.Compare) -> Any:
+        '''Expand multiple comparison into `and` expression.'''
+        if len(old_node.comparators) == 1:
+            return self.generic_visit(old_node)
+        lhs = old_node.left
+        node = ast.BoolOp(ast.And(), [])
+        for op, rhs in zip(old_node.ops, old_node.comparators):
+            node.values.append(ast.Compare(lhs, [op], [rhs]))
+            lhs = rhs
+        return self.visit(location_helper(node, old_node))
 
 
-def transform(func):
-    ctx_stack = ASTContextStack()
-    src = _remove_indent(ins.getsource(func))
-    tree = ast.parse(src)
-    src, lineno = ins.getsourcelines(func)
-    file = ins.getfile(func)
-    params = list(inspect.signature(func).parameters)
-    globals = _get_global_vars(func)
-    closure = {}
-    transformer = ASTTransformer(ctx_stack, params, globals, file, src, lineno)
-    ctx_stack.push_transformer(transformer)
-    transformer.visit(tree)
-    ctx_stack.pop_transformer()
-    returns = list(
-        map(lambda var: (var[1].name, var[1].dtype), transformer.returns))
-    return Func(func.__name__, params + list(transformer.closure.keys()),
-                returns, pop_ast(), transformer.closure)
+def _remove_indent(src: str) -> str:
+    lines = src.split('\n')
+    spaces_to_remove = next((i for i, x in enumerate(lines[0]) if x != ' '),
+                            len(lines[0]))
+    return '\n'.join(line[spaces_to_remove:] for line in lines)
 
 
-def inline(func, src=None):
+def _get_caller_env(depth: int):
+    frame = inspect.currentframe()
+    try:
+        parent = frame
+        for _ in range(depth + 1):
+            parent = parent.f_back
+        caller_env = copy.copy(parent.f_globals)
+        caller_env.update(parent.f_locals)
+    finally:
+        del frame
+    return caller_env
+
+
+def into_staging(func, caller_env, src=None, verbose=False):
     if src is None:
         src = _remove_indent(ins.getsource(func))
         tree = ast.parse(src)
@@ -907,10 +645,81 @@ def inline(func, src=None):
         tree = ast.parse(src)
         src = src.splitlines()
         lineno = 1
-        file = func.__name__
+        file = f'<staging:{func.__name__}>'
+    tree = ast.fix_missing_locations(Transformer(file, lineno).visit(tree))
+
+    import astor
+    from pygments import highlight
+    from pygments.lexers import PythonLexer
+    from pygments.formatters import TerminalFormatter
+    source = astor.to_source(tree)
+
+    if verbose:
+        print(
+            highlight(source, PythonLexer(),
+                      TerminalFormatter(bg='dark', linenos=True)))
+
+    caller_env['ir'] = sys.modules['ir']
+    exec(compile(source, f'<staging:{func.__name__}>', 'exec'), caller_env)
+    return caller_env[func.__name__], file, func.__name__
+
+
+def transform(func, verbose=False):
     params = list(inspect.signature(func).parameters)
-    globals = _get_global_vars(func)
-    funcdef = tree.body[0]
-    assert isinstance(funcdef, ast.FunctionDef)
-    return InlineFunction(func.__name__, funcdef.body, params, globals, file,
-                          src, lineno)
+    caller_env = _get_caller_env(1)
+    staging_func, filename, funcname = into_staging(func,
+                                                    caller_env,
+                                                    verbose=verbose)
+
+    try:
+        with LifetimeScope():
+            with NamingScope(filename, funcname, None):
+                for p in params:
+                    StagingContext.naming_stack[-1].names[p] = 1
+                returns = staging_func(*params)
+                if isinstance(returns, Var):
+                    returns = [returns]
+                elif isinstance(returns, tuple):
+                    for ret in returns:
+                        if not isinstance(ret, Var):
+                            raise StagingError(
+                                'Illegal return at top level, need to be a `Var` or a tuple of `Var`s'
+                            )
+                    returns = list(returns)
+                elif returns is None:
+                    returns = []
+                else:
+                    raise StagingError(
+                        'Illegal return at top level, need to be a `Var` or a tuple of `Var`s'
+                    )
+                for ret in returns:
+                    ret.vardef.set_atype('output')
+                returns = [
+                    (ret.vardef.name, ret.vardef.dtype) for ret in returns
+                ]
+
+                closure = StagingContext.closure
+    except Exception as e:
+        raise StagingError('Exception occurred in staging') from e
+    finally:
+        StagingContext.reset()
+        staged_ast = pop_ast()
+
+    staged = Func(func.__name__, params + list(closure.keys()), returns,
+                  staged_ast, closure)
+
+    return staged
+
+
+def inline(func=None, src=None, fallback=None, verbose=False):
+    caller_env = _get_caller_env(1)
+
+    def decorator(func):
+        return staged_callable(
+            into_staging(func, caller_env, src, verbose=verbose)[0], fallback or
+            func)
+
+    if callable(func):
+        return decorator(func)
+    else:
+        return decorator
