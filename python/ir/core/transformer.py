@@ -635,7 +635,7 @@ def _get_caller_env(depth: int):
     return caller_env
 
 
-def into_staging(func, caller_env, src=None):
+def into_staging(func, caller_env, src=None, verbose=False):
     if src is None:
         src = _remove_indent(ins.getsource(func))
         tree = ast.parse(src)
@@ -653,19 +653,23 @@ def into_staging(func, caller_env, src=None):
     from pygments.lexers import PythonLexer
     from pygments.formatters import TerminalFormatter
     source = astor.to_source(tree)
-    print(
-        highlight(source, PythonLexer(),
-                  TerminalFormatter(bg='dark', linenos=True)))
+
+    if verbose:
+        print(
+            highlight(source, PythonLexer(),
+                      TerminalFormatter(bg='dark', linenos=True)))
 
     caller_env['ir'] = sys.modules['ir']
     exec(compile(source, f'<staging:{func.__name__}>', 'exec'), caller_env)
     return caller_env[func.__name__], file, func.__name__
 
 
-def transform(func):
+def transform(func, verbose=False):
     params = list(inspect.signature(func).parameters)
     caller_env = _get_caller_env(1)
-    staging_func, filename, funcname = into_staging(func, caller_env)
+    staging_func, filename, funcname = into_staging(func,
+                                                    caller_env,
+                                                    verbose=verbose)
 
     try:
         with LifetimeScope():
@@ -707,12 +711,13 @@ def transform(func):
     return staged
 
 
-def inline(func=None, src=None, fallback=None):
+def inline(func=None, src=None, fallback=None, verbose=False):
     caller_env = _get_caller_env(1)
 
     def decorator(func):
         return staged_callable(
-            into_staging(func, caller_env, src)[0], fallback or func)
+            into_staging(func, caller_env, src, verbose=verbose)[0], fallback or
+            func)
 
     if callable(func):
         return decorator(func)
