@@ -1,3 +1,7 @@
+#include <algorithm>
+
+#include <analyze/all_iters.h>
+#include <analyze/all_reads.h>
 #include <analyze/deps.h>
 #include <pass/prop_const.h>
 #include <pass/replace_uses.h>
@@ -34,12 +38,21 @@ Stmt propConst(const Stmt &_op) {
                 return false; // pass/remove_write will deal with it
             }
             auto &&expr = earlier.op_.as<StoreNode>()->expr_;
-            return expr->nodeType() == ASTNodeType::IntConst ||
-                   expr->nodeType() == ASTNodeType::FloatConst ||
-                   expr->nodeType() == ASTNodeType::BoolConst ||
-                   (expr->nodeType() == ASTNodeType::Var &&
-                    iterDefined(lca(later.cursor_, earlier.cursor_),
-                                expr.as<VarNode>()->name_));
+            if (expr->nodeType() == ASTNodeType::IntConst ||
+                expr->nodeType() == ASTNodeType::FloatConst ||
+                expr->nodeType() == ASTNodeType::BoolConst) {
+                return true;
+            }
+            if (allReads(expr).empty()) {
+                // Expressions contains only constants and iterating vars
+                auto &&iters = allIters(expr);
+                auto common = lca(later.cursor_, earlier.cursor_);
+                return std::all_of(iters.begin(), iters.end(),
+                                   [&](const std::string &name) {
+                                       return iterDefined(common, name);
+                                   });
+            }
+            return false;
         };
         auto foundMust = [&](const Dependency &d) {
             r2w[d.later()].emplace_back(d.earlier().as<StmtNode>());

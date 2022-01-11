@@ -162,7 +162,7 @@ def test_def_in_between():
         with ir.For("i", 0, 32) as i:
             with ir.If(i % 8 == 0):
                 z[()] = div(i, 8)
-            y[div(i, 8), i % 8] = z[()] * (i % 8)
+            y[div(i, 8), i % 8] = div(i, 8) * (i % 8)
     std = ir.use_builtin_div(ir.pop_ast())
 
     assert std.match(ast)
