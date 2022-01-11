@@ -102,10 +102,23 @@ void FindAccessPoint::visit(const For &op) {
 
     auto iter = makeVar(op->iter_);
     auto oldCondsSize = conds_.size();
-    auto rbegin = makeAdd(
-        op->begin_, makeMul(makeSub(op->len_, makeIntConst(1)), op->step_));
-    conds_.emplace_back(makeGE(iter, makeMin(op->begin_, rbegin)));
-    conds_.emplace_back(makeLE(iter, makeMax(rbegin, op->begin_)));
+    // We use IfExpr instead of determine the sign of op->step_ here, because
+    // GenPBExpr can fold the constants
+    auto posiCond = makeLAnd(
+        makeLAnd(makeGE(iter, op->begin_), makeLT(iter, op->end_)),
+        makeEQ(makeMod(makeSub(iter, op->begin_), op->step_), makeIntConst(0)));
+    auto negCond = makeLAnd(
+        makeLAnd(makeLE(iter, op->begin_), makeGT(iter, op->end_)),
+        makeEQ(makeMod(
+                   makeSub(op->begin_, iter),
+                   makeSub(makeIntConst(0),
+                           op->step_)), // ISL does not support negative divisor
+               makeIntConst(0)));
+    auto zeroCond = makeEQ(iter, op->begin_);
+    conds_.emplace_back(
+        makeIfExpr(makeGT(op->step_, makeIntConst(0)), std::move(posiCond),
+                   makeIfExpr(makeLT(op->step_, makeIntConst(0)),
+                              std::move(negCond), zeroCond)));
     cur_.emplace_back(iter, op->property_.parallel_);
     scope2coord_[op->id()] = cur_;
     if (int width = countBandNodeWidth(op->body_); width > 1) {

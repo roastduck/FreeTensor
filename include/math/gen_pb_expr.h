@@ -41,6 +41,7 @@ class GenPBExpr : public Visitor {
     void visit(const Var &op) override;
     void visit(const Load &op) override;
     void visit(const IntConst &op) override;
+    void visit(const BoolConst &op) override;
     void visit(const Add &op) override;
     void visit(const Sub &op) override;
     void visit(const Mul &op) override;
@@ -58,6 +59,7 @@ class GenPBExpr : public Visitor {
     void visit(const Mod &op) override;
     void visit(const Min &op) override;
     void visit(const Max &op) override;
+    void visit(const IfExpr &op) override;
 };
 
 } // namespace ir

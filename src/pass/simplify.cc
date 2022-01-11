@@ -249,26 +249,34 @@ Stmt CompTransientBounds::visit(const For &op) {
         throw InvalidProgram(
             "iterators with the same name in nested loops are not allowed");
     }
+    auto oldCondsSize = conds_.size();
     if (op->step_->nodeType() == ASTNodeType::IntConst) {
         auto step = op->step_.as<IntConstNode>()->val_;
         if (step > 0) {
             transients_[hash] = {
                 var, {(*this)(op->begin_)}, {(*this)(sub1(op->end_))}};
+            conds_.emplace_back(makeGE(var, op->begin_));
+            conds_.emplace_back(makeLT(var, op->end_));
+            conds_.emplace_back(makeEQ(
+                makeMod(makeSub(var, op->begin_), op->step_), makeIntConst(0)));
         } else if (step < 0) {
             transients_[hash] = {
                 var, {(*this)(add1(op->end_))}, {(*this)(op->begin_)}};
+            conds_.emplace_back(makeLE(var, op->begin_));
+            conds_.emplace_back(makeGT(var, op->end_));
+            // ISL does not support negative divisor
+            conds_.emplace_back(
+                makeEQ(makeMod(makeSub(op->begin_, var),
+                               makeSub(makeIntConst(0), op->step_)),
+                       makeIntConst(0)));
         } else {
             transients_[hash] = {
                 var, {(*this)(op->begin_)}, {(*this)(op->begin_)}};
+            conds_.emplace_back(makeEQ(var, op->begin_));
         }
     }
-    auto rbegin = makeAdd(
-        op->begin_, makeMul(makeSub(op->len_, makeIntConst(1)), op->step_));
-    conds_.emplace_back(makeGE(var, makeMin(op->begin_, rbegin)));
-    conds_.emplace_back(makeLE(var, makeMax(rbegin, op->begin_)));
     auto ret = Mutator::visit(op);
-    conds_.pop_back();
-    conds_.pop_back();
+    conds_.resize(oldCondsSize);
     transients_.erase(hash);
     return ret;
 }
