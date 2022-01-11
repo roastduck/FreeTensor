@@ -5,6 +5,19 @@
 
 namespace ir {
 
+static bool iterDefined(Cursor c, const std::string &name) {
+    while (true) {
+        if (c.nodeType() == ASTNodeType::For &&
+            c.node().as<ForNode>()->iter_ == name) {
+            return true;
+        }
+        if (!c.hasOuter()) {
+            return false;
+        }
+        c = c.outer();
+    }
+}
+
 Stmt propConst(const Stmt &_op) {
     auto op = _op;
 
@@ -23,7 +36,10 @@ Stmt propConst(const Stmt &_op) {
             auto &&expr = earlier.op_.as<StoreNode>()->expr_;
             return expr->nodeType() == ASTNodeType::IntConst ||
                    expr->nodeType() == ASTNodeType::FloatConst ||
-                   expr->nodeType() == ASTNodeType::BoolConst;
+                   expr->nodeType() == ASTNodeType::BoolConst ||
+                   (expr->nodeType() == ASTNodeType::Var &&
+                    iterDefined(lca(later.cursor_, earlier.cursor_),
+                                expr.as<VarNode>()->name_));
         };
         auto foundMust = [&](const Dependency &d) {
             r2w[d.later()].emplace_back(d.earlier().as<StmtNode>());

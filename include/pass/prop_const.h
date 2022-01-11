@@ -6,7 +6,7 @@
 namespace ir {
 
 /**
- * Propagate constants
+ * Propagate constants and iteration variables
  *
  * E.g. transform
  *

@@ -154,3 +154,47 @@ def test_propagate_through_expressions():
     std = ir.pop_ast()
 
     assert std.match(ast)
+
+
+def test_prop_iter():
+    with ir.VarDef([("y1", (4,), "int32", "output", "cpu"),
+                    ("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):
+        with ir.For("i", 0, 4) as i:
+            y1[i] = i
+            y2[i] = y1[i]
+    ast = ir.pop_ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([("y1", (4,), "int32", "output", "cpu"),
+                    ("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):
+        with ir.For("i", 0, 4) as i:
+            y1[i] = i
+            y2[i] = i
+    std = ir.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_prop_iter_different_scope_no_prop():
+    with ir.VarDef([("y1", (4,), "int32", "output", "cpu"),
+                    ("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):
+        with ir.For("i", 0, 4) as i:
+            y1[i] = i
+        with ir.For("i", 2, 4) as i:
+            y2[i] = y1[i]
+    ast = ir.pop_ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([("y1", (4,), "int32", "output", "cpu"),
+                    ("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):
+        with ir.For("i", 0, 4) as i:
+            y1[i] = i
+        with ir.For("i", 2, 4) as i:
+            y2[i] = y1[i]
+    std = ir.pop_ast()
+
+    assert std.match(ast)
