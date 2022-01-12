@@ -47,14 +47,14 @@ Stmt AsMatMul::visitStmt(const Stmt &op) {
         throw InvalidSchedule("Unexpected " + toString(op->nodeType()) +
                               " node");
     }
-    return Mutator::visitStmt(op);
+    return BaseClass::visitStmt(op);
 }
 
 Stmt AsMatMul::visit(const For &op) {
     if (inside_) {
         iterMap_[op->iter_] = nestCnt_++;
         nests_.emplace_back(op);
-        auto ret = Mutator::visit(op);
+        auto ret = BaseClass::visit(op);
         nests_.pop_back();
         iterMap_.erase(op->iter_), nestCnt_--;
         return ret;
@@ -62,7 +62,7 @@ Stmt AsMatMul::visit(const For &op) {
         inside_ = true;
         iterMap_[op->iter_] = nestCnt_++;
         nests_.emplace_back(op);
-        auto ret = Mutator::visit(op);
+        auto ret = BaseClass::visit(op);
         nests_.pop_back();
         iterMap_.erase(op->iter_), nestCnt_--;
         inside_ = false;
@@ -94,14 +94,14 @@ Stmt AsMatMul::visit(const For &op) {
     } else {
         ASSERT(!outerDefs_.count(op->iter_));
         outerDefs_.insert(op->iter_);
-        auto ret = Mutator::visit(op);
+        auto ret = BaseClass::visit(op);
         outerDefs_.erase(op->iter_);
         return ret;
     }
 }
 
 Stmt AsMatMul::visit(const Store &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Store);
     auto op = __op.as<StoreNode>();
 
@@ -125,7 +125,7 @@ Stmt AsMatMul::visit(const Store &_op) {
 }
 
 Stmt AsMatMul::visit(const ReduceTo &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
     auto op = __op.as<ReduceToNode>();
 
@@ -272,13 +272,10 @@ Stmt AsMatMul::visit(const ReduceTo &_op) {
 }
 
 Stmt AsMatMul::visit(const VarDef &op) {
-    ASSERT(!buffers_.count(op->name_));
     ASSERT(!outerDefs_.count(op->name_));
-    buffers_[op->name_] = op->buffer_;
     outerDefs_.insert(op->name_);
-    auto ret = Mutator::visit(op);
+    auto ret = BaseClass::visit(op);
     outerDefs_.erase(op->name_);
-    buffers_.erase(op->name_);
     if (inside_) {
         innerDefs_.emplace_back(op);
         return op->body_;

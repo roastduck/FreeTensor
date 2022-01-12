@@ -45,22 +45,19 @@ Stmt MultiplexMutator::visit(const For &op) {
         op->property_.parallel_ == "blockIdx.y" ||
         op->property_.parallel_ == "blockIdx.z") {
         stack_.emplace_back(op);
-        auto ret = Mutator::visit(op);
+        auto ret = BaseClass::visit(op);
         stack_.pop_back();
         return ret;
     } else {
-        return Mutator::visit(op);
+        return BaseClass::visit(op);
     }
 }
 
 Stmt MultiplexMutator::visit(const VarDef &_op) {
     int pos = defPos_[_op->name_] = stack_.size();
-    ASSERT(!defs_.count(_op->name_));
-    defs_[_op->name_] = _op->id();
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::VarDef);
     auto op = __op.as<VarDefNode>();
-    defs_.erase(_op->name_);
 
     if (affecting_.count(op->id())) {
         auto &&aff = affecting_.at(op->id());
@@ -76,21 +73,21 @@ Stmt MultiplexMutator::visit(const VarDef &_op) {
 }
 
 Expr MultiplexMutator::visit(const Load &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Load);
     auto op = __op.as<LoadNode>();
     return alterAccess(op);
 }
 
 Stmt MultiplexMutator::visit(const Store &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Store);
     auto op = __op.as<StoreNode>();
     return alterAccess(op);
 }
 
 Stmt MultiplexMutator::visit(const ReduceTo &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
     auto op = __op.as<ReduceToNode>();
     return alterAccess(op);

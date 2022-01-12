@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include <analyze/symbol_table.h>
 #include <mutator.h>
 
 namespace ir {
@@ -59,13 +60,13 @@ class HoistVar : public Mutator {
     Stmt visit(const ReduceTo &op) override;
 };
 
-class AddDimToVar : public Mutator {
+class AddDimToVar : public SymbolTable<Mutator> {
+    typedef SymbolTable<Mutator> BaseClass;
+
     // VarDef ID -> for ID
     std::unordered_map<std::string, std::vector<std::string>> toAdd_;
     // for ID -> For
     std::unordered_map<std::string, For> forMap_;
-    // Var name -> VarDef ID
-    std::unordered_map<std::string, std::string> defs_;
 
   public:
     AddDimToVar(
@@ -74,8 +75,8 @@ class AddDimToVar : public Mutator {
 
   private:
     template <class T> T doAdd(T op) {
-        if (toAdd_.count(defs_.at(op->var_))) {
-            for (auto &&loop : toAdd_.at(defs_.at(op->var_))) {
+        if (toAdd_.count(def(op->var_)->id())) {
+            for (auto &&loop : toAdd_.at(def(op->var_)->id())) {
                 op->indices_.insert(op->indices_.begin(),
                                     makeVar(forMap_.at(loop)->iter_));
             }

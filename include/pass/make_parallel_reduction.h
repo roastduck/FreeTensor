@@ -6,6 +6,7 @@
 
 #include <analyze/find_loop_variance.h>
 #include <analyze/hash.h>
+#include <analyze/symbol_table.h>
 #include <func.h>
 #include <mutator.h>
 #include <visitor.h>
@@ -47,7 +48,9 @@ class FindSerialLoopsOverReduce : public Visitor {
     void visit(const ReduceTo &op) override;
 };
 
-class MakeParallelReduction : public Mutator {
+class MakeParallelReduction : public SymbolTable<Mutator> {
+    typedef SymbolTable<Mutator> BaseClass;
+
     const std::unordered_map<std::string, std::unordered_set<std::string>>
         &toAlter_; // ReduceTo ID -> Racing For ID
     const std::unordered_map<std::string, std::vector<For>>
@@ -58,7 +61,6 @@ class MakeParallelReduction : public Mutator {
         paraScopes_; // For Id -> parallel
     std::unordered_map<std::string, std::vector<ReductionItem>> forReductions_;
     std::unordered_set<std::string> defined_;
-    std::unordered_map<std::string, Ref<Buffer>> buffers_;
     std::unordered_map<std::string, std::unordered_set<std::string>>
         scopeDefined_; // For ID -> definitions at that scope
     std::unordered_map<

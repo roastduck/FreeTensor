@@ -2,13 +2,6 @@
 
 namespace ir {
 
-void FindIndexingLoops::visit(const VarDef &op) {
-    ASSERT(!defs_.count(op->name_));
-    defs_[op->name_] = op;
-    Visitor::visit(op);
-    defs_.erase(op->name_);
-}
-
 void FindIndexingLoops::visit(const For &op) {
     ASSERT(!loops_.count(op->iter_));
     loops_[op->iter_] = op;
@@ -17,7 +10,7 @@ void FindIndexingLoops::visit(const For &op) {
 }
 
 void FindIndexingLoops::visit(const Load &op) {
-    inIndicesStack_.emplace_back(defs_.at(op->var_));
+    inIndicesStack_.emplace_back(def(op->var_));
     for (auto &&idx : op->indices_) {
         (*this)(idx);
     }
@@ -25,7 +18,7 @@ void FindIndexingLoops::visit(const Load &op) {
 }
 
 void FindIndexingLoops::visit(const Store &op) {
-    inIndicesStack_.emplace_back(defs_.at(op->var_));
+    inIndicesStack_.emplace_back(def(op->var_));
     for (auto &&idx : op->indices_) {
         (*this)(idx);
     }
@@ -34,7 +27,7 @@ void FindIndexingLoops::visit(const Store &op) {
 }
 
 void FindIndexingLoops::visit(const ReduceTo &op) {
-    inIndicesStack_.emplace_back(defs_.at(op->var_));
+    inIndicesStack_.emplace_back(def(op->var_));
     for (auto &&idx : op->indices_) {
         (*this)(idx);
     }

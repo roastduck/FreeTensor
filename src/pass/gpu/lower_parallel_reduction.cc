@@ -32,21 +32,13 @@ LowerParallelReduction::reducedBy(const ReduceTo &op) {
     return ret;
 }
 
-Stmt LowerParallelReduction::visit(const VarDef &op) {
-    ASSERT(!buffers_.count(op->name_));
-    buffers_[op->name_] = op->buffer_;
-    auto ret = Mutator::visit(op);
-    buffers_.erase(op->name_);
-    return ret;
-}
-
 Stmt LowerParallelReduction::visit(const For &_op) {
     if (_op->property_.reductions_.empty()) {
-        return Mutator::visit(_op);
+        return BaseClass::visit(_op);
     }
 
     loopStack_.emplace_back(_op);
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::For);
     auto op = __op.as<ForNode>();
     loopStack_.pop_back();
@@ -69,13 +61,13 @@ Stmt LowerParallelReduction::visit(const For &_op) {
     std::vector<DataType> dtypes;
     for (size_t i = 0, n = op->property_.reductions_.size(); i < n; i++) {
         auto &[redOp, var, varIndices] = op->property_.reductions_[i];
-        auto dtype = buffers_.at(var)->tensor().dtype();
+        auto dtype = buffer(var)->tensor().dtype();
         auto workspace = "__reduce_" + op->id() + "_" + std::to_string(i);
         std::vector<SubTree<ExprNode>> workspaceShape;
         workspaceShape.emplace_back(op->len_);
-        ASSERT(varIndices.size() == buffers_.at(var)->tensor().shape().size());
+        ASSERT(varIndices.size() == buffer(var)->tensor().shape().size());
         for (auto &&[idx, dim] :
-             iter::zip(varIndices, buffers_.at(var)->tensor().shape())) {
+             iter::zip(varIndices, buffer(var)->tensor().shape())) {
             if (!idx.isValid()) {
                 workspaceShape.emplace_back(dim);
             }
@@ -160,7 +152,7 @@ Stmt LowerParallelReduction::visit(const For &_op) {
 }
 
 Stmt LowerParallelReduction::visit(const ReduceTo &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
     auto op = __op.as<ReduceToNode>();
 

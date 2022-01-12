@@ -7,17 +7,19 @@
 #include <analyze/analyze_linear.h>
 #include <analyze/check_all_defined.h>
 #include <analyze/hash.h>
+#include <analyze/symbol_table.h>
 #include <mutator.h>
 
 namespace ir {
 
-class AsMatMul : public Mutator {
+class AsMatMul : public SymbolTable<Mutator> {
+    typedef SymbolTable<Mutator> BaseClass;
+
     std::string loop_;
 
     int nestCnt_ = 0;
     std::vector<For> nests_;
     std::unordered_map<std::string, int> iterMap_; // iter var -> nest cnt
-    std::unordered_map<std::string, Ref<Buffer>> buffers_; // var name -> buffer
     std::unordered_set<std::string> outerDefs_;
     std::vector<VarDef> innerDefs_;
     std::vector<int> orderInit_;
@@ -63,11 +65,11 @@ class AsMatMul : public Mutator {
             }
             int loop = iterMap_.at(var->name_);
             if (getHash(nests_[loop]->len_) !=
-                getHash(buffers_.at(acc->var_)->tensor().shape()[i])) {
+                getHash(buffer(acc->var_)->tensor().shape()[i])) {
                 throw InvalidSchedule(
                     "Iterator " + var->name_ + " of " + acc->var_ +
                     " should loop over the entire range (" +
-                    toString(buffers_.at(acc->var_)->tensor().shape()[i]) +
+                    toString(buffer(acc->var_)->tensor().shape()[i]) +
                     "), instead of " + toString(nests_[loop]->len_));
             }
             usedBy[loop] = true;
@@ -106,12 +108,12 @@ class AsMatMul : public Mutator {
                             toString(idx) + " should be contiguous");
                     }
                 }
-                auto thisLen = buffers_.at(acc->var_)->tensor().shape()[i];
+                auto thisLen = buffer(acc->var_)->tensor().shape()[i];
                 len = len.isValid() ? makeMul(len, thisLen) : (Expr)thisLen;
                 lastInDim = idx;
             } else {
                 if (len.isValid()) {
-                    auto thisLen = buffers_.at(acc->var_)->tensor().shape()[i];
+                    auto thisLen = buffer(acc->var_)->tensor().shape()[i];
                     stride = stride.isValid() ? makeMul(stride, thisLen)
                                               : (Expr)thisLen;
                 }

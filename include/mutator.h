@@ -10,6 +10,9 @@ namespace ir {
 
 class Mutator {
   public:
+    typedef Expr ExprRetType;
+    typedef Stmt StmtRetType;
+
     virtual ~Mutator() {}
 
     virtual Stmt operator()(const Stmt &op) final;

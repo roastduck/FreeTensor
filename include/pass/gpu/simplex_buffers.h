@@ -6,6 +6,7 @@
 #include <itertools.hpp>
 
 #include <analyze/analyze_linear.h>
+#include <analyze/symbol_table.h>
 #include <func.h>
 #include <mutator.h>
 #include <visitor.h>
@@ -18,10 +19,11 @@ struct SimplexOffset {
     std::unordered_map<std::string, int> offset_; // parallel scope -> offset
 };
 
-class FindSimplexOffset : public Visitor {
+class FindSimplexOffset : public SymbolTable<Visitor> {
+    typedef SymbolTable<Visitor> BaseClass;
+
     std::unordered_map<std::string, std::vector<Ref<SimplexOffset>>>
         offsets_; // def ID -> [offset for each index]
-    std::unordered_map<std::string, VarDef> defs_;
     std::unordered_map<std::string, std::string> var2para_;
     AnalyzeLinear analyzeLinear_;
 
@@ -51,14 +53,14 @@ class FindSimplexOffset : public Visitor {
     }
 
     template <class T> void visitMemAcc(const T &op) {
-        Visitor::visit(op);
+        BaseClass::visit(op);
 
-        auto mtype = defs_.at(op->var_)->buffer_->mtype();
+        auto mtype = def(op->var_)->buffer_->mtype();
         if (mtype != MemType::GPULocal && mtype != MemType::GPUShared) {
             return;
         }
 
-        auto &&defId = defs_.at(op->var_)->id();
+        auto &&defId = def(op->var_)->id();
         std::vector<Ref<SimplexOffset>> thisOffsets;
         for (auto &&idx : op->indices_) {
             Ref<SimplexOffset> offset;
@@ -89,17 +91,18 @@ class FindSimplexOffset : public Visitor {
     }
 
   protected:
-    void visit(const VarDef &op) override;
+    using BaseClass::visit;
     void visit(const For &op) override;
     void visit(const Load &op) override { visitMemAcc(op); }
     void visit(const Store &op) override { visitMemAcc(op); }
     void visit(const ReduceTo &op) override { visitMemAcc(op); }
 };
 
-class ApplySimplexOffset : public Mutator {
+class ApplySimplexOffset : public SymbolTable<Mutator> {
+    typedef SymbolTable<Mutator> BaseClass;
+
     const std::unordered_map<std::string, std::vector<Ref<SimplexOffset>>>
         &offsets_; // def ID -> [offset for each index]
-    std::unordered_map<std::string, VarDef> defs_;
     std::unordered_map<std::string, std::string> para2var_;
 
   public:
@@ -110,11 +113,11 @@ class ApplySimplexOffset : public Mutator {
 
   private:
     template <class T> T visitMemAcc(const T &_op) {
-        auto __op = Mutator::visit(_op);
+        auto __op = BaseClass::visit(_op);
         ASSERT(__op->nodeType() == _op->nodeType());
         auto op = __op.template as<typename T::Object>();
 
-        auto &&defId = defs_.at(op->var_)->id();
+        auto &&defId = def(op->var_)->id();
         if (offsets_.count(defId)) {
             auto &&offset = offsets_.at(defId);
             ASSERT(offset.size() == op->indices_.size());
@@ -132,7 +135,7 @@ class ApplySimplexOffset : public Mutator {
     }
 
   protected:
-    Stmt visit(const VarDef &op) override;
+    using BaseClass::visit;
     Stmt visit(const For &op) override;
     Expr visit(const Load &op) override { return visitMemAcc(op); }
     Stmt visit(const Store &op) override { return visitMemAcc(op); }

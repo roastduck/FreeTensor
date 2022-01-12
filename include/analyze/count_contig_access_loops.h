@@ -4,15 +4,17 @@
 #include <unordered_map>
 
 #include <analyze/analyze_linear.h>
+#include <analyze/symbol_table.h>
 #include <visitor.h>
 
 namespace ir {
 
-class CountContigAccessLoops : public Visitor {
+class CountContigAccessLoops : public SymbolTable<Visitor> {
+    typedef SymbolTable<Visitor> BaseClass;
+
     std::unordered_map<std::string, std::pair<int64_t, int>>
         counts_; // for ID -> (count, -depth)
     std::unordered_map<std::string, For> var2for_;
-    std::unordered_map<std::string, Ref<Buffer>> buffers_;
     AnalyzeLinear analyzeLinear_;
     int64_t repeat_ = 1;
     int depth_ = 0;
@@ -26,7 +28,7 @@ class CountContigAccessLoops : public Visitor {
   private:
     int64_t getStaticSize(const std::string &var) {
         int64_t ret = 1;
-        for (auto &&dim : buffers_.at(var)->tensor().shape()) {
+        for (auto &&dim : buffer(var)->tensor().shape()) {
             if (dim->nodeType() == ASTNodeType::IntConst) {
                 ret *= dim.as<IntConstNode>()->val_;
             } else {
@@ -37,7 +39,7 @@ class CountContigAccessLoops : public Visitor {
     }
 
     template <class T> void visitMemAccess(const T &op) {
-        Visitor::visit(op);
+        BaseClass::visit(op);
         auto size = getStaticSize(op->var_);
         if (size != -1 && size < 128) {
             // We don't count too small vars here because they are likely
@@ -58,8 +60,8 @@ class CountContigAccessLoops : public Visitor {
     }
 
   protected:
+    using BaseClass::visit;
     void visit(const For &op) override;
-    void visit(const VarDef &op) override;
     void visit(const Load &op) override { visitMemAccess(op); }
     void visit(const Store &op) override { visitMemAccess(op); }
     void visit(const ReduceTo &op) override { visitMemAccess(op); }

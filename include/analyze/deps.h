@@ -10,6 +10,7 @@
 #include <vector>
 
 #include <analyze/find_loop_variance.h>
+#include <analyze/symbol_table.h>
 #include <cursor.h>
 #include <math/gen_pb_expr.h>
 #include <math/presburger.h>
@@ -78,7 +79,9 @@ inline int countBandNodeWidth(const Stmt &op) {
 /**
  * Find read and write points
  */
-class FindAccessPoint : public VisitorWithCursor {
+class FindAccessPoint : public SymbolTable<VisitorWithCursor> {
+    typedef SymbolTable<VisitorWithCursor> BaseClass;
+
     bool lastIsLoad_ = false;
     std::vector<IterAxis> cur_; // Current iteration point in the space
     std::vector<Expr> conds_;   // FIXME: There may be out-dated conditions. See
@@ -92,9 +95,6 @@ class FindAccessPoint : public VisitorWithCursor {
 
     // Var name -> axis: Which axis is a local var defined
     std::unordered_map<std::string, int> defAxis_;
-
-    // Var name -> VarDef
-    std::unordered_map<std::string, VarDef> defs_;
 
   public:
     FindAccessPoint(const Stmt &root);
@@ -115,7 +115,7 @@ class FindAccessPoint : public VisitorWithCursor {
 
   private:
     template <class T> void visitStoreLike(const T &op) {
-        Visitor::visit(op);
+        BaseClass::visit(op);
 
         if (!cur_.empty() &&
             cur_.back().iter_->nodeType() == ASTNodeType::IntConst) {
@@ -128,13 +128,13 @@ class FindAccessPoint : public VisitorWithCursor {
         auto ap = Ref<AccessPoint>::make();
         *ap = {op,
                cursor(),
-               defs_.at(op->var_),
-               defs_.at(op->var_)->buffer_,
+               def(op->var_),
+               def(op->var_)->buffer_,
                defAxis_.at(op->var_),
                cur_,
                std::vector<Expr>{op->indices_.begin(), op->indices_.end()},
                conds_};
-        writes_[defs_.at(op->var_)->id()].emplace_back(ap);
+        writes_[def(op->var_)->id()].emplace_back(ap);
     }
 
   protected:

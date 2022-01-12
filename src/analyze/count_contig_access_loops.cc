@@ -23,12 +23,5 @@ void CountContigAccessLoops::visit(const For &op) {
     var2for_.erase(op->iter_);
 }
 
-void CountContigAccessLoops::visit(const VarDef &op) {
-    ASSERT(!buffers_.count(op->name_));
-    buffers_[op->name_] = op->buffer_;
-    Visitor::visit(op);
-    buffers_.erase(op->name_);
-}
-
 } // namespace ir
 

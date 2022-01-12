@@ -115,15 +115,12 @@ Stmt HoistVar::visit(const ReduceTo &op) {
 
 Stmt AddDimToVar::visit(const For &op) {
     forMap_[op->id()] = op;
-    return Mutator::visit(op);
+    return BaseClass::visit(op);
 }
 
 Stmt AddDimToVar::visit(const VarDef &_op) {
-    ASSERT(!defs_.count(_op->name_));
-    defs_[_op->name_] = _op->id();
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::VarDef);
-    defs_.erase(_op->name_);
 
     auto op = __op.as<VarDefNode>();
     if (toAdd_.count(op->id())) {
@@ -139,19 +136,19 @@ Stmt AddDimToVar::visit(const VarDef &_op) {
 }
 
 Stmt AddDimToVar::visit(const Store &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Store);
     return doAdd(__op.as<StoreNode>());
 }
 
 Expr AddDimToVar::visit(const Load &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Load);
     return doAdd(__op.as<LoadNode>());
 }
 
 Stmt AddDimToVar::visit(const ReduceTo &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
     return doAdd(__op.as<ReduceToNode>());
 }

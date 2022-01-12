@@ -67,16 +67,13 @@ FindAccessPoint::FindAccessPoint(const Stmt &root) {
 }
 
 void FindAccessPoint::visit(const VarDef &op) {
-    ASSERT(!defs_.count(op->name_));
     allDefs_.emplace_back(op);
     defAxis_[op->name_] =
         !cur_.empty() && cur_.back().iter_->nodeType() == ASTNodeType::IntConst
             ? cur_.size() - 1
             : cur_.size();
-    defs_[op->name_] = op;
-    Visitor::visit(op);
+    BaseClass::visit(op);
     defAxis_.erase(op->name_);
-    defs_.erase(op->name_);
 }
 
 void FindAccessPoint::visit(const StmtSeq &op) {
@@ -84,7 +81,7 @@ void FindAccessPoint::visit(const StmtSeq &op) {
         cur_.back().iter_->nodeType() == ASTNodeType::IntConst) {
         scope2coord_[op->id()] = cur_;
     }
-    Visitor::visit(op);
+    BaseClass::visit(op);
 }
 
 void FindAccessPoint::visit(const For &op) {
@@ -160,17 +157,17 @@ void FindAccessPoint::visit(const Load &op) {
     }
     lastIsLoad_ = true;
 
-    Visitor::visit(op);
+    BaseClass::visit(op);
     auto ap = Ref<AccessPoint>::make();
     *ap = {op,
            cursor(),
-           defs_.at(op->var_),
-           defs_.at(op->var_)->buffer_,
+           def(op->var_),
+           def(op->var_)->buffer_,
            defAxis_.at(op->var_),
            cur_,
            std::vector<Expr>{op->indices_.begin(), op->indices_.end()},
            conds_};
-    reads_[defs_.at(op->var_)->id()].emplace_back(ap);
+    reads_[def(op->var_)->id()].emplace_back(ap);
 }
 
 std::string AnalyzeDeps::makeIterList(const std::vector<IterAxis> &list,

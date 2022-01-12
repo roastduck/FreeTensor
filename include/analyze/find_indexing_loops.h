@@ -3,14 +3,16 @@
 
 #include <unordered_map>
 
+#include <analyze/symbol_table.h>
 #include <visitor.h>
 
 namespace ir {
 
-class FindIndexingLoops : public Visitor {
+class FindIndexingLoops : public SymbolTable<Visitor> {
+    typedef SymbolTable<Visitor> BaseClass;
+
     std::unordered_map<For, std::vector<VarDef>> results_;
-    std::unordered_map<std::string, VarDef> defs_; // name -> def
-    std::unordered_map<std::string, For> loops_;   // name -> for
+    std::unordered_map<std::string, For> loops_; // name -> for
     std::vector<VarDef> inIndicesStack_;
 
   public:
@@ -19,7 +21,7 @@ class FindIndexingLoops : public Visitor {
     }
 
   protected:
-    void visit(const VarDef &op) override;
+    using BaseClass::visit;
     void visit(const For &op) override;
     void visit(const Load &op) override;
     void visit(const Store &op) override;

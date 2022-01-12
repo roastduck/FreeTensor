@@ -22,8 +22,8 @@ bool OutputIntermediates::isSingleVersion(const std::string &defId) const {
 }
 
 Stmt OutputIntermediates::visit(const Store &op) {
-    auto oldStore = Mutator::visit(op);
-    if (versions_.count(op) && !isSingleVersion(defs_.at(op->var_)->id())) {
+    auto oldStore = BaseClass::visit(op);
+    if (versions_.count(op) && !isSingleVersion(def(op->var_)->id())) {
         std::vector<Expr> newIndices(1, versions_.at(op));
         newIndices.insert(newIndices.end(), op->indices_.begin(),
                           op->indices_.end());
@@ -36,8 +36,8 @@ Stmt OutputIntermediates::visit(const Store &op) {
 }
 
 Stmt OutputIntermediates::visit(const ReduceTo &op) {
-    auto oldReduce = Mutator::visit(op);
-    if (versions_.count(op) && !isSingleVersion(defs_.at(op->var_)->id())) {
+    auto oldReduce = BaseClass::visit(op);
+    if (versions_.count(op) && !isSingleVersion(def(op->var_)->id())) {
         std::vector<Expr> newIndices(1, versions_.at(op));
         newIndices.insert(newIndices.end(), op->indices_.begin(),
                           op->indices_.end());
@@ -54,12 +54,9 @@ Stmt OutputIntermediates::visit(const VarDef &_op) {
         // FIXME: What if the scopeLen_ is a loop-variant temporary?
         if (isSingleVersion(_op->id())) {
             // No need to create a new VarDef
-            ASSERT(!defs_.count(_op->name_));
-            defs_[_op->name_] = _op;
-            auto __op = Mutator::visit(_op);
+            auto __op = BaseClass::visit(_op);
             ASSERT(__op->nodeType() == ASTNodeType::VarDef);
             auto op = __op.as<VarDefNode>();
-            defs_.erase(_op->name_);
 
             tapeNames_[op->id()] = op->name_;
             if (op->buffer_->atype() != AccessType::InOut) {
@@ -67,12 +64,9 @@ Stmt OutputIntermediates::visit(const VarDef &_op) {
             }
             return op;
         } else {
-            ASSERT(!defs_.count(_op->name_));
-            defs_[_op->name_] = _op;
-            auto __op = Mutator::visit(_op);
+            auto __op = BaseClass::visit(_op);
             ASSERT(__op->nodeType() == ASTNodeType::VarDef);
             auto op = __op.as<VarDefNode>();
-            defs_.erase(_op->name_);
 
             auto tapeName = tapeNames_[op->id()] = op->name_ + ".tape";
             auto tensor = op->buffer_->tensor();
@@ -84,11 +78,7 @@ Stmt OutputIntermediates::visit(const VarDef &_op) {
                               nullptr, op, false);
         }
     } else {
-        ASSERT(!defs_.count(_op->name_));
-        defs_[_op->name_] = _op;
-        auto ret = Mutator::visit(_op);
-        defs_.erase(_op->name_);
-        return ret;
+        return BaseClass::visit(_op);
     }
 }
 
