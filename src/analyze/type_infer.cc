@@ -22,13 +22,13 @@ void TypeInfer::visit(const Var &op) {
 
 void TypeInfer::visit(const Load &op) {
     Visitor::visit(op);
-    if (!buffers_->count(op->var_)) {
+    if (!symbolTable_.hasDef(op->var_)) {
         throw InvalidProgram("Name " + op->var_ + " used without definition");
     }
     for (auto &&idx : op->indices_) {
         CHK_TYPE(isInt, types_.at(idx), op);
     }
-    types_[op] = buffers_->at(op->var_)->tensor().dtype();
+    types_[op] = symbolTable_.buffer(op->var_)->tensor().dtype();
 }
 
 void TypeInfer::visit(const IntConst &op) {
@@ -256,12 +256,9 @@ void TypeInfer::visit(const Intrinsic &op) {
 }
 
 void TypeInfer::visit(const VarDef &op) {
-    if (buffers_->count(op->name_)) {
-        throw InvalidProgram("Nested VarDef with the same name is not allowed");
-    }
-    (*buffers_)[op->name_] = op->buffer_;
-    Visitor::visit(op);
-    buffers_->erase(op->name_);
+    // TypeInfer borrows the symbol table from other Visitor / Mutator. Please
+    // maintain the symbol table elsewhere
+    ASSERT(false);
 }
 
 } // namespace ir

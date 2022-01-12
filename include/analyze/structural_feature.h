@@ -62,8 +62,6 @@ class StructuralFeature : public CompUniqueBounds {
 
     std::unordered_set<std::string>
         defs_; // All names currently defined in a subtree
-    std::unordered_map<std::string, Ref<Buffer>>
-        buffers_; // All buffers currently defined in a subtree
 
   public:
     const std::unordered_map<std::string, NodeFeature> &features() const {

@@ -111,7 +111,7 @@ Stmt LowerVector::visit(const For &op) {
             return ret;
         }
     }
-    return Z3Simplify::visit(op);
+    return BaseClass::visit(op);
 }
 
 Expr LowerVector::visit(const Var &op) {
@@ -138,7 +138,7 @@ Expr LowerVector::visit(const Var &op) {
         }
         return ret;
     }
-    return Z3Simplify::visit(op);
+    return BaseClass::visit(op);
 }
 
 Expr LowerVector::visit(const Load &op) {
@@ -146,14 +146,14 @@ Expr LowerVector::visit(const Load &op) {
         ASSERT(op->indices_.size() == 1); // Please do make_1d_var first
         if (hasVectorIndex(op->indices_[0])) {
             Expr index = getIndex(op->indices_[0]);
-            auto dtype = buffers_.at(op->var_)->tensor().dtype();
+            auto dtype = buffer(op->var_)->tensor().dtype();
             auto vtype = vecType(dtype);
             return makeIntrinsic("*((" + vtype + "*)&(%))",
                                  {makeLoad(op->var_, {index})},
                                  DataType::Custom);
         }
     }
-    return Z3Simplify::visit(op);
+    return BaseClass::visit(op);
 }
 
 Stmt LowerVector::visit(const Store &op) {
@@ -161,7 +161,7 @@ Stmt LowerVector::visit(const Store &op) {
         ASSERT(op->indices_.size() == 1); // Please do make_1d_var first
         if (hasVectorIndex(op->indices_[0])) {
             Expr index = getIndex(op->indices_[0]);
-            auto dtype = buffers_.at(op->var_)->tensor().dtype();
+            auto dtype = buffer(op->var_)->tensor().dtype();
             auto vtype = vecType(dtype);
             return makeEval(
                 "",
@@ -170,7 +170,7 @@ Stmt LowerVector::visit(const Store &op) {
                               DataType::Void));
         }
     }
-    return Z3Simplify::visit(op);
+    return BaseClass::visit(op);
 }
 
 Stmt LowerVector::visit(const ReduceTo &op) {
@@ -178,7 +178,7 @@ Stmt LowerVector::visit(const ReduceTo &op) {
         ASSERT(op->indices_.size() == 1); // Please do make_1d_var first
         if (hasVectorIndex(op->indices_[0])) {
             Expr index = getIndex(op->indices_[0]);
-            auto dtype = buffers_.at(op->var_)->tensor().dtype();
+            auto dtype = buffer(op->var_)->tensor().dtype();
             auto vtype = vecType(dtype);
             auto newLoad = makeLoad(op->var_, {index});
             switch (op->op_) {
@@ -206,15 +206,7 @@ Stmt LowerVector::visit(const ReduceTo &op) {
             }
         }
     }
-    return Z3Simplify::visit(op);
-}
-
-Stmt LowerVector::visit(const VarDef &op) {
-    ASSERT(!buffers_.count(op->name_));
-    buffers_[op->name_] = op->buffer_;
-    auto ret = Z3Simplify::visit(op);
-    buffers_.erase(op->name_);
-    return ret;
+    return BaseClass::visit(op);
 }
 
 Stmt lowerVector(const Stmt &_op) {

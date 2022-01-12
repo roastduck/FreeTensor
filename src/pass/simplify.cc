@@ -230,16 +230,6 @@ void CompTransientBounds::applyCond(const Expr &cond) {
     conds_.emplace_back(cond);
 }
 
-Stmt CompTransientBounds::visit(const VarDef &op) {
-    if (buffers_.count(op->name_)) {
-        throw InvalidProgram("Nested VarDef with the same name is not allowed");
-    }
-    buffers_[op->name_] = op->buffer_;
-    auto ret = Mutator::visit(op);
-    buffers_.erase(op->name_);
-    return ret;
-}
-
 Stmt CompTransientBounds::visit(const For &op) {
     OutDatedBoundsRemover localRemover(transients_, conds_);
     localRemover(op);
@@ -275,7 +265,7 @@ Stmt CompTransientBounds::visit(const For &op) {
             conds_.emplace_back(makeEQ(var, op->begin_));
         }
     }
-    auto ret = Mutator::visit(op);
+    auto ret = BaseClass::visit(op);
     conds_.resize(oldCondsSize);
     transients_.erase(hash);
     return ret;
@@ -320,13 +310,13 @@ Stmt CompTransientBounds::visit(const Assert &op) {
 }
 
 Stmt CompTransientBounds::visit(const Store &op) {
-    auto ret = Mutator::visit(op);
+    auto ret = BaseClass::visit(op);
     remover_(op);
     return ret;
 }
 
 Stmt CompTransientBounds::visit(const ReduceTo &op) {
-    auto ret = Mutator::visit(op);
+    auto ret = BaseClass::visit(op);
     remover_(op);
     return ret;
 }

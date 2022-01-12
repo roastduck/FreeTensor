@@ -103,18 +103,8 @@ Expr FloatSimplify::normalizeRealMulDiv(const Expr &op) {
     }
 }
 
-Stmt FloatSimplify::visit(const VarDef &op) {
-    if (buffers_.count(op->name_)) {
-        throw InvalidProgram("Nested VarDef with the same name is not allowed");
-    }
-    buffers_[op->name_] = op->buffer_;
-    auto ret = Mutator::visit(op);
-    buffers_.erase(op->name_);
-    return ret;
-}
-
 Expr FloatSimplify::visit(const IntConst &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::IntConst);
     auto op = __op.as<IntConstNode>();
     constants_[op] = op->val_;
@@ -122,7 +112,7 @@ Expr FloatSimplify::visit(const IntConst &_op) {
 }
 
 Expr FloatSimplify::visit(const FloatConst &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::FloatConst);
     auto op = __op.as<FloatConstNode>();
     constants_[op] = op->val_;
@@ -130,7 +120,7 @@ Expr FloatSimplify::visit(const FloatConst &_op) {
 }
 
 Expr FloatSimplify::visit(const Add &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Add);
     auto op = __op.as<AddNode>();
     if (nonNeg(op->lhs_) && nonNeg(op->rhs_)) {
@@ -162,7 +152,7 @@ Expr FloatSimplify::visit(const Add &_op) {
 }
 
 Expr FloatSimplify::visit(const Sub &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Sub);
     auto op = __op.as<SubNode>();
     if (nonNeg(op->lhs_) && nonPosi(op->rhs_)) {
@@ -195,7 +185,7 @@ Expr FloatSimplify::visit(const Sub &_op) {
 }
 
 Expr FloatSimplify::visit(const Mul &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Mul);
     auto op = __op.as<MulNode>();
     if (nonNeg(op->lhs_) && nonNeg(op->rhs_)) {
@@ -241,7 +231,7 @@ Expr FloatSimplify::visit(const Mul &_op) {
 }
 
 Expr FloatSimplify::visit(const RealDiv &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::RealDiv);
     auto op = __op.as<RealDivNode>();
     if (nonNeg(op->lhs_) && nonNeg(op->rhs_)) {
@@ -267,7 +257,7 @@ Expr FloatSimplify::visit(const RealDiv &_op) {
 }
 
 Expr FloatSimplify::visit(const Min &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Min);
     auto op = __op.as<MinNode>();
     if (nonNeg(op->lhs_) && nonNeg(op->rhs_)) {
@@ -305,7 +295,7 @@ Expr FloatSimplify::visit(const Min &_op) {
 }
 
 Expr FloatSimplify::visit(const Max &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Max);
     auto op = __op.as<MaxNode>();
     if (nonNeg(op->lhs_) || nonNeg(op->rhs_)) {
@@ -343,7 +333,7 @@ Expr FloatSimplify::visit(const Max &_op) {
 }
 
 Expr FloatSimplify::visit(const Sqrt &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Sqrt);
     auto op = __op.as<SqrtNode>();
     setNonNeg(op);
@@ -401,7 +391,7 @@ Expr FloatSimplify::visit(const Sqrt &_op) {
 }
 
 Expr FloatSimplify::visit(const Exp &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Exp);
     auto op = __op.as<ExpNode>();
     setNonNeg(op);
@@ -415,7 +405,7 @@ Expr FloatSimplify::visit(const Exp &_op) {
 }
 
 Expr FloatSimplify::visit(const Square &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Square);
     auto op = __op.as<SquareNode>();
     setNonNeg(op);
@@ -483,7 +473,7 @@ Expr FloatSimplify::visit(const Square &_op) {
 }
 
 Expr FloatSimplify::visit(const Abs &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Abs);
     auto op = __op.as<AbsNode>();
     setNonNeg(op);

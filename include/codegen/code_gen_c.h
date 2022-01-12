@@ -18,7 +18,7 @@ template <class Stream> class CodeGenC : public CodeGen<Stream> {
   public:
     CodeGenC(const std::vector<std::string> &params,
              const std::vector<std::pair<std::string, DataType>> &returns)
-        : params_(params), returns_(returns), typeInfer_(&this->buffers_) {}
+        : params_(params), returns_(returns), typeInfer_(*this) {}
 
     static std::string gen(DataType dtype);
 

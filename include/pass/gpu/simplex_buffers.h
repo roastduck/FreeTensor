@@ -55,7 +55,7 @@ class FindSimplexOffset : public SymbolTable<Visitor> {
     template <class T> void visitMemAcc(const T &op) {
         BaseClass::visit(op);
 
-        auto mtype = def(op->var_)->buffer_->mtype();
+        auto mtype = buffer(op->var_)->mtype();
         if (mtype != MemType::GPULocal && mtype != MemType::GPUShared) {
             return;
         }

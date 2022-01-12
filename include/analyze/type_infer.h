@@ -3,25 +3,18 @@
 
 #include <unordered_map>
 
+#include <analyze/symbol_table.h>
 #include <visitor.h>
 
 namespace ir {
 
 class TypeInfer : public Visitor {
     std::unordered_map<Expr, DataType> types_;
-    std::unordered_map<std::string, Ref<Buffer>> *buffers_;
-    bool borrowedBuffers_ = false;
+    const SymbolTableInterface &symbolTable_;
 
   public:
-    TypeInfer()
-        : buffers_(new std::unordered_map<std::string, Ref<Buffer>>()) {}
-    TypeInfer(std::unordered_map<std::string, Ref<Buffer>> *buffers)
-        : buffers_(buffers), borrowedBuffers_(true) {}
-    ~TypeInfer() {
-        if (!borrowedBuffers_) {
-            delete buffers_;
-        }
-    }
+    TypeInfer(const SymbolTableInterface &symbolTable)
+        : symbolTable_(symbolTable) {}
 
     const std::unordered_map<Expr, DataType> &types() const { return types_; }
 

@@ -110,7 +110,7 @@ void CodeGenCUDA::visit(const ReduceTo &op) {
 
     auto genAddr = [&]() {
         if (op->indices_.empty()) {
-            switch (this->buffers_.at(op->var_)->mtype()) {
+            switch (this->buffer(op->var_)->mtype()) {
             case MemType::ByValue:
             case MemType::CPU:
             case MemType::GPULocal:
@@ -281,7 +281,7 @@ void CodeGenCUDA::visit(const VarDef &op) {
     } else {
         switch (op->buffer_->mtype()) {
         case MemType::GPUGlobal: {
-            markDefBuffer(op->name_, op->buffer_);
+            markDefBuffer(op);
 
             if (inKernel()) {
                 // e.g. float (*x)[5][5] = (float(*)[5][5])(__glmem + 0);
@@ -355,7 +355,7 @@ void CodeGenCUDA::visit(const VarDef &op) {
                 os() << "cudaFree(" << mangle(op->name_) << ");" << std::endl;
             }
 
-            markUndefBuffer(op->name_);
+            markUndefBuffer(op);
             break;
         }
 
@@ -365,7 +365,7 @@ void CodeGenCUDA::visit(const VarDef &op) {
                                      "kernel is not allowed");
             }
 
-            markDefBuffer(op->name_, op->buffer_);
+            markDefBuffer(op);
 
             // A static shared memory array cannot be larger than 48KB (maybe a
             // bug of NVCC), so we allocate shared memory dynamically
@@ -409,7 +409,7 @@ void CodeGenCUDA::visit(const VarDef &op) {
             // sharedStackTop_ -= size;
             // FIXME: We have to add some sync before reusing shared buffers
 
-            markUndefBuffer(op->name_);
+            markUndefBuffer(op);
             break;
         }
 

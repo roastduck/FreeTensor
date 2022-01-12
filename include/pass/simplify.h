@@ -6,6 +6,7 @@
 #include <unordered_set>
 
 #include <analyze/analyze_linear.h>
+#include <analyze/symbol_table.h>
 #include <analyze/type_infer.h>
 #include <func.h>
 #include <math/bounds.h>
@@ -74,7 +75,9 @@ class OutDatedBoundsRemover : public Visitor {
  *
  * Inherit this pass to use it
  */
-class CompTransientBounds : public Mutator {
+class CompTransientBounds : public SymbolTable<Mutator> {
+    typedef SymbolTable<Mutator> BaseClass;
+
     // Bounds related to certain expressions
     // Bounds in transients_ has already been recursed with (*this)(...)
     std::unordered_map<uint64_t, TransientBound> transients_;
@@ -82,15 +85,13 @@ class CompTransientBounds : public Mutator {
     // Original bounds
     std::vector<Expr> conds_;
 
-    std::unordered_map<std::string, Ref<Buffer>> buffers_;
     AnalyzeLinear analyzeLinear_;
     TypeInfer typeInfer_;
     GetHash getHash_;
     OutDatedBoundsRemover remover_;
 
   protected:
-    CompTransientBounds()
-        : typeInfer_(&buffers_), remover_(transients_, conds_) {}
+    CompTransientBounds() : typeInfer_(*this), remover_(transients_, conds_) {}
 
     TransientBound transient(const Expr &op);
     const std::vector<Expr> &conds() const { return conds_; }
@@ -105,9 +106,8 @@ class CompTransientBounds : public Mutator {
     void applyCond(const Expr &cond);
 
   protected:
-    using Mutator::visit; // Avoid hiding virtual functions
+    using BaseClass::visit; // Avoid hiding virtual functions
 
-    Stmt visit(const VarDef &op) override;
     Stmt visit(const For &op) override;
     Stmt visit(const If &op) override;
     Stmt visit(const Assert &op) override;

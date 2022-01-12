@@ -162,7 +162,7 @@ void FindAccessPoint::visit(const Load &op) {
     *ap = {op,
            cursor(),
            def(op->var_),
-           def(op->var_)->buffer_,
+           buffer(op->var_),
            defAxis_.at(op->var_),
            cur_,
            std::vector<Expr>{op->indices_.begin(), op->indices_.end()},

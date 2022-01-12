@@ -32,7 +32,7 @@ template <class Stream> void CodeGenC<Stream>::visit(const StmtSeq &op) {
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
-    this->markDefBuffer(op->name_, op->buffer_);
+    this->markDefBuffer(op);
 
     this->makeIndent();
     auto &&tensor = op->buffer_->tensor();
@@ -196,7 +196,7 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
 
     (*this)(op->body_);
 
-    this->markUndefBuffer(op->name_);
+    this->markUndefBuffer(op);
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const Var &op) {
@@ -211,7 +211,7 @@ template <class Stream> void CodeGenC<Stream>::visit(const Store &op) {
 
     this->makeIndent();
     if (op->indices_.empty()) {
-        switch (this->buffers_.at(op->var_)->mtype()) {
+        switch (this->buffer(op->var_)->mtype()) {
         case MemType::ByValue:
         case MemType::CPU:
         case MemType::GPULocal:
@@ -242,7 +242,7 @@ template <class Stream> void CodeGenC<Stream>::visit(const Load &op) {
     this->markUseBuffer(op->var_);
 
     if (op->indices_.empty()) {
-        switch (this->buffers_.at(op->var_)->mtype()) {
+        switch (this->buffer(op->var_)->mtype()) {
         case MemType::ByValue:
         case MemType::CPU:
         case MemType::GPULocal:
@@ -273,7 +273,7 @@ template <class Stream> void CodeGenC<Stream>::visit(const ReduceTo &op) {
 
     auto genAddr = [&]() {
         if (op->indices_.empty()) {
-            switch (this->buffers_.at(op->var_)->mtype()) {
+            switch (this->buffer(op->var_)->mtype()) {
             case MemType::ByValue:
             case MemType::CPU:
             case MemType::GPULocal:
@@ -307,16 +307,14 @@ template <class Stream> void CodeGenC<Stream>::visit(const ReduceTo &op) {
     case ReduceOp::Min:
         genAddr(), this->os()
                        << " = std::min<"
-                       << this->gen(
-                              this->buffers_.at(op->var_)->tensor().dtype())
+                       << this->gen(this->buffer(op->var_)->tensor().dtype())
                        << ">(";
         genAddr(), this->os() << ", ", genExpr(), this->os() << ")";
         break;
     case ReduceOp::Max:
         genAddr(), this->os()
                        << " = std::max<"
-                       << this->gen(
-                              this->buffers_.at(op->var_)->tensor().dtype())
+                       << this->gen(this->buffer(op->var_)->tensor().dtype())
                        << ">(";
         genAddr(), this->os() << ", ", genExpr(), this->os() << ")";
         break;
