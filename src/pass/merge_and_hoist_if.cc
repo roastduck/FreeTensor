@@ -10,7 +10,7 @@
 namespace ir {
 
 Stmt MergeAndHoistIf::visit(const StmtSeq &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::StmtSeq);
     auto op = __op.as<StmtSeqNode>();
     std::vector<Stmt> stmts;
@@ -60,16 +60,14 @@ Stmt MergeAndHoistIf::visit(const StmtSeq &_op) {
 }
 
 Stmt MergeAndHoistIf::visit(const VarDef &_op) {
-    def_.insert(_op->name_);
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::VarDef);
     auto op = __op.as<VarDefNode>();
-    def_.erase(_op->name_);
 
     if (op->body_->nodeType() == ASTNodeType::If) {
         auto branch = op->body_.as<IfNode>();
         if (!branch->elseCase_.isValid() &&
-            checkAllDefined(def_, branch->cond_)) {
+            checkAllDefined(names(), branch->cond_)) {
             isFixPoint_ = false;
             return makeIf(branch->id(), branch->cond_,
                           makeVarDef(op->id(), op->name_,
@@ -81,16 +79,14 @@ Stmt MergeAndHoistIf::visit(const VarDef &_op) {
 }
 
 Stmt MergeAndHoistIf::visit(const For &_op) {
-    def_.insert(_op->iter_);
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::For);
     auto op = __op.as<ForNode>();
-    def_.erase(op->iter_);
 
     if (op->body_->nodeType() == ASTNodeType::If) {
         auto branch = op->body_.as<IfNode>();
         if (!branch->elseCase_.isValid() &&
-            checkAllDefined(def_, branch->cond_)) {
+            checkAllDefined(names(), branch->cond_)) {
             auto writes = allWrites(branch);
             auto reads = allReads(branch->cond_);
             if (std::none_of(reads.begin(), reads.end(),

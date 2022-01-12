@@ -569,7 +569,7 @@ template <class Stream> void CodeGenC<Stream>::visit(const Cast &op) {
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const For &op) {
-    this->markDefIter(op->iter_);
+    this->markDefIter(op);
     if (op->step_->nodeType() == ASTNodeType::IntConst &&
         op->step_.as<IntConstNode>()->val_ == 1) {
         this->makeIndent();
@@ -597,7 +597,7 @@ template <class Stream> void CodeGenC<Stream>::visit(const For &op) {
         (*this)(op->body_);
         this->endBlock();
     }
-    this->markUndefIter(op->iter_);
+    this->markUndefIter(op);
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const If &op) {

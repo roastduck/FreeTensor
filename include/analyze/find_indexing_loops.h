@@ -12,7 +12,6 @@ class FindIndexingLoops : public SymbolTable<Visitor> {
     typedef SymbolTable<Visitor> BaseClass;
 
     std::unordered_map<For, std::vector<VarDef>> results_;
-    std::unordered_map<std::string, For> loops_; // name -> for
     std::vector<VarDef> inIndicesStack_;
 
   public:
@@ -22,7 +21,6 @@ class FindIndexingLoops : public SymbolTable<Visitor> {
 
   protected:
     using BaseClass::visit;
-    void visit(const For &op) override;
     void visit(const Load &op) override;
     void visit(const Store &op) override;
     void visit(const ReduceTo &op) override;

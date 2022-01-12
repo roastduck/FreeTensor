@@ -55,12 +55,12 @@ void StructuralFeature::updAreaInfo(const AST &parent, const AST &child) {
         ret.hi_ = std::vector<UpperBoundsList>(n);
         for (size_t i = 0; i < n; i++) {
             for (auto &&b : child.lo_[i]) {
-                if (checkAllDefined(defs_, b.expr())) {
+                if (checkAllDefined(names(), b.expr())) {
                     ret.lo_[i].emplace_back(b);
                 }
             }
             for (auto &&b : child.hi_[i]) {
-                if (checkAllDefined(defs_, b.expr())) {
+                if (checkAllDefined(names(), b.expr())) {
                     ret.hi_[i].emplace_back(b);
                 }
             }
@@ -393,11 +393,9 @@ Stmt StructuralFeature::visit(const Assert &_op) {
 }
 
 Stmt StructuralFeature::visit(const For &_op) {
-    defs_.insert(_op->iter_);
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::For);
     auto op = __op.as<ForNode>();
-    defs_.erase(_op->iter_);
 
     updInfo(op, op->begin_);
     updInfo(op, op->end_);
@@ -411,11 +409,9 @@ Stmt StructuralFeature::visit(const For &_op) {
 }
 
 Stmt StructuralFeature::visit(const VarDef &_op) {
-    defs_.insert(_op->name_);
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::VarDef);
     auto op = __op.as<VarDefNode>();
-    defs_.erase(_op->name_);
 
     for (auto &&item : op->buffer_->tensor().shape()) {
         updInfo(op, item);

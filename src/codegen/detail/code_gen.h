@@ -50,9 +50,9 @@ void CodeGen<Stream>::markUndefBuffer(const VarDef &op) {
     popDef(op);
 }
 
-template <class Stream>
-void CodeGen<Stream>::markDefIter(const std::string &name) {
-    var2Stream_[name] = streamStack_.back().name_;
+template <class Stream> void CodeGen<Stream>::markDefIter(const For &op) {
+    var2Stream_[op->iter_] = streamStack_.back().name_;
+    pushFor(op);
 }
 
 template <class Stream>
@@ -66,9 +66,9 @@ void CodeGen<Stream>::markUseIter(const std::string &name) {
     }
 }
 
-template <class Stream>
-void CodeGen<Stream>::markUndefIter(const std::string &name) {
-    var2Stream_.erase(name);
+template <class Stream> void CodeGen<Stream>::markUndefIter(const For &op) {
+    var2Stream_.erase(op->iter_);
+    popFor(op);
 }
 
 template <class Stream>

@@ -6,6 +6,7 @@
 #include <vector>
 
 #include <analyze/analyze_linear.h>
+#include <analyze/symbol_table.h>
 #include <mutator.h>
 #include <visitor.h>
 
@@ -60,13 +61,14 @@ class AppendIDs : public Mutator {
  * }
  * ```
  */
-class SeperateTail : public Mutator {
+class SeperateTail : public SymbolTable<Mutator> {
+    typedef SymbolTable<Mutator> BaseClass;
+
     bool noDuplicateVarDefs_;
 
     const std::unordered_set<std::string> &candidates_;
     std::unordered_set<std::string> nextCandidates_;
 
-    std::unordered_set<std::string> def_;
     std::vector<std::vector<If>> ifStack_;
     std::vector<bool> hasVarDefStack_;
     AnalyzeLinear analyzeLinear_;

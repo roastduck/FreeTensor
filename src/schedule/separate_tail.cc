@@ -132,26 +132,27 @@ Stmt SeperateTail::visit(const If &op) {
             item.emplace_back(op); // Use the old one
         }
     }
-    return Mutator::visit(op);
+    return BaseClass::visit(op);
 }
 
 Stmt SeperateTail::visit(const For &_op) {
-    def_.insert(_op->iter_);
     ifStack_.emplace_back();
     hasVarDefStack_.emplace_back(false);
 
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::For);
     auto op = __op.as<ForNode>();
     bool hasVarDef = hasVarDefStack_.back();
+
+    pushFor(op);
     std::vector<If> ifList;
     for (auto &&branch : ifStack_.back()) {
-        if (checkAllDefined(def_, branch->cond_)) {
+        if (checkAllDefined(names(), branch->cond_)) {
             ifList.emplace_back(branch);
         }
     }
+    popFor(op);
 
-    def_.erase(_op->iter_);
     ifStack_.pop_back();
     hasVarDefStack_.pop_back();
 
@@ -206,9 +207,7 @@ Stmt SeperateTail::visit(const For &_op) {
 }
 
 Stmt SeperateTail::visit(const VarDef &op) {
-    def_.insert(op->name_);
-    auto ret = Mutator::visit(op);
-    def_.erase(op->name_);
+    auto ret = BaseClass::visit(op);
     for (auto it = hasVarDefStack_.begin(); it != hasVarDefStack_.end(); it++) {
         *it = true;
     }

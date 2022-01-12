@@ -46,9 +46,9 @@ template <class Stream> class CodeGen : public SymbolTable<Visitor> {
     void markUseBuffer(const std::string &name);
     void markUndefBuffer(const VarDef &op);
 
-    void markDefIter(const std::string &name);
+    void markDefIter(const For &op);
     void markUseIter(const std::string &name);
-    void markUndefIter(const std::string &name);
+    void markUndefIter(const For &op);
 
     void pushStream(const std::string &name);
     void popStream();

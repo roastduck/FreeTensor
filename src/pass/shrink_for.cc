@@ -10,13 +10,11 @@ Stmt ShrinkFor::visit(const For &_op) {
     newRange_.erase(hash);
 
     iterStack_.emplace_back(var);
-    defStack_.emplace_back(defs_);
-    defs_.insert(_op->iter_);
+    namesStack_.emplace_back(names());
     auto __op = CompTransientBounds::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::For);
     auto op = __op.as<ForNode>();
-    defs_.erase(_op->iter_);
-    defStack_.pop_back();
+    namesStack_.pop_back();
     iterStack_.pop_back();
 
     if (!newRange_.count(hash)) {
@@ -59,13 +57,6 @@ Stmt ShrinkFor::visit(const For &_op) {
     }
 
     return op;
-}
-
-Stmt ShrinkFor::visit(const VarDef &op) {
-    defs_.insert(op->name_);
-    auto ret = CompTransientBounds::visit(op);
-    defs_.erase(op->name_);
-    return ret;
 }
 
 Stmt shrinkFor(const Stmt &_op) {

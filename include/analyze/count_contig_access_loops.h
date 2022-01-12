@@ -14,7 +14,6 @@ class CountContigAccessLoops : public SymbolTable<Visitor> {
 
     std::unordered_map<std::string, std::pair<int64_t, int>>
         counts_; // for ID -> (count, -depth)
-    std::unordered_map<std::string, For> var2for_;
     AnalyzeLinear analyzeLinear_;
     int64_t repeat_ = 1;
     int depth_ = 0;
@@ -53,7 +52,7 @@ class CountContigAccessLoops : public SymbolTable<Visitor> {
                 if ((s.k_ == 1 || s.k_ == -1) &&
                     s.a_->nodeType() == ASTNodeType::Var) {
                     auto &&var = s.a_.template as<VarNode>();
-                    counts_[var2for_.at(var->name_)->id()].first += repeat_;
+                    counts_[loop(var->name_)->id()].first += repeat_;
                 }
             }
         }
