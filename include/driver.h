@@ -27,7 +27,7 @@ class Driver {
     std::unordered_map<std::string, size_t> name2param_;
     Device dev_;
 
-    Context *ctx_ = nullptr;
+    std::unique_ptr<Context> ctx_;
 
   private:
     void buildAndLoad();
@@ -42,9 +42,10 @@ class Driver {
             }
         }
         unload();
-        if (ctx_ != nullptr) {
-            delete ctx_;
-        }
+//        if (ctx_ != nullptr) {
+//            std::cout << "destroying " << ctx_ << std::endl;
+//            delete ctx_;
+//        }
     }
 
     Driver(const Driver &) = delete;

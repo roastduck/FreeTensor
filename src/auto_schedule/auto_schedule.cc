@@ -19,7 +19,11 @@ AutoSchedule::AutoSchedule(const Schedule &schedule, const Ref<Target> &target,
     MultiLevelTilingRule rule;
     int n = rule.analyze(original_);
     std::cout << "Found" << n << std::endl;
-    baseSketch_.addPart(rule.genPart(0));
+    Sketch sketch;
+    sketch.addPart(rule.genPart(0));
+    baseSketches_.push_back(sketch);
+    std::random_device rd;
+    rand_gen = std::mt19937(rd());
 }
 
 void AutoSchedule::setParams(
@@ -65,31 +69,29 @@ AutoSchedule::measure(const std::vector<Schedule> &schedules) {
     return times;
 }
 
-std::vector<Sketch> AutoSchedule::getRandomSketches(size_t n) {
-    std::vector<Sketch> ret;
-    for (size_t i = 0; i < n; i++) {
-        if (candidates_.size() < nCandidates_) {
-            ret.emplace_back(baseSketch_.genRandAnnotation());
-        } else {
-            int mut = random_int(1);
-            if (mut) {
-                auto nw =
-                    candidates_[random_int(nCandidates_ - 1)].genMutation();
-                if (nw.first) {
-                    ret.push_back(nw.second);
-                }
-            } else {
-                int a = random_int(nCandidates_ - 1);
-                int b = random_int(nCandidates_ - 1);
-                while (b == a)
-                    b = random_int(nCandidates_ - 1);
-                auto nw = candidates_[a].genCrossover(candidates_[b]);
-                if (nw.first) {
-                    ret.push_back(nw.second);
-                }
-            }
-        }
-    }
+std::vector<Sketch> AutoSchedule::SearchOneRound(size_t n) {
+    std::vector<Sketch> ret = GetInitPopulation(n);
+//    for (size_t i = 0; i < n; i++) {
+//        if (measured_sketches_.size() < nCandidates_) {
+//        } else {
+//            int mut = random_int(1);
+//            if (mut) {
+//                auto nw = measured_sketches_[random_int(nCandidates_ - 1)].genMutation();
+//                if (nw.first) {
+//                    ret.push_back(nw.second);
+//                }
+//            } else {
+//                int a = random_int(nCandidates_ - 1);
+//                int b = random_int(nCandidates_ - 1);
+//                while (b == a)
+//                    b = random_int(nCandidates_ - 1);
+//                auto nw = measured_sketches_[a].genCrossover(measured_sketches_[b]);
+//                if (nw.first) {
+//                    ret.push_back(nw.second);
+//                }
+//            }
+//        }
+//    }
     return ret;
 }
 
@@ -134,32 +136,76 @@ AutoSchedule::testAndAdd(const std::vector<Sketch> &sketches,
     ASSERT(sketches.size() == n);
     std::vector<double> times = measure(schedules);
     for (size_t i = 0; i < n; i++) {
-        if (candidates_.size() < nCandidates_) {
-            candidates_.emplace_back(sketches[i]);
-            candidates_.back().setTime(times[i]);
-            std::push_heap(candidates_.begin(), candidates_.end());
-        } else if (times[i] < candidates_[0].time()) {
-            std::pop_heap(candidates_.begin(), candidates_.end());
-            candidates_.back() = sketches[i];
-            candidates_.back().setTime(times[i]);
-            std::push_heap(candidates_.begin(), candidates_.end());
+        if (measured_sketches_.size() < nCandidates_) {
+            measured_sketches_.emplace_back(sketches[i]);
+            measured_sketches_.back().setTime(times[i]);
+            std::push_heap(measured_sketches_.begin(),
+                           measured_sketches_.end());
+        } else if (times[i] < measured_sketches_[0].time()) {
+            std::pop_heap(measured_sketches_.begin(), measured_sketches_.end());
+            measured_sketches_.back() = sketches[i];
+            measured_sketches_.back().setTime(times[i]);
+            std::push_heap(measured_sketches_.begin(),
+                           measured_sketches_.end());
         }
         mn_ = std::min(times[i], mn_);
     }
-    std::cout << "min " << mn_ << " max " << candidates_[0].time() << std::endl;
+    std::cout << "min " << mn_ << " max " << measured_sketches_[0].time() << std::endl;
     return times;
 }
 
 Schedule AutoSchedule::getBestSchedule() {
     int best = 0;
-    int time = candidates_[0].time();
-    for (size_t i = 0; i < candidates_.size(); i++) {
-        if (candidates_[i].time() < time) {
-            time = candidates_[i].time();
+    int time = measured_sketches_[0].time();
+    for (size_t i = 0; i < measured_sketches_.size(); i++) {
+        if (measured_sketches_[i].time() < time) {
+            time = measured_sketches_[i].time();
             best = i;
         }
     }
-    return candidates_[best].genSchedule(original_);
+    return measured_sketches_[best].genSchedule(original_);
+}
+
+std::vector<Sketch> AutoSchedule::GetInitPopulation(size_t n) {
+    std::vector<Sketch> ret;
+    std::set<size_t> used;
+    std::vector<std::mt19937> gens;
+    for (int i = 0; i < n; i++) {
+        gens.push_back(std::mt19937(rand_gen()));
+    }
+    int iter = 0;
+    while (ret.size() < n) {
+        std::vector<Sketch> now(n);
+#pragma omp parallel for
+        for (int i = 0; i < n; i++) {
+            now[i] =
+                baseSketches_[random_int(baseSketches_.size() - 1, gens[i])]
+                    .genRandAnnotation(gens[i]);
+        }
+        for (int i = 0; i < n; i++) {
+            size_t h = now[i].hash();
+            if (!used.count(h)) {
+                used.insert(h);
+                ret.push_back(now[i]);
+            }
+        }
+        if (++iter > 10) {
+            break;
+        }
+    }
+    size_t n_measured = std::min(size_t(n * 0.2), measured_sketches_.size());
+    for (int i = 0; i < n_measured; i++) {
+        size_t h = measured_sketches_[i].hash();
+        if (!used.count(h)) {
+            ret.push_back(measured_sketches_[i]);
+        }
+    }
+    return ret;
+}
+
+std::vector<Sketch> AutoSchedule::EvolutionarySearch(std::vector<Sketch> init) {
+
+    return std::vector<Sketch>();
 }
 
 } // namespace ir

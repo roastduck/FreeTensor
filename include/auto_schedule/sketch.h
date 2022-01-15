@@ -3,6 +3,7 @@
 
 #include <schedule.h>
 #include <vector>
+#include <random>
 
 namespace ir {
 
@@ -12,12 +13,13 @@ typedef Ref<SketchPartNode> SketchPart;
 
 class SketchPartNode {
   public:
-    virtual void genRandAnnotation() = 0;
-    virtual SketchPart mutate() { return nullptr; }
-    virtual SketchPart crossover(const SketchPart &part) { return nullptr; };
+    virtual void genRandAnnotation(std::mt19937 gen) = 0;
+    virtual SketchPart mutate(std::mt19937 &gen) { return nullptr; }
+    virtual SketchPart crossover(const SketchPart &part, std::mt19937 &gen) { return nullptr; };
     virtual void apply(Schedule &schedule) = 0;
     virtual std::vector<int> getAnnotation() const = 0;
     virtual ~SketchPartNode() = default;
+    virtual size_t hash() const = 0;
 };
 
 class Sketch {
@@ -27,7 +29,7 @@ class Sketch {
   public:
     Sketch() = default;
 
-    Sketch genRandAnnotation() const;
+    Sketch genRandAnnotation(std::mt19937 gen) const;
 
     Schedule genSchedule(const Schedule &original) const;
 
@@ -44,6 +46,8 @@ class Sketch {
 
     void setTime(double time) { time_ = time; }
     double time() const { return time_; }
+
+    size_t hash() const;
 };
 
 } // namespace ir

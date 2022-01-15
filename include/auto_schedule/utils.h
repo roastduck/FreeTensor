@@ -9,10 +9,8 @@
 
 namespace ir {
 
-template <int n> std::array<int, n> random_fill_array(int total) {
+template <int n> std::array<int, n> random_fill_array(int total, std::mt19937 gen) {
     double log_total = log2(total);
-    static std::random_device rd;
-    static std::mt19937 gen(rd());
     std::uniform_real_distribution<> dis(
         0, std::nextafter(log_total, std::numeric_limits<double>::max()));
     std::array<double, n> data;
@@ -30,9 +28,9 @@ template <int n> std::array<int, n> random_fill_array(int total) {
     return result;
 }
 
-inline int random_int(int mx) {
-    static std::random_device rd;
-    static std::mt19937 gen(rd());
+inline int random_int(int mx, std::mt19937 gen) {
+//    static std::random_device rd;
+//    static std::mt19937 gen(rd());
     std::uniform_int_distribution<> dis(0, mx);
     return dis(gen);
 }

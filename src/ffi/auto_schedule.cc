@@ -17,7 +17,7 @@ void init_ffi_auto_schedule(py::module_ &m) {
         .def("n_predict", &AutoSchedule::nPredict)
         .def("set_params", &AutoSchedule::setParams, "args"_a,
              "kws"_a = std::unordered_map<std::string, Ref<Array>>())
-        .def("get_random_sketches", &AutoSchedule::getRandomSketches, "n"_a)
+        .def("search_one_round", &AutoSchedule::SearchOneRound, "n"_a)
         .def("gen_schedules", &AutoSchedule::genSchedules, "sketches"_a)
         .def("gen_features", &AutoSchedule::genFeatures, "schedules"_a)
         .def("test_and_add", &AutoSchedule::testAndAdd, "sketches"_a,

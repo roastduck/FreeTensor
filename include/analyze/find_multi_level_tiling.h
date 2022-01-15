@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <vector>
 #include <visitor.h>
+#include <boost/functional/hash.hpp>
 
 namespace ir {
 
@@ -104,4 +105,22 @@ inline std::vector<std::string> fakeFindMultiLevelTiling(const Stmt &ast) {
 
 } // namespace ir
 
+template <> struct std::hash<ir::ForInfo> {
+    std::size_t operator()(ir::ForInfo const &s) const noexcept {
+        std::size_t h = std::hash<std::string>{}(s.id);
+        boost::hash_combine(h, std::hash<std::int64_t>{}(s.length));
+        return h;
+    }
+};
+
+template <> struct std::hash<ir::ForsWithDataReuse> {
+    std::size_t operator()(ir::ForsWithDataReuse const &s) const noexcept {
+        std::size_t h = 0;
+        for (const auto &f : s.spaceLoops)
+            boost::hash_combine(h, std::hash<ir::ForInfo>{}(f));
+        for (const auto &f : s.reductionLoops)
+            boost::hash_combine(h, std::hash<ir::ForInfo>{}(f));
+        return h;
+    }
+};
 #endif // IR_FIND_MULTI_LEVEL_TILING_H

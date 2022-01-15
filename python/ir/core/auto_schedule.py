@@ -10,7 +10,7 @@ class AutoSchedule(ffi.AutoSchedule):
 
     def run(self, iteration):
         xgb_params = {}
-        sketches = self.get_random_sketches(self.n_candidates())
+        sketches = self.search_one_round(self.n_candidates())
         schedules = self.gen_schedules(sketches)
         features = self.gen_features(schedules)
         times = self.test_and_add(sketches, schedules)
@@ -19,7 +19,7 @@ class AutoSchedule(ffi.AutoSchedule):
         for i in range(iteration):
             rand_num = int((iteration - i) * 0.8)
             print("iteration {}".format(i))
-            sketches = self.get_random_sketches(self.n_predict())
+            sketches = self.search_one_round(self.n_predict())
             schedules = self.gen_schedules(sketches)
             features = self.gen_features(schedules)
             pred = booster.predict(xgb.DMatrix(np.array(features), missing=-1))

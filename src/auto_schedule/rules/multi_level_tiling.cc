@@ -15,17 +15,17 @@ SketchPart MultiLevelTilingRule::genPart(int p) {
     return SketchPart(new MultiLevelTilingPart(targets[p]));
 }
 
-void MultiLevelTilingPart::genRandAnnotation() {
+void MultiLevelTilingPart::genRandAnnotation(std::mt19937 gen) {
     int spaceLoopLength = target.spaceLoops.size();
     int reductionLoopLength = target.reductionLoops.size();
     std::vector<std::array<int, 4>> spaceLoopTiling(spaceLoopLength);
     std::vector<std::array<int, 2>> reductionLoopTiling(reductionLoopLength);
     for (int i = 0; i < spaceLoopLength; i++) {
-        spaceLoopTiling[i] = random_fill_array<4>(target.spaceLoops[i].length);
+        spaceLoopTiling[i] = random_fill_array<4>(target.spaceLoops[i].length, gen);
     }
     for (int i = 0; i < reductionLoopLength; i++) {
         reductionLoopTiling[i] =
-            random_fill_array<2>(target.reductionLoops[i].length);
+            random_fill_array<2>(target.reductionLoops[i].length, gen);
     }
     annotation =
         MultiLevelTilingAnnotation{spaceLoopTiling, reductionLoopTiling};
@@ -40,16 +40,12 @@ std::array<std::pair<std::string, int>, n>
 split_loop(Schedule &schedule, std::string loop, std::array<int, n> tiling) {
     std::array<std::pair<std::string, int>, n> result;
     for (int i = 0; i < n - 1; i++) {
-        try {
+        if (tiling[i] != 1) {
             auto t = schedule.split(loop, tiling[i]);
             loop = t.first;
             result[n - i - 1] = std::make_pair(t.second, tiling[i]);
-        } catch (const InvalidSchedule &e) {
-            if (tiling[i] == 1) {
-                result[n - i - 1] = std::make_pair("", 1);
-            } else {
-                throw e;
-            }
+        } else {
+            result[n - i - 1] = std::make_pair("", 1);
         }
     }
     result[0] = std::make_pair(loop, tiling[n - 1]);
@@ -99,10 +95,10 @@ void MultiLevelTilingPart::apply(Schedule &schedule) {
     schedule.reorder(labels);
 }
 
-SketchPart MultiLevelTilingPart::mutate() {
+SketchPart MultiLevelTilingPart::mutate(std::mt19937 &gen) {
     // std::cout << "Start mutating...\n";
     MultiLevelTilingPart mut = *this;
-    int mut_part = random_int(1);
+    int mut_part = random_int(1, gen);
     int spaceSize = target.spaceLoops.size();
     int reduceSize = target.reductionLoops.size();
     if (!spaceSize) {
@@ -111,12 +107,12 @@ SketchPart MultiLevelTilingPart::mutate() {
         mut_part = 0;
     }
     if (mut_part == 0) {
-        int mut_idx = random_int(target.spaceLoops.size() - 1);
+        int mut_idx = random_int(target.spaceLoops.size() - 1, gen);
         mut.annotation.spaceLoopTiling[mut_idx] =
             random_fill_array<4>(target.spaceLoops[mut_idx].length);
 
     } else {
-        int mut_idx = random_int(target.reductionLoops.size() - 1);
+        int mut_idx = random_int(target.reductionLoops.size() - 1, gen);
         mut.annotation.reductionLoopTiling[mut_idx] =
             random_fill_array<2>(target.reductionLoops[mut_idx].length);
     }
@@ -124,13 +120,13 @@ SketchPart MultiLevelTilingPart::mutate() {
     return Ref<MultiLevelTilingPart>::make(std::move(mut));
 }
 
-SketchPart MultiLevelTilingPart::crossover(const SketchPart &part) {
+SketchPart MultiLevelTilingPart::crossover(const SketchPart &part, std::mt19937 &gen) {
     // std::cout << "Start crossover...\n";
     if (typeid(*(part.get())) != typeid(MultiLevelTilingPart))
         return nullptr;
     auto p = part.as<MultiLevelTilingPart>();
     MultiLevelTilingPart mut = *this;
-    int mut_part = random_int(1);
+    int mut_part = random_int(1, gen);
     int spaceSize = target.spaceLoops.size();
     int reduceSize = target.reductionLoops.size();
     if (!spaceSize) {
@@ -139,11 +135,11 @@ SketchPart MultiLevelTilingPart::crossover(const SketchPart &part) {
         mut_part = 0;
     }
     if (mut_part == 0) {
-        int mut_idx = random_int(target.spaceLoops.size() - 1);
+        int mut_idx = random_int(target.spaceLoops.size() - 1, gen);
         mut.annotation.spaceLoopTiling[mut_idx] =
             p->annotation.spaceLoopTiling[mut_idx];
     } else {
-        int mut_idx = random_int(target.reductionLoops.size() - 1);
+        int mut_idx = random_int(target.reductionLoops.size() - 1, gen);
         mut.annotation.reductionLoopTiling[mut_idx] =
             p->annotation.reductionLoopTiling[mut_idx];
     }
@@ -165,6 +161,12 @@ std::vector<int> MultiLevelTilingPart::getAnnotation() const {
     // }
     // std::cout << "\n";
     return ret;
+}
+
+size_t MultiLevelTilingPart::hash() const {
+    size_t h = std::hash<ForsWithDataReuse>{}(target);
+    boost::hash_combine(h, std::hash<MultiLevelTilingAnnotation>{}(annotation));
+    return h;
 }
 
 } // namespace ir

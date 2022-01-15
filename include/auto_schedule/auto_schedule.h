@@ -7,6 +7,7 @@
 #include <driver/target.h>
 #include <schedule.h>
 #include <unordered_map>
+#include <random>
 
 namespace ir {
 
@@ -15,12 +16,14 @@ class AutoSchedule {
     Ref<Target> target_;
     Device device_;
     size_t nCandidates_, nPredict_;
-    Sketch baseSketch_;
+    std::vector<Sketch> baseSketches_;
     std::vector<Ref<Array>> args_;
     std::unordered_map<std::string, Ref<Array>> kws_;
     bool paramsSet_;
-    std::vector<Sketch> candidates_;
+    std::vector<Sketch> measured_sketches_;
+    std::vector<size_t> measured_hashes_;
     double mn_;
+    std::mt19937 rand_gen;
 
   private:
     std::vector<double> measure(const std::vector<Schedule> &schedules);
@@ -35,7 +38,11 @@ class AutoSchedule {
     void setParams(const std::vector<Ref<Array>> &args,
                    const std::unordered_map<std::string, Ref<Array>> &kws);
 
-    std::vector<Sketch> getRandomSketches(size_t n);
+    std::vector<Sketch> SearchOneRound(size_t n);
+
+    std::vector<Sketch> EvolutionarySearch(std::vector<Sketch> init);
+
+    std::vector<Sketch> GetInitPopulation(size_t n);
 
     std::vector<Schedule> genSchedules(const std::vector<Sketch> &sketches);
 
