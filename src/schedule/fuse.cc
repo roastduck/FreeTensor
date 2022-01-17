@@ -1,6 +1,6 @@
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
-#include <analyze/hash.h>
+#include <hash.h>
 #include <pass/prop_const.h>
 #include <pass/prop_one_time_use.h>
 #include <pass/remove_dead_var.h>
@@ -152,7 +152,7 @@ Stmt FuseFor::visit(const StmtSeq &_op) {
             }
 
             if (strict_) {
-                if (getHash(loop0->end_) != getHash(loop1->end_)) {
+                if (!HashComparator()(loop0->end_, loop1->end_)) {
                     throw InvalidSchedule(
                         "Unable to determine whether the two loops are of the "
                         "same length. If you are sure that they are the same, "

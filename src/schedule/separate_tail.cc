@@ -1,7 +1,6 @@
 #include <algorithm>
 
 #include <analyze/check_all_defined.h>
-#include <analyze/hash.h>
 #include <pass/z3_simplify.h>
 #include <schedule/separate_tail.h>
 
@@ -34,22 +33,22 @@ Stmt AppendIDs::visitStmt(const Stmt &op) {
 }
 
 void SeperateTail::genSeperation(
-    uint64_t iterHash, const Expr &cond,
+    const Expr &iterVar, const Expr &cond,
     const std::function<void(const Expr &)> &callback) {
     auto type = cond->nodeType();
 
     Expr norm;
     switch (type) {
     case ASTNodeType::LAnd:
-        genSeperation(iterHash, cond.as<LAndNode>()->lhs_, callback);
-        genSeperation(iterHash, cond.as<LAndNode>()->rhs_, callback);
+        genSeperation(iterVar, cond.as<LAndNode>()->lhs_, callback);
+        genSeperation(iterVar, cond.as<LAndNode>()->rhs_, callback);
         return;
     case ASTNodeType::LOr:
-        genSeperation(iterHash, cond.as<LOrNode>()->lhs_, callback);
-        genSeperation(iterHash, cond.as<LOrNode>()->rhs_, callback);
+        genSeperation(iterVar, cond.as<LOrNode>()->lhs_, callback);
+        genSeperation(iterVar, cond.as<LOrNode>()->rhs_, callback);
         return;
     case ASTNodeType::LNot:
-        genSeperation(iterHash, cond.as<LNotNode>()->expr_, callback);
+        genSeperation(iterVar, cond.as<LNotNode>()->expr_, callback);
         return;
     case ASTNodeType::LT:
         norm = makeSub(cond.as<LTNode>()->lhs_, cond.as<LTNode>()->rhs_);
@@ -81,8 +80,8 @@ void SeperateTail::genSeperation(
 
     auto it =
         std::find_if(lin.coeff_.begin(), lin.coeff_.end(),
-                     [iterHash](const decltype(lin.coeff_)::value_type &kx) {
-                         return kx.first == iterHash;
+                     [iterVar](const decltype(lin.coeff_)::value_type &kx) {
+                         return kx.first == iterVar->hash();
                      });
     if (it == lin.coeff_.end()) {
         return;
@@ -99,7 +98,7 @@ void SeperateTail::genSeperation(
 
     Expr seperation = makeIntConst(-lin.bias_);
     for (auto &&item : lin.coeff_) {
-        if (item.first != iterHash) {
+        if (item.first != iterVar->hash()) {
             seperation =
                 makeAdd(seperation,
                         makeMul(makeIntConst(-item.second.k_), item.second.a_));
@@ -164,17 +163,17 @@ Stmt SeperateTail::visit(const For &_op) {
         return op;
     }
 
-    auto iterHash = getHash(makeVar(op->iter_));
-    std::unordered_map<uint64_t, Expr> sepSet;
+    auto iterVar = makeVar(op->iter_);
+    ASTHashSet<Expr> sepSet;
     for (auto &&branch : ifList) {
-        genSeperation(iterHash, branch->cond_,
-                      [&](const Expr &sep) { sepSet[getHash(sep)] = sep; });
+        genSeperation(iterVar, branch->cond_,
+                      [&](const Expr &sep) { sepSet.insert(sep); });
     }
 
     std::vector<Expr> seperations;
     seperations.reserve(sepSet.size());
     for (auto &&item : sepSet) {
-        seperations.emplace_back(item.second);
+        seperations.emplace_back(item);
     }
     std::function<Stmt(size_t, const For &)> dfs =
         [&seperations, &dfs, this](size_t i, const For &old) -> Stmt {

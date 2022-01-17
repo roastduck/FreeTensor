@@ -6,9 +6,10 @@
 
 #include <z3++.h>
 
-#include <analyze/hash.h>
 #include <func.h>
+#include <hash.h>
 #include <mutator.h>
+#include <visitor.h>
 
 namespace ir {
 class OutDatedCondsRemover : public Visitor {
@@ -39,8 +40,7 @@ class OutDatedCondsRemover : public Visitor {
  */
 class Z3Simplify : public Mutator {
     int varCnt_ = 0;
-    std::unordered_map<uint64_t, int> varId_;
-    GetHash getHash_;
+    ASTHashMap<Expr, int> varId_;
 
     z3::context ctx_;
     z3::solver solver_;

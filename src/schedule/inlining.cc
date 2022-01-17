@@ -2,7 +2,6 @@
 
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
-#include <analyze/hash.h>
 #include <pass/simplify.h>
 #include <schedule/inlining.h>
 
@@ -11,12 +10,12 @@ namespace ir {
 MakeInlinePlaceholder::MakeInlinePlaceholder(const std::vector<Expr> &indices) {
     indexHashes_.reserve(indices.size());
     for (auto &&index : indices) {
-        indexHashes_.emplace_back(getHash(index));
+        indexHashes_.emplace_back(index->hash());
     }
 }
 
 Expr MakeInlinePlaceholder::visitExpr(const Expr &op) {
-    auto h = getHash(op);
+    auto h = op->hash();
     for (auto &&[i, indexHash] : iter::enumerate(indexHashes_)) {
         if (indexHash == h) {
             return makeVar(".inline_placeholder." + std::to_string(i));

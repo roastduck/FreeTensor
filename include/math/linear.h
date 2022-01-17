@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <iostream>
 
-#include <analyze/hash.h>
+#include <hash.h>
 
 namespace ir {
 
@@ -23,7 +23,8 @@ template <class T> struct LinearExpr {
     // std::unordered_map can not guarantee ASTs generated from two identical
     // `LinearExpr`s are the same, but std::map is too slow. So, we are using
     // std::vector
-    std::vector<std::pair<uint64_t, Scale<T>>> coeff_;
+    std::vector<std::pair<size_t, Scale<T>>> coeff_;
+    // TODO: Use HashComparator
     T bias_;
 };
 

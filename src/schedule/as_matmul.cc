@@ -28,11 +28,6 @@ static std::vector<int> filter(const std::vector<int> &order,
     return ret;
 }
 
-uint64_t AsMatMul::getHash(const Expr &op) {
-    getHash_(op);
-    return getHash_.hash().at(op);
-}
-
 const LinearExpr<int64_t> &AsMatMul::analyzeLinear(const Expr &expr) {
     analyzeLinear_(expr);
     return analyzeLinear_.result().at(expr);
@@ -73,7 +68,7 @@ Stmt AsMatMul::visit(const For &op) {
         }
         alpha = makeIntConst(1);
         if (foundInit_) {
-            if (getHash(c_) != getHash(initC_)) {
+            if (!HashComparator()(c_, initC_)) {
                 throw InvalidSchedule(
                     "The initialized matrix " + initC_.as<LoadNode>()->var_ +
                     " does not match " + c_.as<LoadNode>()->var_ +

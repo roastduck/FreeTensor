@@ -1,5 +1,6 @@
 #include <cmath>
 
+#include <hash.h>
 #include <pass/float_simplify.h>
 
 namespace ir {
@@ -22,11 +23,6 @@ inline static bool hasSqrt(const Expr &op) {
     } else {
         return op->nodeType() == ASTNodeType::Sqrt;
     }
-}
-
-uint64_t FloatSimplify::getHash(const Expr &op) {
-    getHash_(op);
-    return getHash_.hash().at(op);
 }
 
 DataType FloatSimplify::dtype(const Expr &op) {
@@ -62,7 +58,7 @@ Expr FloatSimplify::normalizeRealMulDiv(const Expr &op) {
     auto trySquare = [this, &squareCnt](std::vector<Expr> &list) {
         for (size_t i = 0; i + 1 < list.size(); i++) {
             for (size_t j = i + 1; j < list.size(); j++) {
-                if (this->getHash(list[i]) == this->getHash(list[j])) {
+                if (HashComparator()(list[i], list[j])) {
                     list[i] = makeSquare(list[i]);
                     std::swap(list[j], list.back());
                     list.resize(list.size() - 1);

@@ -3,6 +3,7 @@
 
 #include <sstream>
 
+#include <hash.h>
 #include <pass/simplify.h>
 
 namespace ir {
@@ -55,7 +56,7 @@ Expr SimplifyPass<BaseClass>::visitExpr(const Expr &_op) {
     auto op = BaseClass::visitExpr(_op);
 
     // To avoid divergence
-    if (this->getHash(op) != this->getHash(_op)) {
+    if (!HashComparator()(op, _op)) {
         // E.g.
         // (1) a[0 - 0] -> a[0]
         // (2) (1 + 1) * a[0] -> 2 * a[0 - 0], because of the old bound
@@ -86,7 +87,7 @@ Expr SimplifyPass<BaseClass>::visitExpr(const Expr &_op) {
             }
         }
     }
-    if (best.isValid() && this->getHash(best) != this->getHash(op)) {
+    if (best.isValid() && !HashComparator()(best, op)) {
         return markMutated(best);
     }
     return op;

@@ -43,7 +43,7 @@ Expr PBCompBounds::visitExpr(const Expr &_op) {
 
         std::string str = "{[";
         for (auto &&[i, var] : iter::enumerate(vars)) {
-            str += (i == 0 ? "" : ", ") + var.second.second;
+            str += (i == 0 ? "" : ", ") + var.second;
         }
         str += "] -> [" + *expr + "]";
         for (auto &&[i, cond] : iter::enumerate(condExprs)) {

@@ -6,8 +6,8 @@
 
 #include <analyze/analyze_linear.h>
 #include <analyze/check_all_defined.h>
-#include <analyze/hash.h>
 #include <analyze/symbol_table.h>
+#include <hash.h>
 #include <mutator.h>
 
 namespace ir {
@@ -29,14 +29,12 @@ class AsMatMul : public SymbolTable<Mutator> {
         stridec_, batchSize_;
     bool aIsRowMajor_, bIsRowMajor_, cIsRowMajor_;
 
-    GetHash getHash_;
     AnalyzeLinear analyzeLinear_;
 
   public:
     AsMatMul(const std::string &loop) : loop_(loop) {}
 
   private:
-    uint64_t getHash(const Expr &op);
     const LinearExpr<int64_t> &analyzeLinear(const Expr &expr);
 
     template <class T>
@@ -64,8 +62,8 @@ class AsMatMul : public SymbolTable<Mutator> {
                 baseAddr.as<LoadNode>()->indices_[i] = makeIntConst(0);
             }
             int loop = iterMap_.at(var->name_);
-            if (getHash(nests_[loop]->len_) !=
-                getHash(buffer(acc->var_)->tensor().shape()[i])) {
+            if (!HashComparator()(nests_[loop]->len_,
+                                  buffer(acc->var_)->tensor().shape()[i])) {
                 throw InvalidSchedule(
                     "Iterator " + var->name_ + " of " + acc->var_ +
                     " should loop over the entire range (" +

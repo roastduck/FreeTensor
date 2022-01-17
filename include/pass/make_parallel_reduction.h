@@ -5,7 +5,6 @@
 #include <unordered_set>
 
 #include <analyze/find_loop_variance.h>
-#include <analyze/hash.h>
 #include <analyze/symbol_table.h>
 #include <func.h>
 #include <mutator.h>
@@ -68,10 +67,6 @@ class MakeParallelReduction : public SymbolTable<Mutator> {
         std::vector<std::tuple<ReduceTo, std::vector<Expr>, std::vector<Expr>>>>
         cacheAtomic_; // loop ID -> [(old ReduceTo node, new shape, new
                       // indices)]
-    GetHash getHash_;
-
-  private:
-    uint64_t getHash(const Expr &op);
 
   public:
     MakeParallelReduction(

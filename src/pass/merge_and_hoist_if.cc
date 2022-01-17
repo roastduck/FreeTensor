@@ -3,7 +3,7 @@
 #include <analyze/all_reads.h>
 #include <analyze/all_writes.h>
 #include <analyze/check_all_defined.h>
-#include <analyze/hash.h>
+#include <hash.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/merge_and_hoist_if.h>
 
@@ -20,7 +20,7 @@ Stmt MergeAndHoistIf::visit(const StmtSeq &_op) {
             stmt->nodeType() == ASTNodeType::If) {
             auto if1 = stmts.back().as<IfNode>();
             auto if2 = stmt.as<IfNode>();
-            if (getHash(if1->cond_) == getHash(if2->cond_)) {
+            if (HashComparator()(if1->cond_, if2->cond_)) {
                 auto writes = allWrites(if1);
                 auto reads = allReads(if2->cond_);
                 if (std::none_of(reads.begin(), reads.end(),

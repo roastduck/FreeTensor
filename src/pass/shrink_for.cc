@@ -6,8 +6,7 @@ namespace ir {
 
 Stmt ShrinkFor::visit(const For &_op) {
     auto var = makeVar(_op->iter_).as<VarNode>();
-    auto hash = getHash(var);
-    newRange_.erase(hash);
+    newRange_.erase(var);
 
     iterStack_.emplace_back(var);
     namesStack_.emplace_back(names());
@@ -17,11 +16,11 @@ Stmt ShrinkFor::visit(const For &_op) {
     namesStack_.pop_back();
     iterStack_.pop_back();
 
-    if (!newRange_.count(hash)) {
+    if (!newRange_.count(var)) {
         return op->body_;
     }
-    auto lower = makeMinMax(newRange_.at(hash).first);
-    auto upper = makeMaxMin(newRange_.at(hash).second);
+    auto lower = makeMinMax(newRange_.at(var).first);
+    auto upper = makeMaxMin(newRange_.at(var).second);
 
     if (op->property_.unroll_ ||
         (op->property_.parallel_.substr(0, 10) == "threadIdx." &&

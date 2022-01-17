@@ -1,7 +1,6 @@
 #include <functional>
 #include <unordered_map>
 
-#include <analyze/hash.h>
 #include <math/min_max.h>
 
 namespace ir {
@@ -86,8 +85,7 @@ Expr makeOuterInner(const MakerType &makeOuter, const MakerType &makeInner,
     for (auto &&group : exprs) {
         std::unordered_map<uint64_t, Expr> groupMap;
         for (auto &&item : group) {
-            auto h = getHash(item);
-            groupMap[h] = item;
+            groupMap[item->hash()] = item; // TODO: Use ASTHashMap
         }
         exprsMap.emplace_back(std::move(groupMap));
     }

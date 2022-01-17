@@ -17,9 +17,8 @@ class LowerVector : public SymbolTable<Z3Simplify> {
 
     static constexpr int VEC_LEN[] = {4, 2};
 
-    std::string var_;
+    Var var_;
     Expr begin_;
-    uint64_t varHash_;
     int vecLen_, isIndex_ = 0;
     bool simplifyOnly_ = false;
 

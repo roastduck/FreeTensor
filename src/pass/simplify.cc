@@ -4,7 +4,6 @@
 
 #include <analyze/all_names.h>
 #include <analyze/all_reads.h>
-#include <analyze/hash.h>
 #include <except.h>
 #include <math/utils.h>
 #include <pass/flatten_stmt_seq.h>
@@ -91,13 +90,8 @@ DataType CompTransientBounds::dtype(const Expr &op) {
     return typeInfer_.types().at(op);
 }
 
-uint64_t CompTransientBounds::getHash(const Expr &op) {
-    getHash_(op);
-    return getHash_.hash().at(op);
-}
-
 TransientBound CompTransientBounds::transient(const Expr &op) {
-    auto hash = getHash(op);
+    auto hash = op->hash();
     if (transients_.count(hash)) {
         return transients_.at(hash);
     }
@@ -133,7 +127,7 @@ void CompTransientBounds::applyCond(int k, const Expr &lhs, ASTNodeType opType,
     }
     auto floorRhs = k != 1 ? makeFloorDiv(rhs, makeIntConst(k)) : rhs;
     auto ceilRhs = k != 1 ? makeCeilDiv(rhs, makeIntConst(k)) : rhs;
-    auto h = getHash(lhs);
+    auto h = lhs->hash();
     switch (opType) {
     case ASTNodeType::LT: {
         transients_[h].expr_ = (*this)(lhs);
@@ -234,7 +228,7 @@ Stmt CompTransientBounds::visit(const For &op) {
     OutDatedBoundsRemover localRemover(transients_, conds_);
     localRemover(op);
     auto var = makeVar(op->iter_);
-    auto hash = getHash(var);
+    auto hash = var->hash();
     if (transients_.count(hash)) {
         throw InvalidProgram(
             "iterators with the same name in nested loops are not allowed");

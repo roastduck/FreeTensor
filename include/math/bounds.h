@@ -12,7 +12,7 @@ class UpperBound {
 
   public:
     UpperBound(const Expr &expr)
-        : expr_(expr), lin_{{{getHash(expr), {1, deepCopy(expr)}}}, 0} {}
+        : expr_(expr), lin_{{{expr->hash(), {1, deepCopy(expr)}}}, 0} {}
     UpperBound(const LinearExpr<Rational<int64_t>> &lin) : lin_(lin) {}
     UpperBound(LinearExpr<Rational<int64_t>> &&lin) : lin_(std::move(lin)) {}
 
@@ -26,7 +26,7 @@ class LowerBound {
 
   public:
     LowerBound(const Expr &expr)
-        : expr_(expr), lin_{{{getHash(expr), {1, expr}}}, 0} {}
+        : expr_(expr), lin_{{{expr->hash(), {1, expr}}}, 0} {}
     LowerBound(const LinearExpr<Rational<int64_t>> &lin) : lin_(lin) {}
     LowerBound(LinearExpr<Rational<int64_t>> &&lin) : lin_(std::move(lin)) {}
 

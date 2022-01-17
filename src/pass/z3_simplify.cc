@@ -24,12 +24,10 @@ void OutDatedCondsRemover::visit(const ReduceTo &op) {
 }
 
 int Z3Simplify::getVarId(const Expr &op) {
-    getHash_(op);
-    auto h = getHash_.hash().at(op);
-    if (!varId_.count(h)) {
-        varId_[h] = varCnt_++;
+    if (!varId_.count(op)) {
+        varId_[op] = varCnt_++;
     }
-    return varId_.at(h);
+    return varId_.at(op);
 }
 
 void Z3Simplify::put(const Expr &key, const z3::expr &expr) {

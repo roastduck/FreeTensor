@@ -15,6 +15,8 @@ namespace ir {
  * Only used in pattern matching
  */
 class AnyExprNode : public ExprNode {
+  public:
+    void compHash() override;
     DEFINE_NODE_TRAIT(AnyExpr);
 };
 typedef Ref<AnyExprNode> AnyExpr;
@@ -24,6 +26,7 @@ inline Expr _makeAnyExpr() { return AnyExpr::make(); }
 class VarNode : public ExprNode {
   public:
     std::string name_;
+    void compHash() override;
     DEFINE_NODE_TRAIT(Var);
 };
 typedef Ref<VarNode> Var;
@@ -38,6 +41,7 @@ class LoadNode : public ExprNode {
   public:
     std::string var_;
     std::vector<SubTree<ExprNode>> indices_;
+    void compHash() override;
     DEFINE_NODE_TRAIT(Load);
 };
 typedef Ref<LoadNode> Load;
@@ -68,6 +72,7 @@ typedef Ref<ConstNode> Const;
 class IntConstNode : public ConstNode {
   public:
     int64_t val_;
+    void compHash() override;
     DEFINE_NODE_TRAIT(IntConst);
 };
 typedef Ref<IntConstNode> IntConst;
@@ -81,6 +86,7 @@ inline Expr _makeIntConst(int64_t val) {
 class FloatConstNode : public ConstNode {
   public:
     double val_;
+    void compHash() override;
     DEFINE_NODE_TRAIT(FloatConst);
 };
 typedef Ref<FloatConstNode> FloatConst;
@@ -94,6 +100,7 @@ inline Expr _makeFloatConst(double val) {
 class BoolConstNode : public ConstNode {
   public:
     bool val_;
+    void compHash() override;
     DEFINE_NODE_TRAIT(BoolConst);
 };
 typedef Ref<BoolConstNode> BoolConst;
@@ -109,10 +116,25 @@ class BinaryExprNode : public ExprNode {
     SubTree<ExprNode> lhs_, rhs_;
 
     bool isBinary() const override { return true; }
+    virtual bool isCommutative() const = 0;
 };
 typedef Ref<BinaryExprNode> BinaryExpr;
 
-class AddNode : public BinaryExprNode {
+class CommutativeBinaryExprNode : public BinaryExprNode {
+  public:
+    void compHash() override;
+    bool isCommutative() const override { return true; }
+};
+typedef Ref<CommutativeBinaryExprNode> CommutativeBinaryExpr;
+
+class NonCommutativeBinaryExprNode : public BinaryExprNode {
+  public:
+    void compHash() override;
+    bool isCommutative() const override { return false; }
+};
+typedef Ref<NonCommutativeBinaryExprNode> NonCommutativeBinaryExpr;
+
+class AddNode : public CommutativeBinaryExprNode {
     DEFINE_NODE_TRAIT(Add);
 };
 typedef Ref<AddNode> Add;
@@ -123,7 +145,7 @@ template <class T, class U> Expr _makeAdd(T &&lhs, U &&rhs) {
     return a;
 }
 
-class SubNode : public BinaryExprNode {
+class SubNode : public NonCommutativeBinaryExprNode {
     DEFINE_NODE_TRAIT(Sub);
 };
 typedef Ref<SubNode> Sub;
@@ -134,7 +156,7 @@ template <class T, class U> Expr _makeSub(T &&lhs, U &&rhs) {
     return a;
 }
 
-class MulNode : public BinaryExprNode {
+class MulNode : public CommutativeBinaryExprNode {
     DEFINE_NODE_TRAIT(Mul);
 };
 typedef Ref<MulNode> Mul;
@@ -148,7 +170,7 @@ template <class T, class U> Expr _makeMul(T &&lhs, U &&rhs) {
 /**
  * Floating-point division
  */
-class RealDivNode : public BinaryExprNode {
+class RealDivNode : public NonCommutativeBinaryExprNode {
     DEFINE_NODE_TRAIT(RealDiv);
 };
 typedef Ref<RealDivNode> RealDiv;
@@ -165,7 +187,7 @@ template <class T, class U> Expr _makeRealDiv(T &&lhs, U &&rhs) {
  * FloorDiv nodes are easy to analyze, and will be replaced by RoundTowards0Div
  * nodes before codegen if possible
  */
-class FloorDivNode : public BinaryExprNode {
+class FloorDivNode : public NonCommutativeBinaryExprNode {
     DEFINE_NODE_TRAIT(FloorDiv);
 };
 typedef Ref<FloorDivNode> FloorDiv;
@@ -182,7 +204,7 @@ template <class T, class U> Expr _makeFloorDiv(T &&lhs, U &&rhs) {
  * CeilDiv nodes are easy to analyze, and will be replaced by RoundTowards0Div
  * nodes before codegen if possible
  */
-class CeilDivNode : public BinaryExprNode {
+class CeilDivNode : public NonCommutativeBinaryExprNode {
     DEFINE_NODE_TRAIT(CeilDiv);
 };
 typedef Ref<CeilDivNode> CeilDiv;
@@ -199,7 +221,7 @@ template <class T, class U> Expr _makeCeilDiv(T &&lhs, U &&rhs) {
  * RoundTowards0Div nodes comply with the integer division behaviour in C. They
  * have minimal runtime overhead, but are hard to analyze
  */
-class RoundTowards0DivNode : public BinaryExprNode {
+class RoundTowards0DivNode : public NonCommutativeBinaryExprNode {
     DEFINE_NODE_TRAIT(RoundTowards0Div);
 };
 typedef Ref<RoundTowards0DivNode> RoundTowards0Div;
@@ -215,7 +237,7 @@ template <class T, class U> Expr _makeRoundTowards0Div(T &&lhs, U &&rhs) {
  * Mod(3, 5) = 3
  * Mod(-3, 5) = 2
  */
-class ModNode : public BinaryExprNode {
+class ModNode : public NonCommutativeBinaryExprNode {
     DEFINE_NODE_TRAIT(Mod);
 };
 typedef Ref<ModNode> Mod;
@@ -231,7 +253,7 @@ template <class T, class U> Expr _makeMod(T &&lhs, U &&rhs) {
  * Remainder(3, 5) = 3
  * Remainder(-3, 5) = -3
  */
-class RemainderNode : public BinaryExprNode {
+class RemainderNode : public NonCommutativeBinaryExprNode {
     DEFINE_NODE_TRAIT(Remainder);
 };
 typedef Ref<RemainderNode> Remainder;
@@ -242,7 +264,7 @@ template <class T, class U> Expr _makeRemainder(T &&lhs, U &&rhs) {
     return a;
 }
 
-class MinNode : public BinaryExprNode {
+class MinNode : public CommutativeBinaryExprNode {
     DEFINE_NODE_TRAIT(Min);
 };
 typedef Ref<MinNode> Min;
@@ -253,7 +275,7 @@ template <class T, class U> Expr _makeMin(T &&lhs, U &&rhs) {
     return m;
 }
 
-class MaxNode : public BinaryExprNode {
+class MaxNode : public CommutativeBinaryExprNode {
     DEFINE_NODE_TRAIT(Max);
 };
 typedef Ref<MaxNode> Max;
@@ -264,7 +286,7 @@ template <class T, class U> Expr _makeMax(T &&lhs, U &&rhs) {
     return m;
 }
 
-class LTNode : public BinaryExprNode {
+class LTNode : public NonCommutativeBinaryExprNode {
     DEFINE_NODE_TRAIT(LT);
 };
 typedef Ref<LTNode> LT;
@@ -275,7 +297,7 @@ template <class T, class U> Expr _makeLT(T &&lhs, U &&rhs) {
     return a;
 }
 
-class LENode : public BinaryExprNode {
+class LENode : public NonCommutativeBinaryExprNode {
     DEFINE_NODE_TRAIT(LE);
 };
 typedef Ref<LENode> LE;
@@ -286,7 +308,7 @@ template <class T, class U> Expr _makeLE(T &&lhs, U &&rhs) {
     return a;
 }
 
-class GTNode : public BinaryExprNode {
+class GTNode : public NonCommutativeBinaryExprNode {
     DEFINE_NODE_TRAIT(GT);
 };
 typedef Ref<GTNode> GT;
@@ -297,7 +319,7 @@ template <class T, class U> Expr _makeGT(T &&lhs, U &&rhs) {
     return a;
 }
 
-class GENode : public BinaryExprNode {
+class GENode : public NonCommutativeBinaryExprNode {
     DEFINE_NODE_TRAIT(GE);
 };
 typedef Ref<GENode> GE;
@@ -308,7 +330,7 @@ template <class T, class U> Expr _makeGE(T &&lhs, U &&rhs) {
     return a;
 }
 
-class EQNode : public BinaryExprNode {
+class EQNode : public CommutativeBinaryExprNode {
     DEFINE_NODE_TRAIT(EQ);
 };
 typedef Ref<EQNode> EQ;
@@ -319,7 +341,7 @@ template <class T, class U> Expr _makeEQ(T &&lhs, U &&rhs) {
     return a;
 }
 
-class NENode : public BinaryExprNode {
+class NENode : public CommutativeBinaryExprNode {
     DEFINE_NODE_TRAIT(NE);
 };
 typedef Ref<NENode> NE;
@@ -330,7 +352,7 @@ template <class T, class U> Expr _makeNE(T &&lhs, U &&rhs) {
     return a;
 }
 
-class LAndNode : public BinaryExprNode {
+class LAndNode : public CommutativeBinaryExprNode {
     DEFINE_NODE_TRAIT(LAnd);
 };
 typedef Ref<LAndNode> LAnd;
@@ -341,7 +363,7 @@ template <class T, class U> Expr _makeLAnd(T &&lhs, U &&rhs) {
     return l;
 }
 
-class LOrNode : public BinaryExprNode {
+class LOrNode : public CommutativeBinaryExprNode {
     DEFINE_NODE_TRAIT(LOr);
 };
 typedef Ref<LOrNode> LOr;
@@ -356,6 +378,7 @@ class UnaryExprNode : public ExprNode {
   public:
     SubTree<ExprNode> expr_;
 
+    void compHash() override;
     bool isUnary() const override { return true; }
 };
 typedef Ref<UnaryExprNode> UnaryExpr;
@@ -462,6 +485,7 @@ template <class T> Expr _makeCeil(T &&expr) {
 class IfExprNode : public ExprNode {
   public:
     SubTree<ExprNode> cond_, thenCase_, elseCase_;
+    void compHash() override;
     DEFINE_NODE_TRAIT(IfExpr);
 };
 typedef Ref<IfExprNode> IfExpr;
@@ -479,6 +503,7 @@ class CastNode : public ExprNode {
   public:
     SubTree<ExprNode> expr_;
     DataType dtype_;
+    void compHash() override;
     DEFINE_NODE_TRAIT(Cast);
 };
 typedef Ref<CastNode> Cast;
@@ -499,6 +524,7 @@ class IntrinsicNode : public ExprNode {
                          /// E.g. sinf(%)
     std::vector<SubTree<ExprNode>> params_;
     DataType retType_;
+    void compHash() override;
     DEFINE_NODE_TRAIT(Intrinsic);
 };
 typedef Ref<IntrinsicNode> Intrinsic;

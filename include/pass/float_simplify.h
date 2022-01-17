@@ -4,7 +4,6 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include <analyze/hash.h>
 #include <analyze/symbol_table.h>
 #include <analyze/type_infer.h>
 #include <func.h>
@@ -17,7 +16,6 @@ class FloatSimplify : public SymbolTable<Mutator> {
 
     std::unordered_map<Expr, double> constants_;
     std::unordered_set<Expr> nonNeg_, nonPosi_;
-    GetHash getHash_;
     TypeInfer typeInfer_;
     bool isFixPoint_ = true;
 
@@ -38,7 +36,6 @@ class FloatSimplify : public SymbolTable<Mutator> {
     }
 
   private:
-    uint64_t getHash(const Expr &op);
     DataType dtype(const Expr &op);
 
     Expr normalizeRealMulDiv(const Expr &op);

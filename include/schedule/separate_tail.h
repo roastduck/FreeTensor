@@ -83,7 +83,7 @@ class SeperateTail : public SymbolTable<Mutator> {
     }
 
   private:
-    void genSeperation(uint64_t iterHash, const Expr &cond,
+    void genSeperation(const Expr &iterVar, const Expr &cond,
                        const std::function<void(const Expr &)> &callback);
 
   protected:

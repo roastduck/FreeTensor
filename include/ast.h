@@ -135,12 +135,18 @@ typedef Ref<ASTNode> AST;
 #endif
 
 class ExprNode : public ASTNode {
+  protected:
+    size_t hash_ = ~0ull;
+
   public:
     bool isExpr() const override { return true; }
 
     virtual bool isConst() const { return false; }
     virtual bool isBinary() const { return false; }
     virtual bool isUnary() const { return false; }
+
+    size_t hash();
+    virtual void compHash() = 0;
 
     DEFINE_NODE_ACCESS(Expr);
 };

@@ -80,6 +80,13 @@ const std::string &StmtNode::id() const {
 
 bool StmtNode::hasNamedId() const { return id_.empty() || id_[0] != '#'; }
 
+size_t ExprNode::hash() {
+    if (hash_ == ~0ull) {
+        compHash();
+    }
+    return hash_;
+}
+
 Expr deepCopy(const Expr &op) { return Mutator()(op); }
 Stmt deepCopy(const Stmt &op) { return Mutator()(op); }
 
