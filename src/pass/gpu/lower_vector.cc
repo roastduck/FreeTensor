@@ -1,5 +1,6 @@
 #include <algorithm>
 
+#include <hash.h>
 #include <pass/gpu/lower_vector.h>
 #include <pass/simplify.h>
 
@@ -30,14 +31,13 @@ bool LowerVector::hasVectorIndex(const Expr &index) {
     analyzeLinear_(index);
     auto &&lin = analyzeLinear_.result().at(index);
 
-    auto it =
-        std::find_if(lin.coeff_.begin(), lin.coeff_.end(),
-                     [this](const std::pair<uint64_t, Scale<int64_t>> &item) {
-                         return item.first == var_->hash();
-                     });
+    auto it = std::find_if(lin.coeff_.begin(), lin.coeff_.end(),
+                           [this](const Scale<int64_t> &item) {
+                               return HashComparator()(item.a_, var_);
+                           });
     if (it != lin.coeff_.end()) {
         // TODO: k_ can be -1
-        if (it->second.k_ != 1) {
+        if (it->k_ != 1) {
             throw InvalidSchedule("Vectorized non-contiguous memory "
                                   "accessis not supported");
         }

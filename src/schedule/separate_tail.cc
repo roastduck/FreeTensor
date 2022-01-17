@@ -80,28 +80,27 @@ void SeperateTail::genSeperation(
 
     auto it =
         std::find_if(lin.coeff_.begin(), lin.coeff_.end(),
-                     [iterVar](const decltype(lin.coeff_)::value_type &kx) {
-                         return kx.first == iterVar->hash();
+                     [&iterVar](const decltype(lin.coeff_)::value_type &kx) {
+                         return HashComparator()(kx.a_, iterVar);
                      });
     if (it == lin.coeff_.end()) {
         return;
     }
-    auto selfK = it->second.k_;
+    auto selfK = it->k_;
     if (selfK < 0) {
         type = reverseCmp(type);
         selfK *= -1;
         lin.bias_ *= -1;
         for (auto &item : lin.coeff_) {
-            item.second.k_ *= -1;
+            item.k_ *= -1;
         }
     }
 
     Expr seperation = makeIntConst(-lin.bias_);
     for (auto &&item : lin.coeff_) {
-        if (item.first != iterVar->hash()) {
+        if (!HashComparator()(item.a_, iterVar)) {
             seperation =
-                makeAdd(seperation,
-                        makeMul(makeIntConst(-item.second.k_), item.second.a_));
+                makeAdd(seperation, makeMul(makeIntConst(-item.k_), item.a_));
         }
     }
     switch (type) {

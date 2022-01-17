@@ -39,13 +39,13 @@ class FindSimplexOffset : public SymbolTable<Visitor> {
                      const Expr &expr) {
         Ref<SimplexOffset> ret = Ref<SimplexOffset>::make();
         analyzeLinear_(expr);
-        for (auto &&[h, s] : analyzeLinear_.result().at(expr).coeff_) {
-            if (s.a_->nodeType() == ASTNodeType::Var) {
-                auto var = s.a_.as<VarNode>();
+        for (auto &&[k, a] : analyzeLinear_.result().at(expr).coeff_) {
+            if (a->nodeType() == ASTNodeType::Var) {
+                auto var = a.as<VarNode>();
                 if (var2para_.count(var->name_) &&
                     filter.count(var2para_.at(var->name_))) {
                     ASSERT(!ret->offset_.count(var2para_.at(var->name_)));
-                    ret->offset_[var2para_.at(var->name_)] = s.k_;
+                    ret->offset_[var2para_.at(var->name_)] = k;
                 }
             }
         }

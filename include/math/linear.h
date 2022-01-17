@@ -22,9 +22,8 @@ template <class T> struct Scale {
 template <class T> struct LinearExpr {
     // std::unordered_map can not guarantee ASTs generated from two identical
     // `LinearExpr`s are the same, but std::map is too slow. So, we are using
-    // std::vector
-    std::vector<std::pair<size_t, Scale<T>>> coeff_;
-    // TODO: Use HashComparator
+    // std::vector and sort each factor by its hash
+    std::vector<Scale<T>> coeff_;
     T bias_;
 };
 
@@ -34,18 +33,17 @@ LinearExpr<T> add(const LinearExpr<T> &lhs, const LinearExpr<T> &rhs) {
     auto m = lhs.coeff_.size(), n = rhs.coeff_.size();
     ret.coeff_.reserve(m + n);
     for (size_t p = 0, q = 0; p < m || q < n;) {
-        if (q == n || (p < m && lhs.coeff_[p].first < rhs.coeff_[q].first)) {
+        if (q == n ||
+            (p < m && lhs.coeff_[p].a_->hash() < rhs.coeff_[q].a_->hash())) {
             ret.coeff_.emplace_back(lhs.coeff_[p++]);
-        } else if (p == m ||
-                   (q < n && lhs.coeff_[p].first > rhs.coeff_[q].first)) {
+        } else if (p == m || (q < n && lhs.coeff_[p].a_->hash() >
+                                           rhs.coeff_[q].a_->hash())) {
             ret.coeff_.emplace_back(rhs.coeff_[q++]);
         } else {
-            auto h = lhs.coeff_[p].first;
-            Scale<T> s{lhs.coeff_[p].second.k_ + rhs.coeff_[q].second.k_,
-                       lhs.coeff_[p].second.a_};
+            Scale<T> s{lhs.coeff_[p].k_ + rhs.coeff_[q].k_, lhs.coeff_[p].a_};
             p++, q++;
             if (s.k_ != 0) {
-                ret.coeff_.emplace_back(h, s);
+                ret.coeff_.emplace_back(s);
             }
         }
     }
@@ -59,19 +57,18 @@ LinearExpr<T> sub(const LinearExpr<T> &lhs, const LinearExpr<T> &rhs) {
     auto m = lhs.coeff_.size(), n = rhs.coeff_.size();
     ret.coeff_.reserve(m + n);
     for (size_t p = 0, q = 0; p < m || q < n;) {
-        if (q == n || (p < m && lhs.coeff_[p].first < rhs.coeff_[q].first)) {
+        if (q == n ||
+            (p < m && lhs.coeff_[p].a_->hash() < rhs.coeff_[q].a_->hash())) {
             ret.coeff_.emplace_back(lhs.coeff_[p++]);
-        } else if (p == m ||
-                   (q < n && lhs.coeff_[p].first > rhs.coeff_[q].first)) {
+        } else if (p == m || (q < n && lhs.coeff_[p].a_->hash() >
+                                           rhs.coeff_[q].a_->hash())) {
             ret.coeff_.emplace_back(rhs.coeff_[q++]);
-            ret.coeff_.back().second.k_ = -ret.coeff_.back().second.k_;
+            ret.coeff_.back().k_ = -ret.coeff_.back().k_;
         } else {
-            auto h = lhs.coeff_[p].first;
-            Scale<T> s{lhs.coeff_[p].second.k_ - rhs.coeff_[q].second.k_,
-                       lhs.coeff_[p].second.a_};
+            Scale<T> s{lhs.coeff_[p].k_ - rhs.coeff_[q].k_, lhs.coeff_[p].a_};
             p++, q++;
             if (s.k_ != 0) {
-                ret.coeff_.emplace_back(h, s);
+                ret.coeff_.emplace_back(s);
             }
         }
     }
@@ -86,8 +83,7 @@ template <class T> LinearExpr<T> mul(const LinearExpr<T> &lin, const T &k) {
     LinearExpr<T> ret;
     ret.coeff_.reserve(lin.coeff_.size());
     for (auto &&item : lin.coeff_) {
-        ret.coeff_.emplace_back(item.first,
-                                Scale<T>{item.second.k_ * k, item.second.a_});
+        ret.coeff_.emplace_back(Scale<T>{item.k_ * k, item.a_});
     }
     ret.bias_ = lin.bias_ * k;
     return ret;
@@ -97,10 +93,10 @@ template <class T>
 bool hasIdenticalCoeff(const LinearExpr<T> &lhs, const LinearExpr<T> &rhs) {
     if (lhs.coeff_.size() == rhs.coeff_.size()) {
         for (size_t i = 0, iEnd = lhs.coeff_.size(); i < iEnd; i++) {
-            if (lhs.coeff_[i].first != rhs.coeff_[i].first) {
+            if (lhs.coeff_[i].k_ != rhs.coeff_[i].k_) {
                 return false;
             }
-            if (lhs.coeff_[i].second.k_ != rhs.coeff_[i].second.k_) {
+            if (!HashComparator()(lhs.coeff_[i].a_, rhs.coeff_[i].a_)) {
                 return false;
             }
         }
@@ -122,8 +118,8 @@ Expr lin2expr(const LinearExpr<T> &lin) {
     Expr b = makeIntConst(lin.bias_);
 
     for (auto &&item : lin.coeff_) {
-        auto k = item.second.k_;
-        auto a = deepCopy(item.second.a_);
+        auto k = item.k_;
+        auto a = deepCopy(item.a_);
 
         if (k == 0) {
             continue;
@@ -156,27 +152,13 @@ Expr lin2expr(const LinearExpr<T> &lin) {
 
 template <class T>
 bool operator==(const LinearExpr<T> &lhs, const LinearExpr<T> &rhs) {
-    if (lhs.coeff_.size() != rhs.coeff_.size()) {
-        return false;
-    }
-    for (size_t i = 0, iEnd = lhs.coeff_.size(); i < iEnd; i++) {
-        if (lhs.coeff_[i].first != rhs.coeff_[i].first) {
-            return false;
-        }
-        if (lhs.coeff_[i].second.k_ != rhs.coeff_[i].second.k_) {
-            return false;
-        }
-    }
-    if (lhs.bias_ != rhs.bias_) {
-        return false;
-    }
-    return true;
+    return hasIdenticalCoeff(lhs, rhs) && lhs.bias_ == rhs.bias_;
 }
 
 template <class T>
 std::ostream &operator<<(std::ostream &os, const LinearExpr<T> &lin) {
-    for (auto &&item : lin.coeff_) {
-        os << item.second.k_ << " * " << item.second.a_ << " + ";
+    for (auto &&[k, a] : lin.coeff_) {
+        os << k << " * " << a << " + ";
     }
     os << lin.bias_;
     return os;

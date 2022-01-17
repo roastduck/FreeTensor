@@ -6,7 +6,7 @@ void AnalyzeLinear::visitExpr(const Expr &op) {
     if (!result_.count(op)) {
         Visitor::visitExpr(op);
         if (!result_.count(op)) {
-            result_[op] = {{{op->hash(), {1, op}}}, 0};
+            result_[op] = {{{1, op}}, 0};
         }
     }
 }

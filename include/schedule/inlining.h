@@ -8,10 +8,11 @@
 namespace ir {
 
 class MakeInlinePlaceholder : public Mutator {
-    std::vector<uint64_t> indexHashes_;
+    std::vector<Expr> indices_;
 
   public:
-    MakeInlinePlaceholder(const std::vector<Expr> &indices);
+    MakeInlinePlaceholder(const std::vector<Expr> &indices)
+        : indices_(indices) {}
     MakeInlinePlaceholder(const std::vector<SubTree<ExprNode>> &indices)
         : MakeInlinePlaceholder(
               std::vector<Expr>(indices.begin(), indices.end())) {}

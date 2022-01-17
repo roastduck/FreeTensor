@@ -1,6 +1,7 @@
 #include <functional>
 #include <unordered_map>
 
+#include <hash.h>
 #include <math/min_max.h>
 
 namespace ir {
@@ -26,10 +27,9 @@ auto makeMaxFunc = [](const Expr &lhs, const Expr &rhs) {
     return makeMax(lhs, rhs);
 };
 
-Expr makeOuterInner(
-    const MakerType &makeOuter, const MakerType &makeInner,
-    std::vector<std::unordered_map<uint64_t, Expr>>::iterator begin,
-    std::vector<std::unordered_map<uint64_t, Expr>>::iterator end) {
+Expr makeOuterInner(const MakerType &makeOuter, const MakerType &makeInner,
+                    std::vector<ASTHashSet<Expr>>::iterator begin,
+                    std::vector<ASTHashSet<Expr>>::iterator end) {
     for (auto it = begin; it != end; it++) {
         if (it->empty()) {
             // In case of min(max(...), ...), this means min(max(empty), ...) =
@@ -38,17 +38,15 @@ Expr makeOuterInner(
         }
     }
 
-    std::unordered_map<uint64_t, int> counter;
-    uint64_t mostHash;
+    ASTHashMap<Expr, int> counter;
     Expr mostExpr;
     int mostCnt = 0;
     for (auto it = begin; it != end; it++) {
         auto &&group = *it;
         for (auto &&item : group) {
-            int cnt = ++counter[item.first];
+            int cnt = ++counter[item];
             if (cnt > mostCnt) {
-                mostHash = item.first;
-                mostExpr = item.second;
+                mostExpr = item;
                 mostCnt = cnt;
             }
         }
@@ -57,14 +55,14 @@ Expr makeOuterInner(
 
     auto split = begin;
     for (auto i = begin; i != end; i++) {
-        if (i->count(mostHash)) {
+        if (i->count(mostExpr)) {
             std::swap(*split, *i);
             split++;
         }
     }
     ASSERT(begin != split);
     for (auto it = begin; it != split; it++) {
-        it->erase(mostHash);
+        it->erase(mostExpr);
     }
 
     auto left = makeOuterInner(makeOuter, makeInner, begin, split);
@@ -80,17 +78,17 @@ Expr makeOuterInner(
 
 Expr makeOuterInner(const MakerType &makeOuter, const MakerType &makeInner,
                     const std::vector<std::vector<Expr>> &exprs) {
-    std::vector<std::unordered_map<uint64_t, Expr>> exprsMap;
-    exprsMap.reserve(exprs.size());
+    std::vector<ASTHashSet<Expr>> exprsSet;
+    exprsSet.reserve(exprs.size());
     for (auto &&group : exprs) {
-        std::unordered_map<uint64_t, Expr> groupMap;
+        ASTHashSet<Expr> groupSet;
         for (auto &&item : group) {
-            groupMap[item->hash()] = item; // TODO: Use ASTHashMap
+            groupSet.insert(item);
         }
-        exprsMap.emplace_back(std::move(groupMap));
+        exprsSet.emplace_back(std::move(groupSet));
     }
-    return makeOuterInner(makeOuter, makeInner, exprsMap.begin(),
-                          exprsMap.end());
+    return makeOuterInner(makeOuter, makeInner, exprsSet.begin(),
+                          exprsSet.end());
 }
 
 } // Anonymous namespace

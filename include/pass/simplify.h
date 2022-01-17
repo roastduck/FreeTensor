@@ -42,13 +42,12 @@ struct TransientBound {
 };
 
 class OutDatedBoundsRemover : public Visitor {
-    std::unordered_map<size_t, TransientBound> &transients_;
+    ASTHashMap<Expr, TransientBound> &transients_;
     std::vector<Expr> &conds_;
 
   public:
-    OutDatedBoundsRemover(
-        std::unordered_map<size_t, TransientBound> &transients,
-        std::vector<Expr> &conds)
+    OutDatedBoundsRemover(ASTHashMap<Expr, TransientBound> &transients,
+                          std::vector<Expr> &conds)
         : transients_(transients), conds_(conds) {}
 
   private:
@@ -80,7 +79,7 @@ class CompTransientBounds : public SymbolTable<Mutator> {
 
     // Bounds related to certain expressions
     // Bounds in transients_ has already been recursed with (*this)(...)
-    std::unordered_map<size_t, TransientBound> transients_;
+    ASTHashMap<Expr, TransientBound> transients_;
 
     // Original bounds
     std::vector<Expr> conds_;

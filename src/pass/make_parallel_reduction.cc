@@ -13,9 +13,9 @@ static bool isDenseOver(const Expr &expr, const std::string &iter) {
     AnalyzeLinear analyzeLinear;
     analyzeLinear(expr);
     auto &&lin = analyzeLinear.result().at(expr);
-    if (lin.coeff_.size() == 1 && std::abs(lin.coeff_.front().second.k_) == 1 &&
-        lin.coeff_.front().second.a_->nodeType() == ASTNodeType::Var) {
-        Var var = lin.coeff_.front().second.a_.as<VarNode>();
+    if (lin.coeff_.size() == 1 && std::abs(lin.coeff_.front().k_) == 1 &&
+        lin.coeff_.front().a_->nodeType() == ASTNodeType::Var) {
+        Var var = lin.coeff_.front().a_.as<VarNode>();
         return var->name_ == iter;
     }
     return false;
