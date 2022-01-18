@@ -5,6 +5,7 @@
 #include <unordered_set>
 
 #include <expr.h>
+#include <stmt.h>
 
 namespace ir {
 
@@ -20,6 +21,19 @@ class Hasher {
     // (finally * K3 + B3) % P
 
   public:
+    // stmt
+    static size_t compHash(const AnyNode &op);
+    static size_t compHash(const StmtSeqNode &op);
+    static size_t compHash(const VarDefNode &op);
+    static size_t compHash(const StoreNode &op);
+    static size_t compHash(const ReduceToNode &op);
+    static size_t compHash(const ForNode &op);
+    static size_t compHash(const IfNode &op);
+    static size_t compHash(const AssertNode &op);
+    static size_t compHash(const EvalNode &op);
+    static size_t compHash(const MatMulNode &op);
+
+    // expr
     static size_t compHash(const CommutativeBinaryExprNode &op);
     static size_t compHash(const NonCommutativeBinaryExprNode &op);
     static size_t compHash(const UnaryExprNode &op);
@@ -33,11 +47,23 @@ class Hasher {
     static size_t compHash(const CastNode &op);
     static size_t compHash(const IntrinsicNode &op);
 
-    size_t operator()(const Expr &op) const { return op->hash(); }
+    size_t operator()(const AST &op) const { return op->hash(); }
 };
 
 class HashComparator {
   private:
+    // stmt
+    bool compare(const StmtSeq &lhs, const StmtSeq &rhs) const;
+    bool compare(const VarDef &lhs, const VarDef &rhs) const;
+    bool compare(const Store &lhs, const Store &rhs) const;
+    bool compare(const ReduceTo &lhs, const ReduceTo &rhs) const;
+    bool compare(const For &lhs, const For &rhs) const;
+    bool compare(const If &lhs, const If &rhs) const;
+    bool compare(const Assert &lhs, const Assert &rhs) const;
+    bool compare(const Eval &lhs, const Eval &rhs) const;
+    bool compare(const MatMul &lhs, const MatMul &rhs) const;
+
+    // expr
     bool compare(const CommutativeBinaryExpr &lhs,
                  const CommutativeBinaryExpr &rhs) const;
     bool compare(const NonCommutativeBinaryExpr &lhs,
@@ -53,7 +79,7 @@ class HashComparator {
     bool compare(const Intrinsic &lhs, const Intrinsic &rhs) const;
 
   public:
-    bool operator()(const Expr &lhs, const Expr &rhs) const;
+    bool operator()(const AST &lhs, const AST &rhs) const;
 };
 
 template <class K, class V>

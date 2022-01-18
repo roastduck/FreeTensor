@@ -4,6 +4,113 @@
 
 namespace ir {
 
+size_t Hasher::compHash(const AnyNode &op) {
+    size_t h = ((size_t)op.nodeType() * K1 + B1) % P;
+    return (h * K3 + B3) % P;
+}
+
+size_t Hasher::compHash(const StmtSeqNode &op) {
+    size_t h = ((size_t)op.nodeType() * K1 + B1) % P;
+    for (auto &&stmt : op.stmts_) {
+        h = ((h + stmt->hash()) * K2 + B2) % P;
+    }
+    return (h * K3 + B3) % P;
+}
+
+size_t Hasher::compHash(const VarDefNode &op) {
+    size_t h = ((size_t)op.nodeType() * K1 + B1) % P;
+    h = ((h + std::hash<std::string>()(op.name_)) * K2 + B2) % P;
+    for (auto &&dim : op.buffer_->tensor().shape()) {
+        h = ((h + dim->hash()) * K2 + B2) % P;
+    }
+    h = ((h + std::hash<int>()((int)op.buffer_->tensor().dtype())) * K2 + B2) %
+        P;
+    h = ((h + std::hash<int>()((int)op.buffer_->atype())) * K2 + B2) % P;
+    h = ((h + std::hash<int>()((int)op.buffer_->mtype())) * K2 + B2) % P;
+    if (op.sizeLim_.isValid()) {
+        h = ((h + op.sizeLim_->hash()) * K2 + B2) % P;
+    }
+    h = ((h + op.body_->hash()) * K2 + B2) % P;
+    h = ((h + std::hash<bool>()((int)op.pinned_)) * K2 + B2) % P;
+    return (h * K3 + B3) % P;
+}
+
+size_t Hasher::compHash(const StoreNode &op) {
+    size_t h = ((size_t)op.nodeType() * K1 + B1) % P;
+    h = ((h + std::hash<std::string>()(op.var_)) * K2 + B2) % P;
+    for (auto &&index : op.indices_) {
+        h = ((h + index->hash()) * K2 + B2) % P;
+    }
+    h = ((h + op.expr_->hash()) * K2 + B2) % P;
+    return (h * K3 + B3) % P;
+}
+
+size_t Hasher::compHash(const ReduceToNode &op) {
+    size_t h = ((size_t)op.nodeType() * K1 + B1) % P;
+    h = ((h + std::hash<std::string>()(op.var_)) * K2 + B2) % P;
+    for (auto &&index : op.indices_) {
+        h = ((h + index->hash()) * K2 + B2) % P;
+    }
+    h = ((h + std::hash<int>()((int)op.op_)) * K2 + B2) % P;
+    h = ((h + op.expr_->hash()) * K2 + B2) % P;
+    h = ((h + std::hash<bool>()((int)op.atomic_)) * K2 + B2) % P;
+    return (h * K3 + B3) % P;
+}
+
+size_t Hasher::compHash(const ForNode &op) {
+    size_t h = ((size_t)op.nodeType() * K1 + B1) % P;
+    h = ((h + std::hash<std::string>()(op.iter_)) * K2 + B2) % P;
+    h = ((h + op.begin_->hash()) * K2 + B2) % P;
+    h = ((h + op.end_->hash()) * K2 + B2) % P;
+    h = ((h + op.step_->hash()) * K2 + B2) % P;
+    h = ((h + op.len_->hash()) * K2 + B2) % P;
+    h = ((h + std::hash<std::string>()(op.property_.parallel_)) * K2 + B2) % P;
+    h = ((h + std::hash<bool>()(op.property_.unroll_)) * K2 + B2) % P;
+    h = ((h + std::hash<bool>()(op.property_.vectorize_)) * K2 + B2) % P;
+    for (auto &&item : op.property_.reductions_) {
+        h = ((h + std::hash<int>()((int)item.op_)) * K2 + B2) % P;
+        h = ((h + std::hash<std::string>()(item.var_)) * K2 + B2) % P;
+        for (auto &&idx : item.indices_) {
+            h = ((h + idx->hash()) * K2 + B2) % P;
+        }
+    }
+    for (auto &&item : op.property_.noDeps_) {
+        h = ((h + std::hash<std::string>()(item)) * K2 + B2) % P;
+    }
+    h = ((h + std::hash<bool>()(op.property_.preferLibs_)) * K2 + B2) % P;
+    h = ((h + op.body_->hash()) * K2 + B2) % P;
+    return (h * K3 + B3) % P;
+}
+
+size_t Hasher::compHash(const IfNode &op) {
+    size_t h = ((size_t)op.nodeType() * K1 + B1) % P;
+    h = ((h + op.cond_->hash()) * K2 + B2) % P;
+    h = ((h + op.thenCase_->hash()) * K2 + B2) % P;
+    if (op.elseCase_.isValid()) {
+        h = ((h + op.elseCase_->hash()) * K2 + B2) % P;
+    }
+    return (h * K3 + B3) % P;
+}
+
+size_t Hasher::compHash(const AssertNode &op) {
+    size_t h = ((size_t)op.nodeType() * K1 + B1) % P;
+    h = ((h + op.cond_->hash()) * K2 + B2) % P;
+    h = ((h + op.body_->hash()) * K2 + B2) % P;
+    return (h * K3 + B3) % P;
+}
+
+size_t Hasher::compHash(const EvalNode &op) {
+    size_t h = ((size_t)op.nodeType() * K1 + B1) % P;
+    h = ((h + op.expr_->hash()) * K2 + B2) % P;
+    return (h * K3 + B3) % P;
+}
+
+size_t Hasher::compHash(const MatMulNode &op) {
+    size_t h = ((size_t)op.nodeType() * K1 + B1) % P;
+    h = ((h + op.equivalent_->hash()) * K2 + B2) % P;
+    return (h * K3 + B3) % P;
+}
+
 size_t Hasher::compHash(const CommutativeBinaryExprNode &op) {
     size_t h = ((size_t)op.nodeType() * K1 + B1) % P;
     h += op.lhs_->hash() + op.rhs_->hash();
@@ -85,6 +192,196 @@ size_t Hasher::compHash(const IntrinsicNode &op) {
     return (h * K3 + B3) % P;
 }
 
+bool HashComparator::compare(const StmtSeq &lhs, const StmtSeq &rhs) const {
+    if (lhs->stmts_.size() != rhs->stmts_.size()) {
+        return false;
+    }
+    for (auto &&[l, r] : iter::zip(lhs->stmts_, rhs->stmts_)) {
+        if (!(*this)(l, r)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool HashComparator::compare(const VarDef &lhs, const VarDef &rhs) const {
+    if (lhs->name_ != rhs->name_) {
+        return false;
+    }
+    if (lhs->buffer_->tensor().shape().size() !=
+        rhs->buffer_->tensor().shape().size()) {
+        return false;
+    }
+    for (auto &&[l, r] : iter::zip(lhs->buffer_->tensor().shape(),
+                                   rhs->buffer_->tensor().shape())) {
+        if (!(*this)(l, r)) {
+            return false;
+        }
+    }
+    if (lhs->buffer_->tensor().dtype() != rhs->buffer_->tensor().dtype()) {
+        return false;
+    }
+    if (lhs->buffer_->mtype() != rhs->buffer_->mtype()) {
+        return false;
+    }
+    if (lhs->buffer_->atype() != rhs->buffer_->atype()) {
+        return false;
+    }
+    if (lhs->sizeLim_.isValid() != rhs->sizeLim_.isValid()) {
+        return false;
+    }
+    if (lhs->sizeLim_.isValid() && !(*this)(lhs->sizeLim_, rhs->sizeLim_)) {
+        return false;
+    }
+    if (!(*this)(lhs->body_, rhs->body_)) {
+        return false;
+    }
+    if (lhs->pinned_ != rhs->pinned_) {
+        return false;
+    }
+    return true;
+}
+
+bool HashComparator::compare(const Store &lhs, const Store &rhs) const {
+    if (lhs->var_ != rhs->var_) {
+        return false;
+    }
+    if (lhs->indices_.size() != rhs->indices_.size()) {
+        return false;
+    }
+    for (auto &&[l, r] : iter::zip(lhs->indices_, rhs->indices_)) {
+        if (!(*this)(l, r)) {
+            return false;
+        }
+    }
+    if (!(*this)(lhs->expr_, rhs->expr_)) {
+        return false;
+    }
+    return true;
+}
+
+bool HashComparator::compare(const ReduceTo &lhs, const ReduceTo &rhs) const {
+    if (lhs->var_ != rhs->var_) {
+        return false;
+    }
+    if (lhs->indices_.size() != rhs->indices_.size()) {
+        return false;
+    }
+    for (auto &&[l, r] : iter::zip(lhs->indices_, rhs->indices_)) {
+        if (!(*this)(l, r)) {
+            return false;
+        }
+    }
+    if (lhs->op_ != rhs->op_) {
+        return false;
+    }
+    if (!(*this)(lhs->expr_, rhs->expr_)) {
+        return false;
+    }
+    if (lhs->atomic_ != rhs->atomic_) {
+        return false;
+    }
+    return true;
+}
+
+bool HashComparator::compare(const For &lhs, const For &rhs) const {
+    if (lhs->iter_ != rhs->iter_) {
+        return false;
+    }
+    if (!(*this)(lhs->begin_, rhs->begin_)) {
+        return false;
+    }
+    if (!(*this)(lhs->end_, rhs->end_)) {
+        return false;
+    }
+    if (!(*this)(lhs->step_, rhs->step_)) {
+        return false;
+    }
+    if (!(*this)(lhs->len_, rhs->len_)) {
+        return false;
+    }
+    if (lhs->property_.parallel_ != rhs->property_.parallel_) {
+        return false;
+    }
+    if (lhs->property_.unroll_ != rhs->property_.unroll_) {
+        return false;
+    }
+    if (lhs->property_.vectorize_ != rhs->property_.vectorize_) {
+        return false;
+    }
+    if (lhs->property_.reductions_.size() !=
+        rhs->property_.reductions_.size()) {
+        return false;
+    }
+    for (auto &&[l, r] :
+         iter::zip(lhs->property_.reductions_, rhs->property_.reductions_)) {
+        if (l.op_ != r.op_) {
+            return false;
+        }
+        if (l.var_ != r.var_) {
+            return false;
+        }
+        if (l.indices_.size() != r.indices_.size()) {
+            return false;
+        }
+        for (auto &&[ll, rr] : iter::zip(l.indices_, r.indices_)) {
+            if (!(*this)(ll, rr)) {
+                return false;
+            }
+        }
+    }
+    if (lhs->property_.noDeps_.size() != rhs->property_.noDeps_.size()) {
+        return false;
+    }
+    for (auto &&[l, r] :
+         iter::zip(lhs->property_.noDeps_, rhs->property_.noDeps_)) {
+        if (l != r) {
+            return false;
+        }
+    }
+    if (lhs->property_.preferLibs_ != rhs->property_.preferLibs_) {
+        return false;
+    }
+    if (!(*this)(lhs->body_, rhs->body_)) {
+        return false;
+    }
+    return true;
+}
+
+bool HashComparator::compare(const If &lhs, const If &rhs) const {
+    if (!(*this)(lhs->cond_, rhs->cond_)) {
+        return false;
+    }
+    if (!(*this)(lhs->thenCase_, rhs->thenCase_)) {
+        return false;
+    }
+    if (lhs->elseCase_.isValid() != rhs->elseCase_.isValid()) {
+        return false;
+    }
+    if (lhs->elseCase_.isValid() && !(*this)(lhs->elseCase_, rhs->elseCase_)) {
+        return false;
+    }
+    return true;
+}
+
+bool HashComparator::compare(const Assert &lhs, const Assert &rhs) const {
+    if (!(*this)(lhs->cond_, rhs->cond_)) {
+        return false;
+    }
+    if (!(*this)(lhs->body_, rhs->body_)) {
+        return false;
+    }
+    return true;
+}
+
+bool HashComparator::compare(const Eval &lhs, const Eval &rhs) const {
+    return !(*this)(lhs->expr_, rhs->expr_);
+}
+
+bool HashComparator::compare(const MatMul &lhs, const MatMul &rhs) const {
+    return !(*this)(lhs->equivalent_, rhs->equivalent_);
+}
+
 bool HashComparator::compare(const CommutativeBinaryExpr &lhs,
                              const CommutativeBinaryExpr &rhs) const {
     if ((lhs->lhs_->hash() < lhs->rhs_->hash()) ==
@@ -164,7 +461,7 @@ bool HashComparator::compare(const Intrinsic &lhs, const Intrinsic &rhs) const {
     return true;
 }
 
-bool HashComparator::operator()(const Expr &lhs, const Expr &rhs) const {
+bool HashComparator::operator()(const AST &lhs, const AST &rhs) const {
     if (lhs->hash() != rhs->hash()) {
         return false;
     }
@@ -173,17 +470,19 @@ bool HashComparator::operator()(const Expr &lhs, const Expr &rhs) const {
         return false;
     }
 
-    if (lhs->isBinary()) {
-        if (lhs.as<BinaryExprNode>()->isCommutative()) {
-            return compare(lhs.as<CommutativeBinaryExprNode>(),
-                           rhs.as<CommutativeBinaryExprNode>());
-        } else {
-            return compare(lhs.as<NonCommutativeBinaryExprNode>(),
-                           rhs.as<NonCommutativeBinaryExprNode>());
+    if (lhs->isExpr()) {
+        if (lhs.as<ExprNode>()->isBinary()) {
+            if (lhs.as<BinaryExprNode>()->isCommutative()) {
+                return compare(lhs.as<CommutativeBinaryExprNode>(),
+                               rhs.as<CommutativeBinaryExprNode>());
+            } else {
+                return compare(lhs.as<NonCommutativeBinaryExprNode>(),
+                               rhs.as<NonCommutativeBinaryExprNode>());
+            }
         }
-    }
-    if (lhs->isUnary()) {
-        return compare(lhs.as<UnaryExprNode>(), rhs.as<UnaryExprNode>());
+        if (lhs.as<ExprNode>()->isUnary()) {
+            return compare(lhs.as<UnaryExprNode>(), rhs.as<UnaryExprNode>());
+        }
     }
     switch (lhs->nodeType()) {
 
@@ -191,6 +490,15 @@ bool HashComparator::operator()(const Expr &lhs, const Expr &rhs) const {
     case ASTNodeType::name:                                                    \
         return compare(lhs.as<name##Node>(), rhs.as<name##Node>());
 
+        DISPATCH(StmtSeq);
+        DISPATCH(VarDef);
+        DISPATCH(Store);
+        DISPATCH(ReduceTo);
+        DISPATCH(For);
+        DISPATCH(If);
+        DISPATCH(Assert);
+        DISPATCH(Eval);
+        DISPATCH(MatMul);
         DISPATCH(Var);
         DISPATCH(Load);
         DISPATCH(IntConst);

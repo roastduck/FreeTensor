@@ -96,6 +96,9 @@ class ASTNode {
 
     bool isSubTree_ = false;
 
+  protected:
+    size_t hash_ = ~0ull;
+
   public:
 #ifdef IR_DEBUG_LOG_NODE
     std::string debugCreator_ = "Python API";
@@ -110,6 +113,9 @@ class ASTNode {
     virtual bool isFunc() const { return false; }
     virtual bool isStmt() const { return false; }
     virtual bool isExpr() const { return false; }
+
+    size_t hash();
+    virtual void compHash() = 0;
 
     DEFINE_NODE_ACCESS(AST);
 };
@@ -135,18 +141,12 @@ typedef Ref<ASTNode> AST;
 #endif
 
 class ExprNode : public ASTNode {
-  protected:
-    size_t hash_ = ~0ull;
-
   public:
     bool isExpr() const override { return true; }
 
     virtual bool isConst() const { return false; }
     virtual bool isBinary() const { return false; }
     virtual bool isUnary() const { return false; }
-
-    size_t hash();
-    virtual void compHash() = 0;
 
     DEFINE_NODE_ACCESS(Expr);
 };
