@@ -155,38 +155,4 @@ Cursor lca(const Cursor &lhs, const Cursor &rhs) {
     return ret;
 }
 
-void VisitorWithCursor::visitStmt(const Stmt &op) {
-    cursor_.push(op);
-    Visitor::visitStmt(op);
-    cursor_.pop();
-}
-
-Stmt MutatorWithCursor::visitStmt(const Stmt &op) {
-    cursor_.push(op);
-    auto ret = Mutator::visitStmt(op);
-    cursor_.pop();
-    return ret;
-}
-
-void GetCursorById::visitStmt(const Stmt &op) {
-    if (!found_) {
-        VisitorWithCursor::visitStmt(op);
-        if (op->id() == id_) {
-            result_ = cursor();
-            result_.push(op);
-            ASSERT(result_.id() == id_);
-            found_ = true;
-        }
-    }
-}
-
-void GetCursorByFilter::visitStmt(const Stmt &op) {
-    VisitorWithCursor::visitStmt(op);
-    auto c = cursor();
-    c.push(op);
-    if (filter_(c)) {
-        results_.emplace_back(c);
-    }
-}
-
 } // namespace ir

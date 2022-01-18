@@ -6,15 +6,15 @@
 
 #include <analyze/find_loop_variance.h>
 #include <analyze/symbol_table.h>
-#include <cursor.h>
+#include <analyze/with_cursor.h>
 #include <func.h>
 #include <mutator.h>
 #include <visitor.h>
 
 namespace ir {
 
-class FindLoopInvariantWrites : public SymbolTable<VisitorWithCursor> {
-    typedef SymbolTable<VisitorWithCursor> BaseClass;
+class FindLoopInvariantWrites : public SymbolTable<WithCursor<Visitor>> {
+    typedef SymbolTable<WithCursor<Visitor>> BaseClass;
 
     std::vector<Cursor> cursorStack_;
     std::vector<If> ifStack_;
