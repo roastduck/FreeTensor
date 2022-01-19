@@ -9,6 +9,7 @@
 #include <func.h>
 #include <hash.h>
 #include <mutator.h>
+#include <opt.h>
 #include <visitor.h>
 
 namespace ir {
@@ -45,8 +46,8 @@ class Z3Simplify : public Mutator {
     z3::context ctx_;
     z3::solver solver_;
 
-    // We use Ref because there is no z3::expr::expr()
-    std::unordered_map<Expr, Ref<z3::expr>> z3Exprs_;
+    // We use Opt because there is no z3::expr::expr()
+    std::unordered_map<Expr, Opt<z3::expr>> z3Exprs_;
     std::deque<std::pair<Expr, bool>> condList_;
 
     std::unordered_map<std::string, Expr> replace_;

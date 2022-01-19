@@ -374,10 +374,10 @@ int CompUniqueBounds::getIntUpper(const Expr &op) const {
     return ret;
 }
 
-Ref<int> CompUniqueBounds::getInt(const Expr &op) const {
+Opt<int> CompUniqueBounds::getInt(const Expr &op) const {
     int lower = getIntLower(op);
     int upper = getIntUpper(op);
-    return lower == upper ? Ref<int>::make(lower) : nullptr;
+    return lower == upper ? Opt<int>::make(lower) : nullptr;
 }
 
 bool CompUniqueBounds::alwaysLT(const Expr &lhs, const Expr &rhs) const {

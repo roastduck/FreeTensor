@@ -282,10 +282,10 @@ void GenPBExpr::visit(const IfExpr &op) {
     }
 }
 
-Ref<std::string> GenPBExpr::gen(const Expr &op) {
+Opt<std::string> GenPBExpr::gen(const Expr &op) {
     (*this)(op);
     if (results_.count(op)) {
-        return Ref<std::string>::make(results_.at(op));
+        return Opt<std::string>::make(results_.at(op));
     }
     return nullptr;
 }

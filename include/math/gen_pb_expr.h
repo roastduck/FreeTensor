@@ -6,6 +6,7 @@
 
 #include <hash.h>
 #include <math/presburger.h>
+#include <opt.h>
 #include <visitor.h>
 
 namespace ir {
@@ -33,7 +34,7 @@ class GenPBExpr : public Visitor {
 
     const VarMap &vars(const Expr &op) { return vars_[op]; }
 
-    Ref<std::string> gen(const Expr &op);
+    Opt<std::string> gen(const Expr &op);
 
   protected:
     void visitExpr(const Expr &op) override;

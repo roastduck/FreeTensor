@@ -11,6 +11,7 @@
 #include <func.h>
 #include <math/bounds.h>
 #include <mutator.h>
+#include <opt.h>
 #include <visitor.h>
 
 namespace ir {
@@ -162,7 +163,7 @@ class CompUniqueBounds : public CompTransientBounds {
 
     int getIntLower(const Expr &op) const;
     int getIntUpper(const Expr &op) const;
-    Ref<int> getInt(const Expr &op) const;
+    Opt<int> getInt(const Expr &op) const;
 
     bool alwaysLT(const Expr &lhs, const Expr &rhs) const;
     bool alwaysLE(const Expr &lhs, const Expr &rhs) const;
