@@ -462,6 +462,13 @@ bool HashComparator::compare(const Intrinsic &lhs, const Intrinsic &rhs) const {
 }
 
 bool HashComparator::operator()(const AST &lhs, const AST &rhs) const {
+    if (lhs == rhs) { // alias or nullptr
+        return true;
+    }
+    if (lhs.isValid() != rhs.isValid()) {
+        return false;
+    }
+
     if (lhs->hash() != rhs->hash()) {
         return false;
     }
