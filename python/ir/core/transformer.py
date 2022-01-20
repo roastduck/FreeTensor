@@ -77,7 +77,8 @@ class NamingScope(FunctionScope):
         super().__exit__(_1, _2, _3)
         popped = StagingContext.naming_stack.pop()
         if popped != self:
-            raise StagingError('NamingScope enter/exit not match, must be FILO')
+            raise StagingError(
+                'NamingScope enter/exit not match, must be FILO')
         StagingContext.allow_return_stack.pop()
 
     def fullname(self, name: str):
@@ -394,8 +395,10 @@ def call_helper(callee, *args: ast.expr, **kwargs: ast.expr):
                     [ast.keyword(k, w) for k, w in kwargs.items()])
 
 
-def function_helper(name: str, args: Sequence[str], body: List[ast.stmt]):
+def function_helper(name: str, args: Sequence[str], body: List[ast.stmt], nonlocals: List[str]):
     '''Function helper that generates a python AST FunctionDef node with given name, arguments name, and body.'''
+    if len(nonlocals) > 0:
+        body = [ast.Nonlocal(nonlocals)] + body
     return ast.FunctionDef(name=name,
                            args=ast.arguments(
                                args=[],
@@ -422,6 +425,7 @@ def location_helper(new_nodes, old_node):
 class Transformer(ast.NodeTransformer):
     filename: str
     base_lineno: int
+    localvars: List[str] = None
 
     def visit(self, node: ast.AST):
         new_node = super().visit(node)
@@ -486,6 +490,9 @@ class Transformer(ast.NodeTransformer):
                 node = ast.Assign(
                     node.targets,
                     call_helper(assign, ast.Constant(name), node.value))
+        for target in node.targets:
+            if isinstance(target, ast.Name):
+                self.localvars.append(target.id)
         return location_helper(node, old_node)
 
     def visit_For(self, old_node: ast.For):
@@ -503,7 +510,8 @@ class Transformer(ast.NodeTransformer):
         node = self.generic_visit(old_node)
         if isinstance(node.target, ast.Name) and len(node.orelse) == 0:
             node = [
-                function_helper('for_body', [node.target.id], node.body),
+                function_helper(
+                    'for_body', [node.target.id], node.body, self.localvars),
                 ast.Expr(
                     call_helper(foreach, ast.Constant(node.target.id),
                                 node.iter, ast.Name('for_body', ast.Load())))
@@ -539,10 +547,12 @@ class Transformer(ast.NodeTransformer):
         ```
         '''
         node: ast.If = self.generic_visit(old_node)
-        new_node = [function_helper('then_body', [], node.body)]
+        new_node = [function_helper(
+            'then_body', [], node.body, self.localvars)]
         then_body = ast.Name('then_body', ast.Load())
         if node.orelse:
-            new_node.append(function_helper('else_body', [], node.orelse))
+            new_node.append(function_helper(
+                'else_body', [], node.orelse, self.localvars))
             else_body = ast.Name('else_body', ast.Load())
         else:
             else_body = ast.Constant(None)
@@ -555,11 +565,16 @@ class Transformer(ast.NodeTransformer):
     def visit_IfExp(self, old_node: ast.IfExp):
         '''Rule: `body if test else orelse` -> `if_then_else_expr(test, body, orelse)`'''
         node = self.generic_visit(old_node)
-        node = call_helper(if_then_else_expr, node.test, node.body, node.orelse)
+        node = call_helper(if_then_else_expr, node.test,
+                           node.body, node.orelse)
         return location_helper(node, old_node)
 
     def visit_FunctionDef(self, old_node: ast.FunctionDef) -> Any:
+        previous_localvars = self.localvars
+        self.localvars = []
         node: ast.FunctionDef = self.generic_visit(old_node)
+        self.localvars = previous_localvars
+
         node.decorator_list = []
         old_body = node.body
         node.body = [
@@ -567,9 +582,9 @@ class Transformer(ast.NodeTransformer):
                 ast.withitem(context_expr=call_helper(
                     functiondef_wrapper, ast.Constant(self.filename),
                     ast.Constant(node.name)),
-                             optional_vars=None)
+                    optional_vars=None)
             ],
-                     body=old_body)
+                body=old_body)
         ]
         return location_helper(node, old_node)
 
@@ -636,6 +651,7 @@ def _get_caller_env(depth: int):
 
 
 def into_staging(func, caller_env, src=None, verbose=False):
+    verbose = True
     if src is None:
         src = _remove_indent(ins.getsource(func))
         tree = ast.parse(src)
@@ -711,8 +727,9 @@ def transform(func, verbose=False):
     return staged
 
 
-def inline(func=None, src=None, fallback=None, verbose=False):
-    caller_env = _get_caller_env(1)
+def inline(func=None, src=None, fallback=None, verbose=False, caller_env=None):
+    if caller_env is None:
+        caller_env = _get_caller_env(1)
 
     def decorator(func):
         return staged_callable(
