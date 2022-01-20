@@ -89,11 +89,11 @@ class ScalarProp : public Mutator {
         for (auto &[var, curr_scalar_dict] : constants_) {
             ASSERT(other.count(var));
             auto &other_scalar_dict = other[var];
-            for (auto &[idx, curr_val] : curr_scalar_dict) {
+            for (auto it = curr_scalar_dict.cbegin();
+                 it != curr_scalar_dict.cend();) {
+                bool must_delete = true;
+                auto &[idx, curr_val] = *it;
                 if (!other_scalar_dict.count(idx)) {
-                    curr_scalar_dict.erase(idx);
-                    changed = true;
-                } else {
                     auto &other_val = other_scalar_dict[idx];
                     ASSERT(other_val->nodeType() == curr_val->nodeType());
                     // manually capture curr_val to workaround structural
@@ -104,11 +104,12 @@ class ScalarProp : public Mutator {
                                 return other_data == curr_data;
                             });
                         });
-                    if (!equal) {
-                        curr_scalar_dict.erase(idx);
-                        changed = true;
-                    }
+                    if (equal)
+                        must_delete = false;
                 }
+                auto prev_it = it++;
+                if (must_delete)
+                    curr_scalar_dict.erase(prev_it);
             }
         }
         return changed;
