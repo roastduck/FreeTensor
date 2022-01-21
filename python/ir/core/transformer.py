@@ -651,7 +651,6 @@ def _get_caller_env(depth: int):
 
 
 def into_staging(func, caller_env, src=None, verbose=False):
-    verbose = True
     if src is None:
         src = _remove_indent(ins.getsource(func))
         tree = ast.parse(src)
