@@ -722,17 +722,16 @@ simplifyAndGetBounds(const Stmt &_op) {
 
     for (int i = 0;; i++) {
         Simplifier mutator;
-        op = mutator(op);
+        auto newOp = mutator(op);
 
-        CheckFixedPoint checker(mutator.mutated());
-        checker(op);
-        if (checker.isFixPoint() || i > 100) {
+        if (HashComparator()(newOp, op) || i > 100) {
             if (i > 100) {
                 WARNING("SimplifyPass iterates over 100 rounds. Maybe there is "
                         "a bug");
             }
-            return {op, mutator.lower(), mutator.upper()};
+            return {newOp, mutator.lower(), mutator.upper()};
         }
+        op = newOp;
     }
 }
 

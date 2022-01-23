@@ -202,18 +202,11 @@ template <class BaseClass> class SimplifyPass : public BaseClass {
     std::unordered_map<std::string, int> varScope_;
     int curScope_ = 0;
 
-    // Used to check for fixed point
-    std::unordered_set<AST> mutated_;
-
     std::unordered_map<std::string, Expr> replace_;
-
-  public:
-    const std::unordered_set<AST> &mutated() const { return mutated_; }
 
   private:
     template <class T> T markMutated(const T &op) {
         auto ret = (*this)(op); // Recurse again to get bounds of op
-        mutated_.insert(ret);
         return ret;
     }
 
@@ -252,22 +245,6 @@ template <class BaseClass> class SimplifyPass : public BaseClass {
 };
 
 class BuiltinSimplify : public SimplifyPass<CompUniqueBounds> {};
-
-class CheckFixedPoint : public Visitor {
-  private:
-    const std::unordered_set<AST> &mutated_;
-    bool isFixPoint_ = true;
-
-  public:
-    CheckFixedPoint(const std::unordered_set<AST> &mutated)
-        : mutated_(mutated) {}
-
-    bool isFixPoint() const { return isFixPoint_; }
-
-  protected:
-    void visitExpr(const Expr &op) override;
-    void visitStmt(const Stmt &op) override;
-};
 
 /**
  * Simplify a program and compute bounds of each expressions

@@ -71,7 +71,7 @@ size_t Hasher::compHash(const ForNode &op) {
         h = ((h + std::hash<int>()((int)item.op_)) * K2 + B2) % P;
         h = ((h + std::hash<std::string>()(item.var_)) * K2 + B2) % P;
         for (auto &&idx : item.indices_) {
-            h = ((h + idx->hash()) * K2 + B2) % P;
+            h = ((h + (idx.isValid() ? idx->hash() : 0ull)) * K2 + B2) % P;
         }
     }
     for (auto &&item : op.property_.noDeps_) {
@@ -190,6 +190,10 @@ size_t Hasher::compHash(const IntrinsicNode &op) {
         h = ((h + item->hash()) * K2 + B2) % P;
     }
     return (h * K3 + B3) % P;
+}
+
+bool HashComparator::compare(const Any &lhs, const Any &rhs) const {
+    return true;
 }
 
 bool HashComparator::compare(const StmtSeq &lhs, const StmtSeq &rhs) const {
@@ -375,11 +379,11 @@ bool HashComparator::compare(const Assert &lhs, const Assert &rhs) const {
 }
 
 bool HashComparator::compare(const Eval &lhs, const Eval &rhs) const {
-    return !(*this)(lhs->expr_, rhs->expr_);
+    return (*this)(lhs->expr_, rhs->expr_);
 }
 
 bool HashComparator::compare(const MatMul &lhs, const MatMul &rhs) const {
-    return !(*this)(lhs->equivalent_, rhs->equivalent_);
+    return (*this)(lhs->equivalent_, rhs->equivalent_);
 }
 
 bool HashComparator::compare(const CommutativeBinaryExpr &lhs,
@@ -497,6 +501,8 @@ bool HashComparator::operator()(const AST &lhs, const AST &rhs) const {
     case ASTNodeType::name:                                                    \
         return compare(lhs.as<name##Node>(), rhs.as<name##Node>());
 
+        DISPATCH(
+            Any); // HashComparator does not treat Any as a universal matcher
         DISPATCH(StmtSeq);
         DISPATCH(VarDef);
         DISPATCH(Store);
@@ -516,7 +522,7 @@ bool HashComparator::operator()(const AST &lhs, const AST &rhs) const {
         DISPATCH(Intrinsic);
 
     default:
-        ERROR("Unexpected Expr node type");
+        ERROR("Unexpected Expr node type: " + toString(lhs->nodeType()));
     }
 }
 

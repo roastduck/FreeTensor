@@ -53,6 +53,7 @@ class Hasher {
 class HashComparator {
   private:
     // stmt
+    bool compare(const Any &lhs, const Any &rhs) const;
     bool compare(const StmtSeq &lhs, const StmtSeq &rhs) const;
     bool compare(const VarDef &lhs, const VarDef &rhs) const;
     bool compare(const Store &lhs, const Store &rhs) const;

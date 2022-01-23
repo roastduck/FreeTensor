@@ -731,20 +731,6 @@ Expr CompUniqueBounds::visit(const IfExpr &_op) {
     return op;
 }
 
-void CheckFixedPoint::visitExpr(const Expr &op) {
-    Visitor::visitExpr(op);
-    if (mutated_.count(op)) {
-        isFixPoint_ = false;
-    }
-}
-
-void CheckFixedPoint::visitStmt(const Stmt &op) {
-    Visitor::visitStmt(op);
-    if (mutated_.count(op)) {
-        isFixPoint_ = false;
-    }
-}
-
 Stmt builtinSimplify(const Stmt &op) {
     return flattenStmtSeq(
         std::get<0>(simplifyAndGetBounds<BuiltinSimplify>(op)));
