@@ -205,10 +205,7 @@ template <class BaseClass> class SimplifyPass : public BaseClass {
     std::unordered_map<std::string, Expr> replace_;
 
   private:
-    template <class T> T markMutated(const T &op) {
-        auto ret = (*this)(op); // Recurse again to get bounds of op
-        return ret;
-    }
+    Expr recompBounds(const Expr &op) { return (*this)(op); }
 
   protected:
     using BaseClass::visit;
