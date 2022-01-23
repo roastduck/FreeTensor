@@ -36,9 +36,11 @@ bool Cursor::isBefore(const Cursor &other) const {
             auto il = std::find_if(
                 seq->stmts_.begin(), seq->stmts_.end(),
                 [&](const Stmt &s) { return s->id() == l.top()->data_->id(); });
+            ASSERT(il != seq->stmts_.end());
             auto ir = std::find_if(
                 seq->stmts_.begin(), seq->stmts_.end(),
                 [&](const Stmt &s) { return s->id() == r.top()->data_->id(); });
+            ASSERT(ir != seq->stmts_.end());
             return il < ir;
         }
     }
@@ -66,6 +68,7 @@ bool Cursor::hasPrev() const {
     auto seq = stack_.top()->prev_->data_.as<StmtSeqNode>();
     auto it = std::find_if(seq->stmts_.begin(), seq->stmts_.end(),
                            [&](const Stmt &s) { return s->id() == id(); });
+    ASSERT(it != seq->stmts_.end());
     return it > seq->stmts_.begin();
 }
 
@@ -74,6 +77,7 @@ Cursor Cursor::prev() const {
     auto seq = stack_.top()->prev_->data_.as<StmtSeqNode>();
     auto it = std::find_if(seq->stmts_.begin(), seq->stmts_.end(),
                            [&](const Stmt &s) { return s->id() == id(); });
+    ASSERT(it != seq->stmts_.end());
     Cursor ret = *this;
     ret.pop(), ret.push(*(it - 1));
     return ret;
@@ -89,6 +93,7 @@ bool Cursor::hasNext() const {
     auto seq = stack_.top()->prev_->data_.as<StmtSeqNode>();
     auto it = std::find_if(seq->stmts_.rbegin(), seq->stmts_.rend(),
                            [&](const Stmt &s) { return s->id() == id(); });
+    ASSERT(it != seq->stmts_.rend());
     return it > seq->stmts_.rbegin();
 }
 
@@ -97,6 +102,7 @@ Cursor Cursor::next() const {
     auto seq = stack_.top()->prev_->data_.as<StmtSeqNode>();
     auto it = std::find_if(seq->stmts_.rbegin(), seq->stmts_.rend(),
                            [&](const Stmt &s) { return s->id() == id(); });
+    ASSERT(it != seq->stmts_.rend());
     Cursor ret = *this;
     ret.pop(), ret.push(*(it - 1));
     return ret;
