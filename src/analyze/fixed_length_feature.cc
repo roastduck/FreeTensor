@@ -238,4 +238,8 @@ void FixedLengthFeature::visit(const Eval &op) {
     samples_[op].resize(SAMPLE_GROUPS, asVec(structural_.at(op->id())));
 }
 
+size_t FixedLengthFeature::feature_len() {
+    return STANDALONE_FEATURES + SAMPLE_GROUPS * SAMPLE_FEATURES;
+}
+
 } // namespace ir

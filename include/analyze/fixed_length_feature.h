@@ -60,6 +60,7 @@ class FixedLengthFeature : public Visitor {
         : structural_(structural) {}
 
     std::vector<double> features(const Stmt &root) const;
+    static size_t feature_len();
 
   protected:
     void visit(const StmtSeq &op) override;

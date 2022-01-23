@@ -34,6 +34,10 @@ inline int random_int(int mx, std::mt19937 gen) {
     std::uniform_int_distribution<> dis(0, mx);
     return dis(gen);
 }
+inline double random_double(std::mt19937 gen) {
+    std::uniform_real_distribution<> dis(0, 1);
+    return dis(gen);
+}
 
 } // namespace ir
 

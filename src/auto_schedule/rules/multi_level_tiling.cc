@@ -27,8 +27,8 @@ void MultiLevelTilingPart::genRandAnnotation(std::mt19937 gen) {
         reductionLoopTiling[i] =
             random_fill_array<2>(target.reductionLoops[i].length, gen);
     }
-    annotation =
-        MultiLevelTilingAnnotation{spaceLoopTiling, reductionLoopTiling};
+    annotation.spaceLoopTiling = spaceLoopTiling;
+    annotation.reductionLoopTiling = reductionLoopTiling;
 }
 
 MultiLevelTilingPart::MultiLevelTilingPart(ForsWithDataReuse fors) {
@@ -109,12 +109,12 @@ SketchPart MultiLevelTilingPart::mutate(std::mt19937 &gen) {
     if (mut_part == 0) {
         int mut_idx = random_int(target.spaceLoops.size() - 1, gen);
         mut.annotation.spaceLoopTiling[mut_idx] =
-            random_fill_array<4>(target.spaceLoops[mut_idx].length);
+            random_fill_array<4>(target.spaceLoops[mut_idx].length, gen);
 
     } else {
         int mut_idx = random_int(target.reductionLoops.size() - 1, gen);
         mut.annotation.reductionLoopTiling[mut_idx] =
-            random_fill_array<2>(target.reductionLoops[mut_idx].length);
+            random_fill_array<2>(target.reductionLoops[mut_idx].length, gen);
     }
     // std::cout << "End mutating...\n";
     return Ref<MultiLevelTilingPart>::make(std::move(mut));

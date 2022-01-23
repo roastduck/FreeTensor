@@ -29,7 +29,7 @@ class Sketch {
   public:
     Sketch() = default;
 
-    Sketch genRandAnnotation(std::mt19937 gen) const;
+    Sketch genRandAnnotation(std::mt19937 &gen) const;
 
     Schedule genSchedule(const Schedule &original) const;
 
@@ -39,10 +39,10 @@ class Sketch {
 
     std::vector<int> getAnnotation() const;
 
-    [[nodiscard]] std::pair<bool, Sketch> genMutation() const;
+    [[nodiscard]] std::pair<bool, Sketch> genMutation(std::mt19937 &gen) const;
 
     [[nodiscard]] std::pair<bool, Sketch>
-    genCrossover(const Sketch &sketch) const;
+    genCrossover(const Sketch &sketch, std::mt19937 &gen) const;
 
     void setTime(double time) { time_ = time; }
     double time() const { return time_; }
