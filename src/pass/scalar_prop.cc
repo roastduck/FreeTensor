@@ -93,7 +93,7 @@ class ScalarProp : public Mutator {
                  it != curr_scalar_dict.cend();) {
                 bool must_delete = true;
                 auto &[idx, curr_val] = *it;
-                if (!other_scalar_dict.count(idx)) {
+                if (other_scalar_dict.count(idx)) {
                     auto &other_val = other_scalar_dict[idx];
                     ASSERT(other_val->nodeType() == curr_val->nodeType());
                     // manually capture curr_val to workaround structural
