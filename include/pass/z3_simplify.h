@@ -50,8 +50,6 @@ class Z3Simplify : public Mutator {
     std::unordered_map<Expr, Opt<z3::expr>> z3Exprs_;
     std::deque<std::pair<Expr, bool>> condList_;
 
-    std::unordered_map<std::string, Expr> replace_;
-
     OutDatedCondsRemover remove_;
 
   public:

@@ -202,8 +202,6 @@ template <class BaseClass> class SimplifyPass : public BaseClass {
     std::unordered_map<std::string, int> varScope_;
     int curScope_ = 0;
 
-    std::unordered_map<std::string, Expr> replace_;
-
   private:
     Expr recompBounds(const Expr &op) { return (*this)(op); }
 
@@ -213,7 +211,6 @@ template <class BaseClass> class SimplifyPass : public BaseClass {
     Expr visitExpr(const Expr &op) override;
 
     Expr visit(const IntConst &op) override;
-    Expr visit(const Var &op) override;
     Expr visit(const Add &op) override;
     Expr visit(const Sub &op) override;
     Expr visit(const Mul &op) override;

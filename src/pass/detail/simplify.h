@@ -4,6 +4,7 @@
 #include <sstream>
 
 #include <hash.h>
+#include <pass/replace_iter.h>
 #include <pass/simplify.h>
 
 namespace ir {
@@ -160,13 +161,6 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const Mul &_op) {
     }
 
     return op;
-}
-
-template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const Var &op) {
-    if (replace_.count(op->name_)) {
-        return (*this)(replace_.at(op->name_));
-    }
-    return BaseClass::visit(op);
 }
 
 template <class BaseClass>
@@ -636,21 +630,16 @@ template <class BaseClass> Stmt SimplifyPass<BaseClass>::visit(const For &_op) {
     if (auto intLen_ = this->getInt(op->len_); intLen_.isValid()) {
         auto intLen = *intLen_;
         if (intLen == 1) {
-            ASSERT(!replace_.count(_op->iter_));
-            replace_[_op->iter_] = op->begin_;
-            auto body = (*this)(_op->body_);
-            replace_.erase(_op->iter_);
-            return body;
+            auto body = ReplaceIter(_op->iter_, op->begin_)(_op->body_);
+            return (*this)(body);
         }
         if (intLen <= 0) {
             return makeStmtSeq("", {});
         }
     }
     if (this->getIntUpper(op->len_) == 1) {
-        ASSERT(!replace_.count(_op->iter_));
-        replace_[_op->iter_] = op->begin_;
-        auto body = (*this)(_op->body_);
-        replace_.erase(_op->iter_);
+        auto body = ReplaceIter(_op->iter_, op->begin_)(_op->body_);
+        body = (*this)(body);
         return makeIf("", makeEQ(op->len_, makeIntConst(1)), body);
     }
 
