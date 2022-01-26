@@ -316,6 +316,8 @@ def return_stmt(value, funcname):
     if not StagingContext.allow_return():
         raise StagingError(
             'Return is only allowed in statically deterministic control flow.')
+    if isinstance(value, StagedAssignable):
+        value = value.assign(funcname)
     return value
 
 
