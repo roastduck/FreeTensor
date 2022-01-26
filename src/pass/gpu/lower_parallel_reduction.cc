@@ -1,15 +1,11 @@
 #include <itertools.hpp>
 
+#include <hash.h>
 #include <pass/gpu/lower_parallel_reduction.h>
 
 namespace ir {
 
 namespace gpu {
-
-uint64_t LowerParallelReduction::getHash(const Expr &op) {
-    getHash_(op);
-    return getHash_.hash().at(op);
-}
 
 std::vector<std::pair<For, int>>
 LowerParallelReduction::reducedBy(const ReduceTo &op) {
@@ -20,7 +16,7 @@ LowerParallelReduction::reducedBy(const ReduceTo &op) {
                 ASSERT(item.indices_.size() == op->indices_.size());
                 for (auto &&[lIdx, oIdx] :
                      iter::zip(item.indices_, op->indices_)) {
-                    if (lIdx.isValid() && getHash(lIdx) != getHash(oIdx)) {
+                    if (lIdx.isValid() && !HashComparator()(lIdx, oIdx)) {
                         goto mismatch;
                     }
                 }

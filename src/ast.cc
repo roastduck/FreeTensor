@@ -61,6 +61,13 @@ std::string toString(ASTNodeType type) {
     }
 }
 
+size_t ASTNode::hash() {
+    if (hash_ == ~0ull) {
+        compHash();
+    }
+    return hash_;
+}
+
 std::atomic<uint64_t> StmtNode::idCnt_ = 0;
 
 std::string StmtNode::newId() { return "#" + std::to_string(idCnt_++); }

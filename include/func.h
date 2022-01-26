@@ -29,6 +29,8 @@ class FuncNode : public ASTNode {
 
     bool isFunc() const override { return true; }
 
+    void compHash() override { ASSERT(false); } // TODO
+
     DEFINE_NODE_TRAIT(Func);
 };
 typedef Ref<FuncNode> Func;

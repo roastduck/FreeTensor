@@ -3,7 +3,7 @@
 
 #include <unordered_set>
 
-#include <cursor.h>
+#include <analyze/with_cursor.h>
 #include <func.h>
 #include <math/bounds.h>
 
@@ -52,7 +52,9 @@ struct CrossThreadDep {
     bool visiting_, synced_;
 };
 
-class MakeSync : public MutatorWithCursor {
+class MakeSync : public WithCursor<Mutator> {
+    typedef WithCursor<Mutator> BaseClass;
+
     Stmt root_;
     std::vector<CrossThreadDep> deps_;
     std::unordered_map<std::string, Stmt> syncBeforeFor_;

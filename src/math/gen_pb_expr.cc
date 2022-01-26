@@ -4,9 +4,9 @@
 
 namespace ir {
 
-template <class T, class V>
-static void unionTo(std::unordered_map<T, V> &target,
-                    const std::unordered_map<T, V> &other) {
+template <class T, class V, class Hash, class KeyEqual>
+static void unionTo(std::unordered_map<T, V, Hash, KeyEqual> &target,
+                    const std::unordered_map<T, V, Hash, KeyEqual> &other) {
     target.insert(other.begin(), other.end());
 }
 
@@ -28,18 +28,14 @@ void GenPBExpr::visitExpr(const Expr &op) {
 }
 
 void GenPBExpr::visit(const Var &op) {
-    getHash_(op);
-    auto h = getHash_.hash().at(op);
     auto str = mangle(op->name_);
-    vars_[op][h] = std::make_pair(op, str);
+    vars_[op][op] = str;
     results_[op] = str;
 }
 
 void GenPBExpr::visit(const Load &op) {
-    getHash_(op);
-    auto h = getHash_.hash().at(op);
-    auto str = mangle("ext" + std::to_string(h)) + varSuffix_;
-    vars_[op][h] = std::make_pair(op, str);
+    auto str = mangle("ext" + std::to_string(op->hash())) + varSuffix_;
+    vars_[op][op] = str;
     results_[op] = str;
 }
 
@@ -286,10 +282,10 @@ void GenPBExpr::visit(const IfExpr &op) {
     }
 }
 
-Ref<std::string> GenPBExpr::gen(const Expr &op) {
+Opt<std::string> GenPBExpr::gen(const Expr &op) {
     (*this)(op);
     if (results_.count(op)) {
-        return Ref<std::string>::make(results_.at(op));
+        return Opt<std::string>::make(results_.at(op));
     }
     return nullptr;
 }

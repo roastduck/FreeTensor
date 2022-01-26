@@ -3,6 +3,7 @@
 #include <analyze/analyze_linear.h>
 #include <analyze/check_all_defined.h>
 #include <analyze/deps.h>
+#include <hash.h>
 #include <pass/make_parallel_reduction.h>
 #include <pass/make_reduction.h>
 
@@ -12,9 +13,9 @@ static bool isDenseOver(const Expr &expr, const std::string &iter) {
     AnalyzeLinear analyzeLinear;
     analyzeLinear(expr);
     auto &&lin = analyzeLinear.result().at(expr);
-    if (lin.coeff_.size() == 1 && std::abs(lin.coeff_.front().second.k_) == 1 &&
-        lin.coeff_.front().second.a_->nodeType() == ASTNodeType::Var) {
-        Var var = lin.coeff_.front().second.a_.as<VarNode>();
+    if (lin.coeff_.size() == 1 && std::abs(lin.coeff_.front().k_) == 1 &&
+        lin.coeff_.front().a_->nodeType() == ASTNodeType::Var) {
+        Var var = lin.coeff_.front().a_.as<VarNode>();
         return var->name_ == iter;
     }
     return false;
@@ -58,11 +59,6 @@ void FindSerialLoopsOverReduce::visit(const ReduceTo &op) {
     }
 }
 
-uint64_t MakeParallelReduction::getHash(const Expr &op) {
-    getHash_(op);
-    return getHash_.hash().at(op);
-}
-
 Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
@@ -98,7 +94,7 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
                     for (auto &&[oldIdx, idx] :
                          iter::zip(oldIndices, indices)) {
                         if (oldIdx.isValid() && idx.isValid()) {
-                            if (getHash(oldIdx) == getHash(idx)) {
+                            if (HashComparator()(oldIdx, idx)) {
                                 newIndices.emplace_back(idx);
                             } else {
                                 goto mismatch;

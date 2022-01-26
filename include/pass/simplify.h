@@ -11,6 +11,7 @@
 #include <func.h>
 #include <math/bounds.h>
 #include <mutator.h>
+#include <opt.h>
 #include <visitor.h>
 
 namespace ir {
@@ -42,13 +43,12 @@ struct TransientBound {
 };
 
 class OutDatedBoundsRemover : public Visitor {
-    std::unordered_map<uint64_t, TransientBound> &transients_;
+    ASTHashMap<Expr, TransientBound> &transients_;
     std::vector<Expr> &conds_;
 
   public:
-    OutDatedBoundsRemover(
-        std::unordered_map<uint64_t, TransientBound> &transients,
-        std::vector<Expr> &conds)
+    OutDatedBoundsRemover(ASTHashMap<Expr, TransientBound> &transients,
+                          std::vector<Expr> &conds)
         : transients_(transients), conds_(conds) {}
 
   private:
@@ -80,14 +80,13 @@ class CompTransientBounds : public SymbolTable<Mutator> {
 
     // Bounds related to certain expressions
     // Bounds in transients_ has already been recursed with (*this)(...)
-    std::unordered_map<uint64_t, TransientBound> transients_;
+    ASTHashMap<Expr, TransientBound> transients_;
 
     // Original bounds
     std::vector<Expr> conds_;
 
     AnalyzeLinear analyzeLinear_;
     TypeInfer typeInfer_;
-    GetHash getHash_;
     OutDatedBoundsRemover remover_;
 
   protected:
@@ -96,7 +95,6 @@ class CompTransientBounds : public SymbolTable<Mutator> {
     TransientBound transient(const Expr &op);
     const std::vector<Expr> &conds() const { return conds_; }
     DataType dtype(const Expr &op);
-    uint64_t getHash(const Expr &op);
 
   private:
     static Expr sub1(const Expr &op);
@@ -165,7 +163,7 @@ class CompUniqueBounds : public CompTransientBounds {
 
     int getIntLower(const Expr &op) const;
     int getIntUpper(const Expr &op) const;
-    Ref<int> getInt(const Expr &op) const;
+    Opt<int> getInt(const Expr &op) const;
 
     bool alwaysLT(const Expr &lhs, const Expr &rhs) const;
     bool alwaysLE(const Expr &lhs, const Expr &rhs) const;
@@ -204,20 +202,8 @@ template <class BaseClass> class SimplifyPass : public BaseClass {
     std::unordered_map<std::string, int> varScope_;
     int curScope_ = 0;
 
-    // Used to check for fixed point
-    std::unordered_set<AST> mutated_;
-
-    std::unordered_map<std::string, Expr> replace_;
-
-  public:
-    const std::unordered_set<AST> &mutated() const { return mutated_; }
-
   private:
-    template <class T> T markMutated(const T &op) {
-        auto ret = (*this)(op); // Recurse again to get bounds of op
-        mutated_.insert(ret);
-        return ret;
-    }
+    Expr recompBounds(const Expr &op) { return (*this)(op); }
 
   protected:
     using BaseClass::visit;
@@ -225,7 +211,6 @@ template <class BaseClass> class SimplifyPass : public BaseClass {
     Expr visitExpr(const Expr &op) override;
 
     Expr visit(const IntConst &op) override;
-    Expr visit(const Var &op) override;
     Expr visit(const Add &op) override;
     Expr visit(const Sub &op) override;
     Expr visit(const Mul &op) override;
@@ -254,22 +239,6 @@ template <class BaseClass> class SimplifyPass : public BaseClass {
 };
 
 class BuiltinSimplify : public SimplifyPass<CompUniqueBounds> {};
-
-class CheckFixedPoint : public Visitor {
-  private:
-    const std::unordered_set<AST> &mutated_;
-    bool isFixPoint_ = true;
-
-  public:
-    CheckFixedPoint(const std::unordered_set<AST> &mutated)
-        : mutated_(mutated) {}
-
-    bool isFixPoint() const { return isFixPoint_; }
-
-  protected:
-    void visitExpr(const Expr &op) override;
-    void visitStmt(const Stmt &op) override;
-};
 
 /**
  * Simplify a program and compute bounds of each expressions

@@ -5,13 +5,14 @@
 
 #include <analyze/check_all_defined.h>
 #include <func.h>
+#include <hash.h>
 #include <pass/simplify.h>
 
 namespace ir {
 
 class ShrinkFor : public CompUniqueBounds {
-    std::unordered_map<uint64_t, std::pair<std::vector<std::vector<Expr>>,
-                                           std::vector<std::vector<Expr>>>>
+    ASTHashMap<Var, std::pair<std::vector<std::vector<Expr>>,
+                              std::vector<std::vector<Expr>>>>
         newRange_;
     std::vector<Var> iterStack_;
     std::vector<std::unordered_set<std::string>> namesStack_;
@@ -20,7 +21,6 @@ class ShrinkFor : public CompUniqueBounds {
     template <class T> Stmt visitSideEffect(const T &op) {
         auto ret = CompTransientBounds::visit(op);
         for (auto &&[var, names] : iter::zip(iterStack_, namesStack_)) {
-            auto hash = getHash(var);
             auto tr = transient(var);
             std::vector<Expr> lower, upper;
             for (auto &&first : tr.lower_) {
@@ -47,8 +47,8 @@ class ShrinkFor : public CompUniqueBounds {
                     }
                 }
             }
-            newRange_[hash].first.emplace_back(std::move(lower));
-            newRange_[hash].second.emplace_back(std::move(upper));
+            newRange_[var].first.emplace_back(std::move(lower));
+            newRange_[var].second.emplace_back(std::move(upper));
         }
         return ret;
     }

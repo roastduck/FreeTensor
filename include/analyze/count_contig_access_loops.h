@@ -48,10 +48,9 @@ class CountContigAccessLoops : public SymbolTable<Visitor> {
         if (!op->indices_.empty()) {
             auto idx = op->indices_.back();
             analyzeLinear_(idx);
-            for (auto &&[h, s] : analyzeLinear_.result().at(idx).coeff_) {
-                if ((s.k_ == 1 || s.k_ == -1) &&
-                    s.a_->nodeType() == ASTNodeType::Var) {
-                    auto &&var = s.a_.template as<VarNode>();
+            for (auto &&[k, a] : analyzeLinear_.result().at(idx).coeff_) {
+                if ((k == 1 || k == -1) && a->nodeType() == ASTNodeType::Var) {
+                    auto &&var = a.template as<VarNode>();
                     counts_[loop(var->name_)->id()].first += repeat_;
                 }
             }

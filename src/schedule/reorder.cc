@@ -1,7 +1,6 @@
 #include <sstream>
 
 #include <analyze/deps.h>
-#include <analyze/hash.h>
 #include <pass/make_reduction.h>
 #include <schedule/check_loop_order.h>
 #include <schedule/reorder.h>

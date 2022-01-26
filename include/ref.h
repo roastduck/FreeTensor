@@ -24,7 +24,7 @@ template <class T> class Ref {
     std::shared_ptr<T> ptr_;
 
   private:
-    Ref(std::shared_ptr<T> &&ptr) : ptr_(ptr) {}
+    Ref(std::shared_ptr<T> &&ptr) : ptr_(std::move(ptr)) {}
 
   public:
     typedef T Object;

@@ -11,7 +11,7 @@
 
 #include <analyze/find_loop_variance.h>
 #include <analyze/symbol_table.h>
-#include <cursor.h>
+#include <analyze/with_cursor.h>
 #include <math/gen_pb_expr.h>
 #include <math/presburger.h>
 #include <visitor.h>
@@ -79,8 +79,8 @@ inline int countBandNodeWidth(const Stmt &op) {
 /**
  * Find read and write points
  */
-class FindAccessPoint : public SymbolTable<VisitorWithCursor> {
-    typedef SymbolTable<VisitorWithCursor> BaseClass;
+class FindAccessPoint : public SymbolTable<WithCursor<Visitor>> {
+    typedef SymbolTable<WithCursor<Visitor>> BaseClass;
 
     bool lastIsLoad_ = false;
     std::vector<IterAxis> cur_; // Current iteration point in the space

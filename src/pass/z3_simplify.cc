@@ -1,4 +1,5 @@
 #include <analyze/all_reads.h>
+#include <pass/replace_iter.h>
 #include <pass/simplify.h>
 #include <pass/z3_simplify.h>
 
@@ -24,16 +25,14 @@ void OutDatedCondsRemover::visit(const ReduceTo &op) {
 }
 
 int Z3Simplify::getVarId(const Expr &op) {
-    getHash_(op);
-    auto h = getHash_.hash().at(op);
-    if (!varId_.count(h)) {
-        varId_[h] = varCnt_++;
+    if (!varId_.count(op)) {
+        varId_[op] = varCnt_++;
     }
-    return varId_.at(h);
+    return varId_.at(op);
 }
 
 void Z3Simplify::put(const Expr &key, const z3::expr &expr) {
-    z3Exprs_[key] = Ref<z3::expr>::make(expr);
+    z3Exprs_[key] = Opt<z3::expr>::make(expr);
 }
 
 bool Z3Simplify::exists(const Expr &key) { return z3Exprs_.count(key); }
@@ -63,9 +62,6 @@ void Z3Simplify::push(const Expr &op) {
 void Z3Simplify::pop() { condList_.pop_back(); }
 
 Expr Z3Simplify::visit(const Var &_op) {
-    if (replace_.count(_op->name_)) {
-        return (*this)(replace_.at(_op->name_));
-    }
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Var);
     auto op = __op.as<VarNode>();
@@ -438,11 +434,8 @@ Stmt Z3Simplify::visit(const For &op) {
         return makeStmtSeq("", {});
     }
     if (prove((*this)(makeEQ(len, makeIntConst(1))))) {
-        ASSERT(!replace_.count(op->iter_));
-        replace_[op->iter_] = begin;
-        auto body = (*this)(op->body_);
-        replace_.erase(op->iter_);
-        return body;
+        auto body = ReplaceIter(op->iter_, begin)(op->body_);
+        return (*this)(body);
     }
 
     Stmt body;

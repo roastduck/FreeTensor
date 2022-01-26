@@ -7,6 +7,7 @@
 #include <analyze/count_contig_access_loops.h>
 #include <analyze/find_indexing_loops.h>
 #include <analyze/get_loop_nest_tree.h>
+#include <analyze/with_cursor.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/simplify.h>
 #include <schedule.h>

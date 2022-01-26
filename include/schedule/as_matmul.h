@@ -6,8 +6,8 @@
 
 #include <analyze/analyze_linear.h>
 #include <analyze/check_all_defined.h>
-#include <analyze/hash.h>
 #include <analyze/symbol_table.h>
+#include <hash.h>
 #include <mutator.h>
 
 namespace ir {
@@ -29,14 +29,12 @@ class AsMatMul : public SymbolTable<Mutator> {
         stridec_, batchSize_;
     bool aIsRowMajor_, bIsRowMajor_, cIsRowMajor_;
 
-    GetHash getHash_;
     AnalyzeLinear analyzeLinear_;
 
   public:
     AsMatMul(const std::string &loop) : loop_(loop) {}
 
   private:
-    uint64_t getHash(const Expr &op);
     const LinearExpr<int64_t> &analyzeLinear(const Expr &expr);
 
     template <class T>
@@ -49,23 +47,23 @@ class AsMatMul : public SymbolTable<Mutator> {
             auto &&idx = acc->indices_[i];
             auto &&lin = analyzeLinear(idx);
             if (lin.coeff_.size() != 1 ||
-                std::abs(lin.coeff_.front().second.k_) != 1 ||
-                lin.coeff_.front().second.a_->nodeType() != ASTNodeType::Var) {
+                std::abs(lin.coeff_.front().k_) != 1 ||
+                lin.coeff_.front().a_->nodeType() != ASTNodeType::Var) {
                 if (!checkAllDefined(outerDefs_, idx)) {
                     throw InvalidSchedule("Indices of " + acc->var_ +
                                           " should be plain loop iterators");
                 }
                 continue; // not a dim in matmul
             }
-            Var var = lin.coeff_.front().second.a_.template as<VarNode>();
+            Var var = lin.coeff_.front().a_.template as<VarNode>();
             if (!iterMap_.count(var->name_)) {
                 continue; // not a dim in matmul
             } else {
                 baseAddr.as<LoadNode>()->indices_[i] = makeIntConst(0);
             }
             int loop = iterMap_.at(var->name_);
-            if (getHash(nests_[loop]->len_) !=
-                getHash(buffer(acc->var_)->tensor().shape()[i])) {
+            if (!HashComparator()(nests_[loop]->len_,
+                                  buffer(acc->var_)->tensor().shape()[i])) {
                 throw InvalidSchedule(
                     "Iterator " + var->name_ + " of " + acc->var_ +
                     " should loop over the entire range (" +
@@ -90,11 +88,11 @@ class AsMatMul : public SymbolTable<Mutator> {
             lastDimIn = thisDimIn;
             thisDimIn = true;
             if (lin.coeff_.size() != 1 ||
-                std::abs(lin.coeff_.front().second.k_) != 1 ||
-                lin.coeff_.front().second.a_->nodeType() != ASTNodeType::Var) {
+                std::abs(lin.coeff_.front().k_) != 1 ||
+                lin.coeff_.front().a_->nodeType() != ASTNodeType::Var) {
                 thisDimIn = false;
             } else {
-                Var var = lin.coeff_.front().second.a_.template as<VarNode>();
+                Var var = lin.coeff_.front().a_.template as<VarNode>();
                 if (!iterMap_.count(var->name_) ||
                     !flag[iterMap_.at(var->name_)]) {
                     thisDimIn = false;

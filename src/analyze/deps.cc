@@ -12,11 +12,11 @@
 
 namespace ir {
 
-template <class T, class V1, class V2>
-static std::unordered_map<T, std::pair<V1, V2>>
-intersect(const std::unordered_map<T, V1> &lhs,
-          const std::unordered_map<T, V2> &rhs) {
-    std::unordered_map<T, std::pair<V1, V2>> ret;
+template <class T, class V1, class V2, class Hash, class KeyEqual>
+static std::unordered_map<T, std::pair<V1, V2>, Hash, KeyEqual>
+intersect(const std::unordered_map<T, V1, Hash, KeyEqual> &lhs,
+          const std::unordered_map<T, V2, Hash, KeyEqual> &rhs) {
+    std::unordered_map<T, std::pair<V1, V2>, Hash, KeyEqual> ret;
     for (auto &&[key, v1] : lhs) {
         if (rhs.count(key)) {
             ret.emplace(key, std::make_pair(v1, rhs.at(key)));
@@ -200,9 +200,9 @@ Ref<std::string> AnalyzeDeps::makeAccList(GenPBExpr &genPBExpr,
     for (int i = 0, iEnd = list.size(); i < iEnd; i++) {
         if (auto linstr = genPBExpr.gen(list[i]); linstr.isValid()) {
             ret += *linstr;
-            for (auto &&[h, item] : genPBExpr.vars(list[i])) {
-                if (item.first->nodeType() == ASTNodeType::Load) {
-                    externals[h] = item;
+            for (auto &&[expr, str] : genPBExpr.vars(list[i])) {
+                if (expr->nodeType() == ASTNodeType::Load) {
+                    externals[expr] = str;
                 }
             }
         } else if (relax == RelaxMode::Possible) {
@@ -224,9 +224,9 @@ Ref<std::string> AnalyzeDeps::makeCond(GenPBExpr &genPBExpr,
     std::string ret;
     for (auto &&cond : conds) {
         if (auto str = genPBExpr.gen(cond); str.isValid()) {
-            for (auto &&[h, item] : genPBExpr.vars(cond)) {
-                if (item.first->nodeType() == ASTNodeType::Load) {
-                    externals[h] = item;
+            for (auto &&[expr, str] : genPBExpr.vars(cond)) {
+                if (expr->nodeType() == ASTNodeType::Load) {
+                    externals[expr] = str;
                 }
             }
             if (!ret.empty()) {
@@ -265,8 +265,8 @@ PBMap AnalyzeDeps::makeAccMap(PBCtx &presburger, const AccessPoint &p,
     std::string ext;
     if (!externals.empty()) {
         bool first = true;
-        for (auto &&[hash, item] : externals) {
-            ext += (first ? "" : ", ") + item.second;
+        for (auto &&[expr, str] : externals) {
+            ext += (first ? "" : ", ") + str;
             first = false;
         }
         ext = "[" + ext + "] -> ";
@@ -474,13 +474,13 @@ PBMap AnalyzeDeps::makeExternalVarConstraint(
     // We only have to add constraint for common loops of both accesses
     auto common = lca(point->cursor_, other->cursor_);
 
-    for (auto &&[hash, item] : intersect(pExternals, oExternals)) {
-        auto &&[pItem, oItem] = item;
+    for (auto &&[expr, strs] : intersect(pExternals, oExternals)) {
+        auto &&[pStr, oStr] = strs;
         // If all of the loops are variant, we don't have to make the constraint
         // at all. This will save time for Presburger solver
         for (auto c = common;; c = c.outer()) {
             if (c.nodeType() == ASTNodeType::For) {
-                if (isVariant(variantExpr_, pItem.first, c.id())) {
+                if (isVariant(variantExpr_, expr, c.id())) {
                     goto found;
                 }
                 goto do_compute_constraint;
@@ -494,11 +494,10 @@ PBMap AnalyzeDeps::makeExternalVarConstraint(
 
         // Compute the constraint
     do_compute_constraint:
-        auto require =
-            makeExternalEq(presburger, iterDim, pItem.second, oItem.second);
+        auto require = makeExternalEq(presburger, iterDim, pStr, oStr);
         for (auto c = common;; c = c.outer()) {
             if (c.nodeType() == ASTNodeType::For) {
-                if (isVariant(variantExpr_, pItem.first, c.id())) {
+                if (isVariant(variantExpr_, expr, c.id())) {
                     // Since idx[i] must be inside loop i, we only have
                     // to call makeIneqBetweenOps, but no need to call
                     // makeConstraintOfSingleLoop

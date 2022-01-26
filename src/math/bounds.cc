@@ -12,14 +12,14 @@ static LinearExpr<Rational<int64_t>>
 commonDenominator(const LinearExpr<Rational<int64_t>> &_lin) {
     auto lin = _lin;
     auto common = lin.bias_.q_;
-    for (auto &&item : lin.coeff_) {
-        common = lcm(common, item.second.k_.q_);
+    for (auto &&[k, a] : lin.coeff_) {
+        common = lcm(common, k.q_);
     }
     lin.bias_.p_ *= common / lin.bias_.q_;
     lin.bias_.q_ = common;
-    for (auto &item : lin.coeff_) {
-        item.second.k_.p_ *= common / item.second.k_.q_;
-        item.second.k_.q_ = common;
+    for (auto &[k, a] : lin.coeff_) {
+        k.p_ *= common / k.q_;
+        k.q_ = common;
     }
     return lin;
 }
@@ -27,8 +27,8 @@ commonDenominator(const LinearExpr<Rational<int64_t>> &_lin) {
 static Expr linToExprDivisible(const LinearExpr<Rational<int64_t>> &lin) {
     Expr ret;
     for (auto &&item : lin.coeff_) {
-        auto k = item.second.k_;
-        auto a = deepCopy(item.second.a_);
+        auto k = item.k_;
+        auto a = deepCopy(item.a_);
 
         if (k == 0 || k.p_ % k.q_ != 0) {
             continue;
@@ -78,8 +78,8 @@ static Expr linToExprDivisible(const LinearExpr<Rational<int64_t>> &lin) {
 static Expr linToExprNumerator(const LinearExpr<Rational<int64_t>> &lin) {
     Expr ret;
     for (auto &&item : lin.coeff_) {
-        auto k = item.second.k_;
-        auto a = deepCopy(item.second.a_);
+        auto k = item.k_;
+        auto a = deepCopy(item.a_);
 
         if (k == 0 || k.p_ % k.q_ == 0) {
             continue;
@@ -196,7 +196,7 @@ LowerBound mul(const LowerBound &b, int k) {
 UpperBound floorDiv(const UpperBound &b, int k) {
     auto ret = b.lin();
     for (auto &&item : ret.coeff_) {
-        item.second.k_ /= k;
+        item.k_ /= k;
     }
     ret.bias_ /= k;
     return UpperBound(std::move(ret));
@@ -204,7 +204,7 @@ UpperBound floorDiv(const UpperBound &b, int k) {
 LowerBound floorDiv(const LowerBound &b, int k) {
     auto ret = b.lin();
     for (auto &&item : ret.coeff_) {
-        item.second.k_ /= k;
+        item.k_ /= k;
     }
     ret.bias_ -= k - 1;
     ret.bias_ /= k;
@@ -214,7 +214,7 @@ LowerBound floorDiv(const LowerBound &b, int k) {
 UpperBound ceilDiv(const UpperBound &b, int k) {
     auto ret = b.lin();
     for (auto &&item : ret.coeff_) {
-        item.second.k_ /= k;
+        item.k_ /= k;
     }
     ret.bias_ += k - 1;
     ret.bias_ /= k;
@@ -223,7 +223,7 @@ UpperBound ceilDiv(const UpperBound &b, int k) {
 LowerBound ceilDiv(const LowerBound &b, int k) {
     auto ret = b.lin();
     for (auto &&item : ret.coeff_) {
-        item.second.k_ /= k;
+        item.k_ /= k;
     }
     ret.bias_ /= k;
     return LowerBound(std::move(ret));

@@ -4,8 +4,9 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include <analyze/hash.h>
+#include <hash.h>
 #include <math/presburger.h>
+#include <opt.h>
 #include <visitor.h>
 
 namespace ir {
@@ -17,15 +18,14 @@ namespace ir {
  */
 class GenPBExpr : public Visitor {
   public:
-    // hash -> (expr, presburger name)
-    typedef std::unordered_map<uint64_t, std::pair<Expr, std::string>> VarMap;
+    // hash -> presburger name
+    typedef ASTHashMap<Expr, std::string> VarMap;
 
   private:
     std::unordered_map<Expr, std::string> results_;
     std::unordered_set<Expr> visited_;
     std::unordered_map<Expr, int> constants_;
     std::unordered_map<Expr, VarMap> vars_;
-    GetHash getHash_;
     Expr parent_ = nullptr;
     std::string varSuffix_;
 
@@ -34,7 +34,7 @@ class GenPBExpr : public Visitor {
 
     const VarMap &vars(const Expr &op) { return vars_[op]; }
 
-    Ref<std::string> gen(const Expr &op);
+    Opt<std::string> gen(const Expr &op);
 
   protected:
     void visitExpr(const Expr &op) override;

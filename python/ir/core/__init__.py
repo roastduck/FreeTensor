@@ -48,7 +48,7 @@ from .codegen import codegen
 from .driver import *
 from .config import *
 
-from .transformer import (transform, inline, create_var, declare_var,
+from .transformer import (transform, inline, create_var, var, declare_var,
                           capture_var, StagingError, StagedAssignable,
                           StagedIterable)
 

@@ -1,6 +1,6 @@
 #include <algorithm>
 
-#include <analyze/hash.h>
+#include <hash.h>
 #include <pass/gpu/lower_vector.h>
 #include <pass/simplify.h>
 
@@ -31,21 +31,20 @@ bool LowerVector::hasVectorIndex(const Expr &index) {
     analyzeLinear_(index);
     auto &&lin = analyzeLinear_.result().at(index);
 
-    auto it =
-        std::find_if(lin.coeff_.begin(), lin.coeff_.end(),
-                     [this](const std::pair<uint64_t, Scale<int64_t>> &item) {
-                         return item.first == varHash_;
-                     });
+    auto it = std::find_if(lin.coeff_.begin(), lin.coeff_.end(),
+                           [this](const Scale<int64_t> &item) {
+                               return HashComparator()(item.a_, var_);
+                           });
     if (it != lin.coeff_.end()) {
         // TODO: k_ can be -1
-        if (it->second.k_ != 1) {
+        if (it->k_ != 1) {
             throw InvalidSchedule("Vectorized non-contiguous memory "
                                   "accessis not supported");
         }
 
-        auto toProve = makeEQ(
-            makeMod(makeSub(index, makeVar(var_)), makeIntConst(vecLen_)),
-            makeIntConst(0));
+        auto toProve =
+            makeEQ(makeMod(makeSub(index, var_), makeIntConst(vecLen_)),
+                   makeIntConst(0));
         simplifyOnly_ = true;
         toProve = (*this)(toProve);
         simplifyOnly_ = false;
@@ -75,13 +74,12 @@ Expr LowerVector::getIndex(const Expr &index) {
 
 Stmt LowerVector::visit(const For &op) {
     if (op->property_.vectorize_) {
-        if (!var_.empty()) {
+        if (var_.isValid()) {
             throw InvalidSchedule("Nested vectorized loops is not supported");
         }
 
-        varHash_ = getHash(makeVar(op->iter_));
         for (int vecLen : VEC_LEN) {
-            var_ = op->iter_;
+            var_ = makeVar(op->iter_).as<VarNode>();
             begin_ = op->begin_;
             vecLen_ = vecLen;
             For ret;
@@ -103,10 +101,10 @@ Stmt LowerVector::visit(const For &op) {
                 WARNING("Vectorizing loop " + op->id() + " to length " +
                         std::to_string(vecLen) +
                         " failed because: " + e.what());
-                var_.clear();
+                var_ = nullptr;
                 continue;
             }
-            var_.clear();
+            var_ = nullptr;
             ret->property_.vectorize_ = false; // done
             return ret;
         }
@@ -115,7 +113,7 @@ Stmt LowerVector::visit(const For &op) {
 }
 
 Expr LowerVector::visit(const Var &op) {
-    if (!simplifyOnly_ && var_ == op->name_) {
+    if (!simplifyOnly_ && var_.isValid() && var_->name_ == op->name_) {
         auto ret = makeAdd(makeMul(makeSub(op, begin_), makeIntConst(vecLen_)),
                            begin_);
         if (!isIndex_) {
@@ -142,7 +140,7 @@ Expr LowerVector::visit(const Var &op) {
 }
 
 Expr LowerVector::visit(const Load &op) {
-    if (!simplifyOnly_ && !var_.empty() && !op->indices_.empty()) {
+    if (!simplifyOnly_ && var_.isValid() && !op->indices_.empty()) {
         ASSERT(op->indices_.size() == 1); // Please do make_1d_var first
         if (hasVectorIndex(op->indices_[0])) {
             Expr index = getIndex(op->indices_[0]);
@@ -157,7 +155,7 @@ Expr LowerVector::visit(const Load &op) {
 }
 
 Stmt LowerVector::visit(const Store &op) {
-    if (!var_.empty() && !op->indices_.empty()) {
+    if (var_.isValid() && !op->indices_.empty()) {
         ASSERT(op->indices_.size() == 1); // Please do make_1d_var first
         if (hasVectorIndex(op->indices_[0])) {
             Expr index = getIndex(op->indices_[0]);
@@ -174,7 +172,7 @@ Stmt LowerVector::visit(const Store &op) {
 }
 
 Stmt LowerVector::visit(const ReduceTo &op) {
-    if (!var_.empty() && !op->indices_.empty()) {
+    if (var_.isValid() && !op->indices_.empty()) {
         ASSERT(op->indices_.size() == 1); // Please do make_1d_var first
         if (hasVectorIndex(op->indices_[0])) {
             Expr index = getIndex(op->indices_[0]);
