@@ -17,7 +17,7 @@ from typing import Callable, Dict, List, Sequence, Optional, Mapping, Any, Tuple
 from dataclasses import dataclass
 
 from . import nodes
-from .nodes import (_VarDef, Var, pop_ast, For, If, Else, MarkNid, intrinsic,
+from .nodes import (_VarDef, Var, ndim, pop_ast, For, If, Else, MarkNid, intrinsic,
                     l_and, l_or, l_not, if_then_else, ctx_stack, Func, Assert)
 from .utils import *
 
@@ -235,6 +235,49 @@ def create_var_fallback(shape, dtype, mtype):
 
 create_var = staged_callable(create_var_staging, create_var_fallback)
 '''Create a IR variable.'''
+
+
+class PredefinedVarCreator(VarCreator):
+    def __init__(self, initializer: List[Any], dtype: str, mtype: str):
+        def get_shape(lst):
+            if not isinstance(lst, list):
+                assert ndim(lst) == 0
+                return ()
+
+            if len(lst) == 0:
+                return (0,)
+
+            shape_ = get_shape(lst[0])
+            for x in lst[1:]:
+                assert shape_ == get_shape(x)
+
+            return (len(lst),) + shape_
+        super().__init__(get_shape(initializer), dtype, mtype)
+        self.initializer = initializer
+
+    def assign(self, name: str) -> Var:
+        var = super().assign(name)
+
+        def impl(var_slice, init_slice):
+            if not isinstance(init_slice, list):
+                var_slice[()] = init_slice
+            else:
+                for i, x in enumerate(init_slice):
+                    impl(var_slice[i], x)
+        impl(var, self.initializer)
+        return var
+
+
+def var_staging(initializer, dtype, mtype):
+    return PredefinedVarCreator(initializer, dtype, mtype)
+
+
+def var_fallback(initializer, dtype, mtype):
+    return np.array(initializer, dtype=dtype)
+
+
+var = staged_callable(var_staging, var_fallback)
+'''Create a IR variable with given initializer.'''
 
 
 def declare_var_staging(name, shape, dtype, atype, mtype):
