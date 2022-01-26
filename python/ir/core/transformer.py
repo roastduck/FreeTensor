@@ -52,10 +52,12 @@ class FunctionScope:
     def __enter__(self):
         StagingContext.call_stack.append(
             traceback.FrameSummary(self.filename, 1, self.funcname))
+        StagingContext.allow_return_stack.append(True)
 
     def __exit__(self, exc_class, exc_value, traceback):
         if exc_class is None:
             StagingContext.call_stack.pop()
+        StagingContext.allow_return_stack.pop()
 
 
 class NamingScope(FunctionScope):
@@ -71,14 +73,13 @@ class NamingScope(FunctionScope):
     def __enter__(self):
         super().__enter__()
         StagingContext.naming_stack.append(self)
-        StagingContext.allow_return_stack.append(True)
 
     def __exit__(self, _1, _2, _3):
         super().__exit__(_1, _2, _3)
         popped = StagingContext.naming_stack.pop()
         if popped != self:
-            raise StagingError('NamingScope enter/exit not match, must be FILO')
-        StagingContext.allow_return_stack.pop()
+            raise StagingError(
+                'NamingScope enter/exit not match, must be FILO')
 
     def fullname(self, name: str):
         if self.namespace is not None:
@@ -310,7 +311,7 @@ def if_then_else_expr(predicate, then_expr, else_expr):
     return if_then_else(predicate, then_expr, else_expr)
 
 
-def return_stmt(value):
+def return_stmt(value, funcname):
     '''Return staging tool. Only allow return in static control flow.'''
     if not StagingContext.allow_return():
         raise StagingError(
@@ -422,6 +423,7 @@ def location_helper(new_nodes, old_node):
 class Transformer(ast.NodeTransformer):
     filename: str
     base_lineno: int
+    curr_func: str = None
 
     def visit(self, node: ast.AST):
         new_node = super().visit(node)
@@ -555,10 +557,14 @@ class Transformer(ast.NodeTransformer):
     def visit_IfExp(self, old_node: ast.IfExp):
         '''Rule: `body if test else orelse` -> `if_then_else_expr(test, body, orelse)`'''
         node = self.generic_visit(old_node)
-        node = call_helper(if_then_else_expr, node.test, node.body, node.orelse)
+        node = call_helper(if_then_else_expr, node.test,
+                           node.body, node.orelse)
         return location_helper(node, old_node)
 
     def visit_FunctionDef(self, old_node: ast.FunctionDef) -> Any:
+        prev_func = self.curr_func
+        self.curr_func = old_node.name
+
         node: ast.FunctionDef = self.generic_visit(old_node)
         node.decorator_list = []
         old_body = node.body
@@ -567,10 +573,12 @@ class Transformer(ast.NodeTransformer):
                 ast.withitem(context_expr=call_helper(
                     functiondef_wrapper, ast.Constant(self.filename),
                     ast.Constant(node.name)),
-                             optional_vars=None)
+                    optional_vars=None)
             ],
-                     body=old_body)
+                body=old_body)
         ]
+
+        self.curr_func = prev_func
         return location_helper(node, old_node)
 
     def visit_Assert(self, old_node: ast.Assert) -> Any:
@@ -613,6 +621,13 @@ class Transformer(ast.NodeTransformer):
             node.values.append(ast.Compare(lhs, [op], [rhs]))
             lhs = rhs
         return self.visit(location_helper(node, old_node))
+
+    def visit_Return(self, old_node: ast.Return) -> Any:
+        node: ast.Return = self.generic_visit(old_node)
+        assert self.curr_func is not None
+        node = ast.Return(call_helper(
+            return_stmt, node.value, ast.Constant(self.curr_func)))
+        return location_helper(node, old_node)
 
 
 def _remove_indent(src: str) -> str:
