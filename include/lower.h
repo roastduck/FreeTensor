@@ -31,6 +31,8 @@ namespace ir {
 
 template <class T> T lower(const T &t, const Ref<Target> &target) {
     T func = t;
+    func = scalarPropConst(func);
+    func = removeDeadVar(func);
     func = propOneTimeUse(func);
     func = floatSimplify(func); // After propOneTimeUse
     func = simplifyPass(func);
