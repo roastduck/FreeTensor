@@ -54,7 +54,7 @@ void OutDatedBoundsRemover::remove(const std::string &name) {
         for (auto i = item.second.lower_.begin();
              i != item.second.lower_.end();) {
             if (allReads(*i).count(name)) {
-                item.second.lower_.erase(i);
+                i = item.second.lower_.erase(i);
             } else {
                 i++;
             }
