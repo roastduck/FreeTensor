@@ -6,7 +6,7 @@
 namespace ir {
 
 /**
- * Propagate constant scalars.
+ * Propagate scalars of constant value or only depending on iteration variables.
  * Scalars are values in tensors indexed with constants.
  *
  * E.g. transform

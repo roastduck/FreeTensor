@@ -1,7 +1,12 @@
 
+#include <analyze/all_iters.h>
+#include <analyze/all_reads.h>
+
+#include <pass/make_reduction.h>
 #include <pass/scalar_prop_const.h>
 #include <pass/undo_make_reduction.h>
 
+#include <hash.h>
 #include <mutator.h>
 
 #include <map>
@@ -10,9 +15,11 @@
 namespace ir {
 
 /**
- * Mutator for propagating scalar constants.
- * Scalars are values in tensors indexed with constants, i.e. this pass
- * requires both indices and assigned value to be constants.
+ * Mutator for propagating scalar values that are const or depend on iteration
+ * variables only.
+ *
+ * Scalars are values in tensors indexed with constants, i.e.
+ * this pass requires both indices and assigned value to be constants.
  */
 class ScalarPropConst : public Mutator {
   private:
@@ -75,6 +82,16 @@ class ScalarPropConst : public Mutator {
                     return true;
             return false;
         }
+
+        /// Support equivalence check
+        bool operator==(const ScalarIndices &other) const {
+            ASSERT(offset.size() == other.offset.size() &&
+                   "Index count should be identical for same tensor");
+            for (size_t i = 0; i < offset.size(); ++i)
+                if (offset[i] != other.offset[i])
+                    return false;
+            return true;
+        }
     };
     /**
      * @brief Try converting indices' AST nodes to constant indices.
@@ -93,11 +110,76 @@ class ScalarPropConst : public Mutator {
                 return std::nullopt;
         return std::move(res);
     }
+
     /// Scalar constants records, with first level map indexing var names and
     /// second indexing indices
-    std::unordered_map<std::string, std::map<ScalarIndices, Const>> constants_;
+    std::unordered_map<std::string, std::map<ScalarIndices, Expr>> constants_;
+
     /// Type of currently available `vardef`s
     std::unordered_map<std::string, DataType> tensors_type_;
+
+    /// Constant entries dependent on each iteration variable
+    std::unordered_multimap<std::string, std::pair<std::string, ScalarIndices>>
+        iter_dep_constants_;
+
+    static std::optional<std::unordered_set<std::string>>
+    try_all_iters(const Expr &expr) {
+        if (!allReads(expr).empty())
+            return std::nullopt;
+        return allIters(expr);
+    }
+
+    void gen_constant(const std::string &name,
+                      const std::optional<ScalarIndices> &indices,
+                      const Expr &value) {
+        kill_constant(name, indices);
+        if (!indices || !allReads(value).empty())
+            return;
+        constants_[name][*indices] = value;
+        for (auto &it_var : allIters(value)) {
+            iter_dep_constants_.insert({it_var, {name, *indices}});
+        }
+    }
+
+    void kill_iter_dep_entry(const std::string &name,
+                             const ScalarIndices &indices) {
+        for (auto &it_var : allIters(constants_[name][indices])) {
+            auto [range_begin, range_end] =
+                iter_dep_constants_.equal_range(it_var);
+            for (auto it_const = range_begin; it_const != range_end;) {
+                auto prev_it_const = it_const++;
+                if (prev_it_const->second.first == name &&
+                    prev_it_const->second.second == indices) {
+                    iter_dep_constants_.erase(prev_it_const);
+                }
+            }
+        }
+    }
+
+    void kill_constant(const std::string &name,
+                       const std::optional<ScalarIndices> &indices) {
+        if (indices) {
+            if (constants_[name].count(*indices))
+                kill_iter_dep_entry(name, *indices);
+            constants_[name].erase(*indices);
+        } else {
+            for (const auto &[killing_indices, _] : constants_[name]) {
+                kill_iter_dep_entry(name, killing_indices);
+            }
+            constants_[name].clear();
+        }
+    }
+
+    void kill_iter(const std::string &it_var) {
+        auto [range_begin, range_end] = iter_dep_constants_.equal_range(it_var);
+        for (auto it_const = range_begin; it_const != range_end;) {
+            auto &[name, indices] = it_const->second;
+            constants_[name].erase(indices);
+
+            auto prev_it_const = it_const++;
+            iter_dep_constants_.erase(prev_it_const);
+        }
+    }
 
     /**
      * @brief Cast the data type of a `Const` node.
@@ -133,7 +215,7 @@ class ScalarPropConst : public Mutator {
      * @return false The current constants remain unchanged in this intersection
      */
     bool intersect_constants_with(
-        std::unordered_map<std::string, std::map<ScalarIndices, Const>> other) {
+        std::unordered_map<std::string, std::map<ScalarIndices, Expr>> other) {
         bool changed = false;
         for (auto &[var, curr_scalar_dict] : constants_) {
             // The outer map is maintained according to VarDef, thus should
@@ -148,24 +230,15 @@ class ScalarPropConst : public Mutator {
                 // If the same scalar exists, check for equivalence
                 if (other_scalar_dict.count(idx)) {
                     auto &other_val = other_scalar_dict[idx];
-                    // Constant map should always store as target type
-                    ASSERT(other_val->nodeType() == curr_val->nodeType());
-                    // manually capture curr_val to workaround structural
-                    // binding
-                    bool equal = dispatch(
-                        other_val, [curr_val = curr_val](auto other_data) {
-                            return dispatch(curr_val, [&](auto curr_data) {
-                                return other_data == curr_data;
-                            });
-                        });
+                    bool equal = HashComparator()(other_val, curr_val);
                     if (equal)
                         must_delete = false;
                 }
-                // advance and keep previous iterator
-                auto prev_it = it++;
+                // advance iterator
+                it++;
                 // do delete
                 if (must_delete) {
-                    curr_scalar_dict.erase(prev_it);
+                    kill_constant(var, idx);
                     changed = true;
                 }
             }
@@ -183,76 +256,21 @@ class ScalarPropConst : public Mutator {
         // const map is maintained according to VarDefs, should always find
         ASSERT(constants_.count(store->var_));
 
-        // try converting to scalar indices
-        auto indices = tryToScalar(store->indices_);
-        if (!indices) {
-            // not scalar store, kill entire tensor
-            constants_[store->var_].clear();
-        } else {
-            // scalar store, kill scalar and gen if constant value provided
-            if (store->expr_->isConst())
-                // cast type to target tensor
-                constants_[store->var_][*indices] = castType(
-                    tensors_type_[store->var_], store->expr_.as<ConstNode>());
-            else
-                constants_[store->var_].erase(*indices);
-        }
+        // convert constant value type first
+        auto expr = store->expr_;
+        if (expr->isConst())
+            expr = castType(tensors_type_[store->var_],
+                            store->expr_.as<ConstNode>());
+
+        // generate constant value
+        gen_constant(store->var_, tryToScalar(store->indices_), expr);
 
         return store;
     }
 
     /// ReduceTo: kill & gen optionally
-    Stmt visit(const ReduceTo &reduce_orig) override {
-        auto reduce_unchecked = Mutator::visit(reduce_orig);
-        ASSERT(reduce_unchecked->nodeType() == ASTNodeType::ReduceTo);
-        auto reduce = reduce_unchecked.as<ReduceToNode>();
-
-        // const map is maintained according to VarDefs, should always find
-        ASSERT(constants_.count(reduce->var_));
-
-        // try converting to scalar indices
-        auto indices = tryToScalar(reduce->indices_);
-        if (!indices) {
-            // not scalar reduction, kill entire tensor
-            constants_[reduce->var_].clear();
-        } else {
-            // scalar reduction, kill scalar and gen if constant value produced
-
-            // ReduceTo only produces constant result when both sides has
-            // constant value
-            if (constants_[reduce->var_].count(*indices) &&
-                reduce->expr_->isConst()) {
-                Expr result;
-                // compute reduction by creating a node and fold it
-                switch (reduce->op_) {
-                case ReduceOp::Add:
-                    result = makeAdd(constants_[reduce->var_][*indices],
-                                     reduce->expr_);
-                    break;
-                case ReduceOp::Mul:
-                    result = makeMul(constants_[reduce->var_][*indices],
-                                     reduce->expr_);
-                    break;
-                case ReduceOp::Min:
-                    result = makeMin(constants_[reduce->var_][*indices],
-                                     reduce->expr_);
-                    break;
-                case ReduceOp::Max:
-                    result = makeMax(constants_[reduce->var_][*indices],
-                                     reduce->expr_);
-                    break;
-                default:
-                    ASSERT(false);
-                }
-                result = visitExpr(result);
-                // cast type to target tensor
-                constants_[reduce->var_][*indices] = castType(
-                    tensors_type_[reduce->var_], result.as<ConstNode>());
-            } else
-                constants_[reduce->var_].erase(*indices);
-        }
-
-        return reduce;
+    Stmt visit(const ReduceTo &op) override {
+        return makeReduction(visitStmt(undoMakeReduction(op)));
     }
 
     /// Load: read from constants map
@@ -284,11 +302,12 @@ class ScalarPropConst : public Mutator {
             // keep both branches, propagate on each one
 
             // backup current map for else branch
-            auto backup_constants = constants_;
+            std::pair backup = {constants_, iter_dep_constants_};
             auto then_case = visitStmt(op->thenCase_);
             // record then branch result and recover previous for else branch
             auto then_constants = constants_;
-            constants_ = std::move(backup_constants);
+            constants_ = std::move(backup.first);
+            iter_dep_constants_ = std::move(backup.second);
             // walk else branch
             auto else_case =
                 op->elseCase_.isValid() ? visitStmt(op->elseCase_) : nullptr;
@@ -304,11 +323,12 @@ class ScalarPropConst : public Mutator {
         auto &name = vd->name_;
         auto dtype = vd->buffer_->tensor().dtype();
         // create entry for constant and type map
-        constants_[name] = std::map<ScalarIndices, Const>();
+        constants_[name] = std::map<ScalarIndices, Expr>();
         tensors_type_[name] = dtype;
         // generic visit
         auto res_vd = Mutator::visit(vd);
         // remove self entry
+        kill_constant(name, std::nullopt);
         constants_.erase(name);
         tensors_type_.erase(name);
         return res_vd;
@@ -321,16 +341,20 @@ class ScalarPropConst : public Mutator {
         int iter_times = 0;
         while (true) {
             // backup constants before iteration
-            auto backup = constants_;
+            std::pair backup = {constants_, iter_dep_constants_};
             // generic visit for one iteration
             Mutator::visit(op);
 
+            kill_iter(op->iter_);
+
             // intersect with pre-loop map and seek for a fixed-point:
+
             // swap backup and current to ensure intersect returns changed
             // across iteration
-            std::swap(backup, constants_);
+            std::swap(backup.first, constants_);
+            std::swap(backup.second, iter_dep_constants_);
             // do intersect
-            if (!intersect_constants_with(backup))
+            if (!intersect_constants_with(backup.first))
                 break;
 
             // check dangerously many iterations
