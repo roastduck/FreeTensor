@@ -164,8 +164,10 @@ class ScalarPropConst : public Mutator {
                 // advance and keep previous iterator
                 auto prev_it = it++;
                 // do delete
-                if (must_delete)
+                if (must_delete) {
                     curr_scalar_dict.erase(prev_it);
+                    changed = true;
+                }
             }
         }
         return changed;
@@ -320,11 +322,13 @@ class ScalarPropConst : public Mutator {
             // backup constants before iteration
             auto before_loop = constants_;
             // generic visit for one iteration
-            auto res = Mutator::visit(op);
+            Mutator::visit(op);
             // intersect with pre-loop map and seek for a fixed-point
             if (!intersect_constants_with(before_loop))
-                return res;
+                break;
         }
+        // propagate on body again to get post- fixed-point code
+        return Mutator::visit(op);
     }
 
   private:
