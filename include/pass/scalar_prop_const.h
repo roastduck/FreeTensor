@@ -1,12 +1,12 @@
-#ifndef SCALAR_PROP_H
-#define SCALAR_PROP_H
+#ifndef SCALAR_PROP_CONST_H
+#define SCALAR_PROP_CONST_H
 
 #include <func.h>
 
 namespace ir {
 
 /**
- * Propagate constant and single-used scalars.
+ * Propagate constant scalars.
  * Scalars are values in tensors indexed with constants.
  *
  * E.g. transform
@@ -23,9 +23,9 @@ namespace ir {
  * y[0] = 1
  * ```
  */
-Stmt scalarProp(const Stmt &op);
+Stmt scalarPropConst(const Stmt &op);
 
-DEFINE_PASS_FOR_FUNC(scalarProp)
+DEFINE_PASS_FOR_FUNC(scalarPropConst)
 
 } // namespace ir
 

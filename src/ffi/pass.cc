@@ -22,7 +22,7 @@
 #include <pass/prop_one_time_use.h>
 #include <pass/remove_dead_var.h>
 #include <pass/remove_writes.h>
-#include <pass/scalar_prop.h>
+#include <pass/scalar_prop_const.h>
 #include <pass/shrink_for.h>
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
@@ -113,8 +113,8 @@ void init_ffi_pass(py::module_ &m) {
           static_cast<Stmt (*)(const Stmt &)>(&moveOutFirstOrLastIter),
           "stmt"_a);
 
-    m.def("scalar_prop", static_cast<Func (*)(const Func &)>(&scalarProp), "func"_a);
-    m.def("scalar_prop", static_cast<Stmt (*)(const Stmt &)>(&scalarProp), "stmt"_a);
+    m.def("scalar_prop_const", static_cast<Func (*)(const Func &)>(&scalarPropConst), "func"_a);
+    m.def("scalar_prop_const", static_cast<Stmt (*)(const Stmt &)>(&scalarPropConst), "stmt"_a);
 
     m.def("sink_var", static_cast<Func (*)(const Func &)>(&sinkVar), "func"_a);
     m.def("sink_var", static_cast<Stmt (*)(const Stmt &)>(&sinkVar), "stmt"_a);
