@@ -318,14 +318,24 @@ class ScalarPropConst : public Mutator {
     Stmt visit(const For &op) override {
         // Since we aren't aware of loop times in this scalar pass, we treat it
         // as any iterations, thus a fixed-point is required
+        int iter_times = 0;
         while (true) {
             // backup constants before iteration
-            auto before_loop = constants_;
+            auto backup = constants_;
             // generic visit for one iteration
             Mutator::visit(op);
-            // intersect with pre-loop map and seek for a fixed-point
-            if (!intersect_constants_with(before_loop))
+
+            // intersect with pre-loop map and seek for a fixed-point:
+            // swap backup and current to ensure intersect returns changed
+            // across iteration
+            std::swap(backup, constants_);
+            // do intersect
+            if (!intersect_constants_with(backup))
                 break;
+
+            // check dangerously many iterations
+            if (iter_times++ == 100)
+                WARNING("ScalarPropConst on For loop iterated over 100 times");
         }
         // propagate on body again to get post- fixed-point code
         return Mutator::visit(op);
