@@ -355,18 +355,20 @@ PBMap AnalyzeDeps::makeConstraintOfSingleLoop(PBCtx &presburger,
                      makeIneqBetweenOps(presburger, mode, iterId, iterDim));
 }
 
-PBMap AnalyzeDeps::makeConstraintOfParallelScope(
-    PBCtx &presburger, const std::string &parallel, DepDirection mode,
-    int iterDim, const Ref<AccessPoint> &point, const Ref<AccessPoint> &other) {
+PBMap AnalyzeDeps::makeConstraintOfParallelScope(PBCtx &presburger,
+                                                 const std::string &parallel,
+                                                 DepDirection mode, int iterDim,
+                                                 const AccessPoint &point,
+                                                 const AccessPoint &other) {
     int pointDim = -1, otherDim = -1;
-    for (int i = (int)point->iter_.size() - 1; i >= 0; i--) {
-        if (point->iter_[i].parallel_ == parallel) {
+    for (int i = (int)point.iter_.size() - 1; i >= 0; i--) {
+        if (point.iter_[i].parallel_ == parallel) {
             pointDim = i;
             break;
         }
     }
-    for (int i = (int)other->iter_.size() - 1; i >= 0; i--) {
-        if (other->iter_[i].parallel_ == parallel) {
+    for (int i = (int)other.iter_.size() - 1; i >= 0; i--) {
+        if (other.iter_[i].parallel_ == parallel) {
             otherDim = i;
             break;
         }
@@ -596,6 +598,8 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
     if (nearest.empty()) {
         return;
     }
+    // FIXME: Should these killing tests be after the conditional checks, for
+    // correctness?
     if ((mode_ == FindDepsMode::KillEarlier ||
          mode_ == FindDepsMode::KillBoth) &&
         oIter != range(nearest)) {
@@ -614,8 +618,8 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
                     presburger, nodeOrParallel.name_, dir, iterDim));
             } else {
                 requires.emplace_back(makeConstraintOfParallelScope(
-                    presburger, nodeOrParallel.name_, dir, iterDim, point,
-                    other));
+                    presburger, nodeOrParallel.name_, dir, iterDim, *point,
+                    *other));
             }
         }
 
@@ -638,7 +642,8 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
         }
         {
             std::lock_guard<std::mutex> guard(lock_);
-            found_(Dependency{item, getVar(point->op_), *point, *other});
+            found_(Dependency{item, getVar(point->op_), *point, *other, iterDim,
+                              res, presburger, *this});
         }
     fail:;
     }
@@ -902,6 +907,21 @@ void AnalyzeDeps::genTasks() {
             }
         }
     }
+}
+
+PBMap Dependency::extraCheck(PBMap dep,
+                             const NodeIDOrParallelScope &nodeOrParallel,
+                             const DepDirection &dir) const {
+    PBMap require;
+    if (nodeOrParallel.isNode_) {
+        require = self_.makeConstraintOfSingleLoop(
+            presburger_, nodeOrParallel.name_, dir, iterDim_);
+    } else {
+        require = self_.makeConstraintOfParallelScope(
+            presburger_, nodeOrParallel.name_, dir, iterDim_, later_, earlier_);
+    }
+    dep = intersect(std::move(dep), std::move(require));
+    return dep;
 }
 
 void findDeps(const Stmt &op, const std::vector<FindDepsCond> &cond,

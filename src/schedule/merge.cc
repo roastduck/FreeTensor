@@ -1,3 +1,4 @@
+#include <pass/prop_const.h>
 #include <schedule/check_loop_order.h>
 #include <schedule/merge.h>
 
@@ -135,14 +136,16 @@ Stmt MergeFor::visit(const VarDef &_op) {
 
 std::pair<Stmt, std::string> merge(const Stmt &_ast, const std::string &loop1,
                                    const std::string &loop2) {
+    // Propagate first, because merge will lose some propagating opportunities
+    auto ast = propConst(_ast);
 
     CheckLoopOrder checker({loop1, loop2});
-    checker(_ast); // Check they are nested
+    checker(ast); // Check they are nested
     auto &&curOrder = checker.order();
     auto outer = curOrder[0], inner = curOrder[1];
 
     MergeFor mutator(outer, inner);
-    auto ast = mutator(_ast);
+    ast = mutator(ast);
     return std::make_pair(ast, mutator.newId());
 }
 

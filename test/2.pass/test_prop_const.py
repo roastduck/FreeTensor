@@ -200,6 +200,29 @@ def test_prop_iter_different_scope_no_prop():
     assert std.match(ast)
 
 
+def test_prop_iter_different_instance_no_prop():
+    with ir.VarDef([("y1", (), "int32", "output", "cpu"),
+                    ("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):
+        with ir.For("i", 0, 4) as i:
+            with ir.If(i % 2 == 0):
+                y1[()] = i
+            y2[i] = y1[()]
+    ast = ir.pop_ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([("y1", (), "int32", "output", "cpu"),
+                    ("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):
+        with ir.For("i", 0, 4) as i:
+            with ir.If(i % 2 == 0):
+                y1[()] = i
+            y2[i] = y1[()]
+    std = ir.use_builtin_div(ir.pop_ast())
+
+    assert std.match(ast)
+
+
 def test_prop_iter_in_expr():
     with ir.VarDef([("y1", (4,), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):

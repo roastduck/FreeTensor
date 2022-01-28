@@ -1,5 +1,3 @@
-#include <algorithm>
-
 #include <analyze/all_iters.h>
 #include <analyze/all_reads.h>
 #include <analyze/deps.h>
@@ -38,23 +36,41 @@ Stmt propConst(const Stmt &_op) {
                 return false; // pass/remove_write will deal with it
             }
             auto &&expr = earlier.op_.as<StoreNode>()->expr_;
-            if (expr->nodeType() == ASTNodeType::IntConst ||
-                expr->nodeType() == ASTNodeType::FloatConst ||
-                expr->nodeType() == ASTNodeType::BoolConst) {
-                return true;
+            if (!allReads(expr).empty()) {
+                // Expressions should contain only constants and iterating vars
+                return false;
             }
-            if (allReads(expr).empty()) {
-                // Expressions contains only constants and iterating vars
-                auto &&iters = allIters(expr);
-                auto common = lca(later.cursor_, earlier.cursor_);
-                return std::all_of(iters.begin(), iters.end(),
-                                   [&](const std::string &name) {
-                                       return iterDefined(common, name);
-                                   });
+            auto &&iters = allIters(expr);
+            auto common = lca(later.cursor_, earlier.cursor_);
+            for (auto &&iter : iters) {
+                if (!iterDefined(common, iter)) {
+                    // Iter with the same name from different loops
+                    return false;
+                }
             }
-            return false;
+            return true;
         };
         auto foundMust = [&](const Dependency &d) {
+            auto &&expr = d.earlier().as<StoreNode>()->expr_;
+            auto &&iters = allIters(expr);
+            auto common = lca(d.later_.cursor_, d.earlier_.cursor_);
+            auto dep = d.dep_;
+            for (auto &&iter : iters) {
+                for (auto c = common; c.isValid(); c = c.outer()) {
+                    if (c.nodeType() == ASTNodeType::For) {
+                        if (auto &&f = c.node().as<ForNode>();
+                            f->iter_ == iter) {
+                            dep =
+                                d.extraCheck(dep, f->id(), DepDirection::Same);
+                            if (dep != d.dep_) {
+                                // Iterating variable in different iterations
+                                return;
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
             r2w[d.later()].emplace_back(d.earlier().as<StmtNode>());
         };
         auto filterMay = [&](const AccessPoint &later,

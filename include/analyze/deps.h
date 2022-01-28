@@ -166,16 +166,27 @@ struct NodeIDOrParallelScope {
 typedef std::vector<std::pair<NodeIDOrParallelScope, DepDirection>>
     FindDepsCond;
 
+class AnalyzeDeps;
+
 struct Dependency {
     const FindDepsCond &cond_; /// sub-condition that fails
     const std::string &var_;
     const AccessPoint &later_, &earlier_;
+    int iterDim_;
+    PBMap dep_;
+    PBCtx &presburger_;
+    AnalyzeDeps &self_;
 
     // Helper functions
     const AST &later() const { return later_.op_; }
     const AST &earlier() const { return earlier_.op_; }
     const VarDef &def() const { return earlier_.def_; }
     const std::string &defId() const { return earlier_.def_->id(); }
+
+    // Additional condition check. This check is not multi-thread, so please use
+    // the `cond` parameter of `findDeps` instead, if possible
+    PBMap extraCheck(PBMap dep, const NodeIDOrParallelScope &nodeOrParallel,
+                     const DepDirection &dir) const;
 };
 typedef std::function<void(const Dependency &)> FindDepsCallback;
 
@@ -203,6 +214,8 @@ typedef std::function<bool(const AccessPoint &later,
  * Find RAW, WAR and WAW dependencies
  */
 class AnalyzeDeps {
+    friend Dependency;
+
     const std::unordered_map<std::string, std::vector<Ref<AccessPoint>>>
         &reads_, &writes_;
     const std::vector<VarDef> &allDefs_;
@@ -291,8 +304,8 @@ class AnalyzeDeps {
     PBMap makeConstraintOfParallelScope(PBCtx &presburger,
                                         const std::string &parallel,
                                         DepDirection mode, int iterDim,
-                                        const Ref<AccessPoint> &point,
-                                        const Ref<AccessPoint> &other);
+                                        const AccessPoint &point,
+                                        const AccessPoint &other);
 
     /**
      * Constraint for variables defined inside some loops
