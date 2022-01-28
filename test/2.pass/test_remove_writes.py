@@ -259,7 +259,7 @@ def test_type1_not_kill_earlier_store_no_remove():
 def test_type1_not_kill_earlier_reduce_no_remove():
     with ir.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
-        y[()] = 1
+        y[()] = x[()] + 1
         with ir.If(x[()] > 0):
             y[()] += x[()]
     ast = ir.pop_ast()
@@ -269,7 +269,7 @@ def test_type1_not_kill_earlier_reduce_no_remove():
 
     with ir.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
-        y[()] = 1
+        y[()] = x[()] + 1
         with ir.If(x[()] > 0):
             y[()] += x[()]
     std = ir.make_reduction(ir.pop_ast())

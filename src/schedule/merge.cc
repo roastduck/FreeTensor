@@ -1,4 +1,4 @@
-#include <pass/prop_const.h>
+#include <pass/tensor_prop_const.h>
 #include <schedule/check_loop_order.h>
 #include <schedule/merge.h>
 
@@ -137,7 +137,7 @@ Stmt MergeFor::visit(const VarDef &_op) {
 std::pair<Stmt, std::string> merge(const Stmt &_ast, const std::string &loop1,
                                    const std::string &loop2) {
     // Propagate first, because merge will lose some propagating opportunities
-    auto ast = propConst(_ast);
+    auto ast = tensorPropConst(_ast);
 
     CheckLoopOrder checker({loop1, loop2});
     checker(ast); // Check they are nested

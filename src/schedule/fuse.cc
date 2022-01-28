@@ -1,12 +1,12 @@
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
 #include <hash.h>
-#include <pass/prop_const.h>
 #include <pass/prop_one_time_use.h>
 #include <pass/remove_dead_var.h>
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
 #include <pass/sink_var.h>
+#include <pass/tensor_prop_const.h>
 #include <schedule/fuse.h>
 
 namespace ir {
@@ -241,7 +241,7 @@ std::pair<Stmt, std::string> fuse(const Stmt &_ast, const std::string &loop0,
     }
 
     ast = propOneTimeUse(ast);
-    ast = propConst(ast);
+    ast = tensorPropConst(ast);
     ast = sinkVar(ast);
     ast = shrinkVar(ast);
     ast = removeDeadVar(ast);

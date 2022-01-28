@@ -8,12 +8,12 @@
 #include <pass/hoist_var_over_stmt_seq.h>
 #include <pass/make_reduction.h>
 #include <pass/output_intermediates.h>
-#include <pass/prop_const.h>
 #include <pass/prop_one_time_use.h>
 #include <pass/remove_cyclic_assign.h>
 #include <pass/remove_dead_var.h>
 #include <pass/remove_writes.h>
 #include <pass/simplify.h>
+#include <pass/tensor_prop_const.h>
 #include <pass/undo_make_reduction.h>
 
 namespace ir {
@@ -494,7 +494,7 @@ grad(const Stmt &_op, const std::unordered_set<std::string> &requires,
     // We do some basic simplifications here, to reduce burden on auto-schedule
     backward = propOneTimeUse(backward);
     backward = simplifyPass(backward);
-    backward = propConst(backward);
+    backward = tensorPropConst(backward);
     backward = removeWrites(backward);
     backward = removeCyclicAssign(backward);
     backward = removeDeadVar(backward);

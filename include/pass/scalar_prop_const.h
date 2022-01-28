@@ -22,6 +22,9 @@ namespace ir {
  * x[0] = 1
  * y[0] = 1
  * ```
+ *
+ * This version of const propagation is designed for only scalars and meant to
+ * be fast. It uses traditional dataflow techniques
  */
 Stmt scalarPropConst(const Stmt &op);
 
