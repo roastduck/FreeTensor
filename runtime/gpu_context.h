@@ -52,7 +52,6 @@ class GPUContext : public Context {
         initialized_ = true;
     }
     ~GPUContext() {
-        std::cout << "destroyed" << std::endl;
         if (initialized_) {
             checkCublasError(cublasDestroy(cublas_));
             initialized_ = false;
