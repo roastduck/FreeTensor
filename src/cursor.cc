@@ -36,9 +36,11 @@ bool Cursor::isBefore(const Cursor &other) const {
             auto il = std::find_if(
                 seq->stmts_.begin(), seq->stmts_.end(),
                 [&](const Stmt &s) { return s->id() == l.top()->data_->id(); });
+            ASSERT(il != seq->stmts_.end());
             auto ir = std::find_if(
                 seq->stmts_.begin(), seq->stmts_.end(),
                 [&](const Stmt &s) { return s->id() == r.top()->data_->id(); });
+            ASSERT(ir != seq->stmts_.end());
             return il < ir;
         }
     }
@@ -66,6 +68,7 @@ bool Cursor::hasPrev() const {
     auto seq = stack_.top()->prev_->data_.as<StmtSeqNode>();
     auto it = std::find_if(seq->stmts_.begin(), seq->stmts_.end(),
                            [&](const Stmt &s) { return s->id() == id(); });
+    ASSERT(it != seq->stmts_.end());
     return it > seq->stmts_.begin();
 }
 
@@ -74,6 +77,7 @@ Cursor Cursor::prev() const {
     auto seq = stack_.top()->prev_->data_.as<StmtSeqNode>();
     auto it = std::find_if(seq->stmts_.begin(), seq->stmts_.end(),
                            [&](const Stmt &s) { return s->id() == id(); });
+    ASSERT(it != seq->stmts_.end());
     Cursor ret = *this;
     ret.pop(), ret.push(*(it - 1));
     return ret;
@@ -89,6 +93,7 @@ bool Cursor::hasNext() const {
     auto seq = stack_.top()->prev_->data_.as<StmtSeqNode>();
     auto it = std::find_if(seq->stmts_.rbegin(), seq->stmts_.rend(),
                            [&](const Stmt &s) { return s->id() == id(); });
+    ASSERT(it != seq->stmts_.rend());
     return it > seq->stmts_.rbegin();
 }
 
@@ -97,6 +102,7 @@ Cursor Cursor::next() const {
     auto seq = stack_.top()->prev_->data_.as<StmtSeqNode>();
     auto it = std::find_if(seq->stmts_.rbegin(), seq->stmts_.rend(),
                            [&](const Stmt &s) { return s->id() == id(); });
+    ASSERT(it != seq->stmts_.rend());
     Cursor ret = *this;
     ret.pop(), ret.push(*(it - 1));
     return ret;
@@ -153,40 +159,6 @@ Cursor lca(const Cursor &lhs, const Cursor &rhs) {
     Cursor ret;
     ret.stack_ = l;
     return ret;
-}
-
-void VisitorWithCursor::visitStmt(const Stmt &op) {
-    cursor_.push(op);
-    Visitor::visitStmt(op);
-    cursor_.pop();
-}
-
-Stmt MutatorWithCursor::visitStmt(const Stmt &op) {
-    cursor_.push(op);
-    auto ret = Mutator::visitStmt(op);
-    cursor_.pop();
-    return ret;
-}
-
-void GetCursorById::visitStmt(const Stmt &op) {
-    if (!found_) {
-        VisitorWithCursor::visitStmt(op);
-        if (op->id() == id_) {
-            result_ = cursor();
-            result_.push(op);
-            ASSERT(result_.id() == id_);
-            found_ = true;
-        }
-    }
-}
-
-void GetCursorByFilter::visitStmt(const Stmt &op) {
-    VisitorWithCursor::visitStmt(op);
-    auto c = cursor();
-    c.push(op);
-    if (filter_(c)) {
-        results_.emplace_back(c);
-    }
 }
 
 } // namespace ir

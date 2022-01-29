@@ -7,6 +7,7 @@
 #include <analyze/count_contig_access_loops.h>
 #include <analyze/find_indexing_loops.h>
 #include <analyze/get_loop_nest_tree.h>
+#include <analyze/with_cursor.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/simplify.h>
 #include <schedule.h>
@@ -20,7 +21,7 @@
 #include <schedule/merge.h>
 #include <schedule/parallelize.h>
 #include <schedule/reorder.h>
-#include <schedule/seperate_tail.h>
+#include <schedule/separate_tail.h>
 #include <schedule/set_mem_type.h>
 #include <schedule/split.h>
 #include <schedule/swap.h>
@@ -361,7 +362,9 @@ void Schedule::vectorize(const std::string &loop) {
     }
 }
 
-void Schedule::seperateTail() { ast_ = ir::seperateTail(ast_); }
+void Schedule::separateTail(bool noDuplicateVarDefs) {
+    ast_ = ir::separateTail(ast_, noDuplicateVarDefs);
+}
 
 void Schedule::asMatMul(const std::string &loop) {
     auto log = "as_matmul(" + loop + ")";

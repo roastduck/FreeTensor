@@ -134,8 +134,8 @@ void MakeSync::markSyncForSplitting(const Stmt &sync) {
 }
 
 Stmt MakeSync::visitStmt(const Stmt &op) {
-    auto ret = MutatorWithCursor::visitStmt(op);
-    // Please note that we have exited MutatorWithCursor, so `cursor()` is out
+    auto ret = BaseClass::visitStmt(op);
+    // Please note that we have exited BaseClass, so `cursor()` is out
     // of `op`
 
     Cursor target;
@@ -191,7 +191,7 @@ Stmt MakeSync::visitStmt(const Stmt &op) {
 }
 
 Stmt MakeSync::visit(const For &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::For);
     auto op = __op.as<ForNode>();
     bool needSyncThreads = false, needSyncWarp = false;
@@ -231,7 +231,7 @@ Stmt MakeSync::visit(const For &_op) {
 }
 
 Stmt MakeSync::visit(const If &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::If);
     auto op = __op.as<IfNode>();
 

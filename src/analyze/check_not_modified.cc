@@ -1,5 +1,6 @@
 #include <unordered_set>
 
+#include <analyze/all_reads.h>
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
 
@@ -28,6 +29,10 @@ Stmt InsertTmpEval::visitStmt(const Stmt &_op) {
 bool checkNotModified(const Stmt &op, const Expr &expr,
                       CheckNotModifiedSide s0Side, const std::string &s0,
                       CheckNotModifiedSide s1Side, const std::string &s1) {
+    if (allReads(expr).empty()) {
+        return true;
+    }
+
     // First insert temporarily Eval node to the AST, then perform dependency
     // analysis
 

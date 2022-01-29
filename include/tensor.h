@@ -37,6 +37,8 @@ class Tensor {
     }
 
     DataType dtype() const { return dtype_; }
+
+    bool isScalar() const;
 };
 
 } // namespace ir

@@ -5,6 +5,7 @@ import ffi
 from ffi import grad
 from ffi import GradTapeMode
 from ffi import output_intermediates
+from ffi import scalar_prop_const
 from ffi import simplify_pass
 from ffi import sink_var
 from ffi import shrink_var
@@ -17,6 +18,7 @@ from ffi import remove_dead_var
 from ffi import make_const_shape
 from ffi import make_1d_var
 from ffi import use_builtin_div
+from ffi import hoist_var_over_stmt_seq
 from ffi import cpu_lower_parallel_reduction
 from ffi import gpu_lower_parallel_reduction
 from ffi import gpu_make_sync

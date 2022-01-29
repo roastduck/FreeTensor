@@ -2,6 +2,7 @@
 #define MATCH_AST_H
 
 #include <unordered_map>
+#include <unordered_set>
 
 #include <visitor.h>
 
@@ -9,6 +10,9 @@ namespace ir {
 
 /**
  * Check whether an AST strictly matches a pattern
+ *
+ * Names of the variables can be different between the two ASTs, but there must
+ * be an one-to-one mapping
  *
  * MatchVisitor can tolerate some difference such as a + b will match b + a, but
  * more complex ones such as (a - b) + c does not match a - (b - c)
@@ -18,6 +22,7 @@ class MatchVisitor : public Visitor {
     AST instance_;
 
     std::unordered_map<std::string, std::string> nameMap_;
+    std::unordered_set<std::string> nameMapImage_;
 
   public:
     MatchVisitor(const AST &instance) : instance_(instance) {}
@@ -25,6 +30,7 @@ class MatchVisitor : public Visitor {
     bool isMatched() const { return isMatched_; }
 
     bool matchName(const std::string &thisName, const std::string &otherName);
+    void clearName(const std::string &thisName);
 
   protected:
     void visit(const StmtSeq &op) override;

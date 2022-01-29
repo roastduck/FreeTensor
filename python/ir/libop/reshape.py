@@ -8,8 +8,8 @@ def _flatten_inner_():
 
     @core.inline
     def f_flatten(x, y):
-        if x.ndim == 0:
-            y[0] = x[()]
+        if core.ndim(x) == 0:
+            y[0] = x
         else:
             'nid: L_inner'
             for i in range(x.shape(0)):
@@ -44,14 +44,14 @@ def flatten(axis=1):
     def comp_shape(x, axis):
         y_shape = [1, 1]
         for i in range(axis):
-            y_shape[0] *= x.shape(i)
-        for i in range(axis, x.ndim):
-            y_shape[1] *= x.shape(i)
+            y_shape[0] *= core.shape(x, i)
+        for i in range(axis, core.ndim(x)):
+            y_shape[1] *= core.shape(x, i)
         return y_shape
 
     @core.inline
     def f_flatten(x):
-        y = core.create_var(comp_shape(x, axis), x.dtype, x.mtype)
+        y = core.create_var(comp_shape(x, axis), core.dtype(x), core.mtype(x))
         'nid: recur'
         flatten_(axis)(x, y)
         return y
@@ -70,7 +70,7 @@ def _unsqueeze_(axes: Sequence[int]):
     @core.inline
     def f_unsqueeze(x, y):
         if y.ndim == 0:
-            y[()] = x[()]
+            y[()] = x
         elif begin_with_0(axes):
             'nid: recur'
             unsqueeze_(all_minus_one(axes[1:]))(x, y[0])
@@ -88,12 +88,12 @@ def unsqueeze_(axes: Sequence[int]):
     def circular_axes(axes, x_ndim):
         # ONNX >= 13 treats axes as a tensor, which we don't support for now
         return sorted(
-            map(lambda x: x if x >= 0 else x.ndim + len(axes) + x, axes))
+            map(lambda x: x if x >= 0 else x_ndim + len(axes) + x, axes))
 
     @core.inline
     def f_unsqueeze(x, y):
         'nid: impl'
-        _unsqueeze_(circular_axes(axes, x.ndim))(x, y)
+        _unsqueeze_(circular_axes(axes, core.ndim(x)))(x, y)
 
     return f_unsqueeze
 
@@ -103,7 +103,7 @@ def unsqueeze(axes: Sequence[int]):
     def circular_axes(axes, x_ndim):
         # ONNX >= 13 treats axes as a tensor, which we don't support for now
         return sorted(
-            map(lambda x: x if x >= 0 else x.ndim + len(axes) + x, axes))
+            map(lambda x: x if x >= 0 else x_ndim + len(axes) + x, axes))
 
     def comp_shape(axes, x):
         y_shape = copy_shape(x)
@@ -113,10 +113,10 @@ def unsqueeze(axes: Sequence[int]):
 
     @core.inline
     def f_unsqueeze(x):
-        y = core.create_var(comp_shape(circular_axes(axes, x.ndim), x), x.dtype,
-                            x.mtype)
+        y = core.create_var(comp_shape(circular_axes(axes, core.ndim(x)), x), core.dtype(x),
+                            core.mtype(x))
         'nid: recur'
-        _unsqueeze_(circular_axes(axes, x.ndim))(x, y)
+        _unsqueeze_(circular_axes(axes, core.ndim(x)))(x, y)
         return y
 
     return f_unsqueeze
@@ -127,11 +127,11 @@ def _expand_():
     @core.inline
     def f_expand(a, out):
         if out.ndim == 0:
-            out[()] = a[()]
+            out[()] = a
         else:
             'nid: L_elem'
             for i in range(out.shape(0)):
-                if a.ndim < out.ndim:
+                if core.ndim(a) < out.ndim:
                     'nid: recur'
                     _expand_()(a, out[i])
                 else:
@@ -146,7 +146,7 @@ def _expand():
     @core.inline
     def f_expand(a, expand_shape):
         # FIXME: out_shape = broadcast(a.shape, expand_shape)
-        out = core.create_var(expand_shape, a.dtype, a.mtype)
+        out = core.create_var(expand_shape, core.dtype(a), core.mtype(a))
         'nid: recur'
         expand_(a, out)
         return out

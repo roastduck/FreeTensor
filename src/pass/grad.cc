@@ -8,12 +8,12 @@
 #include <pass/hoist_var_over_stmt_seq.h>
 #include <pass/make_reduction.h>
 #include <pass/output_intermediates.h>
-#include <pass/prop_const.h>
 #include <pass/prop_one_time_use.h>
 #include <pass/remove_cyclic_assign.h>
 #include <pass/remove_dead_var.h>
 #include <pass/remove_writes.h>
 #include <pass/simplify.h>
+#include <pass/tensor_prop_const.h>
 #include <pass/undo_make_reduction.h>
 
 namespace ir {
@@ -25,15 +25,15 @@ DataType PropagateRequire::dtype(const Expr &op) {
 
 void PropagateRequire::visit(const Load &op) {
     if (isFloat(dtype(op)) && !curTarget_.empty() &&
-        defs_.at(op->var_)->buffer_->atype() == AccessType::Cache) {
-        affectedDefs_.insert(defs_.at(op->var_)->id());
+        buffer(op->var_)->atype() == AccessType::Cache) {
+        affectedDefs_.insert(def(op->var_)->id());
         // No need to recurse deeper
     }
 }
 
 void PropagateRequire::visit(const Store &op) {
-    if (affectedDefs_.count(defs_.at(op->var_)->id())) {
-        curTarget_ = defs_.at(op->var_)->id();
+    if (affectedDefs_.count(def(op->var_)->id())) {
+        curTarget_ = def(op->var_)->id();
         (*this)(op->expr_);
         // No need to recurse into indices
         curTarget_ = "";
@@ -41,8 +41,8 @@ void PropagateRequire::visit(const Store &op) {
 }
 
 void PropagateRequire::visit(const ReduceTo &op) {
-    if (affectedDefs_.count(defs_.at(op->var_)->id())) {
-        curTarget_ = defs_.at(op->var_)->id();
+    if (affectedDefs_.count(def(op->var_)->id())) {
+        curTarget_ = def(op->var_)->id();
         (*this)(op->expr_);
         // No need to recurse into indices
         curTarget_ = "";
@@ -53,20 +53,15 @@ void PropagateRequire::visit(const VarDef &op) {
     if (requires_.count(op->name_) || provides_.count(op->name_)) {
         affectedDefs_.insert(op->id());
     }
-    ASSERT(!defs_.count(op->name_));
-    defs_[op->name_] = op;
-    buffers_[op->name_] = op->buffer_;
-    Visitor::visit(op);
-    defs_.erase(op->name_);
-    buffers_.erase(op->name_);
+    BaseClass::visit(op);
 }
 
 Expr ReplaceByTape::visit(const Load &_op) {
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Load);
     auto op = __op.as<LoadNode>();
-    if (tapeMap_.count(defs_.at(_op->var_)->id())) {
-        auto tapeVar = tapeMap_.at(defs_.at(_op->var_)->id());
+    if (tapeMap_.count(symbolTable_.def(_op->var_)->id())) {
+        auto tapeVar = tapeMap_.at(symbolTable_.def(_op->var_)->id());
         if (tapeVar != op->var_) {
             op->var_ = tapeVar;
             op->indices_.insert(op->indices_.begin(), versions_.at(_op));
@@ -77,7 +72,7 @@ Expr ReplaceByTape::visit(const Load &_op) {
 
 Stmt Grad::visit(const StmtSeq &op) {
     if (isRecompute_) {
-        auto ret = Mutator::visit(op);
+        auto ret = BaseClass::visit(op);
         ret->setId("");
         return ret;
     } else {
@@ -97,14 +92,13 @@ Stmt Grad::visit(const StmtSeq &op) {
 
 Stmt Grad::visit(const For &op) {
     if (isRecompute_) {
-        auto ret = Mutator::visit(op);
+        auto ret = BaseClass::visit(op);
         ret->setId("");
         return ret;
     } else {
         auto noDeps = op->property_.noDeps_;
         for (auto &&fwdVar : op->property_.noDeps_) {
-            if (defs_.count(fwdVar) &&
-                affectedDefs_.count(defs_.at(fwdVar)->id())) {
+            if (hasDef(fwdVar) && affectedDefs_.count(def(fwdVar)->id())) {
                 noDeps.emplace_back(fwdVar + ".grad");
             }
         }
@@ -120,21 +114,18 @@ Stmt Grad::visit(const For &op) {
 
 Stmt Grad::visit(const VarDef &_op) {
     ASSERT(!gradNames_.count(_op->name_));
-    ASSERT(!defs_.count(_op->name_));
     ASSERT(!recomputed_.count(_op->name_));
     std::string gradName;
     if (affectedDefs_.count(_op->id())) {
         gradName = gradNames_[_op->name_] = _op->name_ + ".grad";
     }
-    defs_[_op->name_] = _op;
     if (tapes_.count(_op->id())) {
         taped_.insert(_op->name_);
     }
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::VarDef);
     auto op = __op.as<VarDefNode>();
     taped_.erase(op->name_);
-    defs_.erase(op->name_);
     gradNames_.erase(op->name_);
     recomputed_.erase(op->name_);
 
@@ -221,13 +212,13 @@ Stmt Grad::visit(const VarDef &_op) {
 }
 
 Stmt Grad::visit(const Store &op) {
-    auto &&buffer = defs_.at(op->var_)->buffer_;
+    auto &&b = buffer(op->var_);
     if (isRecompute_) {
         // FIXME: What if an intermediate variable is assigned and used multiple
         // times? E.g. a = x; use a; a = y; use a;
         bool recomputed =
             recomputed_.count(op->var_) && recomputed_.at(op->var_).count(op);
-        if (!recomputed && buffer->atype() == AccessType::Cache &&
+        if (!recomputed && b->atype() == AccessType::Cache &&
             !taped_.count(op->var_)) {
             recomputed_[op->var_].insert(op);
             auto ret = replaceByTape_(op);
@@ -277,8 +268,8 @@ Stmt Grad::visit(const Store &op) {
                     stmts.emplace_back(stmt);
                 }
                 return makeVarDef("", oldGrad,
-                                  Buffer(Tensor({}, buffer->tensor().dtype()),
-                                         AccessType::Cache, buffer->mtype()),
+                                  Buffer(Tensor({}, b->tensor().dtype()),
+                                         AccessType::Cache, b->mtype()),
                                   nullptr, makeStmtSeq("", std::move(stmts)),
                                   false);
             }
@@ -289,13 +280,13 @@ Stmt Grad::visit(const Store &op) {
 }
 
 Stmt Grad::visit(const ReduceTo &op) {
-    auto &&buffer = defs_.at(op->var_)->buffer_;
+    auto &&b = buffer(op->var_);
     if (isRecompute_) {
         // FIXME: What if an intermediate variable is assigned and used multiple
         // times? E.g. a = x; use a; a = y; use a;
         bool recomputed =
             recomputed_.count(op->var_) && recomputed_.at(op->var_).count(op);
-        if (!recomputed && buffer->atype() == AccessType::Cache &&
+        if (!recomputed && b->atype() == AccessType::Cache &&
             !taped_.count(op->var_)) {
             recomputed_[op->var_].insert(op);
             auto ret = replaceByTape_(op);
@@ -503,7 +494,7 @@ grad(const Stmt &_op, const std::unordered_set<std::string> &requires,
     // We do some basic simplifications here, to reduce burden on auto-schedule
     backward = propOneTimeUse(backward);
     backward = simplifyPass(backward);
-    backward = propConst(backward);
+    backward = tensorPropConst(backward);
     backward = removeWrites(backward);
     backward = removeCyclicAssign(backward);
     backward = removeDeadVar(backward);

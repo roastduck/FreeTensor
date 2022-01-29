@@ -142,6 +142,35 @@ def test_stmt_in_between():
 
 
 def test_def_in_between():
+    with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("y", (4, 8), "int32", "output", "cpu")]) as (x, y):
+        with ir.For("i", 0, 4, nid="L1") as i:
+            with ir.VarDef("z", (), "int32", "output", "cpu") as z:
+                z[()] = x[i]
+                with ir.For("j", 0, 8, nid="L2") as j:
+                    y[i, j] = z[()] * j
+    ast = ir.pop_ast()
+    print(ast)
+    s = ir.Schedule(ast)
+    s.merge("L1", "L2")
+    ast = s.ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("y", (4, 8), "int32", "output", "cpu"),
+                    ("z", (), "int32", "output", "cpu")]) as (x, y, z):
+        with ir.For("i", 0, 32) as i:
+            with ir.If(i % 8 == 0):
+                z[()] = x[div(i, 8)]
+            y[div(i, 8), i % 8] = z[()] * (i % 8)
+    std = ir.use_builtin_div(ir.pop_ast())
+
+    assert std.match(ast)
+
+
+def test_prop_expr_of_outer_loop():
     with ir.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.VarDef("z", (), "int32", "output", "cpu") as z:
@@ -162,7 +191,7 @@ def test_def_in_between():
         with ir.For("i", 0, 32) as i:
             with ir.If(i % 8 == 0):
                 z[()] = div(i, 8)
-            y[div(i, 8), i % 8] = z[()] * (i % 8)
+            y[div(i, 8), i % 8] = div(i, 8) * (i % 8)
     std = ir.use_builtin_div(ir.pop_ast())
 
     assert std.match(ast)

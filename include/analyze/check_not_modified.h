@@ -28,6 +28,9 @@ class InsertTmpEval : public Mutator {
 /**
  * Verify if `expr` is evaluated at just before/after `s0` and before/after
  * `s1`, it will result in the same value
+ *
+ * The caller must ensure that every names in `expr` are defined in both sites,
+ * and defined by the same For or VarDef nodes
  */
 bool checkNotModified(const Stmt &op, const Expr &expr,
                       CheckNotModifiedSide s0Side, const std::string &s0,

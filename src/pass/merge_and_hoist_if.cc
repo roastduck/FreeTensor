@@ -3,14 +3,14 @@
 #include <analyze/all_reads.h>
 #include <analyze/all_writes.h>
 #include <analyze/check_all_defined.h>
-#include <analyze/hash.h>
+#include <hash.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/merge_and_hoist_if.h>
 
 namespace ir {
 
 Stmt MergeAndHoistIf::visit(const StmtSeq &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::StmtSeq);
     auto op = __op.as<StmtSeqNode>();
     std::vector<Stmt> stmts;
@@ -20,7 +20,7 @@ Stmt MergeAndHoistIf::visit(const StmtSeq &_op) {
             stmt->nodeType() == ASTNodeType::If) {
             auto if1 = stmts.back().as<IfNode>();
             auto if2 = stmt.as<IfNode>();
-            if (getHash(if1->cond_) == getHash(if2->cond_)) {
+            if (HashComparator()(if1->cond_, if2->cond_)) {
                 auto writes = allWrites(if1);
                 auto reads = allReads(if2->cond_);
                 if (std::none_of(reads.begin(), reads.end(),
@@ -60,16 +60,14 @@ Stmt MergeAndHoistIf::visit(const StmtSeq &_op) {
 }
 
 Stmt MergeAndHoistIf::visit(const VarDef &_op) {
-    def_.insert(_op->name_);
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::VarDef);
     auto op = __op.as<VarDefNode>();
-    def_.erase(_op->name_);
 
     if (op->body_->nodeType() == ASTNodeType::If) {
         auto branch = op->body_.as<IfNode>();
         if (!branch->elseCase_.isValid() &&
-            checkAllDefined(def_, branch->cond_)) {
+            checkAllDefined(names(), branch->cond_)) {
             isFixPoint_ = false;
             return makeIf(branch->id(), branch->cond_,
                           makeVarDef(op->id(), op->name_,
@@ -81,16 +79,14 @@ Stmt MergeAndHoistIf::visit(const VarDef &_op) {
 }
 
 Stmt MergeAndHoistIf::visit(const For &_op) {
-    def_.insert(_op->iter_);
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::For);
     auto op = __op.as<ForNode>();
-    def_.erase(op->iter_);
 
     if (op->body_->nodeType() == ASTNodeType::If) {
         auto branch = op->body_.as<IfNode>();
         if (!branch->elseCase_.isValid() &&
-            checkAllDefined(def_, branch->cond_)) {
+            checkAllDefined(names(), branch->cond_)) {
             auto writes = allWrites(branch);
             auto reads = allReads(branch->cond_);
             if (std::none_of(reads.begin(), reads.end(),

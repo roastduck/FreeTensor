@@ -6,24 +6,21 @@ namespace ir {
 
 Stmt ShrinkFor::visit(const For &_op) {
     auto var = makeVar(_op->iter_).as<VarNode>();
-    auto hash = getHash(var);
-    newRange_.erase(hash);
+    newRange_.erase(var);
 
     iterStack_.emplace_back(var);
-    defStack_.emplace_back(defs_);
-    defs_.insert(_op->iter_);
+    namesStack_.emplace_back(names());
     auto __op = CompTransientBounds::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::For);
     auto op = __op.as<ForNode>();
-    defs_.erase(_op->iter_);
-    defStack_.pop_back();
+    namesStack_.pop_back();
     iterStack_.pop_back();
 
-    if (!newRange_.count(hash)) {
+    if (!newRange_.count(var)) {
         return op->body_;
     }
-    auto lower = makeMinMax(newRange_.at(hash).first);
-    auto upper = makeMaxMin(newRange_.at(hash).second);
+    auto lower = makeMinMax(newRange_.at(var).first);
+    auto upper = makeMaxMin(newRange_.at(var).second);
 
     if (op->property_.unroll_ ||
         (op->property_.parallel_.substr(0, 10) == "threadIdx." &&
@@ -59,13 +56,6 @@ Stmt ShrinkFor::visit(const For &_op) {
     }
 
     return op;
-}
-
-Stmt ShrinkFor::visit(const VarDef &op) {
-    defs_.insert(op->name_);
-    auto ret = CompTransientBounds::visit(op);
-    defs_.erase(op->name_);
-    return ret;
 }
 
 Stmt shrinkFor(const Stmt &_op) {

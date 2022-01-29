@@ -3,6 +3,7 @@
 #include <analyze/analyze_linear.h>
 #include <analyze/check_all_defined.h>
 #include <analyze/deps.h>
+#include <hash.h>
 #include <pass/make_parallel_reduction.h>
 #include <pass/make_reduction.h>
 
@@ -12,9 +13,9 @@ static bool isDenseOver(const Expr &expr, const std::string &iter) {
     AnalyzeLinear analyzeLinear;
     analyzeLinear(expr);
     auto &&lin = analyzeLinear.result().at(expr);
-    if (lin.coeff_.size() == 1 && std::abs(lin.coeff_.front().second.k_) == 1 &&
-        lin.coeff_.front().second.a_->nodeType() == ASTNodeType::Var) {
-        Var var = lin.coeff_.front().second.a_.as<VarNode>();
+    if (lin.coeff_.size() == 1 && std::abs(lin.coeff_.front().k_) == 1 &&
+        lin.coeff_.front().a_->nodeType() == ASTNodeType::Var) {
+        Var var = lin.coeff_.front().a_.as<VarNode>();
         return var->name_ == iter;
     }
     return false;
@@ -58,13 +59,8 @@ void FindSerialLoopsOverReduce::visit(const ReduceTo &op) {
     }
 }
 
-uint64_t MakeParallelReduction::getHash(const Expr &op) {
-    getHash_(op);
-    return getHash_.hash().at(op);
-}
-
 Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
     auto op = __op.as<ReduceToNode>();
     if (toAlter_.count(op->id())) {
@@ -98,7 +94,7 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
                     for (auto &&[oldIdx, idx] :
                          iter::zip(oldIndices, indices)) {
                         if (oldIdx.isValid() && idx.isValid()) {
-                            if (getHash(oldIdx) == getHash(idx)) {
+                            if (HashComparator()(oldIdx, idx)) {
                                 newIndices.emplace_back(idx);
                             } else {
                                 goto mismatch;
@@ -155,7 +151,7 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
             op->indices_ = {};
             for (auto &&[preserve, idx, dim] :
                  iter::zip(preserveDim, _op->indices_,
-                           buffers_.at(_op->var_)->tensor().shape())) {
+                           buffer(_op->var_)->tensor().shape())) {
                 if (preserve) {
                     op->indices_.emplace_back(idx);
                     newShape.emplace_back(dim);
@@ -179,7 +175,7 @@ Stmt MakeParallelReduction::visit(const For &_op) {
     defined_.insert(_op->iter_);
     paraScopes_[_op->id()] = _op->property_.parallel_;
     scopeDefined_[_op->id()] = defined_;
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     scopeDefined_.erase(_op->id());
     paraScopes_.erase(_op->id());
     defined_.erase(_op->iter_);
@@ -197,8 +193,8 @@ Stmt MakeParallelReduction::visit(const For &_op) {
         for (auto &&[reduce, newShape, targetIndices] :
              cacheAtomic_.at(op->id())) {
             auto cacheName = reduce->var_ + ".atomic_cache." + reduce->id();
-            auto dtype = buffers_.at(reduce->var_)->tensor().dtype();
-            auto mtype = localMType(buffers_.at(reduce->var_)->mtype());
+            auto dtype = buffer(reduce->var_)->tensor().dtype();
+            auto mtype = localMType(buffer(reduce->var_)->mtype());
             std::vector<Expr> cacheIndices;
             for (size_t i = 0, j = 0, n = newShape.size(); i < n; i++) {
                 cacheIndices.emplace_back(
@@ -235,11 +231,8 @@ Stmt MakeParallelReduction::visit(const For &_op) {
 
 Stmt MakeParallelReduction::visit(const VarDef &op) {
     ASSERT(!defined_.count(op->name_));
-    ASSERT(!buffers_.count(op->name_));
     defined_.insert(op->name_);
-    buffers_[op->name_] = op->buffer_;
-    auto ret = Mutator::visit(op);
-    buffers_.erase(op->name_);
+    auto ret = BaseClass::visit(op);
     defined_.erase(op->name_);
     return ret;
 }

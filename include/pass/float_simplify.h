@@ -4,23 +4,23 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include <analyze/hash.h>
+#include <analyze/symbol_table.h>
 #include <analyze/type_infer.h>
 #include <func.h>
 #include <mutator.h>
 
 namespace ir {
 
-class FloatSimplify : public Mutator {
+class FloatSimplify : public SymbolTable<Mutator> {
+    typedef SymbolTable<Mutator> BaseClass;
+
     std::unordered_map<Expr, double> constants_;
     std::unordered_set<Expr> nonNeg_, nonPosi_;
-    std::unordered_map<std::string, Ref<Buffer>> buffers_;
-    GetHash getHash_;
     TypeInfer typeInfer_;
     bool isFixPoint_ = true;
 
   public:
-    FloatSimplify() : typeInfer_(&buffers_) {}
+    FloatSimplify() : typeInfer_(*this) {}
 
     bool isFixPoint() const { return isFixPoint_; }
 
@@ -36,13 +36,12 @@ class FloatSimplify : public Mutator {
     }
 
   private:
-    uint64_t getHash(const Expr &op);
     DataType dtype(const Expr &op);
 
     Expr normalizeRealMulDiv(const Expr &op);
 
   protected:
-    Stmt visit(const VarDef &op) override;
+    using BaseClass::visit;
     Expr visit(const IntConst &op) override;
     Expr visit(const FloatConst &op) override;
     Expr visit(const Add &op) override;

@@ -15,6 +15,8 @@ namespace ir {
  * Only used in pattern matching
  */
 class AnyNode : public StmtNode {
+  public:
+    void compHash() override;
     DEFINE_NODE_TRAIT(Any);
 };
 typedef Ref<AnyNode> Any;
@@ -24,6 +26,7 @@ inline Stmt _makeAny() { return Any::make(); }
 class StmtSeqNode : public StmtNode {
   public:
     std::vector<SubTree<StmtNode>> stmts_;
+    void compHash() override;
     DEFINE_NODE_TRAIT(StmtSeq);
 };
 typedef Ref<StmtSeqNode> StmtSeq;
@@ -56,6 +59,8 @@ class VarDefNode : public StmtNode {
     VarDefNode(const VarDefNode &other);            // Deep copy buffer_
     VarDefNode &operator=(const VarDefNode &other); // Deep copy buffer_
 
+    void compHash() override;
+
     DEFINE_NODE_TRAIT(VarDef);
 };
 typedef Ref<VarDefNode> VarDef;
@@ -79,6 +84,7 @@ class StoreNode : public StmtNode {
     std::string var_;
     std::vector<SubTree<ExprNode>> indices_;
     SubTree<ExprNode> expr_;
+    void compHash() override;
     DEFINE_NODE_TRAIT(Store);
 };
 typedef Ref<StoreNode> Store;
@@ -114,6 +120,7 @@ class ReduceToNode : public StmtNode {
     ReduceOp op_;
     SubTree<ExprNode> expr_;
     bool atomic_;
+    void compHash() override;
     DEFINE_NODE_TRAIT(ReduceTo)
 };
 typedef Ref<ReduceToNode> ReduceTo;
@@ -204,6 +211,8 @@ class ForNode : public StmtNode {
     ForProperty property_;
     SubTree<StmtNode> body_;
 
+    void compHash() override;
+
     DEFINE_NODE_TRAIT(For);
 };
 typedef Ref<ForNode> For;
@@ -230,6 +239,8 @@ class IfNode : public StmtNode {
     SubTree<StmtNode> thenCase_;
     SubTree<StmtNode, NullPolicy::Nullable> elseCase_;
 
+    void compHash() override;
+
     DEFINE_NODE_TRAIT(If);
 };
 typedef Ref<IfNode> If;
@@ -249,6 +260,7 @@ class AssertNode : public StmtNode {
   public:
     SubTree<ExprNode> cond_;
     SubTree<StmtNode> body_;
+    void compHash() override;
     DEFINE_NODE_TRAIT(Assert);
 };
 typedef Ref<AssertNode> Assert;
@@ -270,6 +282,7 @@ Stmt _makeAssert(const std::string &id, Tcond &&cond, Tbody &&body) {
 class EvalNode : public StmtNode {
   public:
     SubTree<ExprNode> expr_;
+    void compHash() override;
     DEFINE_NODE_TRAIT(Eval);
 };
 typedef Ref<EvalNode> Eval;
@@ -295,6 +308,7 @@ class MatMulNode : public StmtNode {
     bool aIsRowMajor_, bIsRowMajor_, cIsRowMajor_;
     SubTree<StmtNode>
         equivalent_; // Equivalent loop statements, to help dependency analysis
+    void compHash() override;
     DEFINE_NODE_TRAIT(MatMul);
 };
 typedef Ref<MatMulNode> MatMul;

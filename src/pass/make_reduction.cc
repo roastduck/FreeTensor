@@ -1,6 +1,6 @@
 #include <itertools.hpp>
 
-#include <analyze/hash.h>
+#include <hash.h>
 #include <pass/make_reduction.h>
 
 namespace ir {
@@ -11,7 +11,7 @@ bool MakeReduction::isSameElem(const Store &s, const Load &l) {
     }
     ASSERT(s->indices_.size() == l->indices_.size());
     for (auto &&[sIdx, lIdx] : iter::zip(s->indices_, l->indices_)) {
-        if (getHash(sIdx) != getHash(lIdx)) {
+        if (!HashComparator()(sIdx, lIdx)) {
             return false;
         }
     }

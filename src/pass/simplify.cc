@@ -4,7 +4,6 @@
 
 #include <analyze/all_names.h>
 #include <analyze/all_reads.h>
-#include <analyze/hash.h>
 #include <except.h>
 #include <math/utils.h>
 #include <pass/flatten_stmt_seq.h>
@@ -55,7 +54,7 @@ void OutDatedBoundsRemover::remove(const std::string &name) {
         for (auto i = item.second.lower_.begin();
              i != item.second.lower_.end();) {
             if (allReads(*i).count(name)) {
-                item.second.lower_.erase(i);
+                i = item.second.lower_.erase(i);
             } else {
                 i++;
             }
@@ -91,15 +90,9 @@ DataType CompTransientBounds::dtype(const Expr &op) {
     return typeInfer_.types().at(op);
 }
 
-uint64_t CompTransientBounds::getHash(const Expr &op) {
-    getHash_(op);
-    return getHash_.hash().at(op);
-}
-
 TransientBound CompTransientBounds::transient(const Expr &op) {
-    auto hash = getHash(op);
-    if (transients_.count(hash)) {
-        return transients_.at(hash);
+    if (transients_.count(op)) {
+        return transients_.at(op);
     }
     return {};
 }
@@ -133,32 +126,31 @@ void CompTransientBounds::applyCond(int k, const Expr &lhs, ASTNodeType opType,
     }
     auto floorRhs = k != 1 ? makeFloorDiv(rhs, makeIntConst(k)) : rhs;
     auto ceilRhs = k != 1 ? makeCeilDiv(rhs, makeIntConst(k)) : rhs;
-    auto h = getHash(lhs);
     switch (opType) {
     case ASTNodeType::LT: {
-        transients_[h].expr_ = (*this)(lhs);
-        transients_[h].upper_.emplace_back((*this)(sub1(ceilRhs)));
+        transients_[lhs].expr_ = (*this)(lhs);
+        transients_[lhs].upper_.emplace_back((*this)(sub1(ceilRhs)));
         break;
     }
     case ASTNodeType::GT: {
-        transients_[h].expr_ = (*this)(lhs);
-        transients_[h].lower_.emplace_back((*this)(add1(floorRhs)));
+        transients_[lhs].expr_ = (*this)(lhs);
+        transients_[lhs].lower_.emplace_back((*this)(add1(floorRhs)));
         break;
     }
     case ASTNodeType::LE: {
-        transients_[h].expr_ = (*this)(lhs);
-        transients_[h].upper_.emplace_back((*this)(floorRhs));
+        transients_[lhs].expr_ = (*this)(lhs);
+        transients_[lhs].upper_.emplace_back((*this)(floorRhs));
         break;
     }
     case ASTNodeType::GE: {
-        transients_[h].expr_ = (*this)(lhs);
-        transients_[h].lower_.emplace_back((*this)(ceilRhs));
+        transients_[lhs].expr_ = (*this)(lhs);
+        transients_[lhs].lower_.emplace_back((*this)(ceilRhs));
         break;
     }
     case ASTNodeType::EQ: {
-        transients_[h].expr_ = (*this)(lhs);
-        transients_[h].lower_.emplace_back((*this)(ceilRhs));
-        transients_[h].upper_.emplace_back((*this)(floorRhs));
+        transients_[lhs].expr_ = (*this)(lhs);
+        transients_[lhs].lower_.emplace_back((*this)(ceilRhs));
+        transients_[lhs].upper_.emplace_back((*this)(floorRhs));
         break;
     }
     default:
@@ -212,65 +204,59 @@ void CompTransientBounds::applyCond(const Expr &cond) {
         return;
     }
     LinearExpr lin = analyzeLinear_.result().at(norm);
-    for (auto &&item : lin.coeff_) {
-        if (item.second.k_ != 0 &&
-            (item.second.a_->nodeType() == ASTNodeType::Var ||
-             item.second.a_->nodeType() == ASTNodeType::Load)) {
+    for (auto &&[k, a] : lin.coeff_) {
+        if (k != 0 && (a->nodeType() == ASTNodeType::Var ||
+                       a->nodeType() == ASTNodeType::Load)) {
             auto l = lin;
             l.coeff_.resize(
-                std::remove_if(
-                    l.coeff_.begin(), l.coeff_.end(),
-                    [&item](const decltype(l.coeff_)::value_type &kx) {
-                        return kx.first == item.first;
-                    }) -
+                std::remove_if(l.coeff_.begin(), l.coeff_.end(),
+                               [&a](const decltype(l.coeff_)::value_type &kx) {
+                                   return HashComparator()(kx.a_, a);
+                               }) -
                 l.coeff_.begin());
-            applyCond(-item.second.k_, item.second.a_, cond->nodeType(),
-                      lin2expr(l));
+            applyCond(-k, a, cond->nodeType(), lin2expr(l));
         }
     }
     conds_.emplace_back(cond);
-}
-
-Stmt CompTransientBounds::visit(const VarDef &op) {
-    if (buffers_.count(op->name_)) {
-        throw InvalidProgram("Nested VarDef with the same name is not allowed");
-    }
-    buffers_[op->name_] = op->buffer_;
-    auto ret = Mutator::visit(op);
-    buffers_.erase(op->name_);
-    return ret;
 }
 
 Stmt CompTransientBounds::visit(const For &op) {
     OutDatedBoundsRemover localRemover(transients_, conds_);
     localRemover(op);
     auto var = makeVar(op->iter_);
-    auto hash = getHash(var);
-    if (transients_.count(hash)) {
+    if (transients_.count(var)) {
         throw InvalidProgram(
             "iterators with the same name in nested loops are not allowed");
     }
+    auto oldCondsSize = conds_.size();
     if (op->step_->nodeType() == ASTNodeType::IntConst) {
         auto step = op->step_.as<IntConstNode>()->val_;
         if (step > 0) {
-            transients_[hash] = {
+            transients_[var] = {
                 var, {(*this)(op->begin_)}, {(*this)(sub1(op->end_))}};
+            conds_.emplace_back(makeGE(var, op->begin_));
+            conds_.emplace_back(makeLT(var, op->end_));
+            conds_.emplace_back(makeEQ(
+                makeMod(makeSub(var, op->begin_), op->step_), makeIntConst(0)));
         } else if (step < 0) {
-            transients_[hash] = {
+            transients_[var] = {
                 var, {(*this)(add1(op->end_))}, {(*this)(op->begin_)}};
+            conds_.emplace_back(makeLE(var, op->begin_));
+            conds_.emplace_back(makeGT(var, op->end_));
+            // ISL does not support negative divisor
+            conds_.emplace_back(
+                makeEQ(makeMod(makeSub(op->begin_, var),
+                               makeSub(makeIntConst(0), op->step_)),
+                       makeIntConst(0)));
         } else {
-            transients_[hash] = {
+            transients_[var] = {
                 var, {(*this)(op->begin_)}, {(*this)(op->begin_)}};
+            conds_.emplace_back(makeEQ(var, op->begin_));
         }
     }
-    auto rbegin = makeAdd(
-        op->begin_, makeMul(makeSub(op->len_, makeIntConst(1)), op->step_));
-    conds_.emplace_back(makeGE(var, makeMin(op->begin_, rbegin)));
-    conds_.emplace_back(makeLE(var, makeMax(rbegin, op->begin_)));
-    auto ret = Mutator::visit(op);
-    conds_.pop_back();
-    conds_.pop_back();
-    transients_.erase(hash);
+    auto ret = BaseClass::visit(op);
+    conds_.resize(oldCondsSize);
+    transients_.erase(var);
     return ret;
 }
 
@@ -313,13 +299,13 @@ Stmt CompTransientBounds::visit(const Assert &op) {
 }
 
 Stmt CompTransientBounds::visit(const Store &op) {
-    auto ret = Mutator::visit(op);
+    auto ret = BaseClass::visit(op);
     remover_(op);
     return ret;
 }
 
 Stmt CompTransientBounds::visit(const ReduceTo &op) {
-    auto ret = Mutator::visit(op);
+    auto ret = BaseClass::visit(op);
     remover_(op);
     return ret;
 }
@@ -388,10 +374,10 @@ int CompUniqueBounds::getIntUpper(const Expr &op) const {
     return ret;
 }
 
-Ref<int> CompUniqueBounds::getInt(const Expr &op) const {
+Opt<int> CompUniqueBounds::getInt(const Expr &op) const {
     int lower = getIntLower(op);
     int upper = getIntUpper(op);
-    return lower == upper ? Ref<int>::make(lower) : nullptr;
+    return lower == upper ? Opt<int>::make(lower) : nullptr;
 }
 
 bool CompUniqueBounds::alwaysLT(const Expr &lhs, const Expr &rhs) const {
@@ -743,20 +729,6 @@ Expr CompUniqueBounds::visit(const IfExpr &_op) {
     updLower(lower, LowerBound{op});
     updUpper(upper, UpperBound{op});
     return op;
-}
-
-void CheckFixedPoint::visitExpr(const Expr &op) {
-    Visitor::visitExpr(op);
-    if (mutated_.count(op)) {
-        isFixPoint_ = false;
-    }
-}
-
-void CheckFixedPoint::visitStmt(const Stmt &op) {
-    Visitor::visitStmt(op);
-    if (mutated_.count(op)) {
-        isFixPoint_ = false;
-    }
 }
 
 Stmt builtinSimplify(const Stmt &op) {

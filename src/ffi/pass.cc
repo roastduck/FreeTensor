@@ -10,6 +10,7 @@
 #include <pass/gpu/normalize_threads.h>
 #include <pass/gpu/simplex_buffers.h>
 #include <pass/grad.h>
+#include <pass/hoist_var_over_stmt_seq.h>
 #include <pass/make_1d_var.h>
 #include <pass/make_const_shape.h>
 #include <pass/make_parallel_reduction.h>
@@ -17,14 +18,15 @@
 #include <pass/merge_and_hoist_if.h>
 #include <pass/move_out_first_or_last_iter.h>
 #include <pass/output_intermediates.h>
-#include <pass/prop_const.h>
 #include <pass/prop_one_time_use.h>
 #include <pass/remove_dead_var.h>
 #include <pass/remove_writes.h>
+#include <pass/scalar_prop_const.h>
 #include <pass/shrink_for.h>
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
 #include <pass/sink_var.h>
+#include <pass/tensor_prop_const.h>
 #include <pass/use_builtin_div.h>
 
 namespace ir {
@@ -111,6 +113,11 @@ void init_ffi_pass(py::module_ &m) {
           static_cast<Stmt (*)(const Stmt &)>(&moveOutFirstOrLastIter),
           "stmt"_a);
 
+    m.def("scalar_prop_const",
+          static_cast<Func (*)(const Func &)>(&scalarPropConst), "func"_a);
+    m.def("scalar_prop_const",
+          static_cast<Stmt (*)(const Stmt &)>(&scalarPropConst), "stmt"_a);
+
     m.def("sink_var", static_cast<Func (*)(const Func &)>(&sinkVar), "func"_a);
     m.def("sink_var", static_cast<Stmt (*)(const Stmt &)>(&sinkVar), "stmt"_a);
 
@@ -141,10 +148,10 @@ void init_ffi_pass(py::module_ &m) {
           static_cast<Stmt (*)(const Stmt &)>(&makeParallelReduction),
           "stmt"_a);
 
-    m.def("prop_const", static_cast<Func (*)(const Func &)>(&propConst),
-          "func"_a);
-    m.def("prop_const", static_cast<Stmt (*)(const Stmt &)>(&propConst),
-          "stmt"_a);
+    m.def("tensor_prop_const",
+          static_cast<Func (*)(const Func &)>(&tensorPropConst), "func"_a);
+    m.def("tensor_prop_const",
+          static_cast<Stmt (*)(const Stmt &)>(&tensorPropConst), "stmt"_a);
 
     m.def("prop_one_time_use",
           static_cast<Func (*)(const Func &)>(&propOneTimeUse), "func"_a);
@@ -183,6 +190,11 @@ void init_ffi_pass(py::module_ &m) {
           static_cast<Func (*)(const Func &)>(&useBuiltinDiv), "func"_a);
     m.def("use_builtin_div",
           static_cast<Stmt (*)(const Stmt &)>(&useBuiltinDiv), "stmt"_a);
+
+    m.def("hoist_var_over_stmt_seq",
+          static_cast<Func (*)(const Func &)>(&hoistVarOverStmtSeq), "func"_a);
+    m.def("hoist_var_over_stmt_seq",
+          static_cast<Stmt (*)(const Stmt &)>(&hoistVarOverStmtSeq), "stmt"_a);
 
     // CPU
     m.def("cpu_lower_parallel_reduction",

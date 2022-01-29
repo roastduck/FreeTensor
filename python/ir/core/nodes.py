@@ -518,3 +518,36 @@ def any():
 
 def Func(name, params, returns, body, closure={}):
     return ffi.makeFunc(name, params, returns, body, closure)
+
+
+def ndim(var):
+    if isinstance(var, Var):
+        return var.ndim
+    else:
+        return 0
+
+
+def shape(var, i):
+    if isinstance(var, Var):
+        return var.shape(i)
+    else:
+        raise Exception('Scalar object has no shape')
+
+
+def dtype(var):
+    if isinstance(var, Var):
+        return var.dtype
+    else:
+        if isinstance(var, float):
+            return DataType.Float32
+        elif isinstance(var, int):
+            return DataType.Int32
+        else:
+            raise Exception('Unknown scalar type')
+
+
+def mtype(var):
+    if isinstance(var, Var):
+        return var.mtype
+    else:
+        return 'byvalue'

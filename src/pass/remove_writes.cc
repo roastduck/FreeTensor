@@ -44,28 +44,25 @@ static bool isConst(const Expr &expr) {
 
 void FindLoopInvariantWrites::visit(const For &op) {
     cursorStack_.emplace_back(cursor());
-    Visitor::visit(op);
+    BaseClass::visit(op);
     cursorStack_.pop_back();
 }
 
 void FindLoopInvariantWrites::visit(const If &op) {
     ifStack_.emplace_back(op);
-    Visitor::visit(op);
+    BaseClass::visit(op);
     ifStack_.pop_back();
 }
 
 void FindLoopInvariantWrites::visit(const VarDef &op) {
-    ASSERT(!defs_.count(op->name_));
     defDepth_[op->name_] = cursorStack_.size();
-    defs_[op->name_] = op;
-    Visitor::visit(op);
-    defs_.erase(op->name_);
+    BaseClass::visit(op);
     defDepth_.erase(op->name_);
 }
 
 void FindLoopInvariantWrites::visit(const Store &op) {
-    Visitor::visit(op);
-    if (!singleDefId_.empty() && defs_.at(op->var_)->id() != singleDefId_) {
+    BaseClass::visit(op);
+    if (!singleDefId_.empty() && def(op->var_)->id() != singleDefId_) {
         return;
     }
     Expr cond;
@@ -106,7 +103,7 @@ void FindLoopInvariantWrites::visit(const Store &op) {
 
     if (cond.isValid()) {
         results_[op] =
-            std::make_tuple(defs_.at(op->var_), cond, innerMostLoopCursor);
+            std::make_tuple(def(op->var_), cond, innerMostLoopCursor);
     }
 }
 

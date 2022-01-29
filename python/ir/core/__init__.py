@@ -1,5 +1,6 @@
+import os
 from ffi import AccessType, MemType, DataType, ASTNodeType, TargetType
-from ffi import InvalidSchedule, InvalidProgram, DriverError
+from ffi import InvalidSchedule, InvalidProgram, DriverError, AssertAlwaysFalse
 
 from .nodes import (
     pop_ast,
@@ -35,6 +36,10 @@ from .nodes import (
     intrinsic,
     any,
     Func,
+    ndim,
+    shape,
+    dtype,
+    mtype,
 )
 from .analyze import *
 from .passes import *
@@ -42,6 +47,10 @@ from .schedule import *
 from .codegen import codegen
 from .driver import *
 from .config import *
-from .transformer import transform, inline, create_var, declare_var
+
+from .transformer import (transform, inline, create_var, var, declare_var,
+                          capture_var, StagingError, StagedAssignable,
+                          StagedIterable)
+
 from .meta import *
 from .auto_schedule import *

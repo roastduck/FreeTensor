@@ -10,6 +10,9 @@ namespace ir {
 
 class Visitor {
   public:
+    typedef void ExprRetType;
+    typedef void StmtRetType;
+
     virtual ~Visitor() {}
 
     virtual void operator()(const AST &op) final;

@@ -4,15 +4,17 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include <analyze/symbol_table.h>
 #include <mutator.h>
 
 namespace ir {
 
-class OutputIntermediates : public Mutator {
+class OutputIntermediates : public SymbolTable<Mutator> {
+    typedef SymbolTable<Mutator> BaseClass;
+
     const std::unordered_map<AST, Expr> &versions_;
     const std::unordered_map<std::string, Expr> &totLens_;
     std::unordered_map<std::string, std::string> tapeNames_;
-    std::unordered_map<std::string, VarDef> defs_;
 
   public:
     OutputIntermediates(const std::unordered_map<AST, Expr> &versions,

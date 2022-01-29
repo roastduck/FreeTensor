@@ -12,11 +12,11 @@
 
 namespace ir {
 
-template <class T, class V1, class V2>
-static std::unordered_map<T, std::pair<V1, V2>>
-intersect(const std::unordered_map<T, V1> &lhs,
-          const std::unordered_map<T, V2> &rhs) {
-    std::unordered_map<T, std::pair<V1, V2>> ret;
+template <class T, class V1, class V2, class Hash, class KeyEqual>
+static std::unordered_map<T, std::pair<V1, V2>, Hash, KeyEqual>
+intersect(const std::unordered_map<T, V1, Hash, KeyEqual> &lhs,
+          const std::unordered_map<T, V2, Hash, KeyEqual> &rhs) {
+    std::unordered_map<T, std::pair<V1, V2>, Hash, KeyEqual> ret;
     for (auto &&[key, v1] : lhs) {
         if (rhs.count(key)) {
             ret.emplace(key, std::make_pair(v1, rhs.at(key)));
@@ -67,16 +67,13 @@ FindAccessPoint::FindAccessPoint(const Stmt &root) {
 }
 
 void FindAccessPoint::visit(const VarDef &op) {
-    ASSERT(!defs_.count(op->name_));
     allDefs_.emplace_back(op);
     defAxis_[op->name_] =
         !cur_.empty() && cur_.back().iter_->nodeType() == ASTNodeType::IntConst
             ? cur_.size() - 1
             : cur_.size();
-    defs_[op->name_] = op;
-    Visitor::visit(op);
+    BaseClass::visit(op);
     defAxis_.erase(op->name_);
-    defs_.erase(op->name_);
 }
 
 void FindAccessPoint::visit(const StmtSeq &op) {
@@ -84,7 +81,7 @@ void FindAccessPoint::visit(const StmtSeq &op) {
         cur_.back().iter_->nodeType() == ASTNodeType::IntConst) {
         scope2coord_[op->id()] = cur_;
     }
-    Visitor::visit(op);
+    BaseClass::visit(op);
 }
 
 void FindAccessPoint::visit(const For &op) {
@@ -102,10 +99,23 @@ void FindAccessPoint::visit(const For &op) {
 
     auto iter = makeVar(op->iter_);
     auto oldCondsSize = conds_.size();
-    auto rbegin = makeAdd(
-        op->begin_, makeMul(makeSub(op->len_, makeIntConst(1)), op->step_));
-    conds_.emplace_back(makeGE(iter, makeMin(op->begin_, rbegin)));
-    conds_.emplace_back(makeLE(iter, makeMax(rbegin, op->begin_)));
+    // We use IfExpr instead of determine the sign of op->step_ here, because
+    // GenPBExpr can fold the constants
+    auto posiCond = makeLAnd(
+        makeLAnd(makeGE(iter, op->begin_), makeLT(iter, op->end_)),
+        makeEQ(makeMod(makeSub(iter, op->begin_), op->step_), makeIntConst(0)));
+    auto negCond = makeLAnd(
+        makeLAnd(makeLE(iter, op->begin_), makeGT(iter, op->end_)),
+        makeEQ(makeMod(
+                   makeSub(op->begin_, iter),
+                   makeSub(makeIntConst(0),
+                           op->step_)), // ISL does not support negative divisor
+               makeIntConst(0)));
+    auto zeroCond = makeEQ(iter, op->begin_);
+    conds_.emplace_back(
+        makeIfExpr(makeGT(op->step_, makeIntConst(0)), std::move(posiCond),
+                   makeIfExpr(makeLT(op->step_, makeIntConst(0)),
+                              std::move(negCond), zeroCond)));
     cur_.emplace_back(iter, op->property_.parallel_);
     scope2coord_[op->id()] = cur_;
     if (int width = countBandNodeWidth(op->body_); width > 1) {
@@ -147,17 +157,17 @@ void FindAccessPoint::visit(const Load &op) {
     }
     lastIsLoad_ = true;
 
-    Visitor::visit(op);
+    BaseClass::visit(op);
     auto ap = Ref<AccessPoint>::make();
     *ap = {op,
            cursor(),
-           defs_.at(op->var_),
-           defs_.at(op->var_)->buffer_,
+           def(op->var_),
+           buffer(op->var_),
            defAxis_.at(op->var_),
            cur_,
            std::vector<Expr>{op->indices_.begin(), op->indices_.end()},
            conds_};
-    reads_[defs_.at(op->var_)->id()].emplace_back(ap);
+    reads_[def(op->var_)->id()].emplace_back(ap);
 }
 
 std::string AnalyzeDeps::makeIterList(const std::vector<IterAxis> &list,
@@ -190,9 +200,9 @@ Ref<std::string> AnalyzeDeps::makeAccList(GenPBExpr &genPBExpr,
     for (int i = 0, iEnd = list.size(); i < iEnd; i++) {
         if (auto linstr = genPBExpr.gen(list[i]); linstr.isValid()) {
             ret += *linstr;
-            for (auto &&[h, item] : genPBExpr.vars(list[i])) {
-                if (item.first->nodeType() == ASTNodeType::Load) {
-                    externals[h] = item;
+            for (auto &&[expr, str] : genPBExpr.vars(list[i])) {
+                if (expr->nodeType() == ASTNodeType::Load) {
+                    externals[expr] = str;
                 }
             }
         } else if (relax == RelaxMode::Possible) {
@@ -214,9 +224,9 @@ Ref<std::string> AnalyzeDeps::makeCond(GenPBExpr &genPBExpr,
     std::string ret;
     for (auto &&cond : conds) {
         if (auto str = genPBExpr.gen(cond); str.isValid()) {
-            for (auto &&[h, item] : genPBExpr.vars(cond)) {
-                if (item.first->nodeType() == ASTNodeType::Load) {
-                    externals[h] = item;
+            for (auto &&[expr, str] : genPBExpr.vars(cond)) {
+                if (expr->nodeType() == ASTNodeType::Load) {
+                    externals[expr] = str;
                 }
             }
             if (!ret.empty()) {
@@ -255,8 +265,8 @@ PBMap AnalyzeDeps::makeAccMap(PBCtx &presburger, const AccessPoint &p,
     std::string ext;
     if (!externals.empty()) {
         bool first = true;
-        for (auto &&[hash, item] : externals) {
-            ext += (first ? "" : ", ") + item.second;
+        for (auto &&[expr, str] : externals) {
+            ext += (first ? "" : ", ") + str;
             first = false;
         }
         ext = "[" + ext + "] -> ";
@@ -345,18 +355,20 @@ PBMap AnalyzeDeps::makeConstraintOfSingleLoop(PBCtx &presburger,
                      makeIneqBetweenOps(presburger, mode, iterId, iterDim));
 }
 
-PBMap AnalyzeDeps::makeConstraintOfParallelScope(
-    PBCtx &presburger, const std::string &parallel, DepDirection mode,
-    int iterDim, const Ref<AccessPoint> &point, const Ref<AccessPoint> &other) {
+PBMap AnalyzeDeps::makeConstraintOfParallelScope(PBCtx &presburger,
+                                                 const std::string &parallel,
+                                                 DepDirection mode, int iterDim,
+                                                 const AccessPoint &point,
+                                                 const AccessPoint &other) {
     int pointDim = -1, otherDim = -1;
-    for (int i = (int)point->iter_.size() - 1; i >= 0; i--) {
-        if (point->iter_[i].parallel_ == parallel) {
+    for (int i = (int)point.iter_.size() - 1; i >= 0; i--) {
+        if (point.iter_[i].parallel_ == parallel) {
             pointDim = i;
             break;
         }
     }
-    for (int i = (int)other->iter_.size() - 1; i >= 0; i--) {
-        if (other->iter_[i].parallel_ == parallel) {
+    for (int i = (int)other.iter_.size() - 1; i >= 0; i--) {
+        if (other.iter_[i].parallel_ == parallel) {
             otherDim = i;
             break;
         }
@@ -464,13 +476,13 @@ PBMap AnalyzeDeps::makeExternalVarConstraint(
     // We only have to add constraint for common loops of both accesses
     auto common = lca(point->cursor_, other->cursor_);
 
-    for (auto &&[hash, item] : intersect(pExternals, oExternals)) {
-        auto &&[pItem, oItem] = item;
+    for (auto &&[expr, strs] : intersect(pExternals, oExternals)) {
+        auto &&[pStr, oStr] = strs;
         // If all of the loops are variant, we don't have to make the constraint
         // at all. This will save time for Presburger solver
         for (auto c = common;; c = c.outer()) {
             if (c.nodeType() == ASTNodeType::For) {
-                if (isVariant(variantExpr_, pItem.first, c.id())) {
+                if (isVariant(variantExpr_, expr, c.id())) {
                     goto found;
                 }
                 goto do_compute_constraint;
@@ -484,11 +496,10 @@ PBMap AnalyzeDeps::makeExternalVarConstraint(
 
         // Compute the constraint
     do_compute_constraint:
-        auto require =
-            makeExternalEq(presburger, iterDim, pItem.second, oItem.second);
+        auto require = makeExternalEq(presburger, iterDim, pStr, oStr);
         for (auto c = common;; c = c.outer()) {
             if (c.nodeType() == ASTNodeType::For) {
-                if (isVariant(variantExpr_, pItem.first, c.id())) {
+                if (isVariant(variantExpr_, expr, c.id())) {
                     // Since idx[i] must be inside loop i, we only have
                     // to call makeIneqBetweenOps, but no need to call
                     // makeConstraintOfSingleLoop
@@ -587,6 +598,8 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
     if (nearest.empty()) {
         return;
     }
+    // FIXME: Should these killing tests be after the conditional checks, for
+    // correctness?
     if ((mode_ == FindDepsMode::KillEarlier ||
          mode_ == FindDepsMode::KillBoth) &&
         oIter != range(nearest)) {
@@ -606,8 +619,8 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
                     presburger, nodeOrParallel.name_, dir, iterDim));
             } else {
                 requires.emplace_back(makeConstraintOfParallelScope(
-                    presburger, nodeOrParallel.name_, dir, iterDim, point,
-                    other));
+                    presburger, nodeOrParallel.name_, dir, iterDim, *point,
+                    *other));
             }
         }
 
@@ -630,7 +643,8 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
         }
         {
             std::lock_guard<std::mutex> guard(lock_);
-            found_(Dependency{item, getVar(point->op_), *point, *other});
+            found_(Dependency{item, getVar(point->op_), *point, *other, iterDim,
+                              res, presburger, *this});
         }
     fail:;
     }
@@ -894,6 +908,21 @@ void AnalyzeDeps::genTasks() {
             }
         }
     }
+}
+
+PBMap Dependency::extraCheck(PBMap dep,
+                             const NodeIDOrParallelScope &nodeOrParallel,
+                             const DepDirection &dir) const {
+    PBMap require;
+    if (nodeOrParallel.isNode_) {
+        require = self_.makeConstraintOfSingleLoop(
+            presburger_, nodeOrParallel.name_, dir, iterDim_);
+    } else {
+        require = self_.makeConstraintOfParallelScope(
+            presburger_, nodeOrParallel.name_, dir, iterDim_, later_, earlier_);
+    }
+    dep = intersect(std::move(dep), std::move(require));
+    return dep;
 }
 
 void findDeps(const Stmt &op, const std::vector<FindDepsCond> &cond,

@@ -5,6 +5,7 @@
 
 #include <itertools.hpp>
 
+#include <analyze/symbol_table.h>
 #include <func.h>
 #include <mutator.h>
 
@@ -14,15 +15,14 @@ namespace ir {
  * Some backends do not support dynamic array types, so we transform them into
  * 1D arraies, so they can be passed by pointers
  */
-class Make1DVar : public Mutator {
-    std::unordered_map<std::string, Ref<Buffer>> buffers_;
+class Make1DVar : public SymbolTable<Mutator> {
+    typedef SymbolTable<Mutator> BaseClass;
 
-  private:
     template <class T> T visitMemAcc(const T &op) {
-        if (!buffers_.count(op->var_)) {
+        auto &&shape = buffer(op->var_)->tensor().shape();
+        if (shape.size() <= 1) {
             return op;
         }
-        auto &&shape = buffers_.at(op->var_)->tensor().shape();
         auto &&indices = op->indices_;
         size_t ndim = indices.size();
         ASSERT(shape.size() == ndim);

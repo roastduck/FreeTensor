@@ -10,6 +10,7 @@
 
 #include <itertools.hpp>
 
+#include <analyze/symbol_table.h>
 #include <visitor.h>
 
 namespace ir {
@@ -22,12 +23,11 @@ struct CodeGenStream {
     std::unordered_set<std::string> useIters_;
 };
 
-template <class Stream> class CodeGen : public Visitor {
+template <class Stream> class CodeGen : public SymbolTable<Visitor> {
   protected:
     int indentSize_;
     std::vector<Stream> streamStack_, poppedStream_;
 
-    std::unordered_map<std::string, Ref<Buffer>> buffers_; // var name -> buffer
     std::unordered_map<std::string, std::string>
         var2Stream_; // var name -> stream name
 
@@ -42,13 +42,13 @@ template <class Stream> class CodeGen : public Visitor {
 
     CodeGen(int indentSize = 2);
 
-    void markDefBuffer(const std::string &name, const Ref<Buffer> &buffer);
+    void markDefBuffer(const VarDef &op);
     void markUseBuffer(const std::string &name);
-    void markUndefBuffer(const std::string &name);
+    void markUndefBuffer(const VarDef &op);
 
-    void markDefIter(const std::string &name);
+    void markDefIter(const For &op);
     void markUseIter(const std::string &name);
-    void markUndefIter(const std::string &name);
+    void markUndefIter(const For &op);
 
     void pushStream(const std::string &name);
     void popStream();

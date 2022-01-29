@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include <analyze/hash.h>
+#include <hash.h>
 #include <math/linear.h>
 #include <visitor.h>
 
@@ -15,7 +15,6 @@ namespace ir {
  * accesses and loop iterators
  */
 class AnalyzeLinear : public Visitor {
-    GetHash getHash_;
     std::unordered_map<AST, LinearExpr<int64_t>> result_;
 
   public:

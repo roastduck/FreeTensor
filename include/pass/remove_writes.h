@@ -5,20 +5,22 @@
 #include <unordered_set>
 
 #include <analyze/find_loop_variance.h>
-#include <cursor.h>
+#include <analyze/symbol_table.h>
+#include <analyze/with_cursor.h>
 #include <func.h>
 #include <mutator.h>
 #include <visitor.h>
 
 namespace ir {
 
-class FindLoopInvariantWrites : public VisitorWithCursor {
+class FindLoopInvariantWrites : public SymbolTable<WithCursor<Visitor>> {
+    typedef SymbolTable<WithCursor<Visitor>> BaseClass;
+
     std::vector<Cursor> cursorStack_;
     std::vector<If> ifStack_;
     std::unordered_map<Store, std::tuple<VarDef, Expr, Cursor>>
         results_; /// (store, extraCond, cursor to loop)
     std::unordered_map<std::string, int> defDepth_;
-    std::unordered_map<std::string, VarDef> defs_;
     const std::unordered_map<
         Expr, std::unordered_map<std::string, LoopVariability>> &variantExpr_;
     const std::string &singleDefId_;

@@ -1,4 +1,5 @@
 import ir
+import pytest
 
 
 def test_const_fold():
@@ -259,6 +260,45 @@ def test_precondition_from_assert():
         with ir.For("i", 0, 4) as i:
             with ir.Assert(x1[i] < x2[i]):
                 y[i] = x1[i]
+    std = ir.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_assert_false():
+    with ir.VarDef([("x", (), "int32", "input", "cpu"),
+                    ("y", (), "int32", "output", "cpu")]) as (x, y):
+        with ir.If(x[()] > 0):
+            with ir.Assert(x[()] < 0):
+                y[()] = 1
+    ast = ir.pop_ast()
+    print(ast)
+    with pytest.raises(ir.AssertAlwaysFalse):
+        ast = ir.lower(ast)
+
+
+def test_unreachable_assert_false():
+    with ir.VarDef([("x", (), "int32", "input", "cpu"),
+                    ("y", (), "int32", "output", "cpu")]) as (x, y):
+        with ir.If(x[()] < 0):
+            with ir.If(x[()] > 0):
+                with ir.Assert(x[()] > 0):
+                    y[()] = 1
+            with ir.Else():
+                y[()] = 2
+        with ir.Else():
+            y[()] = 3
+    ast = ir.pop_ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([("x", (), "int32", "input", "cpu"),
+                    ("y", (), "int32", "output", "cpu")]) as (x, y):
+        with ir.If(x[()] < 0):
+            y[()] = 2
+        with ir.Else():
+            y[()] = 3
     std = ir.pop_ast()
 
     assert std.match(ast)

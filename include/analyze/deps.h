@@ -10,7 +10,8 @@
 #include <vector>
 
 #include <analyze/find_loop_variance.h>
-#include <cursor.h>
+#include <analyze/symbol_table.h>
+#include <analyze/with_cursor.h>
 #include <math/gen_pb_expr.h>
 #include <math/presburger.h>
 #include <visitor.h>
@@ -78,7 +79,9 @@ inline int countBandNodeWidth(const Stmt &op) {
 /**
  * Find read and write points
  */
-class FindAccessPoint : public VisitorWithCursor {
+class FindAccessPoint : public SymbolTable<WithCursor<Visitor>> {
+    typedef SymbolTable<WithCursor<Visitor>> BaseClass;
+
     bool lastIsLoad_ = false;
     std::vector<IterAxis> cur_; // Current iteration point in the space
     std::vector<Expr> conds_;   // FIXME: There may be out-dated conditions. See
@@ -92,9 +95,6 @@ class FindAccessPoint : public VisitorWithCursor {
 
     // Var name -> axis: Which axis is a local var defined
     std::unordered_map<std::string, int> defAxis_;
-
-    // Var name -> VarDef
-    std::unordered_map<std::string, VarDef> defs_;
 
   public:
     FindAccessPoint(const Stmt &root);
@@ -115,7 +115,7 @@ class FindAccessPoint : public VisitorWithCursor {
 
   private:
     template <class T> void visitStoreLike(const T &op) {
-        Visitor::visit(op);
+        BaseClass::visit(op);
 
         if (!cur_.empty() &&
             cur_.back().iter_->nodeType() == ASTNodeType::IntConst) {
@@ -128,13 +128,13 @@ class FindAccessPoint : public VisitorWithCursor {
         auto ap = Ref<AccessPoint>::make();
         *ap = {op,
                cursor(),
-               defs_.at(op->var_),
-               defs_.at(op->var_)->buffer_,
+               def(op->var_),
+               buffer(op->var_),
                defAxis_.at(op->var_),
                cur_,
                std::vector<Expr>{op->indices_.begin(), op->indices_.end()},
                conds_};
-        writes_[defs_.at(op->var_)->id()].emplace_back(ap);
+        writes_[def(op->var_)->id()].emplace_back(ap);
     }
 
   protected:
@@ -166,16 +166,27 @@ struct NodeIDOrParallelScope {
 typedef std::vector<std::pair<NodeIDOrParallelScope, DepDirection>>
     FindDepsCond;
 
+class AnalyzeDeps;
+
 struct Dependency {
     const FindDepsCond &cond_; /// sub-condition that fails
     const std::string &var_;
     const AccessPoint &later_, &earlier_;
+    int iterDim_;
+    PBMap dep_;
+    PBCtx &presburger_;
+    AnalyzeDeps &self_;
 
     // Helper functions
     const AST &later() const { return later_.op_; }
     const AST &earlier() const { return earlier_.op_; }
     const VarDef &def() const { return earlier_.def_; }
     const std::string &defId() const { return earlier_.def_->id(); }
+
+    // Additional condition check. This check is not multi-thread, so please use
+    // the `cond` parameter of `findDeps` instead, if possible
+    PBMap extraCheck(PBMap dep, const NodeIDOrParallelScope &nodeOrParallel,
+                     const DepDirection &dir) const;
 };
 typedef std::function<void(const Dependency &)> FindDepsCallback;
 
@@ -203,6 +214,8 @@ typedef std::function<bool(const AccessPoint &later,
  * Find RAW, WAR and WAW dependencies
  */
 class AnalyzeDeps {
+    friend Dependency;
+
     const std::unordered_map<std::string, std::vector<Ref<AccessPoint>>>
         &reads_, &writes_;
     const std::vector<VarDef> &allDefs_;
@@ -291,8 +304,8 @@ class AnalyzeDeps {
     PBMap makeConstraintOfParallelScope(PBCtx &presburger,
                                         const std::string &parallel,
                                         DepDirection mode, int iterDim,
-                                        const Ref<AccessPoint> &point,
-                                        const Ref<AccessPoint> &other);
+                                        const AccessPoint &point,
+                                        const AccessPoint &other);
 
     /**
      * Constraint for variables defined inside some loops

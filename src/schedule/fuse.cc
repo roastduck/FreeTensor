@@ -1,12 +1,12 @@
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
-#include <analyze/hash.h>
-#include <pass/prop_const.h>
+#include <hash.h>
 #include <pass/prop_one_time_use.h>
 #include <pass/remove_dead_var.h>
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
 #include <pass/sink_var.h>
+#include <pass/tensor_prop_const.h>
 #include <schedule/fuse.h>
 
 namespace ir {
@@ -152,7 +152,7 @@ Stmt FuseFor::visit(const StmtSeq &_op) {
             }
 
             if (strict_) {
-                if (getHash(loop0->end_) != getHash(loop1->end_)) {
+                if (!HashComparator()(loop0->end_, loop1->end_)) {
                     throw InvalidSchedule(
                         "Unable to determine whether the two loops are of the "
                         "same length. If you are sure that they are the same, "
@@ -234,14 +234,14 @@ std::pair<Stmt, std::string> fuse(const Stmt &_ast, const std::string &loop0,
 
     try {
         ast = simplifyPass(ast);
-    } catch (const InvalidProgram &e) {
+    } catch (const AssertAlwaysFalse &e) {
         throw InvalidSchedule((std::string) "Fusing " + loop0 + " and " +
                               loop1 + " loop1 with different lengths? " +
                               e.what());
     }
 
     ast = propOneTimeUse(ast);
-    ast = propConst(ast);
+    ast = tensorPropConst(ast);
     ast = sinkVar(ast);
     ast = shrinkVar(ast);
     ast = removeDeadVar(ast);

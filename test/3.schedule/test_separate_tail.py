@@ -16,7 +16,7 @@ def test_basic():
     ast = ir.pop_ast()
     print(ast)
     s = ir.Schedule(ast)
-    s.seperate_tail()
+    s.separate_tail()
     ast = s.ast()
     ast = ir.lower(ast)
     print(ast)
@@ -49,7 +49,7 @@ def test_multiple_cond():
     ast = ir.pop_ast()
     print(ast)
     s = ir.Schedule(ast)
-    s.seperate_tail()
+    s.separate_tail()
     ast = s.ast()
     ast = ir.lower(ast)
     print(ast)
@@ -79,7 +79,7 @@ def test_eq():
     ast = ir.pop_ast()
     print(ast)
     s = ir.Schedule(ast)
-    s.seperate_tail()
+    s.separate_tail()
     ast = s.ast()
     ast = ir.lower(ast)
     print(ast)
@@ -104,7 +104,7 @@ def test_tiled():
     ast = ir.pop_ast()
     print(ast)
     s = ir.Schedule(ast)
-    s.seperate_tail()
+    s.separate_tail()
     ast = s.ast()
     ast = ir.lower(ast)
     print(ast)
@@ -132,8 +132,8 @@ def test_dynamic_tiled():
     print(ast)
     s = ir.Schedule(ast)
     # FIXME: Why do we need to call it twice??? It happens after we propagates the constants
-    s.seperate_tail()
-    s.seperate_tail()
+    s.separate_tail()
+    s.separate_tail()
     ast = s.ast()
     print(ast)
     ast = ir.lower(ast)
@@ -164,7 +164,7 @@ def test_1d_stencil():
     ast = ir.pop_ast()
     print(ast)
     s = ir.Schedule(ast)
-    s.seperate_tail()
+    s.separate_tail()
     ast = s.ast()
     ast = ir.lower(ast)
     print(ast)
@@ -180,12 +180,14 @@ def test_1d_stencil():
     assert std.match(ast)
 
 
-def test_no_seperate_vardef():
+def test_duplicate_vardef():
     with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ir.For("i", 0, 4) as i:
             with ir.VarDef("t", (), "int32", "cache", "cpu") as t:
                 t[()] = x[i]
+                with ir.If(t[()] < 0):
+                    t[()] *= -1
                 with ir.If(i < 2):
                     y[i] = t[()] + 1
                 with ir.Else():
@@ -193,7 +195,46 @@ def test_no_seperate_vardef():
     ast = ir.pop_ast()
     print(ast)
     s = ir.Schedule(ast)
-    s.seperate_tail()
+    s.separate_tail()
+    ast = s.ast()
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+        with ir.For("i", 0, 2) as i:
+            with ir.VarDef("t", (), "int32", "cache", "cpu") as t:
+                t[()] = x[i]
+                with ir.If(t[()] < 0):
+                    t[()] *= -1
+                y[i] = t[()] + 1
+        with ir.For("i", 2, 4) as i:
+            with ir.VarDef("t", (), "int32", "cache", "cpu") as t:
+                t[()] = x[i]
+                with ir.If(t[()] < 0):
+                    t[()] *= -1
+                y[i] = t[()] + 2
+    std = ir.make_reduction(ir.pop_ast())
+
+    assert std.match(ast)
+
+
+def test_no_duplicate_vardef():
+    with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+        with ir.For("i", 0, 4) as i:
+            with ir.VarDef("t", (), "int32", "cache", "cpu") as t:
+                t[()] = x[i]
+                with ir.If(t[()] < 0):
+                    t[()] *= -1
+                with ir.If(i < 2):
+                    y[i] = t[()] + 1
+                with ir.Else():
+                    y[i] = t[()] + 2
+    ast = ir.pop_ast()
+    print(ast)
+    s = ir.Schedule(ast)
+    s.separate_tail(True)
     ast = s.ast()
     ast = ir.lower(ast)
     print(ast)
@@ -203,10 +244,12 @@ def test_no_seperate_vardef():
         with ir.For("i", 0, 4) as i:
             with ir.VarDef("t", (), "int32", "cache", "cpu") as t:
                 t[()] = x[i]
+                with ir.If(t[()] < 0):
+                    t[()] *= -1
                 with ir.If(i < 2):
                     y[i] = t[()] + 1
                 with ir.Else():
                     y[i] = t[()] + 2
-    std = ir.pop_ast()
+    std = ir.make_reduction(ir.pop_ast())
 
     assert std.match(ast)

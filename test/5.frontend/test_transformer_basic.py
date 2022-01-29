@@ -187,3 +187,22 @@ def test_assert():
     ir.Driver(func, code, ir.Device(ir.CPU()))(x=x, y=y)
     y_np = y.numpy()
     assert np.array_equal(x_np, y_np)
+
+
+def test_immediate_var_return():
+
+    @ir.transform
+    def test(x):
+        ir.declare_var(x, (), "int32", "input", "cpu")
+        return ir.var([0, 1, x[()]], "int32", "cpu")
+
+    print(test)
+    func = ir.lower(test, ir.CPU())
+    code = ir.codegen(func, ir.CPU())
+    print(ir.debug.with_line_no(code))
+    x_np = np.array(2, dtype="int32")
+    x_arr = ir.Array(x_np, ir.Device(ir.CPU()))
+    y_arr, = ir.Driver(func, code, ir.Device(ir.CPU()))(x=x_arr)
+    y_np = y_arr.numpy()
+
+    assert np.all(y_np == np.array([0, 1, 2]))

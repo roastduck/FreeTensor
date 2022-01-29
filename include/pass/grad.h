@@ -4,29 +4,30 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include <analyze/hash.h>
+#include <analyze/symbol_table.h>
 #include <analyze/type_infer.h>
 #include <func.h>
+#include <hash.h>
 #include <mutator.h>
 #include <visitor.h>
 
 namespace ir {
 
-class PropagateRequire : public Visitor {
+class PropagateRequire : public SymbolTable<Visitor> {
+    typedef SymbolTable<Visitor> BaseClass;
+
     const std::unordered_set<std::string> &requires_; // input var names
     const std::unordered_set<std::string> &provides_; // output var names
     TypeInfer typeInfer_;
 
     std::unordered_set<std::string> affectedDefs_; // all VarDef IDs
 
-    std::unordered_map<std::string, VarDef> defs_;
-    std::unordered_map<std::string, Ref<Buffer>> buffers_;
     std::string curTarget_; // VarDef ID of current var being written to
 
   public:
     PropagateRequire(const std::unordered_set<std::string> &requires,
                      const std::unordered_set<std::string> &provides)
-        : requires_(requires), provides_(provides), typeInfer_(&buffers_) {}
+        : requires_(requires), provides_(provides), typeInfer_(*this) {}
 
     const std::unordered_set<std::string> &affectedDefs() const {
         return affectedDefs_;
@@ -43,15 +44,15 @@ class PropagateRequire : public Visitor {
 };
 
 class ReplaceByTape : public Mutator {
-    const std::unordered_map<std::string, VarDef> &defs_;
+    const SymbolTableInterface &symbolTable_;
     const std::unordered_map<std::string, std::string> &tapeMap_;
     const std::unordered_map<AST, Expr> &versions_;
 
   public:
-    ReplaceByTape(const std::unordered_map<std::string, VarDef> &defs,
+    ReplaceByTape(const SymbolTableInterface &symbolTable,
                   const std::unordered_map<std::string, std::string> &tapeMap,
                   const std::unordered_map<AST, Expr> &versions)
-        : defs_(defs), tapeMap_(tapeMap), versions_(versions) {}
+        : symbolTable_(symbolTable), tapeMap_(tapeMap), versions_(versions) {}
 
   protected:
     Expr visit(const Load &op) override;
@@ -61,7 +62,7 @@ class GradExpr : public Visitor {
     const std::unordered_map<std::string, std::string>
         &gradNames_;                           // x -> dy/dx
     std::unordered_map<Expr, Expr> gradExprs_; // x -> dy/dx
-    uint64_t rootHash_;
+    const Expr &root_;
     Expr equLoad_;
     ReplaceByTape &replaceByTape_;
     std::vector<Stmt> appends_;
@@ -70,7 +71,7 @@ class GradExpr : public Visitor {
     GradExpr(ReplaceByTape &replaceByTape,
              const std::unordered_map<std::string, std::string> &gradNames,
              const Expr &root, const Expr &grad, const Expr &equLoad)
-        : gradNames_(gradNames), rootHash_(getHash(root)), equLoad_(equLoad),
+        : gradNames_(gradNames), root_(root), equLoad_(equLoad),
           replaceByTape_(replaceByTape) {
         gradExprs_[root] = grad;
     }
@@ -79,7 +80,7 @@ class GradExpr : public Visitor {
 
   private:
     Expr replaceByLoadY(const Expr &op) {
-        return getHash(op) == rootHash_ ? equLoad_ : op;
+        return HashComparator()(op, root_) ? equLoad_ : op;
     }
 
     Expr useForwardVal(const Expr &op) {
@@ -103,7 +104,9 @@ class GradExpr : public Visitor {
     void visit(const Abs &op) override;
 };
 
-class Grad : public Mutator {
+class Grad : public SymbolTable<Mutator> {
+    typedef SymbolTable<Mutator> BaseClass;
+
     const std::unordered_set<std::string> &requires_;
     const std::unordered_set<std::string> &provides_;
     const std::unordered_set<std::string> &tapes_;
@@ -118,7 +121,6 @@ class Grad : public Mutator {
     std::unordered_map<std::string, std::string> provideGrads_; // var name map
 
     std::unordered_map<std::string, std::string> gradNames_; // x -> dy/dx
-    std::unordered_map<std::string, VarDef> defs_;
     std::unordered_set<std::string> taped_;
     std::unordered_map<Expr, Expr> equLoads_;
     std::unordered_map<std::string, std::unordered_set<Stmt>>
@@ -137,7 +139,7 @@ class Grad : public Mutator {
         : requires_(requires), provides_(provides), tapes_(tapes),
           affectedDefs_(affectedDefs), tapeMap_(tapeMap), versions_(versions),
           totLens_(totLens), notSingleWrite_(notSingleWrite),
-          replaceByTape_(defs_, tapeMap_, versions) {}
+          replaceByTape_(*this, tapeMap_, versions) {}
 
     const std::unordered_map<std::string, std::string> &requireGrads() const {
         return requireGrads_;
