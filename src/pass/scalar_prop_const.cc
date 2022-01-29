@@ -6,9 +6,12 @@
 #include <pass/scalar_prop_const.h>
 #include <pass/undo_make_reduction.h>
 
+#include <math/utils.h>
+
 #include <hash.h>
 #include <mutator.h>
 
+#include <cmath>
 #include <map>
 #include <stack>
 
@@ -189,7 +192,7 @@ class ScalarPropConst : public Mutator {
      * @return Const Casted constant node
      */
     static Const castType(DataType type, const Const &val) {
-        return dispatch(val, [type](auto v) {
+        auto result = dispatch(val, [type](auto v) {
             switch (type) {
             case DataType::Int32:
                 return wrap(int64_t(v));
@@ -202,6 +205,7 @@ class ScalarPropConst : public Mutator {
                 ASSERT(false && "Unrecognized variable type assigned")
             }
         });
+        return COPY_DEBUG_INFO(result, val);
     }
 
     /**
@@ -414,51 +418,108 @@ class ScalarPropConst : public Mutator {
     }
 
   protected:
+    // Macros for operators.
+    // SFINAE tricks are heavily used for reporting error on invalid types.
 #define BINARY_OP(OPNAME, OP)                                                  \
+    struct op_f_##OPNAME {                                                     \
+        template <typename T, typename U>                                      \
+        auto operator()(const T &l, const U &r, int) -> decltype(l OP r) {     \
+            return l OP r;                                                     \
+        }                                                                      \
+        template <typename T, typename U>                                      \
+        auto operator()(const T &l, const U &r, char) -> decltype(l) {         \
+            ERROR("Invalid operator " #OPNAME " on given types");              \
+            return l;                                                          \
+        }                                                                      \
+    };                                                                         \
     Expr visit(const OPNAME &op) override {                                    \
         return visitBinary(                                                    \
-            op, [](auto l, auto r) { return l OP r; },                         \
+            op, [](auto l, auto r) { return op_f_##OPNAME()(l, r, 0); },       \
+            [](auto l, auto r) { return make##OPNAME(l, r); });                \
+    }
+#define BINARY_OP_F(OPNAME, OP_F, OP_TYPE_HINT)                                \
+    struct op_f_##OPNAME {                                                     \
+        template <typename T, typename U>                                      \
+        auto operator()(const T &l, const U &r, int)                           \
+            -> decltype(l OP_TYPE_HINT r) {                                    \
+            typedef decltype(l OP_TYPE_HINT r) V;                              \
+            return (OP_F)((V)l, (V)r);                                         \
+        }                                                                      \
+        template <typename T, typename U>                                      \
+        auto operator()(const T &l, const U &r, char) -> decltype(l) {         \
+            ERROR("Invalid operator " #OPNAME " on given types");              \
+            return l;                                                          \
+        }                                                                      \
+    };                                                                         \
+    Expr visit(const OPNAME &op) override {                                    \
+        return visitBinary(                                                    \
+            op, [](auto l, auto r) { return op_f_##OPNAME()(l, r, 0); },       \
             [](auto l, auto r) { return make##OPNAME(l, r); });                \
     }
 #define UNARY_OP(OPNAME, OP)                                                   \
+    struct op_f_##OPNAME {                                                     \
+        template <typename T>                                                  \
+        auto operator()(const T &t, int) -> decltype(OP(t)) {                  \
+            return OP(t);                                                      \
+        }                                                                      \
+        template <typename T>                                                  \
+        auto operator()(const T &t, char) -> decltype(t) {                     \
+            ERROR("Invalid operator " #OPNAME " on given types");              \
+            return t;                                                          \
+        }                                                                      \
+    };                                                                         \
     Expr visit(const OPNAME &op) override {                                    \
         return visitUnary(                                                     \
-            op, [](auto x) { return OP x; },                                   \
+            op, [](auto x) { return op_f_##OPNAME()(x, 0); },                  \
             [](auto x) { return make##OPNAME(x); });                           \
     }
 
     BINARY_OP(Add, +)
     BINARY_OP(Sub, -)
-    BINARY_OP(LAnd, &&)
-    BINARY_OP(LOr, ||)
-    BINARY_OP(EQ, ==)
-    BINARY_OP(NE, !=)
+    BINARY_OP(Mul, *)
+    BINARY_OP(RealDiv, /)
+    BINARY_OP_F(FloorDiv, floorDiv, %)
+    BINARY_OP_F(CeilDiv, ceilDiv, %)
+    BINARY_OP(RoundTowards0Div, /)
+    BINARY_OP_F(Mod, mod, %)
+    BINARY_OP(Remainder, %)
+    BINARY_OP_F(Min, std::min, +)
+    BINARY_OP_F(Max, std::max, +)
     BINARY_OP(LT, <)
     BINARY_OP(LE, <=)
     BINARY_OP(GT, >)
     BINARY_OP(GE, >=)
+    BINARY_OP(EQ, ==)
+    BINARY_OP(NE, !=)
+    BINARY_OP(LAnd, &&)
+    BINARY_OP(LOr, ||)
     UNARY_OP(LNot, !)
+    UNARY_OP(Sqrt, std::sqrt)
+    UNARY_OP(Exp, std::exp)
 
-    Expr visit(const Min &op) override {
-        return visitBinary(
-            op,
-            [](auto l, auto r) {
-                typedef decltype(l + r) T;
-                return std::min((T)l, (T)r);
-            },
-            [](auto l, auto r) { return makeMin(l, r); });
-    }
+  private:
+    static int64_t _square(const int64_t &t) { return t * t; }
+    static double _square(const double &t) { return t * t; }
 
-    Expr visit(const Max &op) override {
-        return visitBinary(
-            op,
-            [](auto l, auto r) {
-                typedef decltype(l + r) T;
-                return std::max((T)l, (T)r);
-            },
-            [](auto l, auto r) { return makeMax(l, r); });
+  protected:
+    UNARY_OP(Square, _square)
+    //! TODO: Sigmoid
+    //! TODO: Tanh
+    UNARY_OP(Abs, std::abs)
+    UNARY_OP(Floor, std::floor)
+    UNARY_OP(Ceil, std::ceil)
+
+    Expr visit(const Cast &op) {
+        auto expr = visitExpr(op->expr_);
+        if (expr->isConst() &&
+            (op->dtype_ == DataType::Bool || op->dtype_ == DataType::Float32 ||
+             op->dtype_ == DataType::Float64 ||
+             op->dtype_ == DataType::Int32)) {
+            expr = castType(op->dtype_, expr.as<ConstNode>());
+        }
+        return COPY_DEBUG_INFO(makeCast(expr, op->dtype_), op);
     }
-};
+}; // namespace ir
 
 Stmt scalarPropConst(const Stmt &op) { return ScalarPropConst()(op); }
 
