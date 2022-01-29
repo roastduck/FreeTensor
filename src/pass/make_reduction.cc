@@ -37,4 +37,3 @@ Stmt MakeReduction::visit(const Store &_op) {
 }
 
 } // namespace ir
-

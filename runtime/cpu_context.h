@@ -31,9 +31,7 @@ class CPUContext : public Context {
             curStackSize_ = bytes;
         }
     }
-    ~CPUContext() {
-        std::cout << "destroyed" << std::endl;
-    }
+    ~CPUContext() { std::cout << "destroyed" << std::endl; }
 };
 
 extern "C" typedef CPUContext *CPUContext_t;

@@ -13,7 +13,7 @@ void init_ffi_auto_schedule(py::module_ &m) {
     py::class_<AutoSchedule>(m, "AutoSchedule")
         .def(py::init<const Schedule &, const Ref<Target> &, const Device &,
                       size_t, py::function, py::function>())
-        .def("measured_size", &AutoSchedule::measured_size)
+        .def("measuredSize", &AutoSchedule::measuredSize)
         .def("set_params", &AutoSchedule::setParams, "args"_a,
              "kws"_a = std::unordered_map<std::string, Ref<Array>>())
         .def("search_one_round", &AutoSchedule::SearchOneRound, "n"_a)

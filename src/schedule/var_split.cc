@@ -87,4 +87,3 @@ Stmt varSplit(const Stmt &_ast, const std::string &def, int dim,
 }
 
 } // namespace ir
-

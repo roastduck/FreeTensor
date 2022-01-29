@@ -103,4 +103,3 @@ void Array::toCPU(void *other, size_t size) {
 }
 
 } // namespace ir
-

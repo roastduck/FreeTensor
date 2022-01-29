@@ -4,7 +4,7 @@
 
 namespace ir {
 
-Sketch Sketch::genRandAnnotation(std::mt19937 &gen) const {
+Sketch Sketch::genRandAnnotation(std::default_random_engine &gen) const {
     Sketch sketch = *this;
     for (auto &part : sketch.parts_) {
         part->genRandAnnotation(gen);
@@ -23,9 +23,10 @@ Schedule Sketch::genSchedule(const Schedule &original) const {
 
 bool Sketch::operator<(const Sketch &a) const { return time_ < a.time_; }
 
-std::pair<bool, Sketch> Sketch::genMutation(std::mt19937 &gen) const {
+std::pair<bool, Sketch>
+Sketch::genMutation(std::default_random_engine &gen) const {
     Sketch ret = *this;
-    int mut_part = random_int(ret.parts_.size() - 1, gen);
+    int mut_part = randomInt(ret.parts_.size() - 1, gen);
     auto mut = ret.parts_[mut_part]->mutate(gen);
     if (!mut.isValid()) {
         return std::make_pair(false, Sketch());
@@ -34,9 +35,11 @@ std::pair<bool, Sketch> Sketch::genMutation(std::mt19937 &gen) const {
     return std::make_pair(true, ret);
 }
 
-std::pair<bool, Sketch> Sketch::genCrossover(const Sketch &sketch, std::mt19937 &gen) const {
+std::pair<bool, Sketch>
+Sketch::genCrossover(const Sketch &sketch,
+                     std::default_random_engine &gen) const {
     Sketch ret = *this;
-    int mut_part = random_int(ret.parts_.size() - 1, gen);
+    int mut_part = randomInt(ret.parts_.size() - 1, gen);
     auto mut = ret.parts_[mut_part]->crossover(sketch.parts_[mut_part], gen);
     if (!mut.isValid()) {
         return std::make_pair(false, Sketch());

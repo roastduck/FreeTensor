@@ -71,4 +71,3 @@ Stmt varReorder(const Stmt &_ast, const std::string &def,
 }
 
 } // namespace ir
-

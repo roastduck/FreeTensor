@@ -59,4 +59,3 @@ class GPU : public Target {
 } // namespace ir
 
 #endif // TARGET_H
-

@@ -71,4 +71,3 @@ Stmt propConst(const Stmt &_op) {
 }
 
 } // namespace ir
-

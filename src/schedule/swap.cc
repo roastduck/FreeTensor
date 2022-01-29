@@ -80,4 +80,3 @@ Stmt swap(const Stmt &_ast, const std::vector<std::string> &order) {
 }
 
 } // namespace ir
-

@@ -137,4 +137,3 @@ Stmt multiplexBuffers(const Stmt &op) {
 } // namespace gpu
 
 } // namespace ir
-

@@ -21,4 +21,3 @@ allNoReuseDefs(const Stmt &_op, const std::unordered_set<AccessType> &atypes) {
 }
 
 } // namespace ir
-

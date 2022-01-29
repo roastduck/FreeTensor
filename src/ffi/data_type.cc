@@ -15,4 +15,3 @@ void init_ffi_data_type(py::module_ &m) {
 }
 
 } // namespace ir
-

@@ -523,4 +523,3 @@ Stmt floatSimplify(const Stmt &_op) {
 }
 
 } // namespace ir
-

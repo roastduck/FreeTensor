@@ -8,23 +8,24 @@ class AutoSchedule(ffi.AutoSchedule):
     def __init__(self, schedule, target, device, n_measured):
         self.model = None
         self.xgb_params = {}
-        
+
         def predict_func(features):
             return self.predict(features)
-        
+
         def update_func(features, times):
             return self.update(features, times)
-        
-        super(AutoSchedule, self).__init__(schedule, target, device, n_measured, predict_func, update_func)
+
+        super(AutoSchedule, self).__init__(schedule, target, device, n_measured,
+                                           predict_func, update_func)
 
     def set_params(self, *args, **kws):
         super(AutoSchedule, self).set_params(args, kws)
 
     def run(self, iteration):
-        ret = None
         for i in range(iteration):
-            ret = self.search_one_round(32)
-        return ret
+            print("iter ", i)
+            self.search_one_round(32)
+        return self.get_best_schedule()
 
     def predict(self, features):
         if not self.model:

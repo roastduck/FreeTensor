@@ -68,4 +68,3 @@ Expr UseBuiltinDiv::visit(const Mod &_op) {
 Stmt useBuiltinDiv(const Stmt &_op) { return UseBuiltinDiv()(_op); }
 
 } // namespace ir
-

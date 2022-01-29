@@ -44,4 +44,3 @@ const std::vector<For> &CheckLoopOrder::order() const {
 }
 
 } // namespace ir
-

@@ -598,7 +598,8 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
     }
 
     for (auto &&item : cond_) {
-        std::vector<PBMap> requires;
+        std::vector<PBMap>
+        requires;
         for (auto &&[nodeOrParallel, dir] : item) {
             if (nodeOrParallel.isNode_) {
                 requires.emplace_back(makeConstraintOfSingleLoop(
@@ -948,4 +949,3 @@ std::string toString(const Dependency &dep) {
 }
 
 } // namespace ir
-

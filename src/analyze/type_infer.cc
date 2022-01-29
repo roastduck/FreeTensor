@@ -265,4 +265,3 @@ void TypeInfer::visit(const VarDef &op) {
 }
 
 } // namespace ir
-

@@ -10,4 +10,3 @@ void AllStmts::visitStmt(const Stmt &op) {
 }
 
 } // namespace ir
-

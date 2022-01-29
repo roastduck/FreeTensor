@@ -103,4 +103,3 @@ void GetHash::visit(const Intrinsic &op) {
 }
 
 } // namespace ir
-

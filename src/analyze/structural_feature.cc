@@ -444,4 +444,3 @@ Stmt StructuralFeature::visit(const VarDef &_op) {
 }
 
 } // namespace ir
-

@@ -49,4 +49,3 @@ Stmt removeDeadVar(const Stmt &_op) {
 }
 
 } // namespace ir
-

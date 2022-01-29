@@ -177,4 +177,3 @@ compAccessBound(const Stmt &op, const std::string &varDefId,
 }
 
 } // namespace ir
-

@@ -115,4 +115,3 @@ Stmt inlining(const Stmt &_ast, const std::string &def) {
 }
 
 } // namespace ir
-

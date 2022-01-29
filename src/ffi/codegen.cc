@@ -12,4 +12,3 @@ void init_ffi_codegen(py::module_ &m) {
 }
 
 } // namespace ir
-

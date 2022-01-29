@@ -6,4 +6,3 @@ LogCtrl LogCtrl::instance_;
 std::mutex Logger::lock_;
 
 } // namespace ir
-

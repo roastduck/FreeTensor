@@ -5,8 +5,8 @@
 #include <auto_schedule/rule.h>
 #include <auto_schedule/sketch.h>
 
-#include <random>
 #include <array>
+#include <random>
 
 namespace ir {
 struct MultiLevelTilingAnnotation {
@@ -27,11 +27,12 @@ class MultiLevelTilingPart : public SketchPartNode {
     MultiLevelTilingAnnotation annotation;
 
   public:
-    void genRandAnnotation(std::mt19937 gen) override;
+    void genRandAnnotation(std::default_random_engine &gen) override;
     explicit MultiLevelTilingPart(ForsWithDataReuse);
     void apply(Schedule &schedule) override;
-    SketchPart mutate(std::mt19937 &gen) override;
-    SketchPart crossover(const SketchPart &part, std::mt19937 &gen) override;
+    SketchPart mutate(std::default_random_engine &gen) override;
+    SketchPart crossover(const SketchPart &part,
+                         std::default_random_engine &gen) override;
     [[nodiscard]] std::vector<int> getAnnotation() const override;
     [[nodiscard]] size_t hash() const override;
 };
@@ -39,7 +40,8 @@ class MultiLevelTilingPart : public SketchPartNode {
 } // namespace ir
 
 template <> struct std::hash<ir::MultiLevelTilingAnnotation> {
-    std::size_t operator()(ir::MultiLevelTilingAnnotation const &s) const noexcept {
+    std::size_t
+    operator()(ir::MultiLevelTilingAnnotation const &s) const noexcept {
         std::size_t h = 0;
         for (const auto &t : s.spaceLoopTiling)
             for (const auto i : t)

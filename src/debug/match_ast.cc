@@ -475,4 +475,3 @@ bool match(const AST &pattern, const AST &instance) {
 }
 
 } // namespace ir
-

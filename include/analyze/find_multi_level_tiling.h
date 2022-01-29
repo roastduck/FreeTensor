@@ -2,10 +2,10 @@
 #define IR_FIND_MULTI_LEVEL_TILING_H
 
 #include <analyze/find_loop_variance.h>
+#include <boost/functional/hash.hpp>
 #include <unordered_map>
 #include <vector>
 #include <visitor.h>
-#include <boost/functional/hash.hpp>
 
 namespace ir {
 

@@ -9,7 +9,8 @@
 
 namespace ir {
 
-template <int n> std::array<int, n> random_fill_array(int total, std::mt19937 gen) {
+template <int n>
+std::array<int, n> randomFillArray(int total, std::default_random_engine &gen) {
     double log_total = log2(total);
     std::uniform_real_distribution<> dis(
         0, std::nextafter(log_total, std::numeric_limits<double>::max()));
@@ -28,15 +29,36 @@ template <int n> std::array<int, n> random_fill_array(int total, std::mt19937 ge
     return result;
 }
 
-inline int random_int(int mx, std::mt19937 gen) {
-//    static std::random_device rd;
-//    static std::mt19937 gen(rd());
+inline int randomInt(int mx, std::default_random_engine &gen) {
+    //    static std::random_device rd;
+    //    static std::default_random_engine gen(rd());
     std::uniform_int_distribution<> dis(0, mx);
     return dis(gen);
 }
-inline double random_double(std::mt19937 gen) {
+
+inline double randomDouble(std::default_random_engine &gen) {
     std::uniform_real_distribution<> dis(0, 1);
     return dis(gen);
+}
+
+inline std::vector<double> getProbSum(const std::vector<double> &pred) {
+    std::vector<double> sum = pred;
+    int sz = sum.size();
+    sum[0] = 1 / sum[0];
+    for (int i = 1; i < sz; i++) {
+        sum[i] = sum[i - 1] + 1 / sum[i];
+    }
+    for (int i = 0; i < sz; i++) {
+        sum[i] /= sum[sz - 1];
+    }
+    return sum;
+}
+
+inline int randWithProb(const std::vector<double> &prob_sum,
+                        std::default_random_engine &gen) {
+    std::uniform_real_distribution<> dis(0, 1);
+    return std::lower_bound(prob_sum.begin(), prob_sum.end(), dis(gen)) -
+           prob_sum.begin();
 }
 
 } // namespace ir

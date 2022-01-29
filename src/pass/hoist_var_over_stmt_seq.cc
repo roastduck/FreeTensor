@@ -101,4 +101,3 @@ Stmt hoistVarOverStmtSeq(const Stmt &_op) {
 }
 
 } // namespace ir
-

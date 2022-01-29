@@ -38,4 +38,3 @@ Stmt FlattenStmtSeq::visit(const StmtSeq &_op) {
 }
 
 } // namespace ir
-

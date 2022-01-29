@@ -11,4 +11,3 @@ Expr ReplaceUses::visit(const Load &op) {
 }
 
 } // namespace ir
-

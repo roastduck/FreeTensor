@@ -138,7 +138,6 @@ void Driver::buildAndLoad() {
     default:
         ASSERT(false);
     }
-    std::cout << "created ctx " << ctx_.get() << std::endl;
 }
 
 void Driver::setParams(const std::vector<Ref<Array>> &args,

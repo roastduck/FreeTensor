@@ -1,9 +1,9 @@
 #ifndef IR_SKETCH_H
 #define IR_SKETCH_H
 
+#include <random>
 #include <schedule.h>
 #include <vector>
-#include <random>
 
 namespace ir {
 
@@ -13,9 +13,14 @@ typedef Ref<SketchPartNode> SketchPart;
 
 class SketchPartNode {
   public:
-    virtual void genRandAnnotation(std::mt19937 gen) = 0;
-    virtual SketchPart mutate(std::mt19937 &gen) { return nullptr; }
-    virtual SketchPart crossover(const SketchPart &part, std::mt19937 &gen) { return nullptr; };
+    virtual void genRandAnnotation(std::default_random_engine &gen) = 0;
+    virtual SketchPart mutate(std::default_random_engine &gen) {
+        return nullptr;
+    }
+    virtual SketchPart crossover(const SketchPart &part,
+                                 std::default_random_engine &gen) {
+        return nullptr;
+    };
     virtual void apply(Schedule &schedule) = 0;
     virtual std::vector<int> getAnnotation() const = 0;
     virtual ~SketchPartNode() = default;
@@ -29,7 +34,7 @@ class Sketch {
   public:
     Sketch() = default;
 
-    Sketch genRandAnnotation(std::mt19937 &gen) const;
+    Sketch genRandAnnotation(std::default_random_engine &gen) const;
 
     Schedule genSchedule(const Schedule &original) const;
 
@@ -39,10 +44,11 @@ class Sketch {
 
     std::vector<int> getAnnotation() const;
 
-    [[nodiscard]] std::pair<bool, Sketch> genMutation(std::mt19937 &gen) const;
+    [[nodiscard]] std::pair<bool, Sketch>
+    genMutation(std::default_random_engine &gen) const;
 
     [[nodiscard]] std::pair<bool, Sketch>
-    genCrossover(const Sketch &sketch, std::mt19937 &gen) const;
+    genCrossover(const Sketch &sketch, std::default_random_engine &gen) const;
 
     void setTime(double time) { time_ = time; }
     double time() const { return time_; }

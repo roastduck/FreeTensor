@@ -364,4 +364,3 @@ Stmt removeWrites(const Stmt &_op, const std::string &singleDefId) {
 }
 
 } // namespace ir
-

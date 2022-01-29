@@ -31,4 +31,3 @@ void CountContigAccessLoops::visit(const VarDef &op) {
 }
 
 } // namespace ir
-

@@ -14,4 +14,3 @@ std::vector<std::string> findAllLoops(const Stmt &op) {
 }
 
 } // namespace ir
-

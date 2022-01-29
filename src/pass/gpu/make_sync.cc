@@ -308,4 +308,3 @@ Stmt makeSync(const Stmt &_op) {
 } // namespace gpu
 
 } // namespace ir
-

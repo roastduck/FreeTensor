@@ -36,4 +36,3 @@ void checkVarCrossParallel(const Stmt &ast, const std::string &def,
 }
 
 } // namespace ir
-
