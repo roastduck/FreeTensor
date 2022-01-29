@@ -15,21 +15,24 @@
 #include <pass/make_parallel_reduction.h>
 #include <pass/merge_and_hoist_if.h>
 #include <pass/move_out_first_or_last_iter.h>
-#include <pass/prop_const.h>
 #include <pass/prop_one_time_use.h>
 #include <pass/remove_cyclic_assign.h>
 #include <pass/remove_dead_var.h>
 #include <pass/remove_writes.h>
+#include <pass/scalar_prop_const.h>
 #include <pass/shrink_for.h>
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
 #include <pass/sink_var.h>
+#include <pass/tensor_prop_const.h>
 #include <pass/use_builtin_div.h>
 
 namespace ir {
 
 template <class T> T lower(const T &t, const Ref<Target> &target) {
     T func = t;
+    func = scalarPropConst(func);
+    func = removeDeadVar(func);
     func = propOneTimeUse(func);
     func = floatSimplify(func); // After propOneTimeUse
     func = simplifyPass(func);
@@ -37,7 +40,7 @@ template <class T> T lower(const T &t, const Ref<Target> &target) {
     func = sinkVar(func);
     func = shrinkVar(func);
     func = mergeAndHoistIf(func);
-    func = propConst(func);
+    func = tensorPropConst(func);
     func = removeWrites(func);
     func = removeCyclicAssign(func); // After remove_writes
     func = removeDeadVar(func);      // After remove_writes and prop_const

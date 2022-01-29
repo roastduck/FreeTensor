@@ -1,9 +1,10 @@
 #include <analyze/all_iters.h>
 #include <analyze/all_reads.h>
 #include <analyze/deps.h>
-#include <pass/prop_const.h>
 #include <pass/replace_uses.h>
+#include <pass/scalar_prop_const.h>
 #include <pass/simplify.h>
+#include <pass/tensor_prop_const.h>
 
 namespace ir {
 
@@ -20,15 +21,19 @@ static bool iterDefined(Cursor c, const std::string &name) {
     }
 }
 
-Stmt propConst(const Stmt &_op) {
+Stmt tensorPropConst(const Stmt &_op) {
     auto op = _op;
 
     for (int i = 0;; i++) {
         op = simplifyPass(op);
+        op = scalarPropConst(op);
 
         std::unordered_map<AST, std::vector<Stmt>> r2w, r2wMay;
         auto filterMust = [&](const AccessPoint &later,
                               const AccessPoint &earlier) {
+            if (later.buffer_->tensor().isScalar()) {
+                return false;
+            }
             if (earlier.op_->nodeType() != ASTNodeType::Store) {
                 return false;
             }
