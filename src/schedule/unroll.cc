@@ -64,7 +64,7 @@ Stmt unroll(const Stmt &_ast, const std::string &loop, bool immediate) {
         ImmediateUnroll mutator(loop);
         ast = mutator(ast);
         done = mutator.done();
-        // ast = removeWrites(ast);
+        ast = removeWrites(ast);
     } else {
         BackUnroll mutator(loop);
         ast = mutator(ast);
