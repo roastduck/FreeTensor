@@ -270,6 +270,11 @@ class Mutator {
             makeAssert(op->id(), (*this)(op->cond_), (*this)(op->body_)), op);
     }
 
+    virtual Stmt visit(const Assume &op) {
+        return COPY_DEBUG_INFO(
+            makeAssume(op->id(), (*this)(op->cond_), (*this)(op->body_)), op);
+    }
+
     virtual Expr visit(const IfExpr &op) {
         return COPY_DEBUG_INFO(makeIfExpr((*this)(op->cond_),
                                           (*this)(op->thenCase_),

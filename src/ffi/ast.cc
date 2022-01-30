@@ -58,6 +58,7 @@ void init_ffi_ast(py::module_ &m) {
         .value("For", ASTNodeType::For)
         .value("If", ASTNodeType::If)
         .value("Assert", ASTNodeType::Assert)
+        .value("Assume", ASTNodeType::Assume)
         .value("Intrinsic", ASTNodeType::Intrinsic)
         .value("Eval", ASTNodeType::Eval);
 
@@ -169,6 +170,11 @@ void init_ffi_ast(py::module_ &m) {
             "cond", [](const Assert &op) -> Expr { return op->cond_; })
         .def_property_readonly(
             "body", [](const Assert &op) -> Stmt { return op->body_; });
+    py::class_<AssumeNode, Assume>(m, "Assume", pyStmt)
+        .def_property_readonly(
+            "cond", [](const Assume &op) -> Expr { return op->cond_; })
+        .def_property_readonly(
+            "body", [](const Assume &op) -> Stmt { return op->body_; });
     py::class_<EvalNode, Eval>(m, "Eval", pyStmt)
         .def_property_readonly(
             "expr", [](const Eval &op) -> Expr { return op->expr_; });
@@ -330,7 +336,7 @@ void init_ffi_ast(py::module_ &m) {
 
     pyAST
         .def("match",
-             [](const AST &op, const AST &other) { return match(op, other); })
+             [](const Stmt &op, const Stmt &other) { return match(op, other); })
         .def("type", [](const AST &op) { return toString(op->nodeType()); })
         .def("__str__", [](const AST &op) { return toString(op); })
         .def("__repr__",
@@ -574,6 +580,7 @@ template <> struct polymorphic_type_hook<ir::ASTNode> {
             DISPATCH(For);
             DISPATCH(If);
             DISPATCH(Assert);
+            DISPATCH(Assume);
             DISPATCH(Eval);
             DISPATCH(Any);
             DISPATCH(AnyExpr);
@@ -638,6 +645,7 @@ template <> struct polymorphic_type_hook<ir::StmtNode> {
             DISPATCH(For);
             DISPATCH(If);
             DISPATCH(Assert);
+            DISPATCH(Assume);
             DISPATCH(Eval);
             DISPATCH(Any);
         default:

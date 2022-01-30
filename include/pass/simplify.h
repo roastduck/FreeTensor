@@ -42,23 +42,6 @@ struct TransientBound {
     std::vector<Expr> lower_, upper_;
 };
 
-class OutDatedBoundsRemover : public Visitor {
-    ASTHashMap<Expr, TransientBound> &transients_;
-    std::vector<Expr> &conds_;
-
-  public:
-    OutDatedBoundsRemover(ASTHashMap<Expr, TransientBound> &transients,
-                          std::vector<Expr> &conds)
-        : transients_(transients), conds_(conds) {}
-
-  private:
-    void remove(const std::string &name);
-
-  protected:
-    void visit(const Store &op) override;
-    void visit(const ReduceTo &op) override;
-};
-
 /**
  * Compute bounds of IDENTICAL INTEGER (sub)expressions AT A POSITION in the AST
  *
@@ -87,10 +70,9 @@ class CompTransientBounds : public SymbolTable<Mutator> {
 
     AnalyzeLinear analyzeLinear_;
     TypeInfer typeInfer_;
-    OutDatedBoundsRemover remover_;
 
   protected:
-    CompTransientBounds() : typeInfer_(*this), remover_(transients_, conds_) {}
+    CompTransientBounds() : typeInfer_(*this) {}
 
     TransientBound transient(const Expr &op);
     const std::vector<Expr> &conds() const { return conds_; }
@@ -101,7 +83,8 @@ class CompTransientBounds : public SymbolTable<Mutator> {
     static Expr add1(const Expr &op);
 
     void applyCond(int k, const Expr &lhs, ASTNodeType opType, const Expr &rhs);
-    void applyCond(const Expr &cond);
+    void applyCond(const Expr &cond,
+                   const std::unordered_set<std::string> &bodyAllWrites);
 
   protected:
     using BaseClass::visit; // Avoid hiding virtual functions
@@ -109,8 +92,7 @@ class CompTransientBounds : public SymbolTable<Mutator> {
     Stmt visit(const For &op) override;
     Stmt visit(const If &op) override;
     Stmt visit(const Assert &op) override;
-    Stmt visit(const Store &op) override;
-    Stmt visit(const ReduceTo &op) override;
+    Stmt visit(const Assume &op) override;
 };
 
 /**

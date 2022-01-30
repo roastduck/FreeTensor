@@ -4,6 +4,7 @@
 
 #include <analyze/all_names.h>
 #include <analyze/all_reads.h>
+#include <analyze/all_writes.h>
 #include <except.h>
 #include <math/utils.h>
 #include <pass/flatten_stmt_seq.h>
@@ -44,45 +45,6 @@ int findInnerMostScope(const std::unordered_map<std::string, int> &varScope,
     FindInnerMostScope visitor(varScope);
     visitor(op);
     return visitor.innnerMost();
-}
-
-void OutDatedBoundsRemover::remove(const std::string &name) {
-    for (auto &item : transients_) {
-        if (allReads(item.second.expr_).count(name)) {
-            item.second.lower_ = item.second.upper_ = {};
-        }
-        for (auto i = item.second.lower_.begin();
-             i != item.second.lower_.end();) {
-            if (allReads(*i).count(name)) {
-                i = item.second.lower_.erase(i);
-            } else {
-                i++;
-            }
-        }
-        for (auto i = item.second.upper_.begin();
-             i != item.second.upper_.end();) {
-            if (allReads(*i).count(name)) {
-                i = item.second.upper_.erase(i);
-            } else {
-                i++;
-            }
-        }
-    }
-    for (auto i = conds_.begin(); i != conds_.end(); i++) {
-        if (i->isValid() && allReads(*i).count(name)) {
-            *i = nullptr;
-        }
-    }
-}
-
-void OutDatedBoundsRemover::visit(const Store &op) {
-    Visitor::visit(op);
-    remove(op->var_);
-}
-
-void OutDatedBoundsRemover::visit(const ReduceTo &op) {
-    Visitor::visit(op);
-    remove(op->var_);
 }
 
 DataType CompTransientBounds::dtype(const Expr &op) {
@@ -158,13 +120,14 @@ void CompTransientBounds::applyCond(int k, const Expr &lhs, ASTNodeType opType,
     }
 }
 
-void CompTransientBounds::applyCond(const Expr &cond) {
+void CompTransientBounds::applyCond(
+    const Expr &cond, const std::unordered_set<std::string> &bodyAllWrites) {
     Expr norm;
     switch (cond->nodeType()) {
     case ASTNodeType::LAnd: {
         auto land = cond.as<LAndNode>();
-        applyCond(land->lhs_);
-        applyCond(land->rhs_);
+        applyCond(land->lhs_, bodyAllWrites);
+        applyCond(land->rhs_, bodyAllWrites);
         return;
     }
     case ASTNodeType::LT: {
@@ -196,6 +159,10 @@ void CompTransientBounds::applyCond(const Expr &cond) {
         return;
     }
 
+    if (!noIntersect(allReads(cond), bodyAllWrites)) {
+        return;
+    }
+
     if (!isInt(dtype(norm))) {
         return;
     }
@@ -221,8 +188,6 @@ void CompTransientBounds::applyCond(const Expr &cond) {
 }
 
 Stmt CompTransientBounds::visit(const For &op) {
-    OutDatedBoundsRemover localRemover(transients_, conds_);
-    localRemover(op);
     auto var = makeVar(op->iter_);
     if (transients_.count(var)) {
         throw InvalidProgram(
@@ -266,7 +231,7 @@ Stmt CompTransientBounds::visit(const If &op) {
 
     auto oldMap = transients_;
     auto oldCondsSize = conds_.size();
-    applyCond(cond);
+    applyCond(cond, allWrites(op->thenCase_));
     auto thenCase = (*this)(op->thenCase_);
     transients_ = oldMap;
     conds_.resize(oldCondsSize);
@@ -274,7 +239,7 @@ Stmt CompTransientBounds::visit(const If &op) {
     Stmt elseCase = nullptr;
     if (op->elseCase_.isValid()) {
         auto oldCondsSize = conds_.size();
-        applyCond(notCond);
+        applyCond(notCond, allWrites(op->elseCase_));
         elseCase = (*this)(op->elseCase_);
         transients_ = oldMap;
         conds_.resize(oldCondsSize);
@@ -290,7 +255,7 @@ Stmt CompTransientBounds::visit(const Assert &op) {
 
     auto oldMap = transients_;
     auto oldCondsSize = conds_.size();
-    applyCond(cond);
+    applyCond(cond, allWrites(op->body_));
     auto body = (*this)(op->body_);
     transients_ = oldMap;
     conds_.resize(oldCondsSize);
@@ -298,16 +263,17 @@ Stmt CompTransientBounds::visit(const Assert &op) {
     return makeAssert(op->id(), std::move(cond), std::move(body));
 }
 
-Stmt CompTransientBounds::visit(const Store &op) {
-    auto ret = BaseClass::visit(op);
-    remover_(op);
-    return ret;
-}
+Stmt CompTransientBounds::visit(const Assume &op) {
+    auto cond = (*this)(op->cond_);
 
-Stmt CompTransientBounds::visit(const ReduceTo &op) {
-    auto ret = BaseClass::visit(op);
-    remover_(op);
-    return ret;
+    auto oldMap = transients_;
+    auto oldCondsSize = conds_.size();
+    applyCond(cond, allWrites(op->body_));
+    auto body = (*this)(op->body_);
+    transients_ = oldMap;
+    conds_.resize(oldCondsSize);
+
+    return makeAssume(op->id(), std::move(cond), std::move(body));
 }
 
 void CompUniqueBounds::updLower(LowerBoundsList &list,

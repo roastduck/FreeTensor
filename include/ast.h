@@ -27,6 +27,7 @@ enum class ASTNodeType : int {
     For,
     If,
     Assert,
+    Assume,
 
     // Calls to external libs
     MatMul,

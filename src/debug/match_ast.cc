@@ -3,6 +3,7 @@
 #include <itertools.hpp>
 
 #include <debug/match_ast.h>
+#include <pass/flatten_stmt_seq.h>
 
 namespace ir {
 
@@ -480,7 +481,9 @@ void MatchVisitor::visit(const MatMul &op) {
     RECURSE(op->equivalent_, instance->equivalent_);
 }
 
-bool match(const AST &pattern, const AST &instance) {
+bool match(const Stmt &_pattern, const Stmt &_instance) {
+    auto pattern = flattenStmtSeq(_pattern);
+    auto instance = flattenStmtSeq(_instance);
     MatchVisitor visitor(instance);
     visitor(pattern);
     return visitor.isMatched();

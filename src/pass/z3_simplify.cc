@@ -1,27 +1,20 @@
 #include <analyze/all_reads.h>
+#include <analyze/all_writes.h>
+#include <pass/annotate_conds.h>
 #include <pass/replace_iter.h>
 #include <pass/simplify.h>
 #include <pass/z3_simplify.h>
 
 namespace ir {
 
-void OutDatedCondsRemover::remove(const std::string &name) {
-    for (auto &i : condList_) {
-        if (i.second) {
-            if (allReads(i.first).count(name))
-                i.second = false;
+static bool noIntersect(const std::unordered_set<std::string> &set1,
+                        const std::unordered_set<std::string> &set2) {
+    for (auto &&x : set1) {
+        if (set2.count(x)) {
+            return false;
         }
     }
-}
-
-void OutDatedCondsRemover::visit(const Store &op) {
-    Visitor::visit(op);
-    remove(op->var_);
-}
-
-void OutDatedCondsRemover::visit(const ReduceTo &op) {
-    Visitor::visit(op);
-    remove(op->var_);
+    return true;
 }
 
 int Z3Simplify::getVarId(const Expr &op) {
@@ -387,15 +380,24 @@ Stmt Z3Simplify::visit(const If &op) {
                                        : makeStmtSeq("", {});
     }
 
-    push(cond);
-    auto thenCase = (*this)(op->thenCase_);
-    pop();
+    Stmt thenCase;
+    if (noIntersect(allReads(cond), allWrites(op->thenCase_))) {
+        push(cond);
+        thenCase = (*this)(op->thenCase_);
+        pop();
+    } else {
+        thenCase = (*this)(op->thenCase_);
+    }
 
     Stmt elseCase = nullptr;
     if (op->elseCase_.isValid()) {
-        push(notCond);
-        elseCase = (*this)(op->elseCase_);
-        pop();
+        if (noIntersect(allReads(cond), allWrites(op->elseCase_))) {
+            push(notCond);
+            elseCase = (*this)(op->elseCase_);
+            pop();
+        } else {
+            elseCase = (*this)(op->elseCase_);
+        }
     }
 
     auto ret = makeIf(op->id(), std::move(cond), std::move(thenCase),
@@ -413,17 +415,34 @@ Stmt Z3Simplify::visit(const Assert &op) {
         throw AssertAlwaysFalse("Assertion always false: " + toString(op));
     }
 
-    push(cond);
-    auto body = (*this)(op->body_);
-    pop();
+    Stmt body;
+    if (noIntersect(allReads(cond), allWrites(op->body_))) {
+        push(cond);
+        body = (*this)(op->body_);
+        pop();
+    } else {
+        body = (*this)(op->body_);
+    }
 
     return makeAssert(op->id(), std::move(cond), std::move(body));
 }
 
-Stmt Z3Simplify::visit(const For &op) {
-    OutDatedCondsRemover localRemover(condList_);
-    localRemover(op);
+Stmt Z3Simplify::visit(const Assume &op) {
+    auto cond = (*this)(op->cond_);
 
+    Stmt body;
+    if (noIntersect(allReads(cond), allWrites(op->body_))) {
+        push(cond);
+        body = (*this)(op->body_);
+        pop();
+    } else {
+        body = (*this)(op->body_);
+    }
+
+    return makeAssume(op->id(), std::move(cond), std::move(body));
+}
+
+Stmt Z3Simplify::visit(const For &op) {
     auto var = makeVar(op->iter_);
     auto begin = (*this)(op->begin_);
     auto end = (*this)(op->end_);
@@ -439,7 +458,10 @@ Stmt Z3Simplify::visit(const For &op) {
     }
 
     Stmt body;
-    if (op->step_->nodeType() == ASTNodeType::IntConst) {
+    auto bodyAllWrites = allWrites(op->body_);
+    if (op->step_->nodeType() == ASTNodeType::IntConst &&
+        noIntersect(allReads(begin), bodyAllWrites) &&
+        noIntersect(allReads(end), bodyAllWrites)) {
         auto step = op->step_.as<IntConstNode>()->val_;
         if (step > 0) {
             push((*this)(makeGE(var, begin)));
@@ -468,20 +490,9 @@ Stmt Z3Simplify::visit(const For &op) {
     return COPY_DEBUG_INFO(ret, op);
 }
 
-Stmt Z3Simplify::visit(const Store &op) {
-    auto ret = Mutator::visit(op);
-    remove_(op);
-    return ret;
-}
-
-Stmt Z3Simplify::visit(const ReduceTo &op) {
-    auto ret = Mutator::visit(op);
-    remove_(op);
-    return ret;
-}
-
 Stmt z3Simplify(const Stmt &_op) {
-    auto op = Z3Simplify()(_op);
+    auto op = annotateConds(_op);
+    op = Z3Simplify()(_op);
     op = simplifyPass(op); // to remove some empty blocks
     return op;
 }
