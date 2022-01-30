@@ -28,6 +28,18 @@ Stmt tensorPropConst(const Stmt &_op) {
         op = simplifyPass(op);
         op = scalarPropConst(op);
 
+        // Please note that the "reads" might also be reductions.
+        // pass/remove_writes cannot replace pass/tensor_prop_const when
+        // propagating to ReduceTo nodes. E.g.:
+        //
+        // ```
+        // a = 1  // (1) if (...) {
+        //   a += 1  // (2)
+        // }
+        // ```
+        //
+        // pass/tensor_prop_const will propagate this case. However
+        // pass/remove_writes can not, because statement (1) cannot be removed
         std::unordered_map<AST, std::vector<Stmt>> r2w, r2wMay;
         auto filterMust = [&](const AccessPoint &later,
                               const AccessPoint &earlier) {
@@ -36,9 +48,6 @@ Stmt tensorPropConst(const Stmt &_op) {
             }
             if (earlier.op_->nodeType() != ASTNodeType::Store) {
                 return false;
-            }
-            if (later.op_->nodeType() == ASTNodeType::ReduceTo) {
-                return false; // pass/remove_write will deal with it
             }
             auto &&expr = earlier.op_.as<StoreNode>()->expr_;
             if (!allReads(expr).empty()) {
@@ -90,7 +99,7 @@ Stmt tensorPropConst(const Stmt &_op) {
         findDeps(op, {{}}, foundMay, FindDepsMode::Dep, DEP_RAW, filterMay,
                  false);
 
-        std::unordered_map<Load, Expr> replaceLoad;
+        std::unordered_map<AST, Expr> replace;
         for (auto &&item : r2w) {
             if (item.second.size() > 1) {
                 continue;
@@ -102,19 +111,17 @@ Stmt tensorPropConst(const Stmt &_op) {
             }
             ASSERT(item.second.front()->nodeType() == ASTNodeType::Store);
             auto &&store = item.second.front().as<StoreNode>();
-            ASSERT(item.first->nodeType() == ASTNodeType::Load);
-            auto &&load = item.first.as<LoadNode>();
-            replaceLoad[load] = store->expr_;
+            replace[item.first] = store->expr_;
         }
 
-        if (replaceLoad.empty() || i > 100) {
+        if (replace.empty() || i > 100) {
             if (i > 100) {
                 WARNING(
                     "propConst iterates over 100 rounds. Maybe there is a bug");
             }
             break;
         }
-        op = ReplaceUses(replaceLoad)(op);
+        op = ReplaceUses(replace)(op);
     }
 
     return op;

@@ -68,7 +68,7 @@ Stmt propOneTimeUse(const Stmt &_op) {
     findDeps(op, {{}}, foundMust, FindDepsMode::KillLater, DEP_RAW, filterMust);
     findDeps(op, {{}}, foundMay, FindDepsMode::Dep, DEP_RAW, filterMay, false);
 
-    std::unordered_map<Load, Expr> replaceLoad;
+    std::unordered_map<AST, Expr> replace;
     for (auto &&item : r2w) {
         if (item.second.size() > 1) {
             continue;
@@ -85,12 +85,10 @@ Stmt propOneTimeUse(const Stmt &_op) {
         }
         ASSERT(item.second.front()->nodeType() == ASTNodeType::Store);
         auto &&store = item.second.front().as<StoreNode>();
-        ASSERT(item.first->nodeType() == ASTNodeType::Load);
-        auto &&load = item.first.as<LoadNode>();
-        replaceLoad[load] = store->expr_;
+        replace[item.first] = store->expr_;
     }
 
-    op = ReplaceUses(replaceLoad)(op);
+    op = ReplaceUses(replace)(op);
     return sinkVar(op);
 }
 
