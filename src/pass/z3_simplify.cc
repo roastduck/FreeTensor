@@ -55,7 +55,7 @@ void Z3Simplify::push(const Expr &op) {
 void Z3Simplify::pop() { condList_.pop_back(); }
 
 Expr Z3Simplify::visit(const Var &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Var);
     auto op = __op.as<VarNode>();
     put(op, ctx_.int_const(("x" + std::to_string(getVarId(op))).c_str()));
@@ -63,16 +63,21 @@ Expr Z3Simplify::visit(const Var &_op) {
 }
 
 Expr Z3Simplify::visit(const Load &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Load);
     auto op = __op.as<LoadNode>();
-    // FIXME: Determine the data type
-    put(op, ctx_.int_const(("x" + std::to_string(getVarId(op))).c_str()));
+    auto dtype = buffer(op->var_)->tensor().dtype();
+    if (isInt(dtype)) {
+        put(op, ctx_.int_const(("x" + std::to_string(getVarId(op))).c_str()));
+    } else if (isBool(dtype)) {
+        put(op, ctx_.bool_const(("x" + std::to_string(getVarId(op))).c_str()));
+    }
+    // We don't simplify float in Z3Simplify
     return op;
 }
 
 Expr Z3Simplify::visit(const IntConst &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::IntConst);
     auto op = __op.as<IntConstNode>();
     put(op, ctx_.int_val(op->val_));
@@ -80,7 +85,7 @@ Expr Z3Simplify::visit(const IntConst &_op) {
 }
 
 Expr Z3Simplify::visit(const BoolConst &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::BoolConst);
     auto op = __op.as<BoolConstNode>();
     put(op, ctx_.bool_val(op->val_));
@@ -88,7 +93,7 @@ Expr Z3Simplify::visit(const BoolConst &_op) {
 }
 
 Expr Z3Simplify::visit(const Add &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Add);
     auto op = __op.as<AddNode>();
     if (exists(op->lhs_) && exists(op->rhs_)) {
@@ -98,7 +103,7 @@ Expr Z3Simplify::visit(const Add &_op) {
 }
 
 Expr Z3Simplify::visit(const Sub &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Sub);
     auto op = __op.as<SubNode>();
     if (exists(op->lhs_) && exists(op->rhs_)) {
@@ -108,7 +113,7 @@ Expr Z3Simplify::visit(const Sub &_op) {
 }
 
 Expr Z3Simplify::visit(const Mul &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Mul);
     auto op = __op.as<MulNode>();
     if (exists(op->lhs_) && exists(op->rhs_)) {
@@ -118,7 +123,7 @@ Expr Z3Simplify::visit(const Mul &_op) {
 }
 
 Expr Z3Simplify::visit(const FloorDiv &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::FloorDiv);
     auto op = __op.as<FloorDivNode>();
     if (exists(op->lhs_) && exists(op->rhs_)) {
@@ -130,7 +135,7 @@ Expr Z3Simplify::visit(const FloorDiv &_op) {
 }
 
 Expr Z3Simplify::visit(const CeilDiv &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::CeilDiv);
     auto op = __op.as<CeilDivNode>();
     if (exists(op->lhs_) && exists(op->rhs_)) {
@@ -140,7 +145,7 @@ Expr Z3Simplify::visit(const CeilDiv &_op) {
 }
 
 Expr Z3Simplify::visit(const Mod &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Mod);
     auto op = __op.as<ModNode>();
     if (exists(op->lhs_) && exists(op->rhs_)) {
@@ -150,7 +155,7 @@ Expr Z3Simplify::visit(const Mod &_op) {
 }
 
 Expr Z3Simplify::visit(const Min &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Min);
     auto op = __op.as<MinNode>();
 
@@ -199,7 +204,7 @@ Expr Z3Simplify::visit(const Min &_op) {
 }
 
 Expr Z3Simplify::visit(const Max &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Max);
     auto op = __op.as<MaxNode>();
 
@@ -248,7 +253,7 @@ Expr Z3Simplify::visit(const Max &_op) {
 }
 
 Expr Z3Simplify::visit(const LT &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::LT);
     auto op = __op.as<LTNode>();
     if (exists(op->lhs_) && exists(op->rhs_)) {
@@ -258,7 +263,7 @@ Expr Z3Simplify::visit(const LT &_op) {
 }
 
 Expr Z3Simplify::visit(const LE &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::LE);
     auto op = __op.as<LENode>();
     if (exists(op->lhs_) && exists(op->rhs_)) {
@@ -268,7 +273,7 @@ Expr Z3Simplify::visit(const LE &_op) {
 }
 
 Expr Z3Simplify::visit(const GT &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::GT);
     auto op = __op.as<GTNode>();
     if (exists(op->lhs_) && exists(op->rhs_)) {
@@ -278,7 +283,7 @@ Expr Z3Simplify::visit(const GT &_op) {
 }
 
 Expr Z3Simplify::visit(const GE &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::GE);
     auto op = __op.as<GENode>();
     if (exists(op->lhs_) && exists(op->rhs_)) {
@@ -288,7 +293,7 @@ Expr Z3Simplify::visit(const GE &_op) {
 }
 
 Expr Z3Simplify::visit(const EQ &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::EQ);
     auto op = __op.as<EQNode>();
     if (exists(op->lhs_) && exists(op->rhs_)) {
@@ -298,7 +303,7 @@ Expr Z3Simplify::visit(const EQ &_op) {
 }
 
 Expr Z3Simplify::visit(const NE &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::NE);
     auto op = __op.as<NENode>();
     if (exists(op->lhs_) && exists(op->rhs_)) {
@@ -308,7 +313,7 @@ Expr Z3Simplify::visit(const NE &_op) {
 }
 
 Expr Z3Simplify::visit(const LAnd &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::LAnd);
     auto op = __op.as<LAndNode>();
     if (exists(op->lhs_) && exists(op->rhs_)) {
@@ -326,7 +331,7 @@ Expr Z3Simplify::visit(const LAnd &_op) {
 }
 
 Expr Z3Simplify::visit(const LOr &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::LOr);
     auto op = __op.as<LOrNode>();
     if (exists(op->lhs_) && exists(op->rhs_)) {
@@ -344,7 +349,7 @@ Expr Z3Simplify::visit(const LOr &_op) {
 }
 
 Expr Z3Simplify::visit(const LNot &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::LNot);
     auto op = __op.as<LNotNode>();
     if (exists(op->expr_)) {

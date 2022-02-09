@@ -6,6 +6,7 @@
 
 #include <z3++.h>
 
+#include <analyze/symbol_table.h>
 #include <func.h>
 #include <hash.h>
 #include <mutator.h>
@@ -25,7 +26,9 @@ namespace ir {
  * - It can deal with some more complex expressions, such as Mod
  * - It may take some more time
  */
-class Z3Simplify : public Mutator {
+class Z3Simplify : public SymbolTable<Mutator> {
+    typedef SymbolTable<Mutator> BaseClass;
+
     int varCnt_ = 0;
     ASTHashMap<Expr, int> varId_;
 
