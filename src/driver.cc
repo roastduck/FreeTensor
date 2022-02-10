@@ -129,10 +129,10 @@ void Driver::buildAndLoad() {
 
     switch (dev_.type()) {
     case TargetType::CPU:
-        ctx_ = new CPUContext();
+        ctx_ = std::make_unique<CPUContext>();
         break;
     case TargetType::GPU:
-        ctx_ = new GPUContext();
+        ctx_ = std::make_unique<GPUContext>();
         break;
     default:
         ASSERT(false);
@@ -168,7 +168,7 @@ void Driver::setParams(const std::vector<Ref<Array>> &args,
 
 void Driver::run() {
     func_(params_.data(), returns_.data(), retShapes_.data(), retDims_.data(),
-          ctx_);
+          ctx_.get());
 }
 
 void Driver::sync() { dev_.sync(); }
