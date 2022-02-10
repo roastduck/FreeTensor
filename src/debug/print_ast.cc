@@ -519,6 +519,16 @@ void PrintVisitor::visit(const Assert &op) {
     endBlock();
 }
 
+void PrintVisitor::visit(const Assume &op) {
+    makeIndent();
+    os() << "assume ";
+    recur(op->cond_);
+    os() << " ";
+    beginBlock();
+    recur(op->body_);
+    endBlock();
+}
+
 void PrintVisitor::visit(const Intrinsic &op) {
     os() << "intrinsic(\"";
     int i = 0;

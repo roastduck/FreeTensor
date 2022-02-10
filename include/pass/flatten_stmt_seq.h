@@ -14,8 +14,16 @@ class FlattenStmtSeq : public Mutator {
 
   protected:
     Stmt visit(const StmtSeq &op) override;
+    Stmt visit(const Assume &op) override;
 };
 
+/**
+ * Merge nested StmtSeq nodes into one
+ *
+ * This pass also clears Assume nodes
+ *
+ * @param popVarDef : { A; VarDef { B; }} -> VarDef { A; B; }
+ */
 inline Stmt flattenStmtSeq(const Stmt &op, bool popVarDef = false) {
     return FlattenStmtSeq(popVarDef)(op);
 }

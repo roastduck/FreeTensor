@@ -256,6 +256,16 @@ Stmt _makeIf(const std::string &id, Tcond &&cond, Tthen &&thenCase,
     return i;
 }
 
+/**
+ * Assert a condition shall hold in the body
+ *
+ * Please note that Assert is different from Assume:
+ *
+ * - An Assert node is written by users to provide EXTRA conditions
+ * - An Assert node will be translated to a runtime assertion
+ * - Redundant assertions will be removed in simplifying passes
+ * - An Assert node is checked in debug/match_ast
+ */
 class AssertNode : public StmtNode {
   public:
     SubTree<ExprNode> cond_;
@@ -268,6 +278,35 @@ typedef Ref<AssertNode> Assert;
 template <class Tcond, class Tbody>
 Stmt _makeAssert(const std::string &id, Tcond &&cond, Tbody &&body) {
     Assert a = Assert::make();
+    a->setId(id);
+    a->cond_ = std::forward<Tcond>(cond);
+    a->body_ = std::forward<Tbody>(body);
+    return a;
+}
+
+/**
+ * Assume a condition will hold in the body
+ *
+ * Please note that Assume is different from Assert
+ *
+ * - An Assume node is introduced by some passes to help the compiler recognize
+ * some implicit conditions, and cannot be written by users
+ * - An Assume node will not introduce runtime overhead
+ * - Assume nodes are inserted and removed freely by passes
+ * - An Assert node is NOT checked in debug/match_ast
+ */
+class AssumeNode : public StmtNode {
+  public:
+    SubTree<ExprNode> cond_;
+    SubTree<StmtNode> body_;
+    void compHash() override;
+    DEFINE_NODE_TRAIT(Assume);
+};
+typedef Ref<AssumeNode> Assume;
+#define makeAssume(...) makeNode(Assume, __VA_ARGS__)
+template <class Tcond, class Tbody>
+Stmt _makeAssume(const std::string &id, Tcond &&cond, Tbody &&body) {
+    Assume a = Assume::make();
     a->setId(id);
     a->cond_ = std::forward<Tcond>(cond);
     a->body_ = std::forward<Tbody>(body);

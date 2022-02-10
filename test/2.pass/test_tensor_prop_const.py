@@ -218,3 +218,29 @@ def test_prop_iter_in_expr():
     std = ir.pop_ast()
 
     assert std.match(ast)
+
+
+def test_reduction():
+    # This is a case that cannot be handled by pass/remove_writes,
+    # so it must be done in pass/tensor_prop_const
+
+    with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
+        with ir.For("i", 0, 4) as i:
+            y[i] = 1
+            with ir.If(i > 1):
+                # This condition stops pass/remove_writes from removing the
+                # assignment above
+                y[i] += 1
+    ast = ir.pop_ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
+        with ir.For("i", 0, 4) as i:
+            y[i] = 1
+            with ir.If(i > 1):
+                y[i] = 2
+    std = ir.pop_ast()
+
+    assert std.match(ast)

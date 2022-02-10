@@ -36,12 +36,6 @@ static Expr makeReduce(ReduceOp reduceOp, const Expr &lhs, const Expr &rhs) {
     }
 }
 
-static bool isConst(const Expr &expr) {
-    return expr->nodeType() == ASTNodeType::IntConst ||
-           expr->nodeType() == ASTNodeType::FloatConst ||
-           expr->nodeType() == ASTNodeType::BoolConst;
-}
-
 void FindLoopInvariantWrites::visit(const For &op) {
     cursorStack_.emplace_back(cursor());
     BaseClass::visit(op);
@@ -218,12 +212,12 @@ Stmt removeWrites(const Stmt &_op, const std::string &singleDefId) {
             (!selfDependentReduces.count(d.later().as<StmtNode>()) ||
              sameParent(d.later_.cursor_, d.earlier_.cursor_))) {
             if (d.earlier()->nodeType() == ASTNodeType::Store &&
-                isConst(d.earlier().as<StoreNode>()->expr_)) {
+                d.earlier().as<StoreNode>()->expr_->isConst()) {
                 overwrites.emplace(d.later().as<StmtNode>(),
                                    d.earlier().as<StmtNode>());
                 suspect.insert(d.def());
             } else if (d.earlier()->nodeType() == ASTNodeType::ReduceTo &&
-                       isConst(d.earlier().as<ReduceToNode>()->expr_)) {
+                       d.earlier().as<ReduceToNode>()->expr_->isConst()) {
                 overwrites.emplace(d.later().as<StmtNode>(),
                                    d.earlier().as<StmtNode>());
                 suspect.insert(d.def());

@@ -13,7 +13,7 @@ import inspect
 import traceback
 import sourceinspect as ins
 import copy
-from typing import Callable, Dict, List, Sequence, Optional, Mapping, Any, Tuple, Union
+from typing import Callable, Dict, List, Sequence, Optional, Any, TypeVar, Union
 from dataclasses import dataclass
 
 from . import nodes
@@ -164,7 +164,10 @@ def prepare_vardef(name: str,
     return fullname
 
 
-def staged_callable(staging, original):
+F = TypeVar('F')
+
+
+def staged_callable(staging: F, original) -> F:
 
     def impl(*args, **kwargs):
         if StagingContext.in_staging():
@@ -393,7 +396,7 @@ def or_expr(*lazy_args):
 
 
 def not_expr(arg):
-    if isinstance(arg, ffi.Expr):
+    if not isinstance(arg, bool):
         return l_not(arg)
     else:
         return not arg
@@ -523,7 +526,9 @@ class Transformer(ast.NodeTransformer):
         '''
         node: ast.Assign = self.generic_visit(old_node)
         # FIXME: multi-assign not implemented
-        if len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
+        if len(node.targets) == 1 and (
+                isinstance(node.targets[0], ast.Name) or
+                isinstance(node.targets[0], ast.Attribute)):
             name = None
             if isinstance(node.targets[0], ast.Name):
                 name = node.targets[0].id
@@ -724,55 +729,64 @@ def into_staging(func, caller_env, src=None, verbose=False):
     return caller_env[func.__name__], file, func.__name__
 
 
-def transform(func, verbose=False):
-    params = list(inspect.signature(func).parameters)
-    caller_env = _get_caller_env(1)
-    staging_func, filename, funcname = into_staging(func,
-                                                    caller_env,
-                                                    verbose=verbose)
+def transform(func=None, verbose=False, caller_env=None):
+    if caller_env is None:
+        caller_env = _get_caller_env(1)
 
-    try:
-        with LifetimeScope():
-            with NamingScope(filename, funcname, None):
-                for p in params:
-                    StagingContext.naming_stack[-1].names[p] = 1
-                returns = staging_func(*params)
-                if isinstance(returns, Var):
-                    returns = [returns]
-                elif isinstance(returns, tuple):
+    def decorator(func):
+        params = list(inspect.signature(func).parameters)
+        staging_func, filename, funcname = into_staging(func,
+                                                        caller_env,
+                                                        verbose=verbose)
+
+        try:
+            with LifetimeScope():
+                with NamingScope(filename, funcname, None):
+                    for p in params:
+                        StagingContext.naming_stack[-1].names[p] = 1
+                    returns = staging_func(*params)
+                    if isinstance(returns, Var):
+                        returns = [returns]
+                    elif isinstance(returns, tuple):
+                        for ret in returns:
+                            if not isinstance(ret, Var):
+                                raise StagingError(
+                                    'Illegal return at top level, need to be a `Var` or a tuple of `Var`s'
+                                )
+                        returns = list(returns)
+                    elif returns is None:
+                        returns = []
+                    else:
+                        raise StagingError(
+                            'Illegal return at top level, need to be a `Var` or a tuple of `Var`s'
+                        )
                     for ret in returns:
-                        if not isinstance(ret, Var):
-                            raise StagingError(
-                                'Illegal return at top level, need to be a `Var` or a tuple of `Var`s'
-                            )
-                    returns = list(returns)
-                elif returns is None:
-                    returns = []
-                else:
-                    raise StagingError(
-                        'Illegal return at top level, need to be a `Var` or a tuple of `Var`s'
-                    )
-                for ret in returns:
-                    ret.vardef.set_atype('output')
-                returns = [
-                    (ret.vardef.name, ret.vardef.dtype) for ret in returns
-                ]
+                        ret.vardef.set_atype('output')
+                    returns = [
+                        (ret.vardef.name, ret.vardef.dtype) for ret in returns
+                    ]
 
-                closure = StagingContext.closure
-    except Exception as e:
-        raise StagingError('Exception occurred in staging') from e
-    finally:
-        StagingContext.reset()
-        staged_ast = pop_ast()
+                    closure = StagingContext.closure
+        except Exception as e:
+            raise StagingError('Exception occurred in staging') from e
+        finally:
+            StagingContext.reset()
+            staged_ast = pop_ast()
 
-    staged = Func(func.__name__, params + list(closure.keys()), returns,
-                  staged_ast, closure)
+        staged = Func(func.__name__, params + list(closure.keys()), returns,
+                      staged_ast, closure)
 
-    return staged
+        return staged
+
+    if callable(func):
+        return decorator(func)
+    else:
+        return decorator
 
 
-def inline(func=None, src=None, fallback=None, verbose=False):
-    caller_env = _get_caller_env(1)
+def inline(func=None, src=None, fallback=None, verbose=False, caller_env=None):
+    if caller_env is None:
+        caller_env = _get_caller_env(1)
 
     def decorator(func):
         return staged_callable(

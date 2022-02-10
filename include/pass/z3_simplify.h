@@ -6,6 +6,7 @@
 
 #include <z3++.h>
 
+#include <analyze/symbol_table.h>
 #include <func.h>
 #include <hash.h>
 #include <mutator.h>
@@ -13,20 +14,6 @@
 #include <visitor.h>
 
 namespace ir {
-class OutDatedCondsRemover : public Visitor {
-    std::deque<std::pair<Expr, bool>> &condList_;
-
-  public:
-    OutDatedCondsRemover(std::deque<std::pair<Expr, bool>> &condList)
-        : condList_(condList) {}
-
-  private:
-    void remove(const std::string &name);
-
-  protected:
-    void visit(const Store &op) override;
-    void visit(const ReduceTo &op) override;
-};
 
 /**
  * Simplify the AST using Z3
@@ -39,7 +26,9 @@ class OutDatedCondsRemover : public Visitor {
  * - It can deal with some more complex expressions, such as Mod
  * - It may take some more time
  */
-class Z3Simplify : public Mutator {
+class Z3Simplify : public SymbolTable<Mutator> {
+    typedef SymbolTable<Mutator> BaseClass;
+
     int varCnt_ = 0;
     ASTHashMap<Expr, int> varId_;
 
@@ -50,10 +39,8 @@ class Z3Simplify : public Mutator {
     std::unordered_map<Expr, Opt<z3::expr>> z3Exprs_;
     std::deque<std::pair<Expr, bool>> condList_;
 
-    OutDatedCondsRemover remove_;
-
   public:
-    Z3Simplify() : solver_(ctx_), remove_(condList_) {}
+    Z3Simplify() : solver_(ctx_) {}
 
   private:
     int getVarId(const Expr &op);
@@ -95,9 +82,8 @@ class Z3Simplify : public Mutator {
 
     Stmt visit(const If &op) override;
     Stmt visit(const Assert &op) override;
+    Stmt visit(const Assume &op) override;
     Stmt visit(const For &op) override;
-    Stmt visit(const Store &op) override;
-    Stmt visit(const ReduceTo &op) override;
 };
 
 Stmt z3Simplify(const Stmt &op);

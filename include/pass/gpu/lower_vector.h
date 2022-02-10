@@ -4,7 +4,6 @@
 #include <unordered_map>
 
 #include <analyze/analyze_linear.h>
-#include <analyze/symbol_table.h>
 #include <func.h>
 #include <pass/z3_simplify.h>
 
@@ -12,8 +11,8 @@ namespace ir {
 
 namespace gpu {
 
-class LowerVector : public SymbolTable<Z3Simplify> {
-    typedef SymbolTable<Z3Simplify> BaseClass;
+class LowerVector : public Z3Simplify {
+    typedef Z3Simplify BaseClass;
 
     static constexpr int VEC_LEN[] = {4, 2};
 

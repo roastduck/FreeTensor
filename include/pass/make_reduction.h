@@ -3,7 +3,6 @@
 
 #include <unordered_set>
 
-#include <analyze/all_reads.h>
 #include <func.h>
 #include <mutator.h>
 
@@ -20,24 +19,7 @@ class MakeReduction : public Mutator {
   private:
     bool isSameElem(const Store &s, const Load &l);
 
-    template <class Node> Stmt doMake(Store op, ReduceOp reduceOp) {
-        if (types_.count(reduceOp)) {
-            auto expr = op->expr_.as<Node>();
-            if (expr->lhs_->nodeType() == ASTNodeType::Load &&
-                isSameElem(op, expr->lhs_.template as<LoadNode>()) &&
-                (!canonicalOnly_ || !allReads(expr->rhs_).count(op->var_))) {
-                return makeReduceTo(op->id(), op->var_, op->indices_, reduceOp,
-                                    expr->rhs_, false);
-            }
-            if (expr->rhs_->nodeType() == ASTNodeType::Load &&
-                isSameElem(op, expr->rhs_.template as<LoadNode>()) &&
-                (!canonicalOnly_ || !allReads(expr->lhs_).count(op->var_))) {
-                return makeReduceTo(op->id(), op->var_, op->indices_, reduceOp,
-                                    expr->lhs_, false);
-            }
-        }
-        return op;
-    }
+    Stmt doMake(Store op, ReduceOp reduceOp);
 
   protected:
     Stmt visit(const Store &op) override;

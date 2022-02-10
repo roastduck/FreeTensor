@@ -30,6 +30,7 @@ class Hasher {
     static size_t compHash(const ForNode &op);
     static size_t compHash(const IfNode &op);
     static size_t compHash(const AssertNode &op);
+    static size_t compHash(const AssumeNode &op);
     static size_t compHash(const EvalNode &op);
     static size_t compHash(const MatMulNode &op);
 
@@ -61,6 +62,7 @@ class HashComparator {
     bool compare(const For &lhs, const For &rhs) const;
     bool compare(const If &lhs, const If &rhs) const;
     bool compare(const Assert &lhs, const Assert &rhs) const;
+    bool compare(const Assume &lhs, const Assume &rhs) const;
     bool compare(const Eval &lhs, const Eval &rhs) const;
     bool compare(const MatMul &lhs, const MatMul &rhs) const;
 

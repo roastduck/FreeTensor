@@ -84,8 +84,11 @@ class FindAccessPoint : public SymbolTable<WithCursor<Visitor>> {
 
     bool lastIsLoad_ = false;
     std::vector<IterAxis> cur_; // Current iteration point in the space
-    std::vector<Expr> conds_;   // FIXME: There may be out-dated conditions. See
-                                // OutDatedRemover in pass/simplify
+    std::vector<Expr>
+        conds_; // FIXME: There may be out-dated conditions, and we must check
+                // allReads(cond) against allWrites(body) for each If or For
+                // nodes. See pass/simplify. If the condition violates, we may
+                // need to push a null condition according to RelaxMode
     std::unordered_map<std::string, std::vector<Ref<AccessPoint>>> reads_,
         writes_;
     std::vector<VarDef> allDefs_;
