@@ -8,6 +8,7 @@
 #include <analyze/type_infer.h>
 #include <func.h>
 #include <hash.h>
+#include <id.h>
 #include <mutator.h>
 #include <visitor.h>
 
@@ -37,6 +38,7 @@ class PropagateRequire : public SymbolTable<Visitor> {
     DataType dtype(const Expr &op);
 
   protected:
+    using BaseClass::visit;
     void visit(const Load &op) override;
     void visit(const Store &op) override;
     void visit(const ReduceTo &op) override;
@@ -46,13 +48,16 @@ class PropagateRequire : public SymbolTable<Visitor> {
 class ReplaceByTape : public Mutator {
     const SymbolTableInterface &symbolTable_;
     const std::unordered_map<std::string, std::string> &tapeMap_;
-    const std::unordered_map<AST, Expr> &versions_;
+    const std::unordered_map<ExprOrStmtId, Expr> &versions_;
+    Stmt parent_;
 
   public:
     ReplaceByTape(const SymbolTableInterface &symbolTable,
                   const std::unordered_map<std::string, std::string> &tapeMap,
-                  const std::unordered_map<AST, Expr> &versions)
-        : symbolTable_(symbolTable), tapeMap_(tapeMap), versions_(versions) {}
+                  const std::unordered_map<ExprOrStmtId, Expr> &versions,
+                  const Stmt &parent)
+        : symbolTable_(symbolTable), tapeMap_(tapeMap), versions_(versions),
+          parent_(parent) {}
 
   protected:
     Expr visit(const Load &op) override;
@@ -112,10 +117,9 @@ class Grad : public SymbolTable<Mutator> {
     const std::unordered_set<std::string> &tapes_;
     const std::unordered_set<std::string> &affectedDefs_;
     const std::unordered_map<std::string, std::string> &tapeMap_;
-    const std::unordered_map<AST, Expr> &versions_;
+    const std::unordered_map<ExprOrStmtId, Expr> &versions_;
     const std::unordered_map<std::string, Expr> &totLens_;
     const std::unordered_set<Stmt> &notSingleWrite_;
-    ReplaceByTape replaceByTape_;
 
     std::unordered_map<std::string, std::string> requireGrads_; // var name map
     std::unordered_map<std::string, std::string> provideGrads_; // var name map
@@ -133,13 +137,12 @@ class Grad : public SymbolTable<Mutator> {
          const std::unordered_set<std::string> &tapes,
          const std::unordered_set<std::string> &affectedDefs,
          const std::unordered_map<std::string, std::string> &tapeMap,
-         const std::unordered_map<AST, Expr> &versions,
+         const std::unordered_map<ExprOrStmtId, Expr> &versions,
          const std::unordered_map<std::string, Expr> &totLens,
          const std::unordered_set<Stmt> &notSingleWrite)
         : requires_(requires), provides_(provides), tapes_(tapes),
           affectedDefs_(affectedDefs), tapeMap_(tapeMap), versions_(versions),
-          totLens_(totLens), notSingleWrite_(notSingleWrite),
-          replaceByTape_(*this, tapeMap_, versions) {}
+          totLens_(totLens), notSingleWrite_(notSingleWrite) {}
 
     const std::unordered_map<std::string, std::string> &requireGrads() const {
         return requireGrads_;

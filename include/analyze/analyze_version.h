@@ -4,6 +4,8 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include <analyze/with_cursor.h>
+#include <id.h>
 #include <visitor.h>
 
 namespace ir {
@@ -32,13 +34,15 @@ class CountScopeLen : public Visitor {
     void visit(const Assert &op) override;
 };
 
-class AnalyzeVersion : public Visitor {
+class AnalyzeVersion : public WithCursor<Visitor> {
+    typedef WithCursor<Visitor> BaseClass;
+
     std::string def_, var_;
     const std::unordered_set<std::string> &affectingScopes_; // For IDs
     const std::unordered_set<std::string> &needTapes_; // Store or ReduceTo IDs
     const std::unordered_map<Stmt, Expr> &scopeLen_;
     Expr totLen_;
-    std::unordered_map<AST, Expr> &versions_;
+    std::unordered_map<ExprOrStmtId, Expr> &versions_;
     std::string tapeName_;
     Expr offset_ = makeIntConst(0);
 
@@ -47,7 +51,8 @@ class AnalyzeVersion : public Visitor {
                    const std::unordered_set<std::string> &affectingScopes,
                    const std::unordered_set<std::string> &needTapes,
                    const std::unordered_map<Stmt, Expr> &scopeLen,
-                   const Expr &totLen, std::unordered_map<AST, Expr> &versions)
+                   const Expr &totLen,
+                   std::unordered_map<ExprOrStmtId, Expr> &versions)
         : def_(def), affectingScopes_(affectingScopes), needTapes_(needTapes),
           scopeLen_(scopeLen), totLen_(totLen), versions_(versions) {}
 
@@ -68,7 +73,8 @@ class AnalyzeVersion : public Visitor {
  *
  * @return : (node -> versions, VarDef IDs -> total version counts)
  */
-std::pair<std::unordered_map<AST, Expr>, std::unordered_map<std::string, Expr>>
+std::pair<std::unordered_map<ExprOrStmtId, Expr>,
+          std::unordered_map<std::string, Expr>>
 analyzeVersion(const Stmt &op,
                const std::unordered_set<std::string> &intermediates);
 

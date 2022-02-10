@@ -64,7 +64,8 @@ Expr ReplaceByTape::visit(const Load &_op) {
         auto tapeVar = tapeMap_.at(symbolTable_.def(_op->var_)->id());
         if (tapeVar != op->var_) {
             op->var_ = tapeVar;
-            op->indices_.insert(op->indices_.begin(), versions_.at(_op));
+            op->indices_.insert(op->indices_.begin(),
+                                versions_.at(ExprOrStmtId(_op, parent_)));
         }
     }
     return op;
@@ -221,7 +222,7 @@ Stmt Grad::visit(const Store &op) {
         if (!recomputed && b->atype() == AccessType::Cache &&
             !taped_.count(op->var_)) {
             recomputed_[op->var_].insert(op);
-            auto ret = replaceByTape_(op);
+            auto ret = ReplaceByTape(*this, tapeMap_, versions_, op)(op);
             ret->setId("");
             return ret;
         } else {
@@ -233,8 +234,9 @@ Stmt Grad::visit(const Store &op) {
             auto &&grad = gradNames_.at(op->var_);
             auto &&indices = op->indices_;
             if (!allReads(op->expr_).count(op->var_)) {
+                ReplaceByTape replaceByTape(*this, tapeMap_, versions_, op);
                 // Quick path for acyclic assignment
-                GradExpr exprVisitor(replaceByTape_, gradNames_, op->expr_,
+                GradExpr exprVisitor(replaceByTape, gradNames_, op->expr_,
                                      makeLoad(grad, indices),
                                      makeLoad(op->var_, indices));
                 exprVisitor(op->expr_);
@@ -259,7 +261,8 @@ Stmt Grad::visit(const Store &op) {
                 stmts.emplace_back(
                     makeStore("", grad, indices, makeIntConst(0)));
 
-                GradExpr exprVisitor(replaceByTape_, gradNames_, op->expr_,
+                ReplaceByTape replaceByTape(*this, tapeMap_, versions_, op);
+                GradExpr exprVisitor(replaceByTape, gradNames_, op->expr_,
                                      makeLoad(oldGrad, {}),
                                      makeLoad(op->var_, indices));
                 exprVisitor(op->expr_);
@@ -289,7 +292,7 @@ Stmt Grad::visit(const ReduceTo &op) {
         if (!recomputed && b->atype() == AccessType::Cache &&
             !taped_.count(op->var_)) {
             recomputed_[op->var_].insert(op);
-            auto ret = replaceByTape_(op);
+            auto ret = ReplaceByTape(*this, tapeMap_, versions_, op)(op);
             ret->setId("");
             return ret;
         } else {
@@ -302,8 +305,9 @@ Stmt Grad::visit(const ReduceTo &op) {
             auto &&indices = op->indices_;
             if (op->op_ == ReduceOp::Add &&
                 !allReads(op->expr_).count(op->var_)) {
+                ReplaceByTape replaceByTape(*this, tapeMap_, versions_, op);
                 // Quick path for canonical reduce sum
-                GradExpr exprVisitor(replaceByTape_, gradNames_, op->expr_,
+                GradExpr exprVisitor(replaceByTape, gradNames_, op->expr_,
                                      makeLoad(grad, indices),
                                      makeLoad(op->var_, indices));
                 exprVisitor(op->expr_);
@@ -472,7 +476,6 @@ grad(const Stmt &_op, const std::unordered_set<std::string> &requires,
     op = makeReduction(op, {ReduceOp::Add}, true);
 
     auto [forward, tapeMap, versions, totLens] = outputIntermediates(op, tapes);
-    // versions contains pointers to op. Do not modify op
 
     PropagateRequire propagator(requires, provides);
     size_t affectCnt;

@@ -5,6 +5,7 @@
 #include <unordered_set>
 
 #include <analyze/symbol_table.h>
+#include <id.h>
 #include <mutator.h>
 
 namespace ir {
@@ -12,12 +13,12 @@ namespace ir {
 class OutputIntermediates : public SymbolTable<Mutator> {
     typedef SymbolTable<Mutator> BaseClass;
 
-    const std::unordered_map<AST, Expr> &versions_;
+    const std::unordered_map<ExprOrStmtId, Expr> &versions_;
     const std::unordered_map<std::string, Expr> &totLens_;
     std::unordered_map<std::string, std::string> tapeNames_;
 
   public:
-    OutputIntermediates(const std::unordered_map<AST, Expr> &versions,
+    OutputIntermediates(const std::unordered_map<ExprOrStmtId, Expr> &versions,
                         const std::unordered_map<std::string, Expr> &totLens)
         : versions_(versions), totLens_(totLens) {}
 
@@ -29,6 +30,7 @@ class OutputIntermediates : public SymbolTable<Mutator> {
     bool isSingleVersion(const std::string &defId) const;
 
   protected:
+    using BaseClass::visit;
     Stmt visit(const Store &op) override;
     Stmt visit(const ReduceTo &op) override;
     Stmt visit(const VarDef &op) override;
@@ -53,7 +55,8 @@ class OutputIntermediates : public SymbolTable<Mutator> {
  * )
  */
 std::tuple<Stmt, std::unordered_map<std::string, std::string>,
-           std::unordered_map<AST, Expr>, std::unordered_map<std::string, Expr>>
+           std::unordered_map<ExprOrStmtId, Expr>,
+           std::unordered_map<std::string, Expr>>
 outputIntermediates(const Stmt &op,
                     const std::unordered_set<std::string> &intermediates);
 

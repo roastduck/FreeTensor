@@ -23,8 +23,9 @@ bool OutputIntermediates::isSingleVersion(const std::string &defId) const {
 
 Stmt OutputIntermediates::visit(const Store &op) {
     auto oldStore = BaseClass::visit(op);
-    if (versions_.count(op) && !isSingleVersion(def(op->var_)->id())) {
-        std::vector<Expr> newIndices(1, versions_.at(op));
+    ExprOrStmtId id(op);
+    if (versions_.count(id) && !isSingleVersion(def(op->var_)->id())) {
+        std::vector<Expr> newIndices(1, versions_.at(id));
         newIndices.insert(newIndices.end(), op->indices_.begin(),
                           op->indices_.end());
         auto newStore = makeStore("", op->var_ + ".tape", std::move(newIndices),
@@ -37,8 +38,9 @@ Stmt OutputIntermediates::visit(const Store &op) {
 
 Stmt OutputIntermediates::visit(const ReduceTo &op) {
     auto oldReduce = BaseClass::visit(op);
-    if (versions_.count(op) && !isSingleVersion(def(op->var_)->id())) {
-        std::vector<Expr> newIndices(1, versions_.at(op));
+    ExprOrStmtId id(op);
+    if (versions_.count(id) && !isSingleVersion(def(op->var_)->id())) {
+        std::vector<Expr> newIndices(1, versions_.at(id));
         newIndices.insert(newIndices.end(), op->indices_.begin(),
                           op->indices_.end());
         auto newStore = makeStore("", op->var_ + ".tape", std::move(newIndices),
@@ -83,7 +85,8 @@ Stmt OutputIntermediates::visit(const VarDef &_op) {
 }
 
 std::tuple<Stmt, std::unordered_map<std::string, std::string>,
-           std::unordered_map<AST, Expr>, std::unordered_map<std::string, Expr>>
+           std::unordered_map<ExprOrStmtId, Expr>,
+           std::unordered_map<std::string, Expr>>
 outputIntermediates(const Stmt &op,
                     const std::unordered_set<std::string> &intermediates) {
     auto [versions, totLens] = analyzeVersion(op, intermediates);
