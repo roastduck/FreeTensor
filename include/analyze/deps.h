@@ -35,6 +35,7 @@ struct AccessPoint {
     std::vector<IterAxis> iter_; /// The temporal location of the access
     std::vector<Expr> access_;   /// The spacial location of the access
     std::vector<Expr> conds_;    /// The condition (predicate) of the access
+    SymbolTableData symbolTable_;
 };
 
 class FindAllNoDeps : public Visitor {
@@ -132,7 +133,8 @@ class FindAccessPoint : public SymbolTable<WithCursor<Visitor>> {
                defAxis_.at(op->var_),
                cur_,
                std::vector<Expr>{op->indices_.begin(), op->indices_.end()},
-               conds_};
+               conds_,
+               symbolTableSnapshot()};
         writes_[def(op->var_)->id()].emplace_back(ap);
     }
 

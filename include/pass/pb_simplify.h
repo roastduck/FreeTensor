@@ -14,6 +14,9 @@ class PBCompBounds : public CompUniqueBounds {
     GenPBExpr genPBExpr_;
     PBCtx isl_;
 
+  public:
+    PBCompBounds() : genPBExpr_(*this) {}
+
   protected:
     using CompUniqueBounds::visit;
 
