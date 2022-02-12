@@ -56,12 +56,11 @@ class StructuralFeature : public CompUniqueBounds {
         // unlimited
     };
 
-    std::unordered_map<std::string, NodeFeature>
-        features_;                           // Node ID -> features
-    std::unordered_map<AST, NodeInfo> info_; // AST -> info
+    std::unordered_map<ID, NodeFeature> features_; // Node ID -> features
+    std::unordered_map<AST, NodeInfo> info_;       // AST -> info
 
   public:
-    const std::unordered_map<std::string, NodeFeature> &features() const {
+    const std::unordered_map<ID, NodeFeature> &features() const {
         return features_;
     }
 
@@ -101,8 +100,7 @@ class StructuralFeature : public CompUniqueBounds {
     Stmt visit(const VarDef &op) override;
 };
 
-inline std::unordered_map<std::string, NodeFeature>
-structuralFeature(const Stmt &op) {
+inline std::unordered_map<ID, NodeFeature> structuralFeature(const Stmt &op) {
     StructuralFeature visitor; // actually a Mutator, but we drop the result
     visitor(op);
     return visitor.features();

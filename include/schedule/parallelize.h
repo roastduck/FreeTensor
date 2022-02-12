@@ -9,8 +9,9 @@
 namespace ir {
 
 class Parallelize : public Mutator {
-    std::string loop_, parallel_;
-    std::vector<std::string> outerLoops_, loopStack_;
+    ID loop_;
+    std::string parallel_;
+    std::vector<ID> outerLoops_, loopStack_;
     bool done_ = false;
 
     // For GPU threads, we may want to bind a loop to threadIdx.x inside another
@@ -39,19 +40,18 @@ class Parallelize : public Mutator {
     std::unordered_set<std::string> hiddenVars_;
 
   public:
-    Parallelize(const std::string &loop, const std::string &parallel)
+    Parallelize(const ID &loop, const std::string &parallel)
         : loop_(loop), parallel_(parallel) {}
 
     bool done() const { return done_; }
-    const std::vector<std::string> outerLoops() const { return outerLoops_; }
+    const std::vector<ID> outerLoops() const { return outerLoops_; }
 
   protected:
     Stmt visit(const For &op) override;
     Expr visit(const Var &op) override;
 };
 
-Stmt parallelize(const Stmt &ast, const std::string &loop,
-                 const std::string &parallel);
+Stmt parallelize(const Stmt &ast, const ID &loop, const std::string &parallel);
 
 } // namespace ir
 

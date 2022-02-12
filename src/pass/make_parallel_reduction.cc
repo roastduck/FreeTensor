@@ -64,8 +64,7 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
     auto op = __op.as<ReduceToNode>();
     if (toAlter_.count(op->id())) {
-        std::unordered_map<std::string,
-                           std::vector<SubTree<ExprNode, Nullable>>>
+        std::unordered_map<ID, std::vector<SubTree<ExprNode, Nullable>>>
             indicesMap;
         for (auto &&loopId : toAlter_.at(op->id())) {
             auto &indices = indicesMap[loopId];
@@ -122,7 +121,7 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
         // atomic operation. We will cache over some serial inner loops, if
         // reduction is invariant to this loop, or if the loop densly iterates
         // over the reduction
-        std::string loopToCache;
+        ID loopToCache;
         std::vector<bool> preserveDim(op->indices_.size(), false);
         if (serialOverRed_.count(op->id())) {
             for (auto &&loop : serialOverRed_.at(op->id())) {
@@ -145,9 +144,9 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
             }
         }
     found_loop_to_cache:
-        if (!loopToCache.empty()) {
+        if (loopToCache.isValid()) {
             std::vector<Expr> newShape, newTargetIndices;
-            op->var_ += ".atomic_cache." + op->id();
+            op->var_ += ".atomic_cache." + op->id().strId();
             op->indices_ = {};
             for (auto &&[preserve, idx, dim] :
                  iter::zip(preserveDim, _op->indices_,
@@ -192,7 +191,8 @@ Stmt MakeParallelReduction::visit(const For &_op) {
         Stmt ret = op;
         for (auto &&[reduce, newShape, targetIndices] :
              cacheAtomic_.at(op->id())) {
-            auto cacheName = reduce->var_ + ".atomic_cache." + reduce->id();
+            auto cacheName =
+                reduce->var_ + ".atomic_cache." + reduce->id().strId();
             auto dtype = buffer(reduce->var_)->tensor().dtype();
             auto mtype = localMType(buffer(reduce->var_)->mtype());
             std::vector<Expr> cacheIndices;
@@ -252,7 +252,7 @@ Stmt makeParallelReduction(const Stmt &_op) {
         cond.emplace_back(std::move(findDepsCond));
     }
 
-    std::unordered_map<std::string, std::unordered_set<std::string>> toAlter;
+    std::unordered_map<ID, std::unordered_set<ID>> toAlter;
     auto filter = [](const AccessPoint &later, const AccessPoint &earlier) {
         return earlier.op_->nodeType() == ASTNodeType::ReduceTo &&
                later.op_->nodeType() == ASTNodeType::ReduceTo;
@@ -260,7 +260,7 @@ Stmt makeParallelReduction(const Stmt &_op) {
     auto found = [&](const Dependency &d) {
         ASSERT(d.cond_.size() >= 1);
         ASSERT(d.cond_.front().first.isNode_);
-        auto &&loopId = d.cond_.front().first.name_;
+        auto &&loopId = d.cond_.front().first.id_;
         if (paraInfo.at(loopId).type_.substr(0, 10) == "threadIdx." &&
             d.later() != d.earlier()) {
             // No need to use atomic because we can sync

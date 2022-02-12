@@ -37,9 +37,9 @@ MultiLevelTilingPart::MultiLevelTilingPart(ForsWithDataReuse fors) {
 }
 
 template <int n>
-std::array<std::pair<std::string, int>, n>
-splitLoop(Schedule &schedule, std::string loop, std::array<int, n> tiling) {
-    std::array<std::pair<std::string, int>, n> result;
+std::array<std::pair<ID, int>, n> splitLoop(Schedule &schedule, ID loop,
+                                            std::array<int, n> tiling) {
+    std::array<std::pair<ID, int>, n> result;
     for (int i = 0; i < n - 1; i++) {
         if (tiling[i] != 1) {
             auto t = schedule.split(loop, tiling[i]);
@@ -57,9 +57,8 @@ void MultiLevelTilingPart::apply(Schedule &schedule) {
     int spaceLoopLength = target.spaceLoops.size();
     int reductionLoopLength = target.reductionLoops.size();
 
-    std::vector<std::array<std::pair<std::string, int>, 4>> space_split(
-        spaceLoopLength);
-    std::vector<std::array<std::pair<std::string, int>, 2>> reduction_split(
+    std::vector<std::array<std::pair<ID, int>, 4>> space_split(spaceLoopLength);
+    std::vector<std::array<std::pair<ID, int>, 2>> reduction_split(
         spaceLoopLength);
 
     for (int i = 0; i < spaceLoopLength; i++) {
@@ -71,8 +70,8 @@ void MultiLevelTilingPart::apply(Schedule &schedule) {
                                           annotation.reductionLoopTiling[i]);
     }
 
-    std::vector<std::pair<std::string, int>> tiles(4 * spaceLoopLength +
-                                                   2 * reductionLoopLength);
+    std::vector<std::pair<ID, int>> tiles(4 * spaceLoopLength +
+                                          2 * reductionLoopLength);
     for (int i = 0; i < spaceLoopLength; i++) {
         tiles[i] = space_split[i][0];
         tiles[i + spaceLoopLength] = space_split[i][1];
@@ -86,7 +85,7 @@ void MultiLevelTilingPart::apply(Schedule &schedule) {
         tiles[i + 3 * spaceLoopLength + reductionLoopLength] =
             reduction_split[i][1];
     }
-    std::vector<std::string> labels;
+    std::vector<ID> labels;
     for (const auto &tile : tiles) {
         if (tile.second > 1) {
             labels.push_back(tile.first);
@@ -166,7 +165,7 @@ std::vector<int> MultiLevelTilingPart::getAnnotation() const {
 
 size_t MultiLevelTilingPart::hash() const {
     size_t h = std::hash<ForsWithDataReuse>{}(target);
-    boost::hash_combine(h, std::hash<MultiLevelTilingAnnotation>{}(annotation));
+    hashCombine(h, std::hash<MultiLevelTilingAnnotation>{}(annotation));
     return h;
 }
 

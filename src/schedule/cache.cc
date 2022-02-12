@@ -250,17 +250,17 @@ Expr MakeInitAndReduce::visit(const Load &op) {
     return Mutator::visit(op);
 }
 
-std::pair<Stmt, std::tuple<std::string, std::string, std::string, std::string>>
-cache(const Stmt &_ast, const std::string &stmt, const std::string &var,
-      MemType mtype) {
-    std::string fillStmt, flushStmt, newVar, oldDef, newDef;
+std::pair<Stmt, std::tuple<ID, ID, std::string, ID>>
+cache(const Stmt &_ast, const ID &stmt, const std::string &var, MemType mtype) {
+    ID fillStmt, flushStmt, oldDef, newDef;
+    std::string newVar;
     MakeCacheVar makeCacheVar(stmt, var, mtype, false);
     auto ast = makeCacheVar(_ast);
     newVar = makeCacheVar.newVar();
     oldDef = makeCacheVar.oldDef();
     newDef = makeCacheVar.newDef();
-    if (newDef.empty()) {
-        throw InvalidSchedule("Statement " + stmt + " not found");
+    if (!newDef.isValid()) {
+        throw InvalidSchedule("Statement " + toString(stmt) + " not found");
     }
 
     BuiltinSimplify::LowerBoundsMap lower;
@@ -284,10 +284,11 @@ cache(const Stmt &_ast, const std::string &stmt, const std::string &var,
                              std::move(newVar), std::move(newDef)));
 }
 
-std::pair<Stmt, std::tuple<std::string, std::string, std::string, std::string>>
-cacheReduction(const Stmt &_ast, const std::string &stmt,
-               const std::string &var, MemType mtype) {
-    std::string initStmt, reduceStmt, newVar, oldDef, newDef;
+std::pair<Stmt, std::tuple<ID, ID, std::string, ID>>
+cacheReduction(const Stmt &_ast, const ID &stmt, const std::string &var,
+               MemType mtype) {
+    ID initStmt, reduceStmt, oldDef, newDef;
+    std::string newVar;
     auto ast = makeReduction(_ast);
 
     MakeCacheVar makeCacheVar(stmt, var, mtype, true);
@@ -295,8 +296,8 @@ cacheReduction(const Stmt &_ast, const std::string &stmt,
     newVar = makeCacheVar.newVar();
     oldDef = makeCacheVar.oldDef();
     newDef = makeCacheVar.newDef();
-    if (newDef.empty()) {
-        throw InvalidSchedule("Statement " + stmt + " not found");
+    if (!newDef.isValid()) {
+        throw InvalidSchedule("Statement " + toString(stmt) + " not found");
     }
 
     BuiltinSimplify::LowerBoundsMap lower;

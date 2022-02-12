@@ -14,11 +14,11 @@ Stmt Vectorize::visit(const For &_op) {
     return op;
 }
 
-Stmt vectorize(const Stmt &_ast, const std::string &loop) {
+Stmt vectorize(const Stmt &_ast, const ID &loop) {
     Vectorize mutator(loop);
     auto ast = mutator(_ast);
     if (!mutator.done()) {
-        throw InvalidSchedule("Loop " + loop + " not found");
+        throw InvalidSchedule("Loop " + toString(loop) + " not found");
     }
     auto filter = [&](const AccessPoint &later, const AccessPoint &earlier) {
         return earlier.cursor_.getParentById(loop).isValid() &&

@@ -35,7 +35,7 @@ const std::vector<For> &CheckLoopOrder::order() const {
     if (curOrder_.size() != dstOrder_.size()) {
         std::string msg = "Loops ";
         for (auto &&[i, item] : iter::enumerate(dstOrder_)) {
-            msg += (i > 0 ? ", " : "") + item;
+            msg += (i > 0 ? ", " : "") + toString(item);
         }
         msg += "should be directly nested";
         throw InvalidSchedule(msg);

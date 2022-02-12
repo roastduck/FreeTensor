@@ -13,10 +13,10 @@
 namespace ir {
 
 class FindAllIfs : public Visitor {
-    std::unordered_set<std::string> results_;
+    std::unordered_set<ID> results_;
 
   public:
-    const std::unordered_set<std::string> &results() const { return results_; }
+    const std::unordered_set<ID> &results() const { return results_; }
 
   protected:
     void visit(const If &op) override;
@@ -66,8 +66,8 @@ class SeperateTail : public SymbolTable<Mutator> {
 
     bool noDuplicateVarDefs_;
 
-    const std::unordered_set<std::string> &candidates_;
-    std::unordered_set<std::string> nextCandidates_;
+    const std::unordered_set<ID> &candidates_;
+    std::unordered_set<ID> nextCandidates_;
 
     std::vector<std::vector<If>> ifStack_;
     std::vector<bool> hasVarDefStack_;
@@ -75,10 +75,10 @@ class SeperateTail : public SymbolTable<Mutator> {
 
   public:
     SeperateTail(bool noDuplicateVarDefs,
-                 const std::unordered_set<std::string> &candidates)
+                 const std::unordered_set<ID> &candidates)
         : noDuplicateVarDefs_(noDuplicateVarDefs), candidates_(candidates) {}
 
-    const std::unordered_set<std::string> &nextCandidates() const {
+    const std::unordered_set<ID> &nextCandidates() const {
         return nextCandidates_;
     }
 

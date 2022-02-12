@@ -15,7 +15,7 @@ namespace ir {
 class AsMatMul : public SymbolTable<Mutator> {
     typedef SymbolTable<Mutator> BaseClass;
 
-    std::string loop_;
+    ID loop_;
 
     int nestCnt_ = 0;
     std::vector<For> nests_;
@@ -32,7 +32,7 @@ class AsMatMul : public SymbolTable<Mutator> {
     AnalyzeLinear analyzeLinear_;
 
   public:
-    AsMatMul(const std::string &loop) : loop_(loop) {}
+    AsMatMul(const ID &loop) : loop_(loop) {}
 
   private:
     const LinearExpr<int64_t> &analyzeLinear(const Expr &expr);
@@ -130,7 +130,7 @@ class AsMatMul : public SymbolTable<Mutator> {
     Stmt visit(const VarDef &op) override;
 };
 
-Stmt asMatMul(const Stmt &ast, const std::string &loop);
+Stmt asMatMul(const Stmt &ast, const ID &loop);
 
 } // namespace ir
 

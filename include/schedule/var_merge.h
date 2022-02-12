@@ -6,13 +6,14 @@
 namespace ir {
 
 class VarMerge : public Mutator {
-    std::string def_, var_;
+    ID def_;
+    std::string var_;
     int dim_;
     Expr factor_;
     bool found_ = false;
 
   public:
-    VarMerge(const std::string &def, int dim) : def_(def), dim_(dim) {}
+    VarMerge(const ID &def, int dim) : def_(def), dim_(dim) {}
 
     bool found() const { return found_; }
 
@@ -33,7 +34,7 @@ class VarMerge : public Mutator {
     Expr visit(const Load &op) override;
 };
 
-Stmt varMerge(const Stmt &ast, const std::string &def, int dim);
+Stmt varMerge(const Stmt &ast, const ID &def, int dim);
 
 } // namespace ir
 

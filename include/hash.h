@@ -48,7 +48,9 @@ class Hasher {
     static size_t compHash(const CastNode &op);
     static size_t compHash(const IntrinsicNode &op);
 
-    size_t operator()(const AST &op) const { return op->hash(); }
+    size_t operator()(const AST &op) const {
+        return op.isValid() ? op->hash() : P;
+    }
 };
 
 class HashComparator {
@@ -91,6 +93,22 @@ using ASTHashMap = std::unordered_map<K, V, Hasher, HashComparator>;
 template <class K>
 using ASTHashSet = std::unordered_set<K, Hasher, HashComparator>;
 
+size_t hashCombine(size_t seed, size_t other);
+
 } // namespace ir
+
+namespace std {
+
+template <class T, class U> class hash<std::pair<T, U>> {
+    std::hash<T> hashT_;
+    std::hash<U> hashU_;
+
+  public:
+    size_t operator()(const std::pair<T, U> &pair) const {
+        return ir::hashCombine(hashT_(pair.first), hashU_(pair.second));
+    }
+};
+
+} // namespace std
 
 #endif // HASH_H

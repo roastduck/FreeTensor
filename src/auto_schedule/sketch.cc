@@ -1,6 +1,6 @@
 #include <auto_schedule/sketch.h>
 #include <auto_schedule/utils.h>
-#include <boost/functional/hash.hpp>
+#include <hash.h>
 
 namespace ir {
 
@@ -56,10 +56,11 @@ std::vector<int> Sketch::getAnnotation() const {
     }
     return ret;
 }
+
 size_t Sketch::hash() const {
     size_t h = 0;
     for (const auto &part : parts_) {
-        boost::hash_combine(h, part->hash());
+        hashCombine(h, part->hash());
     }
     return h;
 }

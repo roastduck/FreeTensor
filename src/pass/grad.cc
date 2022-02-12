@@ -24,7 +24,7 @@ DataType PropagateRequire::dtype(const Expr &op) {
 }
 
 void PropagateRequire::visit(const Load &op) {
-    if (isFloat(dtype(op)) && !curTarget_.empty() &&
+    if (isFloat(dtype(op)) && curTarget_.isValid() &&
         buffer(op->var_)->atype() == AccessType::Cache) {
         affectedDefs_.insert(def(op->var_)->id());
         // No need to recurse deeper
@@ -64,7 +64,8 @@ Expr ReplaceByTape::visit(const Load &_op) {
         auto tapeVar = tapeMap_.at(symbolTable_.def(_op->var_)->id());
         if (tapeVar != op->var_) {
             op->var_ = tapeVar;
-            op->indices_.insert(op->indices_.begin(), versions_.at(_op));
+            op->indices_.insert(op->indices_.begin(),
+                                versions_.at(ID(_op, parent_)));
         }
     }
     return op;
@@ -172,8 +173,8 @@ Stmt Grad::visit(const VarDef &_op) {
                 grad = makeStmtSeq("", {init, grad});
             }
 
-            grad = makeVarDef(op->id() + ".grad", gradName, *op->buffer_,
-                              op->sizeLim_, grad, op->pinned_);
+            grad = makeVarDef(op->id().strId() + ".grad", gradName,
+                              *op->buffer_, op->sizeLim_, grad, op->pinned_);
             switch (op->buffer_->atype()) {
             case AccessType::Input:
                 grad.as<VarDefNode>()->buffer_->setAtype(AccessType::Output);
@@ -198,9 +199,10 @@ Stmt Grad::visit(const VarDef &_op) {
         if (tapeMap_.count(op->id())) {
             auto tapeVar = tapeMap_.at(op->id());
             if (tapeVar != ret->name_) {
-                ret = makeVarDef(ret->id() + ".tape", tapeVar, *ret->buffer_,
-                                 ret->sizeLim_, ret, ret->pinned_)
-                          .as<VarDefNode>();
+                ret =
+                    makeVarDef(ret->id().strId() + ".tape", tapeVar,
+                               *ret->buffer_, ret->sizeLim_, ret, ret->pinned_)
+                        .as<VarDefNode>();
                 auto &shape = ret->buffer_->tensor().shape();
                 shape.insert(shape.begin(), totLens_.at(op->id()));
             }
@@ -221,7 +223,7 @@ Stmt Grad::visit(const Store &op) {
         if (!recomputed && b->atype() == AccessType::Cache &&
             !taped_.count(op->var_)) {
             recomputed_[op->var_].insert(op);
-            auto ret = replaceByTape_(op);
+            auto ret = ReplaceByTape(*this, tapeMap_, versions_, op)(op);
             ret->setId("");
             return ret;
         } else {
@@ -233,8 +235,9 @@ Stmt Grad::visit(const Store &op) {
             auto &&grad = gradNames_.at(op->var_);
             auto &&indices = op->indices_;
             if (!allReads(op->expr_).count(op->var_)) {
+                ReplaceByTape replaceByTape(*this, tapeMap_, versions_, op);
                 // Quick path for acyclic assignment
-                GradExpr exprVisitor(replaceByTape_, gradNames_, op->expr_,
+                GradExpr exprVisitor(replaceByTape, gradNames_, op->expr_,
                                      makeLoad(grad, indices),
                                      makeLoad(op->var_, indices));
                 exprVisitor(op->expr_);
@@ -259,7 +262,8 @@ Stmt Grad::visit(const Store &op) {
                 stmts.emplace_back(
                     makeStore("", grad, indices, makeIntConst(0)));
 
-                GradExpr exprVisitor(replaceByTape_, gradNames_, op->expr_,
+                ReplaceByTape replaceByTape(*this, tapeMap_, versions_, op);
+                GradExpr exprVisitor(replaceByTape, gradNames_, op->expr_,
                                      makeLoad(oldGrad, {}),
                                      makeLoad(op->var_, indices));
                 exprVisitor(op->expr_);
@@ -289,7 +293,7 @@ Stmt Grad::visit(const ReduceTo &op) {
         if (!recomputed && b->atype() == AccessType::Cache &&
             !taped_.count(op->var_)) {
             recomputed_[op->var_].insert(op);
-            auto ret = replaceByTape_(op);
+            auto ret = ReplaceByTape(*this, tapeMap_, versions_, op)(op);
             ret->setId("");
             return ret;
         } else {
@@ -302,8 +306,9 @@ Stmt Grad::visit(const ReduceTo &op) {
             auto &&indices = op->indices_;
             if (op->op_ == ReduceOp::Add &&
                 !allReads(op->expr_).count(op->var_)) {
+                ReplaceByTape replaceByTape(*this, tapeMap_, versions_, op);
                 // Quick path for canonical reduce sum
-                GradExpr exprVisitor(replaceByTape_, gradNames_, op->expr_,
+                GradExpr exprVisitor(replaceByTape, gradNames_, op->expr_,
                                      makeLoad(grad, indices),
                                      makeLoad(op->var_, indices));
                 exprVisitor(op->expr_);
@@ -455,10 +460,10 @@ void GradExpr::visit(const Abs &op) {
 
 std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>,
-           std::unordered_map<std::string, std::string>>
+           std::unordered_map<ID, std::string>>
 grad(const Stmt &_op, const std::unordered_set<std::string> &requires,
      const std::unordered_set<std::string> &provides,
-     const std::unordered_set<std::string> &tapes) {
+     const std::unordered_set<ID> &tapes) {
 
     // expand the scope of each local variable, to avoid unnecessary recomputing
     auto op = hoistVarOverStmtSeq(_op);
@@ -472,7 +477,6 @@ grad(const Stmt &_op, const std::unordered_set<std::string> &requires,
     op = makeReduction(op, {ReduceOp::Add}, true);
 
     auto [forward, tapeMap, versions, totLens] = outputIntermediates(op, tapes);
-    // versions contains pointers to op. Do not modify op
 
     PropagateRequire propagator(requires, provides);
     size_t affectCnt;
@@ -505,10 +509,10 @@ grad(const Stmt &_op, const std::unordered_set<std::string> &requires,
 
 std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>,
-           std::unordered_map<std::string, std::string>>
+           std::unordered_map<ID, std::string>>
 grad(const Func &func, const std::unordered_set<std::string> &requires,
      const std::unordered_set<std::string> &provides,
-     const std::unordered_set<std::string> &tapes) {
+     const std::unordered_set<ID> &tapes) {
     auto [forward, backward, requireGrads, provideGrads, tapeMap] =
         grad(func->body_, requires, provides, tapes);
 
@@ -544,11 +548,10 @@ grad(const Func &func, const std::unordered_set<std::string> &requires,
                            provideGrads, tapeMap);
 }
 
-static std::vector<std::string> _findTapeDefs(const Stmt &op,
-                                              GradTapeMode mode) {
+static std::vector<ID> _findTapeDefs(const Stmt &op, GradTapeMode mode) {
     switch (mode) {
     case GradTapeMode::All: {
-        std::vector<std::string> ret;
+        std::vector<ID> ret;
         for (auto &&[id, name] : allDefs(op, {AccessType::Cache})) {
             ret.emplace_back(id);
         }
@@ -563,15 +566,14 @@ static std::vector<std::string> _findTapeDefs(const Stmt &op,
     }
 }
 
-static std::unordered_set<std::string> findTapeDefs(const Stmt &op,
-                                                    GradTapeMode mode) {
+static std::unordered_set<ID> findTapeDefs(const Stmt &op, GradTapeMode mode) {
     auto ret = _findTapeDefs(op, mode);
-    return std::unordered_set<std::string>(ret.begin(), ret.end());
+    return std::unordered_set<ID>(ret.begin(), ret.end());
 }
 
 std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>,
-           std::unordered_map<std::string, std::string>>
+           std::unordered_map<ID, std::string>>
 grad(const Stmt &op, const std::unordered_set<std::string> &requires,
      const std::unordered_set<std::string> &provides, GradTapeMode tapeMode) {
     return grad(op, requires, provides, findTapeDefs(op, tapeMode));
@@ -579,7 +581,7 @@ grad(const Stmt &op, const std::unordered_set<std::string> &requires,
 
 std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>,
-           std::unordered_map<std::string, std::string>>
+           std::unordered_map<ID, std::string>>
 grad(const Func &func, const std::unordered_set<std::string> &requires,
      const std::unordered_set<std::string> &provides, GradTapeMode tapeMode) {
     return grad(func, requires, provides, findTapeDefs(func->body_, tapeMode));

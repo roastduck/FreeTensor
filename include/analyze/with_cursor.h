@@ -43,12 +43,12 @@ template <class BaseClass> class WithCursor : public BaseClass {
 };
 
 class GetCursorById : public WithCursor<Visitor> {
-    std::string id_;
+    ID id_;
     Cursor result_;
     bool found_ = false;
 
   public:
-    GetCursorById(const std::string &id) : id_(id) {}
+    GetCursorById(const ID &id) : id_(id) {}
 
     const Cursor &result() const { return result_; }
     bool found() const { return found_; }
@@ -57,11 +57,11 @@ class GetCursorById : public WithCursor<Visitor> {
     void visitStmt(const Stmt &op) override;
 };
 
-inline Cursor getCursorById(const Stmt &ast, const std::string &id) {
+inline Cursor getCursorById(const Stmt &ast, const ID &id) {
     GetCursorById visitor(id);
     visitor(ast);
     if (!visitor.found()) {
-        throw InvalidSchedule("Statement " + id + " not found");
+        throw InvalidSchedule("Statement " + toString(id) + " not found");
     }
     return visitor.result();
 }

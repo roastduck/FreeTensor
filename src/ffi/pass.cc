@@ -44,27 +44,27 @@ void init_ffi_pass(py::module_ &m) {
         static_cast<
             std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
                        std::unordered_map<std::string, std::string>,
-                       std::unordered_map<std::string, std::string>> (*)(
+                       std::unordered_map<ID, std::string>> (*)(
                 const Func &, const std::unordered_set<std::string> &,
                 const std::unordered_set<std::string> &,
-                const std::unordered_set<std::string> &)>(&grad),
+                const std::unordered_set<ID> &)>(&grad),
         "stmt"_a, "requires"_a, "provides"_a, "tapes"_a);
     m.def(
         "grad",
         static_cast<
             std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
                        std::unordered_map<std::string, std::string>,
-                       std::unordered_map<std::string, std::string>> (*)(
+                       std::unordered_map<ID, std::string>> (*)(
                 const Stmt &, const std::unordered_set<std::string> &,
                 const std::unordered_set<std::string> &,
-                const std::unordered_set<std::string> &)>(&grad),
+                const std::unordered_set<ID> &)>(&grad),
         "func"_a, "requires"_a, "provides"_a, "tapes"_a);
     m.def(
         "grad",
         static_cast<
             std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
                        std::unordered_map<std::string, std::string>,
-                       std::unordered_map<std::string, std::string>> (*)(
+                       std::unordered_map<ID, std::string>> (*)(
                 const Func &, const std::unordered_set<std::string> &,
                 const std::unordered_set<std::string> &, GradTapeMode)>(&grad),
         "stmt"_a, "requires"_a, "provides"_a,
@@ -74,7 +74,7 @@ void init_ffi_pass(py::module_ &m) {
         static_cast<
             std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
                        std::unordered_map<std::string, std::string>,
-                       std::unordered_map<std::string, std::string>> (*)(
+                       std::unordered_map<ID, std::string>> (*)(
                 const Stmt &, const std::unordered_set<std::string> &,
                 const std::unordered_set<std::string> &, GradTapeMode)>(&grad),
         "func"_a, "requires"_a, "provides"_a,
@@ -83,8 +83,7 @@ void init_ffi_pass(py::module_ &m) {
     // std::unordered_map<Load, Expr> cannot be exported to Python
     m.def(
         "output_intermediates",
-        [](const Stmt &op,
-           const std::unordered_set<std::string> &intermediates) {
+        [](const Stmt &op, const std::unordered_set<ID> &intermediates) {
             return std::get<0>(outputIntermediates(op, intermediates));
         },
         "stmt"_a, "intermediates"_a);
@@ -158,14 +157,12 @@ void init_ffi_pass(py::module_ &m) {
     m.def("prop_one_time_use",
           static_cast<Stmt (*)(const Stmt &)>(&propOneTimeUse), "stmt"_a);
 
-    m.def(
-        "remove_writes",
-        static_cast<Func (*)(const Func &, const std::string &)>(&removeWrites),
-        "func"_a, "single_def_id"_a = "");
-    m.def(
-        "remove_writes",
-        static_cast<Stmt (*)(const Stmt &, const std::string &)>(&removeWrites),
-        "stmt"_a, "single_def_id"_a = "");
+    m.def("remove_writes",
+          static_cast<Func (*)(const Func &, const ID &)>(&removeWrites),
+          "func"_a, "single_def_id"_a = "");
+    m.def("remove_writes",
+          static_cast<Stmt (*)(const Stmt &, const ID &)>(&removeWrites),
+          "stmt"_a, "single_def_id"_a = "");
 
     m.def("remove_dead_var",
           static_cast<Func (*)(const Func &)>(&removeDeadVar), "func"_a);

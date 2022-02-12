@@ -67,6 +67,15 @@ void init_ffi_ast(py::module_ &m) {
     py::class_<StmtNode, Stmt> pyStmt(m, "Stmt", pyAST);
     py::class_<ExprNode, Expr> pyExpr(m, "Expr", pyAST);
 
+    py::class_<ID>(m, "ID")
+        .def(py::init([](const std::string &stmtId) { return ID(stmtId); }))
+        .def("__str__", [](const ID &id) { return toString(id); })
+        .def("__hash__", [](const ID &id) { return std::hash<ID>()(id); })
+        .def(
+            "__eq__", [](const ID &lhs, const ID &rhs) { return lhs == rhs; },
+            py::is_operator());
+    py::implicitly_convertible<std::string, ID>();
+
 #ifdef IR_DEBUG_LOG_NODE
     pyAST.def_readonly("debug_creator", &ASTNode::debugCreator_);
 #endif
@@ -458,18 +467,16 @@ void init_ffi_ast(py::module_ &m) {
     // Statements
     m.def("makeAny", &_makeAny);
     m.def("makeStmtSeq",
-          static_cast<Stmt (*)(const std::string &, const std::vector<Stmt> &)>(
+          static_cast<Stmt (*)(const ID &, const std::vector<Stmt> &)>(
               &_makeStmtSeq),
           "id"_a, "stmts"_a);
-    m.def(
-        "makeVarDef",
-        static_cast<Stmt (*)(const std::string &, const std::string &,
-                             const Buffer &, const Expr &, const Stmt &, bool)>(
-            &_makeVarDef),
-        "nid"_a, "name"_a, "buffer"_a, "size_lim"_a, "body"_a, "pinned"_a);
+    m.def("makeVarDef",
+          static_cast<Stmt (*)(const ID &, const std::string &, const Buffer &,
+                               const Expr &, const Stmt &, bool)>(&_makeVarDef),
+          "nid"_a, "name"_a, "buffer"_a, "size_lim"_a, "body"_a, "pinned"_a);
     m.def("makeVar", &_makeVar, "name"_a);
     m.def("makeStore",
-          static_cast<Stmt (*)(const std::string &, const std::string &,
+          static_cast<Stmt (*)(const ID &, const std::string &,
                                const std::vector<Expr> &, const Expr &)>(
               &_makeStore),
           "nid"_a, "var"_a, "indices"_a, "expr"_a);
@@ -479,26 +486,23 @@ void init_ffi_ast(py::module_ &m) {
           "var"_a, "indices"_a);
     m.def("makeIntConst", &_makeIntConst, "val"_a);
     m.def("makeFloatConst", &_makeFloatConst, "val"_a);
-    m.def(
-        "makeFor",
-        static_cast<Stmt (*)(const std::string &, const std::string &,
-                             const Expr &, const Expr &, const Expr &,
-                             const Expr &, const ForProperty &, const Stmt &)>(
-            &_makeFor),
-        "nid"_a, "iter"_a, "begin"_a, "end"_a, "step"_a, "len"_a, "property"_a,
-        "body"_a);
+    m.def("makeFor",
+          static_cast<Stmt (*)(const ID &, const std::string &, const Expr &,
+                               const Expr &, const Expr &, const Expr &,
+                               const ForProperty &, const Stmt &)>(&_makeFor),
+          "nid"_a, "iter"_a, "begin"_a, "end"_a, "step"_a, "len"_a,
+          "property"_a, "body"_a);
     m.def("makeIf",
-          static_cast<Stmt (*)(const std::string &, const Expr &, const Stmt &,
+          static_cast<Stmt (*)(const ID &, const Expr &, const Stmt &,
                                const Stmt &)>(&_makeIf),
           "nid"_a, "cond"_a, "thenCase"_a, "elseCase"_a = nullptr);
-    m.def(
-        "makeAssert",
-        static_cast<Stmt (*)(const std::string &, const Expr &, const Stmt &)>(
-            &_makeAssert),
-        "nid"_a, "cond"_a, "body"_a);
+    m.def("makeAssert",
+          static_cast<Stmt (*)(const ID &, const Expr &, const Stmt &)>(
+              &_makeAssert),
+          "nid"_a, "cond"_a, "body"_a);
     m.def("makeEval",
-          static_cast<Stmt (*)(const std::string &, const Expr &)>(&_makeEval),
-          "nid"_a, "expr"_a);
+          static_cast<Stmt (*)(const ID &, const Expr &)>(&_makeEval), "nid"_a,
+          "expr"_a);
 
     // Expressions
     m.def("makeAnyExpr", &_makeAnyExpr);

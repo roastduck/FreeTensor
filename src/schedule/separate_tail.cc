@@ -28,7 +28,7 @@ void FindAllIfs::visit(const If &op) {
 
 Stmt AppendIDs::visitStmt(const Stmt &op) {
     auto ret = Mutator::visitStmt(op);
-    ret->setId(op->id() + suffix_);
+    ret->setId(op->id().strId() + suffix_);
     return ret;
 }
 

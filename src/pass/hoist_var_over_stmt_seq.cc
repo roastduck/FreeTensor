@@ -59,7 +59,7 @@ Stmt HoistVarOverStmtSeq::visit(const StmtSeq &op) {
             Stmt _newDef;
             if (namesCnt.at(def->name_) > 1) {
                 ASSERT(!rename_.count(def->name_));
-                rename_[def->name_] = def->name_ + "." + def->id();
+                rename_[def->name_] = def->name_ + "." + def->id().strId();
                 _newDef = (*this)(stmt);
                 rename_.erase(def->name_);
             } else {

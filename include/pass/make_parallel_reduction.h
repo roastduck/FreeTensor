@@ -13,18 +13,18 @@
 namespace ir {
 
 struct ParallelInfo {
-    std::string type_;                    // parallel type
-    std::vector<std::string> outerLoops_; // outer loop ID
+    std::string type_;           // parallel type
+    std::vector<ID> outerLoops_; // outer loop ID
 };
 
 class FindAllParallel : public Visitor {
     // Loop ID -> ParallelInfo
-    std::unordered_map<std::string, ParallelInfo> results_;
+    std::unordered_map<ID, ParallelInfo> results_;
 
-    std::vector<std::string> loopStack_;
+    std::vector<ID> loopStack_;
 
   public:
-    const std::unordered_map<std::string, ParallelInfo> &results() const {
+    const std::unordered_map<ID, ParallelInfo> &results() const {
         return results_;
     }
 
@@ -33,12 +33,12 @@ class FindAllParallel : public Visitor {
 };
 
 class FindSerialLoopsOverReduce : public Visitor {
-    std::unordered_map<std::string, std::vector<For>>
+    std::unordered_map<ID, std::vector<For>>
         results_; // ReduceTo ID -> [For], from inner to outer
     std::vector<For> loopStack_;
 
   public:
-    const std::unordered_map<std::string, std::vector<For>> &results() const {
+    const std::unordered_map<ID, std::vector<For>> &results() const {
         return results_;
     }
 
@@ -50,29 +50,27 @@ class FindSerialLoopsOverReduce : public Visitor {
 class MakeParallelReduction : public SymbolTable<Mutator> {
     typedef SymbolTable<Mutator> BaseClass;
 
-    const std::unordered_map<std::string, std::unordered_set<std::string>>
+    const std::unordered_map<ID, std::unordered_set<ID>>
         &toAlter_; // ReduceTo ID -> Racing For ID
-    const std::unordered_map<std::string, std::vector<For>>
+    const std::unordered_map<ID, std::vector<For>>
         &serialOverRed_; // ReduceTo ID -> [For], from inner to outer
     const LoopVariExprMap &variantMap_;
 
-    std::unordered_map<std::string, std::string>
-        paraScopes_; // For Id -> parallel
-    std::unordered_map<std::string, std::vector<ReductionItem>> forReductions_;
+    std::unordered_map<ID, std::string> paraScopes_; // For Id -> parallel
+    std::unordered_map<ID, std::vector<ReductionItem>> forReductions_;
     std::unordered_set<std::string> defined_;
-    std::unordered_map<std::string, std::unordered_set<std::string>>
+    std::unordered_map<ID, std::unordered_set<std::string>>
         scopeDefined_; // For ID -> definitions at that scope
     std::unordered_map<
-        std::string,
+        ID,
         std::vector<std::tuple<ReduceTo, std::vector<Expr>, std::vector<Expr>>>>
         cacheAtomic_; // loop ID -> [(old ReduceTo node, new shape, new
                       // indices)]
 
   public:
     MakeParallelReduction(
-        const std::unordered_map<std::string, std::unordered_set<std::string>>
-            &toAlter,
-        const std::unordered_map<std::string, std::vector<For>> &serialOverRed,
+        const std::unordered_map<ID, std::unordered_set<ID>> &toAlter,
+        const std::unordered_map<ID, std::vector<For>> &serialOverRed,
         const LoopVariExprMap &variantMap)
         : toAlter_(toAlter), serialOverRed_(serialOverRed),
           variantMap_(variantMap) {}

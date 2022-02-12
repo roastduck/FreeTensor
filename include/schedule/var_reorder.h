@@ -8,12 +8,13 @@
 namespace ir {
 
 class VarReorder : public Mutator {
-    std::string def_, var_;
+    ID def_;
+    std::string var_;
     std::vector<int> order_;
     bool found_ = false;
 
   public:
-    VarReorder(const std::string &def, const std::vector<int> &order)
+    VarReorder(const ID &def, const std::vector<int> &order)
         : def_(def), order_(order) {
         std::vector<int> numbers;
         numbers.reserve(order.size());
@@ -54,8 +55,7 @@ class VarReorder : public Mutator {
     Stmt visit(const MatMul &op) override;
 };
 
-Stmt varReorder(const Stmt &ast, const std::string &def,
-                const std::vector<int> &order);
+Stmt varReorder(const Stmt &ast, const ID &def, const std::vector<int> &order);
 
 } // namespace ir
 

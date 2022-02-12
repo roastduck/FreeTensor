@@ -16,12 +16,11 @@ namespace gpu {
 
 class FindParallelLoops : public Visitor {
     std::vector<For> loops_, stack_;
-    std::unordered_map<std::string, std::unordered_set<std::string>> affecting_;
+    std::unordered_map<ID, std::unordered_set<ID>> affecting_;
 
   public:
     const std::vector<For> &loops() const { return loops_; }
-    const std::unordered_map<std::string, std::unordered_set<std::string>> &
-    affecting() const {
+    const std::unordered_map<ID, std::unordered_set<ID>> &affecting() const {
         return affecting_;
     }
 
@@ -35,13 +34,12 @@ class MultiplexMutator : public SymbolTable<Mutator> {
 
     std::vector<For> stack_;
     std::unordered_map<std::string, int> defPos_;
-    const std::unordered_map<std::string, std::unordered_set<std::string>>
+    const std::unordered_map<ID, std::unordered_set<ID>>
         &affecting_; // VarDef ID -> For ID
 
   public:
     MultiplexMutator(
-        const std::unordered_map<std::string, std::unordered_set<std::string>>
-            &affecting)
+        const std::unordered_map<ID, std::unordered_set<ID>> &affecting)
         : affecting_(affecting) {}
 
   private:
