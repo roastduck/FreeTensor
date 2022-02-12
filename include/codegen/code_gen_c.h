@@ -10,15 +10,16 @@
 
 namespace ir {
 
-template <class Stream> class CodeGenC : public CodeGen<Stream> {
+template <class Stream> class CodeGenC : public WithTypeInfer<CodeGen<Stream>> {
+    typedef WithTypeInfer<CodeGen<Stream>> BaseClass;
+
     const std::vector<std::string> &params_;
     const std::vector<std::pair<std::string, DataType>> &returns_;
-    TypeInfer typeInfer_;
 
   public:
     CodeGenC(const std::vector<std::string> &params,
              const std::vector<std::pair<std::string, DataType>> &returns)
-        : params_(params), returns_(returns), typeInfer_(*this) {}
+        : params_(params), returns_(returns) {}
 
     static std::string gen(DataType dtype);
 
@@ -26,8 +27,6 @@ template <class Stream> class CodeGenC : public CodeGen<Stream> {
     virtual void genAlloc(const Tensor &tensor, const std::string &rawPtr,
                           const std::string &shapePtr,
                           const std::string &dimPtr) = 0;
-
-    DataType dtype(const Expr &op);
 
     virtual void visit(const StmtSeq &op) override;
     virtual void visit(const VarDef &op) override;

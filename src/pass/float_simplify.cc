@@ -25,11 +25,6 @@ inline static bool hasSqrt(const Expr &op) {
     }
 }
 
-DataType FloatSimplify::dtype(const Expr &op) {
-    typeInfer_(op);
-    return typeInfer_.types().at(op);
-}
-
 Expr FloatSimplify::normalizeRealMulDiv(const Expr &op) {
     int sqrtCnt = 0, divCnt = 0, squareCnt = 0;
     std::function<void(const Expr &, std::vector<Expr> &, std::vector<Expr> &,

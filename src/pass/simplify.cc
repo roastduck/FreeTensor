@@ -47,11 +47,6 @@ int findInnerMostScope(const std::unordered_map<std::string, int> &varScope,
     return visitor.innnerMost();
 }
 
-DataType CompTransientBounds::dtype(const Expr &op) {
-    typeInfer_(op);
-    return typeInfer_.types().at(op);
-}
-
 TransientBound CompTransientBounds::transient(const Expr &op) {
     if (transients_.count(op)) {
         return transients_.at(op);

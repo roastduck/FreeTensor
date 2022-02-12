@@ -13,12 +13,11 @@
 
 namespace ir {
 
-class PropagateRequire : public SymbolTable<Visitor> {
-    typedef SymbolTable<Visitor> BaseClass;
+class PropagateRequire : public WithTypeInfer<SymbolTable<Visitor>> {
+    typedef WithTypeInfer<SymbolTable<Visitor>> BaseClass;
 
     const std::unordered_set<std::string> &requires_; // input var names
     const std::unordered_set<std::string> &provides_; // output var names
-    TypeInfer typeInfer_;
 
     std::unordered_set<ID> affectedDefs_; // all VarDef IDs
 
@@ -27,12 +26,9 @@ class PropagateRequire : public SymbolTable<Visitor> {
   public:
     PropagateRequire(const std::unordered_set<std::string> &requires,
                      const std::unordered_set<std::string> &provides)
-        : requires_(requires), provides_(provides), typeInfer_(*this) {}
+        : requires_(requires), provides_(provides) {}
 
     const std::unordered_set<ID> &affectedDefs() const { return affectedDefs_; }
-
-  private:
-    DataType dtype(const Expr &op);
 
   protected:
     using BaseClass::visit;
