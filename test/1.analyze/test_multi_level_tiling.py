@@ -19,7 +19,7 @@ def test_basic():
     ast = ir.pop_ast()
     fors_with_data_reuse = ir.find_multi_level_tiling(ast)
 
-    assert fors_with_data_reuse[0].strip() == "S L2 S L1 R L3"
+    assert str(fors_with_data_reuse[0]).strip() == "S L2 S L1 R L3"
 
 
 def test_basic_2():
@@ -38,7 +38,7 @@ def test_basic_2():
     ast = ir.pop_ast()
     fors_with_data_reuse = ir.find_multi_level_tiling(ast)
 
-    assert fors_with_data_reuse[0].strip() == "S L2 S L1"
+    assert str(fors_with_data_reuse[0]).strip() == "S L2 S L1"
 
 
 def test_middle_store():
@@ -61,7 +61,7 @@ def test_middle_store():
     ast = ir.pop_ast()
     fors_with_data_reuse = ir.find_multi_level_tiling(ast)
 
-    assert fors_with_data_reuse[0].strip() == "S L5 S L3 R L4"
+    assert str(fors_with_data_reuse[0]).strip() == "S L5 S L3 R L4"
 
 
 def test_two_branches():
@@ -87,8 +87,8 @@ def test_two_branches():
     ast = ir.pop_ast()
     fors_with_data_reuse = ir.find_multi_level_tiling(ast)
 
-    assert fors_with_data_reuse[0].strip() == "S L5 S L4 R L3"
-    assert fors_with_data_reuse[1].strip() == "S L7 S L6"
+    assert str(fors_with_data_reuse[0]).strip() == "S L5 S L4 R L3"
+    assert str(fors_with_data_reuse[1]).strip() == "S L7 S L6"
 
 
 def test_no_data_reuse():
@@ -114,7 +114,7 @@ def test_no_data_reuse():
     ast = ir.pop_ast()
     fors_with_data_reuse = ir.find_multi_level_tiling(ast)
 
-    assert fors_with_data_reuse[0].strip() == "S L5 S L4 R L3"
+    assert str(fors_with_data_reuse[0]).strip() == "S L5 S L4 R L3"
 
 
 def test_no_data_reuse_exchange():
@@ -140,7 +140,7 @@ def test_no_data_reuse_exchange():
     ast = ir.pop_ast()
     fors_with_data_reuse = ir.find_multi_level_tiling(ast)
 
-    assert fors_with_data_reuse[0].strip() == "S L5 S L4 R L3"
+    assert str(fors_with_data_reuse[0]).strip() == "S L5 S L4 R L3"
 
 
 def test_root_and_branch():
@@ -169,8 +169,8 @@ def test_root_and_branch():
     ast = ir.pop_ast()
     fors_with_data_reuse = ir.find_multi_level_tiling(ast)
 
-    assert fors_with_data_reuse[0].strip() == "S L5 S L4 R L3"
-    assert fors_with_data_reuse[1].strip() == "S L2 S L1"
+    assert str(fors_with_data_reuse[0]).strip() == "S L5 S L4 R L3"
+    assert str(fors_with_data_reuse[1]).strip() == "S L2 S L1"
 
 
 def test_root_with_no_data_reuse():
@@ -198,4 +198,4 @@ def test_root_with_no_data_reuse():
     ast = ir.pop_ast()
     fors_with_data_reuse = ir.find_multi_level_tiling(ast)
 
-    assert fors_with_data_reuse[0].strip() == "S L5 S L4 R L3"
+    assert str(fors_with_data_reuse[0]).strip() == "S L5 S L4 R L3"

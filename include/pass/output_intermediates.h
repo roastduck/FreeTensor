@@ -5,7 +5,6 @@
 #include <unordered_set>
 
 #include <analyze/symbol_table.h>
-#include <id.h>
 #include <mutator.h>
 
 namespace ir {
@@ -13,21 +12,21 @@ namespace ir {
 class OutputIntermediates : public SymbolTable<Mutator> {
     typedef SymbolTable<Mutator> BaseClass;
 
-    const std::unordered_map<ExprOrStmtId, Expr> &versions_;
-    const std::unordered_map<std::string, Expr> &totLens_;
-    std::unordered_map<std::string, std::string> tapeNames_;
+    const std::unordered_map<ID, Expr> &versions_;
+    const std::unordered_map<ID, Expr> &totLens_;
+    std::unordered_map<ID, std::string> tapeNames_;
 
   public:
-    OutputIntermediates(const std::unordered_map<ExprOrStmtId, Expr> &versions,
-                        const std::unordered_map<std::string, Expr> &totLens)
+    OutputIntermediates(const std::unordered_map<ID, Expr> &versions,
+                        const std::unordered_map<ID, Expr> &totLens)
         : versions_(versions), totLens_(totLens) {}
 
-    const std::unordered_map<std::string, std::string> &tapeNames() const {
+    const std::unordered_map<ID, std::string> &tapeNames() const {
         return tapeNames_;
     }
 
   private:
-    bool isSingleVersion(const std::string &defId) const;
+    bool isSingleVersion(const ID &defId) const;
 
   protected:
     using BaseClass::visit;
@@ -54,11 +53,10 @@ class OutputIntermediates : public SymbolTable<Mutator> {
  *  Total version counts of each VarDef nodes
  * )
  */
-std::tuple<Stmt, std::unordered_map<std::string, std::string>,
-           std::unordered_map<ExprOrStmtId, Expr>,
-           std::unordered_map<std::string, Expr>>
+std::tuple<Stmt, std::unordered_map<ID, std::string>,
+           std::unordered_map<ID, Expr>, std::unordered_map<ID, Expr>>
 outputIntermediates(const Stmt &op,
-                    const std::unordered_set<std::string> &intermediates);
+                    const std::unordered_set<ID> &intermediates);
 
 } // namespace ir
 

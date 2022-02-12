@@ -4,7 +4,7 @@
 
 namespace ir {
 
-Stmt Cursor::getParentById(const std::string &id) const {
+Stmt Cursor::getParentById(const ID &id) const {
     for (auto it = stack_.top(); it.isValid(); it = it->prev_) {
         if (it->data_->id() == id) {
             return it->data_;

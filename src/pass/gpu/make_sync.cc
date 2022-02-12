@@ -62,7 +62,7 @@ Stmt CopyParts::visit(const For &_op) {
             throw InvalidProgram(
                 "Unable to insert a synchronizing statment because it requires "
                 "splitting a dynamic loop " +
-                op->id() + " into two parts");
+                toString(op->id()) + " into two parts");
         }
     }
     return op;

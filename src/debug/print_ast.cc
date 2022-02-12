@@ -33,9 +33,10 @@ void PrintVisitor::printId(const Stmt &op) {
 #endif
     if (op->hasNamedId()) {
         if (pretty_) {
-            os() << CYAN << op->id() << ":" << RESET << std::endl;
+            os() << CYAN << ::ir::toString(op->id()) << ":" << RESET
+                 << std::endl;
         } else {
-            os() << op->id() << ":" << std::endl;
+            os() << ::ir::toString(op->id()) << ":" << std::endl;
         }
     }
 }

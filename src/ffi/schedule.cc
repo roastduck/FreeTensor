@@ -27,15 +27,15 @@ void init_ffi_schedule(py::module_ &m) {
         .def("find", static_cast<Cursor (Schedule::*)(
                          const std::function<bool(const Cursor &)> &) const>(
                          &Schedule::find))
-        .def("find",
-             static_cast<Cursor (Schedule::*)(const std::string &) const>(
-                 &Schedule::find))
+        .def("find", static_cast<Cursor (Schedule::*)(const ID &) const>(
+                         &Schedule::find))
         .def("find_all",
              static_cast<std::vector<Cursor> (Schedule::*)(
                  const std::function<bool(const Cursor &)> &) const>(
                  &Schedule::findAll))
-        .def("find_all", static_cast<std::vector<Cursor> (Schedule::*)(
-                             const std::string &) const>(&Schedule::findAll))
+        .def("find_all",
+             static_cast<std::vector<Cursor> (Schedule::*)(const ID &) const>(
+                 &Schedule::findAll))
         .def("split", &Schedule::split, "id"_a, "factor"_a = -1,
              "nparts"_a = -1)
         .def("reorder", &Schedule::reorder, "order"_a)

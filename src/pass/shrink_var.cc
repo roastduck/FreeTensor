@@ -62,7 +62,7 @@ Stmt shrinkVar(const Stmt &_op) {
     std::tie(op, lower, upper) = simplifyAndGetBounds<PBSimplify>(_op);
 
     // (2)
-    std::unordered_map<std::string, AccessBound> bounds;
+    std::unordered_map<ID, AccessBound> bounds;
     for (auto &&[varDefId, name] : allDefs(op, {AccessType::Cache})) {
         bounds[varDefId] = compAccessBound(op, varDefId, lower, upper);
     }
@@ -74,7 +74,7 @@ Stmt shrinkVar(const Stmt &_op) {
     return z3Simplify(op); // Currently BuiltinSimplify is not sufficient
 }
 
-Stmt shrinkSingleVar(const Stmt &_op, const std::string &varDefId) {
+Stmt shrinkSingleVar(const Stmt &_op, const ID &varDefId) {
     // (1)
     Stmt op;
     BuiltinSimplify::LowerBoundsMap lower;
@@ -82,7 +82,7 @@ Stmt shrinkSingleVar(const Stmt &_op, const std::string &varDefId) {
     std::tie(op, lower, upper) = simplifyAndGetBounds<PBSimplify>(_op);
 
     // (2)
-    std::unordered_map<std::string, AccessBound> bounds;
+    std::unordered_map<ID, AccessBound> bounds;
     bounds[varDefId] = compAccessBound(op, varDefId, lower, upper);
 
     // (3)

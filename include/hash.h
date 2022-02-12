@@ -97,4 +97,18 @@ size_t hashCombine(size_t seed, size_t other);
 
 } // namespace ir
 
+namespace std {
+
+template <class T, class U> class hash<std::pair<T, U>> {
+    std::hash<T> hashT_;
+    std::hash<U> hashU_;
+
+  public:
+    size_t operator()(const std::pair<T, U> &pair) const {
+        return ir::hashCombine(hashT_(pair.first), hashU_(pair.second));
+    }
+};
+
+} // namespace std
+
 #endif // HASH_H

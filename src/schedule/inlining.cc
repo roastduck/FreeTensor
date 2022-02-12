@@ -69,7 +69,7 @@ Stmt MakeInline::visit(const VarDef &_op) {
     }
 }
 
-Stmt inlining(const Stmt &_ast, const std::string &def) {
+Stmt inlining(const Stmt &_ast, const ID &def) {
     std::unordered_map<Load, Expr> replace;
     auto filter = [&](const AccessPoint &later, const AccessPoint &earlier) {
         return later.op_->nodeType() == ASTNodeType::Load &&

@@ -16,16 +16,15 @@ static MemType toGlobalMemType(MemType mtype) {
     }
 }
 
-bool OutputIntermediates::isSingleVersion(const std::string &defId) const {
+bool OutputIntermediates::isSingleVersion(const ID &defId) const {
     return totLens_.at(defId)->nodeType() == ASTNodeType::IntConst &&
            totLens_.at(defId).as<IntConstNode>()->val_ == 1;
 }
 
 Stmt OutputIntermediates::visit(const Store &op) {
     auto oldStore = BaseClass::visit(op);
-    ExprOrStmtId id(op);
-    if (versions_.count(id) && !isSingleVersion(def(op->var_)->id())) {
-        std::vector<Expr> newIndices(1, versions_.at(id));
+    if (versions_.count(op->id()) && !isSingleVersion(def(op->var_)->id())) {
+        std::vector<Expr> newIndices(1, versions_.at(op->id()));
         newIndices.insert(newIndices.end(), op->indices_.begin(),
                           op->indices_.end());
         auto newStore = makeStore("", op->var_ + ".tape", std::move(newIndices),
@@ -38,9 +37,8 @@ Stmt OutputIntermediates::visit(const Store &op) {
 
 Stmt OutputIntermediates::visit(const ReduceTo &op) {
     auto oldReduce = BaseClass::visit(op);
-    ExprOrStmtId id(op);
-    if (versions_.count(id) && !isSingleVersion(def(op->var_)->id())) {
-        std::vector<Expr> newIndices(1, versions_.at(id));
+    if (versions_.count(op->id()) && !isSingleVersion(def(op->var_)->id())) {
+        std::vector<Expr> newIndices(1, versions_.at(op->id()));
         newIndices.insert(newIndices.end(), op->indices_.begin(),
                           op->indices_.end());
         auto newStore = makeStore("", op->var_ + ".tape", std::move(newIndices),
@@ -84,11 +82,10 @@ Stmt OutputIntermediates::visit(const VarDef &_op) {
     }
 }
 
-std::tuple<Stmt, std::unordered_map<std::string, std::string>,
-           std::unordered_map<ExprOrStmtId, Expr>,
-           std::unordered_map<std::string, Expr>>
+std::tuple<Stmt, std::unordered_map<ID, std::string>,
+           std::unordered_map<ID, Expr>, std::unordered_map<ID, Expr>>
 outputIntermediates(const Stmt &op,
-                    const std::unordered_set<std::string> &intermediates) {
+                    const std::unordered_set<ID> &intermediates) {
     auto [versions, totLens] = analyzeVersion(op, intermediates);
     OutputIntermediates mutator(versions, totLens);
     auto ret = mutator(op);

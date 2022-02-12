@@ -29,7 +29,7 @@ void FindAllScopesInside::visit(const StmtSeq &op) {
 Stmt BlendPass::visit(const For &op) {
     if (op->id() == loop_) {
         if (op->len_->nodeType() != ASTNodeType::IntConst) {
-            throw InvalidSchedule("The length of " + loop_ +
+            throw InvalidSchedule("The length of " + toString(loop_) +
                                   " should be a constant");
         }
         iter_ = op->iter_;
@@ -149,13 +149,13 @@ Expr BlendPass::visit(const Load &_op) {
     return visitMemAccess(op);
 }
 
-Stmt blend(const Stmt &_ast, const std::string &loop) {
+Stmt blend(const Stmt &_ast, const ID &loop) {
     auto ast = simplifyPass(_ast); // Const prop for ForNode::len_
 
     FindAllScopesInside finder(loop);
     finder(ast);
     if (!finder.found()) {
-        throw InvalidSchedule("Loop " + loop + " not found");
+        throw InvalidSchedule("Loop " + toString(loop) + " not found");
     }
 
     std::vector<FindDepsCond> cond;

@@ -51,8 +51,8 @@ Expr Splitter::visit(const Var &op) {
     }
 }
 
-std::pair<Stmt, std::pair<std::string, std::string>>
-split(const Stmt &_ast, const std::string &id, int factor, int nparts) {
+std::pair<Stmt, std::pair<ID, ID>> split(const Stmt &_ast, const ID &id,
+                                         int factor, int nparts) {
     Splitter mutator(id, factor, nparts);
     auto ast = mutator(_ast);
     if (!mutator.found()) {

@@ -10,14 +10,11 @@ namespace ir {
 
 enum class LoopVariability : int { Variance, Invariance };
 
-typedef std::unordered_map<std::string,
-                           std::unordered_map<std::string, LoopVariability>>
+typedef std::unordered_map<std::string, std::unordered_map<ID, LoopVariability>>
     LoopVariTransVarMap;
-typedef std::unordered_map<VarDef,
-                           std::unordered_map<std::string, LoopVariability>>
+typedef std::unordered_map<VarDef, std::unordered_map<ID, LoopVariability>>
     LoopVariUniqVarMap;
-typedef std::unordered_map<Expr,
-                           std::unordered_map<std::string, LoopVariability>>
+typedef std::unordered_map<Expr, std::unordered_map<ID, LoopVariability>>
     LoopVariExprMap;
 
 class MarkStores : public Visitor {
@@ -62,7 +59,7 @@ class MarkStores : public Visitor {
 };
 
 class FindLoopVariance : public Visitor {
-    const std::vector<std::string> &allLoops_;
+    const std::vector<ID> &allLoops_;
 
     std::vector<For> loopStack_;
     std::vector<Expr> condStack_;
@@ -71,8 +68,7 @@ class FindLoopVariance : public Visitor {
     LoopVariExprMap exprInfo_;
 
   public:
-    FindLoopVariance(const std::vector<std::string> &allLoops)
-        : allLoops_(allLoops) {}
+    FindLoopVariance(const std::vector<ID> &allLoops) : allLoops_(allLoops) {}
 
     const LoopVariExprMap &exprInfo() const { return exprInfo_; }
     const LoopVariUniqVarMap &varInfo() const { return uniqVarInfo_; }
@@ -100,9 +96,9 @@ class FindLoopVariance : public Visitor {
 };
 
 bool isVariant(const LoopVariExprMap &exprInfo, const Expr &expr,
-               const std::string &loop);
+               const ID &loop);
 bool isVariant(const LoopVariUniqVarMap &varInfo, const VarDef &def,
-               const std::string &loop);
+               const ID &loop);
 
 std::pair<LoopVariExprMap, LoopVariUniqVarMap> findLoopVariance(const Stmt &op);
 

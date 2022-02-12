@@ -12,7 +12,7 @@ void MarkStores::mergeInfo(const Expr &from, const std::string &to) {
         }
     }
     if (varInfo_.count(to)) {
-        std::vector<std::string> toErase;
+        std::vector<ID> toErase;
         for (auto &&loop : varInfo_.at(to)) {
             if (!exprInfo_.count(from) ||
                 !exprInfo_.at(from).count(loop.first)) {
@@ -81,7 +81,7 @@ void FindLoopVariance::mergeInfo(const Expr &from, const Expr &to) {
         }
     }
     if (exprInfo_.count(to)) {
-        std::vector<std::string> toErase;
+        std::vector<ID> toErase;
         for (auto &&loop : exprInfo_.at(to)) {
             if (!exprInfo_.count(from) ||
                 !exprInfo_.at(from).count(loop.first)) {
@@ -196,7 +196,7 @@ void FindLoopVariance::visit(const Cast &op) {
 }
 
 bool isVariant(const LoopVariExprMap &exprInfo, const Expr &expr,
-               const std::string &loop) {
+               const ID &loop) {
     if (!exprInfo.count(expr)) {
         return true;
     }
@@ -207,7 +207,7 @@ bool isVariant(const LoopVariExprMap &exprInfo, const Expr &expr,
 }
 
 bool isVariant(const LoopVariUniqVarMap &varInfo, const VarDef &def,
-               const std::string &loop) {
+               const ID &loop) {
     if (!varInfo.count(def)) {
         return true;
     }

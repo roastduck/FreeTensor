@@ -49,14 +49,13 @@ constexpr int FEAT_SAMP_GPU_LOCAL_ACCESS_AREA = 25;
  * XGBoost
  */
 class FixedLengthFeature : public Visitor {
-    const std::unordered_map<std::string, NodeFeature> &structural_;
+    const std::unordered_map<ID, NodeFeature> &structural_;
     std::unordered_map<Stmt, int64_t> iterCnts_; // -1 means unknown
     std::unordered_map<Stmt, std::vector<std::vector<double>>>
         samples_; // -1 means unknown. Passed down through the AST
 
   public:
-    FixedLengthFeature(
-        const std::unordered_map<std::string, NodeFeature> &structural)
+    FixedLengthFeature(const std::unordered_map<ID, NodeFeature> &structural)
         : structural_(structural) {}
 
     std::vector<double> features(const Stmt &root) const;

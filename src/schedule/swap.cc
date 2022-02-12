@@ -11,7 +11,7 @@ Stmt Swap::visit(const StmtSeq &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::StmtSeq);
     auto op = __op.as<StmtSeqNode>();
 
-    std::unordered_map<std::string, size_t> pos;
+    std::unordered_map<ID, size_t> pos;
     for (size_t i = 0, iEnd = op->stmts_.size(); i < iEnd; i++) {
         pos[op->stmts_[i]->id()] = i;
     }
@@ -35,7 +35,7 @@ Stmt Swap::visit(const StmtSeq &_op) {
     return makeStmtSeq(op->id(), std::move(stmts));
 }
 
-Stmt swap(const Stmt &_ast, const std::vector<std::string> &order) {
+Stmt swap(const Stmt &_ast, const std::vector<ID> &order) {
     Swap mutator(order);
     auto ast = mutator(_ast);
     auto scope = mutator.scope();
@@ -64,12 +64,10 @@ Stmt swap(const Stmt &_ast, const std::vector<std::string> &order) {
         auto old1 =
             std::find_if(scope->stmts_.begin(), scope->stmts_.end(),
                          [&](const Stmt &s) { return s->id() == s1->id(); });
-        auto new0 =
-            std::find_if(order.begin(), order.end(),
-                         [&](const std::string &id) { return id == s0->id(); });
-        auto new1 =
-            std::find_if(order.begin(), order.end(),
-                         [&](const std::string &id) { return id == s1->id(); });
+        auto new0 = std::find_if(order.begin(), order.end(),
+                                 [&](const ID &id) { return id == s0->id(); });
+        auto new1 = std::find_if(order.begin(), order.end(),
+                                 [&](const ID &id) { return id == s1->id(); });
         return (old0 < old1) != (new0 < new1);
     };
     auto found = [&](const Dependency &d) {

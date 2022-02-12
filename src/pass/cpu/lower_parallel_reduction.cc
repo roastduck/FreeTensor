@@ -47,7 +47,8 @@ Stmt LowerParallelReduction::visit(const For &_op) {
     for (size_t i = 0, n = op->property_.reductions_.size(); i < n; i++) {
         auto &[redOp, var, varIndices] = op->property_.reductions_[i];
         auto dtype = buffer(var)->tensor().dtype();
-        auto workspace = "__reduce_" + op->id() + "_" + std::to_string(i);
+        auto workspace =
+            "__reduce_" + op->id().strId() + "_" + std::to_string(i);
         std::vector<SubTree<ExprNode>> workspaceShape;
         ASSERT(varIndices.size() == buffer(var)->tensor().shape().size());
         for (auto &&[idx, dim] :
@@ -130,7 +131,7 @@ Stmt LowerParallelReduction::visit(const ReduceTo &_op) {
                 "Parallel reduction over multiple scopes is not supported yet");
         }
         auto &&redLoop = redLoops.front();
-        auto workspace = "__reduce_" + redLoop.first->id() + "_" +
+        auto workspace = "__reduce_" + redLoop.first->id().strId() + "_" +
                          std::to_string(redLoop.second);
         std::vector<SubTree<ExprNode>> indices;
         auto &&redIndices =

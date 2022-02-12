@@ -6,11 +6,11 @@
 namespace ir {
 
 class Vectorize : public Mutator {
-    std::string loop_;
+    ID loop_;
     bool done_ = false;
 
   public:
-    Vectorize(const std::string &loop) : loop_(loop) {}
+    Vectorize(const ID &loop) : loop_(loop) {}
 
     bool done() const { return done_; }
 
@@ -18,7 +18,7 @@ class Vectorize : public Mutator {
     Stmt visit(const For &op) override;
 };
 
-Stmt vectorize(const Stmt &ast, const std::string &loop);
+Stmt vectorize(const Stmt &ast, const ID &loop);
 
 } // namespace ir
 

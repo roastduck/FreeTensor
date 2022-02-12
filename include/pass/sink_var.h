@@ -1,7 +1,6 @@
 #ifndef SINK_VAR_H
 #define SINK_VAR_H
 
-#include <set>
 #include <unordered_set>
 #include <vector>
 
@@ -18,13 +17,14 @@ namespace ir {
  * If you don't want a variable to be sinked, please set VarDefNode::pinned_
  */
 class SinkVar : public Mutator {
-    const std::set<std::pair<std::string, std::string>> &deps_; // {(var, loop)}
+    const std::unordered_set<std::pair<std::string, ID>>
+        &deps_; // {(var, loop)}
     const LoopVariUniqVarMap &variantMap_;
     std::unordered_set<std::string> used_;
     bool isFixPoint_ = true;
 
   public:
-    SinkVar(const std::set<std::pair<std::string, std::string>> &deps,
+    SinkVar(const std::unordered_set<std::pair<std::string, ID>> &deps,
             const LoopVariUniqVarMap &variantMap)
         : deps_(deps), variantMap_(variantMap) {}
 

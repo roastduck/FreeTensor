@@ -328,8 +328,7 @@ PBMap AnalyzeDeps::makeIneqBetweenOps(PBCtx &presburger, DepDirection mode,
                                  " " + ineq + " d" + idStr + "}");
 }
 
-PBMap AnalyzeDeps::makeConstraintOfSingleLoop(PBCtx &presburger,
-                                              const std::string &loop,
+PBMap AnalyzeDeps::makeConstraintOfSingleLoop(PBCtx &presburger, const ID &loop,
                                               DepDirection mode, int iterDim) {
     auto &&coord = scope2coord_.at(loop);
     int iterId = coord.size() - 1;
@@ -615,10 +614,10 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
         for (auto &&[nodeOrParallel, dir] : item) {
             if (nodeOrParallel.isNode_) {
                 requires.emplace_back(makeConstraintOfSingleLoop(
-                    presburger, nodeOrParallel.name_, dir, iterDim));
+                    presburger, nodeOrParallel.id_, dir, iterDim));
             } else {
                 requires.emplace_back(makeConstraintOfParallelScope(
-                    presburger, nodeOrParallel.name_, dir, iterDim, *point,
+                    presburger, nodeOrParallel.parallel_, dir, iterDim, *point,
                     *other));
             }
         }
@@ -915,10 +914,11 @@ PBMap Dependency::extraCheck(PBMap dep,
     PBMap require;
     if (nodeOrParallel.isNode_) {
         require = self_.makeConstraintOfSingleLoop(
-            presburger_, nodeOrParallel.name_, dir, iterDim_);
+            presburger_, nodeOrParallel.id_, dir, iterDim_);
     } else {
         require = self_.makeConstraintOfParallelScope(
-            presburger_, nodeOrParallel.name_, dir, iterDim_, later_, earlier_);
+            presburger_, nodeOrParallel.parallel_, dir, iterDim_, later_,
+            earlier_);
     }
     dep = intersect(std::move(dep), std::move(require));
     return dep;
@@ -971,7 +971,11 @@ std::string toString(const Dependency &dep) {
     for (auto &&[scope, dir] : dep.cond_) {
         os << (first ? " along " : " and ");
         first = false;
-        os << scope.name_;
+        if (scope.isNode_) {
+            os << toString(scope.id_);
+        } else {
+            os << scope.parallel_;
+        }
     }
     return std::regex_replace(os.str(), std::regex("\n"), "");
 }

@@ -98,7 +98,7 @@ Stmt LowerVector::visit(const For &op) {
                 ret->end_ = makeAdd(ret->begin_, ret->len_);
                 ret->body_ = (*this)(ret->body_);
             } catch (const InvalidSchedule &e) {
-                WARNING("Vectorizing loop " + op->id() + " to length " +
+                WARNING("Vectorizing loop " + op->id().strId() + " to length " +
                         std::to_string(vecLen) +
                         " failed because: " + e.what());
                 var_ = nullptr;

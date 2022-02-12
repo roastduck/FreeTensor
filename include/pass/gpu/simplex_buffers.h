@@ -16,27 +16,26 @@ namespace ir {
 namespace gpu {
 
 struct SimplexOffset {
-    std::unordered_map<std::string, int> offset_; // parallel scope -> offset
+    std::unordered_map<ID, int> offset_; // parallel scope -> offset
 };
 
 class FindSimplexOffset : public SymbolTable<Visitor> {
     typedef SymbolTable<Visitor> BaseClass;
 
-    std::unordered_map<std::string, std::vector<Ref<SimplexOffset>>>
+    std::unordered_map<ID, std::vector<Ref<SimplexOffset>>>
         offsets_; // def ID -> [offset for each index]
-    std::unordered_map<std::string, std::string> var2para_;
+    std::unordered_map<std::string, ID> var2para_;
     AnalyzeLinear analyzeLinear_;
 
   public:
-    const std::unordered_map<std::string, std::vector<Ref<SimplexOffset>>> &
+    const std::unordered_map<ID, std::vector<Ref<SimplexOffset>>> &
     offsets() const {
         return offsets_;
     }
 
   private:
-    Ref<SimplexOffset>
-    getSimplexOffset(const std::unordered_set<std::string> &filter,
-                     const Expr &expr) {
+    Ref<SimplexOffset> getSimplexOffset(const std::unordered_set<ID> &filter,
+                                        const Expr &expr) {
         Ref<SimplexOffset> ret = Ref<SimplexOffset>::make();
         analyzeLinear_(expr);
         for (auto &&[k, a] : analyzeLinear_.result().at(expr).coeff_) {
@@ -101,14 +100,13 @@ class FindSimplexOffset : public SymbolTable<Visitor> {
 class ApplySimplexOffset : public SymbolTable<Mutator> {
     typedef SymbolTable<Mutator> BaseClass;
 
-    const std::unordered_map<std::string, std::vector<Ref<SimplexOffset>>>
+    const std::unordered_map<ID, std::vector<Ref<SimplexOffset>>>
         &offsets_; // def ID -> [offset for each index]
-    std::unordered_map<std::string, std::string> para2var_;
+    std::unordered_map<ID, std::string> para2var_;
 
   public:
     ApplySimplexOffset(
-        const std::unordered_map<std::string, std::vector<Ref<SimplexOffset>>>
-            &offsets)
+        const std::unordered_map<ID, std::vector<Ref<SimplexOffset>>> &offsets)
         : offsets_(offsets) {}
 
   private:

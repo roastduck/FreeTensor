@@ -56,7 +56,7 @@ void FindLoopInvariantWrites::visit(const VarDef &op) {
 
 void FindLoopInvariantWrites::visit(const Store &op) {
     BaseClass::visit(op);
-    if (!singleDefId_.empty() && def(op->var_)->id() != singleDefId_) {
+    if (singleDefId_.isValid() && def(op->var_)->id() != singleDefId_) {
         return;
     }
     Expr cond;
@@ -148,7 +148,7 @@ Stmt RemoveWrites::visit(const If &_op) {
     return op;
 }
 
-Stmt removeWrites(const Stmt &_op, const std::string &singleDefId) {
+Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
     auto op = makeReduction(_op);
 
     // A new Store/ReduceTo node may contain Load nodes out of their VarDef
@@ -189,7 +189,7 @@ Stmt removeWrites(const Stmt &_op, const std::string &singleDefId) {
     std::set<std::pair<Stmt, AST>> usesWAR;
     auto filterOverwriteStore = [&](const AccessPoint &later,
                                     const AccessPoint &earlier) {
-        if (!singleDefId.empty() && later.def_->id() != singleDefId) {
+        if (singleDefId.isValid() && later.def_->id() != singleDefId) {
             return false;
         }
         return later.op_->nodeType() == ASTNodeType::Store &&
@@ -197,7 +197,7 @@ Stmt removeWrites(const Stmt &_op, const std::string &singleDefId) {
     };
     auto filterOverwriteReduce = [&](const AccessPoint &later,
                                      const AccessPoint &earlier) {
-        if (!singleDefId.empty() && later.def_->id() != singleDefId) {
+        if (singleDefId.isValid() && later.def_->id() != singleDefId) {
             return false;
         }
         return later.op_->nodeType() == ASTNodeType::ReduceTo;
