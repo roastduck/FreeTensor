@@ -52,11 +52,11 @@ inline std::vector<double> getProbSum(const std::vector<double> &pred) {
     return sum;
 }
 
-inline int randWithProb(const std::vector<double> &prob_sum,
+inline int randWithProb(const std::vector<double> &probSum,
                         std::default_random_engine &gen) {
     std::uniform_real_distribution<> dis(0, 1);
-    return std::lower_bound(prob_sum.begin(), prob_sum.end(), dis(gen)) -
-           prob_sum.begin();
+    return std::lower_bound(probSum.begin(), probSum.end(), dis(gen)) -
+           probSum.begin();
 }
 
 } // namespace ir
