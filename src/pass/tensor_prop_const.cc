@@ -128,4 +128,3 @@ Stmt tensorPropConst(const Stmt &_op) {
 }
 
 } // namespace ir
-

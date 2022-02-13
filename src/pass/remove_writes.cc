@@ -355,4 +355,3 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
 }
 
 } // namespace ir
-

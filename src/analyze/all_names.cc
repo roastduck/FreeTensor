@@ -29,4 +29,3 @@ std::unordered_set<std::string> allNames(const AST &op) {
 }
 
 } // namespace ir
-

@@ -35,4 +35,3 @@ void checkVarCrossParallel(const Stmt &ast, const ID &def, MemType mtype) {
 }
 
 } // namespace ir
-

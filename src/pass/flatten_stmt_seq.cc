@@ -40,4 +40,3 @@ Stmt FlattenStmtSeq::visit(const StmtSeq &_op) {
 Stmt FlattenStmtSeq::visit(const Assume &op) { return (*this)(op->body_); }
 
 } // namespace ir
-

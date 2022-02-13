@@ -52,4 +52,3 @@ Stmt make1dVar(const Stmt &_op) {
 }
 
 } // namespace ir
-

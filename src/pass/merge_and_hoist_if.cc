@@ -123,4 +123,3 @@ Stmt mergeAndHoistIf(const Stmt &_op) {
 }
 
 } // namespace ir
-

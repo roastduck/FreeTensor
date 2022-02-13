@@ -19,4 +19,3 @@ void init_ffi_tensor(py::module_ &m) {
 }
 
 } // namespace ir
-

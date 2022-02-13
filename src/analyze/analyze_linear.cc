@@ -56,4 +56,3 @@ void AnalyzeLinear::visit(const Mul &op) {
 }
 
 } // namespace ir
-

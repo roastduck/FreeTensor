@@ -34,4 +34,3 @@ Stmt ReplaceUses::visit(const ReduceTo &op) {
 }
 
 } // namespace ir
-

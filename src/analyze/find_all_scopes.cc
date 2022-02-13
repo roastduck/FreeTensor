@@ -19,4 +19,3 @@ std::vector<ID> findAllScopes(const Stmt &op) {
 }
 
 } // namespace ir
-

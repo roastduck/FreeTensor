@@ -14,4 +14,3 @@ std::vector<ID> findAllLoops(const Stmt &op) {
 }
 
 } // namespace ir
-

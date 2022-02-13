@@ -76,4 +76,3 @@ void SmallItemAllocator::deallocate(void *p) {
 }
 
 } // namespace ir
-

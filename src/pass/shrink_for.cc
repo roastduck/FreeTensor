@@ -65,4 +65,3 @@ Stmt shrinkFor(const Stmt &_op) {
 }
 
 } // namespace ir
-

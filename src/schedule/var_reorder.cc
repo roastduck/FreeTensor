@@ -71,4 +71,3 @@ Stmt varReorder(const Stmt &_ast, const ID &def,
 }
 
 } // namespace ir
-

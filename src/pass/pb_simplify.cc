@@ -76,4 +76,3 @@ Stmt islSimplify(const Stmt &op) {
 }
 
 } // namespace ir
-

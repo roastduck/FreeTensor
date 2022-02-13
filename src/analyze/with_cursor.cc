@@ -24,4 +24,3 @@ void GetCursorByFilter::visitStmt(const Stmt &op) {
 }
 
 } // namespace ir
-

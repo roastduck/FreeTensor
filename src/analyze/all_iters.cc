@@ -14,4 +14,3 @@ std::unordered_set<std::string> allIters(const AST &op) {
 }
 
 } // namespace ir
-

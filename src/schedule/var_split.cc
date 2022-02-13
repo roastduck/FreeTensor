@@ -87,4 +87,3 @@ Stmt varSplit(const Stmt &_ast, const ID &def, int dim, VarSplitMode mode,
 }
 
 } // namespace ir
-

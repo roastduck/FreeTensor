@@ -23,4 +23,3 @@ void CountContigAccessLoops::visit(const For &op) {
 }
 
 } // namespace ir
-

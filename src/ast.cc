@@ -128,4 +128,3 @@ size_t hash<ir::ID>::operator()(const ir::ID &id) const {
 }
 
 } // namespace std
-

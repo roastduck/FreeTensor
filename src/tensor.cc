@@ -14,4 +14,3 @@ bool Tensor::isScalar() const {
 }
 
 } // namespace ir
-

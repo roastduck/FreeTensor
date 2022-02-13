@@ -490,4 +490,3 @@ bool match(const Stmt &_pattern, const Stmt &_instance) {
 }
 
 } // namespace ir
-

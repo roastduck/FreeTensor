@@ -45,4 +45,3 @@ Stmt removeCyclicAssign(const Stmt &op) {
 }
 
 } // namespace ir
-

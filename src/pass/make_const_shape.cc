@@ -56,4 +56,3 @@ Stmt makeConstShape(const Stmt &_op, const std::vector<MemType> &mtypes) {
 }
 
 } // namespace ir
-

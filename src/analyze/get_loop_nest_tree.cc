@@ -14,4 +14,3 @@ void GetLoopNestTree::visit(const For &op) {
 }
 
 } // namespace ir
-

@@ -93,4 +93,3 @@ Stmt shrinkSingleVar(const Stmt &_op, const ID &varDefId) {
 }
 
 } // namespace ir
-

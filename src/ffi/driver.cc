@@ -157,4 +157,3 @@ template <> struct polymorphic_type_hook<ir::Target> {
 };
 
 } // namespace pybind11
-

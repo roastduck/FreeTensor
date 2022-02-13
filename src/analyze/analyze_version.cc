@@ -190,4 +190,3 @@ analyzeVersion(const Stmt &op, const std::unordered_set<ID> &intermediates) {
 }
 
 } // namespace ir
-

@@ -281,4 +281,3 @@ Stmt makeParallelReduction(const Stmt &_op) {
 }
 
 } // namespace ir
-

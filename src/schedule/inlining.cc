@@ -107,4 +107,3 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
 }
 
 } // namespace ir
-
