@@ -13,12 +13,12 @@
 namespace ir {
 
 AutoSchedule::AutoSchedule(const Schedule &schedule, const Ref<Target> &target,
-                           const Device &device, int measured_size,
-                           py::function predict_func, py::function update_func)
+                           const Device &device, int measuredSize,
+                           py::function predictFunc, py::function updateFunc)
     : original_(schedule), target_(target), device_(device),
-      measuredSize_(measured_size), paramsSet_(false), mn_(INFINITY),
-      predictFunc_(std::move(predict_func)),
-      updateFunc_(std::move(update_func)) {
+      measuredSize_(measuredSize), paramsSet_(false), mn_(INFINITY),
+      predictFunc_(std::move(predictFunc)),
+      updateFunc_(std::move(updateFunc)) {
     MultiLevelTilingRule rule;
     int n = rule.analyze(original_);
     std::cout << "Found" << n << std::endl;
@@ -173,28 +173,28 @@ Schedule AutoSchedule::getBestSchedule() {
     return measuredSketches_[best].genSchedule(original_);
 }
 
-std::vector<Sketch> AutoSchedule::getRandPopulation(size_t n_rand) {
+std::vector<Sketch> AutoSchedule::getRandPopulation(size_t nRand) {
     std::vector<Sketch> ret;
     std::set<size_t> used(measuredHashes_);
     std::vector<std::default_random_engine> gens;
-    for (size_t i = 0; i < n_rand; i++) {
+    for (size_t i = 0; i < nRand; i++) {
         gens.push_back(std::default_random_engine((i + i) * randGen_()));
     }
     int iter = 0;
-    while (ret.size() < n_rand) {
-        std::vector<Sketch> now(n_rand);
+    while (ret.size() < nRand) {
+        std::vector<Sketch> now(nRand);
 #pragma omp parallel for
-        for (size_t i = 0; i < n_rand; i++) {
+        for (size_t i = 0; i < nRand; i++) {
             now[i] = baseSketches_[randomInt(baseSketches_.size() - 1, gens[i])]
                          .genRandAnnotation(gens[i]);
         }
-        for (size_t i = 0; i < n_rand; i++) {
+        for (size_t i = 0; i < nRand; i++) {
             size_t h = now[i].hash();
             if (!used.count(h)) {
                 used.insert(h);
                 ret.push_back(now[i]);
             }
-            if (ret.size() >= n_rand) {
+            if (ret.size() >= nRand) {
                 break;
             }
         }
@@ -215,7 +215,7 @@ std::vector<Sketch> AutoSchedule::getInitPopulation(size_t n) {
 }
 
 std::vector<Sketch> AutoSchedule::evolutionarySearch(std::vector<Sketch> init,
-                                                     size_t out_size) {
+                                                     size_t outSize) {
     std::vector<Sketch> v1 = std::move(init);
     std::vector<Sketch> v2;
     auto *p1 = &v1;
@@ -236,7 +236,7 @@ std::vector<Sketch> AutoSchedule::evolutionarySearch(std::vector<Sketch> init,
             size_t hash = (*p1)[j].hash();
             auto time = pred[j];
             if (!heap_hashes.count(hash)) {
-                if (heap.size() < out_size) {
+                if (heap.size() < outSize) {
                     heap_hashes.insert(hash);
                     heap.emplace_back((*p1)[j], time);
                     std::push_heap(heap.begin(), heap.end(), cmp);

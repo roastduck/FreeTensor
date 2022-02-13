@@ -42,8 +42,8 @@ class AutoSchedule {
 
   public:
     AutoSchedule(const Schedule &schedule, const Ref<Target> &target,
-                 const Device &device, int measured_size,
-                 py::function predict_func, py::function update_func);
+                 const Device &device, int measuredSize,
+                 py::function predictFunc, py::function updateFunc);
 
     size_t measuredSize() const { return measuredSize_; }
 
@@ -53,11 +53,11 @@ class AutoSchedule {
     std::vector<Sketch> searchOneRound(size_t n);
 
     std::vector<Sketch> evolutionarySearch(std::vector<Sketch> init,
-                                           size_t out_size);
+                                           size_t outSize);
 
     std::vector<Sketch> getInitPopulation(size_t n);
 
-    std::vector<Sketch> getRandPopulation(size_t n_rand);
+    std::vector<Sketch> getRandPopulation(size_t nRand);
 
     std::vector<Schedule> genSchedules(const std::vector<Sketch> &sketches);
 
