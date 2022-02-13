@@ -33,9 +33,9 @@ class AutoSchedule {
     std::vector<Sketch> measured_sketches_;
     std::set<size_t> measured_hashes_;
     double mn_;
-    std::default_random_engine rand_gen;
-    py::function predict_func;
-    py::function update_func;
+    std::default_random_engine rand_gen_;
+    py::function predict_func_;
+    py::function update_func_;
 
   private:
     std::vector<double> measure(const std::vector<Schedule> &schedules);
@@ -57,7 +57,7 @@ class AutoSchedule {
 
     std::vector<Sketch> getInitPopulation(size_t n);
 
-    std::vector<Sketch> getRandPopulation(size_t n);
+    std::vector<Sketch> getRandPopulation(size_t n_rand);
 
     std::vector<Schedule> genSchedules(const std::vector<Sketch> &sketches);
 

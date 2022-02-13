@@ -30,8 +30,6 @@ std::array<int, n> randomFillArray(int total, std::default_random_engine &gen) {
 }
 
 inline int randomInt(int mx, std::default_random_engine &gen) {
-    //    static std::random_device rd;
-    //    static std::default_random_engine gen(rd());
     std::uniform_int_distribution<> dis(0, mx);
     return dis(gen);
 }

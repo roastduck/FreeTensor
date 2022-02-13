@@ -17,8 +17,8 @@ AutoSchedule::AutoSchedule(const Schedule &schedule, const Ref<Target> &target,
                            py::function predict_func, py::function update_func)
     : original_(schedule), target_(target), device_(device),
       measured_size_(measured_size), paramsSet_(false), mn_(INFINITY),
-      predict_func(std::move(predict_func)),
-      update_func(std::move(update_func)) {
+      predict_func_(std::move(predict_func)),
+      update_func_(std::move(update_func)) {
     MultiLevelTilingRule rule;
     int n = rule.analyze(original_);
     std::cout << "Found" << n << std::endl;
@@ -26,7 +26,7 @@ AutoSchedule::AutoSchedule(const Schedule &schedule, const Ref<Target> &target,
     sketch.addPart(rule.genPart(0));
     baseSketches_.push_back(sketch);
     std::random_device rd;
-    rand_gen = std::default_random_engine(rd());
+    rand_gen_ = std::default_random_engine(rd());
 }
 
 void AutoSchedule::setParams(
@@ -139,7 +139,7 @@ AutoSchedule::testAndAdd(const std::vector<Sketch> &sketches) {
     for (auto i : times) {
         times_list.append(py::float_(i));
     }
-    update_func(features, times_list);
+    update_func_(features, times_list);
     for (size_t i = 0; i < n; i++) {
         std::cout << "test " << i << std::endl;
         if (measured_sketches_.size() < measured_size_) {
@@ -180,7 +180,7 @@ std::vector<Sketch> AutoSchedule::getRandPopulation(size_t n_rand) {
     std::set<size_t> used(measured_hashes_);
     std::vector<std::default_random_engine> gens;
     for (size_t i = 0; i < n_rand; i++) {
-        gens.push_back(std::default_random_engine((i + i) * rand_gen()));
+        gens.push_back(std::default_random_engine((i + i) * rand_gen_()));
     }
     int iter = 0;
     while (ret.size() < n_rand) {
@@ -253,25 +253,25 @@ std::vector<Sketch> AutoSchedule::evolutionarySearch(std::vector<Sketch> init,
         }
 
         while (p2->size() < EVOLUTIONARY_SEARCH_POPULATION) {
-            double r = randomDouble(rand_gen);
+            double r = randomDouble(rand_gen_);
             if (r < EVOLUTIONARY_SEARCH_MUTATION_PROB) {
-                auto nw = (*p1)[randWithProb(prob_sum, rand_gen)].genMutation(
-                    rand_gen);
+                auto nw = (*p1)[randWithProb(prob_sum, rand_gen_)].genMutation(
+                    rand_gen_);
                 if (nw.first) {
                     p2->push_back(nw.second);
                 }
             } else if (r < EVOLUTIONARY_SEARCH_MUTATION_PROB +
                                EVOLUTIONARY_SEARCH_CROSSOVER_PROB) {
-                int a = randWithProb(prob_sum, rand_gen);
-                int b = randWithProb(prob_sum, rand_gen);
+                int a = randWithProb(prob_sum, rand_gen_);
+                int b = randWithProb(prob_sum, rand_gen_);
                 while (b == a)
-                    b = randWithProb(prob_sum, rand_gen);
-                auto nw = (*p1)[a].genCrossover((*p1)[b], rand_gen);
+                    b = randWithProb(prob_sum, rand_gen_);
+                auto nw = (*p1)[a].genCrossover((*p1)[b], rand_gen_);
                 if (nw.first) {
                     p2->push_back(nw.second);
                 }
             } else {
-                p2->push_back((*p1)[randomInt(p1->size() - 1, rand_gen)]);
+                p2->push_back((*p1)[randomInt(p1->size() - 1, rand_gen_)]);
             }
         }
 
@@ -289,7 +289,7 @@ std::vector<Sketch> AutoSchedule::evolutionarySearch(std::vector<Sketch> init,
 std::vector<double>
 AutoSchedule::getPrediction(const std::vector<Sketch> &sketches) {
     auto feature_list = genFeatures(genSchedules(sketches));
-    py::list pred_list = predict_func(feature_list);
+    py::list pred_list = predict_func_(feature_list);
     std::vector<double> ret;
     for (auto &i : pred_list) {
         ret.push_back(i.cast<double>());
