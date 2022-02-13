@@ -16,9 +16,9 @@ AutoSchedule::AutoSchedule(const Schedule &schedule, const Ref<Target> &target,
                            const Device &device, int measured_size,
                            py::function predict_func, py::function update_func)
     : original_(schedule), target_(target), device_(device),
-      measured_size_(measured_size), paramsSet_(false), mn_(INFINITY),
-      predict_func_(std::move(predict_func)),
-      update_func_(std::move(update_func)) {
+      measuredSize_(measured_size), paramsSet_(false), mn_(INFINITY),
+      predictFunc_(std::move(predict_func)),
+      updateFunc_(std::move(update_func)) {
     MultiLevelTilingRule rule;
     int n = rule.analyze(original_);
     std::cout << "Found" << n << std::endl;
@@ -26,7 +26,7 @@ AutoSchedule::AutoSchedule(const Schedule &schedule, const Ref<Target> &target,
     sketch.addPart(rule.genPart(0));
     baseSketches_.push_back(sketch);
     std::random_device rd;
-    rand_gen_ = std::default_random_engine(rd());
+    randGen_ = std::default_random_engine(rd());
 }
 
 void AutoSchedule::setParams(
@@ -139,48 +139,46 @@ AutoSchedule::testAndAdd(const std::vector<Sketch> &sketches) {
     for (auto i : times) {
         times_list.append(py::float_(i));
     }
-    update_func_(features, times_list);
+    updateFunc_(features, times_list);
     for (size_t i = 0; i < n; i++) {
         std::cout << "test " << i << std::endl;
-        if (measured_sketches_.size() < measured_size_) {
-            measured_sketches_.emplace_back(sketches[i]);
-            measured_sketches_.back().setTime(times[i]);
-            std::push_heap(measured_sketches_.begin(),
-                           measured_sketches_.end());
-        } else if (times[i] < measured_sketches_[0].time()) {
-            std::pop_heap(measured_sketches_.begin(), measured_sketches_.end());
-            measured_sketches_.back() = sketches[i];
-            measured_sketches_.back().setTime(times[i]);
-            std::push_heap(measured_sketches_.begin(),
-                           measured_sketches_.end());
+        if (measuredSketches_.size() < measuredSize_) {
+            measuredSketches_.emplace_back(sketches[i]);
+            measuredSketches_.back().setTime(times[i]);
+            std::push_heap(measuredSketches_.begin(), measuredSketches_.end());
+        } else if (times[i] < measuredSketches_[0].time()) {
+            std::pop_heap(measuredSketches_.begin(), measuredSketches_.end());
+            measuredSketches_.back() = sketches[i];
+            measuredSketches_.back().setTime(times[i]);
+            std::push_heap(measuredSketches_.begin(), measuredSketches_.end());
         }
-        measured_hashes_.insert(sketches[i].hash());
+        measuredHashes_.insert(sketches[i].hash());
         mn_ = std::min(times[i], mn_);
     }
 
-    std::cout << "min " << mn_ << " max " << measured_sketches_[0].time()
+    std::cout << "min " << mn_ << " max " << measuredSketches_[0].time()
               << std::endl;
     return times;
 }
 
 Schedule AutoSchedule::getBestSchedule() {
     int best = 0;
-    int time = measured_sketches_[0].time();
-    for (size_t i = 0; i < measured_sketches_.size(); i++) {
-        if (measured_sketches_[i].time() < time) {
-            time = measured_sketches_[i].time();
+    int time = measuredSketches_[0].time();
+    for (size_t i = 0; i < measuredSketches_.size(); i++) {
+        if (measuredSketches_[i].time() < time) {
+            time = measuredSketches_[i].time();
             best = i;
         }
     }
-    return measured_sketches_[best].genSchedule(original_);
+    return measuredSketches_[best].genSchedule(original_);
 }
 
 std::vector<Sketch> AutoSchedule::getRandPopulation(size_t n_rand) {
     std::vector<Sketch> ret;
-    std::set<size_t> used(measured_hashes_);
+    std::set<size_t> used(measuredHashes_);
     std::vector<std::default_random_engine> gens;
     for (size_t i = 0; i < n_rand; i++) {
-        gens.push_back(std::default_random_engine((i + i) * rand_gen_()));
+        gens.push_back(std::default_random_engine((i + i) * randGen_()));
     }
     int iter = 0;
     while (ret.size() < n_rand) {
@@ -209,9 +207,9 @@ std::vector<Sketch> AutoSchedule::getRandPopulation(size_t n_rand) {
 
 std::vector<Sketch> AutoSchedule::getInitPopulation(size_t n) {
     std::vector<Sketch> ret = getRandPopulation(n * INIT_RAND_RATIO);
-    size_t n_measured = std::min(n - ret.size(), measured_sketches_.size());
+    size_t n_measured = std::min(n - ret.size(), measuredSketches_.size());
     for (size_t i = 0; i < n_measured; i++) {
-        ret.push_back(measured_sketches_[i]);
+        ret.push_back(measuredSketches_[i]);
     }
     return ret;
 }
@@ -225,7 +223,7 @@ std::vector<Sketch> AutoSchedule::evolutionarySearch(std::vector<Sketch> init,
     v2.reserve(v1.size());
     typedef std::pair<Sketch, double> SketchPred;
     std::vector<SketchPred> heap;
-    std::set<size_t> heap_hashes(measured_hashes_);
+    std::set<size_t> heap_hashes(measuredHashes_);
     auto cmp = [](const SketchPred &a, const SketchPred &b) {
         return a.second < b.second;
     };
@@ -253,25 +251,25 @@ std::vector<Sketch> AutoSchedule::evolutionarySearch(std::vector<Sketch> init,
         }
 
         while (p2->size() < EVOLUTIONARY_SEARCH_POPULATION) {
-            double r = randomDouble(rand_gen_);
+            double r = randomDouble(randGen_);
             if (r < EVOLUTIONARY_SEARCH_MUTATION_PROB) {
-                auto nw = (*p1)[randWithProb(prob_sum, rand_gen_)].genMutation(
-                    rand_gen_);
+                auto nw = (*p1)[randWithProb(prob_sum, randGen_)].genMutation(
+                    randGen_);
                 if (nw.first) {
                     p2->push_back(nw.second);
                 }
             } else if (r < EVOLUTIONARY_SEARCH_MUTATION_PROB +
                                EVOLUTIONARY_SEARCH_CROSSOVER_PROB) {
-                int a = randWithProb(prob_sum, rand_gen_);
-                int b = randWithProb(prob_sum, rand_gen_);
+                int a = randWithProb(prob_sum, randGen_);
+                int b = randWithProb(prob_sum, randGen_);
                 while (b == a)
-                    b = randWithProb(prob_sum, rand_gen_);
-                auto nw = (*p1)[a].genCrossover((*p1)[b], rand_gen_);
+                    b = randWithProb(prob_sum, randGen_);
+                auto nw = (*p1)[a].genCrossover((*p1)[b], randGen_);
                 if (nw.first) {
                     p2->push_back(nw.second);
                 }
             } else {
-                p2->push_back((*p1)[randomInt(p1->size() - 1, rand_gen_)]);
+                p2->push_back((*p1)[randomInt(p1->size() - 1, randGen_)]);
             }
         }
 
@@ -289,7 +287,7 @@ std::vector<Sketch> AutoSchedule::evolutionarySearch(std::vector<Sketch> init,
 std::vector<double>
 AutoSchedule::getPrediction(const std::vector<Sketch> &sketches) {
     auto feature_list = genFeatures(genSchedules(sketches));
-    py::list pred_list = predict_func_(feature_list);
+    py::list pred_list = predictFunc_(feature_list);
     std::vector<double> ret;
     for (auto &i : pred_list) {
         ret.push_back(i.cast<double>());

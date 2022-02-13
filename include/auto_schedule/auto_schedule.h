@@ -25,17 +25,17 @@ class AutoSchedule {
     Schedule original_;
     Ref<Target> target_;
     Device device_;
-    size_t measured_size_;
+    size_t measuredSize_;
     std::vector<Sketch> baseSketches_;
     std::vector<Ref<Array>> args_;
     std::unordered_map<std::string, Ref<Array>> kws_;
     bool paramsSet_;
-    std::vector<Sketch> measured_sketches_;
-    std::set<size_t> measured_hashes_;
+    std::vector<Sketch> measuredSketches_;
+    std::set<size_t> measuredHashes_;
     double mn_;
-    std::default_random_engine rand_gen_;
-    py::function predict_func_;
-    py::function update_func_;
+    std::default_random_engine randGen_;
+    py::function predictFunc_;
+    py::function updateFunc_;
 
   private:
     std::vector<double> measure(const std::vector<Schedule> &schedules);
@@ -45,7 +45,7 @@ class AutoSchedule {
                  const Device &device, int measured_size,
                  py::function predict_func, py::function update_func);
 
-    size_t measuredSize() const { return measured_size_; }
+    size_t measuredSize() const { return measuredSize_; }
 
     void setParams(const std::vector<Ref<Array>> &args,
                    const std::unordered_map<std::string, Ref<Array>> &kws);
