@@ -116,8 +116,7 @@ void init_ffi_driver(py::module_ &m) {
         .def_property_readonly("device", &Array::device);
 
     py::class_<Driver, Ref<Driver>>(m, "Driver")
-        .def(py::init<const Func &, const std::string &, const Device &>(),
-             py::return_value_policy::reference)
+        .def(py::init<const Func &, const std::string &, const Device &>())
         .def("set_params",
              static_cast<void (Driver::*)(
                  const std::vector<Ref<Array>> &,

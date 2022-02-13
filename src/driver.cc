@@ -4,7 +4,6 @@
 #include <cstring> // memset
 #include <dlfcn.h> // dlopen
 #include <fstream>
-#include <memory>
 #include <sys/stat.h> // mkdir
 #include <unistd.h>   // rmdir
 
