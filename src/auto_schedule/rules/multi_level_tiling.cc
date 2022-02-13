@@ -165,7 +165,7 @@ std::vector<int> MultiLevelTilingPart::getAnnotation() const {
 
 size_t MultiLevelTilingPart::hash() const {
     size_t h = std::hash<ForsWithDataReuse>{}(target);
-    hashCombine(h, std::hash<MultiLevelTilingAnnotation>{}(annotation));
+    h = hashCombine(h, std::hash<MultiLevelTilingAnnotation>{}(annotation));
     return h;
 }
 

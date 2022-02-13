@@ -129,4 +129,3 @@ Stmt AnnotateConds::visit(const Assert &op) {
 Stmt AnnotateConds::visit(const Assume &op) { return (*this)(op->body_); }
 
 } // namespace ir
-

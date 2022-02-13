@@ -60,7 +60,7 @@ std::vector<int> Sketch::getAnnotation() const {
 size_t Sketch::hash() const {
     size_t h = 0;
     for (const auto &part : parts_) {
-        hashCombine(h, part->hash());
+        h = hashCombine(h, part->hash());
     }
     return h;
 }

@@ -80,6 +80,8 @@ std::vector<Sketch> AutoSchedule::searchOneRound(size_t n) {
     std::vector<Sketch> best = evolutionarySearch(init, n);
 
     testAndAdd(best);
+    std::vector<Sketch> rand = getRandPopulation(n * 0.2);
+    testAndAdd(rand);
     return best;
 }
 
@@ -173,14 +175,13 @@ Schedule AutoSchedule::getBestSchedule() {
     return measured_sketches_[best].genSchedule(original_);
 }
 
-std::vector<Sketch> AutoSchedule::getRandPopulation(size_t n) {
+std::vector<Sketch> AutoSchedule::getRandPopulation(size_t n_rand) {
     std::vector<Sketch> ret;
-    std::set<size_t> used;
+    std::set<size_t> used(measured_hashes_);
     std::vector<std::default_random_engine> gens;
-    for (size_t i = 0; i < n; i++) {
+    for (size_t i = 0; i < n_rand; i++) {
         gens.push_back(std::default_random_engine((i + i) * rand_gen()));
     }
-    size_t n_rand = n * INIT_RAND_RATIO;
     int iter = 0;
     while (ret.size() < n_rand) {
         std::vector<Sketch> now(n_rand);
@@ -207,41 +208,10 @@ std::vector<Sketch> AutoSchedule::getRandPopulation(size_t n) {
 }
 
 std::vector<Sketch> AutoSchedule::getInitPopulation(size_t n) {
-    std::vector<Sketch> ret;
-    std::set<size_t> used;
-    std::vector<std::default_random_engine> gens;
-    for (size_t i = 0; i < n; i++) {
-        gens.push_back(std::default_random_engine((i + i) * rand_gen()));
-    }
-    size_t n_rand = n * INIT_RAND_RATIO;
-    int iter = 0;
-    while (ret.size() < n_rand) {
-        std::vector<Sketch> now(n_rand);
-#pragma omp parallel for
-        for (size_t i = 0; i < n_rand; i++) {
-            now[i] = baseSketches_[randomInt(baseSketches_.size() - 1, gens[i])]
-                         .genRandAnnotation(gens[i]);
-        }
-        for (size_t i = 0; i < n_rand; i++) {
-            size_t h = now[i].hash();
-            if (!used.count(h)) {
-                used.insert(h);
-                ret.push_back(now[i]);
-            }
-            if (ret.size() >= n_rand) {
-                break;
-            }
-        }
-        if (++iter > 10) {
-            break;
-        }
-    }
+    std::vector<Sketch> ret = getRandPopulation(n * INIT_RAND_RATIO);
     size_t n_measured = std::min(n - ret.size(), measured_sketches_.size());
     for (size_t i = 0; i < n_measured; i++) {
-        size_t h = measured_sketches_[i].hash();
-        if (!used.count(h)) {
-            ret.push_back(measured_sketches_[i]);
-        }
+        ret.push_back(measured_sketches_[i]);
     }
     return ret;
 }

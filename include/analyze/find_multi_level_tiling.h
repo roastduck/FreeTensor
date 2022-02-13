@@ -107,7 +107,7 @@ inline std::vector<ID> fakeFindMultiLevelTiling(const Stmt &ast) {
 template <> struct std::hash<ir::ForInfo> {
     std::size_t operator()(ir::ForInfo const &s) const noexcept {
         std::size_t h = std::hash<ir::ID>{}(s.id);
-        ir::hashCombine(h, std::hash<std::int64_t>{}(s.length));
+        h = ir::hashCombine(h, std::hash<std::int64_t>{}(s.length));
         return h;
     }
 };
@@ -116,9 +116,9 @@ template <> struct std::hash<ir::ForsWithDataReuse> {
     std::size_t operator()(ir::ForsWithDataReuse const &s) const noexcept {
         std::size_t h = 0;
         for (const auto &f : s.spaceLoops)
-            ir::hashCombine(h, std::hash<ir::ForInfo>{}(f));
+            h = ir::hashCombine(h, std::hash<ir::ForInfo>{}(f));
         for (const auto &f : s.reductionLoops)
-            ir::hashCombine(h, std::hash<ir::ForInfo>{}(f));
+            h = ir::hashCombine(h, std::hash<ir::ForInfo>{}(f));
         return h;
     }
 };
