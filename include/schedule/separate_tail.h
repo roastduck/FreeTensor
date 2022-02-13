@@ -33,7 +33,7 @@ class AppendIDs : public Mutator {
 };
 
 /**
- * Seperate main iterations and tail iterations of a loop
+ * Separate main iterations and tail iterations of a loop
  *
  * E.g.
  *
@@ -61,7 +61,7 @@ class AppendIDs : public Mutator {
  * }
  * ```
  */
-class SeperateTail : public SymbolTable<Mutator> {
+class SeparateTail : public SymbolTable<Mutator> {
     typedef SymbolTable<Mutator> BaseClass;
 
     bool noDuplicateVarDefs_;
@@ -74,7 +74,7 @@ class SeperateTail : public SymbolTable<Mutator> {
     AnalyzeLinear analyzeLinear_;
 
   public:
-    SeperateTail(bool noDuplicateVarDefs,
+    SeparateTail(bool noDuplicateVarDefs,
                  const std::unordered_set<ID> &candidates)
         : noDuplicateVarDefs_(noDuplicateVarDefs), candidates_(candidates) {}
 

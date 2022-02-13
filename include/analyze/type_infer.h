@@ -8,6 +8,11 @@
 
 namespace ir {
 
+/**
+ * Infer the data type of each (sub)expressions in an AST
+ *
+ * Pass it a pointer to a symbol table to use
+ */
 class TypeInfer : public Visitor {
     std::unordered_map<Expr, DataType> types_;
     const SymbolTableInterface &symbolTable_;
@@ -59,6 +64,24 @@ class TypeInfer : public Visitor {
     void visit(const Intrinsic &op) override;
 
     void visit(const VarDef &op) override;
+};
+
+/**
+ * A helper class to invoke type inference inside a Visitor or Mutator
+ *
+ * Inherit this class to use. The BaseClass should be a decent of
+ * SymbolTable<...>
+ */
+template <class BaseClass> class WithTypeInfer : public BaseClass {
+    TypeInfer typeInfer_;
+
+  protected:
+    WithTypeInfer() : typeInfer_(*this) {}
+
+    DataType dtype(const Expr &op) {
+        typeInfer_(op);
+        return typeInfer_.types().at(op);
+    }
 };
 
 } // namespace ir

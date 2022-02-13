@@ -58,8 +58,8 @@ struct TransientBound {
  *
  * Inherit this pass to use it
  */
-class CompTransientBounds : public SymbolTable<Mutator> {
-    typedef SymbolTable<Mutator> BaseClass;
+class CompTransientBounds : public WithTypeInfer<SymbolTable<Mutator>> {
+    typedef WithTypeInfer<SymbolTable<Mutator>> BaseClass;
 
     // Bounds related to certain expressions
     // Bounds in transients_ has already been recursed with (*this)(...)
@@ -69,14 +69,10 @@ class CompTransientBounds : public SymbolTable<Mutator> {
     std::vector<Expr> conds_;
 
     AnalyzeLinear analyzeLinear_;
-    TypeInfer typeInfer_;
 
   protected:
-    CompTransientBounds() : typeInfer_(*this) {}
-
     TransientBound transient(const Expr &op);
     const std::vector<Expr> &conds() const { return conds_; }
-    DataType dtype(const Expr &op);
 
   private:
     static Expr sub1(const Expr &op);

@@ -32,7 +32,7 @@ Stmt AppendIDs::visitStmt(const Stmt &op) {
     return ret;
 }
 
-void SeperateTail::genSeperation(
+void SeparateTail::genSeperation(
     const Expr &iterVar, const Expr &cond,
     const std::function<void(const Expr &)> &callback) {
     auto type = cond->nodeType();
@@ -124,7 +124,7 @@ void SeperateTail::genSeperation(
     }
 }
 
-Stmt SeperateTail::visit(const If &op) {
+Stmt SeparateTail::visit(const If &op) {
     if (candidates_.count(op->id())) {
         for (auto &item : ifStack_) {
             item.emplace_back(op); // Use the old one
@@ -133,7 +133,7 @@ Stmt SeperateTail::visit(const If &op) {
     return BaseClass::visit(op);
 }
 
-Stmt SeperateTail::visit(const For &_op) {
+Stmt SeparateTail::visit(const For &_op) {
     ifStack_.emplace_back();
     hasVarDefStack_.emplace_back(false);
 
@@ -204,7 +204,7 @@ Stmt SeperateTail::visit(const For &_op) {
     return dfs(0, op);
 }
 
-Stmt SeperateTail::visit(const VarDef &op) {
+Stmt SeparateTail::visit(const VarDef &op) {
     auto ret = BaseClass::visit(op);
     for (auto it = hasVarDefStack_.begin(); it != hasVarDefStack_.end(); it++) {
         *it = true;
@@ -220,7 +220,7 @@ Stmt separateTail(const Stmt &_ast, bool noDuplicateVarDefs) {
     auto candidates = finder.results();
 
     while (!candidates.empty()) {
-        SeperateTail mutator(noDuplicateVarDefs, candidates);
+        SeparateTail mutator(noDuplicateVarDefs, candidates);
         ast = mutator(ast);
         ast =
             z3Simplify(ast); // Although Z3 may be slow, if we don't use Z3
