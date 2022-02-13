@@ -73,11 +73,11 @@ AutoSchedule::measure(const std::vector<Schedule> &schedules) {
     return times;
 }
 
-std::vector<Sketch> AutoSchedule::SearchOneRound(size_t n) {
+std::vector<Sketch> AutoSchedule::searchOneRound(size_t n) {
     std::cout << "get init population" << std::endl;
-    std::vector<Sketch> init = GetInitPopulation(n);
+    std::vector<Sketch> init = getInitPopulation(n);
     std::cout << "evolutionary search" << std::endl;
-    std::vector<Sketch> best = EvolutionarySearch(init, n);
+    std::vector<Sketch> best = evolutionarySearch(init, n);
 
     testAndAdd(best);
     return best;
@@ -173,7 +173,40 @@ Schedule AutoSchedule::getBestSchedule() {
     return measured_sketches_[best].genSchedule(original_);
 }
 
-std::vector<Sketch> AutoSchedule::GetInitPopulation(size_t n) {
+std::vector<Sketch> AutoSchedule::getRandPopulation(size_t n) {
+    std::vector<Sketch> ret;
+    std::set<size_t> used;
+    std::vector<std::default_random_engine> gens;
+    for (size_t i = 0; i < n; i++) {
+        gens.push_back(std::default_random_engine((i + i) * rand_gen()));
+    }
+    size_t n_rand = n * INIT_RAND_RATIO;
+    int iter = 0;
+    while (ret.size() < n_rand) {
+        std::vector<Sketch> now(n_rand);
+#pragma omp parallel for
+        for (size_t i = 0; i < n_rand; i++) {
+            now[i] = baseSketches_[randomInt(baseSketches_.size() - 1, gens[i])]
+                         .genRandAnnotation(gens[i]);
+        }
+        for (size_t i = 0; i < n_rand; i++) {
+            size_t h = now[i].hash();
+            if (!used.count(h)) {
+                used.insert(h);
+                ret.push_back(now[i]);
+            }
+            if (ret.size() >= n_rand) {
+                break;
+            }
+        }
+        if (++iter > 10) {
+            break;
+        }
+    }
+    return ret;
+}
+
+std::vector<Sketch> AutoSchedule::getInitPopulation(size_t n) {
     std::vector<Sketch> ret;
     std::set<size_t> used;
     std::vector<std::default_random_engine> gens;
@@ -213,7 +246,7 @@ std::vector<Sketch> AutoSchedule::GetInitPopulation(size_t n) {
     return ret;
 }
 
-std::vector<Sketch> AutoSchedule::EvolutionarySearch(std::vector<Sketch> init,
+std::vector<Sketch> AutoSchedule::evolutionarySearch(std::vector<Sketch> init,
                                                      size_t out_size) {
     std::vector<Sketch> v1 = std::move(init);
     std::vector<Sketch> v2;

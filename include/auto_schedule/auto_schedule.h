@@ -50,12 +50,14 @@ class AutoSchedule {
     void setParams(const std::vector<Ref<Array>> &args,
                    const std::unordered_map<std::string, Ref<Array>> &kws);
 
-    std::vector<Sketch> SearchOneRound(size_t n);
+    std::vector<Sketch> searchOneRound(size_t n);
 
-    std::vector<Sketch> EvolutionarySearch(std::vector<Sketch> init,
+    std::vector<Sketch> evolutionarySearch(std::vector<Sketch> init,
                                            size_t out_size);
 
-    std::vector<Sketch> GetInitPopulation(size_t n);
+    std::vector<Sketch> getInitPopulation(size_t n);
+
+    std::vector<Sketch> getRandPopulation(size_t n);
 
     std::vector<Schedule> genSchedules(const std::vector<Sketch> &sketches);
 
