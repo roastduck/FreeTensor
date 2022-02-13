@@ -5,8 +5,7 @@
 
 namespace ir {
 
-void checkVarCrossParallel(const Stmt &ast, const std::string &def,
-                           MemType mtype);
+void checkVarCrossParallel(const Stmt &ast, const ID &def, MemType mtype);
 
 }
 

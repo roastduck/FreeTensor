@@ -22,7 +22,7 @@ Stmt BackUnroll::visit(const For &_op) {
 Stmt ImmediateUnroll::visitStmt(const Stmt &op) {
     auto ret = Mutator::visitStmt(op);
     if (!iter_.empty()) {
-        ret->setId(ret->id() + "." + std::to_string(curIter_));
+        ret->setId(ret->id().strId() + "." + std::to_string(curIter_));
     }
     return ret;
 }
@@ -57,7 +57,7 @@ Stmt ImmediateUnroll::visit(const For &op) {
     }
 }
 
-Stmt unroll(const Stmt &_ast, const std::string &loop, bool immediate) {
+Stmt unroll(const Stmt &_ast, const ID &loop, bool immediate) {
     auto ast = simplifyPass(_ast); // Const prop for ForNode::len_
     bool done = false;
     if (immediate) {
@@ -71,7 +71,7 @@ Stmt unroll(const Stmt &_ast, const std::string &loop, bool immediate) {
         done = mutator.done();
     }
     if (!done) {
-        throw InvalidSchedule("Loop " + loop + " not found");
+        throw InvalidSchedule("Loop " + toString(loop) + " not found");
     }
     return ast;
 }

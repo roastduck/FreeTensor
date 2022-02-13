@@ -20,17 +20,13 @@ class FindLoopInvariantWrites : public SymbolTable<WithCursor<Visitor>> {
     std::vector<If> ifStack_;
     std::unordered_map<Store, std::tuple<VarDef, Expr, Cursor>>
         results_; /// (store, extraCond, cursor to loop)
-    std::unordered_map<std::string, int> defDepth_;
-    const std::unordered_map<
-        Expr, std::unordered_map<std::string, LoopVariability>> &variantExpr_;
-    const std::string &singleDefId_;
+    std::unordered_map<ID, int> defDepth_;
+    const LoopVariExprMap &variantExpr_;
+    const ID &singleDefId_;
 
   public:
-    FindLoopInvariantWrites(
-        const std::unordered_map<
-            Expr, std::unordered_map<std::string, LoopVariability>>
-            &variantExpr,
-        const std::string &singleDefId)
+    FindLoopInvariantWrites(const LoopVariExprMap &variantExpr,
+                            const ID &singleDefId)
         : variantExpr_(variantExpr), singleDefId_(singleDefId) {}
 
     const std::unordered_map<Store, std::tuple<VarDef, Expr, Cursor>> &
@@ -108,7 +104,7 @@ class RemoveWrites : public Mutator {
  * }
  * ```
  */
-Stmt removeWrites(const Stmt &op, const std::string &singleDefId = "");
+Stmt removeWrites(const Stmt &op, const ID &singleDefId = "");
 
 DEFINE_PASS_FOR_FUNC(removeWrites)
 

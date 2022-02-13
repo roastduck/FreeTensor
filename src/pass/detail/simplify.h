@@ -4,6 +4,7 @@
 #include <sstream>
 
 #include <hash.h>
+#include <pass/annotate_conds.h>
 #include <pass/replace_iter.h>
 #include <pass/simplify.h>
 
@@ -710,6 +711,8 @@ simplifyAndGetBounds(const Stmt &_op) {
     auto op = _op;
 
     for (int i = 0;; i++) {
+        op = annotateConds(op);
+
         Simplifier mutator;
         auto newOp = mutator(op);
 

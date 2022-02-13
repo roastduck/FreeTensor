@@ -30,6 +30,7 @@ class Hasher {
     static size_t compHash(const ForNode &op);
     static size_t compHash(const IfNode &op);
     static size_t compHash(const AssertNode &op);
+    static size_t compHash(const AssumeNode &op);
     static size_t compHash(const EvalNode &op);
     static size_t compHash(const MatMulNode &op);
 
@@ -47,7 +48,9 @@ class Hasher {
     static size_t compHash(const CastNode &op);
     static size_t compHash(const IntrinsicNode &op);
 
-    size_t operator()(const AST &op) const { return op->hash(); }
+    size_t operator()(const AST &op) const {
+        return op.isValid() ? op->hash() : P;
+    }
 };
 
 class HashComparator {
@@ -61,6 +64,7 @@ class HashComparator {
     bool compare(const For &lhs, const For &rhs) const;
     bool compare(const If &lhs, const If &rhs) const;
     bool compare(const Assert &lhs, const Assert &rhs) const;
+    bool compare(const Assume &lhs, const Assume &rhs) const;
     bool compare(const Eval &lhs, const Eval &rhs) const;
     bool compare(const MatMul &lhs, const MatMul &rhs) const;
 
@@ -89,6 +93,22 @@ using ASTHashMap = std::unordered_map<K, V, Hasher, HashComparator>;
 template <class K>
 using ASTHashSet = std::unordered_set<K, Hasher, HashComparator>;
 
+size_t hashCombine(size_t seed, size_t other);
+
 } // namespace ir
+
+namespace std {
+
+template <class T, class U> class hash<std::pair<T, U>> {
+    std::hash<T> hashT_;
+    std::hash<U> hashU_;
+
+  public:
+    size_t operator()(const std::pair<T, U> &pair) const {
+        return ir::hashCombine(hashT_(pair.first), hashU_(pair.second));
+    }
+};
+
+} // namespace std
 
 #endif // HASH_H

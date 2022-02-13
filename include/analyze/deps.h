@@ -38,7 +38,7 @@ struct AccessPoint {
 };
 
 class FindAllNoDeps : public Visitor {
-    std::unordered_map<std::string, std::vector<std::string>>
+    std::unordered_map<std::string, std::vector<ID>>
         results_; // Var name -> [loop ID]
     // FIXME: Currently, we record a var name to loop ID relation, which is not
     // rigorous because there will be different vars with the same name.
@@ -47,8 +47,7 @@ class FindAllNoDeps : public Visitor {
     // and we are unable to find the VarDef ID
 
   public:
-    const std::unordered_map<std::string, std::vector<std::string>> &
-    results() const {
+    const std::unordered_map<std::string, std::vector<ID>> &results() const {
         return results_;
     }
 
@@ -84,14 +83,16 @@ class FindAccessPoint : public SymbolTable<WithCursor<Visitor>> {
 
     bool lastIsLoad_ = false;
     std::vector<IterAxis> cur_; // Current iteration point in the space
-    std::vector<Expr> conds_;   // FIXME: There may be out-dated conditions. See
-                                // OutDatedRemover in pass/simplify
-    std::unordered_map<std::string, std::vector<Ref<AccessPoint>>> reads_,
-        writes_;
+    std::vector<Expr>
+        conds_; // FIXME: There may be out-dated conditions, and we must check
+                // allReads(cond) against allWrites(body) for each If or For
+                // nodes. See pass/simplify. If the condition violates, we may
+                // need to push a null condition according to RelaxMode
+    std::unordered_map<ID, std::vector<Ref<AccessPoint>>> reads_, writes_;
     std::vector<VarDef> allDefs_;
 
     // For or StmtSeq -> coordinate in space
-    std::unordered_map<std::string, std::vector<IterAxis>> scope2coord_;
+    std::unordered_map<ID, std::vector<IterAxis>> scope2coord_;
 
     // Var name -> axis: Which axis is a local var defined
     std::unordered_map<std::string, int> defAxis_;
@@ -99,17 +100,15 @@ class FindAccessPoint : public SymbolTable<WithCursor<Visitor>> {
   public:
     FindAccessPoint(const Stmt &root);
 
-    const std::unordered_map<std::string, std::vector<Ref<AccessPoint>>> &
-    reads() const {
+    const std::unordered_map<ID, std::vector<Ref<AccessPoint>>> &reads() const {
         return reads_;
     }
-    const std::unordered_map<std::string, std::vector<Ref<AccessPoint>>> &
+    const std::unordered_map<ID, std::vector<Ref<AccessPoint>>> &
     writes() const {
         return writes_;
     }
     const std::vector<VarDef> &allDefs() const { return allDefs_; }
-    const std::unordered_map<std::string, std::vector<IterAxis>> &
-    scope2coord() const {
+    const std::unordered_map<ID, std::vector<IterAxis>> &scope2coord() const {
         return scope2coord_;
     }
 
@@ -156,11 +155,19 @@ enum class DepDirection : int {
 };
 
 struct NodeIDOrParallelScope {
-    std::string name_;
+    ID id_;
+    std::string parallel_;
     bool isNode_;
 
-    NodeIDOrParallelScope(const std::string &name, bool isNode = true)
-        : name_(name), isNode_(isNode) {}
+    NodeIDOrParallelScope(const ID &id) : id_(id), isNode_(true) {}
+    NodeIDOrParallelScope(const std::string &name, bool isNode)
+        : isNode_(isNode) {
+        if (isNode) {
+            id_ = name;
+        } else {
+            parallel_ = name;
+        }
+    }
 };
 
 typedef std::vector<std::pair<NodeIDOrParallelScope, DepDirection>>
@@ -181,7 +188,7 @@ struct Dependency {
     const AST &later() const { return later_.op_; }
     const AST &earlier() const { return earlier_.op_; }
     const VarDef &def() const { return earlier_.def_; }
-    const std::string &defId() const { return earlier_.def_->id(); }
+    ID defId() const { return earlier_.def_->id(); }
 
     // Additional condition check. This check is not multi-thread, so please use
     // the `cond` parameter of `findDeps` instead, if possible
@@ -216,11 +223,11 @@ typedef std::function<bool(const AccessPoint &later,
 class AnalyzeDeps {
     friend Dependency;
 
-    const std::unordered_map<std::string, std::vector<Ref<AccessPoint>>>
-        &reads_, &writes_;
+    const std::unordered_map<ID, std::vector<Ref<AccessPoint>>> &reads_,
+        &writes_;
     const std::vector<VarDef> &allDefs_;
-    const std::unordered_map<std::string, std::vector<IterAxis>> &scope2coord_;
-    const std::unordered_map<std::string, std::vector<std::string>>
+    const std::unordered_map<ID, std::vector<IterAxis>> &scope2coord_;
+    const std::unordered_map<std::string, std::vector<ID>>
         &noDepsLists_; // Var name -> [loop ID]
     const LoopVariExprMap &variantExpr_;
 
@@ -239,15 +246,11 @@ class AnalyzeDeps {
 
   public:
     AnalyzeDeps(
-        const std::unordered_map<std::string, std::vector<Ref<AccessPoint>>>
-            &reads,
-        const std::unordered_map<std::string, std::vector<Ref<AccessPoint>>>
-            &writes,
+        const std::unordered_map<ID, std::vector<Ref<AccessPoint>>> &reads,
+        const std::unordered_map<ID, std::vector<Ref<AccessPoint>>> &writes,
         const std::vector<VarDef> &allDefs,
-        const std::unordered_map<std::string, std::vector<IterAxis>>
-            &scope2coord,
-        const std::unordered_map<std::string, std::vector<std::string>>
-            &noDepsLists,
+        const std::unordered_map<ID, std::vector<IterAxis>> &scope2coord,
+        const std::unordered_map<std::string, std::vector<ID>> &noDepsLists,
         const LoopVariExprMap &variantExpr,
         const std::vector<FindDepsCond> &cond, const FindDepsCallback &found,
         FindDepsMode mode, DepType depType, const FindDepsFilter &filter,
@@ -298,7 +301,7 @@ class AnalyzeDeps {
     PBMap makeExternalEq(PBCtx &presburger, int iterDim,
                          const std::string &ext1, const std::string &ext2);
 
-    PBMap makeConstraintOfSingleLoop(PBCtx &presburger, const std::string &loop,
+    PBMap makeConstraintOfSingleLoop(PBCtx &presburger, const ID &loop,
                                      DepDirection mode, int iterDim);
 
     PBMap makeConstraintOfParallelScope(PBCtx &presburger,

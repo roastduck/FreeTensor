@@ -45,10 +45,10 @@ template <> struct std::hash<ir::MultiLevelTilingAnnotation> {
         std::size_t h = 0;
         for (const auto &t : s.spaceLoopTiling)
             for (const auto i : t)
-                boost::hash_combine(h, std::hash<int>{}(i));
+                ir::hashCombine(h, std::hash<int>{}(i));
         for (const auto &t : s.reductionLoopTiling)
             for (const auto i : t)
-                boost::hash_combine(h, std::hash<int>{}(i));
+                ir::hashCombine(h, std::hash<int>{}(i));
         return h;
     }
 };

@@ -35,11 +35,11 @@ Stmt SetMemType::visit(const VarDef &_op) {
     return op;
 }
 
-Stmt setMemType(const Stmt &_ast, const std::string &def, MemType mtype) {
+Stmt setMemType(const Stmt &_ast, const ID &def, MemType mtype) {
     SetMemType mutator(def, mtype);
     auto ast = mutator(_ast);
     if (!mutator.found()) {
-        throw InvalidSchedule(def + " not found");
+        throw InvalidSchedule(toString(def) + " not found");
     }
     checkVarCrossParallel(ast, def, mtype);
     return ast;

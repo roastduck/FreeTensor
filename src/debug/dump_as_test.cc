@@ -9,7 +9,8 @@ namespace ir {
 void DumpAsTest::printId(const Stmt &op) {
     if (op->hasNamedId()) {
         makeIndent();
-        os() << "ir.MarkNid(\"" << op->id() << "\")" << std::endl;
+        os() << "ir.MarkNid(\"" << ::ir::toString(op->id()) << "\")"
+             << std::endl;
     }
 }
 

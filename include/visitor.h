@@ -215,6 +215,11 @@ class Visitor {
         (*this)(op->body_);
     }
 
+    virtual void visit(const Assume &op) {
+        (*this)(op->cond_);
+        (*this)(op->body_);
+    }
+
     virtual void visit(const IfExpr &op) {
         (*this)(op->cond_);
         (*this)(op->thenCase_);

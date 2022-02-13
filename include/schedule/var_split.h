@@ -8,7 +8,8 @@ namespace ir {
 enum VarSplitMode : int { FixedSize, RelaxedSize };
 
 class VarSplit : public Mutator {
-    std::string def_, var_;
+    ID def_;
+    std::string var_;
     int dim_;
     bool fixedSize_;
     int factor_, nparts_;
@@ -16,8 +17,7 @@ class VarSplit : public Mutator {
     bool found_ = false;
 
   public:
-    VarSplit(const std::string &def, int dim, bool fixedSize, int factor,
-             int nparts)
+    VarSplit(const ID &def, int dim, bool fixedSize, int factor, int nparts)
         : def_(def), dim_(dim), fixedSize_(fixedSize), factor_(factor),
           nparts_(nparts) {}
 
@@ -41,8 +41,8 @@ class VarSplit : public Mutator {
     Expr visit(const Load &op) override;
 };
 
-Stmt varSplit(const Stmt &ast, const std::string &def, int dim,
-              VarSplitMode mode, int factor, int nparts);
+Stmt varSplit(const Stmt &ast, const ID &def, int dim, VarSplitMode mode,
+              int factor, int nparts);
 
 } // namespace ir
 

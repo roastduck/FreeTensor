@@ -12,15 +12,14 @@ namespace ir {
 class CountContigAccessLoops : public SymbolTable<Visitor> {
     typedef SymbolTable<Visitor> BaseClass;
 
-    std::unordered_map<std::string, std::pair<int64_t, int>>
+    std::unordered_map<ID, std::pair<int64_t, int>>
         counts_; // for ID -> (count, -depth)
     AnalyzeLinear analyzeLinear_;
     int64_t repeat_ = 1;
     int depth_ = 0;
 
   public:
-    const std::unordered_map<std::string, std::pair<int64_t, int>> &
-    counts() const {
+    const std::unordered_map<ID, std::pair<int64_t, int>> &counts() const {
         return counts_;
     }
 

@@ -79,33 +79,33 @@ void CountScopeLen::visit(const Assert &op) {
 }
 
 void AnalyzeVersion::visit(const Load &op) {
-    Visitor::visit(op);
+    BaseClass::visit(op);
     if (op->var_ == var_) {
-        versions_[op] = makeSub(offset_, makeIntConst(1));
+        versions_[ID(op, cursor().node())] = makeSub(offset_, makeIntConst(1));
     }
 }
 
 void AnalyzeVersion::visit(const Store &op) {
-    Visitor::visit(op);
+    BaseClass::visit(op);
     if (op->var_ == var_ && needTapes_.count(op->id())) {
-        versions_[op] = offset_;
+        versions_[op->id()] = offset_;
     }
 }
 
 void AnalyzeVersion::visit(const ReduceTo &op) {
-    Visitor::visit(op);
+    BaseClass::visit(op);
     if (op->var_ == var_ && needTapes_.count(op->id())) {
-        versions_[op] = offset_;
+        versions_[op->id()] = offset_;
     }
 }
 
 void AnalyzeVersion::visit(const VarDef &op) {
     if (op->id() == def_) {
         var_ = op->name_;
-        Visitor::visit(op);
+        BaseClass::visit(op);
         var_.clear();
     } else {
-        Visitor::visit(op);
+        BaseClass::visit(op);
     }
 }
 
@@ -117,10 +117,10 @@ void AnalyzeVersion::visit(const For &op) {
             makeMul(makeFloorDiv(makeSub(makeVar(op->iter_), op->begin_),
                                  op->step_),
                     scopeLen_.at(op->body_)));
-        Visitor::visit(op);
+        BaseClass::visit(op);
         offset_ = oldOffset;
     } else {
-        Visitor::visit(op);
+        BaseClass::visit(op);
     }
 }
 
@@ -137,15 +137,13 @@ void AnalyzeVersion::visit(const StmtSeq &op) {
     offset_ = oldOffset;
 }
 
-std::pair<std::unordered_map<AST, Expr>, std::unordered_map<std::string, Expr>>
-analyzeVersion(const Stmt &op,
-               const std::unordered_set<std::string> &intermediates) {
+std::pair<std::unordered_map<ID, Expr>, std::unordered_map<ID, Expr>>
+analyzeVersion(const Stmt &op, const std::unordered_set<ID> &intermediates) {
     std::vector<FindDepsCond> conds;
     for (auto &&scope : findAllLoops(op)) {
         conds.push_back({{scope, DepDirection::Normal}});
     }
-    std::unordered_map<std::string, std::unordered_set<std::string>>
-        affectingScopes, needTapes;
+    std::unordered_map<ID, std::unordered_set<ID>> affectingScopes, needTapes;
     auto filter1 = [&](const AccessPoint &later, const AccessPoint &earlier) {
         return intermediates.count(earlier.def_->id());
     };
@@ -166,7 +164,7 @@ analyzeVersion(const Stmt &op,
             (d.later()->nodeType() == ASTNodeType::Load &&
              d.earlier()->nodeType() != ASTNodeType::Load)) {
             ASSERT(d.cond_.size() == 1);
-            affectingScopes[d.defId()].insert(d.cond_[0].first.name_);
+            affectingScopes[d.defId()].insert(d.cond_[0].first.id_);
         }
     };
     findDeps(op, {{}}, found1, FindDepsMode::Dep, DEP_RAW, filter1, true,
@@ -174,8 +172,8 @@ analyzeVersion(const Stmt &op,
     findDeps(op, conds, found2, FindDepsMode::Dep, DEP_RAW | DEP_WAR, filter2,
              true, false);
 
-    std::unordered_map<AST, Expr> versions;
-    std::unordered_map<std::string, Expr> totLens;
+    std::unordered_map<ID, Expr> versions;
+    std::unordered_map<ID, Expr> totLens;
     for (auto &&defId : intermediates) {
         auto &&scopes = affectingScopes[defId];
         auto &&needTape = needTapes[defId];

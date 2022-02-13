@@ -27,8 +27,8 @@ Stmt InsertTmpEval::visitStmt(const Stmt &_op) {
 }
 
 bool checkNotModified(const Stmt &op, const Expr &expr,
-                      CheckNotModifiedSide s0Side, const std::string &s0,
-                      CheckNotModifiedSide s1Side, const std::string &s1) {
+                      CheckNotModifiedSide s0Side, const ID &s0,
+                      CheckNotModifiedSide s1Side, const ID &s1) {
     if (allReads(expr).empty()) {
         return true;
     }
@@ -38,8 +38,8 @@ bool checkNotModified(const Stmt &op, const Expr &expr,
 
     InsertTmpEval inserter(expr, s0Side, s0, s1Side, s1);
     auto tmpOp = inserter(op);
-    ASSERT(!inserter.s0Eval().empty());
-    ASSERT(!inserter.s1Eval().empty());
+    ASSERT(inserter.s0Eval().isValid());
+    ASSERT(inserter.s1Eval().isValid());
     auto common = lca(getCursorById(tmpOp, inserter.s0Eval()),
                       getCursorById(tmpOp, inserter.s1Eval()));
 

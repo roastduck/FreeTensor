@@ -13,10 +13,10 @@ namespace ir {
 
 class ShrinkVar : public Mutator {
     std::unordered_map<std::string, std::vector<Expr>> offset_;
-    const std::unordered_map<std::string, AccessBound> &newRange_;
+    const std::unordered_map<ID, AccessBound> &newRange_;
 
   public:
-    ShrinkVar(const std::unordered_map<std::string, AccessBound> &newRange)
+    ShrinkVar(const std::unordered_map<ID, AccessBound> &newRange)
         : newRange_(newRange) {}
 
   private:
@@ -48,7 +48,7 @@ Stmt shrinkVar(const Stmt &op);
 /**
  * A variant of shrinkVar that shrinks only one variable only
  */
-Stmt shrinkSingleVar(const Stmt &op, const std::string &varDefId);
+Stmt shrinkSingleVar(const Stmt &op, const ID &varDefId);
 
 DEFINE_PASS_FOR_FUNC(shrinkVar)
 

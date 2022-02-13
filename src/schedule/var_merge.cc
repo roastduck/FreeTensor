@@ -48,11 +48,11 @@ Expr VarMerge::visit(const Load &_op) {
     return mergeMemAcc(op);
 }
 
-Stmt varMerge(const Stmt &_ast, const std::string &def, int dim) {
+Stmt varMerge(const Stmt &_ast, const ID &def, int dim) {
     VarMerge mutator(def, dim);
     auto ast = mutator(_ast);
     if (!mutator.found()) {
-        throw InvalidSchedule(def + " not found");
+        throw InvalidSchedule(toString(def) + " not found");
     }
     return ast;
 }

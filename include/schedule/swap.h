@@ -9,11 +9,11 @@
 namespace ir {
 
 class Swap : public Mutator {
-    std::vector<std::string> order_;
+    std::vector<ID> order_;
     StmtSeq scope_;
 
   public:
-    Swap(const std::vector<std::string> &order) : order_(order) {}
+    Swap(const std::vector<ID> &order) : order_(order) {}
 
     const StmtSeq &scope() const { return scope_; }
 
@@ -21,7 +21,7 @@ class Swap : public Mutator {
     Stmt visit(const StmtSeq &op) override;
 };
 
-Stmt swap(const Stmt &ast, const std::vector<std::string> &order);
+Stmt swap(const Stmt &ast, const std::vector<ID> &order);
 
 } // namespace ir
 

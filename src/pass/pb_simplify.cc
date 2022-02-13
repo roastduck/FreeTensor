@@ -27,17 +27,14 @@ Expr PBCompBounds::visitExpr(const Expr &_op) {
         // x + y < 2 directly
         std::vector<std::string> condExprs;
         for (auto &&cond : conds()) {
-            if (cond.isValid()) {
-                if (auto &&condExpr = genPBExpr_.gen(cond);
-                    condExpr.isValid()) {
-                    for (auto &&var : genPBExpr_.vars(cond)) {
-                        if (!vars.count(var.first)) {
-                            goto ignore;
-                        }
+            if (auto &&condExpr = genPBExpr_.gen(cond); condExpr.isValid()) {
+                for (auto &&var : genPBExpr_.vars(cond)) {
+                    if (!vars.count(var.first)) {
+                        goto ignore;
                     }
-                    condExprs.emplace_back(*condExpr);
-                ignore:;
                 }
+                condExprs.emplace_back(*condExpr);
+            ignore:;
             }
         }
 

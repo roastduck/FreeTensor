@@ -13,33 +13,31 @@ namespace ir {
 enum class FissionSide : int { Before, After };
 
 class HoistVar : public Mutator {
-    std::string loop_, before_, after_;
-    std::vector<std::pair<std::string, std::string>> scopePairs_;
+    ID loop_, before_, after_;
+    std::vector<std::pair<ID, ID>> scopePairs_;
     std::unordered_set<std::string> part0Vars_, part1Vars_;
     std::vector<VarDef> defStack_;
-    std::vector<std::string> outerScopes_, innerLoops_;
+    std::vector<ID> outerScopes_, innerLoops_;
 
     // var name -> loop id: which loops will a var cross during hoisting?
-    std::unordered_map<std::string, std::vector<std::string>> xLoops_;
+    std::unordered_map<std::string, std::vector<ID>> xLoops_;
 
     bool inside_ = false, isAfter_ = false;
 
   public:
-    HoistVar(const std::string &loop, const std::string &before,
-             const std::string &after)
+    HoistVar(const ID &loop, const ID &before, const ID &after)
         : loop_(loop), before_(before), after_(after) {}
 
-    const std::vector<std::pair<std::string, std::string>> &scopePairs() const {
+    const std::vector<std::pair<ID, ID>> &scopePairs() const {
         return scopePairs_;
     }
 
     bool found() const { return isAfter_; }
 
-    const std::vector<std::string> &outerScopes() const { return outerScopes_; }
-    const std::vector<std::string> &innerLoops() const { return innerLoops_; }
+    const std::vector<ID> &outerScopes() const { return outerScopes_; }
+    const std::vector<ID> &innerLoops() const { return innerLoops_; }
 
-    const std::unordered_map<std::string, std::vector<std::string>> &
-    xLoops() const {
+    const std::unordered_map<std::string, std::vector<ID>> &xLoops() const {
         return xLoops_;
     }
 
@@ -64,13 +62,12 @@ class AddDimToVar : public SymbolTable<Mutator> {
     typedef SymbolTable<Mutator> BaseClass;
 
     // VarDef ID -> for ID
-    std::unordered_map<std::string, std::vector<std::string>> toAdd_;
+    std::unordered_map<ID, std::vector<ID>> toAdd_;
     // for ID -> For
-    std::unordered_map<std::string, For> forMap_;
+    std::unordered_map<ID, For> forMap_;
 
   public:
-    AddDimToVar(
-        const std::unordered_map<std::string, std::vector<std::string>> &toAdd)
+    AddDimToVar(const std::unordered_map<ID, std::vector<ID>> &toAdd)
         : toAdd_(toAdd) {}
 
   private:
@@ -93,24 +90,21 @@ class AddDimToVar : public SymbolTable<Mutator> {
 };
 
 class FissionFor : public Mutator {
-    std::string loop_, before_, after_, suffix0_, suffix1_;
-    std::unordered_map<std::string, std::string> ids0_, ids1_;
+    ID loop_, before_, after_;
+    std::string suffix0_, suffix1_;
+    std::unordered_map<ID, ID> ids0_, ids1_;
     std::unordered_set<std::string> varUses_;
     bool inside_ = false, isPart0_ = true, anyInside_ = false, isAfter_ = false;
 
   public:
-    FissionFor(const std::string &loop, const std::string &before,
-               const std::string &after, const std::string &suffix0 = ".a",
+    FissionFor(const ID &loop, const ID &before, const ID &after,
+               const std::string &suffix0 = ".a",
                const std::string &suffix1 = ".b")
         : loop_(loop), before_(before), after_(after), suffix0_(suffix0),
           suffix1_(suffix1) {}
 
-    const std::unordered_map<std::string, std::string> &ids0() const {
-        return ids0_;
-    }
-    const std::unordered_map<std::string, std::string> &ids1() const {
-        return ids1_;
-    }
+    const std::unordered_map<ID, ID> &ids0() const { return ids0_; }
+    const std::unordered_map<ID, ID> &ids1() const { return ids1_; }
 
   private:
     void markNewId(const Stmt &op, bool isPart0);
@@ -131,11 +125,10 @@ class FissionFor : public Mutator {
     Stmt visit(const Assert &op) override;
 };
 
-std::pair<Stmt, std::pair<std::unordered_map<std::string, std::string>,
-                          std::unordered_map<std::string, std::string>>>
-fission(const Stmt &ast, const std::string &loop, FissionSide side,
-        const std::string &splitter, const std::string &suffix0,
-        const std::string &suffix1);
+std::pair<Stmt,
+          std::pair<std::unordered_map<ID, ID>, std::unordered_map<ID, ID>>>
+fission(const Stmt &ast, const ID &loop, FissionSide side, const ID &splitter,
+        const std::string &suffix0, const std::string &suffix1);
 
 } // namespace ir
 

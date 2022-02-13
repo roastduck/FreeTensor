@@ -27,6 +27,7 @@ enum class ASTNodeType : int {
     For,
     If,
     Assert,
+    Assume,
 
     // Calls to external libs
     MatMul,
@@ -152,22 +153,64 @@ class ExprNode : public ASTNode {
 };
 typedef Ref<ExprNode> Expr;
 
+class StmtNode;
+typedef Ref<StmtNode> Stmt;
+
+/**
+ * Identify an Stmt or Expr acrossing passes, so we do not need to pass pointers
+ *
+ * An Stmt is identified by a string-typed id_ property, which is unique to each
+ * Stmt node
+ *
+ * An Expr is identified by the hash of itself, combined with the string-typed
+ * ID of the Stmt its in, so that any identical Expr in the same Stmt is treated
+ * as the same node
+ */
+class ID {
+    friend StmtNode;
+
+    std::string stmtId_;
+    Expr expr_; /// null for Stmt
+
+  public:
+    ID() {}
+    ID(const char *stmtId) : stmtId_(stmtId) {}
+    ID(const std::string &stmtId) : stmtId_(stmtId) {}
+    explicit ID(const Stmt &stmt);
+
+    template <class T> ID(const Expr &expr, T &&parent) : ID(parent) {
+        expr_ = expr;
+    }
+
+    bool isValid() const { return !stmtId_.empty(); }
+
+    const std::string &strId() const;
+
+    friend std::string toString(const ID &id);
+    friend bool operator==(const ID &lhs, const ID &rhs);
+    friend bool operator!=(const ID &lhs, const ID &rhs);
+    friend struct ::std::hash<ID>;
+};
+
+std::string toString(const ID &id);
+
 class StmtNode : public ASTNode {
+    friend ID;
+
     std::string id_;
     static std::atomic<uint64_t> idCnt_;
 
   public:
     static std::string newId();
 
-    void setId(const std::string &id);
-    const std::string &id() const;
+    void setId(const ID &id);
+    ID id() const;
     bool hasNamedId() const;
 
     bool isStmt() const override { return true; }
 
     DEFINE_NODE_ACCESS(Stmt);
 };
-typedef Ref<StmtNode> Stmt;
 
 Expr deepCopy(const Expr &op);
 Stmt deepCopy(const Stmt &op);
@@ -275,5 +318,11 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTree {
 };
 
 } // namespace ir
+
+namespace std {
+
+template <> struct hash<ir::ID> { size_t operator()(const ir::ID &id) const; };
+
+} // namespace std
 
 #endif // AST_H

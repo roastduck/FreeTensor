@@ -8,14 +8,13 @@
 namespace ir {
 
 class SetMemType : public Mutator {
-    std::string def_;
+    ID def_;
     MemType mtype_;
-    std::unordered_map<std::string, int> inScope_;
+    std::unordered_map<ID, int> inScope_;
     bool found_ = false;
 
   public:
-    SetMemType(const std::string &def, MemType mtype)
-        : def_(def), mtype_(mtype) {}
+    SetMemType(const ID &def, MemType mtype) : def_(def), mtype_(mtype) {}
 
     bool found() const { return found_; }
 
@@ -24,7 +23,7 @@ class SetMemType : public Mutator {
     Stmt visit(const VarDef &op) override;
 };
 
-Stmt setMemType(const Stmt &ast, const std::string &def, MemType mtype);
+Stmt setMemType(const Stmt &ast, const ID &def, MemType mtype);
 
 } // namespace ir
 

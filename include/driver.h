@@ -42,10 +42,6 @@ class Driver {
             }
         }
         unload();
-        //        if (ctx_ != nullptr) {
-        //            std::cout << "destroying " << ctx_ << std::endl;
-        //            delete ctx_;
-        //        }
     }
 
     Driver(const Driver &) = delete;

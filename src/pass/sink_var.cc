@@ -115,10 +115,10 @@ Stmt sinkVar(const Stmt &_op) {
     for (auto &&loop : allLoops) {
         cond.push_back({{loop, DepDirection::Normal}});
     }
-    std::set<std::pair<std::string, std::string>> deps; // {(var, loop)}
+    std::unordered_set<std::pair<std::string, ID>> deps; // {(var, loop)}
     auto found = [&](const Dependency &d) {
         ASSERT(d.cond_.size() == 1);
-        deps.emplace(d.var_, d.cond_[0].first.name_);
+        deps.emplace(d.var_, d.cond_[0].first.id_);
     };
     findDeps(op, cond, found);
 

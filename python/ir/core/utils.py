@@ -1,8 +1,10 @@
 import ffi
-from ffi import AccessType, MemType, DataType
+from ffi import ID, AccessType, MemType, DataType
 
 
 def toId(node):
+    if type(node) is ID:
+        return node
     if type(node) is str:
         return node
     if isinstance(node, ffi.Cursor):

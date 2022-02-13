@@ -14,7 +14,9 @@ def test_flop():
     ast = ir.pop_ast()
     print(ast)
 
-    features = ir.structural_feature(ast)
+    features = dict(
+        map(lambda kv: (str(kv[0]), kv[1]),
+            ir.structural_feature(ast).items()))
 
     assert features['S1'].op_cnt[ir.parseDType('float32')] == 2
     assert features['L1'].op_cnt[ir.parseDType('float32')] == 64
@@ -31,7 +33,9 @@ def test_access_count():
     ast = ir.pop_ast()
     print(ast)
 
-    features = ir.structural_feature(ast)
+    features = dict(
+        map(lambda kv: (str(kv[0]), kv[1]),
+            ir.structural_feature(ast).items()))
 
     assert features['S1'].load_cnt[ir.parseMType('cpu')] == 1
     assert features['S1'].store_cnt[ir.parseMType('cpu')] == 1
@@ -55,7 +59,9 @@ def test_access_count_overlap():
     ast = ir.pop_ast()
     print(ast)
 
-    features = ir.structural_feature(ast)
+    features = dict(
+        map(lambda kv: (str(kv[0]), kv[1]),
+            ir.structural_feature(ast).items()))
 
     assert features['L1'].load_cnt[ir.parseMType('cpu')] == 32
     assert features['L1'].store_cnt[ir.parseMType('cpu')] == 32
@@ -79,7 +85,9 @@ def test_access_area():
     ast = ir.pop_ast()
     print(ast)
 
-    features = ir.structural_feature(ast)
+    features = dict(
+        map(lambda kv: (str(kv[0]), kv[1]),
+            ir.structural_feature(ast).items()))
 
     assert features['S1'].load_area[ir.parseMType('cpu')] == 1
     assert features['S1'].store_area[ir.parseMType('cpu')] == 1
@@ -103,7 +111,9 @@ def test_access_area_overlap():
     ast = ir.pop_ast()
     print(ast)
 
-    features = ir.structural_feature(ast)
+    features = dict(
+        map(lambda kv: (str(kv[0]), kv[1]),
+            ir.structural_feature(ast).items()))
 
     assert features['L1'].load_area[ir.parseMType('cpu')] == 32
     assert features['L1'].store_area[ir.parseMType('cpu')] == 32

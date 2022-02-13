@@ -22,11 +22,11 @@ const CompAccessBoundMode COMP_ACCESS_BOUND_ALL =
     COMP_ACCESS_BOUND_READ | COMP_ACCESS_BOUND_WRITE;
 
 class FindMemType : public Visitor {
-    std::string varDefId_;
+    ID varDefId_;
     MemType mtype_;
 
   public:
-    FindMemType(const std::string &varDefId) : varDefId_(varDefId) {}
+    FindMemType(const ID &varDefId) : varDefId_(varDefId) {}
 
     MemType mtype() const { return mtype_; }
 
@@ -43,7 +43,7 @@ class CompAccessBound : public Visitor {
     };
 
     // The variable to compute
-    std::string varDefId_;
+    ID varDefId_;
     std::string var_;
     MemType mtype_;
 
@@ -66,7 +66,7 @@ class CompAccessBound : public Visitor {
 
   public:
     CompAccessBound(
-        const std::string &varDefId, MemType mtype,
+        const ID &varDefId, MemType mtype,
         const std::unordered_map<Expr, std::vector<LowerBound>> &lower,
         const std::unordered_map<Expr, std::vector<UpperBound>> &upper,
         CompAccessBoundMode mode = COMP_ACCESS_BOUND_ALL)
@@ -85,7 +85,7 @@ class CompAccessBound : public Visitor {
 };
 
 AccessBound
-compAccessBound(const Stmt &op, const std::string &varDefId,
+compAccessBound(const Stmt &op, const ID &varDefId,
                 const std::unordered_map<Expr, std::vector<LowerBound>> &lower,
                 const std::unordered_map<Expr, std::vector<UpperBound>> &upper,
                 CompAccessBoundMode mode = COMP_ACCESS_BOUND_ALL);

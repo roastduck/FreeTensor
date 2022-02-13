@@ -134,8 +134,7 @@ Stmt MergeFor::visit(const VarDef &_op) {
     }
 }
 
-std::pair<Stmt, std::string> merge(const Stmt &_ast, const std::string &loop1,
-                                   const std::string &loop2) {
+std::pair<Stmt, ID> merge(const Stmt &_ast, const ID &loop1, const ID &loop2) {
     // Propagate first, because merge will lose some propagating opportunities
     auto ast = tensorPropConst(_ast);
 

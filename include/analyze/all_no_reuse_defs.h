@@ -7,8 +7,8 @@
 
 namespace ir {
 
-std::vector<std::string>
-allNoReuseDefs(const Stmt &op, const std::unordered_set<AccessType> &atypes);
+std::vector<ID> allNoReuseDefs(const Stmt &op,
+                               const std::unordered_set<AccessType> &atypes);
 
 }
 

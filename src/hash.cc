@@ -99,6 +99,13 @@ size_t Hasher::compHash(const AssertNode &op) {
     return (h * K3 + B3) % P;
 }
 
+size_t Hasher::compHash(const AssumeNode &op) {
+    size_t h = ((size_t)op.nodeType() * K1 + B1) % P;
+    h = ((h + op.cond_->hash()) * K2 + B2) % P;
+    h = ((h + op.body_->hash()) * K2 + B2) % P;
+    return (h * K3 + B3) % P;
+}
+
 size_t Hasher::compHash(const EvalNode &op) {
     size_t h = ((size_t)op.nodeType() * K1 + B1) % P;
     h = ((h + op.expr_->hash()) * K2 + B2) % P;
@@ -378,6 +385,16 @@ bool HashComparator::compare(const Assert &lhs, const Assert &rhs) const {
     return true;
 }
 
+bool HashComparator::compare(const Assume &lhs, const Assume &rhs) const {
+    if (!(*this)(lhs->cond_, rhs->cond_)) {
+        return false;
+    }
+    if (!(*this)(lhs->body_, rhs->body_)) {
+        return false;
+    }
+    return true;
+}
+
 bool HashComparator::compare(const Eval &lhs, const Eval &rhs) const {
     return (*this)(lhs->expr_, rhs->expr_);
 }
@@ -510,6 +527,7 @@ bool HashComparator::operator()(const AST &lhs, const AST &rhs) const {
         DISPATCH(For);
         DISPATCH(If);
         DISPATCH(Assert);
+        DISPATCH(Assume);
         DISPATCH(Eval);
         DISPATCH(MatMul);
         DISPATCH(Var);
@@ -524,6 +542,11 @@ bool HashComparator::operator()(const AST &lhs, const AST &rhs) const {
     default:
         ERROR("Unexpected Expr node type: " + toString(lhs->nodeType()));
     }
+}
+
+size_t hashCombine(size_t seed, size_t other) {
+    // https://stackoverflow.com/questions/35985960/c-why-is-boosthash-combine-the-best-way-to-combine-hash-values
+    return seed ^ (other + 0x9e3779b9 + (seed << 6) + (seed >> 2));
 }
 
 } // namespace ir

@@ -24,11 +24,12 @@ std::vector<std::string> intersect(const std::vector<std::string> &lhs,
     return ret;
 }
 
-LoopInVarDefs findLoopInVarDefs(const Stmt &stmt, const std::string &id,
+LoopInVarDefs findLoopInVarDefs(const Stmt &stmt, const ID &id,
                                 FindLoopInVarDefsDirection direction) {
     if (stmt->id() == id) {
         if (stmt->nodeType() != ASTNodeType::For) {
-            throw InvalidSchedule("Statement " + id + " is not a loop");
+            throw InvalidSchedule("Statement " + toString(id) +
+                                  " is not a loop");
         }
         return LoopInVarDefs{stmt.as<ForNode>(), {}};
     }
@@ -99,13 +100,15 @@ Stmt FuseFor::visit(const StmtSeq &_op) {
             op->stmts_[i], id0_, FindLoopInVarDefsDirection::Back);
         if (loop0InVarDefs.loop_.isValid()) {
             if (i + 1 == iEnd) {
-                throw InvalidSchedule("Fuse: Loop " + id0_ + " and " + id1_ +
+                throw InvalidSchedule("Fuse: Loop " + toString(id0_) + " and " +
+                                      toString(id1_) +
                                       " shuold be directly following");
             }
             auto loop1InVarDefs = findLoopInVarDefs(
                 op->stmts_[i + 1], id1_, FindLoopInVarDefsDirection::Front);
             if (!loop1InVarDefs.loop_.isValid()) {
-                throw InvalidSchedule("Fuse: Loop " + id0_ + " and " + id1_ +
+                throw InvalidSchedule("Fuse: Loop " + toString(id0_) + " and " +
+                                      toString(id1_) +
                                       " shuold be directly following");
             }
 
@@ -178,15 +181,15 @@ void CheckAccessible::visit(const StmtSeq &op) {
                 op->stmts_[i], id0_, FindLoopInVarDefsDirection::Back);
             if (loop0InVarDefs_.loop_.isValid()) {
                 if (i + 1 == iEnd) {
-                    throw InvalidSchedule("Fuse: Loop " + id0_ + " and " +
-                                          id1_ +
+                    throw InvalidSchedule("Fuse: Loop " + toString(id0_) +
+                                          " and " + toString(id1_) +
                                           " shuold be directly following");
                 }
                 loop1InVarDefs_ = findLoopInVarDefs(
                     op->stmts_[i + 1], id1_, FindLoopInVarDefsDirection::Front);
                 if (!loop1InVarDefs_.loop_.isValid()) {
-                    throw InvalidSchedule("Fuse: Loop " + id0_ + " and " +
-                                          id1_ +
+                    throw InvalidSchedule("Fuse: Loop " + toString(id0_) +
+                                          " and " + toString(id1_) +
                                           " shuold be directly following");
                 }
                 return;
@@ -195,8 +198,8 @@ void CheckAccessible::visit(const StmtSeq &op) {
     }
 }
 
-std::pair<Stmt, std::string> fuse(const Stmt &_ast, const std::string &loop0,
-                                  const std::string &loop1, bool strict) {
+std::pair<Stmt, ID> fuse(const Stmt &_ast, const ID &loop0, const ID &loop1,
+                         bool strict) {
     FuseFor mutator(loop0, loop1, strict);
     CheckAccessible check(loop0, loop1);
     check(_ast);
@@ -211,9 +214,8 @@ std::pair<Stmt, std::string> fuse(const Stmt &_ast, const std::string &loop0,
                 if (!checkNotModified(_ast, shape, CheckNotModifiedSide::Before,
                                       loop0, CheckNotModifiedSide::Before,
                                       loop1)) {
-                    throw InvalidSchedule(
-                        (std::string) "The shape of Vars in loop1 shouldn't "
-                                      "be changed in loop0");
+                    throw InvalidSchedule("The shape of Vars in loop1 "
+                                          "shouldn't be changed in loop0");
                 }
             }
         }
@@ -235,9 +237,9 @@ std::pair<Stmt, std::string> fuse(const Stmt &_ast, const std::string &loop0,
     try {
         ast = simplifyPass(ast);
     } catch (const AssertAlwaysFalse &e) {
-        throw InvalidSchedule((std::string) "Fusing " + loop0 + " and " +
-                              loop1 + " loop1 with different lengths? " +
-                              e.what());
+        throw InvalidSchedule("Fusing " + toString(loop0) + " and " +
+                              toString(loop1) +
+                              " loop1 with different lengths? " + e.what());
     }
 
     ast = propOneTimeUse(ast);

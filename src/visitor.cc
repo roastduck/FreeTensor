@@ -67,6 +67,7 @@ void Visitor::visitStmt(const Stmt &op) {
         DISPATCH_STMT_CASE(For);
         DISPATCH_STMT_CASE(If);
         DISPATCH_STMT_CASE(Assert);
+        DISPATCH_STMT_CASE(Assume);
         DISPATCH_STMT_CASE(Eval);
         DISPATCH_STMT_CASE(MatMul);
         DISPATCH_STMT_CASE(Any);
