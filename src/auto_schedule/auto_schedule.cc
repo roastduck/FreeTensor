@@ -104,26 +104,26 @@ AutoSchedule::genSchedules(const std::vector<Sketch> &sketches) {
 
 py::list AutoSchedule::genFeatures(const std::vector<Schedule> &schedules) {
     size_t n = schedules.size();
-    std::vector<std::vector<double>> feature_vec(n);
+    std::vector<std::vector<double>> featureVec(n);
 #pragma omp parallel for
     for (size_t i = 0; i < n; i++) {
         try {
-            feature_vec[i] = fixedLengthFeature(schedules[i].ast());
+            featureVec[i] = fixedLengthFeature(schedules[i].ast());
         } catch (const std::exception &e) {
             // OpenMP threads won't report an exception message
             std::cerr << "ERROR: " << e.what() << std::endl;
             exit(-1);
         }
     }
-    py::list feature_list;
-    for (auto &i : feature_vec) {
+    py::list featureList;
+    for (auto &i : featureVec) {
         py::list feature;
         for (auto j : i) {
             feature.append(py::float_(j));
         }
-        feature_list.append(feature);
+        featureList.append(feature);
     }
-    return feature_list;
+    return featureList;
 }
 
 std::vector<double>
@@ -135,11 +135,11 @@ AutoSchedule::testAndAdd(const std::vector<Sketch> &sketches) {
     size_t n = schedules.size();
     ASSERT(sketches.size() == n);
     std::vector<double> times = measure(schedules);
-    py::list times_list;
+    py::list timesList;
     for (auto i : times) {
-        times_list.append(py::float_(i));
+        timesList.append(py::float_(i));
     }
-    updateFunc_(features, times_list);
+    updateFunc_(features, timesList);
     for (size_t i = 0; i < n; i++) {
         std::cout << "test " << i << std::endl;
         if (measuredSketches_.size() < measuredSize_) {
@@ -207,8 +207,8 @@ std::vector<Sketch> AutoSchedule::getRandPopulation(size_t nRand) {
 
 std::vector<Sketch> AutoSchedule::getInitPopulation(size_t n) {
     std::vector<Sketch> ret = getRandPopulation(n * INIT_RAND_RATIO);
-    size_t n_measured = std::min(n - ret.size(), measuredSketches_.size());
-    for (size_t i = 0; i < n_measured; i++) {
+    size_t nMeasured = std::min(n - ret.size(), measuredSketches_.size());
+    for (size_t i = 0; i < nMeasured; i++) {
         ret.push_back(measuredSketches_[i]);
     }
     return ret;
@@ -223,7 +223,7 @@ std::vector<Sketch> AutoSchedule::evolutionarySearch(std::vector<Sketch> init,
     v2.reserve(v1.size());
     typedef std::pair<Sketch, double> SketchPred;
     std::vector<SketchPred> heap;
-    std::set<size_t> heap_hashes(measuredHashes_);
+    std::set<size_t> heapHashes(measuredHashes_);
     auto cmp = [](const SketchPred &a, const SketchPred &b) {
         return a.second < b.second;
     };
@@ -231,18 +231,18 @@ std::vector<Sketch> AutoSchedule::evolutionarySearch(std::vector<Sketch> init,
     for (int i = 0; i < EVOLUTIONARY_SEARCH_ITERS; i++) {
         std::cout << "search round " << i << std::endl;
         auto pred = getPrediction(*p1);
-        auto prob_sum = getProbSum(pred);
+        auto probSum = getProbSum(pred);
         for (size_t j = 0; j < p1->size(); j++) {
             size_t hash = (*p1)[j].hash();
             auto time = pred[j];
-            if (!heap_hashes.count(hash)) {
+            if (!heapHashes.count(hash)) {
                 if (heap.size() < outSize) {
-                    heap_hashes.insert(hash);
+                    heapHashes.insert(hash);
                     heap.emplace_back((*p1)[j], time);
                     std::push_heap(heap.begin(), heap.end(), cmp);
                 } else if (time < heap[0].second) {
-                    heap_hashes.erase(heap[0].first.hash());
-                    heap_hashes.insert(hash);
+                    heapHashes.erase(heap[0].first.hash());
+                    heapHashes.insert(hash);
                     std::pop_heap(heap.begin(), heap.end(), cmp);
                     heap.back() = std::make_pair((*p1)[j], time);
                     std::push_heap(heap.begin(), heap.end(), cmp);
@@ -253,17 +253,17 @@ std::vector<Sketch> AutoSchedule::evolutionarySearch(std::vector<Sketch> init,
         while (p2->size() < EVOLUTIONARY_SEARCH_POPULATION) {
             double r = randomDouble(randGen_);
             if (r < EVOLUTIONARY_SEARCH_MUTATION_PROB) {
-                auto nw = (*p1)[randWithProb(prob_sum, randGen_)].genMutation(
+                auto nw = (*p1)[randWithProb(probSum, randGen_)].genMutation(
                     randGen_);
                 if (nw.first) {
                     p2->push_back(nw.second);
                 }
             } else if (r < EVOLUTIONARY_SEARCH_MUTATION_PROB +
                                EVOLUTIONARY_SEARCH_CROSSOVER_PROB) {
-                int a = randWithProb(prob_sum, randGen_);
-                int b = randWithProb(prob_sum, randGen_);
+                int a = randWithProb(probSum, randGen_);
+                int b = randWithProb(probSum, randGen_);
                 while (b == a)
-                    b = randWithProb(prob_sum, randGen_);
+                    b = randWithProb(probSum, randGen_);
                 auto nw = (*p1)[a].genCrossover((*p1)[b], randGen_);
                 if (nw.first) {
                     p2->push_back(nw.second);
@@ -286,10 +286,10 @@ std::vector<Sketch> AutoSchedule::evolutionarySearch(std::vector<Sketch> init,
 
 std::vector<double>
 AutoSchedule::getPrediction(const std::vector<Sketch> &sketches) {
-    auto feature_list = genFeatures(genSchedules(sketches));
-    py::list pred_list = predictFunc_(feature_list);
+    auto featureList = genFeatures(genSchedules(sketches));
+    py::list predList = predictFunc_(featureList);
     std::vector<double> ret;
-    for (auto &i : pred_list) {
+    for (auto &i : predList) {
         ret.push_back(i.cast<double>());
     }
     return ret;
