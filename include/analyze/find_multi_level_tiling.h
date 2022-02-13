@@ -2,6 +2,7 @@
 #define IR_FIND_MULTI_LEVEL_TILING_H
 
 #include <analyze/find_loop_variance.h>
+#include <hash.h>
 #include <unordered_map>
 #include <vector>
 #include <visitor.h>
@@ -103,4 +104,22 @@ inline std::vector<ID> fakeFindMultiLevelTiling(const Stmt &ast) {
 
 } // namespace ir
 
+template <> struct std::hash<ir::ForInfo> {
+    std::size_t operator()(ir::ForInfo const &s) const noexcept {
+        std::size_t h = std::hash<ir::ID>{}(s.id);
+        h = ir::hashCombine(h, std::hash<std::int64_t>{}(s.length));
+        return h;
+    }
+};
+
+template <> struct std::hash<ir::ForsWithDataReuse> {
+    std::size_t operator()(ir::ForsWithDataReuse const &s) const noexcept {
+        std::size_t h = 0;
+        for (const auto &f : s.spaceLoops)
+            h = ir::hashCombine(h, std::hash<ir::ForInfo>{}(f));
+        for (const auto &f : s.reductionLoops)
+            h = ir::hashCombine(h, std::hash<ir::ForInfo>{}(f));
+        return h;
+    }
+};
 #endif // IR_FIND_MULTI_LEVEL_TILING_H

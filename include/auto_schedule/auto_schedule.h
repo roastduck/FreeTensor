@@ -5,45 +5,67 @@
 #include <driver/array.h>
 #include <driver/device.h>
 #include <driver/target.h>
+#include <pybind11/pybind11.h>
+#include <random>
 #include <schedule.h>
+#include <set>
 #include <unordered_map>
 
 namespace ir {
+namespace py = pybind11;
+
+constexpr int EVOLUTIONARY_SEARCH_POPULATION = 128;
+constexpr int EVOLUTIONARY_SEARCH_ITERS = 4;
+constexpr double EVOLUTIONARY_SEARCH_MUTATION_PROB = 0.6;
+constexpr double EVOLUTIONARY_SEARCH_CROSSOVER_PROB = 0.3;
+
+constexpr double INIT_RAND_RATIO = 0.8;
 
 class AutoSchedule {
     Schedule original_;
     Ref<Target> target_;
     Device device_;
-    size_t nCandidates_, nPredict_;
-    Sketch baseSketch_;
+    size_t measuredSize_;
+    std::vector<Sketch> baseSketches_;
     std::vector<Ref<Array>> args_;
     std::unordered_map<std::string, Ref<Array>> kws_;
     bool paramsSet_;
-    std::vector<Sketch> candidates_;
+    std::vector<Sketch> measuredSketches_;
+    std::set<size_t> measuredHashes_;
     double mn_;
+    std::default_random_engine randGen_;
+    py::function predictFunc_;
+    py::function updateFunc_;
 
   private:
     std::vector<double> measure(const std::vector<Schedule> &schedules);
 
   public:
     AutoSchedule(const Schedule &schedule, const Ref<Target> &target,
-                 const Device &device, int nCandidates, int nPredict);
+                 const Device &device, int measuredSize,
+                 py::function predictFunc, py::function updateFunc);
 
-    size_t nCandidates() const { return nCandidates_; }
-    size_t nPredict() const { return nPredict_; }
+    size_t measuredSize() const { return measuredSize_; }
 
     void setParams(const std::vector<Ref<Array>> &args,
                    const std::unordered_map<std::string, Ref<Array>> &kws);
 
-    std::vector<Sketch> getRandomSketches(size_t n);
+    std::vector<Sketch> searchOneRound(size_t n);
+
+    std::vector<Sketch> evolutionarySearch(std::vector<Sketch> init,
+                                           size_t outSize);
+
+    std::vector<Sketch> getInitPopulation(size_t n);
+
+    std::vector<Sketch> getRandPopulation(size_t nRand);
 
     std::vector<Schedule> genSchedules(const std::vector<Sketch> &sketches);
 
-    std::vector<std::vector<double>>
-    genFeatures(const std::vector<Schedule> &schedules);
+    py::list genFeatures(const std::vector<Schedule> &schedules);
 
-    std::vector<double> testAndAdd(const std::vector<Sketch> &sketches,
-                                   const std::vector<Schedule> &schedules);
+    std::vector<double> getPrediction(const std::vector<Sketch> &sketches);
+
+    std::vector<double> testAndAdd(const std::vector<Sketch> &sketches);
 
     Schedule getBestSchedule();
 };
