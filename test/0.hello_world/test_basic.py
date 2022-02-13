@@ -162,6 +162,32 @@ def test_if():
     assert np.array_equal(y_np, y_std)
 
 
+def test_bool_tensor_as_cond():
+    with ir.VarDef([("a", (4,), "bool", "input", "cpu"),
+                    ("b", (4,), "bool", "input", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (a, b, y):
+        with ir.For("i", 0, 4) as i:
+            y[i] = 1
+            with ir.If(ir.l_and(a[i], b[i])):
+                y[i] = 2
+
+    func = ir.lower(ir.Func("main", ["a", "b", "y"], [], ir.pop_ast()),
+                    ir.CPU())
+    code = ir.codegen(func, ir.CPU())
+    print(code)
+    a_np = np.array([False, False, True, True], dtype="bool")
+    a_arr = ir.Array(a_np, ir.Device(ir.CPU()))
+    b_np = np.array([False, True, False, True], dtype="bool")
+    b_arr = ir.Array(b_np, ir.Device(ir.CPU()))
+    y_np = np.zeros((4,), dtype="int32")
+    y_arr = ir.Array(y_np, ir.Device(ir.CPU()))
+    ir.Driver(func, code, ir.Device(ir.CPU()))(a=a_arr, b=b_arr, y=y_arr)
+    y_np = y_arr.numpy()
+
+    y_std = np.array([1, 1, 1, 2], dtype="int32")
+    assert np.array_equal(y_np, y_std)
+
+
 def test_var_as_shape():
     with ir.VarDef("shape", (2,), "int32", "input", "cpu") as shape:
         with ir.VarDef([("x", shape, "int32", "input", "cpu"),

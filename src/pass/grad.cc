@@ -18,11 +18,6 @@
 
 namespace ir {
 
-DataType PropagateRequire::dtype(const Expr &op) {
-    typeInfer_(op);
-    return typeInfer_.types().at(op);
-}
-
 void PropagateRequire::visit(const Load &op) {
     if (isFloat(dtype(op)) && curTarget_.isValid() &&
         buffer(op->var_)->atype() == AccessType::Cache) {

@@ -13,11 +13,6 @@
 
 namespace ir {
 
-template <class Stream> DataType CodeGenC<Stream>::dtype(const Expr &op) {
-    typeInfer_(op);
-    return typeInfer_.types().at(op);
-}
-
 template <class Stream> void CodeGenC<Stream>::visit(const StmtSeq &op) {
     for (auto &&stmt : op->stmts_) {
         if (stmt->nodeType() == ASTNodeType::VarDef) {
@@ -202,7 +197,7 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
 template <class Stream> void CodeGenC<Stream>::visit(const Var &op) {
     this->markUseIter(op->name_);
     this->os() << mangle(op->name_);
-    CodeGen<Stream>::visit(op);
+    BaseClass::visit(op);
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const Store &op) {

@@ -26,27 +26,15 @@ class SymbolTableInterface {
     virtual void popFor(const For &op) = 0;
 };
 
-/**
- * A symbol table context for Visitor or Mutator
- *
- * Inherit this class to use. E.g., inherit SymbolTable<Visitor> or
- * SymbolTable<Mutator>
- *
- * This class will automatically maintains the symbol table if the sub-class
- * calls visit(VarDef), which is the suggested usage
- *
- * However, in some cases, this is impossible, e.g., when the sub-class needs to
- * recurse into different sub-trees manually. In these cases, the sub-class
- * should explicitly call the pushDef / popDef or pushFor / popFor methods
- */
-template <class BaseClass>
-class SymbolTable : public BaseClass, public SymbolTableInterface {
+class SymbolTableData : public SymbolTableInterface {
     std::unordered_map<std::string, VarDef> defs_;
     std::unordered_map<std::string, For> loops_;
     std::unordered_set<std::string> names_;
 
   public:
-    const std::unordered_set<std::string> &names() const { return names_; }
+    const std::unordered_set<std::string> &names() const override {
+        return names_;
+    }
 
     bool hasDef(const std::string &name) const override {
         return defs_.count(name);
@@ -91,6 +79,49 @@ class SymbolTable : public BaseClass, public SymbolTableInterface {
         loops_.erase(op->iter_);
         names_.erase(op->iter_);
     }
+};
+
+/**
+ * A symbol table context for Visitor or Mutator
+ *
+ * Inherit this class to use. E.g., inherit SymbolTable<Visitor> or
+ * SymbolTable<Mutator>
+ *
+ * This class will automatically maintains the symbol table if the sub-class
+ * calls visit(VarDef), which is the suggested usage
+ *
+ * However, in some cases, this is impossible, e.g., when the sub-class needs to
+ * recurse into different sub-trees manually. In these cases, the sub-class
+ * should explicitly call the pushDef / popDef or pushFor / popFor methods
+ */
+template <class BaseClass>
+class SymbolTable : public BaseClass, public SymbolTableInterface {
+    SymbolTableData impl_;
+
+  public:
+    const std::unordered_set<std::string> &names() const override {
+        return impl_.names();
+    }
+
+    bool hasDef(const std::string &name) const override {
+        return impl_.hasDef(name);
+    }
+    const VarDef &def(const std::string &name) const { return impl_.def(name); }
+    const Ref<Buffer> &buffer(const std::string &name) const {
+        return impl_.buffer(name);
+    }
+
+    const For &loop(const std::string &name) const override {
+        return impl_.loop(name);
+    }
+
+    void pushDef(const VarDef &op) override { impl_.pushDef(op); }
+    void popDef(const VarDef &op) override { impl_.popDef(op); }
+
+    void pushFor(const For &op) override { impl_.pushFor(op); }
+    void popFor(const For &op) override { impl_.popFor(op); }
+
+    const SymbolTableData &symbolTableSnapshot() const { return impl_; }
 
   protected:
     using BaseClass::visit;

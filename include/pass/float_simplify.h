@@ -11,17 +11,14 @@
 
 namespace ir {
 
-class FloatSimplify : public SymbolTable<Mutator> {
-    typedef SymbolTable<Mutator> BaseClass;
+class FloatSimplify : public WithTypeInfer<SymbolTable<Mutator>> {
+    typedef WithTypeInfer<SymbolTable<Mutator>> BaseClass;
 
     std::unordered_map<Expr, double> constants_;
     std::unordered_set<Expr> nonNeg_, nonPosi_;
-    TypeInfer typeInfer_;
     bool isFixPoint_ = true;
 
   public:
-    FloatSimplify() : typeInfer_(*this) {}
-
     bool isFixPoint() const { return isFixPoint_; }
 
     void setNonNeg(const Expr &op) { nonNeg_.insert(op); }
@@ -36,8 +33,6 @@ class FloatSimplify : public SymbolTable<Mutator> {
     }
 
   private:
-    DataType dtype(const Expr &op);
-
     Expr normalizeRealMulDiv(const Expr &op);
 
   protected:
