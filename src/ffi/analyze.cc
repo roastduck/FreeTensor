@@ -20,7 +20,7 @@ void init_ffi_analyze(py::module_ &m) {
 
     m.def("fixed_length_feature", fixedLengthFeature);
 
-    m.def("feature_length", FixedLengthFeature::feature_len);
+    m.def("feature_length", FixedLengthFeature::featureLen);
 
     m.def("find_multi_level_tiling", fakeFindMultiLevelTiling);
 }
