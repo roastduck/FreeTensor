@@ -253,3 +253,22 @@ def test_no_duplicate_vardef():
     std = ir.make_reduction(ir.pop_ast())
 
     assert std.match(ast)
+
+
+def test_no_hoisting_loop_variant():
+
+    @ir.transform
+    def foo(x):
+        ir.declare_var(x, (32,), 'int32', 'output', 'cpu')
+        a = ir.create_var((), 'int32', 'cpu')
+        a[()] = 10
+        for i in range(32):
+            a[()] = 20
+            if i < a[()]:
+                x[i] = i
+            else:
+                x[i] = 32 - i
+
+    s = ir.Schedule(foo)
+    s.separate_tail()
+    print(s.func())

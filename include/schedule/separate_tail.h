@@ -83,7 +83,8 @@ class SeparateTail : public SymbolTable<Mutator> {
     }
 
   private:
-    void genSeperation(const Expr &iterVar, const Expr &cond,
+    void genSeparation(const Expr &iterVar, const Expr &cond,
+                       const std::unordered_set<std::string> &bodyAllWrites,
                        const std::function<void(const Expr &)> &callback);
 
   protected:

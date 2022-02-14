@@ -1,11 +1,23 @@
 #include <algorithm>
 
+#include <analyze/all_reads.h>
+#include <analyze/all_writes.h>
 #include <analyze/as_dnf.h>
 #include <analyze/check_all_defined.h>
 #include <pass/z3_simplify.h>
 #include <schedule/separate_tail.h>
 
 namespace ir {
+
+static bool noIntersect(const std::unordered_set<std::string> &set1,
+                        const std::unordered_set<std::string> &set2) {
+    for (auto &&x : set1) {
+        if (set2.count(x)) {
+            return false;
+        }
+    }
+    return true;
+}
 
 static ASTNodeType reverseCmp(ASTNodeType type) {
     switch (type) {
@@ -33,8 +45,9 @@ Stmt AppendIDs::visitStmt(const Stmt &op) {
     return ret;
 }
 
-void SeparateTail::genSeperation(
+void SeparateTail::genSeparation(
     const Expr &iterVar, const Expr &_cond,
+    const std::unordered_set<std::string> &bodyAllWrites,
     const std::function<void(const Expr &)> &callback) {
     for (auto &&conj : asDNF(_cond)) {
         for (auto &&cond : conj) {
@@ -54,7 +67,11 @@ void SeparateTail::genSeperation(
             default:
                 continue;
             }
-            ASSERT(norm.isValid());
+
+            if (!noIntersect(allReads(cond), bodyAllWrites)) {
+                continue;
+            }
+
             analyzeLinear_(norm);
             if (!analyzeLinear_.result().count(norm)) {
                 continue;
@@ -79,27 +96,27 @@ void SeparateTail::genSeperation(
                 }
             }
 
-            Expr seperation = makeIntConst(-lin.bias_);
+            Expr separation = makeIntConst(-lin.bias_);
             for (auto &&item : lin.coeff_) {
                 if (!HashComparator()(item.a_, iterVar)) {
-                    seperation = makeAdd(
-                        seperation, makeMul(makeIntConst(-item.k_), item.a_));
+                    separation = makeAdd(
+                        separation, makeMul(makeIntConst(-item.k_), item.a_));
                 }
             }
             switch (type) {
             case ASTNodeType::LT:
             case ASTNodeType::GE:
-                callback(makeCeilDiv(seperation, makeIntConst(selfK)));
+                callback(makeCeilDiv(separation, makeIntConst(selfK)));
                 break;
             case ASTNodeType::LE:
             case ASTNodeType::GT:
-                callback(makeAdd(makeFloorDiv(seperation, makeIntConst(selfK)),
+                callback(makeAdd(makeFloorDiv(separation, makeIntConst(selfK)),
                                  makeIntConst(1)));
                 break;
             case ASTNodeType::EQ:
             case ASTNodeType::NE:
-                callback(makeCeilDiv(seperation, makeIntConst(selfK)));
-                callback(makeAdd(makeFloorDiv(seperation, makeIntConst(selfK)),
+                callback(makeCeilDiv(separation, makeIntConst(selfK)));
+                callback(makeAdd(makeFloorDiv(separation, makeIntConst(selfK)),
                                  makeIntConst(1)));
                 break;
             default:
@@ -147,24 +164,25 @@ Stmt SeparateTail::visit(const For &_op) {
         return op;
     }
 
+    auto bodyAllWrites = allWrites(op);
     auto iterVar = makeVar(op->iter_);
     ASTHashSet<Expr> sepSet;
     for (auto &&branch : ifList) {
-        genSeperation(iterVar, branch->cond_,
+        genSeparation(iterVar, branch->cond_, bodyAllWrites,
                       [&](const Expr &sep) { sepSet.insert(sep); });
     }
 
-    std::vector<Expr> seperations;
-    seperations.reserve(sepSet.size());
+    std::vector<Expr> separations;
+    separations.reserve(sepSet.size());
     for (auto &&item : sepSet) {
-        seperations.emplace_back(item);
+        separations.emplace_back(item);
     }
     std::function<Stmt(size_t, const For &)> dfs =
-        [&seperations, &dfs, this](size_t i, const For &old) -> Stmt {
-        if (i == seperations.size()) {
+        [&separations, &dfs, this](size_t i, const For &old) -> Stmt {
+        if (i == separations.size()) {
             return old;
         }
-        auto &&sep = seperations[i];
+        auto &&sep = separations[i];
         auto front =
             makeFor(old->id(), old->iter_, old->begin_, sep, old->step_,
                     makeFloorDiv(makeSub(sep, old->begin_), old->step_),
