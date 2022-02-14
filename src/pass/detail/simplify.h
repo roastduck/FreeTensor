@@ -367,10 +367,10 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const LT &_op) {
         return op;
     }
     if (this->alwaysLT(op->lhs_, op->rhs_)) {
-        return recompBounds(makeBoolConst(true));
+        return makeBoolConst(true);
     }
     if (this->alwaysLE(op->rhs_, op->lhs_)) {
-        return recompBounds(makeBoolConst(false));
+        return makeBoolConst(false);
     }
     return op;
 }
@@ -383,10 +383,10 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const LE &_op) {
         return op;
     }
     if (this->alwaysLE(op->lhs_, op->rhs_)) {
-        return recompBounds(makeBoolConst(true));
+        return makeBoolConst(true);
     }
     if (this->alwaysLT(op->rhs_, op->lhs_)) {
-        return recompBounds(makeBoolConst(false));
+        return makeBoolConst(false);
     }
     return op;
 }
@@ -399,10 +399,10 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const GT &_op) {
         return op;
     }
     if (this->alwaysLE(op->lhs_, op->rhs_)) {
-        return recompBounds(makeBoolConst(false));
+        return makeBoolConst(false);
     }
     if (this->alwaysLT(op->rhs_, op->lhs_)) {
-        return recompBounds(makeBoolConst(true));
+        return makeBoolConst(true);
     }
     return op;
 }
@@ -415,10 +415,10 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const GE &_op) {
         return op;
     }
     if (this->alwaysLT(op->lhs_, op->rhs_)) {
-        return recompBounds(makeBoolConst(false));
+        return makeBoolConst(false);
     }
     if (this->alwaysLE(op->rhs_, op->lhs_)) {
-        return recompBounds(makeBoolConst(true));
+        return makeBoolConst(true);
     }
     return op;
 }
@@ -431,14 +431,14 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const EQ &_op) {
         return op;
     }
     if (this->alwaysLT(op->lhs_, op->rhs_)) {
-        return recompBounds(makeBoolConst(false));
+        return makeBoolConst(false);
     }
     if (this->alwaysLT(op->rhs_, op->lhs_)) {
-        return recompBounds(makeBoolConst(false));
+        return makeBoolConst(false);
     }
     if (this->alwaysLE(op->lhs_, op->rhs_) &&
         this->alwaysLE(op->rhs_, op->lhs_)) {
-        return recompBounds(makeBoolConst(true));
+        return makeBoolConst(true);
     }
     return op;
 }
@@ -451,14 +451,14 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const NE &_op) {
         return op;
     }
     if (this->alwaysLT(op->lhs_, op->rhs_)) {
-        return recompBounds(makeBoolConst(true));
+        return makeBoolConst(true);
     }
     if (this->alwaysLT(op->rhs_, op->lhs_)) {
-        return recompBounds(makeBoolConst(true));
+        return makeBoolConst(true);
     }
     if (this->alwaysLE(op->lhs_, op->rhs_) &&
         this->alwaysLE(op->rhs_, op->lhs_)) {
-        return recompBounds(makeBoolConst(false));
+        return makeBoolConst(false);
     }
     return op;
 }
@@ -469,14 +469,14 @@ Expr SimplifyPass<BaseClass>::visit(const LAnd &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::LAnd);
     auto op = __op.template as<LAndNode>();
     if (op->lhs_->nodeType() == ASTNodeType::BoolConst) {
-        return recompBounds(op->lhs_.template as<BoolConstNode>()->val_
-                                ? (Expr)op->rhs_
-                                : makeBoolConst(false));
+        return op->lhs_.template as<BoolConstNode>()->val_
+                   ? (Expr)op->rhs_
+                   : makeBoolConst(false);
     }
     if (op->rhs_->nodeType() == ASTNodeType::BoolConst) {
-        return recompBounds(op->rhs_.template as<BoolConstNode>()->val_
-                                ? (Expr)op->lhs_
-                                : makeBoolConst(false));
+        return op->rhs_.template as<BoolConstNode>()->val_
+                   ? (Expr)op->lhs_
+                   : makeBoolConst(false);
     }
     return op;
 }
@@ -486,14 +486,12 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const LOr &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::LOr);
     auto op = __op.template as<LOrNode>();
     if (op->lhs_->nodeType() == ASTNodeType::BoolConst) {
-        return recompBounds(op->lhs_.template as<BoolConstNode>()->val_
-                                ? makeBoolConst(true)
-                                : (Expr)op->rhs_);
+        return op->lhs_.template as<BoolConstNode>()->val_ ? makeBoolConst(true)
+                                                           : (Expr)op->rhs_;
     }
     if (op->rhs_->nodeType() == ASTNodeType::BoolConst) {
-        return recompBounds(op->rhs_.template as<BoolConstNode>()->val_
-                                ? makeBoolConst(true)
-                                : (Expr)op->lhs_);
+        return op->rhs_.template as<BoolConstNode>()->val_ ? makeBoolConst(true)
+                                                           : (Expr)op->lhs_;
     }
     return op;
 }
@@ -505,36 +503,33 @@ Expr SimplifyPass<BaseClass>::visit(const LNot &_op) {
     auto op = __op.template as<LNotNode>();
     switch (op->expr_->nodeType()) {
     case ASTNodeType::BoolConst:
-        return recompBounds(
-            makeBoolConst(!op->expr_.template as<BoolConstNode>()->val_));
+        return makeBoolConst(!op->expr_.template as<BoolConstNode>()->val_);
     case ASTNodeType::LT:
-        return recompBounds(makeGE(op->expr_.template as<LTNode>()->lhs_,
-                                   op->expr_.template as<LTNode>()->rhs_));
+        return makeGE(op->expr_.template as<LTNode>()->lhs_,
+                      op->expr_.template as<LTNode>()->rhs_);
     case ASTNodeType::GT:
-        return recompBounds(makeLE(op->expr_.template as<GTNode>()->lhs_,
-                                   op->expr_.template as<GTNode>()->rhs_));
+        return makeLE(op->expr_.template as<GTNode>()->lhs_,
+                      op->expr_.template as<GTNode>()->rhs_);
     case ASTNodeType::LE:
-        return recompBounds(makeGT(op->expr_.template as<LENode>()->lhs_,
-                                   op->expr_.template as<LENode>()->rhs_));
+        return makeGT(op->expr_.template as<LENode>()->lhs_,
+                      op->expr_.template as<LENode>()->rhs_);
     case ASTNodeType::GE:
-        return recompBounds(makeLT(op->expr_.template as<GENode>()->lhs_,
-                                   op->expr_.template as<GENode>()->rhs_));
+        return makeLT(op->expr_.template as<GENode>()->lhs_,
+                      op->expr_.template as<GENode>()->rhs_);
     case ASTNodeType::EQ:
-        return recompBounds(makeNE(op->expr_.template as<EQNode>()->lhs_,
-                                   op->expr_.template as<EQNode>()->rhs_));
+        return makeNE(op->expr_.template as<EQNode>()->lhs_,
+                      op->expr_.template as<EQNode>()->rhs_);
     case ASTNodeType::NE:
-        return recompBounds(makeEQ(op->expr_.template as<NENode>()->lhs_,
-                                   op->expr_.template as<NENode>()->rhs_));
+        return makeEQ(op->expr_.template as<NENode>()->lhs_,
+                      op->expr_.template as<NENode>()->rhs_);
     case ASTNodeType::LAnd:
-        return recompBounds(
-            makeLOr(makeLNot(op->expr_.template as<LAndNode>()->lhs_),
-                    makeLNot(op->expr_.template as<LAndNode>()->rhs_)));
+        return makeLOr(makeLNot(op->expr_.template as<LAndNode>()->lhs_),
+                       makeLNot(op->expr_.template as<LAndNode>()->rhs_));
     case ASTNodeType::LOr:
-        return recompBounds(
-            makeLAnd(makeLNot(op->expr_.template as<LOrNode>()->lhs_),
-                     makeLNot(op->expr_.template as<LOrNode>()->rhs_)));
+        return makeLAnd(makeLNot(op->expr_.template as<LOrNode>()->lhs_),
+                        makeLNot(op->expr_.template as<LOrNode>()->rhs_));
     case ASTNodeType::LNot:
-        return recompBounds(op->expr_.template as<LNotNode>()->expr_);
+        return op->expr_.template as<LNotNode>()->expr_;
     default:;
     }
     return op;

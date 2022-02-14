@@ -9,7 +9,7 @@ class AnnotateConds : public Mutator {
     std::vector<Expr> conds_; // stack of conditions, may be null
 
   private:
-    void addCond(const Expr &expr, bool negate = false);
+    void addCond(const Expr &expr);
 
   protected:
     Stmt visit(const StmtSeq &op) override;

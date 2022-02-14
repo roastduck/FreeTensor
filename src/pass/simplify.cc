@@ -5,6 +5,7 @@
 #include <analyze/all_names.h>
 #include <analyze/all_reads.h>
 #include <analyze/all_writes.h>
+#include <analyze/as_dnf.h>
 #include <except.h>
 #include <math/utils.h>
 #include <pass/flatten_stmt_seq.h>
@@ -116,70 +117,57 @@ void CompTransientBounds::applyCond(int k, const Expr &lhs, ASTNodeType opType,
 }
 
 void CompTransientBounds::applyCond(
-    const Expr &cond, const std::unordered_set<std::string> &bodyAllWrites) {
-    Expr norm;
-    switch (cond->nodeType()) {
-    case ASTNodeType::LAnd: {
-        auto land = cond.as<LAndNode>();
-        applyCond(land->lhs_, bodyAllWrites);
-        applyCond(land->rhs_, bodyAllWrites);
-        return;
-    }
-    case ASTNodeType::LT: {
-        auto lt = cond.as<LTNode>();
-        norm = makeSub(lt->rhs_, lt->lhs_);
-        break;
-    }
-    case ASTNodeType::GT: {
-        auto gt = cond.as<GTNode>();
-        norm = makeSub(gt->rhs_, gt->lhs_);
-        break;
-    }
-    case ASTNodeType::LE: {
-        auto le = cond.as<LENode>();
-        norm = makeSub(le->rhs_, le->lhs_);
-        break;
-    }
-    case ASTNodeType::GE: {
-        auto ge = cond.as<GENode>();
-        norm = makeSub(ge->rhs_, ge->lhs_);
-        break;
-    }
-    case ASTNodeType::EQ: {
-        auto eq = cond.as<EQNode>();
-        norm = makeSub(eq->rhs_, eq->lhs_);
-        break;
-    }
-    default:
-        return;
+    const Expr &_cond, const std::unordered_set<std::string> &bodyAllWrites) {
+    auto dnf = asDNF(_cond);
+
+    if (dnf.size() != 1) {
+        return; // Currrently we cannot handle OR
     }
 
-    if (!noIntersect(allReads(cond), bodyAllWrites)) {
-        return;
-    }
-
-    if (!isInt(dtype(norm))) {
-        return;
-    }
-    analyzeLinear_(norm);
-    if (!analyzeLinear_.result().count(norm)) {
-        return;
-    }
-    LinearExpr lin = analyzeLinear_.result().at(norm);
-    for (auto &&[k, a] : lin.coeff_) {
-        if (k != 0 && (a->nodeType() == ASTNodeType::Var ||
-                       a->nodeType() == ASTNodeType::Load)) {
-            auto l = lin;
-            l.coeff_.resize(
-                std::remove_if(l.coeff_.begin(), l.coeff_.end(),
-                               [&a](const decltype(l.coeff_)::value_type &kx) {
-                                   return HashComparator()(kx.a_, a);
-                               }) -
-                l.coeff_.begin());
-            applyCond(-k, a, cond->nodeType(), lin2expr(l));
+    for (auto &&cond : dnf.front()) {
+        Expr norm;
+        switch (cond->nodeType()) {
+        case ASTNodeType::LT:
+        case ASTNodeType::GT:
+        case ASTNodeType::LE:
+        case ASTNodeType::GE:
+        case ASTNodeType::EQ: {
+            auto binOp = cond.as<BinaryExprNode>();
+            norm = makeSub(binOp->rhs_, binOp->lhs_);
+            break;
         }
+        default:
+            continue;
+        }
+
+        if (!noIntersect(allReads(cond), bodyAllWrites)) {
+            continue;
+        }
+
+        if (!isInt(dtype(norm))) {
+            continue;
+        }
+        analyzeLinear_(norm);
+        if (!analyzeLinear_.result().count(norm)) {
+            continue;
+        }
+        LinearExpr lin = analyzeLinear_.result().at(norm);
+        for (auto &&[k, a] : lin.coeff_) {
+            if (k != 0 && (a->nodeType() == ASTNodeType::Var ||
+                           a->nodeType() == ASTNodeType::Load)) {
+                auto l = lin;
+                l.coeff_.resize(
+                    std::remove_if(
+                        l.coeff_.begin(), l.coeff_.end(),
+                        [&a](const decltype(l.coeff_)::value_type &kx) {
+                            return HashComparator()(kx.a_, a);
+                        }) -
+                    l.coeff_.begin());
+                applyCond(-k, a, cond->nodeType(), lin2expr(l));
+            }
+        }
+        conds_.emplace_back(cond);
     }
-    conds_.emplace_back(cond);
 }
 
 Stmt CompTransientBounds::visit(const For &op) {
@@ -222,7 +210,6 @@ Stmt CompTransientBounds::visit(const For &op) {
 
 Stmt CompTransientBounds::visit(const If &op) {
     auto cond = (*this)(op->cond_);
-    auto notCond = (*this)(makeLNot(cond));
 
     auto oldMap = transients_;
     auto oldCondsSize = conds_.size();
@@ -234,7 +221,7 @@ Stmt CompTransientBounds::visit(const If &op) {
     Stmt elseCase = nullptr;
     if (op->elseCase_.isValid()) {
         auto oldCondsSize = conds_.size();
-        applyCond(notCond, allWrites(op->elseCase_));
+        applyCond(makeLNot(cond), allWrites(op->elseCase_));
         elseCase = (*this)(op->elseCase_);
         transients_ = oldMap;
         conds_.resize(oldCondsSize);

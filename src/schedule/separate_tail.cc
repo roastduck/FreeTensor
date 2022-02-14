@@ -1,5 +1,6 @@
 #include <algorithm>
 
+#include <analyze/as_dnf.h>
 #include <analyze/check_all_defined.h>
 #include <pass/z3_simplify.h>
 #include <schedule/separate_tail.h>
@@ -33,94 +34,78 @@ Stmt AppendIDs::visitStmt(const Stmt &op) {
 }
 
 void SeparateTail::genSeperation(
-    const Expr &iterVar, const Expr &cond,
+    const Expr &iterVar, const Expr &_cond,
     const std::function<void(const Expr &)> &callback) {
-    auto type = cond->nodeType();
+    for (auto &&conj : asDNF(_cond)) {
+        for (auto &&cond : conj) {
+            auto type = cond->nodeType();
 
-    Expr norm;
-    switch (type) {
-    case ASTNodeType::LAnd:
-        genSeperation(iterVar, cond.as<LAndNode>()->lhs_, callback);
-        genSeperation(iterVar, cond.as<LAndNode>()->rhs_, callback);
-        return;
-    case ASTNodeType::LOr:
-        genSeperation(iterVar, cond.as<LOrNode>()->lhs_, callback);
-        genSeperation(iterVar, cond.as<LOrNode>()->rhs_, callback);
-        return;
-    case ASTNodeType::LNot:
-        genSeperation(iterVar, cond.as<LNotNode>()->expr_, callback);
-        return;
-    case ASTNodeType::LT:
-        norm = makeSub(cond.as<LTNode>()->lhs_, cond.as<LTNode>()->rhs_);
-        break;
-    case ASTNodeType::LE:
-        norm = makeSub(cond.as<LENode>()->lhs_, cond.as<LENode>()->rhs_);
-        break;
-    case ASTNodeType::GT:
-        norm = makeSub(cond.as<GTNode>()->lhs_, cond.as<GTNode>()->rhs_);
-        break;
-    case ASTNodeType::GE:
-        norm = makeSub(cond.as<GENode>()->lhs_, cond.as<GENode>()->rhs_);
-        break;
-    case ASTNodeType::EQ:
-        norm = makeSub(cond.as<EQNode>()->lhs_, cond.as<EQNode>()->rhs_);
-        break;
-    case ASTNodeType::NE:
-        norm = makeSub(cond.as<NENode>()->lhs_, cond.as<NENode>()->rhs_);
-        break;
-    default:
-        return;
-    }
-    ASSERT(norm.isValid());
-    analyzeLinear_(norm);
-    if (!analyzeLinear_.result().count(norm)) {
-        return;
-    }
-    LinearExpr lin = analyzeLinear_.result().at(norm);
+            Expr norm;
+            switch (type) {
+            case ASTNodeType::LT:
+            case ASTNodeType::LE:
+            case ASTNodeType::GT:
+            case ASTNodeType::GE:
+            case ASTNodeType::EQ:
+            case ASTNodeType::NE:
+                norm = makeSub(cond.as<BinaryExprNode>()->lhs_,
+                               cond.as<BinaryExprNode>()->rhs_);
+                break;
+            default:
+                continue;
+            }
+            ASSERT(norm.isValid());
+            analyzeLinear_(norm);
+            if (!analyzeLinear_.result().count(norm)) {
+                continue;
+            }
+            LinearExpr lin = analyzeLinear_.result().at(norm);
 
-    auto it =
-        std::find_if(lin.coeff_.begin(), lin.coeff_.end(),
-                     [&iterVar](const decltype(lin.coeff_)::value_type &kx) {
-                         return HashComparator()(kx.a_, iterVar);
-                     });
-    if (it == lin.coeff_.end()) {
-        return;
-    }
-    auto selfK = it->k_;
-    if (selfK < 0) {
-        type = reverseCmp(type);
-        selfK *= -1;
-        lin.bias_ *= -1;
-        for (auto &item : lin.coeff_) {
-            item.k_ *= -1;
+            auto it = std::find_if(
+                lin.coeff_.begin(), lin.coeff_.end(),
+                [&iterVar](const decltype(lin.coeff_)::value_type &kx) {
+                    return HashComparator()(kx.a_, iterVar);
+                });
+            if (it == lin.coeff_.end()) {
+                continue;
+            }
+            auto selfK = it->k_;
+            if (selfK < 0) {
+                type = reverseCmp(type);
+                selfK *= -1;
+                lin.bias_ *= -1;
+                for (auto &item : lin.coeff_) {
+                    item.k_ *= -1;
+                }
+            }
+
+            Expr seperation = makeIntConst(-lin.bias_);
+            for (auto &&item : lin.coeff_) {
+                if (!HashComparator()(item.a_, iterVar)) {
+                    seperation = makeAdd(
+                        seperation, makeMul(makeIntConst(-item.k_), item.a_));
+                }
+            }
+            switch (type) {
+            case ASTNodeType::LT:
+            case ASTNodeType::GE:
+                callback(makeCeilDiv(seperation, makeIntConst(selfK)));
+                break;
+            case ASTNodeType::LE:
+            case ASTNodeType::GT:
+                callback(makeAdd(makeFloorDiv(seperation, makeIntConst(selfK)),
+                                 makeIntConst(1)));
+                break;
+            case ASTNodeType::EQ:
+            case ASTNodeType::NE:
+                callback(makeCeilDiv(seperation, makeIntConst(selfK)));
+                callback(makeAdd(makeFloorDiv(seperation, makeIntConst(selfK)),
+                                 makeIntConst(1)));
+                break;
+            default:
+                ASSERT(false);
+            }
         }
-    }
-
-    Expr seperation = makeIntConst(-lin.bias_);
-    for (auto &&item : lin.coeff_) {
-        if (!HashComparator()(item.a_, iterVar)) {
-            seperation =
-                makeAdd(seperation, makeMul(makeIntConst(-item.k_), item.a_));
-        }
-    }
-    switch (type) {
-    case ASTNodeType::LT:
-    case ASTNodeType::GE:
-        callback(makeCeilDiv(seperation, makeIntConst(selfK)));
-        break;
-    case ASTNodeType::LE:
-    case ASTNodeType::GT:
-        callback(makeAdd(makeFloorDiv(seperation, makeIntConst(selfK)),
-                         makeIntConst(1)));
-        break;
-    case ASTNodeType::EQ:
-    case ASTNodeType::NE:
-        callback(makeCeilDiv(seperation, makeIntConst(selfK)));
-        callback(makeAdd(makeFloorDiv(seperation, makeIntConst(selfK)),
-                         makeIntConst(1)));
-        break;
-    default:
-        ASSERT(false);
     }
 }
 

@@ -1,5 +1,6 @@
 #include <analyze/all_reads.h>
 #include <analyze/all_writes.h>
+#include <analyze/as_dnf.h>
 #include <pass/annotate_conds.h>
 
 namespace ir {
@@ -14,19 +15,14 @@ static bool hasIntersect(const std::unordered_set<std::string> &lhs,
     return false;
 }
 
-void AnnotateConds::addCond(const Expr &expr, bool negate) {
-    if (expr->nodeType() == ASTNodeType::LAnd && !negate) {
-        auto &&land = expr.as<LAndNode>();
-        addCond(land->lhs_, negate);
-        addCond(land->rhs_, negate);
-    } else if (expr->nodeType() == ASTNodeType::LOr && negate) {
-        auto &&lor = expr.as<LOrNode>();
-        addCond(lor->lhs_, negate);
-        addCond(lor->rhs_, negate);
-    } else if (expr->nodeType() == ASTNodeType::LNot) {
-        addCond(expr.as<LNotNode>()->expr_, !negate);
+void AnnotateConds::addCond(const Expr &expr) {
+    auto dnf = asDNF(expr);
+    if (dnf.size() == 1) {
+        for (auto &&item : dnf.front()) {
+            conds_.emplace_back(item);
+        }
     } else {
-        conds_.emplace_back(negate ? makeLNot(expr) : expr);
+        conds_.emplace_back(expr);
     }
 }
 
