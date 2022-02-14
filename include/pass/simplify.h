@@ -5,7 +5,6 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include <analyze/analyze_linear.h>
 #include <analyze/symbol_table.h>
 #include <analyze/type_infer.h>
 #include <func.h>
@@ -67,8 +66,6 @@ class CompTransientBounds : public WithTypeInfer<SymbolTable<Mutator>> {
 
     // Original bounds
     std::vector<Expr> conds_;
-
-    AnalyzeLinear analyzeLinear_;
 
   protected:
     TransientBound transient(const Expr &op);

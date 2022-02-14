@@ -5,7 +5,6 @@
 #include <unordered_set>
 #include <vector>
 
-#include <analyze/analyze_linear.h>
 #include <analyze/symbol_table.h>
 #include <mutator.h>
 #include <visitor.h>
@@ -71,7 +70,6 @@ class SeparateTail : public SymbolTable<Mutator> {
 
     std::vector<std::vector<If>> ifStack_;
     std::vector<bool> hasVarDefStack_;
-    AnalyzeLinear analyzeLinear_;
 
   public:
     SeparateTail(bool noDuplicateVarDefs,

@@ -27,6 +27,9 @@ class AsDNF : public Visitor {
     void visit(const GT &op) override;
 };
 
+/**
+ * Normalize an bool expression to be a disjunctive normal form
+ */
 DNF asDNF(const Expr &expr);
 
 } // namespace ir

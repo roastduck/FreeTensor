@@ -5,6 +5,7 @@
 #include <analyze/all_names.h>
 #include <analyze/all_reads.h>
 #include <analyze/all_writes.h>
+#include <analyze/analyze_linear.h>
 #include <analyze/as_dnf.h>
 #include <except.h>
 #include <math/utils.h>
@@ -85,22 +86,22 @@ void CompTransientBounds::applyCond(int k, const Expr &lhs, ASTNodeType opType,
     auto floorRhs = k != 1 ? makeFloorDiv(rhs, makeIntConst(k)) : rhs;
     auto ceilRhs = k != 1 ? makeCeilDiv(rhs, makeIntConst(k)) : rhs;
     switch (opType) {
-    case ASTNodeType::LT: {
+    case ASTNodeType::GT: {
         transients_[lhs].expr_ = (*this)(lhs);
         transients_[lhs].upper_.emplace_back((*this)(sub1(ceilRhs)));
         break;
     }
-    case ASTNodeType::GT: {
+    case ASTNodeType::LT: {
         transients_[lhs].expr_ = (*this)(lhs);
         transients_[lhs].lower_.emplace_back((*this)(add1(floorRhs)));
         break;
     }
-    case ASTNodeType::LE: {
+    case ASTNodeType::GE: {
         transients_[lhs].expr_ = (*this)(lhs);
         transients_[lhs].upper_.emplace_back((*this)(floorRhs));
         break;
     }
-    case ASTNodeType::GE: {
+    case ASTNodeType::LE: {
         transients_[lhs].expr_ = (*this)(lhs);
         transients_[lhs].lower_.emplace_back((*this)(ceilRhs));
         break;
@@ -111,6 +112,8 @@ void CompTransientBounds::applyCond(int k, const Expr &lhs, ASTNodeType opType,
         transients_[lhs].upper_.emplace_back((*this)(floorRhs));
         break;
     }
+    case ASTNodeType::NE:
+        break; // do nothing
     default:
         ASSERT(false);
     }
@@ -121,37 +124,24 @@ void CompTransientBounds::applyCond(
     auto dnf = asDNF(_cond);
 
     if (dnf.size() != 1) {
-        return; // Currrently we cannot handle OR
+        return; // Currently we cannot handle OR
     }
 
     for (auto &&cond : dnf.front()) {
-        Expr norm;
-        switch (cond->nodeType()) {
-        case ASTNodeType::LT:
-        case ASTNodeType::GT:
-        case ASTNodeType::LE:
-        case ASTNodeType::GE:
-        case ASTNodeType::EQ: {
-            auto binOp = cond.as<BinaryExprNode>();
-            norm = makeSub(binOp->rhs_, binOp->lhs_);
-            break;
-        }
-        default:
-            continue;
-        }
-
         if (!noIntersect(allReads(cond), bodyAllWrites)) {
             continue;
         }
 
-        if (!isInt(dtype(norm))) {
+        auto norm = linearComp(cond);
+        if (!norm.isValid()) {
             continue;
         }
-        analyzeLinear_(norm);
-        if (!analyzeLinear_.result().count(norm)) {
+
+        auto &&[lin, type] = *norm;
+        if (!isInt(dtype(lin2expr(lin)))) {
             continue;
         }
-        LinearExpr lin = analyzeLinear_.result().at(norm);
+
         for (auto &&[k, a] : lin.coeff_) {
             if (k != 0 && (a->nodeType() == ASTNodeType::Var ||
                            a->nodeType() == ASTNodeType::Load)) {
@@ -163,7 +153,7 @@ void CompTransientBounds::applyCond(
                             return HashComparator()(kx.a_, a);
                         }) -
                     l.coeff_.begin());
-                applyCond(-k, a, cond->nodeType(), lin2expr(l));
+                applyCond(-k, a, type, lin2expr(l));
             }
         }
         conds_.emplace_back(cond);

@@ -2,6 +2,7 @@
 
 #include <analyze/all_reads.h>
 #include <analyze/all_writes.h>
+#include <analyze/analyze_linear.h>
 #include <analyze/as_dnf.h>
 #include <analyze/check_all_defined.h>
 #include <pass/z3_simplify.h>
@@ -51,33 +52,16 @@ void SeparateTail::genSeparation(
     const std::function<void(const Expr &)> &callback) {
     for (auto &&conj : asDNF(_cond)) {
         for (auto &&cond : conj) {
-            auto type = cond->nodeType();
-
-            Expr norm;
-            switch (type) {
-            case ASTNodeType::LT:
-            case ASTNodeType::LE:
-            case ASTNodeType::GT:
-            case ASTNodeType::GE:
-            case ASTNodeType::EQ:
-            case ASTNodeType::NE:
-                norm = makeSub(cond.as<BinaryExprNode>()->lhs_,
-                               cond.as<BinaryExprNode>()->rhs_);
-                break;
-            default:
-                continue;
-            }
-
             if (!noIntersect(allReads(cond), bodyAllWrites)) {
                 continue;
             }
 
-            analyzeLinear_(norm);
-            if (!analyzeLinear_.result().count(norm)) {
+            auto norm = linearComp(cond);
+            if (!norm.isValid()) {
                 continue;
             }
-            LinearExpr lin = analyzeLinear_.result().at(norm);
 
+            auto [lin, type] = *norm;
             auto it = std::find_if(
                 lin.coeff_.begin(), lin.coeff_.end(),
                 [&iterVar](const decltype(lin.coeff_)::value_type &kx) {
