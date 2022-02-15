@@ -75,7 +75,6 @@ class CompTransientBounds : public WithTypeInfer<SymbolTable<Mutator>> {
     static Expr sub1(const Expr &op);
     static Expr add1(const Expr &op);
 
-    void applyCond(int k, const Expr &lhs, ASTNodeType opType, const Expr &rhs);
     void applyCond(const Expr &cond,
                    const std::unordered_set<std::string> &bodyAllWrites);
 

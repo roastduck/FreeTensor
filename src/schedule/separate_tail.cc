@@ -5,6 +5,7 @@
 #include <analyze/analyze_linear.h>
 #include <analyze/as_dnf.h>
 #include <analyze/check_all_defined.h>
+#include <math/bounds.h>
 #include <pass/z3_simplify.h>
 #include <schedule/separate_tail.h>
 
@@ -18,21 +19,6 @@ static bool noIntersect(const std::unordered_set<std::string> &set1,
         }
     }
     return true;
-}
-
-static ASTNodeType reverseCmp(ASTNodeType type) {
-    switch (type) {
-    case ASTNodeType::LT:
-        return ASTNodeType::GT;
-    case ASTNodeType::LE:
-        return ASTNodeType::GE;
-    case ASTNodeType::GT:
-        return ASTNodeType::LT;
-    case ASTNodeType::GE:
-        return ASTNodeType::LE;
-    default:
-        ASSERT(false);
-    }
 }
 
 void FindAllIfs::visit(const If &op) {
@@ -62,49 +48,13 @@ void SeparateTail::genSeparation(
             }
 
             auto [lin, type] = *norm;
-            auto it = std::find_if(
-                lin.coeff_.begin(), lin.coeff_.end(),
-                [&iterVar](const decltype(lin.coeff_)::value_type &kx) {
-                    return HashComparator()(kx.a_, iterVar);
-                });
-            if (it == lin.coeff_.end()) {
-                continue;
+            auto [lower, upper] = lin2bounds(
+                lin, type == ASTNodeType::NE ? ASTNodeType::EQ : type, iterVar);
+            if (lower.isValid()) {
+                callback(lower->expr());
             }
-            auto selfK = it->k_;
-            if (selfK < 0) {
-                type = reverseCmp(type);
-                selfK *= -1;
-                lin.bias_ *= -1;
-                for (auto &item : lin.coeff_) {
-                    item.k_ *= -1;
-                }
-            }
-
-            Expr separation = makeIntConst(-lin.bias_);
-            for (auto &&item : lin.coeff_) {
-                if (!HashComparator()(item.a_, iterVar)) {
-                    separation = makeAdd(
-                        separation, makeMul(makeIntConst(-item.k_), item.a_));
-                }
-            }
-            switch (type) {
-            case ASTNodeType::LT:
-            case ASTNodeType::GE:
-                callback(makeCeilDiv(separation, makeIntConst(selfK)));
-                break;
-            case ASTNodeType::LE:
-            case ASTNodeType::GT:
-                callback(makeAdd(makeFloorDiv(separation, makeIntConst(selfK)),
-                                 makeIntConst(1)));
-                break;
-            case ASTNodeType::EQ:
-            case ASTNodeType::NE:
-                callback(makeCeilDiv(separation, makeIntConst(selfK)));
-                callback(makeAdd(makeFloorDiv(separation, makeIntConst(selfK)),
-                                 makeIntConst(1)));
-                break;
-            default:
-                ASSERT(false);
+            if (upper.isValid()) {
+                callback(makeAdd(upper->expr(), makeIntConst(1)));
             }
         }
     }

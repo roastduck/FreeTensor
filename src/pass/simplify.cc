@@ -72,53 +72,6 @@ Expr CompTransientBounds::add1(const Expr &op) {
     }
 }
 
-void CompTransientBounds::applyCond(int k, const Expr &lhs, ASTNodeType opType,
-                                    const Expr &rhs) {
-    if (k < 0) {
-        opType = opType == ASTNodeType::LT   ? ASTNodeType::GT
-                 : opType == ASTNodeType::LE ? ASTNodeType::GE
-                 : opType == ASTNodeType::GT ? ASTNodeType::LT
-                 : opType == ASTNodeType::GE ? ASTNodeType::LE
-                                             : opType;
-        applyCond(-k, lhs, opType, makeMul(makeIntConst(-1), rhs));
-        return;
-    }
-    auto floorRhs = k != 1 ? makeFloorDiv(rhs, makeIntConst(k)) : rhs;
-    auto ceilRhs = k != 1 ? makeCeilDiv(rhs, makeIntConst(k)) : rhs;
-    switch (opType) {
-    case ASTNodeType::GT: {
-        transients_[lhs].expr_ = (*this)(lhs);
-        transients_[lhs].upper_.emplace_back((*this)(sub1(ceilRhs)));
-        break;
-    }
-    case ASTNodeType::LT: {
-        transients_[lhs].expr_ = (*this)(lhs);
-        transients_[lhs].lower_.emplace_back((*this)(add1(floorRhs)));
-        break;
-    }
-    case ASTNodeType::GE: {
-        transients_[lhs].expr_ = (*this)(lhs);
-        transients_[lhs].upper_.emplace_back((*this)(floorRhs));
-        break;
-    }
-    case ASTNodeType::LE: {
-        transients_[lhs].expr_ = (*this)(lhs);
-        transients_[lhs].lower_.emplace_back((*this)(ceilRhs));
-        break;
-    }
-    case ASTNodeType::EQ: {
-        transients_[lhs].expr_ = (*this)(lhs);
-        transients_[lhs].lower_.emplace_back((*this)(ceilRhs));
-        transients_[lhs].upper_.emplace_back((*this)(floorRhs));
-        break;
-    }
-    case ASTNodeType::NE:
-        break; // do nothing
-    default:
-        ASSERT(false);
-    }
-}
-
 void CompTransientBounds::applyCond(
     const Expr &_cond, const std::unordered_set<std::string> &bodyAllWrites) {
     auto dnf = asDNF(_cond);
@@ -143,17 +96,18 @@ void CompTransientBounds::applyCond(
         }
 
         for (auto &&[k, a] : lin.coeff_) {
-            if (k != 0 && (a->nodeType() == ASTNodeType::Var ||
-                           a->nodeType() == ASTNodeType::Load)) {
-                auto l = lin;
-                l.coeff_.resize(
-                    std::remove_if(
-                        l.coeff_.begin(), l.coeff_.end(),
-                        [&a](const decltype(l.coeff_)::value_type &kx) {
-                            return HashComparator()(kx.a_, a);
-                        }) -
-                    l.coeff_.begin());
-                applyCond(-k, a, type, lin2expr(l));
+            if (a->nodeType() == ASTNodeType::Var ||
+                a->nodeType() == ASTNodeType::Load) {
+                auto [lower, upper] = lin2bounds(lin, type, a);
+                if (lower.isValid() || upper.isValid()) {
+                    transients_[a].expr_ = (*this)(a);
+                }
+                if (lower.isValid()) {
+                    transients_[a].lower_.emplace_back((*this)(lower->expr()));
+                }
+                if (upper.isValid()) {
+                    transients_[a].upper_.emplace_back((*this)(upper->expr()));
+                }
             }
         }
         conds_.emplace_back(cond);
