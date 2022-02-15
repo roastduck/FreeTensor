@@ -27,16 +27,15 @@ struct NodeFeature {
  * performance. This pass outputs an structual feature, which can be converted
  * to a plain feature by a following pass
  */
-class StructuralFeature : public CompUniqueBounds {
-    typedef CompUniqueBounds
-        BaseClass; // Replace it with any simplifying pass if needed
+class StructuralFeature : public CompTransientBounds {
+    typedef CompTransientBounds BaseClass;
 
     /**
      * Memory access info of an AST node with respect to a buffer
      */
     struct NodeBufferInfo {
-        std::vector<LowerBoundsList> lo_;
-        std::vector<UpperBoundsList> hi_;
+        std::vector<CompUniqueBounds::LowerBoundsList> lo_;
+        std::vector<CompUniqueBounds::UpperBoundsList> hi_;
     };
 
     /**
@@ -56,10 +55,14 @@ class StructuralFeature : public CompUniqueBounds {
         // unlimited
     };
 
+    CompUniqueBounds bound_;
+
     std::unordered_map<ID, NodeFeature> features_; // Node ID -> features
     std::unordered_map<AST, NodeInfo> info_;       // AST -> info
 
   public:
+    StructuralFeature() : bound_(*this, *this) {}
+
     const std::unordered_map<ID, NodeFeature> &features() const {
         return features_;
     }
@@ -81,7 +84,7 @@ class StructuralFeature : public CompUniqueBounds {
     Expr visitUnaryOp(const UnaryExpr &_op);
 
   protected:
-    using CompUniqueBounds::visit;
+    using BaseClass::visit;
 
     Stmt visitStmt(const Stmt &op) override;
     Expr visitExpr(const Expr &op) override;

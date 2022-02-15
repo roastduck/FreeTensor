@@ -49,7 +49,7 @@ int findInnerMostScope(const std::unordered_map<std::string, int> &varScope,
     return visitor.innnerMost();
 }
 
-TransientBound CompTransientBounds::transient(const Expr &op) {
+TransientBound CompTransientBounds::transient(const Expr &op) const {
     if (transients_.count(op)) {
         return transients_.at(op);
     }
@@ -99,14 +99,13 @@ void CompTransientBounds::applyCond(
             if (a->nodeType() == ASTNodeType::Var ||
                 a->nodeType() == ASTNodeType::Load) {
                 auto [lower, upper] = lin2bounds(lin, type, a);
-                if (lower.isValid() || upper.isValid()) {
-                    transients_[a].expr_ = (*this)(a);
-                }
                 if (lower.isValid()) {
-                    transients_[a].lower_.emplace_back((*this)(lower->expr()));
+                    transients_[a].expr_ = a;
+                    transients_[a].lower_.emplace_back(lower->expr());
                 }
                 if (upper.isValid()) {
-                    transients_[a].upper_.emplace_back((*this)(upper->expr()));
+                    transients_[a].expr_ = a;
+                    transients_[a].upper_.emplace_back(upper->expr());
                 }
             }
         }
@@ -124,15 +123,13 @@ Stmt CompTransientBounds::visit(const For &op) {
     if (op->step_->nodeType() == ASTNodeType::IntConst) {
         auto step = op->step_.as<IntConstNode>()->val_;
         if (step > 0) {
-            transients_[var] = {
-                var, {(*this)(op->begin_)}, {(*this)(sub1(op->end_))}};
+            transients_[var] = {var, {op->begin_}, {sub1(op->end_)}};
             conds_.emplace_back(makeGE(var, op->begin_));
             conds_.emplace_back(makeLT(var, op->end_));
             conds_.emplace_back(makeEQ(
                 makeMod(makeSub(var, op->begin_), op->step_), makeIntConst(0)));
         } else if (step < 0) {
-            transients_[var] = {
-                var, {(*this)(add1(op->end_))}, {(*this)(op->begin_)}};
+            transients_[var] = {var, {add1(op->end_)}, {op->begin_}};
             conds_.emplace_back(makeLE(var, op->begin_));
             conds_.emplace_back(makeGT(var, op->end_));
             // ISL does not support negative divisor
@@ -141,8 +138,7 @@ Stmt CompTransientBounds::visit(const For &op) {
                                makeSub(makeIntConst(0), op->step_)),
                        makeIntConst(0)));
         } else {
-            transients_[var] = {
-                var, {(*this)(op->begin_)}, {(*this)(op->begin_)}};
+            transients_[var] = {var, {op->begin_}, {op->begin_}};
             conds_.emplace_back(makeEQ(var, op->begin_));
         }
     }
@@ -242,7 +238,7 @@ void CompUniqueBounds::updUpper(UpperBoundsList &list,
     list.emplace_back(bound);
 }
 
-int CompUniqueBounds::getIntLower(const Expr &op) const {
+int CompUniqueBounds::getIntLower(const Expr &op) {
     int ret = INT_MIN;
     for (auto &&b : getLower(op)) {
         if (b.lin().coeff_.empty()) {
@@ -254,7 +250,7 @@ int CompUniqueBounds::getIntLower(const Expr &op) const {
     return ret;
 }
 
-int CompUniqueBounds::getIntUpper(const Expr &op) const {
+int CompUniqueBounds::getIntUpper(const Expr &op) {
     int ret = INT_MAX;
     for (auto &&b : getUpper(op)) {
         if (b.lin().coeff_.empty()) {
@@ -266,13 +262,13 @@ int CompUniqueBounds::getIntUpper(const Expr &op) const {
     return ret;
 }
 
-Opt<int> CompUniqueBounds::getInt(const Expr &op) const {
+Opt<int> CompUniqueBounds::getInt(const Expr &op) {
     int lower = getIntLower(op);
     int upper = getIntUpper(op);
     return lower == upper ? Opt<int>::make(lower) : nullptr;
 }
 
-bool CompUniqueBounds::alwaysLT(const Expr &lhs, const Expr &rhs) const {
+bool CompUniqueBounds::alwaysLT(const Expr &lhs, const Expr &rhs) {
     for (auto &&b1 : getUpper(lhs)) {
         for (auto &&b2 : getLower(rhs)) {
             if (ir::alwaysLT(b1, b2)) {
@@ -283,7 +279,7 @@ bool CompUniqueBounds::alwaysLT(const Expr &lhs, const Expr &rhs) const {
     return false;
 }
 
-bool CompUniqueBounds::alwaysLE(const Expr &lhs, const Expr &rhs) const {
+bool CompUniqueBounds::alwaysLE(const Expr &lhs, const Expr &rhs) {
     for (auto &&b1 : getUpper(lhs)) {
         for (auto &&b2 : getLower(rhs)) {
             if (ir::alwaysLE(b1, b2)) {
@@ -294,11 +290,21 @@ bool CompUniqueBounds::alwaysLE(const Expr &lhs, const Expr &rhs) const {
     return false;
 }
 
-Expr CompUniqueBounds::visitExpr(const Expr &_op) {
-    auto op = CompTransientBounds::visitExpr(_op);
-    auto tr = transient(op);
+void CompUniqueBounds::visitExpr(const Expr &op) {
+    if (lower_.count(op) || upper_.count(op)) {
+        return;
+    }
     auto &lower = lower_[op];
     auto &upper = upper_[op];
+    lower = {};
+    upper = {};
+
+    if (!isInt(dtype(op))) {
+        return;
+    }
+
+    BaseClass::visitExpr(op);
+    auto tr = transients_.transient(op);
     for (auto &&first : tr.lower_) {
         for (auto &&item : getLower(first)) {
             if (noIntersect(allNames(op), allNames(item.expr()))) {
@@ -315,44 +321,30 @@ Expr CompUniqueBounds::visitExpr(const Expr &_op) {
             }
         }
     }
-    return op;
 }
 
-Expr CompUniqueBounds::visit(const Var &_op) {
-    auto __op = CompTransientBounds::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::Var);
-    auto op = __op.as<VarNode>();
+void CompUniqueBounds::visit(const Var &op) {
+    BaseClass::visit(op);
     updLower(lower_[op], LowerBound{op});
     updUpper(upper_[op], UpperBound{op});
-    return op;
 }
 
-Expr CompUniqueBounds::visit(const Load &_op) {
-    auto __op = CompTransientBounds::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::Load);
-    auto op = __op.as<LoadNode>();
-    if (isInt(dtype(op))) {
-        updLower(lower_[op], LowerBound{op});
-        updUpper(upper_[op], UpperBound{op});
-    }
-    return op;
+void CompUniqueBounds::visit(const Load &op) {
+    BaseClass::visit(op);
+    updLower(lower_[op], LowerBound{op});
+    updUpper(upper_[op], UpperBound{op});
 }
 
-Expr CompUniqueBounds::visit(const IntConst &_op) {
-    auto __op = CompTransientBounds::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::IntConst);
-    auto op = __op.as<IntConstNode>();
+void CompUniqueBounds::visit(const IntConst &op) {
+    BaseClass::visit(op);
     updLower(lower_[op],
              LowerBound{LinearExpr<Rational<int64_t>>{{}, op->val_}});
     updUpper(upper_[op],
              UpperBound{LinearExpr<Rational<int64_t>>{{}, op->val_}});
-    return op;
 }
 
-Expr CompUniqueBounds::visit(const Add &_op) {
-    auto __op = CompTransientBounds::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::Add);
-    auto op = __op.as<AddNode>();
+void CompUniqueBounds::visit(const Add &op) {
+    BaseClass::visit(op);
     auto &lower = lower_[op];
     auto &upper = upper_[op];
     for (auto &&b1 : getLower(op->lhs_)) {
@@ -365,13 +357,10 @@ Expr CompUniqueBounds::visit(const Add &_op) {
             updUpper(upper, add(b1, b2));
         }
     }
-    return op;
 }
 
-Expr CompUniqueBounds::visit(const Sub &_op) {
-    auto __op = CompTransientBounds::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::Sub);
-    auto op = __op.as<SubNode>();
+void CompUniqueBounds::visit(const Sub &op) {
+    BaseClass::visit(op);
     auto &lower = lower_[op];
     auto &upper = upper_[op];
     for (auto &&b1 : getLower(op->lhs_)) {
@@ -384,13 +373,10 @@ Expr CompUniqueBounds::visit(const Sub &_op) {
             updUpper(upper, sub(b1, b2));
         }
     }
-    return op;
 }
 
-Expr CompUniqueBounds::visit(const Mul &_op) {
-    auto __op = CompTransientBounds::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::Mul);
-    auto op = __op.as<MulNode>();
+void CompUniqueBounds::visit(const Mul &op) {
+    BaseClass::visit(op);
 
     auto &lower = lower_[op];
     auto &upper = upper_[op];
@@ -408,8 +394,8 @@ Expr CompUniqueBounds::visit(const Mul &_op) {
                     auto div = e1.as<FloorDivNode>();
                     if (auto k1 = getInt(div->rhs_);
                         k1.isValid() && *k1 > 0 && *k % *k1 == 0) {
-                        auto equ = (*this)(
-                            makeSub(div->lhs_, makeMod(div->lhs_, div->rhs_)));
+                        auto equ =
+                            makeSub(div->lhs_, makeMod(div->lhs_, div->rhs_));
                         for (auto &&b : getLower(equ)) {
                             updLower(lower, mul(b, *k / *k1));
                         }
@@ -429,8 +415,8 @@ Expr CompUniqueBounds::visit(const Mul &_op) {
                     auto div = e1.as<FloorDivNode>();
                     if (auto k1 = getInt(div->rhs_);
                         k1.isValid() && *k1 > 0 && *k % *k1 == 0) {
-                        auto equ = (*this)(
-                            makeSub(div->lhs_, makeMod(div->lhs_, div->rhs_)));
+                        auto equ =
+                            makeSub(div->lhs_, makeMod(div->lhs_, div->rhs_));
                         for (auto &&b : getLower(equ)) {
                             updUpper(upper, mul(UpperBound{b.lin()}, *k / *k1));
                         }
@@ -444,13 +430,10 @@ Expr CompUniqueBounds::visit(const Mul &_op) {
     };
     g(op, op->lhs_, op->rhs_);
     g(op, op->rhs_, op->lhs_);
-    return op;
 }
 
-Expr CompUniqueBounds::visit(const Square &_op) {
-    auto __op = CompTransientBounds::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::Square);
-    auto op = __op.as<SquareNode>();
+void CompUniqueBounds::visit(const Square &op) {
+    BaseClass::visit(op);
 
     auto &lower = lower_[op];
     auto &upper = upper_[op];
@@ -458,13 +441,10 @@ Expr CompUniqueBounds::visit(const Square &_op) {
         updLower(lower, LowerBound{LinearExpr<Rational<int64_t>>{{}, *k * *k}});
         updUpper(upper, UpperBound{LinearExpr<Rational<int64_t>>{{}, *k * *k}});
     }
-    return op;
 }
 
-Expr CompUniqueBounds::visit(const FloorDiv &_op) {
-    auto __op = CompTransientBounds::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::FloorDiv);
-    auto op = __op.as<FloorDivNode>();
+void CompUniqueBounds::visit(const FloorDiv &op) {
+    BaseClass::visit(op);
 
     auto &lower = lower_[op];
     auto &upper = upper_[op];
@@ -485,14 +465,10 @@ Expr CompUniqueBounds::visit(const FloorDiv &_op) {
             }
         }
     }
-
-    return op;
 }
 
-Expr CompUniqueBounds::visit(const CeilDiv &_op) {
-    auto __op = CompTransientBounds::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::CeilDiv);
-    auto op = __op.as<CeilDivNode>();
+void CompUniqueBounds::visit(const CeilDiv &op) {
+    BaseClass::visit(op);
 
     auto &lower = lower_[op];
     auto &upper = upper_[op];
@@ -513,31 +489,20 @@ Expr CompUniqueBounds::visit(const CeilDiv &_op) {
             }
         }
     }
-
-    return op;
 }
 
-Expr CompUniqueBounds::visit(const Mod &_op) {
-    auto __op = CompTransientBounds::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::Mod);
-    auto op = __op.as<ModNode>();
+void CompUniqueBounds::visit(const Mod &op) {
+    BaseClass::visit(op);
     updLower(lower_[op], LowerBound{op});
     updUpper(upper_[op], UpperBound{op});
     updLower(lower_[op], LowerBound{LinearExpr<Rational<int64_t>>{{}, 0}});
     for (auto &&item : getUpper(op->rhs_)) {
         updUpper(upper_[op], item);
     }
-    return op;
 }
 
-Expr CompUniqueBounds::visit(const Min &_op) {
-    auto __op = CompTransientBounds::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::Min);
-    auto op = __op.as<MinNode>();
-
-    if (!isInt(dtype(op))) {
-        return op;
-    }
+void CompUniqueBounds::visit(const Min &op) {
+    BaseClass::visit(op);
     auto &lower = lower_[op];
     auto &upper = upper_[op];
     for (auto &&b : getUpper(op->lhs_)) {
@@ -557,17 +522,10 @@ Expr CompUniqueBounds::visit(const Min &_op) {
     }
     updLower(lower, LowerBound{op});
     updUpper(upper, UpperBound{op});
-    return op;
 }
 
-Expr CompUniqueBounds::visit(const Max &_op) {
-    auto __op = CompTransientBounds::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::Max);
-    auto op = __op.as<MaxNode>();
-
-    if (!isInt(dtype(op))) {
-        return op;
-    }
+void CompUniqueBounds::visit(const Max &op) {
+    BaseClass::visit(op);
     auto &lower = lower_[op];
     auto &upper = upper_[op];
     for (auto &&b : getLower(op->lhs_)) {
@@ -587,17 +545,10 @@ Expr CompUniqueBounds::visit(const Max &_op) {
     }
     updLower(lower, LowerBound{op});
     updUpper(upper, UpperBound{op});
-    return op;
 }
 
-Expr CompUniqueBounds::visit(const IfExpr &_op) {
-    auto __op = CompTransientBounds::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::IfExpr);
-    auto op = __op.as<IfExprNode>();
-
-    if (!isInt(dtype(op))) {
-        return op;
-    }
+void CompUniqueBounds::visit(const IfExpr &op) {
+    BaseClass::visit(op);
     auto &lower = lower_[op];
     auto &upper = upper_[op];
     for (auto &&b1 : getUpper(op->thenCase_)) {
@@ -620,7 +571,6 @@ Expr CompUniqueBounds::visit(const IfExpr &_op) {
     }
     updLower(lower, LowerBound{op});
     updUpper(upper, UpperBound{op});
-    return op;
 }
 
 Stmt builtinSimplify(const Stmt &op) {

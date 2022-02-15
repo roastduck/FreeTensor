@@ -10,7 +10,7 @@ Stmt ShrinkFor::visit(const For &_op) {
 
     iterStack_.emplace_back(var);
     namesStack_.emplace_back(names());
-    auto __op = CompTransientBounds::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::For);
     auto op = __op.as<ForNode>();
     namesStack_.pop_back();

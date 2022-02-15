@@ -145,7 +145,7 @@ Stmt NormalizeThreads::visit(const Eval &op) {
 }
 
 Stmt CheckThreadNum::visit(const For &_op) {
-    auto __op = CompUniqueBounds::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::For);
     auto op = __op.as<ForNode>();
 
@@ -153,12 +153,12 @@ Stmt CheckThreadNum::visit(const For &_op) {
         if (op->begin_->nodeType() != ASTNodeType::IntConst) {
             op->body_ =
                 makeIf("", makeGE(makeVar(op->iter_), op->begin_), op->body_);
-            op->begin_ = makeIntConst(getIntLower(op->begin_));
+            op->begin_ = makeIntConst(bound_.getIntLower(op->begin_));
         }
         if (op->end_->nodeType() != ASTNodeType::IntConst) {
             op->body_ =
                 makeIf("", makeLT(makeVar(op->iter_), op->end_), op->body_);
-            op->end_ = makeIntConst(getIntUpper(op->end_));
+            op->end_ = makeIntConst(bound_.getIntUpper(op->end_));
         }
         ASSERT(op->begin_->nodeType() == ASTNodeType::IntConst);
         ASSERT(op->end_->nodeType() == ASTNodeType::IntConst);

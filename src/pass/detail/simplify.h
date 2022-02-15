@@ -53,8 +53,7 @@ inline int countHeavyOps(const Expr &op) {
 
 } // namespace detail
 
-template <class BaseClass>
-Expr SimplifyPass<BaseClass>::visitExpr(const Expr &_op) {
+template <class Unique> Expr SimplifyPass<Unique>::visitExpr(const Expr &_op) {
     auto op = BaseClass::visitExpr(_op);
 
     // To avoid divergence
@@ -67,8 +66,8 @@ Expr SimplifyPass<BaseClass>::visitExpr(const Expr &_op) {
 
     Expr best = nullptr;
     auto bestScope = -1, bestHeavyOps = -1;
-    for (auto &&lower : this->getLower(op)) {
-        for (auto &&upper : this->getUpper(op)) {
+    for (auto &&lower : this->unique_.getLower(op)) {
+        for (auto &&upper : this->unique_.getUpper(op)) {
             if (ir::alwaysLE(upper, lower)) { // upper <= lower ==> equal
                 // We need to choose the simplest one. Otherwise we are always
                 // picking the original expression
@@ -90,13 +89,12 @@ Expr SimplifyPass<BaseClass>::visitExpr(const Expr &_op) {
         }
     }
     if (best.isValid() && !HashComparator()(best, op)) {
-        return recompBounds(best);
+        return best;
     }
     return op;
 }
 
-template <class BaseClass>
-Expr SimplifyPass<BaseClass>::visit(const IntConst &_op) {
+template <class Unique> Expr SimplifyPass<Unique>::visit(const IntConst &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::IntConst);
     auto op = __op.template as<IntConstNode>();
@@ -104,121 +102,117 @@ Expr SimplifyPass<BaseClass>::visit(const IntConst &_op) {
     return op;
 }
 
-template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const Add &_op) {
+template <class Unique> Expr SimplifyPass<Unique>::visit(const Add &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Add);
     auto op = __op.template as<AddNode>();
 
     if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
-        return recompBounds(
-            makeIntConst(constants_.at(op->lhs_) + constants_.at(op->rhs_)));
+        return makeIntConst(constants_.at(op->lhs_) + constants_.at(op->rhs_));
     }
     if (constants_.count(op->lhs_) && constants_.at(op->lhs_) == 0) {
-        return recompBounds(op->rhs_);
+        return op->rhs_;
     }
     if (constants_.count(op->rhs_) && constants_.at(op->rhs_) == 0) {
-        return recompBounds(op->lhs_);
+        return op->lhs_;
     }
 
     return op;
 }
 
-template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const Sub &_op) {
+template <class Unique> Expr SimplifyPass<Unique>::visit(const Sub &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Sub);
     auto op = __op.template as<SubNode>();
 
     if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
-        return recompBounds(
-            makeIntConst(constants_.at(op->lhs_) - constants_.at(op->rhs_)));
+        return makeIntConst(constants_.at(op->lhs_) - constants_.at(op->rhs_));
     }
     if (constants_.count(op->rhs_) && constants_.at(op->rhs_) == 0) {
-        return recompBounds(op->lhs_);
+        return op->lhs_;
     }
 
     return op;
 }
 
-template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const Mul &_op) {
+template <class Unique> Expr SimplifyPass<Unique>::visit(const Mul &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Mul);
     auto op = __op.template as<MulNode>();
 
     if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
-        return recompBounds(
-            makeIntConst(constants_.at(op->lhs_) * constants_.at(op->rhs_)));
+        return makeIntConst(constants_.at(op->lhs_) * constants_.at(op->rhs_));
     }
     if (constants_.count(op->lhs_) && constants_.at(op->lhs_) == 1) {
-        return recompBounds(op->rhs_);
+        return op->rhs_;
     }
     if (constants_.count(op->rhs_) && constants_.at(op->rhs_) == 1) {
-        return recompBounds(op->lhs_);
+        return op->lhs_;
     }
     if (constants_.count(op->lhs_) && constants_.at(op->lhs_) == 0) {
-        return recompBounds(makeIntConst(0));
+        return makeIntConst(0);
     }
     if (constants_.count(op->rhs_) && constants_.at(op->rhs_) == 0) {
-        return recompBounds(makeIntConst(0));
+        return makeIntConst(0);
     }
 
     return op;
 }
 
-template <class BaseClass>
-Expr SimplifyPass<BaseClass>::visit(const FloorDiv &_op) {
+template <class Unique> Expr SimplifyPass<Unique>::visit(const FloorDiv &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::FloorDiv);
     auto op = __op.template as<FloorDivNode>();
     if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
-        return recompBounds(makeIntConst(
-            floorDiv(constants_.at(op->lhs_), constants_.at(op->rhs_))));
+        return makeIntConst(
+            floorDiv(constants_.at(op->lhs_), constants_.at(op->rhs_)));
     }
     return op;
 }
 
-template <class BaseClass>
-Expr SimplifyPass<BaseClass>::visit(const CeilDiv &_op) {
+template <class Unique> Expr SimplifyPass<Unique>::visit(const CeilDiv &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::CeilDiv);
     auto op = __op.template as<CeilDivNode>();
     if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
-        return recompBounds(makeIntConst(
-            ceilDiv(constants_.at(op->lhs_), constants_.at(op->rhs_))));
+        return makeIntConst(
+            ceilDiv(constants_.at(op->lhs_), constants_.at(op->rhs_)));
     }
     return op;
 }
 
-template <class BaseClass>
-Expr SimplifyPass<BaseClass>::visit(const RoundTowards0Div &_op) {
+template <class Unique>
+Expr SimplifyPass<Unique>::visit(const RoundTowards0Div &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::RoundTowards0Div);
     auto op = __op.template as<RoundTowards0DivNode>();
     if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
-        return recompBounds(
-            makeIntConst(constants_.at(op->lhs_) / constants_.at(op->rhs_)));
+        return makeIntConst(constants_.at(op->lhs_) / constants_.at(op->rhs_));
     }
     return op;
 }
 
-template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const Mod &_op) {
+template <class Unique> Expr SimplifyPass<Unique>::visit(const Mod &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Mod);
     auto op = __op.template as<ModNode>();
 
-    if (this->getIntLower(op->rhs_) > 0 && this->getIntLower(op->lhs_) >= 0 &&
-        this->alwaysLT(op->lhs_, op->rhs_)) {
-        return recompBounds(op->lhs_);
+    if (this->unique_.getIntLower(op->rhs_) > 0 &&
+        this->unique_.getIntLower(op->lhs_) >= 0 &&
+        this->unique_.alwaysLT(op->lhs_, op->rhs_)) {
+        return op->lhs_;
     }
-    if (this->getIntUpper(op->rhs_) < 0 && this->getIntUpper(op->rhs_) <= 0 &&
-        this->alwaysLT(op->rhs_, op->lhs_)) {
-        return recompBounds(op->lhs_);
+    if (this->unique_.getIntUpper(op->rhs_) < 0 &&
+        this->unique_.getIntUpper(op->rhs_) <= 0 &&
+        this->unique_.alwaysLT(op->rhs_, op->lhs_)) {
+        return op->lhs_;
     }
 
     if (constants_.count(op->rhs_)) {
         auto k = constants_.at(op->rhs_);
 
         if (constants_.count(op->lhs_)) {
-            return recompBounds(makeIntConst(mod(constants_.at(op->lhs_), k)));
+            return makeIntConst(mod(constants_.at(op->lhs_), k));
         }
 
         bool mutated = false;
@@ -244,28 +238,26 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const Mod &_op) {
         };
         auto newLhs = f(op->lhs_);
         if (mutated) {
-            return recompBounds(makeMod(newLhs, op->rhs_));
+            return makeMod(newLhs, op->rhs_);
         }
     }
 
     return op;
 }
 
-template <class BaseClass>
-Expr SimplifyPass<BaseClass>::visit(const Remainder &_op) {
+template <class Unique> Expr SimplifyPass<Unique>::visit(const Remainder &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Remainder);
     auto op = __op.template as<RemainderNode>();
 
     if (constants_.count(op->rhs_) && constants_.count(op->lhs_)) {
-        return recompBounds(
-            makeIntConst(constants_.at(op->lhs_) % constants_.at(op->rhs_)));
+        return makeIntConst(constants_.at(op->lhs_) % constants_.at(op->rhs_));
     }
 
     return op;
 }
 
-template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const Min &_op) {
+template <class Unique> Expr SimplifyPass<Unique>::visit(const Min &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Min);
     auto op = __op.template as<MinNode>();
@@ -292,9 +284,9 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const Min &_op) {
 
     for (auto &&l : lhs) {
         for (auto &&r : rhs) {
-            if (this->alwaysLE(l, r)) {
+            if (this->unique_.alwaysLE(l, r)) {
                 all.erase(r);
-            } else if (this->alwaysLE(r, l)) {
+            } else if (this->unique_.alwaysLE(r, l)) {
                 all.erase(l);
             }
         }
@@ -308,11 +300,11 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const Min &_op) {
         for (auto &&item : all) {
             ret = ret.isValid() ? makeMin(ret, item) : item;
         }
-        return recompBounds(ret);
+        return ret;
     }
 }
 
-template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const Max &_op) {
+template <class Unique> Expr SimplifyPass<Unique>::visit(const Max &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Max);
     auto op = __op.template as<MaxNode>();
@@ -339,9 +331,9 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const Max &_op) {
 
     for (auto &&l : lhs) {
         for (auto &&r : rhs) {
-            if (this->alwaysLE(l, r)) {
+            if (this->unique_.alwaysLE(l, r)) {
                 all.erase(l);
-            } else if (this->alwaysLE(r, l)) {
+            } else if (this->unique_.alwaysLE(r, l)) {
                 all.erase(r);
             }
         }
@@ -355,116 +347,115 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const Max &_op) {
         for (auto &&item : all) {
             ret = ret.isValid() ? makeMax(ret, item) : item;
         }
-        return recompBounds(ret);
+        return ret;
     }
 }
 
-template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const LT &_op) {
+template <class Unique> Expr SimplifyPass<Unique>::visit(const LT &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::LT);
     auto op = __op.template as<LTNode>();
     if (!isInt(this->dtype(op->lhs_)) || !isInt(this->dtype(op->rhs_))) {
         return op;
     }
-    if (this->alwaysLT(op->lhs_, op->rhs_)) {
+    if (this->unique_.alwaysLT(op->lhs_, op->rhs_)) {
         return makeBoolConst(true);
     }
-    if (this->alwaysLE(op->rhs_, op->lhs_)) {
+    if (this->unique_.alwaysLE(op->rhs_, op->lhs_)) {
         return makeBoolConst(false);
     }
     return op;
 }
 
-template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const LE &_op) {
+template <class Unique> Expr SimplifyPass<Unique>::visit(const LE &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::LE);
     auto op = __op.template as<LENode>();
     if (!isInt(this->dtype(op->lhs_)) || !isInt(this->dtype(op->rhs_))) {
         return op;
     }
-    if (this->alwaysLE(op->lhs_, op->rhs_)) {
+    if (this->unique_.alwaysLE(op->lhs_, op->rhs_)) {
         return makeBoolConst(true);
     }
-    if (this->alwaysLT(op->rhs_, op->lhs_)) {
+    if (this->unique_.alwaysLT(op->rhs_, op->lhs_)) {
         return makeBoolConst(false);
     }
     return op;
 }
 
-template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const GT &_op) {
+template <class Unique> Expr SimplifyPass<Unique>::visit(const GT &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::GT);
     auto op = __op.template as<GTNode>();
     if (!isInt(this->dtype(op->lhs_)) || !isInt(this->dtype(op->rhs_))) {
         return op;
     }
-    if (this->alwaysLE(op->lhs_, op->rhs_)) {
+    if (this->unique_.alwaysLE(op->lhs_, op->rhs_)) {
         return makeBoolConst(false);
     }
-    if (this->alwaysLT(op->rhs_, op->lhs_)) {
+    if (this->unique_.alwaysLT(op->rhs_, op->lhs_)) {
         return makeBoolConst(true);
     }
     return op;
 }
 
-template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const GE &_op) {
+template <class Unique> Expr SimplifyPass<Unique>::visit(const GE &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::GE);
     auto op = __op.template as<GENode>();
     if (!isInt(this->dtype(op->lhs_)) || !isInt(this->dtype(op->rhs_))) {
         return op;
     }
-    if (this->alwaysLT(op->lhs_, op->rhs_)) {
+    if (this->unique_.alwaysLT(op->lhs_, op->rhs_)) {
         return makeBoolConst(false);
     }
-    if (this->alwaysLE(op->rhs_, op->lhs_)) {
+    if (this->unique_.alwaysLE(op->rhs_, op->lhs_)) {
         return makeBoolConst(true);
     }
     return op;
 }
 
-template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const EQ &_op) {
+template <class Unique> Expr SimplifyPass<Unique>::visit(const EQ &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::EQ);
     auto op = __op.template as<EQNode>();
     if (!isInt(this->dtype(op->lhs_)) || !isInt(this->dtype(op->rhs_))) {
         return op;
     }
-    if (this->alwaysLT(op->lhs_, op->rhs_)) {
+    if (this->unique_.alwaysLT(op->lhs_, op->rhs_)) {
         return makeBoolConst(false);
     }
-    if (this->alwaysLT(op->rhs_, op->lhs_)) {
+    if (this->unique_.alwaysLT(op->rhs_, op->lhs_)) {
         return makeBoolConst(false);
     }
-    if (this->alwaysLE(op->lhs_, op->rhs_) &&
-        this->alwaysLE(op->rhs_, op->lhs_)) {
+    if (this->unique_.alwaysLE(op->lhs_, op->rhs_) &&
+        this->unique_.alwaysLE(op->rhs_, op->lhs_)) {
         return makeBoolConst(true);
     }
     return op;
 }
 
-template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const NE &_op) {
+template <class Unique> Expr SimplifyPass<Unique>::visit(const NE &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::NE);
     auto op = __op.template as<NENode>();
     if (!isInt(this->dtype(op->lhs_)) || !isInt(this->dtype(op->rhs_))) {
         return op;
     }
-    if (this->alwaysLT(op->lhs_, op->rhs_)) {
+    if (this->unique_.alwaysLT(op->lhs_, op->rhs_)) {
         return makeBoolConst(true);
     }
-    if (this->alwaysLT(op->rhs_, op->lhs_)) {
+    if (this->unique_.alwaysLT(op->rhs_, op->lhs_)) {
         return makeBoolConst(true);
     }
-    if (this->alwaysLE(op->lhs_, op->rhs_) &&
-        this->alwaysLE(op->rhs_, op->lhs_)) {
+    if (this->unique_.alwaysLE(op->lhs_, op->rhs_) &&
+        this->unique_.alwaysLE(op->rhs_, op->lhs_)) {
         return makeBoolConst(false);
     }
     return op;
 }
 
-template <class BaseClass>
-Expr SimplifyPass<BaseClass>::visit(const LAnd &_op) {
+template <class Unique> Expr SimplifyPass<Unique>::visit(const LAnd &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::LAnd);
     auto op = __op.template as<LAndNode>();
@@ -481,7 +472,7 @@ Expr SimplifyPass<BaseClass>::visit(const LAnd &_op) {
     return op;
 }
 
-template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const LOr &_op) {
+template <class Unique> Expr SimplifyPass<Unique>::visit(const LOr &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::LOr);
     auto op = __op.template as<LOrNode>();
@@ -496,8 +487,7 @@ template <class BaseClass> Expr SimplifyPass<BaseClass>::visit(const LOr &_op) {
     return op;
 }
 
-template <class BaseClass>
-Expr SimplifyPass<BaseClass>::visit(const LNot &_op) {
+template <class Unique> Expr SimplifyPass<Unique>::visit(const LNot &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::LNot);
     auto op = __op.template as<LNotNode>();
@@ -535,23 +525,21 @@ Expr SimplifyPass<BaseClass>::visit(const LNot &_op) {
     return op;
 }
 
-template <class BaseClass>
-Expr SimplifyPass<BaseClass>::visit(const IfExpr &_op) {
+template <class Unique> Expr SimplifyPass<Unique>::visit(const IfExpr &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::IfExpr);
     auto op = __op.template as<IfExprNode>();
     if (op->cond_->nodeType() == ASTNodeType::BoolConst) {
         if (op->cond_.template as<BoolConstNode>()->val_) {
-            return recompBounds(op->thenCase_);
+            return op->thenCase_;
         } else {
-            return recompBounds(op->elseCase_);
+            return op->elseCase_;
         }
     }
     return op;
 }
 
-template <class BaseClass>
-Stmt SimplifyPass<BaseClass>::visit(const ReduceTo &_op) {
+template <class Unique> Stmt SimplifyPass<Unique>::visit(const ReduceTo &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
     auto op = __op.template as<ReduceToNode>();
@@ -581,8 +569,7 @@ Stmt SimplifyPass<BaseClass>::visit(const ReduceTo &_op) {
     return op;
 }
 
-template <class BaseClass>
-Stmt SimplifyPass<BaseClass>::visit(const VarDef &_op) {
+template <class Unique> Stmt SimplifyPass<Unique>::visit(const VarDef &_op) {
     if (varScope_.count(_op->name_)) {
         throw InvalidProgram(
             "Conflict var name: " + _op->name_ +
@@ -603,7 +590,7 @@ Stmt SimplifyPass<BaseClass>::visit(const VarDef &_op) {
         for (auto &&dim : op->buffer_->tensor().shape()) {
             size = makeMul(size, dim);
         }
-        if (this->getIntLower((*this)(makeSub(op->sizeLim_, size))) >= 0) {
+        if (this->unique_.getIntLower(makeSub(op->sizeLim_, size)) >= 0) {
             op->sizeLim_ = nullptr;
         }
     }
@@ -611,7 +598,7 @@ Stmt SimplifyPass<BaseClass>::visit(const VarDef &_op) {
     return op;
 }
 
-template <class BaseClass> Stmt SimplifyPass<BaseClass>::visit(const For &_op) {
+template <class Unique> Stmt SimplifyPass<Unique>::visit(const For &_op) {
     if (varScope_.count(_op->iter_)) {
         throw InvalidProgram(
             "iterators with the same name in nested loops are not allowed");
@@ -623,7 +610,7 @@ template <class BaseClass> Stmt SimplifyPass<BaseClass>::visit(const For &_op) {
     auto op = __op.template as<ForNode>();
     varScope_.erase(_op->iter_), curScope_--;
 
-    if (auto intLen_ = this->getInt(op->len_); intLen_.isValid()) {
+    if (auto intLen_ = this->unique_.getInt(op->len_); intLen_.isValid()) {
         auto intLen = *intLen_;
         if (intLen == 1) {
             auto body = ReplaceIter(_op->iter_, op->begin_)(_op->body_);
@@ -633,7 +620,7 @@ template <class BaseClass> Stmt SimplifyPass<BaseClass>::visit(const For &_op) {
             return makeStmtSeq("", {});
         }
     }
-    if (this->getIntUpper(op->len_) == 1) {
+    if (this->unique_.getIntUpper(op->len_) == 1) {
         auto body = ReplaceIter(_op->iter_, op->begin_)(_op->body_);
         body = (*this)(body);
         return makeIf("", makeEQ(op->len_, makeIntConst(1)), body);
@@ -645,7 +632,7 @@ template <class BaseClass> Stmt SimplifyPass<BaseClass>::visit(const For &_op) {
     return op;
 }
 
-template <class BaseClass> Stmt SimplifyPass<BaseClass>::visit(const If &_op) {
+template <class Unique> Stmt SimplifyPass<Unique>::visit(const If &_op) {
     // Simplify the condition first to determine a possible dead branch, so we
     // can avoid recurse into the dead branch. This allows assertion false in
     // the dead branch
@@ -683,8 +670,7 @@ template <class BaseClass> Stmt SimplifyPass<BaseClass>::visit(const If &_op) {
     return op;
 }
 
-template <class BaseClass>
-Stmt SimplifyPass<BaseClass>::visit(const Assert &_op) {
+template <class Unique> Stmt SimplifyPass<Unique>::visit(const Assert &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Assert);
     auto op = __op.template as<AssertNode>();
@@ -700,8 +686,8 @@ Stmt SimplifyPass<BaseClass>::visit(const Assert &_op) {
 }
 
 template <class Simplifier>
-std::tuple<Stmt, typename Simplifier::LowerBoundsMap,
-           typename Simplifier::UpperBoundsMap>
+std::tuple<Stmt, typename CompUniqueBounds::LowerBoundsMap,
+           typename CompUniqueBounds::UpperBoundsMap>
 simplifyAndGetBounds(const Stmt &_op) {
     auto op = _op;
 
@@ -716,7 +702,8 @@ simplifyAndGetBounds(const Stmt &_op) {
                 WARNING("SimplifyPass iterates over 100 rounds. Maybe there is "
                         "a bug");
             }
-            return {newOp, mutator.lower(), mutator.upper()};
+            return {newOp, mutator.uniqueBounds().lower(),
+                    mutator.uniqueBounds().upper()};
         }
         op = newOp;
     }

@@ -11,16 +11,21 @@
 namespace ir {
 
 class PBCompBounds : public CompUniqueBounds {
+    const CompTransientBoundsInterface &transients_;
     GenPBExpr genPBExpr_;
     PBCtx isl_;
+    std::unordered_set<Expr> visited_;
 
   public:
-    PBCompBounds() : genPBExpr_(*this) {}
+    PBCompBounds(const SymbolTableInterface &symbolTable,
+                 const CompTransientBoundsInterface &transients)
+        : CompUniqueBounds(symbolTable, transients), transients_(transients),
+          genPBExpr_(symbolTable) {}
 
   protected:
     using CompUniqueBounds::visit;
 
-    Expr visitExpr(const Expr &op) override;
+    void visitExpr(const Expr &op) override;
 };
 
 class PBSimplify : public SimplifyPass<PBCompBounds> {};

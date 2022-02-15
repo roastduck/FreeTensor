@@ -263,8 +263,8 @@ cache(const Stmt &_ast, const ID &stmt, const std::string &var, MemType mtype) {
         throw InvalidSchedule("Statement " + toString(stmt) + " not found");
     }
 
-    BuiltinSimplify::LowerBoundsMap lower;
-    BuiltinSimplify::UpperBoundsMap upper;
+    CompUniqueBounds::LowerBoundsMap lower;
+    CompUniqueBounds::UpperBoundsMap upper;
     std::tie(ast, lower, upper) = simplifyAndGetBounds<BuiltinSimplify>(ast);
     auto rBound =
         compAccessBound(ast, newDef, lower, upper, COMP_ACCESS_BOUND_READ);
@@ -300,8 +300,8 @@ cacheReduction(const Stmt &_ast, const ID &stmt, const std::string &var,
         throw InvalidSchedule("Statement " + toString(stmt) + " not found");
     }
 
-    BuiltinSimplify::LowerBoundsMap lower;
-    BuiltinSimplify::UpperBoundsMap upper;
+    CompUniqueBounds::LowerBoundsMap lower;
+    CompUniqueBounds::UpperBoundsMap upper;
     std::tie(ast, lower, upper) = simplifyAndGetBounds<BuiltinSimplify>(ast);
     auto bound = compAccessBound(ast, newDef, lower, upper);
     MakeInitAndReduce makeInitAndReduce(stmt, var, newVar, oldDef, newDef,

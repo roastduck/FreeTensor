@@ -70,13 +70,16 @@ class TypeInfer : public Visitor {
  * A helper class to invoke type inference inside a Visitor or Mutator
  *
  * Inherit this class to use. The BaseClass should be a decent of
- * SymbolTable<...>
+ * SymbolTable<...>, or the an SymbolTable should be passed in to the
+ * constructor
  */
 template <class BaseClass> class WithTypeInfer : public BaseClass {
     TypeInfer typeInfer_;
 
   protected:
     WithTypeInfer() : typeInfer_(*this) {}
+    WithTypeInfer(const SymbolTableInterface &symbolTable)
+        : typeInfer_(symbolTable) {}
 
     DataType dtype(const Expr &op) {
         typeInfer_(op);

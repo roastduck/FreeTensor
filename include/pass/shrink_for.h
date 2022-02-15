@@ -10,16 +10,23 @@
 
 namespace ir {
 
-class ShrinkFor : public CompUniqueBounds {
+class ShrinkFor : public CompTransientBounds {
+    typedef CompTransientBounds BaseClass;
+
+    CompUniqueBounds bound_;
+
     ASTHashMap<Var, std::pair<std::vector<std::vector<Expr>>,
                               std::vector<std::vector<Expr>>>>
         newRange_;
     std::vector<Var> iterStack_;
     std::vector<std::unordered_set<std::string>> namesStack_;
 
+  public:
+    ShrinkFor() : bound_(*this, *this) {}
+
   private:
     template <class T> Stmt visitSideEffect(const T &op) {
-        auto ret = CompTransientBounds::visit(op);
+        auto ret = BaseClass::visit(op);
         for (auto &&[var, names] : iter::zip(iterStack_, namesStack_)) {
             auto tr = transient(var);
             std::vector<Expr> lower, upper;
@@ -27,7 +34,7 @@ class ShrinkFor : public CompUniqueBounds {
                 if (checkAllDefined(names, first)) {
                     lower.emplace_back(first);
                 } else {
-                    for (auto &&l : getLower((*this)(first))) {
+                    for (auto &&l : bound_.getLower(first)) {
                         if (auto &&expr = l.expr();
                             checkAllDefined(names, expr)) {
                             lower.emplace_back(expr);
@@ -39,7 +46,7 @@ class ShrinkFor : public CompUniqueBounds {
                 if (checkAllDefined(names, second)) {
                     upper.emplace_back(second);
                 } else {
-                    for (auto &&u : getUpper((*this)(second))) {
+                    for (auto &&u : bound_.getUpper(second)) {
                         if (auto &&expr = u.expr();
                             checkAllDefined(names, expr)) {
                             upper.emplace_back(expr);
@@ -54,7 +61,7 @@ class ShrinkFor : public CompUniqueBounds {
     }
 
   protected:
-    using CompTransientBounds::visit;
+    using BaseClass::visit;
 
     Stmt visit(const Store &op) override { return visitSideEffect(op); }
     Stmt visit(const ReduceTo &op) override { return visitSideEffect(op); }

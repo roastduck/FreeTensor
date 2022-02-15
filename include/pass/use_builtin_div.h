@@ -6,8 +6,16 @@
 
 namespace ir {
 
-class UseBuiltinDiv : public CompUniqueBounds {
+class UseBuiltinDiv : public CompTransientBounds {
+    typedef CompTransientBounds BaseClass;
+
+    CompUniqueBounds bound_;
+
+  public:
+    UseBuiltinDiv() : bound_(*this, *this) {}
+
   protected:
+    using BaseClass::visit;
     Expr visit(const FloorDiv &op) override;
     Expr visit(const CeilDiv &op) override;
     Expr visit(const Mod &op) override;

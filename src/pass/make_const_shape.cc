@@ -48,8 +48,8 @@ Stmt MakeConstShape::visit(const VarDef &_op) {
 
 Stmt makeConstShape(const Stmt &_op, const std::vector<MemType> &mtypes) {
     Stmt op;
-    BuiltinSimplify::LowerBoundsMap lower;
-    BuiltinSimplify::UpperBoundsMap upper;
+    CompUniqueBounds::LowerBoundsMap lower;
+    CompUniqueBounds::UpperBoundsMap upper;
     std::tie(op, lower, upper) = simplifyAndGetBounds<PBSimplify>(_op);
     op = MakeConstShape(mtypes, upper)(op);
     return op;

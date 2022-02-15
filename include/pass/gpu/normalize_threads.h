@@ -36,9 +36,16 @@ class NormalizeThreads : public Mutator {
     Stmt visit(const Eval &op) override;
 };
 
-class CheckThreadNum : public CompUniqueBounds {
+class CheckThreadNum : public CompTransientBounds {
+    typedef CompTransientBounds BaseClass;
+
+    CompUniqueBounds bound_;
+
+  public:
+    CheckThreadNum() : bound_(*this, *this) {}
+
   protected:
-    using CompUniqueBounds::visit;
+    using BaseClass::visit;
     Stmt visit(const For &op) override;
 };
 

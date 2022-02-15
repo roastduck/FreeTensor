@@ -57,8 +57,8 @@ Stmt shrinkVar(const Stmt &_op) {
 
     // (1)
     Stmt op;
-    BuiltinSimplify::LowerBoundsMap lower;
-    BuiltinSimplify::UpperBoundsMap upper;
+    CompUniqueBounds::LowerBoundsMap lower;
+    CompUniqueBounds::UpperBoundsMap upper;
     std::tie(op, lower, upper) = simplifyAndGetBounds<PBSimplify>(_op);
 
     // (2)
@@ -77,8 +77,8 @@ Stmt shrinkVar(const Stmt &_op) {
 Stmt shrinkSingleVar(const Stmt &_op, const ID &varDefId) {
     // (1)
     Stmt op;
-    BuiltinSimplify::LowerBoundsMap lower;
-    BuiltinSimplify::UpperBoundsMap upper;
+    CompUniqueBounds::LowerBoundsMap lower;
+    CompUniqueBounds::UpperBoundsMap upper;
     std::tie(op, lower, upper) = simplifyAndGetBounds<PBSimplify>(_op);
 
     // (2)

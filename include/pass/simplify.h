@@ -41,13 +41,19 @@ struct TransientBound {
     std::vector<Expr> lower_, upper_;
 };
 
+class CompTransientBoundsInterface {
+  public:
+    virtual TransientBound transient(const Expr &op) const = 0;
+    virtual const std::vector<Expr> &conds() const = 0;
+};
+
 /**
  * Compute bounds of IDENTICAL INTEGER (sub)expressions AT A POSITION in the AST
  *
  * E.g.
  *
  * ```
- * if (x < 2) {
+ * if (x <= 2) {
  *   ... = x + x; // <- AT THIS POSITION
  * }
  * ```
@@ -57,7 +63,8 @@ struct TransientBound {
  *
  * Inherit this pass to use it
  */
-class CompTransientBounds : public WithTypeInfer<SymbolTable<Mutator>> {
+class CompTransientBounds : public WithTypeInfer<SymbolTable<Mutator>>,
+                            public CompTransientBoundsInterface {
     typedef WithTypeInfer<SymbolTable<Mutator>> BaseClass;
 
     // Bounds related to certain expressions
@@ -67,9 +74,9 @@ class CompTransientBounds : public WithTypeInfer<SymbolTable<Mutator>> {
     // Original bounds
     std::vector<Expr> conds_;
 
-  protected:
-    TransientBound transient(const Expr &op);
-    const std::vector<Expr> &conds() const { return conds_; }
+  public:
+    TransientBound transient(const Expr &op) const override;
+    const std::vector<Expr> &conds() const override { return conds_; }
 
   private:
     static Expr sub1(const Expr &op);
@@ -106,7 +113,9 @@ class CompTransientBounds : public WithTypeInfer<SymbolTable<Mutator>> {
  * This pass is not accurate. Simplifying passes using this analysis may need
  * to run for multiple rounds
  */
-class CompUniqueBounds : public CompTransientBounds {
+class CompUniqueBounds : public WithTypeInfer<Visitor> {
+    typedef WithTypeInfer<Visitor> BaseClass;
+
   public:
     typedef std::vector<LowerBound> LowerBoundsList;
     typedef std::vector<UpperBound> UpperBoundsList;
@@ -114,15 +123,23 @@ class CompUniqueBounds : public CompTransientBounds {
     typedef std::unordered_map<Expr, UpperBoundsList> UpperBoundsMap;
 
   private:
+    const CompTransientBoundsInterface &transients_;
+
     LowerBoundsMap lower_;
     UpperBoundsMap upper_;
 
-  protected:
-    LowerBoundsList getLower(const Expr &op) const {
-        return lower_.count(op) ? lower_.at(op) : LowerBoundsList{};
+  public:
+    CompUniqueBounds(const SymbolTableInterface &symbolTable,
+                     const CompTransientBoundsInterface &transients)
+        : WithTypeInfer<Visitor>(symbolTable), transients_(transients) {}
+
+    LowerBoundsList getLower(const Expr &op) {
+        (*this)(op);
+        return lower_.at(op);
     }
-    UpperBoundsList getUpper(const Expr &op) const {
-        return upper_.count(op) ? upper_.at(op) : UpperBoundsList{};
+    UpperBoundsList getUpper(const Expr &op) {
+        (*this)(op);
+        return upper_.at(op);
     }
 
     template <class T> void setLower(const Expr &op, T &&list) {
@@ -135,38 +152,37 @@ class CompUniqueBounds : public CompTransientBounds {
     void updLower(LowerBoundsList &list, const LowerBound &bound) const;
     void updUpper(UpperBoundsList &list, const UpperBound &bound) const;
 
-    int getIntLower(const Expr &op) const;
-    int getIntUpper(const Expr &op) const;
-    Opt<int> getInt(const Expr &op) const;
+    int getIntLower(const Expr &op);
+    int getIntUpper(const Expr &op);
+    Opt<int> getInt(const Expr &op);
 
-    bool alwaysLT(const Expr &lhs, const Expr &rhs) const;
-    bool alwaysLE(const Expr &lhs, const Expr &rhs) const;
+    bool alwaysLT(const Expr &lhs, const Expr &rhs);
+    bool alwaysLE(const Expr &lhs, const Expr &rhs);
 
-  public:
     const LowerBoundsMap &lower() const { return lower_; }
     const UpperBoundsMap &upper() const { return upper_; }
 
   protected:
-    using CompTransientBounds::visit; // Avoid hiding virtual functions
+    void visitExpr(const Expr &op) override;
 
-    Expr visitExpr(const Expr &op) override;
-
-    Expr visit(const Var &op) override;
-    Expr visit(const Load &op) override;
-    Expr visit(const IntConst &op) override;
-    Expr visit(const Add &op) override;
-    Expr visit(const Sub &op) override;
-    Expr visit(const Mul &op) override;
-    Expr visit(const Square &op) override;
-    Expr visit(const FloorDiv &op) override;
-    Expr visit(const CeilDiv &op) override;
-    Expr visit(const Mod &op) override;
-    Expr visit(const Min &op) override;
-    Expr visit(const Max &op) override;
-    Expr visit(const IfExpr &op) override;
+    void visit(const Var &op) override;
+    void visit(const Load &op) override;
+    void visit(const IntConst &op) override;
+    void visit(const Add &op) override;
+    void visit(const Sub &op) override;
+    void visit(const Mul &op) override;
+    void visit(const Square &op) override;
+    void visit(const FloorDiv &op) override;
+    void visit(const CeilDiv &op) override;
+    void visit(const Mod &op) override;
+    void visit(const Min &op) override;
+    void visit(const Max &op) override;
+    void visit(const IfExpr &op) override;
 };
 
-template <class BaseClass> class SimplifyPass : public BaseClass {
+template <class Unique> class SimplifyPass : public CompTransientBounds {
+    typedef CompTransientBounds BaseClass;
+
     // We cannot rely the bound analysis for constant propagation.
     // E.g f(x) + 0, where f(x) is a complex expression and it does not have a
     // bound. The "+ 0" cannot be removed by bound analysis
@@ -176,8 +192,12 @@ template <class BaseClass> class SimplifyPass : public BaseClass {
     std::unordered_map<std::string, int> varScope_;
     int curScope_ = 0;
 
-  private:
-    Expr recompBounds(const Expr &op) { return (*this)(op); }
+    Unique unique_;
+
+  public:
+    SimplifyPass() : unique_(*this, *this) {}
+
+    const Unique &uniqueBounds() const { return unique_; }
 
   protected:
     using BaseClass::visit;
@@ -223,8 +243,8 @@ class BuiltinSimplify : public SimplifyPass<CompUniqueBounds> {};
  * @return : {simplified, lower, upper}
  */
 template <class Simplifier>
-std::tuple<Stmt, typename Simplifier::LowerBoundsMap,
-           typename Simplifier::UpperBoundsMap>
+std::tuple<Stmt, typename CompUniqueBounds::LowerBoundsMap,
+           typename CompUniqueBounds::UpperBoundsMap>
 simplifyAndGetBounds(const Stmt &op);
 
 Stmt builtinSimplify(const Stmt &op);

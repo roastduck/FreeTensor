@@ -13,10 +13,16 @@ static void appendTo(std::vector<T> &target, const std::vector<T> &other) {
     target.insert(target.end(), other.begin(), other.end());
 }
 
-Expr PBCompBounds::visitExpr(const Expr &_op) {
-    auto op = CompUniqueBounds::visitExpr(_op);
+void PBCompBounds::visitExpr(const Expr &op) {
+    CompUniqueBounds::visitExpr(op);
+
+    if (visited_.count(op)) {
+        return;
+    }
+    visited_.insert(op);
+
     if (!isInt(dtype(op))) {
-        return op;
+        return;
     }
     if (auto &&expr = genPBExpr_.gen(op); expr.isValid()) {
         auto &&vars = genPBExpr_.vars(op);
@@ -26,7 +32,7 @@ Expr PBCompBounds::visitExpr(const Expr &_op) {
         // x + y, we shall not rely on x < 2 - y and y < 2 - x. Instead, we use
         // x + y < 2 directly
         std::vector<std::string> condExprs;
-        for (auto &&cond : conds()) {
+        for (auto &&cond : transients_.conds()) {
             if (auto &&condExpr = genPBExpr_.gen(cond); condExpr.isValid()) {
                 for (auto &&var : genPBExpr_.vars(cond)) {
                     if (!vars.count(var.first)) {
@@ -68,10 +74,9 @@ Expr PBCompBounds::visitExpr(const Expr &_op) {
             setLower(op, std::move(list));
         }
     }
-    return op;
 }
 
-Stmt islSimplify(const Stmt &op) {
+Stmt pbSimplify(const Stmt &op) {
     return flattenStmtSeq(std::get<0>(simplifyAndGetBounds<PBSimplify>(op)));
 }
 

@@ -51,8 +51,8 @@ void StructuralFeature::updAreaInfo(const AST &parent, const AST &child) {
         ASSERT(child.hi_.size() == n);
 
         NodeBufferInfo ret;
-        ret.lo_ = std::vector<LowerBoundsList>(n);
-        ret.hi_ = std::vector<UpperBoundsList>(n);
+        ret.lo_ = std::vector<CompUniqueBounds::LowerBoundsList>(n);
+        ret.hi_ = std::vector<CompUniqueBounds::UpperBoundsList>(n);
         for (size_t i = 0; i < n; i++) {
             for (auto &&b : child.lo_[i]) {
                 if (checkAllDefined(names(), b.expr())) {
@@ -76,8 +76,8 @@ void StructuralFeature::updAreaInfo(const AST &parent, const AST &child) {
         ASSERT(child.hi_.size() == n);
 
         NodeBufferInfo ret;
-        ret.lo_ = std::vector<LowerBoundsList>(n);
-        ret.hi_ = std::vector<UpperBoundsList>(n);
+        ret.lo_ = std::vector<CompUniqueBounds::LowerBoundsList>(n);
+        ret.hi_ = std::vector<CompUniqueBounds::UpperBoundsList>(n);
         for (size_t i = 0; i < n; i++) {
             for (auto &&b1 : parent.lo_[i]) {
                 for (auto &&b2 : child.lo_[i]) {
@@ -253,10 +253,10 @@ Expr StructuralFeature::visit(const Load &_op) {
     accesses.lo_.reserve(op->indices_.size());
     accesses.hi_.reserve(op->indices_.size());
     for (auto &&idx : op->indices_) {
-        loads.lo_.emplace_back(getLower(idx));
-        loads.hi_.emplace_back(getUpper(idx));
-        accesses.lo_.emplace_back(getLower(idx));
-        accesses.hi_.emplace_back(getUpper(idx));
+        loads.lo_.emplace_back(bound_.getLower(idx));
+        loads.hi_.emplace_back(bound_.getUpper(idx));
+        accesses.lo_.emplace_back(bound_.getLower(idx));
+        accesses.hi_.emplace_back(bound_.getUpper(idx));
     }
 
     info_[op].loadCnt_[buffer(op->var_)->mtype()]++;
@@ -281,10 +281,10 @@ Stmt StructuralFeature::visit(const Store &_op) {
     accesses.lo_.reserve(op->indices_.size());
     accesses.hi_.reserve(op->indices_.size());
     for (auto &&idx : op->indices_) {
-        stores.lo_.emplace_back(getLower(idx));
-        stores.hi_.emplace_back(getUpper(idx));
-        accesses.lo_.emplace_back(getLower(idx));
-        accesses.hi_.emplace_back(getUpper(idx));
+        stores.lo_.emplace_back(bound_.getLower(idx));
+        stores.hi_.emplace_back(bound_.getUpper(idx));
+        accesses.lo_.emplace_back(bound_.getLower(idx));
+        accesses.hi_.emplace_back(bound_.getUpper(idx));
     }
 
     info_[op].storeCnt_[buffer(op->var_)->mtype()]++;
@@ -313,12 +313,12 @@ Stmt StructuralFeature::visit(const ReduceTo &_op) {
     accesses.lo_.reserve(op->indices_.size());
     accesses.hi_.reserve(op->indices_.size());
     for (auto &&idx : op->indices_) {
-        loads.lo_.emplace_back(getLower(idx));
-        loads.hi_.emplace_back(getUpper(idx));
-        stores.lo_.emplace_back(getLower(idx));
-        stores.hi_.emplace_back(getUpper(idx));
-        accesses.lo_.emplace_back(getLower(idx));
-        accesses.hi_.emplace_back(getUpper(idx));
+        loads.lo_.emplace_back(bound_.getLower(idx));
+        loads.hi_.emplace_back(bound_.getUpper(idx));
+        stores.lo_.emplace_back(bound_.getLower(idx));
+        stores.hi_.emplace_back(bound_.getUpper(idx));
+        accesses.lo_.emplace_back(bound_.getLower(idx));
+        accesses.hi_.emplace_back(bound_.getUpper(idx));
     }
 
     info_[op]
@@ -399,7 +399,7 @@ Stmt StructuralFeature::visit(const For &_op) {
 
     updInfo(op, op->begin_);
     updInfo(op, op->end_);
-    if (auto intLen = getInt(op->len_); intLen.isValid()) {
+    if (auto intLen = bound_.getInt(op->len_); intLen.isValid()) {
         updInfo(op, op->body_, *intLen);
     } else {
         updInfo(op, op->body_, -1);
