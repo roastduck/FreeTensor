@@ -11,7 +11,7 @@ namespace ir {
 
 namespace gpu {
 
-class LowerVector : public Z3Simplify {
+class LowerVector : public Z3SimplifyWithSymbolTable {
     typedef Z3Simplify BaseClass;
 
     static constexpr int VEC_LEN[] = {4, 2};

@@ -26,8 +26,10 @@ namespace ir {
  * - It can deal with some more complex expressions, such as Mod
  * - It may take some more time
  */
-class Z3Simplify : public SymbolTable<Mutator> {
-    typedef SymbolTable<Mutator> BaseClass;
+class Z3Simplify : public Mutator {
+    typedef Mutator BaseClass;
+
+    const SymbolTableInterface &symbolTable_;
 
     int varCnt_ = 0;
     ASTHashMap<Expr, int> varId_;
@@ -40,7 +42,8 @@ class Z3Simplify : public SymbolTable<Mutator> {
     std::deque<std::pair<Expr, bool>> condList_;
 
   public:
-    Z3Simplify() : solver_(ctx_) {}
+    Z3Simplify(const SymbolTableInterface &symbolTable)
+        : symbolTable_(symbolTable), solver_(ctx_) {}
 
   private:
     int getVarId(const Expr &op);
@@ -84,6 +87,12 @@ class Z3Simplify : public SymbolTable<Mutator> {
     Stmt visit(const Assert &op) override;
     Stmt visit(const Assume &op) override;
     Stmt visit(const For &op) override;
+};
+
+class Z3SimplifyWithSymbolTable : public SymbolTable<Z3Simplify> {
+  public:
+    Z3SimplifyWithSymbolTable()
+        : SymbolTable<Z3Simplify>((const SymbolTableInterface &)(*this)) {}
 };
 
 Stmt z3Simplify(const Stmt &op);
