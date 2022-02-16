@@ -4,8 +4,6 @@
 
 #include <itertools.hpp>
 
-#include "detail/simplify.h"
-
 namespace ir {
 
 template <class T>

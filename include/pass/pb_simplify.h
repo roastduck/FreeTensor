@@ -28,7 +28,12 @@ class PBCompBounds : public CompUniqueBounds {
     void visitExpr(const Expr &op) override;
 };
 
-class PBSimplify : public SimplifyPass<PBCompBounds> {};
+class PBSimplify : public SimplifyPass {
+    PBCompBounds unique_;
+
+  public:
+    PBSimplify() : SimplifyPass(unique_), unique_(*this, *this) {}
+};
 
 Stmt pbSimplify(const Stmt &op);
 

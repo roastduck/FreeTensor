@@ -11,6 +11,7 @@
 #include <math/bounds.h>
 #include <mutator.h>
 #include <opt.h>
+#include <pass/annotate_conds.h>
 #include <visitor.h>
 
 namespace ir {
@@ -180,7 +181,7 @@ class CompUniqueBounds : public WithTypeInfer<Visitor> {
     void visit(const IfExpr &op) override;
 };
 
-template <class Unique> class SimplifyPass : public CompTransientBounds {
+class SimplifyPass : public CompTransientBounds {
     typedef CompTransientBounds BaseClass;
 
     // We cannot rely the bound analysis for constant propagation.
@@ -192,12 +193,12 @@ template <class Unique> class SimplifyPass : public CompTransientBounds {
     std::unordered_map<std::string, int> varScope_;
     int curScope_ = 0;
 
-    Unique unique_;
+    CompUniqueBounds &unique_;
 
   public:
-    SimplifyPass() : unique_(*this, *this) {}
+    SimplifyPass(CompUniqueBounds &unique) : unique_(unique) {}
 
-    const Unique &uniqueBounds() const { return unique_; }
+    const CompUniqueBounds &uniqueBounds() const { return unique_; }
 
   protected:
     using BaseClass::visit;
@@ -232,7 +233,12 @@ template <class Unique> class SimplifyPass : public CompTransientBounds {
     Stmt visit(const Assert &op) override;
 };
 
-class BuiltinSimplify : public SimplifyPass<CompUniqueBounds> {};
+class BuiltinSimplify : public SimplifyPass {
+    CompUniqueBounds unique_;
+
+  public:
+    BuiltinSimplify() : SimplifyPass(unique_), unique_(*this, *this) {}
+};
 
 /**
  * Simplify a program and compute bounds of each expressions
@@ -245,7 +251,26 @@ class BuiltinSimplify : public SimplifyPass<CompUniqueBounds> {};
 template <class Simplifier>
 std::tuple<Stmt, typename CompUniqueBounds::LowerBoundsMap,
            typename CompUniqueBounds::UpperBoundsMap>
-simplifyAndGetBounds(const Stmt &op);
+simplifyAndGetBounds(const Stmt &_op) {
+    auto op = _op;
+
+    for (int i = 0;; i++) {
+        op = annotateConds(op);
+
+        Simplifier mutator;
+        auto newOp = mutator(op);
+
+        if (HashComparator()(newOp, op) || i > 100) {
+            if (i > 100) {
+                WARNING("SimplifyPass iterates over 100 rounds. Maybe there is "
+                        "a bug");
+            }
+            return {newOp, mutator.uniqueBounds().lower(),
+                    mutator.uniqueBounds().upper()};
+        }
+        op = newOp;
+    }
+}
 
 Stmt builtinSimplify(const Stmt &op);
 
