@@ -5,25 +5,13 @@
 #include <itertools.hpp>
 
 #include <analyze/deps.h>
+#include <container_utils.h>
 #include <except.h>
 #include <mangle.h>
 #include <mutator.h>
 #include <pass/simplify.h>
 
 namespace ir {
-
-template <class T, class V1, class V2, class Hash, class KeyEqual>
-static std::unordered_map<T, std::pair<V1, V2>, Hash, KeyEqual>
-intersect(const std::unordered_map<T, V1, Hash, KeyEqual> &lhs,
-          const std::unordered_map<T, V2, Hash, KeyEqual> &rhs) {
-    std::unordered_map<T, std::pair<V1, V2>, Hash, KeyEqual> ret;
-    for (auto &&[key, v1] : lhs) {
-        if (rhs.count(key)) {
-            ret.emplace(key, std::make_pair(v1, rhs.at(key)));
-        }
-    }
-    return ret;
-}
 
 void FindAllNoDeps::visit(const For &op) {
     Visitor::visit(op);
@@ -611,8 +599,7 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
     }
 
     for (auto &&item : cond_) {
-        std::vector<PBMap>
-        requires;
+        std::vector<PBMap> requires;
         for (auto &&[nodeOrParallel, dir] : item) {
             if (nodeOrParallel.isNode_) {
                 requires.emplace_back(makeConstraintOfSingleLoop(

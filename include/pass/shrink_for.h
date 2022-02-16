@@ -4,14 +4,19 @@
 #include <itertools.hpp>
 
 #include <analyze/check_all_defined.h>
+#include <analyze/comp_transient_bounds.h>
+#include <analyze/comp_unique_bounds.h>
+#include <analyze/symbol_table.h>
+#include <analyze/type_infer.h>
 #include <func.h>
 #include <hash.h>
-#include <pass/simplify.h>
+#include <mutator.h>
 
 namespace ir {
 
-class ShrinkFor : public CompTransientBounds {
-    typedef CompTransientBounds BaseClass;
+class ShrinkFor
+    : public CompTransientBounds<WithTypeInfer<SymbolTable<Mutator>>> {
+    typedef CompTransientBounds<WithTypeInfer<SymbolTable<Mutator>>> BaseClass;
 
     CompUniqueBounds bound_;
 

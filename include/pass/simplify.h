@@ -5,6 +5,8 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include <analyze/comp_transient_bounds.h>
+#include <analyze/comp_unique_bounds.h>
 #include <analyze/symbol_table.h>
 #include <analyze/type_infer.h>
 #include <func.h>
@@ -37,152 +39,9 @@ class FindInnerMostScope : public Visitor {
 int findInnerMostScope(const std::unordered_map<std::string, int> &varScope,
                        const Expr &op);
 
-struct TransientBound {
-    Expr expr_;
-    std::vector<Expr> lower_, upper_;
-};
-
-class CompTransientBoundsInterface {
-  public:
-    virtual TransientBound transient(const Expr &op) const = 0;
-    virtual const std::vector<Expr> &conds() const = 0;
-};
-
-/**
- * Compute bounds of IDENTICAL INTEGER (sub)expressions AT A POSITION in the AST
- *
- * E.g.
- *
- * ```
- * if (x <= 2) {
- *   ... = x + x; // <- AT THIS POSITION
- * }
- * ```
- *
- * At the position above, ALL TWO IDENTICAL EXPRESSIONS `x` have an upper bound
- * 2
- *
- * Inherit this pass to use it
- */
-class CompTransientBounds : public WithTypeInfer<SymbolTable<Mutator>>,
-                            public CompTransientBoundsInterface {
-    typedef WithTypeInfer<SymbolTable<Mutator>> BaseClass;
-
-    // Bounds related to certain expressions
-    // Bounds in transients_ has already been recursed with (*this)(...)
-    ASTHashMap<Expr, TransientBound> transients_;
-
-    // Original bounds
-    std::vector<Expr> conds_;
-
-  public:
-    TransientBound transient(const Expr &op) const override;
-    const std::vector<Expr> &conds() const override { return conds_; }
-
-  private:
-    static Expr sub1(const Expr &op);
-    static Expr add1(const Expr &op);
-
-    void applyCond(const Expr &cond,
-                   const std::unordered_set<std::string> &bodyAllWrites);
-
-  protected:
-    using BaseClass::visit; // Avoid hiding virtual functions
-
-    Stmt visit(const For &op) override;
-    Stmt visit(const If &op) override;
-    Stmt visit(const Assert &op) override;
-    Stmt visit(const Assume &op) override;
-};
-
-/**
- * Compute bounds of each UNIQUE INTEGER (sub)expression
- *
- * E.g.
- *
- * ```
- * if (x < 2) {
- *   ... = x;
- * }
- * ... = x;
- * ```
- *
- * Two UNIQUE expressions `x` have different upper bounds
- *
- * Inherit this pass to use it
- *
- * This pass is not accurate. Simplifying passes using this analysis may need
- * to run for multiple rounds
- */
-class CompUniqueBounds : public WithTypeInfer<Visitor> {
-    typedef WithTypeInfer<Visitor> BaseClass;
-
-  public:
-    typedef std::vector<LowerBound> LowerBoundsList;
-    typedef std::vector<UpperBound> UpperBoundsList;
-    typedef std::unordered_map<Expr, LowerBoundsList> LowerBoundsMap;
-    typedef std::unordered_map<Expr, UpperBoundsList> UpperBoundsMap;
-
-  private:
-    const CompTransientBoundsInterface &transients_;
-
-    LowerBoundsMap lower_;
-    UpperBoundsMap upper_;
-
-  public:
-    CompUniqueBounds(const SymbolTableInterface &symbolTable,
-                     const CompTransientBoundsInterface &transients)
-        : WithTypeInfer<Visitor>(symbolTable), transients_(transients) {}
-
-    LowerBoundsList getLower(const Expr &op) {
-        (*this)(op);
-        return lower_.at(op);
-    }
-    UpperBoundsList getUpper(const Expr &op) {
-        (*this)(op);
-        return upper_.at(op);
-    }
-
-    template <class T> void setLower(const Expr &op, T &&list) {
-        lower_[op] = std::forward<T>(list);
-    }
-    template <class T> void setUpper(const Expr &op, T &&list) {
-        upper_[op] = std::forward<T>(list);
-    }
-
-    void updLower(LowerBoundsList &list, const LowerBound &bound) const;
-    void updUpper(UpperBoundsList &list, const UpperBound &bound) const;
-
-    int getIntLower(const Expr &op);
-    int getIntUpper(const Expr &op);
-    Opt<int> getInt(const Expr &op);
-
-    bool alwaysLT(const Expr &lhs, const Expr &rhs);
-    bool alwaysLE(const Expr &lhs, const Expr &rhs);
-
-    const LowerBoundsMap &lower() const { return lower_; }
-    const UpperBoundsMap &upper() const { return upper_; }
-
-  protected:
-    void visitExpr(const Expr &op) override;
-
-    void visit(const Var &op) override;
-    void visit(const Load &op) override;
-    void visit(const IntConst &op) override;
-    void visit(const Add &op) override;
-    void visit(const Sub &op) override;
-    void visit(const Mul &op) override;
-    void visit(const Square &op) override;
-    void visit(const FloorDiv &op) override;
-    void visit(const CeilDiv &op) override;
-    void visit(const Mod &op) override;
-    void visit(const Min &op) override;
-    void visit(const Max &op) override;
-    void visit(const IfExpr &op) override;
-};
-
-class SimplifyPass : public CompTransientBounds {
-    typedef CompTransientBounds BaseClass;
+class SimplifyPass
+    : public CompTransientBounds<WithTypeInfer<SymbolTable<Mutator>>> {
+    typedef CompTransientBounds<WithTypeInfer<SymbolTable<Mutator>>> BaseClass;
 
     // We cannot rely the bound analysis for constant propagation.
     // E.g f(x) + 0, where f(x) is a complex expression and it does not have a

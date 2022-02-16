@@ -4,7 +4,11 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include <pass/simplify.h>
+#include <analyze/comp_transient_bounds.h>
+#include <analyze/comp_unique_bounds.h>
+#include <analyze/symbol_table.h>
+#include <analyze/type_infer.h>
+#include <visitor.h>
 
 namespace ir {
 
@@ -27,8 +31,9 @@ struct NodeFeature {
  * performance. This pass outputs an structual feature, which can be converted
  * to a plain feature by a following pass
  */
-class StructuralFeature : public CompTransientBounds {
-    typedef CompTransientBounds BaseClass;
+class StructuralFeature
+    : public CompTransientBounds<WithTypeInfer<SymbolTable<Visitor>>> {
+    typedef CompTransientBounds<WithTypeInfer<SymbolTable<Visitor>>> BaseClass;
 
     /**
      * Memory access info of an AST node with respect to a buffer
@@ -80,31 +85,31 @@ class StructuralFeature : public CompTransientBounds {
     void calcAreaFeatures(const Stmt &parent);
     void calcFeatures(const Stmt &parent);
 
-    Expr visitBinOp(const BinaryExpr &_op);
-    Expr visitUnaryOp(const UnaryExpr &_op);
+    void visitBinOp(const BinaryExpr &op);
+    void visitUnaryOp(const UnaryExpr &op);
 
   protected:
     using BaseClass::visit;
 
-    Stmt visitStmt(const Stmt &op) override;
-    Expr visitExpr(const Expr &op) override;
+    void visitStmt(const Stmt &op) override;
+    void visitExpr(const Expr &op) override;
 
-    Expr visit(const Load &op) override;
-    Stmt visit(const Store &op) override;
-    Stmt visit(const ReduceTo &op) override;
+    void visit(const Load &op) override;
+    void visit(const Store &op) override;
+    void visit(const ReduceTo &op) override;
 
-    Expr visit(const Cast &op) override;
-    Expr visit(const IfExpr &op) override;
+    void visit(const Cast &op) override;
+    void visit(const IfExpr &op) override;
 
-    Stmt visit(const StmtSeq &op) override;
-    Stmt visit(const If &op) override;
-    Stmt visit(const Assert &op) override;
-    Stmt visit(const For &op) override;
-    Stmt visit(const VarDef &op) override;
+    void visit(const StmtSeq &op) override;
+    void visit(const If &op) override;
+    void visit(const Assert &op) override;
+    void visit(const For &op) override;
+    void visit(const VarDef &op) override;
 };
 
 inline std::unordered_map<ID, NodeFeature> structuralFeature(const Stmt &op) {
-    StructuralFeature visitor; // actually a Mutator, but we drop the result
+    StructuralFeature visitor;
     visitor(op);
     return visitor.features();
 }

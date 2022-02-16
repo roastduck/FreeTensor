@@ -206,45 +206,36 @@ void StructuralFeature::calcFeatures(const Stmt &node) {
     calcAreaFeatures(node);
 }
 
-Expr StructuralFeature::visitBinOp(const BinaryExpr &_op) {
-    auto __op = BaseClass::visitExpr(_op);
-    ASSERT(__op->nodeType() == _op->nodeType());
-    auto op = __op.as<BinaryExprNode>();
+void StructuralFeature::visitBinOp(const BinaryExpr &op) {
+    BaseClass::visitExpr(op);
     updInfo(op, op->lhs_);
     updInfo(op, op->rhs_);
     info_[op].opCnt_[upCast(dtype(op->lhs_), dtype(op->rhs_))]++;
-    return op;
 }
 
-Expr StructuralFeature::visitUnaryOp(const UnaryExpr &_op) {
-    auto __op = BaseClass::visitExpr(_op);
-    ASSERT(__op->nodeType() == _op->nodeType());
-    auto op = __op.as<UnaryExprNode>();
+void StructuralFeature::visitUnaryOp(const UnaryExpr &op) {
+    BaseClass::visitExpr(op);
     updInfo(op, op->expr_);
     info_[op].opCnt_[dtype(op->expr_)]++;
-    return op;
 }
 
-Stmt StructuralFeature::visitStmt(const Stmt &_op) {
-    auto op = BaseClass::visitStmt(_op);
+void StructuralFeature::visitStmt(const Stmt &op) {
+    BaseClass::visitStmt(op);
     calcFeatures(op);
-    return op;
 }
 
-Expr StructuralFeature::visitExpr(const Expr &op) {
+void StructuralFeature::visitExpr(const Expr &op) {
     if (op->isBinary()) {
-        return visitBinOp(op.as<BinaryExprNode>());
+        visitBinOp(op.as<BinaryExprNode>());
     } else if (op->isUnary()) {
-        return visitUnaryOp(op.as<UnaryExprNode>());
+        visitUnaryOp(op.as<UnaryExprNode>());
     } else {
-        return BaseClass::visitExpr(op);
+        BaseClass::visitExpr(op);
     }
 }
 
-Expr StructuralFeature::visit(const Load &_op) {
-    auto __op = BaseClass::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::Load);
-    auto op = __op.as<LoadNode>();
+void StructuralFeature::visit(const Load &op) {
+    BaseClass::visit(op);
 
     NodeBufferInfo &loads = info_[op].loads_[op->var_];
     NodeBufferInfo &accesses = info_[op].accesses_[op->var_];
@@ -265,14 +256,10 @@ Expr StructuralFeature::visit(const Load &_op) {
     for (auto &&idx : op->indices_) {
         updInfo(op, idx);
     }
-
-    return op;
 }
 
-Stmt StructuralFeature::visit(const Store &_op) {
-    auto __op = BaseClass::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::Store);
-    auto op = __op.as<StoreNode>();
+void StructuralFeature::visit(const Store &op) {
+    BaseClass::visit(op);
 
     NodeBufferInfo &stores = info_[op].stores_[op->var_];
     NodeBufferInfo &accesses = info_[op].accesses_[op->var_];
@@ -294,14 +281,10 @@ Stmt StructuralFeature::visit(const Store &_op) {
         updInfo(op, idx);
     }
     updInfo(op, op->expr_);
-
-    return op;
 }
 
-Stmt StructuralFeature::visit(const ReduceTo &_op) {
-    auto __op = BaseClass::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
-    auto op = __op.as<ReduceToNode>();
+void StructuralFeature::visit(const ReduceTo &op) {
+    BaseClass::visit(op);
 
     NodeBufferInfo &loads = info_[op].loads_[op->var_];
     NodeBufferInfo &stores = info_[op].stores_[op->var_];
@@ -331,71 +314,46 @@ Stmt StructuralFeature::visit(const ReduceTo &_op) {
         updInfo(op, idx);
     }
     updInfo(op, op->expr_);
-
-    return op;
 }
 
-Expr StructuralFeature::visit(const IfExpr &_op) {
-    auto __op = BaseClass::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::IfExpr);
-    auto op = __op.as<IfExprNode>();
+void StructuralFeature::visit(const IfExpr &op) {
+    BaseClass::visit(op);
     updInfo(op, op->cond_);
     updInfo(op, op->thenCase_);
     updInfo(op, op->elseCase_);
     info_[op].opCnt_[dtype(op->cond_)]++;
-    return op;
 }
 
-Expr StructuralFeature::visit(const Cast &_op) {
-    auto __op = BaseClass::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::Cast);
-    auto op = __op.as<CastNode>();
+void StructuralFeature::visit(const Cast &op) {
+    BaseClass::visit(op);
     updInfo(op, op->expr_);
     info_[op].opCnt_[dtype(op->expr_)]++;
-    return op;
 }
 
-Stmt StructuralFeature::visit(const StmtSeq &_op) {
-    auto __op = BaseClass::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::StmtSeq);
-    auto op = __op.as<StmtSeqNode>();
-
+void StructuralFeature::visit(const StmtSeq &op) {
+    BaseClass::visit(op);
     for (auto &&stmt : op->stmts_) {
         updInfo(op, stmt);
     }
-
-    return op;
 }
 
-Stmt StructuralFeature::visit(const If &_op) {
-    auto __op = BaseClass::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::If);
-    auto op = __op.as<IfNode>();
-
+void StructuralFeature::visit(const If &op) {
+    BaseClass::visit(op);
     updInfo(op, op->cond_);
     updInfo(op, op->thenCase_);
     if (op->elseCase_.isValid()) {
         updInfo(op, op->elseCase_);
     }
-
-    return op;
 }
 
-Stmt StructuralFeature::visit(const Assert &_op) {
-    auto __op = BaseClass::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::Assert);
-    auto op = __op.as<AssertNode>();
-
+void StructuralFeature::visit(const Assert &op) {
+    BaseClass::visit(op);
     updInfo(op, op->cond_);
     updInfo(op, op->body_);
-
-    return op;
 }
 
-Stmt StructuralFeature::visit(const For &_op) {
-    auto __op = BaseClass::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::For);
-    auto op = __op.as<ForNode>();
+void StructuralFeature::visit(const For &op) {
+    BaseClass::visit(op);
 
     updInfo(op, op->begin_);
     updInfo(op, op->end_);
@@ -404,14 +362,10 @@ Stmt StructuralFeature::visit(const For &_op) {
     } else {
         updInfo(op, op->body_, -1);
     }
-
-    return op;
 }
 
-Stmt StructuralFeature::visit(const VarDef &_op) {
-    auto __op = BaseClass::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::VarDef);
-    auto op = __op.as<VarDefNode>();
+void StructuralFeature::visit(const VarDef &op) {
+    BaseClass::visit(op);
 
     for (auto &&item : op->buffer_->tensor().shape()) {
         updInfo(op, item);
@@ -433,8 +387,6 @@ Stmt StructuralFeature::visit(const VarDef &_op) {
             calcArea(info_[op].accesses_[op->name_]);
         info_[op].accesses_.erase(op->name_);
     }
-
-    return op;
 }
 
 } // namespace ir

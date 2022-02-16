@@ -1,19 +1,10 @@
 #include <analyze/all_reads.h>
 #include <analyze/all_writes.h>
 #include <analyze/as_dnf.h>
+#include <container_utils.h>
 #include <pass/annotate_conds.h>
 
 namespace ir {
-
-static bool hasIntersect(const std::unordered_set<std::string> &lhs,
-                         const std::unordered_set<std::string> &rhs) {
-    for (auto &&item : lhs) {
-        if (rhs.count(item)) {
-            return true;
-        }
-    }
-    return false;
-}
 
 void AnnotateConds::addCond(const Expr &expr) {
     auto dnf = asDNF(expr);
