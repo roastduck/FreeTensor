@@ -2,6 +2,7 @@
 #define WITH_CURSOR_H
 
 #include <cursor.h>
+#include <maybe_void.h>
 
 namespace ir {
 
@@ -29,14 +30,10 @@ template <class BaseClass> class WithCursor : public BaseClass {
     const Cursor &cursor() const { return cursor_; }
 
     typename BaseClass::StmtRetType visitStmt(const Stmt &op) override {
-        if constexpr (std::is_same_v<typename BaseClass::StmtRetType, void>) {
-            pushCursor(op);
-            BaseClass::visitStmt(op);
-            popCursor(op);
-        } else {
-            pushCursor(op);
-            auto ret = BaseClass::visitStmt(op);
-            popCursor(op);
+        pushCursor(op);
+        MAYBE_VOID(ret, BaseClass::visitStmt(op));
+        popCursor(op);
+        if constexpr (!std::is_same_v<typename BaseClass::StmtRetType, void>) {
             return ret;
         }
     }

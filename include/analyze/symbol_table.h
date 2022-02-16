@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include <maybe_void.h>
 #include <stmt.h>
 
 namespace ir {
@@ -161,24 +162,16 @@ class SymbolTable : public BaseClass, public SymbolTableInterface {
     }
 
     typename BaseClass::StmtRetType visit(const For &op) override {
-        if constexpr (std::is_same_v<typename BaseClass::StmtRetType, void>) {
-            (*this)(op->begin_);
-            (*this)(op->end_);
-            (*this)(op->len_);
+        MAYBE_VOID(begin, (*this)(op->begin_));
+        MAYBE_VOID(end, (*this)(op->end_));
+        MAYBE_VOID(step, (*this)(op->step_));
+        MAYBE_VOID(len, (*this)(op->len_));
 
-            pushFor(op);
-            (*this)(op->body_);
-            popFor(op);
-        } else {
-            auto begin = (*this)(op->begin_);
-            auto end = (*this)(op->end_);
-            auto step = (*this)(op->step_);
-            auto len = (*this)(op->len_);
+        pushFor(op);
+        MAYBE_VOID(body, (*this)(op->body_));
+        popFor(op);
 
-            pushFor(op);
-            auto body = (*this)(op->body_);
-            popFor(op);
-
+        if constexpr (!std::is_same_v<typename BaseClass::StmtRetType, void>) {
             auto ret = makeFor(op->id(), op->iter_, std::move(begin),
                                std::move(end), std::move(step), std::move(len),
                                op->property_, std::move(body));
