@@ -28,6 +28,7 @@
 #include <pass/sink_var.h>
 #include <pass/tensor_prop_const.h>
 #include <pass/use_builtin_div.h>
+#include <pass/z3_simplify.h>
 
 namespace ir {
 
@@ -91,6 +92,11 @@ void init_ffi_pass(py::module_ &m) {
     m.def("simplify_pass", static_cast<Func (*)(const Func &)>(&simplifyPass),
           "func"_a);
     m.def("simplify_pass", static_cast<Stmt (*)(const Stmt &)>(&simplifyPass),
+          "stmt"_a);
+
+    m.def("z3_simplify", static_cast<Func (*)(const Func &)>(&z3Simplify),
+          "func"_a);
+    m.def("z3_simplify", static_cast<Stmt (*)(const Stmt &)>(&z3Simplify),
           "stmt"_a);
 
     m.def("float_simplify", static_cast<Func (*)(const Func &)>(&floatSimplify),

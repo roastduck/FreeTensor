@@ -229,6 +229,12 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTree {
     SubTree() {}
     SubTree(std::nullptr_t) { ASSERT(POLICY == NullPolicy::Nullable); }
 
+    ~SubTree() {
+        if (obj_.isValid()) {
+            obj_->setIsSubTree(false);
+        }
+    }
+
     template <class U,
               typename std::enable_if_t<std::is_base_of_v<T, U>> * = nullptr>
     SubTree(const Ref<U> &obj) : obj_(obj) {

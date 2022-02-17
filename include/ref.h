@@ -31,6 +31,8 @@ template <class T> class Ref {
 
     Ref() = default;
     Ref(std::nullptr_t) : Ref() {}
+    Ref(const Ref &) = default;
+    Ref(Ref &&) = default;
 
     /// NO NOT USE THIS CONSTRUCTOR IN PUBLIC
     /// It is public because Pybind11 needs it
@@ -49,6 +51,9 @@ template <class T> class Ref {
         ptr_ = std::static_pointer_cast<T>(other.ptr_);
         return *this;
     }
+
+    Ref &operator=(const Ref &) = default;
+    Ref &operator=(Ref &&) = default;
 
     Ref clone() const {
         return Ref(std::allocate_shared<T>(Allocator<T>(), *ptr_));

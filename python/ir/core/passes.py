@@ -7,6 +7,7 @@ from ffi import GradTapeMode
 from ffi import output_intermediates
 from ffi import scalar_prop_const
 from ffi import simplify_pass
+from ffi import z3_simplify
 from ffi import sink_var
 from ffi import shrink_var
 from ffi import shrink_for
