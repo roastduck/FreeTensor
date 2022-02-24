@@ -68,6 +68,8 @@ class AutoSchedule {
     std::vector<double> testAndAdd(const std::vector<Sketch> &sketches);
 
     Schedule getBestSchedule();
+
+    void genSketches();
 };
 
 } // namespace ir
