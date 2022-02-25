@@ -4,6 +4,7 @@
 #include <except.h>
 #include <expr.h>
 #include <ffi.h>
+#include <frontend/frontend_var.h>
 #include <func.h>
 #include <stmt.h>
 
@@ -85,27 +86,6 @@ void init_ffi_ast(py::module_ &m) {
         .def_readonly("returns", &FuncNode::returns_)
         .def_property_readonly(
             "body", [](const Func &op) -> Stmt { return op->body_; });
-
-    py::class_<FrontendVarIdx>(m, "FrontendVarIdx")
-        .def(py::init(&FrontendVarIdx::fromSingle))
-        .def(py::init(&FrontendVarIdx::fromSlice))
-        .def("__repr__",
-             [](const FrontendVarIdx &idx) { return toString(idx); });
-
-    py::class_<FrontendVar, Ref<FrontendVar>>(m, "FrontendVar")
-        .def(py::init<const std::string &, const std::vector<Expr> &, DataType,
-                      MemType, const std::vector<FrontendVarIdx> &>())
-        .def_property_readonly("name", &FrontendVar::name)
-        .def_property_readonly("full_shape", &FrontendVar::fullShape)
-        .def_property_readonly("indices", &FrontendVar::indices)
-        .def_property_readonly("dtype", &FrontendVar::dtype)
-        .def_property_readonly("mtype", &FrontendVar::mtype)
-        .def_property_readonly("ndim", &FrontendVar::ndim)
-        .def("shape", &FrontendVar::shape)
-        .def("as_load", &FrontendVar::asLoad)
-        .def("as_store", &FrontendVar::asStore)
-        .def("chain_indices", &FrontendVar::chainIndices)
-        .def("__repr__", [](const FrontendVar &var) { return toString(var); });
 
     pyStmt.def_property_readonly("nid", &StmtNode::id);
 

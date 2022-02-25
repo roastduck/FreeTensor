@@ -397,6 +397,11 @@ class NamedScope:
         ctx_stack.top().append_stmt(body)
 
 
+def Invoke(func, *args, **kvs):
+    top = ctx_stack.top()
+    top.append_stmt(ffi.inlined_invoke(top.get_next_nid(), func, args, kvs))
+
+
 def Eval(expr):
     top = ctx_stack.top()
     top.append_stmt(ffi.makeEval(top.get_next_nid(), expr))

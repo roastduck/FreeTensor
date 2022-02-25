@@ -1,0 +1,43 @@
+#ifndef INLINED_INVOKE_H
+#define INLINED_INVOKE_H
+
+#include <unordered_map>
+
+#include <frontend/frontend_var.h>
+#include <func.h>
+#include <mutator.h>
+
+namespace ir {
+
+class InlinedInvoke : public Mutator {
+    ID callSiteId_;
+    const std::unordered_map<std::string, Ref<FrontendVar>> &kvs_;
+
+  public:
+    InlinedInvoke(const ID &callSiteId,
+                  const std::unordered_map<std::string, Ref<FrontendVar>> &kvs)
+        : callSiteId_(callSiteId), kvs_(kvs) {}
+
+  protected:
+    Stmt visitStmt(const Stmt &op) override;
+    Expr visit(const Load &op) override;
+    Stmt visit(const Store &op) override;
+    Stmt visit(const ReduceTo &op) override;
+    Stmt visit(const VarDef &op) override;
+};
+
+/**
+ * Replace a Function's all arguments by `FrontendVar`s and return an Stmt
+ *
+ * Usually we handle function calls directly in the frontend. But sometimes we
+ * may want to call a differentiated function, which is already lowered as an
+ * AST. Then, we can use `inlinedInvoke` to call it
+ */
+Stmt inlinedInvoke(
+    const ID &callSiteId, const Func &func,
+    const std::vector<Ref<FrontendVar>> &args,
+    const std::unordered_map<std::string, Ref<FrontendVar>> &kvs);
+
+} // namespace ir
+
+#endif // INLINED_INVOKE_H

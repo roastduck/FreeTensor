@@ -1,5 +1,5 @@
 #include <except.h>
-#include <frontend_utils.h>
+#include <frontend/frontend_var.h>
 
 namespace ir {
 
@@ -56,7 +56,7 @@ Expr FrontendVar::asLoad() const {
     return makeLoad(name_, std::move(indices));
 }
 
-Stmt FrontendVar::asStore(const std::string &id, const Expr &value) const {
+Stmt FrontendVar::asStore(const ID &id, const Expr &value) const {
     if (ndim() != 0) {
         throw InvalidProgram(
             name_ + " is of a " + std::to_string(fullShape_.size()) +

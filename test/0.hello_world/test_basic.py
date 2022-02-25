@@ -253,3 +253,26 @@ def test_error_missing_parameters():
     driver = ir.Driver(func, code, ir.Device(ir.CPU()))
     with pytest.raises(ir.DriverError):
         driver()
+
+
+def test_inlined_invoke():
+    with ir.VarDef("y", (4,), "float32", "output", "cpu") as y:
+        y[3] = 2.0
+    g = ir.lower(ir.Func("g", ["y"], [], ir.pop_ast()), ir.CPU())
+
+    with ir.VarDef("x", (4, 4), "float32", "output", "cpu") as x:
+        ir.Invoke(g, x[2])
+    f = ir.lower(ir.Func("f", ["x"], [], ir.pop_ast()), ir.CPU())
+
+    print(f)
+    code = ir.codegen(f, ir.CPU())
+    print(code)
+
+    x_np = np.zeros((4, 4), dtype="float32")
+    x_arr = ir.Array(x_np, ir.Device(ir.CPU()))
+    ir.Driver(f, code, ir.Device(ir.CPU()))(x=x_arr)
+    x_np = x_arr.numpy()
+
+    x_std = np.zeros((4, 4), dtype="float32")
+    x_std[2, 3] = 2.0
+    assert np.array_equal(x_np, x_std)

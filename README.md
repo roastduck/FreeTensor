@@ -86,6 +86,8 @@ include/ --------------------------------------------------- C++ headers
 |- mutator.h ----------------------------------------------- Inherit Mutator in this file to modify an AST
 |- ffi.h --------------------------------------------------- Interface between C++ and Python. Implementations are in src/ffi/
 |- schedule.h ---------------------------------------------- All user specified transformations (schedules). Main interface. Details are in schedule/
+|- frontend/ ----------------------------------------------- C++ utilities used in Python API
+|- math/ --------------------------------------------------- Math utilities
 |- schedule/ ----------------------------------------------- All user specified transformations (schedules)
 |- pass/ --------------------------------------------------- All user agnostic transformations (used inside or after schedules)
 |- analyze/ ------------------------------------------------ Passes to extract information from an AST

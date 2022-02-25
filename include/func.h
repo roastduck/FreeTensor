@@ -8,7 +8,6 @@
 #include <ast.h>
 #include <buffer.h>
 #include <driver/array.h>
-#include <frontend_utils.h>
 #include <stmt.h>
 #include <tensor.h>
 

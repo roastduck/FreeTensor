@@ -1,5 +1,5 @@
-#ifndef FRONTEND_UTILIS
-#define FRONTEND_UTILIS
+#ifndef FRONTEND_VAR
+#define FRONTEND_VAR
 
 #include <debug.h>
 #include <expr.h>
@@ -78,7 +78,12 @@ class FrontendVar {
 
     DataType dtype() const { return dtype_; }
     MemType mtype() const { return mtype_; }
+
+    /**
+     * Number of dimensions after slicing
+     */
     int ndim() const;
+
     const std::vector<FrontendVarIdx> &indices() const { return indices_; }
 
     /**
@@ -87,7 +92,7 @@ class FrontendVar {
     Expr shape(const Expr &idx) const;
 
     Expr asLoad() const;
-    Stmt asStore(const std::string &id, const Expr &value) const;
+    Stmt asStore(const ID &id, const Expr &value) const;
 
     std::vector<FrontendVarIdx>
     chainIndices(const std::vector<FrontendVarIdx> &next) const;
@@ -108,4 +113,4 @@ inline std::string toString(const FrontendVar &var) {
 
 } // namespace ir
 
-#endif // FRONTEND_UTILS
+#endif // FRONTEND_VAR

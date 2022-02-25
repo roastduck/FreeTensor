@@ -12,6 +12,7 @@ from .nodes import (
     Assert,
     MarkNid,
     NamedScope,
+    Invoke,
     Eval,
     Any,
     remainder,
