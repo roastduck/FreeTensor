@@ -120,3 +120,38 @@ def test_inline_serial_into_parallel():
     std = ir.pop_ast()
 
     assert std.match(ast)
+
+
+def test_correct_scope():
+    with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+        ir.MarkNid("U")
+        with ir.VarDef("u", (4,), "int32", "cache", "cpu") as u:
+            ir.MarkNid("T")
+            with ir.VarDef("t", (4,), "int32", "cache", "cpu") as t:
+                with ir.For("i", 0, 4) as i:
+                    t[i] = x[i] * 2
+                with ir.For("i", 0, 4) as i:
+                    u[i] = t[i] + 1
+            with ir.For("i", 0, 4) as i:
+                y[i] = u[i] - 1
+    ast = ir.pop_ast()
+    print(ast)
+    s = ir.Schedule(ast)
+    s.inline("U")
+    ast = s.ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+        ir.MarkNid("T")
+        with ir.VarDef("t", (4,), "int32", "cache", "cpu") as t:
+            with ir.For("i", 0, 4) as i:
+                t[i] = x[i] * 2
+            with ir.For("i", 0, 4) as i:
+                y[i] = t[i]
+    std = ir.pop_ast()
+
+    assert std.match(ast)

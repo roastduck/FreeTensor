@@ -25,7 +25,7 @@ Stmt propOneTimeUse(const Stmt &_op) {
     // A new Store/ReduceTo node may contain Load nodes out of their VarDef
     // scopes, so we have to expand those VarDef nodes. We first call
     // hoistVarDefOverStmtSeq to expand the VarDef nodes over all the statment
-    // in a StmtSeq, and then we call RemoveWrites to update the Store/ReduceTo
+    // in a StmtSeq, and then we call ReplaceUses to update the Store/ReduceTo
     // nodes, and finally we call sinkVars to adjust the scope of the VarDef
     // nodes back to a proper size.
     op = hoistVarOverStmtSeq(op);
