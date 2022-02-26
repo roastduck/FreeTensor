@@ -10,10 +10,10 @@
 #include <vector>
 
 #include <analyze/find_loop_variance.h>
-#include <analyze/hash.h>
-#include <cursor.h>
-#include <math/gen_isl_expr.h>
-#include <math/isl.h>
+#include <analyze/symbol_table.h>
+#include <analyze/with_cursor.h>
+#include <math/gen_pb_expr.h>
+#include <math/presburger.h>
 #include <visitor.h>
 
 namespace ir {
@@ -35,10 +35,11 @@ struct AccessPoint {
     std::vector<IterAxis> iter_; /// The temporal location of the access
     std::vector<Expr> access_;   /// The spacial location of the access
     std::vector<Expr> conds_;    /// The condition (predicate) of the access
+    SymbolTableData symbolTable_;
 };
 
 class FindAllNoDeps : public Visitor {
-    std::unordered_map<std::string, std::vector<std::string>>
+    std::unordered_map<std::string, std::vector<ID>>
         results_; // Var name -> [loop ID]
     // FIXME: Currently, we record a var name to loop ID relation, which is not
     // rigorous because there will be different vars with the same name.
@@ -47,8 +48,7 @@ class FindAllNoDeps : public Visitor {
     // and we are unable to find the VarDef ID
 
   public:
-    const std::unordered_map<std::string, std::vector<std::string>> &
-    results() const {
+    const std::unordered_map<std::string, std::vector<ID>> &results() const {
         return results_;
     }
 
@@ -79,45 +79,43 @@ inline int countBandNodeWidth(const Stmt &op) {
 /**
  * Find read and write points
  */
-class FindAccessPoint : public VisitorWithCursor {
+class FindAccessPoint : public SymbolTable<WithCursor<Visitor>> {
+    typedef SymbolTable<WithCursor<Visitor>> BaseClass;
+
     bool lastIsLoad_ = false;
     std::vector<IterAxis> cur_; // Current iteration point in the space
-    std::vector<Expr> conds_;
-    std::unordered_map<AST, Ref<AccessPoint>> points_;
-    std::unordered_map<std::string, std::vector<Ref<AccessPoint>>> reads_,
-        writes_;
+    std::vector<Expr>
+        conds_; // FIXME: There may be out-dated conditions, and we must check
+                // allReads(cond) against allWrites(body) for each If or For
+                // nodes. See pass/simplify. If the condition violates, we may
+                // need to push a null condition according to RelaxMode
+    std::unordered_map<ID, std::vector<Ref<AccessPoint>>> reads_, writes_;
+    std::vector<VarDef> allDefs_;
 
     // For or StmtSeq -> coordinate in space
-    std::unordered_map<std::string, std::vector<IterAxis>> scope2coord_;
+    std::unordered_map<ID, std::vector<IterAxis>> scope2coord_;
 
     // Var name -> axis: Which axis is a local var defined
     std::unordered_map<std::string, int> defAxis_;
 
-    // Var name -> VarDef
-    std::unordered_map<std::string, VarDef> defs_;
-
   public:
     FindAccessPoint(const Stmt &root);
 
-    const std::unordered_map<AST, Ref<AccessPoint>> &points() const {
-        return points_;
-    }
-    const std::unordered_map<std::string, std::vector<Ref<AccessPoint>>> &
-    reads() const {
+    const std::unordered_map<ID, std::vector<Ref<AccessPoint>>> &reads() const {
         return reads_;
     }
-    const std::unordered_map<std::string, std::vector<Ref<AccessPoint>>> &
+    const std::unordered_map<ID, std::vector<Ref<AccessPoint>>> &
     writes() const {
         return writes_;
     }
-    const std::unordered_map<std::string, std::vector<IterAxis>> &
-    scope2coord() const {
+    const std::vector<VarDef> &allDefs() const { return allDefs_; }
+    const std::unordered_map<ID, std::vector<IterAxis>> &scope2coord() const {
         return scope2coord_;
     }
 
   private:
     template <class T> void visitStoreLike(const T &op) {
-        Visitor::visit(op);
+        BaseClass::visit(op);
 
         if (!cur_.empty() &&
             cur_.back().iter_->nodeType() == ASTNodeType::IntConst) {
@@ -130,14 +128,14 @@ class FindAccessPoint : public VisitorWithCursor {
         auto ap = Ref<AccessPoint>::make();
         *ap = {op,
                cursor(),
-               defs_.at(op->var_),
-               defs_.at(op->var_)->buffer_,
+               def(op->var_),
+               buffer(op->var_),
                defAxis_.at(op->var_),
                cur_,
                std::vector<Expr>{op->indices_.begin(), op->indices_.end()},
-               conds_};
-        points_.emplace(op, ap);
-        writes_[defs_.at(op->var_)->id()].emplace_back(ap);
+               conds_,
+               symbolTableSnapshot()};
+        writes_[def(op->var_)->id()].emplace_back(ap);
     }
 
   protected:
@@ -151,27 +149,6 @@ class FindAccessPoint : public VisitorWithCursor {
     void visit(const MatMul &op) override { (*this)(op->equivalent_); }
 };
 
-// hash -> (expr, isl name)
-typedef std::unordered_map<uint64_t, std::pair<Expr, std::string>> ExternalMap;
-
-/**
- * GenISLExpr specialized for handling external variables
- */
-class GenISLExprDeps : public GenISLExpr {
-    std::unordered_map<Expr, ExternalMap> externals_;
-    GetHash getHash_;
-    Expr parent_ = nullptr;
-
-  public:
-    const ExternalMap &externals(const Expr &op) { return externals_[op]; }
-
-  protected:
-    using GenISLExpr::visit;
-    void visitExpr(const Expr &op,
-                   const std::function<void(const Expr &)> &visitNode) override;
-    void visit(const Load &op) override;
-};
-
 enum class DepDirection : int {
     Normal,
     Inv,
@@ -180,26 +157,45 @@ enum class DepDirection : int {
 };
 
 struct NodeIDOrParallelScope {
-    std::string name_;
+    ID id_;
+    std::string parallel_;
     bool isNode_;
 
-    NodeIDOrParallelScope(const std::string &name, bool isNode = true)
-        : name_(name), isNode_(isNode) {}
+    NodeIDOrParallelScope(const ID &id) : id_(id), isNode_(true) {}
+    NodeIDOrParallelScope(const std::string &name, bool isNode)
+        : isNode_(isNode) {
+        if (isNode) {
+            id_ = name;
+        } else {
+            parallel_ = name;
+        }
+    }
 };
 
 typedef std::vector<std::pair<NodeIDOrParallelScope, DepDirection>>
     FindDepsCond;
 
+class AnalyzeDeps;
+
 struct Dependency {
     const FindDepsCond &cond_; /// sub-condition that fails
     const std::string &var_;
     const AccessPoint &later_, &earlier_;
+    int iterDim_;
+    PBMap dep_;
+    PBCtx &presburger_;
+    AnalyzeDeps &self_;
 
     // Helper functions
     const AST &later() const { return later_.op_; }
     const AST &earlier() const { return earlier_.op_; }
     const VarDef &def() const { return earlier_.def_; }
-    const std::string &defId() const { return earlier_.def_->id(); }
+    ID defId() const { return earlier_.def_->id(); }
+
+    // Additional condition check. This check is not multi-thread, so please use
+    // the `cond` parameter of `findDeps` instead, if possible
+    PBMap extraCheck(PBMap dep, const NodeIDOrParallelScope &nodeOrParallel,
+                     const DepDirection &dir) const;
 };
 typedef std::function<void(const Dependency &)> FindDepsCallback;
 
@@ -226,12 +222,14 @@ typedef std::function<bool(const AccessPoint &later,
 /**
  * Find RAW, WAR and WAW dependencies
  */
-class AnalyzeDeps : public Visitor {
-    const std::unordered_map<AST, Ref<AccessPoint>> &points_;
-    const std::unordered_map<std::string, std::vector<Ref<AccessPoint>>>
-        &reads_, &writes_;
-    const std::unordered_map<std::string, std::vector<IterAxis>> &scope2coord_;
-    const std::unordered_map<std::string, std::vector<std::string>>
+class AnalyzeDeps {
+    friend Dependency;
+
+    const std::unordered_map<ID, std::vector<Ref<AccessPoint>>> &reads_,
+        &writes_;
+    const std::vector<VarDef> &allDefs_;
+    const std::unordered_map<ID, std::vector<IterAxis>> &scope2coord_;
+    const std::unordered_map<std::string, std::vector<ID>>
         &noDepsLists_; // Var name -> [loop ID]
     const LoopVariExprMap &variantExpr_;
 
@@ -240,77 +238,79 @@ class AnalyzeDeps : public Visitor {
     const FindDepsFilter &filter_;
 
     const FindDepsMode mode_;
+    const RelaxMode earlierRelax_, laterRelax_;
     const DepType depType_;
     const bool ignoreReductionWAW_;
     const bool eraseOutsideVarDef_;
-
-    std::unordered_map<std::string, std::string>
-        defId_; // var name -> VarDef ID
 
     std::vector<std::function<void()>> tasks_;
     std::mutex lock_;
 
   public:
     AnalyzeDeps(
-        const std::unordered_map<AST, Ref<AccessPoint>> &points,
-        const std::unordered_map<std::string, std::vector<Ref<AccessPoint>>>
-            &reads,
-        const std::unordered_map<std::string, std::vector<Ref<AccessPoint>>>
-            &writes,
-        const std::unordered_map<std::string, std::vector<IterAxis>>
-            &scope2coord,
-        const std::unordered_map<std::string, std::vector<std::string>>
-            &noDepsLists,
+        const std::unordered_map<ID, std::vector<Ref<AccessPoint>>> &reads,
+        const std::unordered_map<ID, std::vector<Ref<AccessPoint>>> &writes,
+        const std::vector<VarDef> &allDefs,
+        const std::unordered_map<ID, std::vector<IterAxis>> &scope2coord,
+        const std::unordered_map<std::string, std::vector<ID>> &noDepsLists,
         const LoopVariExprMap &variantExpr,
         const std::vector<FindDepsCond> &cond, const FindDepsCallback &found,
         FindDepsMode mode, DepType depType, const FindDepsFilter &filter,
         bool ignoreReductionWAW, bool eraseOutsideVarDef)
-        : points_(points), reads_(reads), writes_(writes),
+        : reads_(reads), writes_(writes), allDefs_(allDefs),
           scope2coord_(scope2coord), noDepsLists_(noDepsLists),
           variantExpr_(variantExpr), cond_(cond), found_(found),
-          filter_(filter), mode_(mode), depType_(depType),
-          ignoreReductionWAW_(ignoreReductionWAW),
+          filter_(filter), mode_(mode),
+          earlierRelax_(mode_ == FindDepsMode::KillLater ||
+                                mode_ == FindDepsMode::KillBoth
+                            ? RelaxMode::Necessary
+                            : RelaxMode::Possible),
+          laterRelax_(mode_ == FindDepsMode::KillEarlier ||
+                              mode_ == FindDepsMode::KillBoth
+                          ? RelaxMode::Necessary
+                          : RelaxMode::Possible),
+          depType_(depType), ignoreReductionWAW_(ignoreReductionWAW),
           eraseOutsideVarDef_(eraseOutsideVarDef) {}
+
+    void genTasks();
 
     const std::vector<std::function<void()>> &tasks() const { return tasks_; }
 
   private:
-    std::string makeIterList(GenISLExprDeps &genISLExpr,
-                             const std::vector<IterAxis> &list, int n);
+    std::string makeIterList(const std::vector<IterAxis> &list, int n);
     std::string makeNdList(const std::string &name, int n) const;
-    Ref<std::string> makeAccList(GenISLExprDeps &genISLExpr,
+    Ref<std::string> makeAccList(GenPBExpr &genPBExpr,
                                  const std::vector<Expr> &list, RelaxMode relax,
-                                 ExternalMap &externals);
-    Ref<std::string> makeCond(GenISLExprDeps &genISLExpr,
+                                 GenPBExpr::VarMap &externals);
+    Ref<std::string> makeCond(GenPBExpr &genPBExpr,
                               const std::vector<Expr> &conds, RelaxMode relax,
-                              ExternalMap &externals);
+                              GenPBExpr::VarMap &externals);
 
-    ISLMap makeAccMap(ISLCtx &isl, GenISLExprDeps &genISLExpr,
-                      const AccessPoint &p, int iterDim, int accDim,
-                      RelaxMode relax, const std::string &extSuffix,
-                      ExternalMap &externals);
+    PBMap makeAccMap(PBCtx &presburger, const AccessPoint &p, int iterDim,
+                     int accDim, RelaxMode relax, const std::string &extSuffix,
+                     GenPBExpr::VarMap &externals);
 
-    ISLMap makeEqForBothOps(ISLCtx &isl,
-                            const std::vector<std::pair<int, int>> &coord,
-                            int iterDim) const;
-    ISLMap makeIneqBetweenOps(ISLCtx &isl, DepDirection mode, int iterId,
-                              int iterDim) const;
+    PBMap makeEqForBothOps(PBCtx &presburger,
+                           const std::vector<std::pair<int, int>> &coord,
+                           int iterDim) const;
+    PBMap makeIneqBetweenOps(PBCtx &presburger, DepDirection mode, int iterId,
+                             int iterDim) const;
 
-    ISLMap makeSerialToAll(ISLCtx &isl, int iterDim,
-                           const std::vector<IterAxis> &point) const;
+    PBMap makeSerialToAll(PBCtx &presburger, int iterDim,
+                          const std::vector<IterAxis> &point) const;
     static int countSerial(const std::vector<IterAxis> &point);
 
-    ISLMap makeExternalEq(ISLCtx &isl, int iterDim, const std::string &ext1,
-                          const std::string &ext2);
+    PBMap makeExternalEq(PBCtx &presburger, int iterDim,
+                         const std::string &ext1, const std::string &ext2);
 
-    ISLMap makeConstraintOfSingleLoop(ISLCtx &isl, const std::string &loop,
-                                      DepDirection mode, int iterDim);
+    PBMap makeConstraintOfSingleLoop(PBCtx &presburger, const ID &loop,
+                                     DepDirection mode, int iterDim);
 
-    ISLMap makeConstraintOfParallelScope(ISLCtx &isl,
-                                         const std::string &parallel,
-                                         DepDirection mode, int iterDim,
-                                         const Ref<AccessPoint> &point,
-                                         const Ref<AccessPoint> &other);
+    PBMap makeConstraintOfParallelScope(PBCtx &presburger,
+                                        const std::string &parallel,
+                                        DepDirection mode, int iterDim,
+                                        const AccessPoint &point,
+                                        const AccessPoint &other);
 
     /**
      * Constraint for variables defined inside some loops
@@ -321,14 +321,14 @@ class AnalyzeDeps : public Visitor {
      *     ... = a[0]
      * There will be no dependencies of a[0] across i
      */
-    ISLMap makeEraseVarDefConstraint(ISLCtx &isl, const Ref<AccessPoint> &point,
-                                     int iterDim);
+    PBMap makeEraseVarDefConstraint(PBCtx &presburger,
+                                    const Ref<AccessPoint> &point, int iterDim);
 
     /**
      * Constraint for loops that explicitly marked as no_deps by users
      */
-    ISLMap makeNoDepsConstraint(ISLCtx &isl, const std::string &var,
-                                int iterDim);
+    PBMap makeNoDepsConstraint(PBCtx &presburger, const std::string &var,
+                               int iterDim);
 
     /*
      * Constraint for external variables inside loop
@@ -339,12 +339,12 @@ class AnalyzeDeps : public Visitor {
      * idx[i] + j must be different for the same i but different j, but
      * idx[i] + j may be the same for different i
      */
-    ISLMap makeExternalVarConstraint(ISLCtx &isl, const Ref<AccessPoint> &point,
-                                     const Ref<AccessPoint> &other,
-                                     const ExternalMap &pExternals,
-                                     const ExternalMap &oExternals, int iterDim,
-                                     const std::string &extSuffixP,
-                                     const std::string &extSuffixO);
+    PBMap makeExternalVarConstraint(PBCtx &presburger,
+                                    const Ref<AccessPoint> &point,
+                                    const Ref<AccessPoint> &other,
+                                    const GenPBExpr::VarMap &pExternals,
+                                    const GenPBExpr::VarMap &oExternals,
+                                    int iterDim);
 
     /**
      * If we are analyzing the dependency between A and B, e.g.
@@ -357,9 +357,17 @@ class AnalyzeDeps : public Visitor {
      * FindDepsMode::Dep mode, we do not care about the result. Therefore, we
      * project out these dimensions
      */
-    ISLMap projectOutPrivateAxis(ISLCtx &isl, int iterDim, int since);
-
+    PBMap projectOutPrivateAxis(PBCtx &presburger, int iterDim, int since);
+    void projectOutPrivateAxis(PBCtx &presburger, const Ref<AccessPoint> &point,
+                               const std::vector<Ref<AccessPoint>> &otherList,
+                               PBMap &pmap, std::vector<PBMap> &omapList,
+                               int iterDim);
     int numCommonDims(const Ref<AccessPoint> &p1, const Ref<AccessPoint> &p2);
+
+    void checkAgainstCond(PBCtx &presburger, const Ref<AccessPoint> &point,
+                          const Ref<AccessPoint> &other, const PBMap &depAll,
+                          const PBMap &nearest, const PBSet &pIter,
+                          const PBSet &oIter, int iterDim);
 
     static const std::string &getVar(const AST &op);
 
@@ -373,8 +381,7 @@ class AnalyzeDeps : public Visitor {
     void checkDepLatestEarlier(const Ref<AccessPoint> &point,
                                const std::vector<Ref<AccessPoint>> &otherList);
     void
-    checkDepLatestEarlierImpl(ISLCtx &isl, GenISLExprDeps &genISLExpr,
-                              const Ref<AccessPoint> &point,
+    checkDepLatestEarlierImpl(PBCtx &presburger, const Ref<AccessPoint> &point,
                               const std::vector<Ref<AccessPoint>> &otherList);
 
     /**
@@ -387,16 +394,9 @@ class AnalyzeDeps : public Visitor {
     void checkDepEarliestLater(const std::vector<Ref<AccessPoint>> &pointList,
                                const Ref<AccessPoint> &other);
     void
-    checkDepEarliestLaterImpl(ISLCtx &isl, GenISLExprDeps &genISLExpr,
+    checkDepEarliestLaterImpl(PBCtx &presburger,
                               const std::vector<Ref<AccessPoint>> &pointList,
                               const Ref<AccessPoint> &other);
-
-  protected:
-    void visit(const VarDef &op) override;
-    void visit(const Store &op) override;
-    void visit(const ReduceTo &op) override;
-    void visit(const Load &op) override;
-    void visit(const MatMul &op) override { (*this)(op->equivalent_); }
 };
 
 /**

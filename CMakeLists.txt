@@ -3,7 +3,8 @@ project(IR C CXX)
 
 include(ExternalProject)
 
-option(IR_DEBUG "Enable debug mode" OFF)
+option(IR_DEBUG_LOG_NODE "Log where each AST node is created" OFF)
+option(IR_DEBUG_PROFILE "Profile some heavy functions in the compiler" OFF)
 option(WITH_MKL "Path to MKL (optional)" OFF)
 
 set(DEFAULT_BUILD_TYPE "RelWithDebInfo")
@@ -40,8 +41,11 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
 if(WITH_MKL)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWITH_MKL=${WITH_MKL}")
 endif()
-if(IR_DEBUG)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DIR_DEBUG")
+if(IR_DEBUG_LOG_NODE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DIR_DEBUG_LOG_NODE")
+endif()
+if(IR_DEBUG_PROFILE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DIR_DEBUG_PROFILE")
 endif()
 
 set(CMAKE_CXX_STANDARD 17)
@@ -59,6 +63,7 @@ endif()
 include_directories(${CMAKE_SOURCE_DIR}/include)
 include_directories(${CMAKE_SOURCE_DIR}/3rd-party/pybind11/include)
 include_directories(${CMAKE_SOURCE_DIR}/3rd-party/z3/src/api/c++)
+include_directories(${CMAKE_SOURCE_DIR}/3rd-party/cppitertools)
 file(GLOB_RECURSE SRC ${CMAKE_SOURCE_DIR}/src/*.cc)
 
 # Target

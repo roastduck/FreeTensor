@@ -36,36 +36,27 @@ static Expr makeReduce(ReduceOp reduceOp, const Expr &lhs, const Expr &rhs) {
     }
 }
 
-static bool isConst(const Expr &expr) {
-    return expr->nodeType() == ASTNodeType::IntConst ||
-           expr->nodeType() == ASTNodeType::FloatConst ||
-           expr->nodeType() == ASTNodeType::BoolConst;
-}
-
 void FindLoopInvariantWrites::visit(const For &op) {
     cursorStack_.emplace_back(cursor());
-    Visitor::visit(op);
+    BaseClass::visit(op);
     cursorStack_.pop_back();
 }
 
 void FindLoopInvariantWrites::visit(const If &op) {
     ifStack_.emplace_back(op);
-    Visitor::visit(op);
+    BaseClass::visit(op);
     ifStack_.pop_back();
 }
 
 void FindLoopInvariantWrites::visit(const VarDef &op) {
-    ASSERT(!defs_.count(op->name_));
     defDepth_[op->name_] = cursorStack_.size();
-    defs_[op->name_] = op;
-    Visitor::visit(op);
-    defs_.erase(op->name_);
+    BaseClass::visit(op);
     defDepth_.erase(op->name_);
 }
 
 void FindLoopInvariantWrites::visit(const Store &op) {
-    Visitor::visit(op);
-    if (!singleDefId_.empty() && defs_.at(op->var_)->id() != singleDefId_) {
+    BaseClass::visit(op);
+    if (singleDefId_.isValid() && def(op->var_)->id() != singleDefId_) {
         return;
     }
     Expr cond;
@@ -79,6 +70,9 @@ void FindLoopInvariantWrites::visit(const Store &op) {
         if (!item->property_.parallel_.empty()) {
             continue;
         }
+        auto rbegin =
+            makeAdd(item->begin_,
+                    makeMul(makeSub(item->len_, makeIntConst(1)), item->step_));
         Expr thisCond;
         for (auto &&idx : op->indices_) {
             if (isVariant(variantExpr_, idx, item->id())) {
@@ -90,8 +84,7 @@ void FindLoopInvariantWrites::visit(const Store &op) {
                 goto fail;
             }
         }
-        thisCond =
-            makeEQ(makeVar(item->iter_), makeSub(item->end_, makeIntConst(1)));
+        thisCond = makeEQ(makeVar(item->iter_), rbegin);
         if (!cond.isValid()) {
             innerMostLoopCursor = loopCursor;
             cond = thisCond;
@@ -104,7 +97,7 @@ void FindLoopInvariantWrites::visit(const Store &op) {
 
     if (cond.isValid()) {
         results_[op] =
-            std::make_tuple(defs_.at(op->var_), cond, innerMostLoopCursor);
+            std::make_tuple(def(op->var_), cond, innerMostLoopCursor);
     }
 }
 
@@ -155,7 +148,7 @@ Stmt RemoveWrites::visit(const If &_op) {
     return op;
 }
 
-Stmt removeWrites(const Stmt &_op, const std::string &singleDefId) {
+Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
     auto op = makeReduction(_op);
 
     // A new Store/ReduceTo node may contain Load nodes out of their VarDef
@@ -196,7 +189,7 @@ Stmt removeWrites(const Stmt &_op, const std::string &singleDefId) {
     std::set<std::pair<Stmt, AST>> usesWAR;
     auto filterOverwriteStore = [&](const AccessPoint &later,
                                     const AccessPoint &earlier) {
-        if (!singleDefId.empty() && later.def_->id() != singleDefId) {
+        if (singleDefId.isValid() && later.def_->id() != singleDefId) {
             return false;
         }
         return later.op_->nodeType() == ASTNodeType::Store &&
@@ -204,7 +197,7 @@ Stmt removeWrites(const Stmt &_op, const std::string &singleDefId) {
     };
     auto filterOverwriteReduce = [&](const AccessPoint &later,
                                      const AccessPoint &earlier) {
-        if (!singleDefId.empty() && later.def_->id() != singleDefId) {
+        if (singleDefId.isValid() && later.def_->id() != singleDefId) {
             return false;
         }
         return later.op_->nodeType() == ASTNodeType::ReduceTo;
@@ -219,12 +212,12 @@ Stmt removeWrites(const Stmt &_op, const std::string &singleDefId) {
             (!selfDependentReduces.count(d.later().as<StmtNode>()) ||
              sameParent(d.later_.cursor_, d.earlier_.cursor_))) {
             if (d.earlier()->nodeType() == ASTNodeType::Store &&
-                isConst(d.earlier().as<StoreNode>()->expr_)) {
+                d.earlier().as<StoreNode>()->expr_->isConst()) {
                 overwrites.emplace(d.later().as<StmtNode>(),
                                    d.earlier().as<StmtNode>());
                 suspect.insert(d.def());
             } else if (d.earlier()->nodeType() == ASTNodeType::ReduceTo &&
-                       isConst(d.earlier().as<ReduceToNode>()->expr_)) {
+                       d.earlier().as<ReduceToNode>()->expr_->isConst()) {
                 overwrites.emplace(d.later().as<StmtNode>(),
                                    d.earlier().as<StmtNode>());
                 suspect.insert(d.def());
@@ -362,4 +355,3 @@ Stmt removeWrites(const Stmt &_op, const std::string &singleDefId) {
 }
 
 } // namespace ir
-

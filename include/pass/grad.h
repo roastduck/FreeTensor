@@ -4,62 +4,53 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include <analyze/hash.h>
+#include <analyze/symbol_table.h>
 #include <analyze/type_infer.h>
 #include <func.h>
+#include <hash.h>
 #include <mutator.h>
 #include <visitor.h>
 
 namespace ir {
 
-class PropagateRequire : public Visitor {
+class PropagateRequire : public WithTypeInfer<SymbolTable<Visitor>> {
+    typedef WithTypeInfer<SymbolTable<Visitor>> BaseClass;
+
     const std::unordered_set<std::string> &requires_; // input var names
     const std::unordered_set<std::string> &provides_; // output var names
-    TypeInfer typeInfer_;
 
-    std::unordered_set<std::string> affectedDefs_; // all VarDef IDs
+    std::unordered_set<ID> affectedDefs_; // all VarDef IDs
 
-    std::unordered_map<std::string, VarDef> defs_;
-    std::unordered_map<std::string, Ref<Buffer>> buffers_;
-    std::string curTarget_; // VarDef ID of current var being written to
+    ID curTarget_; // VarDef ID of current var being written to
 
   public:
     PropagateRequire(const std::unordered_set<std::string> &requires,
                      const std::unordered_set<std::string> &provides)
-        : requires_(requires), provides_(provides), typeInfer_(&buffers_) {}
+        : requires_(requires), provides_(provides) {}
 
-    const std::unordered_set<std::string> &affectedDefs() const {
-        return affectedDefs_;
-    }
-
-  private:
-    DataType dtype(const Expr &op);
+    const std::unordered_set<ID> &affectedDefs() const { return affectedDefs_; }
 
   protected:
+    using BaseClass::visit;
     void visit(const Load &op) override;
     void visit(const Store &op) override;
     void visit(const ReduceTo &op) override;
     void visit(const VarDef &op) override;
 };
 
-class ReplaceVar : public Mutator {
-    std::string from_;
-    Expr to_;
-
-  public:
-    ReplaceVar(const std::string &from, const Expr &to)
-        : from_(from), to_(to) {}
-
-  protected:
-    Expr visit(const Var &op) override;
-};
-
 class ReplaceByTape : public Mutator {
-    const std::unordered_map<Load, Expr> &loadMap_;
+    const SymbolTableInterface &symbolTable_;
+    const std::unordered_map<ID, std::string> &tapeMap_;
+    const std::unordered_map<ID, Expr> &versions_;
+    Stmt parent_;
 
   public:
-    ReplaceByTape(const std::unordered_map<Load, Expr> &loadMap)
-        : loadMap_(loadMap) {}
+    ReplaceByTape(const SymbolTableInterface &symbolTable,
+                  const std::unordered_map<ID, std::string> &tapeMap,
+                  const std::unordered_map<ID, Expr> &versions,
+                  const Stmt &parent)
+        : symbolTable_(symbolTable), tapeMap_(tapeMap), versions_(versions),
+          parent_(parent) {}
 
   protected:
     Expr visit(const Load &op) override;
@@ -69,17 +60,17 @@ class GradExpr : public Visitor {
     const std::unordered_map<std::string, std::string>
         &gradNames_;                           // x -> dy/dx
     std::unordered_map<Expr, Expr> gradExprs_; // x -> dy/dx
-    uint64_t rootHash_;
+    const Expr &root_;
     Expr equLoad_;
-    ReplaceByTape replaceByTape_;
+    ReplaceByTape &replaceByTape_;
     std::vector<Stmt> appends_;
 
   public:
-    GradExpr(const std::unordered_map<Load, Expr> &loadMap,
+    GradExpr(ReplaceByTape &replaceByTape,
              const std::unordered_map<std::string, std::string> &gradNames,
              const Expr &root, const Expr &grad, const Expr &equLoad)
-        : gradNames_(gradNames), rootHash_(getHash(root)), equLoad_(equLoad),
-          replaceByTape_(loadMap) {
+        : gradNames_(gradNames), root_(root), equLoad_(equLoad),
+          replaceByTape_(replaceByTape) {
         gradExprs_[root] = grad;
     }
 
@@ -87,7 +78,7 @@ class GradExpr : public Visitor {
 
   private:
     Expr replaceByLoadY(const Expr &op) {
-        return getHash(op) == rootHash_ ? equLoad_ : op;
+        return HashComparator()(op, root_) ? equLoad_ : op;
     }
 
     Expr useForwardVal(const Expr &op) {
@@ -111,21 +102,22 @@ class GradExpr : public Visitor {
     void visit(const Abs &op) override;
 };
 
-class Grad : public Mutator {
+class Grad : public SymbolTable<Mutator> {
+    typedef SymbolTable<Mutator> BaseClass;
+
     const std::unordered_set<std::string> &requires_;
     const std::unordered_set<std::string> &provides_;
-    const std::unordered_set<std::string> &tapes_;
-    const std::unordered_set<std::string> &affectedDefs_;
-    const std::unordered_map<Load, Expr> &loadMap_;
+    const std::unordered_set<ID> &tapes_;
+    const std::unordered_set<ID> &affectedDefs_;
+    const std::unordered_map<ID, std::string> &tapeMap_;
+    const std::unordered_map<ID, Expr> &versions_;
+    const std::unordered_map<ID, Expr> &totLens_;
     const std::unordered_set<Stmt> &notSingleWrite_;
-    std::unordered_set<std::string> isTape_;
-    ReplaceByTape replaceByTape_;
 
     std::unordered_map<std::string, std::string> requireGrads_; // var name map
     std::unordered_map<std::string, std::string> provideGrads_; // var name map
 
     std::unordered_map<std::string, std::string> gradNames_; // x -> dy/dx
-    std::unordered_map<std::string, VarDef> defs_;
     std::unordered_set<std::string> taped_;
     std::unordered_map<Expr, Expr> equLoads_;
     std::unordered_map<std::string, std::unordered_set<Stmt>>
@@ -135,18 +127,15 @@ class Grad : public Mutator {
   public:
     Grad(const std::unordered_set<std::string> &requires,
          const std::unordered_set<std::string> &provides,
-         const std::unordered_set<std::string> &tapes,
-         const std::unordered_set<std::string> &affectedDefs,
-         const std::unordered_map<std::string, std::string> &tapeMap,
-         const std::unordered_map<Load, Expr> &loadMap,
+         const std::unordered_set<ID> &tapes,
+         const std::unordered_set<ID> &affectedDefs,
+         const std::unordered_map<ID, std::string> &tapeMap,
+         const std::unordered_map<ID, Expr> &versions,
+         const std::unordered_map<ID, Expr> &totLens,
          const std::unordered_set<Stmt> &notSingleWrite)
         : requires_(requires), provides_(provides), tapes_(tapes),
-          affectedDefs_(affectedDefs), loadMap_(loadMap),
-          notSingleWrite_(notSingleWrite), replaceByTape_(loadMap) {
-        for (auto &&[oriDef, tapeVar] : tapeMap) {
-            isTape_.insert(tapeVar);
-        }
-    }
+          affectedDefs_(affectedDefs), tapeMap_(tapeMap), versions_(versions),
+          totLens_(totLens), notSingleWrite_(notSingleWrite) {}
 
     const std::unordered_map<std::string, std::string> &requireGrads() const {
         return requireGrads_;
@@ -160,7 +149,7 @@ class Grad : public Mutator {
     Stmt visit(const For &op) override;
     Stmt visit(const VarDef &op) override;
     Stmt visit(const Store &op) override;
-    Stmt visit(const ReduceTo &op) override { ASSERT(false); }
+    Stmt visit(const ReduceTo &op) override;
 };
 
 /**
@@ -184,17 +173,17 @@ class Grad : public Mutator {
  */
 std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>,
-           std::unordered_map<std::string, std::string>>
+           std::unordered_map<ID, std::string>>
 grad(const Stmt &op, const std::unordered_set<std::string> &requires,
      const std::unordered_set<std::string> &provides,
-     const std::unordered_set<std::string> &tapes);
+     const std::unordered_set<ID> &tapes);
 
 std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>,
-           std::unordered_map<std::string, std::string>>
+           std::unordered_map<ID, std::string>>
 grad(const Func &func, const std::unordered_set<std::string> &requires,
      const std::unordered_set<std::string> &provides,
-     const std::unordered_set<std::string> &tapes);
+     const std::unordered_set<ID> &tapes);
 
 enum class GradTapeMode : int { All, Nothing, NoReuseOnly };
 
@@ -204,8 +193,6 @@ enum class GradTapeMode : int { All, Nothing, NoReuseOnly };
  * @param op : Original AST
  * @param requires : Name of input variables that need gradients
  * @param provides : Name of output variables whose gradients are known
- * @param tapes : VarDef IDs of intermediate variables that need to be stored in
- * the forward pass
  * @param tapeMode : Mode of which intermediate variables should be stored. All:
  * store all variables including local scalars; None: store nothing;
  * NoReuseOnly: store variables that only hold one version of data, which means
@@ -223,14 +210,14 @@ enum class GradTapeMode : int { All, Nothing, NoReuseOnly };
  */
 std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>,
-           std::unordered_map<std::string, std::string>>
+           std::unordered_map<ID, std::string>>
 grad(const Stmt &op, const std::unordered_set<std::string> &requires,
      const std::unordered_set<std::string> &provides,
      GradTapeMode tapeMode = GradTapeMode::NoReuseOnly);
 
 std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>,
-           std::unordered_map<std::string, std::string>>
+           std::unordered_map<ID, std::string>>
 grad(const Func &func, const std::unordered_set<std::string> &requires,
      const std::unordered_set<std::string> &provides,
      GradTapeMode tapeMode = GradTapeMode::NoReuseOnly);

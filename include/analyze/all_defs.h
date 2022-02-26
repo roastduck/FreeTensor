@@ -9,12 +9,12 @@ namespace ir {
 
 class AllDefs : public Visitor {
     const std::unordered_set<AccessType> &atypes_;
-    std::vector<std::pair<std::string, std::string>> results_; // (id, name)
+    std::vector<std::pair<ID, std::string>> results_; // (id, name)
 
   public:
     AllDefs(const std::unordered_set<AccessType> &atypes) : atypes_(atypes) {}
 
-    const std::vector<std::pair<std::string, std::string>> &results() const {
+    const std::vector<std::pair<ID, std::string>> &results() const {
         return results_;
     }
 
@@ -25,7 +25,7 @@ class AllDefs : public Visitor {
 /**
  * Collect IDs of all `VarDef` nodes of specific `AccessType`s
  */
-std::vector<std::pair<std::string, std::string>>
+std::vector<std::pair<ID, std::string>>
 allDefs(const Stmt &op, const std::unordered_set<AccessType> &atypes = {
                             AccessType::Input, AccessType::Output,
                             AccessType::InOut, AccessType::Cache});

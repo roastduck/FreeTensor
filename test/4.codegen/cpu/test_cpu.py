@@ -64,7 +64,7 @@ def test_omp_for_2():
     x_arr = ir.Array(x_np, ir.Device(target))
     y_arr = ir.Array(y_np, ir.Device(target))
     ir.Driver(func, code, device)(x=x_arr, y=y_arr)
-    y_np = y_arr.numpy().reshape(4, 4)
+    y_np = y_arr.numpy()
 
     y_std = np.array([[i + j + 1 for j in range(4)] for i in range(4)],
                      dtype="int32")

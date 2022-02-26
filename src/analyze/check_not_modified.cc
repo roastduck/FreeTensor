@@ -1,13 +1,13 @@
 #include <unordered_set>
 
+#include <analyze/all_reads.h>
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
 
 namespace ir {
 
-Stmt InsertTmpEval::visitStmt(
-    const Stmt &_op, const std::function<Stmt(const Stmt &)> &visitNode) {
-    auto op = Mutator::visitStmt(_op, visitNode);
+Stmt InsertTmpEval::visitStmt(const Stmt &_op) {
+    auto op = Mutator::visitStmt(_op);
     auto ret = op;
     if (op->id() == s0_) {
         auto eval = makeEval("", expr_);
@@ -27,15 +27,19 @@ Stmt InsertTmpEval::visitStmt(
 }
 
 bool checkNotModified(const Stmt &op, const Expr &expr,
-                      CheckNotModifiedSide s0Side, const std::string &s0,
-                      CheckNotModifiedSide s1Side, const std::string &s1) {
+                      CheckNotModifiedSide s0Side, const ID &s0,
+                      CheckNotModifiedSide s1Side, const ID &s1) {
+    if (allReads(expr).empty()) {
+        return true;
+    }
+
     // First insert temporarily Eval node to the AST, then perform dependency
     // analysis
 
     InsertTmpEval inserter(expr, s0Side, s0, s1Side, s1);
     auto tmpOp = inserter(op);
-    ASSERT(!inserter.s0Eval().empty());
-    ASSERT(!inserter.s1Eval().empty());
+    ASSERT(inserter.s0Eval().isValid());
+    ASSERT(inserter.s1Eval().isValid());
     auto common = lca(getCursorById(tmpOp, inserter.s0Eval()),
                       getCursorById(tmpOp, inserter.s1Eval()));
 

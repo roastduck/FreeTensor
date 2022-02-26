@@ -2,10 +2,9 @@
 
 namespace ir {
 
-void TypeInfer::visitExpr(const Expr &op,
-                          const std::function<void(const Expr &)> &visitNode) {
+void TypeInfer::visitExpr(const Expr &op) {
     if (!types_.count(op)) {
-        Visitor::visitExpr(op, visitNode);
+        Visitor::visitExpr(op);
     }
 }
 
@@ -23,13 +22,13 @@ void TypeInfer::visit(const Var &op) {
 
 void TypeInfer::visit(const Load &op) {
     Visitor::visit(op);
-    if (!buffers_->count(op->var_)) {
+    if (!symbolTable_.hasDef(op->var_)) {
         throw InvalidProgram("Name " + op->var_ + " used without definition");
     }
     for (auto &&idx : op->indices_) {
         CHK_TYPE(isInt, types_.at(idx), op);
     }
-    types_[op] = buffers_->at(op->var_)->tensor().dtype();
+    types_[op] = symbolTable_.buffer(op->var_)->tensor().dtype();
 }
 
 void TypeInfer::visit(const IntConst &op) {
@@ -103,6 +102,13 @@ void TypeInfer::visit(const RoundTowards0Div &op) {
 }
 
 void TypeInfer::visit(const Mod &op) {
+    Visitor::visit(op);
+    CHK_TYPE(isInt, types_.at(op->lhs_), op);
+    CHK_TYPE(isInt, types_.at(op->rhs_), op);
+    types_[op] = upCast(types_.at(op->lhs_), types_.at(op->rhs_));
+}
+
+void TypeInfer::visit(const Remainder &op) {
     Visitor::visit(op);
     CHK_TYPE(isInt, types_.at(op->lhs_), op);
     CHK_TYPE(isInt, types_.at(op->rhs_), op);
@@ -250,13 +256,9 @@ void TypeInfer::visit(const Intrinsic &op) {
 }
 
 void TypeInfer::visit(const VarDef &op) {
-    if (buffers_->count(op->name_)) {
-        throw InvalidProgram("Nested VarDef with the same name is not allowed");
-    }
-    (*buffers_)[op->name_] = op->buffer_;
-    Visitor::visit(op);
-    buffers_->erase(op->name_);
+    // TypeInfer borrows the symbol table from other Visitor / Mutator. Please
+    // maintain the symbol table elsewhere
+    ASSERT(false);
 }
 
 } // namespace ir
-

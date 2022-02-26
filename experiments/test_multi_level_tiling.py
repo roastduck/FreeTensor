@@ -70,7 +70,7 @@ def test_multi_level_tiling():
     z_arr = ir.Array(z_np, device)
     u_arr = ir.Array(u_np, device)
     print("Start constructing...")
-    s = ir.AutoSchedule(s, target, device, 20, 100)
+    s = ir.AutoSchedule(s, target, device, 8)
     s.set_params(w=w_arr, x=x_arr, y=y_arr, z=z_arr, u=u_arr)
     # s.set_params(w=w_arr, x=x_arr, y=y_arr)
     print("Start running...")

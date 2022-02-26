@@ -7,7 +7,7 @@ Stmt Splitter::visit(const For &_op) {
     if (_op->id() == src_) {
         auto iter0 = _op->iter_ + ".0";
         auto iter1 = _op->iter_ + ".1";
-        auto len = makeSub(_op->end_, _op->begin_);
+        auto len = makeFloorDiv(makeSub(_op->end_, _op->begin_), _op->step_);
         Expr factor, nparts;
 
         if (factor_ != -1) {
@@ -20,9 +20,8 @@ Stmt Splitter::visit(const For &_op) {
             factor = makeCeilDiv(len, nparts);
         }
 
-        auto newIter =
-            makeAdd(_op->begin_,
-                    makeAdd(makeMul(makeVar(iter0), factor), makeVar(iter1)));
+        auto nthIter = makeAdd(makeMul(makeVar(iter0), factor), makeVar(iter1));
+        auto newIter = makeAdd(_op->begin_, makeMul(nthIter, _op->step_));
 
         iterFrom_ = _op->iter_;
         iterTo_ = newIter;
@@ -32,11 +31,11 @@ Stmt Splitter::visit(const For &_op) {
         ASSERT(__op->nodeType() == ASTNodeType::For);
         auto &&op = __op.as<ForNode>();
 
-        auto body = makeIf("", makeLT(newIter, op->end_), op->body_);
-        auto inner = makeFor(dst1_, iter1, makeIntConst(0), factor, factor,
-                             op->property_, body);
-        auto outer = makeFor(dst0_, iter0, makeIntConst(0), nparts, nparts,
-                             op->property_, inner);
+        auto body = makeIf("", makeLT(nthIter, _op->len_), op->body_);
+        auto inner = makeFor(dst1_, iter1, makeIntConst(0), factor,
+                             makeIntConst(1), factor, op->property_, body);
+        auto outer = makeFor(dst0_, iter0, makeIntConst(0), nparts,
+                             makeIntConst(1), nparts, op->property_, inner);
         found_ = true;
         return outer;
     } else {
@@ -52,8 +51,8 @@ Expr Splitter::visit(const Var &op) {
     }
 }
 
-std::pair<Stmt, std::pair<std::string, std::string>>
-split(const Stmt &_ast, const std::string &id, int factor, int nparts) {
+std::pair<Stmt, std::pair<ID, ID>> split(const Stmt &_ast, const ID &id,
+                                         int factor, int nparts) {
     Splitter mutator(id, factor, nparts);
     auto ast = mutator(_ast);
     if (!mutator.found()) {

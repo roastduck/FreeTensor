@@ -3,22 +3,11 @@
 
 namespace ir {
 
-void Visitor::operator()(const AST &op) {
+void Visitor::visitExpr(const Expr &op) {
     switch (op->nodeType()) {
-    case ASTNodeType::Func:
-        visit(op.as<FuncNode>());
-        break;
-
 #define DISPATCH_EXPR_CASE(name)                                               \
     case ASTNodeType::name:                                                    \
-        visitExpr(op.as<ExprNode>(),                                           \
-                  [this](const Expr &_op) { visit(_op.as<name##Node>()); });   \
-        break;
-
-#define DISPATCH_STMT_CASE(name)                                               \
-    case ASTNodeType::name:                                                    \
-        visitStmt(op.as<StmtNode>(),                                           \
-                  [this](const Stmt &_op) { visit(_op.as<name##Node>()); });   \
+        visit(op.as<name##Node>());                                            \
         break;
 
         DISPATCH_EXPR_CASE(Var);
@@ -34,6 +23,7 @@ void Visitor::operator()(const AST &op) {
         DISPATCH_EXPR_CASE(CeilDiv);
         DISPATCH_EXPR_CASE(RoundTowards0Div);
         DISPATCH_EXPR_CASE(Mod);
+        DISPATCH_EXPR_CASE(Remainder);
         DISPATCH_EXPR_CASE(Min);
         DISPATCH_EXPR_CASE(Max);
         DISPATCH_EXPR_CASE(LT);
@@ -58,6 +48,18 @@ void Visitor::operator()(const AST &op) {
         DISPATCH_EXPR_CASE(Intrinsic);
         DISPATCH_EXPR_CASE(AnyExpr);
 
+    default:
+        ERROR("Unexpected AST node type");
+    }
+}
+
+void Visitor::visitStmt(const Stmt &op) {
+    switch (op->nodeType()) {
+#define DISPATCH_STMT_CASE(name)                                               \
+    case ASTNodeType::name:                                                    \
+        visit(op.as<name##Node>());                                            \
+        break;
+
         DISPATCH_STMT_CASE(StmtSeq);
         DISPATCH_STMT_CASE(VarDef);
         DISPATCH_STMT_CASE(Store);
@@ -65,12 +67,23 @@ void Visitor::operator()(const AST &op) {
         DISPATCH_STMT_CASE(For);
         DISPATCH_STMT_CASE(If);
         DISPATCH_STMT_CASE(Assert);
+        DISPATCH_STMT_CASE(Assume);
         DISPATCH_STMT_CASE(Eval);
         DISPATCH_STMT_CASE(MatMul);
         DISPATCH_STMT_CASE(Any);
 
     default:
         ERROR("Unexpected AST node type");
+    }
+}
+
+void Visitor::operator()(const AST &op) {
+    if (op->isFunc()) {
+        visit(op.as<FuncNode>());
+    } else if (op->isStmt()) {
+        visitStmt(op.as<StmtNode>());
+    } else if (op->isExpr()) {
+        visitExpr(op.as<ExprNode>());
     }
 }
 

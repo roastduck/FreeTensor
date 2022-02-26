@@ -1,7 +1,6 @@
 #include <sstream>
 
 #include <analyze/deps.h>
-#include <analyze/hash.h>
 #include <pass/make_reduction.h>
 #include <schedule/check_loop_order.h>
 #include <schedule/reorder.h>
@@ -14,8 +13,8 @@ Stmt SwapFor::visit(const For &_op) {
         auto body = Mutator::visit(_op);
         insideOuter_ = false;
         return makeFor(oldInner_->id(), oldInner_->iter_, oldInner_->begin_,
-                       oldInner_->end_, oldInner_->len_, oldInner_->property_,
-                       body);
+                       oldInner_->end_, oldInner_->step_, oldInner_->len_,
+                       oldInner_->property_, body);
     } else if (_op->id() == oldInner_->id()) {
         insideInner_ = true;
         auto __op = Mutator::visit(_op);
@@ -89,7 +88,7 @@ Stmt SwapFor::visit(const StmtSeq &_op) {
     }
 }
 
-Stmt reorder(const Stmt &_ast, const std::vector<std::string> &dstOrder) {
+Stmt reorder(const Stmt &_ast, const std::vector<ID> &dstOrder) {
     auto ast = makeReduction(_ast);
 
     CheckLoopOrder checker(dstOrder);
@@ -119,8 +118,8 @@ Stmt reorder(const Stmt &_ast, const std::vector<std::string> &dstOrder) {
                 auto found = [&](const Dependency &d) {
                     ASSERT(d.cond_.size() == 1);
                     std::ostringstream os;
-                    os << "Loop " << curOrder[j]->id() << " and "
-                       << curOrder[j + 1]->id()
+                    os << "Loop " << toString(curOrder[j]->id()) << " and "
+                       << toString(curOrder[j + 1]->id())
                        << " are not permutable: " << toString(d)
                        << " cannot be resolved";
                     throw InvalidSchedule(os.str());

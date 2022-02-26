@@ -123,6 +123,30 @@ def test_immediate_with_offset():
     assert std.match(ast)
 
 
+def test_immediate_with_step():
+    with ir.VarDef([("x", (8,), "int32", "input", "cpu"),
+                    ("y", (8,), "int32", "output", "cpu")]) as (x, y):
+        with ir.For("i", 6, -2, -2, nid="L1") as i:
+            y[i] = x[i] + 1
+
+    s = ir.Schedule(ir.pop_ast())
+    s.unroll("L1", True)
+    ast = s.ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([("x", (8,), "int32", "input", "cpu"),
+                    ("y", (8,), "int32", "output", "cpu")]) as (x, y):
+        y[6] = x[6] + 1
+        y[4] = x[4] + 1
+        y[2] = x[2] + 1
+        y[0] = x[0] + 1
+    std = ir.pop_ast()
+
+    assert std.match(ast)
+
+
 def test_folding_sum():
     with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):

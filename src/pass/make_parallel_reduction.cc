@@ -1,6 +1,9 @@
+#include <itertools.hpp>
+
 #include <analyze/analyze_linear.h>
 #include <analyze/check_all_defined.h>
 #include <analyze/deps.h>
+#include <hash.h>
 #include <pass/make_parallel_reduction.h>
 #include <pass/make_reduction.h>
 
@@ -10,9 +13,9 @@ static bool isDenseOver(const Expr &expr, const std::string &iter) {
     AnalyzeLinear analyzeLinear;
     analyzeLinear(expr);
     auto &&lin = analyzeLinear.result().at(expr);
-    if (lin.coeff_.size() == 1 && std::abs(lin.coeff_.front().second.k_) == 1 &&
-        lin.coeff_.front().second.a_->nodeType() == ASTNodeType::Var) {
-        Var var = lin.coeff_.front().second.a_.as<VarNode>();
+    if (lin.coeff_.size() == 1 && std::abs(lin.coeff_.front().k_) == 1 &&
+        lin.coeff_.front().a_->nodeType() == ASTNodeType::Var) {
+        Var var = lin.coeff_.front().a_.as<VarNode>();
         return var->name_ == iter;
     }
     return false;
@@ -56,18 +59,12 @@ void FindSerialLoopsOverReduce::visit(const ReduceTo &op) {
     }
 }
 
-uint64_t MakeParallelReduction::getHash(const Expr &op) {
-    getHash_(op);
-    return getHash_.hash().at(op);
-}
-
 Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
     auto op = __op.as<ReduceToNode>();
     if (toAlter_.count(op->id())) {
-        std::unordered_map<std::string,
-                           std::vector<SubTree<ExprNode, Nullable>>>
+        std::unordered_map<ID, std::vector<SubTree<ExprNode, Nullable>>>
             indicesMap;
         for (auto &&loopId : toAlter_.at(op->id())) {
             auto &indices = indicesMap[loopId];
@@ -93,10 +90,11 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
                 if (redOp == op->op_ && var == op->var_) {
                     ASSERT(oldIndices.size() == indices.size());
                     std::vector<SubTree<ExprNode, Nullable>> newIndices;
-                    for (size_t i = 0, n = indices.size(); i < n; i++) {
-                        if (oldIndices[i].isValid() && indices[i].isValid()) {
-                            if (getHash(oldIndices[i]) == getHash(indices[i])) {
-                                newIndices.emplace_back(indices[i]);
+                    for (auto &&[oldIdx, idx] :
+                         iter::zip(oldIndices, indices)) {
+                        if (oldIdx.isValid() && idx.isValid()) {
+                            if (HashComparator()(oldIdx, idx)) {
+                                newIndices.emplace_back(idx);
                             } else {
                                 goto mismatch;
                             }
@@ -123,17 +121,17 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
         // atomic operation. We will cache over some serial inner loops, if
         // reduction is invariant to this loop, or if the loop densly iterates
         // over the reduction
-        std::string loopToCache;
+        ID loopToCache;
         std::vector<bool> preserveDim(op->indices_.size(), false);
         if (serialOverRed_.count(op->id())) {
             for (auto &&loop : serialOverRed_.at(op->id())) {
                 bool noPreserve = true;
-                for (size_t i = 0, n = _op->indices_.size(); i < n; i++) {
-                    auto &&idx = _op->indices_[i];
+                for (auto &&[idx, preserve] :
+                     iter::zip(_op->indices_, preserveDim)) {
                     // use _op because isVariant needs it
                     if (isVariant(variantMap_, idx, loop->id())) {
                         if (isDenseOver(idx, loop->iter_)) {
-                            preserveDim[i] = true;
+                            preserve = true;
                             noPreserve = false;
                         } else {
                             goto found_loop_to_cache;
@@ -146,18 +144,19 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
             }
         }
     found_loop_to_cache:
-        if (!loopToCache.empty()) {
+        if (loopToCache.isValid()) {
             std::vector<Expr> newShape, newTargetIndices;
-            op->var_ += ".atomic_cache." + op->id();
+            op->var_ += ".atomic_cache." + op->id().strId();
             op->indices_ = {};
-            for (size_t i = 0, n = _op->indices_.size(); i < n; i++) {
-                if (preserveDim[i]) {
-                    op->indices_.emplace_back(_op->indices_[i]);
-                    newShape.emplace_back(
-                        buffers_.at(_op->var_)->tensor().shape()[i]);
+            for (auto &&[preserve, idx, dim] :
+                 iter::zip(preserveDim, _op->indices_,
+                           buffer(_op->var_)->tensor().shape())) {
+                if (preserve) {
+                    op->indices_.emplace_back(idx);
+                    newShape.emplace_back(dim);
                     newTargetIndices.emplace_back(nullptr);
                 } else {
-                    newTargetIndices.emplace_back(_op->indices_[i]);
+                    newTargetIndices.emplace_back(idx);
                 }
             }
             cacheAtomic_[loopToCache].emplace_back(_op, newShape,
@@ -175,7 +174,7 @@ Stmt MakeParallelReduction::visit(const For &_op) {
     defined_.insert(_op->iter_);
     paraScopes_[_op->id()] = _op->property_.parallel_;
     scopeDefined_[_op->id()] = defined_;
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     scopeDefined_.erase(_op->id());
     paraScopes_.erase(_op->id());
     defined_.erase(_op->iter_);
@@ -192,9 +191,10 @@ Stmt MakeParallelReduction::visit(const For &_op) {
         Stmt ret = op;
         for (auto &&[reduce, newShape, targetIndices] :
              cacheAtomic_.at(op->id())) {
-            auto cacheName = reduce->var_ + ".atomic_cache." + reduce->id();
-            auto dtype = buffers_.at(reduce->var_)->tensor().dtype();
-            auto mtype = localMType(buffers_.at(reduce->var_)->mtype());
+            auto cacheName =
+                reduce->var_ + ".atomic_cache." + reduce->id().strId();
+            auto dtype = buffer(reduce->var_)->tensor().dtype();
+            auto mtype = localMType(buffer(reduce->var_)->mtype());
             std::vector<Expr> cacheIndices;
             for (size_t i = 0, j = 0, n = newShape.size(); i < n; i++) {
                 cacheIndices.emplace_back(
@@ -212,11 +212,11 @@ Stmt MakeParallelReduction::visit(const For &_op) {
                              makeLoad(cacheName, cacheIndices), true);
             for (size_t i = newShape.size() - 1; ~i; i--) {
                 init = makeFor("", cacheName + ".i" + std::to_string(i),
-                               makeIntConst(0), newShape[i], newShape[i],
-                               ForProperty(), init);
+                               makeIntConst(0), newShape[i], makeIntConst(1),
+                               newShape[i], ForProperty(), init);
                 flush = makeFor("", cacheName + ".i" + std::to_string(i),
-                                makeIntConst(0), newShape[i], newShape[i],
-                                ForProperty(), flush);
+                                makeIntConst(0), newShape[i], makeIntConst(1),
+                                newShape[i], ForProperty(), flush);
             }
             ret = makeVarDef(
                 "", cacheName,
@@ -231,11 +231,8 @@ Stmt MakeParallelReduction::visit(const For &_op) {
 
 Stmt MakeParallelReduction::visit(const VarDef &op) {
     ASSERT(!defined_.count(op->name_));
-    ASSERT(!buffers_.count(op->name_));
     defined_.insert(op->name_);
-    buffers_[op->name_] = op->buffer_;
-    auto ret = Mutator::visit(op);
-    buffers_.erase(op->name_);
+    auto ret = BaseClass::visit(op);
     defined_.erase(op->name_);
     return ret;
 }
@@ -255,7 +252,7 @@ Stmt makeParallelReduction(const Stmt &_op) {
         cond.emplace_back(std::move(findDepsCond));
     }
 
-    std::unordered_map<std::string, std::unordered_set<std::string>> toAlter;
+    std::unordered_map<ID, std::unordered_set<ID>> toAlter;
     auto filter = [](const AccessPoint &later, const AccessPoint &earlier) {
         return earlier.op_->nodeType() == ASTNodeType::ReduceTo &&
                later.op_->nodeType() == ASTNodeType::ReduceTo;
@@ -263,7 +260,7 @@ Stmt makeParallelReduction(const Stmt &_op) {
     auto found = [&](const Dependency &d) {
         ASSERT(d.cond_.size() >= 1);
         ASSERT(d.cond_.front().first.isNode_);
-        auto &&loopId = d.cond_.front().first.name_;
+        auto &&loopId = d.cond_.front().first.id_;
         if (paraInfo.at(loopId).type_.substr(0, 10) == "threadIdx." &&
             d.later() != d.earlier()) {
             // No need to use atomic because we can sync
@@ -284,4 +281,3 @@ Stmt makeParallelReduction(const Stmt &_op) {
 }
 
 } // namespace ir
-

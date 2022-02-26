@@ -8,7 +8,6 @@
 #include <ast.h>
 #include <buffer.h>
 #include <driver/array.h>
-#include <frontend_utils.h>
 #include <stmt.h>
 #include <tensor.h>
 
@@ -26,6 +25,10 @@ class FuncNode : public ASTNode {
     // recorded in `params_` and/or `returns_`, but we do not have to specify
     // them to `Driver`
     std::unordered_map<std::string, Ref<Ref<Array>>> closure_;
+
+    bool isFunc() const override { return true; }
+
+    void compHash() override { ASSERT(false); } // TODO
 
     DEFINE_NODE_TRAIT(Func);
 };

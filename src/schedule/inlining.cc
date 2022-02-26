@@ -1,27 +1,22 @@
+#include <itertools.hpp>
+
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
-#include <analyze/hash.h>
+#include <hash.h>
+#include <pass/hoist_var_over_stmt_seq.h>
 #include <pass/simplify.h>
+#include <pass/sink_var.h>
 #include <schedule/inlining.h>
 
 namespace ir {
 
-MakeInlinePlaceholder::MakeInlinePlaceholder(const std::vector<Expr> &indices) {
-    indexHashes_.reserve(indices.size());
-    for (auto &&index : indices) {
-        indexHashes_.emplace_back(getHash(index));
-    }
-}
-
-Expr MakeInlinePlaceholder::visitExpr(
-    const Expr &op, const std::function<Expr(const Expr &)> &visitNode) {
-    auto h = getHash(op);
-    for (size_t i = 0, iEnd = indexHashes_.size(); i < iEnd; i++) {
-        if (indexHashes_[i] == h) {
+Expr MakeInlinePlaceholder::visitExpr(const Expr &op) {
+    for (auto &&[i, index] : iter::enumerate(indices_)) {
+        if (HashComparator()(index, op)) {
             return makeVar(".inline_placeholder." + std::to_string(i));
         }
     }
-    return Mutator::visitExpr(op, visitNode);
+    return Mutator::visitExpr(op);
 }
 
 Expr ApplyInlinePlaceholder::visit(const Var &op) {
@@ -76,7 +71,17 @@ Stmt MakeInline::visit(const VarDef &_op) {
     }
 }
 
-Stmt inlining(const Stmt &_ast, const std::string &def) {
+Stmt inlining(const Stmt &_ast, const ID &def) {
+    auto ast = _ast;
+
+    // A new Store/ReduceTo node may contain Load nodes out of their VarDef
+    // scopes, so we have to expand those VarDef nodes. We first call
+    // hoistVarDefOverStmtSeq to expand the VarDef nodes over all the statment
+    // in a StmtSeq, and then we call ReplaceUses to update the Store/ReduceTo
+    // nodes, and finally we call sinkVars to adjust the scope of the VarDef
+    // nodes back to a proper size.
+    ast = hoistVarOverStmtSeq(ast);
+
     std::unordered_map<Load, Expr> replace;
     auto filter = [&](const AccessPoint &later, const AccessPoint &earlier) {
         return later.op_->nodeType() == ASTNodeType::Load &&
@@ -95,7 +100,7 @@ Stmt inlining(const Stmt &_ast, const std::string &def) {
             auto earlier = dep.earlier().as<ReduceToNode>();
             expr = MakeInlinePlaceholder(earlier->indices_)(earlier->expr_);
         }
-        if (!checkNotModified(_ast, expr, CheckNotModifiedSide::After,
+        if (!checkNotModified(ast, expr, CheckNotModifiedSide::After,
                               dep.earlier_.cursor_.id(),
                               CheckNotModifiedSide::Before,
                               dep.later_.cursor_.id())) {
@@ -107,11 +112,13 @@ Stmt inlining(const Stmt &_ast, const std::string &def) {
         auto later = dep.later().as<LoadNode>();
         replace[later] = ApplyInlinePlaceholder(later->indices_)(expr);
     };
-    findDeps(_ast, {{}}, found, FindDepsMode::KillLater, DEP_RAW, filter);
-    auto ast = MakeInline(def, replace)(_ast);
+    findDeps(ast, {{}}, found, FindDepsMode::KillLater, DEP_RAW, filter);
+    ast = MakeInline(def, replace)(ast);
+
+    ast = sinkVar(ast);
     ast = simplifyPass(ast);
+
     return ast;
 }
 
 } // namespace ir
-

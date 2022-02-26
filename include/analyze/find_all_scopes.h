@@ -6,10 +6,10 @@
 namespace ir {
 
 class FindAllScopes : public Visitor {
-    std::vector<std::string> scopes_;
+    std::vector<ID> scopes_;
 
   public:
-    const std::vector<std::string> &scopes() const { return scopes_; }
+    const std::vector<ID> &scopes() const { return scopes_; }
 
   protected:
     void visit(const For &op) override;
@@ -19,7 +19,7 @@ class FindAllScopes : public Visitor {
 /**
  * Collect IDs of all For and StmtSeq nodes in the AST
  */
-std::vector<std::string> findAllScopes(const Stmt &op);
+std::vector<ID> findAllScopes(const Stmt &op);
 
 } // namespace ir
 

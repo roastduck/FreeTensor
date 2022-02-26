@@ -13,4 +13,3 @@ void Device::sync() {
 }
 
 } // namespace ir
-

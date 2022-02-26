@@ -4,18 +4,14 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include <analyze/hash.h>
+#include <hash.h>
 #include <math/linear.h>
+#include <opt.h>
 #include <visitor.h>
 
 namespace ir {
 
-/**
- * Try to represent each (sub)expression as a linear expression of memory
- * accesses and loop iterators
- */
 class AnalyzeLinear : public Visitor {
-    GetHash getHash_;
     std::unordered_map<AST, LinearExpr<int64_t>> result_;
 
   public:
@@ -24,8 +20,7 @@ class AnalyzeLinear : public Visitor {
     }
 
   protected:
-    void visitExpr(const Expr &op,
-                   const std::function<void(const Expr &)> &visitNode) override;
+    void visitExpr(const Expr &op) override;
 
     void visit(const IntConst &op) override;
     void visit(const Add &op) override;
@@ -34,6 +29,17 @@ class AnalyzeLinear : public Visitor {
     // Note that for integer (floored) div, k * a / d !== (k / d) * a, so we are
     // not handling Div here
 };
+
+/**
+ * Try to represent each (sub)expression as a linear expression of memory
+ * accesses and loop iterators
+ */
+LinearExpr<int64_t> linear(const Expr &expr);
+
+/**
+ * Try to represent an comparison as a "LINEAR OP 0" form
+ */
+Opt<std::pair<LinearExpr<int64_t>, ASTNodeType>> linearComp(const Expr &expr);
 
 } // namespace ir
 

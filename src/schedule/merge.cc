@@ -1,3 +1,4 @@
+#include <pass/tensor_prop_const.h>
 #include <schedule/check_loop_order.h>
 #include <schedule/merge.h>
 
@@ -26,7 +27,8 @@ Stmt MergeFor::visit(const For &_op) {
                        ? makeIntConst(innerLen_.as<IntConstNode>()->val_ *
                                       outerLen_.as<IntConstNode>()->val_)
                        : makeMul(innerLen_, outerLen_);
-        auto ret = makeFor(newId_, newIter_, makeIntConst(0), len, len,
+        auto ret = makeFor(newId_, newIter_, makeIntConst(0), len,
+                           makeIntConst(1), len,
                            ForProperty().withNoDeps(
                                intersect(op->property_.noDeps_, innerNoDeps_)),
                            op->body_);
@@ -108,10 +110,14 @@ Expr MergeFor::visit(const Var &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::Var);
     auto op = __op.as<VarNode>();
     if (insideInner_ && op->name_ == oldInner_->iter_) {
-        return makeMod(makeVar(newIter_), innerLen_);
+        return makeAdd(
+            oldInner_->begin_,
+            makeMul(makeMod(makeVar(newIter_), innerLen_), oldInner_->step_));
     }
     if (insideOuter_ && op->name_ == oldOuter_->iter_) {
-        return makeFloorDiv(makeVar(newIter_), innerLen_);
+        return makeAdd(oldOuter_->begin_,
+                       makeMul(makeFloorDiv(makeVar(newIter_), innerLen_),
+                               oldOuter_->step_));
     }
     return op;
 }
@@ -128,16 +134,17 @@ Stmt MergeFor::visit(const VarDef &_op) {
     }
 }
 
-std::pair<Stmt, std::string> merge(const Stmt &_ast, const std::string &loop1,
-                                   const std::string &loop2) {
+std::pair<Stmt, ID> merge(const Stmt &_ast, const ID &loop1, const ID &loop2) {
+    // Propagate first, because merge will lose some propagating opportunities
+    auto ast = tensorPropConst(_ast);
 
     CheckLoopOrder checker({loop1, loop2});
-    checker(_ast); // Check they are nested
+    checker(ast); // Check they are nested
     auto &&curOrder = checker.order();
     auto outer = curOrder[0], inner = curOrder[1];
 
     MergeFor mutator(outer, inner);
-    auto ast = mutator(_ast);
+    ast = mutator(ast);
     return std::make_pair(ast, mutator.newId());
 }
 

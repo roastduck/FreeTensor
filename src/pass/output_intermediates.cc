@@ -1,9 +1,5 @@
-#include <analyze/deps.h>
-#include <analyze/find_all_scopes.h>
-#include <pass/flatten_stmt_seq.h>
-#include <pass/make_reduction.h>
+#include <analyze/analyze_version.h>
 #include <pass/output_intermediates.h>
-#include <pass/undo_make_reduction.h>
 
 namespace ir {
 
@@ -20,234 +16,80 @@ static MemType toGlobalMemType(MemType mtype) {
     }
 }
 
-void CountScopeLen::visit(const Store &op) {
-    Visitor::visit(op);
-    if (op->var_ == var_) {
-        scopeLen_[op] = makeIntConst(1);
-    }
+bool OutputIntermediates::isSingleVersion(const ID &defId) const {
+    return totLens_.at(defId)->nodeType() == ASTNodeType::IntConst &&
+           totLens_.at(defId).as<IntConstNode>()->val_ == 1;
 }
 
-void CountScopeLen::visit(const VarDef &op) {
-    if (op->id() == def_) {
-        var_ = op->name_;
-        Visitor::visit(op);
-        var_.clear();
-    } else {
-        Visitor::visit(op);
-    }
-    if (scopeLen_.count(op->body_)) {
-        scopeLen_[op] = scopeLen_.at(op->body_);
-    }
-}
-
-void CountScopeLen::visit(const For &op) {
-    Visitor::visit(op);
-    if (scopeLen_.count(op->body_)) {
-        if (affectingScopes_.count(op->id())) {
-            scopeLen_[op] = makeMul(scopeLen_.at(op->body_), op->len_);
-        } else {
-            scopeLen_[op] = scopeLen_.at(op->body_);
-        }
-    }
-}
-
-void CountScopeLen::visit(const StmtSeq &op) {
-    Visitor::visit(op);
-    Expr len;
-    for (auto &&stmt : op->stmts_) {
-        if (scopeLen_.count(stmt)) {
-            if (affectingScopes_.count(op->id())) {
-                len = len.isValid() ? makeAdd(len, scopeLen_.at(stmt))
-                                    : scopeLen_.at(stmt);
-            } else {
-                len = scopeLen_.at(stmt);
-            }
-        }
-    }
-    if (len.isValid()) {
-        scopeLen_[op] = len;
-    }
-}
-
-void CountScopeLen::visit(const If &op) {
-    Visitor::visit(op);
-    Expr len;
-    if (scopeLen_.count(op->thenCase_)) {
-        len = scopeLen_.at(op->thenCase_);
-    }
-    if (op->elseCase_.isValid() && scopeLen_.count(op->elseCase_)) {
-        len = len.isValid() ? makeMax(len, scopeLen_.at(op->elseCase_))
-                            : scopeLen_.at(op->elseCase_);
-    }
-    if (len.isValid()) {
-        scopeLen_[op] = len;
-    }
-}
-
-void CountScopeLen::visit(const Assert &op) {
-    Visitor::visit(op);
-    if (scopeLen_.count(op->body_)) {
-        scopeLen_[op] = scopeLen_.at(op->body_);
-    }
-}
-
-Expr AddExtraDim::visit(const Load &_op) {
-    auto __op = Mutator::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::Load);
-    auto op = __op.as<LoadNode>();
-    if (loadMap_.count(_op)) {
-        loadMap_[op] = loadMap_.at(_op);
-        loadMap_.erase(_op);
-    }
-    if (op->var_ == var_) {
-        std::vector<Expr> newIndices(1, offset_);
-        newIndices.insert(newIndices.end(), op->indices_.begin(),
-                          op->indices_.end());
-        loadMap_[op] = makeLoad(op->var_ + ".tape", std::move(newIndices));
-    }
-    return op;
-}
-
-Stmt AddExtraDim::visit(const Store &op) {
-    if (op->var_ == var_) {
-        auto oldOffset = offset_;
-        offset_ = makeSub(offset_, makeIntConst(1));
-
-        std::vector<Expr> indices;
-        indices.reserve(op->indices_.size());
-        for (auto &&index : op->indices_) {
-            indices.emplace_back((*this)(index));
-        }
-        auto oldStore = makeStore(op->id(), op->var_, std::move(indices),
-                                  (*this)(op->expr_));
-
-        offset_ = oldOffset;
-
-        std::vector<Expr> newIndices(1, offset_);
+Stmt OutputIntermediates::visit(const Store &op) {
+    auto oldStore = BaseClass::visit(op);
+    if (versions_.count(op->id()) && !isSingleVersion(def(op->var_)->id())) {
+        std::vector<Expr> newIndices(1, versions_.at(op->id()));
         newIndices.insert(newIndices.end(), op->indices_.begin(),
                           op->indices_.end());
         auto newStore = makeStore("", op->var_ + ".tape", std::move(newIndices),
                                   makeLoad(op->var_, op->indices_));
-
         return makeStmtSeq("", {oldStore, newStore});
     } else {
-        return Mutator::visit(op);
+        return oldStore;
     }
 }
 
-Stmt AddExtraDim::visit(const VarDef &_op) {
-    if (_op->id() == def_) {
+Stmt OutputIntermediates::visit(const ReduceTo &op) {
+    auto oldReduce = BaseClass::visit(op);
+    if (versions_.count(op->id()) && !isSingleVersion(def(op->var_)->id())) {
+        std::vector<Expr> newIndices(1, versions_.at(op->id()));
+        newIndices.insert(newIndices.end(), op->indices_.begin(),
+                          op->indices_.end());
+        auto newStore = makeStore("", op->var_ + ".tape", std::move(newIndices),
+                                  makeLoad(op->var_, op->indices_));
+        return makeStmtSeq("", {oldReduce, newStore});
+    } else {
+        return oldReduce;
+    }
+}
+
+Stmt OutputIntermediates::visit(const VarDef &_op) {
+    if (totLens_.count(_op->id())) {
         // FIXME: What if the scopeLen_ is a loop-variant temporary?
-        if (totLen_->nodeType() == ASTNodeType::IntConst &&
-            totLen_.as<IntConstNode>()->val_ == 1) {
+        if (isSingleVersion(_op->id())) {
             // No need to create a new VarDef
-            auto __op = Mutator::visit(_op);
+            auto __op = BaseClass::visit(_op);
             ASSERT(__op->nodeType() == ASTNodeType::VarDef);
             auto op = __op.as<VarDefNode>();
 
-            tapeName_ = op->name_;
+            tapeNames_[op->id()] = op->name_;
             if (op->buffer_->atype() != AccessType::InOut) {
                 op->buffer_->setAtype(AccessType::Output);
             }
             return op;
         } else {
-            var_ = _op->name_;
-            auto __op = Mutator::visit(_op);
+            auto __op = BaseClass::visit(_op);
             ASSERT(__op->nodeType() == ASTNodeType::VarDef);
             auto op = __op.as<VarDefNode>();
-            var_.clear();
 
-            tapeName_ = op->name_ + ".tape";
+            auto tapeName = tapeNames_[op->id()] = op->name_ + ".tape";
             auto tensor = op->buffer_->tensor();
-            tensor.shape().insert(tensor.shape().begin(), totLen_);
-            return makeVarDef("", tapeName_,
+            tensor.shape().insert(tensor.shape().begin(),
+                                  totLens_.at(op->id()));
+            return makeVarDef("", tapeName,
                               Buffer(std::move(tensor), AccessType::Output,
                                      toGlobalMemType(op->buffer_->mtype())),
                               nullptr, op, false);
         }
     } else {
-        return Mutator::visit(_op);
+        return BaseClass::visit(_op);
     }
 }
 
-Stmt AddExtraDim::visit(const For &op) {
-    if (affectingScopes_.count(op->id())) {
-        auto oldOffset = offset_;
-        offset_ = makeAdd(offset_,
-                          makeMul(makeVar(op->iter_), scopeLen_.at(op->body_)));
-        auto ret = Mutator::visit(op);
-        offset_ = oldOffset;
-        return ret;
-    } else {
-        return Mutator::visit(op);
-    }
-}
-
-Stmt AddExtraDim::visit(const StmtSeq &op) {
-    if (affectingScopes_.count(op->id())) {
-        auto oldOffset = offset_;
-        auto nextOffset = offset_;
-        std::vector<Stmt> stmts;
-        for (auto &&stmt : op->stmts_) {
-            if (scopeLen_.count(stmt)) {
-                offset_ = nextOffset;
-                stmts.emplace_back((*this)(stmt));
-                nextOffset = makeAdd(offset_, scopeLen_.at(stmt));
-            } else {
-                stmts.emplace_back((*this)(stmt));
-            }
-        }
-        offset_ = oldOffset;
-        return makeStmtSeq(op->id(), std::move(stmts));
-    } else {
-        return Mutator::visit(op);
-    }
-}
-
-std::tuple<Stmt, std::unordered_map<std::string, std::string>,
-           std::unordered_map<Load, Expr>>
-outputIntermediates(const Stmt &_op,
-                    const std::unordered_set<std::string> &intermediates) {
-    auto op = flattenStmtSeq(_op); // Make the added dim simpler
-
-    // Reduce min and reduce max may need the intermediate value for
-    // gradients, but reduce max does not
-    op = makeReduction(op, {ReduceOp::Add});
-
-    std::vector<FindDepsCond> conds;
-    for (auto &&scope : findAllScopes(op)) {
-        conds.push_back({{scope, DepDirection::Normal}});
-    }
-    std::unordered_map<std::string, std::unordered_set<std::string>>
-        affectingScopes;
-    auto filter = [&](const AccessPoint &later, const AccessPoint &earlier) {
-        return intermediates.count(earlier.def_->id());
-    };
-    auto found = [&](const Dependency &d) {
-        if (d.earlier()->nodeType() != ASTNodeType::ReduceTo &&
-            d.later()->nodeType() != ASTNodeType::ReduceTo) {
-            ASSERT(d.cond_.size() == 1);
-            affectingScopes[d.defId()].insert(d.cond_[0].first.name_);
-        }
-    };
-    findDeps(op, conds, found, FindDepsMode::Dep, DEP_WAR | DEP_RAW, filter,
-             true, false);
-
-    op = undoMakeReduction(op); // Because we need to record loadMap
-
-    std::unordered_map<std::string, std::string> nameMap;
-    std::unordered_map<Load, Expr> loadMap;
-    for (auto &&defId : intermediates) {
-        auto &&scopes = affectingScopes[defId];
-        CountScopeLen counter(defId, scopes);
-        counter(op);
-        auto &&scopeLen = counter.scopeLen();
-        AddExtraDim adder(defId, scopes, scopeLen, scopeLen.at(op), loadMap);
-        op = adder(op);
-        nameMap[defId] = adder.tapeName();
-    }
-    return std::make_tuple(op, nameMap, loadMap);
+std::tuple<Stmt, std::unordered_map<ID, std::string>,
+           std::unordered_map<ID, Expr>, std::unordered_map<ID, Expr>>
+outputIntermediates(const Stmt &op,
+                    const std::unordered_set<ID> &intermediates) {
+    auto [versions, totLens] = analyzeVersion(op, intermediates);
+    OutputIntermediates mutator(versions, totLens);
+    auto ret = mutator(op);
+    return std::make_tuple(ret, mutator.tapeNames(), versions, totLens);
 }
 
 } // namespace ir
-

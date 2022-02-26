@@ -165,7 +165,7 @@ void CompAccessBound::visit(const If &op) {
 }
 
 AccessBound
-compAccessBound(const Stmt &op, const std::string &varDefId,
+compAccessBound(const Stmt &op, const ID &varDefId,
                 const std::unordered_map<Expr, std::vector<LowerBound>> &lower,
                 const std::unordered_map<Expr, std::vector<UpperBound>> &upper,
                 CompAccessBoundMode mode) {
@@ -177,4 +177,3 @@ compAccessBound(const Stmt &op, const std::string &varDefId,
 }
 
 } // namespace ir
-

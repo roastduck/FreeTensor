@@ -363,6 +363,18 @@ class Schedule(ffi.Schedule):
         return super(Schedule, self).var_split(toId(vardef), dim, mode, factor,
                                                nparts)
 
+    def var_merge(self, vardef, dim):
+        """
+        Merge two dimensions of a variable
+        Parameters
+        ----------
+        vardef : str, Stmt or Cursor
+            ID of the VarDef statement of the specific variable
+        dim : int
+            Merge the `dim`-th and the `(dim + 1)`-th dimension
+        """
+        return super(Schedule, self).var_merge(toId(vardef), dim)
+
     def var_reorder(self, vardef, order):
         """
         Reorder the dimensions of a variable
@@ -485,7 +497,7 @@ class Schedule(ffi.Schedule):
         """
         super(Schedule, self).vectorize(toId(loop))
 
-    def seperate_tail(self):
+    def separate_tail(self, noDuplicateVarDefs=False):
         """
         Seperate main iterations and tail iterations of a loop
 
@@ -501,7 +513,7 @@ class Schedule(ffi.Schedule):
         }
         ```
 
-        Each loop will be seperated into 2 parts: the body and the tail. After
+        Each loop will be separated into 2 parts: the body and the tail. After
         simplification, the program will finally be transformed to
 
         ```
@@ -515,18 +527,20 @@ class Schedule(ffi.Schedule):
         }
         ```
 
-        If there is two VarDef nodes in two branches, it may result in doubled
-        memory use, since different thread may go to different branch. Therefore,
-        this pass will not duplicate VarDef nodes. (TODO: This restriction may be
-        limited to non-local buffers)
-
         Ideally, all programs can benefit from this schedule. However, this
         schedule may greatly increase the program size and make the compiling
         time way too long. Therefore, this transformation is implemented as a
         schedule, which can be applied optionally. (TODO: Optionally apply this
         schedule to part of the program)
+
+        Parameters
+        ----------
+        noDuplicateVarDefs : bool
+            If there is two VarDef nodes in two branches, it may result in doubled
+            memory use, since different thread may go to different branch.
+            Set this parameter to true to stop duplicating VarDef nodes.
         """
-        super(Schedule, self).seperate_tail()
+        super(Schedule, self).separate_tail(noDuplicateVarDefs)
 
     def as_matmul(self, loop):
         """

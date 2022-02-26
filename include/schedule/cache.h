@@ -7,14 +7,16 @@
 namespace ir {
 
 class MakeCacheVar : public Mutator {
-    std::string stmt_, oldVar_, newVar_, oldDef_, newDef_;
+    ID stmt_;
+    std::string oldVar_, newVar_;
+    ID oldDef_, newDef_;
     MemType mtype_;
     VarDef def_;
     bool inStmt_ = false;
 
   public:
-    MakeCacheVar(const std::string &stmt, const std::string &oldVar,
-                 MemType mtype, bool isReduction)
+    MakeCacheVar(const ID &stmt, const std::string &oldVar, MemType mtype,
+                 bool isReduction)
         : stmt_(stmt), oldVar_(oldVar), mtype_(mtype) {
         newVar_ = oldVar_ + (isReduction ? ".r" : ".c");
         switch (mtype) {
@@ -32,12 +34,11 @@ class MakeCacheVar : public Mutator {
     }
 
     const std::string &newVar() const { return newVar_; }
-    const std::string &oldDef() const { return oldDef_; }
-    const std::string &newDef() const { return newDef_; }
+    const ID &oldDef() const { return oldDef_; }
+    const ID &newDef() const { return newDef_; }
 
   protected:
-    Stmt visitStmt(const Stmt &op,
-                   const std::function<Stmt(const Stmt &)> &visitNode) override;
+    Stmt visitStmt(const Stmt &op) override;
     Stmt visit(const VarDef &op) override;
     Expr visit(const Load &op) override;
     Stmt visit(const Store &op) override;
@@ -45,60 +46,59 @@ class MakeCacheVar : public Mutator {
 };
 
 class MakeFillAndFlush : public Mutator {
-    std::string stmt_, oldVar_, newVar_, oldDef_;
-    std::string fillStmt_, flushStmt_;
+    ID stmt_;
+    std::string oldVar_, newVar_;
+    ID oldDef_, fillStmt_, flushStmt_;
     const AccessBound &rRange_, &wRange_;
     VarDef def_;
 
   public:
-    MakeFillAndFlush(const std::string &stmt, const std::string &oldVar,
-                     const std::string &newVar, const std::string &oldDef,
+    MakeFillAndFlush(const ID &stmt, const std::string &oldVar,
+                     const std::string &newVar, const ID &oldDef,
                      const AccessBound &rRange, const AccessBound &wRange)
         : stmt_(stmt), oldVar_(oldVar), newVar_(newVar), oldDef_(oldDef),
           rRange_(rRange), wRange_(wRange) {}
 
-    const std::string &fillStmt() const { return fillStmt_; }
-    const std::string &flushStmt() const { return flushStmt_; }
+    const ID &fillStmt() const { return fillStmt_; }
+    const ID &flushStmt() const { return flushStmt_; }
 
   protected:
-    Stmt visitStmt(const Stmt &op,
-                   const std::function<Stmt(const Stmt &)> &visitNode) override;
+    Stmt visitStmt(const Stmt &op) override;
     Stmt visit(const VarDef &op) override;
 };
 
 class MakeInitAndReduce : public Mutator {
-    std::string stmt_, oldVar_, newVar_, oldDef_, newDef_;
-    std::string initStmt_, reduceStmt_;
+    ID stmt_;
+    std::string oldVar_, newVar_;
+    ID oldDef_, newDef_, initStmt_, reduceStmt_;
     const AccessBound &range_;
     VarDef def_;
     ReduceTo reduce_;
     bool inNewVar_ = false;
 
   public:
-    MakeInitAndReduce(const std::string &stmt, const std::string &oldVar,
-                      const std::string &newVar, const std::string &oldDef,
-                      const std::string &newDef, const AccessBound &range)
+    MakeInitAndReduce(const ID &stmt, const std::string &oldVar,
+                      const std::string &newVar, const ID &oldDef,
+                      const ID &newDef, const AccessBound &range)
         : stmt_(stmt), oldVar_(oldVar), newVar_(newVar), oldDef_(oldDef),
           newDef_(newDef), range_(range) {}
 
-    const std::string &initStmt() const { return initStmt_; }
-    const std::string &reduceStmt() const { return reduceStmt_; }
+    const ID &initStmt() const { return initStmt_; }
+    const ID &reduceStmt() const { return reduceStmt_; }
 
   protected:
-    Stmt visitStmt(const Stmt &op,
-                   const std::function<Stmt(const Stmt &)> &visitNode) override;
+    Stmt visitStmt(const Stmt &op) override;
     Stmt visit(const VarDef &op) override;
     Stmt visit(const ReduceTo &op) override;
     Stmt visit(const Store &op) override;
     Expr visit(const Load &op) override;
 };
 
-std::pair<Stmt, std::tuple<std::string, std::string, std::string, std::string>>
-cache(const Stmt &ast, const std::string &stmt, const std::string &var,
-      MemType mtype);
+std::pair<Stmt, std::tuple<ID, ID, std::string, ID>>
+cache(const Stmt &ast, const ID &stmt, const std::string &var, MemType mtype);
 
-std::pair<Stmt, std::tuple<std::string, std::string, std::string, std::string>>
-cacheReduction(const Stmt &ast, const std::string &stmt, const std::string &var,
+std::pair<Stmt, std::tuple<ID, ID, std::string, ID>>
+cacheReduction(const Stmt &ast, const ID &stmt, const std::string &var,
                MemType mtype);
 
 } // namespace ir

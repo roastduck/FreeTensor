@@ -19,4 +19,3 @@ std::unordered_set<std::string> allWrites(const AST &op) {
 }
 
 } // namespace ir
-

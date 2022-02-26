@@ -1,8 +1,6 @@
 #ifndef MUTATOR_H
 #define MUTATOR_H
 
-#include <functional>
-
 #include <debug.h>
 #include <except.h>
 #include <expr.h>
@@ -12,6 +10,9 @@ namespace ir {
 
 class Mutator {
   public:
+    typedef Expr ExprRetType;
+    typedef Stmt StmtRetType;
+
     virtual ~Mutator() {}
 
     virtual Stmt operator()(const Stmt &op) final;
@@ -21,17 +22,19 @@ class Mutator {
     // NOTE: Do NOT std::move from the original op! The original op may be
     // duplicated around the AST!
 
-    // Additional hook for any expressions
-    virtual Expr visitExpr(const Expr &op,
-                           const std::function<Expr(const Expr &)> &visitNode) {
-        return visitNode(op);
-    }
+    /* Additional hook for any expressions
+     *
+     * Cautious when one visitor B inherits another visitor A, the calling order
+     * is B::visitExpr -> A::visitExpr -> B::visit -> A::visit
+     */
+    virtual Expr visitExpr(const Expr &op);
 
-    // Additional hook for any statements
-    virtual Stmt visitStmt(const Stmt &op,
-                           const std::function<Stmt(const Stmt &)> &visitNode) {
-        return visitNode(op);
-    }
+    /* Additional hook for any statements
+     *
+     * Cautious when one visitor B inherits another visitor A, the calling order
+     * is B::visitStmt -> A::visitStmt -> B::visit -> A::visit
+     */
+    virtual Stmt visitStmt(const Stmt &op);
 
     virtual Stmt visit(const Any &op) { return COPY_DEBUG_INFO(makeAny(), op); }
 
@@ -153,6 +156,11 @@ class Mutator {
                                op);
     }
 
+    virtual Expr visit(const Remainder &op) {
+        return COPY_DEBUG_INFO(
+            makeRemainder((*this)(op->lhs_), (*this)(op->rhs_)), op);
+    }
+
     virtual Expr visit(const Min &op) {
         return COPY_DEBUG_INFO(makeMin((*this)(op->lhs_), (*this)(op->rhs_)),
                                op);
@@ -242,7 +250,8 @@ class Mutator {
     virtual Stmt visit(const For &op) {
         auto ret =
             makeFor(op->id(), op->iter_, (*this)(op->begin_), (*this)(op->end_),
-                    (*this)(op->len_), op->property_, (*this)(op->body_));
+                    (*this)(op->step_), (*this)(op->len_), op->property_,
+                    (*this)(op->body_));
         return COPY_DEBUG_INFO(ret, op);
     }
 
@@ -259,6 +268,11 @@ class Mutator {
     virtual Stmt visit(const Assert &op) {
         return COPY_DEBUG_INFO(
             makeAssert(op->id(), (*this)(op->cond_), (*this)(op->body_)), op);
+    }
+
+    virtual Stmt visit(const Assume &op) {
+        return COPY_DEBUG_INFO(
+            makeAssume(op->id(), (*this)(op->cond_), (*this)(op->body_)), op);
     }
 
     virtual Expr visit(const IfExpr &op) {

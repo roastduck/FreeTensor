@@ -27,15 +27,15 @@ void init_ffi_schedule(py::module_ &m) {
         .def("find", static_cast<Cursor (Schedule::*)(
                          const std::function<bool(const Cursor &)> &) const>(
                          &Schedule::find))
-        .def("find",
-             static_cast<Cursor (Schedule::*)(const std::string &) const>(
-                 &Schedule::find))
+        .def("find", static_cast<Cursor (Schedule::*)(const ID &) const>(
+                         &Schedule::find))
         .def("find_all",
              static_cast<std::vector<Cursor> (Schedule::*)(
                  const std::function<bool(const Cursor &)> &) const>(
                  &Schedule::findAll))
-        .def("find_all", static_cast<std::vector<Cursor> (Schedule::*)(
-                             const std::string &) const>(&Schedule::findAll))
+        .def("find_all",
+             static_cast<std::vector<Cursor> (Schedule::*)(const ID &) const>(
+                 &Schedule::findAll))
         .def("split", &Schedule::split, "id"_a, "factor"_a = -1,
              "nparts"_a = -1)
         .def("reorder", &Schedule::reorder, "order"_a)
@@ -51,13 +51,15 @@ void init_ffi_schedule(py::module_ &m) {
         .def("set_mem_type", &Schedule::setMemType, "def"_a, "mtype"_a)
         .def("var_split", &Schedule::varSplit, "vardef"_a, "dim"_a, "mode"_a,
              "factor"_a = -1, "nparts"_a = -1)
+        .def("var_merge", &Schedule::varMerge, "vardef"_a, "dim"_a)
         .def("var_reorder", &Schedule::varReorder, "vardef"_a, "order"_a)
         .def("move_to", &Schedule::moveTo, "stmt"_a, "side"_a, "dst"_a)
         .def("inline", &Schedule::inlining, "vardef"_a)
         .def("parallelize", &Schedule::parallelize, "loop"_a, "parallel"_a)
         .def("unroll", &Schedule::unroll, "loop"_a, "immedate"_a = false)
         .def("vectorize", &Schedule::vectorize, "loop"_a)
-        .def("seperate_tail", &Schedule::seperateTail)
+        .def("separate_tail", &Schedule::separateTail,
+             "noDuplicateVarDefs"_a = false)
         .def("as_matmul", &Schedule::asMatMul)
         .def("auto_schedule", &Schedule::autoSchedule)
         .def("auto_use_lib", &Schedule::autoUseLib)

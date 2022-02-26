@@ -29,11 +29,12 @@ void FindAllScopesInside::visit(const StmtSeq &op) {
 Stmt BlendPass::visit(const For &op) {
     if (op->id() == loop_) {
         if (op->len_->nodeType() != ASTNodeType::IntConst) {
-            throw InvalidSchedule("The length of " + loop_ +
+            throw InvalidSchedule("The length of " + toString(loop_) +
                                   " should be a constant");
         }
         iter_ = op->iter_;
         begin_ = op->begin_;
+        step_ = op->step_;
         len_ = op->len_.as<IntConstNode>()->val_;
         inLoop_ = true;
         auto body = (*this)(op->body_);
@@ -48,12 +49,13 @@ Stmt BlendPass::visit(const For &op) {
                 envStack_.pop_back();
             } else {
                 ASSERT(!offset_.count(op->iter_));
-                offset_[op->iter_] = op->begin_;
+                offset_[op->iter_] = std::make_pair(op->begin_, op->step_);
                 ret = (*this)(op->body_);
                 offset_.erase(op->iter_);
                 auto len = (*this)(op->len_);
-                ret = makeFor(op->id(), op->iter_, makeIntConst(0), len, len,
-                              op->property_, std::move(ret));
+                ret = makeFor(op->id(), op->iter_, makeIntConst(0), len,
+                              makeIntConst(1), len, op->property_,
+                              std::move(ret));
             }
             return ret;
         } else {
@@ -130,10 +132,12 @@ Stmt BlendPass::visit(const VarDef &op) {
 
 Expr BlendPass::visit(const Var &op) {
     if (inLoop_ && op->name_ == iter_) {
-        return makeAdd(begin_, makeIntConst(curIter_));
+        return makeAdd(begin_, makeMul(makeIntConst(curIter_), step_));
     }
     if (offset_.count(op->name_)) {
-        return makeAdd(Mutator::visit(op), (*this)(offset_.at(op->name_)));
+        auto &&[begin, step] = offset_.at(op->name_);
+        return makeAdd(makeMul(Mutator::visit(op), (*this)(step)),
+                       (*this)(begin));
     }
     return Mutator::visit(op);
 }
@@ -145,13 +149,13 @@ Expr BlendPass::visit(const Load &_op) {
     return visitMemAccess(op);
 }
 
-Stmt blend(const Stmt &_ast, const std::string &loop) {
+Stmt blend(const Stmt &_ast, const ID &loop) {
     auto ast = simplifyPass(_ast); // Const prop for ForNode::len_
 
     FindAllScopesInside finder(loop);
     finder(ast);
     if (!finder.found()) {
-        throw InvalidSchedule("Loop " + loop + " not found");
+        throw InvalidSchedule("Loop " + toString(loop) + " not found");
     }
 
     std::vector<FindDepsCond> cond;

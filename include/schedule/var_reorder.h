@@ -8,12 +8,13 @@
 namespace ir {
 
 class VarReorder : public Mutator {
-    std::string def_, var_;
+    ID def_;
+    std::string var_;
     std::vector<int> order_;
     bool found_ = false;
 
   public:
-    VarReorder(const std::string &def, const std::vector<int> &order)
+    VarReorder(const ID &def, const std::vector<int> &order)
         : def_(def), order_(order) {
         std::vector<int> numbers;
         numbers.reserve(order.size());
@@ -37,8 +38,8 @@ class VarReorder : public Mutator {
                 throw InvalidSchedule("Number of dimensions in the order does "
                                       "not match the variable");
             }
-            for (size_t i = 0, n = order_.size(); i < n; i++) {
-                indices.emplace_back(op->indices_[order_[i]]);
+            for (auto &&nth : order_) {
+                indices.emplace_back(op->indices_[nth]);
             }
             op->indices_ =
                 std::vector<SubTree<ExprNode>>(indices.begin(), indices.end());
@@ -54,8 +55,7 @@ class VarReorder : public Mutator {
     Stmt visit(const MatMul &op) override;
 };
 
-Stmt varReorder(const Stmt &ast, const std::string &def,
-                const std::vector<int> &order);
+Stmt varReorder(const Stmt &ast, const ID &def, const std::vector<int> &order);
 
 } // namespace ir
 

@@ -1,8 +1,10 @@
 import ffi
-from ffi import AccessType, MemType, DataType
+from ffi import ID, AccessType, MemType, DataType
 
 
 def toId(node):
+    if type(node) is ID:
+        return node
     if type(node) is str:
         return node
     if isinstance(node, ffi.Cursor):
@@ -22,6 +24,8 @@ def parseDType(dtype):
             return DataType.Float32
         elif dtype.lower() == "int32":
             return DataType.Int32
+        elif dtype.lower() == "bool":
+            return DataType.Bool
     assert False, "Unrecognized data type %s" % dtype
 
 

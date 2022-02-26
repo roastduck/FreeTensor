@@ -97,4 +97,12 @@ template <class T> struct Rational {
 
 } // namespace ir
 
+namespace std {
+
+template <class T> ir::Rational<T> abs(const ir::Rational<T> &x) {
+    return x < 0 ? -x : x;
+}
+
+} // namespace std
+
 #endif // RATIONAL_H

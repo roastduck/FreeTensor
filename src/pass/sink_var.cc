@@ -89,8 +89,9 @@ Stmt SinkVar::visit(const VarDef &op) {
                            std::move(sizeLim), (*this)(loop->body_), false);
             isFixPoint_ = false;
             return makeFor(loop->id(), loop->iter_, (*this)(loop->begin_),
-                           (*this)(loop->end_), (*this)(loop->len_),
-                           loop->property_, std::move(loopBody));
+                           (*this)(loop->end_), (*this)(loop->step_),
+                           (*this)(loop->len_), loop->property_,
+                           std::move(loopBody));
         } else {
             body = (*this)(op->body_);
         }
@@ -114,10 +115,10 @@ Stmt sinkVar(const Stmt &_op) {
     for (auto &&loop : allLoops) {
         cond.push_back({{loop, DepDirection::Normal}});
     }
-    std::set<std::pair<std::string, std::string>> deps; // {(var, loop)}
+    std::unordered_set<std::pair<std::string, ID>> deps; // {(var, loop)}
     auto found = [&](const Dependency &d) {
         ASSERT(d.cond_.size() == 1);
-        deps.emplace(d.var_, d.cond_[0].first.name_);
+        deps.emplace(d.var_, d.cond_[0].first.id_);
     };
     findDeps(op, cond, found);
 

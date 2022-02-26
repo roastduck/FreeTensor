@@ -1,8 +1,6 @@
 #ifndef VISITOR_H
 #define VISITOR_H
 
-#include <functional>
-
 #include <debug.h>
 #include <expr.h>
 #include <func.h>
@@ -12,22 +10,27 @@ namespace ir {
 
 class Visitor {
   public:
+    typedef void ExprRetType;
+    typedef void StmtRetType;
+
     virtual ~Visitor() {}
 
     virtual void operator()(const AST &op) final;
 
   protected:
-    // Additional hook for any expressions
-    virtual void visitExpr(const Expr &op,
-                           const std::function<void(const Expr &)> &visitNode) {
-        visitNode(op);
-    }
+    /* Additional hook for any expressions
+     *
+     * Cautious when one visitor B inherits another visitor A, the calling order
+     * is B::visitExpr -> A::visitExpr -> B::visit -> A::visit
+     */
+    virtual void visitExpr(const Expr &op);
 
-    // Additional hook for any statements
-    virtual void visitStmt(const Stmt &op,
-                           const std::function<void(const Stmt &)> &visitNode) {
-        visitNode(op);
-    }
+    /* Additional hook for any statements
+     *
+     * Cautious when one visitor B inherits another visitor A, the calling order
+     * is B::visitStmt -> A::visitStmt -> B::visit -> A::visit
+     */
+    virtual void visitStmt(const Stmt &op);
 
     // Hooks for each node
     virtual void visit(const Any &op) {}
@@ -119,6 +122,11 @@ class Visitor {
         (*this)(op->rhs_);
     }
 
+    virtual void visit(const Remainder &op) {
+        (*this)(op->lhs_);
+        (*this)(op->rhs_);
+    }
+
     virtual void visit(const Min &op) {
         (*this)(op->lhs_);
         (*this)(op->rhs_);
@@ -203,6 +211,11 @@ class Visitor {
     }
 
     virtual void visit(const Assert &op) {
+        (*this)(op->cond_);
+        (*this)(op->body_);
+    }
+
+    virtual void visit(const Assume &op) {
         (*this)(op->cond_);
         (*this)(op->body_);
     }

@@ -28,9 +28,7 @@ If using MKL, add a `-DWITH_MKL=<path/to/mkl/root>` to `cmake`.
 
 It will build a shared library with a name like `ffi.cpython-37m-x86_64-linux-gnu.so`.
 
-You can also replace `cmake ..` with `cmake -DIR_DEBUG=ON ..` to enable some debugging features. Currently, this includes:
-
-- Enable tracing to tell by which pass a specific AST node is modified.
+There are some debugging options. Adding `-DIR_DEBUG_LOG_NODE=ON` to `cmake` enables tracing to tell by which pass a specific AST node is modified. Adding `-DIR_DEBUG_PROFILE` to `cmake` profiles some heavy functions in the compiler.
 
 ## Run
 
@@ -88,6 +86,8 @@ include/ --------------------------------------------------- C++ headers
 |- mutator.h ----------------------------------------------- Inherit Mutator in this file to modify an AST
 |- ffi.h --------------------------------------------------- Interface between C++ and Python. Implementations are in src/ffi/
 |- schedule.h ---------------------------------------------- All user specified transformations (schedules). Main interface. Details are in schedule/
+|- frontend/ ----------------------------------------------- C++ utilities used in Python API
+|- math/ --------------------------------------------------- Math utilities
 |- schedule/ ----------------------------------------------- All user specified transformations (schedules)
 |- pass/ --------------------------------------------------- All user agnostic transformations (used inside or after schedules)
 |- analyze/ ------------------------------------------------ Passes to extract information from an AST

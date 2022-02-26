@@ -12,7 +12,8 @@ class MergeFor : public Mutator {
     For oldOuter_, oldInner_;
     Expr outerLen_, innerLen_;
 
-    std::string newIter_, newId_;
+    std::string newIter_;
+    ID newId_;
 
     bool insideOuter_ = false, insideInner_ = false;
     bool visitedInner_ = false;
@@ -25,10 +26,11 @@ class MergeFor : public Mutator {
         : oldOuter_(oldOuter), oldInner_(oldInner), outerLen_(oldOuter_->len_),
           innerLen_(oldInner_->len_),
           newIter_("m." + oldOuter_->iter_ + "." + oldInner_->iter_),
-          newId_("merged." + oldOuter_->id() + "." + oldInner_->id()) {}
+          newId_("merged." + oldOuter_->id().strId() + "." +
+                 oldInner_->id().strId()) {}
 
     const std::string &newIter() const { return newIter_; }
-    const std::string &newId() const { return newId_; }
+    const ID &newId() const { return newId_; }
 
   protected:
     Stmt visit(const For &op) override;
@@ -37,8 +39,7 @@ class MergeFor : public Mutator {
     Stmt visit(const VarDef &op) override;
 };
 
-std::pair<Stmt, std::string> merge(const Stmt &ast, const std::string &loop1,
-                                   const std::string &loop2);
+std::pair<Stmt, ID> merge(const Stmt &ast, const ID &loop1, const ID &loop2);
 
 } // namespace ir
 

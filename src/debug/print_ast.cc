@@ -27,25 +27,25 @@ void PrintVisitor::recur(const Stmt &op) {
 }
 
 void PrintVisitor::printId(const Stmt &op) {
-#ifdef IR_DEBUG
+#ifdef IR_DEBUG_LOG_NODE
     makeIndent();
     os() << "// By " << op->debugCreator_ << std::endl;
 #endif
     if (op->hasNamedId()) {
         if (pretty_) {
-            os() << CYAN << op->id() << ":" << RESET << std::endl;
+            os() << CYAN << ::ir::toString(op->id()) << ":" << RESET
+                 << std::endl;
         } else {
-            os() << op->id() << ":" << std::endl;
+            os() << ::ir::toString(op->id()) << ":" << std::endl;
         }
     }
 }
 
-void PrintVisitor::visitStmt(
-    const Stmt &op, const std::function<void(const Stmt &)> &visitNode) {
+void PrintVisitor::visitStmt(const Stmt &op) {
     if (op->nodeType() != ASTNodeType::Any) {
         printId(op);
     }
-    Visitor::visitStmt(op, visitNode);
+    Visitor::visitStmt(op);
 }
 
 void PrintVisitor::visit(const Func &op) {
@@ -240,6 +240,14 @@ void PrintVisitor::visit(const Mod &op) {
     os() << "(";
     recur(op->lhs_);
     os() << " % ";
+    recur(op->rhs_);
+    os() << ")";
+}
+
+void PrintVisitor::visit(const Remainder &op) {
+    os() << "(";
+    recur(op->lhs_);
+    os() << " %% ";
     recur(op->rhs_);
     os() << ")";
 }
@@ -462,13 +470,15 @@ void PrintVisitor::visit(const For &op) {
     }
     makeIndent();
     if (pretty_) {
-        os() << BOLD << "for " << RESET << op->iter_ << " = ";
+        os() << BOLD << "for " << RESET << op->iter_ << " in ";
     } else {
-        os() << "for " << op->iter_ << " = ";
+        os() << "for " << op->iter_ << " in ";
     }
     recur(op->begin_);
-    os() << " to ";
+    os() << " : ";
     recur(op->end_);
+    os() << " : ";
+    recur(op->step_);
     os() << " ";
     beginBlock();
     recur(op->body_);
@@ -503,6 +513,16 @@ void PrintVisitor::visit(const If &op) {
 void PrintVisitor::visit(const Assert &op) {
     makeIndent();
     os() << "assert ";
+    recur(op->cond_);
+    os() << " ";
+    beginBlock();
+    recur(op->body_);
+    endBlock();
+}
+
+void PrintVisitor::visit(const Assume &op) {
+    makeIndent();
+    os() << "assume ";
     recur(op->cond_);
     os() << " ";
     beginBlock();

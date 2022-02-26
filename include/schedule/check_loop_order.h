@@ -12,13 +12,12 @@ namespace ir {
  * Return loops in nesting order
  */
 class CheckLoopOrder : public Visitor {
-    std::vector<std::string> dstOrder_;
+    std::vector<ID> dstOrder_;
     std::vector<For> curOrder_;
     bool done_ = false;
 
   public:
-    CheckLoopOrder(const std::vector<std::string> &dstOrder)
-        : dstOrder_(dstOrder) {}
+    CheckLoopOrder(const std::vector<ID> &dstOrder) : dstOrder_(dstOrder) {}
 
     const std::vector<For> &order() const;
 

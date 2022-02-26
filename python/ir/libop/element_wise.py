@@ -4,20 +4,24 @@ from .shape_utils import *
 
 def _binary_op_(op):
 
-    @core.inline
+    @core.inline(fallback=op)
     def f_binary_op(a, b, out):
-        if out.ndim == 0:
-            out[()] = op(a[()], b[()])
+        if core.ndim(out) == 0:
+            out[()] = op(a, b)
         else:
             'nid: L_elem'
             for i in range(out.shape(0)):
-                if a.ndim < out.ndim:
+                if core.ndim(a) < core.ndim(out):
+                    assert b.shape(0) == out.shape(0)
                     'nid: recur'
                     _binary_op_(op)(a, b[i], out[i])
-                elif b.ndim < out.ndim:
+                elif core.ndim(b) < core.ndim(out):
+                    assert a.shape(0) == out.shape(0)
                     'nid: recur'
                     _binary_op_(op)(a[i], b, out[i])
                 else:
+                    assert a.shape(0) == out.shape(0) or a.shape(0) == 1
+                    assert b.shape(0) == out.shape(0) or b.shape(0) == 1
                     'nid: recur'
                     _binary_op_(op)(a[i % a.shape(0)], b[i % b.shape(0)],
                                     out[i])
@@ -27,12 +31,11 @@ def _binary_op_(op):
 
 def _binary_op(op):
 
-    @core.inline
+    @core.inline(fallback=op)
     def f_binary_op(a, b):
-        'nid: broadcast_shape'
         out = core.create_var(broadcast_shape(a, b),
-                              core.up_cast(a.dtype, b.dtype),
-                              core.same_mtype(a.mtype, b.mtype))
+                              core.up_cast(core.dtype(a), core.dtype(b)),
+                              core.same_mtype(core.mtype(a), core.mtype(b)))
         'nid: recur'
         _binary_op_(op)(a, b, out)
         return out
@@ -42,28 +45,25 @@ def _binary_op(op):
 
 add_ = _binary_op_(lambda x, y: x + y)
 add = _binary_op(lambda x, y: x + y)
-add.set_fallback(lambda x, y: x + y)
 
 sub_ = _binary_op_(lambda x, y: x - y)
 sub = _binary_op(lambda x, y: x - y)
-sub.set_fallback(lambda x, y: x - y)
 
 mul_ = _binary_op_(lambda x, y: x * y)
 mul = _binary_op(lambda x, y: x * y)
-mul.set_fallback(lambda x, y: x * y)
 
 div_ = _binary_op_(lambda x, y: x / y)
 div = _binary_op(lambda x, y: x / y)
-div.set_fallback(lambda x, y: x / y)
 
 
 def _unary_op_(op):
 
     @core.inline
     def f_unary_op(x, y):
-        if x.ndim == 0:
-            y[()] = op(x[()])
+        if core.ndim(x) == 0:
+            y[()] = op(x)
         else:
+            assert x.shape(0) == y.shape(0)
             'nid: L_elem'
             for i in range(x.shape(0)):
                 'nid: recur'
@@ -76,7 +76,7 @@ def _unary_op(op):
 
     @core.inline
     def f_unary_op(x):
-        y = core.create_var(copy_shape(x), x.dtype, x.mtype)
+        y = core.create_var(copy_shape(x), core.dtype(x), core.mtype(x))
         'nid: recur'
         _unary_op_(op)(x, y)
         return y

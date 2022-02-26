@@ -5,6 +5,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include <analyze/symbol_table.h>
 #include <func.h>
 #include <mutator.h>
 #include <visitor.h>
@@ -15,12 +16,11 @@ namespace gpu {
 
 class FindParallelLoops : public Visitor {
     std::vector<For> loops_, stack_;
-    std::unordered_map<std::string, std::unordered_set<std::string>> affecting_;
+    std::unordered_map<ID, std::unordered_set<ID>> affecting_;
 
   public:
     const std::vector<For> &loops() const { return loops_; }
-    const std::unordered_map<std::string, std::unordered_set<std::string>> &
-    affecting() const {
+    const std::unordered_map<ID, std::unordered_set<ID>> &affecting() const {
         return affecting_;
     }
 
@@ -29,17 +29,17 @@ class FindParallelLoops : public Visitor {
     void visit(const VarDef &op) override;
 };
 
-class MultiplexMutator : public Mutator {
+class MultiplexMutator : public SymbolTable<Mutator> {
+    typedef SymbolTable<Mutator> BaseClass;
+
     std::vector<For> stack_;
     std::unordered_map<std::string, int> defPos_;
-    std::unordered_map<std::string, std::string> defs_; // name -> ID
-    const std::unordered_map<std::string, std::unordered_set<std::string>>
+    const std::unordered_map<ID, std::unordered_set<ID>>
         &affecting_; // VarDef ID -> For ID
 
   public:
     MultiplexMutator(
-        const std::unordered_map<std::string, std::unordered_set<std::string>>
-            &affecting)
+        const std::unordered_map<ID, std::unordered_set<ID>> &affecting)
         : affecting_(affecting) {}
 
   private:
@@ -47,8 +47,8 @@ class MultiplexMutator : public Mutator {
         if (!defPos_.count(op->var_)) {
             return op;
         }
-        if (affecting_.count(defs_.at(op->var_))) {
-            auto &&aff = affecting_.at(defs_.at(op->var_));
+        if (affecting_.count(def(op->var_)->id())) {
+            auto &&aff = affecting_.at(def(op->var_)->id());
             int pos = defPos_.at(op->var_);
             for (int i = pos - 1; i >= 0; i--) {
                 if (aff.count(stack_[i]->id())) {

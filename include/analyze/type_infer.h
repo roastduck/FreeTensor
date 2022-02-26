@@ -3,31 +3,28 @@
 
 #include <unordered_map>
 
+#include <analyze/symbol_table.h>
 #include <visitor.h>
 
 namespace ir {
 
+/**
+ * Infer the data type of each (sub)expressions in an AST
+ *
+ * Pass it a pointer to a symbol table to use
+ */
 class TypeInfer : public Visitor {
     std::unordered_map<Expr, DataType> types_;
-    std::unordered_map<std::string, Ref<Buffer>> *buffers_;
-    bool borrowedBuffers_ = false;
+    const SymbolTableInterface &symbolTable_;
 
   public:
-    TypeInfer()
-        : buffers_(new std::unordered_map<std::string, Ref<Buffer>>()) {}
-    TypeInfer(std::unordered_map<std::string, Ref<Buffer>> *buffers)
-        : buffers_(buffers), borrowedBuffers_(true) {}
-    ~TypeInfer() {
-        if (!borrowedBuffers_) {
-            delete buffers_;
-        }
-    }
+    TypeInfer(const SymbolTableInterface &symbolTable)
+        : symbolTable_(symbolTable) {}
 
-    const std::unordered_map<Expr, DataType> types() const { return types_; }
+    const std::unordered_map<Expr, DataType> &types() const { return types_; }
 
   protected:
-    void visitExpr(const Expr &op,
-                   const std::function<void(const Expr &)> &visitNode) override;
+    void visitExpr(const Expr &op) override;
 
     void visit(const Var &op) override;
     void visit(const Load &op) override;
@@ -42,6 +39,7 @@ class TypeInfer : public Visitor {
     void visit(const CeilDiv &op) override;
     void visit(const RoundTowards0Div &op) override;
     void visit(const Mod &op) override;
+    void visit(const Remainder &op) override;
     void visit(const Min &op) override;
     void visit(const Max &op) override;
     void visit(const LT &op) override;
@@ -66,6 +64,27 @@ class TypeInfer : public Visitor {
     void visit(const Intrinsic &op) override;
 
     void visit(const VarDef &op) override;
+};
+
+/**
+ * A helper class to invoke type inference inside a Visitor or Mutator
+ *
+ * Inherit this class to use. The BaseClass should be a decent of
+ * SymbolTable<...>, or the an SymbolTable should be passed in to the
+ * constructor
+ */
+template <class BaseClass> class WithTypeInfer : public BaseClass {
+    TypeInfer typeInfer_;
+
+  protected:
+    WithTypeInfer() : typeInfer_(*this) {}
+    WithTypeInfer(const SymbolTableInterface &symbolTable)
+        : typeInfer_(symbolTable) {}
+
+    DataType dtype(const Expr &op) {
+        typeInfer_(op);
+        return typeInfer_.types().at(op);
+    }
 };
 
 } // namespace ir

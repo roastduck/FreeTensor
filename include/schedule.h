@@ -65,7 +65,7 @@ class Schedule {
      * Find a (maybe non-existing) node in the current AST by ID
      * @param id: ID
      */
-    std::vector<Cursor> findAll(const std::string &id) const {
+    std::vector<Cursor> findAll(const ID &id) const {
         return findAll([&id](const Cursor &c) { return c.id() == id; });
     }
 
@@ -73,7 +73,7 @@ class Schedule {
      * Find a node in the current AST by ID
      * @param id: ID
      */
-    Cursor find(const std::string &id) const {
+    Cursor find(const ID &id) const {
         return find([&id](const Cursor &c) { return c.id() == id; });
     }
 
@@ -107,8 +107,7 @@ class Schedule {
      * @throw InvalidSchedule if the loop is not found
      * @return : (outer loop ID, inner loop ID)
      */
-    std::pair<std::string, std::string> split(const std::string &id,
-                                              int factor = -1, int nparts = -1);
+    std::pair<ID, ID> split(const ID &id, int factor = -1, int nparts = -1);
 
     /**
      * Reorder directly nested loops
@@ -119,7 +118,7 @@ class Schedule {
      * @throw InvalidSchedule if the input is invalid or there are breaking
      * dependencies
      */
-    void reorder(const std::vector<std::string> &order);
+    void reorder(const std::vector<ID> &order);
 
     /**
      * Merge two directly nested loops into one
@@ -133,9 +132,9 @@ class Schedule {
      * @throw InvalidSchedule if the loops are not directly nested
      * @return : ID of the merged loop
      */
-    std::string merge(const std::string &loop1, const std::string &loop2);
+    ID merge(const ID &loop1, const ID &loop2);
 
-    typedef std::unordered_map<std::string, std::string> IDMap;
+    typedef std::unordered_map<ID, ID> IDMap;
     /**
      * Fission a loop into two loops each containing part of the statements, one
      * followed by another
@@ -154,8 +153,8 @@ class Schedule {
      * @return : ({old ID -> new ID in 1st loop}, {old ID -> new ID in 2nd
      * loop})
      */
-    std::pair<IDMap, IDMap> fission(const std::string &loop, FissionSide side,
-                                    const std::string &splitter,
+    std::pair<IDMap, IDMap> fission(const ID &loop, FissionSide side,
+                                    const ID &splitter,
                                     const std::string &suffix0 = ".a",
                                     const std::string &suffix1 = ".b");
 
@@ -176,8 +175,7 @@ class Schedule {
      * be resolved
      * @return : ID of the result loop
      */
-    std::string fuse(const std::string &loop0, const std::string &loop1,
-                     bool strict = false);
+    ID fuse(const ID &loop0, const ID &loop1, bool strict = false);
 
     /**
      * Swap statements in the same block
@@ -188,7 +186,7 @@ class Schedule {
      * @throw InvalidSchedule if the statements are not found or the
      * dependencies cannot be solved
      */
-    void swap(const std::vector<std::string> &order);
+    void swap(const std::vector<ID> &order);
 
     /**
      * Unroll a loop and interleave statements from each iteration
@@ -217,7 +215,7 @@ class Schedule {
      * @throw InvalidSchedule if the loop is not found, the loop length is not a
      * constant, or the dependencies cannot be solved
      */
-    void blend(const std::string &loop);
+    void blend(const ID &loop);
 
     /**
      * Cache a variable into a new local variable
@@ -253,8 +251,8 @@ class Schedule {
      * that flushes from the cache, name of the cache variable, ID of the VarDef
      * node of the cache variable)
      */
-    std::tuple<std::string, std::string, std::string, std::string>
-    cache(const std::string &stmt, const std::string &var, MemType mtype);
+    std::tuple<ID, ID, std::string, ID>
+    cache(const ID &stmt, const std::string &var, MemType mtype);
 
     /**
      * Perform local reductions (e.g. sum) in a local variable first, and then
@@ -285,9 +283,8 @@ class Schedule {
      * statement that reduces the local result to the global result, name of the
      * cache variable, ID of the VarDef node of the cache variable)
      */
-    std::tuple<std::string, std::string, std::string, std::string>
-    cacheReduction(const std::string &stmt, const std::string &var,
-                   MemType mtype);
+    std::tuple<ID, ID, std::string, ID>
+    cacheReduction(const ID &stmt, const std::string &var, MemType mtype);
 
     /**
      * Change where a variable is stored
@@ -296,7 +293,7 @@ class Schedule {
      * @param mtype : Where the variable should be stored
      * @throw InvalidSchedule if the variable is not found
      */
-    void setMemType(const std::string &def, MemType mtype);
+    void setMemType(const ID &def, MemType mtype);
 
     /**
      * Split a dimension of a variable into two
@@ -314,8 +311,16 @@ class Schedule {
      * `factor`
      * @throw InvalidSchedule if the variable or the dimension is not found
      */
-    void varSplit(const std::string &def, int dim, VarSplitMode mode,
-                  int factor = -1, int nparts = -1);
+    void varSplit(const ID &def, int dim, VarSplitMode mode, int factor = -1,
+                  int nparts = -1);
+
+    /**
+     * Merge two dimensions of a variable
+     *
+     * @param def : ID of the VarDef statement of the specific variable
+     * @param dim : Merge the `dim`-th and the `(dim + 1)`-th dimension
+     */
+    void varMerge(const ID &def, int dim);
 
     /**
      * Reorder the dimensions of a variable
@@ -324,7 +329,7 @@ class Schedule {
      * @param order : new order of the dimensions
      * @throw InvalidSchedule if the variable or the order is illegal
      */
-    void varReorder(const std::string &def, const std::vector<int> &order);
+    void varReorder(const ID &def, const std::vector<int> &order);
 
     /**
      * Move a statement to a new position
@@ -338,8 +343,7 @@ class Schedule {
      * @throw InvalidSchedule if there is no feasible path to move
      * @return : The new ID of stmt
      */
-    std::string moveTo(const std::string &stmt, MoveToSide side,
-                       const std::string &dst);
+    ID moveTo(const ID &stmt, MoveToSide side, const ID &dst);
 
     /**
      * Remove a variable. When the variable is used, recompute its value
@@ -348,7 +352,7 @@ class Schedule {
      * not be an I/O varible
      * @throw InvalidSchedule if the variable cannot be completely removed
      */
-    void inlining(const std::string &def);
+    void inlining(const ID &def);
 
     /**
      * Mark a loop with a parallel implementation
@@ -358,7 +362,7 @@ class Schedule {
      * "blockIdx.x", "blockIdx.y", "blockIdx.z", "threadIdx.x", "threadIdx.y",
      * "threadIdx.z"
      */
-    void parallelize(const std::string &loop, const std::string &parallel);
+    void parallelize(const ID &loop, const std::string &parallel);
 
     /**
      * Unroll a loop
@@ -373,7 +377,7 @@ class Schedule {
      * @throw InvalidSchedule if the loop is not found or length of the loop is
      * not a constant
      */
-    void unroll(const std::string &loop, bool immediate = false);
+    void unroll(const ID &loop, bool immediate = false);
 
     /**
      * Vectorize a loop
@@ -386,7 +390,7 @@ class Schedule {
      * @throw InvalidSchedule if the ID or name is not found, or the dependency
      * requirement is not met
      */
-    void vectorize(const std::string &loop);
+    void vectorize(const ID &loop);
 
     /**
      * Seperate main iterations and tail iterations of a loop
@@ -403,7 +407,7 @@ class Schedule {
      * }
      * ```
      *
-     * Each loop will be seperated into 2 parts: the body and the tail. After
+     * Each loop will be separated into 2 parts: the body and the tail. After
      * simplification, the program will finally be transformed to
      *
      * ```
@@ -417,18 +421,18 @@ class Schedule {
      * }
      * ```
      *
-     * If there is two VarDef nodes in two branches, it may result in doubled
-     * memory use, since different thread may go to different branch. Therefore,
-     * this pass will not duplicate VarDef nodes. (TODO: This restriction may be
-     * limited to non-local buffers)
-     *
      * Ideally, all programs can benefit from this schedule. However, this
      * schedule may greatly increase the program size and make the compiling
      * time way too long. Therefore, this transformation is implemented as a
      * schedule, which can be applied optionally. (TODO: Optionally apply this
      * schedule to part of the program)
+     *
+     * @param noDuplicateVarDefs : If there is two VarDef nodes in two branches,
+     * it may result in doubled memory use, since different thread may go to
+     * different branch. Set this parameter to true to stop duplicating VarDef
+     * nodes.
      */
-    void seperateTail();
+    void separateTail(bool noDuplicateVarDefs = false);
 
     /**
      * Transform nested loops to be a external call to a matrix multiplication
@@ -437,7 +441,7 @@ class Schedule {
      * @throw InvalidSchedule if the loop cannot be transformed to be a matrix
      * multiplication
      */
-    void asMatMul(const std::string &loop);
+    void asMatMul(const ID &loop);
 
     /**
      * Automatic scheduling using some heuristics

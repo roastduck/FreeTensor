@@ -94,33 +94,34 @@ Stmt NormalizeThreads::visit(const For &op) {
         auto ret = doVisitFor(op);
         inKernel_ = false;
         auto zero = makeIntConst(0);
+        auto one = makeIntConst(1);
         auto inf = makeIntConst(INT_MAX);
-        ret = makeFor("", ".threadIdx.x", zero, inf, inf,
+        ret = makeFor("", ".threadIdx.x", zero, inf, one, inf,
                       ForProperty()
                           .withParallel("threadIdx.x")
                           .withNoDeps(noDeps_["threadIdx.x"]),
                       ret);
-        ret = makeFor("", ".threadIdx.y", zero, inf, inf,
+        ret = makeFor("", ".threadIdx.y", zero, inf, one, inf,
                       ForProperty()
                           .withParallel("threadIdx.y")
                           .withNoDeps(noDeps_["threadIdx.y"]),
                       ret);
-        ret = makeFor("", ".threadIdx.z", zero, inf, inf,
+        ret = makeFor("", ".threadIdx.z", zero, inf, one, inf,
                       ForProperty()
                           .withParallel("threadIdx.z")
                           .withNoDeps(noDeps_["threadIdx.z"]),
                       ret);
-        ret = makeFor("", ".blockIdx.x", zero, inf, inf,
+        ret = makeFor("", ".blockIdx.x", zero, inf, one, inf,
                       ForProperty()
                           .withParallel("blockIdx.x")
                           .withNoDeps(noDeps_["blockIdx.x"]),
                       ret);
-        ret = makeFor("", ".blockIdx.y", zero, inf, inf,
+        ret = makeFor("", ".blockIdx.y", zero, inf, one, inf,
                       ForProperty()
                           .withParallel("blockIdx.y")
                           .withNoDeps(noDeps_["blockIdx.y"]),
                       ret);
-        ret = makeFor("", ".blockIdx.z", zero, inf, inf,
+        ret = makeFor("", ".blockIdx.z", zero, inf, one, inf,
                       ForProperty()
                           .withParallel("blockIdx.z")
                           .withNoDeps(noDeps_["blockIdx.z"]),
@@ -144,7 +145,7 @@ Stmt NormalizeThreads::visit(const Eval &op) {
 }
 
 Stmt CheckThreadNum::visit(const For &_op) {
-    auto __op = CompUniqueBounds::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::For);
     auto op = __op.as<ForNode>();
 
@@ -152,12 +153,12 @@ Stmt CheckThreadNum::visit(const For &_op) {
         if (op->begin_->nodeType() != ASTNodeType::IntConst) {
             op->body_ =
                 makeIf("", makeGE(makeVar(op->iter_), op->begin_), op->body_);
-            op->begin_ = makeIntConst(getIntLower(op->begin_));
+            op->begin_ = makeIntConst(bound_.getIntLower(op->begin_));
         }
         if (op->end_->nodeType() != ASTNodeType::IntConst) {
             op->body_ =
                 makeIf("", makeLT(makeVar(op->iter_), op->end_), op->body_);
-            op->end_ = makeIntConst(getIntUpper(op->end_));
+            op->end_ = makeIntConst(bound_.getIntUpper(op->end_));
         }
         ASSERT(op->begin_->nodeType() == ASTNodeType::IntConst);
         ASSERT(op->end_->nodeType() == ASTNodeType::IntConst);

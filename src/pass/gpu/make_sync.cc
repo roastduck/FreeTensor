@@ -32,9 +32,8 @@ void FindAllThreads::visit(const For &op) {
     }
 }
 
-Stmt CopyParts::visitStmt(const Stmt &op,
-                          const std::function<Stmt(const Stmt &)> &visitNode) {
-    auto ret = Mutator::visitStmt(op, visitNode);
+Stmt CopyParts::visitStmt(const Stmt &op) {
+    auto ret = Mutator::visitStmt(op);
     if (ret->nodeType() == ASTNodeType::Store ||
         ret->nodeType() == ASTNodeType::ReduceTo ||
         ret->nodeType() == ASTNodeType::Eval) {
@@ -63,7 +62,7 @@ Stmt CopyParts::visit(const For &_op) {
             throw InvalidProgram(
                 "Unable to insert a synchronizing statment because it requires "
                 "splitting a dynamic loop " +
-                op->id() + " into two parts");
+                toString(op->id()) + " into two parts");
         }
     }
     return op;
@@ -134,10 +133,9 @@ void MakeSync::markSyncForSplitting(const Stmt &sync) {
     }
 }
 
-Stmt MakeSync::visitStmt(const Stmt &op,
-                         const std::function<Stmt(const Stmt &)> &visitNode) {
-    auto ret = MutatorWithCursor::visitStmt(op, visitNode);
-    // Please note that we have exited MutatorWithCursor, so `cursor()` is out
+Stmt MakeSync::visitStmt(const Stmt &op) {
+    auto ret = BaseClass::visitStmt(op);
+    // Please note that we have exited BaseClass, so `cursor()` is out
     // of `op`
 
     Cursor target;
@@ -193,7 +191,7 @@ Stmt MakeSync::visitStmt(const Stmt &op,
 }
 
 Stmt MakeSync::visit(const For &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::For);
     auto op = __op.as<ForNode>();
     bool needSyncThreads = false, needSyncWarp = false;
@@ -233,7 +231,7 @@ Stmt MakeSync::visit(const For &_op) {
 }
 
 Stmt MakeSync::visit(const If &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::If);
     auto op = __op.as<IfNode>();
 
@@ -310,4 +308,3 @@ Stmt makeSync(const Stmt &_op) {
 } // namespace gpu
 
 } // namespace ir
-

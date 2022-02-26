@@ -14,4 +14,3 @@ std::unordered_set<std::string> allReads(const AST &op) {
 }
 
 } // namespace ir
-

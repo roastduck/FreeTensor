@@ -1,4 +1,5 @@
 import ir
+import ir.debug
 
 
 def test_type1_basic():
@@ -258,7 +259,7 @@ def test_type1_not_kill_earlier_store_no_remove():
 def test_type1_not_kill_earlier_reduce_no_remove():
     with ir.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
-        y[()] = 1
+        y[()] = x[()] + 1
         with ir.If(x[()] > 0):
             y[()] += x[()]
     ast = ir.pop_ast()
@@ -268,7 +269,7 @@ def test_type1_not_kill_earlier_reduce_no_remove():
 
     with ir.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
-        y[()] = 1
+        y[()] = x[()] + 1
         with ir.If(x[()] > 0):
             y[()] += x[()]
     std = ir.make_reduction(ir.pop_ast())
@@ -429,6 +430,49 @@ def test_same_parent_but_dep_and_circular_dependency_on_init():
                 with ir.For("k", 0, 10) as k:
                     f[j] += u[j] + 1
                 u[j] = f[j]
+    std = ir.make_reduction(ir.pop_ast())
+
+    assert std.match(ast)
+
+
+def test_circular_dependency_in_parallel():
+    with ir.VarDef([("a", (256,), "float32", "inout", "cpu"),
+                    ("b", (256,), "float32", "cache", "cpu"),
+                    ("c", (256,), "float32", "cache", "cpu")]) as (a, b, c):
+        with ir.For("i", 0, 256) as i:
+            c[i] = 0
+        with ir.For("i", 0, 256) as i:
+            b[i] = a[i]
+        with ir.For("k", 0, 100) as k:
+            ir.MarkNid("L1")
+            with ir.For("l", 0, 256) as l:
+                c[l] += b[l]
+                b[l] = 0
+            ir.MarkNid("L")
+            with ir.For("i", 0, 256) as i:
+                with ir.For("j", 0, 256) as j:
+                    b[j] += c[i]
+    s = ir.Schedule(ir.pop_ast())
+    s.parallelize("L", "openmp")
+    ast = s.ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([("a", (256,), "float32", "inout", "cpu"),
+                    ("b", (256,), "float32", "cache", "cpu"),
+                    ("c", (256,), "float32", "cache", "cpu")]) as (a, b, c):
+        with ir.For("i", 0, 256) as i:
+            c[i] = 0
+        with ir.For("i", 0, 256) as i:
+            b[i] = a[i]
+        with ir.For("k", 0, 100) as k:
+            with ir.For("l", 0, 256) as l:
+                c[l] = (c[l] + b[l])
+                b[l] = 0
+            with ir.For("i", 0, 256) as i:
+                with ir.For("j", 0, 256) as j:
+                    b[j] = (b[j] + c[i])
     std = ir.make_reduction(ir.pop_ast())
 
     assert std.match(ast)

@@ -17,8 +17,7 @@ class PrintVisitor : public CodeGen<CodeGenStream> {
     void printId(const Stmt &op);
 
   protected:
-    void visitStmt(const Stmt &op,
-                   const std::function<void(const Stmt &)> &visitNode) override;
+    void visitStmt(const Stmt &op) override;
 
     void visit(const Func &op) override;
     void visit(const StmtSeq &op) override;
@@ -40,6 +39,7 @@ class PrintVisitor : public CodeGen<CodeGenStream> {
     void visit(const CeilDiv &op) override;
     void visit(const RoundTowards0Div &op) override;
     void visit(const Mod &op) override;
+    void visit(const Remainder &op) override;
     void visit(const Min &op) override;
     void visit(const Max &op) override;
     void visit(const LT &op) override;
@@ -64,6 +64,7 @@ class PrintVisitor : public CodeGen<CodeGenStream> {
     void visit(const For &op) override;
     void visit(const If &op) override;
     void visit(const Assert &op) override;
+    void visit(const Assume &op) override;
     void visit(const Intrinsic &op) override;
     void visit(const Eval &op) override;
     void visit(const MatMul &op) override;

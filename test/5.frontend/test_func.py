@@ -1,4 +1,5 @@
 import ir
+import ir.debug
 import math
 import pytest
 import numpy as np
@@ -94,7 +95,8 @@ def test_called_multiple_times():
 
 
 def test_call_with_external_data():
-    data = ir.Tensor([[0, 1], [2, 3]], "cpu")
+    data = ir.Array(np.array([[0, 1], [2, 3]], dtype=np.int32),
+                    ir.Device(ir.CPU()))
 
     @ir.inline
     def g(x, y):
@@ -105,25 +107,32 @@ def test_call_with_external_data():
     @ir.transform
     def f(y):
         ir.declare_var(y, (2, 2), "int32", "output", "cpu")
-        g(data, y)
+        g(ir.capture_var(data), y)
 
     func = ir.lower(f, ir.CPU())
     print(func)
 
     with ir.VarDef("y", (2, 2), "int32", "output", "cpu") as y:
-        with ir.VarDef("x", (2, 2), "int32", "cache", "cpu") as x:
-            x[0, 0] = 0
-            x[0, 1] = 1
-            x[1, 0] = 2
-            x[1, 1] = 3
+        with ir.VarDef("x", (2, 2), "int32", "input", "cpu") as x:
             with ir.For("i", 0, 2) as i:
                 with ir.For("j", 0, 2) as j:
                     y[i, j] = x[i, j] * 2
     std = ir.pop_ast()
     assert std.match(func.body)
+
+    code = ir.codegen(func, ir.CPU())
+    print(ir.debug.with_line_no(code))
+
+    y_np = np.zeros((2, 2), dtype="int32")
+    y_arr = ir.Array(y_np, ir.Device(ir.CPU()))
+    ir.Driver(func, code, ir.Device(ir.CPU()))(y=y_arr)
+    y_np = y_arr.numpy()
+
+    assert np.array_equal(y_np, data.numpy() * 2)
 
 
 def test_call_with_literal_data():
+    dev = ir.Device(ir.CPU())
 
     @ir.inline
     def g(x, y):
@@ -134,22 +143,30 @@ def test_call_with_literal_data():
     @ir.transform
     def f(y):
         ir.declare_var(y, (2, 2), "int32", "output", "cpu")
-        g(ir.Tensor([[0, 1], [2, 3]], "cpu"), y)
+        g(
+            ir.capture_var(
+                ir.Array(np.array([[0, 1], [2, 3]], dtype=np.int32), dev)), y)
 
     func = ir.lower(f, ir.CPU())
     print(func)
 
     with ir.VarDef("y", (2, 2), "int32", "output", "cpu") as y:
-        with ir.VarDef("x", (2, 2), "int32", "cache", "cpu") as x:
-            x[0, 0] = 0
-            x[0, 1] = 1
-            x[1, 0] = 2
-            x[1, 1] = 3
+        with ir.VarDef("x", (2, 2), "int32", "input", "cpu") as x:
             with ir.For("i", 0, 2) as i:
                 with ir.For("j", 0, 2) as j:
                     y[i, j] = x[i, j] * 2
     std = ir.pop_ast()
     assert std.match(func.body)
+
+    code = ir.codegen(func, ir.CPU())
+    print(ir.debug.with_line_no(code))
+
+    y_np = np.zeros((2, 2), dtype="int32")
+    y_arr = ir.Array(y_np, dev)
+    ir.Driver(func, code, dev)(y=y_arr)
+    y_np = y_arr.numpy()
+
+    assert np.array_equal(y_np, np.array([[0, 1], [2, 3]], dtype=np.int32) * 2)
 
 
 def test_call_with_fixed_dim_at_front():
@@ -262,6 +279,28 @@ def test_call_with_scalar():
     assert std.match(func.body)
 
 
+def test_call_with_literal_scalar():
+
+    @ir.inline
+    def g(x1, x2, y):
+        y[()] = x1 + x2
+
+    @ir.transform
+    def f(y):
+        ir.declare_var(y, (4,), "float32", "output", "cpu")
+        for i in range(4):
+            g(1, 2, y[i])
+
+    func = ir.lower(f, ir.CPU())
+    print(func)
+
+    with ir.VarDef("y", (4,), "float32", "output", "cpu") as y:
+        with ir.For("i", 0, 4) as i:
+            y[i] = 3
+    std = ir.pop_ast()
+    assert std.match(func.body)
+
+
 def test_external_call():
 
     @ir.transform
@@ -288,11 +327,12 @@ def test_error_missing_parameters():
         ir.declare_var(y, (2,), "float32", "output", "cpu")
         g()
 
-    with pytest.raises(ir.InvalidProgram):
+    with pytest.raises(ir.StagingError):
         ir.transform(f)
 
 
 def test_return():
+    dev = ir.Device(ir.CPU())
 
     @ir.inline
     def test_i(a, b):
@@ -310,7 +350,9 @@ def test_return():
         ir.declare_var(y, (2, 2), "int32", "output", "cpu")
         ir.declare_var(c, (2, 2), "int32", "output", "cpu")
         ir.declare_var(d, (2, 2), "int32", "output", "cpu")
-        c1, d1 = test_i(ir.Tensor([[1, 2], [3, 4]], "cpu"), y)
+        c1, d1 = test_i(
+            ir.capture_var(
+                ir.Array(np.array([[1, 2], [3, 4]], dtype=np.int32), dev)), y)
         for i in range(2):
             for j in range(2):
                 c[i, j] = c1[i, j]
@@ -322,11 +364,7 @@ def test_return():
     with ir.VarDef([("y", (2, 2), "int32", "output", "cpu"),
                     ("c", (2, 2), "int32", "output", "cpu"),
                     ("d", (2, 2), "int32", "output", "cpu")]) as (y, c, d):
-        with ir.VarDef("a", (2, 2), "int32", "cache", "cpu") as a:
-            a[0, 0] = 1
-            a[0, 1] = 2
-            a[1, 0] = 3
-            a[1, 1] = 4
+        with ir.VarDef("a", (2, 2), "int32", "input", "cpu") as a:
             with ir.VarDef([("c1", (2, 2), "int32", "cache", "cpu"),
                             ("d1", (2, 2), "int32", "cache", "cpu")]) as (c1,
                                                                           d1):

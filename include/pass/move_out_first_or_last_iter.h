@@ -9,10 +9,7 @@
 namespace ir {
 
 class MoveOutFirstOrLastIter : public Z3Simplify {
-    std::unordered_map<std::string, Expr> replace_;
-
   protected:
-    Expr visit(const Var &op) override;
     Stmt visit(const For &op) override;
 };
 

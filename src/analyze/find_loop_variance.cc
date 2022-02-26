@@ -12,7 +12,7 @@ void MarkStores::mergeInfo(const Expr &from, const std::string &to) {
         }
     }
     if (varInfo_.count(to)) {
-        std::vector<std::string> toErase;
+        std::vector<ID> toErase;
         for (auto &&loop : varInfo_.at(to)) {
             if (!exprInfo_.count(from) ||
                 !exprInfo_.at(from).count(loop.first)) {
@@ -81,7 +81,7 @@ void FindLoopVariance::mergeInfo(const Expr &from, const Expr &to) {
         }
     }
     if (exprInfo_.count(to)) {
-        std::vector<std::string> toErase;
+        std::vector<ID> toErase;
         for (auto &&loop : exprInfo_.at(to)) {
             if (!exprInfo_.count(from) ||
                 !exprInfo_.at(from).count(loop.first)) {
@@ -136,6 +136,36 @@ void FindLoopVariance::visit(const VarDef &op) {
     varInfo_.erase(op->name_);
 }
 
+void FindLoopVariance::visitConst(const Const &op) {
+    Visitor::visitExpr(op);
+    for (auto &&loop : allLoops_) {
+        exprInfo_[op][loop] = LoopVariability::Invariance;
+    }
+}
+
+void FindLoopVariance::visitBinOp(const BinaryExpr &op) {
+    Visitor::visitExpr(op);
+    copyInfo(op->lhs_, op);
+    mergeInfo(op->rhs_, op);
+}
+
+void FindLoopVariance::visitUnaryOp(const UnaryExpr &op) {
+    Visitor::visitExpr(op);
+    copyInfo(op->expr_, op);
+}
+
+void FindLoopVariance::visitExpr(const Expr &op) {
+    if (op->isConst()) {
+        visitConst(op.as<ConstNode>());
+    } else if (op->isBinary()) {
+        visitBinOp(op.as<BinaryExprNode>());
+    } else if (op->isUnary()) {
+        visitUnaryOp(op.as<UnaryExprNode>());
+    } else {
+        Visitor::visitExpr(op);
+    }
+}
+
 void FindLoopVariance::visit(const Var &op) {
     Visitor::visit(op);
     if (varInfo_.count(op->name_)) {
@@ -160,8 +190,13 @@ void FindLoopVariance::visit(const IfExpr &op) {
     mergeInfo(op->elseCase_, op);
 }
 
+void FindLoopVariance::visit(const Cast &op) {
+    Visitor::visit(op);
+    copyInfo(op->expr_, op);
+}
+
 bool isVariant(const LoopVariExprMap &exprInfo, const Expr &expr,
-               const std::string &loop) {
+               const ID &loop) {
     if (!exprInfo.count(expr)) {
         return true;
     }
@@ -172,7 +207,7 @@ bool isVariant(const LoopVariExprMap &exprInfo, const Expr &expr,
 }
 
 bool isVariant(const LoopVariUniqVarMap &varInfo, const VarDef &def,
-               const std::string &loop) {
+               const ID &loop) {
     if (!varInfo.count(def)) {
         return true;
     }
@@ -198,4 +233,3 @@ findLoopVariance(const Stmt &op) {
 }
 
 } // namespace ir
-

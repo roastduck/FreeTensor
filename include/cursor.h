@@ -13,8 +13,9 @@
 namespace ir {
 
 class Cursor {
-    friend class VisitorWithCursor;
-    friend class MutatorWithCursor;
+    template <class T> friend class WithCursor;
+    friend class GetCursorById;
+    friend class GetCursorByFilter;
 
     Stack<Stmt> stack_;
 
@@ -29,10 +30,10 @@ class Cursor {
     size_t depth() const { return stack_.size(); }
 
     const Stmt &node() const { return stack_.top()->data_; }
-    const std::string &id() const { return node()->id(); }
+    ID id() const { return node()->id(); }
     ASTNodeType nodeType() const { return node()->nodeType(); }
 
-    Stmt getParentById(const std::string &id) const;
+    Stmt getParentById(const ID &id) const;
 
     bool isBefore(const Cursor &other) const;
     bool isOuter(const Cursor &other) const;
@@ -59,73 +60,6 @@ class Cursor {
     /// Lowest common ancestor
     friend Cursor lca(const Cursor &lhs, const Cursor &rhs);
 };
-
-class VisitorWithCursor : public Visitor {
-    Cursor cursor_;
-
-  protected:
-    void visitStmt(const Stmt &op,
-                   const std::function<void(const Stmt &)> &visitNode) override;
-
-    const Cursor &cursor() const { return cursor_; }
-};
-
-class MutatorWithCursor : public Mutator {
-    Cursor cursor_;
-
-  protected:
-    Stmt visitStmt(const Stmt &op,
-                   const std::function<Stmt(const Stmt &)> &visitNode) override;
-
-    const Cursor &cursor() const { return cursor_; }
-};
-
-class GetCursorById : public VisitorWithCursor {
-    std::string id_;
-    Cursor result_;
-    bool found_ = false;
-
-  public:
-    GetCursorById(const std::string &id) : id_(id) {}
-
-    const Cursor &result() const { return result_; }
-    bool found() const { return found_; }
-
-  protected:
-    void visitStmt(const Stmt &op,
-                   const std::function<void(const Stmt &)> &visitNode) override;
-};
-
-inline Cursor getCursorById(const Stmt &ast, const std::string &id) {
-    GetCursorById visitor(id);
-    visitor(ast);
-    if (!visitor.found()) {
-        throw InvalidSchedule("Statement " + id + " not found");
-    }
-    return visitor.result();
-}
-
-class GetCursorByFilter : public VisitorWithCursor {
-    const std::function<bool(const Cursor &)> &filter_;
-    std::vector<Cursor> results_;
-
-  public:
-    GetCursorByFilter(const std::function<bool(const Cursor &)> &filter)
-        : filter_(filter) {}
-    const std::vector<Cursor> &results() const { return results_; }
-
-  protected:
-    void visitStmt(const Stmt &op,
-                   const std::function<void(const Stmt &)> &visitNode) override;
-};
-
-inline std::vector<Cursor>
-getCursorByFilter(const Stmt &ast,
-                  const std::function<bool(const Cursor &)> &filter) {
-    GetCursorByFilter visitor(filter);
-    visitor(ast);
-    return visitor.results();
-}
 
 } // namespace ir
 

@@ -27,6 +27,11 @@ class InvalidProgram : public Error {
     InvalidProgram(const std::string &msg) : Error(msg) {}
 };
 
+class AssertAlwaysFalse : public InvalidProgram {
+  public:
+    AssertAlwaysFalse(const std::string &msg) : InvalidProgram(msg) {}
+};
+
 #define ERROR(msg)                                                             \
     {                                                                          \
         throw ::ir::Error((std::string) "[ERROR] " __FILE__ ":" +              \

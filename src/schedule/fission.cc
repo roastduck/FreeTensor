@@ -5,13 +5,12 @@
 
 namespace ir {
 
-Stmt HoistVar::visitStmt(const Stmt &op,
-                         const std::function<Stmt(const Stmt &)> &visitNode) {
-    if (!before_.empty()) {
+Stmt HoistVar::visitStmt(const Stmt &op) {
+    if (before_.isValid()) {
         isAfter_ |= op->id() == before_;
     }
-    auto ret = Mutator::visitStmt(op, visitNode);
-    if (!after_.empty()) {
+    auto ret = Mutator::visitStmt(op);
+    if (after_.isValid()) {
         isAfter_ |= op->id() == after_;
     }
     return ret;
@@ -116,15 +115,12 @@ Stmt HoistVar::visit(const ReduceTo &op) {
 
 Stmt AddDimToVar::visit(const For &op) {
     forMap_[op->id()] = op;
-    return Mutator::visit(op);
+    return BaseClass::visit(op);
 }
 
 Stmt AddDimToVar::visit(const VarDef &_op) {
-    ASSERT(!defs_.count(_op->name_));
-    defs_[_op->name_] = _op->id();
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::VarDef);
-    defs_.erase(_op->name_);
 
     auto op = __op.as<VarDefNode>();
     if (toAdd_.count(op->id())) {
@@ -140,36 +136,35 @@ Stmt AddDimToVar::visit(const VarDef &_op) {
 }
 
 Stmt AddDimToVar::visit(const Store &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Store);
     return doAdd(__op.as<StoreNode>());
 }
 
 Expr AddDimToVar::visit(const Load &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Load);
     return doAdd(__op.as<LoadNode>());
 }
 
 Stmt AddDimToVar::visit(const ReduceTo &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
     return doAdd(__op.as<ReduceToNode>());
 }
 
-Stmt FissionFor::visitStmt(const Stmt &op,
-                           const std::function<Stmt(const Stmt &)> &visitNode) {
+Stmt FissionFor::visitStmt(const Stmt &op) {
     if (!inside_) {
-        return Mutator::visitStmt(op, visitNode);
+        return Mutator::visitStmt(op);
     } else {
         auto oldAnyInside = anyInside_;
         anyInside_ = false;
-        if (!before_.empty()) {
+        if (before_.isValid()) {
             isAfter_ |= op->id() == before_;
         }
         anyInside_ |= (isPart0_ && !isAfter_) || (!isPart0_ && isAfter_);
-        auto ret = Mutator::visitStmt(op, visitNode);
-        if (!after_.empty()) {
+        auto ret = Mutator::visitStmt(op);
+        if (after_.isValid()) {
             isAfter_ |= op->id() == after_;
         }
         if (!anyInside_) {
@@ -181,12 +176,12 @@ Stmt FissionFor::visitStmt(const Stmt &op,
 }
 
 void FissionFor::markNewId(const Stmt &op, bool isPart0) {
-    std::string oldId = op->id(), newId;
+    ID oldId = op->id(), newId;
     if (isPart0) {
-        op->setId(newId = oldId + suffix0_);
+        op->setId(newId = oldId.strId() + suffix0_);
         ids0_.emplace(oldId, newId);
     } else {
-        op->setId(newId = oldId + suffix1_);
+        op->setId(newId = oldId.strId() + suffix1_);
         ids1_.emplace(oldId, newId);
     }
 }
@@ -201,6 +196,7 @@ Stmt FissionFor::visit(const For &op) {
     } else {
         auto begin = (*this)(op->begin_);
         auto end = (*this)(op->end_);
+        auto step = (*this)(op->step_);
         auto len = (*this)(op->len_);
         inside_ = true;
         isPart0_ = true, isAfter_ = false, anyInside_ = false;
@@ -208,10 +204,10 @@ Stmt FissionFor::visit(const For &op) {
         isPart0_ = false, isAfter_ = false, anyInside_ = false;
         auto part1 = (*this)(op->body_);
         inside_ = false;
-        auto for0 =
-            makeFor(op->id(), op->iter_, begin, end, len, op->property_, part0);
-        auto for1 =
-            makeFor(op->id(), op->iter_, begin, end, len, op->property_, part1);
+        auto for0 = makeFor(op->id(), op->iter_, begin, end, step, len,
+                            op->property_, part0);
+        auto for1 = makeFor(op->id(), op->iter_, begin, end, step, len,
+                            op->property_, part1);
         markNewId(for0, true);
         markNewId(for1, false);
         return makeStmtSeq("", {for0, for1});
@@ -285,11 +281,10 @@ Stmt FissionFor::visit(const Assert &op) {
     return ret;
 }
 
-std::pair<Stmt, std::pair<std::unordered_map<std::string, std::string>,
-                          std::unordered_map<std::string, std::string>>>
-fission(const Stmt &_ast, const std::string &loop, FissionSide side,
-        const std::string &splitter, const std::string &suffix0,
-        const std::string &suffix1) {
+std::pair<Stmt,
+          std::pair<std::unordered_map<ID, ID>, std::unordered_map<ID, ID>>>
+fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
+        const std::string &suffix0, const std::string &suffix1) {
     // FIXME: Check the condition is not variant when splitting an If
 
     if (suffix0 == suffix1) {
@@ -304,8 +299,8 @@ fission(const Stmt &_ast, const std::string &loop, FissionSide side,
 
     auto ast = hoist(_ast);
     if (!hoist.found()) {
-        throw InvalidSchedule("Split point " + splitter + " not found inside " +
-                              loop);
+        throw InvalidSchedule("Split point " + toString(splitter) +
+                              " not found inside " + toString(loop));
     }
     auto &&xLoops = hoist.xLoops();
 
@@ -313,10 +308,10 @@ fission(const Stmt &_ast, const std::string &loop, FissionSide side,
 
     // var name -> loop id
     std::vector<FindDepsCond> disjunct;
-    for (const std::string &inner : hoist.innerLoops()) {
+    for (const ID &inner : hoist.innerLoops()) {
         disjunct.push_back({{inner, DepDirection::Normal}});
     }
-    auto isRealWrite = [&](const std::string &loop, const VarDef &def) -> bool {
+    auto isRealWrite = [&](const ID &loop, const VarDef &def) -> bool {
         return isVariant(variantExpr.second, def, loop);
     };
     auto filter = [&](const AccessPoint &later, const AccessPoint &earlier) {
@@ -328,10 +323,10 @@ fission(const Stmt &_ast, const std::string &loop, FissionSide side,
         }
         return false;
     };
-    std::unordered_map<std::string, std::vector<std::string>> toAdd;
+    std::unordered_map<ID, std::vector<ID>> toAdd;
     auto found = [&](const Dependency &d) {
         ASSERT(d.cond_.size() == 1);
-        auto &&id = d.cond_[0].first.name_;
+        auto &&id = d.cond_[0].first.id_;
         if (!xLoops.count(d.var_) ||
             std::find(xLoops.at(d.var_).begin(), xLoops.at(d.var_).end(), id) ==
                 xLoops.at(d.var_).end()) {

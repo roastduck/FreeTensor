@@ -2,13 +2,11 @@
 
 namespace ir {
 
-void AnalyzeLinear::visitExpr(
-    const Expr &op, const std::function<void(const Expr &)> &visitNode) {
+void AnalyzeLinear::visitExpr(const Expr &op) {
     if (!result_.count(op)) {
-        Visitor::visitExpr(op, visitNode);
+        Visitor::visitExpr(op);
         if (!result_.count(op)) {
-            getHash_(op);
-            result_[op] = {{{getHash_.hash().at(op), {1, op}}}, 0};
+            result_[op] = {{{1, op}}, 0};
         }
     }
 }
@@ -20,9 +18,6 @@ void AnalyzeLinear::visit(const IntConst &op) {
 
 void AnalyzeLinear::visit(const Add &op) {
     Visitor::visit(op);
-    if (!result_.count(op->lhs_) || !result_.count(op->rhs_)) {
-        return;
-    }
     const auto &e1 = result_.at(op->lhs_);
     const auto &e2 = result_.at(op->rhs_);
     result_[op] = add(e1, e2);
@@ -30,9 +25,6 @@ void AnalyzeLinear::visit(const Add &op) {
 
 void AnalyzeLinear::visit(const Sub &op) {
     Visitor::visit(op);
-    if (!result_.count(op->lhs_) || !result_.count(op->rhs_)) {
-        return;
-    }
     const auto &e1 = result_.at(op->lhs_);
     const auto &e2 = result_.at(op->rhs_);
     result_[op] = sub(e1, e2);
@@ -40,9 +32,6 @@ void AnalyzeLinear::visit(const Sub &op) {
 
 void AnalyzeLinear::visit(const Mul &op) {
     Visitor::visit(op);
-    if (!result_.count(op->lhs_) || !result_.count(op->rhs_)) {
-        return;
-    }
     const auto &e1 = result_.at(op->lhs_);
     const auto &e2 = result_.at(op->rhs_);
 
@@ -57,5 +46,27 @@ void AnalyzeLinear::visit(const Mul &op) {
     // Not linear
 }
 
-} // namespace ir
+LinearExpr<int64_t> linear(const Expr &expr) {
+    AnalyzeLinear visitor;
+    visitor(expr);
+    return visitor.result().at(expr);
+}
 
+Opt<std::pair<LinearExpr<int64_t>, ASTNodeType>> linearComp(const Expr &expr) {
+    switch (expr->nodeType()) {
+    case ASTNodeType::LT:
+    case ASTNodeType::LE:
+    case ASTNodeType::GT:
+    case ASTNodeType::GE:
+    case ASTNodeType::EQ:
+    case ASTNodeType::NE:
+        return Opt<std::pair<LinearExpr<int64_t>, ASTNodeType>>::make(
+            std::make_pair(linear(makeSub(expr.as<BinaryExprNode>()->lhs_,
+                                          expr.as<BinaryExprNode>()->rhs_)),
+                           expr->nodeType()));
+    default:
+        return nullptr;
+    }
+}
+
+} // namespace ir

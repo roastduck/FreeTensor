@@ -45,12 +45,13 @@ Stmt HoistVarOverStmtSeq::visit(const ReduceTo &_op) {
 }
 
 Stmt HoistVarOverStmtSeq::visit(const StmtSeq &op) {
-    std::unordered_map<std::string, int> namesCnt, renameCnt;
-    std::vector<Stmt> stmts;
-    std::vector<VarDef> defs;
+    std::unordered_map<std::string, int> namesCnt;
     for (auto &&[id, name] : allDefs(op)) {
         namesCnt[name]++;
     }
+
+    std::vector<Stmt> stmts;
+    std::vector<VarDef> defs;
     for (auto &&stmt : op->stmts_) {
         if (stmt->nodeType() == ASTNodeType::VarDef) {
             isFixPoint_ = false;
@@ -58,8 +59,7 @@ Stmt HoistVarOverStmtSeq::visit(const StmtSeq &op) {
             Stmt _newDef;
             if (namesCnt.at(def->name_) > 1) {
                 ASSERT(!rename_.count(def->name_));
-                rename_[def->name_] =
-                    def->name_ + "." + std::to_string(renameCnt[def->name_]++);
+                rename_[def->name_] = def->name_ + "." + def->id().strId();
                 _newDef = (*this)(stmt);
                 rename_.erase(def->name_);
             } else {
@@ -101,4 +101,3 @@ Stmt hoistVarOverStmtSeq(const Stmt &_op) {
 }
 
 } // namespace ir
-

@@ -21,17 +21,11 @@ def test_manual_static():
     @ir.transform
     def f(x, y):
         "nid: V_x"
-        ir.declare_var(x, (batch_size, n_heads, seq_len, seq_len),
-                       "float32",
-                       "input",
-                       "gpu/global",
-                       name="x")
+        ir.declare_var(x, (batch_size, n_heads, seq_len, seq_len), "float32",
+                       "input", "gpu/global")
         "nid: V_y"
-        ir.declare_var(y, (batch_size, n_heads, seq_len, seq_len),
-                       "float32",
-                       "output",
-                       "gpu/global",
-                       name="y")
+        ir.declare_var(y, (batch_size, n_heads, seq_len, seq_len), "float32",
+                       "output", "gpu/global")
         "nid: softmax"
         ir.libop.softmax_()(x, y)
 
@@ -88,11 +82,11 @@ def test_manual_static():
         return V_sum_shmem
 
     V_sum_shmem = opt_red(
-        "softmax:sum:y", "$softmax:sum:y",
+        "softmax:sum:y", "softmax:sum:y",
         "softmax:sum:recur:init:recur:recur:recur:recur:exec",
         "softmax:sum:recur:reduce:recur:recur:recur:L")
     V_max_shmem = opt_red(
-        "softmax:max:impl:y", "$softmax:max:impl:y",
+        "softmax:max:impl:y", "softmax:max:impl:y",
         "softmax:max:impl:recur:init:recur:recur:recur:recur:exec",
         "softmax:max:impl:recur:reduce:recur:recur:recur:L")
 
@@ -140,7 +134,6 @@ def test_manual_static():
                           dtype=torch.float32)
     y_arr = ir.Array(y_torch.numpy(), device)
     ir.Driver(f, code, device)(x_arr, y_arr)
-    y_torch = torch.Tensor(y_arr.numpy().reshape(batch_size, n_heads, seq_len,
-                                                 seq_len))
+    y_torch = torch.Tensor(y_arr.numpy())
 
     assert torch.all(torch.isclose(y_torch, torch.softmax(x_torch, axis=-1)))

@@ -1,25 +1,22 @@
+#include <itertools.hpp>
+
+#include <hash.h>
 #include <pass/cpu/lower_parallel_reduction.h>
 
 namespace ir {
 
 namespace cpu {
 
-uint64_t LowerParallelReduction::getHash(const Expr &op) {
-    getHash_(op);
-    return getHash_.hash().at(op);
-}
-
 std::vector<std::pair<For, int>>
 LowerParallelReduction::reducedBy(const ReduceTo &op) {
     std::vector<std::pair<For, int>> ret;
     for (auto &&loop : loopStack_) {
-        for (size_t k = 0, m = loop->property_.reductions_.size(); k < m; k++) {
-            auto &&item = loop->property_.reductions_[k];
+        for (auto &&[k, item] : iter::enumerate(loop->property_.reductions_)) {
             if (item.var_ == op->var_) {
                 ASSERT(item.indices_.size() == op->indices_.size());
-                for (size_t i = 0, n = item.indices_.size(); i < n; i++) {
-                    if (item.indices_[i].isValid() &&
-                        getHash(item.indices_[i]) != getHash(op->indices_[i])) {
+                for (auto &&[lIdx, oIdx] :
+                     iter::zip(item.indices_, op->indices_)) {
+                    if (lIdx.isValid() && !HashComparator()(lIdx, oIdx)) {
                         goto mismatch;
                     }
                 }
@@ -31,21 +28,13 @@ LowerParallelReduction::reducedBy(const ReduceTo &op) {
     return ret;
 }
 
-Stmt LowerParallelReduction::visit(const VarDef &op) {
-    ASSERT(!buffers_.count(op->name_));
-    buffers_[op->name_] = op->buffer_;
-    auto ret = Mutator::visit(op);
-    buffers_.erase(op->name_);
-    return ret;
-}
-
 Stmt LowerParallelReduction::visit(const For &_op) {
     if (_op->property_.reductions_.empty()) {
-        return Mutator::visit(_op);
+        return BaseClass::visit(_op);
     }
 
     loopStack_.emplace_back(_op);
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::For);
     auto op = __op.as<ForNode>();
     loopStack_.pop_back();
@@ -57,14 +46,15 @@ Stmt LowerParallelReduction::visit(const For &_op) {
     std::vector<DataType> dtypes;
     for (size_t i = 0, n = op->property_.reductions_.size(); i < n; i++) {
         auto &[redOp, var, varIndices] = op->property_.reductions_[i];
-        auto dtype = buffers_.at(var)->tensor().dtype();
-        auto workspace = "__reduce_" + op->id() + "_" + std::to_string(i);
+        auto dtype = buffer(var)->tensor().dtype();
+        auto workspace =
+            "__reduce_" + op->id().strId() + "_" + std::to_string(i);
         std::vector<SubTree<ExprNode>> workspaceShape;
-        ASSERT(varIndices.size() == buffers_.at(var)->tensor().shape().size());
-        for (size_t j = 0, m = varIndices.size(); j < m; j++) {
-            if (!varIndices[j].isValid()) {
-                workspaceShape.emplace_back(
-                    buffers_.at(var)->tensor().shape()[j]);
+        ASSERT(varIndices.size() == buffer(var)->tensor().shape().size());
+        for (auto &&[idx, dim] :
+             iter::zip(varIndices, buffer(var)->tensor().shape())) {
+            if (!idx.isValid()) {
+                workspaceShape.emplace_back(dim);
             }
         }
 
@@ -88,22 +78,21 @@ Stmt LowerParallelReduction::visit(const For &_op) {
         for (size_t j = workspaceShape.size() - 1; ~j; j--) {
             initStmt =
                 makeFor("", workspace + "." + std::to_string(j),
-                        makeIntConst(0), workspaceShape[j], workspaceShape[j],
-                        ForProperty(), std::move(initStmt));
+                        makeIntConst(0), workspaceShape[j], makeIntConst(1),
+                        workspaceShape[j], ForProperty(), std::move(initStmt));
             flushStmt =
                 makeFor("", workspace + "." + std::to_string(j),
-                        makeIntConst(0), workspaceShape[j], workspaceShape[j],
-                        ForProperty(), std::move(flushStmt));
+                        makeIntConst(0), workspaceShape[j], makeIntConst(1),
+                        workspaceShape[j], ForProperty(), std::move(flushStmt));
         }
 
         initStmts.emplace_back(std::move(initStmt));
         flushStmts.emplace_back(std::move(flushStmt));
 
         std::vector<SubTree<ExprNode, Nullable>> workspaceIndices;
-        ASSERT(varIndices.size() == buffers_.at(var)->tensor().shape().size());
-        for (size_t j = 0, m = varIndices.size(); j < m; j++) {
-            if (!varIndices[j].isValid()) {
-                workspaceIndices.emplace_back(varIndices[j]);
+        for (auto &&idx : varIndices) {
+            if (!idx.isValid()) {
+                workspaceIndices.emplace_back(idx);
             }
         }
         var = workspace;
@@ -119,18 +108,19 @@ Stmt LowerParallelReduction::visit(const For &_op) {
     stmts.emplace_back(op);
     stmts.insert(stmts.end(), flushStmts.begin(), flushStmts.end());
     Stmt ret = makeStmtSeq("", std::move(stmts));
-    for (size_t i = 0, n = op->property_.reductions_.size(); i < n; i++) {
-        ret = makeVarDef("", workspaces[i],
-                         Buffer(Tensor(workspaceShapes[i], dtypes[i]),
-                                AccessType::Cache, MemType::CPU),
-                         nullptr, ret, false);
+    for (auto &&[workspace, wsShape, dtype] :
+         iter::zip(workspaces, workspaceShapes, dtypes)) {
+        ret = makeVarDef(
+            "", workspace,
+            Buffer(Tensor(wsShape, dtype), AccessType::Cache, MemType::CPU),
+            nullptr, ret, false);
     }
 
     return ret;
 }
 
 Stmt LowerParallelReduction::visit(const ReduceTo &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
     auto op = __op.as<ReduceToNode>();
 
@@ -141,15 +131,15 @@ Stmt LowerParallelReduction::visit(const ReduceTo &_op) {
                 "Parallel reduction over multiple scopes is not supported yet");
         }
         auto &&redLoop = redLoops.front();
-        auto workspace = "__reduce_" + redLoop.first->id() + "_" +
+        auto workspace = "__reduce_" + redLoop.first->id().strId() + "_" +
                          std::to_string(redLoop.second);
         std::vector<SubTree<ExprNode>> indices;
         auto &&redIndices =
             redLoop.first->property_.reductions_[redLoop.second].indices_;
         ASSERT(op->indices_.size() == redIndices.size());
-        for (size_t i = 0, n = op->indices_.size(); i < n; i++) {
-            if (!redIndices[i].isValid()) {
-                indices.emplace_back(op->indices_[i]);
+        for (auto &&[lIdx, oIdx] : iter::zip(redIndices, op->indices_)) {
+            if (!lIdx.isValid()) {
+                indices.emplace_back(oIdx);
             }
         }
         return makeReduceTo(op->id(), workspace, std::move(indices), op->op_,

@@ -9,7 +9,7 @@ void AllDefs::visit(const VarDef &op) {
     }
 }
 
-std::vector<std::pair<std::string, std::string>>
+std::vector<std::pair<ID, std::string>>
 allDefs(const Stmt &op, const std::unordered_set<AccessType> &atypes) {
     AllDefs visitor(atypes);
     visitor(op);
@@ -17,4 +17,3 @@ allDefs(const Stmt &op, const std::unordered_set<AccessType> &atypes) {
 }
 
 } // namespace ir
-

@@ -26,4 +26,3 @@ Stmt UndoMakeReduction::visit(const ReduceTo &_op) {
 }
 
 } // namespace ir
-

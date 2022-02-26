@@ -48,14 +48,14 @@ Expr Parallelize::visit(const Var &op) {
     return Mutator::visit(op);
 }
 
-Stmt parallelize(const Stmt &_ast, const std::string &loop,
+Stmt parallelize(const Stmt &_ast, const ID &loop,
                  const std::string &parallel) {
     Parallelize mutator(loop, parallel);
     auto ast = makeReduction(_ast);
     auto oldAst = ast;
     ast = mutator(ast);
     if (!mutator.done()) {
-        throw InvalidSchedule("Loop " + loop + " not found");
+        throw InvalidSchedule("Loop " + toString(loop) + " not found");
     }
 
     {

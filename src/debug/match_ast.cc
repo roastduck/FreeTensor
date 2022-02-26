@@ -1,16 +1,29 @@
 #include <algorithm>
 
+#include <itertools.hpp>
+
 #include <debug/match_ast.h>
+#include <pass/flatten_stmt_seq.h>
 
 namespace ir {
 
 bool MatchVisitor::matchName(const std::string &thisName,
                              const std::string &otherName) {
     if (!nameMap_.count(thisName)) {
+        if (nameMapImage_.count(otherName)) {
+            return false;
+        }
         nameMap_[thisName] = otherName;
+        nameMapImage_.insert(otherName);
         return true;
     }
     return nameMap_.at(thisName) == otherName;
+}
+
+void MatchVisitor::clearName(const std::string &thisName) {
+    ASSERT(nameMap_.count(thisName));
+    nameMapImage_.erase(nameMap_.at(thisName));
+    nameMap_.erase(thisName);
 }
 
 #define CHECK(expr)                                                            \
@@ -39,8 +52,8 @@ void MatchVisitor::visit(const StmtSeq &op) {
     CHECK(instance_->nodeType() == ASTNodeType::StmtSeq);
     auto instance = instance_.as<StmtSeqNode>();
     CHECK(op->stmts_.size() == instance->stmts_.size());
-    for (size_t i = 0, iEnd = op->stmts_.size(); i < iEnd; i++) {
-        RECURSE(op->stmts_[i], instance->stmts_[i]);
+    for (auto &&[oStmt, iStmt] : iter::zip(op->stmts_, instance->stmts_)) {
+        RECURSE(oStmt, iStmt);
     }
 }
 
@@ -53,10 +66,11 @@ void MatchVisitor::visit(const VarDef &op) {
     auto &&lshape = op->buffer_->tensor().shape();
     auto &&rshape = instance->buffer_->tensor().shape();
     CHECK(lshape.size() == rshape.size());
-    for (size_t i = 0, iEnd = lshape.size(); i < iEnd; i++) {
-        RECURSE(lshape[i], rshape[i]);
+    for (auto &&[ldim, rdim] : iter::zip(lshape, rshape)) {
+        RECURSE(ldim, rdim);
     }
     RECURSE(op->body_, instance->body_);
+    clearName(op->name_);
 }
 
 void MatchVisitor::visit(const Var &op) {
@@ -69,8 +83,8 @@ void MatchVisitor::visit(const Store &op) {
     CHECK(instance_->nodeType() == ASTNodeType::Store);
     auto instance = instance_.as<StoreNode>();
     CHECK(matchName(op->var_, instance->var_));
-    for (size_t i = 0, iEnd = op->indices_.size(); i < iEnd; i++) {
-        RECURSE(op->indices_[i], instance->indices_[i]);
+    for (auto &&[oIdx, iIdx] : iter::zip(op->indices_, instance->indices_)) {
+        RECURSE(oIdx, iIdx);
     }
     RECURSE(op->expr_, instance->expr_);
 }
@@ -79,8 +93,8 @@ void MatchVisitor::visit(const Load &op) {
     CHECK(instance_->nodeType() == ASTNodeType::Load);
     auto instance = instance_.as<LoadNode>();
     CHECK(matchName(op->var_, instance->var_));
-    for (size_t i = 0, iEnd = op->indices_.size(); i < iEnd; i++) {
-        RECURSE(op->indices_[i], instance->indices_[i]);
+    for (auto &&[oIdx, iIdx] : iter::zip(op->indices_, instance->indices_)) {
+        RECURSE(oIdx, iIdx);
     }
 }
 
@@ -88,8 +102,8 @@ void MatchVisitor::visit(const ReduceTo &op) {
     CHECK(instance_->nodeType() == ASTNodeType::ReduceTo);
     auto instance = instance_.as<ReduceToNode>();
     CHECK(matchName(op->var_, instance->var_));
-    for (size_t i = 0, iEnd = op->indices_.size(); i < iEnd; i++) {
-        RECURSE(op->indices_[i], instance->indices_[i]);
+    for (auto &&[oIdx, iIdx] : iter::zip(op->indices_, instance->indices_)) {
+        RECURSE(oIdx, iIdx);
     }
     CHECK(op->op_ == instance->op_);
     RECURSE(op->expr_, instance->expr_);
@@ -129,13 +143,15 @@ void MatchVisitor::visit(const Add &op) {
         };
     recur(op, thisOperands);
     recur(instance, instanceOperands);
+    // FIXME: If the expression contains `AnyExpr`, this assertion may lead to
+    // false mismatch
     CHECK(thisOperands.size() == instanceOperands.size());
 
     std::sort(thisOperands.begin(), thisOperands.end());
     do {
         isMatched_ = true;
-        for (size_t i = 0, n = thisOperands.size(); i < n; i++) {
-            TRY_RECURSE(thisOperands[i], instanceOperands[i]);
+        for (auto &&[oOp, iOp] : iter::zip(thisOperands, instanceOperands)) {
+            TRY_RECURSE(oOp, iOp);
             if (!isMatched_) {
                 goto fail;
             }
@@ -173,8 +189,8 @@ void MatchVisitor::visit(const Mul &op) {
     std::sort(thisOperands.begin(), thisOperands.end());
     do {
         isMatched_ = true;
-        for (size_t i = 0, n = thisOperands.size(); i < n; i++) {
-            TRY_RECURSE(thisOperands[i], instanceOperands[i]);
+        for (auto &&[oOp, iOp] : iter::zip(thisOperands, instanceOperands)) {
+            TRY_RECURSE(oOp, iOp);
             if (!isMatched_) {
                 goto fail;
             }
@@ -215,6 +231,13 @@ void MatchVisitor::visit(const RoundTowards0Div &op) {
 void MatchVisitor::visit(const Mod &op) {
     CHECK(instance_->nodeType() == ASTNodeType::Mod);
     auto instance = instance_.as<ModNode>();
+    RECURSE(op->lhs_, instance->lhs_);
+    RECURSE(op->rhs_, instance->rhs_);
+}
+
+void MatchVisitor::visit(const Remainder &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::Remainder);
+    auto instance = instance_.as<RemainderNode>();
     RECURSE(op->lhs_, instance->lhs_);
     RECURSE(op->rhs_, instance->rhs_);
 }
@@ -394,7 +417,9 @@ void MatchVisitor::visit(const For &op) {
     CHECK(matchName(op->iter_, instance->iter_));
     RECURSE(op->begin_, instance->begin_);
     RECURSE(op->end_, instance->end_);
+    RECURSE(op->step_, instance->step_);
     RECURSE(op->body_, instance->body_);
+    clearName(op->iter_);
 }
 
 void MatchVisitor::visit(const If &op) {
@@ -420,8 +445,8 @@ void MatchVisitor::visit(const Intrinsic &op) {
     auto instance = instance_.as<IntrinsicNode>();
     CHECK(op->format_ == instance->format_);
     CHECK(op->params_.size() == instance->params_.size());
-    for (size_t i = 0, iEnd = op->params_.size(); i < iEnd; i++) {
-        RECURSE(op->params_[i], instance->params_[i]);
+    for (auto &&[oParam, iParam] : iter::zip(op->params_, instance->params_)) {
+        RECURSE(oParam, iParam);
     }
     CHECK(op->retType_ == instance->retType_);
 }
@@ -456,11 +481,12 @@ void MatchVisitor::visit(const MatMul &op) {
     RECURSE(op->equivalent_, instance->equivalent_);
 }
 
-bool match(const AST &pattern, const AST &instance) {
+bool match(const Stmt &_pattern, const Stmt &_instance) {
+    auto pattern = flattenStmtSeq(_pattern);
+    auto instance = flattenStmtSeq(_instance);
     MatchVisitor visitor(instance);
     visitor(pattern);
     return visitor.isMatched();
 }
 
 } // namespace ir
-

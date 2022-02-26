@@ -24,5 +24,7 @@ def max_value(dtype):
 
 
 def same_mtype(lhs, rhs):
-    assert lhs == rhs, "Variables must be on the same memory"
+    lhs = parseMType(lhs)
+    rhs = parseMType(rhs)
+    assert lhs == rhs or lhs == ffi.MemType.ByValue or rhs == ffi.MemType.ByValue, "Variables must be on the same memory"
     return lhs

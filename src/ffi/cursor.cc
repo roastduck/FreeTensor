@@ -14,4 +14,3 @@ void init_ffi_cursor(py::module_ &m) {
 }
 
 } // namespace ir
-

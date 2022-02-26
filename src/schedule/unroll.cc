@@ -19,18 +19,17 @@ Stmt BackUnroll::visit(const For &_op) {
     return op;
 }
 
-Stmt ImmediateUnroll::visitStmt(
-    const Stmt &op, const std::function<Stmt(const Stmt &)> &visitNode) {
-    auto ret = Mutator::visitStmt(op, visitNode);
+Stmt ImmediateUnroll::visitStmt(const Stmt &op) {
+    auto ret = Mutator::visitStmt(op);
     if (!iter_.empty()) {
-        ret->setId(ret->id() + "." + std::to_string(curIter_));
+        ret->setId(ret->id().strId() + "." + std::to_string(curIter_));
     }
     return ret;
 }
 
 Expr ImmediateUnroll::visit(const Var &op) {
     if (op->name_ == iter_) {
-        return makeAdd(begin_, makeIntConst(curIter_));
+        return makeAdd(begin_, makeMul(makeIntConst(curIter_), step_));
     } else {
         return Mutator::visit(op);
     }
@@ -42,11 +41,11 @@ Stmt ImmediateUnroll::visit(const For &op) {
             auto len = op->len_.as<IntConstNode>()->val_;
             std::vector<Stmt> stmts;
             iter_ = op->iter_;
-            begin_ = op->begin_;
+            begin_ = op->begin_, step_ = op->step_;
             for (curIter_ = 0; curIter_ < len; curIter_++) {
                 stmts.emplace_back((*this)(op->body_));
             }
-            begin_ = nullptr;
+            begin_ = step_ = nullptr;
             iter_.clear();
             done_ = true;
             return makeStmtSeq("", std::move(stmts));
@@ -58,7 +57,7 @@ Stmt ImmediateUnroll::visit(const For &op) {
     }
 }
 
-Stmt unroll(const Stmt &_ast, const std::string &loop, bool immediate) {
+Stmt unroll(const Stmt &_ast, const ID &loop, bool immediate) {
     auto ast = simplifyPass(_ast); // Const prop for ForNode::len_
     bool done = false;
     if (immediate) {
@@ -72,7 +71,7 @@ Stmt unroll(const Stmt &_ast, const std::string &loop, bool immediate) {
         done = mutator.done();
     }
     if (!done) {
-        throw InvalidSchedule("Loop " + loop + " not found");
+        throw InvalidSchedule("Loop " + toString(loop) + " not found");
     }
     return ast;
 }

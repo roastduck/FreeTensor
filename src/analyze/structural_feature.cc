@@ -51,16 +51,16 @@ void StructuralFeature::updAreaInfo(const AST &parent, const AST &child) {
         ASSERT(child.hi_.size() == n);
 
         NodeBufferInfo ret;
-        ret.lo_ = std::vector<LowerBoundsList>(n);
-        ret.hi_ = std::vector<UpperBoundsList>(n);
+        ret.lo_ = std::vector<CompUniqueBounds::LowerBoundsList>(n);
+        ret.hi_ = std::vector<CompUniqueBounds::UpperBoundsList>(n);
         for (size_t i = 0; i < n; i++) {
             for (auto &&b : child.lo_[i]) {
-                if (checkAllDefined(defs_, b.expr())) {
+                if (checkAllDefined(names(), b.expr())) {
                     ret.lo_[i].emplace_back(b);
                 }
             }
             for (auto &&b : child.hi_[i]) {
-                if (checkAllDefined(defs_, b.expr())) {
+                if (checkAllDefined(names(), b.expr())) {
                     ret.hi_[i].emplace_back(b);
                 }
             }
@@ -76,8 +76,8 @@ void StructuralFeature::updAreaInfo(const AST &parent, const AST &child) {
         ASSERT(child.hi_.size() == n);
 
         NodeBufferInfo ret;
-        ret.lo_ = std::vector<LowerBoundsList>(n);
-        ret.hi_ = std::vector<UpperBoundsList>(n);
+        ret.lo_ = std::vector<CompUniqueBounds::LowerBoundsList>(n);
+        ret.hi_ = std::vector<CompUniqueBounds::UpperBoundsList>(n);
         for (size_t i = 0; i < n; i++) {
             for (auto &&b1 : parent.lo_[i]) {
                 for (auto &&b2 : child.lo_[i]) {
@@ -187,15 +187,15 @@ void StructuralFeature::calcAreaFeatures(const Stmt &node) {
     }
 
     for (auto &&item : info_[node].loads_) {
-        features_[node->id()].loadArea_[buffers_.at(item.first)->mtype()] +=
+        features_[node->id()].loadArea_[buffer(item.first)->mtype()] +=
             calcArea(item.second);
     }
     for (auto &&item : info_[node].stores_) {
-        features_[node->id()].storeArea_[buffers_.at(item.first)->mtype()] +=
+        features_[node->id()].storeArea_[buffer(item.first)->mtype()] +=
             calcArea(item.second);
     }
     for (auto &&item : info_[node].accesses_) {
-        features_[node->id()].accessArea_[buffers_.at(item.first)->mtype()] +=
+        features_[node->id()].accessArea_[buffer(item.first)->mtype()] +=
             calcArea(item.second);
     }
 }
@@ -206,17 +206,36 @@ void StructuralFeature::calcFeatures(const Stmt &node) {
     calcAreaFeatures(node);
 }
 
-Stmt StructuralFeature::visitStmt(
-    const Stmt &_op, const std::function<Stmt(const Stmt &)> &visitNode) {
-    auto op = BaseClass::visitStmt(_op, visitNode);
+void StructuralFeature::visitBinOp(const BinaryExpr &op) {
+    BaseClass::visitExpr(op);
+    updInfo(op, op->lhs_);
+    updInfo(op, op->rhs_);
+    info_[op].opCnt_[upCast(dtype(op->lhs_), dtype(op->rhs_))]++;
+}
+
+void StructuralFeature::visitUnaryOp(const UnaryExpr &op) {
+    BaseClass::visitExpr(op);
+    updInfo(op, op->expr_);
+    info_[op].opCnt_[dtype(op->expr_)]++;
+}
+
+void StructuralFeature::visitStmt(const Stmt &op) {
+    BaseClass::visitStmt(op);
     calcFeatures(op);
-    return op;
 }
 
-Expr StructuralFeature::visit(const Load &_op) {
-    auto __op = BaseClass::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::Load);
-    auto op = __op.as<LoadNode>();
+void StructuralFeature::visitExpr(const Expr &op) {
+    if (op->isBinary()) {
+        visitBinOp(op.as<BinaryExprNode>());
+    } else if (op->isUnary()) {
+        visitUnaryOp(op.as<UnaryExprNode>());
+    } else {
+        BaseClass::visitExpr(op);
+    }
+}
+
+void StructuralFeature::visit(const Load &op) {
+    BaseClass::visit(op);
 
     NodeBufferInfo &loads = info_[op].loads_[op->var_];
     NodeBufferInfo &accesses = info_[op].accesses_[op->var_];
@@ -225,26 +244,22 @@ Expr StructuralFeature::visit(const Load &_op) {
     accesses.lo_.reserve(op->indices_.size());
     accesses.hi_.reserve(op->indices_.size());
     for (auto &&idx : op->indices_) {
-        loads.lo_.emplace_back(getLower(idx));
-        loads.hi_.emplace_back(getUpper(idx));
-        accesses.lo_.emplace_back(getLower(idx));
-        accesses.hi_.emplace_back(getUpper(idx));
+        loads.lo_.emplace_back(bound_.getLower(idx));
+        loads.hi_.emplace_back(bound_.getUpper(idx));
+        accesses.lo_.emplace_back(bound_.getLower(idx));
+        accesses.hi_.emplace_back(bound_.getUpper(idx));
     }
 
-    info_[op].loadCnt_[buffers_.at(op->var_)->mtype()]++;
-    info_[op].accessCnt_[buffers_.at(op->var_)->mtype()]++;
+    info_[op].loadCnt_[buffer(op->var_)->mtype()]++;
+    info_[op].accessCnt_[buffer(op->var_)->mtype()]++;
 
     for (auto &&idx : op->indices_) {
         updInfo(op, idx);
     }
-
-    return op;
 }
 
-Stmt StructuralFeature::visit(const Store &_op) {
-    auto __op = BaseClass::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::Store);
-    auto op = __op.as<StoreNode>();
+void StructuralFeature::visit(const Store &op) {
+    BaseClass::visit(op);
 
     NodeBufferInfo &stores = info_[op].stores_[op->var_];
     NodeBufferInfo &accesses = info_[op].accesses_[op->var_];
@@ -253,27 +268,23 @@ Stmt StructuralFeature::visit(const Store &_op) {
     accesses.lo_.reserve(op->indices_.size());
     accesses.hi_.reserve(op->indices_.size());
     for (auto &&idx : op->indices_) {
-        stores.lo_.emplace_back(getLower(idx));
-        stores.hi_.emplace_back(getUpper(idx));
-        accesses.lo_.emplace_back(getLower(idx));
-        accesses.hi_.emplace_back(getUpper(idx));
+        stores.lo_.emplace_back(bound_.getLower(idx));
+        stores.hi_.emplace_back(bound_.getUpper(idx));
+        accesses.lo_.emplace_back(bound_.getLower(idx));
+        accesses.hi_.emplace_back(bound_.getUpper(idx));
     }
 
-    info_[op].storeCnt_[buffers_.at(op->var_)->mtype()]++;
-    info_[op].accessCnt_[buffers_.at(op->var_)->mtype()]++;
+    info_[op].storeCnt_[buffer(op->var_)->mtype()]++;
+    info_[op].accessCnt_[buffer(op->var_)->mtype()]++;
 
     for (auto &&idx : op->indices_) {
         updInfo(op, idx);
     }
     updInfo(op, op->expr_);
-
-    return op;
 }
 
-Stmt StructuralFeature::visit(const ReduceTo &_op) {
-    auto __op = BaseClass::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
-    auto op = __op.as<ReduceToNode>();
+void StructuralFeature::visit(const ReduceTo &op) {
+    BaseClass::visit(op);
 
     NodeBufferInfo &loads = info_[op].loads_[op->var_];
     NodeBufferInfo &stores = info_[op].stores_[op->var_];
@@ -285,102 +296,76 @@ Stmt StructuralFeature::visit(const ReduceTo &_op) {
     accesses.lo_.reserve(op->indices_.size());
     accesses.hi_.reserve(op->indices_.size());
     for (auto &&idx : op->indices_) {
-        loads.lo_.emplace_back(getLower(idx));
-        loads.hi_.emplace_back(getUpper(idx));
-        stores.lo_.emplace_back(getLower(idx));
-        stores.hi_.emplace_back(getUpper(idx));
-        accesses.lo_.emplace_back(getLower(idx));
-        accesses.hi_.emplace_back(getUpper(idx));
+        loads.lo_.emplace_back(bound_.getLower(idx));
+        loads.hi_.emplace_back(bound_.getUpper(idx));
+        stores.lo_.emplace_back(bound_.getLower(idx));
+        stores.hi_.emplace_back(bound_.getUpper(idx));
+        accesses.lo_.emplace_back(bound_.getLower(idx));
+        accesses.hi_.emplace_back(bound_.getUpper(idx));
     }
 
-    info_[op].opCnt_[upCast(buffers_.at(op->var_)->tensor().dtype(),
-                            dtype(op->expr_))]++;
-    info_[op].loadCnt_[buffers_.at(op->var_)->mtype()]++;
-    info_[op].storeCnt_[buffers_.at(op->var_)->mtype()]++;
-    info_[op].accessCnt_[buffers_.at(op->var_)->mtype()]++;
+    info_[op]
+        .opCnt_[upCast(buffer(op->var_)->tensor().dtype(), dtype(op->expr_))]++;
+    info_[op].loadCnt_[buffer(op->var_)->mtype()]++;
+    info_[op].storeCnt_[buffer(op->var_)->mtype()]++;
+    info_[op].accessCnt_[buffer(op->var_)->mtype()]++;
 
     for (auto &&idx : op->indices_) {
         updInfo(op, idx);
     }
     updInfo(op, op->expr_);
-
-    return op;
 }
 
-Expr StructuralFeature::visit(const IfExpr &_op) {
-    auto __op = BaseClass::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::IfExpr);
-    auto op = __op.as<IfExprNode>();
+void StructuralFeature::visit(const IfExpr &op) {
+    BaseClass::visit(op);
     updInfo(op, op->cond_);
     updInfo(op, op->thenCase_);
     updInfo(op, op->elseCase_);
     info_[op].opCnt_[dtype(op->cond_)]++;
-    return op;
 }
 
-Stmt StructuralFeature::visit(const StmtSeq &_op) {
-    auto __op = BaseClass::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::StmtSeq);
-    auto op = __op.as<StmtSeqNode>();
+void StructuralFeature::visit(const Cast &op) {
+    BaseClass::visit(op);
+    updInfo(op, op->expr_);
+    info_[op].opCnt_[dtype(op->expr_)]++;
+}
 
+void StructuralFeature::visit(const StmtSeq &op) {
+    BaseClass::visit(op);
     for (auto &&stmt : op->stmts_) {
         updInfo(op, stmt);
     }
-
-    return op;
 }
 
-Stmt StructuralFeature::visit(const If &_op) {
-    auto __op = BaseClass::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::If);
-    auto op = __op.as<IfNode>();
-
+void StructuralFeature::visit(const If &op) {
+    BaseClass::visit(op);
     updInfo(op, op->cond_);
     updInfo(op, op->thenCase_);
     if (op->elseCase_.isValid()) {
         updInfo(op, op->elseCase_);
     }
-
-    return op;
 }
 
-Stmt StructuralFeature::visit(const Assert &_op) {
-    auto __op = BaseClass::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::Assert);
-    auto op = __op.as<AssertNode>();
-
+void StructuralFeature::visit(const Assert &op) {
+    BaseClass::visit(op);
     updInfo(op, op->cond_);
     updInfo(op, op->body_);
-
-    return op;
 }
 
-Stmt StructuralFeature::visit(const For &_op) {
-    defs_.insert(_op->iter_);
-    auto __op = BaseClass::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::For);
-    auto op = __op.as<ForNode>();
-    defs_.erase(_op->iter_);
+void StructuralFeature::visit(const For &op) {
+    BaseClass::visit(op);
 
     updInfo(op, op->begin_);
     updInfo(op, op->end_);
-    if (auto intLen = getInt(op->len_); intLen.isValid()) {
+    if (auto intLen = bound_.getInt(op->len_); intLen.isValid()) {
         updInfo(op, op->body_, *intLen);
     } else {
         updInfo(op, op->body_, -1);
     }
-
-    return op;
 }
 
-Stmt StructuralFeature::visit(const VarDef &_op) {
-    defs_.insert(_op->name_);
-    buffers_[_op->name_] = _op->buffer_;
-    auto __op = BaseClass::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::VarDef);
-    auto op = __op.as<VarDefNode>();
-    defs_.erase(_op->name_);
-    buffers_.erase(_op->name_);
+void StructuralFeature::visit(const VarDef &op) {
+    BaseClass::visit(op);
 
     for (auto &&item : op->buffer_->tensor().shape()) {
         updInfo(op, item);
@@ -402,9 +387,6 @@ Stmt StructuralFeature::visit(const VarDef &_op) {
             calcArea(info_[op].accesses_[op->name_]);
         info_[op].accesses_.erase(op->name_);
     }
-
-    return op;
 }
 
 } // namespace ir
-

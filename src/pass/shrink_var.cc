@@ -1,5 +1,5 @@
 #include <analyze/all_defs.h>
-#include <pass/isl_simplify.h>
+#include <pass/pb_simplify.h>
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
 #include <pass/z3_simplify.h>
@@ -57,12 +57,12 @@ Stmt shrinkVar(const Stmt &_op) {
 
     // (1)
     Stmt op;
-    BuiltinSimplify::LowerBoundsMap lower;
-    BuiltinSimplify::UpperBoundsMap upper;
-    std::tie(op, lower, upper) = simplifyAndGetBounds<ISLSimplify>(_op);
+    CompUniqueBounds::LowerBoundsMap lower;
+    CompUniqueBounds::UpperBoundsMap upper;
+    std::tie(op, lower, upper) = simplifyAndGetBounds<PBSimplify>(_op);
 
     // (2)
-    std::unordered_map<std::string, AccessBound> bounds;
+    std::unordered_map<ID, AccessBound> bounds;
     for (auto &&[varDefId, name] : allDefs(op, {AccessType::Cache})) {
         bounds[varDefId] = compAccessBound(op, varDefId, lower, upper);
     }
@@ -74,15 +74,15 @@ Stmt shrinkVar(const Stmt &_op) {
     return z3Simplify(op); // Currently BuiltinSimplify is not sufficient
 }
 
-Stmt shrinkSingleVar(const Stmt &_op, const std::string &varDefId) {
+Stmt shrinkSingleVar(const Stmt &_op, const ID &varDefId) {
     // (1)
     Stmt op;
-    BuiltinSimplify::LowerBoundsMap lower;
-    BuiltinSimplify::UpperBoundsMap upper;
-    std::tie(op, lower, upper) = simplifyAndGetBounds<ISLSimplify>(_op);
+    CompUniqueBounds::LowerBoundsMap lower;
+    CompUniqueBounds::UpperBoundsMap upper;
+    std::tie(op, lower, upper) = simplifyAndGetBounds<PBSimplify>(_op);
 
     // (2)
-    std::unordered_map<std::string, AccessBound> bounds;
+    std::unordered_map<ID, AccessBound> bounds;
     bounds[varDefId] = compAccessBound(op, varDefId, lower, upper);
 
     // (3)
@@ -93,4 +93,3 @@ Stmt shrinkSingleVar(const Stmt &_op, const std::string &varDefId) {
 }
 
 } // namespace ir
-

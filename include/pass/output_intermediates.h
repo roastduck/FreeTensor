@@ -4,61 +4,35 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include <analyze/symbol_table.h>
 #include <mutator.h>
-#include <visitor.h>
 
 namespace ir {
 
-class CountScopeLen : public Visitor {
-    std::string def_, var_;
-    const std::unordered_set<std::string>
-        &affectingScopes_; // For or StmtSeq IDs
-    std::unordered_map<Stmt, Expr> scopeLen_;
+class OutputIntermediates : public SymbolTable<Mutator> {
+    typedef SymbolTable<Mutator> BaseClass;
+
+    const std::unordered_map<ID, Expr> &versions_;
+    const std::unordered_map<ID, Expr> &totLens_;
+    std::unordered_map<ID, std::string> tapeNames_;
 
   public:
-    CountScopeLen(const std::string &def,
-                  const std::unordered_set<std::string> &affectingScopes)
-        : def_(def), affectingScopes_(affectingScopes) {}
+    OutputIntermediates(const std::unordered_map<ID, Expr> &versions,
+                        const std::unordered_map<ID, Expr> &totLens)
+        : versions_(versions), totLens_(totLens) {}
 
-    const std::unordered_map<Stmt, Expr> &scopeLen() const { return scopeLen_; }
+    const std::unordered_map<ID, std::string> &tapeNames() const {
+        return tapeNames_;
+    }
 
-  protected:
-    void visit(const Store &op) override;
-    void visit(const ReduceTo &op) override { ASSERT(false); }
-    void visit(const VarDef &op) override;
-    void visit(const For &op) override;
-    void visit(const StmtSeq &op) override;
-    void visit(const If &op) override;
-    void visit(const Assert &op) override;
-};
-
-class AddExtraDim : public Mutator {
-    std::string def_, var_;
-    const std::unordered_set<std::string>
-        &affectingScopes_; // For or StmtSeq IDs
-    const std::unordered_map<Stmt, Expr> &scopeLen_;
-    Expr totLen_;
-    std::unordered_map<Load, Expr> &loadMap_;
-    std::string tapeName_;
-    Expr offset_ = makeIntConst(0);
-
-  public:
-    AddExtraDim(const std::string &def,
-                const std::unordered_set<std::string> &affectingScopes,
-                const std::unordered_map<Stmt, Expr> &scopeLen,
-                const Expr &totLen, std::unordered_map<Load, Expr> &loadMap)
-        : def_(def), affectingScopes_(affectingScopes), scopeLen_(scopeLen),
-          totLen_(totLen), loadMap_(loadMap) {}
-
-    const std::string &tapeName() const { return tapeName_; }
+  private:
+    bool isSingleVersion(const ID &defId) const;
 
   protected:
-    Expr visit(const Load &op) override;
+    using BaseClass::visit;
     Stmt visit(const Store &op) override;
-    Stmt visit(const ReduceTo &op) override { ASSERT(false); }
+    Stmt visit(const ReduceTo &op) override;
     Stmt visit(const VarDef &op) override;
-    Stmt visit(const For &op) override;
-    Stmt visit(const StmtSeq &op) override;
 };
 
 /**
@@ -75,14 +49,14 @@ class AddExtraDim : public Mutator {
  * @return : (
  *  The transformed program
  *  Mapping from VarDef IDs of intermediate variables to output names
- *  Mapping from Load nodes of intermediate variables to Load nodes of the
- * corresponding output variables
+ *  Versions of each memory accesses,
+ *  Total version counts of each VarDef nodes
  * )
  */
-std::tuple<Stmt, std::unordered_map<std::string, std::string>,
-           std::unordered_map<Load, Expr>>
+std::tuple<Stmt, std::unordered_map<ID, std::string>,
+           std::unordered_map<ID, Expr>, std::unordered_map<ID, Expr>>
 outputIntermediates(const Stmt &op,
-                    const std::unordered_set<std::string> &intermediates);
+                    const std::unordered_set<ID> &intermediates);
 
 } // namespace ir
 

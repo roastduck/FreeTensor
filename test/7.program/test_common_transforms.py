@@ -74,7 +74,7 @@ def test_tiling():
     b_arr = ir.Array(b_np, device)
     c_arr = ir.Array(c_np, device)
     ir.Driver(func, code, device)(a=a_arr, b=b_arr, c=c_arr)
-    c_np = c_arr.numpy().reshape(256, 256)
+    c_np = c_arr.numpy()
 
     c_std = a_np @ b_np
     assert np.all(np.isclose(c_np, c_std))
@@ -219,7 +219,7 @@ def test_dynamic_tiling():
     s.cache(i1, "a", "cpu")
     s.cache(i1, "b", "cpu")
 
-    s.seperate_tail()
+    s.separate_tail(True)
 
     func = s.func()
     print(func)
@@ -242,7 +242,7 @@ def test_dynamic_tiling():
     c_arr = ir.Array(c_np, device)
     driver = ir.Driver(func, code, device)
     driver(n=n_arr, k=k_arr, m=m_arr, a=a_arr, b=b_arr, c=c_arr)
-    c_np = c_arr.numpy().reshape(300, 500)
+    c_np = c_arr.numpy()
 
     c_std = a_np @ b_np
     assert np.all(np.isclose(c_np, c_std))
@@ -295,7 +295,7 @@ def test_collaborative_fetch():
     b_arr = ir.Array(b_np, device)
     c_arr = ir.Array(c_np, device)
     ir.Driver(func, code, device)(a=a_arr, b=b_arr, c=c_arr)
-    c_np = c_arr.numpy().reshape(32, 32)
+    c_np = c_arr.numpy()
 
     c_std = a_np @ b_np
     assert np.all(np.isclose(c_np, c_std))

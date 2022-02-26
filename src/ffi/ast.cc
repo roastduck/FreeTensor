@@ -4,6 +4,7 @@
 #include <except.h>
 #include <expr.h>
 #include <ffi.h>
+#include <frontend/frontend_var.h>
 #include <func.h>
 #include <stmt.h>
 
@@ -33,6 +34,7 @@ void init_ffi_ast(py::module_ &m) {
         .value("CeilDiv", ASTNodeType::CeilDiv)
         .value("RoundTowards0Div", ASTNodeType::RoundTowards0Div)
         .value("Mod", ASTNodeType::Mod)
+        .value("Remainder", ASTNodeType::Remainder)
         .value("Min", ASTNodeType::Min)
         .value("Max", ASTNodeType::Max)
         .value("LT", ASTNodeType::LT)
@@ -57,6 +59,7 @@ void init_ffi_ast(py::module_ &m) {
         .value("For", ASTNodeType::For)
         .value("If", ASTNodeType::If)
         .value("Assert", ASTNodeType::Assert)
+        .value("Assume", ASTNodeType::Assume)
         .value("Intrinsic", ASTNodeType::Intrinsic)
         .value("Eval", ASTNodeType::Eval);
 
@@ -65,7 +68,16 @@ void init_ffi_ast(py::module_ &m) {
     py::class_<StmtNode, Stmt> pyStmt(m, "Stmt", pyAST);
     py::class_<ExprNode, Expr> pyExpr(m, "Expr", pyAST);
 
-#ifdef IR_DEBUG
+    py::class_<ID>(m, "ID")
+        .def(py::init([](const std::string &stmtId) { return ID(stmtId); }))
+        .def("__str__", [](const ID &id) { return toString(id); })
+        .def("__hash__", [](const ID &id) { return std::hash<ID>()(id); })
+        .def(
+            "__eq__", [](const ID &lhs, const ID &rhs) { return lhs == rhs; },
+            py::is_operator());
+    py::implicitly_convertible<std::string, ID>();
+
+#ifdef IR_DEBUG_LOG_NODE
     pyAST.def_readonly("debug_creator", &ASTNode::debugCreator_);
 #endif
 
@@ -74,27 +86,6 @@ void init_ffi_ast(py::module_ &m) {
         .def_readonly("returns", &FuncNode::returns_)
         .def_property_readonly(
             "body", [](const Func &op) -> Stmt { return op->body_; });
-
-    py::class_<FrontendVarIdx>(m, "FrontendVarIdx")
-        .def(py::init(&FrontendVarIdx::fromSingle))
-        .def(py::init(&FrontendVarIdx::fromSlice))
-        .def("__repr__",
-             [](const FrontendVarIdx &idx) { return toString(idx); });
-
-    py::class_<FrontendVar, Ref<FrontendVar>>(m, "FrontendVar")
-        .def(py::init<const std::string &, const std::vector<Expr> &, DataType,
-                      MemType, const std::vector<FrontendVarIdx> &>())
-        .def_property_readonly("name", &FrontendVar::name)
-        .def_property_readonly("full_shape", &FrontendVar::fullShape)
-        .def_property_readonly("indices", &FrontendVar::indices)
-        .def_property_readonly("dtype", &FrontendVar::dtype)
-        .def_property_readonly("mtype", &FrontendVar::mtype)
-        .def_property_readonly("ndim", &FrontendVar::ndim)
-        .def("shape", &FrontendVar::shape)
-        .def("as_load", &FrontendVar::asLoad)
-        .def("as_store", &FrontendVar::asStore)
-        .def("chain_indices", &FrontendVar::chainIndices)
-        .def("__repr__", [](const FrontendVar &var) { return toString(var); });
 
     pyStmt.def_property_readonly("nid", &StmtNode::id);
 
@@ -149,6 +140,10 @@ void init_ffi_ast(py::module_ &m) {
                                [](const For &op) -> Expr { return op->begin_; })
         .def_property_readonly("end",
                                [](const For &op) -> Expr { return op->end_; })
+        .def_property_readonly("step",
+                               [](const For &op) -> Expr { return op->step_; })
+        .def_property_readonly("len",
+                               [](const For &op) -> Expr { return op->len_; })
         .def_readonly("property", &ForNode::property_)
         .def_property_readonly("body",
                                [](const For &op) -> Stmt { return op->body_; });
@@ -164,6 +159,11 @@ void init_ffi_ast(py::module_ &m) {
             "cond", [](const Assert &op) -> Expr { return op->cond_; })
         .def_property_readonly(
             "body", [](const Assert &op) -> Stmt { return op->body_; });
+    py::class_<AssumeNode, Assume>(m, "Assume", pyStmt)
+        .def_property_readonly(
+            "cond", [](const Assume &op) -> Expr { return op->cond_; })
+        .def_property_readonly(
+            "body", [](const Assume &op) -> Stmt { return op->body_; });
     py::class_<EvalNode, Eval>(m, "Eval", pyStmt)
         .def_property_readonly(
             "expr", [](const Eval &op) -> Expr { return op->expr_; });
@@ -225,6 +225,11 @@ void init_ffi_ast(py::module_ &m) {
                                [](const Mod &op) -> Expr { return op->lhs_; })
         .def_property_readonly("rhs",
                                [](const Mod &op) -> Expr { return op->rhs_; });
+    py::class_<RemainderNode, Remainder>(m, "Remainder", pyExpr)
+        .def_property_readonly(
+            "lhs", [](const Remainder &op) -> Expr { return op->lhs_; })
+        .def_property_readonly(
+            "rhs", [](const Remainder &op) -> Expr { return op->rhs_; });
     py::class_<MinNode, Min>(m, "Min", pyExpr)
         .def_property_readonly("lhs",
                                [](const Min &op) -> Expr { return op->lhs_; })
@@ -320,7 +325,7 @@ void init_ffi_ast(py::module_ &m) {
 
     pyAST
         .def("match",
-             [](const AST &op, const AST &other) { return match(op, other); })
+             [](const Stmt &op, const Stmt &other) { return match(op, other); })
         .def("type", [](const AST &op) { return toString(op->nodeType()); })
         .def("__str__", [](const AST &op) { return toString(op); })
         .def("__repr__",
@@ -330,9 +335,10 @@ void init_ffi_ast(py::module_ &m) {
              })
         .def("pretty_print", [](const AST &op) { return toString(op, true); });
 
-    pyExpr.def(py::init([](int64_t val) { return makeIntConst(val); }))
+    // NOTE: ORDER of the constructor matters!
+    pyExpr.def(py::init([](bool val) { return makeBoolConst(val); }))
+        .def(py::init([](int64_t val) { return makeIntConst(val); }))
         .def(py::init([](float val) { return makeFloatConst(val); }))
-        .def(py::init([](bool val) { return makeBoolConst(val); }))
         .def(py::init([](const FrontendVar &var) { return var.asLoad(); }))
         .def(
             "__add__",
@@ -428,26 +434,29 @@ void init_ffi_ast(py::module_ &m) {
         "makeFunc",
         [](const std::string &name, const std::vector<std::string> &params,
            const std::vector<std::pair<std::string, DataType>> &returns,
-           const Stmt &body) {
-            return makeFunc(name, params, returns, body, {});
+           const Stmt &body,
+           const std::unordered_map<std::string, Ref<Array>> &_closure) {
+            std::unordered_map<std::string, Ref<Ref<Array>>> closure;
+            for (auto &&[name, var] : _closure) {
+                closure[name] = Ref<Ref<Array>>::make(var);
+            }
+            return makeFunc(name, params, returns, body, closure);
         },
-        "name"_a, "params"_a, "returns"_a, "body"_a); // no closure
+        "name"_a, "params"_a, "returns"_a, "body"_a, "closure"_a);
 
     // Statements
     m.def("makeAny", &_makeAny);
     m.def("makeStmtSeq",
-          static_cast<Stmt (*)(const std::string &, const std::vector<Stmt> &)>(
+          static_cast<Stmt (*)(const ID &, const std::vector<Stmt> &)>(
               &_makeStmtSeq),
           "id"_a, "stmts"_a);
-    m.def(
-        "makeVarDef",
-        static_cast<Stmt (*)(const std::string &, const std::string &,
-                             const Buffer &, const Expr &, const Stmt &, bool)>(
-            &_makeVarDef),
-        "nid"_a, "name"_a, "buffer"_a, "size_lim"_a, "body"_a, "pinned"_a);
+    m.def("makeVarDef",
+          static_cast<Stmt (*)(const ID &, const std::string &, const Buffer &,
+                               const Expr &, const Stmt &, bool)>(&_makeVarDef),
+          "nid"_a, "name"_a, "buffer"_a, "size_lim"_a, "body"_a, "pinned"_a);
     m.def("makeVar", &_makeVar, "name"_a);
     m.def("makeStore",
-          static_cast<Stmt (*)(const std::string &, const std::string &,
+          static_cast<Stmt (*)(const ID &, const std::string &,
                                const std::vector<Expr> &, const Expr &)>(
               &_makeStore),
           "nid"_a, "var"_a, "indices"_a, "expr"_a);
@@ -458,26 +467,28 @@ void init_ffi_ast(py::module_ &m) {
     m.def("makeIntConst", &_makeIntConst, "val"_a);
     m.def("makeFloatConst", &_makeFloatConst, "val"_a);
     m.def("makeFor",
-          static_cast<Stmt (*)(const std::string &, const std::string &,
+          static_cast<Stmt (*)(const ID &, const std::string &, const Expr &,
                                const Expr &, const Expr &, const Expr &,
                                const ForProperty &, const Stmt &)>(&_makeFor),
-          "nid"_a, "iter"_a, "begin"_a, "end"_a, "len"_a, "property"_a,
-          "body"_a);
+          "nid"_a, "iter"_a, "begin"_a, "end"_a, "step"_a, "len"_a,
+          "property"_a, "body"_a);
     m.def("makeIf",
-          static_cast<Stmt (*)(const std::string &, const Expr &, const Stmt &,
+          static_cast<Stmt (*)(const ID &, const Expr &, const Stmt &,
                                const Stmt &)>(&_makeIf),
           "nid"_a, "cond"_a, "thenCase"_a, "elseCase"_a = nullptr);
-    m.def(
-        "makeAssert",
-        static_cast<Stmt (*)(const std::string &, const Expr &, const Stmt &)>(
-            &_makeAssert),
-        "nid"_a, "cond"_a, "body"_a);
+    m.def("makeAssert",
+          static_cast<Stmt (*)(const ID &, const Expr &, const Stmt &)>(
+              &_makeAssert),
+          "nid"_a, "cond"_a, "body"_a);
     m.def("makeEval",
-          static_cast<Stmt (*)(const std::string &, const Expr &)>(&_makeEval),
-          "nid"_a, "expr"_a);
+          static_cast<Stmt (*)(const ID &, const Expr &)>(&_makeEval), "nid"_a,
+          "expr"_a);
 
     // Expressions
     m.def("makeAnyExpr", &_makeAnyExpr);
+    m.def("makeRemainder",
+          static_cast<Expr (*)(const Expr &, const Expr &)>(&_makeRemainder),
+          "lhs"_a, "rhs"_a);
     m.def("makeMin",
           static_cast<Expr (*)(const Expr &, const Expr &)>(&_makeMin), "lhs"_a,
           "rhs"_a);
@@ -553,6 +564,7 @@ template <> struct polymorphic_type_hook<ir::ASTNode> {
             DISPATCH(For);
             DISPATCH(If);
             DISPATCH(Assert);
+            DISPATCH(Assume);
             DISPATCH(Eval);
             DISPATCH(Any);
             DISPATCH(AnyExpr);
@@ -569,6 +581,7 @@ template <> struct polymorphic_type_hook<ir::ASTNode> {
             DISPATCH(CeilDiv);
             DISPATCH(RoundTowards0Div);
             DISPATCH(Mod);
+            DISPATCH(Remainder);
             DISPATCH(Min);
             DISPATCH(Max);
             DISPATCH(LT);
@@ -616,6 +629,7 @@ template <> struct polymorphic_type_hook<ir::StmtNode> {
             DISPATCH(For);
             DISPATCH(If);
             DISPATCH(Assert);
+            DISPATCH(Assume);
             DISPATCH(Eval);
             DISPATCH(Any);
         default:
@@ -649,6 +663,7 @@ template <> struct polymorphic_type_hook<ir::ExprNode> {
             DISPATCH(CeilDiv);
             DISPATCH(RoundTowards0Div);
             DISPATCH(Mod);
+            DISPATCH(Remainder);
             DISPATCH(Min);
             DISPATCH(Max);
             DISPATCH(LT);

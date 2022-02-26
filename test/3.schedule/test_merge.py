@@ -23,7 +23,52 @@ def test_basic():
     with ir.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
         with ir.For("i", 0, 32) as i:
             y[div(i, 8), i % 8] = div(i, 8) * (i % 8)
-    std = ir.pop_ast()
+    std = ir.use_builtin_div(ir.pop_ast())
+
+    assert std.match(ast)
+
+
+def test_non_zero_begin():
+    with ir.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
+        with ir.For("i", 2, 6, nid="L1") as i:
+            with ir.For("j", 4, 12, nid="L2") as j:
+                y[i - 2, j - 4] = i * j
+    ast = ir.pop_ast()
+    print(ast)
+    s = ir.Schedule(ast)
+    s.merge("L1", "L2")
+    ast = s.ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
+        with ir.For("i", 0, 32) as i:
+            y[div(i, 8), i % 8] = (div(i, 8) + 2) * ((i % 8) + 4)
+    std = ir.use_builtin_div(ir.pop_ast())
+
+    assert std.match(ast)
+
+
+def test_step():
+    with ir.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
+        with ir.For("i", 2, -2, -2, nid="L1") as i:
+            with ir.For("j", 6, -2, -2, nid="L2") as j:
+                y[i, j] = i * j
+    ast = ir.pop_ast()
+    print(ast)
+    s = ir.Schedule(ast)
+    s.merge("L1", "L2")
+    ast = s.ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
+        with ir.For("i", 0, 8) as i:
+            y[2 + div(i, 4) * -2,
+              6 + i % 4 * -2] = (2 + div(i, 4) * -2) * (6 + i % 4 * -2)
+    std = ir.use_builtin_div(ir.pop_ast())
 
     assert std.match(ast)
 
@@ -64,7 +109,7 @@ def test_if_in_between():
         with ir.For("i", 0, 32) as i:
             with ir.If(x[div(i, 8)] > 0):
                 y[div(i, 8), i % 8] = div(i, 8) * (i % 8)
-    std = ir.pop_ast()
+    std = ir.use_builtin_div(ir.pop_ast())
 
     assert std.match(ast)
 
@@ -91,12 +136,41 @@ def test_stmt_in_between():
             with ir.If(i % 8 == 0):
                 z[div(i, 8)] = div(i, 8)
             y[div(i, 8), i % 8] = div(i, 8) * (i % 8)
-    std = ir.pop_ast()
+    std = ir.use_builtin_div(ir.pop_ast())
 
     assert std.match(ast)
 
 
 def test_def_in_between():
+    with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("y", (4, 8), "int32", "output", "cpu")]) as (x, y):
+        with ir.For("i", 0, 4, nid="L1") as i:
+            with ir.VarDef("z", (), "int32", "output", "cpu") as z:
+                z[()] = x[i]
+                with ir.For("j", 0, 8, nid="L2") as j:
+                    y[i, j] = z[()] * j
+    ast = ir.pop_ast()
+    print(ast)
+    s = ir.Schedule(ast)
+    s.merge("L1", "L2")
+    ast = s.ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("y", (4, 8), "int32", "output", "cpu"),
+                    ("z", (), "int32", "output", "cpu")]) as (x, y, z):
+        with ir.For("i", 0, 32) as i:
+            with ir.If(i % 8 == 0):
+                z[()] = x[div(i, 8)]
+            y[div(i, 8), i % 8] = z[()] * (i % 8)
+    std = ir.use_builtin_div(ir.pop_ast())
+
+    assert std.match(ast)
+
+
+def test_prop_expr_of_outer_loop():
     with ir.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
         with ir.For("i", 0, 4, nid="L1") as i:
             with ir.VarDef("z", (), "int32", "output", "cpu") as z:
@@ -117,7 +191,7 @@ def test_def_in_between():
         with ir.For("i", 0, 32) as i:
             with ir.If(i % 8 == 0):
                 z[()] = div(i, 8)
-            y[div(i, 8), i % 8] = z[()] * (i % 8)
-    std = ir.pop_ast()
+            y[div(i, 8), i % 8] = div(i, 8) * (i % 8)
+    std = ir.use_builtin_div(ir.pop_ast())
 
     assert std.match(ast)

@@ -27,6 +27,7 @@ enum class ASTNodeType : int {
     For,
     If,
     Assert,
+    Assume,
 
     // Calls to external libs
     MatMul,
@@ -49,6 +50,7 @@ enum class ASTNodeType : int {
     CeilDiv,
     RoundTowards0Div,
     Mod,
+    Remainder,
     Min,
     Max,
     LT,
@@ -95,8 +97,11 @@ class ASTNode {
 
     bool isSubTree_ = false;
 
+  protected:
+    size_t hash_ = ~0ull;
+
   public:
-#ifdef IR_DEBUG
+#ifdef IR_DEBUG_LOG_NODE
     std::string debugCreator_ = "Python API";
 #endif
 
@@ -106,11 +111,18 @@ class ASTNode {
     void setIsSubTree(bool isSubTree = true) { isSubTree_ = isSubTree; }
     bool isSubTree() const { return isSubTree_; }
 
+    virtual bool isFunc() const { return false; }
+    virtual bool isStmt() const { return false; }
+    virtual bool isExpr() const { return false; }
+
+    size_t hash();
+    virtual void compHash() = 0;
+
     DEFINE_NODE_ACCESS(AST);
 };
 typedef Ref<ASTNode> AST;
 
-#ifdef IR_DEBUG
+#ifdef IR_DEBUG_LOG_NODE
 #define makeNode(type, ...)                                                    \
     ({                                                                         \
         auto __x = _make##type(__VA_ARGS__);                                   \
@@ -130,24 +142,75 @@ typedef Ref<ASTNode> AST;
 #endif
 
 class ExprNode : public ASTNode {
+  public:
+    bool isExpr() const override { return true; }
+
+    virtual bool isConst() const { return false; }
+    virtual bool isBinary() const { return false; }
+    virtual bool isUnary() const { return false; }
+
     DEFINE_NODE_ACCESS(Expr);
 };
 typedef Ref<ExprNode> Expr;
 
+class StmtNode;
+typedef Ref<StmtNode> Stmt;
+
+/**
+ * Identify an Stmt or Expr acrossing passes, so we do not need to pass pointers
+ *
+ * An Stmt is identified by a string-typed id_ property, which is unique to each
+ * Stmt node
+ *
+ * An Expr is identified by the hash of itself, combined with the string-typed
+ * ID of the Stmt its in, so that any identical Expr in the same Stmt is treated
+ * as the same node
+ */
+class ID {
+    friend StmtNode;
+
+    std::string stmtId_;
+    Expr expr_; /// null for Stmt
+
+  public:
+    ID() {}
+    ID(const char *stmtId) : stmtId_(stmtId) {}
+    ID(const std::string &stmtId) : stmtId_(stmtId) {}
+    explicit ID(const Stmt &stmt);
+
+    template <class T> ID(const Expr &expr, T &&parent) : ID(parent) {
+        expr_ = expr;
+    }
+
+    bool isValid() const { return !stmtId_.empty(); }
+
+    const std::string &strId() const;
+
+    friend std::string toString(const ID &id);
+    friend bool operator==(const ID &lhs, const ID &rhs);
+    friend bool operator!=(const ID &lhs, const ID &rhs);
+    friend struct ::std::hash<ID>;
+};
+
+std::string toString(const ID &id);
+
 class StmtNode : public ASTNode {
+    friend ID;
+
     std::string id_;
     static std::atomic<uint64_t> idCnt_;
 
   public:
     static std::string newId();
 
-    void setId(const std::string &id);
-    const std::string &id() const;
+    void setId(const ID &id);
+    ID id() const;
     bool hasNamedId() const;
+
+    bool isStmt() const override { return true; }
 
     DEFINE_NODE_ACCESS(Stmt);
 };
-typedef Ref<StmtNode> Stmt;
 
 Expr deepCopy(const Expr &op);
 Stmt deepCopy(const Stmt &op);
@@ -165,6 +228,12 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTree {
   public:
     SubTree() {}
     SubTree(std::nullptr_t) { ASSERT(POLICY == NullPolicy::Nullable); }
+
+    ~SubTree() {
+        if (obj_.isValid()) {
+            obj_->setIsSubTree(false);
+        }
+    }
 
     template <class U,
               typename std::enable_if_t<std::is_base_of_v<T, U>> * = nullptr>
@@ -255,5 +324,11 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTree {
 };
 
 } // namespace ir
+
+namespace std {
+
+template <> struct hash<ir::ID> { size_t operator()(const ir::ID &id) const; };
+
+} // namespace std
 
 #endif // AST_H

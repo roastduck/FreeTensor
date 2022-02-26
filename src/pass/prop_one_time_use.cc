@@ -25,7 +25,7 @@ Stmt propOneTimeUse(const Stmt &_op) {
     // A new Store/ReduceTo node may contain Load nodes out of their VarDef
     // scopes, so we have to expand those VarDef nodes. We first call
     // hoistVarDefOverStmtSeq to expand the VarDef nodes over all the statment
-    // in a StmtSeq, and then we call RemoveWrites to update the Store/ReduceTo
+    // in a StmtSeq, and then we call ReplaceUses to update the Store/ReduceTo
     // nodes, and finally we call sinkVars to adjust the scope of the VarDef
     // nodes back to a proper size.
     op = hoistVarOverStmtSeq(op);
@@ -68,7 +68,7 @@ Stmt propOneTimeUse(const Stmt &_op) {
     findDeps(op, {{}}, foundMust, FindDepsMode::KillLater, DEP_RAW, filterMust);
     findDeps(op, {{}}, foundMay, FindDepsMode::Dep, DEP_RAW, filterMay, false);
 
-    std::unordered_map<Load, Expr> replaceLoad;
+    std::unordered_map<AST, Expr> replace;
     for (auto &&item : r2w) {
         if (item.second.size() > 1) {
             continue;
@@ -85,14 +85,11 @@ Stmt propOneTimeUse(const Stmt &_op) {
         }
         ASSERT(item.second.front()->nodeType() == ASTNodeType::Store);
         auto &&store = item.second.front().as<StoreNode>();
-        ASSERT(item.first->nodeType() == ASTNodeType::Load);
-        auto &&load = item.first.as<LoadNode>();
-        replaceLoad[load] = store->expr_;
+        replace[item.first] = store->expr_;
     }
 
-    op = ReplaceUses(replaceLoad)(op);
+    op = ReplaceUses(replace)(op);
     return sinkVar(op);
 }
 
 } // namespace ir
-

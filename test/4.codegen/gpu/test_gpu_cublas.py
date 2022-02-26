@@ -34,6 +34,6 @@ def test_cublas_basic():
     b_arr = ir.Array(b_np, device)
     c_arr = ir.Array(c_np, device)
     ir.Driver(func, code, device)(a=a_arr, b=b_arr, c=c_arr)
-    c_result = c_arr.numpy().reshape(48, 72)
+    c_result = c_arr.numpy()
 
     assert np.all(np.isclose(c_result, c_np + a_np @ b_np))

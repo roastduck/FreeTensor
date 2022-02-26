@@ -1,67 +1,77 @@
 #ifndef SHRINK_FOR_H
 #define SHRINK_FOR_H
 
+#include <itertools.hpp>
+
 #include <analyze/check_all_defined.h>
+#include <analyze/comp_transient_bounds.h>
+#include <analyze/comp_unique_bounds.h>
+#include <analyze/symbol_table.h>
+#include <analyze/type_infer.h>
 #include <func.h>
-#include <pass/simplify.h>
+#include <hash.h>
+#include <mutator.h>
 
 namespace ir {
 
-class ShrinkFor : public CompUniqueBounds {
-    std::unordered_map<uint64_t, std::pair<std::vector<std::vector<Expr>>,
-                                           std::vector<std::vector<Expr>>>>
+class ShrinkFor
+    : public CompTransientBounds<WithTypeInfer<SymbolTable<Mutator>>> {
+    typedef CompTransientBounds<WithTypeInfer<SymbolTable<Mutator>>> BaseClass;
+
+    CompUniqueBounds bound_;
+
+    ASTHashMap<Var, std::pair<std::vector<std::vector<Expr>>,
+                              std::vector<std::vector<Expr>>>>
         newRange_;
     std::vector<Var> iterStack_;
-    std::vector<std::unordered_set<std::string>> defStack_;
-    std::unordered_set<std::string> defs_;
+    std::vector<std::unordered_set<std::string>> namesStack_;
+
+  public:
+    ShrinkFor() : bound_(*this, *this) {}
 
   private:
     template <class T> Stmt visitSideEffect(const T &op) {
-        auto ret = CompTransientBounds::visit(op);
-        for (size_t i = 0, iEnd = iterStack_.size(); i < iEnd; i++) {
-            auto &&var = iterStack_[i];
-            auto &&defs = defStack_[i];
-            auto hash = getHash(var);
+        auto ret = BaseClass::visit(op);
+        for (auto &&[var, names] : iter::zip(iterStack_, namesStack_)) {
             auto tr = transient(var);
             std::vector<Expr> lower, upper;
             for (auto &&first : tr.lower_) {
-                if (checkAllDefined(defs, first)) {
+                if (checkAllDefined(names, first)) {
                     lower.emplace_back(first);
                 } else {
-                    for (auto &&l : getLower((*this)(first))) {
+                    for (auto &&l : bound_.getLower(first)) {
                         if (auto &&expr = l.expr();
-                            checkAllDefined(defs, expr)) {
+                            checkAllDefined(names, expr)) {
                             lower.emplace_back(expr);
                         }
                     }
                 }
             }
             for (auto &&second : tr.upper_) {
-                if (checkAllDefined(defs, second)) {
+                if (checkAllDefined(names, second)) {
                     upper.emplace_back(second);
                 } else {
-                    for (auto &&u : getUpper((*this)(second))) {
+                    for (auto &&u : bound_.getUpper(second)) {
                         if (auto &&expr = u.expr();
-                            checkAllDefined(defs, expr)) {
+                            checkAllDefined(names, expr)) {
                             upper.emplace_back(expr);
                         }
                     }
                 }
             }
-            newRange_[hash].first.emplace_back(std::move(lower));
-            newRange_[hash].second.emplace_back(std::move(upper));
+            newRange_[var].first.emplace_back(std::move(lower));
+            newRange_[var].second.emplace_back(std::move(upper));
         }
         return ret;
     }
 
   protected:
-    using CompTransientBounds::visit;
+    using BaseClass::visit;
 
     Stmt visit(const Store &op) override { return visitSideEffect(op); }
     Stmt visit(const ReduceTo &op) override { return visitSideEffect(op); }
     // TODO: Also for Eval with side effect
     Stmt visit(const For &op) override;
-    Stmt visit(const VarDef &op) override;
 };
 
 /**

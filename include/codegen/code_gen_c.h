@@ -10,27 +10,23 @@
 
 namespace ir {
 
-template <class Stream> class CodeGenC : public CodeGen<Stream> {
+template <class Stream> class CodeGenC : public WithTypeInfer<CodeGen<Stream>> {
+    typedef WithTypeInfer<CodeGen<Stream>> BaseClass;
+
     const std::vector<std::string> &params_;
     const std::vector<std::pair<std::string, DataType>> &returns_;
-    std::unordered_map<std::string, std::string> idCache_; // IR IDs -> C IDs
-    std::unordered_set<std::string> idFlag_;               // C IDs
-    TypeInfer typeInfer_;
 
   public:
     CodeGenC(const std::vector<std::string> &params,
              const std::vector<std::pair<std::string, DataType>> &returns)
-        : params_(params), returns_(returns), typeInfer_(&this->buffers_) {}
-
-    const std::string &normalizeId(const std::string &id);
+        : params_(params), returns_(returns) {}
 
     static std::string gen(DataType dtype);
 
   protected:
     virtual void genAlloc(const Tensor &tensor, const std::string &rawPtr,
-                          const std::string &sizePtr) = 0;
-
-    DataType dtype(const Expr &op);
+                          const std::string &shapePtr,
+                          const std::string &dimPtr) = 0;
 
     virtual void visit(const StmtSeq &op) override;
     virtual void visit(const VarDef &op) override;
@@ -49,6 +45,7 @@ template <class Stream> class CodeGenC : public CodeGen<Stream> {
     virtual void visit(const CeilDiv &op) override;
     virtual void visit(const RoundTowards0Div &op) override;
     virtual void visit(const Mod &op) override;
+    virtual void visit(const Remainder &op) override;
     virtual void visit(const Min &op) override;
     virtual void visit(const Max &op) override;
     virtual void visit(const LT &op) override;

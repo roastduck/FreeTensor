@@ -10,15 +10,15 @@
 namespace ir {
 
 class FindAllScopesInside : public Visitor {
-    std::string loop_;
-    std::vector<std::string> scopes_;
+    ID loop_;
+    std::vector<ID> scopes_;
     bool inLoop_ = false;
     bool found_ = false;
 
   public:
-    FindAllScopesInside(const std::string &loop) : loop_(loop) {}
+    FindAllScopesInside(const ID &loop) : loop_(loop) {}
 
-    const std::vector<std::string> &scopes() const { return scopes_; }
+    const std::vector<ID> &scopes() const { return scopes_; }
 
     bool found() const { return found_; }
 
@@ -28,19 +28,19 @@ class FindAllScopesInside : public Visitor {
 };
 
 class BlendPass : public Mutator {
-    std::string loop_;
+    ID loop_;
     bool inLoop_ = false;
     std::string iter_;
-    Expr begin_;
+    Expr begin_, step_;
     int len_ = 0, curIter_ = 0;
     std::vector<Stmt> envStack_;
     std::vector<VarDef> defs_;
-    std::unordered_map<std::string, Expr> offset_;
+    std::unordered_map<std::string, std::pair<Expr, Expr>> offset_;
     const LoopVariExprMap &exprVari_;
     const LoopVariUniqVarMap &varVari_;
 
   public:
-    BlendPass(const std::string &loop, const LoopVariExprMap &exprVari,
+    BlendPass(const ID &loop, const LoopVariExprMap &exprVari,
               const LoopVariUniqVarMap &varVari)
         : loop_(loop), exprVari_(exprVari), varVari_(varVari) {}
 
@@ -55,7 +55,8 @@ class BlendPass : public Mutator {
                 } else if (stmt->nodeType() == ASTNodeType::ReduceTo) {
                     stmt = visitMemAccess(stmt.template as<ReduceToNode>());
                 }
-                stmt->setId(stmt->id() + "." + std::to_string(curIter_));
+                stmt->setId(stmt->id().strId() + "." +
+                            std::to_string(curIter_));
 
                 for (auto it = envStack_.rbegin(); it != envStack_.rend();
                      it++) {
@@ -63,8 +64,9 @@ class BlendPass : public Mutator {
                     case ASTNodeType::For: {
                         auto env = it->as<ForNode>();
                         stmt = makeFor("", env->iter_, (*this)(env->begin_),
-                                       (*this)(env->end_), (*this)(env->len_),
-                                       env->property_, std::move(stmt));
+                                       (*this)(env->end_), (*this)(env->step_),
+                                       (*this)(env->len_), env->property_,
+                                       std::move(stmt));
                         break;
                     }
                     case ASTNodeType::If: {
@@ -113,7 +115,7 @@ class BlendPass : public Mutator {
     Expr visit(const Load &op) override;
 };
 
-Stmt blend(const Stmt &ast, const std::string &loop);
+Stmt blend(const Stmt &ast, const ID &loop);
 
 } // namespace ir
 

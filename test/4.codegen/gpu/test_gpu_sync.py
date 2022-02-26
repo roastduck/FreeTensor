@@ -62,7 +62,7 @@ def test_syncthreads():
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
     ir.Driver(func, code, device)(x=x_arr, y=y_arr)
-    y_np = y_arr.numpy().reshape(4, 256)
+    y_np = y_arr.numpy()
 
     y_std = np.array([range(511, -1, -2)] * 4, dtype="int32")
     assert np.array_equal(y_np, y_std)
@@ -602,7 +602,7 @@ def test_syncwarp():
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
     ir.Driver(func, code, device)(x=x_arr, y=y_arr)
-    y_np = y_arr.numpy().reshape(4, 4)
+    y_np = y_arr.numpy()
 
     y_std = np.array([[7, 5, 3, 1]] * 4, dtype="int32")
     assert np.array_equal(y_np, y_std)

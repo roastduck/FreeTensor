@@ -5,30 +5,28 @@
 #include <unordered_set>
 
 #include <analyze/find_loop_variance.h>
-#include <cursor.h>
+#include <analyze/symbol_table.h>
+#include <analyze/with_cursor.h>
 #include <func.h>
 #include <mutator.h>
 #include <visitor.h>
 
 namespace ir {
 
-class FindLoopInvariantWrites : public VisitorWithCursor {
+class FindLoopInvariantWrites : public SymbolTable<WithCursor<Visitor>> {
+    typedef SymbolTable<WithCursor<Visitor>> BaseClass;
+
     std::vector<Cursor> cursorStack_;
     std::vector<If> ifStack_;
     std::unordered_map<Store, std::tuple<VarDef, Expr, Cursor>>
         results_; /// (store, extraCond, cursor to loop)
-    std::unordered_map<std::string, int> defDepth_;
-    std::unordered_map<std::string, VarDef> defs_;
-    const std::unordered_map<
-        Expr, std::unordered_map<std::string, LoopVariability>> &variantExpr_;
-    const std::string &singleDefId_;
+    std::unordered_map<ID, int> defDepth_;
+    const LoopVariExprMap &variantExpr_;
+    const ID &singleDefId_;
 
   public:
-    FindLoopInvariantWrites(
-        const std::unordered_map<
-            Expr, std::unordered_map<std::string, LoopVariability>>
-            &variantExpr,
-        const std::string &singleDefId)
+    FindLoopInvariantWrites(const LoopVariExprMap &variantExpr,
+                            const ID &singleDefId)
         : variantExpr_(variantExpr), singleDefId_(singleDefId) {}
 
     const std::unordered_map<Store, std::tuple<VarDef, Expr, Cursor>> &
@@ -106,7 +104,7 @@ class RemoveWrites : public Mutator {
  * }
  * ```
  */
-Stmt removeWrites(const Stmt &op, const std::string &singleDefId = "");
+Stmt removeWrites(const Stmt &op, const ID &singleDefId = "");
 
 DEFINE_PASS_FOR_FUNC(removeWrites)
 

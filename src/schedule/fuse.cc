@@ -1,12 +1,12 @@
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
-#include <analyze/hash.h>
-#include <pass/prop_const.h>
+#include <hash.h>
 #include <pass/prop_one_time_use.h>
 #include <pass/remove_dead_var.h>
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
 #include <pass/sink_var.h>
+#include <pass/tensor_prop_const.h>
 #include <schedule/fuse.h>
 
 namespace ir {
@@ -24,11 +24,12 @@ std::vector<std::string> intersect(const std::vector<std::string> &lhs,
     return ret;
 }
 
-LoopInVarDefs findLoopInVarDefs(const Stmt &stmt, const std::string &id,
+LoopInVarDefs findLoopInVarDefs(const Stmt &stmt, const ID &id,
                                 FindLoopInVarDefsDirection direction) {
     if (stmt->id() == id) {
         if (stmt->nodeType() != ASTNodeType::For) {
-            throw InvalidSchedule("Statement " + id + " is not a loop");
+            throw InvalidSchedule("Statement " + toString(id) +
+                                  " is not a loop");
         }
         return LoopInVarDefs{stmt.as<ForNode>(), {}};
     }
@@ -59,22 +60,24 @@ Expr FuseFor::visit(const Var &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::Var);
     auto op = __op.as<VarNode>();
     if (inLoop0_ && op->name_ == iter0_) {
-        return makeAdd(makeVar(iter0_), begin0_);
+        return makeAdd(makeMul(makeVar(iter0_), step0_), begin0_);
     }
     if (inLoop1_ && op->name_ == iter1_) {
         // Yes, use iter0_
-        return makeAdd(makeVar(iter0_), begin1_);
+        return makeAdd(makeMul(makeVar(iter0_), step1_), begin1_);
     }
     return op;
 }
 
 Stmt FuseFor::visit(const For &_op) {
     if (_op->id() == id0_) {
-        iter0_ = _op->iter_, begin0_ = _op->begin_;
+        iter0_ = _op->iter_;
+        begin0_ = _op->begin_, step0_ = _op->step_;
         inLoop0_ = true;
     }
     if (_op->id() == id1_) {
-        iter1_ = _op->iter_, begin1_ = _op->begin_;
+        iter1_ = _op->iter_;
+        begin1_ = _op->begin_, step1_ = _op->step_;
         inLoop1_ = true;
     }
     auto __op = Mutator::visit(_op);
@@ -82,8 +85,8 @@ Stmt FuseFor::visit(const For &_op) {
     auto op = __op.as<ForNode>();
     if (op->id() == id0_ || op->id() == id1_) {
         inLoop0_ = inLoop1_ = false;
-        return makeFor(op->id(), op->iter_, makeIntConst(0), op->len_, op->len_,
-                       op->property_, op->body_);
+        return makeFor(op->id(), op->iter_, makeIntConst(0), op->len_,
+                       makeIntConst(1), op->len_, op->property_, op->body_);
     }
     return op;
 }
@@ -97,13 +100,15 @@ Stmt FuseFor::visit(const StmtSeq &_op) {
             op->stmts_[i], id0_, FindLoopInVarDefsDirection::Back);
         if (loop0InVarDefs.loop_.isValid()) {
             if (i + 1 == iEnd) {
-                throw InvalidSchedule("Fuse: Loop " + id0_ + " and " + id1_ +
+                throw InvalidSchedule("Fuse: Loop " + toString(id0_) + " and " +
+                                      toString(id1_) +
                                       " shuold be directly following");
             }
             auto loop1InVarDefs = findLoopInVarDefs(
                 op->stmts_[i + 1], id1_, FindLoopInVarDefsDirection::Front);
             if (!loop1InVarDefs.loop_.isValid()) {
-                throw InvalidSchedule("Fuse: Loop " + id0_ + " and " + id1_ +
+                throw InvalidSchedule("Fuse: Loop " + toString(id0_) + " and " +
+                                      toString(id1_) +
                                       " shuold be directly following");
             }
 
@@ -113,7 +118,8 @@ Stmt FuseFor::visit(const StmtSeq &_op) {
             afterId_ = loop1->body_->id();
             auto seq = makeStmtSeq("", {loop0->body_, loop1->body_});
             auto fused = makeFor(
-                fused_, iter0_, makeIntConst(0), loop0->end_, loop0->end_,
+                fused_, iter0_, makeIntConst(0), loop0->end_, makeIntConst(1),
+                loop0->end_,
                 ForProperty().withNoDeps(intersect(loop0->property_.noDeps_,
                                                    loop1->property_.noDeps_)),
                 std::move(seq));
@@ -149,7 +155,7 @@ Stmt FuseFor::visit(const StmtSeq &_op) {
             }
 
             if (strict_) {
-                if (getHash(loop0->end_) != getHash(loop1->end_)) {
+                if (!HashComparator()(loop0->end_, loop1->end_)) {
                     throw InvalidSchedule(
                         "Unable to determine whether the two loops are of the "
                         "same length. If you are sure that they are the same, "
@@ -175,15 +181,15 @@ void CheckAccessible::visit(const StmtSeq &op) {
                 op->stmts_[i], id0_, FindLoopInVarDefsDirection::Back);
             if (loop0InVarDefs_.loop_.isValid()) {
                 if (i + 1 == iEnd) {
-                    throw InvalidSchedule("Fuse: Loop " + id0_ + " and " +
-                                          id1_ +
+                    throw InvalidSchedule("Fuse: Loop " + toString(id0_) +
+                                          " and " + toString(id1_) +
                                           " shuold be directly following");
                 }
                 loop1InVarDefs_ = findLoopInVarDefs(
                     op->stmts_[i + 1], id1_, FindLoopInVarDefsDirection::Front);
                 if (!loop1InVarDefs_.loop_.isValid()) {
-                    throw InvalidSchedule("Fuse: Loop " + id0_ + " and " +
-                                          id1_ +
+                    throw InvalidSchedule("Fuse: Loop " + toString(id0_) +
+                                          " and " + toString(id1_) +
                                           " shuold be directly following");
                 }
                 return;
@@ -192,8 +198,8 @@ void CheckAccessible::visit(const StmtSeq &op) {
     }
 }
 
-std::pair<Stmt, std::string> fuse(const Stmt &_ast, const std::string &loop0,
-                                  const std::string &loop1, bool strict) {
+std::pair<Stmt, ID> fuse(const Stmt &_ast, const ID &loop0, const ID &loop1,
+                         bool strict) {
     FuseFor mutator(loop0, loop1, strict);
     CheckAccessible check(loop0, loop1);
     check(_ast);
@@ -208,9 +214,8 @@ std::pair<Stmt, std::string> fuse(const Stmt &_ast, const std::string &loop0,
                 if (!checkNotModified(_ast, shape, CheckNotModifiedSide::Before,
                                       loop0, CheckNotModifiedSide::Before,
                                       loop1)) {
-                    throw InvalidSchedule(
-                        (std::string) "The shape of Vars in loop1 shouldn't "
-                                      "be changed in loop0");
+                    throw InvalidSchedule("The shape of Vars in loop1 "
+                                          "shouldn't be changed in loop0");
                 }
             }
         }
@@ -231,14 +236,14 @@ std::pair<Stmt, std::string> fuse(const Stmt &_ast, const std::string &loop0,
 
     try {
         ast = simplifyPass(ast);
-    } catch (const InvalidProgram &e) {
-        throw InvalidSchedule((std::string) "Fusing " + loop0 + " and " +
-                              loop1 + " loop1 with different lengths? " +
-                              e.what());
+    } catch (const AssertAlwaysFalse &e) {
+        throw InvalidSchedule("Fusing " + toString(loop0) + " and " +
+                              toString(loop1) +
+                              " loop1 with different lengths? " + e.what());
     }
 
     ast = propOneTimeUse(ast);
-    ast = propConst(ast);
+    ast = tensorPropConst(ast);
     ast = sinkVar(ast);
     ast = shrinkVar(ast);
     ast = removeDeadVar(ast);

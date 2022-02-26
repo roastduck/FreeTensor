@@ -12,11 +12,10 @@ void FindAllScopes::visit(const StmtSeq &op) {
     scopes_.emplace_back(op->id());
 }
 
-std::vector<std::string> findAllScopes(const Stmt &op) {
+std::vector<ID> findAllScopes(const Stmt &op) {
     FindAllScopes visitor;
     visitor(op);
     return visitor.scopes();
 }
 
 } // namespace ir
-

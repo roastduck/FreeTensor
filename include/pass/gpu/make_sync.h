@@ -3,7 +3,7 @@
 
 #include <unordered_set>
 
-#include <cursor.h>
+#include <analyze/with_cursor.h>
 #include <func.h>
 #include <math/bounds.h>
 
@@ -38,8 +38,7 @@ class CopyParts : public Mutator {
         : cond_(cond), splitters_(splitters) {}
 
   protected:
-    Stmt visitStmt(const Stmt &op,
-                   const std::function<Stmt(const Stmt &)> &visitNode) override;
+    Stmt visitStmt(const Stmt &op) override;
     Stmt visit(const For &op) override;
     Stmt visit(const If &op) override;
     Stmt visit(const Assert &op) override;
@@ -53,11 +52,13 @@ struct CrossThreadDep {
     bool visiting_, synced_;
 };
 
-class MakeSync : public MutatorWithCursor {
+class MakeSync : public WithCursor<Mutator> {
+    typedef WithCursor<Mutator> BaseClass;
+
     Stmt root_;
     std::vector<CrossThreadDep> deps_;
-    std::unordered_map<std::string, Stmt> syncBeforeFor_;
-    std::unordered_map<std::string, std::vector<Stmt>> branchSplittersThen_,
+    std::unordered_map<ID, Stmt> syncBeforeFor_;
+    std::unordered_map<ID, std::vector<Stmt>> branchSplittersThen_,
         branchSplittersElse_;
 
   public:
@@ -68,8 +69,7 @@ class MakeSync : public MutatorWithCursor {
     void markSyncForSplitting(const Stmt &sync);
 
   protected:
-    Stmt visitStmt(const Stmt &op,
-                   const std::function<Stmt(const Stmt &)> &visitNode) override;
+    Stmt visitStmt(const Stmt &op) override;
     Stmt visit(const For &op) override;
     Stmt visit(const If &op) override;
 };

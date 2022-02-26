@@ -2,21 +2,16 @@
 #define DETAIL_CODE_GEN_C_H
 
 #include <algorithm>
-#include <cctype>
 #include <cmath>
 #include <functional>
 #include <vector>
 
 #include <codegen/code_gen_c.h>
+#include <mangle.h>
 
 #include "code_gen.h"
 
 namespace ir {
-
-template <class Stream> DataType CodeGenC<Stream>::dtype(const Expr &op) {
-    typeInfer_(op);
-    return typeInfer_.types().at(op);
-}
 
 template <class Stream> void CodeGenC<Stream>::visit(const StmtSeq &op) {
     for (auto &&stmt : op->stmts_) {
@@ -32,12 +27,12 @@ template <class Stream> void CodeGenC<Stream>::visit(const StmtSeq &op) {
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
-    this->markDefBuffer(op->name_, op->buffer_);
+    this->markDefBuffer(op);
 
     this->makeIndent();
     auto &&tensor = op->buffer_->tensor();
     auto &&shape = tensor.shape();
-    auto name = normalizeId(op->name_);
+    auto name = mangle(op->name_);
 
     if (op->buffer_->atype() == AccessType::Cache) {
         // e.g. float x[5][5][5];
@@ -89,11 +84,12 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
             }
             int nthReturn = nthReturnsIter - returns_.begin();
             rawPtr = "_returns[" + std::to_string(nthReturn) + "]";
-            std::string sizePtr =
-                "_retSizes[" + std::to_string(nthReturn) + "]";
+            std::string shapePtr =
+                "_retShapes[" + std::to_string(nthReturn) + "]";
+            std::string dimPtr = "_retDims[" + std::to_string(nthReturn) + "]";
             this->os() << "if (" + rawPtr + " == NULL) ";
             this->beginBlock();
-            this->genAlloc(op->buffer_->tensor(), rawPtr, sizePtr);
+            this->genAlloc(op->buffer_->tensor(), rawPtr, shapePtr, dimPtr);
             this->endBlock();
             this->makeIndent();
         }
@@ -195,22 +191,22 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
 
     (*this)(op->body_);
 
-    this->markUndefBuffer(op->name_);
+    this->markUndefBuffer(op);
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const Var &op) {
     this->markUseIter(op->name_);
-    this->os() << normalizeId(op->name_);
-    CodeGen<Stream>::visit(op);
+    this->os() << mangle(op->name_);
+    BaseClass::visit(op);
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const Store &op) {
-    auto id = normalizeId(op->var_);
+    auto id = mangle(op->var_);
     this->markUseBuffer(op->var_);
 
     this->makeIndent();
     if (op->indices_.empty()) {
-        switch (this->buffers_.at(op->var_)->mtype()) {
+        switch (this->buffer(op->var_)->mtype()) {
         case MemType::ByValue:
         case MemType::CPU:
         case MemType::GPULocal:
@@ -237,11 +233,11 @@ template <class Stream> void CodeGenC<Stream>::visit(const Store &op) {
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const Load &op) {
-    auto id = normalizeId(op->var_);
+    auto id = mangle(op->var_);
     this->markUseBuffer(op->var_);
 
     if (op->indices_.empty()) {
-        switch (this->buffers_.at(op->var_)->mtype()) {
+        switch (this->buffer(op->var_)->mtype()) {
         case MemType::ByValue:
         case MemType::CPU:
         case MemType::GPULocal:
@@ -265,14 +261,14 @@ template <class Stream> void CodeGenC<Stream>::visit(const Load &op) {
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const ReduceTo &op) {
-    auto id = normalizeId(op->var_);
+    auto id = mangle(op->var_);
     this->markUseBuffer(op->var_);
 
     this->makeIndent();
 
     auto genAddr = [&]() {
         if (op->indices_.empty()) {
-            switch (this->buffers_.at(op->var_)->mtype()) {
+            switch (this->buffer(op->var_)->mtype()) {
             case MemType::ByValue:
             case MemType::CPU:
             case MemType::GPULocal:
@@ -306,16 +302,14 @@ template <class Stream> void CodeGenC<Stream>::visit(const ReduceTo &op) {
     case ReduceOp::Min:
         genAddr(), this->os()
                        << " = std::min<"
-                       << this->gen(
-                              this->buffers_.at(op->var_)->tensor().dtype())
+                       << this->gen(this->buffer(op->var_)->tensor().dtype())
                        << ">(";
         genAddr(), this->os() << ", ", genExpr(), this->os() << ")";
         break;
     case ReduceOp::Max:
         genAddr(), this->os()
                        << " = std::max<"
-                       << this->gen(
-                              this->buffers_.at(op->var_)->tensor().dtype())
+                       << this->gen(this->buffer(op->var_)->tensor().dtype())
                        << ">(";
         genAddr(), this->os() << ", ", genExpr(), this->os() << ")";
         break;
@@ -405,6 +399,14 @@ template <class Stream> void CodeGenC<Stream>::visit(const CeilDiv &op) {
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const Mod &op) {
+    this->os() << "runtime_mod(";
+    (*this)(op->lhs_);
+    this->os() << ", ";
+    (*this)(op->rhs_);
+    this->os() << ")";
+}
+
+template <class Stream> void CodeGenC<Stream>::visit(const Remainder &op) {
     this->os() << "(";
     (*this)(op->lhs_);
     this->os() << " % ";
@@ -562,17 +564,35 @@ template <class Stream> void CodeGenC<Stream>::visit(const Cast &op) {
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const For &op) {
-    this->markDefIter(op->iter_);
-    this->makeIndent();
-    this->os() << "for (int " << normalizeId(op->iter_) << " = ";
-    (*this)(op->begin_);
-    this->os() << "; " << normalizeId(op->iter_) << " < ";
-    (*this)(op->end_);
-    this->os() << "; " << normalizeId(op->iter_) << "++) ";
-    this->beginBlock();
-    (*this)(op->body_);
-    this->endBlock();
-    this->markUndefIter(op->iter_);
+    this->markDefIter(op);
+    if (op->step_->nodeType() == ASTNodeType::IntConst &&
+        op->step_.as<IntConstNode>()->val_ == 1) {
+        this->makeIndent();
+        this->os() << "for (int " << mangle(op->iter_) << " = ";
+        (*this)(op->begin_);
+        this->os() << "; " << mangle(op->iter_) << " < ";
+        (*this)(op->end_);
+        this->os() << "; " << mangle(op->iter_) << "++) ";
+        this->beginBlock();
+        (*this)(op->body_);
+        this->endBlock();
+    } else {
+        auto iterCnt = mangle(op->iter_ + ".cnt");
+        this->makeIndent();
+        this->os() << "for (int " << iterCnt << " = 0; " << iterCnt << " < ";
+        (*this)(op->len_);
+        this->os() << "; " << iterCnt << "++) ";
+        this->beginBlock();
+        this->makeIndent();
+        this->os() << "int " << mangle(op->iter_) << " = ";
+        (*this)(op->begin_);
+        this->os() << " + " << iterCnt << " * ";
+        (*this)(op->step_);
+        this->os() << ";" << std::endl;
+        (*this)(op->body_);
+        this->endBlock();
+    }
+    this->markUndefIter(op);
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const If &op) {
@@ -619,24 +639,6 @@ template <class Stream> void CodeGenC<Stream>::visit(const Eval &op) {
     this->os() << ";" << std::endl;
 }
 
-template <class Stream>
-const std::string &CodeGenC<Stream>::normalizeId(const std::string &old) {
-    if (idCache_.count(old)) {
-        return idCache_.at(old);
-    }
-    std::string ret = old;
-    for (char &c : ret) {
-        if (!isalnum(c) && c != '_') {
-            c = '_';
-        }
-    }
-    while (idFlag_.count(ret)) {
-        ret += "_";
-    }
-    idFlag_.insert(ret);
-    return idCache_[old] = ret;
-}
-
 template <class Stream> std::string CodeGenC<Stream>::gen(DataType dtype) {
     switch (dtype) {
     case DataType::Float64:
@@ -645,6 +647,8 @@ template <class Stream> std::string CodeGenC<Stream>::gen(DataType dtype) {
         return "float";
     case DataType::Int32:
         return "int32_t";
+    case DataType::Bool:
+        return "bool";
     default:
         ASSERT(false);
     }

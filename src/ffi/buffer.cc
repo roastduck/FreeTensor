@@ -27,4 +27,3 @@ void init_ffi_buffer(py::module_ &m) {
 }
 
 } // namespace ir
-

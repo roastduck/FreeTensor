@@ -242,7 +242,7 @@ def test_pass_by_value_0d():
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
     ir.Driver(func, code, device)(n=n_arr, x=x_arr, y=y_arr)
-    y_np = y_arr.numpy().reshape(5, 4)
+    y_np = y_arr.numpy()
 
     y_std = np.array([[2, 3, 4, 5]] * 5, dtype="int32")
     assert np.array_equal(y_np, y_std)
@@ -284,7 +284,7 @@ def test_pass_by_value_1d():
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
     ir.Driver(func, code, device)(n=n_arr, x=x_arr, y=y_arr)
-    y_np = y_arr.numpy().reshape(5, 4)
+    y_np = y_arr.numpy()
 
     y_std = np.array([[2, 3, 4, 5]] * 5, dtype="int32")
     assert np.array_equal(y_np, y_std)
@@ -315,7 +315,7 @@ def test_dynamic_2d_array():
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
     ir.Driver(func, code, device)(n=n_arr, x=x_arr, y=y_arr)
-    y_np = y_arr.numpy().reshape(5, 5)
+    y_np = y_arr.numpy()
 
     y_std = x_np + 1
     assert np.array_equal(y_np, y_std)
@@ -336,7 +336,7 @@ def test_use_cpu_iters():
     y_np = np.zeros((4, 1000), dtype="int32")
     y_arr = ir.Array(y_np, device)
     ir.Driver(func, code, device)(y_arr)
-    y_np = y_arr.numpy().reshape(4, 1000)
+    y_np = y_arr.numpy()
 
     y_std = np.array([[i + j for j in range(1000)] for i in range(4)],
                      dtype="int32")
@@ -432,7 +432,7 @@ def test_multiplex_shared_1():
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
     ir.Driver(func, code, device)(x=x_arr, y=y_arr)
-    y_np = y_arr.numpy().reshape(4, 256)
+    y_np = y_arr.numpy()
 
     y_std = np.array([range(1, 513, 2)] * 4, dtype="int32")
     assert np.array_equal(y_np, y_std)
@@ -503,7 +503,7 @@ def test_simplex_local_1():
     s.parallelize("L0", "threadIdx.x")
     s.parallelize("L1", "threadIdx.x")
     s.parallelize("L2", "threadIdx.x")
-    s.set_mem_type(":t", "gpu/local")
+    s.set_mem_type("t", "gpu/local")
     func = ir.lower(s.func(), target)
     print(func)
 
@@ -516,9 +516,9 @@ def test_simplex_local_1():
                 with ir.VarDef("t", (10,), "int32", "cache", "gpu/local") as t:
                     with ir.For("j", 0, 10) as j:
                         t[j] = x[b, i, j] * 2
-                    with ir.For("j", 0, 10) as j:
+                    with ir.For("j$1", 0, 10) as j:
                         y[b, i, j] = t[j] + 1
-                    with ir.For("j", 0, 10) as j:
+                    with ir.For("j$2", 0, 10) as j:
                         z[b, i, j] = t[j] + 2
     assert ir.make_1d_var(ir.pop_ast()).match(func.body)
 
@@ -531,8 +531,8 @@ def test_simplex_local_1():
     y_arr = ir.Array(y_np, device)
     z_arr = ir.Array(z_np, device)
     ir.Driver(func, code, device)(x=x_arr, y=y_arr, z=z_arr)
-    y_np = y_arr.numpy().reshape(10, 10, 10)
-    z_np = z_arr.numpy().reshape(10, 10, 10)
+    y_np = y_arr.numpy()
+    z_np = z_arr.numpy()
 
     assert np.array_equal(y_np, x_np * 2 + 1)
     assert np.array_equal(z_np, x_np * 2 + 2)
@@ -563,7 +563,7 @@ def test_simplex_local_2():
     s.parallelize("Lb", "blockIdx.x")
     s.parallelize("L0", "threadIdx.x")
     s.parallelize("L1", "threadIdx.x")
-    s.set_mem_type(":t", "gpu/local")
+    s.set_mem_type("t", "gpu/local")
     func = ir.lower(s.func(), target)
     print(func)
 
@@ -576,9 +576,9 @@ def test_simplex_local_2():
                 with ir.VarDef("t", (10,), "int32", "cache", "gpu/local") as t:
                     with ir.For("j", 0, 10) as j:
                         t[j] = x[b, i, j] * 2
-                    with ir.For("j", 0, 10) as j:
+                    with ir.For("j$1", 0, 10) as j:
                         t[j] += t[i]
-                    with ir.For("j", 0, 10) as j:
+                    with ir.For("j$2", 0, 10) as j:
                         y[b, i, j] = t[j] + 1
     assert ir.make_1d_var(ir.make_reduction(ir.pop_ast())).match(func.body)
 
@@ -631,7 +631,7 @@ def test_relax_shared_shape_to_constants():
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
     ir.Driver(func, code, device)(n=n_arr, x=x_arr, y=y_arr)
-    y_np = y_arr.numpy().reshape(4, 256)
+    y_np = y_arr.numpy()
 
     y_std = np.array([list(range(1, 401, 2)) + [0] * 56] * 4, dtype="int32")
     assert np.array_equal(y_np, y_std)
@@ -701,7 +701,7 @@ def test_parallel_different_length():
     b_arr = ir.Array(b_np, device)
     c_arr = ir.Array(c_np, device)
     ir.Driver(func, code, device)(a=a_arr, b=b_arr, c=c_arr)
-    c_np = c_arr.numpy().reshape(4, 8)
+    c_np = c_arr.numpy()
 
     c_std = a_np @ b_np
     assert np.array_equal(c_np, c_std)
@@ -792,7 +792,7 @@ def test_parallel_broadcast():
     b_arr = ir.Array(b_np, device)
     c_arr = ir.Array(c_np, device)
     ir.Driver(func, code, device)(a=a_arr, b=b_arr, c=c_arr)
-    c_np = c_arr.numpy().reshape(4, 8)
+    c_np = c_arr.numpy()
 
     c_std = a_np @ b_np
     assert np.array_equal(c_np, c_std)

@@ -29,7 +29,7 @@ def test_mm():
     y_torch = torch.zeros(4, 6, dtype=torch.float32)
     y_arr = ir.Array(y_torch.numpy(), device)
     ir.Driver(f, code, device)(a_arr, b_arr, y_arr)
-    y_torch = torch.Tensor(y_arr.numpy().reshape(4, 6))
+    y_torch = torch.Tensor(y_arr.numpy())
 
     y_std = torch.matmul(a_torch, b_torch)
     assert torch.all(torch.isclose(y_torch, y_std))
@@ -59,7 +59,7 @@ def test_bmm_1():
     y_torch = torch.zeros(2, 4, 6, dtype=torch.float32)
     y_arr = ir.Array(y_torch.numpy(), device)
     ir.Driver(f, code, device)(a_arr, b_arr, y_arr)
-    y_torch = torch.Tensor(y_arr.numpy().reshape(2, 4, 6))
+    y_torch = torch.Tensor(y_arr.numpy())
 
     y_std = torch.matmul(a_torch, b_torch)
     assert torch.all(torch.isclose(y_torch, y_std))
@@ -89,7 +89,7 @@ def test_bmm_2():
     y_torch = torch.zeros(2, 4, 6, dtype=torch.float32)
     y_arr = ir.Array(y_torch.numpy(), device)
     ir.Driver(f, code, device)(a_arr, b_arr, y_arr)
-    y_torch = torch.Tensor(y_arr.numpy().reshape(2, 4, 6))
+    y_torch = torch.Tensor(y_arr.numpy())
 
     y_std = torch.matmul(a_torch, b_torch)
     assert torch.all(torch.isclose(y_torch, y_std))

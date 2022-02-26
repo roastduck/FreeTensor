@@ -41,20 +41,22 @@ def _general_reduce_(op,
 
         @core.inline
         def f_reduce(x, y):
-            if x.ndim == 0:
+            if core.ndim(x) == 0:
                 'nid: exec'
-                y[()] = op(y[()], x[()])
+                y[()] = op(y, x)
             else:
                 'nid: L'
                 for i in range(x.shape(0)):
                     if begin_with_0(axes):
                         if keepdims:
+                            assert y.shape(0) == 1
                             'nid: recur'
                             reduce(all_minus_one(axes[1:]))(x[i], y[0])
                         else:
                             'nid: recur'
                             reduce(all_minus_one(axes[1:]))(x[i], y)
                     else:
+                        assert y.shape(0) == x.shape(0)
                         'nid: recur'
                         reduce(all_minus_one(axes))(x[i], y[i])
 
@@ -65,7 +67,7 @@ def _general_reduce_(op,
         'nid: init'
         init()(y)
         'nid: reduce'
-        reduce(circular_axes(axes, x.ndim))(x, y)
+        reduce(circular_axes(axes, core.ndim(x)))(x, y)
 
     return f_reduce
 
@@ -85,7 +87,7 @@ def _general_reduce(op,
 
     def comp_shape(axes, x):
         out_shape = []
-        for i in range(x.ndim):
+        for i in range(core.ndim(x)):
             if len(axes) > 0 and axes[0] == i:
                 if keepdims:
                     out_shape.append(1)
@@ -96,10 +98,10 @@ def _general_reduce(op,
 
     @core.inline
     def f_reduce(x):
-        y = core.create_var(comp_shape(circular_axes(axes, x.ndim), x), x.dtype,
-                            x.mtype)
+        y = core.create_var(comp_shape(circular_axes(axes, core.ndim(x)), x), core.dtype(x),
+                            core.mtype(x))
         'nid: recur'
-        _general_reduce_(op, neutral_val, circular_axes(axes, x.ndim),
+        _general_reduce_(op, neutral_val, circular_axes(axes, core.ndim(x)),
                          keepdims)(x, y)
         return y
 
@@ -115,23 +117,23 @@ def reduce_sum(axes: Sequence[int], keepdims: bool = True):
 
 
 def reduce_max_(axes: Sequence[int], keepdims: bool = True):
-    op = lambda x, y: core.max(x, y)
+    def op(x, y): return core.max(x, y)
 
     @core.inline
     def f(x, y):
         'nid: impl'
-        _general_reduce_(op, core.min_value(x.dtype), axes, keepdims)(x, y)
+        _general_reduce_(op, core.min_value(core.dtype(x)), axes, keepdims)(x, y)
 
     return f
 
 
 def reduce_max(axes: Sequence[int], keepdims: bool = True):
-    op = lambda x, y: core.max(x, y)
+    def op(x, y): return core.max(x, y)
 
     @core.inline
     def f(x):
         'nid: impl'
-        y = _general_reduce(op, core.min_value(x.dtype), axes, keepdims)(x)
+        y = _general_reduce(op, core.min_value(core.dtype(x)), axes, keepdims)(x)
         return y
 
     return f

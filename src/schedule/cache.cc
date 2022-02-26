@@ -10,14 +10,13 @@
 
 namespace ir {
 
-Stmt MakeCacheVar::visitStmt(
-    const Stmt &op, const std::function<Stmt(const Stmt &)> &visitNode) {
+Stmt MakeCacheVar::visitStmt(const Stmt &op) {
     if (op->id() == stmt_) {
         if (!def_.isValid()) {
             throw InvalidSchedule("Variable " + oldVar_ + " not found");
         }
         inStmt_ = true;
-        auto ret = Mutator::visitStmt(op, visitNode);
+        auto ret = Mutator::visitStmt(op);
         inStmt_ = false;
         Buffer newBuffer(def_->buffer_->tensor(), AccessType::Cache, mtype_);
         ret = makeVarDef("", newVar_, std::move(newBuffer), nullptr,
@@ -26,7 +25,7 @@ Stmt MakeCacheVar::visitStmt(
         newDef_ = ret->id();
         return ret;
     } else {
-        return Mutator::visitStmt(op, visitNode);
+        return Mutator::visitStmt(op);
     }
 }
 
@@ -74,9 +73,8 @@ Stmt MakeCacheVar::visit(const ReduceTo &_op) {
     return op;
 }
 
-Stmt MakeFillAndFlush::visitStmt(
-    const Stmt &_op, const std::function<Stmt(const Stmt &)> &visitNode) {
-    auto op = Mutator::visitStmt(_op, visitNode);
+Stmt MakeFillAndFlush::visitStmt(const Stmt &_op) {
+    auto op = Mutator::visitStmt(_op);
     if (op->id() == stmt_) {
         std::vector<std::string> iters;
         std::vector<Expr> indices;
@@ -107,9 +105,10 @@ Stmt MakeFillAndFlush::visitStmt(
             fill = makeIf("", makeLT(idx1d, def_->sizeLim_), fill);
         }
         for (int i = nDim - 1; i >= 0; i--) {
-            fill = makeFor("", iters[i], rRange_.lower_[i],
-                           makeAdd(rRange_.lower_[i], rRange_.len_[i]),
-                           rRange_.len_[i], ForProperty(), fill);
+            fill =
+                makeFor("", iters[i], rRange_.lower_[i],
+                        makeAdd(rRange_.lower_[i], rRange_.len_[i]),
+                        makeIntConst(1), rRange_.len_[i], ForProperty(), fill);
         }
         if (rRange_.cond_.isValid()) {
             fill = makeIf("", rRange_.cond_, fill);
@@ -122,9 +121,10 @@ Stmt MakeFillAndFlush::visitStmt(
             flush = makeIf("", makeLT(idx1d, def_->sizeLim_), flush);
         }
         for (int i = nDim - 1; i >= 0; i--) {
-            flush = makeFor("", iters[i], wRange_.lower_[i],
-                            makeAdd(wRange_.lower_[i], wRange_.len_[i]),
-                            wRange_.len_[i], ForProperty(), flush);
+            flush =
+                makeFor("", iters[i], wRange_.lower_[i],
+                        makeAdd(wRange_.lower_[i], wRange_.len_[i]),
+                        makeIntConst(1), wRange_.len_[i], ForProperty(), flush);
         }
         if (wRange_.cond_.isValid()) {
             flush = makeIf("", wRange_.cond_, flush);
@@ -146,9 +146,8 @@ Stmt MakeFillAndFlush::visit(const VarDef &op) {
     }
 }
 
-Stmt MakeInitAndReduce::visitStmt(
-    const Stmt &_op, const std::function<Stmt(const Stmt &)> &visitNode) {
-    auto op = Mutator::visitStmt(_op, visitNode);
+Stmt MakeInitAndReduce::visitStmt(const Stmt &_op) {
+    auto op = Mutator::visitStmt(_op);
     if (op->id() == stmt_) {
         std::vector<std::string> iters;
         std::vector<Expr> indices;
@@ -180,9 +179,10 @@ Stmt MakeInitAndReduce::visitStmt(
             init = makeIf("", makeLT(idx1d, def_->sizeLim_), init);
         }
         for (int i = nDim - 1; i >= 0; i--) {
-            init = makeFor("", iters[i], range_.lower_[i],
-                           makeAdd(range_.lower_[i], range_.len_[i]),
-                           range_.len_[i], ForProperty(), init);
+            init =
+                makeFor("", iters[i], range_.lower_[i],
+                        makeAdd(range_.lower_[i], range_.len_[i]),
+                        makeIntConst(1), range_.len_[i], ForProperty(), init);
         }
 
         Stmt reduce = makeReduceTo("", oldVar_, indices, reduce_->op_,
@@ -192,9 +192,10 @@ Stmt MakeInitAndReduce::visitStmt(
             reduce = makeIf("", makeLT(idx1d, def_->sizeLim_), reduce);
         }
         for (int i = nDim - 1; i >= 0; i--) {
-            reduce = makeFor("", iters[i], range_.lower_[i],
-                             makeAdd(range_.lower_[i], range_.len_[i]),
-                             range_.len_[i], ForProperty(), reduce);
+            reduce =
+                makeFor("", iters[i], range_.lower_[i],
+                        makeAdd(range_.lower_[i], range_.len_[i]),
+                        makeIntConst(1), range_.len_[i], ForProperty(), reduce);
         }
 
         op = makeStmtSeq("", {init, op, reduce});
@@ -249,21 +250,21 @@ Expr MakeInitAndReduce::visit(const Load &op) {
     return Mutator::visit(op);
 }
 
-std::pair<Stmt, std::tuple<std::string, std::string, std::string, std::string>>
-cache(const Stmt &_ast, const std::string &stmt, const std::string &var,
-      MemType mtype) {
-    std::string fillStmt, flushStmt, newVar, oldDef, newDef;
+std::pair<Stmt, std::tuple<ID, ID, std::string, ID>>
+cache(const Stmt &_ast, const ID &stmt, const std::string &var, MemType mtype) {
+    ID fillStmt, flushStmt, oldDef, newDef;
+    std::string newVar;
     MakeCacheVar makeCacheVar(stmt, var, mtype, false);
     auto ast = makeCacheVar(_ast);
     newVar = makeCacheVar.newVar();
     oldDef = makeCacheVar.oldDef();
     newDef = makeCacheVar.newDef();
-    if (newDef.empty()) {
-        throw InvalidSchedule("Statement " + stmt + " not found");
+    if (!newDef.isValid()) {
+        throw InvalidSchedule("Statement " + toString(stmt) + " not found");
     }
 
-    BuiltinSimplify::LowerBoundsMap lower;
-    BuiltinSimplify::UpperBoundsMap upper;
+    CompUniqueBounds::LowerBoundsMap lower;
+    CompUniqueBounds::UpperBoundsMap upper;
     std::tie(ast, lower, upper) = simplifyAndGetBounds<BuiltinSimplify>(ast);
     auto rBound =
         compAccessBound(ast, newDef, lower, upper, COMP_ACCESS_BOUND_READ);
@@ -283,10 +284,11 @@ cache(const Stmt &_ast, const std::string &stmt, const std::string &var,
                              std::move(newVar), std::move(newDef)));
 }
 
-std::pair<Stmt, std::tuple<std::string, std::string, std::string, std::string>>
-cacheReduction(const Stmt &_ast, const std::string &stmt,
-               const std::string &var, MemType mtype) {
-    std::string initStmt, reduceStmt, newVar, oldDef, newDef;
+std::pair<Stmt, std::tuple<ID, ID, std::string, ID>>
+cacheReduction(const Stmt &_ast, const ID &stmt, const std::string &var,
+               MemType mtype) {
+    ID initStmt, reduceStmt, oldDef, newDef;
+    std::string newVar;
     auto ast = makeReduction(_ast);
 
     MakeCacheVar makeCacheVar(stmt, var, mtype, true);
@@ -294,12 +296,12 @@ cacheReduction(const Stmt &_ast, const std::string &stmt,
     newVar = makeCacheVar.newVar();
     oldDef = makeCacheVar.oldDef();
     newDef = makeCacheVar.newDef();
-    if (newDef.empty()) {
-        throw InvalidSchedule("Statement " + stmt + " not found");
+    if (!newDef.isValid()) {
+        throw InvalidSchedule("Statement " + toString(stmt) + " not found");
     }
 
-    BuiltinSimplify::LowerBoundsMap lower;
-    BuiltinSimplify::UpperBoundsMap upper;
+    CompUniqueBounds::LowerBoundsMap lower;
+    CompUniqueBounds::UpperBoundsMap upper;
     std::tie(ast, lower, upper) = simplifyAndGetBounds<BuiltinSimplify>(ast);
     auto bound = compAccessBound(ast, newDef, lower, upper);
     MakeInitAndReduce makeInitAndReduce(stmt, var, newVar, oldDef, newDef,

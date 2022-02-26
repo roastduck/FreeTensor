@@ -13,11 +13,11 @@ namespace ir {
  */
 class MakeConstShape : public Mutator {
     const std::vector<MemType> &mtypes_;
-    const BuiltinSimplify::UpperBoundsMap &upper_;
+    const CompUniqueBounds::UpperBoundsMap &upper_;
 
   public:
     MakeConstShape(const std::vector<MemType> &mtypes,
-                   const BuiltinSimplify::UpperBoundsMap &upper)
+                   const CompUniqueBounds::UpperBoundsMap &upper)
         : mtypes_(mtypes), upper_(upper) {}
 
   protected:

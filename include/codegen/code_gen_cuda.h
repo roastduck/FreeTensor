@@ -31,7 +31,8 @@ class CodeGenCUDA : public CodeGenC<CodeGenCUDAStream> {
 
   protected:
     void genAlloc(const Tensor &tensor, const std::string &rawPtr,
-                  const std::string &sizePtr) override;
+                  const std::string &shapePtr,
+                  const std::string &dimPtr) override;
 
     using CodeGenC<CodeGenCUDAStream>::visit;
     void visit(const Min &op) override;

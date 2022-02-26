@@ -2,7 +2,7 @@
 
 namespace ir {
 
-Logger Logger::instance_;
+LogCtrl LogCtrl::instance_;
+std::mutex Logger::lock_;
 
-}
-
+} // namespace ir

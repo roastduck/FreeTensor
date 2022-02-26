@@ -34,7 +34,24 @@ def f_einsum({','.join(params)}):
             if offset != -1:
                 thisLength = f"{param}.shape({offset})"
                 length = thisLength if length is None else f"core.max({length}, {thisLength})"
-        # TODO: Assert lengths of each arguments are consistent
+
+        assert_exprs = []
+        if right != '':
+            assert offsets[-1] != -1
+            rightLength = f"{params[-1]}.shape({offsets[-1]})"
+            for param, offset in zip(params[:-1], offsets[:-1]):
+                if offset != -1:
+                    thisLength = f"{param}.shape({offset})"
+                    assert_exprs.append(
+                        f"({thisLength} == {rightLength} or {thisLength} == 1)")
+        else:
+            for param, offset in zip(params, offsets):
+                if offset != -1:
+                    thisLength = f"{param}.shape({offset})"
+                    assert_exprs.append(
+                        f"({thisLength} == {length} or {thisLength} == 1)")
+        assert_stmt = "assert " + " and ".join(assert_exprs)
+
         init_stmt = ''
         next_init = init
         if init and right == '':
@@ -44,6 +61,7 @@ def f_einsum({','.join(params)}):
         code = f'''
 def f_einsum({', '.join(params)}):
     {init_stmt}
+    {assert_stmt}
     'prefer_libs'
     for i in range({length}):
         _einsum_([{", ".join(next_lefts)}], {next_right}, {next_order}, {next_init})({', '.join(arguments)})
@@ -141,7 +159,7 @@ def gemm_(has_bias: bool = False,
             'nid: einsum'
             einsum_(format)(A, B, Y)
             'nid: mul_to'
-            mul_to(Y, core.Tensor(alpha, Y.mtype))
+            mul_to(Y, alpha)
 
     else:
 
@@ -150,9 +168,9 @@ def gemm_(has_bias: bool = False,
             'nid: einsum'
             einsum_(format)(A, B, Y)
             'nid: mul_to'
-            mul_to(Y, core.Tensor(alpha, Y.mtype))
+            mul_to(Y, alpha)
             'nid: add_to'
-            add_to(Y, mul(core.Tensor(beta, Y.mtype), C))
+            add_to(Y, mul(beta, C))
 
     return f_gemm
 

@@ -15,6 +15,8 @@ namespace ir {
  * Only used in pattern matching
  */
 class AnyNode : public StmtNode {
+  public:
+    void compHash() override;
     DEFINE_NODE_TRAIT(Any);
 };
 typedef Ref<AnyNode> Any;
@@ -24,19 +26,18 @@ inline Stmt _makeAny() { return Any::make(); }
 class StmtSeqNode : public StmtNode {
   public:
     std::vector<SubTree<StmtNode>> stmts_;
+    void compHash() override;
     DEFINE_NODE_TRAIT(StmtSeq);
 };
 typedef Ref<StmtSeqNode> StmtSeq;
 #define makeStmtSeq(...) makeNode(StmtSeq, __VA_ARGS__)
-template <class Tstmts>
-Stmt _makeStmtSeq(const std::string &id, Tstmts &&stmts) {
+template <class Tstmts> Stmt _makeStmtSeq(const ID &id, Tstmts &&stmts) {
     StmtSeq s = StmtSeq::make();
     s->setId(id);
     s->stmts_ = std::vector<SubTree<StmtNode>>(stmts.begin(), stmts.end());
     return s;
 }
-inline Stmt _makeStmtSeq(const std::string &id,
-                         std::initializer_list<Stmt> stmts) {
+inline Stmt _makeStmtSeq(const ID &id, std::initializer_list<Stmt> stmts) {
     StmtSeq s = StmtSeq::make();
     s->setId(id);
     s->stmts_ = std::vector<SubTree<StmtNode>>(stmts.begin(), stmts.end());
@@ -56,14 +57,15 @@ class VarDefNode : public StmtNode {
     VarDefNode(const VarDefNode &other);            // Deep copy buffer_
     VarDefNode &operator=(const VarDefNode &other); // Deep copy buffer_
 
+    void compHash() override;
+
     DEFINE_NODE_TRAIT(VarDef);
 };
 typedef Ref<VarDefNode> VarDef;
 #define makeVarDef(...) makeNode(VarDef, __VA_ARGS__)
 template <class Tbuffer, class Tbody>
-Stmt _makeVarDef(const std::string &id, const std::string &name,
-                 Tbuffer &&buffer, const Expr &sizeLim, Tbody &&body,
-                 bool pinned) {
+Stmt _makeVarDef(const ID &id, const std::string &name, Tbuffer &&buffer,
+                 const Expr &sizeLim, Tbody &&body, bool pinned) {
     VarDef d = VarDef::make();
     d->setId(id);
     d->name_ = name;
@@ -79,13 +81,14 @@ class StoreNode : public StmtNode {
     std::string var_;
     std::vector<SubTree<ExprNode>> indices_;
     SubTree<ExprNode> expr_;
+    void compHash() override;
     DEFINE_NODE_TRAIT(Store);
 };
 typedef Ref<StoreNode> Store;
 #define makeStore(...) makeNode(Store, __VA_ARGS__)
 template <class Tindices, class Texpr>
-Stmt _makeStore(const std::string &id, const std::string &var,
-                Tindices &&indices, Texpr &&expr) {
+Stmt _makeStore(const ID &id, const std::string &var, Tindices &&indices,
+                Texpr &&expr) {
     Store s = Store::make();
     s->setId(id);
     s->var_ = var;
@@ -95,7 +98,7 @@ Stmt _makeStore(const std::string &id, const std::string &var,
     return s;
 }
 template <class Texpr>
-Stmt _makeStore(const std::string &id, const std::string &var,
+Stmt _makeStore(const ID &id, const std::string &var,
                 const std::vector<Expr> &indices, Texpr &&expr) {
     Store s = Store::make();
     s->setId(id);
@@ -114,13 +117,14 @@ class ReduceToNode : public StmtNode {
     ReduceOp op_;
     SubTree<ExprNode> expr_;
     bool atomic_;
+    void compHash() override;
     DEFINE_NODE_TRAIT(ReduceTo)
 };
 typedef Ref<ReduceToNode> ReduceTo;
 #define makeReduceTo(...) makeNode(ReduceTo, __VA_ARGS__)
 template <class Tindices, class Texpr>
-Stmt _makeReduceTo(const std::string &id, const std::string &var,
-                   Tindices &&indices, ReduceOp op, Texpr &&expr, bool atomic) {
+Stmt _makeReduceTo(const ID &id, const std::string &var, Tindices &&indices,
+                   ReduceOp op, Texpr &&expr, bool atomic) {
     ReduceTo a = ReduceTo::make();
     a->setId(id);
     a->var_ = var;
@@ -132,7 +136,7 @@ Stmt _makeReduceTo(const std::string &id, const std::string &var,
     return a;
 }
 template <class Texpr>
-Stmt _makeReduceTo(const std::string &id, const std::string &var,
+Stmt _makeReduceTo(const ID &id, const std::string &var,
                    const std::vector<Expr> &indices, ReduceOp op, Texpr &&expr,
                    bool atomic) {
     ReduceTo a = ReduceTo::make();
@@ -200,23 +204,26 @@ class ForNode : public StmtNode {
     // We also record len_ because it is used in may passes. If we computes len_
     // every time and call simplifyPass to propagate the constants, it is very
     // time consuming
-    SubTree<ExprNode> begin_, end_, len_;
+    SubTree<ExprNode> begin_, end_, step_, len_;
     ForProperty property_;
     SubTree<StmtNode> body_;
+
+    void compHash() override;
 
     DEFINE_NODE_TRAIT(For);
 };
 typedef Ref<ForNode> For;
 #define makeFor(...) makeNode(For, __VA_ARGS__)
-template <class Tbegin, class Tend, class Tlen, class Tbody>
-Stmt _makeFor(const std::string &id, const std::string &iter, Tbegin &&begin,
-              Tend &&end, Tlen &&len, const ForProperty &property,
+template <class Tbegin, class Tend, class Tstep, class Tlen, class Tbody>
+Stmt _makeFor(const ID &id, const std::string &iter, Tbegin &&begin, Tend &&end,
+              Tstep &&step, Tlen &&len, const ForProperty &property,
               Tbody &&body) {
     For f = For::make();
     f->setId(id);
     f->iter_ = iter;
     f->begin_ = std::forward<Tbegin>(begin);
     f->end_ = std::forward<Tend>(end);
+    f->step_ = std::forward<Tstep>(step);
     f->len_ = std::forward<Tlen>(len);
     f->property_ = property;
     f->body_ = std::forward<Tbody>(body);
@@ -229,12 +236,14 @@ class IfNode : public StmtNode {
     SubTree<StmtNode> thenCase_;
     SubTree<StmtNode, NullPolicy::Nullable> elseCase_;
 
+    void compHash() override;
+
     DEFINE_NODE_TRAIT(If);
 };
 typedef Ref<IfNode> If;
 #define makeIf(...) makeNode(If, __VA_ARGS__)
 template <class Tcond, class Tthen, class Telse = std::nullptr_t>
-Stmt _makeIf(const std::string &id, Tcond &&cond, Tthen &&thenCase,
+Stmt _makeIf(const ID &id, Tcond &&cond, Tthen &&thenCase,
              Telse &&elseCase = nullptr) {
     If i = If::make();
     i->setId(id);
@@ -244,17 +253,57 @@ Stmt _makeIf(const std::string &id, Tcond &&cond, Tthen &&thenCase,
     return i;
 }
 
+/**
+ * Assert a condition shall hold in the body
+ *
+ * Please note that Assert is different from Assume:
+ *
+ * - An Assert node is written by users to provide EXTRA conditions
+ * - An Assert node will be translated to a runtime assertion
+ * - Redundant assertions will be removed in simplifying passes
+ * - An Assert node is checked in debug/match_ast
+ */
 class AssertNode : public StmtNode {
   public:
     SubTree<ExprNode> cond_;
     SubTree<StmtNode> body_;
+    void compHash() override;
     DEFINE_NODE_TRAIT(Assert);
 };
 typedef Ref<AssertNode> Assert;
 #define makeAssert(...) makeNode(Assert, __VA_ARGS__)
 template <class Tcond, class Tbody>
-Stmt _makeAssert(const std::string &id, Tcond &&cond, Tbody &&body) {
+Stmt _makeAssert(const ID &id, Tcond &&cond, Tbody &&body) {
     Assert a = Assert::make();
+    a->setId(id);
+    a->cond_ = std::forward<Tcond>(cond);
+    a->body_ = std::forward<Tbody>(body);
+    return a;
+}
+
+/**
+ * Assume a condition will hold in the body
+ *
+ * Please note that Assume is different from Assert
+ *
+ * - An Assume node is introduced by some passes to help the compiler recognize
+ * some implicit conditions, and cannot be written by users
+ * - An Assume node will not introduce runtime overhead
+ * - Assume nodes are inserted and removed freely by passes
+ * - An Assert node is NOT checked in debug/match_ast
+ */
+class AssumeNode : public StmtNode {
+  public:
+    SubTree<ExprNode> cond_;
+    SubTree<StmtNode> body_;
+    void compHash() override;
+    DEFINE_NODE_TRAIT(Assume);
+};
+typedef Ref<AssumeNode> Assume;
+#define makeAssume(...) makeNode(Assume, __VA_ARGS__)
+template <class Tcond, class Tbody>
+Stmt _makeAssume(const ID &id, Tcond &&cond, Tbody &&body) {
+    Assume a = Assume::make();
     a->setId(id);
     a->cond_ = std::forward<Tcond>(cond);
     a->body_ = std::forward<Tbody>(body);
@@ -269,11 +318,12 @@ Stmt _makeAssert(const std::string &id, Tcond &&cond, Tbody &&body) {
 class EvalNode : public StmtNode {
   public:
     SubTree<ExprNode> expr_;
+    void compHash() override;
     DEFINE_NODE_TRAIT(Eval);
 };
 typedef Ref<EvalNode> Eval;
 #define makeEval(...) makeNode(Eval, __VA_ARGS__)
-template <class T> Stmt _makeEval(const std::string &id, T &&expr) {
+template <class T> Stmt _makeEval(const ID &id, T &&expr) {
     Eval e = Eval::make();
     e->setId(id);
     e->expr_ = std::forward<T>(expr);
@@ -294,11 +344,12 @@ class MatMulNode : public StmtNode {
     bool aIsRowMajor_, bIsRowMajor_, cIsRowMajor_;
     SubTree<StmtNode>
         equivalent_; // Equivalent loop statements, to help dependency analysis
+    void compHash() override;
     DEFINE_NODE_TRAIT(MatMul);
 };
 typedef Ref<MatMulNode> MatMul;
 #define makeMatMul(...) makeNode(MatMul, __VA_ARGS__)
-inline Stmt _makeMatMul(const std::string &id, const Expr &a, const Expr &b,
+inline Stmt _makeMatMul(const ID &id, const Expr &a, const Expr &b,
                         const Expr &c, const Expr &alpha, const Expr &beta,
                         const Expr &m, const Expr &k, const Expr &n,
                         const Expr &lda, const Expr &ldb, const Expr &ldc,

@@ -42,4 +42,3 @@ bool checkAllDefined(const std::unordered_set<std::string> &defs,
 }
 
 } // namespace ir
-

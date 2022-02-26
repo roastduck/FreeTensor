@@ -1,8 +1,8 @@
 #include <algorithm>
 #include <climits>
 
-#include <pass/isl_simplify.h>
 #include <pass/make_const_shape.h>
+#include <pass/pb_simplify.h>
 
 namespace ir {
 
@@ -37,7 +37,7 @@ Stmt MakeConstShape::visit(const VarDef &_op) {
         if (result == INT_MAX) {
             throw InvalidProgram("Unable to relax dimension " +
                                  std::to_string(i) + ": " + toString(dim) +
-                                 " of " + op->id() + ": " + op->name_ +
+                                 " of " + op->id().strId() + ": " + op->name_ +
                                  " to a constant");
         }
         dim = makeIntConst(result);
@@ -48,12 +48,11 @@ Stmt MakeConstShape::visit(const VarDef &_op) {
 
 Stmt makeConstShape(const Stmt &_op, const std::vector<MemType> &mtypes) {
     Stmt op;
-    BuiltinSimplify::LowerBoundsMap lower;
-    BuiltinSimplify::UpperBoundsMap upper;
-    std::tie(op, lower, upper) = simplifyAndGetBounds<ISLSimplify>(_op);
+    CompUniqueBounds::LowerBoundsMap lower;
+    CompUniqueBounds::UpperBoundsMap upper;
+    std::tie(op, lower, upper) = simplifyAndGetBounds<PBSimplify>(_op);
     op = MakeConstShape(mtypes, upper)(op);
     return op;
 }
 
 } // namespace ir
-

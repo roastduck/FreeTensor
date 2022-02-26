@@ -2,13 +2,11 @@
 
 namespace ir {
 
-void AllStmts::visitStmt(const Stmt &op,
-                         const std::function<void(const Stmt &)> &visitNode) {
+void AllStmts::visitStmt(const Stmt &op) {
     if (types_.count(op->nodeType())) {
         results_.emplace_back(op);
     }
-    Visitor::visitStmt(op, visitNode);
+    Visitor::visitStmt(op);
 }
 
 } // namespace ir
-

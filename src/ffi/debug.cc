@@ -8,7 +8,8 @@ void init_ffi_debug(py::module_ &m) {
         .def("enable", &Logger::enable)
         .def("disable", &Logger::disable);
     m.def("logger", &logger, py::return_value_policy::reference);
+
+    m.def("dump_as_test", &dumpAsTest);
 }
 
 } // namespace ir
-

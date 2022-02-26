@@ -5,15 +5,12 @@ namespace ir {
 
 Stmt Make1DVar::visit(const VarDef &_op) {
     if (_op->buffer_->tensor().shape().size() <= 1) {
-        return Mutator::visit(_op);
+        return BaseClass::visit(_op);
     }
 
-    ASSERT(!buffers_.count(_op->name_));
-    buffers_[_op->name_] = _op->buffer_;
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::VarDef);
     auto op = __op.as<VarDefNode>();
-    buffers_.erase(_op->name_);
 
     Expr len;
     if (op->sizeLim_.isValid()) {
@@ -28,21 +25,21 @@ Stmt Make1DVar::visit(const VarDef &_op) {
 }
 
 Stmt Make1DVar::visit(const Store &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Store);
     auto op = __op.as<StoreNode>();
     return visitMemAcc(op);
 }
 
 Stmt Make1DVar::visit(const ReduceTo &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
     auto op = __op.as<ReduceToNode>();
     return visitMemAcc(op);
 }
 
 Expr Make1DVar::visit(const Load &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Load);
     auto op = __op.as<LoadNode>();
     return visitMemAcc(op);
@@ -55,4 +52,3 @@ Stmt make1dVar(const Stmt &_op) {
 }
 
 } // namespace ir
-

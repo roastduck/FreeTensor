@@ -1,12 +1,13 @@
 #include <auto_schedule/sketch.h>
 #include <auto_schedule/utils.h>
+#include <hash.h>
 
 namespace ir {
 
-Sketch Sketch::genRandAnnotation() const {
+Sketch Sketch::genRandAnnotation(std::default_random_engine &gen) const {
     Sketch sketch = *this;
     for (auto &part : sketch.parts_) {
-        part->genRandAnnotation();
+        part->genRandAnnotation(gen);
     }
     return sketch;
 }
@@ -22,10 +23,11 @@ Schedule Sketch::genSchedule(const Schedule &original) const {
 
 bool Sketch::operator<(const Sketch &a) const { return time_ < a.time_; }
 
-std::pair<bool, Sketch> Sketch::genMutation() const {
+std::pair<bool, Sketch>
+Sketch::genMutation(std::default_random_engine &gen) const {
     Sketch ret = *this;
-    int mut_part = random_int(ret.parts_.size() - 1);
-    auto mut = ret.parts_[mut_part]->mutate();
+    int mut_part = randomInt(ret.parts_.size() - 1, gen);
+    auto mut = ret.parts_[mut_part]->mutate(gen);
     if (!mut.isValid()) {
         return std::make_pair(false, Sketch());
     }
@@ -33,10 +35,12 @@ std::pair<bool, Sketch> Sketch::genMutation() const {
     return std::make_pair(true, ret);
 }
 
-std::pair<bool, Sketch> Sketch::genCrossover(const Sketch &sketch) const {
+std::pair<bool, Sketch>
+Sketch::genCrossover(const Sketch &sketch,
+                     std::default_random_engine &gen) const {
     Sketch ret = *this;
-    int mut_part = random_int(ret.parts_.size() - 1);
-    auto mut = ret.parts_[mut_part]->crossover(sketch.parts_[mut_part]);
+    int mut_part = randomInt(ret.parts_.size() - 1, gen);
+    auto mut = ret.parts_[mut_part]->crossover(sketch.parts_[mut_part], gen);
     if (!mut.isValid()) {
         return std::make_pair(false, Sketch());
     }
@@ -51,6 +55,14 @@ std::vector<int> Sketch::getAnnotation() const {
         ret.insert(ret.end(), nw.begin(), nw.end());
     }
     return ret;
+}
+
+size_t Sketch::hash() const {
+    size_t h = 0;
+    for (const auto &part : parts_) {
+        h = hashCombine(h, part->hash());
+    }
+    return h;
 }
 
 } // namespace ir

@@ -8,17 +8,17 @@
 namespace ir {
 
 class MakeInlinePlaceholder : public Mutator {
-    std::vector<uint64_t> indexHashes_;
+    std::vector<Expr> indices_;
 
   public:
-    MakeInlinePlaceholder(const std::vector<Expr> &indices);
+    MakeInlinePlaceholder(const std::vector<Expr> &indices)
+        : indices_(indices) {}
     MakeInlinePlaceholder(const std::vector<SubTree<ExprNode>> &indices)
         : MakeInlinePlaceholder(
               std::vector<Expr>(indices.begin(), indices.end())) {}
 
   protected:
-    Expr visitExpr(const Expr &op,
-                   const std::function<Expr(const Expr &)> &visitNode) override;
+    Expr visitExpr(const Expr &op) override;
 };
 
 class ApplyInlinePlaceholder : public Mutator {
@@ -36,12 +36,12 @@ class ApplyInlinePlaceholder : public Mutator {
 };
 
 class MakeInline : public Mutator {
-    std::string def_, var_;
+    ID def_;
+    std::string var_;
     const std::unordered_map<Load, Expr> &replace_;
 
   public:
-    MakeInline(const std::string &def,
-               const std::unordered_map<Load, Expr> &replace)
+    MakeInline(const ID &def, const std::unordered_map<Load, Expr> &replace)
         : def_(def), replace_(replace) {}
 
   protected:
@@ -51,7 +51,7 @@ class MakeInline : public Mutator {
     Stmt visit(const VarDef &op) override;
 };
 
-Stmt inlining(const Stmt &ast, const std::string &def);
+Stmt inlining(const Stmt &ast, const ID &def);
 
 } // namespace ir
 

@@ -4,8 +4,12 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include <analyze/comp_transient_bounds.h>
+#include <analyze/comp_unique_bounds.h>
+#include <analyze/symbol_table.h>
+#include <analyze/type_infer.h>
 #include <func.h>
-#include <pass/simplify.h>
+#include <mutator.h>
 
 namespace ir {
 
@@ -36,9 +40,17 @@ class NormalizeThreads : public Mutator {
     Stmt visit(const Eval &op) override;
 };
 
-class CheckThreadNum : public CompUniqueBounds {
+class CheckThreadNum
+    : public CompTransientBounds<WithTypeInfer<SymbolTable<Mutator>>> {
+    typedef CompTransientBounds<WithTypeInfer<SymbolTable<Mutator>>> BaseClass;
+
+    CompUniqueBounds bound_;
+
+  public:
+    CheckThreadNum() : bound_(*this, *this) {}
+
   protected:
-    using CompUniqueBounds::visit;
+    using BaseClass::visit;
     Stmt visit(const For &op) override;
 };
 

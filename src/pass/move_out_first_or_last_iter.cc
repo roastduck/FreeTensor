@@ -1,14 +1,7 @@
 #include <pass/move_out_first_or_last_iter.h>
+#include <pass/replace_iter.h>
 
 namespace ir {
-
-Expr MoveOutFirstOrLastIter::visit(const Var &op) {
-    if (replace_.count(op->name_)) {
-        return (*this)(replace_.at(op->name_));
-    } else {
-        return Z3Simplify::visit(op);
-    }
-}
 
 Stmt MoveOutFirstOrLastIter::visit(const For &_op) {
     auto __op = Z3Simplify::visit(_op);
@@ -24,24 +17,22 @@ Stmt MoveOutFirstOrLastIter::visit(const For &_op) {
                     prove(
                         (*this)(makeEQ(branch->cond_, makeEQ(makeVar(op->iter_),
                                                              op->begin_))))) {
-                    ASSERT(!replace_.count(op->iter_));
-                    replace_[op->iter_] = op->begin_;
-                    toFront = (*this)(branch->thenCase_);
-                    replace_.erase(op->iter_);
+                    toFront =
+                        ReplaceIter(op->iter_, op->begin_)(branch->thenCase_);
+                    toFront = (*this)(toFront);
                     seq->stmts_.erase(seq->stmts_.begin());
                 }
             }
             if (seq->stmts_.back()->nodeType() == ASTNodeType::If) {
                 auto &&branch = seq->stmts_.back().as<IfNode>();
+                auto rbegin = makeAdd(
+                    op->begin_,
+                    makeMul(makeSub(op->len_, makeIntConst(1)), op->step_));
                 if (!branch->elseCase_.isValid() &&
-                    prove((*this)(
-                        makeEQ(branch->cond_,
-                               makeEQ(makeVar(op->iter_),
-                                      makeSub(op->end_, makeIntConst(1))))))) {
-                    ASSERT(!replace_.count(op->iter_));
-                    replace_[op->iter_] = makeSub(op->end_, makeIntConst(1));
-                    toBack = (*this)(branch->thenCase_);
-                    replace_.erase(op->iter_);
+                    prove((*this)(makeEQ(
+                        branch->cond_, makeEQ(makeVar(op->iter_), rbegin))))) {
+                    toBack = ReplaceIter(op->iter_, rbegin)(branch->thenCase_);
+                    toBack = (*this)(toBack);
                     seq->stmts_.pop_back();
                 }
             }

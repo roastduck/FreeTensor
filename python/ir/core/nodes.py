@@ -37,6 +37,7 @@ class Context:
                         iter_var,
                         begin,
                         end,
+                        step,
                         body,
                         nid: str = "",
                         no_deps: Optional[Sequence] = None,
@@ -53,7 +54,8 @@ class Context:
                 iter_var,
                 begin,
                 end,
-                end - begin,
+                step,
+                (end - begin) // step,
                 ffi.ForProperty().with_no_deps(no_deps).with_prefer_libs(
                     prefer_libs),
                 body,
@@ -307,12 +309,14 @@ class For:
                  iter_var: str,
                  begin,
                  end,
+                 step=1,
                  nid: str = "",
                  no_deps: Optional[Sequence] = None,
                  prefer_libs: Optional[bool] = None):
         self.iter_var = iter_var
         self.begin = begin
         self.end = end
+        self.step = step
         self.nid = nid
         self.no_deps = no_deps
         self.prefer_libs = prefer_libs
@@ -327,6 +331,7 @@ class For:
         top.append_for_stmt(self.iter_var,
                             self.begin,
                             self.end,
+                            self.step,
                             body,
                             nid=self.nid,
                             no_deps=self.no_deps,
@@ -392,6 +397,11 @@ class NamedScope:
         ctx_stack.top().append_stmt(body)
 
 
+def Invoke(func, *args, **kvs):
+    top = ctx_stack.top()
+    top.append_stmt(ffi.inlined_invoke(top.get_next_nid(), func, args, kvs))
+
+
 def Eval(expr):
     top = ctx_stack.top()
     top.append_stmt(ffi.makeEval(top.get_next_nid(), expr))
@@ -399,6 +409,10 @@ def Eval(expr):
 
 def Any():
     ctx_stack.top().append_stmt(ffi.makeAny())
+
+
+def remainder(lhs, rhs):
+    return ffi.makeRemainder(lhs, rhs)
 
 
 def min(lhs, rhs):
@@ -507,12 +521,38 @@ def any():
     return ffi.makeAnyExpr()
 
 
-def Func(name, params, returns, body):
-    return ffi.makeFunc(name, params, returns, body)
+def Func(name, params, returns, body, closure={}):
+    return ffi.makeFunc(name, params, returns, body, closure)
 
 
-class Tensor(ffi.TensorData):
+def ndim(var):
+    if isinstance(var, Var):
+        return var.ndim
+    else:
+        return 0
 
-    def __init__(self, data, mtype):
-        super(Tensor, self).__init__(np.array(data))
-        self.mtype = parseMType(mtype)
+
+def shape(var, i):
+    if isinstance(var, Var):
+        return var.shape(i)
+    else:
+        raise Exception('Scalar object has no shape')
+
+
+def dtype(var):
+    if isinstance(var, Var):
+        return var.dtype
+    else:
+        if isinstance(var, float):
+            return DataType.Float32
+        elif isinstance(var, int):
+            return DataType.Int32
+        else:
+            raise Exception('Unknown scalar type')
+
+
+def mtype(var):
+    if isinstance(var, Var):
+        return var.mtype
+    else:
+        return 'byvalue'

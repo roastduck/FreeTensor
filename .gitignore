@@ -1,8 +1,10 @@
 /build
 __pycache__
-/.vscode
+*.log
+*.csv
 
-# Vim
+# Editors
+/.vscode
 *.swp
 .ycm_extra_conf.py
 .idea

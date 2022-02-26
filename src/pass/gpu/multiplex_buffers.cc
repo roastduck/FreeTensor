@@ -45,22 +45,19 @@ Stmt MultiplexMutator::visit(const For &op) {
         op->property_.parallel_ == "blockIdx.y" ||
         op->property_.parallel_ == "blockIdx.z") {
         stack_.emplace_back(op);
-        auto ret = Mutator::visit(op);
+        auto ret = BaseClass::visit(op);
         stack_.pop_back();
         return ret;
     } else {
-        return Mutator::visit(op);
+        return BaseClass::visit(op);
     }
 }
 
 Stmt MultiplexMutator::visit(const VarDef &_op) {
     int pos = defPos_[_op->name_] = stack_.size();
-    ASSERT(!defs_.count(_op->name_));
-    defs_[_op->name_] = _op->id();
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::VarDef);
     auto op = __op.as<VarDefNode>();
-    defs_.erase(_op->name_);
 
     if (affecting_.count(op->id())) {
         auto &&aff = affecting_.at(op->id());
@@ -76,21 +73,21 @@ Stmt MultiplexMutator::visit(const VarDef &_op) {
 }
 
 Expr MultiplexMutator::visit(const Load &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Load);
     auto op = __op.as<LoadNode>();
     return alterAccess(op);
 }
 
 Stmt MultiplexMutator::visit(const Store &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Store);
     auto op = __op.as<StoreNode>();
     return alterAccess(op);
 }
 
 Stmt MultiplexMutator::visit(const ReduceTo &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
     auto op = __op.as<ReduceToNode>();
     return alterAccess(op);
@@ -108,13 +105,12 @@ Stmt multiplexBuffers(const Stmt &op) {
     auto variantMap = findLoopVariance(op).second;
 
     std::vector<FindDepsCond> conds;
-    std::unordered_map<std::string, std::string>
-        parallelScopes; // For ID -> parallel
+    std::unordered_map<ID, std::string> parallelScopes; // For ID -> parallel
     for (auto &&loop : finder.loops()) {
         conds.emplace_back(FindDepsCond{{loop->id(), DepDirection::Different}});
         parallelScopes[loop->id()] = loop->property_.parallel_;
     }
-    std::unordered_map<std::string, std::unordered_set<std::string>>
+    std::unordered_map<ID, std::unordered_set<ID>>
         affecting; // VarDef ID -> For ID
     auto filter = [](const AccessPoint &later, const AccessPoint &earlier) {
         return later.def_->buffer_->mtype() == MemType::GPUShared ||
@@ -123,9 +119,9 @@ Stmt multiplexBuffers(const Stmt &op) {
     auto found = [&](const Dependency &d) {
         ASSERT(d.cond_.size() == 1);
         if (finder.affecting().count(d.defId()) &&
-            finder.affecting().at(d.defId()).count(d.cond_[0].first.name_)) {
-            if (isVariant(variantMap, d.def(), d.cond_[0].first.name_)) {
-                affecting[d.defId()].insert(d.cond_[0].first.name_);
+            finder.affecting().at(d.defId()).count(d.cond_[0].first.id_)) {
+            if (isVariant(variantMap, d.def(), d.cond_[0].first.id_)) {
+                affecting[d.defId()].insert(d.cond_[0].first.id_);
             }
         }
     };
@@ -137,4 +133,3 @@ Stmt multiplexBuffers(const Stmt &op) {
 } // namespace gpu
 
 } // namespace ir
-

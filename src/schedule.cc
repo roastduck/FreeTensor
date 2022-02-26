@@ -1,10 +1,13 @@
 #include <algorithm>
 
+#include <itertools.hpp>
+
 #include <analyze/all_defs.h>
 #include <analyze/all_stmts.h>
 #include <analyze/count_contig_access_loops.h>
 #include <analyze/find_indexing_loops.h>
 #include <analyze/get_loop_nest_tree.h>
+#include <analyze/with_cursor.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/simplify.h>
 #include <schedule.h>
@@ -18,11 +21,12 @@
 #include <schedule/merge.h>
 #include <schedule/parallelize.h>
 #include <schedule/reorder.h>
-#include <schedule/seperate_tail.h>
+#include <schedule/separate_tail.h>
 #include <schedule/set_mem_type.h>
 #include <schedule/split.h>
 #include <schedule/swap.h>
 #include <schedule/unroll.h>
+#include <schedule/var_merge.h>
 #include <schedule/var_reorder.h>
 #include <schedule/vectorize.h>
 
@@ -45,9 +49,8 @@ Cursor Schedule::find(const std::function<bool(const Cursor &)> &filter) const {
     return ret[0];
 }
 
-std::pair<std::string, std::string> Schedule::split(const std::string &id,
-                                                    int factor, int nparts) {
-    auto log = "split(" + id + ", factor=" + std::to_string(factor) +
+std::pair<ID, ID> Schedule::split(const ID &id, int factor, int nparts) {
+    auto log = "split(" + toString(id) + ", factor=" + std::to_string(factor) +
                ", nparts=" + std::to_string(nparts) + ")";
     try {
         auto ret = ir::split(ast_, id, factor, nparts);
@@ -59,10 +62,10 @@ std::pair<std::string, std::string> Schedule::split(const std::string &id,
     }
 }
 
-void Schedule::reorder(const std::vector<std::string> &order) {
+void Schedule::reorder(const std::vector<ID> &order) {
     std::string log = "reorder(";
-    for (size_t i = 0, iEnd = order.size(); i < iEnd; i++) {
-        log += order[i] + (i < iEnd - 1 ? ", " : "");
+    for (auto &&[i, item] : iter::enumerate(order)) {
+        log += (i > 0 ? ", " : "") + toString(item);
     }
     log += ")";
     try {
@@ -73,9 +76,8 @@ void Schedule::reorder(const std::vector<std::string> &order) {
     }
 }
 
-std::string Schedule::merge(const std::string &loop1,
-                            const std::string &loop2) {
-    auto log = "merge(" + loop1 + ", " + loop2 + ")";
+ID Schedule::merge(const ID &loop1, const ID &loop2) {
+    auto log = "merge(" + toString(loop1) + ", " + toString(loop2) + ")";
     try {
         auto ret = ir::merge(ast_, loop1, loop2);
         ast_ = ret.first;
@@ -87,12 +89,11 @@ std::string Schedule::merge(const std::string &loop1,
 }
 
 std::pair<Schedule::IDMap, Schedule::IDMap>
-Schedule::fission(const std::string &loop, FissionSide side,
-                  const std::string &splitter, const std::string &suffix0,
-                  const std::string &suffix1) {
-    auto log = "fission(" + loop + ", " +
+Schedule::fission(const ID &loop, FissionSide side, const ID &splitter,
+                  const std::string &suffix0, const std::string &suffix1) {
+    auto log = "fission(" + toString(loop) + ", " +
                (side == FissionSide::Before ? "BEFORE, " : "AFTER, ") +
-               splitter + ")";
+               toString(splitter) + ")";
     try {
         auto ret = ir::fission(ast_, loop, side, splitter, suffix0, suffix1);
         ast_ = ret.first;
@@ -103,9 +104,8 @@ Schedule::fission(const std::string &loop, FissionSide side,
     }
 }
 
-std::string Schedule::fuse(const std::string &loop0, const std::string &loop1,
-                           bool strict) {
-    auto log = "fuse(" + loop0 + ", " + loop1 + ")";
+ID Schedule::fuse(const ID &loop0, const ID &loop1, bool strict) {
+    auto log = "fuse(" + toString(loop0) + ", " + toString(loop1) + ")";
     try {
         auto ret = ir::fuse(ast_, loop0, loop1, strict);
         ast_ = ret.first;
@@ -116,10 +116,10 @@ std::string Schedule::fuse(const std::string &loop0, const std::string &loop1,
     }
 }
 
-void Schedule::swap(const std::vector<std::string> &order) {
+void Schedule::swap(const std::vector<ID> &order) {
     std::string log = "swap(";
-    for (size_t i = 0, iEnd = order.size(); i < iEnd; i++) {
-        log += order[i] + (i < iEnd - 1 ? ", " : "");
+    for (auto &&[i, item] : iter::enumerate(order)) {
+        log += (i > 0 ? ", " : "") + toString(item);
     }
     log += ")";
     try {
@@ -130,8 +130,8 @@ void Schedule::swap(const std::vector<std::string> &order) {
     }
 }
 
-void Schedule::blend(const std::string &loop) {
-    auto log = "blend(" + loop + ")";
+void Schedule::blend(const ID &loop) {
+    auto log = "blend(" + toString(loop) + ")";
     try {
         ast_ = ir::blend(ast_, loop);
         logs_.emplace_back(log);
@@ -140,10 +140,9 @@ void Schedule::blend(const std::string &loop) {
     }
 }
 
-std::tuple<std::string, std::string, std::string, std::string>
-Schedule::cache(const std::string &stmt, const std::string &var,
-                MemType mtype) {
-    auto log = "cache(" + stmt + ", " + var + ")";
+std::tuple<ID, ID, std::string, ID>
+Schedule::cache(const ID &stmt, const std::string &var, MemType mtype) {
+    auto log = "cache(" + toString(stmt) + ", " + var + ")";
     try {
         auto ret = ir::cache(ast_, stmt, var, mtype);
         ast_ = ret.first;
@@ -154,10 +153,10 @@ Schedule::cache(const std::string &stmt, const std::string &var,
     }
 }
 
-std::tuple<std::string, std::string, std::string, std::string>
-Schedule::cacheReduction(const std::string &stmt, const std::string &var,
+std::tuple<ID, ID, std::string, ID>
+Schedule::cacheReduction(const ID &stmt, const std::string &var,
                          MemType mtype) {
-    auto log = "cache_reduction(" + stmt + ", " + var + ")";
+    auto log = "cache_reduction(" + toString(stmt) + ", " + var + ")";
     try {
         auto ret = ir::cacheReduction(ast_, stmt, var, mtype);
         ast_ = ret.first;
@@ -168,8 +167,8 @@ Schedule::cacheReduction(const std::string &stmt, const std::string &var,
     }
 }
 
-void Schedule::setMemType(const std::string &def, MemType mtype) {
-    auto log = "set_mem_type(" + def + ", " + toString(mtype) + ")";
+void Schedule::setMemType(const ID &def, MemType mtype) {
+    auto log = "set_mem_type(" + toString(def) + ", " + toString(mtype) + ")";
     try {
         ast_ = ir::setMemType(ast_, def, mtype);
         logs_.emplace_back(log);
@@ -178,10 +177,10 @@ void Schedule::setMemType(const std::string &def, MemType mtype) {
     }
 }
 
-void Schedule::varSplit(const std::string &def, int dim, VarSplitMode mode,
-                        int factor, int nparts) {
+void Schedule::varSplit(const ID &def, int dim, VarSplitMode mode, int factor,
+                        int nparts) {
     auto log =
-        "var_split(" + def + ", " + std::to_string(dim) +
+        "var_split(" + toString(def) + ", " + std::to_string(dim) +
         (mode == VarSplitMode::FixedSize ? ", FixedSize" : ", RelaxedSize") +
         ", factor=" + std::to_string(factor) +
         ", nparts=" + std::to_string(nparts) + ")";
@@ -193,11 +192,20 @@ void Schedule::varSplit(const std::string &def, int dim, VarSplitMode mode,
     }
 }
 
-void Schedule::varReorder(const std::string &def,
-                          const std::vector<int> &order) {
-    std::string log = "var_reorder(" + def + ", ";
-    for (size_t i = 0, iEnd = order.size(); i < iEnd; i++) {
-        log += std::to_string(order[i]) + (i < iEnd - 1 ? ", " : "");
+void Schedule::varMerge(const ID &def, int dim) {
+    auto log = "var_merge(" + toString(def) + ", " + std::to_string(dim) + ")";
+    try {
+        ast_ = ir::varMerge(ast_, def, dim);
+        logs_.emplace_back(log);
+    } catch (const InvalidSchedule &e) {
+        throw InvalidSchedule("Invalid " + log + ": " + e.what());
+    }
+}
+
+void Schedule::varReorder(const ID &def, const std::vector<int> &order) {
+    std::string log = "var_reorder(" + toString(def) + ", ";
+    for (auto &&[i, item] : iter::enumerate(order)) {
+        log += (i > 0 ? ", " : "") + std::to_string(item);
     }
     log += ")";
     try {
@@ -208,8 +216,7 @@ void Schedule::varReorder(const std::string &def,
     }
 }
 
-std::string Schedule::moveTo(const std::string &_stmt, MoveToSide side,
-                             const std::string &_dst) {
+ID Schedule::moveTo(const ID &_stmt, MoveToSide side, const ID &_dst) {
     auto bak = ast_;
     try {
         auto stmt = _stmt, dst = _dst;
@@ -242,14 +249,13 @@ std::string Schedule::moveTo(const std::string &_stmt, MoveToSide side,
 
             if (movingUp()) {
                 if (s.hasPrev()) {
-                    std::vector<std::string> orderRev;
+                    std::vector<ID> orderRev;
                     while (s.hasPrev() && movingUp()) {
                         s = s.prev();
                         orderRev.emplace_back(s.id());
                     }
                     orderRev.emplace_back(stmt);
-                    std::vector<std::string> order(orderRev.rbegin(),
-                                                   orderRev.rend());
+                    std::vector<ID> order(orderRev.rbegin(), orderRev.rend());
                     swap(order);
                 } else {
                     while (!s.hasPrev() && movingUp()) {
@@ -271,7 +277,7 @@ std::string Schedule::moveTo(const std::string &_stmt, MoveToSide side,
 
             } else if (movingDown()) {
                 if (s.hasNext()) {
-                    std::vector<std::string> order;
+                    std::vector<ID> order;
                     while (s.hasNext() && movingDown()) {
                         s = s.next();
                         order.emplace_back(s.id());
@@ -302,13 +308,13 @@ std::string Schedule::moveTo(const std::string &_stmt, MoveToSide side,
         }
     } catch (const InvalidSchedule &e) {
         ast_ = bak;
-        throw InvalidSchedule("Invalid move_to(" + _stmt + ", " + _dst +
-                              "): " + e.what());
+        throw InvalidSchedule("Invalid move_to(" + toString(_stmt) + ", " +
+                              toString(_dst) + "): " + e.what());
     }
 }
 
-void Schedule::inlining(const std::string &def) {
-    auto log = "inline(" + def + ")";
+void Schedule::inlining(const ID &def) {
+    auto log = "inline(" + toString(def) + ")";
     try {
         ast_ = ir::inlining(ast_, def);
         logs_.emplace_back(log);
@@ -317,9 +323,8 @@ void Schedule::inlining(const std::string &def) {
     }
 }
 
-void Schedule::parallelize(const std::string &loop,
-                           const std::string &parallel) {
-    auto log = "parallelize(" + loop + ", " + parallel + ")";
+void Schedule::parallelize(const ID &loop, const std::string &parallel) {
+    auto log = "parallelize(" + toString(loop) + ", " + parallel + ")";
     try {
         ast_ = ir::parallelize(ast_, loop, parallel);
         logs_.emplace_back(log);
@@ -328,8 +333,8 @@ void Schedule::parallelize(const std::string &loop,
     }
 }
 
-void Schedule::unroll(const std::string &loop, bool immediate) {
-    auto log = "unroll(" + loop + ")";
+void Schedule::unroll(const ID &loop, bool immediate) {
+    auto log = "unroll(" + toString(loop) + ")";
     try {
         ast_ = ir::unroll(ast_, loop, immediate);
         logs_.emplace_back(log);
@@ -338,8 +343,8 @@ void Schedule::unroll(const std::string &loop, bool immediate) {
     }
 }
 
-void Schedule::vectorize(const std::string &loop) {
-    auto log = "vectorize(" + loop + ")";
+void Schedule::vectorize(const ID &loop) {
+    auto log = "vectorize(" + toString(loop) + ")";
     try {
         ast_ = ir::vectorize(ast_, loop);
         logs_.emplace_back(log);
@@ -348,10 +353,12 @@ void Schedule::vectorize(const std::string &loop) {
     }
 }
 
-void Schedule::seperateTail() { ast_ = ir::seperateTail(ast_); }
+void Schedule::separateTail(bool noDuplicateVarDefs) {
+    ast_ = ir::separateTail(ast_, noDuplicateVarDefs);
+}
 
-void Schedule::asMatMul(const std::string &loop) {
-    auto log = "as_matmul(" + loop + ")";
+void Schedule::asMatMul(const ID &loop) {
+    auto log = "as_matmul(" + toString(loop) + ")";
     try {
         ast_ = ir::asMatMul(ast_, loop);
         logs_.emplace_back(log);
@@ -405,8 +412,7 @@ void Schedule::autoUseLib(const Target &target) {
                 }
                 auto stmts = allStmts(
                     loop->loop_, {ASTNodeType::Store, ASTNodeType::ReduceTo});
-                for (size_t i = 0, n = stmts.size(); i < n; i++) {
-                    auto &&stmt = stmts[i];
+                for (auto &&[i, stmt] : iter::enumerate(stmts)) {
                     auto bak = ast_;
                     auto logBak = logs_;
                     try {
@@ -432,7 +438,7 @@ void Schedule::autoFuse(const Target &target) {
     std::function<void(const Ref<LoopNest> &nest)> visitNest =
         [&, this](const Ref<LoopNest> &nest) {
             Ref<LoopNest> last;
-            std::string lastId;
+            ID lastId;
             for (auto &&subNest : nest->subLoops_) {
                 auto thisId = subNest->loop_->id();
                 if (last.isValid()) {
@@ -471,15 +477,13 @@ void Schedule::autoParallelize(const Target &target) {
         // with the same count first
         CountContigAccessLoops contigFinder;
         contigFinder(ast_);
-        std::vector<std::pair<std::string, std::pair<int64_t, int>>>
-            contigLoops(contigFinder.counts().begin(),
-                        contigFinder.counts().end());
-        std::sort(
-            contigLoops.begin(), contigLoops.end(),
-            [](const std::pair<std::string, std::pair<int64_t, int>> &lhs,
-               const std::pair<std::string, std::pair<int64_t, int>> &rhs) {
-                return lhs.second > rhs.second;
-            });
+        std::vector<std::pair<ID, std::pair<int64_t, int>>> contigLoops(
+            contigFinder.counts().begin(), contigFinder.counts().end());
+        std::sort(contigLoops.begin(), contigLoops.end(),
+                  [](const std::pair<ID, std::pair<int64_t, int>> &lhs,
+                     const std::pair<ID, std::pair<int64_t, int>> &rhs) {
+                      return lhs.second > rhs.second;
+                  });
         for (auto &&[loopId, cnt] : contigLoops) {
             auto loop = find(loopId);
 
@@ -537,7 +541,7 @@ void Schedule::autoParallelize(const Target &target) {
                     parentIsWarp = true;
                 }
 
-                std::string loopId, outerId;
+                ID loopId, outerId;
                 while (true) {
                     loopId = loop->loop_->id();
                     if (!find(loopId)
@@ -546,7 +550,7 @@ void Schedule::autoParallelize(const Target &target) {
                              ->property_.parallel_.empty()) {
                         break;
                     }
-                    if (!outerId.empty()) {
+                    if (outerId.isValid()) {
                         loopId = merge(outerId, loopId);
                     }
 
@@ -580,7 +584,7 @@ void Schedule::autoParallelize(const Target &target) {
                         int maxThreads =
                             (!parentIsWarp && !childIsWarp) ? 256 : 8;
                         // TODO: do not hard-code these numbers
-                        std::string l1, l1b, l2;
+                        ID l1, l1b, l2;
                         if (auto loopNode = loop.node().as<ForNode>();
                             loopNode->len_->nodeType() ==
                             ASTNodeType::IntConst) {
@@ -603,7 +607,7 @@ void Schedule::autoParallelize(const Target &target) {
                             }
                         }
                         if (!findAll(l1).empty()) {
-                            if (!l1b.empty() && !findAll(l1b).empty()) {
+                            if (l1b.isValid() && !findAll(l1b).empty()) {
                                 // We are unable to fuse `l1` and `l1b` back to
                                 // one loop. Because the length of `l1b` is not
                                 // a constant, a division by this length will be
