@@ -10,3 +10,4 @@ if [ $1 == 'cpu' ]; then
     JULIA_NUM_THREADS=$threads julia cpu.jl $@
 elif [ $1 == 'gpu' ]; then
     JULIA_CUDA_USE_BINARYBUILDER=false julia ./gpu.jl
+fi

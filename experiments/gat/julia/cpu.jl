@@ -1,5 +1,7 @@
-using DelimitedFiles, Printf
+using Printf
 using Zygote
+
+include("../../common/julia/io.jl")
 
 function inference(ptr::Vector{Int}, idx::Vector{Int},
     feat::Matrix{Float32}, weight::Matrix{Float32},
@@ -41,16 +43,22 @@ function main()
         exit(-1)
     end
 
-    ptr::Vector{Int} = reshape(readdlm(open("../ptr.in"), Int) .+ 1, :)  # (num_v + 1)
-    idx::Vector{Int} = reshape(readdlm(open("../idx.in"), Int) .+ 1, :)  # (num_e)
+    # ptr::Vector{Int} = reshape(readdlm(open("../ptr.in"), Int) .+ 1, :)  # (num_v + 1)
+    # idx::Vector{Int} = reshape(readdlm(open("../idx.in"), Int) .+ 1, :)  # (num_e)
+    ptr::Vector{Int} = read_vec("../ptr.in", "Int") .+ 1
+    idx::Vector{Int} = read_vec("../idx.in", "Int") .+ 1
     num_v::Int = length(ptr) - 1
     num_e::Int = length(idx)
 
     feat_len::Int = 32
-    x::Matrix{Float32} = copy(readdlm(open("../x.in"), Float32)')   # (feat_len, num_v)
-    w::Matrix{Float32} = copy(readdlm(open("../w.in"), Float32)')   # (feat_len, feat_len)
-    w_attn_1::Vector{Float32} = reshape(readdlm(open("../w_attn_1.in"), Float32), :) # (feat_len)
-    w_attn_2::Vector{Float32} = reshape(readdlm(open("../w_attn_2.in"), Float32), :) # (feat_len)
+    x::Matrix{Float32} = copy(read_vec("../x.in", "Float32")')
+    w::Matrix{Float32} = copy(read_vec("../w.in", "Float32")')
+    # x::Matrix{Float32} = copy(readdlm(open("../x.in"), Float32)')   # (feat_len, num_v)
+    # w::Matrix{Float32} = copy(readdlm(open("../w.in"), Float32)')   # (feat_len, feat_len)
+    w_attn_1::Vector{Float32} = read_vec("../w_attn_1.in", "Float32")
+    w_attn_2::Vector{Float32} = read_vec("../w_attn_2.in", "Float32")
+    # w_attn_1::Vector{Float32} = reshape(readdlm(open("../w_attn_1.in"), Float32), :) # (feat_len)
+    # w_attn_2::Vector{Float32} = reshape(readdlm(open("../w_attn_2.in"), Float32), :) # (feat_len)
     y::Matrix{Float32} = zeros(Float32, (feat_len, num_v))   # (feat_len, num_v)
 
     warmup_num = 10
@@ -63,7 +71,8 @@ function main()
             inference(ptr, idx, x, w, w_attn_1, w_attn_2, y, num_v, num_e, feat_len)
         end
     end
-    writedlm("y.out", [@sprintf("%.18e", i) for i in Array(y')], ' ')
+    write_vec("y.out", y)
+    # writedlm("y.out", [@sprintf("%.18e", i) for i in Array(y')], ' ')
     println("Inference Time = " * string(time.time / test_num * 1000) * " ms")
 end
 

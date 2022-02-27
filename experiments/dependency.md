@@ -1,0 +1,18 @@
+- gcc 8.4.0
+- python 3.8.6
+    - numpy 1.22.2
+    - jax 0.2.19
+        - jaxlib 0.1.70
+    - torch 1.8.1
+    - sourceinspect 0.0.4
+    - xgboost 1.5.2
+    - astor 0.8.1
+    - pygments 2.11.2
+- cuda 10.2.89
+- julia 1.6.3
+    - Zygote (Feb 26th, 2022)
+    - CUDA
+    - Flux
+    - Einsum v0.4.1
+    - IterTools v1.4.0
+    - GraphNeuralNetworks v0.3.13
