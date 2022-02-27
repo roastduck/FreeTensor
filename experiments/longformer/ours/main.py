@@ -5,6 +5,9 @@ import numpy as np
 import ir
 import ir.debug
 
+sys.path.append('../..')
+from common.numpy.io import load_txt, store_txt
+
 
 def compile_all(w, dilation, dilation_heads, n_heads, seq_len, feat_len,
                 device):
@@ -120,14 +123,14 @@ if __name__ == '__main__':
     w = 32
     dilation = 4  # counts from 1
     dilation_heads = 2
-    q = np.load("../q.in.npy").astype("float32")
-    k = np.load("../k.in.npy").astype("float32")
-    v = np.load("../v.in.npy").astype("float32")
+    q = load_txt("../q.in", "float32")
+    k = load_txt("../k.in", "float32")
+    v = load_txt("../v.in", "float32")
     y = np.zeros((n_heads, seq_len, feat_len), dtype="float32")
     d_q = np.zeros(q.shape, dtype='float32')
     d_k = np.zeros(k.shape, dtype='float32')
     d_v = np.zeros(v.shape, dtype='float32')
-    d_y = np.load("../d_y.in.npy").astype("float32")
+    d_y = load_txt("../d_y.in", "float32")
 
     if device == 'gpu':
         ir_dev = ir.Device(ir.GPU())
@@ -154,9 +157,7 @@ if __name__ == '__main__':
     for i in range(warmup_num):
         inference(q, k, v, y)
         if i == 0:
-            np.save("y.out.npy",
-                    y.numpy().reshape((n_heads, seq_len, feat_len)),
-                    allow_pickle=False)
+            store_txt("y.out", y.numpy().reshape((n_heads, seq_len, feat_len)))
     ir_dev.sync()
     t0 = time.time()
     for i in range(test_num):
@@ -180,15 +181,12 @@ if __name__ == '__main__':
     for i in range(warmup_num):
         backward(q, k, v, y, d_y, d_q, d_k, d_v)
         if i == 0:
-            np.save("d_q.out.npy",
-                    d_q.numpy().reshape((n_heads, seq_len, feat_len)),
-                    allow_pickle=False)
-            np.save("d_k.out.npy",
-                    d_k.numpy().reshape((n_heads, seq_len, feat_len)),
-                    allow_pickle=False)
-            np.save("d_v.out.npy",
-                    d_v.numpy().reshape((n_heads, seq_len, feat_len)),
-                    allow_pickle=False)
+            store_txt("d_q.out",
+                      d_q.numpy().reshape((n_heads, seq_len, feat_len)))
+            store_txt("d_k.out",
+                      d_k.numpy().reshape((n_heads, seq_len, feat_len)))
+            store_txt("d_v.out",
+                      d_v.numpy().reshape((n_heads, seq_len, feat_len)))
     ir_dev.sync()
     t0 = time.time()
     for i in range(test_num):

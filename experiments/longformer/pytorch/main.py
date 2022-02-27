@@ -4,6 +4,9 @@ import math
 import numpy as np
 import torch
 
+sys.path.append('../..')
+from common.numpy.io import load_txt, store_txt
+
 
 def dilated_attention(q, k, v, w, dilation):
     n_heads, seq_len, feat_len = q.shape
@@ -51,10 +54,10 @@ if __name__ == '__main__':
     w = 32
     dilation = 4  # counts from 1
     dilation_heads = 2
-    q = torch.tensor(np.load("../q.in.npy"), dtype=torch.float)
-    k = torch.tensor(np.load("../k.in.npy"), dtype=torch.float)
-    v = torch.tensor(np.load("../v.in.npy"), dtype=torch.float)
-    d_y = torch.tensor(np.load("../d_y.in.npy"), dtype=torch.float)
+    q = torch.tensor(load_txt("../q.in", "float32"), dtype=torch.float)
+    k = torch.tensor(load_txt("../k.in", "float32"), dtype=torch.float)
+    v = torch.tensor(load_txt("../v.in", "float32"), dtype=torch.float)
+    d_y = torch.tensor(load_txt("../d_y.in", "float32"), dtype=torch.float)
 
     if device == 'gpu':
         q = q.cuda()
@@ -72,7 +75,7 @@ if __name__ == '__main__':
     for i in range(warmup_num):
         y = transformer_impl1(q, k, v, w, dilation, dilation_heads)
         if i == 0:
-            np.save("y.out.npy", y.cpu().numpy(), allow_pickle=False)
+            store_txt("y.out", y.cpu().numpy())
     sync()
     t0 = time.time()
     for i in range(test_num):
@@ -100,9 +103,9 @@ if __name__ == '__main__':
     for i in range(warmup_num):
         y.backward(d_y, retain_graph=True)
         if i == 0:
-            np.save("d_q.out.npy", q.grad.cpu().numpy(), allow_pickle=False)
-            np.save("d_k.out.npy", k.grad.cpu().numpy(), allow_pickle=False)
-            np.save("d_v.out.npy", v.grad.cpu().numpy(), allow_pickle=False)
+            store_txt("d_q.out", q.grad.cpu().numpy())
+            store_txt("d_k.out", k.grad.cpu().numpy())
+            store_txt("d_v.out", v.grad.cpu().numpy())
     sync()
     t0 = time.time()
     for i in range(test_num):

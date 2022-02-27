@@ -3,6 +3,9 @@ import time
 import numpy as np
 import torch
 
+sys.path.append('../..')
+from common.numpy.io import load_txt, store_txt
+
 
 def conv_impl1(adj, x, w0, w1, w2, w3):
     # TODO: Dilation
@@ -38,16 +41,16 @@ if __name__ == '__main__':
         exit(-1)
     device = sys.argv[1]
 
-    adj = torch.tensor(np.loadtxt("../adj.in", dtype=np.int32))
+    adj = torch.tensor(load_txt("../adj.in", "int32"))
     n_faces = adj.shape[0]
     in_feats = 13
     out_feats = 64
-    x = torch.tensor(np.loadtxt("../x.in"), dtype=torch.float)
-    w0 = torch.tensor(np.loadtxt("../w0.in"), dtype=torch.float)
-    w1 = torch.tensor(np.loadtxt("../w1.in"), dtype=torch.float)
-    w2 = torch.tensor(np.loadtxt("../w2.in"), dtype=torch.float)
-    w3 = torch.tensor(np.loadtxt("../w3.in"), dtype=torch.float)
-    d_y = torch.tensor(np.loadtxt("../d_y.in"), dtype=torch.float)
+    x = torch.tensor(load_txt("../x.in", "float32"), dtype=torch.float)
+    w0 = torch.tensor(load_txt("../w0.in", "float32"), dtype=torch.float)
+    w1 = torch.tensor(load_txt("../w1.in", "float32"), dtype=torch.float)
+    w2 = torch.tensor(load_txt("../w2.in", "float32"), dtype=torch.float)
+    w3 = torch.tensor(load_txt("../w3.in", "float32"), dtype=torch.float)
+    d_y = torch.tensor(load_txt("../d_y.in", "float32"), dtype=torch.float)
 
     if device == 'gpu':
         adj = adj.cuda()
@@ -68,7 +71,7 @@ if __name__ == '__main__':
     for i in range(warmup_num):
         y = conv_impl1(adj, x, w0, w1, w2, w3)
         if i == 0:
-            np.savetxt("y.out", y.cpu().numpy())
+            store_txt("y.out", y.cpu().numpy())
     sync()
     t0 = time.time()
     for i in range(test_num):
@@ -98,11 +101,11 @@ if __name__ == '__main__':
     for i in range(warmup_num):
         y.backward(d_y, retain_graph=True)
         if i == 0:
-            np.savetxt("d_x.out", x.grad.cpu().numpy())
-            np.savetxt("d_w0.out", w0.grad.cpu().numpy())
-            np.savetxt("d_w1.out", w1.grad.cpu().numpy())
-            np.savetxt("d_w2.out", w2.grad.cpu().numpy())
-            np.savetxt("d_w3.out", w3.grad.cpu().numpy())
+            store_txt("d_x.out", x.grad.cpu().numpy())
+            store_txt("d_w0.out", w0.grad.cpu().numpy())
+            store_txt("d_w1.out", w1.grad.cpu().numpy())
+            store_txt("d_w2.out", w2.grad.cpu().numpy())
+            store_txt("d_w3.out", w3.grad.cpu().numpy())
     sync()
     t0 = time.time()
     for i in range(test_num):
