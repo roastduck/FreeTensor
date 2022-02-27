@@ -3,6 +3,9 @@ import time
 import numpy as np
 import torch
 
+sys.path.append('../..')
+from common.numpy.io import load_txt, store_txt
+
 
 def rasterize(vertices, faces, h, w):
     """
@@ -80,13 +83,14 @@ if __name__ == '__main__':
         exit(-1)
     device = sys.argv[1]
 
-    vertices = torch.tensor(np.load("../vertices.in.npy"), dtype=torch.float)
-    faces = torch.tensor(np.load("../faces.in.npy"))
+    vertices = torch.tensor(load_txt("../vertices.in", "float32"),
+                            dtype=torch.float)
+    faces = torch.tensor(load_txt("../faces.in", "int32"))
     n_verts = vertices.shape[0]
     n_faces = faces.shape[0]
     h = 64
     w = 64
-    d_y = torch.tensor(np.load("../d_y.in.npy"), dtype=torch.float)
+    d_y = torch.tensor(load_txt("../d_y.in", "float32"), dtype=torch.float)
 
     if device == 'gpu':
         vertices = vertices.cuda()
@@ -103,7 +107,7 @@ if __name__ == '__main__':
     for i in range(warmup_num):
         y = rasterize(vertices, faces, h, w)
         if i == 0:
-            np.save("y.out.npy", y.cpu().numpy(), allow_pickle=False)
+            store_txt("y.out", y.cpu().numpy())
     sync()
     t0 = time.time()
     for i in range(test_num):
@@ -129,9 +133,7 @@ if __name__ == '__main__':
     for i in range(warmup_num):
         y.backward(d_y, retain_graph=True)
         if i == 0:
-            np.save("d_vertices.out.npy",
-                    vertices.grad.cpu().numpy(),
-                    allow_pickle=False)
+            store_txt("d_vertices.out", vertices.grad.cpu().numpy())
     sync()
     t0 = time.time()
     for i in range(test_num):

@@ -2,6 +2,9 @@ import sys
 import numpy as np
 import torch
 
+sys.path.append('..')
+from common.numpy.io import store_txt
+
 
 def load_faces(path: str):
     """
@@ -39,13 +42,13 @@ if __name__ == '__main__':
         exit(-1)
     obj_file = sys.argv[1]
 
-    vertices, faces = map(torch.tensor, load_faces(obj_file))
+    vertices, faces = load_faces(obj_file)
     n_verts = vertices.shape[0]
     n_faces = faces.shape[0]
     h = 64
     w = 64
-    d_y = torch.rand(n_faces, h, w, dtype=torch.float)
+    d_y = torch.rand(n_faces, h, w, dtype=torch.float).numpy()
 
-    np.save("vertices.in.npy", vertices, allow_pickle=False)
-    np.save("faces.in.npy", faces, allow_pickle=False)
-    np.save("d_y.in.npy", d_y, allow_pickle=False)
+    store_txt("vertices.in", vertices)
+    store_txt("faces.in", faces)
+    store_txt("d_y.in", d_y)
