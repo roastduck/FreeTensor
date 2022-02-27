@@ -104,7 +104,7 @@ function main()
         end
         time = @timed begin
             for i = 1:test_num
-                transformer(Q, K, V, Y, w, dilation, dilation_heads, n_heads, seq_len, feat_len)
+                transformer(q, k, v, y, w, dilation, dilation_heads, n_heads, seq_len, feat_len)
                 println("test: [" * string(i) * "/" * string(test_num) * "]  Done.")
             end
         end
@@ -132,7 +132,7 @@ function main()
         println("Forward Time = " * string(time.time / test_num * 1000) * " ms")
     elseif ARGS[2] == "Bac"
         warmup_num = 5
-        test_num = 20
+        test_num = 50
         z, back = Zygote.pullback(
             (q, k, v) -> sum(operator_transformer(q, k, v, w, dilation, dilation_heads) .* d_y),
             q, k, v
@@ -148,7 +148,7 @@ function main()
             end
         end
         writedlm("y.out", [@sprintf("%.10f", i) for i in reshape(Array(y), (1, :))], ' ')
-        println("Forward Time = " * string(time.time / test_num * 1000) * " ms")
+        println("Backward Time = " * string(time.time / test_num * 1000) * " ms")
     else
         println("Usage: " * PROGRAM_FILE * "Inf/For/Bac")
         exit(-1)

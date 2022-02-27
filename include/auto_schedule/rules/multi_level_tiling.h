@@ -35,6 +35,9 @@ class MultiLevelTilingPart : public SketchPartNode {
                          std::default_random_engine &gen) override;
     [[nodiscard]] std::vector<int> getAnnotation() const override;
     [[nodiscard]] size_t hash() const override;
+    SketchPartType partType() override {
+        return SketchPartType::MultiLevelTiling;
+    }
 };
 
 } // namespace ir

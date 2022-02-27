@@ -7,6 +7,9 @@ import torch.nn.functional as F
 import dgl
 import dgl.function as fn
 
+sys.path.append('../..')
+from common.numpy.io import load_txt, store_txt
+
 
 def load_data(data_name: str):
     '''
@@ -44,8 +47,8 @@ if __name__ == '__main__':
         exit(-1)
     device = sys.argv[1]
 
-    ptr = np.loadtxt("../ptr.in", dtype=np.int32)
-    idx = np.loadtxt("../idx.in", dtype=np.int32)
+    ptr = load_txt("../ptr.in", "int32")
+    idx = load_txt("../idx.in", "int32")
     num_v = ptr.shape[0] - 1
     num_e = idx.shape[0]
     src_list = []
@@ -57,11 +60,13 @@ if __name__ == '__main__':
     g = dgl.graph((src_list, dst_list))
 
     feat_len = 32
-    x = torch.tensor(np.loadtxt("../x.in"), dtype=torch.float)
-    w = torch.tensor(np.loadtxt("../w.in"), dtype=torch.float)
-    w_attn_1 = torch.tensor(np.loadtxt("../w_attn_1.in"), dtype=torch.float)
-    w_attn_2 = torch.tensor(np.loadtxt("../w_attn_2.in"), dtype=torch.float)
-    d_y = torch.tensor(np.loadtxt("../d_y.in"), dtype=torch.float)
+    x = torch.tensor(load_txt("../x.in", "float32"), dtype=torch.float)
+    w = torch.tensor(load_txt("../w.in", "float32"), dtype=torch.float)
+    w_attn_1 = torch.tensor(load_txt("../w_attn_1.in", "float32"),
+                            dtype=torch.float)
+    w_attn_2 = torch.tensor(load_txt("../w_attn_2.in", "float32"),
+                            dtype=torch.float)
+    d_y = torch.tensor(load_txt("../d_y.in", "float32"), dtype=torch.float)
 
     if device == 'gpu':
         x = x.cuda()
@@ -81,7 +86,7 @@ if __name__ == '__main__':
     for i in range(warmup_num):
         y = gat_layer(g, x, w, w_attn_1, w_attn_2)
         if i == 0:
-            np.savetxt("y.out", y.cpu().numpy())
+            store_txt("y.out", y.cpu().numpy())
     sync()
     t0 = time.time()
     for i in range(test_num):
@@ -110,10 +115,10 @@ if __name__ == '__main__':
     for i in range(warmup_num):
         y.backward(d_y, retain_graph=True)
         if i == 0:
-            np.savetxt("d_x.out", x.grad.cpu().numpy())
-            np.savetxt("d_w.out", w.grad.cpu().numpy())
-            np.savetxt("d_w_attn_1.out", w_attn_1.grad.cpu().numpy())
-            np.savetxt("d_w_attn_2.out", w_attn_2.grad.cpu().numpy())
+            store_txt("d_x.out", x.grad.cpu().numpy())
+            store_txt("d_w.out", w.grad.cpu().numpy())
+            store_txt("d_w_attn_1.out", w_attn_1.grad.cpu().numpy())
+            store_txt("d_w_attn_2.out", w_attn_2.grad.cpu().numpy())
     sync()
     t0 = time.time()
     for i in range(test_num):

@@ -6,6 +6,9 @@ import ir
 from ir.libop import *
 import ir.debug
 
+sys.path.append('../..')
+from common.numpy.io import load_txt, store_txt
+
 
 def load_data(data_name: str):
     '''
@@ -127,24 +130,24 @@ if __name__ == '__main__':
         exit(-1)
     device = sys.argv[1]
 
-    ptr = np.loadtxt("../ptr.in", dtype=np.int32)
-    idx = np.loadtxt("../idx.in", dtype=np.int32)
+    ptr = load_txt("../ptr.in", "int32")
+    idx = load_txt("../idx.in", "int32")
     num_v = ptr.shape[0] - 1
     num_e = idx.shape[0]
 
     feat_len = 32
     ptr = ptr.astype("int32")
     idx = idx.astype("int32")
-    x = np.loadtxt("../x.in").astype("float32")
-    w = np.loadtxt("../w.in").astype("float32")
-    w_attn_1 = np.loadtxt("../w_attn_1.in").astype("float32")
-    w_attn_2 = np.loadtxt("../w_attn_2.in").astype("float32")
+    x = load_txt("../x.in", "float32")
+    w = load_txt("../w.in", "float32")
+    w_attn_1 = load_txt("../w_attn_1.in", "float32")
+    w_attn_2 = load_txt("../w_attn_2.in", "float32")
     y = np.zeros((num_v, feat_len), dtype="float32")
     d_x = np.zeros(x.shape, dtype='float32')
     d_w = np.zeros(w.shape, dtype='float32')
     d_w_attn_1 = np.zeros(w_attn_1.shape, dtype='float32')
     d_w_attn_2 = np.zeros(w_attn_2.shape, dtype='float32')
-    d_y = np.loadtxt("../d_y.in").astype("float32")
+    d_y = load_txt("../d_y.in", "float32")
 
     if device == 'gpu':
         ir_dev = ir.Device(ir.GPU())
@@ -173,7 +176,7 @@ if __name__ == '__main__':
     for i in range(warmup_num):
         inference(ptr, idx, x, w, w_attn_1, w_attn_2, y)
         if i == 0:
-            np.savetxt("y.out", y.numpy().reshape((num_v, feat_len)))
+            store_txt("y.out", y.numpy().reshape((num_v, feat_len)))
     ir_dev.sync()
     t0 = time.time()
     for i in range(test_num):
@@ -198,10 +201,10 @@ if __name__ == '__main__':
     #    backward(ptr, idx, x, w, w_attn_1, w_attn_2, y, d_y, d_x, d_w,
     #             d_w_attn_1, d_w_attn_2)
     #    if i == 0:
-    #        np.savetxt("d_x.out", d_x.numpy().reshape((num_v, feat_len)))
-    #        np.savetxt("d_w.out", d_w.numpy().reshape((feat_len, feat_len)))
-    #        np.savetxt("d_w_attn_1.out", d_w_attn_1.numpy())
-    #        np.savetxt("d_w_attn_2.out", d_w_attn_2.numpy())
+    #        store_txt("d_x.out", d_x.numpy().reshape((num_v, feat_len)))
+    #        store_txt("d_w.out", d_w.numpy().reshape((feat_len, feat_len)))
+    #        store_txt("d_w_attn_1.out", d_w_attn_1.numpy())
+    #        store_txt("d_w_attn_2.out", d_w_attn_2.numpy())
     #ir_dev.sync()
     #t0 = time.time()
     #for i in range(test_num):

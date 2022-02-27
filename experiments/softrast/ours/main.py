@@ -5,6 +5,9 @@ import numpy as np
 import ir
 import ir.debug
 
+sys.path.append('../..')
+from common.numpy.io import load_txt, store_txt
+
 
 def compile_all(h, w, n_verts, n_faces, device):
     """
@@ -145,15 +148,15 @@ if __name__ == '__main__':
         exit(-1)
     device = sys.argv[1]
 
-    vertices = np.load("../vertices.in.npy").astype("float32")
-    faces = np.load("../faces.in.npy").astype("int32")
+    vertices = load_txt("../vertices.in", "float32")
+    faces = load_txt("../faces.in", "int32")
     n_verts = vertices.shape[0]
     n_faces = faces.shape[0]
     h = 64
     w = 64
     y = np.zeros((n_faces, h, w), dtype="float32")
     d_vertices = np.zeros(vertices.shape, dtype='float32')
-    d_y = np.load("../d_y.in.npy").astype("float32")
+    d_y = load_txt("../d_y.in", "float32")
 
     if device == 'gpu':
         ir_dev = ir.Device(ir.GPU())
@@ -175,10 +178,7 @@ if __name__ == '__main__':
     for i in range(warmup_num):
         inference(vertices, faces, y)
         if i == 0:
-            # np.save("y.out.npy",
-            #         y.numpy().reshape((n_faces, h, w)),
-            #         allow_pickle=False)
-            y.numpy().reshape((n_faces, h, w)).tofile("y.out", sep='\n', format='%.10f')
+            store_txt("y.out", y.numpy().reshape((n_faces, h, w)))
     ir_dev.sync()
     t0 = time.time()
     for i in range(test_num):
@@ -202,9 +202,8 @@ if __name__ == '__main__':
     for i in range(warmup_num):
         backward(vertices, faces, y, d_y, d_vertices)
         if i == 0:
-            np.save("d_vertices.out.npy",
-                    d_vertices.numpy().reshape((n_verts, 3)),
-                    allow_pickle=False)
+            store_txt("d_vertices.out",
+                      d_vertices.numpy().reshape((n_verts, 3)))
     ir_dev.sync()
     t0 = time.time()
     for i in range(test_num):

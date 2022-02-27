@@ -2,6 +2,9 @@ import sys
 import itertools
 import numpy as np
 
+sys.path.append('..')
+from common.numpy.io import store_txt
+
 
 def load_data(data_name: str):
     '''
@@ -37,10 +40,10 @@ if __name__ == '__main__':
     w_attn_2 = np.random.uniform(size=(feat_len,)).astype("float32")
     d_y = np.random.uniform(size=(num_v, feat_len)).astype('float32')
 
-    np.savetxt("ptr.in", ptr, fmt="%d")
-    np.savetxt("idx.in", idx, fmt="%d")
-    np.savetxt("x.in", x)
-    np.savetxt("w.in", w)
-    np.savetxt("w_attn_1.in", w_attn_1)
-    np.savetxt("w_attn_2.in", w_attn_2)
-    np.savetxt("d_y.in", d_y)
+    store_txt("ptr.in", ptr)
+    store_txt("idx.in", idx)
+    store_txt("x.in", x)
+    store_txt("w.in", w)
+    store_txt("w_attn_1.in", w_attn_1)
+    store_txt("w_attn_2.in", w_attn_2)
+    store_txt("d_y.in", d_y)

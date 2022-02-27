@@ -1,4 +1,8 @@
+import sys
 import numpy as np
+
+sys.path.append('..')
+from common.numpy.io import store_txt
 
 if __name__ == '__main__':
     n_heads = 8
@@ -13,11 +17,7 @@ if __name__ == '__main__':
     v = np.random.uniform(size=(n_heads, seq_len, feat_len)).astype("float32")
     d_y = np.random.uniform(size=(n_heads, seq_len, feat_len)).astype('float32')
 
-    # np.savetxt("q.in", q)
-    # np.savetxt("k.in", k)
-    # np.savetxt("v.in", v)
-    # np.savetxt("d_y.in", d_y)
-    q.tofile("q.in", sep=' ', format='%.10f')
-    k.tofile("k.in", sep=' ', format='%.10f')
-    v.tofile("v.in", sep=' ', format='%.10f')
-    d_y.tofile("d_y.in", sep=' ', format='%.10f')
+    store_txt("q.in", q)
+    store_txt("k.in", k)
+    store_txt("v.in", v)
+    store_txt("d_y.in", d_y)

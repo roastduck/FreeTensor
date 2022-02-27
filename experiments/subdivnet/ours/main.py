@@ -6,6 +6,9 @@ import ir
 from ir.libop import *
 import ir.debug
 
+sys.path.append('../..')
+from common.numpy.io import load_txt, store_txt
+
 
 def compile_all(n_faces, in_feats, out_feats, device):
     mtype = device.main_mem_type()
@@ -87,22 +90,22 @@ if __name__ == '__main__':
         exit(-1)
     device = sys.argv[1]
 
-    adj = np.loadtxt("../adj.in", dtype=np.int32)
+    adj = load_txt("../adj.in", "int32")
     n_faces = adj.shape[0]
     in_feats = 13
     out_feats = 64
-    x = np.loadtxt("../x.in").astype("float32")
-    w0 = np.loadtxt("../w0.in").astype("float32")
-    w1 = np.loadtxt("../w1.in").astype("float32")
-    w2 = np.loadtxt("../w2.in").astype("float32")
-    w3 = np.loadtxt("../w3.in").astype("float32")
+    x = load_txt("../x.in", "float32")
+    w0 = load_txt("../w0.in", "float32")
+    w1 = load_txt("../w1.in", "float32")
+    w2 = load_txt("../w2.in", "float32")
+    w3 = load_txt("../w3.in", "float32")
     y = np.zeros((n_faces, out_feats), dtype="float32")
     d_x = np.zeros(x.shape, dtype='float32')
     d_w0 = np.zeros(w0.shape, dtype='float32')
     d_w1 = np.zeros(w1.shape, dtype='float32')
     d_w2 = np.zeros(w2.shape, dtype='float32')
     d_w3 = np.zeros(w3.shape, dtype='float32')
-    d_y = np.loadtxt("../d_y.in").astype("float32")
+    d_y = load_txt("../d_y.in", "float32")
 
     if device == 'gpu':
         ir_dev = ir.Device(ir.GPU())
@@ -133,7 +136,7 @@ if __name__ == '__main__':
     for i in range(warmup_num):
         inference(adj, x, w0, w1, w2, w3, y)
         if i == 0:
-            np.savetxt("y.out", y.numpy().reshape((n_faces, out_feats)))
+            store_txt("y.out", y.numpy().reshape((n_faces, out_feats)))
     ir_dev.sync()
     t0 = time.time()
     for i in range(test_num):
@@ -157,11 +160,11 @@ if __name__ == '__main__':
     for i in range(warmup_num):
         backward(adj, x, w0, w1, w2, w3, y, d_y, d_x, d_w0, d_w1, d_w2, d_w3)
         if i == 0:
-            np.savetxt("d_x.out", d_x.numpy().reshape((n_faces, in_feats)))
-            np.savetxt("d_w0.out", d_w0.numpy().reshape((in_feats, out_feats)))
-            np.savetxt("d_w1.out", d_w1.numpy().reshape((in_feats, out_feats)))
-            np.savetxt("d_w2.out", d_w2.numpy().reshape((in_feats, out_feats)))
-            np.savetxt("d_w3.out", d_w3.numpy().reshape((in_feats, out_feats)))
+            store_txt("d_x.out", d_x.numpy().reshape((n_faces, in_feats)))
+            store_txt("d_w0.out", d_w0.numpy().reshape((in_feats, out_feats)))
+            store_txt("d_w1.out", d_w1.numpy().reshape((in_feats, out_feats)))
+            store_txt("d_w2.out", d_w2.numpy().reshape((in_feats, out_feats)))
+            store_txt("d_w3.out", d_w3.numpy().reshape((in_feats, out_feats)))
     ir_dev.sync()
     t0 = time.time()
     for i in range(test_num):

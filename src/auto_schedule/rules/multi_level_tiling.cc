@@ -63,11 +63,11 @@ void MultiLevelTilingPart::apply(Schedule &schedule) {
 
     for (int i = 0; i < spaceLoopLength; i++) {
         spaceSplit[i] = splitLoop<4>(schedule, target.spaceLoops[i].id,
-                                      annotation.spaceLoopTiling[i]);
+                                     annotation.spaceLoopTiling[i]);
     }
     for (int i = 0; i < reductionLoopLength; i++) {
         reductionSplit[i] = splitLoop<2>(schedule, target.reductionLoops[i].id,
-                                          annotation.reductionLoopTiling[i]);
+                                         annotation.reductionLoopTiling[i]);
     }
 
     std::vector<std::pair<ID, int>> tiles(4 * spaceLoopLength +
@@ -121,7 +121,7 @@ SketchPart MultiLevelTilingPart::mutate(std::default_random_engine &gen) {
 SketchPart MultiLevelTilingPart::crossover(const SketchPart &part,
                                            std::default_random_engine &gen) {
     // std::cout << "Start crossover...\n";
-    if (typeid(*(part.get())) != typeid(MultiLevelTilingPart))
+    if (part->partType() != SketchPartType::MultiLevelTiling)
         return nullptr;
     auto p = part.as<MultiLevelTilingPart>();
     MultiLevelTilingPart mut = *this;

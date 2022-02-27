@@ -2,6 +2,9 @@ import sys
 import itertools
 import numpy as np
 
+sys.path.append('..')
+from common.numpy.io import store_txt
+
 
 def load_faces(path: str):
     """
@@ -58,10 +61,10 @@ if __name__ == '__main__':
     w3 = np.random.uniform(size=(in_feats, out_feats)).astype("float32")
     d_y = np.random.uniform(size=(n_faces, out_feats)).astype('float32')
 
-    np.savetxt("adj.in", adj, fmt="%d")
-    np.savetxt("x.in", x)
-    np.savetxt("w0.in", w0)
-    np.savetxt("w1.in", w1)
-    np.savetxt("w2.in", w2)
-    np.savetxt("w3.in", w3)
-    np.savetxt("d_y.in", d_y)
+    store_txt("adj.in", adj)
+    store_txt("x.in", x)
+    store_txt("w0.in", w0)
+    store_txt("w1.in", w1)
+    store_txt("w2.in", w2)
+    store_txt("w3.in", w3)
+    store_txt("d_y.in", d_y)

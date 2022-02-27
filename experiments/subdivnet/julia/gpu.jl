@@ -24,8 +24,8 @@ function my_conv(adj, x, w0, w1, w2, w3, n_faces, in_feats, out_feats)::CuArray{
 end
 
 function main()
-    if length(ARGS) != 1
-        println("Usage: " * PROGRAM_FILE)
+    if length(ARGS) != 2
+        println("Usage: " * PROGRAM_FILE * "  Inf/For/Bac")
         exit(-1)
     end
 
@@ -50,67 +50,69 @@ function main()
     y = CuArray(y)
     d_y = CuArray(d_y)
 
-    warmup_num = 1
-    test_num = 1
+    warmup_num = 10
+    test_num = 1000
 
-    for i = 1:warmup_num
-        y = my_conv(adj, x, w0, w1, w2, w3, n_faces, in_feats, out_feats)
-    end
-    # exit()
-    time = @timed begin
-        for i = 1:test_num
+    if ARGS[2] == "Inf"
+        for i = 1:warmup_num
             y = my_conv(adj, x, w0, w1, w2, w3, n_faces, in_feats, out_feats)
         end
-    end
-    writedlm("y.out", [@sprintf("%.18e", i) for i in Array(y')], ' ')
-    println("Inference Time = " * string(time.time / test_num * 1000) * " ms")
-exit(0)
-
-    for i = 1:warmup_num
-        # gs = gradient(params(x, w0, w1, w2, w3)) do
-        #     z = sum(my_conv(adj, x, w0, w1, w2, w3, n_faces, in_feats, out_feats) .* d_y)
-        # end
-        z, back = Zygote.pullback(
-            (x, w0, w1, w2, w3) -> sum(my_conv(adj, x, w0, w1, w2, w3, n_faces, in_feats, out_feats) .* d_y),
-            x, w0, w1, w2, w3
-        )
-    end
-    # exit()
-    time = @timed begin
-        for i = 1:test_num
+        # exit()
+        time = @timed begin
+            for i = 1:test_num
+                y = my_conv(adj, x, w0, w1, w2, w3, n_faces, in_feats, out_feats)
+            end
+        end
+        writedlm("y.out", [@sprintf("%.18e", i) for i in Array(y')], ' ')
+        println("Inference Time = " * string(time.time / test_num * 1000) * " ms")
+    
+    elseif ARGS[2] == "For"
+        for i = 1:warmup_num
+            # gs = gradient(params(x, w0, w1, w2, w3)) do
+            #     z = sum(my_conv(adj, x, w0, w1, w2, w3, n_faces, in_feats, out_feats) .* d_y)
+            # end
             z, back = Zygote.pullback(
                 (x, w0, w1, w2, w3) -> sum(my_conv(adj, x, w0, w1, w2, w3, n_faces, in_feats, out_feats) .* d_y),
                 x, w0, w1, w2, w3
             )
         end
-    end
-    println("Forward Time = " * string(time.time / test_num * 1000) * " ms")
-
-
-    z, back = Zygote.pullback(
-        (x, w0, w1, w2, w3) -> sum(my_conv(adj, x, w0, w1, w2, w3, n_faces, in_feats, out_feats) .* d_y),
-        x, w0, w1, w2, w3
-    )
-    for i = 1:warmup_num
-        # gs = gradient(params(x, w0, w1, w2, w3)) do
-        #     z = sum(my_conv(adj, x, w0, w1, w2, w3, n_faces, in_feats, out_feats) .* d_y)
-        # end
-        back_array = back(1)
-        if i == 1
-            writedlm("d_x.out", [@sprintf("%.18e", i) for i in Array(back_array[1]')], ' ')
-            writedlm("d_w0.out", [@sprintf("%.18e", i) for i in Array(back_array[2]')], ' ')
-            writedlm("d_w1.out", [@sprintf("%.18e", i) for i in Array(back_array[3]')], ' ')
-            writedlm("d_w2.out", [@sprintf("%.18e", i) for i in Array(back_array[4]')], ' ')
-            writedlm("d_w3.out", [@sprintf("%.18e", i) for i in Array(back_array[5]')], ' ')
+        # exit()
+        time = @timed begin
+            for i = 1:test_num
+                z, back = Zygote.pullback(
+                    (x, w0, w1, w2, w3) -> sum(my_conv(adj, x, w0, w1, w2, w3, n_faces, in_feats, out_feats) .* d_y),
+                    x, w0, w1, w2, w3
+                )
+            end
         end
-    end
-    # exit()
-    time = @timed begin
-        for i = 1:test_num
+        println("Forward Time = " * string(time.time / test_num * 1000) * " ms")
+
+    elseif ARGS[2] == "Bac"
+        z, back = Zygote.pullback(
+            (x, w0, w1, w2, w3) -> sum(my_conv(adj, x, w0, w1, w2, w3, n_faces, in_feats, out_feats) .* d_y),
+            x, w0, w1, w2, w3
+        )
+        for i = 1:warmup_num
             back_array = back(1)
+            if i == 1
+                writedlm("d_x.out", [@sprintf("%.18e", i) for i in Array(back_array[1]')], ' ')
+                writedlm("d_w0.out", [@sprintf("%.18e", i) for i in Array(back_array[2]')], ' ')
+                writedlm("d_w1.out", [@sprintf("%.18e", i) for i in Array(back_array[3]')], ' ')
+                writedlm("d_w2.out", [@sprintf("%.18e", i) for i in Array(back_array[4]')], ' ')
+                writedlm("d_w3.out", [@sprintf("%.18e", i) for i in Array(back_array[5]')], ' ')
+                exit(0)
+            end
         end
+        time = @timed begin
+            for i = 1:test_num
+                back_array = back(1)
+            end
+        end
+        println("Backward Time = " * string(time.time / test_num * 1000) * " ms")
+    else
+        println("Usage: " * PROGRAM_FILE * "  Inf/For/Bac")
+        exit(-1)
     end
-    println("Backward Time = " * string(time.time / test_num * 1000) * " ms")
 end
 
 main()

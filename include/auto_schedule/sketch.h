@@ -11,6 +11,10 @@ class SketchPartNode;
 
 typedef Ref<SketchPartNode> SketchPart;
 
+enum class SketchPartType : int {
+    MultiLevelTiling,
+};
+
 class SketchPartNode {
   public:
     virtual void genRandAnnotation(std::default_random_engine &gen) = 0;
@@ -22,6 +26,7 @@ class SketchPartNode {
         return nullptr;
     };
     virtual void apply(Schedule &schedule) = 0;
+    virtual SketchPartType partType() = 0;
     virtual std::vector<int> getAnnotation() const = 0;
     virtual ~SketchPartNode() = default;
     virtual size_t hash() const = 0;

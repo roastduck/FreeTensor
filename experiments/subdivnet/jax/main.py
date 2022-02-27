@@ -136,6 +136,8 @@ if __name__ == '__main__':
 
     for i in range(warmup_num):
         y = conv_impl1_inference(adj, x, w0, w1, w2, w3)
+        if i == 0:
+            np.savetxt("y.out", y)
     y = y.block_until_ready()
     t0 = time.time()
     for i in range(test_num):
@@ -176,6 +178,13 @@ if __name__ == '__main__':
     for i in range(warmup_num):
         d_x, d_w0, d_w1, d_w2, d_w3 = conv_impl2_forward_backward(
             adj, x, w0, w1, w2, w3)
+        if i == 0:
+            np.savetxt("d_x.out", d_x)
+            np.savetxt("d_w0.out", d_w0)
+            np.savetxt("d_w1.out", d_w1)
+            np.savetxt("d_w2.out", d_w2)
+            np.savetxt("d_w3.out", d_w3)
+            # exit(0)
     y = y.block_until_ready()
     t0 = time.time()
     for i in range(test_num):
