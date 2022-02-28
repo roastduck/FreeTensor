@@ -23,10 +23,12 @@ def conv_impl1(x, w1, w2):
     assert offset.shape == (n, h, w, k_h, k_w, 2)
 
     offset += jnp.stack(jnp.meshgrid(jnp.arange(-(k_h // 2), k_h - k_h // 2),
-                                     jnp.arange(-(k_w // 2), k_w - k_w // 2)),
+                                     jnp.arange(-(k_w // 2), k_w - k_w // 2),
+                                     indexing='ij'),
                         axis=-1).reshape(k_h, k_w, 2)
 
-    coords = jnp.stack(jnp.meshgrid(jnp.arange(h), jnp.arange(w)),
+    coords = jnp.stack(jnp.meshgrid(jnp.arange(h), jnp.arange(w),
+                                    indexing='ij'),
                        axis=-1).reshape(h, w, 1, 1, 2)
     coords = coords + offset
     assert coords.shape == (n, h, w, k_h, k_w, 2)

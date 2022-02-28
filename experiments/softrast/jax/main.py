@@ -4,6 +4,9 @@ import numpy as np
 import jax
 import jax.numpy as jnp
 
+sys.path.append('../..')
+from common.jax.io import load_txt, store_txt
+
 h = 64
 w = 64
 
@@ -60,7 +63,8 @@ def rasterize(vertices, faces):
     sigma = 1e-4
 
     pixels = jnp.stack(jnp.meshgrid(jnp.linspace(0, 1, h),
-                                    jnp.linspace(0, 1, w)),
+                                    jnp.linspace(0, 1, w),
+                                    indexing='ij'),
                        axis=-1).reshape(h, w, 2)
     face_verts = jax.vmap(lambda v3: jax.vmap(lambda v: vertices[v, :2])(v3))(
         faces)
@@ -101,13 +105,13 @@ def rasterize(vertices, faces):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 2:
-        print(f"Usage: {sys.argv[0]} <obj-file>")
+    if len(sys.argv) != 1:
+        print(f"Usage: {sys.argv[0]}")
         print("Please set device in main.sh")
         exit(-1)
-    obj_file = sys.argv[1]
 
-    vertices, faces = map(jnp.array, load_faces(obj_file))
+    vertices = load_txt("../vertices.in", "float32")
+    faces = load_txt("../faces.in", "int32")
     n_verts = vertices.shape[0]
     n_faces = faces.shape[0]
 
@@ -124,6 +128,8 @@ if __name__ == '__main__':
 
     for i in range(warmup_num):
         y = rasterize_inference(vertices, faces)
+        if i == 0:
+            store_txt("y.out", y)
     y = y.block_until_ready()
     t0 = time.time()
     for i in range(test_num):
@@ -131,7 +137,7 @@ if __name__ == '__main__':
     y = y.block_until_ready()
     t1 = time.time()
     assert y.shape == (n_faces, h, w)
-    print(f"Time = {(t1 - t0) / test_num * 1000} ms")
+    print(f"Inference Time = {(t1 - t0) / test_num * 1000} ms")
 
     for i in range(warmup_num):
         d_vertices, = rasterize_forward_backward(vertices, faces)
