@@ -5,6 +5,9 @@ import numpy as np
 import jax
 import jax.numpy as jnp
 
+sys.path.append('../..')
+from common.jax.io import load_txt, store_txt
+
 
 def load_faces(path: str):
     """
@@ -99,22 +102,20 @@ def conv_impl2(adj, x, w0, w1, w2, w3):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 2:
-        print(f"Usage: {sys.argv[0]} <obj-file>")
+    if len(sys.argv) != 1:
+        print(f"Usage: {sys.argv[0]}")
         print("Please set device in main.sh")
         exit(-1)
-    obj_file = sys.argv[1]
 
-    adj = jnp.array(load_faces(obj_file))
+    adj = load_txt("../adj.in", "int32")
     n_faces = adj.shape[0]
     in_feats = 13
     out_feats = 64
-    key = jax.random.PRNGKey(0)
-    x = jax.random.uniform(key, (n_faces, in_feats), dtype=jnp.float32)
-    w0 = jax.random.uniform(key, (in_feats, out_feats), dtype=jnp.float32)
-    w1 = jax.random.uniform(key, (in_feats, out_feats), dtype=jnp.float32)
-    w2 = jax.random.uniform(key, (in_feats, out_feats), dtype=jnp.float32)
-    w3 = jax.random.uniform(key, (in_feats, out_feats), dtype=jnp.float32)
+    x = load_txt("../x.in", "float32")
+    w0 = load_txt("../w0.in", "float32")
+    w1 = load_txt("../w1.in", "float32")
+    w2 = load_txt("../w2.in", "float32")
+    w3 = load_txt("../w3.in", "float32")
 
     adj = jax.device_put(adj)
     x = jax.device_put(x)
@@ -136,6 +137,8 @@ if __name__ == '__main__':
 
     for i in range(warmup_num):
         y = conv_impl1_inference(adj, x, w0, w1, w2, w3)
+        if i == 0:
+            store_txt("y.out", y)
     y = y.block_until_ready()
     t0 = time.time()
     for i in range(test_num):
