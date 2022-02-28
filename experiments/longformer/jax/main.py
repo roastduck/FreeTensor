@@ -5,6 +5,9 @@ import numpy as np
 import jax
 import jax.numpy as jnp
 
+sys.path.append('../..')
+from common.jax.io import load_txt, store_txt
+
 n_heads = 8
 seq_len = 10000
 feat_len = 512
@@ -59,10 +62,9 @@ def transformer_impl1(q, k, v):
 
 
 if __name__ == '__main__':
-    key = jax.random.PRNGKey(0)
-    q = jax.random.uniform(key, (n_heads, seq_len, feat_len), dtype=jnp.float32)
-    k = jax.random.uniform(key, (n_heads, seq_len, feat_len), dtype=jnp.float32)
-    v = jax.random.uniform(key, (n_heads, seq_len, feat_len), dtype=jnp.float32)
+    q = load_txt("../q.in", "float32")
+    k = load_txt("../k.in", "float32")
+    v = load_txt("../v.in", "float32")
 
     q = jax.device_put(q)
     k = jax.device_put(k)
@@ -78,6 +80,8 @@ if __name__ == '__main__':
 
     for i in range(warmup_num):
         y = transformer_impl1_inference(q, k, v)
+        if i == 0:
+            store_txt("y.out", y)
     y = y.block_until_ready()
     t0 = time.time()
     for i in range(test_num):
