@@ -13,11 +13,11 @@ function read_vec(file::String, type::String)
     end
     if length(shape) == 1
         return copy(reshape(vec, shape))
-    elseif length(shape) == 2
+    elseif length(shape) == 2 # Matrix: keep the number of rows&column
         return copy(reshape(vec, reverse(shape))')
+    else # (>2)-dim vector: (2, 3, 4) -> (4, 3, 2)
+        return copy(reshape(vec, reverse(shape)))
     end
-    println("invalid read")
-    exit(-1)
 end
 
 function write_vec(file::String, data)

@@ -1,6 +1,7 @@
 using CUDA
-using Printf
 using Flux, Zygote
+
+include("../../common/julia/io.jl")
 
 function my_conv(adj, x, w0, w1, w2, w3, n_faces, in_feats, out_feats)::CuArray{Float32}
     # adj_feat = reshape(x[:, Vector(reshape(adj, :))], (in_feats, 3, n_faces))

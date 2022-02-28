@@ -1,6 +1,7 @@
-using DelimitedFiles, Printf
 using Zygote, Flux
 using IterTools
+
+include("../../common/julia/io.jl")
 
 function cross_product(v1::Tuple{Float32,Float32}, v2::Tuple{Float32,Float32})::Float32
     return v1[1] * v2[2] - v1[2] * v2[1]
@@ -85,16 +86,19 @@ function main()
         exit(-1)
     end
 
-    vertices = copy(readdlm(open("../vertices.in"), Float32)')
-    faces = copy(readdlm(open("../faces.in"), Int)') .+ 1
+    vertices = copy(read_vec("../vertices.in", "Float32")')
+    # vertices = copy(readdlm(open("../vertices.in"), Float32)')
+    faces = copy(read_vec("../faces.in", "Int")') .+ 1
+    # faces = copy(readdlm(open("../faces.in"), Int)') .+ 1
     n_verts = size(vertices)[2]
     n_faces = size(faces)[2]
     h = 64
     w = 64
-    pixel1 = getindex.(product(range(0, 1, length=w), range(0, 1, length=h)), 1)
-    pixel2 = getindex.(product(range(0, 1, length=w), range(0, 1, length=h)), 2)
+    pixel1 = getindex.(product(range(0, 1, length=w), range(0, 1, length=h)), 2)
+    pixel2 = getindex.(product(range(0, 1, length=w), range(0, 1, length=h)), 1)
     pixels = cat(reshape(pixel1, (1, w, h)), reshape(pixel2, (1, w, h)), dims=1)
-    d_y = reshape(readdlm(open("../d_y.in"), Float32), (w, h, n_faces))
+    d_y = read_vec("../d_y.in", "Float32")
+    # d_y = reshape(readdlm(open("../d_y.in"), Float32), (w, h, n_faces))
 
     if ARGS[2] == "Inf"
         warmup_num = 10
@@ -102,7 +106,8 @@ function main()
         for i = 1:warmup_num
             y = para_rasterize(vertices, faces, h, w, n_verts, n_faces)
             if i == 1
-                writedlm("y.out", [@sprintf("%.10f", i) for i in reshape(y, (1, :))], '\n')
+                write_vec("y.out", y)
+                # writedlm("y.out", [@sprintf("%.10f", i) for i in reshape(y, (1, :))], '\n')
             end
             println("warmup: [" * string(i) * "/" * string(warmup_num) * "]  Done.")
         end
@@ -135,8 +140,8 @@ function main()
         end
         println("Forward Time = " * string(time.time / test_num * 1000) * " ms")
     elseif ARGS[2] == "Bac"
-        warmup_num = 2
-        test_num = 10
+        warmup_num = 1
+        test_num = 0
         z, back = Zygote.pullback(
             (vertices) -> sum(rasterize(vertices, faces, pixels, h, w, n_verts, n_faces) .* d_y),
             vertices
@@ -144,7 +149,8 @@ function main()
         for i = 1:warmup_num
             back_array = back(1)
             if i == 1
-                writedlm("d_vertices.out", [@sprintf("%.18e", i) for i in reshape(Array(back_array[1]), :)], ' ')
+                write_vec("d_vertices.out", Array(back_array[1]))
+                # writedlm("d_vertices.out", [@sprintf("%.18e", i) for i in reshape(Array(back_array[1]), :)], ' ')
             end
             println("warmup: [" * string(i) * "/" * string(warmup_num) * "]  Done.")
         end

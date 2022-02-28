@@ -1,6 +1,7 @@
-using DelimitedFiles, Printf
 using Flux, Zygote
 using Einsum, IterTools
+
+include("../../common/julia/io.jl")
 
 function transformer(Q, K, V, Y, w, dilation, dilation_heads, n_heads, seq_len, feat_len)
     sqrt_d = sqrt(feat_len)
@@ -88,18 +89,25 @@ function main()
     w = 32
     dilation = 4  # counts from 1
     dilation_heads = 2
-    q = reshape(readdlm(open("../q.in"), Float32), (feat_len, seq_len, n_heads))
-    k = reshape(readdlm(open("../k.in"), Float32), (feat_len, seq_len, n_heads))
-    v = reshape(readdlm(open("../v.in"), Float32), (feat_len, seq_len, n_heads))
+    q = read_vec("../q.in", "Float32")
+    k = read_vec("../k.in", "Float32")
+    v = read_vec("../v.in", "Float32")
+    # q = reshape(readdlm(open("../q.in"), Float32), (feat_len, seq_len, n_heads))
+    # k = reshape(readdlm(open("../k.in"), Float32), (feat_len, seq_len, n_heads))
+    # v = reshape(readdlm(open("../v.in"), Float32), (feat_len, seq_len, n_heads))
     y = zeros(Float32, (feat_len, seq_len, n_heads))
-    d_y = reshape(readdlm(open("../d_y.in"), Float32), (feat_len, seq_len, n_heads))
+    d_y = read_vec("../d_y.in", "Float32")
+    # d_y = reshape(readdlm(open("../d_y.in"), Float32), (feat_len, seq_len, n_heads))
 
     if ARGS[2] == "Inf"
         warmup_num = 10
         test_num = 100
         for i = 1:warmup_num
             transformer(q, k, v, y, w, dilation, dilation_heads, n_heads, seq_len, feat_len)
-            writedlm("y.out", [@sprintf("%.10f", i) for i in reshape(Array(y), (1, :))], ' ')
+            if i == 1
+                write_vec("y.out", Array(y))
+                # writedlm("y.out", [@sprintf("%.10f", i) for i in reshape(Array(y), (1, :))], ' ')
+            end
             println("warmup: [" * string(i) * "/" * string(warmup_num) * "]  Done.")
         end
         time = @timed begin
@@ -108,7 +116,6 @@ function main()
                 println("test: [" * string(i) * "/" * string(test_num) * "]  Done.")
             end
         end
-        writedlm("y.out", [@sprintf("%.10f", i) for i in reshape(Array(y), (1, :))], ' ')
         println("Inference Time = " * string(time.time / test_num * 1000) * " ms")
     elseif ARGS[2] == "For"
         warmup_num = 5
@@ -138,8 +145,13 @@ function main()
             q, k, v
         )
         for i = 1:warmup_num
-            back(1)
+            back_array = back(1)
             println("warmup: [" * string(i) * "/" * string(warmup_num) * "]  Done.")
+            if i == 1
+                write_vec("d_q.out", back_array[1])
+                write_vec("d_k.out", back_array[2])
+                write_vec("d_v.out", back_array[3])
+            end
         end
         time = @timed begin
             for i = 1:test_num
@@ -147,7 +159,6 @@ function main()
                 println("test: [" * string(i) * "/" * string(test_num) * "]  Done.")
             end
         end
-        writedlm("y.out", [@sprintf("%.10f", i) for i in reshape(Array(y), (1, :))], ' ')
         println("Backward Time = " * string(time.time / test_num * 1000) * " ms")
     else
         println("Usage: " * PROGRAM_FILE * "Inf/For/Bac")

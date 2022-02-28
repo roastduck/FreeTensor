@@ -1,4 +1,3 @@
-using Printf
 using Zygote
 
 include("../../common/julia/io.jl")
