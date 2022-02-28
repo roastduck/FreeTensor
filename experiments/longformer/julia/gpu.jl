@@ -2,7 +2,8 @@ using CUDA
 using IterTools
 # using OMEinsum
 using Flux, Zygote
-using DelimitedFiles, Printf
+
+include("../../common/julia/io.jl")
 
 function dilated_attention(q, k, v, w, dilation)::CuArray{Float32}
     feat_len, seq_len, n_heads = size(q)
@@ -12,14 +13,14 @@ function dilated_attention(q, k, v, w, dilation)::CuArray{Float32}
     # pad_arr2 = zeros(feat_len, w * dilation, n_heads)
     # pad_arr3 = zeros(feat_len, w * dilation, n_heads)
     # pad_arr4 = zeros(feat_len, w * dilation, n_heads)
-    pad_arr1 = CuArray{Float32}(undef, (feat_len, w * dilation, n_heads))
-    pad_arr2 = CuArray{Float32}(undef, (feat_len, w * dilation, n_heads))
-    pad_arr3 = CuArray{Float32}(undef, (feat_len, w * dilation, n_heads))
-    pad_arr4 = CuArray{Float32}(undef, (feat_len, w * dilation, n_heads))
-    pad_k = cat(pad_arr1, k, pad_arr2, dims=2)
-    pad_v = cat(pad_arr3, v, pad_arr4, dims=2)
-    # pad_k = pad_zeros(k, (0, w * dilation, 0))
-    # pad_v = pad_zeros(v, (0, w * dilation, 0))
+    # pad_arr1 = CuArray{Float32}(undef, (feat_len, w * dilation, n_heads))
+    # pad_arr2 = CuArray{Float32}(undef, (feat_len, w * dilation, n_heads))
+    # pad_arr3 = CuArray{Float32}(undef, (feat_len, w * dilation, n_heads))
+    # pad_arr4 = CuArray{Float32}(undef, (feat_len, w * dilation, n_heads))
+    # pad_k = cat(pad_arr1, k, pad_arr2, dims=2)
+    # pad_v = cat(pad_arr3, v, pad_arr4, dims=2)
+    pad_k = pad_zeros(k, (0, w * dilation, 0))
+    pad_v = pad_zeros(v, (0, w * dilation, 0))
 
     indexes = map(i -> i[2] + i[1] * dilation + i[3] * (seq_len + 2 * w * dilation), product(0:2*w, 1:seq_len, 0:n_heads-1))
     diag_k = view(reshape(pad_k, (feat_len, :)), :, indexes) # (feat_len, 2*w+1, seq_len, n_heads)
@@ -62,24 +63,32 @@ function main()
     w = 32
     dilation = 4  # counts from 1
     dilation_heads = 2
-    q = reshape(readdlm(open("../q.in"), Float32), (feat_len, seq_len, n_heads))
-    k = reshape(readdlm(open("../k.in"), Float32), (feat_len, seq_len, n_heads))
-    v = reshape(readdlm(open("../v.in"), Float32), (feat_len, seq_len, n_heads))
-    d_y = reshape(readdlm(open("../d_y.in"), Float32), (feat_len, seq_len, n_heads))
+    q = read_vec("../q.in", "Float32")
+    k = read_vec("../k.in", "Float32")
+    v = read_vec("../v.in", "Float32")
+    # q = reshape(readdlm(open("../q.in"), Float32), (feat_len, seq_len, n_heads))
+    # k = reshape(readdlm(open("../k.in"), Float32), (feat_len, seq_len, n_heads))
+    # v = reshape(readdlm(open("../v.in"), Float32), (feat_len, seq_len, n_heads))
     y = zeros(Float32, (feat_len, seq_len, n_heads))
+    d_y = read_vec("../d_y.in", "Float32")
+    # d_y = reshape(readdlm(open("../d_y.in"), Float32), (feat_len, seq_len, n_heads))
 
     q = CuArray(q)
     k = CuArray(k)
     v = CuArray(v)
     d_y = CuArray(d_y)
 
-    warmup_num = 10
-    test_num = 100
+    warmup_num = 1
+    test_num = 0
 
     if ARGS[2] == "Inf"
         for i = 1:warmup_num
             y = transformer(q, k, v, w, dilation, dilation_heads)
             println("warmup: [" * string(i) * "/" * string(warmup_num) * "]  Done.")
+            if i == 1
+                write_vec("y.out", Array(y))
+                # writedlm("y.out", [@sprintf("%.10f", i) for i in reshape(Array(y), (1, :))], ' ')
+            end
         end
         time = @timed begin
             for i = 1:test_num
@@ -87,7 +96,6 @@ function main()
                 println("test: [" * string(i) * "/" * string(test_num) * "]  Done.")
             end
         end
-        writedlm("y.out", [@sprintf("%.10f", i) for i in reshape(Array(y), (1, :))], ' ')
         println("Inference Time = " * string(time.time / test_num * 1000) * " ms")
     elseif ARGS[2] == "For"
         println("Compiling Forward...")
@@ -114,8 +122,13 @@ function main()
             q, k, v
         )
         for i = 1:warmup_num
-            back(1)
+            back_array = back(1)
             println("warmup: [" * string(i) * "/" * string(warmup_num) * "]  Done.")
+            if i == 1
+                write_vec("d_q.out", back_array[1])
+                write_vec("d_k.out", back_array[2])
+                write_vec("d_v.out", back_array[3])
+            end
         end
         time = @timed begin
             for i = 1:test_num
@@ -123,7 +136,6 @@ function main()
                 println("test: [" * string(i) * "/" * string(test_num) * "]  Done.")
             end
         end
-        writedlm("y.out", [@sprintf("%.10f", i) for i in reshape(Array(y), (1, :))], ' ')
         println("Forward Time = " * string(time.time / test_num * 1000) * " ms")
     else
         println("Usage: " * PROGRAM_FILE * "Inf/For/Bac")

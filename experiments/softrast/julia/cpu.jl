@@ -140,8 +140,8 @@ function main()
         end
         println("Forward Time = " * string(time.time / test_num * 1000) * " ms")
     elseif ARGS[2] == "Bac"
-        warmup_num = 1
-        test_num = 0
+        warmup_num = 2
+        test_num = 5
         z, back = Zygote.pullback(
             (vertices) -> sum(rasterize(vertices, faces, pixels, h, w, n_verts, n_faces) .* d_y),
             vertices
