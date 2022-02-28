@@ -1,5 +1,5 @@
 using CUDA
-using Printf, DelimitedFiles
+using Printf
 using Flux, Zygote
 
 function my_conv(adj, x, w0, w1, w2, w3, n_faces, in_feats, out_feats)::CuArray{Float32}
@@ -29,17 +29,24 @@ function main()
         exit(-1)
     end
 
-    adj = readdlm(open("../adj.in"), Int) .+ 1   # (n_faces, 3)
+    adj = copy(read_vec("../adj.in", "Int")) .+ 1
+    # adj = readdlm(open("../adj.in"), Int) .+ 1   # (n_faces, 3)
     n_faces = size(adj)[1]
     in_feats = 13
     out_feats = 64
-    x = copy(readdlm(open("../x.in"), Float32)')        # (n_faces, in_feats) -> (in_feats, n_faces)
-    w0 = copy(readdlm(open("../w0.in"), Float32)')      # (in_feats, out_feats)
-    w1 = copy(readdlm(open("../w1.in"), Float32)')
-    w2 = copy(readdlm(open("../w2.in"), Float32)')
-    w3 = copy(readdlm(open("../w3.in"), Float32)')
+    x = copy(read_vec("../x.in", "Float32")')
+    # x = copy(readdlm(open("../x.in"), Float32)')        # (n_faces, in_feats) -> (in_feats, n_faces)
+    w0 = copy(read_vec("../w0.in", "Float32")')
+    w1 = copy(read_vec("../w1.in", "Float32")')
+    w2 = copy(read_vec("../w2.in", "Float32")')
+    w3 = copy(read_vec("../w3.in", "Float32")')
+    # w0 = copy(readdlm(open("../w0.in"), Float32)')      # (in_feats, out_feats)
+    # w1 = copy(readdlm(open("../w1.in"), Float32)')
+    # w2 = copy(readdlm(open("../w2.in"), Float32)')
+    # w3 = copy(readdlm(open("../w3.in"), Float32)')
     y = zeros(Float32, (out_feats, n_faces))
-    d_y = copy(readdlm(open("../d_y.in"), Float32)')
+    d_y = copy(read_vec("../d_y.in", "Float32")')
+    # d_y = copy(readdlm(open("../d_y.in"), Float32)')
 
     adj = CuArray(adj)
     x = CuArray(x)
@@ -63,7 +70,8 @@ function main()
                 y = my_conv(adj, x, w0, w1, w2, w3, n_faces, in_feats, out_feats)
             end
         end
-        writedlm("y.out", [@sprintf("%.18e", i) for i in Array(y')], ' ')
+        write_vec("y.out", Array(y))
+        # writedlm("y.out", [@sprintf("%.18e", i) for i in Array(y')], ' ')
         println("Inference Time = " * string(time.time / test_num * 1000) * " ms")
     
     elseif ARGS[2] == "For"
@@ -95,11 +103,16 @@ function main()
         for i = 1:warmup_num
             back_array = back(1)
             if i == 1
-                writedlm("d_x.out", [@sprintf("%.18e", i) for i in Array(back_array[1]')], ' ')
-                writedlm("d_w0.out", [@sprintf("%.18e", i) for i in Array(back_array[2]')], ' ')
-                writedlm("d_w1.out", [@sprintf("%.18e", i) for i in Array(back_array[3]')], ' ')
-                writedlm("d_w2.out", [@sprintf("%.18e", i) for i in Array(back_array[4]')], ' ')
-                writedlm("d_w3.out", [@sprintf("%.18e", i) for i in Array(back_array[5]')], ' ')
+                write_vec("d_x.out", back_array[1])
+                write_vec("d_w0.out", back_array[2])
+                write_vec("d_w1.out", back_array[3])
+                write_vec("d_w2.out", back_array[4])
+                write_vec("d_w3.out", back_array[5])
+                # writedlm("d_x.out", [@sprintf("%.18e", i) for i in Array(back_array[1]')], ' ')
+                # writedlm("d_w0.out", [@sprintf("%.18e", i) for i in Array(back_array[2]')], ' ')
+                # writedlm("d_w1.out", [@sprintf("%.18e", i) for i in Array(back_array[3]')], ' ')
+                # writedlm("d_w2.out", [@sprintf("%.18e", i) for i in Array(back_array[4]')], ' ')
+                # writedlm("d_w3.out", [@sprintf("%.18e", i) for i in Array(back_array[5]')], ' ')
                 exit(0)
             end
         end

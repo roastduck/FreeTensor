@@ -23,20 +23,12 @@ end
 function write_vec(file::String, data)
     f = open(file, "w")
 
-    if length(size(data)) == 2
-        data = copy(data')
-    end
-
     sz = size(data)
-    for i in sz
+    for i in reverse(sz)
         print(f, i)
         print(f, ' ')
     end
     print(f, '\n')
-
-    if length(size(data)) == 2
-        data = copy(data')
-    end
 
     for i in data
         print(f, i)
