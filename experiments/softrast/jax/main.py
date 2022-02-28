@@ -11,36 +11,6 @@ h = 64
 w = 64
 
 
-def load_faces(path: str):
-    """
-    Load a 3D object and returns the adjacency array of the faces
-
-
-    Parameters
-    ----------
-    path: str
-        Path to a 3D object file, where a `v <x> <y> <z>` line means there is a vertex at coordinate (x, y, z),
-        a `f <i> <j> <k>` line means there is a face among vertices i, j and k. Faces are stored in conter-clockwise
-        order
-
-
-    Returns
-    -------
-    (np.array, np.array)
-        ret[0] is an n*3-shaped numpy array, where n is the number of vertices. array[i] = the coordinate (x, y, z)
-        ret[1] is an m*3-shaped numpy array, where m is the number of faces. array[i] = each vertices of the face
-    """
-
-    vertices = []
-    faces = []
-    for line in open(path):
-        if line.startswith('v'):
-            vertices.append(tuple(map(float, line.split()[1:])))
-        if line.startswith('f'):
-            faces.append(tuple(map(lambda x: int(x) - 1, line.split()[1:])))
-    return np.array(vertices, dtype=np.float32), np.array(faces, dtype=np.int32)
-
-
 def rasterize(vertices, faces):
     """
     Compute soft rasterization of each faces
@@ -112,19 +82,23 @@ if __name__ == '__main__':
 
     vertices = load_txt("../vertices.in", "float32")
     faces = load_txt("../faces.in", "int32")
+    d_y = load_txt("../d_y.in", "float32")
     n_verts = vertices.shape[0]
     n_faces = faces.shape[0]
 
     vertices = jax.device_put(vertices)
     faces = jax.device_put(faces)
+    d_y = jax.device_put(d_y)
 
     warmup_num = 10
     test_num = 100
 
     rasterize_inference = jax.jit(rasterize)
-    # FIXME: Can we remove the `jnp.sum`?
+    # NOTE: JAX requires to compute gradients w.r.t. a scalar, so we sum the output to compute it.
+    #       We explicitly multiply d_y here, so it is mathematically equivalent to compute gradients
+    #       given d_y
     rasterize_forward_backward = jax.grad(
-        lambda *args: jnp.sum(rasterize(*args)), argnums=(0,))
+        lambda *args: jnp.sum(rasterize(*args) * d_y), argnums=(0,))
 
     for i in range(warmup_num):
         y = rasterize_inference(vertices, faces)
@@ -141,6 +115,8 @@ if __name__ == '__main__':
 
     for i in range(warmup_num):
         d_vertices, = rasterize_forward_backward(vertices, faces)
+        if i == 0:
+            store_txt("d_vertices.out", d_vertices)
     y = y.block_until_ready()
     t0 = time.time()
     for i in range(test_num):
