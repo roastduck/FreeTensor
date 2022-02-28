@@ -65,18 +65,23 @@ if __name__ == '__main__':
     q = load_txt("../q.in", "float32")
     k = load_txt("../k.in", "float32")
     v = load_txt("../v.in", "float32")
+    d_y = load_txt("../d_y.in", "float32")
 
     q = jax.device_put(q)
     k = jax.device_put(k)
     v = jax.device_put(v)
+    d_y = jax.device_put(d_y)
 
     warmup_num = 10
     test_num = 100
 
     transformer_impl1_inference = jax.jit(transformer_impl1)
-    # FIXME: Can we remove the `jnp.sum`?
+    # NOTE: JAX requires to compute gradients w.r.t. a scalar, so we sum the output to compute it.
+    #       We explicitly multiply d_y here, so it is mathematically equivalent to compute gradients
+    #       given d_y
     transformer_impl1_forward_backward = jax.grad(
-        lambda *args: jnp.sum(transformer_impl1(*args)), argnums=(0, 1, 2))
+        lambda *args: jnp.sum(transformer_impl1(*args) * d_y),
+        argnums=(0, 1, 2))
 
     for i in range(warmup_num):
         y = transformer_impl1_inference(q, k, v)
@@ -93,6 +98,10 @@ if __name__ == '__main__':
 
     for i in range(warmup_num):
         d_q, d_k, d_v = transformer_impl1_forward_backward(q, k, v)
+        if i == 0:
+            store_txt("d_q.out", d_q)
+            store_txt("d_k.out", d_k)
+            store_txt("d_v.out", d_v)
     y = y.block_until_ready()
     t0 = time.time()
     for i in range(test_num):
