@@ -9,7 +9,7 @@ if __name__ == '__main__':
     if len(sys.argv) not in range(3, 5):
         print(f"Usage: {sys.argv[0]} <dir1> <dir2> [--infer-only]")
         print("--infer-only: Some baselines does not support differentiation, "
-              "use this option to check the inference resutls only")
+              "use this option to check the inference results only")
         exit(-1)
 
     dir1 = sys.argv[1]
