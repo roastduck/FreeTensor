@@ -7,7 +7,7 @@ include("../../common/julia/io.jl")
 
 function dilated_attention(q, k, v, w, dilation)::CuArray{Float32}
     feat_len, seq_len, n_heads = size(q)
-    sqrt_d = sqrt(feat_len)
+    sqrt_d = Float32(sqrt(feat_len))
 
     # pad_arr1 = CuArray{Float32}(undef, (feat_len, w * dilation, n_heads))
     # pad_arr2 = CuArray{Float32}(undef, (feat_len, w * dilation, n_heads))
