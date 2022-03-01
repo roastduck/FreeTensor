@@ -1,20 +1,25 @@
-using Printf, DelimitedFiles
+using Printf
 using Flux, GraphNeuralNetworks
 using CUDA
 using Flux: cpu, gpu
 
+include("../../common/julia/io.jl")
+
 device = CUDA.functional() ? gpu : cpu
 println(CUDA.functional())
 
-ptr_float = round.(Int, readdlm(open("../ptr.in"), Float32))  # (num_v + 1)
+ptr_float = round.(Int, read_vec("../ptr.in", "Float32"))
+# ptr_float = round.(Int, readdlm(open("../ptr.in"), Float32))  # (num_v + 1)
 ptr = reshape(ptr_float .+ 1, :)  # (num_v + 1)
-idx_float = round.(Int, readdlm(open("../idx.in"), Float32))  # (num_v + 1)
+idx_float = round.(Int, read_vec("../idx.in", "Float32"))
+# idx_float = round.(Int, readdlm(open("../idx.in"), Float32))  # (num_v + 1)
 idx = reshape(idx_float .+ 1, :)  # (num_e)
 num_v = length(ptr) - 1
 num_e = length(idx)
 
 feat_len = 32
-X = copy(readdlm(open("../x.in"), Float32)') |> device  # (feat_len, num_v)
+X = copy(read_vec("../x.in", "Float32")') |> device
+# X = copy(readdlm(open("../x.in"), Float32)') |> device  # (feat_len, num_v)
 # w = copy(readdlm(open("../w.in"), Float32)')   # (feat_len, feat_len)
 # w_attn_1::Vector{Float32} = reshape(readdlm(open("../w_attn_1.in"), Float32), :) # (feat_len)
 # w_attn_2::Vector{Float32} = reshape(readdlm(open("../w_attn_2.in"), Float32), :) # (feat_len)
@@ -45,7 +50,8 @@ warmup_num = 10
 test_num = 1000
 
 y = model(g, X)
-writedlm("y.out", [@sprintf("%.18e", i) for i in Array(y')], ' ')
+write_vec("y.out", Array(y))
+# writedlm("y.out", [@sprintf("%.18e", i) for i in Array(y')], ' ')
 for i = 1:warmup_num
     y = model(g, X)
 end

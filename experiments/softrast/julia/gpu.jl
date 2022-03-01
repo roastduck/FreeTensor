@@ -1,51 +1,7 @@
-using Zygote, Flux
+using CUDA, Flux, Zygote
 using IterTools
 
 include("../../common/julia/io.jl")
-
-function cross_product(v1::Tuple{Float32,Float32}, v2::Tuple{Float32,Float32})::Float32
-    return v1[1] * v2[2] - v1[2] * v2[1]
-end
-
-function dot_product(v1::Tuple{Float32,Float32}, v2::Tuple{Float32,Float32})::Float32
-    return v1[1] * v2[1] + v1[2] * v2[2]
-end
-
-using LinearAlgebra
-using Flux
-const sigma = 1e-4
-
-function para_rasterize(vertices, faces, h, w, n_verts, n_faces)
-    y = zeros(Float32, (w, h, n_faces))
-    Threads.@threads for i = 1:n_faces
-        v1 = (vertices[1, faces[1, i]], vertices[2, faces[1, i]])
-        v2 = (vertices[1, faces[2, i]], vertices[2, faces[2, i]])
-        v3 = (vertices[1, faces[3, i]], vertices[2, faces[3, i]])
-
-        for j = 0:h-1, k=0:w-1
-            pixel = (one(Float32) / (h-1) * j, one(Float32) / (w-1) * k)
-            cp1 = cross_product(pixel .- v1, v2 .- v1)
-            cp2 = cross_product(pixel .- v2, v3 .- v2)
-            cp3 = cross_product(pixel .- v3, v1 .- v3)
-            dist1 = dot_product(pixel .- v1, v2 .- v1) >= 0 ? (
-                dot_product(pixel .- v2, v1 .- v2) >= 0 ?
-                    abs(cp1) / norm(v2 .- v1) : norm(pixel .- v2)
-                ) : norm(pixel .- v1)
-            dist2 = dot_product(pixel .- v2, v3 .- v2) >= 0 ? (
-                dot_product(pixel .- v3, v2 .- v3) >= 0 ?
-                    abs(cp2) / norm(v3 .- v2) : norm(pixel .- v3)
-                ) : norm(pixel .- v2)
-            dist3 = dot_product(pixel .- v3, v1 .- v3) >= 0 ? (
-                dot_product(pixel .- v1, v3 .- v1) >= 0 ?
-                    abs(cp3) / norm(v1 .- v3) : norm(pixel .- v1)
-                ) : norm(pixel .- v3)
-            coeff = (cp1 < 0 && cp2 < 0 && cp3 < 0) ? 1 : -1
-            dist = min(dist1, dist2, dist3)
-            y[k+1, j+1, i] = sigmoid(coeff * dist * dist / sigma)
-        end
-    end
-    return y
-end
 
 function rasterize(vertices, faces, pixels, h, w, n_verts, n_faces)
     sigma = 1e-4
@@ -82,7 +38,7 @@ end
 
 function main()
     if length(ARGS) != 2
-        println("Usage: " * PROGRAM_FILE * " Inf/For/Bac")
+        println("Usage: " * PROGRAM_FILE * "  Inf/For/Bac")
         exit(-1)
     end
 
@@ -96,31 +52,37 @@ function main()
     w = 64
     pixel1 = getindex.(product(range(0, 1, length=w), range(0, 1, length=h)), 2)
     pixel2 = getindex.(product(range(0, 1, length=w), range(0, 1, length=h)), 1)
-    pixels = cat(reshape(pixel1, (1, w, h)), reshape(pixel2, (1, w, h)), dims=1)
+    pixels = CuArray(cat(reshape(pixel1, (1, w, h)), reshape(pixel2, (1, w, h)), dims=1))
+    y = zeros(Float32, (w, h, n_faces))
     d_y = read_vec("../d_y.in", "Float32")
     # d_y = reshape(readdlm(open("../d_y.in"), Float32), (w, h, n_faces))
+
+    vertices = CuArray(vertices)
+    faces = CuArray(faces)
+    y = CuArray(y)
+    pixels = CuArray(pixels)
 
     if ARGS[2] == "Inf"
         warmup_num = 10
         test_num = 100
         for i = 1:warmup_num
-            y = para_rasterize(vertices, faces, h, w, n_verts, n_faces)
+            y = rasterize(vertices, faces, pixels, h, w, n_verts, n_faces)
             if i == 1
-                write_vec("y.out", y)
+                write_vec("y.out", Array(y))
                 # writedlm("y.out", [@sprintf("%.10f", i) for i in reshape(y, (1, :))], '\n')
             end
             println("warmup: [" * string(i) * "/" * string(warmup_num) * "]  Done.")
         end
         time = @timed begin
             for i = 1:test_num
-                y = para_rasterize(vertices, faces, h, w, n_verts, n_faces)
+                y = rasterize(vertices, faces, pixels, h, w, n_verts, n_faces)
                 println("test: [" * string(i) * "/" * string(test_num) * "]  Done.")
             end
         end
         println("Inference Time = " * string(time.time / test_num * 1000) * " ms")
     elseif ARGS[2] == "For"
-        warmup_num = 2
-        test_num = 5
+        warmup_num = 10
+        test_num = 10
         for i = 1:warmup_num
             z, back = Zygote.pullback(
                 (vertices) -> sum(rasterize(vertices, faces, pixels, h, w, n_verts, n_faces) .* d_y),
@@ -140,8 +102,8 @@ function main()
         end
         println("Forward Time = " * string(time.time / test_num * 1000) * " ms")
     elseif ARGS[2] == "Bac"
-        warmup_num = 2
-        test_num = 5
+        warmup_num = 5
+        test_num = 15
         z, back = Zygote.pullback(
             (vertices) -> sum(rasterize(vertices, faces, pixels, h, w, n_verts, n_faces) .* d_y),
             vertices
@@ -156,13 +118,13 @@ function main()
         end
         time = @timed begin
             for i = 1:test_num
-                back(1)
+                back_array = back(1)
                 println("test: [" * string(i) * "/" * string(test_num) * "]  Done.")
             end
         end
         println("Backward Time = " * string(time.time / test_num * 1000) * " ms")
     else
-        println("Usage: " * PROGRAM_FILE * " Inf/For/Bac")
+        println("Usage: " * PROGRAM_FILE * "  Inf/For/Bac")
         exit(-1)
     end
 end
