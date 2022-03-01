@@ -8,12 +8,10 @@ include("../../common/julia/io.jl")
 device = CUDA.functional() ? gpu : cpu
 println(CUDA.functional())
 
-ptr_float = round.(Int, read_vec("../ptr.in", "Float32"))
-# ptr_float = round.(Int, readdlm(open("../ptr.in"), Float32))  # (num_v + 1)
-ptr = reshape(ptr_float .+ 1, :)  # (num_v + 1)
-idx_float = round.(Int, read_vec("../idx.in", "Float32"))
-# idx_float = round.(Int, readdlm(open("../idx.in"), Float32))  # (num_v + 1)
-idx = reshape(idx_float .+ 1, :)  # (num_e)
+_ptr = read_vec("../ptr.in", "Int")
+ptr = reshape(_ptr .+ 1, :)  # (num_v + 1)
+_idx = read_vec("../idx.in", "Int")
+idx = reshape(_idx .+ 1, :)  # (num_e)
 num_v = length(ptr) - 1
 num_e = length(idx)
 
@@ -25,19 +23,19 @@ X = copy(read_vec("../x.in", "Float32")') |> device
 # w_attn_2::Vector{Float32} = reshape(readdlm(open("../w_attn_2.in"), Float32), :) # (feat_len)
 # y::Matrix{Float32} = zeros(Float32, (feat_len, num_v))   # (feat_len, num_v)
 
-feat_len_in, feat_len_out = 32, 32 
+feat_len_in, feat_len_out = 32, 32
 # num_v = 4
 # num_e = 4
 # ptr=[1 2 3 4 4]
 # idx=[2 3 4]
-# CSR -> adjacency list 
+# CSR -> adjacency list
 adj=Array{Int,1}[]
 for i =1:num_v
     Z = Vector{Int}()
     for j = ptr[i]:ptr[i+1]-1
         push!(Z,idx[j])
     end
-    push!(adj, Z)   
+    push!(adj, Z)
 end
 
 g = GNNGraph(adj) |> device
