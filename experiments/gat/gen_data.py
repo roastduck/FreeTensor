@@ -1,5 +1,6 @@
 import sys
 import itertools
+import torch
 import numpy as np
 
 sys.path.append('..')
@@ -23,6 +24,11 @@ def load_data(data_name: str):
     return num_v, num_e, ptr, idx
 
 
+def init_weight(shape):
+    w = torch.empty(shape, dtype=torch.float)
+    torch.nn.init.xavier_uniform_(w)
+    return w.numpy()
+
 if __name__ == '__main__':
     if len(sys.argv) != 2:
         print(f"Usage: {sys.argv[0]} <data_name>")
@@ -35,9 +41,9 @@ if __name__ == '__main__':
     ptr = ptr.astype("int32")
     idx = idx.astype("int32")
     x = np.random.uniform(size=(num_v, feat_len)).astype("float32")
-    w = np.random.uniform(size=(feat_len, feat_len)).astype("float32")
-    w_attn_1 = np.random.uniform(size=(feat_len,)).astype("float32")
-    w_attn_2 = np.random.uniform(size=(feat_len,)).astype("float32")
+    w = init_weight((feat_len, feat_len))
+    w_attn_1 = init_weight((feat_len, 1)).flatten()
+    w_attn_2 = init_weight((feat_len, 1)).flatten()
     d_y = np.random.uniform(size=(num_v, feat_len)).astype('float32')
 
     store_txt("ptr.in", ptr)
