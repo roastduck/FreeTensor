@@ -1,5 +1,6 @@
 import sys
 import time
+import argparse
 import numpy as np
 import torch
 import torch.nn as nn
@@ -42,10 +43,19 @@ def gat_layer(g, feat, weight, attn_l, attn_r):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 2:
-        print(f"Usage: {sys.argv[0]} <cpu/gpu>")
-        exit(-1)
-    device = sys.argv[1]
+    parser = argparse.ArgumentParser()
+    parser.add_argument('target', nargs='?')
+    parser.add_argument('--warmup-repeat',
+                        type=int,
+                        default=10,
+                        dest='warmup_num')
+    parser.add_argument('--timing-repeat',
+                        type=int,
+                        default=100,
+                        dest='test_num')
+    cmd_args = parser.parse_args()
+
+    device = cmd_args.target
 
     ptr = load_txt("../ptr.in", "int32")
     idx = load_txt("../idx.in", "int32")
@@ -80,8 +90,11 @@ if __name__ == '__main__':
         assert device == 'cpu'
         sync = lambda: None
 
-    warmup_num = 10
-    test_num = 1000
+    print(
+        f"{cmd_args.warmup_num} warmup, {cmd_args.test_num} repeats for evalution"
+    )
+    warmup_num = cmd_args.warmup_num
+    test_num = cmd_args.test_num
 
     for i in range(warmup_num):
         y = gat_layer(g, x, w, w_attn_1, w_attn_2)

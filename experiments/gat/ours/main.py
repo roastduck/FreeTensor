@@ -1,6 +1,7 @@
 import sys
 import time
 import itertools
+import argparse
 import numpy as np
 import ir
 from ir.libop import *
@@ -125,10 +126,19 @@ def compile_all(num_v, num_e, feat_len, device):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 2:
-        print(f"Usage: {sys.argv[0]} <cpu/gpu>")
-        exit(-1)
-    device = sys.argv[1]
+    parser = argparse.ArgumentParser()
+    parser.add_argument('target', nargs='?')
+    parser.add_argument('--warmup-repeat',
+                        type=int,
+                        default=10,
+                        dest='warmup_num')
+    parser.add_argument('--timing-repeat',
+                        type=int,
+                        default=100,
+                        dest='test_num')
+    cmd_args = parser.parse_args()
+
+    device = cmd_args.target
 
     ptr = load_txt("../ptr.in", "int32")
     idx = load_txt("../idx.in", "int32")
@@ -170,8 +180,11 @@ if __name__ == '__main__':
 
     inference, forward, backward = compile_all(num_v, num_e, feat_len, ir_dev)
 
-    warmup_num = 10
-    test_num = 1000
+    print(
+        f"{cmd_args.warmup_num} warmup, {cmd_args.test_num} repeats for evalution"
+    )
+    warmup_num = cmd_args.warmup_num
+    test_num = cmd_args.test_num
 
     for i in range(warmup_num):
         inference(ptr, idx, x, w, w_attn_1, w_attn_2, y)
