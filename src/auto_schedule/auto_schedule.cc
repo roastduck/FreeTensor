@@ -1,5 +1,7 @@
 #include <cmath>
 
+#include <analyze/all_names.h>
+#include <analyze/find_elementwise.h>
 #include <analyze/fixed_length_feature.h>
 #include <auto_schedule/auto_schedule.h>
 #include <auto_schedule/rules/multi_level_tiling.h>
@@ -17,8 +19,12 @@ AutoSchedule::AutoSchedule(const Schedule &schedule, const Ref<Target> &target,
                            py::function predictFunc, py::function updateFunc)
     : original_(schedule), target_(target), device_(device),
       measuredSize_(measuredSize), paramsSet_(false), mn_(INFINITY),
-      predictFunc_(std::move(predictFunc)),
-      updateFunc_(std::move(updateFunc)) {
+      predictFunc_(std::move(predictFunc)), updateFunc_(std::move(updateFunc)) {
+    Store consumer = findSingleElementWiseConsumer(schedule.ast(), "y");
+    if (consumer.isValid())
+        std::cout << consumer->var_ << std::endl;
+    else
+        std::cout << "not found" << std::endl;
     MultiLevelTilingRule rule;
     int n = rule.analyze(original_);
     std::cout << "Found" << n << std::endl;
