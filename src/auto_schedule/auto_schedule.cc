@@ -1,6 +1,5 @@
 #include <cmath>
 
-#include <analyze/all_names.h>
 #include <analyze/find_elementwise.h>
 #include <analyze/fixed_length_feature.h>
 #include <auto_schedule/auto_schedule.h>

@@ -16,7 +16,7 @@ class FindSingleElementWise : public SymbolTable<Visitor> {
 
   public:
     explicit FindSingleElementWise(std::string name)
-        : BaseClass(), name_(std::move(name)), invalid_(false) {}
+        : name_(std::move(name)), invalid_(false) {}
     using SymbolTable<Visitor>::visit;
     void visit(const Store &op) override;
     void visit(const Load &op) override;

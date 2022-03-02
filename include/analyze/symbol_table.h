@@ -107,7 +107,7 @@ class SymbolTable : public BaseClass, public SymbolTableInterface {
     bool hasDef(const std::string &name) const override {
         return impl_.hasDef(name);
     }
-    const VarDef &def(const std::string &name) const override{ return impl_.def(name); }
+    const VarDef &def(const std::string &name) const override { return impl_.def(name); }
     const Ref<Buffer> &buffer(const std::string &name) const override {
         return impl_.buffer(name);
     }
