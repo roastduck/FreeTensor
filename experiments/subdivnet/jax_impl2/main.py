@@ -1,5 +1,6 @@
 import sys
 import time
+import argparse
 import numpy as np
 import jax
 import jax.numpy as jnp
@@ -37,10 +38,16 @@ def conv_impl2(adj, x, w0, w1, w2, w3):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 1:
-        print(f"Usage: {sys.argv[0]}")
-        print("Please set device in main.sh")
-        exit(-1)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--warmup-repeat',
+                        type=int,
+                        default=10,
+                        dest='warmup_num')
+    parser.add_argument('--timing-repeat',
+                        type=int,
+                        default=100,
+                        dest='test_num')
+    cmd_args = parser.parse_args()
 
     adj = load_txt("../adj.in", "int32")
     n_faces = adj.shape[0]
@@ -61,8 +68,11 @@ if __name__ == '__main__':
     w3 = jax.device_put(w3)
     d_y = jax.device_put(d_y)
 
-    warmup_num = 10
-    test_num = 1000
+    print(
+        f"{cmd_args.warmup_num} warmup, {cmd_args.test_num} repeats for evalution"
+    )
+    warmup_num = cmd_args.warmup_num
+    test_num = cmd_args.test_num
 
     conv_impl2_inference = jax.jit(conv_impl2)
     # NOTE: JAX requires to compute gradients w.r.t. a scalar, so we sum the output to compute it.

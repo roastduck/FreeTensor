@@ -1,4 +1,5 @@
 import numpy as np
+import time
 
 from tvm import relay
 from tvm.relay import testing
@@ -11,6 +12,7 @@ import tvm.auto_scheduler as auto_scheduler
 from tvm.autotvm.tuner import XGBTuner
 from tvm import autotvm
 import sys
+import argparse
 from datetime import datetime
 import logging
 
@@ -24,29 +26,33 @@ logging.getLogger().setLevel(logging.DEBUG)
 ######################################################################
 # Define Neural Network in Relay
 
-if len(sys.argv) not in range(3, 5):
-    print("Usage:")
-    print(f"  {sys.argv[0]} <cpu/gpu> --tune")
-    print("OR")
-    print(f"  {sys.argv[0]} <cpu/gpu> --eval <log_file>")
-    exit(-1)
-if sys.argv[1] == 'cpu':
+parser = argparse.ArgumentParser()
+parser.add_argument('target', nargs='?')
+parser.add_argument('--tune', action='store_true', dest='is_tuning')
+parser.add_argument('--tune-rounds',
+                    type=int,
+                    default=1000,
+                    dest='tuning_rounds')
+parser.add_argument('--eval', default='', dest='eval')
+parser.add_argument('--warmup-repeat', type=int, default=10, dest='warmup_num')
+parser.add_argument('--timing-repeat', type=int, default=100, dest='test_num')
+cmd_args = parser.parse_args()
+
+if cmd_args.target == 'cpu':
     target_name = 'llvm -libs=mkl -mcpu=core-avx2'
-elif sys.argv[1] == 'gpu':
+elif cmd_args.target == 'gpu':
     target_name = 'cuda -libs=cublas'
 else:
     assert False
-if sys.argv[2] == '--tune':
-    is_tunning = True
+if cmd_args.is_tuning:
     time_now = datetime.now().strftime('%Y-%m-%d.%H-%M-%S')
-    log_file = f'ansor.{sys.argv[1]}.{time_now}.json'
-elif sys.argv[2] == '--eval':
-    is_tunning = False
-    log_file = sys.argv[3]
+    log_file = f'ansor.{cmd_args.target}.{time_now}.json'
 else:
-    assert False
+    log_file = cmd_args.eval
+    if log_file == '':
+        print("Please specify --eval <log_file> if not tuning")
+        exit(-1)
 
-tuning_rounds = 1000
 target = tvm.target.Target(target_name)
 dtype, itype = 'float32', 'int32'
 
@@ -181,18 +187,28 @@ params = {"w" + str(p): tvm.nd.array(d_w[p]) for p in range(4)}
 
 # AutoSchedule
 
-if is_tunning:
+if cmd_args.is_tuning:
+
+    print()
+    print("!!!!!!!!!!!!!!!!!!!!!!!!")
+    print("!! TUNING             !!")
+    print("!!!!!!!!!!!!!!!!!!!!!!!!")
+    print()
+
     tasks, task_weights = auto_scheduler.extract_tasks(
         mod["main"], params, target, include_simple_tasks=True)
     tuner = auto_scheduler.TaskScheduler(tasks, task_weights)
-    print('#Tuning trials', tuning_rounds * len(tasks))
+    print('#Tuning trials', cmd_args.tuning_rounds * len(tasks))
     print(task_weights)
     tune_option = auto_scheduler.TuningOptions(
-        num_measure_trials=tuning_rounds * len(tasks),
+        num_measure_trials=cmd_args.tuning_rounds * len(tasks),
         measure_callbacks=[auto_scheduler.RecordToFile(log_file)],
         verbose=2,
     )
+    st_tune = time.time()
     tuner.tune(tune_option)
+    en_tune = time.time()
+    print(f"Tuning time: {en_tune - st_tune}s")
 
 print()
 print("!!!!!!!!!!!!!!!!!!!!!!!!")
@@ -218,13 +234,13 @@ store_txt("y.out", y)
 
 import timeit
 
-warmup_num = 10
+print(
+    f"{cmd_args.warmup_num} warmup, {cmd_args.test_num} repeats for evalution")
 timing_number = 1
-timing_repeat = 1000
-timeit.Timer(lambda: module.run()).repeat(repeat=warmup_num, number=1)
+timeit.Timer(lambda: module.run()).repeat(repeat=cmd_args.warmup_num, number=1)
 optimized = (np.array(
     timeit.Timer(lambda: module.run()).repeat(
-        repeat=timing_repeat, number=timing_number)) * 1000 / timing_number)
+        repeat=cmd_args.test_num, number=timing_number)) * 1000 / timing_number)
 optimized = {
     "mean": np.mean(optimized),
     "median": np.median(optimized),
