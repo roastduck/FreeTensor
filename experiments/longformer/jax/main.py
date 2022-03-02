@@ -1,6 +1,7 @@
 import sys
 import time
 import math
+import argparse
 import numpy as np
 import jax
 import jax.numpy as jnp
@@ -62,6 +63,17 @@ def transformer_impl1(q, k, v):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--warmup-repeat',
+                        type=int,
+                        default=10,
+                        dest='warmup_num')
+    parser.add_argument('--timing-repeat',
+                        type=int,
+                        default=100,
+                        dest='test_num')
+    cmd_args = parser.parse_args()
+
     q = load_txt("../q.in", "float32")
     k = load_txt("../k.in", "float32")
     v = load_txt("../v.in", "float32")
@@ -72,8 +84,11 @@ if __name__ == '__main__':
     v = jax.device_put(v)
     d_y = jax.device_put(d_y)
 
-    warmup_num = 10
-    test_num = 100
+    print(
+        f"{cmd_args.warmup_num} warmup, {cmd_args.test_num} repeats for evalution"
+    )
+    warmup_num = cmd_args.warmup_num
+    test_num = cmd_args.test_num
 
     transformer_impl1_inference = jax.jit(transformer_impl1)
     # NOTE: JAX requires to compute gradients w.r.t. a scalar, so we sum the output to compute it.

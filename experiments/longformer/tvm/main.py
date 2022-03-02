@@ -1,4 +1,5 @@
 import timeit
+import time
 import numpy as np
 
 from tvm import relay
@@ -15,6 +16,7 @@ from tvm import topi, autotvm
 import logging
 from datetime import datetime
 import sys
+import argparse
 # Enable debug logs
 import logging
 
@@ -24,29 +26,32 @@ from common.numpy.io import load_txt, store_txt
 logging.basicConfig()
 logging.getLogger().setLevel(logging.DEBUG)
 
-if len(sys.argv) not in range(3, 5):
-    print("Usage:")
-    print(f"  {sys.argv[0]} <cpu/gpu> --tune")
-    print("OR")
-    print(f"  {sys.argv[0]} <cpu/gpu> --eval <log_file>")
-    exit(-1)
-if sys.argv[1] == 'cpu':
+parser = argparse.ArgumentParser()
+parser.add_argument('target', nargs='?')
+parser.add_argument('--tune', action='store_true', dest='is_tuning')
+parser.add_argument('--tune-rounds',
+                    type=int,
+                    default=1000,
+                    dest='tuning_rounds')
+parser.add_argument('--eval', default='', dest='eval')
+parser.add_argument('--warmup-repeat', type=int, default=10, dest='warmup_num')
+parser.add_argument('--timing-repeat', type=int, default=100, dest='test_num')
+cmd_args = parser.parse_args()
+
+if cmd_args.target == 'cpu':
     target_name = 'llvm -libs=mkl -mcpu=core-avx2'
-elif sys.argv[1] == 'gpu':
+elif cmd_args.target == 'gpu':
     target_name = 'cuda -libs=cublas'
 else:
     assert False
-if sys.argv[2] == '--tune':
-    is_tunning = True
+if cmd_args.is_tuning:
     time_now = datetime.now().strftime('%Y-%m-%d.%H-%M-%S')
-    log_file = f'ansor.{sys.argv[1]}.{time_now}.json'
-elif sys.argv[2] == '--eval':
-    is_tunning = False
-    log_file = sys.argv[3]
+    log_file = f'ansor.{cmd_args.target}.{time_now}.json'
 else:
-    assert False
-
-tuning_rounds = 1000
+    log_file = cmd_args.eval
+    if log_file == '':
+        print("Please specify --eval <log_file> if not tuning")
+        exit(-1)
 
 n_heads = 8
 seq_len = 10000
@@ -218,14 +223,25 @@ tasks = [
 
 ################################################################################
 # Set Parameters for Auto-Scheduler
-if is_tunning:
+if cmd_args.is_tuning:
+
+    print()
+    print("!!!!!!!!!!!!!!!!!!!!!!!!")
+    print("!! TUNING             !!")
+    print("!!!!!!!!!!!!!!!!!!!!!!!!")
+    print()
+
     tuner = auto_scheduler.TaskScheduler(tasks)
     tune_option = auto_scheduler.TuningOptions(
-        num_measure_trials=tuning_rounds * len(tasks),
+        num_measure_trials=cmd_args.tuning_rounds * len(tasks),
         measure_callbacks=[auto_scheduler.RecordToFile(log_file)],
         verbose=2,
     )
+
+    st_tune = time.time()
     tuner.tune(tune_option)
+    en_tune = time.time()
+    print(f"Tuning time: {en_tune - st_tune}s")
 
 print()
 print("!!!!!!!!!!!!!!!!!!!!!!!!")
@@ -263,15 +279,18 @@ for func, inputs in zip(funcs, inputs_funcs):
 store_txt('y.out', y_tvm.asnumpy())
 
 # Evaluation
-warmup_num = 10
-timing_repeat = 1000
 time_log = []
 for func, inputs in zip(funcs, inputs_funcs):
-    evaluator = func.time_evaluator(func.entry_name, dev, number=warmup_num)
+    evaluator = func.time_evaluator(func.entry_name,
+                                    dev,
+                                    number=cmd_args.warmup_num)
     evaluator(*inputs)
-    evaluator = func.time_evaluator(func.entry_name, dev, number=timing_repeat)
+    evaluator = func.time_evaluator(func.entry_name,
+                                    dev,
+                                    number=cmd_args.test_num)
     time_ms = np.median(evaluator(*inputs).results) * 1000
     time_log.append(time_ms)
-print(f"{warmup_num} warmup, {timing_repeat} repeats for evalution")
+print(
+    f"{cmd_args.warmup_num} warmup, {cmd_args.test_num} repeats for evalution")
 print('Time breakdown (ms):', time_log)
 print("Average e2e time: %.3f ms" % (sum(time_log)))

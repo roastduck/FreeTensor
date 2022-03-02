@@ -1,6 +1,7 @@
 import sys
 import time
 import math
+import argparse
 import numpy as np
 import torch
 
@@ -43,10 +44,19 @@ def transformer_impl1(q, k, v, w, dilation, dilation_heads):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 2:
-        print(f"Usage: {sys.argv[0]} <cpu/gpu>")
-        exit(-1)
-    device = sys.argv[1]
+    parser = argparse.ArgumentParser()
+    parser.add_argument('target', nargs='?')
+    parser.add_argument('--warmup-repeat',
+                        type=int,
+                        default=10,
+                        dest='warmup_num')
+    parser.add_argument('--timing-repeat',
+                        type=int,
+                        default=100,
+                        dest='test_num')
+    cmd_args = parser.parse_args()
+
+    device = cmd_args.target
 
     n_heads = 8
     seq_len = 10000
@@ -69,8 +79,11 @@ if __name__ == '__main__':
         assert device == 'cpu'
         sync = lambda: None
 
-    warmup_num = 10
-    test_num = 100
+    print(
+        f"{cmd_args.warmup_num} warmup, {cmd_args.test_num} repeats for evalution"
+    )
+    warmup_num = cmd_args.warmup_num
+    test_num = cmd_args.test_num
 
     for i in range(warmup_num):
         y = transformer_impl1(q, k, v, w, dilation, dilation_heads)
