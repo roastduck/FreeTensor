@@ -25,29 +25,29 @@ function my_conv(adj, x, w0, w1, w2, w3, n_faces, in_feats, out_feats)::CuArray{
 end
 
 function main()
-    if length(ARGS) != 2
-        println("Usage: " * PROGRAM_FILE * "  Inf/For/Bac")
+    warmup_num = 10
+    test_num = 100
+    if length(ARGS) != 2 && length(ARGS) != 4
+        println("Usage: " * PROGRAM_FILE * "  Inf/For/Bac  <warmup_repeat> <timing_repeat>")
         exit(-1)
     end
+    if length(ARGS) == 4
+        warmup_num = parse(Int, ARGS[3])
+        test_num = parse(Int, ARGS[4])
+    end
+    println(warmup_num, " warmup, ", test_num, "repeats for evalution")
 
     adj = copy(read_vec("../adj.in", "Int")) .+ 1
-    # adj = readdlm(open("../adj.in"), Int) .+ 1   # (n_faces, 3)
     n_faces = size(adj)[1]
     in_feats = 13
     out_feats = 64
     x = copy(read_vec("../x.in", "Float32")')
-    # x = copy(readdlm(open("../x.in"), Float32)')        # (n_faces, in_feats) -> (in_feats, n_faces)
     w0 = copy(read_vec("../w0.in", "Float32")')
     w1 = copy(read_vec("../w1.in", "Float32")')
     w2 = copy(read_vec("../w2.in", "Float32")')
     w3 = copy(read_vec("../w3.in", "Float32")')
-    # w0 = copy(readdlm(open("../w0.in"), Float32)')      # (in_feats, out_feats)
-    # w1 = copy(readdlm(open("../w1.in"), Float32)')
-    # w2 = copy(readdlm(open("../w2.in"), Float32)')
-    # w3 = copy(readdlm(open("../w3.in"), Float32)')
     y = zeros(Float32, (out_feats, n_faces))
     d_y = copy(read_vec("../d_y.in", "Float32")')
-    # d_y = copy(readdlm(open("../d_y.in"), Float32)')
 
     adj = CuArray(adj)
     x = CuArray(x)
@@ -57,9 +57,6 @@ function main()
     w3 = CuArray(w3)
     y = CuArray(y)
     d_y = CuArray(d_y)
-
-    warmup_num = 10
-    test_num = 1000
 
     if ARGS[2] == "Inf"
         for i = 1:warmup_num
@@ -72,14 +69,10 @@ function main()
             end
         end
         write_vec("y.out", Array(y))
-        # writedlm("y.out", [@sprintf("%.18e", i) for i in Array(y')], ' ')
         println("Inference Time = " * string(time.time / test_num * 1000) * " ms")
     
     elseif ARGS[2] == "For"
         for i = 1:warmup_num
-            # gs = gradient(params(x, w0, w1, w2, w3)) do
-            #     z = sum(my_conv(adj, x, w0, w1, w2, w3, n_faces, in_feats, out_feats) .* d_y)
-            # end
             z, back = Zygote.pullback(
                 (x, w0, w1, w2, w3) -> sum(my_conv(adj, x, w0, w1, w2, w3, n_faces, in_feats, out_feats) .* d_y),
                 x, w0, w1, w2, w3
@@ -109,12 +102,6 @@ function main()
                 write_vec("d_w1.out", Array(back_array[3]))
                 write_vec("d_w2.out", Array(back_array[4]))
                 write_vec("d_w3.out", Array(back_array[5]))
-                # writedlm("d_x.out", [@sprintf("%.18e", i) for i in Array(back_array[1]')], ' ')
-                # writedlm("d_w0.out", [@sprintf("%.18e", i) for i in Array(back_array[2]')], ' ')
-                # writedlm("d_w1.out", [@sprintf("%.18e", i) for i in Array(back_array[3]')], ' ')
-                # writedlm("d_w2.out", [@sprintf("%.18e", i) for i in Array(back_array[4]')], ' ')
-                # writedlm("d_w3.out", [@sprintf("%.18e", i) for i in Array(back_array[5]')], ' ')
-                exit(0)
             end
         end
         time = @timed begin
