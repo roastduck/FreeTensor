@@ -12,6 +12,7 @@ import tvm.auto_scheduler as auto_scheduler
 from tvm.autotvm.tuner import XGBTuner
 from tvm import autotvm
 import sys
+import argparse
 from datetime import datetime
 import logging
 
@@ -25,13 +26,29 @@ logging.getLogger().setLevel(logging.DEBUG)
 ######################################################################
 # Define Neural Network in Relay
 
-if len(sys.argv) != 2:
-    print(f"Usage: {sys.argv[0]} <cpu/gpu>")
-    exit(-1)
-if sys.argv[1] == 'cpu':
+parser = argparse.ArgumentParser()
+parser.add_argument('target', nargs='?')
+parser.add_argument('--tune',
+                    action='store_true',
+                    dest='is_tuning',
+                    help='(this argument is ignored in this part)')
+parser.add_argument('--tune-rounds',
+                    type=int,
+                    default=1000,
+                    dest='tuning_rounds',
+                    help='(this argument is ignored in this part)')
+parser.add_argument('--eval',
+                    default='',
+                    dest='eval',
+                    help='(this argument is ignored in this part)')
+parser.add_argument('--warmup-repeat', type=int, default=10, dest='warmup_num')
+parser.add_argument('--timing-repeat', type=int, default=100, dest='test_num')
+cmd_args = parser.parse_args()
+
+if cmd_args.target == 'cpu':
     target_name = 'llvm -libs=mkl -mcpu=core-avx2'
     dev = tvm.cpu()
-elif sys.argv[1] == 'gpu':
+elif cmd_args.target == 'gpu':
     target_name = 'cuda -libs=cublas'
     dev = tvm.cuda()
 else:
@@ -187,13 +204,13 @@ module.run()
 y = module.get_output(0, tvm.nd.empty(output_shape)).numpy()
 store_txt("v.tmp", y)
 
-warmup_num = 10
+print(
+    f"{cmd_args.warmup_num} warmup, {cmd_args.test_num} repeats for evalution")
 timing_number = 1
-timing_repeat = 1000
-timeit.Timer(lambda: module.run()).repeat(repeat=warmup_num, number=1)
+timeit.Timer(lambda: module.run()).repeat(repeat=cmd_args.warmup_num, number=1)
 optimized = (np.array(
     timeit.Timer(lambda: module.run()).repeat(
-        repeat=timing_repeat, number=timing_number)) * 1000 / timing_number)
+        repeat=cmd_args.test_num, number=timing_number)) * 1000 / timing_number)
 optimized = {
     "mean": np.mean(optimized),
     "median": np.median(optimized),

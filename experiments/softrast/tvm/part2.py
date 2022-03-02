@@ -16,6 +16,7 @@ from tvm import topi, autotvm
 import logging
 from datetime import datetime
 import sys
+import argparse
 # Enable debug logs
 import logging
 
@@ -25,29 +26,32 @@ from common.numpy.io import load_txt, store_txt
 logging.basicConfig()
 logging.getLogger().setLevel(logging.DEBUG)
 
-if len(sys.argv) not in range(3, 5):
-    print("Usage:")
-    print(f"  {sys.argv[0]} <cpu/gpu> --tune")
-    print("OR")
-    print(f"  {sys.argv[0]} <cpu/gpu> --eval <log_file>")
-    exit(-1)
-if sys.argv[1] == 'cpu':
+parser = argparse.ArgumentParser()
+parser.add_argument('target', nargs='?')
+parser.add_argument('--tune', action='store_true', dest='is_tuning')
+parser.add_argument('--tune-rounds',
+                    type=int,
+                    default=1000,
+                    dest='tuning_rounds')
+parser.add_argument('--eval', default='', dest='eval')
+parser.add_argument('--warmup-repeat', type=int, default=10, dest='warmup_num')
+parser.add_argument('--timing-repeat', type=int, default=100, dest='test_num')
+cmd_args = parser.parse_args()
+
+if cmd_args.target == 'cpu':
     target_name = 'llvm -libs=mkl -mcpu=core-avx2'
-elif sys.argv[1] == 'gpu':
+elif cmd_args.target == 'gpu':
     target_name = 'cuda -libs=cublas'
 else:
     assert False
-if sys.argv[2] == '--tune':
-    is_tunning = True
+if cmd_args.is_tuning:
     time_now = datetime.now().strftime('%Y-%m-%d.%H-%M-%S')
-    log_file = f'ansor.{sys.argv[1]}.{time_now}.json'
-elif sys.argv[2] == '--eval':
-    is_tunning = False
-    log_file = sys.argv[3]
+    log_file = f'ansor.{cmd_args.target}.{time_now}.json'
 else:
-    assert False
-
-tuning_rounds = 1000
+    log_file = cmd_args.eval
+    if log_file == '':
+        print("Please specify --eval <log_file> if not tuning")
+        exit(-1)
 
 vertices = load_txt("../vertices.in", "float32")
 faces = load_txt("../faces.in", "int32")
@@ -249,8 +253,10 @@ def softrast_gpu_compute2(n_verts,
 
 
 # Only dilated parts
-args = softrast_compute(n_verts, n_faces, h, w)
-s = te.create_schedule(args[-1].op)
+#args1 = softrast_gpu_compute1(n_verts, n_faces, h, w)
+#args2 = softrast_gpu_compute2(n_verts, n_faces, h, w)
+#s1 = te.create_schedule(args1[-1].op)
+#s2 = te.create_schedule(args2[-1].op)
 # print(tvm.lower(s, args, simple_mode=True))
 y_tvm = tvm.nd.empty(y.shape, device=dev)
 #v_tvm = tvm.nd.empty((n_faces, 3, 3), device=dev)
@@ -258,11 +264,13 @@ inside_tvm = tvm.nd.empty((n_faces, h, w), dtype='bool', device=dev)
 e_cp_tvm = tvm.nd.empty((n_faces, h, w, 3), device=dev)
 dist_tvm = tvm.nd.empty((n_faces, h, w), device=dev)
 
-# if sys.argv[1] == 'cpu':
-#     func = tvm.build(s, args, target)
-#     func(vertices_tvm, faces_tvm, y_tvm)
-#     func(v_tvm, y_tvm)
-#     np.save('y.out.npy', y_tvm.numpy())
+#if cmd_args.target == 'cpu':
+#    func1 = tvm.build(s1, args1, target)
+#    func2 = tvm.build(s2, args2, target)
+#    func1(v_tvm, e_cp_tvm, dist_tvm)
+#    func2(e_cp_tvm, dist_tvm, y_tvm)
+#    store_txt('y.out', y_tvm.numpy())
+#    exit(-1)
 
 # optimized = (
 #     np.array(timeit.Timer(lambda:func(vertices_tvm, faces_tvm, y_tvm)).repeat(
@@ -272,7 +280,7 @@ dist_tvm = tvm.nd.empty((n_faces, h, w), device=dev)
 # print(optimized)
 
 ################################################################################
-if sys.argv[1] == 'cpu':
+if cmd_args.target == 'cpu':
     tasks = [
         # tvm.auto_scheduler.SearchTask(
         #     func=contiguous_compute, args=(
@@ -297,7 +305,7 @@ else:
 
 ################################################################################
 # Set Parameters for Auto-Scheduler
-if is_tunning:
+if cmd_args.is_tuning:
 
     print()
     print("!!!!!!!!!!!!!!!!!!!!!!!!")
@@ -307,7 +315,7 @@ if is_tunning:
 
     tuner = auto_scheduler.TaskScheduler(tasks)
     tune_option = auto_scheduler.TuningOptions(
-        num_measure_trials=tuning_rounds * len(tasks),
+        num_measure_trials=cmd_args.tuning_rounds * len(tasks),
         measure_callbacks=[auto_scheduler.RecordToFile(log_file)],
         verbose=2,
     )
@@ -345,7 +353,7 @@ else:
 # funcs[1](prob_tvm, prob_softmax_tvm)
 # funcs[2](prob_softmax_tvm, v_tvm, y_tvm)
 
-if sys.argv[1] == 'cpu':
+if cmd_args.target == 'cpu':
     inputs_funcs = [
         # (vertices_tvm, faces_tvm, v_tvm),
         (v_tvm, y_tvm)
@@ -362,15 +370,18 @@ for func, inputs in zip(funcs, inputs_funcs):
 store_txt('y.out', y_tvm.asnumpy())
 
 # Evaluation
-warmup_num = 10
-timing_repeat = 1000
 time_log = []
 for func, inputs in zip(funcs, inputs_funcs):
-    evaluator = func.time_evaluator(func.entry_name, dev, number=warmup_num)
+    evaluator = func.time_evaluator(func.entry_name,
+                                    dev,
+                                    number=cmd_args.warmup_num)
     evaluator(*inputs)
-    evaluator = func.time_evaluator(func.entry_name, dev, number=timing_repeat)
+    evaluator = func.time_evaluator(func.entry_name,
+                                    dev,
+                                    number=cmd_args.test_num)
     time_ms = np.median(evaluator(*inputs).results) * 1000
     time_log.append(time_ms)
-print(f"{warmup_num} warmup, {timing_repeat} repeats for evalution")
+print(
+    f"{cmd_args.warmup_num} warmup, {cmd_args.test_num} repeats for evalution")
 print('Time breakdown (ms):', time_log)
 print("Average e2e time: %.3f ms" % (sum(time_log)))

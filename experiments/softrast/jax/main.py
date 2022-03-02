@@ -1,5 +1,6 @@
 import sys
 import time
+import argparse
 import numpy as np
 import jax
 import jax.numpy as jnp
@@ -75,10 +76,16 @@ def rasterize(vertices, faces):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 1:
-        print(f"Usage: {sys.argv[0]}")
-        print("Please set device in main.sh")
-        exit(-1)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--warmup-repeat',
+                        type=int,
+                        default=10,
+                        dest='warmup_num')
+    parser.add_argument('--timing-repeat',
+                        type=int,
+                        default=100,
+                        dest='test_num')
+    cmd_args = parser.parse_args()
 
     vertices = load_txt("../vertices.in", "float32")
     faces = load_txt("../faces.in", "int32")
@@ -90,8 +97,11 @@ if __name__ == '__main__':
     faces = jax.device_put(faces)
     d_y = jax.device_put(d_y)
 
-    warmup_num = 10
-    test_num = 100
+    print(
+        f"{cmd_args.warmup_num} warmup, {cmd_args.test_num} repeats for evalution"
+    )
+    warmup_num = cmd_args.warmup_num
+    test_num = cmd_args.test_num
 
     rasterize_inference = jax.jit(rasterize)
     # NOTE: JAX requires to compute gradients w.r.t. a scalar, so we sum the output to compute it.
