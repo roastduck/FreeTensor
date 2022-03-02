@@ -458,7 +458,7 @@ void init_ffi_ast(py::module_ &m) {
     m.def("makeStore",
           static_cast<Stmt (*)(const ID &, const std::string &,
                                const std::vector<Expr> &, const Expr &)>(
-              &_makeStore),
+              &_makeStore<const Expr &>),
           "nid"_a, "var"_a, "indices"_a, "expr"_a);
     m.def("makeLoad",
           static_cast<Expr (*)(const std::string &, const std::vector<Expr> &)>(

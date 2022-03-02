@@ -456,7 +456,7 @@ void GradExpr::visit(const Abs &op) {
 std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>,
            std::unordered_map<ID, std::string>>
-grad(const Stmt &_op, const std::unordered_set<std::string> &requires,
+grad(const Stmt &_op, const std::unordered_set<std::string> &_requires,
      const std::unordered_set<std::string> &provides,
      const std::unordered_set<ID> &tapes) {
 
@@ -473,7 +473,7 @@ grad(const Stmt &_op, const std::unordered_set<std::string> &requires,
 
     auto [forward, tapeMap, versions, totLens] = outputIntermediates(op, tapes);
 
-    PropagateRequire propagator(requires, provides);
+    PropagateRequire propagator(_requires, provides);
     size_t affectCnt;
     do {
         affectCnt = propagator.affectedDefs().size();
@@ -486,7 +486,7 @@ grad(const Stmt &_op, const std::unordered_set<std::string> &requires,
     };
     findDeps(op, {{}}, foundWAW, FindDepsMode::Dep, DEP_WAW, nullptr, false);
 
-    Grad mutator(requires, provides, tapes, propagator.affectedDefs(), tapeMap,
+    Grad mutator(_requires, provides, tapes, propagator.affectedDefs(), tapeMap,
                  versions, totLens, notSingleWrite);
     auto backward = mutator(op);
 
@@ -505,11 +505,11 @@ grad(const Stmt &_op, const std::unordered_set<std::string> &requires,
 std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>,
            std::unordered_map<ID, std::string>>
-grad(const Func &func, const std::unordered_set<std::string> &requires,
+grad(const Func &func, const std::unordered_set<std::string> &_requires,
      const std::unordered_set<std::string> &provides,
      const std::unordered_set<ID> &tapes) {
     auto [forward, backward, requireGrads, provideGrads, tapeMap] =
-        grad(func->body_, requires, provides, tapes);
+        grad(func->body_, _requires, provides, tapes);
 
     auto backwardParams = func->params_;
     auto forwardReturns = func->returns_;
@@ -569,17 +569,17 @@ static std::unordered_set<ID> findTapeDefs(const Stmt &op, GradTapeMode mode) {
 std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>,
            std::unordered_map<ID, std::string>>
-grad(const Stmt &op, const std::unordered_set<std::string> &requires,
+grad(const Stmt &op, const std::unordered_set<std::string> &_requires,
      const std::unordered_set<std::string> &provides, GradTapeMode tapeMode) {
-    return grad(op, requires, provides, findTapeDefs(op, tapeMode));
+    return grad(op, _requires, provides, findTapeDefs(op, tapeMode));
 }
 
 std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>,
            std::unordered_map<ID, std::string>>
-grad(const Func &func, const std::unordered_set<std::string> &requires,
+grad(const Func &func, const std::unordered_set<std::string> &_requires,
      const std::unordered_set<std::string> &provides, GradTapeMode tapeMode) {
-    return grad(func, requires, provides, findTapeDefs(func->body_, tapeMode));
+    return grad(func, _requires, provides, findTapeDefs(func->body_, tapeMode));
 }
 
 } // namespace ir

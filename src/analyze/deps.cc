@@ -599,13 +599,13 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
     }
 
     for (auto &&item : cond_) {
-        std::vector<PBMap> requires;
+        std::vector<PBMap> _requires;
         for (auto &&[nodeOrParallel, dir] : item) {
             if (nodeOrParallel.isNode_) {
-                requires.emplace_back(makeConstraintOfSingleLoop(
+                _requires.emplace_back(makeConstraintOfSingleLoop(
                     presburger, nodeOrParallel.id_, dir, iterDim));
             } else {
-                requires.emplace_back(makeConstraintOfParallelScope(
+                _requires.emplace_back(makeConstraintOfParallelScope(
                     presburger, nodeOrParallel.parallel_, dir, iterDim, *point,
                     *other));
             }
@@ -615,14 +615,14 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
         // be no intersection on `nearest`. Computing on `nearest` is much
         // heavier because it contains more basic maps
         PBMap res = nearest, possible = depAll;
-        for (auto &&require : requires) {
+        for (auto &&require : _requires) {
             possible = intersect(std::move(possible), require);
             if (possible.empty()) {
                 goto fail;
             }
         }
 
-        for (auto &&require : requires) {
+        for (auto &&require : _requires) {
             res = intersect(std::move(res), std::move(require));
             if (res.empty()) {
                 goto fail;

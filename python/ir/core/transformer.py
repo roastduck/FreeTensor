@@ -354,7 +354,13 @@ def if_then_else_stmt(predicate, then_body, else_body=None):
 
 def if_then_else_expr(predicate, then_expr, else_expr):
     '''If-then-else expression staging tool.'''
-    return if_then_else(predicate, then_expr, else_expr)
+    if type(predicate) == bool:
+        if predicate:
+            return then_expr
+        else:
+            return else_expr
+    else:
+        return if_then_else(predicate, then_expr, else_expr)
 
 
 def return_stmt(value, funcname):
