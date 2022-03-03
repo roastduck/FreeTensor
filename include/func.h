@@ -2,6 +2,7 @@
 #define FUNC_H
 
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 

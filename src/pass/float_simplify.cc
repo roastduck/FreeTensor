@@ -50,7 +50,7 @@ Expr FloatSimplify::normalizeRealMulDiv(const Expr &op) {
     std::vector<Expr> num, den, sqrtNum, sqrtDen;
     recur(op, num, den, sqrtNum, sqrtDen);
 
-    auto trySquare = [this, &squareCnt](std::vector<Expr> &list) {
+    auto trySquare = [&squareCnt](std::vector<Expr> &list) {
         for (size_t i = 0; i + 1 < list.size(); i++) {
             for (size_t j = i + 1; j < list.size(); j++) {
                 if (HashComparator()(list[i], list[j])) {

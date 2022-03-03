@@ -37,6 +37,8 @@ class Make1DVar : public SymbolTable<Mutator> {
     }
 
   protected:
+    using BaseClass::visit;
+
     Stmt visit(const VarDef &op) override;
     Stmt visit(const Store &op) override;
     Stmt visit(const ReduceTo &op) override;

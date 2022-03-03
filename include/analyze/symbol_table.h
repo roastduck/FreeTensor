@@ -100,6 +100,9 @@ class SymbolTable : public BaseClass, public SymbolTableInterface {
     SymbolTableData impl_;
 
   public:
+    template <class... T>
+    SymbolTable(T &&... args) : BaseClass(std::forward<T>(args)...) {}
+
     const std::unordered_set<std::string> &names() const override {
         return impl_.names();
     }

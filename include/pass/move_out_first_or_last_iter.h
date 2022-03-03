@@ -8,7 +8,7 @@
 
 namespace ir {
 
-class MoveOutFirstOrLastIter : public Z3Simplify {
+class MoveOutFirstOrLastIter : public Z3SimplifyWithSymbolTable {
   protected:
     Stmt visit(const For &op) override;
 };

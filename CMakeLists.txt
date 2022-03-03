@@ -48,7 +48,8 @@ if(IR_DEBUG_PROFILE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DIR_DEBUG_PROFILE")
 endif()
 
-set(CMAKE_CXX_STANDARD 17)
+# Not using CMAKE_CXX_STANDARD_REQUIRED since on GCC >= 8 we can work with C++17, let it fallback
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS OFF) # -std=gnu++11 when on, -std=c++11 when off
 
 add_definitions(-DIR_RUNTIME_DIR=${CMAKE_SOURCE_DIR}/runtime)

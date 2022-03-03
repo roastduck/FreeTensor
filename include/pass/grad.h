@@ -24,9 +24,9 @@ class PropagateRequire : public WithTypeInfer<SymbolTable<Visitor>> {
     ID curTarget_; // VarDef ID of current var being written to
 
   public:
-    PropagateRequire(const std::unordered_set<std::string> &requires,
+    PropagateRequire(const std::unordered_set<std::string> &_requires,
                      const std::unordered_set<std::string> &provides)
-        : requires_(requires), provides_(provides) {}
+        : requires_(_requires), provides_(provides) {}
 
     const std::unordered_set<ID> &affectedDefs() const { return affectedDefs_; }
 
@@ -125,7 +125,7 @@ class Grad : public SymbolTable<Mutator> {
     bool isRecompute_ = false;
 
   public:
-    Grad(const std::unordered_set<std::string> &requires,
+    Grad(const std::unordered_set<std::string> &_requires,
          const std::unordered_set<std::string> &provides,
          const std::unordered_set<ID> &tapes,
          const std::unordered_set<ID> &affectedDefs,
@@ -133,7 +133,7 @@ class Grad : public SymbolTable<Mutator> {
          const std::unordered_map<ID, Expr> &versions,
          const std::unordered_map<ID, Expr> &totLens,
          const std::unordered_set<Stmt> &notSingleWrite)
-        : requires_(requires), provides_(provides), tapes_(tapes),
+        : requires_(_requires), provides_(provides), tapes_(tapes),
           affectedDefs_(affectedDefs), tapeMap_(tapeMap), versions_(versions),
           totLens_(totLens), notSingleWrite_(notSingleWrite) {}
 
@@ -174,14 +174,14 @@ class Grad : public SymbolTable<Mutator> {
 std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>,
            std::unordered_map<ID, std::string>>
-grad(const Stmt &op, const std::unordered_set<std::string> &requires,
+grad(const Stmt &op, const std::unordered_set<std::string> &_requires,
      const std::unordered_set<std::string> &provides,
      const std::unordered_set<ID> &tapes);
 
 std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>,
            std::unordered_map<ID, std::string>>
-grad(const Func &func, const std::unordered_set<std::string> &requires,
+grad(const Func &func, const std::unordered_set<std::string> &_requires,
      const std::unordered_set<std::string> &provides,
      const std::unordered_set<ID> &tapes);
 
@@ -211,14 +211,14 @@ enum class GradTapeMode : int { All, Nothing, NoReuseOnly };
 std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>,
            std::unordered_map<ID, std::string>>
-grad(const Stmt &op, const std::unordered_set<std::string> &requires,
+grad(const Stmt &op, const std::unordered_set<std::string> &_requires,
      const std::unordered_set<std::string> &provides,
      GradTapeMode tapeMode = GradTapeMode::NoReuseOnly);
 
 std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>,
            std::unordered_map<ID, std::string>>
-grad(const Func &func, const std::unordered_set<std::string> &requires,
+grad(const Func &func, const std::unordered_set<std::string> &_requires,
      const std::unordered_set<std::string> &provides,
      GradTapeMode tapeMode = GradTapeMode::NoReuseOnly);
 
