@@ -37,7 +37,7 @@ add_subdirectory(3rd-party/z3)
 find_package(CUDA REQUIRED)
 
 # THIS PROJECT
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -Wno-overloaded-virtual")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
 if(WITH_MKL)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWITH_MKL=${WITH_MKL}")
 endif()
