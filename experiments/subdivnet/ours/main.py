@@ -99,6 +99,7 @@ if __name__ == '__main__':
                         type=int,
                         default=100,
                         dest='test_num')
+    parser.add_argument('--infer-only', action='store_true', dest='infer_only')
     cmd_args = parser.parse_args()
 
     device = cmd_args.target
@@ -161,6 +162,9 @@ if __name__ == '__main__':
     t1 = time.time()
 
     print(f"Inference Time = {(t1 - t0) / test_num * 1000} ms")
+
+    if cmd_args.infer_only:
+        exit(0)
 
     for i in range(warmup_num):
         forward(adj, x, w0, w1, w2, w3, y)
