@@ -96,7 +96,7 @@ if __name__ == '__main__':
     sync()
     t1 = time.time()
     assert y.shape == (n_heads, seq_len, feat_len)
-    print(f"Impl1 Inference Time = {(t1 - t0) / test_num * 1000} ms")
+    print(f"Inference Time = {(t1 - t0) / test_num * 1000} ms")
 
     q.requires_grad = True
     k.requires_grad = True
@@ -111,7 +111,7 @@ if __name__ == '__main__':
     sync()
     t1 = time.time()
     assert y.shape == (n_heads, seq_len, feat_len)
-    print(f"Impl1 Forward Time = {(t1 - t0) / test_num * 1000} ms")
+    print(f"Forward Time = {(t1 - t0) / test_num * 1000} ms")
 
     for i in range(warmup_num):
         y.backward(d_y, retain_graph=True)
@@ -125,4 +125,4 @@ if __name__ == '__main__':
         y.backward(d_y, retain_graph=True)
     sync()
     t1 = time.time()
-    print(f"Impl2 Backward Time = {(t1 - t0) / test_num * 1000} ms")
+    print(f"Backward Time = {(t1 - t0) / test_num * 1000} ms")
