@@ -1,4 +1,8 @@
-# IR
+# FreeTensor
+
+**For PLDI '22 Artifact Evaluation, please follow the README uploaded to the submission site, where you can find step-by-step instructions.**
+
+A language and compiler for irregular tensor programs.
 
 ## Dependencies
 
