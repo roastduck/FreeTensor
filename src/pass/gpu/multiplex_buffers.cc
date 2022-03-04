@@ -38,8 +38,8 @@ void FindParallelLoops::visit(const VarDef &op) {
         for (auto &&outer : stack_) {
             if (outer->property_.parallel_.substr(0, 11) == "threadIdx.x") {
                 //TODO: transform ASSERT to error msg
-                ASSERT(outer->len_->isConst);
-                auto len = op->len_.as<IntConstNode>()->val_;
+                ASSERT(outer->len_->isConst());
+                auto len = outer->len_.as<IntConstNode>()->val_;
                 ASSERT(len <= 31);
                 affecting_[op->id()].insert(outer->id());
             }
