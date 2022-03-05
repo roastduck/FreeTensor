@@ -460,19 +460,19 @@ def test_circular_dependency_in_parallel():
     print(ast)
 
     with ir.VarDef([("a", (256,), "float32", "inout", "cpu"),
-                    ("b", (256,), "float32", "cache", "cpu"),
-                    ("c", (256,), "float32", "cache", "cpu")]) as (a, b, c):
+                    ("c", (256,), "float32", "cache", "cpu")]) as (a, c):
         with ir.For("i", 0, 256) as i:
             c[i] = 0
-        with ir.For("i", 0, 256) as i:
-            b[i] = a[i]
-        with ir.For("k", 0, 100) as k:
-            with ir.For("l", 0, 256) as l:
-                c[l] = (c[l] + b[l])
-                b[l] = 0
+        with ir.VarDef("b", (256,), "float32", "cache", "cpu") as b:
             with ir.For("i", 0, 256) as i:
-                with ir.For("j", 0, 256) as j:
-                    b[j] = (b[j] + c[i])
+                b[i] = a[i]
+            with ir.For("k", 0, 100) as k:
+                with ir.For("l", 0, 256) as l:
+                    c[l] = (c[l] + b[l])
+                    b[l] = 0
+                with ir.For("i", 0, 256) as i:
+                    with ir.For("j", 0, 256) as j:
+                        b[j] = (b[j] + c[i])
     std = ir.make_reduction(ir.pop_ast())
 
     assert std.match(ast)
