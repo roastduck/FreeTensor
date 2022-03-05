@@ -1,6 +1,6 @@
 #include <unordered_set>
 
-#include <analyze/all_reads.h>
+#include <analyze/all_uses.h>
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
 
