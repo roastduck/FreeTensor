@@ -18,10 +18,14 @@ import logging
 logging.basicConfig()
 logging.getLogger().setLevel(logging.DEBUG)
 
+sys.path.append('../..')
+from common.numpy.io import load_txt, store_txt
+
 ######################################################################
 # Define Neural Network in Relay
 
-if len(sys.argv) != 2:
+if len(sys.argv) != 3:
+    print(len(sys.argv))
     print(f"Usage: {sys.argv[0]} <cpu/gpu>")
     exit(-1)
 if sys.argv[1] == 'cpu':
@@ -39,13 +43,20 @@ dtype, itype = 'float32', 'int32'
 time_now = datetime.now().strftime('%Y-%m-%d.%H-%M-%S')
 log_file = f'ansor.{sys.argv[1]}.{time_now}.json'
 
-ptr_np = np.loadtxt("../ptr.in", dtype=itype)
-idx_np = np.loadtxt("../idx.in", dtype=itype)
-feat_np = np.loadtxt("../x.in", dtype=dtype)
-weight_np = np.loadtxt("../w.in", dtype=dtype)
-attn_l_np = np.expand_dims(np.loadtxt("../w_attn_1.in", dtype=dtype), axis=1)
-attn_r_np = np.expand_dims(np.loadtxt("../w_attn_2.in", dtype=dtype), axis=1)
-d_y_np = np.loadtxt("../d_y.in", dtype=dtype)
+ptr_np = load_txt("../ptr.in", itype)
+idx_np = load_txt("../idx.in", itype)
+# ptr_np = np.loadtxt("../ptr.in", dtype=itype)
+# idx_np = np.loadtxt("../idx.in", dtype=itype)
+feat_np = load_txt("../x.in", dtype)
+# feat_np = np.loadtxt("../x.in", dtype=dtype)
+weight_np = load_txt("../w.in", dtype)
+# weight_np = np.loadtxt("../w.in", dtype=dtype)
+attn_l_np = np.expand_dims(load_txt("../w_attn_1.in", dtype), axis=1)
+attn_r_np = np.expand_dims(load_txt("../w_attn_2.in", dtype), axis=1)
+# attn_l_np = np.expand_dims(np.loadtxt("../w_attn_1.in", dtype=dtype), axis=1)
+# attn_r_np = np.expand_dims(np.loadtxt("../w_attn_2.in", dtype=dtype), axis=1)
+d_y_np = load_txt("../d_y.in", dtype)
+# d_y_np = np.loadtxt("../d_y.in", dtype=dtype)
 num_v = ptr_np.shape[0] - 1
 num_e = idx_np.shape[0]
 idx_center_np = np.zeros([num_e], dtype=itype)

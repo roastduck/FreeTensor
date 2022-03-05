@@ -9,12 +9,6 @@ function dilated_attention(q, k, v, w, dilation)::CuArray{Float32}
     feat_len, seq_len, n_heads = size(q)
     sqrt_d = Float32(sqrt(feat_len))
 
-    # pad_arr1 = CuArray{Float32}(undef, (feat_len, w * dilation, n_heads))
-    # pad_arr2 = CuArray{Float32}(undef, (feat_len, w * dilation, n_heads))
-    # pad_arr3 = CuArray{Float32}(undef, (feat_len, w * dilation, n_heads))
-    # pad_arr4 = CuArray{Float32}(undef, (feat_len, w * dilation, n_heads))
-    # pad_k = cat(pad_arr1, k, pad_arr2, dims=2)
-    # pad_v = cat(pad_arr3, v, pad_arr4, dims=2)
     pad_k = pad_zeros(k, (0, w * dilation, 0))
     pad_v = pad_zeros(v, (0, w * dilation, 0))
 
@@ -48,10 +42,17 @@ function transformer(Q, K, V, w, dilation, dilation_heads)::CuArray{Float32}
 end
 
 function main()
-    if length(ARGS) != 2
-        println("Usage: " * PROGRAM_FILE * "  Inf/For/Bac")
+    warmup_num = 10
+    test_num = 100
+    if length(ARGS) != 2 && length(ARGS) != 4
+        println("Usage: " * PROGRAM_FILE * "  Inf/For/Bac  <warmup_repeat> <timing_repeat>")
         exit(-1)
     end
+    if length(ARGS) == 4
+        warmup_num = parse(Int, ARGS[3])
+        test_num = parse(Int, ARGS[4])
+    end
+    println(warmup_num, " warmup, ", test_num, "repeats for evalution")
 
     n_heads = 8
     seq_len = 10000
@@ -74,13 +75,12 @@ function main()
     v = CuArray(v)
     d_y = CuArray(d_y)
 
-    warmup_num = 1
-    test_num = 0
+    warmup_num = 5
+    test_num = 100
 
     if ARGS[2] == "Inf"
         for i = 1:warmup_num
             y = transformer(q, k, v, w, dilation, dilation_heads)
-            println("warmup: [" * string(i) * "/" * string(warmup_num) * "]  Done.")
             if i == 1
                 write_vec("y.out", Array(y))
                 # writedlm("y.out", [@sprintf("%.10f", i) for i in reshape(Array(y), (1, :))], ' ')
@@ -89,7 +89,6 @@ function main()
         time = @timed begin
             for i = 1:test_num
                 y = transformer(q, k, v, w, dilation, dilation_heads)
-                println("test: [" * string(i) * "/" * string(test_num) * "]  Done.")
             end
         end
         println("Inference Time = " * string(time.time / test_num * 1000) * " ms")
@@ -100,7 +99,9 @@ function main()
                 (q, k, v) -> sum(transformer(q, k, v, w, dilation, dilation_heads) .* d_y),
                 q, k, v
             )
-            println("warmup: [" * string(i) * "/" * string(warmup_num) * "]  Done.")
+            if i % 20 == 0
+                println("warmup: [" * string(i) * "/" * string(warmup_num) * "]  Done.")
+            end
         end
         time = @timed begin
             for i = 1:test_num
@@ -108,7 +109,9 @@ function main()
                     (q, k, v) -> sum(transformer(q, k, v, w, dilation, dilation_heads) .* d_y),
                     q, k, v
                 )
-                println("test: [" * string(i) * "/" * string(test_num) * "]  Done.")
+                if i % 20 == 0
+                    println("test: [" * string(i) * "/" * string(test_num) * "]  Done.")
+                end
             end
         end
         println("Forward Time = " * string(time.time / test_num * 1000) * " ms")
@@ -119,7 +122,9 @@ function main()
         )
         for i = 1:warmup_num
             back_array = back(1)
-            println("warmup: [" * string(i) * "/" * string(warmup_num) * "]  Done.")
+            if i % 20 == 0
+                println("warmup: [" * string(i) * "/" * string(warmup_num) * "]  Done.")
+            end
             if i == 1
                 write_vec("d_q.out", back_array[1])
                 write_vec("d_k.out", back_array[2])
@@ -129,7 +134,9 @@ function main()
         time = @timed begin
             for i = 1:test_num
                 back(1)
-                println("test: [" * string(i) * "/" * string(test_num) * "]  Done.")
+                if i % 20 == 0
+                    println("test: [" * string(i) * "/" * string(test_num) * "]  Done.")
+                end
             end
         end
         println("Forward Time = " * string(time.time / test_num * 1000) * " ms")

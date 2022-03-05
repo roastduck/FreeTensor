@@ -4,15 +4,15 @@
     - jax 0.2.19
         - jaxlib 0.1.70
     - torch 1.8.1
+    - dgl 0.7.1
     - sourceinspect 0.0.4
     - xgboost 1.5.2
     - astor 0.8.1
     - pygments 2.11.2
 - cuda 10.2.89
 - julia 1.6.3
-    - Zygote (Feb 26th, 2022)
-    - CUDA
-    - Flux
-    - Einsum v0.4.1
-    - IterTools v1.4.0
-    - GraphNeuralNetworks v0.3.13
+    - CUDA: 3.4.2
+    - Flux: 0.12.8
+    - Zygote: 0.6.27
+    - GraphNeuralNetworks: 0.3.4
+    - IterTools: 1.3.0

@@ -38,10 +38,18 @@ function inference(ptr::Vector{Int}, idx::Vector{Int},
 end
 
 function main()
-    if length(ARGS) != 1
-        println("Usage: " * PROGRAM_FILE)
+    warmup_num = 10
+    test_num = 100
+    if length(ARGS) != 1 && length(ARGS) != 3
+        println("Usage: " * PROGRAM_FILE * " cpu/gpu <warmup_repeat> <timing_repeat>")
         exit(-1)
     end
+    if length(ARGS) == 3
+        warmup_num = parse(Int, ARGS[2])
+        test_num = parse(Int, ARGS[3])
+    end
+    println(warmup_num, " warmup, ", test_num, "repeats for evalution")
+
 
     # ptr::Vector{Int} = reshape(readdlm(open("../ptr.in"), Int) .+ 1, :)  # (num_v + 1)
     # idx::Vector{Int} = reshape(readdlm(open("../idx.in"), Int) .+ 1, :)  # (num_e)
@@ -61,8 +69,6 @@ function main()
     # w_attn_2::Vector{Float32} = reshape(readdlm(open("../w_attn_2.in"), Float32), :) # (feat_len)
     y::Matrix{Float32} = zeros(Float32, (feat_len, num_v))   # (feat_len, num_v)
 
-    warmup_num = 10
-    test_num = 1000
     for i = 1:warmup_num
         inference(ptr, idx, x, w, w_attn_1, w_attn_2, y, num_v, num_e, feat_len)
     end
@@ -72,7 +78,6 @@ function main()
         end
     end
     write_vec("y.out", y)
-    # writedlm("y.out", [@sprintf("%.18e", i) for i in Array(y')], ' ')
     println("Inference Time = " * string(time.time / test_num * 1000) * " ms")
 end
 

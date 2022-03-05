@@ -81,15 +81,20 @@ function rasterize(vertices, faces, pixels, h, w, n_verts, n_faces)
 end
 
 function main()
-    if length(ARGS) != 2
-        println("Usage: " * PROGRAM_FILE * " Inf/For/Bac")
+    warmup_num = 10
+    test_num = 100
+    if length(ARGS) != 2 && length(ARGS) != 4
+        println("Usage: " * PROGRAM_FILE * "  Inf/For/Bac  <warmup_repeat> <timing_repeat>")
         exit(-1)
     end
+    if length(ARGS) == 4
+        warmup_num = parse(Int, ARGS[3])
+        test_num = parse(Int, ARGS[4])
+    end
+    println(warmup_num, " warmup, ", test_num, "repeats for evalution")
 
     vertices = copy(read_vec("../vertices.in", "Float32")')
-    # vertices = copy(readdlm(open("../vertices.in"), Float32)')
     faces = copy(read_vec("../faces.in", "Int")') .+ 1
-    # faces = copy(readdlm(open("../faces.in"), Int)') .+ 1
     n_verts = size(vertices)[2]
     n_faces = size(faces)[2]
     h = 64
@@ -101,32 +106,27 @@ function main()
     # d_y = reshape(readdlm(open("../d_y.in"), Float32), (w, h, n_faces))
 
     if ARGS[2] == "Inf"
-        warmup_num = 10
-        test_num = 100
         for i = 1:warmup_num
             y = para_rasterize(vertices, faces, h, w, n_verts, n_faces)
             if i == 1
                 write_vec("y.out", y)
-                # writedlm("y.out", [@sprintf("%.10f", i) for i in reshape(y, (1, :))], '\n')
             end
-            println("warmup: [" * string(i) * "/" * string(warmup_num) * "]  Done.")
         end
         time = @timed begin
             for i = 1:test_num
                 y = para_rasterize(vertices, faces, h, w, n_verts, n_faces)
-                println("test: [" * string(i) * "/" * string(test_num) * "]  Done.")
             end
         end
         println("Inference Time = " * string(time.time / test_num * 1000) * " ms")
     elseif ARGS[2] == "For"
-        warmup_num = 2
-        test_num = 5
         for i = 1:warmup_num
             z, back = Zygote.pullback(
                 (vertices) -> sum(rasterize(vertices, faces, pixels, h, w, n_verts, n_faces) .* d_y),
                 vertices
             )
-            println("warmup: [" * string(i) * "/" * string(warmup_num) * "]  Done.")
+            if i % 20 == 0
+                println("warmup: [" * string(i) * "/" * string(warmup_num) * "]  Done.")
+            end
             # exit(0)
         end
         time = @timed begin
@@ -135,13 +135,13 @@ function main()
                     (vertices) -> sum(rasterize(vertices, faces, pixels, h, w, n_verts, n_faces) .* d_y),
                     vertices
                 )
-                println("test: [" * string(i) * "/" * string(test_num) * "]  Done.")
+                if i % 20 == 0
+                    println("test: [" * string(i) * "/" * string(test_num) * "]  Done.")
+                end
             end
         end
         println("Forward Time = " * string(time.time / test_num * 1000) * " ms")
     elseif ARGS[2] == "Bac"
-        warmup_num = 2
-        test_num = 5
         z, back = Zygote.pullback(
             (vertices) -> sum(rasterize(vertices, faces, pixels, h, w, n_verts, n_faces) .* d_y),
             vertices
@@ -150,14 +150,17 @@ function main()
             back_array = back(1)
             if i == 1
                 write_vec("d_vertices.out", Array(back_array[1]))
-                # writedlm("d_vertices.out", [@sprintf("%.18e", i) for i in reshape(Array(back_array[1]), :)], ' ')
             end
-            println("warmup: [" * string(i) * "/" * string(warmup_num) * "]  Done.")
+            if i % 20 == 0
+                println("warmup: [" * string(i) * "/" * string(warmup_num) * "]  Done.")
+            end
         end
         time = @timed begin
             for i = 1:test_num
                 back(1)
-                println("test: [" * string(i) * "/" * string(test_num) * "]  Done.")
+                if i % 20 == 0
+                    println("test: [" * string(i) * "/" * string(test_num) * "]  Done.")
+                end
             end
         end
         println("Backward Time = " * string(time.time / test_num * 1000) * " ms")

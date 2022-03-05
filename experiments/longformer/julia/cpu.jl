@@ -79,10 +79,18 @@ function operator_transformer(Q, K, V, w, dilation, dilation_heads)::Array{Float
 end
 
 function main()
-    if length(ARGS) != 2
-        println("Usage: " * PROGRAM_FILE * "  Inf/For/Bac")
+    warmup_num = 10
+    test_num = 100
+    if length(ARGS) != 2 && length(ARGS) != 4
+        println("Usage: " * PROGRAM_FILE * "  Inf/For/Bac  <warmup_repeat> <timing_repeat>")
         exit(-1)
     end
+    if length(ARGS) == 4
+        warmup_num = parse(Int, ARGS[3])
+        test_num = parse(Int, ARGS[4])
+    end
+    println(warmup_num, " warmup, ", test_num, "repeats for evalution")
+
     n_heads = 8
     seq_len = 10000
     feat_len = 512
@@ -100,32 +108,28 @@ function main()
     # d_y = reshape(readdlm(open("../d_y.in"), Float32), (feat_len, seq_len, n_heads))
 
     if ARGS[2] == "Inf"
-        warmup_num = 10
-        test_num = 100
         for i = 1:warmup_num
             transformer(q, k, v, y, w, dilation, dilation_heads, n_heads, seq_len, feat_len)
             if i == 1
                 write_vec("y.out", Array(y))
                 # writedlm("y.out", [@sprintf("%.10f", i) for i in reshape(Array(y), (1, :))], ' ')
             end
-            println("warmup: [" * string(i) * "/" * string(warmup_num) * "]  Done.")
         end
         time = @timed begin
             for i = 1:test_num
                 transformer(q, k, v, y, w, dilation, dilation_heads, n_heads, seq_len, feat_len)
-                println("test: [" * string(i) * "/" * string(test_num) * "]  Done.")
             end
         end
         println("Inference Time = " * string(time.time / test_num * 1000) * " ms")
     elseif ARGS[2] == "For"
-        warmup_num = 5
-        test_num = 20
         for i = 1:warmup_num
             z, back = Zygote.pullback(
                 (q, k, v) -> sum(operator_transformer(q, k, v, w, dilation, dilation_heads) .* d_y),
                 q, k, v
             )
-            println("warmup: [" * string(i) * "/" * string(warmup_num) * "]  Done.")
+            if i % 20 == 0
+                println("warmup: [" * string(i) * "/" * string(warmup_num) * "]  Done.")
+            end
         end
         time = @timed begin
             for i = 1:test_num
@@ -133,20 +137,22 @@ function main()
                     (q, k, v) -> sum(operator_transformer(q, k, v, w, dilation, dilation_heads) .* d_y),
                     q, k, v
                 )
-                println("test: [" * string(i) * "/" * string(test_num) * "]  Done.")
+                if i % 20 == 0
+                    println("test: [" * string(i) * "/" * string(test_num) * "]  Done.")
+                end
             end
         end
         println("Forward Time = " * string(time.time / test_num * 1000) * " ms")
     elseif ARGS[2] == "Bac"
-        warmup_num = 5
-        test_num = 50
         z, back = Zygote.pullback(
             (q, k, v) -> sum(operator_transformer(q, k, v, w, dilation, dilation_heads) .* d_y),
             q, k, v
         )
         for i = 1:warmup_num
             back_array = back(1)
-            println("warmup: [" * string(i) * "/" * string(warmup_num) * "]  Done.")
+            if i % 20 == 0
+                println("warmup: [" * string(i) * "/" * string(warmup_num) * "]  Done.")
+            end
             if i == 1
                 write_vec("d_q.out", back_array[1])
                 write_vec("d_k.out", back_array[2])
@@ -156,7 +162,9 @@ function main()
         time = @timed begin
             for i = 1:test_num
                 back(1)
-                println("test: [" * string(i) * "/" * string(test_num) * "]  Done.")
+                if i % 20 == 0
+                    println("test: [" * string(i) * "/" * string(test_num) * "]  Done.")
+                end
             end
         end
         println("Backward Time = " * string(time.time / test_num * 1000) * " ms")

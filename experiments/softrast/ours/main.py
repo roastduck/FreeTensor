@@ -106,13 +106,16 @@ def compile_all(h, w, n_verts, n_faces, device):
 
     print("# Inference:")
     print(inference)
+    t0 = time.time()
     s = ir.Schedule(inference)
     s.auto_schedule(device.target())
     f = ir.lower(s.func(), device.target())
-    print(f)
     code = ir.codegen(f, device.target())
-    print(ir.debug.with_line_no(code))
     inference_exe = ir.Driver(inference, code, device)
+    t1 = time.time()
+    print(f)
+    print(ir.debug.with_line_no(code))
+    print(f"Inference compiling time: {t1 - t0}s")
 
     print("# Forward:")
     print(forward)
