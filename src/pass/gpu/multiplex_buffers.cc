@@ -37,11 +37,11 @@ void FindParallelLoops::visit(const VarDef &op) {
     } else if (op->buffer_->mtype() == MemType::GPUWarp) {
         for (auto &&outer : stack_) {
             if (outer->property_.parallel_.substr(0, 11) == "threadIdx.x") {
-                //TODO: transform ASSERT to error msg
-                ASSERT(outer->len_->isConst());
-                auto len = outer->len_.as<IntConstNode>()->val_;
-                ASSERT(len <= 31);
-                affecting_[op->id()].insert(outer->id());
+                if (outer->len_->isConst() && outer->len_.as<IntConstNode>()->val_ <= 32) {
+                    affecting_[op->id()].insert(outer->id());
+                } else {
+                    ERROR("Only support conditions that threadIdx.x <= 32");
+                }
             }
         }
     }
