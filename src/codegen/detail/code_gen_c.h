@@ -37,10 +37,22 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
     if (op->buffer_->atype() == AccessType::Cache) {
         // e.g. float x[5][5][5];
         this->os() << gen(tensor.dtype()) << " " << name;
-        for (auto &&dim : shape) {
-            this->os() << "[";
-            (*this)(dim);
-            this->os() << "]";
+        if (op->buffer_->mtype() == MemType::GPUWarp) {
+            if ((int) shape.size() && shape[0]->isConst() && shape[0].as<IntConstNode>()->val_ == 32) {
+                for (int i = 1; i < (int) shape.size(); i++) {
+                    this->os() << "[";
+                    (*this)(shape[i]);
+                    this->os() << "]";
+                }
+            } else {
+                ERROR("GPUWarp type must have a 32-size dimension");
+            }
+        } else {
+            for (auto &&dim : shape) {
+                this->os() << "[";
+                (*this)(dim);
+                this->os() << "]";
+            }
         }
         if (op->buffer_->mtype() == MemType::CPU) {
             // Alignment (TODO: Move to CodeGenCPU)
