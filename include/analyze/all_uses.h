@@ -16,6 +16,7 @@ class AllUses : public Visitor {
     static constexpr AllUsesType CHECK_LOAD = 0x1;
     static constexpr AllUsesType CHECK_STORE = 0x2;
     static constexpr AllUsesType CHECK_REDUCE = 0x4;
+    static constexpr AllUsesType CHECK_VAR = 0x8;
 
   private:
     AllUsesType type_;
@@ -30,6 +31,7 @@ class AllUses : public Visitor {
     void visit(const Load &op) override;
     void visit(const Store &op) override;
     void visit(const ReduceTo &op) override;
+    void visit(const Var &op) override;
 };
 
 std::unordered_set<std::string>
@@ -38,6 +40,7 @@ allUses(const AST &op, AllUses::AllUsesType type = AllUses::CHECK_LOAD |
                                                    AllUses::CHECK_REDUCE);
 std::unordered_set<std::string> allReads(const AST &op);
 std::unordered_set<std::string> allWrites(const AST &op);
+std::unordered_set<std::string> allNames(const AST &op);
 
 } // namespace ir
 

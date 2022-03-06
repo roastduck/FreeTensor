@@ -23,6 +23,13 @@ void AllUses::visit(const ReduceTo &op) {
     }
 }
 
+void AllUses::visit(const Var &op) {
+    Visitor::visit(op);
+    if (type_ & CHECK_VAR) {
+        uses_.insert(op->name_);
+    }
+}
+
 std::unordered_set<std::string> allUses(const AST &op,
                                         AllUses::AllUsesType type) {
     AllUses visitor(type);
@@ -36,6 +43,11 @@ std::unordered_set<std::string> allReads(const AST &op) {
 
 std::unordered_set<std::string> allWrites(const AST &op) {
     return allUses(op, AllUses::CHECK_STORE | AllUses::CHECK_REDUCE);
+}
+
+std::unordered_set<std::string> allNames(const AST &op) {
+    return allUses(op, AllUses::CHECK_LOAD | AllUses::CHECK_STORE |
+                           AllUses::CHECK_REDUCE | AllUses::CHECK_VAR);
 }
 
 } // namespace ir
