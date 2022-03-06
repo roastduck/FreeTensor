@@ -1,18 +1,13 @@
-
-#include <analyze/all_iters.h>
-#include <analyze/all_uses.h>
-
-#include <pass/make_reduction.h>
-#include <pass/scalar_prop_const.h>
-#include <pass/undo_make_reduction.h>
-
-#include <math/utils.h>
-
-#include <hash.h>
-
 #include <cmath>
 #include <map>
 #include <stack>
+
+#include <analyze/all_uses.h>
+#include <hash.h>
+#include <math/utils.h>
+#include <pass/make_reduction.h>
+#include <pass/scalar_prop_const.h>
+#include <pass/undo_make_reduction.h>
 
 namespace ir {
 

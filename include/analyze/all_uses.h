@@ -40,6 +40,7 @@ allUses(const AST &op, AllUses::AllUsesType type = AllUses::CHECK_LOAD |
                                                    AllUses::CHECK_REDUCE);
 std::unordered_set<std::string> allReads(const AST &op);
 std::unordered_set<std::string> allWrites(const AST &op);
+std::unordered_set<std::string> allIters(const AST &op);
 std::unordered_set<std::string> allNames(const AST &op);
 
 } // namespace ir

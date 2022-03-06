@@ -45,6 +45,10 @@ std::unordered_set<std::string> allWrites(const AST &op) {
     return allUses(op, AllUses::CHECK_STORE | AllUses::CHECK_REDUCE);
 }
 
+std::unordered_set<std::string> allIters(const AST &op) {
+    return allUses(op, AllUses::CHECK_VAR);
+}
+
 std::unordered_set<std::string> allNames(const AST &op) {
     return allUses(op, AllUses::CHECK_LOAD | AllUses::CHECK_STORE |
                            AllUses::CHECK_REDUCE | AllUses::CHECK_VAR);
