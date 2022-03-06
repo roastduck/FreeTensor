@@ -635,6 +635,49 @@ def test_tape_5():
     assert std.match(backward)
 
 
+def test_hoist_tape_out_of_loop():
+    with ir.VarDef([("x1", (4,), "float32", "input", "cpu"),
+                    ("x2", (4,), "float32", "input", "cpu"),
+                    ("x3", (4,), "float32", "input", "cpu"),
+                    ("y", (4,), "float32", "output", "cpu")]) as (x1, x2, x3,
+                                                                  y):
+        with ir.For("i", 0, 4) as i:
+            ir.MarkNid("V_t")
+            with ir.VarDef("t", (), "float32", "cache", "cpu") as t:
+                t[()] = x1[i] + x2[i]
+                y[i] = t[()] * x3[i]
+    func = ir.Func("main", ["x1", "x2", "x3", "y"], [], ir.pop_ast())
+    print(func)
+    forward, backward, _, _, _ = ir.grad(func, set(["x1", "x2", "x3"]),
+                                         set(["y"]), set(["V_t"]))
+    print("Forward:")
+    print(forward)
+    print("Backward:")
+    print(backward)
+    forward = ir.lower(forward)
+    backward = ir.lower(backward)
+    print("Forward:")
+    print(forward)
+    print("Backward:")
+    print(backward)
+
+    with ir.VarDef([("x1", (4,), "float32", "input", "cpu"),
+                    ("x2", (4,), "float32", "input", "cpu"),
+                    ("x3", (4,), "float32", "input", "cpu"),
+                    ("y", (4,), "float32", "output", "cpu")]) as (x1, x2, x3,
+                                                                  y):
+        with ir.VarDef("t_tape", (4,), "float32", "output", "cpu") as t_tape:
+            # Here out of the loop
+            with ir.For("i", 0, 4) as i:
+                with ir.VarDef("t", (), "float32", "cache", "cpu") as t:
+                    t[()] = x1[i] + x2[i]
+                    t_tape[i] = t[()]
+                    y[i] = t[()] * x3[i]
+    std = ir.pop_ast()
+
+    assert std.match(forward.body)
+
+
 def test_tape_mode_all():
     with ir.VarDef([("x1", (4,), "float32", "input", "cpu"),
                     ("x2", (4,), "float32", "input", "cpu"),

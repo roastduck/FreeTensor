@@ -5,6 +5,7 @@
 #include <cursor.h>
 #include <pass/float_simplify.h>
 #include <pass/grad.h>
+#include <pass/hoist_return_vars.h>
 #include <pass/hoist_var_over_stmt_seq.h>
 #include <pass/make_reduction.h>
 #include <pass/output_intermediates.h>
@@ -528,6 +529,8 @@ grad(const Func &func, const std::unordered_set<std::string> &_requires,
     }
     auto forwardFunc = makeFunc(func->name_, func->params_,
                                 std::move(forwardReturns), forward, closure);
+
+    forwardFunc = hoistReturnVars(forwardFunc);
 
     for (auto &&[x, dzdx] : requireGrads) {
         backwardParams.emplace_back(dzdx);
