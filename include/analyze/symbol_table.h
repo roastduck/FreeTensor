@@ -18,6 +18,7 @@ class SymbolTableInterface {
     virtual const VarDef &def(const std::string &name) const = 0;
     virtual const Ref<Buffer> &buffer(const std::string &name) const = 0;
 
+    virtual bool hasLoop(const std::string &name) const = 0;
     virtual const For &loop(const std::string &name) const = 0;
 
     virtual void pushDef(const VarDef &op) = 0;
@@ -47,6 +48,10 @@ class SymbolTableData : public SymbolTableInterface {
 
     const Ref<Buffer> &buffer(const std::string &name) const override {
         return def(name)->buffer_;
+    }
+
+    virtual bool hasLoop(const std::string &name) const override {
+        return loops_.count(name);
     }
 
     virtual const For &loop(const std::string &name) const override {
@@ -101,7 +106,7 @@ class SymbolTable : public BaseClass, public SymbolTableInterface {
 
   public:
     template <class... T>
-    SymbolTable(T &&... args) : BaseClass(std::forward<T>(args)...) {}
+    SymbolTable(T &&...args) : BaseClass(std::forward<T>(args)...) {}
 
     const std::unordered_set<std::string> &names() const override {
         return impl_.names();
@@ -117,6 +122,9 @@ class SymbolTable : public BaseClass, public SymbolTableInterface {
         return impl_.buffer(name);
     }
 
+    bool hasLoop(const std::string &name) const override {
+        return impl_.hasLoop(name);
+    }
     const For &loop(const std::string &name) const override {
         return impl_.loop(name);
     }

@@ -1,11 +1,36 @@
 #ifndef CHECK_NOT_MODIFIED
 #define CHECK_NOT_MODIFIED
 
+#include <unordered_map>
+#include <unordered_set>
+
+#include <analyze/symbol_table.h>
 #include <mutator.h>
+#include <visitor.h>
 
 namespace ir {
 
 enum class CheckNotModifiedSide : int { Before, After };
+
+class CheckNameToDefMapping : public SymbolTable<Visitor> {
+    typedef SymbolTable<Visitor> BaseClass;
+
+    ID pos_;
+    const std::unordered_set<std::string> &names_;
+    std::unordered_map<std::string, ID> name2def_;
+
+  public:
+    CheckNameToDefMapping(const ID &pos,
+                          const std::unordered_set<std::string> &names)
+        : pos_(pos), names_(names) {}
+
+    const std::unordered_map<std::string, ID> &name2def() const {
+        return name2def_;
+    }
+
+  protected:
+    void visitStmt(const Stmt &stmt) override;
+};
 
 class InsertTmpEval : public Mutator {
     Expr expr_;
@@ -28,8 +53,10 @@ class InsertTmpEval : public Mutator {
  * Verify if `expr` is evaluated at just before/after `s0` and before/after
  * `s1`, it will result in the same value
  *
- * The caller must ensure that every names in `expr` are defined in both sites,
- * and defined by the same For or VarDef nodes
+ * It will return false in two cases:
+ *
+ * 1. The defining VarDef or For nodes in `s0` and `s1` are different, or
+ * 2. Variables used in `expr` is written between `s0` and `s1`.
  */
 bool checkNotModified(const Stmt &op, const Expr &expr,
                       CheckNotModifiedSide s0Side, const ID &s0,

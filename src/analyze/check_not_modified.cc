@@ -6,6 +6,25 @@
 
 namespace ir {
 
+static std::unordered_map<std::string, ID>
+usedDefsAt(const ID &pos, const std::unordered_set<std::string> &names) {
+    CheckNameToDefMapping checker(pos, names);
+    return checker.name2def();
+}
+
+void CheckNameToDefMapping::visitStmt(const Stmt &stmt) {
+    BaseClass::visitStmt(stmt);
+    if (stmt->id() == pos_) {
+        for (auto &&name : names_) {
+            if (hasDef(name)) {
+                name2def_[name] = def(name)->id();
+            } else if (hasLoop(name)) {
+                name2def_[name] = loop(name)->id();
+            }
+        }
+    }
+}
+
 Stmt InsertTmpEval::visitStmt(const Stmt &_op) {
     auto op = Mutator::visitStmt(_op);
     auto ret = op;
@@ -29,8 +48,17 @@ Stmt InsertTmpEval::visitStmt(const Stmt &_op) {
 bool checkNotModified(const Stmt &op, const Expr &expr,
                       CheckNotModifiedSide s0Side, const ID &s0,
                       CheckNotModifiedSide s1Side, const ID &s1) {
-    if (allReads(expr).empty()) {
+    auto names = allNames(expr);
+    if (names.empty()) {
         return true;
+    }
+    if (usedDefsAt(s0, names) != usedDefsAt(s1, names)) {
+        return false;
+    }
+
+    auto reads = allReads(expr);
+    if (reads.empty()) {
+        return true; // early exit
     }
 
     // First insert temporarily Eval node to the AST, then perform dependency
