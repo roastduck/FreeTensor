@@ -258,7 +258,7 @@ void CodeGenCUDA::visit(const For &op) {
                 os() << (first ? "" : ", ") << mangle(name);
                 first = false;
             }
-            os() << ", __glmem);" << std::endl;
+            os() << ", _params, __glmem);" << std::endl;
             if (globalSize > 0) {
                 makeIndent();
                 os() << "cudaFree(__glmem);" << std::endl;
@@ -492,6 +492,8 @@ void CodeGenCUDA::visit(const MatMul &op) {
 }
 
 std::string codeGenCUDA(const Func &func) {
+    auto nParams = func->params_.size();
+
     CodeGenCUDA visitor(func->params_, func->returns_);
     auto &&op = func->body_;
     visitor.beginBlock();
@@ -511,9 +513,22 @@ extern "C" {
 
     auto body = visitor.toString([&](const CodeGenCUDA::Stream &stream) {
         if (stream.name_ == "default") {
-            return "void run(void **_params, void **_returns, size_t "
-                   "**_retShapes, size_t *_retDims, GPUContext_t _ctx) " +
-                   stream.os_.str();
+            std::string s =
+                "void run(void **__params, void **_returns, size_t "
+                "**_retShapes, size_t *_retDims, GPUContext_t _ctx) {\n";
+            // We copy __params to _params, in order to pass the parameter pack
+            // into a kernel
+            s += "__ByValArray<void *, " + std::to_string(nParams) +
+                 "> _params;\n";
+            for (size_t i = 0; i < nParams; i++) {
+                s += "_params[" + std::to_string(i) + "] = __params[" +
+                     std::to_string(i) + "];\n";
+            }
+            s += "\n";
+            s += stream.os_.str();
+            s += "\n";
+            s += "}\n";
+            return s;
         } else {
             const auto &dim = stream.threadDim_;
             std::ostringstream os;
@@ -564,7 +579,8 @@ extern "C" {
                 os << (first ? "" : ", ") << "int " << mangle(name);
                 first = false;
             }
-            os << ", uint8_t *__glmem) ";
+            os << ", __ByValArray<void *, " + std::to_string(nParams) +
+                      "> _params, uint8_t *__glmem) ";
             os << stream.os_.str() << std::endl;
             return os.str();
         }
