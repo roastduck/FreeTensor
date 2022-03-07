@@ -170,6 +170,40 @@ def test_use_forward_value_when_taped():
     assert std.match(ast)
 
 
+def test_use_taped_forward_value():
+    with ir.VarDef([("x", (4,), "float32", "input", "cpu"),
+                    ("y1", (4,), "float32", "output", "cpu"),
+                    ("y2", (4,), "float32", "output", "cpu")]) as (x, y1, y2):
+        with ir.For("i", 0, 4) as i:
+            ir.MarkNid("V_t")
+            with ir.VarDef("t", (), "float32", "cache", "cpu") as t:
+                t[()] = ir.exp(x[i])
+                y1[i] = 2 * t[()]
+                y2[i] = 3 * t[()]
+    ast = ir.pop_ast()
+    print(ast)
+    _, ast, _, _, _ = ir.grad(ast, set(["x"]), set(["y1", "y2"]), set(["V_t"]))
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([
+        ("x", (4,), "float32", "input", "cpu"),
+        ("d_x", (4,), "float32", "output", "cpu"),
+        ("y1", (4,), "float32", "input", "cpu"),
+        ("d_y1", (4,), "float32", "inout", "cpu"),
+        ("y2", (4,), "float32", "input", "cpu"),
+        ("d_y2", (4,), "float32", "inout", "cpu"),
+    ]) as (x, d_x, y1, d_y1, y2, d_y2):
+        with ir.For("i", 3, -1, -1) as i:
+            with ir.VarDef("t.tape", (4,), "float32", "input", "cpu") as t:
+                d_x[i] = ((d_y2[i] * 3) + (d_y1[i] * 2)) * t[i]
+    std = ir.make_reduction(ir.pop_ast())
+    print(std)
+
+    assert std.match(ast)
+
+
 def test_multiple_statements():
     with ir.VarDef([("x1", (), "float32", "input", "cpu"),
                     ("x2", (), "float32", "input", "cpu"),

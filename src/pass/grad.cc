@@ -52,6 +52,21 @@ void PropagateRequire::visit(const VarDef &op) {
     BaseClass::visit(op);
 }
 
+Expr ReplaceByTape::replaceForwardValue(const Expr &_equLoad) {
+    auto __equLoad = deepCopy(_equLoad);
+    ASSERT(__equLoad->nodeType() == ASTNodeType::Load);
+    auto equLoad = __equLoad.as<LoadNode>();
+    if (tapeMap_.count(symbolTable_.def(equLoad->var_)->id())) {
+        auto tapeVar = tapeMap_.at(symbolTable_.def(equLoad->var_)->id());
+        if (tapeVar != equLoad->var_) {
+            equLoad->var_ = tapeVar;
+            equLoad->indices_.insert(equLoad->indices_.begin(),
+                                     versions_.at(parent_->id()));
+        }
+    }
+    return equLoad;
+}
+
 Expr ReplaceByTape::visit(const Load &_op) {
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Load);
