@@ -99,14 +99,42 @@ Stmt Grad::visit(const For &op) {
                 noDeps.emplace_back(fwdVar + ".grad");
             }
         }
-        auto rbegin = makeAdd(
-            op->begin_, makeMul(op->step_, makeSub(op->len_, makeIntConst(1))));
-        auto rend = makeSub(op->begin_, op->step_);
-        auto rstep = makeSub(makeIntConst(0), op->step_);
+        ReplaceByTape replaceByTape(*this, tapeMap_, versions_, op);
+        auto rbegin = replaceByTape(
+            makeAdd(op->begin_,
+                    makeMul(op->step_, makeSub(op->len_, makeIntConst(1)))));
+        auto rend = replaceByTape(makeSub(op->begin_, op->step_));
+        auto rstep = replaceByTape(makeSub(makeIntConst(0), op->step_));
         return makeFor(op->id(), op->iter_, std::move(rbegin), std::move(rend),
                        std::move(rstep), op->len_,
                        op->property_.withNoDeps(noDeps), (*this)(op->body_));
     }
+}
+
+Stmt Grad::visit(const If &_op) {
+    auto __op = BaseClass::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::If);
+    auto op = __op.as<IfNode>();
+    if (isRecompute_) {
+        op->setId("");
+    } else {
+        ReplaceByTape replaceByTape(*this, tapeMap_, versions_, op);
+        op->cond_ = replaceByTape(op->cond_);
+    }
+    return op;
+}
+
+Stmt Grad::visit(const Assert &_op) {
+    auto __op = BaseClass::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::Assert);
+    auto op = __op.as<AssertNode>();
+    if (isRecompute_) {
+        op->setId("");
+    } else {
+        ReplaceByTape replaceByTape(*this, tapeMap_, versions_, op);
+        op->cond_ = replaceByTape(op->cond_);
+    }
+    return op;
 }
 
 Stmt Grad::visit(const VarDef &_op) {

@@ -147,6 +147,8 @@ class Grad : public SymbolTable<Mutator> {
   protected:
     Stmt visit(const StmtSeq &op) override;
     Stmt visit(const For &op) override;
+    Stmt visit(const If &op) override;
+    Stmt visit(const Assert &op) override;
     Stmt visit(const VarDef &op) override;
     Stmt visit(const Store &op) override;
     Stmt visit(const ReduceTo &op) override;

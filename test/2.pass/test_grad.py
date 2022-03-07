@@ -678,6 +678,66 @@ def test_hoist_tape_out_of_loop():
     assert std.match(forward.body)
 
 
+def test_use_tape_in_cond():
+    with ir.VarDef([("x1", (4,), "float32", "input", "cpu"),
+                    ("x2", (4,), "float32", "input", "cpu"),
+                    ("x3", (4,), "float32", "input", "cpu"),
+                    ("y", (4,), "float32", "output", "cpu")]) as (x1, x2, x3,
+                                                                  y):
+        with ir.For("i", 0, 4) as i:
+            ir.MarkNid("V_t")
+            with ir.VarDef("t", (), "float32", "cache", "cpu") as t:
+                t[()] = x1[i] + x2[i]
+                with ir.If(t[()] >= 0):
+                    y[i] = t[()] * x3[i]
+                with ir.Else():
+                    y[i] = t[()]
+    func = ir.Func("main", ["x1", "x2", "x3", "y"], [], ir.pop_ast())
+    print(func)
+    forward, backward, _, _, _ = ir.grad(func, set(["x1", "x2", "x3"]),
+                                         set(["y"]), set(["V_t"]))
+    print("Forward:")
+    print(forward)
+    print("Backward:")
+    print(backward)
+    forward = ir.lower(forward)
+    backward = ir.lower(backward)
+    print("Forward:")
+    print(forward)
+    print("Backward:")
+    print(backward)
+
+    with ir.VarDef([("x1", (4,), "float32", "input", "cpu"),
+                    ("d_x1", (4,), "float32", "output", "cpu"),
+                    ("x2", (4,), "float32", "input", "cpu"),
+                    ("d_x2", (4,), "float32", "output", "cpu"),
+                    ("x3", (4,), "float32", "input", "cpu"),
+                    ("d_x3", (4,), "float32", "output", "cpu"),
+                    ("y", (4,), "float32", "input", "cpu"),
+                    ("d_y", (4,), "float32", "inout", "cpu")
+                   ]) as (x1, d_x1, x2, d_x2, x3, d_x3, y, d_y):
+        with ir.For("i0", 3, -1, -1) as i:
+            d_x3[i] = 0
+        with ir.For("i", 3, -1, -1) as i:
+            with ir.VarDef([("t.tape", (4,), "float32", "input", "cpu"),
+                            ("d_t", (), "float32", "cache", "cpu")]) as (t,
+                                                                         d_t):
+                d_t[()] = 0
+                with ir.If(t[i] >= 0):
+                    d_t[()] = d_y[i] * x3[i]
+                    d_x3[i] = d_y[i] * t[i]
+                    d_y[i] = 0
+                    # FIXME: Why did we not remove this `= 0`?
+                    # Bugs in analyze/deps that thinks two branches of the `If` depend on each other?
+                with ir.Else():
+                    d_t[()] = d_y[i]
+                d_x1[i] = d_t[()]
+                d_x2[i] = d_t[()]
+    std = ir.pop_ast()
+
+    assert std.match(backward.body)
+
+
 def test_tape_mode_all():
     with ir.VarDef([("x1", (4,), "float32", "input", "cpu"),
                     ("x2", (4,), "float32", "input", "cpu"),
