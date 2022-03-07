@@ -30,13 +30,13 @@ void CodeGenCUDA::genAlloc(const Tensor &tensor, const std::string &rawPtr,
     os() << shapePtr << " = " << ndim << " > 0 ? (size_t*)malloc((" << dimPtr
          << " = " << ndim << ") * sizeof(size_t)) : NULL;" << std::endl;
     makeIndent();
-    os() << "cudaMalloc(&" << rawPtr << ", ";
+    os() << "checkCudaError(cudaMalloc(&" << rawPtr << ", ";
     for (auto &&[i, dim] : iter::enumerate(tensor.shape())) {
         os() << "(" << shapePtr << "[" << i << "] = ";
         (*this)(dim);
         os() << ") * ";
     }
-    os() << "sizeof(" << gen(tensor.dtype()) << "));" << std::endl;
+    os() << "sizeof(" << gen(tensor.dtype()) << ")));" << std::endl;
 }
 
 bool CodeGenCUDA::inKernel() const {
@@ -230,13 +230,13 @@ void CodeGenCUDA::visit(const For &op) {
             os() << "uint8_t *__glmem = NULL;" << std::endl;
             if (globalSize > 0) {
                 makeIndent();
-                os() << "cudaMalloc(&__glmem, " << globalSize << ");"
-                     << std::endl;
+                os() << "checkCudaError(cudaMalloc(&__glmem, " << globalSize
+                     << "));" << std::endl;
             }
             makeIndent();
-            os() << "cudaFuncSetAttribute(" << kernel
+            os() << "checkCudaError(cudaFuncSetAttribute(" << kernel
                  << ", cudaFuncAttributeMaxDynamicSharedMemorySize, "
-                 << std::to_string(sharedSize) << ");" << std::endl;
+                 << std::to_string(sharedSize) << "));" << std::endl;
             makeIndent();
             os() << kernel << "<<<dim3("
                  << (dim.count("blockIdx.x") ? dim.at("blockIdx.x") : 1) << ", "
@@ -342,12 +342,13 @@ void CodeGenCUDA::visit(const VarDef &op) {
                 }
                 os() << ";" << std::endl;
                 makeIndent();
-                os() << "cudaMalloc(&" << mangle(op->name_) << ", ";
+                os() << "checkCudaError(cudaMalloc(&" << mangle(op->name_)
+                     << ", ";
                 for (auto &&dim : shape) {
                     (*this)(dim);
                     os() << " * ";
                 }
-                os() << "sizeof(" << gen(tensor.dtype()) << "));" << std::endl;
+                os() << "sizeof(" << gen(tensor.dtype()) << ")));" << std::endl;
 
                 (*this)(op->body_);
 

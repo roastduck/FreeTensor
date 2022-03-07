@@ -8,7 +8,7 @@
 
 #define checkCublasError(call)                                                 \
     {                                                                          \
-        auto err = call;                                                       \
+        auto err = (call);                                                     \
         if (CUBLAS_STATUS_SUCCESS != err) {                                    \
             fprintf(stderr, "cuBLAS error in file '%s' in line %i : %s.\n",    \
                     __FILE__, __LINE__, cublasGetErrorString(err));            \
