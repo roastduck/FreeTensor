@@ -82,7 +82,7 @@ class GradExpr : public Visitor {
     }
 
     Expr useForwardVal(const Expr &op) {
-        return replaceByLoadY(replaceByTape_(op));
+        return replaceByTape_(replaceByLoadY(op));
     }
 
   protected:
