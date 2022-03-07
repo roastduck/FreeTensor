@@ -37,11 +37,9 @@ void FindParallelLoops::visit(const VarDef &op) {
     } else if (op->buffer_->mtype() == MemType::GPUWarp) {
         for (auto &&outer : stack_) {
             if (outer->property_.parallel_.substr(0, 11) == "threadIdx.x") {
-                if (outer->len_->isConst() && outer->len_.as<IntConstNode>()->val_ <= 32) {
-                    affecting_[op->id()].insert(outer->id());
-                } else {
-                    ERROR("Only support conditions that threadIdx.x <= 32");
-                }
+                //Only support conditions that threadIdx.x <= 32
+                makeAssert(StmtNode::newId(), makeLE(outer->len_, makeIntConst(32)), makeStmtSeq(StmtNode::newId(), std::initializer_list<Stmt>()));
+                affecting_[op->id()].insert(outer->id());
             }
         }
     }

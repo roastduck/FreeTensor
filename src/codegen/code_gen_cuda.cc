@@ -471,13 +471,17 @@ void CodeGenCUDA::visit(const VarDef &op) {
             }
             CodeGenC::visit(op);
             break;
-        case MemType::GPUWarp:
+        case MemType::GPUWarp: {
             if (!inKernel()) {
                 throw InvalidProgram("Allocating a warp buffer outside a "
                                      "kernel is not allowed");
             }
+            auto &&tensor = op->buffer_->tensor();
+            auto &&shape = tensor.shape();
+            ASSERT((int) shape.size() > 0 && shape[0]->isConst() && shape[0].as<IntConstNode>()->val_ <= 32);
             CodeGenC::visit(op);
             break;
+        }
         default:
             CodeGenC::visit(op);
             break;
