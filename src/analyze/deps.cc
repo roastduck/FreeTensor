@@ -222,8 +222,32 @@ Ref<std::string> AnalyzeDeps::makeCond(GenPBExpr &genPBExpr,
                 ret += " and ";
             }
             ret += *str;
-        } else if (relax == RelaxMode::Necessary) {
-            return nullptr;
+        } else {
+            if (relax == RelaxMode::Necessary) {
+                return nullptr;
+            } else {
+                // Create a dummy integer variable because ISL does not bool
+                // variables
+                if (cond->nodeType() == ASTNodeType::LNot) {
+                    auto predicate =
+                        "__pred_" +
+                        std::to_string(cond.as<LNotNode>()->expr_->hash()) +
+                        genPBExpr.varSuffix();
+                    externals[cond.as<LNotNode>()->expr_] = predicate;
+                    if (!ret.empty()) {
+                        ret += " and ";
+                    }
+                    ret += predicate + " <= 0";
+                } else {
+                    auto predicate = "__pred_" + std::to_string(cond->hash()) +
+                                     genPBExpr.varSuffix();
+                    externals[cond] = predicate;
+                    if (!ret.empty()) {
+                        ret += " and ";
+                    }
+                    ret += predicate + " > 0";
+                }
+            }
         }
     }
     return Ref<std::string>::make(ret);

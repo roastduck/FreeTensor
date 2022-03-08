@@ -38,6 +38,8 @@ class GenPBExpr : public Visitor {
 
     const VarMap &vars(const Expr &op) { return vars_[op]; }
 
+    const std::string &varSuffix() const { return varSuffix_; }
+
     Opt<std::string> gen(const Expr &op);
 
   protected:
