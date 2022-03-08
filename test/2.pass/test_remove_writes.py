@@ -476,3 +476,44 @@ def test_circular_dependency_in_parallel():
     std = ir.make_reduction(ir.pop_ast())
 
     assert std.match(ast)
+
+
+def test_one_loop_depends_on_multiple_statements_no_remove():
+    with ir.VarDef("u", (64,), "float64", "input", "cpu") as u:
+        with ir.VarDef("y", (2,), "float64", "output", "cpu") as y:
+            with ir.VarDef("tmp", (2,), "float64", "cache", "cpu") as tmp:
+                with ir.For("i", 0, 2) as i:
+                    tmp[i] = 0
+                with ir.VarDef("A", (2,), "float32", "cache", "cpu") as A:
+                    A[0] = 0
+                    A[1] = 1
+                    with ir.For("i", 0, 2) as i:
+                        tmp[i] += A[i] * u[0, 0] + A[i] * u[0, 1]
+                    A[0] = 2
+                    A[1] = 3
+                    with ir.For("i", 0, 2) as i:
+                        tmp[i] += A[i] * u[1, 0] + A[i] * u[1, 1]
+                with ir.For("i", 0, 2) as i:
+                    y[i] = tmp[i]
+    ast = ir.pop_ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef("u", (64,), "float64", "input", "cpu") as u:
+        with ir.VarDef("y", (2,), "float64", "output", "cpu") as y:
+            with ir.VarDef("tmp", (2,), "float64", "cache", "cpu") as tmp:
+                with ir.VarDef("A", (2,), "float32", "cache", "cpu") as A:
+                    A[0] = 0
+                    A[1] = 1
+                    with ir.For("i", 0, 2) as i:
+                        tmp[i] = A[i] * u[0, 0] + A[i] * u[0, 1]
+                    A[0] = 2
+                    A[1] = 3
+                    with ir.For("i", 0, 2) as i:
+                        tmp[i] += A[i] * u[1, 0] + A[i] * u[1, 1]
+                with ir.For("i", 0, 2) as i:
+                    y[i] = tmp[i]
+    std = ir.make_reduction(ir.pop_ast())
+
+    assert std.match(ast)

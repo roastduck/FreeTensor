@@ -543,15 +543,13 @@ PBMap AnalyzeDeps::projectOutPrivateAxis(PBCtx &presburger, int iterDim,
 
 void AnalyzeDeps::projectOutPrivateAxis(
     PBCtx &presburger, const Ref<AccessPoint> &point,
-    const std::vector<Ref<AccessPoint>> &otherList, PBMap &pmap,
+    const std::vector<Ref<AccessPoint>> &otherList,
     std::vector<PBMap> &omapList, int iterDim) {
     if (mode_ == FindDepsMode::Dep) {
-        int pCommonDims = 0;
         std::vector<int> oCommonDims(otherList.size(), 0);
         for (size_t i = 0, n = otherList.size(); i < n; i++) {
             auto &&other = otherList[i];
             int cpo = numCommonDims(point, other);
-            pCommonDims = std::max(pCommonDims, cpo);
             oCommonDims[i] = std::max(oCommonDims[i], cpo);
             if (i + 1 < n) {
                 int co1o2 = numCommonDims(other, otherList[i + 1]);
@@ -560,12 +558,6 @@ void AnalyzeDeps::projectOutPrivateAxis(
             }
         }
 
-        if (pCommonDims + 1 < (int)point->iter_.size()) {
-            pmap = applyDomain(
-                std::move(pmap),
-                projectOutPrivateAxis(presburger, iterDim, pCommonDims + 1));
-            pmap = coalesce(std::move(pmap));
-        }
         for (auto &&[common, other, omap] :
              iter::zip(oCommonDims, otherList, omapList)) {
             if (common + 1 < (int)other->iter_.size()) {
@@ -742,8 +734,7 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
         omap = makeAccMap(presburger, *other, iterDim, accDim, earlierRelax_,
                           "__ext_o" + std::to_string(i), oExternals);
     }
-    projectOutPrivateAxis(presburger, point, otherList, pmap, omapList,
-                          iterDim);
+    projectOutPrivateAxis(presburger, point, otherList, omapList, iterDim);
     for (auto &&[i, other, omap, oExternals, os2a, oIter, depAll] :
          iter::zip(iter::count(), otherList, omapList, oExternalsList, os2aList,
                    oIterList, depAllList)) {
@@ -830,8 +821,7 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
         pmap = makeAccMap(presburger, *point, iterDim, accDim, laterRelax_,
                           "__ext_p" + std::to_string(i), pExternals);
     }
-    projectOutPrivateAxis(presburger, other, pointList, omap, pmapList,
-                          iterDim);
+    projectOutPrivateAxis(presburger, other, pointList, pmapList, iterDim);
     for (auto &&[i, point, pmap, pExternals, ps2a, pIter, depAll] :
          iter::zip(iter::count(), pointList, pmapList, pExternalsList, ps2aList,
                    pIterList, depAllList)) {
@@ -976,10 +966,16 @@ std::string toString(const Dependency &dep) {
     std::ostringstream os;
     os << "Dependency ";
     os << (dep.later()->nodeType() == ASTNodeType::Load ? "READ " : "WRITE ")
-       << dep.later() << " in " << dep.later_.cursor_.node();
+       << dep.later();
+    if (dep.later()->isExpr()) {
+        os << " in " << dep.later_.cursor_.node();
+    }
     os << " after ";
     os << (dep.earlier()->nodeType() == ASTNodeType::Load ? "READ " : "WRITE ")
-       << dep.earlier() << " in " << dep.earlier_.cursor_.node();
+       << dep.earlier();
+    if (dep.earlier()->isExpr()) {
+        os << " in " << dep.earlier_.cursor_.node();
+    }
     bool first = true;
     for (auto &&[scope, dir] : dep.cond_) {
         os << (first ? " along " : " and ");
