@@ -11,7 +11,7 @@ sys.path.append('../..')
 from common.numpy.io import load_txt, store_txt
 
 
-def compile_all(n_faces, in_feats, out_feats, device):
+def compile_all(n_faces, in_feats, out_feats, device, ad_save_all):
     mtype = device.main_mem_type()
 
     @ir.transform
@@ -38,9 +38,6 @@ def compile_all(n_faces, in_feats, out_feats, device):
             y3 = matmul(sum3, w3)
             assign(y[i], add(add(add(y0, y1), y2), y3))
 
-    forward, backward, requires, privdes, _ = ir.grad(
-        inference, set(["x", "w0", "w1", "w2", "w3"]), set(["y"]))
-
     print("# Inference:")
     print(inference)
     t0 = time.time()
@@ -53,6 +50,10 @@ def compile_all(n_faces, in_feats, out_feats, device):
     print(f)
     print(ir.debug.with_line_no(code))
     print(f"Inference compiling time: {t1 - t0}s")
+
+    forward, backward, requires, privdes, _ = ir.grad(
+        inference, set(["x", "w0", "w1", "w2", "w3"]), set(["y"]),
+        ir.GradTapeMode.All if ad_save_all else ir.GradTapeMode.NoReuseOnly)
 
     print("# Forward:")
     print(forward)
@@ -100,6 +101,9 @@ if __name__ == '__main__':
                         default=100,
                         dest='test_num')
     parser.add_argument('--infer-only', action='store_true', dest='infer_only')
+    parser.add_argument('--ad-save-all',
+                        action='store_true',
+                        dest='ad_save_all')
     cmd_args = parser.parse_args()
 
     device = cmd_args.target
@@ -142,7 +146,7 @@ if __name__ == '__main__':
     d_y = ir.Array(d_y, ir_dev)
 
     inference, forward, backward = compile_all(n_faces, in_feats, out_feats,
-                                               ir_dev)
+                                               ir_dev, cmd_args.ad_save_all)
 
     print(
         f"{cmd_args.warmup_num} warmup, {cmd_args.test_num} repeats for evalution"

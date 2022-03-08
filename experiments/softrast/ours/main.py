@@ -10,7 +10,7 @@ sys.path.append('../..')
 from common.numpy.io import load_txt, store_txt
 
 
-def compile_all(h, w, n_verts, n_faces, device):
+def compile_all(h, w, n_verts, n_faces, device, ad_save_all):
     """
     Compute soft rasterization of each faces
 
@@ -100,10 +100,6 @@ def compile_all(h, w, n_verts, n_faces, device):
                     y[i, j,
                       k] = ir.sigmoid(inside[()] * dist[()] * dist[()] / sigma)
 
-    forward, backward, requires, privdes, _ = ir.grad(inference,
-                                                      set(["vertices"]),
-                                                      set(["y"]))
-
     print("# Inference:")
     print(inference)
     t0 = time.time()
@@ -116,6 +112,10 @@ def compile_all(h, w, n_verts, n_faces, device):
     print(f)
     print(ir.debug.with_line_no(code))
     print(f"Inference compiling time: {t1 - t0}s")
+
+    forward, backward, requires, privdes, _ = ir.grad(
+        inference, set(["vertices"]), set(["y"]),
+        ir.GradTapeMode.All if ad_save_all else ir.GradTapeMode.NoReuseOnly)
 
     print("# Forward:")
     print(forward)
@@ -157,6 +157,9 @@ if __name__ == '__main__':
                         type=int,
                         default=100,
                         dest='test_num')
+    parser.add_argument('--ad-save-all',
+                        action='store_true',
+                        dest='ad_save_all')
     cmd_args = parser.parse_args()
 
     device = cmd_args.target
@@ -183,7 +186,8 @@ if __name__ == '__main__':
     d_y = ir.Array(d_y, ir_dev)
     d_vertices = ir.Array(d_vertices, ir_dev)
 
-    inference, forward, backward = compile_all(h, w, n_verts, n_faces, ir_dev)
+    inference, forward, backward = compile_all(h, w, n_verts, n_faces, ir_dev,
+                                               cmd_args.ad_save_all)
 
     print(
         f"{cmd_args.warmup_num} warmup, {cmd_args.test_num} repeats for evalution"

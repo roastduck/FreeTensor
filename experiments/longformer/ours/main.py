@@ -10,8 +10,8 @@ sys.path.append('../..')
 from common.numpy.io import load_txt, store_txt
 
 
-def compile_all(w, dilation, dilation_heads, n_heads, seq_len, feat_len,
-                device):
+def compile_all(w, dilation, dilation_heads, n_heads, seq_len, feat_len, device,
+                ad_save_all):
     mtype = device.main_mem_type()
 
     sqrt_d = math.sqrt(feat_len)
@@ -67,10 +67,6 @@ def compile_all(w, dilation, dilation_heads, n_heads, seq_len, feat_len,
                               p] += attn[k + w] * V[i, j + ir.if_then_else(
                                   i >= dilation_heads, k, k * dilation), p]
 
-    forward, backward, requires, privdes, _ = ir.grad(inference,
-                                                      set(["Q", "K", "V"]),
-                                                      set(["Y"]))
-
     print("# Inference:")
     print(inference)
     t0 = time.time()
@@ -83,6 +79,10 @@ def compile_all(w, dilation, dilation_heads, n_heads, seq_len, feat_len,
     print(f)
     print(ir.debug.with_line_no(code))
     print(f"Inference compiling time: {t1 - t0}s")
+
+    forward, backward, requires, privdes, _ = ir.grad(
+        inference, set(["Q", "K", "V"]), set(["Y"]),
+        ir.GradTapeMode.All if ad_save_all else ir.GradTapeMode.NoReuseOnly)
 
     print("# Forward:")
     print(forward)
@@ -126,6 +126,9 @@ if __name__ == '__main__':
                         type=int,
                         default=100,
                         dest='test_num')
+    parser.add_argument('--ad-save-all',
+                        action='store_true',
+                        dest='ad_save_all')
     cmd_args = parser.parse_args()
 
     device = cmd_args.target
@@ -162,7 +165,7 @@ if __name__ == '__main__':
 
     inference, forward, backward = compile_all(w, dilation, dilation_heads,
                                                n_heads, seq_len, feat_len,
-                                               ir_dev)
+                                               ir_dev, cmd_args.ad_save_all)
 
     print(
         f"{cmd_args.warmup_num} warmup, {cmd_args.test_num} repeats for evalution"
