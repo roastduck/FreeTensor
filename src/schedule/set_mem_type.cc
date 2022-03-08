@@ -19,7 +19,7 @@ Stmt SetMemType::visit(const VarDef &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::VarDef);
     auto op = __op.as<VarDefNode>();
     if (op->id() == def_) {
-        if ((mtype_ == MemType::GPUShared || mtype_ == MemType::GPULocal) &&
+        if ((mtype_ == MemType::GPUWarp || mtype_ == MemType::GPUShared || mtype_ == MemType::GPULocal) &&
             inScope_["threadIdx.x"] == 0 && inScope_["threadIdx.y"] == 0 &&
             inScope_["threadIdx.z"] == 0 && inScope_["blockIdx.x"] == 0 &&
             inScope_["blockIdx.y"] == 0 && inScope_["blockIdx.z"] == 0) {
