@@ -1,6 +1,7 @@
+#include <analyze/all_uses.h>
 #include <analyze/analyze_version.h>
 #include <analyze/deps.h>
-#include <analyze/find_all_scopes.h>
+#include <analyze/find_all_loops.h>
 #include <pass/flatten_stmt_seq.h>
 
 namespace ir {
@@ -45,15 +46,16 @@ void CountScopeLen::visit(const For &op) {
 
 void CountScopeLen::visit(const StmtSeq &op) {
     Visitor::visit(op);
-    Expr len;
+    Expr len, lastLen;
     for (auto &&stmt : op->stmts_) {
+        if (scopeLen_.count(stmt) &&
+            (var_.empty() || !allReads(stmt).count(var_))) {
+            len = lastLen;
+        }
+        lastLen = len;
         if (scopeLen_.count(stmt)) {
-            if (affectingScopes_.count(op->id())) {
-                len = len.isValid() ? makeAdd(len, scopeLen_.at(stmt))
-                                    : scopeLen_.at(stmt);
-            } else {
-                len = scopeLen_.at(stmt);
-            }
+            len = len.isValid() ? makeAdd(len, scopeLen_.at(stmt))
+                                : scopeLen_.at(stmt);
         }
     }
     if (len.isValid()) {
@@ -130,20 +132,22 @@ void AnalyzeVersion::visit(const For &op) {
 }
 
 void AnalyzeVersion::visit(const StmtSeq &op) {
-    if (affectingScopes_.count(op->id())) {
-        auto oldOffset = offset_;
-        for (auto &&stmt : op->stmts_) {
-            if (scopeLen_.count(stmt)) {
-                (*this)(stmt);
-                offset_ = makeAdd(offset_, scopeLen_.at(stmt));
-            } else {
-                (*this)(stmt);
-            }
+    auto oldOffset = offset_;
+    auto lastOffset = offset_;
+    for (auto &&stmt : op->stmts_) {
+        if (scopeLen_.count(stmt) &&
+            (var_.empty() || !allReads(stmt).count(var_))) {
+            offset_ = lastOffset;
         }
-        offset_ = oldOffset;
-    } else {
-        BaseClass::visit(op);
+        lastOffset = offset_;
+        if (scopeLen_.count(stmt)) {
+            (*this)(stmt);
+            offset_ = makeAdd(offset_, scopeLen_.at(stmt));
+        } else {
+            (*this)(stmt);
+        }
     }
+    offset_ = oldOffset;
 }
 
 std::pair<std::unordered_map<ID, Expr>, std::unordered_map<ID, Expr>>
@@ -151,7 +155,7 @@ analyzeVersion(const Stmt &_op, const std::unordered_set<ID> &intermediates) {
     auto op = flattenStmtSeq(_op);
 
     std::vector<FindDepsCond> conds;
-    for (auto &&scope : findAllScopes(op)) {
+    for (auto &&scope : findAllLoops(op)) {
         conds.push_back({{scope, DepDirection::Normal}});
     }
     std::unordered_map<ID, std::unordered_set<ID>> affectingScopes, needTapes;
