@@ -54,6 +54,8 @@ std::string DumpAsTest::asTest(MemType mtype) const {
         return "\"gpu/shared\"";
     case MemType::GPUGlobal:
         return "\"gpu/global\"";
+    case MemType::GPUWarp:
+        return "\"gpu/warp\"";
     default:
         ASSERT(false);
     }

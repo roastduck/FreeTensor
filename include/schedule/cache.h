@@ -29,6 +29,8 @@ class MakeCacheVar : public Mutator {
         case MemType::GPUGlobal:
             newVar_ += ".global";
             break;
+        case MemType::GPUWarp:
+            newVar_ += ".warp";
         default:;
         }
     }

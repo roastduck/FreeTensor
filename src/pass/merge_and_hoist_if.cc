@@ -1,7 +1,6 @@
 #include <algorithm>
 
 #include <analyze/all_uses.h>
-#include <analyze/all_uses.h>
 #include <analyze/check_all_defined.h>
 #include <hash.h>
 #include <pass/flatten_stmt_seq.h>
