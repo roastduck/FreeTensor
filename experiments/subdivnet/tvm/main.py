@@ -36,7 +36,11 @@ parser.add_argument('--tune-rounds',
 parser.add_argument('--eval', default='', dest='eval')
 parser.add_argument('--warmup-repeat', type=int, default=10, dest='warmup_num')
 parser.add_argument('--timing-repeat', type=int, default=100, dest='test_num')
+parser.add_argument('--profile-gpu', action='store_true', dest='profile_gpu')
 cmd_args = parser.parse_args()
+
+if cmd_args.profile_gpu:
+    from common.gpu import profile_start, profile_stop
 
 if cmd_args.target == 'cpu':
     target_name = 'llvm -libs=mkl -mcpu=core-avx2'
@@ -238,9 +242,13 @@ print(
     f"{cmd_args.warmup_num} warmup, {cmd_args.test_num} repeats for evalution")
 timing_number = 1
 timeit.Timer(lambda: module.run()).repeat(repeat=cmd_args.warmup_num, number=1)
+if cmd_args.profile_gpu:
+    profile_start()
 optimized = (np.array(
     timeit.Timer(lambda: module.run()).repeat(
         repeat=cmd_args.test_num, number=timing_number)) * 1000 / timing_number)
+if cmd_args.profile_gpu:
+    profile_stop()
 optimized = {
     "mean": np.mean(optimized),
     "median": np.median(optimized),

@@ -160,7 +160,13 @@ if __name__ == '__main__':
     parser.add_argument('--ad-save-all',
                         action='store_true',
                         dest='ad_save_all')
+    parser.add_argument('--profile-gpu',
+                        action='store_true',
+                        dest='profile_gpu')
     cmd_args = parser.parse_args()
+
+    if cmd_args.profile_gpu:
+        from common.gpu import profile_start, profile_stop
 
     device = cmd_args.target
 
@@ -200,13 +206,20 @@ if __name__ == '__main__':
         if i == 0:
             store_txt("y.out", y.numpy().reshape((n_faces, h, w)))
     ir_dev.sync()
+    if cmd_args.profile_gpu:
+        profile_start()
     t0 = time.time()
     for i in range(test_num):
         inference(vertices, faces, y)
     ir_dev.sync()
     t1 = time.time()
+    if cmd_args.profile_gpu:
+        profile_stop()
 
     print(f"Inference Time = {(t1 - t0) / test_num * 1000} ms")
+
+    if cmd_args.profile_gpu:
+        exit(0)
 
     for i in range(warmup_num):
         forward(vertices, faces, y)
