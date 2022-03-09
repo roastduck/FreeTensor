@@ -100,11 +100,16 @@ if __name__ == '__main__':
                         type=int,
                         default=100,
                         dest='test_num')
-    parser.add_argument('--infer-only', action='store_true', dest='infer_only')
+    parser.add_argument('--profile-gpu',
+                        action='store_true',
+                        dest='profile_gpu')
     parser.add_argument('--ad-save-all',
                         action='store_true',
                         dest='ad_save_all')
     cmd_args = parser.parse_args()
+
+    if cmd_args.profile_gpu:
+        from common.gpu import profile_start, profile_stop
 
     device = cmd_args.target
 
@@ -159,15 +164,19 @@ if __name__ == '__main__':
         if i == 0:
             store_txt("y.out", y.numpy().reshape((n_faces, out_feats)))
     ir_dev.sync()
+    if cmd_args.profile_gpu:
+        profile_start()
     t0 = time.time()
     for i in range(test_num):
         inference(adj, x, w0, w1, w2, w3, y)
     ir_dev.sync()
     t1 = time.time()
+    if cmd_args.profile_gpu:
+        profile_stop()
 
     print(f"Inference Time = {(t1 - t0) / test_num * 1000} ms")
 
-    if cmd_args.infer_only:
+    if cmd_args.profile_gpu:
         exit(0)
 
     for i in range(warmup_num):

@@ -14,7 +14,7 @@ for line in open(filename):
     if len(cols) >= 6:
         if cols[1] == 'dram_read_bytes':
             dram_bytes += int(cols[0]) * int(cols[-1])
-            kernels += 1
+            kernels += int(cols[0])
         if cols[1] == 'dram_write_bytes':
             dram_bytes += int(cols[0]) * int(cols[-1])
         if cols[1] == 'l2_global_load_bytes':
