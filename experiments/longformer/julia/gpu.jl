@@ -76,9 +76,6 @@ function main()
     v = CuArray(v)
     d_y = CuArray(d_y)
 
-    warmup_num = 5
-    test_num = 100
-
     if ARGS[2] == "Inf"
         for i = 1:warmup_num
             y = transformer(q, k, v, w, dilation, dilation_heads)
