@@ -4,6 +4,7 @@ using CUDA
 using Flux: cpu, gpu
 
 include("../../common/julia/io.jl")
+include("../../common/julia/gpu.jl")
 
 device = CUDA.functional() ? gpu : cpu
 println("Running on ", CUDA.functional() ? "gpu" : "cpu")
@@ -62,9 +63,15 @@ for i = 1:warmup_num
     y = model(g, X)
 end
 
+if haskey(ENV, "PROFILE_GPU")
+    profile_start()
+end
 time = @timed begin
     for i = 1:test_num
         y = model(g, X)
     end
+end
+if haskey(ENV, "PROFILE_GPU")
+    profile_stop()
 end
 println("Inference Time = " * string(time.time / test_num * 1000) * " ms")

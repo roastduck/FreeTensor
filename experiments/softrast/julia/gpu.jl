@@ -2,6 +2,7 @@ using CUDA, Flux, Zygote
 using IterTools
 
 include("../../common/julia/io.jl")
+include("../../common/julia/gpu.jl")
 
 function rasterize(vertices, faces, pixels, h, w, n_verts, n_faces)
     sigma = 1e-4
@@ -73,10 +74,16 @@ function main()
                 write_vec("y.out", Array(y))
             end
         end
+        if haskey(ENV, "PROFILE_GPU")
+            profile_start()
+        end
         time = @timed begin
             for i = 1:test_num
                 y = rasterize(vertices, faces, pixels, h, w, n_verts, n_faces)
             end
+        end
+        if haskey(ENV, "PROFILE_GPU")
+            profile_stop()
         end
         println("Inference Time = " * string(time.time / test_num * 1000) * " ms")
     elseif ARGS[2] == "For"

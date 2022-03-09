@@ -2,6 +2,7 @@ using CUDA
 using Flux, Zygote
 
 include("../../common/julia/io.jl")
+include("../../common/julia/gpu.jl")
 
 function my_conv(adj, x, w0, w1, w2, w3, n_faces, in_feats, out_feats)::CuArray{Float32}
     # adj_feat = reshape(x[:, Vector(reshape(adj, :))], (in_feats, 3, n_faces))
@@ -63,14 +64,20 @@ function main()
             y = my_conv(adj, x, w0, w1, w2, w3, n_faces, in_feats, out_feats)
         end
         # exit()
+        if haskey(ENV, "PROFILE_GPU")
+            profile_start()
+        end
         time = @timed begin
             for i = 1:test_num
                 y = my_conv(adj, x, w0, w1, w2, w3, n_faces, in_feats, out_feats)
             end
         end
+        if haskey(ENV, "PROFILE_GPU")
+            profile_stop()
+        end
         write_vec("y.out", Array(y))
         println("Inference Time = " * string(time.time / test_num * 1000) * " ms")
-    
+
     elseif ARGS[2] == "For"
         for i = 1:warmup_num
             z, back = Zygote.pullback(
