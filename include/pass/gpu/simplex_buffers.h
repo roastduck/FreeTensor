@@ -55,7 +55,8 @@ class FindSimplexOffset : public SymbolTable<Visitor> {
         BaseClass::visit(op);
 
         auto mtype = buffer(op->var_)->mtype();
-        if (mtype != MemType::GPULocal && mtype != MemType::GPUShared && mtype != MemType::GPUWarp) {
+        if (mtype != MemType::GPULocal && mtype != MemType::GPUShared &&
+            mtype != MemType::GPUWarp) {
             return;
         }
 

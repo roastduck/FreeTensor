@@ -73,7 +73,7 @@ void CodeGenCPU::visit(const ReduceTo &op) {
 }
 
 void CodeGenCPU::visit(const For &op) {
-    if (op->property_.parallel_ == "openmp") {       
+    if (op->property_.parallel_ == "openmp") {
         os() << "#pragma omp parallel for";
         if (!op->property_.reductions_.empty()) {
             for (size_t i = 1, n = op->property_.reductions_.size(); i < n;

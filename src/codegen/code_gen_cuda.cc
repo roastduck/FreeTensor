@@ -109,7 +109,7 @@ void CodeGenCUDA::visit(const Store &op) {
         this->markUseBuffer(op->var_);
         this->makeIndent();
         this->os() << id;
-        for (int i = 1; i < (int) op->indices_.size(); i++) {
+        for (int i = 1; i < (int)op->indices_.size(); i++) {
             this->os() << "[";
             (*this)(op->indices_[i]);
             this->os() << "]";
@@ -126,17 +126,17 @@ void CodeGenCUDA::visit(const Load &op) {
     if (this->buffer(op->var_)->mtype() == MemType::GPUWarp) {
         auto id = mangle(op->var_);
         this->markUseBuffer(op->var_);
-        //mask
+        // mask
         this->os() << "__shfl_sync(0x1f, ";
-        //var
+        // var
         this->os() << id;
-        for (int i = 1; i < (int) op->indices_.size(); i++) {
+        for (int i = 1; i < (int)op->indices_.size(); i++) {
             this->os() << "[";
             (*this)(op->indices_[i]);
             this->os() << "]";
         }
         this->os() << ", ";
-        //srcLane
+        // srcLane
         (*this)(op->indices_[0]);
         this->os() << ");" << std::endl;
     } else {
@@ -168,7 +168,7 @@ void CodeGenCUDA::visit(const ReduceTo &op) {
         } else {
             os() << id;
             if (this->buffer(op->var_)->mtype() == MemType::GPUWarp) {
-                for (int i = 1; i < (int) op->indices_.size(); i++) {
+                for (int i = 1; i < (int)op->indices_.size(); i++) {
                     this->os() << "[";
                     (*this)(op->indices_[i]);
                     this->os() << "]";
@@ -478,7 +478,8 @@ void CodeGenCUDA::visit(const VarDef &op) {
             }
             auto &&tensor = op->buffer_->tensor();
             auto &&shape = tensor.shape();
-            ASSERT((int) shape.size() > 0 && shape[0]->isConst() && shape[0].as<IntConstNode>()->val_ <= 32);
+            ASSERT((int)shape.size() > 0 && shape[0]->isConst() &&
+                   shape[0].as<IntConstNode>()->val_ <= 32);
             CodeGenC::visit(op);
             break;
         }

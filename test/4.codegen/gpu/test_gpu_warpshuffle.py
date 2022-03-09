@@ -35,7 +35,8 @@ def test_warpshuffle_reverse():
         ("y", (4, 32), "int32", "output", "gpu/global"),
     ]) as (x, y):
         with ir.For(".blockIdx.x", 0, 4) as i:
-            with ir.VarDef("value", (32,), "int32", "cache", "gpu/warp") as value:
+            with ir.VarDef("value", (32,), "int32", "cache",
+                           "gpu/warp") as value:
                 with ir.For(".threadIdx.x", 0, 32) as j:
                     value[j] = x[i, j]
                 with ir.For(".threadIdx.x", 0, 32) as j:
@@ -44,15 +45,18 @@ def test_warpshuffle_reverse():
 
     code = ir.codegen(func, target)
     print(ir.debug.with_line_no(code))
-    x_np = np.array([list(range(num * 32, (num + 1) * 32)) for num in range(4)], dtype="int32")
+    x_np = np.array([list(range(num * 32, (num + 1) * 32)) for num in range(4)],
+                    dtype="int32")
     y_np = np.zeros((4, 32), dtype="int32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
-    
-    ir.Driver(func, code, device)(x=x_arr,y=y_arr)
 
-    y_np = y_arr.numpy();
-    y_std = np.array([list(range(num * 32 + 31, num * 32 - 1, -1)) for num in range(4)], dtype="int32")
+    ir.Driver(func, code, device)(x=x_arr, y=y_arr)
+
+    y_np = y_arr.numpy()
+    y_std = np.array(
+        [list(range(num * 32 + 31, num * 32 - 1, -1)) for num in range(4)],
+        dtype="int32")
     assert np.array_equal(y_np, y_std)
 
 
@@ -92,8 +96,10 @@ def test_warpshuffle_sum():
         ("z", (4, 32), "int32", "output", "gpu/global"),
     ]) as (x, y, z):
         with ir.For(".blockIdx.x", 0, 4) as i:
-            with ir.VarDef("value1", (32,), "int32", "cache", "gpu/warp") as value1:
-                with ir.VarDef("value2", (32,), "int32", "cache", "gpu/warp") as value2:
+            with ir.VarDef("value1", (32,), "int32", "cache",
+                           "gpu/warp") as value1:
+                with ir.VarDef("value2", (32,), "int32", "cache",
+                               "gpu/warp") as value2:
                     with ir.For(".threadIdx.x", 0, 32) as j:
                         value1[j] = x[i, j]
                         value2[j] = y[i, j]
@@ -105,15 +111,18 @@ def test_warpshuffle_sum():
 
     code = ir.codegen(func, target)
     print(ir.debug.with_line_no(code))
-    x_np = np.array([list(range(num * 32, (num + 1) * 32)) for num in range(4)], dtype="int32")
-    y_np = np.array([list(range(num * 32, (num + 1) * 32)) for num in range(4)], dtype="int32")
+    x_np = np.array([list(range(num * 32, (num + 1) * 32)) for num in range(4)],
+                    dtype="int32")
+    y_np = np.array([list(range(num * 32, (num + 1) * 32)) for num in range(4)],
+                    dtype="int32")
     z_np = np.zeros((4, 32), dtype="int32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
     z_arr = ir.Array(z_np, device)
-    
-    ir.Driver(func, code, device)(x=x_arr,y=y_arr,z=z_arr)
 
-    z_np = z_arr.numpy();
-    z_std = np.array([[num * 64 + 31 for k in range(32)] for num in range(4)], dtype="int32")
+    ir.Driver(func, code, device)(x=x_arr, y=y_arr, z=z_arr)
+
+    z_np = z_arr.numpy()
+    z_std = np.array([[num * 64 + 31 for k in range(32)] for num in range(4)],
+                     dtype="int32")
     assert np.array_equal(z_np, z_std)

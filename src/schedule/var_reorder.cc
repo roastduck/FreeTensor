@@ -1,5 +1,4 @@
 #include <analyze/all_uses.h>
-#include <analyze/all_uses.h>
 #include <schedule/var_reorder.h>
 
 namespace ir {
