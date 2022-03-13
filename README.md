@@ -53,7 +53,7 @@ PYTHONPATH=../python:../build:$PYTHONPATH pytest
 To run a single test case, specify the test case name, and optionally use `pytest -s` to display the standard output. E.g,
 
 ```sh
-PYTHONPATH=../python:../build:$PYTHONPATH pytest -s codegen/test_basic.py::test_hello_world
+PYTHONPATH=../python:../build:$PYTHONPATH pytest -s 0.hello_world/test_basic.py::test_hello_world
 ```
 
 If using GDB, one should invoke PyTest with `python3 -m`:
