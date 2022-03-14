@@ -96,9 +96,8 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
             auto earlier = dep.earlier().as<StoreNode>();
             expr = MakeInlinePlaceholder(earlier->indices_)(earlier->expr_);
         } else {
-            ASSERT(dep.earlier()->nodeType() == ASTNodeType::ReduceTo);
-            auto earlier = dep.earlier().as<ReduceToNode>();
-            expr = MakeInlinePlaceholder(earlier->indices_)(earlier->expr_);
+            throw InvalidSchedule(
+                "Unsupported: ReduceTo nodes cannot be inlined");
         }
         if (!checkNotModified(ast, expr, CheckNotModifiedSide::After,
                               dep.earlier_.cursor_.id(),
