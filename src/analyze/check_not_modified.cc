@@ -3,6 +3,7 @@
 #include <analyze/all_uses.h>
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
+#include <pass/flatten_stmt_seq.h>
 
 namespace ir {
 
@@ -58,7 +59,7 @@ bool checkNotModified(const Stmt &op, const Expr &expr,
 
     auto reads = allReads(expr);
     if (reads.empty()) {
-        return true; // early exit
+        return true; // early exit: impossible to be written
     }
 
     // First insert temporarily Eval node to the AST, then perform dependency
@@ -66,10 +67,18 @@ bool checkNotModified(const Stmt &op, const Expr &expr,
 
     InsertTmpEval inserter(expr, s0Side, s0, s1Side, s1);
     auto tmpOp = inserter(op);
+    tmpOp = flattenStmtSeq(tmpOp);
     ASSERT(inserter.s0Eval().isValid());
     ASSERT(inserter.s1Eval().isValid());
-    auto common = lca(getCursorById(tmpOp, inserter.s0Eval()),
-                      getCursorById(tmpOp, inserter.s1Eval()));
+    auto c0 = getCursorById(tmpOp, inserter.s0Eval());
+    auto c1 = getCursorById(tmpOp, inserter.s1Eval());
+
+    if (c0.hasNext() && c0.next().id() == c1.id()) {
+        return true; // early exit: the period to check is empty
+    }
+
+    auto common = lca(c0, c1); // FIXME: It seems checking `common` is wrong
+                               // because we may have multiple loops
 
     std::unordered_set<Stmt> writesWAR, writesRAW;
     auto filterWAR = [&](const AccessPoint &later, const AccessPoint &earlier) {
@@ -96,7 +105,8 @@ bool checkNotModified(const Stmt &op, const Expr &expr,
     }
 
     // FIXME: What if the loop iterators are different between
-    // `earlier` and `later`?
+    // `earlier` and `later`? Currently we check it explicitly in
+    // schedule/inline and pass/tensor_prop_const
 
     return true;
 }

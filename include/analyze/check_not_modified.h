@@ -50,8 +50,10 @@ class InsertTmpEval : public Mutator {
 };
 
 /**
- * Verify if `expr` is evaluated at just before/after `s0` and before/after
- * `s1`, it will result in the same value
+ * Verify if `expr` evaluates to the same value in the period that AFTER
+ * ENCOUNTERING `s0` UNTIL ENCOUNTERING THE NEXT `s1`. The exact boundary of the
+ * period to check can be set by `s0Side` and `s1Side`, to specify whether the
+ * period includes `s0` and `s1` themselves
  *
  * It will return false in two cases:
  *
