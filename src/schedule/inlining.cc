@@ -99,6 +99,27 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
             throw InvalidSchedule(
                 "Unsupported: ReduceTo nodes cannot be inlined");
         }
+
+        auto common = lca(dep.later_.cursor_, dep.earlier_.cursor_);
+        auto d = dep.dep_;
+        for (auto &&iter : allIters(expr)) {
+            for (auto c = common; c.isValid(); c = c.outer()) {
+                if (c.nodeType() == ASTNodeType::For) {
+                    if (auto &&f = c.node().as<ForNode>(); f->iter_ == iter) {
+                        d = dep.extraCheck(d, f->id(), DepDirection::Same);
+                        if (d != dep.dep_) {
+                            throw InvalidSchedule(
+                                "Unsupported: The loop iterator will be "
+                                "changed after inlining from " +
+                                toString(dep.earlier_.cursor_.node()) +
+                                " into " + toString(dep.later_.cursor_.node()));
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
         if (!checkNotModified(ast, expr, CheckNotModifiedSide::After,
                               dep.earlier_.cursor_.id(),
                               CheckNotModifiedSide::Before,
