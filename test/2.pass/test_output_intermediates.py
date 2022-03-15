@@ -32,9 +32,8 @@ def test_reuse_over_loop():
                     with ir.For("j", 0, 5) as j:
                         with ir.For("k", 0, 6) as k:
                             t[k] += x[i, j, k]
-                            with ir.If(j == 4):
-                                t_tape[i, k] = t[k]
                     with ir.For("k", 0, 6):
+                        t_tape[i, k] = t[k]
                         y[i, k] = t[k] * 2
     std = ir.make_reduction(ir.pop_ast())
 
@@ -76,13 +75,11 @@ def test_multiple_assignments():
                     with ir.For("j", 0, 5) as j:
                         with ir.For("k", 0, 6) as k:
                             t[k, 0] += x[i, j, k]
-                            with ir.If(j == 4):
-                                t_tape[i, k, 0] = t[k, 0]
                             t[k, 1] += x[i, j, k] + 1
-                            with ir.If(j == 4):
-                                t_tape[i, k, 1] = t[k, 1]
                     with ir.For("k", 0, 6):
+                        t_tape[i, k, 0] = t[k, 0]
                         y[i, k, 0] = t[k, 0] * 2
+                        t_tape[i, k, 1] = t[k, 1]
                         y[i, k, 1] = t[k, 1] * 2
     std = ir.make_reduction(ir.pop_ast())
 
@@ -120,9 +117,8 @@ def test_reuse_over_loop_with_offset():
                     with ir.For("j", 0, 5) as j:
                         with ir.For("k", 0, 6) as k:
                             t[k] += x[i + -2, j, k]
-                            with ir.If(j == 4):
-                                t_tape[i + -2, k] = t[k]
                     with ir.For("k", 0, 6):
+                        t_tape[i + -2, k] = t[k]
                         y[i + -2, k] = t[k] * 2
     std = ir.make_reduction(ir.pop_ast())
 
@@ -155,13 +151,13 @@ def test_reuse_over_stmt_seq():
             with ir.VarDef("t", (6,), "float32", "cache", "cpu") as t:
                 with ir.For("k", 0, 6) as k:
                     t[k] = x[k] * k
-                    t_tape[0, k] = t[k]
                 with ir.For("k", 0, 6):
+                    t_tape[0, k] = t[k]
                     y[k] += t[k] * 2
                 with ir.For("k", 0, 6) as k:
                     t[k] = x[-1 * k + 5] * k
-                    t_tape[1, k] = t[k]
                 with ir.For("k", 0, 6):
+                    t_tape[1, k] = t[k]
                     y[k] *= t[k]
     std = ir.make_reduction(ir.pop_ast())
 
@@ -212,9 +208,8 @@ def test_reuse_different_lengths():
                     with ir.For("j", 0, 5) as j:
                         with ir.For("k", 0, 6) as k:
                             t[k] += x1[i, j, k]
-                            with ir.If(j == 4):
-                                t_tape[i, k] = t[k]
                     with ir.For("k", 0, 6):
+                        t_tape[i, k] = t[k]
                         y1[i, k] = t[k] * 2
                 with ir.For("i", 0, 2) as i:
                     with ir.For("k", 0, 6) as k:
@@ -222,9 +217,8 @@ def test_reuse_different_lengths():
                     with ir.For("j", 0, 5) as j:
                         with ir.For("k", 0, 6) as k:
                             t[k] += x2[i, j, k]
-                            with ir.If(j == 4):
-                                t_tape[4 + i, k] = t[k]
                     with ir.For("k", 0, 6):
+                        t_tape[4 + i, k] = t[k]
                         y2[i, k] = t[k] * 2
     std = ir.make_reduction(ir.pop_ast())
 
@@ -298,16 +292,16 @@ def test_circular_reuse():
                 with ir.VarDef("h", (128,), "float32", "cache", "cpu") as h:
                     with ir.For("i", 0, 128, nid='Li0') as i:
                         h[i] = 0
-                        h_tape[0, i] = 0
                     ir.MarkNid("V_c")
                     with ir.VarDef("c", (128,), "float32", "cache", "cpu") as c:
                         with ir.For("p", 0, 100, nid='Lp') as p:
                             with ir.For("i", 0, 128, nid='Li1') as i:
+                                h_tape[p, i] = h[i]
                                 c[i] = h[i] / 2 - 1
                                 c_tape[p, i] = c[i]
                                 h[i] = c[i] * 2 + 1
-                                h_tape[1 + p, i] = h[i]
                     with ir.For("i", 0, 128, nid='Li2') as i:
+                        h_tape[100, i] = h[i]
                         y[i] = h[i]
     std = ir.make_reduction(ir.pop_ast())
 
