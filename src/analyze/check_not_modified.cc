@@ -1,4 +1,4 @@
-#include <unordered_set>
+#include <unordered_map>
 
 #include <analyze/all_uses.h>
 #include <analyze/check_not_modified.h>
@@ -80,7 +80,8 @@ bool checkNotModified(const Stmt &op, const Expr &expr,
     auto common = lca(c0, c1); // FIXME: It seems checking `common` is wrong
                                // because we may have multiple loops
 
-    std::unordered_set<Stmt> writesWAR, writesRAW;
+    // write -> serialized PBMap
+    std::unordered_map<Stmt, std::string> writesWAR, writesRAW;
     auto filterWAR = [&](const AccessPoint &later, const AccessPoint &earlier) {
         return earlier.cursor_.id() == inserter.s0Eval() &&
                lca(later.cursor_, common).id() == common.id();
@@ -90,17 +91,24 @@ bool checkNotModified(const Stmt &op, const Expr &expr,
                lca(earlier.cursor_, common).id() == common.id();
     };
     auto foundWAR = [&](const Dependency &dep) {
-        writesWAR.insert(dep.later_.cursor_.node());
+        // Serialize dep.dep_ because it is from a random PBCtx
+        writesWAR[dep.later_.cursor_.node()] = toString(dep.dep_);
     };
     auto foundRAW = [&](const Dependency &dep) {
-        writesRAW.insert(dep.earlier_.cursor_.node());
+        // Serialize dep.dep_ because it is from a random PBCtx
+        writesRAW[dep.earlier_.cursor_.node()] = toString(dep.dep_);
     };
     findDeps(tmpOp, {{}}, foundWAR, FindDepsMode::Dep, DEP_WAR, filterWAR);
     findDeps(tmpOp, {{}}, foundRAW, FindDepsMode::Dep, DEP_RAW, filterRAW);
 
-    for (auto &item : writesWAR) {
+    for (auto &[item, wr0] : writesWAR) {
         if (writesRAW.count(item)) {
-            return false;
+            PBCtx ctx;
+            auto r1w = writesRAW.at(item);
+            auto r1r0 = applyRange(PBMap(ctx, r1w), PBMap(ctx, wr0));
+            if (!r1r0.empty()) {
+                return false;
+            }
         }
     }
 

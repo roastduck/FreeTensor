@@ -29,6 +29,68 @@ def test_basic():
     assert std.match(ast)
 
 
+def test_multiple_assignments():
+    with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+        ir.MarkNid("T")
+        with ir.VarDef("t", (4,), "int32", "cache", "cpu") as t:
+            with ir.For("i", 0, 2) as i:
+                t[i] = x[i] * 2
+            with ir.For("i", 2, 4) as i:
+                t[i] = x[i] * 3
+            with ir.For("i", 0, 2) as i:
+                y[i] = t[i] + 1
+            with ir.For("i", 2, 4) as i:
+                y[i] = t[i] + 2
+    ast = ir.pop_ast()
+    print(ast)
+    s = ir.Schedule(ast)
+    s.inline("T")
+    ast = s.ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+        with ir.For("i", 0, 2) as i:
+            y[i] = x[i] * 2 + 1
+        with ir.For("i", 2, 4) as i:
+            y[i] = x[i] * 3 + 2
+    std = ir.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_modified_unrelated_item():
+    with ir.VarDef([("x", (5,), "int32", "inout", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+        ir.MarkNid("T")
+        with ir.VarDef("t", (4,), "int32", "cache", "cpu") as t:
+            with ir.For("i", 0, 4) as i:
+                t[i] = x[i] * 2
+            x[4] = 10
+            with ir.For("i", 0, 4) as i:
+                y[i] = t[i] + 1
+    ast = ir.pop_ast()
+    print(ast)
+    s = ir.Schedule(ast)
+    s.inline("T")
+    ast = s.ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([("x", (5,), "int32", "inout", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+        x[4] = 10
+        with ir.For("i", 0, 4) as i:
+            y[i] = x[i] * 2 + 1
+    std = ir.pop_ast()
+
+    assert std.match(ast)
+
+
 def test_loop_around():
     with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4, 3), "int32", "output", "cpu")]) as (x, y):

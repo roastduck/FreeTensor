@@ -91,10 +91,11 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
         if (replace.count(dep.later().as<LoadNode>())) {
             throw InvalidSchedule("Multiple writes correspond to one read");
         }
-        Expr expr;
+        Expr expr, placeholder;
         if (dep.earlier()->nodeType() == ASTNodeType::Store) {
             auto earlier = dep.earlier().as<StoreNode>();
-            expr = MakeInlinePlaceholder(earlier->indices_)(earlier->expr_);
+            expr = earlier->expr_;
+            placeholder = MakeInlinePlaceholder(earlier->indices_)(expr);
         } else {
             throw InvalidSchedule(
                 "Unsupported: ReduceTo nodes cannot be inlined");
@@ -130,7 +131,7 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
                 toString(dep.later_.cursor_.node()));
         }
         auto later = dep.later().as<LoadNode>();
-        replace[later] = ApplyInlinePlaceholder(later->indices_)(expr);
+        replace[later] = ApplyInlinePlaceholder(later->indices_)(placeholder);
     };
     findDeps(ast, {{}}, found, FindDepsMode::KillLater, DEP_RAW, filter);
     ast = MakeInline(def, replace)(ast);
