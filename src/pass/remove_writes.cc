@@ -181,17 +181,18 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
     findDeps(op, {{}}, foundSelfDependent, FindDepsMode::Dep, DEP_WAW,
              filterSelfDependent, false);
 
-    // {(later, earlier)}
-    std::vector<std::pair<Stmt, Stmt>> overwrites;
+    PBCtx presburger;
+    // {(later, earlier, toKill)}
+    std::vector<std::tuple<Stmt, Stmt, PBSet>> overwrites;
     std::unordered_map<Stmt, std::unordered_set<AST>> usesRAW; // W -> R
     std::unordered_map<Stmt, std::unordered_set<AST>> usesWAR; // W -> R
+    std::unordered_map<Stmt, PBSet> kill;
     auto filterOverwriteStore = [&](const AccessPoint &later,
                                     const AccessPoint &earlier) {
         if (singleDefId.isValid() && later.def_->id() != singleDefId) {
             return false;
         }
-        return later.op_->nodeType() == ASTNodeType::Store &&
-               later.op_ != earlier.op_;
+        return later.op_->nodeType() == ASTNodeType::Store;
     };
     auto filterOverwriteReduce = [&](const AccessPoint &later,
                                      const AccessPoint &earlier) {
@@ -201,8 +202,13 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
         return later.op_->nodeType() == ASTNodeType::ReduceTo;
     };
     auto foundOverwriteStore = [&](const Dependency &d) {
-        overwrites.emplace_back(d.later().as<StmtNode>(),
-                                d.earlier().as<StmtNode>());
+        auto earlier = d.earlier().as<StmtNode>();
+        auto later = d.later().as<StmtNode>();
+        if (!kill.count(earlier)) {
+            kill[earlier] = PBSet(presburger, toString(d.oIter_));
+        }
+        overwrites.emplace_back(later, earlier,
+                                PBSet(presburger, toString(range(d.dep_))));
         suspect.insert(d.def());
     };
     auto foundOverwriteReduce = [&](const Dependency &d) {
@@ -211,20 +217,24 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
              sameParent(d.later_.cursor_, d.earlier_.cursor_))) {
             if (d.earlier()->nodeType() == ASTNodeType::Store &&
                 d.earlier().as<StoreNode>()->expr_->isConst()) {
-                overwrites.emplace_back(d.later().as<StmtNode>(),
-                                        d.earlier().as<StmtNode>());
-                suspect.insert(d.def());
+                goto is_overwrite;
             } else if (d.earlier()->nodeType() == ASTNodeType::ReduceTo &&
                        d.earlier().as<ReduceToNode>()->expr_->isConst()) {
-                overwrites.emplace_back(d.later().as<StmtNode>(),
-                                        d.earlier().as<StmtNode>());
-                suspect.insert(d.def());
+                goto is_overwrite;
             } else if (sameParent(d.later_.cursor_, d.earlier_.cursor_)) {
-
-                overwrites.emplace_back(d.later().as<StmtNode>(),
-                                        d.earlier().as<StmtNode>());
-                suspect.insert(d.def());
+                goto is_overwrite;
             }
+            return;
+
+        is_overwrite:
+            auto earlier = d.earlier().as<StmtNode>();
+            auto later = d.later().as<StmtNode>();
+            if (!kill.count(earlier)) {
+                kill[earlier] = PBSet(presburger, toString(d.oIter_));
+            }
+            overwrites.emplace_back(later, earlier,
+                                    PBSet(presburger, toString(range(d.dep_))));
+            suspect.insert(d.def());
         }
     };
     auto filterUse = [&](const AccessPoint &later, const AccessPoint &earlier) {
@@ -255,10 +265,10 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
         }
     };
 
-    findDeps(op, {{}}, foundOverwriteStore, FindDepsMode::KillEarlier, DEP_WAW,
-             filterOverwriteStore, false);
-    findDeps(op, {{}}, foundOverwriteReduce, FindDepsMode::KillBoth, DEP_WAW,
-             filterOverwriteReduce, false);
+    findDeps(op, {{}}, foundOverwriteStore, FindDepsMode::Dep, DEP_WAW,
+             filterOverwriteStore, false, true, true);
+    findDeps(op, {{}}, foundOverwriteReduce, FindDepsMode::KillLater, DEP_WAW,
+             filterOverwriteReduce, false, true, true);
     findDeps(op, {{}}, foundUse, FindDepsMode::Dep, DEP_ALL, filterUse, false);
 
     std::unordered_set<Stmt> redundant;
@@ -266,24 +276,31 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
 
     // Type 1
     for (auto i = overwrites.begin(); i != overwrites.end();) {
-        auto &&[later, earlier] = *i;
-        if (usesRAW.count(earlier) && usesWAR.count(later)) {
-            for (auto &&read :
-                 intersect(usesRAW.at(earlier), usesWAR.at(later))) {
-                if (read->nodeType() == ASTNodeType::Load ||
-                    !redundant.count(read.as<StmtNode>())) {
-                    goto fail;
-                }
-            }
+        auto &&[later, earlier, _] = *i;
+        if (usesRAW.count(earlier) && usesWAR.count(later) &&
+            hasIntersect(usesRAW.at(earlier), usesWAR.at(later))) {
+            i = overwrites.erase(i);
+        } else {
+            i++;
         }
-        i++;
-        continue;
-    fail:
-        i = overwrites.erase(i);
+    }
+    for (auto &&[later, earlier, thisKill] : overwrites) {
+        kill[earlier] = subtract(std::move(kill.at(earlier)), thisKill);
+    }
+    for (auto i = overwrites.begin(); i != overwrites.end();) {
+        auto &&[later, earlier, _] = *i;
+        if (!kill.at(earlier).empty()) {
+            i = overwrites.erase(i);
+        } else {
+            i++;
+        }
     }
     for (auto i = overwrites.begin(); i != overwrites.end(); i++) {
-        auto &&[_later, _earlier] = *i;
+        auto &&[_later, _earlier, _] = *i;
 
+        if (_later == _earlier) {
+            continue;
+        }
         if (redundant.count(_later) || redundant.count(_earlier)) {
             continue;
         }
@@ -326,7 +343,7 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
 
         auto j = i;
         for (j++; j != overwrites.end(); j++) {
-            auto &[__later, __earlier] = *j;
+            auto &[__later, __earlier, _] = *j;
             if (__later == _earlier) {
                 __later = _later;
             }

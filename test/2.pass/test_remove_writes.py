@@ -62,6 +62,29 @@ def test_type1_one_then_many():
     assert std.match(ast)
 
 
+def test_type1_many_then_one():
+    with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
+        with ir.For("i", 0, 4) as i:
+            y[i] = i
+        y[0] = 0
+        y[1] = 1
+        y[2] = 2
+        y[3] = 3
+    ast = ir.pop_ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
+        y[0] = 0
+        y[1] = 1
+        y[2] = 2
+        y[3] = 3
+    std = ir.pop_ast()
+
+    assert std.match(ast)
+
+
 def test_type1_many_then_one_no_remove():
     with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ir.For("i", 0, 4) as i:
@@ -75,6 +98,23 @@ def test_type1_many_then_one_no_remove():
     with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ir.For("i", 0, 4) as i:
             y[i] = i
+        y[0] = 1
+    std = ir.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_type1_repeated_then_one():
+    with ir.VarDef("y", (1,), "int32", "output", "cpu") as y:
+        with ir.For("i", 0, 4) as i:
+            y[0] = i
+        y[0] = 1
+    ast = ir.pop_ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef("y", (1,), "int32", "output", "cpu") as y:
         y[0] = 1
     std = ir.pop_ast()
 

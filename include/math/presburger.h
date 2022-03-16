@@ -200,6 +200,11 @@ class PBSet {
     isl_set *copy() const { return COPY_ISL_PTR(set_, set); }
     isl_set *move() { return MOVE_ISL_PTR(set_); }
 
+    bool empty() const {
+        DEBUG_PROFILE("empty");
+        return isl_set_is_empty(get());
+    }
+
     isl_size nBasic() const { return isl_set_n_basic_set(set_); }
 
     friend std::string toString(const PBSet &set) {
@@ -302,6 +307,26 @@ inline PBMap subtract(const PBMap &lhs, const PBMap &rhs) {
     DEBUG_PROFILE_VERBOSE("subtract", "nBasic=" + std::to_string(lhs.nBasic()) +
                                           "," + std::to_string(rhs.nBasic()));
     return isl_map_subtract(lhs.copy(), rhs.copy());
+}
+inline PBSet subtract(PBSet &&lhs, PBSet &&rhs) {
+    DEBUG_PROFILE_VERBOSE("subtract", "nBasic=" + std::to_string(lhs.nBasic()) +
+                                          "," + std::to_string(rhs.nBasic()));
+    return isl_set_subtract(lhs.move(), rhs.move());
+}
+inline PBSet subtract(const PBSet &lhs, PBSet &&rhs) {
+    DEBUG_PROFILE_VERBOSE("subtract", "nBasic=" + std::to_string(lhs.nBasic()) +
+                                          "," + std::to_string(rhs.nBasic()));
+    return isl_set_subtract(lhs.copy(), rhs.move());
+}
+inline PBSet subtract(PBSet &&lhs, const PBSet &rhs) {
+    DEBUG_PROFILE_VERBOSE("subtract", "nBasic=" + std::to_string(lhs.nBasic()) +
+                                          "," + std::to_string(rhs.nBasic()));
+    return isl_set_subtract(lhs.move(), rhs.copy());
+}
+inline PBSet subtract(const PBSet &lhs, const PBSet &rhs) {
+    DEBUG_PROFILE_VERBOSE("subtract", "nBasic=" + std::to_string(lhs.nBasic()) +
+                                          "," + std::to_string(rhs.nBasic()));
+    return isl_set_subtract(lhs.copy(), rhs.copy());
 }
 
 inline PBMap intersect(PBMap &&lhs, PBMap &&rhs) {

@@ -182,7 +182,8 @@ struct Dependency {
     const std::string &var_;
     const AccessPoint &later_, &earlier_;
     int iterDim_;
-    PBMap dep_;
+    PBMap dep_;           // later -> earlier
+    PBSet pIter_, oIter_; // later, earlier
     PBCtx &presburger_;
     AnalyzeDeps &self_;
 
@@ -242,6 +243,7 @@ class AnalyzeDeps {
     const DepType depType_;
     const bool ignoreReductionWAW_;
     const bool eraseOutsideVarDef_;
+    const bool noProjectOutProvateAxis_;
 
     std::vector<std::function<void()>> tasks_;
     std::mutex lock_;
@@ -256,7 +258,8 @@ class AnalyzeDeps {
         const LoopVariExprMap &variantExpr,
         const std::vector<FindDepsCond> &cond, const FindDepsCallback &found,
         FindDepsMode mode, DepType depType, const FindDepsFilter &filter,
-        bool ignoreReductionWAW, bool eraseOutsideVarDef)
+        bool ignoreReductionWAW, bool eraseOutsideVarDef,
+        bool noProjectOutProvateAxis)
         : reads_(reads), writes_(writes), allDefs_(allDefs),
           scope2coord_(scope2coord), noDepsLists_(noDepsLists),
           variantExpr_(variantExpr), cond_(cond), found_(found),
@@ -270,7 +273,8 @@ class AnalyzeDeps {
                           ? RelaxMode::Necessary
                           : RelaxMode::Possible),
           depType_(depType), ignoreReductionWAW_(ignoreReductionWAW),
-          eraseOutsideVarDef_(eraseOutsideVarDef) {}
+          eraseOutsideVarDef_(eraseOutsideVarDef),
+          noProjectOutProvateAxis_(noProjectOutProvateAxis) {}
 
     void genTasks();
 
@@ -413,12 +417,15 @@ class AnalyzeDeps {
  * @param ignoreReductionWAW : Ignore WAW dependencies between two ReduceTo
  * nodes. This kind of dependencies are false dependencies if running serially
  * @param eraseOutsideVarDef : Ignore all dependencies outside the VarDef
+ * @param noProjectOutPrivateAxis : Disable the projectOutPrivateAxis
+ * optimization
  */
 void findDeps(const Stmt &op, const std::vector<FindDepsCond> &cond,
               const FindDepsCallback &found,
               FindDepsMode mode = FindDepsMode::Dep, DepType depType = DEP_ALL,
               const FindDepsFilter &filter = nullptr,
-              bool ignoreReductionWAW = true, bool eraseOutsideVarDef = true);
+              bool ignoreReductionWAW = true, bool eraseOutsideVarDef = true,
+              bool noProjectOutProvateAxis = false);
 
 std::string toString(const Dependency &dep);
 

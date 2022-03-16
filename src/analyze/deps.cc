@@ -545,7 +545,7 @@ void AnalyzeDeps::projectOutPrivateAxis(
     PBCtx &presburger, const Ref<AccessPoint> &point,
     const std::vector<Ref<AccessPoint>> &otherList,
     std::vector<PBMap> &omapList, int iterDim) {
-    if (mode_ == FindDepsMode::Dep) {
+    if (!noProjectOutProvateAxis_) {
         std::vector<int> oCommonDims(otherList.size(), 0);
         for (size_t i = 0, n = otherList.size(); i < n; i++) {
             auto &&other = otherList[i];
@@ -647,7 +647,7 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
         {
             std::lock_guard<std::mutex> guard(lock_);
             found_(Dependency{item, getVar(point->op_), *point, *other, iterDim,
-                              res, presburger, *this});
+                              res, pIter, oIter, presburger, *this});
         }
     fail:;
     }
@@ -930,9 +930,13 @@ PBMap Dependency::extraCheck(PBMap dep,
 void findDeps(const Stmt &op, const std::vector<FindDepsCond> &cond,
               const FindDepsCallback &found, FindDepsMode mode, DepType depType,
               const FindDepsFilter &filter, bool ignoreReductionWAW,
-              bool eraseOutsideVarDef) {
+              bool eraseOutsideVarDef, bool noProjectOutProvateAxis) {
     if (cond.empty()) {
         return;
+    }
+
+    if (mode != FindDepsMode::Dep) {
+        noProjectOutProvateAxis = true;
     }
 
     FindAccessPoint accFinder(op);
@@ -940,10 +944,11 @@ void findDeps(const Stmt &op, const std::vector<FindDepsCond> &cond,
     FindAllNoDeps noDepsFinder;
     noDepsFinder(op);
     auto variantExpr = findLoopVariance(op).first;
-    AnalyzeDeps analyzer(
-        accFinder.reads(), accFinder.writes(), accFinder.allDefs(),
-        accFinder.scope2coord(), noDepsFinder.results(), variantExpr, cond,
-        found, mode, depType, filter, ignoreReductionWAW, eraseOutsideVarDef);
+    AnalyzeDeps analyzer(accFinder.reads(), accFinder.writes(),
+                         accFinder.allDefs(), accFinder.scope2coord(),
+                         noDepsFinder.results(), variantExpr, cond, found, mode,
+                         depType, filter, ignoreReductionWAW,
+                         eraseOutsideVarDef, noProjectOutProvateAxis);
     analyzer.genTasks();
     size_t n = analyzer.tasks().size();
     std::vector<std::exception_ptr> exceptions(n, nullptr);
