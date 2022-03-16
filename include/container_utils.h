@@ -11,9 +11,24 @@ std::unordered_map<T, std::pair<V1, V2>, Hash, KeyEqual>
 intersect(const std::unordered_map<T, V1, Hash, KeyEqual> &lhs,
           const std::unordered_map<T, V2, Hash, KeyEqual> &rhs) {
     std::unordered_map<T, std::pair<V1, V2>, Hash, KeyEqual> ret;
+    ret.reserve(std::min(lhs.size(), rhs.size()));
     for (auto &&[key, v1] : lhs) {
         if (rhs.count(key)) {
             ret.emplace(key, std::make_pair(v1, rhs.at(key)));
+        }
+    }
+    return ret;
+}
+
+template <class T, class Hash, class KeyEqual>
+std::unordered_set<T, Hash, KeyEqual>
+intersect(const std::unordered_set<T, Hash, KeyEqual> &lhs,
+          const std::unordered_set<T, Hash, KeyEqual> &rhs) {
+    std::unordered_set<T, Hash, KeyEqual> ret;
+    ret.reserve(std::min(lhs.size(), rhs.size()));
+    for (auto &&key : lhs) {
+        if (rhs.count(key)) {
+            ret.emplace(key);
         }
     }
     return ret;
