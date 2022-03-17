@@ -23,6 +23,7 @@ AutoSchedule::AutoSchedule(const Schedule &schedule, const Ref<Target> &target,
       predictFunc_(std::move(predictFunc)), updateFunc_(std::move(updateFunc)) {
     rules_.push_back(new CacheWriteRule);
     rules_.push_back(new MultiLevelTilingRule);
+    genSketches();
     std::random_device rd;
     randGen_ = std::default_random_engine(rd());
 }

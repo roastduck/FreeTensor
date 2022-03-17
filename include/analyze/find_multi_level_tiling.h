@@ -24,7 +24,7 @@ struct ForsWithDataReuse {
 
 struct ForWithStore {
     ID id;
-    ID dest;
+    std::string dest;
     std::vector<SubTree<ExprNode>> indices;
     std::vector<std::vector<SubTree<ExprNode>>> checkDataReuseIndices;
 };
@@ -51,7 +51,7 @@ class FindMultiLevelTiling : public Visitor {
     std::vector<ForInfo> buf_;
     std::vector<SubTree<ExprNode>> bufIndices_;
     std::vector<std::vector<SubTree<ExprNode>>> bufCheckDataReuseIndices_;
-    ID dest_;
+    std::string dest_;
     bool downward = true;
 
     std::vector<ForsWithDataReuse> found_;
@@ -70,7 +70,7 @@ class FindMultiLevelTiling : public Visitor {
     void visit(const For &op) override;
 
   private:
-    ID hasStore(const For &op);
+    std::string hasStore(const For &op);
 };
 
 inline std::vector<ForsWithDataReuse> findMultiLevelTiling(const Stmt &ast) {
