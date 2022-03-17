@@ -1,4 +1,5 @@
 #include <analyze/find_multi_level_tiling.h>
+#include <ast.h>
 #include <iostream>
 
 using std::cout;
@@ -21,12 +22,13 @@ void FindMultiLevelTiling::visit(const For &op) {
     if (stackMarkBranch_.back()) {
         storeBuf();
     }
-    if (hasStore(op)) {
+    if (ID dest = hasStore(op); dest.isValid()) {
         storeBuf();
         buf_.push_back(stack_.back());
         bufIndices_ = forsWithStore_.at(op->id()).indices;
         bufCheckDataReuseIndices_ =
             forsWithStore_.at(op->id()).checkDataReuseIndices;
+        dest_ = dest;
     } else if (!buf_.empty()) {
         buf_.push_back(stack_.back());
     }
@@ -63,6 +65,8 @@ void FindMultiLevelTiling::storeBuf() {
 
         if (hasDataReuse) {
             ForsWithDataReuse tmp;
+            tmp.dest = dest_.strId();
+            tmp.outermost = buf_[0].id;
             std::vector<bool> checkAppear(buf_.size());
             for (unsigned i = 0; i < bufIndices_.size(); i++) {
                 const auto &mapItem =
@@ -87,6 +91,7 @@ void FindMultiLevelTiling::storeBuf() {
         buf_.clear();
         bufIndices_.clear();
         bufCheckDataReuseIndices_.clear();
+        dest_ = "";
 
         // if (hasDataReuse) {
         //     const auto &nw = found_.back();
@@ -102,8 +107,10 @@ void FindMultiLevelTiling::storeBuf() {
     }
 }
 
-bool FindMultiLevelTiling::hasStore(const For &op) {
-    return forsWithStore_.count(op->id());
+ID FindMultiLevelTiling::hasStore(const For &op) {
+    if (forsWithStore_.count(op->id()))
+        return forsWithStore_[op->id()].dest;
+    return "";
 }
 
 void FindHasStore::visit(const For &op) {
@@ -121,7 +128,7 @@ void FindHasStore::visit(const Store &op) {
     } else {
         found_.insert(
             {stack_.back().id,
-             {stack_.back().id, op->indices_,
+             {stack_.back().id, op->id(), op->indices_,
               std::vector<std::vector<SubTree<ExprNode>>>(1, op->indices_)}});
     }
     Visitor::visit(op);

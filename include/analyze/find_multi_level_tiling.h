@@ -2,6 +2,7 @@
 #define IR_FIND_MULTI_LEVEL_TILING_H
 
 #include <analyze/find_loop_variance.h>
+#include <ast.h>
 #include <hash.h>
 #include <unordered_map>
 #include <vector>
@@ -17,10 +18,13 @@ struct ForInfo {
 struct ForsWithDataReuse {
     std::vector<ForInfo> spaceLoops;
     std::vector<ForInfo> reductionLoops;
+    std::string dest;
+    ID outermost;
 };
 
 struct ForWithStore {
     ID id;
+    ID dest;
     std::vector<SubTree<ExprNode>> indices;
     std::vector<std::vector<SubTree<ExprNode>>> checkDataReuseIndices;
 };
@@ -47,6 +51,7 @@ class FindMultiLevelTiling : public Visitor {
     std::vector<ForInfo> buf_;
     std::vector<SubTree<ExprNode>> bufIndices_;
     std::vector<std::vector<SubTree<ExprNode>>> bufCheckDataReuseIndices_;
+    ID dest_;
     bool downward = true;
 
     std::vector<ForsWithDataReuse> found_;
@@ -65,7 +70,7 @@ class FindMultiLevelTiling : public Visitor {
     void visit(const For &op) override;
 
   private:
-    bool hasStore(const For &op);
+    ID hasStore(const For &op);
 };
 
 inline std::vector<ForsWithDataReuse> findMultiLevelTiling(const Stmt &ast) {

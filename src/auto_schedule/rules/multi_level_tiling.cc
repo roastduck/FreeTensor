@@ -4,15 +4,15 @@
 #include <auto_schedule/utils.h>
 
 namespace ir {
-int MultiLevelTilingRule::analyze(Schedule &schedule) {
-    targets = findMultiLevelTiling(schedule.ast());
-    if (targets.empty())
-        return false;
-    return true;
+RuleStatus MultiLevelTilingRule::analyze(const Sketch &sketch) {
+    return RuleStatus::Apply;
 }
 
-SketchPart MultiLevelTilingRule::genPart(int p) {
-    return SketchPart(new MultiLevelTilingPart(targets[p]));
+std::vector<Sketch> MultiLevelTilingRule::genPart(const Sketch &sketch) {
+    Sketch newSketch = sketch;
+    newSketch.addPart(new MultiLevelTilingPart(sketch.nowTarget()));
+    newSketch.moveToNextTarget();
+    return {newSketch};
 }
 
 void MultiLevelTilingPart::genRandAnnotation(std::default_random_engine &gen) {

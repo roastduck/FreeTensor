@@ -1,6 +1,7 @@
 #ifndef IR_AUTO_SCHEDULE_H
 #define IR_AUTO_SCHEDULE_H
 
+#include <auto_schedule/rule.h>
 #include <auto_schedule/sketch.h>
 #include <driver/array.h>
 #include <driver/device.h>
@@ -36,6 +37,7 @@ class AutoSchedule {
     std::default_random_engine randGen_;
     py::function predictFunc_;
     py::function updateFunc_;
+    std::vector<Ref<Rule>> rules_;
 
   private:
     std::vector<double> measure(const std::vector<Schedule> &schedules);
@@ -68,6 +70,8 @@ class AutoSchedule {
     std::vector<double> testAndAdd(const std::vector<Sketch> &sketches);
 
     Schedule getBestSchedule();
+
+    void genSketches();
 };
 
 } // namespace ir

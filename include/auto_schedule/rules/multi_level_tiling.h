@@ -15,11 +15,9 @@ struct MultiLevelTilingAnnotation {
 };
 
 class MultiLevelTilingRule : public Rule {
-    std::vector<ForsWithDataReuse> targets;
-
   public:
-    int analyze(Schedule &schedule) override;
-    SketchPart genPart(int p) override;
+    RuleStatus analyze(const Sketch &sketch) override;
+    std::vector<Sketch> genPart(const Sketch &sketch) override;
 };
 
 class MultiLevelTilingPart : public SketchPartNode {
