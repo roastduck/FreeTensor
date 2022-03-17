@@ -81,30 +81,33 @@ bool checkNotModified(const Stmt &op, const Expr &expr,
                                // because we may have multiple loops
 
     // write -> serialized PBMap
-    std::unordered_map<Stmt, std::string> writesWAR, writesRAW;
+    std::unordered_map<Stmt, std::string> writesWAR;
     auto filterWAR = [&](const AccessPoint &later, const AccessPoint &earlier) {
         return earlier.cursor_.id() == inserter.s0Eval() &&
                lca(later.cursor_, common).id() == common.id();
-    };
-    auto filterRAW = [&](const AccessPoint &later, const AccessPoint &earlier) {
-        return later.cursor_.id() == inserter.s1Eval() &&
-               lca(earlier.cursor_, common).id() == common.id();
     };
     auto foundWAR = [&](const Dependency &dep) {
         // Serialize dep.dep_ because it is from a random PBCtx
         writesWAR[dep.later_.cursor_.node()] = toString(dep.dep_);
     };
-    auto foundRAW = [&](const Dependency &dep) {
-        // Serialize dep.dep_ because it is from a random PBCtx
-        writesRAW[dep.earlier_.cursor_.node()] = toString(dep.dep_);
-    };
     findDeps(tmpOp, {{}}, foundWAR, FindDepsMode::Dep, DEP_WAR, filterWAR);
-    findDeps(tmpOp, {{}}, foundRAW, FindDepsMode::Dep, DEP_RAW, filterRAW);
 
-    for (auto &[item, wr0] : writesWAR) {
-        if (writesRAW.count(item)) {
+    for (auto &&[_item, wr0] : writesWAR) {
+        auto &&item = _item;
+        std::string r1w;
+        auto filterRAW = [&](const AccessPoint &later,
+                             const AccessPoint &earlier) {
+            return later.cursor_.id() == inserter.s1Eval() &&
+                   earlier.cursor_.id() == item->id();
+        };
+        auto foundRAW = [&](const Dependency &dep) {
+            // Serialize dep.dep_ because it is from a random PBCtx
+            r1w = toString(dep.dep_);
+        };
+        findDeps(tmpOp, {{}}, foundRAW, FindDepsMode::Dep, DEP_RAW, filterRAW);
+
+        if (!r1w.empty()) {
             PBCtx ctx;
-            auto r1w = writesRAW.at(item);
             auto r1r0 = applyRange(PBMap(ctx, r1w), PBMap(ctx, wr0));
             if (!r1r0.empty()) {
                 return false;

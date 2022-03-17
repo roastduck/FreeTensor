@@ -161,6 +161,30 @@ def test_no_inline_expr_is_changed():
     assert ast_.match(ast)
 
 
+def test_no_inline_expr_is_changed_multiple_times():
+    with ir.VarDef([("x", (4,), "int32", "inout", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+        ir.MarkNid("T")
+        with ir.VarDef("t", (4,), "int32", "cache", "cpu") as t:
+            with ir.For("i", 0, 4) as i:
+                t[i] = x[i] * 2
+            with ir.For("i", 0, 4) as i:
+                x[i] = i + 1
+            with ir.For("i", 0, 4) as i:
+                y[i] = x[i]
+            with ir.For("i", 0, 4) as i:
+                x[i] = i + 2
+            with ir.For("i", 0, 4) as i:
+                y[i] = t[i] + 1
+    ast = ir.pop_ast()
+    print(ast)
+    s = ir.Schedule(ast)
+    with pytest.raises(ir.InvalidSchedule):
+        s.inline("T")
+    ast_ = s.ast()  # Should not changed
+    assert ast_.match(ast)
+
+
 def test_no_inline_output_var():
     with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
