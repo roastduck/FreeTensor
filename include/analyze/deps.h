@@ -182,8 +182,8 @@ struct Dependency {
     const std::string &var_;
     const AccessPoint &later_, &earlier_;
     int iterDim_;
-    PBMap dep_;           // later -> earlier
-    PBSet pIter_, oIter_; // later, earlier
+    PBMap dep_;         // later -> earlier
+    PBMap pmap_, omap_; // later, earlier
     PBCtx &presburger_;
     AnalyzeDeps &self_;
 
@@ -369,8 +369,8 @@ class AnalyzeDeps {
 
     void checkAgainstCond(PBCtx &presburger, const Ref<AccessPoint> &point,
                           const Ref<AccessPoint> &other, const PBMap &depAll,
-                          const PBMap &nearest, const PBSet &pIter,
-                          const PBSet &oIter, int iterDim);
+                          const PBMap &nearest, const PBMap &pmap,
+                          const PBMap &omap, int iterDim);
 
     static const std::string &getVar(const AST &op);
 

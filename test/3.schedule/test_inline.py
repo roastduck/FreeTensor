@@ -141,7 +141,7 @@ def test_loop_around_different_iter_no_prop():
     assert ast_.match(ast)
 
 
-def test_no_inline_expr_is_changed():
+def test_no_inline_expr_is_changed_1():
     with ir.VarDef([("x", (4,), "int32", "inout", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         ir.MarkNid("T")
@@ -149,6 +149,25 @@ def test_no_inline_expr_is_changed():
             with ir.For("i", 0, 4) as i:
                 t[i] = x[i] * 2
             with ir.For("i", 0, 4) as i:
+                x[i] = 1
+            with ir.For("i", 0, 4) as i:
+                y[i] = t[i] + 1
+    ast = ir.pop_ast()
+    print(ast)
+    s = ir.Schedule(ast)
+    with pytest.raises(ir.InvalidSchedule):
+        s.inline("T")
+    ast_ = s.ast()  # Should not changed
+    assert ast_.match(ast)
+
+
+def test_no_inline_expr_is_changed_2():
+    with ir.VarDef([("x", (4,), "int32", "inout", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+        ir.MarkNid("T")
+        with ir.VarDef("t", (4,), "int32", "cache", "cpu") as t:
+            with ir.For("i", 0, 4) as i:
+                t[i] = x[i] * 2
                 x[i] = 1
             with ir.For("i", 0, 4) as i:
                 y[i] = t[i] + 1

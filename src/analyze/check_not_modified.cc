@@ -80,7 +80,7 @@ bool checkNotModified(const Stmt &op, const Expr &expr,
     auto common = lca(c0, c1); // FIXME: It seems checking `common` is wrong
                                // because we may have multiple loops
 
-    // write -> serialized PBMap
+    // write -> serialized PBSet
     std::unordered_map<Stmt, std::string> writesWAR;
     auto filterWAR = [&](const AccessPoint &later, const AccessPoint &earlier) {
         return earlier.cursor_.id() == inserter.s0Eval() &&
@@ -88,13 +88,15 @@ bool checkNotModified(const Stmt &op, const Expr &expr,
     };
     auto foundWAR = [&](const Dependency &dep) {
         // Serialize dep.dep_ because it is from a random PBCtx
-        writesWAR[dep.later_.cursor_.node()] = toString(dep.dep_);
+        writesWAR[dep.later_.cursor_.node()] =
+            toString(apply(domain(dep.dep_), dep.pmap_));
     };
-    findDeps(tmpOp, {{}}, foundWAR, FindDepsMode::Dep, DEP_WAR, filterWAR);
+    findDeps(tmpOp, {{}}, foundWAR, FindDepsMode::Dep, DEP_WAR, filterWAR, true,
+             true, true);
 
-    for (auto &&[_item, wr0] : writesWAR) {
+    for (auto &&[_item, w0] : writesWAR) {
         auto &&item = _item;
-        std::string r1w;
+        std::string w1;
         auto filterRAW = [&](const AccessPoint &later,
                              const AccessPoint &earlier) {
             return later.cursor_.id() == inserter.s1Eval() &&
@@ -102,14 +104,15 @@ bool checkNotModified(const Stmt &op, const Expr &expr,
         };
         auto foundRAW = [&](const Dependency &dep) {
             // Serialize dep.dep_ because it is from a random PBCtx
-            r1w = toString(dep.dep_);
+            w1 = toString(apply(range(dep.dep_), dep.omap_));
         };
-        findDeps(tmpOp, {{}}, foundRAW, FindDepsMode::Dep, DEP_RAW, filterRAW);
+        findDeps(tmpOp, {{}}, foundRAW, FindDepsMode::Dep, DEP_RAW, filterRAW,
+                 true, true, true);
 
-        if (!r1w.empty()) {
+        if (!w1.empty()) {
             PBCtx ctx;
-            auto r1r0 = applyRange(PBMap(ctx, r1w), PBMap(ctx, wr0));
-            if (!r1r0.empty()) {
+            auto w = intersect(PBSet(ctx, w0), PBSet(ctx, w1));
+            if (!w.empty()) {
                 return false;
             }
         }

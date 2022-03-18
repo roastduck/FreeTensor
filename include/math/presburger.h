@@ -329,6 +329,31 @@ inline PBSet subtract(const PBSet &lhs, const PBSet &rhs) {
     return isl_set_subtract(lhs.copy(), rhs.copy());
 }
 
+inline PBSet intersect(PBSet &&lhs, PBSet &&rhs) {
+    DEBUG_PROFILE_VERBOSE("intersect",
+                          "nBasic=" + std::to_string(lhs.nBasic()) + "," +
+                              std::to_string(rhs.nBasic()));
+    return isl_set_intersect(lhs.move(), rhs.move());
+}
+inline PBSet intersect(const PBSet &lhs, PBSet &&rhs) {
+    DEBUG_PROFILE_VERBOSE("intersect",
+                          "nBasic=" + std::to_string(lhs.nBasic()) + "," +
+                              std::to_string(rhs.nBasic()));
+    return isl_set_intersect(lhs.copy(), rhs.move());
+}
+inline PBSet intersect(PBSet &&lhs, const PBSet &rhs) {
+    DEBUG_PROFILE_VERBOSE("intersect",
+                          "nBasic=" + std::to_string(lhs.nBasic()) + "," +
+                              std::to_string(rhs.nBasic()));
+    return isl_set_intersect(lhs.move(), rhs.copy());
+}
+inline PBSet intersect(const PBSet &lhs, const PBSet &rhs) {
+    DEBUG_PROFILE_VERBOSE("intersect",
+                          "nBasic=" + std::to_string(lhs.nBasic()) + "," +
+                              std::to_string(rhs.nBasic()));
+    return isl_set_intersect(lhs.copy(), rhs.copy());
+}
+
 inline PBMap intersect(PBMap &&lhs, PBMap &&rhs) {
     DEBUG_PROFILE_VERBOSE("intersect",
                           "nBasic=" + std::to_string(lhs.nBasic()) + "," +
@@ -373,6 +398,23 @@ inline PBMap uni(const PBMap &lhs, const PBMap &rhs) {
     DEBUG_PROFILE_VERBOSE("uni", "nBasic=" + std::to_string(lhs.nBasic()) +
                                      "," + std::to_string(rhs.nBasic()));
     return isl_map_union(lhs.copy(), rhs.copy());
+}
+
+inline PBSet apply(PBSet &&lhs, PBMap &&rhs) {
+    DEBUG_PROFILE("apply");
+    return isl_set_apply(lhs.move(), rhs.move());
+}
+inline PBSet apply(const PBSet &lhs, PBMap &&rhs) {
+    DEBUG_PROFILE("apply");
+    return isl_set_apply(lhs.copy(), rhs.move());
+}
+inline PBSet apply(PBSet &&lhs, const PBMap &rhs) {
+    DEBUG_PROFILE("apply");
+    return isl_set_apply(lhs.move(), rhs.copy());
+}
+inline PBSet apply(const PBSet &lhs, const PBMap &rhs) {
+    DEBUG_PROFILE("apply");
+    return isl_set_apply(lhs.copy(), rhs.copy());
 }
 
 inline PBMap applyDomain(PBMap &&lhs, PBMap &&rhs) {

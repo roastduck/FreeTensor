@@ -205,7 +205,7 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
         auto earlier = d.earlier().as<StmtNode>();
         auto later = d.later().as<StmtNode>();
         if (!kill.count(earlier)) {
-            kill[earlier] = PBSet(presburger, toString(d.oIter_));
+            kill[earlier] = PBSet(presburger, toString(domain(d.omap_)));
         }
         overwrites.emplace_back(later, earlier,
                                 PBSet(presburger, toString(range(d.dep_))));
@@ -230,7 +230,7 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
             auto earlier = d.earlier().as<StmtNode>();
             auto later = d.later().as<StmtNode>();
             if (!kill.count(earlier)) {
-                kill[earlier] = PBSet(presburger, toString(d.oIter_));
+                kill[earlier] = PBSet(presburger, toString(domain(d.omap_)));
             }
             overwrites.emplace_back(later, earlier,
                                     PBSet(presburger, toString(range(d.dep_))));

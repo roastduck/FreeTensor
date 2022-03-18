@@ -597,7 +597,7 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
                                    const Ref<AccessPoint> &point,
                                    const Ref<AccessPoint> &other,
                                    const PBMap &depAll, const PBMap &nearest,
-                                   const PBSet &pIter, const PBSet &oIter,
+                                   const PBMap &pmap, const PBMap &omap,
                                    int iterDim) {
     if (nearest.empty()) {
         return;
@@ -606,11 +606,11 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
     // correctness?
     if ((mode_ == FindDepsMode::KillEarlier ||
          mode_ == FindDepsMode::KillBoth) &&
-        oIter != range(nearest)) {
+        domain(omap) != range(nearest)) {
         return;
     }
     if ((mode_ == FindDepsMode::KillLater || mode_ == FindDepsMode::KillBoth) &&
-        pIter != domain(nearest)) {
+        domain(pmap) != domain(nearest)) {
         return;
     }
 
@@ -647,7 +647,7 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
         {
             std::lock_guard<std::mutex> guard(lock_);
             found_(Dependency{item, getVar(point->op_), *point, *other, iterDim,
-                              res, pIter, oIter, presburger, *this});
+                              res, pmap, omap, presburger, *this});
         }
     fail:;
     }
@@ -723,11 +723,9 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
     }
     PBMap ps2a = makeSerialToAll(presburger, iterDim, point->iter_);
     PBMap pa2s = reverse(ps2a);
-    PBSet pIter = domain(pmap);
     std::vector<PBMap> omapList(otherList.size());
     std::vector<GenPBExpr::VarMap> oExternalsList(otherList.size());
     std::vector<PBMap> os2aList(otherList.size()), depAllList(otherList.size());
-    std::vector<PBSet> oIterList(otherList.size());
     PBMap psDepAllUnion;
     for (auto &&[i, other, omap, oExternals] :
          iter::zip(iter::count(), otherList, omapList, oExternalsList)) {
@@ -735,17 +733,16 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
                           "__ext_o" + std::to_string(i), oExternals);
     }
     projectOutPrivateAxis(presburger, point, otherList, omapList, iterDim);
-    for (auto &&[i, other, omap, oExternals, os2a, oIter, depAll] :
+    for (auto &&[i, other, omap, oExternals, os2a, depAll] :
          iter::zip(iter::count(), otherList, omapList, oExternalsList, os2aList,
-                   oIterList, depAllList)) {
+                   depAllList)) {
         if (omap.empty()) {
             continue;
         }
         os2a = makeSerialToAll(presburger, iterDim, other->iter_);
         PBMap oa2s = reverse(os2a);
-        oIter = domain(omap);
 
-        depAll = subtract(applyRange(pmap, reverse(std::move(omap))), allEQ);
+        depAll = subtract(applyRange(pmap, reverse(omap)), allEQ);
 
         depAll = intersect(std::move(depAll), eraseVarDefConstraint);
         depAll = intersect(std::move(depAll), noDepsConstraint);
@@ -775,13 +772,13 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
     PBMap psNearest = uni(lexmax(std::move(psDep)), std::move(psSelf));
     psNearest = coalesce(std::move(psNearest));
 
-    for (auto &&[other, os2a, oIter, depAll] :
-         iter::zip(otherList, os2aList, oIterList, depAllList)) {
+    for (auto &&[other, os2a, omap, depAll] :
+         iter::zip(otherList, os2aList, omapList, depAllList)) {
         if (depAll.isValid()) {
             checkAgainstCond(
                 presburger, point, other, depAll,
-                intersect(applyRange(psNearest, std::move(os2a)), depAll),
-                pIter, oIter, iterDim);
+                intersect(applyRange(psNearest, std::move(os2a)), depAll), pmap,
+                omap, iterDim);
         }
     }
 }
@@ -810,11 +807,9 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
     }
     PBMap os2a = makeSerialToAll(presburger, iterDim, other->iter_);
     PBMap oa2s = reverse(os2a);
-    PBSet oIter = domain(omap);
     std::vector<PBMap> pmapList(pointList.size());
     std::vector<GenPBExpr::VarMap> pExternalsList(pointList.size());
     std::vector<PBMap> ps2aList(pointList.size()), depAllList(pointList.size());
-    std::vector<PBSet> pIterList(pointList.size());
     PBMap spDepAllUnion;
     for (auto &&[i, point, pmap, pExternals] :
          iter::zip(iter::count(), pointList, pmapList, pExternalsList)) {
@@ -822,17 +817,16 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
                           "__ext_p" + std::to_string(i), pExternals);
     }
     projectOutPrivateAxis(presburger, other, pointList, pmapList, iterDim);
-    for (auto &&[i, point, pmap, pExternals, ps2a, pIter, depAll] :
+    for (auto &&[i, point, pmap, pExternals, ps2a, depAll] :
          iter::zip(iter::count(), pointList, pmapList, pExternalsList, ps2aList,
-                   pIterList, depAllList)) {
+                   depAllList)) {
         if (pmap.empty()) {
             continue;
         }
         ps2a = makeSerialToAll(presburger, iterDim, point->iter_);
         PBMap pa2s = reverse(ps2a);
-        pIter = domain(pmap);
 
-        depAll = subtract(applyRange(std::move(pmap), reverse(omap)), allEQ);
+        depAll = subtract(applyRange(pmap, reverse(omap)), allEQ);
 
         depAll = intersect(std::move(depAll), eraseVarDefConstraint);
         depAll = intersect(std::move(depAll), noDepsConstraint);
@@ -863,13 +857,13 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
         uni(reverse(lexmin(reverse(std::move(spDep)))), std::move(spSelf));
     spNearest = coalesce(std::move(spNearest));
 
-    for (auto &&[point, ps2a, pIter, depAll] :
-         iter::zip(pointList, ps2aList, pIterList, depAllList)) {
+    for (auto &&[point, ps2a, pmap, depAll] :
+         iter::zip(pointList, ps2aList, pmapList, depAllList)) {
         if (depAll.isValid()) {
             checkAgainstCond(
                 presburger, point, other, depAll,
                 intersect(applyDomain(spNearest, std::move(ps2a)), depAll),
-                pIter, oIter, iterDim);
+                pmap, omap, iterDim);
         }
     }
 }
