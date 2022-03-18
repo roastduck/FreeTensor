@@ -97,6 +97,38 @@ Stmt SinkVar::visit(const VarDef &_op) {
         break;
     }
 
+    case ASTNodeType::If: {
+        auto branch = op->body_.as<IfNode>();
+        Stmt thenCase, elseCase;
+        thenCase =
+            makeVarDef(_op->id().strId() + ".0", _op->name_, *_op->buffer_,
+                       _op->sizeLim_, branch->thenCase_, false);
+        if (branch->elseCase_.isValid()) {
+            elseCase =
+                makeVarDef(_op->id().strId() + ".1", _op->name_, *_op->buffer_,
+                           _op->sizeLim_, branch->elseCase_, false);
+        }
+        ret = makeIf(branch->id(), branch->cond_, std::move(thenCase),
+                     std::move(elseCase));
+        for (auto &&def : iter::reversed(inners)) {
+            ret = makeVarDef(def->id(), def->name_, *def->buffer_,
+                             def->sizeLim_, std::move(ret), def->pinned_);
+        }
+        break;
+    }
+
+    case ASTNodeType::Assert: {
+        auto ass = op->body_.as<AssertNode>();
+        auto body = makeVarDef(_op->id(), _op->name_, *_op->buffer_,
+                               _op->sizeLim_, ass->body_, false);
+        ret = makeAssert(ass->id(), ass->cond_, std::move(body));
+        for (auto &&def : iter::reversed(inners)) {
+            ret = makeVarDef(def->id(), def->name_, *def->buffer_,
+                             def->sizeLim_, std::move(ret), def->pinned_);
+        }
+        break;
+    }
+
     default:; // do nothing
     }
 

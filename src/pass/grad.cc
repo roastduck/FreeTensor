@@ -102,11 +102,17 @@ Stmt Grad::visit(const StmtSeq &op) {
     }
 }
 
-Stmt Grad::visit(const For &op) {
+Stmt Grad::visit(const For &_op) {
+    auto __op = BaseClass::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::For);
+    auto op = __op.as<ForNode>();
+    ReplaceByTape replaceByTape(*this, tapeMap_, versions_, op);
     if (isRecompute_) {
-        auto ret = BaseClass::visit(op);
-        ret->setId("");
-        return ret;
+        op->begin_ = replaceByTape(op->begin_);
+        op->end_ = replaceByTape(op->end_);
+        op->step_ = replaceByTape(op->step_);
+        op->len_ = replaceByTape(op->len_);
+        op->setId("");
     } else {
         auto noDeps = op->property_.noDeps_;
         for (auto &&fwdVar : op->property_.noDeps_) {
@@ -114,27 +120,30 @@ Stmt Grad::visit(const For &op) {
                 noDeps.emplace_back(fwdVar + ".grad");
             }
         }
-        ReplaceByTape replaceByTape(*this, tapeMap_, versions_, op);
-        auto rbegin = replaceByTape(
+        auto begin = replaceByTape(
             makeAdd(op->begin_,
                     makeMul(op->step_, makeSub(op->len_, makeIntConst(1)))));
-        auto rend = replaceByTape(makeSub(op->begin_, op->step_));
-        auto rstep = replaceByTape(makeSub(makeIntConst(0), op->step_));
-        return makeFor(op->id(), op->iter_, std::move(rbegin), std::move(rend),
-                       std::move(rstep), op->len_,
-                       op->property_.withNoDeps(noDeps), (*this)(op->body_));
+        auto end = replaceByTape(makeSub(op->begin_, op->step_));
+        auto step = replaceByTape(makeSub(makeIntConst(0), op->step_));
+        auto len = replaceByTape(op->len_);
+
+        op->property_.noDeps_ = std::move(noDeps);
+        op->begin_ = std::move(begin);
+        op->end_ = std::move(end);
+        op->step_ = std::move(step);
+        op->len_ = std::move(len);
     }
+    return op;
 }
 
 Stmt Grad::visit(const If &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::If);
     auto op = __op.as<IfNode>();
+    ReplaceByTape replaceByTape(*this, tapeMap_, versions_, op);
+    op->cond_ = replaceByTape(op->cond_);
     if (isRecompute_) {
         op->setId("");
-    } else {
-        ReplaceByTape replaceByTape(*this, tapeMap_, versions_, op);
-        op->cond_ = replaceByTape(op->cond_);
     }
     return op;
 }
@@ -143,11 +152,10 @@ Stmt Grad::visit(const Assert &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Assert);
     auto op = __op.as<AssertNode>();
+    ReplaceByTape replaceByTape(*this, tapeMap_, versions_, op);
+    op->cond_ = replaceByTape(op->cond_);
     if (isRecompute_) {
         op->setId("");
-    } else {
-        ReplaceByTape replaceByTape(*this, tapeMap_, versions_, op);
-        op->cond_ = replaceByTape(op->cond_);
     }
     return op;
 }
