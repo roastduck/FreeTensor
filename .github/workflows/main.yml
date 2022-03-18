@@ -33,4 +33,4 @@ jobs:
           source /opt/spack/share/spack/setup-env.sh
           spack load gcc@8.4.0 cuda@10.2.89 python@3.8.6 py-pip@20.2 cudnn@8.0.4.30-10.2-linux-x64 cmake@3.18.4%gcc@7.5.0 intel-mkl@2020.3.279
           srun -N 1 -p V100 python -c 'import pkg_resources; print(pkg_resources)'
-          PYTHONPATH=build:python srun -N 1 -p V100 pytest -s test
+          PYTHONPATH=build:python:$PYTHONPATH srun -N 1 -p V100 pytest -s test
