@@ -109,11 +109,10 @@ def test_sink_for_invariant():
                     ("y1", (4,), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (x, y1, y2):
         with ir.For("i", 0, 4) as i:
-            # Also shrinked
             with ir.VarDef("b", (), "int32", "cache", "cpu") as b:
                 b[()] = x[0] + x[1]
-                y1[i] = b[0] * i
-                y2[i] = b[0] + i
+                y1[i] = b[()] * i
+                y2[i] = b[()] + i
     std = ir.pop_ast()
 
     assert std.match(ast)
