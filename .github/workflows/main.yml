@@ -19,6 +19,7 @@ jobs:
         with:
           ssh-key: ${{ secrets.CI }}
           submodules: true
+          fetch-depth: 0
       - name: Load environment
         run: |
           source /opt/spack/share/spack/setup-env.sh
