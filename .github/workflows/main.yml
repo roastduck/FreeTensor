@@ -28,7 +28,8 @@ jobs:
           spack load cudnn@8.0.4.30-10.2-linux-x64
           spack load cmake@3.18.4%gcc@7.5.0
           spack load intel-mkl@2020.3.279
-          env >> $GITHUB_ENV
+          echo "PATH=$PATH" >> $GITHUB_ENV
+          echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> $GITHUB_ENV
       - name: Build ffi module in Release
         run: |
           mkdir -p build
