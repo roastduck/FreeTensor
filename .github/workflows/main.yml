@@ -18,6 +18,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           ssh-key: ${{ secrets.CI }}
+          submodules: true
       - name: Load environment
         run: |
           source /opt/spack/share/spack/setup-env.sh
