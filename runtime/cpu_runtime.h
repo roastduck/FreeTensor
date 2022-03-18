@@ -7,11 +7,13 @@
 #include <cmath> // INFINITY, sqrt
 #include <cstdint>
 
-#include "cpu_context.h"
+#include <omp.h>
 
 #ifdef WITH_MKL
 #include <mkl.h>
 #endif
+
+#include "cpu_context.h"
 
 #define restrict __restrict__
 #define __ByValArray std::array
