@@ -6,10 +6,12 @@
 
 namespace ir {
 
+enum class RuleStatus { Skip, Apply, ApplyAndSkipRest };
+
 class Rule {
   public:
-    virtual int analyze(Schedule &schedule) = 0;
-    virtual SketchPart genPart(int p) = 0;
+    virtual RuleStatus analyze(const Sketch &sketch) = 0;
+    virtual std::vector<Sketch> genPart(const Sketch &sketch) = 0;
 };
 
 } // namespace ir

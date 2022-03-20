@@ -62,6 +62,9 @@ size_t Sketch::hash() const {
     for (const auto &part : parts_) {
         h = hashCombine(h, part->hash());
     }
+    for (const auto &rule : doneRules_) {
+        h = hashCombine(h, std::hash<std::string>{}(rule));
+    }
     return h;
 }
 

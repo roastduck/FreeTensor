@@ -9,9 +9,10 @@ namespace ir {
 
 class FindSingleElementWise : public SymbolTable<Visitor> {
     Store nowStore_;
+    ReduceTo nowReduceTo_;
     typedef SymbolTable<Visitor> BaseClass;
     std::string name_;
-    Store found_;
+    Stmt found_;
     bool invalid_;
 
   public:
@@ -19,12 +20,14 @@ class FindSingleElementWise : public SymbolTable<Visitor> {
         : name_(std::move(name)), invalid_(false) {}
     using SymbolTable<Visitor>::visit;
     void visit(const Store &op) override;
+    void visit(const ReduceTo &op) override;
     void visit(const Load &op) override;
     bool isElementWise(const Store &st, const Load &ld);
-    Store result() { return invalid_ ? nullptr : found_; }
+    bool isElementWise(const ReduceTo &st, const Load &ld);
+    Stmt result() { return invalid_ ? nullptr : found_; }
 };
 
-Store findSingleElementWiseConsumer(const Stmt &root, const std::string &name);
+Stmt findSingleElementWiseConsumer(const Stmt &root, const std::string &name);
 
 } // namespace ir
 

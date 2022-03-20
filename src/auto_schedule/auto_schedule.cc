@@ -3,6 +3,7 @@
 #include <analyze/find_elementwise.h>
 #include <analyze/fixed_length_feature.h>
 #include <auto_schedule/auto_schedule.h>
+#include <auto_schedule/rules/cache_write.h>
 #include <auto_schedule/rules/multi_level_tiling.h>
 #include <auto_schedule/utils.h>
 #include <codegen/code_gen_cpu.h>
@@ -10,6 +11,7 @@
 #include <driver.h>
 #include <lower.h>
 #include <pybind11/numpy.h>
+#include <queue>
 
 namespace ir {
 
@@ -19,17 +21,8 @@ AutoSchedule::AutoSchedule(const Schedule &schedule, const Ref<Target> &target,
     : original_(schedule), target_(target), device_(device),
       measuredSize_(measuredSize), paramsSet_(false), mn_(INFINITY),
       predictFunc_(std::move(predictFunc)), updateFunc_(std::move(updateFunc)) {
-    Store consumer = findSingleElementWiseConsumer(schedule.ast(), "y");
-    if (consumer.isValid())
-        std::cout << consumer->var_ << std::endl;
-    else
-        std::cout << "not found" << std::endl;
-    MultiLevelTilingRule rule;
-    int n = rule.analyze(original_);
-    std::cout << "Found" << n << std::endl;
-    Sketch sketch;
-    sketch.addPart(rule.genPart(0));
-    baseSketches_.push_back(sketch);
+    rules_.push_back(new CacheWriteRule);
+    rules_.push_back(new MultiLevelTilingRule);
     std::random_device rd;
     randGen_ = std::default_random_engine(rd());
 }
@@ -79,6 +72,9 @@ AutoSchedule::measure(const std::vector<Schedule> &schedules) {
 }
 
 std::vector<Sketch> AutoSchedule::searchOneRound(size_t n) {
+    if (baseSketches_.empty()) {
+        genSketches();
+    }
     std::cout << "get init population" << std::endl;
     std::vector<Sketch> init = getInitPopulation(n);
     std::cout << "evolutionary search" << std::endl;
@@ -298,6 +294,53 @@ AutoSchedule::getPrediction(const std::vector<Sketch> &sketches) {
         ret.push_back(i.cast<double>());
     }
     return ret;
+}
+void AutoSchedule::genSketches() {
+    auto targets = findMultiLevelTiling(original_.ast());
+    if (!targets.size()) {
+        return;
+    }
+    Sketch initSketch(original_, targets);
+    std::queue<Sketch> q;
+    q.push(std::move(initSketch));
+    while (!q.empty()) {
+        auto nowSketch = std::move(q.front());
+        q.pop();
+        for (auto &rule : rules_) {
+            if (auto status = rule->analyze(nowSketch);
+                status != RuleStatus::Skip) {
+                auto sketches = rule->genPart(nowSketch);
+                for (auto &sketch : sketches) {
+                    if (sketch.nowTargetNum() == -1) {
+                        baseSketches_.push_back(sketch);
+                    } else {
+                        q.push(std::move(sketch));
+                    }
+                }
+                if (status == RuleStatus::ApplyAndSkipRest) {
+                    break;
+                }
+            }
+        }
+    }
+}
+
+Sketch AutoSchedule::getInitSketch() {
+    auto targets = findMultiLevelTiling(original_.ast());
+    if (!targets.size()) {
+        return {};
+    }
+    return {original_, targets};
+}
+
+Stmt AutoSchedule::testCacheWrite() {
+    auto sketch = getInitSketch();
+    CacheWriteRule rule;
+    if (rule.analyze(sketch) == RuleStatus::Skip) {
+        return nullptr;
+    }
+    auto newSketch = rule.genPart(sketch).front();
+    return newSketch.schedule().ast();
 }
 
 } // namespace ir
