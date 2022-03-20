@@ -10,8 +10,8 @@ sys.path.append('../..')
 from common.numpy.io import load_txt, store_txt
 
 
-def compile_all(w, dilation, dilation_heads, n_heads, seq_len, feat_len,
-                device):
+def compile_all(w, dilation, dilation_heads, n_heads, seq_len, feat_len, device,
+                ad_save_all):
     mtype = device.main_mem_type()
 
     sqrt_d = math.sqrt(feat_len)
@@ -67,19 +67,22 @@ def compile_all(w, dilation, dilation_heads, n_heads, seq_len, feat_len,
                               p] += attn[k + w] * V[i, j + ir.if_then_else(
                                   i >= dilation_heads, k, k * dilation), p]
 
-    forward, backward, requires, privdes, _ = ir.grad(inference,
-                                                      set(["Q", "K", "V"]),
-                                                      set(["Y"]))
-
     print("# Inference:")
     print(inference)
+    t0 = time.time()
     s = ir.Schedule(inference)
     s.auto_schedule(device.target())
     f = ir.lower(s.func(), device.target())
-    print(f)
     code = ir.codegen(f, device.target())
-    print(ir.debug.with_line_no(code))
     inference_exe = ir.Driver(inference, code, device)
+    t1 = time.time()
+    print(f)
+    print(ir.debug.with_line_no(code))
+    print(f"Inference compiling time: {t1 - t0}s")
+
+    forward, backward, requires, privdes, _ = ir.grad(
+        inference, set(["Q", "K", "V"]), set(["Y"]),
+        ir.GradTapeMode.All if ad_save_all else ir.GradTapeMode.NoReuseOnly)
 
     print("# Forward:")
     print(forward)
@@ -123,7 +126,16 @@ if __name__ == '__main__':
                         type=int,
                         default=100,
                         dest='test_num')
+    parser.add_argument('--ad-save-all',
+                        action='store_true',
+                        dest='ad_save_all')
+    parser.add_argument('--profile-gpu',
+                        action='store_true',
+                        dest='profile_gpu')
     cmd_args = parser.parse_args()
+
+    if cmd_args.profile_gpu:
+        from common.gpu import profile_start, profile_stop
 
     device = cmd_args.target
 
@@ -159,7 +171,7 @@ if __name__ == '__main__':
 
     inference, forward, backward = compile_all(w, dilation, dilation_heads,
                                                n_heads, seq_len, feat_len,
-                                               ir_dev)
+                                               ir_dev, cmd_args.ad_save_all)
 
     print(
         f"{cmd_args.warmup_num} warmup, {cmd_args.test_num} repeats for evalution"
@@ -172,13 +184,20 @@ if __name__ == '__main__':
         if i == 0:
             store_txt("y.out", y.numpy().reshape((n_heads, seq_len, feat_len)))
     ir_dev.sync()
+    if cmd_args.profile_gpu:
+        profile_start()
     t0 = time.time()
     for i in range(test_num):
         inference(q, k, v, y)
     ir_dev.sync()
     t1 = time.time()
+    if cmd_args.profile_gpu:
+        profile_stop()
 
     print(f"Inference Time = {(t1 - t0) / test_num * 1000} ms")
+
+    if cmd_args.profile_gpu:
+        exit(0)
 
     for i in range(warmup_num):
         forward(q, k, v, y)

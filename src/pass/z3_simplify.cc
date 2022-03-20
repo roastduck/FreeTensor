@@ -1,5 +1,4 @@
-#include <analyze/all_reads.h>
-#include <analyze/all_writes.h>
+#include <analyze/all_uses.h>
 #include <pass/annotate_conds.h>
 #include <pass/replace_iter.h>
 #include <pass/simplify.h>
@@ -66,7 +65,7 @@ Expr Z3Simplify::visit(const Load &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Load);
     auto op = __op.as<LoadNode>();
-    auto dtype = buffer(op->var_)->tensor().dtype();
+    auto dtype = symbolTable_.buffer(op->var_)->tensor().dtype();
     if (isInt(dtype)) {
         put(op, ctx_.int_const(("x" + std::to_string(getVarId(op))).c_str()));
     } else if (isBool(dtype)) {
@@ -497,7 +496,7 @@ Stmt Z3Simplify::visit(const For &op) {
 
 Stmt z3Simplify(const Stmt &_op) {
     auto op = annotateConds(_op);
-    op = Z3Simplify()(_op);
+    op = Z3SimplifyWithSymbolTable()(_op);
     op = simplifyPass(op); // to remove some empty blocks
     return op;
 }

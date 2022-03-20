@@ -1,5 +1,4 @@
-#include <analyze/all_iters.h>
-#include <analyze/all_reads.h>
+#include <analyze/all_uses.h>
 #include <analyze/deps.h>
 #include <pass/replace_uses.h>
 #include <pass/scalar_prop_const.h>

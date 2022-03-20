@@ -41,14 +41,16 @@ LoopInVarDefs findLoopInVarDefs(const Stmt &stmt, const ID &id,
     }
     if (stmt->nodeType() == ASTNodeType::StmtSeq) {
         auto stmtSeq = stmt.as<StmtSeqNode>();
-        LoopInVarDefs ret;
-        if (direction == FindLoopInVarDefsDirection::Front) {
-            ret = findLoopInVarDefs(stmtSeq->stmts_.front(), id, direction);
-        } else {
-            ret = findLoopInVarDefs(stmtSeq->stmts_.back(), id, direction);
+        if (!stmtSeq->stmts_.empty()) {
+            LoopInVarDefs ret;
+            if (direction == FindLoopInVarDefsDirection::Front) {
+                ret = findLoopInVarDefs(stmtSeq->stmts_.front(), id, direction);
+            } else {
+                ret = findLoopInVarDefs(stmtSeq->stmts_.back(), id, direction);
+            }
+            ret.surroundings_.emplace_back(stmt);
+            return ret;
         }
-        ret.surroundings_.emplace_back(stmt);
-        return ret;
     }
     return LoopInVarDefs{nullptr, {}};
 }

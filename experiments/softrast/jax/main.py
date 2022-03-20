@@ -85,7 +85,13 @@ if __name__ == '__main__':
                         type=int,
                         default=100,
                         dest='test_num')
+    parser.add_argument('--profile-gpu',
+                        action='store_true',
+                        dest='profile_gpu')
     cmd_args = parser.parse_args()
+
+    if cmd_args.profile_gpu:
+        from common.gpu import profile_start, profile_stop
 
     vertices = load_txt("../vertices.in", "float32")
     faces = load_txt("../faces.in", "int32")
@@ -115,13 +121,20 @@ if __name__ == '__main__':
         if i == 0:
             store_txt("y.out", y)
     y = y.block_until_ready()
+    if cmd_args.profile_gpu:
+        profile_start()
     t0 = time.time()
     for i in range(test_num):
         y = rasterize_inference(vertices, faces)
     y = y.block_until_ready()
     t1 = time.time()
+    if cmd_args.profile_gpu:
+        profile_stop()
     assert y.shape == (n_faces, h, w)
     print(f"Inference Time = {(t1 - t0) / test_num * 1000} ms")
+
+    if cmd_args.profile_gpu:
+        exit(0)
 
     for i in range(warmup_num):
         d_vertices, = rasterize_forward_backward(vertices, faces)

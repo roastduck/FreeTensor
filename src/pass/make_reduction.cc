@@ -1,6 +1,6 @@
 #include <itertools.hpp>
 
-#include <analyze/all_reads.h>
+#include <analyze/all_uses.h>
 #include <hash.h>
 #include <pass/make_reduction.h>
 

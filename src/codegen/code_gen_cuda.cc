@@ -30,13 +30,13 @@ void CodeGenCUDA::genAlloc(const Tensor &tensor, const std::string &rawPtr,
     os() << shapePtr << " = " << ndim << " > 0 ? (size_t*)malloc((" << dimPtr
          << " = " << ndim << ") * sizeof(size_t)) : NULL;" << std::endl;
     makeIndent();
-    os() << "cudaMalloc(&" << rawPtr << ", ";
+    os() << "checkCudaError(cudaMalloc(&" << rawPtr << ", ";
     for (auto &&[i, dim] : iter::enumerate(tensor.shape())) {
         os() << "(" << shapePtr << "[" << i << "] = ";
         (*this)(dim);
         os() << ") * ";
     }
-    os() << "sizeof(" << gen(tensor.dtype()) << "));" << std::endl;
+    os() << "sizeof(" << gen(tensor.dtype()) << ")));" << std::endl;
 }
 
 bool CodeGenCUDA::inKernel() const {
@@ -103,6 +103,47 @@ void CodeGenCUDA::visit(const Ceil &op) {
     os() << ")";
 }
 
+void CodeGenCUDA::visit(const Store &op) {
+    if (this->buffer(op->var_)->mtype() == MemType::GPUWarp) {
+        auto id = mangle(op->var_);
+        this->markUseBuffer(op->var_);
+        this->makeIndent();
+        this->os() << id;
+        for (int i = 1; i < (int)op->indices_.size(); i++) {
+            this->os() << "[";
+            (*this)(op->indices_[i]);
+            this->os() << "]";
+        }
+        this->os() << " = ";
+        (*this)(op->expr_);
+        this->os() << ";" << std::endl;
+    } else {
+        CodeGenC::visit(op);
+    }
+}
+
+void CodeGenCUDA::visit(const Load &op) {
+    if (this->buffer(op->var_)->mtype() == MemType::GPUWarp) {
+        auto id = mangle(op->var_);
+        this->markUseBuffer(op->var_);
+        // mask
+        this->os() << "__shfl_sync(0x1f, ";
+        // var
+        this->os() << id;
+        for (int i = 1; i < (int)op->indices_.size(); i++) {
+            this->os() << "[";
+            (*this)(op->indices_[i]);
+            this->os() << "]";
+        }
+        this->os() << ", ";
+        // srcLane
+        (*this)(op->indices_[0]);
+        this->os() << ");" << std::endl;
+    } else {
+        CodeGenC::visit(op);
+    }
+}
+
 void CodeGenCUDA::visit(const ReduceTo &op) {
     auto id = mangle(op->var_);
     markUseBuffer(op->var_);
@@ -120,15 +161,24 @@ void CodeGenCUDA::visit(const ReduceTo &op) {
             case MemType::GPUShared:
                 this->os() << "*" << id;
                 break;
+            case MemType::GPUWarp:
             default:
                 ASSERT(false);
             }
         } else {
             os() << id;
-            for (auto &&index : op->indices_) {
-                os() << "[";
-                (*this)(index);
-                os() << "]";
+            if (this->buffer(op->var_)->mtype() == MemType::GPUWarp) {
+                for (int i = 1; i < (int)op->indices_.size(); i++) {
+                    this->os() << "[";
+                    (*this)(op->indices_[i]);
+                    this->os() << "]";
+                }
+            } else {
+                for (auto &&index : op->indices_) {
+                    os() << "[";
+                    (*this)(index);
+                    os() << "]";
+                }
             }
         }
     };
@@ -230,13 +280,13 @@ void CodeGenCUDA::visit(const For &op) {
             os() << "uint8_t *__glmem = NULL;" << std::endl;
             if (globalSize > 0) {
                 makeIndent();
-                os() << "cudaMalloc(&__glmem, " << globalSize << ");"
-                     << std::endl;
+                os() << "checkCudaError(cudaMalloc(&__glmem, " << globalSize
+                     << "));" << std::endl;
             }
             makeIndent();
-            os() << "cudaFuncSetAttribute(" << kernel
+            os() << "checkCudaError(cudaFuncSetAttribute(" << kernel
                  << ", cudaFuncAttributeMaxDynamicSharedMemorySize, "
-                 << std::to_string(sharedSize) << ");" << std::endl;
+                 << std::to_string(sharedSize) << "));" << std::endl;
             makeIndent();
             os() << kernel << "<<<dim3("
                  << (dim.count("blockIdx.x") ? dim.at("blockIdx.x") : 1) << ", "
@@ -258,7 +308,7 @@ void CodeGenCUDA::visit(const For &op) {
                 os() << (first ? "" : ", ") << mangle(name);
                 first = false;
             }
-            os() << ", __glmem);" << std::endl;
+            os() << ", _params, __glmem);" << std::endl;
             if (globalSize > 0) {
                 makeIndent();
                 os() << "cudaFree(__glmem);" << std::endl;
@@ -342,12 +392,13 @@ void CodeGenCUDA::visit(const VarDef &op) {
                 }
                 os() << ";" << std::endl;
                 makeIndent();
-                os() << "cudaMalloc(&" << mangle(op->name_) << ", ";
+                os() << "checkCudaError(cudaMalloc(&" << mangle(op->name_)
+                     << ", ";
                 for (auto &&dim : shape) {
                     (*this)(dim);
                     os() << " * ";
                 }
-                os() << "sizeof(" << gen(tensor.dtype()) << "));" << std::endl;
+                os() << "sizeof(" << gen(tensor.dtype()) << ")));" << std::endl;
 
                 (*this)(op->body_);
 
@@ -420,7 +471,18 @@ void CodeGenCUDA::visit(const VarDef &op) {
             }
             CodeGenC::visit(op);
             break;
-
+        case MemType::GPUWarp: {
+            if (!inKernel()) {
+                throw InvalidProgram("Allocating a warp buffer outside a "
+                                     "kernel is not allowed");
+            }
+            auto &&tensor = op->buffer_->tensor();
+            auto &&shape = tensor.shape();
+            ASSERT((int)shape.size() > 0 && shape[0]->isConst() &&
+                   shape[0].as<IntConstNode>()->val_ <= 32);
+            CodeGenC::visit(op);
+            break;
+        }
         default:
             CodeGenC::visit(op);
             break;
@@ -492,6 +554,8 @@ void CodeGenCUDA::visit(const MatMul &op) {
 }
 
 std::string codeGenCUDA(const Func &func) {
+    auto nParams = func->params_.size();
+
     CodeGenCUDA visitor(func->params_, func->returns_);
     auto &&op = func->body_;
     visitor.beginBlock();
@@ -511,9 +575,22 @@ extern "C" {
 
     auto body = visitor.toString([&](const CodeGenCUDA::Stream &stream) {
         if (stream.name_ == "default") {
-            return "void run(void **_params, void **_returns, size_t "
-                   "**_retShapes, size_t *_retDims, GPUContext_t _ctx) " +
-                   stream.os_.str();
+            std::string s =
+                "void run(void **__params, void **_returns, size_t "
+                "**_retShapes, size_t *_retDims, GPUContext_t _ctx) {\n";
+            // We copy __params to _params, in order to pass the parameter pack
+            // into a kernel
+            s += "__ByValArray<void *, " + std::to_string(nParams) +
+                 "> _params;\n";
+            for (size_t i = 0; i < nParams; i++) {
+                s += "_params[" + std::to_string(i) + "] = __params[" +
+                     std::to_string(i) + "];\n";
+            }
+            s += "\n";
+            s += stream.os_.str();
+            s += "\n";
+            s += "}\n";
+            return s;
         } else {
             const auto &dim = stream.threadDim_;
             std::ostringstream os;
@@ -564,7 +641,8 @@ extern "C" {
                 os << (first ? "" : ", ") << "int " << mangle(name);
                 first = false;
             }
-            os << ", uint8_t *__glmem) ";
+            os << ", __ByValArray<void *, " + std::to_string(nParams) +
+                      "> _params, uint8_t *__glmem) ";
             os << stream.os_.str() << std::endl;
             return os.str();
         }

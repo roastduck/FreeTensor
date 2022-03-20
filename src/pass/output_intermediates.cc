@@ -21,6 +21,31 @@ bool OutputIntermediates::isSingleVersion(const ID &defId) const {
            totLens_.at(defId).as<IntConstNode>()->val_ == 1;
 }
 
+Stmt OutputIntermediates::visitStmt(const Stmt &stmt) {
+    curStmt_ = stmt->id();
+    auto ret = BaseClass::visitStmt(stmt);
+    if (toTape_.count(stmt->id())) {
+        auto &toTape = toTape_.at(stmt->id());
+        toTape.emplace_back(ret);
+        return makeStmtSeq("", std::move(toTape));
+    }
+    return ret;
+}
+
+Expr OutputIntermediates::visit(const Load &op) {
+    auto ret = BaseClass::visit(op);
+    auto id = ID(op, curStmt_);
+    if (versions_.count(id) && !isSingleVersion(def(op->var_)->id())) {
+        std::vector<Expr> newIndices(1, versions_.at(id));
+        newIndices.insert(newIndices.end(), op->indices_.begin(),
+                          op->indices_.end());
+        toTape_[curStmt_].emplace_back(
+            makeStore("", op->var_ + ".tape", std::move(newIndices),
+                      makeLoad(op->var_, op->indices_)));
+    }
+    return ret;
+}
+
 Stmt OutputIntermediates::visit(const Store &op) {
     auto oldStore = BaseClass::visit(op);
     if (versions_.count(op->id()) && !isSingleVersion(def(op->var_)->id())) {

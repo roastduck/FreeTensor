@@ -55,10 +55,19 @@ void CodeGenCPU::visit(const VarDef &op) {
                     "this array is large, it may result in a stack overflow");
             }
         }
-        stackSize_ = std::max(stackSize_, stackTop_ + size);
-        stackTop_ += size;
-        CodeGenC::visit(op);
-        stackTop_ -= size;
+        if (inParallel_) {
+            threadStackSize_ =
+                std::max(threadStackSize_, threadStackTop_ + size);
+            threadStackTop_ += size;
+            CodeGenC::visit(op);
+            threadStackTop_ -= size;
+        } else {
+            sharedStackSize_ =
+                std::max(sharedStackSize_, sharedStackTop_ + size);
+            sharedStackTop_ += size;
+            CodeGenC::visit(op);
+            sharedStackTop_ -= size;
+        }
     } else {
         CodeGenC::visit(op);
     }
@@ -233,8 +242,10 @@ extern "C" {
         s += "\n";
         s += "void run(void **_params, void **_returns, size_t **_retShapes, "
              "size_t *_retDims, CPUContext_t _ctx) {\n";
-        s += "  _ctx->setStackLim(" + std::to_string(visitor.stackSize()) +
-             ");\n";
+        s += "  _ctx->setStackLim(" +
+             std::to_string(visitor.sharedStackSize()) +
+             " + omp_get_num_threads() * " +
+             std::to_string(visitor.threadStackSize()) + ");\n";
         s += "  _run(_params, _returns, _retShapes, _retDims);\n";
         s += "}";
         return s;

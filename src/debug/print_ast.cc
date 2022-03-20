@@ -1,3 +1,5 @@
+#include <itertools.hpp>
+
 #include <debug/print_ast.h>
 
 #include "../codegen/detail/code_gen.h"
@@ -51,19 +53,22 @@ void PrintVisitor::visitStmt(const Stmt &op) {
 void PrintVisitor::visit(const Func &op) {
     makeIndent();
     os() << "func(";
-    for (size_t i = 0, iEnd = op->params_.size(); i < iEnd; i++) {
-        os() << (i > 0 ? ", " : "") << op->params_[i];
+    for (auto &&[i, param] : iter::enumerate(op->params_)) {
+        os() << (i > 0 ? ", " : "") << param;
+        if (op->closure_.count(param)) {
+            os() << " @ " << op->closure_.at(param).get();
+        }
     }
     os() << ") ";
     if (!op->returns_.empty()) {
         os() << "-> ";
-        bool first = true;
-        for (auto &&[name, dtype] : op->returns_) {
-            if (!first) {
-                os() << ", ";
+        for (auto &&[i, ret] : iter::enumerate(op->returns_)) {
+            auto &&[name, dtype] = ret;
+            os() << (i > 0 ? ", " : "") << name << ": "
+                 << ::ir::toString(dtype);
+            if (op->closure_.count(name)) {
+                os() << " @ " << op->closure_.at(name).get();
             }
-            first = false;
-            os() << name << ": " << ::ir::toString(dtype);
         }
         os() << " ";
     }

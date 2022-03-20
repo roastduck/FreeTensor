@@ -28,7 +28,8 @@ enum class MemType : int {
     CPU,     // Main memory
     GPUGlobal,
     GPUShared,
-    GPULocal
+    GPULocal,
+    GPUWarp
 };
 
 inline std::string toString(MemType mtype) {
@@ -43,6 +44,8 @@ inline std::string toString(MemType mtype) {
         return "[GPUShared]";
     case MemType::GPULocal:
         return "[GPULocal]";
+    case MemType::GPUWarp:
+        return "[GPUWarp]";
     }
     return "[???]";
 }

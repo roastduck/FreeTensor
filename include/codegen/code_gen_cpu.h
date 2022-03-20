@@ -8,14 +8,16 @@ namespace ir {
 
 class CodeGenCPU : public CodeGenC<CodeGenStream> {
     bool inParallel_ = false;
-    int64_t stackTop_ = 8192 * 1024, stackSize_ = 0;
+    int64_t sharedStackTop_ = 8192 * 1024, sharedStackSize_ = 0;
+    int64_t threadStackTop_ = 0, threadStackSize_ = 0;
 
   public:
     CodeGenCPU(const std::vector<std::string> &params,
                const std::vector<std::pair<std::string, DataType>> &returns)
         : CodeGenC(params, returns) {}
 
-    int64_t stackSize() const { return stackSize_; }
+    int64_t sharedStackSize() const { return sharedStackSize_; }
+    int64_t threadStackSize() const { return threadStackSize_; }
 
   protected:
     void genAlloc(const Tensor &tensor, const std::string &rawPtr,

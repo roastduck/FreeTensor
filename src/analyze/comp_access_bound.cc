@@ -10,6 +10,7 @@ static bool isSharedAmong(MemType mtype, const std::string &parallel) {
         switch (mtype) {
         case MemType::GPUGlobal:
         case MemType::GPUShared:
+        case MemType::GPUWarp:
             return true;
         default:
             return false;

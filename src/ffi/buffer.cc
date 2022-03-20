@@ -15,7 +15,8 @@ void init_ffi_buffer(py::module_ &m) {
         .value("CPU", MemType::CPU)
         .value("GPUGlobal", MemType::GPUGlobal)
         .value("GPUShared", MemType::GPUShared)
-        .value("GPULocal", MemType::GPULocal);
+        .value("GPULocal", MemType::GPULocal)
+        .value("GPUWarp", MemType::GPUWarp);
 
     py::class_<Buffer, Ref<Buffer>> buffer(m, "Buffer");
     buffer.def(py::init<const Tensor &, AccessType, MemType>())

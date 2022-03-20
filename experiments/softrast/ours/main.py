@@ -10,7 +10,7 @@ sys.path.append('../..')
 from common.numpy.io import load_txt, store_txt
 
 
-def compile_all(h, w, n_verts, n_faces, device):
+def compile_all(h, w, n_verts, n_faces, device, ad_save_all):
     """
     Compute soft rasterization of each faces
 
@@ -100,19 +100,22 @@ def compile_all(h, w, n_verts, n_faces, device):
                     y[i, j,
                       k] = ir.sigmoid(inside[()] * dist[()] * dist[()] / sigma)
 
-    forward, backward, requires, privdes, _ = ir.grad(inference,
-                                                      set(["vertices"]),
-                                                      set(["y"]))
-
     print("# Inference:")
     print(inference)
+    t0 = time.time()
     s = ir.Schedule(inference)
     s.auto_schedule(device.target())
     f = ir.lower(s.func(), device.target())
-    print(f)
     code = ir.codegen(f, device.target())
-    print(ir.debug.with_line_no(code))
     inference_exe = ir.Driver(inference, code, device)
+    t1 = time.time()
+    print(f)
+    print(ir.debug.with_line_no(code))
+    print(f"Inference compiling time: {t1 - t0}s")
+
+    forward, backward, requires, privdes, _ = ir.grad(
+        inference, set(["vertices"]), set(["y"]),
+        ir.GradTapeMode.All if ad_save_all else ir.GradTapeMode.NoReuseOnly)
 
     print("# Forward:")
     print(forward)
@@ -154,7 +157,16 @@ if __name__ == '__main__':
                         type=int,
                         default=100,
                         dest='test_num')
+    parser.add_argument('--ad-save-all',
+                        action='store_true',
+                        dest='ad_save_all')
+    parser.add_argument('--profile-gpu',
+                        action='store_true',
+                        dest='profile_gpu')
     cmd_args = parser.parse_args()
+
+    if cmd_args.profile_gpu:
+        from common.gpu import profile_start, profile_stop
 
     device = cmd_args.target
 
@@ -180,7 +192,8 @@ if __name__ == '__main__':
     d_y = ir.Array(d_y, ir_dev)
     d_vertices = ir.Array(d_vertices, ir_dev)
 
-    inference, forward, backward = compile_all(h, w, n_verts, n_faces, ir_dev)
+    inference, forward, backward = compile_all(h, w, n_verts, n_faces, ir_dev,
+                                               cmd_args.ad_save_all)
 
     print(
         f"{cmd_args.warmup_num} warmup, {cmd_args.test_num} repeats for evalution"
@@ -193,13 +206,20 @@ if __name__ == '__main__':
         if i == 0:
             store_txt("y.out", y.numpy().reshape((n_faces, h, w)))
     ir_dev.sync()
+    if cmd_args.profile_gpu:
+        profile_start()
     t0 = time.time()
     for i in range(test_num):
         inference(vertices, faces, y)
     ir_dev.sync()
     t1 = time.time()
+    if cmd_args.profile_gpu:
+        profile_stop()
 
     print(f"Inference Time = {(t1 - t0) / test_num * 1000} ms")
+
+    if cmd_args.profile_gpu:
+        exit(0)
 
     for i in range(warmup_num):
         forward(vertices, faces, y)

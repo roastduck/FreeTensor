@@ -55,7 +55,8 @@ class FindSimplexOffset : public SymbolTable<Visitor> {
         BaseClass::visit(op);
 
         auto mtype = buffer(op->var_)->mtype();
-        if (mtype != MemType::GPULocal && mtype != MemType::GPUShared) {
+        if (mtype != MemType::GPULocal && mtype != MemType::GPUShared &&
+            mtype != MemType::GPUWarp) {
             return;
         }
 
@@ -63,7 +64,7 @@ class FindSimplexOffset : public SymbolTable<Visitor> {
         std::vector<Ref<SimplexOffset>> thisOffsets;
         for (auto &&idx : op->indices_) {
             Ref<SimplexOffset> offset;
-            if (mtype == MemType::GPUShared) {
+            if (mtype == MemType::GPUShared || mtype == MemType::GPUWarp) {
                 offset = getSimplexOffset(
                     {"blockIdx.x", "blockIdx.y", "blockIdx.z"}, idx);
             } else {

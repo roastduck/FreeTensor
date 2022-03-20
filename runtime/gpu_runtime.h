@@ -12,6 +12,16 @@
 
 #define restrict __restrict__
 
+#define checkCudaError(call)                                                   \
+    {                                                                          \
+        auto err = (call);                                                     \
+        if (cudaSuccess != err) {                                              \
+            fprintf(stderr, "CUDA error in file '%s' in line %i : %s.\n",      \
+                    __FILE__, __LINE__, cudaGetErrorString(err));              \
+            exit(EXIT_FAILURE);                                                \
+        }                                                                      \
+    }
+
 template <class T, size_t n> struct __ByValArray {
     T data[n];
     __host__ __device__ const T &operator[](size_t i) const { return data[i]; }

@@ -1,4 +1,3 @@
-
 function read_vec(file::String, type::String)
     ls = readlines(file)
     shape = tuple(parse.(Int, split(ls[1]))...)
@@ -36,4 +35,3 @@ function write_vec(file::String, data)
     end
     return nothing
 end
-    

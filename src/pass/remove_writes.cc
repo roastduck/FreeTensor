@@ -1,8 +1,6 @@
-#include <functional>
-#include <set>
-
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
+#include <container_utils.h>
 #include <pass/hoist_var_over_stmt_seq.h>
 #include <pass/make_reduction.h>
 #include <pass/remove_writes.h>
@@ -183,17 +181,18 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
     findDeps(op, {{}}, foundSelfDependent, FindDepsMode::Dep, DEP_WAW,
              filterSelfDependent, false);
 
-    // {(later, earlier)}
-    std::set<std::pair<Stmt, Stmt>> overwrites;
-    std::set<std::pair<AST, Stmt>> usesRAW;
-    std::set<std::pair<Stmt, AST>> usesWAR;
+    PBCtx presburger;
+    // {(later, earlier, toKill)}
+    std::vector<std::tuple<Stmt, Stmt, PBSet>> overwrites;
+    std::unordered_map<Stmt, std::unordered_set<AST>> usesRAW; // W -> R
+    std::unordered_map<Stmt, std::unordered_set<AST>> usesWAR; // W -> R
+    std::unordered_map<Stmt, PBSet> kill;
     auto filterOverwriteStore = [&](const AccessPoint &later,
                                     const AccessPoint &earlier) {
         if (singleDefId.isValid() && later.def_->id() != singleDefId) {
             return false;
         }
-        return later.op_->nodeType() == ASTNodeType::Store &&
-               later.op_ != earlier.op_;
+        return later.op_->nodeType() == ASTNodeType::Store;
     };
     auto filterOverwriteReduce = [&](const AccessPoint &later,
                                      const AccessPoint &earlier) {
@@ -203,8 +202,13 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
         return later.op_->nodeType() == ASTNodeType::ReduceTo;
     };
     auto foundOverwriteStore = [&](const Dependency &d) {
-        overwrites.emplace(d.later().as<StmtNode>(),
-                           d.earlier().as<StmtNode>());
+        auto earlier = d.earlier().as<StmtNode>();
+        auto later = d.later().as<StmtNode>();
+        if (!kill.count(earlier)) {
+            kill[earlier] = PBSet(presburger, toString(domain(d.omap_)));
+        }
+        overwrites.emplace_back(later, earlier,
+                                PBSet(presburger, toString(range(d.dep_))));
         suspect.insert(d.def());
     };
     auto foundOverwriteReduce = [&](const Dependency &d) {
@@ -213,20 +217,24 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
              sameParent(d.later_.cursor_, d.earlier_.cursor_))) {
             if (d.earlier()->nodeType() == ASTNodeType::Store &&
                 d.earlier().as<StoreNode>()->expr_->isConst()) {
-                overwrites.emplace(d.later().as<StmtNode>(),
-                                   d.earlier().as<StmtNode>());
-                suspect.insert(d.def());
+                goto is_overwrite;
             } else if (d.earlier()->nodeType() == ASTNodeType::ReduceTo &&
                        d.earlier().as<ReduceToNode>()->expr_->isConst()) {
-                overwrites.emplace(d.later().as<StmtNode>(),
-                                   d.earlier().as<StmtNode>());
-                suspect.insert(d.def());
+                goto is_overwrite;
             } else if (sameParent(d.later_.cursor_, d.earlier_.cursor_)) {
-
-                overwrites.emplace(d.later().as<StmtNode>(),
-                                   d.earlier().as<StmtNode>());
-                suspect.insert(d.def());
+                goto is_overwrite;
             }
+            return;
+
+        is_overwrite:
+            auto earlier = d.earlier().as<StmtNode>();
+            auto later = d.later().as<StmtNode>();
+            if (!kill.count(earlier)) {
+                kill[earlier] = PBSet(presburger, toString(domain(d.omap_)));
+            }
+            overwrites.emplace_back(later, earlier,
+                                    PBSet(presburger, toString(range(d.dep_))));
+            suspect.insert(d.def());
         }
     };
     auto filterUse = [&](const AccessPoint &later, const AccessPoint &earlier) {
@@ -236,12 +244,12 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
         if (d.later()->nodeType() != ASTNodeType::Store &&
             d.earlier()->nodeType() != ASTNodeType::Load &&
             d.earlier() != d.later()) {
-            usesRAW.emplace(d.later(), d.earlier().as<StmtNode>());
+            usesRAW[d.earlier().as<StmtNode>()].emplace(d.later());
         }
         if (d.earlier()->nodeType() != ASTNodeType::Store &&
             d.later()->nodeType() != ASTNodeType::Load &&
             d.earlier() != d.later()) {
-            usesWAR.emplace(d.later().as<StmtNode>(), d.earlier());
+            usesWAR[d.later().as<StmtNode>()].emplace(d.earlier());
         }
 
         if (d.later()->nodeType() != ASTNodeType::Store &&
@@ -257,90 +265,89 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
         }
     };
 
-    findDeps(op, {{}}, foundOverwriteStore, FindDepsMode::KillEarlier, DEP_WAW,
-             filterOverwriteStore, false);
-    findDeps(op, {{}}, foundOverwriteReduce, FindDepsMode::KillBoth, DEP_WAW,
-             filterOverwriteReduce, false);
+    findDeps(op, {{}}, foundOverwriteStore, FindDepsMode::Dep, DEP_WAW,
+             filterOverwriteStore, false, true, true);
+    findDeps(op, {{}}, foundOverwriteReduce, FindDepsMode::KillLater, DEP_WAW,
+             filterOverwriteReduce, false, true, true);
     findDeps(op, {{}}, foundUse, FindDepsMode::Dep, DEP_ALL, filterUse, false);
 
     std::unordered_set<Stmt> redundant;
     std::unordered_map<Stmt, Stmt> replacement;
 
     // Type 1
-    std::set<std::pair<Stmt, Stmt>> visited;
-    std::function<void(const std::pair<Stmt, Stmt> &)> visitType1 =
-        [&](const std::pair<Stmt, Stmt> &item) {
-            if (visited.count(item)) {
-                return;
-            }
-            visited.insert(item);
-            auto &&_later = item.first, &&_earlier = item.second;
+    for (auto i = overwrites.begin(); i != overwrites.end();) {
+        auto &&[later, earlier, _] = *i;
+        if (usesRAW.count(earlier) && usesWAR.count(later) &&
+            hasIntersect(usesRAW.at(earlier), usesWAR.at(later))) {
+            i = overwrites.erase(i);
+        } else {
+            i++;
+        }
+    }
+    for (auto &&[later, earlier, thisKill] : overwrites) {
+        kill[earlier] = subtract(std::move(kill.at(earlier)), thisKill);
+    }
+    for (auto i = overwrites.begin(); i != overwrites.end();) {
+        auto &&[later, earlier, _] = *i;
+        if (!kill.at(earlier).empty()) {
+            i = overwrites.erase(i);
+        } else {
+            i++;
+        }
+    }
+    for (auto i = overwrites.begin(); i != overwrites.end(); i++) {
+        auto &&[_later, _earlier, _] = *i;
 
-            for (auto &&use : overwrites) {
-                if (use.first == _earlier && !redundant.count(use.second)) {
-                    // In the case of:
-                    // (1) A = X
-                    // (2) A += Y
-                    // (3) A += Z
-                    // if we handle (2)-(3) first, which resulting to `A += Y +
-                    // Z`, we cannot handle (1) then. So, we handle (1)-(2)
-                    // before (2)-(3)
-                    visitType1(use);
-                }
+        if (_later == _earlier) {
+            continue;
+        }
+        if (redundant.count(_later) || redundant.count(_earlier)) {
+            continue;
+        }
+        auto later =
+            replacement.count(_later) ? replacement.at(_later) : _later;
+        auto earlier =
+            replacement.count(_earlier) ? replacement.at(_earlier) : _earlier;
+
+        if (later->nodeType() == ASTNodeType::Store) {
+            redundant.insert(_earlier);
+        } else {
+            ASSERT(later->nodeType() == ASTNodeType::ReduceTo);
+
+            Expr expr = earlier->nodeType() == ASTNodeType::Store
+                            ? earlier.as<StoreNode>()->expr_
+                            : earlier.as<ReduceToNode>()->expr_;
+
+            if (!checkNotModified(op, expr, CheckNotModifiedSide::After,
+                                  earlier->id(), CheckNotModifiedSide::Before,
+                                  later->id())) {
+                continue;
             }
 
-            for (auto &&use : usesRAW) {
-                if (use.second == _earlier &&
-                    (use.first->nodeType() == ASTNodeType::Load ||
-                     !redundant.count(use.first.as<StmtNode>())) &&
-                    usesWAR.count(std::make_pair(_later, use.first))) {
-                    return;
-                }
-            }
-
-            if (redundant.count(_later) || redundant.count(_earlier)) {
-                return;
-            }
-            auto later =
-                replacement.count(_later) ? replacement.at(_later) : _later;
-            auto earlier = replacement.count(_earlier)
-                               ? replacement.at(_earlier)
-                               : _earlier;
-
-            if (later->nodeType() == ASTNodeType::Store) {
+            auto l = later.as<ReduceToNode>();
+            if (earlier->nodeType() == ASTNodeType::Store) {
                 redundant.insert(_earlier);
-            } else {
-                ASSERT(later->nodeType() == ASTNodeType::ReduceTo);
-
-                Expr expr = earlier->nodeType() == ASTNodeType::Store
-                                ? earlier.as<StoreNode>()->expr_
-                                : earlier.as<ReduceToNode>()->expr_;
-
-                if (!checkNotModified(
-                        op, expr, CheckNotModifiedSide::After, earlier->id(),
-                        CheckNotModifiedSide::Before, later->id())) {
-                    return;
-                }
-
-                auto l = later.as<ReduceToNode>();
-                if (earlier->nodeType() == ASTNodeType::Store) {
-                    redundant.insert(_earlier);
-                    replacement[_later] = makeStore(
-                        later->id(), l->var_, l->indices_,
-                        makeReduce(l->op_, earlier.as<StoreNode>()->expr_,
-                                   l->expr_));
-                } else if (earlier.as<ReduceToNode>()->op_ == l->op_) {
-                    redundant.insert(_earlier);
-                    replacement[_later] = makeReduceTo(
-                        later->id(), l->var_, l->indices_, l->op_,
-                        makeReduce(l->op_, earlier.as<ReduceToNode>()->expr_,
-                                   l->expr_),
-                        false);
-                }
+                replacement[_later] =
+                    makeStore(later->id(), l->var_, l->indices_,
+                              makeReduce(l->op_, earlier.as<StoreNode>()->expr_,
+                                         l->expr_));
+            } else if (earlier.as<ReduceToNode>()->op_ == l->op_) {
+                redundant.insert(_earlier);
+                replacement[_later] = makeReduceTo(
+                    later->id(), l->var_, l->indices_, l->op_,
+                    makeReduce(l->op_, earlier.as<ReduceToNode>()->expr_,
+                               l->expr_),
+                    false);
             }
-        };
-    for (auto &&item : overwrites) {
-        visitType1(item);
+        }
+
+        auto j = i;
+        for (j++; j != overwrites.end(); j++) {
+            auto &[__later, __earlier, _] = *j;
+            if (__later == _earlier) {
+                __later = _later;
+            }
+        }
     }
 
     // Type 2

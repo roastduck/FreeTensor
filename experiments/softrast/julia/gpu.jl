@@ -2,6 +2,7 @@ using CUDA, Flux, Zygote
 using IterTools
 
 include("../../common/julia/io.jl")
+include("../../common/julia/gpu.jl")
 
 function rasterize(vertices, faces, pixels, h, w, n_verts, n_faces)
     sigma = 1e-4
@@ -37,15 +38,20 @@ function rasterize(vertices, faces, pixels, h, w, n_verts, n_faces)
 end
 
 function main()
-    if length(ARGS) != 2
-        println("Usage: " * PROGRAM_FILE * "  Inf/For/Bac")
+    warmup_num = 10
+    test_num = 100
+    if length(ARGS) != 2 && length(ARGS) != 4
+        println("Usage: " * PROGRAM_FILE * "  Inf/For/Bac  <warmup_repeat> <timing_repeat>")
         exit(-1)
     end
+    if length(ARGS) == 4
+        warmup_num = parse(Int, ARGS[3])
+        test_num = parse(Int, ARGS[4])
+    end
+    println(warmup_num, " warmup, ", test_num, "repeats for evalution")
 
     vertices = copy(read_vec("../vertices.in", "Float32")')
-    # vertices = copy(readdlm(open("../vertices.in"), Float32)')
     faces = copy(read_vec("../faces.in", "Int")') .+ 1
-    # faces = copy(readdlm(open("../faces.in"), Int)') .+ 1
     n_verts = size(vertices)[2]
     n_faces = size(faces)[2]
     h = 64
@@ -55,7 +61,6 @@ function main()
     pixels = CuArray(cat(reshape(pixel1, (1, w, h)), reshape(pixel2, (1, w, h)), dims=1))
     y = zeros(Float32, (w, h, n_faces))
     d_y = read_vec("../d_y.in", "Float32")
-    # d_y = reshape(readdlm(open("../d_y.in"), Float32), (w, h, n_faces))
 
     vertices = CuArray(vertices)
     faces = CuArray(faces)
@@ -63,33 +68,33 @@ function main()
     pixels = CuArray(pixels)
 
     if ARGS[2] == "Inf"
-        warmup_num = 10
-        test_num = 100
         for i = 1:warmup_num
             y = rasterize(vertices, faces, pixels, h, w, n_verts, n_faces)
             if i == 1
                 write_vec("y.out", Array(y))
-                # writedlm("y.out", [@sprintf("%.10f", i) for i in reshape(y, (1, :))], '\n')
             end
-            println("warmup: [" * string(i) * "/" * string(warmup_num) * "]  Done.")
+        end
+        if haskey(ENV, "PROFILE_GPU")
+            profile_start()
         end
         time = @timed begin
             for i = 1:test_num
                 y = rasterize(vertices, faces, pixels, h, w, n_verts, n_faces)
-                println("test: [" * string(i) * "/" * string(test_num) * "]  Done.")
             end
+        end
+        if haskey(ENV, "PROFILE_GPU")
+            profile_stop()
         end
         println("Inference Time = " * string(time.time / test_num * 1000) * " ms")
     elseif ARGS[2] == "For"
-        warmup_num = 10
-        test_num = 10
         for i = 1:warmup_num
             z, back = Zygote.pullback(
                 (vertices) -> sum(rasterize(vertices, faces, pixels, h, w, n_verts, n_faces) .* d_y),
                 vertices
             )
-            println("warmup: [" * string(i) * "/" * string(warmup_num) * "]  Done.")
-            # exit(0)
+            if i % 20 == 0
+                println("warmup: [" * string(i) * "/" * string(warmup_num) * "]  Done.")
+            end
         end
         time = @timed begin
             for i = 1:test_num
@@ -97,13 +102,13 @@ function main()
                     (vertices) -> sum(rasterize(vertices, faces, pixels, h, w, n_verts, n_faces) .* d_y),
                     vertices
                 )
-                println("test: [" * string(i) * "/" * string(test_num) * "]  Done.")
+                if i % 20 == 0
+                    println("test: [" * string(i) * "/" * string(test_num) * "]  Done.")
+                end
             end
         end
         println("Forward Time = " * string(time.time / test_num * 1000) * " ms")
     elseif ARGS[2] == "Bac"
-        warmup_num = 5
-        test_num = 15
         z, back = Zygote.pullback(
             (vertices) -> sum(rasterize(vertices, faces, pixels, h, w, n_verts, n_faces) .* d_y),
             vertices
@@ -112,14 +117,17 @@ function main()
             back_array = back(1)
             if i == 1
                 write_vec("d_vertices.out", Array(back_array[1]))
-                # writedlm("d_vertices.out", [@sprintf("%.18e", i) for i in reshape(Array(back_array[1]), :)], ' ')
             end
-            println("warmup: [" * string(i) * "/" * string(warmup_num) * "]  Done.")
+            if i % 20 == 0
+                println("warmup: [" * string(i) * "/" * string(warmup_num) * "]  Done.")
+            end
         end
         time = @timed begin
             for i = 1:test_num
                 back_array = back(1)
-                println("test: [" * string(i) * "/" * string(test_num) * "]  Done.")
+                if i % 20 == 0
+                    println("test: [" * string(i) * "/" * string(test_num) * "]  Done.")
+                end
             end
         end
         println("Backward Time = " * string(time.time / test_num * 1000) * " ms")

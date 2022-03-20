@@ -13,8 +13,12 @@ static bool isEmptyStmt(const Stmt &op) {
     if (!op.isValid()) { // In case If->elseCase_ == nullptr
         return true;
     }
-    if (op->nodeType() == ASTNodeType::StmtSeq &&
-        op.as<StmtSeqNode>()->stmts_.empty()) {
+    if (op->nodeType() == ASTNodeType::StmtSeq) {
+        for (auto &&stmt : op.as<StmtSeqNode>()->stmts_) {
+            if (!isEmptyStmt(stmt)) {
+                return false;
+            }
+        }
         return true;
     }
     return false;

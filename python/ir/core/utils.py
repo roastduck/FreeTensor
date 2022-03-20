@@ -58,4 +58,6 @@ def parseMType(mtype):
             return MemType.GPUShared
         elif mtype.lower() == "gpu/local":
             return MemType.GPULocal
+        elif mtype.lower() == "gpu/warp":
+            return MemType.GPUWarp
     assert False, "Unrecognized memory type %s" % mtype

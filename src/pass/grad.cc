@@ -1,10 +1,11 @@
 #include <analyze/all_defs.h>
 #include <analyze/all_no_reuse_defs.h>
-#include <analyze/all_reads.h>
+#include <analyze/all_uses.h>
 #include <analyze/deps.h>
 #include <cursor.h>
 #include <pass/float_simplify.h>
 #include <pass/grad.h>
+#include <pass/hoist_return_vars.h>
 #include <pass/hoist_var_over_stmt_seq.h>
 #include <pass/make_reduction.h>
 #include <pass/output_intermediates.h>
@@ -51,6 +52,21 @@ void PropagateRequire::visit(const VarDef &op) {
     BaseClass::visit(op);
 }
 
+Expr ReplaceByTape::replaceForwardValue(const Expr &_equLoad) {
+    auto __equLoad = deepCopy(_equLoad);
+    ASSERT(__equLoad->nodeType() == ASTNodeType::Load);
+    auto equLoad = __equLoad.as<LoadNode>();
+    if (tapeMap_.count(symbolTable_.def(equLoad->var_)->id())) {
+        auto tapeVar = tapeMap_.at(symbolTable_.def(equLoad->var_)->id());
+        if (tapeVar != equLoad->var_) {
+            equLoad->var_ = tapeVar;
+            equLoad->indices_.insert(equLoad->indices_.begin(),
+                                     versions_.at(parent_->id()));
+        }
+    }
+    return equLoad;
+}
+
 Expr ReplaceByTape::visit(const Load &_op) {
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Load);
@@ -86,11 +102,17 @@ Stmt Grad::visit(const StmtSeq &op) {
     }
 }
 
-Stmt Grad::visit(const For &op) {
+Stmt Grad::visit(const For &_op) {
+    auto __op = BaseClass::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::For);
+    auto op = __op.as<ForNode>();
+    ReplaceByTape replaceByTape(*this, tapeMap_, versions_, op);
     if (isRecompute_) {
-        auto ret = BaseClass::visit(op);
-        ret->setId("");
-        return ret;
+        op->begin_ = replaceByTape(op->begin_);
+        op->end_ = replaceByTape(op->end_);
+        op->step_ = replaceByTape(op->step_);
+        op->len_ = replaceByTape(op->len_);
+        op->setId("");
     } else {
         auto noDeps = op->property_.noDeps_;
         for (auto &&fwdVar : op->property_.noDeps_) {
@@ -98,14 +120,44 @@ Stmt Grad::visit(const For &op) {
                 noDeps.emplace_back(fwdVar + ".grad");
             }
         }
-        auto rbegin = makeAdd(
-            op->begin_, makeMul(op->step_, makeSub(op->len_, makeIntConst(1))));
-        auto rend = makeSub(op->begin_, op->step_);
-        auto rstep = makeSub(makeIntConst(0), op->step_);
-        return makeFor(op->id(), op->iter_, std::move(rbegin), std::move(rend),
-                       std::move(rstep), op->len_,
-                       op->property_.withNoDeps(noDeps), (*this)(op->body_));
+        auto begin = replaceByTape(
+            makeAdd(op->begin_,
+                    makeMul(op->step_, makeSub(op->len_, makeIntConst(1)))));
+        auto end = replaceByTape(makeSub(op->begin_, op->step_));
+        auto step = replaceByTape(makeSub(makeIntConst(0), op->step_));
+        auto len = replaceByTape(op->len_);
+
+        op->property_.noDeps_ = std::move(noDeps);
+        op->begin_ = std::move(begin);
+        op->end_ = std::move(end);
+        op->step_ = std::move(step);
+        op->len_ = std::move(len);
     }
+    return op;
+}
+
+Stmt Grad::visit(const If &_op) {
+    auto __op = BaseClass::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::If);
+    auto op = __op.as<IfNode>();
+    ReplaceByTape replaceByTape(*this, tapeMap_, versions_, op);
+    op->cond_ = replaceByTape(op->cond_);
+    if (isRecompute_) {
+        op->setId("");
+    }
+    return op;
+}
+
+Stmt Grad::visit(const Assert &_op) {
+    auto __op = BaseClass::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::Assert);
+    auto op = __op.as<AssertNode>();
+    ReplaceByTape replaceByTape(*this, tapeMap_, versions_, op);
+    op->cond_ = replaceByTape(op->cond_);
+    if (isRecompute_) {
+        op->setId("");
+    }
+    return op;
 }
 
 Stmt Grad::visit(const VarDef &_op) {
@@ -456,7 +508,7 @@ void GradExpr::visit(const Abs &op) {
 std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>,
            std::unordered_map<ID, std::string>>
-grad(const Stmt &_op, const std::unordered_set<std::string> &requires,
+grad(const Stmt &_op, const std::unordered_set<std::string> &_requires,
      const std::unordered_set<std::string> &provides,
      const std::unordered_set<ID> &tapes) {
 
@@ -473,7 +525,7 @@ grad(const Stmt &_op, const std::unordered_set<std::string> &requires,
 
     auto [forward, tapeMap, versions, totLens] = outputIntermediates(op, tapes);
 
-    PropagateRequire propagator(requires, provides);
+    PropagateRequire propagator(_requires, provides);
     size_t affectCnt;
     do {
         affectCnt = propagator.affectedDefs().size();
@@ -486,7 +538,7 @@ grad(const Stmt &_op, const std::unordered_set<std::string> &requires,
     };
     findDeps(op, {{}}, foundWAW, FindDepsMode::Dep, DEP_WAW, nullptr, false);
 
-    Grad mutator(requires, provides, tapes, propagator.affectedDefs(), tapeMap,
+    Grad mutator(_requires, provides, tapes, propagator.affectedDefs(), tapeMap,
                  versions, totLens, notSingleWrite);
     auto backward = mutator(op);
 
@@ -505,11 +557,11 @@ grad(const Stmt &_op, const std::unordered_set<std::string> &requires,
 std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>,
            std::unordered_map<ID, std::string>>
-grad(const Func &func, const std::unordered_set<std::string> &requires,
+grad(const Func &func, const std::unordered_set<std::string> &_requires,
      const std::unordered_set<std::string> &provides,
      const std::unordered_set<ID> &tapes) {
     auto [forward, backward, requireGrads, provideGrads, tapeMap] =
-        grad(func->body_, requires, provides, tapes);
+        grad(func->body_, _requires, provides, tapes);
 
     auto backwardParams = func->params_;
     auto forwardReturns = func->returns_;
@@ -528,6 +580,8 @@ grad(const Func &func, const std::unordered_set<std::string> &requires,
     }
     auto forwardFunc = makeFunc(func->name_, func->params_,
                                 std::move(forwardReturns), forward, closure);
+
+    forwardFunc = hoistReturnVars(forwardFunc);
 
     for (auto &&[x, dzdx] : requireGrads) {
         backwardParams.emplace_back(dzdx);
@@ -569,17 +623,17 @@ static std::unordered_set<ID> findTapeDefs(const Stmt &op, GradTapeMode mode) {
 std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>,
            std::unordered_map<ID, std::string>>
-grad(const Stmt &op, const std::unordered_set<std::string> &requires,
+grad(const Stmt &op, const std::unordered_set<std::string> &_requires,
      const std::unordered_set<std::string> &provides, GradTapeMode tapeMode) {
-    return grad(op, requires, provides, findTapeDefs(op, tapeMode));
+    return grad(op, _requires, provides, findTapeDefs(op, tapeMode));
 }
 
 std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>,
            std::unordered_map<ID, std::string>>
-grad(const Func &func, const std::unordered_set<std::string> &requires,
+grad(const Func &func, const std::unordered_set<std::string> &_requires,
      const std::unordered_set<std::string> &provides, GradTapeMode tapeMode) {
-    return grad(func, requires, provides, findTapeDefs(func->body_, tapeMode));
+    return grad(func, _requires, provides, findTapeDefs(func->body_, tapeMode));
 }
 
 } // namespace ir

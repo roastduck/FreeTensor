@@ -20,7 +20,6 @@ class SinkVar : public Mutator {
     const std::unordered_set<std::pair<std::string, ID>>
         &deps_; // {(var, loop)}
     const LoopVariUniqVarMap &variantMap_;
-    std::unordered_set<std::string> used_;
     bool isFixPoint_ = true;
 
   public:
@@ -31,9 +30,6 @@ class SinkVar : public Mutator {
     bool isFixPoint() const { return isFixPoint_; }
 
   protected:
-    Expr visit(const Load &op) override;
-    Stmt visit(const Store &op) override;
-    Stmt visit(const ReduceTo &op) override;
     Stmt visit(const VarDef &op) override;
 };
 

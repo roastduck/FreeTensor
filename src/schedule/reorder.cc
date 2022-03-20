@@ -103,32 +103,33 @@ Stmt reorder(const Stmt &_ast, const std::vector<ID> &dstOrder) {
             dstOrder.begin());
     }
 
+    // A reorder is leagal if and only if, after transformation, there is no
+    // such dependence that the out-most non-'=' carrying loop is not a '>'
+    std::vector<FindDepsCond> conds;
+    for (size_t i = 0, n = dstOrder.size(); i < n; i++) {
+        FindDepsCond cond;
+        for (size_t j = 0; j < i; j++) {
+            cond.emplace_back(dstOrder[j], DepDirection::Same);
+        }
+        cond.emplace_back(dstOrder[i], DepDirection::Inv);
+        conds.emplace_back(std::move(cond));
+    }
+    auto filter = [&](const AccessPoint &later, const AccessPoint &earlier) {
+        return earlier.cursor_.getParentById(curOrder.front()->id())
+                   .isValid() &&
+               later.cursor_.getParentById(curOrder.front()->id()).isValid();
+    };
+    auto found = [&](const Dependency &d) {
+        throw InvalidSchedule("Loops are not permutable: " + toString(d) +
+                              " cannot be resolved");
+    };
+    findDeps(ast, conds, found, FindDepsMode::Dep, DEP_ALL, filter);
+
     // Bubble Sort
     size_t n = index.size();
     for (size_t i = 0; i < n; i++) {
         for (size_t j = 0; j + 1 < n; j++) {
             if (index[j] > index[j + 1]) {
-                auto filter = [&](const AccessPoint &later,
-                                  const AccessPoint &earlier) {
-                    return earlier.cursor_.getParentById(curOrder[j + 1]->id())
-                               .isValid() &&
-                           later.cursor_.getParentById(curOrder[j + 1]->id())
-                               .isValid();
-                };
-                auto found = [&](const Dependency &d) {
-                    ASSERT(d.cond_.size() == 1);
-                    std::ostringstream os;
-                    os << "Loop " << toString(curOrder[j]->id()) << " and "
-                       << toString(curOrder[j + 1]->id())
-                       << " are not permutable: " << toString(d)
-                       << " cannot be resolved";
-                    throw InvalidSchedule(os.str());
-                };
-                findDeps(ast,
-                         {{{curOrder[j]->id(), DepDirection::Inv}},
-                          {{curOrder[j + 1]->id(), DepDirection::Inv}}},
-                         found, FindDepsMode::Dep, DEP_ALL, filter);
-
                 SwapFor swapper(curOrder[j], curOrder[j + 1]);
                 ast = swapper(ast);
                 std::swap(index[j], index[j + 1]);

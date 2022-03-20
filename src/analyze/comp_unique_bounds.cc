@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <climits>
 
-#include <analyze/all_names.h>
+#include <analyze/all_uses.h>
 #include <analyze/comp_unique_bounds.h>
 #include <container_utils.h>
 

@@ -21,7 +21,7 @@ class Target {
     }
     bool useNativeArch() const { return useNativeArch_; }
 
-    ~Target() = default;
+    virtual ~Target() = default;
     virtual TargetType type() const = 0;
     virtual std::string toString() const = 0;
     virtual MemType mainMemType() const = 0;

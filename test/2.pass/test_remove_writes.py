@@ -62,6 +62,29 @@ def test_type1_one_then_many():
     assert std.match(ast)
 
 
+def test_type1_many_then_one():
+    with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
+        with ir.For("i", 0, 4) as i:
+            y[i] = i
+        y[0] = 0
+        y[1] = 1
+        y[2] = 2
+        y[3] = 3
+    ast = ir.pop_ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
+        y[0] = 0
+        y[1] = 1
+        y[2] = 2
+        y[3] = 3
+    std = ir.pop_ast()
+
+    assert std.match(ast)
+
+
 def test_type1_many_then_one_no_remove():
     with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ir.For("i", 0, 4) as i:
@@ -75,6 +98,23 @@ def test_type1_many_then_one_no_remove():
     with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ir.For("i", 0, 4) as i:
             y[i] = i
+        y[0] = 1
+    std = ir.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_type1_repeated_then_one():
+    with ir.VarDef("y", (1,), "int32", "output", "cpu") as y:
+        with ir.For("i", 0, 4) as i:
+            y[0] = i
+        y[0] = 1
+    ast = ir.pop_ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef("y", (1,), "int32", "output", "cpu") as y:
         y[0] = 1
     std = ir.pop_ast()
 
@@ -460,19 +500,60 @@ def test_circular_dependency_in_parallel():
     print(ast)
 
     with ir.VarDef([("a", (256,), "float32", "inout", "cpu"),
-                    ("b", (256,), "float32", "cache", "cpu"),
-                    ("c", (256,), "float32", "cache", "cpu")]) as (a, b, c):
+                    ("c", (256,), "float32", "cache", "cpu")]) as (a, c):
         with ir.For("i", 0, 256) as i:
             c[i] = 0
-        with ir.For("i", 0, 256) as i:
-            b[i] = a[i]
-        with ir.For("k", 0, 100) as k:
-            with ir.For("l", 0, 256) as l:
-                c[l] = (c[l] + b[l])
-                b[l] = 0
+        with ir.VarDef("b", (256,), "float32", "cache", "cpu") as b:
             with ir.For("i", 0, 256) as i:
-                with ir.For("j", 0, 256) as j:
-                    b[j] = (b[j] + c[i])
+                b[i] = a[i]
+            with ir.For("k", 0, 100) as k:
+                with ir.For("l", 0, 256) as l:
+                    c[l] = (c[l] + b[l])
+                    b[l] = 0
+                with ir.For("i", 0, 256) as i:
+                    with ir.For("j", 0, 256) as j:
+                        b[j] = (b[j] + c[i])
+    std = ir.make_reduction(ir.pop_ast())
+
+    assert std.match(ast)
+
+
+def test_one_loop_depends_on_multiple_statements_no_remove():
+    with ir.VarDef("u", (64,), "float64", "input", "cpu") as u:
+        with ir.VarDef("y", (2,), "float64", "output", "cpu") as y:
+            with ir.VarDef("tmp", (2,), "float64", "cache", "cpu") as tmp:
+                with ir.For("i", 0, 2) as i:
+                    tmp[i] = 0
+                with ir.VarDef("A", (2,), "float32", "cache", "cpu") as A:
+                    A[0] = 0
+                    A[1] = 1
+                    with ir.For("i", 0, 2) as i:
+                        tmp[i] += A[i] * u[0, 0] + A[i] * u[0, 1]
+                    A[0] = 2
+                    A[1] = 3
+                    with ir.For("i", 0, 2) as i:
+                        tmp[i] += A[i] * u[1, 0] + A[i] * u[1, 1]
+                with ir.For("i", 0, 2) as i:
+                    y[i] = tmp[i]
+    ast = ir.pop_ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef("u", (64,), "float64", "input", "cpu") as u:
+        with ir.VarDef("y", (2,), "float64", "output", "cpu") as y:
+            with ir.VarDef("tmp", (2,), "float64", "cache", "cpu") as tmp:
+                with ir.VarDef("A", (2,), "float32", "cache", "cpu") as A:
+                    A[0] = 0
+                    A[1] = 1
+                    with ir.For("i", 0, 2) as i:
+                        tmp[i] = A[i] * u[0, 0] + A[i] * u[0, 1]
+                    A[0] = 2
+                    A[1] = 3
+                    with ir.For("i", 0, 2) as i:
+                        tmp[i] += A[i] * u[1, 0] + A[i] * u[1, 1]
+                with ir.For("i", 0, 2) as i:
+                    y[i] = tmp[i]
     std = ir.make_reduction(ir.pop_ast())
 
     assert std.match(ast)

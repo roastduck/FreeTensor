@@ -4,9 +4,22 @@ using CUDA
 using Flux: cpu, gpu
 
 include("../../common/julia/io.jl")
+include("../../common/julia/gpu.jl")
 
 device = CUDA.functional() ? gpu : cpu
-println(CUDA.functional())
+println("Running on ", CUDA.functional() ? "gpu" : "cpu")
+
+warmup_num = 10
+test_num = 100
+if length(ARGS) != 1 && length(ARGS) != 3
+    println("Usage: " * PROGRAM_FILE * " cpu/gpu <warmup_repeat> <timing_repeat>")
+    exit(-1)
+end
+if length(ARGS) == 3
+    warmup_num = parse(Int, ARGS[2])
+    test_num = parse(Int, ARGS[3])
+end
+println(warmup_num, " warmup, ", test_num, "repeats for evalution")
 
 _ptr = read_vec("../ptr.in", "Int")
 ptr = reshape(_ptr .+ 1, :)  # (num_v + 1)
@@ -39,24 +52,26 @@ for i =1:num_v
 end
 
 g = GNNGraph(adj) |> device
-println("# vertices = ", g.num_nodes)
-println("# edges = ", g.num_edges)
+# println("# vertices = ", g.num_nodes)
+# println("# edges = ", g.num_edges)
 
 model = GNNChain(GATConv(feat_len_in => feat_len_out)) |> device
 
-warmup_num = 10
-test_num = 1000
-
 y = model(g, X)
 write_vec("y.out", Array(y))
-# writedlm("y.out", [@sprintf("%.18e", i) for i in Array(y')], ' ')
 for i = 1:warmup_num
     y = model(g, X)
 end
 
+if haskey(ENV, "PROFILE_GPU")
+    profile_start()
+end
 time = @timed begin
     for i = 1:test_num
         y = model(g, X)
     end
+end
+if haskey(ENV, "PROFILE_GPU")
+    profile_stop()
 end
 println("Inference Time = " * string(time.time / test_num * 1000) * " ms")
