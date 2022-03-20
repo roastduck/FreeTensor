@@ -79,7 +79,6 @@ void FindMultiLevelTiling::storeBuf() {
                 }
             }
             for (unsigned i = 0; i < buf_.size(); i++) {
-                std::cout << buf_[i].id.strId() << std::endl;
                 if (checkAppear[i]) {
                     tmp.spaceLoops.push_back(buf_[i]);
                 } else {

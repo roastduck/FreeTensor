@@ -1,7 +1,6 @@
 #ifndef IR_RULE_H
 #define IR_RULE_H
 
-#include <analyze/find_multi_level_tiling.h>
 #include <auto_schedule/sketch.h>
 #include <schedule.h>
 

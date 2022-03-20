@@ -15,13 +15,10 @@ RuleStatus CacheWriteRule::analyze(const Sketch &sketch) {
 std::vector<Sketch> CacheWriteRule::genPart(const Sketch &sketch) {
     Sketch newSketch = sketch;
     const auto &target = newSketch.nowTarget();
-    std::cout << "before: " << toString(newSketch.schedule().ast())
-              << std::endl;
     std::cout << "cache: " << target.outermost.strId() << " " << target.dest
               << std::endl;
     std::string name = std::get<2>(newSketch.schedule().cache(
         target.outermost, target.dest, MemType::CPU)); // fixme: GPU Memtype
-    std::cout << "after: " << toString(newSketch.schedule().ast()) << std::endl;
     newSketch.nowTarget().dest = name;
     newSketch.addDoneRule(
         "cache_write_" +

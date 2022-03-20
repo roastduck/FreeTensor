@@ -72,6 +72,8 @@ class AutoSchedule {
     Schedule getBestSchedule();
 
     void genSketches();
+    Sketch getInitSketch();
+    Stmt testCacheWrite();
 };
 
 } // namespace ir

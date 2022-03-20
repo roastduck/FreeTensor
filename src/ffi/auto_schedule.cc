@@ -20,7 +20,8 @@ void init_ffi_auto_schedule(py::module_ &m) {
         .def("gen_schedules", &AutoSchedule::genSchedules, "sketches"_a)
         .def("gen_features", &AutoSchedule::genFeatures, "schedules"_a)
         .def("test_and_add", &AutoSchedule::testAndAdd, "sketches"_a)
-        .def("get_best_schedule", &AutoSchedule::getBestSchedule);
+        .def("get_best_schedule", &AutoSchedule::getBestSchedule)
+        .def("test_cache_write", &AutoSchedule::testCacheWrite);
 }
 
 } // namespace ir
