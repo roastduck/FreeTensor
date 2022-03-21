@@ -720,7 +720,7 @@ def test_parallel_different_length():
                 with ir.VarDef("t", (4,), "int32", "cache", "gpu/shared") as t:
                     with ir.If(th < 4):
                         t[th] = a[blk, th]
-                    ir.Eval(ir.intrinsic("__syncwarp()"))
+                    ir.Eval(ir.intrinsic("__syncwarp()", has_side_effect=True))
                     with ir.For("j", 0, 4) as j:
                         ir.Any()
     assert ir.make_1d_var(ir.pop_ast()).match(func.body)
@@ -812,7 +812,7 @@ def test_parallel_broadcast():
                 with ir.VarDef("t", (1,), "int32", "cache", "gpu/shared") as t:
                     with ir.If(th == 0):
                         t[0] = a[blk, 0]
-                    ir.Eval(ir.intrinsic("__syncwarp()"))
+                    ir.Eval(ir.intrinsic("__syncwarp()", has_side_effect=True))
                     ir.Any()
     assert ir.make_1d_var(ir.pop_ast()).match(func.body)
 

@@ -123,12 +123,12 @@ Expr LowerVector::visit(const Var &op) {
                                     {ret, makeAdd(ret, makeIntConst(1)),
                                      makeAdd(ret, makeIntConst(2)),
                                      makeAdd(ret, makeIntConst(3))},
-                                    DataType::Custom);
+                                    DataType::Custom, false);
                 break;
             case 2:
                 ret = makeIntrinsic("int2{%, %}",
                                     {ret, makeAdd(ret, makeIntConst(1))},
-                                    DataType::Custom);
+                                    DataType::Custom, false);
                 break;
             default:
                 ASSERT(false);
@@ -148,7 +148,7 @@ Expr LowerVector::visit(const Load &op) {
             auto vtype = vecType(dtype);
             return makeIntrinsic("*((" + vtype + "*)&(%))",
                                  {makeLoad(op->var_, {index})},
-                                 DataType::Custom);
+                                 DataType::Custom, false);
         }
     }
     return BaseClass::visit(op);
@@ -165,7 +165,7 @@ Stmt LowerVector::visit(const Store &op) {
                 "",
                 makeIntrinsic("*((" + vtype + "*)&(%)) = make_" + vtype + "(%)",
                               {makeLoad(op->var_, {index}), (*this)(op->expr_)},
-                              DataType::Void));
+                              DataType::Void, false));
         }
     }
     return BaseClass::visit(op);
@@ -181,24 +181,25 @@ Stmt LowerVector::visit(const ReduceTo &op) {
             auto newLoad = makeLoad(op->var_, {index});
             switch (op->op_) {
             case ReduceOp::Add:
-                return makeEval(
-                    "", makeIntrinsic(
-                            "*((" + vtype + "*)&(%)) += make_" + vtype + "(%)",
-                            {newLoad, (*this)(op->expr_)}, DataType::Void));
+                return makeEval("", makeIntrinsic("*((" + vtype +
+                                                      "*)&(%)) += make_" +
+                                                      vtype + "(%)",
+                                                  {newLoad, (*this)(op->expr_)},
+                                                  DataType::Void, false));
             case ReduceOp::Max:
                 return makeEval(
                     "",
                     makeIntrinsic("*((" + vtype + "*)&(%)) = max(*((*" + vtype +
                                       ")&(%)), make_" + vtype + "(%))",
                                   {newLoad, newLoad, (*this)(op->expr_)},
-                                  DataType::Void));
+                                  DataType::Void, false));
             case ReduceOp::Min:
                 return makeEval(
                     "",
                     makeIntrinsic("*((" + vtype + "*)&(%)) = min(*((*" + vtype +
                                       ")&(%)), make_" + vtype + "(%))",
                                   {newLoad, newLoad, (*this)(op->expr_)},
-                                  DataType::Void));
+                                  DataType::Void, false));
             default:
                 ASSERT(false);
             }

@@ -100,8 +100,8 @@ Stmt LowerParallelReduction::visit(const For &_op) {
         //   => p < log_2 len
         //   => p < floor(log_2(len - 1)) + 1
         auto count = (63 - __builtin_clzll((unsigned long long)(len - 1))) + 1;
-        auto k =
-            makeIntrinsic("1 << (%)", {makeVar("__reduce_p")}, DataType::Int32);
+        auto k = makeIntrinsic("1 << (%)", {makeVar("__reduce_p")},
+                               DataType::Int32, false);
         auto wNextIndices = wIndices;
         wNextIndices[0] = makeAdd(nth, k);
         auto reduceStmt =

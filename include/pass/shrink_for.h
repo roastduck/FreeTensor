@@ -14,6 +14,18 @@
 
 namespace ir {
 
+class CheckSideEffect : public Visitor {
+    bool hasSideEffect_ = false;
+
+  public:
+    bool hasSideEffect() const { return hasSideEffect_; }
+
+  protected:
+    void visit(const Store &op) override;
+    void visit(const ReduceTo &op) override;
+    void visit(const Intrinsic &op) override;
+};
+
 class ShrinkFor
     : public CompTransientBounds<WithTypeInfer<SymbolTable<Mutator>>> {
     typedef CompTransientBounds<WithTypeInfer<SymbolTable<Mutator>>> BaseClass;
@@ -29,48 +41,10 @@ class ShrinkFor
   public:
     ShrinkFor() : bound_(*this, *this) {}
 
-  private:
-    template <class T> Stmt visitSideEffect(const T &op) {
-        auto ret = BaseClass::visit(op);
-        for (auto &&[var, names] : iter::zip(iterStack_, namesStack_)) {
-            auto tr = transient(var);
-            std::vector<Expr> lower, upper;
-            for (auto &&first : tr.lower_) {
-                if (checkAllDefined(names, first)) {
-                    lower.emplace_back(first);
-                } else {
-                    for (auto &&l : bound_.getLower(first)) {
-                        if (auto &&expr = l.expr();
-                            checkAllDefined(names, expr)) {
-                            lower.emplace_back(expr);
-                        }
-                    }
-                }
-            }
-            for (auto &&second : tr.upper_) {
-                if (checkAllDefined(names, second)) {
-                    upper.emplace_back(second);
-                } else {
-                    for (auto &&u : bound_.getUpper(second)) {
-                        if (auto &&expr = u.expr();
-                            checkAllDefined(names, expr)) {
-                            upper.emplace_back(expr);
-                        }
-                    }
-                }
-            }
-            newRange_[var].first.emplace_back(std::move(lower));
-            newRange_[var].second.emplace_back(std::move(upper));
-        }
-        return ret;
-    }
-
   protected:
     using BaseClass::visit;
 
-    Stmt visit(const Store &op) override { return visitSideEffect(op); }
-    Stmt visit(const ReduceTo &op) override { return visitSideEffect(op); }
-    // TODO: Also for Eval with side effect
+    Stmt visitStmt(const Stmt &stmt) override;
     Stmt visit(const For &op) override;
 };
 

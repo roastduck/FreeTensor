@@ -51,7 +51,8 @@ def test_syncthreads():
                 with ir.VarDef("t", (256,), "int32", "cache",
                                "gpu/shared") as t:
                     ir.Any()
-                    ir.Eval(ir.intrinsic("__syncthreads()"))
+                    ir.Eval(
+                        ir.intrinsic("__syncthreads()", has_side_effect=True))
                     ir.Any()
     assert ir.make_1d_var(ir.pop_ast()).match(func.body)
 
@@ -102,9 +103,12 @@ def test_syncthreads_in_loop():
                     with ir.VarDef("t", (256,), "int32", "cache",
                                    "gpu/shared") as t:
                         ir.Any()
-                        ir.Eval(ir.intrinsic("__syncthreads()"))
+                        ir.Eval(
+                            ir.intrinsic("__syncthreads()",
+                                         has_side_effect=True))
                         ir.Any()
-                    ir.Eval(ir.intrinsic("__syncthreads()"))
+                    ir.Eval(
+                        ir.intrinsic("__syncthreads()", has_side_effect=True))
     assert ir.make_1d_var(ir.pop_ast()).match(func.body)
 
 
@@ -141,7 +145,9 @@ def test_syncthreads_at_outer_loop():
                 with ir.VarDef("t", (256,), "int32", "cache",
                                "gpu/shared") as t:
                     ir.Any()
-                    ir.Eval(ir.intrinsic("__syncthreads()"))  # Here outside p
+                    ir.Eval(
+                        ir.intrinsic("__syncthreads()",
+                                     has_side_effect=True))  # Here outside p
                     with ir.For("p", 0, 5) as p:
                         ir.Any()
     assert ir.make_1d_var(ir.pop_ast()).match(func.body)
@@ -192,10 +198,14 @@ def test_syncthreads_not_at_outer_loop():
                         with ir.VarDef("t1", (256,), "int32", "cache",
                                        "gpu/shared") as t1:
                             ir.Any()  # t1
-                            ir.Eval(ir.intrinsic(
-                                "__syncthreads()"))  # Here inside p
+                            ir.Eval(
+                                ir.intrinsic(
+                                    "__syncthreads()",
+                                    has_side_effect=True))  # Here inside p
                             ir.Any()  # L3
-                        ir.Eval(ir.intrinsic("__syncthreads()"))
+                        ir.Eval(
+                            ir.intrinsic("__syncthreads()",
+                                         has_side_effect=True))
     assert ir.make_1d_var(ir.pop_ast()).match(func.body)
 
 
@@ -227,7 +237,9 @@ def test_syncthreads_at_outer_branch():
             with ir.For(".threadIdx.x", 0, 256) as j:
                 with ir.VarDef("t", (1,), "int32", "cache", "gpu/shared") as t:
                     ir.Any()
-                    ir.Eval(ir.intrinsic("__syncthreads()"))  # Here outside If
+                    ir.Eval(
+                        ir.intrinsic("__syncthreads()",
+                                     has_side_effect=True))  # Here outside If
                     with ir.If(j == 0):
                         ir.Any()
     assert ir.make_1d_var(ir.pop_ast()).match(func.body)
@@ -265,8 +277,9 @@ def test_syncthreads_at_outer_loop_and_outer_branch():
                 with ir.VarDef("t", (256,), "int32", "cache",
                                "gpu/shared") as t:
                     ir.Any()
-                    ir.Eval(ir.intrinsic(
-                        "__syncthreads()"))  # Here outside p and ouside If
+                    ir.Eval(
+                        ir.intrinsic("__syncthreads()", has_side_effect=True)
+                    )  # Here outside p and ouside If
                     with ir.If(j == 0):
                         with ir.For("p", 0, 5) as p:
                             ir.Any()
@@ -306,7 +319,9 @@ def test_syncthreads_split_branch():
                     ir.Any()
                     with ir.If(j == 0):
                         ir.Any()  # z[i]
-                    ir.Eval(ir.intrinsic("__syncthreads()"))  # Here outside If
+                    ir.Eval(
+                        ir.intrinsic("__syncthreads()",
+                                     has_side_effect=True))  # Here outside If
                     with ir.If(j == 0):
                         ir.Any()  # y[i]
     assert ir.make_1d_var(ir.pop_ast()).match(func.body)
@@ -349,11 +364,14 @@ def test_syncthreads_split_branch_out_of_const_loop():
                                        "gpu/shared") as t:
                             with ir.If(ir.any()):
                                 ir.Any()  # t
-                            ir.Eval(ir.intrinsic("__syncwarp()"))
+                            ir.Eval(
+                                ir.intrinsic("__syncwarp()",
+                                             has_side_effect=True))
                             with ir.If(ir.any()):
                                 with ir.If(p == 0):
                                     ir.Any()  # y
-                        ir.Eval(ir.intrinsic("__syncwarp()"))
+                        ir.Eval(
+                            ir.intrinsic("__syncwarp()", has_side_effect=True))
     assert ir.pop_ast().match(func.body)
 
 
@@ -399,7 +417,9 @@ def test_syncthreads_split_branch_with_else():
                         ir.Any()
                         with ir.If(j == 0):
                             ir.Any()  # z[i]
-                    ir.Eval(ir.intrinsic("__syncthreads()"))  # Here outside If
+                    ir.Eval(
+                        ir.intrinsic("__syncthreads()",
+                                     has_side_effect=True))  # Here outside If
                     with ir.If(i < 2):
                         with ir.If(j == 0):
                             ir.Any()  # y[i]
@@ -409,7 +429,9 @@ def test_syncthreads_split_branch_with_else():
                         ir.Any()
                         with ir.If(j == 0):
                             ir.Any()  # z[i]
-                    ir.Eval(ir.intrinsic("__syncthreads()"))  # Here outside If
+                    ir.Eval(
+                        ir.intrinsic("__syncthreads()",
+                                     has_side_effect=True))  # Here outside If
                     with ir.If(i >= 2):
                         with ir.If(j == 0):
                             ir.Any()  # y[i]
@@ -457,7 +479,9 @@ def test_syncthreads_split_branch_and_vardef():
                         with ir.If(j == 0):
                             ir.Any()  # u[0]
                         ir.Eval(
-                            ir.intrinsic("__syncthreads()"))  # Here outside If
+                            ir.intrinsic(
+                                "__syncthreads()",
+                                has_side_effect=True))  # Here outside If
                         with ir.If(j == 0):
                             ir.Any()  # y[i]
                             ir.Any()  # z1[i]
@@ -519,7 +543,9 @@ def test_syncthreads_split_branch_and_vardef_with_else():
                             with ir.If(j == 0):
                                 ir.Any()  # u[0]
                         ir.Eval(
-                            ir.intrinsic("__syncthreads()"))  # Here outside If
+                            ir.intrinsic(
+                                "__syncthreads()",
+                                has_side_effect=True))  # Here outside If
                         with ir.If(i < 2):
                             with ir.If(j == 0):
                                 ir.Any()  # y[i]
@@ -535,7 +561,9 @@ def test_syncthreads_split_branch_and_vardef_with_else():
                             with ir.If(j == 0):
                                 ir.Any()  # u[0]
                         ir.Eval(
-                            ir.intrinsic("__syncthreads()"))  # Here outside If
+                            ir.intrinsic(
+                                "__syncthreads()",
+                                has_side_effect=True))  # Here outside If
                         with ir.If(i >= 2):
                             with ir.If(j == 0):
                                 ir.Any()  # y[i]
@@ -587,7 +615,7 @@ def test_syncwarp():
             with ir.For(".threadIdx.x", 0, 4) as j:
                 with ir.VarDef("t", (4,), "int32", "cache", "gpu/shared") as t:
                     ir.Any()
-                    ir.Eval(ir.intrinsic("__syncwarp()"))
+                    ir.Eval(ir.intrinsic("__syncwarp()", has_side_effect=True))
                     ir.Any()
     assert ir.make_1d_var(ir.pop_ast()).match(func.body)
 

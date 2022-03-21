@@ -524,26 +524,30 @@ class IntrinsicNode : public ExprNode {
                          /// E.g. sinf(%)
     std::vector<SubTree<ExprNode>> params_;
     DataType retType_;
+    bool hasSideEffect_;
     void compHash() override;
     DEFINE_NODE_TRAIT(Intrinsic);
 };
 typedef Ref<IntrinsicNode> Intrinsic;
 #define makeIntrinsic(...) makeNode(Intrinsic, __VA_ARGS__)
 template <class T>
-Expr _makeIntrinsic(const std::string &format, T &&params, DataType retType) {
+Expr _makeIntrinsic(const std::string &format, T &&params, DataType retType,
+                    bool hasSideEffect) {
     Intrinsic i = Intrinsic::make();
     i->format_ = format;
     i->params_ = std::vector<SubTree<ExprNode>>(params.begin(), params.end());
     i->retType_ = retType;
+    i->hasSideEffect_ = hasSideEffect;
     return i;
 }
 inline Expr _makeIntrinsic(const std::string &format,
-                           std::initializer_list<Expr> params,
-                           DataType retType) {
+                           std::initializer_list<Expr> params, DataType retType,
+                           bool hasSideEffect) {
     Intrinsic i = Intrinsic::make();
     i->format_ = format;
     i->params_ = std::vector<SubTree<ExprNode>>(params.begin(), params.end());
     i->retType_ = retType;
+    i->hasSideEffect_ = hasSideEffect;
     return i;
 }
 

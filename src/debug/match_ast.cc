@@ -449,6 +449,7 @@ void MatchVisitor::visit(const Intrinsic &op) {
         RECURSE(oParam, iParam);
     }
     CHECK(op->retType_ == instance->retType_);
+    CHECK(op->hasSideEffect_ == instance->hasSideEffect_);
 }
 
 void MatchVisitor::visit(const Eval &op) {

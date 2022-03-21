@@ -532,8 +532,9 @@ void init_ffi_ast(py::module_ &m) {
           "expr"_a, "expr"_a);
     m.def("makeIntrinsic",
           static_cast<Expr (*)(const std::string &, const std::vector<Expr> &,
-                               DataType)>(&_makeIntrinsic),
-          "fmt"_a, "params"_a, "retType"_a = DataType::Void);
+                               DataType, bool)>(&_makeIntrinsic),
+          "fmt"_a, "params"_a, "retType"_a = DataType::Void,
+          "hasSideEffect"_a = false);
 
     m.def("neutral_val", &neutralVal);
 }

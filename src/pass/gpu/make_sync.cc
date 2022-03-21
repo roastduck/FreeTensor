@@ -152,10 +152,10 @@ Stmt MakeSync::visitStmt(const Stmt &op) {
         Stmt sync;
         if (needSyncThreads) {
             sync = makeEval(
-                "", makeIntrinsic("__syncthreads()", {}, DataType::Void));
+                "", makeIntrinsic("__syncthreads()", {}, DataType::Void, true));
         } else {
-            sync =
-                makeEval("", makeIntrinsic("__syncwarp()", {}, DataType::Void));
+            sync = makeEval(
+                "", makeIntrinsic("__syncwarp()", {}, DataType::Void, true));
         }
 
         Cursor whereToInsert;
@@ -204,10 +204,10 @@ Stmt MakeSync::visit(const For &_op) {
         Stmt sync;
         if (needSyncThreads) {
             sync = makeEval(
-                "", makeIntrinsic("__syncthreads()", {}, DataType::Void));
+                "", makeIntrinsic("__syncthreads()", {}, DataType::Void, true));
         } else if (needSyncWarp) {
-            sync =
-                makeEval("", makeIntrinsic("__syncwarp()", {}, DataType::Void));
+            sync = makeEval(
+                "", makeIntrinsic("__syncwarp()", {}, DataType::Void, true));
         }
         op->body_ = makeStmtSeq("", {op->body_, sync});
         markSyncForSplitting(sync);

@@ -196,6 +196,8 @@ size_t Hasher::compHash(const IntrinsicNode &op) {
     for (auto &&item : op.params_) {
         h = ((h + item->hash()) * K2 + B2) % P;
     }
+    h = ((h + std::hash<int>()(int(op.retType_))) * K2 + B2) % P;
+    h = ((h + std::hash<bool>()(op.hasSideEffect_)) * K2 + B2) % P;
     return (h * K3 + B3) % P;
 }
 
@@ -477,6 +479,9 @@ bool HashComparator::compare(const Intrinsic &lhs, const Intrinsic &rhs) const {
         }
     }
     if (lhs->retType_ != rhs->retType_) {
+        return false;
+    }
+    if (lhs->hasSideEffect_ != rhs->hasSideEffect_) {
         return false;
     }
     return true;

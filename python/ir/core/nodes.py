@@ -508,13 +508,19 @@ def intrinsic(fmt, *params, **kws):
         Parameters to `fmt`
     ret_type : DataType or str
         (Keyword argument only) The return type. Void for no return type. Defaults to Void
+    has_side_effect: bool
+        (Keyword argument only) True to indicate the intrinsic modifes something other than the return value. Defaults to false
     """
     ret_type = ffi.DataType.Void
+    has_side_effect = False
     if "ret_type" in kws:
         ret_type = parseDType(kws["ret_type"])
         del kws["ret_type"]
+    if "has_side_effect" in kws:
+        has_side_effect = kws["has_side_effect"]
+        del kws["has_side_effect"]
     assert len(kws) == 0, "Unrecognized keyword arguments: %s" % kws
-    return ffi.makeIntrinsic(fmt, params, ret_type)
+    return ffi.makeIntrinsic(fmt, params, ret_type, has_side_effect)
 
 
 def any():
