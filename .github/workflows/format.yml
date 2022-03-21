@@ -1,0 +1,19 @@
+name: Format C++ and Python
+
+on: [push]
+
+jobs:
+  python-format-check:
+    name: Python Formatting Check
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: AlexanderMelde/yapf-action@master
+  cxx-format-check:
+    name: C++ Formatting Check
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: RafikFarhad/clang-format-github-action@v2.0.0
+      with:
+        sources: "include/**/*.h,runtime/**/*.h,src/**/*.cc"
