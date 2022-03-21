@@ -12,8 +12,16 @@ jobs:
   cxx-format-check:
     name: C++ Formatting Check
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        path:
+          - 'src'
+          - 'include'
+          - 'runtime'
     steps:
     - uses: actions/checkout@v2
-    - uses: RafikFarhad/clang-format-github-action@v2.0.0
+    - name: Run clang-format style check for C/C++/Protobuf programs.
+      uses: jidicula/clang-format-action@v4.5.0
       with:
-        sources: "include/**/*.h,runtime/**/*.h,src/**/*.cc"
+        clang-format-version: '13'
+        check-path: ${{ matrix.path }}
