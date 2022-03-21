@@ -8,15 +8,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Run YAPF style check for Python scripts.
+    - name: YAPF
       uses: AlexanderMelde/yapf-action@master
   cxx-format-check:
     name: C++ Formatting Check
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Run clang-format style check for C/C++ programs.
-      uses: jidicula/clang-format-action@v4.5.0
+    - name: Clang Format
+      uses: RafikFarhad/clang-format-github-action@v2.0.0
       with:
-        clang-format-version: '13'
-        check-path: .
+        sources: include,runtime,src
