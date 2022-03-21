@@ -1,22 +1,19 @@
-#include <string>
+#include <cstdio>
+#include <unistd.h>
 
+#include <config.h>
 #include <ffi.h>
-
-#define NAME_(macro) #macro
-#define NAME(macro) NAME_(macro)
 
 namespace ir {
 
 using namespace pybind11::literals;
 
 void init_ffi_config(py::module_ &m) {
-    m.def("with_mkl", []() -> std::string {
-#ifdef WITH_MKL
-        return NAME(WITH_MKL);
-#else
-        return "";
-#endif
-    });
+    Config::setPrettyPrint(isatty(fileno(stdout)));
+
+    m.def("with_mkl", Config::withMKL);
+    m.def("set_pretty_print", Config::setPrettyPrint);
+    m.def("pretty_print", Config::prettyPrint);
 }
 
 } // namespace ir

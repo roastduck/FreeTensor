@@ -29,7 +29,7 @@ def test_manual_static():
         "nid: softmax"
         ir.libop.softmax_()(x, y)
 
-    print(f.pretty_print())
+    print(f)
     s = ir.Schedule(f)
 
     # L_head
@@ -116,7 +116,7 @@ def test_manual_static():
     s.set_mem_type(s.find(lambda x: x.nid() == "softmax:exp:y"), "gpu/local")
 
     f = ir.lower(s.func(), target)
-    print(f.pretty_print())
+    print(f)
 
     code = ir.codegen(f, target)
     print(ir.debug.with_line_no(code))

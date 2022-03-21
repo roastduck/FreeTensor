@@ -11,14 +11,15 @@
 
 namespace ir {
 
-std::string toString(const AST &op, bool pretty = false);
+std::string toString(const AST &op);
+std::string toString(const AST &op, bool pretty);
 
 std::string dumpAsTest(const Stmt &op);
 
 bool match(const Stmt &pattern, const Stmt &instance);
 
 inline std::ostream &operator<<(std::ostream &os, const AST &op) {
-    os << toString(op);
+    os << toString(op, false);
     return os;
 }
 

@@ -1,5 +1,6 @@
 #include <itertools.hpp>
 
+#include <config.h>
 #include <debug/print_ast.h>
 
 #include "../codegen/detail/code_gen.h"
@@ -591,6 +592,10 @@ void PrintVisitor::visit(const MatMul &op) {
     beginBlock();
     recur(op->equivalent_);
     endBlock();
+}
+
+std::string toString(const AST &op) {
+    return toString(op, Config::prettyPrint());
 }
 
 std::string toString(const AST &op, bool pretty) {
