@@ -34,7 +34,7 @@ void PrintVisitor::printId(const Stmt &op) {
     makeIndent();
     os() << "// By " << op->debugCreator_ << std::endl;
 #endif
-    if (op->hasNamedId()) {
+    if (Config::printAllId() || op->hasNamedId()) {
         if (pretty_) {
             os() << CYAN << ::ir::toString(op->id()) << ":" << RESET
                  << std::endl;
