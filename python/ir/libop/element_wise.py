@@ -33,6 +33,7 @@ def _binary_op(op):
 
     @core.inline(fallback=op)
     def f_binary_op(a, b):
+        'nid: out'
         out = core.create_var(broadcast_shape(a, b),
                               core.up_cast(core.dtype(a), core.dtype(b)),
                               core.same_mtype(core.mtype(a), core.mtype(b)))
@@ -76,6 +77,7 @@ def _unary_op(op):
 
     @core.inline
     def f_unary_op(x):
+        'nid: y'
         y = core.create_var(copy_shape(x), core.dtype(x), core.mtype(x))
         'nid: recur'
         _unary_op_(op)(x, y)

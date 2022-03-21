@@ -17,8 +17,9 @@ from typing import Callable, Dict, List, Sequence, Optional, Any, TypeVar, Union
 from dataclasses import dataclass
 
 from . import nodes
-from .nodes import (_VarDef, Var, ndim, pop_ast, For, If, Else, MarkNid, intrinsic,
-                    l_and, l_or, l_not, if_then_else, ctx_stack, Func, Assert)
+from .nodes import (_VarDef, Var, ndim, pop_ast, For, If, Else, MarkNid,
+                    intrinsic, l_and, l_or, l_not, if_then_else, ctx_stack,
+                    Func, Assert)
 from .utils import *
 
 assert sys.version_info >= (3,
@@ -69,6 +70,7 @@ class NamingScope(FunctionScope):
             raise StagingError('Namespace must not be None for inner levels.')
         self.namespace = namespace
         self.names = {}
+        self.ids = {}
 
     def __enter__(self):
         super().__enter__()
@@ -78,21 +80,28 @@ class NamingScope(FunctionScope):
         super().__exit__(_1, _2, _3)
         popped = StagingContext.naming_stack.pop()
         if popped != self:
-            raise StagingError(
-                'NamingScope enter/exit not match, must be FILO')
+            raise StagingError('NamingScope enter/exit not match, must be FILO')
 
-    def fullname(self, name: str):
+    def fullname(self, name: str, is_id: bool = True):
         if self.namespace is not None:
-            prefix = self.namespace + ':'
+            prefix = self.namespace + '->'
         else:
             prefix = ''
 
-        if name in self.names:
-            suffix = '$' + str(self.names[name])
-            self.names[name] += 1
+        if is_id:
+            if name in self.ids:
+                suffix = '$' + str(self.ids[name])
+                self.ids[name] += 1
+            else:
+                suffix = ''
+                self.ids[name] = 1
         else:
-            suffix = ''
-            self.names[name] = 1
+            if name in self.names:
+                suffix = '$' + str(self.names[name])
+                self.names[name] += 1
+            else:
+                suffix = ''
+                self.names[name] = 1
 
         return prefix + name + suffix
 
@@ -133,9 +142,9 @@ class StagingContext:
         return StagingContext.lifetime_stack[-1].register_implicit_scope(scope)
 
     @staticmethod
-    def fullname(name: str) -> str:
+    def fullname(name: str, is_id: bool = True) -> str:
         '''Get namespace-prepended full name of given short name.'''
-        return StagingContext.naming_stack[-1].fullname(name)
+        return StagingContext.naming_stack[-1].fullname(name, is_id=is_id)
 
     @staticmethod
     def allow_return():
@@ -156,11 +165,10 @@ class StagingContext:
 def prepare_vardef(name: str,
                    override: bool = False,
                    capture: Optional[ffi.Array] = None):
-    fullname = StagingContext.fullname(name) if not override else name
+    fullname = StagingContext.fullname(name,
+                                       is_id=False) if not override else name
     if capture:
         StagingContext.closure[fullname] = capture
-    if ctx_stack.top().get_next_nid() == '':
-        ctx_stack.top().set_next_nid(fullname)
     return fullname
 
 
@@ -241,7 +249,9 @@ create_var = staged_callable(create_var_staging, create_var_fallback)
 
 
 class PredefinedVarCreator(VarCreator):
+
     def __init__(self, initializer: List[Any], dtype: str, mtype: str):
+
         def get_shape(lst):
             if not isinstance(lst, list):
                 assert ndim(lst) == 0
@@ -255,6 +265,7 @@ class PredefinedVarCreator(VarCreator):
                 assert shape_ == get_shape(x)
 
             return (len(lst),) + shape_
+
         super().__init__(get_shape(initializer), dtype, mtype)
         self.initializer = initializer
 
@@ -267,6 +278,7 @@ class PredefinedVarCreator(VarCreator):
             else:
                 for i, x in enumerate(init_slice):
                     impl(var_slice[i], x)
+
         impl(var, self.initializer)
         return var
 
@@ -326,8 +338,8 @@ class dynamic_range(StagedIterable):
 
     def foreach(self, name: str, body: Callable[[Any], None]) -> None:
         '''Customized foreach behavior. Creates a For loop.'''
-        with For(StagingContext.fullname(name), self.start, self.stop,
-                 self.step) as iter_var:
+        with For(StagingContext.fullname(name, is_id=False), self.start,
+                 self.stop, self.step) as iter_var:
             with LifetimeScope():
                 body(iter_var)
 
@@ -434,6 +446,8 @@ def mark_position(base_lineno: int, line_offset: int):
     lineno = base_lineno + line_offset - 1
     StagingContext.call_stack[-1] = traceback.FrameSummary(
         original.filename, lineno, original.name)
+    if ctx_stack.top().get_next_nid() == "":
+        mark_nid(f'{original.filename}:{lineno}')
 
 
 def module_helper(callee):
@@ -532,9 +546,9 @@ class Transformer(ast.NodeTransformer):
         '''
         node: ast.Assign = self.generic_visit(old_node)
         # FIXME: multi-assign not implemented
-        if len(node.targets) == 1 and (
-                isinstance(node.targets[0], ast.Name) or
-                isinstance(node.targets[0], ast.Attribute)):
+        if len(node.targets) == 1 and (isinstance(node.targets[0], ast.Name) or
+                                       isinstance(node.targets[0],
+                                                  ast.Attribute)):
             name = None
             if isinstance(node.targets[0], ast.Name):
                 name = node.targets[0].id
@@ -613,8 +627,7 @@ class Transformer(ast.NodeTransformer):
     def visit_IfExp(self, old_node: ast.IfExp):
         '''Rule: `body if test else orelse` -> `if_then_else_expr(test, body, orelse)`'''
         node = self.generic_visit(old_node)
-        node = call_helper(if_then_else_expr, node.test,
-                           node.body, node.orelse)
+        node = call_helper(if_then_else_expr, node.test, node.body, node.orelse)
         return location_helper(node, old_node)
 
     def visit_FunctionDef(self, old_node: ast.FunctionDef) -> Any:
@@ -629,9 +642,9 @@ class Transformer(ast.NodeTransformer):
                 ast.withitem(context_expr=call_helper(
                     functiondef_wrapper, ast.Constant(self.filename),
                     ast.Constant(node.name)),
-                    optional_vars=None)
+                             optional_vars=None)
             ],
-                body=old_body)
+                     body=old_body)
         ]
 
         self.curr_func = prev_func
@@ -681,8 +694,8 @@ class Transformer(ast.NodeTransformer):
     def visit_Return(self, old_node: ast.Return) -> Any:
         node: ast.Return = self.generic_visit(old_node)
         assert self.curr_func is not None
-        node = ast.Return(call_helper(
-            return_stmt, node.value, ast.Constant(self.curr_func)))
+        node = ast.Return(
+            call_helper(return_stmt, node.value, ast.Constant(self.curr_func)))
         return location_helper(node, old_node)
 
 

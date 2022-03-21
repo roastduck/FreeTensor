@@ -517,6 +517,7 @@ def test_simplex_local_1():
         ir.declare_var(z, (10, 10, 10), "int32", "output", "gpu/global")
         'nid: Lb'
         for b in range(10):
+            'nid: t'
             t = ir.create_var((10, 10), "int32", "gpu/global")
             'nid: L0'
             for i in range(10):
@@ -579,6 +580,7 @@ def test_simplex_local_2():
         ir.declare_var(y, (10, 10, 10), "int32", "output", "gpu/global")
         'nid: Lb'
         for b in range(10):
+            'nid: t'
             t = ir.create_var((10, 10), "int32", "gpu/global")
             'nid: L0'
             for i in range(10):

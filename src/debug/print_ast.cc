@@ -1,3 +1,5 @@
+#include <cctype>
+
 #include <itertools.hpp>
 
 #include <config.h>
@@ -44,6 +46,15 @@ void PrintVisitor::printId(const Stmt &op) {
     }
 }
 
+std::string PrintVisitor::printName(const std::string &name) {
+    for (char c : name) {
+        if (!isalnum(c) && c != '_') {
+            return '`' + name + '`';
+        }
+    }
+    return name;
+}
+
 void PrintVisitor::visitStmt(const Stmt &op) {
     if (op->nodeType() != ASTNodeType::Any) {
         printId(op);
@@ -65,7 +76,7 @@ void PrintVisitor::visit(const Func &op) {
         os() << "-> ";
         for (auto &&[i, ret] : iter::enumerate(op->returns_)) {
             auto &&[name, dtype] = ret;
-            os() << (i > 0 ? ", " : "") << name << ": "
+            os() << (i > 0 ? ", " : "") << printName(name) << ": "
                  << ::ir::toString(dtype);
             if (op->closure_.count(name)) {
                 os() << " @ " << op->closure_.at(name).get();
@@ -97,7 +108,8 @@ void PrintVisitor::visit(const AnyExpr &op) { os() << "<Any>"; }
 void PrintVisitor::visit(const VarDef &op) {
     makeIndent();
     os() << ::ir::toString(op->buffer_->atype()) << " "
-         << ::ir::toString(op->buffer_->mtype()) << " " << op->name_ << ": ";
+         << ::ir::toString(op->buffer_->mtype()) << " " << printName(op->name_)
+         << ": ";
     auto &&tensor = op->buffer_->tensor();
     os() << ::ir::toString(tensor.dtype()) << "[";
     printList(tensor.shape());
@@ -113,13 +125,13 @@ void PrintVisitor::visit(const VarDef &op) {
 }
 
 void PrintVisitor::visit(const Var &op) {
-    os() << op->name_;
+    os() << printName(op->name_);
     Visitor::visit(op);
 }
 
 void PrintVisitor::visit(const Store &op) {
     makeIndent();
-    os() << op->var_ << "[";
+    os() << printName(op->var_) << "[";
     printList(op->indices_);
     os() << "] = ";
     recur(op->expr_);
@@ -127,7 +139,7 @@ void PrintVisitor::visit(const Store &op) {
 }
 
 void PrintVisitor::visit(const Load &op) {
-    os() << op->var_ << "[";
+    os() << printName(op->var_) << "[";
     printList(op->indices_);
     os() << "]";
 }
@@ -138,7 +150,7 @@ void PrintVisitor::visit(const ReduceTo &op) {
         os() << "// atomic" << std::endl;
     }
     makeIndent();
-    os() << op->var_ << "[";
+    os() << printName(op->var_) << "[";
     printList(op->indices_);
     os() << "] ";
     switch (op->op_) {
@@ -415,7 +427,7 @@ void PrintVisitor::visit(const For &op) {
         for (auto &&var : op->property_.noDeps_) {
             os() << (first ? "" : ", ");
             first = false;
-            os() << var;
+            os() << printName(var);
         }
         os() << std::endl;
     }
@@ -443,7 +455,7 @@ void PrintVisitor::visit(const For &op) {
             ASSERT(false);
         }
 
-        os() << reduction.var_;
+        os() << printName(reduction.var_);
         if (!reduction.indices_.empty()) {
             os() << "[";
             bool first_2 = true;

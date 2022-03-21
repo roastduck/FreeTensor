@@ -33,27 +33,31 @@ def test_manual_static():
     s = ir.Schedule(f)
 
     # L_head
-    L_head = s.fuse("softmax:max:impl:recur:init:recur:L",
-                    "softmax:max:impl:recur:reduce:recur:L")
-    L_head = s.fuse(L_head, "softmax:sub:recur:recur:L_elem")
-    L_head = s.fuse(L_head, "softmax:exp:recur:recur:L_elem")
-    L_head = s.fuse(L_head, "softmax:sum:recur:init:recur:L")
-    L_head = s.fuse(L_head, "softmax:sum:recur:reduce:recur:L")
-    L_head = s.fuse(L_head, "softmax:div:recur:L_elem")
+    L_head = s.fuse("softmax->max->impl->recur->init->recur->L",
+                    "softmax->max->impl->recur->reduce->recur->L")
+    L_head = s.fuse(L_head, "softmax->sub->recur->recur->L_elem")
+    L_head = s.fuse(L_head, "softmax->exp->recur->recur->L_elem")
+    L_head = s.fuse(L_head, "softmax->sum->recur->init->recur->L")
+    L_head = s.fuse(L_head, "softmax->sum->recur->reduce->recur->L")
+    L_head = s.fuse(L_head, "softmax->div->recur->L_elem")
 
     # L_seq_outer
-    L_seq_outer = s.fuse("softmax:max:impl:recur:init:recur:recur:L",
-                         "softmax:max:impl:recur:reduce:recur:recur:L")
-    L_seq_outer = s.fuse(L_seq_outer, "softmax:sub:recur:recur:recur:L_elem")
-    L_seq_outer = s.fuse(L_seq_outer, "softmax:exp:recur:recur:recur:L_elem")
-    L_seq_outer = s.fuse(L_seq_outer, "softmax:sum:recur:init:recur:recur:L")
-    L_seq_outer = s.fuse(L_seq_outer, "softmax:sum:recur:reduce:recur:recur:L")
-    L_seq_outer = s.fuse(L_seq_outer, "softmax:div:recur:recur:L_elem")
+    L_seq_outer = s.fuse("softmax->max->impl->recur->init->recur->recur->L",
+                         "softmax->max->impl->recur->reduce->recur->recur->L")
+    L_seq_outer = s.fuse(L_seq_outer,
+                         "softmax->sub->recur->recur->recur->L_elem")
+    L_seq_outer = s.fuse(L_seq_outer,
+                         "softmax->exp->recur->recur->recur->L_elem")
+    L_seq_outer = s.fuse(L_seq_outer,
+                         "softmax->sum->recur->init->recur->recur->L")
+    L_seq_outer = s.fuse(L_seq_outer,
+                         "softmax->sum->recur->reduce->recur->recur->L")
+    L_seq_outer = s.fuse(L_seq_outer, "softmax->div->recur->recur->L_elem")
 
     # ----------------
 
     # Don't store these intermediates
-    s.inline("softmax:sub:out")
+    s.inline("softmax->sub->out")
 
     # Store these intermedates to registers
     load_x, _, _, x_local_def = s.cache(
@@ -82,13 +86,13 @@ def test_manual_static():
         return V_sum_shmem
 
     V_sum_shmem = opt_red(
-        "softmax:sum:y", "softmax:sum:y",
-        "softmax:sum:recur:init:recur:recur:recur:recur:exec",
-        "softmax:sum:recur:reduce:recur:recur:recur:L")
+        "softmax->sum->y", "softmax->sum->y",
+        "softmax->sum->recur->init->recur->recur->recur->recur->exec",
+        "softmax->sum->recur->reduce->recur->recur->recur->L")
     V_max_shmem = opt_red(
-        "softmax:max:impl:y", "softmax:max:impl:y",
-        "softmax:max:impl:recur:init:recur:recur:recur:recur:exec",
-        "softmax:max:impl:recur:reduce:recur:recur:recur:L")
+        "softmax->max->impl->y", "softmax->max->impl->y",
+        "softmax->max->impl->recur->init->recur->recur->recur->recur->exec",
+        "softmax->max->impl->recur->reduce->recur->recur->recur->L")
 
     # Parallelize data-parall loops
     def opt_elemwise(loop_nid):
@@ -99,8 +103,9 @@ def test_manual_static():
 
     opt_elemwise(load_x_loop)
     exp_outer, exp_inner = opt_elemwise(
-        "softmax:exp:recur:recur:recur:recur:L_elem")
-    div_outer, div_inner = opt_elemwise("softmax:div:recur:recur:recur:L_elem")
+        "softmax->exp->recur->recur->recur->recur->L_elem")
+    div_outer, div_inner = opt_elemwise(
+        "softmax->div->recur->recur->recur->L_elem")
     s.cache(exp_inner, V_max_shmem, "gpu/local")
     s.cache(div_inner, V_sum_shmem, "gpu/local")
 
@@ -113,7 +118,7 @@ def test_manual_static():
     # ----------------
 
     s.set_mem_type(x_local_def, "gpu/local")
-    s.set_mem_type(s.find(lambda x: x.nid() == "softmax:exp:y"), "gpu/local")
+    s.set_mem_type(s.find(lambda x: x.nid() == "softmax->exp->y"), "gpu/local")
 
     f = ir.lower(s.func(), target)
     print(f)
