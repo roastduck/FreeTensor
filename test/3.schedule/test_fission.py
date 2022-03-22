@@ -302,6 +302,43 @@ def test_correct_dependency_before():
     assert std.match(ast)
 
 
+def test_correct_dependency_loop_step():
+    with ir.VarDef([
+        ("x0", (4, 8), "int32", "input", "cpu"),
+        ("x1", (4, 8), "int32", "input", "cpu"),
+        ("y", (4, 8), "int32", "output", "cpu"),
+    ]) as (x0, x1, y):
+        with ir.For("i", 0, 4, nid="L1") as i:
+            with ir.For("j", 0, 8, 2, nid="L2") as j:
+                with ir.VarDef("buf", (1,), "int32", "cache", "cpu") as b:
+                    ir.MarkNid("S0")
+                    b[0] = x0[i, j] + x1[i, j]
+                    y[i, j] = b[0] * b[0]
+    ast = ir.pop_ast()
+    print(ast)
+    s = ir.Schedule(ast)
+    s.fission("L2", ir.FissionSide.After, "S0")
+    ast = s.ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([
+        ("x0", (4, 8), "int32", "input", "cpu"),
+        ("x1", (4, 8), "int32", "input", "cpu"),
+        ("y", (4, 8), "int32", "output", "cpu"),
+    ]) as (x0, x1, y):
+        with ir.For("i", 0, 4) as i:
+            with ir.VarDef("buf", (4, 1), "int32", "cache", "cpu") as b:
+                with ir.For("j", 0, 8, 2) as j:
+                    b[j // 2, 0] = x0[i, j] + x1[i, j]
+                with ir.For("j", 0, 8, 2) as j:
+                    y[i, j] = b[j // 2, 0] * b[j // 2, 0]
+    std = ir.use_builtin_div(ir.pop_ast())
+
+    assert std.match(ast)
+
+
 def test_correct_dependency_multi_loop_1():
     with ir.VarDef([
         ("x0", (4, 8), "int32", "input", "cpu"),

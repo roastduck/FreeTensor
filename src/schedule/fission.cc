@@ -127,9 +127,7 @@ Stmt AddDimToVar::visit(const VarDef &_op) {
         op->buffer_ = op->buffer_.clone();
         auto &shape = op->buffer_->tensor().shape();
         for (auto &&loop : toAdd_.at(op->id())) {
-            auto len =
-                makeSub(forMap_.at(loop)->end_, forMap_.at(loop)->begin_);
-            shape.insert(shape.begin(), len);
+            shape.insert(shape.begin(), forMap_.at(loop)->len_);
         }
     }
     return op;

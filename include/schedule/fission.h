@@ -74,8 +74,11 @@ class AddDimToVar : public SymbolTable<Mutator> {
     template <class T> T doAdd(T op) {
         if (toAdd_.count(def(op->var_)->id())) {
             for (auto &&loop : toAdd_.at(def(op->var_)->id())) {
-                op->indices_.insert(op->indices_.begin(),
-                                    makeVar(forMap_.at(loop)->iter_));
+                op->indices_.insert(
+                    op->indices_.begin(),
+                    makeFloorDiv(makeSub(makeVar(forMap_.at(loop)->iter_),
+                                         forMap_.at(loop)->begin_),
+                                 forMap_.at(loop)->step_));
             }
         }
         return op;

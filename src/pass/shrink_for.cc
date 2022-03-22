@@ -118,7 +118,7 @@ Stmt ShrinkFor::visit(const For &_op) {
                 op->begin_ = lower;
             }
             if (upper.isValid()) {
-                op->end_ = makeAdd(upper, op->step_);
+                op->end_ = makeAdd(upper, makeIntConst(1));
             }
             op->len_ = makeFloorDiv(makeSub(op->end_, op->begin_), op->step_);
         } else if (step < 0) {
@@ -126,7 +126,7 @@ Stmt ShrinkFor::visit(const For &_op) {
                 op->begin_ = upper;
             }
             if (lower.isValid()) {
-                op->end_ = makeAdd(lower, op->step_);
+                op->end_ = makeAdd(lower, makeIntConst(-1));
             }
             op->len_ = makeFloorDiv(makeSub(op->end_, op->begin_), op->step_);
         }
