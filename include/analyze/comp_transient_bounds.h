@@ -103,42 +103,6 @@ class CompTransientBounds : public BaseClass,
                 }
             }
 
-            // A temporary hack for
-            // test/2.pass/test_shrink_var.py::test_const_in_branch_1 and
-            // test/2.pass/test_shrink_var.py::test_const_in_branch_2 (FIXME)
-            if (lin.coeff_.size() == 1) {
-                auto &&[k, a] = lin.coeff_.front();
-                if (lin.bias_ % k == 0) {
-                    auto b = -lin.bias_ / k;
-                    switch (type) {
-                    case ASTNodeType::EQ:
-                        transients_[makeIntConst(b)].expr_ = makeIntConst(b);
-                        transients_[makeIntConst(b)].lower_.emplace_back(a);
-                        transients_[makeIntConst(b)].upper_.emplace_back(a);
-                        break;
-                    case ASTNodeType::LE: // a <= b <==> b >= a
-                        transients_[makeIntConst(b)].expr_ = makeIntConst(b);
-                        transients_[makeIntConst(b)].lower_.emplace_back(a);
-                        break;
-                    case ASTNodeType::LT: // a < b <==> b - 1 >= a
-                        transients_[makeIntConst(b - 1)].expr_ =
-                            makeIntConst(b - 1);
-                        transients_[makeIntConst(b - 1)].lower_.emplace_back(a);
-                        break;
-                    case ASTNodeType::GE: // a >= b <==> b <= a
-                        transients_[makeIntConst(b)].expr_ = makeIntConst(b);
-                        transients_[makeIntConst(b)].upper_.emplace_back(a);
-                        break;
-                    case ASTNodeType::GT: // a > b <==> b + 1 <= a
-                        transients_[makeIntConst(b + 1)].expr_ =
-                            makeIntConst(b + 1);
-                        transients_[makeIntConst(b + 1)].upper_.emplace_back(a);
-                        break;
-                    default:;
-                    }
-                }
-            }
-
             conds_.emplace_back(cond);
         }
     }
