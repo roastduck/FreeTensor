@@ -147,10 +147,8 @@ class CompTransientBounds : public BaseClass,
                     var, {makeAdd(op->end_, makeIntConst(1))}, {op->begin_}};
                 conds_.emplace_back(makeLE(var, op->begin_));
                 conds_.emplace_back(makeGT(var, op->end_));
-                // ISL does not support negative divisor
                 conds_.emplace_back(
-                    makeEQ(makeMod(makeSub(op->begin_, var),
-                                   makeSub(makeIntConst(0), op->step_)),
+                    makeEQ(makeMod(makeSub(var, op->begin_), op->step_),
                            makeIntConst(0)));
             } else {
                 transients_[var] = {var, {op->begin_}, {op->begin_}};

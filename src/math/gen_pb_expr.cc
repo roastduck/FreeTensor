@@ -204,8 +204,14 @@ void GenPBExpr::visit(const NE &op) {
 void GenPBExpr::visit(const FloorDiv &op) {
     Visitor::visit(op);
     if (results_.count(op->lhs_) && constants_.count(op->rhs_)) {
-        results_[op] = "floor(" + results_.at(op->lhs_) + " / " +
-                       results_.at(op->rhs_) + ")";
+        // ISL requires a positive divisor
+        if (constants_.at(op->rhs_) > 0) {
+            results_[op] = "floor(" + results_.at(op->lhs_) + " / " +
+                           std::to_string(constants_.at(op->rhs_)) + ")";
+        } else {
+            results_[op] = "floor(-(" + results_.at(op->lhs_) + ") / " +
+                           std::to_string(-constants_.at(op->rhs_)) + ")";
+        }
         if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
             results_[op] = std::to_string(
                 constants_[op] =
@@ -217,8 +223,14 @@ void GenPBExpr::visit(const FloorDiv &op) {
 void GenPBExpr::visit(const CeilDiv &op) {
     Visitor::visit(op);
     if (results_.count(op->lhs_) && constants_.count(op->rhs_)) {
-        results_[op] = "ceil(" + results_.at(op->lhs_) + " / " +
-                       results_.at(op->rhs_) + ")";
+        // ISL requires a positive divisor
+        if (constants_.at(op->rhs_) > 0) {
+            results_[op] = "ceil(" + results_.at(op->lhs_) + " / " +
+                           std::to_string(constants_.at(op->rhs_)) + ")";
+        } else {
+            results_[op] = "ceil(-(" + results_.at(op->lhs_) + ") / " +
+                           std::to_string(-constants_.at(op->rhs_)) + ")";
+        }
         if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
             results_[op] = std::to_string(
                 constants_[op] =
@@ -230,8 +242,14 @@ void GenPBExpr::visit(const CeilDiv &op) {
 void GenPBExpr::visit(const Mod &op) {
     Visitor::visit(op);
     if (results_.count(op->lhs_) && constants_.count(op->rhs_)) {
-        results_[op] =
-            "(" + results_.at(op->lhs_) + " % " + results_.at(op->rhs_) + ")";
+        // ISL requires a positive divisor
+        if (constants_.at(op->rhs_) > 0) {
+            results_[op] = "(" + results_.at(op->lhs_) + " % " +
+                           std::to_string(constants_.at(op->rhs_)) + ")";
+        } else {
+            results_[op] = "(-(" + results_.at(op->lhs_) + ") % " +
+                           std::to_string(-constants_.at(op->rhs_)) + ")";
+        }
         if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
             results_[op] =
                 std::to_string(constants_[op] = constants_.at(op->lhs_) %
