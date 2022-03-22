@@ -28,6 +28,11 @@ static bool isSharedAmong(MemType mtype, const std::string &parallel) {
     return false;
 }
 
+static bool isConstTrue(const Expr &expr) {
+    return expr->nodeType() == ASTNodeType::BoolConst &&
+           expr.as<BoolConstNode>()->val_;
+}
+
 void FindMemType::visit(const VarDef &op) {
     Visitor::visit(op);
     if (op->id() == varDefId_) {
@@ -111,8 +116,13 @@ void CompAccessBound::visit(const VarDef &op) {
             }
         }
         if (part.isValid()) {
-            result_.cond_ =
-                result_.cond_.isValid() ? makeLOr(result_.cond_, part) : part;
+            if (!isConstTrue(part)) {
+                result_.cond_ = result_.cond_.isValid()
+                                    ? makeLOr(result_.cond_, part)
+                                    : part;
+            }
+        } else {
+            result_.cond_ = makeBoolConst(true);
         }
     }
 }

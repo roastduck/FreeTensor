@@ -324,3 +324,37 @@ def test_cache_with_multiple_conditions():
     std = ir.make_reduction(ir.pop_ast())
 
     assert std.match(ast)
+
+
+def test_fill_is_necessary_when_possibly_not_written():
+    with ir.VarDef([("x", (2, 4), "int32", "input", "cpu"),
+                    ("y", (2, 4), "int32", "output", "cpu")]) as (x, y):
+        with ir.For("i", 0, 2, nid="L1") as i:
+            with ir.For("j", 0, 4, nid="L2") as j:
+                with ir.If(i == 0):
+                    y[0, j] = x[0, j]
+                y[1, j] = x[1, j]
+    ast = ir.pop_ast()
+    print(ast)
+    s = ir.Schedule(ast)
+    s.cache(s.find("L2").node().body, "y", "cpu")
+    ast = s.ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([("x", (2, 4), "int32", "input", "cpu"),
+                    ("y", (2, 4), "int32", "output", "cpu")]) as (x, y):
+        with ir.For("i", 0, 2, nid="L1") as i:
+            with ir.For("j", 0, 4, nid="L2") as j:
+                with ir.VarDef("b", (2, 1), "int32", "cache", "cpu") as b:
+                    with ir.For("k", 0, 2) as k:
+                        b[k, 0] = y[k, j]  # This statement is necessary
+                    with ir.If(i == 0):
+                        b[0, 0] = x[0, j]
+                    b[1, 0] = x[1, j]
+                    with ir.For("k", 0, 2) as k:
+                        y[k, j] = b[k, 0]
+    std = ir.pop_ast()
+
+    assert std.match(ast)

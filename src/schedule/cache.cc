@@ -107,12 +107,12 @@ Stmt MakeFillAndFlush::visitStmt(const Stmt &_op) {
         }
         for (int i = nDim - 1; i >= 0; i--) {
             fill =
-                makeFor("", iters[i], rRange_.lower_[i],
-                        makeAdd(rRange_.lower_[i], rRange_.len_[i]),
-                        makeIntConst(1), rRange_.len_[i], ForProperty(), fill);
+                makeFor("", iters[i], rwRange_.lower_[i],
+                        makeAdd(rwRange_.lower_[i], rwRange_.len_[i]),
+                        makeIntConst(1), rwRange_.len_[i], ForProperty(), fill);
         }
-        if (rRange_.cond_.isValid()) {
-            fill = makeIf("", rRange_.cond_, fill);
+        if (rwRange_.cond_.isValid()) {
+            fill = makeIf("", rwRange_.cond_, fill);
         }
 
         Stmt flush;
@@ -267,11 +267,10 @@ cache(const Stmt &_ast, const ID &stmt, const std::string &var, MemType mtype) {
     CompUniqueBounds::LowerBoundsMap lower;
     CompUniqueBounds::UpperBoundsMap upper;
     std::tie(ast, lower, upper) = simplifyAndGetBounds<BuiltinSimplify>(ast);
-    auto rBound =
-        compAccessBound(ast, newDef, lower, upper, COMP_ACCESS_BOUND_READ);
+    auto rwBound = compAccessBound(ast, newDef, lower, upper);
     auto wBound =
         compAccessBound(ast, newDef, lower, upper, COMP_ACCESS_BOUND_WRITE);
-    MakeFillAndFlush makeFillAndFlush(stmt, var, newVar, oldDef, rBound,
+    MakeFillAndFlush makeFillAndFlush(stmt, var, newVar, oldDef, rwBound,
                                       wBound);
     ast = makeFillAndFlush(ast);
     fillStmt = makeFillAndFlush.fillStmt();

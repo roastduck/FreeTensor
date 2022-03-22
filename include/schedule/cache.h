@@ -51,15 +51,15 @@ class MakeFillAndFlush : public Mutator {
     ID stmt_;
     std::string oldVar_, newVar_;
     ID oldDef_, fillStmt_, flushStmt_;
-    const AccessBound &rRange_, &wRange_;
+    const AccessBound &rwRange_, &wRange_;
     VarDef def_;
 
   public:
     MakeFillAndFlush(const ID &stmt, const std::string &oldVar,
                      const std::string &newVar, const ID &oldDef,
-                     const AccessBound &rRange, const AccessBound &wRange)
+                     const AccessBound &rwRange, const AccessBound &wRange)
         : stmt_(stmt), oldVar_(oldVar), newVar_(newVar), oldDef_(oldDef),
-          rRange_(rRange), wRange_(wRange) {}
+          rwRange_(rwRange), wRange_(wRange) {}
 
     const ID &fillStmt() const { return fillStmt_; }
     const ID &flushStmt() const { return flushStmt_; }
