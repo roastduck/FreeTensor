@@ -61,12 +61,13 @@ num_v = ptr_np.shape[0] - 1
 num_e = idx_np.shape[0]
 idx_center_np = np.zeros([num_e], dtype=itype)
 for i in range(num_v):
-    idx_center_np[ptr_np[i]:ptr_np[i+1]] = i
+    idx_center_np[ptr_np[i]:ptr_np[i + 1]] = i
 print(feat_np.shape, weight_np.shape)
 
 feat_len = 32
 
 output_shape = (num_v, feat_len)
+
 
 def get_spmm_relay(num_v, num_e, feat_len, dtype, itype):
     ptr = relay.var("ptr", shape=(num_v + 1,), dtype=itype)
@@ -77,9 +78,13 @@ def get_spmm_relay(num_v, num_e, feat_len, dtype, itype):
     attn_l = relay.var("attn_l", shape=(feat_len, 1), dtype=dtype)
     attn_r = relay.var("attn_r", shape=(feat_len, 1), dtype=dtype)
 
-    edge_exp_oe = relay.squeeze(relay.exp(relay.ones([num_e,1], dtype=dtype)), axis=[1])
-    edge_sum_on = relay.nn.sparse_dense(relay.ones([1, num_v], dtype=dtype), [ptr, idx, edge_exp_oe], sparse_lhs=True)
+    edge_exp_oe = relay.squeeze(relay.exp(relay.ones([num_e, 1], dtype=dtype)),
+                                axis=[1])
+    edge_sum_on = relay.nn.sparse_dense(relay.ones([1, num_v], dtype=dtype),
+                                        [ptr, idx, edge_exp_oe],
+                                        sparse_lhs=True)
     return edge_sum_on
+
 
 def get_gat_relay(num_v, num_e, feat_len, dtype, itype):
     ptr = relay.var("ptr", shape=(num_v + 1,), dtype=itype)
@@ -95,10 +100,15 @@ def get_gat_relay(num_v, num_e, feat_len, dtype, itype):
     att_r = relay.nn.matmul(feat2, attn_r)
     att_l_oe = relay.adv_index([att_l, idx_center])
     att_r_oe = relay.adv_index([att_r, idx_center])
-    edge_exp_oe = relay.squeeze(relay.exp(relay.nn.leaky_relu(att_l_oe+att_r_oe)), axis=[1])
-    edge_sum_on = relay.nn.sparse_dense(relay.ones([1, num_v], dtype=dtype), [ptr, idx, edge_exp_oe], sparse_lhs=True)
-    yy = relay.nn.sparse_dense(relay.transpose(feat2), [ptr, idx, edge_exp_oe], sparse_lhs=True)
-    y = yy/edge_sum_on
+    edge_exp_oe = relay.squeeze(relay.exp(
+        relay.nn.leaky_relu(att_l_oe + att_r_oe)),
+                                axis=[1])
+    edge_sum_on = relay.nn.sparse_dense(relay.ones([1, num_v], dtype=dtype),
+                                        [ptr, idx, edge_exp_oe],
+                                        sparse_lhs=True)
+    yy = relay.nn.sparse_dense(relay.transpose(feat2), [ptr, idx, edge_exp_oe],
+                               sparse_lhs=True)
+    y = yy / edge_sum_on
     return y
 
 
@@ -117,10 +127,15 @@ print(mod.astext(show_meta_data=False))
 # d_w = np.random.uniform(-1, 1, size=(3, in_feats, out_feats)).astype(dtype)
 
 opt_level = 3
-params = {"ptr": tvm.nd.array(ptr_np), "idx": tvm.nd.array(idx_np),
-          "idx": tvm.nd.array(idx_np), "idx_center": tvm.nd.array(idx_center_np),
-          "weight": tvm.nd.array(weight_np),
-          "attn_l": tvm.nd.array(attn_l_np), "attn_r": tvm.nd.array(attn_r_np)}
+params = {
+    "ptr": tvm.nd.array(ptr_np),
+    "idx": tvm.nd.array(idx_np),
+    "idx": tvm.nd.array(idx_np),
+    "idx_center": tvm.nd.array(idx_center_np),
+    "weight": tvm.nd.array(weight_np),
+    "attn_l": tvm.nd.array(attn_l_np),
+    "attn_r": tvm.nd.array(attn_r_np)
+}
 for k, v in params.items():
     print(k, v.shape)
 
@@ -153,18 +168,24 @@ if False:
     )
 
     tuning_option = {
-        "tuner": "xgb",
-        "trials": tuning_rounds,
-        "early_stopping": 100,
-        "measure_option": autotvm.measure_option(
-            builder=autotvm.LocalBuilder(build_func="default"), runner=runner
-        ),
-        "tuning_records": log_file,
+        "tuner":
+            "xgb",
+        "trials":
+            tuning_rounds,
+        "early_stopping":
+            100,
+        "measure_option":
+            autotvm.measure_option(
+                builder=autotvm.LocalBuilder(build_func="default"),
+                runner=runner),
+        "tuning_records":
+            log_file,
     }
 
     # tasks = autotvm.task.extract_from_program(mod["main"], target=target, params=params)
-    tasks = autotvm.task.extract_from_program(
-        mod["main"], target=target, params=params)
+    tasks = autotvm.task.extract_from_program(mod["main"],
+                                              target=target,
+                                              params=params)
     print(len(tasks))
     print(tasks)
 
@@ -177,8 +198,8 @@ if False:
             early_stopping=tuning_option["early_stopping"],
             measure_option=tuning_option["measure_option"],
             callbacks=[
-                autotvm.callback.progress_bar(
-                    tuning_option["trials"], prefix=prefix),
+                autotvm.callback.progress_bar(tuning_option["trials"],
+                                              prefix=prefix),
                 autotvm.callback.log_to_file(tuning_option["tuning_records"]),
             ],
         )
@@ -194,20 +215,20 @@ if True:
     tasks, task_weights = auto_scheduler.extract_tasks(
         mod["main"], params, target, include_simple_tasks=True)
     tuner = auto_scheduler.TaskScheduler(tasks, task_weights)
-    print('#Tuning trials', tuning_rounds*len(tasks))
+    print('#Tuning trials', tuning_rounds * len(tasks))
     print(task_weights)
     print([task.compute_dag for task in tasks])
     tune_option = auto_scheduler.TuningOptions(
-        num_measure_trials=tuning_rounds*len(tasks),
+        num_measure_trials=tuning_rounds * len(tasks),
         measure_callbacks=[auto_scheduler.RecordToFile(log_file)],
         verbose=2,
     )
     tuner.tune(tune_option)
     with auto_scheduler.ApplyHistoryBest(log_file):
-        with tvm.transform.PassContext(opt_level=3, config={"relay.backend.use_auto_scheduler": True}):
+        with tvm.transform.PassContext(
+                opt_level=3, config={"relay.backend.use_auto_scheduler": True}):
             lib = relay.build(mod, target=target, params=params)
     module = graph_executor.GraphModule(lib["default"](dev))
-
 
 ################################################################################
 # Comparing the Tuned and Untuned Models
@@ -222,13 +243,13 @@ warmup_num = 10
 timing_number = 1
 timing_repeat = 1000
 timeit.Timer(lambda: module.run()).repeat(repeat=warmup_num, number=1)
-optimized = (
-    np.array(timeit.Timer(lambda: module.run()).repeat(
-        repeat=timing_repeat, number=timing_number))
-    * 1000 / timing_number
-)
-optimized = {"mean": np.mean(optimized), "median": np.median(
-    optimized), "std": np.std(optimized)}
-
+optimized = (np.array(
+    timeit.Timer(lambda: module.run()).repeat(
+        repeat=timing_repeat, number=timing_number)) * 1000 / timing_number)
+optimized = {
+    "mean": np.mean(optimized),
+    "median": np.median(optimized),
+    "std": np.std(optimized)
+}
 
 print("optimized: %s" % (optimized))

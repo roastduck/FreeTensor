@@ -113,8 +113,8 @@ def unsqueeze(axes: Sequence[int]):
 
     @core.inline
     def f_unsqueeze(x):
-        y = core.create_var(comp_shape(circular_axes(axes, core.ndim(x)), x), core.dtype(x),
-                            core.mtype(x))
+        y = core.create_var(comp_shape(circular_axes(axes, core.ndim(x)), x),
+                            core.dtype(x), core.mtype(x))
         'nid: recur'
         _unsqueeze_(circular_axes(axes, core.ndim(x)))(x, y)
         return y

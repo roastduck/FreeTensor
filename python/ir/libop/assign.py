@@ -15,8 +15,8 @@ def _assign_op(op):
                     'nid: recur'
                     _assign_op(op)(y[i], x)
                 else:
-                    assert core.shape(x, 0) == core.shape(
-                        y, 0) or core.shape(x, 0) == 1
+                    assert core.shape(x, 0) == core.shape(y, 0) or core.shape(
+                        x, 0) == 1
                     'nid: recur'
                     _assign_op(op)(y[i], x[i % x.shape(0)])
 

@@ -17,6 +17,7 @@ from datetime import datetime
 import sys
 # Enable debug logs
 import logging
+
 logging.basicConfig()
 logging.getLogger().setLevel(logging.DEBUG)
 
@@ -28,7 +29,7 @@ if sys.argv[1] == 'cpu':
 elif sys.argv[1] == 'gpu':
     target_name = 'cuda -libs=cublas'
 else:
-    assert(False)
+    assert False
 
 tuning_rounds = 1000
 
@@ -49,6 +50,7 @@ time_now = datetime.now().strftime('%Y-%m-%d.%H-%M-%S')
 log_file = f'ansor.{sys.argv[1]}.{time_now}.json'
 print('log file:', log_file)
 
+
 @auto_scheduler.register_workload  # Note the auto_scheduler decorator
 def get_lstm_compute():
     num_thread_y = 8
@@ -66,35 +68,47 @@ def get_lstm_compute():
     # h: output hidden state, c: cell state.
     s_state_h = te.placeholder((num_step, batch_size, num_hidden))
     s_state_c = te.placeholder((num_step, batch_size, num_hidden))
-    s_init_c = te.compute((1, batch_size, num_hidden), lambda *i: 0.0, name="init_c")
-    s_init_h = te.compute((1, batch_size, num_hidden), lambda *i: 0.0, name="init_h")
+    s_init_c = te.compute((1, batch_size, num_hidden),
+                          lambda *i: 0.0,
+                          name="init_c")
+    s_init_h = te.compute((1, batch_size, num_hidden),
+                          lambda *i: 0.0,
+                          name="init_h")
     # LSTM transition
     k = te.reduce_axis((0, num_hidden), name="ki2h")
     s_h2h = te.compute(
         (num_step, batch_size, 4, num_hidden),
-        lambda t, i, x, j: te.sum(s_state_h[t - 1, i, k] * Wh2h[x, j, k], axis=k),
+        lambda t, i, x, j: te.sum(s_state_h[t - 1, i, k] * Wh2h[x, j, k],
+                                  axis=k),
         name="s_h2h",
     )
     # Gate rules
-    gates = te.compute(Xi2h.shape, lambda *i: Xi2h(*i) + s_h2h(*i), name="gates")
+    gates = te.compute(Xi2h.shape,
+                       lambda *i: Xi2h(*i) + s_h2h(*i),
+                       name="gates")
     gshape = (num_step, batch_size, num_hidden)
-    in_gate = te.compute(gshape, lambda t, i, j: te.sigmoid(gates[t, i, 0, j]), name="in_gate")
-    in_transform = te.compute(
-        gshape, lambda t, i, j: te.tanh(gates[t, i, 1, j]), name="in_transform"
-    )
-    forget_gate = te.compute(
-        gshape, lambda t, i, j: te.sigmoid(gates[t, i, 2, j]), name="forget_gate"
-    )
-    out_gate = te.compute(gshape, lambda t, i, j: te.sigmoid(gates[t, i, 3, j]), name="out_gate")
+    in_gate = te.compute(gshape,
+                         lambda t, i, j: te.sigmoid(gates[t, i, 0, j]),
+                         name="in_gate")
+    in_transform = te.compute(gshape,
+                              lambda t, i, j: te.tanh(gates[t, i, 1, j]),
+                              name="in_transform")
+    forget_gate = te.compute(gshape,
+                             lambda t, i, j: te.sigmoid(gates[t, i, 2, j]),
+                             name="forget_gate")
+    out_gate = te.compute(gshape,
+                          lambda t, i, j: te.sigmoid(gates[t, i, 3, j]),
+                          name="out_gate")
     next_c = te.compute(
         gshape,
-        lambda t, i, j: forget_gate[t, i, j] * s_state_c[t - 1, i, j]
-        + in_gate[t, i, j] * in_transform[t, i, j],
+        lambda t, i, j: forget_gate[t, i, j] * s_state_c[t - 1, i, j] + in_gate[
+            t, i, j] * in_transform[t, i, j],
         name="next_c",
     )
     next_h = te.compute(
-        gshape, lambda t, i, j: out_gate[t, i, j] * te.tanh(next_c[t, i, j]), name="next_h"
-    )
+        gshape,
+        lambda t, i, j: out_gate[t, i, j] * te.tanh(next_c[t, i, j]),
+        name="next_h")
     update_c = te.compute(gshape, lambda *i: next_c(*i), name="update_c")
     update_h = te.compute(gshape, lambda *i: next_h(*i), name="update_h")
     # schedule
@@ -107,12 +121,12 @@ def get_lstm_compute():
     )
     return [Xi2h, Wh2h, scan_h, scan_c]
 
+
 # Only dilated parts
 args = get_lstm_compute()
 s = te.create_schedule(args[-1].op)
 # print(tvm.lower(s, args, simple_mode=True))
 # y_tvm = tvm.nd.empty(y.shape, device=dev)
-
 
 # if sys.argv[1] == 'cpu':
 #     func = tvm.build(s, args, target)
@@ -129,17 +143,15 @@ s = te.create_schedule(args[-1].op)
 
 ################################################################################
 tasks = [
-    tvm.auto_scheduler.SearchTask(
-        func=get_lstm_compute, args=(
-            ),
-        target=target),
+    tvm.auto_scheduler.SearchTask(func=get_lstm_compute, args=(),
+                                  target=target),
 ]
 
 ################################################################################
 # Set Parameters for Auto-Scheduler
 tuner = auto_scheduler.TaskScheduler(tasks)
 tune_option = auto_scheduler.TuningOptions(
-    num_measure_trials=tuning_rounds*len(tasks),
+    num_measure_trials=tuning_rounds * len(tasks),
     measure_callbacks=[auto_scheduler.RecordToFile(log_file)],
     verbose=2,
 )
@@ -167,16 +179,17 @@ else:
 # funcs[1](prob_tvm, prob_softmax_tvm)
 # funcs[2](prob_softmax_tvm, v_tvm, y_tvm)
 
-if sys.argv[1]=='cpu':
+if sys.argv[1] == 'cpu':
     inputs_funcs = [
         # (vertices_tvm, faces_tvm, v_tvm),
-        (v_tvm, y_tvm)]
+        (v_tvm, y_tvm)
+    ]
 else:
     inputs_funcs = [
         (vertices_tvm, faces_tvm, v_tvm),
         (v_tvm, e_cp_tvm, dist_tvm),
-        (e_cp_tvm, dist_tvm,y_tvm),
-        ]
+        (e_cp_tvm, dist_tvm, y_tvm),
+    ]
 # Check correctness
 for func, inputs in zip(funcs, inputs_funcs):
     func(*inputs)
@@ -187,16 +200,11 @@ warmup_num = 10
 timing_repeat = 1000
 time_log = []
 for func, inputs in zip(funcs, inputs_funcs):
-    evaluator = func.time_evaluator(
-        func.entry_name, dev, number=warmup_num)
+    evaluator = func.time_evaluator(func.entry_name, dev, number=warmup_num)
     evaluator(*inputs)
-    evaluator = func.time_evaluator(
-        func.entry_name, dev, number=timing_repeat)
+    evaluator = func.time_evaluator(func.entry_name, dev, number=timing_repeat)
     time_ms = np.median(evaluator(*inputs).results) * 1000
     time_log.append(time_ms)
 print(f"{warmup_num} warmup, {timing_repeat} repeats for evalution")
 print('Time breakdown (ms):', time_log)
-print(
-    "Average e2e time: %.3f ms"
-    % (sum(time_log))
-)
+print("Average e2e time: %.3f ms" % (sum(time_log)))

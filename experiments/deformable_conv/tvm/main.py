@@ -17,6 +17,7 @@ from datetime import datetime
 import sys
 # Enable debug logs
 import logging
+
 logging.basicConfig()
 logging.getLogger().setLevel(logging.DEBUG)
 
@@ -30,7 +31,7 @@ elif sys.argv[1] == 'gpu':
     target_name = 'cuda -libs=cublas'
     dev = tvm.cuda()
 else:
-    assert(False)
+    assert False
 
 tuning_rounds = 1000
 
@@ -60,7 +61,15 @@ pos_size = np.product(pos_shape)
 
 
 @auto_scheduler.register_workload  # Note the auto_scheduler decorator
-def deformable_conv_compute0(n, c_in, c_out, h, w, k_h, k_w, dtype='float32', itype='int32'):
+def deformable_conv_compute0(n,
+                             c_in,
+                             c_out,
+                             h,
+                             w,
+                             k_h,
+                             k_w,
+                             dtype='float32',
+                             itype='int32'):
     X = te.placeholder((n, c_in, h, w), name="X", dtype=dtype)
     W1 = te.placeholder((k_h, k_w, 2, c_in, k_h, k_w), name="W1", dtype=dtype)
 
@@ -74,25 +83,28 @@ def deformable_conv_compute0(n, c_in, c_out, h, w, k_h, k_w, dtype='float32', it
         # col[ro, so] += X[i, ki, p + ri, q + si] * W1[ro, so, 1, ki, ri, si]
         te.sum(X[i, ki, p + ri, q + si] * W1[ro, so, t, ki, ri, si],
                axis=[ki, ri, si]),
-        name="pos"
-    )
-    pos_x = te.compute(
-        (n, h, w, 3, 3, 2, 2),
-        lambda i, p, q, ro, so, tx, ty:
-        topi.cast(te.floor(pos[i, p, q, ro, so, 0]+tx), dtype=itype),
-        name="pos_x"
-    )
-    pos_y = te.compute(
-        (n, h, w, 3, 3, 2, 2),
-        lambda i, p, q, ro, so, tx, ty:
-        topi.cast(te.floor(pos[i, p, q, ro, so, 1]+ty), dtype=itype),
-        name="pos_y"
-    )
+        name="pos")
+    pos_x = te.compute((n, h, w, 3, 3, 2, 2),
+                       lambda i, p, q, ro, so, tx, ty: topi.cast(
+                           te.floor(pos[i, p, q, ro, so, 0] + tx), dtype=itype),
+                       name="pos_x")
+    pos_y = te.compute((n, h, w, 3, 3, 2, 2),
+                       lambda i, p, q, ro, so, tx, ty: topi.cast(
+                           te.floor(pos[i, p, q, ro, so, 1] + ty), dtype=itype),
+                       name="pos_y")
     return [X, W1, pos, pos_x, pos_y]
 
 
 @auto_scheduler.register_workload  # Note the auto_scheduler decorator
-def contiguous_compute(n, c_in, c_out, h, w, k_h, k_w, dtype='float32', itype='int32'):
+def contiguous_compute(n,
+                       c_in,
+                       c_out,
+                       h,
+                       w,
+                       k_h,
+                       k_w,
+                       dtype='float32',
+                       itype='int32'):
     X = te.placeholder((n, c_in, h, w), name="X", dtype=dtype)
     pos_n = te.placeholder(pos_shape, name="pos_n", dtype=dtype)
     pos_x = te.placeholder(pos_shape, name="pos_x", dtype=dtype)
@@ -109,11 +121,18 @@ def contiguous_compute(n, c_in, c_out, h, w, k_h, k_w, dtype='float32', itype='i
 
 # Cannot be tuned by Ansor.
 @auto_scheduler.register_workload  # Note the auto_scheduler decorator
-def deformable_conv_compute1(n, c_in, c_out, h, w, k_h, k_w, dtype='float32', itype='int32'):
+def deformable_conv_compute1(n,
+                             c_in,
+                             c_out,
+                             h,
+                             w,
+                             k_h,
+                             k_w,
+                             dtype='float32',
+                             itype='int32'):
     # [n,h,w,kernel_h,kernel_w,x/y]
     pos = te.placeholder((n, h, w, 3, 3, 2), name="pos", dtype=dtype)
-    v_xy = te.placeholder((n, c_in, h, w, 3, 3, 2, 2),
-                          name="v_xy", dtype=dtype)
+    v_xy = te.placeholder((n, c_in, h, w, 3, 3, 2, 2), name="v_xy", dtype=dtype)
     W2 = te.placeholder((c_out, c_in, k_h, k_w), name="W2", dtype=dtype)
 
     ci = te.reduce_axis((0, c_in), name="ci")  # channel in
@@ -123,23 +142,24 @@ def deformable_conv_compute1(n, c_in, c_out, h, w, k_h, k_w, dtype='float32', it
     si = te.reduce_axis((0, 3), name="si")  # y axis for 3x3 kernel
 
     def y_compute(i, ko, p, q):
+
         def xx():
             return pos[i, p, q, ri, si, 0]
 
         def yy():
             return pos[i, p, q, ri, si, 1]
-        return te.sum(
-            te.if_then_else(
-                te.all(xx()+kx >= 0, xx()+kx < h, yy()+ky >= 0, yy()+ky < w),
-                v_xy[i, ci, p, q, ri, si, kx, ky] *
-                te.abs((xx()-te.floor(xx())-kx) * (yy()-te.floor(yy())-ky)),
-                0),
-            axis=[ci, kx, ky, ri, si])
 
-    y = te.compute(
-        (n, c_out, h, w),
-        y_compute,
-        name='y')
+        return te.sum(te.if_then_else(
+            te.all(xx() + kx >= 0,
+                   xx() + kx < h,
+                   yy() + ky >= 0,
+                   yy() + ky < w),
+            v_xy[i, ci, p, q, ri, si, kx, ky] * te.abs(
+                (xx() - te.floor(xx()) - kx) * (yy() - te.floor(yy()) - ky)),
+            0),
+                      axis=[ci, kx, ky, ri, si])
+
+    y = te.compute((n, c_out, h, w), y_compute, name='y')
     return [pos, v_xy, W2, y]
 
 
@@ -182,18 +202,18 @@ exit()
 ################################################################################
 tasks = [
     tvm.auto_scheduler.SearchTask(
-        func=deformable_conv_compute0, args=(
-            n, c_in, c_out, h, w, k_h, k_w),
+        func=deformable_conv_compute0,
+        args=(n, c_in, c_out, h, w, k_h, k_w),
         # x_tvm, w1_tvm, pos_tvm, pos_x_tvm, pos_y_tvm),
         target=target),
     tvm.auto_scheduler.SearchTask(
-        func=contiguous_compute, args=(
-            n, c_in, c_out, h, w, k_h, k_w),
+        func=contiguous_compute,
+        args=(n, c_in, c_out, h, w, k_h, k_w),
         # x_tvm, pos_n_tvm, pos_x_tvm, pos_y_tvm, v_xy_tvm),
         target=target),
     tvm.auto_scheduler.SearchTask(
-        func=deformable_conv_compute1, args=(
-            n, c_in, c_out, h, w, k_h, k_w),
+        func=deformable_conv_compute1,
+        args=(n, c_in, c_out, h, w, k_h, k_w),
         # pos_tvm, v_xy_tvm, w2_tvm, y_tvm),
         target=target),
 ]
@@ -202,7 +222,7 @@ tasks = [
 # Set Parameters for Auto-Scheduler
 tuner = auto_scheduler.TaskScheduler(tasks)
 tune_option = auto_scheduler.TuningOptions(
-    num_measure_trials=tuning_rounds*len(tasks),
+    num_measure_trials=tuning_rounds * len(tasks),
     measure_callbacks=[auto_scheduler.RecordToFile(log_file)],
     verbose=2,
 )
@@ -233,7 +253,8 @@ else:
 if sys.argv[1] == 'cpu':
     inputs_funcs = [
         # (vertices_tvm, faces_tvm, v_tvm),
-        (v_tvm, y_tvm)]
+        (v_tvm, y_tvm)
+    ]
 else:
     inputs_funcs = [
         (vertices_tvm, faces_tvm, v_tvm),
@@ -250,16 +271,11 @@ warmup_num = 10
 timing_repeat = 1000
 time_log = []
 for func, inputs in zip(funcs, inputs_funcs):
-    evaluator = func.time_evaluator(
-        func.entry_name, dev, number=warmup_num)
+    evaluator = func.time_evaluator(func.entry_name, dev, number=warmup_num)
     evaluator(*inputs)
-    evaluator = func.time_evaluator(
-        func.entry_name, dev, number=timing_repeat)
+    evaluator = func.time_evaluator(func.entry_name, dev, number=timing_repeat)
     time_ms = np.median(evaluator(*inputs).results) * 1000
     time_log.append(time_ms)
 print(f"{warmup_num} warmup, {timing_repeat} repeats for evalution")
 print('Time breakdown (ms):', time_log)
-print(
-    "Average e2e time: %.3f ms"
-    % (sum(time_log))
-)
+print("Average e2e time: %.3f ms" % (sum(time_log)))

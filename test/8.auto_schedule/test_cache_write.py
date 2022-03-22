@@ -32,7 +32,8 @@ def test_multi_level_tiling():
     with ir.VarDef([("w", (m, m, a, b), "int32", "input", "cpu"),
                     ("x", (m, m, b, a), "int32", "input", "cpu"),
                     ("y", (m, m, a, a), "int32", "output", "cpu"),
-                    ("y.c", (m, m, a, a), "int32", "cache", "cpu")]) as (w, x, y, yc):
+                    ("y.c", (m, m, a, a), "int32", "cache", "cpu")]) as (w, x,
+                                                                         y, yc):
         with ir.For("i0", 0, m) as i0:
             with ir.For("i1", 0, m) as i1:
                 with ir.For("i2", 0, a) as i2:
@@ -44,7 +45,8 @@ def test_multi_level_tiling():
                     with ir.For("p", 0, a, nid='L6') as p:
                         with ir.For("q", 0, a, nid='L7') as q:
                             yc[i, j, p,
-                              q] = yc[i, j, p, q] + w[i, j, p, k] * x[i, j, k, q]
+                               q] = yc[i, j, p,
+                                       q] + w[i, j, p, k] * x[i, j, k, q]
         with ir.For("i0", 0, m) as i0:
             with ir.For("i1", 0, m) as i1:
                 with ir.For("i2", 0, a) as i2:

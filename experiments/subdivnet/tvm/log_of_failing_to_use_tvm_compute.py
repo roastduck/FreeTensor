@@ -23,110 +23,110 @@ def get_subdivnet_compute(n_faces, in_feats, out_feats, dtype):
     p = te.reduce_axis((0, 3), name="p")
     # There are three simplified te.compute codes with indirect mem access
     sum1 = te.compute(
-        (in_feats, ),
+        (in_feats,),
         lambda i: te.sum(x[adj[i, p], 0], axis=p),
         name="Kernel-w1",
     )
-# # Error log
-# Computational DAG:
-# adj = PLACEHOLDER [1024, 3]
-# x = PLACEHOLDER [1024, 13]
-# Kernel-w1(i) += x[adj[i, p], k]
+    # # Error log
+    # Computational DAG:
+    # adj = PLACEHOLDER [1024, 3]
+    # x = PLACEHOLDER [1024, 13]
+    # Kernel-w1(i) += x[adj[i, p], k]
 
-# Traceback (most recent call last):
-#   File "./main.py", line 131, in <module>
-#     fadd = tvm.build(s, [A1, A2, A3, C], target, name="myadd")
-#   File "/home/zhenly/App/tvm-211104/python/tvm/driver/build_module.py", line 263, in build
-#     rt_mod_host = _driver_ffi.preprocess_module(target_input_mod, target_host)
-#   File "/home/zhenly/App/tvm-211104/python/tvm/_ffi/_ctypes/packed_func.py", line 237, in __call__
-#     raise get_last_ffi_error()
-# tvm._ffi.base.TVMError: Traceback (most recent call last):
-#   5: TVMFuncCall
-#   4: std::_Function_handler<void (tvm::runtime::TVMArgs, tvm::runtime::TVMRetValue*), tvm::runtime::TypedPackedFunc<tvm::runtime::Module (tvm::runtime::Map<tvm::Target, tvm::IRModule, void, void> const&, tvm::Target)>::Assign
-# TypedLambda<tvm::{lambda(tvm::runtime::Map<tvm::Target, tvm::IRModule, void, void> const&, tvm::Target)#6}>(tvm::{lambda(tvm::runtime::Map<tvm::Target, tvm::IRModule, void, void> const&, tvm::Target)#6}, std::__cxx11::basic_s
-# tring<char, std::char_traits<char>, std::allocator<char> >)::{lambda(tvm::runtime::TVMArgs const&, tvm::runtime::TVMRetValue*)#1}>::_M_invoke(std::_Any_data const&, tvm::runtime::TVMArgs&&, tvm::runtime::TVMRetValue*&&)
-#   3: tvm::PreProcessModuleForBuild(tvm::runtime::Map<tvm::Target, tvm::IRModule, void, void> const&, tvm::Target const&)
-#   2: tvm::codegen::Build(tvm::IRModule, tvm::Target)
-#   1: std::_Function_handler<void (tvm::runtime::TVMArgs, tvm::runtime::TVMRetValue*), tvm::runtime::TypedPackedFunc<tvm::runtime::Module (tvm::IRModule, tvm::Target)>::AssignTypedLambda<tvm::codegen::{lambda(tvm::IRModule, tv
-# m::Target)#1}>(tvm::codegen::{lambda(tvm::IRModule, tvm::Target)#1}, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >)::{lambda(tvm::runtime::TVMArgs const&, tvm::runtime::TVMRetValue*)#1}>::_M_
-# invoke(std::_Any_data const&, tvm::runtime::TVMArgs&&, tvm::runtime::TVMRetValue*&&)
-#   0: tvm::codegen::LLVMModuleNode::Init(tvm::IRModule const&, tvm::Target const&)
-#   File "/home/zhenly/App/tvm-211104/src/target/llvm/llvm_module.cc", line 327
-# TVMError: LLVM module verification failed with the following errors:
-# SExt only operates on integer
-#   %8 = sext float %7 to i64
-# SExt only operates on integer
-#   %16 = sext float %15 to i64
-# SExt only operates on integer
-#   %24 = sext float %23 to i64
-# SExt only operates on integer
-#   %34 = sext float %33 to i64
+    # Traceback (most recent call last):
+    #   File "./main.py", line 131, in <module>
+    #     fadd = tvm.build(s, [A1, A2, A3, C], target, name="myadd")
+    #   File "/home/zhenly/App/tvm-211104/python/tvm/driver/build_module.py", line 263, in build
+    #     rt_mod_host = _driver_ffi.preprocess_module(target_input_mod, target_host)
+    #   File "/home/zhenly/App/tvm-211104/python/tvm/_ffi/_ctypes/packed_func.py", line 237, in __call__
+    #     raise get_last_ffi_error()
+    # tvm._ffi.base.TVMError: Traceback (most recent call last):
+    #   5: TVMFuncCall
+    #   4: std::_Function_handler<void (tvm::runtime::TVMArgs, tvm::runtime::TVMRetValue*), tvm::runtime::TypedPackedFunc<tvm::runtime::Module (tvm::runtime::Map<tvm::Target, tvm::IRModule, void, void> const&, tvm::Target)>::Assign
+    # TypedLambda<tvm::{lambda(tvm::runtime::Map<tvm::Target, tvm::IRModule, void, void> const&, tvm::Target)#6}>(tvm::{lambda(tvm::runtime::Map<tvm::Target, tvm::IRModule, void, void> const&, tvm::Target)#6}, std::__cxx11::basic_s
+    # tring<char, std::char_traits<char>, std::allocator<char> >)::{lambda(tvm::runtime::TVMArgs const&, tvm::runtime::TVMRetValue*)#1}>::_M_invoke(std::_Any_data const&, tvm::runtime::TVMArgs&&, tvm::runtime::TVMRetValue*&&)
+    #   3: tvm::PreProcessModuleForBuild(tvm::runtime::Map<tvm::Target, tvm::IRModule, void, void> const&, tvm::Target const&)
+    #   2: tvm::codegen::Build(tvm::IRModule, tvm::Target)
+    #   1: std::_Function_handler<void (tvm::runtime::TVMArgs, tvm::runtime::TVMRetValue*), tvm::runtime::TypedPackedFunc<tvm::runtime::Module (tvm::IRModule, tvm::Target)>::AssignTypedLambda<tvm::codegen::{lambda(tvm::IRModule, tv
+    # m::Target)#1}>(tvm::codegen::{lambda(tvm::IRModule, tvm::Target)#1}, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >)::{lambda(tvm::runtime::TVMArgs const&, tvm::runtime::TVMRetValue*)#1}>::_M_
+    # invoke(std::_Any_data const&, tvm::runtime::TVMArgs&&, tvm::runtime::TVMRetValue*&&)
+    #   0: tvm::codegen::LLVMModuleNode::Init(tvm::IRModule const&, tvm::Target const&)
+    #   File "/home/zhenly/App/tvm-211104/src/target/llvm/llvm_module.cc", line 327
+    # TVMError: LLVM module verification failed with the following errors:
+    # SExt only operates on integer
+    #   %8 = sext float %7 to i64
+    # SExt only operates on integer
+    #   %16 = sext float %15 to i64
+    # SExt only operates on integer
+    #   %24 = sext float %23 to i64
+    # SExt only operates on integer
+    #   %34 = sext float %33 to i64
     sum1 = te.compute(
-        (in_feats, ),
+        (in_feats,),
         lambda i: te.sum(x[adj[i, 0], p], axis=p),
         name="Kernel-w1",
     )
-# # Error log
-# Computational DAG:
-# adj = PLACEHOLDER [1024, 3]
-# x = PLACEHOLDER [1024, 13]
-# Kernel-w1(i) += x[adj[i, p], k]
+    # # Error log
+    # Computational DAG:
+    # adj = PLACEHOLDER [1024, 3]
+    # x = PLACEHOLDER [1024, 13]
+    # Kernel-w1(i) += x[adj[i, p], k]
 
-# Traceback (most recent call last):
-#   File "./main.py", line 166, in <module>
-#     fadd = tvm.build(s, [A1, A2, A3, C], target, name="myadd")
-#   File "/home/zhenly/App/tvm-211104/python/tvm/driver/build_module.py", line 263, in build
-#     rt_mod_host = _driver_ffi.preprocess_module(target_input_mod, target_host)
-#   File "/home/zhenly/App/tvm-211104/python/tvm/_ffi/_ctypes/packed_func.py", line 237, in __call__
-#     raise get_last_ffi_error()
-# tvm._ffi.base.TVMError: Traceback (most recent call last):
-#   5: TVMFuncCall
-#   4: std::_Function_handler<void (tvm::runtime::TVMArgs, tvm::runtime::TVMRetValue*), tvm::runtime::TypedPackedFunc<tvm::runtime::Module (tvm::runtime::Map<tvm::Target, tvm::IRModule, void, void> const&, tvm::Target)>::AssignTypedLambda<tvm::{lambda(tvm::runtime::Map<tvm::Target, tvm::IRModule, void, void> const&, tvm::Target)#6}>(tvm::{lambda(tvm::runtime::Map<tvm::Target, tvm::IRModule, void, void> const&, tvm::Target)#6}, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >)::{lambda(tvm::runtime::TVMArgs const&, tvm::runtime::TVMRetValue*)#1}>::_M_invoke(std::_Any_data const&, tvm::runtime::TVMArgs&&, tvm::runtime::TVMRetValue*&&)
-#   3: tvm::PreProcessModuleForBuild(tvm::runtime::Map<tvm::Target, tvm::IRModule, void, void> const&, tvm::Target const&)
-#   2: tvm::codegen::Build(tvm::IRModule, tvm::Target)
-#   1: std::_Function_handler<void (tvm::runtime::TVMArgs, tvm::runtime::TVMRetValue*), tvm::runtime::TypedPackedFunc<tvm::runtime::Module (tvm::IRModule, tvm::Target)>::AssignTypedLambda<tvm::codegen::{lambda(tvm::IRModule, tvm::Target)#1}>(tvm::codegen::{lambda(tvm::IRModule, tvm::Target)#1}, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >)::{lambda(tvm::runtime::TVMArgs const&, tvm::runtime::TVMRetValue*)#1}>::_M_invoke(std::_Any_data const&, tvm::runtime::TVMArgs&&, tvm::runtime::TVMRetValue*&&)
-#   0: tvm::codegen::LLVMModuleNode::Init(tvm::IRModule const&, tvm::Target const&)
-#   File "/home/zhenly/App/tvm-211104/src/target/llvm/llvm_module.cc", line 327
-# TVMError: LLVM module verification failed with the following errors:
-# SExt only operates on integer
-#   %279 = sext float %278 to i64
-# SExt only operates on integer
-#   %284 = sext float %283 to i64
-# SExt only operates on integer
-#   %289 = sext float %288 to i64
+    # Traceback (most recent call last):
+    #   File "./main.py", line 166, in <module>
+    #     fadd = tvm.build(s, [A1, A2, A3, C], target, name="myadd")
+    #   File "/home/zhenly/App/tvm-211104/python/tvm/driver/build_module.py", line 263, in build
+    #     rt_mod_host = _driver_ffi.preprocess_module(target_input_mod, target_host)
+    #   File "/home/zhenly/App/tvm-211104/python/tvm/_ffi/_ctypes/packed_func.py", line 237, in __call__
+    #     raise get_last_ffi_error()
+    # tvm._ffi.base.TVMError: Traceback (most recent call last):
+    #   5: TVMFuncCall
+    #   4: std::_Function_handler<void (tvm::runtime::TVMArgs, tvm::runtime::TVMRetValue*), tvm::runtime::TypedPackedFunc<tvm::runtime::Module (tvm::runtime::Map<tvm::Target, tvm::IRModule, void, void> const&, tvm::Target)>::AssignTypedLambda<tvm::{lambda(tvm::runtime::Map<tvm::Target, tvm::IRModule, void, void> const&, tvm::Target)#6}>(tvm::{lambda(tvm::runtime::Map<tvm::Target, tvm::IRModule, void, void> const&, tvm::Target)#6}, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >)::{lambda(tvm::runtime::TVMArgs const&, tvm::runtime::TVMRetValue*)#1}>::_M_invoke(std::_Any_data const&, tvm::runtime::TVMArgs&&, tvm::runtime::TVMRetValue*&&)
+    #   3: tvm::PreProcessModuleForBuild(tvm::runtime::Map<tvm::Target, tvm::IRModule, void, void> const&, tvm::Target const&)
+    #   2: tvm::codegen::Build(tvm::IRModule, tvm::Target)
+    #   1: std::_Function_handler<void (tvm::runtime::TVMArgs, tvm::runtime::TVMRetValue*), tvm::runtime::TypedPackedFunc<tvm::runtime::Module (tvm::IRModule, tvm::Target)>::AssignTypedLambda<tvm::codegen::{lambda(tvm::IRModule, tvm::Target)#1}>(tvm::codegen::{lambda(tvm::IRModule, tvm::Target)#1}, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >)::{lambda(tvm::runtime::TVMArgs const&, tvm::runtime::TVMRetValue*)#1}>::_M_invoke(std::_Any_data const&, tvm::runtime::TVMArgs&&, tvm::runtime::TVMRetValue*&&)
+    #   0: tvm::codegen::LLVMModuleNode::Init(tvm::IRModule const&, tvm::Target const&)
+    #   File "/home/zhenly/App/tvm-211104/src/target/llvm/llvm_module.cc", line 327
+    # TVMError: LLVM module verification failed with the following errors:
+    # SExt only operates on integer
+    #   %279 = sext float %278 to i64
+    # SExt only operates on integer
+    #   %284 = sext float %283 to i64
+    # SExt only operates on integer
+    #   %289 = sext float %288 to i64
     sum1 = te.compute(
-        (in_feats, ),
+        (in_feats,),
         lambda i: te.sum(x[adj[0, 0], p], axis=p),
         name="Kernel-w1",
     )
-# # Error log
-# Computational DAG:
-# adj = PLACEHOLDER [1024, 3]
-# x = PLACEHOLDER [1024, 13]
-# Kernel-w1(i) += x[adj[i, p], k]
+    # # Error log
+    # Computational DAG:
+    # adj = PLACEHOLDER [1024, 3]
+    # x = PLACEHOLDER [1024, 13]
+    # Kernel-w1(i) += x[adj[i, p], k]
 
-# Traceback (most recent call last):
-#   File "./main.py", line 193, in <module>
-#     fadd = tvm.build(s, [A1, A2, A3, C], target, name="myadd")
-#   File "/home/zhenly/App/tvm-211104/python/tvm/driver/build_module.py", line 263, in build
-#     rt_mod_host = _driver_ffi.preprocess_module(target_input_mod, target_host)
-#   File "/home/zhenly/App/tvm-211104/python/tvm/_ffi/_ctypes/packed_func.py", line 237, in __call__
-#     raise get_last_ffi_error()
-# tvm._ffi.base.TVMError: Traceback (most recent call last):
-#   5: TVMFuncCall
-#   4: std::_Function_handler<void (tvm::runtime::TVMArgs, tvm::runtime::TVMRetValue*), tvm::runtime::TypedPackedFunc<tvm::runtime::Module (tvm::runtime::Map<tvm::Target, tvm::IRModule, void, void> const&, tvm::Target)>::AssignTypedLambda<tvm::{lambda(tvm::runtime::Map<tvm::Target, tvm::IRModule, void, void> const&, tvm::Target)#6}>(tvm::{lambda(tvm::runtime::Map<tvm::Target, tvm::IRModule, void, void> const&, tvm::Target)#6}, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >)::{lambda(tvm::runtime::TVMArgs const&, tvm::runtime::TVMRetValue*)#1}>::_M_invoke(std::_Any_data const&, tvm::runtime::TVMArgs&&, tvm::runtime::TVMRetValue*&&)
-#   3: tvm::PreProcessModuleForBuild(tvm::runtime::Map<tvm::Target, tvm::IRModule, void, void> const&, tvm::Target const&)
-#   2: tvm::codegen::Build(tvm::IRModule, tvm::Target)
-#   1: std::_Function_handler<void (tvm::runtime::TVMArgs, tvm::runtime::TVMRetValue*), tvm::runtime::TypedPackedFunc<tvm::runtime::Module (tvm::IRModule, tvm::Target)>::AssignTypedLambda<tvm::codegen::{lambda(tvm::IRModule, tvm::Target)#1}>(tvm::codegen::{lambda(tvm::IRModule, tvm::Target)#1}, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >)::{lambda(tvm::runtime::TVMArgs const&, tvm::runtime::TVMRetValue*)#1}>::_M_invoke(std::_Any_data const&, tvm::runtime::TVMArgs&&, tvm::runtime::TVMRetValue*&&)
-#   0: tvm::codegen::LLVMModuleNode::Init(tvm::IRModule const&, tvm::Target const&)
-#   File "/home/zhenly/App/tvm-211104/src/target/llvm/llvm_module.cc", line 327
-# TVMError: LLVM module verification failed with the following errors:
-# SExt only operates on integer
-#   %7 = sext float %6 to i64
-# SExt only operates on integer
-#   %12 = sext float %11 to i64
-# SExt only operates on integer
-#   %17 = sext float %16 to i64
+    # Traceback (most recent call last):
+    #   File "./main.py", line 193, in <module>
+    #     fadd = tvm.build(s, [A1, A2, A3, C], target, name="myadd")
+    #   File "/home/zhenly/App/tvm-211104/python/tvm/driver/build_module.py", line 263, in build
+    #     rt_mod_host = _driver_ffi.preprocess_module(target_input_mod, target_host)
+    #   File "/home/zhenly/App/tvm-211104/python/tvm/_ffi/_ctypes/packed_func.py", line 237, in __call__
+    #     raise get_last_ffi_error()
+    # tvm._ffi.base.TVMError: Traceback (most recent call last):
+    #   5: TVMFuncCall
+    #   4: std::_Function_handler<void (tvm::runtime::TVMArgs, tvm::runtime::TVMRetValue*), tvm::runtime::TypedPackedFunc<tvm::runtime::Module (tvm::runtime::Map<tvm::Target, tvm::IRModule, void, void> const&, tvm::Target)>::AssignTypedLambda<tvm::{lambda(tvm::runtime::Map<tvm::Target, tvm::IRModule, void, void> const&, tvm::Target)#6}>(tvm::{lambda(tvm::runtime::Map<tvm::Target, tvm::IRModule, void, void> const&, tvm::Target)#6}, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >)::{lambda(tvm::runtime::TVMArgs const&, tvm::runtime::TVMRetValue*)#1}>::_M_invoke(std::_Any_data const&, tvm::runtime::TVMArgs&&, tvm::runtime::TVMRetValue*&&)
+    #   3: tvm::PreProcessModuleForBuild(tvm::runtime::Map<tvm::Target, tvm::IRModule, void, void> const&, tvm::Target const&)
+    #   2: tvm::codegen::Build(tvm::IRModule, tvm::Target)
+    #   1: std::_Function_handler<void (tvm::runtime::TVMArgs, tvm::runtime::TVMRetValue*), tvm::runtime::TypedPackedFunc<tvm::runtime::Module (tvm::IRModule, tvm::Target)>::AssignTypedLambda<tvm::codegen::{lambda(tvm::IRModule, tvm::Target)#1}>(tvm::codegen::{lambda(tvm::IRModule, tvm::Target)#1}, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >)::{lambda(tvm::runtime::TVMArgs const&, tvm::runtime::TVMRetValue*)#1}>::_M_invoke(std::_Any_data const&, tvm::runtime::TVMArgs&&, tvm::runtime::TVMRetValue*&&)
+    #   0: tvm::codegen::LLVMModuleNode::Init(tvm::IRModule const&, tvm::Target const&)
+    #   File "/home/zhenly/App/tvm-211104/src/target/llvm/llvm_module.cc", line 327
+    # TVMError: LLVM module verification failed with the following errors:
+    # SExt only operates on integer
+    #   %7 = sext float %6 to i64
+    # SExt only operates on integer
+    #   %12 = sext float %11 to i64
+    # SExt only operates on integer
+    #   %17 = sext float %16 to i64
     return [adj, x, w1, sum1]
 
 
@@ -136,47 +136,49 @@ def get_subdivnet_compute(n_faces, in_feats, out_feats, dtype):
 # dev = tvm.device(target.kind.name, 0)
 # print(tvm.lower(s, [A1, A2, A3, C], simple_mode=True))
 
+
 def get_test(n_faces, in_feats, out_feats, dtype='float32', itype='int32'):
     adj = te.placeholder((n_faces, 3), name="adj", dtype=dtype)
     x = te.placeholder((n_faces, in_feats), name="x", dtype=dtype)
     # w1 = te.placeholder((in_feats, out_feats), name="w1", dtype=dtype)
-    idx = te.placeholder((2, ), name="idx", dtype=itype)
+    idx = te.placeholder((2,), name="idx", dtype=itype)
     # adj_flatten = topi.reshape(adj, [n_faces, 3])
     # adj_feats = topi.adv_index(x, [adj_flatten]).reshape([n_faces, 3, in_feats])
     # for p in range(3):
     #     adj_feats = topi.adv_index(adj_feats, [[], [p]])
-    adj_feats = topi.strided_slice(adj, topi.const_vector(
-        [0, 1]), topi.const_vector([n_faces, 2]))
-    
+    adj_feats = topi.strided_slice(adj, topi.const_vector([0, 1]),
+                                   topi.const_vector([n_faces, 2]))
+
     return [adj, x, idx, adj_feats]
 
-# n_faces, in_feats, out_feats, 
+
+# n_faces, in_feats, out_feats,
 def get_subdivnet_topi(dtype='float32', itype='int32'):
     adj = te.placeholder((n_faces, 3), name="adj", dtype=itype)
     x = te.placeholder((n_faces, in_feats), name="x", dtype=dtype)
     w1 = te.placeholder((in_feats, out_feats), name="w1", dtype=dtype)
     sum1 = te.placeholder((n_faces, in_feats), name="sum1", dtype=dtype)
-    idx = te.placeholder((2, ), name="idx", dtype=itype)
+    idx = te.placeholder((2,), name="idx", dtype=itype)
 
     adj_flatten = topi.reshape(adj, [n_faces, 3])
     adj_feats = topi.adv_index(x, [adj_flatten])
     adj_feats = topi.reshape(adj_feats, [n_faces, 3, in_feats])
     print(sum1.shape)
     # for p in range(3):
-        # p_feats = topi.strided_slice(adj_feats, topi.const_vector(
-        #     [0, p]), topi.const_vector([n_faces, p+1]))
-        # p_feats = topi.reshape(p_feats, [n_faces, in_feats])
-        # print(sum1.shape, adj_feats, p_feats)
-        # sum1 = sum1+p_feats
-    p=0
-    p_feats = topi.strided_slice(adj_feats, topi.const_vector(
-        [0, p]), topi.const_vector([n_faces, p+1]))
+    # p_feats = topi.strided_slice(adj_feats, topi.const_vector(
+    #     [0, p]), topi.const_vector([n_faces, p+1]))
+    # p_feats = topi.reshape(p_feats, [n_faces, in_feats])
+    # print(sum1.shape, adj_feats, p_feats)
+    # sum1 = sum1+p_feats
+    p = 0
+    p_feats = topi.strided_slice(adj_feats, topi.const_vector([0, p]),
+                                 topi.const_vector([n_faces, p + 1]))
     p_feats = topi.reshape(p_feats, [n_faces, in_feats])
     print(sum1.shape, adj_feats, p_feats)
-    sum1 = sum1+p_feats
+    sum1 = sum1 + p_feats
 
-    new_feats=topi.matmul(sum1, w1)
-        
+    new_feats = topi.matmul(sum1, w1)
+
     return [adj, x, idx, new_feats]
 
 
@@ -186,10 +188,14 @@ args = get_subdivnet_topi()
 sch = topi.x86.schedule_batch_matmul(args[-1])
 print(tvm.lower(sch, args, simple_mode=True))
 
-def get_subdivnet_compute(n_faces, in_feats, out_feats, dtype='float32', itype='int32'):
+
+def get_subdivnet_compute(n_faces,
+                          in_feats,
+                          out_feats,
+                          dtype='float32',
+                          itype='int32'):
     w1 = te.placeholder((in_feats, out_feats), name="w1", dtype=dtype)
 
-    
 
 ###########################################################################
 
@@ -212,11 +218,10 @@ w1_tvm = tvm.nd.array(w1_np, device=dev)
 idx_tvm = tvm.nd.array(idx_np, device=dev)
 idx2_tvm = tvm.nd.array(idx2_np, device=dev)
 # out_tvm = tvm.nd.empty((2,3), device=dev)
-out_tvm = tvm.nd.empty((n_faces,1), device=dev)
+out_tvm = tvm.nd.empty((n_faces, 1), device=dev)
 print(adj_np, idx_np.shape, idx2_np.shape)
 func(adj_tvm, x_tvm, idx_tvm, out_tvm)
 print(out_tvm)
-
 
 exit()
 
@@ -230,7 +235,7 @@ def matmul_add(n_faces, in_feats, out_feats, dtype):
     k = te.reduce_axis((0, in_feats), name="k")
     p = te.reduce_axis((0, 3), name="p")
     sum1 = te.compute(
-        (in_feats, ),
+        (in_feats,),
         lambda i: te.sum(x[adj[i, p], k], axis=(p, k)),
         name="Kernel-w1",
         # enable automatic layout transform for tensor B
@@ -246,13 +251,14 @@ def matmul_add(n_faces, in_feats, out_feats, dtype):
 #   you will want to manuall specify your CPU capabilities. For example:
 #   - replace "llvm" below with "llvm -mcpu=core-avx2" to enable AVX2
 #   - replace "llvm" below with "llvm -mcpu=skylake-avx512" to enable AVX-512
-task = tvm.auto_scheduler.SearchTask(
-    func=matmul_add, args=(n_faces, in_feats, out_feats, "float32"), target=target)
+task = tvm.auto_scheduler.SearchTask(func=matmul_add,
+                                     args=(n_faces, in_feats, out_feats,
+                                           "float32"),
+                                     target=target)
 
 # Inspect the computational graph
 print("Computational DAG:")
 print(task.compute_dag)
-
 
 ################################################################################
 # Set Parameters for Auto-Scheduler
@@ -328,7 +334,5 @@ np.testing.assert_allclose(out_np, out_tvm.numpy(), rtol=1e-3)
 
 # Evaluate execution time.
 evaluator = func.time_evaluator(func.entry_name, dev, min_repeat_ms=500)
-print(
-    "Execution time of this operator: %.3f ms"
-    % (np.median(evaluator(a_tvm, b_tvm, c_tvm, out_tvm).results) * 1000)
-)
+print("Execution time of this operator: %.3f ms" %
+      (np.median(evaluator(a_tvm, b_tvm, c_tvm, out_tvm).results) * 1000))
