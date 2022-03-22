@@ -66,44 +66,35 @@ class NamingScope(FunctionScope):
     def __init__(self, filename: str, funcname: str,
                  namespace: Optional[str]) -> None:
         super().__init__(filename, funcname)
-        if len(StagingContext.naming_stack) > 0 and namespace is None:
+        if len(StagingContext.id_stack) > 0 and namespace is None:
             raise StagingError('Namespace must not be None for inner levels.')
         self.namespace = namespace
-        self.names = {}
         self.ids = {}
 
     def __enter__(self):
         super().__enter__()
-        StagingContext.naming_stack.append(self)
+        StagingContext.id_stack.append(self)
 
     def __exit__(self, _1, _2, _3):
         super().__exit__(_1, _2, _3)
-        popped = StagingContext.naming_stack.pop()
+        popped = StagingContext.id_stack.pop()
         if popped != self:
             raise StagingError('NamingScope enter/exit not match, must be FILO')
 
-    def fullname(self, name: str, is_id: bool = True):
+    def fullid(self, nid: str):
         if self.namespace is not None:
             prefix = self.namespace + '->'
         else:
             prefix = ''
 
-        if is_id:
-            if name in self.ids:
-                suffix = '$' + str(self.ids[name])
-                self.ids[name] += 1
-            else:
-                suffix = ''
-                self.ids[name] = 1
+        if nid in self.ids:
+            suffix = '$' + str(self.ids[nid])
+            self.ids[nid] += 1
         else:
-            if name in self.names:
-                suffix = '$' + str(self.names[name])
-                self.names[name] += 1
-            else:
-                suffix = ''
-                self.names[name] = 1
+            suffix = ''
+            self.ids[nid] = 1
 
-        return prefix + name + suffix
+        return prefix + nid + suffix
 
 
 class LifetimeScope:
@@ -131,20 +122,31 @@ class LifetimeScope:
 
 class StagingContext:
     '''Helper class managing context in IR staging.'''
-    naming_stack: List[NamingScope] = []
+    id_stack: List[NamingScope] = []
     lifetime_stack: List[LifetimeScope] = []
     allow_return_stack: List[bool] = []
     closure: Dict[str, Any] = {}
     call_stack: List[traceback.FrameSummary] = []
+    name_dict: Dict[str, int] = {}
 
     @staticmethod
     def register_implicit_scope(scope):
         return StagingContext.lifetime_stack[-1].register_implicit_scope(scope)
 
     @staticmethod
-    def fullname(name: str, is_id: bool = True) -> str:
-        '''Get namespace-prepended full name of given short name.'''
-        return StagingContext.naming_stack[-1].fullname(name, is_id=is_id)
+    def fullid(nid: str) -> str:
+        '''Get namespace-prepended full nid of given short nid.'''
+        return StagingContext.id_stack[-1].fullid(nid)
+
+    @staticmethod
+    def fullname(name: str) -> str:
+        '''Get distinct name.'''
+        if name in StagingContext.name_dict:
+            StagingContext.name_dict[name] += 1
+            return f'{name}{StagingContext.name_dict[name]}'
+        else:
+            StagingContext.name_dict[name] = 0
+            return name
 
     @staticmethod
     def allow_return():
@@ -156,7 +158,7 @@ class StagingContext:
 
     @staticmethod
     def reset():
-        StagingContext.naming_stack.clear()
+        StagingContext.id_stack.clear()
         StagingContext.lifetime_stack.clear()
         StagingContext.closure = {}
         StagingContext.call_stack = []
@@ -165,8 +167,7 @@ class StagingContext:
 def prepare_vardef(name: str,
                    override: bool = False,
                    capture: Optional[ffi.Array] = None):
-    fullname = StagingContext.fullname(name,
-                                       is_id=False) if not override else name
+    fullname = StagingContext.fullname(name) if not override else name
     if capture:
         StagingContext.closure[fullname] = capture
     return fullname
@@ -338,7 +339,7 @@ class dynamic_range(StagedIterable):
 
     def foreach(self, name: str, body: Callable[[Any], None]) -> None:
         '''Customized foreach behavior. Creates a For loop.'''
-        with For(StagingContext.fullname(name, is_id=False), self.start,
+        with For(StagingContext.fullname(name), self.start,
                  self.stop, self.step) as iter_var:
             with LifetimeScope():
                 body(iter_var)
@@ -430,7 +431,7 @@ def functiondef_wrapper(filename, funcname):
 
 
 def mark_nid(nid: str):
-    ctx_stack.top().set_next_nid(StagingContext.fullname(nid))
+    ctx_stack.top().set_next_nid(StagingContext.fullid(nid))
 
 
 def mark_no_deps(no_deps: str):
@@ -762,7 +763,8 @@ def transform(func=None, verbose=False, caller_env=None):
             with LifetimeScope():
                 with NamingScope(filename, funcname, None):
                     for p in params:
-                        StagingContext.naming_stack[-1].names[p] = 1
+                        StagingContext.id_stack[-1].ids[p] = 1
+                        StagingContext.name_dict[p] = 0
                     returns = staging_func(*params)
                     if isinstance(returns, Var):
                         returns = [returns]
