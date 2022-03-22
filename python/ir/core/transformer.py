@@ -764,6 +764,7 @@ def transform(func=None, verbose=False, caller_env=None):
                 with NamingScope(filename, funcname, None):
                     for p in params:
                         StagingContext.id_stack[-1].ids[p] = 1
+                        StagingContext.name_dict[p] = 0
                     returns = staging_func(*params)
                     if isinstance(returns, Var):
                         returns = [returns]
