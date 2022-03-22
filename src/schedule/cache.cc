@@ -36,8 +36,9 @@ Stmt MakeCacheVar::visit(const VarDef &op) {
                 "Nested VarDef with the same buffer name is not allowed");
         }
         def_ = op;
-        return Mutator::visit(op);
+        auto ret = Mutator::visit(op);
         def_ = nullptr;
+        return ret;
     } else {
         return Mutator::visit(op);
     }
