@@ -70,10 +70,11 @@ def test_manual_static():
     thr_y_dim = 32
 
     # Optimize reductions
-    def opt_red(def_nid, var, init_nid, loop_nid):
+    def opt_red(def_nid, init_nid, loop_nid):
+        node = s.find(lambda x: x.nid() == def_nid).node()
+
         # Hold result in shared memory
-        _, _, V_sum_shmem, _ = s.cache(
-            s.find(lambda x: x.nid() == def_nid).node().body, var, "gpu/shared")
+        _, _, V_sum_shmem, _ = s.cache(node.body, node.name, "gpu/shared")
 
         # Parallel reduction
         serial, thr_x = s.split(loop_nid, thr_x_dim)
@@ -86,11 +87,11 @@ def test_manual_static():
         return V_sum_shmem
 
     V_sum_shmem = opt_red(
-        "softmax->sum->y", "softmax->sum->y",
+        "softmax->sum->y",
         "softmax->sum->recur->init->recur->recur->recur->recur->exec",
         "softmax->sum->recur->reduce->recur->recur->recur->L")
     V_max_shmem = opt_red(
-        "softmax->max->impl->y", "softmax->max->impl->y",
+        "softmax->max->impl->y",
         "softmax->max->impl->recur->init->recur->recur->recur->recur->exec",
         "softmax->max->impl->recur->reduce->recur->recur->recur->L")
 
