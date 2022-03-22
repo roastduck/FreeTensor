@@ -7,11 +7,6 @@
 namespace ir {
 
 class FlattenStmtSeq : public Mutator {
-    bool popVarDef_; // { A; VarDef { B; }} -> VarDef { A; B; }
-
-  public:
-    FlattenStmtSeq(bool popVarDef) : popVarDef_(popVarDef) {}
-
   protected:
     Stmt visit(const StmtSeq &op) override;
     Stmt visit(const Assume &op) override;
@@ -21,12 +16,8 @@ class FlattenStmtSeq : public Mutator {
  * Merge nested StmtSeq nodes into one
  *
  * This pass also clears Assume nodes
- *
- * @param popVarDef : { A; VarDef { B; }} -> VarDef { A; B; }
  */
-inline Stmt flattenStmtSeq(const Stmt &op, bool popVarDef = false) {
-    return FlattenStmtSeq(popVarDef)(op);
-}
+inline Stmt flattenStmtSeq(const Stmt &op) { return FlattenStmtSeq()(op); }
 
 DEFINE_PASS_FOR_FUNC(flattenStmtSeq)
 

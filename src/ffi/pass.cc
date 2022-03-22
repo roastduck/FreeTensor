@@ -105,11 +105,9 @@ void init_ffi_pass(py::module_ &m) {
           "stmt"_a);
 
     m.def("flatten_stmt_seq",
-          static_cast<Func (*)(const Func &, bool &&)>(&flattenStmtSeq),
-          "func"_a, "popVarDef"_a = false);
+          static_cast<Func (*)(const Func &)>(&flattenStmtSeq), "func"_a);
     m.def("flatten_stmt_seq",
-          static_cast<Stmt (*)(const Stmt &, bool)>(&flattenStmtSeq), "stmt"_a,
-          "popVarDef"_a = false);
+          static_cast<Stmt (*)(const Stmt &)>(&flattenStmtSeq), "stmt"_a);
 
     m.def("move_out_first_or_last_iter",
           static_cast<Func (*)(const Func &)>(&moveOutFirstOrLastIter),

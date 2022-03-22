@@ -9,6 +9,7 @@
 #include <analyze/get_loop_nest_tree.h>
 #include <analyze/with_cursor.h>
 #include <pass/flatten_stmt_seq.h>
+#include <pass/hoist_var_over_stmt_seq.h>
 #include <pass/simplify.h>
 #include <schedule.h>
 #include <schedule/as_matmul.h>
@@ -221,7 +222,7 @@ ID Schedule::moveTo(const ID &_stmt, MoveToSide side, const ID &_dst) {
     try {
         auto stmt = _stmt, dst = _dst;
         while (true) {
-            ast_ = flattenStmtSeq(ast_, true);
+            ast_ = hoistVarOverStmtSeq(ast_);
             Cursor s = getCursorById(ast_, stmt);
             Cursor d = getCursorById(ast_, dst);
 
