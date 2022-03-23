@@ -71,6 +71,36 @@ def test_omp_for_2():
     assert np.array_equal(y_np, y_std)
 
 
+def test_omp_for_collapse_nested():
+
+    @ir.transform
+    def test(x, y):
+        ir.declare_var(x, (4, 4), "float32", "input", "cpu")
+        ir.declare_var(y, (4, 4), "float32", "output", "cpu")
+        "nid: L1"
+        for i in range(0, 4):
+            "nid: L2"
+            for j in range(0, 4):
+                y[i, j] = x[i, j] + 1
+
+    s = ir.Schedule(test)
+    s.parallelize("L1", "openmp")
+    s.parallelize("L2", "openmp")
+    func = ir.lower(s.func(), target)
+    print(func)
+    code = ir.codegen(func, target)
+    print(code)
+    assert "collapse(2)" in code
+    x_np = np.random.rand(4, 4).astype("float32")
+    y_np = np.zeros((4, 4), dtype="float32")
+    x_arr = ir.Array(x_np, ir.Device(target))
+    y_arr = ir.Array(y_np, ir.Device(target))
+    ir.Driver(func, code, device)(x=x_arr, y=y_arr)
+    y_np = y_arr.numpy()
+
+    assert np.all(np.isclose(y_np, x_np + 1))
+
+
 def test_parallelize_parametric_access_1():
 
     @ir.transform
