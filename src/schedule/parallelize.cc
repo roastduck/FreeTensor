@@ -9,8 +9,7 @@ Stmt Parallelize::visit(const For &_op) {
         _op->id() == loop_ ? parallel_ : _op->property_.parallel_;
     Stmt __op;
     loopStack_.emplace_back(_op->id());
-    if (thisParallel.substr(0, 10) == "threadIdx." ||
-        thisParallel.substr(0, 9) == "blockIdx.") {
+    if (std::holds_alternative<CUDAScope>(thisParallel)) {
         if (para2var_.count(thisParallel)) {
             auto oldVar = para2var_.at(thisParallel);
             para2var_[thisParallel] = _op->iter_;
@@ -43,13 +42,13 @@ Expr Parallelize::visit(const Var &op) {
     if (hiddenVars_.count(op->name_)) {
         throw InvalidSchedule("Unable to bind multiple loops, which are used "
                               "simultaneously, all to " +
-                              parallel_);
+                              toString(parallel_));
     }
     return Mutator::visit(op);
 }
 
 Stmt parallelize(const Stmt &_ast, const ID &loop,
-                 const std::string &parallel) {
+                 const ParallelScope &parallel) {
     Parallelize mutator(loop, parallel);
     auto ast = makeReduction(_ast);
     auto oldAst = ast;
@@ -82,10 +81,12 @@ Stmt parallelize(const Stmt &_ast, const ID &loop,
             bool laterInLoop = later.cursor_.getParentById(loop).isValid();
             if ((earlierInLoop && !laterInLoop) ||
                 (!earlierInLoop && laterInLoop)) {
-                if (parallel.substr(0, 10) == "threadIdx.") {
+                if (std::holds_alternative<CUDAScope>(parallel) &&
+                    std::get<CUDAScope>(parallel).level_ == CUDAScope::Thread) {
                     return later.def_->buffer_->mtype() == MemType::GPULocal;
                 }
-                if (parallel.substr(0, 9) == "blockIdx.") {
+                if (std::holds_alternative<CUDAScope>(parallel) &&
+                    std::get<CUDAScope>(parallel).level_ == CUDAScope::Block) {
                     return later.def_->buffer_->mtype() == MemType::GPULocal ||
                            later.def_->buffer_->mtype() == MemType::GPUShared;
                 }
@@ -97,8 +98,7 @@ Stmt parallelize(const Stmt &_ast, const ID &loop,
             throw InvalidSchedule(toString(d) + " cannot be resolved");
         };
         findDeps(ast,
-                 {{{NodeIDOrParallelScope(parallel, false),
-                    DepDirection::Different}}},
+                 {{{NodeIDOrParallelScope(parallel), DepDirection::Different}}},
                  found, FindDepsMode::Dep, DEP_ALL, filter);
     }
     return ast;

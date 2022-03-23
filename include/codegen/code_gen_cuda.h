@@ -9,7 +9,7 @@
 namespace ir {
 
 struct CodeGenCUDAStream : public CodeGenStream {
-    std::unordered_map<std::string, int> threadDim_;
+    std::unordered_map<ParallelScope, int> threadDim_;
     int64_t sharedSize_ = 0, globalSize_ = 0;
 };
 

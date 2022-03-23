@@ -65,7 +65,7 @@ void FindLoopInvariantWrites::visit(const Store &op) {
         auto &&loopCursor = cursorStack_[i];
         ASSERT(loopCursor.nodeType() == ASTNodeType::For);
         auto &&item = loopCursor.node().as<ForNode>();
-        if (!item->property_.parallel_.empty()) {
+        if (item->property_.parallel_ != serialScope) {
             continue;
         }
         auto rbegin =

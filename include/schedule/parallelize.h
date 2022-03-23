@@ -10,7 +10,7 @@ namespace ir {
 
 class Parallelize : public Mutator {
     ID loop_;
-    std::string parallel_;
+    ParallelScope parallel_;
     std::vector<ID> outerLoops_, loopStack_;
     bool done_ = false;
 
@@ -36,11 +36,11 @@ class Parallelize : public Mutator {
     //
     // This is illegal because it violates its serial semantics. The following
     // variables are used to check this behaviour
-    std::unordered_map<std::string, std::string> para2var_;
+    std::unordered_map<ParallelScope, std::string> para2var_;
     std::unordered_set<std::string> hiddenVars_;
 
   public:
-    Parallelize(const ID &loop, const std::string &parallel)
+    Parallelize(const ID &loop, const ParallelScope &parallel)
         : loop_(loop), parallel_(parallel) {}
 
     bool done() const { return done_; }
@@ -51,7 +51,8 @@ class Parallelize : public Mutator {
     Expr visit(const Var &op) override;
 };
 
-Stmt parallelize(const Stmt &ast, const ID &loop, const std::string &parallel);
+Stmt parallelize(const Stmt &ast, const ID &loop,
+                 const ParallelScope &parallel);
 
 } // namespace ir
 

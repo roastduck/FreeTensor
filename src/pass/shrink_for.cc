@@ -100,7 +100,9 @@ Stmt ShrinkFor::visit(const For &_op) {
     auto upper = makeMaxMin(newRange_.at(var).second);
 
     if (op->property_.unroll_ ||
-        (op->property_.parallel_.substr(0, 10) == "threadIdx." &&
+        (std::holds_alternative<CUDAScope>(op->property_.parallel_) &&
+         std::get<CUDAScope>(op->property_.parallel_).level_ ==
+             CUDAScope::Thread &&
          !op->property_.reductions_.empty())) {
         // Backends do not support these loops to be of variable lengths
         if (lower.isValid() && lower->nodeType() != ASTNodeType::IntConst) {

@@ -16,7 +16,7 @@ namespace ir {
 namespace gpu {
 
 struct SimplexOffset {
-    std::unordered_map<ID, int> offset_; // parallel scope -> offset
+    std::unordered_map<ParallelScope, int> offset_; // parallel scope -> offset
 };
 
 class FindSimplexOffset : public SymbolTable<Visitor> {
@@ -24,7 +24,7 @@ class FindSimplexOffset : public SymbolTable<Visitor> {
 
     std::unordered_map<ID, std::vector<Ref<SimplexOffset>>>
         offsets_; // def ID -> [offset for each index]
-    std::unordered_map<std::string, ID> var2para_;
+    std::unordered_map<std::string, ParallelScope> var2para_;
     AnalyzeLinear analyzeLinear_;
 
   public:
@@ -34,8 +34,9 @@ class FindSimplexOffset : public SymbolTable<Visitor> {
     }
 
   private:
-    Ref<SimplexOffset> getSimplexOffset(const std::unordered_set<ID> &filter,
-                                        const Expr &expr) {
+    Ref<SimplexOffset>
+    getSimplexOffset(const std::unordered_set<ParallelScope> &filter,
+                     const Expr &expr) {
         Ref<SimplexOffset> ret = Ref<SimplexOffset>::make();
         analyzeLinear_(expr);
         for (auto &&[k, a] : analyzeLinear_.result().at(expr).coeff_) {
@@ -65,12 +66,11 @@ class FindSimplexOffset : public SymbolTable<Visitor> {
         for (auto &&idx : op->indices_) {
             Ref<SimplexOffset> offset;
             if (mtype == MemType::GPUShared || mtype == MemType::GPUWarp) {
-                offset = getSimplexOffset(
-                    {"blockIdx.x", "blockIdx.y", "blockIdx.z"}, idx);
+                offset =
+                    getSimplexOffset({blockIdxX, blockIdxY, blockIdxZ}, idx);
             } else {
-                offset = getSimplexOffset({"threadIdx.x", "threadIdx.y",
-                                           "threadIdx.z", "blockIdx.x",
-                                           "blockIdx.y", "blockIdx.z"},
+                offset = getSimplexOffset({threadIdxX, threadIdxY, threadIdxZ,
+                                           blockIdxX, blockIdxY, blockIdxZ},
                                           idx);
             }
             thisOffsets.emplace_back(offset);
@@ -103,7 +103,7 @@ class ApplySimplexOffset : public SymbolTable<Mutator> {
 
     const std::unordered_map<ID, std::vector<Ref<SimplexOffset>>>
         &offsets_; // def ID -> [offset for each index]
-    std::unordered_map<ID, std::string> para2var_;
+    std::unordered_map<ParallelScope, std::string> para2var_;
 
   public:
     ApplySimplexOffset(

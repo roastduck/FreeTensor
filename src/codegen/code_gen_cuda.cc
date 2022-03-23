@@ -243,20 +243,15 @@ void CodeGenCUDA::visit(const Var &op) {
 }
 
 void CodeGenCUDA::visit(const For &op) {
-    if (op->property_.parallel_.empty()) {
+    if (op->property_.parallel_ == serialScope) {
         if (op->property_.unroll_) {
             os() << "#pragma unroll " << op->len_ << std::endl;
         }
         CodeGenC::visit(op);
-    } else if (op->property_.parallel_ == "blockIdx.x" ||
-               op->property_.parallel_ == "blockIdx.y" ||
-               op->property_.parallel_ == "blockIdx.z" ||
-               op->property_.parallel_ == "threadIdx.x" ||
-               op->property_.parallel_ == "threadIdx.y" ||
-               op->property_.parallel_ == "threadIdx.z") {
+    } else if (std::holds_alternative<CUDAScope>(op->property_.parallel_)) {
         if (op->len_->nodeType() != ASTNodeType::IntConst) {
             std::ostringstream msg;
-            msg << "Length of " << op->property_.parallel_
+            msg << "Length of " << ::ir::toString(op->property_.parallel_)
                 << " should be constant, instead of " << op->len_;
             throw Error(msg.str());
         }
@@ -289,16 +284,13 @@ void CodeGenCUDA::visit(const For &op) {
                  << std::to_string(sharedSize) << "));" << std::endl;
             makeIndent();
             os() << kernel << "<<<dim3("
-                 << (dim.count("blockIdx.x") ? dim.at("blockIdx.x") : 1) << ", "
-                 << (dim.count("blockIdx.y") ? dim.at("blockIdx.y") : 1) << ", "
-                 << (dim.count("blockIdx.z") ? dim.at("blockIdx.z") : 1)
-                 << "), dim3("
-                 << (dim.count("threadIdx.x") ? dim.at("threadIdx.x") : 1)
-                 << ", "
-                 << (dim.count("threadIdx.y") ? dim.at("threadIdx.y") : 1)
-                 << ", "
-                 << (dim.count("threadIdx.z") ? dim.at("threadIdx.z") : 1)
-                 << "), " << std::to_string(sharedSize) << ">>>(";
+                 << (dim.count(blockIdxX) ? dim.at(blockIdxX) : 1) << ", "
+                 << (dim.count(blockIdxY) ? dim.at(blockIdxY) : 1) << ", "
+                 << (dim.count(blockIdxZ) ? dim.at(blockIdxZ) : 1) << "), dim3("
+                 << (dim.count(threadIdxX) ? dim.at(threadIdxX) : 1) << ", "
+                 << (dim.count(threadIdxY) ? dim.at(threadIdxY) : 1) << ", "
+                 << (dim.count(threadIdxZ) ? dim.at(threadIdxZ) : 1) << "), "
+                 << std::to_string(sharedSize) << ">>>(";
             bool first = true;
             for (auto &&[name, buffer] : stream.useBuffers_) {
                 os() << (first ? "" : ", ") << mangle(name);
@@ -320,7 +312,8 @@ void CodeGenCUDA::visit(const For &op) {
                 op->len_.as<IntConstNode>()->val_;
         }
     } else {
-        throw Error("Unsupported parallel method " + op->property_.parallel_);
+        throw Error("Unsupported parallel method " +
+                    ::ir::toString(op->property_.parallel_));
     }
 }
 
@@ -595,11 +588,11 @@ extern "C" {
             const auto &dim = stream.threadDim_;
             std::ostringstream os;
             os << "__global__ void __launch_bounds__(";
-            os << (dim.count("threadIdx.x") ? dim.at("threadIdx.x") : 1);
+            os << (dim.count(threadIdxX) ? dim.at(threadIdxX) : 1);
             os << " * ";
-            os << (dim.count("threadIdx.y") ? dim.at("threadIdx.y") : 1);
+            os << (dim.count(threadIdxY) ? dim.at(threadIdxY) : 1);
             os << " * ";
-            os << (dim.count("threadIdx.z") ? dim.at("threadIdx.z") : 1);
+            os << (dim.count(threadIdxZ) ? dim.at(threadIdxZ) : 1);
             os << ") " << stream.name_ << "(";
             bool first = true;
             for (auto &&[name, buffer] : stream.useBuffers_) {

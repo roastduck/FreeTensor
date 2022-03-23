@@ -64,7 +64,8 @@ size_t Hasher::compHash(const ForNode &op) {
     h = ((h + op.end_->hash()) * K2 + B2) % P;
     h = ((h + op.step_->hash()) * K2 + B2) % P;
     h = ((h + op.len_->hash()) * K2 + B2) % P;
-    h = ((h + std::hash<std::string>()(op.property_.parallel_)) * K2 + B2) % P;
+    h = ((h + std::hash<ParallelScope>()(op.property_.parallel_)) * K2 + B2) %
+        P;
     h = ((h + std::hash<bool>()(op.property_.unroll_)) * K2 + B2) % P;
     h = ((h + std::hash<bool>()(op.property_.vectorize_)) * K2 + B2) % P;
     for (auto &&item : op.property_.reductions_) {
@@ -547,11 +548,6 @@ bool HashComparator::operator()(const AST &lhs, const AST &rhs) const {
     default:
         ERROR("Unexpected Expr node type: " + toString(lhs->nodeType()));
     }
-}
-
-size_t hashCombine(size_t seed, size_t other) {
-    // https://stackoverflow.com/questions/35985960/c-why-is-boosthash-combine-the-best-way-to-combine-hash-values
-    return seed ^ (other + 0x9e3779b9 + (seed << 6) + (seed >> 2));
 }
 
 } // namespace ir

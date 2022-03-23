@@ -4,25 +4,25 @@
 
 namespace ir {
 
-static bool isSharedAmong(MemType mtype, const std::string &parallel) {
-    if (parallel == "threadIdx.x" || parallel == "threadIdx.y" ||
-        parallel == "threadIdx.z") {
-        switch (mtype) {
-        case MemType::GPUGlobal:
-        case MemType::GPUShared:
-        case MemType::GPUWarp:
-            return true;
-        default:
-            return false;
+static bool isSharedAmong(MemType mtype, const ParallelScope &parallel) {
+    if (std::holds_alternative<CUDAScope>(parallel)) {
+        if (std::get<CUDAScope>(parallel).level_ == CUDAScope::Thread) {
+            switch (mtype) {
+            case MemType::GPUGlobal:
+            case MemType::GPUShared:
+            case MemType::GPUWarp:
+                return true;
+            default:
+                return false;
+            }
         }
-    }
-    if (parallel == "blockIdx.x" || parallel == "blockIdx.y" ||
-        parallel == "blockIdx.z") {
-        switch (mtype) {
-        case MemType::GPUGlobal:
-            return true;
-        default:
-            return false;
+        if (std::get<CUDAScope>(parallel).level_ == CUDAScope::Block) {
+            switch (mtype) {
+            case MemType::GPUGlobal:
+                return true;
+            default:
+                return false;
+            }
         }
     }
     return false;

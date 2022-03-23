@@ -20,9 +20,9 @@ namespace ir {
 
 struct IterAxis {
     Expr iter_;
-    std::string parallel_;
+    ParallelScope parallel_;
 
-    IterAxis(Expr iter, const std::string &parallel = "")
+    IterAxis(Expr iter, const ParallelScope &parallel = serialScope)
         : iter_(iter), parallel_(parallel) {}
 };
 
@@ -158,18 +158,12 @@ enum class DepDirection : int {
 
 struct NodeIDOrParallelScope {
     ID id_;
-    std::string parallel_;
+    ParallelScope parallel_;
     bool isNode_;
 
     NodeIDOrParallelScope(const ID &id) : id_(id), isNode_(true) {}
-    NodeIDOrParallelScope(const std::string &name, bool isNode)
-        : isNode_(isNode) {
-        if (isNode) {
-            id_ = name;
-        } else {
-            parallel_ = name;
-        }
-    }
+    NodeIDOrParallelScope(const ParallelScope &parallel)
+        : parallel_(parallel), isNode_(false) {}
 };
 
 typedef std::vector<std::pair<NodeIDOrParallelScope, DepDirection>>
@@ -311,7 +305,7 @@ class AnalyzeDeps {
                                      DepDirection mode, int iterDim);
 
     PBMap makeConstraintOfParallelScope(PBCtx &presburger,
-                                        const std::string &parallel,
+                                        const ParallelScope &parallel,
                                         DepDirection mode, int iterDim,
                                         const AccessPoint &point,
                                         const AccessPoint &other);

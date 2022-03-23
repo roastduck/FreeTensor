@@ -6,6 +6,7 @@
 
 #include <ast.h>
 #include <buffer.h>
+#include <parallel_scope.h>
 
 namespace ir {
 
@@ -159,7 +160,7 @@ struct ReductionItem {
 };
 
 struct ForProperty {
-    std::string parallel_;
+    ParallelScope parallel_;
     bool unroll_, vectorize_;
     std::vector<ReductionItem> reductions_;
     std::vector<std::string> noDeps_; // vars that are explicitly marked to have
@@ -170,7 +171,7 @@ struct ForProperty {
     ForProperty()
         : parallel_(), unroll_(false), vectorize_(false), preferLibs_(false) {}
 
-    ForProperty withParallel(const std::string &parallel) {
+    ForProperty withParallel(const ParallelScope &parallel) {
         auto ret = *this;
         ret.parallel_ = parallel;
         return ret;

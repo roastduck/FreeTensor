@@ -35,35 +35,30 @@ Stmt NormalizeThreads::doVisitStmt(const Stmt &_op) {
     if (!inKernel_) {
         return op;
     }
-    if (!inside_["threadIdx.x"]) {
+    if (!inside_[threadIdxX]) {
         op = makeIf("", makeEQ(makeVar(".threadIdx.x"), makeIntConst(0)), op);
     }
-    if (!inside_["threadIdx.y"]) {
+    if (!inside_[threadIdxY]) {
         op = makeIf("", makeEQ(makeVar(".threadIdx.y"), makeIntConst(0)), op);
     }
-    if (!inside_["threadIdx.z"]) {
+    if (!inside_[threadIdxZ]) {
         op = makeIf("", makeEQ(makeVar(".threadIdx.z"), makeIntConst(0)), op);
     }
-    if (!inside_["blockIdx.x"]) {
+    if (!inside_[blockIdxX]) {
         op = makeIf("", makeEQ(makeVar(".blockIdx.x"), makeIntConst(0)), op);
     }
-    if (!inside_["blockIdx.y"]) {
+    if (!inside_[blockIdxY]) {
         op = makeIf("", makeEQ(makeVar(".blockIdx.y"), makeIntConst(0)), op);
     }
-    if (!inside_["blockIdx.z"]) {
+    if (!inside_[blockIdxZ]) {
         op = makeIf("", makeEQ(makeVar(".blockIdx.z"), makeIntConst(0)), op);
     }
     return op;
 }
 
 Stmt NormalizeThreads::doVisitFor(const For &_op) {
-    if (_op->property_.parallel_ == "blockIdx.x" ||
-        _op->property_.parallel_ == "blockIdx.y" ||
-        _op->property_.parallel_ == "blockIdx.z" ||
-        _op->property_.parallel_ == "threadIdx.x" ||
-        _op->property_.parallel_ == "threadIdx.y" ||
-        _op->property_.parallel_ == "threadIdx.z") {
-        auto newIter = "." + _op->property_.parallel_;
+    if (std::holds_alternative<CUDAScope>(_op->property_.parallel_)) {
+        auto newIter = "." + toString(_op->property_.parallel_);
         varMap_[_op->iter_] = {newIter, _op->begin_};
         inside_[_op->property_.parallel_]++;
         auto __op = Mutator::visit(_op);
@@ -84,12 +79,8 @@ Stmt NormalizeThreads::doVisitFor(const For &_op) {
 }
 
 Stmt NormalizeThreads::visit(const For &op) {
-    if (!inKernel_ && (op->property_.parallel_ == "blockIdx.x" ||
-                       op->property_.parallel_ == "blockIdx.y" ||
-                       op->property_.parallel_ == "blockIdx.z" ||
-                       op->property_.parallel_ == "threadIdx.x" ||
-                       op->property_.parallel_ == "threadIdx.y" ||
-                       op->property_.parallel_ == "threadIdx.z")) {
+    if (!inKernel_ &&
+        std::holds_alternative<CUDAScope>(op->property_.parallel_)) {
         inKernel_ = true;
         auto ret = doVisitFor(op);
         inKernel_ = false;
@@ -98,33 +89,30 @@ Stmt NormalizeThreads::visit(const For &op) {
         auto inf = makeIntConst(INT_MAX);
         ret = makeFor("", ".threadIdx.x", zero, inf, one, inf,
                       ForProperty()
-                          .withParallel("threadIdx.x")
-                          .withNoDeps(noDeps_["threadIdx.x"]),
+                          .withParallel(threadIdxX)
+                          .withNoDeps(noDeps_[threadIdxX]),
                       ret);
         ret = makeFor("", ".threadIdx.y", zero, inf, one, inf,
                       ForProperty()
-                          .withParallel("threadIdx.y")
-                          .withNoDeps(noDeps_["threadIdx.y"]),
+                          .withParallel(threadIdxY)
+                          .withNoDeps(noDeps_[threadIdxY]),
                       ret);
         ret = makeFor("", ".threadIdx.z", zero, inf, one, inf,
                       ForProperty()
-                          .withParallel("threadIdx.z")
-                          .withNoDeps(noDeps_["threadIdx.z"]),
+                          .withParallel(threadIdxZ)
+                          .withNoDeps(noDeps_[threadIdxZ]),
                       ret);
         ret = makeFor("", ".blockIdx.x", zero, inf, one, inf,
-                      ForProperty()
-                          .withParallel("blockIdx.x")
-                          .withNoDeps(noDeps_["blockIdx.x"]),
+                      ForProperty().withParallel(blockIdxX).withNoDeps(
+                          noDeps_[blockIdxX]),
                       ret);
         ret = makeFor("", ".blockIdx.y", zero, inf, one, inf,
-                      ForProperty()
-                          .withParallel("blockIdx.y")
-                          .withNoDeps(noDeps_["blockIdx.y"]),
+                      ForProperty().withParallel(blockIdxY).withNoDeps(
+                          noDeps_[blockIdxY]),
                       ret);
         ret = makeFor("", ".blockIdx.z", zero, inf, one, inf,
-                      ForProperty()
-                          .withParallel("blockIdx.z")
-                          .withNoDeps(noDeps_["blockIdx.z"]),
+                      ForProperty().withParallel(blockIdxZ).withNoDeps(
+                          noDeps_[blockIdxZ]),
                       ret);
         return ret;
     } else {
@@ -149,7 +137,7 @@ Stmt CheckThreadNum::visit(const For &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::For);
     auto op = __op.as<ForNode>();
 
-    if (!op->property_.parallel_.empty()) {
+    if (op->property_.parallel_ != serialScope) {
         if (op->begin_->nodeType() != ASTNodeType::IntConst) {
             op->body_ =
                 makeIf("", makeGE(makeVar(op->iter_), op->begin_), op->body_);
@@ -165,7 +153,8 @@ Stmt CheckThreadNum::visit(const For &_op) {
         op->len_ = makeIntConst(op->end_.as<IntConstNode>()->val_ -
                                 op->begin_.as<IntConstNode>()->val_);
         if (op->end_.as<IntConstNode>()->val_ == INT_MAX) {
-            throw InvalidProgram("Length of " + op->property_.parallel_ +
+            throw InvalidProgram("Length of " +
+                                 toString(op->property_.parallel_) +
                                  " should have a finite bound");
         }
     }

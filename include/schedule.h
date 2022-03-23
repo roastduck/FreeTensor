@@ -362,7 +362,7 @@ class Schedule {
      * "blockIdx.x", "blockIdx.y", "blockIdx.z", "threadIdx.x", "threadIdx.y",
      * "threadIdx.z"
      */
-    void parallelize(const ID &loop, const std::string &parallel);
+    void parallelize(const ID &loop, const ParallelScope &parallel);
 
     /**
      * Unroll a loop

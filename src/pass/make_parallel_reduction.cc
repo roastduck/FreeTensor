@@ -39,7 +39,7 @@ void FindAllParallel::visit(const For &op) {
     Visitor::visit(op);
     loopStack_.pop_back();
 
-    if (!op->property_.parallel_.empty()) {
+    if (op->property_.parallel_ != serialScope) {
         results_[op->id()] = {op->property_.parallel_, loopStack_};
     }
 }
@@ -52,7 +52,7 @@ void FindSerialLoopsOverReduce::visit(const For &op) {
 
 void FindSerialLoopsOverReduce::visit(const ReduceTo &op) {
     for (auto it = loopStack_.rbegin(); it != loopStack_.rend(); it++) {
-        if (!(*it)->property_.parallel_.empty()) {
+        if ((*it)->property_.parallel_ != serialScope) {
             break;
         }
         results_[op->id()].emplace_back(*it);
@@ -68,7 +68,9 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
             indicesMap;
         for (auto &&loopId : toAlter_.at(op->id())) {
             auto &indices = indicesMap[loopId];
-            if (paraScopes_.at(loopId).substr(0, 9) == "blockIdx.") {
+            if (auto &&parallel = paraScopes_.at(loopId);
+                std::holds_alternative<CUDAScope>(parallel) &&
+                std::get<CUDAScope>(parallel).level_ == CUDAScope::Block) {
                 // Race-free reduction among thread blocks are impossible
                 goto use_atomic;
             }
@@ -261,7 +263,9 @@ Stmt makeParallelReduction(const Stmt &_op) {
         ASSERT(d.cond_.size() >= 1);
         ASSERT(d.cond_.front().first.isNode_);
         auto &&loopId = d.cond_.front().first.id_;
-        if (paraInfo.at(loopId).type_.substr(0, 10) == "threadIdx." &&
+        if (auto &&parallel = paraInfo.at(loopId).type_;
+            std::holds_alternative<CUDAScope>(parallel) &&
+            std::get<CUDAScope>(parallel).level_ == CUDAScope::Thread &&
             d.later() != d.earlier()) {
             // No need to use atomic because we can sync
             return;

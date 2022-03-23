@@ -6,7 +6,7 @@ namespace ir {
 namespace gpu {
 
 void FindSimplexOffset::visit(const For &op) {
-    if (op->property_.parallel_.empty()) {
+    if (op->property_.parallel_ == serialScope) {
         BaseClass::visit(op);
     } else {
         ASSERT(!var2para_.count(op->iter_));
@@ -17,7 +17,7 @@ void FindSimplexOffset::visit(const For &op) {
 }
 
 Stmt ApplySimplexOffset::visit(const For &op) {
-    if (op->property_.parallel_.empty()) {
+    if (op->property_.parallel_ == serialScope) {
         return BaseClass::visit(op);
     } else if (!para2var_.count(op->property_.parallel_)) {
         para2var_[op->property_.parallel_] = op->iter_;

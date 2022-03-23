@@ -13,7 +13,7 @@
 namespace ir {
 
 struct ParallelInfo {
-    std::string type_;           // parallel type
+    ParallelScope type_;         // parallel type
     std::vector<ID> outerLoops_; // outer loop ID
 };
 
@@ -56,7 +56,7 @@ class MakeParallelReduction : public SymbolTable<Mutator> {
         &serialOverRed_; // ReduceTo ID -> [For], from inner to outer
     const LoopVariExprMap &variantMap_;
 
-    std::unordered_map<ID, std::string> paraScopes_; // For Id -> parallel
+    std::unordered_map<ID, ParallelScope> paraScopes_; // For Id -> parallel
     std::unordered_map<ID, std::vector<ReductionItem>> forReductions_;
     std::unordered_set<std::string> defined_;
     std::unordered_map<ID, std::unordered_set<std::string>>

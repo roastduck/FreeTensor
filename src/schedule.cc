@@ -324,8 +324,9 @@ void Schedule::inlining(const ID &def) {
     }
 }
 
-void Schedule::parallelize(const ID &loop, const std::string &parallel) {
-    auto log = "parallelize(" + toString(loop) + ", " + parallel + ")";
+void Schedule::parallelize(const ID &loop, const ParallelScope &parallel) {
+    auto log =
+        "parallelize(" + toString(loop) + ", " + toString(parallel) + ")";
     try {
         ast_ = ir::parallelize(ast_, loop, parallel);
         logs_.emplace_back(log);
@@ -500,7 +501,7 @@ void Schedule::autoParallelize(const Target &target) {
             try {
                 // FIXME: Do not hard-code 32
                 auto [l0, l1] = split(loop.id(), 32);
-                parallelize(l1, "threadIdx.x");
+                parallelize(l1, threadIdxX);
 
                 try {
                     // Reorder this scope to as outer as possible
@@ -536,7 +537,7 @@ void Schedule::autoParallelize(const Target &target) {
                 Ref<LoopNest> loop = root;
 
                 bool parentIsWarp = false;
-                while (!loop->loop_->property_.parallel_.empty() &&
+                while (loop->loop_->property_.parallel_ != serialScope &&
                        loop->subLoops_.size() == 1) {
                     loop = loop->subLoops_.front();
                     parentIsWarp = true;
@@ -545,10 +546,10 @@ void Schedule::autoParallelize(const Target &target) {
                 ID loopId, outerId;
                 while (true) {
                     loopId = loop->loop_->id();
-                    if (!find(loopId)
-                             .node()
-                             .as<ForNode>()
-                             ->property_.parallel_.empty()) {
+                    if (find(loopId)
+                            .node()
+                            .as<ForNode>()
+                            ->property_.parallel_ != serialScope) {
                         break;
                     }
                     if (outerId.isValid()) {
@@ -559,7 +560,7 @@ void Schedule::autoParallelize(const Target &target) {
                     auto logBak = logs_;
                     switch (target.type()) {
                     case TargetType::CPU:
-                        parallelize(loopId, "openmp");
+                        parallelize(loopId, OpenMPScope{});
                         atLeastOne = true;
                         break;
 
@@ -567,9 +568,8 @@ void Schedule::autoParallelize(const Target &target) {
                         auto loop = find(loopId);
                         auto isParallelLoop = [](const Cursor &c) {
                             return c.nodeType() == ASTNodeType::For &&
-                                   !c.node()
-                                        .as<ForNode>()
-                                        ->property_.parallel_.empty();
+                                   c.node().as<ForNode>()
+                                           ->property_.parallel_ != serialScope;
                         };
                         bool childIsWarp =
                             !getCursorByFilter(loop.node(), isParallelLoop)
@@ -614,18 +614,18 @@ void Schedule::autoParallelize(const Target &target) {
                                 // a constant, a division by this length will be
                                 // introduced, which is not supported by ISL and
                                 // may probably lead to false dependencies
-                                parallelize(l1, "blockIdx.y");
+                                parallelize(l1, blockIdxY);
                                 atLeastOne = true;
-                                parallelize(l1b, "blockIdx.x");
+                                parallelize(l1b, blockIdxX);
                             } else {
-                                parallelize(l1, "blockIdx.x");
+                                parallelize(l1, blockIdxX);
                                 atLeastOne = true;
                             }
                         }
                         if (!findAll(l2).empty()) {
                             parallelize(l2, (!parentIsWarp && !childIsWarp)
-                                                ? "threadIdx.x"
-                                                : "threadIdx.y");
+                                                ? threadIdxX
+                                                : threadIdxY);
                             atLeastOne = true;
                         }
                         break;
@@ -693,7 +693,7 @@ void Schedule::autoUnroll(const Target &target) {
         // Try to unroll loops that accessing local arrays, to help nvcc put
         // these arrays to registers
         for (auto &&[loop, defs] : findIndexingLoops(ast_)) {
-            if (!loop->property_.parallel_.empty() ||
+            if (loop->property_.parallel_ != serialScope ||
                 loop->property_.vectorize_) {
                 continue;
             }
@@ -718,7 +718,7 @@ void Schedule::autoUnroll(const Target &target) {
         [&, this](const Ref<LoopNest> &nest) {
             auto &&loop = nest->loop_;
             if (loop.isValid()) { // not root
-                if (loop->property_.parallel_.empty() &&
+                if (loop->property_.parallel_ == serialScope &&
                     !loop->property_.vectorize_ && !loop->property_.unroll_ &&
                     loop->len_->nodeType() == ASTNodeType::IntConst &&
                     loop->len_.as<IntConstNode>()->val_ <= 4) {

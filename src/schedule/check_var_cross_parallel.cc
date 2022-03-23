@@ -14,21 +14,21 @@ void checkVarCrossParallel(const Stmt &ast, const ID &def, MemType mtype) {
     std::vector<FindDepsCond> conds;
     switch (mtype) {
     case MemType::GPULocal:
-        conds.push_back({{NodeIDOrParallelScope("threadIdx.x", false),
-                          DepDirection::Different}});
-        conds.push_back({{NodeIDOrParallelScope("threadIdx.y", false),
-                          DepDirection::Different}});
-        conds.push_back({{NodeIDOrParallelScope("threadIdx.z", false),
-                          DepDirection::Different}});
+        conds.push_back(
+            {{NodeIDOrParallelScope(threadIdxX), DepDirection::Different}});
+        conds.push_back(
+            {{NodeIDOrParallelScope(threadIdxY), DepDirection::Different}});
+        conds.push_back(
+            {{NodeIDOrParallelScope(threadIdxZ), DepDirection::Different}});
         // fall through
     case MemType::GPUWarp:
     case MemType::GPUShared:
-        conds.push_back({{NodeIDOrParallelScope("blockIdx.x", false),
-                          DepDirection::Different}});
-        conds.push_back({{NodeIDOrParallelScope("blockIdx.y", false),
-                          DepDirection::Different}});
-        conds.push_back({{NodeIDOrParallelScope("blockIdx.z", false),
-                          DepDirection::Different}});
+        conds.push_back(
+            {{NodeIDOrParallelScope(blockIdxX), DepDirection::Different}});
+        conds.push_back(
+            {{NodeIDOrParallelScope(blockIdxY), DepDirection::Different}});
+        conds.push_back(
+            {{NodeIDOrParallelScope(blockIdxZ), DepDirection::Different}});
         break;
     default:; // do nothing
     }

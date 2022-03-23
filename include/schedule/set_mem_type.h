@@ -10,7 +10,7 @@ namespace ir {
 class SetMemType : public Mutator {
     ID def_;
     MemType mtype_;
-    std::unordered_map<ID, int> inScope_;
+    std::unordered_map<ParallelScope, int> inScope_;
     bool found_ = false;
 
   public:

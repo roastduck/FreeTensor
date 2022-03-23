@@ -7,12 +7,7 @@ namespace ir {
 namespace gpu {
 
 void FindParallelLoops::visit(const For &op) {
-    if (op->property_.parallel_ == "threadIdx.x" ||
-        op->property_.parallel_ == "threadIdx.y" ||
-        op->property_.parallel_ == "threadIdx.z" ||
-        op->property_.parallel_ == "blockIdx.x" ||
-        op->property_.parallel_ == "blockIdx.y" ||
-        op->property_.parallel_ == "blockIdx.z") {
+    if (std::holds_alternative<CUDAScope>(op->property_.parallel_)) {
         loops_.emplace_back(op);
         stack_.emplace_back(op);
         Visitor::visit(op);
@@ -30,13 +25,15 @@ void FindParallelLoops::visit(const VarDef &op) {
         }
     } else if (op->buffer_->mtype() == MemType::GPUShared) {
         for (auto &&outer : stack_) {
-            if (outer->property_.parallel_.substr(0, 10) == "threadIdx.") {
+            if (std::holds_alternative<CUDAScope>(outer->property_.parallel_) &&
+                std::get<CUDAScope>(outer->property_.parallel_).level_ ==
+                    CUDAScope::Thread) {
                 affecting_[op->id()].insert(outer->id());
             }
         }
     } else if (op->buffer_->mtype() == MemType::GPUWarp) {
         for (auto &&outer : stack_) {
-            if (outer->property_.parallel_.substr(0, 11) == "threadIdx.x") {
+            if (outer->property_.parallel_ == threadIdxX) {
                 // Only support conditions that threadIdx.x <= 32
                 makeAssert(StmtNode::newId(),
                            makeLE(outer->len_, makeIntConst(32)),
@@ -49,12 +46,7 @@ void FindParallelLoops::visit(const VarDef &op) {
 }
 
 Stmt MultiplexMutator::visit(const For &op) {
-    if (op->property_.parallel_ == "threadIdx.x" ||
-        op->property_.parallel_ == "threadIdx.y" ||
-        op->property_.parallel_ == "threadIdx.z" ||
-        op->property_.parallel_ == "blockIdx.x" ||
-        op->property_.parallel_ == "blockIdx.y" ||
-        op->property_.parallel_ == "blockIdx.z") {
+    if (std::holds_alternative<CUDAScope>(op->property_.parallel_)) {
         stack_.emplace_back(op);
         auto ret = BaseClass::visit(op);
         stack_.pop_back();
@@ -116,7 +108,7 @@ Stmt multiplexBuffers(const Stmt &op) {
     auto variantMap = findLoopVariance(op).second;
 
     std::vector<FindDepsCond> conds;
-    std::unordered_map<ID, std::string> parallelScopes; // For ID -> parallel
+    std::unordered_map<ID, ParallelScope> parallelScopes; // For ID -> parallel
     for (auto &&loop : finder.loops()) {
         conds.emplace_back(FindDepsCond{{loop->id(), DepDirection::Different}});
         parallelScopes[loop->id()] = loop->property_.parallel_;

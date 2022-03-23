@@ -5,6 +5,7 @@
 #include <unordered_set>
 
 #include <expr.h>
+#include <hash_combine.h>
 #include <stmt.h>
 
 namespace ir {
@@ -92,8 +93,6 @@ using ASTHashMap = std::unordered_map<K, V, Hasher, HashComparator>;
 
 template <class K>
 using ASTHashSet = std::unordered_set<K, Hasher, HashComparator>;
-
-size_t hashCombine(size_t seed, size_t other);
 
 } // namespace ir
 

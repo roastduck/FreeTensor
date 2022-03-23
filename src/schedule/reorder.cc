@@ -52,7 +52,7 @@ Stmt SwapFor::visit(const StmtSeq &_op) {
         }
 
         if (!beforeStmts.empty()) {
-            if (!oldInner_->property_.parallel_.empty()) {
+            if (oldInner_->property_.parallel_ != serialScope) {
                 throw InvalidSchedule("Imperfect nesting is not allowed when "
                                       "the inner loop is parallelized");
             }
@@ -62,7 +62,7 @@ Stmt SwapFor::visit(const StmtSeq &_op) {
                                                : makeStmtSeq("", beforeStmts));
         }
         if (!afterStmts.empty()) {
-            if (!oldInner_->property_.parallel_.empty()) {
+            if (oldInner_->property_.parallel_ != serialScope) {
                 throw InvalidSchedule("Imperfect nesting is not allowed when "
                                       "the inner loop is parallelized");
             }

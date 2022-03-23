@@ -364,7 +364,7 @@ PBMap AnalyzeDeps::makeConstraintOfSingleLoop(PBCtx &presburger, const ID &loop,
 }
 
 PBMap AnalyzeDeps::makeConstraintOfParallelScope(PBCtx &presburger,
-                                                 const std::string &parallel,
+                                                 const ParallelScope &parallel,
                                                  DepDirection mode, int iterDim,
                                                  const AccessPoint &point,
                                                  const AccessPoint &other) {
@@ -439,7 +439,7 @@ PBMap AnalyzeDeps::makeSerialToAll(PBCtx &presburger, int iterDim,
                                    const std::vector<IterAxis> &point) const {
     std::string to = makeNdList("d", iterDim), from;
     for (int i = 0; i < iterDim; i++) {
-        if (i < (int)point.size() && !point[i].parallel_.empty()) {
+        if (i < (int)point.size() && point[i].parallel_ != serialScope) {
             from += std::string(i > 0 ? ", " : "") + "0";
         } else {
             from += std::string(i > 0 ? ", " : "") + "d" + std::to_string(i);
@@ -577,9 +577,9 @@ int AnalyzeDeps::numCommonDims(const Ref<AccessPoint> &p1,
             iter1.as<IntConstNode>()->val_ != iter2.as<IntConstNode>()->val_) {
             for (int j = n - 1; j >= i; j--) {
                 if ((j < (int)p1->iter_.size() &&
-                     !p1->iter_[j].parallel_.empty()) ||
+                     p1->iter_[j].parallel_ != serialScope) ||
                     (j < (int)p2->iter_.size() &&
-                     !p2->iter_[j].parallel_.empty())) {
+                     p2->iter_[j].parallel_ != serialScope)) {
                     return j + 1;
                 }
             }
@@ -978,7 +978,7 @@ std::string toString(const Dependency &dep) {
         if (scope.isNode_) {
             os << toString(scope.id_);
         } else {
-            os << scope.parallel_;
+            os << toString(scope.parallel_);
         }
     }
     return std::regex_replace(os.str(), std::regex("\n"), "");

@@ -4,7 +4,7 @@
 namespace ir {
 
 Stmt SetMemType::visit(const For &op) {
-    if (op->property_.parallel_.empty()) {
+    if (op->property_.parallel_ == serialScope) {
         return Mutator::visit(op);
     } else {
         inScope_[op->property_.parallel_]++;
@@ -21,9 +21,9 @@ Stmt SetMemType::visit(const VarDef &_op) {
     if (op->id() == def_) {
         if ((mtype_ == MemType::GPUWarp || mtype_ == MemType::GPUShared ||
              mtype_ == MemType::GPULocal) &&
-            inScope_["threadIdx.x"] == 0 && inScope_["threadIdx.y"] == 0 &&
-            inScope_["threadIdx.z"] == 0 && inScope_["blockIdx.x"] == 0 &&
-            inScope_["blockIdx.y"] == 0 && inScope_["blockIdx.z"] == 0) {
+            inScope_[threadIdxX] == 0 && inScope_[threadIdxY] == 0 &&
+            inScope_[threadIdxZ] == 0 && inScope_[blockIdxX] == 0 &&
+            inScope_[blockIdxY] == 0 && inScope_[blockIdxZ] == 0) {
             // This restriction is brought by CodeGen, which can not be checked
             // via checkVarCrossParallel. If we improve CodeGen in the future,
             // we can lift this restriction
