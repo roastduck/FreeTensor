@@ -67,6 +67,7 @@ void FindMultiLevelTiling::storeBuf() {
             ForsWithDataReuse tmp;
             tmp.dest = dest_;
             tmp.outermost = buf_.rbegin()->id;
+            tmp.dimIterated = std::vector<bool>(bufIndices_.size(), false);
             std::vector<bool> checkAppear(buf_.size());
             for (unsigned i = 0; i < bufIndices_.size(); i++) {
                 const auto &mapItem =
@@ -75,6 +76,7 @@ void FindMultiLevelTiling::storeBuf() {
                     if (mapItem.count(buf_[j].id) &&
                         mapItem.at(buf_[j].id) == LoopVariability::Variance) {
                         checkAppear[j] = true;
+                        tmp.dimIterated[i] = true;
                     }
                 }
             }

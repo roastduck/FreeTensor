@@ -28,13 +28,20 @@ bool FindSingleElementWise::isElementWise(const Store &st, const Load &ld) {
     }
     HashComparator comp;
     for (size_t i = 0; i < destShape.size(); i++) {
-        if (!comp(destShape[i], srcShape[i])) {
+        if (fors_.dimIterated[i]) {
+            if (!comp(destShape[i], srcShape[i])) {
+                return false;
+            }
+        } else if (!comp(destShape[i], srcShape[i]) &&
+                   !comp(srcShape[i], makeIntConst(1))) {
             return false;
         }
     }
     for (size_t i = 0; i < st->indices_.size(); i++) {
-        if (!comp(st->indices_[i], ld->indices_[i])) {
-            return false;
+        if (fors_.dimIterated[i]) {
+            if (!comp(st->indices_[i], ld->indices_[i])) {
+                return false;
+            }
         }
     }
     return true;
@@ -48,13 +55,20 @@ bool FindSingleElementWise::isElementWise(const ReduceTo &st, const Load &ld) {
     }
     HashComparator comp;
     for (size_t i = 0; i < destShape.size(); i++) {
-        if (!comp(destShape[i], srcShape[i])) {
+        if (fors_.dimIterated[i]) {
+            if (!comp(destShape[i], srcShape[i])) {
+                return false;
+            }
+        } else if (!comp(destShape[i], srcShape[i]) &&
+                   !comp(srcShape[i], makeIntConst(1))) {
             return false;
         }
     }
     for (size_t i = 0; i < st->indices_.size(); i++) {
-        if (!comp(st->indices_[i], ld->indices_[i])) {
-            return false;
+        if (fors_.dimIterated[i]) {
+            if (!comp(st->indices_[i], ld->indices_[i])) {
+                return false;
+            }
         }
     }
     return true;
@@ -65,7 +79,7 @@ void FindSingleElementWise::visit(const Load &op) {
         return;
     }
     if (nowStore_.isValid() && op->var_ != nowStore_->var_ &&
-        op->var_ == name_) {
+        op->var_ == fors_.dest) {
         if (!found_.isValid() && isElementWise(nowStore_, op)) {
             found_ = nowStore_;
         } else {
@@ -73,7 +87,7 @@ void FindSingleElementWise::visit(const Load &op) {
             return;
         }
     } else if (nowReduceTo_.isValid() && op->var_ != nowReduceTo_->var_ &&
-               op->var_ == name_) {
+               op->var_ == fors_.dest) {
         if (!found_.isValid() && isElementWise(nowReduceTo_, op)) {
             found_ = nowStore_;
         } else {
@@ -84,8 +98,9 @@ void FindSingleElementWise::visit(const Load &op) {
     BaseClass::visit(op);
 }
 
-Stmt findSingleElementWiseConsumer(const Stmt &root, const std::string &name) {
-    FindSingleElementWise finder(name);
+Stmt findSingleElementWiseConsumer(const Stmt &root,
+                                   const ForsWithDataReuse &fors) {
+    FindSingleElementWise finder(fors);
     finder(root);
     return finder.result();
 }

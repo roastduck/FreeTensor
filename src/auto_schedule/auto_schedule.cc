@@ -337,7 +337,7 @@ Stmt AutoSchedule::testCacheWrite() {
     auto sketch = getInitSketch();
     CacheWriteRule rule;
     if (rule.analyze(sketch) == RuleStatus::Skip) {
-        return nullptr;
+        return sketch.schedule().ast();
     }
     auto newSketch = rule.genPart(sketch).front();
     return newSketch.schedule().ast();
