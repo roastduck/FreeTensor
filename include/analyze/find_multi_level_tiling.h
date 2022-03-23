@@ -4,6 +4,7 @@
 #include <analyze/find_loop_variance.h>
 #include <ast.h>
 #include <hash.h>
+#include <pass/undo_make_reduction.h>
 #include <unordered_map>
 #include <vector>
 #include <visitor.h>
@@ -18,6 +19,7 @@ struct ForInfo {
 struct ForsWithDataReuse {
     std::vector<ForInfo> spaceLoops;
     std::vector<ForInfo> reductionLoops;
+    std::vector<bool> dimIterated;
     std::string dest;
     ID outermost;
 };
@@ -74,13 +76,14 @@ class FindMultiLevelTiling : public Visitor {
 };
 
 inline std::vector<ForsWithDataReuse> findMultiLevelTiling(const Stmt &ast) {
+    auto ast_wo_reduction = undoMakeReduction(ast);
     FindHasStore findHasStore;
-    findHasStore(ast);
+    findHasStore(ast_wo_reduction);
     auto forsWithStore = findHasStore.result();
-    auto loopVariExprMap = findLoopVariance(ast).first;
+    auto loopVariExprMap = findLoopVariance(ast_wo_reduction).first;
 
     FindMultiLevelTiling find(forsWithStore, loopVariExprMap);
-    find(ast);
+    find(ast_wo_reduction);
     find.storeBuf();
     return find.result();
 }

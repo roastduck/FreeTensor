@@ -5,7 +5,7 @@
 namespace ir {
 RuleStatus CacheWriteRule::analyze(const Sketch &sketch) {
     if (!findSingleElementWiseConsumer(sketch.schedule().ast(),
-                                       sketch.nowTarget().dest)
+                                       sketch.nowTarget())
              .isValid()) {
         return RuleStatus::Apply;
     }
