@@ -189,6 +189,12 @@ Expr SimplifyPass::visit(const FloorDiv &_op) {
         return makeIntConst(
             floorDiv(constants_.at(op->lhs_), constants_.at(op->rhs_)));
     }
+    if (constants_.count(op->rhs_) && constants_.at(op->rhs_) == 1) {
+        return op->lhs_;
+    }
+    if (constants_.count(op->rhs_) && constants_.at(op->rhs_) == -1) {
+        return makeMul(makeIntConst(-1), op->lhs_);
+    }
     return op;
 }
 
@@ -200,6 +206,12 @@ Expr SimplifyPass::visit(const CeilDiv &_op) {
         return makeIntConst(
             ceilDiv(constants_.at(op->lhs_), constants_.at(op->rhs_)));
     }
+    if (constants_.count(op->rhs_) && constants_.at(op->rhs_) == 1) {
+        return op->lhs_;
+    }
+    if (constants_.count(op->rhs_) && constants_.at(op->rhs_) == -1) {
+        return makeMul(makeIntConst(-1), op->lhs_);
+    }
     return op;
 }
 
@@ -209,6 +221,12 @@ Expr SimplifyPass::visit(const RoundTowards0Div &_op) {
     auto op = __op.as<RoundTowards0DivNode>();
     if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
         return makeIntConst(constants_.at(op->lhs_) / constants_.at(op->rhs_));
+    }
+    if (constants_.count(op->rhs_) && constants_.at(op->rhs_) == 1) {
+        return op->lhs_;
+    }
+    if (constants_.count(op->rhs_) && constants_.at(op->rhs_) == -1) {
+        return makeMul(makeIntConst(-1), op->lhs_);
     }
     return op;
 }
