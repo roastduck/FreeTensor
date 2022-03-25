@@ -57,8 +57,9 @@ class InsertTmpEval : public Mutator {
  *
  * It will return false in two cases:
  *
- * 1. The defining VarDef or For nodes in `s0` and `s1` are different, or
- * 2. Variables used in `expr` is written between `s0` and `s1`.
+ * 1. Variables in `expr` is not defined at `s0` or `s1`, or
+ * 2. The defining VarDef or For nodes in `s0` and `s1` are different, or
+ * 3. Variables used in `expr` is written between `s0` and `s1`.
  */
 bool checkNotModified(const Stmt &op, const Expr &expr,
                       CheckNotModifiedSide s0Side, const ID &s0,

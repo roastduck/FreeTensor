@@ -310,3 +310,27 @@ def test_correct_scope():
     std = ir.pop_ast()
 
     assert std.match(ast)
+
+
+def test_no_inline_defined_inside_a_loop():
+    with ir.VarDef([("x", (4, 4), "int32", "input", "cpu"),
+                    ("y", (4, 4), "int32", "output", "cpu")]) as (x, y):
+        ir.MarkNid("U")
+        with ir.VarDef("u", (4, 4), "int32", "cache", "cpu") as u:
+            with ir.For("i", 0, 4) as i:
+                ir.MarkNid("T")
+                with ir.VarDef("t", (4,), "int32", "cache", "cpu") as t:
+                    with ir.For("j", 0, 4) as j:
+                        t[j] = x[i, j] * 2
+                    with ir.For("j", 0, 4) as j:
+                        u[i, j] = t[j] + 1
+            with ir.For("i", 0, 4) as i:
+                with ir.For("j", 0, 4) as j:
+                    y[i, j] = u[i, j] + -1
+    ast = ir.pop_ast()
+    print(ast)
+    s = ir.Schedule(ast)
+    with pytest.raises(ir.InvalidSchedule):
+        s.inline("U")
+    ast_ = s.ast()  # Should not changed
+    assert ast_.match(ir.make_reduction(ast))

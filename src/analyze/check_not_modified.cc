@@ -8,8 +8,10 @@
 namespace ir {
 
 static std::unordered_map<std::string, ID>
-usedDefsAt(const ID &pos, const std::unordered_set<std::string> &names) {
+usedDefsAt(const Stmt &ast, const ID &pos,
+           const std::unordered_set<std::string> &names) {
     CheckNameToDefMapping checker(pos, names);
+    checker(ast);
     return checker.name2def();
 }
 
@@ -49,11 +51,11 @@ Stmt InsertTmpEval::visitStmt(const Stmt &_op) {
 bool checkNotModified(const Stmt &op, const Expr &expr,
                       CheckNotModifiedSide s0Side, const ID &s0,
                       CheckNotModifiedSide s1Side, const ID &s1) {
-    auto names = allNames(expr);
+    auto names = allUses(expr);
     if (names.empty()) {
         return true;
     }
-    if (usedDefsAt(s0, names) != usedDefsAt(s1, names)) {
+    if (usedDefsAt(op, s0, names) != usedDefsAt(op, s1, names)) {
         return false;
     }
 
