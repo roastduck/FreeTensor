@@ -26,6 +26,17 @@ inline bool operator!=(const OpenMPScope &lhs, const OpenMPScope &rhs) {
 }
 inline std::string toString(const OpenMPScope &parallel) { return "openmp"; }
 
+struct CUDAStreamScope {};
+inline bool operator==(const CUDAStreamScope &lhs, const CUDAStreamScope &rhs) {
+    return true;
+}
+inline bool operator!=(const CUDAStreamScope &lhs, const CUDAStreamScope &rhs) {
+    return false;
+}
+inline std::string toString(const CUDAStreamScope &parallel) {
+    return "cudastream";
+}
+
 struct CUDAScope {
     enum Level { Block, Thread } level_;
     enum Dim { X, Y, Z } dim_;
@@ -65,7 +76,8 @@ inline std::string toString(const CUDAScope &parallel) {
 }
 
 // The first type is default
-typedef std::variant<SerialScope, OpenMPScope, CUDAScope> ParallelScope;
+typedef std::variant<SerialScope, OpenMPScope, CUDAStreamScope, CUDAScope>
+    ParallelScope;
 
 inline std::string toString(const ParallelScope &parallel) {
     if (std::holds_alternative<SerialScope>(parallel)) {
@@ -74,6 +86,8 @@ inline std::string toString(const ParallelScope &parallel) {
         return toString(std::get<OpenMPScope>(parallel));
     } else if (std::holds_alternative<CUDAScope>(parallel)) {
         return toString(std::get<CUDAScope>(parallel));
+    } else if (std::holds_alternative<CUDAStreamScope>(parallel)) {
+        return toString(std::get<CUDAStreamScope>(parallel));
     } else {
         ASSERT(false);
     }
@@ -98,6 +112,10 @@ template <> struct hash<ir::SerialScope> {
 
 template <> struct hash<ir::OpenMPScope> {
     size_t operator()(const ir::OpenMPScope &) { return 0; }
+};
+
+template <> struct hash<ir::CUDAStreamScope> {
+    size_t operator()(const ir::CUDAStreamScope &) { return 0; }
 };
 
 template <> struct hash<ir::CUDAScope> {

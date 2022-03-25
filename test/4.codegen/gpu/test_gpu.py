@@ -899,3 +899,38 @@ def test_unroll_for():
 
     y_std = np.sum(x_np, axis=1)
     assert np.array_equal(y_np, y_std)
+
+
+def test_streams():
+
+    @ir.transform
+    def test(x, y):
+        ir.declare_var(x, (4, 256), "int32", "input", "gpu/global")
+        ir.declare_var(y, (4, 256), "int32", "output", "gpu/global")
+        "nid: L1"
+        for i in range(0, 4):
+            "nid: L2"
+            for j in range(0, 256):
+                y[i, j] = x[i, j] + 1
+            "nid: L3"
+            for j in range(0, 128):
+                y[i, j * 2] *= 2
+
+    s = ir.Schedule(test)
+    s.parallelize("L1", "cudaStream")
+    s.parallelize("L2", "threadIdx.x")
+    s.parallelize("L3", "threadIdx.x")
+    func = ir.lower(s.func(), target)
+    print(func)
+    code = ir.codegen(func, target)
+    print(ir.debug.with_line_no(code))
+    assert "cudaStreamCreate" in code
+    x_np = np.random.randint(0, 100, (4, 256)).astype("int32")
+    y_np = np.zeros((4, 256), dtype="int32")
+    x_arr = ir.Array(x_np, device)
+    y_arr = ir.Array(y_np, device)
+    ir.Driver(func, code, device)(x=x_arr, y=y_arr)
+    y_np = y_arr.numpy()
+
+    y_std = ((x_np + 1).reshape(4, 128, 2) * [2, 1]).reshape(4, 256)
+    assert np.array_equal(y_np, y_std)

@@ -43,6 +43,61 @@ bool CodeGenCUDA::inKernel() const {
     return streamStack_.back().name_ != "default";
 }
 
+void CodeGenCUDA::visitStmt(const Stmt &stmt) {
+    if (streamScopes_.count(stmt)) {
+        makeIndent();
+        os() << "cudaStream_t __newStream;" << std::endl;
+        makeIndent();
+        os() << "checkCudaError(cudaStreamCreate(&__newStream));" << std::endl;
+        makeIndent();
+        os() << "cudaEvent_t __start, __stop;" << std::endl;
+        makeIndent();
+        os() << "checkCudaError(cudaEventCreate(&__start));" << std::endl;
+        makeIndent();
+        os() << "checkCudaError(cudaEventCreate(&__stop));" << std::endl;
+
+        // Fork into __newStream
+        makeIndent();
+        os() << "checkCudaError(cudaEventRecord(__start, __stream));"
+             << std::endl;
+        makeIndent();
+        os() << "checkCudaError(cudaStreamWaitEvent(__newStream, __start, "
+                "0));"
+             << std::endl;
+
+        // Run with __newStream
+        makeIndent();
+        os() << "cudaStream_t __oldStream = __stream;" << std::endl;
+        makeIndent();
+        os() << "__stream = __newStream;" << std::endl;
+        CodeGenC::visitStmt(stmt);
+        makeIndent();
+        os() << "__stream = __oldStream;" << std::endl;
+
+        // Join back to __stream
+        makeIndent();
+        os() << "checkCudaError(cudaEventRecord(__stop, __newStream));"
+             << std::endl;
+        makeIndent();
+        os() << "checkCudaError(cudaStreamWaitEvent(__stream, __stop, "
+                "0));"
+             << std::endl;
+
+        // Destroy. In case the device is still doing work in the stream when
+        // cudaStreamDestroy() is called, the function will return immediately
+        // and the resources associated with the stream will be released
+        // automatically once the device has completed all work in the stream
+        makeIndent();
+        os() << "cudaEventDestroy(__start);" << std::endl;
+        makeIndent();
+        os() << "cudaEventDestroy(__stop);" << std::endl;
+        makeIndent();
+        os() << "cudaStreamDestroy(__newStream);" << std::endl;
+    } else {
+        CodeGenC::visitStmt(stmt);
+    }
+}
+
 void CodeGenCUDA::visit(const Min &op) {
     if (inKernel()) {
         os() << "min(";
@@ -275,6 +330,8 @@ void CodeGenCUDA::visit(const For &op) {
             os() << "uint8_t *__glmem = NULL;" << std::endl;
             if (globalSize > 0) {
                 makeIndent();
+                // TODO: Use cudaMallocAsync, but it requires CUDA 11.3 and
+                // device support
                 os() << "checkCudaError(cudaMalloc(&__glmem, " << globalSize
                      << "));" << std::endl;
             }
@@ -290,7 +347,7 @@ void CodeGenCUDA::visit(const For &op) {
                  << (dim.count(threadIdxX) ? dim.at(threadIdxX) : 1) << ", "
                  << (dim.count(threadIdxY) ? dim.at(threadIdxY) : 1) << ", "
                  << (dim.count(threadIdxZ) ? dim.at(threadIdxZ) : 1) << "), "
-                 << std::to_string(sharedSize) << ">>>(";
+                 << std::to_string(sharedSize) << ", __stream>>>(";
             bool first = true;
             for (auto &&[name, buffer] : stream.useBuffers_) {
                 os() << (first ? "" : ", ") << mangle(name);
@@ -311,6 +368,10 @@ void CodeGenCUDA::visit(const For &op) {
             streamStack_.back().threadDim_[op->property_.parallel_] =
                 op->len_.as<IntConstNode>()->val_;
         }
+    } else if (std::holds_alternative<CUDAStreamScope>(
+                   op->property_.parallel_)) {
+        streamScopes_.insert(op->body_);
+        CodeGenC::visit(op);
     } else {
         throw Error("Unsupported parallel method " +
                     ::ir::toString(op->property_.parallel_));
@@ -580,6 +641,12 @@ extern "C" {
                      std::to_string(i) + "];\n";
             }
             s += "\n";
+
+            // Set the default stream to __stream, in order to implement
+            // multiple streams
+            s += "cudaStream_t __stream = 0;\n";
+            s += "\n";
+
             s += stream.os_.str();
             s += "\n";
             s += "}\n";

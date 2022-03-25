@@ -2,6 +2,7 @@
 #define CODE_GEN_CUDA_H
 
 #include <unordered_map>
+#include <unordered_set>
 
 #include <codegen/code_gen_c.h>
 #include <func.h>
@@ -20,6 +21,7 @@ class CodeGenCUDA : public CodeGenC<CodeGenCUDAStream> {
   private:
     int nKernel_ = 0;
     int64_t sharedStackTop_ = 0, globalStackTop_ = 0;
+    std::unordered_set<Stmt> streamScopes_;
 
   public:
     CodeGenCUDA(const std::vector<std::string> &params,
@@ -35,6 +37,7 @@ class CodeGenCUDA : public CodeGenC<CodeGenCUDAStream> {
                   const std::string &dimPtr) override;
 
     using CodeGenC<CodeGenCUDAStream>::visit;
+    void visitStmt(const Stmt &stmt) override;
     void visit(const Min &op) override;
     void visit(const Max &op) override;
     void visit(const Sqrt &op) override;

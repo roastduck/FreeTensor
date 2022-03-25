@@ -447,9 +447,7 @@ class Schedule(ffi.Schedule):
         loop : str, Stmt or Cursor
             The loop
         parallel : ParallelScope
-            Parallel implementation. Supported values are "openmp",
-            "blockIdx.x", "blockIdx.y", "blockIdx.z", "threadIdx.x",
-            "threadIdx.y", "threadIdx.z"
+            Parallel scope
         """
         super(Schedule, self).parallelize(toId(loop),
                                           parseParallelScope(parallel))

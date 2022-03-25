@@ -358,9 +358,7 @@ class Schedule {
      * Mark a loop with a parallel implementation
      *
      * @param loop : ID of the loop
-     * @param parallel : Parallel implementation. Supported values are "openmp",
-     * "blockIdx.x", "blockIdx.y", "blockIdx.z", "threadIdx.x", "threadIdx.y",
-     * "threadIdx.z"
+     * @param parallel : Parallel scope
      */
     void parallelize(const ID &loop, const ParallelScope &parallel);
 

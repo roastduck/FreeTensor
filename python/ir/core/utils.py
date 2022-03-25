@@ -1,5 +1,6 @@
 import ffi
-from ffi import ID, AccessType, MemType, DataType, OpenMPScope, CUDAScope, CUDAScopeLevel, CUDAScopeDim
+from ffi import (ID, AccessType, MemType, DataType, OpenMPScope,
+                 CUDAStreamScope, CUDAScope, CUDAScopeLevel, CUDAScopeDim)
 
 
 def toId(node):
@@ -71,6 +72,8 @@ def parseParallelScope(parallel):
     elif type(parallel) is str:
         if parallel.lower() == "openmp":
             return OpenMPScope()
+        elif parallel.lower() == "cudastream":
+            return CUDAStreamScope()
         elif parallel.lower() == "blockidx.x":
             return CUDAScope(CUDAScopeLevel.Block, CUDAScopeDim.X)
         elif parallel.lower() == "blockidx.y":

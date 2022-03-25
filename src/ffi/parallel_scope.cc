@@ -6,6 +6,8 @@ namespace ir {
 void init_ffi_parallel_scope(py::module_ &m) {
     py::class_<OpenMPScope>(m, "OpenMPScope").def(py::init<>());
 
+    py::class_<CUDAStreamScope>(m, "CUDAStreamScope").def(py::init<>());
+
     py::enum_<CUDAScope::Level>(m, "CUDAScopeLevel")
         .value("Block", CUDAScope::Level::Block)
         .value("Thread", CUDAScope::Level::Thread);
