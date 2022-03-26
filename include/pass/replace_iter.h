@@ -1,6 +1,8 @@
 #ifndef REPLACE_ITER_H
 #define REPLACE_ITER_H
 
+#include <unordered_map>
+
 #include <mutator.h>
 
 namespace ir {
@@ -9,17 +11,18 @@ namespace ir {
  * Replace all Var node with a specific name by another expression
  */
 class ReplaceIter : public Mutator {
-    std::string name_;
-    Expr expr_;
+    std::unordered_map<std::string, Expr> replace_;
 
   public:
     ReplaceIter(const std::string &name, const Expr &expr)
-        : name_(name), expr_(expr) {}
+        : replace_({{name, expr}}) {}
+    ReplaceIter(const std::unordered_map<std::string, Expr> &replace)
+        : replace_(replace) {}
 
   protected:
     Expr visit(const Var &op) override {
-        if (op->name_ == name_) {
-            return (*this)(expr_);
+        if (replace_.count(op->name_)) {
+            return (*this)(replace_.at(op->name_));
         } else {
             return Mutator::visit(op);
         }

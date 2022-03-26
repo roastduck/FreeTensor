@@ -1,24 +1,14 @@
+#include <itertools.hpp>
+
 #include <analyze/all_uses.h>
 #include <analyze/deps.h>
+#include <pass/replace_iter.h>
 #include <pass/replace_uses.h>
 #include <pass/scalar_prop_const.h>
 #include <pass/simplify.h>
 #include <pass/tensor_prop_const.h>
 
 namespace ir {
-
-static bool iterDefined(Cursor c, const std::string &name) {
-    while (true) {
-        if (c.nodeType() == ASTNodeType::For &&
-            c.node().as<ForNode>()->iter_ == name) {
-            return true;
-        }
-        if (!c.hasOuter()) {
-            return false;
-        }
-        c = c.outer();
-    }
-}
 
 Stmt tensorPropConst(const Stmt &_op) {
     auto op = _op;
@@ -52,14 +42,6 @@ Stmt tensorPropConst(const Stmt &_op) {
             if (!allReads(expr).empty()) {
                 // Expressions should contain only constants and iterating vars
                 return false;
-            }
-            auto &&iters = allIters(expr);
-            auto common = lca(later.cursor_, earlier.cursor_);
-            for (auto &&iter : iters) {
-                if (!iterDefined(common, iter)) {
-                    // Iter with the same name from different loops
-                    return false;
-                }
             }
             return true;
         };
@@ -110,7 +92,33 @@ Stmt tensorPropConst(const Stmt &_op) {
             }
             ASSERT(item.second.front()->nodeType() == ASTNodeType::Store);
             auto &&store = item.second.front().as<StoreNode>();
-            replace[item.first] = store->expr_;
+
+            if (!allIters(store->expr_).empty()) {
+                std::unordered_map<std::string, Expr> replaceAsPlaceholder;
+                std::unordered_map<std::string, Expr> replaceFromPlaceholder;
+                Expr placeholder;
+                for (auto &&[i, idx] : iter::enumerate(store->indices_)) {
+                    if (idx->nodeType() == ASTNodeType::Var) {
+                        replaceAsPlaceholder[idx.as<VarNode>()->name_] =
+                            makeVar(".prop_placeholder." + std::to_string(i));
+                    } else if (!idx->isConst()) {
+                        goto fail;
+                    }
+                }
+                placeholder = ReplaceIter(replaceAsPlaceholder)(store->expr_);
+                for (auto &&[i, idx] : iter::enumerate(
+                         item.first->nodeType() == ASTNodeType::Load
+                             ? item.first.as<LoadNode>()->indices_
+                             : item.first.as<ReduceToNode>()->indices_)) {
+                    replaceFromPlaceholder[".prop_placeholder." +
+                                           std::to_string(i)] = idx;
+                }
+                replace[item.first] =
+                    ReplaceIter(replaceFromPlaceholder)(placeholder);
+            fail:;
+            } else {
+                replace[item.first] = store->expr_;
+            }
         }
 
         if (replace.empty() || i > 100) {

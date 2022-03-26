@@ -4,28 +4,12 @@
 #include <analyze/deps.h>
 #include <hash.h>
 #include <pass/hoist_var_over_stmt_seq.h>
+#include <pass/replace_iter.h>
 #include <pass/simplify.h>
 #include <pass/sink_var.h>
 #include <schedule/inlining.h>
 
 namespace ir {
-
-Expr MakeInlinePlaceholder::visitExpr(const Expr &op) {
-    for (auto &&[i, index] : iter::enumerate(indices_)) {
-        if (HashComparator()(index, op)) {
-            return makeVar(".inline_placeholder." + std::to_string(i));
-        }
-    }
-    return Mutator::visitExpr(op);
-}
-
-Expr ApplyInlinePlaceholder::visit(const Var &op) {
-    if (op->name_.substr(0, 20) == ".inline_placeholder.") {
-        int pos = std::stoi(op->name_.substr(20));
-        return indices_.at(pos);
-    }
-    return Mutator::visit(op);
-}
 
 Expr MakeInline::visit(const Load &op) {
     if (op->var_ == var_) {
@@ -95,7 +79,25 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
         if (dep.earlier()->nodeType() == ASTNodeType::Store) {
             auto earlier = dep.earlier().as<StoreNode>();
             expr = earlier->expr_;
-            placeholder = MakeInlinePlaceholder(earlier->indices_)(expr);
+            if (!allIters(expr).empty()) {
+                std::unordered_map<std::string, Expr> replaceAsPlaceholder;
+                for (auto &&[i, idx] : iter::enumerate(earlier->indices_)) {
+                    if (idx->nodeType() == ASTNodeType::Var) {
+                        replaceAsPlaceholder[idx.as<VarNode>()->name_] =
+                            makeVar(".inline_placeholder." + std::to_string(i));
+                    } else if (!idx->isConst()) {
+                        throw InvalidSchedule(
+                            "Inlining a variable that is stored using "
+                            "non-iterator "
+                            "index " +
+                            toString(idx) +
+                            " is currenctly unsupported"); // TODO
+                    }
+                }
+                placeholder = ReplaceIter(replaceAsPlaceholder)(expr);
+            } else {
+                placeholder = expr;
+            }
         } else {
             throw InvalidSchedule(
                 "Unsupported: ReduceTo nodes cannot be inlined");
@@ -131,7 +133,12 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
                 toString(dep.later_.cursor_.node()));
         }
         auto later = dep.later().as<LoadNode>();
-        replace[later] = ApplyInlinePlaceholder(later->indices_)(placeholder);
+        std::unordered_map<std::string, Expr> replaceFromPlaceholder;
+        for (auto &&[i, idx] : iter::enumerate(later->indices_)) {
+            replaceFromPlaceholder[".inline_placeholder." + std::to_string(i)] =
+                idx;
+        }
+        replace[later] = ReplaceIter(replaceFromPlaceholder)(placeholder);
     };
     findDeps(ast, {{}}, found, FindDepsMode::KillLater, DEP_RAW, filter);
     ast = MakeInline(def, replace)(ast);

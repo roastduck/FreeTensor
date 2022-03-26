@@ -7,34 +7,6 @@
 
 namespace ir {
 
-class MakeInlinePlaceholder : public Mutator {
-    std::vector<Expr> indices_;
-
-  public:
-    MakeInlinePlaceholder(const std::vector<Expr> &indices)
-        : indices_(indices) {}
-    MakeInlinePlaceholder(const std::vector<SubTree<ExprNode>> &indices)
-        : MakeInlinePlaceholder(
-              std::vector<Expr>(indices.begin(), indices.end())) {}
-
-  protected:
-    Expr visitExpr(const Expr &op) override;
-};
-
-class ApplyInlinePlaceholder : public Mutator {
-    std::vector<Expr> indices_;
-
-  public:
-    ApplyInlinePlaceholder(const std::vector<Expr> &indices)
-        : indices_(indices) {}
-    ApplyInlinePlaceholder(const std::vector<SubTree<ExprNode>> &indices)
-        : ApplyInlinePlaceholder(
-              std::vector<Expr>(indices.begin(), indices.end())) {}
-
-  protected:
-    Expr visit(const Var &op) override;
-};
-
 class MakeInline : public Mutator {
     ID def_;
     std::string var_;

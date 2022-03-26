@@ -304,15 +304,16 @@ def test_swap_and_fission_backward():
 
 def test_crossing_var_def():
     with ir.VarDef([
+        ("x", (4,), "int32", "input", "cpu"),
         ("y1", (4,), "int32", "output", "cpu"),
         ("y2", (4, 4), "int32", "output", "cpu"),
-    ]) as (y1, y2):
+    ]) as (x, y1, y2):
         with ir.For("i", 0, 4, nid="L1") as i:
             y1[i] = i
             with ir.For("j", 0, 4, nid="L2") as j:
                 with ir.VarDef("t", (), "int32", "cache", "cpu") as t:
                     ir.MarkNid("S1")
-                    t[()] = i * j
+                    t[()] = x[i] * x[j]
                     y2[i, j] = t[()]
     ast = ir.pop_ast()
     print(ast)
@@ -325,13 +326,14 @@ def test_crossing_var_def():
     print(ast)
 
     with ir.VarDef([
+        ("x", (4,), "int32", "input", "cpu"),
         ("y1", (4,), "int32", "output", "cpu"),
         ("y2", (4, 4), "int32", "output", "cpu"),
-    ]) as (y1, y2):
+    ]) as (x, y1, y2):
         with ir.For("i", 0, 4) as i:
             with ir.VarDef("t", (4,), "int32", "cache", "cpu") as t:
                 with ir.For("j", 0, 4) as j:
-                    t[j] = i * j
+                    t[j] = x[i] * x[j]
                 y1[i] = i
                 with ir.For("j", 0, 4) as j:
                     y2[i, j] = t[j]
