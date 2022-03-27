@@ -1,0 +1,14 @@
+name: Format C++
+
+on: [pull_request]
+
+jobs:
+  cxx-format-check:
+    name: C++ Formatting Check
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Clang Format
+      uses: RafikFarhad/clang-format-github-action@v2.0.0
+      with:
+        sources: include,runtime,src
