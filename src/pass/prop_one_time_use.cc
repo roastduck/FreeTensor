@@ -52,7 +52,7 @@ Stmt propOneTimeUse(const Stmt &_op) {
     auto foundMust = [&](const Dependency &d) {
         if (checkNotModified(
                 op, d.earlier().as<StoreNode>()->expr_,
-                CheckNotModifiedSide::After, d.earlier_.cursor_.id(),
+                CheckNotModifiedSide::Before, d.earlier_.cursor_.id(),
                 CheckNotModifiedSide::Before, d.later_.cursor_.id())) {
             r2w[d.later()].emplace_back(d.earlier().as<StmtNode>());
             w2r[d.earlier().as<StmtNode>()].emplace_back(d.later());

@@ -70,3 +70,30 @@ def test_used_in_many_reads_no_prop():
     std = ir.pop_ast()
 
     assert std.match(ast)
+
+
+def test_modify_self_no_prop():
+    with ir.VarDef([("x", (5,), "float64", "input", "cpu"),
+                    ("y", (5,), "float64", "output", "cpu")]) as (x, y):
+        with ir.VarDef("t", (5,), "float64", "cache", "cpu") as t:
+            with ir.For("i", 0, 5) as i:
+                t[i] = x[i]
+            with ir.For("i", 0, 5) as i:
+                t[i] = t[i] - 1
+                y[i] = t[i]
+    ast = ir.pop_ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([("x", (5,), "float64", "input", "cpu"),
+                    ("y", (5,), "float64", "output", "cpu")]) as (x, y):
+        with ir.VarDef("t", (5,), "float64", "cache", "cpu") as t:
+            with ir.For("i", 0, 5) as i:
+                t[i] = x[i]
+            with ir.For("i", 0, 5) as i:
+                t[i] = t[i] - 1
+                y[i] = t[i]
+    std = ir.pop_ast()
+
+    assert std.match(ast)

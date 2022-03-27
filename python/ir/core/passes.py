@@ -6,6 +6,8 @@ from ffi import grad
 from ffi import GradTapeMode
 from ffi import output_intermediates
 from ffi import scalar_prop_const
+from ffi import tensor_prop_const
+from ffi import prop_one_time_use
 from ffi import simplify_pass
 from ffi import z3_simplify
 from ffi import sink_var

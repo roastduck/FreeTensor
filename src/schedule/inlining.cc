@@ -123,7 +123,7 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
             }
         }
 
-        if (!checkNotModified(ast, expr, CheckNotModifiedSide::After,
+        if (!checkNotModified(ast, expr, CheckNotModifiedSide::Before,
                               dep.earlier_.cursor_.id(),
                               CheckNotModifiedSide::Before,
                               dep.later_.cursor_.id())) {
