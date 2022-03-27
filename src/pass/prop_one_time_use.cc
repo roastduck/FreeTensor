@@ -1,23 +1,16 @@
+#include <itertools.hpp>
+
+#include <analyze/all_uses.h>
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
 #include <pass/hoist_var_over_stmt_seq.h>
 #include <pass/make_reduction.h>
 #include <pass/prop_one_time_use.h>
+#include <pass/replace_iter.h>
 #include <pass/replace_uses.h>
 #include <pass/sink_var.h>
 
 namespace ir {
-
-static bool sameParent(const Cursor &x, const Cursor &y) {
-    if (!x.hasOuterCtrlFlow() && !y.hasOuterCtrlFlow()) {
-        return true;
-    }
-    if (x.hasOuterCtrlFlow() && y.hasOuterCtrlFlow() &&
-        x.outerCtrlFlow().id() == y.outerCtrlFlow().id()) {
-        return true;
-    }
-    return false;
-}
 
 Stmt propOneTimeUse(const Stmt &_op) {
     auto op = makeReduction(_op);
@@ -42,10 +35,6 @@ Stmt propOneTimeUse(const Stmt &_op) {
         }
         if (later.op_->nodeType() == ASTNodeType::ReduceTo) {
             return false; // pass/remove_write will deal with it
-        }
-        if (!sameParent(later.cursor_, earlier.cursor_)) {
-            // Definition of each vars may differ
-            return false;
         }
         return true;
     };
@@ -85,7 +74,33 @@ Stmt propOneTimeUse(const Stmt &_op) {
         }
         ASSERT(item.second.front()->nodeType() == ASTNodeType::Store);
         auto &&store = item.second.front().as<StoreNode>();
-        replace[item.first] = store->expr_;
+
+        if (!allIters(store->expr_).empty()) {
+            std::unordered_map<std::string, Expr> replaceAsPlaceholder;
+            std::unordered_map<std::string, Expr> replaceFromPlaceholder;
+            Expr placeholder;
+            for (auto &&[i, idx] : iter::enumerate(store->indices_)) {
+                if (idx->nodeType() == ASTNodeType::Var) {
+                    replaceAsPlaceholder[idx.as<VarNode>()->name_] =
+                        makeVar(".prop_placeholder." + std::to_string(i));
+                } else if (!idx->isConst()) {
+                    goto fail;
+                }
+            }
+            placeholder = ReplaceIter(replaceAsPlaceholder)(store->expr_);
+            for (auto &&[i, idx] : iter::enumerate(
+                     item.first->nodeType() == ASTNodeType::Load
+                         ? item.first.as<LoadNode>()->indices_
+                         : item.first.as<ReduceToNode>()->indices_)) {
+                replaceFromPlaceholder[".prop_placeholder." +
+                                       std::to_string(i)] = idx;
+            }
+            replace[item.first] =
+                ReplaceIter(replaceFromPlaceholder)(placeholder);
+        fail:;
+        } else {
+            replace[item.first] = store->expr_;
+        }
     }
 
     op = ReplaceUses(replace)(op);
