@@ -12,9 +12,14 @@ class Error : public std::runtime_error {
     Error(const std::string &msg) : std::runtime_error(msg) {}
 };
 
+class StmtNode;
+template <class T> class Ref;
+typedef Ref<StmtNode> Stmt;
+
 class InvalidSchedule : public Error {
   public:
     InvalidSchedule(const std::string &msg) : Error(msg) {}
+    InvalidSchedule(const std::string &msg, const Stmt &ast);
 };
 
 class DriverError : public Error {

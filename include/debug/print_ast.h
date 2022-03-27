@@ -6,10 +6,11 @@
 namespace ir {
 
 class PrintVisitor : public CodeGen<CodeGenStream> {
-    bool pretty_ = false;
+    bool printAllId_ = false, pretty_ = false;
 
   public:
-    PrintVisitor(bool pretty = false) : pretty_(pretty) {}
+    PrintVisitor(bool printAllId = false, bool pretty = false)
+        : printAllId_(printAllId), pretty_(pretty) {}
 
   private:
     void recur(const Expr &op);

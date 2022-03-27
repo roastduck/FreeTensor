@@ -36,7 +36,7 @@ void PrintVisitor::printId(const Stmt &op) {
     makeIndent();
     os() << "// By " << op->debugCreator_ << std::endl;
 #endif
-    if (Config::printAllId() || op->hasNamedId()) {
+    if (printAllId_ || op->hasNamedId()) {
         if (pretty_) {
             os() << CYAN << ::ir::toString(op->id()) << ":" << RESET
                  << std::endl;
@@ -611,7 +611,11 @@ std::string toString(const AST &op) {
 }
 
 std::string toString(const AST &op, bool pretty) {
-    PrintVisitor visitor(pretty);
+    return toString(op, pretty, Config::printAllId());
+}
+
+std::string toString(const AST &op, bool pretty, bool printAllId) {
+    PrintVisitor visitor(printAllId, pretty);
     visitor(op);
     return visitor.toString(
         [](const CodeGenStream &stream) { return stream.os_.str(); });
