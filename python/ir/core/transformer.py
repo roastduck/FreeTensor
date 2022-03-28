@@ -339,8 +339,8 @@ class dynamic_range(StagedIterable):
 
     def foreach(self, name: str, body: Callable[[Any], None]) -> None:
         '''Customized foreach behavior. Creates a For loop.'''
-        with For(StagingContext.fullname(name), self.start,
-                 self.stop, self.step) as iter_var:
+        with For(StagingContext.fullname(name), self.start, self.stop,
+                 self.step) as iter_var:
             with LifetimeScope():
                 body(iter_var)
 
@@ -434,8 +434,8 @@ def mark_nid(nid: str):
     ctx_stack.top().set_next_nid(StagingContext.fullid(nid))
 
 
-def mark_no_deps(no_deps: str):
-    ctx_stack.top().add_next_no_deps(no_deps)
+def mark_no_deps(no_deps: Var):
+    ctx_stack.top().add_next_no_deps(no_deps.name)
 
 
 def mark_prefer_libs():
@@ -534,8 +534,7 @@ class Transformer(ast.NodeTransformer):
                     call_helper(mark_nid, ast.Constant(text[5:], kind=None)))
             elif text.startswith('no_deps: '):
                 node = ast.Expr(
-                    call_helper(mark_no_deps, ast.Constant(text[9:],
-                                                           kind=None)))
+                    call_helper(mark_no_deps, ast.Name(text[9:], ast.Load())))
             elif text.startswith('prefer_libs'):
                 node = ast.Expr(call_helper(mark_prefer_libs))
         return location_helper(node, old_node)

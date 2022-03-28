@@ -457,3 +457,40 @@ def test_func_in_args():
 
     y_std = np.array([4, 5, 6, 7], dtype="int32")
     assert np.array_equal(y_np, y_std)
+
+
+def test_no_deps_on_returned_tensor():
+    dev = ir.Device(ir.CPU())
+
+    @ir.inline
+    def test_i(a, b):
+        'nid: Vc'
+        c = ir.create_var((2, 2), "int32", "cpu")
+        d = ir.create_var((2, 2), "int32", "cpu")
+        for i in range(2):
+            for j in range(2):
+                b[i, j] = a[i, j]
+                c[i, j] = b[i, j] * a[i, j]
+                d[i, j] = b[i, j] + a[i, j]
+        return c, d
+
+    @ir.transform
+    def test(y, c, d):
+        ir.declare_var(y, (2, 2), "int32", "output", "cpu")
+        ir.declare_var(c, (2, 2), "int32", "output", "cpu")
+        ir.declare_var(d, (2, 2), "int32", "output", "cpu")
+        cc, dd = test_i(
+            ir.capture_var(
+                ir.Array(np.array([[1, 2], [3, 4]], dtype=np.int32), dev)), y)
+        for i in range(2):
+            'nid: Lj'
+            'no_deps: cc'
+            for j in range(2):
+                c[i, j] = cc[i, j]
+                d[i, j] = dd[i, j]
+
+    func = ir.lower(test, ir.CPU())
+    print(func)
+
+    s = ir.Schedule(func)
+    assert s.find('Lj').node().property.no_deps[0] == s.find('Vc').node().name
