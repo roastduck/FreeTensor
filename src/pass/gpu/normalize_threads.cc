@@ -1,5 +1,6 @@
 #include <climits>
 
+#include <container_utils.h>
 #include <pass/gpu/normalize_threads.h>
 #include <pass/merge_and_hoist_if.h>
 #include <pass/shrink_for.h>
@@ -7,17 +8,6 @@
 namespace ir {
 
 namespace gpu {
-
-static std::vector<std::string> intersect(const std::vector<std::string> &lhs,
-                                          const std::vector<std::string> &rhs) {
-    std::vector<std::string> ret;
-    for (auto &&item : lhs) {
-        if (std::find(rhs.begin(), rhs.end(), item) != rhs.end()) {
-            ret.emplace_back(item);
-        }
-    }
-    return ret;
-}
 
 Expr NormalizeThreads::visit(const Var &_op) {
     auto __op = Mutator::visit(_op);

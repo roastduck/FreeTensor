@@ -1,5 +1,6 @@
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
+#include <container_utils.h>
 #include <hash.h>
 #include <pass/prop_one_time_use.h>
 #include <pass/remove_dead_var.h>
@@ -12,17 +13,6 @@
 namespace ir {
 
 namespace {
-
-std::vector<std::string> intersect(const std::vector<std::string> &lhs,
-                                   const std::vector<std::string> &rhs) {
-    std::vector<std::string> ret;
-    for (auto &&item : lhs) {
-        if (std::find(rhs.begin(), rhs.end(), item) != rhs.end()) {
-            ret.emplace_back(item);
-        }
-    }
-    return ret;
-}
 
 LoopInVarDefs findLoopInVarDefs(const Stmt &stmt, const ID &id,
                                 FindLoopInVarDefsDirection direction) {

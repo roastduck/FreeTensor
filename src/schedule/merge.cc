@@ -1,19 +1,9 @@
+#include <container_utils.h>
 #include <pass/tensor_prop_const.h>
 #include <schedule/check_loop_order.h>
 #include <schedule/merge.h>
 
 namespace ir {
-
-static std::vector<std::string> intersect(const std::vector<std::string> &lhs,
-                                          const std::vector<std::string> &rhs) {
-    std::vector<std::string> ret;
-    for (auto &&item : lhs) {
-        if (std::find(rhs.begin(), rhs.end(), item) != rhs.end()) {
-            ret.emplace_back(item);
-        }
-    }
-    return ret;
-}
 
 Stmt MergeFor::visit(const For &_op) {
     if (_op->id() == oldOuter_->id()) {

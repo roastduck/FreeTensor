@@ -1,8 +1,10 @@
 #ifndef CONTAINER_UTILS_H
 #define CONTAINER_UTILS_H
 
+#include <algorithm>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 namespace ir {
 
@@ -43,6 +45,17 @@ bool hasIntersect(const std::unordered_set<T, Hash, KeyEqual> &lhs,
         }
     }
     return false;
+}
+
+template <class T>
+std::vector<T> intersect(const std::vector<T> &lhs, const std::vector<T> &rhs) {
+    std::vector<T> ret;
+    for (auto &&item : lhs) {
+        if (std::find(rhs.begin(), rhs.end(), item) != rhs.end()) {
+            ret.emplace_back(item);
+        }
+    }
+    return ret;
 }
 
 } // namespace ir
