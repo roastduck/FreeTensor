@@ -1,4 +1,4 @@
-#include <container_utils.h>
+#include <analyze/merge_no_deps_hint.h>
 #include <pass/tensor_prop_const.h>
 #include <schedule/check_loop_order.h>
 #include <schedule/merge.h>
@@ -19,8 +19,8 @@ Stmt MergeFor::visit(const For &_op) {
                        : makeMul(innerLen_, outerLen_);
         auto ret = makeFor(newId_, newIter_, makeIntConst(0), len,
                            makeIntConst(1), len,
-                           ForProperty().withNoDeps(
-                               intersect(op->property_.noDeps_, innerNoDeps_)),
+                           ForProperty().withNoDeps(mergeNoDepsHint(
+                               root_, oldInner_->id(), oldOuter_->id())),
                            op->body_);
         for (auto &&def : intermediateDefs_) {
             ret = makeVarDef(def->id(), def->name_, *def->buffer_,
@@ -34,7 +34,6 @@ Stmt MergeFor::visit(const For &_op) {
         visitedInner_ = true;
         ASSERT(__op->nodeType() == ASTNodeType::For);
         auto op = __op.as<ForNode>();
-        innerNoDeps_ = op->property_.noDeps_;
         return op->body_;
     } else {
         return Mutator::visit(_op);
@@ -133,7 +132,7 @@ std::pair<Stmt, ID> merge(const Stmt &_ast, const ID &loop1, const ID &loop2) {
     auto &&curOrder = checker.order();
     auto outer = curOrder[0], inner = curOrder[1];
 
-    MergeFor mutator(outer, inner);
+    MergeFor mutator(ast, outer, inner);
     ast = mutator(ast);
     return std::make_pair(ast, mutator.newId());
 }

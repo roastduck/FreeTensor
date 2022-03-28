@@ -14,6 +14,7 @@ struct LoopInVarDefs {
 enum class FindLoopInVarDefsDirection : int { Front, Back };
 
 class FuseFor : public Mutator {
+    Stmt root_;
     ID id0_, id1_, fused_;
     std::string iter0_, iter1_;
     ID beforeId_, afterId_;
@@ -21,8 +22,8 @@ class FuseFor : public Mutator {
     bool strict_, inLoop0_ = false, inLoop1_ = false;
 
   public:
-    FuseFor(const ID &id0, const ID &id1, bool strict)
-        : id0_(id0), id1_(id1),
+    FuseFor(const Stmt &root, const ID &id0, const ID &id1, bool strict)
+        : root_(root), id0_(id0), id1_(id1),
           fused_("fused." + id0.strId() + "." + id1.strId()), strict_(strict) {}
 
     const ID &fused() const { return fused_; }
