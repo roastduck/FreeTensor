@@ -45,7 +45,7 @@ Stmt HoistVarOverStmtSeq::visit(const ReduceTo &_op) {
 }
 
 Stmt HoistVarOverStmtSeq::visit(const StmtSeq &op) {
-    std::unordered_map<std::string, int> namesCnt;
+    std::unordered_map<std::string, int> namesCnt, ioNamesCnt;
     for (auto &&[id, name] : allDefs(op)) {
         namesCnt[name]++;
     }
@@ -58,10 +58,19 @@ Stmt HoistVarOverStmtSeq::visit(const StmtSeq &op) {
             auto def = stmt.as<VarDefNode>();
             Stmt _newDef;
             if (namesCnt.at(def->name_) > 1) {
-                ASSERT(!rename_.count(def->name_));
-                rename_[def->name_] = def->name_ + "." + def->id().strId();
-                _newDef = (*this)(stmt);
-                rename_.erase(def->name_);
+                if (def->buffer_->atype() == AccessType::Cache) {
+                    ASSERT(!rename_.count(def->name_));
+                    rename_[def->name_] = def->name_ + "." + def->id().strId();
+                    _newDef = (*this)(stmt);
+                    rename_.erase(def->name_);
+                } else {
+                    if (++ioNamesCnt[def->name_] > 1) {
+                        throw InvalidProgram(
+                            "Multiple I/O variables bound to the same name " +
+                            def->name_);
+                    }
+                    _newDef = (*this)(stmt);
+                }
             } else {
                 _newDef = (*this)(stmt);
             }
