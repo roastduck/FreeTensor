@@ -1,5 +1,7 @@
 #include <algorithm>
 
+#include <itertools.hpp>
+
 #include <analyze/deps.h>
 #include <analyze/merge_no_deps_hint.h>
 #include <analyze/with_cursor.h>
@@ -7,49 +9,51 @@
 
 namespace ir {
 
-std::vector<std::string> mergeNoDepsHint(const Stmt &ast, const ID &loop1,
-                                         const ID &loop2) {
-    auto _l1 = getCursorById(ast, loop1).node();
-    ASSERT(_l1->nodeType() == ASTNodeType::For);
-    auto l1 = _l1.as<ForNode>();
-    auto _l2 = getCursorById(ast, loop2).node();
-    ASSERT(_l2->nodeType() == ASTNodeType::For);
-    auto l2 = _l2.as<ForNode>();
+std::vector<std::string> mergeNoDepsHint(const Stmt &ast,
+                                         const std::vector<ID> &loops) {
+    std::vector<For> loopNodes;
+    loopNodes.reserve(loops.size());
+    for (auto &&loopId : loops) {
+        auto node = getCursorById(ast, loopId).node();
+        ASSERT(node->nodeType() == ASTNodeType::For);
+        loopNodes.emplace_back(node.as<ForNode>());
+    }
 
-    auto ret = intersect(l1->property_.noDeps_, l2->property_.noDeps_);
-
-    for (auto &&item : l1->property_.noDeps_) {
-        if (std::find(ret.begin(), ret.end(), item) == ret.end()) {
-            bool noDep = true;
-            auto filter = [&](const AccessPoint &later,
-                              const AccessPoint &earlier) {
-                return later.def_->name_ == item;
-            };
-            auto found = [&](const Dependency &d) { noDep = false; };
-            findDeps(ast, {{{loop2, DepDirection::Different}}}, found,
-                     FindDepsMode::Dep, DEP_ALL, filter, false, false);
-            if (noDep) {
-                ret.emplace_back(item);
-            }
+    std::vector<std::string> ret, candidates;
+    for (auto &&[i, loop] : iter::enumerate(loopNodes)) {
+        if (i == 0) {
+            ret = loop->property_.noDeps_;
+            candidates = loop->property_.noDeps_;
+        } else {
+            ret = intersect(ret, loop->property_.noDeps_);
+            candidates = uni(candidates, loop->property_.noDeps_);
         }
     }
 
-    for (auto &&item : l2->property_.noDeps_) {
+    for (auto &&item : candidates) {
         if (std::find(ret.begin(), ret.end(), item) == ret.end()) {
-            bool noDep = true;
-            auto filter = [&](const AccessPoint &later,
-                              const AccessPoint &earlier) {
-                return later.def_->name_ == item;
-            };
-            auto found = [&](const Dependency &d) { noDep = false; };
-            findDeps(ast, {{{loop1, DepDirection::Different}}}, found,
-                     FindDepsMode::Dep, DEP_ALL, filter, false, false);
-            if (noDep) {
-                ret.emplace_back(item);
+            for (auto &&loop : loopNodes) {
+                if (std::find(loop->property_.noDeps_.begin(),
+                              loop->property_.noDeps_.end(),
+                              item) == loop->property_.noDeps_.end()) {
+                    bool noDep = true;
+                    auto filter = [&](const AccessPoint &later,
+                                      const AccessPoint &earlier) {
+                        return later.def_->name_ == item;
+                    };
+                    auto found = [&](const Dependency &d) { noDep = false; };
+                    findDeps(ast, {{{loop->id(), DepDirection::Different}}},
+                             found, FindDepsMode::Dep, DEP_ALL, filter, false,
+                             false);
+                    if (!noDep) {
+                        goto fail;
+                    }
+                }
             }
+            ret.emplace_back(item);
+        fail:;
         }
     }
-
     return ret;
 }
 

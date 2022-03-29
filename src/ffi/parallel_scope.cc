@@ -4,9 +4,20 @@
 namespace ir {
 
 void init_ffi_parallel_scope(py::module_ &m) {
-    py::class_<OpenMPScope>(m, "OpenMPScope").def(py::init<>());
+    py::class_<SerialScope>(m, "SerialScope")
+        .def(py::init<>())
+        .def("__str__",
+             [](const SerialScope &scope) { return toString(scope); });
 
-    py::class_<CUDAStreamScope>(m, "CUDAStreamScope").def(py::init<>());
+    py::class_<OpenMPScope>(m, "OpenMPScope")
+        .def(py::init<>())
+        .def("__str__",
+             [](const OpenMPScope &scope) { return toString(scope); });
+
+    py::class_<CUDAStreamScope>(m, "CUDAStreamScope")
+        .def(py::init<>())
+        .def("__str__",
+             [](const CUDAStreamScope &scope) { return toString(scope); });
 
     py::enum_<CUDAScope::Level>(m, "CUDAScopeLevel")
         .value("Block", CUDAScope::Level::Block)
@@ -19,7 +30,12 @@ void init_ffi_parallel_scope(py::module_ &m) {
         .def(py::init(
             [](const CUDAScope::Level &level, const CUDAScope::Dim &dim) {
                 return CUDAScope{level, dim};
-            }));
+            }))
+        .def("__str__", [](const CUDAScope &scope) { return toString(scope); });
+
+    // TODO: Can we check the type using a native Python API?
+    // https://github.com/pybind/pybind11/discussions/3835
+    m.def("check", [](const ParallelScope &scope) { return toString(scope); });
 }
 
 } // namespace ir

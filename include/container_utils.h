@@ -50,8 +50,22 @@ bool hasIntersect(const std::unordered_set<T, Hash, KeyEqual> &lhs,
 template <class T>
 std::vector<T> intersect(const std::vector<T> &lhs, const std::vector<T> &rhs) {
     std::vector<T> ret;
+    ret.reserve(std::min(lhs.size(), rhs.size()));
     for (auto &&item : lhs) {
         if (std::find(rhs.begin(), rhs.end(), item) != rhs.end()) {
+            ret.emplace_back(item);
+        }
+    }
+    return ret;
+}
+
+template <class T>
+std::vector<T> uni(const std::vector<T> &lhs, const std::vector<T> &rhs) {
+    std::vector<T> ret;
+    ret.reserve(std::max(lhs.size(), rhs.size()));
+    ret.insert(ret.end(), lhs.begin(), lhs.end());
+    for (auto &&item : rhs) {
+        if (std::find(lhs.begin(), lhs.end(), item) == lhs.end()) {
             ret.emplace_back(item);
         }
     }

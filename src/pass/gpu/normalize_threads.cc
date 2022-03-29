@@ -1,6 +1,6 @@
 #include <climits>
 
-#include <container_utils.h>
+#include <analyze/merge_no_deps_hint.h>
 #include <pass/gpu/normalize_threads.h>
 #include <pass/merge_and_hoist_if.h>
 #include <pass/shrink_for.h>
@@ -56,12 +56,7 @@ Stmt NormalizeThreads::doVisitFor(const For &_op) {
         auto op = __op.as<ForNode>();
         varMap_.erase(_op->iter_);
         inside_[_op->property_.parallel_]--;
-        if (!noDeps_.count(_op->property_.parallel_)) {
-            noDeps_[_op->property_.parallel_] = _op->property_.noDeps_;
-        } else {
-            noDeps_[_op->property_.parallel_] = intersect(
-                noDeps_.at(_op->property_.parallel_), _op->property_.noDeps_);
-        }
+        loops_[_op->property_.parallel_].emplace_back(_op->id());
         return makeIf(op->id(), makeLT(makeVar(newIter), op->len_), op->body_);
     } else {
         return Mutator::visit(_op);
@@ -77,32 +72,35 @@ Stmt NormalizeThreads::visit(const For &op) {
         auto zero = makeIntConst(0);
         auto one = makeIntConst(1);
         auto inf = makeIntConst(INT_MAX);
-        ret = makeFor("", ".threadIdx.x", zero, inf, one, inf,
-                      ForProperty()
-                          .withParallel(threadIdxX)
-                          .withNoDeps(noDeps_[threadIdxX]),
-                      ret);
-        ret = makeFor("", ".threadIdx.y", zero, inf, one, inf,
-                      ForProperty()
-                          .withParallel(threadIdxY)
-                          .withNoDeps(noDeps_[threadIdxY]),
-                      ret);
-        ret = makeFor("", ".threadIdx.z", zero, inf, one, inf,
-                      ForProperty()
-                          .withParallel(threadIdxZ)
-                          .withNoDeps(noDeps_[threadIdxZ]),
-                      ret);
+        ret =
+            makeFor("", ".threadIdx.x", zero, inf, one, inf,
+                    ForProperty()
+                        .withParallel(threadIdxX)
+                        .withNoDeps(mergeNoDepsHint(root_, loops_[threadIdxX])),
+                    ret);
+        ret =
+            makeFor("", ".threadIdx.y", zero, inf, one, inf,
+                    ForProperty()
+                        .withParallel(threadIdxY)
+                        .withNoDeps(mergeNoDepsHint(root_, loops_[threadIdxY])),
+                    ret);
+        ret =
+            makeFor("", ".threadIdx.z", zero, inf, one, inf,
+                    ForProperty()
+                        .withParallel(threadIdxZ)
+                        .withNoDeps(mergeNoDepsHint(root_, loops_[threadIdxZ])),
+                    ret);
         ret = makeFor("", ".blockIdx.x", zero, inf, one, inf,
                       ForProperty().withParallel(blockIdxX).withNoDeps(
-                          noDeps_[blockIdxX]),
+                          mergeNoDepsHint(root_, loops_[blockIdxX])),
                       ret);
         ret = makeFor("", ".blockIdx.y", zero, inf, one, inf,
                       ForProperty().withParallel(blockIdxY).withNoDeps(
-                          noDeps_[blockIdxY]),
+                          mergeNoDepsHint(root_, loops_[blockIdxY])),
                       ret);
         ret = makeFor("", ".blockIdx.z", zero, inf, one, inf,
                       ForProperty().withParallel(blockIdxZ).withNoDeps(
-                          noDeps_[blockIdxZ]),
+                          mergeNoDepsHint(root_, loops_[blockIdxZ])),
                       ret);
         return ret;
     } else {
@@ -153,7 +151,7 @@ Stmt CheckThreadNum::visit(const For &_op) {
 }
 
 Stmt normalizeThreads(const Stmt &_op) {
-    auto op = NormalizeThreads()(_op);
+    auto op = NormalizeThreads(_op)(_op);
     op = shrinkFor(op);
     op = mergeAndHoistIf(op);
     op = CheckThreadNum()(op);
