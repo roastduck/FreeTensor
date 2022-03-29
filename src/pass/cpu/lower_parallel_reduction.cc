@@ -2,6 +2,7 @@
 
 #include <hash.h>
 #include <pass/cpu/lower_parallel_reduction.h>
+#include <pass/make_nested_loops.h>
 
 namespace ir {
 
@@ -42,14 +43,14 @@ Stmt LowerParallelReduction::visit(const For &_op) {
     std::vector<Stmt> initStmts, flushStmts;
 
     std::vector<std::string> workspaces;
-    std::vector<std::vector<SubTree<ExprNode>>> workspaceShapes;
+    std::vector<std::vector<Expr>> workspaceShapes;
     std::vector<DataType> dtypes;
     for (size_t i = 0, n = op->property_.reductions_.size(); i < n; i++) {
         auto &[redOp, var, varIndices] = op->property_.reductions_[i];
         auto dtype = buffer(var)->tensor().dtype();
         auto workspace =
             "__reduce_" + op->id().strId() + "_" + std::to_string(i);
-        std::vector<SubTree<ExprNode>> workspaceShape;
+        std::vector<Expr> workspaceShape;
         ASSERT(varIndices.size() == buffer(var)->tensor().shape().size());
         for (auto &&[idx, dim] :
              iter::zip(varIndices, buffer(var)->tensor().shape())) {
@@ -58,7 +59,7 @@ Stmt LowerParallelReduction::visit(const For &_op) {
             }
         }
 
-        std::vector<SubTree<ExprNode>> wIndices, flushVIndices;
+        std::vector<Expr> wIndices, flushVIndices;
         for (size_t j = 0, m = workspaceShape.size(); j < m; j++) {
             wIndices.emplace_back(makeVar(workspace + "." + std::to_string(j)));
         }
@@ -72,20 +73,16 @@ Stmt LowerParallelReduction::visit(const For &_op) {
         }
         auto initStmt =
             makeStore("", workspace, wIndices, neutralVal(dtype, redOp));
-        auto flushStmt =
-            makeReduceTo("", var, std::move(flushVIndices), redOp,
-                         makeLoad(workspace, std::move(wIndices)), false);
-        for (size_t j = workspaceShape.size() - 1; ~j; j--) {
-            initStmt = makeFor(
-                "", workspace + "." + std::to_string(j), makeIntConst(0),
-                workspaceShape[j], makeIntConst(1), workspaceShape[j],
-                ForProperty().withParallel(OpenMPScope{}), std::move(initStmt));
-            flushStmt = makeFor("", workspace + "." + std::to_string(j),
-                                makeIntConst(0), workspaceShape[j],
-                                makeIntConst(1), workspaceShape[j],
-                                ForProperty().withParallel(OpenMPScope{}),
-                                std::move(flushStmt));
-        }
+        auto flushStmt = makeReduceTo("", var, std::move(flushVIndices), redOp,
+                                      makeLoad(workspace, wIndices), false);
+        initStmt = makeNestedLoops(
+            wIndices, iter::repeat(makeIntConst(0)), workspaceShape,
+            iter::repeat(makeIntConst(1)), workspaceShape,
+            iter::repeat(ForProperty().withParallel(OpenMPScope{})), initStmt);
+        flushStmt = makeNestedLoops(
+            wIndices, iter::repeat(makeIntConst(0)), workspaceShape,
+            iter::repeat(makeIntConst(1)), workspaceShape,
+            iter::repeat(ForProperty().withParallel(OpenMPScope{})), flushStmt);
 
         initStmts.emplace_back(std::move(initStmt));
         flushStmts.emplace_back(std::move(flushStmt));

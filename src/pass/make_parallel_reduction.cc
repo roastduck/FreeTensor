@@ -4,6 +4,7 @@
 #include <analyze/check_all_defined.h>
 #include <analyze/deps.h>
 #include <hash.h>
+#include <pass/make_nested_loops.h>
 #include <pass/make_parallel_reduction.h>
 #include <pass/make_reduction.h>
 
@@ -212,14 +213,13 @@ Stmt MakeParallelReduction::visit(const For &_op) {
             Stmt flush =
                 makeReduceTo("", reduce->var_, targetIndices, reduce->op_,
                              makeLoad(cacheName, cacheIndices), true);
-            for (size_t i = newShape.size() - 1; ~i; i--) {
-                init = makeFor("", cacheName + ".i" + std::to_string(i),
-                               makeIntConst(0), newShape[i], makeIntConst(1),
-                               newShape[i], ForProperty(), init);
-                flush = makeFor("", cacheName + ".i" + std::to_string(i),
-                                makeIntConst(0), newShape[i], makeIntConst(1),
-                                newShape[i], ForProperty(), flush);
-            }
+            init = makeNestedLoops(cacheIndices, iter::repeat(makeIntConst(0)),
+                                   newShape, iter::repeat(makeIntConst(1)),
+                                   newShape, iter::repeat(ForProperty()), init);
+            flush =
+                makeNestedLoops(cacheIndices, iter::repeat(makeIntConst(0)),
+                                newShape, iter::repeat(makeIntConst(1)),
+                                newShape, iter::repeat(ForProperty()), flush);
             ret = makeVarDef(
                 "", cacheName,
                 Buffer(Tensor(newShape, dtype), AccessType::Cache, mtype),

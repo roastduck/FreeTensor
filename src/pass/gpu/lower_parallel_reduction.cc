@@ -2,6 +2,7 @@
 
 #include <hash.h>
 #include <pass/gpu/lower_parallel_reduction.h>
+#include <pass/make_nested_loops.h>
 
 namespace ir {
 
@@ -53,14 +54,14 @@ Stmt LowerParallelReduction::visit(const For &_op) {
     // scope.
 
     std::vector<std::string> workspaces;
-    std::vector<std::vector<SubTree<ExprNode>>> workspaceShapes;
+    std::vector<std::vector<Expr>> workspaceShapes;
     std::vector<DataType> dtypes;
     for (size_t i = 0, n = op->property_.reductions_.size(); i < n; i++) {
         auto &[redOp, var, varIndices] = op->property_.reductions_[i];
         auto dtype = buffer(var)->tensor().dtype();
         auto workspace =
             "__reduce_" + op->id().strId() + "_" + std::to_string(i);
-        std::vector<SubTree<ExprNode>> workspaceShape;
+        std::vector<Expr> workspaceShape;
         workspaceShape.emplace_back(op->len_);
         ASSERT(varIndices.size() == buffer(var)->tensor().shape().size());
         for (auto &&[idx, dim] :
@@ -70,7 +71,7 @@ Stmt LowerParallelReduction::visit(const For &_op) {
             }
         }
 
-        std::vector<SubTree<ExprNode>> wIndices, wFirstIndices, flushVIndices;
+        std::vector<Expr> wIndices, wFirstIndices, flushVIndices;
         wIndices.emplace_back(nth);
         wFirstIndices.emplace_back(makeIntConst(0));
         for (size_t j = 0, m = workspaceShape.size(); j < m - 1; j++) {
@@ -117,16 +118,16 @@ Stmt LowerParallelReduction::visit(const For &_op) {
                     ForProperty().withUnroll(), std::move(reduceStmt));
         flushStmt = makeStmtSeq("", {reduceStmt, flushStmt});
 
-        for (size_t j = workspaceShape.size() - 2; ~j; j--) {
-            initStmt = makeFor("", workspace + "." + std::to_string(j),
-                               makeIntConst(0), workspaceShape[j + 1],
-                               makeIntConst(1), workspaceShape[j + 1],
-                               ForProperty(), std::move(initStmt));
-            flushStmt = makeFor("", workspace + "." + std::to_string(j),
-                                makeIntConst(0), workspaceShape[j + 1],
-                                makeIntConst(1), workspaceShape[j + 1],
-                                ForProperty(), std::move(flushStmt));
-        }
+        std::vector<Expr> iters(wIndices.begin() + 1, wIndices.end()),
+            lengths(workspaceShape.begin() + 1, workspaceShape.end());
+        initStmt =
+            makeNestedLoops(iters, iter::repeat(makeIntConst(0)), lengths,
+                            iter::repeat(makeIntConst(1)), lengths,
+                            iter::repeat(ForProperty()), initStmt);
+        flushStmt =
+            makeNestedLoops(iters, iter::repeat(makeIntConst(0)), lengths,
+                            iter::repeat(makeIntConst(1)), lengths,
+                            iter::repeat(ForProperty()), flushStmt);
 
         op->body_ = makeStmtSeq("", {initStmt, op->body_, flushStmt});
 
