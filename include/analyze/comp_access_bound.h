@@ -67,9 +67,6 @@ class CompAccessBound
     // all defined name in the scope
     std::unordered_set<std::string> defs_;
 
-    // all branching conditions
-    std::vector<Expr> condStack_;
-
     CompAccessBoundMode mode_;
 
     AccessBound result_;
@@ -89,7 +86,6 @@ class CompAccessBound
     void visit(const Store &op) override;
     void visit(const ReduceTo &op) override;
     void visit(const For &op) override;
-    void visit(const If &op) override;
 };
 
 AccessBound compAccessBound(const Stmt &op, const ID &varDefId,

@@ -106,17 +106,16 @@ void CompAccessBound::visit(const VarDef &op) {
 
     for (auto &&item : access_) {
         Expr part;
-        for (auto &&cond : item.conds_) {
-            if (checkAllDefined(defs_, cond)) {
+        for (size_t i = conds().size(), iEnd = item.conds_.size(); i < iEnd;
+             i++) {
+            auto &&cond = item.conds_[i];
+            if (!isConstTrue(cond) && checkAllDefined(defs_, cond)) {
                 part = part.isValid() ? makeLAnd(part, cond) : cond;
             }
         }
         if (part.isValid()) {
-            if (!isConstTrue(part)) {
-                result_.cond_ = result_.cond_.isValid()
-                                    ? makeLOr(result_.cond_, part)
-                                    : part;
-            }
+            result_.cond_ =
+                result_.cond_.isValid() ? makeLOr(result_.cond_, part) : part;
         } else {
             result_.cond_ = makeBoolConst(true);
         }
@@ -129,7 +128,7 @@ void CompAccessBound::visit(const Load &op) {
         access_.emplace_back(
             unique_,
             std::vector<Expr>(op->indices_.begin(), op->indices_.end()),
-            condStack_);
+            conds());
     }
 }
 
@@ -139,7 +138,7 @@ void CompAccessBound::visit(const Store &op) {
         access_.emplace_back(
             unique_,
             std::vector<Expr>(op->indices_.begin(), op->indices_.end()),
-            condStack_);
+            conds());
     }
 }
 
@@ -149,7 +148,7 @@ void CompAccessBound::visit(const ReduceTo &op) {
         access_.emplace_back(
             unique_,
             std::vector<Expr>(op->indices_.begin(), op->indices_.end()),
-            condStack_);
+            conds());
     }
 }
 
@@ -161,17 +160,6 @@ void CompAccessBound::visit(const For &op) {
         BaseClass::visit(op);
         defs_.erase(op->iter_);
     }
-}
-
-void CompAccessBound::visit(const If &op) {
-    (*this)(op->cond_);
-    condStack_.emplace_back(op->cond_);
-    (*this)(op->thenCase_);
-    if (op->elseCase_.isValid()) {
-        condStack_.back() = makeLNot(op->cond_);
-        (*this)(op->elseCase_);
-    }
-    condStack_.pop_back();
 }
 
 AccessBound compAccessBound(const Stmt &op, const ID &varDefId,
