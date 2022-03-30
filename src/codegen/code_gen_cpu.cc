@@ -126,22 +126,21 @@ void CodeGenCPU::visit(const For &op) {
                 ASSERT(false);
             }
             bool first = true;
-            for (auto &&[redOp, var, indices] : op->property_.reductions_) {
+            for (auto &&[redOp, var, begins, ends] :
+                 op->property_.reductions_) {
                 if (!first) {
                     os() << ", ";
                 }
                 first = false;
                 os() << mangle(var);
-                if (!indices.empty()) {
-                    for (auto &&idx : indices) {
-                        os() << "[";
-                        if (idx.isValid()) {
-                            (*this)(idx);
-                        } else {
-                            os() << ":";
-                        }
-                        os() << "]";
-                    }
+                for (auto &&[b, e] : iter::zip(begins, ends)) {
+                    os() << "[";
+                    (*this)(b);
+                    os() << ":";
+                    // Note that OpenMP accepts `[begin : length]` rather than
+                    // `[begin : end]`
+                    (*this)(makeSub(e, b));
+                    os() << "]";
                 }
             }
             os() << ")";

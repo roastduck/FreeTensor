@@ -4,9 +4,11 @@
 #include <analyze/check_all_defined.h>
 #include <analyze/deps.h>
 #include <hash.h>
+#include <math/min_max.h>
 #include <pass/make_nested_loops.h>
 #include <pass/make_parallel_reduction.h>
 #include <pass/make_reduction.h>
+#include <pass/simplify.h>
 
 namespace ir {
 
@@ -65,53 +67,75 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
     auto op = __op.as<ReduceToNode>();
     if (toAlter_.count(op->id())) {
-        std::unordered_map<ID, std::vector<SubTree<ExprNode, Nullable>>>
-            indicesMap;
+        std::unordered_map<ID, std::vector<std::vector<Expr>>> lowerMap,
+            upperMap; // loop ID -> [dim][bound]
         for (auto &&loopId : toAlter_.at(op->id())) {
-            auto &indices = indicesMap[loopId];
             if (auto &&parallel = paraScopes_.at(loopId);
                 std::holds_alternative<CUDAScope>(parallel) &&
                 std::get<CUDAScope>(parallel).level_ == CUDAScope::Block) {
                 // Race-free reduction among thread blocks are impossible
                 goto use_atomic;
             }
-            for (auto &&idx : _op->indices_) {
+            for (auto &&[i, idx, dim] :
+                 iter::zip(iter::count(), _op->indices_,
+                           buffer(_op->var_)->tensor().shape())) {
                 // use _op because isVariant needs it
                 if (isVariant(variantMap_, idx, loopId)) {
                     goto use_atomic;
                 }
-                if (!checkAllDefined(scopeDefined_.at(loopId), idx)) {
-                    indices.emplace_back(nullptr);
-                } else {
-                    indices.emplace_back(idx);
+                std::vector<Expr> dimLowers{makeIntConst(0)}, dimUppers{dim};
+                for (auto &&item : unique_.getLower(idx)) {
+                    if (checkAllDefined(scopeDefined_.at(loopId),
+                                        item.expr())) {
+                        dimLowers.emplace_back(item.expr());
+                    }
                 }
+                for (auto &&item : unique_.getUpper(idx)) {
+                    if (checkAllDefined(scopeDefined_.at(loopId),
+                                        item.expr())) {
+                        dimUppers.emplace_back(item.expr());
+                    }
+                }
+                lowerMap[loopId].emplace_back(std::move(dimLowers));
+                upperMap[loopId].emplace_back(std::move(dimUppers));
             }
         }
         for (auto &&loopId : toAlter_.at(op->id())) {
-            const auto &indices = indicesMap[loopId];
-            for (auto &[redOp, var, oldIndices] : forReductions_[loopId]) {
+            const auto &lowers = lowerMap[loopId]; // [dim][bound]
+            const auto &uppers = upperMap[loopId]; // [dim][bound]
+            for (auto &[redOp, var, allLowers, allUppers] :
+                 forReductions_[loopId]) {
+                // allLowers, allUppers : [dim][access][bound]
                 if (redOp == op->op_ && var == op->var_) {
-                    ASSERT(oldIndices.size() == indices.size());
-                    std::vector<SubTree<ExprNode, Nullable>> newIndices;
-                    for (auto &&[oldIdx, idx] :
-                         iter::zip(oldIndices, indices)) {
-                        if (oldIdx.isValid() && idx.isValid()) {
-                            if (HashComparator()(oldIdx, idx)) {
-                                newIndices.emplace_back(idx);
-                            } else {
-                                goto mismatch;
-                            }
-                        } else {
-                            newIndices.emplace_back(nullptr);
-                        }
+                    ASSERT(allLowers.size() == lowers.size());
+                    ASSERT(allUppers.size() == uppers.size());
+                    for (auto &&[allLowersItem, lowersItem] :
+                         iter::zip(allLowers, lowers)) {
+                        allLowersItem.emplace_back(lowersItem);
                     }
-                    oldIndices = std::move(newIndices);
+                    for (auto &&[allUppersItem, uppersItem] :
+                         iter::zip(allUppers, uppers)) {
+                        allUppersItem.emplace_back(uppersItem);
+                    }
                     goto done;
                 }
-            mismatch:;
             }
-            forReductions_[loopId].emplace_back(
-                ReductionItem{op->op_, op->var_, std::move(indices)});
+            {
+                std::vector<std::vector<std::vector<Expr>>> allLowers(
+                    lowers.size()),
+                    allUppers(uppers.size());
+                for (auto &&[allLowersItem, lowersItem] :
+                     iter::zip(allLowers, lowers)) {
+                    allLowersItem.emplace_back(lowersItem);
+                }
+                for (auto &&[allUppersItem, uppersItem] :
+                     iter::zip(allUppers, uppers)) {
+                    allUppersItem.emplace_back(uppersItem);
+                }
+                forReductions_[loopId].emplace_back(ReductionItemFactors{
+                    op->op_, op->var_, std::move(allLowers),
+                    std::move(allUppers)});
+            }
         done:;
         }
         return op;
@@ -172,21 +196,28 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
 }
 
 Stmt MakeParallelReduction::visit(const For &_op) {
-    ASSERT(!defined_.count(_op->iter_));
     ASSERT(!paraScopes_.count(_op->id()));
-    defined_.insert(_op->iter_);
     paraScopes_[_op->id()] = _op->property_.parallel_;
-    scopeDefined_[_op->id()] = defined_;
+    scopeDefined_[_op->id()] = names();
     auto __op = BaseClass::visit(_op);
     scopeDefined_.erase(_op->id());
     paraScopes_.erase(_op->id());
-    defined_.erase(_op->iter_);
 
     ASSERT(__op->nodeType() == ASTNodeType::For);
     auto op = __op.as<ForNode>();
     if (forReductions_.count(op->id())) {
-        for (auto &&reduction : forReductions_.at(op->id())) {
-            op->property_.reductions_.emplace_back(reduction);
+        for (auto &&[redOp, var, allLowers, allUppers] :
+             forReductions_.at(op->id())) {
+            std::vector<SubTree<ExprNode>> begins, ends;
+            for (auto &&dimLowers : allLowers) {
+                begins.emplace_back(makeMinMax(dimLowers));
+            }
+            for (auto &&dimUppers : allUppers) {
+                ends.emplace_back(
+                    makeAdd(makeMaxMin(dimUppers), makeIntConst(1)));
+            }
+            op->property_.reductions_.emplace_back(
+                ReductionItem{redOp, var, std::move(begins), std::move(ends)});
         }
     }
 
@@ -231,14 +262,6 @@ Stmt MakeParallelReduction::visit(const For &_op) {
     }
 }
 
-Stmt MakeParallelReduction::visit(const VarDef &op) {
-    ASSERT(!defined_.count(op->name_));
-    defined_.insert(op->name_);
-    auto ret = BaseClass::visit(op);
-    defined_.erase(op->name_);
-    return ret;
-}
-
 Stmt makeParallelReduction(const Stmt &_op) {
     auto op = makeReduction(_op);
 
@@ -280,8 +303,10 @@ Stmt makeParallelReduction(const Stmt &_op) {
 
     auto [variantExprMap, variantVarMap] = findLoopVariance(op);
 
-    return MakeParallelReduction(toAlter, serialFinder.results(),
-                                 variantExprMap)(op);
+    op = MakeParallelReduction(toAlter, serialFinder.results(),
+                               variantExprMap)(op);
+    op = simplifyPass(op);
+    return op;
 }
 
 } // namespace ir

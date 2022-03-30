@@ -72,6 +72,15 @@ std::vector<T> uni(const std::vector<T> &lhs, const std::vector<T> &rhs) {
     return ret;
 }
 
+template <class T>
+std::vector<T> cat(const std::vector<T> &lhs, const std::vector<T> &rhs) {
+    std::vector<T> ret;
+    ret.reserve(lhs.size() + rhs.size());
+    ret.insert(ret.end(), lhs.begin(), lhs.end());
+    ret.insert(ret.end(), rhs.begin(), rhs.end());
+    return ret;
+}
+
 } // namespace ir
 
 #endif // CONTAINER_UTILS_H

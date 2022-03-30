@@ -25,9 +25,7 @@ class LowerParallelReduction : public SymbolTable<Mutator> {
     Stmt visit(const ReduceTo &op) override;
 };
 
-inline Stmt lowerParallelReduction(const Stmt &op) {
-    return LowerParallelReduction()(op);
-}
+Stmt lowerParallelReduction(const Stmt &op);
 
 DEFINE_PASS_FOR_FUNC(lowerParallelReduction)
 

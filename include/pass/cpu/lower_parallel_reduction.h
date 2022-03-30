@@ -31,9 +31,7 @@ class LowerParallelReduction : public SymbolTable<Mutator> {
  * support using parallel reduction and atomic reduction simulteneously.
  * Therefore, we need to make some transformations
  */
-inline Stmt lowerParallelReduction(const Stmt &op) {
-    return LowerParallelReduction()(op);
-}
+Stmt lowerParallelReduction(const Stmt &op);
 
 DEFINE_PASS_FOR_FUNC(lowerParallelReduction)
 

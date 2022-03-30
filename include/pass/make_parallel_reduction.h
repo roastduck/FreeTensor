@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include <analyze/comp_unique_bounds.h>
 #include <analyze/find_loop_variance.h>
 #include <analyze/symbol_table.h>
 #include <func.h>
@@ -47,8 +48,18 @@ class FindSerialLoopsOverReduce : public Visitor {
     void visit(const ReduceTo &op) override;
 };
 
-class MakeParallelReduction : public SymbolTable<Mutator> {
-    typedef SymbolTable<Mutator> BaseClass;
+class MakeParallelReduction
+    : public CompTransientBounds<WithTypeInfer<SymbolTable<Mutator>>> {
+    typedef CompTransientBounds<WithTypeInfer<SymbolTable<Mutator>>> BaseClass;
+
+    struct ReductionItemFactors {
+        ReduceOp op_;
+        std::string var_;
+        std::vector<std::vector<std::vector<Expr>>> lower_,
+            upper_; // [dim][access][bound]
+    };
+
+    CompUniqueBounds unique_;
 
     const std::unordered_map<ID, std::unordered_set<ID>>
         &toAlter_; // ReduceTo ID -> Racing For ID
@@ -57,8 +68,7 @@ class MakeParallelReduction : public SymbolTable<Mutator> {
     const LoopVariExprMap &variantMap_;
 
     std::unordered_map<ID, ParallelScope> paraScopes_; // For Id -> parallel
-    std::unordered_map<ID, std::vector<ReductionItem>> forReductions_;
-    std::unordered_set<std::string> defined_;
+    std::unordered_map<ID, std::vector<ReductionItemFactors>> forReductions_;
     std::unordered_map<ID, std::unordered_set<std::string>>
         scopeDefined_; // For ID -> definitions at that scope
     std::unordered_map<
@@ -72,13 +82,13 @@ class MakeParallelReduction : public SymbolTable<Mutator> {
         const std::unordered_map<ID, std::unordered_set<ID>> &toAlter,
         const std::unordered_map<ID, std::vector<For>> &serialOverRed,
         const LoopVariExprMap &variantMap)
-        : toAlter_(toAlter), serialOverRed_(serialOverRed),
-          variantMap_(variantMap) {}
+        : unique_(*this, *this), toAlter_(toAlter),
+          serialOverRed_(serialOverRed), variantMap_(variantMap) {}
 
   protected:
+    using BaseClass::visit;
     Stmt visit(const ReduceTo &op) override;
     Stmt visit(const For &op) override;
-    Stmt visit(const VarDef &op) override;
 };
 
 /**
