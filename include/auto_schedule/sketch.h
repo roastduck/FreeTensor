@@ -15,6 +15,7 @@ typedef Ref<SketchPartNode> SketchPart;
 
 enum class SketchPartType : int {
     MultiLevelTiling,
+    MultiLevelTilingWithFusion
 };
 
 class SketchPartNode {

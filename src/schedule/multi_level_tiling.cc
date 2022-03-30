@@ -1,0 +1,105 @@
+#include <cmath>
+#include <schedule.h>
+#include <schedule/multi_level_tiling.h>
+
+namespace ir {
+
+std::vector<std::pair<ID, int>> splitLoop(Schedule &schedule, ID loop,
+                                          std::vector<int> tiling) {
+    int n = tiling.size();
+    std::vector<std::pair<ID, int>> result(n);
+    for (int i = 0; i < n - 1; i++) {
+        if (tiling[i] != 1) {
+            auto t = schedule.split(loop, tiling[i]);
+            loop = t.first;
+            result[n - i - 1] = std::make_pair(t.second, tiling[i]);
+        } else {
+            result[n - i - 1] = std::make_pair("", 1);
+        }
+    }
+    result[0] = std::make_pair(loop, tiling[n - 1]);
+    return result;
+}
+
+std::vector<std::pair<ID, int>>
+multiLevelTiling(Schedule &schedule, const ForsWithDataReuse &target,
+                 const MultiLevelTilingAnnotation &annotation,
+                 const std::string &pat) {
+    int spaceLoopLength = target.spaceLoops.size();
+    int reductionLoopLength = target.reductionLoops.size();
+    int spaceLoopTimes = annotation.spaceLoopTiling[0].size();
+    int reductionLoopTimes = annotation.reductionLoopTiling.empty()
+                                 ? 0
+                                 : annotation.reductionLoopTiling[0].size();
+
+    std::vector<std::vector<std::pair<ID, int>>> spaceSplit(spaceLoopLength);
+    std::vector<std::vector<std::pair<ID, int>>> reductionSplit(
+        reductionLoopLength);
+
+    for (int i = 0; i < spaceLoopLength; i++) {
+        spaceSplit[i] = splitLoop(schedule, target.spaceLoops[i].id,
+                                  annotation.spaceLoopTiling[i]);
+    }
+    for (int i = 0; i < reductionLoopLength; i++) {
+        reductionSplit[i] = splitLoop(schedule, target.reductionLoops[i].id,
+                                      annotation.reductionLoopTiling[i]);
+    }
+
+    std::vector<std::pair<ID, int>> tiles;
+    tiles.reserve(spaceLoopTimes * spaceLoopLength +
+                  reductionLoopTimes * reductionLoopLength);
+    int nowSpace = 0;
+    int nowReduction = 0;
+    for (char c : pat) {
+        if (c == 'S') {
+            for (auto &split : spaceSplit) {
+                tiles.push_back(split[nowSpace]);
+            }
+            nowSpace++;
+        } else {
+            for (auto &split : reductionSplit) {
+                tiles.push_back(split[nowReduction]);
+            }
+            nowReduction++;
+        }
+    }
+    std::vector<ID> labels;
+    for (const auto &tile : tiles) {
+        if (tile.second > 1) {
+            labels.push_back(tile.first);
+        }
+    }
+    schedule.reorder(labels);
+    return tiles;
+}
+
+void multiLevelTilingWithFusion(Schedule &schedule,
+                                const ForsWithDataReuse &target,
+                                const MultiLevelTilingAnnotation &annotation,
+                                const std::string &pat,
+                                const ElementWiseInfo &toFuse, int level) {
+    auto tiles = multiLevelTiling(schedule, target, annotation, pat);
+    std::string fusePat = pat.substr(0, level);
+    MultiLevelTilingAnnotation fuseAnnotation;
+    ForsWithDataReuse fuseTarget;
+    for (size_t i = 0; i < toFuse.fors.size(); i++) {
+        fuseTarget.spaceLoops = toFuse.fors;
+        std::vector<int> tiling;
+        int tot = 1;
+        for (int j = 0; j < level; j++) {
+            tiling.push_back(annotation.spaceLoopTiling[i][j]);
+            tot *= annotation.spaceLoopTiling[i][j];
+        }
+        tiling.push_back(ceil(double(toFuse.fors[i].length) / tot));
+        fuseAnnotation.spaceLoopTiling.push_back(tiling);
+    }
+    auto fuseTiles =
+        multiLevelTiling(schedule, fuseTarget, fuseAnnotation, fusePat);
+    for (size_t i = 0; i < fuseTiles.size(); i++) {
+        if (fuseTiles[i].second > 1) {
+            schedule.fuse(tiles[i].first, fuseTiles[i].first);
+        }
+    }
+}
+
+} // namespace ir

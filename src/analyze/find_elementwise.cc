@@ -20,58 +20,122 @@ void FindSingleElementWise::visit(const ReduceTo &op) {
     nowReduceTo_ = nullptr;
 }
 
-bool FindSingleElementWise::isElementWise(const Store &st, const Load &ld) {
+ElementWiseInfo FindSingleElementWise::isElementWise(const Store &st,
+                                                     const Load &ld) {
     const auto &destShape = buffer(st->var_)->tensor().shape();
     const auto &srcShape = buffer(ld->var_)->tensor().shape();
     if (destShape.size() != srcShape.size()) {
-        return false;
+        return {};
     }
     HashComparator comp;
+    size_t iteratedDims = 0;
     for (size_t i = 0; i < destShape.size(); i++) {
         if (fors_.dimIterated[i]) {
             if (!comp(destShape[i], srcShape[i])) {
-                return false;
+                return {};
             }
+            iteratedDims++;
         } else if (!comp(destShape[i], srcShape[i]) &&
                    !comp(srcShape[i], makeIntConst(1))) {
-            return false;
+            return {};
         }
     }
+    std::vector<ForInfo> forInfos;
+    std::vector<size_t> indices;
     for (size_t i = 0; i < st->indices_.size(); i++) {
         if (fors_.dimIterated[i]) {
             if (!comp(st->indices_[i], ld->indices_[i])) {
-                return false;
+                return {};
+            }
+            for (size_t j = stack_.size() - 1; j >= 0; j--) {
+                if (comp(makeVar(stack_[j].second), st->indices_[i])) {
+                    stack_[j].first.index = i;
+                    forInfos.push_back(stack_[j].first);
+                    indices.push_back(j);
+                    break;
+                }
             }
         }
     }
-    return true;
+    if (indices.size() != iteratedDims) {
+        return {};
+    }
+    std::sort(indices.begin(), indices.end());
+    if (indices.back() != stack_.size() - 1) {
+        return {};
+    }
+    for (size_t i = 1; i < indices.size(); i++) {
+        if (indices[i] != indices[i - 1] + 1) {
+            return {};
+        }
+    }
+    std::sort(forInfos.begin(), forInfos.end());
+    for (size_t i = 0; i < forInfos.size(); i++) {
+        if (forInfos[i].index != fors_.spaceLoops[i].index ||
+            forInfos[i].length != fors_.spaceLoops[i].length) {
+            return {};
+        }
+    }
+    return {st, forInfos};
 }
 
-bool FindSingleElementWise::isElementWise(const ReduceTo &st, const Load &ld) {
+ElementWiseInfo FindSingleElementWise::isElementWise(const ReduceTo &st,
+                                                     const Load &ld) {
     const auto &destShape = buffer(st->var_)->tensor().shape();
     const auto &srcShape = buffer(ld->var_)->tensor().shape();
     if (destShape.size() != srcShape.size()) {
-        return false;
+        return {};
     }
     HashComparator comp;
+    size_t iteratedDims = 0;
     for (size_t i = 0; i < destShape.size(); i++) {
         if (fors_.dimIterated[i]) {
             if (!comp(destShape[i], srcShape[i])) {
-                return false;
+                return {};
             }
+            iteratedDims++;
         } else if (!comp(destShape[i], srcShape[i]) &&
                    !comp(srcShape[i], makeIntConst(1))) {
-            return false;
+            return {};
         }
     }
+    std::vector<ForInfo> forInfos;
+    std::vector<size_t> indices;
     for (size_t i = 0; i < st->indices_.size(); i++) {
         if (fors_.dimIterated[i]) {
             if (!comp(st->indices_[i], ld->indices_[i])) {
-                return false;
+                return {};
+            }
+            for (size_t j = stack_.size() - 1; j >= 0; j--) {
+                if (comp(makeVar(stack_[j].second), st->indices_[i])) {
+                    stack_[j].first.index = i;
+                    forInfos.push_back(stack_[j].first);
+                    indices.push_back(j);
+                    break;
+                }
             }
         }
     }
-    return true;
+    if (indices.size() != iteratedDims) {
+        return {};
+    }
+    std::sort(indices.begin(), indices.end());
+    if (indices.back() != stack_.size() - 1) {
+        return {};
+    }
+    for (size_t i = 1; i < indices.size(); i++) {
+        if (indices[i] != indices[i - 1] + 1) {
+            return {};
+        }
+    }
+    std::sort(forInfos.begin(), forInfos.end());
+    for (size_t i = 0; i < forInfos.size(); i++) {
+        if (forInfos[i].index != fors_.spaceLoops[i].index ||
+            forInfos[i].length != fors_.spaceLoops[i].length) {
+            return {};
+        }
+    }
+    return {st, forInfos};
 }
 
 void FindSingleElementWise::visit(const Load &op) {
@@ -80,26 +144,36 @@ void FindSingleElementWise::visit(const Load &op) {
     }
     if (nowStore_.isValid() && op->var_ != nowStore_->var_ &&
         op->var_ == fors_.dest) {
-        if (!found_.isValid() && isElementWise(nowStore_, op)) {
-            found_ = nowStore_;
-        } else {
-            invalid_ = true;
-            return;
+        if (auto info = isElementWise(nowStore_, op); info.isValid()) {
+            if (!found_.isValid()) {
+                found_ = info;
+            } else {
+                invalid_ = true;
+                return;
+            }
         }
     } else if (nowReduceTo_.isValid() && op->var_ != nowReduceTo_->var_ &&
                op->var_ == fors_.dest) {
-        if (!found_.isValid() && isElementWise(nowReduceTo_, op)) {
-            found_ = nowStore_;
-        } else {
-            invalid_ = true;
-            return;
+        if (auto info = isElementWise(nowReduceTo_, op); info.isValid()) {
+            if (!found_.isValid()) {
+                found_ = info;
+            } else {
+                invalid_ = true;
+                return;
+            }
         }
     }
     BaseClass::visit(op);
 }
 
-Stmt findSingleElementWiseConsumer(const Stmt &root,
-                                   const ForsWithDataReuse &fors) {
+void FindSingleElementWise::visit(const For &op) {
+    stack_.emplace_back(
+        ForInfo{op->id(), -1, op->len_.as<IntConstNode>()->val_}, op->iter_);
+    BaseClass::visit(op);
+}
+
+ElementWiseInfo findSingleElementWiseConsumer(const Stmt &root,
+                                              const ForsWithDataReuse &fors) {
     FindSingleElementWise finder(fors);
     finder(root);
     return finder.result();

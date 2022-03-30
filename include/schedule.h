@@ -4,6 +4,7 @@
 #include <functional>
 #include <unordered_map>
 
+#include <auto_schedule/structs.h>
 #include <cursor.h>
 #include <driver/target.h>
 #include <func.h>
@@ -482,6 +483,16 @@ class Schedule {
      * @param target : Target architecture
      */
     void autoUnroll(const Target &target);
+
+    void multiLevelTiling(const ForsWithDataReuse &target,
+                          const MultiLevelTilingAnnotation &annotation,
+                          const std::string &pat);
+
+    void
+    multiLevelTilingWithFusion(const ForsWithDataReuse &target,
+                               const MultiLevelTilingAnnotation &annotation,
+                               const std::string &pat,
+                               const ElementWiseInfo &toFuse, int level);
 };
 
 } // namespace ir
