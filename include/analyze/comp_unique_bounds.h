@@ -70,9 +70,6 @@ class CompUniqueBounds : public WithTypeInfer<Visitor> {
     bool alwaysLT(const Expr &lhs, const Expr &rhs);
     bool alwaysLE(const Expr &lhs, const Expr &rhs);
 
-    const LowerBoundsMap &lower() const { return lower_; }
-    const UpperBoundsMap &upper() const { return upper_; }
-
   protected:
     void visitExpr(const Expr &op) override;
 

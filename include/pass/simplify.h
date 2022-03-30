@@ -57,8 +57,6 @@ class SimplifyPass
   public:
     SimplifyPass(CompUniqueBounds &unique) : unique_(unique) {}
 
-    const CompUniqueBounds &uniqueBounds() const { return unique_; }
-
   protected:
     using BaseClass::visit;
 
@@ -107,25 +105,18 @@ class BuiltinSimplify : public SimplifyPass {
  *
  * @return : {simplified, lower, upper}
  */
-template <class Simplifier>
-std::tuple<Stmt, typename CompUniqueBounds::LowerBoundsMap,
-           typename CompUniqueBounds::UpperBoundsMap>
-simplifyAndGetBounds(const Stmt &_op) {
+template <class Simplifier> Stmt simplifyImpl(const Stmt &_op) {
     auto op = _op;
 
     for (int i = 0;; i++) {
         op = annotateConds(op);
-
-        Simplifier mutator;
-        auto newOp = mutator(op);
-
+        auto newOp = Simplifier()(op);
         if (HashComparator()(newOp, op) || i > 100) {
             if (i > 100) {
                 WARNING("SimplifyPass iterates over 100 rounds. Maybe there is "
                         "a bug");
             }
-            return {newOp, mutator.uniqueBounds().lower(),
-                    mutator.uniqueBounds().upper()};
+            return newOp;
         }
         op = newOp;
     }
