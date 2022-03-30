@@ -9,27 +9,6 @@
 
 namespace ir {
 
-namespace detail {
-
-// Hack on cppitertools so we can call reversed on repeat(...)
-// https://github.com/ryanhaining/cppitertools/issues/86
-
-template <class T>
-const iter::impl::Repeater<T> &myrev(const iter::impl::Repeater<T> &repeater) {
-    return repeater;
-}
-
-template <class T>
-iter::impl::Repeater<T> &myrev(iter::impl::Repeater<T> &repeater) {
-    return repeater;
-}
-
-template <class T> auto myrev(T &&x) {
-    return iter::reversed(std::forward<T>(x));
-}
-
-} // namespace detail
-
 /**
  * Helper function to make a loop nest given lists of loop parameters (from
  * outer to inner)
@@ -45,9 +24,9 @@ Stmt makeNestedLoops(Titers &&iters, Tbegins &&begins, Tends &&ends,
                      Tbody &&body) {
     Stmt ret = std::forward<Tbody>(body);
     for (auto &&[_iter, begin, _end, step, _len, property] :
-         iter::zip(detail::myrev(iters), detail::myrev(begins),
-                   detail::myrev(ends), detail::myrev(steps),
-                   detail::myrev(lens), detail::myrev(properties))) {
+         iter::zip(iter::reversed(iters), iter::reversed(begins),
+                   iter::reversed(ends), iter::reversed(steps),
+                   iter::reversed(lens), iter::reversed(properties))) {
         std::string *iter = nullptr;
         if constexpr (std::is_same_v<std::decay_t<decltype(_iter)>,
                                      std::string>) {
