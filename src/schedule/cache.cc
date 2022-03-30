@@ -249,18 +249,16 @@ cache(const Stmt &_ast, const ID &stmt, const std::string &var, MemType mtype) {
         throw InvalidSchedule("Statement " + toString(stmt) + " not found");
     }
 
-    CompUniqueBounds::LowerBoundsMap lower;
-    CompUniqueBounds::UpperBoundsMap upper;
-    std::tie(ast, lower, upper) = simplifyAndGetBounds<BuiltinSimplify>(ast);
-    auto rwBound = compAccessBound(ast, newDef, lower, upper);
-    auto wBound =
-        compAccessBound(ast, newDef, lower, upper, COMP_ACCESS_BOUND_WRITE);
+    ast = simplifyPass(ast);
+    auto rwBound = compAccessBound(ast, newDef);
+    auto wBound = compAccessBound(ast, newDef, COMP_ACCESS_BOUND_WRITE);
     MakeFillAndFlush makeFillAndFlush(stmt, var, newVar, oldDef, rwBound,
                                       wBound);
     ast = makeFillAndFlush(ast);
     fillStmt = makeFillAndFlush.fillStmt();
     flushStmt = makeFillAndFlush.flushStmt();
 
+    ast = simplifyPass(ast);
     ast = shrinkSingleVar(ast, newDef);
     ast = removeWrites(ast, newDef);
     checkVarCrossParallel(ast, newDef, mtype);
@@ -285,16 +283,15 @@ cacheReduction(const Stmt &_ast, const ID &stmt, const std::string &var,
         throw InvalidSchedule("Statement " + toString(stmt) + " not found");
     }
 
-    CompUniqueBounds::LowerBoundsMap lower;
-    CompUniqueBounds::UpperBoundsMap upper;
-    std::tie(ast, lower, upper) = simplifyAndGetBounds<BuiltinSimplify>(ast);
-    auto bound = compAccessBound(ast, newDef, lower, upper);
+    ast = simplifyPass(ast);
+    auto bound = compAccessBound(ast, newDef);
     MakeInitAndReduce makeInitAndReduce(stmt, var, newVar, oldDef, newDef,
                                         bound);
     ast = makeInitAndReduce(ast);
     initStmt = makeInitAndReduce.initStmt();
     reduceStmt = makeInitAndReduce.reduceStmt();
 
+    ast = simplifyPass(ast);
     ast = shrinkSingleVar(ast, newDef);
     ast = removeWrites(ast, newDef);
     checkVarCrossParallel(ast, newDef, mtype);

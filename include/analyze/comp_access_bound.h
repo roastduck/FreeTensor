@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include <analyze/comp_unique_bounds.h>
 #include <math/bounds.h>
 #include <visitor.h>
 
@@ -34,22 +35,31 @@ class FindMemType : public Visitor {
     void visit(const VarDef &op) override;
 };
 
-class CompAccessBound : public Visitor {
+class CompAccessBound
+    : public CompTransientBounds<WithTypeInfer<SymbolTable<Visitor>>> {
+    typedef CompTransientBounds<WithTypeInfer<SymbolTable<Visitor>>> BaseClass;
+
     struct Access {
         std::vector<Expr> indices_, conds_;
+        std::vector<std::vector<LowerBound>> lower_;
+        std::vector<std::vector<UpperBound>> upper_;
 
-        Access(const std::vector<Expr> &indices, const std::vector<Expr> &conds)
-            : indices_(indices), conds_(conds) {}
+        Access(CompUniqueBounds &unique, const std::vector<Expr> &indices,
+               const std::vector<Expr> &conds)
+            : indices_(indices), conds_(conds) {
+            for (auto &&idx : indices) {
+                lower_.emplace_back(unique.getLower(idx));
+                upper_.emplace_back(unique.getUpper(idx));
+            }
+        }
     };
+
+    CompUniqueBounds unique_;
 
     // The variable to compute
     ID varDefId_;
     std::string var_;
     MemType mtype_;
-
-    // bounds from AnalyzeBounds
-    const std::unordered_map<Expr, std::vector<LowerBound>> &lower_;
-    const std::unordered_map<Expr, std::vector<UpperBound>> &upper_;
 
     // each access to the specific variable
     std::vector<Access> access_;
@@ -65,17 +75,15 @@ class CompAccessBound : public Visitor {
     AccessBound result_;
 
   public:
-    CompAccessBound(
-        const ID &varDefId, MemType mtype,
-        const std::unordered_map<Expr, std::vector<LowerBound>> &lower,
-        const std::unordered_map<Expr, std::vector<UpperBound>> &upper,
-        CompAccessBoundMode mode = COMP_ACCESS_BOUND_ALL)
-        : varDefId_(varDefId), mtype_(mtype), lower_(lower), upper_(upper),
+    CompAccessBound(const ID &varDefId, MemType mtype,
+                    CompAccessBoundMode mode = COMP_ACCESS_BOUND_ALL)
+        : unique_(*this, *this), varDefId_(varDefId), mtype_(mtype),
           mode_(mode) {}
 
     const AccessBound &result() const { return result_; }
 
   protected:
+    using BaseClass::visit;
     void visit(const VarDef &op) override;
     void visit(const Load &op) override;
     void visit(const Store &op) override;
@@ -84,11 +92,8 @@ class CompAccessBound : public Visitor {
     void visit(const If &op) override;
 };
 
-AccessBound
-compAccessBound(const Stmt &op, const ID &varDefId,
-                const std::unordered_map<Expr, std::vector<LowerBound>> &lower,
-                const std::unordered_map<Expr, std::vector<UpperBound>> &upper,
-                CompAccessBoundMode mode = COMP_ACCESS_BOUND_ALL);
+AccessBound compAccessBound(const Stmt &op, const ID &varDefId,
+                            CompAccessBoundMode mode = COMP_ACCESS_BOUND_ALL);
 
 } // namespace ir
 
