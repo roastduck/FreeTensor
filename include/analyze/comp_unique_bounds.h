@@ -21,8 +21,6 @@ namespace ir {
  *
  * Two UNIQUE expressions `x` have different upper bounds
  *
- * Inherit this pass to use it
- *
  * This pass is not accurate. Simplifying passes using this analysis may need
  * to run for multiple rounds
  */
