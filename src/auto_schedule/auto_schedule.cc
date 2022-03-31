@@ -5,6 +5,7 @@
 #include <auto_schedule/auto_schedule.h>
 #include <auto_schedule/rules/cache_write.h>
 #include <auto_schedule/rules/multi_level_tiling.h>
+#include <auto_schedule/rules/multi_level_tiling_with_fusion.h>
 #include <auto_schedule/utils.h>
 #include <codegen/code_gen_cpu.h>
 #include <codegen/code_gen_cuda.h>
@@ -93,7 +94,7 @@ AutoSchedule::genSchedules(const std::vector<Sketch> &sketches) {
 #pragma omp parallel for
     for (size_t i = 0; i < n; i++) {
         try {
-            ret[i] = sketches[i].genSchedule(original_);
+            ret[i] = sketches[i].genSchedule();
         } catch (const std::exception &e) {
             // OpenMP threads won't report an exception message
             std::cerr << "ERROR: " << e.what() << std::endl;
@@ -171,7 +172,7 @@ Schedule AutoSchedule::getBestSchedule() {
             best = i;
         }
     }
-    return measuredSketches_[best].genSchedule(original_);
+    return measuredSketches_[best].genSchedule();
 }
 
 std::vector<Sketch> AutoSchedule::getRandPopulation(size_t nRand) {
@@ -341,6 +342,20 @@ Stmt AutoSchedule::testCacheWrite() {
     }
     auto newSketch = rule.genPart(sketch).front();
     return newSketch.schedule().ast();
+}
+
+Stmt AutoSchedule::testMultiLevelTilingWithFusion(int nLevel) {
+    auto sketch = getInitSketch();
+    MultiLevelTilingWithFusionRule rule;
+    if (rule.analyze(sketch) == RuleStatus::Skip) {
+        return sketch.schedule().ast();
+    }
+    Sketch newSketch = rule.genPart(sketch)[nLevel];
+    std::cout << toString(newSketch.schedule().ast()) << std::endl;
+    auto part = newSketch.part(0).as<MultiLevelTilingWithFusionPart>();
+    part->genAverageAnnotation();
+    auto schedule = newSketch.genSchedule();
+    return schedule.ast();
 }
 
 } // namespace ir

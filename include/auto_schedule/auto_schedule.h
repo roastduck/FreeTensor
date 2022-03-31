@@ -74,6 +74,7 @@ class AutoSchedule {
     void genSketches();
     Sketch getInitSketch();
     Stmt testCacheWrite();
+    Stmt testMultiLevelTilingWithFusion(int nLevel);
 };
 
 } // namespace ir

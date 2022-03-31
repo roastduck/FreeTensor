@@ -64,11 +64,14 @@ multiLevelTiling(Schedule &schedule, const ForsWithDataReuse &target,
         }
     }
     std::vector<ID> labels;
+    std::cout << "tiles: ";
     for (const auto &tile : tiles) {
         if (tile.second > 1) {
             labels.push_back(tile.first);
+            std::cout << tile.first.strId() << " ";
         }
     }
+    std::cout << "\nBefore reorder: " << toString(schedule.ast()) << std::endl;
     schedule.reorder(labels);
     return tiles;
 }
@@ -79,23 +82,28 @@ void multiLevelTilingWithFusion(Schedule &schedule,
                                 const std::string &pat,
                                 const ElementWiseInfo &toFuse, int level) {
     auto tiles = multiLevelTiling(schedule, target, annotation, pat);
-    std::string fusePat = pat.substr(0, level);
+    std::string fusePat = pat.substr(0, level) + "S";
+    std::cout << toString(schedule.ast()) << std::endl;
+    std::cout << "Level: " << level << "Fuse Pattern: " << fusePat << std::endl;
     MultiLevelTilingAnnotation fuseAnnotation;
     ForsWithDataReuse fuseTarget;
     for (size_t i = 0; i < toFuse.fors.size(); i++) {
         fuseTarget.spaceLoops = toFuse.fors;
-        std::vector<int> tiling;
+        std::vector<int> tiling(level + 1);
         int tot = 1;
+        int tileSize = annotation.spaceLoopTiling[0].size();
         for (int j = 0; j < level; j++) {
-            tiling.push_back(annotation.spaceLoopTiling[i][j]);
-            tot *= annotation.spaceLoopTiling[i][j];
+            tiling[level - j] = annotation.spaceLoopTiling[i][tileSize - 1 - j];
+            tot *= annotation.spaceLoopTiling[i][tileSize - 1 - j];
         }
-        tiling.push_back(ceil(double(toFuse.fors[i].length) / tot));
+        tiling[0] = ceil(double(toFuse.fors[i].length) / tot);
         fuseAnnotation.spaceLoopTiling.push_back(tiling);
     }
     auto fuseTiles =
         multiLevelTiling(schedule, fuseTarget, fuseAnnotation, fusePat);
-    for (size_t i = 0; i < fuseTiles.size(); i++) {
+    std::cout << toString(schedule.ast()) << std::endl;
+    for (size_t i = 0; i < fuseTiles.size() - fuseTarget.spaceLoops.size();
+         i++) {
         if (fuseTiles[i].second > 1) {
             schedule.fuse(tiles[i].first, fuseTiles[i].first);
         }

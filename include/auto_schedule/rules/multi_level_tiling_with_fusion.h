@@ -30,6 +30,7 @@ class MultiLevelTilingWithFusionPart : public SketchPartNode {
 
   public:
     void genRandAnnotation(std::default_random_engine &gen) override;
+    void genAverageAnnotation();
     explicit MultiLevelTilingWithFusionPart(ForsWithDataReuse fors,
                                             ElementWiseInfo toFuse, int level,
                                             std::string pat = "SSRSRS");
