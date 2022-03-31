@@ -102,12 +102,16 @@ void multiLevelTilingWithFusion(Schedule &schedule,
     auto fuseTiles =
         multiLevelTiling(schedule, fuseTarget, fuseAnnotation, fusePat);
     std::cout << toString(schedule.ast()) << std::endl;
-    for (size_t i = 0; i < fuseTiles.size() - fuseTarget.spaceLoops.size();
-         i++) {
+    size_t fuseTileSize = fuseTiles.size() - fuseTarget.spaceLoops.size();
+    ID lastFuse;
+    for (size_t i = 0; i < fuseTileSize; i++) {
         if (fuseTiles[i].second > 1) {
-            schedule.fuse(tiles[i].first, fuseTiles[i].first);
+            lastFuse = schedule.fuse(tiles[i].first, fuseTiles[i].first);
         }
     }
+    schedule.cache(schedule.find(lastFuse).node().as<ForNode>()->body_->id(),
+                   target.dest, MemType::CPU);
+    std::cout << "after cache: " << toString(schedule.ast()) << std::endl;
 }
 
 } // namespace ir
