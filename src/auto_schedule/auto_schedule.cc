@@ -24,6 +24,7 @@ AutoSchedule::AutoSchedule(const Schedule &schedule, const Ref<Target> &target,
       predictFunc_(std::move(predictFunc)), updateFunc_(std::move(updateFunc)) {
     rules_.push_back(new CacheWriteRule);
     rules_.push_back(new MultiLevelTilingRule);
+    rules_.push_back(new MultiLevelTilingWithFusionRule);
     std::random_device rd;
     randGen_ = std::default_random_engine(rd());
 }
@@ -91,7 +92,7 @@ std::vector<Schedule>
 AutoSchedule::genSchedules(const std::vector<Sketch> &sketches) {
     size_t n = sketches.size();
     std::vector<Schedule> ret(n);
-#pragma omp parallel for
+    //#pragma omp parallel for
     for (size_t i = 0; i < n; i++) {
         try {
             ret[i] = sketches[i].genSchedule();

@@ -34,7 +34,6 @@ struct ForWithStore {
 };
 
 struct ElementWiseInfo {
-    Stmt stmt;
     std::vector<ForInfo> fors;
     [[nodiscard]] bool isValid() const { return !fors.empty(); }
 };
@@ -51,7 +50,7 @@ template <> struct std::hash<ir::ForInfo> {
 
 template <> struct std::hash<ir::ElementWiseInfo> {
     std::size_t operator()(ir::ElementWiseInfo const &s) const noexcept {
-        std::size_t h = std::hash<ir::Stmt>{}(s.stmt.get());
+        std::size_t h = 0;
         for (const auto &f : s.fors) {
             h = ir::hashCombine(h, std::hash<ir::ForInfo>{}(f));
         }

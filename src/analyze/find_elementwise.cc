@@ -76,7 +76,7 @@ ElementWiseInfo FindSingleElementWise::isElementWise(const Store &st,
             return {};
         }
     }
-    return {st, forInfos};
+    return {forInfos};
 }
 
 ElementWiseInfo FindSingleElementWise::isElementWise(const ReduceTo &st,
@@ -135,7 +135,7 @@ ElementWiseInfo FindSingleElementWise::isElementWise(const ReduceTo &st,
             return {};
         }
     }
-    return {st, forInfos};
+    return {forInfos};
 }
 
 void FindSingleElementWise::visit(const Load &op) {

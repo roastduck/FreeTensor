@@ -71,7 +71,6 @@ multiLevelTiling(Schedule &schedule, const ForsWithDataReuse &target,
             std::cout << tile.first.strId() << " ";
         }
     }
-    std::cout << "\nBefore reorder: " << toString(schedule.ast()) << std::endl;
     schedule.reorder(labels);
     return tiles;
 }
@@ -104,11 +103,13 @@ void multiLevelTilingWithFusion(Schedule &schedule,
     std::cout << toString(schedule.ast()) << std::endl;
     size_t fuseTileSize = fuseTiles.size() - fuseTarget.spaceLoops.size();
     ID lastFuse;
+    std::cout << "before fuse: " << toString(schedule.ast()) << std::endl;
     for (size_t i = 0; i < fuseTileSize; i++) {
         if (fuseTiles[i].second > 1) {
             lastFuse = schedule.fuse(tiles[i].first, fuseTiles[i].first);
         }
     }
+    std::cout << "after fuse: " << toString(schedule.ast()) << std::endl;
     schedule.cache(schedule.find(lastFuse).node().as<ForNode>()->body_->id(),
                    target.dest, MemType::CPU);
     std::cout << "after cache: " << toString(schedule.ast()) << std::endl;

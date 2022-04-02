@@ -258,9 +258,9 @@ cache(const Stmt &_ast, const ID &stmt, const std::string &var, MemType mtype) {
     fillStmt = makeFillAndFlush.fillStmt();
     flushStmt = makeFillAndFlush.flushStmt();
 
-    ast = simplifyPass(ast);
-    ast = shrinkSingleVar(ast, newDef);
-    ast = removeWrites(ast, newDef);
+    //    ast = simplifyPass(ast);
+    //    ast = shrinkSingleVar(ast, newDef);
+    //    ast = removeWrites(ast, newDef);
     checkVarCrossParallel(ast, newDef, mtype);
     return std::make_pair(
         ast, std::make_tuple(std::move(fillStmt), std::move(flushStmt),
