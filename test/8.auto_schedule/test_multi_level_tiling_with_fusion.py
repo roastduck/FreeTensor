@@ -47,26 +47,19 @@ def test_cache():
     m = 4
 
     @ir.transform
-    def test(w, x, y, z):
-        ir.declare_var(w, (a, b), "int32", "input", "cpu")
-        ir.declare_var(x, (b, a), "int32", "input", "cpu")
-        ir.declare_var(y, (a, a), "int32", "cache", "cpu")
-        ir.declare_var(z, (a, a), "int32", "output", "cpu")
+    def test(y, z):
+        # ir.declare_var(w, (a, b), "int32", "input", "cpu")
+        # ir.declare_var(x, (b, a), "int32", "input", "cpu")
+        ir.declare_var(y, (a,), "int32", "cache", "cpu")
+        ir.declare_var(z, (a,), "int32", "output", "cpu")
         "nid: L1"
         for p1 in range(4):
-            "nid: L3"
-            for k in range(b):
-                "nid: L4"
-                for p in range(a // 4):
-                    "nid: L5"
-                    for q in range(a):
-                        y[p + p1 * 32,
-                          q] = y[p + p1 * 32, q] + w[p + p1 * 32, k] * x[k, q]
+            "nid: L4"
+            for p in range(a // 4):
+                y[p + p1 * 32] = p + p1 * 32
             "nid: L6"
             for p0 in range(a // 4):
-                "nid: L7"
-                for q0 in range(a):
-                    z[p0 + p1 * 32, q0] = y[p0 + p1 * 32, q0]
+                z[p0 + p1 * 32] = y[p0 + p1 * 32]
 
     s = ir.Schedule(test)
     print(s.ast())
