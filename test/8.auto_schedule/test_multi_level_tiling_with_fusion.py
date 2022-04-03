@@ -39,29 +39,3 @@ def test_fusion():
     s = ir.AutoSchedule(s, target, device, 8)
     ast = s.test_multi_level_tiling_with_fusion(1)
     print(ast)
-
-
-def test_cache():
-    a = 128
-
-    @ir.transform
-    def test(y, z):
-        ir.declare_var(y, (a,), "int32", "cache", "cpu")
-        ir.declare_var(z, (a,), "int32", "output", "cpu")
-        for p0 in range(5):
-            "nid: LQ"
-            for p1 in range(3):
-                "nid: L4"
-                for p in range(9):
-                    if (((27 * p0) + p) + (9 * p1)) < 128:
-                        y[p + p0 * 27 + p1 * 9] = p
-                "nid: L6"
-                for px in range(9):
-                    if (((27 * p0) + px) + (9 * p1)) < 128:
-                        z[px + p0 * 27 + p1 * 9] = y[px + p0 * 27 + p1 * 9]
-
-    s = ir.Schedule(test)
-    print(s.ast())
-
-    s.cache(s.find("LQ").node().body, "y", "cpu")
-    print(s.ast())
