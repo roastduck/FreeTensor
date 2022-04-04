@@ -159,82 +159,61 @@ void CodeGenCUDA::visit(const Ceil &op) {
 }
 
 void CodeGenCUDA::visit(const Store &op) {
-    if (this->buffer(op->var_)->mtype() == MemType::GPUWarp) {
+    if (buffer(op->var_)->mtype() == MemType::GPUWarp) {
         auto id = mangle(op->var_);
-        this->markUseBuffer(op->var_);
-        this->makeIndent();
-        this->os() << id;
+        markUseBuffer(op->var_);
+        makeIndent();
+        os() << id;
         for (int i = 1; i < (int)op->indices_.size(); i++) {
-            this->os() << "[";
+            os() << "[";
             (*this)(op->indices_[i]);
-            this->os() << "]";
+            os() << "]";
         }
-        this->os() << " = ";
+        os() << " = ";
         (*this)(op->expr_);
-        this->os() << ";" << std::endl;
+        os() << ";" << std::endl;
     } else {
         CodeGenC::visit(op);
     }
 }
 
 void CodeGenCUDA::visit(const Load &op) {
-    if (this->buffer(op->var_)->mtype() == MemType::GPUWarp) {
+    if (buffer(op->var_)->mtype() == MemType::GPUWarp) {
         auto id = mangle(op->var_);
-        this->markUseBuffer(op->var_);
+        markUseBuffer(op->var_);
         // mask
-        this->os() << "__shfl_sync(0x1f, ";
+        os() << "__shfl_sync(0x1f, ";
         // var
-        this->os() << id;
+        os() << id;
         for (int i = 1; i < (int)op->indices_.size(); i++) {
-            this->os() << "[";
+            os() << "[";
             (*this)(op->indices_[i]);
-            this->os() << "]";
+            os() << "]";
         }
-        this->os() << ", ";
+        os() << ", ";
         // srcLane
         (*this)(op->indices_[0]);
-        this->os() << ");" << std::endl;
+        os() << ");" << std::endl;
     } else {
         CodeGenC::visit(op);
     }
 }
 
 void CodeGenCUDA::visit(const ReduceTo &op) {
-    auto id = mangle(op->var_);
     markUseBuffer(op->var_);
     makeIndent();
 
     auto genAddr = [&]() {
-        if (op->indices_.empty()) {
-            switch (this->buffer(op->var_)->mtype()) {
-            case MemType::ByValue:
-            case MemType::CPU:
-            case MemType::GPULocal:
-                this->os() << id;
-                break;
-            case MemType::GPUGlobal:
-            case MemType::GPUShared:
-                this->os() << "*" << id;
-                break;
-            case MemType::GPUWarp:
-            default:
-                ASSERT(false);
+        if (this->buffer(op->var_)->mtype() == MemType::GPUWarp) {
+            ASSERT(!op->indices_.empty());
+            os() << mangle(op->var_);
+            for (int i = 1; i < (int)op->indices_.size(); i++) {
+                os() << "[";
+                (*this)(op->indices_[i]);
+                os() << "]";
             }
         } else {
-            os() << id;
-            if (this->buffer(op->var_)->mtype() == MemType::GPUWarp) {
-                for (int i = 1; i < (int)op->indices_.size(); i++) {
-                    this->os() << "[";
-                    (*this)(op->indices_[i]);
-                    this->os() << "]";
-                }
-            } else {
-                for (auto &&index : op->indices_) {
-                    os() << "[";
-                    (*this)(index);
-                    os() << "]";
-                }
-            }
+            genScalar(op);
         }
     };
     auto genExpr = [&]() { (*this)(op->expr_); };
