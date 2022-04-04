@@ -50,12 +50,12 @@ void MultiLevelTilingWithFusionPart::genRandAnnotation(
 MultiLevelTilingWithFusionPart::MultiLevelTilingWithFusionPart(
     ForsWithDataReuse fors, ElementWiseInfo toFuse, int level, std::string pat,
     MemType memType)
-    : MultiLevelTilingPart(std::move(fors), std::move(pat)), memType_(memType), level_(level), toFuse_(std::move(toFuse)) {
-}
+    : MultiLevelTilingPart(std::move(fors), std::move(pat)), memType_(memType),
+      level_(level), toFuse_(std::move(toFuse)) {}
 
 void MultiLevelTilingWithFusionPart::apply(Schedule &schedule) {
-    tiles_ = schedule.multiLevelTilingWithFusion(
-        target_, annotation_, pat_, toFuse_, level_, memType_);
+    tiles_ = schedule.multiLevelTilingWithFusion(target_, annotation_, pat_,
+                                                 toFuse_, level_, memType_);
 }
 
 SketchPart

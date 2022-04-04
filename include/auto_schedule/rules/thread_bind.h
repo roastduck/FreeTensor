@@ -10,6 +10,6 @@ class ThreadBindRule : public InitRule {
     bool apply(SketchPart &part, Schedule &schedule) const override;
 };
 
-}
+} // namespace ir
 
 #endif // IR_THREAD_BIND_H

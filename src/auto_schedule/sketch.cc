@@ -1,12 +1,12 @@
+#include <auto_schedule/rule.h>
 #include <auto_schedule/sketch.h>
 #include <auto_schedule/utils.h>
-#include <auto_schedule/rule.h>
 #include <hash.h>
 
 namespace ir {
 
 Sketch Sketch::genRandAnnotation(std::default_random_engine &gen) const {
-    Sketch sketch = *this;
+    Sketch sketch = clone();
     for (auto &part : sketch.parts_) {
         part->genRandAnnotation(gen);
     }
@@ -17,22 +17,23 @@ void Sketch::addPart(const SketchPart &p) { parts_.push_back(p); }
 
 Schedule Sketch::genSchedule(const std::vector<Ref<InitRule>> &rules) {
     if (scheduleGenerated_)
-        return schedule_;
+        return generatedSchedule_;
+    generatedSchedule_ = schedule_.clone();
     for (auto &part : parts_) {
-        part->apply(schedule_);
+        part->apply(generatedSchedule_);
         for (auto &rule : rules) {
-            rule->apply(part, schedule_);
+            rule->apply(part, generatedSchedule_);
         }
     }
     scheduleGenerated_ = true;
-    return schedule_;
+    return generatedSchedule_;
 }
 
 bool Sketch::operator<(const Sketch &a) const { return time_ < a.time_; }
 
 std::pair<bool, Sketch>
 Sketch::genMutation(std::default_random_engine &gen) const {
-    Sketch ret = *this;
+    Sketch ret = clone();
     int mut_part = randomInt(ret.parts_.size() - 1, gen);
     auto mut = ret.parts_[mut_part]->mutate(gen);
     if (!mut.isValid()) {
@@ -45,7 +46,7 @@ Sketch::genMutation(std::default_random_engine &gen) const {
 std::pair<bool, Sketch>
 Sketch::genCrossover(const Sketch &sketch,
                      std::default_random_engine &gen) const {
-    Sketch ret = *this;
+    Sketch ret = clone();
     int mut_part = randomInt(ret.parts_.size() - 1, gen);
     auto mut = ret.parts_[mut_part]->crossover(sketch.parts_[mut_part], gen);
     if (!mut.isValid()) {

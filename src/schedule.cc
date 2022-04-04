@@ -739,8 +739,8 @@ void Schedule::autoUnroll(const Target &target) {
 
 std::vector<std::pair<ID, int>>
 Schedule::multiLevelTiling(const ForsWithDataReuse &target,
-                                const MultiLevelTilingAnnotation &annotation,
-                                const std::string &pat) {
+                           const MultiLevelTilingAnnotation &annotation,
+                           const std::string &pat) {
     return ir::multiLevelTiling(*this, target, annotation, pat);
 }
 std::vector<std::pair<ID, int>> Schedule::multiLevelTilingWithFusion(

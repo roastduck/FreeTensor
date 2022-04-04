@@ -17,8 +17,8 @@ std::vector<Sketch> CacheWriteRule::genPart(const Sketch &sketch) {
     const auto &target = newSketch.nowTarget();
     std::cout << "cache: " << target.outermost.strId() << " " << target.dest
               << std::endl;
-    std::string name = std::get<2>(newSketch.schedule().cache(
-        target.outermost, target.dest, memType_));
+    std::string name = std::get<2>(
+        newSketch.schedule().cache(target.outermost, target.dest, memType_));
     newSketch.nowTarget().dest = name;
     newSketch.addDoneRule(
         "cache_write_" +

@@ -2,8 +2,8 @@
 #define IR_MULTI_LEVEL_TILING_WITH_FUSION_H
 
 #include <analyze/find_multi_level_tiling.h>
-#include <auto_schedule/rules/multi_level_tiling.h>
 #include <auto_schedule/rule.h>
+#include <auto_schedule/rules/multi_level_tiling.h>
 #include <auto_schedule/sketch.h>
 #include <auto_schedule/structs.h>
 
@@ -24,8 +24,7 @@ class MultiLevelTilingWithFusionRule : public Rule {
             pat_ = "SSRSRS";
             fuseLevels_ = {1, 2};
             memType_ = MemType::CPU;
-        }
-        else {
+        } else {
             pat_ = "SSSRRSRS";
             fuseLevels_ = {3};
             memType_ = MemType::GPULocal;
@@ -44,8 +43,7 @@ class MultiLevelTilingWithFusionPart : public MultiLevelTilingPart {
     void genRandAnnotation(std::default_random_engine &gen) override;
     explicit MultiLevelTilingWithFusionPart(ForsWithDataReuse fors,
                                             ElementWiseInfo toFuse, int level,
-                                            std::string pat,
-                                            MemType memType);
+                                            std::string pat, MemType memType);
     void apply(Schedule &schedule) override;
     SketchPart mutate(std::default_random_engine &gen) override;
     SketchPart crossover(const SketchPart &part,
@@ -54,6 +52,9 @@ class MultiLevelTilingWithFusionPart : public MultiLevelTilingPart {
     [[nodiscard]] size_t hash() const override;
     SketchPartType partType() override {
         return SketchPartType::MultiLevelTilingWithFusion;
+    }
+    [[nodiscard]] SketchPart clone() const override {
+        return Ref<MultiLevelTilingWithFusionPart>::make(*this);
     }
 };
 

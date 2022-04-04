@@ -8,8 +8,11 @@ namespace ir {
 
 class CacheWriteRule : public Rule {
     MemType memType_;
+
   public:
-    explicit CacheWriteRule(TargetType target): memType_(target == TargetType::CPU ? MemType::CPU : MemType::GPULocal) {}
+    explicit CacheWriteRule(TargetType target)
+        : memType_(target == TargetType::CPU ? MemType::CPU
+                                             : MemType::GPULocal) {}
     RuleStatus analyze(const Sketch &sketch) override;
     std::vector<Sketch> genPart(const Sketch &sketch) override;
 };

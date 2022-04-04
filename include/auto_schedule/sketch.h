@@ -34,10 +34,12 @@ class SketchPartNode {
     virtual std::vector<int> getAnnotation() const = 0;
     virtual ~SketchPartNode() = default;
     virtual size_t hash() const = 0;
+    virtual SketchPart clone() const = 0;
 };
 
 class Sketch {
     Schedule schedule_;
+    Schedule generatedSchedule_;
     std::vector<std::string> doneRules_;
     std::vector<SketchPart> parts_;
     std::vector<ForsWithDataReuse> targets_;
@@ -53,8 +55,16 @@ class Sketch {
           nowTargetNum_(targets_.size() - 1) {}
 
     Sketch clone() const {
-        Sketch ret = *this;
+        Sketch ret;
         ret.schedule_ = schedule_.clone();
+        ret.doneRules_ = doneRules_;
+        for (const auto &part : parts_) {
+            ret.parts_.push_back(part->clone());
+        }
+        ret.targets_ = targets_;
+        ret.nowTargetNum_ = nowTargetNum_;
+        ret.time_ = 0;
+        ret.scheduleGenerated_ = false;
         return ret;
     }
 

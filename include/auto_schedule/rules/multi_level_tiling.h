@@ -13,6 +13,7 @@ namespace ir {
 
 class MultiLevelTilingRule : public Rule {
     std::string pat_;
+
   public:
     explicit MultiLevelTilingRule(TargetType target) {
         if (target == TargetType::CPU) {
@@ -37,7 +38,7 @@ class MultiLevelTilingPart : public SketchPartNode {
   public:
     void genRandAnnotation(std::default_random_engine &gen) override;
     void genAverageAnnotation();
-    std::vector<std::pair<ID, int>> &tiles() {return tiles_;}
+    std::vector<std::pair<ID, int>> &tiles() { return tiles_; }
     explicit MultiLevelTilingPart(ForsWithDataReuse fors,
                                   std::string pat = "SSRSRS");
     void apply(Schedule &schedule) override;
@@ -45,10 +46,13 @@ class MultiLevelTilingPart : public SketchPartNode {
     SketchPart crossover(const SketchPart &part,
                          std::default_random_engine &gen) override;
     [[nodiscard]] std::vector<int> getAnnotation() const override;
-    size_t spaceLoopLength() const {return target_.spaceLoops.size();}
+    size_t spaceLoopLength() const { return target_.spaceLoops.size(); }
     [[nodiscard]] size_t hash() const override;
     SketchPartType partType() override {
         return SketchPartType::MultiLevelTiling;
+    }
+    [[nodiscard]] SketchPart clone() const override {
+        return Ref<MultiLevelTilingPart>::make(*this);
     }
 };
 

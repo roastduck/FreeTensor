@@ -69,6 +69,9 @@ inline DataType upCast(DataType lhs, DataType rhs) {
     if (lhs == DataType::Custom || rhs == DataType::Custom) {
         return DataType::Custom;
     }
+    if (lhs == rhs) {
+        return lhs;
+    }
     if (isInt(lhs) && isFloat(rhs)) {
         return rhs;
     }

@@ -25,12 +25,12 @@ AutoSchedule::AutoSchedule(const Schedule &schedule, const Ref<Target> &target,
       predictFunc_(std::move(predictFunc)), updateFunc_(std::move(updateFunc)) {
     if (target->type() == TargetType::CPU) {
         rules_.push_back(new CacheWriteRule(target->type()));
-        rules_.push_back(new MultiLevelTilingRule(target->type()));
         rules_.push_back(new MultiLevelTilingWithFusionRule(target->type()));
+        rules_.push_back(new MultiLevelTilingRule(target->type()));
     } else {
         rules_.push_back(new CacheWriteRule(target->type()));
-        rules_.push_back(new MultiLevelTilingRule(target->type()));
         rules_.push_back(new MultiLevelTilingWithFusionRule(target->type()));
+        //        rules_.push_back(new MultiLevelTilingRule(target->type()));
         initRules_.push_back(new ThreadBindRule);
     }
     std::random_device rd;
@@ -100,14 +100,16 @@ std::vector<Schedule>
 AutoSchedule::genSchedules(std::vector<Sketch> &sketches) {
     size_t n = sketches.size();
     std::vector<Schedule> ret(n);
-#pragma omp parallel for
+    //#pragma omp parallel for
     for (size_t i = 0; i < n; i++) {
+        std::cout << "begin " << i << std::endl;
         try {
             ret[i] = sketches[i].genSchedule(initRules_);
         } catch (const std::exception &e) {
             // OpenMP threads won't report an exception message
             std::cerr << "ERROR schedule: " << e.what() << std::endl;
         }
+        std::cout << "end " << i << std::endl;
     }
     return ret;
 }
@@ -139,8 +141,7 @@ py::list AutoSchedule::genFeatures(const std::vector<Schedule> &schedules) {
     return featureList;
 }
 
-std::vector<double>
-AutoSchedule::testAndAdd(std::vector<Sketch> &sketches_in) {
+std::vector<double> AutoSchedule::testAndAdd(std::vector<Sketch> &sketches_in) {
     std::cout << "schedule" << std::endl;
     auto schedules_in = genSchedules(sketches_in);
     std::vector<Sketch> sketches;
@@ -310,9 +311,9 @@ std::vector<Sketch> AutoSchedule::evolutionarySearch(std::vector<Sketch> init,
     return ret;
 }
 
-std::vector<double>
-AutoSchedule::getPrediction(std::vector<Sketch> &sketches) {
+std::vector<double> AutoSchedule::getPrediction(std::vector<Sketch> &sketches) {
     auto schedules_in = genSchedules(sketches);
+    std::cout << "schedule completed" << std::endl;
     std::vector<int> index;
     std::vector<double> ret(schedules_in.size());
     index.reserve(schedules_in.size());
@@ -373,7 +374,7 @@ Sketch AutoSchedule::getInitSketch() {
 
 Stmt AutoSchedule::testCacheWrite() {
     auto sketch = getInitSketch();
-    CacheWriteRule rule;
+    CacheWriteRule rule(target_->type());
     if (rule.analyze(sketch) == RuleStatus::Skip) {
         return sketch.schedule().ast();
     }
@@ -383,7 +384,7 @@ Stmt AutoSchedule::testCacheWrite() {
 
 Schedule AutoSchedule::testMultiLevelTilingWithFusion(int nLevel) {
     auto sketch = getInitSketch();
-    MultiLevelTilingWithFusionRule rule(TargetType::CPU);
+    MultiLevelTilingWithFusionRule rule(target_->type());
     if (rule.analyze(sketch) == RuleStatus::Skip) {
         return sketch.schedule();
     }
@@ -391,7 +392,21 @@ Schedule AutoSchedule::testMultiLevelTilingWithFusion(int nLevel) {
     std::cout << toString(newSketch.schedule().ast()) << std::endl;
     auto part = newSketch.part(0).as<MultiLevelTilingWithFusionPart>();
     part->genAverageAnnotation();
-    auto schedule = newSketch.genSchedule(initRules_);
+    auto schedule = newSketch.genSchedule({});
+    return schedule;
+}
+
+Schedule AutoSchedule::testThreadBind() {
+    auto sketch = getInitSketch();
+    MultiLevelTilingWithFusionRule rule(target_->type());
+    if (rule.analyze(sketch) == RuleStatus::Skip) {
+        return sketch.schedule();
+    }
+    Sketch newSketch = rule.genPart(sketch)[0];
+    std::cout << toString(newSketch.schedule().ast()) << std::endl;
+    auto part = newSketch.part(0).as<MultiLevelTilingWithFusionPart>();
+    part->genAverageAnnotation();
+    auto schedule = newSketch.genSchedule({new ThreadBindRule});
     return schedule;
 }
 

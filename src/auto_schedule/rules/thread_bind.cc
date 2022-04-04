@@ -1,10 +1,10 @@
-#include <auto_schedule/rules/thread_bind.h>
 #include <auto_schedule/rules/multi_level_tiling.h>
+#include <auto_schedule/rules/thread_bind.h>
 
 namespace ir {
 
 ID mergeLoops(Schedule &schedule, std::vector<ID> loops) {
-    if (loops.empty()){
+    if (loops.empty()) {
         return {};
     }
     ID outermost = loops[0];
@@ -15,7 +15,9 @@ ID mergeLoops(Schedule &schedule, std::vector<ID> loops) {
 }
 
 bool ThreadBindRule::apply(SketchPart &part, Schedule &schedule) const {
-    if (part->partType() != SketchPartType::MultiLevelTilingWithFusion || part->partType() != SketchPartType::MultiLevelTiling) {
+    std::cout << "begin thread bind" << std::endl;
+    if (part->partType() != SketchPartType::MultiLevelTilingWithFusion &&
+        part->partType() != SketchPartType::MultiLevelTiling) {
         return false;
     }
     auto mltPart = part.as<MultiLevelTilingPart>();
@@ -39,19 +41,29 @@ bool ThreadBindRule::apply(SketchPart &part, Schedule &schedule) const {
             threadLoops.push_back(tiles[i].first);
         }
     }
+    std::cout << "before merge: " << toString(schedule.ast()) << std::endl;
     ID blockID = mergeLoops(schedule, blockLoops);
+    std::cout << "after block merge: " << toString(schedule.ast()) << std::endl;
     ID vthreadID = mergeLoops(schedule, vthreadLoops);
+    std::cout << "after vthread merge: " << toString(schedule.ast())
+              << std::endl;
     ID threadID = mergeLoops(schedule, threadLoops);
+    std::cout << "after thread merge: " << toString(schedule.ast())
+              << std::endl;
     if (blockID.isValid()) {
         schedule.parallelize(blockID, blockIdxX);
     }
+    std::cout << "after block: " << toString(schedule.ast()) << std::endl;
     if (vthreadID.isValid()) {
         schedule.blend(vthreadID);
     }
+    std::cout << "after blend: " << toString(schedule.ast()) << std::endl;
     if (threadID.isValid()) {
         schedule.parallelize(threadID, threadIdxX);
     }
+    std::cout << "after thread: " << toString(schedule.ast()) << std::endl;
+    std::cout << "thread bind ended" << std::endl;
     return true;
 }
 
-}
+} // namespace ir
