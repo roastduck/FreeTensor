@@ -12,12 +12,21 @@
 namespace ir {
 
 class MultiLevelTilingRule : public Rule {
+    std::string pat_;
   public:
+    explicit MultiLevelTilingRule(TargetType target) {
+        if (target == TargetType::CPU) {
+            pat_ = "SSRSRS";
+        } else {
+            pat_ = "SSSRRSRS";
+        }
+    }
     RuleStatus analyze(const Sketch &sketch) override;
     std::vector<Sketch> genPart(const Sketch &sketch) override;
 };
 
 class MultiLevelTilingPart : public SketchPartNode {
+  protected:
     ForsWithDataReuse target_;
     MultiLevelTilingAnnotation annotation_;
     std::string pat_;
@@ -26,6 +35,7 @@ class MultiLevelTilingPart : public SketchPartNode {
 
   public:
     void genRandAnnotation(std::default_random_engine &gen) override;
+    void genAverageAnnotation();
     explicit MultiLevelTilingPart(ForsWithDataReuse fors,
                                   std::string pat = "SSRSRS");
     void apply(Schedule &schedule) override;

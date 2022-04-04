@@ -18,12 +18,11 @@ RuleStatus MultiLevelTilingWithFusionRule::analyze(const Sketch &sketch) {
 
 std::vector<Sketch>
 MultiLevelTilingWithFusionRule::genPart(const Sketch &sketch) {
-    std::vector<int> fuseLevel = {1, 2};
     std::vector<Sketch> ret;
-    for (size_t i = 0; i < fuseLevel.size(); i++) {
+    for (size_t i = 0; i < fuseLevels_.size(); i++) {
         Sketch newSketch = sketch;
         newSketch.addPart(new MultiLevelTilingWithFusionPart(
-            sketch.nowTarget(), toFuse_, fuseLevel[i], "SSRSRS"));
+            sketch.nowTarget(), toFuse_, fuseLevels_[i], pat_));
         newSketch.moveToNextTarget();
         ret.push_back(std::move(newSketch));
     }
@@ -50,17 +49,7 @@ void MultiLevelTilingWithFusionPart::genRandAnnotation(
 
 MultiLevelTilingWithFusionPart::MultiLevelTilingWithFusionPart(
     ForsWithDataReuse fors, ElementWiseInfo toFuse, int level, std::string pat)
-    : pat_(std::move(pat)), level_(level), toFuse_(std::move(toFuse)) {
-    target_ = std::move(fors);
-    spaceLoopTimes_ = 0;
-    reductionLoopTimes_ = 0;
-    for (auto c : pat_) {
-        if (c == 'S') {
-            spaceLoopTimes_++;
-        } else {
-            reductionLoopTimes_++;
-        }
-    }
+    : MultiLevelTilingPart(std::move(fors), std::move(pat)), level_(level), toFuse_(std::move(toFuse)) {
 }
 
 void MultiLevelTilingWithFusionPart::apply(Schedule &schedule) {
@@ -145,29 +134,6 @@ size_t MultiLevelTilingWithFusionPart::hash() const {
     h = hashCombine(h, std::hash<ElementWiseInfo>{}(toFuse_));
     h = hashCombine(h, std::hash<int>{}(level_));
     return h;
-}
-void MultiLevelTilingWithFusionPart::genAverageAnnotation() {
-    int spaceLoopLength = target_.spaceLoops.size();
-    int reductionLoopLength = target_.reductionLoops.size();
-    std::vector<std::vector<int>> spaceLoopTiling(spaceLoopLength);
-    std::vector<std::vector<int>> reductionLoopTiling(reductionLoopLength);
-    for (int i = 0; i < spaceLoopLength; i++) {
-        int len = target_.spaceLoops[i].length;
-        int div = floor(pow(len, 1. / spaceLoopTimes_));
-        int last = ceil(double(len) / pow(div, spaceLoopTimes_ - 1));
-
-        spaceLoopTiling[i] = std::vector<int>(spaceLoopTimes_, div);
-        spaceLoopTiling[i][spaceLoopTimes_ - 1] = last;
-    }
-    for (int i = 0; i < reductionLoopLength; i++) {
-        int len = target_.reductionLoops[i].length;
-        int div = floor(pow(len, 1. / reductionLoopTimes_));
-        int last = ceil(double(len) / pow(div, reductionLoopTimes_ - 1));
-        reductionLoopTiling[i] = std::vector<int>(reductionLoopTimes_, div);
-        reductionLoopTiling[i][reductionLoopTimes_ - 1] = last;
-    }
-    annotation_.spaceLoopTiling = spaceLoopTiling;
-    annotation_.reductionLoopTiling = reductionLoopTiling;
 }
 
 } // namespace ir

@@ -15,8 +15,8 @@
 namespace ir {
 namespace py = pybind11;
 
-constexpr int EVOLUTIONARY_SEARCH_POPULATION = 128;
-constexpr int EVOLUTIONARY_SEARCH_ITERS = 4;
+constexpr int EVOLUTIONARY_SEARCH_POPULATION = 16;
+constexpr int EVOLUTIONARY_SEARCH_ITERS = 2;
 constexpr double EVOLUTIONARY_SEARCH_MUTATION_PROB = 0.6;
 constexpr double EVOLUTIONARY_SEARCH_CROSSOVER_PROB = 0.3;
 
