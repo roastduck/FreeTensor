@@ -27,7 +27,11 @@ class Schedule {
     Schedule(const Stmt &ast);
     Schedule(const Func &func) : Schedule(func->body_) { func_ = func; }
 
-    Schedule clone() const { return Schedule(deepCopy(func_)); }
+    Schedule clone() const {
+        if (func_.isValid())
+            return Schedule(deepCopy(func_));
+        return Schedule(deepCopy(ast_));
+    }
 
     /**
      * @return : The function being transformed
