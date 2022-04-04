@@ -13,7 +13,7 @@ namespace ir {
 
 /**
  * Some backends do not support dynamic array types, so we transform them into
- * 1D arraies, so they can be passed by pointers
+ * 1D arrays, so they can be passed by pointers
  */
 class Make1DVar : public SymbolTable<Mutator> {
     typedef SymbolTable<Mutator> BaseClass;

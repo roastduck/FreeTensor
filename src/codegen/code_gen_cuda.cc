@@ -388,11 +388,12 @@ void CodeGenCUDA::visit(const VarDef &op) {
             markDefBuffer(op);
 
             if (inKernel()) {
-                // e.g. float (*x)[5][5] = (float(*)[5][5])(__glmem + 0);
+                // e.g. float (*restirct x)[5][5] = (float(*)[5][5])(__glmem +
+                // 0);
                 auto &&tensor = op->buffer_->tensor();
                 auto &&shape = tensor.shape();
                 makeIndent();
-                os() << gen(tensor.dtype()) << " (*";
+                os() << gen(tensor.dtype()) << " (*restrict ";
                 os() << mangle(op->name_) << ")";
                 for (size_t i = 1, iEnd = shape.size(); i < iEnd;
                      i++) { // No shape[0]
