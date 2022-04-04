@@ -38,7 +38,7 @@ def test_fusion():
     print(s.ast())
     s = ir.AutoSchedule(s, target, device, 8)
     sch = s.test_multi_level_tiling_with_fusion(1)
-    assert sch.logs() == [
+    std_log = [
         'split(L4, factor=3, nparts=-1)', 'split(L4.0, factor=3, nparts=-1)',
         'split(L4.0.0, factor=3, nparts=-1)', 'split(L5, factor=3, nparts=-1)',
         'split(L5.0, factor=3, nparts=-1)',
@@ -50,3 +50,6 @@ def test_fusion():
         'fuse(L4.0.0.0, L6.0.0)', 'fuse(L5.0.0.0, L7.0.0)',
         'fuse(L4.0.0.1, L6.0.1)', 'fuse(L5.0.0.1, L7.0.1)', 'cache(#23, y)'
     ]
+    sch_log = sch.logs()
+    assert std_log[:-1] == sch_log[:-1]
+    assert sch_log[-1][:6] == 'cache(' and sch_log[-1][-4:] == ', y)'
