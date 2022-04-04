@@ -100,7 +100,7 @@ std::vector<Schedule>
 AutoSchedule::genSchedules(std::vector<Sketch> &sketches) {
     size_t n = sketches.size();
     std::vector<Schedule> ret(n);
-    #pragma omp parallel for
+#pragma omp parallel for
     for (size_t i = 0; i < n; i++) {
         try {
             ret[i] = sketches[i].genSchedule(initRules_);
@@ -381,18 +381,18 @@ Stmt AutoSchedule::testCacheWrite() {
     return newSketch.schedule().ast();
 }
 
-Stmt AutoSchedule::testMultiLevelTilingWithFusion(int nLevel) {
+Schedule AutoSchedule::testMultiLevelTilingWithFusion(int nLevel) {
     auto sketch = getInitSketch();
     MultiLevelTilingWithFusionRule rule(TargetType::CPU);
     if (rule.analyze(sketch) == RuleStatus::Skip) {
-        return sketch.schedule().ast();
+        return sketch.schedule();
     }
     Sketch newSketch = rule.genPart(sketch)[nLevel];
     std::cout << toString(newSketch.schedule().ast()) << std::endl;
     auto part = newSketch.part(0).as<MultiLevelTilingWithFusionPart>();
     part->genAverageAnnotation();
     auto schedule = newSketch.genSchedule(initRules_);
-    return schedule.ast();
+    return schedule;
 }
 
 } // namespace ir

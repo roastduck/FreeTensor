@@ -24,6 +24,7 @@ Schedule Sketch::genSchedule(const std::vector<Ref<InitRule>> &rules) {
             rule->apply(part, schedule_);
         }
     }
+    scheduleGenerated_ = true;
     return schedule_;
 }
 
