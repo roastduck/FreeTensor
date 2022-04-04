@@ -38,6 +38,7 @@ def test_thread_bind():
     print(s.ast())
     s = ir.AutoSchedule(s, target, device, 8)
     sch = s.test_thread_bind()
+    print(sch.ast())
     std_log = [
         'split(L4, factor=2, nparts=-1)', 'split(L4.0, factor=2, nparts=-1)',
         'split(L4.0.0, factor=2, nparts=-1)',

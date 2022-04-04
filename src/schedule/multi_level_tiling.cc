@@ -64,11 +64,11 @@ multiLevelTiling(Schedule &schedule, const ForsWithDataReuse &target,
         }
     }
     std::vector<ID> labels;
-    std::cout << "tiles: ";
+    //    std::cout << "tiles: ";
     for (const auto &tile : tiles) {
         if (tile.second > 1) {
             labels.push_back(tile.first);
-            std::cout << tile.first.strId() << " ";
+            //            std::cout << tile.first.strId() << " ";
         }
     }
     schedule.reorder(labels);
@@ -79,11 +79,10 @@ std::vector<std::pair<ID, int>> multiLevelTilingWithFusion(
     Schedule &schedule, const ForsWithDataReuse &target,
     const MultiLevelTilingAnnotation &annotation, const std::string &pat,
     const ElementWiseInfo &toFuse, int level, MemType memType) {
-    std::cout << "begin mltfusion" << std::endl;
-    std::cout << toString(schedule.ast()) << std::endl;
     auto tiles = multiLevelTiling(schedule, target, annotation, pat);
     std::string fusePat = pat.substr(0, level) + "S";
-    std::cout << "Level: " << level << "Fuse Pattern: " << fusePat << std::endl;
+    //    std::cout << "Level: " << level << "Fuse Pattern: " << fusePat <<
+    //    std::endl;
     MultiLevelTilingAnnotation fuseAnnotation;
     ForsWithDataReuse fuseTarget;
     for (size_t i = 0; i < toFuse.fors.size(); i++) {
@@ -103,7 +102,6 @@ std::vector<std::pair<ID, int>> multiLevelTilingWithFusion(
     //    std::cout << toString(schedule.ast()) << std::endl;
     size_t fuseTileSize = fuseTiles.size() - fuseTarget.spaceLoops.size();
     ID lastFuse;
-    std::cout << "before fuse: " << std::endl;
     //    std::cout << "before fuse: " << toString(schedule.ast()) << std::endl;
     for (size_t i = 0; i < fuseTileSize; i++) {
         if (fuseTiles[i].second > 1) {
@@ -111,11 +109,9 @@ std::vector<std::pair<ID, int>> multiLevelTilingWithFusion(
                 schedule.fuse(tiles[i].first, fuseTiles[i].first);
         }
     }
-    std::cout << "after fuse: " << std::endl;
     //    std::cout << "after fuse: " << toString(schedule.ast()) << std::endl;
     schedule.cache(schedule.find(lastFuse).node().as<ForNode>()->body_->id(),
                    target.dest, memType);
-    std::cout << "after cache: " << std::endl;
     //    std::cout << "after cache: " << toString(schedule.ast()) << std::endl;
     return tiles;
 }

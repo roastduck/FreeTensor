@@ -119,9 +119,6 @@ py::list AutoSchedule::genFeatures(const std::vector<Schedule> &schedules) {
     std::vector<std::vector<double>> featureVec(n);
 #pragma omp parallel for
     for (size_t i = 0; i < n; i++) {
-        if (!schedules[i].ast().isValid()) {
-            continue;
-        }
         try {
             featureVec[i] = fixedLengthFeature(schedules[i].ast());
         } catch (const std::exception &e) {
@@ -253,7 +250,6 @@ std::vector<Sketch> AutoSchedule::evolutionarySearch(std::vector<Sketch> init,
     for (int i = 0; i < EVOLUTIONARY_SEARCH_ITERS; i++) {
         std::cout << "search round " << i << std::endl;
         auto pred = getPrediction(*p1);
-        std::cout << "got prediction" << std::endl;
         auto probSum = getProbSum(pred);
         for (size_t j = 0; j < p1->size(); j++) {
             size_t hash = (*p1)[j].hash();
@@ -277,7 +273,6 @@ std::vector<Sketch> AutoSchedule::evolutionarySearch(std::vector<Sketch> init,
         }
 
         while (p2->size() < EVOLUTIONARY_SEARCH_POPULATION) {
-            std::cout << "now pop: " << p2->size() << std::endl;
             double r = randomDouble(randGen_);
             if (r < EVOLUTIONARY_SEARCH_MUTATION_PROB) {
                 auto nw = (*p1)[randWithProb(probSum, randGen_)].genMutation(

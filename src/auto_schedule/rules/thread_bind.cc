@@ -41,27 +41,18 @@ bool ThreadBindRule::apply(SketchPart &part, Schedule &schedule) const {
             threadLoops.push_back(tiles[i].first);
         }
     }
-    std::cout << "before merge: " << toString(schedule.ast()) << std::endl;
     ID blockID = mergeLoops(schedule, blockLoops);
-    std::cout << "after block merge: " << toString(schedule.ast()) << std::endl;
     ID vthreadID = mergeLoops(schedule, vthreadLoops);
-    std::cout << "after vthread merge: " << toString(schedule.ast())
-              << std::endl;
     ID threadID = mergeLoops(schedule, threadLoops);
-    std::cout << "after thread merge: " << toString(schedule.ast())
-              << std::endl;
     if (blockID.isValid()) {
         schedule.parallelize(blockID, blockIdxX);
     }
-    std::cout << "after block: " << toString(schedule.ast()) << std::endl;
     if (vthreadID.isValid()) {
         schedule.blend(vthreadID);
     }
-    std::cout << "after blend: " << toString(schedule.ast()) << std::endl;
     if (threadID.isValid()) {
         schedule.parallelize(threadID, threadIdxX);
     }
-    std::cout << "after thread: " << toString(schedule.ast()) << std::endl;
     std::cout << "thread bind ended" << std::endl;
     return true;
 }
