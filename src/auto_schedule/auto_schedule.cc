@@ -345,18 +345,18 @@ Stmt AutoSchedule::testCacheWrite() {
     return newSketch.schedule().ast();
 }
 
-Stmt AutoSchedule::testMultiLevelTilingWithFusion(int nLevel) {
+Schedule AutoSchedule::testMultiLevelTilingWithFusion(int nLevel) {
     auto sketch = getInitSketch();
     MultiLevelTilingWithFusionRule rule;
     if (rule.analyze(sketch) == RuleStatus::Skip) {
-        return sketch.schedule().ast();
+        return sketch.schedule();
     }
     Sketch newSketch = rule.genPart(sketch)[nLevel];
     std::cout << toString(newSketch.schedule().ast()) << std::endl;
     auto part = newSketch.part(0).as<MultiLevelTilingWithFusionPart>();
     part->genAverageAnnotation();
     auto schedule = newSketch.genSchedule();
-    return schedule.ast();
+    return schedule;
 }
 
 } // namespace ir
