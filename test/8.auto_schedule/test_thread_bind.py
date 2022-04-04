@@ -70,5 +70,3 @@ def test_thread_bind():
             assert r.startswith('cache')
         else:
             assert l == r
-    # assert std_log[:-1] == sch_log[:-1]
-    # assert sch_log[-1][:6] == 'cache(' and sch_log[-1][-4:] == ', y)'
