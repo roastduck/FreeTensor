@@ -20,9 +20,9 @@ std::vector<Sketch>
 MultiLevelTilingWithFusionRule::genPart(const Sketch &sketch) {
     std::vector<Sketch> ret;
     for (size_t i = 0; i < fuseLevels_.size(); i++) {
-        Sketch newSketch = sketch;
+        Sketch newSketch = sketch.clone();
         newSketch.addPart(new MultiLevelTilingWithFusionPart(
-            sketch.nowTarget(), toFuse_, fuseLevels_[i], pat_));
+            sketch.nowTarget(), toFuse_, fuseLevels_[i], pat_, memType_));
         newSketch.moveToNextTarget();
         ret.push_back(std::move(newSketch));
     }
@@ -48,13 +48,14 @@ void MultiLevelTilingWithFusionPart::genRandAnnotation(
 }
 
 MultiLevelTilingWithFusionPart::MultiLevelTilingWithFusionPart(
-    ForsWithDataReuse fors, ElementWiseInfo toFuse, int level, std::string pat)
-    : MultiLevelTilingPart(std::move(fors), std::move(pat)), level_(level), toFuse_(std::move(toFuse)) {
+    ForsWithDataReuse fors, ElementWiseInfo toFuse, int level, std::string pat,
+    MemType memType)
+    : MultiLevelTilingPart(std::move(fors), std::move(pat)), memType_(memType), level_(level), toFuse_(std::move(toFuse)) {
 }
 
 void MultiLevelTilingWithFusionPart::apply(Schedule &schedule) {
-    schedule.multiLevelTilingWithFusion(target_, annotation_, pat_, toFuse_,
-                                        level_);
+    tiles_ = schedule.multiLevelTilingWithFusion(
+        target_, annotation_, pat_, toFuse_, level_, memType_);
 }
 
 SketchPart

@@ -737,16 +737,17 @@ void Schedule::autoUnroll(const Target &target) {
     visitNest(getLoopNestTree(ast_));
 }
 
-void Schedule::multiLevelTiling(const ForsWithDataReuse &target,
+std::vector<std::pair<ID, int>>
+Schedule::multiLevelTiling(const ForsWithDataReuse &target,
                                 const MultiLevelTilingAnnotation &annotation,
                                 const std::string &pat) {
-    ir::multiLevelTiling(*this, target, annotation, pat);
+    return ir::multiLevelTiling(*this, target, annotation, pat);
 }
-void Schedule::multiLevelTilingWithFusion(
+std::vector<std::pair<ID, int>> Schedule::multiLevelTilingWithFusion(
     const ForsWithDataReuse &target,
     const MultiLevelTilingAnnotation &annotation, const std::string &pat,
-    const ElementWiseInfo &toFuse, int level) {
-    ir::multiLevelTilingWithFusion(*this, target, annotation, pat, toFuse,
-                                   level);
+    const ElementWiseInfo &toFuse, int level, MemType memType) {
+    return ir::multiLevelTilingWithFusion(*this, target, annotation, pat,
+                                          toFuse, level, memType);
 }
 } // namespace ir

@@ -10,6 +10,7 @@
 namespace ir {
 
 class SketchPartNode;
+class InitRule;
 
 typedef Ref<SketchPartNode> SketchPart;
 
@@ -42,6 +43,7 @@ class Sketch {
     std::vector<ForsWithDataReuse> targets_;
     int nowTargetNum_;
     double time_;
+    bool scheduleGenerated_{false};
 
   public:
     Sketch() = default;
@@ -50,9 +52,15 @@ class Sketch {
         : schedule_(schedule.clone()), targets_(std::move(targets)),
           nowTargetNum_(targets_.size() - 1) {}
 
+    Sketch clone() const {
+        Sketch ret = *this;
+        ret.schedule_ = schedule_.clone();
+        return ret;
+    }
+
     Sketch genRandAnnotation(std::default_random_engine &gen) const;
 
-    Schedule genSchedule() const;
+    Schedule genSchedule(const std::vector<Ref<InitRule>> &rules);
 
     void addPart(const SketchPart &);
     SketchPart part(int i) { return parts_[i]; }

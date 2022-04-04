@@ -8,7 +8,7 @@ RuleStatus MultiLevelTilingRule::analyze(const Sketch &sketch) {
 }
 
 std::vector<Sketch> MultiLevelTilingRule::genPart(const Sketch &sketch) {
-    Sketch newSketch = sketch;
+    Sketch newSketch = sketch.clone();
     newSketch.addPart(new MultiLevelTilingPart(sketch.nowTarget(), pat_));
     newSketch.moveToNextTarget();
     return {newSketch};
@@ -47,7 +47,7 @@ MultiLevelTilingPart::MultiLevelTilingPart(ForsWithDataReuse fors,
 }
 
 void MultiLevelTilingPart::apply(Schedule &schedule) {
-    schedule.multiLevelTiling(target_, annotation_, pat_);
+    tiles_ = schedule.multiLevelTiling(target_, annotation_, pat_);
 }
 
 SketchPart MultiLevelTilingPart::mutate(std::default_random_engine &gen) {

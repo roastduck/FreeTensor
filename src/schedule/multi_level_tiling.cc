@@ -75,11 +75,10 @@ multiLevelTiling(Schedule &schedule, const ForsWithDataReuse &target,
     return tiles;
 }
 
-void multiLevelTilingWithFusion(Schedule &schedule,
-                                const ForsWithDataReuse &target,
-                                const MultiLevelTilingAnnotation &annotation,
-                                const std::string &pat,
-                                const ElementWiseInfo &toFuse, int level) {
+std::vector<std::pair<ID, int>> multiLevelTilingWithFusion(
+    Schedule &schedule, const ForsWithDataReuse &target,
+    const MultiLevelTilingAnnotation &annotation, const std::string &pat,
+    const ElementWiseInfo &toFuse, int level, MemType memType) {
     auto tiles = multiLevelTiling(schedule, target, annotation, pat);
     std::string fusePat = pat.substr(0, level) + "S";
 //    std::cout << toString(schedule.ast()) << std::endl;
@@ -107,15 +106,16 @@ void multiLevelTilingWithFusion(Schedule &schedule,
 //    std::cout << "before fuse: " << toString(schedule.ast()) << std::endl;
     for (size_t i = 0; i < fuseTileSize; i++) {
         if (fuseTiles[i].second > 1) {
-            lastFuse = schedule.fuse(tiles[i].first, fuseTiles[i].first);
+            lastFuse = tiles[i].first = schedule.fuse(tiles[i].first, fuseTiles[i].first);
         }
     }
     std::cout << "after fuse: " << std::endl;
 //    std::cout << "after fuse: " << toString(schedule.ast()) << std::endl;
     schedule.cache(schedule.find(lastFuse).node().as<ForNode>()->body_->id(),
-                   target.dest, MemType::CPU);
+                   target.dest, memType);
     std::cout << "after cache: " << std::endl;
 //    std::cout << "after cache: " << toString(schedule.ast()) << std::endl;
+    return tiles;
 }
 
 } // namespace ir

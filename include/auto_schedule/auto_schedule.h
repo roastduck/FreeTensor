@@ -38,6 +38,7 @@ class AutoSchedule {
     py::function predictFunc_;
     py::function updateFunc_;
     std::vector<Ref<Rule>> rules_;
+    std::vector<Ref<InitRule>> initRules_;
 
   private:
     std::vector<double> measure(const std::vector<Schedule> &schedules);
@@ -61,13 +62,13 @@ class AutoSchedule {
 
     std::vector<Sketch> getRandPopulation(size_t nRand);
 
-    std::vector<Schedule> genSchedules(const std::vector<Sketch> &sketches);
+    std::vector<Schedule> genSchedules(std::vector<Sketch> &sketches);
 
     py::list genFeatures(const std::vector<Schedule> &schedules);
 
-    std::vector<double> getPrediction(const std::vector<Sketch> &sketches);
+    std::vector<double> getPrediction(std::vector<Sketch> &sketches);
 
-    std::vector<double> testAndAdd(const std::vector<Sketch> &sketches);
+    std::vector<double> testAndAdd(std::vector<Sketch> &sketches_in);
 
     Schedule getBestSchedule();
 

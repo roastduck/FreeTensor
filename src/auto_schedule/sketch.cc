@@ -1,5 +1,6 @@
 #include <auto_schedule/sketch.h>
 #include <auto_schedule/utils.h>
+#include <auto_schedule/rule.h>
 #include <hash.h>
 
 namespace ir {
@@ -14,11 +15,16 @@ Sketch Sketch::genRandAnnotation(std::default_random_engine &gen) const {
 
 void Sketch::addPart(const SketchPart &p) { parts_.push_back(p); }
 
-Schedule Sketch::genSchedule() const {
-    Schedule schedule = schedule_.clone();
-    for (const auto &part : parts_)
-        part->apply(schedule);
-    return schedule;
+Schedule Sketch::genSchedule(const std::vector<Ref<InitRule>> &rules) {
+    if (scheduleGenerated_)
+        return schedule_;
+    for (auto &part : parts_) {
+        part->apply(schedule_);
+        for (auto &rule : rules) {
+            rule->apply(part, schedule_);
+        }
+    }
+    return schedule_;
 }
 
 bool Sketch::operator<(const Sketch &a) const { return time_ < a.time_; }
