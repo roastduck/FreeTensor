@@ -21,7 +21,9 @@ void init_ffi_auto_schedule(py::module_ &m) {
         .def("gen_features", &AutoSchedule::genFeatures, "schedules"_a)
         .def("test_and_add", &AutoSchedule::testAndAdd, "sketches"_a)
         .def("get_best_schedule", &AutoSchedule::getBestSchedule)
-        .def("test_cache_write", &AutoSchedule::testCacheWrite);
+        .def("test_cache_write", &AutoSchedule::testCacheWrite)
+        .def("test_multi_level_tiling_with_fusion",
+             &AutoSchedule::testMultiLevelTilingWithFusion, "n_level"_a);
 }
 
 } // namespace ir

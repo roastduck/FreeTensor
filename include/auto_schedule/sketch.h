@@ -15,6 +15,7 @@ typedef Ref<SketchPartNode> SketchPart;
 
 enum class SketchPartType : int {
     MultiLevelTiling,
+    MultiLevelTilingWithFusion
 };
 
 class SketchPartNode {
@@ -46,14 +47,15 @@ class Sketch {
     Sketch() = default;
     Sketch(const Sketch &) = default;
     Sketch(Schedule schedule, std::vector<ForsWithDataReuse> targets)
-        : schedule_(std::move(schedule)), targets_(std::move(targets)),
+        : schedule_(schedule.clone()), targets_(std::move(targets)),
           nowTargetNum_(targets_.size() - 1) {}
 
     Sketch genRandAnnotation(std::default_random_engine &gen) const;
 
-    Schedule genSchedule(const Schedule &original) const;
+    Schedule genSchedule() const;
 
     void addPart(const SketchPart &);
+    SketchPart part(int i) { return parts_[i]; }
 
     bool operator<(const Sketch &a) const;
 

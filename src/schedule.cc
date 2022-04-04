@@ -8,6 +8,7 @@
 #include <analyze/find_indexing_loops.h>
 #include <analyze/get_loop_nest_tree.h>
 #include <analyze/with_cursor.h>
+#include <auto_schedule/utils.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/hoist_var_over_stmt_seq.h>
 #include <pass/simplify.h>
@@ -20,6 +21,7 @@
 #include <schedule/fuse.h>
 #include <schedule/inlining.h>
 #include <schedule/merge.h>
+#include <schedule/multi_level_tiling.h>
 #include <schedule/parallelize.h>
 #include <schedule/reorder.h>
 #include <schedule/separate_tail.h>
@@ -735,4 +737,16 @@ void Schedule::autoUnroll(const Target &target) {
     visitNest(getLoopNestTree(ast_));
 }
 
+void Schedule::multiLevelTiling(const ForsWithDataReuse &target,
+                                const MultiLevelTilingAnnotation &annotation,
+                                const std::string &pat) {
+    ir::multiLevelTiling(*this, target, annotation, pat);
+}
+void Schedule::multiLevelTilingWithFusion(
+    const ForsWithDataReuse &target,
+    const MultiLevelTilingAnnotation &annotation, const std::string &pat,
+    const ElementWiseInfo &toFuse, int level) {
+    ir::multiLevelTilingWithFusion(*this, target, annotation, pat, toFuse,
+                                   level);
+}
 } // namespace ir

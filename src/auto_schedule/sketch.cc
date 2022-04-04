@@ -14,8 +14,8 @@ Sketch Sketch::genRandAnnotation(std::default_random_engine &gen) const {
 
 void Sketch::addPart(const SketchPart &p) { parts_.push_back(p); }
 
-Schedule Sketch::genSchedule(const Schedule &original) const {
-    Schedule schedule = original.clone();
+Schedule Sketch::genSchedule() const {
+    Schedule schedule = schedule_.clone();
     for (const auto &part : parts_)
         part->apply(schedule);
     return schedule;
