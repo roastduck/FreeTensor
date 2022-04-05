@@ -8,6 +8,7 @@
 #include <analyze/find_indexing_loops.h>
 #include <analyze/get_loop_nest_tree.h>
 #include <analyze/with_cursor.h>
+#include <auto_schedule/utils.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/hoist_var_over_stmt_seq.h>
 #include <pass/simplify.h>
@@ -20,6 +21,7 @@
 #include <schedule/fuse.h>
 #include <schedule/inlining.h>
 #include <schedule/merge.h>
+#include <schedule/multi_level_tiling.h>
 #include <schedule/parallelize.h>
 #include <schedule/reorder.h>
 #include <schedule/separate_tail.h>
@@ -59,7 +61,7 @@ std::pair<ID, ID> Schedule::split(const ID &id, int factor, int nparts) {
         logs_.emplace_back(log);
         return ret.second;
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule("Invalid " + log + ": " + e.what());
+        throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
     }
 }
 
@@ -73,7 +75,7 @@ void Schedule::reorder(const std::vector<ID> &order) {
         ast_ = ir::reorder(ast_, order);
         logs_.emplace_back(log);
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule(log + ": " + e.what());
+        throw InvalidSchedule(log + ": " + e.what(), ast_);
     }
 }
 
@@ -85,7 +87,7 @@ ID Schedule::merge(const ID &loop1, const ID &loop2) {
         logs_.emplace_back(log);
         return ret.second;
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule("Invalid " + log + ": " + e.what());
+        throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
     }
 }
 
@@ -101,7 +103,7 @@ Schedule::fission(const ID &loop, FissionSide side, const ID &splitter,
         logs_.emplace_back(log);
         return ret.second;
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule("Invalid " + log + ": " + e.what());
+        throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
     }
 }
 
@@ -113,7 +115,7 @@ ID Schedule::fuse(const ID &loop0, const ID &loop1, bool strict) {
         logs_.emplace_back(log);
         return ret.second;
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule("Invalid " + log + ": " + e.what());
+        throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
     }
 }
 
@@ -127,7 +129,7 @@ void Schedule::swap(const std::vector<ID> &order) {
         ast_ = ir::swap(ast_, order);
         logs_.emplace_back(log);
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule("Invalid " + log + ": " + e.what());
+        throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
     }
 }
 
@@ -137,7 +139,7 @@ void Schedule::blend(const ID &loop) {
         ast_ = ir::blend(ast_, loop);
         logs_.emplace_back(log);
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule("Invalid " + log + ": " + e.what());
+        throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
     }
 }
 
@@ -150,7 +152,7 @@ Schedule::cache(const ID &stmt, const std::string &var, MemType mtype) {
         logs_.emplace_back(log);
         return ret.second;
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule("Invalid " + log + ": " + e.what());
+        throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
     }
 }
 
@@ -164,7 +166,7 @@ Schedule::cacheReduction(const ID &stmt, const std::string &var,
         logs_.emplace_back(log);
         return ret.second;
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule("Invalid " + log + ": " + e.what());
+        throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
     }
 }
 
@@ -174,7 +176,7 @@ void Schedule::setMemType(const ID &def, MemType mtype) {
         ast_ = ir::setMemType(ast_, def, mtype);
         logs_.emplace_back(log);
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule("Invalid " + log + ": " + e.what());
+        throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
     }
 }
 
@@ -189,7 +191,7 @@ void Schedule::varSplit(const ID &def, int dim, VarSplitMode mode, int factor,
         ast_ = ir::varSplit(ast_, def, dim, mode, factor, nparts);
         logs_.emplace_back(log);
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule("Invalid " + log + ": " + e.what());
+        throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
     }
 }
 
@@ -199,7 +201,7 @@ void Schedule::varMerge(const ID &def, int dim) {
         ast_ = ir::varMerge(ast_, def, dim);
         logs_.emplace_back(log);
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule("Invalid " + log + ": " + e.what());
+        throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
     }
 }
 
@@ -213,7 +215,7 @@ void Schedule::varReorder(const ID &def, const std::vector<int> &order) {
         ast_ = ir::varReorder(ast_, def, order);
         logs_.emplace_back(log);
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule("Invalid " + log + "): " + e.what());
+        throw InvalidSchedule("Invalid " + log + "): " + e.what(), ast_);
     }
 }
 
@@ -265,7 +267,8 @@ ID Schedule::moveTo(const ID &_stmt, MoveToSide side, const ID &_dst) {
                     if (s.node()->nodeType() != ASTNodeType::For) {
                         throw InvalidSchedule(
                             "Fission a If node in a StmtSeq is not currently "
-                            "supported in moveTo");
+                            "supported in moveTo",
+                            ast_);
                         // TODO: Fission IfNode
                     }
                     // Leave IDs of the other statements unchanged
@@ -292,7 +295,8 @@ ID Schedule::moveTo(const ID &_stmt, MoveToSide side, const ID &_dst) {
                     if (s.node()->nodeType() != ASTNodeType::For) {
                         throw InvalidSchedule(
                             "Fission a If node in a StmtSeq is not currently "
-                            "supported in moveTo");
+                            "supported in moveTo",
+                            ast_);
                         // TODO: Fission IfNode
                     }
                     // Leave IDs of the other statements unchanged
@@ -310,7 +314,8 @@ ID Schedule::moveTo(const ID &_stmt, MoveToSide side, const ID &_dst) {
     } catch (const InvalidSchedule &e) {
         ast_ = bak;
         throw InvalidSchedule("Invalid move_to(" + toString(_stmt) + ", " +
-                              toString(_dst) + "): " + e.what());
+                                  toString(_dst) + "): " + e.what(),
+                              ast_);
     }
 }
 
@@ -320,7 +325,7 @@ void Schedule::inlining(const ID &def) {
         ast_ = ir::inlining(ast_, def);
         logs_.emplace_back(log);
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule("Invalid " + log + ": " + e.what());
+        throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
     }
 }
 
@@ -331,7 +336,7 @@ void Schedule::parallelize(const ID &loop, const ParallelScope &parallel) {
         ast_ = ir::parallelize(ast_, loop, parallel);
         logs_.emplace_back(log);
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule("Invalid " + log + ": " + e.what());
+        throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
     }
 }
 
@@ -341,7 +346,7 @@ void Schedule::unroll(const ID &loop, bool immediate) {
         ast_ = ir::unroll(ast_, loop, immediate);
         logs_.emplace_back(log);
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule("Invalid " + log + ": " + e.what());
+        throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
     }
 }
 
@@ -351,7 +356,7 @@ void Schedule::vectorize(const ID &loop) {
         ast_ = ir::vectorize(ast_, loop);
         logs_.emplace_back(log);
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule("Invalid " + log + ": " + e.what());
+        throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
     }
 }
 
@@ -365,7 +370,7 @@ void Schedule::asMatMul(const ID &loop) {
         ast_ = ir::asMatMul(ast_, loop);
         logs_.emplace_back(log);
     } catch (const InvalidSchedule &e) {
-        throw InvalidSchedule("Invalid " + log + ": " + e.what());
+        throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
     }
 }
 
@@ -732,4 +737,16 @@ void Schedule::autoUnroll(const Target &target) {
     visitNest(getLoopNestTree(ast_));
 }
 
+void Schedule::multiLevelTiling(const ForsWithDataReuse &target,
+                                const MultiLevelTilingAnnotation &annotation,
+                                const std::string &pat) {
+    ir::multiLevelTiling(*this, target, annotation, pat);
+}
+void Schedule::multiLevelTilingWithFusion(
+    const ForsWithDataReuse &target,
+    const MultiLevelTilingAnnotation &annotation, const std::string &pat,
+    const ElementWiseInfo &toFuse, int level) {
+    ir::multiLevelTilingWithFusion(*this, target, annotation, pat, toFuse,
+                                   level);
+}
 } // namespace ir

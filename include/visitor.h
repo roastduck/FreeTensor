@@ -199,6 +199,14 @@ class Visitor {
         (*this)(op->begin_);
         (*this)(op->end_);
         (*this)(op->len_);
+        for (auto &&[redOp, var, begins, ends] : op->property_.reductions_) {
+            for (auto &&item : begins) {
+                (*this)(item);
+            }
+            for (auto &&item : ends) {
+                (*this)(item);
+            }
+        }
         (*this)(op->body_);
     }
 

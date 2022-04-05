@@ -723,8 +723,7 @@ Stmt SimplifyPass::visit(const Assert &_op) {
 }
 
 Stmt builtinSimplify(const Stmt &op) {
-    return flattenStmtSeq(
-        std::get<0>(simplifyAndGetBounds<BuiltinSimplify>(op)));
+    return flattenStmtSeq(simplifyImpl<BuiltinSimplify>(op));
 }
 
 Stmt simplifyPass(const Stmt &op) { return builtinSimplify(op); }

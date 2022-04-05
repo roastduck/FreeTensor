@@ -14,8 +14,24 @@ Expr RemoveDeadVar::visit(const Load &_op) {
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Load);
     auto op = __op.as<LoadNode>();
-    uses_.insert(op->var_);
+    if (destination_ != op->var_) {
+        uses_.insert(op->var_);
+    }
     return op;
+}
+
+Stmt RemoveDeadVar::visit(const Store &op) {
+    destination_ = op->var_;
+    auto ret = Mutator::visit(op);
+    destination_.clear();
+    return ret;
+}
+
+Stmt RemoveDeadVar::visit(const ReduceTo &op) {
+    destination_ = op->var_;
+    auto ret = Mutator::visit(op);
+    destination_.clear();
+    return ret;
 }
 
 Stmt RemoveDeadVar::visit(const VarDef &_op) {

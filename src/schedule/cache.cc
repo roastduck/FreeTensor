@@ -1,6 +1,9 @@
 #include <climits>
 #include <cmath>
 
+#include <itertools.hpp>
+
+#include <pass/make_nested_loops.h>
 #include <pass/make_reduction.h>
 #include <pass/remove_writes.h>
 #include <pass/shrink_var.h>
@@ -77,16 +80,13 @@ Stmt MakeCacheVar::visit(const ReduceTo &_op) {
 Stmt MakeFillAndFlush::visitStmt(const Stmt &_op) {
     auto op = Mutator::visitStmt(_op);
     if (op->id() == stmt_) {
-        std::vector<std::string> iters;
         std::vector<Expr> indices;
         ASSERT(def_.isValid());
         int nDim = def_->buffer_->tensor().shape().size();
-        iters.reserve(nDim);
         indices.reserve(nDim);
         for (int i = 0; i < nDim; i++) {
             std::string iter = "." + newVar_ + ".i" + std::to_string(i);
             indices.emplace_back(makeVar(iter));
-            iters.emplace_back(std::move(iter));
         }
 
         Expr idx1d;
@@ -105,12 +105,9 @@ Stmt MakeFillAndFlush::visitStmt(const Stmt &_op) {
         if (idx1d.isValid()) {
             fill = makeIf("", makeLT(idx1d, def_->sizeLim_), fill);
         }
-        for (int i = nDim - 1; i >= 0; i--) {
-            fill =
-                makeFor("", iters[i], rwRange_.lower_[i],
-                        makeAdd(rwRange_.lower_[i], rwRange_.len_[i]),
-                        makeIntConst(1), rwRange_.len_[i], ForProperty(), fill);
-        }
+        fill = makeNestedLoops(indices, rwRange_.lower_, iter::repeat(nullptr),
+                               iter::repeat(makeIntConst(1)), rwRange_.len_,
+                               iter::repeat(ForProperty()), fill);
         if (rwRange_.cond_.isValid()) {
             fill = makeIf("", rwRange_.cond_, fill);
         }
@@ -121,12 +118,9 @@ Stmt MakeFillAndFlush::visitStmt(const Stmt &_op) {
         if (idx1d.isValid()) {
             flush = makeIf("", makeLT(idx1d, def_->sizeLim_), flush);
         }
-        for (int i = nDim - 1; i >= 0; i--) {
-            flush =
-                makeFor("", iters[i], wRange_.lower_[i],
-                        makeAdd(wRange_.lower_[i], wRange_.len_[i]),
-                        makeIntConst(1), wRange_.len_[i], ForProperty(), flush);
-        }
+        flush = makeNestedLoops(indices, wRange_.lower_, iter::repeat(nullptr),
+                                iter::repeat(makeIntConst(1)), wRange_.len_,
+                                iter::repeat(ForProperty()), flush);
         if (wRange_.cond_.isValid()) {
             flush = makeIf("", wRange_.cond_, flush);
         }
@@ -150,16 +144,13 @@ Stmt MakeFillAndFlush::visit(const VarDef &op) {
 Stmt MakeInitAndReduce::visitStmt(const Stmt &_op) {
     auto op = Mutator::visitStmt(_op);
     if (op->id() == stmt_) {
-        std::vector<std::string> iters;
         std::vector<Expr> indices;
         ASSERT(def_.isValid());
         int nDim = def_->buffer_->tensor().shape().size();
-        iters.reserve(nDim);
         indices.reserve(nDim);
         for (int i = 0; i < nDim; i++) {
             std::string iter = "." + newVar_ + ".i" + std::to_string(i);
             indices.emplace_back(makeVar(iter));
-            iters.emplace_back(std::move(iter));
         }
 
         Expr idx1d;
@@ -179,12 +170,9 @@ Stmt MakeInitAndReduce::visitStmt(const Stmt &_op) {
         if (idx1d.isValid()) {
             init = makeIf("", makeLT(idx1d, def_->sizeLim_), init);
         }
-        for (int i = nDim - 1; i >= 0; i--) {
-            init =
-                makeFor("", iters[i], range_.lower_[i],
-                        makeAdd(range_.lower_[i], range_.len_[i]),
-                        makeIntConst(1), range_.len_[i], ForProperty(), init);
-        }
+        init = makeNestedLoops(indices, range_.lower_, iter::repeat(nullptr),
+                               iter::repeat(makeIntConst(1)), range_.len_,
+                               iter::repeat(ForProperty()), init);
 
         Stmt reduce = makeReduceTo("", oldVar_, indices, reduce_->op_,
                                    makeLoad(newVar_, indices), false);
@@ -192,12 +180,9 @@ Stmt MakeInitAndReduce::visitStmt(const Stmt &_op) {
         if (idx1d.isValid()) {
             reduce = makeIf("", makeLT(idx1d, def_->sizeLim_), reduce);
         }
-        for (int i = nDim - 1; i >= 0; i--) {
-            reduce =
-                makeFor("", iters[i], range_.lower_[i],
-                        makeAdd(range_.lower_[i], range_.len_[i]),
-                        makeIntConst(1), range_.len_[i], ForProperty(), reduce);
-        }
+        reduce = makeNestedLoops(indices, range_.lower_, iter::repeat(nullptr),
+                                 iter::repeat(makeIntConst(1)), range_.len_,
+                                 iter::repeat(ForProperty()), reduce);
 
         op = makeStmtSeq("", {init, op, reduce});
     }
@@ -264,18 +249,16 @@ cache(const Stmt &_ast, const ID &stmt, const std::string &var, MemType mtype) {
         throw InvalidSchedule("Statement " + toString(stmt) + " not found");
     }
 
-    CompUniqueBounds::LowerBoundsMap lower;
-    CompUniqueBounds::UpperBoundsMap upper;
-    std::tie(ast, lower, upper) = simplifyAndGetBounds<BuiltinSimplify>(ast);
-    auto rwBound = compAccessBound(ast, newDef, lower, upper);
-    auto wBound =
-        compAccessBound(ast, newDef, lower, upper, COMP_ACCESS_BOUND_WRITE);
+    ast = simplifyPass(ast);
+    auto rwBound = compAccessBound(ast, newDef);
+    auto wBound = compAccessBound(ast, newDef, COMP_ACCESS_BOUND_WRITE);
     MakeFillAndFlush makeFillAndFlush(stmt, var, newVar, oldDef, rwBound,
                                       wBound);
     ast = makeFillAndFlush(ast);
     fillStmt = makeFillAndFlush.fillStmt();
     flushStmt = makeFillAndFlush.flushStmt();
 
+    ast = simplifyPass(ast);
     ast = shrinkSingleVar(ast, newDef);
     ast = removeWrites(ast, newDef);
     checkVarCrossParallel(ast, newDef, mtype);
@@ -300,16 +283,15 @@ cacheReduction(const Stmt &_ast, const ID &stmt, const std::string &var,
         throw InvalidSchedule("Statement " + toString(stmt) + " not found");
     }
 
-    CompUniqueBounds::LowerBoundsMap lower;
-    CompUniqueBounds::UpperBoundsMap upper;
-    std::tie(ast, lower, upper) = simplifyAndGetBounds<BuiltinSimplify>(ast);
-    auto bound = compAccessBound(ast, newDef, lower, upper);
+    ast = simplifyPass(ast);
+    auto bound = compAccessBound(ast, newDef);
     MakeInitAndReduce makeInitAndReduce(stmt, var, newVar, oldDef, newDef,
                                         bound);
     ast = makeInitAndReduce(ast);
     initStmt = makeInitAndReduce.initStmt();
     reduceStmt = makeInitAndReduce.reduceStmt();
 
+    ast = simplifyPass(ast);
     ast = shrinkSingleVar(ast, newDef);
     ast = removeWrites(ast, newDef);
     checkVarCrossParallel(ast, newDef, mtype);

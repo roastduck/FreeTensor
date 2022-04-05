@@ -24,11 +24,12 @@ void FindAllThreads::visit(const For &op) {
     }
     Visitor::visit(op);
     if (op->property_.parallel_ == threadIdxX) {
-        results_.emplace_back(ThreadInfo{op, thx_ <= warpSize_});
+        results_.emplace_back(ThreadInfo{op, warpSize_ % thx_ == 0});
     } else if (op->property_.parallel_ == threadIdxY) {
-        results_.emplace_back(ThreadInfo{op, thx_ * thy_ <= warpSize_});
+        results_.emplace_back(ThreadInfo{op, warpSize_ % (thx_ * thy_) == 0});
     } else if (op->property_.parallel_ == threadIdxZ) {
-        results_.emplace_back(ThreadInfo{op, thx_ * thy_ <= warpSize_});
+        results_.emplace_back(
+            ThreadInfo{op, warpSize_ % (thx_ * thy_ * thz_) == 0});
     }
 }
 

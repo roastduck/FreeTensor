@@ -3,7 +3,7 @@
 
 #include <func.h>
 #include <mutator.h>
-#include <pass/simplify.h>
+#include <pass/pb_simplify.h>
 
 namespace ir {
 
@@ -11,16 +11,19 @@ namespace ir {
  * Some backends do not support local variables with dynamic shapes. This pass
  * relaxed selected shapes to constants
  */
-class MakeConstShape : public Mutator {
+class MakeConstShape
+    : public CompTransientBounds<WithTypeInfer<SymbolTable<Mutator>>> {
+    typedef CompTransientBounds<WithTypeInfer<SymbolTable<Mutator>>> BaseClass;
+
+    PBCompBounds unique_;
     const std::vector<MemType> &mtypes_;
-    const CompUniqueBounds::UpperBoundsMap &upper_;
 
   public:
-    MakeConstShape(const std::vector<MemType> &mtypes,
-                   const CompUniqueBounds::UpperBoundsMap &upper)
-        : mtypes_(mtypes), upper_(upper) {}
+    MakeConstShape(const std::vector<MemType> &mtypes)
+        : unique_(*this, *this), mtypes_(mtypes) {}
 
   protected:
+    using BaseClass::visit;
     Stmt visit(const VarDef &op) override;
 };
 

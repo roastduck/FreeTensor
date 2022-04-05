@@ -13,6 +13,7 @@ namespace ir {
 
 std::string toString(const AST &op);
 std::string toString(const AST &op, bool pretty);
+std::string toString(const AST &op, bool pretty, bool printAllId);
 
 std::string dumpAsTest(const Stmt &op);
 

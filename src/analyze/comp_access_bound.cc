@@ -43,14 +43,14 @@ void FindMemType::visit(const VarDef &op) {
 void CompAccessBound::visit(const VarDef &op) {
     if (op->id() != varDefId_) {
         defs_.insert(op->name_);
-        Visitor::visit(op);
+        BaseClass::visit(op);
         defs_.erase(op->name_);
         return;
     }
 
     var_ = op->name_;
     defs_.insert(op->name_);
-    Visitor::visit(op);
+    BaseClass::visit(op);
     defs_.erase(op->name_);
     var_.clear();
 
@@ -74,11 +74,9 @@ void CompAccessBound::visit(const VarDef &op) {
             if (checkAllDefined(defs_, index)) {
                 lowerItem.emplace_back(index);
             }
-            if (lower_.count(index)) {
-                for (auto item : lower_.at(index)) {
-                    if (checkAllDefined(defs_, item.expr())) {
-                        lowerItem.emplace_back(item.expr());
-                    }
+            for (auto item : access_[j].lower_[i]) {
+                if (checkAllDefined(defs_, item.expr())) {
+                    lowerItem.emplace_back(item.expr());
                 }
             }
             lower.emplace_back(std::move(lowerItem));
@@ -92,11 +90,9 @@ void CompAccessBound::visit(const VarDef &op) {
             if (checkAllDefined(defs_, index)) {
                 upperItem.emplace_back(index);
             }
-            if (upper_.count(index)) {
-                for (auto item : upper_.at(index)) {
-                    if (checkAllDefined(defs_, item.expr())) {
-                        upperItem.emplace_back(item.expr());
-                    }
+            for (auto item : access_[j].upper_[i]) {
+                if (checkAllDefined(defs_, item.expr())) {
+                    upperItem.emplace_back(item.expr());
                 }
             }
             upper.emplace_back(std::move(upperItem));
@@ -110,17 +106,16 @@ void CompAccessBound::visit(const VarDef &op) {
 
     for (auto &&item : access_) {
         Expr part;
-        for (auto &&cond : item.conds_) {
-            if (checkAllDefined(defs_, cond)) {
+        for (size_t i = conds().size(), iEnd = item.conds_.size(); i < iEnd;
+             i++) {
+            auto &&cond = item.conds_[i];
+            if (!isConstTrue(cond) && checkAllDefined(defs_, cond)) {
                 part = part.isValid() ? makeLAnd(part, cond) : cond;
             }
         }
         if (part.isValid()) {
-            if (!isConstTrue(part)) {
-                result_.cond_ = result_.cond_.isValid()
-                                    ? makeLOr(result_.cond_, part)
-                                    : part;
-            }
+            result_.cond_ =
+                result_.cond_.isValid() ? makeLOr(result_.cond_, part) : part;
         } else {
             result_.cond_ = makeBoolConst(true);
         }
@@ -128,61 +123,50 @@ void CompAccessBound::visit(const VarDef &op) {
 }
 
 void CompAccessBound::visit(const Load &op) {
-    Visitor::visit(op);
+    BaseClass::visit(op);
     if (op->var_ == var_ && mode_ & COMP_ACCESS_BOUND_READ) {
         access_.emplace_back(
+            unique_,
             std::vector<Expr>(op->indices_.begin(), op->indices_.end()),
-            condStack_);
+            conds());
     }
 }
 
 void CompAccessBound::visit(const Store &op) {
-    Visitor::visit(op);
+    BaseClass::visit(op);
     if (op->var_ == var_ && mode_ & COMP_ACCESS_BOUND_WRITE) {
         access_.emplace_back(
+            unique_,
             std::vector<Expr>(op->indices_.begin(), op->indices_.end()),
-            condStack_);
+            conds());
     }
 }
 
 void CompAccessBound::visit(const ReduceTo &op) {
-    Visitor::visit(op);
+    BaseClass::visit(op);
     if (op->var_ == var_) {
         access_.emplace_back(
+            unique_,
             std::vector<Expr>(op->indices_.begin(), op->indices_.end()),
-            condStack_);
+            conds());
     }
 }
 
 void CompAccessBound::visit(const For &op) {
     if (isSharedAmong(mtype_, op->property_.parallel_)) {
-        Visitor::visit(op);
+        BaseClass::visit(op);
     } else {
         defs_.insert(op->iter_);
-        Visitor::visit(op);
+        BaseClass::visit(op);
         defs_.erase(op->iter_);
     }
 }
 
-void CompAccessBound::visit(const If &op) {
-    (*this)(op->cond_);
-    condStack_.emplace_back(op->cond_);
-    (*this)(op->thenCase_);
-    if (op->elseCase_.isValid()) {
-        condStack_.back() = makeLNot(op->cond_);
-        (*this)(op->elseCase_);
-    }
-    condStack_.pop_back();
-}
-
-AccessBound
-compAccessBound(const Stmt &op, const ID &varDefId,
-                const std::unordered_map<Expr, std::vector<LowerBound>> &lower,
-                const std::unordered_map<Expr, std::vector<UpperBound>> &upper,
-                CompAccessBoundMode mode) {
+AccessBound compAccessBound(const Stmt &op, const ID &varDefId,
+                            CompAccessBoundMode mode) {
     FindMemType finder(varDefId);
     finder(op);
-    CompAccessBound visitor(varDefId, finder.mtype(), lower, upper, mode);
+    CompAccessBound visitor(varDefId, finder.mtype(), mode);
     visitor(op);
     return visitor.result();
 }

@@ -16,9 +16,10 @@ Stmt HoistReturnVars::visit(const VarDef &_op) {
             if (!checkNotModified(func_->body_, dim,
                                   CheckNotModifiedSide::Before, op->id(),
                                   CheckNotModifiedSide::Before, outMostLoop_)) {
-                throw InvalidSchedule(
+                throw InvalidProgram(
                     "A `Func`'s returning values are allocated during run "
-                    "time, and the allocation cannot be parallelized. However, "
+                    "time, and the allocation cannot be parallelized. "
+                    "Furthermore, "
                     "it is unable to hoist " +
                     op->name_ + " out of " + toString(outMostLoop_) +
                     " or the dimension size " + toString(dim) +

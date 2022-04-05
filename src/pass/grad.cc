@@ -543,12 +543,12 @@ grad(const Stmt &_op, const std::unordered_set<std::string> &_requires,
     auto backward = mutator(op);
 
     // We do some basic simplifications here, to reduce burden on auto-schedule
+    backward = removeDeadVar(backward);
     backward = propOneTimeUse(backward);
     backward = simplifyPass(backward);
     backward = tensorPropConst(backward);
     backward = removeWrites(backward);
     backward = removeCyclicAssign(backward);
-    backward = removeDeadVar(backward);
 
     return std::make_tuple(forward, backward, mutator.requireGrads(),
                            mutator.provideGrads(), tapeMap);

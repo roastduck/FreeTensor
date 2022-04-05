@@ -33,10 +33,6 @@ const z3::expr &Z3Simplify::get(const Expr &key) { return *z3Exprs_.at(key); }
 
 bool Z3Simplify::prove(const Expr &op) {
     // expr can be proved <==> !expr can not be satisfied
-    solver_.reset();
-    for (auto i : condList_)
-        if (i.second)
-            solver_.add(get(i.first));
     if (exists(op)) {
         auto toCheck = !get(op);
         return solver_.check(1, &toCheck) == z3::unsat;
@@ -45,13 +41,13 @@ bool Z3Simplify::prove(const Expr &op) {
 }
 
 void Z3Simplify::push(const Expr &op) {
-    std::pair<Expr, bool> cond = std::make_pair(op, false);
-    if (exists(op))
-        cond.second = true;
-    condList_.emplace_back(cond);
+    solver_.push();
+    if (exists(op)) {
+        solver_.add(get(op));
+    }
 }
 
-void Z3Simplify::pop() { condList_.pop_back(); }
+void Z3Simplify::pop() { solver_.pop(); }
 
 Expr Z3Simplify::visit(const Var &_op) {
     auto __op = BaseClass::visit(_op);

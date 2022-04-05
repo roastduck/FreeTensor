@@ -217,11 +217,11 @@ def test_syncthreads_at_outer_branch():
         ir.declare_var(y, (4,), "int32", "output", "gpu/global")
         "nid: L0"
         for i in range(0, 4):
-            t = ir.create_var((1,), "int32", "gpu/shared")
+            t = ir.create_var((256,), "int32", "gpu/shared")
             "nid: L1"
             for j in range(0, 256):
-                t[0] = t[0] + x[i, j]  # Atomic reduction
-            y[i] = t[0]
+                t[j] = x[i, j]
+            y[i] = t[0] + t[1]
 
     s = ir.Schedule(test)
     s.parallelize("L0", "blockIdx.x")
@@ -235,7 +235,8 @@ def test_syncthreads_at_outer_branch():
     ]) as (x, y):
         with ir.For(".blockIdx.x", 0, 4) as i:
             with ir.For(".threadIdx.x", 0, 256) as j:
-                with ir.VarDef("t", (1,), "int32", "cache", "gpu/shared") as t:
+                with ir.VarDef("t", (256,), "int32", "cache",
+                               "gpu/shared") as t:
                     ir.Any()
                     ir.Eval(
                         ir.intrinsic("__syncthreads()",
@@ -295,12 +296,12 @@ def test_syncthreads_split_branch():
         ir.declare_var(z, (4,), "int32", "inout", "gpu/global")
         "nid: L0"
         for i in range(0, 4):
-            t = ir.create_var((1,), "int32", "gpu/shared")
+            t = ir.create_var((256,), "int32", "gpu/shared")
             "nid: L1"
             for j in range(0, 256):
-                t[0] = t[0] + x[i, j]  # Atomic reduction
+                t[j] = x[i, j]
             z[i] = z[i] + 1
-            y[i] = t[0]
+            y[i] = t[0] + t[1]
 
     s = ir.Schedule(test)
     s.parallelize("L0", "blockIdx.x")
@@ -315,7 +316,8 @@ def test_syncthreads_split_branch():
     ]) as (x, y, z):
         with ir.For(".blockIdx.x", 0, 4) as i:
             with ir.For(".threadIdx.x", 0, 256) as j:
-                with ir.VarDef("t", (1,), "int32", "cache", "gpu/shared") as t:
+                with ir.VarDef("t", (256,), "int32", "cache",
+                               "gpu/shared") as t:
                     ir.Any()
                     with ir.If(j == 0):
                         ir.Any()  # z[i]
@@ -448,13 +450,13 @@ def test_syncthreads_split_branch_and_vardef():
         ir.declare_var(z2, (4,), "int32", "inout", "gpu/global")
         "nid: L0"
         for i in range(0, 4):
-            t = ir.create_var((1,), "int32", "gpu/shared")
+            t = ir.create_var((256,), "int32", "gpu/shared")
             "nid: L1"
             for j in range(0, 256):
-                t[0] = t[0] + x[i, j]  # Atomic reduction
+                t[j] = x[i, j]
             u = ir.create_var((1,), "int32", "gpu/local")
             u[0] = z1[i] * 2
-            y[i] = t[0]
+            y[i] = t[0] + t[1]
             z1[i] = u[0] + 1
             z2[i] = u[0] + 1
 
@@ -472,7 +474,8 @@ def test_syncthreads_split_branch_and_vardef():
     ]) as (x, y, z1, z2):
         with ir.For(".blockIdx.x", 0, 4) as i:
             with ir.For(".threadIdx.x", 0, 256) as j:
-                with ir.VarDef("t", (1,), "int32", "cache", "gpu/shared") as t:
+                with ir.VarDef("t", (256,), "int32", "cache",
+                               "gpu/shared") as t:
                     ir.Any()
                     with ir.VarDef("u", (1,), "int32", "cache",
                                    "gpu/shared") as u:
@@ -630,3 +633,56 @@ def test_syncwarp():
 
     y_std = np.array([[7, 5, 3, 1]] * 4, dtype="int32")
     assert np.array_equal(y_np, y_std)
+
+
+def test_use_syncthreads_for_non_aligned_warps():
+    with ir.VarDef([("u", (64, 64, 64, 5), "float64", "input", "gpu/global"),
+                    ("e", (64, 64, 64, 5), "float64", "output", "gpu/global")
+                   ]) as (u, e):
+        ir.MarkNid("L0")
+        with ir.For("i", 0, 64) as i:
+            ir.MarkNid("L1")
+            with ir.For("j", 0, 64) as j:
+                ir.MarkNid("L2")
+                with ir.For("k", 0, 64) as k:
+                    with ir.VarDef("t", (5,), "float64", "cache",
+                                   "gpu/shared") as t:
+                        t[0] = u[i, j, k, 0]
+                        t[1] = u[i, j, k, 1]
+                        t[2] = u[i, j, k, 2]
+                        t[3] = u[i, j, k, 3]
+                        t[4] = u[i, j, k, 4]
+                        ir.MarkNid("L3")
+                        with ir.For("i1", 0, 5) as i1:
+                            e[i, j, k, i1] = t[i1]
+    s = ir.Schedule(ir.pop_ast())
+    s.parallelize("L0", "blockIdx.y")
+    s.parallelize("L1", "blockIdx.x")
+    s.parallelize("L2", "threadIdx.y")
+    s.parallelize("L3", "threadIdx.x")
+    ast = ir.lower(s.ast(), target)
+    print(ast)
+
+    with ir.VarDef([("u", (64, 64, 64, 5), "float64", "input", "gpu/global"),
+                    ("e", (64, 64, 64, 5), "float64", "output", "gpu/global")
+                   ]) as (u, e):
+        with ir.For("i", 0, 64) as i:
+            with ir.For("j", 0, 64) as j:
+                with ir.For("k", 0, 64) as k:
+                    with ir.For("i1", 0, 5) as i1:
+                        with ir.VarDef("t", (64, 5), "float64", "cache",
+                                       "gpu/shared") as t:
+                            with ir.If(i1 == 0):
+                                t[k, 0] = u[i, j, k, 0]
+                                t[k, 1] = u[i, j, k, 1]
+                                t[k, 2] = u[i, j, k, 2]
+                                t[k, 3] = u[i, j, k, 3]
+                                t[k, 4] = u[i, j, k, 4]
+
+                            # Use syncthreads here
+                            ir.Eval(
+                                ir.intrinsic("__syncthreads()",
+                                             has_side_effect=True))
+
+                            e[i, j, k, i1] = t[k, i1]
+    assert ir.make_1d_var(ir.pop_ast()).match(ast)

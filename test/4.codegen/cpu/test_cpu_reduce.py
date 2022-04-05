@@ -1,3 +1,5 @@
+import re
+
 import ir
 import pytest
 import numpy as np
@@ -112,6 +114,41 @@ def test_parallel_reduction_on_array():
     assert "+=" in code
     x_np = np.random.randint(0, 100, (4, 64, 64)).astype("int32")
     y_np = np.zeros((4, 64), dtype="int32")
+    x_arr = ir.Array(x_np, device)
+    y_arr = ir.Array(y_np, device)
+    ir.Driver(func, code, device)(x=x_arr, y=y_arr)
+    y_np = y_arr.numpy()
+
+    y_std = np.sum(x_np, axis=1)
+    assert np.array_equal(y_np, y_std)
+
+
+def test_parallel_reduction_on_array_range():
+
+    @ir.transform
+    def test(x, y):
+        ir.declare_var(x, (64, 64), "int32", "input", "cpu")
+        ir.declare_var(y, (64,), "int32", "inout", "cpu")
+        "nid: L1"
+        for i in range(0, 4):
+            "nid: L2"
+            for j in range(0, 64):
+                "nid: L3"
+                for k in range(0, 16):
+                    y[i * 16 + k] += x[i * 16 + k, j]
+
+    s = ir.Schedule(test)
+    s.parallelize("L2", "openmp")
+    func = ir.lower(s.func(), target)
+    print(func)
+
+    code = ir.codegen(func, target)
+    print(code)
+    assert re.search(r"pragma omp parallel for reduction.*16", code)
+    assert "#pragma omp atomic" not in code
+    assert "+=" in code
+    x_np = np.random.randint(0, 100, (64, 64)).astype("int32")
+    y_np = np.zeros((64,), dtype="int32")
     x_arr = ir.Array(x_np, device)
     y_arr = ir.Array(y_np, device)
     ir.Driver(func, code, device)(x=x_arr, y=y_arr)

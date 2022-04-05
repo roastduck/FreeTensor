@@ -36,7 +36,7 @@ void PrintVisitor::printId(const Stmt &op) {
     makeIndent();
     os() << "// By " << op->debugCreator_ << std::endl;
 #endif
-    if (Config::printAllId() || op->hasNamedId()) {
+    if (printAllId_ || op->hasNamedId()) {
         if (pretty_) {
             os() << CYAN << ::ir::toString(op->id()) << ":" << RESET
                  << std::endl;
@@ -423,10 +423,8 @@ void PrintVisitor::visit(const For &op) {
     if (!op->property_.noDeps_.empty()) {
         makeIndent();
         os() << "// no_deps = ";
-        bool first = true;
-        for (auto &&var : op->property_.noDeps_) {
-            os() << (first ? "" : ", ");
-            first = false;
+        for (auto &&[i, var] : iter::enumerate(op->property_.noDeps_)) {
+            os() << (i == 0 ? "" : ", ");
             os() << printName(var);
         }
         os() << std::endl;
@@ -456,22 +454,15 @@ void PrintVisitor::visit(const For &op) {
         }
 
         os() << printName(reduction.var_);
-        if (!reduction.indices_.empty()) {
-            os() << "[";
-            bool first_2 = true;
-            for (auto &&idx : reduction.indices_) {
-                if (!first_2) {
-                    os() << ", ";
-                }
-                first_2 = false;
-                if (idx.isValid()) {
-                    (*this)(idx);
-                } else {
-                    os() << ":";
-                }
-            }
-            os() << "]";
+        os() << "[";
+        for (auto &&[i, b, e] :
+             iter::zip(iter::count(), reduction.begins_, reduction.ends_)) {
+            os() << (i == 0 ? "" : ", ");
+            (*this)(b);
+            os() << ":";
+            (*this)(e);
         }
+        os() << "]";
         os() << std::endl;
     }
     if (op->property_.unroll_) {
@@ -611,7 +602,11 @@ std::string toString(const AST &op) {
 }
 
 std::string toString(const AST &op, bool pretty) {
-    PrintVisitor visitor(pretty);
+    return toString(op, pretty, Config::printAllId());
+}
+
+std::string toString(const AST &op, bool pretty, bool printAllId) {
+    PrintVisitor visitor(printAllId, pretty);
     visitor(op);
     return visitor.toString(
         [](const CodeGenStream &stream) { return stream.os_.str(); });

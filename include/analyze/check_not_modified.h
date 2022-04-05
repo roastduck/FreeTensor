@@ -33,14 +33,16 @@ class CheckNameToDefMapping : public SymbolTable<Visitor> {
 };
 
 class InsertTmpEval : public Mutator {
-    Expr expr_;
+    Expr s0Expr_, s1Expr_;
     ID s0_, s1_, s0Eval_, s1Eval_;
     CheckNotModifiedSide s0Side_, s1Side_;
 
   public:
-    InsertTmpEval(const Expr &expr, CheckNotModifiedSide s0Side, const ID &s0,
+    InsertTmpEval(const Expr &s0Expr, const Expr &s1Expr,
+                  CheckNotModifiedSide s0Side, const ID &s0,
                   CheckNotModifiedSide s1Side, const ID &s1)
-        : expr_(expr), s0_(s0), s1_(s1), s0Side_(s0Side), s1Side_(s1Side) {}
+        : s0Expr_(s0Expr), s1Expr_(s1Expr), s0_(s0), s1_(s1), s0Side_(s0Side),
+          s1Side_(s1Side) {}
 
     const ID &s0Eval() const { return s0Eval_; }
     const ID &s1Eval() const { return s1Eval_; }
@@ -62,6 +64,21 @@ class InsertTmpEval : public Mutator {
  * 3. Variables used in `expr` is written between `s0` and `s1`.
  */
 bool checkNotModified(const Stmt &op, const Expr &expr,
+                      CheckNotModifiedSide s0Side, const ID &s0,
+                      CheckNotModifiedSide s1Side, const ID &s1);
+
+/**
+ * Another version of `checkNotModified` that accpets two expressions, for `s0`
+ * and `s1`, respectively
+ *
+ * This version of `checkNotModified` is used when the iterators in the
+ * expression have different names in `s0` and `s1`
+ *
+ * TODO: Check the mapping of the iterators in a general way in
+ * `checkNotModified`. Currently it is checked explicitly in schedule/inline and
+ * pass/tensor_prop_const
+ */
+bool checkNotModified(const Stmt &op, const Expr &s0Expr, const Expr &s1Expr,
                       CheckNotModifiedSide s0Side, const ID &s0,
                       CheckNotModifiedSide s1Side, const ID &s1);
 

@@ -248,10 +248,23 @@ class Mutator {
     }
 
     virtual Stmt visit(const For &op) {
-        auto ret =
-            makeFor(op->id(), op->iter_, (*this)(op->begin_), (*this)(op->end_),
-                    (*this)(op->step_), (*this)(op->len_), op->property_,
-                    (*this)(op->body_));
+        auto begin = (*this)(op->begin_);
+        auto end = (*this)(op->end_);
+        auto step = (*this)(op->step_);
+        auto len = (*this)(op->len_);
+        auto property = op->property_;
+        for (auto &&[redOp, var, begins, ends] : property.reductions_) {
+            for (auto &&item : begins) {
+                item = (*this)(item);
+            }
+            for (auto &&item : ends) {
+                item = (*this)(item);
+            }
+        }
+        auto body = (*this)(op->body_);
+        auto ret = makeFor(op->id(), op->iter_, std::move(begin),
+                           std::move(end), std::move(step), std::move(len),
+                           std::move(property), std::move(body));
         return COPY_DEBUG_INFO(ret, op);
     }
 

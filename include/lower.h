@@ -64,7 +64,8 @@ template <class T> T lower(const T &t, const Ref<Target> &target) {
                                                           MemType::GPULocal});
             func = gpu::normalizeThreads(func); // After gpu_multiplex_buffers
             func = gpu::makeSync(func);         // After gpu_normalize_threads
-            func = make1dVar(func);
+            func = make1dVar(func); // FIXME: make1dVar will break the shape of
+                                    // returned tensors
             func = gpu::lowerVector(func); // After make_1d_var
             break;
 

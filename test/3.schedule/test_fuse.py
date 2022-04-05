@@ -325,3 +325,114 @@ def test_hoist_var_with_modified_shape():
         s.fuse("L1", "L2")
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
+
+
+def test_fuse_no_deps_1():
+
+    @ir.transform
+    def test(ptr, edge1, edge2):
+        ir.declare_var(ptr, (11,), "int32", "input", "cpu")
+        ir.declare_var(edge1, (50,), "int32", "input", "cpu")
+        ir.declare_var(edge2, (50,), "int32", "output", "cpu")
+        'nid: Li1'
+        'no_deps: edge2'
+        for i in range(10):
+            for j in range(ptr[i], ptr[i + 1]):
+                edge2[j] = edge1[j] + i
+        'nid: Li2'
+        'no_deps: edge2'
+        for i in range(10):
+            for j in range(ptr[i], ptr[i + 1]):
+                edge2[j] += j
+
+    print(test)
+    s = ir.Schedule(test)
+    fused = s.fuse("Li1", "Li2")
+    print(s.ast())
+    assert s.find(fused).node().property.no_deps == ["edge2"]
+
+
+def test_fuse_no_deps_2():
+
+    @ir.transform
+    def test(ptr, edge1, edge2):
+        ir.declare_var(ptr, (11,), "int32", "input", "cpu")
+        ir.declare_var(edge1, (50,), "int32", "input", "cpu")
+        ir.declare_var(edge2, (50,), "int32", "output", "cpu")
+        ir.declare_var(foobar, (10,), "int32", "output", "cpu")
+        'nid: Li1'
+        'no_deps: edge2'
+        for i in range(10):
+            for j in range(ptr[i], ptr[i + 1]):
+                edge2[j] = edge1[j] + i
+        'nid: Li2'
+        for i in range(10):
+            # Nothing to do with edge2 here
+            foobar[i] = i
+
+    print(test)
+    s = ir.Schedule(test)
+    fused = s.fuse("Li1", "Li2")
+    print(s.ast())
+    assert s.find(fused).node().property.no_deps == ["edge2"]
+
+
+def test_fuse_no_deps_3():
+
+    @ir.transform
+    def test(ptr, edge1, edge2):
+        ir.declare_var(ptr, (11,), "int32", "input", "cpu")
+        ir.declare_var(edge1, (50,), "int32", "input", "cpu")
+        ir.declare_var(edge2, (50,), "int32", "output", "cpu")
+        'nid: Li1'
+        'no_deps: edge2'
+        for i in range(10):
+            for j in range(ptr[i], ptr[i + 1]):
+                edge2[j] = edge1[j] + i
+        'nid: Li2'  # If we don't mark edge2 here
+        for i in range(10):
+            for j in range(ptr[i], ptr[i + 1] + 1):
+                edge2[j] += j
+
+    print(test)
+    s = ir.Schedule(test)
+    with pytest.raises(ir.InvalidSchedule):
+        s.fuse("Li1", "Li2")
+    ast = s.ast()  # Should not changed
+    assert ast.match(test.body)
+
+
+def test_fuse_with_if():
+    with ir.VarDef([
+        ("c", (), "int32", "input", "cpu"),
+        ("y", (4, 8), "int32", "output", "cpu"),
+        ("z", (4, 8), "int32", "output", "cpu"),
+    ]) as (c, y, z):
+        with ir.For("i", 0, 4, nid="L1") as i:
+            with ir.If(c[()] > 0):
+                with ir.For("j1", 0, 8, nid="L2a") as j:
+                    y[i, j] = i + j
+            with ir.For("j2", 0, 8, nid="L2b") as j:
+                z[i, j] = i * j
+    ast = ir.pop_ast()
+    print(ast)
+    s = ir.Schedule(ast)
+    s.fuse("L2a", "L2b")
+    ast = s.ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([
+        ("c", (), "int32", "input", "cpu"),
+        ("y", (4, 8), "int32", "output", "cpu"),
+        ("z", (4, 8), "int32", "output", "cpu"),
+    ]) as (c, y, z):
+        with ir.For("i", 0, 4) as i:
+            with ir.For("j", 0, 8) as j:
+                with ir.If(c[()] > 0):
+                    y[i, j] = i + j
+                z[i, j] = i * j
+    std = ir.pop_ast()
+
+    assert std.match(ast)

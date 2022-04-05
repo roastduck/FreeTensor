@@ -28,6 +28,12 @@ void GenPBExpr::visitExpr(const Expr &op) {
 }
 
 void GenPBExpr::visit(const Var &op) {
+    // Check this here earlier, otherwise an undefined Var will result in an
+    // illegal-presburger-map type error
+    if (!symbolTable_.hasLoop(op->name_)) {
+        ERROR("BUG: Iterator " + op->name_ +
+              " used undefined in a presbuger expression");
+    }
     auto str = mangle(op->name_);
     vars_[op][op] = str;
     results_[op] = str;

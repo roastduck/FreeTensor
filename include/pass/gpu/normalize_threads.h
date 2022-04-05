@@ -21,12 +21,16 @@ class NormalizeThreads : public Mutator {
         Expr offset_;
     };
 
+    Stmt root_;
     std::unordered_map<std::string, IterInfo> varMap_;
     std::unordered_map<ParallelScope, int>
         inside_; // Multiple nested `threadIdx.x`s are possible. See
                  // test/program/common_transforms::test_collaborative_fetch
-    std::unordered_map<ParallelScope, std::vector<std::string>> noDeps_;
+    std::unordered_map<ParallelScope, std::vector<ID>> loops_;
     bool inKernel_ = false;
+
+  public:
+    NormalizeThreads(const Stmt &root) : root_(root) {}
 
   private:
     Stmt doVisitFor(const For &op);

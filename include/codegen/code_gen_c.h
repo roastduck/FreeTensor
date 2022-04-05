@@ -28,6 +28,9 @@ template <class Stream> class CodeGenC : public WithTypeInfer<CodeGen<Stream>> {
                           const std::string &shapePtr,
                           const std::string &dimPtr) = 0;
 
+    // Generate the access to a scalar or an element of an array
+    template <class T> void genScalar(const T &op);
+
     virtual void visit(const StmtSeq &op) override;
     virtual void visit(const VarDef &op) override;
     virtual void visit(const Var &op) override;

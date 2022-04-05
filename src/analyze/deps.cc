@@ -104,10 +104,14 @@ void FindAccessPoint::visit(const For &op) {
     scope2coord_[op->id()] = cur_;
     if (int width = countBandNodeWidth(op->body_); width > 1) {
         cur_.emplace_back(makeIntConst(-1));
+        pushFor(op);
         (*this)(op->body_);
+        popFor(op);
         cur_.pop_back();
     } else {
+        pushFor(op);
         (*this)(op->body_);
+        popFor(op);
     }
     cur_.pop_back();
     conds_.resize(oldCondsSize);

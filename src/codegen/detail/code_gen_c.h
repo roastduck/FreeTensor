@@ -13,6 +13,34 @@
 
 namespace ir {
 
+template <class Stream>
+template <class T>
+void CodeGenC<Stream>::genScalar(const T &op) {
+    auto id = mangle(op->var_);
+    if (op->indices_.empty()) {
+        switch (this->buffer(op->var_)->mtype()) {
+        case MemType::ByValue:
+        case MemType::CPU:
+        case MemType::GPULocal:
+            this->os() << id;
+            break;
+        case MemType::GPUGlobal:
+        case MemType::GPUShared:
+            this->os() << "*" << id;
+            break;
+        default:
+            ASSERT(false);
+        }
+    } else {
+        this->os() << id;
+        for (auto &&index : op->indices_) {
+            this->os() << "[";
+            (*this)(index);
+            this->os() << "]";
+        }
+    }
+}
+
 template <class Stream> void CodeGenC<Stream>::visit(const StmtSeq &op) {
     for (auto &&stmt : op->stmts_) {
         if (stmt->nodeType() == ASTNodeType::VarDef) {
@@ -214,95 +242,26 @@ template <class Stream> void CodeGenC<Stream>::visit(const Var &op) {
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const Store &op) {
-    auto id = mangle(op->var_);
     this->markUseBuffer(op->var_);
 
     this->makeIndent();
-    if (op->indices_.empty()) {
-        switch (this->buffer(op->var_)->mtype()) {
-        case MemType::ByValue:
-        case MemType::CPU:
-        case MemType::GPULocal:
-            this->os() << id;
-            break;
-        case MemType::GPUGlobal:
-        case MemType::GPUShared:
-            this->os() << "*" << id;
-            break;
-        default:
-            ASSERT(false);
-        }
-    } else {
-        this->os() << id;
-        for (auto &&index : op->indices_) {
-            this->os() << "[";
-            (*this)(index);
-            this->os() << "]";
-        }
-    }
+    this->genScalar(op);
     this->os() << " = ";
     (*this)(op->expr_);
     this->os() << ";" << std::endl;
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const Load &op) {
-    auto id = mangle(op->var_);
     this->markUseBuffer(op->var_);
-
-    if (op->indices_.empty()) {
-        switch (this->buffer(op->var_)->mtype()) {
-        case MemType::ByValue:
-        case MemType::CPU:
-        case MemType::GPULocal:
-            this->os() << id;
-            break;
-        case MemType::GPUGlobal:
-        case MemType::GPUShared:
-            this->os() << "*" << id;
-            break;
-        default:
-            ASSERT(false);
-        }
-    } else {
-        this->os() << id;
-        for (auto &&index : op->indices_) {
-            this->os() << "[";
-            (*this)(index);
-            this->os() << "]";
-        }
-    }
+    this->genScalar(op);
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const ReduceTo &op) {
-    auto id = mangle(op->var_);
     this->markUseBuffer(op->var_);
 
     this->makeIndent();
 
-    auto genAddr = [&]() {
-        if (op->indices_.empty()) {
-            switch (this->buffer(op->var_)->mtype()) {
-            case MemType::ByValue:
-            case MemType::CPU:
-            case MemType::GPULocal:
-                this->os() << id;
-                break;
-            case MemType::GPUGlobal:
-            case MemType::GPUShared:
-                this->os() << "*" << id;
-                break;
-            default:
-                ASSERT(false);
-            }
-        } else {
-            this->os() << id;
-            for (auto &&index : op->indices_) {
-                this->os() << "[";
-                (*this)(index);
-                this->os() << "]";
-            }
-        }
-    };
+    auto genAddr = [&]() { this->genScalar(op); };
     auto genExpr = [&]() { (*this)(op->expr_); };
 
     switch (op->op_) {

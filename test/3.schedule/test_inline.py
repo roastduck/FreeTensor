@@ -222,7 +222,7 @@ def test_no_inline_output_var():
     assert ast_.match(ast)
 
 
-def test_different_iter():
+def test_different_iter_with_the_same_name():
     with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         ir.MarkNid("T")
@@ -244,6 +244,37 @@ def test_different_iter():
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ir.For("i", 4, 8) as i:
             y[i + -4] = x[i + -4] * 2 + 1
+    std = ir.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_different_iter_with_different_names():
+    with ir.VarDef([("x", (4,), "int32", "inout", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+        ir.MarkNid("T")
+        with ir.VarDef("t", (4,), "int32", "cache", "cpu") as t:
+            with ir.For("i", 0, 4) as i:
+                t[i] = x[i] * 2
+            with ir.For("j", 4, 8) as j:
+                y[j + -4] = t[j + -4] + 1
+            with ir.For("i", 0, 4) as i:
+                x[i] = 0
+    ast = ir.pop_ast()
+    print(ast)
+    s = ir.Schedule(ast)
+    s.inline("T")
+    ast = s.ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([("x", (4,), "int32", "inout", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+        with ir.For("j", 4, 8) as j:
+            y[j + -4] = x[j + -4] * 2 + 1
+        with ir.For("i", 0, 4) as i:
+            x[i] = 0
     std = ir.pop_ast()
 
     assert std.match(ast)

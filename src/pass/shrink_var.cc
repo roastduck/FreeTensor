@@ -1,7 +1,5 @@
 #include <analyze/all_defs.h>
-#include <pass/pb_simplify.h>
 #include <pass/shrink_var.h>
-#include <pass/simplify.h>
 #include <pass/z3_simplify.h>
 
 namespace ir {
@@ -49,46 +47,37 @@ Stmt ShrinkVar::visit(const ReduceTo &_op) {
 }
 
 Stmt shrinkVar(const Stmt &_op) {
+    auto op = _op;
+
     // Algorithm:
-    // (1) Simplify and get bounds of every expressions
-    // (2) Represent the bounds of each vars with min / max expressions
-    // (3) Modify var definitions
-    // (4) Simplify the new indicies
+    // (1) Represent the bounds of each vars with min / max expressions
+    // (2) Modify var definitions
+    // (3) Simplify the new indicies
 
     // (1)
-    Stmt op;
-    CompUniqueBounds::LowerBoundsMap lower;
-    CompUniqueBounds::UpperBoundsMap upper;
-    std::tie(op, lower, upper) = simplifyAndGetBounds<PBSimplify>(_op);
-
-    // (2)
     std::unordered_map<ID, AccessBound> bounds;
     for (auto &&[varDefId, name] : allDefs(op, {AccessType::Cache})) {
-        bounds[varDefId] = compAccessBound(op, varDefId, lower, upper);
+        bounds[varDefId] = compAccessBound(op, varDefId);
     }
 
-    // (3)
+    // (2)
     op = ShrinkVar(bounds)(op);
 
-    // (4)
+    // (3)
     return z3Simplify(op); // Currently BuiltinSimplify is not sufficient
 }
 
 Stmt shrinkSingleVar(const Stmt &_op, const ID &varDefId) {
+    auto op = _op;
+
     // (1)
-    Stmt op;
-    CompUniqueBounds::LowerBoundsMap lower;
-    CompUniqueBounds::UpperBoundsMap upper;
-    std::tie(op, lower, upper) = simplifyAndGetBounds<PBSimplify>(_op);
+    std::unordered_map<ID, AccessBound> bounds;
+    bounds[varDefId] = compAccessBound(op, varDefId);
 
     // (2)
-    std::unordered_map<ID, AccessBound> bounds;
-    bounds[varDefId] = compAccessBound(op, varDefId, lower, upper);
-
-    // (3)
     op = ShrinkVar(bounds)(op);
 
-    // (4)
+    // (3)
     return z3Simplify(op); // Currently BuiltinSimplify is not sufficient
 }
 

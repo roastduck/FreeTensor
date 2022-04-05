@@ -21,6 +21,7 @@ class RemoveAllWrites : public Mutator {
 
 class RemoveDeadVar : public Mutator {
     std::unordered_set<std::string> uses_;
+    std::string destination_;
     bool isFixPoint_ = true;
 
   public:
@@ -28,6 +29,8 @@ class RemoveDeadVar : public Mutator {
 
   protected:
     Expr visit(const Load &op) override;
+    Stmt visit(const Store &op) override;
+    Stmt visit(const ReduceTo &op) override;
     Stmt visit(const VarDef &op) override;
 };
 

@@ -115,6 +115,23 @@ class CompTransientBounds : public BaseClass,
         MAYBE_VOID(end, (*this)(op->end_));
         MAYBE_VOID(step, (*this)(op->step_));
         MAYBE_VOID(len, (*this)(op->len_));
+        auto property = op->property_;
+        for (auto &&[redOp, var, begins, ends] : property.reductions_) {
+            for (auto &&item : begins) {
+                MAYBE_VOID(newItem, (*this)(item));
+                if constexpr (!std::is_same_v<typename BaseClass::StmtRetType,
+                                              void>) {
+                    item = newItem;
+                }
+            }
+            for (auto &&item : ends) {
+                MAYBE_VOID(newItem, (*this)(item));
+                if constexpr (!std::is_same_v<typename BaseClass::StmtRetType,
+                                              void>) {
+                    item = newItem;
+                }
+            }
+        }
 
         auto var = makeVar(op->iter_);
         if (transients_.count(var)) {
@@ -154,7 +171,7 @@ class CompTransientBounds : public BaseClass,
         if constexpr (!std::is_same_v<typename BaseClass::StmtRetType, void>) {
             auto ret = makeFor(op->id(), op->iter_, std::move(begin),
                                std::move(end), std::move(step), std::move(len),
-                               op->property_, std::move(body));
+                               std::move(property), std::move(body));
             return COPY_DEBUG_INFO(ret, op);
         }
     }

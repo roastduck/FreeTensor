@@ -934,3 +934,115 @@ def test_streams():
 
     y_std = ((x_np + 1).reshape(4, 128, 2) * [2, 1]).reshape(4, 256)
     assert np.array_equal(y_np, y_std)
+
+
+def test_merge_no_deps_1():
+
+    @ir.transform
+    def test(ptr, edge1, edge2):
+        ir.declare_var(ptr, (4, 11), "int32", "input", "cpu")
+        ir.declare_var(edge1, (4, 50), "int32", "input", "cpu")
+        ir.declare_var(edge2, (4, 50), "int32", "output", "cpu")
+        'nid: Lb'
+        for b in range(4):
+            'nid: Li1'
+            'no_deps: edge2'
+            for i in range(10):
+                for j in range(ptr[b, i], ptr[b, i + 1]):
+                    edge2[b, j] = edge1[b, j] + i
+            'nid: Li2'
+            'no_deps: edge2'
+            for i in range(10):
+                for j in range(ptr[b, i], ptr[b, i + 1]):
+                    edge2[b, j] += j
+
+    print(test)
+    s = ir.Schedule(test)
+    s.parallelize("Lb", "blockIdx.x")
+    s.parallelize("Li1", "threadIdx.x")
+    s.parallelize("Li2", "threadIdx.x")
+    func = ir.lower(s.func(), target)
+    print(func)
+
+    def matcher(x):
+        if x.node_type() == ir.ASTNodeType.For:
+            node = x.node()
+            # TODO: Can we check the type using a native Python API?
+            # https://github.com/pybind/pybind11/discussions/3835
+            if ir.ffi.check(node.property.parallel) == "threadIdx.x":
+                return True
+        return False
+
+    checker = ir.Schedule(func)
+    assert checker.find(matcher).node().property.no_deps == ['edge2']
+
+
+def test_merge_no_deps_2():
+
+    @ir.transform
+    def test(ptr, edge1, edge2):
+        ir.declare_var(ptr, (4, 11), "int32", "input", "cpu")
+        ir.declare_var(edge1, (4, 50), "int32", "input", "cpu")
+        ir.declare_var(edge2, (4, 50), "int32", "output", "cpu")
+        ir.declare_var(foobar, (
+            4,
+            10,
+        ), "int32", "output", "cpu")
+        'nid: Lb'
+        for b in range(4):
+            'nid: Li1'
+            'no_deps: edge2'
+            for i in range(10):
+                for j in range(ptr[b, i], ptr[b, i + 1]):
+                    edge2[b, j] = edge1[b, j] + i
+            'nid: Li2'
+            for i in range(10):
+                # Nothing to do with edge2 here
+                foobar[b, i] = i
+
+    print(test)
+    s = ir.Schedule(test)
+    s.parallelize("Lb", "blockIdx.x")
+    s.parallelize("Li1", "threadIdx.x")
+    s.parallelize("Li2", "threadIdx.x")
+    func = ir.lower(s.func(), target)
+    print(func)
+
+    def matcher(x):
+        if x.node_type() == ir.ASTNodeType.For:
+            node = x.node()
+            # TODO: Can we check the type using a native Python API?
+            # https://github.com/pybind/pybind11/discussions/3835
+            if ir.ffi.check(node.property.parallel) == "threadIdx.x":
+                return True
+        return False
+
+    checker = ir.Schedule(func)
+    assert checker.find(matcher).node().property.no_deps == ['edge2']
+
+
+def test_merge_no_deps_3():
+
+    @ir.transform
+    def test(ptr, edge1, edge2):
+        ir.declare_var(ptr, (4, 11), "int32", "input", "cpu")
+        ir.declare_var(edge1, (4, 50), "int32", "input", "cpu")
+        ir.declare_var(edge2, (4, 50), "int32", "output", "cpu")
+        'nid: Lb'
+        for b in range(4):
+            'nid: Li1'
+            'no_deps: edge2'
+            for i in range(10):
+                for j in range(ptr[b, i], ptr[b, i + 1]):
+                    edge2[b, j] = edge1[b, j] + i
+            'nid: Li2'  # If we don't mark edge2 here
+            for i in range(10):
+                for j in range(ptr[b, i], ptr[b, i + 1] + 1):
+                    edge2[b, j] = edge2[b, j] * 2 + j
+
+    print(test)
+    s = ir.Schedule(test)
+    s.parallelize("Lb", "blockIdx.x")
+    s.parallelize("Li1", "threadIdx.x")
+    with pytest.raises(ir.InvalidSchedule):
+        s.parallelize("Li2", "threadIdx.x")

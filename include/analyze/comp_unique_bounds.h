@@ -21,8 +21,6 @@ namespace ir {
  *
  * Two UNIQUE expressions `x` have different upper bounds
  *
- * Inherit this pass to use it
- *
  * This pass is not accurate. Simplifying passes using this analysis may need
  * to run for multiple rounds
  */
@@ -71,9 +69,6 @@ class CompUniqueBounds : public WithTypeInfer<Visitor> {
 
     bool alwaysLT(const Expr &lhs, const Expr &rhs);
     bool alwaysLE(const Expr &lhs, const Expr &rhs);
-
-    const LowerBoundsMap &lower() const { return lower_; }
-    const UpperBoundsMap &upper() const { return upper_; }
 
   protected:
     void visitExpr(const Expr &op) override;

@@ -3,6 +3,7 @@
 
 #include <analyze/find_multi_level_tiling.h>
 #include <analyze/symbol_table.h>
+#include <stack>
 #include <stmt.h>
 #include <visitor.h>
 
@@ -13,8 +14,9 @@ class FindSingleElementWise : public SymbolTable<Visitor> {
     ReduceTo nowReduceTo_;
     typedef SymbolTable<Visitor> BaseClass;
     ForsWithDataReuse fors_;
-    Stmt found_;
+    ElementWiseInfo found_;
     bool invalid_;
+    std::vector<std::pair<ForInfo, std::string>> stack_;
 
   public:
     explicit FindSingleElementWise(ForsWithDataReuse fors)
@@ -23,13 +25,14 @@ class FindSingleElementWise : public SymbolTable<Visitor> {
     void visit(const Store &op) override;
     void visit(const ReduceTo &op) override;
     void visit(const Load &op) override;
-    bool isElementWise(const Store &st, const Load &ld);
-    bool isElementWise(const ReduceTo &st, const Load &ld);
-    Stmt result() { return invalid_ ? nullptr : found_; }
+    void visit(const For &op) override;
+    ElementWiseInfo isElementWise(const Store &st, const Load &ld);
+    ElementWiseInfo isElementWise(const ReduceTo &st, const Load &ld);
+    ElementWiseInfo result() { return invalid_ ? ElementWiseInfo() : found_; }
 };
 
-Stmt findSingleElementWiseConsumer(const Stmt &root,
-                                   const ForsWithDataReuse &fors);
+ElementWiseInfo findSingleElementWiseConsumer(const Stmt &root,
+                                              const ForsWithDataReuse &fors);
 
 } // namespace ir
 

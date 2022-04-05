@@ -71,7 +71,10 @@ size_t Hasher::compHash(const ForNode &op) {
     for (auto &&item : op.property_.reductions_) {
         h = ((h + std::hash<int>()((int)item.op_)) * K2 + B2) % P;
         h = ((h + std::hash<std::string>()(item.var_)) * K2 + B2) % P;
-        for (auto &&idx : item.indices_) {
+        for (auto &&idx : item.begins_) {
+            h = ((h + (idx.isValid() ? idx->hash() : 0ull)) * K2 + B2) % P;
+        }
+        for (auto &&idx : item.ends_) {
             h = ((h + (idx.isValid() ? idx->hash() : 0ull)) * K2 + B2) % P;
         }
     }
@@ -335,10 +338,18 @@ bool HashComparator::compare(const For &lhs, const For &rhs) const {
         if (l.var_ != r.var_) {
             return false;
         }
-        if (l.indices_.size() != r.indices_.size()) {
+        if (l.begins_.size() != r.begins_.size()) {
             return false;
         }
-        for (auto &&[ll, rr] : iter::zip(l.indices_, r.indices_)) {
+        for (auto &&[ll, rr] : iter::zip(l.begins_, r.begins_)) {
+            if (!(*this)(ll, rr)) {
+                return false;
+            }
+        }
+        if (l.ends_.size() != r.ends_.size()) {
+            return false;
+        }
+        for (auto &&[ll, rr] : iter::zip(l.ends_, r.ends_)) {
             if (!(*this)(ll, rr)) {
                 return false;
             }

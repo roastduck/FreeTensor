@@ -8,6 +8,15 @@ namespace ir {
 
 namespace gpu {
 
+namespace {
+
+class InvalidGPUVector : public InvalidProgram {
+  public:
+    InvalidGPUVector(const std::string &msg) : InvalidProgram(msg) {}
+};
+
+} // namespace
+
 std::string LowerVector::vecType(DataType dtype) const {
     std::string ret;
     switch (dtype) {
@@ -38,8 +47,8 @@ bool LowerVector::hasVectorIndex(const Expr &index) {
     if (it != lin.coeff_.end()) {
         // TODO: k_ can be -1
         if (it->k_ != 1) {
-            throw InvalidSchedule("Vectorized non-contiguous memory "
-                                  "accessis not supported");
+            throw InvalidGPUVector("Vectorized non-contiguous memory "
+                                   "accessis not supported");
         }
 
         auto toProve =
@@ -49,9 +58,9 @@ bool LowerVector::hasVectorIndex(const Expr &index) {
         toProve = (*this)(toProve);
         simplifyOnly_ = false;
         if (!prove(toProve)) {
-            throw InvalidSchedule("Vectorized memory access should be"
-                                  "aligned to the vector length: " +
-                                  toString(toProve) + " does not hold");
+            throw InvalidGPUVector("Vectorized memory access should be"
+                                   "aligned to the vector length: " +
+                                   toString(toProve) + " does not hold");
         }
         return true;
     } else {
@@ -64,7 +73,7 @@ Expr LowerVector::getIndex(const Expr &index) {
     isIndex_++;
     try {
         ret = (*this)(index);
-    } catch (const InvalidSchedule &e) {
+    } catch (const InvalidGPUVector &e) {
         isIndex_--;
         throw;
     }
@@ -75,7 +84,7 @@ Expr LowerVector::getIndex(const Expr &index) {
 Stmt LowerVector::visit(const For &op) {
     if (op->property_.vectorize_) {
         if (var_.isValid()) {
-            throw InvalidSchedule("Nested vectorized loops is not supported");
+            throw InvalidGPUVector("Nested vectorized loops is not supported");
         }
 
         for (int vecLen : VEC_LEN) {
@@ -90,14 +99,15 @@ Stmt LowerVector::visit(const For &op) {
                 toProve = (*this)(toProve);
                 simplifyOnly_ = false;
                 if (!prove(toProve)) {
-                    throw InvalidSchedule("The loop length should be divisible "
-                                          "by the vector length");
+                    throw InvalidGPUVector(
+                        "The loop length should be divisible "
+                        "by the vector length");
                 }
                 ret = deepCopy(op).as<ForNode>();
                 ret->len_ = makeFloorDiv(ret->len_, makeIntConst(vecLen));
                 ret->end_ = makeAdd(ret->begin_, ret->len_);
                 ret->body_ = (*this)(ret->body_);
-            } catch (const InvalidSchedule &e) {
+            } catch (const InvalidGPUVector &e) {
                 WARNING("Vectorizing loop " + op->id().strId() + " to length " +
                         std::to_string(vecLen) +
                         " failed because: " + e.what());

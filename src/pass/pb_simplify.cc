@@ -75,7 +75,7 @@ void PBCompBounds::visitExpr(const Expr &op) {
 }
 
 Stmt pbSimplify(const Stmt &op) {
-    return flattenStmtSeq(std::get<0>(simplifyAndGetBounds<PBSimplify>(op)));
+    return flattenStmtSeq(simplifyImpl<PBSimplify>(op));
 }
 
 } // namespace ir

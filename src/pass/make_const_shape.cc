@@ -1,5 +1,5 @@
 #include <algorithm>
-#include <climits>
+#include <limits>
 
 #include <pass/make_const_shape.h>
 #include <pass/pb_simplify.h>
@@ -7,7 +7,7 @@
 namespace ir {
 
 Stmt MakeConstShape::visit(const VarDef &_op) {
-    auto __op = Mutator::visit(_op);
+    auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::VarDef);
     auto op = __op.as<VarDefNode>();
 
@@ -23,18 +23,14 @@ Stmt MakeConstShape::visit(const VarDef &_op) {
         if (dim->nodeType() == ASTNodeType::IntConst) {
             continue;
         }
-        int result = INT_MAX;
-        if (upper_.count(oldDim)) {
-            for (auto b : upper_.at(oldDim)) {
-                if (b.lin().coeff_.empty()) {
-                    auto bias = b.lin().bias_;
-                    result = std::min(
-                        result,
-                        (int)floorDiv(bias.p_, bias.q_)); // FIXME: int64_t
-                }
+        int64_t result = std::numeric_limits<int64_t>::max();
+        for (auto b : unique_.getUpper(oldDim)) {
+            if (b.lin().coeff_.empty()) {
+                auto bias = b.lin().bias_;
+                result = std::min(result, floorDiv(bias.p_, bias.q_));
             }
         }
-        if (result == INT_MAX) {
+        if (result == std::numeric_limits<int64_t>::max()) {
             throw InvalidProgram("Unable to relax dimension " +
                                  std::to_string(i) + ": " + toString(dim) +
                                  " of " + op->id().strId() + ": " + op->name_ +
@@ -47,12 +43,7 @@ Stmt MakeConstShape::visit(const VarDef &_op) {
 }
 
 Stmt makeConstShape(const Stmt &_op, const std::vector<MemType> &mtypes) {
-    Stmt op;
-    CompUniqueBounds::LowerBoundsMap lower;
-    CompUniqueBounds::UpperBoundsMap upper;
-    std::tie(op, lower, upper) = simplifyAndGetBounds<PBSimplify>(_op);
-    op = MakeConstShape(mtypes, upper)(op);
-    return op;
+    return MakeConstShape(mtypes)(_op);
 }
 
 } // namespace ir

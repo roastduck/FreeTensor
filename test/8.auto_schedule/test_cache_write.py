@@ -5,7 +5,7 @@ target = ir.CPU()
 device = ir.Device(target)
 
 
-def test_multi_level_tiling():
+def test_cache_write():
     a = 128
     b = 256
     m = 4

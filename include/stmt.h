@@ -154,9 +154,7 @@ Stmt _makeReduceTo(const ID &id, const std::string &var,
 struct ReductionItem {
     ReduceOp op_;
     std::string var_;
-    std::vector<SubTree<ExprNode, Nullable>> indices_;
-    // A null index means the full range of that dimension
-    // TODO: Support slicing
+    std::vector<SubTree<ExprNode>> begins_, ends_;
 };
 
 struct ForProperty {

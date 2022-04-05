@@ -4,6 +4,7 @@
 #include <functional>
 #include <unordered_map>
 
+#include <auto_schedule/structs.h>
 #include <cursor.h>
 #include <driver/target.h>
 #include <func.h>
@@ -26,7 +27,11 @@ class Schedule {
     Schedule(const Stmt &ast);
     Schedule(const Func &func) : Schedule(func->body_) { func_ = func; }
 
-    Schedule clone() const { return Schedule(deepCopy(func_)); }
+    Schedule clone() const {
+        if (func_.isValid())
+            return Schedule(deepCopy(func_));
+        return Schedule(deepCopy(ast_));
+    }
 
     /**
      * @return : The function being transformed
@@ -482,6 +487,16 @@ class Schedule {
      * @param target : Target architecture
      */
     void autoUnroll(const Target &target);
+
+    void multiLevelTiling(const ForsWithDataReuse &target,
+                          const MultiLevelTilingAnnotation &annotation,
+                          const std::string &pat);
+
+    void
+    multiLevelTilingWithFusion(const ForsWithDataReuse &target,
+                               const MultiLevelTilingAnnotation &annotation,
+                               const std::string &pat,
+                               const ElementWiseInfo &toFuse, int level);
 };
 
 } // namespace ir

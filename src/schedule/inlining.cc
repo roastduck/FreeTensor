@@ -123,7 +123,15 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
             }
         }
 
-        if (!checkNotModified(ast, expr, CheckNotModifiedSide::Before,
+        auto later = dep.later().as<LoadNode>();
+        std::unordered_map<std::string, Expr> replaceFromPlaceholder;
+        for (auto &&[i, idx] : iter::enumerate(later->indices_)) {
+            replaceFromPlaceholder[".inline_placeholder." + std::to_string(i)] =
+                idx;
+        }
+        auto newExpr = ReplaceIter(replaceFromPlaceholder)(placeholder);
+
+        if (!checkNotModified(ast, expr, newExpr, CheckNotModifiedSide::Before,
                               dep.earlier_.cursor_.id(),
                               CheckNotModifiedSide::Before,
                               dep.later_.cursor_.id())) {
@@ -132,13 +140,7 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
                 toString(dep.earlier_.cursor_.node()) + " into " +
                 toString(dep.later_.cursor_.node()));
         }
-        auto later = dep.later().as<LoadNode>();
-        std::unordered_map<std::string, Expr> replaceFromPlaceholder;
-        for (auto &&[i, idx] : iter::enumerate(later->indices_)) {
-            replaceFromPlaceholder[".inline_placeholder." + std::to_string(i)] =
-                idx;
-        }
-        replace[later] = ReplaceIter(replaceFromPlaceholder)(placeholder);
+        replace[later] = std::move(newExpr);
     };
     findDeps(ast, {{}}, found, FindDepsMode::KillLater, DEP_RAW, filter);
     ast = MakeInline(def, replace)(ast);

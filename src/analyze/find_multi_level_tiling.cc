@@ -15,7 +15,7 @@ void FindMultiLevelTiling::visit(const For &op) {
     if (!downward && !stackMarkBranch_.empty()) {
         stackMarkBranch_.back() = true;
     }
-    stack_.push_back({op->id(), op->len_.as<IntConstNode>()->val_});
+    stack_.push_back({op->id(), -1, op->len_.as<IntConstNode>()->val_});
     stackMarkBranch_.push_back(false);
     downward = true;
     Visitor::visit(op);
@@ -77,6 +77,7 @@ void FindMultiLevelTiling::storeBuf() {
                         mapItem.at(buf_[j].id) == LoopVariability::Variance) {
                         checkAppear[j] = true;
                         tmp.dimIterated[i] = true;
+                        buf_[j].index = i;
                     }
                 }
             }
@@ -87,6 +88,7 @@ void FindMultiLevelTiling::storeBuf() {
                     tmp.reductionLoops.push_back(buf_[i]);
                 }
             }
+            std::sort(tmp.spaceLoops.begin(), tmp.spaceLoops.end());
             found_.push_back(tmp);
         }
 
@@ -116,7 +118,7 @@ std::string FindMultiLevelTiling::hasStore(const For &op) {
 }
 
 void FindHasStore::visit(const For &op) {
-    stack_.push_back({op->id(), op->len_.as<IntConstNode>()->val_});
+    stack_.push_back({op->id(), -1, op->len_.as<IntConstNode>()->val_});
     Visitor::visit(op);
     stack_.pop_back();
 }

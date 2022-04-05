@@ -41,7 +41,6 @@ class Z3Simplify : public Mutator {
 
     // We use Opt because there is no z3::expr::expr()
     std::unordered_map<Expr, Opt<z3::expr>> z3Exprs_;
-    std::deque<std::pair<Expr, bool>> condList_;
 
   public:
     Z3Simplify(const SymbolTableInterface &symbolTable)
