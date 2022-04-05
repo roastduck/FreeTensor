@@ -25,6 +25,7 @@ Stmt propOneTimeUse(const Stmt &_op) {
 
     std::unordered_map<AST, std::vector<Stmt>> r2w, r2wMay;
     std::unordered_map<Stmt, std::vector<AST>> w2r, w2rMay;
+    std::unordered_map<AST, Cursor> cursors;
     auto filterMust = [&](const AccessPoint &later,
                           const AccessPoint &earlier) {
         if (earlier.op_->nodeType() != ASTNodeType::Store) {
@@ -39,13 +40,9 @@ Stmt propOneTimeUse(const Stmt &_op) {
         return true;
     };
     auto foundMust = [&](const Dependency &d) {
-        if (checkNotModified(
-                op, d.earlier().as<StoreNode>()->expr_,
-                CheckNotModifiedSide::Before, d.earlier_.cursor_.id(),
-                CheckNotModifiedSide::Before, d.later_.cursor_.id())) {
-            r2w[d.later()].emplace_back(d.earlier().as<StmtNode>());
-            w2r[d.earlier().as<StmtNode>()].emplace_back(d.later());
-        }
+        r2w[d.later()].emplace_back(d.earlier().as<StmtNode>());
+        w2r[d.earlier().as<StmtNode>()].emplace_back(d.later());
+        cursors[d.later()] = d.later_.cursor_;
     };
     auto filterMay = [&](const AccessPoint &later, const AccessPoint &earlier) {
         return r2w.count(later.op_) || w2r.count(earlier.op_.as<StmtNode>());
@@ -95,11 +92,24 @@ Stmt propOneTimeUse(const Stmt &_op) {
                 replaceFromPlaceholder[".prop_placeholder." +
                                        std::to_string(i)] = idx;
             }
-            replace[item.first] =
-                ReplaceIter(replaceFromPlaceholder)(placeholder);
+
+            {
+                auto newExpr = ReplaceIter(replaceFromPlaceholder)(placeholder);
+                if (!checkNotModified(op, store->expr_, newExpr,
+                                      CheckNotModifiedSide::Before, store->id(),
+                                      CheckNotModifiedSide::Before,
+                                      cursors.at(item.first).id())) {
+                    goto fail;
+                }
+                replace[item.first] = std::move(newExpr);
+            }
         fail:;
         } else {
-            replace[item.first] = store->expr_;
+            if (checkNotModified(op, store->expr_, CheckNotModifiedSide::Before,
+                                 store->id(), CheckNotModifiedSide::Before,
+                                 cursors.at(item.first).id())) {
+                replace[item.first] = store->expr_;
+            }
         }
     }
 
