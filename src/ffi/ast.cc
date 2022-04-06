@@ -441,8 +441,9 @@ void init_ffi_ast(py::module_ &m) {
               &_makeStmtSeq),
           "id"_a, "stmts"_a);
     m.def("makeVarDef",
-          static_cast<Stmt (*)(const ID &, const std::string &, const Buffer &,
-                               const Expr &, const Stmt &, bool)>(&_makeVarDef),
+          static_cast<Stmt (*)(const ID &, const std::string &,
+                               const Ref<Buffer> &, const Expr &, const Stmt &,
+                               bool)>(&_makeVarDef),
           "nid"_a, "name"_a, "buffer"_a, "size_lim"_a, "body"_a, "pinned"_a);
     m.def("makeVar", &_makeVar, "name"_a);
     m.def("makeStore",

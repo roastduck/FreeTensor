@@ -169,7 +169,7 @@ Stmt FuseFor::visit(const StmtSeq &_op) {
                 if (stmt->nodeType() == ASTNodeType::VarDef) {
                     auto def = stmt.as<VarDefNode>();
                     fused = makeVarDef(def->id(), def->name_,
-                                       std::move(*def->buffer_), def->sizeLim_,
+                                       std::move(def->buffer_), def->sizeLim_,
                                        fused, def->pinned_);
                 } else if (stmt->nodeType() == ASTNodeType::StmtSeq) {
                     auto seq = stmt.as<StmtSeqNode>();
@@ -183,7 +183,7 @@ Stmt FuseFor::visit(const StmtSeq &_op) {
                 if (stmt->nodeType() == ASTNodeType::VarDef) {
                     auto def = stmt.as<VarDefNode>();
                     fused = makeVarDef(def->id(), def->name_,
-                                       std::move(*def->buffer_), def->sizeLim_,
+                                       std::move(def->buffer_), def->sizeLim_,
                                        fused, def->pinned_);
                 } else if (stmt->nodeType() == ASTNodeType::StmtSeq) {
                     auto seq = stmt.as<StmtSeqNode>();

@@ -126,10 +126,11 @@ Stmt LowerParallelReduction::visit(const For &_op) {
     Stmt ret = op;
     for (auto &&[workspace, wsShape, dtype] :
          iter::zip(workspaces, workspaceShapes, dtypes)) {
-        ret = makeVarDef("", workspace,
-                         Buffer(Tensor(wsShape, dtype), AccessType::Cache,
-                                MemType::GPUShared),
-                         nullptr, ret, false);
+        ret =
+            makeVarDef("", workspace,
+                       Ref<Buffer>::make(Tensor(wsShape, dtype),
+                                         AccessType::Cache, MemType::GPUShared),
+                       nullptr, ret, false);
     }
 
     return ret;

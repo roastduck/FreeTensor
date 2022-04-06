@@ -98,10 +98,10 @@ Stmt LowerParallelReduction::visit(const For &_op) {
     Stmt ret = makeStmtSeq("", std::move(stmts));
     for (auto &&[workspace, wsShape, dtype] :
          iter::zip(workspaces, workspaceShapes, dtypes)) {
-        ret = makeVarDef(
-            "", workspace,
-            Buffer(Tensor(wsShape, dtype), AccessType::Cache, MemType::CPU),
-            nullptr, ret, false);
+        ret = makeVarDef("", workspace,
+                         Ref<Buffer>::make(Tensor(wsShape, dtype),
+                                           AccessType::Cache, MemType::CPU),
+                         nullptr, ret, false);
     }
 
     return ret;

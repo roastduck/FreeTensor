@@ -3,6 +3,7 @@
 
 #include <string>
 
+#include <sub_tree.h>
 #include <tensor.h>
 
 namespace ir {
@@ -50,7 +51,7 @@ inline std::string toString(MemType mtype) {
     return "[???]";
 }
 
-class Buffer {
+class Buffer : public ASTPart {
     Tensor tensor_;
     AccessType atype_;
     MemType mtype_;
@@ -70,6 +71,8 @@ class Buffer {
     void setMtype(MemType mtype) { mtype_ = mtype; }
     MemType mtype() const { return mtype_; }
 };
+
+Ref<Buffer> deepCopy(const Ref<Buffer> &b);
 
 } // namespace ir
 

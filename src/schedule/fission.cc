@@ -38,7 +38,7 @@ Stmt HoistVar::visit(const For &op) {
         innerLoops_.emplace_back(op->id());
         for (auto i = defStack_.rbegin(); i != defStack_.rend(); i++) {
             ret = makeVarDef((*i)->id(), std::move((*i)->name_),
-                             std::move(*((*i)->buffer_)),
+                             std::move(((*i)->buffer_)),
                              std::move((*i)->sizeLim_), ret, (*i)->pinned_);
         }
         return ret;
@@ -124,7 +124,7 @@ Stmt AddDimToVar::visit(const VarDef &_op) {
 
     auto op = __op.as<VarDefNode>();
     if (toAdd_.count(op->id())) {
-        op->buffer_ = op->buffer_.clone();
+        op->buffer_ = deepCopy(op->buffer_);
         auto &shape = op->buffer_->tensor().shape();
         for (auto &&loop : toAdd_.at(op->id())) {
             shape.insert(shape.begin(), forMap_.at(loop)->len_);

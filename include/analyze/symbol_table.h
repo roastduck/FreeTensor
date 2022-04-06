@@ -16,7 +16,7 @@ class SymbolTableInterface {
 
     virtual bool hasDef(const std::string &name) const = 0;
     virtual const VarDef &def(const std::string &name) const = 0;
-    virtual const Ref<Buffer> &buffer(const std::string &name) const = 0;
+    virtual Ref<Buffer> buffer(const std::string &name) const = 0;
 
     virtual bool hasLoop(const std::string &name) const = 0;
     virtual const For &loop(const std::string &name) const = 0;
@@ -46,7 +46,7 @@ class SymbolTableData : public SymbolTableInterface {
         return defs_.at(name);
     }
 
-    const Ref<Buffer> &buffer(const std::string &name) const override {
+    Ref<Buffer> buffer(const std::string &name) const override {
         return def(name)->buffer_;
     }
 
@@ -118,7 +118,7 @@ class SymbolTable : public BaseClass, public SymbolTableInterface {
     const VarDef &def(const std::string &name) const override {
         return impl_.def(name);
     }
-    const Ref<Buffer> &buffer(const std::string &name) const override {
+    Ref<Buffer> buffer(const std::string &name) const override {
         return impl_.buffer(name);
     }
 
@@ -159,7 +159,8 @@ class SymbolTable : public BaseClass, public SymbolTableInterface {
                 shape.emplace_back((*this)(dim));
             }
             Tensor t(std::move(shape), op->buffer_->tensor().dtype());
-            Buffer b(std::move(t), op->buffer_->atype(), op->buffer_->mtype());
+            Ref<Buffer> b = Ref<Buffer>::make(
+                std::move(t), op->buffer_->atype(), op->buffer_->mtype());
             Expr sizeLim =
                 op->sizeLim_.isValid() ? (*this)(op->sizeLim_) : nullptr;
 

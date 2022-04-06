@@ -54,7 +54,8 @@ class Mutator {
             shape.emplace_back((*this)(dim));
         }
         Tensor t(std::move(shape), op->buffer_->tensor().dtype());
-        Buffer b(std::move(t), op->buffer_->atype(), op->buffer_->mtype());
+        Ref<Buffer> b = Ref<Buffer>::make(std::move(t), op->buffer_->atype(),
+                                          op->buffer_->mtype());
         Expr sizeLim = op->sizeLim_.isValid() ? (*this)(op->sizeLim_) : nullptr;
         return COPY_DEBUG_INFO(makeVarDef(op->id(), op->name_, std::move(b),
                                           std::move(sizeLim),

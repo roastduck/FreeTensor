@@ -82,8 +82,8 @@ Stmt AsMatMul::visit(const For &op) {
                          ldc_, stridea_, strideb_, stridec_, batchSize_,
                          aIsRowMajor_, bIsRowMajor_, cIsRowMajor_, ret);
         for (auto &&def : innerDefs_) {
-            ret = makeVarDef(def->id(), def->name_, *def->buffer_,
-                             def->sizeLim_, ret, def->pinned_);
+            ret = makeVarDef(def->id(), def->name_, def->buffer_, def->sizeLim_,
+                             ret, def->pinned_);
         }
         return ret;
     } else {

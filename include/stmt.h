@@ -48,18 +48,13 @@ inline Stmt _makeStmtSeq(const ID &id, std::initializer_list<Stmt> stmts) {
 class VarDefNode : public StmtNode {
   public:
     std::string name_;
-    Ref<Buffer> buffer_;
+    SubTree<Buffer> buffer_;
     SubTree<ExprNode, NullPolicy::Nullable>
         sizeLim_; // limit the buffer size to a specific
                   // expression, other than the size of buffer_
     SubTree<StmtNode> body_;
     bool pinned_; // If pinned, SinkVar and ShrinkVar will not alter this node
-
-    VarDefNode(const VarDefNode &other);            // Deep copy buffer_
-    VarDefNode &operator=(const VarDefNode &other); // Deep copy buffer_
-
     void compHash() override;
-
     DEFINE_NODE_TRAIT(VarDef);
 };
 typedef Ref<VarDefNode> VarDef;
@@ -70,7 +65,9 @@ Stmt _makeVarDef(const ID &id, const std::string &name, Tbuffer &&buffer,
     VarDef d = VarDef::make();
     d->setId(id);
     d->name_ = name;
-    d->buffer_ = Ref<Buffer>::make(std::forward<Tbuffer>(buffer));
+    auto tmp = SubTree<Buffer>(buffer);
+    d->buffer_ = std::move(tmp);
+    // d->buffer_ = std::forward<Tbuffer>(buffer);
     d->sizeLim_ = sizeLim;
     d->body_ = std::forward<Tbody>(body);
     d->pinned_ = pinned;

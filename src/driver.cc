@@ -177,8 +177,8 @@ std::vector<Ref<Array>> Driver::collectReturns() {
     std::vector<Ref<Array>> ret;
     for (size_t i = 0, n = f_->returns_.size(); i < n; i++) {
         std::vector<size_t> shape(retShapes_[i], retShapes_[i] + retDims_[i]);
-        auto val = Ref<Array>::make(
-            Array(returns_[i], shape, f_->returns_[i].second, dev_));
+        auto val =
+            Ref<Array>::make(returns_[i], shape, f_->returns_[i].second, dev_);
         if (f_->closure_.count(f_->returns_[i].first)) {
             *f_->closure_.at(f_->returns_[i].first) = val;
         } else {

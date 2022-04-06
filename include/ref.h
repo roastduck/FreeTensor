@@ -55,10 +55,6 @@ template <class T> class Ref {
     Ref &operator=(const Ref &) = default;
     Ref &operator=(Ref &&) = default;
 
-    Ref clone() const {
-        return Ref(std::allocate_shared<T>(Allocator<T>(), *ptr_));
-    }
-
     template <class U> Ref<U> as() const {
         Ref<U> ret;
         ret.ptr_ = std::static_pointer_cast<U>(ptr_);
@@ -88,6 +84,10 @@ template <class T> class Ref {
     }
     static Ref make(const T &x) {
         return Ref(std::allocate_shared<T>(Allocator<T>(), x));
+    }
+    template <class... Args> static Ref make(Args &&...args) {
+        return Ref(std::allocate_shared<T>(Allocator<T>(),
+                                           std::forward<Args>(args)...));
     }
 
     friend bool operator==(const Ref &lhs, const Ref &rhs) {

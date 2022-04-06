@@ -251,10 +251,11 @@ Stmt MakeParallelReduction::visit(const For &_op) {
                 makeNestedLoops(cacheIndices, iter::repeat(makeIntConst(0)),
                                 newShape, iter::repeat(makeIntConst(1)),
                                 newShape, iter::repeat(ForProperty()), flush);
-            ret = makeVarDef(
-                "", cacheName,
-                Buffer(Tensor(newShape, dtype), AccessType::Cache, mtype),
-                nullptr, makeStmtSeq("", {init, ret, flush}), false);
+            ret =
+                makeVarDef("", cacheName,
+                           Ref<Buffer>::make(Tensor(newShape, dtype),
+                                             AccessType::Cache, mtype),
+                           nullptr, makeStmtSeq("", {init, ret, flush}), false);
         }
         return ret;
     } else {

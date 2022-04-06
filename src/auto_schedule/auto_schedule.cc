@@ -54,7 +54,7 @@ AutoSchedule::measure(const std::vector<Schedule> &schedules) {
                 code = codeGenCUDA(func);
             else
                 code = codeGenCPU(func);
-            drivers[i] = Ref<Driver>::make(Driver(func, code, device_));
+            drivers[i] = Ref<Driver>::make(func, code, device_);
         } catch (const std::exception &e) {
             // OpenMP threads won't report an exception message
             std::cerr << "ERROR: " << e.what() << std::endl;

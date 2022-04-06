@@ -22,7 +22,7 @@ Stmt ShrinkVar::visit(const VarDef &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::VarDef);
     auto op = __op.as<VarDefNode>();
 
-    op->buffer_ = op->buffer_.clone();
+    op->buffer_ = deepCopy(op->buffer_);
     op->buffer_->tensor().setShape(range.len_);
     offset_.erase(_op->name_);
     return op;
