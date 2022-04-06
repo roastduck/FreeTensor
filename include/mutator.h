@@ -48,7 +48,7 @@ class Mutator {
     }
 
     virtual Stmt visit(const VarDef &op) {
-        std::vector<SubTree<ExprNode>> shape;
+        std::vector<Expr> shape;
         shape.reserve(op->buffer_->tensor().shape().size());
         for (auto &&dim : op->buffer_->tensor().shape()) {
             shape.emplace_back((*this)(dim));

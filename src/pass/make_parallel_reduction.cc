@@ -208,7 +208,7 @@ Stmt MakeParallelReduction::visit(const For &_op) {
     if (forReductions_.count(op->id())) {
         for (auto &&[redOp, var, allLowers, allUppers] :
              forReductions_.at(op->id())) {
-            std::vector<SubTree<ExprNode>> begins, ends;
+            std::vector<Expr> begins, ends;
             for (auto &&dimLowers : allLowers) {
                 begins.emplace_back(makeMinMax(dimLowers));
             }

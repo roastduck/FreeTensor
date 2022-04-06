@@ -41,8 +41,7 @@ class VarReorder : public Mutator {
             for (auto &&nth : order_) {
                 indices.emplace_back(op->indices_[nth]);
             }
-            op->indices_ =
-                std::vector<SubTree<ExprNode>>(indices.begin(), indices.end());
+            op->indices_ = std::move(indices);
         }
         return op;
     }

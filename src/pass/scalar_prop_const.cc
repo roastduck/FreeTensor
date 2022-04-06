@@ -12,7 +12,7 @@
 namespace ir {
 
 std::optional<ScalarPropConst::ScalarIndices>
-ScalarPropConst::tryToScalar(const std::vector<SubTree<ExprNode>> &exprs) {
+ScalarPropConst::tryToScalar(const std::vector<Expr> &exprs) {
     ScalarIndices res;
     for (auto &i : exprs)
         if (i->nodeType() == ASTNodeType::IntConst)

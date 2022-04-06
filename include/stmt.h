@@ -26,7 +26,7 @@ inline Stmt _makeAny() { return Any::make(); }
 
 class StmtSeqNode : public StmtNode {
   public:
-    std::vector<SubTree<StmtNode>> stmts_;
+    SubTreeList<StmtNode> stmts_;
     void compHash() override;
     DEFINE_NODE_TRAIT(StmtSeq);
 };
@@ -35,13 +35,13 @@ typedef Ref<StmtSeqNode> StmtSeq;
 template <class Tstmts> Stmt _makeStmtSeq(const ID &id, Tstmts &&stmts) {
     StmtSeq s = StmtSeq::make();
     s->setId(id);
-    s->stmts_ = std::vector<SubTree<StmtNode>>(stmts.begin(), stmts.end());
+    s->stmts_ = std::forward<Tstmts>(stmts);
     return s;
 }
 inline Stmt _makeStmtSeq(const ID &id, std::initializer_list<Stmt> stmts) {
     StmtSeq s = StmtSeq::make();
     s->setId(id);
-    s->stmts_ = std::vector<SubTree<StmtNode>>(stmts.begin(), stmts.end());
+    s->stmts_ = stmts;
     return s;
 }
 
@@ -80,7 +80,7 @@ Stmt _makeVarDef(const ID &id, const std::string &name, Tbuffer &&buffer,
 class StoreNode : public StmtNode {
   public:
     std::string var_;
-    std::vector<SubTree<ExprNode>> indices_;
+    SubTreeList<ExprNode> indices_;
     SubTree<ExprNode> expr_;
     void compHash() override;
     DEFINE_NODE_TRAIT(Store);
@@ -93,8 +93,7 @@ Stmt _makeStore(const ID &id, const std::string &var, Tindices &&indices,
     Store s = Store::make();
     s->setId(id);
     s->var_ = var;
-    s->indices_ =
-        std::vector<SubTree<ExprNode>>(indices.begin(), indices.end());
+    s->indices_ = std::forward<Tindices>(indices);
     s->expr_ = std::forward<Texpr>(expr);
     return s;
 }
@@ -104,8 +103,7 @@ Stmt _makeStore(const ID &id, const std::string &var,
     Store s = Store::make();
     s->setId(id);
     s->var_ = var;
-    s->indices_ =
-        std::vector<SubTree<ExprNode>>(indices.begin(), indices.end());
+    s->indices_ = indices;
     s->expr_ = std::forward<Texpr>(expr);
     return s;
 }
@@ -114,7 +112,7 @@ enum class ReduceOp : int { Add, Mul, Min, Max };
 class ReduceToNode : public StmtNode {
   public:
     std::string var_;
-    std::vector<SubTree<ExprNode>> indices_;
+    SubTreeList<ExprNode> indices_;
     ReduceOp op_;
     SubTree<ExprNode> expr_;
     bool atomic_;
@@ -129,8 +127,7 @@ Stmt _makeReduceTo(const ID &id, const std::string &var, Tindices &&indices,
     ReduceTo a = ReduceTo::make();
     a->setId(id);
     a->var_ = var;
-    a->indices_ =
-        std::vector<SubTree<ExprNode>>(indices.begin(), indices.end());
+    a->indices_ = std::forward<Tindices>(indices);
     a->op_ = op;
     a->expr_ = std::forward<Texpr>(expr);
     a->atomic_ = atomic;
@@ -143,8 +140,7 @@ Stmt _makeReduceTo(const ID &id, const std::string &var,
     ReduceTo a = ReduceTo::make();
     a->setId(id);
     a->var_ = var;
-    a->indices_ =
-        std::vector<SubTree<ExprNode>>(indices.begin(), indices.end());
+    a->indices_ = indices;
     a->op_ = op;
     a->expr_ = std::forward<Texpr>(expr);
     a->atomic_ = atomic;
@@ -154,7 +150,7 @@ Stmt _makeReduceTo(const ID &id, const std::string &var,
 struct ReductionItem {
     ReduceOp op_;
     std::string var_;
-    std::vector<SubTree<ExprNode>> begins_, ends_;
+    SubTreeList<ExprNode> begins_, ends_;
 };
 
 struct ForProperty {

@@ -32,7 +32,7 @@ class Make1DVar : public SymbolTable<Mutator> {
             res = res.isValid() ? makeMul(res, dim) : res;
             res = res.isValid() ? makeAdd(res, idx) : (Expr)idx;
         }
-        op->indices_ = std::vector<SubTree<ExprNode>>({res});
+        op->indices_ = {res};
         return op;
     }
 

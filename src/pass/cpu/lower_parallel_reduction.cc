@@ -9,6 +9,14 @@ namespace ir {
 
 namespace cpu {
 
+namespace {
+
+template <class T, class U> std::vector<T> asVec(U &&adaptor) {
+    return std::vector<T>(adaptor.begin(), adaptor.end());
+}
+
+} // namespace
+
 std::vector<std::pair<For, int>>
 LowerParallelReduction::reducedBy(const ReduceTo &op) {
     std::vector<std::pair<For, int>> ret;
@@ -56,11 +64,12 @@ Stmt LowerParallelReduction::visit(const For &_op) {
         }
         auto initStmt =
             makeStore("", workspace, indices, neutralVal(dtype, redOp));
-        auto flushStmt = makeReduceTo(
-            "", var,
-            iter::imap([](auto &&x, auto &&y) { return makeAdd(x, y); }, begins,
-                       indices),
-            redOp, makeLoad(workspace, indices), false);
+        auto flushStmt =
+            makeReduceTo("", var,
+                         asVec<Expr>(iter::imap(
+                             [](auto &&x, auto &&y) { return makeAdd(x, y); },
+                             begins, indices)),
+                         redOp, makeLoad(workspace, indices), false);
         initStmt = makeNestedLoops(
             indices, iter::repeat(makeIntConst(0)), workspaceShape,
             iter::repeat(makeIntConst(1)), workspaceShape,
@@ -74,9 +83,8 @@ Stmt LowerParallelReduction::visit(const For &_op) {
 
         // assign back to property_
         var = workspace;
-        begins = std::vector<SubTree<ExprNode>>(begins.size(), makeIntConst(0));
-        ends = std::vector<SubTree<ExprNode>>(workspaceShape.begin(),
-                                              workspaceShape.end());
+        begins = std::vector<Expr>(begins.size(), makeIntConst(0));
+        ends = workspaceShape;
 
         workspaces.emplace_back(std::move(workspace));
         workspaceShapes.emplace_back(std::move(workspaceShape));
@@ -122,8 +130,9 @@ Stmt LowerParallelReduction::visit(const ReduceTo &_op) {
         ASSERT(op->indices_.size() == begins.size());
         return makeReduceTo(
             op->id(), workspace,
-            iter::imap([](auto &&x, auto &&y) { return makeSub(x, y); },
-                       op->indices_, begins),
+            asVec<Expr>(
+                iter::imap([](auto &&x, auto &&y) { return makeSub(x, y); },
+                           op->indices_, begins)),
             op->op_, op->expr_, false);
     }
 

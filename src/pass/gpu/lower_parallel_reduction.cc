@@ -10,6 +10,14 @@ namespace ir {
 
 namespace gpu {
 
+namespace {
+
+template <class T, class U> std::vector<T> asVec(U &&adaptor) {
+    return std::vector<T>(adaptor.begin(), adaptor.end());
+}
+
+} // namespace
+
 std::vector<std::pair<For, int>>
 LowerParallelReduction::reducedBy(const ReduceTo &op) {
     std::vector<std::pair<For, int>> ret;
@@ -70,8 +78,9 @@ Stmt LowerParallelReduction::visit(const For &_op) {
                                   neutralVal(dtype, redOp));
         auto flushStmt = makeReduceTo(
             "", var,
-            iter::imap([](auto &&x, auto &&y) { return makeAdd(x, y); }, begins,
-                       indices),
+            asVec<Expr>(
+                iter::imap([](auto &&x, auto &&y) { return makeAdd(x, y); },
+                           begins, indices)),
             redOp, makeLoad(workspace, cat({makeIntConst(0)}, indices)), false);
         flushStmt = makeIf("", makeEQ(nth, makeIntConst(0)), flushStmt);
 
@@ -146,7 +155,7 @@ Stmt LowerParallelReduction::visit(const ReduceTo &_op) {
                          std::to_string(redLoop.second);
         auto nth =
             makeSub(makeVar(redLoop.first->iter_), redLoop.first->begin_);
-        std::vector<SubTree<ExprNode>> indices;
+        std::vector<Expr> indices;
         indices.emplace_back(nth);
         auto &&begins =
             redLoop.first->property_.reductions_[redLoop.second].begins_;

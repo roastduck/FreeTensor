@@ -125,30 +125,21 @@ void CompAccessBound::visit(const VarDef &op) {
 void CompAccessBound::visit(const Load &op) {
     BaseClass::visit(op);
     if (op->var_ == var_ && mode_ & COMP_ACCESS_BOUND_READ) {
-        access_.emplace_back(
-            unique_,
-            std::vector<Expr>(op->indices_.begin(), op->indices_.end()),
-            conds());
+        access_.emplace_back(unique_, op->indices_, conds());
     }
 }
 
 void CompAccessBound::visit(const Store &op) {
     BaseClass::visit(op);
     if (op->var_ == var_ && mode_ & COMP_ACCESS_BOUND_WRITE) {
-        access_.emplace_back(
-            unique_,
-            std::vector<Expr>(op->indices_.begin(), op->indices_.end()),
-            conds());
+        access_.emplace_back(unique_, op->indices_, conds());
     }
 }
 
 void CompAccessBound::visit(const ReduceTo &op) {
     BaseClass::visit(op);
     if (op->var_ == var_) {
-        access_.emplace_back(
-            unique_,
-            std::vector<Expr>(op->indices_.begin(), op->indices_.end()),
-            conds());
+        access_.emplace_back(unique_, op->indices_, conds());
     }
 }
 

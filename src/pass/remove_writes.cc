@@ -103,7 +103,7 @@ Stmt RemoveWrites::visit(const StmtSeq &_op) {
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::StmtSeq);
     auto op = __op.as<StmtSeqNode>();
-    std::vector<SubTree<StmtNode>> stmts;
+    std::vector<Stmt> stmts;
     for (auto &&stmt : op->stmts_) {
         if (stmt->nodeType() != ASTNodeType::StmtSeq ||
             !stmt.as<StmtSeqNode>()->stmts_.empty()) {

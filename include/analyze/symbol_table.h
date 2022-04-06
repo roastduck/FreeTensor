@@ -153,7 +153,7 @@ class SymbolTable : public BaseClass, public SymbolTableInterface {
             (*this)(op->body_);
             popDef(op);
         } else {
-            std::vector<SubTree<ExprNode>> shape;
+            std::vector<Expr> shape;
             shape.reserve(op->buffer_->tensor().shape().size());
             for (auto &&dim : op->buffer_->tensor().shape()) {
                 shape.emplace_back((*this)(dim));

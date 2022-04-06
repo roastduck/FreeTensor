@@ -90,9 +90,9 @@ void init_ffi_ast(py::module_ &m) {
     pyStmt.def_property_readonly("nid", &StmtNode::id);
 
     py::class_<StmtSeqNode, StmtSeq>(m, "StmtSeq", pyStmt)
-        .def_property_readonly("stmts", [](const StmtSeq &op) {
-            return std::vector<Stmt>(op->stmts_.begin(), op->stmts_.end());
-        });
+        .def_property_readonly(
+            "stmts",
+            [](const StmtSeq &op) -> std::vector<Stmt> { return op->stmts_; });
     py::class_<VarDefNode, VarDef>(m, "VarDef", pyStmt)
         .def_readonly("name", &VarDefNode::name_)
         .def_readonly("buffer", &VarDefNode::buffer_)
@@ -102,21 +102,16 @@ void init_ffi_ast(py::module_ &m) {
             "body", [](const VarDef &op) -> Stmt { return op->body_; });
     py::class_<StoreNode, Store>(m, "Store", pyStmt)
         .def_readonly("var", &StoreNode::var_)
-        .def_property_readonly("indices",
-                               [](const Store &op) {
-                                   return std::vector<Expr>(
-                                       op->indices_.begin(),
-                                       op->indices_.end());
-                               })
+        .def_property_readonly(
+            "indices",
+            [](const Store &op) -> std::vector<Expr> { return op->indices_; })
         .def_property_readonly(
             "expr", [](const Store &op) -> Expr { return op->expr_; });
     py::class_<ReduceToNode, ReduceTo>(m, "ReduceTo", pyStmt)
         .def_readonly("var", &ReduceToNode::var_)
         .def_property_readonly("indices",
-                               [](const ReduceTo &op) {
-                                   return std::vector<Expr>(
-                                       op->indices_.begin(),
-                                       op->indices_.end());
+                               [](const ReduceTo &op) -> std::vector<Expr> {
+                                   return op->indices_;
                                })
         .def_readonly("op", &ReduceToNode::op_)
         .def_property_readonly(
@@ -174,10 +169,8 @@ void init_ffi_ast(py::module_ &m) {
     py::class_<LoadNode, Load>(m, "Load", pyExpr)
         .def_readonly("var", &LoadNode::var_)
         .def_property_readonly(
-            "indices", [](const Load &op) -> std::vector<Expr> {
-                return std::vector<Expr>(op->indices_.begin(),
-                                         op->indices_.end());
-            });
+            "indices",
+            [](const Load &op) -> std::vector<Expr> { return op->indices_; });
     py::class_<IntConstNode, IntConst>(m, "IntConst", pyExpr)
         .def_readonly("val", &IntConstNode::val_);
     py::class_<FloatConstNode, FloatConst>(m, "FloatConst", pyExpr)

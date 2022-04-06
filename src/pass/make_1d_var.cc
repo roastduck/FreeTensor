@@ -20,7 +20,7 @@ Stmt Make1DVar::visit(const VarDef &_op) {
             len = len.isValid() ? makeMul(len, dim) : dim;
         }
     }
-    op->buffer_->tensor().setShape(std::vector<Expr>({len}));
+    op->buffer_->tensor().setShape({len});
     return op;
 }
 
