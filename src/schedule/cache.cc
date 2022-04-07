@@ -108,7 +108,7 @@ Stmt MakeFillAndFlush::visitStmt(const Stmt &_op) {
         }
         fill = makeNestedLoops(indices, rwRange_.lower_, iter::repeat(nullptr),
                                iter::repeat(makeIntConst(1)), rwRange_.len_,
-                               iter::repeat(ForProperty()), fill);
+                               iter::repeat(Ref<ForProperty>::make()), fill);
         if (rwRange_.cond_.isValid()) {
             fill = makeIf("", rwRange_.cond_, fill);
         }
@@ -121,7 +121,7 @@ Stmt MakeFillAndFlush::visitStmt(const Stmt &_op) {
         }
         flush = makeNestedLoops(indices, wRange_.lower_, iter::repeat(nullptr),
                                 iter::repeat(makeIntConst(1)), wRange_.len_,
-                                iter::repeat(ForProperty()), flush);
+                                iter::repeat(Ref<ForProperty>::make()), flush);
         if (wRange_.cond_.isValid()) {
             flush = makeIf("", wRange_.cond_, flush);
         }
@@ -173,7 +173,7 @@ Stmt MakeInitAndReduce::visitStmt(const Stmt &_op) {
         }
         init = makeNestedLoops(indices, range_.lower_, iter::repeat(nullptr),
                                iter::repeat(makeIntConst(1)), range_.len_,
-                               iter::repeat(ForProperty()), init);
+                               iter::repeat(Ref<ForProperty>::make()), init);
 
         Stmt reduce = makeReduceTo("", oldVar_, indices, reduce_->op_,
                                    makeLoad(newVar_, indices), false);
@@ -181,9 +181,10 @@ Stmt MakeInitAndReduce::visitStmt(const Stmt &_op) {
         if (idx1d.isValid()) {
             reduce = makeIf("", makeLT(idx1d, def_->sizeLim_), reduce);
         }
-        reduce = makeNestedLoops(indices, range_.lower_, iter::repeat(nullptr),
-                                 iter::repeat(makeIntConst(1)), range_.len_,
-                                 iter::repeat(ForProperty()), reduce);
+        reduce =
+            makeNestedLoops(indices, range_.lower_, iter::repeat(nullptr),
+                            iter::repeat(makeIntConst(1)), range_.len_,
+                            iter::repeat(Ref<ForProperty>::make()), reduce);
 
         op = makeStmtSeq("", {init, op, reduce});
     }

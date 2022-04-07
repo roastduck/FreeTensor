@@ -307,6 +307,10 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTreeList {
         return objs_.erase(std::forward<U>(i));
     }
     void pop_back() { objs_.pop_back(); }
+    template <class U> void reserve(U &&x) {
+        objs_.reserve(std::forward<U>(x));
+    }
+    void clear() { objs_.clear(); }
 };
 
 } // namespace ir

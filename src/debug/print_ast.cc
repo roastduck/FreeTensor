@@ -420,23 +420,23 @@ void PrintVisitor::visit(const Cast &op) {
 }
 
 void PrintVisitor::visit(const For &op) {
-    if (!op->property_.noDeps_.empty()) {
+    if (!op->property_->noDeps_.empty()) {
         makeIndent();
         os() << "// no_deps = ";
-        for (auto &&[i, var] : iter::enumerate(op->property_.noDeps_)) {
+        for (auto &&[i, var] : iter::enumerate(op->property_->noDeps_)) {
             os() << (i == 0 ? "" : ", ");
             os() << printName(var);
         }
         os() << std::endl;
     }
-    if (auto str = ::ir::toString(op->property_.parallel_); !str.empty()) {
+    if (auto str = ::ir::toString(op->property_->parallel_); !str.empty()) {
         makeIndent();
         os() << "// parallel = " << str << std::endl;
     }
-    for (auto &&reduction : op->property_.reductions_) {
+    for (auto &&reduction : op->property_->reductions_) {
         makeIndent();
         os() << "// reduction ";
-        switch (reduction.op_) {
+        switch (reduction->op_) {
         case ReduceOp::Add:
             os() << "+: ";
             break;
@@ -453,10 +453,10 @@ void PrintVisitor::visit(const For &op) {
             ASSERT(false);
         }
 
-        os() << printName(reduction.var_);
+        os() << printName(reduction->var_);
         os() << "[";
         for (auto &&[i, b, e] :
-             iter::zip(iter::count(), reduction.begins_, reduction.ends_)) {
+             iter::zip(iter::count(), reduction->begins_, reduction->ends_)) {
             os() << (i == 0 ? "" : ", ");
             (*this)(b);
             os() << ":";
@@ -465,15 +465,15 @@ void PrintVisitor::visit(const For &op) {
         os() << "]";
         os() << std::endl;
     }
-    if (op->property_.unroll_) {
+    if (op->property_->unroll_) {
         makeIndent();
         os() << "// unroll" << std::endl;
     }
-    if (op->property_.vectorize_) {
+    if (op->property_->vectorize_) {
         makeIndent();
         os() << "// vectorize" << std::endl;
     }
-    if (op->property_.preferLibs_) {
+    if (op->property_->preferLibs_) {
         makeIndent();
         os() << "// prefer libs" << std::endl;
     }

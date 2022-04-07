@@ -144,7 +144,7 @@ void CompAccessBound::visit(const ReduceTo &op) {
 }
 
 void CompAccessBound::visit(const For &op) {
-    if (isSharedAmong(mtype_, op->property_.parallel_)) {
+    if (isSharedAmong(mtype_, op->property_->parallel_)) {
         BaseClass::visit(op);
     } else {
         defs_.insert(op->iter_);

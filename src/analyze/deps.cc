@@ -15,7 +15,7 @@ namespace ir {
 
 void FindAllNoDeps::visit(const For &op) {
     Visitor::visit(op);
-    for (auto &&var : op->property_.noDeps_) {
+    for (auto &&var : op->property_->noDeps_) {
         results_[var].emplace_back(op->id());
     }
 }
@@ -100,7 +100,7 @@ void FindAccessPoint::visit(const For &op) {
         makeIfExpr(makeGT(op->step_, makeIntConst(0)), std::move(posiCond),
                    makeIfExpr(makeLT(op->step_, makeIntConst(0)),
                               std::move(negCond), zeroCond)));
-    cur_.emplace_back(iter, op->property_.parallel_);
+    cur_.emplace_back(iter, op->property_->parallel_);
     scope2coord_[op->id()] = cur_;
     if (int width = countBandNodeWidth(op->body_); width > 1) {
         cur_.emplace_back(makeIntConst(-1));

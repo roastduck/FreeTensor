@@ -6,7 +6,7 @@ namespace ir {
 
 Stmt Parallelize::visit(const For &_op) {
     auto thisParallel =
-        _op->id() == loop_ ? parallel_ : _op->property_.parallel_;
+        _op->id() == loop_ ? parallel_ : _op->property_->parallel_;
     Stmt __op;
     loopStack_.emplace_back(_op->id());
     if (std::holds_alternative<CUDAScope>(thisParallel)) {
@@ -31,7 +31,7 @@ Stmt Parallelize::visit(const For &_op) {
     auto op = __op.as<ForNode>();
 
     if (op->id() == loop_) {
-        op->property_.parallel_ = parallel_;
+        op->property_->parallel_ = parallel_;
         outerLoops_ = loopStack_;
         done_ = true;
     }

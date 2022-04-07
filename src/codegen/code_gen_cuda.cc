@@ -277,15 +277,15 @@ void CodeGenCUDA::visit(const Var &op) {
 }
 
 void CodeGenCUDA::visit(const For &op) {
-    if (op->property_.parallel_ == serialScope) {
-        if (op->property_.unroll_) {
+    if (op->property_->parallel_ == serialScope) {
+        if (op->property_->unroll_) {
             os() << "#pragma unroll " << op->len_ << std::endl;
         }
         CodeGenC::visit(op);
-    } else if (std::holds_alternative<CUDAScope>(op->property_.parallel_)) {
+    } else if (std::holds_alternative<CUDAScope>(op->property_->parallel_)) {
         if (op->len_->nodeType() != ASTNodeType::IntConst) {
             std::ostringstream msg;
-            msg << "Length of " << ::ir::toString(op->property_.parallel_)
+            msg << "Length of " << ::ir::toString(op->property_->parallel_)
                 << " should be constant, instead of " << op->len_;
             throw Error(msg.str());
         }
@@ -294,7 +294,7 @@ void CodeGenCUDA::visit(const For &op) {
             pushStream(kernel);
             beginBlock();
             (*this)(op->body_);
-            streamStack_.back().threadDim_[op->property_.parallel_] =
+            streamStack_.back().threadDim_[op->property_->parallel_] =
                 op->len_.as<IntConstNode>()->val_;
             endBlock();
             popStream();
@@ -344,16 +344,16 @@ void CodeGenCUDA::visit(const For &op) {
             endBlock();
         } else {
             (*this)(op->body_);
-            streamStack_.back().threadDim_[op->property_.parallel_] =
+            streamStack_.back().threadDim_[op->property_->parallel_] =
                 op->len_.as<IntConstNode>()->val_;
         }
     } else if (std::holds_alternative<CUDAStreamScope>(
-                   op->property_.parallel_)) {
+                   op->property_->parallel_)) {
         streamScopes_.insert(op->body_);
         CodeGenC::visit(op);
     } else {
         throw Error("Unsupported parallel method " +
-                    ::ir::toString(op->property_.parallel_));
+                    ::ir::toString(op->property_->parallel_));
     }
 }
 

@@ -42,8 +42,8 @@ void FindAllParallel::visit(const For &op) {
     Visitor::visit(op);
     loopStack_.pop_back();
 
-    if (op->property_.parallel_ != serialScope) {
-        results_[op->id()] = {op->property_.parallel_, loopStack_};
+    if (op->property_->parallel_ != serialScope) {
+        results_[op->id()] = {op->property_->parallel_, loopStack_};
     }
 }
 
@@ -55,7 +55,7 @@ void FindSerialLoopsOverReduce::visit(const For &op) {
 
 void FindSerialLoopsOverReduce::visit(const ReduceTo &op) {
     for (auto it = loopStack_.rbegin(); it != loopStack_.rend(); it++) {
-        if ((*it)->property_.parallel_ != serialScope) {
+        if ((*it)->property_->parallel_ != serialScope) {
             break;
         }
         results_[op->id()].emplace_back(*it);
@@ -197,7 +197,7 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
 
 Stmt MakeParallelReduction::visit(const For &_op) {
     ASSERT(!paraScopes_.count(_op->id()));
-    paraScopes_[_op->id()] = _op->property_.parallel_;
+    paraScopes_[_op->id()] = _op->property_->parallel_;
     scopeDefined_[_op->id()] = names();
     auto __op = BaseClass::visit(_op);
     scopeDefined_.erase(_op->id());
@@ -216,8 +216,8 @@ Stmt MakeParallelReduction::visit(const For &_op) {
                 ends.emplace_back(
                     makeAdd(makeMaxMin(dimUppers), makeIntConst(1)));
             }
-            op->property_.reductions_.emplace_back(
-                ReductionItem{redOp, var, std::move(begins), std::move(ends)});
+            op->property_->reductions_.emplace_back(Ref<ReductionItem>::make(
+                redOp, var, std::move(begins), std::move(ends)));
         }
     }
 
@@ -244,13 +244,14 @@ Stmt MakeParallelReduction::visit(const For &_op) {
             Stmt flush =
                 makeReduceTo("", reduce->var_, targetIndices, reduce->op_,
                              makeLoad(cacheName, cacheIndices), true);
-            init = makeNestedLoops(cacheIndices, iter::repeat(makeIntConst(0)),
-                                   newShape, iter::repeat(makeIntConst(1)),
-                                   newShape, iter::repeat(ForProperty()), init);
-            flush =
-                makeNestedLoops(cacheIndices, iter::repeat(makeIntConst(0)),
-                                newShape, iter::repeat(makeIntConst(1)),
-                                newShape, iter::repeat(ForProperty()), flush);
+            init = makeNestedLoops(
+                cacheIndices, iter::repeat(makeIntConst(0)), newShape,
+                iter::repeat(makeIntConst(1)), newShape,
+                iter::repeat(Ref<ForProperty>::make()), init);
+            flush = makeNestedLoops(
+                cacheIndices, iter::repeat(makeIntConst(0)), newShape,
+                iter::repeat(makeIntConst(1)), newShape,
+                iter::repeat(Ref<ForProperty>::make()), flush);
             ret =
                 makeVarDef("", cacheName,
                            Ref<Buffer>::make(Ref<Tensor>::make(newShape, dtype),

@@ -114,8 +114,8 @@ Stmt Grad::visit(const For &_op) {
         op->len_ = replaceByTape(op->len_);
         op->setId("");
     } else {
-        auto noDeps = op->property_.noDeps_;
-        for (auto &&fwdVar : op->property_.noDeps_) {
+        auto noDeps = op->property_->noDeps_;
+        for (auto &&fwdVar : op->property_->noDeps_) {
             if (hasDef(fwdVar) && affectedDefs_.count(def(fwdVar)->id())) {
                 noDeps.emplace_back(fwdVar + ".grad");
             }
@@ -127,7 +127,7 @@ Stmt Grad::visit(const For &_op) {
         auto step = replaceByTape(makeSub(makeIntConst(0), op->step_));
         auto len = replaceByTape(op->len_);
 
-        op->property_.noDeps_ = std::move(noDeps);
+        op->property_->noDeps_ = std::move(noDeps);
         op->begin_ = std::move(begin);
         op->end_ = std::move(end);
         op->step_ = std::move(step);
@@ -215,7 +215,7 @@ Stmt Grad::visit(const VarDef &_op) {
                                            makeIntConst(1)),
                                    makeIntConst(-1), makeIntConst(-1),
                                    op->buffer_->tensor()->shape()[i],
-                                   ForProperty(), init);
+                                   Ref<ForProperty>::make(), init);
                 }
                 grad = makeStmtSeq("", {init, grad});
             }

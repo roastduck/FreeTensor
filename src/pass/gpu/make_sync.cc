@@ -12,22 +12,22 @@ namespace ir {
 namespace gpu {
 
 void FindAllThreads::visit(const For &op) {
-    if (op->property_.parallel_ == threadIdxX) {
+    if (op->property_->parallel_ == threadIdxX) {
         ASSERT(op->len_->nodeType() == ASTNodeType::IntConst);
         thx_ = op->len_.as<IntConstNode>()->val_;
-    } else if (op->property_.parallel_ == threadIdxY) {
+    } else if (op->property_->parallel_ == threadIdxY) {
         ASSERT(op->len_->nodeType() == ASTNodeType::IntConst);
         thy_ = op->len_.as<IntConstNode>()->val_;
-    } else if (op->property_.parallel_ == threadIdxZ) {
+    } else if (op->property_->parallel_ == threadIdxZ) {
         ASSERT(op->len_->nodeType() == ASTNodeType::IntConst);
         thz_ = op->len_.as<IntConstNode>()->val_;
     }
     Visitor::visit(op);
-    if (op->property_.parallel_ == threadIdxX) {
+    if (op->property_->parallel_ == threadIdxX) {
         results_.emplace_back(ThreadInfo{op, warpSize_ % thx_ == 0});
-    } else if (op->property_.parallel_ == threadIdxY) {
+    } else if (op->property_->parallel_ == threadIdxY) {
         results_.emplace_back(ThreadInfo{op, warpSize_ % (thx_ * thy_) == 0});
-    } else if (op->property_.parallel_ == threadIdxZ) {
+    } else if (op->property_->parallel_ == threadIdxZ) {
         results_.emplace_back(
             ThreadInfo{op, warpSize_ % (thx_ * thy_ * thz_) == 0});
     }
@@ -57,7 +57,7 @@ Stmt CopyParts::visit(const For &_op) {
     if (fullParts_.count(op->body_)) {
         fullParts_.insert(op);
     } else {
-        if (op->property_.parallel_ == serialScope &&
+        if (op->property_->parallel_ == serialScope &&
             (op->begin_->nodeType() != ASTNodeType::IntConst ||
              op->end_->nodeType() != ASTNodeType::IntConst)) {
             throw InvalidProgram(

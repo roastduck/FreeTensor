@@ -21,9 +21,8 @@ std::vector<std::pair<For, int>>
 LowerParallelReduction::reducedBy(const ReduceTo &op) {
     std::vector<std::pair<For, int>> ret;
     for (auto &&loop : loopStack_) {
-        for (auto &&[k, item] : iter::enumerate(loop->property_.reductions_)) {
-            auto &&[redOp, var, begins, ends] = item;
-            if (var == op->var_) {
+        for (auto &&[k, item] : iter::enumerate(loop->property_->reductions_)) {
+            if (item->var_ == op->var_) {
                 ret.emplace_back(loop, k);
                 break;
             }
@@ -33,7 +32,7 @@ LowerParallelReduction::reducedBy(const ReduceTo &op) {
 }
 
 Stmt LowerParallelReduction::visit(const For &_op) {
-    if (_op->property_.reductions_.empty()) {
+    if (_op->property_->reductions_.empty()) {
         return BaseClass::visit(_op);
     }
 
@@ -48,13 +47,13 @@ Stmt LowerParallelReduction::visit(const For &_op) {
     std::vector<std::string> workspaces;
     std::vector<std::vector<Expr>> workspaceShapes;
     std::vector<DataType> dtypes;
-    for (size_t i = 0, n = op->property_.reductions_.size(); i < n; i++) {
-        auto &[redOp, var, begins, ends] = op->property_.reductions_[i];
-        auto dtype = buffer(var)->tensor()->dtype();
+    for (size_t i = 0, n = op->property_->reductions_.size(); i < n; i++) {
+        auto &&r = op->property_->reductions_[i];
+        auto dtype = buffer(r->var_)->tensor()->dtype();
         auto workspace =
             "__reduce_" + op->id().strId() + "_" + std::to_string(i);
         std::vector<Expr> workspaceShape;
-        for (auto &&[begin, end] : iter::zip(begins, ends)) {
+        for (auto &&[begin, end] : iter::zip(r->begins_, r->ends_)) {
             workspaceShape.emplace_back(makeSub(end, begin));
         }
 
@@ -63,28 +62,30 @@ Stmt LowerParallelReduction::visit(const For &_op) {
             indices.emplace_back(makeVar(workspace + "." + std::to_string(j)));
         }
         auto initStmt =
-            makeStore("", workspace, indices, neutralVal(dtype, redOp));
+            makeStore("", workspace, indices, neutralVal(dtype, r->op_));
         auto flushStmt =
-            makeReduceTo("", var,
+            makeReduceTo("", r->var_,
                          asVec<Expr>(iter::imap(
                              [](auto &&x, auto &&y) { return makeAdd(x, y); },
-                             begins, indices)),
-                         redOp, makeLoad(workspace, indices), false);
+                             r->begins_, indices)),
+                         r->op_, makeLoad(workspace, indices), false);
         initStmt = makeNestedLoops(
             indices, iter::repeat(makeIntConst(0)), workspaceShape,
             iter::repeat(makeIntConst(1)), workspaceShape,
-            iter::repeat(ForProperty().withParallel(OpenMPScope{})), initStmt);
+            iter::repeat(Ref<ForProperty>::make()->withParallel(OpenMPScope{})),
+            initStmt);
         flushStmt = makeNestedLoops(
             indices, iter::repeat(makeIntConst(0)), workspaceShape,
             iter::repeat(makeIntConst(1)), workspaceShape,
-            iter::repeat(ForProperty().withParallel(OpenMPScope{})), flushStmt);
+            iter::repeat(Ref<ForProperty>::make()->withParallel(OpenMPScope{})),
+            flushStmt);
         initStmts.emplace_back(std::move(initStmt));
         flushStmts.emplace_back(std::move(flushStmt));
 
         // assign back to property_
-        var = workspace;
-        begins = std::vector<Expr>(begins.size(), makeIntConst(0));
-        ends = workspaceShape;
+        r->var_ = workspace;
+        r->begins_ = std::vector<Expr>(r->begins_.size(), makeIntConst(0));
+        r->ends_ = workspaceShape;
 
         workspaces.emplace_back(std::move(workspace));
         workspaceShapes.emplace_back(std::move(workspaceShape));
@@ -126,7 +127,7 @@ Stmt LowerParallelReduction::visit(const ReduceTo &_op) {
         auto workspace = "__reduce_" + redLoop.first->id().strId() + "_" +
                          std::to_string(redLoop.second);
         auto &&begins =
-            redLoop.first->property_.reductions_[redLoop.second].begins_;
+            redLoop.first->property_->reductions_[redLoop.second]->begins_;
         ASSERT(op->indices_.size() == begins.size());
         return makeReduceTo(
             op->id(), workspace,

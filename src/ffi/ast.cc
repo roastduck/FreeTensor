@@ -116,19 +116,6 @@ void init_ffi_ast(py::module_ &m) {
         .def_readonly("op", &ReduceToNode::op_)
         .def_property_readonly(
             "expr", [](const ReduceTo &op) -> Expr { return op->expr_; });
-    py::class_<ForProperty>(m, "ForProperty")
-        .def(py::init<>())
-        .def_readonly("parallel", &ForProperty::parallel_)
-        .def_readonly("unroll", &ForProperty::unroll_)
-        .def_readonly("vectorize", &ForProperty::vectorize_)
-        .def_readonly("no_deps", &ForProperty::noDeps_)
-        .def_readonly("prefer_libs", &ForProperty::preferLibs_)
-        .def("with_parallel", &ForProperty::withParallel, "parallel"_a)
-        .def("with_unroll", &ForProperty::withUnroll, "unroll"_a = true)
-        .def("with_vectorize", &ForProperty::withVectorize,
-             "vectorize"_a = true)
-        .def("with_no_deps", &ForProperty::withNoDeps, "var"_a)
-        .def("with_prefer_libs", &ForProperty::withPreferLibs, "prefer_libs"_a);
     py::class_<ForNode, For>(m, "For", pyStmt)
         .def_readonly("iter", &ForNode::iter_)
         .def_property_readonly("begin",
@@ -139,7 +126,9 @@ void init_ffi_ast(py::module_ &m) {
                                [](const For &op) -> Expr { return op->step_; })
         .def_property_readonly("len",
                                [](const For &op) -> Expr { return op->len_; })
-        .def_readonly("property", &ForNode::property_)
+        .def_property_readonly(
+            "property",
+            [](const For &op) -> Ref<ForProperty> { return op->property_; })
         .def_property_readonly("body",
                                [](const For &op) -> Stmt { return op->body_; });
     py::class_<IfNode, If>(m, "If", pyStmt)
@@ -460,7 +449,8 @@ void init_ffi_ast(py::module_ &m) {
     m.def("makeFor",
           static_cast<Stmt (*)(const ID &, const std::string &, const Expr &,
                                const Expr &, const Expr &, const Expr &,
-                               const ForProperty &, const Stmt &)>(&_makeFor),
+                               const Ref<ForProperty> &, const Stmt &)>(
+              &_makeFor),
           "nid"_a, "iter"_a, "begin"_a, "end"_a, "step"_a, "len"_a,
           "property"_a, "body"_a);
     m.def("makeIf",

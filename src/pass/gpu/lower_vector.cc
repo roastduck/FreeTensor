@@ -82,7 +82,7 @@ Expr LowerVector::getIndex(const Expr &index) {
 }
 
 Stmt LowerVector::visit(const For &op) {
-    if (op->property_.vectorize_) {
+    if (op->property_->vectorize_) {
         if (var_.isValid()) {
             throw InvalidGPUVector("Nested vectorized loops is not supported");
         }
@@ -115,7 +115,7 @@ Stmt LowerVector::visit(const For &op) {
                 continue;
             }
             var_ = nullptr;
-            ret->property_.vectorize_ = false; // done
+            ret->property_->vectorize_ = false; // done
             return ret;
         }
     }

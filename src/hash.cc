@@ -64,24 +64,24 @@ size_t Hasher::compHash(const ForNode &op) {
     h = ((h + op.end_->hash()) * K2 + B2) % P;
     h = ((h + op.step_->hash()) * K2 + B2) % P;
     h = ((h + op.len_->hash()) * K2 + B2) % P;
-    h = ((h + std::hash<ParallelScope>()(op.property_.parallel_)) * K2 + B2) %
+    h = ((h + std::hash<ParallelScope>()(op.property_->parallel_)) * K2 + B2) %
         P;
-    h = ((h + std::hash<bool>()(op.property_.unroll_)) * K2 + B2) % P;
-    h = ((h + std::hash<bool>()(op.property_.vectorize_)) * K2 + B2) % P;
-    for (auto &&item : op.property_.reductions_) {
-        h = ((h + std::hash<int>()((int)item.op_)) * K2 + B2) % P;
-        h = ((h + std::hash<std::string>()(item.var_)) * K2 + B2) % P;
-        for (auto &&idx : item.begins_) {
+    h = ((h + std::hash<bool>()(op.property_->unroll_)) * K2 + B2) % P;
+    h = ((h + std::hash<bool>()(op.property_->vectorize_)) * K2 + B2) % P;
+    for (auto &&item : op.property_->reductions_) {
+        h = ((h + std::hash<int>()((int)item->op_)) * K2 + B2) % P;
+        h = ((h + std::hash<std::string>()(item->var_)) * K2 + B2) % P;
+        for (auto &&idx : item->begins_) {
             h = ((h + (idx.isValid() ? idx->hash() : 0ull)) * K2 + B2) % P;
         }
-        for (auto &&idx : item.ends_) {
+        for (auto &&idx : item->ends_) {
             h = ((h + (idx.isValid() ? idx->hash() : 0ull)) * K2 + B2) % P;
         }
     }
-    for (auto &&item : op.property_.noDeps_) {
+    for (auto &&item : op.property_->noDeps_) {
         h = ((h + std::hash<std::string>()(item)) * K2 + B2) % P;
     }
-    h = ((h + std::hash<bool>()(op.property_.preferLibs_)) * K2 + B2) % P;
+    h = ((h + std::hash<bool>()(op.property_->preferLibs_)) * K2 + B2) % P;
     h = ((h + op.body_->hash()) * K2 + B2) % P;
     return (h * K3 + B3) % P;
 }
@@ -317,54 +317,54 @@ bool HashComparator::compare(const For &lhs, const For &rhs) const {
     if (!(*this)(lhs->len_, rhs->len_)) {
         return false;
     }
-    if (lhs->property_.parallel_ != rhs->property_.parallel_) {
+    if (lhs->property_->parallel_ != rhs->property_->parallel_) {
         return false;
     }
-    if (lhs->property_.unroll_ != rhs->property_.unroll_) {
+    if (lhs->property_->unroll_ != rhs->property_->unroll_) {
         return false;
     }
-    if (lhs->property_.vectorize_ != rhs->property_.vectorize_) {
+    if (lhs->property_->vectorize_ != rhs->property_->vectorize_) {
         return false;
     }
-    if (lhs->property_.reductions_.size() !=
-        rhs->property_.reductions_.size()) {
+    if (lhs->property_->reductions_.size() !=
+        rhs->property_->reductions_.size()) {
         return false;
     }
     for (auto &&[l, r] :
-         iter::zip(lhs->property_.reductions_, rhs->property_.reductions_)) {
-        if (l.op_ != r.op_) {
+         iter::zip(lhs->property_->reductions_, rhs->property_->reductions_)) {
+        if (l->op_ != r->op_) {
             return false;
         }
-        if (l.var_ != r.var_) {
+        if (l->var_ != r->var_) {
             return false;
         }
-        if (l.begins_.size() != r.begins_.size()) {
+        if (l->begins_.size() != r->begins_.size()) {
             return false;
         }
-        for (auto &&[ll, rr] : iter::zip(l.begins_, r.begins_)) {
+        for (auto &&[ll, rr] : iter::zip(l->begins_, r->begins_)) {
             if (!(*this)(ll, rr)) {
                 return false;
             }
         }
-        if (l.ends_.size() != r.ends_.size()) {
+        if (l->ends_.size() != r->ends_.size()) {
             return false;
         }
-        for (auto &&[ll, rr] : iter::zip(l.ends_, r.ends_)) {
+        for (auto &&[ll, rr] : iter::zip(l->ends_, r->ends_)) {
             if (!(*this)(ll, rr)) {
                 return false;
             }
         }
     }
-    if (lhs->property_.noDeps_.size() != rhs->property_.noDeps_.size()) {
+    if (lhs->property_->noDeps_.size() != rhs->property_->noDeps_.size()) {
         return false;
     }
     for (auto &&[l, r] :
-         iter::zip(lhs->property_.noDeps_, rhs->property_.noDeps_)) {
+         iter::zip(lhs->property_->noDeps_, rhs->property_->noDeps_)) {
         if (l != r) {
             return false;
         }
     }
-    if (lhs->property_.preferLibs_ != rhs->property_.preferLibs_) {
+    if (lhs->property_->preferLibs_ != rhs->property_->preferLibs_) {
         return false;
     }
     if (!(*this)(lhs->body_, rhs->body_)) {

@@ -115,23 +115,6 @@ class CompTransientBounds : public BaseClass,
         MAYBE_VOID(end, (*this)(op->end_));
         MAYBE_VOID(step, (*this)(op->step_));
         MAYBE_VOID(len, (*this)(op->len_));
-        auto property = op->property_;
-        for (auto &&[redOp, var, begins, ends] : property.reductions_) {
-            for (auto &&item : begins) {
-                MAYBE_VOID(newItem, (*this)(item));
-                if constexpr (!std::is_same_v<typename BaseClass::StmtRetType,
-                                              void>) {
-                    item = newItem;
-                }
-            }
-            for (auto &&item : ends) {
-                MAYBE_VOID(newItem, (*this)(item));
-                if constexpr (!std::is_same_v<typename BaseClass::StmtRetType,
-                                              void>) {
-                    item = newItem;
-                }
-            }
-        }
 
         auto var = makeVar(op->iter_);
         if (transients_.count(var)) {
@@ -169,6 +152,26 @@ class CompTransientBounds : public BaseClass,
         transients_.erase(var);
 
         if constexpr (!std::is_same_v<typename BaseClass::StmtRetType, void>) {
+            auto property = Ref<ForProperty>::make()
+                                ->withParallel(op->property_->parallel_)
+                                ->withUnroll(op->property_->unroll_)
+                                ->withVectorize(op->property_->vectorize_)
+                                ->withNoDeps(op->property_->noDeps_)
+                                ->withPreferLibs(op->property_->preferLibs_);
+            property->reductions_.reserve(op->property_->reductions_.size());
+            for (auto &&r : op->property_->reductions_) {
+                std::vector<Expr> begins, ends;
+                begins.reserve(r->begins_.size());
+                ends.reserve(r->ends_.size());
+                for (auto &&item : r->begins_) {
+                    begins.emplace_back((*this)(item));
+                }
+                for (auto &&item : r->ends_) {
+                    ends.emplace_back((*this)(item));
+                }
+                property->reductions_.emplace_back(Ref<ReductionItem>::make(
+                    r->op_, r->var_, std::move(begins), std::move(ends)));
+            }
             auto ret = makeFor(op->id(), op->iter_, std::move(begin),
                                std::move(end), std::move(step), std::move(len),
                                std::move(property), std::move(body));

@@ -82,13 +82,13 @@ void CodeGenCPU::visit(const ReduceTo &op) {
 }
 
 void CodeGenCPU::visit(const For &op) {
-    if (std::holds_alternative<OpenMPScope>(op->property_.parallel_) &&
+    if (std::holds_alternative<OpenMPScope>(op->property_->parallel_) &&
         !collapsed_.count(op)) {
         int collapse = 1;
         for (Stmt inner = op->body_;
              inner->nodeType() == ASTNodeType::For &&
              std::holds_alternative<OpenMPScope>(
-                 inner.as<ForNode>()->property_.parallel_);
+                 inner.as<ForNode>()->property_->parallel_);
              inner = inner.as<ForNode>()->body_) {
             collapse++;
             collapsed_.insert(inner.as<ForNode>());
@@ -98,18 +98,18 @@ void CodeGenCPU::visit(const For &op) {
         if (collapse > 1) {
             os() << " collapse(" << collapse << ")";
         }
-        if (!op->property_.reductions_.empty()) {
-            for (size_t i = 1, n = op->property_.reductions_.size(); i < n;
+        if (!op->property_->reductions_.empty()) {
+            for (size_t i = 1, n = op->property_->reductions_.size(); i < n;
                  i++) {
-                if (op->property_.reductions_[i].op_ !=
-                    op->property_.reductions_.front().op_) {
+                if (op->property_->reductions_[i]->op_ !=
+                    op->property_->reductions_.front()->op_) {
                     throw InvalidProgram(
                         "Reduction operators of each parallel reduction "
                         "variables should be the same in a single OpenMP loop");
                 }
             }
             os() << " reduction(";
-            switch (op->property_.reductions_.front().op_) {
+            switch (op->property_->reductions_.front()->op_) {
             case ReduceOp::Add:
                 os() << "+: ";
                 break;
@@ -126,14 +126,13 @@ void CodeGenCPU::visit(const For &op) {
                 ASSERT(false);
             }
             bool first = true;
-            for (auto &&[redOp, var, begins, ends] :
-                 op->property_.reductions_) {
+            for (auto &&r : op->property_->reductions_) {
                 if (!first) {
                     os() << ", ";
                 }
                 first = false;
-                os() << mangle(var);
-                for (auto &&[b, e] : iter::zip(begins, ends)) {
+                os() << mangle(r->var_);
+                for (auto &&[b, e] : iter::zip(r->begins_, r->ends_)) {
                     os() << "[";
                     (*this)(b);
                     os() << ":";
@@ -151,9 +150,9 @@ void CodeGenCPU::visit(const For &op) {
         CodeGenC::visit(op);
         inParallel_ = oldInParallel;
         return;
-    } else if (op->property_.vectorize_) {
+    } else if (op->property_->vectorize_) {
         os() << "#pragma omp simd" << std::endl;
-    } else if (op->property_.unroll_) {
+    } else if (op->property_->unroll_) {
         os() << "#pragma GCC unroll " << op->len_ << std::endl;
     }
     CodeGenC::visit(op);

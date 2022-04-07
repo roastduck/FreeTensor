@@ -6,7 +6,8 @@
 
 #include <ast.h>
 #include <buffer.h>
-#include <parallel_scope.h>
+#include <for_property.h>
+#include <reduce_op.h>
 
 namespace ir {
 
@@ -105,7 +106,6 @@ Stmt _makeStore(const ID &id, const std::string &var,
     return s;
 }
 
-enum class ReduceOp : int { Add, Mul, Min, Max };
 class ReduceToNode : public StmtNode {
   public:
     std::string var_;
@@ -144,51 +144,6 @@ Stmt _makeReduceTo(const ID &id, const std::string &var,
     return a;
 }
 
-struct ReductionItem {
-    ReduceOp op_;
-    std::string var_;
-    SubTreeList<ExprNode> begins_, ends_;
-};
-
-struct ForProperty {
-    ParallelScope parallel_;
-    bool unroll_, vectorize_;
-    std::vector<ReductionItem> reductions_;
-    std::vector<std::string> noDeps_; // vars that are explicitly marked to have
-                                      // no dependencies over this loop
-    bool preferLibs_; // Aggresively transform to external library calls in
-                      // auto-schedule
-
-    ForProperty()
-        : parallel_(), unroll_(false), vectorize_(false), preferLibs_(false) {}
-
-    ForProperty withParallel(const ParallelScope &parallel) {
-        auto ret = *this;
-        ret.parallel_ = parallel;
-        return ret;
-    }
-    ForProperty withUnroll(bool unroll = true) {
-        auto ret = *this;
-        ret.unroll_ = unroll;
-        return ret;
-    }
-    ForProperty withVectorize(bool vectorize = true) {
-        auto ret = *this;
-        ret.vectorize_ = vectorize;
-        return ret;
-    }
-    ForProperty withNoDeps(const std::vector<std::string> &noDeps) {
-        auto ret = *this;
-        ret.noDeps_ = noDeps;
-        return ret;
-    }
-    ForProperty withPreferLibs(bool preferLibs = true) {
-        auto ret = *this;
-        ret.preferLibs_ = preferLibs;
-        return ret;
-    }
-};
-
 class ForNode : public StmtNode {
   public:
     std::string iter_;
@@ -197,7 +152,7 @@ class ForNode : public StmtNode {
     // every time and call simplifyPass to propagate the constants, it is very
     // time consuming
     SubTree<ExprNode> begin_, end_, step_, len_;
-    ForProperty property_;
+    SubTree<ForProperty> property_;
     SubTree<StmtNode> body_;
 
     void compHash() override;
@@ -206,10 +161,10 @@ class ForNode : public StmtNode {
 };
 typedef Ref<ForNode> For;
 #define makeFor(...) makeNode(For, __VA_ARGS__)
-template <class Tbegin, class Tend, class Tstep, class Tlen, class Tbody>
+template <class Tbegin, class Tend, class Tstep, class Tlen, class Tbody,
+          class Tproperty>
 Stmt _makeFor(const ID &id, const std::string &iter, Tbegin &&begin, Tend &&end,
-              Tstep &&step, Tlen &&len, const ForProperty &property,
-              Tbody &&body) {
+              Tstep &&step, Tlen &&len, Tproperty &&property, Tbody &&body) {
     For f = For::make();
     f->setId(id);
     f->iter_ = iter;
@@ -217,7 +172,7 @@ Stmt _makeFor(const ID &id, const std::string &iter, Tbegin &&begin, Tend &&end,
     f->end_ = std::forward<Tend>(end);
     f->step_ = std::forward<Tstep>(step);
     f->len_ = std::forward<Tlen>(len);
-    f->property_ = property;
+    f->property_ = std::forward<Tproperty>(property);
     f->body_ = std::forward<Tbody>(body);
     return f;
 }
@@ -372,8 +327,6 @@ inline Stmt _makeMatMul(const ID &id, const Expr &a, const Expr &b,
     s->equivalent_ = equivalent;
     return s;
 }
-
-Expr neutralVal(DataType dtype, ReduceOp op);
 
 } // namespace ir
 
