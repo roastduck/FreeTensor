@@ -198,7 +198,7 @@ Stmt Grad::visit(const VarDef &_op) {
                 // with the backward pass
                 std::vector<std::string> iters;
                 std::vector<Expr> indices;
-                int nDim = op->buffer_->tensor().shape().size();
+                int nDim = op->buffer_->tensor()->shape().size();
                 iters.reserve(nDim);
                 indices.reserve(nDim);
                 for (int i = 0; i < nDim; i++) {
@@ -211,10 +211,10 @@ Stmt Grad::visit(const VarDef &_op) {
                                       makeIntConst(0));
                 for (int i = nDim - 1; i >= 0; i--) {
                     init = makeFor("", iters[i],
-                                   makeSub(op->buffer_->tensor().shape()[i],
+                                   makeSub(op->buffer_->tensor()->shape()[i],
                                            makeIntConst(1)),
                                    makeIntConst(-1), makeIntConst(-1),
-                                   op->buffer_->tensor().shape()[i],
+                                   op->buffer_->tensor()->shape()[i],
                                    ForProperty(), init);
                 }
                 grad = makeStmtSeq("", {init, grad});
@@ -249,7 +249,7 @@ Stmt Grad::visit(const VarDef &_op) {
                 ret = makeVarDef(ret->id().strId() + ".tape", tapeVar,
                                  ret->buffer_, ret->sizeLim_, ret, ret->pinned_)
                           .as<VarDefNode>();
-                auto &shape = ret->buffer_->tensor().shape();
+                auto &shape = ret->buffer_->tensor()->shape();
                 shape.insert(shape.begin(), totLens_.at(op->id()));
             }
             ret.as<VarDefNode>()->buffer_->setAtype(AccessType::Input);
@@ -319,8 +319,9 @@ Stmt Grad::visit(const Store &op) {
                 }
                 return makeVarDef(
                     "", oldGrad,
-                    Ref<Buffer>::make(Tensor({}, b->tensor().dtype()),
-                                      AccessType::Cache, b->mtype()),
+                    Ref<Buffer>::make(
+                        Ref<Tensor>::make(Tensor({}, b->tensor()->dtype())),
+                        AccessType::Cache, b->mtype()),
                     nullptr, makeStmtSeq("", std::move(stmts)), false);
             }
         } else {
@@ -572,7 +573,7 @@ grad(const Func &func, const std::unordered_set<std::string> &_requires,
         ASSERT(def.size() == 1 &&
                def.front().nodeType() == ASTNodeType::VarDef);
         auto tapeDType =
-            def.front().node().as<VarDefNode>()->buffer_->tensor().dtype();
+            def.front().node().as<VarDefNode>()->buffer_->tensor()->dtype();
         forwardReturns.emplace_back(tapeName, tapeDType);
         backwardParams.emplace_back(tapeName);
         closure[tapeName] = Ref<Ref<Array>>::make(nullptr);

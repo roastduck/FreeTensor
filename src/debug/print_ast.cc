@@ -111,8 +111,8 @@ void PrintVisitor::visit(const VarDef &op) {
          << ::ir::toString(op->buffer_->mtype()) << " " << printName(op->name_)
          << ": ";
     auto &&tensor = op->buffer_->tensor();
-    os() << ::ir::toString(tensor.dtype()) << "[";
-    printList(tensor.shape());
+    os() << ::ir::toString(tensor->dtype()) << "[";
+    printList(tensor->shape());
     os() << "] ";
     if (op->sizeLim_.isValid()) {
         os() << "size_lim = ";

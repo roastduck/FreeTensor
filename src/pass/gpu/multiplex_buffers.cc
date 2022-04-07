@@ -66,7 +66,7 @@ Stmt MultiplexMutator::visit(const VarDef &_op) {
         auto &&aff = affecting_.at(op->id());
         for (int i = pos - 1; i >= 0; i--) {
             if (aff.count(stack_[i]->id())) {
-                auto &shape = op->buffer_->tensor().shape();
+                auto &shape = op->buffer_->tensor()->shape();
                 shape.insert(shape.begin(), stack_[i]->len_);
             }
         }

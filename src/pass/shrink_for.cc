@@ -39,7 +39,7 @@ Stmt ShrinkFor::visitStmt(const Stmt &stmt) {
         checker(stmt.as<ForNode>()->step_);
         break;
     case ASTNodeType::VarDef:
-        for (auto &&dim : stmt.as<VarDefNode>()->buffer_->tensor().shape()) {
+        for (auto &&dim : stmt.as<VarDefNode>()->buffer_->tensor()->shape()) {
             checker(dim);
         }
         break;

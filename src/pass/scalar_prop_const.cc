@@ -120,7 +120,7 @@ Stmt ScalarPropConst::visit(const Store &store_orig) {
     // convert constant value type first
     Expr expr = store->expr_;
     if (expr->isConst())
-        expr = castType(this->def(store->var_)->buffer_->tensor().dtype(),
+        expr = castType(this->def(store->var_)->buffer_->tensor()->dtype(),
                         store->expr_.as<ConstNode>());
 
     // generate constant value

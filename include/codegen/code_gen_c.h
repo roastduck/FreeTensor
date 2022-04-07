@@ -24,7 +24,7 @@ template <class Stream> class CodeGenC : public WithTypeInfer<CodeGen<Stream>> {
     static std::string gen(DataType dtype);
 
   protected:
-    virtual void genAlloc(const Tensor &tensor, const std::string &rawPtr,
+    virtual void genAlloc(const Ref<Tensor> &tensor, const std::string &rawPtr,
                           const std::string &shapePtr,
                           const std::string &dimPtr) = 0;
 

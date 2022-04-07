@@ -20,10 +20,10 @@ size_t Hasher::compHash(const StmtSeqNode &op) {
 size_t Hasher::compHash(const VarDefNode &op) {
     size_t h = ((size_t)op.nodeType() * K1 + B1) % P;
     h = ((h + std::hash<std::string>()(op.name_)) * K2 + B2) % P;
-    for (auto &&dim : op.buffer_->tensor().shape()) {
+    for (auto &&dim : op.buffer_->tensor()->shape()) {
         h = ((h + dim->hash()) * K2 + B2) % P;
     }
-    h = ((h + std::hash<int>()((int)op.buffer_->tensor().dtype())) * K2 + B2) %
+    h = ((h + std::hash<int>()((int)op.buffer_->tensor()->dtype())) * K2 + B2) %
         P;
     h = ((h + std::hash<int>()((int)op.buffer_->atype())) * K2 + B2) % P;
     h = ((h + std::hash<int>()((int)op.buffer_->mtype())) * K2 + B2) % P;
@@ -225,17 +225,17 @@ bool HashComparator::compare(const VarDef &lhs, const VarDef &rhs) const {
     if (lhs->name_ != rhs->name_) {
         return false;
     }
-    if (lhs->buffer_->tensor().shape().size() !=
-        rhs->buffer_->tensor().shape().size()) {
+    if (lhs->buffer_->tensor()->shape().size() !=
+        rhs->buffer_->tensor()->shape().size()) {
         return false;
     }
-    for (auto &&[l, r] : iter::zip(lhs->buffer_->tensor().shape(),
-                                   rhs->buffer_->tensor().shape())) {
+    for (auto &&[l, r] : iter::zip(lhs->buffer_->tensor()->shape(),
+                                   rhs->buffer_->tensor()->shape())) {
         if (!(*this)(l, r)) {
             return false;
         }
     }
-    if (lhs->buffer_->tensor().dtype() != rhs->buffer_->tensor().dtype()) {
+    if (lhs->buffer_->tensor()->dtype() != rhs->buffer_->tensor()->dtype()) {
         return false;
     }
     if (lhs->buffer_->mtype() != rhs->buffer_->mtype()) {

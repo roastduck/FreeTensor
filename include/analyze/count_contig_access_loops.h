@@ -26,7 +26,7 @@ class CountContigAccessLoops : public SymbolTable<Visitor> {
   private:
     int64_t getStaticSize(const std::string &var) {
         int64_t ret = 1;
-        for (auto &&dim : buffer(var)->tensor().shape()) {
+        for (auto &&dim : buffer(var)->tensor()->shape()) {
             if (dim->nodeType() == ASTNodeType::IntConst) {
                 ret *= dim.as<IntConstNode>()->val_;
             } else {

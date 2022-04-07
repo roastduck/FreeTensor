@@ -249,7 +249,7 @@ std::pair<Stmt, ID> fuse(const Stmt &_ast, const ID &loop0, const ID &loop1,
     for (auto &&stmt : check.loop1().scopes_) {
         if (stmt->nodeType() == ASTNodeType::VarDef) {
             for (auto &&shape :
-                 stmt.as<VarDefNode>()->buffer_->tensor().shape()) {
+                 stmt.as<VarDefNode>()->buffer_->tensor()->shape()) {
                 if (!checkNotModified(_ast, shape, CheckNotModifiedSide::Before,
                                       loop0, CheckNotModifiedSide::Before,
                                       loop1)) {

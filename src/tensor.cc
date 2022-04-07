@@ -13,4 +13,13 @@ bool Tensor::isScalar() const {
     return true;
 }
 
+Ref<Tensor> deepCopy(const Ref<Tensor> &t) {
+    std::vector<Expr> shape;
+    shape.reserve(t->shape().size());
+    for (auto &&dim : t->shape()) {
+        shape.emplace_back(deepCopy(dim));
+    }
+    return Ref<Tensor>::make(std::move(shape), t->dtype());
+}
+
 } // namespace ir

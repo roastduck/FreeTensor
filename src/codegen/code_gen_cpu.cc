@@ -23,28 +23,28 @@ static char genMKLTypeMark(DataType dtype) {
 
 #endif
 
-void CodeGenCPU::genAlloc(const Tensor &tensor, const std::string &rawPtr,
+void CodeGenCPU::genAlloc(const Ref<Tensor> &tensor, const std::string &rawPtr,
                           const std::string &shapePtr,
                           const std::string &dimPtr) {
-    auto ndim = tensor.shape().size();
+    auto ndim = tensor->shape().size();
     makeIndent();
     os() << shapePtr << " = " << ndim << " > 0 ? (size_t*)malloc((" << dimPtr
          << " = " << ndim << ") * sizeof(size_t)) : NULL;" << std::endl;
     makeIndent();
     os() << rawPtr << " = malloc(";
-    for (auto &&[i, dim] : iter::enumerate(tensor.shape())) {
+    for (auto &&[i, dim] : iter::enumerate(tensor->shape())) {
         os() << "(" << shapePtr << "[" << i << "] = ";
         (*this)(dim);
         os() << ") * ";
     }
-    os() << "sizeof(" << gen(tensor.dtype()) << "));" << std::endl;
+    os() << "sizeof(" << gen(tensor->dtype()) << "));" << std::endl;
 }
 
 void CodeGenCPU::visit(const VarDef &op) {
     if (op->buffer_->atype() == AccessType::Cache) {
         auto &&tensor = op->buffer_->tensor();
-        auto &&shape = tensor.shape();
-        int64_t size = sizeOf(tensor.dtype());
+        auto &&shape = tensor->shape();
+        int64_t size = sizeOf(tensor->dtype());
         for (auto &&dim : shape) {
             if (dim->nodeType() == ASTNodeType::IntConst) {
                 size *= dim.as<IntConstNode>()->val_;

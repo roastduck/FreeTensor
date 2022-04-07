@@ -6,19 +6,19 @@ Stmt VarMerge::visit(const VarDef &_op) {
     if (_op->id() == def_) {
         found_ = true;
 
-        if (dim_ + 1 >= (int)_op->buffer_->tensor().shape().size()) {
+        if (dim_ + 1 >= (int)_op->buffer_->tensor()->shape().size()) {
             throw InvalidSchedule(
                 "There is no dimension " + std::to_string(dim_) + " ~ " +
                 std::to_string(dim_ + 1) + " in variable " + _op->name_);
         }
-        factor_ = _op->buffer_->tensor().shape()[dim_ + 1];
+        factor_ = _op->buffer_->tensor()->shape()[dim_ + 1];
         var_ = _op->name_;
         auto __op = Mutator::visit(_op);
         ASSERT(__op->nodeType() == ASTNodeType::VarDef);
         auto op = __op.as<VarDefNode>();
         var_.clear();
 
-        auto &shape = op->buffer_->tensor().shape();
+        auto &shape = op->buffer_->tensor()->shape();
         shape[dim_] = makeMul(shape[dim_], shape[dim_ + 1]);
         shape.erase(shape.begin() + dim_ + 1);
         return op;

@@ -63,11 +63,11 @@ class AsMatMul : public SymbolTable<Mutator> {
             }
             int loop = iterMap_.at(var->name_);
             if (!HashComparator()(nests_[loop]->len_,
-                                  buffer(acc->var_)->tensor().shape()[i])) {
+                                  buffer(acc->var_)->tensor()->shape()[i])) {
                 throw InvalidSchedule(
                     "Iterator " + var->name_ + " of " + acc->var_ +
                     " should loop over the entire range (" +
-                    toString(buffer(acc->var_)->tensor().shape()[i]) +
+                    toString(buffer(acc->var_)->tensor()->shape()[i]) +
                     "), instead of " + toString(nests_[loop]->len_));
             }
             usedBy[loop] = true;
@@ -106,12 +106,12 @@ class AsMatMul : public SymbolTable<Mutator> {
                             toString(idx) + " should be contiguous");
                     }
                 }
-                Expr thisLen = buffer(acc->var_)->tensor().shape()[i];
+                Expr thisLen = buffer(acc->var_)->tensor()->shape()[i];
                 len = len.isValid() ? makeMul(len, thisLen) : (Expr)thisLen;
                 lastInDim = idx;
             } else {
                 if (len.isValid()) {
-                    Expr thisLen = buffer(acc->var_)->tensor().shape()[i];
+                    Expr thisLen = buffer(acc->var_)->tensor()->shape()[i];
                     stride = stride.isValid() ? makeMul(stride, thisLen)
                                               : (Expr)thisLen;
                 }

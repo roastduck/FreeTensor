@@ -61,7 +61,7 @@ Expr Z3Simplify::visit(const Load &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Load);
     auto op = __op.as<LoadNode>();
-    auto dtype = symbolTable_.buffer(op->var_)->tensor().dtype();
+    auto dtype = symbolTable_.buffer(op->var_)->tensor()->dtype();
     if (isInt(dtype)) {
         put(op, ctx_.int_const(("x" + std::to_string(getVarId(op))).c_str()));
     } else if (isBool(dtype)) {

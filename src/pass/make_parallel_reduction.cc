@@ -78,7 +78,7 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
             }
             for (auto &&[i, idx, dim] :
                  iter::zip(iter::count(), _op->indices_,
-                           buffer(_op->var_)->tensor().shape())) {
+                           buffer(_op->var_)->tensor()->shape())) {
                 // use _op because isVariant needs it
                 if (isVariant(variantMap_, idx, loopId)) {
                     goto use_atomic;
@@ -177,7 +177,7 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
             op->indices_ = {};
             for (auto &&[preserve, idx, dim] :
                  iter::zip(preserveDim, _op->indices_,
-                           buffer(_op->var_)->tensor().shape())) {
+                           buffer(_op->var_)->tensor()->shape())) {
                 if (preserve) {
                     op->indices_.emplace_back(idx);
                     newShape.emplace_back(dim);
@@ -227,7 +227,7 @@ Stmt MakeParallelReduction::visit(const For &_op) {
              cacheAtomic_.at(op->id())) {
             auto cacheName =
                 reduce->var_ + ".atomic_cache." + reduce->id().strId();
-            auto dtype = buffer(reduce->var_)->tensor().dtype();
+            auto dtype = buffer(reduce->var_)->tensor()->dtype();
             auto mtype = localMType(buffer(reduce->var_)->mtype());
             std::vector<Expr> cacheIndices;
             for (size_t i = 0, j = 0, n = newShape.size(); i < n; i++) {
@@ -253,7 +253,7 @@ Stmt MakeParallelReduction::visit(const For &_op) {
                                 newShape, iter::repeat(ForProperty()), flush);
             ret =
                 makeVarDef("", cacheName,
-                           Ref<Buffer>::make(Tensor(newShape, dtype),
+                           Ref<Buffer>::make(Ref<Tensor>::make(newShape, dtype),
                                              AccessType::Cache, mtype),
                            nullptr, makeStmtSeq("", {init, ret, flush}), false);
         }

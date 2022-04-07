@@ -125,7 +125,7 @@ Stmt AddDimToVar::visit(const VarDef &_op) {
     auto op = __op.as<VarDefNode>();
     if (toAdd_.count(op->id())) {
         op->buffer_ = deepCopy(op->buffer_);
-        auto &shape = op->buffer_->tensor().shape();
+        auto &shape = op->buffer_->tensor()->shape();
         for (auto &&loop : toAdd_.at(op->id())) {
             shape.insert(shape.begin(), forMap_.at(loop)->len_);
         }

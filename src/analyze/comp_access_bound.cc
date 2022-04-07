@@ -54,7 +54,7 @@ void CompAccessBound::visit(const VarDef &op) {
     defs_.erase(op->name_);
     var_.clear();
 
-    size_t n = op->buffer_->tensor().shape().size();
+    size_t n = op->buffer_->tensor()->shape().size();
     result_.lower_.reserve(n);
     result_.len_.reserve(n);
 
@@ -86,7 +86,7 @@ void CompAccessBound::visit(const VarDef &op) {
             ASSERT(access_[j].indices_.size() == n);
             auto &&index = access_[j].indices_[i];
             std::vector<Expr> upperItem(
-                {makeSub(op->buffer_->tensor().shape()[i], makeIntConst(1))});
+                {makeSub(op->buffer_->tensor()->shape()[i], makeIntConst(1))});
             if (checkAllDefined(defs_, index)) {
                 upperItem.emplace_back(index);
             }

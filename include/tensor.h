@@ -10,7 +10,7 @@
 
 namespace ir {
 
-class Tensor {
+class Tensor : public ASTPart {
     SubTreeList<ExprNode> shape_;
     DataType dtype_;
 
@@ -35,6 +35,8 @@ class Tensor {
 
     bool isScalar() const;
 };
+
+Ref<Tensor> deepCopy(const Ref<Tensor> &t);
 
 } // namespace ir
 

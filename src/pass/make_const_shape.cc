@@ -16,10 +16,10 @@ Stmt MakeConstShape::visit(const VarDef &_op) {
         return op;
     }
 
-    size_t ndim = op->buffer_->tensor().shape().size();
+    size_t ndim = op->buffer_->tensor()->shape().size();
     for (size_t i = 0; i < ndim; i++) {
-        auto &dim = op->buffer_->tensor().shape()[i];
-        const Expr &oldDim = _op->buffer_->tensor().shape()[i];
+        auto &dim = op->buffer_->tensor()->shape()[i];
+        const Expr &oldDim = _op->buffer_->tensor()->shape()[i];
         if (dim->nodeType() == ASTNodeType::IntConst) {
             continue;
         }

@@ -25,7 +25,7 @@ Stmt SinkVar::visit(const VarDef &_op) {
     std::vector<VarDef> inners; // outer to inner
     while (op->body_->nodeType() == ASTNodeType::VarDef) {
         auto def = op->body_.as<VarDefNode>();
-        for (auto &&dim : def->buffer_->tensor().shape()) {
+        for (auto &&dim : def->buffer_->tensor()->shape()) {
             if (allReads(dim).count(op->name_)) {
                 return ret;
             }

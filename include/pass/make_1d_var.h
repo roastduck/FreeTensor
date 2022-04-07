@@ -19,7 +19,7 @@ class Make1DVar : public SymbolTable<Mutator> {
     typedef SymbolTable<Mutator> BaseClass;
 
     template <class T> T visitMemAcc(const T &op) {
-        auto &&shape = buffer(op->var_)->tensor().shape();
+        auto &&shape = buffer(op->var_)->tensor()->shape();
         if (shape.size() <= 1) {
             return op;
         }

@@ -12,7 +12,7 @@ Stmt ShrinkVar::visit(const VarDef &_op) {
 
     auto &&range = newRange_.at(_op->id());
 
-    size_t n = _op->buffer_->tensor().shape().size();
+    size_t n = _op->buffer_->tensor()->shape().size();
     ASSERT(range.lower_.size() == n);
     ASSERT(range.len_.size() == n);
     ASSERT(!offset_.count(_op->name_));
@@ -22,8 +22,7 @@ Stmt ShrinkVar::visit(const VarDef &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::VarDef);
     auto op = __op.as<VarDefNode>();
 
-    op->buffer_ = deepCopy(op->buffer_);
-    op->buffer_->tensor().setShape(range.len_);
+    op->buffer_->tensor()->setShape(range.len_);
     offset_.erase(_op->name_);
     return op;
 }

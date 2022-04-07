@@ -32,7 +32,7 @@ Stmt tensorPropConst(const Stmt &_op) {
         std::unordered_map<AST, std::vector<Stmt>> r2w, r2wMay;
         auto filterMust = [&](const AccessPoint &later,
                               const AccessPoint &earlier) {
-            if (later.buffer_->tensor().isScalar()) {
+            if (later.buffer_->tensor()->isScalar()) {
                 return false;
             }
             if (earlier.op_->nodeType() != ASTNodeType::Store) {

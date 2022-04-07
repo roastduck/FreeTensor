@@ -22,21 +22,21 @@ static std::string genCUBLASType(DataType dtype) {
     }
 }
 
-void CodeGenCUDA::genAlloc(const Tensor &tensor, const std::string &rawPtr,
+void CodeGenCUDA::genAlloc(const Ref<Tensor> &tensor, const std::string &rawPtr,
                            const std::string &shapePtr,
                            const std::string &dimPtr) {
-    auto ndim = tensor.shape().size();
+    auto ndim = tensor->shape().size();
     makeIndent();
     os() << shapePtr << " = " << ndim << " > 0 ? (size_t*)malloc((" << dimPtr
          << " = " << ndim << ") * sizeof(size_t)) : NULL;" << std::endl;
     makeIndent();
     os() << "checkCudaError(cudaMalloc(&" << rawPtr << ", ";
-    for (auto &&[i, dim] : iter::enumerate(tensor.shape())) {
+    for (auto &&[i, dim] : iter::enumerate(tensor->shape())) {
         os() << "(" << shapePtr << "[" << i << "] = ";
         (*this)(dim);
         os() << ") * ";
     }
-    os() << "sizeof(" << gen(tensor.dtype()) << ")));" << std::endl;
+    os() << "sizeof(" << gen(tensor->dtype()) << ")));" << std::endl;
 }
 
 bool CodeGenCUDA::inKernel() const {
@@ -370,9 +370,9 @@ void CodeGenCUDA::visit(const VarDef &op) {
                 // e.g. float (*restirct x)[5][5] = (float(*)[5][5])(__glmem +
                 // 0);
                 auto &&tensor = op->buffer_->tensor();
-                auto &&shape = tensor.shape();
+                auto &&shape = tensor->shape();
                 makeIndent();
-                os() << gen(tensor.dtype()) << " (*restrict ";
+                os() << gen(tensor->dtype()) << " (*restrict ";
                 os() << mangle(op->name_) << ")";
                 for (size_t i = 1, iEnd = shape.size(); i < iEnd;
                      i++) { // No shape[0]
@@ -380,7 +380,7 @@ void CodeGenCUDA::visit(const VarDef &op) {
                     (*this)(shape[i]);
                     os() << "]";
                 }
-                os() << " = (" << gen(tensor.dtype()) << "(*)";
+                os() << " = (" << gen(tensor->dtype()) << "(*)";
                 for (size_t i = 1, iEnd = shape.size(); i < iEnd;
                      i++) { // No shape[0]
                     os() << "[";
@@ -390,7 +390,7 @@ void CodeGenCUDA::visit(const VarDef &op) {
                 os() << ")(__glmem + " + std::to_string(globalStackTop_) << ");"
                      << std::endl;
 
-                int64_t size = sizeOf(tensor.dtype());
+                int64_t size = sizeOf(tensor->dtype());
                 for (auto &&dim : shape) {
                     if (dim->nodeType() == ASTNodeType::IntConst) {
                         size *= dim.as<IntConstNode>()->val_;
@@ -414,9 +414,9 @@ void CodeGenCUDA::visit(const VarDef &op) {
                 // float (*x)[5][5];  // CUDA does not allow "restrict" here
                 // cudaMalloc(&x, 5 * 5 * 5 * sizeof(float)); ...; cudaFree(x);
                 auto &&tensor = op->buffer_->tensor();
-                auto &&shape = tensor.shape();
+                auto &&shape = tensor->shape();
                 makeIndent();
-                os() << gen(tensor.dtype()) << " (*";
+                os() << gen(tensor->dtype()) << " (*";
                 os() << mangle(op->name_) << ")";
                 for (size_t i = 1, iEnd = shape.size(); i < iEnd;
                      i++) { // No shape[0]
@@ -432,7 +432,8 @@ void CodeGenCUDA::visit(const VarDef &op) {
                     (*this)(dim);
                     os() << " * ";
                 }
-                os() << "sizeof(" << gen(tensor.dtype()) << ")));" << std::endl;
+                os() << "sizeof(" << gen(tensor->dtype()) << ")));"
+                     << std::endl;
 
                 (*this)(op->body_);
 
@@ -456,9 +457,9 @@ void CodeGenCUDA::visit(const VarDef &op) {
             // bug of NVCC), so we allocate shared memory dynamically
             // e.g. float (*x)[5][5] = (float(*)[5][5])(__shmem + 0);
             auto &&tensor = op->buffer_->tensor();
-            auto &&shape = tensor.shape();
+            auto &&shape = tensor->shape();
             makeIndent();
-            os() << gen(tensor.dtype()) << " (*";
+            os() << gen(tensor->dtype()) << " (*";
             os() << mangle(op->name_) << ")";
             for (size_t i = 1, iEnd = shape.size(); i < iEnd;
                  i++) { // No shape[0]
@@ -466,7 +467,7 @@ void CodeGenCUDA::visit(const VarDef &op) {
                 (*this)(shape[i]);
                 os() << "]";
             }
-            os() << " = (" << gen(tensor.dtype()) << "(*)";
+            os() << " = (" << gen(tensor->dtype()) << "(*)";
             for (size_t i = 1, iEnd = shape.size(); i < iEnd;
                  i++) { // No shape[0]
                 os() << "[";
@@ -476,7 +477,7 @@ void CodeGenCUDA::visit(const VarDef &op) {
             os() << ")(__shmem + " + std::to_string(sharedStackTop_) << ");"
                  << std::endl;
 
-            int64_t size = sizeOf(tensor.dtype());
+            int64_t size = sizeOf(tensor->dtype());
             for (auto &&dim : shape) {
                 if (dim->nodeType() == ASTNodeType::IntConst) {
                     size *= dim.as<IntConstNode>()->val_;
@@ -511,7 +512,7 @@ void CodeGenCUDA::visit(const VarDef &op) {
                                      "kernel is not allowed");
             }
             auto &&tensor = op->buffer_->tensor();
-            auto &&shape = tensor.shape();
+            auto &&shape = tensor->shape();
             ASSERT((int)shape.size() > 0 && shape[0]->isConst() &&
                    shape[0].as<IntConstNode>()->val_ <= 32);
             CodeGenC::visit(op);
@@ -645,7 +646,7 @@ extern "C" {
             for (auto &&[name, buffer] : stream.useBuffers_) {
                 os << (first ? "" : ", ");
                 auto &&tensor = buffer->tensor();
-                auto &&shape = tensor.shape();
+                auto &&shape = tensor->shape();
 
                 switch (buffer->mtype()) {
                 case MemType::ByValue:
@@ -654,7 +655,7 @@ extern "C" {
                     for (size_t i = 0, iEnd = shape.size(); i < iEnd; i++) {
                         os << "__ByValArray<";
                     }
-                    os << CodeGenCUDA::gen(tensor.dtype());
+                    os << CodeGenCUDA::gen(tensor->dtype());
                     for (auto it = shape.rbegin(); it != shape.rend(); it++) {
                         ASSERT((*it)->nodeType() == ASTNodeType::IntConst);
                         os << ", " << (*it).as<IntConstNode>()->val_ << ">";
@@ -667,7 +668,7 @@ extern "C" {
                     if (buffer->atype() == AccessType::Input) {
                         os << "const ";
                     }
-                    os << CodeGenCUDA::gen(tensor.dtype()) << " (*restrict ";
+                    os << CodeGenCUDA::gen(tensor->dtype()) << " (*restrict ";
                     os << mangle(name) << ")";
                     for (size_t i = 1, iEnd = shape.size(); i < iEnd;
                          i++) { // No shape[0]

@@ -4,7 +4,7 @@
 namespace ir {
 
 Stmt Make1DVar::visit(const VarDef &_op) {
-    if (_op->buffer_->tensor().shape().size() <= 1) {
+    if (_op->buffer_->tensor()->shape().size() <= 1) {
         return BaseClass::visit(_op);
     }
 
@@ -16,11 +16,11 @@ Stmt Make1DVar::visit(const VarDef &_op) {
     if (op->sizeLim_.isValid()) {
         len = op->sizeLim_;
     } else {
-        for (Expr dim : op->buffer_->tensor().shape()) {
+        for (Expr dim : op->buffer_->tensor()->shape()) {
             len = len.isValid() ? makeMul(len, dim) : dim;
         }
     }
-    op->buffer_->tensor().setShape({len});
+    op->buffer_->tensor()->setShape({len});
     return op;
 }
 
