@@ -16,6 +16,18 @@ class ASTPart {
     bool isSubTree_ = false;
 
   public:
+    ASTPart() : isSubTree_(false) {}
+
+    // Construct a new part using another part. The new part will not initially
+    // have a parent, and the other part will keep its parent
+    ASTPart(ASTPart &&other) : isSubTree_(false) {}
+    ASTPart(const ASTPart &other) : isSubTree_(false) {}
+
+    // Assign the other part to the current part, but the parent of the current
+    // part will still be its parent
+    ASTPart &operator=(ASTPart &&) { return *this; }
+    ASTPart &operator=(const ASTPart &) { return *this; }
+
     void setIsSubTree(bool isSubTree = true) { isSubTree_ = isSubTree; }
     bool isSubTree() const { return isSubTree_; }
 };

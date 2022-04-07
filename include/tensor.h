@@ -36,7 +36,9 @@ class Tensor : public ASTPart {
     bool isScalar() const;
 };
 
-Ref<Tensor> deepCopy(const Ref<Tensor> &t);
+inline Ref<Tensor> deepCopy(const Ref<Tensor> &t) {
+    return Ref<Tensor>::make(*t);
+}
 
 } // namespace ir
 

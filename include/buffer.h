@@ -71,7 +71,9 @@ class Buffer : public ASTPart {
     MemType mtype() const { return mtype_; }
 };
 
-Ref<Buffer> deepCopy(const Ref<Buffer> &b);
+inline Ref<Buffer> deepCopy(const Ref<Buffer> &b) {
+    return Ref<Buffer>::make(*b);
+}
 
 } // namespace ir
 
