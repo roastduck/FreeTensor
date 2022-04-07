@@ -32,10 +32,6 @@ void init_ffi_parallel_scope(py::module_ &m) {
                 return CUDAScope{level, dim};
             }))
         .def("__str__", [](const CUDAScope &scope) { return toString(scope); });
-
-    // TODO: Can we check the type using a native Python API?
-    // https://github.com/pybind/pybind11/discussions/3835
-    m.def("check", [](const ParallelScope &scope) { return toString(scope); });
 }
 
 } // namespace ir
