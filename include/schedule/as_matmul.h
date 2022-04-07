@@ -106,12 +106,12 @@ class AsMatMul : public SymbolTable<Mutator> {
                             toString(idx) + " should be contiguous");
                     }
                 }
-                auto thisLen = buffer(acc->var_)->tensor().shape()[i];
+                Expr thisLen = buffer(acc->var_)->tensor().shape()[i];
                 len = len.isValid() ? makeMul(len, thisLen) : (Expr)thisLen;
                 lastInDim = idx;
             } else {
                 if (len.isValid()) {
-                    auto thisLen = buffer(acc->var_)->tensor().shape()[i];
+                    Expr thisLen = buffer(acc->var_)->tensor().shape()[i];
                     stride = stride.isValid() ? makeMul(stride, thisLen)
                                               : (Expr)thisLen;
                 }

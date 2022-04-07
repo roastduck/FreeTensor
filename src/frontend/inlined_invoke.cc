@@ -67,7 +67,7 @@ Stmt inlinedInvoke(
     const ID &callSiteId, const Func &func,
     const std::vector<Ref<FrontendVar>> &args,
     const std::unordered_map<std::string, Ref<FrontendVar>> &_kvs) {
-    auto ast = func->body_;
+    Stmt ast = func->body_;
     ast = undoMakeReduction(ast);
 
     auto kvs = _kvs;

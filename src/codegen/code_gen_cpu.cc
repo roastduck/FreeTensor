@@ -83,15 +83,15 @@ void CodeGenCPU::visit(const ReduceTo &op) {
 
 void CodeGenCPU::visit(const For &op) {
     if (std::holds_alternative<OpenMPScope>(op->property_.parallel_) &&
-        !collapsed_.count(op->id())) {
+        !collapsed_.count(op)) {
         int collapse = 1;
-        for (auto inner = op->body_;
+        for (Stmt inner = op->body_;
              inner->nodeType() == ASTNodeType::For &&
              std::holds_alternative<OpenMPScope>(
                  inner.as<ForNode>()->property_.parallel_);
              inner = inner.as<ForNode>()->body_) {
             collapse++;
-            collapsed_.insert(inner->id());
+            collapsed_.insert(inner.as<ForNode>());
         }
 
         os() << "#pragma omp parallel for";

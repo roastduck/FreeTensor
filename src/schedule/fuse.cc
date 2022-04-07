@@ -133,8 +133,8 @@ Stmt FuseFor::visit(const StmtSeq &_op) {
             beforeId_ = loop0->body_->id();
             afterId_ = loop1->body_->id();
 
-            auto body0 = loop0->body_;
-            auto body1 = loop1->body_;
+            Stmt body0 = loop0->body_;
+            Stmt body1 = loop1->body_;
             // From inner to outer
             for (auto &&stmt : loop0InScopes.scopes_) {
                 if (stmt->nodeType() == ASTNodeType::If) {
@@ -248,7 +248,7 @@ std::pair<Stmt, ID> fuse(const Stmt &_ast, const ID &loop0, const ID &loop1,
 
     for (auto &&stmt : check.loop1().scopes_) {
         if (stmt->nodeType() == ASTNodeType::VarDef) {
-            for (auto shape :
+            for (auto &&shape :
                  stmt.as<VarDefNode>()->buffer_->tensor().shape()) {
                 if (!checkNotModified(_ast, shape, CheckNotModifiedSide::Before,
                                       loop0, CheckNotModifiedSide::Before,

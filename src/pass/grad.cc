@@ -191,7 +191,7 @@ Stmt Grad::visit(const VarDef &_op) {
                 provideGrads_[op->name_] = gradName;
             }
 
-            auto grad = op->body_;
+            Stmt grad = op->body_;
             if ((op->buffer_->atype() != AccessType::Output &&
                  op->buffer_->atype() != AccessType::InOut)) {
                 // We use reverse order in the init, so it can be better fused

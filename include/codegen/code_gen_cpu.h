@@ -12,7 +12,7 @@ class CodeGenCPU : public CodeGenC<CodeGenStream> {
     bool inParallel_ = false;
     int64_t sharedStackTop_ = 8192 * 1024, sharedStackSize_ = 0;
     int64_t threadStackTop_ = 0, threadStackSize_ = 0;
-    std::unordered_set<ID> collapsed_;
+    std::unordered_set<For> collapsed_;
 
   public:
     CodeGenCPU(const std::vector<std::string> &params,

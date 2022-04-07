@@ -398,7 +398,7 @@ void Schedule::autoUseLib(const Target &target) {
                     isPreferLibs = true;
                     break;
                 }
-                auto body = l->body_;
+                Stmt body = l->body_;
                 while (body->nodeType() == ASTNodeType::VarDef) {
                     body = body.as<VarDefNode>()->body_;
                 }
@@ -495,7 +495,7 @@ void Schedule::autoParallelize(const Target &target) {
             auto loop = find(loopId);
 
             // Ignore if too short
-            if (auto len = loop.node().as<ForNode>()->len_;
+            if (auto &&len = loop.node().as<ForNode>()->len_;
                 len->nodeType() == ASTNodeType::IntConst &&
                 len.as<IntConstNode>()->val_ <= 4) {
                 continue;

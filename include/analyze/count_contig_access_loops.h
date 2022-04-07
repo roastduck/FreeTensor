@@ -45,7 +45,7 @@ class CountContigAccessLoops : public SymbolTable<Visitor> {
             return;
         }
         if (!op->indices_.empty()) {
-            auto idx = op->indices_.back();
+            Expr idx = op->indices_.back();
             analyzeLinear_(idx);
             for (auto &&[k, a] : analyzeLinear_.result().at(idx).coeff_) {
                 if ((k == 1 || k == -1) && a->nodeType() == ASTNodeType::Var) {

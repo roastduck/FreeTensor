@@ -84,7 +84,12 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTree {
         }
     }
 
-    SubTree(const SubTree &other) {
+    /**
+     * For a `SubTree y`, `auto x = y` will result in a deep copy of the entire
+     * `SubTree`. We avoid this misuse by making the copy constructor explicit.
+     * Please use `Ref<T> x = y` or `auto &&x = y` instead
+     */
+    explicit SubTree(const SubTree &other) {
         if (other.obj_.isValid()) {
             obj_ = deepCopy(other.obj_).template as<T>();
             ASSERT(!obj_->isSubTree());
