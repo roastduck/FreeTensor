@@ -280,6 +280,29 @@ def test_different_iter_with_different_names():
     assert std.match(ast)
 
 
+#def test_different_iter_non_affine():
+#    with ir.VarDef([("x1", (4,), "int32", "input", "cpu"),
+#                    ("x2", (4,), "int32", "input", "cpu"),
+#                    ("y", (16,), "int32", "output", "cpu")]) as (x1, x2, y):
+#        ir.MarkNid("T")
+#        with ir.VarDef("t", (16,), "int32", "cache", "cpu") as t:
+#            with ir.For("i", 0, 4) as i:
+#                with ir.For("j", 0, 4) as j:
+#                    t[i * 4 + j] = x1[i] * x2[j]
+#            with ir.For("k", 0, 16) as k:
+#                y[k] = t[k] + 1
+#    ast = ir.pop_ast()
+#    print(ast)
+#    s = ir.Schedule(ast)
+#    s.inline("T")
+#    ast = s.ast()
+#    print(ast)
+#    ast = ir.lower(ast)
+#    print(ast)
+#
+#    assert False
+
+
 def test_inline_serial_into_parallel():
     with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
