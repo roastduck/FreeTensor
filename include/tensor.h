@@ -11,7 +11,7 @@
 namespace ir {
 
 class Tensor : public ASTPart {
-    SubTreeList<ExprNode> shape_;
+    SubTreeList<ExprNode> shape_ = ChildOf{this};
     DataType dtype_;
 
   public:

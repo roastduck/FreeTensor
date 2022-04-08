@@ -23,7 +23,7 @@ Stmt Swap::visit(const StmtSeq &_op) {
         start = std::min(start, pos.at(item));
     }
 
-    auto stmts = op->stmts_;
+    std::vector<Stmt> stmts = op->stmts_;
     for (size_t i = 0, iEnd = order_.size(); i < iEnd; i++) {
         auto p = pos.at(order_[i]);
         if (p >= start + order_.size()) {

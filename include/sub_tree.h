@@ -7,55 +7,85 @@
 
 namespace ir {
 
+class ASTPart;
+
+/**
+ * Explicitly mark a SubTree's parent
+ *
+ * A `ChildOf` can be initialized before the `Ref` of its child node being
+ * initialized, so we store its raw pointer rather than a `Weak`. It is OK
+ * because a `ChildOf` is only meant to be a temporary object
+ */
+struct ChildOf {
+    ASTPart *parent_;
+};
+
 /**
  * An object that can be managed by SubTree
  *
  * Can be derived as an ASTNode or part of an ASTNode
  */
-class ASTPart {
-    bool isSubTree_ = false;
+class ASTPart : public EnableSelf<ASTPart> {
+    Weak<ASTPart> parent_;
 
   public:
-    ASTPart() : isSubTree_(false) {}
+    ASTPart() {}
 
     // Construct a new part using another part. The new part will not initially
     // have a parent, and the other part will keep its parent
-    ASTPart(ASTPart &&other) : isSubTree_(false) {}
-    ASTPart(const ASTPart &other) : isSubTree_(false) {}
+    ASTPart(ASTPart &&other) {}
+    ASTPart(const ASTPart &other) {}
 
     // Assign the other part to the current part, but the parent of the current
     // part will still be its parent
     ASTPart &operator=(ASTPart &&) { return *this; }
     ASTPart &operator=(const ASTPart &) { return *this; }
 
-    void setIsSubTree(bool isSubTree = true) { isSubTree_ = isSubTree; }
-    bool isSubTree() const { return isSubTree_; }
+    void setParent(const Ref<ASTPart> &parent) { parent_ = parent; }
+    void resetParent() { parent_ = nullptr; }
+    bool isSubTree() const { return parent_.isValid(); }
 };
 
 enum NullPolicy : int { NotNull, Nullable };
 
 /**
- * Plugging a Ref as a sub-tree in the AST
+ * Plugging a `Ref` of `ASTPart` as a sub-tree in the AST
  *
- * This class ensures that each Ref of an AST node having a single parent. In
- * other words, there will not be two nodes in one AST sharing the same address.
- * If an AST node is assigned as a SubTree, but it has already been in another
- * SubTree, it will be automatically copied
+ * This class ensures that each `Ref` of an `ASTPart` having a single parent. In
+ * other words, there will not be two `ASTPart`s in one AST sharing the same
+ * address. If an `ASTPart` is assigned as a `SubTree`, but it has already been
+ * in another `SubTree`, it will be automatically copied
  */
 template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTree {
     Ref<T> obj_;
 
+    /**
+     * The parent of this SubTree. Using a raw pointer here is OK because the
+     * parent of a SubTree will always be alive given the SubTree is alive
+     */
+    ASTPart *parent_ = nullptr;
+
     template <class, NullPolicy> friend class SubTree;
 
-  public:
-    SubTree() {}
-    SubTree(std::nullptr_t) { ASSERT(POLICY == NullPolicy::Nullable); }
-
-    ~SubTree() {
+  private:
+    void reset() {
         if (obj_.isValid()) {
-            obj_->setIsSubTree(false);
+            obj_->resetParent();
+        }
+        obj_ = nullptr;
+    }
+
+    void checkNull() {
+        if (!obj_.isValid() && POLICY == NullPolicy::NotNull) {
+            ERROR("Cannot assign a null Ref to a NotNull SubTree");
         }
     }
+
+  public:
+    SubTree(const ChildOf &c) : parent_(c.parent_) {}
+    ~SubTree() { reset(); }
+
+    SubTree(std::nullptr_t) { ASSERT(POLICY == NullPolicy::Nullable); }
 
     template <class U,
               typename std::enable_if_t<std::is_base_of_v<T, U>> * = nullptr>
@@ -65,10 +95,8 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTree {
                 obj_ = deepCopy(obj).template as<T>();
             }
             ASSERT(!obj_->isSubTree());
-            obj_->setIsSubTree();
-        } else {
-            ASSERT(POLICY == NullPolicy::Nullable);
         }
+        checkNull();
     }
     template <class U,
               typename std::enable_if_t<std::is_base_of_v<T, U>> * = nullptr>
@@ -78,22 +106,14 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTree {
                 obj_ = deepCopy(obj).template as<T>();
             }
             ASSERT(!obj_->isSubTree());
-            obj_->setIsSubTree();
-        } else {
-            ASSERT(POLICY == NullPolicy::Nullable);
         }
+        checkNull();
     }
 
-    SubTree(SubTree &&other) : obj_(std::move(other.obj_)) {
-        if (!obj_.isValid()) {
-            ASSERT(POLICY == NullPolicy::Nullable);
-        }
-    }
+    SubTree(SubTree &&other) : obj_(std::move(other.obj_)) { checkNull(); }
     template <NullPolicy OTHER_POLICY>
     SubTree(SubTree<T, OTHER_POLICY> &&other) : obj_(std::move(other.obj_)) {
-        if (!obj_.isValid()) {
-            ASSERT(POLICY == NullPolicy::Nullable);
-        }
+        checkNull();
     }
 
     /**
@@ -105,73 +125,65 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTree {
         if (other.obj_.isValid()) {
             obj_ = deepCopy(other.obj_).template as<T>();
             ASSERT(!obj_->isSubTree());
-            obj_->setIsSubTree();
         } else {
-            ASSERT(POLICY == NullPolicy::Nullable);
             obj_ = nullptr;
         }
+        checkNull();
     }
     template <NullPolicy OTHER_POLICY>
     explicit SubTree(const SubTree<T, OTHER_POLICY> &other) {
         if (other.obj_.isValid()) {
             obj_ = deepCopy(other.obj_).template as<T>();
             ASSERT(!obj_->isSubTree());
-            obj_->setIsSubTree();
         } else {
-            ASSERT(POLICY == NullPolicy::Nullable);
             obj_ = nullptr;
         }
+        checkNull();
     }
 
     SubTree &operator=(SubTree &&other) {
-        if (obj_.isValid()) {
-            obj_->setIsSubTree(false);
-        }
+        reset();
         obj_ = std::move(other.obj_);
-        if (!obj_.isValid()) {
-            ASSERT(POLICY == NullPolicy::Nullable);
-        }
+        checkNull();
         return *this;
     }
     template <NullPolicy OTHER_POLICY>
     SubTree &operator=(SubTree<T, OTHER_POLICY> &&other) {
-        if (obj_.isValid()) {
-            obj_->setIsSubTree(false);
-        }
+        reset();
         obj_ = std::move(other.obj_);
-        if (!obj_.isValid()) {
-            ASSERT(POLICY == NullPolicy::Nullable);
-        }
+        checkNull();
         return *this;
     }
 
     SubTree &operator=(const SubTree &other) {
-        if (obj_.isValid()) {
-            obj_->setIsSubTree(false);
-        }
+        reset();
         if (other.obj_.isValid()) {
             obj_ = deepCopy(other.obj_).template as<T>();
             ASSERT(!obj_->isSubTree());
-            obj_->setIsSubTree();
+            if (parent_ != nullptr) {
+                obj_->setParent(
+                    ((EnableSelf<typename T::Self> *)parent_)->self());
+            }
         } else {
-            ASSERT(POLICY == NullPolicy::Nullable);
             obj_ = nullptr;
         }
+        checkNull();
         return *this;
     }
     template <NullPolicy OTHER_POLICY>
     SubTree &operator=(const SubTree<T, OTHER_POLICY> &other) {
-        if (obj_.isValid()) {
-            obj_->setIsSubTree(false);
-        }
+        reset();
         if (other.obj_.isValid()) {
             obj_ = deepCopy(other.obj_).template as<T>();
             ASSERT(!obj_->isSubTree());
-            obj_->setIsSubTree();
+            if (parent_ != nullptr) {
+                obj_->setParent(
+                    ((EnableSelf<typename T::Self> *)parent_)->self());
+            }
         } else {
-            ASSERT(POLICY == NullPolicy::Nullable);
             obj_ = nullptr;
         }
+        checkNull();
         return *this;
     }
 
@@ -197,54 +209,108 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTree {
 template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTreeList {
     std::vector<SubTree<T, POLICY>> objs_;
 
+    /**
+     * The parent of this SubTree. Using a raw pointer here is OK because the
+     * parent of a SubTree will always be alive given the SubTree is alive
+     */
+    ASTPart *parent_ = nullptr;
+
     template <class, NullPolicy> friend class SubTree;
 
   public:
-    SubTreeList() {}
+    SubTreeList(const ChildOf &c) : parent_(c.parent_) {}
 
     template <class U,
               typename std::enable_if_t<std::is_base_of_v<T, U>> * = nullptr>
-    SubTreeList(const std::vector<Ref<U>> &objs)
-        : objs_(objs.begin(), objs.end()) {}
+    SubTreeList(const std::vector<Ref<U>> &objs) {
+        objs_.reserve(objs.size());
+        for (auto &&item : objs) {
+            SubTree<T, POLICY> newItem = ChildOf{parent_};
+            newItem = item;
+            objs_.emplace_back(std::move(newItem));
+        }
+    }
     template <class U,
               typename std::enable_if_t<std::is_base_of_v<T, U>> * = nullptr>
     SubTreeList(std::vector<Ref<U>> &&objs) {
         objs_.reserve(objs.size());
-        for (auto &obj : objs) {
-            objs_.emplace_back(std::move(obj));
+        for (auto &&item : objs) {
+            SubTree<T, POLICY> newItem = ChildOf{parent_};
+            newItem = std::move(item);
+            objs_.emplace_back(std::move(newItem));
         }
     }
     template <class U,
               typename std::enable_if_t<std::is_base_of_v<T, U>> * = nullptr>
     SubTreeList(std::initializer_list<Ref<U>> objs) {
         objs_.reserve(objs.size());
-        for (auto &obj : objs) {
-            objs_.emplace_back(std::move(obj));
+        for (auto &&item : objs) {
+            SubTree<T, POLICY> newItem = ChildOf{parent_};
+            newItem = std::move(item);
+            objs_.emplace_back(std::move(newItem));
         }
     }
 
-    SubTreeList(SubTreeList<T, POLICY> &&other)
-        : objs_(std::move(other.objs_)) {}
-    explicit SubTreeList(const SubTreeList<T, POLICY> &other)
-        : objs_(other.objs_) {}
-
+    SubTreeList(SubTreeList &&other) {
+        objs_.reserve(other.objs_.size());
+        for (auto &&item : other.objs_) {
+            SubTree<T, POLICY> newItem = ChildOf{parent_};
+            newItem = std::move(item);
+            objs_.emplace_back(std::move(newItem));
+        }
+    }
     template <NullPolicy OTHER_POLICY>
     SubTreeList(SubTreeList<T, OTHER_POLICY> &&other) {
         objs_.reserve(other.objs_.size());
-        for (auto &obj : other.objs_) {
-            objs_.emplace_back(std::move(obj));
+        for (auto &&item : other.objs_) {
+            SubTree<T, POLICY> newItem = ChildOf{parent_};
+            newItem = std::move(item);
+            objs_.emplace_back(std::move(newItem));
+        }
+    }
+
+    /**
+     * For a `SubTreeList y`, `auto x = y` will result in a deep copy of the
+     * entire `SubTreeList`. We avoid this misuse by making the copy constructor
+     * explicit. Please use `std::vector<Ref<T>> x = y` or `auto &&x = y`
+     * instead
+     */
+    explicit SubTreeList(const SubTreeList &other) {
+        objs_.reserve(other.objs_.size());
+        for (auto &&item : other.objs_) {
+            SubTree<T, POLICY> newItem = ChildOf{parent_};
+            newItem = item;
+            objs_.emplace_back(std::move(newItem));
         }
     }
     template <NullPolicy OTHER_POLICY>
-    SubTreeList(const SubTreeList<T, OTHER_POLICY> &other)
-        : objs_(other.objs_.begin(), other.objs_.end()) {}
+    explicit SubTreeList(const SubTreeList<T, OTHER_POLICY> &other) {
+        objs_.reserve(other.objs_.size());
+        for (auto &&item : other.objs_) {
+            SubTree<T, POLICY> newItem = ChildOf{parent_};
+            newItem = item;
+            objs_.emplace_back(std::move(newItem));
+        }
+    }
 
-    SubTreeList &operator=(SubTreeList<T, POLICY> &&other) {
-        objs_ = std::move(other.objs_);
+    SubTreeList &operator=(SubTreeList &&other) {
+        objs_.clear();
+        objs_.reserve(other.objs_.size());
+        for (auto &&item : other.objs_) {
+            SubTree<T, POLICY> newItem = ChildOf{parent_};
+            newItem = std::move(item);
+            objs_.emplace_back(std::move(newItem));
+        }
         return *this;
     }
-    SubTreeList &operator=(const SubTreeList<T, POLICY> &other) {
-        objs_ = other.objs_;
+    SubTreeList &operator=(const SubTreeList &other) {
+        objs_.clear();
+        objs_.reserve(other.objs_.size());
+        for (auto &&item : other.objs_) {
+            SubTree<T, POLICY> newItem = ChildOf{parent_};
+            newItem = item;
+            objs_.emplace_back(std::move(newItem));
+        }
         return *this;
     }
 
@@ -252,15 +318,33 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTreeList {
     SubTreeList &operator=(SubTreeList<T, OTHER_POLICY> &&other) {
         objs_.clear();
         objs_.reserve(other.objs_.size());
-        for (auto &obj : other.objs_) {
-            objs_.emplace_back(std::move(obj));
+        for (auto &&item : other.objs_) {
+            SubTree<T, POLICY> newItem = ChildOf{parent_};
+            newItem = std::move(item);
+            objs_.emplace_back(std::move(newItem));
         }
         return *this;
     }
     template <NullPolicy OTHER_POLICY>
     SubTreeList &operator=(const SubTreeList<T, OTHER_POLICY> &other) {
-        objs_ = std::vector<SubTree<T, POLICY>>(other.objs_.begin(),
-                                                other.objs_.end());
+        objs_.clear();
+        objs_.reserve(other.objs_.size());
+        for (auto &&item : other.objs_) {
+            SubTree<T, POLICY> newItem = ChildOf{parent_};
+            newItem = item;
+            objs_.emplace_back(std::move(newItem));
+        }
+        return *this;
+    }
+
+    SubTreeList &operator=(std::initializer_list<Ref<T>> &&objs) {
+        objs_.clear();
+        objs_.reserve(objs.size());
+        for (auto &&item : objs) {
+            SubTree<T, POLICY> newItem = ChildOf{parent_};
+            newItem = std::move(item);
+            objs_.emplace_back(std::move(newItem));
+        }
         return *this;
     }
 

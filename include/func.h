@@ -19,7 +19,7 @@ class FuncNode : public ASTNode {
     std::string name_;
     std::vector<std::string> params_;
     std::vector<std::pair<std::string, DataType>> returns_;
-    SubTree<StmtNode> body_;
+    SubTree<StmtNode> body_ = ChildOf{this};
 
     // Some parameters and/or return values can be enclosed in `closure_`. These
     // values will be automatically set and collect in `Driver`. They are still
