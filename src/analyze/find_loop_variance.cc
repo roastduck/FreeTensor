@@ -138,6 +138,7 @@ void FindLoopVariance::visit(const VarDef &op) {
 
 void FindLoopVariance::visitConst(const Const &op) {
     Visitor::visitExpr(op);
+    exprInfo_[op].reserve(allLoops_.size());
     for (auto &&loop : allLoops_) {
         exprInfo_[op][loop] = LoopVariability::Invariance;
     }

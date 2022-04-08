@@ -10,6 +10,9 @@
 
 namespace ir {
 
+class EnableSelfBase;
+template <class T> class EnableSelf;
+
 /**
  * Ref-counting pointer
  *
@@ -20,11 +23,22 @@ namespace ir {
  */
 template <class T> class Ref {
     template <class U> friend class Ref;
+    template <class U> friend class Weak;
+    template <class U> friend class EnableSelf;
 
     std::shared_ptr<T> ptr_;
 
   private:
-    Ref(std::shared_ptr<T> &&ptr) : ptr_(std::move(ptr)) {}
+    Ref(std::shared_ptr<T> &&ptr) : ptr_(std::move(ptr)) { updateSelf(); }
+
+    void updateSelf() {
+        if constexpr (std::is_base_of_v<EnableSelfBase, T>) {
+            if (ptr_ != nullptr) {
+                std::static_pointer_cast<EnableSelf<typename T::Self>>(ptr_)
+                    ->self_ = *this;
+            }
+        }
+    }
 
   public:
     typedef T Object;
@@ -36,7 +50,7 @@ template <class T> class Ref {
 
     /// NO NOT USE THIS CONSTRUCTOR IN PUBLIC
     /// It is public because Pybind11 needs it
-    Ref(T *ptr) : ptr_(ptr) {}
+    Ref(T *ptr) : ptr_(ptr) { updateSelf(); }
 
     /**
      * Shared with any compatible references
@@ -99,6 +113,53 @@ template <class T> class Ref {
     friend bool operator<(const Ref &lhs, const Ref &rhs) {
         return lhs.ptr_ < rhs.ptr_;
     }
+};
+
+template <class T> class Weak {
+    std::weak_ptr<T> ptr_;
+    bool notNull_ = false;
+
+  public:
+    Weak() {}
+    Weak(std::nullptr_t) {}
+
+    template <class U,
+              typename std::enable_if_t<std::is_base_of_v<T, U>> * = nullptr>
+    Weak(const Ref<U> &ref) : ptr_(ref.ptr_), notNull_(ref.isValid()) {}
+
+    /**
+     * Return true if this is not a null pointer. If you are checking whether
+     * the object it pointing to still exists, please use `lock().isValid()`
+     */
+    bool isValid() const { return notNull_; }
+
+    Ref<T> lock() const { return Ref<T>(ptr_.lock()); }
+};
+
+class EnableSelfBase {};
+
+/**
+ * Similar to `std::enable_shared_from_this`, but returns a Ref
+ *
+ * Pybind11 has a bug with `std::enable_shared_from_this`
+ * (https://github.com/pybind/pybind11/issues/3851), so we make our own
+ * implementation, rather than wrap around `std::enable_shared_from_this`
+ */
+template <class T> class EnableSelf : public EnableSelfBase {
+    template <class U> friend class Ref;
+
+    Weak<T> self_;
+
+  public:
+    typedef T Self;
+
+    Ref<T> self() {
+        auto ret = self_.lock();
+        if (!ret.isValid()) {
+            ERROR("This class is not managed by Ref");
+        }
+        return ret;
+    };
 };
 
 } // namespace ir

@@ -11,7 +11,7 @@
 namespace ir {
 
 class Tensor : public ASTPart {
-    SubTreeList<ExprNode> shape_;
+    SubTreeList<ExprNode> shape_ = ChildOf{this};
     DataType dtype_;
 
   public:
@@ -34,6 +34,8 @@ class Tensor : public ASTPart {
     DataType dtype() const { return dtype_; }
 
     bool isScalar() const;
+
+    void compHash() override;
 };
 
 inline Ref<Tensor> deepCopy(const Ref<Tensor> &t) {

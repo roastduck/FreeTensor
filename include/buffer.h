@@ -69,6 +69,8 @@ class Buffer : public ASTPart {
 
     void setMtype(MemType mtype) { mtype_ = mtype; }
     MemType mtype() const { return mtype_; }
+
+    void compHash() override;
 };
 
 inline Ref<Buffer> deepCopy(const Ref<Buffer> &b) {

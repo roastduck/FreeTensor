@@ -11,19 +11,23 @@ namespace ir {
 struct ReductionItem : public ASTPart {
     ReduceOp op_;
     std::string var_;
-    SubTreeList<ExprNode> begins_, ends_;
+    SubTreeList<ExprNode> begins_ = ChildOf{this}, ends_ = ChildOf{this};
 
     template <class Tbegins, class Tends>
     ReductionItem(ReduceOp op, const std::string &var, Tbegins &&begins,
                   Tends &&ends)
-        : op_(op), var_(var), begins_(std::forward<Tbegins>(begins)),
-          ends_(std::forward<Tends>(ends)) {}
+        : op_(op), var_(var) {
+        begins_ = std::forward<Tbegins>(begins);
+        ends_ = std::forward<Tends>(ends);
+    }
+
+    void compHash() override;
 };
 
 struct ForProperty : public ASTPart {
     ParallelScope parallel_;
     bool unroll_, vectorize_;
-    SubTreeList<ReductionItem> reductions_;
+    SubTreeList<ReductionItem> reductions_ = ChildOf{this};
     std::vector<std::string> noDeps_; // vars that are explicitly marked to have
                                       // no dependencies over this loop
     bool preferLibs_; // Aggresively transform to external library calls in
@@ -57,6 +61,8 @@ struct ForProperty : public ASTPart {
         ret->preferLibs_ = preferLibs;
         return ret;
     }
+
+    void compHash() override;
 };
 
 inline Ref<ReductionItem> deepCopy(const Ref<ReductionItem> &r) {
