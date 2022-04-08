@@ -93,39 +93,40 @@ def compile_all(num_v, num_e, feat_len, device):
     print(ir.debug.with_line_no(code))
     print(f"Inference compiling time: {t1 - t0}s")
 
-    return inference_exe, None, None
-    #print("# Forward:")
-    #print(forward)
-    #s = ir.Schedule(forward)
-    #s.auto_schedule(device.target())
-    #f = ir.lower(s.func(), device.target())
-    #print(f)
-    #code = ir.codegen(f, device.target())
-    #print(ir.debug.with_line_no(code))
-    #forward_exe = ir.Driver(forward, code, device)
+    #return inference_exe, None, None
 
-    #print("# Backward:")
-    #print(backward)
-    #s = ir.Schedule(backward)
-    #s.auto_schedule(device.target())
-    #print(s.ast())
-    #f = ir.lower(s.func(), device.target())
-    #print(f)
-    #code = ir.codegen(f, device.target())
-    #print(ir.debug.with_line_no(code))
-    #backward_exe = ir.Driver(backward, code, device)
+    print("# Forward:")
+    print(forward)
+    s = ir.Schedule(forward)
+    s.auto_schedule(device.target())
+    f = ir.lower(s.func(), device.target())
+    print(f)
+    code = ir.codegen(f, device.target())
+    print(ir.debug.with_line_no(code))
+    forward_exe = ir.Driver(forward, code, device)
 
-    #def run_backward(ptr, idx, x, w, w_attn_1, w_attn_2, y, d_y, d_x, d_w,
-    #                 d_w_attn_1, d_w_attn_2):
-    #    kvs = {}
-    #    kvs[privdes['y']] = d_y
-    #    kvs[requires['feat']] = d_x
-    #    kvs[requires['weight']] = d_w
-    #    kvs[requires['attn_l']] = d_w_attn_1
-    #    kvs[requires['attn_r']] = d_w_attn_2
-    #    backward_exe(ptr, idx, x, w, w_attn_1, w_attn_2, y, **kvs)
+    print("# Backward:")
+    print(backward)
+    s = ir.Schedule(backward)
+    s.auto_schedule(device.target())
+    print(s.ast())
+    f = ir.lower(s.func(), device.target())
+    print(f)
+    code = ir.codegen(f, device.target())
+    print(ir.debug.with_line_no(code))
+    backward_exe = ir.Driver(backward, code, device)
 
-    #return inference_exe, forward_exe, run_backward
+    def run_backward(ptr, idx, x, w, w_attn_1, w_attn_2, y, d_y, d_x, d_w,
+                     d_w_attn_1, d_w_attn_2):
+        kvs = {}
+        kvs[privdes['y']] = d_y
+        kvs[requires['feat']] = d_x
+        kvs[requires['weight']] = d_w
+        kvs[requires['attn_l']] = d_w_attn_1
+        kvs[requires['attn_r']] = d_w_attn_2
+        backward_exe(ptr, idx, x, w, w_attn_1, w_attn_2, y, **kvs)
+
+    return inference_exe, forward_exe, run_backward
 
 
 if __name__ == '__main__':
@@ -215,31 +216,31 @@ if __name__ == '__main__':
     if cmd_args.profile_gpu:
         exit(0)
 
-    #for i in range(warmup_num):
-    #    forward(ptr, idx, x, w, w_attn_1, w_attn_2, y)
-    #ir_dev.sync()
-    #t0 = time.time()
-    #for i in range(test_num):
-    #    forward(ptr, idx, x, w, w_attn_1, w_attn_2, y)
-    #ir_dev.sync()
-    #t1 = time.time()
+    for i in range(warmup_num):
+        forward(ptr, idx, x, w, w_attn_1, w_attn_2, y)
+    ir_dev.sync()
+    t0 = time.time()
+    for i in range(test_num):
+        forward(ptr, idx, x, w, w_attn_1, w_attn_2, y)
+    ir_dev.sync()
+    t1 = time.time()
 
-    #print(f"Forward Time = {(t1 - t0) / test_num * 1000} ms")
+    print(f"Forward Time = {(t1 - t0) / test_num * 1000} ms")
 
-    #for i in range(warmup_num):
-    #    backward(ptr, idx, x, w, w_attn_1, w_attn_2, y, d_y, d_x, d_w,
-    #             d_w_attn_1, d_w_attn_2)
-    #    if i == 0:
-    #        store_txt("d_x.out", d_x.numpy().reshape((num_v, feat_len)))
-    #        store_txt("d_w.out", d_w.numpy().reshape((feat_len, feat_len)))
-    #        store_txt("d_w_attn_1.out", d_w_attn_1.numpy())
-    #        store_txt("d_w_attn_2.out", d_w_attn_2.numpy())
-    #ir_dev.sync()
-    #t0 = time.time()
-    #for i in range(test_num):
-    #    backward(ptr, idx, x, w, w_attn_1, w_attn_2, y, d_y, d_x, d_w,
-    #             d_w_attn_1, d_w_attn_2)
-    #ir_dev.sync()
-    #t1 = time.time()
+    for i in range(warmup_num):
+        backward(ptr, idx, x, w, w_attn_1, w_attn_2, y, d_y, d_x, d_w,
+                 d_w_attn_1, d_w_attn_2)
+        if i == 0:
+            store_txt("d_x.out", d_x.numpy().reshape((num_v, feat_len)))
+            store_txt("d_w.out", d_w.numpy().reshape((feat_len, feat_len)))
+            store_txt("d_w_attn_1.out", d_w_attn_1.numpy())
+            store_txt("d_w_attn_2.out", d_w_attn_2.numpy())
+    ir_dev.sync()
+    t0 = time.time()
+    for i in range(test_num):
+        backward(ptr, idx, x, w, w_attn_1, w_attn_2, y, d_y, d_x, d_w,
+                 d_w_attn_1, d_w_attn_2)
+    ir_dev.sync()
+    t1 = time.time()
 
-    #print(f"Backward Time = {(t1 - t0) / test_num * 1000} ms")
+    print(f"Backward Time = {(t1 - t0) / test_num * 1000} ms")
