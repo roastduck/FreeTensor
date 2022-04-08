@@ -47,9 +47,11 @@ class ASTPart : public EnableSelf<ASTPart> {
 
     void setParent(const Ref<ASTPart> &parent) { parent_ = parent; }
     void resetParent() { parent_ = nullptr; }
+    Ref<ASTPart> parent() const { return parent_.lock(); }
     bool isSubTree() const { return parent_.isValid(); }
 
     size_t hash();
+    void resetHash();
     virtual void compHash() = 0;
 };
 
@@ -77,6 +79,9 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTree {
   private:
     void reset() {
         if (obj_.isValid()) {
+            if (auto p = obj_->parent(); p.isValid()) {
+                p->resetHash();
+            }
             obj_->resetParent();
         }
         obj_ = nullptr;

@@ -9,4 +9,13 @@ size_t ASTPart::hash() {
     return hash_;
 }
 
+void ASTPart::resetHash() {
+    if (hash_ != ~0ull) {
+        hash_ = ~0ull;
+        if (auto p = parent(); p.isValid()) {
+            p->resetHash();
+        }
+    }
+}
+
 } // namespace ir
