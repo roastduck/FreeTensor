@@ -4,6 +4,51 @@
 
 namespace ir {
 
+size_t Hasher::compHash(const Tensor &t) {
+    size_t h = (-1 * K1 + B1) % P;
+    for (auto &&dim : t.shape()) {
+        h = ((h + dim->hash()) * K2 + B2) % P;
+    }
+    h = ((h + std::hash<int>()((int)t.dtype())) * K2 + B2) % P;
+    return (h * K3 + B3) % P;
+}
+
+size_t Hasher::compHash(const Buffer &b) {
+    size_t h = (-1 * K1 + B1) % P;
+    h = ((h + b.tensor()->hash()) * K2 + B2) % P;
+    h = ((h + std::hash<int>()((int)b.atype())) * K2 + B2) % P;
+    h = ((h + std::hash<int>()((int)b.mtype())) * K2 + B2) % P;
+    return (h * K3 + B3) % P;
+}
+
+size_t Hasher::compHash(const ReductionItem &r) {
+    size_t h = (-1 * K1 + B1) % P;
+    h = ((h + std::hash<int>()((int)r.op_)) * K2 + B2) % P;
+    h = ((h + std::hash<std::string>()(r.var_)) * K2 + B2) % P;
+    for (auto &&idx : r.begins_) {
+        h = ((h + (idx.isValid() ? idx->hash() : 0ull)) * K2 + B2) % P;
+    }
+    for (auto &&idx : r.ends_) {
+        h = ((h + (idx.isValid() ? idx->hash() : 0ull)) * K2 + B2) % P;
+    }
+    return (h * K3 + B3) % P;
+}
+
+size_t Hasher::compHash(const ForProperty &p) {
+    size_t h = (-1 * K1 + B1) % P;
+    h = ((h + std::hash<ParallelScope>()(p.parallel_)) * K2 + B2) % P;
+    h = ((h + std::hash<bool>()(p.unroll_)) * K2 + B2) % P;
+    h = ((h + std::hash<bool>()(p.vectorize_)) * K2 + B2) % P;
+    for (auto &&r : p.reductions_) {
+        h = ((h + r->hash()) * K2 + B2) % P;
+    }
+    for (auto &&item : p.noDeps_) {
+        h = ((h + std::hash<std::string>()(item)) * K2 + B2) % P;
+    }
+    h = ((h + std::hash<bool>()(p.preferLibs_)) * K2 + B2) % P;
+    return (h * K3 + B3) % P;
+}
+
 size_t Hasher::compHash(const AnyNode &op) {
     size_t h = ((size_t)op.nodeType() * K1 + B1) % P;
     return (h * K3 + B3) % P;
@@ -20,13 +65,7 @@ size_t Hasher::compHash(const StmtSeqNode &op) {
 size_t Hasher::compHash(const VarDefNode &op) {
     size_t h = ((size_t)op.nodeType() * K1 + B1) % P;
     h = ((h + std::hash<std::string>()(op.name_)) * K2 + B2) % P;
-    for (auto &&dim : op.buffer_->tensor()->shape()) {
-        h = ((h + dim->hash()) * K2 + B2) % P;
-    }
-    h = ((h + std::hash<int>()((int)op.buffer_->tensor()->dtype())) * K2 + B2) %
-        P;
-    h = ((h + std::hash<int>()((int)op.buffer_->atype())) * K2 + B2) % P;
-    h = ((h + std::hash<int>()((int)op.buffer_->mtype())) * K2 + B2) % P;
+    h = ((h + op.buffer_->hash()) * K2 + B2) % P;
     if (op.sizeLim_.isValid()) {
         h = ((h + op.sizeLim_->hash()) * K2 + B2) % P;
     }
@@ -64,24 +103,7 @@ size_t Hasher::compHash(const ForNode &op) {
     h = ((h + op.end_->hash()) * K2 + B2) % P;
     h = ((h + op.step_->hash()) * K2 + B2) % P;
     h = ((h + op.len_->hash()) * K2 + B2) % P;
-    h = ((h + std::hash<ParallelScope>()(op.property_->parallel_)) * K2 + B2) %
-        P;
-    h = ((h + std::hash<bool>()(op.property_->unroll_)) * K2 + B2) % P;
-    h = ((h + std::hash<bool>()(op.property_->vectorize_)) * K2 + B2) % P;
-    for (auto &&item : op.property_->reductions_) {
-        h = ((h + std::hash<int>()((int)item->op_)) * K2 + B2) % P;
-        h = ((h + std::hash<std::string>()(item->var_)) * K2 + B2) % P;
-        for (auto &&idx : item->begins_) {
-            h = ((h + (idx.isValid() ? idx->hash() : 0ull)) * K2 + B2) % P;
-        }
-        for (auto &&idx : item->ends_) {
-            h = ((h + (idx.isValid() ? idx->hash() : 0ull)) * K2 + B2) % P;
-        }
-    }
-    for (auto &&item : op.property_->noDeps_) {
-        h = ((h + std::hash<std::string>()(item)) * K2 + B2) % P;
-    }
-    h = ((h + std::hash<bool>()(op.property_->preferLibs_)) * K2 + B2) % P;
+    h = ((h + op.property_->hash()) * K2 + B2) % P;
     h = ((h + op.body_->hash()) * K2 + B2) % P;
     return (h * K3 + B3) % P;
 }
@@ -225,23 +247,7 @@ bool HashComparator::compare(const VarDef &lhs, const VarDef &rhs) const {
     if (lhs->name_ != rhs->name_) {
         return false;
     }
-    if (lhs->buffer_->tensor()->shape().size() !=
-        rhs->buffer_->tensor()->shape().size()) {
-        return false;
-    }
-    for (auto &&[l, r] : iter::zip(lhs->buffer_->tensor()->shape(),
-                                   rhs->buffer_->tensor()->shape())) {
-        if (!(*this)(l, r)) {
-            return false;
-        }
-    }
-    if (lhs->buffer_->tensor()->dtype() != rhs->buffer_->tensor()->dtype()) {
-        return false;
-    }
-    if (lhs->buffer_->mtype() != rhs->buffer_->mtype()) {
-        return false;
-    }
-    if (lhs->buffer_->atype() != rhs->buffer_->atype()) {
+    if (!(*this)(lhs->buffer_, rhs->buffer_)) {
         return false;
     }
     if (lhs->sizeLim_.isValid() != rhs->sizeLim_.isValid()) {
@@ -317,54 +323,7 @@ bool HashComparator::compare(const For &lhs, const For &rhs) const {
     if (!(*this)(lhs->len_, rhs->len_)) {
         return false;
     }
-    if (lhs->property_->parallel_ != rhs->property_->parallel_) {
-        return false;
-    }
-    if (lhs->property_->unroll_ != rhs->property_->unroll_) {
-        return false;
-    }
-    if (lhs->property_->vectorize_ != rhs->property_->vectorize_) {
-        return false;
-    }
-    if (lhs->property_->reductions_.size() !=
-        rhs->property_->reductions_.size()) {
-        return false;
-    }
-    for (auto &&[l, r] :
-         iter::zip(lhs->property_->reductions_, rhs->property_->reductions_)) {
-        if (l->op_ != r->op_) {
-            return false;
-        }
-        if (l->var_ != r->var_) {
-            return false;
-        }
-        if (l->begins_.size() != r->begins_.size()) {
-            return false;
-        }
-        for (auto &&[ll, rr] : iter::zip(l->begins_, r->begins_)) {
-            if (!(*this)(ll, rr)) {
-                return false;
-            }
-        }
-        if (l->ends_.size() != r->ends_.size()) {
-            return false;
-        }
-        for (auto &&[ll, rr] : iter::zip(l->ends_, r->ends_)) {
-            if (!(*this)(ll, rr)) {
-                return false;
-            }
-        }
-    }
-    if (lhs->property_->noDeps_.size() != rhs->property_->noDeps_.size()) {
-        return false;
-    }
-    for (auto &&[l, r] :
-         iter::zip(lhs->property_->noDeps_, rhs->property_->noDeps_)) {
-        if (l != r) {
-            return false;
-        }
-    }
-    if (lhs->property_->preferLibs_ != rhs->property_->preferLibs_) {
+    if (!(*this)(lhs->property_, rhs->property_)) {
         return false;
     }
     if (!(*this)(lhs->body_, rhs->body_)) {
@@ -494,6 +453,96 @@ bool HashComparator::compare(const Intrinsic &lhs, const Intrinsic &rhs) const {
         return false;
     }
     if (lhs->hasSideEffect_ != rhs->hasSideEffect_) {
+        return false;
+    }
+    return true;
+}
+
+bool HashComparator::operator()(const Ref<Tensor> &lhs,
+                                const Ref<Tensor> &rhs) const {
+    if (lhs->shape().size() != rhs->shape().size()) {
+        return false;
+    }
+    for (auto &&[l, r] : iter::zip(lhs->shape(), rhs->shape())) {
+        if (!(*this)(l, r)) {
+            return false;
+        }
+    }
+    if (lhs->dtype() != rhs->dtype()) {
+        return false;
+    }
+    return true;
+}
+
+bool HashComparator::operator()(const Ref<Buffer> &lhs,
+                                const Ref<Buffer> &rhs) const {
+    if (!(*this)(lhs->tensor(), rhs->tensor())) {
+        return false;
+    }
+    if (lhs->mtype() != rhs->mtype()) {
+        return false;
+    }
+    if (lhs->atype() != rhs->atype()) {
+        return false;
+    }
+    return true;
+}
+
+bool HashComparator::operator()(const Ref<ReductionItem> &lhs,
+                                const Ref<ReductionItem> &rhs) const {
+    if (lhs->op_ != rhs->op_) {
+        return false;
+    }
+    if (lhs->var_ != rhs->var_) {
+        return false;
+    }
+    if (lhs->begins_.size() != rhs->begins_.size()) {
+        return false;
+    }
+    for (auto &&[ll, rr] : iter::zip(lhs->begins_, rhs->begins_)) {
+        if (!(*this)(ll, rr)) {
+            return false;
+        }
+    }
+    if (lhs->ends_.size() != rhs->ends_.size()) {
+        return false;
+    }
+    for (auto &&[ll, rr] : iter::zip(lhs->ends_, rhs->ends_)) {
+        if (!(*this)(ll, rr)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool HashComparator::operator()(const Ref<ForProperty> &lhs,
+                                const Ref<ForProperty> &rhs) const {
+    if (lhs->parallel_ != rhs->parallel_) {
+        return false;
+    }
+    if (lhs->unroll_ != rhs->unroll_) {
+        return false;
+    }
+    if (lhs->vectorize_ != rhs->vectorize_) {
+        return false;
+    }
+    if (lhs->reductions_.size() != rhs->reductions_.size()) {
+        return false;
+    }
+    for (auto &&[l, r] : iter::zip(lhs->reductions_, rhs->reductions_)) {
+        if (!(*this)(l, r)) {
+            return false;
+        }
+    }
+    if (lhs->noDeps_.size() != rhs->noDeps_.size()) {
+        return false;
+    }
+    for (auto &&[l, r] : iter::zip(lhs->noDeps_, rhs->noDeps_)) {
+        if (l != r) {
+            return false;
+        }
+    }
+    if (lhs->preferLibs_ != rhs->preferLibs_) {
         return false;
     }
     return true;

@@ -28,8 +28,12 @@ struct ChildOf {
 class ASTPart : public EnableSelf<ASTPart> {
     Weak<ASTPart> parent_;
 
+  protected:
+    size_t hash_ = ~0ull;
+
   public:
     ASTPart() {}
+    virtual ~ASTPart() {}
 
     // Construct a new part using another part. The new part will not initially
     // have a parent, and the other part will keep its parent
@@ -44,6 +48,9 @@ class ASTPart : public EnableSelf<ASTPart> {
     void setParent(const Ref<ASTPart> &parent) { parent_ = parent; }
     void resetParent() { parent_ = nullptr; }
     bool isSubTree() const { return parent_.isValid(); }
+
+    size_t hash();
+    virtual void compHash() = 0;
 };
 
 enum NullPolicy : int { NotNull, Nullable };

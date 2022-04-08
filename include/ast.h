@@ -94,9 +94,6 @@ std::string toString(ASTNodeType type);
     virtual ASTNodeType nodeType() const override { return ASTNodeType::name; }
 
 class ASTNode : public ASTPart {
-  protected:
-    size_t hash_ = ~0ull;
-
   public:
 #ifdef IR_DEBUG_LOG_NODE
     std::string debugCreator_ = "Python API";
@@ -108,9 +105,6 @@ class ASTNode : public ASTPart {
     virtual bool isFunc() const { return false; }
     virtual bool isStmt() const { return false; }
     virtual bool isExpr() const { return false; }
-
-    size_t hash();
-    virtual void compHash() = 0;
 
     DEFINE_NODE_ACCESS(AST);
 };

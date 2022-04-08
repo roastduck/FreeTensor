@@ -63,13 +63,6 @@ std::string toString(ASTNodeType type) {
     }
 }
 
-size_t ASTNode::hash() {
-    if (hash_ == ~0ull) {
-        compHash();
-    }
-    return hash_;
-}
-
 ID::ID(const Stmt &stmt) : ID(stmt->id_) {}
 
 const std::string &ID::strId() const {

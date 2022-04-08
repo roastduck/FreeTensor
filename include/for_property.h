@@ -20,6 +20,8 @@ struct ReductionItem : public ASTPart {
         begins_ = std::forward<Tbegins>(begins);
         ends_ = std::forward<Tends>(ends);
     }
+
+    void compHash() override;
 };
 
 struct ForProperty : public ASTPart {
@@ -59,6 +61,8 @@ struct ForProperty : public ASTPart {
         ret->preferLibs_ = preferLibs;
         return ret;
     }
+
+    void compHash() override;
 };
 
 inline Ref<ReductionItem> deepCopy(const Ref<ReductionItem> &r) {

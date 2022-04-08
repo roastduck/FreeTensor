@@ -34,6 +34,8 @@ class Tensor : public ASTPart {
     DataType dtype() const { return dtype_; }
 
     bool isScalar() const;
+
+    void compHash() override;
 };
 
 inline Ref<Tensor> deepCopy(const Ref<Tensor> &t) {
