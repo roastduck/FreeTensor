@@ -624,7 +624,7 @@ Stmt SimplifyPass::visit(const VarDef &_op) {
 
     if (op->sizeLim_.isValid()) {
         Expr size = makeIntConst(1);
-        for (auto &&dim : op->buffer_->tensor().shape()) {
+        for (auto &&dim : op->buffer_->tensor()->shape()) {
             size = makeMul(size, dim);
         }
         if (unique_.getIntLower(makeSub(op->sizeLim_, size)) >= 0) {

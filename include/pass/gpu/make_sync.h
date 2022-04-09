@@ -3,9 +3,10 @@
 
 #include <unordered_set>
 
-#include <analyze/with_cursor.h>
 #include <func.h>
 #include <math/bounds.h>
+#include <mutator.h>
+#include <visitor.h>
 
 namespace ir {
 
@@ -47,13 +48,13 @@ class CopyParts : public Mutator {
 };
 
 struct CrossThreadDep {
-    Cursor later_, earlier_, lcaStmt_, lcaLoop_;
+    Stmt later_, earlier_, lcaStmt_, lcaLoop_;
     bool inWarp_;
     bool visiting_, synced_;
 };
 
-class MakeSync : public WithCursor<Mutator> {
-    typedef WithCursor<Mutator> BaseClass;
+class MakeSync : public Mutator {
+    typedef Mutator BaseClass;
 
     Stmt root_;
     std::vector<CrossThreadDep> deps_;
@@ -66,7 +67,7 @@ class MakeSync : public WithCursor<Mutator> {
         : root_(root), deps_(std::move(deps)) {}
 
   private:
-    void markSyncForSplitting(const Stmt &sync);
+    void markSyncForSplitting(const Stmt &stmtInTree, const Stmt &sync);
 
   protected:
     Stmt visitStmt(const Stmt &op) override;

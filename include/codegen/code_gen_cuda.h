@@ -32,7 +32,7 @@ class CodeGenCUDA : public CodeGenC<CodeGenCUDAStream> {
     bool inKernel() const;
 
   protected:
-    void genAlloc(const Tensor &tensor, const std::string &rawPtr,
+    void genAlloc(const Ref<Tensor> &tensor, const std::string &rawPtr,
                   const std::string &shapePtr,
                   const std::string &dimPtr) override;
 

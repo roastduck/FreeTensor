@@ -5,6 +5,7 @@
 #include <string>
 
 #include <ref.h>
+#include <sub_tree.h>
 
 namespace ir {
 
@@ -81,25 +82,21 @@ enum class ASTNodeType : int {
 
 std::string toString(ASTNodeType type);
 
-#define DEFINE_NODE_ACCESS(name)                                               \
-  protected:                                                                   \
-    name##Node() = default; /* Must be constructed in Ref */                   \
-                                                                               \
-    friend class Allocator<name##Node>;
+#define DEFINE_NODE_ACCESS(name) DEFINE_AST_PART_ACCESS(name##Node)
 
 #define DEFINE_NODE_TRAIT(name)                                                \
     DEFINE_NODE_ACCESS(name)                                                   \
   public:                                                                      \
     virtual ASTNodeType nodeType() const override { return ASTNodeType::name; }
 
-class ASTNode {
-    friend class Disambiguous;
-
-    bool isSubTree_ = false;
-
-  protected:
-    size_t hash_ = ~0ull;
-
+/**
+ * Base class of all nodes in an AST
+ *
+ * `ASTNode` is the minimal unit that can be traversed by a `Visitor`, or
+ * traversed and modified by a `Mutator`. An `ASTNode` is a derived class of
+ * `ASTPart`, and a derived node of `ASTNode` may contain other `ASTPart`s
+ */
+class ASTNode : public ASTPart {
   public:
 #ifdef IR_DEBUG_LOG_NODE
     std::string debugCreator_ = "Python API";
@@ -108,15 +105,12 @@ class ASTNode {
     virtual ~ASTNode() {}
     virtual ASTNodeType nodeType() const = 0;
 
-    void setIsSubTree(bool isSubTree = true) { isSubTree_ = isSubTree; }
-    bool isSubTree() const { return isSubTree_; }
-
+    bool isAST() const override { return true; }
     virtual bool isFunc() const { return false; }
     virtual bool isStmt() const { return false; }
     virtual bool isExpr() const { return false; }
 
-    size_t hash();
-    virtual void compHash() = 0;
+    Ref<ASTNode> parentAST() const;
 
     DEFINE_NODE_ACCESS(AST);
 };
@@ -141,6 +135,9 @@ typedef Ref<ASTNode> AST;
 #define COPY_DEBUG_INFO(ret, old) (ret)
 #endif
 
+/**
+ * Base class of all expression nodes in an AST
+ */
 class ExprNode : public ASTNode {
   public:
     bool isExpr() const override { return true; }
@@ -148,6 +145,8 @@ class ExprNode : public ASTNode {
     virtual bool isConst() const { return false; }
     virtual bool isBinary() const { return false; }
     virtual bool isUnary() const { return false; }
+
+    Ref<ExprNode> parentExpr() const;
 
     DEFINE_NODE_ACCESS(Expr);
 };
@@ -194,6 +193,9 @@ class ID {
 
 std::string toString(const ID &id);
 
+/**
+ * Base class of all statement nodes in an AST
+ */
 class StmtNode : public ASTNode {
     friend ID;
 
@@ -209,119 +211,23 @@ class StmtNode : public ASTNode {
 
     bool isStmt() const override { return true; }
 
+    Ref<StmtNode> parentStmt() const;
+    Ref<StmtNode> parentCtrlFlow() const;
+
+    /**
+     * Find an ancestor by ID. `this` itself is also considered
+     */
+    Ref<StmtNode> parentById(const ID &lookup) const;
+
     DEFINE_NODE_ACCESS(Stmt);
 };
 
 Expr deepCopy(const Expr &op);
 Stmt deepCopy(const Stmt &op);
 
-enum NullPolicy : int { NotNull, Nullable };
-
-/**
- * To ensure there will not be two nodes in one AST sharing the same address
- */
-template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTree {
-    Ref<T> obj_;
-
-    template <class, NullPolicy> friend class SubTree;
-
-  public:
-    SubTree() {}
-    SubTree(std::nullptr_t) { ASSERT(POLICY == NullPolicy::Nullable); }
-
-    ~SubTree() {
-        if (obj_.isValid()) {
-            obj_->setIsSubTree(false);
-        }
-    }
-
-    template <class U,
-              typename std::enable_if_t<std::is_base_of_v<T, U>> * = nullptr>
-    SubTree(const Ref<U> &obj) : obj_(obj) {
-        if (obj_.isValid()) {
-            if (obj_->isSubTree()) {
-                obj_ = deepCopy(obj).template as<T>();
-            }
-            ASSERT(!obj_->isSubTree());
-            obj_->setIsSubTree();
-        } else {
-            ASSERT(POLICY == NullPolicy::Nullable);
-        }
-    }
-    template <class U,
-              typename std::enable_if_t<std::is_base_of_v<T, U>> * = nullptr>
-    SubTree(Ref<U> &&obj) : obj_(obj) {
-        if (obj_.isValid()) {
-            if (obj_->isSubTree()) {
-                obj_ = deepCopy(obj).template as<T>();
-            }
-            ASSERT(!obj_->isSubTree());
-            obj_->setIsSubTree();
-        } else {
-            ASSERT(POLICY == NullPolicy::Nullable);
-        }
-    }
-
-    template <NullPolicy OTHER_POLICY>
-    SubTree(SubTree<T, OTHER_POLICY> &&other) : obj_(std::move(other.obj_)) {
-        if (!obj_.isValid()) {
-            ASSERT(POLICY == NullPolicy::Nullable);
-        }
-    }
-
-    template <NullPolicy OTHER_POLICY>
-    explicit SubTree(const SubTree<T, OTHER_POLICY> &other) {
-        if (other.obj_.isValid()) {
-            obj_ = deepCopy(other.obj_).template as<T>();
-            ASSERT(!obj_->isSubTree());
-            obj_->setIsSubTree();
-        } else {
-            ASSERT(POLICY == NullPolicy::Nullable);
-            obj_ = nullptr;
-        }
-    }
-
-    template <NullPolicy OTHER_POLICY>
-    SubTree &operator=(SubTree<T, OTHER_POLICY> &&other) {
-        if (obj_.isValid()) {
-            obj_->setIsSubTree(false);
-        }
-        obj_ = std::move(other.obj_);
-        if (!obj_.isValid()) {
-            ASSERT(POLICY == NullPolicy::Nullable);
-        }
-        return *this;
-    }
-
-    template <NullPolicy OTHER_POLICY>
-    SubTree &operator=(const SubTree<T, OTHER_POLICY> &other) {
-        if (obj_.isValid()) {
-            obj_->setIsSubTree(false);
-        }
-        if (other.obj_.isValid()) {
-            obj_ = deepCopy(other.obj_).template as<T>();
-            ASSERT(!obj_->isSubTree());
-            obj_->setIsSubTree();
-        } else {
-            ASSERT(POLICY == NullPolicy::Nullable);
-            obj_ = nullptr;
-        }
-        return *this;
-    }
-
-    template <class U,
-              typename std::enable_if_t<std::is_base_of_v<U, T>> * = nullptr>
-    operator Ref<U>() const {
-        return obj_;
-    }
-
-    T &operator*() const { return *obj_; }
-    T *operator->() const { return obj_.get(); }
-
-    template <class U> Ref<U> as() const { return obj_.template as<U>(); }
-
-    bool isValid() const { return obj_.isValid(); }
-};
+AST lcaAST(const AST &lhs, const AST &rhs);
+Expr lcaExpr(const Expr &lhs, const Expr &rhs);
+Stmt lcaStmt(const Stmt &lhs, const Stmt &rhs);
 
 } // namespace ir
 

@@ -7,6 +7,7 @@ PYBIND11_MODULE(ffi, m) {
     init_ffi_data_type(m);
     init_ffi_tensor(m);
     init_ffi_parallel_scope(m);
+    init_ffi_for_property(m);
     init_ffi_buffer(m);
     init_ffi_frontend(m);
     init_ffi_ast(m);

@@ -15,7 +15,7 @@ namespace ir {
 
 void FindAllNoDeps::visit(const For &op) {
     Visitor::visit(op);
-    for (auto &&var : op->property_.noDeps_) {
+    for (auto &&var : op->property_->noDeps_) {
         results_[var].emplace_back(op->id());
     }
 }
@@ -100,7 +100,7 @@ void FindAccessPoint::visit(const For &op) {
         makeIfExpr(makeGT(op->step_, makeIntConst(0)), std::move(posiCond),
                    makeIfExpr(makeLT(op->step_, makeIntConst(0)),
                               std::move(negCond), zeroCond)));
-    cur_.emplace_back(iter, op->property_.parallel_);
+    cur_.emplace_back(iter, op->property_->parallel_);
     scope2coord_[op->id()] = cur_;
     if (int width = countBandNodeWidth(op->body_); width > 1) {
         cur_.emplace_back(makeIntConst(-1));
@@ -148,7 +148,7 @@ void FindAccessPoint::visit(const Load &op) {
     BaseClass::visit(op);
     auto ap = Ref<AccessPoint>::make();
     *ap = {op,
-           cursor(),
+           curStmt(),
            def(op->var_),
            buffer(op->var_),
            defAxis_.at(op->var_),
@@ -486,22 +486,19 @@ PBMap AnalyzeDeps::makeExternalVarConstraint(
     const GenPBExpr::VarMap &oExternals, int iterDim) {
     PBMap ret = universeMap(spaceAlloc(presburger, 0, iterDim, iterDim));
     // We only have to add constraint for common loops of both accesses
-    auto common = lca(point->cursor_, other->cursor_);
+    auto common = lcaStmt(point->stmt_, other->stmt_);
 
     for (auto &&[expr, strs] : intersect(pExternals, oExternals)) {
         auto &&[pStr, oStr] = strs;
         // If all of the loops are variant, we don't have to make the constraint
         // at all. This will save time for Presburger solver
-        for (auto c = common;; c = c.outer()) {
-            if (c.nodeType() == ASTNodeType::For) {
-                if (isVariant(variantExpr_, expr, c.id())) {
+        for (auto c = common; c.isValid(); c = c->parentStmt()) {
+            if (c->nodeType() == ASTNodeType::For) {
+                if (isVariant(variantExpr_, expr, c->id())) {
                     goto found;
                 }
                 goto do_compute_constraint;
             found:;
-            }
-            if (!c.hasOuter()) {
-                break;
             }
         }
         continue;
@@ -509,20 +506,17 @@ PBMap AnalyzeDeps::makeExternalVarConstraint(
         // Compute the constraint
     do_compute_constraint:
         auto require = makeExternalEq(presburger, iterDim, pStr, oStr);
-        for (auto c = common;; c = c.outer()) {
-            if (c.nodeType() == ASTNodeType::For) {
-                if (isVariant(variantExpr_, expr, c.id())) {
+        for (auto c = common; c.isValid(); c = c->parentStmt()) {
+            if (c->nodeType() == ASTNodeType::For) {
+                if (isVariant(variantExpr_, expr, c->id())) {
                     // Since idx[i] must be inside loop i, we only have
                     // to call makeIneqBetweenOps, but no need to call
                     // makeConstraintOfSingleLoop
                     auto diffIter = makeIneqBetweenOps(
                         presburger, DepDirection::Different,
-                        scope2coord_.at(c.id()).size() - 1, iterDim);
+                        scope2coord_.at(c->id()).size() - 1, iterDim);
                     require = uni(std::move(diffIter), std::move(require));
                 }
-            }
-            if (!c.hasOuter()) {
-                break;
             }
         }
         ret = intersect(std::move(ret), std::move(require));
@@ -967,13 +961,13 @@ std::string toString(const Dependency &dep) {
     os << (dep.later()->nodeType() == ASTNodeType::Load ? "READ " : "WRITE ")
        << dep.later();
     if (dep.later()->isExpr()) {
-        os << " in " << dep.later_.cursor_.node();
+        os << " in " << dep.later_.stmt_;
     }
     os << " after ";
     os << (dep.earlier()->nodeType() == ASTNodeType::Load ? "READ " : "WRITE ")
        << dep.earlier();
     if (dep.earlier()->isExpr()) {
-        os << " in " << dep.earlier_.cursor_.node();
+        os << " in " << dep.earlier_.stmt_;
     }
     bool first = true;
     for (auto &&[scope, dir] : dep.cond_) {

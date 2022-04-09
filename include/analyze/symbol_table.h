@@ -16,7 +16,7 @@ class SymbolTableInterface {
 
     virtual bool hasDef(const std::string &name) const = 0;
     virtual const VarDef &def(const std::string &name) const = 0;
-    virtual const Ref<Buffer> &buffer(const std::string &name) const = 0;
+    virtual Ref<Buffer> buffer(const std::string &name) const = 0;
 
     virtual bool hasLoop(const std::string &name) const = 0;
     virtual const For &loop(const std::string &name) const = 0;
@@ -46,7 +46,7 @@ class SymbolTableData : public SymbolTableInterface {
         return defs_.at(name);
     }
 
-    const Ref<Buffer> &buffer(const std::string &name) const override {
+    Ref<Buffer> buffer(const std::string &name) const override {
         return def(name)->buffer_;
     }
 
@@ -118,7 +118,7 @@ class SymbolTable : public BaseClass, public SymbolTableInterface {
     const VarDef &def(const std::string &name) const override {
         return impl_.def(name);
     }
-    const Ref<Buffer> &buffer(const std::string &name) const override {
+    Ref<Buffer> buffer(const std::string &name) const override {
         return impl_.buffer(name);
     }
 
@@ -142,7 +142,7 @@ class SymbolTable : public BaseClass, public SymbolTableInterface {
 
     typename BaseClass::StmtRetType visit(const VarDef &op) override {
         if constexpr (std::is_same_v<typename BaseClass::StmtRetType, void>) {
-            for (auto &&dim : op->buffer_->tensor().shape()) {
+            for (auto &&dim : op->buffer_->tensor()->shape()) {
                 (*this)(dim);
             }
             if (op->sizeLim_.isValid()) {
@@ -153,13 +153,15 @@ class SymbolTable : public BaseClass, public SymbolTableInterface {
             (*this)(op->body_);
             popDef(op);
         } else {
-            std::vector<SubTree<ExprNode>> shape;
-            shape.reserve(op->buffer_->tensor().shape().size());
-            for (auto &&dim : op->buffer_->tensor().shape()) {
+            std::vector<Expr> shape;
+            shape.reserve(op->buffer_->tensor()->shape().size());
+            for (auto &&dim : op->buffer_->tensor()->shape()) {
                 shape.emplace_back((*this)(dim));
             }
-            Tensor t(std::move(shape), op->buffer_->tensor().dtype());
-            Buffer b(std::move(t), op->buffer_->atype(), op->buffer_->mtype());
+            Ref<Tensor> t =
+                makeTensor(std::move(shape), op->buffer_->tensor()->dtype());
+            Ref<Buffer> b = makeBuffer(std::move(t), op->buffer_->atype(),
+                                       op->buffer_->mtype());
             Expr sizeLim =
                 op->sizeLim_.isValid() ? (*this)(op->sizeLim_) : nullptr;
 

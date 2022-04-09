@@ -52,7 +52,7 @@ Stmt SwapFor::visit(const StmtSeq &_op) {
         }
 
         if (!beforeStmts.empty()) {
-            if (oldInner_->property_.parallel_ != serialScope) {
+            if (oldInner_->property_->parallel_ != serialScope) {
                 throw InvalidSchedule("Imperfect nesting is not allowed when "
                                       "the inner loop is parallelized");
             }
@@ -62,7 +62,7 @@ Stmt SwapFor::visit(const StmtSeq &_op) {
                                                : makeStmtSeq("", beforeStmts));
         }
         if (!afterStmts.empty()) {
-            if (oldInner_->property_.parallel_ != serialScope) {
+            if (oldInner_->property_->parallel_ != serialScope) {
                 throw InvalidSchedule("Imperfect nesting is not allowed when "
                                       "the inner loop is parallelized");
             }
@@ -115,9 +115,8 @@ Stmt reorder(const Stmt &_ast, const std::vector<ID> &dstOrder) {
         conds.emplace_back(std::move(cond));
     }
     auto filter = [&](const AccessPoint &later, const AccessPoint &earlier) {
-        return earlier.cursor_.getParentById(curOrder.front()->id())
-                   .isValid() &&
-               later.cursor_.getParentById(curOrder.front()->id()).isValid();
+        return earlier.stmt_->parentById(curOrder.front()->id()).isValid() &&
+               later.stmt_->parentById(curOrder.front()->id()).isValid();
     };
     auto found = [&](const Dependency &d) {
         throw InvalidSchedule("Loops are not permutable: " + toString(d) +

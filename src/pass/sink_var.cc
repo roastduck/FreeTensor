@@ -25,7 +25,7 @@ Stmt SinkVar::visit(const VarDef &_op) {
     std::vector<VarDef> inners; // outer to inner
     while (op->body_->nodeType() == ASTNodeType::VarDef) {
         auto def = op->body_.as<VarDefNode>();
-        for (auto &&dim : def->buffer_->tensor().shape()) {
+        for (auto &&dim : def->buffer_->tensor()->shape()) {
             if (allReads(dim).count(op->name_)) {
                 return ret;
             }
@@ -61,14 +61,14 @@ Stmt SinkVar::visit(const VarDef &_op) {
             stmts.insert(stmts.end(), seq->stmts_.begin(),
                          seq->stmts_.begin() + firstUse);
             stmts.insert(stmts.end(),
-                         makeVarDef(_op->id(), _op->name_, *_op->buffer_,
+                         makeVarDef(_op->id(), _op->name_, _op->buffer_,
                                     _op->sizeLim_, std::move(segment), false));
             stmts.insert(stmts.end(), seq->stmts_.begin() + lastUse + 1,
                          seq->stmts_.end());
             isFixPoint_ = false;
             ret = makeStmtSeq(seq->id(), std::move(stmts));
             for (auto &&def : iter::reversed(inners)) {
-                ret = makeVarDef(def->id(), def->name_, *def->buffer_,
+                ret = makeVarDef(def->id(), def->name_, def->buffer_,
                                  def->sizeLim_, std::move(ret), def->pinned_);
             }
         }
@@ -83,14 +83,14 @@ Stmt SinkVar::visit(const VarDef &_op) {
         // 2. All writes to this variable write the same value
         if (!deps_.count(std::make_pair(_op->name_, loop->id())) ||
             !isVariant(variantMap_, _op, loop->id())) {
-            auto loopBody = makeVarDef(_op->id(), _op->name_, *_op->buffer_,
+            auto loopBody = makeVarDef(_op->id(), _op->name_, _op->buffer_,
                                        _op->sizeLim_, loop->body_, false);
             isFixPoint_ = false;
             ret = makeFor(loop->id(), loop->iter_, loop->begin_, loop->end_,
                           loop->step_, loop->len_, loop->property_,
                           std::move(loopBody));
             for (auto &&def : iter::reversed(inners)) {
-                ret = makeVarDef(def->id(), def->name_, *def->buffer_,
+                ret = makeVarDef(def->id(), def->name_, def->buffer_,
                                  def->sizeLim_, std::move(ret), def->pinned_);
             }
         }
@@ -101,30 +101,30 @@ Stmt SinkVar::visit(const VarDef &_op) {
         auto branch = op->body_.as<IfNode>();
         Stmt thenCase, elseCase;
         thenCase =
-            makeVarDef(_op->id().strId() + ".0", _op->name_, *_op->buffer_,
+            makeVarDef(_op->id().strId() + ".0", _op->name_, _op->buffer_,
                        _op->sizeLim_, branch->thenCase_, false);
         if (branch->elseCase_.isValid()) {
             elseCase =
-                makeVarDef(_op->id().strId() + ".1", _op->name_, *_op->buffer_,
+                makeVarDef(_op->id().strId() + ".1", _op->name_, _op->buffer_,
                            _op->sizeLim_, branch->elseCase_, false);
         }
         ret = makeIf(branch->id(), branch->cond_, std::move(thenCase),
                      std::move(elseCase));
         for (auto &&def : iter::reversed(inners)) {
-            ret = makeVarDef(def->id(), def->name_, *def->buffer_,
-                             def->sizeLim_, std::move(ret), def->pinned_);
+            ret = makeVarDef(def->id(), def->name_, def->buffer_, def->sizeLim_,
+                             std::move(ret), def->pinned_);
         }
         break;
     }
 
     case ASTNodeType::Assert: {
         auto ass = op->body_.as<AssertNode>();
-        auto body = makeVarDef(_op->id(), _op->name_, *_op->buffer_,
+        auto body = makeVarDef(_op->id(), _op->name_, _op->buffer_,
                                _op->sizeLim_, ass->body_, false);
         ret = makeAssert(ass->id(), ass->cond_, std::move(body));
         for (auto &&def : iter::reversed(inners)) {
-            ret = makeVarDef(def->id(), def->name_, *def->buffer_,
-                             def->sizeLim_, std::move(ret), def->pinned_);
+            ret = makeVarDef(def->id(), def->name_, def->buffer_, def->sizeLim_,
+                             std::move(ret), def->pinned_);
         }
         break;
     }

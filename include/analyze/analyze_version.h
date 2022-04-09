@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include <analyze/with_cursor.h>
+#include <analyze/track_stmt.h>
 #include <visitor.h>
 
 namespace ir {
@@ -33,8 +33,8 @@ class CountScopeLen : public Visitor {
     void visit(const Assert &op) override;
 };
 
-class AnalyzeVersion : public WithCursor<Visitor> {
-    typedef WithCursor<Visitor> BaseClass;
+class AnalyzeVersion : public TrackStmt<Visitor> {
+    typedef TrackStmt<Visitor> BaseClass;
 
     ID def_;
     std::string var_;

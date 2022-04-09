@@ -50,7 +50,7 @@ Stmt MergeAndHoistIf::visit(const StmtSeq &_op) {
         }
         stmts.emplace_back(stmt);
     }
-    op->stmts_ = std::vector<SubTree<StmtNode>>(stmts.begin(), stmts.end());
+    op->stmts_ = std::move(stmts);
     if (op->stmts_.size() == 1) {
         isFixPoint_ = false;
         return op->stmts_[0];
@@ -70,7 +70,7 @@ Stmt MergeAndHoistIf::visit(const VarDef &_op) {
             isFixPoint_ = false;
             return makeIf(branch->id(), branch->cond_,
                           makeVarDef(op->id(), op->name_,
-                                     std::move(*op->buffer_), op->sizeLim_,
+                                     std::move(op->buffer_), op->sizeLim_,
                                      branch->thenCase_, op->pinned_));
         }
     }

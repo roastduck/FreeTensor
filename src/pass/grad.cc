@@ -114,8 +114,8 @@ Stmt Grad::visit(const For &_op) {
         op->len_ = replaceByTape(op->len_);
         op->setId("");
     } else {
-        auto noDeps = op->property_.noDeps_;
-        for (auto &&fwdVar : op->property_.noDeps_) {
+        auto noDeps = op->property_->noDeps_;
+        for (auto &&fwdVar : op->property_->noDeps_) {
             if (hasDef(fwdVar) && affectedDefs_.count(def(fwdVar)->id())) {
                 noDeps.emplace_back(fwdVar + ".grad");
             }
@@ -127,7 +127,7 @@ Stmt Grad::visit(const For &_op) {
         auto step = replaceByTape(makeSub(makeIntConst(0), op->step_));
         auto len = replaceByTape(op->len_);
 
-        op->property_.noDeps_ = std::move(noDeps);
+        op->property_->noDeps_ = std::move(noDeps);
         op->begin_ = std::move(begin);
         op->end_ = std::move(end);
         op->step_ = std::move(step);
@@ -191,14 +191,14 @@ Stmt Grad::visit(const VarDef &_op) {
                 provideGrads_[op->name_] = gradName;
             }
 
-            auto grad = op->body_;
+            Stmt grad = op->body_;
             if ((op->buffer_->atype() != AccessType::Output &&
                  op->buffer_->atype() != AccessType::InOut)) {
                 // We use reverse order in the init, so it can be better fused
                 // with the backward pass
                 std::vector<std::string> iters;
                 std::vector<Expr> indices;
-                int nDim = op->buffer_->tensor().shape().size();
+                int nDim = op->buffer_->tensor()->shape().size();
                 iters.reserve(nDim);
                 indices.reserve(nDim);
                 for (int i = 0; i < nDim; i++) {
@@ -211,17 +211,17 @@ Stmt Grad::visit(const VarDef &_op) {
                                       makeIntConst(0));
                 for (int i = nDim - 1; i >= 0; i--) {
                     init = makeFor("", iters[i],
-                                   makeSub(op->buffer_->tensor().shape()[i],
+                                   makeSub(op->buffer_->tensor()->shape()[i],
                                            makeIntConst(1)),
                                    makeIntConst(-1), makeIntConst(-1),
-                                   op->buffer_->tensor().shape()[i],
-                                   ForProperty(), init);
+                                   op->buffer_->tensor()->shape()[i],
+                                   Ref<ForProperty>::make(), init);
                 }
                 grad = makeStmtSeq("", {init, grad});
             }
 
-            grad = makeVarDef(op->id().strId() + ".grad", gradName,
-                              *op->buffer_, op->sizeLim_, grad, op->pinned_);
+            grad = makeVarDef(op->id().strId() + ".grad", gradName, op->buffer_,
+                              op->sizeLim_, grad, op->pinned_);
             switch (op->buffer_->atype()) {
             case AccessType::Input:
                 grad.as<VarDefNode>()->buffer_->setAtype(AccessType::Output);
@@ -234,7 +234,7 @@ Stmt Grad::visit(const VarDef &_op) {
                 break; // do nothing
             }
 
-            ret = makeVarDef(op->id(), op->name_, *op->buffer_, op->sizeLim_,
+            ret = makeVarDef(op->id(), op->name_, op->buffer_, op->sizeLim_,
                              grad, op->pinned_)
                       .as<VarDefNode>();
         }
@@ -246,11 +246,10 @@ Stmt Grad::visit(const VarDef &_op) {
         if (tapeMap_.count(op->id())) {
             auto tapeVar = tapeMap_.at(op->id());
             if (tapeVar != ret->name_) {
-                ret =
-                    makeVarDef(ret->id().strId() + ".tape", tapeVar,
-                               *ret->buffer_, ret->sizeLim_, ret, ret->pinned_)
-                        .as<VarDefNode>();
-                auto &shape = ret->buffer_->tensor().shape();
+                ret = makeVarDef(ret->id().strId() + ".tape", tapeVar,
+                                 ret->buffer_, ret->sizeLim_, ret, ret->pinned_)
+                          .as<VarDefNode>();
+                auto &shape = ret->buffer_->tensor()->shape();
                 shape.insert(shape.begin(), totLens_.at(op->id()));
             }
             ret.as<VarDefNode>()->buffer_->setAtype(AccessType::Input);
@@ -318,11 +317,11 @@ Stmt Grad::visit(const Store &op) {
                 for (auto &&stmt : exprVisitor.appends()) {
                     stmts.emplace_back(stmt);
                 }
-                return makeVarDef("", oldGrad,
-                                  Buffer(Tensor({}, b->tensor().dtype()),
-                                         AccessType::Cache, b->mtype()),
-                                  nullptr, makeStmtSeq("", std::move(stmts)),
-                                  false);
+                return makeVarDef(
+                    "", oldGrad,
+                    makeBuffer(makeTensor({}, b->tensor()->dtype()),
+                               AccessType::Cache, b->mtype()),
+                    nullptr, makeStmtSeq("", std::move(stmts)), false);
             }
         } else {
             return makeStmtSeq("", {});
@@ -573,7 +572,7 @@ grad(const Func &func, const std::unordered_set<std::string> &_requires,
         ASSERT(def.size() == 1 &&
                def.front().nodeType() == ASTNodeType::VarDef);
         auto tapeDType =
-            def.front().node().as<VarDefNode>()->buffer_->tensor().dtype();
+            def.front().node().as<VarDefNode>()->buffer_->tensor()->dtype();
         forwardReturns.emplace_back(tapeName, tapeDType);
         backwardParams.emplace_back(tapeName);
         closure[tapeName] = Ref<Ref<Array>>::make(nullptr);

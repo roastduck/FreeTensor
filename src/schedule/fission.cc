@@ -38,7 +38,7 @@ Stmt HoistVar::visit(const For &op) {
         innerLoops_.emplace_back(op->id());
         for (auto i = defStack_.rbegin(); i != defStack_.rend(); i++) {
             ret = makeVarDef((*i)->id(), std::move((*i)->name_),
-                             std::move(*((*i)->buffer_)),
+                             std::move(((*i)->buffer_)),
                              std::move((*i)->sizeLim_), ret, (*i)->pinned_);
         }
         return ret;
@@ -124,8 +124,8 @@ Stmt AddDimToVar::visit(const VarDef &_op) {
 
     auto op = __op.as<VarDefNode>();
     if (toAdd_.count(op->id())) {
-        op->buffer_ = op->buffer_.clone();
-        auto &shape = op->buffer_->tensor().shape();
+        op->buffer_ = deepCopy(op->buffer_);
+        auto &shape = op->buffer_->tensor()->shape();
         for (auto &&loop : toAdd_.at(op->id())) {
             shape.insert(shape.begin(), forMap_.at(loop)->len_);
         }
@@ -314,8 +314,8 @@ fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
     };
     auto filter = [&](const AccessPoint &later, const AccessPoint &earlier) {
         for (auto &&[beforeId, afterId] : hoist.scopePairs()) {
-            if (earlier.cursor_.getParentById(afterId).isValid() &&
-                later.cursor_.getParentById(beforeId).isValid()) {
+            if (earlier.stmt_->parentById(afterId).isValid() &&
+                later.stmt_->parentById(beforeId).isValid()) {
                 return true;
             }
         }

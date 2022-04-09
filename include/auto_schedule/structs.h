@@ -29,8 +29,8 @@ struct ForsWithDataReuse {
 struct ForWithStore {
     ID id;
     std::string dest;
-    std::vector<SubTree<ExprNode>> indices;
-    std::vector<std::vector<SubTree<ExprNode>>> checkDataReuseIndices;
+    std::vector<Expr> indices;
+    std::vector<std::vector<Expr>> checkDataReuseIndices;
 };
 
 struct ElementWiseInfo {

@@ -54,7 +54,7 @@ void CompAccessBound::visit(const VarDef &op) {
     defs_.erase(op->name_);
     var_.clear();
 
-    size_t n = op->buffer_->tensor().shape().size();
+    size_t n = op->buffer_->tensor()->shape().size();
     result_.lower_.reserve(n);
     result_.len_.reserve(n);
 
@@ -86,7 +86,7 @@ void CompAccessBound::visit(const VarDef &op) {
             ASSERT(access_[j].indices_.size() == n);
             auto &&index = access_[j].indices_[i];
             std::vector<Expr> upperItem(
-                {makeSub(op->buffer_->tensor().shape()[i], makeIntConst(1))});
+                {makeSub(op->buffer_->tensor()->shape()[i], makeIntConst(1))});
             if (checkAllDefined(defs_, index)) {
                 upperItem.emplace_back(index);
             }
@@ -125,35 +125,26 @@ void CompAccessBound::visit(const VarDef &op) {
 void CompAccessBound::visit(const Load &op) {
     BaseClass::visit(op);
     if (op->var_ == var_ && mode_ & COMP_ACCESS_BOUND_READ) {
-        access_.emplace_back(
-            unique_,
-            std::vector<Expr>(op->indices_.begin(), op->indices_.end()),
-            conds());
+        access_.emplace_back(unique_, op->indices_, conds());
     }
 }
 
 void CompAccessBound::visit(const Store &op) {
     BaseClass::visit(op);
     if (op->var_ == var_ && mode_ & COMP_ACCESS_BOUND_WRITE) {
-        access_.emplace_back(
-            unique_,
-            std::vector<Expr>(op->indices_.begin(), op->indices_.end()),
-            conds());
+        access_.emplace_back(unique_, op->indices_, conds());
     }
 }
 
 void CompAccessBound::visit(const ReduceTo &op) {
     BaseClass::visit(op);
     if (op->var_ == var_) {
-        access_.emplace_back(
-            unique_,
-            std::vector<Expr>(op->indices_.begin(), op->indices_.end()),
-            conds());
+        access_.emplace_back(unique_, op->indices_, conds());
     }
 }
 
 void CompAccessBound::visit(const For &op) {
-    if (isSharedAmong(mtype_, op->property_.parallel_)) {
+    if (isSharedAmong(mtype_, op->property_->parallel_)) {
         BaseClass::visit(op);
     } else {
         defs_.insert(op->iter_);

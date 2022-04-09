@@ -42,8 +42,8 @@ void FindAllParallel::visit(const For &op) {
     Visitor::visit(op);
     loopStack_.pop_back();
 
-    if (op->property_.parallel_ != serialScope) {
-        results_[op->id()] = {op->property_.parallel_, loopStack_};
+    if (op->property_->parallel_ != serialScope) {
+        results_[op->id()] = {op->property_->parallel_, loopStack_};
     }
 }
 
@@ -55,7 +55,7 @@ void FindSerialLoopsOverReduce::visit(const For &op) {
 
 void FindSerialLoopsOverReduce::visit(const ReduceTo &op) {
     for (auto it = loopStack_.rbegin(); it != loopStack_.rend(); it++) {
-        if ((*it)->property_.parallel_ != serialScope) {
+        if ((*it)->property_->parallel_ != serialScope) {
             break;
         }
         results_[op->id()].emplace_back(*it);
@@ -78,7 +78,7 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
             }
             for (auto &&[i, idx, dim] :
                  iter::zip(iter::count(), _op->indices_,
-                           buffer(_op->var_)->tensor().shape())) {
+                           buffer(_op->var_)->tensor()->shape())) {
                 // use _op because isVariant needs it
                 if (isVariant(variantMap_, idx, loopId)) {
                     goto use_atomic;
@@ -177,7 +177,7 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
             op->indices_ = {};
             for (auto &&[preserve, idx, dim] :
                  iter::zip(preserveDim, _op->indices_,
-                           buffer(_op->var_)->tensor().shape())) {
+                           buffer(_op->var_)->tensor()->shape())) {
                 if (preserve) {
                     op->indices_.emplace_back(idx);
                     newShape.emplace_back(dim);
@@ -197,7 +197,7 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
 
 Stmt MakeParallelReduction::visit(const For &_op) {
     ASSERT(!paraScopes_.count(_op->id()));
-    paraScopes_[_op->id()] = _op->property_.parallel_;
+    paraScopes_[_op->id()] = _op->property_->parallel_;
     scopeDefined_[_op->id()] = names();
     auto __op = BaseClass::visit(_op);
     scopeDefined_.erase(_op->id());
@@ -208,7 +208,7 @@ Stmt MakeParallelReduction::visit(const For &_op) {
     if (forReductions_.count(op->id())) {
         for (auto &&[redOp, var, allLowers, allUppers] :
              forReductions_.at(op->id())) {
-            std::vector<SubTree<ExprNode>> begins, ends;
+            std::vector<Expr> begins, ends;
             for (auto &&dimLowers : allLowers) {
                 begins.emplace_back(makeMinMax(dimLowers));
             }
@@ -216,8 +216,8 @@ Stmt MakeParallelReduction::visit(const For &_op) {
                 ends.emplace_back(
                     makeAdd(makeMaxMin(dimUppers), makeIntConst(1)));
             }
-            op->property_.reductions_.emplace_back(
-                ReductionItem{redOp, var, std::move(begins), std::move(ends)});
+            op->property_->reductions_.emplace_back(makeReductionItem(
+                redOp, var, std::move(begins), std::move(ends)));
         }
     }
 
@@ -227,7 +227,7 @@ Stmt MakeParallelReduction::visit(const For &_op) {
              cacheAtomic_.at(op->id())) {
             auto cacheName =
                 reduce->var_ + ".atomic_cache." + reduce->id().strId();
-            auto dtype = buffer(reduce->var_)->tensor().dtype();
+            auto dtype = buffer(reduce->var_)->tensor()->dtype();
             auto mtype = localMType(buffer(reduce->var_)->mtype());
             std::vector<Expr> cacheIndices;
             for (size_t i = 0, j = 0, n = newShape.size(); i < n; i++) {
@@ -244,17 +244,19 @@ Stmt MakeParallelReduction::visit(const For &_op) {
             Stmt flush =
                 makeReduceTo("", reduce->var_, targetIndices, reduce->op_,
                              makeLoad(cacheName, cacheIndices), true);
-            init = makeNestedLoops(cacheIndices, iter::repeat(makeIntConst(0)),
-                                   newShape, iter::repeat(makeIntConst(1)),
-                                   newShape, iter::repeat(ForProperty()), init);
-            flush =
-                makeNestedLoops(cacheIndices, iter::repeat(makeIntConst(0)),
-                                newShape, iter::repeat(makeIntConst(1)),
-                                newShape, iter::repeat(ForProperty()), flush);
-            ret = makeVarDef(
-                "", cacheName,
-                Buffer(Tensor(newShape, dtype), AccessType::Cache, mtype),
-                nullptr, makeStmtSeq("", {init, ret, flush}), false);
+            init = makeNestedLoops(
+                cacheIndices, iter::repeat(makeIntConst(0)), newShape,
+                iter::repeat(makeIntConst(1)), newShape,
+                iter::repeat(Ref<ForProperty>::make()), init);
+            flush = makeNestedLoops(
+                cacheIndices, iter::repeat(makeIntConst(0)), newShape,
+                iter::repeat(makeIntConst(1)), newShape,
+                iter::repeat(Ref<ForProperty>::make()), flush);
+            ret =
+                makeVarDef("", cacheName,
+                           makeBuffer(makeTensor(newShape, dtype),
+                                      AccessType::Cache, mtype),
+                           nullptr, makeStmtSeq("", {init, ret, flush}), false);
         }
         return ret;
     } else {

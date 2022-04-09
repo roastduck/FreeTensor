@@ -32,7 +32,7 @@ Stmt tensorPropConst(const Stmt &_op) {
         std::unordered_map<AST, std::vector<Stmt>> r2w, r2wMay;
         auto filterMust = [&](const AccessPoint &later,
                               const AccessPoint &earlier) {
-            if (later.buffer_->tensor().isScalar()) {
+            if (later.buffer_->tensor()->isScalar()) {
                 return false;
             }
             if (earlier.op_->nodeType() != ASTNodeType::Store) {
@@ -48,13 +48,12 @@ Stmt tensorPropConst(const Stmt &_op) {
         auto foundMust = [&](const Dependency &d) {
             auto &&expr = d.earlier().as<StoreNode>()->expr_;
             auto &&iters = allIters(expr);
-            auto common = lca(d.later_.cursor_, d.earlier_.cursor_);
+            auto common = lcaStmt(d.later_.stmt_, d.earlier_.stmt_);
             auto dep = d.dep_;
             for (auto &&iter : iters) {
-                for (auto c = common; c.isValid(); c = c.outer()) {
-                    if (c.nodeType() == ASTNodeType::For) {
-                        if (auto &&f = c.node().as<ForNode>();
-                            f->iter_ == iter) {
+                for (auto c = common; c.isValid(); c = c->parentStmt()) {
+                    if (c->nodeType() == ASTNodeType::For) {
+                        if (auto &&f = c.as<ForNode>(); f->iter_ == iter) {
                             dep =
                                 d.extraCheck(dep, f->id(), DepDirection::Same);
                             if (dep != d.dep_) {

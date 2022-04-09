@@ -133,8 +133,8 @@ Stmt FuseFor::visit(const StmtSeq &_op) {
             beforeId_ = loop0->body_->id();
             afterId_ = loop1->body_->id();
 
-            auto body0 = loop0->body_;
-            auto body1 = loop1->body_;
+            Stmt body0 = loop0->body_;
+            Stmt body1 = loop1->body_;
             // From inner to outer
             for (auto &&stmt : loop0InScopes.scopes_) {
                 if (stmt->nodeType() == ASTNodeType::If) {
@@ -169,7 +169,7 @@ Stmt FuseFor::visit(const StmtSeq &_op) {
                 if (stmt->nodeType() == ASTNodeType::VarDef) {
                     auto def = stmt.as<VarDefNode>();
                     fused = makeVarDef(def->id(), def->name_,
-                                       std::move(*def->buffer_), def->sizeLim_,
+                                       std::move(def->buffer_), def->sizeLim_,
                                        fused, def->pinned_);
                 } else if (stmt->nodeType() == ASTNodeType::StmtSeq) {
                     auto seq = stmt.as<StmtSeqNode>();
@@ -183,7 +183,7 @@ Stmt FuseFor::visit(const StmtSeq &_op) {
                 if (stmt->nodeType() == ASTNodeType::VarDef) {
                     auto def = stmt.as<VarDefNode>();
                     fused = makeVarDef(def->id(), def->name_,
-                                       std::move(*def->buffer_), def->sizeLim_,
+                                       std::move(def->buffer_), def->sizeLim_,
                                        fused, def->pinned_);
                 } else if (stmt->nodeType() == ASTNodeType::StmtSeq) {
                     auto seq = stmt.as<StmtSeqNode>();
@@ -248,8 +248,8 @@ std::pair<Stmt, ID> fuse(const Stmt &_ast, const ID &loop0, const ID &loop1,
 
     for (auto &&stmt : check.loop1().scopes_) {
         if (stmt->nodeType() == ASTNodeType::VarDef) {
-            for (auto shape :
-                 stmt.as<VarDefNode>()->buffer_->tensor().shape()) {
+            for (auto &&shape :
+                 stmt.as<VarDefNode>()->buffer_->tensor()->shape()) {
                 if (!checkNotModified(_ast, shape, CheckNotModifiedSide::Before,
                                       loop0, CheckNotModifiedSide::Before,
                                       loop1)) {
@@ -264,8 +264,8 @@ std::pair<Stmt, ID> fuse(const Stmt &_ast, const ID &loop0, const ID &loop1,
     auto ast = mutator(_ast);
 
     auto filter = [&](const AccessPoint &later, const AccessPoint &earlier) {
-        return earlier.cursor_.getParentById(mutator.afterId()).isValid() &&
-               later.cursor_.getParentById(mutator.beforeId()).isValid();
+        return earlier.stmt_->parentById(mutator.afterId()).isValid() &&
+               later.stmt_->parentById(mutator.beforeId()).isValid();
     };
     auto found = [&](const Dependency &d) {
         ASSERT(d.cond_.size() == 1);

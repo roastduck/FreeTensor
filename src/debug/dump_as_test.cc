@@ -79,11 +79,11 @@ void DumpAsTest::visit(const VarDef &op) {
     makeIndent();
     os() << "with ir.VarDef(\"" << op->name_ << "\", (";
     auto &&tensor = op->buffer_->tensor();
-    for (auto &&dim : tensor.shape()) {
+    for (auto &&dim : tensor->shape()) {
         (*this)(dim);
         os() << ", ";
     }
-    os() << "), " << asTest(tensor.dtype()) << ", "
+    os() << "), " << asTest(tensor->dtype()) << ", "
          << asTest(op->buffer_->atype()) << ", " << asTest(op->buffer_->mtype())
          << ") as " << mangle(op->name_) << ": " << std::endl;
     nIndent()++;

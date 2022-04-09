@@ -394,11 +394,11 @@ void Schedule::autoUseLib(const Target &target) {
             // each of them
             bool isPreferLibs = false;
             for (For l = loop->loop_;;) {
-                if (l->property_.preferLibs_) {
+                if (l->property_->preferLibs_) {
                     isPreferLibs = true;
                     break;
                 }
-                auto body = l->body_;
+                Stmt body = l->body_;
                 while (body->nodeType() == ASTNodeType::VarDef) {
                     body = body.as<VarDefNode>()->body_;
                 }
@@ -495,7 +495,7 @@ void Schedule::autoParallelize(const Target &target) {
             auto loop = find(loopId);
 
             // Ignore if too short
-            if (auto len = loop.node().as<ForNode>()->len_;
+            if (auto &&len = loop.node().as<ForNode>()->len_;
                 len->nodeType() == ASTNodeType::IntConst &&
                 len.as<IntConstNode>()->val_ <= 4) {
                 continue;
@@ -542,7 +542,7 @@ void Schedule::autoParallelize(const Target &target) {
                 Ref<LoopNest> loop = root;
 
                 bool parentIsWarp = false;
-                while (loop->loop_->property_.parallel_ != serialScope &&
+                while (loop->loop_->property_->parallel_ != serialScope &&
                        loop->subLoops_.size() == 1) {
                     loop = loop->subLoops_.front();
                     parentIsWarp = true;
@@ -554,7 +554,7 @@ void Schedule::autoParallelize(const Target &target) {
                     if (find(loopId)
                             .node()
                             .as<ForNode>()
-                            ->property_.parallel_ != serialScope) {
+                            ->property_->parallel_ != serialScope) {
                         break;
                     }
                     if (outerId.isValid()) {
@@ -574,7 +574,8 @@ void Schedule::autoParallelize(const Target &target) {
                         auto isParallelLoop = [](const Cursor &c) {
                             return c.nodeType() == ASTNodeType::For &&
                                    c.node().as<ForNode>()
-                                           ->property_.parallel_ != serialScope;
+                                           ->property_->parallel_ !=
+                                       serialScope;
                         };
                         bool childIsWarp =
                             !getCursorByFilter(loop.node(), isParallelLoop)
@@ -698,8 +699,8 @@ void Schedule::autoUnroll(const Target &target) {
         // Try to unroll loops that accessing local arrays, to help nvcc put
         // these arrays to registers
         for (auto &&[loop, defs] : findIndexingLoops(ast_)) {
-            if (loop->property_.parallel_ != serialScope ||
-                loop->property_.vectorize_) {
+            if (loop->property_->parallel_ != serialScope ||
+                loop->property_->vectorize_) {
                 continue;
             }
 
@@ -723,8 +724,8 @@ void Schedule::autoUnroll(const Target &target) {
         [&, this](const Ref<LoopNest> &nest) {
             auto &&loop = nest->loop_;
             if (loop.isValid()) { // not root
-                if (loop->property_.parallel_ == serialScope &&
-                    !loop->property_.vectorize_ && !loop->property_.unroll_ &&
+                if (loop->property_->parallel_ == serialScope &&
+                    !loop->property_->vectorize_ && !loop->property_->unroll_ &&
                     loop->len_->nodeType() == ASTNodeType::IntConst &&
                     loop->len_.as<IntConstNode>()->val_ <= 4) {
                     unroll(loop->id());

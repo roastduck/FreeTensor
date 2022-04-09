@@ -93,7 +93,7 @@ Stmt SeparateTail::visit(const For &_op) {
         return op;
     }
 
-    if (op->property_.parallel_ != serialScope) {
+    if (op->property_->parallel_ != serialScope) {
         return op;
     }
 

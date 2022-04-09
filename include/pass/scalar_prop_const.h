@@ -124,8 +124,7 @@ class ScalarPropConst : public SymbolTable<Mutator> {
      * @return std::optional<ScalarIndices> Indices to the scalar, if all
      * indices are constant
      */
-    std::optional<ScalarIndices>
-    tryToScalar(const std::vector<SubTree<ExprNode>> &exprs);
+    std::optional<ScalarIndices> tryToScalar(const std::vector<Expr> &exprs);
 
     /// Scalar constants records, with first level map indexing var names and
     /// second indexing indices

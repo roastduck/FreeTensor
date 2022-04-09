@@ -23,7 +23,7 @@ class CodeGenCPU : public CodeGenC<CodeGenStream> {
     int64_t threadStackSize() const { return threadStackSize_; }
 
   protected:
-    void genAlloc(const Tensor &tensor, const std::string &rawPtr,
+    void genAlloc(const Ref<Tensor> &tensor, const std::string &rawPtr,
                   const std::string &shapePtr,
                   const std::string &dimPtr) override;
 

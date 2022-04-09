@@ -19,12 +19,12 @@ Stmt MergeFor::visit(const For &_op) {
                        : makeMul(innerLen_, outerLen_);
         auto ret = makeFor(newId_, newIter_, makeIntConst(0), len,
                            makeIntConst(1), len,
-                           ForProperty().withNoDeps(mergeNoDepsHint(
+                           Ref<ForProperty>::make()->withNoDeps(mergeNoDepsHint(
                                root_, oldInner_->id(), oldOuter_->id())),
                            op->body_);
         for (auto &&def : intermediateDefs_) {
-            ret = makeVarDef(def->id(), def->name_, *def->buffer_,
-                             def->sizeLim_, ret, def->pinned_);
+            ret = makeVarDef(def->id(), def->name_, def->buffer_, def->sizeLim_,
+                             ret, def->pinned_);
         }
         return ret;
     } else if (_op->id() == oldInner_->id()) {

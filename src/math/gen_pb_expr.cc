@@ -40,7 +40,7 @@ void GenPBExpr::visit(const Var &op) {
 }
 
 void GenPBExpr::visit(const Load &op) {
-    if (isInt(symbolTable_.buffer(op->var_)->tensor().dtype())) {
+    if (isInt(symbolTable_.buffer(op->var_)->tensor()->dtype())) {
         auto str = mangle("ext" + std::to_string(op->hash())) + varSuffix_;
         vars_[op][op] = str;
         results_[op] = str;

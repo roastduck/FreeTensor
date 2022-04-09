@@ -82,7 +82,7 @@ Expr LowerVector::getIndex(const Expr &index) {
 }
 
 Stmt LowerVector::visit(const For &op) {
-    if (op->property_.vectorize_) {
+    if (op->property_->vectorize_) {
         if (var_.isValid()) {
             throw InvalidGPUVector("Nested vectorized loops is not supported");
         }
@@ -115,7 +115,7 @@ Stmt LowerVector::visit(const For &op) {
                 continue;
             }
             var_ = nullptr;
-            ret->property_.vectorize_ = false; // done
+            ret->property_->vectorize_ = false; // done
             return ret;
         }
     }
@@ -154,7 +154,7 @@ Expr LowerVector::visit(const Load &op) {
         ASSERT(op->indices_.size() == 1); // Please do make_1d_var first
         if (hasVectorIndex(op->indices_[0])) {
             Expr index = getIndex(op->indices_[0]);
-            auto dtype = buffer(op->var_)->tensor().dtype();
+            auto dtype = buffer(op->var_)->tensor()->dtype();
             auto vtype = vecType(dtype);
             return makeIntrinsic("*((" + vtype + "*)&(%))",
                                  {makeLoad(op->var_, {index})},
@@ -169,7 +169,7 @@ Stmt LowerVector::visit(const Store &op) {
         ASSERT(op->indices_.size() == 1); // Please do make_1d_var first
         if (hasVectorIndex(op->indices_[0])) {
             Expr index = getIndex(op->indices_[0]);
-            auto dtype = buffer(op->var_)->tensor().dtype();
+            auto dtype = buffer(op->var_)->tensor()->dtype();
             auto vtype = vecType(dtype);
             return makeEval(
                 "",
@@ -186,7 +186,7 @@ Stmt LowerVector::visit(const ReduceTo &op) {
         ASSERT(op->indices_.size() == 1); // Please do make_1d_var first
         if (hasVectorIndex(op->indices_[0])) {
             Expr index = getIndex(op->indices_[0]);
-            auto dtype = buffer(op->var_)->tensor().dtype();
+            auto dtype = buffer(op->var_)->tensor()->dtype();
             auto vtype = vecType(dtype);
             auto newLoad = makeLoad(op->var_, {index});
             switch (op->op_) {

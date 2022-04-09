@@ -967,9 +967,7 @@ def test_merge_no_deps_1():
     def matcher(x):
         if x.node_type() == ir.ASTNodeType.For:
             node = x.node()
-            # TODO: Can we check the type using a native Python API?
-            # https://github.com/pybind/pybind11/discussions/3835
-            if ir.ffi.check(node.property.parallel) == "threadIdx.x":
+            if str(node.property.parallel) == "threadIdx.x":
                 return True
         return False
 
@@ -1011,9 +1009,7 @@ def test_merge_no_deps_2():
     def matcher(x):
         if x.node_type() == ir.ASTNodeType.For:
             node = x.node()
-            # TODO: Can we check the type using a native Python API?
-            # https://github.com/pybind/pybind11/discussions/3835
-            if ir.ffi.check(node.property.parallel) == "threadIdx.x":
+            if str(node.property.parallel) == "threadIdx.x":
                 return True
         return False
 
