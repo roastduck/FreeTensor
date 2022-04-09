@@ -69,6 +69,13 @@ class ASTPart : public EnableSelf<ASTPart> {
     Ref<ASTPart> parent() const { return parent_.lock(); }
     bool isSubTree() const { return parent_.isValid(); }
 
+    /**
+     * How many ancestors this `ASTPart` has. Counting from 0
+     *
+     * This value is not cached. Please count it as few as possible
+     */
+    int depth() const;
+
     size_t hash();
     void resetHash();
     virtual void compHash() = 0;
@@ -431,6 +438,11 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTreeList {
     }
     void clear() { objs_.clear(); }
 };
+
+/**
+ * Lowest common ancestor
+ */
+Ref<ASTPart> lca(const Ref<ASTPart> &lhs, const Ref<ASTPart> &rhs);
 
 } // namespace ir
 

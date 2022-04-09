@@ -138,6 +138,30 @@ bool StmtNode::hasNamedId() const { return id_.empty() || id_[0] != '#'; }
 Expr deepCopy(const Expr &op) { return Mutator()(op); }
 Stmt deepCopy(const Stmt &op) { return Mutator()(op); }
 
+AST lcaAST(const AST &lhs, const AST &rhs) {
+    auto ret = lca(lhs, rhs);
+    while (ret.isValid() && !ret->isAST()) {
+        ret = ret->parent();
+    }
+    return ret.as<ASTNode>();
+}
+
+Expr lcaExpr(const Expr &lhs, const Expr &rhs) {
+    auto ret = lcaAST(lhs, rhs);
+    while (ret.isValid() && !ret->isExpr()) {
+        ret = ret->parentAST();
+    }
+    return ret.as<ExprNode>();
+}
+
+Stmt lcaStmt(const Stmt &lhs, const Stmt &rhs) {
+    auto ret = lcaAST(lhs, rhs);
+    while (ret.isValid() && !ret->isStmt()) {
+        ret = ret->parentAST();
+    }
+    return ret.as<StmtNode>();
+}
+
 } // namespace ir
 
 namespace std {

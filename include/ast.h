@@ -219,6 +219,10 @@ class StmtNode : public ASTNode {
 Expr deepCopy(const Expr &op);
 Stmt deepCopy(const Stmt &op);
 
+AST lcaAST(const AST &lhs, const AST &rhs);
+Expr lcaExpr(const Expr &lhs, const Expr &rhs);
+Stmt lcaStmt(const Stmt &lhs, const Stmt &rhs);
+
 } // namespace ir
 
 namespace std {
