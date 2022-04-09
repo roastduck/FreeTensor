@@ -52,15 +52,13 @@ inline std::string toString(MemType mtype) {
 }
 
 class Buffer : public ASTPart {
-    SubTree<Tensor> tensor_;
+    template <class T> friend Ref<Buffer> makeBuffer(T &&, AccessType, MemType);
+
+    SubTree<Tensor> tensor_ = ChildOf{this};
     AccessType atype_;
     MemType mtype_;
 
   public:
-    template <class T>
-    Buffer(T &&tensor, AccessType atype, MemType mtype)
-        : tensor_(std::forward<T>(tensor)), atype_(atype), mtype_(mtype) {}
-
     const auto &tensor() const { return tensor_; }
     auto &tensor() { return tensor_; }
 
@@ -73,8 +71,17 @@ class Buffer : public ASTPart {
     void compHash() override;
 };
 
+template <class T>
+Ref<Buffer> makeBuffer(T &&tensor, AccessType atype, MemType mtype) {
+    auto b = Ref<Buffer>::make();
+    b->tensor_ = std::forward<T>(tensor);
+    b->atype_ = atype;
+    b->mtype_ = mtype;
+    return b;
+}
+
 inline Ref<Buffer> deepCopy(const Ref<Buffer> &b) {
-    return Ref<Buffer>::make(*b);
+    return makeBuffer(b->tensor(), b->atype(), b->mtype());
 }
 
 } // namespace ir

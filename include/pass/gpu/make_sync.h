@@ -66,7 +66,7 @@ class MakeSync : public WithCursor<Mutator> {
         : root_(root), deps_(std::move(deps)) {}
 
   private:
-    void markSyncForSplitting(const Stmt &sync);
+    void markSyncForSplitting(const Stmt &stmtInTree, const Stmt &sync);
 
   protected:
     Stmt visitStmt(const Stmt &op) override;

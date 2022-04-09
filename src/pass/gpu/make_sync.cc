@@ -121,16 +121,17 @@ split_this_level:
     return op;
 }
 
-void MakeSync::markSyncForSplitting(const Stmt &sync) {
+void MakeSync::markSyncForSplitting(const Stmt &stmtInTree, const Stmt &sync) {
     bool inElseCase = false;
-    for (auto ctx = cursor(); ctx.hasOuter(); ctx = ctx.outer()) {
-        if (ctx.nodeType() == ASTNodeType::If) {
-            (inElseCase ? branchSplittersElse_ : branchSplittersThen_)[ctx.id()]
+    for (auto ctx = stmtInTree; ctx.isValid(); ctx = ctx->parentStmt()) {
+        if (ctx->nodeType() == ASTNodeType::If) {
+            (inElseCase ? branchSplittersElse_
+                        : branchSplittersThen_)[ctx->id()]
                 .emplace_back(sync);
         }
-        inElseCase = ctx.outer().isValid() &&
-                     ctx.outer().nodeType() == ASTNodeType::If &&
-                     ctx.outer().node().as<IfNode>()->elseCase_ == ctx.node();
+        inElseCase = ctx->parentStmt().isValid() &&
+                     ctx->parentStmt()->nodeType() == ASTNodeType::If &&
+                     ctx->parentStmt().as<IfNode>()->elseCase_ == ctx;
     }
 }
 
@@ -167,7 +168,7 @@ Stmt MakeSync::visitStmt(const Stmt &op) {
         }
         if (!whereToInsert.isValid()) {
             ret = makeStmtSeq("", {sync, ret});
-            markSyncForSplitting(sync);
+            markSyncForSplitting(op, sync);
         } else {
             syncBeforeFor_[whereToInsert.id()] = sync;
         }
@@ -211,7 +212,7 @@ Stmt MakeSync::visit(const For &_op) {
                 "", makeIntrinsic("__syncwarp()", {}, DataType::Void, true));
         }
         op->body_ = makeStmtSeq("", {op->body_, sync});
-        markSyncForSplitting(sync);
+        markSyncForSplitting(_op, sync);
         for (CrossThreadDep &dep : deps_) {
             if (dep.visiting_) {
                 if (needSyncThreads) {
@@ -225,7 +226,7 @@ Stmt MakeSync::visit(const For &_op) {
     }
     if (syncBeforeFor_.count(op->id())) {
         auto &&sync = syncBeforeFor_.at(op->id());
-        markSyncForSplitting(sync);
+        markSyncForSplitting(_op, sync);
         return makeStmtSeq("", {sync, op});
     }
     return op;

@@ -19,7 +19,10 @@ void init_ffi_buffer(py::module_ &m) {
         .value("GPUWarp", MemType::GPUWarp);
 
     py::class_<Buffer, Ref<Buffer>> buffer(m, "Buffer");
-    buffer.def(py::init<const Ref<Tensor> &, AccessType, MemType>())
+    buffer
+        .def(py::init([](const Ref<Tensor> &t, AccessType a, MemType m) {
+            return makeBuffer(t, a, m);
+        }))
         .def_property_readonly(
             "tensor",
             [](const Ref<Buffer> &b) -> Ref<Tensor> { return b->tensor(); })

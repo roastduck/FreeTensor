@@ -216,7 +216,7 @@ Stmt MakeParallelReduction::visit(const For &_op) {
                 ends.emplace_back(
                     makeAdd(makeMaxMin(dimUppers), makeIntConst(1)));
             }
-            op->property_->reductions_.emplace_back(Ref<ReductionItem>::make(
+            op->property_->reductions_.emplace_back(makeReductionItem(
                 redOp, var, std::move(begins), std::move(ends)));
         }
     }
@@ -254,8 +254,8 @@ Stmt MakeParallelReduction::visit(const For &_op) {
                 iter::repeat(Ref<ForProperty>::make()), flush);
             ret =
                 makeVarDef("", cacheName,
-                           Ref<Buffer>::make(Ref<Tensor>::make(newShape, dtype),
-                                             AccessType::Cache, mtype),
+                           makeBuffer(makeTensor(newShape, dtype),
+                                      AccessType::Cache, mtype),
                            nullptr, makeStmtSeq("", {init, ret, flush}), false);
         }
         return ret;

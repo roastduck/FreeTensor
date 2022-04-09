@@ -156,7 +156,9 @@ template <class T> class EnableSelf : public EnableSelfBase {
     Ref<T> self() {
         auto ret = self_.lock();
         if (!ret.isValid()) {
-            ERROR("This class is not managed by Ref");
+            ERROR(
+                "BUG: This class is not managed by Ref. Are you trying to get "
+                "the Ref in a constructor even before a Ref is constructed?");
         }
         return ret;
     };

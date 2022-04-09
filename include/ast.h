@@ -102,9 +102,12 @@ class ASTNode : public ASTPart {
     virtual ~ASTNode() {}
     virtual ASTNodeType nodeType() const = 0;
 
+    bool isAST() const override { return true; }
     virtual bool isFunc() const { return false; }
     virtual bool isStmt() const { return false; }
     virtual bool isExpr() const { return false; }
+
+    Ref<ASTNode> parentAST() const;
 
     DEFINE_NODE_ACCESS(AST);
 };
@@ -136,6 +139,8 @@ class ExprNode : public ASTNode {
     virtual bool isConst() const { return false; }
     virtual bool isBinary() const { return false; }
     virtual bool isUnary() const { return false; }
+
+    Ref<ExprNode> parentExpr() const;
 
     DEFINE_NODE_ACCESS(Expr);
 };
@@ -196,6 +201,8 @@ class StmtNode : public ASTNode {
     bool hasNamedId() const;
 
     bool isStmt() const override { return true; }
+
+    Ref<StmtNode> parentStmt() const;
 
     DEFINE_NODE_ACCESS(Stmt);
 };

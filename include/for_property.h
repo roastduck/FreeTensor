@@ -13,16 +13,19 @@ struct ReductionItem : public ASTPart {
     std::string var_;
     SubTreeList<ExprNode> begins_ = ChildOf{this}, ends_ = ChildOf{this};
 
-    template <class Tbegins, class Tends>
-    ReductionItem(ReduceOp op, const std::string &var, Tbegins &&begins,
-                  Tends &&ends)
-        : op_(op), var_(var) {
-        begins_ = std::forward<Tbegins>(begins);
-        ends_ = std::forward<Tends>(ends);
-    }
-
     void compHash() override;
 };
+
+template <class Tbegins, class Tends>
+Ref<ReductionItem> makeReductionItem(ReduceOp op, const std::string &var,
+                                     Tbegins &&begins, Tends &&ends) {
+    auto r = Ref<ReductionItem>::make();
+    r->op_ = op;
+    r->var_ = var;
+    r->begins_ = std::forward<Tbegins>(begins);
+    r->ends_ = std::forward<Tends>(ends);
+    return r;
+}
 
 struct ForProperty : public ASTPart {
     ParallelScope parallel_;
@@ -66,11 +69,18 @@ struct ForProperty : public ASTPart {
 };
 
 inline Ref<ReductionItem> deepCopy(const Ref<ReductionItem> &r) {
-    return Ref<ReductionItem>::make(*r);
+    return makeReductionItem(r->op_, r->var_, r->begins_, r->ends_);
 }
 
-inline Ref<ForProperty> deepCopy(const Ref<ForProperty> &p) {
-    return Ref<ForProperty>::make(*p);
+inline Ref<ForProperty> deepCopy(const Ref<ForProperty> &_p) {
+    auto p = Ref<ForProperty>::make();
+    p->parallel_ = _p->parallel_;
+    p->unroll_ = _p->unroll_;
+    p->vectorize_ = _p->vectorize_;
+    p->reductions_ = _p->reductions_;
+    p->noDeps_ = _p->noDeps_;
+    p->preferLibs_ = _p->preferLibs_;
+    return p;
 }
 
 } // namespace ir

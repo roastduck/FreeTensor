@@ -158,10 +158,10 @@ class SymbolTable : public BaseClass, public SymbolTableInterface {
             for (auto &&dim : op->buffer_->tensor()->shape()) {
                 shape.emplace_back((*this)(dim));
             }
-            Ref<Tensor> t = Ref<Tensor>::make(std::move(shape),
-                                              op->buffer_->tensor()->dtype());
-            Ref<Buffer> b = Ref<Buffer>::make(
-                std::move(t), op->buffer_->atype(), op->buffer_->mtype());
+            Ref<Tensor> t =
+                makeTensor(std::move(shape), op->buffer_->tensor()->dtype());
+            Ref<Buffer> b = makeBuffer(std::move(t), op->buffer_->atype(),
+                                       op->buffer_->mtype());
             Expr sizeLim =
                 op->sizeLim_.isValid() ? (*this)(op->sizeLim_) : nullptr;
 

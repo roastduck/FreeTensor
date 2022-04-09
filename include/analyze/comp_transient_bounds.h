@@ -169,7 +169,7 @@ class CompTransientBounds : public BaseClass,
                 for (auto &&item : r->ends_) {
                     ends.emplace_back((*this)(item));
                 }
-                property->reductions_.emplace_back(Ref<ReductionItem>::make(
+                property->reductions_.emplace_back(makeReductionItem(
                     r->op_, r->var_, std::move(begins), std::move(ends)));
             }
             auto ret = makeFor(op->id(), op->iter_, std::move(begin),

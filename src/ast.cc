@@ -63,6 +63,33 @@ std::string toString(ASTNodeType type) {
     }
 }
 
+AST ASTNode::parentAST() const {
+    for (auto p = parent(); p.isValid(); p = p->parent()) {
+        if (p->isAST()) {
+            return p.as<ASTNode>();
+        }
+    }
+    return nullptr;
+}
+
+Expr ExprNode::parentExpr() const {
+    for (auto p = parentAST(); p.isValid(); p = p->parentAST()) {
+        if (p->isExpr()) {
+            return p.as<ExprNode>();
+        }
+    }
+    return nullptr;
+}
+
+Stmt StmtNode::parentStmt() const {
+    for (auto p = parentAST(); p.isValid(); p = p->parentAST()) {
+        if (p->isStmt()) {
+            return p.as<StmtNode>();
+        }
+    }
+    return nullptr;
+}
+
 ID::ID(const Stmt &stmt) : ID(stmt->id_) {}
 
 const std::string &ID::strId() const {

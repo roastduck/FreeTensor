@@ -21,8 +21,8 @@ Stmt MakeCacheVar::visitStmt(const Stmt &op) {
         inStmt_ = true;
         auto ret = Mutator::visitStmt(op);
         inStmt_ = false;
-        Ref<Buffer> newBuffer = Ref<Buffer>::make(def_->buffer_->tensor(),
-                                                  AccessType::Cache, mtype_);
+        Ref<Buffer> newBuffer =
+            makeBuffer(def_->buffer_->tensor(), AccessType::Cache, mtype_);
         ret = makeVarDef("", newVar_, std::move(newBuffer), nullptr,
                          std::move(ret), false);
         oldDef_ = def_->id();

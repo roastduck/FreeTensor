@@ -319,9 +319,8 @@ Stmt Grad::visit(const Store &op) {
                 }
                 return makeVarDef(
                     "", oldGrad,
-                    Ref<Buffer>::make(
-                        Ref<Tensor>::make(Tensor({}, b->tensor()->dtype())),
-                        AccessType::Cache, b->mtype()),
+                    makeBuffer(makeTensor({}, b->tensor()->dtype()),
+                               AccessType::Cache, b->mtype()),
                     nullptr, makeStmtSeq("", std::move(stmts)), false);
             }
         } else {

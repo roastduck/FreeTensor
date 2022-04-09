@@ -149,6 +149,7 @@ void FindAccessPoint::visit(const Load &op) {
     auto ap = Ref<AccessPoint>::make();
     *ap = {op,
            cursor(),
+           curStmt(),
            def(op->var_),
            buffer(op->var_),
            defAxis_.at(op->var_),
@@ -967,13 +968,13 @@ std::string toString(const Dependency &dep) {
     os << (dep.later()->nodeType() == ASTNodeType::Load ? "READ " : "WRITE ")
        << dep.later();
     if (dep.later()->isExpr()) {
-        os << " in " << dep.later_.cursor_.node();
+        os << " in " << dep.later_.stmt_;
     }
     os << " after ";
     os << (dep.earlier()->nodeType() == ASTNodeType::Load ? "READ " : "WRITE ")
        << dep.earlier();
     if (dep.earlier()->isExpr()) {
-        os << " in " << dep.earlier_.cursor_.node();
+        os << " in " << dep.earlier_.stmt_;
     }
     bool first = true;
     for (auto &&[scope, dir] : dep.cond_) {

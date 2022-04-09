@@ -97,11 +97,10 @@ Stmt OutputIntermediates::visit(const VarDef &_op) {
             Ref<Tensor> tensor = deepCopy(op->buffer_->tensor());
             tensor->shape().insert(tensor->shape().begin(),
                                    totLens_.at(op->id()));
-            return makeVarDef(
-                "", tapeName,
-                Ref<Buffer>::make(std::move(tensor), AccessType::Output,
-                                  toGlobalMemType(op->buffer_->mtype())),
-                nullptr, op, false);
+            return makeVarDef("", tapeName,
+                              makeBuffer(std::move(tensor), AccessType::Output,
+                                         toGlobalMemType(op->buffer_->mtype())),
+                              nullptr, op, false);
         }
     } else {
         return BaseClass::visit(_op);

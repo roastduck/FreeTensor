@@ -21,9 +21,14 @@ struct ChildOf {
 };
 
 /**
- * An object that can be managed by SubTree
+ * An object that can be managed by `SubTree`
  *
- * Can be derived as an ASTNode or part of an ASTNode
+ * Can be derived as an `ASTNode` or part of an `ASTNode`
+ *
+ * An `ASTPart` must be constructed via factory functions like `makeXXX`,
+ * instead of a custom constructor. This is because the `self()` will be used to
+ * initialize is children, but `self()` is only available when a `Ref` of the
+ * `ASTPart` is present, after the `ASTPart` is constructed.
  */
 class ASTPart : public EnableSelf<ASTPart> {
     Weak<ASTPart> parent_;
@@ -53,6 +58,8 @@ class ASTPart : public EnableSelf<ASTPart> {
     size_t hash();
     void resetHash();
     virtual void compHash() = 0;
+
+    virtual bool isAST() const { return false; };
 };
 
 enum NullPolicy : int { NotNull, Nullable };
@@ -77,7 +84,7 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTree {
     template <class, NullPolicy> friend class SubTree;
 
   private:
-    void reset() {
+    void abandon() {
         if (obj_.isValid()) {
             if (auto p = obj_->parent(); p.isValid()) {
                 p->resetHash();
@@ -85,6 +92,12 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTree {
             obj_->resetParent();
         }
         obj_ = nullptr;
+    }
+
+    void adopt() {
+        if (obj_.isValid() && parent_ != nullptr) {
+            obj_->setParent(((EnableSelf<typename T::Self> *)parent_)->self());
+        }
     }
 
     void checkNull() {
@@ -95,7 +108,7 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTree {
 
   public:
     SubTree(const ChildOf &c) : parent_(c.parent_) {}
-    ~SubTree() { reset(); }
+    ~SubTree() { abandon(); }
 
     SubTree(std::nullptr_t) { ASSERT(POLICY == NullPolicy::Nullable); }
 
@@ -154,28 +167,27 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTree {
     }
 
     SubTree &operator=(SubTree &&other) {
-        reset();
+        abandon();
         obj_ = std::move(other.obj_);
+        adopt();
         checkNull();
         return *this;
     }
     template <NullPolicy OTHER_POLICY>
     SubTree &operator=(SubTree<T, OTHER_POLICY> &&other) {
-        reset();
+        abandon();
         obj_ = std::move(other.obj_);
+        adopt();
         checkNull();
         return *this;
     }
 
     SubTree &operator=(const SubTree &other) {
-        reset();
+        abandon();
         if (other.obj_.isValid()) {
             obj_ = deepCopy(other.obj_).template as<T>();
             ASSERT(!obj_->isSubTree());
-            if (parent_ != nullptr) {
-                obj_->setParent(
-                    ((EnableSelf<typename T::Self> *)parent_)->self());
-            }
+            adopt();
         } else {
             obj_ = nullptr;
         }
@@ -184,14 +196,11 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTree {
     }
     template <NullPolicy OTHER_POLICY>
     SubTree &operator=(const SubTree<T, OTHER_POLICY> &other) {
-        reset();
+        abandon();
         if (other.obj_.isValid()) {
             obj_ = deepCopy(other.obj_).template as<T>();
             ASSERT(!obj_->isSubTree());
-            if (parent_ != nullptr) {
-                obj_->setParent(
-                    ((EnableSelf<typename T::Self> *)parent_)->self());
-            }
+            adopt();
         } else {
             obj_ = nullptr;
         }
