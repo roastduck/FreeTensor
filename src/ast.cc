@@ -100,6 +100,15 @@ Stmt StmtNode::parentCtrlFlow() const {
     return nullptr;
 }
 
+Stmt StmtNode::parentById(const ID &lookup) const {
+    for (auto p = self().as<StmtNode>(); p.isValid(); p = p->parentStmt()) {
+        if (p->id() == lookup) {
+            return p;
+        }
+    }
+    return nullptr;
+}
+
 ID::ID(const Stmt &stmt) : ID(stmt->id_) {}
 
 const std::string &ID::strId() const {

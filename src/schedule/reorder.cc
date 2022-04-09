@@ -115,9 +115,8 @@ Stmt reorder(const Stmt &_ast, const std::vector<ID> &dstOrder) {
         conds.emplace_back(std::move(cond));
     }
     auto filter = [&](const AccessPoint &later, const AccessPoint &earlier) {
-        return earlier.cursor_.getParentById(curOrder.front()->id())
-                   .isValid() &&
-               later.cursor_.getParentById(curOrder.front()->id()).isValid();
+        return earlier.stmt_->parentById(curOrder.front()->id()).isValid() &&
+               later.stmt_->parentById(curOrder.front()->id()).isValid();
     };
     auto found = [&](const Dependency &d) {
         throw InvalidSchedule("Loops are not permutable: " + toString(d) +

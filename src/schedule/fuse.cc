@@ -264,8 +264,8 @@ std::pair<Stmt, ID> fuse(const Stmt &_ast, const ID &loop0, const ID &loop1,
     auto ast = mutator(_ast);
 
     auto filter = [&](const AccessPoint &later, const AccessPoint &earlier) {
-        return earlier.cursor_.getParentById(mutator.afterId()).isValid() &&
-               later.cursor_.getParentById(mutator.beforeId()).isValid();
+        return earlier.stmt_->parentById(mutator.afterId()).isValid() &&
+               later.stmt_->parentById(mutator.beforeId()).isValid();
     };
     auto found = [&](const Dependency &d) {
         ASSERT(d.cond_.size() == 1);

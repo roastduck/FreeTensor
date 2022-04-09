@@ -164,8 +164,8 @@ Stmt blend(const Stmt &_ast, const ID &loop) {
             {{loop, DepDirection::Normal}, {item, DepDirection::Inv}});
     }
     auto filter = [&](const AccessPoint &later, const AccessPoint &earlier) {
-        return earlier.cursor_.getParentById(loop).isValid() &&
-               later.cursor_.getParentById(loop).isValid();
+        return earlier.stmt_->parentById(loop).isValid() &&
+               later.stmt_->parentById(loop).isValid();
     };
     auto found = [&](const Dependency &d) {
         ASSERT(d.cond_.size() == 2);

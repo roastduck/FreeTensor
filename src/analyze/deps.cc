@@ -148,7 +148,6 @@ void FindAccessPoint::visit(const Load &op) {
     BaseClass::visit(op);
     auto ap = Ref<AccessPoint>::make();
     *ap = {op,
-           cursor(),
            curStmt(),
            def(op->var_),
            buffer(op->var_),
@@ -487,22 +486,19 @@ PBMap AnalyzeDeps::makeExternalVarConstraint(
     const GenPBExpr::VarMap &oExternals, int iterDim) {
     PBMap ret = universeMap(spaceAlloc(presburger, 0, iterDim, iterDim));
     // We only have to add constraint for common loops of both accesses
-    auto common = lca(point->cursor_, other->cursor_);
+    auto common = lcaStmt(point->stmt_, other->stmt_);
 
     for (auto &&[expr, strs] : intersect(pExternals, oExternals)) {
         auto &&[pStr, oStr] = strs;
         // If all of the loops are variant, we don't have to make the constraint
         // at all. This will save time for Presburger solver
-        for (auto c = common;; c = c.outer()) {
-            if (c.nodeType() == ASTNodeType::For) {
-                if (isVariant(variantExpr_, expr, c.id())) {
+        for (auto c = common; c.isValid(); c = c->parentStmt()) {
+            if (c->nodeType() == ASTNodeType::For) {
+                if (isVariant(variantExpr_, expr, c->id())) {
                     goto found;
                 }
                 goto do_compute_constraint;
             found:;
-            }
-            if (!c.hasOuter()) {
-                break;
             }
         }
         continue;
@@ -510,20 +506,17 @@ PBMap AnalyzeDeps::makeExternalVarConstraint(
         // Compute the constraint
     do_compute_constraint:
         auto require = makeExternalEq(presburger, iterDim, pStr, oStr);
-        for (auto c = common;; c = c.outer()) {
-            if (c.nodeType() == ASTNodeType::For) {
-                if (isVariant(variantExpr_, expr, c.id())) {
+        for (auto c = common; c.isValid(); c = c->parentStmt()) {
+            if (c->nodeType() == ASTNodeType::For) {
+                if (isVariant(variantExpr_, expr, c->id())) {
                     // Since idx[i] must be inside loop i, we only have
                     // to call makeIneqBetweenOps, but no need to call
                     // makeConstraintOfSingleLoop
                     auto diffIter = makeIneqBetweenOps(
                         presburger, DepDirection::Different,
-                        scope2coord_.at(c.id()).size() - 1, iterDim);
+                        scope2coord_.at(c->id()).size() - 1, iterDim);
                     require = uni(std::move(diffIter), std::move(require));
                 }
-            }
-            if (!c.hasOuter()) {
-                break;
             }
         }
         ret = intersect(std::move(ret), std::move(require));

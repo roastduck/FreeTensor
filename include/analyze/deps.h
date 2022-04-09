@@ -12,7 +12,6 @@
 #include <analyze/find_loop_variance.h>
 #include <analyze/symbol_table.h>
 #include <analyze/track_stmt.h>
-#include <analyze/with_cursor.h>
 #include <math/gen_pb_expr.h>
 #include <math/presburger.h>
 #include <visitor.h>
@@ -29,7 +28,6 @@ struct IterAxis {
 
 struct AccessPoint {
     AST op_;
-    Cursor cursor_;
     Stmt stmt_;
     VarDef def_;
     Ref<Buffer> buffer_;
@@ -81,8 +79,8 @@ inline int countBandNodeWidth(const Stmt &op) {
 /**
  * Find read and write points
  */
-class FindAccessPoint : public SymbolTable<WithCursor<TrackStmt<Visitor>>> {
-    typedef SymbolTable<WithCursor<TrackStmt<Visitor>>> BaseClass;
+class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
+    typedef SymbolTable<TrackStmt<Visitor>> BaseClass;
 
     bool lastIsLoad_ = false;
     std::vector<IterAxis> cur_; // Current iteration point in the space
@@ -129,7 +127,6 @@ class FindAccessPoint : public SymbolTable<WithCursor<TrackStmt<Visitor>>> {
 
         auto ap = Ref<AccessPoint>::make();
         *ap = {op,
-               cursor(),
                curStmt(),
                def(op->var_),
                buffer(op->var_),

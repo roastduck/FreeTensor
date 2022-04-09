@@ -3,6 +3,7 @@
 #include <analyze/all_uses.h>
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
+#include <analyze/with_cursor.h>
 #include <pass/flatten_stmt_seq.h>
 
 namespace ir {
@@ -79,14 +80,10 @@ bool checkNotModified(const Stmt &op, const Expr &s0Expr, const Expr &s1Expr,
         return true; // early exit: the period to check is empty
     }
 
-    auto common = lca(c0, c1); // FIXME: It seems checking `common` is wrong
-                               // because we may have multiple loops
-
     // write -> serialized PBSet
     std::unordered_map<Stmt, std::string> writesWAR;
     auto filterWAR = [&](const AccessPoint &later, const AccessPoint &earlier) {
-        return earlier.cursor_.id() == inserter.s0Eval() &&
-               lca(later.cursor_, common).id() == common.id();
+        return earlier.stmt_->id() == inserter.s0Eval();
     };
     auto foundWAR = [&](const Dependency &dep) {
         // Serialize dep.dep_ because it is from a random PBCtx
@@ -101,8 +98,8 @@ bool checkNotModified(const Stmt &op, const Expr &s0Expr, const Expr &s1Expr,
         std::string w1;
         auto filterRAW = [&](const AccessPoint &later,
                              const AccessPoint &earlier) {
-            return later.cursor_.id() == inserter.s1Eval() &&
-                   earlier.cursor_.id() == item->id();
+            return later.stmt_->id() == inserter.s1Eval() &&
+                   earlier.stmt_->id() == item->id();
         };
         auto foundRAW = [&](const Dependency &dep) {
             // Serialize dep.dep_ because it is from a random PBCtx

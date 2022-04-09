@@ -153,7 +153,7 @@ template <class T> class EnableSelf : public EnableSelfBase {
   public:
     typedef T Self;
 
-    Ref<T> self() {
+    Ref<T> self() const {
         auto ret = self_.lock();
         if (!ret.isValid()) {
             ERROR(

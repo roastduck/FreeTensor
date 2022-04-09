@@ -103,12 +103,12 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
                 "Unsupported: ReduceTo nodes cannot be inlined");
         }
 
-        auto common = lca(dep.later_.cursor_, dep.earlier_.cursor_);
+        auto common = lcaStmt(dep.later_.stmt_, dep.earlier_.stmt_);
         auto d = dep.dep_;
         for (auto &&iter : allIters(expr)) {
-            for (auto c = common; c.isValid(); c = c.outer()) {
-                if (c.nodeType() == ASTNodeType::For) {
-                    if (auto &&f = c.node().as<ForNode>(); f->iter_ == iter) {
+            for (auto c = common; c.isValid(); c = c->parentStmt()) {
+                if (c->nodeType() == ASTNodeType::For) {
+                    if (auto &&f = c.as<ForNode>(); f->iter_ == iter) {
                         d = dep.extraCheck(d, f->id(), DepDirection::Same);
                         if (d != dep.dep_) {
                             throw InvalidSchedule(
@@ -132,9 +132,9 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
         auto newExpr = ReplaceIter(replaceFromPlaceholder)(placeholder);
 
         if (!checkNotModified(ast, expr, newExpr, CheckNotModifiedSide::Before,
-                              dep.earlier_.cursor_.id(),
+                              dep.earlier_.stmt_->id(),
                               CheckNotModifiedSide::Before,
-                              dep.later_.cursor_.id())) {
+                              dep.later_.stmt_->id())) {
             throw InvalidSchedule(
                 "The expression will be modified after inlining from " +
                 toString(dep.earlier_.stmt_) + " into " +
