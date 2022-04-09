@@ -21,9 +21,22 @@ struct ChildOf {
 };
 
 /**
- * An object that can be managed by `SubTree`
+ * Please do not consturct an `ASTPart` directly. Please refer to doc of
+ * `ASTPart`
+ */
+#define DEFINE_AST_PART_ACCESS(part)                                           \
+  protected:                                                                   \
+    part() = default; /* Must be constructed in Ref */                         \
+                                                                               \
+    friend class Allocator<part>;
+
+/**
+ * The basic building block of an AST
  *
- * Can be derived as an `ASTNode` or part of an `ASTNode`
+ * A `ASTPart` can be derived as an `ASTNode`, or other classes that is a part
+ * of an `ASTNode`. `ASTPart` automatically manage the memory of the AST, and
+ * tracking each `ASTPart`'s parent, as long as each `ASTPart` is "plugged in" a
+ * `SubTree` of its parent
  *
  * An `ASTPart` must be constructed via factory functions like `makeXXX`,
  * instead of a custom constructor. This is because the `self()` will be used to
@@ -31,13 +44,14 @@ struct ChildOf {
  * `ASTPart` is present, after the `ASTPart` is constructed.
  */
 class ASTPart : public EnableSelf<ASTPart> {
+    DEFINE_AST_PART_ACCESS(ASTPart)
+
     Weak<ASTPart> parent_;
 
   protected:
     size_t hash_ = ~0ull;
 
   public:
-    ASTPart() {}
     virtual ~ASTPart() {}
 
     // Construct a new part using another part. The new part will not initially

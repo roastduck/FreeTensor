@@ -82,17 +82,20 @@ enum class ASTNodeType : int {
 
 std::string toString(ASTNodeType type);
 
-#define DEFINE_NODE_ACCESS(name)                                               \
-  protected:                                                                   \
-    name##Node() = default; /* Must be constructed in Ref */                   \
-                                                                               \
-    friend class Allocator<name##Node>;
+#define DEFINE_NODE_ACCESS(name) DEFINE_AST_PART_ACCESS(name##Node)
 
 #define DEFINE_NODE_TRAIT(name)                                                \
     DEFINE_NODE_ACCESS(name)                                                   \
   public:                                                                      \
     virtual ASTNodeType nodeType() const override { return ASTNodeType::name; }
 
+/**
+ * Base class of all nodes in an AST
+ *
+ * `ASTNode` is the minimal unit that can be traversed by a `Visitor`, or
+ * traversed and modified by a `Mutator`. An `ASTNode` is a derived class of
+ * `ASTPart`, and a derived node of `ASTNode` may contain other `ASTPart`s
+ */
 class ASTNode : public ASTPart {
   public:
 #ifdef IR_DEBUG_LOG_NODE
@@ -132,6 +135,9 @@ typedef Ref<ASTNode> AST;
 #define COPY_DEBUG_INFO(ret, old) (ret)
 #endif
 
+/**
+ * Base class of all expression nodes in an AST
+ */
 class ExprNode : public ASTNode {
   public:
     bool isExpr() const override { return true; }
@@ -187,6 +193,9 @@ class ID {
 
 std::string toString(const ID &id);
 
+/**
+ * Base class of all statement nodes in an AST
+ */
 class StmtNode : public ASTNode {
     friend ID;
 
