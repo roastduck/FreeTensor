@@ -90,7 +90,7 @@ bool checkNotModified(const Stmt &op, const Expr &s0Expr, const Expr &s1Expr,
     };
     auto foundWAR = [&](const Dependency &dep) {
         // Serialize dep.dep_ because it is from a random PBCtx
-        writesWAR[dep.later_.cursor_.node()] =
+        writesWAR[dep.later_.stmt_] =
             toString(apply(domain(dep.dep_), dep.pmap_));
     };
     findDeps(tmpOp, {{}}, foundWAR, FindDepsMode::Dep, DEP_WAR, filterWAR, true,

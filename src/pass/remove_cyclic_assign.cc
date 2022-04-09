@@ -8,20 +8,19 @@ Stmt removeCyclicAssign(const Stmt &op) {
     std::unordered_set<Stmt> redundant;
     auto foundRAW = [&](const Dependency &d) {
         if (d.earlier()->nodeType() == ASTNodeType::Store) {
-            if (auto &&laterStmt = d.later_.cursor_.node();
+            if (auto &&laterStmt = d.later_.stmt_;
                 laterStmt->nodeType() == ASTNodeType::Store) {
                 if (auto &&laterStore = laterStmt.as<StoreNode>();
                     laterStore->expr_ == d.later()) {
-                    later2earlier[d.later_.cursor_.node()] =
-                        d.earlier_.cursor_.node();
+                    later2earlier[d.later_.stmt_] = d.earlier_.stmt_;
                 }
             }
         }
     };
     auto filterWAR = [&](const AccessPoint &later, const AccessPoint &earlier) {
-        if (later2earlier.count(later.cursor_.node()) &&
-            later2earlier.at(later.cursor_.node()) == earlier.cursor_.node()) {
-            auto &&earlierStmt = earlier.cursor_.node();
+        if (later2earlier.count(later.stmt_) &&
+            later2earlier.at(later.stmt_) == earlier.stmt_) {
+            auto &&earlierStmt = earlier.stmt_;
             ASSERT(earlierStmt->nodeType() == ASTNodeType::Store);
             if (auto &&earlierStore = earlierStmt.as<StoreNode>();
                 earlierStore->expr_ == earlier.op_) {
@@ -31,7 +30,7 @@ Stmt removeCyclicAssign(const Stmt &op) {
         return false;
     };
     auto foundWAR = [&](const Dependency &d) {
-        redundant.emplace(d.later_.cursor_.node());
+        redundant.emplace(d.later_.stmt_);
     };
     // No filter for RAW because we want findDeps to find the nearest affecting
     // write

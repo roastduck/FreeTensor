@@ -114,8 +114,8 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
                             throw InvalidSchedule(
                                 "Unsupported: The loop iterator will be "
                                 "changed after inlining from " +
-                                toString(dep.earlier_.cursor_.node()) +
-                                " into " + toString(dep.later_.cursor_.node()));
+                                toString(dep.earlier_.stmt_) + " into " +
+                                toString(dep.later_.stmt_));
                         }
                         break;
                     }
@@ -137,8 +137,8 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
                               dep.later_.cursor_.id())) {
             throw InvalidSchedule(
                 "The expression will be modified after inlining from " +
-                toString(dep.earlier_.cursor_.node()) + " into " +
-                toString(dep.later_.cursor_.node()));
+                toString(dep.earlier_.stmt_) + " into " +
+                toString(dep.later_.stmt_));
         }
         replace[later] = std::move(newExpr);
     };
