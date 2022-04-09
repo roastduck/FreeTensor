@@ -16,10 +16,10 @@ namespace ir {
 class FindLoopInvariantWrites : public SymbolTable<WithCursor<Visitor>> {
     typedef SymbolTable<WithCursor<Visitor>> BaseClass;
 
-    std::vector<Cursor> cursorStack_;
+    std::vector<For> loopStack_;
     std::vector<If> ifStack_;
-    std::unordered_map<Store, std::tuple<VarDef, Expr, Cursor>>
-        results_; /// (store, extraCond, cursor to loop)
+    std::unordered_map<Store, std::tuple<VarDef, Expr, For>>
+        results_; /// (store, extraCond, innerMostLoop)
     std::unordered_map<ID, int> defDepth_;
     const LoopVariExprMap &variantExpr_;
     const ID &singleDefId_;
@@ -29,7 +29,7 @@ class FindLoopInvariantWrites : public SymbolTable<WithCursor<Visitor>> {
                             const ID &singleDefId)
         : variantExpr_(variantExpr), singleDefId_(singleDefId) {}
 
-    const std::unordered_map<Store, std::tuple<VarDef, Expr, Cursor>> &
+    const std::unordered_map<Store, std::tuple<VarDef, Expr, For>> &
     results() const {
         return results_;
     }

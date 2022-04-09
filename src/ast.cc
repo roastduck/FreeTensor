@@ -90,6 +90,16 @@ Stmt StmtNode::parentStmt() const {
     return nullptr;
 }
 
+Stmt StmtNode::parentCtrlFlow() const {
+    for (auto p = parentStmt(); p.isValid(); p = p->parentStmt()) {
+        if (p->nodeType() != ASTNodeType::StmtSeq &&
+            p->nodeType() != ASTNodeType::VarDef) {
+            return p;
+        }
+    }
+    return nullptr;
+}
+
 ID::ID(const Stmt &stmt) : ID(stmt->id_) {}
 
 const std::string &ID::strId() const {

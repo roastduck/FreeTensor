@@ -212,6 +212,7 @@ class StmtNode : public ASTNode {
     bool isStmt() const override { return true; }
 
     Ref<StmtNode> parentStmt() const;
+    Ref<StmtNode> parentCtrlFlow() const;
 
     DEFINE_NODE_ACCESS(Stmt);
 };

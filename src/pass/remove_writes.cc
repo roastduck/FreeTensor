@@ -8,15 +8,8 @@
 
 namespace ir {
 
-static bool sameParent(const Cursor &x, const Cursor &y) {
-    if (!x.hasOuterCtrlFlow() && !y.hasOuterCtrlFlow()) {
-        return true;
-    }
-    if (x.hasOuterCtrlFlow() && y.hasOuterCtrlFlow() &&
-        x.outerCtrlFlow().id() == y.outerCtrlFlow().id()) {
-        return true;
-    }
-    return false;
+static bool sameParent(const Stmt &x, const Stmt &y) {
+    return x->parentCtrlFlow() == y->parentCtrlFlow();
 }
 
 static Expr makeReduce(ReduceOp reduceOp, const Expr &lhs, const Expr &rhs) {
@@ -35,9 +28,9 @@ static Expr makeReduce(ReduceOp reduceOp, const Expr &lhs, const Expr &rhs) {
 }
 
 void FindLoopInvariantWrites::visit(const For &op) {
-    cursorStack_.emplace_back(cursor());
+    loopStack_.emplace_back(op);
     BaseClass::visit(op);
-    cursorStack_.pop_back();
+    loopStack_.pop_back();
 }
 
 void FindLoopInvariantWrites::visit(const If &op) {
@@ -47,7 +40,7 @@ void FindLoopInvariantWrites::visit(const If &op) {
 }
 
 void FindLoopInvariantWrites::visit(const VarDef &op) {
-    defDepth_[op->name_] = cursorStack_.size();
+    defDepth_[op->name_] = loopStack_.size();
     BaseClass::visit(op);
     defDepth_.erase(op->name_);
 }
@@ -58,13 +51,11 @@ void FindLoopInvariantWrites::visit(const Store &op) {
         return;
     }
     Expr cond;
-    Cursor innerMostLoopCursor;
+    For innerMostLoop;
 
-    for (int i = (int)(cursorStack_.size()) - 1, iEnd = defDepth_.at(op->var_);
+    for (int i = (int)(loopStack_.size()) - 1, iEnd = defDepth_.at(op->var_);
          i >= iEnd; i--) {
-        auto &&loopCursor = cursorStack_[i];
-        ASSERT(loopCursor.nodeType() == ASTNodeType::For);
-        auto &&item = loopCursor.node().as<ForNode>();
+        auto &&item = loopStack_[i];
         if (item->property_->parallel_ != serialScope) {
             continue;
         }
@@ -84,7 +75,7 @@ void FindLoopInvariantWrites::visit(const Store &op) {
         }
         thisCond = makeEQ(makeVar(item->iter_), rbegin);
         if (!cond.isValid()) {
-            innerMostLoopCursor = loopCursor;
+            innerMostLoop = item;
             cond = thisCond;
         } else {
             cond = makeLAnd(cond, thisCond);
@@ -94,8 +85,7 @@ void FindLoopInvariantWrites::visit(const Store &op) {
     }
 
     if (cond.isValid()) {
-        results_[op] =
-            std::make_tuple(def(op->var_), cond, innerMostLoopCursor);
+        results_[op] = std::make_tuple(def(op->var_), cond, innerMostLoop);
     }
 }
 
@@ -164,7 +154,7 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
 
     std::unordered_set<VarDef> suspect;
     for (auto &&[store, item] : type2Results) {
-        auto &&[def, cond, cursor] = item;
+        auto &&[def, cond, loop] = item;
         suspect.insert(def);
     }
 
@@ -214,14 +204,14 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
     auto foundOverwriteReduce = [&](const Dependency &d) {
         if (d.later() != d.earlier() &&
             (!selfDependentReduces.count(d.later().as<StmtNode>()) ||
-             sameParent(d.later_.cursor_, d.earlier_.cursor_))) {
+             sameParent(d.later_.stmt_, d.earlier_.stmt_))) {
             if (d.earlier()->nodeType() == ASTNodeType::Store &&
                 d.earlier().as<StoreNode>()->expr_->isConst()) {
                 goto is_overwrite;
             } else if (d.earlier()->nodeType() == ASTNodeType::ReduceTo &&
                        d.earlier().as<ReduceToNode>()->expr_->isConst()) {
                 goto is_overwrite;
-            } else if (sameParent(d.later_.cursor_, d.earlier_.cursor_)) {
+            } else if (sameParent(d.later_.stmt_, d.earlier_.stmt_)) {
                 goto is_overwrite;
             }
             return;
@@ -256,9 +246,9 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
             d.earlier()->nodeType() == ASTNodeType::Store &&
             d.earlier() != d.later()) {
             if (type2Results.count(d.earlier().as<StoreNode>())) {
-                auto &&[def, cond, cursor] =
+                auto &&[def, cond, innerMostLoop] =
                     type2Results.at(d.earlier().as<StoreNode>());
-                if (lca(cursor, d.later_.cursor_).id() == cursor.id()) {
+                if (lcaStmt(innerMostLoop, d.later_.stmt_) == innerMostLoop) {
                     type2Results.erase(d.earlier().as<StoreNode>());
                 }
             }
@@ -352,7 +342,7 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
 
     // Type 2
     for (auto &&[_store, item] : type2Results) {
-        auto &&[def, cond, cursor] = item;
+        auto &&[def, cond, loop] = item;
         auto store = _store.as<StmtNode>();
         replacement.emplace(store, makeIf("", cond, store));
     }
