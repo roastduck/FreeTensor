@@ -5,9 +5,15 @@
 
 namespace ir {
 
+/**
+ * Global configurations
+ *
+ * All variables are initialized in src/ffi/config.cc. All writable options can
+ * be set by environment variables
+ */
 class Config {
-    static bool prettyPrint_;
-    static bool printAllId_;
+    static bool prettyPrint_; /// Env IR_PRETTY_PRINT
+    static bool printAllId_;  /// Env IR_PRINT_ALL_ID
 
   public:
     static std::string withMKL();
