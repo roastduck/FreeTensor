@@ -37,6 +37,8 @@ class AssertAlwaysFalse : public InvalidProgram {
     AssertAlwaysFalse(const std::string &msg) : InvalidProgram(msg) {}
 };
 
+void reportWarning(const std::string &msg);
+
 #define ERROR(msg)                                                             \
     {                                                                          \
         throw ::ir::Error((std::string) "[ERROR] " __FILE__ ":" +              \
@@ -45,9 +47,8 @@ class AssertAlwaysFalse : public InvalidProgram {
 
 #define WARNING(msg)                                                           \
     {                                                                          \
-        std::cerr << ((std::string) "[WARING] " __FILE__ ":" +                 \
-                      std::to_string(__LINE__) + ": " + (msg))                 \
-                  << std::endl;                                                \
+        reportWarning((std::string) "[WARNING] " __FILE__ ":" +                \
+                      std::to_string(__LINE__) + ": " + (msg));                \
     }
 
 #define ASSERT(expr)                                                           \
