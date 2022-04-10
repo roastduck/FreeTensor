@@ -1,3 +1,5 @@
+import re
+
 import ir
 import ir.debug
 import pytest
@@ -204,39 +206,59 @@ def test_global_mem():
 def test_global_mem_in_kernel():
 
     @ir.transform
-    def test(x, y1, y2):
-        ir.declare_var(x, (4,), "int32", "input", "gpu/global")
-        ir.declare_var(y1, (4,), "int32", "output", "gpu/global")
-        ir.declare_var(y2, (4,), "int32", "output", "gpu/global")
+    def test(x, y1, y2, z1, z2):
+        ir.declare_var(x, (8,), "int32", "input", "gpu/global")
+        ir.declare_var(y1, (8,), "int32", "output", "gpu/global")
+        ir.declare_var(y2, (8,), "int32", "output", "gpu/global")
+        ir.declare_var(z1, (4,), "int32", "output", "gpu/global")
+        ir.declare_var(z2, (4,), "int32", "output", "gpu/global")
         "nid: L1"
-        for i in range(0, 4):
+        for i in range(0, 8):
             t = ir.create_var((), "int32", "gpu/global")
             t[()] = x[i] * 2
             y1[i] = t[()] + 1
             y2[i] = t[()] + 2
+        "nid: L2"
+        for i in range(0, 4):
+            t = ir.create_var((), "int32", "gpu/global")
+            t[()] = x[i] * 3
+            z1[i] = t[()] + 1
+            z2[i] = t[()] + 2
 
     s = ir.Schedule(test)
     s.parallelize("L1", "threadIdx.x")
+    s.parallelize("L2", "threadIdx.x")
     func = ir.lower(s.func(), target)
     print(func)
     code = ir.codegen(func, target)
     print(ir.debug.with_line_no(code))
-    assert "cudaMalloc" in code
+    assert re.search(r"cudaMalloc(.*, 32)", code)
+    assert re.search(r"cudaMalloc(.*, 16)", code)
     assert "cudaFree" in code
-    x_np = np.array([1, 2, 3, 4], dtype="int32")
-    y1_np = np.zeros((4,), dtype="int32")
-    y2_np = np.zeros((4,), dtype="int32")
+    x_np = np.array([1, 2, 3, 4, 5, 6, 7, 8], dtype="int32")
+    y1_np = np.zeros((8,), dtype="int32")
+    y2_np = np.zeros((8,), dtype="int32")
+    z1_np = np.zeros((4,), dtype="int32")
+    z2_np = np.zeros((4,), dtype="int32")
     x_arr = ir.Array(x_np, device)
     y1_arr = ir.Array(y1_np, device)
     y2_arr = ir.Array(y2_np, device)
-    ir.Driver(func, code, device)(x=x_arr, y1=y1_arr, y2=y2_arr)
+    z1_arr = ir.Array(z1_np, device)
+    z2_arr = ir.Array(z2_np, device)
+    ir.Driver(func, code, device)(x_arr, y1_arr, y2_arr, z1_arr, z2_arr)
     y1_np = y1_arr.numpy()
     y2_np = y2_arr.numpy()
+    z1_np = z1_arr.numpy()
+    z2_np = z2_arr.numpy()
 
-    y1_std = np.array([3, 5, 7, 9], dtype="int32")
-    y2_std = np.array([4, 6, 8, 10], dtype="int32")
+    y1_std = np.array([3, 5, 7, 9, 11, 13, 15, 17], dtype="int32")
+    y2_std = np.array([4, 6, 8, 10, 12, 14, 16, 18], dtype="int32")
+    z1_std = np.array([4, 7, 10, 13], dtype="int32")
+    z2_std = np.array([5, 8, 11, 14], dtype="int32")
     assert np.array_equal(y1_np, y1_std)
     assert np.array_equal(y2_np, y2_std)
+    assert np.array_equal(z1_np, z1_std)
+    assert np.array_equal(z2_np, z2_std)
 
 
 def test_pass_by_value_0d():

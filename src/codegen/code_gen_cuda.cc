@@ -292,6 +292,8 @@ void CodeGenCUDA::visit(const For &op) {
         if (!inKernel()) {
             std::string kernel = "kernel" + std::to_string(nKernel_++);
             pushStream(kernel);
+            sharedStackTop_ = 0;
+            globalStackTop_ = 0;
             beginBlock();
             (*this)(op->body_);
             streamStack_.back().threadDim_[op->property_->parallel_] =
