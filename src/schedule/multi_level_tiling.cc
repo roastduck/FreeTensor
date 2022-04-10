@@ -110,7 +110,7 @@ void multiLevelTilingWithFusion(Schedule &schedule,
         }
     }
     std::cout << "after fuse: " << toString(schedule.ast()) << std::endl;
-    schedule.cache(schedule.find(lastFuse).node().as<ForNode>()->body_->id(),
+    schedule.cache(schedule.find(lastFuse).as<ForNode>()->body_->id(),
                    target.dest, MemType::CPU);
     std::cout << "after cache: " << toString(schedule.ast()) << std::endl;
 }

@@ -87,7 +87,33 @@ void init_ffi_ast(py::module_ &m) {
         .def_property_readonly(
             "body", [](const Func &op) -> Stmt { return op->body_; });
 
-    pyStmt.def_property_readonly("nid", &StmtNode::id);
+    pyStmt.def_property_readonly("nid", &StmtNode::id)
+        .def("node",
+             [](const Stmt &op) {
+                 WARNING("`x.node()` is deprecated. Please directly use `x`");
+                 return op;
+             })
+        .def("prev",
+             [](const Stmt &op) {
+                 WARNING(
+                     "`x.prev()` is deprecated. Please use `x.prev_stmt()`");
+                 return op->prevStmt();
+             })
+        .def("next",
+             [](const Stmt &op) {
+                 WARNING(
+                     "`x.next()` is deprecated. Please use `x.next_stmt()`");
+                 return op->nextStmt();
+             })
+        .def("outer",
+             [](const Stmt &op) {
+                 WARNING(
+                     "`x.outer()` is deprecated. Please use `x.parent_stmt()`");
+                 return op->parentStmt();
+             })
+        .def("prev_stmt", &StmtNode::prevStmt)
+        .def("next_stmt", &StmtNode::nextStmt)
+        .def("parent_stmt", &StmtNode::parentStmt);
 
     py::class_<StmtSeqNode, StmtSeq>(m, "StmtSeq", pyStmt)
         .def_property_readonly(
@@ -308,7 +334,13 @@ void init_ffi_ast(py::module_ &m) {
     pyAST
         .def("match",
              [](const Stmt &op, const Stmt &other) { return match(op, other); })
-        .def("type", [](const AST &op) { return toString(op->nodeType()); })
+        .def("type", [](const AST &op) { return op->nodeType(); })
+        .def("node_type",
+             [](const AST &op) {
+                 WARNING(
+                     "`x.node_type()` is deprecated. Please use `x.type()`");
+                 return op->nodeType();
+             })
         .def("__str__", [](const AST &op) { return toString(op); })
         .def("__repr__", [](const AST &op) {
             return "<" + toString(op->nodeType()) + ": " + toString(op) + ">";

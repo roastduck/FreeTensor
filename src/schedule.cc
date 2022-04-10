@@ -8,7 +8,6 @@
 #include <analyze/find_indexing_loops.h>
 #include <analyze/find_stmt.h>
 #include <analyze/get_loop_nest_tree.h>
-#include <analyze/with_cursor.h>
 #include <auto_schedule/utils.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/hoist_var_over_stmt_seq.h>
@@ -38,13 +37,13 @@ namespace ir {
 
 Schedule::Schedule(const Stmt &ast) : ast_(ast) { ast_ = simplifyPass(ast_); }
 
-std::vector<Cursor>
-Schedule::findAll(const std::function<bool(const Cursor &)> &filter) const {
-    return getCursorByFilter(ast_, filter);
+std::vector<Stmt>
+Schedule::findAll(const std::function<bool(const Stmt &)> &filter) const {
+    return findStmt(ast_, filter);
 }
 
-Cursor Schedule::find(const std::function<bool(const Cursor &)> &filter) const {
-    auto ret = getCursorByFilter(ast_, filter);
+Stmt Schedule::find(const std::function<bool(const Stmt &)> &filter) const {
+    auto ret = findStmt(ast_, filter);
     if (ret.size() != 1) {
         throw Error("find: There is " + std::to_string(ret.size()) +
                     " nodes matching the given condition. "
@@ -495,7 +494,7 @@ void Schedule::autoParallelize(const Target &target) {
             auto loop = find(loopId);
 
             // Ignore if too short
-            if (auto &&len = loop.node().as<ForNode>()->len_;
+            if (auto &&len = loop.as<ForNode>()->len_;
                 len->nodeType() == ASTNodeType::IntConst &&
                 len.as<IntConstNode>()->val_ <= 4) {
                 continue;
@@ -505,17 +504,19 @@ void Schedule::autoParallelize(const Target &target) {
             auto logBak = logs_;
             try {
                 // FIXME: Do not hard-code 32
-                auto [l0, l1] = split(loop.id(), 32);
+                auto [l0, l1] = split(loop->id(), 32);
                 parallelize(l1, threadIdxX);
 
                 try {
                     // Reorder this scope to as outer as possible
+                    auto refCntHolder = ast_;
                     auto c = find(l1);
-                    if (c.hasOuter()) {
-                        for (c = c.outer(); c.hasOuter(); c = c.outer()) {
-                            if (c.nodeType() == ASTNodeType::For) {
+                    if (c->parentStmt().isValid()) {
+                        for (c = c->parentStmt(); c->parentStmt().isValid();
+                             c = c->parentStmt()) {
+                            if (c->nodeType() == ASTNodeType::For) {
                                 try {
-                                    reorder({l1, c.id()});
+                                    reorder({l1, c->id()});
                                 } catch (InvalidSchedule &e) {
                                     break;
                                 }
@@ -551,10 +552,8 @@ void Schedule::autoParallelize(const Target &target) {
                 ID loopId, outerId;
                 while (true) {
                     loopId = loop->loop_->id();
-                    if (find(loopId)
-                            .node()
-                            .as<ForNode>()
-                            ->property_->parallel_ != serialScope) {
+                    if (find(loopId).as<ForNode>()->property_->parallel_ !=
+                        serialScope) {
                         break;
                     }
                     if (outerId.isValid()) {
@@ -577,7 +576,7 @@ void Schedule::autoParallelize(const Target &target) {
                                        serialScope;
                         };
                         bool childIsWarp =
-                            !findStmt(loop.node(), isParallelLoop).empty();
+                            !findStmt(loop, isParallelLoop).empty();
                         // We guarantee the following requirements in order:
                         // 1. make sure all SMs are used
                         // 2. if there are enough threads, make sure blockDim is
@@ -590,7 +589,7 @@ void Schedule::autoParallelize(const Target &target) {
                             (!parentIsWarp && !childIsWarp) ? 256 : 8;
                         // TODO: do not hard-code these numbers
                         ID l1, l1b, l2;
-                        if (auto loopNode = loop.node().as<ForNode>();
+                        if (auto loopNode = loop.as<ForNode>();
                             loopNode->len_->nodeType() ==
                             ASTNodeType::IntConst) {
                             auto len = loopNode->len_.as<IntConstNode>()->val_;

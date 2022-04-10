@@ -36,7 +36,7 @@ class Schedule(ffi.Schedule):
 
         Parameters
         ----------
-        node : str, Stmt or Cursor
+        node : str, ID or Stmt
             The loop to be split
         factor : int
             Length of the inner loop. Set to -1 if using `nparts`
@@ -63,7 +63,7 @@ class Schedule(ffi.Schedule):
 
         Parameters
         ----------
-        order : array like of str, Stmt or Cursor
+        order : array like of str, ID or Stmt
             Vector of loops. The requested order of the loops
 
         Raises
@@ -84,7 +84,7 @@ class Schedule(ffi.Schedule):
 
         Parameters
         ----------
-        loop1, loop2 : str, Stmt or Cursor
+        loop1, loop2 : str, ID or Stmt
             loops to be merged, can be in any order
 
         Raises
@@ -108,12 +108,12 @@ class Schedule(ffi.Schedule):
 
         Parameters
         ----------
-        loop : str, Stmt or Cursor
+        loop : str, ID or Stmt
             The loop to be fissioned
         side : FissionSide
             If `After`, `splitter` is the last statement of the first loop. If `Before`,
             `splitter` is the first statement of the second loop
-        splitter : str, Stmt or Cursor
+        splitter : str, ID or Stmt
             Where to fission the loop
         suffix0 : str
             ID suffix of the statements in the first loop, default to ".a", can be
@@ -146,9 +146,9 @@ class Schedule(ffi.Schedule):
 
         Parameters
         ----------
-        loop0 : str, Stmt or Cursor
+        loop0 : str, ID or Stmt
             The leading loop
-        loop1 : str, Stmt or Cursor
+        loop1 : str, ID or Stmt
             The following loop
         strict : bool
             If true, throw an error if unable to determine whether the two loops
@@ -175,7 +175,7 @@ class Schedule(ffi.Schedule):
 
         Parameters
         ----------
-        order : array like of str, Stmt or Cursor
+        order : array like of str, ID or Stmt
             The statements
 
         Raises
@@ -211,7 +211,7 @@ class Schedule(ffi.Schedule):
 
         Parameters
         ----------
-        loop : str, Stmt or Cursor
+        loop : str, ID or Stmt
             The loop being transformed
 
         Raises
@@ -250,7 +250,7 @@ class Schedule(ffi.Schedule):
 
         Parameters
         ----------
-        stmt : str, Stmt or Cursor
+        stmt : str, ID or Stmt
             The statement or block (e.g. an If or a For) to be modified
         var : str
             Name of the variable to be cached
@@ -292,7 +292,7 @@ class Schedule(ffi.Schedule):
 
         Parameters
         ----------
-        stmt : str, Stmt or Cursor
+        stmt : str, ID or Stmt
             The statement or block (e.g. an If or a For) to be modified
         var : str
             Name of the variable to be cached. Only reductions are allowed on
@@ -322,7 +322,7 @@ class Schedule(ffi.Schedule):
 
         Parameters
         ----------
-        vardef : str, Stmt or Cursor
+        vardef : str, ID or Stmt
             ID of the VarDef statement of the specific variable
         mtype : MemType
             Where the variable should be stored
@@ -340,7 +340,7 @@ class Schedule(ffi.Schedule):
 
         Parameters
         ----------
-        vardef : str, Stmt or Cursor
+        vardef : str, ID or Stmt
             ID of the VarDef statement of the specific variable
         dim : int
             which dimension to be split
@@ -368,7 +368,7 @@ class Schedule(ffi.Schedule):
         Merge two dimensions of a variable
         Parameters
         ----------
-        vardef : str, Stmt or Cursor
+        vardef : str, ID or Stmt
             ID of the VarDef statement of the specific variable
         dim : int
             Merge the `dim`-th and the `(dim + 1)`-th dimension
@@ -381,9 +381,9 @@ class Schedule(ffi.Schedule):
 
         Parameters
         ----------
-        vardef : str, Stmt or Cursor
+        vardef : str, ID or Stmt
             ID of the VarDef statement of the specific variable
-        order : array like of str, Stmt or Cursor
+        order : array like of str, ID or Stmt
             Vector of integers. The new order of the dimensions
 
         Raises
@@ -402,11 +402,11 @@ class Schedule(ffi.Schedule):
 
         Parameters
         ----------
-        stmt : str, Stmt or Cursor
+        stmt : str, ID or Stmt
             The statement to be moved
         side : MoveToSide
             Whether `stmt` will be BEFORE or AFTER `dst
-        dst : str, Stmt or Cursor
+        dst : str, ID or Stmt
             Insert `stmt` to be directly after this statement
 
         Raises
@@ -427,7 +427,7 @@ class Schedule(ffi.Schedule):
 
         Parameters
         ----------
-        vardef : str, Stmt or Cursor
+        vardef : str, ID or Stmt
             The VarDef statement of the specific variable. It can not be an
             I/O varible
 
@@ -444,7 +444,7 @@ class Schedule(ffi.Schedule):
 
         Parameters
         ----------
-        loop : str, Stmt or Cursor
+        loop : str, ID or Stmt
             The loop
         parallel : ParallelScope
             Parallel scope
@@ -458,7 +458,7 @@ class Schedule(ffi.Schedule):
 
         Parameters
         ----------
-        loop : str, Stmt or Cursor
+        loop : str, ID or Stmt
             ID of the loop
         immediate : bool
             If false (by default), postpone the unroll procedure to the backend
@@ -485,7 +485,7 @@ class Schedule(ffi.Schedule):
 
         Parameters
         ----------
-        loop : str, Stmt or Cursor
+        loop : str, ID or Stmt
             ID of the loop
 
         Raises
@@ -547,7 +547,7 @@ class Schedule(ffi.Schedule):
 
         Parameters
         ----------
-        loop : str, Stmt or Cursor
+        loop : str, ID or Stmt
             ID of the loop
 
         Raises

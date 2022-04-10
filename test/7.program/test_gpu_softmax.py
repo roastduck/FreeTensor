@@ -61,8 +61,8 @@ def test_manual_static():
 
     # Store these intermedates to registers
     load_x, _, _, x_local_def = s.cache(
-        s.find(lambda x: x.nid() == L_seq_outer).node().body, "x", "gpu/global")
-    load_x_loop = s.find(lambda x: x.nid() == load_x).outer()
+        s.find(L_seq_outer).node().body, "x", "gpu/global")
+    load_x_loop = s.find(load_x).outer()
 
     # ----------------
 
@@ -71,7 +71,7 @@ def test_manual_static():
 
     # Optimize reductions
     def opt_red(def_nid, init_nid, loop_nid):
-        node = s.find(lambda x: x.nid() == def_nid).node()
+        node = s.find(def_nid).node()
 
         # Hold result in shared memory
         _, _, V_sum_shmem, _ = s.cache(node.body, node.name, "gpu/shared")
@@ -119,7 +119,7 @@ def test_manual_static():
     # ----------------
 
     s.set_mem_type(x_local_def, "gpu/local")
-    s.set_mem_type(s.find(lambda x: x.nid() == "softmax->exp->y"), "gpu/local")
+    s.set_mem_type(s.find("softmax->exp->y"), "gpu/local")
 
     f = ir.lower(s.func(), target)
     print(f)

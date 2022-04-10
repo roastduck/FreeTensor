@@ -317,8 +317,7 @@ def test_vectorize_spmv():
     s.reorder([i0, "Lj", i1])
     s.move_to("S0", ir.MoveToSide.Before, "Lj")
     s.vectorize(i1)
-    s.vectorize(s.find(
-        lambda x: x.nid() == "S0.a").outer())  # FIXME: do not hard-code S0.a
+    s.vectorize(s.find("S0.a").outer())  # FIXME: do not hard-code S0.a
     ast = s.ast()
     print(ast)
     ast = ir.lower(ast)

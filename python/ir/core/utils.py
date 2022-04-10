@@ -8,8 +8,6 @@ def toId(node):
         return node
     if type(node) is str:
         return node
-    if isinstance(node, ffi.Cursor):
-        return node.nid()
     if isinstance(node, ffi.Stmt):
         return node.nid
     assert False, "%s is not a valid statement" % node
