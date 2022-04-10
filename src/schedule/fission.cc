@@ -314,8 +314,8 @@ fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
     };
     auto filter = [&](const AccessPoint &later, const AccessPoint &earlier) {
         for (auto &&[beforeId, afterId] : hoist.scopePairs()) {
-            if (earlier.stmt_->parentById(afterId).isValid() &&
-                later.stmt_->parentById(beforeId).isValid()) {
+            if (earlier.stmt_->ancestorById(afterId).isValid() &&
+                later.stmt_->ancestorById(beforeId).isValid()) {
                 return true;
             }
         }

@@ -3,7 +3,7 @@
 #include <analyze/all_uses.h>
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
-#include <analyze/with_cursor.h>
+#include <analyze/find_stmt.h>
 #include <pass/flatten_stmt_seq.h>
 
 namespace ir {
@@ -73,10 +73,9 @@ bool checkNotModified(const Stmt &op, const Expr &s0Expr, const Expr &s1Expr,
     tmpOp = flattenStmtSeq(tmpOp);
     ASSERT(inserter.s0Eval().isValid());
     ASSERT(inserter.s1Eval().isValid());
-    auto c0 = getCursorById(tmpOp, inserter.s0Eval());
-    auto c1 = getCursorById(tmpOp, inserter.s1Eval());
 
-    if (c0.hasNext() && c0.next().id() == c1.id()) {
+    if (findStmt(tmpOp, inserter.s0Eval())->nextStmt() ==
+        findStmt(tmpOp, inserter.s1Eval())) {
         return true; // early exit: the period to check is empty
     }
 

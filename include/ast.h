@@ -213,11 +213,16 @@ class StmtNode : public ASTNode {
 
     Ref<StmtNode> parentStmt() const;
     Ref<StmtNode> parentCtrlFlow() const;
+    Ref<StmtNode> prevStmt() const;
+    Ref<StmtNode> nextStmt() const;
 
     /**
      * Find an ancestor by ID. `this` itself is also considered
      */
-    Ref<StmtNode> parentById(const ID &lookup) const;
+    Ref<StmtNode> ancestorById(const ID &lookup) const;
+
+    bool isAncestorOf(const Stmt &other) const;
+    bool isBefore(const Stmt &other) const;
 
     DEFINE_NODE_ACCESS(Stmt);
 };

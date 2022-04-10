@@ -45,7 +45,7 @@ Stmt swap(const Stmt &_ast, const std::vector<ID> &order) {
 
     auto findParentStmt = [&](const Stmt &stmt) -> Stmt {
         for (auto &&item : order) {
-            auto ret = stmt->parentById(item);
+            auto ret = stmt->ancestorById(item);
             if (ret.isValid()) {
                 return ret;
             }

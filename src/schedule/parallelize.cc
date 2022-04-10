@@ -64,8 +64,8 @@ Stmt parallelize(const Stmt &_ast, const ID &loop,
         }
         auto filter = [&](const AccessPoint &later,
                           const AccessPoint &earlier) {
-            return earlier.stmt_->parentById(loop).isValid() &&
-                   later.stmt_->parentById(loop).isValid();
+            return earlier.stmt_->ancestorById(loop).isValid() &&
+                   later.stmt_->ancestorById(loop).isValid();
         };
         auto found = [&](const Dependency &d) {
             throw InvalidSchedule(toString(d) + " cannot be resolved");
@@ -77,8 +77,8 @@ Stmt parallelize(const Stmt &_ast, const ID &loop,
     {
         auto filter = [&](const AccessPoint &later,
                           const AccessPoint &earlier) {
-            bool earlierInLoop = earlier.stmt_->parentById(loop).isValid();
-            bool laterInLoop = later.stmt_->parentById(loop).isValid();
+            bool earlierInLoop = earlier.stmt_->ancestorById(loop).isValid();
+            bool laterInLoop = later.stmt_->ancestorById(loop).isValid();
             if ((earlierInLoop && !laterInLoop) ||
                 (!earlierInLoop && laterInLoop)) {
                 if (std::holds_alternative<CUDAScope>(parallel) &&

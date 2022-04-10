@@ -2,7 +2,7 @@
 #include <analyze/all_no_reuse_defs.h>
 #include <analyze/all_uses.h>
 #include <analyze/deps.h>
-#include <cursor.h>
+#include <analyze/find_stmt.h>
 #include <pass/float_simplify.h>
 #include <pass/grad.h>
 #include <pass/hoist_return_vars.h>
@@ -567,12 +567,8 @@ grad(const Func &func, const std::unordered_set<std::string> &_requires,
     auto closure = func->closure_;
     for (auto &&[_oriDef, tapeName] : tapeMap) {
         auto &&oriDef = _oriDef;
-        auto def = getCursorByFilter(
-            func->body_, [&](const Cursor &c) { return c.id() == oriDef; });
-        ASSERT(def.size() == 1 &&
-               def.front().nodeType() == ASTNodeType::VarDef);
-        auto tapeDType =
-            def.front().node().as<VarDefNode>()->buffer_->tensor()->dtype();
+        auto def = findStmt(func->body_, oriDef);
+        auto tapeDType = def.as<VarDefNode>()->buffer_->tensor()->dtype();
         forwardReturns.emplace_back(tapeName, tapeDType);
         backwardParams.emplace_back(tapeName);
         closure[tapeName] = Ref<Ref<Array>>::make(nullptr);

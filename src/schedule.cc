@@ -6,6 +6,7 @@
 #include <analyze/all_stmts.h>
 #include <analyze/count_contig_access_loops.h>
 #include <analyze/find_indexing_loops.h>
+#include <analyze/find_stmt.h>
 #include <analyze/get_loop_nest_tree.h>
 #include <analyze/with_cursor.h>
 #include <auto_schedule/utils.h>
@@ -225,46 +226,45 @@ ID Schedule::moveTo(const ID &_stmt, MoveToSide side, const ID &_dst) {
         auto stmt = _stmt, dst = _dst;
         while (true) {
             ast_ = hoistVarOverStmtSeq(ast_);
-            Cursor s = getCursorById(ast_, stmt);
-            Cursor d = getCursorById(ast_, dst);
+            Stmt s = findStmt(ast_, stmt);
+            Stmt d = findStmt(ast_, dst);
 
             auto movingUp = [&]() {
-                if (d.isOuter(s)) {
+                if (d->isAncestorOf(s)) {
                     return side == MoveToSide::Before;
                 }
-                if (s.hasPrev()) {
-                    return d.isBefore(side == MoveToSide::After ? s.prev() : s);
+                if (auto prev = s->prevStmt(); prev.isValid()) {
+                    return d->isBefore(side == MoveToSide::After ? prev : s);
                 } else {
-                    return d.isBefore(s);
+                    return d->isBefore(s);
                 }
             };
             auto movingDown = [&]() {
-                if (d.isOuter(s)) {
+                if (d->isAncestorOf(s)) {
                     return side == MoveToSide::After;
                 }
-                if (s.hasNext()) {
-                    return (side == MoveToSide::Before ? s.next() : s)
-                        .isBefore(d);
+                if (auto next = s->nextStmt(); next.isValid()) {
+                    return (side == MoveToSide::Before ? next : s)->isBefore(d);
                 } else {
-                    return s.isBefore(d);
+                    return s->isBefore(d);
                 }
             };
 
             if (movingUp()) {
-                if (s.hasPrev()) {
+                if (s->prevStmt().isValid()) {
                     std::vector<ID> orderRev;
-                    while (s.hasPrev() && movingUp()) {
-                        s = s.prev();
-                        orderRev.emplace_back(s.id());
+                    while (s->prevStmt().isValid() && movingUp()) {
+                        s = s->prevStmt();
+                        orderRev.emplace_back(s->id());
                     }
                     orderRev.emplace_back(stmt);
                     std::vector<ID> order(orderRev.rbegin(), orderRev.rend());
                     swap(order);
                 } else {
-                    while (!s.hasPrev() && movingUp()) {
-                        s = s.outerCtrlFlow();
+                    while (!s->prevStmt().isValid() && movingUp()) {
+                        s = s->parentCtrlFlow();
                     }
-                    if (s.node()->nodeType() != ASTNodeType::For) {
+                    if (s->nodeType() != ASTNodeType::For) {
                         throw InvalidSchedule(
                             "Fission a If node in a StmtSeq is not currently "
                             "supported in moveTo",
@@ -273,26 +273,26 @@ ID Schedule::moveTo(const ID &_stmt, MoveToSide side, const ID &_dst) {
                     }
                     // Leave IDs of the other statements unchanged
                     auto idMap =
-                        fission(s.id(), FissionSide::After, stmt, ".a", "")
+                        fission(s->id(), FissionSide::After, stmt, ".a", "")
                             .first;
-                    stmt = idMap.at(s.id());
+                    stmt = idMap.at(s->id());
                 }
                 // TODO: Fuse if d is inner of s
 
             } else if (movingDown()) {
-                if (s.hasNext()) {
+                if (s->nextStmt().isValid()) {
                     std::vector<ID> order;
-                    while (s.hasNext() && movingDown()) {
-                        s = s.next();
-                        order.emplace_back(s.id());
+                    while (s->nextStmt().isValid() && movingDown()) {
+                        s = s->nextStmt();
+                        order.emplace_back(s->id());
                     }
                     order.emplace_back(stmt);
                     swap(order);
                 } else {
-                    while (!s.hasNext() && movingDown()) {
-                        s = s.outerCtrlFlow();
+                    while (!s->nextStmt().isValid() && movingDown()) {
+                        s = s->parentCtrlFlow();
                     }
-                    if (s.node()->nodeType() != ASTNodeType::For) {
+                    if (s->nodeType() != ASTNodeType::For) {
                         throw InvalidSchedule(
                             "Fission a If node in a StmtSeq is not currently "
                             "supported in moveTo",
@@ -301,14 +301,14 @@ ID Schedule::moveTo(const ID &_stmt, MoveToSide side, const ID &_dst) {
                     }
                     // Leave IDs of the other statements unchanged
                     auto idMap =
-                        fission(s.id(), FissionSide::Before, stmt, "", ".b")
+                        fission(s->id(), FissionSide::Before, stmt, "", ".b")
                             .second;
-                    stmt = idMap.at(s.id());
+                    stmt = idMap.at(s->id());
                 }
                 // TODO: Fuse if d is inner of s
 
             } else {
-                return s.id();
+                return s->id();
             }
         }
     } catch (const InvalidSchedule &e) {
@@ -571,15 +571,13 @@ void Schedule::autoParallelize(const Target &target) {
 
                     case TargetType::GPU: {
                         auto loop = find(loopId);
-                        auto isParallelLoop = [](const Cursor &c) {
-                            return c.nodeType() == ASTNodeType::For &&
-                                   c.node().as<ForNode>()
-                                           ->property_->parallel_ !=
+                        auto isParallelLoop = [](const Stmt &s) {
+                            return s->nodeType() == ASTNodeType::For &&
+                                   s.as<ForNode>()->property_->parallel_ !=
                                        serialScope;
                         };
                         bool childIsWarp =
-                            !getCursorByFilter(loop.node(), isParallelLoop)
-                                 .empty();
+                            !findStmt(loop.node(), isParallelLoop).empty();
                         // We guarantee the following requirements in order:
                         // 1. make sure all SMs are used
                         // 2. if there are enough threads, make sure blockDim is
