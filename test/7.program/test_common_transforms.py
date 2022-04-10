@@ -274,13 +274,13 @@ def test_collaborative_fetch():
     s.parallelize(i, "threadIdx.y")
     s.parallelize(j, "threadIdx.x")
     s.parallelize(
-        s.find(lambda x: x.node_type() == ir.ASTNodeType.For and x.node().body.
-               nid == fill_a),
+        s.find(
+            lambda x: x.type() == ir.ASTNodeType.For and x.body.nid == fill_a),
         "threadIdx.x",
     )
     s.parallelize(
-        s.find(lambda x: x.node_type() == ir.ASTNodeType.For and x.node().body.
-               nid == fill_b),
+        s.find(
+            lambda x: x.type() == ir.ASTNodeType.For and x.body.nid == fill_b),
         "threadIdx.y",
     )
     func = ir.lower(s.func(), target)
@@ -317,7 +317,7 @@ def test_vectorize_spmv():
     s.reorder([i0, "Lj", i1])
     s.move_to("S0", ir.MoveToSide.Before, "Lj")
     s.vectorize(i1)
-    s.vectorize(s.find("S0.a").outer())  # FIXME: do not hard-code S0.a
+    s.vectorize(s.find("S0.a").parent_stmt())  # FIXME: do not hard-code S0.a
     ast = s.ast()
     print(ast)
     ast = ir.lower(ast)

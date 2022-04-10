@@ -349,7 +349,7 @@ def test_fuse_no_deps_1():
     s = ir.Schedule(test)
     fused = s.fuse("Li1", "Li2")
     print(s.ast())
-    assert s.find(fused).node().property.no_deps == ["edge2"]
+    assert s.find(fused).property.no_deps == ["edge2"]
 
 
 def test_fuse_no_deps_2():
@@ -374,7 +374,7 @@ def test_fuse_no_deps_2():
     s = ir.Schedule(test)
     fused = s.fuse("Li1", "Li2")
     print(s.ast())
-    assert s.find(fused).node().property.no_deps == ["edge2"]
+    assert s.find(fused).property.no_deps == ["edge2"]
 
 
 def test_fuse_no_deps_3():

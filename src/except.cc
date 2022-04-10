@@ -17,6 +17,10 @@ void reportWarning(const std::string &msg) {
     static std::unordered_map<std::string, int> reportCnt;
     static std::mutex lock;
 
+    if (Config::werror()) {
+        throw Error(msg);
+    }
+
     std::lock_guard<std::mutex> guard(lock);
     int cnt = ++reportCnt[msg];
     if (cnt <= 2) {

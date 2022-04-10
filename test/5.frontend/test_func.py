@@ -493,4 +493,4 @@ def test_no_deps_on_returned_tensor():
     print(func)
 
     s = ir.Schedule(func)
-    assert s.find('Lj').node().property.no_deps[0] == s.find('Vc').node().name
+    assert s.find('Lj').property.no_deps[0] == s.find('Vc').name

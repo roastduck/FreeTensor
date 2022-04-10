@@ -39,12 +39,17 @@ void init_ffi_config(py::module_ &m) {
     if (auto flag = getBoolEnv("IR_PRINT_ALL_ID"); flag.isValid()) {
         Config::setPrintAllId(*flag);
     }
+    if (auto flag = getBoolEnv("IR_WERROR"); flag.isValid()) {
+        Config::setWerror(*flag);
+    }
 
     m.def("with_mkl", Config::withMKL);
     m.def("set_pretty_print", Config::setPrettyPrint, "flag"_a = true);
     m.def("pretty_print", Config::prettyPrint);
     m.def("set_print_all_id", Config::setPrintAllId, "flag"_a = true);
     m.def("print_all_id", Config::printAllId);
+    m.def("set_werror", Config::setWerror, "flag"_a = true);
+    m.def("werror", Config::werror);
 }
 
 } // namespace ir

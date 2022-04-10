@@ -965,14 +965,14 @@ def test_merge_no_deps_1():
     print(func)
 
     def matcher(x):
-        if x.node_type() == ir.ASTNodeType.For:
-            node = x.node()
+        if x.type() == ir.ASTNodeType.For:
+            node = x
             if str(node.property.parallel) == "threadIdx.x":
                 return True
         return False
 
     checker = ir.Schedule(func)
-    assert checker.find(matcher).node().property.no_deps == ['edge2']
+    assert checker.find(matcher).property.no_deps == ['edge2']
 
 
 def test_merge_no_deps_2():
@@ -1007,14 +1007,14 @@ def test_merge_no_deps_2():
     print(func)
 
     def matcher(x):
-        if x.node_type() == ir.ASTNodeType.For:
-            node = x.node()
+        if x.type() == ir.ASTNodeType.For:
+            node = x
             if str(node.property.parallel) == "threadIdx.x":
                 return True
         return False
 
     checker = ir.Schedule(func)
-    assert checker.find(matcher).node().property.no_deps == ['edge2']
+    assert checker.find(matcher).property.no_deps == ['edge2']
 
 
 def test_merge_no_deps_3():

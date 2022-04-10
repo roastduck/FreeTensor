@@ -7,6 +7,7 @@ namespace ir {
 
 bool Config::prettyPrint_ = false;
 bool Config::printAllId_ = false;
+bool Config::werror_ = false;
 
 std::string Config::withMKL() {
 #ifdef WITH_MKL

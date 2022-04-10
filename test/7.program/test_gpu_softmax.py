@@ -61,8 +61,8 @@ def test_manual_static():
 
     # Store these intermedates to registers
     load_x, _, _, x_local_def = s.cache(
-        s.find(L_seq_outer).node().body, "x", "gpu/global")
-    load_x_loop = s.find(load_x).outer()
+        s.find(L_seq_outer).body, "x", "gpu/global")
+    load_x_loop = s.find(load_x).parent_stmt()
 
     # ----------------
 
@@ -71,7 +71,7 @@ def test_manual_static():
 
     # Optimize reductions
     def opt_red(def_nid, init_nid, loop_nid):
-        node = s.find(def_nid).node()
+        node = s.find(def_nid)
 
         # Hold result in shared memory
         _, _, V_sum_shmem, _ = s.cache(node.body, node.name, "gpu/shared")
