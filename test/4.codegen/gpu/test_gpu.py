@@ -1064,3 +1064,37 @@ def test_merge_no_deps_3():
     s.parallelize("Li1", "threadIdx.x")
     with pytest.raises(ir.InvalidSchedule):
         s.parallelize("Li2", "threadIdx.x")
+
+
+def test_access_gpu_from_cpu_for_debugging():
+
+    @ir.transform
+    def test(x, y):
+        ir.declare_var(x, (4,), "int32", "input", "gpu/global")
+        ir.declare_var(y, (4,), "int32", "output", "gpu/global")
+        "nid: L1"
+        for i in range(0, 4):
+            y[i] = x[i] + 1
+
+    with ir.VarDef([
+        ("x", (4,), "int32", "input", "gpu/global"),
+        ("y", (4,), "int32", "output", "gpu/global"),
+    ]) as (x, y):
+        with ir.For("i", 0, 4, nid="L1") as i:
+            y[i] = x[i] + 1
+    assert ir.pop_ast().match(test.body)
+
+    s = ir.Schedule(test)
+    func = ir.lower(s.func(), target)
+    print(func)
+    code = ir.codegen(func, target)
+    print(ir.debug.with_line_no(code))
+    x_np = np.array([1, 2, 3, 4], dtype="int32")
+    y_np = np.zeros((4,), dtype="int32")
+    x_arr = ir.Array(x_np, device)
+    y_arr = ir.Array(y_np, device)
+    ir.Driver(func, code, device)(x=x_arr, y=y_arr)
+    y_np = y_arr.numpy()
+
+    y_std = np.array([2, 3, 4, 5], dtype="int32")
+    assert np.array_equal(y_np, y_std)

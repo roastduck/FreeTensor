@@ -41,9 +41,24 @@ void CodeGenCUDA::genAlloc(const Ref<Tensor> &tensor, const std::string &rawPtr,
 
 void CodeGenCUDA::genScalar(const std::string &var,
                             const std::vector<Expr> &indices) {
-    if (indices.empty() && (buffer(var)->mtype() == MemType::GPUGlobal ||
-                            buffer(var)->mtype() == MemType::GPUShared)) {
+    auto mtype = buffer(var)->mtype();
+    if (indices.empty() &&
+        (mtype == MemType::GPUGlobal || mtype == MemType::GPUShared)) {
         os() << "*" << mangle(var);
+    } else if (!inKernel() &&
+               (mtype == MemType::GPUGlobal || mtype == MemType::GPUShared ||
+                mtype == MemType::GPUWarp || mtype == MemType::GPULocal)) {
+        if (mtype == MemType::GPUGlobal) {
+            WARNING(
+                "You are accessing gpu/global memory from outside of a kernel. "
+                "This is only for debugging, and it has a low performance");
+            os() << "gpuScalar(";
+            CodeGenC::genScalar(var, indices);
+            os() << ")";
+        } else {
+            throw InvalidProgram("Unable to access " + ::ir::toString(mtype) +
+                                 " from outside of a kernel");
+        }
     } else {
         CodeGenC::genScalar(var, indices);
     }

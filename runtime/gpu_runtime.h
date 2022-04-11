@@ -28,6 +28,57 @@ template <class T, size_t n> struct __ByValArray {
     __host__ __device__ T &operator[](size_t i) { return data[i]; }
 };
 
+// Access a scalar on GPU, only for debugging
+template <class T> class GPUScalar {
+    T *ptr_;
+
+  public:
+    explicit GPUScalar(T *ptr) : ptr_(ptr) {}
+    explicit GPUScalar(T &ref) : ptr_(&ref) {}
+
+    // Our compiler passes ensures the correctness, and the performance is not a
+    // problem because it is for debugging
+    explicit GPUScalar(const T *ptr) : ptr_(const_cast<T *>(ptr)) {}
+    explicit GPUScalar(const T &ref) : ptr_(const_cast<T *>(&ref)) {}
+
+    operator T() {
+        T ret;
+        checkCudaError(cudaMemcpy(&ret, ptr_, sizeof(T), cudaMemcpyDefault));
+        return ret;
+    }
+
+    GPUScalar &operator=(const T &other) {
+        checkCudaError(cudaMemcpy(ptr_, &other, sizeof(T), cudaMemcpyDefault));
+        return *this;
+    }
+
+    friend T operator+(const GPUScalar &lhs, const GPUScalar &rhs) {
+        return T(lhs) + T(rhs);
+    }
+    friend T operator-(const GPUScalar &lhs, const GPUScalar &rhs) {
+        return T(lhs) - T(rhs);
+    }
+    friend T operator*(const GPUScalar &lhs, const GPUScalar &rhs) {
+        return T(lhs) * T(rhs);
+    }
+    friend T operator/(const GPUScalar &lhs, const GPUScalar &rhs) {
+        return T(lhs) / T(rhs);
+    }
+
+    GPUScalar &operator+=(const T &other) { return *this = *this + other; }
+    GPUScalar &operator-=(const T &other) { return *this = *this - other; }
+    GPUScalar &operator*=(const T &other) { return *this = *this * other; }
+    GPUScalar &operator/=(const T &other) { return *this = *this / other; }
+};
+template <class T> GPUScalar<T> gpuScalar(T *ptr) { return GPUScalar<T>(ptr); }
+template <class T> GPUScalar<T> gpuScalar(T &ref) { return GPUScalar<T>(ref); }
+template <class T> GPUScalar<T> gpuScalar(const T *ptr) {
+    return GPUScalar<T>(ptr);
+}
+template <class T> GPUScalar<T> gpuScalar(const T &ref) {
+    return GPUScalar<T>(ref);
+}
+
 template <class T> __host__ __device__ T floorDiv(T a, T b) {
     T res = a / b, rem = a % b;
     return res - (rem != 0 && ((rem < 0) != (b < 0)));
