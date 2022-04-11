@@ -36,6 +36,10 @@ class CodeGenCUDA : public CodeGenC<CodeGenCUDAStream> {
                   const std::string &shapePtr,
                   const std::string &dimPtr) override;
 
+    using CodeGenC::genScalar;
+    void genScalar(const std::string &var,
+                   const std::vector<Expr> &indices) override;
+
     using CodeGenC<CodeGenCUDAStream>::visit;
     void visitStmt(const Stmt &stmt) override;
     void visit(const Min &op) override;

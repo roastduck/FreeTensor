@@ -39,6 +39,16 @@ void CodeGenCUDA::genAlloc(const Ref<Tensor> &tensor, const std::string &rawPtr,
     os() << "sizeof(" << gen(tensor->dtype()) << ")));" << std::endl;
 }
 
+void CodeGenCUDA::genScalar(const std::string &var,
+                            const std::vector<Expr> &indices) {
+    if (indices.empty() && (buffer(var)->mtype() == MemType::GPUGlobal ||
+                            buffer(var)->mtype() == MemType::GPUShared)) {
+        os() << "*" << mangle(var);
+    } else {
+        CodeGenC::genScalar(var, indices);
+    }
+}
+
 bool CodeGenCUDA::inKernel() const {
     return streamStack_.back().name_ != "default";
 }

@@ -14,30 +14,13 @@
 namespace ir {
 
 template <class Stream>
-template <class T>
-void CodeGenC<Stream>::genScalar(const T &op) {
-    auto id = mangle(op->var_);
-    if (op->indices_.empty()) {
-        switch (this->buffer(op->var_)->mtype()) {
-        case MemType::ByValue:
-        case MemType::CPU:
-        case MemType::GPULocal:
-            this->os() << id;
-            break;
-        case MemType::GPUGlobal:
-        case MemType::GPUShared:
-            this->os() << "*" << id;
-            break;
-        default:
-            ASSERT(false);
-        }
-    } else {
-        this->os() << id;
-        for (auto &&index : op->indices_) {
-            this->os() << "[";
-            (*this)(index);
-            this->os() << "]";
-        }
+void CodeGenC<Stream>::genScalar(const std::string &var,
+                                 const std::vector<Expr> &indices) {
+    this->os() << mangle(var);
+    for (auto &&index : indices) {
+        this->os() << "[";
+        (*this)(index);
+        this->os() << "]";
     }
 }
 
