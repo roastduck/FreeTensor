@@ -7,6 +7,7 @@
 #include <sys/stat.h> // mkdir
 #include <unistd.h>   // rmdir
 
+#include <config.h>
 #include <debug.h>
 #include <driver.h>
 #include <driver/gpu.h>
@@ -80,6 +81,9 @@ void Driver::buildAndLoad() {
         if (dev_.target()->useNativeArch()) {
             cmd += " -march=native";
         }
+        if (Config::debugBinary()) {
+            cmd += " -g";
+        }
         break;
     case TargetType::GPU:
         cmd = "nvcc -I" NAME(IR_RUNTIME_DIR) " -shared -Xcompiler "
@@ -101,9 +105,15 @@ void Driver::buildAndLoad() {
             WARNING("GPU arch not specified, which may result in suboptimal "
                     "performance ");
         }
+        if (Config::debugBinary()) {
+            cmd += " -g";
+        }
         break;
     default:
         ASSERT(false);
+    }
+    if (Config::debugBinary()) {
+        WARNING("debug-binary mode on. Compiling with " + cmd);
     }
     auto compilerErr = system(cmd.c_str());
     if (compilerErr != 0) {
@@ -123,9 +133,15 @@ void Driver::buildAndLoad() {
                           dlerror());
     }
 
-    remove(cpp.c_str());
-    remove(so.c_str());
-    rmdir(path);
+    if (!Config::debugBinary()) {
+        remove(cpp.c_str());
+        remove(so.c_str());
+        rmdir(path);
+    } else {
+        WARNING((std::string) "debug-binary mode on. The produced files are "
+                              "saved in " +
+                path);
+    }
 
     switch (dev_.type()) {
     case TargetType::CPU:
