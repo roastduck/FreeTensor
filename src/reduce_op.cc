@@ -20,6 +20,18 @@ Expr neutralVal(DataType dtype, ReduceOp op) {
             ASSERT(false);
         }
 
+    case DataType::Int64:
+        switch (op) {
+        case ReduceOp::Add:
+            return makeIntConst(0);
+        case ReduceOp::Max:
+            return makeIntConst(LLONG_MIN);
+        case ReduceOp::Min:
+            return makeIntConst(LLONG_MAX);
+        default:
+            ASSERT(false);
+        }
+
     case DataType::Int32:
         switch (op) {
         case ReduceOp::Add:

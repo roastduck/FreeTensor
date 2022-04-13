@@ -9,6 +9,8 @@ def min_value(dtype):
         return -float("inf")
     elif dtype == DataType.Int32:
         return 0x80000000
+    elif dtype == DataType.Int64:
+        return 0x8000000000000000
     else:
         assert False, "Unrecognized data type %s" % dtype
 
@@ -19,6 +21,8 @@ def max_value(dtype):
         return float("inf")
     elif dtype == DataType.Int32:
         return 0x7fffffff
+    elif dtype == DataType.Int64:
+        return 0x7fffffffffffffff
     else:
         assert False, "Unrecognized data type %s" % dtype
 

@@ -5,7 +5,15 @@
 
 namespace ir {
 
-enum class DataType : int { Void = 0, Float32, Float64, Int32, Bool, Custom };
+enum class DataType : int {
+    Void = 0,
+    Float32,
+    Float64,
+    Int32,
+    Int64,
+    Bool,
+    Custom
+};
 
 inline std::string toString(DataType dtype) {
     switch (dtype) {
@@ -15,6 +23,8 @@ inline std::string toString(DataType dtype) {
         return "f64";
     case DataType::Int32:
         return "i32";
+    case DataType::Int64:
+        return "i64";
     case DataType::Bool:
         return "bool";
     case DataType::Custom:
@@ -28,6 +38,7 @@ inline std::string toString(DataType dtype) {
 inline size_t sizeOf(DataType dtype) {
     switch (dtype) {
     case DataType::Float64:
+    case DataType::Int64:
         return 8;
     case DataType::Float32:
     case DataType::Int32:
@@ -45,6 +56,7 @@ inline size_t sizeOf(DataType dtype) {
 inline bool isInt(DataType dtype) {
     switch (dtype) {
     case DataType::Int32:
+    case DataType::Int64:
         return true;
     default:
         return false;

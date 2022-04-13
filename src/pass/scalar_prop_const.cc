@@ -320,7 +320,8 @@ Expr ScalarPropConst::visit(const Cast &op) {
     auto expr = visitExpr(op->expr_);
     if (expr->isConst() &&
         (op->dtype_ == DataType::Bool || op->dtype_ == DataType::Float32 ||
-         op->dtype_ == DataType::Float64 || op->dtype_ == DataType::Int32)) {
+         op->dtype_ == DataType::Float64 || op->dtype_ == DataType::Int64 ||
+         op->dtype_ == DataType::Int32)) {
         expr = castType(op->dtype_, expr.as<ConstNode>());
     }
     return COPY_DEBUG_INFO(makeCast(expr, op->dtype_), op);

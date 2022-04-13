@@ -45,6 +45,27 @@ def test_hello_world_float64():
     assert np.array_equal(x_np, x_std)
 
 
+def test_hello_world_int64():
+    with ir.VarDef("x", (4, 4), "int64", "output", "cpu") as x:
+        x[2, 3] = 2
+        x[1, 0] = 3
+
+    func = ir.lower(ir.Func("main", ["x"], [], ir.pop_ast()), ir.CPU())
+    print(func)
+    code = ir.codegen(func, ir.CPU())
+    print(code)
+
+    x_np = np.zeros((4, 4), dtype="int64")
+    x_arr = ir.Array(x_np, ir.Device(ir.CPU()))
+    ir.Driver(func, code, ir.Device(ir.CPU()))(x=x_arr)
+    x_np = x_arr.numpy()
+
+    x_std = np.zeros((4, 4), dtype="int64")
+    x_std[2, 3] = 2
+    x_std[1, 0] = 3
+    assert np.array_equal(x_np, x_std)
+
+
 def test_hello_world_bool():
     with ir.VarDef("x", (4, 4), "bool", "output", "cpu") as x:
         x[2, 3] = False

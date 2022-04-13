@@ -15,6 +15,8 @@ static std::string genCUBLASType(DataType dtype) {
         return "CUDA_R_64F";
     case DataType::Float32:
         return "CUDA_R_32F";
+    case DataType::Int64:
+        return "CUDA_R_64I";
     case DataType::Int32:
         return "CUDA_R_32I";
     default:

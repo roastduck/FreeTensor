@@ -600,6 +600,8 @@ template <class Stream> std::string CodeGenC<Stream>::gen(DataType dtype) {
         return "double";
     case DataType::Float32:
         return "float";
+    case DataType::Int64:
+        return "int64_t";
     case DataType::Int32:
         return "int32_t";
     case DataType::Bool:

@@ -17,8 +17,8 @@ constexpr int SAMPLE_GROUPS = 10;
 constexpr int SAMPLE_ITERS[SAMPLE_GROUPS] = {32,   64,   128,  256,  512,
                                              1024, 2048, 4096, 8192, 16384};
 constexpr int SAMPLE_FEATURES = 26;
-constexpr int FEAT_SAMP_FLOAT32_OPS = 0;
-constexpr int FEAT_SAMP_INT32_OPS = 1;
+constexpr int FEAT_SAMP_FLOAT32_OPS = 0; // TODO: Float64
+constexpr int FEAT_SAMP_INT32_OPS = 1;   // TODO: Int64
 constexpr int FEAT_SAMP_CPU_LOAD_CNT = 2;
 constexpr int FEAT_SAMP_CPU_STORE_CNT = 3;
 constexpr int FEAT_SAMP_CPU_ACCESS_CNT = 4;

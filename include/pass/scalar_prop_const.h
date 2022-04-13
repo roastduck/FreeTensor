@@ -75,6 +75,7 @@ class ScalarPropConst : public SymbolTable<Mutator> {
         auto result = dispatch(val, [type](auto v) {
             switch (type) {
             case DataType::Int32:
+            case DataType::Int64:
                 return wrap(int64_t(v));
             case DataType::Float32:
             case DataType::Float64:

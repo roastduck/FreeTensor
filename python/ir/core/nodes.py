@@ -549,6 +549,7 @@ def dtype(var):
     if isinstance(var, Var):
         return var.dtype
     else:
+        # TODO: Config default type
         if isinstance(var, float):
             return DataType.Float32
         elif isinstance(var, int):
