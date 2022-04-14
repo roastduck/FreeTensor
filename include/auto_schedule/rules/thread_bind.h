@@ -13,7 +13,7 @@ class ThreadBindRule : public Rule {
 
 class ThreadBindPart : public SketchPartNode {
     void genRandAnnotation(std::default_random_engine &gen) override{};
-    void apply(Schedule &schedule, struct SketchTarget &target) override;
+    void apply(Schedule &schedule, SketchTarget &target) override;
     SketchPartType partType() override { return SketchPartType::ThreadBind; }
     [[nodiscard]] std::vector<int> getAnnotation() const override {
         return {};

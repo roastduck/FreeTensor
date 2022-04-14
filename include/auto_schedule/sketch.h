@@ -20,6 +20,8 @@ enum class SketchPartType : int {
     ThreadBind = 2,
 };
 
+struct SketchTarget;
+
 class SketchPartNode {
   public:
     virtual void genRandAnnotation(std::default_random_engine &gen) = 0;
@@ -28,7 +30,7 @@ class SketchPartNode {
                            std::default_random_engine &gen) {
         return false;
     };
-    virtual void apply(Schedule &schedule, struct SketchTarget &target) = 0;
+    virtual void apply(Schedule &schedule, SketchTarget &target) = 0;
     virtual SketchPartType partType() = 0;
     virtual std::vector<int> getAnnotation() const = 0;
     virtual ~SketchPartNode() = default;
