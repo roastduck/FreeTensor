@@ -44,10 +44,10 @@ class MultiLevelTilingWithFusionPart : public MultiLevelTilingPart {
     explicit MultiLevelTilingWithFusionPart(ForsWithDataReuse fors,
                                             ElementWiseInfo toFuse, int level,
                                             std::string pat, MemType memType);
-    void apply(Schedule &schedule) override;
-    SketchPart mutate(std::default_random_engine &gen) override;
-    SketchPart crossover(const SketchPart &part,
-                         std::default_random_engine &gen) override;
+    void apply(Schedule &schedule, SketchTarget &target) override;
+    bool mutate(std::default_random_engine &gen) override;
+    bool crossover(const SketchPart &part,
+                   std::default_random_engine &gen) override;
     [[nodiscard]] std::vector<int> getAnnotation() const override;
     [[nodiscard]] size_t hash() const override;
     SketchPartType partType() override {

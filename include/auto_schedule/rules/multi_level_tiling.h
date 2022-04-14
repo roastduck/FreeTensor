@@ -41,10 +41,10 @@ class MultiLevelTilingPart : public SketchPartNode {
     std::vector<std::pair<ID, int>> &tiles() { return tiles_; }
     explicit MultiLevelTilingPart(ForsWithDataReuse fors,
                                   std::string pat = "SSRSRS");
-    void apply(Schedule &schedule) override;
-    SketchPart mutate(std::default_random_engine &gen) override;
-    SketchPart crossover(const SketchPart &part,
-                         std::default_random_engine &gen) override;
+    void apply(Schedule &schedule, SketchTarget &target) override;
+    bool mutate(std::default_random_engine &gen) override;
+    bool crossover(const SketchPart &part,
+                   std::default_random_engine &gen) override;
     [[nodiscard]] std::vector<int> getAnnotation() const override;
     size_t spaceLoopLength() const { return target_.spaceLoops.size(); }
     [[nodiscard]] size_t hash() const override;

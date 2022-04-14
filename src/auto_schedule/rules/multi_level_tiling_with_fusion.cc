@@ -2,16 +2,23 @@
 #include <analyze/find_multi_level_tiling.h>
 #include <auto_schedule/rules/multi_level_tiling_with_fusion.h>
 #include <auto_schedule/utils.h>
+#include <unistd.h>
 
 #include <utility>
 
 namespace ir {
 RuleStatus MultiLevelTilingWithFusionRule::analyze(const Sketch &sketch) {
+    if (sketch.nowTarget().hasPart(
+            SketchPartType::MultiLevelTilingWithFusion) ||
+        sketch.nowTarget().hasPart(SketchPartType::MultiLevelTiling)) {
+        return RuleStatus::Skip;
+    }
     if (auto toFuse = findSingleElementWiseConsumer(sketch.schedule().ast(),
-                                                    sketch.nowTarget());
+                                                    sketch.nowTarget().target);
         toFuse.isValid()) {
         toFuse_ = toFuse;
-        return RuleStatus::Apply;
+        return memType_ == MemType::CPU ? RuleStatus::Apply
+                                        : RuleStatus::ApplyAndSkipRest;
     }
     return RuleStatus::Skip;
 }
@@ -21,10 +28,12 @@ MultiLevelTilingWithFusionRule::genPart(const Sketch &sketch) {
     std::vector<Sketch> ret;
     for (size_t i = 0; i < fuseLevels_.size(); i++) {
         Sketch newSketch = sketch.clone();
-        newSketch.addPart(new MultiLevelTilingWithFusionPart(
-            sketch.nowTarget(), toFuse_, fuseLevels_[i], pat_, memType_));
-        newSketch.moveToNextTarget();
-        ret.push_back(std::move(newSketch));
+        newSketch.addPart(Ref<MultiLevelTilingWithFusionPart>::make(
+            MultiLevelTilingWithFusionPart(sketch.nowTarget().target, toFuse_,
+                                           fuseLevels_[i], pat_, memType_)));
+        newSketch.addLog("multi_level_tiling_with_fusion " +
+                         std::to_string(fuseLevels_[i]));
+        ret.push_back(newSketch);
     }
     return ret;
 }
@@ -35,9 +44,18 @@ void MultiLevelTilingWithFusionPart::genRandAnnotation(
     int reductionLoopLength = target_.reductionLoops.size();
     std::vector<std::vector<int>> spaceLoopTiling(spaceLoopLength);
     std::vector<std::vector<int>> reductionLoopTiling(reductionLoopLength);
-    for (int i = 0; i < spaceLoopLength; i++) {
-        spaceLoopTiling[i] =
-            randomFillArray(target_.spaceLoops[i].length, spaceLoopTimes_, gen);
+    while (true) {
+        int vthread = 1;
+        int thread = 1;
+        for (int i = 0; i < spaceLoopLength; i++) {
+            spaceLoopTiling[i] = randomFillArray(target_.spaceLoops[i].length,
+                                                 spaceLoopTimes_, gen);
+            vthread *= spaceLoopTiling[i][spaceLoopTimes_ - 2];
+            thread *= spaceLoopTiling[i][spaceLoopTimes_ - 3];
+        }
+        if (vthread <= 16 && thread <= 1024) {
+            break;
+        }
     }
     for (int i = 0; i < reductionLoopLength; i++) {
         reductionLoopTiling[i] = randomFillArray(
@@ -53,15 +71,15 @@ MultiLevelTilingWithFusionPart::MultiLevelTilingWithFusionPart(
     : MultiLevelTilingPart(std::move(fors), std::move(pat)), memType_(memType),
       level_(level), toFuse_(std::move(toFuse)) {}
 
-void MultiLevelTilingWithFusionPart::apply(Schedule &schedule) {
+void MultiLevelTilingWithFusionPart::apply(Schedule &schedule,
+                                           SketchTarget &target) {
     tiles_ = schedule.multiLevelTilingWithFusion(target_, annotation_, pat_,
                                                  toFuse_, level_, memType_);
 }
 
-SketchPart
-MultiLevelTilingWithFusionPart::mutate(std::default_random_engine &gen) {
+bool MultiLevelTilingWithFusionPart::mutate(std::default_random_engine &gen) {
     // std::cout << "Start mutating...\n";
-    MultiLevelTilingWithFusionPart mut = *this;
+    MultiLevelTilingAnnotation mut = annotation_;
     int mutPart = randomInt(1, gen);
     int spaceSize = target_.spaceLoops.size();
     int reduceSize = target_.reductionLoops.size();
@@ -72,26 +90,34 @@ MultiLevelTilingWithFusionPart::mutate(std::default_random_engine &gen) {
     }
     if (mutPart == 0) {
         int mut_idx = randomInt(target_.spaceLoops.size() - 1, gen);
-        mut.annotation_.spaceLoopTiling[mut_idx] = randomFillArray(
+        mut.spaceLoopTiling[mut_idx] = randomFillArray(
             target_.spaceLoops[mut_idx].length, spaceLoopTimes_, gen);
-
+        int vthread = 1;
+        int thread = 1;
+        for (size_t i = 0; i < target_.spaceLoops.size(); i++) {
+            vthread *= mut.spaceLoopTiling[i][spaceLoopTimes_ - 2];
+            thread *= mut.spaceLoopTiling[i][spaceLoopTimes_ - 3];
+        }
+        if (vthread > 16 || thread > 1024) {
+            return false;
+        }
     } else {
         int mut_idx = randomInt(target_.reductionLoops.size() - 1, gen);
-        mut.annotation_.reductionLoopTiling[mut_idx] = randomFillArray(
+        mut.reductionLoopTiling[mut_idx] = randomFillArray(
             target_.reductionLoops[mut_idx].length, reductionLoopTimes_, gen);
     }
+    annotation_ = mut;
     // std::cout << "End mutating...\n";
-    return Ref<MultiLevelTilingWithFusionPart>::make(std::move(mut));
+    return true;
 }
 
-SketchPart
-MultiLevelTilingWithFusionPart::crossover(const SketchPart &part,
-                                          std::default_random_engine &gen) {
+bool MultiLevelTilingWithFusionPart::crossover(
+    const SketchPart &part, std::default_random_engine &gen) {
     // std::cout << "Start crossover...\n";
     if (part->partType() != SketchPartType::MultiLevelTilingWithFusion)
-        return nullptr;
+        return false;
     auto p = part.as<MultiLevelTilingWithFusionPart>();
-    MultiLevelTilingWithFusionPart mut = *this;
+    MultiLevelTilingAnnotation mut = annotation_;
     int mutPart = randomInt(1, gen);
     int spaceSize = target_.spaceLoops.size();
     int reduceSize = target_.reductionLoops.size();
@@ -102,15 +128,24 @@ MultiLevelTilingWithFusionPart::crossover(const SketchPart &part,
     }
     if (mutPart == 0) {
         int mutIdx = randomInt(target_.spaceLoops.size() - 1, gen);
-        mut.annotation_.spaceLoopTiling[mutIdx] =
-            p->annotation_.spaceLoopTiling[mutIdx];
+        mut.spaceLoopTiling[mutIdx] = p->annotation_.spaceLoopTiling[mutIdx];
+        int vthread = 1;
+        int thread = 1;
+        for (size_t i = 0; i < target_.spaceLoops.size(); i++) {
+            vthread *= mut.spaceLoopTiling[i][spaceLoopTimes_ - 2];
+            thread *= mut.spaceLoopTiling[i][spaceLoopTimes_ - 3];
+        }
+        if (vthread > 16 || thread > 1024) {
+            return false;
+        }
     } else {
         int mutIdx = randomInt(target_.reductionLoops.size() - 1, gen);
-        mut.annotation_.reductionLoopTiling[mutIdx] =
+        mut.reductionLoopTiling[mutIdx] =
             p->annotation_.reductionLoopTiling[mutIdx];
     }
+    annotation_ = mut;
     // std::cout << "End crossover...\n";
-    return Ref<MultiLevelTilingWithFusionPart>::make(std::move(mut));
+    return true;
 }
 
 std::vector<int> MultiLevelTilingWithFusionPart::getAnnotation() const {

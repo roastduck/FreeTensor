@@ -1,3 +1,4 @@
+#include <analyze/all_defs.h>
 #include <cmath>
 #include <schedule.h>
 #include <schedule/multi_level_tiling.h>
@@ -94,7 +95,7 @@ std::vector<std::pair<ID, int>> multiLevelTilingWithFusion(
             tiling[level - j] = annotation.spaceLoopTiling[i][tileSize - 1 - j];
             tot *= annotation.spaceLoopTiling[i][tileSize - 1 - j];
         }
-        tiling[0] = ceil(double(toFuse.fors[i].length) / tot);
+        tiling[0] = toFuse.fors[i].length / tot;
         fuseAnnotation.spaceLoopTiling.push_back(tiling);
     }
     auto fuseTiles =
@@ -110,8 +111,22 @@ std::vector<std::pair<ID, int>> multiLevelTilingWithFusion(
         }
     }
     //    std::cout << "after fuse: " << toString(schedule.ast()) << std::endl;
-    schedule.cache(schedule.find(lastFuse).node().as<ForNode>()->body_->id(),
-                   target.dest, memType);
+    auto body = schedule.find(lastFuse).node().as<ForNode>()->body_;
+    try {
+        schedule.cache(body->id(), target.dest, memType);
+    } catch (const InvalidSchedule &e) {
+        //        auto defs = allDefs(body, {AccessType::Cache});
+        //        bool set = false;
+        //        for (const auto& def : defs) {
+        //            if (def.second == target.dest) {
+        //                schedule.cache(schedule.find(def.first).node().as<VarDefNode>()->buffer_->mtype(),
+        //                target.dest, memType); set = true; break;
+        //            }
+        //        }
+        //        if (!set) {
+        //            throw e;
+        //        }
+    }
     //    std::cout << "after cache: " << toString(schedule.ast()) << std::endl;
     return tiles;
 }

@@ -6,6 +6,7 @@
 #include <auto_schedule/rules/cache_write.h>
 #include <auto_schedule/rules/multi_level_tiling.h>
 #include <auto_schedule/rules/multi_level_tiling_with_fusion.h>
+#include <auto_schedule/rules/skip.h>
 #include <auto_schedule/rules/thread_bind.h>
 #include <auto_schedule/utils.h>
 #include <codegen/code_gen_cpu.h>
@@ -30,9 +31,9 @@ AutoSchedule::AutoSchedule(const Schedule &schedule, const Ref<Target> &target,
     } else {
         rules_.push_back(new CacheWriteRule(target->type()));
         rules_.push_back(new MultiLevelTilingWithFusionRule(target->type()));
-        //        rules_.push_back(new MultiLevelTilingRule(target->type()));
-        initRules_.push_back(new ThreadBindRule);
+        rules_.push_back(new ThreadBindRule());
     }
+    rules_.push_back(new SkipRule());
     std::random_device rd;
     randGen_ = std::default_random_engine(rd());
 }
@@ -62,6 +63,7 @@ AutoSchedule::measure(const std::vector<Schedule> &schedules) {
                 code = codeGenCUDA(func);
             else
                 code = codeGenCPU(func);
+            //            std::cout << code << std::endl;
             drivers[i] = Ref<Driver>::make(Driver(func, code, device_));
         } catch (const std::exception &e) {
             // OpenMP threads won't report an exception message
@@ -75,8 +77,18 @@ AutoSchedule::measure(const std::vector<Schedule> &schedules) {
     for (size_t i = 0; i < n; i++) {
         std::cout << "measure " << i << std::endl;
         ASSERT(paramsSet_);
-        drivers[i]->setParams(args_, kws_);
-        times.emplace_back(drivers[i]->time(5, 20));
+        try {
+            drivers[i]->setParams(args_, kws_);
+            double t = drivers[i]->time(5, 20);
+            if (t < 0.003) {
+                t = 1e30;
+            }
+            times.emplace_back(t);
+        } catch (const std::exception &e) {
+            // OpenMP threads won't report an exception message
+            std::cerr << "ERROR measure: " << e.what() << std::endl;
+            exit(-1);
+        }
     }
     return times;
 }
@@ -93,6 +105,12 @@ std::vector<Sketch> AutoSchedule::searchOneRound(size_t n) {
     testAndAdd(best);
     std::vector<Sketch> rand = getRandPopulation(n * 0.2);
     testAndAdd(rand);
+    auto bs = getBestSchedule();
+    auto logs = bs.logs();
+    for (auto log : logs) {
+        std::cout << log << std::endl;
+    }
+    std::cout << "now best: " << toString(bs.ast()) << std::endl;
     return best;
 }
 
@@ -100,16 +118,14 @@ std::vector<Schedule>
 AutoSchedule::genSchedules(std::vector<Sketch> &sketches) {
     size_t n = sketches.size();
     std::vector<Schedule> ret(n);
-    //#pragma omp parallel for
+#pragma omp parallel for
     for (size_t i = 0; i < n; i++) {
-        std::cout << "begin " << i << std::endl;
         try {
-            ret[i] = sketches[i].genSchedule(initRules_);
+            ret[i] = sketches[i].genSchedule();
         } catch (const std::exception &e) {
             // OpenMP threads won't report an exception message
             std::cerr << "ERROR schedule: " << e.what() << std::endl;
         }
-        std::cout << "end " << i << std::endl;
     }
     return ret;
 }
@@ -159,6 +175,7 @@ std::vector<double> AutoSchedule::testAndAdd(std::vector<Sketch> &sketches_in) {
         timesList.append(py::float_(i));
     }
     updateFunc_(features, timesList);
+    std::make_heap(measuredSketches_.begin(), measuredSketches_.end());
     for (size_t i = 0; i < n; i++) {
         std::cout << "test " << i << std::endl;
         if (measuredSketches_.size() < measuredSize_) {
@@ -177,6 +194,7 @@ std::vector<double> AutoSchedule::testAndAdd(std::vector<Sketch> &sketches_in) {
 
     std::cout << "min " << mn_ << " max " << measuredSketches_[0].time()
               << std::endl;
+    std::sort(measuredSketches_.begin(), measuredSketches_.end());
     return times;
 }
 
@@ -189,7 +207,7 @@ Schedule AutoSchedule::getBestSchedule() {
             best = i;
         }
     }
-    return measuredSketches_[best].genSchedule(initRules_);
+    return measuredSketches_[best].genSchedule();
 }
 
 std::vector<Sketch> AutoSchedule::getRandPopulation(size_t nRand) {
@@ -273,6 +291,7 @@ std::vector<Sketch> AutoSchedule::evolutionarySearch(std::vector<Sketch> init,
         }
 
         while (p2->size() < EVOLUTIONARY_SEARCH_POPULATION) {
+            std::cout << "evo " << p2->size() << std::endl;
             double r = randomDouble(randGen_);
             if (r < EVOLUTIONARY_SEARCH_MUTATION_PROB) {
                 auto nw = (*p1)[randWithProb(probSum, randGen_)].genMutation(
@@ -385,9 +404,10 @@ Schedule AutoSchedule::testMultiLevelTilingWithFusion(int nLevel) {
     }
     Sketch newSketch = rule.genPart(sketch)[nLevel];
     std::cout << toString(newSketch.schedule().ast()) << std::endl;
-    auto part = newSketch.part(0).as<MultiLevelTilingWithFusionPart>();
+    auto part = newSketch.part(0)[SketchPartType::MultiLevelTilingWithFusion]
+                    .as<MultiLevelTilingWithFusionPart>();
     part->genAverageAnnotation();
-    auto schedule = newSketch.genSchedule({});
+    auto schedule = newSketch.genSchedule();
     return schedule;
 }
 
@@ -399,9 +419,10 @@ Schedule AutoSchedule::testThreadBind() {
     }
     Sketch newSketch = rule.genPart(sketch)[0];
     std::cout << toString(newSketch.schedule().ast()) << std::endl;
-    auto part = newSketch.part(0).as<MultiLevelTilingWithFusionPart>();
-    part->genAverageAnnotation();
-    auto schedule = newSketch.genSchedule({new ThreadBindRule});
+    auto part = newSketch.part(0)[SketchPartType::MultiLevelTilingWithFusion]
+                    .as<MultiLevelTilingWithFusionPart>();
+    part->genRandAnnotation(randGen_);
+    auto schedule = newSketch.genSchedule();
     return schedule;
 }
 

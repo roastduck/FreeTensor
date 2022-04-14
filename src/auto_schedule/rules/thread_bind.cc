@@ -14,12 +14,10 @@ ID mergeLoops(Schedule &schedule, std::vector<ID> loops) {
     return outermost;
 }
 
-bool ThreadBindRule::apply(SketchPart &part, Schedule &schedule) const {
-    std::cout << "begin thread bind" << std::endl;
-    if (part->partType() != SketchPartType::MultiLevelTilingWithFusion &&
-        part->partType() != SketchPartType::MultiLevelTiling) {
-        return false;
-    }
+void ThreadBindPart::apply(Schedule &schedule, SketchTarget &target) {
+    SketchPart part =
+        target.getPart(SketchPartType::MultiLevelTilingWithFusion);
+    ASSERT(part.isValid());
     auto mltPart = part.as<MultiLevelTilingPart>();
     auto &tiles = mltPart->tiles();
     size_t spaceLoopLength = mltPart->spaceLoopLength();
@@ -31,11 +29,14 @@ bool ThreadBindRule::apply(SketchPart &part, Schedule &schedule) const {
             blockLoops.push_back(tiles[i].first);
         }
     }
+    int vthread_size = 1;
     for (size_t i = spaceLoopLength; i < spaceLoopLength * 2; i++) {
         if (tiles[i].second > 1) {
             vthreadLoops.push_back(tiles[i].first);
+            vthread_size *= tiles[i].second;
         }
     }
+    std::cout << "vthread size: " << vthread_size << std::endl;
     for (size_t i = spaceLoopLength * 2; i < spaceLoopLength * 3; i++) {
         if (tiles[i].second > 1) {
             threadLoops.push_back(tiles[i].first);
@@ -53,8 +54,21 @@ bool ThreadBindRule::apply(SketchPart &part, Schedule &schedule) const {
     if (threadID.isValid()) {
         schedule.parallelize(threadID, threadIdxX);
     }
-    std::cout << "thread bind ended" << std::endl;
-    return true;
+}
+
+std::vector<Sketch> ThreadBindRule::genPart(const Sketch &sketch) {
+    Sketch newSketch = sketch.clone();
+    newSketch.addPart(Ref<ThreadBindPart>::make());
+    newSketch.addLog("thread_bind");
+    return {newSketch};
+}
+
+RuleStatus ThreadBindRule::analyze(const Sketch &sketch) {
+    if (sketch.nowTarget().hasPart(SketchPartType::ThreadBind))
+        return RuleStatus::Skip;
+    if (sketch.nowTarget().hasPart(SketchPartType::MultiLevelTilingWithFusion))
+        return RuleStatus::ApplyAndSkipRest;
+    return RuleStatus::Skip;
 }
 
 } // namespace ir

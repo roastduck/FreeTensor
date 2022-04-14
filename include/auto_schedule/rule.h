@@ -14,11 +14,6 @@ class Rule {
     virtual std::vector<Sketch> genPart(const Sketch &sketch) = 0;
 };
 
-class InitRule {
-  public:
-    virtual bool apply(SketchPart &part, Schedule &schedule) const = 0;
-};
-
 } // namespace ir
 
 #endif // IR_RULE_H

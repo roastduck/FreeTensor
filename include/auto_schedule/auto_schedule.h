@@ -20,7 +20,7 @@ constexpr int EVOLUTIONARY_SEARCH_ITERS = 4;
 constexpr double EVOLUTIONARY_SEARCH_MUTATION_PROB = 0.6;
 constexpr double EVOLUTIONARY_SEARCH_CROSSOVER_PROB = 0.3;
 
-constexpr double INIT_RAND_RATIO = 0.8;
+constexpr double INIT_RAND_RATIO = 0.7;
 
 class AutoSchedule {
     Schedule original_;
@@ -38,7 +38,6 @@ class AutoSchedule {
     py::function predictFunc_;
     py::function updateFunc_;
     std::vector<Ref<Rule>> rules_;
-    std::vector<Ref<InitRule>> initRules_;
 
   private:
     std::vector<double> measure(const std::vector<Schedule> &schedules);

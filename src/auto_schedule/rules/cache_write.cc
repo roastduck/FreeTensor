@@ -5,24 +5,24 @@
 namespace ir {
 RuleStatus CacheWriteRule::analyze(const Sketch &sketch) {
     if (!findSingleElementWiseConsumer(sketch.schedule().ast(),
-                                       sketch.nowTarget())
+                                       sketch.nowTarget().target)
              .isValid()) {
-        return RuleStatus::Apply;
+        return memType_ == MemType::CPU ? RuleStatus::Apply
+                                        : RuleStatus::ApplyAndSkipRest;
     }
     return RuleStatus::Skip;
 }
 
 std::vector<Sketch> CacheWriteRule::genPart(const Sketch &sketch) {
     Sketch newSketch = sketch.clone();
-    const auto &target = newSketch.nowTarget();
+    auto &target = newSketch.nowTarget().target;
     std::cout << "cache: " << target.outermost.strId() << " " << target.dest
               << std::endl;
     std::string name = std::get<2>(
         newSketch.schedule().cache(target.outermost, target.dest, memType_));
-    newSketch.nowTarget().dest = name;
-    newSketch.addDoneRule(
-        "cache_write_" +
-        std::to_string(std::hash<ForsWithDataReuse>{}(target)));
+    target.dest = name;
+    newSketch.addLog("cache_write_" +
+                     std::to_string(std::hash<ForsWithDataReuse>{}(target)));
     return {newSketch};
 }
 
