@@ -365,3 +365,36 @@ def test_no_inline_defined_inside_a_loop():
         s.inline("U")
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ir.make_reduction(ast))
+
+
+def test_def_then_use_then_def_in_the_same_place():
+    with ir.VarDef("x", (128, 128, 128), "float64", "inout", "cpu") as x:
+        with ir.VarDef("r", (128, 128, 128), "float64", "input", "cpu") as r:
+            with ir.For("ix_2", 1, 127) as ix:
+                with ir.For("iy_2", 1, 127) as iy:
+                    with ir.For("iz_2", 1, 127) as iz:
+                        ir.MarkNid('sx')
+                        with ir.VarDef("sx", (), "float64", "cache",
+                                       "cpu") as sx:
+                            sx[()] = x[ix + -1, iy + 1, iz + -1] + x[ix, iy + 1,
+                                                                     iz + -1]
+                            x[ix, iy, iz] = sx[()] / 26.0
+    ast = ir.pop_ast()
+    print(ast)
+    s = ir.Schedule(ast)
+    s.inline('sx')
+    ast = s.ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef("x", (128, 128, 128), "float64", "inout", "cpu") as x:
+        with ir.VarDef("r", (128, 128, 128), "float64", "input", "cpu") as r:
+            with ir.For("ix_2", 1, 127) as ix:
+                with ir.For("iy_2", 1, 127) as iy:
+                    with ir.For("iz_2", 1, 127) as iz:
+                        x[ix, iy, iz] = (x[ix + -1, iy + 1, iz + -1] +
+                                         x[ix, iy + 1, iz + -1]) / 26.0
+    std = ir.pop_ast()
+
+    assert std.match(ast)
