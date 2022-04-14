@@ -1,3 +1,4 @@
+#include <analyze/all_defs.h>
 #include <cmath>
 #include <schedule.h>
 #include <schedule/multi_level_tiling.h>
@@ -64,26 +65,25 @@ multiLevelTiling(Schedule &schedule, const ForsWithDataReuse &target,
         }
     }
     std::vector<ID> labels;
-    std::cout << "tiles: ";
+    //    std::cout << "tiles: ";
     for (const auto &tile : tiles) {
         if (tile.second > 1) {
             labels.push_back(tile.first);
-            std::cout << tile.first.strId() << " ";
+            //            std::cout << tile.first.strId() << " ";
         }
     }
     schedule.reorder(labels);
     return tiles;
 }
 
-void multiLevelTilingWithFusion(Schedule &schedule,
-                                const ForsWithDataReuse &target,
-                                const MultiLevelTilingAnnotation &annotation,
-                                const std::string &pat,
-                                const ElementWiseInfo &toFuse, int level) {
+std::vector<std::pair<ID, int>> multiLevelTilingWithFusion(
+    Schedule &schedule, const ForsWithDataReuse &target,
+    const MultiLevelTilingAnnotation &annotation, const std::string &pat,
+    const ElementWiseInfo &toFuse, int level, MemType memType) {
     auto tiles = multiLevelTiling(schedule, target, annotation, pat);
     std::string fusePat = pat.substr(0, level) + "S";
-    std::cout << toString(schedule.ast()) << std::endl;
-    std::cout << "Level: " << level << "Fuse Pattern: " << fusePat << std::endl;
+    //    std::cout << "Level: " << level << "Fuse Pattern: " << fusePat <<
+    //    std::endl;
     MultiLevelTilingAnnotation fuseAnnotation;
     ForsWithDataReuse fuseTarget;
     for (size_t i = 0; i < toFuse.fors.size(); i++) {
@@ -95,24 +95,27 @@ void multiLevelTilingWithFusion(Schedule &schedule,
             tiling[level - j] = annotation.spaceLoopTiling[i][tileSize - 1 - j];
             tot *= annotation.spaceLoopTiling[i][tileSize - 1 - j];
         }
-        tiling[0] = ceil(double(toFuse.fors[i].length) / tot);
+        tiling[0] = toFuse.fors[i].length / tot;
         fuseAnnotation.spaceLoopTiling.push_back(tiling);
     }
     auto fuseTiles =
         multiLevelTiling(schedule, fuseTarget, fuseAnnotation, fusePat);
-    std::cout << toString(schedule.ast()) << std::endl;
+    //    std::cout << toString(schedule.ast()) << std::endl;
     size_t fuseTileSize = fuseTiles.size() - fuseTarget.spaceLoops.size();
     ID lastFuse;
-    std::cout << "before fuse: " << toString(schedule.ast()) << std::endl;
+    //    std::cout << "before fuse: " << toString(schedule.ast()) << std::endl;
     for (size_t i = 0; i < fuseTileSize; i++) {
         if (fuseTiles[i].second > 1) {
-            lastFuse = schedule.fuse(tiles[i].first, fuseTiles[i].first);
+            lastFuse = tiles[i].first =
+                schedule.fuse(tiles[i].first, fuseTiles[i].first);
         }
     }
-    std::cout << "after fuse: " << toString(schedule.ast()) << std::endl;
-    schedule.cache(schedule.find(lastFuse).as<ForNode>()->body_->id(),
-                   target.dest, MemType::CPU);
-    std::cout << "after cache: " << toString(schedule.ast()) << std::endl;
+    auto &body = schedule.find(lastFuse).as<ForNode>()->body_;
+    try {
+        schedule.cache(body->id(), target.dest, memType);
+    } catch (const InvalidSchedule &e) {
+    }
+    return tiles;
 }
 
 } // namespace ir
