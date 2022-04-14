@@ -58,7 +58,7 @@ def test_thread_bind():
         'split(L5, factor=2, nparts=-1)', 'split(L5.0, factor=2, nparts=-1)',
         'split(L5.0.0, factor=2, nparts=-1)',
         'split(L5.0.0.0, factor=2, nparts=-1)',
-        'split(L3, factor=6, nparts=-1)', 'split(L3.0, factor=6, nparts=-1)',
+        'split(L3, factor=2, nparts=-1)', 'split(L3.0, factor=2, nparts=-1)',
         'reorder(L4.0.0.0.0, L5.0.0.0.0, L4.0.0.0.1, L5.0.0.0.1, L4.0.0.1, L5.0.0.1, L3.0.0, L3.0.1, L4.0.1, L5.0.1, L3.1, L4.1, L5.1)',
         'split(L6, factor=4, nparts=-1)', 'split(L6.0, factor=2, nparts=-1)',
         'split(L6.0.0, factor=2, nparts=-1)', 'split(L7, factor=4, nparts=-1)',
@@ -76,6 +76,7 @@ def test_thread_bind():
         'parallelize(merged.fused.L4.0.0.1.L6.0.1.fused.L5.0.0.1.L7.0.1, threadIdx.x)'
     ]
     sch_log = sch.logs()
+    print(sch_log)
     assert len(sch_log) == len(std_log)
     for l, r in zip(sch_log, std_log):
         if l.startswith('cache'):

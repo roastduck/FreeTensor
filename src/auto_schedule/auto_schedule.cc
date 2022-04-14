@@ -405,7 +405,7 @@ Schedule AutoSchedule::testMultiLevelTilingWithFusion(int nLevel) {
     std::cout << toString(newSketch.schedule().ast()) << std::endl;
     auto part = newSketch.part(0)[SketchPartType::MultiLevelTilingWithFusion]
                     .as<MultiLevelTilingWithFusionPart>();
-    part->genAverageAnnotation();
+    part->genSampleAnnotation();
     auto schedule = newSketch.genSchedule();
     return schedule;
 }
@@ -420,7 +420,8 @@ Schedule AutoSchedule::testThreadBind() {
     std::cout << toString(newSketch.schedule().ast()) << std::endl;
     auto part = newSketch.part(0)[SketchPartType::MultiLevelTilingWithFusion]
                     .as<MultiLevelTilingWithFusionPart>();
-    part->genRandAnnotation(randGen_);
+    part->genSampleAnnotation();
+    newSketch.addPart(Ref<ThreadBindPart>::make());
     auto schedule = newSketch.genSchedule();
     return schedule;
 }

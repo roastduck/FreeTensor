@@ -129,14 +129,14 @@ size_t MultiLevelTilingPart::hash() const {
     return h;
 }
 
-void MultiLevelTilingPart::genAverageAnnotation() {
+void MultiLevelTilingPart::genSampleAnnotation() {
     int spaceLoopLength = target_.spaceLoops.size();
     int reductionLoopLength = target_.reductionLoops.size();
     std::vector<std::vector<int>> spaceLoopTiling(spaceLoopLength);
     std::vector<std::vector<int>> reductionLoopTiling(reductionLoopLength);
     for (int i = 0; i < spaceLoopLength; i++) {
         int len = target_.spaceLoops[i].length;
-        int div = floor(pow(len, 1. / spaceLoopTimes_));
+        int div = 2;
         int last = ceil(double(len) / pow(div, spaceLoopTimes_ - 1));
 
         spaceLoopTiling[i] = std::vector<int>(spaceLoopTimes_, div);
@@ -144,7 +144,7 @@ void MultiLevelTilingPart::genAverageAnnotation() {
     }
     for (int i = 0; i < reductionLoopLength; i++) {
         int len = target_.reductionLoops[i].length;
-        int div = floor(pow(len, 1. / reductionLoopTimes_));
+        int div = 2;
         int last = ceil(double(len) / pow(div, reductionLoopTimes_ - 1));
         reductionLoopTiling[i] = std::vector<int>(reductionLoopTimes_, div);
         reductionLoopTiling[i][reductionLoopTimes_ - 1] = last;

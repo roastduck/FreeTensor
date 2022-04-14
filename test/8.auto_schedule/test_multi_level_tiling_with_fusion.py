@@ -52,17 +52,18 @@ def test_fusion():
     z_arr = ir.Array(z_np, device)
     ir.Driver(func, code, device)(w=w_arr, x=x_arr, y=y_arr, z=z_arr)
     std_log = [
-        'split(L4, factor=3, nparts=-1)', 'split(L4.0, factor=3, nparts=-1)',
-        'split(L4.0.0, factor=3, nparts=-1)', 'split(L5, factor=3, nparts=-1)',
-        'split(L5.0, factor=3, nparts=-1)',
-        'split(L5.0.0, factor=3, nparts=-1)', 'split(L3, factor=16, nparts=-1)',
+        'split(L4, factor=2, nparts=-1)', 'split(L4.0, factor=2, nparts=-1)',
+        'split(L4.0.0, factor=2, nparts=-1)', 'split(L5, factor=2, nparts=-1)',
+        'split(L5.0, factor=2, nparts=-1)',
+        'split(L5.0.0, factor=2, nparts=-1)', 'split(L3, factor=2, nparts=-1)',
         'reorder(L4.0.0.0, L5.0.0.0, L4.0.0.1, L5.0.0.1, L3.0, L4.0.1, L5.0.1, L3.1, L4.1, L5.1)',
-        'split(L6, factor=9, nparts=-1)', 'split(L6.0, factor=3, nparts=-1)',
-        'split(L7, factor=9, nparts=-1)', 'split(L7.0, factor=3, nparts=-1)',
+        'split(L6, factor=4, nparts=-1)', 'split(L6.0, factor=2, nparts=-1)',
+        'split(L7, factor=4, nparts=-1)', 'split(L7.0, factor=2, nparts=-1)',
         'reorder(L6.0.0, L7.0.0, L6.0.1, L7.0.1, L6.1, L7.1)',
         'fuse(L4.0.0.0, L6.0.0)', 'fuse(L5.0.0.0, L7.0.0)',
         'fuse(L4.0.0.1, L6.0.1)', 'fuse(L5.0.0.1, L7.0.1)', 'cache(#23, y)'
     ]
     sch_log = sch.logs()
+    print(sch_log)
     assert std_log[:-1] == sch_log[:-1]
     assert sch_log[-1][:6] == 'cache(' and sch_log[-1][-4:] == ', y)'
