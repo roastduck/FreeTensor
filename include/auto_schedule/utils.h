@@ -9,6 +9,28 @@
 
 namespace ir {
 
+inline std::vector<int> _randomFillArray(int total, int n,
+                                         std::default_random_engine &gen) {
+    double log_total = log2(total);
+    std::uniform_real_distribution<> dis(
+        0, std::nextafter(log_total, std::numeric_limits<double>::max()));
+    std::vector<double> data;
+    data.reserve(n);
+    for (int i = 0; i < n - 1; i++) {
+        data.push_back(dis(gen));
+    }
+    data.push_back(log_total);
+    std::sort(data.begin(), data.end());
+    std::vector<int> result;
+    result.reserve(n);
+    int tot = 1;
+    for (int i = 0; i < n; i++) {
+        result.push_back(ceil(exp2(data[i]) / tot));
+        tot *= result[i];
+    }
+    return result;
+}
+
 inline int randomInt(int mx, std::default_random_engine &gen) {
     std::uniform_int_distribution<> dis(0, mx);
     return dis(gen);

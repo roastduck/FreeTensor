@@ -11,7 +11,6 @@
 namespace ir {
 
 class SketchPartNode;
-class InitRule;
 
 typedef Ref<SketchPartNode> SketchPart;
 

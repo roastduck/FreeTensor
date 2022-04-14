@@ -2,9 +2,6 @@
 #include <analyze/find_multi_level_tiling.h>
 #include <auto_schedule/rules/multi_level_tiling_with_fusion.h>
 #include <auto_schedule/utils.h>
-#include <unistd.h>
-
-#include <utility>
 
 namespace ir {
 RuleStatus MultiLevelTilingWithFusionRule::analyze(const Sketch &sketch) {

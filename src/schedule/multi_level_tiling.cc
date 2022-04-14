@@ -110,24 +110,11 @@ std::vector<std::pair<ID, int>> multiLevelTilingWithFusion(
                 schedule.fuse(tiles[i].first, fuseTiles[i].first);
         }
     }
-    //    std::cout << "after fuse: " << toString(schedule.ast()) << std::endl;
     auto &body = schedule.find(lastFuse).as<ForNode>()->body_;
     try {
         schedule.cache(body->id(), target.dest, memType);
     } catch (const InvalidSchedule &e) {
-        //        auto defs = allDefs(body, {AccessType::Cache});
-        //        bool set = false;
-        //        for (const auto& def : defs) {
-        //            if (def.second == target.dest) {
-        //                schedule.cache(schedule.find(def.first).node().as<VarDefNode>()->buffer_->mtype(),
-        //                target.dest, memType); set = true; break;
-        //            }
-        //        }
-        //        if (!set) {
-        //            throw e;
-        //        }
     }
-    //    std::cout << "after cache: " << toString(schedule.ast()) << std::endl;
     return tiles;
 }
 
