@@ -15,7 +15,7 @@ RuleStatus MultiLevelTilingRule::analyze(const Sketch &sketch) {
 std::vector<Sketch> MultiLevelTilingRule::genPart(const Sketch &sketch) {
     Sketch newSketch = sketch.clone();
     newSketch.addPart(
-        new MultiLevelTilingPart(sketch.nowTarget().target, pat_));
+        Ref<MultiLevelTilingPart>::make(sketch.nowTarget().target, pat_));
     newSketch.addLog("multi_level_tiling");
     return {newSketch};
 }

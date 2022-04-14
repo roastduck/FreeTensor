@@ -29,8 +29,8 @@ MultiLevelTilingWithFusionRule::genPart(const Sketch &sketch) {
     for (size_t i = 0; i < fuseLevels_.size(); i++) {
         Sketch newSketch = sketch.clone();
         newSketch.addPart(Ref<MultiLevelTilingWithFusionPart>::make(
-            MultiLevelTilingWithFusionPart(sketch.nowTarget().target, toFuse_,
-                                           fuseLevels_[i], pat_, memType_)));
+            sketch.nowTarget().target, toFuse_, fuseLevels_[i], pat_,
+            memType_));
         newSketch.addLog("multi_level_tiling_with_fusion " +
                          std::to_string(fuseLevels_[i]));
         ret.push_back(newSketch);
