@@ -6,7 +6,7 @@ namespace ir {
 
 Stmt Parallelize::visit(const For &_op) {
     auto thisParallel =
-        _op->id() == loop_ ? parallel_ : _op->property_.parallel_;
+        _op->id() == loop_ ? parallel_ : _op->property_->parallel_;
     Stmt __op;
     loopStack_.emplace_back(_op->id());
     if (std::holds_alternative<CUDAScope>(thisParallel)) {
@@ -31,7 +31,7 @@ Stmt Parallelize::visit(const For &_op) {
     auto op = __op.as<ForNode>();
 
     if (op->id() == loop_) {
-        op->property_.parallel_ = parallel_;
+        op->property_->parallel_ = parallel_;
         outerLoops_ = loopStack_;
         done_ = true;
     }
@@ -64,8 +64,8 @@ Stmt parallelize(const Stmt &_ast, const ID &loop,
         }
         auto filter = [&](const AccessPoint &later,
                           const AccessPoint &earlier) {
-            return earlier.cursor_.getParentById(loop).isValid() &&
-                   later.cursor_.getParentById(loop).isValid();
+            return earlier.stmt_->ancestorById(loop).isValid() &&
+                   later.stmt_->ancestorById(loop).isValid();
         };
         auto found = [&](const Dependency &d) {
             throw InvalidSchedule(toString(d) + " cannot be resolved");
@@ -77,8 +77,8 @@ Stmt parallelize(const Stmt &_ast, const ID &loop,
     {
         auto filter = [&](const AccessPoint &later,
                           const AccessPoint &earlier) {
-            bool earlierInLoop = earlier.cursor_.getParentById(loop).isValid();
-            bool laterInLoop = later.cursor_.getParentById(loop).isValid();
+            bool earlierInLoop = earlier.stmt_->ancestorById(loop).isValid();
+            bool laterInLoop = later.stmt_->ancestorById(loop).isValid();
             if ((earlierInLoop && !laterInLoop) ||
                 (!earlierInLoop && laterInLoop)) {
                 if (std::holds_alternative<CUDAScope>(parallel) &&

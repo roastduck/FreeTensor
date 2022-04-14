@@ -51,7 +51,7 @@ Stmt InlinedInvoke::visit(const ReduceTo &op) {
 
 Stmt InlinedInvoke::visit(const VarDef &op) {
     if (kvs_.count(op->name_)) {
-        if ((int)op->buffer_->tensor().shape().size() !=
+        if ((int)op->buffer_->tensor()->shape().size() !=
             kvs_.at(op->name_)->ndim()) {
             throw InvalidProgram("The number of dimensions of argument " +
                                  toString(*kvs_.at(op->name_)) +
@@ -67,7 +67,7 @@ Stmt inlinedInvoke(
     const ID &callSiteId, const Func &func,
     const std::vector<Ref<FrontendVar>> &args,
     const std::unordered_map<std::string, Ref<FrontendVar>> &_kvs) {
-    auto ast = func->body_;
+    Stmt ast = func->body_;
     ast = undoMakeReduction(ast);
 
     auto kvs = _kvs;

@@ -39,7 +39,7 @@ Stmt ShrinkFor::visitStmt(const Stmt &stmt) {
         checker(stmt.as<ForNode>()->step_);
         break;
     case ASTNodeType::VarDef:
-        for (auto &&dim : stmt.as<VarDefNode>()->buffer_->tensor().shape()) {
+        for (auto &&dim : stmt.as<VarDefNode>()->buffer_->tensor()->shape()) {
             checker(dim);
         }
         break;
@@ -99,11 +99,11 @@ Stmt ShrinkFor::visit(const For &_op) {
     auto lower = makeMinMax(newRange_.at(var).first);
     auto upper = makeMaxMin(newRange_.at(var).second);
 
-    if (op->property_.unroll_ ||
-        (std::holds_alternative<CUDAScope>(op->property_.parallel_) &&
-         std::get<CUDAScope>(op->property_.parallel_).level_ ==
+    if (op->property_->unroll_ ||
+        (std::holds_alternative<CUDAScope>(op->property_->parallel_) &&
+         std::get<CUDAScope>(op->property_->parallel_).level_ ==
              CUDAScope::Thread &&
-         !op->property_.reductions_.empty())) {
+         !op->property_->reductions_.empty())) {
         // Backends do not support these loops to be of variable lengths
         if (lower.isValid() && lower->nodeType() != ASTNodeType::IntConst) {
             return op;

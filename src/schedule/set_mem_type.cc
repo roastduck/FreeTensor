@@ -4,12 +4,12 @@
 namespace ir {
 
 Stmt SetMemType::visit(const For &op) {
-    if (op->property_.parallel_ == serialScope) {
+    if (op->property_->parallel_ == serialScope) {
         return Mutator::visit(op);
     } else {
-        inScope_[op->property_.parallel_]++;
+        inScope_[op->property_->parallel_]++;
         auto ret = Mutator::visit(op);
-        inScope_[op->property_.parallel_]--;
+        inScope_[op->property_->parallel_]--;
         return ret;
     }
 }

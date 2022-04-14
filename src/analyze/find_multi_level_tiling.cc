@@ -130,10 +130,9 @@ void FindHasStore::visit(const Store &op) {
                                     op->indices_.begin(), op->indices_.end());
         forWithStore.checkDataReuseIndices.push_back(op->indices_);
     } else {
-        found_.insert(
-            {stack_.back().id,
-             {stack_.back().id, op->var_, op->indices_,
-              std::vector<std::vector<SubTree<ExprNode>>>(1, op->indices_)}});
+        found_.insert({stack_.back().id,
+                       {stack_.back().id, op->var_, op->indices_,
+                        std::vector<std::vector<Expr>>(1, op->indices_)}});
     }
     Visitor::visit(op);
 }

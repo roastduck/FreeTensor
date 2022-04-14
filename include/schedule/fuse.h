@@ -6,12 +6,12 @@
 
 namespace ir {
 
-struct LoopInVarDefs {
+struct LoopInScopes {
     For loop_;
-    std::vector<Stmt> surroundings_; // inner to outer
+    std::vector<Stmt> scopes_; // inner to outer
 };
 
-enum class FindLoopInVarDefsDirection : int { Front, Back };
+enum class FindLoopInScopesDirection : int { Front, Back };
 
 class FuseFor : public Mutator {
     Stmt root_;
@@ -38,13 +38,13 @@ class FuseFor : public Mutator {
 
 class CheckAccessible : public Visitor {
     ID id0_, id1_;
-    LoopInVarDefs loop0InVarDefs_, loop1InVarDefs_;
+    LoopInScopes loop0InScopes_, loop1InScopes_;
 
   public:
     CheckAccessible(const ID &id0, const ID &id1) : id0_(id0), id1_(id1) {}
 
-    const LoopInVarDefs &loop0() const { return loop0InVarDefs_; }
-    const LoopInVarDefs &loop1() const { return loop1InVarDefs_; }
+    const LoopInScopes &loop0() const { return loop0InScopes_; }
+    const LoopInScopes &loop1() const { return loop1InScopes_; }
 
   protected:
     void visit(const StmtSeq &op) override;

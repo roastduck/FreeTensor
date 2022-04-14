@@ -304,8 +304,8 @@ void StructuralFeature::visit(const ReduceTo &op) {
         accesses.hi_.emplace_back(bound_.getUpper(idx));
     }
 
-    info_[op]
-        .opCnt_[upCast(buffer(op->var_)->tensor().dtype(), dtype(op->expr_))]++;
+    info_[op].opCnt_[upCast(buffer(op->var_)->tensor()->dtype(),
+                            dtype(op->expr_))]++;
     info_[op].loadCnt_[buffer(op->var_)->mtype()]++;
     info_[op].storeCnt_[buffer(op->var_)->mtype()]++;
     info_[op].accessCnt_[buffer(op->var_)->mtype()]++;
@@ -367,7 +367,7 @@ void StructuralFeature::visit(const For &op) {
 void StructuralFeature::visit(const VarDef &op) {
     BaseClass::visit(op);
 
-    for (auto &&item : op->buffer_->tensor().shape()) {
+    for (auto &&item : op->buffer_->tensor()->shape()) {
         updInfo(op, item);
     }
     updInfo(op, op->body_);

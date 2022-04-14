@@ -45,7 +45,7 @@ class Visitor {
     }
 
     virtual void visit(const VarDef &op) {
-        for (auto &&dim : op->buffer_->tensor().shape()) {
+        for (auto &&dim : op->buffer_->tensor()->shape()) {
             (*this)(dim);
         }
         if (op->sizeLim_.isValid()) {
@@ -199,11 +199,11 @@ class Visitor {
         (*this)(op->begin_);
         (*this)(op->end_);
         (*this)(op->len_);
-        for (auto &&[redOp, var, begins, ends] : op->property_.reductions_) {
-            for (auto &&item : begins) {
+        for (auto &&r : op->property_->reductions_) {
+            for (auto &&item : r->begins_) {
                 (*this)(item);
             }
-            for (auto &&item : ends) {
+            for (auto &&item : r->ends_) {
                 (*this)(item);
             }
         }

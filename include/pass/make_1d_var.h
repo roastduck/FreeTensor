@@ -19,7 +19,7 @@ class Make1DVar : public SymbolTable<Mutator> {
     typedef SymbolTable<Mutator> BaseClass;
 
     template <class T> T visitMemAcc(const T &op) {
-        auto &&shape = buffer(op->var_)->tensor().shape();
+        auto &&shape = buffer(op->var_)->tensor()->shape();
         if (shape.size() <= 1) {
             return op;
         }
@@ -32,7 +32,7 @@ class Make1DVar : public SymbolTable<Mutator> {
             res = res.isValid() ? makeMul(res, dim) : res;
             res = res.isValid() ? makeAdd(res, idx) : (Expr)idx;
         }
-        op->indices_ = std::vector<SubTree<ExprNode>>({res});
+        op->indices_ = {res};
         return op;
     }
 

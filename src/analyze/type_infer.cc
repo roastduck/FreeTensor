@@ -28,7 +28,7 @@ void TypeInfer::visit(const Load &op) {
     for (auto &&idx : op->indices_) {
         CHK_TYPE(isInt, types_.at(idx), op);
     }
-    types_[op] = symbolTable_.buffer(op->var_)->tensor().dtype();
+    types_[op] = symbolTable_.buffer(op->var_)->tensor()->dtype();
 }
 
 void TypeInfer::visit(const IntConst &op) {

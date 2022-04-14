@@ -75,6 +75,7 @@ class ScalarPropConst : public SymbolTable<Mutator> {
         auto result = dispatch(val, [type](auto v) {
             switch (type) {
             case DataType::Int32:
+            case DataType::Int64:
                 return wrap(int64_t(v));
             case DataType::Float32:
             case DataType::Float64:
@@ -124,8 +125,7 @@ class ScalarPropConst : public SymbolTable<Mutator> {
      * @return std::optional<ScalarIndices> Indices to the scalar, if all
      * indices are constant
      */
-    std::optional<ScalarIndices>
-    tryToScalar(const std::vector<SubTree<ExprNode>> &exprs);
+    std::optional<ScalarIndices> tryToScalar(const std::vector<Expr> &exprs);
 
     /// Scalar constants records, with first level map indexing var names and
     /// second indexing indices

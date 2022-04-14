@@ -12,7 +12,7 @@ Stmt HoistReturnVars::visit(const VarDef &_op) {
                      [&](const std::pair<std::string, DataType> &ret) {
                          return ret.first == op->name_;
                      }) != func_->returns_.end()) {
-        for (auto &&dim : op->buffer_->tensor().shape()) {
+        for (auto &&dim : op->buffer_->tensor()->shape()) {
             if (!checkNotModified(func_->body_, dim,
                                   CheckNotModifiedSide::Before, op->id(),
                                   CheckNotModifiedSide::Before, outMostLoop_)) {
@@ -39,8 +39,8 @@ Stmt HoistReturnVars::visit(const For &op) {
         outMostLoop_ = ID();
 
         for (auto def : toHoist_) {
-            ret = makeVarDef(def->id(), def->name_, *def->buffer_,
-                             def->sizeLim_, std::move(ret), def->pinned_);
+            ret = makeVarDef(def->id(), def->name_, def->buffer_, def->sizeLim_,
+                             std::move(ret), def->pinned_);
         }
         return ret;
     } else {

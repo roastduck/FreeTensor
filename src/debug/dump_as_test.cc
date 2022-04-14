@@ -16,6 +16,8 @@ void DumpAsTest::printId(const Stmt &op) {
 
 std::string DumpAsTest::asTest(DataType dtype) const {
     switch (dtype) {
+    case DataType::Int64:
+        return "\"int64\"";
     case DataType::Int32:
         return "\"int32\"";
     case DataType::Float32:
@@ -79,11 +81,11 @@ void DumpAsTest::visit(const VarDef &op) {
     makeIndent();
     os() << "with ir.VarDef(\"" << op->name_ << "\", (";
     auto &&tensor = op->buffer_->tensor();
-    for (auto &&dim : tensor.shape()) {
+    for (auto &&dim : tensor->shape()) {
         (*this)(dim);
         os() << ", ";
     }
-    os() << "), " << asTest(tensor.dtype()) << ", "
+    os() << "), " << asTest(tensor->dtype()) << ", "
          << asTest(op->buffer_->atype()) << ", " << asTest(op->buffer_->mtype())
          << ") as " << mangle(op->name_) << ": " << std::endl;
     nIndent()++;
@@ -369,13 +371,13 @@ void DumpAsTest::visit(const If &op) {
     makeIndent();
     os() << "with ir.If(";
     (*this)(op->cond_);
-    os() << "):";
+    os() << "):" << std::endl;
     nIndent()++;
     (*this)(op->thenCase_);
     nIndent()--;
     if (op->elseCase_.isValid()) {
         makeIndent();
-        os() << "with ir.Else():";
+        os() << "with ir.Else():" << std::endl;
         nIndent()++;
         (*this)(op->elseCase_);
         nIndent()--;
@@ -386,7 +388,7 @@ void DumpAsTest::visit(const Assert &op) {
     makeIndent();
     os() << "with ir.Assert(";
     (*this)(op->cond_);
-    os() << "):";
+    os() << "):" << std::endl;
     nIndent()++;
     (*this)(op->body_);
     nIndent()--;

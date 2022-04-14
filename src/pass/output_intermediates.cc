@@ -94,12 +94,12 @@ Stmt OutputIntermediates::visit(const VarDef &_op) {
             auto op = __op.as<VarDefNode>();
 
             auto tapeName = tapeNames_[op->id()] = op->name_ + ".tape";
-            auto tensor = op->buffer_->tensor();
-            tensor.shape().insert(tensor.shape().begin(),
-                                  totLens_.at(op->id()));
+            Ref<Tensor> tensor = deepCopy(op->buffer_->tensor());
+            tensor->shape().insert(tensor->shape().begin(),
+                                   totLens_.at(op->id()));
             return makeVarDef("", tapeName,
-                              Buffer(std::move(tensor), AccessType::Output,
-                                     toGlobalMemType(op->buffer_->mtype())),
+                              makeBuffer(std::move(tensor), AccessType::Output,
+                                         toGlobalMemType(op->buffer_->mtype())),
                               nullptr, op, false);
         }
     } else {

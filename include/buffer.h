@@ -3,6 +3,7 @@
 
 #include <string>
 
+#include <sub_tree.h>
 #include <tensor.h>
 
 namespace ir {
@@ -50,26 +51,38 @@ inline std::string toString(MemType mtype) {
     return "[???]";
 }
 
-class Buffer {
-    Tensor tensor_;
+class Buffer : public ASTPart {
+    template <class T> friend Ref<Buffer> makeBuffer(T &&, AccessType, MemType);
+
+    SubTree<Tensor> tensor_ = ChildOf{this};
     AccessType atype_;
     MemType mtype_;
 
   public:
-    Buffer(Tensor &&tensor, AccessType atype, MemType mtype)
-        : tensor_(std::move(tensor)), atype_(atype), mtype_(mtype) {}
-    Buffer(const Tensor &tensor, AccessType atype, MemType mtype)
-        : tensor_(tensor), atype_(atype), mtype_(mtype) {}
-
-    const Tensor &tensor() const { return tensor_; }
-    Tensor &tensor() { return tensor_; }
+    const auto &tensor() const { return tensor_; }
+    auto &tensor() { return tensor_; }
 
     void setAtype(AccessType atype) { atype_ = atype; }
     AccessType atype() const { return atype_; }
 
     void setMtype(MemType mtype) { mtype_ = mtype; }
     MemType mtype() const { return mtype_; }
+
+    void compHash() override;
 };
+
+template <class T>
+Ref<Buffer> makeBuffer(T &&tensor, AccessType atype, MemType mtype) {
+    auto b = Ref<Buffer>::make();
+    b->tensor_ = std::forward<T>(tensor);
+    b->atype_ = atype;
+    b->mtype_ = mtype;
+    return b;
+}
+
+inline Ref<Buffer> deepCopy(const Ref<Buffer> &b) {
+    return makeBuffer(b->tensor(), b->atype(), b->mtype());
+}
 
 } // namespace ir
 

@@ -88,10 +88,10 @@ def test_called_multiple_times():
     assert std.match(func.body)
 
     s = ir.Schedule(func)
-    assert len(s.find_all(lambda x: x.nid() == "C1->S0")) == 1
-    assert len(s.find_all(lambda x: x.nid() == "C1->S1")) == 1
-    assert len(s.find_all(lambda x: x.nid() == "C2->S0")) == 1
-    assert len(s.find_all(lambda x: x.nid() == "C2->S1")) == 1
+    assert len(s.find_all("C1->S0")) == 1
+    assert len(s.find_all("C1->S1")) == 1
+    assert len(s.find_all("C2->S0")) == 1
+    assert len(s.find_all("C2->S1")) == 1
 
 
 def test_call_with_external_data():
@@ -493,4 +493,4 @@ def test_no_deps_on_returned_tensor():
     print(func)
 
     s = ir.Schedule(func)
-    assert s.find('Lj').node().property.no_deps[0] == s.find('Vc').node().name
+    assert s.find('Lj').property.no_deps[0] == s.find('Vc').name

@@ -12,7 +12,7 @@
 namespace ir {
 
 std::optional<ScalarPropConst::ScalarIndices>
-ScalarPropConst::tryToScalar(const std::vector<SubTree<ExprNode>> &exprs) {
+ScalarPropConst::tryToScalar(const std::vector<Expr> &exprs) {
     ScalarIndices res;
     for (auto &i : exprs)
         if (i->nodeType() == ASTNodeType::IntConst)
@@ -118,9 +118,9 @@ Stmt ScalarPropConst::visit(const Store &store_orig) {
     ASSERT(constants_.count(store->var_));
 
     // convert constant value type first
-    auto expr = store->expr_;
+    Expr expr = store->expr_;
     if (expr->isConst())
-        expr = castType(this->def(store->var_)->buffer_->tensor().dtype(),
+        expr = castType(this->def(store->var_)->buffer_->tensor()->dtype(),
                         store->expr_.as<ConstNode>());
 
     // generate constant value
@@ -320,7 +320,8 @@ Expr ScalarPropConst::visit(const Cast &op) {
     auto expr = visitExpr(op->expr_);
     if (expr->isConst() &&
         (op->dtype_ == DataType::Bool || op->dtype_ == DataType::Float32 ||
-         op->dtype_ == DataType::Float64 || op->dtype_ == DataType::Int32)) {
+         op->dtype_ == DataType::Float64 || op->dtype_ == DataType::Int64 ||
+         op->dtype_ == DataType::Int32)) {
         expr = castType(op->dtype_, expr.as<ConstNode>());
     }
     return COPY_DEBUG_INFO(makeCast(expr, op->dtype_), op);

@@ -111,7 +111,7 @@ std::vector<std::pair<ID, int>> multiLevelTilingWithFusion(
         }
     }
     //    std::cout << "after fuse: " << toString(schedule.ast()) << std::endl;
-    auto body = schedule.find(lastFuse).node().as<ForNode>()->body_;
+    auto &body = schedule.find(lastFuse).as<ForNode>()->body_;
     try {
         schedule.cache(body->id(), target.dest, memType);
     } catch (const InvalidSchedule &e) {

@@ -8,8 +8,6 @@ def toId(node):
         return node
     if type(node) is str:
         return node
-    if isinstance(node, ffi.Cursor):
-        return node.nid()
     if isinstance(node, ffi.Stmt):
         return node.nid
     assert False, "%s is not a valid statement" % node
@@ -23,6 +21,8 @@ def parseDType(dtype):
             return DataType.Float64
         elif dtype.lower() == "float32":
             return DataType.Float32
+        elif dtype.lower() == "int64":
+            return DataType.Int64
         elif dtype.lower() == "int32":
             return DataType.Int32
         elif dtype.lower() == "bool":

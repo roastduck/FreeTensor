@@ -1,3 +1,4 @@
+#include <hash.h>
 #include <tensor.h>
 
 namespace ir {
@@ -12,5 +13,7 @@ bool Tensor::isScalar() const {
     }
     return true;
 }
+
+void Tensor::compHash() { hash_ = Hasher::compHash(*this); }
 
 } // namespace ir

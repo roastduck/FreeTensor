@@ -7,6 +7,7 @@ void init_ffi_data_type(py::module_ &m) {
     py::enum_<DataType>(m, "DataType")
         .value("Float64", DataType::Float64)
         .value("Float32", DataType::Float32)
+        .value("Int64", DataType::Int64)
         .value("Int32", DataType::Int32)
         .value("Bool", DataType::Bool)
         .value("Void", DataType::Void);

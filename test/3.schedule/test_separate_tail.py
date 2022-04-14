@@ -131,8 +131,6 @@ def test_dynamic_tiled():
     ast = ir.pop_ast()
     print(ast)
     s = ir.Schedule(ast)
-    # FIXME: Why do we need to call it twice??? It happens after we propagates the constants
-    s.separate_tail()
     s.separate_tail()
     ast = s.ast()
     print(ast)

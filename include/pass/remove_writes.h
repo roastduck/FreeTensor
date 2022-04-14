@@ -6,20 +6,19 @@
 
 #include <analyze/find_loop_variance.h>
 #include <analyze/symbol_table.h>
-#include <analyze/with_cursor.h>
 #include <func.h>
 #include <mutator.h>
 #include <visitor.h>
 
 namespace ir {
 
-class FindLoopInvariantWrites : public SymbolTable<WithCursor<Visitor>> {
-    typedef SymbolTable<WithCursor<Visitor>> BaseClass;
+class FindLoopInvariantWrites : public SymbolTable<Visitor> {
+    typedef SymbolTable<Visitor> BaseClass;
 
-    std::vector<Cursor> cursorStack_;
+    std::vector<For> loopStack_;
     std::vector<If> ifStack_;
-    std::unordered_map<Store, std::tuple<VarDef, Expr, Cursor>>
-        results_; /// (store, extraCond, cursor to loop)
+    std::unordered_map<Store, std::tuple<VarDef, Expr, For>>
+        results_; /// (store, extraCond, innerMostLoop)
     std::unordered_map<ID, int> defDepth_;
     const LoopVariExprMap &variantExpr_;
     const ID &singleDefId_;
@@ -29,12 +28,13 @@ class FindLoopInvariantWrites : public SymbolTable<WithCursor<Visitor>> {
                             const ID &singleDefId)
         : variantExpr_(variantExpr), singleDefId_(singleDefId) {}
 
-    const std::unordered_map<Store, std::tuple<VarDef, Expr, Cursor>> &
+    const std::unordered_map<Store, std::tuple<VarDef, Expr, For>> &
     results() const {
         return results_;
     }
 
   protected:
+    using BaseClass::visit;
     void visit(const For &op) override;
     void visit(const If &op) override;
     void visit(const VarDef &op) override;

@@ -24,12 +24,16 @@ template <class Stream> class CodeGenC : public WithTypeInfer<CodeGen<Stream>> {
     static std::string gen(DataType dtype);
 
   protected:
-    virtual void genAlloc(const Tensor &tensor, const std::string &rawPtr,
+    virtual void genAlloc(const Ref<Tensor> &tensor, const std::string &rawPtr,
                           const std::string &shapePtr,
                           const std::string &dimPtr) = 0;
 
     // Generate the access to a scalar or an element of an array
-    template <class T> void genScalar(const T &op);
+    virtual void genScalar(const std::string &var,
+                           const std::vector<Expr> &indices);
+    template <class T> void genScalar(const T &op) {
+        genScalar(op->var_, op->indices_);
+    }
 
     virtual void visit(const StmtSeq &op) override;
     virtual void visit(const VarDef &op) override;

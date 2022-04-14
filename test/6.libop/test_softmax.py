@@ -96,7 +96,7 @@ def test_grad():
 
     def get_shape_and_dtype(func, nid):
         s = ir.Schedule(func)
-        vardef = s.find(lambda x: x.nid() == nid).node()
+        vardef = s.find(nid).node()
         shape = []
         for x in vardef.buffer.tensor.shape:
             assert isinstance(x, ir.ffi.IntConst)
