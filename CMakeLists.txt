@@ -74,4 +74,4 @@ target_link_libraries(ffi PRIVATE
     ${ISL_DIR}/install/lib/libisl.so
     libz3 # See 3rd-party/z3/src/CMakeLists.txt
     ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES})
-
+target_include_directories(ffi PUBLIC ${CUDA_INCLUDE_DIRS})
