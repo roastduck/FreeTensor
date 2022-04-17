@@ -6,6 +6,8 @@
 #include <vector>
 
 namespace ir {
+
+constexpr int MAX_VTHREAD = 4;
 struct MultiLevelTilingAnnotation {
     std::vector<std::vector<int>> spaceLoopTiling;
     std::vector<std::vector<int>> reductionLoopTiling;
@@ -23,12 +25,14 @@ struct ForsWithDataReuse {
     std::vector<ForInfo> reductionLoops;
     std::vector<bool> dimIterated;
     std::string dest;
+    std::vector<std::string> reads;
     ID outermost;
 };
 
 struct ForWithStore {
     ID id;
     std::string dest;
+    std::vector<std::string> reads;
     std::vector<Expr> indices;
     std::vector<std::vector<Expr>> checkDataReuseIndices;
 };

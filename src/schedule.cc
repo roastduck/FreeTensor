@@ -744,8 +744,8 @@ Schedule::multiLevelTiling(const ForsWithDataReuse &target,
 std::vector<std::pair<ID, int>> Schedule::multiLevelTilingWithFusion(
     const ForsWithDataReuse &target,
     const MultiLevelTilingAnnotation &annotation, const std::string &pat,
-    const ElementWiseInfo &toFuse, int level, MemType memType) {
+    const ElementWiseInfo &toFuse, int level, TargetType targetType) {
     return ir::multiLevelTilingWithFusion(*this, target, annotation, pat,
-                                          toFuse, level, memType);
+                                          toFuse, level, targetType);
 }
 } // namespace ir

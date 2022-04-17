@@ -49,8 +49,6 @@ def test_multi_level_tiling():
                 z[p, q] = y[p, q] + c[p, q]
 
     s = ir.Schedule(test)
-    s.cache("L3", "w", "gpu/shared")
-    s.cache("L3", "x", "gpu/shared")
     # w_np = np.zeros((a, b, c), dtype="float32")
     # w_np = np.zeros((a, b), dtype="float32")
     # x_np = np.zeros((b, a), dtype="float32")

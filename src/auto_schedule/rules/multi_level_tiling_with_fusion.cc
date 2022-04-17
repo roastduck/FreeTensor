@@ -14,7 +14,7 @@ RuleStatus MultiLevelTilingWithFusionRule::analyze(const Sketch &sketch) {
                                                     sketch.nowTarget().target);
         toFuse.isValid()) {
         toFuse_ = toFuse;
-        return memType_ == MemType::CPU ? RuleStatus::Apply
+        return targetType_ == TargetType::CPU ? RuleStatus::Apply
                                         : RuleStatus::ApplyAndSkipRest;
     }
     return RuleStatus::Skip;
@@ -27,7 +27,7 @@ MultiLevelTilingWithFusionRule::genPart(const Sketch &sketch) {
         Sketch newSketch = sketch.clone();
         newSketch.addPart(Ref<MultiLevelTilingWithFusionPart>::make(
             sketch.nowTarget().target, toFuse_, fuseLevels_[i], pat_,
-            memType_));
+            targetType_));
         newSketch.addLog("multi_level_tiling_with_fusion " +
                          std::to_string(fuseLevels_[i]));
         ret.push_back(newSketch);
@@ -50,7 +50,7 @@ void MultiLevelTilingWithFusionPart::genRandAnnotation(
             vthread *= spaceLoopTiling[i][spaceLoopTimes_ - 2];
             thread *= spaceLoopTiling[i][spaceLoopTimes_ - 3];
         }
-        if (vthread <= 16 && thread <= 1024) {
+        if (vthread <= MAX_VTHREAD && thread <= 1024) {
             break;
         }
     }
@@ -64,14 +64,14 @@ void MultiLevelTilingWithFusionPart::genRandAnnotation(
 
 MultiLevelTilingWithFusionPart::MultiLevelTilingWithFusionPart(
     ForsWithDataReuse fors, ElementWiseInfo toFuse, int level, std::string pat,
-    MemType memType)
-    : MultiLevelTilingPart(std::move(fors), std::move(pat)), memType_(memType),
+    TargetType targetType)
+    : MultiLevelTilingPart(std::move(fors), std::move(pat)), targetType_(targetType),
       level_(level), toFuse_(std::move(toFuse)) {}
 
 void MultiLevelTilingWithFusionPart::apply(Schedule &schedule,
                                            SketchTarget &target) {
     tiles_ = schedule.multiLevelTilingWithFusion(target_, annotation_, pat_,
-                                                 toFuse_, level_, memType_);
+                                                 toFuse_, level_, targetType_);
 }
 
 bool MultiLevelTilingWithFusionPart::mutate(std::default_random_engine &gen) {
@@ -95,7 +95,7 @@ bool MultiLevelTilingWithFusionPart::mutate(std::default_random_engine &gen) {
             vthread *= mut.spaceLoopTiling[i][spaceLoopTimes_ - 2];
             thread *= mut.spaceLoopTiling[i][spaceLoopTimes_ - 3];
         }
-        if (vthread > 16 || thread > 1024) {
+        if (vthread > MAX_VTHREAD || thread > 1024) {
             return false;
         }
     } else {
@@ -132,7 +132,7 @@ bool MultiLevelTilingWithFusionPart::crossover(
             vthread *= mut.spaceLoopTiling[i][spaceLoopTimes_ - 2];
             thread *= mut.spaceLoopTiling[i][spaceLoopTimes_ - 3];
         }
-        if (vthread > 16 || thread > 1024) {
+        if (vthread > MAX_VTHREAD || thread > 1024) {
             return false;
         }
     } else {

@@ -21,7 +21,7 @@ namespace ir {
 AutoSchedule::AutoSchedule(const Schedule &schedule, const Ref<Target> &target,
                            const Device &device, int measuredSize,
                            py::function predictFunc, py::function updateFunc)
-    : original_(schedule), target_(target), device_(device),
+    : original_(schedule.clone()), target_(target), device_(device),
       measuredSize_(measuredSize), paramsSet_(false), mn_(INFINITY),
       predictFunc_(std::move(predictFunc)), updateFunc_(std::move(updateFunc)) {
     if (target->type() == TargetType::CPU) {
@@ -132,10 +132,12 @@ AutoSchedule::genSchedules(std::vector<Sketch> &sketches) {
 py::list AutoSchedule::genFeatures(const std::vector<Schedule> &schedules) {
     size_t n = schedules.size();
     std::vector<std::vector<double>> featureVec(n);
-#pragma omp parallel for
+//#pragma omp parallel for
     for (size_t i = 0; i < n; i++) {
         try {
+            std::cout << schedules[i].ast() << std::endl;
             featureVec[i] = fixedLengthFeature(schedules[i].ast());
+            std::cout << "feature got\n";
         } catch (const std::exception &e) {
             // OpenMP threads won't report an exception message
             std::cerr << "ERROR feature: " << e.what() << std::endl;
@@ -339,8 +341,9 @@ std::vector<double> AutoSchedule::getPrediction(std::vector<Sketch> &sketches) {
             ret[i] = 1e30;
         }
     }
-    auto featureList = genFeatures(schedules);
     std::cout << "get prediction" << std::endl;
+    auto featureList = genFeatures(schedules);
+    std::cout << "got prediction" << std::endl;
     py::list predList = predictFunc_(featureList);
     for (size_t i = 0; i < predList.size(); i++) {
         ret[index[i]] = predList[i].cast<double>();

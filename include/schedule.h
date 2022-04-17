@@ -28,7 +28,7 @@ class Schedule {
 
     Schedule clone() const {
         if (func_.isValid())
-            return Schedule(deepCopy(func_));
+            return Schedule(deepCopy(func()));
         return Schedule(deepCopy(ast_));
     }
 
@@ -499,7 +499,7 @@ class Schedule {
     std::vector<std::pair<ID, int>> multiLevelTilingWithFusion(
         const ForsWithDataReuse &target,
         const MultiLevelTilingAnnotation &annotation, const std::string &pat,
-        const ElementWiseInfo &toFuse, int level, MemType memType);
+        const ElementWiseInfo &toFuse, int level, TargetType targetType);
 };
 
 } // namespace ir
