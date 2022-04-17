@@ -90,12 +90,16 @@ void PrintVisitor::visit(const Func &op) {
 }
 
 void PrintVisitor::visit(const StmtSeq &op) {
+    if (printAllId_ || op->hasNamedId())
+        os() << " {" << std::endl;
     if (op->stmts_.empty()) {
         makeIndent();
         os() << "/* empty */" << std::endl;
     } else {
         Visitor::visit(op);
     }
+    if (printAllId_ || op->hasNamedId())
+        os() << std::endl << "}";
 }
 
 void PrintVisitor::visit(const Any &op) {
@@ -119,6 +123,7 @@ void PrintVisitor::visit(const VarDef &op) {
         recur(op->sizeLim_);
         os() << " ";
     }
+    os() << (op->pinned_ ? "[P]" : "[F]") << " ";
     beginBlock();
     recur(op->body_);
     endBlock();

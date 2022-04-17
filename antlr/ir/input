@@ -1,0 +1,9 @@
+func(x, y) {
+  [in] [CPU] x: i32[4] {
+    [out] [CPU] y: i32[4] {
+      for i in 0 : 4 : 1 {
+        y[i] = (x[i] + 1)
+      }
+    }
+  }
+}
