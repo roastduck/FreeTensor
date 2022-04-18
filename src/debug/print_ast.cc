@@ -123,7 +123,7 @@ void PrintVisitor::visit(const VarDef &op) {
         recur(op->sizeLim_);
         os() << " ";
     }
-    os() << (op->pinned_ ? "[P]" : "[F]") << " ";
+    if (op->pinned_) os() << "[pinned] ";
     beginBlock();
     recur(op->body_);
     endBlock();

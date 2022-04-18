@@ -93,44 +93,10 @@ stmtSingle returns [ir::Stmt stmt]
 
 // ---------- ---------- types of STMT ---------- ----------
 stmtType returns [ir::Stmt stmt]
-    : varDef {
-        $stmt = $varDef.varDefNode;
-    }
-    | store {
-        $stmt = $store.storeNode;
-    }
-    | reduceTo {
-        $stmt = $reduceTo.reduceToNode;
-    }
-    | forNode {
-        $stmt = $forNode.fornode;
-    };
-
-// TODO: VarDef.pinned
-varDef returns [ir::Stmt varDefNode] // ir::VarDef
-    @init {
-        ir::Expr sizeLim = nullptr;
-    }
-    : atype mtype Var COLON dtype shape (
-        exprNode {
-            sizeLim = $exprNode.expr;
-        }
-    )? LBRACE NEWLINE
-        stmtNode NEWLINE
-        RBRACE {
-            ir::ID id; // 交由 stmtSingle 统一命名
-            std::cout << "varDef" << std::endl;
-            ir::AccessType atype = $atype.type;
-            ir::MemType mtype = $mtype.type;
-            std::string name = $Var.text;
-            ir::DataType dtype = $dtype.type;
-            std::vector <ir::Expr> shape = $shape.vec;
-            ir::Ref<ir::Tensor> t = ir::makeTensor(std::move(shape), dtype);
-            ir::Ref<ir::Buffer> b = ir::makeBuffer(std::move(t), atype, mtype);
-            ir::Expr sizeLim = nullptr;
-            ir::Stmt body = $stmtNode.stmt;
-            // $varDefNode = ir::makeVarDef(id, name, std::move(b), std::move(sizeLim), body, )
-        };
+    : store {$stmt = $store.storeNode;}
+    | reduceTo {$stmt = $reduceTo.reduceToNode;}
+    | varDef {$stmt = $varDef.varDefNode;}
+    | forNode {$stmt = $forNode.fornode;};
 
 store returns [ir::Stmt storeNode] // ir::Store
     : Var LBRACK indices_expr RBRACK ASSIGN exprNode {
@@ -158,6 +124,38 @@ reduceTo returns [ir::Stmt reduceToNode] // ir::ReduceTo
             $reduceToNode = ir::makeReduceTo(ir::ID(), var, std::move(indices), op, std::move(expr), atomic);
         }
     ;
+
+load returns [ir::Expr loadNode]
+    : Var LBRACK indices_expr RBRACK {
+        std::string var_ = $Var.text;
+        std::vector <ir::Expr> indices = $indices_expr.exprs;
+        $loadNode = ir::makeLoad(var_, std::move(indices));
+    };
+
+varDef returns [ir::Stmt varDefNode] // ir::VarDef
+    @init {
+        ir::Expr sizeLim = nullptr;
+        bool pinned = false;
+    }
+    : atype mtype Var COLON dtype shape
+        (SIZELIM ASSIGN exprNode {sizeLim = $exprNode.expr;})?
+        (PINNED {pinned = true;})?
+        LBRACE NEWLINE
+        stmtNode NEWLINE
+        RBRACE {
+            ir::ID id; // 交由 stmtSingle 统一命名
+            std::cout << "varDef" << std::endl;
+            ir::AccessType atype = $atype.type;
+            ir::MemType mtype = $mtype.type;
+            std::string name = $Var.text;
+            ir::DataType dtype = $dtype.type;
+            std::vector <ir::Expr> shape = $shape.vec;
+            ir::Ref<ir::Tensor> t = ir::makeTensor(std::move(shape), dtype);
+            ir::Ref<ir::Buffer> b = ir::makeBuffer(std::move(t), atype, mtype);
+            ir::Expr sizeLim = nullptr;
+            ir::Stmt body = $stmtNode.stmt;
+            $varDefNode = ir::makeVarDef(id, name, std::move(b), std::move(sizeLim), body, pinned);
+        };
 
 // TODO: len
 forNode returns [ir::Stmt fornode] // ir::ForNode
@@ -208,8 +206,9 @@ forNode returns [ir::Stmt fornode] // ir::ForNode
         };
 
 // ---------- ---------- EXPR ---------- ----------
+ // TODO: Intrinsic 抓出中间结构
 exprNode returns [ir::Expr expr]
-    : Var
+    : load {$expr = $load.loadNode;}
     | intConst {$expr = $intConst.expr;}
     | floatConst {$expr = $floatConst.expr;}
     | boolConst {$expr = $boolConst.expr;}
@@ -265,25 +264,10 @@ exprNode returns [ir::Expr expr]
         | MIN {$expr = ir::makeMin($expr0.expr, $expr1.expr);}
         ) LPAREN expr0=exprNode COMMA expr1=exprNode RPAREN
     | LPAREN exprNode RPAREN {$expr = $exprNode.expr;} // 放在最后以免破坏其他结构
-    | INTRINSIC LPAREN DQUOTE  DQUOTE RPAREN; // Intrinsic: TODO 抓出中间结构
+    | INTRINSIC LPAREN DQUOTE  DQUOTE RPAREN;
 
-indices_expr returns [std::vector<ir::Expr> exprs]
-    : exprNode (COMMA exprNode)* {
-        std::cout << "indices_expr" << std::endl;
-    };
 
-load
-    : Var LBRACK indices_expr RBRACK {
-        std::cout << "load" << std::endl;
-    };
-
-var_params returns [std::vector <std::string> vec]
-    : var=Var  {
-        $vec.clear();
-        $vec.push_back(std::string($var.text));
-    } (COMMA var1=Var {$vec.push_back(std::string($var1.text));})*;
-
-// PARAMETERS
+// ---------- ---------- PARAMETERS ---------- ----------
 shape returns [std::vector <ir::Expr> vec]
     : LBRACK exprNode {
         $vec.clear();
@@ -292,6 +276,17 @@ shape returns [std::vector <ir::Expr> vec]
         $vec.emplace_back($newExprNode.expr);
     }
     )* RBRACK;
+
+var_params returns [std::vector <std::string> vec]
+    : var=Var  {
+        $vec.clear();
+        $vec.push_back(std::string($var.text));
+    } (COMMA var1=Var {$vec.push_back(std::string($var1.text));})*;
+
+indices_expr returns [std::vector<ir::Expr> exprs]
+    @init {$exprs.clear();}
+    : exprNode {$exprs.emplace_back($exprNode.expr);}
+        (COMMA newExpr=exprNode {$exprs.emplace_back($newExpr.expr);})*;
 
 // ---------- ---------- CONST ---------- ----------
 intConst returns [ir::Expr expr]

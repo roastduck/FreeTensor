@@ -39,6 +39,10 @@ BOOL:       'bool';
 CUSTOM:     'custom';
 VOID:       'void';
 
+// VarDef
+SIZELIM:    'size_lim';
+PINNED:     LBRACK 'pinned' RBRACK;
+
 // ReduceTo
 ATOMIC:     ANNOT 'atomic' NEWLINE;
 PLUSEQ:     '+=';
