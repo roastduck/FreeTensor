@@ -25,7 +25,7 @@ Stmt MakeConstShape::visit(const VarDef &_op) {
         }
         int64_t result = std::numeric_limits<int64_t>::max();
         for (auto b : unique_.getUpper(oldDim)) {
-            if (b.lin().coeff_.empty()) {
+            if (b.lin().isConst()) {
                 auto bias = b.lin().bias_;
                 result = std::min(result, floorDiv(bias.p_, bias.q_));
             }

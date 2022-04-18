@@ -25,6 +25,8 @@ template <class T> struct LinearExpr {
     // std::vector and sort each factor by its hash
     std::vector<Scale<T>> coeff_;
     T bias_;
+
+    bool isConst() const { return coeff_.empty(); }
 };
 
 template <class T>

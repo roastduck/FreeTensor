@@ -81,7 +81,7 @@ void StructuralFeature::updAreaInfo(const AST &parent, const AST &child) {
         for (size_t i = 0; i < n; i++) {
             for (auto &&b1 : parent.lo_[i]) {
                 for (auto &&b2 : child.lo_[i]) {
-                    if (b1.lin().coeff_.empty() && b2.lin().coeff_.empty()) {
+                    if (b1.lin().isConst() && b2.lin().isConst()) {
                         ret.lo_[i].emplace_back(LinearExpr<Rational<int64_t>>{
                             {}, std::min(b1.lin().bias_, b2.lin().bias_)});
                     }
@@ -89,7 +89,7 @@ void StructuralFeature::updAreaInfo(const AST &parent, const AST &child) {
             }
             for (auto &&b1 : parent.hi_[i]) {
                 for (auto &&b2 : child.hi_[i]) {
-                    if (b1.lin().coeff_.empty() && b2.lin().coeff_.empty()) {
+                    if (b1.lin().isConst() && b2.lin().isConst()) {
                         ret.hi_[i].emplace_back(LinearExpr<Rational<int64_t>>{
                             {}, std::max(b1.lin().bias_, b2.lin().bias_)});
                     }
@@ -161,7 +161,7 @@ int64_t StructuralFeature::calcArea(const NodeBufferInfo &bufInfo) {
         for (auto &&lo : bufInfo.lo_[i]) {
             for (auto &&hi : bufInfo.hi_[i]) {
                 auto diff = sub(hi, lo);
-                if (diff.lin().coeff_.empty()) {
+                if (diff.lin().isConst()) {
                     tightest =
                         std::min(tightest,
                                  diff.lin().bias_.p_ / diff.lin().bias_.q_ + 1);
