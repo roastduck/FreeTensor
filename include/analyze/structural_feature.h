@@ -30,6 +30,9 @@ struct NodeFeature {
  * Program features are used by machine learning models to predict program
  * performance. This pass outputs an structual feature, which can be converted
  * to a plain feature by a following pass
+ *
+ * This Visitor generate a NodeFeature for each node, depicting the performance
+ * feature of running the subtree rooted at the node
  */
 class StructuralFeature
     : public CompTransientBounds<WithTypeInfer<SymbolTable<Visitor>>> {
