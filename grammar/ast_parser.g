@@ -81,15 +81,15 @@ stmt returns [Stmt node]
       {
         $node = $stmtWithoutID.node;
       }
-    | Var COLON stmtWithoutID
+    | var COLON stmtWithoutID
       {
         $node = $stmtWithoutID.node;
-        $node->setId($Var.text);
+        $node->setId($var.name);
       }
-    | Var COLON '{' stmts '}'
+    | var COLON '{' stmts '}'
       {
         $node = $stmts.node;
-        $node->setId($Var.text);
+        $node->setId($var.name);
       }
     ;
 
@@ -117,10 +117,8 @@ stmtWithoutID returns [Stmt node]
     ;
 
 store returns [Stmt node]
-    : Var indices '=' expr {
-        std::string var = $Var.text;
-        std::vector<Expr> indices = $indices.exprs;
-        $node = makeStore(ID(), var, std::move(indices), $expr.node);
+    : var indices '=' expr {
+        $node = makeStore(ID(), $var.name, $indices.exprs, $expr.node);
     };
 
 reduceTo returns [Stmt node]
@@ -129,20 +127,20 @@ reduceTo returns [Stmt node]
         ReduceOp op;
     }
     : (ATOMIC {atomic = true;})?
-        Var indices
+      var indices
         (PLUSEQ {op = ReduceOp::Add;}
         |STAREQ {op = ReduceOp::Mul;}
         |MINEQ {op = ReduceOp::Min;}
         |MAXEQ {op = ReduceOp::Max;})
         expr {
-            $node = makeReduceTo(ID(), $Var.text, $indices.exprs, op, $expr.node, atomic);
+            $node = makeReduceTo(ID(), $var.name, $indices.exprs, op, $expr.node, atomic);
         }
     ;
 
 load returns [Expr node]
-    : Var indices
+    : var indices
       {
-        $node = makeLoad($Var.text, $indices.exprs);
+        $node = makeLoad($var.name, $indices.exprs);
       }
     ;
 
@@ -151,7 +149,7 @@ varDef returns [Stmt node]
         Expr sizeLim = nullptr;
         bool pinned = false;
     }
-    : atype mtype Var COLON dtype shape
+    : atype mtype var COLON dtype shape
         (SIZELIM '=' expr {sizeLim = $expr.node;})?
         (PINNED {pinned = true;})?
         '{'
@@ -159,7 +157,7 @@ varDef returns [Stmt node]
         '}' {
             AccessType atype = $atype.type;
             MemType mtype = $mtype.type;
-            std::string name = $Var.text;
+            std::string name = $var.name;
             DataType dtype = $dtype.type;
             std::vector<Expr> shape = $shape.vec;
             Ref<Tensor> t = makeTensor(std::move(shape), dtype);
@@ -173,13 +171,13 @@ forNode returns [Stmt node]
     @init {
         auto property = Ref<ForProperty>::make();
     }
-    : (NO_DEPS '=' Var
+    : (NO_DEPS '=' var
       {
-        property->noDeps_.emplace_back($Var.text);
+        property->noDeps_.emplace_back($var.name);
       }
-      (COMMA newVar=Var
+      (COMMA newVar=var
       {
-        property->noDeps_.emplace_back($newVar.text);
+        property->noDeps_.emplace_back($newVar.name);
       }
       )*)?
       (PARALLEL '=' (OPENMP
@@ -211,10 +209,10 @@ forNode returns [Stmt node]
         (
             PREFERLIBS {property = property->withPreferLibs();}
         )? // preferLibs
-        FOR Var IN begin=expr COLON end=expr COLON step=expr COLON len=expr '{'
+        FOR var IN begin=expr COLON end=expr COLON step=expr COLON len=expr '{'
         stmts
         '}' {
-            $node = makeFor(ID(), $Var.text, $begin.node, $end.node, $step.node, $len.node, std::move(property), $stmts.node);
+            $node = makeFor(ID(), $var.name, $begin.node, $end.node, $step.node, $len.node, std::move(property), $stmts.node);
         };
 
 ifNode returns [Stmt node]
@@ -247,9 +245,9 @@ expr returns [Expr node]
       {
         $node = $boolConst.node;
       }
-    | Var
+    | var
       {
-        $node = makeVar($Var.text);
+        $node = makeVar($var.name);
       }
     | '(' expr0=expr QUESTION expr1=expr COLON expr2=expr ')'
       {
@@ -385,9 +383,9 @@ shape returns [std::vector<Expr> vec]
       {
         $vec.emplace_back($expr.node);
       }
-      (COMMA newExprNode=expr
+      (COMMA newExpr=expr
       {
-        $vec.emplace_back($newExprNode.node);
+        $vec.emplace_back($newExpr.node);
       }
       )* ']'
     |
@@ -395,9 +393,9 @@ shape returns [std::vector<Expr> vec]
     ;
 
 var_params returns [std::vector<std::string> vec]
-    : var=Var  {
-        $vec.push_back(std::string($var.text));
-    } (COMMA var1=Var {$vec.push_back(std::string($var1.text));})*;
+    : var  {
+        $vec.push_back(std::string($var.name));
+    } (COMMA var1=var {$vec.push_back(std::string($var1.name));})*;
 
 indices returns [std::vector<Expr> exprs]
     : '[' expr
@@ -431,3 +429,17 @@ boolConst returns [Expr node]
         TRUE {val = true;}
         |FALSE {val = false;}
     ) {$node = makeBoolConst(val);};
+
+// -------------------- IDENTIFIER --------------------
+var returns [std::string name]
+    : SimpleVar
+      {
+        $name = $SimpleVar.text;
+      }
+    | EscapedVar
+      {
+        std::string full = $EscapedVar.text;
+        ASSERT(full.length() > 2);
+        $name = std::string(full.begin() + 1, full.end() - 1);
+      }
+    ;

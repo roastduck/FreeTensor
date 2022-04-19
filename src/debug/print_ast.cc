@@ -38,21 +38,27 @@ void PrintVisitor::printId(const Stmt &op) {
 #endif
     if (printAllId_ || op->hasNamedId()) {
         if (pretty_) {
-            os() << CYAN << ::ir::toString(op->id()) << ":" << RESET
+            os() << CYAN << printName(::ir::toString(op->id())) << ":" << RESET
                  << std::endl;
         } else {
-            os() << ::ir::toString(op->id()) << ":" << std::endl;
+            os() << printName(::ir::toString(op->id())) << ":" << std::endl;
         }
     }
 }
 
 std::string PrintVisitor::printName(const std::string &name) {
-    for (char c : name) {
-        if (!isalnum(c) && c != '_') {
-            return '`' + name + '`';
+    ASSERT(!name.empty());
+    if (!isalpha(name[0]) && name[0] != '_') {
+        goto escape;
+    }
+    for (size_t i = 1, n = name.length(); i < n; i++) {
+        if (!isalnum(name[i]) && name[i] != '_') {
+            goto escape;
         }
     }
     return name;
+escape:
+    return '`' + name + '`';
 }
 
 void PrintVisitor::visitStmt(const Stmt &op) {

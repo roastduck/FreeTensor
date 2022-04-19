@@ -84,8 +84,8 @@ INTRINSIC:  'intrinsic';
 
 Integer:    ('+'|'-')? [0-9]+;
 Float:      ('+'|'-')? Integer '.' [0-9]* (('E'|'e') Integer)?;
-Number:     Integer | Float;
-Var:        [a-zA-Z_][a-zA-Z0-9_]*;
+SimpleVar:  [a-zA-Z_][a-zA-Z0-9_]*;
+EscapedVar: '`' ~[`\r\n]+ '`';
 
 DOT:        '.';
 ASSIGN:     '=';
