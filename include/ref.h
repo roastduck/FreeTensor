@@ -88,8 +88,7 @@ template <class T> class Ref {
     }
 
     T *get() const {
-        ASSERT(isValid());
-        return ptr_.get();
+        return ptr_.get(); // maybe called from PyBind11, don't assert isValid()
     }
 
     static Ref make() { return Ref(std::allocate_shared<T>(Allocator<T>())); }

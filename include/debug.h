@@ -19,6 +19,8 @@ std::string dumpAsTest(const Stmt &op);
 
 bool match(const Stmt &pattern, const Stmt &instance);
 
+AST loadAST(const std::string &txt);
+
 inline std::ostream &operator<<(std::ostream &os, const AST &op) {
     os << toString(op, false);
     return os;

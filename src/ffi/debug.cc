@@ -10,6 +10,10 @@ void init_ffi_debug(py::module_ &m) {
     m.def("logger", &logger, py::return_value_policy::reference);
 
     m.def("dump_as_test", &dumpAsTest);
+
+    m.def("dump_ast",
+          [](const AST &ast) { return toString(ast, false, false); });
+    m.def("load_ast", &loadAST);
 }
 
 } // namespace ir
