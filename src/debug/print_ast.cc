@@ -38,21 +38,27 @@ void PrintVisitor::printId(const Stmt &op) {
 #endif
     if (printAllId_ || op->hasNamedId()) {
         if (pretty_) {
-            os() << CYAN << ::ir::toString(op->id()) << ":" << RESET
+            os() << CYAN << printName(::ir::toString(op->id())) << ":" << RESET
                  << std::endl;
         } else {
-            os() << ::ir::toString(op->id()) << ":" << std::endl;
+            os() << printName(::ir::toString(op->id())) << ":" << std::endl;
         }
     }
 }
 
 std::string PrintVisitor::printName(const std::string &name) {
-    for (char c : name) {
-        if (!isalnum(c) && c != '_') {
-            return '`' + name + '`';
+    ASSERT(!name.empty());
+    if (!isalpha(name[0]) && name[0] != '_') {
+        goto escape;
+    }
+    for (size_t i = 1, n = name.length(); i < n; i++) {
+        if (!isalnum(name[i]) && name[i] != '_') {
+            goto escape;
         }
     }
     return name;
+escape:
+    return '`' + name + '`';
 }
 
 void PrintVisitor::visitStmt(const Stmt &op) {
@@ -90,11 +96,18 @@ void PrintVisitor::visit(const Func &op) {
 }
 
 void PrintVisitor::visit(const StmtSeq &op) {
+    if (printAllId_ || op->hasNamedId()) {
+        makeIndent();
+        beginBlock();
+    }
     if (op->stmts_.empty()) {
         makeIndent();
         os() << "/* empty */" << std::endl;
     } else {
         Visitor::visit(op);
+    }
+    if (printAllId_ || op->hasNamedId()) {
+        endBlock();
     }
 }
 
@@ -147,7 +160,7 @@ void PrintVisitor::visit(const Load &op) {
 void PrintVisitor::visit(const ReduceTo &op) {
     if (op->atomic_) {
         makeIndent();
-        os() << "// atomic" << std::endl;
+        os() << "@atomic" << std::endl;
     }
     makeIndent();
     os() << printName(op->var_) << "[";
@@ -422,7 +435,7 @@ void PrintVisitor::visit(const Cast &op) {
 void PrintVisitor::visit(const For &op) {
     if (!op->property_->noDeps_.empty()) {
         makeIndent();
-        os() << "// no_deps = ";
+        os() << "@no_deps = ";
         for (auto &&[i, var] : iter::enumerate(op->property_->noDeps_)) {
             os() << (i == 0 ? "" : ", ");
             os() << printName(var);
@@ -431,11 +444,11 @@ void PrintVisitor::visit(const For &op) {
     }
     if (auto str = ::ir::toString(op->property_->parallel_); !str.empty()) {
         makeIndent();
-        os() << "// parallel = " << str << std::endl;
+        os() << "@parallel = " << str << std::endl;
     }
     for (auto &&reduction : op->property_->reductions_) {
         makeIndent();
-        os() << "// reduction ";
+        os() << "@reduction ";
         switch (reduction->op_) {
         case ReduceOp::Add:
             os() << "+: ";
@@ -467,15 +480,15 @@ void PrintVisitor::visit(const For &op) {
     }
     if (op->property_->unroll_) {
         makeIndent();
-        os() << "// unroll" << std::endl;
+        os() << "@unroll" << std::endl;
     }
     if (op->property_->vectorize_) {
         makeIndent();
-        os() << "// vectorize" << std::endl;
+        os() << "@vectorize" << std::endl;
     }
     if (op->property_->preferLibs_) {
         makeIndent();
-        os() << "// prefer libs" << std::endl;
+        os() << "@prefer_libs" << std::endl;
     }
     makeIndent();
     if (pretty_) {
@@ -488,6 +501,8 @@ void PrintVisitor::visit(const For &op) {
     recur(op->end_);
     os() << " : ";
     recur(op->step_);
+    os() << " : ";
+    recur(op->len_);
     os() << " ";
     beginBlock();
     recur(op->body_);

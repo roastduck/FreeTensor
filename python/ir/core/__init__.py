@@ -48,6 +48,7 @@ from .schedule import *
 from .codegen import codegen
 from .driver import *
 from .config import *
+from .debug import *
 
 from .transformer import (transform, inline, create_var, var, declare_var,
                           capture_var, StagingError, StagedAssignable,
