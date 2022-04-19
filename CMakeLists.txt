@@ -37,7 +37,7 @@ add_subdirectory(${CMAKE_SOURCE_DIR}/3rd-party/z3)
 
 # ANTLR
 # 1. Runtime
-set(ANTLR_BUILD_CPP_TESTS, OFF)
+set(ANTLR_BUILD_CPP_TESTS OFF)
 add_subdirectory(${CMAKE_SOURCE_DIR}/3rd-party/antlr/antlr4/runtime/Cpp)
 include_directories(${CMAKE_SOURCE_DIR}/3rd-party/antlr/antlr4/runtime/Cpp/runtime/src)
 # 2. Generator
