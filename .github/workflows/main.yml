@@ -24,13 +24,12 @@ jobs:
       - name: Build ffi module in Release
         run: |
           source /opt/spack/share/spack/setup-env.sh
-          spack load gcc@8.4.0 cuda@10.2.89 python@3.8.6 py-pip@20.2 cudnn@8.0.4.30-10.2-linux-x64 cmake@3.18.4%gcc@7.5.0 intel-mkl@2020.3.279 java@11
+          spack load python~debug@3.8.12%gcc@10.2.1 cuda@11.4.2 cudnn@8.2.4.15-11.4 intel-mkl@2020.4.304 java@11
           mkdir build
-          cmake -B build -S . -DCMAKE_CXX_COMPILER=/mnt/ssd/spack/opt/spack/linux-ubuntu16.04-haswell/gcc-7.3.0/gcc-8.4.0-wxwjau3zh2vgh3gbw56byro6skfjuhkz/bin/g++ -DCMAKE_C_COMPILER=/mnt/ssd/spack/opt/spack/linux-ubuntu16.04-haswell/gcc-7.3.0/gcc-8.4.0-wxwjau3zh2vgh3gbw56byro6skfjuhkz/bin/gcc -DCMAKE_BUILD_TYPE=Release -DWITH_MKL=/mnt/ssd/spack/opt/spack/linux-ubuntu16.04-haswell/gcc-7.3.0/intel-mkl-2020.3.279-ejepo2yk7ihi5tcmg7s4fqne7l7u4fgk/mkl
+          cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DWITH_MKL=/home/spack/spack/opt/spack/linux-debian11-zen2/gcc-10.2.1/intel-mkl-2020.4.304-py6elz2mzhdgres34nr5e2ta5isfja7k/mkl
           cmake --build build -j
       - name: Run PyTest
         run: |
           source /opt/spack/share/spack/setup-env.sh
-          spack load gcc@8.4.0 cuda@10.2.89 python@3.8.6 py-pip@20.2 cudnn@8.0.4.30-10.2-linux-x64 cmake@3.18.4%gcc@7.5.0 intel-mkl@2020.3.279
-          srun -N 1 -p V100 python -c 'import pkg_resources; print(pkg_resources)'
-          PYTHONPATH=build:python:$PYTHONPATH srun -N 1 -p V100 pytest test
+          spack load python~debug@3.8.12%gcc@10.2.1 cuda@11.4.2 cudnn@8.2.4.15-11.4 intel-mkl@2020.4.304
+          PYTHONPATH=build:python:$PYTHONPATH srun -N 1 -p gpu pytest test
