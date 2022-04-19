@@ -50,6 +50,7 @@ macro(ANTLR_TARGET Name InputFile)
     set(ANTLR_${Name}_INPUT ${InputFile})
     set(ANTLR_${Name}_OUTPUT_DIR
         ${CMAKE_CURRENT_BINARY_DIR}/antlr4cpp_generated_src)
+    file(MAKE_DIRECTORY ${ANTLR_${Name}_OUTPUT_DIR})
     unset(ANTLR_${Name}_CXX_OUTPUTS)
     list(APPEND ANTLR_${Name}_CXX_OUTPUTS
          ${ANTLR_${Name}_OUTPUT_DIR}/${Name}.cpp)
