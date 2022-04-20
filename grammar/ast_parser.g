@@ -172,40 +172,44 @@ varDef returns [Stmt node]
       }
     ;
 
+// TODO: reduction
+forProperty returns [Ref<ForProperty> property]
+    : /* empty */
+      {
+        $property = Ref<ForProperty>::make();
+      }
+    | prev=forProperty NO_DEPS '=' var { std::vector<std::string> noDeps = {$var.name}; }
+        (',' var2=var { noDeps.emplace_back($var2.name); })*
+      {
+        $property = $prev.property->withNoDeps(std::move(noDeps));
+      }
+    | prev=forProperty PREFERLIBS
+      {
+        $property = $prev.property->withPreferLibs();
+      }
+    | prev=forProperty UNROLL
+      {
+        $property = $prev.property->withUnroll();
+      }
+    | prev=forProperty VECTORIZE
+      {
+        $property = $prev.property->withVectorize();
+      }
+    | prev=forProperty PARALLEL '=' parallelScope
+      {
+        $property = $prev.property->withParallel($parallelScope.type);
+      }
+    ;
+
 forNode returns [Stmt node]
-    @init {
-        auto property = Ref<ForProperty>::make();
-    }
-    : (NO_DEPS '=' var
-      {
-        property->noDeps_.emplace_back($var.name);
-      }
-      (',' newVar=var
-      {
-        property->noDeps_.emplace_back($newVar.name);
-      }
-      )*)?
-      (
-      PARALLEL '=' parallelScope
-      {
-        property->withParallel($parallelScope.type);
-      }
-      )?
-      // TODO: reduction
-      (
-          UNROLL {property = property->withUnroll();}
-      )? // unroll
-      (
-          VECTORIZE {property = property->withVectorize();}
-      )? // vectorize
-      (
-          PREFERLIBS {property = property->withPreferLibs();}
-      )? // preferLibs
-      FOR var IN begin=expr ':' end=expr ':' step=expr ':' len=expr
+    : forProperty
+        FOR var IN begin=expr ':' end=expr ':' step=expr ':' len=expr
         '{' stmts '}'
       {
-          $node = makeFor(ID(), $var.name, $begin.node, $end.node, $step.node, $len.node, std::move(property), $stmts.node);
-      };
+          $node = makeFor(ID(), $var.name, $begin.node, $end.node, $step.node, $len.node,
+                          $forProperty.property, $stmts.node);
+      }
+    ;
 
 ifNode returns [Stmt node]
     : IF '(' cond=expr ')' '{' thenCase=stmts '}'

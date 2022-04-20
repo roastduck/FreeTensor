@@ -76,6 +76,39 @@ def test_reversed_for():
     assert ast2.match(ast)
 
 
+def test_for_with_multiple_properties():
+    with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+        with ir.For("i", 0, 4, nid="foo", no_deps=['x'], prefer_libs=True) as i:
+            y[i] = x[i] + 1
+    ast = ir.pop_ast()
+    txt = ir.dump_ast(ast)
+    print(txt)
+    ast2 = ir.load_ast(txt)
+    print(ast2)
+    assert ast2.match(ast)
+    s = ir.Schedule(ast2)
+    assert s.find("foo").property.no_deps == ['x']
+    assert s.find("foo").property.prefer_libs
+
+
+def test_for_with_parallel():
+    with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+        with ir.For("i", 0, 4, nid="foo") as i:
+            y[i] = x[i] + 1
+    s = ir.Schedule(ir.pop_ast())
+    s.parallelize("foo", "openmp")
+    ast = s.ast()
+    txt = ir.dump_ast(ast)
+    print(txt)
+    ast2 = ir.load_ast(txt)
+    print(ast2)
+    assert ast2.match(ast)
+    s = ir.Schedule(ast2)
+    assert s.find("foo").property.parallel == ir.ffi.ParallelScope("openmp")
+
+
 def test_if():
     with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ir.For("i", 0, 4) as i:

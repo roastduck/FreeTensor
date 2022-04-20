@@ -38,7 +38,7 @@ class Context:
                         step,
                         body,
                         nid: str = "",
-                        no_deps: Optional[Sequence] = None,
+                        no_deps: Optional[Sequence[str]] = None,
                         prefer_libs: Optional[bool] = None):
         if nid == "":
             nid = self.next_nid
@@ -309,7 +309,7 @@ class For:
                  end,
                  step=1,
                  nid: str = "",
-                 no_deps: Optional[Sequence] = None,
+                 no_deps: Optional[Sequence[str]] = None,
                  prefer_libs: Optional[bool] = None):
         self.iter_var = iter_var
         self.begin = begin
