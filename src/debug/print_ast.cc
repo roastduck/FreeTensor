@@ -120,7 +120,7 @@ void PrintVisitor::visit(const AnyExpr &op) { os() << "<Any>"; }
 
 void PrintVisitor::visit(const VarDef &op) {
     makeIndent();
-    os() << ::ir::toString(op->buffer_->atype()) << " "
+    os() << "@" << ::ir::toString(op->buffer_->atype()) << " @"
          << ::ir::toString(op->buffer_->mtype()) << " " << printName(op->name_)
          << ": ";
     auto &&tensor = op->buffer_->tensor();
@@ -160,7 +160,7 @@ void PrintVisitor::visit(const Load &op) {
 void PrintVisitor::visit(const ReduceTo &op) {
     if (op->atomic_) {
         makeIndent();
-        os() << "@atomic" << std::endl;
+        os() << "@!atomic" << std::endl;
     }
     makeIndent();
     os() << printName(op->var_) << "[";
@@ -435,7 +435,7 @@ void PrintVisitor::visit(const Cast &op) {
 void PrintVisitor::visit(const For &op) {
     if (!op->property_->noDeps_.empty()) {
         makeIndent();
-        os() << "@no_deps = ";
+        os() << "@!no_deps = ";
         for (auto &&[i, var] : iter::enumerate(op->property_->noDeps_)) {
             os() << (i == 0 ? "" : ", ");
             os() << printName(var);
@@ -444,11 +444,11 @@ void PrintVisitor::visit(const For &op) {
     }
     if (auto str = ::ir::toString(op->property_->parallel_); !str.empty()) {
         makeIndent();
-        os() << "@parallel = " << str << std::endl;
+        os() << "@!parallel = " << str << std::endl;
     }
     for (auto &&reduction : op->property_->reductions_) {
         makeIndent();
-        os() << "@reduction ";
+        os() << "@!reduction ";
         switch (reduction->op_) {
         case ReduceOp::Add:
             os() << "+: ";
@@ -480,15 +480,15 @@ void PrintVisitor::visit(const For &op) {
     }
     if (op->property_->unroll_) {
         makeIndent();
-        os() << "@unroll" << std::endl;
+        os() << "@!unroll" << std::endl;
     }
     if (op->property_->vectorize_) {
         makeIndent();
-        os() << "@vectorize" << std::endl;
+        os() << "@!vectorize" << std::endl;
     }
     if (op->property_->preferLibs_) {
         makeIndent();
-        os() << "@prefer_libs" << std::endl;
+        os() << "@!prefer_libs" << std::endl;
     }
     makeIndent();
     if (pretty_) {

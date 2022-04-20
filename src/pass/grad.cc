@@ -232,6 +232,8 @@ Stmt Grad::visit(const VarDef &_op) {
                 break;
             case AccessType::Cache:
                 break; // do nothing
+            default:
+                ASSERT(false);
             }
 
             ret = makeVarDef(op->id(), op->name_, op->buffer_, op->sizeLim_,

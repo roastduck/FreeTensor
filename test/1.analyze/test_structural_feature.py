@@ -18,8 +18,8 @@ def test_flop():
         map(lambda kv: (str(kv[0]), kv[1]),
             ir.structural_feature(ast).items()))
 
-    assert features['S1'].op_cnt[ir.parseDType('float32')] == 2
-    assert features['L1'].op_cnt[ir.parseDType('float32')] == 64
+    assert features['S1'].op_cnt[ir.DataType('float32')] == 2
+    assert features['L1'].op_cnt[ir.DataType('float32')] == 64
 
 
 def test_access_count():
@@ -37,12 +37,12 @@ def test_access_count():
         map(lambda kv: (str(kv[0]), kv[1]),
             ir.structural_feature(ast).items()))
 
-    assert features['S1'].load_cnt[ir.parseMType('cpu')] == 1
-    assert features['S1'].store_cnt[ir.parseMType('cpu')] == 1
-    assert features['S1'].access_cnt[ir.parseMType('cpu')] == 2
-    assert features['L1'].load_cnt[ir.parseMType('cpu')] == 32
-    assert features['L1'].store_cnt[ir.parseMType('cpu')] == 32
-    assert features['L1'].access_cnt[ir.parseMType('cpu')] == 64
+    assert features['S1'].load_cnt[ir.MemType('cpu')] == 1
+    assert features['S1'].store_cnt[ir.MemType('cpu')] == 1
+    assert features['S1'].access_cnt[ir.MemType('cpu')] == 2
+    assert features['L1'].load_cnt[ir.MemType('cpu')] == 32
+    assert features['L1'].store_cnt[ir.MemType('cpu')] == 32
+    assert features['L1'].access_cnt[ir.MemType('cpu')] == 64
 
 
 def test_access_count_overlap():
@@ -63,15 +63,15 @@ def test_access_count_overlap():
         map(lambda kv: (str(kv[0]), kv[1]),
             ir.structural_feature(ast).items()))
 
-    assert features['L1'].load_cnt[ir.parseMType('cpu')] == 32
-    assert features['L1'].store_cnt[ir.parseMType('cpu')] == 32
-    assert features['L1'].access_cnt[ir.parseMType('cpu')] == 64
-    assert features['L2'].load_cnt[ir.parseMType('cpu')] == 32
-    assert features['L2'].store_cnt[ir.parseMType('cpu')] == 32
-    assert features['L2'].access_cnt[ir.parseMType('cpu')] == 64
-    assert features['S1'].load_cnt[ir.parseMType('cpu')] == 64
-    assert features['S1'].store_cnt[ir.parseMType('cpu')] == 64
-    assert features['S1'].access_cnt[ir.parseMType('cpu')] == 128
+    assert features['L1'].load_cnt[ir.MemType('cpu')] == 32
+    assert features['L1'].store_cnt[ir.MemType('cpu')] == 32
+    assert features['L1'].access_cnt[ir.MemType('cpu')] == 64
+    assert features['L2'].load_cnt[ir.MemType('cpu')] == 32
+    assert features['L2'].store_cnt[ir.MemType('cpu')] == 32
+    assert features['L2'].access_cnt[ir.MemType('cpu')] == 64
+    assert features['S1'].load_cnt[ir.MemType('cpu')] == 64
+    assert features['S1'].store_cnt[ir.MemType('cpu')] == 64
+    assert features['S1'].access_cnt[ir.MemType('cpu')] == 128
 
 
 def test_access_area():
@@ -89,12 +89,12 @@ def test_access_area():
         map(lambda kv: (str(kv[0]), kv[1]),
             ir.structural_feature(ast).items()))
 
-    assert features['S1'].load_area[ir.parseMType('cpu')] == 1
-    assert features['S1'].store_area[ir.parseMType('cpu')] == 1
-    assert features['S1'].access_area[ir.parseMType('cpu')] == 2
-    assert features['L1'].load_area[ir.parseMType('cpu')] == 32
-    assert features['L1'].store_area[ir.parseMType('cpu')] == 32
-    assert features['L1'].access_area[ir.parseMType('cpu')] == 64
+    assert features['S1'].load_area[ir.MemType('cpu')] == 1
+    assert features['S1'].store_area[ir.MemType('cpu')] == 1
+    assert features['S1'].access_area[ir.MemType('cpu')] == 2
+    assert features['L1'].load_area[ir.MemType('cpu')] == 32
+    assert features['L1'].store_area[ir.MemType('cpu')] == 32
+    assert features['L1'].access_area[ir.MemType('cpu')] == 64
 
 
 def test_access_area_overlap():
@@ -115,12 +115,12 @@ def test_access_area_overlap():
         map(lambda kv: (str(kv[0]), kv[1]),
             ir.structural_feature(ast).items()))
 
-    assert features['L1'].load_area[ir.parseMType('cpu')] == 32
-    assert features['L1'].store_area[ir.parseMType('cpu')] == 32
-    assert features['L1'].access_area[ir.parseMType('cpu')] == 64
-    assert features['L2'].load_area[ir.parseMType('cpu')] == 32
-    assert features['L2'].store_area[ir.parseMType('cpu')] == 32
-    assert features['L2'].access_area[ir.parseMType('cpu')] == 64
-    assert features['S1'].load_area[ir.parseMType('cpu')] == 48
-    assert features['S1'].store_area[ir.parseMType('cpu')] == 64
-    assert features['S1'].access_area[ir.parseMType('cpu')] == 112
+    assert features['L1'].load_area[ir.MemType('cpu')] == 32
+    assert features['L1'].store_area[ir.MemType('cpu')] == 32
+    assert features['L1'].access_area[ir.MemType('cpu')] == 64
+    assert features['L2'].load_area[ir.MemType('cpu')] == 32
+    assert features['L2'].store_area[ir.MemType('cpu')] == 32
+    assert features['L2'].access_area[ir.MemType('cpu')] == 64
+    assert features['S1'].load_area[ir.MemType('cpu')] == 48
+    assert features['S1'].store_area[ir.MemType('cpu')] == 64
+    assert features['S1'].access_area[ir.MemType('cpu')] == 112

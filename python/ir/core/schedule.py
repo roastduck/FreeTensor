@@ -1,5 +1,5 @@
 import ffi
-from ffi import FissionSide, MoveToSide, VarSplitMode
+from ffi import FissionSide, MoveToSide, VarSplitMode, MemType
 
 from .utils import *
 
@@ -269,7 +269,7 @@ class Schedule(ffi.Schedule):
             flushes from the cache, name of the cache variable, ID of the VarDef
             node of the cache variable)
         """
-        return super(Schedule, self).cache(toId(stmt), var, parseMType(mtype))
+        return super(Schedule, self).cache(toId(stmt), var, MemType(mtype))
 
     def cache_reduction(self, stmt, var, mtype):
         """
@@ -314,7 +314,7 @@ class Schedule(ffi.Schedule):
             cache variable, ID of the VarDef node of the cache variable)
         """
         return super(Schedule, self).cache_reduction(toId(stmt), var,
-                                                     parseMType(mtype))
+                                                     MemType(mtype))
 
     def set_mem_type(self, vardef, mtype):
         """
@@ -332,7 +332,7 @@ class Schedule(ffi.Schedule):
         InvalidSchedule
             if the variable is not found
         """
-        super(Schedule, self).set_mem_type(toId(vardef), parseMType(mtype))
+        super(Schedule, self).set_mem_type(toId(vardef), MemType(mtype))
 
     def var_split(self, vardef, dim, mode, factor=-1, nparts=-1):
         """

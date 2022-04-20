@@ -13,57 +13,6 @@ def toId(node):
     assert False, "%s is not a valid statement" % node
 
 
-def parseDType(dtype):
-    if type(dtype) is DataType:
-        return dtype
-    elif type(dtype) is str:
-        if dtype.lower() == "float64":
-            return DataType.Float64
-        elif dtype.lower() == "float32":
-            return DataType.Float32
-        elif dtype.lower() == "int64":
-            return DataType.Int64
-        elif dtype.lower() == "int32":
-            return DataType.Int32
-        elif dtype.lower() == "bool":
-            return DataType.Bool
-    assert False, "Unrecognized data type %s" % dtype
-
-
-def parseAType(atype):
-    if type(atype) is AccessType:
-        return atype
-    elif type(atype) is str:
-        if atype.lower() == "input":
-            return AccessType.Input
-        elif atype.lower() == "output":
-            return AccessType.Output
-        elif atype.lower() == "inout":
-            return AccessType.InOut
-        elif atype.lower() == "cache":
-            return AccessType.Cache
-    assert False, "Unrecognized access type %s" % atype
-
-
-def parseMType(mtype):
-    if type(mtype) is MemType:
-        return mtype
-    elif type(mtype) is str:
-        if mtype.lower() == "byvalue":
-            return MemType.ByValue
-        elif mtype.lower() == "cpu":
-            return MemType.CPU
-        elif mtype.lower() == "gpu/global":
-            return MemType.GPUGlobal
-        elif mtype.lower() == "gpu/shared":
-            return MemType.GPUShared
-        elif mtype.lower() == "gpu/local":
-            return MemType.GPULocal
-        elif mtype.lower() == "gpu/warp":
-            return MemType.GPUWarp
-    assert False, "Unrecognized memory type %s" % mtype
-
-
 def parseParallelScope(parallel):
     if type(parallel) is OpenMPScope:
         return parallel

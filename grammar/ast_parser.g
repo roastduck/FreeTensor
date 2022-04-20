@@ -24,28 +24,29 @@ program returns [AST node]
 
 // -------------------- type --------------------
 mtype returns [MemType type]
-    : '['
-        (BYVALUE {$type = MemType::ByValue;}
-        |CPU {$type = MemType::CPU;}
-        |GPUGlobal {$type = MemType::GPUGlobal;}
-        |GPUShared {$type = MemType::GPUShared;}
-        |GPULocal {$type = MemType::GPULocal;}
-        |GPUWarp {$type = MemType::GPUWarp;})
-        ']';
+    : AtVar
+      {
+        std::string full = $AtVar.text;
+        ASSERT(full.length() > 1);
+        $type = parseMType(std::string(full.begin() + 1, full.end()));
+      }
+    ;
 
 atype returns [AccessType type]
-    : '[' (IN {$type = AccessType::Input;}
-            |OUT {$type = AccessType::Output;}
-            |INOUT {$type = AccessType::InOut;}
-            |CACHE {$type = AccessType::Cache;}) ']';
+    : AtVar
+      {
+        std::string full = $AtVar.text;
+        ASSERT(full.length() > 1);
+        $type = parseAType(std::string(full.begin() + 1, full.end()));
+      }
+    ;
 
 dtype returns [DataType type]
-    : (F32 {$type = DataType::Float32;}
-    |F64 {$type = DataType::Float64;}
-    |I32 {$type = DataType::Int32;}
-    |BOOL {$type = DataType::Bool;}
-    |CUSTOM {$type = DataType::Custom;}
-    |VOID {$type = DataType::Void;});
+    : SimpleVar
+      {
+        $type = parseDType($SimpleVar.text);
+      }
+    ;
 
 func returns [Func node]
     : FUNC '(' var_params ')' (RARROW)? '{' stmts '}'
@@ -81,12 +82,12 @@ stmt returns [Stmt node]
       {
         $node = $stmtWithoutID.node;
       }
-    | var COLON stmtWithoutID
+    | var ':' stmtWithoutID
       {
         $node = $stmtWithoutID.node;
         $node->setId($var.name);
       }
-    | var COLON '{' stmts '}'
+    | var ':' '{' stmts '}'
       {
         $node = $stmts.node;
         $node->setId($var.name);
@@ -149,23 +150,18 @@ varDef returns [Stmt node]
         Expr sizeLim = nullptr;
         bool pinned = false;
     }
-    : atype mtype var COLON dtype shape
+    : atype mtype var ':' dtype shape
         (SIZELIM '=' expr {sizeLim = $expr.node;})?
         (PINNED {pinned = true;})?
-        '{'
-        stmts
-        '}' {
-            AccessType atype = $atype.type;
-            MemType mtype = $mtype.type;
-            std::string name = $var.name;
-            DataType dtype = $dtype.type;
-            std::vector<Expr> shape = $shape.vec;
-            Ref<Tensor> t = makeTensor(std::move(shape), dtype);
-            Ref<Buffer> b = makeBuffer(std::move(t), atype, mtype);
-            Expr sizeLim = nullptr;
-            Stmt body = $stmts.node;
-            $node = makeVarDef(ID(), name, std::move(b), std::move(sizeLim), body, pinned);
-        };
+        '{' stmts '}'
+      {
+        Ref<Tensor> t = makeTensor($shape.vec, $dtype.type);
+        Ref<Buffer> b = makeBuffer(std::move(t), $atype.type, $mtype.type);
+        Expr sizeLim = nullptr;
+        Stmt body = $stmts.node;
+        $node = makeVarDef(ID(), $var.name, std::move(b), std::move(sizeLim), body, pinned);
+      }
+    ;
 
 forNode returns [Stmt node]
     @init {
@@ -175,7 +171,7 @@ forNode returns [Stmt node]
       {
         property->noDeps_.emplace_back($var.name);
       }
-      (COMMA newVar=var
+      (',' newVar=var
       {
         property->noDeps_.emplace_back($newVar.name);
       }
@@ -209,7 +205,7 @@ forNode returns [Stmt node]
         (
             PREFERLIBS {property = property->withPreferLibs();}
         )? // preferLibs
-        FOR var IN begin=expr COLON end=expr COLON step=expr COLON len=expr '{'
+        FOR var IN begin=expr ':' end=expr ':' step=expr ':' len=expr '{'
         stmts
         '}' {
             $node = makeFor(ID(), $var.name, $begin.node, $end.node, $step.node, $len.node, std::move(property), $stmts.node);
@@ -249,7 +245,7 @@ expr returns [Expr node]
       {
         $node = makeVar($var.name);
       }
-    | '(' expr0=expr QUESTION expr1=expr COLON expr2=expr ')'
+    | '(' expr0=expr QUESTION expr1=expr ':' expr2=expr ')'
       {
         $node = makeIfExpr($expr0.node, $expr1.node, $expr2.node);
       }
@@ -361,11 +357,11 @@ expr returns [Expr node]
       {
         $node = makeLOr($expr0.node, $expr1.node);
       }
-    | MIN '(' expr0=expr COMMA expr1=expr ')'
+    | MIN '(' expr0=expr ',' expr1=expr ')'
       {
         $node = makeMin($expr0.node, $expr1.node);
       }
-    | MAX '(' expr0=expr COMMA expr1=expr ')'
+    | MAX '(' expr0=expr ',' expr1=expr ')'
       {
         $node = makeMax($expr0.node, $expr1.node);
       }
@@ -383,26 +379,25 @@ shape returns [std::vector<Expr> vec]
       {
         $vec.emplace_back($expr.node);
       }
-      (COMMA newExpr=expr
+      (',' newExpr=expr
       {
         $vec.emplace_back($newExpr.node);
       }
       )* ']'
-    |
-      '[' ']'
+    | '[' ']'
     ;
 
 var_params returns [std::vector<std::string> vec]
     : var  {
         $vec.push_back(std::string($var.name));
-    } (COMMA var1=var {$vec.push_back(std::string($var1.name));})*;
+    } (',' var1=var {$vec.push_back(std::string($var1.name));})*;
 
 indices returns [std::vector<Expr> exprs]
     : '[' expr
       {
         $exprs.emplace_back($expr.node);
       }
-      (COMMA newExpr=expr
+      (',' newExpr=expr
       {
         $exprs.emplace_back($newExpr.node);
       }
