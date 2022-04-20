@@ -69,7 +69,9 @@ void init_ffi_ast(py::module_ &m) {
     py::class_<ExprNode, Expr> pyExpr(m, "Expr", pyAST);
 
     py::class_<ID>(m, "ID")
-        .def(py::init([](const std::string &stmtId) { return ID(stmtId); }))
+        .def(py::init<ID>())
+        .def(py::init<std::string>())
+        .def(py::init<Stmt>())
         .def("__str__", [](const ID &id) { return toString(id); })
         .def("__hash__", [](const ID &id) { return std::hash<ID>()(id); })
         .def(

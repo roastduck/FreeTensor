@@ -3,16 +3,6 @@ from ffi import (ID, AccessType, MemType, DataType, OpenMPScope,
                  CUDAStreamScope, CUDAScope, CUDAScopeLevel, CUDAScopeDim)
 
 
-def toId(node):
-    if type(node) is ID:
-        return node
-    if type(node) is str:
-        return node
-    if isinstance(node, ffi.Stmt):
-        return node.nid
-    assert False, "%s is not a valid statement" % node
-
-
 def parseParallelScope(parallel):
     if type(parallel) is OpenMPScope:
         return parallel
