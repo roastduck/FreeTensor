@@ -124,6 +124,20 @@ def test_if():
     assert ast2.match(ast)
 
 
+def test_assert():
+    with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+        with ir.For("i", 0, 4) as i:
+            with ir.Assert(x[i] != 0):
+                y[i] = 100 // x[i]
+    ast = ir.pop_ast()
+    txt = ir.dump_ast(ast)
+    print(txt)
+    ast2 = ir.load_ast(txt)
+    print(ast2)
+    assert ast2.match(ast)
+
+
 def test_id():
     with ir.VarDef("x", (4, 4), "float32", "output", "cpu") as x:
         ir.MarkNid("foo")
@@ -179,3 +193,31 @@ def test_complex_id():
     assert ast2.match(ast)
     s = ir.Schedule(ast2)
     assert s.find("id!@#$%^&*").type() == ir.ASTNodeType.Store
+
+
+def test_var_name_be_same_with_builtin():
+    with ir.VarDef([("x1", (4,), "int32", "input", "cpu"),
+                    ("x2", (4,), "int32", "input", "cpu"),
+                    ("max", (4,), "int32", "output", "cpu")]) as (x1, x2, y):
+        with ir.For("i", 0, 4) as i:
+            y[i] = ir.max(x1[i], x2[i])
+    ast = ir.pop_ast()
+    txt = ir.dump_ast(ast)
+    print(txt)
+    ast2 = ir.load_ast(txt)
+    print(ast2)
+    assert ast2.match(ast)
+
+
+def test_var_name_be_same_with_keyword():
+    with ir.VarDef([("x1", (4,), "int32", "input", "cpu"),
+                    ("x2", (4,), "int32", "input", "cpu"),
+                    ("if", (4,), "int32", "output", "cpu")]) as (x1, x2, y):
+        with ir.For("i", 0, 4) as i:
+            y[i] = ir.if_then_else(x1[i] < x2[i], -1, 1)
+    ast = ir.pop_ast()
+    txt = ir.dump_ast(ast)
+    print(txt)
+    ast2 = ir.load_ast(txt)
+    print(ast2)
+    assert ast2.match(ast)

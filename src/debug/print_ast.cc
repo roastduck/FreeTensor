@@ -48,6 +48,9 @@ void PrintVisitor::printId(const Stmt &op) {
 
 std::string PrintVisitor::printName(const std::string &name) {
     ASSERT(!name.empty());
+    if (keywords.count(name)) {
+        goto escape;
+    }
     if (!isalpha(name[0]) && name[0] != '_') {
         goto escape;
     }
@@ -174,10 +177,10 @@ void PrintVisitor::visit(const ReduceTo &op) {
         os() << "*=";
         break;
     case ReduceOp::Min:
-        os() << "min=";
+        os() << "@!min=";
         break;
     case ReduceOp::Max:
-        os() << "max=";
+        os() << "@!max=";
         break;
     default:
         ASSERT(false);
@@ -244,7 +247,7 @@ void PrintVisitor::visit(const RealDiv &op) {
 }
 
 void PrintVisitor::visit(const FloorDiv &op) {
-    os() << "floor(";
+    os() << "@!floor(";
     recur(op->lhs_);
     os() << " / ";
     recur(op->rhs_);
@@ -252,7 +255,7 @@ void PrintVisitor::visit(const FloorDiv &op) {
 }
 
 void PrintVisitor::visit(const CeilDiv &op) {
-    os() << "ceil(";
+    os() << "@!ceil(";
     recur(op->lhs_);
     os() << " / ";
     recur(op->rhs_);
@@ -260,7 +263,7 @@ void PrintVisitor::visit(const CeilDiv &op) {
 }
 
 void PrintVisitor::visit(const RoundTowards0Div &op) {
-    os() << "towards0(";
+    os() << "@!towards0(";
     recur(op->lhs_);
     os() << " / ";
     recur(op->rhs_);
@@ -284,7 +287,7 @@ void PrintVisitor::visit(const Remainder &op) {
 }
 
 void PrintVisitor::visit(const Min &op) {
-    os() << "min(";
+    os() << "@!min(";
     recur(op->lhs_);
     os() << ", ";
     recur(op->rhs_);
@@ -292,7 +295,7 @@ void PrintVisitor::visit(const Min &op) {
 }
 
 void PrintVisitor::visit(const Max &op) {
-    os() << "max(";
+    os() << "@!max(";
     recur(op->lhs_);
     os() << ", ";
     recur(op->rhs_);
@@ -369,49 +372,49 @@ void PrintVisitor::visit(const LNot &op) {
 }
 
 void PrintVisitor::visit(const Sqrt &op) {
-    os() << "sqrt(";
+    os() << "@!sqrt(";
     recur(op->expr_);
     os() << ")";
 }
 
 void PrintVisitor::visit(const Exp &op) {
-    os() << "exp(";
+    os() << "@!exp(";
     recur(op->expr_);
     os() << ")";
 }
 
 void PrintVisitor::visit(const Square &op) {
-    os() << "(";
+    os() << "@!square(";
     recur(op->expr_);
-    os() << ")^2";
+    os() << ")";
 }
 
 void PrintVisitor::visit(const Sigmoid &op) {
-    os() << "sigmoid(";
+    os() << "@!sigmoid(";
     recur(op->expr_);
     os() << ")";
 }
 
 void PrintVisitor::visit(const Tanh &op) {
-    os() << "tanh(";
+    os() << "@!tanh(";
     recur(op->expr_);
     os() << ")";
 }
 
 void PrintVisitor::visit(const Abs &op) {
-    os() << "abs(";
+    os() << "@!abs(";
     recur(op->expr_);
     os() << ")";
 }
 
 void PrintVisitor::visit(const Floor &op) {
-    os() << "floor(";
+    os() << "@!floor(";
     recur(op->expr_);
     os() << ")";
 }
 
 void PrintVisitor::visit(const Ceil &op) {
-    os() << "ceil(";
+    os() << "@!ceil(";
     recur(op->expr_);
     os() << ")";
 }
@@ -555,7 +558,7 @@ void PrintVisitor::visit(const Assume &op) {
 }
 
 void PrintVisitor::visit(const Intrinsic &op) {
-    os() << "intrinsic(\"";
+    os() << "@!intrinsic(\"";
     int i = 0;
     for (char c : op->format_) {
         if (c == '%') {
@@ -575,7 +578,7 @@ void PrintVisitor::visit(const Eval &op) {
 
 void PrintVisitor::visit(const MatMul &op) {
     makeIndent();
-    os() << "matmul(&";
+    os() << "@!matmul(&";
     recur(op->a_);
     os() << ", &";
     recur(op->b_);

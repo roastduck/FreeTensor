@@ -6,6 +6,8 @@ IF:         'if';
 ELSE:       'else';
 FOR:        'for';
 IN:         'in';
+ASSERT_TOKEN:     'assert';
+ASSUME:     'assume';
 FUNC:       'func';
 
 // empty
@@ -19,8 +21,8 @@ PINNED:     '[pinned]';
 ATOMIC:     '@!atomic';
 PLUSEQ:     '+=';
 STAREQ:     '*=';
-MINEQ:      'min=';
-MAXEQ:      'max=';
+MINEQ:      '@!min=';
+MAXEQ:      '@!max=';
 
 // For
 NO_DEPS:    '@!no_deps';
@@ -34,18 +36,18 @@ TRUE:       'true';
 FALSE:      'false';
 
 // expr
-FLOOR:      'floor';
-CEIL:       'ceil';
-ROUNDTO0:   'towards0';
-MAX:        'max';
-MIN:        'min';
-SQRT:       'sqrt';
-EXP:        'exp';
-SQUARE:     '^2';
-ABS:        'abs';
-SIGMOID:    'sigmoid';
-TANH:       'tanh';
-INTRINSIC:  'intrinsic';
+FLOOR:      '@!floor';
+CEIL:       '@!ceil';
+ROUNDTO0:   '@!towards0';
+MAX:        '@!max';
+MIN:        '@!min';
+SQRT:       '@!sqrt';
+EXP:        '@!exp';
+SQUARE:     '@!square';
+ABS:        '@!abs';
+SIGMOID:    '@!sigmoid';
+TANH:       '@!tanh';
+INTRINSIC:  '@!intrinsic';
 
 
 Integer:    ('+'|'-')? [0-9]+;

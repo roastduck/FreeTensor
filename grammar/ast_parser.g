@@ -116,13 +116,21 @@ stmtWithoutID returns [Stmt node]
       {
         $node = $varDef.node;
       }
-    | forNode
+    | for
       {
-        $node = $forNode.node;
+        $node = $for.node;
       }
-    | ifNode
+    | if
       {
-        $node = $ifNode.node;
+        $node = $if.node;
+      }
+    | assertNode
+      {
+        $node = $assertNode.node;
+      }
+    | assume
+      {
+        $node = $assume.node;
       }
     ;
 
@@ -201,7 +209,7 @@ forProperty returns [Ref<ForProperty> property]
       }
     ;
 
-forNode returns [Stmt node]
+for returns [Stmt node]
     : forProperty
         FOR var IN begin=expr ':' end=expr ':' step=expr ':' len=expr
         '{' stmts '}'
@@ -211,7 +219,7 @@ forNode returns [Stmt node]
       }
     ;
 
-ifNode returns [Stmt node]
+if returns [Stmt node]
     : IF '(' cond=expr ')' '{' thenCase=stmts '}'
       {
         $node = makeIf(ID(), $cond.node, $thenCase.node);
@@ -219,6 +227,20 @@ ifNode returns [Stmt node]
     | IF '(' cond=expr ')' '{' thenCase=stmts '}' ELSE '{' elseCase=stmts '}'
       {
         $node = makeIf(ID(), $cond.node, $thenCase.node, $elseCase.node);
+      }
+    ;
+
+assertNode returns [Stmt node]
+    : ASSERT_TOKEN '(' cond=expr ')' '{' stmts '}'
+      {
+        $node = makeAssert(ID(), $cond.node, $stmts.node);
+      }
+    ;
+
+assume returns [Stmt node]
+    : ASSUME '(' cond=expr ')' '{' stmts '}'
+      {
+        $node = makeAssume(ID(), $cond.node, $stmts.node);
       }
     ;
 
