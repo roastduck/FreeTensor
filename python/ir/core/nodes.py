@@ -4,8 +4,6 @@ from typing import Sequence, Tuple, Any, Optional
 
 import ffi
 
-from .utils import *
-
 
 class Context:
 
@@ -284,7 +282,7 @@ class _VarDef:
 
 class _VarsDef:
 
-    def __init__(self, defs: Tuple[str, Any, DataType, AccessType]):
+    def __init__(self, defs: Tuple[str, Any, ffi.DataType, ffi.AccessType]):
         self.defs = [VarDef(*d) for d in defs]
 
     def __enter__(self):
@@ -551,9 +549,9 @@ def dtype(var):
     else:
         # TODO: Config default type
         if isinstance(var, float):
-            return DataType("float32")
+            return ffi.DataType("float32")
         elif isinstance(var, int):
-            return DataType("int32")
+            return ffi.DataType("int32")
         else:
             raise Exception('Unknown scalar type')
 

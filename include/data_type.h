@@ -5,6 +5,7 @@
 
 #include <itertools.hpp>
 
+#include <container_utils.h>
 #include <except.h>
 
 namespace ir {
@@ -30,14 +31,15 @@ inline std::string toString(DataType dtype) {
     return dataTypeNames.at((size_t)dtype);
 }
 
-inline DataType parseDType(const std::string &str) {
+inline DataType parseDType(const std::string &_str) {
+    auto &&str = tolower(_str);
     for (auto &&[i, s] : iter::enumerate(dataTypeNames)) {
         if (s == str) {
             return (DataType)i;
         }
     }
-    std::string msg =
-        "Unrecognized access type \"" + str + "\". Candidates are: ";
+    std::string msg = "Unrecognized access type \"" + _str +
+                      "\". Candidates are (case-insensitive): ";
     for (auto &&[i, s] : iter::enumerate(dataTypeNames)) {
         msg += (i > 0 ? ", " : "");
         msg += s;

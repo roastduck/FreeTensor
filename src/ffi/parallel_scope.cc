@@ -32,6 +32,9 @@ void init_ffi_parallel_scope(py::module_ &m) {
                 return CUDAScope{level, dim};
             }))
         .def("__str__", [](const CUDAScope &scope) { return toString(scope); });
+
+    // Factory function, used as a class
+    m.def("ParallelScope", &parseParallelScope);
 }
 
 } // namespace ir

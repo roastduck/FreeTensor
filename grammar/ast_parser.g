@@ -48,6 +48,15 @@ dtype returns [DataType type]
       }
     ;
 
+parallelScope returns [ParallelScope type]
+    : AtVar
+      {
+        std::string full = $AtVar.text;
+        ASSERT(full.length() > 1);
+        $type = parseParallelScope(std::string(full.begin() + 1, full.end()));
+      }
+    ;
+
 func returns [Func node]
     : FUNC '(' var_params ')' (RARROW)? '{' stmts '}'
       {
@@ -176,40 +185,27 @@ forNode returns [Stmt node]
         property->noDeps_.emplace_back($newVar.name);
       }
       )*)?
-      (PARALLEL '=' (OPENMP
+      (
+      PARALLEL '=' parallelScope
       {
-        property = property->withParallel(OpenMPScope{});
+        property->withParallel($parallelScope.type);
       }
-      | CUDASTREAM
+      )?
+      // TODO: reduction
+      (
+          UNROLL {property = property->withUnroll();}
+      )? // unroll
+      (
+          VECTORIZE {property = property->withVectorize();}
+      )? // vectorize
+      (
+          PREFERLIBS {property = property->withPreferLibs();}
+      )? // preferLibs
+      FOR var IN begin=expr ':' end=expr ':' step=expr ':' len=expr
+        '{' stmts '}'
       {
-        property = property->withParallel(CUDAStreamScope{});
-      }
-      | {CUDAScope::Level level;}
-          (SCOPE_BLOCK {level = CUDAScope::Level::Block;}
-          | SCOPE_THREAD {level = CUDAScope::Level::Thread;})
-          {CUDAScope::Dim dim;}
-          (DOTX {dim = CUDAScope::Dim::X;}
-          | DOTY {dim = CUDAScope::Dim::Y;}
-          | DOTZ {dim = CUDAScope::Dim::Z;})
-      {
-        property = property->withParallel(CUDAScope{level, dim});
-      }
-      ))?
-        // TODO: reduction
-        (
-            UNROLL {property = property->withUnroll();}
-        )? // unroll
-        (
-            VECTORIZE {property = property->withVectorize();}
-        )? // vectorize
-        (
-            PREFERLIBS {property = property->withPreferLibs();}
-        )? // preferLibs
-        FOR var IN begin=expr ':' end=expr ':' step=expr ':' len=expr '{'
-        stmts
-        '}' {
-            $node = makeFor(ID(), $var.name, $begin.node, $end.node, $step.node, $len.node, std::move(property), $stmts.node);
-        };
+          $node = makeFor(ID(), $var.name, $begin.node, $end.node, $step.node, $len.node, std::move(property), $stmts.node);
+      };
 
 ifNode returns [Stmt node]
     : IF '(' cond=expr ')' '{' thenCase=stmts '}'

@@ -2,6 +2,8 @@
 #define CONTAINER_UTILS_H
 
 #include <algorithm>
+#include <cctype>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -78,6 +80,15 @@ std::vector<T> cat(const std::vector<T> &lhs, const std::vector<T> &rhs) {
     ret.reserve(lhs.size() + rhs.size());
     ret.insert(ret.end(), lhs.begin(), lhs.end());
     ret.insert(ret.end(), rhs.begin(), rhs.end());
+    return ret;
+}
+
+inline std::string tolower(const std::string &s) {
+    std::string ret;
+    ret.reserve(s.length());
+    for (char c : s) {
+        ret.push_back(std::tolower(c));
+    }
     return ret;
 }
 

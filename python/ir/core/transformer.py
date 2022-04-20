@@ -20,7 +20,6 @@ from . import nodes
 from .nodes import (_VarDef, Var, ndim, pop_ast, For, If, Else, MarkNid,
                     intrinsic, l_and, l_or, l_not, if_then_else, ctx_stack,
                     Func, Assert)
-from .utils import *
 
 assert sys.version_info >= (3,
                             8), "Python version lower than 3.8 is not supported"

@@ -1,6 +1,5 @@
 import ffi
 from ffi import up_cast, neutral_val, is_float, DataType, MemType
-from .utils import *
 
 
 def min_value(dtype):

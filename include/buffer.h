@@ -6,6 +6,7 @@
 
 #include <itertools.hpp>
 
+#include <container_utils.h>
 #include <sub_tree.h>
 #include <tensor.h>
 
@@ -33,14 +34,15 @@ inline std::string toString(AccessType atype) {
     return accessTypeNames.at((size_t)atype);
 }
 
-inline AccessType parseAType(const std::string &str) {
+inline AccessType parseAType(const std::string &_str) {
+    auto &&str = tolower(_str);
     for (auto &&[i, s] : iter::enumerate(accessTypeNames)) {
         if (s == str) {
             return (AccessType)i;
         }
     }
-    std::string msg =
-        "Unrecognized access type \"" + str + "\". Candidates are: ";
+    std::string msg = "Unrecognized access type \"" + _str +
+                      "\". Candidates are (case-insensitive): ";
     for (auto &&[i, s] : iter::enumerate(accessTypeNames)) {
         msg += (i > 0 ? ", " : "");
         msg += s;
@@ -69,14 +71,15 @@ inline std::string toString(MemType mtype) {
     return memTypeNames.at((size_t)mtype);
 }
 
-inline MemType parseMType(const std::string &str) {
+inline MemType parseMType(const std::string &_str) {
+    auto &&str = tolower(_str);
     for (auto &&[i, s] : iter::enumerate(memTypeNames)) {
         if (s == str) {
             return (MemType)i;
         }
     }
-    std::string msg =
-        "Unrecognized memory type \"" + str + "\". Candidates are: ";
+    std::string msg = "Unrecognized memory type \"" + _str +
+                      "\". Candidates are (case-insensitive): ";
     for (auto &&[i, s] : iter::enumerate(memTypeNames)) {
         msg += (i > 0 ? ", " : "");
         msg += s;

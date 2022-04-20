@@ -29,14 +29,6 @@ REDUCTION:  '@!reduction';
 UNROLL:     '@!unroll';
 VECTORIZE:  '@!vectorize';
 PREFERLIBS: '@!prefer_libs';
-// For parallel
-OPENMP:     'openmp';
-CUDASTREAM: 'cudastream';
-SCOPE_BLOCK:'blockIdx';
-SCOPE_THREAD:'threadIdx';
-DOTX:       '.x';
-DOTY:       '.y';
-DOTZ:       '.z';
 
 TRUE:       'true';
 FALSE:      'false';

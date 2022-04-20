@@ -444,7 +444,7 @@ void PrintVisitor::visit(const For &op) {
     }
     if (auto str = ::ir::toString(op->property_->parallel_); !str.empty()) {
         makeIndent();
-        os() << "@!parallel = " << str << std::endl;
+        os() << "@!parallel = @" << str << std::endl;
     }
     for (auto &&reduction : op->property_->reductions_) {
         makeIndent();

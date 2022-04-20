@@ -1,7 +1,5 @@
 import ffi
-from ffi import FissionSide, MoveToSide, VarSplitMode, MemType, ID
-
-from .utils import *
+from ffi import FissionSide, MoveToSide, VarSplitMode, MemType, ParallelScope, ID
 
 
 class Schedule(ffi.Schedule):
@@ -449,8 +447,7 @@ class Schedule(ffi.Schedule):
         parallel : ParallelScope
             Parallel scope
         """
-        super(Schedule, self).parallelize(ID(loop),
-                                          parseParallelScope(parallel))
+        super(Schedule, self).parallelize(ID(loop), ParallelScope(parallel))
 
     def unroll(self, loop, immediate=False):
         """
