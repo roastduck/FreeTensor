@@ -1,12 +1,17 @@
 #ifndef PRINT_AST_H
 #define PRINT_AST_H
 
+#include <unordered_set>
+
 #include <codegen/code_gen.h>
 
 namespace ir {
 
 class PrintVisitor : public CodeGen<CodeGenStream> {
     bool printAllId_ = false, pretty_ = false;
+    std::unordered_set<std::string> keywords = {
+        "if", "else", "for", "in", "assert", "assume", "func", "true", "false",
+    };
 
   public:
     PrintVisitor(bool printAllId = false, bool pretty = false)

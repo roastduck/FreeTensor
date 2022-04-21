@@ -2,9 +2,13 @@
 #define CONTAINER_UTILS_H
 
 #include <algorithm>
+#include <cctype>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+
+#include <except.h>
 
 namespace ir {
 
@@ -79,6 +83,29 @@ std::vector<T> cat(const std::vector<T> &lhs, const std::vector<T> &rhs) {
     ret.insert(ret.end(), lhs.begin(), lhs.end());
     ret.insert(ret.end(), rhs.begin(), rhs.end());
     return ret;
+}
+
+inline std::string tolower(const std::string &s) {
+    std::string ret;
+    ret.reserve(s.length());
+    for (char c : s) {
+        ret.push_back(std::tolower(c));
+    }
+    return ret;
+}
+
+/**
+ * Python-like slicing that supports negative indexing as reversed indexing
+ */
+inline std::string slice(const std::string &s, int _begin, int _end) {
+    int begin = _begin >= 0 ? _begin : s.length() + _begin;
+    int end = _end >= 0 ? _end : s.length() + _end;
+    int len = end - begin;
+    ASSERT(len >= 0);
+    return s.substr(begin, len);
+}
+inline std::string slice(const std::string &s, int begin) {
+    return slice(s, begin, s.length());
 }
 
 } // namespace ir

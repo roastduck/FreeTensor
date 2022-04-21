@@ -7,17 +7,25 @@ void init_ffi_parallel_scope(py::module_ &m) {
     py::class_<SerialScope>(m, "SerialScope")
         .def(py::init<>())
         .def("__str__",
-             [](const SerialScope &scope) { return toString(scope); });
+             [](const SerialScope &scope) { return toString(scope); })
+        .def("__eq__", [](const SerialScope &lhs, const SerialScope &rhs) {
+            return lhs == rhs;
+        });
 
     py::class_<OpenMPScope>(m, "OpenMPScope")
         .def(py::init<>())
         .def("__str__",
-             [](const OpenMPScope &scope) { return toString(scope); });
+             [](const OpenMPScope &scope) { return toString(scope); })
+        .def("__eq__", [](const OpenMPScope &lhs, const OpenMPScope &rhs) {
+            return lhs == rhs;
+        });
 
     py::class_<CUDAStreamScope>(m, "CUDAStreamScope")
         .def(py::init<>())
         .def("__str__",
-             [](const CUDAStreamScope &scope) { return toString(scope); });
+             [](const CUDAStreamScope &scope) { return toString(scope); })
+        .def("__eq__", [](const CUDAStreamScope &lhs,
+                          const CUDAStreamScope &rhs) { return lhs == rhs; });
 
     py::enum_<CUDAScope::Level>(m, "CUDAScopeLevel")
         .value("Block", CUDAScope::Level::Block)
@@ -31,7 +39,13 @@ void init_ffi_parallel_scope(py::module_ &m) {
             [](const CUDAScope::Level &level, const CUDAScope::Dim &dim) {
                 return CUDAScope{level, dim};
             }))
-        .def("__str__", [](const CUDAScope &scope) { return toString(scope); });
+        .def("__str__", [](const CUDAScope &scope) { return toString(scope); })
+        .def("__eq__", [](const CUDAScope &lhs, const CUDAScope &rhs) {
+            return lhs == rhs;
+        });
+
+    // Factory function, used as a class
+    m.def("ParallelScope", &parseParallelScope);
 }
 
 } // namespace ir

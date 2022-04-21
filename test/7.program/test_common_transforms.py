@@ -42,21 +42,20 @@ def test_tiling():
     ]) as (a, b, c):
         with ir.For("i.0", 0, 8) as i0:
             with ir.For("j.0", 0, 8) as j0:
-                with ir.VarDef("a.r", (32, 256), "float32", ir.AccessType.Cache,
+                with ir.VarDef("a.r", (32, 256), "float32", "cache",
                                "cpu") as ar:
                     with ir.For("i.1.ar", 32 * i0, 32 * i0 + 32) as i1:
                         with ir.For("k.ar", 0, 256) as k:
                             ir.Any()
-                    with ir.VarDef("b.r", (256, 32), "float32",
-                                   ir.AccessType.Cache, "cpu") as br:
+                    with ir.VarDef("b.r", (256, 32), "float32", "cache",
+                                   "cpu") as br:
                         with ir.For("k.br", 0, 256) as k:
                             with ir.For("j.1.br", 32 * j0, 32 * j0 + 32) as j1:
                                 ir.Any()
                         with ir.For("i.1", 0, 32) as i1:
                             with ir.For("j.1", 0, 32) as j1:
                                 with ir.VarDef("c.w", (1, 1), "float32",
-                                               ir.AccessType.Cache,
-                                               "cpu") as cw:
+                                               "cache", "cpu") as cw:
                                     cw[0, 0] = 0
                                     with ir.For("k", 0, 256) as k:
                                         cw[0,

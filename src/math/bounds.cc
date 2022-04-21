@@ -231,7 +231,7 @@ LowerBound ceilDiv(const LowerBound &b, int k) {
 
 bool alwaysLT(const UpperBound &b1, const LowerBound &b2) {
     // Case 1: lower and upper round to some const
-    if (b1.lin().coeff_.empty() && b2.lin().coeff_.empty() &&
+    if (b1.lin().isConst() && b2.lin().isConst() &&
         floorDiv(b1.lin().bias_.p_, b1.lin().bias_.q_) <
             ceilDiv(b2.lin().bias_.p_, b2.lin().bias_.q_)) {
         return true;
@@ -243,7 +243,7 @@ bool alwaysLT(const UpperBound &b1, const LowerBound &b2) {
 }
 bool alwaysLE(const UpperBound &b1, const LowerBound &b2) {
     // Case 1: lower and upper round to some const
-    if (b1.lin().coeff_.empty() && b2.lin().coeff_.empty() &&
+    if (b1.lin().isConst() && b2.lin().isConst() &&
         floorDiv(b1.lin().bias_.p_, b1.lin().bias_.q_) <=
             ceilDiv(b2.lin().bias_.p_, b2.lin().bias_.q_)) {
         return true;

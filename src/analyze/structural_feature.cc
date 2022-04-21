@@ -2,6 +2,8 @@
 
 #include <analyze/check_all_defined.h>
 #include <analyze/structural_feature.h>
+#include <container_utils.h>
+#include <math/min_max.h>
 
 namespace ir {
 
@@ -46,81 +48,34 @@ void StructuralFeature::updAccCntInfo(const AST &parent, const AST &child,
 }
 
 void StructuralFeature::updAreaInfo(const AST &parent, const AST &child) {
-    auto filter = [this](NodeBufferInfo &child) -> NodeBufferInfo {
-        size_t n = child.lo_.size();
-        ASSERT(child.hi_.size() == n);
-
-        NodeBufferInfo ret;
-        ret.lo_ = std::vector<CompUniqueBounds::LowerBoundsList>(n);
-        ret.hi_ = std::vector<CompUniqueBounds::UpperBoundsList>(n);
-        for (size_t i = 0; i < n; i++) {
-            for (auto &&b : child.lo_[i]) {
-                if (checkAllDefined(names(), b.expr())) {
-                    ret.lo_[i].emplace_back(b);
-                }
+    for (auto &&[var, accesses] : info_[child].loads_) {
+        if (hasDef(var)) {
+            if (!info_[parent].loads_.count(var)) {
+                info_[parent].loads_[var] = accesses;
+            } else {
+                info_[parent].loads_[var] =
+                    cat(info_[parent].loads_[var], accesses);
             }
-            for (auto &&b : child.hi_[i]) {
-                if (checkAllDefined(names(), b.expr())) {
-                    ret.hi_[i].emplace_back(b);
-                }
-            }
-        }
-        return ret;
-    };
-
-    auto merge = [](const NodeBufferInfo &parent,
-                    const NodeBufferInfo &child) -> NodeBufferInfo {
-        size_t n = parent.lo_.size();
-        ASSERT(parent.hi_.size() == n);
-        ASSERT(child.lo_.size() == n);
-        ASSERT(child.hi_.size() == n);
-
-        NodeBufferInfo ret;
-        ret.lo_ = std::vector<CompUniqueBounds::LowerBoundsList>(n);
-        ret.hi_ = std::vector<CompUniqueBounds::UpperBoundsList>(n);
-        for (size_t i = 0; i < n; i++) {
-            for (auto &&b1 : parent.lo_[i]) {
-                for (auto &&b2 : child.lo_[i]) {
-                    if (b1.lin().coeff_.empty() && b2.lin().coeff_.empty()) {
-                        ret.lo_[i].emplace_back(LinearExpr<Rational<int64_t>>{
-                            {}, std::min(b1.lin().bias_, b2.lin().bias_)});
-                    }
-                }
-            }
-            for (auto &&b1 : parent.hi_[i]) {
-                for (auto &&b2 : child.hi_[i]) {
-                    if (b1.lin().coeff_.empty() && b2.lin().coeff_.empty()) {
-                        ret.hi_[i].emplace_back(LinearExpr<Rational<int64_t>>{
-                            {}, std::max(b1.lin().bias_, b2.lin().bias_)});
-                    }
-                }
-            }
-        }
-        return ret;
-    };
-
-    for (auto &&buf : info_[child].loads_) {
-        if (!info_[parent].loads_.count(buf.first)) {
-            info_[parent].loads_[buf.first] = filter(buf.second);
-        } else {
-            info_[parent].loads_[buf.first] =
-                merge(info_[parent].loads_[buf.first], filter(buf.second));
         }
     }
-    for (auto &&buf : info_[child].stores_) {
-        if (!info_[parent].stores_.count(buf.first)) {
-            info_[parent].stores_[buf.first] = filter(buf.second);
-        } else {
-            info_[parent].stores_[buf.first] =
-                merge(info_[parent].stores_[buf.first], filter(buf.second));
+    for (auto &&[var, accesses] : info_[child].stores_) {
+        if (hasDef(var)) {
+            if (!info_[parent].stores_.count(var)) {
+                info_[parent].stores_[var] = accesses;
+            } else {
+                info_[parent].stores_[var] =
+                    cat(info_[parent].stores_[var], accesses);
+            }
         }
     }
-    for (auto &&buf : info_[child].accesses_) {
-        if (!info_[parent].accesses_.count(buf.first)) {
-            info_[parent].accesses_[buf.first] = filter(buf.second);
-        } else {
-            info_[parent].accesses_[buf.first] =
-                merge(info_[parent].accesses_[buf.first], filter(buf.second));
+    for (auto &&[var, accesses] : info_[child].accesses_) {
+        if (hasDef(var)) {
+            if (!info_[parent].accesses_.count(var)) {
+                info_[parent].accesses_[var] = accesses;
+            } else {
+                info_[parent].accesses_[var] =
+                    cat(info_[parent].accesses_[var], accesses);
+            }
         }
     }
 
@@ -152,26 +107,56 @@ void StructuralFeature::calcAccCntFeatures(const Stmt &node) {
     features_[node->id()].accessCnt_ = info_[node].accessCnt_;
 }
 
-int64_t StructuralFeature::calcArea(const NodeBufferInfo &bufInfo) {
-    size_t n = bufInfo.lo_.size();
-    ASSERT(bufInfo.hi_.size() == n);
+int64_t StructuralFeature::calcArea(
+    const std::string &var,
+    const std::vector<CompAccessBound::Access> &accesses) {
+    if (accesses.empty()) {
+        return 0;
+    }
+
     int64_t area = 1;
+    size_t n = accesses.front().indices_.size();
     for (size_t i = 0; i < n; i++) {
-        int64_t tightest = LLONG_MAX;
-        for (auto &&lo : bufInfo.lo_[i]) {
-            for (auto &&hi : bufInfo.hi_[i]) {
-                auto diff = sub(hi, lo);
-                if (diff.lin().coeff_.empty()) {
-                    tightest =
-                        std::min(tightest,
-                                 diff.lin().bias_.p_ / diff.lin().bias_.q_ + 1);
+        std::vector<std::vector<Expr>> lower, upper;
+        for (size_t j = 0, jEnd = accesses.size(); j < jEnd; j++) {
+            ASSERT(accesses[j].indices_.size() == n);
+            auto &&index = accesses[j].indices_[i];
+            std::vector<Expr> lowerItem({makeIntConst(0)});
+            if (checkAllDefined(names(), index)) {
+                lowerItem.emplace_back(index);
+            }
+            for (auto item : accesses[j].lower_[i]) {
+                if (checkAllDefined(names(), item.expr())) {
+                    lowerItem.emplace_back(item.expr());
                 }
             }
+            lower.emplace_back(std::move(lowerItem));
         }
-        if (tightest < LLONG_MAX) {
-            area *= tightest;
+
+        for (size_t j = 0, jEnd = accesses.size(); j < jEnd; j++) {
+            ASSERT(accesses[j].indices_.size() == n);
+            auto &&index = accesses[j].indices_[i];
+            std::vector<Expr> upperItem(
+                {makeSub(buffer(var)->tensor()->shape()[i], makeIntConst(1))});
+            if (checkAllDefined(names(), index)) {
+                upperItem.emplace_back(index);
+            }
+            for (auto item : accesses[j].upper_[i]) {
+                if (checkAllDefined(names(), item.expr())) {
+                    upperItem.emplace_back(item.expr());
+                }
+            }
+            upper.emplace_back(std::move(upperItem));
+        }
+
+        auto l = makeMinMax(lower);
+        auto u = makeMaxMin(upper);
+        auto len = makeAdd(makeSub(u, l), makeIntConst(1));
+        if (auto constLen = bound_.getInt(len); constLen.isValid()) {
+            area *= *constLen;
         }
     }
+
     return area;
 }
 
@@ -186,17 +171,17 @@ void StructuralFeature::calcAreaFeatures(const Stmt &node) {
         features_[node->id()].accessArea_[item.first] = item.second;
     }
 
-    for (auto &&item : info_[node].loads_) {
-        features_[node->id()].loadArea_[buffer(item.first)->mtype()] +=
-            calcArea(item.second);
+    for (auto &&[var, accesses] : info_[node].loads_) {
+        features_[node->id()].loadArea_[buffer(var)->mtype()] +=
+            calcArea(var, accesses);
     }
-    for (auto &&item : info_[node].stores_) {
-        features_[node->id()].storeArea_[buffer(item.first)->mtype()] +=
-            calcArea(item.second);
+    for (auto &&[var, accesses] : info_[node].stores_) {
+        features_[node->id()].storeArea_[buffer(var)->mtype()] +=
+            calcArea(var, accesses);
     }
-    for (auto &&item : info_[node].accesses_) {
-        features_[node->id()].accessArea_[buffer(item.first)->mtype()] +=
-            calcArea(item.second);
+    for (auto &&[var, accesses] : info_[node].accesses_) {
+        features_[node->id()].accessArea_[buffer(var)->mtype()] +=
+            calcArea(var, accesses);
     }
 }
 
@@ -237,21 +222,10 @@ void StructuralFeature::visitExpr(const Expr &op) {
 void StructuralFeature::visit(const Load &op) {
     BaseClass::visit(op);
 
-    NodeBufferInfo &loads = info_[op].loads_[op->var_];
-    NodeBufferInfo &accesses = info_[op].accesses_[op->var_];
-    loads.lo_.reserve(op->indices_.size());
-    loads.hi_.reserve(op->indices_.size());
-    accesses.lo_.reserve(op->indices_.size());
-    accesses.hi_.reserve(op->indices_.size());
-    for (auto &&idx : op->indices_) {
-        loads.lo_.emplace_back(bound_.getLower(idx));
-        loads.hi_.emplace_back(bound_.getUpper(idx));
-        accesses.lo_.emplace_back(bound_.getLower(idx));
-        accesses.hi_.emplace_back(bound_.getUpper(idx));
-    }
-
     info_[op].loadCnt_[buffer(op->var_)->mtype()]++;
     info_[op].accessCnt_[buffer(op->var_)->mtype()]++;
+    info_[op].loads_[op->var_] = info_[op].accesses_[op->var_] = {
+        CompAccessBound::Access(bound_, op->indices_, conds())};
 
     for (auto &&idx : op->indices_) {
         updInfo(op, idx);
@@ -261,21 +235,10 @@ void StructuralFeature::visit(const Load &op) {
 void StructuralFeature::visit(const Store &op) {
     BaseClass::visit(op);
 
-    NodeBufferInfo &stores = info_[op].stores_[op->var_];
-    NodeBufferInfo &accesses = info_[op].accesses_[op->var_];
-    stores.lo_.reserve(op->indices_.size());
-    stores.hi_.reserve(op->indices_.size());
-    accesses.lo_.reserve(op->indices_.size());
-    accesses.hi_.reserve(op->indices_.size());
-    for (auto &&idx : op->indices_) {
-        stores.lo_.emplace_back(bound_.getLower(idx));
-        stores.hi_.emplace_back(bound_.getUpper(idx));
-        accesses.lo_.emplace_back(bound_.getLower(idx));
-        accesses.hi_.emplace_back(bound_.getUpper(idx));
-    }
-
     info_[op].storeCnt_[buffer(op->var_)->mtype()]++;
     info_[op].accessCnt_[buffer(op->var_)->mtype()]++;
+    info_[op].stores_[op->var_] = info_[op].accesses_[op->var_] = {
+        CompAccessBound::Access(bound_, op->indices_, conds())};
 
     for (auto &&idx : op->indices_) {
         updInfo(op, idx);
@@ -286,29 +249,14 @@ void StructuralFeature::visit(const Store &op) {
 void StructuralFeature::visit(const ReduceTo &op) {
     BaseClass::visit(op);
 
-    NodeBufferInfo &loads = info_[op].loads_[op->var_];
-    NodeBufferInfo &stores = info_[op].stores_[op->var_];
-    NodeBufferInfo &accesses = info_[op].accesses_[op->var_];
-    loads.lo_.reserve(op->indices_.size());
-    loads.hi_.reserve(op->indices_.size());
-    stores.lo_.reserve(op->indices_.size());
-    stores.hi_.reserve(op->indices_.size());
-    accesses.lo_.reserve(op->indices_.size());
-    accesses.hi_.reserve(op->indices_.size());
-    for (auto &&idx : op->indices_) {
-        loads.lo_.emplace_back(bound_.getLower(idx));
-        loads.hi_.emplace_back(bound_.getUpper(idx));
-        stores.lo_.emplace_back(bound_.getLower(idx));
-        stores.hi_.emplace_back(bound_.getUpper(idx));
-        accesses.lo_.emplace_back(bound_.getLower(idx));
-        accesses.hi_.emplace_back(bound_.getUpper(idx));
-    }
-
     info_[op].opCnt_[upCast(buffer(op->var_)->tensor()->dtype(),
                             dtype(op->expr_))]++;
     info_[op].loadCnt_[buffer(op->var_)->mtype()]++;
     info_[op].storeCnt_[buffer(op->var_)->mtype()]++;
     info_[op].accessCnt_[buffer(op->var_)->mtype()]++;
+    info_[op].loads_[op->var_] = info_[op].stores_[op->var_] =
+        info_[op].accesses_[op->var_] = {
+            CompAccessBound::Access(bound_, op->indices_, conds())};
 
     for (auto &&idx : op->indices_) {
         updInfo(op, idx);
@@ -374,17 +322,17 @@ void StructuralFeature::visit(const VarDef &op) {
 
     if (info_[op].loads_.count(op->name_)) {
         info_[op].innerLoadArea_[op->buffer_->mtype()] +=
-            calcArea(info_[op].loads_[op->name_]);
+            calcArea(op->name_, info_[op].loads_[op->name_]);
         info_[op].loads_.erase(op->name_);
     }
     if (info_[op].stores_.count(op->name_)) {
         info_[op].innerStoreArea_[op->buffer_->mtype()] +=
-            calcArea(info_[op].stores_[op->name_]);
+            calcArea(op->name_, info_[op].stores_[op->name_]);
         info_[op].stores_.erase(op->name_);
     }
     if (info_[op].accesses_.count(op->name_)) {
         info_[op].innerAccessArea_[op->buffer_->mtype()] +=
-            calcArea(info_[op].accesses_[op->name_]);
+            calcArea(op->name_, info_[op].accesses_[op->name_]);
         info_[op].accesses_.erase(op->name_);
     }
 }

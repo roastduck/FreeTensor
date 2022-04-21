@@ -4,8 +4,6 @@ from typing import Sequence, Tuple, Any, Optional
 
 import ffi
 
-from .utils import *
-
 
 class Context:
 
@@ -40,7 +38,7 @@ class Context:
                         step,
                         body,
                         nid: str = "",
-                        no_deps: Optional[Sequence] = None,
+                        no_deps: Optional[Sequence[str]] = None,
                         prefer_libs: Optional[bool] = None):
         if nid == "":
             nid = self.next_nid
@@ -261,12 +259,12 @@ class _VarDef:
             self.shape = [shape[i] for i in range(ndim)]
         else:
             assert False, "shape cannot be of type %s" % type(shape)
-        self.dtype = parseDType(dtype)
-        self.atype = parseAType(atype)
-        self.mtype = parseMType(mtype)
+        self.dtype = ffi.DataType(dtype)
+        self.atype = ffi.AccessType(atype)
+        self.mtype = ffi.MemType(mtype)
 
     def set_atype(self, atype):
-        self.atype = parseAType(atype)
+        self.atype = ffi.AccessType(atype)
 
     def __enter__(self):
         ctx_stack.push()
@@ -284,7 +282,7 @@ class _VarDef:
 
 class _VarsDef:
 
-    def __init__(self, defs: Tuple[str, Any, DataType, AccessType]):
+    def __init__(self, defs: Tuple[str, Any, ffi.DataType, ffi.AccessType]):
         self.defs = [VarDef(*d) for d in defs]
 
     def __enter__(self):
@@ -311,7 +309,7 @@ class For:
                  end,
                  step=1,
                  nid: str = "",
-                 no_deps: Optional[Sequence] = None,
+                 no_deps: Optional[Sequence[str]] = None,
                  prefer_libs: Optional[bool] = None):
         self.iter_var = iter_var
         self.begin = begin
@@ -493,7 +491,7 @@ def ceil(expr):
 
 
 def cast(expr, dtype):
-    return ffi.makeCast(expr, parseDType(dtype))
+    return ffi.makeCast(expr, ffi.DataType(dtype))
 
 
 def intrinsic(fmt, *params, **kws):
@@ -511,10 +509,10 @@ def intrinsic(fmt, *params, **kws):
     has_side_effect: bool
         (Keyword argument only) True to indicate the intrinsic modifes something other than the return value. Defaults to false
     """
-    ret_type = ffi.DataType.Void
+    ret_type = ffi.DataType("void")
     has_side_effect = False
     if "ret_type" in kws:
-        ret_type = parseDType(kws["ret_type"])
+        ret_type = ffi.DataType(kws["ret_type"])
         del kws["ret_type"]
     if "has_side_effect" in kws:
         has_side_effect = kws["has_side_effect"]
@@ -551,9 +549,9 @@ def dtype(var):
     else:
         # TODO: Config default type
         if isinstance(var, float):
-            return DataType.Float32
+            return ffi.DataType("float32")
         elif isinstance(var, int):
-            return DataType.Int32
+            return ffi.DataType("int32")
         else:
             raise Exception('Unknown scalar type')
 

@@ -39,6 +39,7 @@ class CompAccessBound
     : public CompTransientBounds<WithTypeInfer<SymbolTable<Visitor>>> {
     typedef CompTransientBounds<WithTypeInfer<SymbolTable<Visitor>>> BaseClass;
 
+  public:
     struct Access {
         std::vector<Expr> indices_, conds_;
         std::vector<std::vector<LowerBound>> lower_;
@@ -54,6 +55,7 @@ class CompAccessBound
         }
     };
 
+  private:
     CompUniqueBounds unique_;
 
     // The variable to compute

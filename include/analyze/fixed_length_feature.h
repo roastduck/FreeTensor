@@ -45,8 +45,14 @@ constexpr int FEAT_SAMP_GPU_LOCAL_STORE_AREA = 24;
 constexpr int FEAT_SAMP_GPU_LOCAL_ACCESS_AREA = 25;
 
 /**
- * Convert a structural feature into a fixed length one, so can be consumed by
+ * Convert structural features into fixed length ones, so can be consumed by
  * XGBoost
+ *
+ * The feature set includes some standalone features and some sampled features.
+ * Standalone features depict the characteristics of the full program. Sampled
+ * features depict the expected characteristics of running the program for a
+ * given iterations (the expected value of every parts of the program), to
+ * express the locality
  */
 class FixedLengthFeature : public Visitor {
     const std::unordered_map<ID, NodeFeature> &structural_;
