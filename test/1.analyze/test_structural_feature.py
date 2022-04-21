@@ -47,9 +47,9 @@ def test_access_count():
 
 def test_access_count_overlap():
     with ir.VarDef([
-        ("x", (32,), "int32", "input", "cpu"),
-        ("y1", (32,), "int32", "output", "cpu"),
-        ("y2", (32,), "int32", "output", "cpu"),
+        ("x", (48,), "int32", "input", "cpu"),
+        ("y1", (48,), "int32", "output", "cpu"),
+        ("y2", (48,), "int32", "output", "cpu"),
     ]) as (x, y1, y2):
         with ir.NamedScope('S1'):
             with ir.For("i", 0, 32, nid='L1') as i:
@@ -99,9 +99,9 @@ def test_access_area():
 
 def test_access_area_overlap():
     with ir.VarDef([
-        ("x", (32,), "int32", "input", "cpu"),
-        ("y1", (32,), "int32", "output", "cpu"),
-        ("y2", (32,), "int32", "output", "cpu"),
+        ("x", (48,), "int32", "input", "cpu"),
+        ("y1", (48,), "int32", "output", "cpu"),
+        ("y2", (48,), "int32", "output", "cpu"),
     ]) as (x, y1, y2):
         with ir.NamedScope('S1'):
             with ir.For("i", 0, 32, nid='L1') as i:

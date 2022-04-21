@@ -314,46 +314,147 @@ void CompUniqueBounds::visit(const Min &op) {
     BaseClass::visit(op);
     auto &lower = lower_[op];
     auto &upper = upper_[op];
-    for (auto &&b : getUpper(op->lhs_)) {
-        updUpper(upper, b);
+
+    std::vector<Expr> oper, all;
+    std::function<void(const Expr &)> recur = [&](const Expr &expr) {
+        if (expr->nodeType() == ASTNodeType::Min) {
+            recur(expr.as<MinNode>()->lhs_);
+            recur(expr.as<MinNode>()->rhs_);
+        } else {
+            oper.emplace_back(expr);
+        }
+    };
+    recur(op);
+    for (auto &&next : oper) {
+        for (auto &old : all) {
+            if (alwaysLE(old, next)) {
+                goto ignore;
+            }
+            if (alwaysLE(next, old)) {
+                old = next;
+                goto ignore;
+            }
+        }
+        all.emplace_back(next);
+    ignore:;
     }
-    for (auto &&b : getUpper(op->rhs_)) {
-        updUpper(upper, b);
+
+    if (all.size() == 1) {
+        lower = getLower(all.front());
+        upper = getUpper(all.front());
+        return;
     }
-    for (auto &&b1 : getLower(op->lhs_)) {
-        for (auto &&b2 : getLower(op->rhs_)) {
-            if (b1.lin().isConst() && b2.lin().isConst()) {
-                updLower(lower,
-                         LinearExpr<Rational<int64_t>>{
-                             {}, std::min(b1.lin().bias_, b2.lin().bias_)});
+    if (all.size() == oper.size()) {
+        updLower(lower, LowerBound{op});
+        updUpper(upper, UpperBound{op});
+    } else {
+        ASSERT(!all.empty());
+        Expr ret;
+        for (auto &&item : all) {
+            ret = ret.isValid() ? makeMin(ret, item) : item;
+        }
+        updLower(lower, LowerBound{ret});
+        updUpper(upper, UpperBound{ret});
+    }
+
+    bool hasConstLower = true;
+    Opt<Rational<int64_t>> constLower;
+    for (auto &&item : all) {
+        for (auto &&b : getUpper(item)) {
+            updUpper(upper, b);
+        }
+        if (hasConstLower) {
+            for (auto &&b : getLower(item)) {
+                if (b.lin().isConst()) {
+                    if (constLower.isValid()) {
+                        *constLower = std::min(*constLower, b.lin().bias_);
+                    } else {
+                        constLower =
+                            Opt<Rational<int64_t>>::make(b.lin().bias_);
+                    }
+                } else {
+                    hasConstLower = false;
+                }
             }
         }
     }
-    updLower(lower, LowerBound{op});
-    updUpper(upper, UpperBound{op});
+    if (hasConstLower && constLower.isValid()) {
+        updLower(lower, LinearExpr<Rational<int64_t>>{{}, *constLower});
+    }
 }
 
 void CompUniqueBounds::visit(const Max &op) {
     BaseClass::visit(op);
     auto &lower = lower_[op];
     auto &upper = upper_[op];
-    for (auto &&b : getLower(op->lhs_)) {
-        updLower(lower, b);
+
+    std::vector<Expr> oper, all;
+    std::function<void(const Expr &)> recur = [&](const Expr &expr) {
+        if (expr->nodeType() == ASTNodeType::Max) {
+            recur(expr.as<MaxNode>()->lhs_);
+            recur(expr.as<MaxNode>()->rhs_);
+        } else {
+            oper.emplace_back(expr);
+        }
+    };
+    recur(op);
+    for (auto &&next : oper) {
+        for (auto &old : all) {
+            if (alwaysLE(next, old)) {
+                goto ignore;
+            }
+            if (alwaysLE(old, next)) {
+                old = next;
+                goto ignore;
+            }
+        }
+        all.emplace_back(next);
+    ignore:;
     }
-    for (auto &&b : getLower(op->rhs_)) {
-        updLower(lower, b);
+
+    if (all.size() == 1) {
+        lower = getLower(all.front());
+        upper = getUpper(all.front());
+        return;
     }
-    for (auto &&b1 : getUpper(op->lhs_)) {
-        for (auto &&b2 : getUpper(op->rhs_)) {
-            if (b1.lin().isConst() && b2.lin().isConst()) {
-                updUpper(upper,
-                         LinearExpr<Rational<int64_t>>{
-                             {}, std::max(b1.lin().bias_, b2.lin().bias_)});
+    if (all.size() == oper.size()) {
+        updLower(lower, LowerBound{op});
+        updUpper(upper, UpperBound{op});
+    } else {
+        ASSERT(!all.empty());
+        Expr ret;
+        for (auto &&item : all) {
+            ret = ret.isValid() ? makeMax(ret, item) : item;
+        }
+        updLower(lower, LowerBound{ret});
+        updUpper(upper, UpperBound{ret});
+    }
+
+    bool hasConstUpper = true;
+    Opt<Rational<int64_t>> constUpper;
+    for (auto &&item : all) {
+        for (auto &&b : getLower(item)) {
+            updLower(lower, b);
+        }
+        if (hasConstUpper) {
+            for (auto &&b : getUpper(item)) {
+                if (b.lin().isConst()) {
+                    if (constUpper.isValid()) {
+                        *constUpper = std::max(*constUpper, b.lin().bias_);
+                    } else {
+                        constUpper =
+                            Opt<Rational<int64_t>>::make(b.lin().bias_);
+                    }
+                } else {
+                    hasConstUpper = false;
+                    break;
+                }
             }
         }
     }
-    updLower(lower, LowerBound{op});
-    updUpper(upper, UpperBound{op});
+    if (hasConstUpper && constUpper.isValid()) {
+        updUpper(upper, LinearExpr<Rational<int64_t>>{{}, *constUpper});
+    }
 }
 
 void CompUniqueBounds::visit(const IfExpr &op) {

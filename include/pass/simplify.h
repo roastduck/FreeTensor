@@ -71,8 +71,6 @@ class SimplifyPass
     Expr visit(const RoundTowards0Div &op) override;
     Expr visit(const Mod &op) override;
     Expr visit(const Remainder &op) override;
-    Expr visit(const Min &op) override;
-    Expr visit(const Max &op) override;
     Expr visit(const LT &op) override;
     Expr visit(const LE &op) override;
     Expr visit(const GT &op) override;

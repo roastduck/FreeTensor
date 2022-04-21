@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include <analyze/comp_access_bound.h>
 #include <analyze/comp_transient_bounds.h>
 #include <analyze/comp_unique_bounds.h>
 #include <analyze/symbol_table.h>
@@ -39,14 +40,6 @@ class StructuralFeature
     typedef CompTransientBounds<WithTypeInfer<SymbolTable<Visitor>>> BaseClass;
 
     /**
-     * Memory access info of an AST node with respect to a buffer
-     */
-    struct NodeBufferInfo {
-        std::vector<CompUniqueBounds::LowerBoundsList> lo_;
-        std::vector<CompUniqueBounds::UpperBoundsList> hi_;
-    };
-
-    /**
      * Info about an AST node, but not necessarily a feature
      */
     struct NodeInfo {
@@ -55,12 +48,12 @@ class StructuralFeature
 
         std::unordered_map<MemType, int64_t> innerLoadArea_, innerStoreArea_,
             innerAccessArea_;
-        std::unordered_map<std::string, NodeBufferInfo> loads_, stores_,
-            accesses_; // buffer name -> buffer info
-        // NOTE: If a key does not exist in loads_, stores_ or accesses_, it
-        // means that a node does not access the buffer. But, if there is an
-        // empty NodeBufferInfo, it means there is an access whose indices is
-        // unlimited
+
+        // buffer name -> all accesses of this buffer
+        // If a key does not exist in loads_, stores_ or accesses_, it
+        // means that a node does not access the buffer
+        std::unordered_map<std::string, std::vector<CompAccessBound::Access>>
+            loads_, stores_, accesses_;
     };
 
     CompUniqueBounds bound_;
@@ -84,7 +77,8 @@ class StructuralFeature
 
     void calcCompFeatures(const Stmt &parent);
     void calcAccCntFeatures(const Stmt &parent);
-    int64_t calcArea(const NodeBufferInfo &bufInfo);
+    int64_t calcArea(const std::string &var,
+                     const std::vector<CompAccessBound::Access> &accesses);
     void calcAreaFeatures(const Stmt &parent);
     void calcFeatures(const Stmt &parent);
 
