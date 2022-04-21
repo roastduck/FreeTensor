@@ -558,16 +558,16 @@ void PrintVisitor::visit(const Assume &op) {
 }
 
 void PrintVisitor::visit(const Intrinsic &op) {
-    os() << "@!intrinsic(\"";
-    int i = 0;
-    for (char c : op->format_) {
-        if (c == '%') {
-            recur(op->params_.at(i++));
-        } else {
-            os() << c;
-        }
+    os() << "@!intrinsic(\"" << op->format_ << "\" -> "
+         << ::ir::toString(op->retType_);
+    for (auto &&param : op->params_) {
+        os() << ", ";
+        recur(param);
     }
-    os() << "\")";
+    if (op->hasSideEffect_) {
+        os() << ", @!side_effect";
+    }
+    os() << ")";
 }
 
 void PrintVisitor::visit(const Eval &op) {

@@ -50,6 +50,30 @@ def test_cast():
     assert ast2.match(ast)
 
 
+def test_intrinsic():
+    with ir.VarDef([("x", (), "float32", "input", "cpu"),
+                    ("y", (), "float32", "output", "cpu")]) as (x, y):
+        y[()] = ir.intrinsic("sinf(%)", x[()], ret_type="float32")
+    ast = ir.pop_ast()
+    txt = ir.dump_ast(ast)
+    print(txt)
+    ast2 = ir.load_ast(txt)
+    print(ast2)
+    assert ast2.match(ast)
+
+
+def test_intrinsic_side_effect():
+    with ir.VarDef([("x1", (), "float32", "input", "cpu"),
+                    ("x2", (), "float32", "input", "cpu")]) as (x1, x2):
+        ir.Eval(ir.intrinsic("foo(%, %)", x1[()], x2[()], has_side_effect=True))
+    ast = ir.pop_ast()
+    txt = ir.dump_ast(ast)
+    print(txt)
+    ast2 = ir.load_ast(txt)
+    print(ast2)
+    assert ast2.match(ast)
+
+
 def test_for():
     with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):

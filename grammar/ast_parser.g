@@ -9,6 +9,7 @@ options {
     #include <string>
     #include <vector>
 
+    #include <container_utils.h>
     #include <stmt.h>
     #include <func.h>
 }
@@ -26,18 +27,14 @@ program returns [AST node]
 mtype returns [MemType type]
     : AtVar
       {
-        std::string full = $AtVar.text;
-        ASSERT(full.length() > 1);
-        $type = parseMType(std::string(full.begin() + 1, full.end()));
+        $type = parseMType(slice($AtVar.text, 1));
       }
     ;
 
 atype returns [AccessType type]
     : AtVar
       {
-        std::string full = $AtVar.text;
-        ASSERT(full.length() > 1);
-        $type = parseAType(std::string(full.begin() + 1, full.end()));
+        $type = parseAType(slice($AtVar.text, 1));
       }
     ;
 
@@ -51,9 +48,7 @@ dtype returns [DataType type]
 parallelScope returns [ParallelScope type]
     : AtVar
       {
-        std::string full = $AtVar.text;
-        ASSERT(full.length() > 1);
-        $type = parseParallelScope(std::string(full.begin() + 1, full.end()));
+        $type = parseParallelScope(slice($AtVar.text, 1));
       }
     ;
 
@@ -131,6 +126,10 @@ stmtWithoutID returns [Stmt node]
     | assume
       {
         $node = $assume.node;
+      }
+    | expr
+      {
+        $node = makeEval(ID(), $expr.node);
       }
     ;
 
@@ -391,7 +390,13 @@ expr returns [Expr node]
       {
         $node = $expr.node;
       }
-    | INTRINSIC '(' DQUOTE DQUOTE ')'
+    | INTRINSIC '(' String '->' dtype { std::vector<Expr> params; bool hasSideEffect = false; }
+        (',' expr { params.emplace_back($expr.node); } )*
+        (',' SIDE_EFFECT { hasSideEffect = true; } )?
+        ')'
+      {
+        $node = makeIntrinsic(slice($String.text, 1, -1), std::move(params), $dtype.type, hasSideEffect);
+      }
     ;
 
 
@@ -455,8 +460,6 @@ var returns [std::string name]
       }
     | EscapedVar
       {
-        std::string full = $EscapedVar.text;
-        ASSERT(full.length() > 2);
-        $name = std::string(full.begin() + 1, full.end() - 1);
+        $name = std::string(slice($EscapedVar.text, 1, -1));
       }
     ;

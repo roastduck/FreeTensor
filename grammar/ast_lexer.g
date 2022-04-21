@@ -48,10 +48,12 @@ ABS:        '@!abs';
 SIGMOID:    '@!sigmoid';
 TANH:       '@!tanh';
 INTRINSIC:  '@!intrinsic';
+SIDE_EFFECT:    '@!side_effect';
 
 
 Integer:    ('+'|'-')? [0-9]+;
 Float:      ('+'|'-')? Integer '.' [0-9]* (('E'|'e') Integer)?;
+String:     '"' ~["\r\n]+? '"';
 SimpleVar:  [a-zA-Z_][a-zA-Z0-9_]*;
 EscapedVar: '`' ~[`\r\n]+? '`';
 AtVar:      '@' ~[ !\t\r\n]+;
@@ -84,5 +86,4 @@ RBRACK:     ']';
 LBRACE:     '{';
 RBRACE:     '}';
 COMMA:      ',';
-DQUOTE:     '"';
 RARROW:     '->';

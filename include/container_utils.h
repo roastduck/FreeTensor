@@ -8,6 +8,8 @@
 #include <unordered_set>
 #include <vector>
 
+#include <except.h>
+
 namespace ir {
 
 template <class T, class V1, class V2, class Hash, class KeyEqual>
@@ -90,6 +92,20 @@ inline std::string tolower(const std::string &s) {
         ret.push_back(std::tolower(c));
     }
     return ret;
+}
+
+/**
+ * Python-like slicing that supports negative indexing as reversed indexing
+ */
+inline std::string slice(const std::string &s, int _begin, int _end) {
+    int begin = _begin >= 0 ? _begin : s.length() + _begin;
+    int end = _end >= 0 ? _end : s.length() + _end;
+    int len = end - begin;
+    ASSERT(len >= 0);
+    return s.substr(begin, len);
+}
+inline std::string slice(const std::string &s, int begin) {
+    return slice(s, begin, s.length());
 }
 
 } // namespace ir
