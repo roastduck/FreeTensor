@@ -112,11 +112,13 @@ std::vector<std::pair<ID, int>> multiLevelTilingWithFusion(
     }
     auto body = schedule.find(lastFuse).as<ForNode>()->body_->id();
     try {
-        schedule.cache(body, target.dest, targetType == TargetType::CPU ? MemType::CPU : MemType::GPULocal);
+        schedule.cache(body, target.dest,
+                       targetType == TargetType::CPU ? MemType::CPU
+                                                     : MemType::GPULocal);
     } catch (const InvalidSchedule &e) {
     }
     if (targetType == TargetType::GPU) {
-        for (auto &read: target.reads) {
+        for (auto &read : target.reads) {
             body = schedule.find(lastFuse).as<ForNode>()->body_->id();
             try {
                 schedule.cache(body, read, MemType::GPUShared);

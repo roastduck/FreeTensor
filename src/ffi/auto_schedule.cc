@@ -24,7 +24,8 @@ void init_ffi_auto_schedule(py::module_ &m) {
         .def("test_cache_write", &AutoSchedule::testCacheWrite)
         .def("test_multi_level_tiling_with_fusion",
              &AutoSchedule::testMultiLevelTilingWithFusion, "n_level"_a)
-        .def("test_thread_bind", &AutoSchedule::testThreadBind);
+        .def("test_thread_bind", &AutoSchedule::testThreadBind)
+        .def("test_cache_read", &AutoSchedule::testCacheRead);
 }
 
 } // namespace ir

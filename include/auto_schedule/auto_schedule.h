@@ -76,6 +76,7 @@ class AutoSchedule {
     Stmt testCacheWrite();
     Schedule testMultiLevelTilingWithFusion(int nLevel);
     Schedule testThreadBind();
+    Schedule testCacheRead();
 };
 
 } // namespace ir

@@ -15,7 +15,7 @@ RuleStatus MultiLevelTilingWithFusionRule::analyze(const Sketch &sketch) {
         toFuse.isValid()) {
         toFuse_ = toFuse;
         return targetType_ == TargetType::CPU ? RuleStatus::Apply
-                                        : RuleStatus::ApplyAndSkipRest;
+                                              : RuleStatus::ApplyAndSkipRest;
     }
     return RuleStatus::Skip;
 }
@@ -65,8 +65,8 @@ void MultiLevelTilingWithFusionPart::genRandAnnotation(
 MultiLevelTilingWithFusionPart::MultiLevelTilingWithFusionPart(
     ForsWithDataReuse fors, ElementWiseInfo toFuse, int level, std::string pat,
     TargetType targetType)
-    : MultiLevelTilingPart(std::move(fors), std::move(pat)), targetType_(targetType),
-      level_(level), toFuse_(std::move(toFuse)) {}
+    : MultiLevelTilingPart(std::move(fors), std::move(pat)),
+      targetType_(targetType), level_(level), toFuse_(std::move(toFuse)) {}
 
 void MultiLevelTilingWithFusionPart::apply(Schedule &schedule,
                                            SketchTarget &target) {

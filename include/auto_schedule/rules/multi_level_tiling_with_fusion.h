@@ -55,6 +55,25 @@ class MultiLevelTilingWithFusionPart : public MultiLevelTilingPart {
     [[nodiscard]] SketchPart clone() const override {
         return Ref<MultiLevelTilingWithFusionPart>::make(*this);
     }
+    void printAnnotation() {
+        std::cout << "/*space: */{\n";
+        for (const auto &anno : annotation_.spaceLoopTiling) {
+            std::cout << "\t{";
+            for (const auto &i : anno) {
+                std::cout << i << ", ";
+            }
+            std::cout << "},\n";
+        }
+        std::cout << "},\n/*reduction: */{\n";
+        for (const auto &anno : annotation_.reductionLoopTiling) {
+            std::cout << "\t{";
+            for (const auto &i : anno) {
+                std::cout << i << ", ";
+            }
+            std::cout << "},\n";
+        }
+        std::cout << "}\n";
+    }
 };
 
 } // namespace ir

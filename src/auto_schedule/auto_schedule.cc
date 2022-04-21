@@ -79,14 +79,14 @@ AutoSchedule::measure(const std::vector<Schedule> &schedules) {
         try {
             drivers[i]->setParams(args_, kws_);
             double t = drivers[i]->time(5, 20);
-            if (t < 0.003) {
+            if (t < 0.005) {
                 t = 1e30;
             }
             times.emplace_back(t);
         } catch (const std::exception &e) {
             // OpenMP threads won't report an exception message
             std::cerr << "ERROR measure: " << e.what() << std::endl;
-            exit(-1);
+            times.emplace_back(1e30);
         }
     }
     return times;
@@ -132,7 +132,7 @@ AutoSchedule::genSchedules(std::vector<Sketch> &sketches) {
 py::list AutoSchedule::genFeatures(const std::vector<Schedule> &schedules) {
     size_t n = schedules.size();
     std::vector<std::vector<double>> featureVec(n);
-//#pragma omp parallel for
+    //#pragma omp parallel for
     for (size_t i = 0; i < n; i++) {
         try {
             std::cout << schedules[i].ast() << std::endl;
@@ -426,6 +426,49 @@ Schedule AutoSchedule::testThreadBind() {
     part->genSampleAnnotation();
     newSketch.addPart(Ref<ThreadBindPart>::make());
     auto schedule = newSketch.genSchedule();
+    return schedule;
+}
+
+Schedule AutoSchedule::testCacheRead() {
+    auto sketch = getInitSketch();
+    MultiLevelTilingWithFusionRule rule(target_->type());
+    if (rule.analyze(sketch) == RuleStatus::Skip) {
+        return sketch.schedule();
+    }
+    Sketch newSketch = rule.genPart(sketch)[0];
+    std::cout << toString(newSketch.schedule().ast()) << std::endl;
+    auto part = newSketch.part(0)[SketchPartType::MultiLevelTilingWithFusion]
+                    .as<MultiLevelTilingWithFusionPart>();
+    //    part->genRandAnnotation(randGen_);
+    part->setAnnotation({/*space: */ {
+                             {
+                                 2,
+                                 2,
+                                 2,
+                                 4,
+                                 4,
+                             },
+                             {
+                                 4,
+                                 2,
+                                 4,
+                                 2,
+                                 2,
+                             },
+                         },
+                         /*reduction: */ {
+                             {
+                                 32,
+                                 2,
+                                 2,
+                             },
+                         }});
+    newSketch.addPart(Ref<ThreadBindPart>::make());
+    auto schedule = newSketch.genSchedule();
+    std::vector<Sketch> v;
+    v.push_back(newSketch);
+    auto pred = getPrediction(v);
+    part->printAnnotation();
     return schedule;
 }
 

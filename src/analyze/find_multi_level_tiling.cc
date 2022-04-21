@@ -26,10 +26,10 @@ void FindMultiLevelTiling::visit(const For &op) {
         storeBuf();
         buf_.push_back(stack_.back());
         nowFor_ = forsWithStore_.at(op->id());
-//        bufIndices_ = forsWithStore_.at(op->id()).indices;
-//        bufCheckDataReuseIndices_ =
-//            forsWithStore_.at(op->id()).checkDataReuseIndices;
-//        dest_ = dest;
+        //        bufIndices_ = forsWithStore_.at(op->id()).indices;
+        //        bufCheckDataReuseIndices_ =
+        //            forsWithStore_.at(op->id()).checkDataReuseIndices;
+        //        dest_ = dest;
     } else if (!buf_.empty()) {
         buf_.push_back(stack_.back());
     }
@@ -133,7 +133,10 @@ void FindHasStore::visit(const Store &op) {
         forWithStore.checkDataReuseIndices.push_back(op->indices_);
     } else {
         found_.insert({stack_.back().id,
-                       {stack_.back().id, op->var_, {}, op->indices_,
+                       {stack_.back().id,
+                        op->var_,
+                        {},
+                        op->indices_,
                         std::vector<std::vector<Expr>>(1, op->indices_)}});
     }
     Visitor::visit(op);

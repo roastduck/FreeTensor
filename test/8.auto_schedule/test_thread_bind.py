@@ -7,7 +7,7 @@ device = ir.Device(target)
 
 def test_thread_bind():
     a = 128
-    b = 256
+    b = 128
     m = 4
 
     @ir.transform
@@ -68,6 +68,7 @@ def test_thread_bind():
         'fuse(L4.0.0.0.0, L6.0.0.0)', 'fuse(L5.0.0.0.0, L7.0.0.0)',
         'fuse(L4.0.0.0.1, L6.0.0.1)', 'fuse(L5.0.0.0.1, L7.0.0.1)',
         'fuse(L4.0.0.1, L6.0.1)', 'fuse(L5.0.0.1, L7.0.1)', 'cache(#34, y)',
+        'cache(#35, w)', 'cache(#50, x)',
         'merge(fused.L4.0.0.0.0.L6.0.0.0, fused.L5.0.0.0.0.L7.0.0.0)',
         'merge(fused.L4.0.0.0.1.L6.0.0.1, fused.L5.0.0.0.1.L7.0.0.1)',
         'merge(fused.L4.0.0.1.L6.0.1, fused.L5.0.0.1.L7.0.1)',
