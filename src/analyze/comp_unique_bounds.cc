@@ -153,7 +153,7 @@ void CompUniqueBounds::visit(const IntConst &op) {
 }
 
 void CompUniqueBounds::visit(const Add &op) {
-    BaseClass::visit(op);
+    // no need to recurse. getLower or getUpper recurses
     auto &lower = lower_[op];
     auto &upper = upper_[op];
     for (auto &&b1 : getLower(op->lhs_)) {
@@ -169,7 +169,7 @@ void CompUniqueBounds::visit(const Add &op) {
 }
 
 void CompUniqueBounds::visit(const Sub &op) {
-    BaseClass::visit(op);
+    // no need to recurse. getLower or getUpper recurses
     auto &lower = lower_[op];
     auto &upper = upper_[op];
     for (auto &&b1 : getLower(op->lhs_)) {
@@ -185,7 +185,7 @@ void CompUniqueBounds::visit(const Sub &op) {
 }
 
 void CompUniqueBounds::visit(const Mul &op) {
-    BaseClass::visit(op);
+    // no need to recurse. getLower or getUpper recurses
 
     auto &lower = lower_[op];
     auto &upper = upper_[op];
@@ -242,7 +242,7 @@ void CompUniqueBounds::visit(const Mul &op) {
 }
 
 void CompUniqueBounds::visit(const Square &op) {
-    BaseClass::visit(op);
+    // no need to recurse. getLower or getUpper recurses
 
     auto &lower = lower_[op];
     auto &upper = upper_[op];
@@ -253,7 +253,7 @@ void CompUniqueBounds::visit(const Square &op) {
 }
 
 void CompUniqueBounds::visit(const FloorDiv &op) {
-    BaseClass::visit(op);
+    // no need to recurse. getLower or getUpper recurses
 
     auto &lower = lower_[op];
     auto &upper = upper_[op];
@@ -277,7 +277,7 @@ void CompUniqueBounds::visit(const FloorDiv &op) {
 }
 
 void CompUniqueBounds::visit(const CeilDiv &op) {
-    BaseClass::visit(op);
+    // no need to recurse. getLower or getUpper recurses
 
     auto &lower = lower_[op];
     auto &upper = upper_[op];
@@ -301,7 +301,7 @@ void CompUniqueBounds::visit(const CeilDiv &op) {
 }
 
 void CompUniqueBounds::visit(const Mod &op) {
-    BaseClass::visit(op);
+    // no need to recurse. getLower or getUpper recurses
     updLower(lower_[op], LowerBound{op});
     updUpper(upper_[op], UpperBound{op});
     updLower(lower_[op], LowerBound{LinearExpr<Rational<int64_t>>{{}, 0}});
@@ -311,7 +311,7 @@ void CompUniqueBounds::visit(const Mod &op) {
 }
 
 void CompUniqueBounds::visit(const Min &op) {
-    BaseClass::visit(op);
+    // no need to recurse. getLower or getUpper recurses
     auto &lower = lower_[op];
     auto &upper = upper_[op];
 
@@ -384,7 +384,7 @@ void CompUniqueBounds::visit(const Min &op) {
 }
 
 void CompUniqueBounds::visit(const Max &op) {
-    BaseClass::visit(op);
+    // no need to recurse. getLower or getUpper recurses
     auto &lower = lower_[op];
     auto &upper = upper_[op];
 
@@ -458,7 +458,7 @@ void CompUniqueBounds::visit(const Max &op) {
 }
 
 void CompUniqueBounds::visit(const IfExpr &op) {
-    BaseClass::visit(op);
+    // no need to recurse. getLower or getUpper recurses
     auto &lower = lower_[op];
     auto &upper = upper_[op];
     for (auto &&b1 : getUpper(op->thenCase_)) {
