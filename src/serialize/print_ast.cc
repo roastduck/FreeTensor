@@ -3,7 +3,7 @@
 #include <itertools.hpp>
 
 #include <config.h>
-#include <debug/print_ast.h>
+#include <serialize/print_ast.h>
 
 #include "../codegen/detail/code_gen.h"
 

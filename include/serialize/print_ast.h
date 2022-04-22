@@ -1,25 +1,35 @@
-#ifndef DUMP_AS_TEST_H
-#define DUMP_AS_TEST_H
+#ifndef PRINT_AST_H
+#define PRINT_AST_H
+
+#include <unordered_set>
 
 #include <codegen/code_gen.h>
 
 namespace ir {
 
-class DumpAsTest : public CodeGen<CodeGenStream> {
+class PrintVisitor : public CodeGen<CodeGenStream> {
+    bool printAllId_ = false, pretty_ = false;
+    std::unordered_set<std::string> keywords = {
+        "if", "else", "for", "in", "assert", "assume", "func", "true", "false",
+    };
+
   public:
-    DumpAsTest() : CodeGen<CodeGenStream>(4) {}
+    PrintVisitor(bool printAllId = false, bool pretty = false)
+        : printAllId_(printAllId), pretty_(pretty) {}
 
   private:
+    void recur(const Expr &op);
+    void recur(const Stmt &op);
     void printId(const Stmt &op);
-
-    std::string asTest(DataType dtype) const;
-    std::string asTest(AccessType atype) const;
-    std::string asTest(MemType mtype) const;
+    std::string printName(const std::string &name);
 
   protected:
     void visitStmt(const Stmt &op) override;
 
+    void visit(const Func &op) override;
     void visit(const StmtSeq &op) override;
+    void visit(const Any &op) override;
+    void visit(const AnyExpr &op) override;
     void visit(const VarDef &op) override;
     void visit(const Var &op) override;
     void visit(const Store &op) override;
@@ -61,10 +71,20 @@ class DumpAsTest : public CodeGen<CodeGenStream> {
     void visit(const For &op) override;
     void visit(const If &op) override;
     void visit(const Assert &op) override;
+    void visit(const Assume &op) override;
     void visit(const Intrinsic &op) override;
     void visit(const Eval &op) override;
+    void visit(const MatMul &op) override;
 };
+
+// Print functions for debugging
+std::string toString(const AST &op);
+std::string toString(const AST &op, bool pretty);
+std::string toString(const AST &op, bool pretty, bool printAllId);
+
+// Serialize function for storing an AST and loading it back
+inline std::string dumpAST(const AST &op) { return toString(op, false, false); }
 
 } // namespace ir
 
-#endif // DUMP_AS_TEST_H
+#endif // PRINT_AST_H

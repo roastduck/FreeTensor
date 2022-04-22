@@ -3,6 +3,7 @@ import numpy as np
 from typing import Sequence, Tuple, Any, Optional
 
 import ffi
+from ffi import dump_ast, load_ast
 
 
 class Context:
