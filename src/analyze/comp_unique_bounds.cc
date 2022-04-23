@@ -2,6 +2,7 @@
 #include <climits>
 
 #include <analyze/all_uses.h>
+#include <analyze/analyze_linear.h>
 #include <analyze/comp_unique_bounds.h>
 #include <container_utils.h>
 
@@ -152,93 +153,97 @@ void CompUniqueBounds::visit(const IntConst &op) {
              UpperBound{LinearExpr<Rational<int64_t>>{{}, op->val_}});
 }
 
-void CompUniqueBounds::visit(const Add &op) {
-    // no need to recurse. getLower or getUpper recurses
+void CompUniqueBounds::visitLinear(const Expr &op) {
     auto &lower = lower_[op];
     auto &upper = upper_[op];
-    for (auto &&b1 : getLower(op->lhs_)) {
-        for (auto &&b2 : getLower(op->rhs_)) {
-            updLower(lower, add(b1, b2));
-        }
-    }
-    for (auto &&b1 : getUpper(op->lhs_)) {
-        for (auto &&b2 : getUpper(op->rhs_)) {
-            updUpper(upper, add(b1, b2));
-        }
-    }
-}
 
-void CompUniqueBounds::visit(const Sub &op) {
-    // no need to recurse. getLower or getUpper recurses
-    auto &lower = lower_[op];
-    auto &upper = upper_[op];
-    for (auto &&b1 : getLower(op->lhs_)) {
-        for (auto &&b2 : getUpper(op->rhs_)) {
-            updLower(lower, sub(b1, b2));
-        }
-    }
-    for (auto &&b1 : getUpper(op->lhs_)) {
-        for (auto &&b2 : getLower(op->rhs_)) {
-            updUpper(upper, sub(b1, b2));
-        }
-    }
-}
+    auto &&lin = linear(op);
 
-void CompUniqueBounds::visit(const Mul &op) {
-    // no need to recurse. getLower or getUpper recurses
+    // lin is op itself. Stop self-recursion
+    if (lin.bias_ == 0 && lin.coeff_.size() == 1 &&
+        HashComparator()(lin.coeff_.front().a_, op)) {
+        return;
+    }
 
-    auto &lower = lower_[op];
-    auto &upper = upper_[op];
-    auto g = [this, &lower, &upper](const Expr &op, const Expr &e1,
-                                    const Expr &e2) {
-        if (auto k = getInt(e2); k.isValid()) {
-            if (*k > 0) {
-                for (auto &&b : getLower(e1)) {
-                    updLower(lower, mul(b, *k));
-                }
-                for (auto &&b : getUpper(e1)) {
-                    updUpper(upper, mul(b, *k));
-                }
-                if (e1->nodeType() == ASTNodeType::FloorDiv) {
-                    auto div = e1.as<FloorDivNode>();
-                    if (auto k1 = getInt(div->rhs_);
-                        k1.isValid() && *k1 > 0 && *k % *k1 == 0) {
-                        auto equ =
-                            makeSub(div->lhs_, makeMod(div->lhs_, div->rhs_));
-                        for (auto &&b : getLower(equ)) {
-                            updLower(lower, mul(b, *k / *k1));
-                        }
-                        for (auto &&b : getUpper(equ)) {
-                            updUpper(upper, mul(b, *k / *k1));
-                        }
+    lower = {LowerBound{LinearExpr<Rational<int64_t>>{{}, lin.bias_}}};
+    upper = {UpperBound{LinearExpr<Rational<int64_t>>{{}, lin.bias_}}};
+    for (auto &&[k, a] : lin.coeff_) {
+        LowerBoundsList itemLower = {};
+        UpperBoundsList itemUpper = {};
+        if (k > 0) {
+            for (auto &&b : getLower(a)) {
+                updLower(itemLower, mul(b, k));
+            }
+            for (auto &&b : getUpper(a)) {
+                updUpper(itemUpper, mul(b, k));
+            }
+            if (a->nodeType() == ASTNodeType::FloorDiv) {
+                auto div = a.as<FloorDivNode>();
+                if (auto k1 = getInt(div->rhs_);
+                    k1.isValid() && *k1 > 0 && k % *k1 == 0) {
+                    auto equ =
+                        makeSub(div->lhs_, makeMod(div->lhs_, div->rhs_));
+                    for (auto &&b : getLower(equ)) {
+                        updLower(itemLower, mul(b, k / *k1));
+                    }
+                    for (auto &&b : getUpper(equ)) {
+                        updUpper(itemUpper, mul(b, k / *k1));
                     }
                 }
-            } else {
-                for (auto &&b : getLower(e1)) {
-                    updUpper(upper, mul(UpperBound{b.lin()}, *k));
-                }
-                for (auto &&b : getUpper(e1)) {
-                    updLower(lower, mul(LowerBound{b.lin()}, *k));
-                }
-                if (e1->nodeType() == ASTNodeType::FloorDiv) {
-                    auto div = e1.as<FloorDivNode>();
-                    if (auto k1 = getInt(div->rhs_);
-                        k1.isValid() && *k1 > 0 && *k % *k1 == 0) {
-                        auto equ =
-                            makeSub(div->lhs_, makeMod(div->lhs_, div->rhs_));
-                        for (auto &&b : getLower(equ)) {
-                            updUpper(upper, mul(UpperBound{b.lin()}, *k / *k1));
-                        }
-                        for (auto &&b : getUpper(equ)) {
-                            updLower(lower, mul(LowerBound{b.lin()}, *k / *k1));
-                        }
+            }
+        } else {
+            for (auto &&b : getLower(a)) {
+                updUpper(itemUpper, mul(UpperBound{b.lin()}, k));
+            }
+            for (auto &&b : getUpper(a)) {
+                updLower(itemLower, mul(LowerBound{b.lin()}, k));
+            }
+            if (a->nodeType() == ASTNodeType::FloorDiv) {
+                auto div = a.as<FloorDivNode>();
+                if (auto k1 = getInt(div->rhs_);
+                    k1.isValid() && *k1 > 0 && k % *k1 == 0) {
+                    auto equ =
+                        makeSub(div->lhs_, makeMod(div->lhs_, div->rhs_));
+                    for (auto &&b : getLower(equ)) {
+                        updUpper(itemUpper, mul(UpperBound{b.lin()}, k / *k1));
+                    }
+                    for (auto &&b : getUpper(equ)) {
+                        updLower(itemLower, mul(LowerBound{b.lin()}, k / *k1));
                     }
                 }
             }
         }
-    };
-    g(op, op->lhs_, op->rhs_);
-    g(op, op->rhs_, op->lhs_);
+
+        LowerBoundsList newLower = {};
+        UpperBoundsList newUpper = {};
+        for (auto &&b1 : lower) {
+            for (auto &&b2 : itemLower) {
+                updLower(newLower, add(b1, b2));
+            }
+        }
+        for (auto &&b1 : upper) {
+            for (auto &&b2 : itemUpper) {
+                updUpper(newUpper, add(b1, b2));
+            }
+        }
+        lower = std::move(newLower);
+        upper = std::move(newUpper);
+    }
+}
+
+void CompUniqueBounds::visit(const Add &op) {
+    // no need to recurse. getLower or getUpper recurses
+    visitLinear(op);
+}
+
+void CompUniqueBounds::visit(const Sub &op) {
+    // no need to recurse. getLower or getUpper recurses
+    visitLinear(op);
+}
+
+void CompUniqueBounds::visit(const Mul &op) {
+    // no need to recurse. getLower or getUpper recurses
+    visitLinear(op);
 }
 
 void CompUniqueBounds::visit(const Square &op) {

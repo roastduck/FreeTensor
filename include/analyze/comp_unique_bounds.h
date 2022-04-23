@@ -70,6 +70,15 @@ class CompUniqueBounds : public WithTypeInfer<Visitor> {
     bool alwaysLT(const Expr &lhs, const Expr &rhs);
     bool alwaysLE(const Expr &lhs, const Expr &rhs);
 
+  private:
+    /**
+     * When analyzing Add, Sub and Mul, we first convert it to an linear
+     * expression before analyzing bounds, so `a - a: l <= a <= r` results in `0
+     * <= a - a <= 0`, instead of `l - r, l - a, a - r, 0 <= a - a <= r - l, r -
+     * a, a - l, 0`
+     */
+    void visitLinear(const Expr &op);
+
   protected:
     void visitExpr(const Expr &op) override;
 
