@@ -3,6 +3,7 @@
 #include <functional>
 #include <type_traits>
 
+#include <analyze/all_uses.h>
 #include <math/bounds.h>
 #include <math/utils.h>
 
@@ -170,6 +171,32 @@ const Expr &LowerBound::expr() {
         expr_ = divisible.isValid() ? divisible : makeIntConst(0);
     }
     return expr_;
+}
+
+const std::unordered_set<std::string> &UpperBound::allNames() {
+    if (allNames_.isValid()) {
+        return *allNames_;
+    }
+    allNames_ = Opt<std::unordered_set<std::string>>::make();
+    for (auto &&[k, a] : lin_.coeff_) {
+        for (auto &&use : ::ir::allNames(a)) {
+            allNames_->insert(use);
+        }
+    }
+    return *allNames_;
+}
+
+const std::unordered_set<std::string> &LowerBound::allNames() {
+    if (allNames_.isValid()) {
+        return *allNames_;
+    }
+    allNames_ = Opt<std::unordered_set<std::string>>::make();
+    for (auto &&[k, a] : lin_.coeff_) {
+        for (auto &&use : ::ir::allNames(a)) {
+            allNames_->insert(use);
+        }
+    }
+    return *allNames_;
 }
 
 UpperBound add(const UpperBound &b1, const UpperBound &b2) {

@@ -3,12 +3,20 @@
 
 #include <unordered_set>
 
+#include <analyze/all_uses.h>
 #include <ast.h>
 
 namespace ir {
 
-bool checkAllDefined(const std::unordered_set<std::string> &defs,
-                     const AST &op);
+inline bool checkAllDefined(const std::unordered_set<std::string> &defs,
+                            const std::unordered_set<std::string> &namesInOp) {
+    return isSubSetOf(namesInOp, defs);
+}
+
+inline bool checkAllDefined(const std::unordered_set<std::string> &defs,
+                            const AST &op) {
+    return checkAllDefined(defs, allNames(op));
+}
 
 } // namespace ir
 
