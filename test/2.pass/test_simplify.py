@@ -8,7 +8,7 @@ def test_const_fold():
             y[i] = 0 * i
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.lower(ast)
+    ast = ir.simplify_pass(ast)
     print(ast)
 
     with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
@@ -28,7 +28,7 @@ def test_partial_fold():
                 y[i, j] = 2 * j + i - j - j
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.lower(ast)
+    ast = ir.simplify_pass(ast)
     print(ast)
 
     with ir.VarDef("y", (4, 4), "int32", "output", "cpu") as y:
@@ -47,7 +47,7 @@ def test_redundant_if():
                 y[i] = 1
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.lower(ast)
+    ast = ir.simplify_pass(ast)
     print(ast)
 
     with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
@@ -65,11 +65,31 @@ def test_redundant_if_2():
                 y[i] = 1
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.lower(ast)
+    ast = ir.simplify_pass(ast)
     print(ast)
 
     with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ir.For("i", 0, 4) as i:
+            y[i] = 1
+    std = ir.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_redundant_if_3():
+    with ir.VarDef([("n", (), "int32", "input", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (n, y):
+        with ir.For("i", 0, n[()]) as i:
+            with ir.If(2 * i < i + n[()]):
+                y[i] = 1
+    ast = ir.pop_ast()
+    print(ast)
+    ast = ir.simplify_pass(ast)
+    print(ast)
+
+    with ir.VarDef([("n", (), "int32", "input", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (n, y):
+        with ir.For("i", 0, n[()]) as i:
             y[i] = 1
     std = ir.pop_ast()
 
@@ -83,7 +103,7 @@ def test_redundant_min():
                 y[i] = ir.min(i, i + 2)
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.lower(ast)
+    ast = ir.simplify_pass(ast)
     print(ast)
 
     with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
@@ -101,7 +121,7 @@ def test_redundant_max():
                 y[i] = ir.max(i, i + 2)
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.lower(ast)
+    ast = ir.simplify_pass(ast)
     print(ast)
 
     with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
@@ -119,7 +139,7 @@ def test_multiple_mins():
             y[i] = ir.min(ir.min(x[i] + 2, i), x[i])
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.lower(ast)
+    ast = ir.simplify_pass(ast)
     print(ast)
 
     with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
@@ -138,7 +158,7 @@ def test_multiple_maxes():
             y[i] = ir.max(ir.max(x[i] + 2, i), x[i])
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.lower(ast)
+    ast = ir.simplify_pass(ast)
     print(ast)
 
     with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
@@ -161,7 +181,7 @@ def test_multiple_min_max():
                 y[i] = i
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.lower(ast)
+    ast = ir.simplify_pass(ast)
     print(ast)
 
     with ir.VarDef([
@@ -189,7 +209,7 @@ def test_precondition_from_if():
                 y[i] = ir.min(x1[i], x2[i]) + 1
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.lower(ast)
+    ast = ir.simplify_pass(ast)
     print(ast)
 
     with ir.VarDef([
@@ -220,7 +240,7 @@ def test_multiple_preconditions_from_if():
                 y[i] = ir.min(x1[i], x2[i]) + 1
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.lower(ast)
+    ast = ir.simplify_pass(ast)
     print(ast)
 
     with ir.VarDef([
@@ -249,7 +269,7 @@ def test_precondition_from_assert():
                 y[i] = ir.min(x1[i], x2[i])
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.lower(ast)
+    ast = ir.simplify_pass(ast)
     print(ast)
 
     with ir.VarDef([
@@ -274,7 +294,7 @@ def test_assert_false():
     ast = ir.pop_ast()
     print(ast)
     with pytest.raises(ir.AssertAlwaysFalse):
-        ast = ir.lower(ast)
+        ast = ir.simplify_pass(ast)
 
 
 def test_unreachable_assert_false():
@@ -290,7 +310,7 @@ def test_unreachable_assert_false():
             y[()] = 3
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.lower(ast)
+    ast = ir.simplify_pass(ast)
     print(ast)
 
     with ir.VarDef([("x", (), "int32", "input", "cpu"),
@@ -324,7 +344,7 @@ def test_different_scope():
                         y[i, j] = x[i, j] + 3
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.lower(ast)
+    ast = ir.simplify_pass(ast)
     print(ast)
 
     with ir.VarDef([
@@ -354,7 +374,7 @@ def test_dynamic():
                 y[i] = 1
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.lower(ast)
+    ast = ir.simplify_pass(ast)
     print(ast)
 
     with ir.VarDef([("n", (), "int32", "input", "cpu"),
@@ -374,7 +394,7 @@ def test_floor_div_1():
                 y[i] = 1
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.lower(ast)
+    ast = ir.simplify_pass(ast)
     print(ast)
 
     with ir.VarDef([("n", (), "int32", "input", "cpu"),
@@ -394,7 +414,7 @@ def test_floor_div_2():
                 y[i] = 1
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.lower(ast)
+    ast = ir.simplify_pass(ast)
     print(ast)
 
     with ir.VarDef([("n", (), "int32", "input", "cpu"),
@@ -412,7 +432,7 @@ def test_floor_div_3():
         y[()] = ir.min(x[()] // 4, x[()] // 4)
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.lower(ast)
+    ast = ir.simplify_pass(ast)
     print(ast)
 
     with ir.VarDef([("x", (), "int32", "input", "cpu"),
@@ -429,7 +449,7 @@ def test_floor_div_4():
         y[()] = 64 * x[()] // 64
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.lower(ast)
+    ast = ir.simplify_pass(ast)
     print(ast)
 
     with ir.VarDef([("x", (), "int32", "input", "cpu"),
@@ -446,7 +466,7 @@ def test_floor_div_5():
         y[()] = x[()] // 4 - x[()] // 4
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.lower(ast)
+    ast = ir.simplify_pass(ast)
     print(ast)
 
     with ir.VarDef([("x", (), "int32", "input", "cpu"),
@@ -463,7 +483,7 @@ def test_floor_div_6():
         y[()] = x[()] // -1
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.lower(ast)
+    ast = ir.simplify_pass(ast)
     print(ast)
 
     with ir.VarDef([("x", (), "int32", "input", "cpu"),
@@ -480,7 +500,7 @@ def test_mod_1():
         y[()] = 64 * x[()] % 64
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.lower(ast)
+    ast = ir.simplify_pass(ast)
     print(ast)
 
     with ir.VarDef([("x", (), "int32", "input", "cpu"),
@@ -500,7 +520,7 @@ def test_mod_2():
             y[()] = 0
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.lower(ast)
+    ast = ir.simplify_pass(ast)
     print(ast)
 
     with ir.VarDef([("x", (), "int32", "input", "cpu"),
@@ -533,7 +553,7 @@ def test_simplify_not_cmp():
             y6[i] = ir.l_not(x[i] != 5)
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.lower(ast)
+    ast = ir.simplify_pass(ast)
     print(ast)
 
     with ir.VarDef([
@@ -567,7 +587,7 @@ def test_simplify_not_logic_op():
                 y[i] = 0
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.lower(ast)
+    ast = ir.simplify_pass(ast)
     print(ast)
 
     with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
@@ -591,7 +611,7 @@ def test_min_minus_min():
         z[()] = ir.min(x[()], y[()]) - ir.min(x[()], y[()])
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.lower(ast)
+    ast = ir.simplify_pass(ast)
     print(ast)
 
     with ir.VarDef([
@@ -616,7 +636,7 @@ def test_min_max_as_bound():
                     y[i] = 0
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.lower(ast)
+    ast = ir.simplify_pass(ast)
     print(ast)
 
     with ir.VarDef([("l", (), "int32", "input", "cpu"),
@@ -640,17 +660,17 @@ def test_accessible_after_writing_if():
                 y[1] = 1
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.lower(ast)
+    ast = ir.simplify_pass(ast)
     print(ast)
 
     with ir.VarDef("x", (4,), "int32", "input", "cpu") as x:
-        with ir.If(x[0] < 4):
-            with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
+        with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
+            with ir.If(x[0] < 4):
                 y[0] = 1
                 x[0] += 1
                 with ir.If(x[0] < 4):
                     y[1] = 1
-    std = ir.make_reduction(ir.pop_ast())
+    std = ir.pop_ast()
 
     assert std.match(ast)
 
@@ -667,19 +687,19 @@ def test_accessible_after_writing_for():
                     y[1] = 1
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.lower(ast)
+    ast = ir.simplify_pass(ast)
     print(ast)
 
     with ir.VarDef("x", (4,), "int32", "input", "cpu") as x:
-        with ir.If(x[0] < 4):
-            with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
+        with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
+            with ir.If(x[0] < 4):
                 with ir.For("i", 0, 4) as i:
                     with ir.If(x[0] < 4):
                         y[0] = 1
                     x[0] += 1
                     with ir.If(x[0] < 4):
                         y[1] = 1
-    std = ir.make_reduction(ir.pop_ast())
+    std = ir.pop_ast()
 
     assert std.match(ast)
 
@@ -692,13 +712,13 @@ def test_loop_length_0_or_1():
                     y[i] = i
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.lower(ast)
+    ast = ir.simplify_pass(ast)
     print(ast)
 
     with ir.VarDef("n", (), "int32", "input", "cpu") as n:
         with ir.Assert(n[()] <= 1):
-            with ir.If(n[()] == 1):
-                with ir.VarDef("y", (n[()],), "int32", "inout", "cpu") as y:
+            with ir.VarDef("y", (n[()],), "int32", "inout", "cpu") as y:
+                with ir.If(n[()] == 1):
                     y[0] = 0
     std = ir.pop_ast()
 
@@ -719,7 +739,7 @@ def test_bound_outdated():
                 n[()] += 1
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.lower(ast)
+    ast = ir.simplify_pass(ast)
     print(ast)
 
     with ir.VarDef([
@@ -732,6 +752,6 @@ def test_bound_outdated():
             x[0] += 1
             with ir.If(y[0] >= x[0] + x[1]):
                 n[()] += 1
-    std = ir.make_reduction(ir.pop_ast())
+    std = ir.pop_ast()
 
     assert std.match(ast)

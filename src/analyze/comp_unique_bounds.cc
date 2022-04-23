@@ -117,7 +117,8 @@ void CompUniqueBounds::visitExpr(const Expr &op) {
     auto tr = transients_.transient(op);
     for (auto &&first : tr.lower_) {
         for (auto &&item : getLower(first)) {
-            if (!hasIntersect(allNames(op), allNames(item.expr()))) {
+            if (!hasIntersect(allNames(op, true),
+                              allNames(item.expr(), true))) {
                 // No loop bounds: X cannot bound X itself
                 updLower(lower, item);
             }
@@ -125,7 +126,8 @@ void CompUniqueBounds::visitExpr(const Expr &op) {
     }
     for (auto &&second : tr.upper_) {
         for (auto &&item : getUpper(second)) {
-            if (!hasIntersect(allNames(op), allNames(item.expr()))) {
+            if (!hasIntersect(allNames(op, true),
+                              allNames(item.expr(), true))) {
                 // No loop bounds: X cannot bound X itself
                 updUpper(upper, item);
             }
@@ -341,10 +343,11 @@ void CompUniqueBounds::visit(const Min &op) {
     recur(op);
     for (auto &&next : oper) {
         for (auto &old : all) {
-            if (alwaysLE(old, next)) {
+            auto diff = makeSub(old, next);
+            if (getIntUpper(diff) <= 0) {
                 goto ignore;
             }
-            if (alwaysLE(next, old)) {
+            if (getIntLower(diff) >= 0) {
                 old = next;
                 goto ignore;
             }
@@ -373,10 +376,11 @@ void CompUniqueBounds::visit(const Min &op) {
                         constLower =
                             Opt<Rational<int64_t>>::make(b.lin().bias_);
                     }
-                } else {
-                    hasConstLower = false;
+                    goto done;
                 }
             }
+            hasConstLower = false;
+        done:;
         }
     }
     if (hasConstLower && constLower.isValid()) {
@@ -415,10 +419,11 @@ void CompUniqueBounds::visit(const Max &op) {
     recur(op);
     for (auto &&next : oper) {
         for (auto &old : all) {
-            if (alwaysLE(next, old)) {
+            auto diff = makeSub(old, next);
+            if (getIntLower(diff) >= 0) {
                 goto ignore;
             }
-            if (alwaysLE(old, next)) {
+            if (getIntUpper(diff) <= 0) {
                 old = next;
                 goto ignore;
             }
@@ -447,11 +452,11 @@ void CompUniqueBounds::visit(const Max &op) {
                         constUpper =
                             Opt<Rational<int64_t>>::make(b.lin().bias_);
                     }
-                } else {
-                    hasConstUpper = false;
-                    break;
+                    goto done;
                 }
             }
+            hasConstUpper = false;
+        done:;
         }
     }
     if (hasConstUpper && constUpper.isValid()) {

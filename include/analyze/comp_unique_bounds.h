@@ -53,6 +53,22 @@ class CompUniqueBounds : public WithTypeInfer<Visitor> {
         return upper_.at(op);
     }
 
+    int getIntLower(const Expr &op);
+    int getIntUpper(const Expr &op);
+    Opt<int> getInt(const Expr &op);
+
+    /**
+     * Check wheter `lhs` is always less than `rhs`
+     *
+     * This is a fast non-recursing function, which check the less-than relation
+     * literally, without invoking CompUniqueBounds again, but maybe imprecise.
+     * For precise comparison, please use `getLower` or `getUpper` on
+     * `makeSub(lhs, rhs)`
+     */
+    bool alwaysLT(const Expr &lhs, const Expr &rhs);
+    bool alwaysLE(const Expr &lhs, const Expr &rhs);
+
+  protected:
     template <class T> void setLower(const Expr &op, T &&list) {
         lower_[op] = std::forward<T>(list);
     }
@@ -62,13 +78,6 @@ class CompUniqueBounds : public WithTypeInfer<Visitor> {
 
     void updLower(LowerBoundsList &list, const LowerBound &bound) const;
     void updUpper(UpperBoundsList &list, const UpperBound &bound) const;
-
-    int getIntLower(const Expr &op);
-    int getIntUpper(const Expr &op);
-    Opt<int> getInt(const Expr &op);
-
-    bool alwaysLT(const Expr &lhs, const Expr &rhs);
-    bool alwaysLE(const Expr &lhs, const Expr &rhs);
 
   private:
     /**
