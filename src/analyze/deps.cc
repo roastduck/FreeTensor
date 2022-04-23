@@ -7,9 +7,9 @@
 #include <analyze/deps.h>
 #include <container_utils.h>
 #include <except.h>
-#include <mangle.h>
 #include <mutator.h>
 #include <pass/simplify.h>
+#include <serialize/mangle.h>
 
 namespace ir {
 

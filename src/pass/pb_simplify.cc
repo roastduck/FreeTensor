@@ -1,6 +1,6 @@
-#include <mangle.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/pb_simplify.h>
+#include <serialize/mangle.h>
 
 #include <itertools.hpp>
 

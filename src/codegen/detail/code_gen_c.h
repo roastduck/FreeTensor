@@ -7,7 +7,7 @@
 #include <vector>
 
 #include <codegen/code_gen_c.h>
-#include <mangle.h>
+#include <serialize/mangle.h>
 
 #include "code_gen.h"
 
