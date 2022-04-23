@@ -302,6 +302,15 @@ void CompUniqueBounds::visit(const CeilDiv &op) {
 
 void CompUniqueBounds::visit(const Mod &op) {
     // no need to recurse. getLower or getUpper recurses
+    if (auto &&l = getInt(op->lhs_); l.isValid()) {
+        if (auto &&r = getInt(op->rhs_); r.isValid()) {
+            updLower(lower_[op], LowerBound{LinearExpr<Rational<int64_t>>{
+                                     {}, mod(*l, *r)}});
+            updUpper(upper_[op], UpperBound{LinearExpr<Rational<int64_t>>{
+                                     {}, mod(*l, *r)}});
+            return;
+        }
+    }
     updLower(lower_[op], LowerBound{op});
     updUpper(upper_[op], UpperBound{op});
     updLower(lower_[op], LowerBound{LinearExpr<Rational<int64_t>>{{}, 0}});
@@ -338,23 +347,10 @@ void CompUniqueBounds::visit(const Min &op) {
         all.emplace_back(next);
     ignore:;
     }
-
     if (all.size() == 1) {
         lower = getLower(all.front());
         upper = getUpper(all.front());
         return;
-    }
-    if (all.size() == oper.size()) {
-        updLower(lower, LowerBound{op});
-        updUpper(upper, UpperBound{op});
-    } else {
-        ASSERT(!all.empty());
-        Expr ret;
-        for (auto &&item : all) {
-            ret = ret.isValid() ? makeMin(ret, item) : item;
-        }
-        updLower(lower, LowerBound{ret});
-        updUpper(upper, UpperBound{ret});
     }
 
     bool hasConstLower = true;
@@ -379,7 +375,21 @@ void CompUniqueBounds::visit(const Min &op) {
         }
     }
     if (hasConstLower && constLower.isValid()) {
+        // If we have a const lower, we must have const uppers, so we can use
+        // the consts only
         updLower(lower, LinearExpr<Rational<int64_t>>{{}, *constLower});
+    } else if (all.size() == oper.size()) {
+        // Otherwise, we use the min/max expression itself as a bound
+        updLower(lower, LowerBound{op});
+        updUpper(upper, UpperBound{op});
+    } else {
+        ASSERT(!all.empty());
+        Expr ret;
+        for (auto &&item : all) {
+            ret = ret.isValid() ? makeMin(ret, item) : item;
+        }
+        updLower(lower, LowerBound{ret});
+        updUpper(upper, UpperBound{ret});
     }
 }
 
@@ -411,23 +421,10 @@ void CompUniqueBounds::visit(const Max &op) {
         all.emplace_back(next);
     ignore:;
     }
-
     if (all.size() == 1) {
         lower = getLower(all.front());
         upper = getUpper(all.front());
         return;
-    }
-    if (all.size() == oper.size()) {
-        updLower(lower, LowerBound{op});
-        updUpper(upper, UpperBound{op});
-    } else {
-        ASSERT(!all.empty());
-        Expr ret;
-        for (auto &&item : all) {
-            ret = ret.isValid() ? makeMax(ret, item) : item;
-        }
-        updLower(lower, LowerBound{ret});
-        updUpper(upper, UpperBound{ret});
     }
 
     bool hasConstUpper = true;
@@ -453,7 +450,21 @@ void CompUniqueBounds::visit(const Max &op) {
         }
     }
     if (hasConstUpper && constUpper.isValid()) {
+        // If we have a const lower, we must have const uppers, so we can use
+        // the consts only
         updUpper(upper, LinearExpr<Rational<int64_t>>{{}, *constUpper});
+    } else if (all.size() == oper.size()) {
+        // Otherwise, we use the min/max expression itself as a bound
+        updLower(lower, LowerBound{op});
+        updUpper(upper, UpperBound{op});
+    } else {
+        ASSERT(!all.empty());
+        Expr ret;
+        for (auto &&item : all) {
+            ret = ret.isValid() ? makeMax(ret, item) : item;
+        }
+        updLower(lower, LowerBound{ret});
+        updUpper(upper, UpperBound{ret});
     }
 }
 
