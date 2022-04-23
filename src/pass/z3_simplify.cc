@@ -1,5 +1,6 @@
 #include <analyze/all_uses.h>
 #include <pass/annotate_conds.h>
+#include <pass/flatten_stmt_seq.h>
 #include <pass/replace_iter.h>
 #include <pass/simplify.h>
 #include <pass/z3_simplify.h>
@@ -490,10 +491,24 @@ Stmt Z3Simplify::visit(const For &op) {
     return COPY_DEBUG_INFO(ret, op);
 }
 
+Stmt Z3SimplifyWithSymbolTable::visit(const VarDef &op) {
+    pushDef(op);
+    auto ret = Z3Simplify::visit(op);
+    popDef(op);
+    return ret;
+}
+
+Stmt Z3SimplifyWithSymbolTable::visit(const For &op) {
+    pushFor(op);
+    auto ret = Z3Simplify::visit(op);
+    popFor(op);
+    return ret;
+}
+
 Stmt z3Simplify(const Stmt &_op) {
     auto op = annotateConds(_op);
-    op = Z3SimplifyWithSymbolTable()(_op);
-    op = simplifyPass(op); // to remove some empty blocks
+    op = Z3SimplifyWithSymbolTable()(op);
+    op = flattenStmtSeq(op);
     return op;
 }
 

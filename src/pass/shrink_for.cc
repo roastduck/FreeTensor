@@ -140,7 +140,7 @@ Stmt ShrinkFor::visit(const For &_op) {
 Stmt shrinkFor(const Stmt &_op) {
     auto op = simplifyPass(_op); // Const prop + eliminate empty loops
     op = ShrinkFor()(op);
-    return z3Simplify(op);
+    return simplifyPass(op);
 }
 
 } // namespace ir

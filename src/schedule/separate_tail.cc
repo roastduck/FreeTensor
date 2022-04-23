@@ -5,6 +5,7 @@
 #include <analyze/as_dnf.h>
 #include <analyze/check_all_defined.h>
 #include <math/bounds.h>
+#include <pass/simplify.h>
 #include <pass/z3_simplify.h>
 #include <schedule/separate_tail.h>
 
@@ -158,10 +159,10 @@ Stmt separateTail(const Stmt &_ast, bool noDuplicateVarDefs) {
     while (!candidates.empty()) {
         SeparateTail mutator(noDuplicateVarDefs, candidates);
         ast = mutator(ast);
-        ast =
-            z3Simplify(ast); // Although Z3 may be slow, if we don't use Z3
-                             // here, there will be too many redundant branches,
-                             // which will make each pass even slower
+        ast = simplifyPass(
+            z3Simplify(ast)); // Although Z3 may be slow, if we don't use Z3
+                              // here, there will be too many redundant
+                              // branches, which will make each pass even slower
         candidates = mutator.nextCandidates();
     }
 

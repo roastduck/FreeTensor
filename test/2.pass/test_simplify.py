@@ -1,14 +1,20 @@
 import ir
 import pytest
 
+# This is a common test for pass/simplify and pass/z3_simplify.
+# Some tests are supported by both passes, and some tests are
+# supported by one of them. We use @pytest.mark.parametrize to
+# test these two passes
 
-def test_const_fold():
+
+@pytest.mark.parametrize('p', [ir.simplify_pass])
+def test_const_fold(p):
     with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ir.For("i", 0, 4) as i:
             y[i] = 0 * i
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.simplify_pass(ast)
+    ast = p(ast)
     print(ast)
 
     with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
@@ -19,7 +25,8 @@ def test_const_fold():
     assert std.match(ast)
 
 
-def test_partial_fold():
+@pytest.mark.parametrize('p', [ir.simplify_pass])
+def test_partial_fold(p):
     # This is the case that we need a symbolic bound, instead
     # of using integers only
     with ir.VarDef("y", (4, 4), "int32", "output", "cpu") as y:
@@ -28,7 +35,7 @@ def test_partial_fold():
                 y[i, j] = 2 * j + i - j - j
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.simplify_pass(ast)
+    ast = p(ast)
     print(ast)
 
     with ir.VarDef("y", (4, 4), "int32", "output", "cpu") as y:
@@ -40,14 +47,15 @@ def test_partial_fold():
     assert std.match(ast)
 
 
-def test_redundant_if():
+@pytest.mark.parametrize('p', [ir.simplify_pass, ir.z3_simplify])
+def test_redundant_if(p):
     with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ir.For("i", 0, 4) as i:
             with ir.If(i < 10):
                 y[i] = 1
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.simplify_pass(ast)
+    ast = p(ast)
     print(ast)
 
     with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
@@ -58,14 +66,15 @@ def test_redundant_if():
     assert std.match(ast)
 
 
-def test_redundant_if_2():
+@pytest.mark.parametrize('p', [ir.simplify_pass, ir.z3_simplify])
+def test_redundant_if_2(p):
     with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ir.For("i", 0, 4) as i:
             with ir.If(i < i + 2):
                 y[i] = 1
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.simplify_pass(ast)
+    ast = p(ast)
     print(ast)
 
     with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
@@ -76,7 +85,8 @@ def test_redundant_if_2():
     assert std.match(ast)
 
 
-def test_redundant_if_3():
+@pytest.mark.parametrize('p', [ir.simplify_pass, ir.z3_simplify])
+def test_redundant_if_3(p):
     with ir.VarDef([("n", (), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (n, y):
         with ir.For("i", 0, n[()]) as i:
@@ -84,7 +94,7 @@ def test_redundant_if_3():
                 y[i] = 1
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.simplify_pass(ast)
+    ast = p(ast)
     print(ast)
 
     with ir.VarDef([("n", (), "int32", "input", "cpu"),
@@ -96,14 +106,15 @@ def test_redundant_if_3():
     assert std.match(ast)
 
 
-def test_redundant_min():
+@pytest.mark.parametrize('p', [ir.simplify_pass, ir.z3_simplify])
+def test_redundant_min(p):
     with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ir.For("i", 0, 4) as i:
             with ir.If(i < 10):
                 y[i] = ir.min(i, i + 2)
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.simplify_pass(ast)
+    ast = p(ast)
     print(ast)
 
     with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
@@ -114,14 +125,15 @@ def test_redundant_min():
     assert std.match(ast)
 
 
-def test_redundant_max():
+@pytest.mark.parametrize('p', [ir.simplify_pass, ir.z3_simplify])
+def test_redundant_max(p):
     with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ir.For("i", 0, 4) as i:
             with ir.If(i < 10):
                 y[i] = ir.max(i, i + 2)
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.simplify_pass(ast)
+    ast = p(ast)
     print(ast)
 
     with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
@@ -132,14 +144,15 @@ def test_redundant_max():
     assert std.match(ast)
 
 
-def test_multiple_mins():
+@pytest.mark.parametrize('p', [ir.simplify_pass, ir.z3_simplify])
+def test_multiple_mins(p):
     with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ir.For("i", 0, 4) as i:
             y[i] = ir.min(ir.min(x[i] + 2, i), x[i])
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.simplify_pass(ast)
+    ast = p(ast)
     print(ast)
 
     with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
@@ -151,14 +164,15 @@ def test_multiple_mins():
     assert std.match(ast)
 
 
-def test_multiple_maxes():
+@pytest.mark.parametrize('p', [ir.simplify_pass, ir.z3_simplify])
+def test_multiple_maxes(p):
     with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ir.For("i", 0, 4) as i:
             y[i] = ir.max(ir.max(x[i] + 2, i), x[i])
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.simplify_pass(ast)
+    ast = p(ast)
     print(ast)
 
     with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
@@ -170,7 +184,8 @@ def test_multiple_maxes():
     assert std.match(ast)
 
 
-def test_multiple_min_max():
+@pytest.mark.parametrize('p', [ir.simplify_pass, ir.z3_simplify])
+def test_multiple_min_max(p):
     with ir.VarDef([
         ("a", (), "int32", "input", "cpu"),
         ("b", (), "int32", "input", "cpu"),
@@ -181,7 +196,7 @@ def test_multiple_min_max():
                 y[i] = i
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.simplify_pass(ast)
+    ast = p(ast)
     print(ast)
 
     with ir.VarDef([
@@ -196,7 +211,8 @@ def test_multiple_min_max():
     assert std.match(ast)
 
 
-def test_precondition_from_if():
+@pytest.mark.parametrize('p', [ir.simplify_pass, ir.z3_simplify])
+def test_precondition_from_if(p):
     with ir.VarDef([
         ("x1", (4,), "int32", "input", "cpu"),
         ("x2", (4,), "int32", "input", "cpu"),
@@ -209,7 +225,7 @@ def test_precondition_from_if():
                 y[i] = ir.min(x1[i], x2[i]) + 1
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.simplify_pass(ast)
+    ast = p(ast)
     print(ast)
 
     with ir.VarDef([
@@ -227,7 +243,8 @@ def test_precondition_from_if():
     assert std.match(ast)
 
 
-def test_multiple_preconditions_from_if():
+@pytest.mark.parametrize('p', [ir.simplify_pass, ir.z3_simplify])
+def test_multiple_preconditions_from_if(p):
     with ir.VarDef([
         ("x1", (4,), "int32", "input", "cpu"),
         ("x2", (4,), "int32", "input", "cpu"),
@@ -240,7 +257,7 @@ def test_multiple_preconditions_from_if():
                 y[i] = ir.min(x1[i], x2[i]) + 1
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.simplify_pass(ast)
+    ast = p(ast)
     print(ast)
 
     with ir.VarDef([
@@ -258,7 +275,8 @@ def test_multiple_preconditions_from_if():
     assert std.match(ast)
 
 
-def test_precondition_from_assert():
+@pytest.mark.parametrize('p', [ir.simplify_pass, ir.z3_simplify])
+def test_precondition_from_assert(p):
     with ir.VarDef([
         ("x1", (4,), "int32", "input", "cpu"),
         ("x2", (4,), "int32", "input", "cpu"),
@@ -269,7 +287,7 @@ def test_precondition_from_assert():
                 y[i] = ir.min(x1[i], x2[i])
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.simplify_pass(ast)
+    ast = p(ast)
     print(ast)
 
     with ir.VarDef([
@@ -285,7 +303,8 @@ def test_precondition_from_assert():
     assert std.match(ast)
 
 
-def test_assert_false():
+@pytest.mark.parametrize('p', [ir.simplify_pass, ir.z3_simplify])
+def test_assert_false(p):
     with ir.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         with ir.If(x[()] > 0):
@@ -294,10 +313,11 @@ def test_assert_false():
     ast = ir.pop_ast()
     print(ast)
     with pytest.raises(ir.AssertAlwaysFalse):
-        ast = ir.simplify_pass(ast)
+        ast = p(ast)
 
 
-def test_unreachable_assert_false():
+@pytest.mark.parametrize('p', [ir.simplify_pass, ir.z3_simplify])
+def test_unreachable_assert_false(p):
     with ir.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         with ir.If(x[()] < 0):
@@ -310,7 +330,7 @@ def test_unreachable_assert_false():
             y[()] = 3
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.simplify_pass(ast)
+    ast = p(ast)
     print(ast)
 
     with ir.VarDef([("x", (), "int32", "input", "cpu"),
@@ -324,7 +344,8 @@ def test_unreachable_assert_false():
     assert std.match(ast)
 
 
-def test_different_scope():
+@pytest.mark.parametrize('p', [ir.simplify_pass, ir.z3_simplify])
+def test_different_scope(p):
     with ir.VarDef([
         ("x", (4, 10), "int32", "input", "cpu"),
         ("y", (4, 10), "int32", "output", "cpu"),
@@ -344,7 +365,7 @@ def test_different_scope():
                         y[i, j] = x[i, j] + 3
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.simplify_pass(ast)
+    ast = p(ast)
     print(ast)
 
     with ir.VarDef([
@@ -366,7 +387,8 @@ def test_different_scope():
     assert std.match(ast)
 
 
-def test_dynamic():
+@pytest.mark.parametrize('p', [ir.simplify_pass, ir.z3_simplify])
+def test_dynamic(p):
     with ir.VarDef([("n", (), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (n, y):
         with ir.For("i", 0, n[()]) as i:
@@ -374,7 +396,7 @@ def test_dynamic():
                 y[i] = 1
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.simplify_pass(ast)
+    ast = p(ast)
     print(ast)
 
     with ir.VarDef([("n", (), "int32", "input", "cpu"),
@@ -386,7 +408,8 @@ def test_dynamic():
     assert std.match(ast)
 
 
-def test_floor_div_1():
+@pytest.mark.parametrize('p', [ir.simplify_pass, ir.z3_simplify])
+def test_floor_div_1(p):
     with ir.VarDef([("n", (), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (n, y):
         with ir.For("i", 0, n[()] // 4) as i:
@@ -394,7 +417,7 @@ def test_floor_div_1():
                 y[i] = 1
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.simplify_pass(ast)
+    ast = p(ast)
     print(ast)
 
     with ir.VarDef([("n", (), "int32", "input", "cpu"),
@@ -406,7 +429,8 @@ def test_floor_div_1():
     assert std.match(ast)
 
 
-def test_floor_div_2():
+@pytest.mark.parametrize('p', [ir.simplify_pass, ir.z3_simplify])
+def test_floor_div_2(p):
     with ir.VarDef([("n", (), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (n, y):
         with ir.For("i", 0, (n[()] - 1) // 4) as i:
@@ -414,25 +438,26 @@ def test_floor_div_2():
                 y[i] = 1
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.simplify_pass(ast)
+    ast = p(ast)
     print(ast)
 
     with ir.VarDef([("n", (), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (n, y):
-        with ir.For("i", 0, (n[()] + -1) // 4) as i:
+        with ir.For("i", 0, (n[()] - 1) // 4) as i:
             y[i] = 1
     std = ir.pop_ast()
 
     assert std.match(ast)
 
 
-def test_floor_div_3():
+@pytest.mark.parametrize('p', [ir.simplify_pass, ir.z3_simplify])
+def test_floor_div_3(p):
     with ir.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         y[()] = ir.min(x[()] // 4, x[()] // 4)
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.simplify_pass(ast)
+    ast = p(ast)
     print(ast)
 
     with ir.VarDef([("x", (), "int32", "input", "cpu"),
@@ -443,13 +468,14 @@ def test_floor_div_3():
     assert std.match(ast)
 
 
-def test_floor_div_4():
+@pytest.mark.parametrize('p', [ir.simplify_pass])
+def test_floor_div_4(p):
     with ir.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         y[()] = 64 * x[()] // 64
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.simplify_pass(ast)
+    ast = p(ast)
     print(ast)
 
     with ir.VarDef([("x", (), "int32", "input", "cpu"),
@@ -460,13 +486,14 @@ def test_floor_div_4():
     assert std.match(ast)
 
 
-def test_floor_div_5():
+@pytest.mark.parametrize('p', [ir.simplify_pass])
+def test_floor_div_5(p):
     with ir.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         y[()] = x[()] // 4 - x[()] // 4
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.simplify_pass(ast)
+    ast = p(ast)
     print(ast)
 
     with ir.VarDef([("x", (), "int32", "input", "cpu"),
@@ -477,13 +504,14 @@ def test_floor_div_5():
     assert std.match(ast)
 
 
-def test_floor_div_6():
+@pytest.mark.parametrize('p', [ir.simplify_pass])
+def test_floor_div_6(p):
     with ir.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         y[()] = x[()] // -1
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.simplify_pass(ast)
+    ast = p(ast)
     print(ast)
 
     with ir.VarDef([("x", (), "int32", "input", "cpu"),
@@ -494,13 +522,14 @@ def test_floor_div_6():
     assert std.match(ast)
 
 
-def test_mod_1():
+@pytest.mark.parametrize('p', [ir.simplify_pass])
+def test_mod_1(p):
     with ir.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         y[()] = 64 * x[()] % 64
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.simplify_pass(ast)
+    ast = p(ast)
     print(ast)
 
     with ir.VarDef([("x", (), "int32", "input", "cpu"),
@@ -511,7 +540,8 @@ def test_mod_1():
     assert std.match(ast)
 
 
-def test_mod_2():
+@pytest.mark.parametrize('p', [ir.simplify_pass])
+def test_mod_2(p):
     with ir.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         with ir.If(ir.l_and(x[()] >= 0, x[()] < 64)):
@@ -520,7 +550,7 @@ def test_mod_2():
             y[()] = 0
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.simplify_pass(ast)
+    ast = p(ast)
     print(ast)
 
     with ir.VarDef([("x", (), "int32", "input", "cpu"),
@@ -534,7 +564,8 @@ def test_mod_2():
     assert std.match(ast)
 
 
-def test_simplify_not_cmp():
+@pytest.mark.parametrize('p', [ir.simplify_pass])
+def test_simplify_not_cmp(p):
     with ir.VarDef([
         ("x", (4,), "int32", "input", "cpu"),
         ("y1", (4,), "int32", "output", "cpu"),
@@ -553,7 +584,7 @@ def test_simplify_not_cmp():
             y6[i] = ir.l_not(x[i] != 5)
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.simplify_pass(ast)
+    ast = p(ast)
     print(ast)
 
     with ir.VarDef([
@@ -577,7 +608,8 @@ def test_simplify_not_cmp():
     assert std.match(ast)
 
 
-def test_simplify_not_logic_op():
+@pytest.mark.parametrize('p', [ir.simplify_pass])
+def test_simplify_not_logic_op(p):
     with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ir.For("i", 0, 4) as i:
@@ -587,7 +619,7 @@ def test_simplify_not_logic_op():
                 y[i] = 0
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.simplify_pass(ast)
+    ast = p(ast)
     print(ast)
 
     with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
@@ -602,7 +634,8 @@ def test_simplify_not_logic_op():
     assert std.match(ast)
 
 
-def test_min_minus_min():
+@pytest.mark.parametrize('p', [ir.simplify_pass])
+def test_min_minus_min(p):
     with ir.VarDef([
         ("x", (), "int32", "input", "cpu"),
         ("y", (), "int32", "input", "cpu"),
@@ -611,7 +644,7 @@ def test_min_minus_min():
         z[()] = ir.min(x[()], y[()]) - ir.min(x[()], y[()])
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.simplify_pass(ast)
+    ast = p(ast)
     print(ast)
 
     with ir.VarDef([
@@ -625,7 +658,8 @@ def test_min_minus_min():
     assert std.match(ast)
 
 
-def test_min_max_as_bound():
+@pytest.mark.parametrize('p', [ir.simplify_pass, ir.z3_simplify])
+def test_min_max_as_bound(p):
     with ir.VarDef([("l", (), "int32", "input", "cpu"),
                     ("r", (), "int32", "input", "cpu")]) as (l, r):
         with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
@@ -636,7 +670,7 @@ def test_min_max_as_bound():
                     y[i] = 0
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.simplify_pass(ast)
+    ast = p(ast)
     print(ast)
 
     with ir.VarDef([("l", (), "int32", "input", "cpu"),
@@ -649,7 +683,8 @@ def test_min_max_as_bound():
     assert std.match(ast)
 
 
-def test_accessible_after_writing_if():
+@pytest.mark.parametrize('p', [ir.simplify_pass, ir.z3_simplify])
+def test_accessible_after_writing_if(p):
     with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ir.If(x[0] < 4):
@@ -660,7 +695,7 @@ def test_accessible_after_writing_if():
                 y[1] = 1
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.simplify_pass(ast)
+    ast = p(ast)
     print(ast)
 
     with ir.VarDef("x", (4,), "int32", "input", "cpu") as x:
@@ -675,7 +710,8 @@ def test_accessible_after_writing_if():
     assert std.match(ast)
 
 
-def test_accessible_after_writing_for():
+@pytest.mark.parametrize('p', [ir.simplify_pass, ir.z3_simplify])
+def test_accessible_after_writing_for(p):
     with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ir.If(x[0] < 4):
@@ -687,7 +723,7 @@ def test_accessible_after_writing_for():
                     y[1] = 1
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.simplify_pass(ast)
+    ast = p(ast)
     print(ast)
 
     with ir.VarDef("x", (4,), "int32", "input", "cpu") as x:
@@ -704,7 +740,8 @@ def test_accessible_after_writing_for():
     assert std.match(ast)
 
 
-def test_loop_length_0_or_1():
+@pytest.mark.parametrize('p', [ir.simplify_pass])
+def test_loop_length_0_or_1(p):
     with ir.VarDef("n", (), "int32", "input", "cpu") as n:
         with ir.Assert(n[()] <= 1):
             with ir.VarDef("y", (n[()],), "int32", "inout", "cpu") as y:
@@ -712,7 +749,7 @@ def test_loop_length_0_or_1():
                     y[i] = i
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.simplify_pass(ast)
+    ast = p(ast)
     print(ast)
 
     with ir.VarDef("n", (), "int32", "input", "cpu") as n:
@@ -725,33 +762,22 @@ def test_loop_length_0_or_1():
     assert std.match(ast)
 
 
-def test_bound_outdated():
-    with ir.VarDef([
-        ("n", (), "int32", "input", "cpu"),
-        ("x", (4,), "int32", "input", "cpu"),
-        ("y", (4,), "int32", "output", "cpu"),
-    ]) as (n, x, y):
-        with ir.If(y[0] >= x[0] + x[1]):
-            with ir.If(y[0] >= x[0] + x[1]):
-                n[()] += 1
-            x[0] += 1
-            with ir.If(y[0] >= x[0] + x[1]):
-                n[()] += 1
+@pytest.mark.parametrize('p', [ir.z3_simplify])
+def test_complex_tautology(p):
+    with ir.VarDef([("x", (), "int32", "input", "cpu"),
+                    ("pred", (), "bool", "input", "cpu"),
+                    ("y", (), "bool", "output", "cpu")]) as (x, pred, y):
+        y[()] = ir.l_and(ir.l_or(x[()] < 5, ir.l_and(x[()] >= 5, True)),
+                         pred[()])
     ast = ir.pop_ast()
     print(ast)
-    ast = ir.simplify_pass(ast)
+    ast = p(ast)
     print(ast)
 
-    with ir.VarDef([
-        ("n", (), "int32", "input", "cpu"),
-        ("x", (4,), "int32", "input", "cpu"),
-        ("y", (4,), "int32", "output", "cpu"),
-    ]) as (n, x, y):
-        with ir.If(y[0] >= x[0] + x[1]):
-            n[()] += 1
-            x[0] += 1
-            with ir.If(y[0] >= x[0] + x[1]):
-                n[()] += 1
+    with ir.VarDef([("x", (), "int32", "input", "cpu"),
+                    ("pred", (), "bool", "input", "cpu"),
+                    ("y", (), "bool", "output", "cpu")]) as (x, pred, y):
+        y[()] = pred[()]
     std = ir.pop_ast()
 
     assert std.match(ast)
