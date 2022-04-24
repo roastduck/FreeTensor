@@ -1,75 +1,63 @@
 import itertools
-from typing import Optional
+import functools
+from typing import Optional, Sequence
 
 from .. import core
 from .assign import add_to, mul_to
 from .element_wise import add, mul
 
 
-def _einsum_(lefts: str, right: str, order: str, init: bool):
-    params = [f"X{i}" for i in range(len(lefts))] + ["Y"]
+def _einsum_(lefts: Sequence[str], right: str, order: str, init: bool):
 
-    if len(order) == 0:
-        Xs = [f"X{i}[()]" for i in range(len(lefts))]
-
-        code = f'''
-def f_einsum({','.join(params)}):
-    Y[()] += {' * '.join(Xs)}
-'''
-
-    else:
-        v = order[0]
-        next_lefts = ["'" + left.replace(v, '') + "'" for left in lefts]
-        next_right = "'" + right.replace(v, '') + "'"
-        next_order = "'" + order[1:] + "'"
-        # -1 = not found
-        offsets = [left.find(v) for left in lefts] + [right.find(v)]
-        arguments = [
-            param if offset == -1 else
-            f"{param}.select(i % {param}.shape({offset}), {offset})"
-            for param, offset in zip(params, offsets)
-        ]
-        length = None
-        for param, offset in zip(params, offsets):
-            if offset != -1:
-                thisLength = f"{param}.shape({offset})"
-                length = thisLength if length is None else f"core.max({length}, {thisLength})"
-
-        assert_exprs = []
-        if right != '':
-            assert offsets[-1] != -1
-            rightLength = f"{params[-1]}.shape({offsets[-1]})"
-            for param, offset in zip(params[:-1], offsets[:-1]):
-                if offset != -1:
-                    thisLength = f"{param}.shape({offset})"
-                    assert_exprs.append(
-                        f"({thisLength} == {rightLength} or {thisLength} == 1)")
+    def next_arg(i, arg, offset):
+        if offset == -1:
+            return arg
         else:
-            for param, offset in zip(params, offsets):
-                if offset != -1:
-                    thisLength = f"{param}.shape({offset})"
-                    assert_exprs.append(
-                        f"({thisLength} == {length} or {thisLength} == 1)")
-        assert_stmt = "assert " + " and ".join(assert_exprs)
+            return arg.select(i % arg.shape(offset), offset)
 
-        init_stmt = ''
-        next_init = init
-        if init and right == '':
-            init_stmt = 'Y[()] = 0'
-            next_init = False
+    @core.inline
+    def f_einsum(*args):
+        if len(order) == 0:
+            args[-1][()] += functools.reduce(lambda x, y: x * y,
+                                             [x[()] for x in args[:-1]])
+        else:
+            v = order[0]
+            next_lefts = [left.replace(v, '') for left in lefts]
+            next_right = right.replace(v, '')
+            next_order = order[1:]
+            # -1 = not found
+            offsets = [left.find(v) for left in lefts] + [right.find(v)]
+            iter_args, iter_offsets = zip(
+                *filter(lambda x: x[1] != -1, zip(args, offsets)))
+            length = functools.reduce(core.max, [
+                arg.shape(offset)
+                for arg, offset in zip(iter_args, iter_offsets)
+            ])
 
-        code = f'''
-def f_einsum({', '.join(params)}):
-    {init_stmt}
-    {assert_stmt}
-    'prefer_libs'
-    for i in range({length}):
-        _einsum_([{", ".join(next_lefts)}], {next_right}, {next_order}, {next_init})({', '.join(arguments)})
-'''
+            next_init = init
+            if init and right == '':
+                args[-1][()] = 0
+                next_init = False
 
-    _locals = locals()
-    exec(code, globals(), _locals)
-    return core.inline(_locals['f_einsum'], code)
+            assert_exprs = []
+            if right != '':
+                assert offsets[-1] != -1
+                iter_left_args, iter_left_offset = zip(
+                    *filter(lambda x: x[1] != -1, zip(args[:-1], offsets[:-1])))
+                for arg, offset in zip(iter_left_args, iter_left_offset):
+                    assert arg.shape(offset) == args[-1].shape(
+                        offsets[-1]) or arg.shape(offset) == 1
+            else:
+                for arg, offset in zip(iter_args, iter_offsets):
+                    assert arg.shape(offset) == length or arg.shape(offset) == 1
+            'prefer_libs'
+            for i in range(length):
+                _einsum_(next_lefts, next_right, next_order, next_init)(*[
+                    next_arg(i, arg, offset)
+                    for arg, offset in zip(args, offsets)
+                ])
+
+    return f_einsum
 
 
 def einsum_(format):
@@ -86,26 +74,23 @@ def einsum_(format):
 def einsum(format):
     lefts, right = format.split('->')
     lefts = lefts.split(',')
-    params = [f"X{i}" for i in range(len(lefts))]
-    shape = []
-    for v in right:
-        offsets = [left.find(v) for left in lefts]
-        for param, offset in zip(params, offsets):
-            if offset != -1:
-                length = f"{param}.shape({offset})"
-        shape.append(length)
 
-    # FIXME: compute dtype and mtype from every inputs
-    code = f'''
-def f_einsum({', '.join(params)}):
-    Y = core.create_var([{", ".join(shape)}], X0.dtype, X0.mtype)
-    einsum_('{format}')({', '.join(params)}, Y)
-    return Y
-'''
+    @core.inline(verbose=True)
+    def f_einsum(*args):
+        shapes = []
+        for v in right:
+            offsets = [left.find(v) for left in lefts]
+            iter_args, iter_offsets = zip(
+                *filter(lambda x: x[1] != -1, zip(args, offsets)))
+            assert len(iter_args) > 0
+            shapes.append(iter_args[0].shape(iter_offsets[0]))
 
-    _locals = locals()
-    exec(code, globals(), _locals)
-    return core.inline(_locals['f_einsum'], code)
+        # FIXME: compute dtype and mtype from every inputs
+        Y = core.create_var(shapes, args[0].dtype, args[0].mtype)
+        einsum_(format)(*args, Y)
+        return Y
+
+    return f_einsum
 
 
 def _make_matmul_format(a_ndim, b_ndim):
