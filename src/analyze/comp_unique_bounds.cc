@@ -167,8 +167,10 @@ void CompUniqueBounds::visitLinear(const Expr &op) {
         return;
     }
 
-    lower = {LowerBound{LinearExpr<Rational<int64_t>>{{}, lin.bias_}}};
-    upper = {UpperBound{LinearExpr<Rational<int64_t>>{{}, lin.bias_}}};
+    LowerBoundsList retLower = {
+        LowerBound{LinearExpr<Rational<int64_t>>{{}, lin.bias_}}};
+    UpperBoundsList retUpper = {
+        UpperBound{LinearExpr<Rational<int64_t>>{{}, lin.bias_}}};
     for (auto &&[k, a] : lin.coeff_) {
         LowerBoundsList itemLower = {};
         UpperBoundsList itemUpper = {};
@@ -218,19 +220,21 @@ void CompUniqueBounds::visitLinear(const Expr &op) {
 
         LowerBoundsList newLower = {};
         UpperBoundsList newUpper = {};
-        for (auto &&b1 : lower) {
+        for (auto &&b1 : retLower) {
             for (auto &&b2 : itemLower) {
                 updLower(newLower, add(b1, b2));
             }
         }
-        for (auto &&b1 : upper) {
+        for (auto &&b1 : retUpper) {
             for (auto &&b2 : itemUpper) {
                 updUpper(newUpper, add(b1, b2));
             }
         }
-        lower = std::move(newLower);
-        upper = std::move(newUpper);
+        retLower = std::move(newLower);
+        retUpper = std::move(newUpper);
     }
+    lower = std::move(retLower);
+    upper = std::move(retUpper);
 }
 
 void CompUniqueBounds::visit(const Add &op) {
