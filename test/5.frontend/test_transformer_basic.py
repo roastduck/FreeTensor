@@ -168,25 +168,30 @@ def test_std_func_alias():
 def test_assert():
 
     @ir.transform
-    def test(x, y):
-        ir.core.declare_var(x, (10,), "int32", "input", "cpu")
-        ir.core.declare_var(y, (10,), "int32", "output", "cpu")
-        y[0] = 0
-        y[1] = 1
-        for i in range(2, 10):
-            y[i] = y[i - 1] + y[i - 2]
-            assert (x[i] == y[i])
-        assert (y[9] == 34)
+    def test(x1, x2, y1, y2):
+        ir.core.declare_var(x1, (4,), "int32", "input", "cpu")
+        ir.core.declare_var(x2, (4,), "int32", "input", "cpu")
+        ir.core.declare_var(y1, (4,), "int32", "output", "cpu")
+        ir.core.declare_var(y2, (4,), "int32", "output", "cpu")
+        for i in range(4):
+            y1[i] = x1[i] + x2[i]
+            assert x1[i] < x2[i]
+            y2[i] = ir.min(x1[i], x2[i])
 
-    func = ir.lower(test, ir.CPU())
-    code = ir.codegen(func, ir.CPU())
-    print(code)
-    x_np = np.array([0, 1, 1, 2, 3, 5, 8, 13, 21, 34], dtype="int32")
-    x = ir.Array(x_np, ir.Device(ir.CPU()))
-    y = ir.Array(np.zeros((10,), dtype="int32"), ir.Device(ir.CPU()))
-    ir.Driver(func, code, ir.Device(ir.CPU()))(x=x, y=y)
-    y_np = y.numpy()
-    assert np.array_equal(x_np, y_np)
+    print(test)
+
+    with ir.VarDef([("x1", (4,), "int32", "input", "cpu"),
+                    ("x2", (4,), "int32", "input", "cpu"),
+                    ("y1", (4,), "int32", "output", "cpu"),
+                    ("y2", (4,), "int32", "output", "cpu")]) as (x1, x2, y1,
+                                                                 y2):
+        with ir.For("i", 0, 4) as i:
+            y1[i] = x1[i] + x2[i]
+            with ir.Assert(x1[i] < x2[i]):
+                y2[i] = ir.min(x1[i], x2[i])
+    std = ir.pop_ast()
+
+    assert std.match(test.body)
 
 
 def test_immediate_var_return():
