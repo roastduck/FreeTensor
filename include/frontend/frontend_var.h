@@ -1,6 +1,8 @@
 #ifndef FRONTEND_VAR
 #define FRONTEND_VAR
 
+#include <itertools.hpp>
+
 #include <debug.h>
 #include <expr.h>
 #include <stmt.h>
@@ -100,12 +102,8 @@ class FrontendVar {
 
 inline std::string toString(const FrontendVar &var) {
     std::string ret = var.name() + "[";
-    bool first = true;
-    for (auto &&idx : var.indices()) {
-        if (!first) {
-            ret += ", ";
-        }
-        ret += toString(idx);
+    for (auto &&[i, idx] : iter::enumerate(var.indices())) {
+        ret += (i == 0 ? "" : ", ") + toString(idx);
     }
     ret += "]";
     return ret;
