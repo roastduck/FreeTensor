@@ -26,6 +26,20 @@ def test_func():
     assert func2.body.match(func.body)
 
 
+def test_func_with_return_value():
+    with ir.VarDef("x", (4, 4), "float32", "output", "cpu") as x:
+        x[2, 3] = 2.0
+        x[1, 0] = 3.0
+    func = ir.lower(
+        ir.Func("main", [], [("x", ir.DataType("float32"))], ir.pop_ast()),
+        ir.CPU())
+    txt = ir.dump_ast(func)
+    print(txt)
+    func2 = ir.load_ast(txt)
+    print(func2)
+    assert func2.body.match(func.body)
+
+
 def test_scalar_op():
     with ir.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):

@@ -52,13 +52,18 @@ parallelScope returns [ParallelScope type]
       }
     ;
 
+// TODO name, closure
 func returns [Func node]
-    : FUNC '(' var_params ')' (RARROW)? '{' stmts '}'
+    @init {
+        std::vector<std::pair<std::string, DataType>> ret;
+    }
+    : FUNC '(' params ')'
+        (RARROW retVals { ret = $retVals.vec; })?
+        '{' stmts '}'
       {
         std::vector<std::pair<std::string, DataType>> returns;
         Stmt body;
-        // TODO name, returns, closure
-        $node = makeFunc("name", $var_params.vec, {}, $stmts.node, {});
+        $node = makeFunc("name", $params.vec, std::move(ret), $stmts.node, {});
       }
     ;
 
@@ -413,10 +418,16 @@ shape returns [std::vector<Expr> vec]
     | '[' ']'
     ;
 
-var_params returns [std::vector<std::string> vec]
-    : var  {
-        $vec.push_back(std::string($var.name));
-    } (',' var1=var {$vec.push_back(std::string($var1.name));})*;
+params returns [std::vector<std::string> vec]
+    : /* empty */
+    | var { $vec.emplace_back($var.name); }
+        (',' var1=var { $vec.emplace_back($var1.name); })*
+    ;
+
+retVals returns [std::vector<std::pair<std::string, DataType>> vec]
+    : var ':' dtype { $vec.emplace_back($var.name, $dtype.type); }
+        (',' var1=var ':' dtype1=dtype { $vec.emplace_back($var1.name, $dtype1.type); })*
+    ;
 
 indices returns [std::vector<Expr> exprs]
     : '[' expr
