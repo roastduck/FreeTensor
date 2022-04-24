@@ -52,18 +52,18 @@ parallelScope returns [ParallelScope type]
       }
     ;
 
-// TODO name, closure
+// TODO: closure?
 func returns [Func node]
     @init {
         std::vector<std::pair<std::string, DataType>> ret;
     }
-    : FUNC '(' params ')'
+    : FUNC name=var '(' params ')'
         (RARROW retVals { ret = $retVals.vec; })?
         '{' stmts '}'
       {
         std::vector<std::pair<std::string, DataType>> returns;
         Stmt body;
-        $node = makeFunc("name", $params.vec, std::move(ret), $stmts.node, {});
+        $node = makeFunc($name.name, $params.vec, std::move(ret), $stmts.node, {});
       }
     ;
 

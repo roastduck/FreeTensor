@@ -24,6 +24,7 @@ def test_func():
     func2 = ir.load_ast(txt)
     print(func2)
     assert func2.body.match(func.body)
+    assert func2.name == "main"
 
 
 def test_func_with_return_value():
@@ -38,6 +39,7 @@ def test_func_with_return_value():
     func2 = ir.load_ast(txt)
     print(func2)
     assert func2.body.match(func.body)
+    assert func2.name == "main"
 
 
 def test_scalar_op():

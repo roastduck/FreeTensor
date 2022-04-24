@@ -73,9 +73,9 @@ void PrintVisitor::visitStmt(const Stmt &op) {
 
 void PrintVisitor::visit(const Func &op) {
     makeIndent();
-    os() << "func(";
+    os() << "func " << printName(op->name_) << "(";
     for (auto &&[i, param] : iter::enumerate(op->params_)) {
-        os() << (i > 0 ? ", " : "") << param;
+        os() << (i > 0 ? ", " : "") << printName(param);
         if (op->closure_.count(param)) {
             os() << " @ " << op->closure_.at(param).get();
         }
