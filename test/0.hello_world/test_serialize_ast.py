@@ -192,6 +192,20 @@ def test_id_of_stmt_seq():
     assert s.find("foo").type() == ir.ASTNodeType.StmtSeq
 
 
+def test_empty_stmt_seq():
+    with ir.VarDef("x", (4, 4), "float32", "output", "cpu") as x:
+        x[2, 3] = 2.0
+        x[1, 0] = 3.0
+        with ir.NamedScope("foo"):
+            pass
+    ast = ir.pop_ast()
+    txt = ir.dump_ast(ast)
+    print(txt)
+    ast2 = ir.load_ast(txt)
+    print(ast2)
+    assert ast2.match(ast)
+
+
 def test_complex_name():
     with ir.VarDef("x!@#$%^&*", (4, 4), "float32", "output", "cpu") as x:
         x[2, 3] = 2.0

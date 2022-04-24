@@ -78,22 +78,13 @@ stmts returns [Stmt node]
     };
 
 stmt returns [Stmt node]
-    : '{' '}'
-      {
-        $node = makeStmtSeq(ID(), {});
-      }
-    | stmtWithoutID
+    : stmtWithoutID
       {
         $node = $stmtWithoutID.node;
       }
     | var ':' stmtWithoutID
       {
         $node = $stmtWithoutID.node;
-        $node->setId($var.name);
-      }
-    | var ':' '{' stmts '}'
-      {
-        $node = $stmts.node;
         $node->setId($var.name);
       }
     ;
@@ -130,6 +121,14 @@ stmtWithoutID returns [Stmt node]
     | expr
       {
         $node = makeEval(ID(), $expr.node);
+      }
+    | '{' '}'
+      {
+        $node = makeStmtSeq(ID(), {});
+      }
+    | '{' stmts '}'
+      {
+        $node = $stmts.node;
       }
     ;
 
