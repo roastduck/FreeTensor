@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include <analyze/check_all_defined.h>
 #include <analyze/comp_access_bound.h>
 #include <math/min_max.h>
@@ -54,7 +56,7 @@ void CompAccessBound::visit(const VarDef &op) {
     defs_.erase(op->name_);
     var_.clear();
 
-    size_t n = op->buffer_->tensor().shape().size();
+    size_t n = op->buffer_->tensor()->shape().size();
     result_.lower_.reserve(n);
     result_.len_.reserve(n);
 
@@ -74,9 +76,9 @@ void CompAccessBound::visit(const VarDef &op) {
             if (checkAllDefined(defs_, index)) {
                 lowerItem.emplace_back(index);
             }
-            for (auto item : access_[j].lower_[i]) {
-                if (checkAllDefined(defs_, item.expr())) {
-                    lowerItem.emplace_back(item.expr());
+            for (auto &&b : access_[j].lower_[i]) {
+                if (checkAllDefined(defs_, b.allNames())) {
+                    lowerItem.emplace_back(b.expr());
                 }
             }
             lower.emplace_back(std::move(lowerItem));
@@ -86,13 +88,13 @@ void CompAccessBound::visit(const VarDef &op) {
             ASSERT(access_[j].indices_.size() == n);
             auto &&index = access_[j].indices_[i];
             std::vector<Expr> upperItem(
-                {makeSub(op->buffer_->tensor().shape()[i], makeIntConst(1))});
+                {makeSub(op->buffer_->tensor()->shape()[i], makeIntConst(1))});
             if (checkAllDefined(defs_, index)) {
                 upperItem.emplace_back(index);
             }
-            for (auto item : access_[j].upper_[i]) {
-                if (checkAllDefined(defs_, item.expr())) {
-                    upperItem.emplace_back(item.expr());
+            for (auto &&b : access_[j].upper_[i]) {
+                if (checkAllDefined(defs_, b.allNames())) {
+                    upperItem.emplace_back(b.expr());
                 }
             }
             upper.emplace_back(std::move(upperItem));
@@ -125,35 +127,26 @@ void CompAccessBound::visit(const VarDef &op) {
 void CompAccessBound::visit(const Load &op) {
     BaseClass::visit(op);
     if (op->var_ == var_ && mode_ & COMP_ACCESS_BOUND_READ) {
-        access_.emplace_back(
-            unique_,
-            std::vector<Expr>(op->indices_.begin(), op->indices_.end()),
-            conds());
+        access_.emplace_back(unique_, op->indices_, conds());
     }
 }
 
 void CompAccessBound::visit(const Store &op) {
     BaseClass::visit(op);
     if (op->var_ == var_ && mode_ & COMP_ACCESS_BOUND_WRITE) {
-        access_.emplace_back(
-            unique_,
-            std::vector<Expr>(op->indices_.begin(), op->indices_.end()),
-            conds());
+        access_.emplace_back(unique_, op->indices_, conds());
     }
 }
 
 void CompAccessBound::visit(const ReduceTo &op) {
     BaseClass::visit(op);
     if (op->var_ == var_) {
-        access_.emplace_back(
-            unique_,
-            std::vector<Expr>(op->indices_.begin(), op->indices_.end()),
-            conds());
+        access_.emplace_back(unique_, op->indices_, conds());
     }
 }
 
 void CompAccessBound::visit(const For &op) {
-    if (isSharedAmong(mtype_, op->property_.parallel_)) {
+    if (isSharedAmong(mtype_, op->property_->parallel_)) {
         BaseClass::visit(op);
     } else {
         defs_.insert(op->iter_);

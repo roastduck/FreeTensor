@@ -309,7 +309,7 @@ def test_correct_dependency_loop_step():
         ("y", (4, 8), "int32", "output", "cpu"),
     ]) as (x0, x1, y):
         with ir.For("i", 0, 4, nid="L1") as i:
-            with ir.For("j", 0, 8, 2, nid="L2") as j:
+            with ir.For("j", 0, 7, 2, nid="L2") as j:
                 with ir.VarDef("buf", (1,), "int32", "cache", "cpu") as b:
                     ir.MarkNid("S0")
                     b[0] = x0[i, j] + x1[i, j]
@@ -329,10 +329,10 @@ def test_correct_dependency_loop_step():
         ("y", (4, 8), "int32", "output", "cpu"),
     ]) as (x0, x1, y):
         with ir.For("i", 0, 4) as i:
-            with ir.VarDef("buf", (4, 1), "int32", "cache", "cpu") as b:
-                with ir.For("j", 0, 8, 2) as j:
+            with ir.VarDef("buf", (3, 1), "int32", "cache", "cpu") as b:
+                with ir.For("j", 0, 7, 2) as j:
                     b[j // 2, 0] = x0[i, j] + x1[i, j]
-                with ir.For("j", 0, 8, 2) as j:
+                with ir.For("j", 0, 7, 2) as j:
                     y[i, j] = b[j // 2, 0] * b[j // 2, 0]
     std = ir.use_builtin_div(ir.pop_ast())
 

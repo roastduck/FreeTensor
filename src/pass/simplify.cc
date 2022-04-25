@@ -30,20 +30,15 @@ class CountHeavyOps : public Visitor {
   public:
     int cnt() const { return cnt_; }
 
-  private:
-    template <class T> void visitHeavy(const T &op) {
-        Visitor::visit(op);
-        cnt_++;
-    }
-
   protected:
-    void visit(const RealDiv &op) override { visitHeavy(op); }
-    void visit(const FloorDiv &op) override { visitHeavy(op); }
-    void visit(const CeilDiv &op) override { visitHeavy(op); }
-    void visit(const RoundTowards0Div &op) override { visitHeavy(op); }
-    void visit(const Mod &op) override { visitHeavy(op); }
-    void visit(const Sqrt &op) override { visitHeavy(op); }
-    void visit(const Exp &op) override { visitHeavy(op); }
+    void visitExpr(const Expr &op) {
+        Visitor::visitExpr(op);
+        if (!op->isConst() && op->nodeType() != ASTNodeType::Add &&
+            op->nodeType() != ASTNodeType::Sub &&
+            op->nodeType() != ASTNodeType::Mul) {
+            cnt_++;
+        }
+    }
 };
 
 static int countHeavyOps(const Expr &op) {
@@ -90,7 +85,10 @@ Expr SimplifyPass::visitExpr(const Expr &_op) {
     auto bestScope = -1, bestHeavyOps = -1;
     for (auto &&lower : unique_.getLower(op)) {
         for (auto &&upper : unique_.getUpper(op)) {
-            if (ir::alwaysLE(upper, lower)) { // upper <= lower ==> equal
+            // Check upper <= lower ==> equal
+            // Here we use the less precise alwaysLE instead of analyzing bounds
+            // of `upper - lower`, in order to avoid infinite recursion
+            if (ir::alwaysLE(upper, lower)) {
                 // We need to choose the simplest one. Otherwise we are always
                 // picking the original expression
                 Expr expr;
@@ -296,100 +294,6 @@ Expr SimplifyPass::visit(const Remainder &_op) {
     return op;
 }
 
-Expr SimplifyPass::visit(const Min &_op) {
-    auto __op = BaseClass::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::Min);
-    auto op = __op.as<MinNode>();
-
-    // Followed by rules only for integers
-    if (!isInt(dtype(op))) {
-        return op;
-    }
-
-    std::function<void(const Expr &, std::unordered_set<Expr> &)> recur =
-        [&recur](const Expr &expr, std::unordered_set<Expr> &list) {
-            if (expr->nodeType() == ASTNodeType::Min) {
-                recur(expr.as<MinNode>()->lhs_, list);
-                recur(expr.as<MinNode>()->rhs_, list);
-            } else {
-                list.insert(expr);
-            }
-        };
-    std::unordered_set<Expr> lhs, rhs, all;
-    recur(op->lhs_, lhs);
-    recur(op->rhs_, rhs);
-    all.insert(lhs.begin(), lhs.end());
-    all.insert(rhs.begin(), rhs.end());
-
-    for (auto &&l : lhs) {
-        for (auto &&r : rhs) {
-            if (unique_.alwaysLE(l, r)) {
-                all.erase(r);
-            } else if (unique_.alwaysLE(r, l)) {
-                all.erase(l);
-            }
-        }
-    }
-
-    if (all.size() == lhs.size() + rhs.size()) {
-        return op;
-    } else {
-        ASSERT(!all.empty());
-        Expr ret;
-        for (auto &&item : all) {
-            ret = ret.isValid() ? makeMin(ret, item) : item;
-        }
-        return ret;
-    }
-}
-
-Expr SimplifyPass::visit(const Max &_op) {
-    auto __op = BaseClass::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::Max);
-    auto op = __op.as<MaxNode>();
-
-    // Followed by rules only for integers
-    if (!isInt(dtype(op))) {
-        return op;
-    }
-
-    std::function<void(const Expr &, std::unordered_set<Expr> &)> recur =
-        [&recur](const Expr &expr, std::unordered_set<Expr> &list) {
-            if (expr->nodeType() == ASTNodeType::Max) {
-                recur(expr.as<MaxNode>()->lhs_, list);
-                recur(expr.as<MaxNode>()->rhs_, list);
-            } else {
-                list.insert(expr);
-            }
-        };
-    std::unordered_set<Expr> lhs, rhs, all;
-    recur(op->lhs_, lhs);
-    recur(op->rhs_, rhs);
-    all.insert(lhs.begin(), lhs.end());
-    all.insert(rhs.begin(), rhs.end());
-
-    for (auto &&l : lhs) {
-        for (auto &&r : rhs) {
-            if (unique_.alwaysLE(l, r)) {
-                all.erase(l);
-            } else if (unique_.alwaysLE(r, l)) {
-                all.erase(r);
-            }
-        }
-    }
-
-    if (all.size() == lhs.size() + rhs.size()) {
-        return op;
-    } else {
-        ASSERT(!all.empty());
-        Expr ret;
-        for (auto &&item : all) {
-            ret = ret.isValid() ? makeMax(ret, item) : item;
-        }
-        return ret;
-    }
-}
-
 Expr SimplifyPass::visit(const LT &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::LT);
@@ -397,10 +301,11 @@ Expr SimplifyPass::visit(const LT &_op) {
     if (!isInt(dtype(op->lhs_)) || !isInt(dtype(op->rhs_))) {
         return op;
     }
-    if (unique_.alwaysLT(op->lhs_, op->rhs_)) {
+    auto diff = makeSub(op->lhs_, op->rhs_);
+    if (unique_.getIntUpper(diff) < 0) {
         return makeBoolConst(true);
     }
-    if (unique_.alwaysLE(op->rhs_, op->lhs_)) {
+    if (unique_.getIntLower(diff) >= 0) {
         return makeBoolConst(false);
     }
     return op;
@@ -413,10 +318,11 @@ Expr SimplifyPass::visit(const LE &_op) {
     if (!isInt(dtype(op->lhs_)) || !isInt(dtype(op->rhs_))) {
         return op;
     }
-    if (unique_.alwaysLE(op->lhs_, op->rhs_)) {
+    auto diff = makeSub(op->lhs_, op->rhs_);
+    if (unique_.getIntUpper(diff) <= 0) {
         return makeBoolConst(true);
     }
-    if (unique_.alwaysLT(op->rhs_, op->lhs_)) {
+    if (unique_.getIntLower(diff) > 0) {
         return makeBoolConst(false);
     }
     return op;
@@ -429,11 +335,12 @@ Expr SimplifyPass::visit(const GT &_op) {
     if (!isInt(dtype(op->lhs_)) || !isInt(dtype(op->rhs_))) {
         return op;
     }
-    if (unique_.alwaysLE(op->lhs_, op->rhs_)) {
-        return makeBoolConst(false);
-    }
-    if (unique_.alwaysLT(op->rhs_, op->lhs_)) {
+    auto diff = makeSub(op->lhs_, op->rhs_);
+    if (unique_.getIntLower(diff) > 0) {
         return makeBoolConst(true);
+    }
+    if (unique_.getIntUpper(diff) <= 0) {
+        return makeBoolConst(false);
     }
     return op;
 }
@@ -445,11 +352,12 @@ Expr SimplifyPass::visit(const GE &_op) {
     if (!isInt(dtype(op->lhs_)) || !isInt(dtype(op->rhs_))) {
         return op;
     }
-    if (unique_.alwaysLT(op->lhs_, op->rhs_)) {
-        return makeBoolConst(false);
-    }
-    if (unique_.alwaysLE(op->rhs_, op->lhs_)) {
+    auto diff = makeSub(op->lhs_, op->rhs_);
+    if (unique_.getIntLower(diff) >= 0) {
         return makeBoolConst(true);
+    }
+    if (unique_.getIntUpper(diff) < 0) {
+        return makeBoolConst(false);
     }
     return op;
 }
@@ -461,14 +369,14 @@ Expr SimplifyPass::visit(const EQ &_op) {
     if (!isInt(dtype(op->lhs_)) || !isInt(dtype(op->rhs_))) {
         return op;
     }
-    if (unique_.alwaysLT(op->lhs_, op->rhs_)) {
+    auto diff = makeSub(op->lhs_, op->rhs_);
+    if (unique_.getIntLower(diff) > 0) {
         return makeBoolConst(false);
     }
-    if (unique_.alwaysLT(op->rhs_, op->lhs_)) {
+    if (unique_.getIntUpper(diff) < 0) {
         return makeBoolConst(false);
     }
-    if (unique_.alwaysLE(op->lhs_, op->rhs_) &&
-        unique_.alwaysLE(op->rhs_, op->lhs_)) {
+    if (auto &&c = unique_.getInt(diff); c.isValid() && *c == 0) {
         return makeBoolConst(true);
     }
     return op;
@@ -481,14 +389,14 @@ Expr SimplifyPass::visit(const NE &_op) {
     if (!isInt(dtype(op->lhs_)) || !isInt(dtype(op->rhs_))) {
         return op;
     }
-    if (unique_.alwaysLT(op->lhs_, op->rhs_)) {
+    auto diff = makeSub(op->lhs_, op->rhs_);
+    if (unique_.getIntLower(diff) > 0) {
         return makeBoolConst(true);
     }
-    if (unique_.alwaysLT(op->rhs_, op->lhs_)) {
+    if (unique_.getIntUpper(diff) < 0) {
         return makeBoolConst(true);
     }
-    if (unique_.alwaysLE(op->lhs_, op->rhs_) &&
-        unique_.alwaysLE(op->rhs_, op->lhs_)) {
+    if (auto &&c = unique_.getInt(diff); c.isValid() && *c == 0) {
         return makeBoolConst(false);
     }
     return op;
@@ -624,7 +532,7 @@ Stmt SimplifyPass::visit(const VarDef &_op) {
 
     if (op->sizeLim_.isValid()) {
         Expr size = makeIntConst(1);
-        for (auto &&dim : op->buffer_->tensor().shape()) {
+        for (auto &&dim : op->buffer_->tensor()->shape()) {
             size = makeMul(size, dim);
         }
         if (unique_.getIntLower(makeSub(op->sizeLim_, size)) >= 0) {

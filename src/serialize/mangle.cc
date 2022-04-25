@@ -1,6 +1,6 @@
 #include <cctype>
 
-#include <mangle.h>
+#include <serialize/mangle.h>
 
 namespace ir {
 

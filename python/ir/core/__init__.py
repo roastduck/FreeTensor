@@ -41,6 +41,8 @@ from .nodes import (
     shape,
     dtype,
     mtype,
+    dump_ast,
+    load_ast,
 )
 from .analyze import *
 from .passes import *

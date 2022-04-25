@@ -19,11 +19,11 @@ Stmt VarReorder::visit(const VarDef &_op) {
 
         std::vector<Expr> shape;
         shape.reserve(order_.size());
-        ASSERT(order_.size() == op->buffer_->tensor().shape().size());
+        ASSERT(order_.size() == op->buffer_->tensor()->shape().size());
         for (size_t i = 0, n = order_.size(); i < n; i++) {
-            shape.emplace_back(op->buffer_->tensor().shape()[order_[i]]);
+            shape.emplace_back(op->buffer_->tensor()->shape()[order_[i]]);
         }
-        op->buffer_->tensor().setShape(shape);
+        op->buffer_->tensor()->setShape(shape);
         return op;
     } else {
         return Mutator::visit(_op);

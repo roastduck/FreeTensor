@@ -16,16 +16,16 @@ Stmt MakeConstShape::visit(const VarDef &_op) {
         return op;
     }
 
-    size_t ndim = op->buffer_->tensor().shape().size();
+    size_t ndim = op->buffer_->tensor()->shape().size();
     for (size_t i = 0; i < ndim; i++) {
-        auto &dim = op->buffer_->tensor().shape()[i];
-        const Expr &oldDim = _op->buffer_->tensor().shape()[i];
+        auto &dim = op->buffer_->tensor()->shape()[i];
+        const Expr &oldDim = _op->buffer_->tensor()->shape()[i];
         if (dim->nodeType() == ASTNodeType::IntConst) {
             continue;
         }
         int64_t result = std::numeric_limits<int64_t>::max();
         for (auto b : unique_.getUpper(oldDim)) {
-            if (b.lin().coeff_.empty()) {
+            if (b.lin().isConst()) {
                 auto bias = b.lin().bias_;
                 result = std::min(result, floorDiv(bias.p_, bias.q_));
             }

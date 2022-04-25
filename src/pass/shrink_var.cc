@@ -1,6 +1,6 @@
 #include <analyze/all_defs.h>
 #include <pass/shrink_var.h>
-#include <pass/z3_simplify.h>
+#include <pass/simplify.h>
 
 namespace ir {
 
@@ -12,7 +12,7 @@ Stmt ShrinkVar::visit(const VarDef &_op) {
 
     auto &&range = newRange_.at(_op->id());
 
-    size_t n = _op->buffer_->tensor().shape().size();
+    size_t n = _op->buffer_->tensor()->shape().size();
     ASSERT(range.lower_.size() == n);
     ASSERT(range.len_.size() == n);
     ASSERT(!offset_.count(_op->name_));
@@ -22,8 +22,7 @@ Stmt ShrinkVar::visit(const VarDef &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::VarDef);
     auto op = __op.as<VarDefNode>();
 
-    op->buffer_ = op->buffer_.clone();
-    op->buffer_->tensor().setShape(range.len_);
+    op->buffer_->tensor()->setShape(range.len_);
     offset_.erase(_op->name_);
     return op;
 }
@@ -64,7 +63,7 @@ Stmt shrinkVar(const Stmt &_op) {
     op = ShrinkVar(bounds)(op);
 
     // (3)
-    return z3Simplify(op); // Currently BuiltinSimplify is not sufficient
+    return simplifyPass(op);
 }
 
 Stmt shrinkSingleVar(const Stmt &_op, const ID &varDefId) {
@@ -78,7 +77,7 @@ Stmt shrinkSingleVar(const Stmt &_op, const ID &varDefId) {
     op = ShrinkVar(bounds)(op);
 
     // (3)
-    return z3Simplify(op); // Currently BuiltinSimplify is not sufficient
+    return simplifyPass(op);
 }
 
 } // namespace ir

@@ -1,6 +1,6 @@
-#include <mangle.h>
 #include <math/gen_pb_expr.h>
 #include <math/utils.h>
+#include <serialize/mangle.h>
 
 namespace ir {
 
@@ -28,13 +28,19 @@ void GenPBExpr::visitExpr(const Expr &op) {
 }
 
 void GenPBExpr::visit(const Var &op) {
+    // Check this here earlier, otherwise an undefined Var will result in an
+    // illegal-presburger-map type error
+    if (!symbolTable_.hasLoop(op->name_)) {
+        ERROR("BUG: Iterator " + op->name_ +
+              " used undefined in a presbuger expression");
+    }
     auto str = mangle(op->name_);
     vars_[op][op] = str;
     results_[op] = str;
 }
 
 void GenPBExpr::visit(const Load &op) {
-    if (isInt(symbolTable_.buffer(op->var_)->tensor().dtype())) {
+    if (isInt(symbolTable_.buffer(op->var_)->tensor()->dtype())) {
         auto str = mangle("ext" + std::to_string(op->hash())) + varSuffix_;
         vars_[op][op] = str;
         results_[op] = str;

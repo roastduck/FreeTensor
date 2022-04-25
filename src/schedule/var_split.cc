@@ -6,7 +6,7 @@ Stmt VarSplit::visit(const VarDef &_op) {
     if (_op->id() == def_) {
         found_ = true;
 
-        if (dim_ >= (int)_op->buffer_->tensor().shape().size()) {
+        if (dim_ >= (int)_op->buffer_->tensor()->shape().size()) {
             throw InvalidSchedule("There is no dimension " +
                                   std::to_string(dim_) + " in variable " +
                                   _op->name_);
@@ -15,7 +15,7 @@ Stmt VarSplit::visit(const VarDef &_op) {
             dynFactor_ = makeIntConst(factor_);
         } else {
             ASSERT(nparts_ != -1);
-            dynFactor_ = makeCeilDiv(_op->buffer_->tensor().shape()[dim_],
+            dynFactor_ = makeCeilDiv(_op->buffer_->tensor()->shape()[dim_],
                                      makeIntConst(nparts_));
         }
 
@@ -28,7 +28,7 @@ Stmt VarSplit::visit(const VarDef &_op) {
         if (fixedSize_) {
             if (!op->sizeLim_.isValid()) {
                 Expr size;
-                for (Expr dim : op->buffer_->tensor().shape()) {
+                for (Expr dim : op->buffer_->tensor()->shape()) {
                     size = size.isValid() ? makeMul(size, dim) : dim;
                 }
                 op->sizeLim_ = size;
@@ -40,7 +40,7 @@ Stmt VarSplit::visit(const VarDef &_op) {
             }
         }
 
-        auto &shape = op->buffer_->tensor().shape();
+        auto &shape = op->buffer_->tensor()->shape();
         if (factor_ != -1) {
             shape[dim_] = makeCeilDiv(shape[dim_], dynFactor_);
             shape.insert(shape.begin() + dim_ + 1, dynFactor_);

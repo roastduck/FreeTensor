@@ -7,37 +7,20 @@
 #include <vector>
 
 #include <codegen/code_gen_c.h>
-#include <mangle.h>
+#include <serialize/mangle.h>
 
 #include "code_gen.h"
 
 namespace ir {
 
 template <class Stream>
-template <class T>
-void CodeGenC<Stream>::genScalar(const T &op) {
-    auto id = mangle(op->var_);
-    if (op->indices_.empty()) {
-        switch (this->buffer(op->var_)->mtype()) {
-        case MemType::ByValue:
-        case MemType::CPU:
-        case MemType::GPULocal:
-            this->os() << id;
-            break;
-        case MemType::GPUGlobal:
-        case MemType::GPUShared:
-            this->os() << "*" << id;
-            break;
-        default:
-            ASSERT(false);
-        }
-    } else {
-        this->os() << id;
-        for (auto &&index : op->indices_) {
-            this->os() << "[";
-            (*this)(index);
-            this->os() << "]";
-        }
+void CodeGenC<Stream>::genScalar(const std::string &var,
+                                 const std::vector<Expr> &indices) {
+    this->os() << mangle(var);
+    for (auto &&index : indices) {
+        this->os() << "[";
+        (*this)(index);
+        this->os() << "]";
     }
 }
 
@@ -59,12 +42,12 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
 
     this->makeIndent();
     auto &&tensor = op->buffer_->tensor();
-    auto &&shape = tensor.shape();
+    auto &&shape = tensor->shape();
     auto name = mangle(op->name_);
 
     if (op->buffer_->atype() == AccessType::Cache) {
         // e.g. float x[5][5][5];
-        this->os() << gen(tensor.dtype()) << " " << name;
+        this->os() << gen(tensor->dtype()) << " " << name;
         if (op->buffer_->mtype() == MemType::GPUWarp) {
             if ((int)shape.size() && shape[0]->isConst() &&
                 shape[0].as<IntConstNode>()->val_ == 32) {
@@ -158,14 +141,14 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
                 }
             }
             if (shape.empty()) {
-                this->os() << gen(tensor.dtype()) << " " << name << " = *(("
-                           << gen(tensor.dtype()) << "*)" << rawPtr << ");"
+                this->os() << gen(tensor->dtype()) << " " << name << " = *(("
+                           << gen(tensor->dtype()) << "*)" << rawPtr << ");"
                            << std::endl;
             } else {
                 for (size_t i = 0, iEnd = shape.size(); i < iEnd; i++) {
                     this->os() << "__ByValArray<";
                 }
-                this->os() << gen(tensor.dtype());
+                this->os() << gen(tensor->dtype());
                 for (auto it = shape.rbegin(); it != shape.rend(); it++) {
                     this->os() << ", " << (*it).as<IntConstNode>()->val_ << ">";
                 }
@@ -179,7 +162,7 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
                             this->os() << "[" << x << "]";
                         }
                         this->os()
-                            << " = ((" << gen(tensor.dtype()) << "*)" << rawPtr
+                            << " = ((" << gen(tensor->dtype()) << "*)" << rawPtr
                             << ")[" << offset << "];" << std::endl;
                         return;
                     }
@@ -200,9 +183,9 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
                 if (op->buffer_->atype() == AccessType::Input) {
                     this->os() << "const ";
                 }
-                this->os() << gen(tensor.dtype()) << " &";
+                this->os() << gen(tensor->dtype()) << " &";
                 this->os() << name << " ";
-                this->os() << " = *((" << gen(tensor.dtype()) << "*)" << rawPtr
+                this->os() << " = *((" << gen(tensor->dtype()) << "*)" << rawPtr
                            << ");" << std::endl;
             } else {
                 // e.g.
@@ -210,7 +193,7 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
                 if (op->buffer_->atype() == AccessType::Input) {
                     this->os() << "const ";
                 }
-                this->os() << gen(tensor.dtype()) << " (*restrict ";
+                this->os() << gen(tensor->dtype()) << " (*restrict ";
                 this->os() << name << ")";
                 for (size_t i = 1, iEnd = shape.size(); i < iEnd;
                      i++) { // No shape[0]
@@ -218,7 +201,7 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
                     (*this)(shape[i]);
                     this->os() << "]";
                 }
-                this->os() << " = (" << gen(tensor.dtype()) << "(*)";
+                this->os() << " = (" << gen(tensor->dtype()) << "(*)";
                 for (size_t i = 1, iEnd = shape.size(); i < iEnd;
                      i++) { // No shape[0]
                     this->os() << "[";
@@ -274,14 +257,14 @@ template <class Stream> void CodeGenC<Stream>::visit(const ReduceTo &op) {
     case ReduceOp::Min:
         genAddr(), this->os()
                        << " = std::min<"
-                       << this->gen(this->buffer(op->var_)->tensor().dtype())
+                       << this->gen(this->buffer(op->var_)->tensor()->dtype())
                        << ">(";
         genAddr(), this->os() << ", ", genExpr(), this->os() << ")";
         break;
     case ReduceOp::Max:
         genAddr(), this->os()
                        << " = std::max<"
-                       << this->gen(this->buffer(op->var_)->tensor().dtype())
+                       << this->gen(this->buffer(op->var_)->tensor()->dtype())
                        << ">(";
         genAddr(), this->os() << ", ", genExpr(), this->os() << ")";
         break;
@@ -617,6 +600,8 @@ template <class Stream> std::string CodeGenC<Stream>::gen(DataType dtype) {
         return "double";
     case DataType::Float32:
         return "float";
+    case DataType::Int64:
+        return "int64_t";
     case DataType::Int32:
         return "int32_t";
     case DataType::Bool:

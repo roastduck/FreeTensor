@@ -1,7 +1,5 @@
 import ffi
-from ffi import FissionSide, MoveToSide, VarSplitMode
-
-from .utils import *
+from ffi import FissionSide, MoveToSide, VarSplitMode, MemType, ParallelScope, ID
 
 
 class Schedule(ffi.Schedule):
@@ -36,7 +34,7 @@ class Schedule(ffi.Schedule):
 
         Parameters
         ----------
-        node : str, Stmt or Cursor
+        node : str, ID or Stmt
             The loop to be split
         factor : int
             Length of the inner loop. Set to -1 if using `nparts`
@@ -53,7 +51,7 @@ class Schedule(ffi.Schedule):
         (str, str)
             (outer loop ID, inner loop ID)
         """
-        return super(Schedule, self).split(toId(node), factor, nparts)
+        return super(Schedule, self).split(ID(node), factor, nparts)
 
     def reorder(self, order):
         """
@@ -63,7 +61,7 @@ class Schedule(ffi.Schedule):
 
         Parameters
         ----------
-        order : array like of str, Stmt or Cursor
+        order : array like of str, ID or Stmt
             Vector of loops. The requested order of the loops
 
         Raises
@@ -71,7 +69,7 @@ class Schedule(ffi.Schedule):
         InvalidSchedule
             if the input is invalid or there are breaking dependencies
         """
-        super(Schedule, self).reorder(list(map(toId, order)))
+        super(Schedule, self).reorder(list(map(ID, order)))
 
     def merge(self, loop1, loop2):
         """
@@ -84,7 +82,7 @@ class Schedule(ffi.Schedule):
 
         Parameters
         ----------
-        loop1, loop2 : str, Stmt or Cursor
+        loop1, loop2 : str, ID or Stmt
             loops to be merged, can be in any order
 
         Raises
@@ -97,7 +95,7 @@ class Schedule(ffi.Schedule):
         str
             ID of the merged loop
         """
-        return super(Schedule, self).merge(toId(loop1), toId(loop2))
+        return super(Schedule, self).merge(ID(loop1), ID(loop2))
 
     def fission(self, loop, side, splitter, suffix0=".a", suffix1=".b"):
         """
@@ -108,12 +106,12 @@ class Schedule(ffi.Schedule):
 
         Parameters
         ----------
-        loop : str, Stmt or Cursor
+        loop : str, ID or Stmt
             The loop to be fissioned
         side : FissionSide
             If `After`, `splitter` is the last statement of the first loop. If `Before`,
             `splitter` is the first statement of the second loop
-        splitter : str, Stmt or Cursor
+        splitter : str, ID or Stmt
             Where to fission the loop
         suffix0 : str
             ID suffix of the statements in the first loop, default to ".a", can be
@@ -132,7 +130,7 @@ class Schedule(ffi.Schedule):
         (map, map)
             ({old ID -> new ID in 1st loop}, {old ID -> new ID in 2nd loop})
         """
-        return super(Schedule, self).fission(toId(loop), side, toId(splitter),
+        return super(Schedule, self).fission(ID(loop), side, ID(splitter),
                                              suffix0, suffix1)
 
     def fuse(self, loop0, loop1, strict=False):
@@ -146,9 +144,9 @@ class Schedule(ffi.Schedule):
 
         Parameters
         ----------
-        loop0 : str, Stmt or Cursor
+        loop0 : str, ID or Stmt
             The leading loop
-        loop1 : str, Stmt or Cursor
+        loop1 : str, ID or Stmt
             The following loop
         strict : bool
             If true, throw an error if unable to determine whether the two loops
@@ -165,7 +163,7 @@ class Schedule(ffi.Schedule):
         str
             ID of the result loop
         """
-        return super(Schedule, self).fuse(toId(loop0), toId(loop1), strict)
+        return super(Schedule, self).fuse(ID(loop0), ID(loop1), strict)
 
     def swap(self, order):
         """
@@ -175,7 +173,7 @@ class Schedule(ffi.Schedule):
 
         Parameters
         ----------
-        order : array like of str, Stmt or Cursor
+        order : array like of str, ID or Stmt
             The statements
 
         Raises
@@ -183,7 +181,7 @@ class Schedule(ffi.Schedule):
         InvalidSchedule
             if the statements are not found or the dependencies cannot be solved
         """
-        super(Schedule, self).swap(list(map(toId, order)))
+        super(Schedule, self).swap(list(map(ID, order)))
 
     def blend(self, loop):
         """
@@ -211,7 +209,7 @@ class Schedule(ffi.Schedule):
 
         Parameters
         ----------
-        loop : str, Stmt or Cursor
+        loop : str, ID or Stmt
             The loop being transformed
 
         Raises
@@ -220,7 +218,7 @@ class Schedule(ffi.Schedule):
             if the loop is not found, the loop length is not a constant, or
             the dependencies cannot be solved
         """
-        super(Schedule, self).blend(toId(loop))
+        super(Schedule, self).blend(ID(loop))
 
     def cache(self, stmt, var, mtype):
         """
@@ -250,7 +248,7 @@ class Schedule(ffi.Schedule):
 
         Parameters
         ----------
-        stmt : str, Stmt or Cursor
+        stmt : str, ID or Stmt
             The statement or block (e.g. an If or a For) to be modified
         var : str
             Name of the variable to be cached
@@ -269,7 +267,7 @@ class Schedule(ffi.Schedule):
             flushes from the cache, name of the cache variable, ID of the VarDef
             node of the cache variable)
         """
-        return super(Schedule, self).cache(toId(stmt), var, parseMType(mtype))
+        return super(Schedule, self).cache(ID(stmt), var, MemType(mtype))
 
     def cache_reduction(self, stmt, var, mtype):
         """
@@ -292,7 +290,7 @@ class Schedule(ffi.Schedule):
 
         Parameters
         ----------
-        stmt : str, Stmt or Cursor
+        stmt : str, ID or Stmt
             The statement or block (e.g. an If or a For) to be modified
         var : str
             Name of the variable to be cached. Only reductions are allowed on
@@ -313,8 +311,8 @@ class Schedule(ffi.Schedule):
             that reduces the local result to the global result, name of the
             cache variable, ID of the VarDef node of the cache variable)
         """
-        return super(Schedule, self).cache_reduction(toId(stmt), var,
-                                                     parseMType(mtype))
+        return super(Schedule, self).cache_reduction(ID(stmt), var,
+                                                     MemType(mtype))
 
     def set_mem_type(self, vardef, mtype):
         """
@@ -322,7 +320,7 @@ class Schedule(ffi.Schedule):
 
         Parameters
         ----------
-        vardef : str, Stmt or Cursor
+        vardef : str, ID or Stmt
             ID of the VarDef statement of the specific variable
         mtype : MemType
             Where the variable should be stored
@@ -332,7 +330,7 @@ class Schedule(ffi.Schedule):
         InvalidSchedule
             if the variable is not found
         """
-        super(Schedule, self).set_mem_type(toId(vardef), parseMType(mtype))
+        super(Schedule, self).set_mem_type(ID(vardef), MemType(mtype))
 
     def var_split(self, vardef, dim, mode, factor=-1, nparts=-1):
         """
@@ -340,7 +338,7 @@ class Schedule(ffi.Schedule):
 
         Parameters
         ----------
-        vardef : str, Stmt or Cursor
+        vardef : str, ID or Stmt
             ID of the VarDef statement of the specific variable
         dim : int
             which dimension to be split
@@ -360,7 +358,7 @@ class Schedule(ffi.Schedule):
         InvalidSchedule
             if the variable or the dimension is not found
         """
-        return super(Schedule, self).var_split(toId(vardef), dim, mode, factor,
+        return super(Schedule, self).var_split(ID(vardef), dim, mode, factor,
                                                nparts)
 
     def var_merge(self, vardef, dim):
@@ -368,12 +366,12 @@ class Schedule(ffi.Schedule):
         Merge two dimensions of a variable
         Parameters
         ----------
-        vardef : str, Stmt or Cursor
+        vardef : str, ID or Stmt
             ID of the VarDef statement of the specific variable
         dim : int
             Merge the `dim`-th and the `(dim + 1)`-th dimension
         """
-        return super(Schedule, self).var_merge(toId(vardef), dim)
+        return super(Schedule, self).var_merge(ID(vardef), dim)
 
     def var_reorder(self, vardef, order):
         """
@@ -381,9 +379,9 @@ class Schedule(ffi.Schedule):
 
         Parameters
         ----------
-        vardef : str, Stmt or Cursor
+        vardef : str, ID or Stmt
             ID of the VarDef statement of the specific variable
-        order : array like of str, Stmt or Cursor
+        order : array like of str, ID or Stmt
             Vector of integers. The new order of the dimensions
 
         Raises
@@ -391,7 +389,7 @@ class Schedule(ffi.Schedule):
         InvalidSchedule
             if the variable or the order is illegal
         """
-        return super(Schedule, self).var_reorder(toId(vardef), order)
+        return super(Schedule, self).var_reorder(ID(vardef), order)
 
     def move_to(self, stmt, side, dst):
         """
@@ -402,11 +400,11 @@ class Schedule(ffi.Schedule):
 
         Parameters
         ----------
-        stmt : str, Stmt or Cursor
+        stmt : str, ID or Stmt
             The statement to be moved
         side : MoveToSide
             Whether `stmt` will be BEFORE or AFTER `dst
-        dst : str, Stmt or Cursor
+        dst : str, ID or Stmt
             Insert `stmt` to be directly after this statement
 
         Raises
@@ -419,7 +417,7 @@ class Schedule(ffi.Schedule):
         str
             The new ID of stmt
         """
-        return super(Schedule, self).move_to(toId(stmt), side, toId(dst))
+        return super(Schedule, self).move_to(ID(stmt), side, ID(dst))
 
     def inline(self, vardef):
         """
@@ -427,7 +425,7 @@ class Schedule(ffi.Schedule):
 
         Parameters
         ----------
-        vardef : str, Stmt or Cursor
+        vardef : str, ID or Stmt
             The VarDef statement of the specific variable. It can not be an
             I/O varible
 
@@ -436,7 +434,7 @@ class Schedule(ffi.Schedule):
         InvalidSchedule
             if the variable cannot be completely removed
         """
-        return super(Schedule, self).inline(toId(vardef))
+        return super(Schedule, self).inline(ID(vardef))
 
     def parallelize(self, loop, parallel):
         """
@@ -444,13 +442,12 @@ class Schedule(ffi.Schedule):
 
         Parameters
         ----------
-        loop : str, Stmt or Cursor
+        loop : str, ID or Stmt
             The loop
         parallel : ParallelScope
             Parallel scope
         """
-        super(Schedule, self).parallelize(toId(loop),
-                                          parseParallelScope(parallel))
+        super(Schedule, self).parallelize(ID(loop), ParallelScope(parallel))
 
     def unroll(self, loop, immediate=False):
         """
@@ -458,7 +455,7 @@ class Schedule(ffi.Schedule):
 
         Parameters
         ----------
-        loop : str, Stmt or Cursor
+        loop : str, ID or Stmt
             ID of the loop
         immediate : bool
             If false (by default), postpone the unroll procedure to the backend
@@ -473,7 +470,7 @@ class Schedule(ffi.Schedule):
         InvalidSchedule
             if the loop is not found or length of the loop is not a constant
         """
-        super(Schedule, self).unroll(toId(loop), immediate)
+        super(Schedule, self).unroll(ID(loop), immediate)
 
     def vectorize(self, loop):
         """
@@ -485,7 +482,7 @@ class Schedule(ffi.Schedule):
 
         Parameters
         ----------
-        loop : str, Stmt or Cursor
+        loop : str, ID or Stmt
             ID of the loop
 
         Raises
@@ -494,7 +491,7 @@ class Schedule(ffi.Schedule):
             if the ID or name is not found, or the dependency requirement is
             not met
         """
-        super(Schedule, self).vectorize(toId(loop))
+        super(Schedule, self).vectorize(ID(loop))
 
     def separate_tail(self, noDuplicateVarDefs=False):
         """
@@ -547,7 +544,7 @@ class Schedule(ffi.Schedule):
 
         Parameters
         ----------
-        loop : str, Stmt or Cursor
+        loop : str, ID or Stmt
             ID of the loop
 
         Raises
@@ -555,7 +552,7 @@ class Schedule(ffi.Schedule):
         InvalidSchedule
             if the loop cannot be transformed to be a matrix multiplication
         """
-        super(Schedule, self).as_matmul(toId(loop))
+        super(Schedule, self).as_matmul(ID(loop))
 
     def auto_schedule(self, target):
         """

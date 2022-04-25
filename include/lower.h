@@ -26,6 +26,7 @@
 #include <pass/sink_var.h>
 #include <pass/tensor_prop_const.h>
 #include <pass/use_builtin_div.h>
+#include <pass/z3_simplify.h>
 
 namespace ir {
 
@@ -35,6 +36,7 @@ template <class T> T lower(const T &t, const Ref<Target> &target) {
     func = removeDeadVar(func);
     func = propOneTimeUse(func);
     func = floatSimplify(func); // After propOneTimeUse
+    func = z3Simplify(func);
     func = simplifyPass(func);
     func = moveOutFirstOrLastIter(func);
     func = sinkVar(func);

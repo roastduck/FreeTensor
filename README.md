@@ -9,6 +9,7 @@ A language and compiler for irregular tensor programs.
 - Python (>= 3.8, for the Python frontend)
 - GCC (>= 8, to support C++17 and the "unroll" pragma)
 - CUDA (>= 10.2, to support GCC 8)
+- Java (Build-time dependency only)
 - MKL (Optional)
 
 ## Build

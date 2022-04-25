@@ -66,6 +66,13 @@ void init_ffi_driver(py::module_ &m) {
             arr.fromCPU(np.unchecked().data(), np.nbytes());
             return arr;
         }))
+        .def(py::init([](py::array_t<int64_t, py::array::c_style> &np,
+                         const Device &device) {
+            std::vector<size_t> shape(np.shape(), np.shape() + np.ndim());
+            Array arr(shape, DataType::Int64, device);
+            arr.fromCPU(np.unchecked().data(), np.nbytes());
+            return arr;
+        }))
         .def(py::init([](py::array_t<int32_t, py::array::c_style> &np,
                          const Device &device) {
             std::vector<size_t> shape(np.shape(), np.shape() + np.ndim());
@@ -83,6 +90,12 @@ void init_ffi_driver(py::module_ &m) {
         .def("numpy",
              [](Array &arr) -> py::object {
                  switch (arr.dtype()) {
+                 case DataType::Int64: {
+                     py::array_t<int64_t, py::array::c_style> np(arr.shape());
+                     arr.toCPU(np.mutable_unchecked().mutable_data(),
+                               np.nbytes());
+                     return std::move(np); // construct an py::object by move
+                 }
                  case DataType::Int32: {
                      py::array_t<int32_t, py::array::c_style> np(arr.shape());
                      arr.toCPU(np.mutable_unchecked().mutable_data(),

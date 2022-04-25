@@ -3,6 +3,7 @@
 #include <analyze/all_uses.h>
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
+#include <analyze/find_stmt.h>
 #include <pass/flatten_stmt_seq.h>
 
 namespace ir {
@@ -32,14 +33,14 @@ Stmt InsertTmpEval::visitStmt(const Stmt &_op) {
     auto op = Mutator::visitStmt(_op);
     auto ret = op;
     if (op->id() == s0_) {
-        auto eval = makeEval("", expr_);
+        auto eval = makeEval("", s0Expr_);
         s0Eval_ = eval->id();
         ret = s0Side_ == CheckNotModifiedSide::Before
                   ? makeStmtSeq("", {eval, ret})
                   : makeStmtSeq("", {ret, eval});
     }
     if (op->id() == s1_) {
-        auto eval = makeEval("", expr_);
+        auto eval = makeEval("", s1Expr_);
         s1Eval_ = eval->id();
         ret = s1Side_ == CheckNotModifiedSide::Before
                   ? makeStmtSeq("", {eval, ret})
@@ -48,10 +49,10 @@ Stmt InsertTmpEval::visitStmt(const Stmt &_op) {
     return ret;
 }
 
-bool checkNotModified(const Stmt &op, const Expr &expr,
+bool checkNotModified(const Stmt &op, const Expr &s0Expr, const Expr &s1Expr,
                       CheckNotModifiedSide s0Side, const ID &s0,
                       CheckNotModifiedSide s1Side, const ID &s1) {
-    auto names = allUses(expr);
+    auto names = allUses(s0Expr); // uses of s1 should be the same
     if (names.empty()) {
         return true;
     }
@@ -59,7 +60,7 @@ bool checkNotModified(const Stmt &op, const Expr &expr,
         return false;
     }
 
-    auto reads = allReads(expr);
+    auto reads = allReads(s0Expr); // uses of s1 should be the same
     if (reads.empty()) {
         return true; // early exit: impossible to be written
     }
@@ -67,48 +68,52 @@ bool checkNotModified(const Stmt &op, const Expr &expr,
     // First insert temporarily Eval node to the AST, then perform dependency
     // analysis
 
-    InsertTmpEval inserter(expr, s0Side, s0, s1Side, s1);
+    InsertTmpEval inserter(s0Expr, s1Expr, s0Side, s0, s1Side, s1);
     auto tmpOp = inserter(op);
     tmpOp = flattenStmtSeq(tmpOp);
     ASSERT(inserter.s0Eval().isValid());
     ASSERT(inserter.s1Eval().isValid());
-    auto c0 = getCursorById(tmpOp, inserter.s0Eval());
-    auto c1 = getCursorById(tmpOp, inserter.s1Eval());
 
-    if (c0.hasNext() && c0.next().id() == c1.id()) {
+    auto s0Eval = findStmt(tmpOp, inserter.s0Eval());
+    auto s1Eval = findStmt(tmpOp, inserter.s1Eval());
+    if (s0Eval->nextStmt() == s1Eval) {
         return true; // early exit: the period to check is empty
     }
 
-    auto common = lca(c0, c1); // FIXME: It seems checking `common` is wrong
-                               // because we may have multiple loops
+    auto common = lcaStmt(s0Eval, s1Eval);
+    FindDepsCond cond;
+    for (auto p = common; p.isValid(); p = p->parentStmt()) {
+        if (p->nodeType() == ASTNodeType::For) {
+            cond.emplace_back(p->id(), DepDirection::Same);
+        }
+    }
 
     // write -> serialized PBSet
     std::unordered_map<Stmt, std::string> writesWAR;
     auto filterWAR = [&](const AccessPoint &later, const AccessPoint &earlier) {
-        return earlier.cursor_.id() == inserter.s0Eval() &&
-               lca(later.cursor_, common).id() == common.id();
+        return earlier.stmt_->id() == inserter.s0Eval();
     };
     auto foundWAR = [&](const Dependency &dep) {
         // Serialize dep.dep_ because it is from a random PBCtx
-        writesWAR[dep.later_.cursor_.node()] =
+        writesWAR[dep.later_.stmt_] =
             toString(apply(domain(dep.dep_), dep.pmap_));
     };
-    findDeps(tmpOp, {{}}, foundWAR, FindDepsMode::Dep, DEP_WAR, filterWAR, true,
-             true, true);
+    findDeps(tmpOp, {cond}, foundWAR, FindDepsMode::Dep, DEP_WAR, filterWAR,
+             true, true, true);
 
     for (auto &&[_item, w0] : writesWAR) {
         auto &&item = _item;
         std::string w1;
         auto filterRAW = [&](const AccessPoint &later,
                              const AccessPoint &earlier) {
-            return later.cursor_.id() == inserter.s1Eval() &&
-                   earlier.cursor_.id() == item->id();
+            return later.stmt_->id() == inserter.s1Eval() &&
+                   earlier.stmt_->id() == item->id();
         };
         auto foundRAW = [&](const Dependency &dep) {
             // Serialize dep.dep_ because it is from a random PBCtx
             w1 = toString(apply(range(dep.dep_), dep.omap_));
         };
-        findDeps(tmpOp, {{}}, foundRAW, FindDepsMode::Dep, DEP_RAW, filterRAW,
+        findDeps(tmpOp, {cond}, foundRAW, FindDepsMode::Dep, DEP_RAW, filterRAW,
                  true, true, true);
 
         if (!w1.empty()) {
@@ -120,11 +125,13 @@ bool checkNotModified(const Stmt &op, const Expr &expr,
         }
     }
 
-    // FIXME: What if the loop iterators are different between
-    // `earlier` and `later`? Currently we check it explicitly in
-    // schedule/inline and pass/tensor_prop_const
-
     return true;
+}
+
+bool checkNotModified(const Stmt &op, const Expr &expr,
+                      CheckNotModifiedSide s0Side, const ID &s0,
+                      CheckNotModifiedSide s1Side, const ID &s1) {
+    return checkNotModified(op, expr, expr, s0Side, s0, s1Side, s1);
 }
 
 } // namespace ir

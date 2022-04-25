@@ -3,6 +3,7 @@
 #include <functional>
 #include <type_traits>
 
+#include <analyze/all_uses.h>
 #include <math/bounds.h>
 #include <math/utils.h>
 
@@ -172,6 +173,32 @@ const Expr &LowerBound::expr() {
     return expr_;
 }
 
+const std::unordered_set<std::string> &UpperBound::allNames() {
+    if (allNames_.isValid()) {
+        return *allNames_;
+    }
+    allNames_ = Opt<std::unordered_set<std::string>>::make();
+    for (auto &&[k, a] : lin_.coeff_) {
+        for (auto &&use : ::ir::allNames(a)) {
+            allNames_->insert(use);
+        }
+    }
+    return *allNames_;
+}
+
+const std::unordered_set<std::string> &LowerBound::allNames() {
+    if (allNames_.isValid()) {
+        return *allNames_;
+    }
+    allNames_ = Opt<std::unordered_set<std::string>>::make();
+    for (auto &&[k, a] : lin_.coeff_) {
+        for (auto &&use : ::ir::allNames(a)) {
+            allNames_->insert(use);
+        }
+    }
+    return *allNames_;
+}
+
 UpperBound add(const UpperBound &b1, const UpperBound &b2) {
     return add(b1.lin(), b2.lin());
 }
@@ -231,7 +258,7 @@ LowerBound ceilDiv(const LowerBound &b, int k) {
 
 bool alwaysLT(const UpperBound &b1, const LowerBound &b2) {
     // Case 1: lower and upper round to some const
-    if (b1.lin().coeff_.empty() && b2.lin().coeff_.empty() &&
+    if (b1.lin().isConst() && b2.lin().isConst() &&
         floorDiv(b1.lin().bias_.p_, b1.lin().bias_.q_) <
             ceilDiv(b2.lin().bias_.p_, b2.lin().bias_.q_)) {
         return true;
@@ -243,7 +270,7 @@ bool alwaysLT(const UpperBound &b1, const LowerBound &b2) {
 }
 bool alwaysLE(const UpperBound &b1, const LowerBound &b2) {
     // Case 1: lower and upper round to some const
-    if (b1.lin().coeff_.empty() && b2.lin().coeff_.empty() &&
+    if (b1.lin().isConst() && b2.lin().isConst() &&
         floorDiv(b1.lin().bias_.p_, b1.lin().bias_.q_) <=
             ceilDiv(b2.lin().bias_.p_, b2.lin().bias_.q_)) {
         return true;

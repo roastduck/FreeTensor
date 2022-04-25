@@ -47,16 +47,16 @@ Stmt NormalizeThreads::doVisitStmt(const Stmt &_op) {
 }
 
 Stmt NormalizeThreads::doVisitFor(const For &_op) {
-    if (std::holds_alternative<CUDAScope>(_op->property_.parallel_)) {
-        auto newIter = "." + toString(_op->property_.parallel_);
+    if (std::holds_alternative<CUDAScope>(_op->property_->parallel_)) {
+        auto newIter = "." + toString(_op->property_->parallel_);
         varMap_[_op->iter_] = {newIter, _op->begin_};
-        inside_[_op->property_.parallel_]++;
+        inside_[_op->property_->parallel_]++;
         auto __op = Mutator::visit(_op);
         ASSERT(__op->nodeType() == ASTNodeType::For);
         auto op = __op.as<ForNode>();
         varMap_.erase(_op->iter_);
-        inside_[_op->property_.parallel_]--;
-        loops_[_op->property_.parallel_].emplace_back(_op->id());
+        inside_[_op->property_->parallel_]--;
+        loops_[_op->property_->parallel_].emplace_back(_op->id());
         return makeIf(op->id(), makeLT(makeVar(newIter), op->len_), op->body_);
     } else {
         return Mutator::visit(_op);
@@ -65,43 +65,46 @@ Stmt NormalizeThreads::doVisitFor(const For &_op) {
 
 Stmt NormalizeThreads::visit(const For &op) {
     if (!inKernel_ &&
-        std::holds_alternative<CUDAScope>(op->property_.parallel_)) {
+        std::holds_alternative<CUDAScope>(op->property_->parallel_)) {
         inKernel_ = true;
         auto ret = doVisitFor(op);
         inKernel_ = false;
         auto zero = makeIntConst(0);
         auto one = makeIntConst(1);
         auto inf = makeIntConst(INT_MAX);
-        ret =
-            makeFor("", ".threadIdx.x", zero, inf, one, inf,
-                    ForProperty()
-                        .withParallel(threadIdxX)
-                        .withNoDeps(mergeNoDepsHint(root_, loops_[threadIdxX])),
-                    ret);
-        ret =
-            makeFor("", ".threadIdx.y", zero, inf, one, inf,
-                    ForProperty()
-                        .withParallel(threadIdxY)
-                        .withNoDeps(mergeNoDepsHint(root_, loops_[threadIdxY])),
-                    ret);
-        ret =
-            makeFor("", ".threadIdx.z", zero, inf, one, inf,
-                    ForProperty()
-                        .withParallel(threadIdxZ)
-                        .withNoDeps(mergeNoDepsHint(root_, loops_[threadIdxZ])),
-                    ret);
-        ret = makeFor("", ".blockIdx.x", zero, inf, one, inf,
-                      ForProperty().withParallel(blockIdxX).withNoDeps(
-                          mergeNoDepsHint(root_, loops_[blockIdxX])),
-                      ret);
-        ret = makeFor("", ".blockIdx.y", zero, inf, one, inf,
-                      ForProperty().withParallel(blockIdxY).withNoDeps(
-                          mergeNoDepsHint(root_, loops_[blockIdxY])),
-                      ret);
-        ret = makeFor("", ".blockIdx.z", zero, inf, one, inf,
-                      ForProperty().withParallel(blockIdxZ).withNoDeps(
-                          mergeNoDepsHint(root_, loops_[blockIdxZ])),
-                      ret);
+        ret = makeFor(
+            "", ".threadIdx.x", zero, inf, one, inf,
+            Ref<ForProperty>::make()
+                ->withParallel(threadIdxX)
+                ->withNoDeps(mergeNoDepsHint(root_, loops_[threadIdxX])),
+            ret);
+        ret = makeFor(
+            "", ".threadIdx.y", zero, inf, one, inf,
+            Ref<ForProperty>::make()
+                ->withParallel(threadIdxY)
+                ->withNoDeps(mergeNoDepsHint(root_, loops_[threadIdxY])),
+            ret);
+        ret = makeFor(
+            "", ".threadIdx.z", zero, inf, one, inf,
+            Ref<ForProperty>::make()
+                ->withParallel(threadIdxZ)
+                ->withNoDeps(mergeNoDepsHint(root_, loops_[threadIdxZ])),
+            ret);
+        ret = makeFor(
+            "", ".blockIdx.x", zero, inf, one, inf,
+            Ref<ForProperty>::make()->withParallel(blockIdxX)->withNoDeps(
+                mergeNoDepsHint(root_, loops_[blockIdxX])),
+            ret);
+        ret = makeFor(
+            "", ".blockIdx.y", zero, inf, one, inf,
+            Ref<ForProperty>::make()->withParallel(blockIdxY)->withNoDeps(
+                mergeNoDepsHint(root_, loops_[blockIdxY])),
+            ret);
+        ret = makeFor(
+            "", ".blockIdx.z", zero, inf, one, inf,
+            Ref<ForProperty>::make()->withParallel(blockIdxZ)->withNoDeps(
+                mergeNoDepsHint(root_, loops_[blockIdxZ])),
+            ret);
         return ret;
     } else {
         return doVisitFor(op);
@@ -125,7 +128,7 @@ Stmt CheckThreadNum::visit(const For &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::For);
     auto op = __op.as<ForNode>();
 
-    if (op->property_.parallel_ != serialScope) {
+    if (op->property_->parallel_ != serialScope) {
         if (op->begin_->nodeType() != ASTNodeType::IntConst) {
             op->body_ =
                 makeIf("", makeGE(makeVar(op->iter_), op->begin_), op->body_);
@@ -142,7 +145,7 @@ Stmt CheckThreadNum::visit(const For &_op) {
                                 op->begin_.as<IntConstNode>()->val_);
         if (op->end_.as<IntConstNode>()->val_ == INT_MAX) {
             throw InvalidProgram("Length of " +
-                                 toString(op->property_.parallel_) +
+                                 toString(op->property_->parallel_) +
                                  " should have a finite bound");
         }
     }

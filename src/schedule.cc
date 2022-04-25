@@ -6,8 +6,8 @@
 #include <analyze/all_stmts.h>
 #include <analyze/count_contig_access_loops.h>
 #include <analyze/find_indexing_loops.h>
+#include <analyze/find_stmt.h>
 #include <analyze/get_loop_nest_tree.h>
-#include <analyze/with_cursor.h>
 #include <auto_schedule/utils.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/hoist_var_over_stmt_seq.h>
@@ -37,13 +37,13 @@ namespace ir {
 
 Schedule::Schedule(const Stmt &ast) : ast_(ast) { ast_ = simplifyPass(ast_); }
 
-std::vector<Cursor>
-Schedule::findAll(const std::function<bool(const Cursor &)> &filter) const {
-    return getCursorByFilter(ast_, filter);
+std::vector<Stmt>
+Schedule::findAll(const std::function<bool(const Stmt &)> &filter) const {
+    return findStmt(ast_, filter);
 }
 
-Cursor Schedule::find(const std::function<bool(const Cursor &)> &filter) const {
-    auto ret = getCursorByFilter(ast_, filter);
+Stmt Schedule::find(const std::function<bool(const Stmt &)> &filter) const {
+    auto ret = findStmt(ast_, filter);
     if (ret.size() != 1) {
         throw Error("find: There is " + std::to_string(ret.size()) +
                     " nodes matching the given condition. "
@@ -225,46 +225,45 @@ ID Schedule::moveTo(const ID &_stmt, MoveToSide side, const ID &_dst) {
         auto stmt = _stmt, dst = _dst;
         while (true) {
             ast_ = hoistVarOverStmtSeq(ast_);
-            Cursor s = getCursorById(ast_, stmt);
-            Cursor d = getCursorById(ast_, dst);
+            Stmt s = findStmt(ast_, stmt);
+            Stmt d = findStmt(ast_, dst);
 
             auto movingUp = [&]() {
-                if (d.isOuter(s)) {
+                if (d->isAncestorOf(s)) {
                     return side == MoveToSide::Before;
                 }
-                if (s.hasPrev()) {
-                    return d.isBefore(side == MoveToSide::After ? s.prev() : s);
+                if (auto prev = s->prevStmt(); prev.isValid()) {
+                    return d->isBefore(side == MoveToSide::After ? prev : s);
                 } else {
-                    return d.isBefore(s);
+                    return d->isBefore(s);
                 }
             };
             auto movingDown = [&]() {
-                if (d.isOuter(s)) {
+                if (d->isAncestorOf(s)) {
                     return side == MoveToSide::After;
                 }
-                if (s.hasNext()) {
-                    return (side == MoveToSide::Before ? s.next() : s)
-                        .isBefore(d);
+                if (auto next = s->nextStmt(); next.isValid()) {
+                    return (side == MoveToSide::Before ? next : s)->isBefore(d);
                 } else {
-                    return s.isBefore(d);
+                    return s->isBefore(d);
                 }
             };
 
             if (movingUp()) {
-                if (s.hasPrev()) {
+                if (s->prevStmt().isValid()) {
                     std::vector<ID> orderRev;
-                    while (s.hasPrev() && movingUp()) {
-                        s = s.prev();
-                        orderRev.emplace_back(s.id());
+                    while (s->prevStmt().isValid() && movingUp()) {
+                        s = s->prevStmt();
+                        orderRev.emplace_back(s->id());
                     }
                     orderRev.emplace_back(stmt);
                     std::vector<ID> order(orderRev.rbegin(), orderRev.rend());
                     swap(order);
                 } else {
-                    while (!s.hasPrev() && movingUp()) {
-                        s = s.outerCtrlFlow();
+                    while (!s->prevStmt().isValid() && movingUp()) {
+                        s = s->parentCtrlFlow();
                     }
-                    if (s.node()->nodeType() != ASTNodeType::For) {
+                    if (s->nodeType() != ASTNodeType::For) {
                         throw InvalidSchedule(
                             "Fission a If node in a StmtSeq is not currently "
                             "supported in moveTo",
@@ -273,26 +272,26 @@ ID Schedule::moveTo(const ID &_stmt, MoveToSide side, const ID &_dst) {
                     }
                     // Leave IDs of the other statements unchanged
                     auto idMap =
-                        fission(s.id(), FissionSide::After, stmt, ".a", "")
+                        fission(s->id(), FissionSide::After, stmt, ".a", "")
                             .first;
-                    stmt = idMap.at(s.id());
+                    stmt = idMap.at(s->id());
                 }
                 // TODO: Fuse if d is inner of s
 
             } else if (movingDown()) {
-                if (s.hasNext()) {
+                if (s->nextStmt().isValid()) {
                     std::vector<ID> order;
-                    while (s.hasNext() && movingDown()) {
-                        s = s.next();
-                        order.emplace_back(s.id());
+                    while (s->nextStmt().isValid() && movingDown()) {
+                        s = s->nextStmt();
+                        order.emplace_back(s->id());
                     }
                     order.emplace_back(stmt);
                     swap(order);
                 } else {
-                    while (!s.hasNext() && movingDown()) {
-                        s = s.outerCtrlFlow();
+                    while (!s->nextStmt().isValid() && movingDown()) {
+                        s = s->parentCtrlFlow();
                     }
-                    if (s.node()->nodeType() != ASTNodeType::For) {
+                    if (s->nodeType() != ASTNodeType::For) {
                         throw InvalidSchedule(
                             "Fission a If node in a StmtSeq is not currently "
                             "supported in moveTo",
@@ -301,14 +300,14 @@ ID Schedule::moveTo(const ID &_stmt, MoveToSide side, const ID &_dst) {
                     }
                     // Leave IDs of the other statements unchanged
                     auto idMap =
-                        fission(s.id(), FissionSide::Before, stmt, "", ".b")
+                        fission(s->id(), FissionSide::Before, stmt, "", ".b")
                             .second;
-                    stmt = idMap.at(s.id());
+                    stmt = idMap.at(s->id());
                 }
                 // TODO: Fuse if d is inner of s
 
             } else {
-                return s.id();
+                return s->id();
             }
         }
     } catch (const InvalidSchedule &e) {
@@ -394,11 +393,11 @@ void Schedule::autoUseLib(const Target &target) {
             // each of them
             bool isPreferLibs = false;
             for (For l = loop->loop_;;) {
-                if (l->property_.preferLibs_) {
+                if (l->property_->preferLibs_) {
                     isPreferLibs = true;
                     break;
                 }
-                auto body = l->body_;
+                Stmt body = l->body_;
                 while (body->nodeType() == ASTNodeType::VarDef) {
                     body = body.as<VarDefNode>()->body_;
                 }
@@ -495,7 +494,7 @@ void Schedule::autoParallelize(const Target &target) {
             auto loop = find(loopId);
 
             // Ignore if too short
-            if (auto len = loop.node().as<ForNode>()->len_;
+            if (auto &&len = loop.as<ForNode>()->len_;
                 len->nodeType() == ASTNodeType::IntConst &&
                 len.as<IntConstNode>()->val_ <= 4) {
                 continue;
@@ -505,17 +504,19 @@ void Schedule::autoParallelize(const Target &target) {
             auto logBak = logs_;
             try {
                 // FIXME: Do not hard-code 32
-                auto [l0, l1] = split(loop.id(), 32);
+                auto [l0, l1] = split(loop->id(), 32);
                 parallelize(l1, threadIdxX);
 
                 try {
                     // Reorder this scope to as outer as possible
+                    auto refCntHolder = ast_;
                     auto c = find(l1);
-                    if (c.hasOuter()) {
-                        for (c = c.outer(); c.hasOuter(); c = c.outer()) {
-                            if (c.nodeType() == ASTNodeType::For) {
+                    if (c->parentStmt().isValid()) {
+                        for (c = c->parentStmt(); c->parentStmt().isValid();
+                             c = c->parentStmt()) {
+                            if (c->nodeType() == ASTNodeType::For) {
                                 try {
-                                    reorder({l1, c.id()});
+                                    reorder({l1, c->id()});
                                 } catch (InvalidSchedule &e) {
                                     break;
                                 }
@@ -542,7 +543,7 @@ void Schedule::autoParallelize(const Target &target) {
                 Ref<LoopNest> loop = root;
 
                 bool parentIsWarp = false;
-                while (loop->loop_->property_.parallel_ != serialScope &&
+                while (loop->loop_->property_->parallel_ != serialScope &&
                        loop->subLoops_.size() == 1) {
                     loop = loop->subLoops_.front();
                     parentIsWarp = true;
@@ -551,10 +552,8 @@ void Schedule::autoParallelize(const Target &target) {
                 ID loopId, outerId;
                 while (true) {
                     loopId = loop->loop_->id();
-                    if (find(loopId)
-                            .node()
-                            .as<ForNode>()
-                            ->property_.parallel_ != serialScope) {
+                    if (find(loopId).as<ForNode>()->property_->parallel_ !=
+                        serialScope) {
                         break;
                     }
                     if (outerId.isValid()) {
@@ -571,14 +570,13 @@ void Schedule::autoParallelize(const Target &target) {
 
                     case TargetType::GPU: {
                         auto loop = find(loopId);
-                        auto isParallelLoop = [](const Cursor &c) {
-                            return c.nodeType() == ASTNodeType::For &&
-                                   c.node().as<ForNode>()
-                                           ->property_.parallel_ != serialScope;
+                        auto isParallelLoop = [](const Stmt &s) {
+                            return s->nodeType() == ASTNodeType::For &&
+                                   s.as<ForNode>()->property_->parallel_ !=
+                                       serialScope;
                         };
                         bool childIsWarp =
-                            !getCursorByFilter(loop.node(), isParallelLoop)
-                                 .empty();
+                            !findStmt(loop, isParallelLoop).empty();
                         // We guarantee the following requirements in order:
                         // 1. make sure all SMs are used
                         // 2. if there are enough threads, make sure blockDim is
@@ -591,7 +589,7 @@ void Schedule::autoParallelize(const Target &target) {
                             (!parentIsWarp && !childIsWarp) ? 256 : 8;
                         // TODO: do not hard-code these numbers
                         ID l1, l1b, l2;
-                        if (auto loopNode = loop.node().as<ForNode>();
+                        if (auto loopNode = loop.as<ForNode>();
                             loopNode->len_->nodeType() ==
                             ASTNodeType::IntConst) {
                             auto len = loopNode->len_.as<IntConstNode>()->val_;
@@ -698,8 +696,8 @@ void Schedule::autoUnroll(const Target &target) {
         // Try to unroll loops that accessing local arrays, to help nvcc put
         // these arrays to registers
         for (auto &&[loop, defs] : findIndexingLoops(ast_)) {
-            if (loop->property_.parallel_ != serialScope ||
-                loop->property_.vectorize_) {
+            if (loop->property_->parallel_ != serialScope ||
+                loop->property_->vectorize_) {
                 continue;
             }
 
@@ -723,8 +721,8 @@ void Schedule::autoUnroll(const Target &target) {
         [&, this](const Ref<LoopNest> &nest) {
             auto &&loop = nest->loop_;
             if (loop.isValid()) { // not root
-                if (loop->property_.parallel_ == serialScope &&
-                    !loop->property_.vectorize_ && !loop->property_.unroll_ &&
+                if (loop->property_->parallel_ == serialScope &&
+                    !loop->property_->vectorize_ && !loop->property_->unroll_ &&
                     loop->len_->nodeType() == ASTNodeType::IntConst &&
                     loop->len_.as<IntConstNode>()->val_ <= 4) {
                     unroll(loop->id());
@@ -737,16 +735,17 @@ void Schedule::autoUnroll(const Target &target) {
     visitNest(getLoopNestTree(ast_));
 }
 
-void Schedule::multiLevelTiling(const ForsWithDataReuse &target,
-                                const MultiLevelTilingAnnotation &annotation,
-                                const std::string &pat) {
-    ir::multiLevelTiling(*this, target, annotation, pat);
+std::vector<std::pair<ID, int>>
+Schedule::multiLevelTiling(const ForsWithDataReuse &target,
+                           const MultiLevelTilingAnnotation &annotation,
+                           const std::string &pat) {
+    return ir::multiLevelTiling(*this, target, annotation, pat);
 }
-void Schedule::multiLevelTilingWithFusion(
+std::vector<std::pair<ID, int>> Schedule::multiLevelTilingWithFusion(
     const ForsWithDataReuse &target,
     const MultiLevelTilingAnnotation &annotation, const std::string &pat,
-    const ElementWiseInfo &toFuse, int level) {
-    ir::multiLevelTilingWithFusion(*this, target, annotation, pat, toFuse,
-                                   level);
+    const ElementWiseInfo &toFuse, int level, MemType memType) {
+    return ir::multiLevelTilingWithFusion(*this, target, annotation, pat,
+                                          toFuse, level, memType);
 }
 } // namespace ir

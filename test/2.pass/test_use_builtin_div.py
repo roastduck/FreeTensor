@@ -129,6 +129,37 @@ def test_ge0_mod_ge0():
     assert std.match(ast)
 
 
+def test_mod_mod_ge0():
+    with ir.VarDef([
+        ("a", (), "int32", "input", "cpu"),
+        ("b", (), "int32", "input", "cpu"),
+        ("c", (), "int32", "input", "cpu"),
+        ("d", (), "int32", "output", "cpu"),
+    ]) as (a, b, c, d):
+        with ir.Assert(a[()] >= 0):
+            with ir.Assert(b[()] >= 0):
+                with ir.Assert(c[()] >= 0):
+                    d[()] = (a[()] % b[()]) % c[()]
+    ast = ir.pop_ast()
+    print(ast)
+    ast = ir.lower(ast)
+    print(ast)
+
+    with ir.VarDef([
+        ("a", (), "int32", "input", "cpu"),
+        ("b", (), "int32", "input", "cpu"),
+        ("c", (), "int32", "input", "cpu"),
+        ("d", (), "int32", "output", "cpu"),
+    ]) as (a, b, c, d):
+        with ir.Assert(a[()] >= 0):
+            with ir.Assert(b[()] >= 0):
+                with ir.Assert(c[()] >= 0):
+                    d[()] = ir.remainder(ir.remainder(a[()], b[()]), c[()])
+    std = ir.pop_ast()
+
+    assert std.match(ast)
+
+
 def test_unknown_mod_unknown():
     with ir.VarDef([
         ("a", (), "int32", "input", "cpu"),

@@ -21,7 +21,8 @@ Stmt MakeCacheVar::visitStmt(const Stmt &op) {
         inStmt_ = true;
         auto ret = Mutator::visitStmt(op);
         inStmt_ = false;
-        Buffer newBuffer(def_->buffer_->tensor(), AccessType::Cache, mtype_);
+        Ref<Buffer> newBuffer =
+            makeBuffer(def_->buffer_->tensor(), AccessType::Cache, mtype_);
         ret = makeVarDef("", newVar_, std::move(newBuffer), nullptr,
                          std::move(ret), false);
         oldDef_ = def_->id();
@@ -82,7 +83,7 @@ Stmt MakeFillAndFlush::visitStmt(const Stmt &_op) {
     if (op->id() == stmt_) {
         std::vector<Expr> indices;
         ASSERT(def_.isValid());
-        int nDim = def_->buffer_->tensor().shape().size();
+        int nDim = def_->buffer_->tensor()->shape().size();
         indices.reserve(nDim);
         for (int i = 0; i < nDim; i++) {
             std::string iter = "." + newVar_ + ".i" + std::to_string(i);
@@ -91,7 +92,7 @@ Stmt MakeFillAndFlush::visitStmt(const Stmt &_op) {
 
         Expr idx1d;
         if (def_->sizeLim_.isValid()) {
-            auto &&shape = def_->buffer_->tensor().shape();
+            auto &&shape = def_->buffer_->tensor()->shape();
             for (int i = 0; i < nDim; i++) {
                 idx1d = idx1d.isValid() ? makeMul(idx1d, shape[i]) : nullptr;
                 idx1d =
@@ -107,7 +108,7 @@ Stmt MakeFillAndFlush::visitStmt(const Stmt &_op) {
         }
         fill = makeNestedLoops(indices, rwRange_.lower_, iter::repeat(nullptr),
                                iter::repeat(makeIntConst(1)), rwRange_.len_,
-                               iter::repeat(ForProperty()), fill);
+                               iter::repeat(Ref<ForProperty>::make()), fill);
         if (rwRange_.cond_.isValid()) {
             fill = makeIf("", rwRange_.cond_, fill);
         }
@@ -120,7 +121,7 @@ Stmt MakeFillAndFlush::visitStmt(const Stmt &_op) {
         }
         flush = makeNestedLoops(indices, wRange_.lower_, iter::repeat(nullptr),
                                 iter::repeat(makeIntConst(1)), wRange_.len_,
-                                iter::repeat(ForProperty()), flush);
+                                iter::repeat(Ref<ForProperty>::make()), flush);
         if (wRange_.cond_.isValid()) {
             flush = makeIf("", wRange_.cond_, flush);
         }
@@ -146,7 +147,7 @@ Stmt MakeInitAndReduce::visitStmt(const Stmt &_op) {
     if (op->id() == stmt_) {
         std::vector<Expr> indices;
         ASSERT(def_.isValid());
-        int nDim = def_->buffer_->tensor().shape().size();
+        int nDim = def_->buffer_->tensor()->shape().size();
         indices.reserve(nDim);
         for (int i = 0; i < nDim; i++) {
             std::string iter = "." + newVar_ + ".i" + std::to_string(i);
@@ -155,7 +156,7 @@ Stmt MakeInitAndReduce::visitStmt(const Stmt &_op) {
 
         Expr idx1d;
         if (def_->sizeLim_.isValid()) {
-            auto &&shape = def_->buffer_->tensor().shape();
+            auto &&shape = def_->buffer_->tensor()->shape();
             for (int i = 0; i < nDim; i++) {
                 idx1d = idx1d.isValid() ? makeMul(idx1d, shape[i]) : nullptr;
                 idx1d =
@@ -165,14 +166,14 @@ Stmt MakeInitAndReduce::visitStmt(const Stmt &_op) {
 
         Stmt init = makeStore(
             "", newVar_, indices,
-            neutralVal(def_->buffer_->tensor().dtype(), reduce_->op_));
+            neutralVal(def_->buffer_->tensor()->dtype(), reduce_->op_));
         initStmt_ = init->id();
         if (idx1d.isValid()) {
             init = makeIf("", makeLT(idx1d, def_->sizeLim_), init);
         }
         init = makeNestedLoops(indices, range_.lower_, iter::repeat(nullptr),
                                iter::repeat(makeIntConst(1)), range_.len_,
-                               iter::repeat(ForProperty()), init);
+                               iter::repeat(Ref<ForProperty>::make()), init);
 
         Stmt reduce = makeReduceTo("", oldVar_, indices, reduce_->op_,
                                    makeLoad(newVar_, indices), false);
@@ -180,9 +181,10 @@ Stmt MakeInitAndReduce::visitStmt(const Stmt &_op) {
         if (idx1d.isValid()) {
             reduce = makeIf("", makeLT(idx1d, def_->sizeLim_), reduce);
         }
-        reduce = makeNestedLoops(indices, range_.lower_, iter::repeat(nullptr),
-                                 iter::repeat(makeIntConst(1)), range_.len_,
-                                 iter::repeat(ForProperty()), reduce);
+        reduce =
+            makeNestedLoops(indices, range_.lower_, iter::repeat(nullptr),
+                            iter::repeat(makeIntConst(1)), range_.len_,
+                            iter::repeat(Ref<ForProperty>::make()), reduce);
 
         op = makeStmtSeq("", {init, op, reduce});
     }

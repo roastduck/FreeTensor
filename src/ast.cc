@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include <ast.h>
 #include <hash.h>
 #include <mutator.h>
@@ -63,11 +65,105 @@ std::string toString(ASTNodeType type) {
     }
 }
 
-size_t ASTNode::hash() {
-    if (hash_ == ~0ull) {
-        compHash();
+AST ASTNode::parentAST() const {
+    for (auto p = parent(); p.isValid(); p = p->parent()) {
+        if (p->isAST()) {
+            return p.as<ASTNode>();
+        }
     }
-    return hash_;
+    return nullptr;
+}
+
+Expr ExprNode::parentExpr() const {
+    for (auto p = parentAST(); p.isValid(); p = p->parentAST()) {
+        if (p->isExpr()) {
+            return p.as<ExprNode>();
+        }
+    }
+    return nullptr;
+}
+
+Stmt StmtNode::parentStmt() const {
+    for (auto p = parentAST(); p.isValid(); p = p->parentAST()) {
+        if (p->isStmt()) {
+            return p.as<StmtNode>();
+        }
+    }
+    return nullptr;
+}
+
+Stmt StmtNode::parentCtrlFlow() const {
+    for (auto p = parentStmt(); p.isValid(); p = p->parentStmt()) {
+        if (p->nodeType() != ASTNodeType::StmtSeq &&
+            p->nodeType() != ASTNodeType::VarDef) {
+            return p;
+        }
+    }
+    return nullptr;
+}
+
+Stmt StmtNode::prevStmt() const {
+    if (auto p = parentStmt();
+        p.isValid() && p->nodeType() == ASTNodeType::StmtSeq) {
+        auto &&seq = p.as<StmtSeqNode>();
+        auto it = std::find(seq->stmts_.begin(), seq->stmts_.end(), self());
+        ASSERT(it != seq->stmts_.end());
+        if (it > seq->stmts_.begin()) {
+            return *(it - 1);
+        }
+    }
+    return nullptr;
+}
+
+Stmt StmtNode::nextStmt() const {
+    if (auto p = parentStmt();
+        p.isValid() && p->nodeType() == ASTNodeType::StmtSeq) {
+        auto &&seq = p.as<StmtSeqNode>();
+        auto it = std::find(seq->stmts_.begin(), seq->stmts_.end(), self());
+        ASSERT(it != seq->stmts_.end());
+        if (it < seq->stmts_.end() - 1) {
+            return *(it + 1);
+        }
+    }
+    return nullptr;
+}
+
+Stmt StmtNode::ancestorById(const ID &lookup) const {
+    for (auto p = self().as<StmtNode>(); p.isValid(); p = p->parentStmt()) {
+        if (p->id() == lookup) {
+            return p;
+        }
+    }
+    return nullptr;
+}
+
+bool StmtNode::isAncestorOf(const Stmt &other) const {
+    if (auto p = other->parentStmt();
+        p.isValid() && p->ancestorById(id()).isValid()) {
+        return true;
+    }
+    return false;
+}
+
+bool StmtNode::isBefore(const Stmt &other) const {
+    auto l = self().as<StmtNode>();
+    auto r = other;
+    auto common = lcaStmt(l, r);
+    if (common->nodeType() == ASTNodeType::StmtSeq) {
+        auto &&seq = common.as<StmtSeqNode>();
+        while (l->parentStmt() != seq) {
+            l = l->parentStmt();
+        }
+        while (r->parentStmt() != seq) {
+            r = r->parentStmt();
+        }
+        auto itl = std::find(seq->stmts_.begin(), seq->stmts_.end(), l);
+        auto itr = std::find(seq->stmts_.begin(), seq->stmts_.end(), r);
+        ASSERT(itl != seq->stmts_.end());
+        ASSERT(itr != seq->stmts_.end());
+        return itl < itr;
+    }
+    return false;
 }
 
 ID::ID(const Stmt &stmt) : ID(stmt->id_) {}
@@ -117,6 +213,30 @@ bool StmtNode::hasNamedId() const { return id_.empty() || id_[0] != '#'; }
 
 Expr deepCopy(const Expr &op) { return Mutator()(op); }
 Stmt deepCopy(const Stmt &op) { return Mutator()(op); }
+
+AST lcaAST(const AST &lhs, const AST &rhs) {
+    auto ret = lca(lhs, rhs);
+    while (ret.isValid() && !ret->isAST()) {
+        ret = ret->parent();
+    }
+    return ret.as<ASTNode>();
+}
+
+Expr lcaExpr(const Expr &lhs, const Expr &rhs) {
+    auto ret = lcaAST(lhs, rhs);
+    while (ret.isValid() && !ret->isExpr()) {
+        ret = ret->parentAST();
+    }
+    return ret.as<ExprNode>();
+}
+
+Stmt lcaStmt(const Stmt &lhs, const Stmt &rhs) {
+    auto ret = lcaAST(lhs, rhs);
+    while (ret.isValid() && !ret->isStmt()) {
+        ret = ret->parentAST();
+    }
+    return ret.as<StmtNode>();
+}
 
 } // namespace ir
 

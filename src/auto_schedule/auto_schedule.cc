@@ -6,6 +6,8 @@
 #include <auto_schedule/rules/cache_write.h>
 #include <auto_schedule/rules/multi_level_tiling.h>
 #include <auto_schedule/rules/multi_level_tiling_with_fusion.h>
+#include <auto_schedule/rules/skip.h>
+#include <auto_schedule/rules/thread_bind.h>
 #include <auto_schedule/utils.h>
 #include <codegen/code_gen_cpu.h>
 #include <codegen/code_gen_cuda.h>
@@ -22,9 +24,16 @@ AutoSchedule::AutoSchedule(const Schedule &schedule, const Ref<Target> &target,
     : original_(schedule), target_(target), device_(device),
       measuredSize_(measuredSize), paramsSet_(false), mn_(INFINITY),
       predictFunc_(std::move(predictFunc)), updateFunc_(std::move(updateFunc)) {
-    rules_.push_back(new CacheWriteRule);
-    rules_.push_back(new MultiLevelTilingRule);
-    rules_.push_back(new MultiLevelTilingWithFusionRule);
+    if (target->type() == TargetType::CPU) {
+        rules_.push_back(new CacheWriteRule(target->type()));
+        rules_.push_back(new MultiLevelTilingWithFusionRule(target->type()));
+        rules_.push_back(new MultiLevelTilingRule(target->type()));
+    } else {
+        rules_.push_back(new CacheWriteRule(target->type()));
+        rules_.push_back(new MultiLevelTilingWithFusionRule(target->type()));
+        rules_.push_back(new ThreadBindRule());
+    }
+    rules_.push_back(new SkipRule());
     std::random_device rd;
     randGen_ = std::default_random_engine(rd());
 }
@@ -54,10 +63,10 @@ AutoSchedule::measure(const std::vector<Schedule> &schedules) {
                 code = codeGenCUDA(func);
             else
                 code = codeGenCPU(func);
-            drivers[i] = Ref<Driver>::make(Driver(func, code, device_));
+            drivers[i] = Ref<Driver>::make(func, code, device_);
         } catch (const std::exception &e) {
             // OpenMP threads won't report an exception message
-            std::cerr << "ERROR: " << e.what() << std::endl;
+            std::cerr << "ERROR measure: " << e.what() << std::endl;
             exit(-1);
         }
     }
@@ -67,8 +76,18 @@ AutoSchedule::measure(const std::vector<Schedule> &schedules) {
     for (size_t i = 0; i < n; i++) {
         std::cout << "measure " << i << std::endl;
         ASSERT(paramsSet_);
-        drivers[i]->setParams(args_, kws_);
-        times.emplace_back(drivers[i]->time(5, 20));
+        try {
+            drivers[i]->setParams(args_, kws_);
+            double t = drivers[i]->time(5, 20);
+            if (t < 0.003) {
+                t = 1e30;
+            }
+            times.emplace_back(t);
+        } catch (const std::exception &e) {
+            // OpenMP threads won't report an exception message
+            std::cerr << "ERROR measure: " << e.what() << std::endl;
+            exit(-1);
+        }
     }
     return times;
 }
@@ -85,21 +104,26 @@ std::vector<Sketch> AutoSchedule::searchOneRound(size_t n) {
     testAndAdd(best);
     std::vector<Sketch> rand = getRandPopulation(n * 0.2);
     testAndAdd(rand);
+    auto bs = getBestSchedule();
+    auto logs = bs.logs();
+    for (auto log : logs) {
+        std::cout << log << std::endl;
+    }
+    std::cout << "now best: " << toString(bs.ast()) << std::endl;
     return best;
 }
 
 std::vector<Schedule>
-AutoSchedule::genSchedules(const std::vector<Sketch> &sketches) {
+AutoSchedule::genSchedules(std::vector<Sketch> &sketches) {
     size_t n = sketches.size();
     std::vector<Schedule> ret(n);
-    //#pragma omp parallel for
+#pragma omp parallel for
     for (size_t i = 0; i < n; i++) {
         try {
             ret[i] = sketches[i].genSchedule();
         } catch (const std::exception &e) {
             // OpenMP threads won't report an exception message
-            std::cerr << "ERROR: " << e.what() << std::endl;
-            exit(-1);
+            std::cerr << "ERROR schedule: " << e.what() << std::endl;
         }
     }
     return ret;
@@ -114,7 +138,7 @@ py::list AutoSchedule::genFeatures(const std::vector<Schedule> &schedules) {
             featureVec[i] = fixedLengthFeature(schedules[i].ast());
         } catch (const std::exception &e) {
             // OpenMP threads won't report an exception message
-            std::cerr << "ERROR: " << e.what() << std::endl;
+            std::cerr << "ERROR feature: " << e.what() << std::endl;
             exit(-1);
         }
     }
@@ -129,10 +153,17 @@ py::list AutoSchedule::genFeatures(const std::vector<Schedule> &schedules) {
     return featureList;
 }
 
-std::vector<double>
-AutoSchedule::testAndAdd(const std::vector<Sketch> &sketches) {
+std::vector<double> AutoSchedule::testAndAdd(std::vector<Sketch> &sketches_in) {
     std::cout << "schedule" << std::endl;
-    auto schedules = genSchedules(sketches);
+    auto schedules_in = genSchedules(sketches_in);
+    std::vector<Sketch> sketches;
+    std::vector<Schedule> schedules;
+    for (size_t i = 0; i < sketches_in.size(); i++) {
+        if (schedules_in[i].ast().isValid()) {
+            sketches.push_back(sketches_in[i]);
+            schedules.push_back(schedules_in[i]);
+        }
+    }
     std::cout << "feature" << std::endl;
     auto features = genFeatures(schedules);
     size_t n = schedules.size();
@@ -143,6 +174,7 @@ AutoSchedule::testAndAdd(const std::vector<Sketch> &sketches) {
         timesList.append(py::float_(i));
     }
     updateFunc_(features, timesList);
+    std::make_heap(measuredSketches_.begin(), measuredSketches_.end());
     for (size_t i = 0; i < n; i++) {
         std::cout << "test " << i << std::endl;
         if (measuredSketches_.size() < measuredSize_) {
@@ -161,6 +193,7 @@ AutoSchedule::testAndAdd(const std::vector<Sketch> &sketches) {
 
     std::cout << "min " << mn_ << " max " << measuredSketches_[0].time()
               << std::endl;
+    std::sort(measuredSketches_.begin(), measuredSketches_.end());
     return times;
 }
 
@@ -238,6 +271,9 @@ std::vector<Sketch> AutoSchedule::evolutionarySearch(std::vector<Sketch> init,
         for (size_t j = 0; j < p1->size(); j++) {
             size_t hash = (*p1)[j].hash();
             auto time = pred[j];
+            if (time > 1e20) {
+                continue;
+            }
             if (!heapHashes.count(hash)) {
                 if (heap.size() < outSize) {
                     heapHashes.insert(hash);
@@ -254,6 +290,7 @@ std::vector<Sketch> AutoSchedule::evolutionarySearch(std::vector<Sketch> init,
         }
 
         while (p2->size() < EVOLUTIONARY_SEARCH_POPULATION) {
+            std::cout << "evo " << p2->size() << std::endl;
             double r = randomDouble(randGen_);
             if (r < EVOLUTIONARY_SEARCH_MUTATION_PROB) {
                 auto nw = (*p1)[randWithProb(probSum, randGen_)].genMutation(
@@ -287,13 +324,26 @@ std::vector<Sketch> AutoSchedule::evolutionarySearch(std::vector<Sketch> init,
     return ret;
 }
 
-std::vector<double>
-AutoSchedule::getPrediction(const std::vector<Sketch> &sketches) {
-    auto featureList = genFeatures(genSchedules(sketches));
+std::vector<double> AutoSchedule::getPrediction(std::vector<Sketch> &sketches) {
+    auto schedules_in = genSchedules(sketches);
+    std::cout << "schedule completed" << std::endl;
+    std::vector<int> index;
+    std::vector<double> ret(schedules_in.size());
+    index.reserve(schedules_in.size());
+    std::vector<Schedule> schedules;
+    for (size_t i = 0; i < schedules_in.size(); i++) {
+        if (schedules_in[i].ast().isValid()) {
+            index.push_back(i);
+            schedules.push_back(schedules_in[i]);
+        } else {
+            ret[i] = 1e30;
+        }
+    }
+    auto featureList = genFeatures(schedules);
+    std::cout << "get prediction" << std::endl;
     py::list predList = predictFunc_(featureList);
-    std::vector<double> ret;
-    for (auto &i : predList) {
-        ret.push_back(i.cast<double>());
+    for (size_t i = 0; i < predList.size(); i++) {
+        ret[index[i]] = predList[i].cast<double>();
     }
     return ret;
 }
@@ -337,7 +387,7 @@ Sketch AutoSchedule::getInitSketch() {
 
 Stmt AutoSchedule::testCacheWrite() {
     auto sketch = getInitSketch();
-    CacheWriteRule rule;
+    CacheWriteRule rule(target_->type());
     if (rule.analyze(sketch) == RuleStatus::Skip) {
         return sketch.schedule().ast();
     }
@@ -347,14 +397,31 @@ Stmt AutoSchedule::testCacheWrite() {
 
 Schedule AutoSchedule::testMultiLevelTilingWithFusion(int nLevel) {
     auto sketch = getInitSketch();
-    MultiLevelTilingWithFusionRule rule;
+    MultiLevelTilingWithFusionRule rule(target_->type());
     if (rule.analyze(sketch) == RuleStatus::Skip) {
         return sketch.schedule();
     }
     Sketch newSketch = rule.genPart(sketch)[nLevel];
     std::cout << toString(newSketch.schedule().ast()) << std::endl;
-    auto part = newSketch.part(0).as<MultiLevelTilingWithFusionPart>();
-    part->genAverageAnnotation();
+    auto part = newSketch.part(0)[SketchPartType::MultiLevelTilingWithFusion]
+                    .as<MultiLevelTilingWithFusionPart>();
+    part->genSampleAnnotation();
+    auto schedule = newSketch.genSchedule();
+    return schedule;
+}
+
+Schedule AutoSchedule::testThreadBind() {
+    auto sketch = getInitSketch();
+    MultiLevelTilingWithFusionRule rule(target_->type());
+    if (rule.analyze(sketch) == RuleStatus::Skip) {
+        return sketch.schedule();
+    }
+    Sketch newSketch = rule.genPart(sketch)[0];
+    std::cout << toString(newSketch.schedule().ast()) << std::endl;
+    auto part = newSketch.part(0)[SketchPartType::MultiLevelTilingWithFusion]
+                    .as<MultiLevelTilingWithFusionPart>();
+    part->genSampleAnnotation();
+    newSketch.addPart(Ref<ThreadBindPart>::make());
     auto schedule = newSketch.genSchedule();
     return schedule;
 }

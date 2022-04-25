@@ -40,7 +40,7 @@ inline Expr _makeVar(const std::string &name) {
 class LoadNode : public ExprNode {
   public:
     std::string var_;
-    std::vector<SubTree<ExprNode>> indices_;
+    SubTreeList<ExprNode> indices_ = ChildOf{this};
     void compHash() override;
     DEFINE_NODE_TRAIT(Load);
 };
@@ -50,16 +50,14 @@ template <class Tindices>
 Expr _makeLoad(const std::string &var, Tindices &&indices) {
     Load l = Load::make();
     l->var_ = var;
-    l->indices_ =
-        std::vector<SubTree<ExprNode>>(indices.begin(), indices.end());
+    l->indices_ = std::forward<Tindices>(indices);
     return l;
 }
 inline Expr _makeLoad(const std::string &var,
                       const std::vector<Expr> &indices) {
     Load l = Load::make();
     l->var_ = var;
-    l->indices_ =
-        std::vector<SubTree<ExprNode>>(indices.begin(), indices.end());
+    l->indices_ = indices;
     return l;
 }
 
@@ -113,7 +111,7 @@ inline Expr _makeBoolConst(bool val) {
 
 class BinaryExprNode : public ExprNode {
   public:
-    SubTree<ExprNode> lhs_, rhs_;
+    SubTree<ExprNode> lhs_ = ChildOf{this}, rhs_ = ChildOf{this};
 
     bool isBinary() const override { return true; }
     virtual bool isCommutative() const = 0;
@@ -376,7 +374,7 @@ template <class T, class U> Expr _makeLOr(T &&lhs, U &&rhs) {
 
 class UnaryExprNode : public ExprNode {
   public:
-    SubTree<ExprNode> expr_;
+    SubTree<ExprNode> expr_ = ChildOf{this};
 
     void compHash() override;
     bool isUnary() const override { return true; }
@@ -484,7 +482,9 @@ template <class T> Expr _makeCeil(T &&expr) {
 
 class IfExprNode : public ExprNode {
   public:
-    SubTree<ExprNode> cond_, thenCase_, elseCase_;
+    SubTree<ExprNode> cond_ = ChildOf{this};
+    SubTree<ExprNode> thenCase_ = ChildOf{this};
+    SubTree<ExprNode> elseCase_ = ChildOf{this};
     void compHash() override;
     DEFINE_NODE_TRAIT(IfExpr);
 };
@@ -501,7 +501,7 @@ Expr _makeIfExpr(T &&cond, U &&thenCase, V &&elseCase) {
 
 class CastNode : public ExprNode {
   public:
-    SubTree<ExprNode> expr_;
+    SubTree<ExprNode> expr_ = ChildOf{this};
     DataType dtype_;
     void compHash() override;
     DEFINE_NODE_TRAIT(Cast);
@@ -522,7 +522,7 @@ class IntrinsicNode : public ExprNode {
   public:
     std::string format_; /// what to run. "%" is filled by parameters one by one
                          /// E.g. sinf(%)
-    std::vector<SubTree<ExprNode>> params_;
+    SubTreeList<ExprNode> params_ = ChildOf{this};
     DataType retType_;
     bool hasSideEffect_;
     void compHash() override;
@@ -535,7 +535,7 @@ Expr _makeIntrinsic(const std::string &format, T &&params, DataType retType,
                     bool hasSideEffect) {
     Intrinsic i = Intrinsic::make();
     i->format_ = format;
-    i->params_ = std::vector<SubTree<ExprNode>>(params.begin(), params.end());
+    i->params_ = std::forward<T>(params);
     i->retType_ = retType;
     i->hasSideEffect_ = hasSideEffect;
     return i;
@@ -545,7 +545,7 @@ inline Expr _makeIntrinsic(const std::string &format,
                            bool hasSideEffect) {
     Intrinsic i = Intrinsic::make();
     i->format_ = format;
-    i->params_ = std::vector<SubTree<ExprNode>>(params.begin(), params.end());
+    i->params_ = params;
     i->retType_ = retType;
     i->hasSideEffect_ = hasSideEffect;
     return i;

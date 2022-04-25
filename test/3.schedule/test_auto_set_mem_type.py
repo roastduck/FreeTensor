@@ -23,7 +23,7 @@ def test_gpu_basic():
     s.auto_set_mem_type(ir.GPU())
     print(s.ast())
     print(s.logs())
-    assert s.logs()[2:] == ["set_mem_type(V_t, [GPUShared])"]
+    assert s.logs()[2:] == ["set_mem_type(V_t, gpu/shared)"]
 
 
 def test_gpu_local_across_loops():
@@ -47,4 +47,4 @@ def test_gpu_local_across_loops():
     s.auto_set_mem_type(ir.GPU())
     print(s.ast())
     print(s.logs())
-    assert s.logs()[3:] == ["set_mem_type(V_t, [GPULocal])"]
+    assert s.logs()[3:] == ["set_mem_type(V_t, gpu/local)"]

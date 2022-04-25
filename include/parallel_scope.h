@@ -4,6 +4,7 @@
 #include <string>
 #include <variant>
 
+#include <container_utils.h>
 #include <except.h>
 #include <hash_combine.h>
 
@@ -91,6 +92,28 @@ inline std::string toString(const ParallelScope &parallel) {
     } else {
         ASSERT(false);
     }
+}
+
+inline ParallelScope parseParallelScope(const std::string &_str) {
+    auto &&str = tolower(_str);
+    if (auto scope = SerialScope{}; str == tolower(toString(scope))) {
+        return scope;
+    }
+    if (auto scope = OpenMPScope{}; str == tolower(toString(scope))) {
+        return scope;
+    }
+    if (auto scope = CUDAStreamScope{}; str == tolower(toString(scope))) {
+        return scope;
+    }
+    for (auto &&level : {CUDAScope::Block, CUDAScope::Thread}) {
+        for (auto &&dim : {CUDAScope::X, CUDAScope::Y, CUDAScope::Z}) {
+            if (auto scope = CUDAScope{level, dim};
+                str == tolower(toString(scope))) {
+                return scope;
+            }
+        }
+    }
+    ERROR("Unrecognized parallel scope " + _str);
 }
 
 constexpr ParallelScope serialScope = SerialScope{};

@@ -9,8 +9,8 @@
 
 namespace ir {
 
-inline std::vector<int> randomFillArray(int total, int n,
-                                        std::default_random_engine &gen) {
+inline std::vector<int> _randomFillArray(int total, int n,
+                                         std::default_random_engine &gen) {
     double log_total = log2(total);
     std::uniform_real_distribution<> dis(
         0, std::nextafter(log_total, std::numeric_limits<double>::max()));
@@ -44,9 +44,9 @@ inline double randomDouble(std::default_random_engine &gen) {
 inline std::vector<double> getProbSum(const std::vector<double> &pred) {
     std::vector<double> sum = pred;
     int sz = sum.size();
-    sum[0] = 1 / sum[0];
+    sum[0] = (sum[0] > 1e20 ? 0 : 1 / sum[0]);
     for (int i = 1; i < sz; i++) {
-        sum[i] = sum[i - 1] + 1 / sum[i];
+        sum[i] = sum[i - 1] + (sum[i] > 1e20 ? 0 : 1 / sum[i]);
     }
     for (int i = 0; i < sz; i++) {
         sum[i] /= sum[sz - 1];
@@ -57,8 +57,18 @@ inline std::vector<double> getProbSum(const std::vector<double> &pred) {
 inline int randWithProb(const std::vector<double> &probSum,
                         std::default_random_engine &gen) {
     std::uniform_real_distribution<> dis(0, 1);
-    return std::lower_bound(probSum.begin(), probSum.end(), dis(gen)) -
+    return std::upper_bound(probSum.begin(), probSum.end(), dis(gen)) -
            probSum.begin();
+}
+
+inline std::vector<int> randomFillArray(int total, int n,
+                                        std::default_random_engine &gen) {
+    int log_total = log2(total);
+    std::vector<int> data(n, 1);
+    for (int i = 0; i < log_total; i++) {
+        data[randomInt(n - 1, gen)] *= 2;
+    }
+    return data;
 }
 
 } // namespace ir

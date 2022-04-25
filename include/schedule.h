@@ -5,7 +5,6 @@
 #include <unordered_map>
 
 #include <auto_schedule/structs.h>
-#include <cursor.h>
 #include <driver/target.h>
 #include <func.h>
 #include <schedule/fission.h>
@@ -54,32 +53,36 @@ class Schedule {
 
     /**
      * Find all nodes in the current AST satisfying a given condition
+     *
      * @param filter : A callback. Return true for acceptance
      */
-    std::vector<Cursor>
-    findAll(const std::function<bool(const Cursor &)> &filter) const;
+    std::vector<Stmt>
+    findAll(const std::function<bool(const Stmt &)> &filter) const;
 
     /**
      * Find the only one nodes in the current AST satisfying a given condition
+     *
      * @param filter : A callback. Return true for acceptance
      * @throw Error : if there is more than one, or there is no node found
      */
-    Cursor find(const std::function<bool(const Cursor &)> &filter) const;
+    Stmt find(const std::function<bool(const Stmt &)> &filter) const;
 
     /**
      * Find a (maybe non-existing) node in the current AST by ID
+     *
      * @param id: ID
      */
-    std::vector<Cursor> findAll(const ID &id) const {
-        return findAll([&id](const Cursor &c) { return c.id() == id; });
+    std::vector<Stmt> findAll(const ID &id) const {
+        return findAll([&id](const Stmt &c) { return c->id() == id; });
     }
 
     /**
      * Find a node in the current AST by ID
+     *
      * @param id: ID
      */
-    Cursor find(const ID &id) const {
-        return find([&id](const Cursor &c) { return c.id() == id; });
+    Stmt find(const ID &id) const {
+        return find([&id](const Stmt &c) { return c->id() == id; });
     }
 
     /**
@@ -488,15 +491,15 @@ class Schedule {
      */
     void autoUnroll(const Target &target);
 
-    void multiLevelTiling(const ForsWithDataReuse &target,
-                          const MultiLevelTilingAnnotation &annotation,
-                          const std::string &pat);
+    std::vector<std::pair<ID, int>>
+    multiLevelTiling(const ForsWithDataReuse &target,
+                     const MultiLevelTilingAnnotation &annotation,
+                     const std::string &pat);
 
-    void
-    multiLevelTilingWithFusion(const ForsWithDataReuse &target,
-                               const MultiLevelTilingAnnotation &annotation,
-                               const std::string &pat,
-                               const ElementWiseInfo &toFuse, int level);
+    std::vector<std::pair<ID, int>> multiLevelTilingWithFusion(
+        const ForsWithDataReuse &target,
+        const MultiLevelTilingAnnotation &annotation, const std::string &pat,
+        const ElementWiseInfo &toFuse, int level, MemType memType);
 };
 
 } // namespace ir

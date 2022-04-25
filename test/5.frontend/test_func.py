@@ -1,6 +1,7 @@
 import ir
 import ir.debug
 import math
+import functools
 import pytest
 import numpy as np
 
@@ -88,10 +89,10 @@ def test_called_multiple_times():
     assert std.match(func.body)
 
     s = ir.Schedule(func)
-    assert len(s.find_all(lambda x: x.nid() == "C1->S0")) == 1
-    assert len(s.find_all(lambda x: x.nid() == "C1->S1")) == 1
-    assert len(s.find_all(lambda x: x.nid() == "C2->S0")) == 1
-    assert len(s.find_all(lambda x: x.nid() == "C2->S1")) == 1
+    assert len(s.find_all("C1->S0")) == 1
+    assert len(s.find_all("C1->S1")) == 1
+    assert len(s.find_all("C2->S0")) == 1
+    assert len(s.find_all("C2->S1")) == 1
 
 
 def test_call_with_external_data():
@@ -314,6 +315,32 @@ def test_external_call():
     assert std.match(func.body)
 
 
+def test_use_external_call_to_build_runtime_ops():
+
+    @ir.inline
+    def g(x1, x2, x3, y):
+        y[()] = functools.reduce(lambda x, y: x * y, [x1, x2, x3])
+
+    @ir.transform
+    def f(x1, x2, x3, y):
+        ir.declare_var(x1, (), "int32", "input", "cpu")
+        ir.declare_var(x2, (), "int32", "input", "cpu")
+        ir.declare_var(x3, (), "int32", "input", "cpu")
+        ir.declare_var(y, (), "int32", "output", "cpu")
+        g(x1, x2, x3, y)
+
+    func = ir.lower(f, ir.CPU())
+    print(func)
+
+    with ir.VarDef([("x1", (), "int32", "input", "cpu"),
+                    ("x2", (), "int32", "input", "cpu"),
+                    ("x3", (), "int32", "input", "cpu"),
+                    ("y", (), "int32", "output", "cpu")]) as (x1, x2, x3, y):
+        y[()] = x1[()] * x2[()] * x3[()]
+    std = ir.pop_ast()
+    assert std.match(func.body)
+
+
 def test_error_missing_parameters():
 
     @ir.inline
@@ -459,6 +486,34 @@ def test_func_in_args():
     assert np.array_equal(y_np, y_std)
 
 
+def test_variadic():
+
+    @ir.inline
+    def g(*args, **kvs):
+        args[0][0] = 2.0
+        args[0][1] = 3.0
+        kvs['z'][0] = 4.0
+        kvs['z'][1] = 5.0
+
+    @ir.transform
+    def f(y, z):
+        ir.declare_var(y, (2,), "float32", "output", "cpu")
+        ir.declare_var(z, (2,), "float32", "output", "cpu")
+        g(y, z=z)
+
+    func = ir.lower(f, ir.CPU())
+    print(func)
+
+    with ir.VarDef([("y", (2,), "float32", "output", "cpu"),
+                    ("z", (2,), "float32", "output", "cpu")]) as (y, z):
+        y[0] = 2.0
+        y[1] = 3.0
+        z[0] = 4.0
+        z[1] = 5.0
+    std = ir.pop_ast()
+    assert std.match(func.body)
+
+
 def test_no_deps_on_returned_tensor():
     dev = ir.Device(ir.CPU())
 
@@ -493,4 +548,4 @@ def test_no_deps_on_returned_tensor():
     print(func)
 
     s = ir.Schedule(func)
-    assert s.find('Lj').node().property.no_deps[0] == s.find('Vc').node().name
+    assert s.find('Lj').property.no_deps[0] == s.find('Vc').name

@@ -88,7 +88,7 @@ void CountScopeLen::visit(const Assert &op) {
 void AnalyzeVersion::visit(const Load &op) {
     BaseClass::visit(op);
     if (op->var_ == var_) {
-        versions_[ID(op, cursor().node())] = makeSub(offset_, makeIntConst(1));
+        versions_[ID(op, curStmt())] = makeSub(offset_, makeIntConst(1));
     }
 }
 
@@ -170,8 +170,8 @@ analyzeVersion(const Stmt &_op, const std::unordered_set<ID> &intermediates) {
     };
     auto filter2 = [&](const AccessPoint &later, const AccessPoint &earlier) {
         return needTapes.count(earlier.def_->id()) &&
-               (needTapes.at(earlier.def_->id()).count(earlier.cursor_.id()) ||
-                needTapes.at(earlier.def_->id()).count(later.cursor_.id()));
+               (needTapes.at(earlier.def_->id()).count(earlier.stmt_->id()) ||
+                needTapes.at(earlier.def_->id()).count(later.stmt_->id()));
     };
     auto found2 = [&](const Dependency &d) {
         if ((d.earlier()->nodeType() == ASTNodeType::Load &&
