@@ -1,6 +1,7 @@
 lexer grammar ast_lexer;
 
 WhiteSpaces: [ \t\n\r]+ -> skip;
+Comment:    '/*' .*? '*/' -> skip;
 
 IF:         'if';
 ELSE:       'else';

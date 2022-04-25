@@ -90,7 +90,10 @@ Expr SimplifyPass::visitExpr(const Expr &_op) {
     auto bestScope = -1, bestHeavyOps = -1;
     for (auto &&lower : unique_.getLower(op)) {
         for (auto &&upper : unique_.getUpper(op)) {
-            if (ir::alwaysLE(upper, lower)) { // upper <= lower ==> equal
+            // Check upper <= lower ==> equal
+            // Here we use the less precise alwaysLE instead of analyzing bounds
+            // of `upper - lower`, in order to avoid infinite recursion
+            if (ir::alwaysLE(upper, lower)) {
                 // We need to choose the simplest one. Otherwise we are always
                 // picking the original expression
                 Expr expr;
@@ -303,10 +306,11 @@ Expr SimplifyPass::visit(const LT &_op) {
     if (!isInt(dtype(op->lhs_)) || !isInt(dtype(op->rhs_))) {
         return op;
     }
-    if (unique_.alwaysLT(op->lhs_, op->rhs_)) {
+    auto diff = makeSub(op->lhs_, op->rhs_);
+    if (unique_.getIntUpper(diff) < 0) {
         return makeBoolConst(true);
     }
-    if (unique_.alwaysLE(op->rhs_, op->lhs_)) {
+    if (unique_.getIntLower(diff) >= 0) {
         return makeBoolConst(false);
     }
     return op;
@@ -319,10 +323,11 @@ Expr SimplifyPass::visit(const LE &_op) {
     if (!isInt(dtype(op->lhs_)) || !isInt(dtype(op->rhs_))) {
         return op;
     }
-    if (unique_.alwaysLE(op->lhs_, op->rhs_)) {
+    auto diff = makeSub(op->lhs_, op->rhs_);
+    if (unique_.getIntUpper(diff) <= 0) {
         return makeBoolConst(true);
     }
-    if (unique_.alwaysLT(op->rhs_, op->lhs_)) {
+    if (unique_.getIntLower(diff) > 0) {
         return makeBoolConst(false);
     }
     return op;
@@ -335,11 +340,12 @@ Expr SimplifyPass::visit(const GT &_op) {
     if (!isInt(dtype(op->lhs_)) || !isInt(dtype(op->rhs_))) {
         return op;
     }
-    if (unique_.alwaysLE(op->lhs_, op->rhs_)) {
-        return makeBoolConst(false);
-    }
-    if (unique_.alwaysLT(op->rhs_, op->lhs_)) {
+    auto diff = makeSub(op->lhs_, op->rhs_);
+    if (unique_.getIntLower(diff) > 0) {
         return makeBoolConst(true);
+    }
+    if (unique_.getIntUpper(diff) <= 0) {
+        return makeBoolConst(false);
     }
     return op;
 }
@@ -351,11 +357,12 @@ Expr SimplifyPass::visit(const GE &_op) {
     if (!isInt(dtype(op->lhs_)) || !isInt(dtype(op->rhs_))) {
         return op;
     }
-    if (unique_.alwaysLT(op->lhs_, op->rhs_)) {
-        return makeBoolConst(false);
-    }
-    if (unique_.alwaysLE(op->rhs_, op->lhs_)) {
+    auto diff = makeSub(op->lhs_, op->rhs_);
+    if (unique_.getIntLower(diff) >= 0) {
         return makeBoolConst(true);
+    }
+    if (unique_.getIntUpper(diff) < 0) {
+        return makeBoolConst(false);
     }
     return op;
 }
@@ -367,14 +374,14 @@ Expr SimplifyPass::visit(const EQ &_op) {
     if (!isInt(dtype(op->lhs_)) || !isInt(dtype(op->rhs_))) {
         return op;
     }
-    if (unique_.alwaysLT(op->lhs_, op->rhs_)) {
+    auto diff = makeSub(op->lhs_, op->rhs_);
+    if (unique_.getIntLower(diff) > 0) {
         return makeBoolConst(false);
     }
-    if (unique_.alwaysLT(op->rhs_, op->lhs_)) {
+    if (unique_.getIntUpper(diff) < 0) {
         return makeBoolConst(false);
     }
-    if (unique_.alwaysLE(op->lhs_, op->rhs_) &&
-        unique_.alwaysLE(op->rhs_, op->lhs_)) {
+    if (auto &&c = unique_.getInt(diff); c.isValid() && *c == 0) {
         return makeBoolConst(true);
     }
     return op;
@@ -387,14 +394,14 @@ Expr SimplifyPass::visit(const NE &_op) {
     if (!isInt(dtype(op->lhs_)) || !isInt(dtype(op->rhs_))) {
         return op;
     }
-    if (unique_.alwaysLT(op->lhs_, op->rhs_)) {
+    auto diff = makeSub(op->lhs_, op->rhs_);
+    if (unique_.getIntLower(diff) > 0) {
         return makeBoolConst(true);
     }
-    if (unique_.alwaysLT(op->rhs_, op->lhs_)) {
+    if (unique_.getIntUpper(diff) < 0) {
         return makeBoolConst(true);
     }
-    if (unique_.alwaysLE(op->lhs_, op->rhs_) &&
-        unique_.alwaysLE(op->rhs_, op->lhs_)) {
+    if (auto &&c = unique_.getInt(diff); c.isValid() && *c == 0) {
         return makeBoolConst(false);
     }
     return op;

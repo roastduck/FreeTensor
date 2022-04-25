@@ -1,6 +1,8 @@
 #ifndef BOUNDS_H
 #define BOUNDS_H
 
+#include <unordered_set>
+
 #include <math/linear.h>
 #include <math/rational.h>
 #include <opt.h>
@@ -13,6 +15,7 @@ ASTNodeType reverseCmp(ASTNodeType type);
 
 class UpperBound {
     Expr expr_;
+    Opt<std::unordered_set<std::string>> allNames_;
     LinearExpr<Rational<int64_t>> lin_;
 
   public:
@@ -22,11 +25,13 @@ class UpperBound {
     UpperBound(LinearExpr<Rational<int64_t>> &&lin) : lin_(std::move(lin)) {}
 
     const Expr &expr();
+    const std::unordered_set<std::string> &allNames();
     const LinearExpr<Rational<int64_t>> &lin() const { return lin_; }
 };
 
 class LowerBound {
     Expr expr_;
+    Opt<std::unordered_set<std::string>> allNames_;
     LinearExpr<Rational<int64_t>> lin_;
 
   public:
@@ -35,6 +40,7 @@ class LowerBound {
     LowerBound(LinearExpr<Rational<int64_t>> &&lin) : lin_(std::move(lin)) {}
 
     const Expr &expr();
+    const std::unordered_set<std::string> &allNames();
     const LinearExpr<Rational<int64_t>> &lin() const { return lin_; }
 };
 

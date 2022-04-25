@@ -2,7 +2,7 @@
 
 #include <ast_lexer.h>
 #include <ast_parser.h>
-#include <debug.h>
+#include <serialize/load_ast.h>
 
 namespace ir {
 

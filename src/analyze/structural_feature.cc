@@ -125,9 +125,9 @@ int64_t StructuralFeature::calcArea(
             if (checkAllDefined(names(), index)) {
                 lowerItem.emplace_back(index);
             }
-            for (auto item : accesses[j].lower_[i]) {
-                if (checkAllDefined(names(), item.expr())) {
-                    lowerItem.emplace_back(item.expr());
+            for (auto b : accesses[j].lower_[i]) {
+                if (checkAllDefined(names(), b.allNames())) {
+                    lowerItem.emplace_back(b.expr());
                 }
             }
             lower.emplace_back(std::move(lowerItem));
@@ -141,9 +141,9 @@ int64_t StructuralFeature::calcArea(
             if (checkAllDefined(names(), index)) {
                 upperItem.emplace_back(index);
             }
-            for (auto item : accesses[j].upper_[i]) {
-                if (checkAllDefined(names(), item.expr())) {
-                    upperItem.emplace_back(item.expr());
+            for (auto b : accesses[j].upper_[i]) {
+                if (checkAllDefined(names(), b.allNames())) {
+                    upperItem.emplace_back(b.expr());
                 }
             }
             upper.emplace_back(std::move(upperItem));

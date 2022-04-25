@@ -1,6 +1,6 @@
 #include <analyze/all_defs.h>
 #include <pass/shrink_var.h>
-#include <pass/z3_simplify.h>
+#include <pass/simplify.h>
 
 namespace ir {
 
@@ -63,7 +63,7 @@ Stmt shrinkVar(const Stmt &_op) {
     op = ShrinkVar(bounds)(op);
 
     // (3)
-    return z3Simplify(op); // Currently BuiltinSimplify is not sufficient
+    return simplifyPass(op);
 }
 
 Stmt shrinkSingleVar(const Stmt &_op, const ID &varDefId) {
@@ -77,7 +77,7 @@ Stmt shrinkSingleVar(const Stmt &_op, const ID &varDefId) {
     op = ShrinkVar(bounds)(op);
 
     // (3)
-    return z3Simplify(op); // Currently BuiltinSimplify is not sufficient
+    return simplifyPass(op);
 }
 
 } // namespace ir

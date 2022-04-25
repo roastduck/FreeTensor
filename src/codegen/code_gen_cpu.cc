@@ -1,8 +1,8 @@
 #include <itertools.hpp>
 
 #include <codegen/code_gen_cpu.h>
-#include <mangle.h>
 #include <pass/simplify.h>
+#include <serialize/mangle.h>
 
 #include "detail/code_gen_c.h"
 

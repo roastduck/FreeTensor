@@ -1,11 +1,12 @@
 #include <typeinfo>
 
-#include <debug.h>
 #include <except.h>
 #include <expr.h>
 #include <ffi.h>
 #include <frontend/frontend_var.h>
 #include <func.h>
+#include <serialize/load_ast.h>
+#include <serialize/print_ast.h>
 #include <stmt.h>
 
 namespace ir {
@@ -347,6 +348,8 @@ void init_ffi_ast(py::module_ &m) {
         .def("__repr__", [](const AST &op) {
             return "<" + toString(op->nodeType()) + ": " + toString(op) + ">";
         });
+    m.def("dump_ast", &dumpAST);
+    m.def("load_ast", &loadAST);
 
     // NOTE: ORDER of the constructor matters!
     pyExpr.def(py::init([](bool val) { return makeBoolConst(val); }))
@@ -573,6 +576,7 @@ template <> struct polymorphic_type_hook<ir::ASTNode> {
         type = &typeid(ir::name##Node);                                        \
         return static_cast<const ir::name##Node *>(src);
 
+            DISPATCH(Func);
             DISPATCH(StmtSeq);
             DISPATCH(VarDef);
             DISPATCH(Store);

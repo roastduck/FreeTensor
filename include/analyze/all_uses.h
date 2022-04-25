@@ -20,10 +20,12 @@ class AllUses : public Visitor {
 
   private:
     AllUsesType type_;
+    bool noRecurseIdx_;
     std::unordered_set<std::string> uses_;
 
   public:
-    AllUses(AllUsesType type) : type_(type) {}
+    AllUses(AllUsesType type, bool noRecurseIdx)
+        : type_(type), noRecurseIdx_(noRecurseIdx) {}
 
     const std::unordered_set<std::string> &uses() const { return uses_; }
 
@@ -35,13 +37,18 @@ class AllUses : public Visitor {
 };
 
 std::unordered_set<std::string>
-allUses(const AST &op, AllUses::AllUsesType type = AllUses::CHECK_LOAD |
-                                                   AllUses::CHECK_STORE |
-                                                   AllUses::CHECK_REDUCE);
-std::unordered_set<std::string> allReads(const AST &op);
-std::unordered_set<std::string> allWrites(const AST &op);
-std::unordered_set<std::string> allIters(const AST &op);
-std::unordered_set<std::string> allNames(const AST &op);
+allUses(const AST &op,
+        AllUses::AllUsesType type = AllUses::CHECK_LOAD | AllUses::CHECK_STORE |
+                                    AllUses::CHECK_REDUCE,
+        bool noRecurseIdx = false);
+std::unordered_set<std::string> allReads(const AST &op,
+                                         bool noRecurseIdx = false);
+std::unordered_set<std::string> allWrites(const AST &op,
+                                          bool noRecurseIdx = false);
+std::unordered_set<std::string> allIters(const AST &op,
+                                         bool noRecurseIdx = false);
+std::unordered_set<std::string> allNames(const AST &op,
+                                         bool noRecurseIdx = false);
 
 } // namespace ir
 

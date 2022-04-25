@@ -2,8 +2,8 @@
 
 #include <codegen/code_gen_cuda.h>
 #include <except.h>
-#include <mangle.h>
 #include <pass/simplify.h>
+#include <serialize/mangle.h>
 
 #include "detail/code_gen_c.h"
 

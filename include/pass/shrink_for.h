@@ -11,6 +11,7 @@
 #include <func.h>
 #include <hash.h>
 #include <mutator.h>
+#include <pass/pb_simplify.h>
 
 namespace ir {
 
@@ -30,7 +31,11 @@ class ShrinkFor
     : public CompTransientBounds<WithTypeInfer<SymbolTable<Mutator>>> {
     typedef CompTransientBounds<WithTypeInfer<SymbolTable<Mutator>>> BaseClass;
 
-    CompUniqueBounds bound_;
+    // We need linear programming from PBCompBounds, because the minimum/maximum
+    // value of a linear function does not always appear at the minimum/maximum
+    // points of its parameters.
+    // See 2.pass/test_shrink_for.py::test_linear_bounds
+    PBCompBounds bound_;
 
     ASTHashMap<Var, std::pair<std::vector<std::vector<Expr>>,
                               std::vector<std::vector<Expr>>>>

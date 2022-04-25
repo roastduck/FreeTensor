@@ -163,6 +163,25 @@ void MatchVisitor::visit(const Add &op) {
 }
 
 void MatchVisitor::visit(const Sub &op) {
+    // Special case for x - 1 = x + -1
+    if (instance_->nodeType() == ASTNodeType::Add) {
+        auto instance = instance_.as<AddNode>();
+        if (op->rhs_->nodeType() == ASTNodeType::IntConst &&
+            instance->rhs_->nodeType() == ASTNodeType::IntConst &&
+            op->rhs_.as<IntConstNode>()->val_ ==
+                -instance->rhs_.as<IntConstNode>()->val_) {
+            RECURSE(op->lhs_, instance->lhs_);
+            return;
+        }
+        if (op->rhs_->nodeType() == ASTNodeType::FloatConst &&
+            instance->rhs_->nodeType() == ASTNodeType::FloatConst &&
+            op->rhs_.as<FloatConstNode>()->val_ ==
+                -instance->rhs_.as<FloatConstNode>()->val_) {
+            RECURSE(op->lhs_, instance->lhs_);
+            return;
+        }
+    }
+
     CHECK(instance_->nodeType() == ASTNodeType::Sub);
     auto instance = instance_.as<SubNode>();
     RECURSE(op->lhs_, instance->lhs_);

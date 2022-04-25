@@ -24,6 +24,22 @@ def test_func():
     func2 = ir.load_ast(txt)
     print(func2)
     assert func2.body.match(func.body)
+    assert func2.name == "main"
+
+
+def test_func_with_return_value():
+    with ir.VarDef("x", (4, 4), "float32", "output", "cpu") as x:
+        x[2, 3] = 2.0
+        x[1, 0] = 3.0
+    func = ir.lower(
+        ir.Func("main", [], [("x", ir.DataType("float32"))], ir.pop_ast()),
+        ir.CPU())
+    txt = ir.dump_ast(func)
+    print(txt)
+    func2 = ir.load_ast(txt)
+    print(func2)
+    assert func2.body.match(func.body)
+    assert func2.name == "main"
 
 
 def test_scalar_op():
@@ -190,6 +206,20 @@ def test_id_of_stmt_seq():
     assert ast2.match(ast)
     s = ir.Schedule(ast2)
     assert s.find("foo").type() == ir.ASTNodeType.StmtSeq
+
+
+def test_empty_stmt_seq():
+    with ir.VarDef("x", (4, 4), "float32", "output", "cpu") as x:
+        x[2, 3] = 2.0
+        x[1, 0] = 3.0
+        with ir.NamedScope("foo"):
+            pass
+    ast = ir.pop_ast()
+    txt = ir.dump_ast(ast)
+    print(txt)
+    ast2 = ir.load_ast(txt)
+    print(ast2)
+    assert ast2.match(ast)
 
 
 def test_complex_name():

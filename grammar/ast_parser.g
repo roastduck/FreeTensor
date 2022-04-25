@@ -52,13 +52,18 @@ parallelScope returns [ParallelScope type]
       }
     ;
 
+// TODO: closure?
 func returns [Func node]
-    : FUNC '(' var_params ')' (RARROW)? '{' stmts '}'
+    @init {
+        std::vector<std::pair<std::string, DataType>> ret;
+    }
+    : FUNC name=var '(' params ')'
+        (RARROW retVals { ret = $retVals.vec; })?
+        '{' stmts '}'
       {
         std::vector<std::pair<std::string, DataType>> returns;
         Stmt body;
-        // TODO name, returns, closure
-        $node = makeFunc("name", $var_params.vec, {}, $stmts.node, {});
+        $node = makeFunc($name.name, $params.vec, std::move(ret), $stmts.node, {});
       }
     ;
 
@@ -78,22 +83,13 @@ stmts returns [Stmt node]
     };
 
 stmt returns [Stmt node]
-    : '{' '}'
-      {
-        $node = makeStmtSeq(ID(), {});
-      }
-    | stmtWithoutID
+    : stmtWithoutID
       {
         $node = $stmtWithoutID.node;
       }
     | var ':' stmtWithoutID
       {
         $node = $stmtWithoutID.node;
-        $node->setId($var.name);
-      }
-    | var ':' '{' stmts '}'
-      {
-        $node = $stmts.node;
         $node->setId($var.name);
       }
     ;
@@ -130,6 +126,14 @@ stmtWithoutID returns [Stmt node]
     | expr
       {
         $node = makeEval(ID(), $expr.node);
+      }
+    | '{' '}'
+      {
+        $node = makeStmtSeq(ID(), {});
+      }
+    | '{' stmts '}'
+      {
+        $node = $stmts.node;
       }
     ;
 
@@ -414,10 +418,16 @@ shape returns [std::vector<Expr> vec]
     | '[' ']'
     ;
 
-var_params returns [std::vector<std::string> vec]
-    : var  {
-        $vec.push_back(std::string($var.name));
-    } (',' var1=var {$vec.push_back(std::string($var1.name));})*;
+params returns [std::vector<std::string> vec]
+    : /* empty */
+    | var { $vec.emplace_back($var.name); }
+        (',' var1=var { $vec.emplace_back($var1.name); })*
+    ;
+
+retVals returns [std::vector<std::pair<std::string, DataType>> vec]
+    : var ':' dtype { $vec.emplace_back($var.name, $dtype.type); }
+        (',' var1=var ':' dtype1=dtype { $vec.emplace_back($var1.name, $dtype1.type); })*
+    ;
 
 indices returns [std::vector<Expr> exprs]
     : '[' expr

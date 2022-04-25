@@ -787,9 +787,9 @@ def test_bounded_length():
         ("b", (100, 100), "int32", "output", "gpu/global"),
     ]) as (a, b):
         with ir.For(".threadIdx.y", 0, 99) as thy:
-            with ir.For(".threadIdx.x", 1, 100) as thx:
-                with ir.If(thx >= thy + 1):
-                    b[thx, thy] = a[thx, thy] + 1
+            with ir.For(".threadIdx.x", 0, 99) as thx:  # i = thx + 1
+                with ir.If(thx >= thy):
+                    b[thx + 1, thy] = a[thx + 1, thy] + 1
     assert ir.make_1d_var(ir.pop_ast()).match(func.body)
 
 
