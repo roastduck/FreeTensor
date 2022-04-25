@@ -30,20 +30,15 @@ class CountHeavyOps : public Visitor {
   public:
     int cnt() const { return cnt_; }
 
-  private:
-    template <class T> void visitHeavy(const T &op) {
-        Visitor::visit(op);
-        cnt_++;
-    }
-
   protected:
-    void visit(const RealDiv &op) override { visitHeavy(op); }
-    void visit(const FloorDiv &op) override { visitHeavy(op); }
-    void visit(const CeilDiv &op) override { visitHeavy(op); }
-    void visit(const RoundTowards0Div &op) override { visitHeavy(op); }
-    void visit(const Mod &op) override { visitHeavy(op); }
-    void visit(const Sqrt &op) override { visitHeavy(op); }
-    void visit(const Exp &op) override { visitHeavy(op); }
+    void visitExpr(const Expr &op) {
+        Visitor::visitExpr(op);
+        if (!op->isConst() && op->nodeType() != ASTNodeType::Add &&
+            op->nodeType() != ASTNodeType::Sub &&
+            op->nodeType() != ASTNodeType::Mul) {
+            cnt_++;
+        }
+    }
 };
 
 static int countHeavyOps(const Expr &op) {
