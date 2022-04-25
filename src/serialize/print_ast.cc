@@ -77,7 +77,7 @@ void PrintVisitor::visit(const Func &op) {
     for (auto &&[i, param] : iter::enumerate(op->params_)) {
         os() << (i > 0 ? ", " : "") << printName(param);
         if (op->closure_.count(param)) {
-            os() << " @ " << op->closure_.at(param).get();
+            os() << " @!closure /* " << op->closure_.at(param).get() << " */";
         }
     }
     os() << ") ";
@@ -88,7 +88,8 @@ void PrintVisitor::visit(const Func &op) {
             os() << (i > 0 ? ", " : "") << printName(name) << ": "
                  << ::ir::toString(dtype);
             if (op->closure_.count(name)) {
-                os() << " @ " << op->closure_.at(name).get();
+                os() << " @!closure /* " << op->closure_.at(name).get()
+                     << " */";
             }
         }
         os() << " ";

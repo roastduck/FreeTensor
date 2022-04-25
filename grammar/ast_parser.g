@@ -52,18 +52,32 @@ parallelScope returns [ParallelScope type]
       }
     ;
 
-// TODO: closure?
 func returns [Func node]
     @init {
         std::vector<std::pair<std::string, DataType>> ret;
     }
     : FUNC name=var '(' params ')'
-        (RARROW retVals { ret = $retVals.vec; })?
+        (RARROW retVals
+      {
+        ret.reserve($retVals.vec.size());
+        for (auto &&[name, dtype, isClosure] : $retVals.vec) {
+            if (isClosure) {
+                ERROR("Closure is not supported when parsing a function");
+            }
+            ret.emplace_back(name, dtype);
+        }
+      }
+        )?
         '{' stmts '}'
       {
-        std::vector<std::pair<std::string, DataType>> returns;
-        Stmt body;
-        $node = makeFunc($name.name, $params.vec, std::move(ret), $stmts.node, {});
+        std::vector<std::string> params;
+        for (auto &&[name, isClosure] : $params.vec) {
+            if (isClosure) {
+                ERROR("Closure is not supported when parsing a function");
+            }
+            params.emplace_back(name);
+        }
+        $node = makeFunc($name.name, std::move(params), std::move(ret), $stmts.node, {});
       }
     ;
 
@@ -178,8 +192,7 @@ varDef returns [Stmt node]
         Ref<Tensor> t = makeTensor($shape.vec, $dtype.type);
         Ref<Buffer> b = makeBuffer(std::move(t), $atype.type, $mtype.type);
         Expr sizeLim = nullptr;
-        Stmt body = $stmts.node;
-        $node = makeVarDef(ID(), $var.name, std::move(b), std::move(sizeLim), body, pinned);
+        $node = makeVarDef(ID(), $var.name, std::move(b), std::move(sizeLim), $stmts.node, pinned);
       }
     ;
 
@@ -248,7 +261,6 @@ assume returns [Stmt node]
     ;
 
 // -------------------- EXPR --------------------
- // TODO: Intrinsic
 expr returns [Expr node]
     : load
       {
@@ -410,23 +422,48 @@ shape returns [std::vector<Expr> vec]
       {
         $vec.emplace_back($expr.node);
       }
-      (',' newExpr=expr
+        (',' newExpr=expr
       {
         $vec.emplace_back($newExpr.node);
       }
-      )* ']'
+        )* ']'
     | '[' ']'
     ;
 
-params returns [std::vector<std::string> vec]
+closureFlag returns [bool flag]
     : /* empty */
-    | var { $vec.emplace_back($var.name); }
-        (',' var1=var { $vec.emplace_back($var1.name); })*
+      {
+        $flag = false;
+      }
+    | CLOSURE
+      {
+        $flag = true;
+      }
     ;
 
-retVals returns [std::vector<std::pair<std::string, DataType>> vec]
-    : var ':' dtype { $vec.emplace_back($var.name, $dtype.type); }
-        (',' var1=var ':' dtype1=dtype { $vec.emplace_back($var1.name, $dtype1.type); })*
+params returns [std::vector<std::pair<std::string, bool /* isClosure */>> vec]
+    : /* empty */
+    | var closureFlag
+      {
+        $vec.emplace_back($var.name, $closureFlag.flag);
+      }
+        (',' var1=var closureFlag1=closureFlag
+      {
+        $vec.emplace_back($var1.name, $closureFlag1.flag);
+      }
+        )*
+    ;
+
+retVals returns [std::vector<std::tuple<std::string, DataType, bool /* isClosure */>> vec]
+    : var ':' dtype closureFlag
+      {
+        $vec.emplace_back($var.name, $dtype.type, $closureFlag.flag);
+      }
+        (',' var1=var ':' dtype1=dtype closureFlag1=closureFlag
+      {
+        $vec.emplace_back($var1.name, $dtype1.type, $closureFlag1.flag);
+      }
+        )*
     ;
 
 indices returns [std::vector<Expr> exprs]
@@ -434,33 +471,39 @@ indices returns [std::vector<Expr> exprs]
       {
         $exprs.emplace_back($expr.node);
       }
-      (',' newExpr=expr
+        (',' newExpr=expr
       {
         $exprs.emplace_back($newExpr.node);
       }
-      )* ']'
+        )* ']'
     | '[' ']'
     ;
 
 // -------------------- CONST --------------------
 intConst returns [Expr node]
-    : Integer {
-        const char *s = $Integer.text.c_str();
-        $node = makeIntConst(std::atoll(s));
-    };
+    : Integer
+      {
+        $node = makeIntConst(std::stoll($Integer.text));
+      }
+    ;
 
 floatConst returns [Expr node]
-    : Float {
-        auto s = $Float.text.c_str();
-        $node = makeFloatConst(std::atof(s));
-    };
+    : Float
+      {
+        $node = makeFloatConst(std::stod($Float.text));
+      }
+    ;
 
 boolConst returns [Expr node]
-    @init {bool val;}
-    : (
-        TRUE {val = true;}
-        |FALSE {val = false;}
-    ) {$node = makeBoolConst(val);};
+    : TRUE
+      {
+        $node = makeBoolConst(true);
+      }
+    | FALSE
+      {
+        $node = makeBoolConst(false);
+      }
+    ;
 
 // -------------------- IDENTIFIER --------------------
 var returns [std::string name]
