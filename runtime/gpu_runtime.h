@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <cmath> // INFINITY
 #include <cstdint>
+#include <stdexcept>
 
 #include "gpu_context.h"
 
@@ -18,7 +19,7 @@
         if (cudaSuccess != err) {                                              \
             fprintf(stderr, "CUDA error in file '%s' in line %i : %s.\n",      \
                     __FILE__, __LINE__, cudaGetErrorString(err));              \
-            exit(EXIT_FAILURE);                                                \
+            throw std::runtime_error("cuda error");                            \
         }                                                                      \
     }
 

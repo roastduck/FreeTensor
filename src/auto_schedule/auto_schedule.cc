@@ -67,7 +67,7 @@ AutoSchedule::measure(const std::vector<Schedule> &schedules) {
         } catch (const std::exception &e) {
             // OpenMP threads won't report an exception message
             std::cerr << "ERROR measure: " << e.what() << std::endl;
-            exit(-1);
+            drivers[i] = nullptr;
         }
     }
 
@@ -77,6 +77,10 @@ AutoSchedule::measure(const std::vector<Schedule> &schedules) {
         std::cout << "measure " << i << std::endl;
         ASSERT(paramsSet_);
         try {
+            if (!drivers[i].isValid()) {
+                times.emplace_back(1e30);
+                continue;
+            }
             drivers[i]->setParams(args_, kws_);
             double t = drivers[i]->time(5, 20);
             if (t < 0.005) {
@@ -132,10 +136,10 @@ AutoSchedule::genSchedules(std::vector<Sketch> &sketches) {
 py::list AutoSchedule::genFeatures(const std::vector<Schedule> &schedules) {
     size_t n = schedules.size();
     std::vector<std::vector<double>> featureVec(n);
-    //#pragma omp parallel for
+#pragma omp parallel for
     for (size_t i = 0; i < n; i++) {
         try {
-            std::cout << schedules[i].ast() << std::endl;
+            //            std::cout << schedules[i].ast() << std::endl;
             featureVec[i] = fixedLengthFeature(schedules[i].ast());
             std::cout << "feature got\n";
         } catch (const std::exception &e) {
