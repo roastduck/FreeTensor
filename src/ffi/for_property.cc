@@ -6,6 +6,12 @@ namespace ir {
 using namespace pybind11::literals;
 
 void init_ffi_for_property(py::module_ &m) {
+    py::class_<ReductionItem, Ref<ReductionItem>>(m, "ReductionItem")
+        .def_readonly("op", &ReductionItem::op_)
+        .def_readonly("var", &ReductionItem::var_)
+        .def_readonly("begins", &ReductionItem::begins_)
+        .def_readonly("ends", &ReductionItem::ends_);
+
     py::class_<ForProperty, Ref<ForProperty>>(m, "ForProperty")
         .def(py::init<>())
         .def_readonly("parallel", &ForProperty::parallel_)
@@ -13,6 +19,11 @@ void init_ffi_for_property(py::module_ &m) {
         .def_readonly("vectorize", &ForProperty::vectorize_)
         .def_readonly("no_deps", &ForProperty::noDeps_)
         .def_readonly("prefer_libs", &ForProperty::preferLibs_)
+        .def_property_readonly(
+            "reductions",
+            [](const Ref<ForProperty> &p) -> std::vector<Ref<ReductionItem>> {
+                return p->reductions_;
+            })
         .def("with_parallel", &ForProperty::withParallel, "parallel"_a)
         .def("with_unroll", &ForProperty::withUnroll, "unroll"_a = true)
         .def("with_vectorize", &ForProperty::withVectorize,

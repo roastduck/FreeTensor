@@ -156,20 +156,34 @@ store returns [Stmt node]
         $node = makeStore(ID(), $var.name, $indices.exprs, $expr.node);
     };
 
+reduceOp returns [ReduceOp op]
+    : PLUSEQ
+      {
+        $op = ReduceOp::Add;
+      }
+    | STAREQ
+      {
+        $op = ReduceOp::Mul;
+      }
+    | MINEQ
+      {
+        $op = ReduceOp::Min;
+      }
+    | MAXEQ
+      {
+        $op = ReduceOp::Max;
+      }
+    ;
+
 reduceTo returns [Stmt node]
     @init {
         bool atomic = false;
-        ReduceOp op;
     }
-    : (ATOMIC {atomic = true;})?
-      var indices
-        (PLUSEQ {op = ReduceOp::Add;}
-        |STAREQ {op = ReduceOp::Mul;}
-        |MINEQ {op = ReduceOp::Min;}
-        |MAXEQ {op = ReduceOp::Max;})
-        expr {
-            $node = makeReduceTo(ID(), $var.name, $indices.exprs, op, $expr.node, atomic);
-        }
+    : (ATOMIC { atomic = true; })?
+        var indices reduceOp expr
+      {
+        $node = makeReduceTo(ID(), $var.name, $indices.exprs, $reduceOp.op, $expr.node, atomic);
+      }
     ;
 
 load returns [Expr node]
@@ -196,13 +210,12 @@ varDef returns [Stmt node]
       }
     ;
 
-// TODO: reduction
 forProperty returns [Ref<ForProperty> property]
     : /* empty */
       {
         $property = Ref<ForProperty>::make();
       }
-    | prev=forProperty NO_DEPS '=' var { std::vector<std::string> noDeps = {$var.name}; }
+    | prev=forProperty NO_DEPS ':' var { std::vector<std::string> noDeps = {$var.name}; }
         (',' var2=var { noDeps.emplace_back($var2.name); })*
       {
         $property = $prev.property->withNoDeps(std::move(noDeps));
@@ -219,9 +232,15 @@ forProperty returns [Ref<ForProperty> property]
       {
         $property = $prev.property->withVectorize();
       }
-    | prev=forProperty PARALLEL '=' parallelScope
+    | prev=forProperty PARALLEL ':' parallelScope
       {
         $property = $prev.property->withParallel($parallelScope.type);
+      }
+    | prev=forProperty REDUCTION reduceOp ':' varSlice
+      {
+        $property = Ref<ForProperty>::make(*$prev.property);
+        $property->reductions_.emplace_back(
+            makeReductionItem($reduceOp.op, $varSlice.name, $varSlice.begins, $varSlice.ends));
       }
     ;
 
@@ -514,5 +533,20 @@ var returns [std::string name]
     | EscapedVar
       {
         $name = std::string(slice($EscapedVar.text, 1, -1));
+      }
+    ;
+
+varSlice returns [std::string name, std::vector<Expr> begins, std::vector<Expr> ends]
+    : var
+      {
+        $name = $var.name;
+      }
+    | varSlice1=varSlice '[' beg=expr ':' end=expr ']'
+      {
+        $name = $varSlice1.name;
+        $begins = $varSlice1.begins;
+        $ends = $varSlice1.ends;
+        $begins.emplace_back($beg.node);
+        $ends.emplace_back($end.node);
       }
     ;
