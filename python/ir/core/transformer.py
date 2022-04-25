@@ -78,8 +78,7 @@ class NamingScope(FunctionScope):
         super().__exit__(_1, _2, _3)
         popped = StagingContext.id_stack.pop()
         if popped != self:
-            raise StagingError(
-                'NamingScope enter/exit not match, must be FILO')
+            raise StagingError('NamingScope enter/exit not match, must be FILO')
 
     def fullid(self, nid: str):
         if self.namespace is not None:
@@ -464,7 +463,8 @@ def call_helper(callee, *args: ast.expr, **kwargs: ast.expr):
                     [ast.keyword(k, w) for k, w in kwargs.items()])
 
 
-def function_helper(name: str, args: Sequence[str], body: List[ast.stmt], nonlocals: List[str]):
+def function_helper(name: str, args: Sequence[str], body: List[ast.stmt],
+                    nonlocals: List[str]):
     '''Function helper that generates a python AST FunctionDef node with given name, arguments name, and body.'''
     nonlocal_body = ([ast.Nonlocal(nonlocals)]
                      if len(nonlocals) > 0 else []) + body
@@ -494,6 +494,7 @@ def location_helper(new_nodes, old_node):
 
 
 class NonlocalTransformingScope:
+
     def __init__(self, t):
         self.t: Transformer = t
 
@@ -597,11 +598,12 @@ class Transformer(ast.NodeTransformer):
             with NonlocalTransformingScope(self) as nonlocals:
                 node = self.generic_visit(old_node)
                 node = [
-                    function_helper(
-                        'for_body', [node.target.id], node.body, nonlocals),
+                    function_helper('for_body', [node.target.id], node.body,
+                                    nonlocals),
                     ast.Expr(
-                        call_helper(foreach, ast.Constant(node.target.id),
-                                    node.iter, ast.Name('for_body', ast.Load())))
+                        call_helper(foreach,
+                                    ast.Constant(node.target.id), node.iter,
+                                    ast.Name('for_body', ast.Load())))
                 ]
         else:
             node = self.generic_visit(old_node)
@@ -637,27 +639,32 @@ class Transformer(ast.NodeTransformer):
         '''
         test = self.visit(old_node.test)
         with NonlocalTransformingScope(self) as nonlocals:
-            new_node = [function_helper('then_body', [], [z for x in old_node.body for y in [
-                self.visit(x)] for z in (y if isinstance(y, list) else [y])], nonlocals)]
+            new_node = [
+                function_helper('then_body', [], [
+                    z for x in old_node.body for y in [self.visit(x)]
+                    for z in (y if isinstance(y, list) else [y])
+                ], nonlocals)
+            ]
         then_body = ast.Name('then_body', ast.Load())
         if old_node.orelse:
             with NonlocalTransformingScope(self) as nonlocals:
-                new_node.append(function_helper('else_body', [], [z for x in old_node.orelse for y in [
-                                self.visit(x)] for z in (y if isinstance(y, list) else [y])], nonlocals))
+                new_node.append(
+                    function_helper('else_body', [], [
+                        z for x in old_node.orelse for y in [self.visit(x)]
+                        for z in (y if isinstance(y, list) else [y])
+                    ], nonlocals))
             else_body = ast.Name('else_body', ast.Load())
         else:
             else_body = ast.Constant(None)
         new_node.append(
-            ast.Expr(
-                call_helper(if_then_else_stmt, test, then_body,
-                            else_body)))
+            ast.Expr(call_helper(if_then_else_stmt, test, then_body,
+                                 else_body)))
         return location_helper(new_node, old_node)
 
     def visit_IfExp(self, old_node: ast.IfExp):
         '''Rule: `body if test else orelse` -> `if_then_else_expr(test, body, orelse)`'''
         node = self.generic_visit(old_node)
-        node = call_helper(if_then_else_expr, node.test,
-                           node.body, node.orelse)
+        node = call_helper(if_then_else_expr, node.test, node.body, node.orelse)
         return location_helper(node, old_node)
 
     def visit_FunctionDef(self, old_node: ast.FunctionDef) -> Any:
@@ -672,9 +679,9 @@ class Transformer(ast.NodeTransformer):
                     ast.withitem(context_expr=call_helper(
                         functiondef_wrapper, ast.Constant(self.filename),
                         ast.Constant(node.name)),
-                        optional_vars=None)
+                                 optional_vars=None)
                 ],
-                    body=old_body)
+                         body=old_body)
             ]
 
         self.curr_func = prev_func
@@ -816,7 +823,7 @@ def transform(func=None, verbose=False, caller_env=None):
                             'Illegal return at top level, need to be a `Var` or a tuple of `Var`s'
                         )
                     for ret in returns:
-                        if ret.vardef.atype != AccessType.InOut:
+                        if ret.vardef.atype != ffi.AccessType('inout'):
                             ret.vardef.set_atype('output')
                     returns = [
                         (ret.vardef.name, ret.vardef.dtype) for ret in returns
