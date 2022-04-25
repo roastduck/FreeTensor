@@ -76,24 +76,10 @@ void CompAccessBound::visit(const VarDef &op) {
             if (checkAllDefined(defs_, index)) {
                 lowerItem.emplace_back(index);
             }
-            auto bounds = filter(access_[j].lower_[i], [&](LowerBound &b) {
-                return checkAllDefined(defs_, b.allNames());
-            });
-            std::sort(bounds.begin(), bounds.end(),
-                      [](LowerBound &lhs, LowerBound &rhs) {
-                          return lhs.allNames().size() > rhs.allNames().size();
-                      });
-            for (size_t i = 0, n = bounds.size(); i < n; i++) {
-                // If we have added a bound that have a superset of names,
-                // we consider it tighter, so we can ignore the current one
-                for (size_t j = 0; j < i; j++) {
-                    if (isSubSetOf(bounds[i].allNames(),
-                                   bounds[j].allNames())) {
-                        goto ignoreLower;
-                    }
+            for (auto &&b : access_[j].lower_[i]) {
+                if (checkAllDefined(defs_, b.allNames())) {
+                    lowerItem.emplace_back(b.expr());
                 }
-                lowerItem.emplace_back(bounds[i].expr());
-            ignoreLower:;
             }
             lower.emplace_back(std::move(lowerItem));
         }
@@ -106,24 +92,10 @@ void CompAccessBound::visit(const VarDef &op) {
             if (checkAllDefined(defs_, index)) {
                 upperItem.emplace_back(index);
             }
-            auto bounds = filter(access_[j].upper_[i], [&](UpperBound &b) {
-                return checkAllDefined(defs_, b.allNames());
-            });
-            std::sort(bounds.begin(), bounds.end(),
-                      [](UpperBound &lhs, UpperBound &rhs) {
-                          return lhs.allNames().size() > rhs.allNames().size();
-                      });
-            for (size_t i = 0, n = bounds.size(); i < n; i++) {
-                // If we have added a bound that have a superset of names,
-                // we consider it tighter, so we can ignore the current one
-                for (size_t j = 0; j < i; j++) {
-                    if (isSubSetOf(bounds[i].allNames(),
-                                   bounds[j].allNames())) {
-                        goto ignoreUpper;
-                    }
+            for (auto &&b : access_[j].upper_[i]) {
+                if (checkAllDefined(defs_, b.allNames())) {
+                    upperItem.emplace_back(b.expr());
                 }
-                upperItem.emplace_back(bounds[i].expr());
-            ignoreUpper:;
             }
             upper.emplace_back(std::move(upperItem));
         }

@@ -16,11 +16,12 @@ void CompUniqueBounds::updLower(LowerBoundsList &list,
         if (old.lin() == bound.lin()) {
             return;
         }
-        if (bound.lin().isConst() && old.lin().isConst()) {
+        if (hasIdenticalCoeff(bound.lin(), old.lin())) {
             auto oldVal = old.lin().bias_;
             auto newVal = bound.lin().bias_;
             if (newVal > oldVal) {
-                old = LowerBound(LinearExpr<Rational<int64_t>>{{}, newVal});
+                old = LowerBound(
+                    LinearExpr<Rational<int64_t>>{old.lin().coeff_, newVal});
             }
             return;
         }
@@ -36,11 +37,12 @@ void CompUniqueBounds::updUpper(UpperBoundsList &list,
         if (old.lin() == bound.lin()) {
             return;
         }
-        if (bound.lin().isConst() && old.lin().isConst()) {
+        if (hasIdenticalCoeff(bound.lin(), old.lin())) {
             auto oldVal = old.lin().bias_;
             auto newVal = bound.lin().bias_;
             if (newVal < oldVal) {
-                old = UpperBound(LinearExpr<Rational<int64_t>>{{}, newVal});
+                old = UpperBound(
+                    LinearExpr<Rational<int64_t>>{old.lin().coeff_, newVal});
             }
             return;
         }
