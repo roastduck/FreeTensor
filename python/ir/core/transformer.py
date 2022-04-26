@@ -737,12 +737,12 @@ class Transformer(ast.NodeTransformer):
 
     def visit_Lambda(self, old_node: ast.Lambda) -> Any:
         with NonlocalTransformingScope(self):
-            node: ast.Return = self.generic_visit(old_node)
+            node: ast.Lambda = self.generic_visit(old_node)
         return location_helper(node, old_node)
 
     def visit_comprehension(self, old_node: ast.comprehension) -> Any:
         with NonlocalTransformingScope(self):
-            node: ast.Return = self.generic_visit(old_node)
+            node: ast.comprehension = self.generic_visit(old_node)
         return location_helper(node, old_node)
 
     def visit_Name(self, node: ast.Name) -> Any:
