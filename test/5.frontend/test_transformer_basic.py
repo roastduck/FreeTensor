@@ -264,3 +264,35 @@ def test_immediate_var_return():
     y_np = y_arr.numpy()
 
     assert np.all(y_np == np.array([0, 1, 2]))
+
+
+# an example from https://pages.cs.wisc.edu/~horwitz/CS704-NOTES/9.PARTIAL-EVALUATION.html
+def test_pe():
+
+    @ir.transform(verbose=True)
+    def f(x_in, y_out):
+        ir.declare_var(x_in, (1,), "int32", "input", "cpu")
+        ir.declare_var(y_out, (1,), "int32", "output", "cpu")
+        x = x_in[0]
+        y = 0
+        for i in range(x):
+            y = y + 1
+
+        y_out[0] = y
+
+    print(f)
+    f = ir.lower(f, ir.CPU())
+    print(f)
+
+    code = ir.codegen(f, ir.CPU())
+    device = ir.Device(ir.CPU())
+
+    for x in range(0, 5):
+        x_np = np.full((1,), x, dtype=np.int32)
+        x_arr = ir.Array(x_np, device)
+        y_np = np.full((1,), 233, dtype=np.int32)
+        y_arr = ir.Array(y_np, device)
+        ir.Driver(f, code, device)(x_arr, y_arr)
+        y_np = y_arr.numpy()
+        y_std = np.full((1,), x, dtype=np.int32)
+        assert np.all(y_np == y_std)
