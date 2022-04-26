@@ -735,10 +735,28 @@ class Transformer(ast.NodeTransformer):
             call_helper(return_stmt, node.value, ast.Constant(self.curr_func)))
         return location_helper(node, old_node)
 
+    def visit_Lambda(self, old_node: ast.Lambda) -> Any:
+        with NonlocalTransformingScope(self):
+            node: ast.Return = self.generic_visit(old_node)
+        return location_helper(node, old_node)
+
+    def visit_comprehension(self, old_node: ast.comprehension) -> Any:
+        with NonlocalTransformingScope(self):
+            node: ast.Return = self.generic_visit(old_node)
+        return location_helper(node, old_node)
+
     def visit_Name(self, node: ast.Name) -> Any:
         if isinstance(node.ctx, ast.Store):
             self.nonlocals[-1].append(node.id)
         return self.generic_visit(node)
+
+    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> Any:
+        raise TransformError('Async functions not supported.', self.filename,
+                             self.base_lineno, node)
+
+    def visit_ClassDef(self, node: ast.ClassDef) -> Any:
+        raise TransformError('Class definitions not supported.', self.filename,
+                             self.base_lineno, node)
 
 
 def _remove_indent(src: str) -> str:
