@@ -596,6 +596,14 @@ class Transformer(ast.NodeTransformer):
         ```'''
         if isinstance(old_node.target, ast.Name) and len(old_node.orelse) == 0:
             with NonlocalTransformingScope(self) as nonlocals:
+                # while opening a fake function, For loops initiates an iter name as well.
+                # need to remove it from the outer nonlocals list to implement shadowing.
+                # only For loops behaves as such, so handle it specially here.
+                nonlocals = set(nonlocals)
+                if old_node.target.id in nonlocals:
+                    nonlocals.remove(old_node.target.id)
+                nonlocals = list(nonlocals)
+
                 node = self.generic_visit(old_node)
                 node = [
                     function_helper('for_body', [node.target.id], node.body,
@@ -670,6 +678,12 @@ class Transformer(ast.NodeTransformer):
     def visit_FunctionDef(self, old_node: ast.FunctionDef) -> Any:
         prev_func = self.curr_func
         self.curr_func = old_node.name
+
+        # nested functions follow original Python (shitty) scoping,
+        # thus backup the nonlocals stack and prepare a clean one.
+        prev_nonlocals = self.nonlocals
+        self.nonlocals = None
+
         with NonlocalTransformingScope(self):
             # mark arguments as nonlocal
             for name in old_node.args.args + old_node.args.kwonlyargs:
@@ -693,6 +707,7 @@ class Transformer(ast.NodeTransformer):
             ]
 
         self.curr_func = prev_func
+        self.nonlocals = prev_nonlocals
         return location_helper(node, old_node)
 
     def visit_Assert(self, old_node: ast.Assert) -> Any:
