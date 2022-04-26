@@ -91,24 +91,33 @@ UNARY_OP(Abs, _abs)
 UNARY_OP(Floor, std::floor)
 UNARY_OP(Ceil, std::ceil)
 
-Expr ConstFold::visit(const Cast &op) {
-    auto expr = (*this)(op->expr_);
-    if (expr->isConst() &&
+Expr ConstFold::visit(const Cast &_op) {
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::Cast);
+    auto op = __op.as<CastNode>();
+    if (op->expr_->isConst() &&
         (op->dtype_ == DataType::Bool || op->dtype_ == DataType::Float32 ||
          op->dtype_ == DataType::Float64 || op->dtype_ == DataType::Int64 ||
          op->dtype_ == DataType::Int32)) {
-        expr = castType(op->dtype_, expr.as<ConstNode>());
+        return castType(op->dtype_, op->expr_.as<ConstNode>());
     }
-    return makeCast(std::move(expr), op->dtype_);
+    return op;
 }
 
-Expr ConstFold::visit(const IfExpr &op) {
-    auto cond = (*this)(op->cond_);
-    if (cond->isConst()) {
-        ASSERT(cond->nodeType() == ASTNodeType::BoolConst);
-        return cond.as<BoolConstNode>()->val_ ? op->thenCase_ : op->elseCase_;
+Expr ConstFold::visit(const IfExpr &_op) {
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::IfExpr);
+    auto op = __op.as<IfExprNode>();
+    if (op->cond_->isConst() && op->thenCase_->isConst() &&
+        op->elseCase_->isConst()) {
+        // We only handle purely constant cases in const_fold, so that other
+        // Mutators that inherits ConstFold receives either a constant, or the
+        // original node
+        ASSERT(op->cond_->nodeType() == ASTNodeType::BoolConst);
+        return op->cond_.as<BoolConstNode>()->val_ ? op->thenCase_
+                                                   : op->elseCase_;
     }
-    return makeIfExpr(std::move(cond), op->thenCase_, op->elseCase_);
+    return op;
 }
 
 } // namespace ir

@@ -71,8 +71,8 @@ class ConstFold : public Mutator {
      */
     template <typename F, typename FAlt>
     Expr visitBinary(const BinaryExpr &op, F f, FAlt falt) {
-        auto lhs = visitExpr(op->lhs_);
-        auto rhs = visitExpr(op->rhs_);
+        auto lhs = (*this)(op->lhs_);
+        auto rhs = (*this)(op->rhs_);
         if (lhs->isConst() && rhs->isConst()) {
             return dispatch(lhs.as<ConstNode>(), [&](auto ll) {
                 return dispatch(rhs.as<ConstNode>(),
@@ -95,7 +95,7 @@ class ConstFold : public Mutator {
      */
     template <typename F, typename FAlt>
     Expr visitUnary(const UnaryExpr &op, F f, FAlt falt) {
-        auto x = visitExpr(op->expr_);
+        auto x = (*this)(op->expr_);
         if (x->isConst()) {
             return dispatch(x.as<ConstNode>(),
                             [&](auto xx) { return wrap(f(xx)); });
