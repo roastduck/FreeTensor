@@ -671,6 +671,14 @@ class Transformer(ast.NodeTransformer):
         prev_func = self.curr_func
         self.curr_func = old_node.name
         with NonlocalTransformingScope(self):
+            # mark arguments as nonlocal
+            for name in old_node.args.args + old_node.args.kwonlyargs:
+                self.nonlocals[-1].append(name.arg)
+            if old_node.args.vararg:
+                self.nonlocals[-1].append(old_node.args.vararg.arg)
+            if old_node.args.kwarg:
+                self.nonlocals[-1].append(old_node.args.kwarg.arg)
+
             node: ast.FunctionDef = self.generic_visit(old_node)
             node.decorator_list = []
             old_body = node.body
