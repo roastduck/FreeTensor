@@ -72,7 +72,7 @@ class MultiLevelTilingWithFusionPart : public MultiLevelTilingPart {
             }
             std::cout << "},\n";
         }
-        std::cout << "}\n";
+        std::cout << "}" << std::endl;
     }
 };
 

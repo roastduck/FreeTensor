@@ -54,16 +54,20 @@ AutoSchedule::measure(const std::vector<Schedule> &schedules) {
     size_t n = schedules.size();
     std::vector<Ref<Driver>> drivers(n);
     std::cout << "codegen" << std::endl;
-#pragma omp parallel for
+//#pragma omp parallel for
     for (size_t i = 0; i < n; i++) {
         try {
+            std::cout << "lowering\n" << toString(schedules[i].ast()) << std::endl;
             auto func = lower(schedules[i].func(), target_);
+            std::cout << "lowered\n" << toString(func->body_) << std::endl;
             std::string code;
             if (target_->type() == TargetType::GPU)
                 code = codeGenCUDA(func);
             else
                 code = codeGenCPU(func);
+            std::cout << "codegened" << std::endl;
             drivers[i] = Ref<Driver>::make(func, code, device_);
+            std::cout << "driver made" << std::endl;
         } catch (const std::exception &e) {
             // OpenMP threads won't report an exception message
             std::cerr << "ERROR measure: " << e.what() << std::endl;
@@ -434,46 +438,37 @@ Schedule AutoSchedule::testThreadBind() {
 }
 
 Schedule AutoSchedule::testCacheRead() {
-    auto sketch = getInitSketch();
-    MultiLevelTilingWithFusionRule rule(target_->type());
-    if (rule.analyze(sketch) == RuleStatus::Skip) {
-        return sketch.schedule();
-    }
-    Sketch newSketch = rule.genPart(sketch)[0];
-    std::cout << toString(newSketch.schedule().ast()) << std::endl;
-    auto part = newSketch.part(0)[SketchPartType::MultiLevelTilingWithFusion]
-                    .as<MultiLevelTilingWithFusionPart>();
-    //    part->genRandAnnotation(randGen_);
-    part->setAnnotation({/*space: */ {
-                             {
-                                 2,
-                                 2,
-                                 2,
-                                 4,
-                                 4,
-                             },
-                             {
-                                 4,
-                                 2,
-                                 4,
-                                 2,
-                                 2,
-                             },
-                         },
-                         /*reduction: */ {
-                             {
-                                 32,
-                                 2,
-                                 2,
-                             },
-                         }});
-    newSketch.addPart(Ref<ThreadBindPart>::make());
-    auto schedule = newSketch.genSchedule();
-    std::vector<Sketch> v;
-    v.push_back(newSketch);
-    auto pred = getPrediction(v);
-    part->printAnnotation();
-    return schedule;
+//    for (;;) {
+        auto sketch = getInitSketch();
+        MultiLevelTilingWithFusionRule rule(target_->type());
+        if (rule.analyze(sketch) == RuleStatus::Skip) {
+            return sketch.schedule();
+        }
+        Sketch newSketch = rule.genPart(sketch)[0];
+        std::cout << toString(newSketch.schedule().ast()) << std::endl;
+        auto part = newSketch.part(0)[SketchPartType::MultiLevelTilingWithFusion]
+                        .as<MultiLevelTilingWithFusionPart>();
+//        part->genRandAnnotation(randGen_);
+        part->setAnnotation({{
+                                {4, 1, 4, 1, 8, },
+                                {1, 16, 4, 1, 2, },
+                            },
+                            {
+                                {8, 2, 8, },
+                            }}
+                            );
+        newSketch.addPart(Ref<ThreadBindPart>::make());
+        auto schedule = newSketch.genSchedule();
+        std::vector<Sketch> v;
+        v.push_back(newSketch);
+        auto pred = getPrediction(v);
+        std::cout << toString(schedule.ast()) << std::endl;
+        part->printAnnotation();
+        auto func = lower(schedule.func(), target_);
+        std::cout << toString(func->body_) << std::endl;
+        std::cout << "lower done" << std::endl;
+//    }
+    return {};
 }
 
 } // namespace ir

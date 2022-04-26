@@ -117,10 +117,17 @@ std::vector<std::pair<ID, int>> multiLevelTilingWithFusion(
                                                      : MemType::GPULocal);
     } catch (const InvalidSchedule &e) {
     }
+    ID firstReduction = lastFuse;
+    for (int i = target.reductionLoops.size() - 1; i >= 0; i--) {
+        if (tiles[fuseTileSize + i].second > 1){
+            firstReduction = tiles[fuseTileSize + i].first;
+            break;
+        }
+    }
     if (targetType == TargetType::GPU) {
         for (auto &read : target.reads) {
-            body = schedule.find(lastFuse).as<ForNode>()->body_->id();
             try {
+                body = schedule.find(firstReduction).as<ForNode>()->body_->id();
                 schedule.cache(body, read, MemType::GPUShared);
             } catch (const InvalidSchedule &e) {
             }
