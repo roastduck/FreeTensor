@@ -123,6 +123,28 @@ def test_cast():
     assert y_np[()] == 4
 
 
+def test_real_div():
+    with ir.VarDef([("x1", (), "int32", "input", "cpu"),
+                    ("x2", (), "int32", "input", "cpu"),
+                    ("y", (), "float32", "output", "cpu")]) as (x1, x2, y):
+        y[()] = x1[()] / x2[()]
+
+    func = ir.lower(ir.Func("main", ["x1", "x2", "y"], [], ir.pop_ast()),
+                    ir.CPU())
+    code = ir.codegen(func, ir.CPU())
+    print(code)
+    x1_np = np.array(5, dtype="int32")
+    x2_np = np.array(2, dtype="int32")
+    y_np = np.array(0, dtype="float32")
+    x1_arr = ir.Array(x1_np, ir.Device(ir.CPU()))
+    x2_arr = ir.Array(x2_np, ir.Device(ir.CPU()))
+    y_arr = ir.Array(y_np, ir.Device(ir.CPU()))
+    ir.Driver(func, code, ir.Device(ir.CPU()))(x1=x1_arr, x2=x2_arr, y=y_arr)
+    y_np = y_arr.numpy()
+
+    assert y_np[()] == 2.5
+
+
 def test_for():
     with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):

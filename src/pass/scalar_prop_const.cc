@@ -281,7 +281,7 @@ Stmt ScalarPropConst::visit(const For &op) {
 BINARY_OP(Add, +)
 BINARY_OP(Sub, -)
 BINARY_OP(Mul, *)
-BINARY_OP(RealDiv, /)
+BINARY_OP_F(RealDiv, realDiv, /)
 BINARY_OP_F(FloorDiv, floorDiv, %)
 BINARY_OP_F(CeilDiv, ceilDiv, %)
 BINARY_OP(RoundTowards0Div, /)
@@ -300,13 +300,9 @@ BINARY_OP(LOr, ||)
 UNARY_OP(LNot, !)
 UNARY_OP(Sqrt, std::sqrt)
 UNARY_OP(Exp, std::exp)
-
-static int64_t _square(const int64_t &t) { return t * t; }
-static double _square(const double &t) { return t * t; }
-
-UNARY_OP(Square, _square)
-//! TODO: Sigmoid
-//! TODO: Tanh
+UNARY_OP(Square, square)
+UNARY_OP(Sigmoid, sigmoid)
+UNARY_OP(Tanh, std::tanh)
 
 // Avoid -Wabsolute-value in Clang
 static int64_t _abs(const int64_t &t) { return std::abs(t); }

@@ -4,6 +4,7 @@
 #include <analyze/symbol_table.h>
 #include <func.h>
 #include <hash.h>
+#include <math/utils.h>
 #include <mutator.h>
 
 #include <map>
@@ -221,49 +222,36 @@ class ScalarPropConst : public SymbolTable<Mutator> {
     }
 
   protected:
-#define BINARY_OP(OPNAME, OP) Expr visit(const OPNAME &) override;
-#define BINARY_OP_F(OPNAME, OPF, OP) Expr visit(const OPNAME &) override;
-#define UNARY_OP(OPNAME, OPF) Expr visit(const OPNAME &) override;
-    BINARY_OP(Add, +)
-    BINARY_OP(Sub, -)
-    BINARY_OP(Mul, *)
-    BINARY_OP(RealDiv, /)
-    BINARY_OP_F(FloorDiv, floorDiv, %)
-    BINARY_OP_F(CeilDiv, ceilDiv, %)
-    BINARY_OP(RoundTowards0Div, /)
-    BINARY_OP_F(Mod, mod, %)
-    BINARY_OP(Remainder, %)
-    BINARY_OP_F(Min, std::min, +)
-    BINARY_OP_F(Max, std::max, +)
-    BINARY_OP(LT, <)
-    BINARY_OP(LE, <=)
-    BINARY_OP(GT, >)
-    BINARY_OP(GE, >=)
-    BINARY_OP(EQ, ==)
-    BINARY_OP(NE, !=)
-    BINARY_OP(LAnd, &&)
-    BINARY_OP(LOr, ||)
-    UNARY_OP(LNot, !)
-    UNARY_OP(Sqrt, std::sqrt)
-    UNARY_OP(Exp, std::exp)
-
-  private:
-    static int64_t _square(const int64_t &t) { return t * t; }
-    static double _square(const double &t) { return t * t; }
-
-  protected:
-    UNARY_OP(Square, _square)
-    //! TODO: Sigmoid
-    //! TODO: Tanh
-    UNARY_OP(Abs, std::abs)
-    UNARY_OP(Floor, std::floor)
-    UNARY_OP(Ceil, std::ceil)
-#undef BINARY_OP
-#undef BINARY_OP_F
-#undef UNARY_OP
-
+    Expr visit(const Add &op) override;
+    Expr visit(const Sub &op) override;
+    Expr visit(const Mul &op) override;
+    Expr visit(const RealDiv &op) override;
+    Expr visit(const FloorDiv &op) override;
+    Expr visit(const CeilDiv &op) override;
+    Expr visit(const RoundTowards0Div &op) override;
+    Expr visit(const Mod &op) override;
+    Expr visit(const Remainder &op) override;
+    Expr visit(const Min &op) override;
+    Expr visit(const Max &op) override;
+    Expr visit(const LT &op) override;
+    Expr visit(const LE &op) override;
+    Expr visit(const GT &op) override;
+    Expr visit(const GE &op) override;
+    Expr visit(const EQ &op) override;
+    Expr visit(const NE &op) override;
+    Expr visit(const LAnd &op) override;
+    Expr visit(const LOr &op) override;
+    Expr visit(const LNot &op) override;
+    Expr visit(const Sqrt &op) override;
+    Expr visit(const Exp &op) override;
+    Expr visit(const Square &op) override;
+    Expr visit(const Sigmoid &op) override;
+    Expr visit(const Tanh &op) override;
+    Expr visit(const Abs &op) override;
+    Expr visit(const Floor &op) override;
+    Expr visit(const Ceil &op) override;
     Expr visit(const Cast &op) override;
-}; // namespace ir
+};
 
 /**
  * Propagate scalars of constant value or only depending on iteration variables.
