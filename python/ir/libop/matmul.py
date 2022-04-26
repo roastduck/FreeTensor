@@ -75,7 +75,7 @@ def einsum(format):
     lefts, right = format.split('->')
     lefts = lefts.split(',')
 
-    @core.inline(verbose=True)
+    @core.inline
     def f_einsum(*args):
         shapes = []
         for v in right:
