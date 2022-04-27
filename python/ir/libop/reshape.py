@@ -1,6 +1,7 @@
 from typing import Sequence, Optional
 
 from .. import core
+from .utils import *
 from .shape_utils import *
 
 
@@ -49,14 +50,6 @@ def flatten(x, axis=1):
     return y
 
 
-def _begin_with_0(lst):
-    return len(lst) > 0 and lst[0] == 0
-
-
-def _all_minus_one(lst):
-    return list(map(lambda x: x - 1, lst))
-
-
 def _circular_axes(axes, x_ndim):
     # ONNX >= 13 treats axes as a tensor, which we don't support for now
     return sorted(map(lambda x: x if x >= 0 else x_ndim + len(axes) + x, axes))
@@ -67,14 +60,14 @@ def unsqueeze_(x, y, axes: Sequence[int]):
     axes = _circular_axes(axes, core.ndim(x))
     if y.ndim == 0:
         y[()] = x
-    elif _begin_with_0(axes):
+    elif begin_with_0(axes):
         'nid: recur'
-        unsqueeze_(x, y[0], _all_minus_one(axes[1:]))
+        unsqueeze_(x, y[0], all_minus_one(axes[1:]))
     else:
         'nid: L'
         for i in range(x.shape(0)):
             'nid: recur'
-            unsqueeze_(x[i], y[i], _all_minus_one(axes))
+            unsqueeze_(x[i], y[i], all_minus_one(axes))
 
 
 def _unsqueeze_comp_shape(axes, x):

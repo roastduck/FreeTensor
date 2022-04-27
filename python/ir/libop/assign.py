@@ -1,6 +1,5 @@
-import functools
-
 from .. import core
+from .utils import *
 from .shape_utils import *
 
 
@@ -21,6 +20,6 @@ def _assign_op(op, y, x):
                 _assign_op(op, y[i], x[i % x.shape(0)])
 
 
-assign = functools.partial(_assign_op, lambda y, x: x)
-add_to = functools.partial(_assign_op, lambda y, x: x + y)
-mul_to = functools.partial(_assign_op, lambda y, x: x * y)
+assign = named_partial("assign", _assign_op, lambda y, x: x)
+add_to = named_partial("add_to", _assign_op, lambda y, x: x + y)
+mul_to = named_partial("mul_to", _assign_op, lambda y, x: x * y)

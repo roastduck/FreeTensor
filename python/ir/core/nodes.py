@@ -554,7 +554,7 @@ def dtype(var):
         elif isinstance(var, int):
             return ffi.DataType("int32")
         else:
-            raise Exception('Unknown scalar type')
+            raise Exception('Unknown scalar type: ' + str(type(var)))
 
 
 def mtype(var):

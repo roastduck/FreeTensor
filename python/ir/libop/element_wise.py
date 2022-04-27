@@ -1,6 +1,5 @@
-import functools
-
 from .. import core
+from .utils import *
 from .shape_utils import *
 
 
@@ -37,17 +36,17 @@ def _binary_op(op, a, b):
     return out
 
 
-add_ = functools.partial(_binary_op_, lambda x, y: x + y)
-add = functools.partial(_binary_op, lambda x, y: x + y)
+add_ = named_partial("add_", _binary_op_, lambda x, y: x + y)
+add = named_partial("add", _binary_op, lambda x, y: x + y)
 
-sub_ = functools.partial(_binary_op_, lambda x, y: x - y)
-sub = functools.partial(_binary_op, lambda x, y: x - y)
+sub_ = named_partial("sub_", _binary_op_, lambda x, y: x - y)
+sub = named_partial("sub", _binary_op, lambda x, y: x - y)
 
-mul_ = functools.partial(_binary_op_, lambda x, y: x * y)
-mul = functools.partial(_binary_op, lambda x, y: x * y)
+mul_ = named_partial("mul_", _binary_op_, lambda x, y: x * y)
+mul = named_partial("mul", _binary_op, lambda x, y: x * y)
 
-div_ = functools.partial(_binary_op_, lambda x, y: x / y)
-div = functools.partial(_binary_op, lambda x, y: x / y)
+div_ = named_partial("div_", _binary_op_, lambda x, y: x / y)
+div = named_partial("div", _binary_op, lambda x, y: x / y)
 
 
 @core.inline
@@ -71,20 +70,20 @@ def _unary_op(op, x):
     return y
 
 
-relu_ = functools.partial(_unary_op_, lambda x: core.max(x, 0))
-relu = functools.partial(_unary_op, lambda x: core.max(x, 0))
+relu_ = named_partial("relu_", _unary_op_, lambda x: core.max(x, 0))
+relu = named_partial("relu", _unary_op, lambda x: core.max(x, 0))
 
-abs_ = functools.partial(_unary_op_, lambda x: core.abs(x))
-abs = functools.partial(_unary_op, lambda x: core.abs(x))
+abs_ = named_partial("abs_", _unary_op_, lambda x: core.abs(x))
+abs = named_partial("abs", _unary_op, lambda x: core.abs(x))
 
-sqrt_ = functools.partial(_unary_op_, lambda x: core.sqrt(x))
-sqrt = functools.partial(_unary_op, lambda x: core.sqrt(x))
+sqrt_ = named_partial("sqrt_", _unary_op_, lambda x: core.sqrt(x))
+sqrt = named_partial("sqrt", _unary_op, lambda x: core.sqrt(x))
 
-exp_ = functools.partial(_unary_op_, lambda x: core.exp(x))
-exp = functools.partial(_unary_op, lambda x: core.exp(x))
+exp_ = named_partial("exp_", _unary_op_, lambda x: core.exp(x))
+exp = named_partial("exp", _unary_op, lambda x: core.exp(x))
 
-sigmoid_ = functools.partial(_unary_op_, lambda x: core.sigmoid(x))
-sigmoid = functools.partial(_unary_op, lambda x: core.sigmoid(x))
+sigmoid_ = named_partial("sigmoid_", _unary_op_, lambda x: core.sigmoid(x))
+sigmoid = named_partial("sigmoid", _unary_op, lambda x: core.sigmoid(x))
 
-tanh_ = functools.partial(_unary_op_, lambda x: core.tanh(x))
-tanh = functools.partial(_unary_op, lambda x: core.tanh(x))
+tanh_ = named_partial("tanh_", _unary_op_, lambda x: core.tanh(x))
+tanh = named_partial("tanh", _unary_op, lambda x: core.tanh(x))

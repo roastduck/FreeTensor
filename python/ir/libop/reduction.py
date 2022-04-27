@@ -1,6 +1,6 @@
-import functools
 from typing import Sequence, Optional
 
+from .utils import *
 from .. import core
 
 
@@ -13,14 +13,6 @@ def _circular_axes(axes, x_ndim, keepdims):
     return sorted(
         map(lambda x: x
             if x >= 0 else _y_ndim(x_ndim, axes, keepdims) + x, axes))
-
-
-def _begin_with_0(lst):
-    return len(lst) > 0 and lst[0] == 0
-
-
-def _all_minus_one(lst):
-    return list(map(lambda x: x - 1, lst))
 
 
 @core.inline
@@ -43,18 +35,18 @@ def _reduce(op, axes, keepdims, x, y):
     else:
         'nid: L'
         for i in range(x.shape(0)):
-            if _begin_with_0(axes):
+            if begin_with_0(axes):
                 if keepdims:
                     assert y.shape(0) == 1
                     'nid: recur'
-                    _reduce(op, _all_minus_one(axes[1:]), keepdims, x[i], y[0])
+                    _reduce(op, all_minus_one(axes[1:]), keepdims, x[i], y[0])
                 else:
                     'nid: recur'
-                    _reduce(op, _all_minus_one(axes[1:]), keepdims, x[i], y)
+                    _reduce(op, all_minus_one(axes[1:]), keepdims, x[i], y)
             else:
                 assert y.shape(0) == x.shape(0)
                 'nid: recur'
-                _reduce(op, _all_minus_one(axes), keepdims, x[i], y[i])
+                _reduce(op, all_minus_one(axes), keepdims, x[i], y[i])
 
 
 @core.inline
@@ -98,8 +90,9 @@ def _general_reduce(op,
     return y
 
 
-reduce_sum_ = functools.partial(_general_reduce_, lambda x, y: x + y, 0)
-reduce_sum = functools.partial(_general_reduce, lambda x, y: x + y, 0)
+reduce_sum_ = named_partial("reduce_sum_", _general_reduce_, lambda x, y: x + y,
+                            0)
+reduce_sum = named_partial("reduce_sum", _general_reduce, lambda x, y: x + y, 0)
 
 
 @core.inline
