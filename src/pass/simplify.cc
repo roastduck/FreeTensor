@@ -178,7 +178,7 @@ Expr SimplifyPass::visit(const FloorDiv &_op) {
     }
     ASSERT(__op->nodeType() == ASTNodeType::FloorDiv);
     auto op = __op.as<FloorDivNode>();
-    if (equals(op->rhs_, 0)) {
+    if (equals(op->rhs_, 1)) {
         return op->lhs_;
     }
     if (equals(op->rhs_, -1)) {
