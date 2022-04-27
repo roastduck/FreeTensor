@@ -14,7 +14,7 @@ def test_basic():
         ir.declare_var(b, (5,), "float32", "input", "cpu")
         ir.declare_var(y, (4,), "float32", "output", "cpu")
         "nid: einsum"
-        ir.libop.einsum_("ij,j->i")(a, b, y)
+        ir.libop.einsum_("ij,j->i", a, b, y)
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -44,7 +44,7 @@ def test_broadcast():
         ir.declare_var(b, (5,), "float32", "input", "cpu")
         ir.declare_var(y, (4,), "float32", "output", "cpu")
         "nid: einsum"
-        ir.libop.einsum_("ij,j->i")(a, b, y)
+        ir.libop.einsum_("ij,j->i", a, b, y)
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -75,7 +75,7 @@ def test_out_of_place():
         ir.declare_var(y_shape, (1,), "int32", "output", "cpu")
         ir.declare_var(y, (4,), "float32", "output", "cpu")
         "nid: gemm"
-        _y = ir.libop.einsum("ij,j->i")(a, b)
+        _y = ir.libop.einsum("ij,j->i", a, b)
         y_shape[0] = _y.shape(0)
         for i in range(4):
             y[i] = _y[i]

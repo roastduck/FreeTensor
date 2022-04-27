@@ -13,7 +13,7 @@ def test_static():
         ir.declare_var(x, (3, 4, 5), "float32", "input", "cpu")
         ir.declare_var(y, (3, 1, 4, 1, 5), "float32", "output", "cpu")
         "nid: unsqueeze"
-        ir.libop.unsqueeze_(axes=[1, 3])(x, y)
+        ir.libop.unsqueeze_(x, y, axes=[1, 3])
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -40,7 +40,7 @@ def test_out_of_place():
         ir.declare_var(y_shape, (5,), "int32", "output", "cpu")
         ir.declare_var(y, (3, 1, 4, 1, 5), "float32", "output", "cpu")
         "nid: unsqueeze"
-        _y = ir.libop.unsqueeze(axes=[1, 3])(x)
+        _y = ir.libop.unsqueeze(x, axes=[1, 3])
         for i in range(5):
             y_shape[i] = _y.shape(i)
         for i in range(3):

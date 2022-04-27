@@ -27,7 +27,7 @@ def test_manual_static():
         ir.declare_var(y, (batch_size, n_heads, seq_len, seq_len), "float32",
                        "output", "gpu/global")
         "nid: softmax"
-        ir.libop.softmax_()(x, y)
+        ir.libop.softmax_(x, y)
 
     print(f)
     s = ir.Schedule(f)

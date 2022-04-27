@@ -25,9 +25,9 @@ def compile_all(n_faces, in_feats, out_feats, device, ad_save_all):
         ir.declare_var(y, (n_faces, out_feats), "float32", "output", mtype)
 
         for i in range(n_faces):
-            sum1 = zeros((in_feats,), "float32", mtype)()
-            sum2 = zeros((in_feats,), "float32", mtype)()
-            sum3 = zeros((in_feats,), "float32", mtype)()
+            sum1 = zeros((in_feats,), "float32", mtype)
+            sum2 = zeros((in_feats,), "float32", mtype)
+            sum3 = zeros((in_feats,), "float32", mtype)
             for p in range(3):
                 add_to(sum1, x[adj[i, p]])
                 add_to(sum2, abs(sub(x[adj[i, p]], x[adj[i, (p + 1) % 3]])))
