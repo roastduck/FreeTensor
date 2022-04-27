@@ -145,7 +145,7 @@ def test_redundant_max(p):
 
 
 @pytest.mark.parametrize('p', [ir.simplify_pass, ir.z3_simplify])
-def test_multiple_mins(p):
+def test_multiple_mins_1(p):
     with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ir.For("i", 0, 4) as i:
@@ -164,8 +164,30 @@ def test_multiple_mins(p):
     assert std.match(ast)
 
 
+@pytest.mark.parametrize('p', [ir.simplify_pass])
+def test_multiple_mins_2(p):
+    with ir.VarDef("y", (10, 10, 10), "int32", "output", "cpu") as y:
+        with ir.For("i", 0, 10) as i:
+            with ir.For("j", 0, 10) as j:
+                with ir.For("k", 0, 10) as k:
+                    y[i, j, k] = ir.max(i + j - k, ir.max(i - k, i + j + -1))
+    ast = ir.pop_ast()
+    print(ast)
+    ast = p(ast)
+    print(ast)
+
+    with ir.VarDef("y", (10, 10, 10), "int32", "output", "cpu") as y:
+        with ir.For("i", 0, 10) as i:
+            with ir.For("j", 0, 10) as j:
+                with ir.For("k", 0, 10) as k:
+                    y[i, j, k] = ir.max(i - k, i + j + -1)
+    std = ir.pop_ast()
+
+    assert std.match(ast)
+
+
 @pytest.mark.parametrize('p', [ir.simplify_pass, ir.z3_simplify])
-def test_multiple_maxes(p):
+def test_multiple_maxes_1(p):
     with ir.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ir.For("i", 0, 4) as i:
@@ -179,6 +201,28 @@ def test_multiple_maxes(p):
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ir.For("i", 0, 4) as i:
             y[i] = ir.max(x[i] + 2, i)
+    std = ir.pop_ast()
+
+    assert std.match(ast)
+
+
+@pytest.mark.parametrize('p', [ir.simplify_pass])
+def test_multiple_maxes_2(p):
+    with ir.VarDef("y", (10, 10, 10), "int32", "output", "cpu") as y:
+        with ir.For("i", 0, 10) as i:
+            with ir.For("j", 0, 10) as j:
+                with ir.For("k", 0, 10) as k:
+                    y[i, j, k] = ir.max(i + j - k, ir.max(i - k, i + j + -1))
+    ast = ir.pop_ast()
+    print(ast)
+    ast = p(ast)
+    print(ast)
+
+    with ir.VarDef("y", (10, 10, 10), "int32", "output", "cpu") as y:
+        with ir.For("i", 0, 10) as i:
+            with ir.For("j", 0, 10) as j:
+                with ir.For("k", 0, 10) as k:
+                    y[i, j, k] = ir.max(i + j - k, i + j + -1)
     std = ir.pop_ast()
 
     assert std.match(ast)

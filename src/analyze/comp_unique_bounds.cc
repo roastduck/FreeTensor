@@ -390,11 +390,10 @@ void CompUniqueBounds::visit(const Min &op) {
         }
     }
     if (hasConstLower && constLower.isValid()) {
-        // If we have a const lower, we must have const uppers, so we can use
-        // the consts only
         updLower(lower, LinearExpr<Rational<int64_t>>{{}, *constLower});
-    } else if (all.size() == oper.size()) {
-        // Otherwise, we use the min/max expression itself as a bound
+    }
+
+    if (all.size() == oper.size()) {
         updLower(lower, LowerBound{op});
         updUpper(upper, UpperBound{op});
     } else {
@@ -466,11 +465,10 @@ void CompUniqueBounds::visit(const Max &op) {
         }
     }
     if (hasConstUpper && constUpper.isValid()) {
-        // If we have a const lower, we must have const uppers, so we can use
-        // the consts only
         updUpper(upper, LinearExpr<Rational<int64_t>>{{}, *constUpper});
-    } else if (all.size() == oper.size()) {
-        // Otherwise, we use the min/max expression itself as a bound
+    }
+
+    if (all.size() == oper.size()) {
         updLower(lower, LowerBound{op});
         updUpper(upper, UpperBound{op});
     } else {
