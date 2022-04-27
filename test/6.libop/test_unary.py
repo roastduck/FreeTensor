@@ -1,19 +1,28 @@
 import torch
+import pytest
 import numpy as np
 
 import ir
 import ir.libop
 
 
-def test_static_shape():
+@pytest.mark.parametrize('libop_func, torch_func, require_positive', [
+    (ir.libop.abs_, torch.abs, False),
+    (ir.libop.exp_, torch.exp, False),
+    (ir.libop.sigmoid_, torch.sigmoid, False),
+    (ir.libop.sqrt_, torch.sqrt, True),
+    (ir.libop.relu_, torch.relu, False),
+    (ir.libop.tanh_, torch.tanh, False),
+])
+def test_static_shape(libop_func, torch_func, require_positive):
     device = ir.Device(ir.CPU())
 
     @ir.transform
     def f(x, y):
         ir.declare_var(x, (4, 4), "float32", "input", "cpu")
         ir.declare_var(y, (4, 4), "float32", "output", "cpu")
-        "nid: sigmoid"
-        ir.libop.sigmoid_(x, y)
+        "nid: tanh"
+        libop_func(x, y)
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -21,17 +30,28 @@ def test_static_shape():
 
     code = ir.codegen(f, ir.CPU())
 
-    x_torch = torch.rand(4, 4, dtype=torch.float32) - 0.5
+    if require_positive:
+        x_torch = torch.rand(4, 4, dtype=torch.float32)
+    else:
+        x_torch = torch.rand(4, 4, dtype=torch.float32) - 0.5
     x_arr = ir.Array(x_torch.numpy(), device)
     y_torch = torch.zeros(4, 4, dtype=torch.float32)
     y_arr = ir.Array(y_torch.numpy(), device)
     ir.Driver(f, code, device)(x_arr, y_arr)
     y_torch = torch.Tensor(y_arr.numpy())
 
-    assert torch.all(torch.isclose(y_torch, torch.sigmoid(x_torch)))
+    assert torch.all(torch.isclose(y_torch, torch_func(x_torch)))
 
 
-def test_out_of_place():
+@pytest.mark.parametrize('libop_func, torch_func, require_positive', [
+    (ir.libop.abs, torch.abs, False),
+    (ir.libop.exp, torch.exp, False),
+    (ir.libop.sigmoid, torch.sigmoid, False),
+    (ir.libop.sqrt, torch.sqrt, True),
+    (ir.libop.relu, torch.relu, False),
+    (ir.libop.tanh, torch.tanh, False),
+])
+def test_out_of_place(libop_func, torch_func, require_positive):
     device = ir.Device(ir.CPU())
 
     @ir.transform
@@ -39,8 +59,8 @@ def test_out_of_place():
         ir.declare_var(x, (4, 4), "float32", "input", "cpu")
         ir.declare_var(y_shape, (2,), "int32", "output", "cpu")
         ir.declare_var(y, (4, 4), "float32", "output", "cpu")
-        "nid: sigmoid"
-        _y = ir.libop.sigmoid(x)
+        "nid: tanh"
+        _y = libop_func(x)
         y_shape[0] = _y.shape(0)
         y_shape[1] = _y.shape(1)
         for i in range(4):
@@ -53,7 +73,10 @@ def test_out_of_place():
 
     code = ir.codegen(f, ir.CPU())
 
-    x_torch = torch.rand(4, 4, dtype=torch.float32) - 0.5
+    if require_positive:
+        x_torch = torch.rand(4, 4, dtype=torch.float32)
+    else:
+        x_torch = torch.rand(4, 4, dtype=torch.float32) - 0.5
     x_arr = ir.Array(x_torch.numpy(), device)
     y_shape_torch = torch.zeros(2, dtype=torch.int32)
     y_shape_arr = ir.Array(y_shape_torch.numpy(), device)
@@ -64,18 +87,26 @@ def test_out_of_place():
     y_torch = torch.Tensor(y_arr.numpy())
 
     assert np.array_equal(y_shape_np, [4, 4])
-    assert torch.all(torch.isclose(y_torch, torch.sigmoid(x_torch)))
+    assert torch.all(torch.isclose(y_torch, torch_func(x_torch)))
 
 
-def test_grad():
+@pytest.mark.parametrize('libop_func, torch_func, require_positive', [
+    (ir.libop.abs_, torch.abs, False),
+    (ir.libop.exp_, torch.exp, False),
+    (ir.libop.sigmoid_, torch.sigmoid, False),
+    (ir.libop.sqrt_, torch.sqrt, True),
+    (ir.libop.relu_, torch.relu, False),
+    (ir.libop.tanh_, torch.tanh, False),
+])
+def test_grad(libop_func, torch_func, require_positive):
     device = ir.Device(ir.CPU())
 
     @ir.transform
     def f(x, y):
         ir.declare_var(x, (4, 4), "float32", "input", "cpu")
         ir.declare_var(y, (4, 4), "float32", "output", "cpu")
-        "nid: sigmoid"
-        ir.libop.sigmoid_(x, y)
+        "nid: tanh"
+        libop_func(x, y)
 
     print(f)
     f, g, requires, privdes, _ = ir.grad(f, set(["x"]), set(["y"]),
@@ -109,14 +140,17 @@ def test_grad():
             assert False
         return shape, dtype
 
-    x_torch = torch.rand(4, 4, dtype=torch.float32)
+    if require_positive:
+        x_torch = torch.rand(4, 4, dtype=torch.float32)
+    else:
+        x_torch = torch.rand(4, 4, dtype=torch.float32) - 0.5
     x_arr = ir.Array(x_torch.numpy(), device)
     x_torch.requires_grad = True
     y_torch_ours = torch.zeros(4, 4, dtype=torch.float32)
     y_arr = ir.Array(y_torch_ours.numpy(), device)
     ir.Driver(f, f_code, device)(x_arr, y_arr)
     y_torch_ours = torch.Tensor(y_arr.numpy())
-    y_torch = torch.sigmoid(x_torch)
+    y_torch = torch_func(x_torch)
     assert torch.all(torch.isclose(y_torch_ours, y_torch))
 
     y_torch.grad = torch.rand(4, 4, dtype=torch.float32)

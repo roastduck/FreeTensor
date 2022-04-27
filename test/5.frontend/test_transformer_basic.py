@@ -119,6 +119,59 @@ def test_if():
     assert np.array_equal(y_func, y_std)
 
 
+def test_static_if():
+
+    flag = True
+
+    def test(y):
+        ir.declare_var(y, (4,), "int32", "output", "cpu")
+        for i in range(0, 4):
+            value = 0
+            if flag:
+                value = 1
+            y[i] = value
+
+    func = ir.lower(ir.transform(test), ir.CPU())
+    code = ir.codegen(func, ir.CPU())
+    y_np = np.zeros((4,), dtype="int32")
+    y_arr = ir.Array(y_np, ir.Device(ir.CPU()))
+    ir.Driver(func, code, ir.Device(ir.CPU()))(y=y_arr)
+    y_np = y_arr.numpy()
+    y_func = np.zeros((4,), dtype="int32")
+    test(y_func)
+
+    y_std = np.array([1, 1, 1, 1], dtype="int32")
+    assert np.array_equal(y_np, y_std)
+    assert np.array_equal(y_func, y_std)
+
+
+def test_static_if_2():
+
+    flag = True
+
+    @ir.inline
+    def f(y, value):
+        for i in range(0, 4):
+            if flag:
+                value = 1
+            y[i] = value
+
+    @ir.transform
+    def test(y):
+        ir.declare_var(y, (4,), "int32", "output", "cpu")
+        f(y, 0)
+
+    func = ir.lower(test, ir.CPU())
+    code = ir.codegen(func, ir.CPU())
+    y_np = np.zeros((4,), dtype="int32")
+    y_arr = ir.Array(y_np, ir.Device(ir.CPU()))
+    ir.Driver(func, code, ir.Device(ir.CPU()))(y=y_arr)
+    y_np = y_arr.numpy()
+
+    y_std = np.array([1, 1, 1, 1], dtype="int32")
+    assert np.array_equal(y_np, y_std)
+
+
 def test_for_range():
 
     def test(x):

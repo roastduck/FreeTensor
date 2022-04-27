@@ -77,7 +77,7 @@ void PrintVisitor::visit(const Func &op) {
     for (auto &&[i, param] : iter::enumerate(op->params_)) {
         os() << (i > 0 ? ", " : "") << printName(param);
         if (op->closure_.count(param)) {
-            os() << " @ " << op->closure_.at(param).get();
+            os() << " @!closure /* " << op->closure_.at(param).get() << " */";
         }
     }
     os() << ") ";
@@ -88,7 +88,8 @@ void PrintVisitor::visit(const Func &op) {
             os() << (i > 0 ? ", " : "") << printName(name) << ": "
                  << ::ir::toString(dtype);
             if (op->closure_.count(name)) {
-                os() << " @ " << op->closure_.at(name).get();
+                os() << " @!closure /* " << op->closure_.at(name).get()
+                     << " */";
             }
         }
         os() << " ";
@@ -438,7 +439,7 @@ void PrintVisitor::visit(const Cast &op) {
 void PrintVisitor::visit(const For &op) {
     if (!op->property_->noDeps_.empty()) {
         makeIndent();
-        os() << "@!no_deps = ";
+        os() << "@!no_deps : ";
         for (auto &&[i, var] : iter::enumerate(op->property_->noDeps_)) {
             os() << (i == 0 ? "" : ", ");
             os() << printName(var);
@@ -447,38 +448,37 @@ void PrintVisitor::visit(const For &op) {
     }
     if (auto str = ::ir::toString(op->property_->parallel_); !str.empty()) {
         makeIndent();
-        os() << "@!parallel = @" << str << std::endl;
+        os() << "@!parallel : @" << str << std::endl;
     }
     for (auto &&reduction : op->property_->reductions_) {
         makeIndent();
         os() << "@!reduction ";
         switch (reduction->op_) {
         case ReduceOp::Add:
-            os() << "+: ";
+            os() << "+= ";
             break;
         case ReduceOp::Mul:
-            os() << "*: ";
+            os() << "*= ";
             break;
         case ReduceOp::Min:
-            os() << "min: ";
+            os() << "@!min= ";
             break;
         case ReduceOp::Max:
-            os() << "max: ";
+            os() << "@!max= ";
             break;
         default:
             ASSERT(false);
         }
+        os() << ": ";
 
         os() << printName(reduction->var_);
-        os() << "[";
-        for (auto &&[i, b, e] :
-             iter::zip(iter::count(), reduction->begins_, reduction->ends_)) {
-            os() << (i == 0 ? "" : ", ");
+        for (auto &&[b, e] : iter::zip(reduction->begins_, reduction->ends_)) {
+            os() << "[";
             (*this)(b);
             os() << ":";
             (*this)(e);
+            os() << "]";
         }
-        os() << "]";
         os() << std::endl;
     }
     if (op->property_->unroll_) {

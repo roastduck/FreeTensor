@@ -14,7 +14,7 @@ def test_basic():
         ir.declare_var(w, (8, 3, 3, 3), "float32", "input", "cpu")
         ir.declare_var(y, (2, 8, 12, 12), "float32", "output", "cpu")
         "nid: conv"
-        ir.libop.conv_(auto_pad='VALID')(x, w, y)
+        ir.libop.conv_(x, w, None, y, auto_pad='VALID')
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -45,7 +45,7 @@ def test_bias():
         ir.declare_var(b, (8,), "float32", "input", "cpu")
         ir.declare_var(y, (2, 8, 12, 12), "float32", "output", "cpu")
         "nid: conv"
-        ir.libop.conv_(has_bias=True, auto_pad='VALID')(x, w, b, y)
+        ir.libop.conv_(x, w, b, y, auto_pad='VALID')
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -77,7 +77,12 @@ def test_same_pad():
         ir.declare_var(w, (8, 3, 3, 3), "float32", "input", "cpu")
         ir.declare_var(y, (2, 8, 14, 14), "float32", "output", "cpu")
         "nid: conv"
-        ir.libop.conv_(kernel_shape=(3, 3), auto_pad='SAME_UPPER')(x, w, y)
+        ir.libop.conv_(x,
+                       w,
+                       None,
+                       y,
+                       kernel_shape=(3, 3),
+                       auto_pad='SAME_UPPER')
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -107,7 +112,7 @@ def test_stride():
         ir.declare_var(w, (8, 3, 3, 3), "float32", "input", "cpu")
         ir.declare_var(y, (2, 8, 6, 6), "float32", "output", "cpu")
         "nid: conv"
-        ir.libop.conv_(auto_pad='VALID', strides=(2, 2))(x, w, y)
+        ir.libop.conv_(x, w, None, y, auto_pad='VALID', strides=(2, 2))
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -137,7 +142,7 @@ def test_group():
         ir.declare_var(w, (8, 2, 3, 3), "float32", "input", "cpu")
         ir.declare_var(y, (2, 8, 12, 12), "float32", "output", "cpu")
         "nid: conv"
-        ir.libop.conv_(auto_pad='VALID', group=2)(x, w, y)
+        ir.libop.conv_(x, w, None, y, auto_pad='VALID', group=2)
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -167,7 +172,7 @@ def test_dilation():
         ir.declare_var(w, (8, 3, 3, 3), "float32", "input", "cpu")
         ir.declare_var(y, (2, 8, 10, 10), "float32", "output", "cpu")
         "nid: conv"
-        ir.libop.conv_(auto_pad='VALID', dilations=(2, 2))(x, w, y)
+        ir.libop.conv_(x, w, None, y, auto_pad='VALID', dilations=(2, 2))
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -198,7 +203,7 @@ def test_out_of_place():
         ir.declare_var(y_shape, (4,), "int32", "output", "cpu")
         ir.declare_var(y, (2, 8, 12, 12), "float32", "output", "cpu")
         "nid: conv"
-        _y = ir.libop.conv(auto_pad='VALID')(x, w)
+        _y = ir.libop.conv(x, w, auto_pad='VALID')
         for i in range(4):
             y_shape[i] = _y.shape(i)
         for n in range(2):

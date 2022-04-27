@@ -50,6 +50,7 @@ SIGMOID:    '@!sigmoid';
 TANH:       '@!tanh';
 INTRINSIC:  '@!intrinsic';
 SIDE_EFFECT:    '@!side_effect';
+CLOSURE:    '@!closure';
 
 
 Integer:    ('+'|'-')? [0-9]+;

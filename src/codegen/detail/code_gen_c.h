@@ -321,11 +321,20 @@ template <class Stream> void CodeGenC<Stream>::visit(const Mul &op) {
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const RealDiv &op) {
-    this->os() << "(";
-    (*this)(op->lhs_);
-    this->os() << " / ";
-    (*this)(op->rhs_);
-    this->os() << ")";
+    if (isFloat(this->dtype(op->lhs_)) || isFloat(this->dtype(op->rhs_))) {
+        this->os() << "(";
+        (*this)(op->lhs_);
+        this->os() << " / ";
+        (*this)(op->rhs_);
+        this->os() << ")";
+    } else {
+        // TODO: Use double?
+        this->os() << "(float(";
+        (*this)(op->lhs_);
+        this->os() << ") / float(";
+        (*this)(op->rhs_);
+        this->os() << "))";
+    }
 }
 
 template <class Stream>

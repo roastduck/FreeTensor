@@ -64,8 +64,8 @@ void Driver::buildAndLoad() {
     // strict floating point rounding order either
     switch (dev_.type()) {
     case TargetType::CPU:
-        cmd = "c++ -I" NAME(
-            IR_RUNTIME_DIR) " -shared -O3 -fPIC -Wall -fopenmp -ffast-math";
+        cmd = "c++ -I" NAME(IR_RUNTIME_DIR) " -std=c++17 -shared -O3 -fPIC "
+                                            "-Wall -fopenmp -ffast-math";
         cmd += " -o " + so + " " + cpp;
 #ifdef WITH_MKL
         cmd += " -I\"" NAME(WITH_MKL) "/include\"";
@@ -86,7 +86,7 @@ void Driver::buildAndLoad() {
         }
         break;
     case TargetType::GPU:
-        cmd = "nvcc -I" NAME(IR_RUNTIME_DIR) " -shared -Xcompiler "
+        cmd = "nvcc -I" NAME(IR_RUNTIME_DIR) " -std=c++17 -shared -Xcompiler "
                                              "-fPIC,-Wall,-O3 --use_fast_math";
         cmd += " -o " + so + " " + cpp;
         cmd += " -lcublas";

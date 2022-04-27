@@ -6,6 +6,7 @@
 #include <cmath> // INFINITY
 #include <cstdint>
 #include <stdexcept>
+#include <type_traits>
 
 #include "gpu_context.h"
 
@@ -80,15 +81,18 @@ template <class T> GPUScalar<T> gpuScalar(const T &ref) {
     return GPUScalar<T>(ref);
 }
 
-template <class T> __host__ __device__ T floorDiv(T a, T b) {
+template <class T, typename std::enable_if_t<std::is_integral_v<T>> * = nullptr>
+__host__ __device__ T floorDiv(T a, T b) {
     T res = a / b, rem = a % b;
     return res - (rem != 0 && ((rem < 0) != (b < 0)));
 }
-template <class T> __host__ __device__ T ceilDiv(T a, T b) {
+template <class T, typename std::enable_if_t<std::is_integral_v<T>> * = nullptr>
+__host__ __device__ T ceilDiv(T a, T b) {
     T res = a / b, rem = a % b;
     return res + (rem != 0 && ((rem < 0) == (b < 0)));
 }
-template <class T> __host__ __device__ T runtime_mod(T a, T b) {
+template <class T, typename std::enable_if_t<std::is_integral_v<T>> * = nullptr>
+__host__ __device__ T runtime_mod(T a, T b) {
     T m = a % b;
     if (m < 0) {
         // m += (b < 0) ? -b : b; // avoid this form: it is UB when b == INT_MIN

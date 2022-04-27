@@ -13,7 +13,7 @@ def test_static():
         ir.declare_var(x, (3, 4, 5), "float32", "input", "cpu")
         ir.declare_var(y, (3, 5), "float32", "output", "cpu")
         "nid: reduce_sum"
-        ir.libop.reduce_sum_(axes=[1], keepdims=False)(x, y)
+        ir.libop.reduce_sum_(x, y, axes=[1], keepdims=False)
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -39,7 +39,7 @@ def test_keepdims():
         ir.declare_var(x, (3, 4, 5), "float32", "input", "cpu")
         ir.declare_var(y, (3, 1, 5), "float32", "output", "cpu")
         "nid: reduce_sum"
-        ir.libop.reduce_sum_(axes=[1], keepdims=True)(x, y)
+        ir.libop.reduce_sum_(x, y, axes=[1], keepdims=True)
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -66,7 +66,7 @@ def test_out_of_place():
         ir.declare_var(y_shape, (2,), "int32", "output", "cpu")
         ir.declare_var(y, (3, 5), "float32", "output", "cpu")
         "nid: reduce_sum"
-        _y = ir.libop.reduce_sum(axes=[1], keepdims=False)(x)
+        _y = ir.libop.reduce_sum(x, axes=[1], keepdims=False)
         for i in range(2):
             y_shape[i] = _y.shape(i)
         for i in range(3):
@@ -102,7 +102,7 @@ def test_out_of_place_keepdims():
         ir.declare_var(y_shape, (3,), "int32", "output", "cpu")
         ir.declare_var(y, (3, 1, 5), "float32", "output", "cpu")
         "nid: reduce_sum"
-        _y = ir.libop.reduce_sum(axes=[1], keepdims=True)(x)
+        _y = ir.libop.reduce_sum(x, axes=[1], keepdims=True)
         for i in range(3):
             y_shape[i] = _y.shape(i)
         for i in range(3):

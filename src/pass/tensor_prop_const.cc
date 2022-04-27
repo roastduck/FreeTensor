@@ -5,7 +5,6 @@
 #include <pass/replace_iter.h>
 #include <pass/replace_uses.h>
 #include <pass/scalar_prop_const.h>
-#include <pass/simplify.h>
 #include <pass/tensor_prop_const.h>
 
 namespace ir {
@@ -14,7 +13,6 @@ Stmt tensorPropConst(const Stmt &_op) {
     auto op = _op;
 
     for (int i = 0;; i++) {
-        op = simplifyPass(op);
         op = scalarPropConst(op);
 
         // Please note that the "reads" might also be reductions.

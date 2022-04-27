@@ -149,6 +149,25 @@ def test_for_with_parallel():
     assert s.find("foo").property.parallel == ir.ffi.ParallelScope("openmp")
 
 
+def test_for_with_parallel_reduction():
+    with ir.VarDef([("x", (4, 64), "int32", "input", "cpu"),
+                    ("y", (4,), "int32", "inout", "cpu")]) as (x, y):
+        with ir.For("i", 0, 4, nid="L1") as i:
+            with ir.For("j", 0, 64, nid="L2") as j:
+                y[i] = y[i] + x[i, j]
+    s = ir.Schedule(ir.pop_ast())
+    s.parallelize("L2", "openmp")
+    ast = ir.lower(s.ast())
+    txt = ir.dump_ast(ast)
+    print(txt)
+    ast2 = ir.load_ast(txt)
+    print(ast2)
+    assert ast2.match(ast)
+    s = ir.Schedule(ast2)
+    assert s.find("L2").property.parallel == ir.ffi.ParallelScope("openmp")
+    assert s.find("L2").property.reductions[0].var == "y"
+
+
 def test_if():
     with ir.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ir.For("i", 0, 4) as i:

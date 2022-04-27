@@ -13,7 +13,7 @@ def test_max_pooling_basic():
         ir.declare_var(x, (2, 3, 14, 14), "float32", "input", "cpu")
         ir.declare_var(y, (2, 3, 12, 12), "float32", "output", "cpu")
         "nid: max_pool"
-        ir.libop.max_pool_(auto_pad='VALID', kernel_shape=[3, 3])(x, y)
+        ir.libop.max_pool_(x, y, auto_pad='VALID', kernel_shape=[3, 3])
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -44,7 +44,7 @@ def test_max_pooling_same_padding():
         "nid: y_shape"
         y_shape = ir.create_var((4,), "int32", "cpu")
         "nid: max_pool"
-        ir.libop.max_pool_(auto_pad='SAME_UPPER', kernel_shape=[3, 3])(x, y)
+        ir.libop.max_pool_(x, y, auto_pad='SAME_UPPER', kernel_shape=[3, 3])
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -69,16 +69,16 @@ def test_max_pooling_same_padding():
 def test_max_pooling_stride():
     device = ir.Device(ir.CPU())
 
-    max_pool_ = ir.libop.max_pool_(auto_pad='VALID',
-                                   kernel_shape=[3, 3],
-                                   strides=[3, 3])
-
     @ir.transform
     def f(x, y):
         ir.declare_var(x, (2, 3, 12, 12), "float32", "input", "cpu")
         ir.declare_var(y, (2, 3, 4, 4), "float32", "output", "cpu")
         "nid: max_pool"
-        max_pool_(x, y)
+        ir.libop.max_pool_(x,
+                           y,
+                           auto_pad='VALID',
+                           kernel_shape=[3, 3],
+                           strides=[3, 3])
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -102,16 +102,16 @@ def test_max_pooling_stride():
 def test_max_pooling_dilation():
     device = ir.Device(ir.CPU())
 
-    max_pool_ = ir.libop.max_pool_(auto_pad='VALID',
-                                   kernel_shape=[3, 3],
-                                   dilations=[2, 2])
-
     @ir.transform
     def f(x, y):
         ir.declare_var(x, (2, 3, 14, 14), "float32", "input", "cpu")
         ir.declare_var(y, (2, 3, 10, 10), "float32", "output", "cpu")
         "nid: max_pool"
-        max_pool_(x, y)
+        ir.libop.max_pool_(x,
+                           y,
+                           auto_pad='VALID',
+                           kernel_shape=[3, 3],
+                           dilations=[2, 2])
 
     print(f)
     f = ir.lower(f, ir.CPU())
@@ -136,15 +136,13 @@ def test_max_pooling_dilation():
 def test_max_pooling_out_of_place():
     device = ir.Device(ir.CPU())
 
-    max_pool = ir.libop.max_pool(auto_pad='VALID', kernel_shape=[3, 3])
-
     @ir.transform
     def f(x, y_shape, y):
         ir.declare_var(x, (2, 3, 14, 14), "float32", "input", "cpu")
         ir.declare_var(y_shape, (4,), "int32", "output", "cpu")
         ir.declare_var(y, (2, 3, 12, 12), "float32", "output", "cpu")
         "nid: max_pool"
-        _y = max_pool(x)
+        _y = ir.libop.max_pool(x, auto_pad='VALID', kernel_shape=[3, 3])
         for i in range(4):
             y_shape[i] = _y.shape(i)
         for n in range(2):
