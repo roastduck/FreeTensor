@@ -1,6 +1,6 @@
 #include <analyze/find_stmt.h>
 
-namespace ir {
+namespace freetensor {
 
 void FindStmtById::visitStmt(const Stmt &op) {
     if (!result_.isValid()) {
@@ -18,4 +18,4 @@ void FindStmtByFilter::visitStmt(const Stmt &op) {
     }
 }
 
-} // namespace ir
+} // namespace freetensor

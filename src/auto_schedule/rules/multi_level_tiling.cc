@@ -2,7 +2,7 @@
 #include <auto_schedule/rules/multi_level_tiling.h>
 #include <auto_schedule/utils.h>
 
-namespace ir {
+namespace freetensor {
 RuleStatus MultiLevelTilingRule::analyze(const Sketch &sketch) {
     if (sketch.nowTarget().hasPart(
             SketchPartType::MultiLevelTilingWithFusion) ||
@@ -153,4 +153,4 @@ void MultiLevelTilingPart::genSampleAnnotation() {
     annotation_.reductionLoopTiling = reductionLoopTiling;
 }
 
-} // namespace ir
+} // namespace freetensor

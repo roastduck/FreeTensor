@@ -4,7 +4,7 @@
 #include <analyze/comp_access_bound.h>
 #include <math/min_max.h>
 
-namespace ir {
+namespace freetensor {
 
 static bool isSharedAmong(MemType mtype, const ParallelScope &parallel) {
     if (std::holds_alternative<CUDAScope>(parallel)) {
@@ -164,4 +164,4 @@ AccessBound compAccessBound(const Stmt &op, const ID &varDefId,
     return visitor.result();
 }
 
-} // namespace ir
+} // namespace freetensor

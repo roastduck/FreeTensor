@@ -5,7 +5,7 @@
 #include <debug/match_ast.h>
 #include <pass/flatten_stmt_seq.h>
 
-namespace ir {
+namespace freetensor {
 
 bool MatchVisitor::matchName(const std::string &thisName,
                              const std::string &otherName) {
@@ -510,4 +510,4 @@ bool match(const Stmt &_pattern, const Stmt &_instance) {
     return visitor.isMatched();
 }
 
-} // namespace ir
+} // namespace freetensor

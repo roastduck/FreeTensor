@@ -3,7 +3,7 @@
 #include <ffi.h>
 #include <schedule.h>
 
-namespace ir {
+namespace freetensor {
 
 using namespace pybind11::literals;
 
@@ -68,4 +68,4 @@ void init_ffi_schedule(py::module_ &m) {
         .def("auto_unroll", &Schedule::autoUnroll);
 }
 
-} // namespace ir
+} // namespace freetensor

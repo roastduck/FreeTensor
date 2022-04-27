@@ -1,7 +1,7 @@
 #include <pass/simplify.h>
 #include <schedule/split.h>
 
-namespace ir {
+namespace freetensor {
 
 Stmt Splitter::visit(const For &_op) {
     if (_op->id() == src_) {
@@ -64,4 +64,4 @@ std::pair<Stmt, std::pair<ID, ID>> split(const Stmt &_ast, const ID &id,
                           std::make_pair(mutator.outerId(), mutator.innerId()));
 }
 
-} // namespace ir
+} // namespace freetensor

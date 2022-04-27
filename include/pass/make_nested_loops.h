@@ -1,5 +1,5 @@
-#ifndef MAKE_NESTED_LOOPS_H
-#define MAKE_NESTED_LOOPS_H
+#ifndef FREE_TENSOR_MAKE_NESTED_LOOPS_H
+#define FREE_TENSOR_MAKE_NESTED_LOOPS_H
 
 #include <type_traits>
 
@@ -7,7 +7,7 @@
 
 #include <stmt.h>
 
-namespace ir {
+namespace freetensor {
 
 /**
  * Helper function to make a loop nest given lists of loop parameters (from
@@ -48,6 +48,6 @@ Stmt makeNestedLoops(Titers &&iters, Tbegins &&begins, Tends &&ends,
     return ret;
 }
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // MAKE_NESTED_LOOPS_H
+#endif // FREE_TENSOR_MAKE_NESTED_LOOPS_H

@@ -1,5 +1,5 @@
-#ifndef GPU_MAKE_SYNC_H
-#define GPU_MAKE_SYNC_H
+#ifndef FREE_TENSOR_GPU_MAKE_SYNC_H
+#define FREE_TENSOR_GPU_MAKE_SYNC_H
 
 #include <unordered_set>
 
@@ -8,7 +8,7 @@
 #include <mutator.h>
 #include <visitor.h>
 
-namespace ir {
+namespace freetensor {
 
 namespace gpu {
 
@@ -81,6 +81,6 @@ DEFINE_PASS_FOR_FUNC(makeSync)
 
 } // namespace gpu
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // GPU_MAKE_SYNC_H
+#endif // FREE_TENSOR_GPU_MAKE_SYNC_H

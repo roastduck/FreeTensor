@@ -1,5 +1,5 @@
-#ifndef PRESBURGER_H
-#define PRESBURGER_H
+#ifndef FREE_TENSOR_PRESBURGER_H
+#define FREE_TENSOR_PRESBURGER_H
 
 #include <iostream>
 #include <string>
@@ -14,7 +14,7 @@
 #include <debug/profile.h>
 #include <except.h>
 
-namespace ir {
+namespace freetensor {
 
 // Presburger arithmetic, currently implemented with ISL
 
@@ -598,6 +598,6 @@ inline bool operator!=(const PBMap &lhs, const PBMap &rhs) {
     return !isl_map_is_equal(lhs.get(), rhs.get());
 }
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // PRESBURGER_H
+#endif // FREE_TENSOR_PRESBURGER_H

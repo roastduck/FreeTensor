@@ -1,8 +1,8 @@
 #include <debug/logger.h>
 
-namespace ir {
+namespace freetensor {
 
 LogCtrl LogCtrl::instance_;
 std::mutex Logger::lock_;
 
-} // namespace ir
+} // namespace freetensor

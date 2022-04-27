@@ -1,6 +1,6 @@
 #include <pass/use_builtin_div.h>
 
-namespace ir {
+namespace freetensor {
 
 static Expr makeNeg(const Expr &expr) { return makeSub(makeIntConst(0), expr); }
 
@@ -85,4 +85,4 @@ Expr UseBuiltinDiv::visit(const Mod &_op) {
 
 Stmt useBuiltinDiv(const Stmt &_op) { return UseBuiltinDiv()(_op); }
 
-} // namespace ir
+} // namespace freetensor

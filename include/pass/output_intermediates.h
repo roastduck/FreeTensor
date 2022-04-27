@@ -1,5 +1,5 @@
-#ifndef OUTPUT_INTERMEDIATES_H
-#define OUTPUT_INTERMEDIATES_H
+#ifndef FREE_TENSOR_OUTPUT_INTERMEDIATES_H
+#define FREE_TENSOR_OUTPUT_INTERMEDIATES_H
 
 #include <unordered_map>
 #include <unordered_set>
@@ -7,7 +7,7 @@
 #include <analyze/symbol_table.h>
 #include <mutator.h>
 
-namespace ir {
+namespace freetensor {
 
 class OutputIntermediates : public SymbolTable<Mutator> {
     typedef SymbolTable<Mutator> BaseClass;
@@ -94,6 +94,6 @@ std::tuple<Stmt, std::unordered_map<ID, std::string>,
 outputIntermediates(const Stmt &op,
                     const std::unordered_set<ID> &intermediates);
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // OUTPUT_INTERMEDIATES_H
+#endif // FREE_TENSOR_OUTPUT_INTERMEDIATES_H

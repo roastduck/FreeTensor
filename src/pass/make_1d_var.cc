@@ -1,7 +1,7 @@
 #include <pass/make_1d_var.h>
 #include <pass/simplify.h>
 
-namespace ir {
+namespace freetensor {
 
 Stmt Make1DVar::visit(const VarDef &_op) {
     if (_op->buffer_->tensor()->shape().size() <= 1) {
@@ -51,4 +51,4 @@ Stmt make1dVar(const Stmt &_op) {
     return op;
 }
 
-} // namespace ir
+} // namespace freetensor

@@ -1,5 +1,5 @@
-#ifndef SHRINK_FOR_H
-#define SHRINK_FOR_H
+#ifndef FREE_TENSOR_SHRINK_FOR_H
+#define FREE_TENSOR_SHRINK_FOR_H
 
 #include <itertools.hpp>
 
@@ -13,7 +13,7 @@
 #include <mutator.h>
 #include <pass/pb_simplify.h>
 
-namespace ir {
+namespace freetensor {
 
 class CheckSideEffect : public Visitor {
     bool hasSideEffect_ = false;
@@ -61,6 +61,6 @@ Stmt shrinkFor(const Stmt &op);
 
 DEFINE_PASS_FOR_FUNC(shrinkFor)
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // SHRINK_FOR_H
+#endif // FREE_TENSOR_SHRINK_FOR_H

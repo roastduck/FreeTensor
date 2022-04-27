@@ -3,7 +3,7 @@
 #include <analyze/structural_feature.h>
 #include <ffi.h>
 
-namespace ir {
+namespace freetensor {
 
 using namespace pybind11::literals;
 
@@ -25,4 +25,4 @@ void init_ffi_analyze(py::module_ &m) {
     m.def("find_multi_level_tiling", fakeFindMultiLevelTiling);
 }
 
-} // namespace ir
+} // namespace freetensor

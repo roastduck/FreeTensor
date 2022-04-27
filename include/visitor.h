@@ -1,12 +1,12 @@
-#ifndef VISITOR_H
-#define VISITOR_H
+#ifndef FREE_TENSOR_VISITOR_H
+#define FREE_TENSOR_VISITOR_H
 
 #include <debug.h>
 #include <expr.h>
 #include <func.h>
 #include <stmt.h>
 
-namespace ir {
+namespace freetensor {
 
 class Visitor {
   public:
@@ -264,6 +264,6 @@ class Visitor {
     }
 };
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // VISITOR_H
+#endif // FREE_TENSOR_VISITOR_H

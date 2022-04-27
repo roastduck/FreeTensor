@@ -1,5 +1,5 @@
-#ifndef IR_FIND_MULTI_LEVEL_TILING_H
-#define IR_FIND_MULTI_LEVEL_TILING_H
+#ifndef FREE_TENSOR_FIND_MULTI_LEVEL_TILING_H
+#define FREE_TENSOR_FIND_MULTI_LEVEL_TILING_H
 
 #include <analyze/find_loop_variance.h>
 #include <ast.h>
@@ -10,7 +10,7 @@
 #include <vector>
 #include <visitor.h>
 
-namespace ir {
+namespace freetensor {
 
 class FindHasStore : public Visitor {
     std::vector<ForInfo> stack_;
@@ -91,6 +91,6 @@ inline std::vector<ID> fakeFindMultiLevelTiling(const Stmt &ast) {
     return ret;
 }
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // IR_FIND_MULTI_LEVEL_TILING_H
+#endif // FREE_TENSOR_FIND_MULTI_LEVEL_TILING_H

@@ -1,8 +1,8 @@
-import ir
+import freetensor as ft
 import numpy as np
 
-target = ir.CPU()
-device = ir.Device(target)
+target = ft.CPU()
+device = ft.Device(target)
 
 
 def test_fusion():
@@ -10,12 +10,12 @@ def test_fusion():
     b = 256
     m = 4
 
-    @ir.transform
+    @ft.transform
     def test(w, x, y, z):
-        ir.declare_var(w, (m, m, a, b), "int32", "input", "cpu")
-        ir.declare_var(x, (m, m, b, a), "int32", "input", "cpu")
-        ir.declare_var(y, (1, 1, a, a), "int32", "cache", "cpu")
-        ir.declare_var(z, (m, m, a, a), "int32", "output", "cpu")
+        ft.declare_var(w, (m, m, a, b), "int32", "input", "cpu")
+        ft.declare_var(x, (m, m, b, a), "int32", "input", "cpu")
+        ft.declare_var(y, (1, 1, a, a), "int32", "cache", "cpu")
+        ft.declare_var(z, (m, m, a, a), "int32", "output", "cpu")
         "nid: L1"
         for i in range(m):
             "nid: L2"
@@ -34,23 +34,23 @@ def test_fusion():
                     for q in range(a):
                         z[i, j, p, q] = y[0, 0, p, q]
 
-    s = ir.Schedule(test)
+    s = ft.Schedule(test)
     print(s.ast())
-    s = ir.AutoSchedule(s, target, device, 8)
+    s = ft.AutoSchedule(s, target, device, 8)
     sch = s.test_multi_level_tiling_with_fusion(1)
-    func = ir.lower(sch.func(), target)
+    func = ft.lower(sch.func(), target)
     print(func)
-    code = ir.codegen(func, target)
+    code = ft.codegen(func, target)
     print(code)
     w_np = np.zeros((m, m, a, b), dtype="float32")
     x_np = np.zeros((m, m, b, a), dtype="float32")
     y_np = np.zeros((1, 1, a, a), dtype="float32")
     z_np = np.zeros((m, m, a, a), dtype="float32")
-    w_arr = ir.Array(w_np, device)
-    x_arr = ir.Array(x_np, device)
-    y_arr = ir.Array(y_np, device)
-    z_arr = ir.Array(z_np, device)
-    ir.Driver(func, code, device)(w=w_arr, x=x_arr, y=y_arr, z=z_arr)
+    w_arr = ft.Array(w_np, device)
+    x_arr = ft.Array(x_np, device)
+    y_arr = ft.Array(y_np, device)
+    z_arr = ft.Array(z_np, device)
+    ft.Driver(func, code, device)(w=w_arr, x=x_arr, y=y_arr, z=z_arr)
     std_log = [
         'split(L4, factor=2, nparts=-1)', 'split(L4.0, factor=2, nparts=-1)',
         'split(L4.0.0, factor=2, nparts=-1)', 'split(L5, factor=2, nparts=-1)',

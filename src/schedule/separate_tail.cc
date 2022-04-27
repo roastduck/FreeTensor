@@ -9,7 +9,7 @@
 #include <pass/z3_simplify.h>
 #include <schedule/separate_tail.h>
 
-namespace ir {
+namespace freetensor {
 
 static bool noIntersect(const std::unordered_set<std::string> &set1,
                         const std::unordered_set<std::string> &set2) {
@@ -169,4 +169,4 @@ Stmt separateTail(const Stmt &_ast, bool noDuplicateVarDefs) {
     return ast;
 }
 
-} // namespace ir
+} // namespace freetensor

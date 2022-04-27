@@ -3,7 +3,7 @@
 #include <container_utils.h>
 #include <pass/annotate_conds.h>
 
-namespace ir {
+namespace freetensor {
 
 void AnnotateConds::addCond(const Expr &expr) {
     auto dnf = asDNF(expr);
@@ -111,4 +111,4 @@ Stmt AnnotateConds::visit(const Assert &op) {
 
 Stmt AnnotateConds::visit(const Assume &op) { return (*this)(op->body_); }
 
-} // namespace ir
+} // namespace freetensor

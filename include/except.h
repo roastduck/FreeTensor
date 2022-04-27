@@ -1,11 +1,11 @@
-#ifndef EXCEPT_H
-#define EXCEPT_H
+#ifndef FREE_TENSOR_EXCEPT_H
+#define FREE_TENSOR_EXCEPT_H
 
 #include <iostream>
 #include <stdexcept>
 #include <string>
 
-namespace ir {
+namespace freetensor {
 
 class Error : public std::runtime_error {
   public:
@@ -41,8 +41,8 @@ void reportWarning(const std::string &msg);
 
 #define ERROR(msg)                                                             \
     {                                                                          \
-        throw ::ir::Error((std::string) "[ERROR] " __FILE__ ":" +              \
-                          std::to_string(__LINE__) + ": " + (msg));            \
+        throw ::freetensor::Error((std::string) "[ERROR] " __FILE__ ":" +      \
+                                  std::to_string(__LINE__) + ": " + (msg));    \
     }
 
 #define WARNING(msg)                                                           \
@@ -58,6 +58,6 @@ void reportWarning(const std::string &msg);
         }                                                                      \
     }
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // EXCEPT_H
+#endif // FREE_TENSOR_EXCEPT_H

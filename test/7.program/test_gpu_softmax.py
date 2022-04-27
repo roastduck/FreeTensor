@@ -1,12 +1,12 @@
 import torch
 import numpy as np
 
-import ir
-import ir.debug
-import ir.libop
+import freetensor as ft
+from freetensor import debug
+from freetensor import libop
 
-target = ir.GPU()
-device = ir.Device(target)
+target = ft.GPU()
+device = ft.Device(target)
 
 
 def test_manual_static():
@@ -18,19 +18,19 @@ def test_manual_static():
     seq_len = 512
     seq_len = 512
 
-    @ir.transform
+    @ft.transform
     def f(x, y):
         "nid: V_x"
-        ir.declare_var(x, (batch_size, n_heads, seq_len, seq_len), "float32",
+        ft.declare_var(x, (batch_size, n_heads, seq_len, seq_len), "float32",
                        "input", "gpu/global")
         "nid: V_y"
-        ir.declare_var(y, (batch_size, n_heads, seq_len, seq_len), "float32",
+        ft.declare_var(y, (batch_size, n_heads, seq_len, seq_len), "float32",
                        "output", "gpu/global")
         "nid: softmax"
-        ir.libop.softmax_(x, y)
+        libop.softmax_(x, y)
 
     print(f)
-    s = ir.Schedule(f)
+    s = ft.Schedule(f)
 
     # L_head
     L_head = s.fuse("softmax->max->impl->recur->init->recur->L",
@@ -121,25 +121,25 @@ def test_manual_static():
     s.set_mem_type(x_local_def, "gpu/local")
     s.set_mem_type(s.find("softmax->exp->y"), "gpu/local")
 
-    f = ir.lower(s.func(), target)
+    f = ft.lower(s.func(), target)
     print(f)
 
-    code = ir.codegen(f, target)
-    print(ir.debug.with_line_no(code))
+    code = ft.codegen(f, target)
+    print(debug.with_line_no(code))
 
     x_torch = torch.rand(batch_size,
                          n_heads,
                          seq_len,
                          seq_len,
                          dtype=torch.float32)
-    x_arr = ir.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy(), device)
     y_torch = torch.zeros(batch_size,
                           n_heads,
                           seq_len,
                           seq_len,
                           dtype=torch.float32)
-    y_arr = ir.Array(y_torch.numpy(), device)
-    ir.Driver(f, code, device)(x_arr, y_arr)
+    y_arr = ft.Array(y_torch.numpy(), device)
+    ft.Driver(f, code, device)(x_arr, y_arr)
     y_torch = torch.Tensor(y_arr.numpy())
 
     assert torch.all(torch.isclose(y_torch, torch.softmax(x_torch, axis=-1)))

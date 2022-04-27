@@ -1,5 +1,5 @@
-#ifndef BLEND_H
-#define BLEND_H
+#ifndef FREE_TENSOR_BLEND_H
+#define FREE_TENSOR_BLEND_H
 
 #include <unordered_map>
 
@@ -7,7 +7,7 @@
 #include <mutator.h>
 #include <visitor.h>
 
-namespace ir {
+namespace freetensor {
 
 class FindAllScopesInside : public Visitor {
     ID loop_;
@@ -117,6 +117,6 @@ class BlendPass : public Mutator {
 
 Stmt blend(const Stmt &ast, const ID &loop);
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // BLEND_H
+#endif // FREE_TENSOR_BLEND_H

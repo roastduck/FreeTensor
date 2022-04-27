@@ -1,7 +1,7 @@
 #include <analyze/analyze_version.h>
 #include <pass/output_intermediates.h>
 
-namespace ir {
+namespace freetensor {
 
 static MemType toGlobalMemType(MemType mtype) {
     switch (mtype) {
@@ -117,4 +117,4 @@ outputIntermediates(const Stmt &op,
     return std::make_tuple(ret, mutator.tapeNames(), versions, totLens);
 }
 
-} // namespace ir
+} // namespace freetensor

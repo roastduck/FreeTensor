@@ -1,5 +1,5 @@
-#ifndef CONTAINER_UTILS_H
-#define CONTAINER_UTILS_H
+#ifndef FREE_TENSOR_CONTAINER_UTILS_H
+#define FREE_TENSOR_CONTAINER_UTILS_H
 
 #include <algorithm>
 #include <cctype>
@@ -10,7 +10,7 @@
 
 #include <except.h>
 
-namespace ir {
+namespace freetensor {
 
 template <class T, class V1, class V2, class Hash, class KeyEqual>
 std::unordered_map<T, std::pair<V1, V2>, Hash, KeyEqual>
@@ -131,6 +131,6 @@ inline std::string slice(const std::string &s, int begin) {
     return slice(s, begin, s.length());
 }
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // CONTAINER_UTILS_H
+#endif // FREE_TENSOR_CONTAINER_UTILS_H

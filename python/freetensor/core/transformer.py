@@ -453,8 +453,8 @@ def mark_position(base_lineno: int, line_offset: int):
 def module_helper(callee):
     '''Helper to get an AST node with full path to given symbol, which should be in current module.'''
     return ast.Attribute(
-        ast.Attribute(ast.Name('ir', ast.Load()), 'transformer', ast.Load()),
-        callee.__name__, ast.Load())
+        ast.Attribute(ast.Name('freetensor', ast.Load()), 'transformer',
+                      ast.Load()), callee.__name__, ast.Load())
 
 
 def call_helper(callee, *args: ast.expr, **kwargs: ast.expr):
@@ -826,7 +826,7 @@ def into_staging(func, caller_env, src=None, verbose=False):
             highlight(source, PythonLexer(),
                       TerminalFormatter(bg='dark', linenos=True)))
 
-    caller_env['ir'] = sys.modules['ir']
+    caller_env['freetensor'] = sys.modules['freetensor']
     exec(compile(source, f'<staging:{func.__name__}>', 'exec'), caller_env)
     return caller_env[func.__name__], file, func.__name__
 

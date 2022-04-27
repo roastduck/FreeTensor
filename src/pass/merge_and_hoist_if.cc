@@ -6,7 +6,7 @@
 #include <pass/flatten_stmt_seq.h>
 #include <pass/merge_and_hoist_if.h>
 
-namespace ir {
+namespace freetensor {
 
 Stmt MergeAndHoistIf::visit(const StmtSeq &_op) {
     auto __op = BaseClass::visit(_op);
@@ -121,4 +121,4 @@ Stmt mergeAndHoistIf(const Stmt &_op) {
     return op;
 }
 
-} // namespace ir
+} // namespace freetensor

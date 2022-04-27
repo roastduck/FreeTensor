@@ -1,34 +1,34 @@
 import torch
 import numpy as np
 
-import ir
-import ir.libop
+import freetensor as ft
+from freetensor import libop
 
 
 def test_mm():
-    device = ir.Device(ir.CPU())
+    device = ft.Device(ft.CPU())
 
-    @ir.transform
+    @ft.transform
     def f(a, b, y):
-        ir.declare_var(a, (4, 5), "float32", "input", "cpu")
-        ir.declare_var(b, (5, 6), "float32", "input", "cpu")
-        ir.declare_var(y, (4, 6), "float32", "output", "cpu")
+        ft.declare_var(a, (4, 5), "float32", "input", "cpu")
+        ft.declare_var(b, (5, 6), "float32", "input", "cpu")
+        ft.declare_var(y, (4, 6), "float32", "output", "cpu")
         "nid: einsum"
-        ir.libop.matmul_(a, b, y)
+        libop.matmul_(a, b, y)
 
     print(f)
-    f = ir.lower(f, ir.CPU())
+    f = ft.lower(f, ft.CPU())
     print(f)
 
-    code = ir.codegen(f, ir.CPU())
+    code = ft.codegen(f, ft.CPU())
 
     a_torch = torch.rand(4, 5, dtype=torch.float32)
-    a_arr = ir.Array(a_torch.numpy(), device)
+    a_arr = ft.Array(a_torch.numpy(), device)
     b_torch = torch.rand(5, 6, dtype=torch.float32)
-    b_arr = ir.Array(b_torch.numpy(), device)
+    b_arr = ft.Array(b_torch.numpy(), device)
     y_torch = torch.zeros(4, 6, dtype=torch.float32)
-    y_arr = ir.Array(y_torch.numpy(), device)
-    ir.Driver(f, code, device)(a_arr, b_arr, y_arr)
+    y_arr = ft.Array(y_torch.numpy(), device)
+    ft.Driver(f, code, device)(a_arr, b_arr, y_arr)
     y_torch = torch.Tensor(y_arr.numpy())
 
     y_std = torch.matmul(a_torch, b_torch)
@@ -36,29 +36,29 @@ def test_mm():
 
 
 def test_bmm_1():
-    device = ir.Device(ir.CPU())
+    device = ft.Device(ft.CPU())
 
-    @ir.transform
+    @ft.transform
     def f(a, b, y):
-        ir.declare_var(a, (2, 4, 5), "float32", "input", "cpu")
-        ir.declare_var(b, (2, 5, 6), "float32", "input", "cpu")
-        ir.declare_var(y, (2, 4, 6), "float32", "output", "cpu")
+        ft.declare_var(a, (2, 4, 5), "float32", "input", "cpu")
+        ft.declare_var(b, (2, 5, 6), "float32", "input", "cpu")
+        ft.declare_var(y, (2, 4, 6), "float32", "output", "cpu")
         "nid: einsum"
-        ir.libop.matmul_(a, b, y)
+        libop.matmul_(a, b, y)
 
     print(f)
-    f = ir.lower(f, ir.CPU())
+    f = ft.lower(f, ft.CPU())
     print(f)
 
-    code = ir.codegen(f, ir.CPU())
+    code = ft.codegen(f, ft.CPU())
 
     a_torch = torch.rand(2, 4, 5, dtype=torch.float32)
-    a_arr = ir.Array(a_torch.numpy(), device)
+    a_arr = ft.Array(a_torch.numpy(), device)
     b_torch = torch.rand(2, 5, 6, dtype=torch.float32)
-    b_arr = ir.Array(b_torch.numpy(), device)
+    b_arr = ft.Array(b_torch.numpy(), device)
     y_torch = torch.zeros(2, 4, 6, dtype=torch.float32)
-    y_arr = ir.Array(y_torch.numpy(), device)
-    ir.Driver(f, code, device)(a_arr, b_arr, y_arr)
+    y_arr = ft.Array(y_torch.numpy(), device)
+    ft.Driver(f, code, device)(a_arr, b_arr, y_arr)
     y_torch = torch.Tensor(y_arr.numpy())
 
     y_std = torch.matmul(a_torch, b_torch)
@@ -66,29 +66,29 @@ def test_bmm_1():
 
 
 def test_bmm_2():
-    device = ir.Device(ir.CPU())
+    device = ft.Device(ft.CPU())
 
-    @ir.transform
+    @ft.transform
     def f(a, b, y):
-        ir.declare_var(a, (2, 4, 5), "float32", "input", "cpu")
-        ir.declare_var(b, (5, 6), "float32", "input", "cpu")
-        ir.declare_var(y, (2, 4, 6), "float32", "output", "cpu")
+        ft.declare_var(a, (2, 4, 5), "float32", "input", "cpu")
+        ft.declare_var(b, (5, 6), "float32", "input", "cpu")
+        ft.declare_var(y, (2, 4, 6), "float32", "output", "cpu")
         "nid: einsum"
-        ir.libop.matmul_(a, b, y)
+        libop.matmul_(a, b, y)
 
     print(f)
-    f = ir.lower(f, ir.CPU())
+    f = ft.lower(f, ft.CPU())
     print(f)
 
-    code = ir.codegen(f, ir.CPU())
+    code = ft.codegen(f, ft.CPU())
 
     a_torch = torch.rand(2, 4, 5, dtype=torch.float32)
-    a_arr = ir.Array(a_torch.numpy(), device)
+    a_arr = ft.Array(a_torch.numpy(), device)
     b_torch = torch.rand(5, 6, dtype=torch.float32)
-    b_arr = ir.Array(b_torch.numpy(), device)
+    b_arr = ft.Array(b_torch.numpy(), device)
     y_torch = torch.zeros(2, 4, 6, dtype=torch.float32)
-    y_arr = ir.Array(y_torch.numpy(), device)
-    ir.Driver(f, code, device)(a_arr, b_arr, y_arr)
+    y_arr = ft.Array(y_torch.numpy(), device)
+    ft.Driver(f, code, device)(a_arr, b_arr, y_arr)
     y_torch = torch.Tensor(y_arr.numpy())
 
     y_std = torch.matmul(a_torch, b_torch)
@@ -96,29 +96,29 @@ def test_bmm_2():
 
 
 def test_mv():
-    device = ir.Device(ir.CPU())
+    device = ft.Device(ft.CPU())
 
-    @ir.transform
+    @ft.transform
     def f(a, b, y):
-        ir.declare_var(a, (4, 5), "float32", "input", "cpu")
-        ir.declare_var(b, (5,), "float32", "input", "cpu")
-        ir.declare_var(y, (4,), "float32", "output", "cpu")
+        ft.declare_var(a, (4, 5), "float32", "input", "cpu")
+        ft.declare_var(b, (5,), "float32", "input", "cpu")
+        ft.declare_var(y, (4,), "float32", "output", "cpu")
         "nid: einsum"
-        ir.libop.matmul_(a, b, y)
+        libop.matmul_(a, b, y)
 
     print(f)
-    f = ir.lower(f, ir.CPU())
+    f = ft.lower(f, ft.CPU())
     print(f)
 
-    code = ir.codegen(f, ir.CPU())
+    code = ft.codegen(f, ft.CPU())
 
     a_torch = torch.rand(4, 5, dtype=torch.float32)
-    a_arr = ir.Array(a_torch.numpy(), device)
+    a_arr = ft.Array(a_torch.numpy(), device)
     b_torch = torch.rand(5, dtype=torch.float32)
-    b_arr = ir.Array(b_torch.numpy(), device)
+    b_arr = ft.Array(b_torch.numpy(), device)
     y_torch = torch.zeros(4, dtype=torch.float32)
-    y_arr = ir.Array(y_torch.numpy(), device)
-    ir.Driver(f, code, device)(a_arr, b_arr, y_arr)
+    y_arr = ft.Array(y_torch.numpy(), device)
+    ft.Driver(f, code, device)(a_arr, b_arr, y_arr)
     y_torch = torch.Tensor(y_arr.numpy())
 
     y_std = torch.matmul(a_torch, b_torch)
@@ -126,29 +126,29 @@ def test_mv():
 
 
 def test_vm():
-    device = ir.Device(ir.CPU())
+    device = ft.Device(ft.CPU())
 
-    @ir.transform
+    @ft.transform
     def f(a, b, y):
-        ir.declare_var(a, (5,), "float32", "input", "cpu")
-        ir.declare_var(b, (5, 6), "float32", "input", "cpu")
-        ir.declare_var(y, (6,), "float32", "output", "cpu")
+        ft.declare_var(a, (5,), "float32", "input", "cpu")
+        ft.declare_var(b, (5, 6), "float32", "input", "cpu")
+        ft.declare_var(y, (6,), "float32", "output", "cpu")
         "nid: einsum"
-        ir.libop.matmul_(a, b, y)
+        libop.matmul_(a, b, y)
 
     print(f)
-    f = ir.lower(f, ir.CPU())
+    f = ft.lower(f, ft.CPU())
     print(f)
 
-    code = ir.codegen(f, ir.CPU())
+    code = ft.codegen(f, ft.CPU())
 
     a_torch = torch.rand(5, dtype=torch.float32)
-    a_arr = ir.Array(a_torch.numpy(), device)
+    a_arr = ft.Array(a_torch.numpy(), device)
     b_torch = torch.rand(5, 6, dtype=torch.float32)
-    b_arr = ir.Array(b_torch.numpy(), device)
+    b_arr = ft.Array(b_torch.numpy(), device)
     y_torch = torch.zeros(6, dtype=torch.float32)
-    y_arr = ir.Array(y_torch.numpy(), device)
-    ir.Driver(f, code, device)(a_arr, b_arr, y_arr)
+    y_arr = ft.Array(y_torch.numpy(), device)
+    ft.Driver(f, code, device)(a_arr, b_arr, y_arr)
     y_torch = torch.Tensor(y_arr.numpy())
 
     y_std = torch.matmul(a_torch, b_torch)
@@ -156,35 +156,35 @@ def test_vm():
 
 
 def test_out_of_place():
-    device = ir.Device(ir.CPU())
+    device = ft.Device(ft.CPU())
 
-    @ir.transform
+    @ft.transform
     def f(a, b, y_shape, y):
-        ir.declare_var(a, (4, 5), "float32", "input", "cpu")
-        ir.declare_var(b, (5,), "float32", "input", "cpu")
-        ir.declare_var(y_shape, (1,), "int32", "output", "cpu")
-        ir.declare_var(y, (4,), "float32", "output", "cpu")
+        ft.declare_var(a, (4, 5), "float32", "input", "cpu")
+        ft.declare_var(b, (5,), "float32", "input", "cpu")
+        ft.declare_var(y_shape, (1,), "int32", "output", "cpu")
+        ft.declare_var(y, (4,), "float32", "output", "cpu")
         "nid: gemm"
-        _y = ir.libop.matmul(a, b)
+        _y = libop.matmul(a, b)
         y_shape[0] = _y.shape(0)
         for i in range(4):
             y[i] = _y[i]
 
     print(f)
-    f = ir.lower(f, ir.CPU())
+    f = ft.lower(f, ft.CPU())
     print(f)
 
-    code = ir.codegen(f, ir.CPU())
+    code = ft.codegen(f, ft.CPU())
 
     a_torch = torch.rand(4, 5, dtype=torch.float32)
-    a_arr = ir.Array(a_torch.numpy(), device)
+    a_arr = ft.Array(a_torch.numpy(), device)
     b_torch = torch.rand(5, dtype=torch.float32)
-    b_arr = ir.Array(b_torch.numpy(), device)
+    b_arr = ft.Array(b_torch.numpy(), device)
     y_shape_torch = torch.zeros(1, dtype=torch.int32)
-    y_shape_arr = ir.Array(y_shape_torch.numpy(), device)
+    y_shape_arr = ft.Array(y_shape_torch.numpy(), device)
     y_torch = torch.zeros(4, dtype=torch.float32)
-    y_arr = ir.Array(y_torch.numpy(), device)
-    ir.Driver(f, code, device)(a_arr, b_arr, y_shape_arr, y_arr)
+    y_arr = ft.Array(y_torch.numpy(), device)
+    ft.Driver(f, code, device)(a_arr, b_arr, y_shape_arr, y_arr)
     y_shape_np = y_shape_arr.numpy()
     y_torch = torch.Tensor(y_arr.numpy())
 

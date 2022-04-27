@@ -1,6 +1,6 @@
 #include <analyze/find_all_loops.h>
 
-namespace ir {
+namespace freetensor {
 
 void FindAllLoops::visit(const For &op) {
     Visitor::visit(op);
@@ -13,4 +13,4 @@ std::vector<ID> findAllLoops(const Stmt &op) {
     return visitor.loops();
 }
 
-} // namespace ir
+} // namespace freetensor

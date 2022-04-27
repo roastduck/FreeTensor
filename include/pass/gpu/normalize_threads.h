@@ -1,5 +1,5 @@
-#ifndef GPU_NORMALIZE_THREADS_H
-#define GPU_NORMALIZE_THREADS_H
+#ifndef FREE_TENSOR_GPU_NORMALIZE_THREADS_H
+#define FREE_TENSOR_GPU_NORMALIZE_THREADS_H
 
 #include <unordered_map>
 #include <unordered_set>
@@ -11,7 +11,7 @@
 #include <func.h>
 #include <mutator.h>
 
-namespace ir {
+namespace freetensor {
 
 namespace gpu {
 
@@ -64,6 +64,6 @@ DEFINE_PASS_FOR_FUNC(normalizeThreads)
 
 } // namespace gpu
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // GPU_NORMALIZE_THREADS_H
+#endif // FREE_TENSOR_GPU_NORMALIZE_THREADS_H

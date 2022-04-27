@@ -1,9 +1,9 @@
-#ifndef MERGE_H
-#define MERGE_H
+#ifndef FREE_TENSOR_MERGE_H
+#define FREE_TENSOR_MERGE_H
 
 #include <mutator.h>
 
-namespace ir {
+namespace freetensor {
 
 /**
  * Merge two directly nested loops
@@ -42,6 +42,6 @@ class MergeFor : public Mutator {
 
 std::pair<Stmt, ID> merge(const Stmt &ast, const ID &loop1, const ID &loop2);
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // MERGE_H
+#endif // FREE_TENSOR_MERGE_H

@@ -1,7 +1,7 @@
 #include <analyze/check_not_modified.h>
 #include <pass/hoist_return_vars.h>
 
-namespace ir {
+namespace freetensor {
 
 Stmt HoistReturnVars::visit(const VarDef &_op) {
     auto __op = Mutator::visit(_op);
@@ -53,4 +53,4 @@ Func hoistReturnVars(const Func &func) {
                     HoistReturnVars(func)(func->body_), func->closure_);
 }
 
-} // namespace ir
+} // namespace freetensor

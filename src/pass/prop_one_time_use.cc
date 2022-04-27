@@ -6,7 +6,7 @@
 #include <pass/replace_uses.h>
 #include <pass/sink_var.h>
 
-namespace ir {
+namespace freetensor {
 
 static bool sameParent(const Stmt &x, const Stmt &y) {
     return x->parentCtrlFlow() == y->parentCtrlFlow();
@@ -85,4 +85,4 @@ Stmt propOneTimeUse(const Stmt &_op) {
     return sinkVar(op);
 }
 
-} // namespace ir
+} // namespace freetensor

@@ -11,7 +11,7 @@
 #include <pass/simplify.h>
 #include <serialize/mangle.h>
 
-namespace ir {
+namespace freetensor {
 
 void FindAllNoDeps::visit(const For &op) {
     Visitor::visit(op);
@@ -982,4 +982,4 @@ std::string toString(const Dependency &dep) {
     return std::regex_replace(os.str(), std::regex("\n"), "");
 }
 
-} // namespace ir
+} // namespace freetensor

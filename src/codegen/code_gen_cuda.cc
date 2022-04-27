@@ -7,7 +7,7 @@
 
 #include "detail/code_gen_c.h"
 
-namespace ir {
+namespace freetensor {
 
 static std::string genCUBLASType(DataType dtype) {
     switch (dtype) {
@@ -58,7 +58,8 @@ void CodeGenCUDA::genScalar(const std::string &var,
             CodeGenC::genScalar(var, indices);
             os() << ")";
         } else {
-            throw InvalidProgram("Unable to access " + ::ir::toString(mtype) +
+            throw InvalidProgram("Unable to access " +
+                                 ::freetensor::toString(mtype) +
                                  " from outside of a kernel");
         }
     } else {
@@ -312,7 +313,8 @@ void CodeGenCUDA::visit(const For &op) {
     } else if (std::holds_alternative<CUDAScope>(op->property_->parallel_)) {
         if (op->len_->nodeType() != ASTNodeType::IntConst) {
             std::ostringstream msg;
-            msg << "Length of " << ::ir::toString(op->property_->parallel_)
+            msg << "Length of "
+                << ::freetensor::toString(op->property_->parallel_)
                 << " should be constant, instead of " << op->len_;
             throw Error(msg.str());
         }
@@ -382,7 +384,7 @@ void CodeGenCUDA::visit(const For &op) {
         CodeGenC::visit(op);
     } else {
         throw Error("Unsupported parallel method " +
-                    ::ir::toString(op->property_->parallel_));
+                    ::freetensor::toString(op->property_->parallel_));
     }
 }
 
@@ -720,4 +722,4 @@ extern "C" {
     return header + body + tailer;
 }
 
-} // namespace ir
+} // namespace freetensor

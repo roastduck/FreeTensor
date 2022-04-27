@@ -1,9 +1,9 @@
-#ifndef CONFIG_H
-#define CONFIG_H
+#ifndef FREE_TENSOR_CONFIG_H
+#define FREE_TENSOR_CONFIG_H
 
 #include <string>
 
-namespace ir {
+namespace freetensor {
 
 /**
  * Global configurations
@@ -11,12 +11,12 @@ namespace ir {
  * All writable options can be set by environment variables
  */
 class Config {
-    static bool prettyPrint_; /// Env IR_PRETTY_PRINT
-    static bool printAllId_;  /// Env IR_PRINT_ALL_ID
-    static bool werror_;      /// Treat warnings as errors. Env IR_WERROR
+    static bool prettyPrint_; /// Env FT_PRETTY_PRINT
+    static bool printAllId_;  /// Env FT_PRINT_ALL_ID
+    static bool werror_;      /// Treat warnings as errors. Env FT_WERROR
     static bool
         debugBinary_; /// Compile with `-g` at backend. Do not delete the binary
-                      /// file after loaded. Env IR_DEBUG_BINARY
+                      /// file after loaded. Env FT_DEBUG_BINARY
 
   public:
     static void init(); /// Called in src/ffi/config.cc
@@ -36,6 +36,6 @@ class Config {
     static bool debugBinary() { return debugBinary_; }
 };
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // CONFIG_H
+#endif // FREE_TENSOR_CONFIG_H

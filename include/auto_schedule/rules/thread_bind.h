@@ -1,9 +1,9 @@
-#ifndef IR_THREAD_BIND_H
-#define IR_THREAD_BIND_H
+#ifndef FREE_TENSOR_THREAD_BIND_H
+#define FREE_TENSOR_THREAD_BIND_H
 
 #include <auto_schedule/rule.h>
 
-namespace ir {
+namespace freetensor {
 
 class ThreadBindRule : public Rule {
   public:
@@ -26,6 +26,6 @@ class ThreadBindPart : public SketchPartNode {
     };
 };
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // IR_THREAD_BIND_H
+#endif // FREE_TENSOR_THREAD_BIND_H

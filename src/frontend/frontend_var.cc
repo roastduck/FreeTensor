@@ -1,7 +1,7 @@
 #include <except.h>
 #include <frontend/frontend_var.h>
 
-namespace ir {
+namespace freetensor {
 
 int FrontendVar::ndim() const {
     int ndim = fullShape_.size();
@@ -101,4 +101,4 @@ FrontendVar::chainIndices(const std::vector<FrontendVarIdx> &next) const {
     return indices;
 }
 
-} // namespace ir
+} // namespace freetensor

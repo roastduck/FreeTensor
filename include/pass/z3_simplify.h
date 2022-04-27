@@ -1,5 +1,5 @@
-#ifndef Z3_SIMPLIFY
-#define Z3_SIMPLIFY
+#ifndef FREE_TENSOR_Z3_SIMPLIFY
+#define FREE_TENSOR_Z3_SIMPLIFY
 
 #include <deque>
 #include <unordered_map>
@@ -13,7 +13,7 @@
 #include <opt.h>
 #include <visitor.h>
 
-namespace ir {
+namespace freetensor {
 
 /**
  * Simplify the AST using Z3
@@ -134,6 +134,6 @@ Stmt z3Simplify(const Stmt &op);
 
 DEFINE_PASS_FOR_FUNC(z3Simplify)
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // Z3_SIMPLIFY
+#endif // FREE_TENSOR_Z3_SIMPLIFY

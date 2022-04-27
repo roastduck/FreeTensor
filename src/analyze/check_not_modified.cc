@@ -6,7 +6,7 @@
 #include <analyze/find_stmt.h>
 #include <pass/flatten_stmt_seq.h>
 
-namespace ir {
+namespace freetensor {
 
 static std::unordered_map<std::string, ID>
 usedDefsAt(const Stmt &ast, const ID &pos,
@@ -134,4 +134,4 @@ bool checkNotModified(const Stmt &op, const Expr &expr,
     return checkNotModified(op, expr, expr, s0Side, s0, s1Side, s1);
 }
 
-} // namespace ir
+} // namespace freetensor

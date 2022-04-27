@@ -1,6 +1,6 @@
 #include <analyze/get_loop_nest_tree.h>
 
-namespace ir {
+namespace freetensor {
 
 void GetLoopNestTree::visit(const For &op) {
     Ref<LoopNest> loopNest = Ref<LoopNest>::make();
@@ -13,4 +13,4 @@ void GetLoopNestTree::visit(const For &op) {
     parent_ = parent;
 }
 
-} // namespace ir
+} // namespace freetensor

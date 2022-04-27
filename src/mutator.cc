@@ -1,7 +1,7 @@
 #include <except.h>
 #include <mutator.h>
 
-namespace ir {
+namespace freetensor {
 
 Expr Mutator::visitExpr(const Expr &op) {
     switch (op->nodeType()) {
@@ -81,4 +81,4 @@ Stmt Mutator::visitStmt(const Stmt &op) {
 
 Stmt Mutator::operator()(const Stmt &op) { return visitStmt(op); }
 
-} // namespace ir
+} // namespace freetensor

@@ -1,5 +1,5 @@
-#ifndef PB_SIMPLIFY_H
-#define PB_SIMPLIFY_H
+#ifndef FREE_TENSOR_PB_SIMPLIFY_H
+#define FREE_TENSOR_PB_SIMPLIFY_H
 
 #include <unordered_map>
 #include <unordered_set>
@@ -8,7 +8,7 @@
 #include <math/presburger.h>
 #include <pass/simplify.h>
 
-namespace ir {
+namespace freetensor {
 
 class PBCompBounds : public CompUniqueBounds {
     const CompTransientBoundsInterface &transients_;
@@ -37,6 +37,6 @@ class PBSimplify : public SimplifyPass {
 
 Stmt pbSimplify(const Stmt &op);
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // PB_SIMPLIFY_H
+#endif // FREE_TENSOR_PB_SIMPLIFY_H

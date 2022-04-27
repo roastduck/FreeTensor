@@ -1,5 +1,5 @@
-#ifndef IR_MULTI_LEVEL_TILING_H
-#define IR_MULTI_LEVEL_TILING_H
+#ifndef FREE_TENSOR_MULTI_LEVEL_TILING_H
+#define FREE_TENSOR_MULTI_LEVEL_TILING_H
 
 #include <analyze/find_multi_level_tiling.h>
 #include <auto_schedule/rule.h>
@@ -9,7 +9,7 @@
 #include <array>
 #include <random>
 
-namespace ir {
+namespace freetensor {
 
 class MultiLevelTilingRule : public Rule {
     std::string pat_;
@@ -56,6 +56,6 @@ class MultiLevelTilingPart : public SketchPartNode {
     }
 };
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // IR_MULTI_LEVEL_TILING_H
+#endif // FREE_TENSOR_MULTI_LEVEL_TILING_H

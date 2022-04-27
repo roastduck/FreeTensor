@@ -1,5 +1,5 @@
-#ifndef SEPERATE_TAIL_H
-#define SEPERATE_TAIL_H
+#ifndef FREE_TENSOR_SEPERATE_TAIL_H
+#define FREE_TENSOR_SEPERATE_TAIL_H
 
 #include <functional>
 #include <unordered_set>
@@ -9,7 +9,7 @@
 #include <mutator.h>
 #include <visitor.h>
 
-namespace ir {
+namespace freetensor {
 
 class FindAllIfs : public Visitor {
     std::unordered_set<ID> results_;
@@ -93,6 +93,6 @@ class SeparateTail : public SymbolTable<Mutator> {
 
 Stmt separateTail(const Stmt &ast, bool noDuplicateVarDefs);
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // SEPERATE_TAIL_H
+#endif // FREE_TENSOR_SEPERATE_TAIL_H

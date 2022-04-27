@@ -1,172 +1,172 @@
 import torch
 import numpy as np
 
-import ir
-import ir.libop
+import freetensor as ft
+from freetensor import libop
 
 
 def test_same_static_shape():
-    device = ir.Device(ir.CPU())
+    device = ft.Device(ft.CPU())
 
-    @ir.transform
+    @ft.transform
     def f(x, y, out):
-        ir.declare_var(x, (4, 4), "float32", "input", "cpu")
-        ir.declare_var(y, (4, 4), "float32", "input", "cpu")
-        ir.declare_var(out, (4, 4), "float32", "output", "cpu")
+        ft.declare_var(x, (4, 4), "float32", "input", "cpu")
+        ft.declare_var(y, (4, 4), "float32", "input", "cpu")
+        ft.declare_var(out, (4, 4), "float32", "output", "cpu")
         "nid: add"
-        ir.libop.add_(x, y, out)
+        libop.add_(x, y, out)
 
     print(f)
-    f = ir.lower(f, ir.CPU())
+    f = ft.lower(f, ft.CPU())
     print(f)
 
-    code = ir.codegen(f, ir.CPU())
+    code = ft.codegen(f, ft.CPU())
 
     x_torch = torch.rand(4, 4, dtype=torch.float32)
-    x_arr = ir.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy(), device)
     y_torch = torch.rand(4, 4, dtype=torch.float32)
-    y_arr = ir.Array(y_torch.numpy(), device)
+    y_arr = ft.Array(y_torch.numpy(), device)
     out_torch = torch.zeros(4, 4, dtype=torch.float32)
-    out_arr = ir.Array(out_torch.numpy(), device)
-    ir.Driver(f, code, device)(x_arr, y_arr, out_arr)
+    out_arr = ft.Array(out_torch.numpy(), device)
+    ft.Driver(f, code, device)(x_arr, y_arr, out_arr)
     out_torch = torch.Tensor(out_arr.numpy())
 
     assert torch.all(torch.isclose(out_torch, x_torch + y_torch))
 
 
 def test_static_broadcast_shorter():
-    device = ir.Device(ir.CPU())
+    device = ft.Device(ft.CPU())
 
-    @ir.transform
+    @ft.transform
     def f(x, y, out):
-        ir.declare_var(x, (4,), "float32", "input", "cpu")
-        ir.declare_var(y, (4, 4), "float32", "input", "cpu")
-        ir.declare_var(out, (4, 4), "float32", "output", "cpu")
+        ft.declare_var(x, (4,), "float32", "input", "cpu")
+        ft.declare_var(y, (4, 4), "float32", "input", "cpu")
+        ft.declare_var(out, (4, 4), "float32", "output", "cpu")
         "nid: add"
-        ir.libop.add_(x, y, out)
+        libop.add_(x, y, out)
 
     print(f)
-    f = ir.lower(f, ir.CPU())
+    f = ft.lower(f, ft.CPU())
     print(f)
 
-    code = ir.codegen(f, ir.CPU())
+    code = ft.codegen(f, ft.CPU())
 
     x_torch = torch.rand(4, dtype=torch.float32)
-    x_arr = ir.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy(), device)
     y_torch = torch.rand(4, 4, dtype=torch.float32)
-    y_arr = ir.Array(y_torch.numpy(), device)
+    y_arr = ft.Array(y_torch.numpy(), device)
     out_torch = torch.zeros(4, 4, dtype=torch.float32)
-    out_arr = ir.Array(out_torch.numpy(), device)
-    ir.Driver(f, code, device)(x_arr, y_arr, out_arr)
+    out_arr = ft.Array(out_torch.numpy(), device)
+    ft.Driver(f, code, device)(x_arr, y_arr, out_arr)
     out_torch = torch.Tensor(out_arr.numpy())
 
     assert torch.all(torch.isclose(out_torch, x_torch + y_torch))
 
 
 def test_static_broadcast_1_at_front():
-    device = ir.Device(ir.CPU())
+    device = ft.Device(ft.CPU())
 
-    @ir.transform
+    @ft.transform
     def f(x, y, out):
-        ir.declare_var(x, (1, 4), "float32", "input", "cpu")
-        ir.declare_var(y, (4, 4), "float32", "input", "cpu")
-        ir.declare_var(out, (4, 4), "float32", "output", "cpu")
+        ft.declare_var(x, (1, 4), "float32", "input", "cpu")
+        ft.declare_var(y, (4, 4), "float32", "input", "cpu")
+        ft.declare_var(out, (4, 4), "float32", "output", "cpu")
         "nid: out_shape"
-        out_shape = ir.create_var((2,), "int32", "cpu")
+        out_shape = ft.create_var((2,), "int32", "cpu")
         "nid: add"
-        ir.libop.add_(x, y, out)
+        libop.add_(x, y, out)
 
     print(f)
-    f = ir.lower(f, ir.CPU())
+    f = ft.lower(f, ft.CPU())
     print(f)
 
-    code = ir.codegen(f, ir.CPU())
+    code = ft.codegen(f, ft.CPU())
 
     x_torch = torch.rand(1, 4, dtype=torch.float32)
-    x_arr = ir.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy(), device)
     y_torch = torch.rand(4, 4, dtype=torch.float32)
-    y_arr = ir.Array(y_torch.numpy(), device)
+    y_arr = ft.Array(y_torch.numpy(), device)
     out_torch = torch.zeros(4, 4, dtype=torch.float32)
-    out_arr = ir.Array(out_torch.numpy(), device)
-    ir.Driver(f, code, device)(x_arr, y_arr, out_arr)
+    out_arr = ft.Array(out_torch.numpy(), device)
+    ft.Driver(f, code, device)(x_arr, y_arr, out_arr)
     out_torch = torch.Tensor(out_arr.numpy())
 
     assert torch.all(torch.isclose(out_torch, x_torch + y_torch))
 
 
 def test_static_broadcast_1_at_back():
-    device = ir.Device(ir.CPU())
+    device = ft.Device(ft.CPU())
 
-    @ir.transform
+    @ft.transform
     def f(x, y, out):
-        ir.declare_var(x, (4, 4), "float32", "input", "cpu")
-        ir.declare_var(y, (4, 1), "float32", "input", "cpu")
-        ir.declare_var(out, (4, 4), "float32", "output", "cpu")
+        ft.declare_var(x, (4, 4), "float32", "input", "cpu")
+        ft.declare_var(y, (4, 1), "float32", "input", "cpu")
+        ft.declare_var(out, (4, 4), "float32", "output", "cpu")
         "nid: out_shape"
-        out_shape = ir.create_var((2,), "int32", "cpu")
+        out_shape = ft.create_var((2,), "int32", "cpu")
         "nid: add"
-        ir.libop.add_(x, y, out)
+        libop.add_(x, y, out)
 
     print(f)
-    f = ir.lower(f, ir.CPU())
+    f = ft.lower(f, ft.CPU())
     print(f)
 
-    code = ir.codegen(f, ir.CPU())
+    code = ft.codegen(f, ft.CPU())
 
     x_torch = torch.rand(4, 4, dtype=torch.float32)
-    x_arr = ir.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy(), device)
     y_torch = torch.rand(4, 1, dtype=torch.float32)
-    y_arr = ir.Array(y_torch.numpy(), device)
+    y_arr = ft.Array(y_torch.numpy(), device)
     out_torch = torch.zeros(4, 4, dtype=torch.float32)
-    out_arr = ir.Array(out_torch.numpy(), device)
-    ir.Driver(f, code, device)(x_arr, y_arr, out_arr)
+    out_arr = ft.Array(out_torch.numpy(), device)
+    ft.Driver(f, code, device)(x_arr, y_arr, out_arr)
     out_torch = torch.Tensor(out_arr.numpy())
 
     assert torch.all(torch.isclose(out_torch, x_torch + y_torch))
 
 
 def test_different_dtype():
-    device = ir.Device(ir.CPU())
+    device = ft.Device(ft.CPU())
 
-    @ir.transform
+    @ft.transform
     def f(x, y, out):
-        ir.declare_var(x, (4, 4), "int32", "input", "cpu")
-        ir.declare_var(y, (4, 4), "float32", "input", "cpu")
-        ir.declare_var(out, (4, 4), "float32", "output", "cpu")
+        ft.declare_var(x, (4, 4), "int32", "input", "cpu")
+        ft.declare_var(y, (4, 4), "float32", "input", "cpu")
+        ft.declare_var(out, (4, 4), "float32", "output", "cpu")
         "nid: out_shape"
-        out_shape = ir.create_var((2,), "int32", "cpu")
+        out_shape = ft.create_var((2,), "int32", "cpu")
         "nid: add"
-        ir.libop.add_(x, y, out)
+        libop.add_(x, y, out)
 
     print(f)
-    f = ir.lower(f, ir.CPU())
+    f = ft.lower(f, ft.CPU())
     print(f)
 
-    code = ir.codegen(f, ir.CPU())
+    code = ft.codegen(f, ft.CPU())
 
     x_torch = torch.randint(0, 100, (4, 4), dtype=torch.int32)
-    x_arr = ir.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy(), device)
     y_torch = torch.rand(4, 4, dtype=torch.float32)
-    y_arr = ir.Array(y_torch.numpy(), device)
+    y_arr = ft.Array(y_torch.numpy(), device)
     out_torch = torch.zeros(4, 4, dtype=torch.float32)
-    out_arr = ir.Array(out_torch.numpy(), device)
-    ir.Driver(f, code, device)(x_arr, y_arr, out_arr)
+    out_arr = ft.Array(out_torch.numpy(), device)
+    ft.Driver(f, code, device)(x_arr, y_arr, out_arr)
     out_torch = torch.Tensor(out_arr.numpy())
 
     assert torch.all(torch.isclose(out_torch, x_torch + y_torch))
 
 
 def test_out_of_place():
-    device = ir.Device(ir.CPU())
+    device = ft.Device(ft.CPU())
 
-    @ir.transform
+    @ft.transform
     def f(x, y, out_shape, out):
-        ir.declare_var(x, (4, 4), "float32", "input", "cpu")
-        ir.declare_var(y, (4, 4), "float32", "input", "cpu")
-        ir.declare_var(out_shape, (2,), "int32", "output", "cpu")
-        ir.declare_var(out, (4, 4), "float32", "output", "cpu")
+        ft.declare_var(x, (4, 4), "float32", "input", "cpu")
+        ft.declare_var(y, (4, 4), "float32", "input", "cpu")
+        ft.declare_var(out_shape, (2,), "int32", "output", "cpu")
+        ft.declare_var(out, (4, 4), "float32", "output", "cpu")
         "nid: add"
-        _out = ir.libop.add(x, y)
+        _out = libop.add(x, y)
         for i in range(2):
             out_shape[i] = _out.shape(i)
         for i in range(4):
@@ -174,20 +174,20 @@ def test_out_of_place():
                 out[i, j] = _out[i, j]
 
     print(f)
-    f = ir.lower(f, ir.CPU())
+    f = ft.lower(f, ft.CPU())
     print(f)
 
-    code = ir.codegen(f, ir.CPU())
+    code = ft.codegen(f, ft.CPU())
 
     x_torch = torch.rand(4, 4, dtype=torch.float32)
-    x_arr = ir.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy(), device)
     y_torch = torch.rand(4, 4, dtype=torch.float32)
-    y_arr = ir.Array(y_torch.numpy(), device)
+    y_arr = ft.Array(y_torch.numpy(), device)
     out_shape_torch = torch.zeros(2, dtype=torch.int32)
-    out_shape_arr = ir.Array(out_shape_torch.numpy(), device)
+    out_shape_arr = ft.Array(out_shape_torch.numpy(), device)
     out_torch = torch.zeros(4, 4, dtype=torch.float32)
-    out_arr = ir.Array(out_torch.numpy(), device)
-    ir.Driver(f, code, device)(x_arr, y_arr, out_shape_arr, out_arr)
+    out_arr = ft.Array(out_torch.numpy(), device)
+    ft.Driver(f, code, device)(x_arr, y_arr, out_shape_arr, out_arr)
     out_shape_numpy = out_shape_arr.numpy()
     out_torch = torch.Tensor(out_arr.numpy())
 
@@ -198,5 +198,5 @@ def test_out_of_place():
 def test_fallback():
     x = torch.rand(4, 4, dtype=torch.float32)
     y = torch.rand(4, 4, dtype=torch.float32)
-    out = ir.libop.add(x, y)
+    out = libop.add(x, y)
     assert torch.all(torch.isclose(out, x + y))

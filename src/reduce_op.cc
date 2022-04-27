@@ -3,7 +3,7 @@
 
 #include <reduce_op.h>
 
-namespace ir {
+namespace freetensor {
 
 Expr neutralVal(DataType dtype, ReduceOp op) {
     switch (dtype) {
@@ -49,4 +49,4 @@ Expr neutralVal(DataType dtype, ReduceOp op) {
     }
 }
 
-} // namespace ir
+} // namespace freetensor

@@ -4,7 +4,7 @@
 #include <pass/make_const_shape.h>
 #include <pass/pb_simplify.h>
 
-namespace ir {
+namespace freetensor {
 
 Stmt MakeConstShape::visit(const VarDef &_op) {
     auto __op = BaseClass::visit(_op);
@@ -46,4 +46,4 @@ Stmt makeConstShape(const Stmt &_op, const std::vector<MemType> &mtypes) {
     return MakeConstShape(mtypes)(_op);
 }
 
-} // namespace ir
+} // namespace freetensor

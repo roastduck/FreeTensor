@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.15) # Requried by find python
-project(IR C CXX)
+project(FREE_TENSOR C CXX)
 
 include(ExternalProject)
 
-option(IR_DEBUG_LOG_NODE "Log where each AST node is created" OFF)
-option(IR_DEBUG_PROFILE "Profile some heavy functions in the compiler" OFF)
+option(FT_DEBUG_LOG_NODE "Log where each AST node is created" OFF)
+option(FT_DEBUG_PROFILE "Profile some heavy functions in the compiler" OFF)
 option(WITH_MKL "Path to MKL (optional)" OFF)
 
 set(DEFAULT_BUILD_TYPE "RelWithDebInfo")
@@ -86,18 +86,18 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
 if(WITH_MKL)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWITH_MKL=${WITH_MKL}")
 endif()
-if(IR_DEBUG_LOG_NODE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DIR_DEBUG_LOG_NODE")
+if(FT_DEBUG_LOG_NODE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFT_DEBUG_LOG_NODE")
 endif()
-if(IR_DEBUG_PROFILE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DIR_DEBUG_PROFILE")
+if(FT_DEBUG_PROFILE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFT_DEBUG_PROFILE")
 endif()
 
 # Not using CMAKE_CXX_STANDARD_REQUIRED since on GCC >= 8 we can work with C++17, let it fallback
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS OFF) # -std=gnu++11 when on, -std=c++11 when off
 
-add_definitions(-DIR_RUNTIME_DIR=${CMAKE_SOURCE_DIR}/runtime)
+add_definitions(-DFT_RUNTIME_DIR=${CMAKE_SOURCE_DIR}/runtime)
 
 # OpenMP used to parallelize the compilation of different instances
 find_package(OpenMP)
@@ -115,7 +115,7 @@ file(GLOB_RECURSE SRC ${CMAKE_SOURCE_DIR}/src/*.cc)
 file(GLOB_RECURSE LEXERS ${CMAKE_SOURCE_DIR}/grammar/*_lexer.g)
 foreach(G_FILE IN ITEMS ${LEXERS})
     get_filename_component(Name ${G_FILE} NAME_WE)
-    antlr_target(${Name} ${G_FILE} PACKAGE ir)
+    antlr_target(${Name} ${G_FILE} PACKAGE freetensor)
     list(APPEND SRC ${ANTLR_${Name}_CXX_OUTPUTS})
     include_directories(${ANTLR_${Name}_OUTPUT_DIR})
     list(APPEND LEXER_OUTPUTS ${ANTLR_${Name}_OUTPUTS})
@@ -123,7 +123,7 @@ endforeach()
 file(GLOB_RECURSE PARSERS ${CMAKE_SOURCE_DIR}/grammar/*_parser.g)
 foreach(G_FILE IN ITEMS ${PARSERS})
     get_filename_component(Name ${G_FILE} NAME_WE)
-    antlr_target(${Name} ${G_FILE} PACKAGE ir DEPENDS ${LEXER_OUTPUTS})
+    antlr_target(${Name} ${G_FILE} PACKAGE freetensor DEPENDS ${LEXER_OUTPUTS})
     list(APPEND SRC ${ANTLR_${Name}_CXX_OUTPUTS})
     include_directories(${ANTLR_${Name}_OUTPUT_DIR})
 endforeach()

@@ -2,7 +2,7 @@
 #include <analyze/find_multi_level_tiling.h>
 #include <auto_schedule/rules/cache_write.h>
 
-namespace ir {
+namespace freetensor {
 RuleStatus CacheWriteRule::analyze(const Sketch &sketch) {
     if (!findSingleElementWiseConsumer(sketch.schedule().ast(),
                                        sketch.nowTarget().target)
@@ -26,4 +26,4 @@ std::vector<Sketch> CacheWriteRule::genPart(const Sketch &sketch) {
     return {newSketch};
 }
 
-} // namespace ir
+} // namespace freetensor

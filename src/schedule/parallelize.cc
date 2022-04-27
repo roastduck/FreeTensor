@@ -2,7 +2,7 @@
 #include <pass/make_reduction.h>
 #include <schedule/parallelize.h>
 
-namespace ir {
+namespace freetensor {
 
 Stmt Parallelize::visit(const For &_op) {
     auto thisParallel =
@@ -104,4 +104,4 @@ Stmt parallelize(const Stmt &_ast, const ID &loop,
     return ast;
 }
 
-} // namespace ir
+} // namespace freetensor

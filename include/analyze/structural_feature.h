@@ -1,5 +1,5 @@
-#ifndef STRUCTURAL_FEATURE_H
-#define STRUCTURAL_FEATURE_H
+#ifndef FREE_TENSOR_STRUCTURAL_FEATURE_H
+#define FREE_TENSOR_STRUCTURAL_FEATURE_H
 
 #include <unordered_map>
 #include <unordered_set>
@@ -11,7 +11,7 @@
 #include <analyze/type_infer.h>
 #include <visitor.h>
 
-namespace ir {
+namespace freetensor {
 
 /**
  * Features of a statement node
@@ -111,6 +111,6 @@ inline std::unordered_map<ID, NodeFeature> structuralFeature(const Stmt &op) {
     return visitor.features();
 }
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // STRUCTURAL_FEATURE_H
+#endif // FREE_TENSOR_STRUCTURAL_FEATURE_H

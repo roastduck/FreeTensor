@@ -7,7 +7,7 @@
 #include <pass/scalar_prop_const.h>
 #include <pass/tensor_prop_const.h>
 
-namespace ir {
+namespace freetensor {
 
 Stmt tensorPropConst(const Stmt &_op) {
     auto op = _op;
@@ -131,4 +131,4 @@ Stmt tensorPropConst(const Stmt &_op) {
     return op;
 }
 
-} // namespace ir
+} // namespace freetensor

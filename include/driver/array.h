@@ -1,5 +1,5 @@
-#ifndef ARRAY_H
-#define ARRAY_H
+#ifndef FREE_TENSOR_ARRAY_H
+#define FREE_TENSOR_ARRAY_H
 
 #include <cstdint>
 #include <vector>
@@ -7,7 +7,7 @@
 #include <driver/device.h>
 #include <tensor.h>
 
-namespace ir {
+namespace freetensor {
 
 class Array {
     uint8_t *ptr_ = nullptr;
@@ -44,6 +44,6 @@ class Array {
     void *raw() const { return ptr_; }
 };
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // ARRAY_H
+#endif // FREE_TENSOR_ARRAY_H

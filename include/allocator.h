@@ -1,12 +1,12 @@
-#ifndef ALLOCATOR_H
-#define ALLOCATOR_H
+#ifndef FREE_TENSOR_ALLOCATOR_H
+#define FREE_TENSOR_ALLOCATOR_H
 
 #include <atomic>
 #include <cstdint>
 #include <cstdlib>
 #include <vector>
 
-namespace ir {
+namespace freetensor {
 
 constexpr int SMALL_ITEM_SIZE = 64;
 constexpr int SMALL_ITEM_PER_BLOCK = 16384 / SMALL_ITEM_SIZE;
@@ -96,6 +96,6 @@ bool operator!=(const Allocator<T> &lhs, const Allocator<T> &rhs) {
     return false;
 }
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // ALLOCATOR_H
+#endif // FREE_TENSOR_ALLOCATOR_H

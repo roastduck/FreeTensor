@@ -9,7 +9,7 @@
 #include <pass/sink_var.h>
 #include <schedule/inlining.h>
 
-namespace ir {
+namespace freetensor {
 
 Expr MakeInline::visit(const Load &op) {
     if (op->var_ == var_) {
@@ -151,4 +151,4 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
     return ast;
 }
 
-} // namespace ir
+} // namespace freetensor

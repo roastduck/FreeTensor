@@ -1,7 +1,7 @@
 #include <buffer.h>
 #include <ffi.h>
 
-namespace ir {
+namespace freetensor {
 
 void init_ffi_buffer(py::module_ &m) {
     py::class_<AccessType>(m, "AccessType")
@@ -33,4 +33,4 @@ void init_ffi_buffer(py::module_ &m) {
         .def_property_readonly("mtype", &Buffer::mtype);
 }
 
-} // namespace ir
+} // namespace freetensor

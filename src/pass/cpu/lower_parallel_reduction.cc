@@ -5,7 +5,7 @@
 #include <pass/make_nested_loops.h>
 #include <pass/simplify.h>
 
-namespace ir {
+namespace freetensor {
 
 namespace cpu {
 
@@ -148,4 +148,4 @@ Stmt lowerParallelReduction(const Stmt &_op) {
 
 } // namespace cpu
 
-} // namespace ir
+} // namespace freetensor

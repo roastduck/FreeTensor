@@ -1,5 +1,5 @@
-#ifndef STMT_H
-#define STMT_H
+#ifndef FREE_TENSOR_STMT_H
+#define FREE_TENSOR_STMT_H
 
 #include <string>
 #include <vector>
@@ -9,7 +9,7 @@
 #include <for_property.h>
 #include <reduce_op.h>
 
-namespace ir {
+namespace freetensor {
 
 /**
  * Matches any statement
@@ -344,6 +344,6 @@ inline Stmt _makeMatMul(const ID &id, const Expr &a, const Expr &b,
     return s;
 }
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // STMT_H
+#endif // FREE_TENSOR_STMT_H

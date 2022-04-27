@@ -3,7 +3,7 @@
 #include <auto_schedule/utils.h>
 #include <hash.h>
 
-namespace ir {
+namespace freetensor {
 
 Sketch Sketch::genRandAnnotation(std::default_random_engine &gen) const {
     Sketch sketch = clone();
@@ -88,4 +88,4 @@ size_t Sketch::hash() const {
     return h;
 }
 
-} // namespace ir
+} // namespace freetensor

@@ -3,7 +3,7 @@
 #include <schedule.h>
 #include <schedule/multi_level_tiling.h>
 
-namespace ir {
+namespace freetensor {
 
 std::vector<std::pair<ID, int>> splitLoop(Schedule &schedule, ID loop,
                                           std::vector<int> tiling) {
@@ -118,4 +118,4 @@ std::vector<std::pair<ID, int>> multiLevelTilingWithFusion(
     return tiles;
 }
 
-} // namespace ir
+} // namespace freetensor

@@ -3,7 +3,7 @@
 #include <analyze/deps.h>
 #include <pass/make_reduction.h>
 
-namespace ir {
+namespace freetensor {
 
 std::vector<ID> allNoReuseDefs(const Stmt &_op,
                                const std::unordered_set<AccessType> &atypes) {
@@ -20,4 +20,4 @@ std::vector<ID> allNoReuseDefs(const Stmt &_op,
     return ret;
 }
 
-} // namespace ir
+} // namespace freetensor

@@ -1,5 +1,5 @@
-#ifndef GEN_PB_EXPR_H
-#define GEN_PB_EXPR_H
+#ifndef FREE_TENSOR_GEN_PB_EXPR_H
+#define FREE_TENSOR_GEN_PB_EXPR_H
 
 #include <unordered_map>
 #include <unordered_set>
@@ -10,7 +10,7 @@
 #include <opt.h>
 #include <visitor.h>
 
-namespace ir {
+namespace freetensor {
 
 /**
  * Serialize expressions to an Presburger expression string
@@ -68,6 +68,6 @@ class GenPBExpr : public Visitor {
     void visit(const IfExpr &op) override;
 };
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // GEN_PB_EXPR_H
+#endif // FREE_TENSOR_GEN_PB_EXPR_H

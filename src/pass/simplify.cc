@@ -7,7 +7,7 @@
 #include <pass/replace_iter.h>
 #include <pass/simplify.h>
 
-namespace ir {
+namespace freetensor {
 
 static bool isEmptyStmt(const Stmt &op) {
     if (!op.isValid()) { // In case If->elseCase_ == nullptr
@@ -88,7 +88,7 @@ Expr SimplifyPass::visitExpr(const Expr &_op) {
             // Check upper <= lower ==> equal
             // Here we use the less precise alwaysLE instead of analyzing bounds
             // of `upper - lower`, in order to avoid infinite recursion
-            if (ir::alwaysLE(upper, lower)) {
+            if (freetensor::alwaysLE(upper, lower)) {
                 // We need to choose the simplest one. Otherwise we are always
                 // picking the original expression
                 Expr expr;
@@ -643,4 +643,4 @@ Stmt builtinSimplify(const Stmt &op) {
 
 Stmt simplifyPass(const Stmt &op) { return builtinSimplify(op); }
 
-} // namespace ir
+} // namespace freetensor

@@ -1,9 +1,9 @@
-#ifndef FIND_ALL_SCOPES_H
-#define FIND_ALL_SCOPES_H
+#ifndef FREE_TENSOR_FIND_ALL_SCOPES_H
+#define FREE_TENSOR_FIND_ALL_SCOPES_H
 
 #include <visitor.h>
 
-namespace ir {
+namespace freetensor {
 
 class FindAllScopes : public Visitor {
     std::vector<ID> scopes_;
@@ -21,6 +21,6 @@ class FindAllScopes : public Visitor {
  */
 std::vector<ID> findAllScopes(const Stmt &op);
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // FIND_ALL_SCOPES_H
+#endif // FREE_TENSOR_FIND_ALL_SCOPES_H

@@ -2,7 +2,7 @@
 #include <frontend/frontend_var.h>
 #include <frontend/inlined_invoke.h>
 
-namespace ir {
+namespace freetensor {
 
 using namespace pybind11::literals;
 
@@ -31,4 +31,4 @@ void init_ffi_frontend(py::module_ &m) {
     m.def("inlined_invoke", &inlinedInvoke);
 }
 
-} // namespace ir
+} // namespace freetensor

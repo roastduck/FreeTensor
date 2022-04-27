@@ -7,7 +7,7 @@
 #include <math/bounds.h>
 #include <math/utils.h>
 
-namespace ir {
+namespace freetensor {
 
 static LinearExpr<Rational<int64_t>>
 commonDenominator(const LinearExpr<Rational<int64_t>> &_lin) {
@@ -179,7 +179,7 @@ const std::unordered_set<std::string> &UpperBound::allNames() {
     }
     allNames_ = Opt<std::unordered_set<std::string>>::make();
     for (auto &&[k, a] : lin_.coeff_) {
-        for (auto &&use : ::ir::allNames(a)) {
+        for (auto &&use : ::freetensor::allNames(a)) {
             allNames_->insert(use);
         }
     }
@@ -192,7 +192,7 @@ const std::unordered_set<std::string> &LowerBound::allNames() {
     }
     allNames_ = Opt<std::unordered_set<std::string>>::make();
     for (auto &&[k, a] : lin_.coeff_) {
-        for (auto &&use : ::ir::allNames(a)) {
+        for (auto &&use : ::freetensor::allNames(a)) {
             allNames_->insert(use);
         }
     }
@@ -282,4 +282,4 @@ bool alwaysLE(const UpperBound &b1, const LowerBound &b2) {
            hasIdenticalCoeff(b1.lin(), b2.lin());
 }
 
-} // namespace ir
+} // namespace freetensor

@@ -1,5 +1,5 @@
-#ifndef DATA_TYPE_H
-#define DATA_TYPE_H
+#ifndef FREE_TENSOR_DATA_TYPE_H
+#define FREE_TENSOR_DATA_TYPE_H
 
 #include <array>
 
@@ -8,7 +8,7 @@
 #include <container_utils.h>
 #include <except.h>
 
-namespace ir {
+namespace freetensor {
 
 enum class DataType : size_t {
     Void = 0,
@@ -110,6 +110,6 @@ inline DataType upCast(DataType lhs, DataType rhs) {
                          toString(rhs));
 }
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // DATA_TYPE
+#endif // FREE_TENSOR_DATA_TYPE

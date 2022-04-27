@@ -1,8 +1,8 @@
-#ifndef IR_SKIP_H
-#define IR_SKIP_H
+#ifndef FREE_TENSOR_SKIP_H
+#define FREE_TENSOR_SKIP_H
 
 #include <auto_schedule/rule.h>
-namespace ir {
+namespace freetensor {
 
 class SkipRule : public Rule {
   public:
@@ -15,6 +15,6 @@ class SkipRule : public Rule {
         return {newSketch};
     };
 };
-} // namespace ir
+} // namespace freetensor
 
 #endif
