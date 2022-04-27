@@ -183,6 +183,10 @@ def staged_callable(staging: F, original) -> F:
         else:
             return original(*args, **kwargs)
 
+    # Set the name of the staged function.
+    # It helps when printing error messages
+    impl.__name__ = staging.__name__
+
     return impl
 
 

@@ -1,19 +1,24 @@
 import torch
+import pytest
 import numpy as np
 
 import freetensor as ft
 from freetensor import libop
 
 
-def test_static():
+@pytest.mark.parametrize('libop_func, torch_func', [
+    (libop.reduce_sum_, torch.sum),
+    (libop.reduce_max_, lambda *args, **kvs: torch.max(*args, **kvs).values),
+])
+def test_static(libop_func, torch_func):
     device = ft.Device(ft.CPU())
 
     @ft.transform
     def f(x, y):
         ft.declare_var(x, (3, 4, 5), "float32", "input", "cpu")
         ft.declare_var(y, (3, 5), "float32", "output", "cpu")
-        "nid: reduce_sum"
-        libop.reduce_sum_(x, y, axes=[1], keepdims=False)
+        "nid: reduce"
+        libop_func(x, y, axes=[1], keepdims=False)
 
     print(f)
     f = ft.lower(f, ft.CPU())
@@ -28,18 +33,22 @@ def test_static():
     ft.Driver(f, code, device)(x_arr, y_arr)
     y_torch = torch.Tensor(y_arr.numpy())
 
-    assert torch.all(torch.isclose(y_torch, x_torch.sum(axis=1)))
+    assert torch.all(torch.isclose(y_torch, torch_func(x_torch, axis=1)))
 
 
-def test_keepdims():
+@pytest.mark.parametrize('libop_func, torch_func', [
+    (libop.reduce_sum_, torch.sum),
+    (libop.reduce_max_, lambda *args, **kvs: torch.max(*args, **kvs).values),
+])
+def test_keepdims(libop_func, torch_func):
     device = ft.Device(ft.CPU())
 
     @ft.transform
     def f(x, y):
         ft.declare_var(x, (3, 4, 5), "float32", "input", "cpu")
         ft.declare_var(y, (3, 1, 5), "float32", "output", "cpu")
-        "nid: reduce_sum"
-        libop.reduce_sum_(x, y, axes=[1], keepdims=True)
+        "nid: reduce"
+        libop_func(x, y, axes=[1], keepdims=True)
 
     print(f)
     f = ft.lower(f, ft.CPU())
@@ -54,10 +63,15 @@ def test_keepdims():
     ft.Driver(f, code, device)(x_arr, y_arr)
     y_torch = torch.Tensor(y_arr.numpy())
 
-    assert torch.all(torch.isclose(y_torch, x_torch.sum(axis=1, keepdim=True)))
+    assert torch.all(
+        torch.isclose(y_torch, torch_func(x_torch, axis=1, keepdim=True)))
 
 
-def test_out_of_place():
+@pytest.mark.parametrize('libop_func, torch_func', [
+    (libop.reduce_sum, torch.sum),
+    (libop.reduce_max, lambda *args, **kvs: torch.max(*args, **kvs).values),
+])
+def test_out_of_place(libop_func, torch_func):
     device = ft.Device(ft.CPU())
 
     @ft.transform
@@ -65,8 +79,8 @@ def test_out_of_place():
         ft.declare_var(x, (3, 4, 5), "float32", "input", "cpu")
         ft.declare_var(y_shape, (2,), "int32", "output", "cpu")
         ft.declare_var(y, (3, 5), "float32", "output", "cpu")
-        "nid: reduce_sum"
-        _y = libop.reduce_sum(x, axes=[1], keepdims=False)
+        "nid: reduce"
+        _y = libop_func(x, axes=[1], keepdims=False)
         for i in range(2):
             y_shape[i] = _y.shape(i)
         for i in range(3):
@@ -90,10 +104,14 @@ def test_out_of_place():
     y_torch = torch.Tensor(y_arr.numpy())
 
     assert np.array_equal(y_shape_np, [3, 5])
-    assert torch.all(torch.isclose(y_torch, x_torch.sum(axis=1)))
+    assert torch.all(torch.isclose(y_torch, torch_func(x_torch, axis=1)))
 
 
-def test_out_of_place_keepdims():
+@pytest.mark.parametrize('libop_func, torch_func', [
+    (libop.reduce_sum, torch.sum),
+    (libop.reduce_max, lambda *args, **kvs: torch.max(*args, **kvs).values),
+])
+def test_out_of_place_keepdims(libop_func, torch_func):
     device = ft.Device(ft.CPU())
 
     @ft.transform
@@ -101,8 +119,8 @@ def test_out_of_place_keepdims():
         ft.declare_var(x, (3, 4, 5), "float32", "input", "cpu")
         ft.declare_var(y_shape, (3,), "int32", "output", "cpu")
         ft.declare_var(y, (3, 1, 5), "float32", "output", "cpu")
-        "nid: reduce_sum"
-        _y = libop.reduce_sum(x, axes=[1], keepdims=True)
+        "nid: reduce"
+        _y = libop_func(x, axes=[1], keepdims=True)
         for i in range(3):
             y_shape[i] = _y.shape(i)
         for i in range(3):
@@ -126,4 +144,5 @@ def test_out_of_place_keepdims():
     y_torch = torch.Tensor(y_arr.numpy())
 
     assert np.array_equal(y_shape_np, [3, 1, 5])
-    assert torch.all(torch.isclose(y_torch, x_torch.sum(axis=1, keepdim=True)))
+    assert torch.all(
+        torch.isclose(y_torch, torch_func(x_torch, axis=1, keepdim=True)))
