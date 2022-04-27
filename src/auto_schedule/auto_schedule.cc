@@ -16,7 +16,7 @@
 #include <pybind11/numpy.h>
 #include <queue>
 
-namespace ir {
+namespace freetensor {
 
 AutoSchedule::AutoSchedule(const Schedule &schedule, const Ref<Target> &target,
                            const Device &device, int measuredSize,
@@ -426,4 +426,4 @@ Schedule AutoSchedule::testThreadBind() {
     return schedule;
 }
 
-} // namespace ir
+} // namespace freetensor

@@ -3,7 +3,7 @@
 #include <ffi.h>
 #include <schedule.h>
 
-namespace ir {
+namespace freetensor {
 
 using namespace pybind11::literals;
 
@@ -27,4 +27,4 @@ void init_ffi_auto_schedule(py::module_ &m) {
         .def("test_thread_bind", &AutoSchedule::testThreadBind);
 }
 
-} // namespace ir
+} // namespace freetensor

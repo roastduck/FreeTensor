@@ -1,5 +1,5 @@
-#ifndef HOIST_RETURN_VARS_H
-#define HOIST_RETURN_VARS_H
+#ifndef FREE_TENSOR_HOIST_RETURN_VARS_H
+#define FREE_TENSOR_HOIST_RETURN_VARS_H
 
 #include <unordered_map>
 #include <unordered_set>
@@ -7,7 +7,7 @@
 #include <func.h>
 #include <mutator.h>
 
-namespace ir {
+namespace freetensor {
 
 /**
  * Hoist a returning VarDef out of any loops
@@ -33,6 +33,6 @@ class HoistReturnVars : public Mutator {
 
 Func hoistReturnVars(const Func &func);
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // HOIST_RETURN_VARS_H
+#endif // FREE_TENSOR_HOIST_RETURN_VARS_H

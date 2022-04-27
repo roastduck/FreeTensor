@@ -1,5 +1,5 @@
-#ifndef COMP_TRANSIENT_BOUNDS_H
-#define COMP_TRANSIENT_BOUNDS_H
+#ifndef FREE_TENSOR_COMP_TRANSIENT_BOUNDS_H
+#define FREE_TENSOR_COMP_TRANSIENT_BOUNDS_H
 
 #include <unordered_set>
 
@@ -12,7 +12,7 @@
 #include <maybe_void.h>
 #include <stmt.h>
 
-namespace ir {
+namespace freetensor {
 
 struct TransientBound {
     Expr expr_;
@@ -238,6 +238,6 @@ class CompTransientBounds : public BaseClass,
     }
 };
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // COMP_TRANSIENT_BOUNDS_H
+#endif // FREE_TENSOR_COMP_TRANSIENT_BOUNDS_H

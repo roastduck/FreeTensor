@@ -5,7 +5,7 @@
 #include <container_utils.h>
 #include <math/min_max.h>
 
-namespace ir {
+namespace freetensor {
 
 void StructuralFeature::updCompInfo(const AST &parent, const AST &child,
                                     int repeat) {
@@ -337,4 +337,4 @@ void StructuralFeature::visit(const VarDef &op) {
     }
 }
 
-} // namespace ir
+} // namespace freetensor

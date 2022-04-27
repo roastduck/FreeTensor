@@ -1,9 +1,9 @@
-#ifndef ANNOTATE_CONDS_H
-#define ANNOTATE_CONDS_H
+#ifndef FREE_TENSOR_ANNOTATE_CONDS_H
+#define FREE_TENSOR_ANNOTATE_CONDS_H
 
 #include <mutator.h>
 
-namespace ir {
+namespace freetensor {
 
 class AnnotateConds : public Mutator {
     std::vector<Expr> conds_; // stack of conditions, may be null
@@ -55,6 +55,6 @@ class AnnotateConds : public Mutator {
  */
 inline Stmt annotateConds(const Stmt &op) { return AnnotateConds()(op); }
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // ANNOTATE_CONDS_H
+#endif // FREE_TENSOR_ANNOTATE_CONDS_H

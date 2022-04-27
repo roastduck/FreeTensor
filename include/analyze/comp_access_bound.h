@@ -1,5 +1,5 @@
-#ifndef COMP_ACCESS_BOUND_H
-#define COMP_ACCESS_BOUND_H
+#ifndef FREE_TENSOR_COMP_ACCESS_BOUND_H
+#define FREE_TENSOR_COMP_ACCESS_BOUND_H
 
 #include <unordered_map>
 #include <unordered_set>
@@ -8,7 +8,7 @@
 #include <math/bounds.h>
 #include <visitor.h>
 
-namespace ir {
+namespace freetensor {
 
 struct AccessBound {
     std::vector<Expr> lower_; // lower_bound(access)
@@ -93,6 +93,6 @@ class CompAccessBound
 AccessBound compAccessBound(const Stmt &op, const ID &varDefId,
                             CompAccessBoundMode mode = COMP_ACCESS_BOUND_ALL);
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // COMP_ACCESS_BOUND_H
+#endif // FREE_TENSOR_COMP_ACCESS_BOUND_H

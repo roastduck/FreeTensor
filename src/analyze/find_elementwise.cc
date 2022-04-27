@@ -1,6 +1,6 @@
 #include <analyze/find_elementwise.h>
 #include <hash.h>
-namespace ir {
+namespace freetensor {
 
 void FindSingleElementWise::visit(const Store &op) {
     if (invalid_) {
@@ -179,4 +179,4 @@ ElementWiseInfo findSingleElementWiseConsumer(const Stmt &root,
     return finder.result();
 }
 
-} // namespace ir
+} // namespace freetensor

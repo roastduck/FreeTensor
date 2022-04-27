@@ -1,5 +1,5 @@
-#ifndef REMOVE_WRITES_H
-#define REMOVE_WRITES_H
+#ifndef FREE_TENSOR_REMOVE_WRITES_H
+#define FREE_TENSOR_REMOVE_WRITES_H
 
 #include <unordered_map>
 #include <unordered_set>
@@ -10,7 +10,7 @@
 #include <mutator.h>
 #include <visitor.h>
 
-namespace ir {
+namespace freetensor {
 
 class FindLoopInvariantWrites : public SymbolTable<Visitor> {
     typedef SymbolTable<Visitor> BaseClass;
@@ -108,6 +108,6 @@ Stmt removeWrites(const Stmt &op, const ID &singleDefId = "");
 
 DEFINE_PASS_FOR_FUNC(removeWrites)
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // REMOVE_WRITES_H
+#endif // FREE_TENSOR_REMOVE_WRITES_H

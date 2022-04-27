@@ -1,12 +1,12 @@
-#ifndef LINEAR_H
-#define LINEAR_H
+#ifndef FREE_TENSOR_LINEAR_H
+#define FREE_TENSOR_LINEAR_H
 
 #include <algorithm>
 #include <iostream>
 
 #include <hash.h>
 
-namespace ir {
+namespace freetensor {
 
 /**
  * k * a
@@ -166,6 +166,6 @@ std::ostream &operator<<(std::ostream &os, const LinearExpr<T> &lin) {
     return os;
 }
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // LINEAR_H
+#endif // FREE_TENSOR_LINEAR_H

@@ -1,6 +1,6 @@
 #include <analyze/analyze_linear.h>
 
-namespace ir {
+namespace freetensor {
 
 void AnalyzeLinear::visitExpr(const Expr &op) {
     if (!result_.count(op)) {
@@ -69,4 +69,4 @@ Opt<std::pair<LinearExpr<int64_t>, ASTNodeType>> linearComp(const Expr &expr) {
     }
 }
 
-} // namespace ir
+} // namespace freetensor

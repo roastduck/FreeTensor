@@ -4,7 +4,7 @@
 #include <ref.h>
 #include <tensor.h>
 
-namespace ir {
+namespace freetensor {
 
 void init_ffi_tensor(py::module_ &m) {
     py::class_<Tensor, Ref<Tensor>>(m, "Tensor")
@@ -19,4 +19,4 @@ void init_ffi_tensor(py::module_ &m) {
         .def_property_readonly("dtype", &Tensor::dtype);
 }
 
-} // namespace ir
+} // namespace freetensor

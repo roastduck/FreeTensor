@@ -1,12 +1,12 @@
-#ifndef CHECK_VAR_CROSS_PARALLEL_H
-#define CHECK_VAR_CROSS_PARALLEL_H
+#ifndef FREE_TENSOR_CHECK_VAR_CROSS_PARALLEL_H
+#define FREE_TENSOR_CHECK_VAR_CROSS_PARALLEL_H
 
 #include <stmt.h>
 
-namespace ir {
+namespace freetensor {
 
 void checkVarCrossParallel(const Stmt &ast, const ID &def, MemType mtype);
 
 }
 
-#endif // CHECK_VAR_CROSS_PARALLEL_H
+#endif // FREE_TENSOR_CHECK_VAR_CROSS_PARALLEL_H

@@ -1,9 +1,9 @@
-#ifndef VECTORIZE_H
-#define VECTORIZE_H
+#ifndef FREE_TENSOR_VECTORIZE_H
+#define FREE_TENSOR_VECTORIZE_H
 
 #include <mutator.h>
 
-namespace ir {
+namespace freetensor {
 
 class Vectorize : public Mutator {
     ID loop_;
@@ -20,6 +20,6 @@ class Vectorize : public Mutator {
 
 Stmt vectorize(const Stmt &ast, const ID &loop);
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // VECTORIZE_H
+#endif // FREE_TENSOR_VECTORIZE_H

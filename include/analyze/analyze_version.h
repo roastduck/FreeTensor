@@ -1,5 +1,5 @@
-#ifndef ANALYZE_VERSION_H
-#define ANALYZE_VERSION_H
+#ifndef FREE_TENSOR_ANALYZE_VERSION_H
+#define FREE_TENSOR_ANALYZE_VERSION_H
 
 #include <unordered_map>
 #include <unordered_set>
@@ -7,7 +7,7 @@
 #include <analyze/track_stmt.h>
 #include <visitor.h>
 
-namespace ir {
+namespace freetensor {
 
 class CountScopeLen : public Visitor {
     ID def_;
@@ -74,6 +74,6 @@ class AnalyzeVersion : public TrackStmt<Visitor> {
 std::pair<std::unordered_map<ID, Expr>, std::unordered_map<ID, Expr>>
 analyzeVersion(const Stmt &op, const std::unordered_set<ID> &intermediates);
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // ANALYZE_VERSION_H
+#endif // FREE_TENSOR_ANALYZE_VERSION_H

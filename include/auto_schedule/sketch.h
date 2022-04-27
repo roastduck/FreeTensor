@@ -1,5 +1,5 @@
-#ifndef IR_SKETCH_H
-#define IR_SKETCH_H
+#ifndef FREE_TENSOR_SKETCH_H
+#define FREE_TENSOR_SKETCH_H
 
 #include <analyze/find_multi_level_tiling.h>
 #include <map>
@@ -8,7 +8,7 @@
 #include <utility>
 #include <vector>
 
-namespace ir {
+namespace freetensor {
 
 class SketchPartNode;
 
@@ -145,6 +145,6 @@ class Sketch {
     const Schedule &schedule() const { return schedule_; }
 };
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // IR_SKETCH_H
+#endif // FREE_TENSOR_SKETCH_H

@@ -1,10 +1,10 @@
-#ifndef DEVICE_H
-#define DEVICE_H
+#ifndef FREE_TENSOR_DEVICE_H
+#define FREE_TENSOR_DEVICE_H
 
 #include <driver/target.h>
 #include <ref.h>
 
-namespace ir {
+namespace freetensor {
 
 class Device {
     Ref<Target> target_;
@@ -23,6 +23,6 @@ class Device {
     void sync();
 };
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // DEVICE_H
+#endif // FREE_TENSOR_DEVICE_H

@@ -1,12 +1,12 @@
-#ifndef TYPE_INFER_H
-#define TYPE_INFER_H
+#ifndef FREE_TENSOR_TYPE_INFER_H
+#define FREE_TENSOR_TYPE_INFER_H
 
 #include <unordered_map>
 
 #include <analyze/symbol_table.h>
 #include <visitor.h>
 
-namespace ir {
+namespace freetensor {
 
 /**
  * Infer the data type of each (sub)expressions in an AST
@@ -87,6 +87,6 @@ template <class BaseClass> class WithTypeInfer : public BaseClass {
     }
 };
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // TYPE_INFER_H
+#endif // FREE_TENSOR_TYPE_INFER_H

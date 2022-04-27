@@ -1,12 +1,12 @@
-#ifndef FIND_INDEXING_LOOPS_H
-#define FIND_INDEXING_LOOPS_H
+#ifndef FREE_TENSOR_FIND_INDEXING_LOOPS_H
+#define FREE_TENSOR_FIND_INDEXING_LOOPS_H
 
 #include <unordered_map>
 
 #include <analyze/symbol_table.h>
 #include <visitor.h>
 
-namespace ir {
+namespace freetensor {
 
 class FindIndexingLoops : public SymbolTable<Visitor> {
     typedef SymbolTable<Visitor> BaseClass;
@@ -37,6 +37,6 @@ findIndexingLoops(const Stmt &op) {
     return visitor.results();
 }
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // FIND_INDEXING_LOOPS_H
+#endif // FREE_TENSOR_FIND_INDEXING_LOOPS_H

@@ -4,7 +4,7 @@
 #include <hash.h>
 #include <math/min_max.h>
 
-namespace ir {
+namespace freetensor {
 
 namespace {
 
@@ -101,4 +101,4 @@ Expr makeMaxMin(const std::vector<std::vector<Expr>> &exprs) {
     return makeOuterInner(makeMaxFunc, makeMinFunc, exprs);
 }
 
-} // namespace ir
+} // namespace freetensor

@@ -4,7 +4,7 @@
 #include <ast_parser.h>
 #include <serialize/load_ast.h>
 
-namespace ir {
+namespace freetensor {
 
 AST loadAST(const std::string &txt) {
     try {
@@ -19,4 +19,4 @@ AST loadAST(const std::string &txt) {
     }
 }
 
-} // namespace ir
+} // namespace freetensor

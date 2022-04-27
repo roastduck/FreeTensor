@@ -1,5 +1,5 @@
-#ifndef MAKE_MATMUL_H
-#define MAKE_MATMUL_H
+#ifndef FREE_TENSOR_MAKE_MATMUL_H
+#define FREE_TENSOR_MAKE_MATMUL_H
 
 #include <unordered_map>
 #include <unordered_set>
@@ -10,7 +10,7 @@
 #include <hash.h>
 #include <mutator.h>
 
-namespace ir {
+namespace freetensor {
 
 class AsMatMul : public SymbolTable<Mutator> {
     typedef SymbolTable<Mutator> BaseClass;
@@ -132,6 +132,6 @@ class AsMatMul : public SymbolTable<Mutator> {
 
 Stmt asMatMul(const Stmt &ast, const ID &loop);
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // MAKE_MATMUL_H
+#endif // FREE_TENSOR_MAKE_MATMUL_H

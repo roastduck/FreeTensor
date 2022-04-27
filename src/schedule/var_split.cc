@@ -1,6 +1,6 @@
 #include <schedule/var_split.h>
 
-namespace ir {
+namespace freetensor {
 
 Stmt VarSplit::visit(const VarDef &_op) {
     if (_op->id() == def_) {
@@ -86,4 +86,4 @@ Stmt varSplit(const Stmt &_ast, const ID &def, int dim, VarSplitMode mode,
     return ast;
 }
 
-} // namespace ir
+} // namespace freetensor

@@ -11,7 +11,7 @@
 #include <schedule/cache.h>
 #include <schedule/check_var_cross_parallel.h>
 
-namespace ir {
+namespace freetensor {
 
 Stmt MakeCacheVar::visitStmt(const Stmt &op) {
     if (op->id() == stmt_) {
@@ -302,4 +302,4 @@ cacheReduction(const Stmt &_ast, const ID &stmt, const std::string &var,
                              std::move(newVar), std::move(newDef)));
 }
 
-} // namespace ir
+} // namespace freetensor

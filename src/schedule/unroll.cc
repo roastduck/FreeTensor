@@ -2,7 +2,7 @@
 #include <pass/simplify.h>
 #include <schedule/unroll.h>
 
-namespace ir {
+namespace freetensor {
 
 Stmt BackUnroll::visit(const For &_op) {
     auto __op = Mutator::visit(_op);
@@ -76,4 +76,4 @@ Stmt unroll(const Stmt &_ast, const ID &loop, bool immediate) {
     return ast;
 }
 
-} // namespace ir
+} // namespace freetensor

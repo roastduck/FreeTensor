@@ -1,5 +1,5 @@
-#ifndef DEBUG_H
-#define DEBUG_H
+#ifndef FREE_TENSOR_DEBUG_H
+#define FREE_TENSOR_DEBUG_H
 
 #include <iostream>
 #include <string>
@@ -9,7 +9,7 @@
 #include <ast.h>
 #include <debug/logger.h>
 
-namespace ir {
+namespace freetensor {
 
 // Explicitly declare some functions, but not include their headers
 
@@ -24,6 +24,6 @@ inline std::ostream &operator<<(std::ostream &os, const AST &op) {
     return os;
 }
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // DEBUG_H
+#endif // FREE_TENSOR_DEBUG_H

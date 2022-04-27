@@ -1,5 +1,5 @@
-#ifndef GPU_H
-#define GPU_H
+#ifndef FREE_TENSOR_GPU_H
+#define FREE_TENSOR_GPU_H
 
 #include <sstream>
 
@@ -15,4 +15,4 @@
         }                                                                      \
     }
 
-#endif // GPU_H
+#endif // FREE_TENSOR_GPU_H

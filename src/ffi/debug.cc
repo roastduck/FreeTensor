@@ -1,7 +1,7 @@
 #include <debug.h>
 #include <ffi.h>
 
-namespace ir {
+namespace freetensor {
 
 void init_ffi_debug(py::module_ &m) {
     py::class_<Logger>(m, "Logger")
@@ -10,4 +10,4 @@ void init_ffi_debug(py::module_ &m) {
     m.def("logger", &logger, py::return_value_policy::reference);
 }
 
-} // namespace ir
+} // namespace freetensor

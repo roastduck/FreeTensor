@@ -1,11 +1,11 @@
-#ifndef LOGGER_H
-#define LOGGER_H
+#ifndef FREE_TENSOR_LOGGER_H
+#define FREE_TENSOR_LOGGER_H
 
 #include <iostream>
 #include <mutex>
 #include <thread>
 
-namespace ir {
+namespace freetensor {
 
 class LogCtrl {
     bool enable_ = true;
@@ -58,6 +58,6 @@ class Logger {
 
 inline Logger logger() { return Logger(); }
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // LOGGER_H
+#endif // FREE_TENSOR_LOGGER_H

@@ -7,7 +7,7 @@
 #include <pass/gpu/make_sync.h>
 #include <pass/merge_and_hoist_if.h>
 
-namespace ir {
+namespace freetensor {
 
 namespace gpu {
 
@@ -310,4 +310,4 @@ Stmt makeSync(const Stmt &_op) {
 
 } // namespace gpu
 
-} // namespace ir
+} // namespace freetensor

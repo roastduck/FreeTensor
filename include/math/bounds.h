@@ -1,5 +1,5 @@
-#ifndef BOUNDS_H
-#define BOUNDS_H
+#ifndef FREE_TENSOR_BOUNDS_H
+#define FREE_TENSOR_BOUNDS_H
 
 #include <unordered_set>
 
@@ -7,7 +7,7 @@
 #include <math/rational.h>
 #include <opt.h>
 
-namespace ir {
+namespace freetensor {
 
 namespace detail {
 ASTNodeType reverseCmp(ASTNodeType type);
@@ -150,6 +150,6 @@ inline ASTNodeType reverseCmp(ASTNodeType type) {
 
 }; // namespace detail
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // BOUNDS_H
+#endif // FREE_TENSOR_BOUNDS_H

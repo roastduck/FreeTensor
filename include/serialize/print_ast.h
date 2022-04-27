@@ -1,11 +1,11 @@
-#ifndef PRINT_AST_H
-#define PRINT_AST_H
+#ifndef FREE_TENSOR_PRINT_AST_H
+#define FREE_TENSOR_PRINT_AST_H
 
 #include <unordered_set>
 
 #include <codegen/code_gen.h>
 
-namespace ir {
+namespace freetensor {
 
 class PrintVisitor : public CodeGen<CodeGenStream> {
     bool printAllId_ = false, pretty_ = false;
@@ -85,6 +85,6 @@ std::string toString(const AST &op, bool pretty, bool printAllId);
 // Serialize function for storing an AST and loading it back
 inline std::string dumpAST(const AST &op) { return toString(op, false, false); }
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // PRINT_AST_H
+#endif // FREE_TENSOR_PRINT_AST_H

@@ -7,7 +7,7 @@
 #include <analyze/merge_no_deps_hint.h>
 #include <container_utils.h>
 
-namespace ir {
+namespace freetensor {
 
 std::vector<std::string> mergeNoDepsHint(const Stmt &ast,
                                          const std::vector<ID> &loops) {
@@ -57,4 +57,4 @@ std::vector<std::string> mergeNoDepsHint(const Stmt &ast,
     return ret;
 }
 
-} // namespace ir
+} // namespace freetensor

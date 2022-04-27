@@ -2,7 +2,7 @@
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
 
-namespace ir {
+namespace freetensor {
 
 Stmt ShrinkVar::visit(const VarDef &_op) {
     if (_op->buffer_->atype() != AccessType::Cache || _op->sizeLim_.isValid() ||
@@ -80,4 +80,4 @@ Stmt shrinkSingleVar(const Stmt &_op, const ID &varDefId) {
     return simplifyPass(op);
 }
 
-} // namespace ir
+} // namespace freetensor

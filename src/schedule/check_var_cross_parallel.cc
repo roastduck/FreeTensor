@@ -1,7 +1,7 @@
 #include <analyze/deps.h>
 #include <schedule/check_var_cross_parallel.h>
 
-namespace ir {
+namespace freetensor {
 
 void checkVarCrossParallel(const Stmt &ast, const ID &def, MemType mtype) {
     auto filter = [&](const AccessPoint &later, const AccessPoint &earlier) {
@@ -35,4 +35,4 @@ void checkVarCrossParallel(const Stmt &ast, const ID &def, MemType mtype) {
     findDeps(ast, conds, found, FindDepsMode::Dep, DEP_ALL, filter);
 }
 
-} // namespace ir
+} // namespace freetensor

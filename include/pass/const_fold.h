@@ -1,10 +1,10 @@
-#ifndef CONST_FOLD_H
-#define CONST_FOLD_H
+#ifndef FREE_TENSOR_CONST_FOLD_H
+#define FREE_TENSOR_CONST_FOLD_H
 
 #include <func.h>
 #include <mutator.h>
 
-namespace ir {
+namespace freetensor {
 
 /**
  * Calculate constant (sub)expressions
@@ -173,6 +173,6 @@ inline Stmt constFold(const Stmt &op) { return ConstFold()(op); }
 
 DEFINE_PASS_FOR_FUNC(constFold)
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // CONST_FOLD_H
+#endif // FREE_TENSOR_CONST_FOLD_H

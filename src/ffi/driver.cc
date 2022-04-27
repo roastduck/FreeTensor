@@ -5,7 +5,7 @@
 #include <except.h>
 #include <ffi.h>
 
-namespace ir {
+namespace freetensor {
 
 using namespace pybind11::literals;
 
@@ -147,22 +147,23 @@ void init_ffi_driver(py::module_ &m) {
         .def("time", &Driver::time, "rounds"_a = 10, "warmpups"_a = 3);
 }
 
-} // namespace ir
+} // namespace freetensor
 
 namespace pybind11 {
 
-template <> struct polymorphic_type_hook<ir::Target> {
-    static const void *get(const ir::Target *src, const std::type_info *&type) {
+template <> struct polymorphic_type_hook<freetensor::Target> {
+    static const void *get(const freetensor::Target *src,
+                           const std::type_info *&type) {
         if (src == nullptr) {
             return src;
         }
         switch (src->type()) {
-        case ir::TargetType::CPU:
-            type = &typeid(ir::CPU);
-            return static_cast<const ir::CPU *>(src);
-        case ir::TargetType::GPU:
-            type = &typeid(ir::GPU);
-            return static_cast<const ir::GPU *>(src);
+        case freetensor::TargetType::CPU:
+            type = &typeid(freetensor::CPU);
+            return static_cast<const freetensor::CPU *>(src);
+        case freetensor::TargetType::GPU:
+            type = &typeid(freetensor::GPU);
+            return static_cast<const freetensor::GPU *>(src);
         default:
             ERROR("Unexpected target type");
         }

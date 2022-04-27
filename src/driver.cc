@@ -16,7 +16,7 @@
 #define NAME_(macro) #macro
 #define NAME(macro) NAME_(macro)
 
-namespace ir {
+namespace freetensor {
 
 Driver::Driver(const Func &f, const std::string &src, const Device &dev)
     : f_(f), src_(src), params_(f->params_.size(), nullptr),
@@ -33,8 +33,8 @@ Driver::Driver(const Func &f, const std::string &src, const Device &dev)
 
 void Driver::buildAndLoad() {
     std::string home = getenv("HOME");
-    mkdir((home + "/.ir").c_str(), 0755);
-    std::string path_string = home + "/.ir/XXXXXX";
+    mkdir((home + "/.freetensor").c_str(), 0755);
+    std::string path_string = home + "/.freetensor/XXXXXX";
     char path[64];
     ASSERT(path_string.size() < 64);
     strncpy(path, path_string.c_str(), 63);
@@ -64,7 +64,7 @@ void Driver::buildAndLoad() {
     // strict floating point rounding order either
     switch (dev_.type()) {
     case TargetType::CPU:
-        cmd = "c++ -I" NAME(IR_RUNTIME_DIR) " -std=c++17 -shared -O3 -fPIC "
+        cmd = "c++ -I" NAME(FT_RUNTIME_DIR) " -std=c++17 -shared -O3 -fPIC "
                                             "-Wall -fopenmp -ffast-math";
         cmd += " -o " + so + " " + cpp;
 #ifdef WITH_MKL
@@ -86,7 +86,7 @@ void Driver::buildAndLoad() {
         }
         break;
     case TargetType::GPU:
-        cmd = "nvcc -I" NAME(IR_RUNTIME_DIR) " -std=c++17 -shared -Xcompiler "
+        cmd = "nvcc -I" NAME(FT_RUNTIME_DIR) " -std=c++17 -shared -Xcompiler "
                                              "-fPIC,-Wall,-O3 --use_fast_math";
         cmd += " -o " + so + " " + cpp;
         cmd += " -lcublas";
@@ -260,4 +260,4 @@ void Driver::unload() {
     }*/
 }
 
-} // namespace ir
+} // namespace freetensor

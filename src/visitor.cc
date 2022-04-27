@@ -1,7 +1,7 @@
 #include <except.h>
 #include <visitor.h>
 
-namespace ir {
+namespace freetensor {
 
 void Visitor::visitExpr(const Expr &op) {
     switch (op->nodeType()) {
@@ -87,4 +87,4 @@ void Visitor::operator()(const AST &op) {
     }
 }
 
-} // namespace ir
+} // namespace freetensor

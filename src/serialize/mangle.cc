@@ -2,7 +2,7 @@
 
 #include <serialize/mangle.h>
 
-namespace ir {
+namespace freetensor {
 
 std::string mangle(const std::string &name) {
     std::string code;
@@ -19,4 +19,4 @@ std::string mangle(const std::string &name) {
     return code;
 }
 
-} // namespace ir
+} // namespace freetensor

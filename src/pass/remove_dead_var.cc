@@ -1,6 +1,6 @@
 #include <pass/remove_dead_var.h>
 
-namespace ir {
+namespace freetensor {
 
 Stmt RemoveAllWrites::visit(const Store &op) {
     return var_ == op->var_ ? makeStmtSeq("", {}) : Mutator::visit(op);
@@ -64,4 +64,4 @@ Stmt removeDeadVar(const Stmt &_op) {
     return op;
 }
 
-} // namespace ir
+} // namespace freetensor

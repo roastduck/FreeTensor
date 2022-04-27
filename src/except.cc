@@ -6,7 +6,7 @@
 #include <except.h>
 #include <stmt.h>
 
-namespace ir {
+namespace freetensor {
 
 InvalidSchedule::InvalidSchedule(const std::string &msg, const Stmt &ast)
     : InvalidSchedule("Apply schedule on this AST is invalid: \n\n" +
@@ -32,4 +32,4 @@ void reportWarning(const std::string &msg) {
     }
 }
 
-} // namespace ir
+} // namespace freetensor

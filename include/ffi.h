@@ -1,5 +1,5 @@
-#ifndef FFI_H
-#define FFI_H
+#ifndef FREE_TENSOR_FFI_H
+#define FREE_TENSOR_FFI_H
 
 #include <pybind11/functional.h>
 #include <pybind11/pybind11.h>
@@ -7,9 +7,9 @@
 
 #include <ref.h>
 
-PYBIND11_DECLARE_HOLDER_TYPE(T, ir::Ref<T>);
+PYBIND11_DECLARE_HOLDER_TYPE(T, freetensor::Ref<T>);
 
-namespace ir {
+namespace freetensor {
 
 namespace py = pybind11;
 
@@ -30,6 +30,6 @@ void init_ffi_debug(py::module_ &m);
 void init_ffi_auto_schedule(py::module_ &m);
 void init_ffi_config(py::module_ &m);
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // FFI_H
+#endif // FREE_TENSOR_FFI_H

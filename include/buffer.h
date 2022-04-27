@@ -1,5 +1,5 @@
-#ifndef BUFFER_H
-#define BUFFER_H
+#ifndef FREE_TENSOR_BUFFER_H
+#define FREE_TENSOR_BUFFER_H
 
 #include <array>
 #include <string>
@@ -10,7 +10,7 @@
 #include <sub_tree.h>
 #include <tensor.h>
 
-namespace ir {
+namespace freetensor {
 
 enum class AccessType : size_t {
     Input = 0,
@@ -120,6 +120,6 @@ inline Ref<Buffer> deepCopy(const Ref<Buffer> &b) {
     return makeBuffer(b->tensor(), b->atype(), b->mtype());
 }
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // BUFFER_H
+#endif // FREE_TENSOR_BUFFER_H

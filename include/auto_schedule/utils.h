@@ -1,5 +1,5 @@
-#ifndef IR_UTILS_H
-#define IR_UTILS_H
+#ifndef FREE_TENSOR_UTILS_H
+#define FREE_TENSOR_UTILS_H
 
 #include <algorithm>
 #include <array>
@@ -7,7 +7,7 @@
 #include <cstdlib>
 #include <random>
 
-namespace ir {
+namespace freetensor {
 
 inline std::vector<int> _randomFillArray(int total, int n,
                                          std::default_random_engine &gen) {
@@ -71,6 +71,6 @@ inline std::vector<int> randomFillArray(int total, int n,
     return data;
 }
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // IR_UTILS_H
+#endif // FREE_TENSOR_UTILS_H

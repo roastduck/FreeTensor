@@ -3,7 +3,7 @@
 #include <pass/merge_and_hoist_if.h>
 #include <schedule/fission.h>
 
-namespace ir {
+namespace freetensor {
 
 Stmt HoistVar::visitStmt(const Stmt &op) {
     if (before_.isValid()) {
@@ -353,4 +353,4 @@ fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
     return std::make_pair(ast, std::make_pair(mutator.ids0(), mutator.ids1()));
 }
 
-} // namespace ir
+} // namespace freetensor

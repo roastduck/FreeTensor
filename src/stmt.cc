@@ -1,7 +1,7 @@
 #include <hash.h>
 #include <stmt.h>
 
-namespace ir {
+namespace freetensor {
 
 void AnyNode::compHash() { hash_ = Hasher::compHash(*this); }
 void StmtSeqNode::compHash() { hash_ = Hasher::compHash(*this); }
@@ -15,4 +15,4 @@ void AssumeNode::compHash() { hash_ = Hasher::compHash(*this); }
 void EvalNode::compHash() { hash_ = Hasher::compHash(*this); }
 void MatMulNode::compHash() { hash_ = Hasher::compHash(*this); }
 
-} // namespace ir
+} // namespace freetensor

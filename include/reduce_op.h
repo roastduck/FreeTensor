@@ -1,15 +1,15 @@
-#ifndef REDUCE_OP_H
-#define REDUCE_OP_H
+#ifndef FREE_TENSOR_REDUCE_OP_H
+#define FREE_TENSOR_REDUCE_OP_H
 
 #include <data_type.h>
 #include <expr.h>
 
-namespace ir {
+namespace freetensor {
 
 enum class ReduceOp : int { Add, Mul, Min, Max };
 
 Expr neutralVal(DataType dtype, ReduceOp op);
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // REDUCE_OP_H
+#endif // FREE_TENSOR_REDUCE_OP_H

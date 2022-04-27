@@ -1,6 +1,6 @@
 #include <pass/undo_make_reduction.h>
 
-namespace ir {
+namespace freetensor {
 
 Stmt UndoMakeReduction::visit(const ReduceTo &_op) {
     auto __op = Mutator::visit(_op);
@@ -25,4 +25,4 @@ Stmt UndoMakeReduction::visit(const ReduceTo &_op) {
     }
 }
 
-} // namespace ir
+} // namespace freetensor

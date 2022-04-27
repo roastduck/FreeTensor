@@ -3,7 +3,7 @@
 #include <pass/simplify.h>
 #include <pass/z3_simplify.h>
 
-namespace ir {
+namespace freetensor {
 
 void CheckSideEffect::visit(const Store &op) { hasSideEffect_ = true; }
 
@@ -129,4 +129,4 @@ Stmt shrinkFor(const Stmt &_op) {
     return simplifyPass(op);
 }
 
-} // namespace ir
+} // namespace freetensor

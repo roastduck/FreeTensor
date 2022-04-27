@@ -1,5 +1,5 @@
-#ifndef DRIVER_H
-#define DRIVER_H
+#ifndef FREE_TENSOR_DRIVER_H
+#define FREE_TENSOR_DRIVER_H
 
 #include <string>
 #include <unordered_map>
@@ -11,7 +11,7 @@
 #include <../runtime/cpu_context.h>
 #include <../runtime/gpu_context.h>
 
-namespace ir {
+namespace freetensor {
 
 class Driver {
     void *dlHandle_ = nullptr;
@@ -79,6 +79,6 @@ class Driver {
     void unload();
 };
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // DRIVER_H
+#endif // FREE_TENSOR_DRIVER_H

@@ -1,5 +1,5 @@
-#ifndef IR_MULTI_LEVEL_TILING_WITH_FUSION_H
-#define IR_MULTI_LEVEL_TILING_WITH_FUSION_H
+#ifndef FREE_TENSOR_MULTI_LEVEL_TILING_WITH_FUSION_H
+#define FREE_TENSOR_MULTI_LEVEL_TILING_WITH_FUSION_H
 
 #include <analyze/find_multi_level_tiling.h>
 #include <auto_schedule/rule.h>
@@ -10,7 +10,7 @@
 #include <array>
 #include <random>
 
-namespace ir {
+namespace freetensor {
 
 class MultiLevelTilingWithFusionRule : public Rule {
     ElementWiseInfo toFuse_;
@@ -58,6 +58,6 @@ class MultiLevelTilingWithFusionPart : public MultiLevelTilingPart {
     }
 };
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // IR_MULTI_LEVEL_TILING_WITH_FUSION_H
+#endif // FREE_TENSOR_MULTI_LEVEL_TILING_WITH_FUSION_H

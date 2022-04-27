@@ -1,12 +1,12 @@
-#ifndef MANGLE_H
-#define MANGLE_H
+#ifndef FREE_TENSOR_MANGLE_H
+#define FREE_TENSOR_MANGLE_H
 
 #include <string>
 
-namespace ir {
+namespace freetensor {
 
 std::string mangle(const std::string &name);
 
 }
 
-#endif // MANGLE_H
+#endif // FREE_TENSOR_MANGLE_H

@@ -1,12 +1,12 @@
-#ifndef CHECK_ALL_DEFINED_H
-#define CHECK_ALL_DEFINED_H
+#ifndef FREE_TENSOR_CHECK_ALL_DEFINED_H
+#define FREE_TENSOR_CHECK_ALL_DEFINED_H
 
 #include <unordered_set>
 
 #include <analyze/all_uses.h>
 #include <ast.h>
 
-namespace ir {
+namespace freetensor {
 
 inline bool checkAllDefined(const std::unordered_set<std::string> &defs,
                             const std::unordered_set<std::string> &namesInOp) {
@@ -18,6 +18,6 @@ inline bool checkAllDefined(const std::unordered_set<std::string> &defs,
     return checkAllDefined(defs, allNames(op));
 }
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // CHECK_ALL_DEFINED_H
+#endif // FREE_TENSOR_CHECK_ALL_DEFINED_H

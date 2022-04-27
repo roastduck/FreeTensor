@@ -1,5 +1,5 @@
-#ifndef FUNC_H
-#define FUNC_H
+#ifndef FREE_TENSOR_FUNC_H
+#define FREE_TENSOR_FUNC_H
 
 #include <string>
 #include <unordered_map>
@@ -12,7 +12,7 @@
 #include <stmt.h>
 #include <tensor.h>
 
-namespace ir {
+namespace freetensor {
 
 class FuncNode : public ASTNode {
   public:
@@ -69,6 +69,6 @@ Func deepCopy(const Func &func);
                         func->closure_);                                       \
     }
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // FUNC_H
+#endif // FREE_TENSOR_FUNC_H

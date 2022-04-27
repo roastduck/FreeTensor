@@ -1,11 +1,11 @@
-#ifndef ALL_USES_H
-#define ALL_USES_H
+#ifndef FREE_TENSOR_ALL_USES_H
+#define FREE_TENSOR_ALL_USES_H
 
 #include <unordered_set>
 
 #include <visitor.h>
 
-namespace ir {
+namespace freetensor {
 
 /**
  * Record all buffers that are used in an AST
@@ -50,6 +50,6 @@ std::unordered_set<std::string> allIters(const AST &op,
 std::unordered_set<std::string> allNames(const AST &op,
                                          bool noRecurseIdx = false);
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // ALL_USES_H
+#endif // FREE_TENSOR_ALL_USES_H

@@ -1,12 +1,12 @@
-#ifndef FOR_PROPERTY_H
-#define FOR_PROPERTY_H
+#ifndef FREE_TENSOR_FOR_PROPERTY_H
+#define FREE_TENSOR_FOR_PROPERTY_H
 
 #include <expr.h>
 #include <parallel_scope.h>
 #include <reduce_op.h>
 #include <sub_tree.h>
 
-namespace ir {
+namespace freetensor {
 
 struct ReductionItem : public ASTPart {
     ReduceOp op_;
@@ -83,6 +83,6 @@ inline Ref<ForProperty> deepCopy(const Ref<ForProperty> &_p) {
     return p;
 }
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // FOR_PROPERTY_H
+#endif // FREE_TENSOR_FOR_PROPERTY_H

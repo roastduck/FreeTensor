@@ -5,7 +5,7 @@
 using std::cout;
 using std::endl;
 
-namespace ir {
+namespace freetensor {
 void FindMultiLevelTiling::visit(const For &op) {
     if (op->len_->nodeType() != ASTNodeType::IntConst) {
         throw Error("Auto scheduling of non-constant for loop is not yet "
@@ -146,4 +146,4 @@ void FindHasStore::visit(const Load &op) {
             "A load node appearing without a store node is not supported yet.");
     }
 }
-} // namespace ir
+} // namespace freetensor

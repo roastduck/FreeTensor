@@ -1,7 +1,7 @@
 #include <expr.h>
 #include <hash.h>
 
-namespace ir {
+namespace freetensor {
 
 void CommutativeBinaryExprNode::compHash() { hash_ = Hasher::compHash(*this); }
 void NonCommutativeBinaryExprNode::compHash() {
@@ -18,4 +18,4 @@ void IfExprNode::compHash() { hash_ = Hasher::compHash(*this); }
 void CastNode::compHash() { hash_ = Hasher::compHash(*this); }
 void IntrinsicNode::compHash() { hash_ = Hasher::compHash(*this); }
 
-} // namespace ir
+} // namespace freetensor

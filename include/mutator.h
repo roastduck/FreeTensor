@@ -1,12 +1,12 @@
-#ifndef MUTATOR_H
-#define MUTATOR_H
+#ifndef FREE_TENSOR_MUTATOR_H
+#define FREE_TENSOR_MUTATOR_H
 
 #include <debug.h>
 #include <except.h>
 #include <expr.h>
 #include <stmt.h>
 
-namespace ir {
+namespace freetensor {
 
 class Mutator {
   public:
@@ -341,6 +341,6 @@ class Mutator {
     }
 };
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // MUTATOR_H
+#endif // FREE_TENSOR_MUTATOR_H

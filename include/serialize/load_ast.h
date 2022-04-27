@@ -1,12 +1,12 @@
-#ifndef LOAD_AST_H
-#define LOAD_AST_H
+#ifndef FREE_TENSOR_LOAD_AST_H
+#define FREE_TENSOR_LOAD_AST_H
 
 #include <ast.h>
 
-namespace ir {
+namespace freetensor {
 
 AST loadAST(const std::string &txt);
 
 }
 
-#endif // LOAD_AST_H
+#endif // FREE_TENSOR_LOAD_AST_H

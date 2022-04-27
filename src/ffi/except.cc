@@ -1,7 +1,7 @@
 #include <except.h>
 #include <ffi.h>
 
-namespace ir {
+namespace freetensor {
 
 void init_ffi_except(py::module_ &m) {
     py::register_exception<Error>(m, "Error");
@@ -11,4 +11,4 @@ void init_ffi_except(py::module_ &m) {
     py::register_exception<AssertAlwaysFalse>(m, "AssertAlwaysFalse");
 }
 
-} // namespace ir
+} // namespace freetensor

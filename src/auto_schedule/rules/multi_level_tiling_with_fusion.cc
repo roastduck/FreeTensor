@@ -3,7 +3,7 @@
 #include <auto_schedule/rules/multi_level_tiling_with_fusion.h>
 #include <auto_schedule/utils.h>
 
-namespace ir {
+namespace freetensor {
 RuleStatus MultiLevelTilingWithFusionRule::analyze(const Sketch &sketch) {
     if (sketch.nowTarget().hasPart(
             SketchPartType::MultiLevelTilingWithFusion) ||
@@ -169,4 +169,4 @@ size_t MultiLevelTilingWithFusionPart::hash() const {
     return h;
 }
 
-} // namespace ir
+} // namespace freetensor

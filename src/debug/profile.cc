@@ -2,7 +2,7 @@
 
 #include <debug/profile.h>
 
-namespace ir {
+namespace freetensor {
 
 #ifdef IR_DEBUG_PROFILE
 
@@ -40,4 +40,4 @@ ProfileGuard::~ProfileGuard() {
 
 #endif // IR_DEBUG_PROFILE
 
-} // namespace ir
+} // namespace freetensor

@@ -1,11 +1,11 @@
-#ifndef VAR_REORDER_H
-#define VAR_REORDER_H
+#ifndef FREE_TENSOR_VAR_REORDER_H
+#define FREE_TENSOR_VAR_REORDER_H
 
 #include <algorithm>
 
 #include <mutator.h>
 
-namespace ir {
+namespace freetensor {
 
 class VarReorder : public Mutator {
     ID def_;
@@ -56,6 +56,6 @@ class VarReorder : public Mutator {
 
 Stmt varReorder(const Stmt &ast, const ID &def, const std::vector<int> &order);
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // VAR_REORDER_H
+#endif // FREE_TENSOR_VAR_REORDER_H

@@ -2,7 +2,7 @@
 
 #include <hash.h>
 
-namespace ir {
+namespace freetensor {
 
 size_t Hasher::compHash(const Tensor &t) {
     size_t h = (-1 * K1 + B1) % P;
@@ -610,4 +610,4 @@ bool HashComparator::operator()(const AST &lhs, const AST &rhs) const {
     }
 }
 
-} // namespace ir
+} // namespace freetensor

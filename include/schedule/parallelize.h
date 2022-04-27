@@ -1,12 +1,12 @@
-#ifndef PARALLELIZE_H
-#define PARALLELIZE_H
+#ifndef FREE_TENSOR_PARALLELIZE_H
+#define FREE_TENSOR_PARALLELIZE_H
 
 #include <unordered_map>
 #include <unordered_set>
 
 #include <mutator.h>
 
-namespace ir {
+namespace freetensor {
 
 class Parallelize : public Mutator {
     ID loop_;
@@ -54,6 +54,6 @@ class Parallelize : public Mutator {
 Stmt parallelize(const Stmt &ast, const ID &loop,
                  const ParallelScope &parallel);
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // PARALLELIZE_H
+#endif // FREE_TENSOR_PARALLELIZE_H

@@ -1,5 +1,5 @@
-#ifndef FLOAT_SIMPLIFY_H
-#define FLOAT_SIMPLIFY_H
+#ifndef FREE_TENSOR_FLOAT_SIMPLIFY_H
+#define FREE_TENSOR_FLOAT_SIMPLIFY_H
 
 #include <functional>
 #include <unordered_map>
@@ -11,7 +11,7 @@
 #include <mutator.h>
 #include <pass/const_fold.h>
 
-namespace ir {
+namespace freetensor {
 
 class FloatSimplify : public WithTypeInfer<SymbolTable<ConstFold>> {
     typedef WithTypeInfer<SymbolTable<ConstFold>> BaseClass;
@@ -58,6 +58,6 @@ Stmt floatSimplify(const Stmt &op);
 
 DEFINE_PASS_FOR_FUNC(floatSimplify)
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // FLOAT_SIMPLIFY_H
+#endif // FREE_TENSOR_FLOAT_SIMPLIFY_H
