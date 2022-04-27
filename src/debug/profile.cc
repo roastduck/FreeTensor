@@ -4,7 +4,7 @@
 
 namespace freetensor {
 
-#ifdef IR_DEBUG_PROFILE
+#ifdef FT_DEBUG_PROFILE
 
 std::unique_ptr<Profile> Profile::profile_ = nullptr;
 
@@ -38,6 +38,6 @@ ProfileGuard::~ProfileGuard() {
     Profile::getInstance().add(name_, detail_, t);
 }
 
-#endif // IR_DEBUG_PROFILE
+#endif // FT_DEBUG_PROFILE
 
 } // namespace freetensor
