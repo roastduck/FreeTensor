@@ -1,4 +1,4 @@
-import ir
+import freetensor as ft
 
 STANDALONE_FEATURES = 0
 SAMPLE_GROUPS = 10
@@ -8,18 +8,18 @@ FEAT_SAMP_CPU_LOAD_AREA = 14
 
 
 def test_sample_basic():
-    with ir.VarDef([
+    with ft.VarDef([
         ("x", (128,), "float32", "input", "cpu"),
         ("y", (128, 32), "float32", "output", "cpu"),
     ]) as (x, y):
-        with ir.For("i", 0, 4) as i:
-            with ir.For("j", 0, 32) as j:
-                with ir.For("k", 0, 32) as k:
+        with ft.For("i", 0, 4) as i:
+            with ft.For("j", 0, 32) as j:
+                with ft.For("k", 0, 32) as k:
                     y[i * 32 + k, j] = x[i * 32 + k] * 2
-    ast = ir.pop_ast()
+    ast = ft.pop_ast()
     print(ast)
 
-    features = ir.fixed_length_feature(ast)
+    features = ft.fixed_length_feature(ast)
 
     assert features[STANDALONE_FEATURES +
                     SAMPLE_ITERS.index(32) * SAMPLE_FEATURES +

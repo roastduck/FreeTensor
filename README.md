@@ -37,9 +37,9 @@ There are some debugging options. Adding `-DFT_DEBUG_LOG_NODE=ON` to `cmake` ena
 
 ## Run
 
-To run any program with IR, one should add the `python/` and `build/` directory to `PYTHONPATH` first.
+To run any program with FreeTensor, one should add the `python/` and `build/` directory to `PYTHONPATH` first.
 
-E.g. to run a python program `a.py` with IR in the `build/` directory,
+E.g. to run a python program `a.py` with FreeTensor in the `build/` directory,
 
 ```sh
 PYTHONPATH=../python:../build:$PYTHONPATH python3 a.py
@@ -84,7 +84,7 @@ Please configure (or install some plugins for) your editor, to support `clang-fo
 ```
 include/ --------------------------------------------------- C++ headers
 |- ref.h --------------------------------------------------- A smart pointer, based on std::shared_ptr, used all around the code
-|- ast.h --------------------------------------------------- Base class for AST (the form of our IR) nodes
+|- ast.h --------------------------------------------------- Base class for AST (IR of FreeTensor) nodes
 |- stmt.h -------------------------------------------------- Statement nodes of an AST
 |- expr.h -------------------------------------------------- Expression nodes of an AST
 |- visitor.h ----------------------------------------------- Inherit Visitor in this file to examine an AST
