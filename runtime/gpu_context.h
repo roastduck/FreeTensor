@@ -12,7 +12,7 @@
         if (CUBLAS_STATUS_SUCCESS != err) {                                    \
             fprintf(stderr, "cuBLAS error in file '%s' in line %i : %s.\n",    \
                     __FILE__, __LINE__, cublasGetErrorString(err));            \
-            exit(EXIT_FAILURE);                                                \
+            throw std::runtime_error("cublas error");                          \
         }                                                                      \
     }
 
@@ -53,7 +53,10 @@ class GPUContext : public Context {
     }
     ~GPUContext() {
         if (initialized_) {
-            checkCublasError(cublasDestroy(cublas_));
+            try {
+                checkCublasError(cublasDestroy(cublas_));
+            } catch (const std::exception &e) {
+            }
             initialized_ = false;
         }
     }

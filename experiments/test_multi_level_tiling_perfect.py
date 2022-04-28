@@ -6,8 +6,8 @@ device = ir.Device(target)
 
 
 def test_multi_level_tiling():
-    a = 1024
-    b = 1024
+    a = 128
+    b = 128
     m = 4
     # c = 64
 

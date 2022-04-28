@@ -7,7 +7,7 @@
 
 namespace ir {
 
-constexpr int MAX_VTHREAD = 1;
+constexpr int MAX_VTHREAD = 8;
 struct MultiLevelTilingAnnotation {
     std::vector<std::vector<int>> spaceLoopTiling;
     std::vector<std::vector<int>> reductionLoopTiling;

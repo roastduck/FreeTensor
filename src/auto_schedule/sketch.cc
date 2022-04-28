@@ -1,7 +1,11 @@
+#include <analyze/fixed_length_feature.h>
 #include <auto_schedule/rule.h>
 #include <auto_schedule/sketch.h>
 #include <auto_schedule/utils.h>
+#include <codegen/code_gen_cpu.h>
+#include <codegen/code_gen_cuda.h>
 #include <hash.h>
+#include <lower.h>
 
 namespace ir {
 
@@ -86,6 +90,28 @@ size_t Sketch::hash() const {
         h = hashCombine(h, target.hash());
     }
     return h;
+}
+
+std::string Sketch::genCode(const Ref<Target> &target) {
+    if (!code_.empty()) {
+        return code_;
+    }
+    genSchedule();
+    if (!generatedSchedule_.ast().isValid()) {
+        return "";
+    }
+    lowered_ = lower(generatedSchedule_.func(), target);
+    if (target->type() == TargetType::GPU)
+        code_ = codeGenCUDA(lowered_);
+    else
+        code_ = codeGenCPU(lowered_);
+    return code_;
+}
+std::vector<double> &Sketch::genFeature() {
+    if (feature_.empty()) {
+        feature_ = fixedLengthFeature(genSchedule().ast());
+    }
+    return feature_;
 }
 
 } // namespace ir

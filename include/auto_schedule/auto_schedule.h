@@ -27,11 +27,11 @@ class AutoSchedule {
     Ref<Target> target_;
     Device device_;
     size_t measuredSize_;
-    std::vector<Sketch> baseSketches_;
+    std::vector<Ref<Sketch>> baseSketches_;
     std::vector<Ref<Array>> args_;
     std::unordered_map<std::string, Ref<Array>> kws_;
     bool paramsSet_;
-    std::vector<Sketch> measuredSketches_;
+    std::vector<Ref<Sketch>> measuredSketches_;
     std::set<size_t> measuredHashes_;
     double mn_;
     std::default_random_engine randGen_;
@@ -40,7 +40,7 @@ class AutoSchedule {
     std::vector<Ref<Rule>> rules_;
 
   private:
-    std::vector<double> measure(const std::vector<Schedule> &schedules);
+    std::vector<double> measure(std::vector<Ref<Sketch>> &sketches);
 
   public:
     AutoSchedule(const Schedule &schedule, const Ref<Target> &target,
@@ -52,22 +52,23 @@ class AutoSchedule {
     void setParams(const std::vector<Ref<Array>> &args,
                    const std::unordered_map<std::string, Ref<Array>> &kws);
 
-    std::vector<Sketch> searchOneRound(size_t n);
+    void searchOneRound(size_t n);
 
-    std::vector<Sketch> evolutionarySearch(std::vector<Sketch> init,
-                                           size_t outSize);
+    std::vector<Ref<Sketch>> evolutionarySearch(std::vector<Ref<Sketch>> init,
+                                                size_t outSize);
 
-    std::vector<Sketch> getInitPopulation(size_t n);
+    std::vector<Ref<Sketch>> getInitPopulation(size_t n);
 
-    std::vector<Sketch> getRandPopulation(size_t nRand);
+    std::vector<Ref<Sketch>> getRandPopulation(size_t nRand);
 
-    std::vector<Schedule> genSchedules(std::vector<Sketch> &sketches);
+    //    std::vector<Schedule> genSchedules(std::vector<Ref<Sketch>>
+    //    &sketches);
 
-    py::list genFeatures(const std::vector<Schedule> &schedules);
+    py::list genFeatures(std::vector<Ref<Sketch>> &sketches);
 
-    std::vector<double> getPrediction(std::vector<Sketch> &sketches);
+    std::vector<double> getPrediction(std::vector<Ref<Sketch>> &sketches_in);
 
-    std::vector<double> testAndAdd(std::vector<Sketch> &sketches_in);
+    std::vector<double> testAndAdd(std::vector<Ref<Sketch>> &sketches_in);
 
     Schedule getBestSchedule();
 

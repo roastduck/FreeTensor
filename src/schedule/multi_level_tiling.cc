@@ -119,7 +119,7 @@ std::vector<std::pair<ID, int>> multiLevelTilingWithFusion(
     }
     ID firstReduction = lastFuse;
     for (int i = target.reductionLoops.size() - 1; i >= 0; i--) {
-        if (tiles[fuseTileSize + i].second > 1){
+        if (tiles[fuseTileSize + i].second > 1) {
             firstReduction = tiles[fuseTileSize + i].first;
             break;
         }
