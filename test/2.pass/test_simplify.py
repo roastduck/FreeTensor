@@ -683,7 +683,7 @@ def test_min_minus_min(p):
     with ft.VarDef([
         ("x", (), "int32", "input", "cpu"),
         ("y", (), "int32", "input", "cpu"),
-        ("z", (), "int32", "input", "cpu"),
+        ("z", (), "int32", "output", "cpu"),
     ]) as (x, y, z):
         z[()] = ft.min(x[()], y[()]) - ft.min(x[()], y[()])
     ast = ft.pop_ast()
@@ -694,7 +694,7 @@ def test_min_minus_min(p):
     with ft.VarDef([
         ("x", (), "int32", "input", "cpu"),
         ("y", (), "int32", "input", "cpu"),
-        ("z", (), "int32", "input", "cpu"),
+        ("z", (), "int32", "output", "cpu"),
     ]) as (x, y, z):
         z[()] = 0
     std = ft.pop_ast()
@@ -729,7 +729,7 @@ def test_min_max_as_bound(p):
 
 @pytest.mark.parametrize('p', [ft.simplify_pass, ft.z3_simplify])
 def test_accessible_after_writing_if(p):
-    with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
+    with ft.VarDef([("x", (4,), "int32", "inout", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ft.If(x[0] < 4):
             with ft.If(x[0] < 4):
@@ -742,7 +742,7 @@ def test_accessible_after_writing_if(p):
     ast = p(ast)
     print(ast)
 
-    with ft.VarDef("x", (4,), "int32", "input", "cpu") as x:
+    with ft.VarDef("x", (4,), "int32", "inout", "cpu") as x:
         with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
             with ft.If(x[0] < 4):
                 y[0] = 1
@@ -756,7 +756,7 @@ def test_accessible_after_writing_if(p):
 
 @pytest.mark.parametrize('p', [ft.simplify_pass, ft.z3_simplify])
 def test_accessible_after_writing_for(p):
-    with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
+    with ft.VarDef([("x", (4,), "int32", "inout", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ft.If(x[0] < 4):
             with ft.For("i", 0, 4) as i:
@@ -770,7 +770,7 @@ def test_accessible_after_writing_for(p):
     ast = p(ast)
     print(ast)
 
-    with ft.VarDef("x", (4,), "int32", "input", "cpu") as x:
+    with ft.VarDef("x", (4,), "int32", "inout", "cpu") as x:
         with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
             with ft.If(x[0] < 4):
                 with ft.For("i", 0, 4) as i:

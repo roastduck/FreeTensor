@@ -319,3 +319,24 @@ def test_inlined_invoke():
     x_std = np.zeros((4, 4), dtype="float32")
     x_std[2, 3] = 2.0
     assert np.array_equal(x_np, x_std)
+
+
+def test_error_modifying_input_tensor():
+    with pytest.raises(ft.InvalidProgram):
+        with ft.VarDef("x", (4, 4), "float32", "input", "cpu") as x:
+            x[2, 3] = 2.0
+            x[1, 0] = 3.0
+        func = ft.lower(ft.Func("main", ["x"], [], ft.pop_ast()), ft.CPU())
+
+
+def test_error_modifying_shape_of_a_var_when_using_it():
+    with pytest.raises(ft.InvalidProgram):
+        with ft.VarDef("n", (), "int32", "inout", "cpu") as n:
+            with ft.VarDef([("x", (n[()],), "float32", "input", "cpu"),
+                            ("y", (n[()],), "float32", "output", "cpu")
+                           ]) as (x, y):
+                n[()] = 0  # Error
+                with ft.For("i", 0, n[()]) as i:
+                    y[i] = x[i] + 1
+        func = ft.lower(ft.Func("main", ["n", "x", "y"], [], ft.pop_ast()),
+                        ft.CPU())

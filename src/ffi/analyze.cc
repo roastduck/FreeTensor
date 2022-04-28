@@ -1,3 +1,4 @@
+#include <analyze/all_uses.h>
 #include <analyze/find_multi_level_tiling.h>
 #include <analyze/fixed_length_feature.h>
 #include <analyze/structural_feature.h>
@@ -23,6 +24,11 @@ void init_ffi_analyze(py::module_ &m) {
     m.def("feature_length", FixedLengthFeature::featureLen);
 
     m.def("find_multi_level_tiling", fakeFindMultiLevelTiling);
+
+    m.def("all_reads", &allReads, "ast"_a, "no_recurse_idx"_a = false);
+    m.def("all_writes", &allWrites, "ast"_a, "no_recurse_idx"_a = false);
+    m.def("all_iters", &allIters, "ast"_a, "no_recurse_idx"_a = false);
+    m.def("all_names", &allNames, "ast"_a, "no_recurse_idx"_a = false);
 }
 
 } // namespace freetensor
