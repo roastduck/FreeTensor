@@ -17,7 +17,7 @@ from typing import Callable, Dict, List, Sequence, Optional, Any, TypeVar, Union
 from dataclasses import dataclass
 
 from . import nodes
-from .nodes import (_VarDef, Var, ndim, pop_ast, For, If, Else, MarkNid,
+from .nodes import (_VarDef, VarRef, ndim, pop_ast, For, If, Else, MarkNid,
                     intrinsic, l_and, l_or, l_not, if_then_else, ctx_stack,
                     Func, Assert)
 
@@ -192,7 +192,7 @@ def staged_callable(staging: F, original) -> F:
 
 class StagedAssignable:
 
-    def assign(self, name: str) -> Var:
+    def assign(self, name: str) -> VarRef:
         raise NotImplementedError()
 
 
@@ -229,11 +229,11 @@ def foreach(name: str, iter, body: Callable[[Any], None]) -> None:
 
 @dataclass
 class VarCreator(StagedAssignable):
-    shape: Union[Sequence, Var]
+    shape: Union[Sequence, VarRef]
     dtype: str
     mtype: str
 
-    def assign(self, name: str) -> Var:
+    def assign(self, name: str) -> VarRef:
         '''Customized assign behavior. Creates a VarDef with its full name.'''
         return StagingContext.register_implicit_scope(
             _VarDef(prepare_vardef(name), self.shape, self.dtype, 'cache',
@@ -273,7 +273,7 @@ class PredefinedVarCreator(VarCreator):
         super().__init__(get_shape(initializer), dtype, mtype)
         self.initializer = initializer
 
-    def assign(self, name: str) -> Var:
+    def assign(self, name: str) -> VarRef:
         var = super().assign(name)
 
         def impl(var_slice, init_slice):
@@ -437,7 +437,7 @@ def mark_nid(nid: str):
     ctx_stack.top().set_next_nid(StagingContext.fullid(nid))
 
 
-def mark_no_deps(no_deps: Var):
+def mark_no_deps(no_deps: VarRef):
     ctx_stack.top().add_next_no_deps(no_deps.name)
 
 
@@ -534,7 +534,7 @@ class Transformer(ast.NodeTransformer):
 
     def visit_Expr(self, old_node: ast.Expr) -> Any:
         '''Rule:
-        `declare_var(x, ...)` -> `x = declare_var(x, ...)`: x is changed from a name string to a Var
+        `declare_var(x, ...)` -> `x = declare_var(x, ...)`: x is changed from a name string to a VarRef
         '''
         node: ast.Expr = self.generic_visit(old_node)
         if isinstance(node.value, ast.Call):
@@ -852,20 +852,20 @@ def transform(func=None, verbose=False, caller_env=None):
                         StagingContext.id_stack[-1].ids[p] = 1
                         StagingContext.name_dict[p] = 0
                     returns = staging_func(*params)
-                    if isinstance(returns, Var):
+                    if isinstance(returns, VarRef):
                         returns = [returns]
                     elif isinstance(returns, tuple):
                         for ret in returns:
-                            if not isinstance(ret, Var):
+                            if not isinstance(ret, VarRef):
                                 raise StagingError(
-                                    'Illegal return at top level, need to be a `Var` or a tuple of `Var`s'
+                                    'Illegal return at top level, need to be a `VarRef` or a tuple of `VarRef`s'
                                 )
                         returns = list(returns)
                     elif returns is None:
                         returns = []
                     else:
                         raise StagingError(
-                            'Illegal return at top level, need to be a `Var` or a tuple of `Var`s'
+                            'Illegal return at top level, need to be a `VarRef` or a tuple of `VarRef`s'
                         )
                     for ret in returns:
                         if ret.vardef.atype != ffi.AccessType('inout'):

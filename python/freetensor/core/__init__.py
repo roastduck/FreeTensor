@@ -4,7 +4,6 @@ from ffi import InvalidSchedule, InvalidProgram, DriverError, AssertAlwaysFalse
 
 from .nodes import (
     pop_ast,
-    Var,
     VarDef,
     For,
     If,
