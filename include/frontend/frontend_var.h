@@ -109,6 +109,8 @@ inline std::string toString(const FrontendVar &var) {
     return ret;
 }
 
+std::unordered_set<std::string> allReads(const FrontendVarIdx &idx);
+
 } // namespace freetensor
 
 #endif // FREE_TENSOR_FRONTEND_VAR

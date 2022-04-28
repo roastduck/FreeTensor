@@ -86,6 +86,19 @@ std::vector<T> uni(const std::vector<T> &lhs, const std::vector<T> &rhs) {
     }
     return ret;
 }
+template <class T, class Hash, class KeyEqual>
+std::unordered_set<T, Hash, KeyEqual>
+uni(const std::unordered_set<T, Hash, KeyEqual> &lhs,
+    const std::unordered_set<T, Hash, KeyEqual> &rhs) {
+    if (lhs.size() < rhs.size()) {
+        return uni(rhs, lhs);
+    }
+    auto ret = lhs;
+    for (auto &&item : rhs) {
+        ret.insert(item);
+    }
+    return ret;
+}
 
 template <class T>
 std::vector<T> cat(const std::vector<T> &lhs, const std::vector<T> &rhs) {

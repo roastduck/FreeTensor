@@ -134,6 +134,17 @@ class Var(ffi.FrontendVar):
         super(Var, self).__init__(name, full_shape, dtype, mtype, indices)
         self.vardef = vardef
 
+        self.borrowed_vardefs = set()
+        for idx in indices:
+            for name in ffi.all_reads(idx):
+                self.borrowed_vardefs.add(open_vardefs[name])
+        for item in self.borrowed_vardefs:
+            item.lend_out()
+
+    def __del__(self):
+        for item in self.borrowed_vardefs:
+            item.reclaim()
+
     def __getitem__(self, key):
         return Var(self.name, self.vardef, self.full_shape, self.dtype,
                    self.mtype, self.chain_indices(self._parse_key(key)))
@@ -141,11 +152,14 @@ class Var(ffi.FrontendVar):
     def __setitem__(self, key, value):
         var = Var(self.name, self.vardef, self.full_shape, self.dtype,
                   self.mtype, self.chain_indices(self._parse_key(key)))
-        if var.vardef.is_const:
+        if var.vardef.atype == ffi.AccessType("input"):
+            raise ffi.InvalidProgram("Cannot modify an \"input\" tensor `" +
+                                     self.name)
+        if var.vardef.borrower_cnt > 0:
             raise ffi.InvalidProgram(
-                "Cannot modify a const tensor `" + self.name + "`. A tensor "
-                "can be const if it has an \"input\" AccessType, or it has been "
-                "borrowed in another tensor's shape")
+                "Cannot modify tensor `" + self.name +
+                "` becuase it has been borrowed in another tensor's shape, or a tensor slice"
+            )
         top = ctx_stack.top()
         top.append_stmt(var.as_store(top.get_next_nid(), value))
 
@@ -272,26 +286,25 @@ class _VarDef:
         self.atype = ffi.AccessType(atype)
         self.mtype = ffi.MemType(mtype)
 
-        # A VarDef can be const if it has an "input" atype, or it has been borrowed
-        # in another VarDef's shape
-        self.is_const = False
-        if self.atype == ffi.AccessType("input"):
-            self.is_const = True
+        self.borrower_cnt = 0
 
-        self.borrowed_vardefs = []
+        self.borrowed_vardefs = set()
         for dim in self.shape:
             for name in ffi.all_reads(ffi.Expr(dim)):
-                self.borrowed_vardefs.append(Borrow(open_vardefs[name]))
+                self.borrowed_vardefs.add(open_vardefs[name])
 
     def set_atype(self, atype):
         self.atype = ffi.AccessType(atype)
 
-    def set_is_const(self, is_const):
-        self.is_const = is_const
+    def lend_out(self):
+        self.borrower_cnt += 1
+
+    def reclaim(self):
+        self.borrower_cnt -= 1
 
     def __enter__(self):
         for item in self.borrowed_vardefs:
-            item.__enter__()
+            item.lend_out()
 
         ctx_stack.push()
         if self.name in open_vardefs:
@@ -303,7 +316,7 @@ class _VarDef:
     def __exit__(self, exc_type, exc_value, traceback):
         del open_vardefs[self.name]
         for item in self.borrowed_vardefs:
-            item.__exit__(exc_type, exc_value, traceback)
+            item.reclaim()
 
         if exc_value is not None:
             # Do not generate an AST node
@@ -336,20 +349,6 @@ def VarDef(*args):
         return _VarsDef(args[0])
     else:
         return _VarDef(*args)
-
-
-class Borrow:
-    ''' Temporarily mark a VarDef as const '''
-
-    def __init__(self, vardef: _VarDef):
-        self.vardef = vardef
-
-    def __enter__(self):
-        self.old_is_const = self.vardef.is_const
-        self.vardef.set_is_const(True)
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.vardef.set_is_const(self.old_is_const)
 
 
 class For:

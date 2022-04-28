@@ -25,10 +25,22 @@ void init_ffi_analyze(py::module_ &m) {
 
     m.def("find_multi_level_tiling", fakeFindMultiLevelTiling);
 
-    m.def("all_reads", &allReads, "ast"_a, "no_recurse_idx"_a = false);
-    m.def("all_writes", &allWrites, "ast"_a, "no_recurse_idx"_a = false);
-    m.def("all_iters", &allIters, "ast"_a, "no_recurse_idx"_a = false);
-    m.def("all_names", &allNames, "ast"_a, "no_recurse_idx"_a = false);
+    m.def("all_reads",
+          static_cast<std::unordered_set<std::string> (*)(const AST &, bool)>(
+              &allReads),
+          "ast"_a, "no_recurse_idx"_a = false);
+    m.def("all_writes",
+          static_cast<std::unordered_set<std::string> (*)(const AST &, bool)>(
+              &allWrites),
+          "ast"_a, "no_recurse_idx"_a = false);
+    m.def("all_iters",
+          static_cast<std::unordered_set<std::string> (*)(const AST &, bool)>(
+              &allIters),
+          "ast"_a, "no_recurse_idx"_a = false);
+    m.def("all_names",
+          static_cast<std::unordered_set<std::string> (*)(const AST &, bool)>(
+              &allNames),
+          "ast"_a, "no_recurse_idx"_a = false);
 }
 
 } // namespace freetensor

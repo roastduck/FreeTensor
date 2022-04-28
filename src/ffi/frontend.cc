@@ -13,6 +13,9 @@ void init_ffi_frontend(py::module_ &m) {
         .def("__repr__",
              [](const FrontendVarIdx &idx) { return toString(idx); });
 
+    m.def("all_reads", static_cast<std::unordered_set<std::string> (*)(
+                           const FrontendVarIdx &)>(&allReads));
+
     py::class_<FrontendVar, Ref<FrontendVar>>(m, "FrontendVar")
         .def(py::init<const std::string &, const std::vector<Expr> &, DataType,
                       MemType, const std::vector<FrontendVarIdx> &>())

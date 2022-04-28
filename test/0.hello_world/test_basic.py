@@ -340,3 +340,17 @@ def test_error_modifying_shape_of_a_var_when_using_it():
                     y[i] = x[i] + 1
         func = ft.lower(ft.Func("main", ["n", "x", "y"], [], ft.pop_ast()),
                         ft.CPU())
+
+
+def test_error_modifying_a_var_when_borrowed_as_a_slice():
+    with pytest.raises(ft.InvalidProgram):
+        with ft.VarDef([("x", (10, 10), "float32", "input", "cpu"),
+                        ("y", (10,), "float32", "output", "cpu"),
+                        ("offset", (), "int32", "inout", "cpu")]) as (x, y,
+                                                                      offset):
+            x_slice = x[offset[()]]  # Borrow
+            offset[()] = 0  # Error
+            for i in range(10):
+                y[i] = x_slice[i]
+        func = ft.lower(ft.Func("main", ["x", "y", "offset"], [], ft.pop_ast()),
+                        ft.CPU())
