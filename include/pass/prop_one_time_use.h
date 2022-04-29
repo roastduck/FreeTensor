@@ -1,9 +1,9 @@
-#ifndef PROP_ONE_TIME_USE_H
-#define PROP_ONE_TIME_USE_H
+#ifndef FREE_TENSOR_PROP_ONE_TIME_USE_H
+#define FREE_TENSOR_PROP_ONE_TIME_USE_H
 
 #include <func.h>
 
-namespace ir {
+namespace freetensor {
 
 /**
  * Propagate variable if it is used only once after being assigned
@@ -26,6 +26,6 @@ Stmt propOneTimeUse(const Stmt &op);
 
 DEFINE_PASS_FOR_FUNC(propOneTimeUse)
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // PROP_ONE_TIME_USE_H
+#endif // FREE_TENSOR_PROP_ONE_TIME_USE_H

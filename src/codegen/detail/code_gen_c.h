@@ -7,37 +7,20 @@
 #include <vector>
 
 #include <codegen/code_gen_c.h>
-#include <mangle.h>
+#include <serialize/mangle.h>
 
 #include "code_gen.h"
 
-namespace ir {
+namespace freetensor {
 
 template <class Stream>
-template <class T>
-void CodeGenC<Stream>::genScalar(const T &op) {
-    auto id = mangle(op->var_);
-    if (op->indices_.empty()) {
-        switch (this->buffer(op->var_)->mtype()) {
-        case MemType::ByValue:
-        case MemType::CPU:
-        case MemType::GPULocal:
-            this->os() << id;
-            break;
-        case MemType::GPUGlobal:
-        case MemType::GPUShared:
-            this->os() << "*" << id;
-            break;
-        default:
-            ASSERT(false);
-        }
-    } else {
-        this->os() << id;
-        for (auto &&index : op->indices_) {
-            this->os() << "[";
-            (*this)(index);
-            this->os() << "]";
-        }
+void CodeGenC<Stream>::genScalar(const std::string &var,
+                                 const std::vector<Expr> &indices) {
+    this->os() << mangle(var);
+    for (auto &&index : indices) {
+        this->os() << "[";
+        (*this)(index);
+        this->os() << "]";
     }
 }
 
@@ -338,11 +321,20 @@ template <class Stream> void CodeGenC<Stream>::visit(const Mul &op) {
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const RealDiv &op) {
-    this->os() << "(";
-    (*this)(op->lhs_);
-    this->os() << " / ";
-    (*this)(op->rhs_);
-    this->os() << ")";
+    if (isFloat(this->dtype(op->lhs_)) || isFloat(this->dtype(op->rhs_))) {
+        this->os() << "(";
+        (*this)(op->lhs_);
+        this->os() << " / ";
+        (*this)(op->rhs_);
+        this->os() << ")";
+    } else {
+        // TODO: Use double?
+        this->os() << "(float(";
+        (*this)(op->lhs_);
+        this->os() << ") / float(";
+        (*this)(op->rhs_);
+        this->os() << "))";
+    }
 }
 
 template <class Stream>
@@ -617,6 +609,8 @@ template <class Stream> std::string CodeGenC<Stream>::gen(DataType dtype) {
         return "double";
     case DataType::Float32:
         return "float";
+    case DataType::Int64:
+        return "int64_t";
     case DataType::Int32:
         return "int32_t";
     case DataType::Bool:
@@ -626,6 +620,6 @@ template <class Stream> std::string CodeGenC<Stream>::gen(DataType dtype) {
     }
 }
 
-} // namespace ir
+} // namespace freetensor
 
 #endif // DETAIL_CODE_GEN_C_H

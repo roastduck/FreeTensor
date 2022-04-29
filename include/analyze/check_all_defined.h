@@ -1,32 +1,23 @@
-#ifndef CHECK_ALL_DEFINED_H
-#define CHECK_ALL_DEFINED_H
+#ifndef FREE_TENSOR_CHECK_ALL_DEFINED_H
+#define FREE_TENSOR_CHECK_ALL_DEFINED_H
 
 #include <unordered_set>
 
-#include <visitor.h>
+#include <analyze/all_uses.h>
+#include <ast.h>
 
-namespace ir {
+namespace freetensor {
 
-class CheckAllDefined : public Visitor {
-    const std::unordered_set<std::string> &defs_;
-    bool allDef_ = true;
+inline bool checkAllDefined(const std::unordered_set<std::string> &defs,
+                            const std::unordered_set<std::string> &namesInOp) {
+    return isSubSetOf(namesInOp, defs);
+}
 
-  public:
-    CheckAllDefined(const std::unordered_set<std::string> &defs)
-        : defs_(defs) {}
+inline bool checkAllDefined(const std::unordered_set<std::string> &defs,
+                            const AST &op) {
+    return checkAllDefined(defs, allNames(op));
+}
 
-    bool allDef() const { return allDef_; }
+} // namespace freetensor
 
-  protected:
-    void visit(const Var &op) override;
-    void visit(const Load &op) override;
-    void visit(const Store &op) override;
-    void visit(const ReduceTo &op) override;
-};
-
-bool checkAllDefined(const std::unordered_set<std::string> &defs,
-                     const AST &op);
-
-} // namespace ir
-
-#endif // CHECK_ALL_DEFINED_H
+#endif // FREE_TENSOR_CHECK_ALL_DEFINED_H

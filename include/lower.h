@@ -1,5 +1,5 @@
-#ifndef IR_LOWER_H
-#define IR_LOWER_H
+#ifndef FREE_TENSOR_LOWER_H
+#define FREE_TENSOR_LOWER_H
 
 #include <driver/target.h>
 #include <pass/cpu/lower_parallel_reduction.h>
@@ -26,8 +26,9 @@
 #include <pass/sink_var.h>
 #include <pass/tensor_prop_const.h>
 #include <pass/use_builtin_div.h>
+#include <pass/z3_simplify.h>
 
-namespace ir {
+namespace freetensor {
 
 template <class T> T lower(const T &t, const Ref<Target> &target) {
     T func = t;
@@ -35,6 +36,7 @@ template <class T> T lower(const T &t, const Ref<Target> &target) {
     func = removeDeadVar(func);
     func = propOneTimeUse(func);
     func = floatSimplify(func); // After propOneTimeUse
+    func = z3Simplify(func);
     func = simplifyPass(func);
     func = moveOutFirstOrLastIter(func);
     func = sinkVar(func);
@@ -84,6 +86,6 @@ template <class T> T lower(const T &t, const Ref<Target> &target) {
     return func;
 }
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // IR_LOWER_H
+#endif // FREE_TENSOR_LOWER_H

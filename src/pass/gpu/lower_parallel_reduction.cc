@@ -6,7 +6,7 @@
 #include <pass/make_nested_loops.h>
 #include <pass/simplify.h>
 
-namespace ir {
+namespace freetensor {
 
 namespace gpu {
 
@@ -129,11 +129,10 @@ Stmt LowerParallelReduction::visit(const For &_op) {
     Stmt ret = op;
     for (auto &&[workspace, wsShape, dtype] :
          iter::zip(workspaces, workspaceShapes, dtypes)) {
-        ret =
-            makeVarDef("", workspace,
-                       Ref<Buffer>::make(Ref<Tensor>::make(wsShape, dtype),
-                                         AccessType::Cache, MemType::GPUShared),
-                       nullptr, ret, false);
+        ret = makeVarDef("", workspace,
+                         makeBuffer(makeTensor(wsShape, dtype),
+                                    AccessType::Cache, MemType::GPUShared),
+                         nullptr, ret, false);
     }
 
     return ret;
@@ -182,4 +181,4 @@ Stmt lowerParallelReduction(const Stmt &_op) {
 
 } // namespace gpu
 
-} // namespace ir
+} // namespace freetensor

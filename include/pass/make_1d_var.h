@@ -1,5 +1,5 @@
-#ifndef MAKE_1D_VAR_H
-#define MAKE_1D_VAR_H
+#ifndef FREE_TENSOR_MAKE_1D_VAR_H
+#define FREE_TENSOR_MAKE_1D_VAR_H
 
 #include <unordered_map>
 
@@ -9,7 +9,7 @@
 #include <func.h>
 #include <mutator.h>
 
-namespace ir {
+namespace freetensor {
 
 /**
  * Some backends do not support dynamic array types, so we transform them into
@@ -49,6 +49,6 @@ Stmt make1dVar(const Stmt &op);
 
 DEFINE_PASS_FOR_FUNC(make1dVar)
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // MAKE_1D_VAR_H
+#endif // FREE_TENSOR_MAKE_1D_VAR_H

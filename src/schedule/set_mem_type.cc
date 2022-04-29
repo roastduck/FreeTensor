@@ -1,7 +1,7 @@
 #include <schedule/check_var_cross_parallel.h>
 #include <schedule/set_mem_type.h>
 
-namespace ir {
+namespace freetensor {
 
 Stmt SetMemType::visit(const For &op) {
     if (op->property_->parallel_ == serialScope) {
@@ -46,4 +46,4 @@ Stmt setMemType(const Stmt &_ast, const ID &def, MemType mtype) {
     return ast;
 }
 
-} // namespace ir
+} // namespace freetensor

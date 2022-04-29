@@ -3,7 +3,7 @@
 #include <pass/simplify.h>
 #include <schedule/blend.h>
 
-namespace ir {
+namespace freetensor {
 
 void FindAllScopesInside::visit(const For &op) {
     if (op->id() == loop_) {
@@ -164,8 +164,8 @@ Stmt blend(const Stmt &_ast, const ID &loop) {
             {{loop, DepDirection::Normal}, {item, DepDirection::Inv}});
     }
     auto filter = [&](const AccessPoint &later, const AccessPoint &earlier) {
-        return earlier.cursor_.getParentById(loop).isValid() &&
-               later.cursor_.getParentById(loop).isValid();
+        return earlier.stmt_->ancestorById(loop).isValid() &&
+               later.stmt_->ancestorById(loop).isValid();
     };
     auto found = [&](const Dependency &d) {
         ASSERT(d.cond_.size() == 2);
@@ -179,4 +179,4 @@ Stmt blend(const Stmt &_ast, const ID &loop) {
     return ast;
 }
 
-} // namespace ir
+} // namespace freetensor

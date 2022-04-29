@@ -1,12 +1,12 @@
-#ifndef SWAP_H
-#define SWAP_H
+#ifndef FREE_TENSOR_SWAP_H
+#define FREE_TENSOR_SWAP_H
 
 #include <string>
 #include <vector>
 
 #include <mutator.h>
 
-namespace ir {
+namespace freetensor {
 
 class Swap : public Mutator {
     std::vector<ID> order_;
@@ -23,6 +23,6 @@ class Swap : public Mutator {
 
 Stmt swap(const Stmt &ast, const std::vector<ID> &order);
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // SWAP_H
+#endif // FREE_TENSOR_SWAP_H

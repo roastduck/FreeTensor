@@ -1,9 +1,9 @@
-#ifndef GET_LOOP_NEST_TREE_H
-#define GET_LOOP_NEST_TREE_H
+#ifndef FREE_TENSOR_GET_LOOP_NEST_TREE_H
+#define FREE_TENSOR_GET_LOOP_NEST_TREE_H
 
 #include <visitor.h>
 
-namespace ir {
+namespace freetensor {
 
 struct LoopNest {
     For loop_;
@@ -29,6 +29,6 @@ inline Ref<LoopNest> getLoopNestTree(const Stmt &op) {
     return visitor.result();
 }
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // GET_LOOP_NEST_TREE_H
+#endif // FREE_TENSOR_GET_LOOP_NEST_TREE_H

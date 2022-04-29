@@ -1,14 +1,14 @@
 import functools
 
-import ir
-import ir.debug
+import freetensor as ft
+from freetensor import debug
 import pytest
 import numpy as np
 
-target = ir.GPU()
-device = ir.Device(target)
+target = ft.GPU()
+device = ft.Device(target)
 
-host = ir.Device(ir.CPU())
+host = ft.Device(ft.CPU())
 
 
 def test_manual_static():
@@ -29,18 +29,18 @@ def test_manual_static():
                                    out_channel)).astype("float32")
 
     def eval(func, print_code=False, time=False):
-        func = ir.lower(func, target)
+        func = ft.lower(func, target)
         if print_code:
             print(func, flush=True)
-        code = ir.codegen(func, target)
+        code = ft.codegen(func, target)
         if print_code:
-            print(ir.debug.with_line_no(code), flush=True)
-        driver = ir.Driver(func, code, device)
+            print(debug.with_line_no(code), flush=True)
+        driver = ft.Driver(func, code, device)
         B_np = np.zeros((out_size, out_size, out_channel, batch),
                         dtype="float32")
-        A_arr = ir.Array(A_np, device)
-        W_arr = ir.Array(W_np, device)
-        B_arr = ir.Array(B_np, device)
+        A_arr = ft.Array(A_np, device)
+        W_arr = ft.Array(W_np, device)
+        B_arr = ft.Array(B_np, device)
         driver.set_params(A=A_arr, W=W_arr, B=B_arr)
         if time:
             t = driver.time()
@@ -50,13 +50,13 @@ def test_manual_static():
         B_np = B_arr.numpy()
         return B_np
 
-    @ir.transform
+    @ft.transform
     def algo(A, W, B):
-        ir.declare_var(A, (in_size, in_size, in_channel, batch), "float32",
+        ft.declare_var(A, (in_size, in_size, in_channel, batch), "float32",
                        "input", "gpu/global")
-        ir.declare_var(W, (kernel, kernel, in_channel, out_channel), "float32",
+        ft.declare_var(W, (kernel, kernel, in_channel, out_channel), "float32",
                        "input", "gpu/global")
-        ir.declare_var(B, (out_size, out_size, out_channel, batch), "float32",
+        ft.declare_var(B, (out_size, out_size, out_channel, batch), "float32",
                        "output", "gpu/global")
         '''nid: Ly'''
         for yy in range(out_size):
@@ -88,7 +88,7 @@ def test_manual_static():
     step = 8
     vthread = 2
     hi, wi, fi, ni, ryi, rxi, rci = "Ly", "Lx", "Lf", "Ln", "Lry", "Lrx", "Lrc"
-    s = ir.Schedule(algo)
+    s = ft.Schedule(algo)
 
     bz = s.merge(hi, wi)
     by, fi = s.split(fi, factor=block_factor)
@@ -99,7 +99,7 @@ def test_manual_static():
     tx, ni = s.split(ni, nparts=num_thread)
     s.reorder([bz, by, bx, ty, tx, tyz, txz, fi, ni])
 
-    s.move_to("init", ir.MoveToSide.Before, fi)
+    s.move_to("init", ft.MoveToSide.Before, fi)
     rco, rci = s.split(rci, factor=step)
     s.reorder([rco, ryi, rxi, rci, fi, ni])
 
@@ -109,19 +109,21 @@ def test_manual_static():
     s.parallelize(ty, "threadIdx.y")
     s.parallelize(tx, "threadIdx.x")
 
-    s.cache(s.find(lambda x: x.nid() == txz).node().body, "B", "gpu/local")
+    s.cache(s.find(txz).body, "B", "gpu/local")
 
     fill_AA, _, AA, _ = s.cache(rci, "A", "gpu/shared")
-    fill_AA = s.find(lambda x: x.nid() == fill_AA)
-    fill_AA_ty, fill_AA_tx = fill_AA.outer().outer(), fill_AA.outer()
+    fill_AA = s.find(fill_AA)
+    fill_AA_ty, fill_AA_tx = fill_AA.parent_stmt().parent_stmt(
+    ), fill_AA.parent_stmt()
     fill_AA_tx, fill_AA_vec = s.split(fill_AA_tx, factor=4)
     s.parallelize(fill_AA_ty, "threadIdx.y")
     s.parallelize(fill_AA_tx, "threadIdx.x")
     s.vectorize(fill_AA_vec)
 
     fill_WW, _, WW, _ = s.cache(rci, "W", "gpu/shared")
-    fill_WW = s.find(lambda x: x.nid() == fill_WW)
-    fill_WW_ty, fill_WW_tx = fill_WW.outer().outer(), fill_WW.outer()
+    fill_WW = s.find(fill_WW)
+    fill_WW_ty, fill_WW_tx = fill_WW.parent_stmt().parent_stmt(
+    ), fill_WW.parent_stmt()
     fill_WW_tx, fill_WW_vec = s.split(fill_WW_tx, factor=4)
     s.parallelize(fill_WW_ty, "threadIdx.y")
     s.parallelize(fill_WW_tx, "threadIdx.x")
@@ -136,7 +138,7 @@ def test_manual_static():
     func = s.func()
     result = eval(func, True, True)  # Should be about 10ms on V100
 
-    s = ir.Schedule(algo)
+    s = ft.Schedule(algo)
     s.parallelize("Ly", "blockIdx.y")
     s.parallelize("Lx", "blockIdx.x")
     s.parallelize("Lf", "threadIdx.x")

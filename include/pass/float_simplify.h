@@ -1,6 +1,7 @@
-#ifndef FLOAT_SIMPLIFY_H
-#define FLOAT_SIMPLIFY_H
+#ifndef FREE_TENSOR_FLOAT_SIMPLIFY_H
+#define FREE_TENSOR_FLOAT_SIMPLIFY_H
 
+#include <functional>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -8,37 +9,36 @@
 #include <analyze/type_infer.h>
 #include <func.h>
 #include <mutator.h>
+#include <pass/const_fold.h>
 
-namespace ir {
+namespace freetensor {
 
-class FloatSimplify : public WithTypeInfer<SymbolTable<Mutator>> {
-    typedef WithTypeInfer<SymbolTable<Mutator>> BaseClass;
+class FloatSimplify : public WithTypeInfer<SymbolTable<ConstFold>> {
+    typedef WithTypeInfer<SymbolTable<ConstFold>> BaseClass;
 
-    std::unordered_map<Expr, double> constants_;
     std::unordered_set<Expr> nonNeg_, nonPosi_;
-    bool isFixPoint_ = true;
-
-  public:
-    bool isFixPoint() const { return isFixPoint_; }
 
     void setNonNeg(const Expr &op) { nonNeg_.insert(op); }
     void setNonPosi(const Expr &op) { nonPosi_.insert(op); }
-    bool nonNeg(const Expr &op) const {
-        return nonNeg_.count(op) ||
-               (constants_.count(op) && constants_.at(op) >= 0);
-    }
-    bool nonPosi(const Expr &op) const {
-        return nonPosi_.count(op) ||
-               (constants_.count(op) && constants_.at(op) <= 0);
+    bool nonNeg(const Expr &op) const;
+    bool nonPosi(const Expr &op) const;
+
+    template <class T> bool equals(const Expr &op, T &&val) const {
+        if (op->nodeType() == ASTNodeType::IntConst &&
+            op.as<IntConstNode>()->val_ == val) {
+            return true;
+        }
+        if (op->nodeType() == ASTNodeType::FloatConst &&
+            op.as<FloatConstNode>()->val_ == val) {
+            return true;
+        }
+        return false;
     }
 
-  private:
     Expr normalizeRealMulDiv(const Expr &op);
 
   protected:
     using BaseClass::visit;
-    Expr visit(const IntConst &op) override;
-    Expr visit(const FloatConst &op) override;
     Expr visit(const Add &op) override;
     Expr visit(const Sub &op) override;
     Expr visit(const Mul &op) override;
@@ -58,6 +58,6 @@ Stmt floatSimplify(const Stmt &op);
 
 DEFINE_PASS_FOR_FUNC(floatSimplify)
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // FLOAT_SIMPLIFY_H
+#endif // FREE_TENSOR_FLOAT_SIMPLIFY_H

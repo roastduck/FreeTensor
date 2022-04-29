@@ -5,16 +5,14 @@
 #include <pass/replace_iter.h>
 #include <pass/replace_uses.h>
 #include <pass/scalar_prop_const.h>
-#include <pass/simplify.h>
 #include <pass/tensor_prop_const.h>
 
-namespace ir {
+namespace freetensor {
 
 Stmt tensorPropConst(const Stmt &_op) {
     auto op = _op;
 
     for (int i = 0;; i++) {
-        op = simplifyPass(op);
         op = scalarPropConst(op);
 
         // Please note that the "reads" might also be reductions.
@@ -48,13 +46,12 @@ Stmt tensorPropConst(const Stmt &_op) {
         auto foundMust = [&](const Dependency &d) {
             auto &&expr = d.earlier().as<StoreNode>()->expr_;
             auto &&iters = allIters(expr);
-            auto common = lca(d.later_.cursor_, d.earlier_.cursor_);
+            auto common = lcaStmt(d.later_.stmt_, d.earlier_.stmt_);
             auto dep = d.dep_;
             for (auto &&iter : iters) {
-                for (auto c = common; c.isValid(); c = c.outer()) {
-                    if (c.nodeType() == ASTNodeType::For) {
-                        if (auto &&f = c.node().as<ForNode>();
-                            f->iter_ == iter) {
+                for (auto c = common; c.isValid(); c = c->parentStmt()) {
+                    if (c->nodeType() == ASTNodeType::For) {
+                        if (auto &&f = c.as<ForNode>(); f->iter_ == iter) {
                             dep =
                                 d.extraCheck(dep, f->id(), DepDirection::Same);
                             if (dep != d.dep_) {
@@ -134,4 +131,4 @@ Stmt tensorPropConst(const Stmt &_op) {
     return op;
 }
 
-} // namespace ir
+} // namespace freetensor

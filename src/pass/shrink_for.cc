@@ -3,7 +3,7 @@
 #include <pass/simplify.h>
 #include <pass/z3_simplify.h>
 
-namespace ir {
+namespace freetensor {
 
 void CheckSideEffect::visit(const Store &op) { hasSideEffect_ = true; }
 
@@ -46,31 +46,21 @@ Stmt ShrinkFor::visitStmt(const Stmt &stmt) {
     default:;
     }
     if (checker.hasSideEffect()) {
-        for (auto &&[var, names] : iter::zip(iterStack_, namesStack_)) {
-            auto tr = transient(var);
+        for (auto &&[_var, _names] : iter::zip(iterStack_, namesStack_)) {
+            auto &&names = _names;
+
+            // Trigger recomputing in analyze/comp_unique_bounds
+            auto var = deepCopy(_var).as<VarNode>();
+
             std::vector<Expr> lower, upper;
-            for (auto &&first : tr.lower_) {
-                if (checkAllDefined(names, first)) {
-                    lower.emplace_back(first);
-                } else {
-                    for (auto &&l : bound_.getLower(first)) {
-                        if (auto &&expr = l.expr();
-                            checkAllDefined(names, expr)) {
-                            lower.emplace_back(expr);
-                        }
-                    }
+            for (auto &&b : bound_.getLower(var)) {
+                if (checkAllDefined(names, b.allNames())) {
+                    lower.emplace_back(b.expr());
                 }
             }
-            for (auto &&second : tr.upper_) {
-                if (checkAllDefined(names, second)) {
-                    upper.emplace_back(second);
-                } else {
-                    for (auto &&u : bound_.getUpper(second)) {
-                        if (auto &&expr = u.expr();
-                            checkAllDefined(names, expr)) {
-                            upper.emplace_back(expr);
-                        }
-                    }
+            for (auto &&b : bound_.getUpper(var)) {
+                if (checkAllDefined(names, b.allNames())) {
+                    upper.emplace_back(b.expr());
                 }
             }
             newRange_[var].first.emplace_back(std::move(lower));
@@ -105,12 +95,8 @@ Stmt ShrinkFor::visit(const For &_op) {
              CUDAScope::Thread &&
          !op->property_->reductions_.empty())) {
         // Backends do not support these loops to be of variable lengths
-        if (lower.isValid() && lower->nodeType() != ASTNodeType::IntConst) {
-            return op;
-        }
-        if (upper.isValid() && upper->nodeType() != ASTNodeType::IntConst) {
-            return op;
-        }
+        lower = makeIntConst(bound_.getIntLower(lower));
+        upper = makeIntConst(bound_.getIntUpper(upper));
     }
 
     if (op->step_->nodeType() == ASTNodeType::IntConst) {
@@ -140,7 +126,7 @@ Stmt ShrinkFor::visit(const For &_op) {
 Stmt shrinkFor(const Stmt &_op) {
     auto op = simplifyPass(_op); // Const prop + eliminate empty loops
     op = ShrinkFor()(op);
-    return z3Simplify(op);
+    return simplifyPass(op);
 }
 
-} // namespace ir
+} // namespace freetensor

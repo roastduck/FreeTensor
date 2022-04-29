@@ -1,12 +1,12 @@
-#ifndef HOIST_VAR_OVER_STMT_SEQ
-#define HOIST_VAR_OVER_STMT_SEQ
+#ifndef FREE_TENSOR_HOIST_VAR_OVER_STMT_SEQ
+#define FREE_TENSOR_HOIST_VAR_OVER_STMT_SEQ
 
 #include <unordered_map>
 
 #include <func.h>
 #include <mutator.h>
 
-namespace ir {
+namespace freetensor {
 
 class HoistVarOverStmtSeq : public Mutator {
     std::unordered_map<std::string, std::string>
@@ -28,6 +28,6 @@ Stmt hoistVarOverStmtSeq(const Stmt &op);
 
 DEFINE_PASS_FOR_FUNC(hoistVarOverStmtSeq)
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // HOIST_VAR_OVER_STMT_SEQ
+#endif // FREE_TENSOR_HOIST_VAR_OVER_STMT_SEQ

@@ -3,6 +3,10 @@ __pycache__
 *.log
 *.csv
 
+# I don't know why ANTLR wants to put the generated library at the root path
+# See 3rd-party/antlr/antlr4/runtime/Cpp/runtime/CMakeLists.txt
+/dist
+
 # Editors
 /.vscode
 *.swp

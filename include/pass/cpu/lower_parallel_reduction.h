@@ -1,5 +1,5 @@
-#ifndef CPU_LOWER_PARALLEL_REDUCTION_H
-#define CPU_LOWER_PARALLEL_REDUCTION_H
+#ifndef FREE_TENSOR_CPU_LOWER_PARALLEL_REDUCTION_H
+#define FREE_TENSOR_CPU_LOWER_PARALLEL_REDUCTION_H
 
 #include <unordered_map>
 #include <unordered_set>
@@ -8,7 +8,7 @@
 #include <func.h>
 #include <mutator.h>
 
-namespace ir {
+namespace freetensor {
 
 namespace cpu {
 
@@ -37,6 +37,6 @@ DEFINE_PASS_FOR_FUNC(lowerParallelReduction)
 
 } // namespace cpu
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // CPU_LOWER_PARALLEL_REDUCTION_H
+#endif // FREE_TENSOR_CPU_LOWER_PARALLEL_REDUCTION_H

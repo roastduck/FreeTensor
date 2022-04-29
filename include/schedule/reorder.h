@@ -1,12 +1,12 @@
-#ifndef REORDER_H
-#define REORDER_H
+#ifndef FREE_TENSOR_REORDER_H
+#define FREE_TENSOR_REORDER_H
 
 #include <string>
 #include <vector>
 
 #include <mutator.h>
 
-namespace ir {
+namespace freetensor {
 
 /**
  * Swap two directly nested loops
@@ -27,6 +27,6 @@ class SwapFor : public Mutator {
 
 Stmt reorder(const Stmt &ast, const std::vector<ID> &order);
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // REORDER_H
+#endif // FREE_TENSOR_REORDER_H

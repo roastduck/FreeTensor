@@ -1,9 +1,9 @@
-#ifndef VAR_MERGE_H
-#define VAR_MERGE_H
+#ifndef FREE_TENSOR_VAR_MERGE_H
+#define FREE_TENSOR_VAR_MERGE_H
 
 #include <mutator.h>
 
-namespace ir {
+namespace freetensor {
 
 class VarMerge : public Mutator {
     ID def_;
@@ -36,6 +36,6 @@ class VarMerge : public Mutator {
 
 Stmt varMerge(const Stmt &ast, const ID &def, int dim);
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // VAR_MERGE_H
+#endif // FREE_TENSOR_VAR_MERGE_H

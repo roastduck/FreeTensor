@@ -1,7 +1,7 @@
 #include <analyze/find_all_loops.h>
 #include <analyze/find_loop_variance.h>
 
-namespace ir {
+namespace freetensor {
 
 void MarkStores::mergeInfo(const Expr &from, const std::string &to) {
     if (exprInfo_.count(from)) {
@@ -138,6 +138,7 @@ void FindLoopVariance::visit(const VarDef &op) {
 
 void FindLoopVariance::visitConst(const Const &op) {
     Visitor::visitExpr(op);
+    exprInfo_[op].reserve(allLoops_.size());
     for (auto &&loop : allLoops_) {
         exprInfo_[op][loop] = LoopVariability::Invariance;
     }
@@ -232,4 +233,4 @@ findLoopVariance(const Stmt &op) {
     }
 }
 
-} // namespace ir
+} // namespace freetensor

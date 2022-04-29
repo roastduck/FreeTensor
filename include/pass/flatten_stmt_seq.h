@@ -1,10 +1,10 @@
-#ifndef FLATTEN_STMT_SEQ_H
-#define FLATTEN_STMT_SEQ_H
+#ifndef FREE_TENSOR_FLATTEN_STMT_SEQ_H
+#define FREE_TENSOR_FLATTEN_STMT_SEQ_H
 
 #include <func.h>
 #include <mutator.h>
 
-namespace ir {
+namespace freetensor {
 
 class FlattenStmtSeq : public Mutator {
   protected:
@@ -21,6 +21,6 @@ inline Stmt flattenStmtSeq(const Stmt &op) { return FlattenStmtSeq()(op); }
 
 DEFINE_PASS_FOR_FUNC(flattenStmtSeq)
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // FLATTEN_STMT_SEQ_H
+#endif // FREE_TENSOR_FLATTEN_STMT_SEQ_H

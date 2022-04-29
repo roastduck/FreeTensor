@@ -1,11 +1,13 @@
-#ifndef BOUNDS_H
-#define BOUNDS_H
+#ifndef FREE_TENSOR_BOUNDS_H
+#define FREE_TENSOR_BOUNDS_H
+
+#include <unordered_set>
 
 #include <math/linear.h>
 #include <math/rational.h>
 #include <opt.h>
 
-namespace ir {
+namespace freetensor {
 
 namespace detail {
 ASTNodeType reverseCmp(ASTNodeType type);
@@ -13,6 +15,7 @@ ASTNodeType reverseCmp(ASTNodeType type);
 
 class UpperBound {
     Expr expr_;
+    Opt<std::unordered_set<std::string>> allNames_;
     LinearExpr<Rational<int64_t>> lin_;
 
   public:
@@ -22,11 +25,13 @@ class UpperBound {
     UpperBound(LinearExpr<Rational<int64_t>> &&lin) : lin_(std::move(lin)) {}
 
     const Expr &expr();
+    const std::unordered_set<std::string> &allNames();
     const LinearExpr<Rational<int64_t>> &lin() const { return lin_; }
 };
 
 class LowerBound {
     Expr expr_;
+    Opt<std::unordered_set<std::string>> allNames_;
     LinearExpr<Rational<int64_t>> lin_;
 
   public:
@@ -35,6 +40,7 @@ class LowerBound {
     LowerBound(LinearExpr<Rational<int64_t>> &&lin) : lin_(std::move(lin)) {}
 
     const Expr &expr();
+    const std::unordered_set<std::string> &allNames();
     const LinearExpr<Rational<int64_t>> &lin() const { return lin_; }
 };
 
@@ -144,6 +150,6 @@ inline ASTNodeType reverseCmp(ASTNodeType type) {
 
 }; // namespace detail
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // BOUNDS_H
+#endif // FREE_TENSOR_BOUNDS_H

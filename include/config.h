@@ -1,15 +1,26 @@
-#ifndef CONFIG_H
-#define CONFIG_H
+#ifndef FREE_TENSOR_CONFIG_H
+#define FREE_TENSOR_CONFIG_H
 
 #include <string>
 
-namespace ir {
+namespace freetensor {
 
+/**
+ * Global configurations
+ *
+ * All writable options can be set by environment variables
+ */
 class Config {
-    static bool prettyPrint_;
-    static bool printAllId_;
+    static bool prettyPrint_; /// Env FT_PRETTY_PRINT
+    static bool printAllId_;  /// Env FT_PRINT_ALL_ID
+    static bool werror_;      /// Treat warnings as errors. Env FT_WERROR
+    static bool
+        debugBinary_; /// Compile with `-g` at backend. Do not delete the binary
+                      /// file after loaded. Env FT_DEBUG_BINARY
 
   public:
+    static void init(); /// Called in src/ffi/config.cc
+
     static std::string withMKL();
 
     static void setPrettyPrint(bool pretty = true) { prettyPrint_ = pretty; }
@@ -17,8 +28,14 @@ class Config {
 
     static void setPrintAllId(bool flag = true) { printAllId_ = flag; }
     static bool printAllId() { return printAllId_; }
+
+    static void setWerror(bool flag = true) { werror_ = flag; }
+    static bool werror() { return werror_; }
+
+    static void setDebugBinary(bool flag = true) { debugBinary_ = flag; }
+    static bool debugBinary() { return debugBinary_; }
 };
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // CONFIG_H
+#endif // FREE_TENSOR_CONFIG_H

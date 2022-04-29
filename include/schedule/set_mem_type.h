@@ -1,11 +1,11 @@
-#ifndef SET_MEM_TYPE_H
-#define SET_MEM_TYPE_H
+#ifndef FREE_TENSOR_SET_MEM_TYPE_H
+#define FREE_TENSOR_SET_MEM_TYPE_H
 
 #include <unordered_map>
 
 #include <mutator.h>
 
-namespace ir {
+namespace freetensor {
 
 class SetMemType : public Mutator {
     ID def_;
@@ -25,6 +25,6 @@ class SetMemType : public Mutator {
 
 Stmt setMemType(const Stmt &ast, const ID &def, MemType mtype);
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // SET_MEM_TYPE_H
+#endif // FREE_TENSOR_SET_MEM_TYPE_H

@@ -1,5 +1,5 @@
-#ifndef CHECK_NOT_MODIFIED
-#define CHECK_NOT_MODIFIED
+#ifndef FREE_TENSOR_CHECK_NOT_MODIFIED
+#define FREE_TENSOR_CHECK_NOT_MODIFIED
 
 #include <unordered_map>
 #include <unordered_set>
@@ -8,7 +8,7 @@
 #include <mutator.h>
 #include <visitor.h>
 
-namespace ir {
+namespace freetensor {
 
 enum class CheckNotModifiedSide : int { Before, After };
 
@@ -82,6 +82,6 @@ bool checkNotModified(const Stmt &op, const Expr &s0Expr, const Expr &s1Expr,
                       CheckNotModifiedSide s0Side, const ID &s0,
                       CheckNotModifiedSide s1Side, const ID &s1);
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // CHECK_NOT_MODIFIED
+#endif // FREE_TENSOR_CHECK_NOT_MODIFIED

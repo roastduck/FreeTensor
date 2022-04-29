@@ -1,4 +1,4 @@
-import ir
+import freetensor as ft
 import pytest
 import inspect
 
@@ -6,18 +6,18 @@ import inspect
 # DO NOT ADD LINES IN THIS FUNCTION
 def test_illegal_assign():
 
-    @ir.inline
+    @ft.inline
     def bar():
-        c = ir.create_var((1, 1), "int32", "cpu")
+        c = ft.create_var((1, 1), "int32", "cpu")
         c[0] = 1
 
-    @ir.inline
+    @ft.inline
     def foo():
         bar()
 
-    with pytest.raises(ir.StagingError) as e:
+    with pytest.raises(ft.StagingError) as e:
 
-        @ir.transform
+        @ft.transform
         def test():
             foo()
 
@@ -36,20 +36,20 @@ def test_illegal_assign():
 # DO NOT ADD LINES IN THIS FUNCTION
 def test_illegal_bin_op():
 
-    @ir.inline
+    @ft.inline
     def bar(a, b):
         a @ b
 
-    @ir.inline
+    @ft.inline
     def foo(a, b):
         bar(a, b)
 
-    with pytest.raises(ir.StagingError) as e:
+    with pytest.raises(ft.StagingError) as e:
 
-        @ir.transform
+        @ft.transform
         def test(a, b):
-            ir.declare_var(a, (1,), "int32", "input", "cpu")
-            ir.declare_var(b, (1,), "int32", "input", "cpu")
+            ft.declare_var(a, (1,), "int32", "input", "cpu")
+            ft.declare_var(b, (1,), "int32", "input", "cpu")
             foo(a, b)
 
     frame_info = inspect.getframeinfo(inspect.currentframe())

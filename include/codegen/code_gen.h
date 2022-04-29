@@ -1,5 +1,5 @@
-#ifndef CODE_GEN_H
-#define CODE_GEN_H
+#ifndef FREE_TENSOR_CODE_GEN_H
+#define FREE_TENSOR_CODE_GEN_H
 
 #include <functional>
 #include <sstream>
@@ -13,7 +13,7 @@
 #include <analyze/symbol_table.h>
 #include <visitor.h>
 
-namespace ir {
+namespace freetensor {
 
 struct CodeGenStream {
     std::string name_;
@@ -70,6 +70,6 @@ template <class Stream> class CodeGen : public SymbolTable<Visitor> {
     toString(const std::function<std::string(const Stream &)> &action);
 };
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // CODE_GEN_H
+#endif // FREE_TENSOR_CODE_GEN_H

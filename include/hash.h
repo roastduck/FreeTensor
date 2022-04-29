@@ -1,5 +1,5 @@
-#ifndef HASH_H
-#define HASH_H
+#ifndef FREE_TENSOR_HASH_H
+#define FREE_TENSOR_HASH_H
 
 #include <unordered_map>
 #include <unordered_set>
@@ -8,7 +8,7 @@
 #include <hash_combine.h>
 #include <stmt.h>
 
-namespace ir {
+namespace freetensor {
 
 class Hasher {
     static constexpr size_t P = 2147483647; // % P
@@ -22,6 +22,11 @@ class Hasher {
     // (finally * K3 + B3) % P
 
   public:
+    static size_t compHash(const Tensor &t);
+    static size_t compHash(const Buffer &b);
+    static size_t compHash(const ReductionItem &r);
+    static size_t compHash(const ForProperty &p);
+
     // stmt
     static size_t compHash(const AnyNode &op);
     static size_t compHash(const StmtSeqNode &op);
@@ -49,7 +54,7 @@ class Hasher {
     static size_t compHash(const CastNode &op);
     static size_t compHash(const IntrinsicNode &op);
 
-    size_t operator()(const AST &op) const {
+    size_t operator()(const Ref<ASTPart> &op) const {
         return op.isValid() ? op->hash() : P;
     }
 };
@@ -85,6 +90,12 @@ class HashComparator {
     bool compare(const Intrinsic &lhs, const Intrinsic &rhs) const;
 
   public:
+    bool operator()(const Ref<Tensor> &lhs, const Ref<Tensor> &rhs) const;
+    bool operator()(const Ref<Buffer> &lhs, const Ref<Buffer> &rhs) const;
+    bool operator()(const Ref<ReductionItem> &lhs,
+                    const Ref<ReductionItem> &rhs) const;
+    bool operator()(const Ref<ForProperty> &lhs,
+                    const Ref<ForProperty> &rhs) const;
     bool operator()(const AST &lhs, const AST &rhs) const;
 };
 
@@ -94,7 +105,7 @@ using ASTHashMap = std::unordered_map<K, V, Hasher, HashComparator>;
 template <class K>
 using ASTHashSet = std::unordered_set<K, Hasher, HashComparator>;
 
-} // namespace ir
+} // namespace freetensor
 
 namespace std {
 
@@ -104,10 +115,10 @@ template <class T, class U> class hash<std::pair<T, U>> {
 
   public:
     size_t operator()(const std::pair<T, U> &pair) const {
-        return ir::hashCombine(hashT_(pair.first), hashU_(pair.second));
+        return freetensor::hashCombine(hashT_(pair.first), hashU_(pair.second));
     }
 };
 
 } // namespace std
 
-#endif // HASH_H
+#endif // FREE_TENSOR_HASH_H

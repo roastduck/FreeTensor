@@ -4,7 +4,7 @@
 #include <pass/gpu/lower_vector.h>
 #include <pass/simplify.h>
 
-namespace ir {
+namespace freetensor {
 
 namespace gpu {
 
@@ -18,6 +18,7 @@ class InvalidGPUVector : public InvalidProgram {
 } // namespace
 
 std::string LowerVector::vecType(DataType dtype) const {
+    // https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#vector-types
     std::string ret;
     switch (dtype) {
     case DataType::Float64:
@@ -25,6 +26,9 @@ std::string LowerVector::vecType(DataType dtype) const {
         break;
     case DataType::Float32:
         ret = "float";
+        break;
+    case DataType::Int64:
+        ret = "longlong";
         break;
     case DataType::Int32:
         ret = "int";
@@ -225,4 +229,4 @@ Stmt lowerVector(const Stmt &_op) {
 
 } // namespace gpu
 
-} // namespace ir
+} // namespace freetensor

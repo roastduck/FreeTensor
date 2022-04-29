@@ -5,7 +5,7 @@
 #include <debug/match_ast.h>
 #include <pass/flatten_stmt_seq.h>
 
-namespace ir {
+namespace freetensor {
 
 bool MatchVisitor::matchName(const std::string &thisName,
                              const std::string &otherName) {
@@ -163,6 +163,25 @@ void MatchVisitor::visit(const Add &op) {
 }
 
 void MatchVisitor::visit(const Sub &op) {
+    // Special case for x - 1 = x + -1
+    if (instance_->nodeType() == ASTNodeType::Add) {
+        auto instance = instance_.as<AddNode>();
+        if (op->rhs_->nodeType() == ASTNodeType::IntConst &&
+            instance->rhs_->nodeType() == ASTNodeType::IntConst &&
+            op->rhs_.as<IntConstNode>()->val_ ==
+                -instance->rhs_.as<IntConstNode>()->val_) {
+            RECURSE(op->lhs_, instance->lhs_);
+            return;
+        }
+        if (op->rhs_->nodeType() == ASTNodeType::FloatConst &&
+            instance->rhs_->nodeType() == ASTNodeType::FloatConst &&
+            op->rhs_.as<FloatConstNode>()->val_ ==
+                -instance->rhs_.as<FloatConstNode>()->val_) {
+            RECURSE(op->lhs_, instance->lhs_);
+            return;
+        }
+    }
+
     CHECK(instance_->nodeType() == ASTNodeType::Sub);
     auto instance = instance_.as<SubNode>();
     RECURSE(op->lhs_, instance->lhs_);
@@ -491,4 +510,4 @@ bool match(const Stmt &_pattern, const Stmt &_instance) {
     return visitor.isMatched();
 }
 
-} // namespace ir
+} // namespace freetensor

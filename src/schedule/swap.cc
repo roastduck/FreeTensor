@@ -4,7 +4,7 @@
 #include <analyze/deps.h>
 #include <schedule/swap.h>
 
-namespace ir {
+namespace freetensor {
 
 Stmt Swap::visit(const StmtSeq &_op) {
     auto __op = Mutator::visit(_op);
@@ -23,7 +23,7 @@ Stmt Swap::visit(const StmtSeq &_op) {
         start = std::min(start, pos.at(item));
     }
 
-    auto stmts = op->stmts_;
+    std::vector<Stmt> stmts = op->stmts_;
     for (size_t i = 0, iEnd = order_.size(); i < iEnd; i++) {
         auto p = pos.at(order_[i]);
         if (p >= start + order_.size()) {
@@ -43,18 +43,18 @@ Stmt swap(const Stmt &_ast, const std::vector<ID> &order) {
         throw InvalidSchedule("Statements not found or not consecutive");
     }
 
-    auto findParentStmt = [&](const Cursor &cursor) -> Stmt {
+    auto findParentStmt = [&](const Stmt &stmt) -> Stmt {
         for (auto &&item : order) {
-            auto stmt = cursor.getParentById(item);
-            if (stmt.isValid()) {
-                return stmt;
+            auto ret = stmt->ancestorById(item);
+            if (ret.isValid()) {
+                return ret;
             }
         }
         return nullptr;
     };
     auto filter = [&](const AccessPoint &later, const AccessPoint &earlier) {
-        auto s0 = findParentStmt(later.cursor_);
-        auto s1 = findParentStmt(earlier.cursor_);
+        auto s0 = findParentStmt(later.stmt_);
+        auto s1 = findParentStmt(earlier.stmt_);
         if (!s0.isValid() || !s1.isValid()) {
             return false;
         }
@@ -77,4 +77,4 @@ Stmt swap(const Stmt &_ast, const std::vector<ID> &order) {
     return ast;
 }
 
-} // namespace ir
+} // namespace freetensor

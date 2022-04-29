@@ -1,6 +1,7 @@
+#include <hash.h>
 #include <tensor.h>
 
-namespace ir {
+namespace freetensor {
 
 bool Tensor::isScalar() const {
     for (auto &&d : shape_) {
@@ -13,4 +14,6 @@ bool Tensor::isScalar() const {
     return true;
 }
 
-} // namespace ir
+void Tensor::compHash() { hash_ = Hasher::compHash(*this); }
+
+} // namespace freetensor

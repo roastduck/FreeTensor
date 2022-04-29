@@ -1,12 +1,12 @@
-#ifndef MUTATOR_H
-#define MUTATOR_H
+#ifndef FREE_TENSOR_MUTATOR_H
+#define FREE_TENSOR_MUTATOR_H
 
 #include <debug.h>
 #include <except.h>
 #include <expr.h>
 #include <stmt.h>
 
-namespace ir {
+namespace freetensor {
 
 class Mutator {
   public:
@@ -54,9 +54,9 @@ class Mutator {
             shape.emplace_back((*this)(dim));
         }
         Ref<Tensor> t =
-            Ref<Tensor>::make(std::move(shape), op->buffer_->tensor()->dtype());
-        Ref<Buffer> b = Ref<Buffer>::make(std::move(t), op->buffer_->atype(),
-                                          op->buffer_->mtype());
+            makeTensor(std::move(shape), op->buffer_->tensor()->dtype());
+        Ref<Buffer> b = makeBuffer(std::move(t), op->buffer_->atype(),
+                                   op->buffer_->mtype());
         Expr sizeLim = op->sizeLim_.isValid() ? (*this)(op->sizeLim_) : nullptr;
         return COPY_DEBUG_INFO(makeVarDef(op->id(), op->name_, std::move(b),
                                           std::move(sizeLim),
@@ -271,7 +271,7 @@ class Mutator {
             for (auto &&item : r->ends_) {
                 ends.emplace_back((*this)(item));
             }
-            property->reductions_.emplace_back(Ref<ReductionItem>::make(
+            property->reductions_.emplace_back(makeReductionItem(
                 r->op_, r->var_, std::move(begins), std::move(ends)));
         }
         auto body = (*this)(op->body_);
@@ -341,6 +341,6 @@ class Mutator {
     }
 };
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // MUTATOR_H
+#endif // FREE_TENSOR_MUTATOR_H

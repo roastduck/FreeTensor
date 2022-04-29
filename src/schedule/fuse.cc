@@ -12,7 +12,7 @@
 #include <pass/tensor_prop_const.h>
 #include <schedule/fuse.h>
 
-namespace ir {
+namespace freetensor {
 
 namespace {
 
@@ -264,8 +264,8 @@ std::pair<Stmt, ID> fuse(const Stmt &_ast, const ID &loop0, const ID &loop1,
     auto ast = mutator(_ast);
 
     auto filter = [&](const AccessPoint &later, const AccessPoint &earlier) {
-        return earlier.cursor_.getParentById(mutator.afterId()).isValid() &&
-               later.cursor_.getParentById(mutator.beforeId()).isValid();
+        return earlier.stmt_->ancestorById(mutator.afterId()).isValid() &&
+               later.stmt_->ancestorById(mutator.beforeId()).isValid();
     };
     auto found = [&](const Dependency &d) {
         ASSERT(d.cond_.size() == 1);
@@ -290,4 +290,4 @@ std::pair<Stmt, ID> fuse(const Stmt &_ast, const ID &loop0, const ID &loop1,
     return std::make_pair(ast, mutator.fused());
 }
 
-} // namespace ir
+} // namespace freetensor

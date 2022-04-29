@@ -7,6 +7,7 @@
 #include <sys/stat.h> // mkdir
 #include <unistd.h>   // rmdir
 
+#include <config.h>
 #include <debug.h>
 #include <driver.h>
 #include <driver/gpu.h>
@@ -15,7 +16,7 @@
 #define NAME_(macro) #macro
 #define NAME(macro) NAME_(macro)
 
-namespace ir {
+namespace freetensor {
 
 Driver::Driver(const Func &f, const std::string &src, const Device &dev)
     : f_(f), src_(src), params_(f->params_.size(), nullptr),
@@ -32,8 +33,8 @@ Driver::Driver(const Func &f, const std::string &src, const Device &dev)
 
 void Driver::buildAndLoad() {
     std::string home = getenv("HOME");
-    mkdir((home + "/.ir").c_str(), 0755);
-    std::string path_string = home + "/.ir/XXXXXX";
+    mkdir((home + "/.freetensor").c_str(), 0755);
+    std::string path_string = home + "/.freetensor/XXXXXX";
     char path[64];
     ASSERT(path_string.size() < 64);
     strncpy(path, path_string.c_str(), 63);
@@ -63,8 +64,8 @@ void Driver::buildAndLoad() {
     // strict floating point rounding order either
     switch (dev_.type()) {
     case TargetType::CPU:
-        cmd = "c++ -I" NAME(
-            IR_RUNTIME_DIR) " -shared -O3 -fPIC -Wall -fopenmp -ffast-math";
+        cmd = "c++ -I" NAME(FT_RUNTIME_DIR) " -std=c++17 -shared -O3 -fPIC "
+                                            "-Wall -fopenmp -ffast-math";
         cmd += " -o " + so + " " + cpp;
 #ifdef WITH_MKL
         cmd += " -I\"" NAME(WITH_MKL) "/include\"";
@@ -80,9 +81,12 @@ void Driver::buildAndLoad() {
         if (dev_.target()->useNativeArch()) {
             cmd += " -march=native";
         }
+        if (Config::debugBinary()) {
+            cmd += " -g";
+        }
         break;
     case TargetType::GPU:
-        cmd = "nvcc -I" NAME(IR_RUNTIME_DIR) " -shared -Xcompiler "
+        cmd = "nvcc -I" NAME(FT_RUNTIME_DIR) " -std=c++17 -shared -Xcompiler "
                                              "-fPIC,-Wall,-O3 --use_fast_math";
         cmd += " -o " + so + " " + cpp;
         cmd += " -lcublas";
@@ -101,9 +105,15 @@ void Driver::buildAndLoad() {
             WARNING("GPU arch not specified, which may result in suboptimal "
                     "performance ");
         }
+        if (Config::debugBinary()) {
+            cmd += " -g";
+        }
         break;
     default:
         ASSERT(false);
+    }
+    if (Config::debugBinary()) {
+        WARNING("debug-binary mode on. Compiling with " + cmd);
     }
     auto compilerErr = system(cmd.c_str());
     if (compilerErr != 0) {
@@ -123,9 +133,15 @@ void Driver::buildAndLoad() {
                           dlerror());
     }
 
-    remove(cpp.c_str());
-    remove(so.c_str());
-    rmdir(path);
+    if (!Config::debugBinary()) {
+        remove(cpp.c_str());
+        remove(so.c_str());
+        rmdir(path);
+    } else {
+        WARNING((std::string) "debug-binary mode on. The produced files are "
+                              "saved in " +
+                path);
+    }
 
     switch (dev_.type()) {
     case TargetType::CPU:
@@ -244,4 +260,4 @@ void Driver::unload() {
     }*/
 }
 
-} // namespace ir
+} // namespace freetensor

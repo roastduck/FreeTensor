@@ -5,7 +5,7 @@
 #include <analyze/find_all_loops.h>
 #include <pass/sink_var.h>
 
-namespace ir {
+namespace freetensor {
 
 Stmt SinkVar::visit(const VarDef &_op) {
     auto __op = Mutator::visit(_op);
@@ -170,4 +170,4 @@ Stmt sinkVar(const Stmt &_op) {
     return op;
 }
 
-} // namespace ir
+} // namespace freetensor

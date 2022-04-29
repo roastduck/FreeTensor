@@ -1,5 +1,5 @@
-#ifndef MAKE_PARLLEL_REDUCTION_H
-#define MAKE_PARLLEL_REDUCTION_H
+#ifndef FREE_TENSOR_MAKE_PARLLEL_REDUCTION_H
+#define FREE_TENSOR_MAKE_PARLLEL_REDUCTION_H
 
 #include <unordered_map>
 #include <unordered_set>
@@ -11,7 +11,7 @@
 #include <mutator.h>
 #include <visitor.h>
 
-namespace ir {
+namespace freetensor {
 
 struct ParallelInfo {
     ParallelScope type_;         // parallel type
@@ -102,6 +102,6 @@ Stmt makeParallelReduction(const Stmt &op);
 
 DEFINE_PASS_FOR_FUNC(makeParallelReduction)
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // MAKE_PARLLEL_REDUCTION_H
+#endif // FREE_TENSOR_MAKE_PARLLEL_REDUCTION_H

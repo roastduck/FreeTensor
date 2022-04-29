@@ -1,7 +1,7 @@
 #include <driver/device.h>
 #include <driver/gpu.h>
 
-namespace ir {
+namespace freetensor {
 
 void Device::sync() {
     switch (type()) {
@@ -12,4 +12,4 @@ void Device::sync() {
     }
 }
 
-} // namespace ir
+} // namespace freetensor

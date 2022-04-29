@@ -1,5 +1,5 @@
-#ifndef AST_H
-#define AST_H
+#ifndef FREE_TENSOR_AST_H
+#define FREE_TENSOR_AST_H
 
 #include <atomic>
 #include <string>
@@ -7,7 +7,7 @@
 #include <ref.h>
 #include <sub_tree.h>
 
-namespace ir {
+namespace freetensor {
 
 enum class ASTNodeType : int {
     // Matching
@@ -82,41 +82,41 @@ enum class ASTNodeType : int {
 
 std::string toString(ASTNodeType type);
 
-#define DEFINE_NODE_ACCESS(name)                                               \
-  protected:                                                                   \
-    name##Node() = default; /* Must be constructed in Ref */                   \
-                                                                               \
-    friend class Allocator<name##Node>;
+#define DEFINE_NODE_ACCESS(name) DEFINE_AST_PART_ACCESS(name##Node)
 
 #define DEFINE_NODE_TRAIT(name)                                                \
     DEFINE_NODE_ACCESS(name)                                                   \
   public:                                                                      \
     virtual ASTNodeType nodeType() const override { return ASTNodeType::name; }
 
+/**
+ * Base class of all nodes in an AST
+ *
+ * `ASTNode` is the minimal unit that can be traversed by a `Visitor`, or
+ * traversed and modified by a `Mutator`. An `ASTNode` is a derived class of
+ * `ASTPart`, and a derived node of `ASTNode` may contain other `ASTPart`s
+ */
 class ASTNode : public ASTPart {
-  protected:
-    size_t hash_ = ~0ull;
-
   public:
-#ifdef IR_DEBUG_LOG_NODE
+#ifdef FT_DEBUG_LOG_NODE
     std::string debugCreator_ = "Python API";
 #endif
 
     virtual ~ASTNode() {}
     virtual ASTNodeType nodeType() const = 0;
 
+    bool isAST() const override { return true; }
     virtual bool isFunc() const { return false; }
     virtual bool isStmt() const { return false; }
     virtual bool isExpr() const { return false; }
 
-    size_t hash();
-    virtual void compHash() = 0;
+    Ref<ASTNode> parentAST() const;
 
     DEFINE_NODE_ACCESS(AST);
 };
 typedef Ref<ASTNode> AST;
 
-#ifdef IR_DEBUG_LOG_NODE
+#ifdef FT_DEBUG_LOG_NODE
 #define makeNode(type, ...)                                                    \
     ({                                                                         \
         auto __x = _make##type(__VA_ARGS__);                                   \
@@ -135,6 +135,9 @@ typedef Ref<ASTNode> AST;
 #define COPY_DEBUG_INFO(ret, old) (ret)
 #endif
 
+/**
+ * Base class of all expression nodes in an AST
+ */
 class ExprNode : public ASTNode {
   public:
     bool isExpr() const override { return true; }
@@ -142,6 +145,8 @@ class ExprNode : public ASTNode {
     virtual bool isConst() const { return false; }
     virtual bool isBinary() const { return false; }
     virtual bool isUnary() const { return false; }
+
+    Ref<ExprNode> parentExpr() const;
 
     DEFINE_NODE_ACCESS(Expr);
 };
@@ -188,6 +193,9 @@ class ID {
 
 std::string toString(const ID &id);
 
+/**
+ * Base class of all statement nodes in an AST
+ */
 class StmtNode : public ASTNode {
     friend ID;
 
@@ -203,18 +211,37 @@ class StmtNode : public ASTNode {
 
     bool isStmt() const override { return true; }
 
+    Ref<StmtNode> parentStmt() const;
+    Ref<StmtNode> parentCtrlFlow() const;
+    Ref<StmtNode> prevStmt() const;
+    Ref<StmtNode> nextStmt() const;
+
+    /**
+     * Find an ancestor by ID. `this` itself is also considered
+     */
+    Ref<StmtNode> ancestorById(const ID &lookup) const;
+
+    bool isAncestorOf(const Stmt &other) const;
+    bool isBefore(const Stmt &other) const;
+
     DEFINE_NODE_ACCESS(Stmt);
 };
 
 Expr deepCopy(const Expr &op);
 Stmt deepCopy(const Stmt &op);
 
-} // namespace ir
+AST lcaAST(const AST &lhs, const AST &rhs);
+Expr lcaExpr(const Expr &lhs, const Expr &rhs);
+Stmt lcaStmt(const Stmt &lhs, const Stmt &rhs);
+
+} // namespace freetensor
 
 namespace std {
 
-template <> struct hash<ir::ID> { size_t operator()(const ir::ID &id) const; };
+template <> struct hash<freetensor::ID> {
+    size_t operator()(const freetensor::ID &id) const;
+};
 
 } // namespace std
 
-#endif // AST_H
+#endif // FREE_TENSOR_AST_H

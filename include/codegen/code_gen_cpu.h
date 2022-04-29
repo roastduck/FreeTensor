@@ -1,12 +1,12 @@
-#ifndef CODE_GEN_CPU_H
-#define CODE_GEN_CPU_H
+#ifndef FREE_TENSOR_CODE_GEN_CPU_H
+#define FREE_TENSOR_CODE_GEN_CPU_H
 
 #include <unordered_set>
 
 #include <codegen/code_gen_c.h>
 #include <func.h>
 
-namespace ir {
+namespace freetensor {
 
 class CodeGenCPU : public CodeGenC<CodeGenStream> {
     bool inParallel_ = false;
@@ -41,6 +41,6 @@ class CodeGenCPU : public CodeGenC<CodeGenStream> {
  */
 std::string codeGenCPU(const Func &func);
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // CODE_GEN_CPU_H
+#endif // FREE_TENSOR_CODE_GEN_CPU_H

@@ -1,17 +1,16 @@
-#ifndef IR_MULTI_LEVEL_TILING_H
-#define IR_MULTI_LEVEL_TILING_H
+#ifndef FREE_TENSOR_MULTI_LEVEL_TILING_H
+#define FREE_TENSOR_MULTI_LEVEL_TILING_H
 #include <auto_schedule/structs.h>
 
-namespace ir {
+namespace freetensor {
 class Schedule;
 std::vector<std::pair<ID, int>>
 multiLevelTiling(Schedule &schedule, const ForsWithDataReuse &target,
                  const MultiLevelTilingAnnotation &annotation,
                  const std::string &pat);
-void multiLevelTilingWithFusion(Schedule &schedule,
-                                const ForsWithDataReuse &target,
-                                const MultiLevelTilingAnnotation &annotation,
-                                const std::string &pat,
-                                const ElementWiseInfo &toFuse, int level);
-} // namespace ir
-#endif // IR_MULTI_LEVEL_TILING_H
+std::vector<std::pair<ID, int>> multiLevelTilingWithFusion(
+    Schedule &schedule, const ForsWithDataReuse &target,
+    const MultiLevelTilingAnnotation &annotation, const std::string &pat,
+    const ElementWiseInfo &toFuse, int level, MemType memType);
+} // namespace freetensor
+#endif // FREE_TENSOR_MULTI_LEVEL_TILING_H

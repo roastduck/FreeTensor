@@ -2,12 +2,12 @@
 
 #include <codegen/code_gen_cuda.h>
 #include <except.h>
-#include <mangle.h>
 #include <pass/simplify.h>
+#include <serialize/mangle.h>
 
 #include "detail/code_gen_c.h"
 
-namespace ir {
+namespace freetensor {
 
 static std::string genCUBLASType(DataType dtype) {
     switch (dtype) {
@@ -15,6 +15,8 @@ static std::string genCUBLASType(DataType dtype) {
         return "CUDA_R_64F";
     case DataType::Float32:
         return "CUDA_R_32F";
+    case DataType::Int64:
+        return "CUDA_R_64I";
     case DataType::Int32:
         return "CUDA_R_32I";
     default:
@@ -37,6 +39,32 @@ void CodeGenCUDA::genAlloc(const Ref<Tensor> &tensor, const std::string &rawPtr,
         os() << ") * ";
     }
     os() << "sizeof(" << gen(tensor->dtype()) << ")));" << std::endl;
+}
+
+void CodeGenCUDA::genScalar(const std::string &var,
+                            const std::vector<Expr> &indices) {
+    auto mtype = buffer(var)->mtype();
+    if (indices.empty() &&
+        (mtype == MemType::GPUGlobal || mtype == MemType::GPUShared)) {
+        os() << "*" << mangle(var);
+    } else if (!inKernel() &&
+               (mtype == MemType::GPUGlobal || mtype == MemType::GPUShared ||
+                mtype == MemType::GPUWarp || mtype == MemType::GPULocal)) {
+        if (mtype == MemType::GPUGlobal) {
+            WARNING(
+                "You are accessing gpu/global memory from outside of a kernel. "
+                "This is only for debugging, and it has a low performance");
+            os() << "gpuScalar(";
+            CodeGenC::genScalar(var, indices);
+            os() << ")";
+        } else {
+            throw InvalidProgram("Unable to access " +
+                                 ::freetensor::toString(mtype) +
+                                 " from outside of a kernel");
+        }
+    } else {
+        CodeGenC::genScalar(var, indices);
+    }
 }
 
 bool CodeGenCUDA::inKernel() const {
@@ -285,13 +313,16 @@ void CodeGenCUDA::visit(const For &op) {
     } else if (std::holds_alternative<CUDAScope>(op->property_->parallel_)) {
         if (op->len_->nodeType() != ASTNodeType::IntConst) {
             std::ostringstream msg;
-            msg << "Length of " << ::ir::toString(op->property_->parallel_)
+            msg << "Length of "
+                << ::freetensor::toString(op->property_->parallel_)
                 << " should be constant, instead of " << op->len_;
             throw Error(msg.str());
         }
         if (!inKernel()) {
             std::string kernel = "kernel" + std::to_string(nKernel_++);
             pushStream(kernel);
+            sharedStackTop_ = 0;
+            globalStackTop_ = 0;
             beginBlock();
             (*this)(op->body_);
             streamStack_.back().threadDim_[op->property_->parallel_] =
@@ -353,7 +384,7 @@ void CodeGenCUDA::visit(const For &op) {
         CodeGenC::visit(op);
     } else {
         throw Error("Unsupported parallel method " +
-                    ::ir::toString(op->property_->parallel_));
+                    ::freetensor::toString(op->property_->parallel_));
     }
 }
 
@@ -691,4 +722,4 @@ extern "C" {
     return header + body + tailer;
 }
 
-} // namespace ir
+} // namespace freetensor

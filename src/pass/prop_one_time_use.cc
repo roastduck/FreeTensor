@@ -6,17 +6,10 @@
 #include <pass/replace_uses.h>
 #include <pass/sink_var.h>
 
-namespace ir {
+namespace freetensor {
 
-static bool sameParent(const Cursor &x, const Cursor &y) {
-    if (!x.hasOuterCtrlFlow() && !y.hasOuterCtrlFlow()) {
-        return true;
-    }
-    if (x.hasOuterCtrlFlow() && y.hasOuterCtrlFlow() &&
-        x.outerCtrlFlow().id() == y.outerCtrlFlow().id()) {
-        return true;
-    }
-    return false;
+static bool sameParent(const Stmt &x, const Stmt &y) {
+    return x->parentCtrlFlow() == y->parentCtrlFlow();
 }
 
 Stmt propOneTimeUse(const Stmt &_op) {
@@ -43,7 +36,7 @@ Stmt propOneTimeUse(const Stmt &_op) {
         if (later.op_->nodeType() == ASTNodeType::ReduceTo) {
             return false; // pass/remove_write will deal with it
         }
-        if (!sameParent(later.cursor_, earlier.cursor_)) {
+        if (!sameParent(later.stmt_, earlier.stmt_)) {
             // Definition of each vars may differ
             return false;
         }
@@ -52,8 +45,8 @@ Stmt propOneTimeUse(const Stmt &_op) {
     auto foundMust = [&](const Dependency &d) {
         if (checkNotModified(
                 op, d.earlier().as<StoreNode>()->expr_,
-                CheckNotModifiedSide::Before, d.earlier_.cursor_.id(),
-                CheckNotModifiedSide::Before, d.later_.cursor_.id())) {
+                CheckNotModifiedSide::Before, d.earlier_.stmt_->id(),
+                CheckNotModifiedSide::Before, d.later_.stmt_->id())) {
             r2w[d.later()].emplace_back(d.earlier().as<StmtNode>());
             w2r[d.earlier().as<StmtNode>()].emplace_back(d.later());
         }
@@ -92,4 +85,4 @@ Stmt propOneTimeUse(const Stmt &_op) {
     return sinkVar(op);
 }
 
-} // namespace ir
+} // namespace freetensor

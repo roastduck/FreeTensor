@@ -7,7 +7,7 @@
 #include <pass/gpu/make_sync.h>
 #include <pass/merge_and_hoist_if.h>
 
-namespace ir {
+namespace freetensor {
 
 namespace gpu {
 
@@ -121,31 +121,31 @@ split_this_level:
     return op;
 }
 
-void MakeSync::markSyncForSplitting(const Stmt &sync) {
+void MakeSync::markSyncForSplitting(const Stmt &stmtInTree, const Stmt &sync) {
     bool inElseCase = false;
-    for (auto ctx = cursor(); ctx.hasOuter(); ctx = ctx.outer()) {
-        if (ctx.nodeType() == ASTNodeType::If) {
-            (inElseCase ? branchSplittersElse_ : branchSplittersThen_)[ctx.id()]
+    for (auto ctx = stmtInTree; ctx.isValid(); ctx = ctx->parentStmt()) {
+        if (ctx->nodeType() == ASTNodeType::If) {
+            (inElseCase ? branchSplittersElse_
+                        : branchSplittersThen_)[ctx->id()]
                 .emplace_back(sync);
         }
-        inElseCase = ctx.outer().isValid() &&
-                     ctx.outer().nodeType() == ASTNodeType::If &&
-                     ctx.outer().node().as<IfNode>()->elseCase_ == ctx.node();
+        inElseCase = ctx->parentStmt().isValid() &&
+                     ctx->parentStmt()->nodeType() == ASTNodeType::If &&
+                     ctx->parentStmt().as<IfNode>()->elseCase_ == ctx;
     }
 }
 
 Stmt MakeSync::visitStmt(const Stmt &op) {
     auto ret = BaseClass::visitStmt(op);
-    // Please note that we have exited BaseClass, so `cursor()` is out
-    // of `op`
 
-    Cursor target;
+    Stmt target;
     bool needSyncThreads = false, needSyncWarp = false;
     for (const CrossThreadDep &dep : deps_) {
-        if (!dep.synced_ && dep.visiting_ && dep.later_.node() == op) {
+        if (!dep.synced_ && dep.visiting_ && dep.later_ == op) {
             (dep.inWarp_ ? needSyncWarp : needSyncThreads) = true;
-            target =
-                dep.lcaStmt_.depth() > target.depth() ? dep.lcaStmt_ : target;
+            if (!target.isValid() || dep.lcaStmt_->depth() > target->depth()) {
+                target = dep.lcaStmt_;
+            }
         }
     }
 
@@ -159,17 +159,18 @@ Stmt MakeSync::visitStmt(const Stmt &op) {
                 "", makeIntrinsic("__syncwarp()", {}, DataType::Void, true));
         }
 
-        Cursor whereToInsert;
-        for (auto ctx = cursor(); ctx.id() != target.id(); ctx = ctx.outer()) {
-            if (ctx.nodeType() == ASTNodeType::For) {
+        Stmt whereToInsert;
+        for (auto ctx = op->parentStmt(); ctx->id() != target->id();
+             ctx = ctx->parentStmt()) {
+            if (ctx->nodeType() == ASTNodeType::For) {
                 whereToInsert = ctx;
             }
         }
         if (!whereToInsert.isValid()) {
             ret = makeStmtSeq("", {sync, ret});
-            markSyncForSplitting(sync);
+            markSyncForSplitting(op->parentStmt(), sync);
         } else {
-            syncBeforeFor_[whereToInsert.id()] = sync;
+            syncBeforeFor_[whereToInsert->id()] = sync;
         }
 
         for (CrossThreadDep &dep : deps_) {
@@ -184,7 +185,7 @@ Stmt MakeSync::visitStmt(const Stmt &op) {
         }
     }
     for (CrossThreadDep &dep : deps_) {
-        if (!dep.synced_ && !dep.visiting_ && dep.earlier_.node() == op) {
+        if (!dep.synced_ && !dep.visiting_ && dep.earlier_ == op) {
             dep.visiting_ = true;
         }
     }
@@ -197,7 +198,7 @@ Stmt MakeSync::visit(const For &_op) {
     auto op = __op.as<ForNode>();
     bool needSyncThreads = false, needSyncWarp = false;
     for (const CrossThreadDep &dep : deps_) {
-        if (!dep.synced_ && dep.visiting_ && dep.lcaLoop_.node() == _op) {
+        if (!dep.synced_ && dep.visiting_ && dep.lcaLoop_ == _op) {
             (dep.inWarp_ ? needSyncWarp : needSyncThreads) = true;
         }
     }
@@ -211,7 +212,7 @@ Stmt MakeSync::visit(const For &_op) {
                 "", makeIntrinsic("__syncwarp()", {}, DataType::Void, true));
         }
         op->body_ = makeStmtSeq("", {op->body_, sync});
-        markSyncForSplitting(sync);
+        markSyncForSplitting(_op, sync);
         for (CrossThreadDep &dep : deps_) {
             if (dep.visiting_) {
                 if (needSyncThreads) {
@@ -225,7 +226,7 @@ Stmt MakeSync::visit(const For &_op) {
     }
     if (syncBeforeFor_.count(op->id())) {
         auto &&sync = syncBeforeFor_.at(op->id());
-        markSyncForSplitting(sync);
+        markSyncForSplitting(_op, sync);
         return makeStmtSeq("", {sync, op});
     }
     return op;
@@ -287,14 +288,15 @@ Stmt makeSync(const Stmt &_op) {
     };
     auto found = [&](const Dependency &d) {
         auto i = &d.cond_ - &query[0];
-        auto lcaStmt = lca(d.later_.cursor_, d.earlier_.cursor_);
-        auto lcaLoop = lcaStmt;
-        while (lcaLoop.hasOuter() && lcaLoop.nodeType() != ASTNodeType::For) {
-            lcaLoop = lcaLoop.outer();
+        auto commonStmt = lcaStmt(d.later_.stmt_, d.earlier_.stmt_);
+        auto commonLoop = commonStmt;
+        while (commonLoop->parent().isValid() &&
+               commonLoop->nodeType() != ASTNodeType::For) {
+            commonLoop = commonLoop->parentStmt();
         }
-        ASSERT(lcaLoop.nodeType() == ASTNodeType::For);
-        deps.emplace_back(CrossThreadDep{d.later_.cursor_, d.earlier_.cursor_,
-                                         lcaStmt, lcaLoop,
+        ASSERT(commonLoop->nodeType() == ASTNodeType::For);
+        deps.emplace_back(CrossThreadDep{d.later_.stmt_, d.earlier_.stmt_,
+                                         commonStmt, commonLoop,
                                          threads.at(i).inWarp_, false, false});
     };
     findDeps(op, query, found, FindDepsMode::Dep, DEP_ALL, filter, false,
@@ -308,4 +310,4 @@ Stmt makeSync(const Stmt &_op) {
 
 } // namespace gpu
 
-} // namespace ir
+} // namespace freetensor

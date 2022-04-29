@@ -1,11 +1,11 @@
-#ifndef SPLIT_H
-#define SPLIT_H
+#ifndef FREE_TENSOR_SPLIT_H
+#define FREE_TENSOR_SPLIT_H
 
 #include <string>
 
 #include <mutator.h>
 
-namespace ir {
+namespace freetensor {
 
 class Splitter : public Mutator {
     ID src_, dst0_, dst1_;
@@ -33,6 +33,6 @@ class Splitter : public Mutator {
 std::pair<Stmt, std::pair<ID, ID>> split(const Stmt &ast, const ID &id,
                                          int factor, int nparts);
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // SPLIT_H
+#endif // FREE_TENSOR_SPLIT_H

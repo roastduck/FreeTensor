@@ -1,5 +1,5 @@
-#ifndef SYMBOL_TABLE_H
-#define SYMBOL_TABLE_H
+#ifndef FREE_TENSOR_SYMBOL_TABLE_H
+#define FREE_TENSOR_SYMBOL_TABLE_H
 
 #include <type_traits>
 #include <unordered_map>
@@ -8,7 +8,7 @@
 #include <maybe_void.h>
 #include <stmt.h>
 
-namespace ir {
+namespace freetensor {
 
 class SymbolTableInterface {
   public:
@@ -158,10 +158,10 @@ class SymbolTable : public BaseClass, public SymbolTableInterface {
             for (auto &&dim : op->buffer_->tensor()->shape()) {
                 shape.emplace_back((*this)(dim));
             }
-            Ref<Tensor> t = Ref<Tensor>::make(std::move(shape),
-                                              op->buffer_->tensor()->dtype());
-            Ref<Buffer> b = Ref<Buffer>::make(
-                std::move(t), op->buffer_->atype(), op->buffer_->mtype());
+            Ref<Tensor> t =
+                makeTensor(std::move(shape), op->buffer_->tensor()->dtype());
+            Ref<Buffer> b = makeBuffer(std::move(t), op->buffer_->atype(),
+                                       op->buffer_->mtype());
             Expr sizeLim =
                 op->sizeLim_.isValid() ? (*this)(op->sizeLim_) : nullptr;
 
@@ -195,6 +195,6 @@ class SymbolTable : public BaseClass, public SymbolTableInterface {
     }
 };
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // SYMBOL_TABLE_H
+#endif // FREE_TENSOR_SYMBOL_TABLE_H

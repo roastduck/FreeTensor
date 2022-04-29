@@ -1,5 +1,5 @@
-#ifndef STMT_H
-#define STMT_H
+#ifndef FREE_TENSOR_STMT_H
+#define FREE_TENSOR_STMT_H
 
 #include <string>
 #include <vector>
@@ -9,7 +9,7 @@
 #include <for_property.h>
 #include <reduce_op.h>
 
-namespace ir {
+namespace freetensor {
 
 /**
  * Matches any statement
@@ -27,7 +27,7 @@ inline Stmt _makeAny() { return Any::make(); }
 
 class StmtSeqNode : public StmtNode {
   public:
-    SubTreeList<StmtNode> stmts_;
+    SubTreeList<StmtNode> stmts_ = ChildOf{this};
     void compHash() override;
     DEFINE_NODE_TRAIT(StmtSeq);
 };
@@ -49,11 +49,11 @@ inline Stmt _makeStmtSeq(const ID &id, std::initializer_list<Stmt> stmts) {
 class VarDefNode : public StmtNode {
   public:
     std::string name_;
-    SubTree<Buffer> buffer_;
-    SubTree<ExprNode, NullPolicy::Nullable>
-        sizeLim_; // limit the buffer size to a specific
-                  // expression, other than the size of buffer_
-    SubTree<StmtNode> body_;
+    SubTree<Buffer> buffer_ = ChildOf{this};
+    SubTree<ExprNode, NullPolicy::Nullable> sizeLim_ =
+        ChildOf{this}; // limit the buffer size to a specific
+                       // expression, other than the size of buffer_
+    SubTree<StmtNode> body_ = ChildOf{this};
     bool pinned_; // If pinned, SinkVar and ShrinkVar will not alter this node
     void compHash() override;
     DEFINE_NODE_TRAIT(VarDef);
@@ -78,8 +78,8 @@ Stmt _makeVarDef(const ID &id, const std::string &name, Tbuffer &&buffer,
 class StoreNode : public StmtNode {
   public:
     std::string var_;
-    SubTreeList<ExprNode> indices_;
-    SubTree<ExprNode> expr_;
+    SubTreeList<ExprNode> indices_ = ChildOf{this};
+    SubTree<ExprNode> expr_ = ChildOf{this};
     void compHash() override;
     DEFINE_NODE_TRAIT(Store);
 };
@@ -109,9 +109,9 @@ Stmt _makeStore(const ID &id, const std::string &var,
 class ReduceToNode : public StmtNode {
   public:
     std::string var_;
-    SubTreeList<ExprNode> indices_;
+    SubTreeList<ExprNode> indices_ = ChildOf{this};
     ReduceOp op_;
-    SubTree<ExprNode> expr_;
+    SubTree<ExprNode> expr_ = ChildOf{this};
     bool atomic_;
     void compHash() override;
     DEFINE_NODE_TRAIT(ReduceTo)
@@ -151,9 +151,12 @@ class ForNode : public StmtNode {
     // We also record len_ because it is used in may passes. If we computes len_
     // every time and call simplifyPass to propagate the constants, it is very
     // time consuming
-    SubTree<ExprNode> begin_, end_, step_, len_;
-    SubTree<ForProperty> property_;
-    SubTree<StmtNode> body_;
+    SubTree<ExprNode> begin_ = ChildOf{this};
+    SubTree<ExprNode> end_ = ChildOf{this};
+    SubTree<ExprNode> step_ = ChildOf{this};
+    SubTree<ExprNode> len_ = ChildOf{this};
+    SubTree<ForProperty> property_ = ChildOf{this};
+    SubTree<StmtNode> body_ = ChildOf{this};
 
     void compHash() override;
 
@@ -179,9 +182,9 @@ Stmt _makeFor(const ID &id, const std::string &iter, Tbegin &&begin, Tend &&end,
 
 class IfNode : public StmtNode {
   public:
-    SubTree<ExprNode> cond_;
-    SubTree<StmtNode> thenCase_;
-    SubTree<StmtNode, NullPolicy::Nullable> elseCase_;
+    SubTree<ExprNode> cond_ = ChildOf{this};
+    SubTree<StmtNode> thenCase_ = ChildOf{this};
+    SubTree<StmtNode, NullPolicy::Nullable> elseCase_ = ChildOf{this};
 
     void compHash() override;
 
@@ -212,8 +215,8 @@ Stmt _makeIf(const ID &id, Tcond &&cond, Tthen &&thenCase,
  */
 class AssertNode : public StmtNode {
   public:
-    SubTree<ExprNode> cond_;
-    SubTree<StmtNode> body_;
+    SubTree<ExprNode> cond_ = ChildOf{this};
+    SubTree<StmtNode> body_ = ChildOf{this};
     void compHash() override;
     DEFINE_NODE_TRAIT(Assert);
 };
@@ -241,8 +244,8 @@ Stmt _makeAssert(const ID &id, Tcond &&cond, Tbody &&body) {
  */
 class AssumeNode : public StmtNode {
   public:
-    SubTree<ExprNode> cond_;
-    SubTree<StmtNode> body_;
+    SubTree<ExprNode> cond_ = ChildOf{this};
+    SubTree<StmtNode> body_ = ChildOf{this};
     void compHash() override;
     DEFINE_NODE_TRAIT(Assume);
 };
@@ -264,7 +267,7 @@ Stmt _makeAssume(const ID &id, Tcond &&cond, Tbody &&body) {
  */
 class EvalNode : public StmtNode {
   public:
-    SubTree<ExprNode> expr_;
+    SubTree<ExprNode> expr_ = ChildOf{this};
     void compHash() override;
     DEFINE_NODE_TRAIT(Eval);
 };
@@ -286,11 +289,24 @@ class MatMulNode : public StmtNode {
     // a_ is an m_ * k_ matrix
     // b_ is a k_ * n_ matrix
     // c_ is an m_ * n_ matrix
-    SubTree<ExprNode> a_, b_, c_, alpha_, beta_, m_, k_, n_, lda_, ldb_, ldc_,
-        stridea_, strideb_, stridec_, batchSize_;
+    SubTree<ExprNode> a_ = ChildOf{this};
+    SubTree<ExprNode> b_ = ChildOf{this};
+    SubTree<ExprNode> c_ = ChildOf{this};
+    SubTree<ExprNode> alpha_ = ChildOf{this};
+    SubTree<ExprNode> beta_ = ChildOf{this};
+    SubTree<ExprNode> m_ = ChildOf{this};
+    SubTree<ExprNode> k_ = ChildOf{this};
+    SubTree<ExprNode> n_ = ChildOf{this};
+    SubTree<ExprNode> lda_ = ChildOf{this};
+    SubTree<ExprNode> ldb_ = ChildOf{this};
+    SubTree<ExprNode> ldc_ = ChildOf{this};
+    SubTree<ExprNode> stridea_ = ChildOf{this};
+    SubTree<ExprNode> strideb_ = ChildOf{this};
+    SubTree<ExprNode> stridec_ = ChildOf{this};
+    SubTree<ExprNode> batchSize_ = ChildOf{this};
     bool aIsRowMajor_, bIsRowMajor_, cIsRowMajor_;
-    SubTree<StmtNode>
-        equivalent_; // Equivalent loop statements, to help dependency analysis
+    SubTree<StmtNode> equivalent_ = ChildOf{
+        this}; // Equivalent loop statements, to help dependency analysis
     void compHash() override;
     DEFINE_NODE_TRAIT(MatMul);
 };
@@ -328,6 +344,6 @@ inline Stmt _makeMatMul(const ID &id, const Expr &a, const Expr &b,
     return s;
 }
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // STMT_H
+#endif // FREE_TENSOR_STMT_H

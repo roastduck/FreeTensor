@@ -1,12 +1,12 @@
-#ifndef TARGET_H
-#define TARGET_H
+#ifndef FREE_TENSOR_TARGET_H
+#define FREE_TENSOR_TARGET_H
 
 #include <string>
 
 #include <buffer.h>
 #include <ref.h>
 
-namespace ir {
+namespace freetensor {
 
 enum class TargetType : int { CPU, GPU };
 
@@ -56,6 +56,6 @@ class GPU : public Target {
     }
 };
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // TARGET_H
+#endif // FREE_TENSOR_TARGET_H

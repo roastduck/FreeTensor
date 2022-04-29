@@ -1,10 +1,10 @@
-#include <mangle.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/pb_simplify.h>
+#include <serialize/mangle.h>
 
 #include <itertools.hpp>
 
-namespace ir {
+namespace freetensor {
 
 template <class T>
 static void appendTo(std::vector<T> &target, const std::vector<T> &other) {
@@ -23,22 +23,18 @@ void PBCompBounds::visitExpr(const Expr &op) {
         return;
     }
     if (auto &&expr = genPBExpr_.gen(op); expr.isValid()) {
-        auto &&vars = genPBExpr_.vars(op);
-
         // We use the original conditions instead of relying on transient bounds
         // here. E.g., for x + y <= 2, and we are computing the maximum value of
         // x + y, we shall not rely on x < 2 - y and y < 2 - x. Instead, we use
         // x + y < 2 directly
+        auto vars = genPBExpr_.vars(op);
         std::vector<std::string> condExprs;
         for (auto &&cond : transients_.conds()) {
             if (auto &&condExpr = genPBExpr_.gen(cond); condExpr.isValid()) {
                 for (auto &&var : genPBExpr_.vars(cond)) {
-                    if (!vars.count(var.first)) {
-                        goto ignore;
-                    }
+                    vars.insert(var);
                 }
                 condExprs.emplace_back(*condExpr);
-            ignore:;
             }
         }
 
@@ -78,4 +74,4 @@ Stmt pbSimplify(const Stmt &op) {
     return flattenStmtSeq(simplifyImpl<PBSimplify>(op));
 }
 
-} // namespace ir
+} // namespace freetensor

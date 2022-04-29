@@ -1,5 +1,5 @@
-#ifndef EXPR_H
-#define EXPR_H
+#ifndef FREE_TENSOR_EXPR_H
+#define FREE_TENSOR_EXPR_H
 
 #include <string>
 #include <vector>
@@ -7,7 +7,7 @@
 #include <ast.h>
 #include <data_type.h>
 
-namespace ir {
+namespace freetensor {
 
 /**
  * Matches any expression
@@ -40,7 +40,7 @@ inline Expr _makeVar(const std::string &name) {
 class LoadNode : public ExprNode {
   public:
     std::string var_;
-    SubTreeList<ExprNode> indices_;
+    SubTreeList<ExprNode> indices_ = ChildOf{this};
     void compHash() override;
     DEFINE_NODE_TRAIT(Load);
 };
@@ -111,7 +111,7 @@ inline Expr _makeBoolConst(bool val) {
 
 class BinaryExprNode : public ExprNode {
   public:
-    SubTree<ExprNode> lhs_, rhs_;
+    SubTree<ExprNode> lhs_ = ChildOf{this}, rhs_ = ChildOf{this};
 
     bool isBinary() const override { return true; }
     virtual bool isCommutative() const = 0;
@@ -374,7 +374,7 @@ template <class T, class U> Expr _makeLOr(T &&lhs, U &&rhs) {
 
 class UnaryExprNode : public ExprNode {
   public:
-    SubTree<ExprNode> expr_;
+    SubTree<ExprNode> expr_ = ChildOf{this};
 
     void compHash() override;
     bool isUnary() const override { return true; }
@@ -482,7 +482,9 @@ template <class T> Expr _makeCeil(T &&expr) {
 
 class IfExprNode : public ExprNode {
   public:
-    SubTree<ExprNode> cond_, thenCase_, elseCase_;
+    SubTree<ExprNode> cond_ = ChildOf{this};
+    SubTree<ExprNode> thenCase_ = ChildOf{this};
+    SubTree<ExprNode> elseCase_ = ChildOf{this};
     void compHash() override;
     DEFINE_NODE_TRAIT(IfExpr);
 };
@@ -499,7 +501,7 @@ Expr _makeIfExpr(T &&cond, U &&thenCase, V &&elseCase) {
 
 class CastNode : public ExprNode {
   public:
-    SubTree<ExprNode> expr_;
+    SubTree<ExprNode> expr_ = ChildOf{this};
     DataType dtype_;
     void compHash() override;
     DEFINE_NODE_TRAIT(Cast);
@@ -520,7 +522,7 @@ class IntrinsicNode : public ExprNode {
   public:
     std::string format_; /// what to run. "%" is filled by parameters one by one
                          /// E.g. sinf(%)
-    SubTreeList<ExprNode> params_;
+    SubTreeList<ExprNode> params_ = ChildOf{this};
     DataType retType_;
     bool hasSideEffect_;
     void compHash() override;
@@ -614,6 +616,6 @@ template <class T> Expr makeUnary(ASTNodeType nodeType, T &&expr) {
     }
 }
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // EXPR_H
+#endif // FREE_TENSOR_EXPR_H

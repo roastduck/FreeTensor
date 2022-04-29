@@ -1,99 +1,99 @@
-import ir
+import freetensor as ft
 
 
 def test_basic():
-    with ir.VarDef([("x", (4,), "int32", "output", "cpu"),
+    with ft.VarDef([("x", (4,), "int32", "output", "cpu"),
                     ("t", (4,), "int32", "cache", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, t, y):
-        with ir.For("i", 0, 4) as i:
+        with ft.For("i", 0, 4) as i:
             t[i] = x[i] + 1
             y[i] = t[i] * 2
-    ast = ir.pop_ast()
+    ast = ft.pop_ast()
     print(ast)
-    ast = ir.lower(ast)
+    ast = ft.lower(ast)
     print(ast)
 
-    with ir.VarDef([("x", (4,), "int32", "output", "cpu"),
+    with ft.VarDef([("x", (4,), "int32", "output", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
-        with ir.For("i", 0, 4) as i:
+        with ft.For("i", 0, 4) as i:
             y[i] = x[i] * 2 + 2
-    std = ir.pop_ast()
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
 
 def test_used_in_many_stmts_no_prop():
-    with ir.VarDef([("x", (4,), "int32", "output", "cpu"),
+    with ft.VarDef([("x", (4,), "int32", "output", "cpu"),
                     ("y1", (4,), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (x, y1, y2):
-        with ir.For("i", 0, 4) as i:
-            with ir.VarDef("t", (), "int32", "cache", "cpu") as t:
+        with ft.For("i", 0, 4) as i:
+            with ft.VarDef("t", (), "int32", "cache", "cpu") as t:
                 t[()] = x[i] + 1
                 y1[i] = t[()] * 2
                 y2[i] = t[()] * 3
-    ast = ir.pop_ast()
+    ast = ft.pop_ast()
     print(ast)
-    ast = ir.lower(ast)
+    ast = ft.lower(ast)
     print(ast)
 
-    with ir.VarDef([("x", (4,), "int32", "output", "cpu"),
+    with ft.VarDef([("x", (4,), "int32", "output", "cpu"),
                     ("y1", (4,), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (x, y1, y2):
-        with ir.For("i", 0, 4) as i:
-            with ir.VarDef("t", (), "int32", "cache", "cpu") as t:
+        with ft.For("i", 0, 4) as i:
+            with ft.VarDef("t", (), "int32", "cache", "cpu") as t:
                 t[()] = x[i] + 1
                 y1[i] = t[()] * 2
                 y2[i] = t[()] * 3
-    std = ir.pop_ast()
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
 
 def test_used_in_many_reads_no_prop():
-    with ir.VarDef([("x", (4,), "int32", "output", "cpu"),
+    with ft.VarDef([("x", (4,), "int32", "output", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
-        with ir.For("i", 0, 4) as i:
-            with ir.VarDef("t", (), "int32", "cache", "cpu") as t:
+        with ft.For("i", 0, 4) as i:
+            with ft.VarDef("t", (), "int32", "cache", "cpu") as t:
                 t[i] = x[i] + 1
                 y[i] = t[i] * t[i] + t[i]
-    ast = ir.pop_ast()
+    ast = ft.pop_ast()
     print(ast)
-    ast = ir.lower(ast)
+    ast = ft.lower(ast)
     print(ast)
 
-    with ir.VarDef([("x", (4,), "int32", "output", "cpu"),
+    with ft.VarDef([("x", (4,), "int32", "output", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
-        with ir.For("i", 0, 4) as i:
-            with ir.VarDef("t", (), "int32", "cache", "cpu") as t:
+        with ft.For("i", 0, 4) as i:
+            with ft.VarDef("t", (), "int32", "cache", "cpu") as t:
                 t[i] = x[i] + 1
                 y[i] = t[i] * t[i] + t[i]
-    std = ir.pop_ast()
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
 
 def test_modify_self_no_prop():
-    with ir.VarDef([("x", (5,), "float64", "input", "cpu"),
+    with ft.VarDef([("x", (5,), "float64", "input", "cpu"),
                     ("y", (5,), "float64", "output", "cpu")]) as (x, y):
-        with ir.VarDef("t", (5,), "float64", "cache", "cpu") as t:
-            with ir.For("i", 0, 5) as i:
+        with ft.VarDef("t", (5,), "float64", "cache", "cpu") as t:
+            with ft.For("i", 0, 5) as i:
                 t[i] = x[i]
-            with ir.For("i", 0, 5) as i:
+            with ft.For("i", 0, 5) as i:
                 t[i] = t[i] - 1
                 y[i] = t[i]
-    ast = ir.pop_ast()
+    ast = ft.pop_ast()
     print(ast)
-    ast = ir.lower(ast)
+    ast = ft.lower(ast)
     print(ast)
 
-    with ir.VarDef([("x", (5,), "float64", "input", "cpu"),
+    with ft.VarDef([("x", (5,), "float64", "input", "cpu"),
                     ("y", (5,), "float64", "output", "cpu")]) as (x, y):
-        with ir.VarDef("t", (5,), "float64", "cache", "cpu") as t:
-            with ir.For("i", 0, 5) as i:
+        with ft.VarDef("t", (5,), "float64", "cache", "cpu") as t:
+            with ft.For("i", 0, 5) as i:
                 t[i] = x[i]
-            with ir.For("i", 0, 5) as i:
+            with ft.For("i", 0, 5) as i:
                 t[i] = t[i] - 1
                 y[i] = t[i]
-    std = ir.pop_ast()
+    std = ft.pop_ast()
 
     assert std.match(ast)

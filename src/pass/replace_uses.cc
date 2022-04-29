@@ -1,6 +1,6 @@
 #include <pass/replace_uses.h>
 
-namespace ir {
+namespace freetensor {
 
 Expr ReplaceUses::visit(const Load &op) {
     if (replace_.count(op)) {
@@ -33,4 +33,4 @@ Stmt ReplaceUses::visit(const ReduceTo &op) {
     }
 }
 
-} // namespace ir
+} // namespace freetensor

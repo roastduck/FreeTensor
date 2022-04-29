@@ -1,5 +1,5 @@
-#ifndef COUNT_CONTIG_ACCESS_LOOPS_H
-#define COUNT_CONTIG_ACCESS_LOOPS_H
+#ifndef FREE_TENSOR_COUNT_CONTIG_ACCESS_LOOPS_H
+#define FREE_TENSOR_COUNT_CONTIG_ACCESS_LOOPS_H
 
 #include <unordered_map>
 
@@ -7,7 +7,7 @@
 #include <analyze/symbol_table.h>
 #include <visitor.h>
 
-namespace ir {
+namespace freetensor {
 
 class CountContigAccessLoops : public SymbolTable<Visitor> {
     typedef SymbolTable<Visitor> BaseClass;
@@ -65,6 +65,6 @@ class CountContigAccessLoops : public SymbolTable<Visitor> {
     void visit(const MatMul &op) override {} // do nothing
 };
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // COUNT_CONTIG_ACCESS_LOOPS_H
+#endif // FREE_TENSOR_COUNT_CONTIG_ACCESS_LOOPS_H

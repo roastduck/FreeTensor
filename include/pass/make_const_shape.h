@@ -1,11 +1,11 @@
-#ifndef MAKE_CONST_SHAPE_H
-#define MAKE_CONST_SHAPE_H
+#ifndef FREE_TENSOR_MAKE_CONST_SHAPE_H
+#define FREE_TENSOR_MAKE_CONST_SHAPE_H
 
 #include <func.h>
 #include <mutator.h>
 #include <pass/pb_simplify.h>
 
-namespace ir {
+namespace freetensor {
 
 /**
  * Some backends do not support local variables with dynamic shapes. This pass
@@ -31,6 +31,6 @@ Stmt makeConstShape(const Stmt &op, const std::vector<MemType> &mtypes);
 
 DEFINE_PASS_FOR_FUNC(makeConstShape)
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // MAKE_CONST_SHAPE_H
+#endif // FREE_TENSOR_MAKE_CONST_SHAPE_H

@@ -1,5 +1,5 @@
-#ifndef TENSOR_H
-#define TENSOR_H
+#ifndef FREE_TENSOR_TENSOR_H
+#define FREE_TENSOR_TENSOR_H
 
 #include <string>
 #include <vector>
@@ -8,22 +8,16 @@
 #include <except.h>
 #include <expr.h>
 
-namespace ir {
+namespace freetensor {
 
 class Tensor : public ASTPart {
-    SubTreeList<ExprNode> shape_;
+    template <class T> friend Ref<Tensor> makeTensor(T &&, DataType);
+    friend Ref<Tensor> makeTensor(std::initializer_list<Expr>, DataType);
+
+    SubTreeList<ExprNode> shape_ = ChildOf{this};
     DataType dtype_;
 
   public:
-    Tensor(SubTreeList<ExprNode> &&shape, DataType dtype)
-        : shape_(std::move(shape)), dtype_(dtype) {}
-    Tensor(const SubTreeList<ExprNode> &shape, DataType dtype)
-        : shape_(shape), dtype_(dtype) {}
-    Tensor(const std::vector<Expr> &shape, DataType dtype)
-        : shape_(shape), dtype_(dtype) {}
-    Tensor(std::initializer_list<Expr> shape, DataType dtype)
-        : shape_(shape), dtype_(dtype) {}
-
     auto &shape() { return shape_; }
     const auto &shape() const { return shape_; }
     void setShape(SubTreeList<ExprNode> &&shape) { shape_ = std::move(shape); }
@@ -34,12 +28,28 @@ class Tensor : public ASTPart {
     DataType dtype() const { return dtype_; }
 
     bool isScalar() const;
+
+    void compHash() override;
 };
 
-inline Ref<Tensor> deepCopy(const Ref<Tensor> &t) {
-    return Ref<Tensor>::make(*t);
+template <class T> Ref<Tensor> makeTensor(T &&shape, DataType dtype) {
+    auto t = Ref<Tensor>::make();
+    t->shape_ = std::forward<T>(shape);
+    t->dtype_ = dtype;
+    return t;
+}
+inline Ref<Tensor> makeTensor(std::initializer_list<Expr> shape,
+                              DataType dtype) {
+    auto t = Ref<Tensor>::make();
+    t->shape_ = shape;
+    t->dtype_ = dtype;
+    return t;
 }
 
-} // namespace ir
+inline Ref<Tensor> deepCopy(const Ref<Tensor> &t) {
+    return makeTensor(t->shape(), t->dtype());
+}
 
-#endif // TENSOR_H
+} // namespace freetensor
+
+#endif // FREE_TENSOR_TENSOR_H

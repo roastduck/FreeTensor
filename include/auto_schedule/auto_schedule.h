@@ -1,5 +1,5 @@
-#ifndef IR_AUTO_SCHEDULE_H
-#define IR_AUTO_SCHEDULE_H
+#ifndef FREE_TENSOR_AUTO_SCHEDULE_H
+#define FREE_TENSOR_AUTO_SCHEDULE_H
 
 #include <auto_schedule/rule.h>
 #include <auto_schedule/sketch.h>
@@ -12,7 +12,7 @@
 #include <set>
 #include <unordered_map>
 
-namespace ir {
+namespace freetensor {
 namespace py = pybind11;
 
 constexpr int EVOLUTIONARY_SEARCH_POPULATION = 128;
@@ -20,7 +20,7 @@ constexpr int EVOLUTIONARY_SEARCH_ITERS = 4;
 constexpr double EVOLUTIONARY_SEARCH_MUTATION_PROB = 0.6;
 constexpr double EVOLUTIONARY_SEARCH_CROSSOVER_PROB = 0.3;
 
-constexpr double INIT_RAND_RATIO = 0.8;
+constexpr double INIT_RAND_RATIO = 0.7;
 
 class AutoSchedule {
     Schedule original_;
@@ -61,13 +61,13 @@ class AutoSchedule {
 
     std::vector<Sketch> getRandPopulation(size_t nRand);
 
-    std::vector<Schedule> genSchedules(const std::vector<Sketch> &sketches);
+    std::vector<Schedule> genSchedules(std::vector<Sketch> &sketches);
 
     py::list genFeatures(const std::vector<Schedule> &schedules);
 
-    std::vector<double> getPrediction(const std::vector<Sketch> &sketches);
+    std::vector<double> getPrediction(std::vector<Sketch> &sketches);
 
-    std::vector<double> testAndAdd(const std::vector<Sketch> &sketches);
+    std::vector<double> testAndAdd(std::vector<Sketch> &sketches_in);
 
     Schedule getBestSchedule();
 
@@ -75,8 +75,9 @@ class AutoSchedule {
     Sketch getInitSketch();
     Stmt testCacheWrite();
     Schedule testMultiLevelTilingWithFusion(int nLevel);
+    Schedule testThreadBind();
 };
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // IR_AUTO_SCHEDULE_H
+#endif // FREE_TENSOR_AUTO_SCHEDULE_H

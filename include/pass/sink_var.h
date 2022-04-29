@@ -1,5 +1,5 @@
-#ifndef SINK_VAR_H
-#define SINK_VAR_H
+#ifndef FREE_TENSOR_SINK_VAR_H
+#define FREE_TENSOR_SINK_VAR_H
 
 #include <unordered_set>
 #include <vector>
@@ -9,7 +9,7 @@
 #include <mutator.h>
 #include <visitor.h>
 
-namespace ir {
+namespace freetensor {
 
 /**
  * Make the scope of a local variable smaller
@@ -37,6 +37,6 @@ Stmt sinkVar(const Stmt &op);
 
 DEFINE_PASS_FOR_FUNC(sinkVar)
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // SINK_VAR_H
+#endif // FREE_TENSOR_SINK_VAR_H

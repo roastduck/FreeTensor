@@ -1,6 +1,6 @@
 #include <ffi.h>
 
-namespace ir {
+namespace freetensor {
 
 PYBIND11_MODULE(ffi, m) {
     init_ffi_except(m);
@@ -11,7 +11,6 @@ PYBIND11_MODULE(ffi, m) {
     init_ffi_buffer(m);
     init_ffi_frontend(m);
     init_ffi_ast(m);
-    init_ffi_cursor(m);
     init_ffi_schedule(m);
     init_ffi_analyze(m);
     init_ffi_pass(m);
@@ -22,4 +21,4 @@ PYBIND11_MODULE(ffi, m) {
     init_ffi_config(m);
 }
 
-} // namespace ir
+} // namespace freetensor

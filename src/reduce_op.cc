@@ -3,7 +3,7 @@
 
 #include <reduce_op.h>
 
-namespace ir {
+namespace freetensor {
 
 Expr neutralVal(DataType dtype, ReduceOp op) {
     switch (dtype) {
@@ -16,6 +16,18 @@ Expr neutralVal(DataType dtype, ReduceOp op) {
             return makeFloatConst(-INFINITY);
         case ReduceOp::Min:
             return makeFloatConst(INFINITY);
+        default:
+            ASSERT(false);
+        }
+
+    case DataType::Int64:
+        switch (op) {
+        case ReduceOp::Add:
+            return makeIntConst(0);
+        case ReduceOp::Max:
+            return makeIntConst(LLONG_MIN);
+        case ReduceOp::Min:
+            return makeIntConst(LLONG_MAX);
         default:
             ASSERT(false);
         }
@@ -37,4 +49,4 @@ Expr neutralVal(DataType dtype, ReduceOp op) {
     }
 }
 
-} // namespace ir
+} // namespace freetensor

@@ -5,7 +5,7 @@
 #include <schedule/check_loop_order.h>
 #include <schedule/reorder.h>
 
-namespace ir {
+namespace freetensor {
 
 Stmt SwapFor::visit(const For &_op) {
     if (_op->id() == oldOuter_->id()) {
@@ -115,9 +115,8 @@ Stmt reorder(const Stmt &_ast, const std::vector<ID> &dstOrder) {
         conds.emplace_back(std::move(cond));
     }
     auto filter = [&](const AccessPoint &later, const AccessPoint &earlier) {
-        return earlier.cursor_.getParentById(curOrder.front()->id())
-                   .isValid() &&
-               later.cursor_.getParentById(curOrder.front()->id()).isValid();
+        return earlier.stmt_->ancestorById(curOrder.front()->id()).isValid() &&
+               later.stmt_->ancestorById(curOrder.front()->id()).isValid();
     };
     auto found = [&](const Dependency &d) {
         throw InvalidSchedule("Loops are not permutable: " + toString(d) +
@@ -141,4 +140,4 @@ Stmt reorder(const Stmt &_ast, const std::vector<ID> &dstOrder) {
     return ast;
 }
 
-} // namespace ir
+} // namespace freetensor

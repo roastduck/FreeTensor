@@ -1,5 +1,5 @@
-#ifndef SHRINK_VAR_H
-#define SHRINK_VAR_H
+#ifndef FREE_TENSOR_SHRINK_VAR_H
+#define FREE_TENSOR_SHRINK_VAR_H
 
 #include <unordered_map>
 
@@ -9,7 +9,7 @@
 #include <func.h>
 #include <mutator.h>
 
-namespace ir {
+namespace freetensor {
 
 class ShrinkVar : public Mutator {
     std::unordered_map<std::string, std::vector<Expr>> offset_;
@@ -52,6 +52,6 @@ Stmt shrinkSingleVar(const Stmt &op, const ID &varDefId);
 
 DEFINE_PASS_FOR_FUNC(shrinkVar)
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // SHRINK_VAR_H
+#endif // FREE_TENSOR_SHRINK_VAR_H

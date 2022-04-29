@@ -30,7 +30,7 @@
 #include <pass/use_builtin_div.h>
 #include <pass/z3_simplify.h>
 
-namespace ir {
+namespace freetensor {
 
 using namespace pybind11::literals;
 
@@ -246,4 +246,4 @@ void init_ffi_pass(py::module_ &m) {
           "stmt"_a, "target"_a = nullptr);
 }
 
-} // namespace ir
+} // namespace freetensor

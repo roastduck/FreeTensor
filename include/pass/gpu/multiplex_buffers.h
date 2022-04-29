@@ -1,5 +1,5 @@
-#ifndef GPU_MULTIPLEX_BUFFERS_H
-#define GPU_MULTIPLEX_BUFFERS_H
+#ifndef FREE_TENSOR_GPU_MULTIPLEX_BUFFERS_H
+#define FREE_TENSOR_GPU_MULTIPLEX_BUFFERS_H
 
 #include <unordered_map>
 #include <unordered_set>
@@ -10,7 +10,7 @@
 #include <mutator.h>
 #include <visitor.h>
 
-namespace ir {
+namespace freetensor {
 
 namespace gpu {
 
@@ -80,6 +80,6 @@ DEFINE_PASS_FOR_FUNC(multiplexBuffers)
 
 } // namespace gpu
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // GPU_MULTIPLEX_BUFFERS_H
+#endif // FREE_TENSOR_GPU_MULTIPLEX_BUFFERS_H

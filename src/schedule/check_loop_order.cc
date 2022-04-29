@@ -4,7 +4,7 @@
 
 #include <schedule/check_loop_order.h>
 
-namespace ir {
+namespace freetensor {
 
 void CheckLoopOrder::visit(const For &op) {
     if (done_) {
@@ -43,4 +43,4 @@ const std::vector<For> &CheckLoopOrder::order() const {
     return curOrder_;
 }
 
-} // namespace ir
+} // namespace freetensor

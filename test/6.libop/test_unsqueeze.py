@@ -1,46 +1,46 @@
 import torch
 import numpy as np
 
-import ir
-import ir.libop
+import freetensor as ft
+from freetensor import libop
 
 
 def test_static():
-    device = ir.Device(ir.CPU())
+    device = ft.Device(ft.CPU())
 
-    @ir.transform
+    @ft.transform
     def f(x, y):
-        ir.declare_var(x, (3, 4, 5), "float32", "input", "cpu")
-        ir.declare_var(y, (3, 1, 4, 1, 5), "float32", "output", "cpu")
+        ft.declare_var(x, (3, 4, 5), "float32", "input", "cpu")
+        ft.declare_var(y, (3, 1, 4, 1, 5), "float32", "output", "cpu")
         "nid: unsqueeze"
-        ir.libop.unsqueeze_(axes=[1, 3])(x, y)
+        libop.unsqueeze_(x, y, axes=[1, 3])
 
     print(f)
-    f = ir.lower(f, ir.CPU())
+    f = ft.lower(f, ft.CPU())
     print(f)
 
-    code = ir.codegen(f, ir.CPU())
+    code = ft.codegen(f, ft.CPU())
 
     x_torch = torch.rand(3, 4, 5, dtype=torch.float32)
-    x_arr = ir.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy(), device)
     y_torch = torch.zeros(3, 1, 4, 1, 5, dtype=torch.float32)
-    y_arr = ir.Array(y_torch.numpy(), device)
-    ir.Driver(f, code, device)(x_arr, y_arr)
+    y_arr = ft.Array(y_torch.numpy(), device)
+    ft.Driver(f, code, device)(x_arr, y_arr)
     y_torch = torch.Tensor(y_arr.numpy())
 
     assert torch.all(torch.isclose(y_torch, x_torch.reshape(3, 1, 4, 1, 5)))
 
 
 def test_out_of_place():
-    device = ir.Device(ir.CPU())
+    device = ft.Device(ft.CPU())
 
-    @ir.transform
+    @ft.transform
     def f(x, y_shape, y):
-        ir.declare_var(x, (3, 4, 5), "float32", "input", "cpu")
-        ir.declare_var(y_shape, (5,), "int32", "output", "cpu")
-        ir.declare_var(y, (3, 1, 4, 1, 5), "float32", "output", "cpu")
+        ft.declare_var(x, (3, 4, 5), "float32", "input", "cpu")
+        ft.declare_var(y_shape, (5,), "int32", "output", "cpu")
+        ft.declare_var(y, (3, 1, 4, 1, 5), "float32", "output", "cpu")
         "nid: unsqueeze"
-        _y = ir.libop.unsqueeze(axes=[1, 3])(x)
+        _y = libop.unsqueeze(x, axes=[1, 3])
         for i in range(5):
             y_shape[i] = _y.shape(i)
         for i in range(3):
@@ -49,18 +49,18 @@ def test_out_of_place():
                     y[i, 0, j, 0, k] = _y[i, 0, j, 0, k]
 
     print(f)
-    f = ir.lower(f, ir.CPU())
+    f = ft.lower(f, ft.CPU())
     print(f)
 
-    code = ir.codegen(f, ir.CPU())
+    code = ft.codegen(f, ft.CPU())
 
     x_torch = torch.rand(3, 4, 5, dtype=torch.float32)
-    x_arr = ir.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy(), device)
     y_shape_torch = torch.zeros(5, dtype=torch.int32)
-    y_shape_arr = ir.Array(y_shape_torch.numpy(), device)
+    y_shape_arr = ft.Array(y_shape_torch.numpy(), device)
     y_torch = torch.zeros(3, 1, 4, 1, 5, dtype=torch.float32)
-    y_arr = ir.Array(y_torch.numpy(), device)
-    ir.Driver(f, code, device)(x_arr, y_shape_arr, y_arr)
+    y_arr = ft.Array(y_torch.numpy(), device)
+    ft.Driver(f, code, device)(x_arr, y_shape_arr, y_arr)
     y_shape_np = y_shape_arr.numpy()
     y_torch = torch.Tensor(y_arr.numpy())
 

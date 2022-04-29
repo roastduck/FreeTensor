@@ -1,6 +1,6 @@
 #include <analyze/find_all_scopes.h>
 
-namespace ir {
+namespace freetensor {
 
 void FindAllScopes::visit(const For &op) {
     Visitor::visit(op);
@@ -18,4 +18,4 @@ std::vector<ID> findAllScopes(const Stmt &op) {
     return visitor.scopes();
 }
 
-} // namespace ir
+} // namespace freetensor

@@ -1,5 +1,5 @@
-#ifndef MERGE_AND_HOIST_IF_H
-#define MERGE_AND_HOIST_IF_H
+#ifndef FREE_TENSOR_MERGE_AND_HOIST_IF_H
+#define FREE_TENSOR_MERGE_AND_HOIST_IF_H
 
 #include <unordered_set>
 
@@ -7,7 +7,7 @@
 #include <func.h>
 #include <mutator.h>
 
-namespace ir {
+namespace freetensor {
 
 /**
  * Merge and hoist If nodes
@@ -69,6 +69,6 @@ Stmt mergeAndHoistIf(const Stmt &op);
 
 DEFINE_PASS_FOR_FUNC(mergeAndHoistIf)
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // MERGE_AND_HOIST_IF_H
+#endif // FREE_TENSOR_MERGE_AND_HOIST_IF_H

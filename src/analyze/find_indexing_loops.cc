@@ -1,6 +1,6 @@
 #include <analyze/find_indexing_loops.h>
 
-namespace ir {
+namespace freetensor {
 
 void FindIndexingLoops::visit(const Load &op) {
     inIndicesStack_.emplace_back(def(op->var_));
@@ -35,4 +35,4 @@ void FindIndexingLoops::visit(const Var &op) {
     }
 }
 
-} // namespace ir
+} // namespace freetensor

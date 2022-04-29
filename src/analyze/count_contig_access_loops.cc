@@ -1,6 +1,6 @@
 #include <analyze/count_contig_access_loops.h>
 
-namespace ir {
+namespace freetensor {
 
 void CountContigAccessLoops::visit(const For &op) {
     (*this)(op->begin_);
@@ -22,4 +22,4 @@ void CountContigAccessLoops::visit(const For &op) {
     repeat_ = oldRepeat;
 }
 
-} // namespace ir
+} // namespace freetensor

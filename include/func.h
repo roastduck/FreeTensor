@@ -1,5 +1,5 @@
-#ifndef FUNC_H
-#define FUNC_H
+#ifndef FREE_TENSOR_FUNC_H
+#define FREE_TENSOR_FUNC_H
 
 #include <string>
 #include <unordered_map>
@@ -12,14 +12,14 @@
 #include <stmt.h>
 #include <tensor.h>
 
-namespace ir {
+namespace freetensor {
 
 class FuncNode : public ASTNode {
   public:
     std::string name_;
     std::vector<std::string> params_;
     std::vector<std::pair<std::string, DataType>> returns_;
-    SubTree<StmtNode> body_;
+    SubTree<StmtNode> body_ = ChildOf{this};
 
     // Some parameters and/or return values can be enclosed in `closure_`. These
     // values will be automatically set and collect in `Driver`. They are still
@@ -69,6 +69,6 @@ Func deepCopy(const Func &func);
                         func->closure_);                                       \
     }
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // FUNC_H
+#endif // FREE_TENSOR_FUNC_H

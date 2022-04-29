@@ -1,12 +1,12 @@
-#ifndef MAKE_REDUCTION_H
-#define MAKE_REDUCTION_H
+#ifndef FREE_TENSOR_MAKE_REDUCTION_H
+#define FREE_TENSOR_MAKE_REDUCTION_H
 
 #include <unordered_set>
 
 #include <func.h>
 #include <mutator.h>
 
-namespace ir {
+namespace freetensor {
 
 class MakeReduction : public Mutator {
     const std::unordered_set<ReduceOp> &types_;
@@ -46,6 +46,6 @@ inline Stmt makeReduction(const Stmt &op) {
 
 DEFINE_PASS_FOR_FUNC(makeReduction)
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // MAKE_REDUCTION_H
+#endif // FREE_TENSOR_MAKE_REDUCTION_H
