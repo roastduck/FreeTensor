@@ -6,7 +6,9 @@ namespace freetensor {
 
 std::string mangle(const std::string &name) {
     std::string code;
-    code.reserve(name.size());
+    code.reserve(name.size() + 1);
+    code += '_'; // Prepend an underscore to avoid conflicts with keywords in
+                 // target languages
     for (char c : name) {
         if (isalnum(c)) {
             code += c;
