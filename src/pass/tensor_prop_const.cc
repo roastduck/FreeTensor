@@ -106,27 +106,31 @@ Stmt tensorPropConst(const Stmt &_op) {
             auto &&repInfo = item.second.front().second;
 
             if (!allIters(store->expr_).empty()) {
-                auto &&[args, values, cond] =
-                    parsePBFunc(repInfo.funcStr_); // later -> earlier
-                ASSERT(repInfo.earlierIters_.size() <=
-                       values.size()); // maybe padded
-                ASSERT(repInfo.laterIters_.size() <= args.size());
-                std::unordered_map<std::string, Expr> islVarToPlaceholder,
-                    oldIterToPlaceholder;
-                for (auto &&[newIter, arg] :
-                     iter::zip(repInfo.laterIters_, args)) {
-                    islVarToPlaceholder[arg] = newIter.iter_;
-                }
-                for (auto &&[oldIter, value] :
-                     iter::zip(repInfo.earlierIters_, values)) {
-                    if (oldIter.iter_->nodeType() == ASTNodeType::Var) {
-                        oldIterToPlaceholder[oldIter.iter_.as<VarNode>()
-                                                 ->name_] =
-                            ReplaceIter(islVarToPlaceholder)(value);
+                try {
+                    auto &&[args, values, cond] =
+                        parsePBFunc(repInfo.funcStr_); // later -> earlier
+                    ASSERT(repInfo.earlierIters_.size() <=
+                           values.size()); // maybe padded
+                    ASSERT(repInfo.laterIters_.size() <= args.size());
+                    std::unordered_map<std::string, Expr> islVarToPlaceholder,
+                        oldIterToPlaceholder;
+                    for (auto &&[newIter, arg] :
+                         iter::zip(repInfo.laterIters_, args)) {
+                        islVarToPlaceholder[arg] = newIter.iter_;
                     }
+                    for (auto &&[oldIter, value] :
+                         iter::zip(repInfo.earlierIters_, values)) {
+                        if (oldIter.iter_->nodeType() == ASTNodeType::Var) {
+                            oldIterToPlaceholder[oldIter.iter_.as<VarNode>()
+                                                     ->name_] =
+                                ReplaceIter(islVarToPlaceholder)(value);
+                        }
+                    }
+                    replace[item.first] =
+                        ReplaceIter(oldIterToPlaceholder)(store->expr_);
+                } catch (const ParserError &e) {
+                    // do nothing
                 }
-                replace[item.first] =
-                    ReplaceIter(oldIterToPlaceholder)(store->expr_);
             } else {
                 replace[item.first] = store->expr_;
             }

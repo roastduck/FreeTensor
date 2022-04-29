@@ -81,26 +81,33 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
             auto earlier = dep.earlier().as<StoreNode>();
             expr = earlier->expr_;
             if (!allIters(expr).empty()) {
-                auto &&[args, values, cond] =
-                    parsePBFunc(toString(PBFunc(dep.dep_))); // later -> earlier
-                ASSERT(dep.earlier_.iter_.size() <=
-                       values.size()); // maybe padded
-                ASSERT(dep.later_.iter_.size() <= args.size());
-                std::unordered_map<std::string, Expr> islVarToPlaceholder,
-                    oldIterToPlaceholder;
-                for (auto &&[newIter, arg] :
-                     iter::zip(dep.later_.iter_, args)) {
-                    islVarToPlaceholder[arg] = newIter.iter_;
-                }
-                for (auto &&[oldIter, value] :
-                     iter::zip(dep.earlier_.iter_, values)) {
-                    if (oldIter.iter_->nodeType() == ASTNodeType::Var) {
-                        oldIterToPlaceholder[oldIter.iter_.as<VarNode>()
-                                                 ->name_] =
-                            ReplaceIter(islVarToPlaceholder)(value);
+                try {
+                    auto &&[args, values, cond] = parsePBFunc(
+                        toString(PBFunc(dep.dep_))); // later -> earlier
+                    ASSERT(dep.earlier_.iter_.size() <=
+                           values.size()); // maybe padded
+                    ASSERT(dep.later_.iter_.size() <= args.size());
+                    std::unordered_map<std::string, Expr> islVarToPlaceholder,
+                        oldIterToPlaceholder;
+                    for (auto &&[newIter, arg] :
+                         iter::zip(dep.later_.iter_, args)) {
+                        islVarToPlaceholder[arg] = newIter.iter_;
                     }
+                    for (auto &&[oldIter, value] :
+                         iter::zip(dep.earlier_.iter_, values)) {
+                        if (oldIter.iter_->nodeType() == ASTNodeType::Var) {
+                            oldIterToPlaceholder[oldIter.iter_.as<VarNode>()
+                                                     ->name_] =
+                                ReplaceIter(islVarToPlaceholder)(value);
+                        }
+                    }
+                    newExpr = ReplaceIter(oldIterToPlaceholder)(expr);
+                } catch (const ParserError &e) {
+                    throw InvalidSchedule(
+                        "Unable to resolve relation of the iterators between "
+                        "the defining point and the use point: " +
+                        toString(PBFunc(dep.dep_)));
                 }
-                newExpr = ReplaceIter(oldIterToPlaceholder)(expr);
             } else {
                 newExpr = expr;
             }

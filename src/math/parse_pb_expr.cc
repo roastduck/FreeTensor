@@ -18,7 +18,7 @@ parsePBFunc(const std::string &str) {
         auto &&func = parser.func();
         return std::make_tuple(func->args, func->values, func->cond);
     } catch (const antlr4::ParseCancellationException &e) {
-        ERROR((std::string) "Parser error: " + e.what());
+        throw ParserError((std::string) "Parser error: " + e.what());
     }
 }
 

@@ -280,6 +280,27 @@ def test_different_iter_with_different_names():
     assert std.match(ast)
 
 
+def test_different_iter_with_uncertain_offset_no_inline():
+    with ft.VarDef([("offset", (), "int32", "inout", "cpu"),
+                    ("x", (4,), "int32", "input", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (offset, x, y):
+        ft.MarkNid("T")
+        with ft.VarDef("t", (4,), "int32", "cache", "cpu") as t:
+            with ft.For("i", offset[()], offset[()] + 4) as i:
+                t[i + -1 * offset[()]] = x[i + -1 * offset[()]] * 2
+            offset[()] = 0
+            with ft.For("i", 0, 4) as i:
+                y[i] = t[i] + 1
+    ast = ft.pop_ast()
+    print(ast)
+    s = ft.Schedule(ast)
+    with pytest.raises(ft.InvalidSchedule):
+        s.inline("T")
+    ast_ = s.ast()  # Should not changed
+    print(ast_)
+    assert ast_.match(ft.make_reduction(ast))
+
+
 def test_different_iter_non_affine():
     with ft.VarDef([("x1", (4,), "int32", "input", "cpu"),
                     ("x2", (4,), "int32", "input", "cpu"),
