@@ -280,27 +280,34 @@ def test_different_iter_with_different_names():
     assert std.match(ast)
 
 
-#def test_different_iter_non_affine():
-#    with ir.VarDef([("x1", (4,), "int32", "input", "cpu"),
-#                    ("x2", (4,), "int32", "input", "cpu"),
-#                    ("y", (16,), "int32", "output", "cpu")]) as (x1, x2, y):
-#        ir.MarkNid("T")
-#        with ir.VarDef("t", (16,), "int32", "cache", "cpu") as t:
-#            with ir.For("i", 0, 4) as i:
-#                with ir.For("j", 0, 4) as j:
-#                    t[i * 4 + j] = x1[i] * x2[j]
-#            with ir.For("k", 0, 16) as k:
-#                y[k] = t[k] + 1
-#    ast = ir.pop_ast()
-#    print(ast)
-#    s = ir.Schedule(ast)
-#    s.inline("T")
-#    ast = s.ast()
-#    print(ast)
-#    ast = ir.lower(ast)
-#    print(ast)
-#
-#    assert False
+def test_different_iter_non_affine():
+    with ft.VarDef([("x1", (4,), "int32", "input", "cpu"),
+                    ("x2", (4,), "int32", "input", "cpu"),
+                    ("y", (16,), "int32", "output", "cpu")]) as (x1, x2, y):
+        ft.MarkNid("T")
+        with ft.VarDef("t", (16,), "int32", "cache", "cpu") as t:
+            with ft.For("i", 0, 4) as i:
+                with ft.For("j", 0, 4) as j:
+                    t[i * 4 + j] = x1[i] * x2[j]
+            with ft.For("k", 0, 16) as k:
+                y[k] = t[k] + 1
+    ast = ft.pop_ast()
+    print(ast)
+    s = ft.Schedule(ast)
+    s.inline("T")
+    ast = s.ast()
+    print(ast)
+    ast = ft.lower(ast)
+    print(ast)
+
+    with ft.VarDef([("x1", (4,), "int32", "input", "cpu"),
+                    ("x2", (4,), "int32", "input", "cpu"),
+                    ("y", (16,), "int32", "output", "cpu")]) as (x1, x2, y):
+        with ft.For("k", 0, 16) as k:
+            y[k] = x1[k // 4] * x2[k % 4] + 1
+    std = ft.use_builtin_div(ft.pop_ast())
+
+    assert std.match(ast)
 
 
 def test_inline_serial_into_parallel():
