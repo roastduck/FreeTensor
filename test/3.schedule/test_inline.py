@@ -301,7 +301,7 @@ def test_different_iter_with_uncertain_offset_no_inline():
     assert ast_.match(ft.make_reduction(ast))
 
 
-def test_different_iter_non_affine():
+def test_different_iter_non_linear():
     with ft.VarDef([("x1", (4,), "int32", "input", "cpu"),
                     ("x2", (4,), "int32", "input", "cpu"),
                     ("y", (16,), "int32", "output", "cpu")]) as (x1, x2, y):

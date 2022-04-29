@@ -197,7 +197,7 @@ def test_prop_iter_different_iter():
     assert std.match(ast)
 
 
-def test_prop_iter_different_iter_non_affine():
+def test_prop_iter_different_iter_non_linear():
     with ft.VarDef("y", (16,), "int32", "output", "cpu") as y:
         ft.MarkNid("T")
         with ft.VarDef("t", (16,), "int32", "cache", "cpu") as t:
