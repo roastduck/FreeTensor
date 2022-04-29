@@ -37,6 +37,11 @@ class AssertAlwaysFalse : public InvalidProgram {
     AssertAlwaysFalse(const std::string &msg) : InvalidProgram(msg) {}
 };
 
+class ParserError : public Error {
+  public:
+    ParserError(const std::string &msg) : Error(msg) {}
+};
+
 void reportWarning(const std::string &msg);
 
 #define ERROR(msg)                                                             \
