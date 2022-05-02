@@ -22,12 +22,12 @@ add_subdirectory(${CMAKE_SOURCE_DIR}/3rd-party/pybind11)
 # ISL
 set(ISL_DIR ${CMAKE_SOURCE_DIR}/3rd-party/isl)
 ExternalProject_add(ISL
-        SOURCE_DIR ${ISL_DIR}
-        BUILD_IN_SOURCE true
-        INSTALL_DIR ${ISL_DIR}/install
-        CONFIGURE_COMMAND ./autogen.sh && ./configure --prefix=${ISL_DIR}/install
-        BUILD_COMMAND make -j
-        INSTALL_COMMAND make install)
+    SOURCE_DIR ${ISL_DIR}
+    BUILD_IN_SOURCE true
+    INSTALL_DIR ${ISL_DIR}/install
+    CONFIGURE_COMMAND ./autogen.sh && ./configure --prefix=${ISL_DIR}/install
+    BUILD_COMMAND make -j
+    INSTALL_COMMAND make install)
 include_directories(${ISL_DIR}/install/include)
 link_directories(${ISL_DIR}/install/lib)
 
@@ -47,35 +47,35 @@ macro(ANTLR_TARGET Name InputFile)
     set(ANTLR_ONE_VALUE_ARGS PACKAGE)
     set(ANTLR_MULTI_VALUE_ARGS COMPILE_FLAGS DEPENDS)
     cmake_parse_arguments(ANTLR_TARGET
-            "" "${ANTLR_ONE_VALUE_ARGS}" "${ANTLR_MULTI_VALUE_ARGS}" ${ARGN})
+                          "" "${ANTLR_ONE_VALUE_ARGS}" "${ANTLR_MULTI_VALUE_ARGS}" ${ARGN})
     set(ANTLR_${Name}_INPUT ${InputFile})
     set(ANTLR_${Name}_OUTPUT_DIR
-            ${CMAKE_CURRENT_BINARY_DIR}/antlr4cpp_generated_src)
+        ${CMAKE_CURRENT_BINARY_DIR}/antlr4cpp_generated_src)
     file(MAKE_DIRECTORY ${ANTLR_${Name}_OUTPUT_DIR})
     unset(ANTLR_${Name}_CXX_OUTPUTS)
     list(APPEND ANTLR_${Name}_CXX_OUTPUTS
-            ${ANTLR_${Name}_OUTPUT_DIR}/${Name}.cpp)
+         ${ANTLR_${Name}_OUTPUT_DIR}/${Name}.cpp)
     list(APPEND ANTLR_${Name}_OUTPUTS
-            ${ANTLR_${Name}_OUTPUT_DIR}/${Name}.h
-            ${ANTLR_${Name}_OUTPUT_DIR}/${Name}.interp
-            ${ANTLR_${Name}_OUTPUT_DIR}/${Name}.tokens)
+         ${ANTLR_${Name}_OUTPUT_DIR}/${Name}.h
+         ${ANTLR_${Name}_OUTPUT_DIR}/${Name}.interp
+         ${ANTLR_${Name}_OUTPUT_DIR}/${Name}.tokens)
     if(ANTLR_TARGET_PACKAGE)
         list(APPEND ANTLR_TARGET_COMPILE_FLAGS -package ${ANTLR_TARGET_PACKAGE})
     endif()
     list(APPEND ANTLR_${Name}_OUTPUTS ${ANTLR_${Name}_CXX_OUTPUTS})
     add_custom_command(
-            OUTPUT ${ANTLR_${Name}_OUTPUTS}
-            COMMAND ${Java_JAVA_EXECUTABLE} -jar ${ANTLR_EXECUTABLE}
-            ${ANTLR_${Name}_INPUT}
-            -o ${ANTLR_${Name}_OUTPUT_DIR}
-            -no-listener
-            -no-visitor
-            -Dlanguage=Cpp
-            -lib ${ANTLR_${Name}_OUTPUT_DIR}
-            ${ANTLR_TARGET_COMPILE_FLAGS}
-            DEPENDS ${ANTLR_${Name}_INPUT} ${ANTLR_TARGET_DEPENDS}
-            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-            COMMENT "Building ${ANTLR_${Name}_INPUT} with ANTLR")
+        OUTPUT ${ANTLR_${Name}_OUTPUTS}
+        COMMAND ${Java_JAVA_EXECUTABLE} -jar ${ANTLR_EXECUTABLE}
+                ${ANTLR_${Name}_INPUT}
+                -o ${ANTLR_${Name}_OUTPUT_DIR}
+                -no-listener
+                -no-visitor
+                -Dlanguage=Cpp
+                -lib ${ANTLR_${Name}_OUTPUT_DIR}
+                ${ANTLR_TARGET_COMPILE_FLAGS}
+        DEPENDS ${ANTLR_${Name}_INPUT} ${ANTLR_TARGET_DEPENDS}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMENT "Building ${ANTLR_${Name}_INPUT} with ANTLR")
 endmacro(ANTLR_TARGET)
 
 # CUDA
@@ -132,8 +132,8 @@ endforeach()
 pybind11_add_module(ffi SHARED ${SRC})
 add_dependencies(ffi ISL)
 target_link_libraries(ffi PRIVATE
-        ${ISL_DIR}/install/lib/libisl.so
-        libz3 # See 3rd-party/z3/src/CMakeLists.txt
-        antlr4_shared # See 3rd-party/antlr/antlr4/runtime/Cpp/runtime/CMakeLists.txt
-        ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES})
+    ${ISL_DIR}/install/lib/libisl.so
+    libz3 # See 3rd-party/z3/src/CMakeLists.txt
+    antlr4_shared # See 3rd-party/antlr/antlr4/runtime/Cpp/runtime/CMakeLists.txt
+    ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES})
 target_include_directories(ffi PUBLIC ${CUDA_INCLUDE_DIRS})
