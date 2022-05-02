@@ -170,10 +170,15 @@ AutoSchedule::testAndAdd(std::vector<Ref<Sketch>> &sketches_in) {
     ASSERT(sketches.size() == n);
     std::vector<double> times = measure(sketches);
     py::list timesList;
-    for (auto i : times) {
-        timesList.append(py::float_(i));
+    py::list featuresList;
+    for (size_t i = 0; i < times.size(); i++) {
+        if (times[i] > 1e20) {
+            continue;
+        }
+        timesList.append(py::float_(times[i]));
+        featuresList.append(features[i]);
     }
-    updateFunc_(features, timesList);
+    updateFunc_(featuresList, timesList);
     auto cmp = [](const Ref<Sketch> &a, const Ref<Sketch> &b) {
         return *a < *b;
     };
@@ -227,8 +232,9 @@ std::vector<Ref<Sketch>> AutoSchedule::getRandPopulation(size_t nRand) {
     int iter = 0;
     while (ret.size() < nRand) {
         std::vector<Ref<Sketch>> now(nRand);
+        size_t nThisTurn = std::min(nRand, size_t((nRand - ret.size()) * 1.5));
 #pragma omp parallel for
-        for (size_t i = 0; i < nRand; i++) {
+        for (size_t i = 0; i < nThisTurn; i++) {
             now[i] = Ref<Sketch>::make(
                 baseSketches_[randomInt(baseSketches_.size() - 1, gens[i])]
                     ->genRandAnnotation(gens[i]));
@@ -238,7 +244,7 @@ std::vector<Ref<Sketch>> AutoSchedule::getRandPopulation(size_t nRand) {
                 now[i] = nullptr;
             };
         }
-        for (size_t i = 0; i < nRand; i++) {
+        for (size_t i = 0; i < nThisTurn; i++) {
             if (!now[i].isValid() || now[i]->code().empty()) {
                 continue;
             }
@@ -280,8 +286,6 @@ AutoSchedule::evolutionarySearch(std::vector<Ref<Sketch>> init,
                                  size_t outSize) {
     std::vector<Ref<Sketch>> v1 = std::move(init);
     std::vector<Ref<Sketch>> v2;
-    auto *p1 = &v1;
-    auto *p2 = &v2;
     v2.reserve(v1.size());
     typedef std::pair<Ref<Sketch>, double> SketchPred;
     std::vector<SketchPred> heap;
@@ -292,10 +296,20 @@ AutoSchedule::evolutionarySearch(std::vector<Ref<Sketch>> init,
 
     for (int i = 0; i < EVOLUTIONARY_SEARCH_ITERS; i++) {
         std::cout << "search round " << i << std::endl;
-        auto pred = getPrediction(*p1);
+        auto pred = getPrediction(v1);
         auto probSum = getProbSum(pred);
-        for (size_t j = 0; j < p1->size(); j++) {
-            size_t hash = (*p1)[j]->hash();
+        std::cout << "pred: ";
+        for (auto j : pred) {
+            std::cout << j << " ";
+        }
+        std::cout << std::endl;
+        std::cout << "probsum: ";
+        for (auto j : probSum) {
+            std::cout << j << " ";
+        }
+        std::cout << std::endl;
+        for (size_t j = 0; j < v1.size(); j++) {
+            size_t hash = v1[j]->hash();
             auto time = pred[j];
             if (time > 1e20) {
                 continue;
@@ -303,29 +317,28 @@ AutoSchedule::evolutionarySearch(std::vector<Ref<Sketch>> init,
             if (!heapHashes.count(hash)) {
                 if (heap.size() < outSize) {
                     heapHashes.insert(hash);
-                    heap.emplace_back((*p1)[j], time);
+                    heap.emplace_back(v1[j], time);
                     std::push_heap(heap.begin(), heap.end(), cmp);
                 } else if (time < heap[0].second) {
                     heapHashes.erase(heap[0].first->hash());
                     heapHashes.insert(hash);
                     std::pop_heap(heap.begin(), heap.end(), cmp);
-                    heap.back() = std::make_pair((*p1)[j], time);
+                    heap.back() = std::make_pair(v1[j], time);
                     std::push_heap(heap.begin(), heap.end(), cmp);
                 }
             }
         }
 
-        while (p2->size() < EVOLUTIONARY_SEARCH_POPULATION) {
-            std::cout << "evo " << p2->size() << std::endl;
+        while (v2.size() < EVOLUTIONARY_SEARCH_POPULATION) {
+            std::cout << "evo " << v2.size() << std::endl;
             double r = randomDouble(randGen_);
             if (r < EVOLUTIONARY_SEARCH_MUTATION_PROB) {
                 int a = randWithProb(probSum, randGen_);
-                std::cout << "now " << a << " " << size_t((*p1)[a].get())
-                          << std::endl; // The program crashes if I remove this
-                                        // line...
-                auto nw = (*p1)[a]->genMutation(randGen_);
+                //                std::cout << "now " << a << std::endl; // The
+                //                program crashes if I remove this
+                auto nw = v1[a]->genMutation(randGen_);
                 if (nw.first) {
-                    p2->push_back(Ref<Sketch>::make(std::move(nw.second)));
+                    v2.push_back(Ref<Sketch>::make(std::move(nw.second)));
                 }
             } else if (r < EVOLUTIONARY_SEARCH_MUTATION_PROB +
                                EVOLUTIONARY_SEARCH_CROSSOVER_PROB) {
@@ -333,17 +346,17 @@ AutoSchedule::evolutionarySearch(std::vector<Ref<Sketch>> init,
                 int b = randWithProb(probSum, randGen_);
                 while (b == a)
                     b = randWithProb(probSum, randGen_);
-                auto nw = (*p1)[a].get()->genCrossover(*(*p1)[b], randGen_);
+                auto nw = v1[a].get()->genCrossover(*v1[b], randGen_);
                 if (nw.first) {
-                    p2->push_back(Ref<Sketch>::make(std::move(nw.second)));
+                    v2.push_back(Ref<Sketch>::make(std::move(nw.second)));
                 }
             } else {
-                p2->push_back((*p1)[randomInt(p1->size() - 1, randGen_)]);
+                v2.push_back(v1[randomInt(v1.size() - 1, randGen_)]);
             }
         }
 
-        std::swap(p1, p2);
-        p2->clear();
+        v1.swap(v2);
+        v2.clear();
     }
     std::sort(heap.begin(), heap.end(), cmp);
     std::vector<Ref<Sketch>> ret;

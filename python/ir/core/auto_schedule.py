@@ -24,7 +24,7 @@ class AutoSchedule(ffi.AutoSchedule):
     def run(self, iteration):
         for i in range(iteration):
             print("iter ", i)
-            self.search_one_round(16)
+            self.search_one_round(64)
         return self.get_best_schedule()
 
     def predict(self, features):

@@ -15,11 +15,11 @@ endif()
 
 set(BUILD_SHARED_LIBS ON)
 
-# PyBind11
+#PyBind11
 find_package(Python COMPONENTS Interpreter Development REQUIRED)
 add_subdirectory(${CMAKE_SOURCE_DIR}/3rd-party/pybind11)
 
-# ISL
+#ISL
 set(ISL_DIR ${CMAKE_SOURCE_DIR}/3rd-party/isl)
 ExternalProject_add(ISL
     SOURCE_DIR ${ISL_DIR}
@@ -31,11 +31,11 @@ ExternalProject_add(ISL
 include_directories(${ISL_DIR}/install/include)
 link_directories(${ISL_DIR}/install/lib)
 
-# Z3
+#Z3
 set(SUBMODULE_DIR_NAME "3rd-party") # Z3 PR #4959
 add_subdirectory(${CMAKE_SOURCE_DIR}/3rd-party/z3)
 
-# ANTLR
+#ANTLR
 # 1. Runtime
 set(ANTLR_BUILD_CPP_TESTS OFF)
 add_subdirectory(${CMAKE_SOURCE_DIR}/3rd-party/antlr/antlr4/runtime/Cpp)
@@ -78,10 +78,10 @@ macro(ANTLR_TARGET Name InputFile)
         COMMENT "Building ${ANTLR_${Name}_INPUT} with ANTLR")
 endmacro(ANTLR_TARGET)
 
-# CUDA
+#CUDA
 find_package(CUDA REQUIRED)
 
-# THIS PROJECT
+#THIS PROJECT
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
 if(WITH_MKL)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWITH_MKL=${WITH_MKL}")
@@ -93,13 +93,15 @@ if(IR_DEBUG_PROFILE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DIR_DEBUG_PROFILE")
 endif()
 
-# Not using CMAKE_CXX_STANDARD_REQUIRED since on GCC >= 8 we can work with C++17, let it fallback
+#Not using CMAKE_CXX_STANDARD_REQUIRED since on GCC >=                         \
+    8 we can work with C++ 17,                                                 \
+    let it fallback
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS OFF) # -std=gnu++11 when on, -std=c++11 when off
 
 add_definitions(-DIR_RUNTIME_DIR=${CMAKE_SOURCE_DIR}/runtime)
 
-# OpenMP used to parallelize the compilation of different instances
+#OpenMP used to parallelize the compilation of different instances
 find_package(OpenMP)
 if (OPENMP_FOUND)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")

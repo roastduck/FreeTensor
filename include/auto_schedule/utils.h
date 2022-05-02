@@ -44,6 +44,15 @@ inline double randomDouble(std::default_random_engine &gen) {
 inline std::vector<double> getProbSum(const std::vector<double> &pred) {
     std::vector<double> sum = pred;
     int sz = sum.size();
+    double mn = 0, avg = 0;
+    for (auto i : pred) {
+        mn = std::min(mn, i);
+        avg += i;
+    }
+    avg = avg / sz - mn;
+    for (int i = 0; i < sz; i++) {
+        sum[i] = sum[i] - mn + avg / 4;
+    }
     sum[0] = (sum[0] > 1e20 ? 0 : 1 / sum[0]);
     for (int i = 1; i < sz; i++) {
         sum[i] = sum[i - 1] + (sum[i] > 1e20 ? 0 : 1 / sum[i]);
