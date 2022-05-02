@@ -94,8 +94,8 @@ if(FT_DEBUG_PROFILE)
 endif()
 
 #Not using CMAKE_CXX_STANDARD_REQUIRED since on GCC >=                         \
-    8 we can work with C++ 17,                                                 \
-    let it fallback
+    #8 we can work with C++ 17,                                                \
+    #let it fallback
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS OFF) # -std=gnu++11 when on, -std=c++11 when off
 
