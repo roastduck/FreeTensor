@@ -1,7 +1,7 @@
 #include <ffi.h>
 #include <for_property.h>
 
-namespace ir {
+namespace freetensor {
 
 using namespace pybind11::literals;
 
@@ -32,4 +32,4 @@ void init_ffi_for_property(py::module_ &m) {
         .def("with_prefer_libs", &ForProperty::withPreferLibs, "prefer_libs"_a);
 }
 
-} // namespace ir
+} // namespace freetensor

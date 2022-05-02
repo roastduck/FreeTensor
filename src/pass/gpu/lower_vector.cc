@@ -4,7 +4,7 @@
 #include <pass/gpu/lower_vector.h>
 #include <pass/simplify.h>
 
-namespace ir {
+namespace freetensor {
 
 namespace gpu {
 
@@ -229,4 +229,4 @@ Stmt lowerVector(const Stmt &_op) {
 
 } // namespace gpu
 
-} // namespace ir
+} // namespace freetensor

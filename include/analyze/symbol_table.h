@@ -1,5 +1,5 @@
-#ifndef SYMBOL_TABLE_H
-#define SYMBOL_TABLE_H
+#ifndef FREE_TENSOR_SYMBOL_TABLE_H
+#define FREE_TENSOR_SYMBOL_TABLE_H
 
 #include <type_traits>
 #include <unordered_map>
@@ -8,7 +8,7 @@
 #include <maybe_void.h>
 #include <stmt.h>
 
-namespace ir {
+namespace freetensor {
 
 class SymbolTableInterface {
   public:
@@ -195,6 +195,6 @@ class SymbolTable : public BaseClass, public SymbolTableInterface {
     }
 };
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // SYMBOL_TABLE_H
+#endif // FREE_TENSOR_SYMBOL_TABLE_H

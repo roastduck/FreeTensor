@@ -1,7 +1,7 @@
 #include <config.h>
 #include <ffi.h>
 
-namespace ir {
+namespace freetensor {
 
 using namespace pybind11::literals;
 
@@ -17,4 +17,4 @@ void init_ffi_config(py::module_ &m) {
     m.def("werror", Config::werror);
 }
 
-} // namespace ir
+} // namespace freetensor

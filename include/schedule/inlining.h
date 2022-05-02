@@ -1,11 +1,11 @@
-#ifndef INLINING_H
-#define INLINING_H
+#ifndef FREE_TENSOR_INLINING_H
+#define FREE_TENSOR_INLINING_H
 
 #include <unordered_map>
 
 #include <mutator.h>
 
-namespace ir {
+namespace freetensor {
 
 class MakeInline : public Mutator {
     ID def_;
@@ -25,6 +25,6 @@ class MakeInline : public Mutator {
 
 Stmt inlining(const Stmt &ast, const ID &def);
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // INLINING_H
+#endif // FREE_TENSOR_INLINING_H

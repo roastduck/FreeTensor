@@ -6,7 +6,7 @@
 #include <analyze/comp_unique_bounds.h>
 #include <container_utils.h>
 
-namespace ir {
+namespace freetensor {
 
 void CompUniqueBounds::updLower(LowerBoundsList &list,
                                 const LowerBound &bound) const {
@@ -83,7 +83,7 @@ Opt<int> CompUniqueBounds::getInt(const Expr &op) {
 bool CompUniqueBounds::alwaysLT(const Expr &lhs, const Expr &rhs) {
     for (auto &&b1 : getUpper(lhs)) {
         for (auto &&b2 : getLower(rhs)) {
-            if (ir::alwaysLT(b1, b2)) {
+            if (freetensor::alwaysLT(b1, b2)) {
                 return true;
             }
         }
@@ -94,7 +94,7 @@ bool CompUniqueBounds::alwaysLT(const Expr &lhs, const Expr &rhs) {
 bool CompUniqueBounds::alwaysLE(const Expr &lhs, const Expr &rhs) {
     for (auto &&b1 : getUpper(lhs)) {
         for (auto &&b2 : getLower(rhs)) {
-            if (ir::alwaysLE(b1, b2)) {
+            if (freetensor::alwaysLE(b1, b2)) {
                 return true;
             }
         }
@@ -508,4 +508,4 @@ void CompUniqueBounds::visit(const IfExpr &op) {
     updUpper(upper, UpperBound{op});
 }
 
-} // namespace ir
+} // namespace freetensor

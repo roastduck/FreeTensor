@@ -1,11 +1,11 @@
-#ifndef ALL_STMTS_H
-#define ALL_STMTS_H
+#ifndef FREE_TENSOR_ALL_STMTS_H
+#define FREE_TENSOR_ALL_STMTS_H
 
 #include <unordered_set>
 
 #include <visitor.h>
 
-namespace ir {
+namespace freetensor {
 
 class AllStmts : public Visitor {
     const std::unordered_set<ASTNodeType> &types_;
@@ -32,6 +32,6 @@ allStmts(const Stmt &op, const std::unordered_set<ASTNodeType> &types) {
     return visitor.results();
 }
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // ALL_STMTS_H
+#endif // FREE_TENSOR_ALL_STMTS_H

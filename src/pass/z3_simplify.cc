@@ -5,7 +5,7 @@
 #include <pass/simplify.h>
 #include <pass/z3_simplify.h>
 
-namespace ir {
+namespace freetensor {
 
 static bool noIntersect(const std::unordered_set<std::string> &set1,
                         const std::unordered_set<std::string> &set2) {
@@ -512,4 +512,4 @@ Stmt z3Simplify(const Stmt &_op) {
     return op;
 }
 
-} // namespace ir
+} // namespace freetensor

@@ -2,7 +2,7 @@
 
 #include <analyze/fixed_length_feature.h>
 
-namespace ir {
+namespace freetensor {
 
 template <class K, class V>
 static V getOrDefault(const std::unordered_map<K, V> &map, const K &key,
@@ -242,4 +242,4 @@ size_t FixedLengthFeature::featureLen() {
     return STANDALONE_FEATURES + SAMPLE_GROUPS * SAMPLE_FEATURES;
 }
 
-} // namespace ir
+} // namespace freetensor

@@ -1,11 +1,11 @@
-#ifndef COMP_UNIQUE_BOUNDS_H
-#define COMP_UNIQUE_BOUNDS_H
+#ifndef FREE_TENSOR_COMP_UNIQUE_BOUNDS_H
+#define FREE_TENSOR_COMP_UNIQUE_BOUNDS_H
 
 #include <analyze/comp_transient_bounds.h>
 #include <analyze/type_infer.h>
 #include <visitor.h>
 
-namespace ir {
+namespace freetensor {
 
 /**
  * Compute bounds of each UNIQUE INTEGER (sub)expression
@@ -106,6 +106,6 @@ class CompUniqueBounds : public WithTypeInfer<Visitor> {
     void visit(const IfExpr &op) override;
 };
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // COMP_UNIQUE_BOUNDS_H
+#endif // FREE_TENSOR_COMP_UNIQUE_BOUNDS_H

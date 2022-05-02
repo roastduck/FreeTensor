@@ -1,5 +1,5 @@
-#ifndef SCHEDULE_H
-#define SCHEDULE_H
+#ifndef FREE_TENSOR_SCHEDULE_H
+#define FREE_TENSOR_SCHEDULE_H
 
 #include <functional>
 #include <unordered_map>
@@ -11,7 +11,7 @@
 #include <schedule/var_split.h>
 #include <stmt.h>
 
-namespace ir {
+namespace freetensor {
 
 enum class MoveToSide : int { Before, After };
 
@@ -502,6 +502,6 @@ class Schedule {
         const ElementWiseInfo &toFuse, int level, TargetType targetType);
 };
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // SCHEDULE_H
+#endif // FREE_TENSOR_SCHEDULE_H

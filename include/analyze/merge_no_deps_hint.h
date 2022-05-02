@@ -1,9 +1,9 @@
-#ifndef MERGE_NO_DEPS_HINT
-#define MERGE_NO_DEPS_HINT
+#ifndef FREE_TENSOR_MERGE_NO_DEPS_HINT
+#define FREE_TENSOR_MERGE_NO_DEPS_HINT
 
 #include <stmt.h>
 
-namespace ir {
+namespace freetensor {
 
 /**
  * When we merge or fuse some loops, we also merge the no_deps hints on them
@@ -23,6 +23,6 @@ mergeNoDepsHint(const Stmt &ast, const ID &loop1, const ID &loop2) {
     return mergeNoDepsHint(ast, {loop1, loop2});
 }
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // MERGE_NO_DEPS_HINT
+#endif // FREE_TENSOR_MERGE_NO_DEPS_HINT

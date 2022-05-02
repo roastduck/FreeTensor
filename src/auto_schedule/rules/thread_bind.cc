@@ -1,7 +1,7 @@
 #include <auto_schedule/rules/multi_level_tiling.h>
 #include <auto_schedule/rules/thread_bind.h>
 
-namespace ir {
+namespace freetensor {
 
 ID mergeLoops(Schedule &schedule, std::vector<ID> loops) {
     if (loops.empty()) {
@@ -71,4 +71,4 @@ RuleStatus ThreadBindRule::analyze(const Sketch &sketch) {
     return RuleStatus::Skip;
 }
 
-} // namespace ir
+} // namespace freetensor

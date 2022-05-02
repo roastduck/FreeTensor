@@ -1,5 +1,5 @@
-#ifndef SIMPLIFY_H
-#define SIMPLIFY_H
+#ifndef FREE_TENSOR_SIMPLIFY_H
+#define FREE_TENSOR_SIMPLIFY_H
 
 #include <functional>
 #include <unordered_map>
@@ -17,7 +17,7 @@
 #include <pass/const_fold.h>
 #include <visitor.h>
 
-namespace ir {
+namespace freetensor {
 
 /**
  * Find all the variables in an expression, and determine the inner most scope
@@ -137,6 +137,6 @@ Stmt simplifyPass(const Stmt &op);
 
 DEFINE_PASS_FOR_FUNC(simplifyPass)
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // SIMPLIFY_H
+#endif // FREE_TENSOR_SIMPLIFY_H

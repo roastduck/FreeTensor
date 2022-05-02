@@ -1,6 +1,6 @@
 #include <analyze/all_defs.h>
 
-namespace ir {
+namespace freetensor {
 
 void AllDefs::visit(const VarDef &op) {
     Visitor::visit(op);
@@ -16,4 +16,4 @@ allDefs(const Stmt &op, const std::unordered_set<AccessType> &atypes) {
     return visitor.results();
 }
 
-} // namespace ir
+} // namespace freetensor

@@ -1,5 +1,5 @@
-#ifndef IR_AUTO_SCHEDULE_H
-#define IR_AUTO_SCHEDULE_H
+#ifndef FREE_TENSOR_AUTO_SCHEDULE_H
+#define FREE_TENSOR_AUTO_SCHEDULE_H
 
 #include <auto_schedule/rule.h>
 #include <auto_schedule/sketch.h>
@@ -12,7 +12,7 @@
 #include <set>
 #include <unordered_map>
 
-namespace ir {
+namespace freetensor {
 namespace py = pybind11;
 
 constexpr int EVOLUTIONARY_SEARCH_POPULATION = 128;
@@ -80,6 +80,6 @@ class AutoSchedule {
     Schedule testCacheRead();
 };
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // IR_AUTO_SCHEDULE_H
+#endif // FREE_TENSOR_AUTO_SCHEDULE_H

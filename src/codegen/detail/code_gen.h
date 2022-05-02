@@ -3,7 +3,7 @@
 
 #include <codegen/code_gen.h>
 
-namespace ir {
+namespace freetensor {
 
 template <class Stream>
 CodeGen<Stream>::CodeGen(int indentSize) : indentSize_(indentSize) {
@@ -103,6 +103,6 @@ std::string CodeGen<Stream>::toString(
     return ret;
 }
 
-} // namespace ir
+} // namespace freetensor
 
 #endif // DETAIL_CODE_GEN_H

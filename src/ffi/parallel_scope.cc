@@ -1,7 +1,7 @@
 #include <ffi.h>
 #include <parallel_scope.h>
 
-namespace ir {
+namespace freetensor {
 
 void init_ffi_parallel_scope(py::module_ &m) {
     py::class_<SerialScope>(m, "SerialScope")
@@ -48,4 +48,4 @@ void init_ffi_parallel_scope(py::module_ &m) {
     m.def("ParallelScope", &parseParallelScope);
 }
 
-} // namespace ir
+} // namespace freetensor

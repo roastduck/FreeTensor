@@ -5,7 +5,7 @@
 #include <schedule/check_loop_order.h>
 #include <schedule/reorder.h>
 
-namespace ir {
+namespace freetensor {
 
 Stmt SwapFor::visit(const For &_op) {
     if (_op->id() == oldOuter_->id()) {
@@ -140,4 +140,4 @@ Stmt reorder(const Stmt &_ast, const std::vector<ID> &dstOrder) {
     return ast;
 }
 
-} // namespace ir
+} // namespace freetensor

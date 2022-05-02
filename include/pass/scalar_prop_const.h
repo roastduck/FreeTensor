@@ -1,5 +1,5 @@
-#ifndef SCALAR_PROP_CONST_H
-#define SCALAR_PROP_CONST_H
+#ifndef FREE_TENSOR_SCALAR_PROP_CONST_H
+#define FREE_TENSOR_SCALAR_PROP_CONST_H
 
 #include <analyze/symbol_table.h>
 #include <func.h>
@@ -9,7 +9,7 @@
 
 #include <map>
 
-namespace ir {
+namespace freetensor {
 
 /**
  * Mutator for propagating scalar values that are const or depend on iteration
@@ -131,6 +131,6 @@ Stmt scalarPropConst(const Stmt &op);
 
 DEFINE_PASS_FOR_FUNC(scalarPropConst)
 
-} // namespace ir
+} // namespace freetensor
 
-#endif
+#endif // FREE_TENSOR_SCALAR_PROP_CONST_H

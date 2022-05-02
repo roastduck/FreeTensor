@@ -1,12 +1,12 @@
-#ifndef REMOVE_DEAD_VAR_H
-#define REMOVE_DEAD_VAR_H
+#ifndef FREE_TENSOR_REMOVE_DEAD_VAR_H
+#define FREE_TENSOR_REMOVE_DEAD_VAR_H
 
 #include <unordered_set>
 
 #include <func.h>
 #include <mutator.h>
 
-namespace ir {
+namespace freetensor {
 
 class RemoveAllWrites : public Mutator {
     std::string var_;
@@ -38,6 +38,6 @@ Stmt removeDeadVar(const Stmt &op);
 
 DEFINE_PASS_FOR_FUNC(removeDeadVar)
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // REMOVE_DEAD_VAR_H
+#endif // FREE_TENSOR_REMOVE_DEAD_VAR_H

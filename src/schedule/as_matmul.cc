@@ -2,7 +2,7 @@
 #include <pass/simplify.h>
 #include <schedule/as_matmul.h>
 
-namespace ir {
+namespace freetensor {
 
 static bool isIntConst1(const Expr &op) {
     return op->nodeType() == ASTNodeType::IntConst &&
@@ -286,4 +286,4 @@ Stmt asMatMul(const Stmt &_ast, const ID &loop) {
     return ast;
 }
 
-} // namespace ir
+} // namespace freetensor

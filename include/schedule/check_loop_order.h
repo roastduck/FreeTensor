@@ -1,12 +1,12 @@
-#ifndef CHECK_LOOP_ORDER_H
-#define CHECK_LOOP_ORDER_H
+#ifndef FREE_TENSOR_CHECK_LOOP_ORDER_H
+#define FREE_TENSOR_CHECK_LOOP_ORDER_H
 
 #include <string>
 #include <vector>
 
 #include <visitor.h>
 
-namespace ir {
+namespace freetensor {
 
 /**
  * Return loops in nesting order
@@ -25,6 +25,6 @@ class CheckLoopOrder : public Visitor {
     void visit(const For &op) override;
 };
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // CHECK_LOOP_ORDER_H
+#endif // FREE_TENSOR_CHECK_LOOP_ORDER_H

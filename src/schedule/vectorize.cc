@@ -1,7 +1,7 @@
 #include <analyze/deps.h>
 #include <schedule/vectorize.h>
 
-namespace ir {
+namespace freetensor {
 
 Stmt Vectorize::visit(const For &_op) {
     auto __op = Mutator::visit(_op);
@@ -32,4 +32,4 @@ Stmt vectorize(const Stmt &_ast, const ID &loop) {
     return ast;
 }
 
-} // namespace ir
+} // namespace freetensor

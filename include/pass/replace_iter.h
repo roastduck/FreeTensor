@@ -1,11 +1,11 @@
-#ifndef REPLACE_ITER_H
-#define REPLACE_ITER_H
+#ifndef FREE_TENSOR_REPLACE_ITER_H
+#define FREE_TENSOR_REPLACE_ITER_H
 
 #include <unordered_map>
 
 #include <mutator.h>
 
-namespace ir {
+namespace freetensor {
 
 /**
  * Replace all Var node with a specific name by another expression
@@ -22,13 +22,13 @@ class ReplaceIter : public Mutator {
   protected:
     Expr visit(const Var &op) override {
         if (replace_.count(op->name_)) {
-            return (*this)(replace_.at(op->name_));
+            return replace_.at(op->name_);
         } else {
-            return Mutator::visit(op);
+            return op;
         }
     }
 };
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // REPLACE_ITER_H
+#endif // FREE_TENSOR_REPLACE_ITER_H

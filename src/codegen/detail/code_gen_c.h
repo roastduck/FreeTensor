@@ -11,7 +11,7 @@
 
 #include "code_gen.h"
 
-namespace ir {
+namespace freetensor {
 
 template <class Stream>
 void CodeGenC<Stream>::genScalar(const std::string &var,
@@ -620,6 +620,6 @@ template <class Stream> std::string CodeGenC<Stream>::gen(DataType dtype) {
     }
 }
 
-} // namespace ir
+} // namespace freetensor
 
 #endif // DETAIL_CODE_GEN_C_H

@@ -17,7 +17,7 @@
 #include <pass/tensor_prop_const.h>
 #include <pass/undo_make_reduction.h>
 
-namespace ir {
+namespace freetensor {
 
 void PropagateRequire::visit(const Load &op) {
     if (isFloat(dtype(op)) && curTarget_.isValid() &&
@@ -633,4 +633,4 @@ grad(const Func &func, const std::unordered_set<std::string> &_requires,
     return grad(func, _requires, provides, findTapeDefs(func->body_, tapeMode));
 }
 
-} // namespace ir
+} // namespace freetensor

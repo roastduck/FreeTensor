@@ -4,7 +4,7 @@
 #include <hash.h>
 #include <pass/make_reduction.h>
 
-namespace ir {
+namespace freetensor {
 
 bool MakeReduction::isSameElem(const Store &s, const Load &l) {
     if (s->var_ != l->var_) {
@@ -75,4 +75,4 @@ Stmt MakeReduction::visit(const Store &_op) {
     }
 }
 
-} // namespace ir
+} // namespace freetensor

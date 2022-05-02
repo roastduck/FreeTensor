@@ -7,7 +7,7 @@
 
 #include "../codegen/detail/code_gen.h"
 
-namespace ir {
+namespace freetensor {
 
 constexpr const char *MAGENTA = "\u001b[35;1m";
 constexpr const char *CYAN = "\u001b[36m";
@@ -32,16 +32,17 @@ void PrintVisitor::recur(const Stmt &op) {
 }
 
 void PrintVisitor::printId(const Stmt &op) {
-#ifdef IR_DEBUG_LOG_NODE
+#ifdef FT_DEBUG_LOG_NODE
     makeIndent();
     os() << "// By " << op->debugCreator_ << std::endl;
 #endif
     if (printAllId_ || op->hasNamedId()) {
         if (pretty_) {
-            os() << CYAN << printName(::ir::toString(op->id())) << ":" << RESET
-                 << std::endl;
+            os() << CYAN << printName(::freetensor::toString(op->id())) << ":"
+                 << RESET << std::endl;
         } else {
-            os() << printName(::ir::toString(op->id())) << ":" << std::endl;
+            os() << printName(::freetensor::toString(op->id())) << ":"
+                 << std::endl;
         }
     }
 }
@@ -86,7 +87,7 @@ void PrintVisitor::visit(const Func &op) {
         for (auto &&[i, ret] : iter::enumerate(op->returns_)) {
             auto &&[name, dtype] = ret;
             os() << (i > 0 ? ", " : "") << printName(name) << ": "
-                 << ::ir::toString(dtype);
+                 << ::freetensor::toString(dtype);
             if (op->closure_.count(name)) {
                 os() << " @!closure /* " << op->closure_.at(name).get()
                      << " */";
@@ -124,11 +125,11 @@ void PrintVisitor::visit(const AnyExpr &op) { os() << "<Any>"; }
 
 void PrintVisitor::visit(const VarDef &op) {
     makeIndent();
-    os() << "@" << ::ir::toString(op->buffer_->atype()) << " @"
-         << ::ir::toString(op->buffer_->mtype()) << " " << printName(op->name_)
-         << ": ";
+    os() << "@" << ::freetensor::toString(op->buffer_->atype()) << " @"
+         << ::freetensor::toString(op->buffer_->mtype()) << " "
+         << printName(op->name_) << ": ";
     auto &&tensor = op->buffer_->tensor();
-    os() << ::ir::toString(tensor->dtype()) << "[";
+    os() << ::freetensor::toString(tensor->dtype()) << "[";
     printList(tensor->shape());
     os() << "] ";
     if (op->sizeLim_.isValid()) {
@@ -431,7 +432,7 @@ void PrintVisitor::visit(const IfExpr &op) {
 }
 
 void PrintVisitor::visit(const Cast &op) {
-    os() << ::ir::toString(op->dtype_) << "(";
+    os() << ::freetensor::toString(op->dtype_) << "(";
     recur(op->expr_);
     os() << ")";
 }
@@ -446,7 +447,8 @@ void PrintVisitor::visit(const For &op) {
         }
         os() << std::endl;
     }
-    if (auto str = ::ir::toString(op->property_->parallel_); !str.empty()) {
+    if (auto str = ::freetensor::toString(op->property_->parallel_);
+        !str.empty()) {
         makeIndent();
         os() << "@!parallel : @" << str << std::endl;
     }
@@ -559,7 +561,7 @@ void PrintVisitor::visit(const Assume &op) {
 
 void PrintVisitor::visit(const Intrinsic &op) {
     os() << "@!intrinsic(\"" << op->format_ << "\" -> "
-         << ::ir::toString(op->retType_);
+         << ::freetensor::toString(op->retType_);
     for (auto &&param : op->params_) {
         os() << ", ";
         recur(param);
@@ -630,4 +632,4 @@ std::string toString(const AST &op, bool pretty, bool printAllId) {
         [](const CodeGenStream &stream) { return stream.os_.str(); });
 }
 
-} // namespace ir
+} // namespace freetensor

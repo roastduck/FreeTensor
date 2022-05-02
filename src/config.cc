@@ -10,7 +10,7 @@
 #define NAME_(macro) #macro
 #define NAME(macro) NAME_(macro)
 
-namespace ir {
+namespace freetensor {
 
 static Opt<bool> getBoolEnv(const char *name) {
     static std::mutex lock;
@@ -38,16 +38,16 @@ bool Config::debugBinary_ = false;
 void Config::init() {
     Config::setPrettyPrint(isatty(fileno(stdout)));
 
-    if (auto flag = getBoolEnv("IR_PRETTY_PRINT"); flag.isValid()) {
+    if (auto flag = getBoolEnv("FT_PRETTY_PRINT"); flag.isValid()) {
         Config::setPrettyPrint(*flag);
     }
-    if (auto flag = getBoolEnv("IR_PRINT_ALL_ID"); flag.isValid()) {
+    if (auto flag = getBoolEnv("FT_PRINT_ALL_ID"); flag.isValid()) {
         Config::setPrintAllId(*flag);
     }
-    if (auto flag = getBoolEnv("IR_WERROR"); flag.isValid()) {
+    if (auto flag = getBoolEnv("FT_WERROR"); flag.isValid()) {
         Config::setWerror(*flag);
     }
-    if (auto flag = getBoolEnv("IR_DEBUG_BINARY"); flag.isValid()) {
+    if (auto flag = getBoolEnv("FT_DEBUG_BINARY"); flag.isValid()) {
         Config::setDebugBinary(*flag);
     }
 }
@@ -60,4 +60,4 @@ std::string Config::withMKL() {
 #endif
 }
 
-} // namespace ir
+} // namespace freetensor

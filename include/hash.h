@@ -1,5 +1,5 @@
-#ifndef HASH_H
-#define HASH_H
+#ifndef FREE_TENSOR_HASH_H
+#define FREE_TENSOR_HASH_H
 
 #include <unordered_map>
 #include <unordered_set>
@@ -8,7 +8,7 @@
 #include <hash_combine.h>
 #include <stmt.h>
 
-namespace ir {
+namespace freetensor {
 
 class Hasher {
     static constexpr size_t P = 2147483647; // % P
@@ -105,7 +105,7 @@ using ASTHashMap = std::unordered_map<K, V, Hasher, HashComparator>;
 template <class K>
 using ASTHashSet = std::unordered_set<K, Hasher, HashComparator>;
 
-} // namespace ir
+} // namespace freetensor
 
 namespace std {
 
@@ -115,10 +115,10 @@ template <class T, class U> class hash<std::pair<T, U>> {
 
   public:
     size_t operator()(const std::pair<T, U> &pair) const {
-        return ir::hashCombine(hashT_(pair.first), hashU_(pair.second));
+        return freetensor::hashCombine(hashT_(pair.first), hashU_(pair.second));
     }
 };
 
 } // namespace std
 
-#endif // HASH_H
+#endif // FREE_TENSOR_HASH_H

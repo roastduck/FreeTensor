@@ -1,5 +1,5 @@
-#ifndef CONTAINER_UTILS_H
-#define CONTAINER_UTILS_H
+#ifndef FREE_TENSOR_CONTAINER_UTILS_H
+#define FREE_TENSOR_CONTAINER_UTILS_H
 
 #include <algorithm>
 #include <cctype>
@@ -10,7 +10,7 @@
 
 #include <except.h>
 
-namespace ir {
+namespace freetensor {
 
 template <class T, class V1, class V2, class Hash, class KeyEqual>
 std::unordered_map<T, std::pair<V1, V2>, Hash, KeyEqual>
@@ -86,6 +86,19 @@ std::vector<T> uni(const std::vector<T> &lhs, const std::vector<T> &rhs) {
     }
     return ret;
 }
+template <class T, class Hash, class KeyEqual>
+std::unordered_set<T, Hash, KeyEqual>
+uni(const std::unordered_set<T, Hash, KeyEqual> &lhs,
+    const std::unordered_set<T, Hash, KeyEqual> &rhs) {
+    if (lhs.size() < rhs.size()) {
+        return uni(rhs, lhs);
+    }
+    auto ret = lhs;
+    for (auto &&item : rhs) {
+        ret.insert(item);
+    }
+    return ret;
+}
 
 template <class T>
 std::vector<T> cat(const std::vector<T> &lhs, const std::vector<T> &rhs) {
@@ -131,6 +144,6 @@ inline std::string slice(const std::string &s, int begin) {
     return slice(s, begin, s.length());
 }
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // CONTAINER_UTILS_H
+#endif // FREE_TENSOR_CONTAINER_UTILS_H

@@ -1,7 +1,7 @@
 #include <math/utils.h>
 #include <pass/const_fold.h>
 
-namespace ir {
+namespace freetensor {
 
 #define BINARY_OP(OPNAME, OP)                                                  \
     struct op_f_##OPNAME {                                                     \
@@ -120,4 +120,4 @@ Expr ConstFold::visit(const IfExpr &_op) {
     return op;
 }
 
-} // namespace ir
+} // namespace freetensor

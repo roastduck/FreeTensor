@@ -1,6 +1,6 @@
 #include <schedule/var_merge.h>
 
-namespace ir {
+namespace freetensor {
 
 Stmt VarMerge::visit(const VarDef &_op) {
     if (_op->id() == def_) {
@@ -57,4 +57,4 @@ Stmt varMerge(const Stmt &_ast, const ID &def, int dim) {
     return ast;
 }
 
-} // namespace ir
+} // namespace freetensor

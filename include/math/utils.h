@@ -1,12 +1,12 @@
-#ifndef MATH_UTILS
-#define MATH_UTILS
+#ifndef FREE_TENSOR_MATH_UTILS
+#define FREE_TENSOR_MATH_UTILS
 
 #include <cmath>
 #include <cstdlib>
 #include <type_traits>
 #include <utility>
 
-namespace ir {
+namespace freetensor {
 
 // NOTE: For floating-points, we always use double to deal with compile-time
 // operations
@@ -62,6 +62,6 @@ inline double sigmoid(double x) { return 1.0 / (1.0 + std::exp(-x)); }
  */
 inline double realDiv(double a, double b) { return a / b; }
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // MATH_UTILS
+#endif // FREE_TENSOR_MATH_UTILS

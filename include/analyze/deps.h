@@ -1,5 +1,5 @@
-#ifndef DEPS_H
-#define DEPS_H
+#ifndef FREE_TENSOR_DEPS_H
+#define FREE_TENSOR_DEPS_H
 
 #include <functional>
 #include <iostream>
@@ -16,7 +16,7 @@
 #include <math/presburger.h>
 #include <visitor.h>
 
-namespace ir {
+namespace freetensor {
 
 struct IterAxis {
     Expr iter_;
@@ -423,6 +423,6 @@ void findDeps(const Stmt &op, const std::vector<FindDepsCond> &cond,
 
 std::string toString(const Dependency &dep);
 
-}; // namespace ir
+}; // namespace freetensor
 
-#endif // DEPS_H
+#endif // FREE_TENSOR_DEPS_H

@@ -2,7 +2,7 @@
 
 #include <allocator.h>
 
-namespace ir {
+namespace freetensor {
 
 bool SmallItemBlock::full() const { return items_[0].next_ == nullptr; }
 
@@ -75,4 +75,4 @@ void SmallItemAllocator::deallocate(void *p) {
     unlock();
 }
 
-} // namespace ir
+} // namespace freetensor

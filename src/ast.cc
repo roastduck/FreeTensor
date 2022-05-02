@@ -4,7 +4,7 @@
 #include <hash.h>
 #include <mutator.h>
 
-namespace ir {
+namespace freetensor {
 
 std::string toString(ASTNodeType type) {
     switch (type) {
@@ -238,13 +238,13 @@ Stmt lcaStmt(const Stmt &lhs, const Stmt &rhs) {
     return ret.as<StmtNode>();
 }
 
-} // namespace ir
+} // namespace freetensor
 
 namespace std {
 
-size_t hash<ir::ID>::operator()(const ir::ID &id) const {
-    return ir::hashCombine(ir::Hasher()(id.expr_),
-                           std::hash<std::string>()(id.stmtId_));
+size_t hash<freetensor::ID>::operator()(const freetensor::ID &id) const {
+    return freetensor::hashCombine(freetensor::Hasher()(id.expr_),
+                                   std::hash<std::string>()(id.stmtId_));
 }
 
 } // namespace std

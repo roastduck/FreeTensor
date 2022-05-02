@@ -1,9 +1,9 @@
-#ifndef FIND_STMT_H
-#define FIND_STMT_H
+#ifndef FREE_TENSOR_FIND_STMT_H
+#define FREE_TENSOR_FIND_STMT_H
 
 #include <visitor.h>
 
-namespace ir {
+namespace freetensor {
 
 class FindStmtById : public Visitor {
     ID id_;
@@ -47,6 +47,6 @@ findStmt(const Stmt &ast, const std::function<bool(const Stmt &)> &filter) {
     return visitor.results();
 }
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // FIND_STMT_H
+#endif // FREE_TENSOR_FIND_STMT_H

@@ -1,5 +1,5 @@
-#ifndef CODE_GEN_CUDA_H
-#define CODE_GEN_CUDA_H
+#ifndef FREE_TENSOR_CODE_GEN_CUDA_H
+#define FREE_TENSOR_CODE_GEN_CUDA_H
 
 #include <unordered_map>
 #include <unordered_set>
@@ -7,7 +7,7 @@
 #include <codegen/code_gen_c.h>
 #include <func.h>
 
-namespace ir {
+namespace freetensor {
 
 struct CodeGenCUDAStream : public CodeGenStream {
     std::unordered_map<ParallelScope, int> threadDim_;
@@ -66,6 +66,6 @@ class CodeGenCUDA : public CodeGenC<CodeGenCUDAStream> {
  */
 std::string codeGenCUDA(const Func &func);
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // CODE_GEN_CUDA_H
+#endif // FREE_TENSOR_CODE_GEN_CUDA_H

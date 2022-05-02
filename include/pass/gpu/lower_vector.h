@@ -1,5 +1,5 @@
-#ifndef GPU_LOWER_VECTOR_H
-#define GPU_LOWER_VECTOR_H
+#ifndef FREE_TENSOR_GPU_LOWER_VECTOR_H
+#define FREE_TENSOR_GPU_LOWER_VECTOR_H
 
 #include <unordered_map>
 
@@ -7,7 +7,7 @@
 #include <func.h>
 #include <pass/z3_simplify.h>
 
-namespace ir {
+namespace freetensor {
 
 namespace gpu {
 
@@ -44,6 +44,6 @@ DEFINE_PASS_FOR_FUNC(lowerVector)
 
 } // namespace gpu
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // GPU_LOWER_VECTOR_H
+#endif // FREE_TENSOR_GPU_LOWER_VECTOR_H

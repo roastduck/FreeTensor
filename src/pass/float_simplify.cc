@@ -3,7 +3,7 @@
 #include <hash.h>
 #include <pass/float_simplify.h>
 
-namespace ir {
+namespace freetensor {
 
 inline static Expr reduceMul(const std::vector<Expr> &list) {
     Expr ret;
@@ -474,4 +474,4 @@ Stmt floatSimplify(const Stmt &_op) {
     }
 }
 
-} // namespace ir
+} // namespace freetensor

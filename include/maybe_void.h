@@ -1,10 +1,10 @@
-#ifndef MAYBE_VOID_H
-#define MAYBE_VOID_H
+#ifndef FREE_TENSOR_MAYBE_VOID_H
+#define FREE_TENSOR_MAYBE_VOID_H
 
 #include <type_traits>
 #include <variant>
 
-namespace ir {
+namespace freetensor {
 
 template <class T> struct TypeOrMonostate { typedef T type; };
 template <> struct TypeOrMonostate<void> { typedef std::monostate type; };
@@ -26,6 +26,6 @@ template <> struct TypeOrMonostate<void> { typedef std::monostate type; };
     [[maybe_unused]] typename TypeOrMonostate<decltype(expr)>::type name;      \
     MAYBE_VOID_ASSIGN(name, expr)
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // MAYBE_VOID_H
+#endif // FREE_TENSOR_MAYBE_VOID_H

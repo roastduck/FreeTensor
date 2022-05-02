@@ -1,7 +1,7 @@
 #include <frontend/inlined_invoke.h>
 #include <pass/undo_make_reduction.h>
 
-namespace ir {
+namespace freetensor {
 
 Stmt InlinedInvoke::visitStmt(const Stmt &op) {
     auto ret = Mutator::visitStmt(op);
@@ -85,4 +85,4 @@ Stmt inlinedInvoke(
     return ast;
 }
 
-} // namespace ir
+} // namespace freetensor

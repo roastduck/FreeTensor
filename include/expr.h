@@ -1,5 +1,5 @@
-#ifndef EXPR_H
-#define EXPR_H
+#ifndef FREE_TENSOR_EXPR_H
+#define FREE_TENSOR_EXPR_H
 
 #include <string>
 #include <vector>
@@ -7,7 +7,7 @@
 #include <ast.h>
 #include <data_type.h>
 
-namespace ir {
+namespace freetensor {
 
 /**
  * Matches any expression
@@ -616,6 +616,6 @@ template <class T> Expr makeUnary(ASTNodeType nodeType, T &&expr) {
     }
 }
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // EXPR_H
+#endif // FREE_TENSOR_EXPR_H

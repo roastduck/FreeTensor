@@ -122,7 +122,7 @@ def pop_ast():
     return ret
 
 
-class Var(ffi.FrontendVar):
+class VarRef(ffi.FrontendVar):
 
     def __init__(self,
                  name: str,
@@ -131,16 +131,35 @@ class Var(ffi.FrontendVar):
                  dtype: ffi.DataType,
                  mtype: ffi.MemType,
                  indices: Sequence = []):
-        super(Var, self).__init__(name, full_shape, dtype, mtype, indices)
+        super(VarRef, self).__init__(name, full_shape, dtype, mtype, indices)
         self.vardef = vardef
 
+        self.borrowed_vardefs = set()
+        for idx in indices:
+            for name in ffi.all_reads(idx):
+                self.borrowed_vardefs.add(open_vardefs[name])
+        for item in self.borrowed_vardefs:
+            item.lend_out()
+
+    def __del__(self):
+        for item in self.borrowed_vardefs:
+            item.reclaim()
+
     def __getitem__(self, key):
-        return Var(self.name, self.vardef, self.full_shape, self.dtype,
-                   self.mtype, self.chain_indices(self._parse_key(key)))
+        return VarRef(self.name, self.vardef, self.full_shape, self.dtype,
+                      self.mtype, self.chain_indices(self._parse_key(key)))
 
     def __setitem__(self, key, value):
-        var = Var(self.name, self.vardef, self.full_shape, self.dtype,
-                  self.mtype, self.chain_indices(self._parse_key(key)))
+        var = VarRef(self.name, self.vardef, self.full_shape, self.dtype,
+                     self.mtype, self.chain_indices(self._parse_key(key)))
+        if var.vardef.atype == ffi.AccessType("input"):
+            raise ffi.InvalidProgram("Cannot modify an \"input\" tensor `" +
+                                     self.name)
+        if var.vardef.borrower_cnt > 0:
+            raise ffi.InvalidProgram(
+                "Cannot modify tensor `" + self.name +
+                "` becuase it has been borrowed in another tensor's shape, or a tensor slice"
+            )
         top = ctx_stack.top()
         top.append_stmt(var.as_store(top.get_next_nid(), value))
 
@@ -162,7 +181,7 @@ class Var(ffi.FrontendVar):
                 stop = idx.stop if idx.stop is not None else length
                 assert idx.step is None or idx.step == 1
                 ffiIdx.append(ffi.FrontendVarIdx(start, stop))
-            elif isinstance(idx, Var):
+            elif isinstance(idx, VarRef):
                 if len(idx.full_shape) == len(idx.indices):
                     ffiIdx.append(ffi.FrontendVarIdx(idx.as_load()))
                 else:
@@ -239,6 +258,9 @@ class Var(ffi.FrontendVar):
         return 0 - self.as_load()
 
 
+open_vardefs = {}
+
+
 class _VarDef:
 
     def __init__(self, name: str, shape, dtype, atype, mtype):
@@ -251,7 +273,7 @@ class _VarDef:
         self.name = name
         if isinstance(shape, collections.abc.Sequence):
             self.shape = shape
-        elif isinstance(shape, Var):
+        elif isinstance(shape, VarRef):
             assert shape.ndim == 1, "Shape of a shape should be 1-D"
             assert type(
                 shape.shape(0)
@@ -264,14 +286,41 @@ class _VarDef:
         self.atype = ffi.AccessType(atype)
         self.mtype = ffi.MemType(mtype)
 
+        self.borrower_cnt = 0
+
+        self.borrowed_vardefs = set()
+        for dim in self.shape:
+            for name in ffi.all_reads(ffi.Expr(dim)):
+                self.borrowed_vardefs.add(open_vardefs[name])
+
     def set_atype(self, atype):
         self.atype = ffi.AccessType(atype)
 
+    def lend_out(self):
+        self.borrower_cnt += 1
+
+    def reclaim(self):
+        self.borrower_cnt -= 1
+
     def __enter__(self):
+        for item in self.borrowed_vardefs:
+            item.lend_out()
+
         ctx_stack.push()
-        return Var(self.name, self, self.shape, self.dtype, self.mtype)
+        if self.name in open_vardefs:
+            raise ffi.InvalidProgram("Nested VarDefs with the same name `" +
+                                     self.name + "` is not allowed")
+        open_vardefs[self.name] = self
+        return VarRef(self.name, self, self.shape, self.dtype, self.mtype)
 
     def __exit__(self, exc_type, exc_value, traceback):
+        del open_vardefs[self.name]
+        for item in self.borrowed_vardefs:
+            item.reclaim()
+
+        if exc_value is not None:
+            # Do not generate an AST node
+            return False  # Do not suppress the exception
         buf = ffi.Buffer(ffi.Tensor(self.shape, self.dtype), self.atype,
                          self.mtype)
         body = ctx_stack.pop().make_stmt()
@@ -325,6 +374,9 @@ class For:
         return ffi.makeVar(self.iter_var)
 
     def __exit__(self, exc_type, exc_value, traceback):
+        if exc_value is not None:
+            # Do not generate an AST node
+            return False  # Do not suppress the exception
         body = ctx_stack.pop().make_stmt()
         top = ctx_stack.top()
         top.append_for_stmt(self.iter_var,
@@ -346,6 +398,9 @@ class If:
         ctx_stack.push()
 
     def __exit__(self, exc_type, exc_value, traceback):
+        if exc_value is not None:
+            # Do not generate an AST node
+            return False  # Do not suppress the exception
         body = ctx_stack.pop().make_stmt()
         ctx_stack.top().append_if_then_stmt(self.cond, body)
 
@@ -359,6 +414,9 @@ class Else:
         ctx_stack.push()
 
     def __exit__(self, exc_type, exc_value, traceback):
+        if exc_value is not None:
+            # Do not generate an AST node
+            return False  # Do not suppress the exception
         body = ctx_stack.pop().make_stmt()
         ctx_stack.top().append_if_else_stmt(body)
 
@@ -372,6 +430,9 @@ class Assert:
         ctx_stack.push()
 
     def __exit__(self, exc_type, exc_value, traceback):
+        if exc_value is not None:
+            # Do not generate an AST node
+            return False  # Do not suppress the exception
         body = ctx_stack.pop().make_stmt()
         top = ctx_stack.top()
         nid = top.get_next_nid()
@@ -392,6 +453,9 @@ class NamedScope:
         ctx_stack.push()
 
     def __exit__(self, exc_type, exc_value, traceback):
+        if exc_value is not None:
+            # Do not generate an AST node
+            return False  # Do not suppress the exception
         body = ctx_stack.pop().make_stmt(self.nid)
         ctx_stack.top().append_stmt(body)
 
@@ -531,21 +595,21 @@ def Func(name, params, returns, body, closure={}):
 
 
 def ndim(var):
-    if isinstance(var, Var):
+    if isinstance(var, VarRef):
         return var.ndim
     else:
         return 0
 
 
 def shape(var, i):
-    if isinstance(var, Var):
+    if isinstance(var, VarRef):
         return var.shape(i)
     else:
         raise Exception('Scalar object has no shape')
 
 
 def dtype(var):
-    if isinstance(var, Var):
+    if isinstance(var, VarRef):
         return var.dtype
     else:
         # TODO: Config default type
@@ -558,7 +622,7 @@ def dtype(var):
 
 
 def mtype(var):
-    if isinstance(var, Var):
+    if isinstance(var, VarRef):
         return var.mtype
     else:
         return 'byvalue'

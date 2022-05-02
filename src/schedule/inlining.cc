@@ -3,13 +3,14 @@
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
 #include <hash.h>
+#include <math/parse_pb_expr.h>
 #include <pass/hoist_var_over_stmt_seq.h>
 #include <pass/replace_iter.h>
 #include <pass/simplify.h>
 #include <pass/sink_var.h>
 #include <schedule/inlining.h>
 
-namespace ir {
+namespace freetensor {
 
 Expr MakeInline::visit(const Load &op) {
     if (op->var_ == var_) {
@@ -75,28 +76,40 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
         if (replace.count(dep.later().as<LoadNode>())) {
             throw InvalidSchedule("Multiple writes correspond to one read");
         }
-        Expr expr, placeholder;
+        Expr expr, newExpr;
         if (dep.earlier()->nodeType() == ASTNodeType::Store) {
             auto earlier = dep.earlier().as<StoreNode>();
             expr = earlier->expr_;
             if (!allIters(expr).empty()) {
-                std::unordered_map<std::string, Expr> replaceAsPlaceholder;
-                for (auto &&[i, idx] : iter::enumerate(earlier->indices_)) {
-                    if (idx->nodeType() == ASTNodeType::Var) {
-                        replaceAsPlaceholder[idx.as<VarNode>()->name_] =
-                            makeVar(".inline_placeholder." + std::to_string(i));
-                    } else if (!idx->isConst()) {
-                        throw InvalidSchedule(
-                            "Inlining a variable that is stored using "
-                            "non-iterator "
-                            "index " +
-                            toString(idx) +
-                            " is currenctly unsupported"); // TODO
+                try {
+                    auto &&[args, values, cond] = parsePBFunc(
+                        toString(PBFunc(dep.dep_))); // later -> earlier
+                    ASSERT(dep.earlier_.iter_.size() <=
+                           values.size()); // maybe padded
+                    ASSERT(dep.later_.iter_.size() <= args.size());
+                    std::unordered_map<std::string, Expr> islVarToPlaceholder,
+                        oldIterToPlaceholder;
+                    for (auto &&[newIter, arg] :
+                         iter::zip(dep.later_.iter_, args)) {
+                        islVarToPlaceholder[arg] = newIter.iter_;
                     }
+                    for (auto &&[oldIter, value] :
+                         iter::zip(dep.earlier_.iter_, values)) {
+                        if (oldIter.iter_->nodeType() == ASTNodeType::Var) {
+                            oldIterToPlaceholder[oldIter.iter_.as<VarNode>()
+                                                     ->name_] =
+                                ReplaceIter(islVarToPlaceholder)(value);
+                        }
+                    }
+                    newExpr = ReplaceIter(oldIterToPlaceholder)(expr);
+                } catch (const ParserError &e) {
+                    throw InvalidSchedule(
+                        "Unable to resolve relation of the iterators between "
+                        "the defining point and the use point: " +
+                        toString(PBFunc(dep.dep_)));
                 }
-                placeholder = ReplaceIter(replaceAsPlaceholder)(expr);
             } else {
-                placeholder = expr;
+                newExpr = expr;
             }
         } else {
             throw InvalidSchedule(
@@ -124,13 +137,6 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
         }
 
         auto later = dep.later().as<LoadNode>();
-        std::unordered_map<std::string, Expr> replaceFromPlaceholder;
-        for (auto &&[i, idx] : iter::enumerate(later->indices_)) {
-            replaceFromPlaceholder[".inline_placeholder." + std::to_string(i)] =
-                idx;
-        }
-        auto newExpr = ReplaceIter(replaceFromPlaceholder)(placeholder);
-
         if (!checkNotModified(ast, expr, newExpr, CheckNotModifiedSide::Before,
                               dep.earlier_.stmt_->id(),
                               CheckNotModifiedSide::Before,
@@ -142,7 +148,8 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
         }
         replace[later] = std::move(newExpr);
     };
-    findDeps(ast, {{}}, found, FindDepsMode::KillLater, DEP_RAW, filter);
+    findDeps(ast, {{}}, found, FindDepsMode::KillLater, DEP_RAW, filter, true,
+             true, true);
     ast = MakeInline(def, replace)(ast);
 
     ast = sinkVar(ast);
@@ -151,4 +158,4 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
     return ast;
 }
 
-} // namespace ir
+} // namespace freetensor

@@ -3,8 +3,8 @@ import time
 import math
 import argparse
 import numpy as np
-import ir
-import ir.debug
+import freetensor as ft
+from freetensor import debug
 
 sys.path.append('../..')
 from common.numpy.io import load_txt, store_txt
@@ -17,92 +17,92 @@ def compile_all(w, dilation, dilation_heads, n_heads, seq_len, feat_len, device,
     sqrt_d = math.sqrt(feat_len)
     inf = float("inf")
 
-    @ir.transform
+    @ft.transform
     def inference(Q, K, V, Y):
-        ir.declare_var(Q, (n_heads, seq_len, feat_len), "float32", "input",
+        ft.declare_var(Q, (n_heads, seq_len, feat_len), "float32", "input",
                        mtype)
-        ir.declare_var(K, (n_heads, seq_len, feat_len), "float32", "input",
+        ft.declare_var(K, (n_heads, seq_len, feat_len), "float32", "input",
                        mtype)
-        ir.declare_var(V, (n_heads, seq_len, feat_len), "float32", "input",
+        ft.declare_var(V, (n_heads, seq_len, feat_len), "float32", "input",
                        mtype)
-        ir.declare_var(Y, (n_heads, seq_len, feat_len), "float32", "output",
+        ft.declare_var(Y, (n_heads, seq_len, feat_len), "float32", "output",
                        mtype)
         for i in range(n_heads):
             for j in range(seq_len):
-                dot = ir.create_var((2 * w + 1,), "float32", mtype)
+                dot = ft.create_var((2 * w + 1,), "float32", mtype)
                 for k in range(-w, w + 1):
                     dot[k + w] = 0
-                    if j + ir.if_then_else(
+                    if j + ft.if_then_else(
                             i >= dilation_heads, k,
-                            k * dilation) >= 0 and j + ir.if_then_else(
+                            k * dilation) >= 0 and j + ft.if_then_else(
                                 i >= dilation_heads, k, k * dilation) < seq_len:
                         for p in range(feat_len):
-                            dot[k + w] += Q[i, j, p] * K[i, j + ir.if_then_else(
+                            dot[k + w] += Q[i, j, p] * K[i, j + ft.if_then_else(
                                 i >= dilation_heads, k, k * dilation), p]
 
-                maxval = ir.create_var((), "float32", mtype)
+                maxval = ft.create_var((), "float32", mtype)
                 maxval[()] = -inf
                 for k in range(2 * w + 1):
-                    maxval[()] = ir.max(maxval[()], dot[k])
-                expval = ir.create_var((2 * w + 1,), "float32", mtype)
+                    maxval[()] = ft.max(maxval[()], dot[k])
+                expval = ft.create_var((2 * w + 1,), "float32", mtype)
                 for k in range(2 * w + 1):
-                    expval[k] = ir.exp(dot[k] - maxval[()])
-                expsum = ir.create_var((), "float32", mtype)
+                    expval[k] = ft.exp(dot[k] - maxval[()])
+                expsum = ft.create_var((), "float32", mtype)
                 expsum[()] = 0
                 for k in range(2 * w + 1):
                     expsum[()] += expval[k]
-                attn = ir.create_var((2 * w + 1,), "float32", mtype)
+                attn = ft.create_var((2 * w + 1,), "float32", mtype)
                 for k in range(2 * w + 1):
                     attn[k] = expval[k] / expsum[()] / sqrt_d
 
                 for p in range(feat_len):
                     Y[i, j, p] = 0
                 for k in range(-w, w + 1):
-                    if j + ir.if_then_else(
+                    if j + ft.if_then_else(
                             i >= dilation_heads, k,
-                            k * dilation) >= 0 and j + ir.if_then_else(
+                            k * dilation) >= 0 and j + ft.if_then_else(
                                 i >= dilation_heads, k, k * dilation) < seq_len:
                         for p in range(feat_len):
                             Y[i, j,
-                              p] += attn[k + w] * V[i, j + ir.if_then_else(
+                              p] += attn[k + w] * V[i, j + ft.if_then_else(
                                   i >= dilation_heads, k, k * dilation), p]
 
     print("# Inference:")
     print(inference)
     t0 = time.time()
-    s = ir.Schedule(inference)
+    s = ft.Schedule(inference)
     s.auto_schedule(device.target())
-    f = ir.lower(s.func(), device.target())
-    code = ir.codegen(f, device.target())
-    inference_exe = ir.Driver(inference, code, device)
+    f = ft.lower(s.func(), device.target())
+    code = ft.codegen(f, device.target())
+    inference_exe = ft.Driver(inference, code, device)
     t1 = time.time()
     print(f)
-    print(ir.debug.with_line_no(code))
+    print(debug.with_line_no(code))
     print(f"Inference compiling time: {t1 - t0}s")
 
-    forward, backward, requires, privdes, _ = ir.grad(
+    forward, backward, requires, privdes, _ = ft.grad(
         inference, set(["Q", "K", "V"]), set(["Y"]),
-        ir.GradTapeMode.All if ad_save_all else ir.GradTapeMode.NoReuseOnly)
+        ft.GradTapeMode.All if ad_save_all else ft.GradTapeMode.NoReuseOnly)
 
     print("# Forward:")
     print(forward)
-    s = ir.Schedule(forward)
+    s = ft.Schedule(forward)
     s.auto_schedule(device.target())
-    f = ir.lower(s.func(), device.target())
+    f = ft.lower(s.func(), device.target())
     print(f)
-    code = ir.codegen(f, device.target())
-    print(ir.debug.with_line_no(code))
-    forward_exe = ir.Driver(forward, code, device)
+    code = ft.codegen(f, device.target())
+    print(debug.with_line_no(code))
+    forward_exe = ft.Driver(forward, code, device)
 
     print("# Backward:")
     print(backward)
-    s = ir.Schedule(backward)
+    s = ft.Schedule(backward)
     s.auto_schedule(device.target())
-    f = ir.lower(s.func(), device.target())
+    f = ft.lower(s.func(), device.target())
     print(f)
-    code = ir.codegen(f, device.target())
-    print(ir.debug.with_line_no(code))
-    backward_exe = ir.Driver(backward, code, device)
+    code = ft.codegen(f, device.target())
+    print(debug.with_line_no(code))
+    backward_exe = ft.Driver(backward, code, device)
 
     def run_backward(Q, K, V, Y, d_Y, d_Q, d_K, d_V):
         kvs = {}
@@ -155,19 +155,19 @@ if __name__ == '__main__':
     d_y = load_txt("../d_y.in", "float32")
 
     if device == 'gpu':
-        ir_dev = ir.Device(ir.GPU())
+        ir_dev = ft.Device(ft.GPU())
     else:
         assert device == 'cpu'
-        ir_dev = ir.Device(ir.CPU())
+        ir_dev = ft.Device(ft.CPU())
 
-    q = ir.Array(q, ir_dev)
-    k = ir.Array(k, ir_dev)
-    v = ir.Array(v, ir_dev)
-    y = ir.Array(y, ir_dev)
-    d_q = ir.Array(d_q, ir_dev)
-    d_k = ir.Array(d_k, ir_dev)
-    d_v = ir.Array(d_v, ir_dev)
-    d_y = ir.Array(d_y, ir_dev)
+    q = ft.Array(q, ir_dev)
+    k = ft.Array(k, ir_dev)
+    v = ft.Array(v, ir_dev)
+    y = ft.Array(y, ir_dev)
+    d_q = ft.Array(d_q, ir_dev)
+    d_k = ft.Array(d_k, ir_dev)
+    d_v = ft.Array(d_v, ir_dev)
+    d_y = ft.Array(d_y, ir_dev)
 
     inference, forward, backward = compile_all(w, dilation, dilation_heads,
                                                n_heads, seq_len, feat_len,

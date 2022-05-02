@@ -7,7 +7,7 @@
 #include <hash.h>
 #include <lower.h>
 
-namespace ir {
+namespace freetensor {
 
 Sketch Sketch::genRandAnnotation(std::default_random_engine &gen) const {
     Sketch sketch = clone();
@@ -114,4 +114,4 @@ std::vector<double> &Sketch::genFeature() {
     return feature_;
 }
 
-} // namespace ir
+} // namespace freetensor

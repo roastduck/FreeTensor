@@ -1,6 +1,6 @@
 #include <analyze/all_uses.h>
 
-namespace ir {
+namespace freetensor {
 
 void AllUses::visit(const Load &op) {
     if (!noRecurseIdx_) {
@@ -63,4 +63,4 @@ std::unordered_set<std::string> allNames(const AST &op, bool noRecurseIdx) {
                    noRecurseIdx);
 }
 
-} // namespace ir
+} // namespace freetensor

@@ -1,10 +1,10 @@
-#ifndef FUSE_H
-#define FUSE_H
+#ifndef FREE_TENSOR_FUSE_H
+#define FREE_TENSOR_FUSE_H
 
 #include <mutator.h>
 #include <visitor.h>
 
-namespace ir {
+namespace freetensor {
 
 struct LoopInScopes {
     For loop_;
@@ -53,6 +53,6 @@ class CheckAccessible : public Visitor {
 std::pair<Stmt, ID> fuse(const Stmt &ast, const ID &loop0, const ID &loop1,
                          bool strict);
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // FUSE_H
+#endif // FREE_TENSOR_FUSE_H

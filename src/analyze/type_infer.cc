@@ -1,6 +1,6 @@
 #include <analyze/type_infer.h>
 
-namespace ir {
+namespace freetensor {
 
 void TypeInfer::visitExpr(const Expr &op) {
     if (!types_.count(op)) {
@@ -261,4 +261,4 @@ void TypeInfer::visit(const VarDef &op) {
     ASSERT(false);
 }
 
-} // namespace ir
+} // namespace freetensor

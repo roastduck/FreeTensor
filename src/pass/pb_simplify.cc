@@ -4,7 +4,7 @@
 
 #include <itertools.hpp>
 
-namespace ir {
+namespace freetensor {
 
 template <class T>
 static void appendTo(std::vector<T> &target, const std::vector<T> &other) {
@@ -74,4 +74,4 @@ Stmt pbSimplify(const Stmt &op) {
     return flattenStmtSeq(simplifyImpl<PBSimplify>(op));
 }
 
-} // namespace ir
+} // namespace freetensor

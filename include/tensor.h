@@ -1,5 +1,5 @@
-#ifndef TENSOR_H
-#define TENSOR_H
+#ifndef FREE_TENSOR_TENSOR_H
+#define FREE_TENSOR_TENSOR_H
 
 #include <string>
 #include <vector>
@@ -8,7 +8,7 @@
 #include <except.h>
 #include <expr.h>
 
-namespace ir {
+namespace freetensor {
 
 class Tensor : public ASTPart {
     template <class T> friend Ref<Tensor> makeTensor(T &&, DataType);
@@ -50,6 +50,6 @@ inline Ref<Tensor> deepCopy(const Ref<Tensor> &t) {
     return makeTensor(t->shape(), t->dtype());
 }
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // TENSOR_H
+#endif // FREE_TENSOR_TENSOR_H

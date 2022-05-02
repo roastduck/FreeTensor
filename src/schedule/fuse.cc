@@ -12,7 +12,7 @@
 #include <pass/tensor_prop_const.h>
 #include <schedule/fuse.h>
 
-namespace ir {
+namespace freetensor {
 
 namespace {
 
@@ -290,4 +290,4 @@ std::pair<Stmt, ID> fuse(const Stmt &_ast, const ID &loop0, const ID &loop1,
     return std::make_pair(ast, mutator.fused());
 }
 
-} // namespace ir
+} // namespace freetensor

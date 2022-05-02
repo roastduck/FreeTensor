@@ -1,5 +1,5 @@
-#ifndef GPU_LOWER_PARALLEL_REDUCTION_H
-#define GPU_LOWER_PARALLEL_REDUCTION_H
+#ifndef FREE_TENSOR_GPU_LOWER_PARALLEL_REDUCTION_H
+#define FREE_TENSOR_GPU_LOWER_PARALLEL_REDUCTION_H
 
 #include <unordered_map>
 
@@ -7,7 +7,7 @@
 #include <func.h>
 #include <mutator.h>
 
-namespace ir {
+namespace freetensor {
 
 namespace gpu {
 
@@ -31,6 +31,6 @@ DEFINE_PASS_FOR_FUNC(lowerParallelReduction)
 
 } // namespace gpu
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // GPU_LOWER_PARALLEL_REDUCTION_H
+#endif // FREE_TENSOR_GPU_LOWER_PARALLEL_REDUCTION_H

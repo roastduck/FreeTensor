@@ -1,10 +1,10 @@
-#ifndef CACHE_H
-#define CACHE_H
+#ifndef FREE_TENSOR_CACHE_H
+#define FREE_TENSOR_CACHE_H
 
 #include <analyze/comp_access_bound.h>
 #include <mutator.h>
 
-namespace ir {
+namespace freetensor {
 
 class MakeCacheVar : public Mutator {
     ID stmt_;
@@ -103,6 +103,6 @@ std::pair<Stmt, std::tuple<ID, ID, std::string, ID>>
 cacheReduction(const Stmt &ast, const ID &stmt, const std::string &var,
                MemType mtype);
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // CACHE_H
+#endif // FREE_TENSOR_CACHE_H

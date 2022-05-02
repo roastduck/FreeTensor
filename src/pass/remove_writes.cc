@@ -6,7 +6,7 @@
 #include <pass/remove_writes.h>
 #include <pass/sink_var.h>
 
-namespace ir {
+namespace freetensor {
 
 static bool sameParent(const Stmt &x, const Stmt &y) {
     return x->parentCtrlFlow() == y->parentCtrlFlow();
@@ -351,4 +351,4 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
     return sinkVar(op);
 }
 
-} // namespace ir
+} // namespace freetensor

@@ -1,6 +1,6 @@
 #include <analyze/as_dnf.h>
 
-namespace ir {
+namespace freetensor {
 
 template <class T>
 static std::vector<T> merge(const std::vector<T> &lhs,
@@ -106,4 +106,4 @@ DNF asDNF(const Expr &expr) {
     return visitor.results(expr);
 }
 
-} // namespace ir
+} // namespace freetensor

@@ -2,7 +2,7 @@
 #include <frontend/frontend_var.h>
 #include <frontend/inlined_invoke.h>
 
-namespace ir {
+namespace freetensor {
 
 using namespace pybind11::literals;
 
@@ -12,6 +12,9 @@ void init_ffi_frontend(py::module_ &m) {
         .def(py::init(&FrontendVarIdx::fromSlice))
         .def("__repr__",
              [](const FrontendVarIdx &idx) { return toString(idx); });
+
+    m.def("all_reads", static_cast<std::unordered_set<std::string> (*)(
+                           const FrontendVarIdx &)>(&allReads));
 
     py::class_<FrontendVar, Ref<FrontendVar>>(m, "FrontendVar")
         .def(py::init<const std::string &, const std::vector<Expr> &, DataType,
@@ -31,4 +34,4 @@ void init_ffi_frontend(py::module_ &m) {
     m.def("inlined_invoke", &inlinedInvoke);
 }
 
-} // namespace ir
+} // namespace freetensor

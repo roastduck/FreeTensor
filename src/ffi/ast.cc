@@ -9,7 +9,7 @@
 #include <serialize/print_ast.h>
 #include <stmt.h>
 
-namespace ir {
+namespace freetensor {
 
 using namespace pybind11::literals;
 
@@ -80,7 +80,7 @@ void init_ffi_ast(py::module_ &m) {
             py::is_operator());
     py::implicitly_convertible<std::string, ID>();
 
-#ifdef IR_DEBUG_LOG_NODE
+#ifdef FT_DEBUG_LOG_NODE
     pyAST.def_readonly("debug_creator", &ASTNode::debugCreator_);
 #endif
 
@@ -352,7 +352,8 @@ void init_ffi_ast(py::module_ &m) {
     m.def("load_ast", &loadAST);
 
     // NOTE: ORDER of the constructor matters!
-    pyExpr.def(py::init([](bool val) { return makeBoolConst(val); }))
+    pyExpr.def(py::init([](const Expr &expr) { return deepCopy(expr); }))
+        .def(py::init([](bool val) { return makeBoolConst(val); }))
         .def(py::init([](int64_t val) { return makeIntConst(val); }))
         .def(py::init([](float val) { return makeFloatConst(val); }))
         .def(py::init([](const FrontendVar &var) { return var.asLoad(); }))
@@ -560,21 +561,21 @@ void init_ffi_ast(py::module_ &m) {
     m.def("neutral_val", &neutralVal);
 }
 
-} // namespace ir
+} // namespace freetensor
 
 namespace pybind11 {
 
-template <> struct polymorphic_type_hook<ir::ASTNode> {
-    static const void *get(const ir::ASTNode *src,
+template <> struct polymorphic_type_hook<freetensor::ASTNode> {
+    static const void *get(const freetensor::ASTNode *src,
                            const std::type_info *&type) {
         if (src == nullptr) {
             return src;
         }
         switch (src->nodeType()) {
 #define DISPATCH(name)                                                         \
-    case ir::ASTNodeType::name:                                                \
-        type = &typeid(ir::name##Node);                                        \
-        return static_cast<const ir::name##Node *>(src);
+    case freetensor::ASTNodeType::name:                                        \
+        type = &typeid(freetensor::name##Node);                                \
+        return static_cast<const freetensor::name##Node *>(src);
 
             DISPATCH(Func);
             DISPATCH(StmtSeq);
@@ -630,17 +631,17 @@ template <> struct polymorphic_type_hook<ir::ASTNode> {
     }
 };
 
-template <> struct polymorphic_type_hook<ir::StmtNode> {
-    static const void *get(const ir::StmtNode *src,
+template <> struct polymorphic_type_hook<freetensor::StmtNode> {
+    static const void *get(const freetensor::StmtNode *src,
                            const std::type_info *&type) {
         if (src == nullptr) {
             return src;
         }
         switch (src->nodeType()) {
 #define DISPATCH(name)                                                         \
-    case ir::ASTNodeType::name:                                                \
-        type = &typeid(ir::name##Node);                                        \
-        return static_cast<const ir::name##Node *>(src);
+    case freetensor::ASTNodeType::name:                                        \
+        type = &typeid(freetensor::name##Node);                                \
+        return static_cast<const freetensor::name##Node *>(src);
 
             DISPATCH(StmtSeq);
             DISPATCH(VarDef);
@@ -658,17 +659,17 @@ template <> struct polymorphic_type_hook<ir::StmtNode> {
     }
 };
 
-template <> struct polymorphic_type_hook<ir::ExprNode> {
-    static const void *get(const ir::ExprNode *src,
+template <> struct polymorphic_type_hook<freetensor::ExprNode> {
+    static const void *get(const freetensor::ExprNode *src,
                            const std::type_info *&type) {
         if (src == nullptr) {
             return src;
         }
         switch (src->nodeType()) {
 #define DISPATCH(name)                                                         \
-    case ir::ASTNodeType::name:                                                \
-        type = &typeid(ir::name##Node);                                        \
-        return static_cast<const ir::name##Node *>(src);
+    case freetensor::ASTNodeType::name:                                        \
+        type = &typeid(freetensor::name##Node);                                \
+        return static_cast<const freetensor::name##Node *>(src);
 
             DISPATCH(Var);
             DISPATCH(Load);

@@ -1,9 +1,9 @@
-#ifndef UNDO_MAKE_REDUCTION_H
-#define UNDO_MAKE_REDUCTION_H
+#ifndef FREE_TENSOR_UNDO_MAKE_REDUCTION_H
+#define FREE_TENSOR_UNDO_MAKE_REDUCTION_H
 
 #include <mutator.h>
 
-namespace ir {
+namespace freetensor {
 
 /**
  * Transform things like a += b into a = a + b
@@ -17,6 +17,6 @@ inline Stmt undoMakeReduction(const Stmt &op) {
     return UndoMakeReduction()(op);
 }
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // UNDO_MAKE_REDUCTION_H
+#endif // FREE_TENSOR_UNDO_MAKE_REDUCTION_H

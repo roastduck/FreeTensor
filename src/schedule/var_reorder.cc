@@ -1,7 +1,7 @@
 #include <analyze/all_uses.h>
 #include <schedule/var_reorder.h>
 
-namespace ir {
+namespace freetensor {
 
 Stmt VarReorder::visit(const VarDef &_op) {
     if (_op->id() == def_) {
@@ -69,4 +69,4 @@ Stmt varReorder(const Stmt &_ast, const ID &def,
     return ast;
 }
 
-} // namespace ir
+} // namespace freetensor

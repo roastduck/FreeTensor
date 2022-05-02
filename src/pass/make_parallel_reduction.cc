@@ -10,7 +10,7 @@
 #include <pass/make_reduction.h>
 #include <pass/simplify.h>
 
-namespace ir {
+namespace freetensor {
 
 static bool isDenseOver(const Expr &expr, const std::string &iter) {
     AnalyzeLinear analyzeLinear;
@@ -311,4 +311,4 @@ Stmt makeParallelReduction(const Stmt &_op) {
     return op;
 }
 
-} // namespace ir
+} // namespace freetensor

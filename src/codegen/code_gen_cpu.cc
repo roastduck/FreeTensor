@@ -6,7 +6,7 @@
 
 #include "detail/code_gen_c.h"
 
-namespace ir {
+namespace freetensor {
 
 #ifdef WITH_MKL
 
@@ -265,4 +265,4 @@ extern "C" {
     return header + body + tailer;
 }
 
-} // namespace ir
+} // namespace freetensor

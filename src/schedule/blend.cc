@@ -3,7 +3,7 @@
 #include <pass/simplify.h>
 #include <schedule/blend.h>
 
-namespace ir {
+namespace freetensor {
 
 void FindAllScopesInside::visit(const For &op) {
     if (op->id() == loop_) {
@@ -179,4 +179,4 @@ Stmt blend(const Stmt &_ast, const ID &loop) {
     return ast;
 }
 
-} // namespace ir
+} // namespace freetensor

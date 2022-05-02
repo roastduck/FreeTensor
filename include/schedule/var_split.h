@@ -1,9 +1,9 @@
-#ifndef VAR_SPLIT_H
-#define VAR_SPLIT_H
+#ifndef FREE_TENSOR_VAR_SPLIT_H
+#define FREE_TENSOR_VAR_SPLIT_H
 
 #include <mutator.h>
 
-namespace ir {
+namespace freetensor {
 
 enum VarSplitMode : int { FixedSize, RelaxedSize };
 
@@ -44,6 +44,6 @@ class VarSplit : public Mutator {
 Stmt varSplit(const Stmt &ast, const ID &def, int dim, VarSplitMode mode,
               int factor, int nparts);
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // VAR_SPLIT_H
+#endif // FREE_TENSOR_VAR_SPLIT_H

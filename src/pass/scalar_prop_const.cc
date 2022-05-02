@@ -9,7 +9,7 @@
 #include <pass/scalar_prop_const.h>
 #include <pass/undo_make_reduction.h>
 
-namespace ir {
+namespace freetensor {
 
 std::optional<ScalarPropConst::ScalarIndices>
 ScalarPropConst::tryToScalar(const std::vector<Expr> &exprs) {
@@ -226,4 +226,4 @@ Stmt ScalarPropConst::visit(const For &op) {
 
 Stmt scalarPropConst(const Stmt &op) { return ScalarPropConst()(op); }
 
-} // namespace ir
+} // namespace freetensor

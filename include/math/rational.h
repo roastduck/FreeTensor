@@ -1,11 +1,11 @@
-#ifndef RATIONAL_H
-#define RATIONAL_H
+#ifndef FREE_TENSOR_RATIONAL_H
+#define FREE_TENSOR_RATIONAL_H
 
 #include <iostream>
 
 #include <math/utils.h>
 
-namespace ir {
+namespace freetensor {
 
 template <class T> struct Rational {
     T p_, q_; // p_ / q_
@@ -95,14 +95,15 @@ template <class T> struct Rational {
     Rational operator-() const { return Rational{-p_, q_}; }
 };
 
-} // namespace ir
+} // namespace freetensor
 
 namespace std {
 
-template <class T> ir::Rational<T> abs(const ir::Rational<T> &x) {
+template <class T>
+freetensor::Rational<T> abs(const freetensor::Rational<T> &x) {
     return x < 0 ? -x : x;
 }
 
 } // namespace std
 
-#endif // RATIONAL_H
+#endif // FREE_TENSOR_RATIONAL_H

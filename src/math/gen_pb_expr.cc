@@ -2,7 +2,7 @@
 #include <math/utils.h>
 #include <serialize/mangle.h>
 
-namespace ir {
+namespace freetensor {
 
 template <class T, class V, class Hash, class KeyEqual>
 static void unionTo(std::unordered_map<T, V, Hash, KeyEqual> &target,
@@ -316,4 +316,4 @@ Opt<std::string> GenPBExpr::gen(const Expr &op) {
     return nullptr;
 }
 
-} // namespace ir
+} // namespace freetensor

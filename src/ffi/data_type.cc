@@ -1,7 +1,7 @@
 #include <data_type.h>
 #include <ffi.h>
 
-namespace ir {
+namespace freetensor {
 
 void init_ffi_data_type(py::module_ &m) {
     py::class_<DataType>(m, "DataType")
@@ -19,4 +19,4 @@ void init_ffi_data_type(py::module_ &m) {
     m.def("up_cast", &upCast);
 }
 
-} // namespace ir
+} // namespace freetensor

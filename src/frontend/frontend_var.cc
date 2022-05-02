@@ -1,7 +1,9 @@
+#include <analyze/all_uses.h>
+#include <container_utils.h>
 #include <except.h>
 #include <frontend/frontend_var.h>
 
-namespace ir {
+namespace freetensor {
 
 int FrontendVar::ndim() const {
     int ndim = fullShape_.size();
@@ -101,4 +103,15 @@ FrontendVar::chainIndices(const std::vector<FrontendVarIdx> &next) const {
     return indices;
 }
 
-} // namespace ir
+std::unordered_set<std::string> allReads(const FrontendVarIdx &idx) {
+    switch (idx.type()) {
+    case FrontendVarIdxType::Single:
+        return allReads(idx.single());
+    case FrontendVarIdxType::Slice:
+        return uni(allReads(idx.start()), allReads(idx.stop()));
+    default:
+        ASSERT(false);
+    }
+}
+
+} // namespace freetensor

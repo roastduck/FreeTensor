@@ -2,7 +2,7 @@
 #include <analyze/find_loop_variance.h>
 #include <pass/gpu/multiplex_buffers.h>
 
-namespace ir {
+namespace freetensor {
 
 namespace gpu {
 
@@ -136,4 +136,4 @@ Stmt multiplexBuffers(const Stmt &op) {
 
 } // namespace gpu
 
-} // namespace ir
+} // namespace freetensor

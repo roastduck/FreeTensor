@@ -2,8 +2,8 @@ import sys
 import time
 import math
 import numpy as np
-import ir
-import ir.debug
+import freetensor as ft
+from freetensor import debug
 
 jit_cache = {}
 
@@ -17,12 +17,12 @@ def conv(x, w1, w2, y, n, c_in, c_out, h, w, k_h, k_w, device):
 
         # yapf: disable
 
-        @ir.transform
+        @ft.transform
         def f(X, W1, W2, Y):
-            ir.declare_var(X, (n, c_in, h, w), "float32", "input", mtype)
-            ir.declare_var(W1, (k_h, k_w, 2, c_in, k_h, k_w), "float32", "input", mtype)
-            ir.declare_var(W2, (c_out, c_in, k_h, k_w), "float32", "input", mtype)
-            ir.declare_var(Y, (n, c_out, h, w), "float32", "output", mtype)
+            ft.declare_var(X, (n, c_in, h, w), "float32", "input", mtype)
+            ft.declare_var(W1, (k_h, k_w, 2, c_in, k_h, k_w), "float32", "input", mtype)
+            ft.declare_var(W2, (c_out, c_in, k_h, k_w), "float32", "input", mtype)
+            ft.declare_var(Y, (n, c_out, h, w), "float32", "output", mtype)
 
             "nid: Li"
             for i in range(n):
@@ -30,10 +30,10 @@ def conv(x, w1, w2, y, n, c_in, c_out, h, w, k_h, k_w, device):
                 for p in range(h):
                     "nid: Lq"
                     for q in range(w):
-                        row = ir.create_var((k_h, k_w), "float32", mtype)
-                        col = ir.create_var((k_h, k_w), "float32", mtype)
-                        row_int = ir.create_var((k_h, k_w), "int32", mtype)
-                        col_int = ir.create_var((k_h, k_w), "int32", mtype)
+                        row = ft.create_var((k_h, k_w), "float32", mtype)
+                        col = ft.create_var((k_h, k_w), "float32", mtype)
+                        row_int = ft.create_var((k_h, k_w), "int32", mtype)
+                        col_int = ft.create_var((k_h, k_w), "int32", mtype)
                         "nid: Lro0"
                         for ro in range(k_h):
                             "nid: Lso0"
@@ -51,18 +51,18 @@ def conv(x, w1, w2, y, n, c_in, c_out, h, w, k_h, k_w, device):
                                                 col[ro, so] += X[i, ki, p + ri, q + si] * W1[ro, so, 1, ki, ri, si]
                                 row[ro, so] /= c_in
                                 col[ro, so] /= c_in
-                                row_int[ro, so] = ir.cast(ir.floor(row[ro, so]), "int32")
-                                col_int[ro, so] = ir.cast(ir.floor(col[ro, so]), "int32")
+                                row_int[ro, so] = ft.cast(ft.floor(row[ro, so]), "int32")
+                                col_int[ro, so] = ft.cast(ft.floor(col[ro, so]), "int32")
 
-                        pixel = ir.create_var((c_in, k_h, k_w), "float32", mtype)
+                        pixel = ft.create_var((c_in, k_h, k_w), "float32", mtype)
                         "nid: Lki1"
                         for ki in range(c_in):
                             "nid: Lro1"
                             for ro in range(k_h):
                                 "nid: Lso1"
                                 for so in range(k_w):
-                                    x = ir.create_var((), "int32", mtype)
-                                    y = ir.create_var((), "int32", mtype)
+                                    x = ft.create_var((), "int32", mtype)
+                                    y = ft.create_var((), "int32", mtype)
                                     x[()] = p + ro + row_int[ro, so]
                                     y[()] = q + so + col_int[ro, so]
                                     pixel[ki, ro, so] = 0
@@ -93,24 +93,24 @@ def conv(x, w1, w2, y, n, c_in, c_out, h, w, k_h, k_w, device):
 
         # yapf: enable
 
-        s = ir.Schedule(f)
+        s = ft.Schedule(f)
         print(s.ast())
-        if device.target().type() == ir.TargetType.CPU:
-            Lko = s.move_to("Lko", ir.MoveToSide.After, "Li")
+        if device.target().type() == ft.TargetType.CPU:
+            Lko = s.move_to("Lko", ft.MoveToSide.After, "Li")
             _, _, _, Y_t_def = s.cache(Lko, "Y", "cpu")
             s.var_reorder(Y_t_def, [0, 2, 3, 1])
             s.auto_schedule(device.target())
         else:
-            Lko = s.move_to("Lko", ir.MoveToSide.After, "Li")
+            Lko = s.move_to("Lko", ft.MoveToSide.After, "Li")
             _, _, _, Y_t_def = s.cache(Lko, "Y", "gpu/global")
             s.var_reorder(Y_t_def, [0, 2, 3, 1])
             s.var_reorder(":pixel", [3, 4, 5, 0, 1, 2])
             s.auto_schedule(device.target())
-        f = ir.lower(s.func(), device.target())
+        f = ft.lower(s.func(), device.target())
         print(f)
-        code = ir.codegen(f, device.target())
-        print(ir.debug.with_line_no(code))
-        exe = ir.Driver(f, code, device)
+        code = ft.codegen(f, device.target())
+        print(debug.with_line_no(code))
+        exe = ft.Driver(f, code, device)
         exe.set_params(x, w1, w2, y)
         # TODO: do not set_params here
         jit_cache[(n, c_in, c_out, h, w, k_h, k_w)] = exe
@@ -140,19 +140,19 @@ if __name__ == '__main__':
     y = np.zeros((n, c_out, h, w), dtype="float32")
 
     if device == 'gpu':
-        ir_dev = ir.Device(ir.GPU())
+        ir_dev = ft.Device(ft.GPU())
         ir_mtype = 'gpu/global'
         ir_local_mtype = 'gpu/local'
     else:
         assert device == 'cpu'
-        ir_dev = ir.Device(ir.CPU())
+        ir_dev = ft.Device(ft.CPU())
         ir_mtype = 'cpu'
         ir_local_mtype = 'cpu'
 
-    x = ir.Array(x, ir_dev)
-    w1 = ir.Array(w1, ir_dev)
-    w2 = ir.Array(w2, ir_dev)
-    y = ir.Array(y, ir_dev)
+    x = ft.Array(x, ir_dev)
+    w1 = ft.Array(w1, ir_dev)
+    w2 = ft.Array(w2, ir_dev)
+    y = ft.Array(y, ir_dev)
 
     test_num = 100
     conv(x, w1, w2, y, n, c_in, c_out, h, w, k_h, k_w, ir_dev)  # init lazy ops

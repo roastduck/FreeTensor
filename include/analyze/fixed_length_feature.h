@@ -1,10 +1,10 @@
-#ifndef FIXED_LENGTH_FEATURE_H
-#define FIXED_LENGTH_FEATURE_H
+#ifndef FREE_TENSOR_FIXED_LENGTH_FEATURE_H
+#define FREE_TENSOR_FIXED_LENGTH_FEATURE_H
 
 #include <analyze/structural_feature.h>
 #include <visitor.h>
 
-namespace ir {
+namespace freetensor {
 
 // NOTE: Exporting these constants to PyBind11 is tedious, so please sync it
 // with test_fixed_length_featuer.py manually
@@ -85,6 +85,6 @@ inline std::vector<double> fixedLengthFeature(const Stmt &op) {
     return visitor.features(op);
 }
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // FIXED_LENGTH_FEATURE_H
+#endif // FREE_TENSOR_FIXED_LENGTH_FEATURE_H
