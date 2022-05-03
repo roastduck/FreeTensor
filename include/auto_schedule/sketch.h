@@ -85,6 +85,9 @@ class Sketch {
     int nowTargetNum_{0};
     double time_{0};
     bool scheduleGenerated_{false};
+    std::string code_;
+    Func lowered_;
+    std::vector<double> feature_;
 
   public:
     Sketch() = default;
@@ -101,8 +104,6 @@ class Sketch {
         ret.schedule_ = schedule_.clone();
         ret.targets_ = targets_;
         ret.nowTargetNum_ = nowTargetNum_;
-        ret.time_ = 0;
-        ret.scheduleGenerated_ = false;
         return ret;
     }
 
@@ -143,6 +144,14 @@ class Sketch {
 
     Schedule &schedule() { return schedule_; }
     const Schedule &schedule() const { return schedule_; }
+
+    std::string genCode(const Ref<Target> &target);
+
+    const std::string &code() const { return code_; }
+    Func lowered() const { return lowered_; }
+
+    std::vector<double> &genFeature();
+    std::vector<double> &feature() { return feature_; }
 };
 
 } // namespace freetensor
