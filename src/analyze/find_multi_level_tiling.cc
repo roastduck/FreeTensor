@@ -26,10 +26,6 @@ void FindMultiLevelTiling::visit(const For &op) {
         storeBuf();
         buf_.push_back(stack_.back());
         nowFor_ = forsWithStore_.at(op->id());
-        //        bufIndices_ = forsWithStore_.at(op->id()).indices;
-        //        bufCheckDataReuseIndices_ =
-        //            forsWithStore_.at(op->id()).checkDataReuseIndices;
-        //        dest_ = dest;
     } else if (!buf_.empty()) {
         buf_.push_back(stack_.back());
     }

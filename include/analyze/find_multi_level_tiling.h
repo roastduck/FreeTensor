@@ -32,9 +32,6 @@ class FindMultiLevelTiling : public Visitor {
     std::vector<bool> stackMarkBranch_; // mark whether have multiple children
 
     std::vector<ForInfo> buf_;
-    //    std::vector<Expr> bufIndices_;
-    //    std::vector<std::vector<Expr>> bufCheckDataReuseIndices_;
-    //    std::string dest_;
     ForWithStore nowFor_;
     bool downward = true;
 

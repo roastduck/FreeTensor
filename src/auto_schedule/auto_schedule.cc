@@ -78,9 +78,6 @@ std::vector<double> AutoSchedule::measure(std::vector<Ref<Sketch>> &sketches) {
             }
             drivers[i]->setParams(args_, kws_);
             double t = drivers[i]->time(5, 20);
-            //            if (t < 0.005) {
-            //                t = 1e30;
-            //            }
             times.emplace_back(t);
         } catch (const std::exception &e) {
             // OpenMP threads won't report an exception message
@@ -114,30 +111,12 @@ void AutoSchedule::searchOneRound(size_t n) {
     std::cout << "now best: " << toString(bs.ast()) << std::endl;
 }
 
-// std::vector<Schedule>
-// AutoSchedule::genSchedules(std::vector<Sketch> &sketches) {
-//     size_t n = sketches.size();
-//     std::vector<Schedule> ret(n);
-//#pragma omp parallel for
-//     for (size_t i = 0; i < n; i++) {
-//         try {
-//             ret[i] = sketches[i].genSchedule();
-//         } catch (const std::exception &e) {
-//              OpenMP threads won't report an exception message
-//             std::cerr << "ERROR schedule: " << e.what() << std::endl;
-//         }
-//     }
-//     return ret;
-// }
-
 py::list AutoSchedule::genFeatures(std::vector<Ref<Sketch>> &sketches) {
     size_t n = sketches.size();
 #pragma omp parallel for
     for (size_t i = 0; i < n; i++) {
         try {
-            //            std::cout << schedules[i].ast() << std::endl;
             sketches[i]->genFeature();
-            std::cout << "feature got\n";
         } catch (const std::exception &e) {
             // OpenMP threads won't report an exception message
             std::cerr << "ERROR feature: " << e.what() << std::endl;
@@ -298,16 +277,6 @@ AutoSchedule::evolutionarySearch(std::vector<Ref<Sketch>> init,
         std::cout << "search round " << i << std::endl;
         auto pred = getPrediction(v1);
         auto probSum = getProbSum(pred);
-        std::cout << "pred: ";
-        for (auto j : pred) {
-            std::cout << j << " ";
-        }
-        std::cout << std::endl;
-        std::cout << "probsum: ";
-        for (auto j : probSum) {
-            std::cout << j << " ";
-        }
-        std::cout << std::endl;
         for (size_t j = 0; j < v1.size(); j++) {
             size_t hash = v1[j]->hash();
             auto time = pred[j];
@@ -330,12 +299,9 @@ AutoSchedule::evolutionarySearch(std::vector<Ref<Sketch>> init,
         }
 
         while (v2.size() < EVOLUTIONARY_SEARCH_POPULATION) {
-            std::cout << "evo " << v2.size() << std::endl;
             double r = randomDouble(randGen_);
             if (r < EVOLUTIONARY_SEARCH_MUTATION_PROB) {
                 int a = randWithProb(probSum, randGen_);
-                //                std::cout << "now " << a << std::endl; // The
-                //                program crashes if I remove this
                 auto nw = v1[a]->genMutation(randGen_);
                 if (nw.first) {
                     v2.push_back(Ref<Sketch>::make(std::move(nw.second)));
@@ -474,7 +440,6 @@ Schedule AutoSchedule::testThreadBind() {
 }
 
 Schedule AutoSchedule::testCacheRead() {
-    //    for (;;) {
     auto sketch = getInitSketch();
     MultiLevelTilingWithFusionRule rule(target_->type());
     if (rule.analyze(sketch) == RuleStatus::Skip) {
@@ -484,30 +449,7 @@ Schedule AutoSchedule::testCacheRead() {
     std::cout << toString(newSketch.schedule().ast()) << std::endl;
     auto part = newSketch.part(0)[SketchPartType::MultiLevelTilingWithFusion]
                     .as<MultiLevelTilingWithFusionPart>();
-    //        part->genRandAnnotation(randGen_);
-    part->setAnnotation({{
-                             {
-                                 4,
-                                 1,
-                                 4,
-                                 1,
-                                 8,
-                             },
-                             {
-                                 1,
-                                 16,
-                                 4,
-                                 1,
-                                 2,
-                             },
-                         },
-                         {
-                             {
-                                 8,
-                                 2,
-                                 8,
-                             },
-                         }});
+    part->genRandAnnotation(randGen_);
     newSketch.addPart(Ref<ThreadBindPart>::make());
     auto schedule = newSketch.genSchedule();
     std::vector<Ref<Sketch>> v;
@@ -518,7 +460,6 @@ Schedule AutoSchedule::testCacheRead() {
     auto func = lower(schedule.func(), target_);
     std::cout << toString(func->body_) << std::endl;
     std::cout << "lower done" << std::endl;
-    //    }
     return {};
 }
 

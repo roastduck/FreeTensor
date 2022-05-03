@@ -61,9 +61,6 @@ class AutoSchedule {
 
     std::vector<Ref<Sketch>> getRandPopulation(size_t nRand);
 
-    //    std::vector<Schedule> genSchedules(std::vector<Ref<Sketch>>
-    //    &sketches);
-
     py::list genFeatures(std::vector<Ref<Sketch>> &sketches);
 
     std::vector<double> getPrediction(std::vector<Ref<Sketch>> &sketches_in);
