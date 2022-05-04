@@ -19,14 +19,10 @@ def compile_all(w, dilation, dilation_heads, n_heads, seq_len, feat_len, device,
 
     @ft.transform
     def inference(Q, K, V, Y):
-        Q: ft.Var((n_heads, seq_len, feat_len), "float32", "input",
-                       mtype)
-        K: ft.Var((n_heads, seq_len, feat_len), "float32", "input",
-                       mtype)
-        V: ft.Var((n_heads, seq_len, feat_len), "float32", "input",
-                       mtype)
-        Y: ft.Var((n_heads, seq_len, feat_len), "float32", "output",
-                       mtype)
+        Q: ft.Var[(n_heads, seq_len, feat_len), "float32", "input", mtype]
+        K: ft.Var[(n_heads, seq_len, feat_len), "float32", "input", mtype]
+        V: ft.Var[(n_heads, seq_len, feat_len), "float32", "input", mtype]
+        Y: ft.Var[(n_heads, seq_len, feat_len), "float32", "output", mtype]
         for i in range(n_heads):
             for j in range(seq_len):
                 dot = ft.create_var((2 * w + 1,), "float32", mtype)

@@ -214,10 +214,8 @@ def compile_all(in_feats, hidden_feats, length, device):
     def inference(x, y, w, u, b):
         x: ft.Var[(length, in_feats), "float32", "input", mtype]
         y: ft.Var[(hidden_feats,), "float32", "output", mtype]
-        w: ft.Var((4, in_feats, hidden_feats), "float32", "input",
-                       mtype)
-        u: ft.Var((4, hidden_feats, hidden_feats), "float32", "input",
-                       mtype)
+        w: ft.Var[(4, in_feats, hidden_feats), "float32", "input", mtype]
+        u: ft.Var[(4, hidden_feats, hidden_feats), "float32", "input", mtype]
         b: ft.Var[(4, hidden_feats), "float32", "input", mtype]
         h = ft.create_var((hidden_feats,), "float32", mtype)
         c = ft.create_var((hidden_feats,), "float32", mtype)

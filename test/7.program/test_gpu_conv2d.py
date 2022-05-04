@@ -52,12 +52,12 @@ def test_manual_static():
 
     @ft.transform
     def algo(A, W, B):
-        A: ft.Var((in_size, in_size, in_channel, batch), "float32",
-                       "input", "gpu/global")
-        W: ft.Var((kernel, kernel, in_channel, out_channel), "float32",
-                       "input", "gpu/global")
-        B: ft.Var((out_size, out_size, out_channel, batch), "float32",
-                       "output", "gpu/global")
+        A: ft.Var[(in_size, in_size, in_channel, batch), "float32", "input",
+                  "gpu/global"]
+        W: ft.Var[(kernel, kernel, in_channel, out_channel), "float32", "input",
+                  "gpu/global"]
+        B: ft.Var[(out_size, out_size, out_channel, batch), "float32", "output",
+                  "gpu/global"]
         '''nid: Ly'''
         for yy in range(out_size):
             '''nid: Lx'''
