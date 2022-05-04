@@ -2,6 +2,7 @@
 New transformer implementation based on generating a staging function.
 '''
 
+import abc
 import collections
 
 import ffi
@@ -161,6 +162,7 @@ class StagingContext:
         StagingContext.lifetime_stack.clear()
         StagingContext.closure = {}
         StagingContext.call_stack = []
+        StagingContext.name_dict = {}
 
 
 def prepare_vardef(name: str,
@@ -190,24 +192,6 @@ def staged_callable(staging: F, original) -> F:
     return impl
 
 
-class StagedAssignable:
-
-    def assign(self, name: str) -> VarRef:
-        raise NotImplementedError()
-
-
-def assign(name: str, value):
-    '''Customized assign wrapper.
-    If `value` is instance of `StagedAssignable`, it's regarded as a customized assign behavior and
-    gets executed with the assigned target variable name.
-    This wrapper is used for initializing a variable.
-    '''
-    if isinstance(value, StagedAssignable):
-        return value.assign(name)
-    else:
-        return value
-
-
 class StagedIterable:
 
     def foreach(self, name: str, f: Callable[[Any], None]):
@@ -225,6 +209,87 @@ def foreach(name: str, iter, body: Callable[[Any], None]) -> None:
     else:
         for iter_var in iter:
             body(iter_var)
+
+
+class StagedAssignable(abc.ABC):
+
+    @abc.abstractmethod
+    def assign(self, name: str) -> VarRef:
+        raise NotImplementedError()
+
+
+def assign_stmt(name: str, value):
+    '''Customized assign wrapper.
+    If `value` is instance of `StagedAssignable`, it's regarded as a customized assign behavior and
+    gets executed with the assigned target variable name.
+    This wrapper is used for initializing a variable.
+    '''
+    if isinstance(value, StagedAssignable):
+        return value.assign(name)
+    else:
+        return value
+
+
+class StagedTypeAnnotation(abc.ABC):
+
+    @abc.abstractmethod
+    def annotate(self, name: str) -> VarRef:
+        raise NotImplementedError()
+
+
+def annotate_stmt(name: str, ty):
+    if isinstance(ty, StagedTypeAnnotation):
+        return ty.annotate(name)
+    return None
+
+
+def if_then_else_stmt(predicate, then_body, else_body=None):
+    '''If-then-else statement staging tool.
+    When predicate is deterministic in staging, only one branch is generated.
+    Otherwise, a If node in IR is generated.
+    '''
+    if type(predicate) == bool:
+        if predicate:
+            then_body()
+        elif else_body:
+            else_body()
+    else:
+        with If(predicate):
+            with LifetimeScope():
+                then_body()
+        if else_body:
+            with Else():
+                with LifetimeScope():
+                    return else_body()
+
+
+def if_then_else_expr(predicate, then_expr, else_expr):
+    '''If-then-else expression staging tool.'''
+    if type(predicate) == bool:
+        if predicate:
+            return then_expr
+        else:
+            return else_expr
+    else:
+        return if_then_else(predicate, then_expr, else_expr)
+
+
+def return_stmt(value, funcname):
+    '''Return staging tool. Only allow return in static control flow.'''
+    if not StagingContext.allow_return():
+        raise StagingError(
+            'Return is only allowed in statically deterministic control flow.')
+    if isinstance(value, StagedAssignable):
+        value = value.assign(funcname)
+    return value
+
+
+def assert_stmt(test):
+    '''Assert staging tool.'''
+    if isinstance(test, ffi.Expr):
+        StagingContext.register_implicit_scope(Assert(test))
+    else:
+        assert test
 
 
 @dataclass
@@ -327,6 +392,16 @@ capture_var = staged_callable(capture_var_staging, capture_var_fallback)
 '''Capture external array as tensor variable.'''
 
 
+class Var(StagedTypeAnnotation):
+
+    def __init__(self, shape, dtype, atype, mtype):
+        self.shape, self.dtype, self.atype, self.mtype = shape, dtype, atype, mtype
+
+    def annotate(self, name: str) -> VarRef:
+        return StagingContext.register_implicit_scope(
+            _VarDef(prepare_vardef(name), self.shape, self.dtype, self.atype,
+                    self.mtype))
+
 class dynamic_range(StagedIterable):
     '''Dynamic range that generates For loop in IR tree.'''
 
@@ -346,55 +421,6 @@ class dynamic_range(StagedIterable):
                  self.step) as iter_var:
             with LifetimeScope():
                 body(iter_var)
-
-
-def if_then_else_stmt(predicate, then_body, else_body=None):
-    '''If-then-else statement staging tool.
-    When predicate is deterministic in staging, only one branch is generated.
-    Otherwise, a If node in IR is generated.
-    '''
-    if type(predicate) == bool:
-        if predicate:
-            then_body()
-        elif else_body:
-            else_body()
-    else:
-        with If(predicate):
-            with LifetimeScope():
-                then_body()
-        if else_body:
-            with Else():
-                with LifetimeScope():
-                    return else_body()
-
-
-def if_then_else_expr(predicate, then_expr, else_expr):
-    '''If-then-else expression staging tool.'''
-    if type(predicate) == bool:
-        if predicate:
-            return then_expr
-        else:
-            return else_expr
-    else:
-        return if_then_else(predicate, then_expr, else_expr)
-
-
-def return_stmt(value, funcname):
-    '''Return staging tool. Only allow return in static control flow.'''
-    if not StagingContext.allow_return():
-        raise StagingError(
-            'Return is only allowed in statically deterministic control flow.')
-    if isinstance(value, StagedAssignable):
-        value = value.assign(funcname)
-    return value
-
-
-def assert_stmt(test):
-    '''Assert staging tool.'''
-    if isinstance(test, ffi.Expr):
-        StagingContext.register_implicit_scope(Assert(test))
-    else:
-        assert test
 
 
 def boolop_expr(native_reducer, ir_reducer, lazy_args):
@@ -535,6 +561,9 @@ class Transformer(ast.NodeTransformer):
     def visit_Expr(self, old_node: ast.Expr) -> Any:
         '''Rule:
         `declare_var(x, ...)` -> `x = declare_var(x, ...)`: x is changed from a name string to a VarRef
+        `'nid: ...'` -> `mark_nid('...')`: mark next statement id
+        `'no_deps: ...'` -> `mark_no_deps('...')`: mark next loop no_deps
+        `'prefer_libs'` -> `mark_prefer_libs()`: mark prefer_libs
         '''
         node: ast.Expr = self.generic_visit(old_node)
         if isinstance(node.value, ast.Call):
@@ -583,8 +612,33 @@ class Transformer(ast.NodeTransformer):
             if name is not None:
                 node = ast.Assign(
                     node.targets,
-                    call_helper(assign, ast.Constant(name), node.value))
+                    call_helper(assign_stmt, ast.Constant(name), node.value))
         return location_helper(node, old_node)
+
+    def visit_AnnAssign(self, old_node: ast.AnnAssign) -> Any:
+        '''Rule:
+        `x: Ty` -> ```
+        freetensor__annotate__x = annotate_stmt('x', Ty)
+        if freetensor__annotate__x:
+            x = freetensor__annotate__x
+        ```: pure annotation
+        '''
+        node: ast.AnnAssign = self.generic_visit(old_node)
+        if isinstance(node.target, ast.Name) and node.value is None:
+            x = node.target
+            x_str = ast.Constant(x.id)
+            Ty = node.annotation
+
+            intermediate = f'freetensor__annotate__{x.id}'
+            intermediate_store = ast.Name(intermediate, ast.Store())
+            intermediate_load = ast.Name(intermediate, ast.Load())
+            node = [
+                ast.Assign([intermediate_store],
+                           call_helper(annotate_stmt, x_str, Ty)),
+                ast.If(intermediate_load, [ast.Assign([x], intermediate_load)],
+                       [])
+            ]
+        return node
 
     def visit_For(self, old_node: ast.For):
         '''Rule:
@@ -848,9 +902,9 @@ def transform(func=None, verbose=False, caller_env=None):
         try:
             with LifetimeScope():
                 with NamingScope(filename, funcname, None):
-                    for p in params:
-                        StagingContext.id_stack[-1].ids[p] = 1
-                        StagingContext.name_dict[p] = 0
+                    # for p in params:
+                    #     StagingContext.id_stack[-1].ids[p] = 1
+                    #     StagingContext.name_dict[p] = 0
                     returns = staging_func(*params)
                     if isinstance(returns, VarRef):
                         returns = [returns]
