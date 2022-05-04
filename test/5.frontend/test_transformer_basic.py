@@ -264,3 +264,27 @@ def test_immediate_var_return():
     y_np = y_arr.numpy()
 
     assert np.all(y_np == np.array([0, 1, 2]))
+
+
+def test_inline_annotation():
+
+    def test(x: ft.Var[(4, 4), "float32", "output", "cpu"]):
+        x[2, 3] = 2.0
+        x[1, 0] = 3.0
+
+    func = ft.lower(ft.transform(test), ft.CPU())
+    print(func)
+    code = ft.codegen(func, ft.CPU())
+
+    x_np = np.zeros((4, 4), dtype="float32")
+    x_arr = ft.Array(x_np, ft.Device(ft.CPU()))
+    ft.Driver(func, code, ft.Device(ft.CPU()))(x=x_arr)
+    x_np = x_arr.numpy()
+
+    x_std = np.zeros((4, 4), dtype="float32")
+    x_std[2, 3] = 2.0
+    x_std[1, 0] = 3.0
+    x_func = np.zeros((4, 4), dtype="float32")
+    test(x_func)
+    assert np.array_equal(x_np, x_std)
+    assert np.array_equal(x_func, x_std)

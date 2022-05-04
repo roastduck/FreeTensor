@@ -231,8 +231,8 @@ def assign_stmt(name: str, value):
 
 
 class StagedTypeAnnotationMeta(abc.ABCMeta):
+
     def __getitem__(self, args):
-        print(f'{self} ;;;; {args}')
         return self(*args)
 
 
@@ -730,15 +730,21 @@ class Transformer(ast.NodeTransformer):
 
             node: ast.FunctionDef = self.generic_visit(old_node)
             node.decorator_list = []
-            old_body = node.body
             node.body = [
-                ast.With(items=[
-                    ast.withitem(context_expr=call_helper(
-                        functiondef_wrapper, ast.Constant(self.filename),
-                        ast.Constant(node.name)),
-                                 optional_vars=None)
-                ],
-                         body=old_body)
+                ast.With(
+                    items=[
+                        ast.withitem(context_expr=call_helper(
+                            functiondef_wrapper, ast.Constant(self.filename),
+                            ast.Constant(node.name)),
+                                     optional_vars=None)
+                    ],
+                    body=[
+                        stmt for arg in node.args.posonlyargs + node.args.args
+                        if arg.annotation for stmt in self.visit_AnnAssign(
+                            location_helper(
+                                ast.AnnAssign(ast.Name(arg.arg, ast.Store(
+                                )), arg.annotation, None, 1), old_node))
+                    ] + node.body)
             ]
 
         self.curr_func = prev_func
@@ -851,12 +857,12 @@ def into_staging(func, caller_env, src=None, verbose=False):
     tree = ast.fix_missing_locations(Transformer(file, lineno).visit(tree))
 
     import astor
-    from pygments import highlight
-    from pygments.lexers import PythonLexer
-    from pygments.formatters import TerminalFormatter
     source = astor.to_source(tree)
 
     if verbose:
+        from pygments import highlight
+        from pygments.lexers import PythonLexer
+        from pygments.formatters import TerminalFormatter
         print(
             highlight(source, PythonLexer(),
                       TerminalFormatter(bg='dark', linenos=True)))
