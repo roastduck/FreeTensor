@@ -48,8 +48,8 @@ def test_illegal_bin_op():
 
         @ft.transform
         def test(a, b):
-            a: ft.Var((1,), "int32", "input", "cpu")
-            b: ft.Var((1,), "int32", "input", "cpu")
+            a: ft.Var[(1,), "int32", "input", "cpu"]
+            b: ft.Var[(1,), "int32", "input", "cpu"]
             foo(a, b)
 
     frame_info = inspect.getframeinfo(inspect.currentframe())

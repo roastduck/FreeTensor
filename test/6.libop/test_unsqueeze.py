@@ -10,8 +10,8 @@ def test_static():
 
     @ft.transform
     def f(x, y):
-        x: ft.Var((3, 4, 5), "float32", "input", "cpu")
-        y: ft.Var((3, 1, 4, 1, 5), "float32", "output", "cpu")
+        x: ft.Var[(3, 4, 5), "float32", "input", "cpu"]
+        y: ft.Var[(3, 1, 4, 1, 5), "float32", "output", "cpu"]
         "nid: unsqueeze"
         libop.unsqueeze_(x, y, axes=[1, 3])
 
@@ -36,9 +36,9 @@ def test_out_of_place():
 
     @ft.transform
     def f(x, y_shape, y):
-        x: ft.Var((3, 4, 5), "float32", "input", "cpu")
-        y_shape: ft.Var((5,), "int32", "output", "cpu")
-        y: ft.Var((3, 1, 4, 1, 5), "float32", "output", "cpu")
+        x: ft.Var[(3, 4, 5), "float32", "input", "cpu"]
+        y_shape: ft.Var[(5,), "int32", "output", "cpu"]
+        y: ft.Var[(3, 1, 4, 1, 5), "float32", "output", "cpu"]
         "nid: unsqueeze"
         _y = libop.unsqueeze(x, axes=[1, 3])
         for i in range(5):

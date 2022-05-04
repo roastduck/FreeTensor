@@ -972,9 +972,9 @@ def test_no_deps():
 
     @ft.transform
     def test(ptr, edge1, edge2):
-        ptr: ft.Var((11,), "int32", "input", "cpu")
-        edge1: ft.Var((50,), "float32", "input", "cpu")
-        edge2: ft.Var((50,), "float32", "output", "cpu")
+        ptr: ft.Var[(11,), "int32", "input", "cpu"]
+        edge1: ft.Var[(50,), "float32", "input", "cpu"]
+        edge2: ft.Var[(50,), "float32", "output", "cpu"]
         'nid: Li'
         'no_deps: edge2'
         for i in range(10):

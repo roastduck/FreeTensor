@@ -6,7 +6,7 @@ import numpy as np
 def test_hello_world():
 
     def test(x):
-        x: ft.Var((4, 4), "float32", "output", "cpu")
+        x: ft.Var[(4, 4), "float32", "output", "cpu"]
         x[2, 3] = 2.0
         x[1, 0] = 3.0
 
@@ -31,8 +31,8 @@ def test_hello_world():
 def test_scalar_op():
 
     def test(x, y):
-        x: ft.Var((), "int32", "input", "cpu")
-        y: ft.Var((), "int32", "output", "cpu")
+        x: ft.Var[(), "int32", "input", "cpu"]
+        y: ft.Var[(), "int32", "output", "cpu"]
         y[()] = x[()] * 2 + 1
 
     func = ft.lower(ft.transform(test), ft.CPU())
@@ -54,7 +54,7 @@ def test_return_value_and_runtime_allocation():
 
     @ft.transform
     def test(x):
-        x: ft.Var((), "int32", "input", "cpu")
+        x: ft.Var[(), "int32", "input", "cpu"]
         y = ft.create_var((), "int32", "cpu")
         y[()] = x[()] * 2 + 1
         return y
@@ -74,8 +74,8 @@ def test_return_value_and_runtime_allocation():
 def test_for():
 
     def test(x, y):
-        x: ft.Var((4,), "int32", "input", "cpu")
-        y: ft.Var((4,), "int32", "output", "cpu")
+        x: ft.Var[(4,), "int32", "input", "cpu"]
+        y: ft.Var[(4,), "int32", "output", "cpu"]
         for i in range(0, 4):
             y[i] = x[i] + 1
 
@@ -98,7 +98,7 @@ def test_for():
 def test_if():
 
     def test(y):
-        y: ft.Var((4,), "int32", "output", "cpu")
+        y: ft.Var[(4,), "int32", "output", "cpu"]
         for i in range(0, 4):
             if i < 2:
                 y[i] = 0
@@ -124,7 +124,7 @@ def test_static_if():
     flag = True
 
     def test(y):
-        y: ft.Var((4,), "int32", "output", "cpu")
+        y: ft.Var[(4,), "int32", "output", "cpu"]
         for i in range(0, 4):
             value = 0
             if flag:
@@ -158,7 +158,7 @@ def test_static_if_2():
 
     @ft.transform
     def test(y):
-        y: ft.Var((4,), "int32", "output", "cpu")
+        y: ft.Var[(4,), "int32", "output", "cpu"]
         f(y, 0)
 
     func = ft.lower(test, ft.CPU())
@@ -175,7 +175,7 @@ def test_static_if_2():
 def test_for_range():
 
     def test(x):
-        x: ft.Var((4,), "int32", "output", "cpu")
+        x: ft.Var[(4,), "int32", "output", "cpu"]
         for i in range(4):
             x[i] += 1
 
@@ -196,7 +196,7 @@ def test_for_range():
 def test_std_func_alias():
 
     def test(x):
-        x: ft.Var((4, 4), "float32", "output", "cpu")
+        x: ft.Var[(4, 4), "float32", "output", "cpu"]
         x[2, 3] = 2.0
         x[1, 0] = 3.0
 
@@ -222,10 +222,10 @@ def test_assert():
 
     @ft.transform
     def test(x1, x2, y1, y2):
-        x1: ft.Var((4,), "int32", "input", "cpu")
-        x2: ft.Var((4,), "int32", "input", "cpu")
-        y1: ft.Var((4,), "int32", "output", "cpu")
-        y2: ft.Var((4,), "int32", "output", "cpu")
+        x1: ft.Var[(4,), "int32", "input", "cpu"]
+        x2: ft.Var[(4,), "int32", "input", "cpu"]
+        y1: ft.Var[(4,), "int32", "output", "cpu"]
+        y2: ft.Var[(4,), "int32", "output", "cpu"]
         for i in range(4):
             y1[i] = x1[i] + x2[i]
             assert x1[i] < x2[i]
@@ -251,7 +251,7 @@ def test_immediate_var_return():
 
     @ft.transform
     def test(x):
-        x: ft.Var((), "int32", "input", "cpu")
+        x: ft.Var[(), "int32", "input", "cpu"]
         return ft.var([0, 1, x[()]], "int32", "cpu")
 
     print(test)

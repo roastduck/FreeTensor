@@ -10,9 +10,9 @@ def test_basic():
 
     @ft.transform
     def f(a, b, y):
-        a: ft.Var((4, 5), "float32", "input", "cpu")
-        b: ft.Var((5, 6), "float32", "input", "cpu")
-        y: ft.Var((4, 6), "float32", "output", "cpu")
+        a: ft.Var[(4, 5), "float32", "input", "cpu"]
+        b: ft.Var[(5, 6), "float32", "input", "cpu"]
+        y: ft.Var[(4, 6), "float32", "output", "cpu"]
         "nid: gemm"
         libop.gemm_(a, b, None, y)
 
@@ -40,9 +40,9 @@ def test_trans_A():
 
     @ft.transform
     def f(a, b, y):
-        a: ft.Var((5, 4), "float32", "input", "cpu")
-        b: ft.Var((5, 6), "float32", "input", "cpu")
-        y: ft.Var((4, 6), "float32", "output", "cpu")
+        a: ft.Var[(5, 4), "float32", "input", "cpu"]
+        b: ft.Var[(5, 6), "float32", "input", "cpu"]
+        y: ft.Var[(4, 6), "float32", "output", "cpu"]
         "nid: gemm"
         libop.gemm_(a, b, None, y, trans_A=True)
 
@@ -70,9 +70,9 @@ def test_trans_B():
 
     @ft.transform
     def f(a, b, y):
-        a: ft.Var((4, 5), "float32", "input", "cpu")
-        b: ft.Var((6, 5), "float32", "input", "cpu")
-        y: ft.Var((4, 6), "float32", "output", "cpu")
+        a: ft.Var[(4, 5), "float32", "input", "cpu"]
+        b: ft.Var[(6, 5), "float32", "input", "cpu"]
+        y: ft.Var[(4, 6), "float32", "output", "cpu"]
         "nid: gemm"
         libop.gemm_(a, b, None, y, trans_B=True)
 
@@ -100,9 +100,9 @@ def test_trans_AB():
 
     @ft.transform
     def f(a, b, y):
-        a: ft.Var((5, 4), "float32", "input", "cpu")
-        b: ft.Var((6, 5), "float32", "input", "cpu")
-        y: ft.Var((4, 6), "float32", "output", "cpu")
+        a: ft.Var[(5, 4), "float32", "input", "cpu"]
+        b: ft.Var[(6, 5), "float32", "input", "cpu"]
+        y: ft.Var[(4, 6), "float32", "output", "cpu"]
         "nid: gemm"
         libop.gemm_(a, b, None, y, trans_A=True, trans_B=True)
 
@@ -130,10 +130,10 @@ def test_bias():
 
     @ft.transform
     def f(a, b, c, y):
-        a: ft.Var((4, 5), "float32", "input", "cpu")
-        b: ft.Var((5, 6), "float32", "input", "cpu")
-        c: ft.Var((4, 6), "float32", "input", "cpu")
-        y: ft.Var((4, 6), "float32", "output", "cpu")
+        a: ft.Var[(4, 5), "float32", "input", "cpu"]
+        b: ft.Var[(5, 6), "float32", "input", "cpu"]
+        c: ft.Var[(4, 6), "float32", "input", "cpu"]
+        y: ft.Var[(4, 6), "float32", "output", "cpu"]
         "nid: gemm"
         libop.gemm_(a, b, c, y)
 
@@ -163,10 +163,10 @@ def test_bias_broadcast_1():
 
     @ft.transform
     def f(a, b, c, y):
-        a: ft.Var((4, 5), "float32", "input", "cpu")
-        b: ft.Var((5, 6), "float32", "input", "cpu")
-        c: ft.Var((4, 1), "float32", "input", "cpu")
-        y: ft.Var((4, 6), "float32", "output", "cpu")
+        a: ft.Var[(4, 5), "float32", "input", "cpu"]
+        b: ft.Var[(5, 6), "float32", "input", "cpu"]
+        c: ft.Var[(4, 1), "float32", "input", "cpu"]
+        y: ft.Var[(4, 6), "float32", "output", "cpu"]
         "nid: gemm"
         libop.gemm_(a, b, c, y)
 
@@ -196,10 +196,10 @@ def test_bias_broadcast_2():
 
     @ft.transform
     def f(a, b, c, y):
-        a: ft.Var((4, 5), "float32", "input", "cpu")
-        b: ft.Var((5, 6), "float32", "input", "cpu")
-        c: ft.Var((6,), "float32", "input", "cpu")
-        y: ft.Var((4, 6), "float32", "output", "cpu")
+        a: ft.Var[(4, 5), "float32", "input", "cpu"]
+        b: ft.Var[(5, 6), "float32", "input", "cpu"]
+        c: ft.Var[(6,), "float32", "input", "cpu"]
+        y: ft.Var[(4, 6), "float32", "output", "cpu"]
         "nid: gemm"
         libop.gemm_(a, b, c, y)
 
@@ -229,10 +229,10 @@ def test_bias_with_coeff():
 
     @ft.transform
     def f(a, b, c, y):
-        a: ft.Var((4, 5), "float32", "input", "cpu")
-        b: ft.Var((5, 6), "float32", "input", "cpu")
-        c: ft.Var((4, 6), "float32", "input", "cpu")
-        y: ft.Var((4, 6), "float32", "output", "cpu")
+        a: ft.Var[(4, 5), "float32", "input", "cpu"]
+        b: ft.Var[(5, 6), "float32", "input", "cpu"]
+        c: ft.Var[(4, 6), "float32", "input", "cpu"]
+        y: ft.Var[(4, 6), "float32", "output", "cpu"]
         "nid: gemm"
         libop.gemm_(a, b, c, y, alpha=2.5, beta=3.8)
 
@@ -262,10 +262,10 @@ def test_out_of_place():
 
     @ft.transform
     def f(a, b, y_shape, y):
-        a: ft.Var((4, 5), "float32", "input", "cpu")
-        b: ft.Var((5, 6), "float32", "input", "cpu")
-        y_shape: ft.Var((2,), "int32", "output", "cpu")
-        y: ft.Var((4, 6), "float32", "output", "cpu")
+        a: ft.Var[(4, 5), "float32", "input", "cpu"]
+        b: ft.Var[(5, 6), "float32", "input", "cpu"]
+        y_shape: ft.Var[(2,), "int32", "output", "cpu"]
+        y: ft.Var[(4, 6), "float32", "output", "cpu"]
         "nid: gemm"
         _y = libop.gemm(a, b)
         for i in range(2):

@@ -10,9 +10,9 @@ def test_basic():
 
     @ft.transform
     def f(a, b, y):
-        a: ft.Var((4, 5), "float32", "input", "cpu")
-        b: ft.Var((5,), "float32", "input", "cpu")
-        y: ft.Var((4,), "float32", "output", "cpu")
+        a: ft.Var[(4, 5), "float32", "input", "cpu"]
+        b: ft.Var[(5,), "float32", "input", "cpu"]
+        y: ft.Var[(4,), "float32", "output", "cpu"]
         "nid: einsum"
         libop.einsum_("ij,j->i", a, b, y)
 
@@ -40,9 +40,9 @@ def test_broadcast():
 
     @ft.transform
     def f(a, b, y):
-        a: ft.Var((4, 1), "float32", "input", "cpu")
-        b: ft.Var((5,), "float32", "input", "cpu")
-        y: ft.Var((4,), "float32", "output", "cpu")
+        a: ft.Var[(4, 1), "float32", "input", "cpu"]
+        b: ft.Var[(5,), "float32", "input", "cpu"]
+        y: ft.Var[(4,), "float32", "output", "cpu"]
         "nid: einsum"
         libop.einsum_("ij,j->i", a, b, y)
 
@@ -70,10 +70,10 @@ def test_out_of_place():
 
     @ft.transform
     def f(a, b, y_shape, y):
-        a: ft.Var((4, 5), "float32", "input", "cpu")
-        b: ft.Var((5,), "float32", "input", "cpu")
-        y_shape: ft.Var((1,), "int32", "output", "cpu")
-        y: ft.Var((4,), "float32", "output", "cpu")
+        a: ft.Var[(4, 5), "float32", "input", "cpu"]
+        b: ft.Var[(5,), "float32", "input", "cpu"]
+        y_shape: ft.Var[(1,), "int32", "output", "cpu"]
+        y: ft.Var[(4,), "float32", "output", "cpu"]
         "nid: gemm"
         _y = libop.einsum("ij,j->i", a, b)
         y_shape[0] = _y.shape(0)

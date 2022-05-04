@@ -13,9 +13,9 @@ def test_cache_write():
 
     @ft.transform
     def test(w, x, y):
-        w: ft.Var((m, m, a, b), "int32", "input", "cpu")
-        x: ft.Var((m, m, b, a), "int32", "input", "cpu")
-        y: ft.Var((m, m, a, a), "int32", "output", "cpu")
+        w: ft.Var[(m, m, a, b), "int32", "input", "cpu"]
+        x: ft.Var[(m, m, b, a), "int32", "input", "cpu"]
+        y: ft.Var[(m, m, a, a), "int32", "output", "cpu"]
         "nid: L1"
         for i in range(m):
             "nid: L2"

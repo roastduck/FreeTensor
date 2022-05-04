@@ -16,13 +16,13 @@ def compile_all(n_faces, in_feats, out_feats, device, ad_save_all):
 
     @ft.transform
     def inference(adj, x, w0, w1, w2, w3, y):
-        adj: ft.Var((n_faces, 3), "int32", "input", mtype)
-        x: ft.Var((n_faces, in_feats), "float32", "input", mtype)
-        w0: ft.Var((in_feats, out_feats), "float32", "input", mtype)
-        w1: ft.Var((in_feats, out_feats), "float32", "input", mtype)
-        w2: ft.Var((in_feats, out_feats), "float32", "input", mtype)
-        w3: ft.Var((in_feats, out_feats), "float32", "input", mtype)
-        y: ft.Var((n_faces, out_feats), "float32", "output", mtype)
+        adj: ft.Var[(n_faces, 3), "int32", "input", mtype]
+        x: ft.Var[(n_faces, in_feats), "float32", "input", mtype]
+        w0: ft.Var[(in_feats, out_feats), "float32", "input", mtype]
+        w1: ft.Var[(in_feats, out_feats), "float32", "input", mtype]
+        w2: ft.Var[(in_feats, out_feats), "float32", "input", mtype]
+        w3: ft.Var[(in_feats, out_feats), "float32", "input", mtype]
+        y: ft.Var[(n_faces, out_feats), "float32", "output", mtype]
 
         for i in range(n_faces):
             sum1 = zeros((in_feats,), "float32", mtype)

@@ -15,8 +15,8 @@ def test_static(libop_func, torch_func):
 
     @ft.transform
     def f(x, y):
-        x: ft.Var((3, 4, 5), "float32", "input", "cpu")
-        y: ft.Var((3, 5), "float32", "output", "cpu")
+        x: ft.Var[(3, 4, 5), "float32", "input", "cpu"]
+        y: ft.Var[(3, 5), "float32", "output", "cpu"]
         "nid: reduce"
         libop_func(x, y, axes=[1], keepdims=False)
 
@@ -45,8 +45,8 @@ def test_keepdims(libop_func, torch_func):
 
     @ft.transform
     def f(x, y):
-        x: ft.Var((3, 4, 5), "float32", "input", "cpu")
-        y: ft.Var((3, 1, 5), "float32", "output", "cpu")
+        x: ft.Var[(3, 4, 5), "float32", "input", "cpu"]
+        y: ft.Var[(3, 1, 5), "float32", "output", "cpu"]
         "nid: reduce"
         libop_func(x, y, axes=[1], keepdims=True)
 
@@ -76,9 +76,9 @@ def test_out_of_place(libop_func, torch_func):
 
     @ft.transform
     def f(x, y_shape, y):
-        x: ft.Var((3, 4, 5), "float32", "input", "cpu")
-        y_shape: ft.Var((2,), "int32", "output", "cpu")
-        y: ft.Var((3, 5), "float32", "output", "cpu")
+        x: ft.Var[(3, 4, 5), "float32", "input", "cpu"]
+        y_shape: ft.Var[(2,), "int32", "output", "cpu"]
+        y: ft.Var[(3, 5), "float32", "output", "cpu"]
         "nid: reduce"
         _y = libop_func(x, axes=[1], keepdims=False)
         for i in range(2):
@@ -116,9 +116,9 @@ def test_out_of_place_keepdims(libop_func, torch_func):
 
     @ft.transform
     def f(x, y_shape, y):
-        x: ft.Var((3, 4, 5), "float32", "input", "cpu")
-        y_shape: ft.Var((3,), "int32", "output", "cpu")
-        y: ft.Var((3, 1, 5), "float32", "output", "cpu")
+        x: ft.Var[(3, 4, 5), "float32", "input", "cpu"]
+        y_shape: ft.Var[(3,), "int32", "output", "cpu"]
+        y: ft.Var[(3, 1, 5), "float32", "output", "cpu"]
         "nid: reduce"
         _y = libop_func(x, axes=[1], keepdims=True)
         for i in range(3):

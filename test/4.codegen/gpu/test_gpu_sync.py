@@ -11,8 +11,8 @@ def test_syncthreads():
 
     @ft.transform
     def test(x, y):
-        x: ft.Var((4, 256), "int32", "input", "gpu/global")
-        y: ft.Var((4, 256), "int32", "output", "gpu/global")
+        x: ft.Var[(4, 256), "int32", "input", "gpu/global"]
+        y: ft.Var[(4, 256), "int32", "output", "gpu/global"]
         "nid: L0"
         for i in range(0, 4):
             t = ft.create_var((256,), "int32", "gpu/shared")
@@ -73,8 +73,8 @@ def test_syncthreads_in_loop():
 
     @ft.transform
     def test(x, y):
-        x: ft.Var((4, 256), "int32", "input", "gpu/global")
-        y: ft.Var((4, 5, 256), "int32", "output", "gpu/global")
+        x: ft.Var[(4, 256), "int32", "input", "gpu/global"]
+        y: ft.Var[(4, 5, 256), "int32", "output", "gpu/global"]
         "nid: L0"
         for i in range(0, 4):
             for p in range(0, 5):
@@ -116,8 +116,8 @@ def test_syncthreads_at_outer_loop():
 
     @ft.transform
     def test(x, y):
-        x: ft.Var((4, 256), "int32", "input", "gpu/global")
-        y: ft.Var((4, 5, 256), "int32", "output", "gpu/global")
+        x: ft.Var[(4, 256), "int32", "input", "gpu/global"]
+        y: ft.Var[(4, 5, 256), "int32", "output", "gpu/global"]
         "nid: L0"
         for i in range(0, 4):
             t = ft.create_var((256,), "int32", "gpu/shared")
@@ -157,9 +157,9 @@ def test_syncthreads_not_at_outer_loop():
 
     @ft.transform
     def test(x0, x1, y):
-        x0: ft.Var((4, 256), "int32", "input", "gpu/global")
-        x1: ft.Var((4, 5, 256), "int32", "input", "gpu/global")
-        y: ft.Var((4, 5, 256), "int32", "output", "gpu/global")
+        x0: ft.Var[(4, 256), "int32", "input", "gpu/global"]
+        x1: ft.Var[(4, 5, 256), "int32", "input", "gpu/global"]
+        y: ft.Var[(4, 5, 256), "int32", "output", "gpu/global"]
         "nid: L0"
         for i in range(0, 4):
             t0 = ft.create_var((256,), "int32", "gpu/shared")
@@ -213,8 +213,8 @@ def test_syncthreads_at_outer_branch():
 
     @ft.transform
     def test(x, y):
-        x: ft.Var((4, 256), "int32", "input", "gpu/global")
-        y: ft.Var((4,), "int32", "output", "gpu/global")
+        x: ft.Var[(4, 256), "int32", "input", "gpu/global"]
+        y: ft.Var[(4,), "int32", "output", "gpu/global"]
         "nid: L0"
         for i in range(0, 4):
             t = ft.create_var((256,), "int32", "gpu/shared")
@@ -250,8 +250,8 @@ def test_syncthreads_at_outer_loop_and_outer_branch():
 
     @ft.transform
     def test(x, y):
-        x: ft.Var((4, 256), "int32", "input", "gpu/global")
-        y: ft.Var((4, 5, 256), "int32", "output", "gpu/global")
+        x: ft.Var[(4, 256), "int32", "input", "gpu/global"]
+        y: ft.Var[(4, 5, 256), "int32", "output", "gpu/global"]
         "nid: L0"
         for i in range(0, 4):
             t = ft.create_var((256,), "int32", "gpu/shared")
@@ -291,9 +291,9 @@ def test_syncthreads_split_branch():
 
     @ft.transform
     def test(x, y, z):
-        x: ft.Var((4, 256), "int32", "input", "gpu/global")
-        y: ft.Var((4,), "int32", "output", "gpu/global")
-        z: ft.Var((4,), "int32", "inout", "gpu/global")
+        x: ft.Var[(4, 256), "int32", "input", "gpu/global"]
+        y: ft.Var[(4,), "int32", "output", "gpu/global"]
+        z: ft.Var[(4,), "int32", "inout", "gpu/global"]
         "nid: L0"
         for i in range(0, 4):
             t = ft.create_var((256,), "int32", "gpu/shared")
@@ -333,8 +333,8 @@ def test_syncthreads_split_branch_out_of_const_loop():
 
     @ft.transform
     def test(x, y):
-        x: ft.Var((10, 10, 32), "int32", "input", "gpu/global")
-        y: ft.Var((10, 10), "int32", "output", "gpu/global")
+        x: ft.Var[(10, 10, 32), "int32", "input", "gpu/global"]
+        y: ft.Var[(10, 10), "int32", "output", "gpu/global"]
         'nid: L0'
         for i in range(3):
             'nid: L1'
@@ -381,9 +381,9 @@ def test_syncthreads_split_branch_with_else():
 
     @ft.transform
     def test(x, y, z):
-        x: ft.Var((4, 256), "int32", "input", "gpu/global")
-        y: ft.Var((4,), "int32", "output", "gpu/global")
-        z: ft.Var((4,), "int32", "inout", "gpu/global")
+        x: ft.Var[(4, 256), "int32", "input", "gpu/global"]
+        y: ft.Var[(4,), "int32", "output", "gpu/global"]
+        z: ft.Var[(4,), "int32", "inout", "gpu/global"]
         "nid: L0"
         for i in range(0, 4):
             t = ft.create_var((2,), "int32", "gpu/shared")
@@ -444,10 +444,10 @@ def test_syncthreads_split_branch_and_vardef():
 
     @ft.transform
     def test(x, y, z1, z2):
-        x: ft.Var((4, 256), "int32", "input", "gpu/global")
-        y: ft.Var((4,), "int32", "output", "gpu/global")
-        z1: ft.Var((4,), "int32", "inout", "gpu/global")
-        z2: ft.Var((4,), "int32", "inout", "gpu/global")
+        x: ft.Var[(4, 256), "int32", "input", "gpu/global"]
+        y: ft.Var[(4,), "int32", "output", "gpu/global"]
+        z1: ft.Var[(4,), "int32", "inout", "gpu/global"]
+        z2: ft.Var[(4,), "int32", "inout", "gpu/global"]
         "nid: L0"
         for i in range(0, 4):
             t = ft.create_var((256,), "int32", "gpu/shared")
@@ -496,10 +496,10 @@ def test_syncthreads_split_branch_and_vardef_with_else():
 
     @ft.transform
     def test(x, y, z1, z2):
-        x: ft.Var((4, 256), "int32", "input", "gpu/global")
-        y: ft.Var((4,), "int32", "output", "gpu/global")
-        z1: ft.Var((4,), "int32", "inout", "gpu/global")
-        z2: ft.Var((4,), "int32", "inout", "gpu/global")
+        x: ft.Var[(4, 256), "int32", "input", "gpu/global"]
+        y: ft.Var[(4,), "int32", "output", "gpu/global"]
+        z1: ft.Var[(4,), "int32", "inout", "gpu/global"]
+        z2: ft.Var[(4,), "int32", "inout", "gpu/global"]
         "nid: L0"
         for i in range(0, 4):
             t = ft.create_var((2,), "int32", "gpu/shared")
@@ -579,8 +579,8 @@ def test_syncwarp():
 
     @ft.transform
     def test(x, y):
-        x: ft.Var((4, 4), "int32", "input", "gpu/global")
-        y: ft.Var((4, 4), "int32", "output", "gpu/global")
+        x: ft.Var[(4, 4), "int32", "input", "gpu/global"]
+        y: ft.Var[(4, 4), "int32", "output", "gpu/global"]
         "nid: L0"
         for i in range(0, 4):
             t = ft.create_var((4,), "int32", "gpu/shared")

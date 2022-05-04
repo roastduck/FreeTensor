@@ -6,9 +6,9 @@ def test_basic():
 
     @ft.transform
     def test(a, b, c):
-        a: ft.Var((1000, 1000), "float32", "input", "cpu")
-        b: ft.Var((1000, 1000), "float32", "input", "cpu")
-        c: ft.Var((1000, 1000), "float32", "output", "cpu")
+        a: ft.Var[(1000, 1000), "float32", "input", "cpu"]
+        b: ft.Var[(1000, 1000), "float32", "input", "cpu"]
+        c: ft.Var[(1000, 1000), "float32", "output", "cpu"]
         'nid: Li'
         for i in range(1000):
             for j in range(1000):
@@ -28,11 +28,11 @@ def test_fission_when_prefer_libs():
 
     @ft.transform
     def test(a, b1, b2, c1, c2):
-        a: ft.Var((1000, 1000), "float32", "input", "cpu")
-        b1: ft.Var((1000, 1000), "float32", "input", "cpu")
-        b2: ft.Var((1000, 1000), "float32", "input", "cpu")
-        c1: ft.Var((1000, 1000), "float32", "inout", "cpu")
-        c2: ft.Var((1000, 1000), "float32", "inout", "cpu")
+        a: ft.Var[(1000, 1000), "float32", "input", "cpu"]
+        b1: ft.Var[(1000, 1000), "float32", "input", "cpu"]
+        b2: ft.Var[(1000, 1000), "float32", "input", "cpu"]
+        c1: ft.Var[(1000, 1000), "float32", "inout", "cpu"]
+        c2: ft.Var[(1000, 1000), "float32", "inout", "cpu"]
         'nid: Li'
         'prefer_libs'
         for i in range(1000):

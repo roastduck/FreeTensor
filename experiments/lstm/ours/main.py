@@ -15,13 +15,13 @@ def compile_all(n_faces, in_feats, out_feats, device, ad_save_all):
 
     @ft.transform
     def inference(adj, x, w0, w1, w2, w3, y):
-        adj: ft.Var((n_faces, 3), "int32", "input", mtype)
-        x: ft.Var((n_faces, in_feats), "float32", "input", mtype)
-        w0: ft.Var((in_feats, out_feats), "float32", "input", mtype)
-        w1: ft.Var((in_feats, out_feats), "float32", "input", mtype)
-        w2: ft.Var((in_feats, out_feats), "float32", "input", mtype)
-        w3: ft.Var((in_feats, out_feats), "float32", "input", mtype)
-        y: ft.Var((n_faces, out_feats), "float32", "output", mtype)
+        adj: ft.Var[(n_faces, 3), "int32", "input", mtype]
+        x: ft.Var[(n_faces, in_feats), "float32", "input", mtype]
+        w0: ft.Var[(in_feats, out_feats), "float32", "input", mtype]
+        w1: ft.Var[(in_feats, out_feats), "float32", "input", mtype]
+        w2: ft.Var[(in_feats, out_feats), "float32", "input", mtype]
+        w3: ft.Var[(in_feats, out_feats), "float32", "input", mtype]
+        y: ft.Var[(n_faces, out_feats), "float32", "output", mtype]
 
         for i in range(n_faces):
             sum1 = zeros((in_feats,), "float32", mtype)
@@ -212,13 +212,13 @@ def compile_all(in_feats, hidden_feats, length, device):
 
     @ft.transform
     def inference(x, y, w, u, b):
-        x: ft.Var((length, in_feats), "float32", "input", mtype)
-        y: ft.Var((hidden_feats,), "float32", "output", mtype)
+        x: ft.Var[(length, in_feats), "float32", "input", mtype]
+        y: ft.Var[(hidden_feats,), "float32", "output", mtype]
         w: ft.Var((4, in_feats, hidden_feats), "float32", "input",
                        mtype)
         u: ft.Var((4, hidden_feats, hidden_feats), "float32", "input",
                        mtype)
-        b: ft.Var((4, hidden_feats), "float32", "input", mtype)
+        b: ft.Var[(4, hidden_feats), "float32", "input", mtype]
         h = ft.create_var((hidden_feats,), "float32", mtype)
         c = ft.create_var((hidden_feats,), "float32", mtype)
         f = ft.create_var((4, hidden_feats), "float32", mtype)

@@ -230,7 +230,13 @@ def assign_stmt(name: str, value):
         return value
 
 
-class StagedTypeAnnotation(abc.ABC):
+class StagedTypeAnnotationMeta(abc.ABCMeta):
+    def __getitem__(self, args):
+        print(f'{self} ;;;; {args}')
+        return self(*args)
+
+
+class StagedTypeAnnotation(metaclass=StagedTypeAnnotationMeta):
 
     @abc.abstractmethod
     def annotate(self, name: str) -> VarRef:

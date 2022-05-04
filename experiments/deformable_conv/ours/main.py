@@ -19,10 +19,10 @@ def conv(x, w1, w2, y, n, c_in, c_out, h, w, k_h, k_w, device):
 
         @ft.transform
         def f(X, W1, W2, Y):
-            X: ft.Var((n, c_in, h, w), "float32", "input", mtype)
-            W1: ft.Var((k_h, k_w, 2, c_in, k_h, k_w), "float32", "input", mtype)
-            W2: ft.Var((c_out, c_in, k_h, k_w), "float32", "input", mtype)
-            Y: ft.Var((n, c_out, h, w), "float32", "output", mtype)
+            X: ft.Var[(n, c_in, h, w), "float32", "input", mtype]
+            W1: ft.Var[(k_h, k_w, 2, c_in, k_h, k_w), "float32", "input", mtype]
+            W2: ft.Var[(c_out, c_in, k_h, k_w), "float32", "input", mtype]
+            Y: ft.Var[(n, c_out, h, w), "float32", "output", mtype]
 
             "nid: Li"
             for i in range(n):
