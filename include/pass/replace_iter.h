@@ -22,9 +22,9 @@ class ReplaceIter : public Mutator {
   protected:
     Expr visit(const Var &op) override {
         if (replace_.count(op->name_)) {
-            return (*this)(replace_.at(op->name_));
+            return replace_.at(op->name_);
         } else {
-            return Mutator::visit(op);
+            return op;
         }
     }
 };

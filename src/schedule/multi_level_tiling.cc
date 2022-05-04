@@ -79,7 +79,7 @@ multiLevelTiling(Schedule &schedule, const ForsWithDataReuse &target,
 std::vector<std::pair<ID, int>> multiLevelTilingWithFusion(
     Schedule &schedule, const ForsWithDataReuse &target,
     const MultiLevelTilingAnnotation &annotation, const std::string &pat,
-    const ElementWiseInfo &toFuse, int level, MemType memType) {
+    const ElementWiseInfo &toFuse, int level, TargetType targetType) {
     auto tiles = multiLevelTiling(schedule, target, annotation, pat);
     std::string fusePat = pat.substr(0, level) + "S";
     //    std::cout << "Level: " << level << "Fuse Pattern: " << fusePat <<
@@ -110,11 +110,30 @@ std::vector<std::pair<ID, int>> multiLevelTilingWithFusion(
                 schedule.fuse(tiles[i].first, fuseTiles[i].first);
         }
     }
-    auto &body = schedule.find(lastFuse).as<ForNode>()->body_;
+    auto body = schedule.find(lastFuse).as<ForNode>()->body_->id();
     try {
-        schedule.cache(body->id(), target.dest, memType);
+        schedule.cache(body, target.dest,
+                       targetType == TargetType::CPU ? MemType::CPU
+                                                     : MemType::GPULocal);
     } catch (const InvalidSchedule &e) {
     }
+    ID firstReduction = lastFuse;
+    for (int i = target.reductionLoops.size() - 1; i >= 0; i--) {
+        if (tiles[fuseTileSize + i].second > 1) {
+            firstReduction = tiles[fuseTileSize + i].first;
+            break;
+        }
+    }
+    if (targetType == TargetType::GPU) {
+        for (auto &read : target.reads) {
+            try {
+                body = schedule.find(firstReduction).as<ForNode>()->body_->id();
+                schedule.cache(body, read, MemType::GPUShared);
+            } catch (const InvalidSchedule &e) {
+            }
+        }
+    }
+
     return tiles;
 }
 

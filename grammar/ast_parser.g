@@ -5,7 +5,6 @@ options {
 }
 
 @parser::postinclude {
-    #include <iostream>
     #include <string>
     #include <vector>
 
@@ -301,7 +300,7 @@ expr returns [Expr node]
       {
         $node = makeVar($var.name);
       }
-    | '(' expr0=expr QUESTION expr1=expr ':' expr2=expr ')'
+    | '(' expr0=expr '?' expr1=expr ':' expr2=expr ')'
       {
         $node = makeIfExpr($expr0.node, $expr1.node, $expr2.node);
       }
@@ -333,7 +332,7 @@ expr returns [Expr node]
       {
         $node = makeTanh($expr.node);
       }
-    | '(' expr ')' SQUARE
+    | SQUARE '(' expr ')'
       {
         $node = makeSquare($expr.node);
       }
@@ -343,11 +342,11 @@ expr returns [Expr node]
       }
     | CEIL '(' expr0=expr '/' expr1=expr ')'
       {
-        $node = makeFloorDiv($expr0.node, $expr1.node);
+        $node = makeCeilDiv($expr0.node, $expr1.node);
       }
     | ROUNDTO0 '(' expr0=expr '/' expr1=expr ')'
       {
-        $node = makeFloorDiv($expr0.node, $expr1.node);
+        $node = makeRoundTowards0Div($expr0.node, $expr1.node);
       }
     | FLOOR '(' expr ')'
       {

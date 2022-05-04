@@ -354,3 +354,23 @@ def test_error_modifying_a_var_when_borrowed_as_a_slice():
                 y[i] = x_slice[i]
         func = ft.lower(ft.Func("main", ["x", "y", "offset"], [], ft.pop_ast()),
                         ft.CPU())
+
+
+def test_target_language_keyword_as_name():
+    with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+        with ft.For("for", 0, 4) as i:
+            y[i] = x[i] + 1
+
+    func = ft.lower(ft.Func("main", ["x", "y"], [], ft.pop_ast()), ft.CPU())
+    code = ft.codegen(func, ft.CPU())
+    print(code)
+    x_np = np.array([1, 2, 3, 4], dtype="int32")
+    y_np = np.zeros((4,), dtype="int32")
+    x_arr = ft.Array(x_np, ft.Device(ft.CPU()))
+    y_arr = ft.Array(y_np, ft.Device(ft.CPU()))
+    ft.Driver(func, code, ft.Device(ft.CPU()))(x=x_arr, y=y_arr)
+    y_np = y_arr.numpy()
+
+    y_std = np.array([2, 3, 4, 5], dtype="int32")
+    assert np.array_equal(y_np, y_std)

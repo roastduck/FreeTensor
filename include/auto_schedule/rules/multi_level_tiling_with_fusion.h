@@ -16,18 +16,16 @@ class MultiLevelTilingWithFusionRule : public Rule {
     ElementWiseInfo toFuse_;
     std::string pat_;
     std::vector<int> fuseLevels_;
-    MemType memType_;
+    TargetType targetType_;
 
   public:
-    MultiLevelTilingWithFusionRule(TargetType target) {
+    MultiLevelTilingWithFusionRule(TargetType target) : targetType_(target) {
         if (target == TargetType::CPU) {
             pat_ = "SSRSRS";
             fuseLevels_ = {1, 2};
-            memType_ = MemType::CPU;
         } else {
             pat_ = "SSSRRSRS";
             fuseLevels_ = {3};
-            memType_ = MemType::GPULocal;
         }
     }
     RuleStatus analyze(const Sketch &sketch) override;
@@ -35,7 +33,7 @@ class MultiLevelTilingWithFusionRule : public Rule {
 };
 
 class MultiLevelTilingWithFusionPart : public MultiLevelTilingPart {
-    MemType memType_;
+    TargetType targetType_;
     int level_;
     ElementWiseInfo toFuse_;
 
@@ -43,7 +41,8 @@ class MultiLevelTilingWithFusionPart : public MultiLevelTilingPart {
     void genRandAnnotation(std::default_random_engine &gen) override;
     explicit MultiLevelTilingWithFusionPart(ForsWithDataReuse fors,
                                             ElementWiseInfo toFuse, int level,
-                                            std::string pat, MemType memType);
+                                            std::string pat,
+                                            TargetType targetType);
     void apply(Schedule &schedule, SketchTarget &target) override;
     bool mutate(std::default_random_engine &gen) override;
     bool crossover(const SketchPart &part,
@@ -55,6 +54,25 @@ class MultiLevelTilingWithFusionPart : public MultiLevelTilingPart {
     }
     [[nodiscard]] SketchPart clone() const override {
         return Ref<MultiLevelTilingWithFusionPart>::make(*this);
+    }
+    void printAnnotation() {
+        std::cout << "/*space: */{\n";
+        for (const auto &anno : annotation_.spaceLoopTiling) {
+            std::cout << "\t{";
+            for (const auto &i : anno) {
+                std::cout << i << ", ";
+            }
+            std::cout << "},\n";
+        }
+        std::cout << "},\n/*reduction: */{\n";
+        for (const auto &anno : annotation_.reductionLoopTiling) {
+            std::cout << "\t{";
+            for (const auto &i : anno) {
+                std::cout << i << ", ";
+            }
+            std::cout << "},\n";
+        }
+        std::cout << "}" << std::endl;
     }
 };
 

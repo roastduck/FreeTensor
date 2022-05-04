@@ -8,6 +8,7 @@
 
 #include <array>
 #include <random>
+#include <utility>
 
 namespace freetensor {
 
@@ -53,6 +54,9 @@ class MultiLevelTilingPart : public SketchPartNode {
     }
     [[nodiscard]] SketchPart clone() const override {
         return Ref<MultiLevelTilingPart>::make(*this);
+    }
+    void setAnnotation(MultiLevelTilingAnnotation anno) {
+        annotation_ = std::move(anno);
     }
 };
 

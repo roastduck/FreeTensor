@@ -197,6 +197,28 @@ def test_prop_iter_different_iter():
     assert std.match(ast)
 
 
+def test_prop_iter_different_iter_non_linear():
+    with ft.VarDef("y", (16,), "int32", "output", "cpu") as y:
+        ft.MarkNid("T")
+        with ft.VarDef("t", (16,), "int32", "cache", "cpu") as t:
+            with ft.For("i", 0, 4) as i:
+                with ft.For("j", 0, 4) as j:
+                    t[i * 4 + j] = i
+            with ft.For("k", 0, 16) as k:
+                y[k] = t[k]
+    ast = ft.pop_ast()
+    print(ast)
+    ast = ft.lower(ast)
+    print(ast)
+
+    with ft.VarDef("y", (16,), "int32", "output", "cpu") as y:
+        with ft.For("k", 0, 16) as k:
+            y[k] = k // 4
+    std = ft.use_builtin_div(ft.pop_ast())
+
+    assert std.match(ast)
+
+
 def test_prop_iter_different_instance_no_prop():
     with ft.VarDef([("y1", (), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):
