@@ -196,7 +196,7 @@ def test_for_range():
 def test_std_func_alias():
 
     def test(x):
-        ft.core.declare_var(x, (4, 4), "float32", "output", "cpu")
+        x: ft.Var((4, 4), "float32", "output", "cpu")
         x[2, 3] = 2.0
         x[1, 0] = 3.0
 
@@ -222,10 +222,10 @@ def test_assert():
 
     @ft.transform
     def test(x1, x2, y1, y2):
-        ft.core.declare_var(x1, (4,), "int32", "input", "cpu")
-        ft.core.declare_var(x2, (4,), "int32", "input", "cpu")
-        ft.core.declare_var(y1, (4,), "int32", "output", "cpu")
-        ft.core.declare_var(y2, (4,), "int32", "output", "cpu")
+        x1: ft.Var((4,), "int32", "input", "cpu")
+        x2: ft.Var((4,), "int32", "input", "cpu")
+        y1: ft.Var((4,), "int32", "output", "cpu")
+        y2: ft.Var((4,), "int32", "output", "cpu")
         for i in range(4):
             y1[i] = x1[i] + x2[i]
             assert x1[i] < x2[i]

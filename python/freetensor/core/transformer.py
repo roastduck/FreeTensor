@@ -364,20 +364,6 @@ var = staged_callable(var_staging, var_fallback)
 '''Create a IR variable with given initializer.'''
 
 
-def declare_var_staging(name, shape, dtype, atype, mtype):
-    return StagingContext.register_implicit_scope(
-        _VarDef(prepare_vardef(name, override=True), shape, dtype, atype,
-                mtype))
-
-
-def declare_var_fallback(name, shape, dtype, atype, mtype):
-    pass
-
-
-declare_var = staged_callable(declare_var_staging, declare_var_fallback)
-'''Declare parameter as a variable.'''
-
-
 def capture_var_fallback(arr: ffi.Array, name: str = 'captured'):
     return arr.numpy()
 
@@ -401,6 +387,7 @@ class Var(StagedTypeAnnotation):
         return StagingContext.register_implicit_scope(
             _VarDef(prepare_vardef(name), self.shape, self.dtype, self.atype,
                     self.mtype))
+
 
 class dynamic_range(StagedIterable):
     '''Dynamic range that generates For loop in IR tree.'''
@@ -560,28 +547,12 @@ class Transformer(ast.NodeTransformer):
 
     def visit_Expr(self, old_node: ast.Expr) -> Any:
         '''Rule:
-        `declare_var(x, ...)` -> `x = declare_var(x, ...)`: x is changed from a name string to a VarRef
         `'nid: ...'` -> `mark_nid('...')`: mark next statement id
         `'no_deps: ...'` -> `mark_no_deps('...')`: mark next loop no_deps
         `'prefer_libs'` -> `mark_prefer_libs()`: mark prefer_libs
         '''
         node: ast.Expr = self.generic_visit(old_node)
-        if isinstance(node.value, ast.Call):
-            func = node.value.func
-            if isinstance(func, ast.Attribute):
-                func = func.attr
-            elif isinstance(func, ast.Name):
-                func = func.id
-            if func == 'declare_var':
-                target = node.value.args[0]
-                if not isinstance(target, ast.Name):
-                    raise TransformError(
-                        'declare_var is only allowed on top-level parameter',
-                        self.filename, self.base_lineno, target)
-                node.value.args[0] = ast.Constant(target.id)
-                target = ast.Name(target.id, ast.Store())
-                node = ast.Assign([target], node.value)
-        elif isinstance(node.value, ast.Constant) and isinstance(
+        if isinstance(node.value, ast.Constant) and isinstance(
                 node.value.value, str):
             text = node.value.value
             if text.startswith('nid: '):
