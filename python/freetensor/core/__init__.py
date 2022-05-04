@@ -50,9 +50,9 @@ from .codegen import codegen
 from .driver import *
 from .config import *
 
-from .transformer import (transform, inline, create_var, var, declare_var,
-                          capture_var, StagingError, StagedAssignable,
-                          StagedIterable)
+from .transformer import (transform, inline, create_var, var, capture_var, Var,
+                          StagingError, StagedAssignable, StagedIterable,
+                          StagedTypeAnnotation)
 
 from .meta import *
 from .auto_schedule import *

@@ -53,9 +53,9 @@ def compile_all(h, w, n_verts, n_faces, device, ad_save_all):
 
     @ft.transform
     def inference(vertices, faces, y):
-        ft.declare_var(vertices, (n_verts, 3), "float32", "input", mtype)
-        ft.declare_var(faces, (n_faces, 3), "int32", "input", mtype)
-        ft.declare_var(y, (n_faces, h, w), "float32", "output", mtype)
+        vertices: ft.Var[(n_verts, 3), "float32", "input", mtype]
+        faces: ft.Var[(n_faces, 3), "int32", "input", mtype]
+        y: ft.Var[(n_faces, h, w), "float32", "output", mtype]
         "nid: Li"
         for i in range(n_faces):
             v = ft.create_var((3, 2), "float32", mtype)

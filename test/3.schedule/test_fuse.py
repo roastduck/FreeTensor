@@ -331,9 +331,9 @@ def test_fuse_no_deps_1():
 
     @ft.transform
     def test(ptr, edge1, edge2):
-        ft.declare_var(ptr, (11,), "int32", "input", "cpu")
-        ft.declare_var(edge1, (50,), "int32", "input", "cpu")
-        ft.declare_var(edge2, (50,), "int32", "output", "cpu")
+        ptr: ft.Var[(11,), "int32", "input", "cpu"]
+        edge1: ft.Var[(50,), "int32", "input", "cpu"]
+        edge2: ft.Var[(50,), "int32", "output", "cpu"]
         'nid: Li1'
         'no_deps: edge2'
         for i in range(10):
@@ -356,10 +356,10 @@ def test_fuse_no_deps_2():
 
     @ft.transform
     def test(ptr, edge1, edge2):
-        ft.declare_var(ptr, (11,), "int32", "input", "cpu")
-        ft.declare_var(edge1, (50,), "int32", "input", "cpu")
-        ft.declare_var(edge2, (50,), "int32", "output", "cpu")
-        ft.declare_var(foobar, (10,), "int32", "output", "cpu")
+        ptr: ft.Var[(11,), "int32", "input", "cpu"]
+        edge1: ft.Var[(50,), "int32", "input", "cpu"]
+        edge2: ft.Var[(50,), "int32", "output", "cpu"]
+        foobar: ft.Var[(10,), "int32", "output", "cpu"]
         'nid: Li1'
         'no_deps: edge2'
         for i in range(10):
@@ -381,9 +381,9 @@ def test_fuse_no_deps_3():
 
     @ft.transform
     def test(ptr, edge1, edge2):
-        ft.declare_var(ptr, (11,), "int32", "input", "cpu")
-        ft.declare_var(edge1, (50,), "int32", "input", "cpu")
-        ft.declare_var(edge2, (50,), "int32", "output", "cpu")
+        ptr: ft.Var[(11,), "int32", "input", "cpu"]
+        edge1: ft.Var[(50,), "int32", "input", "cpu"]
+        edge2: ft.Var[(50,), "int32", "output", "cpu"]
         'nid: Li1'
         'no_deps: edge2'
         for i in range(10):

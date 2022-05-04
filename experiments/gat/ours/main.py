@@ -35,13 +35,13 @@ def compile_all(num_v, num_e, feat_len, device):
 
     @ft.transform
     def inference(ptr, idx, feat, weight, attn_l, attn_r, y):
-        ft.declare_var(ptr, (num_v + 1,), "int32", "input", mtype)
-        ft.declare_var(idx, (num_e,), "int32", "input", mtype)
-        ft.declare_var(feat, (num_v, feat_len), "float32", "input", mtype)
-        ft.declare_var(weight, (feat_len, feat_len), "float32", "input", mtype)
-        ft.declare_var(attn_l, (feat_len,), "float32", "input", mtype)
-        ft.declare_var(attn_r, (feat_len,), "float32", "input", mtype)
-        ft.declare_var(y, (num_v, feat_len), "float32", "output", mtype)
+        ptr: ft.Var[(num_v + 1,), "int32", "input", mtype]
+        idx: ft.Var[(num_e,), "int32", "input", mtype]
+        feat: ft.Var[(num_v, feat_len), "float32", "input", mtype]
+        weight: ft.Var[(feat_len, feat_len), "float32", "input", mtype]
+        attn_l: ft.Var[(feat_len,), "float32", "input", mtype]
+        attn_r: ft.Var[(feat_len,), "float32", "input", mtype]
+        y: ft.Var[(num_v, feat_len), "float32", "output", mtype]
 
         feat2 = matmul(feat, weight)
         att_l = matmul(feat2, attn_l)

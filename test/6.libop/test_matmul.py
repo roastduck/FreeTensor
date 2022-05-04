@@ -10,9 +10,9 @@ def test_mm():
 
     @ft.transform
     def f(a, b, y):
-        ft.declare_var(a, (4, 5), "float32", "input", "cpu")
-        ft.declare_var(b, (5, 6), "float32", "input", "cpu")
-        ft.declare_var(y, (4, 6), "float32", "output", "cpu")
+        a: ft.Var[(4, 5), "float32", "input", "cpu"]
+        b: ft.Var[(5, 6), "float32", "input", "cpu"]
+        y: ft.Var[(4, 6), "float32", "output", "cpu"]
         "nid: einsum"
         libop.matmul_(a, b, y)
 
@@ -40,9 +40,9 @@ def test_bmm_1():
 
     @ft.transform
     def f(a, b, y):
-        ft.declare_var(a, (2, 4, 5), "float32", "input", "cpu")
-        ft.declare_var(b, (2, 5, 6), "float32", "input", "cpu")
-        ft.declare_var(y, (2, 4, 6), "float32", "output", "cpu")
+        a: ft.Var[(2, 4, 5), "float32", "input", "cpu"]
+        b: ft.Var[(2, 5, 6), "float32", "input", "cpu"]
+        y: ft.Var[(2, 4, 6), "float32", "output", "cpu"]
         "nid: einsum"
         libop.matmul_(a, b, y)
 
@@ -70,9 +70,9 @@ def test_bmm_2():
 
     @ft.transform
     def f(a, b, y):
-        ft.declare_var(a, (2, 4, 5), "float32", "input", "cpu")
-        ft.declare_var(b, (5, 6), "float32", "input", "cpu")
-        ft.declare_var(y, (2, 4, 6), "float32", "output", "cpu")
+        a: ft.Var[(2, 4, 5), "float32", "input", "cpu"]
+        b: ft.Var[(5, 6), "float32", "input", "cpu"]
+        y: ft.Var[(2, 4, 6), "float32", "output", "cpu"]
         "nid: einsum"
         libop.matmul_(a, b, y)
 
@@ -100,9 +100,9 @@ def test_mv():
 
     @ft.transform
     def f(a, b, y):
-        ft.declare_var(a, (4, 5), "float32", "input", "cpu")
-        ft.declare_var(b, (5,), "float32", "input", "cpu")
-        ft.declare_var(y, (4,), "float32", "output", "cpu")
+        a: ft.Var[(4, 5), "float32", "input", "cpu"]
+        b: ft.Var[(5,), "float32", "input", "cpu"]
+        y: ft.Var[(4,), "float32", "output", "cpu"]
         "nid: einsum"
         libop.matmul_(a, b, y)
 
@@ -130,9 +130,9 @@ def test_vm():
 
     @ft.transform
     def f(a, b, y):
-        ft.declare_var(a, (5,), "float32", "input", "cpu")
-        ft.declare_var(b, (5, 6), "float32", "input", "cpu")
-        ft.declare_var(y, (6,), "float32", "output", "cpu")
+        a: ft.Var[(5,), "float32", "input", "cpu"]
+        b: ft.Var[(5, 6), "float32", "input", "cpu"]
+        y: ft.Var[(6,), "float32", "output", "cpu"]
         "nid: einsum"
         libop.matmul_(a, b, y)
 
@@ -160,10 +160,10 @@ def test_out_of_place():
 
     @ft.transform
     def f(a, b, y_shape, y):
-        ft.declare_var(a, (4, 5), "float32", "input", "cpu")
-        ft.declare_var(b, (5,), "float32", "input", "cpu")
-        ft.declare_var(y_shape, (1,), "int32", "output", "cpu")
-        ft.declare_var(y, (4,), "float32", "output", "cpu")
+        a: ft.Var[(4, 5), "float32", "input", "cpu"]
+        b: ft.Var[(5,), "float32", "input", "cpu"]
+        y_shape: ft.Var[(1,), "int32", "output", "cpu"]
+        y: ft.Var[(4,), "float32", "output", "cpu"]
         "nid: gemm"
         _y = libop.matmul(a, b)
         y_shape[0] = _y.shape(0)

@@ -15,15 +15,15 @@ def test_multi_level_tiling():
     # def test(w, x, y):
     def test(w, x, y, z, u):
         # def test(w, y):
-        ft.declare_var(w, (m, m, a, b), "int32", "input", "cpu")
-        # ft.declare_var(w, (a, b), "int32", "input", "cpu")
-        ft.declare_var(x, (m, m, b, a), "int32", "input", "cpu")
-        # ft.declare_var(x, (b, a), "int32", "input", "cpu")
-        # ft.declare_var(y, (a, b), "int32", "output", "cpu")
-        ft.declare_var(y, (m, m, a, a), "int32", "output", "cpu")
-        # ft.declare_var(y, (a, a), "int32", "output", "cpu")
-        ft.declare_var(z, (m, m, a, a), "int32", "output", "cpu")
-        ft.declare_var(u, (m, m), "int32", "output", "cpu")
+        w: ft.Var[(m, m, a, b), "int32", "input", "cpu"]
+        # w: ft.Var[(a, b), "int32", "input", "cpu"]
+        x: ft.Var[(m, m, b, a), "int32", "input", "cpu"]
+        # x: ft.Var[(b, a), "int32", "input", "cpu"]
+        # y: ft.Var[(a, b), "int32", "output", "cpu"]
+        y: ft.Var[(m, m, a, a), "int32", "output", "cpu"]
+        # y: ft.Var[(a, a), "int32", "output", "cpu"]
+        z: ft.Var[(m, m, a, a), "int32", "output", "cpu"]
+        u: ft.Var[(m, m), "int32", "output", "cpu"]
         # "nid: L1"
         # for i in range(a):
         #     "nid: L2"

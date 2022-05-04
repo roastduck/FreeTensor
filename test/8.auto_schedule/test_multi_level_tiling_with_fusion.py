@@ -12,10 +12,10 @@ def test_fusion():
 
     @ft.transform
     def test(w, x, y, z):
-        ft.declare_var(w, (m, m, a, b), "int32", "input", "cpu")
-        ft.declare_var(x, (m, m, b, a), "int32", "input", "cpu")
-        ft.declare_var(y, (1, 1, a, a), "int32", "cache", "cpu")
-        ft.declare_var(z, (m, m, a, a), "int32", "output", "cpu")
+        w: ft.Var[(m, m, a, b), "int32", "input", "cpu"]
+        x: ft.Var[(m, m, b, a), "int32", "input", "cpu"]
+        y: ft.Var[(1, 1, a, a), "int32", "cache", "cpu"]
+        z: ft.Var[(m, m, a, a), "int32", "output", "cpu"]
         "nid: L1"
         for i in range(m):
             "nid: L2"

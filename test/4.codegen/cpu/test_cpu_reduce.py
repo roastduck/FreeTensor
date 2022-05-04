@@ -12,8 +12,8 @@ def test_parallel_reduction():
 
     @ft.transform
     def test(x, y):
-        ft.declare_var(x, (4, 64), "int32", "input", "cpu")
-        ft.declare_var(y, (4,), "int32", "inout", "cpu")
+        x: ft.Var[(4, 64), "int32", "input", "cpu"]
+        y: ft.Var[(4,), "int32", "inout", "cpu"]
         "nid: L1"
         for i in range(0, 4):
             "nid: L2"
@@ -52,9 +52,9 @@ def test_parallel_reduction_on_2_vars():
 
     @ft.transform
     def test(x, y, z):
-        ft.declare_var(x, (4, 64), "int32", "input", "cpu")
-        ft.declare_var(y, (4,), "int32", "inout", "cpu")
-        ft.declare_var(z, (4,), "int32", "inout", "cpu")
+        x: ft.Var[(4, 64), "int32", "input", "cpu"]
+        y: ft.Var[(4,), "int32", "inout", "cpu"]
+        z: ft.Var[(4,), "int32", "inout", "cpu"]
         "nid: L1"
         for i in range(0, 4):
             "nid: L2"
@@ -92,8 +92,8 @@ def test_parallel_reduction_on_array():
 
     @ft.transform
     def test(x, y):
-        ft.declare_var(x, (4, 64, 64), "int32", "input", "cpu")
-        ft.declare_var(y, (4, 64), "int32", "inout", "cpu")
+        x: ft.Var[(4, 64, 64), "int32", "input", "cpu"]
+        y: ft.Var[(4, 64), "int32", "inout", "cpu"]
         "nid: L1"
         for i in range(0, 4):
             "nid: L2"
@@ -127,8 +127,8 @@ def test_parallel_reduction_on_array_range():
 
     @ft.transform
     def test(x, y):
-        ft.declare_var(x, (64, 64), "int32", "input", "cpu")
-        ft.declare_var(y, (64,), "int32", "inout", "cpu")
+        x: ft.Var[(64, 64), "int32", "input", "cpu"]
+        y: ft.Var[(64,), "int32", "inout", "cpu"]
         "nid: L1"
         for i in range(0, 4):
             "nid: L2"
@@ -162,8 +162,8 @@ def test_parallel_reduction_multiple_statements():
 
     @ft.transform
     def test(x, y):
-        ft.declare_var(x, (4, 64, 64), "int32", "input", "cpu")
-        ft.declare_var(y, (4, 64), "int32", "inout", "cpu")
+        x: ft.Var[(4, 64, 64), "int32", "input", "cpu"]
+        y: ft.Var[(4, 64), "int32", "inout", "cpu"]
         "nid: L1"
         for i in range(0, 4):
             "nid: L2"
@@ -199,8 +199,8 @@ def test_atomic_reduction():
 
     @ft.transform
     def test(x, y):
-        ft.declare_var(x, (4, 64), "int32", "input", "cpu")
-        ft.declare_var(y, (4, 2), "int32", "inout", "cpu")
+        x: ft.Var[(4, 64), "int32", "input", "cpu"]
+        y: ft.Var[(4, 2), "int32", "inout", "cpu"]
         "nid: L1"
         for i in range(0, 4):
             "nid: L2"
@@ -239,8 +239,8 @@ def test_atomic_reduction_2_stmts_on_1_var():
 
     @ft.transform
     def test(x, y):
-        ft.declare_var(x, (4, 64), "int32", "input", "cpu")
-        ft.declare_var(y, (4, 64), "int32", "inout", "cpu")
+        x: ft.Var[(4, 64), "int32", "input", "cpu"]
+        y: ft.Var[(4, 64), "int32", "inout", "cpu"]
         "nid: L1"
         for i in range(0, 4):
             "nid: L2"
@@ -275,8 +275,8 @@ def test_atomic_reduction_cache():
 
     @ft.transform
     def test(x, y):
-        ft.declare_var(x, (4, 64, 10), "int32", "input", "cpu")
-        ft.declare_var(y, (4, 2), "int32", "inout", "cpu")
+        x: ft.Var[(4, 64, 10), "int32", "input", "cpu"]
+        y: ft.Var[(4, 2), "int32", "inout", "cpu"]
         "nid: L1"
         for i in range(0, 4):
             "nid: L2"
@@ -310,8 +310,8 @@ def test_atomic_reduction_cache_array():
 
     @ft.transform
     def test(x, y):
-        ft.declare_var(x, (4, 64, 10, 3), "int32", "input", "cpu")
-        ft.declare_var(y, (4, 2, 3), "int32", "inout", "cpu")
+        x: ft.Var[(4, 64, 10, 3), "int32", "input", "cpu"]
+        y: ft.Var[(4, 2, 3), "int32", "inout", "cpu"]
         "nid: L1"
         for i in range(0, 4):
             "nid: L2"
@@ -347,8 +347,8 @@ def test_atomic_reduction_no_cache_array():
 
     @ft.transform
     def test(x, y):
-        ft.declare_var(x, (4, 64, 10, 3), "int32", "input", "cpu")
-        ft.declare_var(y, (4, 2, 300), "int32", "inout", "cpu")
+        x: ft.Var[(4, 64, 10, 3), "int32", "input", "cpu"]
+        y: ft.Var[(4, 2, 300), "int32", "inout", "cpu"]
         "nid: L1"
         for i in range(0, 4):
             "nid: L2"
@@ -375,8 +375,8 @@ def test_simultenous_parallel_and_atomic_reduction():
 
     @ft.transform
     def test(x, y):
-        ft.declare_var(x, (4, 64), "int32", "input", "cpu")
-        ft.declare_var(y, (4, 2), "int32", "inout", "cpu")
+        x: ft.Var[(4, 64), "int32", "input", "cpu"]
+        y: ft.Var[(4, 2), "int32", "inout", "cpu"]
         "nid: L1"
         for i in range(0, 4):
             "nid: L2"
@@ -418,8 +418,8 @@ def test_serial_reduction_1():
 
     @ft.transform
     def test(x, y):
-        ft.declare_var(x, (4, 64), "int32", "input", "cpu")
-        ft.declare_var(y, (4,), "int32", "inout", "cpu")
+        x: ft.Var[(4, 64), "int32", "input", "cpu"]
+        y: ft.Var[(4,), "int32", "inout", "cpu"]
         "nid: L1"
         for i in range(0, 4):
             "nid: L2"
@@ -458,8 +458,8 @@ def test_serial_reduction_2():
 
     @ft.transform
     def test(x, y):
-        ft.declare_var(x, (4, 64), "int32", "input", "cpu")
-        ft.declare_var(y, (4,), "int32", "output", "cpu")
+        x: ft.Var[(4, 64), "int32", "input", "cpu"]
+        y: ft.Var[(4,), "int32", "output", "cpu"]
         "nid: L1"
         for i in range(0, 4):
             local_sum = ft.create_var((), "int32", "cpu")

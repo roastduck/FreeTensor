@@ -15,16 +15,16 @@ def test_multi_level_tiling():
     # def test(w, x, y):
     def test(w, x, c, z):
         # def test(w, y):
-        ft.declare_var(w, (a, b), "float32", "input", "gpu/global")
-        # ft.declare_var(w, (a, b), "int32", "input", "cpu")
-        ft.declare_var(x, (b, a), "float32", "input", "gpu/global")
-        ft.declare_var(c, (b, a), "float32", "input", "gpu/global")
-        # ft.declare_var(x, (b, a), "int32", "input", "cpu")
-        # ft.declare_var(y, (a, b), "int32", "output", "cpu")
+        w: ft.Var[(a, b), "float32", "input", "gpu/global"]
+        # w: ft.Var[(a, b), "int32", "input", "cpu"]
+        x: ft.Var[(b, a), "float32", "input", "gpu/global"]
+        c: ft.Var[(b, a), "float32", "input", "gpu/global"]
+        # x: ft.Var[(b, a), "int32", "input", "cpu"]
+        # y: ft.Var[(a, b), "int32", "output", "cpu"]
         y = ft.create_var((a, a), "float32", "gpu/local")
-        # ft.declare_var(y, (a, a), "int32", "output", "cpu")
-        ft.declare_var(z, (a, a), "float32", "output", "gpu/global")
-        # ft.declare_var(u, (m, m), "int32", "output", "gpu/global")
+        # y: ft.Var[(a, a), "int32", "output", "cpu"]
+        z: ft.Var[(a, a), "float32", "output", "gpu/global"]
+        # u: ft.Var[(m, m), "int32", "output", "gpu/global"]
         # "nid: L1"
         # for i in range(a):
         #     "nid: L2"

@@ -10,8 +10,8 @@ def test_static():
 
     @ft.transform
     def f(x, y):
-        ft.declare_var(x, (3, 1), "float32", "input", "cpu")
-        ft.declare_var(y, (3, 5), "float32", "output", "cpu")
+        x: ft.Var[(3, 1), "float32", "input", "cpu"]
+        y: ft.Var[(3, 5), "float32", "output", "cpu"]
         "nid: expand"
         libop.expand_(x, y)
 
@@ -36,9 +36,9 @@ def test_out_of_place():
 
     @ft.transform
     def f(x, y_shape, y):
-        ft.declare_var(x, (3, 1), "float32", "input", "cpu")
-        ft.declare_var(y_shape, (2,), "int32", "output", "cpu")
-        ft.declare_var(y, (3, 5), "float32", "output", "cpu")
+        x: ft.Var[(3, 1), "float32", "input", "cpu"]
+        y_shape: ft.Var[(2,), "int32", "output", "cpu"]
+        y: ft.Var[(3, 5), "float32", "output", "cpu"]
         "nid: expand"
         _y = libop.expand(
             x, ft.capture_var(ft.Array(np.array([3, 5], dtype=np.int32),

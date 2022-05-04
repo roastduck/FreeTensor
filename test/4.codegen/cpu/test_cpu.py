@@ -10,8 +10,8 @@ def test_omp_for():
 
     @ft.transform
     def test(x, y):
-        ft.declare_var(x, (4,), "int32", "input", "cpu")
-        ft.declare_var(y, (4,), "int32", "output", "cpu")
+        x: ft.Var[(4,), "int32", "input", "cpu"]
+        y: ft.Var[(4,), "int32", "output", "cpu"]
         "nid: L1"
         for i in range(0, 4):
             y[i] = x[i] + 1
@@ -43,8 +43,8 @@ def test_omp_for_2():
 
     @ft.transform
     def test(x, y):
-        ft.declare_var(x, (4, 4), "int32", "input", "cpu")
-        ft.declare_var(y, (4, 4), "int32", "output", "cpu")
+        x: ft.Var[(4, 4), "int32", "input", "cpu"]
+        y: ft.Var[(4, 4), "int32", "output", "cpu"]
         "nid: L1"
         for i in range(4):
             "nid: L2"
@@ -75,8 +75,8 @@ def test_omp_for_collapse_nested():
 
     @ft.transform
     def test(x, y):
-        ft.declare_var(x, (4, 4), "float32", "input", "cpu")
-        ft.declare_var(y, (4, 4), "float32", "output", "cpu")
+        x: ft.Var[(4, 4), "float32", "input", "cpu"]
+        y: ft.Var[(4, 4), "float32", "output", "cpu"]
         "nid: L1"
         for i in range(0, 4):
             "nid: L2"
@@ -105,8 +105,8 @@ def test_parallelize_parametric_access_1():
 
     @ft.transform
     def test(idx, y):
-        ft.declare_var(idx, (10,), "int32", "input", "cpu")
-        ft.declare_var(y, (100,), "int32", "inout", "cpu")
+        idx: ft.Var[(10,), "int32", "input", "cpu"]
+        y: ft.Var[(100,), "int32", "inout", "cpu"]
         "nid: L1"
         for i in range(10):
             "nid: L2"
@@ -129,8 +129,8 @@ def test_parallelize_parametric_access_2():
 
     @ft.transform
     def test(idx, y):
-        ft.declare_var(idx, (10,), "int32", "input", "cpu")
-        ft.declare_var(y, (100,), "int32", "inout", "cpu")
+        idx: ft.Var[(10,), "int32", "input", "cpu"]
+        y: ft.Var[(100,), "int32", "inout", "cpu"]
         "nid: L1"
         for i in range(10):
             "nid: L2"
@@ -153,8 +153,8 @@ def test_unroll_for():
 
     @ft.transform
     def test(x, y):
-        ft.declare_var(x, (4,), "int32", "input", "cpu")
-        ft.declare_var(y, (4,), "int32", "output", "cpu")
+        x: ft.Var[(4,), "int32", "input", "cpu"]
+        y: ft.Var[(4,), "int32", "output", "cpu"]
         "nid: L1"
         for i in range(0, 4):
             y[i] = x[i] + 1
@@ -187,8 +187,8 @@ def test_vectorize_for():
 
     @ft.transform
     def test(x, y):
-        ft.declare_var(x, (4,), "int32", "input", "cpu")
-        ft.declare_var(y, (4,), "int32", "output", "cpu")
+        x: ft.Var[(4,), "int32", "input", "cpu"]
+        y: ft.Var[(4,), "int32", "output", "cpu"]
         "nid: L1"
         for i in range(0, 4):
             y[i] = x[i] + 1

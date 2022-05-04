@@ -10,9 +10,9 @@ def test_same_static_shape():
 
     @ft.transform
     def f(x, y, out):
-        ft.declare_var(x, (4, 4), "float32", "input", "cpu")
-        ft.declare_var(y, (4, 4), "float32", "input", "cpu")
-        ft.declare_var(out, (4, 4), "float32", "output", "cpu")
+        x: ft.Var[(4, 4), "float32", "input", "cpu"]
+        y: ft.Var[(4, 4), "float32", "input", "cpu"]
+        out: ft.Var[(4, 4), "float32", "output", "cpu"]
         "nid: add"
         libop.add_(x, y, out)
 
@@ -39,9 +39,9 @@ def test_static_broadcast_shorter():
 
     @ft.transform
     def f(x, y, out):
-        ft.declare_var(x, (4,), "float32", "input", "cpu")
-        ft.declare_var(y, (4, 4), "float32", "input", "cpu")
-        ft.declare_var(out, (4, 4), "float32", "output", "cpu")
+        x: ft.Var[(4,), "float32", "input", "cpu"]
+        y: ft.Var[(4, 4), "float32", "input", "cpu"]
+        out: ft.Var[(4, 4), "float32", "output", "cpu"]
         "nid: add"
         libop.add_(x, y, out)
 
@@ -68,9 +68,9 @@ def test_static_broadcast_1_at_front():
 
     @ft.transform
     def f(x, y, out):
-        ft.declare_var(x, (1, 4), "float32", "input", "cpu")
-        ft.declare_var(y, (4, 4), "float32", "input", "cpu")
-        ft.declare_var(out, (4, 4), "float32", "output", "cpu")
+        x: ft.Var[(1, 4), "float32", "input", "cpu"]
+        y: ft.Var[(4, 4), "float32", "input", "cpu"]
+        out: ft.Var[(4, 4), "float32", "output", "cpu"]
         "nid: out_shape"
         out_shape = ft.create_var((2,), "int32", "cpu")
         "nid: add"
@@ -99,9 +99,9 @@ def test_static_broadcast_1_at_back():
 
     @ft.transform
     def f(x, y, out):
-        ft.declare_var(x, (4, 4), "float32", "input", "cpu")
-        ft.declare_var(y, (4, 1), "float32", "input", "cpu")
-        ft.declare_var(out, (4, 4), "float32", "output", "cpu")
+        x: ft.Var[(4, 4), "float32", "input", "cpu"]
+        y: ft.Var[(4, 1), "float32", "input", "cpu"]
+        out: ft.Var[(4, 4), "float32", "output", "cpu"]
         "nid: out_shape"
         out_shape = ft.create_var((2,), "int32", "cpu")
         "nid: add"
@@ -130,9 +130,9 @@ def test_different_dtype():
 
     @ft.transform
     def f(x, y, out):
-        ft.declare_var(x, (4, 4), "int32", "input", "cpu")
-        ft.declare_var(y, (4, 4), "float32", "input", "cpu")
-        ft.declare_var(out, (4, 4), "float32", "output", "cpu")
+        x: ft.Var[(4, 4), "int32", "input", "cpu"]
+        y: ft.Var[(4, 4), "float32", "input", "cpu"]
+        out: ft.Var[(4, 4), "float32", "output", "cpu"]
         "nid: out_shape"
         out_shape = ft.create_var((2,), "int32", "cpu")
         "nid: add"
@@ -161,10 +161,10 @@ def test_out_of_place():
 
     @ft.transform
     def f(x, y, out_shape, out):
-        ft.declare_var(x, (4, 4), "float32", "input", "cpu")
-        ft.declare_var(y, (4, 4), "float32", "input", "cpu")
-        ft.declare_var(out_shape, (2,), "int32", "output", "cpu")
-        ft.declare_var(out, (4, 4), "float32", "output", "cpu")
+        x: ft.Var[(4, 4), "float32", "input", "cpu"]
+        y: ft.Var[(4, 4), "float32", "input", "cpu"]
+        out_shape: ft.Var[(2,), "int32", "output", "cpu"]
+        out: ft.Var[(4, 4), "float32", "output", "cpu"]
         "nid: add"
         _out = libop.add(x, y)
         for i in range(2):
