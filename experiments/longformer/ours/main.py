@@ -19,13 +19,13 @@ def compile_all(w, dilation, dilation_heads, n_heads, seq_len, feat_len, device,
 
     @ft.transform
     def inference(Q, K, V, Y):
-        ft.declare_var(Q, (n_heads, seq_len, feat_len), "float32", "input",
+        Q: ft.Var((n_heads, seq_len, feat_len), "float32", "input",
                        mtype)
-        ft.declare_var(K, (n_heads, seq_len, feat_len), "float32", "input",
+        K: ft.Var((n_heads, seq_len, feat_len), "float32", "input",
                        mtype)
-        ft.declare_var(V, (n_heads, seq_len, feat_len), "float32", "input",
+        V: ft.Var((n_heads, seq_len, feat_len), "float32", "input",
                        mtype)
-        ft.declare_var(Y, (n_heads, seq_len, feat_len), "float32", "output",
+        Y: ft.Var((n_heads, seq_len, feat_len), "float32", "output",
                        mtype)
         for i in range(n_heads):
             for j in range(seq_len):

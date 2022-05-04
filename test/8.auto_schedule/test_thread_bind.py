@@ -12,10 +12,10 @@ def test_thread_bind():
 
     @ft.transform
     def test(w, x, y, z):
-        ft.declare_var(w, (m, m, a, b), "int32", "input", "gpu/global")
-        ft.declare_var(x, (m, m, b, a), "int32", "input", "gpu/global")
-        ft.declare_var(y, (1, 1, a, a), "int32", "cache", "gpu/global")
-        ft.declare_var(z, (m, m, a, a), "int32", "output", "gpu/global")
+        w: ft.Var((m, m, a, b), "int32", "input", "gpu/global")
+        x: ft.Var((m, m, b, a), "int32", "input", "gpu/global")
+        y: ft.Var((1, 1, a, a), "int32", "cache", "gpu/global")
+        z: ft.Var((m, m, a, a), "int32", "output", "gpu/global")
         "nid: L1"
         for i in range(m):
             "nid: L2"

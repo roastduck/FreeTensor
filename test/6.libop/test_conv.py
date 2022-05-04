@@ -10,9 +10,9 @@ def test_basic():
 
     @ft.transform
     def f(x, w, y):
-        ft.declare_var(x, (2, 3, 14, 14), "float32", "input", "cpu")
-        ft.declare_var(w, (8, 3, 3, 3), "float32", "input", "cpu")
-        ft.declare_var(y, (2, 8, 12, 12), "float32", "output", "cpu")
+        x: ft.Var((2, 3, 14, 14), "float32", "input", "cpu")
+        w: ft.Var((8, 3, 3, 3), "float32", "input", "cpu")
+        y: ft.Var((2, 8, 12, 12), "float32", "output", "cpu")
         "nid: conv"
         libop.conv_(x, w, None, y, auto_pad='VALID')
 
@@ -40,10 +40,10 @@ def test_bias():
 
     @ft.transform
     def f(x, w, b, y):
-        ft.declare_var(x, (2, 3, 14, 14), "float32", "input", "cpu")
-        ft.declare_var(w, (8, 3, 3, 3), "float32", "input", "cpu")
-        ft.declare_var(b, (8,), "float32", "input", "cpu")
-        ft.declare_var(y, (2, 8, 12, 12), "float32", "output", "cpu")
+        x: ft.Var((2, 3, 14, 14), "float32", "input", "cpu")
+        w: ft.Var((8, 3, 3, 3), "float32", "input", "cpu")
+        b: ft.Var((8,), "float32", "input", "cpu")
+        y: ft.Var((2, 8, 12, 12), "float32", "output", "cpu")
         "nid: conv"
         libop.conv_(x, w, b, y, auto_pad='VALID')
 
@@ -73,9 +73,9 @@ def test_same_pad():
 
     @ft.transform
     def f(x, w, y):
-        ft.declare_var(x, (2, 3, 14, 14), "float32", "input", "cpu")
-        ft.declare_var(w, (8, 3, 3, 3), "float32", "input", "cpu")
-        ft.declare_var(y, (2, 8, 14, 14), "float32", "output", "cpu")
+        x: ft.Var((2, 3, 14, 14), "float32", "input", "cpu")
+        w: ft.Var((8, 3, 3, 3), "float32", "input", "cpu")
+        y: ft.Var((2, 8, 14, 14), "float32", "output", "cpu")
         "nid: conv"
         libop.conv_(x, w, None, y, kernel_shape=(3, 3), auto_pad='SAME_UPPER')
 
@@ -103,9 +103,9 @@ def test_stride():
 
     @ft.transform
     def f(x, w, y):
-        ft.declare_var(x, (2, 3, 14, 14), "float32", "input", "cpu")
-        ft.declare_var(w, (8, 3, 3, 3), "float32", "input", "cpu")
-        ft.declare_var(y, (2, 8, 6, 6), "float32", "output", "cpu")
+        x: ft.Var((2, 3, 14, 14), "float32", "input", "cpu")
+        w: ft.Var((8, 3, 3, 3), "float32", "input", "cpu")
+        y: ft.Var((2, 8, 6, 6), "float32", "output", "cpu")
         "nid: conv"
         libop.conv_(x, w, None, y, auto_pad='VALID', strides=(2, 2))
 
@@ -133,9 +133,9 @@ def test_group():
 
     @ft.transform
     def f(x, w, y):
-        ft.declare_var(x, (2, 4, 14, 14), "float32", "input", "cpu")
-        ft.declare_var(w, (8, 2, 3, 3), "float32", "input", "cpu")
-        ft.declare_var(y, (2, 8, 12, 12), "float32", "output", "cpu")
+        x: ft.Var((2, 4, 14, 14), "float32", "input", "cpu")
+        w: ft.Var((8, 2, 3, 3), "float32", "input", "cpu")
+        y: ft.Var((2, 8, 12, 12), "float32", "output", "cpu")
         "nid: conv"
         libop.conv_(x, w, None, y, auto_pad='VALID', group=2)
 
@@ -163,9 +163,9 @@ def test_dilation():
 
     @ft.transform
     def f(x, w, y):
-        ft.declare_var(x, (2, 3, 14, 14), "float32", "input", "cpu")
-        ft.declare_var(w, (8, 3, 3, 3), "float32", "input", "cpu")
-        ft.declare_var(y, (2, 8, 10, 10), "float32", "output", "cpu")
+        x: ft.Var((2, 3, 14, 14), "float32", "input", "cpu")
+        w: ft.Var((8, 3, 3, 3), "float32", "input", "cpu")
+        y: ft.Var((2, 8, 10, 10), "float32", "output", "cpu")
         "nid: conv"
         libop.conv_(x, w, None, y, auto_pad='VALID', dilations=(2, 2))
 
@@ -193,10 +193,10 @@ def test_out_of_place():
 
     @ft.transform
     def f(x, w, y_shape, y):
-        ft.declare_var(x, (2, 3, 14, 14), "float32", "input", "cpu")
-        ft.declare_var(w, (8, 3, 3, 3), "float32", "input", "cpu")
-        ft.declare_var(y_shape, (4,), "int32", "output", "cpu")
-        ft.declare_var(y, (2, 8, 12, 12), "float32", "output", "cpu")
+        x: ft.Var((2, 3, 14, 14), "float32", "input", "cpu")
+        w: ft.Var((8, 3, 3, 3), "float32", "input", "cpu")
+        y_shape: ft.Var((4,), "int32", "output", "cpu")
+        y: ft.Var((2, 8, 12, 12), "float32", "output", "cpu")
         "nid: conv"
         _y = libop.conv(x, w, auto_pad='VALID')
         for i in range(4):

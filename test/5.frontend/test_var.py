@@ -5,8 +5,8 @@ def test_chained_subscript():
 
     @ft.transform
     def f(x, y):
-        ft.declare_var(x, (4, 4), "int32", "input", "cpu")
-        ft.declare_var(y, (4, 4), "int32", "output", "cpu")
+        x: ft.Var((4, 4), "int32", "input", "cpu")
+        y: ft.Var((4, 4), "int32", "output", "cpu")
         for i in range(4):
             for j in range(4):
                 y[i][j] = x[i][j] * 2
@@ -25,8 +25,8 @@ def test_select():
 
     @ft.transform
     def f(x, y):
-        ft.declare_var(x, (4, 4), "int32", "input", "cpu")
-        ft.declare_var(y, (4, 4), "int32", "output", "cpu")
+        x: ft.Var((4, 4), "int32", "input", "cpu")
+        y: ft.Var((4, 4), "int32", "output", "cpu")
         for i in range(4):
             for j in range(4):
                 y.select(j, 1).select(i,
@@ -47,9 +47,9 @@ def test_var_as_shape():
 
     @ft.transform
     def f(shape, x, y):
-        ft.declare_var(shape, (2,), "int32", "input", "cpu")
-        ft.declare_var(x, shape, "int32", "input", "cpu")
-        ft.declare_var(y, shape, "int32", "output", "cpu")
+        shape: ft.Var((2,), "int32", "input", "cpu")
+        x: ft.Var(shape, "int32", "input", "cpu")
+        y: ft.Var(shape, "int32", "output", "cpu")
         for i in range(shape[0]):
             for j in range(shape[1]):
                 y[i, j] = x[i, j] * 2
@@ -67,9 +67,9 @@ def test_var_as_index():
 
     @ft.transform
     def f(idx, x, y):
-        ft.declare_var(idx, (2,), "int32", "input", "cpu")
-        ft.declare_var(x, (4, 4), "int32", "input", "cpu")
-        ft.declare_var(y, (), "int32", "output", "cpu")
+        idx: ft.Var((2,), "int32", "input", "cpu")
+        x: ft.Var((4, 4), "int32", "input", "cpu")
+        y: ft.Var((), "int32", "output", "cpu")
         y[()] = x[idx]
         # TODO: Consider x[*idx]
 
@@ -84,9 +84,9 @@ def test_var_as_index_2():
 
     @ft.transform
     def f(idx, x, y):
-        ft.declare_var(idx, (2,), "int32", "input", "cpu")
-        ft.declare_var(x, (4, 4), "int32", "input", "cpu")
-        ft.declare_var(y, (), "int32", "output", "cpu")
+        idx: ft.Var((2,), "int32", "input", "cpu")
+        x: ft.Var((4, 4), "int32", "input", "cpu")
+        y: ft.Var((), "int32", "output", "cpu")
         y[()] = x[idx[0], idx[1]]
 
     with ft.VarDef([("idx", (2,), "int32", "input", "cpu"),

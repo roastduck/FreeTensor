@@ -10,8 +10,8 @@ def test_max_pooling_basic():
 
     @ft.transform
     def f(x, y):
-        ft.declare_var(x, (2, 3, 14, 14), "float32", "input", "cpu")
-        ft.declare_var(y, (2, 3, 12, 12), "float32", "output", "cpu")
+        x: ft.Var((2, 3, 14, 14), "float32", "input", "cpu")
+        y: ft.Var((2, 3, 12, 12), "float32", "output", "cpu")
         "nid: max_pool"
         libop.max_pool_(x, y, auto_pad='VALID', kernel_shape=[3, 3])
 
@@ -39,8 +39,8 @@ def test_max_pooling_same_padding():
 
     @ft.transform
     def f(x, y):
-        ft.declare_var(x, (2, 3, 14, 14), "float32", "input", "cpu")
-        ft.declare_var(y, (2, 3, 14, 14), "float32", "output", "cpu")
+        x: ft.Var((2, 3, 14, 14), "float32", "input", "cpu")
+        y: ft.Var((2, 3, 14, 14), "float32", "output", "cpu")
         "nid: y_shape"
         y_shape = ft.create_var((4,), "int32", "cpu")
         "nid: max_pool"
@@ -71,8 +71,8 @@ def test_max_pooling_stride():
 
     @ft.transform
     def f(x, y):
-        ft.declare_var(x, (2, 3, 12, 12), "float32", "input", "cpu")
-        ft.declare_var(y, (2, 3, 4, 4), "float32", "output", "cpu")
+        x: ft.Var((2, 3, 12, 12), "float32", "input", "cpu")
+        y: ft.Var((2, 3, 4, 4), "float32", "output", "cpu")
         "nid: max_pool"
         libop.max_pool_(x,
                         y,
@@ -104,8 +104,8 @@ def test_max_pooling_dilation():
 
     @ft.transform
     def f(x, y):
-        ft.declare_var(x, (2, 3, 14, 14), "float32", "input", "cpu")
-        ft.declare_var(y, (2, 3, 10, 10), "float32", "output", "cpu")
+        x: ft.Var((2, 3, 14, 14), "float32", "input", "cpu")
+        y: ft.Var((2, 3, 10, 10), "float32", "output", "cpu")
         "nid: max_pool"
         libop.max_pool_(x,
                         y,
@@ -138,9 +138,9 @@ def test_max_pooling_out_of_place():
 
     @ft.transform
     def f(x, y_shape, y):
-        ft.declare_var(x, (2, 3, 14, 14), "float32", "input", "cpu")
-        ft.declare_var(y_shape, (4,), "int32", "output", "cpu")
-        ft.declare_var(y, (2, 3, 12, 12), "float32", "output", "cpu")
+        x: ft.Var((2, 3, 14, 14), "float32", "input", "cpu")
+        y_shape: ft.Var((4,), "int32", "output", "cpu")
+        y: ft.Var((2, 3, 12, 12), "float32", "output", "cpu")
         "nid: max_pool"
         _y = libop.max_pool(x, auto_pad='VALID', kernel_shape=[3, 3])
         for i in range(4):
@@ -179,8 +179,8 @@ def test_global_avg_pool():
 
     @ft.transform
     def f(x, y):
-        ft.declare_var(x, (2, 3, 14, 14), "float32", "input", "cpu")
-        ft.declare_var(y, (2, 3), "float32", "output", "cpu")
+        x: ft.Var((2, 3, 14, 14), "float32", "input", "cpu")
+        y: ft.Var((2, 3), "float32", "output", "cpu")
         "nid: max_pool"
         libop.global_avg_pool_(x, y)
 
@@ -207,9 +207,9 @@ def test_global_avg_pool_out_of_place():
 
     @ft.transform
     def f(x, y_shape, y):
-        ft.declare_var(x, (2, 3, 14, 14), "float32", "input", "cpu")
-        ft.declare_var(y_shape, (2,), "int32", "output", "cpu")
-        ft.declare_var(y, (2, 3), "float32", "output", "cpu")
+        x: ft.Var((2, 3, 14, 14), "float32", "input", "cpu")
+        y_shape: ft.Var((2,), "int32", "output", "cpu")
+        y: ft.Var((2, 3), "float32", "output", "cpu")
         "nid: max_pool"
         _y = libop.global_avg_pool(x)
         for i in range(2):

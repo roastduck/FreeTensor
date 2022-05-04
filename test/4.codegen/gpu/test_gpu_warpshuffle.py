@@ -11,8 +11,8 @@ def test_warpshuffle_reverse():
 
     @ft.transform
     def test(x, y):
-        ft.declare_var(x, (4, 32), "int32", "input", "gpu/global")
-        ft.declare_var(y, (4, 32), "int32", "output", "gpu/global")
+        x: ft.Var((4, 32), "int32", "input", "gpu/global")
+        y: ft.Var((4, 32), "int32", "output", "gpu/global")
         'nid: L0'
         for i in range(0, 4):
             value = ft.create_var((32,), "int32", "gpu/warp")
@@ -64,9 +64,9 @@ def test_warpshuffle_sum():
 
     @ft.transform
     def test(x, y, z):
-        ft.declare_var(x, (4, 32), "int32", "input", "gpu/global")
-        ft.declare_var(y, (4, 32), "int32", "input", "gpu/global")
-        ft.declare_var(z, (4, 32), "int32", "output", "gpu/global")
+        x: ft.Var((4, 32), "int32", "input", "gpu/global")
+        y: ft.Var((4, 32), "int32", "input", "gpu/global")
+        z: ft.Var((4, 32), "int32", "output", "gpu/global")
         'nid: L0'
         for i in range(0, 4):
             value1 = ft.create_var((32,), "int32", "gpu/warp")

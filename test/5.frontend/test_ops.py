@@ -6,8 +6,8 @@ import numpy as np
 def test_binary_op():
 
     def test(x, y):
-        ft.declare_var(x, (), "int32", "input", "cpu")
-        ft.declare_var(y, (), "int32", "output", "cpu")
+        x: ft.Var((), "int32", "input", "cpu")
+        y: ft.Var((), "int32", "output", "cpu")
         y[()] = x[()] * 2 + 1
 
     func = ft.lower(ft.transform(test), ft.CPU())
@@ -28,8 +28,8 @@ def test_binary_op():
 def test_bool_op():
 
     def test(x, y):
-        ft.declare_var(x, (4,), "int32", "input", "cpu")
-        ft.declare_var(y, (4,), "int32", "output", "cpu")
+        x: ft.Var((4,), "int32", "input", "cpu")
+        y: ft.Var((4,), "int32", "output", "cpu")
         y[0] = (x[0] != 0 and x[1] != 0) or (x[2] != 0 and x[3] != 0)
         y[1] = (x[0] != 0 or x[1] != 0) and (x[2] != 0 or x[2] != 0)
         y[2] = x[0] != 0 and x[1] != 0 and x[2] != 0
@@ -54,8 +54,8 @@ def test_bool_op():
 def test_unary_op():
 
     def test(x, y):
-        ft.declare_var(x, (4,), "int32", "input", "cpu")
-        ft.declare_var(y, (4,), "int32", "output", "cpu")
+        x: ft.Var((4,), "int32", "input", "cpu")
+        y: ft.Var((4,), "int32", "output", "cpu")
         for i in range(0, 4):
             y[i] = not x[i] != 0
 
@@ -78,8 +78,8 @@ def test_unary_op():
 def test_comparison_op():
 
     def test(x, y):
-        ft.declare_var(x, (4,), "int32", "input", "cpu")
-        ft.declare_var(y, (4,), "int32", "output", "cpu")
+        x: ft.Var((4,), "int32", "input", "cpu")
+        y: ft.Var((4,), "int32", "output", "cpu")
         y[0] = x[0] < x[1] <= x[1] == x[1] != x[2] >= x[2] > x[1]
         y[1] = x[1] != x[1]
         y[2] = x[1] == x[1] != x[1] == x[1]
@@ -104,9 +104,9 @@ def test_comparison_op():
 def test_if_expr():
 
     def test(x1, x2, y):
-        ft.declare_var(x1, (), "int32", "input", "cpu")
-        ft.declare_var(x2, (), "int32", "input", "cpu")
-        ft.declare_var(y, (), "int32", "output", "cpu")
+        x1: ft.Var((), "int32", "input", "cpu")
+        x2: ft.Var((), "int32", "input", "cpu")
+        y: ft.Var((), "int32", "output", "cpu")
         y[()] = x1[()] if x1[()] > 2 * x2[()] else x2[()]
 
     func = ft.lower(ft.transform(test), ft.CPU())

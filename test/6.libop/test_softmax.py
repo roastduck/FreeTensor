@@ -10,8 +10,8 @@ def test_static_shape():
 
     @ft.transform
     def f(x, y):
-        ft.declare_var(x, (4, 4), "float32", "input", "cpu")
-        ft.declare_var(y, (4, 4), "float32", "output", "cpu")
+        x: ft.Var((4, 4), "float32", "input", "cpu")
+        y: ft.Var((4, 4), "float32", "output", "cpu")
         "nid: softmax"
         libop.softmax_(x, y)
 
@@ -36,9 +36,9 @@ def test_out_of_place():
 
     @ft.transform
     def f(x, y_shape, y):
-        ft.declare_var(x, (4, 4), "float32", "input", "cpu")
-        ft.declare_var(y_shape, (2,), "int32", "output", "cpu")
-        ft.declare_var(y, (4, 4), "float32", "output", "cpu")
+        x: ft.Var((4, 4), "float32", "input", "cpu")
+        y_shape: ft.Var((2,), "int32", "output", "cpu")
+        y: ft.Var((4, 4), "float32", "output", "cpu")
         "nid: softmax"
         _y = libop.softmax(x, axis=-1)
         y_shape[0] = _y.shape(0)
@@ -72,8 +72,8 @@ def test_grad():
 
     @ft.transform
     def f(x, y):
-        ft.declare_var(x, (4, 4), "float32", "input", "cpu")
-        ft.declare_var(y, (4, 4), "float32", "output", "cpu")
+        x: ft.Var((4, 4), "float32", "input", "cpu")
+        y: ft.Var((4, 4), "float32", "output", "cpu")
         "nid: softmax"
         libop.softmax_(x, y)
 

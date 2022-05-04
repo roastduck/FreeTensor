@@ -18,7 +18,7 @@ def g_global(y):
 
 @ft.transform
 def f_global(y):
-    ft.declare_var(y, (2,), "float32", "output", "cpu")
+    y: ft.Var((2,), "float32", "output", "cpu")
     g_global(y)
 
 
@@ -33,7 +33,7 @@ def test_basic_call():
 
     @ft.transform
     def f(y):
-        ft.declare_var(y, (2,), "float32", "output", "cpu")
+        y: ft.Var((2,), "float32", "output", "cpu")
         g(y)
 
     func = ft.lower(f, ft.CPU())
@@ -69,8 +69,8 @@ def test_called_multiple_times():
 
     @ft.transform
     def f(y1, y2):
-        ft.declare_var(y1, (2,), "float32", "output", "cpu")
-        ft.declare_var(y2, (2,), "float32", "output", "cpu")
+        y1: ft.Var((2,), "float32", "output", "cpu")
+        y2: ft.Var((2,), "float32", "output", "cpu")
         '''nid: C1'''
         g(y1)
         '''nid: C2'''
@@ -107,7 +107,7 @@ def test_call_with_external_data():
 
     @ft.transform
     def f(y):
-        ft.declare_var(y, (2, 2), "int32", "output", "cpu")
+        y: ft.Var((2, 2), "int32", "output", "cpu")
         g(ft.capture_var(data), y)
 
     func = ft.lower(f, ft.CPU())
@@ -143,7 +143,7 @@ def test_call_with_literal_data():
 
     @ft.transform
     def f(y):
-        ft.declare_var(y, (2, 2), "int32", "output", "cpu")
+        y: ft.Var((2, 2), "int32", "output", "cpu")
         g(
             ft.capture_var(
                 ft.Array(np.array([[0, 1], [2, 3]], dtype=np.int32), dev)), y)
@@ -179,9 +179,9 @@ def test_call_with_fixed_dim_at_front():
 
     @ft.transform
     def f(x1, x2, y):
-        ft.declare_var(x1, (4, 4), "float32", "input", "cpu")
-        ft.declare_var(x2, (4, 4), "float32", "input", "cpu")
-        ft.declare_var(y, (4, 4), "float32", "output", "cpu")
+        x1: ft.Var((4, 4), "float32", "input", "cpu")
+        x2: ft.Var((4, 4), "float32", "input", "cpu")
+        y: ft.Var((4, 4), "float32", "output", "cpu")
         for i in range(4):
             g(x1[i], x2[i], y[i])
 
@@ -207,9 +207,9 @@ def test_call_with_fixed_dim_at_back():
 
     @ft.transform
     def f(x1, x2, y):
-        ft.declare_var(x1, (4, 4), "float32", "input", "cpu")
-        ft.declare_var(x2, (4, 4), "float32", "input", "cpu")
-        ft.declare_var(y, (4, 4), "float32", "output", "cpu")
+        x1: ft.Var((4, 4), "float32", "input", "cpu")
+        x2: ft.Var((4, 4), "float32", "input", "cpu")
+        y: ft.Var((4, 4), "float32", "output", "cpu")
         for i in range(4):
             g(x1[:, i], x2[:, i], y[:, i])
 
@@ -235,9 +235,9 @@ def test_call_with_slice():
 
     @ft.transform
     def f(x1, x2, y):
-        ft.declare_var(x1, (5,), "float32", "input", "cpu")
-        ft.declare_var(x2, (5,), "float32", "input", "cpu")
-        ft.declare_var(y, (5,), "float32", "output", "cpu")
+        x1: ft.Var((5,), "float32", "input", "cpu")
+        x2: ft.Var((5,), "float32", "input", "cpu")
+        y: ft.Var((5,), "float32", "output", "cpu")
         y[0] = 0.
         g(x1[1:], x2[1:], y[1:])
 
@@ -262,9 +262,9 @@ def test_call_with_scalar():
 
     @ft.transform
     def f(x1, x2, y):
-        ft.declare_var(x1, (4,), "float32", "input", "cpu")
-        ft.declare_var(x2, (4,), "float32", "input", "cpu")
-        ft.declare_var(y, (4,), "float32", "output", "cpu")
+        x1: ft.Var((4,), "float32", "input", "cpu")
+        x2: ft.Var((4,), "float32", "input", "cpu")
+        y: ft.Var((4,), "float32", "output", "cpu")
         for i in range(4):
             g(x1[i], x2[i], y[i])
 
@@ -288,7 +288,7 @@ def test_call_with_literal_scalar():
 
     @ft.transform
     def f(y):
-        ft.declare_var(y, (4,), "float32", "output", "cpu")
+        y: ft.Var((4,), "float32", "output", "cpu")
         for i in range(4):
             g(1, 2, y[i])
 
@@ -306,7 +306,7 @@ def test_external_call():
 
     @ft.transform
     def func(y):
-        ft.declare_var(y, (), "int32", "output", "cpu")
+        y: ft.Var((), "int32", "output", "cpu")
         y[()] = math.gcd(10, 15)
 
     with ft.VarDef("y", (), "int32", "output", "cpu") as y:
@@ -323,10 +323,10 @@ def test_use_external_call_to_build_runtime_ops():
 
     @ft.transform
     def f(x1, x2, x3, y):
-        ft.declare_var(x1, (), "int32", "input", "cpu")
-        ft.declare_var(x2, (), "int32", "input", "cpu")
-        ft.declare_var(x3, (), "int32", "input", "cpu")
-        ft.declare_var(y, (), "int32", "output", "cpu")
+        x1: ft.Var((), "int32", "input", "cpu")
+        x2: ft.Var((), "int32", "input", "cpu")
+        x3: ft.Var((), "int32", "input", "cpu")
+        y: ft.Var((), "int32", "output", "cpu")
         g(x1, x2, x3, y)
 
     func = ft.lower(f, ft.CPU())
@@ -351,7 +351,7 @@ def test_error_missing_parameters():
         y[1] = 3.0
 
     def f(y):
-        ft.declare_var(y, (2,), "float32", "output", "cpu")
+        y: ft.Var((2,), "float32", "output", "cpu")
         g()
 
     with pytest.raises(ft.StagingError):
@@ -374,9 +374,9 @@ def test_return():
 
     @ft.transform
     def test(y, c, d):
-        ft.declare_var(y, (2, 2), "int32", "output", "cpu")
-        ft.declare_var(c, (2, 2), "int32", "output", "cpu")
-        ft.declare_var(d, (2, 2), "int32", "output", "cpu")
+        y: ft.Var((2, 2), "int32", "output", "cpu")
+        c: ft.Var((2, 2), "int32", "output", "cpu")
+        d: ft.Var((2, 2), "int32", "output", "cpu")
         c1, d1 = test_i(
             ft.capture_var(
                 ft.Array(np.array([[1, 2], [3, 4]], dtype=np.int32), dev)), y)
@@ -427,9 +427,9 @@ def test_return_returned_value():
 
     @ft.transform
     def f(x, w1, w2):
-        ft.declare_var(x, (8,), "int32", "input", "cpu")
-        ft.declare_var(w1, (4,), "int32", "output", "cpu")
-        ft.declare_var(w2, (4,), "int32", "output", "cpu")
+        x: ft.Var((8,), "int32", "input", "cpu")
+        w1: ft.Var((4,), "int32", "output", "cpu")
+        w2: ft.Var((4,), "int32", "output", "cpu")
         y2, y1 = g(x)
         for i in range(4):
             w1[i] = y1[i]
@@ -465,8 +465,8 @@ def test_func_in_args():
 
     @ft.transform
     def test(x, y):
-        ft.declare_var(x, (4,), "int32", "input", "cpu")
-        ft.declare_var(y, (4,), "int32", "output", "cpu")
+        x: ft.Var((4,), "int32", "input", "cpu")
+        y: ft.Var((4,), "int32", "output", "cpu")
         c = plus_one(plus_one(plus_one(x)))
         for i in range(4):
             y[i] = c[i]
@@ -497,8 +497,8 @@ def test_variadic():
 
     @ft.transform
     def f(y, z):
-        ft.declare_var(y, (2,), "float32", "output", "cpu")
-        ft.declare_var(z, (2,), "float32", "output", "cpu")
+        y: ft.Var((2,), "float32", "output", "cpu")
+        z: ft.Var((2,), "float32", "output", "cpu")
         g(y, z=z)
 
     func = ft.lower(f, ft.CPU())
@@ -531,9 +531,9 @@ def test_no_deps_on_returned_tensor():
 
     @ft.transform
     def test(y, c, d):
-        ft.declare_var(y, (2, 2), "int32", "output", "cpu")
-        ft.declare_var(c, (2, 2), "int32", "output", "cpu")
-        ft.declare_var(d, (2, 2), "int32", "output", "cpu")
+        y: ft.Var((2, 2), "int32", "output", "cpu")
+        c: ft.Var((2, 2), "int32", "output", "cpu")
+        d: ft.Var((2, 2), "int32", "output", "cpu")
         cc, dd = test_i(
             ft.capture_var(
                 ft.Array(np.array([[1, 2], [3, 4]], dtype=np.int32), dev)), y)

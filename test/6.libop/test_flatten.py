@@ -10,8 +10,8 @@ def test_static():
 
     @ft.transform
     def f(x, y):
-        ft.declare_var(x, (3, 4, 5), "float32", "input", "cpu")
-        ft.declare_var(y, (3, 20), "float32", "output", "cpu")
+        x: ft.Var((3, 4, 5), "float32", "input", "cpu")
+        y: ft.Var((3, 20), "float32", "output", "cpu")
         "nid: flatten"
         libop.flatten_(x, y)
 
@@ -36,8 +36,8 @@ def test_axis():
 
     @ft.transform
     def f(x, y):
-        ft.declare_var(x, (3, 4, 5), "float32", "input", "cpu")
-        ft.declare_var(y, (12, 5), "float32", "output", "cpu")
+        x: ft.Var((3, 4, 5), "float32", "input", "cpu")
+        y: ft.Var((12, 5), "float32", "output", "cpu")
         "nid: flatten"
         libop.flatten_(x, y, axis=2)
 
@@ -62,9 +62,9 @@ def test_out_of_place():
 
     @ft.transform
     def f(x, y_shape, y):
-        ft.declare_var(x, (3, 4, 5), "float32", "input", "cpu")
-        ft.declare_var(y_shape, (2,), "int32", "output", "cpu")
-        ft.declare_var(y, (3, 20), "float32", "output", "cpu")
+        x: ft.Var((3, 4, 5), "float32", "input", "cpu")
+        y_shape: ft.Var((2,), "int32", "output", "cpu")
+        y: ft.Var((3, 20), "float32", "output", "cpu")
         "nid: flatten"
         _y = libop.flatten(x)
         for i in range(2):
