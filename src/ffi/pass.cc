@@ -238,12 +238,18 @@ void init_ffi_pass(py::module_ &m) {
     m.def("gpu_lower_vector",
           static_cast<Stmt (*)(const Stmt &)>(&gpu::lowerVector), "stmt"_a);
 
-    m.def("lower",
-          static_cast<Func (*)(const Func &, const Ref<Target> &)>(&lower),
-          "func"_a, "target"_a = nullptr);
-    m.def("lower",
-          static_cast<Stmt (*)(const Stmt &, const Ref<Target> &)>(&lower),
-          "stmt"_a, "target"_a = nullptr);
+    m.def(
+        "lower",
+        static_cast<Func (*)(const Func &, const Ref<Target> &,
+                             const std::unordered_set<std::string> &)>(&lower),
+        "func"_a, "target"_a = nullptr,
+        "skip_passes"_a = std::unordered_set<std::string>{});
+    m.def(
+        "lower",
+        static_cast<Stmt (*)(const Stmt &, const Ref<Target> &,
+                             const std::unordered_set<std::string> &)>(&lower),
+        "stmt"_a, "target"_a = nullptr,
+        "skip_passes"_a = std::unordered_set<std::string>{});
 }
 
 } // namespace freetensor

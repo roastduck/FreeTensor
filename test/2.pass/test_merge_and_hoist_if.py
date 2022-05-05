@@ -109,7 +109,7 @@ def test_hoist():
                     y[i, j] = x[i, j]
     ast = ft.pop_ast()
     print(ast)
-    ast = ft.lower(ast)
+    ast = ft.lower(ast, skip_passes=['use_builtin_div'])
     print(ast)
 
     with ft.VarDef([("x", (3, 4), "int32", "input", "cpu"),
@@ -118,7 +118,7 @@ def test_hoist():
             with ft.If(i % 2 == 0):
                 with ft.For("j", 0, 4) as j:
                     y[i, j] = x[i, j]
-    std = ft.use_builtin_div(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -135,7 +135,7 @@ def test_not_hoisting_not_pure_nested():
                     y[i, j] = x[i, j]
     ast = ft.pop_ast()
     print(ast)
-    ast = ft.lower(ast)
+    ast = ft.lower(ast, skip_passes=['use_builtin_div'])
     print(ast)
 
     with ft.VarDef([
@@ -147,7 +147,7 @@ def test_not_hoisting_not_pure_nested():
                 y[i, j] = 0
                 with ft.If(i % 2 == 0):
                     y[i, j] = x[i, j]
-    std = ft.use_builtin_div(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -192,7 +192,7 @@ def test_hoist_then_merge():
                 y[i, 0] = y[i, 0] + 1
     ast = ft.pop_ast()
     print(ast)
-    ast = ft.lower(ast)
+    ast = ft.lower(ast, skip_passes=['use_builtin_div'])
     print(ast)
 
     with ft.VarDef([("x", (3, 4), "int32", "input", "cpu"),
@@ -202,7 +202,7 @@ def test_hoist_then_merge():
                 with ft.For("j", 0, 4) as j:
                     y[i, j] = x[i, j]
                 y[i, 0] = y[i, 0] + 1
-    std = ft.use_builtin_div(ft.make_reduction(ft.pop_ast()))
+    std = ft.make_reduction(ft.pop_ast())
 
     assert std.match(ast)
 

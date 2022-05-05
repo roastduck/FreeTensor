@@ -208,13 +208,13 @@ def test_prop_iter_different_iter_non_linear():
                 y[k] = t[k]
     ast = ft.pop_ast()
     print(ast)
-    ast = ft.lower(ast)
+    ast = ft.lower(ast, skip_passes=["use_builtin_div"])
     print(ast)
 
     with ft.VarDef("y", (16,), "int32", "output", "cpu") as y:
         with ft.For("k", 0, 16) as k:
             y[k] = k // 4
-    std = ft.use_builtin_div(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -228,7 +228,7 @@ def test_prop_iter_different_instance_no_prop():
             y2[i] = y1[()]
     ast = ft.pop_ast()
     print(ast)
-    ast = ft.lower(ast)
+    ast = ft.lower(ast, skip_passes=["use_builtin_div"])
     print(ast)
 
     with ft.VarDef([("y1", (), "int32", "output", "cpu"),
@@ -237,7 +237,7 @@ def test_prop_iter_different_instance_no_prop():
             with ft.If(i % 2 == 0):
                 y1[()] = i
             y2[i] = y1[()]
-    std = ft.use_builtin_div(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 

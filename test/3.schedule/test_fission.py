@@ -320,7 +320,7 @@ def test_correct_dependency_loop_step():
     s.fission("L2", ft.FissionSide.After, "S0")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
+    ast = ft.lower(ast, skip_passes=["use_builtin_div"])
     print(ast)
 
     with ft.VarDef([
@@ -334,7 +334,7 @@ def test_correct_dependency_loop_step():
                     b[j // 2, 0] = x0[i, j] + x1[i, j]
                 with ft.For("j", 0, 7, 2) as j:
                     y[i, j] = b[j // 2, 0] * b[j // 2, 0]
-    std = ft.use_builtin_div(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 

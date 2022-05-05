@@ -2,10 +2,6 @@ import freetensor as ft
 import pytest
 
 
-def div(lhs, rhs):
-    return ft.round_towards_0_div(lhs, rhs)
-
-
 def test_basic():
     with ft.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4, nid="L1") as i:
@@ -17,13 +13,13 @@ def test_basic():
     s.merge("L1", "L2")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
+    ast = ft.lower(ast, skip_passes=["use_builtin_div"])
     print(ast)
 
     with ft.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 32) as i:
-            y[div(i, 8), i % 8] = div(i, 8) * (i % 8)
-    std = ft.use_builtin_div(ft.pop_ast())
+            y[i // 8, i % 8] = i // 8 * (i % 8)
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -39,13 +35,13 @@ def test_non_zero_begin():
     s.merge("L1", "L2")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
+    ast = ft.lower(ast, skip_passes=["use_builtin_div"])
     print(ast)
 
     with ft.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 32) as i:
-            y[div(i, 8), i % 8] = (div(i, 8) + 2) * ((i % 8) + 4)
-    std = ft.use_builtin_div(ft.pop_ast())
+            y[i // 8, i % 8] = (i // 8 + 2) * ((i % 8) + 4)
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -61,14 +57,14 @@ def test_step():
     s.merge("L1", "L2")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
+    ast = ft.lower(ast, skip_passes=["use_builtin_div"])
     print(ast)
 
     with ft.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 8) as i:
-            y[2 + div(i, 4) * -2,
-              6 + i % 4 * -2] = (2 + div(i, 4) * -2) * (6 + i % 4 * -2)
-    std = ft.use_builtin_div(ft.pop_ast())
+            y[2 + i // 4 * -2,
+              6 + i % 4 * -2] = (2 + i // 4 * -2) * (6 + i % 4 * -2)
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -101,15 +97,15 @@ def test_if_in_between():
     s.merge("L1", "L2")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
+    ast = ft.lower(ast, skip_passes=["use_builtin_div"])
     print(ast)
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4, 8), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 0, 32) as i:
-            with ft.If(x[div(i, 8)] > 0):
-                y[div(i, 8), i % 8] = div(i, 8) * (i % 8)
-    std = ft.use_builtin_div(ft.pop_ast())
+            with ft.If(x[i // 8] > 0):
+                y[i // 8, i % 8] = i // 8 * (i % 8)
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -127,16 +123,16 @@ def test_stmt_in_between():
     s.merge("L1", "L2")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
+    ast = ft.lower(ast, skip_passes=["use_builtin_div"])
     print(ast)
 
     with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
                     ("z", (4,), "int32", "output", "cpu")]) as (y, z):
         with ft.For("i", 0, 32) as i:
             with ft.If(i % 8 == 0):
-                z[div(i, 8)] = div(i, 8)
-            y[div(i, 8), i % 8] = div(i, 8) * (i % 8)
-    std = ft.use_builtin_div(ft.pop_ast())
+                z[i // 8] = i // 8
+            y[i // 8, i % 8] = i // 8 * (i % 8)
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -155,7 +151,7 @@ def test_def_in_between():
     s.merge("L1", "L2")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
+    ast = ft.lower(ast, skip_passes=["use_builtin_div"])
     print(ast)
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
@@ -163,9 +159,9 @@ def test_def_in_between():
                     ("z", (), "int32", "output", "cpu")]) as (x, y, z):
         with ft.For("i", 0, 32) as i:
             with ft.If(i % 8 == 0):
-                z[()] = x[div(i, 8)]
-            y[div(i, 8), i % 8] = z[()] * (i % 8)
-    std = ft.use_builtin_div(ft.pop_ast())
+                z[()] = x[i // 8]
+            y[i // 8, i % 8] = z[()] * (i % 8)
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
@@ -183,15 +179,15 @@ def test_prop_expr_of_outer_loop():
     s.merge("L1", "L2")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
+    ast = ft.lower(ast, skip_passes=["use_builtin_div"])
     print(ast)
 
     with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
                     ("z", (), "int32", "output", "cpu")]) as (y, z):
         with ft.For("i", 0, 32) as i:
             with ft.If(i % 8 == 0):
-                z[()] = div(i, 8)
-            y[div(i, 8), i % 8] = div(i, 8) * (i % 8)
-    std = ft.use_builtin_div(ft.pop_ast())
+                z[()] = i // 8
+            y[i // 8, i % 8] = i // 8 * (i % 8)
+    std = ft.pop_ast()
 
     assert std.match(ast)

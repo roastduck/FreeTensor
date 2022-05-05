@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Sequence
 
 import ffi
 
@@ -29,7 +29,8 @@ from ffi import gpu_multiplex_buffers
 from ffi import gpu_simplex_buffers
 from ffi import gpu_normalize_threads
 from ffi import gpu_lower_vector
+from ffi import lower
 
 
-def lower(ast, target: Optional[ffi.Target] = None):
-    return ffi.lower(ast, target)
+def lower(ast, target: Optional[ffi.Target] = None, skip_passes: Sequence = []):
+    return ffi.lower(ast, target, set(skip_passes))

@@ -318,7 +318,7 @@ def test_different_iter_non_linear():
     s.inline("T")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
+    ast = ft.lower(ast, skip_passes=["use_builtin_div"])
     print(ast)
 
     with ft.VarDef([("x1", (4,), "int32", "input", "cpu"),
@@ -326,7 +326,7 @@ def test_different_iter_non_linear():
                     ("y", (16,), "int32", "output", "cpu")]) as (x1, x2, y):
         with ft.For("k", 0, 16) as k:
             y[k] = x1[k // 4] * x2[k % 4] + 1
-    std = ft.use_builtin_div(ft.pop_ast())
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
