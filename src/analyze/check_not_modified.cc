@@ -94,9 +94,9 @@ bool checkNotModified(const Stmt &op, const Expr &s0Expr, const Expr &s1Expr,
         return earlier.stmt_->id() == inserter.s0Eval();
     };
     auto foundWAR = [&](const Dependency &dep) {
-        // Serialize dep.dep_ because it is from a random PBCtx
+        // Serialize dep.later2EarlierIter_ because it is from a random PBCtx
         writesWAR[dep.later_.stmt_] =
-            toString(apply(domain(dep.dep_), dep.pmap_));
+            toString(apply(domain(dep.later2EarlierIter_), dep.laterIter2Idx_));
     };
     findDeps(tmpOp, {cond}, foundWAR, FindDepsMode::Dep, DEP_WAR, filterWAR,
              true, true, true);
@@ -110,8 +110,10 @@ bool checkNotModified(const Stmt &op, const Expr &s0Expr, const Expr &s1Expr,
                    earlier.stmt_->id() == item->id();
         };
         auto foundRAW = [&](const Dependency &dep) {
-            // Serialize dep.dep_ because it is from a random PBCtx
-            w1 = toString(apply(range(dep.dep_), dep.omap_));
+            // Serialize dep.later2EarlierIter_ because it is from a random
+            // PBCtx
+            w1 = toString(
+                apply(range(dep.later2EarlierIter_), dep.earlierIter2Idx_));
         };
         findDeps(tmpOp, {cond}, foundRAW, FindDepsMode::Dep, DEP_RAW, filterRAW,
                  true, true, true);

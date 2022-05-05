@@ -176,8 +176,8 @@ struct Dependency {
     const std::string &var_;
     const AccessPoint &later_, &earlier_;
     int iterDim_;
-    PBMap dep_;         // later -> earlier
-    PBMap pmap_, omap_; // later, earlier
+    PBMap later2EarlierIter_;
+    PBMap laterIter2Idx_, earlierIter2Idx_;
     PBCtx &presburger_;
     AnalyzeDeps &self_;
 
@@ -307,8 +307,8 @@ class AnalyzeDeps {
     PBMap makeConstraintOfParallelScope(PBCtx &presburger,
                                         const ParallelScope &parallel,
                                         DepDirection mode, int iterDim,
-                                        const AccessPoint &point,
-                                        const AccessPoint &other);
+                                        const AccessPoint &later,
+                                        const AccessPoint &earlier);
 
     /**
      * Constraint for variables defined inside some loops
@@ -338,10 +338,10 @@ class AnalyzeDeps {
      * idx[i] + j may be the same for different i
      */
     PBMap makeExternalVarConstraint(PBCtx &presburger,
-                                    const Ref<AccessPoint> &point,
-                                    const Ref<AccessPoint> &other,
-                                    const GenPBExpr::VarMap &pExternals,
-                                    const GenPBExpr::VarMap &oExternals,
+                                    const Ref<AccessPoint> &later,
+                                    const Ref<AccessPoint> &earlier,
+                                    const GenPBExpr::VarMap &laterExternals,
+                                    const GenPBExpr::VarMap &earlierExternals,
                                     int iterDim);
 
     /**
@@ -358,42 +358,43 @@ class AnalyzeDeps {
     PBMap projectOutPrivateAxis(PBCtx &presburger, int iterDim, int since);
     void projectOutPrivateAxis(PBCtx &presburger, const Ref<AccessPoint> &point,
                                const std::vector<Ref<AccessPoint>> &otherList,
-                               std::vector<PBMap> &omapList, int iterDim);
+                               std::vector<PBMap> &otherMapList, int iterDim);
     int numCommonDims(const Ref<AccessPoint> &p1, const Ref<AccessPoint> &p2);
 
-    void checkAgainstCond(PBCtx &presburger, const Ref<AccessPoint> &point,
-                          const Ref<AccessPoint> &other, const PBMap &depAll,
-                          const PBMap &nearest, const PBMap &pmap,
-                          const PBMap &omap, int iterDim);
+    void checkAgainstCond(PBCtx &presburger, const Ref<AccessPoint> &later,
+                          const Ref<AccessPoint> &earlier, const PBMap &depAll,
+                          const PBMap &nearest, const PBMap &laterMap,
+                          const PBMap &earlierMap, int iterDim);
 
     static const std::string &getVar(const AST &op);
 
     /**
-     * Check the dependencies between a later memory access `point` and many
-     * earlier memory accesses in `otherList`, filter them via the `filter_`
+     * Check the dependencies between a later memory access `later` and many
+     * earlier memory accesses in `earlierList`, filter them via the `filter_`
      * callback, and report then via the `found_` callback. Earlier memory
      * accesses may overwrite each other, and the overwritten ones will not
      * result in a dependency. Used for RAW and WAW dependencies
      */
-    void checkDepLatestEarlier(const Ref<AccessPoint> &point,
-                               const std::vector<Ref<AccessPoint>> &otherList);
     void
-    checkDepLatestEarlierImpl(PBCtx &presburger, const Ref<AccessPoint> &point,
-                              const std::vector<Ref<AccessPoint>> &otherList);
+    checkDepLatestEarlier(const Ref<AccessPoint> &later,
+                          const std::vector<Ref<AccessPoint>> &earlierList);
+    void
+    checkDepLatestEarlierImpl(PBCtx &presburger, const Ref<AccessPoint> &later,
+                              const std::vector<Ref<AccessPoint>> &earlierList);
 
     /**
-     * Check the dependencies between many later memory access in `pointList`
-     * and a earlier memory accesses `other`, filter them via the `filter_`
+     * Check the dependencies between many later memory access in `laterList`
+     * and a earlier memory accesses `earlier`, filter them via the `filter_`
      * callback, and report then via the `found_` callback. Later memory
      * accesses may overwrite each other, and the overwritten ones will not
      * result in a dependency. Used for WAR dependencies
      */
-    void checkDepEarliestLater(const std::vector<Ref<AccessPoint>> &pointList,
-                               const Ref<AccessPoint> &other);
+    void checkDepEarliestLater(const std::vector<Ref<AccessPoint>> &laterList,
+                               const Ref<AccessPoint> &earlier);
     void
     checkDepEarliestLaterImpl(PBCtx &presburger,
-                              const std::vector<Ref<AccessPoint>> &pointList,
-                              const Ref<AccessPoint> &other);
+                              const std::vector<Ref<AccessPoint>> &laterList,
+                              const Ref<AccessPoint> &earlier);
 };
 
 /**
@@ -412,7 +413,8 @@ class AnalyzeDeps {
  * nodes. This kind of dependencies are false dependencies if running serially
  * @param eraseOutsideVarDef : Ignore all dependencies outside the VarDef
  * @param noProjectOutPrivateAxis : Disable the projectOutPrivateAxis
- * optimization
+ * optimization. If you want to further check Presburger maps or sets in the
+ * `found` callback, you must set it to true
  */
 void findDeps(const Stmt &op, const std::vector<FindDepsCond> &cond,
               const FindDepsCallback &found,

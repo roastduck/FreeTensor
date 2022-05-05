@@ -58,14 +58,14 @@ Stmt tensorPropConst(const Stmt &_op) {
             auto &&expr = d.earlier().as<StoreNode>()->expr_;
             auto &&iters = allIters(expr);
             auto common = lcaStmt(d.later_.stmt_, d.earlier_.stmt_);
-            auto dep = d.dep_;
+            auto dep = d.later2EarlierIter_;
             for (auto &&iter : iters) {
                 for (auto c = common; c.isValid(); c = c->parentStmt()) {
                     if (c->nodeType() == ASTNodeType::For) {
                         if (auto &&f = c.as<ForNode>(); f->iter_ == iter) {
                             dep =
                                 d.extraCheck(dep, f->id(), DepDirection::Same);
-                            if (dep != d.dep_) {
+                            if (dep != d.later2EarlierIter_) {
                                 // Iterating variable in different iterations
                                 return;
                             }
@@ -74,10 +74,10 @@ Stmt tensorPropConst(const Stmt &_op) {
                     }
                 }
             }
-            r2w[d.later()].emplace_back(d.earlier().as<StmtNode>(),
-                                        ReplaceInfo{d.earlier_.iter_,
-                                                    d.later_.iter_,
-                                                    toString(PBFunc(d.dep_))});
+            r2w[d.later()].emplace_back(
+                d.earlier().as<StmtNode>(),
+                ReplaceInfo{d.earlier_.iter_, d.later_.iter_,
+                            toString(PBFunc(d.later2EarlierIter_))});
         };
         auto filterMay = [&](const AccessPoint &later,
                              const AccessPoint &earlier) {

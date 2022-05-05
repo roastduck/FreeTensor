@@ -82,8 +82,8 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
             expr = earlier->expr_;
             if (!allIters(expr).empty()) {
                 try {
-                    auto &&[args, values, cond] = parsePBFunc(
-                        toString(PBFunc(dep.dep_))); // later -> earlier
+                    auto &&[args, values, cond] =
+                        parsePBFunc(toString(PBFunc(dep.later2EarlierIter_)));
                     ASSERT(dep.earlier_.iter_.size() <=
                            values.size()); // maybe padded
                     ASSERT(dep.later_.iter_.size() <= args.size());
@@ -106,7 +106,7 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
                     throw InvalidSchedule(
                         "Unable to resolve relation of the iterators between "
                         "the defining point and the use point: " +
-                        toString(PBFunc(dep.dep_)));
+                        toString(PBFunc(dep.later2EarlierIter_)));
                 }
             } else {
                 newExpr = expr;
@@ -117,13 +117,13 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
         }
 
         auto common = lcaStmt(dep.later_.stmt_, dep.earlier_.stmt_);
-        auto d = dep.dep_;
+        auto d = dep.later2EarlierIter_;
         for (auto &&iter : allIters(expr)) {
             for (auto c = common; c.isValid(); c = c->parentStmt()) {
                 if (c->nodeType() == ASTNodeType::For) {
                     if (auto &&f = c.as<ForNode>(); f->iter_ == iter) {
                         d = dep.extraCheck(d, f->id(), DepDirection::Same);
-                        if (d != dep.dep_) {
+                        if (d != dep.later2EarlierIter_) {
                             throw InvalidSchedule(
                                 "Unsupported: The loop iterator will be "
                                 "changed after inlining from " +
