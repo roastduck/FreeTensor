@@ -23,8 +23,8 @@ Stmt MergeFor::visit(const For &_op) {
                                root_, oldInner_->id(), oldOuter_->id())),
                            op->body_);
         for (auto &&def : intermediateDefs_) {
-            ret = makeVarDef(def->id(), def->name_, def->buffer_, def->sizeLim_,
-                             ret, def->pinned_);
+            ret = makeVarDef(def->id(), def->name_, def->buffer_,
+                             def->ioTensor_, ret, def->pinned_);
         }
         return ret;
     } else if (_op->id() == oldInner_->id()) {

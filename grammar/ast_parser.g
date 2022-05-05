@@ -194,18 +194,18 @@ load returns [Expr node]
 
 varDef returns [Stmt node]
     @init {
-        Expr sizeLim = nullptr;
+        Ref<Tensor> ioTensor;
         bool pinned = false;
     }
     : atype mtype var ':' dtype shape
-        (SIZELIM '=' expr {sizeLim = $expr.node;})?
-        (PINNED {pinned = true;})?
+        (IO_TENSOR '=' io_dtype=dtype io_shape=shape { ioTensor = makeTensor($io_shape.vec, $io_dtype.type); })?
+        (PINNED { pinned = true; })?
         '{' stmts '}'
       {
         Ref<Tensor> t = makeTensor($shape.vec, $dtype.type);
         Ref<Buffer> b = makeBuffer(std::move(t), $atype.type, $mtype.type);
         Expr sizeLim = nullptr;
-        $node = makeVarDef(ID(), $var.name, std::move(b), std::move(sizeLim), $stmts.node, pinned);
+        $node = makeVarDef(ID(), $var.name, std::move(b), std::move(ioTensor), $stmts.node, pinned);
       }
     ;
 

@@ -115,15 +115,34 @@ Stmt BlendPass::visit(const Assert &op) {
 
 Stmt BlendPass::visit(const VarDef &op) {
     if (inLoop_ && isVariant(varVari_, op, loop_)) {
+        std::vector<Expr> shape;
+        shape.reserve(op->buffer_->tensor()->shape().size());
+        for (auto &&dim : op->buffer_->tensor()->shape()) {
+            shape.emplace_back((*this)(dim));
+        }
+        Ref<Tensor> t =
+            makeTensor(std::move(shape), op->buffer_->tensor()->dtype());
+        Ref<Buffer> b = makeBuffer(std::move(t), op->buffer_->atype(),
+                                   op->buffer_->mtype());
+        Ref<Tensor> ioTensor;
+        if (op->ioTensor_.isValid()) {
+            std::vector<Expr> shape;
+            shape.reserve(op->ioTensor_->shape().size());
+            for (auto &&dim : op->ioTensor_->shape()) {
+                shape.emplace_back((*this)(dim));
+            }
+            ioTensor = makeTensor(std::move(shape), op->ioTensor_->dtype());
+        }
+
         defs_.emplace_back(op);
         auto body = (*this)(op->body_);
-        auto sizeLim = op->sizeLim_.isValid() ? (*this)(op->sizeLim_) : nullptr;
-        for (int k = len_ - 1; k >= 0; k--) {
-            body =
-                makeVarDef("", op->name_ + "." + std::to_string(k), op->buffer_,
-                           sizeLim, std::move(body), op->pinned_);
-        }
         defs_.pop_back();
+
+        for (int k = len_ - 1; k >= 0; k--) {
+            body = makeVarDef("", op->name_ + "." + std::to_string(k),
+                              std::move(b), std::move(ioTensor),
+                              std::move(body), op->pinned_);
+        }
         return body;
     } else {
         return Mutator::visit(op);

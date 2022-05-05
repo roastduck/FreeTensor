@@ -5,8 +5,9 @@
 namespace freetensor {
 
 Stmt ShrinkVar::visit(const VarDef &_op) {
-    if (_op->buffer_->atype() != AccessType::Cache || _op->sizeLim_.isValid() ||
-        _op->pinned_ || !newRange_.count(_op->id())) {
+    if (_op->buffer_->atype() != AccessType::Cache ||
+        _op->ioTensor_.isValid() || _op->pinned_ ||
+        !newRange_.count(_op->id())) {
         return Mutator::visit(_op);
     }
 

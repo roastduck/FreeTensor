@@ -57,9 +57,17 @@ class Mutator {
             makeTensor(std::move(shape), op->buffer_->tensor()->dtype());
         Ref<Buffer> b = makeBuffer(std::move(t), op->buffer_->atype(),
                                    op->buffer_->mtype());
-        Expr sizeLim = op->sizeLim_.isValid() ? (*this)(op->sizeLim_) : nullptr;
+        Ref<Tensor> ioTensor;
+        if (op->ioTensor_.isValid()) {
+            std::vector<Expr> shape;
+            shape.reserve(op->ioTensor_->shape().size());
+            for (auto &&dim : op->ioTensor_->shape()) {
+                shape.emplace_back((*this)(dim));
+            }
+            ioTensor = makeTensor(std::move(shape), op->ioTensor_->dtype());
+        }
         return COPY_DEBUG_INFO(makeVarDef(op->id(), op->name_, std::move(b),
-                                          std::move(sizeLim),
+                                          std::move(ioTensor),
                                           (*this)(op->body_), op->pinned_),
                                op);
     }

@@ -50,26 +50,27 @@ class VarDefNode : public StmtNode {
   public:
     std::string name_;
     SubTree<Buffer> buffer_ = ChildOf{this};
-    SubTree<ExprNode, NullPolicy::Nullable> sizeLim_ =
-        ChildOf{this}; // limit the buffer size to a specific
-                       // expression, other than the size of buffer_
+    SubTree<Tensor, NullPolicy::Nullable> ioTensor_ = ChildOf{
+        this}; /// We may alter the shape of a `VarDef` in a schedule or
+               /// a pass, but we might want a variable to keep its original
+               /// shape during I/O or in an internal allocation. If `ioTensor_`
+               /// is set, use its shape for I/O. Otherwise, use the shape of
+               /// `buffer_`. `dtype` of `ioTensor_` is currently unused
     SubTree<StmtNode> body_ = ChildOf{this};
-    bool pinned_; // If pinned, SinkVar and ShrinkVar will not alter this node
+    bool pinned_; /// If pinned, SinkVar and ShrinkVar will not alter this node
     void compHash() override;
     DEFINE_NODE_TRAIT(VarDef);
 };
 typedef Ref<VarDefNode> VarDef;
 #define makeVarDef(...) makeNode(VarDef, __VA_ARGS__)
-template <class Tbuffer, class Tbody>
+template <class Tbuffer, class TioTensor, class Tbody>
 Stmt _makeVarDef(const ID &id, const std::string &name, Tbuffer &&buffer,
-                 const Expr &sizeLim, Tbody &&body, bool pinned) {
+                 TioTensor &&ioTensor, Tbody &&body, bool pinned) {
     VarDef d = VarDef::make();
     d->setId(id);
     d->name_ = name;
-    auto tmp = SubTree<Buffer>(buffer);
-    d->buffer_ = std::move(tmp);
-    // d->buffer_ = std::forward<Tbuffer>(buffer);
-    d->sizeLim_ = sizeLim;
+    d->buffer_ = SubTree<Buffer>(buffer);
+    d->ioTensor_ = std::forward<TioTensor>(ioTensor);
     d->body_ = std::forward<Tbody>(body);
     d->pinned_ = pinned;
     return d;

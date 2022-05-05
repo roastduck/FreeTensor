@@ -48,8 +48,10 @@ class Visitor {
         for (auto &&dim : op->buffer_->tensor()->shape()) {
             (*this)(dim);
         }
-        if (op->sizeLim_.isValid()) {
-            (*this)(op->sizeLim_);
+        if (op->ioTensor_.isValid()) {
+            for (auto &&dim : op->ioTensor_->shape()) {
+                (*this)(dim);
+            }
         }
         (*this)(op->body_);
     }

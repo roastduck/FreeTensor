@@ -79,6 +79,34 @@ def test_define_output_inside_kernel():
     assert np.array_equal(y_np, y_std)
 
 
+def test_return_value_and_runtime_allocation():
+
+    @ft.transform
+    def test(x):
+        x: ft.Var[(4, 4), "int32", "input", "cpu"]
+        y = ft.create_var((4, 4), "int32", "cpu")
+        'nid: L1'
+        for i in range(4):
+            'nid: L2'
+            for j in range(4):
+                y[i, j] = x[i, j] * 2 + 1
+        return y
+
+    s = ft.Schedule(test)
+    s.parallelize("L1", "blockIdx.x")
+    s.parallelize("L2", "threadIdx.x")
+    func = ft.lower(s.func(), target)
+    print(func)
+    code = ft.codegen(func, target)
+    print(debug.with_line_no(code))
+    x_np = np.random.randint(0, 100, (4, 4)).astype("int32")
+    x_arr = ft.Array(x_np, device)
+    y_arr, = ft.Driver(func, code, device)(x_arr)
+    y_np = y_arr.numpy()
+
+    assert np.array_equal(y_np, x_np * 2 + 1)
+
+
 def test_split_by_block_and_bind():
 
     @ft.transform

@@ -132,10 +132,15 @@ void PrintVisitor::visit(const VarDef &op) {
     os() << ::freetensor::toString(tensor->dtype()) << "[";
     printList(tensor->shape());
     os() << "] ";
-    if (op->sizeLim_.isValid()) {
-        os() << "size_lim = ";
-        recur(op->sizeLim_);
+    if (op->ioTensor_.isValid()) {
+        os() << "@io_tensor = ";
+        os() << ::freetensor::toString(op->ioTensor_->dtype()) << "[";
+        printList(op->ioTensor_->shape());
+        os() << "] ";
         os() << " ";
+    }
+    if (op->pinned_) {
+        os() << "@pinned ";
     }
     beginBlock();
     recur(op->body_);

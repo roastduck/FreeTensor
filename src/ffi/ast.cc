@@ -124,9 +124,12 @@ void init_ffi_ast(py::module_ &m) {
             [](const StmtSeq &op) -> std::vector<Stmt> { return op->stmts_; });
     py::class_<VarDefNode, VarDef>(m, "VarDef", pyStmt)
         .def_readonly("name", &VarDefNode::name_)
-        .def_readonly("buffer", &VarDefNode::buffer_)
         .def_property_readonly(
-            "size_lim", [](const VarDef &op) -> Expr { return op->sizeLim_; })
+            "buffer",
+            [](const VarDef &op) -> Ref<Buffer> { return op->buffer_; })
+        .def_property_readonly(
+            "io_tensor",
+            [](const VarDef &op) -> Ref<Tensor> { return op->ioTensor_; })
         .def_property_readonly(
             "body", [](const VarDef &op) -> Stmt { return op->body_; });
     py::class_<StoreNode, Store>(m, "Store", pyStmt)
@@ -469,8 +472,8 @@ void init_ffi_ast(py::module_ &m) {
           "id"_a, "stmts"_a);
     m.def("makeVarDef",
           static_cast<Stmt (*)(const ID &, const std::string &,
-                               const Ref<Buffer> &, const Expr &, const Stmt &,
-                               bool)>(&_makeVarDef),
+                               const Ref<Buffer> &, const Ref<Tensor> &,
+                               const Stmt &, bool)>(&_makeVarDef),
           "nid"_a, "name"_a, "buffer"_a, "size_lim"_a, "body"_a, "pinned"_a);
     m.def("makeVar", &_makeVar, "name"_a);
     m.def("makeStore",

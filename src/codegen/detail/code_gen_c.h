@@ -113,7 +113,10 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
             std::string dimPtr = "_retDims[" + std::to_string(nthReturn) + "]";
             this->os() << "if (" + rawPtr + " == NULL) ";
             this->beginBlock();
-            this->genAlloc(op->buffer_->tensor(), rawPtr, shapePtr, dimPtr);
+            this->genAlloc(op->ioTensor_.isValid()
+                               ? (Ref<Tensor>)op->ioTensor_
+                               : (Ref<Tensor>)op->buffer_->tensor(),
+                           rawPtr, shapePtr, dimPtr);
             this->endBlock();
             this->makeIndent();
         }

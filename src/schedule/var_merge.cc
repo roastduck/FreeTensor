@@ -18,6 +18,11 @@ Stmt VarMerge::visit(const VarDef &_op) {
         auto op = __op.as<VarDefNode>();
         var_.clear();
 
+        if (op->buffer_->atype() != AccessType::Cache &&
+            !op->ioTensor_.isValid()) {
+            op->ioTensor_ = op->buffer_->tensor();
+        }
+
         auto &shape = op->buffer_->tensor()->shape();
         shape[dim_] = makeMul(shape[dim_], shape[dim_ + 1]);
         shape.erase(shape.begin() + dim_ + 1);

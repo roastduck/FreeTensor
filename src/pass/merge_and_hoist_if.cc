@@ -70,7 +70,7 @@ Stmt MergeAndHoistIf::visit(const VarDef &_op) {
             isFixPoint_ = false;
             return makeIf(branch->id(), branch->cond_,
                           makeVarDef(op->id(), op->name_,
-                                     std::move(op->buffer_), op->sizeLim_,
+                                     std::move(op->buffer_), op->ioTensor_,
                                      branch->thenCase_, op->pinned_));
         }
     }

@@ -15,8 +15,8 @@ FUNC:       'func';
 ANY:        'Any';
 
 // VarDef
-SIZELIM:    'size_lim';
-PINNED:     '[pinned]';
+IO_TENSOR:  '@io_tensor';
+PINNED:     '@pinned';
 
 // ReduceTo
 ATOMIC:     '@!atomic';

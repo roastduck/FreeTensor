@@ -145,8 +145,10 @@ class SymbolTable : public BaseClass, public SymbolTableInterface {
             for (auto &&dim : op->buffer_->tensor()->shape()) {
                 (*this)(dim);
             }
-            if (op->sizeLim_.isValid()) {
-                (*this)(op->sizeLim_);
+            if (op->ioTensor_.isValid()) {
+                for (auto &&dim : op->ioTensor_->shape()) {
+                    (*this)(dim);
+                }
             }
 
             pushDef(op);
@@ -162,15 +164,22 @@ class SymbolTable : public BaseClass, public SymbolTableInterface {
                 makeTensor(std::move(shape), op->buffer_->tensor()->dtype());
             Ref<Buffer> b = makeBuffer(std::move(t), op->buffer_->atype(),
                                        op->buffer_->mtype());
-            Expr sizeLim =
-                op->sizeLim_.isValid() ? (*this)(op->sizeLim_) : nullptr;
+            Ref<Tensor> ioTensor;
+            if (op->ioTensor_.isValid()) {
+                std::vector<Expr> shape;
+                shape.reserve(op->ioTensor_->shape().size());
+                for (auto &&dim : op->ioTensor_->shape()) {
+                    shape.emplace_back((*this)(dim));
+                }
+                ioTensor = makeTensor(std::move(shape), op->ioTensor_->dtype());
+            }
 
             pushDef(op);
             auto body = (*this)(op->body_);
             popDef(op);
 
             return COPY_DEBUG_INFO(makeVarDef(op->id(), op->name_, std::move(b),
-                                              std::move(sizeLim),
+                                              std::move(ioTensor),
                                               std::move(body), op->pinned_),
                                    op);
         }

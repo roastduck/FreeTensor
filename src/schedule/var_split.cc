@@ -26,12 +26,8 @@ Stmt VarSplit::visit(const VarDef &_op) {
         var_.clear();
 
         if (fixedSize_) {
-            if (!op->sizeLim_.isValid()) {
-                Expr size;
-                for (Expr dim : op->buffer_->tensor()->shape()) {
-                    size = size.isValid() ? makeMul(size, dim) : dim;
-                }
-                op->sizeLim_ = size;
+            if (!op->ioTensor_.isValid()) {
+                op->ioTensor_ = op->buffer_->tensor();
             }
         } else {
             if (op->buffer_->atype() != AccessType::Cache) {

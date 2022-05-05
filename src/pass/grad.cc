@@ -221,7 +221,7 @@ Stmt Grad::visit(const VarDef &_op) {
             }
 
             grad = makeVarDef(op->id().strId() + ".grad", gradName, op->buffer_,
-                              op->sizeLim_, grad, op->pinned_);
+                              op->ioTensor_, grad, op->pinned_);
             switch (op->buffer_->atype()) {
             case AccessType::Input:
                 grad.as<VarDefNode>()->buffer_->setAtype(AccessType::Output);
@@ -236,7 +236,7 @@ Stmt Grad::visit(const VarDef &_op) {
                 ASSERT(false);
             }
 
-            ret = makeVarDef(op->id(), op->name_, op->buffer_, op->sizeLim_,
+            ret = makeVarDef(op->id(), op->name_, op->buffer_, op->ioTensor_,
                              grad, op->pinned_)
                       .as<VarDefNode>();
         }
@@ -248,9 +248,10 @@ Stmt Grad::visit(const VarDef &_op) {
         if (tapeMap_.count(op->id())) {
             auto tapeVar = tapeMap_.at(op->id());
             if (tapeVar != ret->name_) {
-                ret = makeVarDef(ret->id().strId() + ".tape", tapeVar,
-                                 ret->buffer_, ret->sizeLim_, ret, ret->pinned_)
-                          .as<VarDefNode>();
+                ret =
+                    makeVarDef(ret->id().strId() + ".tape", tapeVar,
+                               ret->buffer_, ret->ioTensor_, ret, ret->pinned_)
+                        .as<VarDefNode>();
                 auto &shape = ret->buffer_->tensor()->shape();
                 shape.insert(shape.begin(), totLens_.at(op->id()));
             }
