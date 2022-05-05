@@ -159,7 +159,7 @@ Stmt separateTail(const Stmt &_ast, bool noDuplicateVarDefs) {
     while (!candidates.empty()) {
         SeparateTail mutator(noDuplicateVarDefs, candidates);
         ast = mutator(ast);
-        ast = simplifyPass(
+        ast = simplify(
             z3Simplify(ast)); // Although Z3 may be slow, if we don't use Z3
                               // here, there will be too many redundant
                               // branches, which will make each pass even slower

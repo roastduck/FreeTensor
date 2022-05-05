@@ -307,7 +307,7 @@ Stmt makeParallelReduction(const Stmt &_op) {
 
     op = MakeParallelReduction(toAlter, serialFinder.results(),
                                variantExprMap)(op);
-    op = simplifyPass(op);
+    op = simplify(op);
     return op;
 }
 

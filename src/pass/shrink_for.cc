@@ -124,9 +124,9 @@ Stmt ShrinkFor::visit(const For &_op) {
 }
 
 Stmt shrinkFor(const Stmt &_op) {
-    auto op = simplifyPass(_op); // Const prop + eliminate empty loops
+    auto op = simplify(_op); // Const prop + eliminate empty loops
     op = ShrinkFor()(op);
-    return simplifyPass(op);
+    return simplify(op);
 }
 
 } // namespace freetensor

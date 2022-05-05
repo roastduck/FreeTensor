@@ -58,7 +58,7 @@ T lower(const T &_ast, const Ref<Target> &target,
     ast = APPLY("prop_one_time_use", propOneTimeUse, ast);
     ast = APPLY("float_simplify", floatSimplify, ast); // After propOneTimeUse
     ast = APPLY("z3_simplify", z3Simplify, ast);
-    ast = APPLY("simplify_pass", simplifyPass, ast);
+    ast = APPLY("simplify", simplify, ast);
     ast = APPLY("move_out_first_or_last_iter", moveOutFirstOrLastIter, ast);
     ast = APPLY("sink_var", sinkVar, ast);
     ast = APPLY("shrink_var", shrinkVar, ast);

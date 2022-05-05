@@ -547,7 +547,7 @@ grad(const Stmt &_op, const std::unordered_set<std::string> &_requires,
     // We do some basic simplifications here, to reduce burden on auto-schedule
     backward = removeDeadVar(backward);
     backward = propOneTimeUse(backward);
-    backward = simplifyPass(backward);
+    backward = simplify(backward);
     backward = tensorPropConst(backward);
     backward = removeWrites(backward);
     backward = removeCyclicAssign(backward);

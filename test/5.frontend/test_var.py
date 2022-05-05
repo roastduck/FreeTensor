@@ -32,7 +32,7 @@ def test_select():
                 y.select(j, 1).select(i,
                                       0)[()] = x.select(i, 0).select(j, 0) * 2
 
-    f = ft.simplify_pass(f)
+    f = ft.simplify(f)
     print(f)
 
     with ft.VarDef([("x", (4, 4), "int32", "input", "cpu"),

@@ -630,6 +630,6 @@ Stmt builtinSimplify(const Stmt &op) {
     return flattenStmtSeq(simplifyImpl<BuiltinSimplify>(op));
 }
 
-Stmt simplifyPass(const Stmt &op) { return builtinSimplify(op); }
+Stmt simplify(const Stmt &op) { return builtinSimplify(op); }
 
 } // namespace freetensor

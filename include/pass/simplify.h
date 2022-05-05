@@ -133,9 +133,9 @@ template <class Simplifier> Stmt simplifyImpl(const Stmt &_op) {
 
 Stmt builtinSimplify(const Stmt &op);
 
-Stmt simplifyPass(const Stmt &op);
+Stmt simplify(const Stmt &op);
 
-DEFINE_PASS_FOR_FUNC(simplifyPass)
+DEFINE_PASS_FOR_FUNC(simplify)
 
 } // namespace freetensor
 

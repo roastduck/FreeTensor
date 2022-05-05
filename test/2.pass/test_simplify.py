@@ -7,7 +7,7 @@ import pytest
 # test these two passes
 
 
-@pytest.mark.parametrize('p', [ft.simplify_pass])
+@pytest.mark.parametrize('p', [ft.simplify])
 def test_const_fold(p):
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4) as i:
@@ -25,7 +25,7 @@ def test_const_fold(p):
     assert std.match(ast)
 
 
-@pytest.mark.parametrize('p', [ft.simplify_pass])
+@pytest.mark.parametrize('p', [ft.simplify])
 def test_partial_fold(p):
     # This is the case that we need a symbolic bound, instead
     # of using integers only
@@ -47,7 +47,7 @@ def test_partial_fold(p):
     assert std.match(ast)
 
 
-@pytest.mark.parametrize('p', [ft.simplify_pass, ft.z3_simplify])
+@pytest.mark.parametrize('p', [ft.simplify, ft.z3_simplify])
 def test_redundant_if(p):
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4) as i:
@@ -66,7 +66,7 @@ def test_redundant_if(p):
     assert std.match(ast)
 
 
-@pytest.mark.parametrize('p', [ft.simplify_pass, ft.z3_simplify])
+@pytest.mark.parametrize('p', [ft.simplify, ft.z3_simplify])
 def test_redundant_if_2(p):
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4) as i:
@@ -85,7 +85,7 @@ def test_redundant_if_2(p):
     assert std.match(ast)
 
 
-@pytest.mark.parametrize('p', [ft.simplify_pass, ft.z3_simplify])
+@pytest.mark.parametrize('p', [ft.simplify, ft.z3_simplify])
 def test_redundant_if_3(p):
     with ft.VarDef([("n", (), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (n, y):
@@ -106,7 +106,7 @@ def test_redundant_if_3(p):
     assert std.match(ast)
 
 
-@pytest.mark.parametrize('p', [ft.simplify_pass, ft.z3_simplify])
+@pytest.mark.parametrize('p', [ft.simplify, ft.z3_simplify])
 def test_redundant_min(p):
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4) as i:
@@ -125,7 +125,7 @@ def test_redundant_min(p):
     assert std.match(ast)
 
 
-@pytest.mark.parametrize('p', [ft.simplify_pass, ft.z3_simplify])
+@pytest.mark.parametrize('p', [ft.simplify, ft.z3_simplify])
 def test_redundant_max(p):
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4) as i:
@@ -144,7 +144,7 @@ def test_redundant_max(p):
     assert std.match(ast)
 
 
-@pytest.mark.parametrize('p', [ft.simplify_pass, ft.z3_simplify])
+@pytest.mark.parametrize('p', [ft.simplify, ft.z3_simplify])
 def test_multiple_mins_1(p):
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
@@ -164,7 +164,7 @@ def test_multiple_mins_1(p):
     assert std.match(ast)
 
 
-@pytest.mark.parametrize('p', [ft.simplify_pass])
+@pytest.mark.parametrize('p', [ft.simplify])
 def test_multiple_mins_2(p):
     with ft.VarDef("y", (10, 10, 10), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 10) as i:
@@ -186,7 +186,7 @@ def test_multiple_mins_2(p):
     assert std.match(ast)
 
 
-@pytest.mark.parametrize('p', [ft.simplify_pass, ft.z3_simplify])
+@pytest.mark.parametrize('p', [ft.simplify, ft.z3_simplify])
 def test_multiple_maxes_1(p):
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
@@ -206,7 +206,7 @@ def test_multiple_maxes_1(p):
     assert std.match(ast)
 
 
-@pytest.mark.parametrize('p', [ft.simplify_pass])
+@pytest.mark.parametrize('p', [ft.simplify])
 def test_multiple_maxes_2(p):
     with ft.VarDef("y", (10, 10, 10), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 10) as i:
@@ -228,7 +228,7 @@ def test_multiple_maxes_2(p):
     assert std.match(ast)
 
 
-@pytest.mark.parametrize('p', [ft.simplify_pass, ft.z3_simplify])
+@pytest.mark.parametrize('p', [ft.simplify, ft.z3_simplify])
 def test_multiple_min_max(p):
     with ft.VarDef([
         ("a", (), "int32", "input", "cpu"),
@@ -255,7 +255,7 @@ def test_multiple_min_max(p):
     assert std.match(ast)
 
 
-@pytest.mark.parametrize('p', [ft.simplify_pass, ft.z3_simplify])
+@pytest.mark.parametrize('p', [ft.simplify, ft.z3_simplify])
 def test_precondition_from_if(p):
     with ft.VarDef([
         ("x1", (4,), "int32", "input", "cpu"),
@@ -287,7 +287,7 @@ def test_precondition_from_if(p):
     assert std.match(ast)
 
 
-@pytest.mark.parametrize('p', [ft.simplify_pass, ft.z3_simplify])
+@pytest.mark.parametrize('p', [ft.simplify, ft.z3_simplify])
 def test_multiple_preconditions_from_if(p):
     with ft.VarDef([
         ("x1", (4,), "int32", "input", "cpu"),
@@ -319,7 +319,7 @@ def test_multiple_preconditions_from_if(p):
     assert std.match(ast)
 
 
-@pytest.mark.parametrize('p', [ft.simplify_pass, ft.z3_simplify])
+@pytest.mark.parametrize('p', [ft.simplify, ft.z3_simplify])
 def test_precondition_from_assert(p):
     with ft.VarDef([
         ("x1", (4,), "int32", "input", "cpu"),
@@ -347,7 +347,7 @@ def test_precondition_from_assert(p):
     assert std.match(ast)
 
 
-@pytest.mark.parametrize('p', [ft.simplify_pass, ft.z3_simplify])
+@pytest.mark.parametrize('p', [ft.simplify, ft.z3_simplify])
 def test_assert_false(p):
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
@@ -360,7 +360,7 @@ def test_assert_false(p):
         ast = p(ast)
 
 
-@pytest.mark.parametrize('p', [ft.simplify_pass, ft.z3_simplify])
+@pytest.mark.parametrize('p', [ft.simplify, ft.z3_simplify])
 def test_unreachable_assert_false(p):
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
@@ -388,7 +388,7 @@ def test_unreachable_assert_false(p):
     assert std.match(ast)
 
 
-@pytest.mark.parametrize('p', [ft.simplify_pass, ft.z3_simplify])
+@pytest.mark.parametrize('p', [ft.simplify, ft.z3_simplify])
 def test_different_scope(p):
     with ft.VarDef([
         ("x", (4, 10), "int32", "input", "cpu"),
@@ -431,7 +431,7 @@ def test_different_scope(p):
     assert std.match(ast)
 
 
-@pytest.mark.parametrize('p', [ft.simplify_pass, ft.z3_simplify])
+@pytest.mark.parametrize('p', [ft.simplify, ft.z3_simplify])
 def test_dynamic(p):
     with ft.VarDef([("n", (), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (n, y):
@@ -452,7 +452,7 @@ def test_dynamic(p):
     assert std.match(ast)
 
 
-@pytest.mark.parametrize('p', [ft.simplify_pass, ft.z3_simplify])
+@pytest.mark.parametrize('p', [ft.simplify, ft.z3_simplify])
 def test_floor_div_1(p):
     with ft.VarDef([("n", (), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (n, y):
@@ -473,7 +473,7 @@ def test_floor_div_1(p):
     assert std.match(ast)
 
 
-@pytest.mark.parametrize('p', [ft.simplify_pass, ft.z3_simplify])
+@pytest.mark.parametrize('p', [ft.simplify, ft.z3_simplify])
 def test_floor_div_2(p):
     with ft.VarDef([("n", (), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (n, y):
@@ -494,7 +494,7 @@ def test_floor_div_2(p):
     assert std.match(ast)
 
 
-@pytest.mark.parametrize('p', [ft.simplify_pass, ft.z3_simplify])
+@pytest.mark.parametrize('p', [ft.simplify, ft.z3_simplify])
 def test_floor_div_3(p):
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
@@ -512,7 +512,7 @@ def test_floor_div_3(p):
     assert std.match(ast)
 
 
-@pytest.mark.parametrize('p', [ft.simplify_pass])
+@pytest.mark.parametrize('p', [ft.simplify])
 def test_floor_div_4(p):
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
@@ -530,7 +530,7 @@ def test_floor_div_4(p):
     assert std.match(ast)
 
 
-@pytest.mark.parametrize('p', [ft.simplify_pass])
+@pytest.mark.parametrize('p', [ft.simplify])
 def test_floor_div_5(p):
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
@@ -548,7 +548,7 @@ def test_floor_div_5(p):
     assert std.match(ast)
 
 
-@pytest.mark.parametrize('p', [ft.simplify_pass])
+@pytest.mark.parametrize('p', [ft.simplify])
 def test_floor_div_6(p):
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
@@ -566,7 +566,7 @@ def test_floor_div_6(p):
     assert std.match(ast)
 
 
-@pytest.mark.parametrize('p', [ft.simplify_pass])
+@pytest.mark.parametrize('p', [ft.simplify])
 def test_mod_1(p):
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
@@ -584,7 +584,7 @@ def test_mod_1(p):
     assert std.match(ast)
 
 
-@pytest.mark.parametrize('p', [ft.simplify_pass])
+@pytest.mark.parametrize('p', [ft.simplify])
 def test_mod_2(p):
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
@@ -608,7 +608,7 @@ def test_mod_2(p):
     assert std.match(ast)
 
 
-@pytest.mark.parametrize('p', [ft.simplify_pass])
+@pytest.mark.parametrize('p', [ft.simplify])
 def test_simplify_not_cmp(p):
     with ft.VarDef([
         ("x", (4,), "int32", "input", "cpu"),
@@ -652,7 +652,7 @@ def test_simplify_not_cmp(p):
     assert std.match(ast)
 
 
-@pytest.mark.parametrize('p', [ft.simplify_pass])
+@pytest.mark.parametrize('p', [ft.simplify])
 def test_simplify_not_logic_op(p):
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
@@ -678,7 +678,7 @@ def test_simplify_not_logic_op(p):
     assert std.match(ast)
 
 
-@pytest.mark.parametrize('p', [ft.simplify_pass])
+@pytest.mark.parametrize('p', [ft.simplify])
 def test_min_minus_min(p):
     with ft.VarDef([
         ("x", (), "int32", "input", "cpu"),
@@ -702,7 +702,7 @@ def test_min_minus_min(p):
     assert std.match(ast)
 
 
-@pytest.mark.parametrize('p', [ft.simplify_pass, ft.z3_simplify])
+@pytest.mark.parametrize('p', [ft.simplify, ft.z3_simplify])
 def test_min_max_as_bound(p):
     with ft.VarDef([("l", (), "int32", "input", "cpu"),
                     ("r", (), "int32", "input", "cpu")]) as (l, r):
@@ -727,7 +727,7 @@ def test_min_max_as_bound(p):
     assert std.match(ast)
 
 
-@pytest.mark.parametrize('p', [ft.simplify_pass, ft.z3_simplify])
+@pytest.mark.parametrize('p', [ft.simplify, ft.z3_simplify])
 def test_accessible_after_writing_if(p):
     with ft.VarDef([("x", (4,), "int32", "inout", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
@@ -754,7 +754,7 @@ def test_accessible_after_writing_if(p):
     assert std.match(ast)
 
 
-@pytest.mark.parametrize('p', [ft.simplify_pass, ft.z3_simplify])
+@pytest.mark.parametrize('p', [ft.simplify, ft.z3_simplify])
 def test_accessible_after_writing_for(p):
     with ft.VarDef([("x", (4,), "int32", "inout", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
@@ -784,7 +784,7 @@ def test_accessible_after_writing_for(p):
     assert std.match(ast)
 
 
-@pytest.mark.parametrize('p', [ft.simplify_pass])
+@pytest.mark.parametrize('p', [ft.simplify])
 def test_loop_length_0_or_1(p):
     with ft.VarDef("n", (), "int32", "input", "cpu") as n:
         with ft.Assert(n[()] <= 1):

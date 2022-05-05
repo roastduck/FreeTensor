@@ -89,10 +89,8 @@ void init_ffi_pass(py::module_ &m) {
         },
         "stmt"_a, "intermediates"_a);
 
-    m.def("simplify_pass", static_cast<Func (*)(const Func &)>(&simplifyPass),
-          "func"_a);
-    m.def("simplify_pass", static_cast<Stmt (*)(const Stmt &)>(&simplifyPass),
-          "stmt"_a);
+    m.def("simplify", static_cast<Func (*)(const Func &)>(&simplify), "func"_a);
+    m.def("simplify", static_cast<Stmt (*)(const Stmt &)>(&simplify), "stmt"_a);
 
     m.def("z3_simplify", static_cast<Func (*)(const Func &)>(&z3Simplify),
           "func"_a);

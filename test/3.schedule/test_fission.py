@@ -80,7 +80,7 @@ def test_fission_after_empty():
     s.fission("L2", ft.FissionSide.After, "S0")
     ast = s.ast()
     print(ast)
-    ast = ft.simplify_pass(ast)
+    ast = ft.simplify(ast)
     print(ast)
 
     with ft.VarDef("z", (4, 8), "int32", "output", "cpu") as z:
@@ -104,7 +104,7 @@ def test_fission_before_empty():
     s.fission("L2", ft.FissionSide.Before, "S0")
     ast = s.ast()
     print(ast)
-    ast = ft.simplify_pass(ast)
+    ast = ft.simplify(ast)
     print(ast)
 
     with ft.VarDef("y", (4, 8), "int32", "output", "cpu") as y:

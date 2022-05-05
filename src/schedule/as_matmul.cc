@@ -280,7 +280,7 @@ Stmt AsMatMul::visit(const VarDef &op) {
 }
 
 Stmt asMatMul(const Stmt &_ast, const ID &loop) {
-    auto ast = simplifyPass(_ast); // const prop
+    auto ast = simplify(_ast); // const prop
     ast = makeReduction(ast);
     ast = AsMatMul(loop)(ast);
     return ast;

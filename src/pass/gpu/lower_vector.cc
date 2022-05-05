@@ -224,7 +224,7 @@ Stmt LowerVector::visit(const ReduceTo &op) {
 
 Stmt lowerVector(const Stmt &_op) {
     auto op = LowerVector()(_op);
-    return simplifyPass(op);
+    return simplify(op);
 }
 
 } // namespace gpu

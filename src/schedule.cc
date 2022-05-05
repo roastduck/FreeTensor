@@ -35,7 +35,7 @@
 
 namespace freetensor {
 
-Schedule::Schedule(const Stmt &ast) : ast_(ast) { ast_ = simplifyPass(ast_); }
+Schedule::Schedule(const Stmt &ast) : ast_(ast) { ast_ = simplify(ast_); }
 
 std::vector<Stmt>
 Schedule::findAll(const std::function<bool(const Stmt &)> &filter) const {

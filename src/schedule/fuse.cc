@@ -275,7 +275,7 @@ std::pair<Stmt, ID> fuse(const Stmt &_ast, const ID &loop0, const ID &loop1,
              FindDepsMode::Dep, DEP_ALL, filter);
 
     try {
-        ast = simplifyPass(ast);
+        ast = simplify(ast);
     } catch (const AssertAlwaysFalse &e) {
         throw InvalidSchedule("Fusing " + toString(loop0) + " and " +
                               toString(loop1) +

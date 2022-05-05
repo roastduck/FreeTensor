@@ -143,7 +143,7 @@ def test_not_following_1():
                 z[i, j] = i * j
             with ft.For("j", 0, 8, nid="L2c") as j:
                 w[i, j] = i - j
-    ast = ft.simplify_pass(ft.pop_ast())
+    ast = ft.simplify(ft.pop_ast())
     print(ast)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
@@ -202,7 +202,7 @@ def test_dependency_unable_resolve():
                     b[i, j] = x[i, j] * 2
                 with ft.For("j", 0, 8, nid="L2b") as j:
                     y[i, j] = b[i, 8 - j]
-    ast = ft.simplify_pass(ft.pop_ast())
+    ast = ft.simplify(ft.pop_ast())
     print(ast)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):

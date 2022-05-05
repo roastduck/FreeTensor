@@ -48,7 +48,7 @@ Expr Make1DVar::visit(const Load &_op) {
 
 Stmt make1dVar(const Stmt &_op) {
     auto op = Make1DVar()(_op);
-    op = simplifyPass(op);
+    op = simplify(op);
     return op;
 }
 

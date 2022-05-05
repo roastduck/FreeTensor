@@ -175,7 +175,7 @@ Stmt LowerParallelReduction::visit(const ReduceTo &_op) {
 
 Stmt lowerParallelReduction(const Stmt &_op) {
     auto op = LowerParallelReduction()(_op);
-    op = simplifyPass(op); // flatten singleton loops
+    op = simplify(op); // flatten singleton loops
     return op;
 }
 

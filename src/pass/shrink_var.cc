@@ -64,7 +64,7 @@ Stmt shrinkVar(const Stmt &_op) {
     op = ShrinkVar(bounds)(op);
 
     // (3)
-    return simplifyPass(op);
+    return simplify(op);
 }
 
 Stmt shrinkSingleVar(const Stmt &_op, const ID &varDefId) {
@@ -78,7 +78,7 @@ Stmt shrinkSingleVar(const Stmt &_op, const ID &varDefId) {
     op = ShrinkVar(bounds)(op);
 
     // (3)
-    return simplifyPass(op);
+    return simplify(op);
 }
 
 } // namespace freetensor

@@ -255,7 +255,7 @@ cache(const Stmt &_ast, const ID &stmt, const std::string &var, MemType mtype) {
         throw InvalidSchedule("Statement " + toString(stmt) + " not found");
     }
 
-    ast = simplifyPass(ast);
+    ast = simplify(ast);
     auto rwBound = compAccessBound(ast, newDef);
     auto wBound = compAccessBound(ast, newDef, COMP_ACCESS_BOUND_WRITE);
     MakeFillAndFlush makeFillAndFlush(stmt, var, newVar, oldDef, rwBound,
@@ -264,7 +264,7 @@ cache(const Stmt &_ast, const ID &stmt, const std::string &var, MemType mtype) {
     fillStmt = makeFillAndFlush.fillStmt();
     flushStmt = makeFillAndFlush.flushStmt();
 
-    ast = simplifyPass(ast);
+    ast = simplify(ast);
     ast = shrinkSingleVar(ast, newDef);
     ast = removeWrites(ast, newDef);
     checkVarCrossParallel(ast, newDef, mtype);
@@ -289,7 +289,7 @@ cacheReduction(const Stmt &_ast, const ID &stmt, const std::string &var,
         throw InvalidSchedule("Statement " + toString(stmt) + " not found");
     }
 
-    ast = simplifyPass(ast);
+    ast = simplify(ast);
     auto bound = compAccessBound(ast, newDef);
     MakeInitAndReduce makeInitAndReduce(stmt, var, newVar, oldDef, newDef,
                                         bound);
@@ -297,7 +297,7 @@ cacheReduction(const Stmt &_ast, const ID &stmt, const std::string &var,
     initStmt = makeInitAndReduce.initStmt();
     reduceStmt = makeInitAndReduce.reduceStmt();
 
-    ast = simplifyPass(ast);
+    ast = simplify(ast);
     ast = shrinkSingleVar(ast, newDef);
     ast = removeWrites(ast, newDef);
     checkVarCrossParallel(ast, newDef, mtype);

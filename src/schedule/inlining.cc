@@ -153,7 +153,7 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
     ast = MakeInline(def, replace)(ast);
 
     ast = sinkVar(ast);
-    ast = simplifyPass(ast);
+    ast = simplify(ast);
 
     return ast;
 }

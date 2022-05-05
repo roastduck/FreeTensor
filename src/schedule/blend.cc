@@ -169,7 +169,7 @@ Expr BlendPass::visit(const Load &_op) {
 }
 
 Stmt blend(const Stmt &_ast, const ID &loop) {
-    auto ast = simplifyPass(_ast); // Const prop for ForNode::len_
+    auto ast = simplify(_ast); // Const prop for ForNode::len_
 
     FindAllScopesInside finder(loop);
     finder(ast);

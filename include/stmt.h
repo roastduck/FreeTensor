@@ -150,7 +150,7 @@ class ForNode : public StmtNode {
     std::string iter_;
 
     // We also record len_ because it is used in may passes. If we computes len_
-    // every time and call simplifyPass to propagate the constants, it is very
+    // every time and call simplify to propagate the constants, it is very
     // time consuming
     SubTree<ExprNode> begin_ = ChildOf{this};
     SubTree<ExprNode> end_ = ChildOf{this};

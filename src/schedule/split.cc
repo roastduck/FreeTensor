@@ -58,8 +58,8 @@ std::pair<Stmt, std::pair<ID, ID>> split(const Stmt &_ast, const ID &id,
     if (!mutator.found()) {
         throw InvalidSchedule("Loop not found");
     }
-    ast = simplifyPass(ast); // try to remove divisions, or it will hinder
-                             // the dependency analysis
+    ast = simplify(ast); // try to remove divisions, or it will hinder
+                         // the dependency analysis
     return std::make_pair(ast,
                           std::make_pair(mutator.outerId(), mutator.innerId()));
 }
