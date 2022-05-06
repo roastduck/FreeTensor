@@ -73,11 +73,12 @@ def test_used_in_many_reads_no_prop():
 
 
 def test_modify_self_no_prop():
-    with ft.VarDef([("x", (5,), "float64", "input", "cpu"),
+    with ft.VarDef([("x", (5,), "float64", "inout", "cpu"),
                     ("y", (5,), "float64", "output", "cpu")]) as (x, y):
         with ft.VarDef("t", (5,), "float64", "cache", "cpu") as t:
             with ft.For("i", 0, 5) as i:
                 t[i] = x[i]
+                x[i] = 0
             with ft.For("i", 0, 5) as i:
                 t[i] = t[i] - 1
                 y[i] = t[i]
@@ -86,11 +87,12 @@ def test_modify_self_no_prop():
     ast = ft.lower(ast)
     print(ast)
 
-    with ft.VarDef([("x", (5,), "float64", "input", "cpu"),
+    with ft.VarDef([("x", (5,), "float64", "inout", "cpu"),
                     ("y", (5,), "float64", "output", "cpu")]) as (x, y):
         with ft.VarDef("t", (5,), "float64", "cache", "cpu") as t:
             with ft.For("i", 0, 5) as i:
                 t[i] = x[i]
+                x[i] = 0
             with ft.For("i", 0, 5) as i:
                 t[i] = t[i] - 1
                 y[i] = t[i]

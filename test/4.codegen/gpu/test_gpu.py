@@ -214,7 +214,7 @@ def test_global_mem():
     s = ft.Schedule(test)
     s.parallelize("L1", "threadIdx.x")
     s.parallelize("L2", "threadIdx.x")
-    func = ft.lower(s.func(), target)
+    func = ft.lower(s.func(), target, skip_passes=['prop_one_time_use'])
     print(func)
     code = ft.codegen(func, target)
     print(debug.with_line_no(code))
@@ -493,7 +493,7 @@ def test_multiplex_shared_1():
     s.parallelize("L0", "threadIdx.y")
     s.parallelize("L1", "threadIdx.x")
     s.parallelize("L2", "threadIdx.x")
-    func = ft.lower(s.func(), target)
+    func = ft.lower(s.func(), target, skip_passes=['prop_one_time_use'])
     print(func)
 
     with ft.VarDef([
@@ -542,7 +542,7 @@ def test_multiplex_shared_2():
     s.parallelize("L0", "threadIdx.y")
     s.parallelize("L1", "threadIdx.x")
     s.parallelize("L2", "threadIdx.x")
-    func = ft.lower(s.func(), target)
+    func = ft.lower(s.func(), target, skip_passes=['prop_one_time_use'])
     print(func)
 
     with ft.VarDef([
@@ -759,7 +759,7 @@ def test_parallel_different_length():
     s.parallelize("L0", "blockIdx.x")
     s.parallelize("L1", "threadIdx.x")
     s.parallelize("L3", "threadIdx.x")
-    func = ft.lower(s.func(), target)
+    func = ft.lower(s.func(), target, skip_passes=['prop_one_time_use'])
     print(func)
 
     with ft.VarDef([
@@ -851,7 +851,7 @@ def test_parallel_broadcast():
     s = ft.Schedule(test)
     s.parallelize("L0", "blockIdx.x")
     s.parallelize("L1", "threadIdx.x")
-    func = ft.lower(s.func(), target)
+    func = ft.lower(s.func(), target, skip_passes=['prop_one_time_use'])
     print(func)
 
     with ft.VarDef([

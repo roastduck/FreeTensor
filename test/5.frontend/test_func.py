@@ -385,7 +385,7 @@ def test_return():
                 c[i, j] = c1[i, j]
                 d[i, j] = d1[i, j]
 
-    func = ft.lower(test, ft.CPU())
+    func = ft.lower(test, ft.CPU(), skip_passes=['prop_one_time_use'])
     print(func)
 
     with ft.VarDef([("y", (2, 2), "int32", "output", "cpu"),
@@ -435,7 +435,7 @@ def test_return_returned_value():
             w1[i] = y1[i]
             w2[i] = y2[i]
 
-    func = ft.lower(f, ft.CPU())
+    func = ft.lower(f, ft.CPU(), skip_passes=['prop_one_time_use'])
     print(func)
 
     with ft.VarDef([("x", (8,), "int32", "input", "cpu"),
@@ -544,7 +544,7 @@ def test_no_deps_on_returned_tensor():
                 c[i, j] = cc[i, j]
                 d[i, j] = dd[i, j]
 
-    func = ft.lower(test, ft.CPU())
+    func = ft.lower(test, ft.CPU(), skip_passes=['prop_one_time_use'])
     print(func)
 
     s = ft.Schedule(func)
