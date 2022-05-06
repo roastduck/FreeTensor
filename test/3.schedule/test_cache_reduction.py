@@ -14,7 +14,7 @@ def test_reduce_sum():
     s.cache_reduction("L2", "y", "cpu")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
+    ast = ft.lower(ast, skip_passes=['prop_one_time_use'])
     print(ast)
 
     with ft.VarDef([("x", (4, 8), "int32", "input", "cpu"),

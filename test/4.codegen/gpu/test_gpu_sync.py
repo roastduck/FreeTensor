@@ -39,7 +39,7 @@ def test_syncthreads():
     s.parallelize("L0", "blockIdx.x")
     s.parallelize("L1", "threadIdx.x")
     s.parallelize("L2", "threadIdx.x")
-    func = ft.lower(s.func(), target)
+    func = ft.lower(s.func(), target, skip_passes=['prop_one_time_use'])
     print(func)
 
     with ft.VarDef([
@@ -90,7 +90,7 @@ def test_syncthreads_in_loop():
     s.parallelize("L0", "blockIdx.x")
     s.parallelize("L1", "threadIdx.x")
     s.parallelize("L2", "threadIdx.x")
-    func = ft.lower(s.func(), target)
+    func = ft.lower(s.func(), target, skip_passes=['prop_one_time_use'])
     print(func)
 
     with ft.VarDef([
@@ -133,7 +133,7 @@ def test_syncthreads_at_outer_loop():
     s.parallelize("L0", "blockIdx.x")
     s.parallelize("L1", "threadIdx.x")
     s.parallelize("L2", "threadIdx.x")
-    func = ft.lower(s.func(), target)
+    func = ft.lower(s.func(), target, skip_passes=['prop_one_time_use'])
     print(func)
 
     with ft.VarDef([
@@ -180,7 +180,7 @@ def test_syncthreads_not_at_outer_loop():
     s.parallelize("L1", "threadIdx.x")
     s.parallelize("L2", "threadIdx.x")
     s.parallelize("L3", "threadIdx.x")
-    func = ft.lower(s.func(), target)
+    func = ft.lower(s.func(), target, skip_passes=['prop_one_time_use'])
     print(func)
 
     with ft.VarDef([
@@ -266,7 +266,7 @@ def test_syncthreads_at_outer_loop_and_outer_branch():
     s = ft.Schedule(test)
     s.parallelize("L0", "blockIdx.x")
     s.parallelize("L1", "threadIdx.x")
-    func = ft.lower(s.func(), target)
+    func = ft.lower(s.func(), target, skip_passes=['prop_one_time_use'])
     print(func)
 
     with ft.VarDef([
@@ -607,7 +607,7 @@ def test_syncwarp():
     s.parallelize("L0", "blockIdx.x")
     s.parallelize("L1", "threadIdx.x")
     s.parallelize("L2", "threadIdx.x")
-    func = ft.lower(s.func(), target)
+    func = ft.lower(s.func(), target, skip_passes=['prop_one_time_use'])
     print(func)
 
     with ft.VarDef([

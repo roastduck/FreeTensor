@@ -495,7 +495,7 @@ def test_correct_dependency_no_need_to_modify_no_dep():
     s.fission("L2", ft.FissionSide.After, "S0")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
+    ast = ft.lower(ast, skip_passes=['prop_one_time_use'])
     print(ast)
 
     with ft.VarDef([
@@ -534,7 +534,7 @@ def test_correct_dependency_no_need_to_modify_broadcast():
     s.fission("L2", ft.FissionSide.After, "S0")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
+    ast = ft.lower(ast, skip_passes=['prop_one_time_use'])
     print(ast)
 
     with ft.VarDef([

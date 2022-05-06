@@ -224,7 +224,7 @@ def test_local_var_as_index():
     s.cache("L2", "x", "cpu")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
+    ast = ft.lower(ast, skip_passes=['prop_one_time_use'])
     print(ast)
 
     with ft.VarDef([("x", (4, 8), "int32", "input", "cpu"),

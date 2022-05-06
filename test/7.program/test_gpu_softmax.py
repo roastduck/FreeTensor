@@ -46,7 +46,6 @@ def test_manual_static():
     L_seq_outer = s.fuse(L_seq_outer)
     L_seq_outer = s.fuse(L_seq_outer)
     L_seq_outer = s.fuse(L_seq_outer)
-    L_seq_outer = s.fuse(L_seq_outer)
 
     # ----------------
 

@@ -112,22 +112,22 @@ Stmt tensorPropConst(const Stmt &_op) {
                     ASSERT(repInfo.earlierIters_.size() <=
                            values.size()); // maybe padded
                     ASSERT(repInfo.laterIters_.size() <= args.size());
-                    std::unordered_map<std::string, Expr> islVarToPlaceholder,
-                        oldIterToPlaceholder;
+                    std::unordered_map<std::string, Expr> islVarToNewIter,
+                        oldIterToNewIter;
                     for (auto &&[newIter, arg] :
                          iter::zip(repInfo.laterIters_, args)) {
-                        islVarToPlaceholder[arg] = newIter.iter_;
+                        islVarToNewIter[arg] = newIter.iter_;
                     }
                     for (auto &&[oldIter, value] :
                          iter::zip(repInfo.earlierIters_, values)) {
                         if (oldIter.iter_->nodeType() == ASTNodeType::Var) {
-                            oldIterToPlaceholder[oldIter.iter_.as<VarNode>()
-                                                     ->name_] =
-                                ReplaceIter(islVarToPlaceholder)(value);
+                            oldIterToNewIter[oldIter.iter_.as<VarNode>()
+                                                 ->name_] =
+                                ReplaceIter(islVarToNewIter)(value);
                         }
                     }
                     replace[item.first] =
-                        ReplaceIter(oldIterToPlaceholder)(store->expr_);
+                        ReplaceIter(oldIterToNewIter)(store->expr_);
                 } catch (const ParserError &e) {
                     // do nothing
                 }

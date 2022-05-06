@@ -378,7 +378,7 @@ def test_correct_scope():
     s.inline("U")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
+    ast = ft.lower(ast, skip_passes=['prop_one_time_use'])
     print(ast)
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),

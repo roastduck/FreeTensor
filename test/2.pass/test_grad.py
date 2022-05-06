@@ -897,15 +897,12 @@ def test_tape_mode_nothing():
                     ("d_y", (4,), "float32", "inout", "cpu")
                    ]) as (x1, d_x1, x2, d_x2, x3, d_x3, y, d_y):
         with ft.VarDef("d_t", (4,), "float32", "cache", "cpu") as d_t:
-            with ft.VarDef("t", (4,), "float32", "cache", "cpu") as t:
-                with ft.For("i", 0, 4) as i:
-                    t[i] = x1[i] + x2[i]
-                with ft.For("i", 3, -1, -1) as i:
-                    with ft.VarDef("d_u", (), "float32", "cache", "cpu") as d_u:
-                        d_u[()] = d_y[i] * t[i]
-                        d_t[i] = d_y[i] * (x2[i] + x3[i])
-                        d_x2[i] = d_u[()]
-                        d_x3[i] = d_u[()]
+            with ft.For("i", 3, -1, -1) as i:
+                with ft.VarDef("d_u", (), "float32", "cache", "cpu") as d_u:
+                    d_u[()] = d_y[i] * (x1[i] + x2[i])
+                    d_t[i] = d_y[i] * (x2[i] + x3[i])
+                    d_x2[i] = d_u[()]
+                    d_x3[i] = d_u[()]
             with ft.For("i", 3, -1, -1) as i:
                 d_x1[i] = d_t[i]
                 d_x2[i] += d_t[i]
