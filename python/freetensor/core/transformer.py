@@ -320,7 +320,20 @@ def empty_fallback(shape, dtype, mtype=None):
 
 
 empty = staged_callable(empty_staging, empty_fallback)
-'''Create a IR variable.'''
+'''
+Create an empty variable
+
+Parameters
+----------
+shape : Sequence[Expr] or Var
+    Shape of the variable. A variable can be created using a literal shape,
+    or another fixed-length VarRef as a shape
+dtype : str or DataType
+    Data type of the variable
+mtype : str or MemType (Optional)
+    Memory type of the variable. If omitted, the main memory type of the
+    default Target in config will be used
+'''
 
 
 class PredefinedVarCreator(VarCreator):
@@ -367,7 +380,22 @@ def var_fallback(initializer, dtype, mtype=None):
 
 
 var = staged_callable(var_staging, var_fallback)
-'''Create a IR variable with given initializer.'''
+'''
+Create an with variable a given initializer
+
+Parameters
+----------
+initializer : Sequence[Sequence[...Sequence[Expr]...]]
+    (Multi-level of) sequence of expressions. Will be data of the variable
+shape : Sequence[Expr] or Var
+    Shape of the variable. A variable can be created using a literal shape,
+    or another fixed-length VarRef as a shape
+dtype : str or DataType
+    Data type of the variable
+mtype : str or MemType (Optional)
+    Memory type of the variable. If omitted, the main memory type of the
+    default Target in config will be used
+'''
 
 
 def capture_var_fallback(arr: ffi.Array, name: str = 'captured'):
