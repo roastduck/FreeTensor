@@ -133,7 +133,7 @@ class Schedule(ffi.Schedule):
         return super(Schedule, self).fission(ID(loop), side, ID(splitter),
                                              suffix0, suffix1)
 
-    def fuse(self, loop0, loop1, strict=False):
+    def fuse(self, loop0, loop1=None, strict=False):
         """
         Fuse two directly following loops with the same length into one
 
@@ -146,10 +146,11 @@ class Schedule(ffi.Schedule):
         ----------
         loop0 : str, ID or Stmt
             The leading loop
-        loop1 : str, ID or Stmt
-            The following loop
+        loop1 : str, ID or Stmt, Optional
+            The following loop. If ommited, it will try to find a following loop
+            of `loop0`
         strict : bool
-            If true, throw an error if unable to determine whether the two loops
+            False by default. If set to True, throw an error if unable to determine whether the two loops
             are of the same length
 
         Raises
@@ -163,7 +164,10 @@ class Schedule(ffi.Schedule):
         str
             ID of the result loop
         """
-        return super(Schedule, self).fuse(ID(loop0), ID(loop1), strict)
+        if loop1 is None:
+            return super(Schedule, self).fuse(ID(loop0), strict)
+        else:
+            return super(Schedule, self).fuse(ID(loop0), ID(loop1), strict)
 
     def swap(self, order):
         """

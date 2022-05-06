@@ -175,15 +175,19 @@ class Schedule {
      * fused loop
      *
      * @param loop0 : ID of the leading loop
-     * @param loop1 : ID of the following loop
+     * @param loop1 : ID of the following loop. If ommited, it will try to find
+     * a following loop of `loop0`
      * @param strict : If true, throw an error if unable to determine whether
      * the two loops are of the same length
      * @throw InvalidSchedule if the two loops are not directly following, the
      * two loops are not of the same length, or there is any dependency cannot
      * be resolved
      * @return : ID of the result loop
+     * @{
      */
     ID fuse(const ID &loop0, const ID &loop1, bool strict = false);
+    ID fuse(const ID &loop0, bool strict = false);
+    /** @} */
 
     /**
      * Swap statements in the same block

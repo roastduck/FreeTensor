@@ -41,7 +41,13 @@ void init_ffi_schedule(py::module_ &m) {
         .def("merge", &Schedule::merge, "loop1"_a, "loop2"_a)
         .def("fission", &Schedule::fission, "loop"_a, "side"_a, "splitter"_a,
              "suffix0"_a = ".a", "suffix1"_a = ".b")
-        .def("fuse", &Schedule::fuse, "loop0"_a, "loop1"_a, "strict"_a = false)
+        .def("fuse",
+             static_cast<ID (Schedule::*)(const ID &, const ID &, bool)>(
+                 &Schedule::fuse),
+             "loop0"_a, "loop1"_a, "strict"_a = false)
+        .def("fuse",
+             static_cast<ID (Schedule::*)(const ID &, bool)>(&Schedule::fuse),
+             "loop0"_a, "strict"_a = false)
         .def("swap", &Schedule::swap, "order"_a)
         .def("blend", &Schedule::blend, "loop"_a)
         .def("cache", &Schedule::cache, "stmt"_a, "var"_a, "mtype"_a)
