@@ -5,7 +5,7 @@
 #include <analyze/find_all_loops.h>
 #include <pass/sink_var.h>
 
-namespace ir {
+namespace freetensor {
 
 Stmt SinkVar::visit(const VarDef &_op) {
     auto __op = Mutator::visit(_op);
@@ -62,14 +62,14 @@ Stmt SinkVar::visit(const VarDef &_op) {
                          seq->stmts_.begin() + firstUse);
             stmts.insert(stmts.end(),
                          makeVarDef(_op->id(), _op->name_, _op->buffer_,
-                                    _op->sizeLim_, std::move(segment), false));
+                                    _op->ioTensor_, std::move(segment), false));
             stmts.insert(stmts.end(), seq->stmts_.begin() + lastUse + 1,
                          seq->stmts_.end());
             isFixPoint_ = false;
             ret = makeStmtSeq(seq->id(), std::move(stmts));
             for (auto &&def : iter::reversed(inners)) {
                 ret = makeVarDef(def->id(), def->name_, def->buffer_,
-                                 def->sizeLim_, std::move(ret), def->pinned_);
+                                 def->ioTensor_, std::move(ret), def->pinned_);
             }
         }
         break;
@@ -84,14 +84,14 @@ Stmt SinkVar::visit(const VarDef &_op) {
         if (!deps_.count(std::make_pair(_op->name_, loop->id())) ||
             !isVariant(variantMap_, _op, loop->id())) {
             auto loopBody = makeVarDef(_op->id(), _op->name_, _op->buffer_,
-                                       _op->sizeLim_, loop->body_, false);
+                                       _op->ioTensor_, loop->body_, false);
             isFixPoint_ = false;
             ret = makeFor(loop->id(), loop->iter_, loop->begin_, loop->end_,
                           loop->step_, loop->len_, loop->property_,
                           std::move(loopBody));
             for (auto &&def : iter::reversed(inners)) {
                 ret = makeVarDef(def->id(), def->name_, def->buffer_,
-                                 def->sizeLim_, std::move(ret), def->pinned_);
+                                 def->ioTensor_, std::move(ret), def->pinned_);
             }
         }
         break;
@@ -102,17 +102,17 @@ Stmt SinkVar::visit(const VarDef &_op) {
         Stmt thenCase, elseCase;
         thenCase =
             makeVarDef(_op->id().strId() + ".0", _op->name_, _op->buffer_,
-                       _op->sizeLim_, branch->thenCase_, false);
+                       _op->ioTensor_, branch->thenCase_, false);
         if (branch->elseCase_.isValid()) {
             elseCase =
                 makeVarDef(_op->id().strId() + ".1", _op->name_, _op->buffer_,
-                           _op->sizeLim_, branch->elseCase_, false);
+                           _op->ioTensor_, branch->elseCase_, false);
         }
         ret = makeIf(branch->id(), branch->cond_, std::move(thenCase),
                      std::move(elseCase));
         for (auto &&def : iter::reversed(inners)) {
-            ret = makeVarDef(def->id(), def->name_, def->buffer_, def->sizeLim_,
-                             std::move(ret), def->pinned_);
+            ret = makeVarDef(def->id(), def->name_, def->buffer_,
+                             def->ioTensor_, std::move(ret), def->pinned_);
         }
         break;
     }
@@ -120,11 +120,11 @@ Stmt SinkVar::visit(const VarDef &_op) {
     case ASTNodeType::Assert: {
         auto ass = op->body_.as<AssertNode>();
         auto body = makeVarDef(_op->id(), _op->name_, _op->buffer_,
-                               _op->sizeLim_, ass->body_, false);
+                               _op->ioTensor_, ass->body_, false);
         ret = makeAssert(ass->id(), ass->cond_, std::move(body));
         for (auto &&def : iter::reversed(inners)) {
-            ret = makeVarDef(def->id(), def->name_, def->buffer_, def->sizeLim_,
-                             std::move(ret), def->pinned_);
+            ret = makeVarDef(def->id(), def->name_, def->buffer_,
+                             def->ioTensor_, std::move(ret), def->pinned_);
         }
         break;
     }
@@ -170,4 +170,4 @@ Stmt sinkVar(const Stmt &_op) {
     return op;
 }
 
-} // namespace ir
+} // namespace freetensor

@@ -1,9 +1,9 @@
-#ifndef UNROLL_H
-#define UNROLL_H
+#ifndef FREE_TENSOR_UNROLL_H
+#define FREE_TENSOR_UNROLL_H
 
 #include <mutator.h>
 
-namespace ir {
+namespace freetensor {
 
 /**
  * Mark a loop as to be unroll, and let a backend compiler deal with it
@@ -45,6 +45,6 @@ class ImmediateUnroll : public Mutator {
 
 Stmt unroll(const Stmt &ast, const ID &loop, bool immediate);
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // UNROLL_H
+#endif // FREE_TENSOR_UNROLL_H

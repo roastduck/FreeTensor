@@ -1,8 +1,10 @@
+#include <algorithm>
+
 #include <analyze/check_all_defined.h>
 #include <analyze/comp_access_bound.h>
 #include <math/min_max.h>
 
-namespace ir {
+namespace freetensor {
 
 static bool isSharedAmong(MemType mtype, const ParallelScope &parallel) {
     if (std::holds_alternative<CUDAScope>(parallel)) {
@@ -74,9 +76,9 @@ void CompAccessBound::visit(const VarDef &op) {
             if (checkAllDefined(defs_, index)) {
                 lowerItem.emplace_back(index);
             }
-            for (auto item : access_[j].lower_[i]) {
-                if (checkAllDefined(defs_, item.expr())) {
-                    lowerItem.emplace_back(item.expr());
+            for (auto &&b : access_[j].lower_[i]) {
+                if (checkAllDefined(defs_, b.allNames())) {
+                    lowerItem.emplace_back(b.expr());
                 }
             }
             lower.emplace_back(std::move(lowerItem));
@@ -90,9 +92,9 @@ void CompAccessBound::visit(const VarDef &op) {
             if (checkAllDefined(defs_, index)) {
                 upperItem.emplace_back(index);
             }
-            for (auto item : access_[j].upper_[i]) {
-                if (checkAllDefined(defs_, item.expr())) {
-                    upperItem.emplace_back(item.expr());
+            for (auto &&b : access_[j].upper_[i]) {
+                if (checkAllDefined(defs_, b.allNames())) {
+                    upperItem.emplace_back(b.expr());
                 }
             }
             upper.emplace_back(std::move(upperItem));
@@ -162,4 +164,4 @@ AccessBound compAccessBound(const Stmt &op, const ID &varDefId,
     return visitor.result();
 }
 
-} // namespace ir
+} // namespace freetensor

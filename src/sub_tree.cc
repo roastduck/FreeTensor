@@ -1,6 +1,6 @@
 #include <sub_tree.h>
 
-namespace ir {
+namespace freetensor {
 
 int ASTPart::depth() const {
     int depth = 0;
@@ -42,4 +42,4 @@ Ref<ASTPart> lca(const Ref<ASTPart> &lhs, const Ref<ASTPart> &rhs) {
     return l;
 }
 
-} // namespace ir
+} // namespace freetensor

@@ -3,10 +3,10 @@
 #include <analyze/all_uses.h>
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
-#include <analyze/with_cursor.h>
+#include <analyze/find_stmt.h>
 #include <pass/flatten_stmt_seq.h>
 
-namespace ir {
+namespace freetensor {
 
 static std::unordered_map<std::string, ID>
 usedDefsAt(const Stmt &ast, const ID &pos,
@@ -73,11 +73,19 @@ bool checkNotModified(const Stmt &op, const Expr &s0Expr, const Expr &s1Expr,
     tmpOp = flattenStmtSeq(tmpOp);
     ASSERT(inserter.s0Eval().isValid());
     ASSERT(inserter.s1Eval().isValid());
-    auto c0 = getCursorById(tmpOp, inserter.s0Eval());
-    auto c1 = getCursorById(tmpOp, inserter.s1Eval());
 
-    if (c0.hasNext() && c0.next().id() == c1.id()) {
+    auto s0Eval = findStmt(tmpOp, inserter.s0Eval());
+    auto s1Eval = findStmt(tmpOp, inserter.s1Eval());
+    if (s0Eval->nextStmt() == s1Eval) {
         return true; // early exit: the period to check is empty
+    }
+
+    auto common = lcaStmt(s0Eval, s1Eval);
+    FindDepsCond cond;
+    for (auto p = common; p.isValid(); p = p->parentStmt()) {
+        if (p->nodeType() == ASTNodeType::For) {
+            cond.emplace_back(p->id(), DepDirection::Same);
+        }
     }
 
     // write -> serialized PBSet
@@ -86,12 +94,12 @@ bool checkNotModified(const Stmt &op, const Expr &s0Expr, const Expr &s1Expr,
         return earlier.stmt_->id() == inserter.s0Eval();
     };
     auto foundWAR = [&](const Dependency &dep) {
-        // Serialize dep.dep_ because it is from a random PBCtx
+        // Serialize dep.later2EarlierIter_ because it is from a random PBCtx
         writesWAR[dep.later_.stmt_] =
-            toString(apply(domain(dep.dep_), dep.pmap_));
+            toString(apply(domain(dep.later2EarlierIter_), dep.laterIter2Idx_));
     };
-    findDeps(tmpOp, {{}}, foundWAR, FindDepsMode::Dep, DEP_WAR, filterWAR, true,
-             true, true);
+    findDeps(tmpOp, {cond}, foundWAR, FindDepsMode::Dep, DEP_WAR, filterWAR,
+             true, true, true);
 
     for (auto &&[_item, w0] : writesWAR) {
         auto &&item = _item;
@@ -102,10 +110,12 @@ bool checkNotModified(const Stmt &op, const Expr &s0Expr, const Expr &s1Expr,
                    earlier.stmt_->id() == item->id();
         };
         auto foundRAW = [&](const Dependency &dep) {
-            // Serialize dep.dep_ because it is from a random PBCtx
-            w1 = toString(apply(range(dep.dep_), dep.omap_));
+            // Serialize dep.later2EarlierIter_ because it is from a random
+            // PBCtx
+            w1 = toString(
+                apply(range(dep.later2EarlierIter_), dep.earlierIter2Idx_));
         };
-        findDeps(tmpOp, {{}}, foundRAW, FindDepsMode::Dep, DEP_RAW, filterRAW,
+        findDeps(tmpOp, {cond}, foundRAW, FindDepsMode::Dep, DEP_RAW, filterRAW,
                  true, true, true);
 
         if (!w1.empty()) {
@@ -126,4 +136,4 @@ bool checkNotModified(const Stmt &op, const Expr &expr,
     return checkNotModified(op, expr, expr, s0Side, s0, s1Side, s1);
 }
 
-} // namespace ir
+} // namespace freetensor

@@ -9,6 +9,7 @@ A language and compiler for irregular tensor programs.
 - Python (>= 3.8, for the Python frontend)
 - GCC (>= 8, to support C++17 and the "unroll" pragma)
 - CUDA (>= 10.2, to support GCC 8)
+- Java (Build-time dependency only)
 - MKL (Optional)
 
 ## Build
@@ -32,13 +33,13 @@ If using MKL, add a `-DWITH_MKL=<path/to/mkl/root>` to `cmake`.
 
 It will build a shared library with a name like `ffi.cpython-37m-x86_64-linux-gnu.so`.
 
-There are some debugging options. Adding `-DIR_DEBUG_LOG_NODE=ON` to `cmake` enables tracing to tell by which pass a specific AST node is modified. Adding `-DIR_DEBUG_PROFILE` to `cmake` profiles some heavy functions in the compiler.
+There are some debugging options. Adding `-DFT_DEBUG_LOG_NODE=ON` to `cmake` enables tracing to tell by which pass a specific AST node is modified. Adding `-DFT_DEBUG_PROFILE` to `cmake` profiles some heavy functions in the compiler.
 
 ## Run
 
-To run any program with IR, one should add the `python/` and `build/` directory to `PYTHONPATH` first.
+To run any program with FreeTensor, one should add the `python/` and `build/` directory to `PYTHONPATH` first.
 
-E.g. to run a python program `a.py` with IR in the `build/` directory,
+E.g. to run a python program `a.py` with FreeTensor in the `build/` directory,
 
 ```sh
 PYTHONPATH=../python:../build:$PYTHONPATH python3 a.py
@@ -83,7 +84,7 @@ Please configure (or install some plugins for) your editor, to support `clang-fo
 ```
 include/ --------------------------------------------------- C++ headers
 |- ref.h --------------------------------------------------- A smart pointer, based on std::shared_ptr, used all around the code
-|- ast.h --------------------------------------------------- Base class for AST (the form of our IR) nodes
+|- ast.h --------------------------------------------------- Base class for AST (IR of FreeTensor) nodes
 |- stmt.h -------------------------------------------------- Statement nodes of an AST
 |- expr.h -------------------------------------------------- Expression nodes of an AST
 |- visitor.h ----------------------------------------------- Inherit Visitor in this file to examine an AST

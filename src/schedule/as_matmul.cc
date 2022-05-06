@@ -2,7 +2,7 @@
 #include <pass/simplify.h>
 #include <schedule/as_matmul.h>
 
-namespace ir {
+namespace freetensor {
 
 static bool isIntConst1(const Expr &op) {
     return op->nodeType() == ASTNodeType::IntConst &&
@@ -82,8 +82,8 @@ Stmt AsMatMul::visit(const For &op) {
                          ldc_, stridea_, strideb_, stridec_, batchSize_,
                          aIsRowMajor_, bIsRowMajor_, cIsRowMajor_, ret);
         for (auto &&def : innerDefs_) {
-            ret = makeVarDef(def->id(), def->name_, def->buffer_, def->sizeLim_,
-                             ret, def->pinned_);
+            ret = makeVarDef(def->id(), def->name_, def->buffer_,
+                             def->ioTensor_, ret, def->pinned_);
         }
         return ret;
     } else {
@@ -280,10 +280,10 @@ Stmt AsMatMul::visit(const VarDef &op) {
 }
 
 Stmt asMatMul(const Stmt &_ast, const ID &loop) {
-    auto ast = simplifyPass(_ast); // const prop
+    auto ast = simplify(_ast); // const prop
     ast = makeReduction(ast);
     ast = AsMatMul(loop)(ast);
     return ast;
 }
 
-} // namespace ir
+} // namespace freetensor

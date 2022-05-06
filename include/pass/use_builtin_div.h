@@ -1,5 +1,5 @@
-#ifndef USE_BUILTIN_DIV_H
-#define USE_BUILTIN_DIV_H
+#ifndef FREE_TENSOR_USE_BUILTIN_DIV_H
+#define FREE_TENSOR_USE_BUILTIN_DIV_H
 
 #include <analyze/comp_transient_bounds.h>
 #include <analyze/comp_unique_bounds.h>
@@ -8,7 +8,7 @@
 #include <func.h>
 #include <mutator.h>
 
-namespace ir {
+namespace freetensor {
 
 class UseBuiltinDiv
     : public CompTransientBounds<WithTypeInfer<SymbolTable<Mutator>>> {
@@ -33,6 +33,6 @@ Stmt useBuiltinDiv(const Stmt &op);
 
 DEFINE_PASS_FOR_FUNC(useBuiltinDiv)
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // USE_BUILTIN_DIV_H
+#endif // FREE_TENSOR_USE_BUILTIN_DIV_H

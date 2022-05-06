@@ -1,5 +1,7 @@
-#ifndef IR_LOWER_H
-#define IR_LOWER_H
+#ifndef FREE_TENSOR_LOWER_H
+#define FREE_TENSOR_LOWER_H
+
+#include <unordered_set>
 
 #include <driver/target.h>
 #include <pass/cpu/lower_parallel_reduction.h>
@@ -26,51 +28,81 @@
 #include <pass/sink_var.h>
 #include <pass/tensor_prop_const.h>
 #include <pass/use_builtin_div.h>
+#include <pass/z3_simplify.h>
 
-namespace ir {
+namespace freetensor {
 
-template <class T> T lower(const T &t, const Ref<Target> &target) {
-    T func = t;
-    func = scalarPropConst(func);
-    func = removeDeadVar(func);
-    func = propOneTimeUse(func);
-    func = floatSimplify(func); // After propOneTimeUse
-    func = simplifyPass(func);
-    func = moveOutFirstOrLastIter(func);
-    func = sinkVar(func);
-    func = shrinkVar(func);
-    func = mergeAndHoistIf(func);
-    func = tensorPropConst(func);
-    func = removeWrites(func);
-    func = removeCyclicAssign(func); // After remove_writes
-    func = removeDeadVar(func);      // After remove_writes and prop_const
-    func = makeParallelReduction(func);
-    func = shrinkFor(func); // After remove_writes and make_parallel_reduction
+/**
+ * Lower an AST using a series of passes
+ *
+ * @param _ast : The AST to be lowered. Can be a `Func` or a `Stmt`
+ * @param target : If set, lower the AST to a target with target-specific
+ * passes, then the AST can be used for codegen. If not set, these passes are
+ * skipped
+ * @param skipPasses : Skip some pass for testing or debugging. Names in
+ * `skipPasses` are in underscore_style, as in Python. Please note that some
+ * passes will not be skipped even specified in these parameter, because they
+ * are indirectly called in some other passes
+ */
+template <class T>
+T lower(const T &_ast, const Ref<Target> &target,
+        const std::unordered_set<std::string> &skipPasses = {}) {
+
+#define FIRST_OF(x, ...) (x)
+#define APPLY(name, pass, ...)                                                 \
+    skipPasses.count(name) ? FIRST_OF(__VA_ARGS__) : pass(__VA_ARGS__)
+
+    T ast = _ast;
+    ast = APPLY("scalar_prop_const", scalarPropConst, ast);
+    ast = APPLY("remove_dead_var", removeDeadVar, ast);
+    ast = APPLY("prop_one_time_use", propOneTimeUse, ast);
+    ast = APPLY("float_simplify", floatSimplify, ast); // After propOneTimeUse
+    ast = APPLY("z3_simplify", z3Simplify, ast);
+    ast = APPLY("simplify", simplify, ast);
+    ast = APPLY("move_out_first_or_last_iter", moveOutFirstOrLastIter, ast);
+    ast = APPLY("sink_var", sinkVar, ast);
+    ast = APPLY("shrink_var", shrinkVar, ast);
+    ast = APPLY("merge_and_hoist_if", mergeAndHoistIf, ast);
+    ast = APPLY("tensor_prop_cons", tensorPropConst, ast);
+    ast = APPLY("remove_writes", removeWrites, ast);
+    ast = APPLY("remove_cyclic_assign", removeCyclicAssign,
+                ast); // After remove_writes
+    ast = APPLY("remove_dead_var", removeDeadVar,
+                ast); // After remove_writes and prop_const
+    ast = APPLY("make_parallel_reduction", makeParallelReduction, ast);
+    ast = APPLY("shrink_for", shrinkFor,
+                ast); // After remove_writes and make_parallel_reduction
 
     if (target.isValid()) {
         switch (target->type()) {
         case TargetType::GPU:
             // Before gpu_nromalize_threads
-            func = gpu::lowerParallelReduction(func);
+            ast = APPLY("gpu_lower_parallel_reduction",
+                        gpu::lowerParallelReduction, ast);
 
             // TODO: Support dynamic shared memory size, but the size should be
             // determined outside of kernels
-            func = gpu::multiplexBuffers(func);
-            func = gpu::simplexBuffers(func);
+            ast = APPLY("gpu_multiplex_buffers", gpu::multiplexBuffers, ast);
+            ast = APPLY("gpu_simplex_buffers", gpu::simplexBuffers, ast);
             // FIXME: MemType::GPUGlobal should also be make const, but only
             // inside a kernel
-            func =
-                makeConstShape(func, std::vector<MemType>{MemType::GPUShared,
-                                                          MemType::GPULocal});
-            func = gpu::normalizeThreads(func); // After gpu_multiplex_buffers
-            func = gpu::makeSync(func);         // After gpu_normalize_threads
-            func = make1dVar(func); // FIXME: make1dVar will break the shape of
-                                    // returned tensors
-            func = gpu::lowerVector(func); // After make_1d_var
+            ast = APPLY(
+                "make_const_shape", makeConstShape, ast,
+                std::vector<MemType>{MemType::GPUShared, MemType::GPULocal});
+            ast = APPLY("gpu_normalize_threads", gpu::normalizeThreads,
+                        ast); // After gpu_multiplex_buffers
+            ast = APPLY("gpu_make_sync", gpu::makeSync,
+                        ast); // After gpu_normalize_threads
+            ast = APPLY("make_1d_var", make1dVar,
+                        ast); // FIXME: make1dVar will break the shape of
+                              // returned tensors
+            ast = APPLY("gpu_lower_vector", gpu::lowerVector,
+                        ast); // After make_1d_var
             break;
 
         case TargetType::CPU:
-            func = cpu::lowerParallelReduction(func);
+            ast = APPLY("cpu_lower_parallel_reduction",
+                        cpu::lowerParallelReduction, ast);
             break;
 
         default:
@@ -79,11 +111,14 @@ template <class T> T lower(const T &t, const Ref<Target> &target) {
     }
 
     // After passes including architecture-specific ones
-    func = useBuiltinDiv(func);
+    ast = APPLY("use_builtin_div", useBuiltinDiv, ast);
 
-    return func;
+#undef FIRST_OF
+#undef APPLY
+
+    return ast;
 }
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // IR_LOWER_H
+#endif // FREE_TENSOR_LOWER_H

@@ -1,5 +1,5 @@
-#ifndef INLINED_INVOKE_H
-#define INLINED_INVOKE_H
+#ifndef FREE_TENSOR_INLINED_INVOKE_H
+#define FREE_TENSOR_INLINED_INVOKE_H
 
 #include <unordered_map>
 
@@ -7,7 +7,7 @@
 #include <func.h>
 #include <mutator.h>
 
-namespace ir {
+namespace freetensor {
 
 class InlinedInvoke : public Mutator {
     ID callSiteId_;
@@ -38,6 +38,6 @@ Stmt inlinedInvoke(
     const std::vector<Ref<FrontendVar>> &args,
     const std::unordered_map<std::string, Ref<FrontendVar>> &kvs);
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // INLINED_INVOKE_H
+#endif // FREE_TENSOR_INLINED_INVOKE_H

@@ -1,5 +1,5 @@
-#ifndef SIMPLIFY_H
-#define SIMPLIFY_H
+#ifndef FREE_TENSOR_SIMPLIFY_H
+#define FREE_TENSOR_SIMPLIFY_H
 
 #include <functional>
 #include <unordered_map>
@@ -14,9 +14,10 @@
 #include <mutator.h>
 #include <opt.h>
 #include <pass/annotate_conds.h>
+#include <pass/const_fold.h>
 #include <visitor.h>
 
-namespace ir {
+namespace freetensor {
 
 /**
  * Find all the variables in an expression, and determine the inner most scope
@@ -39,14 +40,13 @@ class FindInnerMostScope : public Visitor {
 int findInnerMostScope(const std::unordered_map<std::string, int> &varScope,
                        const Expr &op);
 
+// NOTE: We use ConstFold because we cannot rely the bound analysis for constant
+// propagation. E.g f(x) + 0, where f(x) is a complex expression and it does not
+// have a bound. The "+ 0" cannot be removed by bound analysis
 class SimplifyPass
-    : public CompTransientBounds<WithTypeInfer<SymbolTable<Mutator>>> {
-    typedef CompTransientBounds<WithTypeInfer<SymbolTable<Mutator>>> BaseClass;
-
-    // We cannot rely the bound analysis for constant propagation.
-    // E.g f(x) + 0, where f(x) is a complex expression and it does not have a
-    // bound. The "+ 0" cannot be removed by bound analysis
-    std::unordered_map<Expr, int64_t> constants_;
+    : public CompTransientBounds<WithTypeInfer<SymbolTable<ConstFold>>> {
+    typedef CompTransientBounds<WithTypeInfer<SymbolTable<ConstFold>>>
+        BaseClass;
 
     // defining scope table
     std::unordered_map<std::string, int> varScope_;
@@ -57,12 +57,24 @@ class SimplifyPass
   public:
     SimplifyPass(CompUniqueBounds &unique) : unique_(unique) {}
 
+  private:
+    template <class T> bool equals(const Expr &op, T &&val) const {
+        if (op->nodeType() == ASTNodeType::IntConst &&
+            op.as<IntConstNode>()->val_ == val) {
+            return true;
+        }
+        if (op->nodeType() == ASTNodeType::FloatConst &&
+            op.as<FloatConstNode>()->val_ == val) {
+            return true;
+        }
+        return false;
+    }
+
   protected:
     using BaseClass::visit;
 
     Expr visitExpr(const Expr &op) override;
 
-    Expr visit(const IntConst &op) override;
     Expr visit(const Add &op) override;
     Expr visit(const Sub &op) override;
     Expr visit(const Mul &op) override;
@@ -70,9 +82,6 @@ class SimplifyPass
     Expr visit(const CeilDiv &op) override;
     Expr visit(const RoundTowards0Div &op) override;
     Expr visit(const Mod &op) override;
-    Expr visit(const Remainder &op) override;
-    Expr visit(const Min &op) override;
-    Expr visit(const Max &op) override;
     Expr visit(const LT &op) override;
     Expr visit(const LE &op) override;
     Expr visit(const GT &op) override;
@@ -124,10 +133,10 @@ template <class Simplifier> Stmt simplifyImpl(const Stmt &_op) {
 
 Stmt builtinSimplify(const Stmt &op);
 
-Stmt simplifyPass(const Stmt &op);
+Stmt simplify(const Stmt &op);
 
-DEFINE_PASS_FOR_FUNC(simplifyPass)
+DEFINE_PASS_FOR_FUNC(simplify)
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // SIMPLIFY_H
+#endif // FREE_TENSOR_SIMPLIFY_H

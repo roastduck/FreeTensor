@@ -10,7 +10,7 @@
 #include <pass/replace_uses.h>
 #include <pass/sink_var.h>
 
-namespace ir {
+namespace freetensor {
 
 Stmt propOneTimeUse(const Stmt &_op) {
     auto op = makeReduction(_op);
@@ -117,4 +117,4 @@ Stmt propOneTimeUse(const Stmt &_op) {
     return sinkVar(op);
 }
 
-} // namespace ir
+} // namespace freetensor

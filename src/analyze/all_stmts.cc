@@ -1,6 +1,6 @@
 #include <analyze/all_stmts.h>
 
-namespace ir {
+namespace freetensor {
 
 void AllStmts::visitStmt(const Stmt &op) {
     if (types_.count(op->nodeType())) {
@@ -9,4 +9,4 @@ void AllStmts::visitStmt(const Stmt &op) {
     Visitor::visitStmt(op);
 }
 
-} // namespace ir
+} // namespace freetensor

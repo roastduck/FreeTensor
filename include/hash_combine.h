@@ -1,12 +1,12 @@
-#ifndef HASH_COMBINE_H
-#define HASH_COMBINE_H
+#ifndef FREE_TENSOR_HASH_COMBINE_H
+#define FREE_TENSOR_HASH_COMBINE_H
 
 #include <cstdlib>
 
-namespace ir {
+namespace freetensor {
 
 size_t hashCombine(size_t seed, size_t other);
 
 }
 
-#endif // HASH_COMBINE_H
+#endif // FREE_TENSOR_HASH_COMBINE_H

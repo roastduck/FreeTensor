@@ -3,7 +3,7 @@
 #include <ffi.h>
 #include <schedule.h>
 
-namespace ir {
+namespace freetensor {
 
 using namespace pybind11::literals;
 
@@ -24,17 +24,16 @@ void init_ffi_schedule(py::module_ &m) {
         .def("ast", &Schedule::ast)
         .def("func", &Schedule::func)
         .def("logs", &Schedule::logs)
-        .def("find", static_cast<Cursor (Schedule::*)(
-                         const std::function<bool(const Cursor &)> &) const>(
+        .def("find", static_cast<Stmt (Schedule::*)(
+                         const std::function<bool(const Stmt &)> &) const>(
                          &Schedule::find))
-        .def("find", static_cast<Cursor (Schedule::*)(const ID &) const>(
-                         &Schedule::find))
+        .def("find",
+             static_cast<Stmt (Schedule::*)(const ID &) const>(&Schedule::find))
+        .def("find_all", static_cast<std::vector<Stmt> (Schedule::*)(
+                             const std::function<bool(const Stmt &)> &) const>(
+                             &Schedule::findAll))
         .def("find_all",
-             static_cast<std::vector<Cursor> (Schedule::*)(
-                 const std::function<bool(const Cursor &)> &) const>(
-                 &Schedule::findAll))
-        .def("find_all",
-             static_cast<std::vector<Cursor> (Schedule::*)(const ID &) const>(
+             static_cast<std::vector<Stmt> (Schedule::*)(const ID &) const>(
                  &Schedule::findAll))
         .def("split", &Schedule::split, "id"_a, "factor"_a = -1,
              "nparts"_a = -1)
@@ -69,4 +68,4 @@ void init_ffi_schedule(py::module_ &m) {
         .def("auto_unroll", &Schedule::autoUnroll);
 }
 
-} // namespace ir
+} // namespace freetensor

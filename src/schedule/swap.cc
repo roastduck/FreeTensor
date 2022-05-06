@@ -4,7 +4,7 @@
 #include <analyze/deps.h>
 #include <schedule/swap.h>
 
-namespace ir {
+namespace freetensor {
 
 Stmt Swap::visit(const StmtSeq &_op) {
     auto __op = Mutator::visit(_op);
@@ -45,7 +45,7 @@ Stmt swap(const Stmt &_ast, const std::vector<ID> &order) {
 
     auto findParentStmt = [&](const Stmt &stmt) -> Stmt {
         for (auto &&item : order) {
-            auto ret = stmt->parentById(item);
+            auto ret = stmt->ancestorById(item);
             if (ret.isValid()) {
                 return ret;
             }
@@ -77,4 +77,4 @@ Stmt swap(const Stmt &_ast, const std::vector<ID> &order) {
     return ast;
 }
 
-} // namespace ir
+} // namespace freetensor

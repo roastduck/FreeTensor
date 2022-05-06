@@ -1,13 +1,13 @@
-#ifndef PROFILE_H
-#define PROFILE_H
+#ifndef FREE_TENSOR_PROFILE_H
+#define FREE_TENSOR_PROFILE_H
 
 #include <chrono>
 #include <fstream>
 #include <memory>
 
-namespace ir {
+namespace freetensor {
 
-#ifdef IR_DEBUG_PROFILE
+#ifdef FT_DEBUG_PROFILE
 
 class Profile {
     std::ofstream os_;
@@ -38,14 +38,14 @@ class ProfileGuard {
     ProfileGuard __profGuard(name, __FILE__ ":" + std::to_string(__LINE__) +   \
                                        ": " + detail)
 
-#else // IR_DEBUG_PROFILE
+#else // FT_DEBUG_PROFILE
 
 #define DEBUG_PROFILE(name)
 
 #define DEBUG_PROFILE_VERBOSE(name, detail)
 
-#endif // IR_DEBUG_PROFILE
+#endif // FT_DEBUG_PROFILE
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // PROFILE_H
+#endif // FREE_TENSOR_PROFILE_H

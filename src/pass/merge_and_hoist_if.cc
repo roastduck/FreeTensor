@@ -6,7 +6,7 @@
 #include <pass/flatten_stmt_seq.h>
 #include <pass/merge_and_hoist_if.h>
 
-namespace ir {
+namespace freetensor {
 
 Stmt MergeAndHoistIf::visit(const StmtSeq &_op) {
     auto __op = BaseClass::visit(_op);
@@ -70,7 +70,7 @@ Stmt MergeAndHoistIf::visit(const VarDef &_op) {
             isFixPoint_ = false;
             return makeIf(branch->id(), branch->cond_,
                           makeVarDef(op->id(), op->name_,
-                                     std::move(op->buffer_), op->sizeLim_,
+                                     std::move(op->buffer_), op->ioTensor_,
                                      branch->thenCase_, op->pinned_));
         }
     }
@@ -121,4 +121,4 @@ Stmt mergeAndHoistIf(const Stmt &_op) {
     return op;
 }
 
-} // namespace ir
+} // namespace freetensor

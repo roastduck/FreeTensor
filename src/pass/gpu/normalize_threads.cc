@@ -5,7 +5,7 @@
 #include <pass/merge_and_hoist_if.h>
 #include <pass/shrink_for.h>
 
-namespace ir {
+namespace freetensor {
 
 namespace gpu {
 
@@ -163,4 +163,4 @@ Stmt normalizeThreads(const Stmt &_op) {
 
 } // namespace gpu
 
-} // namespace ir
+} // namespace freetensor

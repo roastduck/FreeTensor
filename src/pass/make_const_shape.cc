@@ -4,7 +4,7 @@
 #include <pass/make_const_shape.h>
 #include <pass/pb_simplify.h>
 
-namespace ir {
+namespace freetensor {
 
 Stmt MakeConstShape::visit(const VarDef &_op) {
     auto __op = BaseClass::visit(_op);
@@ -25,7 +25,7 @@ Stmt MakeConstShape::visit(const VarDef &_op) {
         }
         int64_t result = std::numeric_limits<int64_t>::max();
         for (auto b : unique_.getUpper(oldDim)) {
-            if (b.lin().coeff_.empty()) {
+            if (b.lin().isConst()) {
                 auto bias = b.lin().bias_;
                 result = std::min(result, floorDiv(bias.p_, bias.q_));
             }
@@ -46,4 +46,4 @@ Stmt makeConstShape(const Stmt &_op, const std::vector<MemType> &mtypes) {
     return MakeConstShape(mtypes)(_op);
 }
 
-} // namespace ir
+} // namespace freetensor

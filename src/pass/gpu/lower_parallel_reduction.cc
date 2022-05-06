@@ -6,7 +6,7 @@
 #include <pass/make_nested_loops.h>
 #include <pass/simplify.h>
 
-namespace ir {
+namespace freetensor {
 
 namespace gpu {
 
@@ -175,10 +175,10 @@ Stmt LowerParallelReduction::visit(const ReduceTo &_op) {
 
 Stmt lowerParallelReduction(const Stmt &_op) {
     auto op = LowerParallelReduction()(_op);
-    op = simplifyPass(op); // flatten singleton loops
+    op = simplify(op); // flatten singleton loops
     return op;
 }
 
 } // namespace gpu
 
-} // namespace ir
+} // namespace freetensor

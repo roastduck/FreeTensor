@@ -3,7 +3,7 @@
 #include <hash.h>
 #include <pass/float_simplify.h>
 
-namespace ir {
+namespace freetensor {
 
 inline static Expr reduceMul(const std::vector<Expr> &list) {
     Expr ret;
@@ -23,6 +23,30 @@ inline static bool hasSqrt(const Expr &op) {
     } else {
         return op->nodeType() == ASTNodeType::Sqrt;
     }
+}
+
+bool FloatSimplify::nonNeg(const Expr &op) const {
+    if (op->nodeType() == ASTNodeType::IntConst &&
+        op.as<IntConstNode>()->val_ >= 0) {
+        return true;
+    }
+    if (op->nodeType() == ASTNodeType::FloatConst &&
+        op.as<FloatConstNode>()->val_ >= 0) {
+        return true;
+    }
+    return nonNeg_.count(op);
+}
+
+bool FloatSimplify::nonPosi(const Expr &op) const {
+    if (op->nodeType() == ASTNodeType::IntConst &&
+        op.as<IntConstNode>()->val_ <= 0) {
+        return true;
+    }
+    if (op->nodeType() == ASTNodeType::FloatConst &&
+        op.as<FloatConstNode>()->val_ <= 0) {
+        return true;
+    }
+    return nonPosi_.count(op);
 }
 
 Expr FloatSimplify::normalizeRealMulDiv(const Expr &op) {
@@ -68,8 +92,6 @@ Expr FloatSimplify::normalizeRealMulDiv(const Expr &op) {
     trySquare(sqrtDen);
     if (sqrtCnt <= 1 && divCnt <= 1 && squareCnt == 0) {
         return op;
-    } else {
-        isFixPoint_ = false;
     }
 
     if (auto x = reduceMul(sqrtNum); x.isValid()) {
@@ -94,24 +116,11 @@ Expr FloatSimplify::normalizeRealMulDiv(const Expr &op) {
     }
 }
 
-Expr FloatSimplify::visit(const IntConst &_op) {
-    auto __op = BaseClass::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::IntConst);
-    auto op = __op.as<IntConstNode>();
-    constants_[op] = op->val_;
-    return op;
-}
-
-Expr FloatSimplify::visit(const FloatConst &_op) {
-    auto __op = BaseClass::visit(_op);
-    ASSERT(__op->nodeType() == ASTNodeType::FloatConst);
-    auto op = __op.as<FloatConstNode>();
-    constants_[op] = op->val_;
-    return op;
-}
-
 Expr FloatSimplify::visit(const Add &_op) {
     auto __op = BaseClass::visit(_op);
+    if (__op->isConst()) {
+        return __op;
+    }
     ASSERT(__op->nodeType() == ASTNodeType::Add);
     auto op = __op.as<AddNode>();
     if (nonNeg(op->lhs_) && nonNeg(op->rhs_)) {
@@ -125,17 +134,10 @@ Expr FloatSimplify::visit(const Add &_op) {
         return op;
     }
 
-    if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
-        isFixPoint_ = false;
-        return makeFloatConst(constants_.at(op->lhs_) +
-                              constants_.at(op->rhs_));
-    }
-    if (constants_.count(op->lhs_) && constants_.at(op->lhs_) == 0) {
-        isFixPoint_ = false;
+    if (equals(op->lhs_, 0)) {
         return op->rhs_;
     }
-    if (constants_.count(op->rhs_) && constants_.at(op->rhs_) == 0) {
-        isFixPoint_ = false;
+    if (equals(op->rhs_, 0)) {
         return op->lhs_;
     }
 
@@ -144,6 +146,9 @@ Expr FloatSimplify::visit(const Add &_op) {
 
 Expr FloatSimplify::visit(const Sub &_op) {
     auto __op = BaseClass::visit(_op);
+    if (__op->isConst()) {
+        return __op;
+    }
     ASSERT(__op->nodeType() == ASTNodeType::Sub);
     auto op = __op.as<SubNode>();
     if (nonNeg(op->lhs_) && nonPosi(op->rhs_)) {
@@ -157,18 +162,11 @@ Expr FloatSimplify::visit(const Sub &_op) {
         return op;
     }
 
-    if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
-        isFixPoint_ = false;
-        return makeFloatConst(constants_.at(op->lhs_) -
-                              constants_.at(op->rhs_));
-    }
-    if (constants_.count(op->lhs_) && constants_.at(op->lhs_) == 0) {
-        isFixPoint_ = false;
+    if (equals(op->lhs_, 0)) {
         // Normalize 0 - x to -1 * x because our ruls for sqrt rely on MulNode
         return makeMul(makeIntConst(-1), op->rhs_);
     }
-    if (constants_.count(op->rhs_) && constants_.at(op->rhs_) == 0) {
-        isFixPoint_ = false;
+    if (equals(op->rhs_, 0)) {
         return op->lhs_;
     }
 
@@ -177,6 +175,9 @@ Expr FloatSimplify::visit(const Sub &_op) {
 
 Expr FloatSimplify::visit(const Mul &_op) {
     auto __op = BaseClass::visit(_op);
+    if (__op->isConst()) {
+        return __op;
+    }
     ASSERT(__op->nodeType() == ASTNodeType::Mul);
     auto op = __op.as<MulNode>();
     if (nonNeg(op->lhs_) && nonNeg(op->rhs_)) {
@@ -196,25 +197,16 @@ Expr FloatSimplify::visit(const Mul &_op) {
         return op;
     }
 
-    if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
-        isFixPoint_ = false;
-        return makeFloatConst(constants_.at(op->lhs_) *
-                              constants_.at(op->rhs_));
-    }
-    if (constants_.count(op->lhs_) && constants_.at(op->lhs_) == 1) {
-        isFixPoint_ = false;
+    if (equals(op->lhs_, 1)) {
         return op->rhs_;
     }
-    if (constants_.count(op->rhs_) && constants_.at(op->rhs_) == 1) {
-        isFixPoint_ = false;
+    if (equals(op->rhs_, 1)) {
         return op->lhs_;
     }
-    if (constants_.count(op->lhs_) && constants_.at(op->lhs_) == 0) {
-        isFixPoint_ = false;
+    if (equals(op->lhs_, 0)) {
         return makeIntConst(0);
     }
-    if (constants_.count(op->rhs_) && constants_.at(op->rhs_) == 0) {
-        isFixPoint_ = false;
+    if (equals(op->rhs_, 0)) {
         return makeIntConst(0);
     }
 
@@ -223,6 +215,9 @@ Expr FloatSimplify::visit(const Mul &_op) {
 
 Expr FloatSimplify::visit(const RealDiv &_op) {
     auto __op = BaseClass::visit(_op);
+    if (__op->isConst()) {
+        return __op;
+    }
     ASSERT(__op->nodeType() == ASTNodeType::RealDiv);
     auto op = __op.as<RealDivNode>();
     if (nonNeg(op->lhs_) && nonNeg(op->rhs_)) {
@@ -238,10 +233,11 @@ Expr FloatSimplify::visit(const RealDiv &_op) {
         setNonNeg(op);
     }
 
-    if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
-        isFixPoint_ = false;
-        return makeFloatConst(constants_.at(op->lhs_) /
-                              constants_.at(op->rhs_));
+    if (equals(op->rhs_, 1)) {
+        return op->lhs_;
+    }
+    if (equals(op->rhs_, -1)) {
+        return makeMul(makeIntConst(-1), op->lhs_);
     }
 
     return normalizeRealMulDiv(op);
@@ -249,6 +245,9 @@ Expr FloatSimplify::visit(const RealDiv &_op) {
 
 Expr FloatSimplify::visit(const Min &_op) {
     auto __op = BaseClass::visit(_op);
+    if (__op->isConst()) {
+        return __op;
+    }
     ASSERT(__op->nodeType() == ASTNodeType::Min);
     auto op = __op.as<MinNode>();
     if (nonNeg(op->lhs_) && nonNeg(op->rhs_)) {
@@ -262,20 +261,12 @@ Expr FloatSimplify::visit(const Min &_op) {
         return op;
     }
 
-    if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
-        isFixPoint_ = false;
-        return makeFloatConst(
-            std::min(constants_.at(op->lhs_), constants_.at(op->rhs_)));
-    }
-
     if (hasSqrt(op->lhs_) && hasSqrt(op->rhs_)) {
         if (nonNeg(op->lhs_) && nonNeg(op->rhs_)) {
-            isFixPoint_ = false;
             return makeSqrt(
                 makeMin(makeSquare(op->lhs_), makeSquare(op->rhs_)));
         }
         if (nonPosi(op->lhs_) && nonPosi(op->rhs_)) {
-            isFixPoint_ = false;
             return makeMul(
                 makeIntConst(-1),
                 makeSqrt(makeMax(makeSquare(op->lhs_), makeSquare(op->rhs_))));
@@ -287,6 +278,9 @@ Expr FloatSimplify::visit(const Min &_op) {
 
 Expr FloatSimplify::visit(const Max &_op) {
     auto __op = BaseClass::visit(_op);
+    if (__op->isConst()) {
+        return __op;
+    }
     ASSERT(__op->nodeType() == ASTNodeType::Max);
     auto op = __op.as<MaxNode>();
     if (nonNeg(op->lhs_) || nonNeg(op->rhs_)) {
@@ -300,20 +294,12 @@ Expr FloatSimplify::visit(const Max &_op) {
         return op;
     }
 
-    if (constants_.count(op->lhs_) && constants_.count(op->rhs_)) {
-        isFixPoint_ = false;
-        return makeFloatConst(
-            std::max(constants_.at(op->lhs_), constants_.at(op->rhs_)));
-    }
-
     if (hasSqrt(op->lhs_) && hasSqrt(op->rhs_)) {
         if (nonNeg(op->lhs_) && nonNeg(op->rhs_)) {
-            isFixPoint_ = false;
             return makeSqrt(
                 makeMax(makeSquare(op->lhs_), makeSquare(op->rhs_)));
         }
         if (nonPosi(op->lhs_) && nonPosi(op->rhs_)) {
-            isFixPoint_ = false;
             return makeMul(
                 makeIntConst(-1),
                 makeSqrt(makeMin(makeSquare(op->lhs_), makeSquare(op->rhs_))));
@@ -325,14 +311,12 @@ Expr FloatSimplify::visit(const Max &_op) {
 
 Expr FloatSimplify::visit(const Sqrt &_op) {
     auto __op = BaseClass::visit(_op);
+    if (__op->isConst()) {
+        return __op;
+    }
     ASSERT(__op->nodeType() == ASTNodeType::Sqrt);
     auto op = __op.as<SqrtNode>();
     setNonNeg(op);
-
-    if (constants_.count(op->expr_)) {
-        isFixPoint_ = false;
-        return makeFloatConst(sqrt(constants_.at(op->expr_)));
-    }
 
     std::function<void(const Expr &, std::vector<Expr> &, std::vector<Expr> &,
                        std::vector<Expr> &, std::vector<Expr> &)>
@@ -355,8 +339,6 @@ Expr FloatSimplify::visit(const Sqrt &_op) {
     recur(op->expr_, num, den, sqrtNum, sqrtDen);
     if (num.empty() && den.empty()) {
         return op;
-    } else {
-        isFixPoint_ = false;
     }
 
     if (auto x = reduceMul(sqrtNum); x.isValid()) {
@@ -383,20 +365,20 @@ Expr FloatSimplify::visit(const Sqrt &_op) {
 
 Expr FloatSimplify::visit(const Exp &_op) {
     auto __op = BaseClass::visit(_op);
+    if (__op->isConst()) {
+        return __op;
+    }
     ASSERT(__op->nodeType() == ASTNodeType::Exp);
     auto op = __op.as<ExpNode>();
     setNonNeg(op);
-
-    if (constants_.count(op->expr_)) {
-        isFixPoint_ = false;
-        return makeFloatConst(exp(constants_.at(op->expr_)));
-    }
-
     return op;
 }
 
 Expr FloatSimplify::visit(const Square &_op) {
     auto __op = BaseClass::visit(_op);
+    if (__op->isConst()) {
+        return __op;
+    }
     ASSERT(__op->nodeType() == ASTNodeType::Square);
     auto op = __op.as<SquareNode>();
     setNonNeg(op);
@@ -405,14 +387,7 @@ Expr FloatSimplify::visit(const Square &_op) {
         return op;
     }
 
-    if (constants_.count(op->expr_)) {
-        isFixPoint_ = false;
-        return makeFloatConst(constants_.at(op->expr_) *
-                              constants_.at(op->expr_));
-    }
-
     if (op->expr_->nodeType() == ASTNodeType::Abs) {
-        isFixPoint_ = false;
         return makeSquare(op->expr_.as<AbsNode>()->expr_);
     }
 
@@ -437,8 +412,6 @@ Expr FloatSimplify::visit(const Square &_op) {
     recur(op->expr_, num, den, sqrtNum, sqrtDen);
     if (sqrtNum.empty() && sqrtDen.empty()) {
         return op;
-    } else {
-        isFixPoint_ = false;
     }
 
     if (auto x = reduceMul(num); x.isValid()) {
@@ -465,6 +438,9 @@ Expr FloatSimplify::visit(const Square &_op) {
 
 Expr FloatSimplify::visit(const Abs &_op) {
     auto __op = BaseClass::visit(_op);
+    if (__op->isConst()) {
+        return __op;
+    }
     ASSERT(__op->nodeType() == ASTNodeType::Abs);
     auto op = __op.as<AbsNode>();
     setNonNeg(op);
@@ -473,13 +449,7 @@ Expr FloatSimplify::visit(const Abs &_op) {
         return op;
     }
 
-    if (constants_.count(op->expr_)) {
-        isFixPoint_ = false;
-        return makeFloatConst(std::abs(constants_.at(op->expr_)));
-    }
-
     if (nonNeg(op->expr_)) {
-        isFixPoint_ = false;
         return op->expr_;
     }
 
@@ -491,8 +461,8 @@ Stmt floatSimplify(const Stmt &_op) {
 
     for (int i = 0;; i++) {
         FloatSimplify mutator;
-        op = mutator(op);
-        if (mutator.isFixPoint() || i > 100) {
+        auto newOp = mutator(op);
+        if (HashComparator()(newOp, op) || i > 100) {
             if (i > 100) {
                 WARNING(
                     "FloatSimplify iterates over 100 rounds. Maybe there is "
@@ -500,7 +470,8 @@ Stmt floatSimplify(const Stmt &_op) {
             }
             return op;
         }
+        op = newOp;
     }
 }
 
-} // namespace ir
+} // namespace freetensor

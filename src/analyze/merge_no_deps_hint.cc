@@ -3,18 +3,18 @@
 #include <itertools.hpp>
 
 #include <analyze/deps.h>
+#include <analyze/find_stmt.h>
 #include <analyze/merge_no_deps_hint.h>
-#include <analyze/with_cursor.h>
 #include <container_utils.h>
 
-namespace ir {
+namespace freetensor {
 
 std::vector<std::string> mergeNoDepsHint(const Stmt &ast,
                                          const std::vector<ID> &loops) {
     std::vector<For> loopNodes;
     loopNodes.reserve(loops.size());
     for (auto &&loopId : loops) {
-        auto node = getCursorById(ast, loopId).node();
+        auto node = findStmt(ast, loopId);
         ASSERT(node->nodeType() == ASTNodeType::For);
         loopNodes.emplace_back(node.as<ForNode>());
     }
@@ -57,4 +57,4 @@ std::vector<std::string> mergeNoDepsHint(const Stmt &ast,
     return ret;
 }
 
-} // namespace ir
+} // namespace freetensor

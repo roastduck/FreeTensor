@@ -1,96 +1,96 @@
-import ir
+import freetensor as ft
 
 
 def test_chained_subscript():
 
-    @ir.transform
+    @ft.transform
     def f(x, y):
-        ir.declare_var(x, (4, 4), "int32", "input", "cpu")
-        ir.declare_var(y, (4, 4), "int32", "output", "cpu")
+        x: ft.Var[(4, 4), "int32", "input", "cpu"]
+        y: ft.Var[(4, 4), "int32", "output", "cpu"]
         for i in range(4):
             for j in range(4):
                 y[i][j] = x[i][j] * 2
 
     print(f)
 
-    with ir.VarDef([("x", (4, 4), "int32", "input", "cpu"),
+    with ft.VarDef([("x", (4, 4), "int32", "input", "cpu"),
                     ("y", (4, 4), "int32", "output", "cpu")]) as (x, y):
-        with ir.For("i", 0, 4) as i:
-            with ir.For("j", 0, 4) as j:
+        with ft.For("i", 0, 4) as i:
+            with ft.For("j", 0, 4) as j:
                 y[i, j] = x[i, j] * 2
-    assert ir.pop_ast().match(f.body)
+    assert ft.pop_ast().match(f.body)
 
 
 def test_select():
 
-    @ir.transform
+    @ft.transform
     def f(x, y):
-        ir.declare_var(x, (4, 4), "int32", "input", "cpu")
-        ir.declare_var(y, (4, 4), "int32", "output", "cpu")
+        x: ft.Var[(4, 4), "int32", "input", "cpu"]
+        y: ft.Var[(4, 4), "int32", "output", "cpu"]
         for i in range(4):
             for j in range(4):
                 y.select(j, 1).select(i,
                                       0)[()] = x.select(i, 0).select(j, 0) * 2
 
-    f = ir.simplify_pass(f)
+    f = ft.simplify(f)
     print(f)
 
-    with ir.VarDef([("x", (4, 4), "int32", "input", "cpu"),
+    with ft.VarDef([("x", (4, 4), "int32", "input", "cpu"),
                     ("y", (4, 4), "int32", "output", "cpu")]) as (x, y):
-        with ir.For("i", 0, 4) as i:
-            with ir.For("j", 0, 4) as j:
+        with ft.For("i", 0, 4) as i:
+            with ft.For("j", 0, 4) as j:
                 y[i, j] = x[i, j] * 2
-    assert ir.pop_ast().match(f.body)
+    assert ft.pop_ast().match(f.body)
 
 
 def test_var_as_shape():
 
-    @ir.transform
+    @ft.transform
     def f(shape, x, y):
-        ir.declare_var(shape, (2,), "int32", "input", "cpu")
-        ir.declare_var(x, shape, "int32", "input", "cpu")
-        ir.declare_var(y, shape, "int32", "output", "cpu")
+        shape: ft.Var[(2,), "int32", "input", "cpu"]
+        x: ft.Var[shape, "int32", "input", "cpu"]
+        y: ft.Var[shape, "int32", "output", "cpu"]
         for i in range(shape[0]):
             for j in range(shape[1]):
                 y[i, j] = x[i, j] * 2
 
-    with ir.VarDef("shape", (2,), "int32", "input", "cpu") as shape:
-        with ir.VarDef([("x", shape, "int32", "input", "cpu"),
+    with ft.VarDef("shape", (2,), "int32", "input", "cpu") as shape:
+        with ft.VarDef([("x", shape, "int32", "input", "cpu"),
                         ("y", shape, "int32", "output", "cpu")]) as (x, y):
-            with ir.For("i", 0, shape[0]) as i:
-                with ir.For("j", 0, shape[1]) as j:
+            with ft.For("i", 0, shape[0]) as i:
+                with ft.For("j", 0, shape[1]) as j:
                     y[i, j] = x[i, j] * 2
-    assert ir.pop_ast().match(f.body)
+    assert ft.pop_ast().match(f.body)
 
 
 def test_var_as_index():
 
-    @ir.transform
+    @ft.transform
     def f(idx, x, y):
-        ir.declare_var(idx, (2,), "int32", "input", "cpu")
-        ir.declare_var(x, (4, 4), "int32", "input", "cpu")
-        ir.declare_var(y, (), "int32", "output", "cpu")
+        idx: ft.Var[(2,), "int32", "input", "cpu"]
+        x: ft.Var[(4, 4), "int32", "input", "cpu"]
+        y: ft.Var[(), "int32", "output", "cpu"]
         y[()] = x[idx]
         # TODO: Consider x[*idx]
 
-    with ir.VarDef([("idx", (2,), "int32", "input", "cpu"),
+    with ft.VarDef([("idx", (2,), "int32", "input", "cpu"),
                     ("x", (4, 4), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (idx, x, y):
         y[()] = x[idx]
-    assert ir.pop_ast().match(f.body)
+    assert ft.pop_ast().match(f.body)
 
 
 def test_var_as_index_2():
 
-    @ir.transform
+    @ft.transform
     def f(idx, x, y):
-        ir.declare_var(idx, (2,), "int32", "input", "cpu")
-        ir.declare_var(x, (4, 4), "int32", "input", "cpu")
-        ir.declare_var(y, (), "int32", "output", "cpu")
+        idx: ft.Var[(2,), "int32", "input", "cpu"]
+        x: ft.Var[(4, 4), "int32", "input", "cpu"]
+        y: ft.Var[(), "int32", "output", "cpu"]
         y[()] = x[idx[0], idx[1]]
 
-    with ir.VarDef([("idx", (2,), "int32", "input", "cpu"),
+    with ft.VarDef([("idx", (2,), "int32", "input", "cpu"),
                     ("x", (4, 4), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (idx, x, y):
         y[()] = x[idx]
-    assert ir.pop_ast().match(f.body)
+    assert ft.pop_ast().match(f.body)

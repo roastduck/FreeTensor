@@ -4,7 +4,7 @@
 #include <driver/gpu.h>
 #include <except.h>
 
-namespace ir {
+namespace freetensor {
 
 Array::Array(const std::vector<size_t> &shape, DataType dtype,
              const Device &device)
@@ -102,4 +102,4 @@ void Array::toCPU(void *other, size_t size) {
     }
 }
 
-} // namespace ir
+} // namespace freetensor

@@ -1,12 +1,12 @@
-#ifndef TRACK_STMT_H
-#define TRACK_STMT_H
+#ifndef FREE_TENSOR_TRACK_STMT_H
+#define FREE_TENSOR_TRACK_STMT_H
 
 #include <vector>
 
 #include <maybe_void.h>
 #include <stmt.h>
 
-namespace ir {
+namespace freetensor {
 
 /**
  * A context for Visitor or Mutator that tracks the visiting statements stack
@@ -43,6 +43,6 @@ template <class BaseClass> class TrackStmt : public BaseClass {
     }
 };
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // TRACK_STMT_H
+#endif // FREE_TENSOR_TRACK_STMT_H

@@ -1,6 +1,6 @@
 #include <analyze/analyze_linear.h>
 
-namespace ir {
+namespace freetensor {
 
 void AnalyzeLinear::visitExpr(const Expr &op) {
     if (!result_.count(op)) {
@@ -35,11 +35,11 @@ void AnalyzeLinear::visit(const Mul &op) {
     const auto &e1 = result_.at(op->lhs_);
     const auto &e2 = result_.at(op->rhs_);
 
-    if (e1.coeff_.empty()) {
+    if (e1.isConst()) {
         result_[op] = mul(e2, e1.bias_);
         return;
     }
-    if (e2.coeff_.empty()) {
+    if (e2.isConst()) {
         result_[op] = mul(e1, e2.bias_);
         return;
     }
@@ -69,4 +69,4 @@ Opt<std::pair<LinearExpr<int64_t>, ASTNodeType>> linearComp(const Expr &expr) {
     }
 }
 
-} // namespace ir
+} // namespace freetensor

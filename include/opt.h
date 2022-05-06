@@ -1,9 +1,9 @@
-#ifndef OPT_H
-#define OPT_H
+#ifndef FREE_TENSOR_OPT_H
+#define FREE_TENSOR_OPT_H
 
 #include <optional>
 
-namespace ir {
+namespace freetensor {
 
 template <class T> class Opt {
     std::optional<T> opt_;
@@ -42,6 +42,6 @@ template <class T> class Opt {
     static Opt make(const T &x) { return Opt(x); }
 };
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // OPT_H
+#endif // FREE_TENSOR_OPT_H

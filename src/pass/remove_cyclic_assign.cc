@@ -1,7 +1,7 @@
 #include <analyze/deps.h>
 #include <pass/remove_cyclic_assign.h>
 
-namespace ir {
+namespace freetensor {
 
 Stmt removeCyclicAssign(const Stmt &op) {
     std::unordered_map<Stmt, Stmt> later2earlier;
@@ -43,4 +43,4 @@ Stmt removeCyclicAssign(const Stmt &op) {
     }
 }
 
-} // namespace ir
+} // namespace freetensor

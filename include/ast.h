@@ -1,5 +1,5 @@
-#ifndef AST_H
-#define AST_H
+#ifndef FREE_TENSOR_AST_H
+#define FREE_TENSOR_AST_H
 
 #include <atomic>
 #include <string>
@@ -7,7 +7,7 @@
 #include <ref.h>
 #include <sub_tree.h>
 
-namespace ir {
+namespace freetensor {
 
 enum class ASTNodeType : int {
     // Matching
@@ -98,7 +98,7 @@ std::string toString(ASTNodeType type);
  */
 class ASTNode : public ASTPart {
   public:
-#ifdef IR_DEBUG_LOG_NODE
+#ifdef FT_DEBUG_LOG_NODE
     std::string debugCreator_ = "Python API";
 #endif
 
@@ -116,7 +116,7 @@ class ASTNode : public ASTPart {
 };
 typedef Ref<ASTNode> AST;
 
-#ifdef IR_DEBUG_LOG_NODE
+#ifdef FT_DEBUG_LOG_NODE
 #define makeNode(type, ...)                                                    \
     ({                                                                         \
         auto __x = _make##type(__VA_ARGS__);                                   \
@@ -213,11 +213,16 @@ class StmtNode : public ASTNode {
 
     Ref<StmtNode> parentStmt() const;
     Ref<StmtNode> parentCtrlFlow() const;
+    Ref<StmtNode> prevStmt() const;
+    Ref<StmtNode> nextStmt() const;
 
     /**
      * Find an ancestor by ID. `this` itself is also considered
      */
-    Ref<StmtNode> parentById(const ID &lookup) const;
+    Ref<StmtNode> ancestorById(const ID &lookup) const;
+
+    bool isAncestorOf(const Stmt &other) const;
+    bool isBefore(const Stmt &other) const;
 
     DEFINE_NODE_ACCESS(Stmt);
 };
@@ -229,12 +234,14 @@ AST lcaAST(const AST &lhs, const AST &rhs);
 Expr lcaExpr(const Expr &lhs, const Expr &rhs);
 Stmt lcaStmt(const Stmt &lhs, const Stmt &rhs);
 
-} // namespace ir
+} // namespace freetensor
 
 namespace std {
 
-template <> struct hash<ir::ID> { size_t operator()(const ir::ID &id) const; };
+template <> struct hash<freetensor::ID> {
+    size_t operator()(const freetensor::ID &id) const;
+};
 
 } // namespace std
 
-#endif // AST_H
+#endif // FREE_TENSOR_AST_H

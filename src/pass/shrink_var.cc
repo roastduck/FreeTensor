@@ -1,12 +1,13 @@
 #include <analyze/all_defs.h>
 #include <pass/shrink_var.h>
-#include <pass/z3_simplify.h>
+#include <pass/simplify.h>
 
-namespace ir {
+namespace freetensor {
 
 Stmt ShrinkVar::visit(const VarDef &_op) {
-    if (_op->buffer_->atype() != AccessType::Cache || _op->sizeLim_.isValid() ||
-        _op->pinned_ || !newRange_.count(_op->id())) {
+    if (_op->buffer_->atype() != AccessType::Cache ||
+        _op->ioTensor_.isValid() || _op->pinned_ ||
+        !newRange_.count(_op->id())) {
         return Mutator::visit(_op);
     }
 
@@ -63,7 +64,7 @@ Stmt shrinkVar(const Stmt &_op) {
     op = ShrinkVar(bounds)(op);
 
     // (3)
-    return z3Simplify(op); // Currently BuiltinSimplify is not sufficient
+    return simplify(op);
 }
 
 Stmt shrinkSingleVar(const Stmt &_op, const ID &varDefId) {
@@ -77,7 +78,7 @@ Stmt shrinkSingleVar(const Stmt &_op, const ID &varDefId) {
     op = ShrinkVar(bounds)(op);
 
     // (3)
-    return z3Simplify(op); // Currently BuiltinSimplify is not sufficient
+    return simplify(op);
 }
 
-} // namespace ir
+} // namespace freetensor

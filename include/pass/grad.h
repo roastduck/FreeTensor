@@ -1,5 +1,5 @@
-#ifndef GRAD_H
-#define GRAD_H
+#ifndef FREE_TENSOR_GRAD_H
+#define FREE_TENSOR_GRAD_H
 
 #include <unordered_map>
 #include <unordered_set>
@@ -11,7 +11,7 @@
 #include <mutator.h>
 #include <visitor.h>
 
-namespace ir {
+namespace freetensor {
 
 class PropagateRequire : public WithTypeInfer<SymbolTable<Visitor>> {
     typedef WithTypeInfer<SymbolTable<Visitor>> BaseClass;
@@ -231,6 +231,6 @@ grad(const Func &func, const std::unordered_set<std::string> &_requires,
      const std::unordered_set<std::string> &provides,
      GradTapeMode tapeMode = GradTapeMode::NoReuseOnly);
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // GRAD_H
+#endif // FREE_TENSOR_GRAD_H

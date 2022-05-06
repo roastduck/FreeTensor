@@ -1,20 +1,19 @@
-#ifndef REMOVE_WRITES_H
-#define REMOVE_WRITES_H
+#ifndef FREE_TENSOR_REMOVE_WRITES_H
+#define FREE_TENSOR_REMOVE_WRITES_H
 
 #include <unordered_map>
 #include <unordered_set>
 
 #include <analyze/find_loop_variance.h>
 #include <analyze/symbol_table.h>
-#include <analyze/with_cursor.h>
 #include <func.h>
 #include <mutator.h>
 #include <visitor.h>
 
-namespace ir {
+namespace freetensor {
 
-class FindLoopInvariantWrites : public SymbolTable<WithCursor<Visitor>> {
-    typedef SymbolTable<WithCursor<Visitor>> BaseClass;
+class FindLoopInvariantWrites : public SymbolTable<Visitor> {
+    typedef SymbolTable<Visitor> BaseClass;
 
     std::vector<For> loopStack_;
     std::vector<If> ifStack_;
@@ -35,6 +34,7 @@ class FindLoopInvariantWrites : public SymbolTable<WithCursor<Visitor>> {
     }
 
   protected:
+    using BaseClass::visit;
     void visit(const For &op) override;
     void visit(const If &op) override;
     void visit(const VarDef &op) override;
@@ -108,6 +108,6 @@ Stmt removeWrites(const Stmt &op, const ID &singleDefId = "");
 
 DEFINE_PASS_FOR_FUNC(removeWrites)
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // REMOVE_WRITES_H
+#endif // FREE_TENSOR_REMOVE_WRITES_H

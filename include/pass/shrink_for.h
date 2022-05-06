@@ -1,5 +1,5 @@
-#ifndef SHRINK_FOR_H
-#define SHRINK_FOR_H
+#ifndef FREE_TENSOR_SHRINK_FOR_H
+#define FREE_TENSOR_SHRINK_FOR_H
 
 #include <itertools.hpp>
 
@@ -11,8 +11,9 @@
 #include <func.h>
 #include <hash.h>
 #include <mutator.h>
+#include <pass/pb_simplify.h>
 
-namespace ir {
+namespace freetensor {
 
 class CheckSideEffect : public Visitor {
     bool hasSideEffect_ = false;
@@ -30,7 +31,11 @@ class ShrinkFor
     : public CompTransientBounds<WithTypeInfer<SymbolTable<Mutator>>> {
     typedef CompTransientBounds<WithTypeInfer<SymbolTable<Mutator>>> BaseClass;
 
-    CompUniqueBounds bound_;
+    // We need linear programming from PBCompBounds, because the minimum/maximum
+    // value of a linear function does not always appear at the minimum/maximum
+    // points of its parameters.
+    // See 2.pass/test_shrink_for.py::test_linear_bounds
+    PBCompBounds bound_;
 
     ASTHashMap<Var, std::pair<std::vector<std::vector<Expr>>,
                               std::vector<std::vector<Expr>>>>
@@ -56,6 +61,6 @@ Stmt shrinkFor(const Stmt &op);
 
 DEFINE_PASS_FOR_FUNC(shrinkFor)
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // SHRINK_FOR_H
+#endif // FREE_TENSOR_SHRINK_FOR_H

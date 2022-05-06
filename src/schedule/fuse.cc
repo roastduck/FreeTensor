@@ -12,7 +12,7 @@
 #include <pass/tensor_prop_const.h>
 #include <schedule/fuse.h>
 
-namespace ir {
+namespace freetensor {
 
 namespace {
 
@@ -169,7 +169,7 @@ Stmt FuseFor::visit(const StmtSeq &_op) {
                 if (stmt->nodeType() == ASTNodeType::VarDef) {
                     auto def = stmt.as<VarDefNode>();
                     fused = makeVarDef(def->id(), def->name_,
-                                       std::move(def->buffer_), def->sizeLim_,
+                                       std::move(def->buffer_), def->ioTensor_,
                                        fused, def->pinned_);
                 } else if (stmt->nodeType() == ASTNodeType::StmtSeq) {
                     auto seq = stmt.as<StmtSeqNode>();
@@ -183,7 +183,7 @@ Stmt FuseFor::visit(const StmtSeq &_op) {
                 if (stmt->nodeType() == ASTNodeType::VarDef) {
                     auto def = stmt.as<VarDefNode>();
                     fused = makeVarDef(def->id(), def->name_,
-                                       std::move(def->buffer_), def->sizeLim_,
+                                       std::move(def->buffer_), def->ioTensor_,
                                        fused, def->pinned_);
                 } else if (stmt->nodeType() == ASTNodeType::StmtSeq) {
                     auto seq = stmt.as<StmtSeqNode>();
@@ -264,8 +264,8 @@ std::pair<Stmt, ID> fuse(const Stmt &_ast, const ID &loop0, const ID &loop1,
     auto ast = mutator(_ast);
 
     auto filter = [&](const AccessPoint &later, const AccessPoint &earlier) {
-        return earlier.stmt_->parentById(mutator.afterId()).isValid() &&
-               later.stmt_->parentById(mutator.beforeId()).isValid();
+        return earlier.stmt_->ancestorById(mutator.afterId()).isValid() &&
+               later.stmt_->ancestorById(mutator.beforeId()).isValid();
     };
     auto found = [&](const Dependency &d) {
         ASSERT(d.cond_.size() == 1);
@@ -275,7 +275,7 @@ std::pair<Stmt, ID> fuse(const Stmt &_ast, const ID &loop0, const ID &loop1,
              FindDepsMode::Dep, DEP_ALL, filter);
 
     try {
-        ast = simplifyPass(ast);
+        ast = simplify(ast);
     } catch (const AssertAlwaysFalse &e) {
         throw InvalidSchedule("Fusing " + toString(loop0) + " and " +
                               toString(loop1) +
@@ -290,4 +290,4 @@ std::pair<Stmt, ID> fuse(const Stmt &_ast, const ID &loop0, const ID &loop1,
     return std::make_pair(ast, mutator.fused());
 }
 
-} // namespace ir
+} // namespace freetensor

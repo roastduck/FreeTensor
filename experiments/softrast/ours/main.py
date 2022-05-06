@@ -3,8 +3,8 @@ import time
 import itertools
 import argparse
 import numpy as np
-import ir
-import ir.debug
+import freetensor as ft
+from freetensor import debug
 
 sys.path.append('../..')
 from common.numpy.io import load_txt, store_txt
@@ -26,52 +26,51 @@ def compile_all(h, w, n_verts, n_faces, device, ad_save_all):
     sigma = 1e-4
     inf = float("inf")
 
-    @ir.inline
+    @ft.inline
     def cross_product(v1, v2):
-        y = ir.create_var((), "float32", mtype)
+        y = ft.create_var((), "float32", mtype)
         y[()] = v1[0] * v2[1] - v1[1] * v2[0]
         return y
 
-    @ir.inline
+    @ft.inline
     def dot_product(v1, v2):
-        y = ir.create_var((), "float32", mtype)
+        y = ft.create_var((), "float32", mtype)
         y[()] = v1[0] * v2[0] + v1[1] * v2[1]
         return y
 
-    @ir.inline
+    @ft.inline
     def norm(v):
-        y = ir.create_var((), "float32", mtype)
-        y[()] = ir.sqrt(v[0] * v[0] + v[1] * v[1])
+        y = ft.create_var((), "float32", mtype)
+        y[()] = ft.sqrt(v[0] * v[0] + v[1] * v[1])
         return y
 
-    @ir.inline
+    @ft.inline
     def sub(v1, v2):
-        y = ir.create_var((2,), "float32", mtype)
+        y = ft.create_var((2,), "float32", mtype)
         y[0] = v1[0] - v2[0]
         y[1] = v1[1] - v2[1]
         return y
 
-    @ir.transform
+    @ft.transform
     def inference(vertices, faces, y):
-        ir.declare_var(vertices, (n_verts, 3), "float32", "input", mtype)
-        ir.declare_var(faces, (n_faces, 3), "int32", "input", mtype)
-        ir.declare_var(y, (n_faces, h, w), "float32", "output", mtype)
-
+        vertices: ft.Var[(n_verts, 3), "float32", "input", mtype]
+        faces: ft.Var[(n_faces, 3), "int32", "input", mtype]
+        y: ft.Var[(n_faces, h, w), "float32", "output", mtype]
         "nid: Li"
         for i in range(n_faces):
-            v = ir.create_var((3, 2), "float32", mtype)
+            v = ft.create_var((3, 2), "float32", mtype)
             for p in range(3):
                 v[p, 0] = vertices[faces[i, p], 0]
                 v[p, 1] = vertices[faces[i, p], 1]
 
             for j in range(h):
                 for k in range(w):
-                    pixel = ir.create_var((2,), "float32", mtype)
+                    pixel = ft.create_var((2,), "float32", mtype)
                     pixel[0] = 1. / (h - 1) * j
                     pixel[1] = 1. / (w - 1) * k
 
-                    e_cp = ir.create_var((3,), "float32", mtype)
-                    e_dist = ir.create_var((3,), "float32", mtype)
+                    e_cp = ft.create_var((3,), "float32", mtype)
+                    e_dist = ft.create_var((3,), "float32", mtype)
                     for p in range(3):
                         cp = cross_product(sub(pixel, v[p]),
                                            sub(v[(p + 1) % 3], v[p]))
@@ -84,7 +83,7 @@ def compile_all(h, w, n_verts, n_faces, device, ad_save_all):
                                               sub(v[p], v[(p + 1) % 3]))
                             if dp2[()] >= 0:
                                 len = norm(sub(v[(p + 1) % 3], v[p]))
-                                e_dist[p] = ir.abs(cp[()]) / len[()]
+                                e_dist[p] = ft.abs(cp[()]) / len[()]
                             else:
                                 p2_dist = norm(sub(pixel, v[(p + 1) % 3]))
                                 e_dist[p] = p2_dist[()]
@@ -92,50 +91,50 @@ def compile_all(h, w, n_verts, n_faces, device, ad_save_all):
                             p1_dist = norm(sub(pixel, v[p]))
                             e_dist[p] = p1_dist[()]
 
-                    inside = ir.create_var((), "int32", mtype)
-                    inside[()] = ir.if_then_else(
+                    inside = ft.create_var((), "int32", mtype)
+                    inside[()] = ft.if_then_else(
                         e_cp[0] < 0 and e_cp[1] < 0 and e_cp[2] < 0, 1, -1)
-                    dist = ir.create_var((), "float32", mtype)
-                    dist[()] = ir.min(ir.min(e_dist[0], e_dist[1]), e_dist[2])
+                    dist = ft.create_var((), "float32", mtype)
+                    dist[()] = ft.min(ft.min(e_dist[0], e_dist[1]), e_dist[2])
                     y[i, j,
-                      k] = ir.sigmoid(inside[()] * dist[()] * dist[()] / sigma)
+                      k] = ft.sigmoid(inside[()] * dist[()] * dist[()] / sigma)
 
     print("# Inference:")
     print(inference)
     t0 = time.time()
-    s = ir.Schedule(inference)
+    s = ft.Schedule(inference)
     s.auto_schedule(device.target())
-    f = ir.lower(s.func(), device.target())
-    code = ir.codegen(f, device.target())
-    inference_exe = ir.Driver(inference, code, device)
+    f = ft.lower(s.func(), device.target())
+    code = ft.codegen(f, device.target())
+    inference_exe = ft.Driver(inference, code, device)
     t1 = time.time()
     print(f)
-    print(ir.debug.with_line_no(code))
+    print(debug.with_line_no(code))
     print(f"Inference compiling time: {t1 - t0}s")
 
-    forward, backward, requires, privdes, _ = ir.grad(
+    forward, backward, requires, privdes, _ = ft.grad(
         inference, set(["vertices"]), set(["y"]),
-        ir.GradTapeMode.All if ad_save_all else ir.GradTapeMode.NoReuseOnly)
+        ft.GradTapeMode.All if ad_save_all else ft.GradTapeMode.NoReuseOnly)
 
     print("# Forward:")
     print(forward)
-    s = ir.Schedule(forward)
+    s = ft.Schedule(forward)
     s.auto_schedule(device.target())
-    f = ir.lower(s.func(), device.target())
+    f = ft.lower(s.func(), device.target())
     print(f)
-    code = ir.codegen(f, device.target())
-    print(ir.debug.with_line_no(code))
-    forward_exe = ir.Driver(forward, code, device)
+    code = ft.codegen(f, device.target())
+    print(debug.with_line_no(code))
+    forward_exe = ft.Driver(forward, code, device)
 
     print("# Backward:")
     print(backward)
-    s = ir.Schedule(backward)
+    s = ft.Schedule(backward)
     s.auto_schedule(device.target())
-    f = ir.lower(s.func(), device.target())
+    f = ft.lower(s.func(), device.target())
     print(f)
-    code = ir.codegen(f, device.target())
-    print(ir.debug.with_line_no(code))
-    backward_exe = ir.Driver(backward, code, device)
+    code = ft.codegen(f, device.target())
+    print(debug.with_line_no(code))
+    backward_exe = ft.Driver(backward, code, device)
 
     def run_backward(vertices, faces, y, d_y, d_vertices):
         kvs = {}
@@ -181,16 +180,16 @@ if __name__ == '__main__':
     d_y = load_txt("../d_y.in", "float32")
 
     if device == 'gpu':
-        ir_dev = ir.Device(ir.GPU())
+        ir_dev = ft.Device(ft.GPU())
     else:
         assert device == 'cpu'
-        ir_dev = ir.Device(ir.CPU())
+        ir_dev = ft.Device(ft.CPU())
 
-    vertices = ir.Array(vertices, ir_dev)
-    faces = ir.Array(faces, ir_dev)
-    y = ir.Array(y, ir_dev)
-    d_y = ir.Array(d_y, ir_dev)
-    d_vertices = ir.Array(d_vertices, ir_dev)
+    vertices = ft.Array(vertices, ir_dev)
+    faces = ft.Array(faces, ir_dev)
+    y = ft.Array(y, ir_dev)
+    d_y = ft.Array(d_y, ir_dev)
+    d_vertices = ft.Array(d_vertices, ir_dev)
 
     inference, forward, backward = compile_all(h, w, n_verts, n_faces, ir_dev,
                                                cmd_args.ad_save_all)

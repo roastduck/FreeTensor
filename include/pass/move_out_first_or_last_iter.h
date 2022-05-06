@@ -1,12 +1,12 @@
-#ifndef MOVE_OUT_FIRST_OR_LAST_ITER_H
-#define MOVE_OUT_FIRST_OR_LAST_ITER_H
+#ifndef FREE_TENSOR_MOVE_OUT_FIRST_OR_LAST_ITER_H
+#define FREE_TENSOR_MOVE_OUT_FIRST_OR_LAST_ITER_H
 
 #include <unordered_map>
 
 #include <func.h>
 #include <pass/z3_simplify.h>
 
-namespace ir {
+namespace freetensor {
 
 class MoveOutFirstOrLastIter : public Z3SimplifyWithSymbolTable {
   protected:
@@ -38,6 +38,6 @@ inline Stmt moveOutFirstOrLastIter(const Stmt &op) {
 
 DEFINE_PASS_FOR_FUNC(moveOutFirstOrLastIter)
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // MOVE_OUT_FIRST_OR_LAST_ITER_H
+#endif // FREE_TENSOR_MOVE_OUT_FIRST_OR_LAST_ITER_H

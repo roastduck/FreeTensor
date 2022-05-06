@@ -1,5 +1,5 @@
-#ifndef FISSION_H
-#define FISSION_H
+#ifndef FREE_TENSOR_FISSION_H
+#define FREE_TENSOR_FISSION_H
 
 #include <string>
 #include <unordered_map>
@@ -8,7 +8,7 @@
 #include <analyze/symbol_table.h>
 #include <mutator.h>
 
-namespace ir {
+namespace freetensor {
 
 enum class FissionSide : int { Before, After };
 
@@ -133,6 +133,6 @@ std::pair<Stmt,
 fission(const Stmt &ast, const ID &loop, FissionSide side, const ID &splitter,
         const std::string &suffix0, const std::string &suffix1);
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // FISSION_H
+#endif // FREE_TENSOR_FISSION_H

@@ -1,9 +1,9 @@
-#ifndef AS_DNF_H
-#define AS_DNF_H
+#ifndef FREE_TENSOR_AS_DNF_H
+#define FREE_TENSOR_AS_DNF_H
 
 #include <visitor.h>
 
-namespace ir {
+namespace freetensor {
 
 typedef std::vector<std::vector<Expr>> DNF;
 
@@ -32,6 +32,6 @@ class AsDNF : public Visitor {
  */
 DNF asDNF(const Expr &expr);
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // AS_DNF_H
+#endif // FREE_TENSOR_AS_DNF_H

@@ -2,7 +2,7 @@
 
 #include <hash.h>
 
-namespace ir {
+namespace freetensor {
 
 size_t Hasher::compHash(const Tensor &t) {
     size_t h = (-1 * K1 + B1) % P;
@@ -66,8 +66,8 @@ size_t Hasher::compHash(const VarDefNode &op) {
     size_t h = ((size_t)op.nodeType() * K1 + B1) % P;
     h = ((h + std::hash<std::string>()(op.name_)) * K2 + B2) % P;
     h = ((h + op.buffer_->hash()) * K2 + B2) % P;
-    if (op.sizeLim_.isValid()) {
-        h = ((h + op.sizeLim_->hash()) * K2 + B2) % P;
+    if (op.ioTensor_.isValid()) {
+        h = ((h + op.ioTensor_->hash()) * K2 + B2) % P;
     }
     h = ((h + op.body_->hash()) * K2 + B2) % P;
     h = ((h + std::hash<bool>()((int)op.pinned_)) * K2 + B2) % P;
@@ -250,10 +250,10 @@ bool HashComparator::compare(const VarDef &lhs, const VarDef &rhs) const {
     if (!(*this)(lhs->buffer_, rhs->buffer_)) {
         return false;
     }
-    if (lhs->sizeLim_.isValid() != rhs->sizeLim_.isValid()) {
+    if (lhs->ioTensor_.isValid() != rhs->ioTensor_.isValid()) {
         return false;
     }
-    if (lhs->sizeLim_.isValid() && !(*this)(lhs->sizeLim_, rhs->sizeLim_)) {
+    if (lhs->ioTensor_.isValid() && !(*this)(lhs->ioTensor_, rhs->ioTensor_)) {
         return false;
     }
     if (!(*this)(lhs->body_, rhs->body_)) {
@@ -610,4 +610,4 @@ bool HashComparator::operator()(const AST &lhs, const AST &rhs) const {
     }
 }
 
-} // namespace ir
+} // namespace freetensor

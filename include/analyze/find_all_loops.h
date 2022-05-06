@@ -1,9 +1,9 @@
-#ifndef FIND_ALL_LOOPS_H
-#define FIND_ALL_LOOPS_H
+#ifndef FREE_TENSOR_FIND_ALL_LOOPS_H
+#define FREE_TENSOR_FIND_ALL_LOOPS_H
 
 #include <visitor.h>
 
-namespace ir {
+namespace freetensor {
 
 class FindAllLoops : public Visitor {
     std::vector<ID> loops_;
@@ -20,6 +20,6 @@ class FindAllLoops : public Visitor {
  */
 std::vector<ID> findAllLoops(const Stmt &op);
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // FIND_ALL_LOOPS_H
+#endif // FREE_TENSOR_FIND_ALL_LOOPS_H

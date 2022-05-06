@@ -1,7 +1,7 @@
 #include <pass/make_1d_var.h>
 #include <pass/simplify.h>
 
-namespace ir {
+namespace freetensor {
 
 Stmt Make1DVar::visit(const VarDef &_op) {
     if (_op->buffer_->tensor()->shape().size() <= 1) {
@@ -12,13 +12,14 @@ Stmt Make1DVar::visit(const VarDef &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::VarDef);
     auto op = __op.as<VarDefNode>();
 
+    if (!op->ioTensor_.isValid() &&
+        op->buffer_->tensor()->shape().size() != 1) {
+        op->ioTensor_ = op->buffer_->tensor();
+    }
+
     Expr len;
-    if (op->sizeLim_.isValid()) {
-        len = op->sizeLim_;
-    } else {
-        for (Expr dim : op->buffer_->tensor()->shape()) {
-            len = len.isValid() ? makeMul(len, dim) : dim;
-        }
+    for (Expr dim : op->buffer_->tensor()->shape()) {
+        len = len.isValid() ? makeMul(len, dim) : dim;
     }
     op->buffer_->tensor()->setShape({len});
     return op;
@@ -47,8 +48,8 @@ Expr Make1DVar::visit(const Load &_op) {
 
 Stmt make1dVar(const Stmt &_op) {
     auto op = Make1DVar()(_op);
-    op = simplifyPass(op);
+    op = simplify(op);
     return op;
 }
 
-} // namespace ir
+} // namespace freetensor

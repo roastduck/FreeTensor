@@ -1,8 +1,10 @@
+#include <algorithm>
+
 #include <ast.h>
 #include <hash.h>
 #include <mutator.h>
 
-namespace ir {
+namespace freetensor {
 
 std::string toString(ASTNodeType type) {
     switch (type) {
@@ -100,13 +102,68 @@ Stmt StmtNode::parentCtrlFlow() const {
     return nullptr;
 }
 
-Stmt StmtNode::parentById(const ID &lookup) const {
+Stmt StmtNode::prevStmt() const {
+    if (auto p = parentStmt();
+        p.isValid() && p->nodeType() == ASTNodeType::StmtSeq) {
+        auto &&seq = p.as<StmtSeqNode>();
+        auto it = std::find(seq->stmts_.begin(), seq->stmts_.end(), self());
+        ASSERT(it != seq->stmts_.end());
+        if (it > seq->stmts_.begin()) {
+            return *(it - 1);
+        }
+    }
+    return nullptr;
+}
+
+Stmt StmtNode::nextStmt() const {
+    if (auto p = parentStmt();
+        p.isValid() && p->nodeType() == ASTNodeType::StmtSeq) {
+        auto &&seq = p.as<StmtSeqNode>();
+        auto it = std::find(seq->stmts_.begin(), seq->stmts_.end(), self());
+        ASSERT(it != seq->stmts_.end());
+        if (it < seq->stmts_.end() - 1) {
+            return *(it + 1);
+        }
+    }
+    return nullptr;
+}
+
+Stmt StmtNode::ancestorById(const ID &lookup) const {
     for (auto p = self().as<StmtNode>(); p.isValid(); p = p->parentStmt()) {
         if (p->id() == lookup) {
             return p;
         }
     }
     return nullptr;
+}
+
+bool StmtNode::isAncestorOf(const Stmt &other) const {
+    if (auto p = other->parentStmt();
+        p.isValid() && p->ancestorById(id()).isValid()) {
+        return true;
+    }
+    return false;
+}
+
+bool StmtNode::isBefore(const Stmt &other) const {
+    auto l = self().as<StmtNode>();
+    auto r = other;
+    auto common = lcaStmt(l, r);
+    if (common->nodeType() == ASTNodeType::StmtSeq) {
+        auto &&seq = common.as<StmtSeqNode>();
+        while (l->parentStmt() != seq) {
+            l = l->parentStmt();
+        }
+        while (r->parentStmt() != seq) {
+            r = r->parentStmt();
+        }
+        auto itl = std::find(seq->stmts_.begin(), seq->stmts_.end(), l);
+        auto itr = std::find(seq->stmts_.begin(), seq->stmts_.end(), r);
+        ASSERT(itl != seq->stmts_.end());
+        ASSERT(itr != seq->stmts_.end());
+        return itl < itr;
+    }
+    return false;
 }
 
 ID::ID(const Stmt &stmt) : ID(stmt->id_) {}
@@ -181,13 +238,13 @@ Stmt lcaStmt(const Stmt &lhs, const Stmt &rhs) {
     return ret.as<StmtNode>();
 }
 
-} // namespace ir
+} // namespace freetensor
 
 namespace std {
 
-size_t hash<ir::ID>::operator()(const ir::ID &id) const {
-    return ir::hashCombine(ir::Hasher()(id.expr_),
-                           std::hash<std::string>()(id.stmtId_));
+size_t hash<freetensor::ID>::operator()(const freetensor::ID &id) const {
+    return freetensor::hashCombine(freetensor::Hasher()(id.expr_),
+                                   std::hash<std::string>()(id.stmtId_));
 }
 
 } // namespace std

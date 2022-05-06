@@ -1,112 +1,112 @@
-import ir
+import freetensor as ft
 
 
 def test_simplify_sqrt_1():
-    with ir.VarDef([("x", (), "float32", "input", "cpu"),
+    with ft.VarDef([("x", (), "float32", "input", "cpu"),
                     ("y", (), "float32", "output", "cpu")]) as (x, y):
-        y[()] = ir.sqrt(x[()]) * ir.sqrt(x[()])
-    ast = ir.pop_ast()
+        y[()] = ft.sqrt(x[()]) * ft.sqrt(x[()])
+    ast = ft.pop_ast()
     print(ast)
-    ast = ir.lower(ast)
+    ast = ft.lower(ast)
     print(ast)
 
-    with ir.VarDef([("x", (), "float32", "input", "cpu"),
+    with ft.VarDef([("x", (), "float32", "input", "cpu"),
                     ("y", (), "float32", "output", "cpu")]) as (x, y):
         y[()] = x[()]
-    std = ir.pop_ast()
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
 
 def test_simplify_sqrt_2():
-    with ir.VarDef([("x1", (), "float32", "input", "cpu"),
+    with ft.VarDef([("x1", (), "float32", "input", "cpu"),
                     ("x2", (), "float32", "input", "cpu"),
                     ("y", (), "float32", "output", "cpu")]) as (x1, x2, y):
-        y[()] = ir.min(2 * ir.sqrt(x1[()]), 3 * ir.sqrt(x2[()]))
-    ast = ir.pop_ast()
+        y[()] = ft.min(2 * ft.sqrt(x1[()]), 3 * ft.sqrt(x2[()]))
+    ast = ft.pop_ast()
     print(ast)
-    ast = ir.lower(ast)
+    ast = ft.lower(ast)
     print(ast)
 
-    with ir.VarDef([("x1", (), "float32", "input", "cpu"),
+    with ft.VarDef([("x1", (), "float32", "input", "cpu"),
                     ("x2", (), "float32", "input", "cpu"),
                     ("y", (), "float32", "output", "cpu")]) as (x1, x2, y):
-        y[()] = ir.sqrt(ir.min(4 * x1[()], 9 * x2[()]))
-    std = ir.pop_ast()
+        y[()] = ft.sqrt(ft.min(4 * x1[()], 9 * x2[()]))
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
 
 def test_simplify_sqrt_3():
-    with ir.VarDef([("x1", (), "float32", "input", "cpu"),
+    with ft.VarDef([("x1", (), "float32", "input", "cpu"),
                     ("x2", (), "float32", "input", "cpu"),
                     ("y", (), "float32", "output", "cpu")]) as (x1, x2, y):
-        y[()] = ir.min(-2 * ir.sqrt(x1[()]), -3 * ir.sqrt(x2[()]))
-    ast = ir.pop_ast()
+        y[()] = ft.min(-2 * ft.sqrt(x1[()]), -3 * ft.sqrt(x2[()]))
+    ast = ft.pop_ast()
     print(ast)
-    ast = ir.lower(ast)
+    ast = ft.lower(ast)
     print(ast)
 
-    with ir.VarDef([("x1", (), "float32", "input", "cpu"),
+    with ft.VarDef([("x1", (), "float32", "input", "cpu"),
                     ("x2", (), "float32", "input", "cpu"),
                     ("y", (), "float32", "output", "cpu")]) as (x1, x2, y):
-        y[()] = -1 * ir.sqrt(ir.max(4 * x1[()], 9 * x2[()]))
-    std = ir.pop_ast()
+        y[()] = -1 * ft.sqrt(ft.max(4 * x1[()], 9 * x2[()]))
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
 
 def test_simplify_sqrt_4():
-    with ir.VarDef([("x1", (), "float32", "input", "cpu"),
+    with ft.VarDef([("x1", (), "float32", "input", "cpu"),
                     ("x2", (), "float32", "input", "cpu"),
                     ("x3", (), "float32", "input", "cpu"),
                     ("y", (), "float32", "output", "cpu")]) as (x1, x2, x3, y):
-        y[()] = (ir.sqrt(x1[()]) * x2[()] /
-                 ir.sqrt(x3[()])) * (ir.sqrt(x1[()]) * x2[()] / ir.sqrt(x3[()]))
-    ast = ir.pop_ast()
+        y[()] = (ft.sqrt(x1[()]) * x2[()] /
+                 ft.sqrt(x3[()])) * (ft.sqrt(x1[()]) * x2[()] / ft.sqrt(x3[()]))
+    ast = ft.pop_ast()
     print(ast)
-    ast = ir.lower(ast)
+    ast = ft.lower(ast)
     print(ast)
 
-    with ir.VarDef([("x1", (), "float32", "input", "cpu"),
+    with ft.VarDef([("x1", (), "float32", "input", "cpu"),
                     ("x2", (), "float32", "input", "cpu"),
                     ("x3", (), "float32", "input", "cpu"),
                     ("y", (), "float32", "output", "cpu")]) as (x1, x2, x3, y):
-        y[()] = ir.square(x2[()]) * (x1[()] / x3[()])
-    std = ir.pop_ast()
+        y[()] = ft.square(x2[()]) * (x1[()] / x3[()])
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
 
 def test_simplify_square_abs():
-    with ir.VarDef([("x", (), "float32", "input", "cpu"),
+    with ft.VarDef([("x", (), "float32", "input", "cpu"),
                     ("y", (), "float32", "output", "cpu")]) as (x, y):
-        y[()] = ir.abs(x[()]) * ir.abs(x[()])
-    ast = ir.pop_ast()
+        y[()] = ft.abs(x[()]) * ft.abs(x[()])
+    ast = ft.pop_ast()
     print(ast)
-    ast = ir.lower(ast)
+    ast = ft.lower(ast)
     print(ast)
 
-    with ir.VarDef([("x", (), "float32", "input", "cpu"),
+    with ft.VarDef([("x", (), "float32", "input", "cpu"),
                     ("y", (), "float32", "output", "cpu")]) as (x, y):
-        y[()] = ir.square(x[()])
-    std = ir.pop_ast()
+        y[()] = ft.square(x[()])
+    std = ft.pop_ast()
 
     assert std.match(ast)
 
 
 def test_simplify_redundant_abs():
-    with ir.VarDef([("x", (), "float32", "input", "cpu"),
+    with ft.VarDef([("x", (), "float32", "input", "cpu"),
                     ("y", (), "float32", "output", "cpu")]) as (x, y):
-        y[()] = ir.abs(ir.abs(x[()]))
-    ast = ir.pop_ast()
+        y[()] = ft.abs(ft.abs(x[()]))
+    ast = ft.pop_ast()
     print(ast)
-    ast = ir.lower(ast)
+    ast = ft.lower(ast)
     print(ast)
 
-    with ir.VarDef([("x", (), "float32", "input", "cpu"),
+    with ft.VarDef([("x", (), "float32", "input", "cpu"),
                     ("y", (), "float32", "output", "cpu")]) as (x, y):
-        y[()] = ir.abs(x[()])
-    std = ir.pop_ast()
+        y[()] = ft.abs(x[()])
+    std = ft.pop_ast()
 
     assert std.match(ast)

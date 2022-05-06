@@ -1,33 +1,56 @@
-#ifndef DATA_TYPE_H
-#define DATA_TYPE_H
+#ifndef FREE_TENSOR_DATA_TYPE_H
+#define FREE_TENSOR_DATA_TYPE_H
 
+#include <array>
+
+#include <itertools.hpp>
+
+#include <container_utils.h>
 #include <except.h>
 
-namespace ir {
+namespace freetensor {
 
-enum class DataType : int { Void = 0, Float32, Float64, Int32, Bool, Custom };
+enum class DataType : size_t {
+    Void = 0,
+    Float32,
+    Float64,
+    Int32,
+    Int64,
+    Bool,
+    Custom,
+    // ------
+    NumTypes,
+};
+
+constexpr std::array dataTypeNames = {
+    "void", "float32", "float64", "int32", "int64", "bool", "custom",
+};
+static_assert(dataTypeNames.size() == (size_t)DataType::NumTypes);
 
 inline std::string toString(DataType dtype) {
-    switch (dtype) {
-    case DataType::Float32:
-        return "f32";
-    case DataType::Float64:
-        return "f64";
-    case DataType::Int32:
-        return "i32";
-    case DataType::Bool:
-        return "bool";
-    case DataType::Custom:
-        return "custom";
-    case DataType::Void:
-        return "void";
+    return dataTypeNames.at((size_t)dtype);
+}
+
+inline DataType parseDType(const std::string &_str) {
+    auto &&str = tolower(_str);
+    for (auto &&[i, s] : iter::enumerate(dataTypeNames)) {
+        if (s == str) {
+            return (DataType)i;
+        }
     }
-    return "???";
+    std::string msg = "Unrecognized access type \"" + _str +
+                      "\". Candidates are (case-insensitive): ";
+    for (auto &&[i, s] : iter::enumerate(dataTypeNames)) {
+        msg += (i > 0 ? ", " : "");
+        msg += s;
+    }
+    ERROR(msg);
 }
 
 inline size_t sizeOf(DataType dtype) {
     switch (dtype) {
     case DataType::Float64:
+    case DataType::Int64:
         return 8;
     case DataType::Float32:
     case DataType::Int32:
@@ -38,13 +61,15 @@ inline size_t sizeOf(DataType dtype) {
         ERROR("Cannot get size of a customized data type");
     case DataType::Void:
         return 0;
+    default:
+        ASSERT(false);
     }
-    ASSERT(false);
 }
 
 inline bool isInt(DataType dtype) {
     switch (dtype) {
     case DataType::Int32:
+    case DataType::Int64:
         return true;
     default:
         return false;
@@ -69,6 +94,9 @@ inline DataType upCast(DataType lhs, DataType rhs) {
     if (lhs == DataType::Custom || rhs == DataType::Custom) {
         return DataType::Custom;
     }
+    if (lhs == rhs) {
+        return lhs;
+    }
     if (isInt(lhs) && isFloat(rhs)) {
         return rhs;
     }
@@ -82,6 +110,6 @@ inline DataType upCast(DataType lhs, DataType rhs) {
                          toString(rhs));
 }
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // DATA_TYPE
+#endif // FREE_TENSOR_DATA_TYPE

@@ -1,11 +1,11 @@
-#ifndef REPLACE_USES_H
-#define REPLACE_USES_H
+#ifndef FREE_TENSOR_REPLACE_USES_H
+#define FREE_TENSOR_REPLACE_USES_H
 
 #include <unordered_map>
 
 #include <mutator.h>
 
-namespace ir {
+namespace freetensor {
 
 /**
  * Replace load to some other expression, or replace reductions like `a += b` to
@@ -23,6 +23,6 @@ class ReplaceUses : public Mutator {
     Stmt visit(const ReduceTo &op) override;
 };
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // REPLACE_USES_H
+#endif // FREE_TENSOR_REPLACE_USES_H

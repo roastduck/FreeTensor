@@ -1,19 +1,19 @@
-import ir
+import freetensor as ft
 
 
 def test_basic():
-    with ir.VarDef([("a", (), "int32", "inout", "cpu"),
+    with ft.VarDef([("a", (), "int32", "inout", "cpu"),
                     ("b", (), "int32", "output", "cpu")]) as (a, b):
         b[()] = a[()]
         a[()] = b[()]
-    ast = ir.pop_ast()
+    ast = ft.pop_ast()
     print(ast)
-    ast = ir.lower(ast)
+    ast = ft.lower(ast)
     print(ast)
 
-    with ir.VarDef([("a", (), "int32", "inout", "cpu"),
+    with ft.VarDef([("a", (), "int32", "inout", "cpu"),
                     ("b", (), "int32", "output", "cpu")]) as (a, b):
         b[()] = a[()]
-    std = ir.pop_ast()
+    std = ft.pop_ast()
 
     assert std.match(ast)

@@ -4,7 +4,7 @@
 #include <analyze/find_all_loops.h>
 #include <pass/flatten_stmt_seq.h>
 
-namespace ir {
+namespace freetensor {
 
 void CountScopeLen::visit(const Store &op) {
     Visitor::visit(op);
@@ -204,4 +204,4 @@ analyzeVersion(const Stmt &_op, const std::unordered_set<ID> &intermediates) {
     return std::make_pair(versions, totLens);
 }
 
-} // namespace ir
+} // namespace freetensor

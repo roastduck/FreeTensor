@@ -1,11 +1,11 @@
-#ifndef ALL_DEFS_H
-#define ALL_DEFS_H
+#ifndef FREE_TENSOR_ALL_DEFS_H
+#define FREE_TENSOR_ALL_DEFS_H
 
 #include <unordered_set>
 
 #include <visitor.h>
 
-namespace ir {
+namespace freetensor {
 
 class AllDefs : public Visitor {
     const std::unordered_set<AccessType> &atypes_;
@@ -30,6 +30,6 @@ allDefs(const Stmt &op, const std::unordered_set<AccessType> &atypes = {
                             AccessType::Input, AccessType::Output,
                             AccessType::InOut, AccessType::Cache});
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // ALL_DEFS_H
+#endif // FREE_TENSOR_ALL_DEFS_H

@@ -1,5 +1,5 @@
-#ifndef Z3_SIMPLIFY
-#define Z3_SIMPLIFY
+#ifndef FREE_TENSOR_Z3_SIMPLIFY
+#define FREE_TENSOR_Z3_SIMPLIFY
 
 #include <deque>
 #include <unordered_map>
@@ -13,7 +13,7 @@
 #include <opt.h>
 #include <visitor.h>
 
-namespace ir {
+namespace freetensor {
 
 /**
  * Simplify the AST using Z3
@@ -89,16 +89,51 @@ class Z3Simplify : public Mutator {
     Stmt visit(const For &op) override;
 };
 
-class Z3SimplifyWithSymbolTable : public SymbolTable<Z3Simplify> {
+class Z3SimplifyWithSymbolTable : public Z3Simplify,
+                                  public SymbolTableInterface {
+    SymbolTableData symbols_;
+
   public:
     Z3SimplifyWithSymbolTable()
-        : SymbolTable<Z3Simplify>((const SymbolTableInterface &)(*this)) {}
+        : Z3Simplify((const SymbolTableInterface &)(symbols_)) {}
+
+    const std::unordered_set<std::string> &names() const override {
+        return symbols_.names();
+    }
+
+    bool hasDef(const std::string &name) const override {
+        return symbols_.hasDef(name);
+    }
+    const VarDef &def(const std::string &name) const override {
+        return symbols_.def(name);
+    }
+    Ref<Buffer> buffer(const std::string &name) const override {
+        return symbols_.buffer(name);
+    }
+
+    bool hasLoop(const std::string &name) const override {
+        return symbols_.hasLoop(name);
+    }
+    const For &loop(const std::string &name) const override {
+        return symbols_.loop(name);
+    }
+
+    void pushDef(const VarDef &op) override { symbols_.pushDef(op); }
+    void popDef(const VarDef &op) override { symbols_.popDef(op); }
+
+    void pushFor(const For &op) override { symbols_.pushFor(op); }
+    void popFor(const For &op) override { symbols_.popFor(op); }
+
+  protected:
+    using Z3Simplify::visit;
+    Stmt visit(const VarDef &op) override;
+    Stmt visit(const For &op) override;
 };
 
 Stmt z3Simplify(const Stmt &op);
 
 DEFINE_PASS_FOR_FUNC(z3Simplify)
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // Z3_SIMPLIFY
+#endif // FREE_TENSOR_Z3_SIMPLIFY

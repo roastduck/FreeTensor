@@ -3,7 +3,7 @@
 #include <pass/simplify.h>
 #include <schedule/blend.h>
 
-namespace ir {
+namespace freetensor {
 
 void FindAllScopesInside::visit(const For &op) {
     if (op->id() == loop_) {
@@ -115,15 +115,34 @@ Stmt BlendPass::visit(const Assert &op) {
 
 Stmt BlendPass::visit(const VarDef &op) {
     if (inLoop_ && isVariant(varVari_, op, loop_)) {
+        std::vector<Expr> shape;
+        shape.reserve(op->buffer_->tensor()->shape().size());
+        for (auto &&dim : op->buffer_->tensor()->shape()) {
+            shape.emplace_back((*this)(dim));
+        }
+        Ref<Tensor> t =
+            makeTensor(std::move(shape), op->buffer_->tensor()->dtype());
+        Ref<Buffer> b = makeBuffer(std::move(t), op->buffer_->atype(),
+                                   op->buffer_->mtype());
+        Ref<Tensor> ioTensor;
+        if (op->ioTensor_.isValid()) {
+            std::vector<Expr> shape;
+            shape.reserve(op->ioTensor_->shape().size());
+            for (auto &&dim : op->ioTensor_->shape()) {
+                shape.emplace_back((*this)(dim));
+            }
+            ioTensor = makeTensor(std::move(shape), op->ioTensor_->dtype());
+        }
+
         defs_.emplace_back(op);
         auto body = (*this)(op->body_);
-        auto sizeLim = op->sizeLim_.isValid() ? (*this)(op->sizeLim_) : nullptr;
-        for (int k = len_ - 1; k >= 0; k--) {
-            body =
-                makeVarDef("", op->name_ + "." + std::to_string(k), op->buffer_,
-                           sizeLim, std::move(body), op->pinned_);
-        }
         defs_.pop_back();
+
+        for (int k = len_ - 1; k >= 0; k--) {
+            body = makeVarDef("", op->name_ + "." + std::to_string(k),
+                              std::move(b), std::move(ioTensor),
+                              std::move(body), op->pinned_);
+        }
         return body;
     } else {
         return Mutator::visit(op);
@@ -150,7 +169,7 @@ Expr BlendPass::visit(const Load &_op) {
 }
 
 Stmt blend(const Stmt &_ast, const ID &loop) {
-    auto ast = simplifyPass(_ast); // Const prop for ForNode::len_
+    auto ast = simplify(_ast); // Const prop for ForNode::len_
 
     FindAllScopesInside finder(loop);
     finder(ast);
@@ -164,8 +183,8 @@ Stmt blend(const Stmt &_ast, const ID &loop) {
             {{loop, DepDirection::Normal}, {item, DepDirection::Inv}});
     }
     auto filter = [&](const AccessPoint &later, const AccessPoint &earlier) {
-        return earlier.stmt_->parentById(loop).isValid() &&
-               later.stmt_->parentById(loop).isValid();
+        return earlier.stmt_->ancestorById(loop).isValid() &&
+               later.stmt_->ancestorById(loop).isValid();
     };
     auto found = [&](const Dependency &d) {
         ASSERT(d.cond_.size() == 2);
@@ -179,4 +198,4 @@ Stmt blend(const Stmt &_ast, const ID &loop) {
     return ast;
 }
 
-} // namespace ir
+} // namespace freetensor

@@ -11,7 +11,7 @@
 #include <schedule/cache.h>
 #include <schedule/check_var_cross_parallel.h>
 
-namespace ir {
+namespace freetensor {
 
 Stmt MakeCacheVar::visitStmt(const Stmt &op) {
     if (op->id() == stmt_) {
@@ -90,13 +90,15 @@ Stmt MakeFillAndFlush::visitStmt(const Stmt &_op) {
             indices.emplace_back(makeVar(iter));
         }
 
-        Expr idx1d;
-        if (def_->sizeLim_.isValid()) {
-            auto &&shape = def_->buffer_->tensor()->shape();
-            for (int i = 0; i < nDim; i++) {
-                idx1d = idx1d.isValid() ? makeMul(idx1d, shape[i]) : nullptr;
-                idx1d =
-                    idx1d.isValid() ? makeAdd(idx1d, indices[i]) : indices[i];
+        Expr idx1d, sizeLim;
+        if (def_->ioTensor_.isValid()) {
+            for (auto &&[idx, dim] :
+                 iter::zip(indices, def_->buffer_->tensor()->shape())) {
+                idx1d = idx1d.isValid() ? makeMul(idx1d, dim) : nullptr;
+                idx1d = idx1d.isValid() ? makeAdd(idx1d, idx) : idx;
+            }
+            for (Expr dim : def_->ioTensor_->shape()) {
+                sizeLim = sizeLim.isValid() ? makeMul(sizeLim, dim) : dim;
             }
         }
 
@@ -104,7 +106,7 @@ Stmt MakeFillAndFlush::visitStmt(const Stmt &_op) {
         fill = makeStore("", newVar_, indices, makeLoad(oldVar_, indices));
         fillStmt_ = fill->id();
         if (idx1d.isValid()) {
-            fill = makeIf("", makeLT(idx1d, def_->sizeLim_), fill);
+            fill = makeIf("", makeLT(idx1d, sizeLim), fill);
         }
         fill = makeNestedLoops(indices, rwRange_.lower_, iter::repeat(nullptr),
                                iter::repeat(makeIntConst(1)), rwRange_.len_,
@@ -117,7 +119,7 @@ Stmt MakeFillAndFlush::visitStmt(const Stmt &_op) {
         flush = makeStore("", oldVar_, indices, makeLoad(newVar_, indices));
         flushStmt_ = flush->id();
         if (idx1d.isValid()) {
-            flush = makeIf("", makeLT(idx1d, def_->sizeLim_), flush);
+            flush = makeIf("", makeLT(idx1d, sizeLim), flush);
         }
         flush = makeNestedLoops(indices, wRange_.lower_, iter::repeat(nullptr),
                                 iter::repeat(makeIntConst(1)), wRange_.len_,
@@ -154,13 +156,15 @@ Stmt MakeInitAndReduce::visitStmt(const Stmt &_op) {
             indices.emplace_back(makeVar(iter));
         }
 
-        Expr idx1d;
-        if (def_->sizeLim_.isValid()) {
-            auto &&shape = def_->buffer_->tensor()->shape();
-            for (int i = 0; i < nDim; i++) {
-                idx1d = idx1d.isValid() ? makeMul(idx1d, shape[i]) : nullptr;
-                idx1d =
-                    idx1d.isValid() ? makeAdd(idx1d, indices[i]) : indices[i];
+        Expr idx1d, sizeLim;
+        if (def_->ioTensor_.isValid()) {
+            for (auto &&[idx, dim] :
+                 iter::zip(indices, def_->buffer_->tensor()->shape())) {
+                idx1d = idx1d.isValid() ? makeMul(idx1d, dim) : nullptr;
+                idx1d = idx1d.isValid() ? makeAdd(idx1d, idx) : idx;
+            }
+            for (Expr dim : def_->ioTensor_->shape()) {
+                sizeLim = sizeLim.isValid() ? makeMul(sizeLim, dim) : dim;
             }
         }
 
@@ -169,7 +173,7 @@ Stmt MakeInitAndReduce::visitStmt(const Stmt &_op) {
             neutralVal(def_->buffer_->tensor()->dtype(), reduce_->op_));
         initStmt_ = init->id();
         if (idx1d.isValid()) {
-            init = makeIf("", makeLT(idx1d, def_->sizeLim_), init);
+            init = makeIf("", makeLT(idx1d, sizeLim), init);
         }
         init = makeNestedLoops(indices, range_.lower_, iter::repeat(nullptr),
                                iter::repeat(makeIntConst(1)), range_.len_,
@@ -179,7 +183,7 @@ Stmt MakeInitAndReduce::visitStmt(const Stmt &_op) {
                                    makeLoad(newVar_, indices), false);
         reduceStmt_ = reduce->id();
         if (idx1d.isValid()) {
-            reduce = makeIf("", makeLT(idx1d, def_->sizeLim_), reduce);
+            reduce = makeIf("", makeLT(idx1d, sizeLim), reduce);
         }
         reduce =
             makeNestedLoops(indices, range_.lower_, iter::repeat(nullptr),
@@ -251,7 +255,7 @@ cache(const Stmt &_ast, const ID &stmt, const std::string &var, MemType mtype) {
         throw InvalidSchedule("Statement " + toString(stmt) + " not found");
     }
 
-    ast = simplifyPass(ast);
+    ast = simplify(ast);
     auto rwBound = compAccessBound(ast, newDef);
     auto wBound = compAccessBound(ast, newDef, COMP_ACCESS_BOUND_WRITE);
     MakeFillAndFlush makeFillAndFlush(stmt, var, newVar, oldDef, rwBound,
@@ -260,7 +264,7 @@ cache(const Stmt &_ast, const ID &stmt, const std::string &var, MemType mtype) {
     fillStmt = makeFillAndFlush.fillStmt();
     flushStmt = makeFillAndFlush.flushStmt();
 
-    ast = simplifyPass(ast);
+    ast = simplify(ast);
     ast = shrinkSingleVar(ast, newDef);
     ast = removeWrites(ast, newDef);
     checkVarCrossParallel(ast, newDef, mtype);
@@ -285,7 +289,7 @@ cacheReduction(const Stmt &_ast, const ID &stmt, const std::string &var,
         throw InvalidSchedule("Statement " + toString(stmt) + " not found");
     }
 
-    ast = simplifyPass(ast);
+    ast = simplify(ast);
     auto bound = compAccessBound(ast, newDef);
     MakeInitAndReduce makeInitAndReduce(stmt, var, newVar, oldDef, newDef,
                                         bound);
@@ -293,7 +297,7 @@ cacheReduction(const Stmt &_ast, const ID &stmt, const std::string &var,
     initStmt = makeInitAndReduce.initStmt();
     reduceStmt = makeInitAndReduce.reduceStmt();
 
-    ast = simplifyPass(ast);
+    ast = simplify(ast);
     ast = shrinkSingleVar(ast, newDef);
     ast = removeWrites(ast, newDef);
     checkVarCrossParallel(ast, newDef, mtype);
@@ -302,4 +306,4 @@ cacheReduction(const Stmt &_ast, const ID &stmt, const std::string &var,
                              std::move(newVar), std::move(newDef)));
 }
 
-} // namespace ir
+} // namespace freetensor

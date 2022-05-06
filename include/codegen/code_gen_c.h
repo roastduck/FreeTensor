@@ -1,5 +1,5 @@
-#ifndef CODE_GEN_C_H
-#define CODE_GEN_C_H
+#ifndef FREE_TENSOR_CODE_GEN_C_H
+#define FREE_TENSOR_CODE_GEN_C_H
 
 #include <unordered_map>
 #include <unordered_set>
@@ -8,7 +8,7 @@
 #include <analyze/type_infer.h>
 #include <codegen/code_gen.h>
 
-namespace ir {
+namespace freetensor {
 
 template <class Stream> class CodeGenC : public WithTypeInfer<CodeGen<Stream>> {
     typedef WithTypeInfer<CodeGen<Stream>> BaseClass;
@@ -29,7 +29,11 @@ template <class Stream> class CodeGenC : public WithTypeInfer<CodeGen<Stream>> {
                           const std::string &dimPtr) = 0;
 
     // Generate the access to a scalar or an element of an array
-    template <class T> void genScalar(const T &op);
+    virtual void genScalar(const std::string &var,
+                           const std::vector<Expr> &indices);
+    template <class T> void genScalar(const T &op) {
+        genScalar(op->var_, op->indices_);
+    }
 
     virtual void visit(const StmtSeq &op) override;
     virtual void visit(const VarDef &op) override;
@@ -77,6 +81,6 @@ template <class Stream> class CodeGenC : public WithTypeInfer<CodeGen<Stream>> {
     virtual void visit(const Eval &op) override;
 };
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // CODE_GEN_C_H
+#endif // FREE_TENSOR_CODE_GEN_C_H

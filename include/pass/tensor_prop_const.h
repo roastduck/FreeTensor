@@ -1,9 +1,9 @@
-#ifndef TENSOR_PROP_CONST_H
-#define TENSOR_PROP_CONST_H
+#ifndef FREE_TENSOR_TENSOR_PROP_CONST_H
+#define FREE_TENSOR_TENSOR_PROP_CONST_H
 
 #include <func.h>
 
-namespace ir {
+namespace freetensor {
 
 /**
  * Propagate constants and iteration variables
@@ -30,6 +30,6 @@ Stmt tensorPropConst(const Stmt &op);
 
 DEFINE_PASS_FOR_FUNC(tensorPropConst)
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // PROP_CONST_H
+#endif // FREE_TENSOR_PROP_CONST_H

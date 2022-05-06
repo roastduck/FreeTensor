@@ -1,11 +1,13 @@
-#ifndef IR_AUTO_SCHEDULE_STRUCT_H
-#define IR_AUTO_SCHEDULE_STRUCT_H
+#ifndef FREE_TENSOR_AUTO_SCHEDULE_STRUCT_H
+#define FREE_TENSOR_AUTO_SCHEDULE_STRUCT_H
 #include <array>
 #include <ast.h>
 #include <hash.h>
 #include <vector>
 
-namespace ir {
+namespace freetensor {
+
+constexpr int MAX_VTHREAD = 8;
 struct MultiLevelTilingAnnotation {
     std::vector<std::vector<int>> spaceLoopTiling;
     std::vector<std::vector<int>> reductionLoopTiling;
@@ -23,12 +25,14 @@ struct ForsWithDataReuse {
     std::vector<ForInfo> reductionLoops;
     std::vector<bool> dimIterated;
     std::string dest;
+    std::vector<std::string> reads;
     ID outermost;
 };
 
 struct ForWithStore {
     ID id;
     std::string dest;
+    std::vector<std::string> reads;
     std::vector<Expr> indices;
     std::vector<std::vector<Expr>> checkDataReuseIndices;
 };
@@ -38,47 +42,49 @@ struct ElementWiseInfo {
     [[nodiscard]] bool isValid() const { return !fors.empty(); }
 };
 
-} // namespace ir
+} // namespace freetensor
 
-template <> struct std::hash<ir::ForInfo> {
-    std::size_t operator()(ir::ForInfo const &s) const noexcept {
-        std::size_t h = std::hash<ir::ID>{}(s.id);
-        h = ir::hashCombine(h, std::hash<std::int64_t>{}(s.length));
+template <> struct std::hash<freetensor::ForInfo> {
+    std::size_t operator()(freetensor::ForInfo const &s) const noexcept {
+        std::size_t h = std::hash<freetensor::ID>{}(s.id);
+        h = freetensor::hashCombine(h, std::hash<std::int64_t>{}(s.length));
         return h;
     }
 };
 
-template <> struct std::hash<ir::ElementWiseInfo> {
-    std::size_t operator()(ir::ElementWiseInfo const &s) const noexcept {
+template <> struct std::hash<freetensor::ElementWiseInfo> {
+    std::size_t
+    operator()(freetensor::ElementWiseInfo const &s) const noexcept {
         std::size_t h = 0;
         for (const auto &f : s.fors) {
-            h = ir::hashCombine(h, std::hash<ir::ForInfo>{}(f));
+            h = freetensor::hashCombine(h, std::hash<freetensor::ForInfo>{}(f));
         }
         return h;
     }
 };
 
-template <> struct std::hash<ir::ForsWithDataReuse> {
-    std::size_t operator()(ir::ForsWithDataReuse const &s) const noexcept {
+template <> struct std::hash<freetensor::ForsWithDataReuse> {
+    std::size_t
+    operator()(freetensor::ForsWithDataReuse const &s) const noexcept {
         std::size_t h = 0;
         for (const auto &f : s.spaceLoops)
-            h = ir::hashCombine(h, std::hash<ir::ForInfo>{}(f));
+            h = freetensor::hashCombine(h, std::hash<freetensor::ForInfo>{}(f));
         for (const auto &f : s.reductionLoops)
-            h = ir::hashCombine(h, std::hash<ir::ForInfo>{}(f));
+            h = freetensor::hashCombine(h, std::hash<freetensor::ForInfo>{}(f));
         return h;
     }
 };
 
-template <> struct std::hash<ir::MultiLevelTilingAnnotation> {
+template <> struct std::hash<freetensor::MultiLevelTilingAnnotation> {
     std::size_t
-    operator()(ir::MultiLevelTilingAnnotation const &s) const noexcept {
+    operator()(freetensor::MultiLevelTilingAnnotation const &s) const noexcept {
         std::size_t h = 0;
         for (const auto &t : s.spaceLoopTiling)
             for (const auto i : t)
-                h = ir::hashCombine(h, std::hash<int>{}(i));
+                h = freetensor::hashCombine(h, std::hash<int>{}(i));
         for (const auto &t : s.reductionLoopTiling)
             for (const auto i : t)
-                h = ir::hashCombine(h, std::hash<int>{}(i));
+                h = freetensor::hashCombine(h, std::hash<int>{}(i));
         return h;
     }
 };

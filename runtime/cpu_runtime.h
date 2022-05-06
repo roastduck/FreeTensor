@@ -4,8 +4,9 @@
 #include <algorithm> // min, max
 #include <array>     // ByValue
 #include <cassert>
-#include <cmath> // INFINITY, sqrt
+#include <cmath> // INFINITY, sqrt, exp
 #include <cstdint>
+#include <type_traits>
 
 #include <omp.h>
 
@@ -18,15 +19,18 @@
 #define restrict __restrict__
 #define __ByValArray std::array
 
-template <class T> T floorDiv(T a, T b) {
+template <class T, typename std::enable_if_t<std::is_integral_v<T>> * = nullptr>
+T floorDiv(T a, T b) {
     T res = a / b, rem = a % b;
     return res - (rem != 0 && ((rem < 0) != (b < 0)));
 }
-template <class T> T ceilDiv(T a, T b) {
+template <class T, typename std::enable_if_t<std::is_integral_v<T>> * = nullptr>
+T ceilDiv(T a, T b) {
     T res = a / b, rem = a % b;
     return res + (rem != 0 && ((rem < 0) == (b < 0)));
 }
-template <class T> T runtime_mod(T a, T b) {
+template <class T, typename std::enable_if_t<std::is_integral_v<T>> * = nullptr>
+T runtime_mod(T a, T b) {
     T m = a % b;
     if (m < 0) {
         // m += (b < 0) ? -b : b; // avoid this form: it is UB when b == INT_MIN

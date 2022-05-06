@@ -1,12 +1,12 @@
-#ifndef FIND_LOOP_VARIANCE_H
-#define FIND_LOOP_VARIANCE_H
+#ifndef FREE_TENSOR_FIND_LOOP_VARIANCE_H
+#define FREE_TENSOR_FIND_LOOP_VARIANCE_H
 
 #include <unordered_map>
 #include <vector>
 
 #include <visitor.h>
 
-namespace ir {
+namespace freetensor {
 
 enum class LoopVariability : int { Variance, Invariance };
 
@@ -102,6 +102,6 @@ bool isVariant(const LoopVariUniqVarMap &varInfo, const VarDef &def,
 
 std::pair<LoopVariExprMap, LoopVariUniqVarMap> findLoopVariance(const Stmt &op);
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // FIND_LOOP_VARIANCE_H
+#endif // FREE_TENSOR_FIND_LOOP_VARIANCE_H

@@ -1,5 +1,5 @@
-#ifndef REF_H
-#define REF_H
+#ifndef FREE_TENSOR_REF_H
+#define FREE_TENSOR_REF_H
 
 #include <functional> // hash
 #include <memory>
@@ -8,7 +8,7 @@
 #include <allocator.h>
 #include <except.h>
 
-namespace ir {
+namespace freetensor {
 
 class EnableSelfBase;
 template <class T> class EnableSelf;
@@ -88,8 +88,7 @@ template <class T> class Ref {
     }
 
     T *get() const {
-        ASSERT(isValid());
-        return ptr_.get();
+        return ptr_.get(); // maybe called from PyBind11, don't assert isValid()
     }
 
     static Ref make() { return Ref(std::allocate_shared<T>(Allocator<T>())); }
@@ -164,15 +163,17 @@ template <class T> class EnableSelf : public EnableSelfBase {
     };
 };
 
-} // namespace ir
+} // namespace freetensor
 
 namespace std {
 
-template <class T> struct hash<ir::Ref<T>> {
+template <class T> struct hash<freetensor::Ref<T>> {
     hash<T *> hash_;
-    size_t operator()(const ir::Ref<T> &ref) const { return hash_(ref.get()); }
+    size_t operator()(const freetensor::Ref<T> &ref) const {
+        return hash_(ref.get());
+    }
 };
 
 } // namespace std
 
-#endif // REF_H
+#endif // FREE_TENSOR_REF_H

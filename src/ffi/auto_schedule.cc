@@ -3,7 +3,7 @@
 #include <ffi.h>
 #include <schedule.h>
 
-namespace ir {
+namespace freetensor {
 
 using namespace pybind11::literals;
 
@@ -17,13 +17,14 @@ void init_ffi_auto_schedule(py::module_ &m) {
         .def("set_params", &AutoSchedule::setParams, "args"_a,
              "kws"_a = std::unordered_map<std::string, Ref<Array>>())
         .def("search_one_round", &AutoSchedule::searchOneRound, "n"_a)
-        .def("gen_schedules", &AutoSchedule::genSchedules, "sketches"_a)
         .def("gen_features", &AutoSchedule::genFeatures, "schedules"_a)
         .def("test_and_add", &AutoSchedule::testAndAdd, "sketches"_a)
         .def("get_best_schedule", &AutoSchedule::getBestSchedule)
         .def("test_cache_write", &AutoSchedule::testCacheWrite)
         .def("test_multi_level_tiling_with_fusion",
-             &AutoSchedule::testMultiLevelTilingWithFusion, "n_level"_a);
+             &AutoSchedule::testMultiLevelTilingWithFusion, "n_level"_a)
+        .def("test_thread_bind", &AutoSchedule::testThreadBind)
+        .def("test_cache_read", &AutoSchedule::testCacheRead);
 }
 
-} // namespace ir
+} // namespace freetensor

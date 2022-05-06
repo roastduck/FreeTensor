@@ -1,9 +1,9 @@
-#ifndef MIN_MAX_H
-#define MIN_MAX_H
+#ifndef FREE_TENSOR_MIN_MAX_H
+#define FREE_TENSOR_MIN_MAX_H
 
 #include <expr.h>
 
-namespace ir {
+namespace freetensor {
 
 /**
  * Make min(max(...), max(...), ...)
@@ -25,6 +25,6 @@ Expr makeMinMax(const std::vector<std::vector<Expr>> &exprs);
  */
 Expr makeMaxMin(const std::vector<std::vector<Expr>> &exprs);
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // MIN_MAX_H
+#endif // FREE_TENSOR_MIN_MAX_H

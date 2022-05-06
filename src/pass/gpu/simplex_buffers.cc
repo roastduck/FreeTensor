@@ -1,7 +1,7 @@
 #include <pass/gpu/simplex_buffers.h>
 #include <pass/shrink_var.h>
 
-namespace ir {
+namespace freetensor {
 
 namespace gpu {
 
@@ -43,4 +43,4 @@ Stmt simplexBuffers(const Stmt &_op) {
 
 } // namespace gpu
 
-} // namespace ir
+} // namespace freetensor

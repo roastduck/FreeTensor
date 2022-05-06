@@ -1,10 +1,10 @@
-#ifndef FIXED_LENGTH_FEATURE_H
-#define FIXED_LENGTH_FEATURE_H
+#ifndef FREE_TENSOR_FIXED_LENGTH_FEATURE_H
+#define FREE_TENSOR_FIXED_LENGTH_FEATURE_H
 
 #include <analyze/structural_feature.h>
 #include <visitor.h>
 
-namespace ir {
+namespace freetensor {
 
 // NOTE: Exporting these constants to PyBind11 is tedious, so please sync it
 // with test_fixed_length_featuer.py manually
@@ -17,8 +17,8 @@ constexpr int SAMPLE_GROUPS = 10;
 constexpr int SAMPLE_ITERS[SAMPLE_GROUPS] = {32,   64,   128,  256,  512,
                                              1024, 2048, 4096, 8192, 16384};
 constexpr int SAMPLE_FEATURES = 26;
-constexpr int FEAT_SAMP_FLOAT32_OPS = 0;
-constexpr int FEAT_SAMP_INT32_OPS = 1;
+constexpr int FEAT_SAMP_FLOAT32_OPS = 0; // TODO: Float64
+constexpr int FEAT_SAMP_INT32_OPS = 1;   // TODO: Int64
 constexpr int FEAT_SAMP_CPU_LOAD_CNT = 2;
 constexpr int FEAT_SAMP_CPU_STORE_CNT = 3;
 constexpr int FEAT_SAMP_CPU_ACCESS_CNT = 4;
@@ -45,8 +45,14 @@ constexpr int FEAT_SAMP_GPU_LOCAL_STORE_AREA = 24;
 constexpr int FEAT_SAMP_GPU_LOCAL_ACCESS_AREA = 25;
 
 /**
- * Convert a structural feature into a fixed length one, so can be consumed by
+ * Convert structural features into fixed length ones, so can be consumed by
  * XGBoost
+ *
+ * The feature set includes some standalone features and some sampled features.
+ * Standalone features depict the characteristics of the full program. Sampled
+ * features depict the expected characteristics of running the program for a
+ * given iterations (the expected value of every parts of the program), to
+ * express the locality
  */
 class FixedLengthFeature : public Visitor {
     const std::unordered_map<ID, NodeFeature> &structural_;
@@ -79,6 +85,6 @@ inline std::vector<double> fixedLengthFeature(const Stmt &op) {
     return visitor.features(op);
 }
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // FIXED_LENGTH_FEATURE_H
+#endif // FREE_TENSOR_FIXED_LENGTH_FEATURE_H

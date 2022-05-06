@@ -1,12 +1,12 @@
-#ifndef LINEAR_H
-#define LINEAR_H
+#ifndef FREE_TENSOR_LINEAR_H
+#define FREE_TENSOR_LINEAR_H
 
 #include <algorithm>
 #include <iostream>
 
 #include <hash.h>
 
-namespace ir {
+namespace freetensor {
 
 /**
  * k * a
@@ -25,6 +25,8 @@ template <class T> struct LinearExpr {
     // std::vector and sort each factor by its hash
     std::vector<Scale<T>> coeff_;
     T bias_;
+
+    bool isConst() const { return coeff_.empty(); }
 };
 
 template <class T>
@@ -164,6 +166,6 @@ std::ostream &operator<<(std::ostream &os, const LinearExpr<T> &lin) {
     return os;
 }
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // LINEAR_H
+#endif // FREE_TENSOR_LINEAR_H

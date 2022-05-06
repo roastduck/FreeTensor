@@ -1,12 +1,12 @@
-#ifndef MATCH_AST_H
-#define MATCH_AST_H
+#ifndef FREE_TENSOR_MATCH_AST_H
+#define FREE_TENSOR_MATCH_AST_H
 
 #include <unordered_map>
 #include <unordered_set>
 
 #include <visitor.h>
 
-namespace ir {
+namespace freetensor {
 
 /**
  * Check whether an AST strictly matches a pattern
@@ -80,6 +80,6 @@ class MatchVisitor : public Visitor {
     void visit(const MatMul &op) override;
 };
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // MATCH_AST_H
+#endif // FREE_TENSOR_MATCH_AST_H

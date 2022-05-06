@@ -1,11 +1,13 @@
-#ifndef FRONTEND_VAR
-#define FRONTEND_VAR
+#ifndef FREE_TENSOR_FRONTEND_VAR
+#define FREE_TENSOR_FRONTEND_VAR
+
+#include <itertools.hpp>
 
 #include <debug.h>
 #include <expr.h>
 #include <stmt.h>
 
-namespace ir {
+namespace freetensor {
 
 enum class FrontendVarIdxType : int { Single, Slice };
 
@@ -100,17 +102,15 @@ class FrontendVar {
 
 inline std::string toString(const FrontendVar &var) {
     std::string ret = var.name() + "[";
-    bool first = true;
-    for (auto &&idx : var.indices()) {
-        if (!first) {
-            ret += ", ";
-        }
-        ret += toString(idx);
+    for (auto &&[i, idx] : iter::enumerate(var.indices())) {
+        ret += (i == 0 ? "" : ", ") + toString(idx);
     }
     ret += "]";
     return ret;
 }
 
-} // namespace ir
+std::unordered_set<std::string> allReads(const FrontendVarIdx &idx);
 
-#endif // FRONTEND_VAR
+} // namespace freetensor
+
+#endif // FREE_TENSOR_FRONTEND_VAR

@@ -2,19 +2,27 @@
 
 #include <analyze/all_uses.h>
 #include <analyze/deps.h>
+#include <math/parse_pb_expr.h>
 #include <pass/replace_iter.h>
 #include <pass/replace_uses.h>
 #include <pass/scalar_prop_const.h>
-#include <pass/simplify.h>
 #include <pass/tensor_prop_const.h>
 
-namespace ir {
+namespace freetensor {
+
+namespace {
+
+struct ReplaceInfo {
+    std::vector<IterAxis> earlierIters_, laterIters_;
+    std::string funcStr_;
+};
+
+} // namespace
 
 Stmt tensorPropConst(const Stmt &_op) {
     auto op = _op;
 
     for (int i = 0;; i++) {
-        op = simplifyPass(op);
         op = scalarPropConst(op);
 
         // Please note that the "reads" might also be reductions.
@@ -29,7 +37,8 @@ Stmt tensorPropConst(const Stmt &_op) {
         //
         // pass/tensor_prop_const will propagate this case. However
         // pass/remove_writes can not, because statement (1) cannot be removed
-        std::unordered_map<AST, std::vector<Stmt>> r2w, r2wMay;
+        std::unordered_map<AST, std::vector<std::pair<Stmt, ReplaceInfo>>> r2w;
+        std::unordered_map<AST, std::vector<Stmt>> r2wMay;
         auto filterMust = [&](const AccessPoint &later,
                               const AccessPoint &earlier) {
             if (later.buffer_->tensor()->isScalar()) {
@@ -49,14 +58,14 @@ Stmt tensorPropConst(const Stmt &_op) {
             auto &&expr = d.earlier().as<StoreNode>()->expr_;
             auto &&iters = allIters(expr);
             auto common = lcaStmt(d.later_.stmt_, d.earlier_.stmt_);
-            auto dep = d.dep_;
+            auto dep = d.later2EarlierIter_;
             for (auto &&iter : iters) {
                 for (auto c = common; c.isValid(); c = c->parentStmt()) {
                     if (c->nodeType() == ASTNodeType::For) {
                         if (auto &&f = c.as<ForNode>(); f->iter_ == iter) {
                             dep =
                                 d.extraCheck(dep, f->id(), DepDirection::Same);
-                            if (dep != d.dep_) {
+                            if (dep != d.later2EarlierIter_) {
                                 // Iterating variable in different iterations
                                 return;
                             }
@@ -65,7 +74,10 @@ Stmt tensorPropConst(const Stmt &_op) {
                     }
                 }
             }
-            r2w[d.later()].emplace_back(d.earlier().as<StmtNode>());
+            r2w[d.later()].emplace_back(
+                d.earlier().as<StmtNode>(),
+                ReplaceInfo{d.earlier_.iter_, d.later_.iter_,
+                            toString(PBFunc(d.later2EarlierIter_))});
         };
         auto filterMay = [&](const AccessPoint &later,
                              const AccessPoint &earlier) {
@@ -75,7 +87,7 @@ Stmt tensorPropConst(const Stmt &_op) {
             r2wMay[d.later()].emplace_back(d.earlier().as<StmtNode>());
         };
         findDeps(op, {{}}, foundMust, FindDepsMode::KillLater, DEP_RAW,
-                 filterMust);
+                 filterMust, true, true, true);
         findDeps(op, {{}}, foundMay, FindDepsMode::Dep, DEP_RAW, filterMay,
                  false);
 
@@ -86,35 +98,39 @@ Stmt tensorPropConst(const Stmt &_op) {
             }
             ASSERT(item.second.size() == 1);
             if (!r2wMay.count(item.first) || r2wMay.at(item.first).size() > 1 ||
-                r2wMay.at(item.first)[0] != item.second.front()) {
+                r2wMay.at(item.first)[0] != item.second.front().first) {
                 continue;
             }
-            ASSERT(item.second.front()->nodeType() == ASTNodeType::Store);
-            auto &&store = item.second.front().as<StoreNode>();
+            ASSERT(item.second.front().first->nodeType() == ASTNodeType::Store);
+            auto &&store = item.second.front().first.as<StoreNode>();
+            auto &&repInfo = item.second.front().second;
 
             if (!allIters(store->expr_).empty()) {
-                std::unordered_map<std::string, Expr> replaceAsPlaceholder;
-                std::unordered_map<std::string, Expr> replaceFromPlaceholder;
-                Expr placeholder;
-                for (auto &&[i, idx] : iter::enumerate(store->indices_)) {
-                    if (idx->nodeType() == ASTNodeType::Var) {
-                        replaceAsPlaceholder[idx.as<VarNode>()->name_] =
-                            makeVar(".prop_placeholder." + std::to_string(i));
-                    } else if (!idx->isConst()) {
-                        goto fail;
+                try {
+                    auto &&[args, values, cond] =
+                        parsePBFunc(repInfo.funcStr_); // later -> earlier
+                    ASSERT(repInfo.earlierIters_.size() <=
+                           values.size()); // maybe padded
+                    ASSERT(repInfo.laterIters_.size() <= args.size());
+                    std::unordered_map<std::string, Expr> islVarToPlaceholder,
+                        oldIterToPlaceholder;
+                    for (auto &&[newIter, arg] :
+                         iter::zip(repInfo.laterIters_, args)) {
+                        islVarToPlaceholder[arg] = newIter.iter_;
                     }
+                    for (auto &&[oldIter, value] :
+                         iter::zip(repInfo.earlierIters_, values)) {
+                        if (oldIter.iter_->nodeType() == ASTNodeType::Var) {
+                            oldIterToPlaceholder[oldIter.iter_.as<VarNode>()
+                                                     ->name_] =
+                                ReplaceIter(islVarToPlaceholder)(value);
+                        }
+                    }
+                    replace[item.first] =
+                        ReplaceIter(oldIterToPlaceholder)(store->expr_);
+                } catch (const ParserError &e) {
+                    // do nothing
                 }
-                placeholder = ReplaceIter(replaceAsPlaceholder)(store->expr_);
-                for (auto &&[i, idx] : iter::enumerate(
-                         item.first->nodeType() == ASTNodeType::Load
-                             ? item.first.as<LoadNode>()->indices_
-                             : item.first.as<ReduceToNode>()->indices_)) {
-                    replaceFromPlaceholder[".prop_placeholder." +
-                                           std::to_string(i)] = idx;
-                }
-                replace[item.first] =
-                    ReplaceIter(replaceFromPlaceholder)(placeholder);
-            fail:;
             } else {
                 replace[item.first] = store->expr_;
             }
@@ -133,4 +149,4 @@ Stmt tensorPropConst(const Stmt &_op) {
     return op;
 }
 
-} // namespace ir
+} // namespace freetensor

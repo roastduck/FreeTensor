@@ -6,7 +6,7 @@
 #include <pass/remove_writes.h>
 #include <pass/sink_var.h>
 
-namespace ir {
+namespace freetensor {
 
 static bool sameParent(const Stmt &x, const Stmt &y) {
     return x->parentCtrlFlow() == y->parentCtrlFlow();
@@ -195,10 +195,12 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
         auto earlier = d.earlier().as<StmtNode>();
         auto later = d.later().as<StmtNode>();
         if (!kill.count(earlier)) {
-            kill[earlier] = PBSet(presburger, toString(domain(d.omap_)));
+            kill[earlier] =
+                PBSet(presburger, toString(domain(d.earlierIter2Idx_)));
         }
-        overwrites.emplace_back(later, earlier,
-                                PBSet(presburger, toString(range(d.dep_))));
+        overwrites.emplace_back(
+            later, earlier,
+            PBSet(presburger, toString(range(d.later2EarlierIter_))));
         suspect.insert(d.def());
     };
     auto foundOverwriteReduce = [&](const Dependency &d) {
@@ -220,10 +222,12 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
             auto earlier = d.earlier().as<StmtNode>();
             auto later = d.later().as<StmtNode>();
             if (!kill.count(earlier)) {
-                kill[earlier] = PBSet(presburger, toString(domain(d.omap_)));
+                kill[earlier] =
+                    PBSet(presburger, toString(domain(d.earlierIter2Idx_)));
             }
-            overwrites.emplace_back(later, earlier,
-                                    PBSet(presburger, toString(range(d.dep_))));
+            overwrites.emplace_back(
+                later, earlier,
+                PBSet(presburger, toString(range(d.later2EarlierIter_))));
             suspect.insert(d.def());
         }
     };
@@ -351,4 +355,4 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
     return sinkVar(op);
 }
 
-} // namespace ir
+} // namespace freetensor

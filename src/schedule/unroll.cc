@@ -2,7 +2,7 @@
 #include <pass/simplify.h>
 #include <schedule/unroll.h>
 
-namespace ir {
+namespace freetensor {
 
 Stmt BackUnroll::visit(const For &_op) {
     auto __op = Mutator::visit(_op);
@@ -58,7 +58,7 @@ Stmt ImmediateUnroll::visit(const For &op) {
 }
 
 Stmt unroll(const Stmt &_ast, const ID &loop, bool immediate) {
-    auto ast = simplifyPass(_ast); // Const prop for ForNode::len_
+    auto ast = simplify(_ast); // Const prop for ForNode::len_
     bool done = false;
     if (immediate) {
         ImmediateUnroll mutator(loop);
@@ -76,4 +76,4 @@ Stmt unroll(const Stmt &_ast, const ID &loop, bool immediate) {
     return ast;
 }
 
-} // namespace ir
+} // namespace freetensor

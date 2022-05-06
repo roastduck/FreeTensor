@@ -1,5 +1,5 @@
-#ifndef IR_FIND_ELEMENTWISE_H
-#define IR_FIND_ELEMENTWISE_H
+#ifndef FREE_TENSOR_FIND_ELEMENTWISE_H
+#define FREE_TENSOR_FIND_ELEMENTWISE_H
 
 #include <analyze/find_multi_level_tiling.h>
 #include <analyze/symbol_table.h>
@@ -7,7 +7,7 @@
 #include <stmt.h>
 #include <visitor.h>
 
-namespace ir {
+namespace freetensor {
 
 class FindSingleElementWise : public SymbolTable<Visitor> {
     Store nowStore_;
@@ -34,6 +34,6 @@ class FindSingleElementWise : public SymbolTable<Visitor> {
 ElementWiseInfo findSingleElementWiseConsumer(const Stmt &root,
                                               const ForsWithDataReuse &fors);
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // IR_FIND_ELEMENTWISE_H
+#endif // FREE_TENSOR_FIND_ELEMENTWISE_H

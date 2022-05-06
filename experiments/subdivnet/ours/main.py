@@ -3,9 +3,9 @@ import time
 import itertools
 import argparse
 import numpy as np
-import ir
-from ir.libop import *
-import ir.debug
+import freetensor as ft
+from freetensor.libop import *
+from freetensor import debug
 
 sys.path.append('../..')
 from common.numpy.io import load_txt, store_txt
@@ -14,20 +14,20 @@ from common.numpy.io import load_txt, store_txt
 def compile_all(n_faces, in_feats, out_feats, device, ad_save_all):
     mtype = device.main_mem_type()
 
-    @ir.transform
+    @ft.transform
     def inference(adj, x, w0, w1, w2, w3, y):
-        ir.declare_var(adj, (n_faces, 3), "int32", "input", mtype)
-        ir.declare_var(x, (n_faces, in_feats), "float32", "input", mtype)
-        ir.declare_var(w0, (in_feats, out_feats), "float32", "input", mtype)
-        ir.declare_var(w1, (in_feats, out_feats), "float32", "input", mtype)
-        ir.declare_var(w2, (in_feats, out_feats), "float32", "input", mtype)
-        ir.declare_var(w3, (in_feats, out_feats), "float32", "input", mtype)
-        ir.declare_var(y, (n_faces, out_feats), "float32", "output", mtype)
+        adj: ft.Var[(n_faces, 3), "int32", "input", mtype]
+        x: ft.Var[(n_faces, in_feats), "float32", "input", mtype]
+        w0: ft.Var[(in_feats, out_feats), "float32", "input", mtype]
+        w1: ft.Var[(in_feats, out_feats), "float32", "input", mtype]
+        w2: ft.Var[(in_feats, out_feats), "float32", "input", mtype]
+        w3: ft.Var[(in_feats, out_feats), "float32", "input", mtype]
+        y: ft.Var[(n_faces, out_feats), "float32", "output", mtype]
 
         for i in range(n_faces):
-            sum1 = zeros((in_feats,), "float32", mtype)()
-            sum2 = zeros((in_feats,), "float32", mtype)()
-            sum3 = zeros((in_feats,), "float32", mtype)()
+            sum1 = zeros((in_feats,), "float32", mtype)
+            sum2 = zeros((in_feats,), "float32", mtype)
+            sum3 = zeros((in_feats,), "float32", mtype)
             for p in range(3):
                 add_to(sum1, x[adj[i, p]])
                 add_to(sum2, abs(sub(x[adj[i, p]], x[adj[i, (p + 1) % 3]])))
@@ -41,39 +41,39 @@ def compile_all(n_faces, in_feats, out_feats, device, ad_save_all):
     print("# Inference:")
     print(inference)
     t0 = time.time()
-    s = ir.Schedule(inference)
+    s = ft.Schedule(inference)
     s.auto_schedule(device.target())
-    f = ir.lower(s.func(), device.target())
-    code = ir.codegen(f, device.target())
-    inference_exe = ir.Driver(inference, code, device)
+    f = ft.lower(s.func(), device.target())
+    code = ft.codegen(f, device.target())
+    inference_exe = ft.Driver(inference, code, device)
     t1 = time.time()
     print(f)
-    print(ir.debug.with_line_no(code))
+    print(debug.with_line_no(code))
     print(f"Inference compiling time: {t1 - t0}s")
 
-    forward, backward, requires, privdes, _ = ir.grad(
+    forward, backward, requires, privdes, _ = ft.grad(
         inference, set(["x", "w0", "w1", "w2", "w3"]), set(["y"]),
-        ir.GradTapeMode.All if ad_save_all else ir.GradTapeMode.NoReuseOnly)
+        ft.GradTapeMode.All if ad_save_all else ft.GradTapeMode.NoReuseOnly)
 
     print("# Forward:")
     print(forward)
-    s = ir.Schedule(forward)
+    s = ft.Schedule(forward)
     s.auto_schedule(device.target())
-    f = ir.lower(s.func(), device.target())
+    f = ft.lower(s.func(), device.target())
     print(f)
-    code = ir.codegen(f, device.target())
-    print(ir.debug.with_line_no(code))
-    forward_exe = ir.Driver(forward, code, device)
+    code = ft.codegen(f, device.target())
+    print(debug.with_line_no(code))
+    forward_exe = ft.Driver(forward, code, device)
 
     print("# Backward:")
     print(backward)
-    s = ir.Schedule(backward)
+    s = ft.Schedule(backward)
     s.auto_schedule(device.target())
-    f = ir.lower(s.func(), device.target())
+    f = ft.lower(s.func(), device.target())
     print(f)
-    code = ir.codegen(f, device.target())
-    print(ir.debug.with_line_no(code))
-    backward_exe = ir.Driver(backward, code, device)
+    code = ft.codegen(f, device.target())
+    print(debug.with_line_no(code))
+    backward_exe = ft.Driver(backward, code, device)
 
     def run_backward(adj, x, w0, w1, w2, w3, y, d_y, d_x, d_w0, d_w1, d_w2,
                      d_w3):
@@ -131,24 +131,24 @@ if __name__ == '__main__':
     d_y = load_txt("../d_y.in", "float32")
 
     if device == 'gpu':
-        ir_dev = ir.Device(ir.GPU())
+        ir_dev = ft.Device(ft.GPU())
     else:
         assert device == 'cpu'
-        ir_dev = ir.Device(ir.CPU())
+        ir_dev = ft.Device(ft.CPU())
 
-    adj = ir.Array(adj, ir_dev)
-    x = ir.Array(x, ir_dev)
-    w0 = ir.Array(w0, ir_dev)
-    w1 = ir.Array(w1, ir_dev)
-    w2 = ir.Array(w2, ir_dev)
-    w3 = ir.Array(w3, ir_dev)
-    y = ir.Array(y, ir_dev)
-    d_x = ir.Array(d_x, ir_dev)
-    d_w0 = ir.Array(d_w0, ir_dev)
-    d_w1 = ir.Array(d_w1, ir_dev)
-    d_w2 = ir.Array(d_w2, ir_dev)
-    d_w3 = ir.Array(d_w3, ir_dev)
-    d_y = ir.Array(d_y, ir_dev)
+    adj = ft.Array(adj, ir_dev)
+    x = ft.Array(x, ir_dev)
+    w0 = ft.Array(w0, ir_dev)
+    w1 = ft.Array(w1, ir_dev)
+    w2 = ft.Array(w2, ir_dev)
+    w3 = ft.Array(w3, ir_dev)
+    y = ft.Array(y, ir_dev)
+    d_x = ft.Array(d_x, ir_dev)
+    d_w0 = ft.Array(d_w0, ir_dev)
+    d_w1 = ft.Array(d_w1, ir_dev)
+    d_w2 = ft.Array(d_w2, ir_dev)
+    d_w3 = ft.Array(d_w3, ir_dev)
+    d_y = ft.Array(d_y, ir_dev)
 
     inference, forward, backward = compile_all(n_faces, in_feats, out_feats,
                                                ir_dev, cmd_args.ad_save_all)

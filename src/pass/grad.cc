@@ -2,7 +2,7 @@
 #include <analyze/all_no_reuse_defs.h>
 #include <analyze/all_uses.h>
 #include <analyze/deps.h>
-#include <cursor.h>
+#include <analyze/find_stmt.h>
 #include <pass/float_simplify.h>
 #include <pass/grad.h>
 #include <pass/hoist_return_vars.h>
@@ -17,7 +17,7 @@
 #include <pass/tensor_prop_const.h>
 #include <pass/undo_make_reduction.h>
 
-namespace ir {
+namespace freetensor {
 
 void PropagateRequire::visit(const Load &op) {
     if (isFloat(dtype(op)) && curTarget_.isValid() &&
@@ -221,7 +221,7 @@ Stmt Grad::visit(const VarDef &_op) {
             }
 
             grad = makeVarDef(op->id().strId() + ".grad", gradName, op->buffer_,
-                              op->sizeLim_, grad, op->pinned_);
+                              op->ioTensor_, grad, op->pinned_);
             switch (op->buffer_->atype()) {
             case AccessType::Input:
                 grad.as<VarDefNode>()->buffer_->setAtype(AccessType::Output);
@@ -232,9 +232,11 @@ Stmt Grad::visit(const VarDef &_op) {
                 break;
             case AccessType::Cache:
                 break; // do nothing
+            default:
+                ASSERT(false);
             }
 
-            ret = makeVarDef(op->id(), op->name_, op->buffer_, op->sizeLim_,
+            ret = makeVarDef(op->id(), op->name_, op->buffer_, op->ioTensor_,
                              grad, op->pinned_)
                       .as<VarDefNode>();
         }
@@ -246,9 +248,10 @@ Stmt Grad::visit(const VarDef &_op) {
         if (tapeMap_.count(op->id())) {
             auto tapeVar = tapeMap_.at(op->id());
             if (tapeVar != ret->name_) {
-                ret = makeVarDef(ret->id().strId() + ".tape", tapeVar,
-                                 ret->buffer_, ret->sizeLim_, ret, ret->pinned_)
-                          .as<VarDefNode>();
+                ret =
+                    makeVarDef(ret->id().strId() + ".tape", tapeVar,
+                               ret->buffer_, ret->ioTensor_, ret, ret->pinned_)
+                        .as<VarDefNode>();
                 auto &shape = ret->buffer_->tensor()->shape();
                 shape.insert(shape.begin(), totLens_.at(op->id()));
             }
@@ -544,7 +547,7 @@ grad(const Stmt &_op, const std::unordered_set<std::string> &_requires,
     // We do some basic simplifications here, to reduce burden on auto-schedule
     backward = removeDeadVar(backward);
     backward = propOneTimeUse(backward);
-    backward = simplifyPass(backward);
+    backward = simplify(backward);
     backward = tensorPropConst(backward);
     backward = removeWrites(backward);
     backward = removeCyclicAssign(backward);
@@ -567,12 +570,8 @@ grad(const Func &func, const std::unordered_set<std::string> &_requires,
     auto closure = func->closure_;
     for (auto &&[_oriDef, tapeName] : tapeMap) {
         auto &&oriDef = _oriDef;
-        auto def = getCursorByFilter(
-            func->body_, [&](const Cursor &c) { return c.id() == oriDef; });
-        ASSERT(def.size() == 1 &&
-               def.front().nodeType() == ASTNodeType::VarDef);
-        auto tapeDType =
-            def.front().node().as<VarDefNode>()->buffer_->tensor()->dtype();
+        auto def = findStmt(func->body_, oriDef);
+        auto tapeDType = def.as<VarDefNode>()->buffer_->tensor()->dtype();
         forwardReturns.emplace_back(tapeName, tapeDType);
         backwardParams.emplace_back(tapeName);
         closure[tapeName] = Ref<Ref<Array>>::make(nullptr);
@@ -635,4 +634,4 @@ grad(const Func &func, const std::unordered_set<std::string> &_requires,
     return grad(func, _requires, provides, findTapeDefs(func->body_, tapeMode));
 }
 
-} // namespace ir
+} // namespace freetensor

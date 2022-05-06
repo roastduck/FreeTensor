@@ -1,11 +1,11 @@
-#ifndef SUB_TREE_H
-#define SUB_TREE_H
+#ifndef FREE_TENSOR_SUB_TREE_H
+#define FREE_TENSOR_SUB_TREE_H
 
 #include <vector>
 
 #include <ref.h>
 
-namespace ir {
+namespace freetensor {
 
 class ASTPart;
 
@@ -444,6 +444,6 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTreeList {
  */
 Ref<ASTPart> lca(const Ref<ASTPart> &lhs, const Ref<ASTPart> &rhs);
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // SUB_TREE_H
+#endif // FREE_TENSOR_SUB_TREE_H

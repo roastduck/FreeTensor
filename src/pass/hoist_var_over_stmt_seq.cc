@@ -2,7 +2,7 @@
 #include <pass/flatten_stmt_seq.h>
 #include <pass/hoist_var_over_stmt_seq.h>
 
-namespace ir {
+namespace freetensor {
 
 Stmt HoistVarOverStmtSeq::visit(const VarDef &_op) {
     auto __op = Mutator::visit(_op);
@@ -85,7 +85,7 @@ Stmt HoistVarOverStmtSeq::visit(const StmtSeq &op) {
     auto ret = makeStmtSeq("", std::move(stmts));
     for (auto i = defs.rbegin(); i != defs.rend(); i++) {
         auto &&def = *i;
-        ret = makeVarDef(def->id(), def->name_, def->buffer_, def->sizeLim_,
+        ret = makeVarDef(def->id(), def->name_, def->buffer_, def->ioTensor_,
                          std::move(ret), def->pinned_);
     }
     return ret;
@@ -109,4 +109,4 @@ Stmt hoistVarOverStmtSeq(const Stmt &_op) {
     return op;
 }
 
-} // namespace ir
+} // namespace freetensor

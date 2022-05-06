@@ -3,9 +3,9 @@ import time
 import itertools
 import argparse
 import numpy as np
-import ir
-from ir.libop import *
-import ir.debug
+import freetensor as ft
+from freetensor.libop import *
+from freetensor import debug
 
 sys.path.append('../..')
 from common.numpy.io import load_txt, store_txt
@@ -33,41 +33,41 @@ def compile_all(num_v, num_e, feat_len, device):
 
     inf = float("inf")
 
-    @ir.transform
+    @ft.transform
     def inference(ptr, idx, feat, weight, attn_l, attn_r, y):
-        ir.declare_var(ptr, (num_v + 1,), "int32", "input", mtype)
-        ir.declare_var(idx, (num_e,), "int32", "input", mtype)
-        ir.declare_var(feat, (num_v, feat_len), "float32", "input", mtype)
-        ir.declare_var(weight, (feat_len, feat_len), "float32", "input", mtype)
-        ir.declare_var(attn_l, (feat_len,), "float32", "input", mtype)
-        ir.declare_var(attn_r, (feat_len,), "float32", "input", mtype)
-        ir.declare_var(y, (num_v, feat_len), "float32", "output", mtype)
+        ptr: ft.Var[(num_v + 1,), "int32", "input", mtype]
+        idx: ft.Var[(num_e,), "int32", "input", mtype]
+        feat: ft.Var[(num_v, feat_len), "float32", "input", mtype]
+        weight: ft.Var[(feat_len, feat_len), "float32", "input", mtype]
+        attn_l: ft.Var[(feat_len,), "float32", "input", mtype]
+        attn_r: ft.Var[(feat_len,), "float32", "input", mtype]
+        y: ft.Var[(num_v, feat_len), "float32", "output", mtype]
 
         feat2 = matmul(feat, weight)
         att_l = matmul(feat2, attn_l)
         att_r = matmul(feat2, attn_r)
 
-        edge = ir.create_var((num_e,), "float32", mtype)
-        edge_exp = ir.create_var((num_e,), "float32", mtype)
+        edge = ft.create_var((num_e,), "float32", mtype)
+        edge_exp = ft.create_var((num_e,), "float32", mtype)
         'nid: Li'
         'no_deps: edge'
         'no_deps: edge_exp'
         'no_deps: idx'
         for i in range(num_v):
-            edge_max = ir.create_var((), "float32", mtype)
+            edge_max = ft.create_var((), "float32", mtype)
             edge_max[()] = -inf
             'nid: Lk1'
             'no_deps: att_l'
             for k in range(ptr[i], ptr[i + 1]):
-                e = ir.create_var((), "float32", mtype)
+                e = ft.create_var((), "float32", mtype)
                 e[()] = att_l[idx[k]] + att_r[i]
-                edge[k] = ir.if_then_else(e[()] >= 0, e[()], e[()] * 0.1)
-                edge_max[()] = ir.max(edge_max[()], edge[k])
-            edge_sum = ir.create_var((), "float32", mtype)
+                edge[k] = ft.if_then_else(e[()] >= 0, e[()], e[()] * 0.1)
+                edge_max[()] = ft.max(edge_max[()], edge[k])
+            edge_sum = ft.create_var((), "float32", mtype)
             edge_sum[()] = 0
             'nid: Lk2'
             for k in range(ptr[i], ptr[i + 1]):
-                edge_exp[k] = ir.exp(edge[k] - edge_max[()])
+                edge_exp[k] = ft.exp(edge[k] - edge_max[()])
                 edge_sum[()] += edge_exp[k]
             'nid: Lj'
             for j in range(feat_len):
@@ -77,43 +77,43 @@ def compile_all(num_v, num_e, feat_len, device):
                 for k in range(ptr[i], ptr[i + 1]):
                     y[i, j] += feat2[idx[k], j] * edge_exp[k] / edge_sum[()]
 
-    forward, backward, requires, privdes, _ = ir.grad(
+    forward, backward, requires, privdes, _ = ft.grad(
         inference, set(["feat", "weight", "attn_l", "attn_r"]), set(["y"]))
 
     print("# Inference:")
     print(inference)
     t0 = time.time()
-    s = ir.Schedule(inference)
+    s = ft.Schedule(inference)
     s.auto_schedule(device.target())
-    f = ir.lower(s.func(), device.target())
-    code = ir.codegen(f, device.target())
-    inference_exe = ir.Driver(inference, code, device)
+    f = ft.lower(s.func(), device.target())
+    code = ft.codegen(f, device.target())
+    inference_exe = ft.Driver(inference, code, device)
     t1 = time.time()
     print(f)
-    print(ir.debug.with_line_no(code))
+    print(debug.with_line_no(code))
     print(f"Inference compiling time: {t1 - t0}s")
 
     return inference_exe, None, None
     #print("# Forward:")
     #print(forward)
-    #s = ir.Schedule(forward)
+    #s = ft.Schedule(forward)
     #s.auto_schedule(device.target())
-    #f = ir.lower(s.func(), device.target())
+    #f = ft.lower(s.func(), device.target())
     #print(f)
-    #code = ir.codegen(f, device.target())
-    #print(ir.debug.with_line_no(code))
-    #forward_exe = ir.Driver(forward, code, device)
+    #code = ft.codegen(f, device.target())
+    #print(debug.with_line_no(code))
+    #forward_exe = ft.Driver(forward, code, device)
 
     #print("# Backward:")
     #print(backward)
-    #s = ir.Schedule(backward)
+    #s = ft.Schedule(backward)
     #s.auto_schedule(device.target())
     #print(s.ast())
-    #f = ir.lower(s.func(), device.target())
+    #f = ft.lower(s.func(), device.target())
     #print(f)
-    #code = ir.codegen(f, device.target())
-    #print(ir.debug.with_line_no(code))
-    #backward_exe = ir.Driver(backward, code, device)
+    #code = ft.codegen(f, device.target())
+    #print(debug.with_line_no(code))
+    #backward_exe = ft.Driver(backward, code, device)
 
     #def run_backward(ptr, idx, x, w, w_attn_1, w_attn_2, y, d_y, d_x, d_w,
     #                 d_w_attn_1, d_w_attn_2):
@@ -169,23 +169,23 @@ if __name__ == '__main__':
     d_y = load_txt("../d_y.in", "float32")
 
     if device == 'gpu':
-        ir_dev = ir.Device(ir.GPU())
+        ir_dev = ft.Device(ft.GPU())
     else:
         assert device == 'cpu'
-        ir_dev = ir.Device(ir.CPU())
+        ir_dev = ft.Device(ft.CPU())
 
-    ptr = ir.Array(ptr, ir_dev)
-    idx = ir.Array(idx, ir_dev)
-    x = ir.Array(x, ir_dev)
-    w = ir.Array(w, ir_dev)
-    w_attn_1 = ir.Array(w_attn_1, ir_dev)
-    w_attn_2 = ir.Array(w_attn_2, ir_dev)
-    y = ir.Array(y, ir_dev)
-    d_x = ir.Array(d_x, ir_dev)
-    d_w = ir.Array(d_w, ir_dev)
-    d_w_attn_1 = ir.Array(d_w_attn_1, ir_dev)
-    d_w_attn_2 = ir.Array(d_w_attn_2, ir_dev)
-    d_y = ir.Array(d_y, ir_dev)
+    ptr = ft.Array(ptr, ir_dev)
+    idx = ft.Array(idx, ir_dev)
+    x = ft.Array(x, ir_dev)
+    w = ft.Array(w, ir_dev)
+    w_attn_1 = ft.Array(w_attn_1, ir_dev)
+    w_attn_2 = ft.Array(w_attn_2, ir_dev)
+    y = ft.Array(y, ir_dev)
+    d_x = ft.Array(d_x, ir_dev)
+    d_w = ft.Array(d_w, ir_dev)
+    d_w_attn_1 = ft.Array(d_w_attn_1, ir_dev)
+    d_w_attn_2 = ft.Array(d_w_attn_2, ir_dev)
+    d_y = ft.Array(d_y, ir_dev)
 
     inference, forward, backward = compile_all(num_v, num_e, feat_len, ir_dev)
 

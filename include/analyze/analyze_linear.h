@@ -1,5 +1,5 @@
-#ifndef ANALYZE_LINEAR_H
-#define ANALYZE_LINEAR_H
+#ifndef FREE_TENSOR_ANALYZE_LINEAR_H
+#define FREE_TENSOR_ANALYZE_LINEAR_H
 
 #include <unordered_map>
 #include <unordered_set>
@@ -9,7 +9,7 @@
 #include <opt.h>
 #include <visitor.h>
 
-namespace ir {
+namespace freetensor {
 
 class AnalyzeLinear : public Visitor {
     std::unordered_map<AST, LinearExpr<int64_t>> result_;
@@ -41,6 +41,6 @@ LinearExpr<int64_t> linear(const Expr &expr);
  */
 Opt<std::pair<LinearExpr<int64_t>, ASTNodeType>> linearComp(const Expr &expr);
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // ANALYZE_LINEAR_H
+#endif // FREE_TENSOR_ANALYZE_LINEAR_H

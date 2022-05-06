@@ -1,9 +1,10 @@
-#ifndef PRESBURGER_H
-#define PRESBURGER_H
+#ifndef FREE_TENSOR_PRESBURGER_H
+#define FREE_TENSOR_PRESBURGER_H
 
 #include <iostream>
 #include <string>
 
+#include <isl/aff.h>
 #include <isl/ctx.h>
 #include <isl/ilp.h>
 #include <isl/map.h>
@@ -14,7 +15,7 @@
 #include <debug/profile.h>
 #include <except.h>
 
-namespace ir {
+namespace freetensor {
 
 // Presburger arithmetic, currently implemented with ISL
 
@@ -260,6 +261,53 @@ class PBSpace {
 
 inline std::ostream &operator<<(std::ostream &os, const PBSpace &space) {
     return os << toString(space);
+}
+
+class PBFunc {
+    isl_pw_multi_aff *func_ = nullptr;
+
+  public:
+    PBFunc() {}
+    PBFunc(isl_pw_multi_aff *func) : func_(func) {}
+    PBFunc(const PBMap &map) : func_(isl_pw_multi_aff_from_map(map.copy())) {}
+    PBFunc(PBMap &&map) : func_(isl_pw_multi_aff_from_map(map.move())) {}
+    ~PBFunc() {
+        if (func_ != nullptr) {
+            isl_pw_multi_aff_free(func_);
+        }
+    }
+
+    PBFunc(const PBFunc &other) : func_(other.copy()) {}
+    PBFunc &operator=(const PBFunc &other) {
+        if (func_ != nullptr) {
+            isl_pw_multi_aff_free(func_);
+        }
+        func_ = other.copy();
+        return *this;
+    }
+
+    PBFunc(PBFunc &&other) : func_(other.move()) {}
+    PBFunc &operator=(PBFunc &&other) {
+        if (func_ != nullptr) {
+            isl_pw_multi_aff_free(func_);
+        }
+        func_ = other.move();
+        return *this;
+    }
+
+    bool isValid() const { return func_ != nullptr; }
+
+    isl_pw_multi_aff *get() const { return GET_ISL_PTR(func_); }
+    isl_pw_multi_aff *copy() const { return COPY_ISL_PTR(func_, pw_multi_aff); }
+    isl_pw_multi_aff *move() { return MOVE_ISL_PTR(func_); }
+
+    friend std::string toString(const PBFunc &func) {
+        return isl_pw_multi_aff_to_str(func.func_);
+    }
+};
+
+inline std::ostream &operator<<(std::ostream &os, const PBFunc &func) {
+    return os << toString(func);
 }
 
 inline PBSet complement(PBSet &&set) {
@@ -598,6 +646,6 @@ inline bool operator!=(const PBMap &lhs, const PBMap &rhs) {
     return !isl_map_is_equal(lhs.get(), rhs.get());
 }
 
-} // namespace ir
+} // namespace freetensor
 
-#endif // PRESBURGER_H
+#endif // FREE_TENSOR_PRESBURGER_H

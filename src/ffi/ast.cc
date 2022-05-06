@@ -1,14 +1,15 @@
 #include <typeinfo>
 
-#include <debug.h>
 #include <except.h>
 #include <expr.h>
 #include <ffi.h>
 #include <frontend/frontend_var.h>
 #include <func.h>
+#include <serialize/load_ast.h>
+#include <serialize/print_ast.h>
 #include <stmt.h>
 
-namespace ir {
+namespace freetensor {
 
 using namespace pybind11::literals;
 
@@ -69,7 +70,9 @@ void init_ffi_ast(py::module_ &m) {
     py::class_<ExprNode, Expr> pyExpr(m, "Expr", pyAST);
 
     py::class_<ID>(m, "ID")
-        .def(py::init([](const std::string &stmtId) { return ID(stmtId); }))
+        .def(py::init<ID>())
+        .def(py::init<std::string>())
+        .def(py::init<Stmt>())
         .def("__str__", [](const ID &id) { return toString(id); })
         .def("__hash__", [](const ID &id) { return std::hash<ID>()(id); })
         .def(
@@ -77,7 +80,7 @@ void init_ffi_ast(py::module_ &m) {
             py::is_operator());
     py::implicitly_convertible<std::string, ID>();
 
-#ifdef IR_DEBUG_LOG_NODE
+#ifdef FT_DEBUG_LOG_NODE
     pyAST.def_readonly("debug_creator", &ASTNode::debugCreator_);
 #endif
 
@@ -87,7 +90,33 @@ void init_ffi_ast(py::module_ &m) {
         .def_property_readonly(
             "body", [](const Func &op) -> Stmt { return op->body_; });
 
-    pyStmt.def_property_readonly("nid", &StmtNode::id);
+    pyStmt.def_property_readonly("nid", &StmtNode::id)
+        .def("node",
+             [](const Stmt &op) {
+                 WARNING("`x.node()` is deprecated. Please directly use `x`");
+                 return op;
+             })
+        .def("prev",
+             [](const Stmt &op) {
+                 WARNING(
+                     "`x.prev()` is deprecated. Please use `x.prev_stmt()`");
+                 return op->prevStmt();
+             })
+        .def("next",
+             [](const Stmt &op) {
+                 WARNING(
+                     "`x.next()` is deprecated. Please use `x.next_stmt()`");
+                 return op->nextStmt();
+             })
+        .def("outer",
+             [](const Stmt &op) {
+                 WARNING(
+                     "`x.outer()` is deprecated. Please use `x.parent_stmt()`");
+                 return op->parentStmt();
+             })
+        .def("prev_stmt", &StmtNode::prevStmt)
+        .def("next_stmt", &StmtNode::nextStmt)
+        .def("parent_stmt", &StmtNode::parentStmt);
 
     py::class_<StmtSeqNode, StmtSeq>(m, "StmtSeq", pyStmt)
         .def_property_readonly(
@@ -95,9 +124,12 @@ void init_ffi_ast(py::module_ &m) {
             [](const StmtSeq &op) -> std::vector<Stmt> { return op->stmts_; });
     py::class_<VarDefNode, VarDef>(m, "VarDef", pyStmt)
         .def_readonly("name", &VarDefNode::name_)
-        .def_readonly("buffer", &VarDefNode::buffer_)
         .def_property_readonly(
-            "size_lim", [](const VarDef &op) -> Expr { return op->sizeLim_; })
+            "buffer",
+            [](const VarDef &op) -> Ref<Buffer> { return op->buffer_; })
+        .def_property_readonly(
+            "io_tensor",
+            [](const VarDef &op) -> Ref<Tensor> { return op->ioTensor_; })
         .def_property_readonly(
             "body", [](const VarDef &op) -> Stmt { return op->body_; });
     py::class_<StoreNode, Store>(m, "Store", pyStmt)
@@ -308,14 +340,23 @@ void init_ffi_ast(py::module_ &m) {
     pyAST
         .def("match",
              [](const Stmt &op, const Stmt &other) { return match(op, other); })
-        .def("type", [](const AST &op) { return toString(op->nodeType()); })
+        .def("type", [](const AST &op) { return op->nodeType(); })
+        .def("node_type",
+             [](const AST &op) {
+                 WARNING(
+                     "`x.node_type()` is deprecated. Please use `x.type()`");
+                 return op->nodeType();
+             })
         .def("__str__", [](const AST &op) { return toString(op); })
         .def("__repr__", [](const AST &op) {
             return "<" + toString(op->nodeType()) + ": " + toString(op) + ">";
         });
+    m.def("dump_ast", &dumpAST);
+    m.def("load_ast", &loadAST);
 
     // NOTE: ORDER of the constructor matters!
-    pyExpr.def(py::init([](bool val) { return makeBoolConst(val); }))
+    pyExpr.def(py::init([](const Expr &expr) { return deepCopy(expr); }))
+        .def(py::init([](bool val) { return makeBoolConst(val); }))
         .def(py::init([](int64_t val) { return makeIntConst(val); }))
         .def(py::init([](float val) { return makeFloatConst(val); }))
         .def(py::init([](const FrontendVar &var) { return var.asLoad(); }))
@@ -431,8 +472,8 @@ void init_ffi_ast(py::module_ &m) {
           "id"_a, "stmts"_a);
     m.def("makeVarDef",
           static_cast<Stmt (*)(const ID &, const std::string &,
-                               const Ref<Buffer> &, const Expr &, const Stmt &,
-                               bool)>(&_makeVarDef),
+                               const Ref<Buffer> &, const Ref<Tensor> &,
+                               const Stmt &, bool)>(&_makeVarDef),
           "nid"_a, "name"_a, "buffer"_a, "size_lim"_a, "body"_a, "pinned"_a);
     m.def("makeVar", &_makeVar, "name"_a);
     m.def("makeStore",
@@ -523,22 +564,23 @@ void init_ffi_ast(py::module_ &m) {
     m.def("neutral_val", &neutralVal);
 }
 
-} // namespace ir
+} // namespace freetensor
 
 namespace pybind11 {
 
-template <> struct polymorphic_type_hook<ir::ASTNode> {
-    static const void *get(const ir::ASTNode *src,
+template <> struct polymorphic_type_hook<freetensor::ASTNode> {
+    static const void *get(const freetensor::ASTNode *src,
                            const std::type_info *&type) {
         if (src == nullptr) {
             return src;
         }
         switch (src->nodeType()) {
 #define DISPATCH(name)                                                         \
-    case ir::ASTNodeType::name:                                                \
-        type = &typeid(ir::name##Node);                                        \
-        return static_cast<const ir::name##Node *>(src);
+    case freetensor::ASTNodeType::name:                                        \
+        type = &typeid(freetensor::name##Node);                                \
+        return static_cast<const freetensor::name##Node *>(src);
 
+            DISPATCH(Func);
             DISPATCH(StmtSeq);
             DISPATCH(VarDef);
             DISPATCH(Store);
@@ -592,17 +634,17 @@ template <> struct polymorphic_type_hook<ir::ASTNode> {
     }
 };
 
-template <> struct polymorphic_type_hook<ir::StmtNode> {
-    static const void *get(const ir::StmtNode *src,
+template <> struct polymorphic_type_hook<freetensor::StmtNode> {
+    static const void *get(const freetensor::StmtNode *src,
                            const std::type_info *&type) {
         if (src == nullptr) {
             return src;
         }
         switch (src->nodeType()) {
 #define DISPATCH(name)                                                         \
-    case ir::ASTNodeType::name:                                                \
-        type = &typeid(ir::name##Node);                                        \
-        return static_cast<const ir::name##Node *>(src);
+    case freetensor::ASTNodeType::name:                                        \
+        type = &typeid(freetensor::name##Node);                                \
+        return static_cast<const freetensor::name##Node *>(src);
 
             DISPATCH(StmtSeq);
             DISPATCH(VarDef);
@@ -620,17 +662,17 @@ template <> struct polymorphic_type_hook<ir::StmtNode> {
     }
 };
 
-template <> struct polymorphic_type_hook<ir::ExprNode> {
-    static const void *get(const ir::ExprNode *src,
+template <> struct polymorphic_type_hook<freetensor::ExprNode> {
+    static const void *get(const freetensor::ExprNode *src,
                            const std::type_info *&type) {
         if (src == nullptr) {
             return src;
         }
         switch (src->nodeType()) {
 #define DISPATCH(name)                                                         \
-    case ir::ASTNodeType::name:                                                \
-        type = &typeid(ir::name##Node);                                        \
-        return static_cast<const ir::name##Node *>(src);
+    case freetensor::ASTNodeType::name:                                        \
+        type = &typeid(freetensor::name##Node);                                \
+        return static_cast<const freetensor::name##Node *>(src);
 
             DISPATCH(Var);
             DISPATCH(Load);

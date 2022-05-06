@@ -1,7 +1,7 @@
 #include <pass/move_out_first_or_last_iter.h>
 #include <pass/replace_iter.h>
 
-namespace ir {
+namespace freetensor {
 
 Stmt MoveOutFirstOrLastIter::visit(const For &_op) {
     auto __op = Z3Simplify::visit(_op);
@@ -50,4 +50,4 @@ Stmt MoveOutFirstOrLastIter::visit(const For &_op) {
     return __op;
 }
 
-} // namespace ir
+} // namespace freetensor

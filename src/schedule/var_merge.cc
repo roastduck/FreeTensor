@@ -1,6 +1,6 @@
 #include <schedule/var_merge.h>
 
-namespace ir {
+namespace freetensor {
 
 Stmt VarMerge::visit(const VarDef &_op) {
     if (_op->id() == def_) {
@@ -17,6 +17,11 @@ Stmt VarMerge::visit(const VarDef &_op) {
         ASSERT(__op->nodeType() == ASTNodeType::VarDef);
         auto op = __op.as<VarDefNode>();
         var_.clear();
+
+        if (op->buffer_->atype() != AccessType::Cache &&
+            !op->ioTensor_.isValid()) {
+            op->ioTensor_ = op->buffer_->tensor();
+        }
 
         auto &shape = op->buffer_->tensor()->shape();
         shape[dim_] = makeMul(shape[dim_], shape[dim_ + 1]);
@@ -57,4 +62,4 @@ Stmt varMerge(const Stmt &_ast, const ID &def, int dim) {
     return ast;
 }
 
-} // namespace ir
+} // namespace freetensor

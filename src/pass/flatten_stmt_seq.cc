@@ -1,6 +1,6 @@
 #include <pass/flatten_stmt_seq.h>
 
-namespace ir {
+namespace freetensor {
 
 Stmt FlattenStmtSeq::visit(const StmtSeq &_op) {
     auto __op = Mutator::visit(_op);
@@ -25,4 +25,4 @@ Stmt FlattenStmtSeq::visit(const StmtSeq &_op) {
 
 Stmt FlattenStmtSeq::visit(const Assume &op) { return (*this)(op->body_); }
 
-} // namespace ir
+} // namespace freetensor

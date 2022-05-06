@@ -1,12 +1,12 @@
 #include <itertools.hpp>
 
 #include <codegen/code_gen_cpu.h>
-#include <mangle.h>
 #include <pass/simplify.h>
+#include <serialize/mangle.h>
 
 #include "detail/code_gen_c.h"
 
-namespace ir {
+namespace freetensor {
 
 #ifdef WITH_MKL
 
@@ -265,4 +265,4 @@ extern "C" {
     return header + body + tailer;
 }
 
-} // namespace ir
+} // namespace freetensor

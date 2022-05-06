@@ -3,7 +3,7 @@
 #include <schedule/check_loop_order.h>
 #include <schedule/merge.h>
 
-namespace ir {
+namespace freetensor {
 
 Stmt MergeFor::visit(const For &_op) {
     if (_op->id() == oldOuter_->id()) {
@@ -23,8 +23,8 @@ Stmt MergeFor::visit(const For &_op) {
                                root_, oldInner_->id(), oldOuter_->id())),
                            op->body_);
         for (auto &&def : intermediateDefs_) {
-            ret = makeVarDef(def->id(), def->name_, def->buffer_, def->sizeLim_,
-                             ret, def->pinned_);
+            ret = makeVarDef(def->id(), def->name_, def->buffer_,
+                             def->ioTensor_, ret, def->pinned_);
         }
         return ret;
     } else if (_op->id() == oldInner_->id()) {
@@ -137,4 +137,4 @@ std::pair<Stmt, ID> merge(const Stmt &_ast, const ID &loop1, const ID &loop2) {
     return std::make_pair(ast, mutator.newId());
 }
 
-} // namespace ir
+} // namespace freetensor
