@@ -123,6 +123,39 @@ def test_modify_self_no_prop():
     assert std.match(ast)
 
 
+def test_using_local_var_no_prop():
+    with ft.VarDef([("x", (5, 10), "float64", "inout", "cpu"),
+                    ("y", (5,), "float64", "output", "cpu")]) as (x, y):
+        with ft.VarDef("t", (5,), "float64", "cache", "cpu") as t:
+            with ft.For("i", 0, 5) as i:
+                with ft.VarDef("s", (), "float64", "cache", "cpu") as s:
+                    s[()] = 0
+                    with ft.For("j", 0, 10) as j:
+                        s[()] += x[i, j]
+                    t[i] = s[()] * 2  # No prop t
+            with ft.For("i", 0, 5) as i:
+                y[i] = t[i]
+    ast = ft.pop_ast()
+    print(ast)
+    ast = ft.lower(ast)
+    print(ast)
+
+    with ft.VarDef([("x", (5, 10), "float64", "inout", "cpu"),
+                    ("y", (5,), "float64", "output", "cpu")]) as (x, y):
+        with ft.VarDef("t", (5,), "float64", "cache", "cpu") as t:
+            with ft.For("i", 0, 5) as i:
+                with ft.VarDef("s", (), "float64", "cache", "cpu") as s:
+                    s[()] = 0
+                    with ft.For("j", 0, 10) as j:
+                        s[()] += x[i, j]
+                    t[i] = s[()] * 2  # No prop t
+            with ft.For("i", 0, 5) as i:
+                y[i] = t[i]
+    std = ft.make_reduction(ft.pop_ast())
+
+    assert std.match(ast)
+
+
 def test_different_iter_non_linear():
     with ft.VarDef([("x1", (4,), "int32", "input", "cpu"),
                     ("x2", (4,), "int32", "input", "cpu"),
