@@ -18,7 +18,7 @@ def test_syncthreads():
         y: ft.Var[(4, 256), "int32", "output", "gpu/global"]
         "nid: L0"
         for i in range(0, 4):
-            t = ft.create_var((256,), "int32", "gpu/shared")
+            t = ft.empty((256,), "int32", "gpu/shared")
             "nid: L1"
             for j in range(0, 256):
                 t[j] = x[i, j] * 2
@@ -81,7 +81,7 @@ def test_syncthreads_in_loop():
         "nid: L0"
         for i in range(0, 4):
             for p in range(0, 5):
-                t = ft.create_var((256,), "int32", "gpu/shared")
+                t = ft.empty((256,), "int32", "gpu/shared")
                 "nid: L1"
                 for j in range(0, 256):
                     t[j] = x[i, j] * p
@@ -123,7 +123,7 @@ def test_syncthreads_at_outer_loop():
         y: ft.Var[(4, 5, 256), "int32", "output", "gpu/global"]
         "nid: L0"
         for i in range(0, 4):
-            t = ft.create_var((256,), "int32", "gpu/shared")
+            t = ft.empty((256,), "int32", "gpu/shared")
             "nid: L1"
             for j in range(0, 256):
                 t[j] = x[i, j]
@@ -165,12 +165,12 @@ def test_syncthreads_not_at_outer_loop():
         y: ft.Var[(4, 5, 256), "int32", "output", "gpu/global"]
         "nid: L0"
         for i in range(0, 4):
-            t0 = ft.create_var((256,), "int32", "gpu/shared")
+            t0 = ft.empty((256,), "int32", "gpu/shared")
             "nid: L1"
             for j in range(0, 256):
                 t0[j] = x0[i, j]
             for p in range(0, 5):
-                t1 = ft.create_var((256,), "int32", "gpu/shared")
+                t1 = ft.empty((256,), "int32", "gpu/shared")
                 "nid: L2"
                 for j in range(0, 256):
                     t1[j] = x1[i, p, j]
@@ -220,7 +220,7 @@ def test_syncthreads_at_outer_branch():
         y: ft.Var[(4,), "int32", "output", "gpu/global"]
         "nid: L0"
         for i in range(0, 4):
-            t = ft.create_var((256,), "int32", "gpu/shared")
+            t = ft.empty((256,), "int32", "gpu/shared")
             "nid: L1"
             for j in range(0, 256):
                 t[j] = x[i, j]
@@ -257,7 +257,7 @@ def test_syncthreads_at_outer_loop_and_outer_branch():
         y: ft.Var[(4, 5, 256), "int32", "output", "gpu/global"]
         "nid: L0"
         for i in range(0, 4):
-            t = ft.create_var((256,), "int32", "gpu/shared")
+            t = ft.empty((256,), "int32", "gpu/shared")
             "nid: L1"
             for j in range(0, 256):
                 t[j] = x[i, j]
@@ -299,7 +299,7 @@ def test_syncthreads_split_branch():
         z: ft.Var[(4,), "int32", "inout", "gpu/global"]
         "nid: L0"
         for i in range(0, 4):
-            t = ft.create_var((256,), "int32", "gpu/shared")
+            t = ft.empty((256,), "int32", "gpu/shared")
             "nid: L1"
             for j in range(0, 256):
                 t[j] = x[i, j]
@@ -345,7 +345,7 @@ def test_syncthreads_split_branch_out_of_const_loop():
                 if i * 4 + j < 10:
                     'nid: L2'
                     for k in range(10):
-                        t = ft.create_var((2,), "int32", "gpu/shared")
+                        t = ft.empty((2,), "int32", "gpu/shared")
                         'nid: L3'
                         for p in range(32):
                             t[p % 2] += x[i * 4 + j, k, p]
@@ -389,7 +389,7 @@ def test_syncthreads_split_branch_with_else():
         z: ft.Var[(4,), "int32", "inout", "gpu/global"]
         "nid: L0"
         for i in range(0, 4):
-            t = ft.create_var((2,), "int32", "gpu/shared")
+            t = ft.empty((2,), "int32", "gpu/shared")
             if i < 2:
                 "nid: L1"
                 for j in range(0, 256):
@@ -453,11 +453,11 @@ def test_syncthreads_split_branch_and_vardef():
         z2: ft.Var[(4,), "int32", "inout", "gpu/global"]
         "nid: L0"
         for i in range(0, 4):
-            t = ft.create_var((256,), "int32", "gpu/shared")
+            t = ft.empty((256,), "int32", "gpu/shared")
             "nid: L1"
             for j in range(0, 256):
                 t[j] = x[i, j]
-            u = ft.create_var((1,), "int32", "gpu/local")
+            u = ft.empty((1,), "int32", "gpu/local")
             u[0] = z1[i] * 2
             y[i] = t[0] + t[1]
             z1[i] = u[0] + 1
@@ -505,12 +505,12 @@ def test_syncthreads_split_branch_and_vardef_with_else():
         z2: ft.Var[(4,), "int32", "inout", "gpu/global"]
         "nid: L0"
         for i in range(0, 4):
-            t = ft.create_var((2,), "int32", "gpu/shared")
+            t = ft.empty((2,), "int32", "gpu/shared")
             if i < 2:
                 "nid: L1"
                 for j in range(0, 256):
                     t[j % 2] += x[i, j]  # Atomic reduction
-                u1 = ft.create_var((1,), "int32", "gpu/local")
+                u1 = ft.empty((1,), "int32", "gpu/local")
                 u1[0] = z1[i] * 2
                 y[i] = t[0]
                 z1[i] = u1[0] + 1
@@ -519,7 +519,7 @@ def test_syncthreads_split_branch_and_vardef_with_else():
                 "nid: L2"
                 for j in range(0, 256):
                     t[j % 2] += x[i, j] * 2  # Atomic reduction
-                u2 = ft.create_var((1,), "int32", "gpu/local")
+                u2 = ft.empty((1,), "int32", "gpu/local")
                 u2[0] = z1[i] * 2
                 y[i] = t[0]
                 z1[i] = u2[0] + 1
@@ -586,7 +586,7 @@ def test_syncwarp():
         y: ft.Var[(4, 4), "int32", "output", "gpu/global"]
         "nid: L0"
         for i in range(0, 4):
-            t = ft.create_var((4,), "int32", "gpu/shared")
+            t = ft.empty((4,), "int32", "gpu/shared")
             "nid: L1"
             for j in range(0, 4):
                 t[j] = x[i, j] * 2

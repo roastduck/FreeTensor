@@ -311,15 +311,15 @@ class VarCreator(StagedAssignable):
                     self.mtype))
 
 
-def create_var_staging(shape, dtype, mtype):
+def empty_staging(shape, dtype, mtype):
     return VarCreator(shape, dtype, mtype)
 
 
-def create_var_fallback(shape, dtype, mtype):
+def empty_fallback(shape, dtype, mtype):
     return np.zeros(shape, dtype)
 
 
-create_var = staged_callable(create_var_staging, create_var_fallback)
+empty = staged_callable(empty_staging, empty_fallback)
 '''Create a IR variable.'''
 
 

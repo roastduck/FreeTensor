@@ -258,7 +258,7 @@ def test_no_hoisting_loop_variant():
     @ft.transform
     def foo(x):
         x: ft.Var[(32,), 'int32', 'output', 'cpu']
-        a = ft.create_var((), 'int32', 'cpu')
+        a = ft.empty((), 'int32', 'cpu')
         a[()] = 10
         for i in range(32):
             a[()] = 20

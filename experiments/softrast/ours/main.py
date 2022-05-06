@@ -28,25 +28,25 @@ def compile_all(h, w, n_verts, n_faces, device, ad_save_all):
 
     @ft.inline
     def cross_product(v1, v2):
-        y = ft.create_var((), "float32", mtype)
+        y = ft.empty((), "float32", mtype)
         y[()] = v1[0] * v2[1] - v1[1] * v2[0]
         return y
 
     @ft.inline
     def dot_product(v1, v2):
-        y = ft.create_var((), "float32", mtype)
+        y = ft.empty((), "float32", mtype)
         y[()] = v1[0] * v2[0] + v1[1] * v2[1]
         return y
 
     @ft.inline
     def norm(v):
-        y = ft.create_var((), "float32", mtype)
+        y = ft.empty((), "float32", mtype)
         y[()] = ft.sqrt(v[0] * v[0] + v[1] * v[1])
         return y
 
     @ft.inline
     def sub(v1, v2):
-        y = ft.create_var((2,), "float32", mtype)
+        y = ft.empty((2,), "float32", mtype)
         y[0] = v1[0] - v2[0]
         y[1] = v1[1] - v2[1]
         return y
@@ -58,19 +58,19 @@ def compile_all(h, w, n_verts, n_faces, device, ad_save_all):
         y: ft.Var[(n_faces, h, w), "float32", "output", mtype]
         "nid: Li"
         for i in range(n_faces):
-            v = ft.create_var((3, 2), "float32", mtype)
+            v = ft.empty((3, 2), "float32", mtype)
             for p in range(3):
                 v[p, 0] = vertices[faces[i, p], 0]
                 v[p, 1] = vertices[faces[i, p], 1]
 
             for j in range(h):
                 for k in range(w):
-                    pixel = ft.create_var((2,), "float32", mtype)
+                    pixel = ft.empty((2,), "float32", mtype)
                     pixel[0] = 1. / (h - 1) * j
                     pixel[1] = 1. / (w - 1) * k
 
-                    e_cp = ft.create_var((3,), "float32", mtype)
-                    e_dist = ft.create_var((3,), "float32", mtype)
+                    e_cp = ft.empty((3,), "float32", mtype)
+                    e_dist = ft.empty((3,), "float32", mtype)
                     for p in range(3):
                         cp = cross_product(sub(pixel, v[p]),
                                            sub(v[(p + 1) % 3], v[p]))
@@ -91,10 +91,10 @@ def compile_all(h, w, n_verts, n_faces, device, ad_save_all):
                             p1_dist = norm(sub(pixel, v[p]))
                             e_dist[p] = p1_dist[()]
 
-                    inside = ft.create_var((), "int32", mtype)
+                    inside = ft.empty((), "int32", mtype)
                     inside[()] = ft.if_then_else(
                         e_cp[0] < 0 and e_cp[1] < 0 and e_cp[2] < 0, 1, -1)
-                    dist = ft.create_var((), "float32", mtype)
+                    dist = ft.empty((), "float32", mtype)
                     dist[()] = ft.min(ft.min(e_dist[0], e_dist[1]), e_dist[2])
                     y[i, j,
                       k] = ft.sigmoid(inside[()] * dist[()] * dist[()] / sigma)

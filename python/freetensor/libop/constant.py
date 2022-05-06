@@ -15,7 +15,7 @@ def zeros_(y):
 
 @core.inline
 def zeros(shape, dtype, mtype):
-    y = core.create_var(shape, dtype, mtype)
+    y = core.empty(shape, dtype, mtype)
     'nid: recur'
     zeros_(y)
     return y

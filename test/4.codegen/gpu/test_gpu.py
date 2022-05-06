@@ -87,7 +87,7 @@ def test_return_value_and_runtime_allocation():
     @ft.transform
     def test(x):
         x: ft.Var[(4, 4), "int32", "input", "cpu"]
-        y = ft.create_var((4, 4), "int32", "cpu")
+        y = ft.empty((4, 4), "int32", "cpu")
         'nid: L1'
         for i in range(4):
             'nid: L2'
@@ -195,7 +195,7 @@ def test_global_mem():
     def test(x, y):
         x: ft.Var[(4,), "int32", "input", "gpu/global"]
         y: ft.Var[(4,), "int32", "output", "gpu/global"]
-        t = ft.create_var((4,), "int32", "gpu/global")
+        t = ft.empty((4,), "int32", "gpu/global")
         "nid: L1"
         for i in range(0, 4):
             t[i] = x[i] * 2
@@ -245,13 +245,13 @@ def test_global_mem_in_kernel():
         z2: ft.Var[(4,), "int32", "output", "gpu/global"]
         "nid: L1"
         for i in range(0, 8):
-            t = ft.create_var((), "int32", "gpu/global")
+            t = ft.empty((), "int32", "gpu/global")
             t[()] = x[i] * 2
             y1[i] = t[()] + 1
             y2[i] = t[()] + 2
         "nid: L2"
         for i in range(0, 4):
-            t = ft.create_var((), "int32", "gpu/global")
+            t = ft.empty((), "int32", "gpu/global")
             t[()] = x[i] * 3
             z1[i] = t[()] + 1
             z2[i] = t[()] + 2
@@ -472,7 +472,7 @@ def test_multiplex_shared_1():
         y: ft.Var[(4, 256), "int32", "output", "gpu/global"]
         "nid: L0"
         for i in range(0, 4):
-            t = ft.create_var((256,), "int32", "gpu/shared")
+            t = ft.empty((256,), "int32", "gpu/shared")
             "nid: L1"
             for j in range(0, 256):
                 t[j] = x[i, j] * 2
@@ -532,7 +532,7 @@ def test_multiplex_shared_2():
         y: ft.Var[(4, 256), "int32", "output", "gpu/global"]
         "nid: L0"
         for i in range(0, 4):
-            t = ft.create_var((256,), "int32", "gpu/shared")
+            t = ft.empty((256,), "int32", "gpu/shared")
             "nid: L1"
             for j in range(i * 64, (i + 1) * 64):
                 t[j] = x[i, j] * 2
@@ -571,7 +571,7 @@ def test_simplex_local_1():
         'nid: Lb'
         for b in range(10):
             'nid: t'
-            t = ft.create_var((10, 10), "int32", "gpu/global")
+            t = ft.empty((10, 10), "int32", "gpu/global")
             'nid: L0'
             for i in range(10):
                 for j in range(10):
@@ -634,7 +634,7 @@ def test_simplex_local_2():
         'nid: Lb'
         for b in range(10):
             'nid: t'
-            t = ft.create_var((10, 10), "int32", "gpu/global")
+            t = ft.empty((10, 10), "int32", "gpu/global")
             'nid: L0'
             for i in range(10):
                 for j in range(10):
@@ -734,7 +734,7 @@ def test_parallel_different_length():
         c: ft.Var[(4, 8), "int32", "output", "gpu/global"]
         "nid: L0"
         for i in range(0, 4):
-            t = ft.create_var((4,), "int32", "gpu/shared")
+            t = ft.empty((4,), "int32", "gpu/shared")
             "nid: L1"
             for j in range(0, 4):
                 t[j] = a[i, j]
@@ -833,7 +833,7 @@ def test_parallel_broadcast():
         c: ft.Var[(4, 8), "int32", "output", "gpu/global"]
         "nid: L0"
         for i in range(0, 4):
-            t = ft.create_var((1,), "int32", "gpu/shared")
+            t = ft.empty((1,), "int32", "gpu/shared")
             t[0] = a[i, 0]
             "nid: L1"
             for k in range(0, 8):

@@ -47,23 +47,23 @@ def compile_all(num_v, num_e, feat_len, device):
         att_l = matmul(feat2, attn_l)
         att_r = matmul(feat2, attn_r)
 
-        edge = ft.create_var((num_e,), "float32", mtype)
-        edge_exp = ft.create_var((num_e,), "float32", mtype)
+        edge = ft.empty((num_e,), "float32", mtype)
+        edge_exp = ft.empty((num_e,), "float32", mtype)
         'nid: Li'
         'no_deps: edge'
         'no_deps: edge_exp'
         'no_deps: idx'
         for i in range(num_v):
-            edge_max = ft.create_var((), "float32", mtype)
+            edge_max = ft.empty((), "float32", mtype)
             edge_max[()] = -inf
             'nid: Lk1'
             'no_deps: att_l'
             for k in range(ptr[i], ptr[i + 1]):
-                e = ft.create_var((), "float32", mtype)
+                e = ft.empty((), "float32", mtype)
                 e[()] = att_l[idx[k]] + att_r[i]
                 edge[k] = ft.if_then_else(e[()] >= 0, e[()], e[()] * 0.1)
                 edge_max[()] = ft.max(edge_max[()], edge[k])
-            edge_sum = ft.create_var((), "float32", mtype)
+            edge_sum = ft.empty((), "float32", mtype)
             edge_sum[()] = 0
             'nid: Lk2'
             for k in range(ptr[i], ptr[i + 1]):

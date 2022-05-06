@@ -462,7 +462,7 @@ def test_serial_reduction_2():
         y: ft.Var[(4,), "int32", "output", "cpu"]
         "nid: L1"
         for i in range(0, 4):
-            local_sum = ft.create_var((), "int32", "cpu")
+            local_sum = ft.empty((), "int32", "cpu")
             local_sum[()] = 0.
             "nid: L2"
             for j in range(0, 64):

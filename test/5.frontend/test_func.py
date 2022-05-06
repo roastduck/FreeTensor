@@ -363,8 +363,8 @@ def test_return():
 
     @ft.inline
     def test_i(a, b):
-        c = ft.create_var((2, 2), "int32", "cpu")
-        d = ft.create_var((2, 2), "int32", "cpu")
+        c = ft.empty((2, 2), "int32", "cpu")
+        d = ft.empty((2, 2), "int32", "cpu")
         for i in range(2):
             for j in range(2):
                 b[i, j] = a[i, j]
@@ -413,8 +413,8 @@ def test_return_returned_value():
 
     @ft.inline
     def h(x):
-        y1 = ft.create_var((4,), "int32", "cpu")
-        y2 = ft.create_var((4,), "int32", "cpu")
+        y1 = ft.empty((4,), "int32", "cpu")
+        y2 = ft.empty((4,), "int32", "cpu")
         for i in range(4):
             y1[i] = x[i]
             y2[i] = x[i * 2]
@@ -458,7 +458,7 @@ def test_func_in_args():
 
     @ft.inline
     def plus_one(x):
-        y = ft.create_var((4,), "int32", "cpu")
+        y = ft.empty((4,), "int32", "cpu")
         for i in range(4):
             y[i] = x[i] + 1
         return y
@@ -520,8 +520,8 @@ def test_no_deps_on_returned_tensor():
     @ft.inline
     def test_i(a, b):
         'nid: Vc'
-        c = ft.create_var((2, 2), "int32", "cpu")
-        d = ft.create_var((2, 2), "int32", "cpu")
+        c = ft.empty((2, 2), "int32", "cpu")
+        d = ft.empty((2, 2), "int32", "cpu")
         for i in range(2):
             for j in range(2):
                 b[i, j] = a[i, j]

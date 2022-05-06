@@ -25,7 +25,7 @@ def compile_all(w, dilation, dilation_heads, n_heads, seq_len, feat_len, device,
         Y: ft.Var[(n_heads, seq_len, feat_len), "float32", "output", mtype]
         for i in range(n_heads):
             for j in range(seq_len):
-                dot = ft.create_var((2 * w + 1,), "float32", mtype)
+                dot = ft.empty((2 * w + 1,), "float32", mtype)
                 for k in range(-w, w + 1):
                     dot[k + w] = 0
                     if j + ft.if_then_else(
@@ -36,18 +36,18 @@ def compile_all(w, dilation, dilation_heads, n_heads, seq_len, feat_len, device,
                             dot[k + w] += Q[i, j, p] * K[i, j + ft.if_then_else(
                                 i >= dilation_heads, k, k * dilation), p]
 
-                maxval = ft.create_var((), "float32", mtype)
+                maxval = ft.empty((), "float32", mtype)
                 maxval[()] = -inf
                 for k in range(2 * w + 1):
                     maxval[()] = ft.max(maxval[()], dot[k])
-                expval = ft.create_var((2 * w + 1,), "float32", mtype)
+                expval = ft.empty((2 * w + 1,), "float32", mtype)
                 for k in range(2 * w + 1):
                     expval[k] = ft.exp(dot[k] - maxval[()])
-                expsum = ft.create_var((), "float32", mtype)
+                expsum = ft.empty((), "float32", mtype)
                 expsum[()] = 0
                 for k in range(2 * w + 1):
                     expsum[()] += expval[k]
-                attn = ft.create_var((2 * w + 1,), "float32", mtype)
+                attn = ft.empty((2 * w + 1,), "float32", mtype)
                 for k in range(2 * w + 1):
                     attn[k] = expval[k] / expsum[()] / sqrt_d
 

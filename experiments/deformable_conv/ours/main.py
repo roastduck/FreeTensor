@@ -30,10 +30,10 @@ def conv(x, w1, w2, y, n, c_in, c_out, h, w, k_h, k_w, device):
                 for p in range(h):
                     "nid: Lq"
                     for q in range(w):
-                        row = ft.create_var((k_h, k_w), "float32", mtype)
-                        col = ft.create_var((k_h, k_w), "float32", mtype)
-                        row_int = ft.create_var((k_h, k_w), "int32", mtype)
-                        col_int = ft.create_var((k_h, k_w), "int32", mtype)
+                        row = ft.empty((k_h, k_w), "float32", mtype)
+                        col = ft.empty((k_h, k_w), "float32", mtype)
+                        row_int = ft.empty((k_h, k_w), "int32", mtype)
+                        col_int = ft.empty((k_h, k_w), "int32", mtype)
                         "nid: Lro0"
                         for ro in range(k_h):
                             "nid: Lso0"
@@ -54,15 +54,15 @@ def conv(x, w1, w2, y, n, c_in, c_out, h, w, k_h, k_w, device):
                                 row_int[ro, so] = ft.cast(ft.floor(row[ro, so]), "int32")
                                 col_int[ro, so] = ft.cast(ft.floor(col[ro, so]), "int32")
 
-                        pixel = ft.create_var((c_in, k_h, k_w), "float32", mtype)
+                        pixel = ft.empty((c_in, k_h, k_w), "float32", mtype)
                         "nid: Lki1"
                         for ki in range(c_in):
                             "nid: Lro1"
                             for ro in range(k_h):
                                 "nid: Lso1"
                                 for so in range(k_w):
-                                    x = ft.create_var((), "int32", mtype)
-                                    y = ft.create_var((), "int32", mtype)
+                                    x = ft.empty((), "int32", mtype)
+                                    y = ft.empty((), "int32", mtype)
                                     x[()] = p + ro + row_int[ro, so]
                                     y[()] = q + so + col_int[ro, so]
                                     pixel[ki, ro, so] = 0

@@ -81,7 +81,7 @@ def _general_reduce(op,
                     axes: Optional[Sequence[int]] = None,
                     keepdims: bool = True):
     'nid: y'
-    y = core.create_var(
+    y = core.empty(
         _comp_shape(_circular_axes(axes, core.ndim(x), keepdims), keepdims, x),
         core.dtype(x), core.mtype(x))
     'nid: recur'

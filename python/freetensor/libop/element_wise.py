@@ -28,9 +28,9 @@ def _binary_op_(op, a, b, out):
 @core.inline(fallback=lambda op, a, b: op(a, b))
 def _binary_op(op, a, b):
     'nid: out'
-    out = core.create_var(broadcast_shape(a, b),
-                          core.up_cast(core.dtype(a), core.dtype(b)),
-                          core.same_mtype(core.mtype(a), core.mtype(b)))
+    out = core.empty(broadcast_shape(a, b),
+                     core.up_cast(core.dtype(a), core.dtype(b)),
+                     core.same_mtype(core.mtype(a), core.mtype(b)))
     'nid: recur'
     _binary_op_(op, a, b, out)
     return out
@@ -64,7 +64,7 @@ def _unary_op_(op, x, y):
 @core.inline
 def _unary_op(op, x):
     'nid: y'
-    y = core.create_var(copy_shape(x), core.dtype(x), core.mtype(x))
+    y = core.empty(copy_shape(x), core.dtype(x), core.mtype(x))
     'nid: recur'
     _unary_op_(op, x, y)
     return y

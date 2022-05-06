@@ -50,7 +50,7 @@ from .codegen import codegen
 from .driver import *
 from .config import *
 
-from .transformer import (transform, inline, create_var, var, capture_var, Var,
+from .transformer import (transform, inline, empty, var, capture_var, Var,
                           StagingError, StagedAssignable, StagedIterable,
                           StagedTypeAnnotation)
 

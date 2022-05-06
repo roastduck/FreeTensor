@@ -72,7 +72,7 @@ def test_static_broadcast_1_at_front():
         y: ft.Var[(4, 4), "float32", "input", "cpu"]
         out: ft.Var[(4, 4), "float32", "output", "cpu"]
         "nid: out_shape"
-        out_shape = ft.create_var((2,), "int32", "cpu")
+        out_shape = ft.empty((2,), "int32", "cpu")
         "nid: add"
         libop.add_(x, y, out)
 
@@ -103,7 +103,7 @@ def test_static_broadcast_1_at_back():
         y: ft.Var[(4, 1), "float32", "input", "cpu"]
         out: ft.Var[(4, 4), "float32", "output", "cpu"]
         "nid: out_shape"
-        out_shape = ft.create_var((2,), "int32", "cpu")
+        out_shape = ft.empty((2,), "int32", "cpu")
         "nid: add"
         libop.add_(x, y, out)
 
@@ -134,7 +134,7 @@ def test_different_dtype():
         y: ft.Var[(4, 4), "float32", "input", "cpu"]
         out: ft.Var[(4, 4), "float32", "output", "cpu"]
         "nid: out_shape"
-        out_shape = ft.create_var((2,), "int32", "cpu")
+        out_shape = ft.empty((2,), "int32", "cpu")
         "nid: add"
         libop.add_(x, y, out)
 

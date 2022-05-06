@@ -18,7 +18,7 @@ def test_warpshuffle_reverse():
         y: ft.Var[(4, 32), "int32", "output", "gpu/global"]
         'nid: L0'
         for i in range(0, 4):
-            value = ft.create_var((32,), "int32", "gpu/warp")
+            value = ft.empty((32,), "int32", "gpu/warp")
             'nid: L1'
             for j in range(0, 32):
                 value[j] = x[i, j]
@@ -72,8 +72,8 @@ def test_warpshuffle_sum():
         z: ft.Var[(4, 32), "int32", "output", "gpu/global"]
         'nid: L0'
         for i in range(0, 4):
-            value1 = ft.create_var((32,), "int32", "gpu/warp")
-            value2 = ft.create_var((32,), "int32", "gpu/warp")
+            value1 = ft.empty((32,), "int32", "gpu/warp")
+            value2 = ft.empty((32,), "int32", "gpu/warp")
             'nid: L1'
             for j in range(0, 32):
                 value1[j] = x[i, j]

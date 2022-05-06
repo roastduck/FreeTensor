@@ -114,7 +114,7 @@ def max_pool(X,
         else:
             assert False, "auto_pad should be set if pads is not specified"
 
-    Y = core.create_var([
+    Y = core.empty([
         X.shape(0),
         X.shape(1),
         calc_out_size(X.shape(2), dilations[0], kernel_shape[0], pads[0],
@@ -152,7 +152,7 @@ def global_avg_pool(X):
 
     n_spatial_dim = 2  # Currently only 2-D convolution is supported (TODO)
 
-    Y = core.create_var([X.shape(0), X.shape(1)], X.dtype, X.mtype)
+    Y = core.empty([X.shape(0), X.shape(1)], X.dtype, X.mtype)
     'nid: recur'
     global_avg_pool_(X, Y)
     return Y

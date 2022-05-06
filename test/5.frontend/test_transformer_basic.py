@@ -79,7 +79,7 @@ def test_return_value_and_runtime_allocation():
     @ft.transform
     def test(x):
         x: ft.Var[(), "int32", "input", "cpu"]
-        y = ft.create_var((), "int32", "cpu")
+        y = ft.empty((), "int32", "cpu")
         y[()] = x[()] * 2 + 1
         return y
 
