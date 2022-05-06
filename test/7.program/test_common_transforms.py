@@ -1,6 +1,7 @@
 import freetensor as ft
 from freetensor import debug
 import numpy as np
+import pytest
 
 
 def test_tiling():
@@ -247,6 +248,7 @@ def test_dynamic_tiling():
     assert np.all(np.isclose(c_np, c_std))
 
 
+@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_collaborative_fetch():
     target = ft.GPU()
     device = ft.Device(target)

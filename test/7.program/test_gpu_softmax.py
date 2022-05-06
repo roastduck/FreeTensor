@@ -1,4 +1,5 @@
 import torch
+import pytest
 import numpy as np
 
 import freetensor as ft
@@ -9,6 +10,7 @@ target = ft.GPU()
 device = ft.Device(target)
 
 
+@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_manual_static():
     # softmax in BERT
     # shape = batch_size * #heads * seq_len * seq_len

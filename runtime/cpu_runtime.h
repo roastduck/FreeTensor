@@ -10,7 +10,7 @@
 
 #include <omp.h>
 
-#ifdef WITH_MKL
+#ifdef FT_WITH_MKL
 #include <mkl.h>
 #endif
 

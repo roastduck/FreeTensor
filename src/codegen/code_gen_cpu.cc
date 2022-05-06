@@ -8,7 +8,7 @@
 
 namespace freetensor {
 
-#ifdef WITH_MKL
+#ifdef FT_WITH_MKL
 
 static char genMKLTypeMark(DataType dtype) {
     switch (dtype) {
@@ -159,7 +159,7 @@ void CodeGenCPU::visit(const For &op) {
 }
 
 void CodeGenCPU::visit(const MatMul &op) {
-#ifdef WITH_MKL
+#ifdef FT_WITH_MKL
     makeIndent();
     if (inParallel_) {
         os() << "mkl_set_num_threads_local(1);" << std::endl;

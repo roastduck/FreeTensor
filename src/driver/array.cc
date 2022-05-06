@@ -1,8 +1,10 @@
 #include <cstring>
 
 #include <driver/array.h>
-#include <driver/gpu.h>
 #include <except.h>
+#ifdef FT_WITH_CUDA
+#include <driver/gpu.h>
+#endif
 
 namespace freetensor {
 
@@ -19,9 +21,11 @@ Array::Array(const std::vector<size_t> &shape, DataType dtype,
     case TargetType::CPU:
         ptr_ = new uint8_t[size_];
         break;
+#ifdef FT_WITH_CUDA
     case TargetType::GPU:
         checkCudaError(cudaMalloc(&ptr_, size_));
         break;
+#endif // FT_WITH_CUDA
     default:
         ASSERT(false);
     }
@@ -45,10 +49,14 @@ Array::~Array() {
             delete[] ptr_;
             ptr_ = nullptr;
             break;
+#ifdef FT_WITH_CUDA
         case TargetType::GPU:
             cudaFree(ptr_);
             ptr_ = nullptr;
             break;
+#endif // FT_WITH_CUDA
+        default:;
+            // Do nothing. We can't throw error in a destructor
         }
     }
 }
@@ -79,9 +87,11 @@ void Array::fromCPU(const void *other, size_t size) {
     case TargetType::CPU:
         memcpy(ptr_, other, size_);
         break;
+#ifdef FT_WITH_CUDA
     case TargetType::GPU:
         checkCudaError(cudaMemcpy(ptr_, other, size_, cudaMemcpyDefault));
         break;
+#endif // FT_WITH_CUDA
     default:
         ASSERT(false);
     }
@@ -94,9 +104,11 @@ void Array::toCPU(void *other, size_t size) {
     case TargetType::CPU:
         memcpy(other, ptr_, size_);
         break;
+#ifdef FT_WITH_CUDA
     case TargetType::GPU:
         checkCudaError(cudaMemcpy(other, ptr_, size_, cudaMemcpyDefault));
         break;
+#endif // FT_WITH_CUDA
     default:
         ASSERT(false);
     }

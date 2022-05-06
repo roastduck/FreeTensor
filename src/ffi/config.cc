@@ -9,6 +9,7 @@ void init_ffi_config(py::module_ &m) {
     Config::init();
 
     m.def("with_mkl", Config::withMKL);
+    m.def("with_cuda", Config::withCUDA);
     m.def("set_pretty_print", Config::setPrettyPrint, "flag"_a = true);
     m.def("pretty_print", Config::prettyPrint);
     m.def("set_print_all_id", Config::setPrintAllId, "flag"_a = true);

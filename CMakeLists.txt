@@ -5,7 +5,8 @@ include(ExternalProject)
 
 option(FT_DEBUG_LOG_NODE "Log where each AST node is created" OFF)
 option(FT_DEBUG_PROFILE "Profile some heavy functions in the compiler" OFF)
-option(WITH_MKL "Path to MKL (optional)" OFF)
+option(FT_WITH_CUDA "Build with CUDA (ON / OFF)" ON)
+option(FT_WITH_MKL "Build with MKL (Path to MKL / OFF)" OFF)
 
 set(DEFAULT_BUILD_TYPE "RelWithDebInfo")
 if(NOT CMAKE_BUILD_TYPE)
@@ -79,12 +80,15 @@ macro(ANTLR_TARGET Name InputFile)
 endmacro(ANTLR_TARGET)
 
 # CUDA
-find_package(CUDA REQUIRED)
+if(FT_WITH_CUDA)
+    find_package(CUDA REQUIRED)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFT_WITH_CUDA")
+endif()
 
 # THIS PROJECT
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
-if(WITH_MKL)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWITH_MKL=${WITH_MKL}")
+if(FT_WITH_MKL)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFT_WITH_MKL=${FT_WITH_MKL}")
 endif()
 if(FT_DEBUG_LOG_NODE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFT_DEBUG_LOG_NODE")

@@ -10,8 +10,10 @@
 #include <config.h>
 #include <debug.h>
 #include <driver.h>
-#include <driver/gpu.h>
 #include <except.h>
+#ifdef FT_WITH_CUDA
+#include <driver/gpu.h>
+#endif
 
 #define NAME_(macro) #macro
 #define NAME(macro) NAME_(macro)
@@ -67,17 +69,17 @@ void Driver::buildAndLoad() {
         cmd = "c++ -I" NAME(FT_RUNTIME_DIR) " -std=c++17 -shared -O3 -fPIC "
                                             "-Wall -fopenmp -ffast-math";
         cmd += " -o " + so + " " + cpp;
-#ifdef WITH_MKL
-        cmd += " -I\"" NAME(WITH_MKL) "/include\"";
+#ifdef FT_WITH_MKL
+        cmd += " -I\"" NAME(FT_WITH_MKL) "/include\"";
         cmd += " -Wl,--start-group";
-        cmd += " \"" NAME(WITH_MKL) "/lib/intel64/libmkl_intel_lp64.a\"";
-        cmd += " \"" NAME(WITH_MKL) "/lib/intel64/libmkl_gnu_thread.a\"";
-        cmd += " \"" NAME(WITH_MKL) "/lib/intel64/libmkl_core.a\"";
+        cmd += " \"" NAME(FT_WITH_MKL) "/lib/intel64/libmkl_intel_lp64.a\"";
+        cmd += " \"" NAME(FT_WITH_MKL) "/lib/intel64/libmkl_gnu_thread.a\"";
+        cmd += " \"" NAME(FT_WITH_MKL) "/lib/intel64/libmkl_core.a\"";
         cmd += " -Wl,--end-group";
-        cmd += " -DWITH_MKL=\"" NAME(WITH_MKL) "\"";
+        cmd += " -DFT_WITH_MKL=\"" NAME(FT_WITH_MKL) "\"";
         // Link statically, or there will be dlopen issues
         // Generated with MKL Link Line Advisor
-#endif
+#endif // FT_WITH_MKL
         if (dev_.target()->useNativeArch()) {
             cmd += " -march=native";
         }
@@ -85,6 +87,7 @@ void Driver::buildAndLoad() {
             cmd += " -g";
         }
         break;
+#ifdef FT_WITH_CUDA
     case TargetType::GPU:
         cmd = "nvcc -I" NAME(FT_RUNTIME_DIR) " -std=c++17 -shared -Xcompiler "
                                              "-fPIC,-Wall,-O3 --use_fast_math";
@@ -109,6 +112,7 @@ void Driver::buildAndLoad() {
             cmd += " -g";
         }
         break;
+#endif // FT_WITH_CUDA
     default:
         ASSERT(false);
     }
@@ -147,9 +151,11 @@ void Driver::buildAndLoad() {
     case TargetType::CPU:
         ctx_ = std::make_unique<CPUContext>();
         break;
+#ifdef FT_WITH_CUDA
     case TargetType::GPU:
         ctx_ = std::make_unique<GPUContext>();
         break;
+#endif // FT_WITH_CUDA
     default:
         ASSERT(false);
     }
@@ -219,19 +225,25 @@ double Driver::time(int rounds, int warmups) {
     for (int i = 0; i < warmups; i++) {
         run();
         switch (tgtType) {
+#ifdef FT_WITH_CUDA
         case TargetType::GPU:
             checkCudaError(cudaDeviceSynchronize());
+#endif // FT_WITH_CUDA
         default:;
         }
     }
     for (int i = 0; i < rounds; i++) {
+#ifdef FT_WITH_CUDA
         auto cudaErr = cudaSuccess;
+#endif // FT_WITH_CUDA
 
         auto beg = ch::high_resolution_clock::now();
         run();
         switch (tgtType) {
+#ifdef FT_WITH_CUDA
         case TargetType::GPU:
             cudaErr = cudaDeviceSynchronize();
+#endif // FT_WITH_CUDA
         default:;
         }
         auto end = ch::high_resolution_clock::now();
@@ -239,9 +251,11 @@ double Driver::time(int rounds, int warmups) {
             ch::duration_cast<ch::duration<double>>(end - beg).count() *
             1000; // ms
 
+#ifdef FT_WITH_CUDA
         if (cudaErr) {
             throw DriverError(cudaGetErrorString(cudaErr));
         }
+#endif // FT_WITH_CUDA
 
         tot += dur;
     }

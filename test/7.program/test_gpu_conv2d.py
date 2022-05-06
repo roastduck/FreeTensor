@@ -11,6 +11,7 @@ device = ft.Device(target)
 host = ft.Device(ft.CPU())
 
 
+@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_manual_static():
     # Matching http://tvm.apache.org/docs/tutorials/optimize/opt_conv_cuda.html
 
