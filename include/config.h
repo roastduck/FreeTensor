@@ -22,6 +22,7 @@ class Config {
     static void init(); /// Called in src/ffi/config.cc
 
     static std::string withMKL();
+    static bool withCUDA();
 
     static void setPrettyPrint(bool pretty = true) { prettyPrint_ = pretty; }
     static bool prettyPrint() { return prettyPrint_; }

@@ -9,7 +9,9 @@
 #include <func.h>
 
 #include <../runtime/cpu_context.h>
+#ifdef FT_WITH_CUDA
 #include <../runtime/gpu_context.h>
+#endif
 
 namespace freetensor {
 

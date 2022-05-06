@@ -1,10 +1,12 @@
 import freetensor as ft
 import numpy as np
+import pytest
 
 target = ft.GPU()
 device = ft.Device(target)
 
 
+@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_thread_bind():
     a = 128
     b = 128

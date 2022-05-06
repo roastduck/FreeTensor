@@ -2,11 +2,13 @@ import freetensor as ft
 import pytest
 import numpy as np
 
+if not ft.with_mkl():
+    pytest.skip("requires MKL", allow_module_level=True)
+
 target = ft.CPU()
 device = ft.Device(target)
 
 
-@pytest.mark.skipif(not ft.with_mkl(), reason="requires MKL")
 def test_mkl_basic():
 
     @ft.transform
@@ -40,7 +42,6 @@ def test_mkl_basic():
     assert np.all(np.isclose(c_result, c_np + a_np @ b_np))
 
 
-@pytest.mark.skipif(not ft.with_mkl(), reason="requires MKL")
 def test_mkl_reverse_idx():
 
     @ft.transform
@@ -74,7 +75,6 @@ def test_mkl_reverse_idx():
     assert np.all(np.isclose(c_result, c_np + a_np @ b_np))
 
 
-@pytest.mark.skipif(not ft.with_mkl(), reason="requires MKL")
 def test_mkl_trans_a():
 
     @ft.transform
@@ -107,7 +107,6 @@ def test_mkl_trans_a():
     assert np.all(np.isclose(c_result, c_np + a_np.transpose() @ b_np))
 
 
-@pytest.mark.skipif(not ft.with_mkl(), reason="requires MKL")
 def test_mkl_trans_b():
 
     @ft.transform
@@ -140,7 +139,6 @@ def test_mkl_trans_b():
     assert np.all(np.isclose(c_result, c_np + a_np @ b_np.transpose()))
 
 
-@pytest.mark.skipif(not ft.with_mkl(), reason="requires MKL")
 def test_mkl_trans_c():
 
     @ft.transform
@@ -173,7 +171,6 @@ def test_mkl_trans_c():
     assert np.all(np.isclose(c_result, c_np + (a_np @ b_np).transpose()))
 
 
-@pytest.mark.skipif(not ft.with_mkl(), reason="requires MKL")
 def test_mkl_batch():
 
     @ft.transform
@@ -207,7 +204,6 @@ def test_mkl_batch():
     assert np.all(np.isclose(c_result, c_np + a_np @ b_np))
 
 
-@pytest.mark.skipif(not ft.with_mkl(), reason="requires MKL")
 def test_mkl_splitted_dim():
 
     @ft.transform
@@ -243,7 +239,6 @@ def test_mkl_splitted_dim():
                    c_np + a_np.reshape(48, 64) @ b_np.reshape(64, 72)))
 
 
-@pytest.mark.skipif(not ft.with_mkl(), reason="requires MKL")
 def test_mkl_with_init():
 
     @ft.transform
@@ -277,7 +272,6 @@ def test_mkl_with_init():
     assert np.all(np.isclose(c_result, a_np @ b_np))
 
 
-@pytest.mark.skipif(not ft.with_mkl(), reason="requires MKL")
 def test_mkl_in_parallel():
 
     @ft.transform
@@ -314,7 +308,6 @@ def test_mkl_in_parallel():
     assert np.all(np.isclose(c_result, c_np + a_np @ b_np))
 
 
-@pytest.mark.skipif(not ft.with_mkl(), reason="requires MKL")
 def test_mkl_matrix_vector():
 
     @ft.transform
@@ -347,7 +340,6 @@ def test_mkl_matrix_vector():
     assert np.all(np.isclose(c_result, c_np + a_np @ b_np))
 
 
-@pytest.mark.skipif(not ft.with_mkl(), reason="requires MKL")
 def test_mkl_vector_matrix():
 
     @ft.transform
@@ -380,7 +372,6 @@ def test_mkl_vector_matrix():
     assert np.all(np.isclose(c_result, c_np + a_np @ b_np))
 
 
-@pytest.mark.skipif(not ft.with_mkl(), reason="requires MKL")
 def test_mkl_vardef_in_loop():
 
     @ft.transform

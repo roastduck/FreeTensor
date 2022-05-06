@@ -53,10 +53,18 @@ void Config::init() {
 }
 
 std::string Config::withMKL() {
-#ifdef WITH_MKL
-    return NAME(WITH_MKL);
+#ifdef FT_WITH_MKL
+    return NAME(FT_WITH_MKL);
 #else
     return "";
+#endif
+}
+
+bool Config::withCUDA() {
+#ifdef FT_WITH_CUDA
+    return true;
+#else
+    return false;
 #endif
 }
 
