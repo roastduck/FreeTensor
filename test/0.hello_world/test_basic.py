@@ -4,7 +4,7 @@ import pytest
 
 
 def test_hello_world():
-    with ft.VarDef("x", (4, 4), "float32", "output", "cpu") as x:
+    with ft.VarDef("x", (4, 4), "float32", "output") as x:
         x[2, 3] = 2.0
         x[1, 0] = 3.0
 
@@ -25,7 +25,7 @@ def test_hello_world():
 
 
 def test_hello_world_float64():
-    with ft.VarDef("x", (4, 4), "float64", "output", "cpu") as x:
+    with ft.VarDef("x", (4, 4), "float64", "output") as x:
         x[2, 3] = 2.0
         x[1, 0] = 3.0
 
@@ -46,7 +46,7 @@ def test_hello_world_float64():
 
 
 def test_hello_world_int64():
-    with ft.VarDef("x", (4, 4), "int64", "output", "cpu") as x:
+    with ft.VarDef("x", (4, 4), "int64", "output") as x:
         x[2, 3] = 2
         x[1, 0] = 3
 
@@ -67,7 +67,7 @@ def test_hello_world_int64():
 
 
 def test_hello_world_bool():
-    with ft.VarDef("x", (4, 4), "bool", "output", "cpu") as x:
+    with ft.VarDef("x", (4, 4), "bool", "output") as x:
         x[2, 3] = False
         x[1, 0] = True
 
@@ -88,8 +88,8 @@ def test_hello_world_bool():
 
 
 def test_scalar_op():
-    with ft.VarDef([("x", (), "int32", "input", "cpu"),
-                    ("y", (), "int32", "output", "cpu")]) as (x, y):
+    with ft.VarDef([("x", (), "int32", "input"),
+                    ("y", (), "int32", "output")]) as (x, y):
         y[()] = x[()] * 2 + 1
 
     func = ft.lower(ft.Func("main", ["x", "y"], [], ft.pop_ast()))
@@ -106,8 +106,8 @@ def test_scalar_op():
 
 
 def test_cast():
-    with ft.VarDef([("x", (), "float32", "input", "cpu"),
-                    ("y", (), "int32", "output", "cpu")]) as (x, y):
+    with ft.VarDef([("x", (), "float32", "input"),
+                    ("y", (), "int32", "output")]) as (x, y):
         y[()] = ft.cast(x[()], "int32") * 2
 
     func = ft.lower(ft.Func("main", ["x", "y"], [], ft.pop_ast()))
@@ -124,9 +124,8 @@ def test_cast():
 
 
 def test_real_div():
-    with ft.VarDef([("x1", (), "int32", "input", "cpu"),
-                    ("x2", (), "int32", "input", "cpu"),
-                    ("y", (), "float32", "output", "cpu")]) as (x1, x2, y):
+    with ft.VarDef([("x1", (), "int32", "input"), ("x2", (), "int32", "input"),
+                    ("y", (), "float32", "output")]) as (x1, x2, y):
         y[()] = x1[()] / x2[()]
 
     func = ft.lower(ft.Func("main", ["x1", "x2", "y"], [], ft.pop_ast()))
@@ -145,8 +144,8 @@ def test_real_div():
 
 
 def test_for():
-    with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
-                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+    with ft.VarDef([("x", (4,), "int32", "input"),
+                    ("y", (4,), "int32", "output")]) as (x, y):
         with ft.For("i", 0, 4) as i:
             y[i] = x[i] + 1
 
@@ -165,8 +164,8 @@ def test_for():
 
 
 def test_reversed_for():
-    with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
-                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+    with ft.VarDef([("x", (4,), "int32", "input"),
+                    ("y", (4,), "int32", "output")]) as (x, y):
         with ft.For("i", 3, -1, -1) as i:
             y[i] = x[i] + 1
 
@@ -185,7 +184,7 @@ def test_reversed_for():
 
 
 def test_if():
-    with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
+    with ft.VarDef("y", (4,), "int32", "output") as y:
         with ft.For("i", 0, 4) as i:
             with ft.If(i < 2):
                 y[i] = 0
@@ -205,9 +204,8 @@ def test_if():
 
 
 def test_bool_tensor_as_cond():
-    with ft.VarDef([("a", (4,), "bool", "input", "cpu"),
-                    ("b", (4,), "bool", "input", "cpu"),
-                    ("y", (4,), "int32", "output", "cpu")]) as (a, b, y):
+    with ft.VarDef([("a", (4,), "bool", "input"), ("b", (4,), "bool", "input"),
+                    ("y", (4,), "int32", "output")]) as (a, b, y):
         with ft.For("i", 0, 4) as i:
             y[i] = 1
             with ft.If(ft.l_and(a[i], b[i])):
@@ -230,9 +228,9 @@ def test_bool_tensor_as_cond():
 
 
 def test_var_as_shape():
-    with ft.VarDef("shape", (2,), "int32", "input", "cpu") as shape:
-        with ft.VarDef([("x", shape, "int32", "input", "cpu"),
-                        ("y", shape, "int32", "output", "cpu")]) as (x, y):
+    with ft.VarDef("shape", (2,), "int32", "input") as shape:
+        with ft.VarDef([("x", shape, "int32", "input"),
+                        ("y", shape, "int32", "output")]) as (x, y):
             with ft.For("i", 0, shape[0]) as i:
                 with ft.For("j", 0, shape[1]) as j:
                     y[i, j] = x[i, j] * 2
@@ -256,9 +254,9 @@ def test_var_as_shape():
 
 
 def test_var_as_index():
-    with ft.VarDef([("idx", (2,), "int32", "input", "cpu"),
-                    ("x", (4, 4), "int32", "input", "cpu"),
-                    ("y", (), "int32", "output", "cpu")]) as (idx, x, y):
+    with ft.VarDef([("idx", (2,), "int32", "input"),
+                    ("x", (4, 4), "int32", "input"),
+                    ("y", (), "int32", "output")]) as (idx, x, y):
         y[()] = x[idx]
 
     func = ft.lower(ft.Func("main", ["idx", "x", "y"], [], ft.pop_ast()))
@@ -280,7 +278,7 @@ def test_var_as_index():
 
 
 def test_error_missing_parameters():
-    with ft.VarDef("x", (4, 4), "float32", "output", "cpu") as x:
+    with ft.VarDef("x", (4, 4), "float32", "output") as x:
         x[2, 3] = 2.0
         x[1, 0] = 3.0
 
@@ -293,11 +291,11 @@ def test_error_missing_parameters():
 
 
 def test_inlined_invoke():
-    with ft.VarDef("y", (4,), "float32", "output", "cpu") as y:
+    with ft.VarDef("y", (4,), "float32", "output") as y:
         y[3] = 2.0
     g = ft.lower(ft.Func("g", ["y"], [], ft.pop_ast()))
 
-    with ft.VarDef("x", (4, 4), "float32", "output", "cpu") as x:
+    with ft.VarDef("x", (4, 4), "float32", "output") as x:
         ft.Invoke(g, x[2])
     f = ft.lower(ft.Func("f", ["x"], [], ft.pop_ast()))
 
@@ -317,7 +315,7 @@ def test_inlined_invoke():
 
 def test_error_modifying_input_tensor():
     with pytest.raises(ft.InvalidProgram):
-        with ft.VarDef("x", (4, 4), "float32", "input", "cpu") as x:
+        with ft.VarDef("x", (4, 4), "float32", "input") as x:
             x[2, 3] = 2.0
             x[1, 0] = 3.0
         func = ft.lower(ft.Func("main", ["x"], [], ft.pop_ast()))
@@ -325,10 +323,9 @@ def test_error_modifying_input_tensor():
 
 def test_error_modifying_shape_of_a_var_when_using_it():
     with pytest.raises(ft.InvalidProgram):
-        with ft.VarDef("n", (), "int32", "inout", "cpu") as n:
-            with ft.VarDef([("x", (n[()],), "float32", "input", "cpu"),
-                            ("y", (n[()],), "float32", "output", "cpu")
-                           ]) as (x, y):
+        with ft.VarDef("n", (), "int32", "inout") as n:
+            with ft.VarDef([("x", (n[()],), "float32", "input"),
+                            ("y", (n[()],), "float32", "output")]) as (x, y):
                 n[()] = 0  # Error
                 with ft.For("i", 0, n[()]) as i:
                     y[i] = x[i] + 1
@@ -337,10 +334,9 @@ def test_error_modifying_shape_of_a_var_when_using_it():
 
 def test_error_modifying_a_var_when_borrowed_as_a_slice():
     with pytest.raises(ft.InvalidProgram):
-        with ft.VarDef([("x", (10, 10), "float32", "input", "cpu"),
-                        ("y", (10,), "float32", "output", "cpu"),
-                        ("offset", (), "int32", "inout", "cpu")]) as (x, y,
-                                                                      offset):
+        with ft.VarDef([("x", (10, 10), "float32", "input"),
+                        ("y", (10,), "float32", "output"),
+                        ("offset", (), "int32", "inout")]) as (x, y, offset):
             x_slice = x[offset[()]]  # Borrow
             offset[()] = 0  # Error
             for i in range(10):
@@ -349,8 +345,8 @@ def test_error_modifying_a_var_when_borrowed_as_a_slice():
 
 
 def test_target_language_keyword_as_name():
-    with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
-                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+    with ft.VarDef([("x", (4,), "int32", "input"),
+                    ("y", (4,), "int32", "output")]) as (x, y):
         with ft.For("for", 0, 4) as i:
             y[i] = x[i] + 1
 

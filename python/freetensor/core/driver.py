@@ -11,11 +11,13 @@ class Target(ffi.Target):
     A target architecture
 
     A Target can be used as a "with" scope, then all the `lower`s and `codegen`s
-    will use it by default. E.g:
+    will use it by default. In this style, it also sets the default Device as the
+    0-th device of the given Target. E.g:
 
     ```
     with Target(...):
         ast = lower(ast)  # Use the Target above by default
+        a = Array(...)  # Use the 0-th device of the Target above by default
     ```
     '''
 
@@ -24,11 +26,14 @@ class Target(ffi.Target):
 
     def __enter__(self):
         self.old_target = config.default_target()
+        self.old_device = config.default_device()
         config.set_default_target(self)
+        config.set_default_device(Device(self, 0))
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
         config.set_default_target(self.old_target)
+        config.set_default_device(self.old_device)
 
 
 class Device(ffi.Device):

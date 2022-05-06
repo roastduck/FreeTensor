@@ -311,11 +311,11 @@ class VarCreator(StagedAssignable):
                     self.mtype))
 
 
-def empty_staging(shape, dtype, mtype):
+def empty_staging(shape, dtype, mtype=None):
     return VarCreator(shape, dtype, mtype)
 
 
-def empty_fallback(shape, dtype, mtype):
+def empty_fallback(shape, dtype, mtype=None):
     return np.zeros(shape, dtype)
 
 
@@ -358,11 +358,11 @@ class PredefinedVarCreator(VarCreator):
         return var
 
 
-def var_staging(initializer, dtype, mtype):
+def var_staging(initializer, dtype, mtype=None):
     return PredefinedVarCreator(initializer, dtype, mtype)
 
 
-def var_fallback(initializer, dtype, mtype):
+def var_fallback(initializer, dtype, mtype=None):
     return np.array(initializer, dtype=dtype)
 
 
@@ -386,7 +386,23 @@ capture_var = staged_callable(capture_var_staging, capture_var_fallback)
 
 class Var(StagedTypeAnnotation):
 
-    def __init__(self, shape, dtype, atype, mtype):
+    def __init__(self, shape, dtype, atype, mtype=None):
+        '''
+        Declare a variable
+
+        Parameters
+        ----------
+        name : str
+            Name of the variable
+        shape : Sequence[Expr] or Var
+            Shape of the variable. A variable can be created using a literal shape,
+            or another fixed-length VarRef as a shape
+        dtype : str or DataType
+            Data type of the variable
+        mtype : str or MemType (Optional)
+            Memory type of the variable. If omitted, the main memory type of the
+            default Target in config will be used
+        '''
         self.shape, self.dtype, self.atype, self.mtype = shape, dtype, atype, mtype
 
     def annotate(self, name: str) -> VarRef:
