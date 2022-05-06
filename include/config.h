@@ -3,12 +3,16 @@
 
 #include <string>
 
+#include <ref.h>
+
 namespace freetensor {
+
+class Device;
 
 /**
  * Global configurations
  *
- * All writable options can be set by environment variables
+ * All writable options with simple types can be set by environment variables
  */
 class Config {
     static bool prettyPrint_; /// Env FT_PRETTY_PRINT
@@ -17,6 +21,9 @@ class Config {
     static bool
         debugBinary_; /// Compile with `-g` at backend. Do not delete the binary
                       /// file after loaded. Env FT_DEBUG_BINARY
+    static Ref<Device>
+        defaultDevice_; /// Used to create Array and Driver when
+                        /// device is omitted. Initialized to a CPU Device
 
   public:
     static void init(); /// Called in src/ffi/config.cc
@@ -35,6 +42,11 @@ class Config {
 
     static void setDebugBinary(bool flag = true) { debugBinary_ = flag; }
     static bool debugBinary() { return debugBinary_; }
+
+    static void setDefaultDevice(const Ref<Device> &dev) {
+        defaultDevice_ = dev;
+    }
+    static Ref<Device> defaultDevice() { return defaultDevice_; }
 };
 
 } // namespace freetensor

@@ -1,5 +1,6 @@
 #include <cstring>
 
+#include <config.h>
 #include <driver/array.h>
 #include <except.h>
 #ifdef FT_WITH_CUDA
@@ -9,7 +10,7 @@
 namespace freetensor {
 
 Array::Array(const std::vector<size_t> &shape, DataType dtype,
-             const Device &device)
+             const Ref<Device> &device)
     : shape_(shape), dtype_(dtype), device_(device) {
     nElem_ = 1;
     for (size_t dim : shape_) {
@@ -17,7 +18,7 @@ Array::Array(const std::vector<size_t> &shape, DataType dtype,
     }
     size_ = nElem_ * sizeOf(dtype_);
 
-    switch (device_.type()) {
+    switch (device_->type()) {
     case TargetType::CPU:
         ptr_ = new uint8_t[size_];
         break;
@@ -31,9 +32,12 @@ Array::Array(const std::vector<size_t> &shape, DataType dtype,
     }
 }
 
+Array::Array(const std::vector<size_t> &shape, DataType dtype)
+    : Array(shape, dtype, Config::defaultDevice()) {}
+
 // Move from raw pointer. Use with cautious
 Array::Array(void *ptr, const std::vector<size_t> &shape, DataType dtype,
-             const Device &device)
+             const Ref<Device> &device)
     : ptr_((uint8_t *)ptr), shape_(shape), dtype_(dtype), device_(device) {
     nElem_ = 1;
     for (size_t dim : shape_) {
@@ -44,7 +48,7 @@ Array::Array(void *ptr, const std::vector<size_t> &shape, DataType dtype,
 
 Array::~Array() {
     if (ptr_ != nullptr) {
-        switch (device_.type()) {
+        switch (device_->type()) {
         case TargetType::CPU:
             delete[] ptr_;
             ptr_ = nullptr;
@@ -83,7 +87,7 @@ Array &Array::operator=(Array &&other) {
 void Array::fromCPU(const void *other, size_t size) {
     ASSERT(size == size_);
     ASSERT(ptr_ != nullptr);
-    switch (device_.type()) {
+    switch (device_->type()) {
     case TargetType::CPU:
         memcpy(ptr_, other, size_);
         break;
@@ -100,7 +104,7 @@ void Array::fromCPU(const void *other, size_t size) {
 void Array::toCPU(void *other, size_t size) {
     ASSERT(size == size_);
     ASSERT(ptr_ != nullptr);
-    switch (device_.type()) {
+    switch (device_->type()) {
     case TargetType::CPU:
         memcpy(other, ptr_, size_);
         break;

@@ -14,8 +14,8 @@ def test_hello_world():
     print(code)
 
     x_np = np.zeros((4, 4), dtype="float32")
-    x_arr = ft.Array(x_np, ft.Device(ft.CPU()))
-    ft.Driver(func, code, ft.Device(ft.CPU()))(x=x_arr)
+    x_arr = ft.Array(x_np)
+    ft.Driver(func, code)(x=x_arr)
     x_np = x_arr.numpy()
 
     x_std = np.zeros((4, 4), dtype="float32")
@@ -35,8 +35,8 @@ def test_hello_world_float64():
     print(code)
 
     x_np = np.zeros((4, 4), dtype="float64")
-    x_arr = ft.Array(x_np, ft.Device(ft.CPU()))
-    ft.Driver(func, code, ft.Device(ft.CPU()))(x=x_arr)
+    x_arr = ft.Array(x_np)
+    ft.Driver(func, code)(x=x_arr)
     x_np = x_arr.numpy()
 
     x_std = np.zeros((4, 4), dtype="float64")
@@ -56,8 +56,8 @@ def test_hello_world_int64():
     print(code)
 
     x_np = np.zeros((4, 4), dtype="int64")
-    x_arr = ft.Array(x_np, ft.Device(ft.CPU()))
-    ft.Driver(func, code, ft.Device(ft.CPU()))(x=x_arr)
+    x_arr = ft.Array(x_np)
+    ft.Driver(func, code)(x=x_arr)
     x_np = x_arr.numpy()
 
     x_std = np.zeros((4, 4), dtype="int64")
@@ -77,8 +77,8 @@ def test_hello_world_bool():
     print(code)
 
     x_np = np.zeros((4, 4), dtype="bool")
-    x_arr = ft.Array(x_np, ft.Device(ft.CPU()))
-    ft.Driver(func, code, ft.Device(ft.CPU()))(x=x_arr)
+    x_arr = ft.Array(x_np)
+    ft.Driver(func, code)(x=x_arr)
     x_np = x_arr.numpy()
 
     x_std = np.zeros((4, 4), dtype="bool")
@@ -97,9 +97,9 @@ def test_scalar_op():
     print(code)
     x_np = np.array(5, dtype="int32")
     y_np = np.array(0, dtype="int32")
-    x_arr = ft.Array(x_np, ft.Device(ft.CPU()))
-    y_arr = ft.Array(y_np, ft.Device(ft.CPU()))
-    ft.Driver(func, code, ft.Device(ft.CPU()))(x=x_arr, y=y_arr)
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
+    ft.Driver(func, code)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     assert y_np[()] == 11
@@ -115,9 +115,9 @@ def test_cast():
     print(code)
     x_np = np.array(2.5, dtype="float32")
     y_np = np.array(0, dtype="int32")
-    x_arr = ft.Array(x_np, ft.Device(ft.CPU()))
-    y_arr = ft.Array(y_np, ft.Device(ft.CPU()))
-    ft.Driver(func, code, ft.Device(ft.CPU()))(x=x_arr, y=y_arr)
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
+    ft.Driver(func, code)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     assert y_np[()] == 4
@@ -136,10 +136,10 @@ def test_real_div():
     x1_np = np.array(5, dtype="int32")
     x2_np = np.array(2, dtype="int32")
     y_np = np.array(0, dtype="float32")
-    x1_arr = ft.Array(x1_np, ft.Device(ft.CPU()))
-    x2_arr = ft.Array(x2_np, ft.Device(ft.CPU()))
-    y_arr = ft.Array(y_np, ft.Device(ft.CPU()))
-    ft.Driver(func, code, ft.Device(ft.CPU()))(x1=x1_arr, x2=x2_arr, y=y_arr)
+    x1_arr = ft.Array(x1_np)
+    x2_arr = ft.Array(x2_np)
+    y_arr = ft.Array(y_np)
+    ft.Driver(func, code)(x1=x1_arr, x2=x2_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     assert y_np[()] == 2.5
@@ -156,9 +156,9 @@ def test_for():
     print(code)
     x_np = np.array([1, 2, 3, 4], dtype="int32")
     y_np = np.zeros((4,), dtype="int32")
-    x_arr = ft.Array(x_np, ft.Device(ft.CPU()))
-    y_arr = ft.Array(y_np, ft.Device(ft.CPU()))
-    ft.Driver(func, code, ft.Device(ft.CPU()))(x=x_arr, y=y_arr)
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
+    ft.Driver(func, code)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.array([2, 3, 4, 5], dtype="int32")
@@ -176,9 +176,9 @@ def test_reversed_for():
     print(code)
     x_np = np.array([1, 2, 3, 4], dtype="int32")
     y_np = np.zeros((4,), dtype="int32")
-    x_arr = ft.Array(x_np, ft.Device(ft.CPU()))
-    y_arr = ft.Array(y_np, ft.Device(ft.CPU()))
-    ft.Driver(func, code, ft.Device(ft.CPU()))(x=x_arr, y=y_arr)
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
+    ft.Driver(func, code)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.array([2, 3, 4, 5], dtype="int32")
@@ -197,8 +197,8 @@ def test_if():
     code = ft.codegen(func, ft.CPU())
     print(code)
     y_np = np.zeros((4,), dtype="int32")
-    y_arr = ft.Array(y_np, ft.Device(ft.CPU()))
-    ft.Driver(func, code, ft.Device(ft.CPU()))(y=y_arr)
+    y_arr = ft.Array(y_np)
+    ft.Driver(func, code)(y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.array([0, 0, 1, 1], dtype="int32")
@@ -219,12 +219,12 @@ def test_bool_tensor_as_cond():
     code = ft.codegen(func, ft.CPU())
     print(code)
     a_np = np.array([False, False, True, True], dtype="bool")
-    a_arr = ft.Array(a_np, ft.Device(ft.CPU()))
+    a_arr = ft.Array(a_np)
     b_np = np.array([False, True, False, True], dtype="bool")
-    b_arr = ft.Array(b_np, ft.Device(ft.CPU()))
+    b_arr = ft.Array(b_np)
     y_np = np.zeros((4,), dtype="int32")
-    y_arr = ft.Array(y_np, ft.Device(ft.CPU()))
-    ft.Driver(func, code, ft.Device(ft.CPU()))(a=a_arr, b=b_arr, y=y_arr)
+    y_arr = ft.Array(y_np)
+    ft.Driver(func, code)(a=a_arr, b=b_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.array([1, 1, 1, 2], dtype="int32")
@@ -246,14 +246,12 @@ def test_var_as_shape():
     code = ft.codegen(func, ft.CPU())
     print(code)
     shape_np = np.array([4, 4]).astype("int32")
-    shape_arr = ft.Array(shape_np, ft.Device(ft.CPU()))
+    shape_arr = ft.Array(shape_np)
     x_np = np.random.randint(0, 100, (4, 4)).astype("int32")
-    x_arr = ft.Array(x_np, ft.Device(ft.CPU()))
+    x_arr = ft.Array(x_np)
     y_np = np.zeros((4, 4), dtype="int32")
-    y_arr = ft.Array(y_np, ft.Device(ft.CPU()))
-    ft.Driver(func, code, ft.Device(ft.CPU()))(shape=shape_arr,
-                                               x=x_arr,
-                                               y=y_arr)
+    y_arr = ft.Array(y_np)
+    ft.Driver(func, code)(shape=shape_arr, x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = x_np * 2
@@ -273,12 +271,12 @@ def test_var_as_index():
     code = ft.codegen(func, ft.CPU())
     print(code)
     idx_np = np.array([1, 2]).astype("int32")
-    idx_arr = ft.Array(idx_np, ft.Device(ft.CPU()))
+    idx_arr = ft.Array(idx_np)
     x_np = np.random.randint(0, 100, (4, 4)).astype("int32")
-    x_arr = ft.Array(x_np, ft.Device(ft.CPU()))
+    x_arr = ft.Array(x_np)
     y_np = np.array(0, dtype="int32")
-    y_arr = ft.Array(y_np, ft.Device(ft.CPU()))
-    ft.Driver(func, code, ft.Device(ft.CPU()))(idx=idx_arr, x=x_arr, y=y_arr)
+    y_arr = ft.Array(y_np)
+    ft.Driver(func, code)(idx=idx_arr, x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = x_np[1, 2]
@@ -293,7 +291,7 @@ def test_error_missing_parameters():
     func = ft.lower(ft.Func("main", ["x"], [], ft.pop_ast()), ft.CPU())
     code = ft.codegen(func, ft.CPU())
 
-    driver = ft.Driver(func, code, ft.Device(ft.CPU()))
+    driver = ft.Driver(func, code)
     with pytest.raises(ft.DriverError):
         driver()
 
@@ -312,8 +310,8 @@ def test_inlined_invoke():
     print(code)
 
     x_np = np.zeros((4, 4), dtype="float32")
-    x_arr = ft.Array(x_np, ft.Device(ft.CPU()))
-    ft.Driver(f, code, ft.Device(ft.CPU()))(x=x_arr)
+    x_arr = ft.Array(x_np)
+    ft.Driver(f, code)(x=x_arr)
     x_np = x_arr.numpy()
 
     x_std = np.zeros((4, 4), dtype="float32")
@@ -367,9 +365,9 @@ def test_target_language_keyword_as_name():
     print(code)
     x_np = np.array([1, 2, 3, 4], dtype="int32")
     y_np = np.zeros((4,), dtype="int32")
-    x_arr = ft.Array(x_np, ft.Device(ft.CPU()))
-    y_arr = ft.Array(y_np, ft.Device(ft.CPU()))
-    ft.Driver(func, code, ft.Device(ft.CPU()))(x=x_arr, y=y_arr)
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
+    ft.Driver(func, code)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.array([2, 3, 4, 5], dtype="int32")

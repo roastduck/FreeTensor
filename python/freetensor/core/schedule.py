@@ -147,7 +147,7 @@ class Schedule(ffi.Schedule):
         loop0 : str, ID or Stmt
             The leading loop
         loop1 : str, ID or Stmt, Optional
-            The following loop. If ommited, it will try to find a following loop
+            The following loop. If omitted, it will try to find a following loop
             of `loop0`
         strict : bool
             False by default. If set to True, throw an error if unable to determine whether the two loops

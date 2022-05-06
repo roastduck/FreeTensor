@@ -14,15 +14,28 @@ class Array {
     size_t size_ = 0, nElem_ = 0;
     std::vector<size_t> shape_;
     DataType dtype_;
-    Device device_;
+    Ref<Device> device_;
 
   public:
+    /**
+     * Intialize an array on a specific device
+     *
+     * @param shape : Length of each dimensions of the array
+     * @param dtype : Data type of the array
+     * @param device : Device that holds the array. If omitted, use the default
+     * one set in Config
+     * @{
+     */
     Array(const std::vector<size_t> &shape, DataType dtype,
-          const Device &device);
+          const Ref<Device> &device);
+    Array(const std::vector<size_t> &shape, DataType dtype);
+    /** @} */
 
-    // Move from raw pointer. Use with cautious
+    /**
+     * Move from raw pointer. Use with cautious
+     */
     Array(void *ptr, const std::vector<size_t> &shape, DataType dtype,
-          const Device &device);
+          const Ref<Device> &device);
 
     ~Array();
 
@@ -36,7 +49,7 @@ class Array {
     size_t nElem() const { return nElem_; }
     const std::vector<size_t> &shape() const { return shape_; }
     DataType dtype() const { return dtype_; }
-    const Device &device() const { return device_; }
+    const Ref<Device> &device() const { return device_; }
 
     void fromCPU(const void *other, size_t size);
     void toCPU(void *other, size_t size);

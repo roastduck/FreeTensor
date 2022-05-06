@@ -25,7 +25,7 @@ constexpr double INIT_RAND_RATIO = 0.7;
 class AutoSchedule {
     Schedule original_;
     Ref<Target> target_;
-    Device device_;
+    Ref<Device> device_;
     size_t measuredSize_;
     std::vector<Ref<Sketch>> baseSketches_;
     std::vector<Ref<Array>> args_;
@@ -44,7 +44,7 @@ class AutoSchedule {
 
   public:
     AutoSchedule(const Schedule &schedule, const Ref<Target> &target,
-                 const Device &device, int measuredSize,
+                 const Ref<Device> &device, int measuredSize,
                  py::function predictFunc, py::function updateFunc);
 
     size_t measuredSize() const { return measuredSize_; }

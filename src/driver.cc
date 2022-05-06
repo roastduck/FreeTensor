@@ -20,7 +20,7 @@
 
 namespace freetensor {
 
-Driver::Driver(const Func &f, const std::string &src, const Device &dev)
+Driver::Driver(const Func &f, const std::string &src, const Ref<Device> &dev)
     : f_(f), src_(src), params_(f->params_.size(), nullptr),
       returns_(f->returns_.size(), nullptr),
       retShapes_(f->returns_.size(), nullptr), retDims_(f->returns_.size(), 0),
@@ -33,6 +33,9 @@ Driver::Driver(const Func &f, const std::string &src, const Device &dev)
     buildAndLoad();
 }
 
+Driver::Driver(const Func &f, const std::string &src)
+    : Driver(f, src, Config::defaultDevice()) {}
+
 void Driver::buildAndLoad() {
     std::string home = getenv("HOME");
     mkdir((home + "/.freetensor").c_str(), 0755);
@@ -44,7 +47,7 @@ void Driver::buildAndLoad() {
     ASSERT(mkdtempPtr != nullptr);
 
     std::string srcSuffix;
-    switch (dev_.type()) {
+    switch (dev_->type()) {
     case TargetType::CPU:
         srcSuffix = ".cpp";
         break;
@@ -64,7 +67,7 @@ void Driver::buildAndLoad() {
     std::string cmd;
     // We enable fast-math because our own transformations do not preserve
     // strict floating point rounding order either
-    switch (dev_.type()) {
+    switch (dev_->type()) {
     case TargetType::CPU:
         cmd = "c++ -I" NAME(FT_RUNTIME_DIR) " -std=c++17 -shared -O3 -fPIC "
                                             "-Wall -fopenmp -ffast-math";
@@ -80,7 +83,7 @@ void Driver::buildAndLoad() {
         // Link statically, or there will be dlopen issues
         // Generated with MKL Link Line Advisor
 #endif // FT_WITH_MKL
-        if (dev_.target()->useNativeArch()) {
+        if (dev_->target()->useNativeArch()) {
             cmd += " -march=native";
         }
         if (Config::debugBinary()) {
@@ -93,16 +96,16 @@ void Driver::buildAndLoad() {
                                              "-fPIC,-Wall,-O3 --use_fast_math";
         cmd += " -o " + so + " " + cpp;
         cmd += " -lcublas";
-        if (auto arch = dev_.target().as<GPU>()->computeCapability();
+        if (auto arch = dev_->target().as<GPU>()->computeCapability();
             arch.isValid()) {
             cmd += " -arch sm_" + std::to_string(arch->first) +
                    std::to_string(arch->second);
-        } else if (dev_.target()->useNativeArch()) {
+        } else if (dev_->target()->useNativeArch()) {
             int major, minor;
             checkCudaError(cudaDeviceGetAttribute(
-                &major, cudaDevAttrComputeCapabilityMajor, dev_.num()));
+                &major, cudaDevAttrComputeCapabilityMajor, dev_->num()));
             checkCudaError(cudaDeviceGetAttribute(
-                &minor, cudaDevAttrComputeCapabilityMinor, dev_.num()));
+                &minor, cudaDevAttrComputeCapabilityMinor, dev_->num()));
             cmd += " -arch sm_" + std::to_string(major) + std::to_string(minor);
         } else {
             WARNING("GPU arch not specified, which may result in suboptimal "
@@ -147,7 +150,7 @@ void Driver::buildAndLoad() {
                 path);
     }
 
-    switch (dev_.type()) {
+    switch (dev_->type()) {
     case TargetType::CPU:
         ctx_ = std::make_unique<CPUContext>();
         break;
@@ -193,7 +196,7 @@ void Driver::run() {
           ctx_.get());
 }
 
-void Driver::sync() { dev_.sync(); }
+void Driver::sync() { dev_->sync(); }
 
 std::vector<Ref<Array>> Driver::collectReturns() {
     std::vector<Ref<Array>> ret;
@@ -221,7 +224,7 @@ double Driver::time(int rounds, int warmups) {
     namespace ch = std::chrono;
 
     double tot = 0;
-    auto tgtType = dev_.type();
+    auto tgtType = dev_->type();
     for (int i = 0; i < warmups; i++) {
         run();
         switch (tgtType) {

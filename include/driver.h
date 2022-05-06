@@ -27,7 +27,7 @@ class Driver {
     std::vector<size_t *> retShapes_;
     std::vector<size_t> retDims_;
     std::unordered_map<std::string, size_t> name2param_;
-    Device dev_;
+    Ref<Device> dev_;
 
     std::unique_ptr<Context> ctx_;
 
@@ -35,7 +35,20 @@ class Driver {
     void buildAndLoad();
 
   public:
-    Driver(const Func &func, const std::string &src, const Device &dev);
+    /**
+     * Compile a program using a backend compiler and load it into memory
+     *
+     * @param func : AST of the function, where the function signature is needed
+     * to determine the parameters and return values
+     * @param src : Native code generated from codegen
+     * @param dev : The device to run the program. If omitted, use the default
+     * device in Config
+     * @{
+     */
+    Driver(const Func &func, const std::string &src, const Ref<Device> &dev);
+    Driver(const Func &func, const std::string &src);
+    /** @} */
+
     ~Driver() {
         for (void *retVal : returns_) {
             if (retVal != nullptr) {

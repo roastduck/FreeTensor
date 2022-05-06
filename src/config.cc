@@ -4,6 +4,7 @@
 #include <unistd.h>
 
 #include <config.h>
+#include <driver/device.h>
 #include <except.h>
 #include <opt.h>
 
@@ -34,6 +35,7 @@ bool Config::prettyPrint_ = false;
 bool Config::printAllId_ = false;
 bool Config::werror_ = false;
 bool Config::debugBinary_ = false;
+Ref<Device> Config::defaultDevice_;
 
 void Config::init() {
     Config::setPrettyPrint(isatty(fileno(stdout)));
@@ -50,6 +52,7 @@ void Config::init() {
     if (auto flag = getBoolEnv("FT_DEBUG_BINARY"); flag.isValid()) {
         Config::setDebugBinary(*flag);
     }
+    Config::setDefaultDevice(Ref<Device>::make(Ref<CPU>::make()));
 }
 
 std::string Config::withMKL() {

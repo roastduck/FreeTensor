@@ -6,6 +6,12 @@
 
 namespace freetensor {
 
+/**
+ * A computing device of a Target
+ *
+ * E.g. suppose GPU() is a Target, then Device(GPU(), 0) means the 0-th GPU
+ * device
+ */
 class Device {
     Ref<Target> target_;
     size_t num_;

@@ -45,48 +45,38 @@ void init_ffi_driver(py::module_ &m) {
     // We can't export .compute_capability() to Python due to an issue in
     // PyBind11
 
-    py::class_<Device>(m, "Device")
+    py::class_<Device, Ref<Device>>(m, "Device")
         .def(py::init<const Ref<Target> &, size_t>(), "target"_a, "num"_a = 0)
         .def("target", &Device::target)
         .def("main_mem_type", &Device::mainMemType)
         .def("sync", &Device::sync);
 
+#define INIT_FROM_NUMPY_DEV(nativeType, dtype)                                 \
+    py::init([](py::array_t<nativeType, py::array::c_style> &np,               \
+                const Ref<Device> &device) {                                   \
+        std::vector<size_t> shape(np.shape(), np.shape() + np.ndim());         \
+        Array arr(shape, dtype, device);                                       \
+        arr.fromCPU(np.unchecked().data(), np.nbytes());                       \
+        return arr;                                                            \
+    })
+#define INIT_FROM_NUMPY(nativeType, dtype)                                     \
+    py::init([](py::array_t<nativeType, py::array::c_style> &np) {             \
+        std::vector<size_t> shape(np.shape(), np.shape() + np.ndim());         \
+        Array arr(shape, dtype);                                               \
+        arr.fromCPU(np.unchecked().data(), np.nbytes());                       \
+        return arr;                                                            \
+    })
     py::class_<Array, Ref<Array>>(m, "Array")
-        .def(py::init([](py::array_t<double, py::array::c_style> &np,
-                         const Device &device) {
-            std::vector<size_t> shape(np.shape(), np.shape() + np.ndim());
-            Array arr(shape, DataType::Float64, device);
-            arr.fromCPU(np.unchecked().data(), np.nbytes());
-            return arr;
-        }))
-        .def(py::init([](py::array_t<float, py::array::c_style> &np,
-                         const Device &device) {
-            std::vector<size_t> shape(np.shape(), np.shape() + np.ndim());
-            Array arr(shape, DataType::Float32, device);
-            arr.fromCPU(np.unchecked().data(), np.nbytes());
-            return arr;
-        }))
-        .def(py::init([](py::array_t<int64_t, py::array::c_style> &np,
-                         const Device &device) {
-            std::vector<size_t> shape(np.shape(), np.shape() + np.ndim());
-            Array arr(shape, DataType::Int64, device);
-            arr.fromCPU(np.unchecked().data(), np.nbytes());
-            return arr;
-        }))
-        .def(py::init([](py::array_t<int32_t, py::array::c_style> &np,
-                         const Device &device) {
-            std::vector<size_t> shape(np.shape(), np.shape() + np.ndim());
-            Array arr(shape, DataType::Int32, device);
-            arr.fromCPU(np.unchecked().data(), np.nbytes());
-            return arr;
-        }))
-        .def(py::init([](py::array_t<bool, py::array::c_style> &np,
-                         const Device &device) {
-            std::vector<size_t> shape(np.shape(), np.shape() + np.ndim());
-            Array arr(shape, DataType::Bool, device);
-            arr.fromCPU(np.unchecked().data(), np.nbytes());
-            return arr;
-        }))
+        .def(INIT_FROM_NUMPY_DEV(double, DataType::Float64))
+        .def(INIT_FROM_NUMPY_DEV(float, DataType::Float32))
+        .def(INIT_FROM_NUMPY_DEV(int64_t, DataType::Int64))
+        .def(INIT_FROM_NUMPY_DEV(int32_t, DataType::Int32))
+        .def(INIT_FROM_NUMPY_DEV(bool, DataType::Bool))
+        .def(INIT_FROM_NUMPY(double, DataType::Float64))
+        .def(INIT_FROM_NUMPY(float, DataType::Float32))
+        .def(INIT_FROM_NUMPY(int64_t, DataType::Int64))
+        .def(INIT_FROM_NUMPY(int32_t, DataType::Int32))
+        .def(INIT_FROM_NUMPY(bool, DataType::Bool))
         .def("numpy",
              [](Array &arr) -> py::object {
                  switch (arr.dtype()) {
@@ -127,9 +117,11 @@ void init_ffi_driver(py::module_ &m) {
         .def_property_readonly("shape", &Array::shape)
         .def_property_readonly("dtype", &Array::dtype)
         .def_property_readonly("device", &Array::device);
+    py::implicitly_convertible<py::array, Array>();
 
     py::class_<Driver, Ref<Driver>>(m, "Driver")
-        .def(py::init<const Func &, const std::string &, const Device &>())
+        .def(py::init<const Func &, const std::string &, const Ref<Device> &>())
+        .def(py::init<const Func &, const std::string &>())
         .def("set_params",
              static_cast<void (Driver::*)(
                  const std::vector<Ref<Array>> &,

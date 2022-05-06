@@ -175,7 +175,7 @@ class Schedule {
      * fused loop
      *
      * @param loop0 : ID of the leading loop
-     * @param loop1 : ID of the following loop. If ommited, it will try to find
+     * @param loop1 : ID of the following loop. If omitted, it will try to find
      * a following loop of `loop0`
      * @param strict : If true, throw an error if unable to determine whether
      * the two loops are of the same length
