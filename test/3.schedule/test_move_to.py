@@ -322,7 +322,7 @@ def test_crossing_var_def():
     s.move_to("S1", ft.MoveToSide.Before, dst)
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
+    ast = ft.lower(ast, skip_passes=["prop_one_time_use"])
     print(ast)
 
     with ft.VarDef([
