@@ -33,26 +33,20 @@ def test_manual_static():
     s = ft.Schedule(f)
 
     # L_head
-    L_head = s.fuse("softmax->max->impl->recur->init->recur->L",
-                    "softmax->max->impl->recur->reduce->recur->L")
-    L_head = s.fuse(L_head, "softmax->sub->recur->recur->L_elem")
-    L_head = s.fuse(L_head, "softmax->exp->recur->recur->L_elem")
-    L_head = s.fuse(L_head, "softmax->sum->recur->init->recur->L")
-    L_head = s.fuse(L_head, "softmax->sum->recur->reduce->recur->L")
-    L_head = s.fuse(L_head, "softmax->div->recur->L_elem")
+    L_head = s.fuse("softmax->max->impl->recur->init->recur->L")
+    L_head = s.fuse(L_head)
+    L_head = s.fuse(L_head)
+    L_head = s.fuse(L_head)
+    L_head = s.fuse(L_head)
+    L_head = s.fuse(L_head)
 
     # L_seq_outer
-    L_seq_outer = s.fuse("softmax->max->impl->recur->init->recur->recur->L",
-                         "softmax->max->impl->recur->reduce->recur->recur->L")
-    L_seq_outer = s.fuse(L_seq_outer,
-                         "softmax->sub->recur->recur->recur->L_elem")
-    L_seq_outer = s.fuse(L_seq_outer,
-                         "softmax->exp->recur->recur->recur->L_elem")
-    L_seq_outer = s.fuse(L_seq_outer,
-                         "softmax->sum->recur->init->recur->recur->L")
-    L_seq_outer = s.fuse(L_seq_outer,
-                         "softmax->sum->recur->reduce->recur->recur->L")
-    L_seq_outer = s.fuse(L_seq_outer, "softmax->div->recur->recur->L_elem")
+    L_seq_outer = s.fuse("softmax->max->impl->recur->init->recur->recur->L")
+    L_seq_outer = s.fuse(L_seq_outer)
+    L_seq_outer = s.fuse(L_seq_outer)
+    L_seq_outer = s.fuse(L_seq_outer)
+    L_seq_outer = s.fuse(L_seq_outer)
+    L_seq_outer = s.fuse(L_seq_outer)
 
     # ----------------
 

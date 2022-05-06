@@ -45,9 +45,9 @@ Schedule::findAll(const std::function<bool(const Stmt &)> &filter) const {
 Stmt Schedule::find(const std::function<bool(const Stmt &)> &filter) const {
     auto ret = findStmt(ast_, filter);
     if (ret.size() != 1) {
-        throw Error("find: There is " + std::to_string(ret.size()) +
-                    " nodes matching the given condition. "
-                    "Consider using findAll");
+        throw InvalidSchedule("find: There is " + std::to_string(ret.size()) +
+                              " nodes matching the given condition. "
+                              "Consider using findAll");
     }
     return ret[0];
 }
@@ -118,6 +118,65 @@ ID Schedule::fuse(const ID &loop0, const ID &loop1, bool strict) {
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
     }
+}
+
+ID Schedule::fuse(const ID &loop0, bool strict) {
+    ast_ = flattenStmtSeq(ast_);
+    auto l0 = find(loop0);
+
+    auto isTrivialScope = [](const Stmt &s) {
+        switch (s->nodeType()) {
+        case ASTNodeType::StmtSeq:
+        case ASTNodeType::VarDef:
+        case ASTNodeType::Assert:
+        case ASTNodeType::Assume:
+            return true;
+        case ASTNodeType::If:
+            return !s.as<IfNode>()->elseCase_.isValid();
+        default:
+            return false;
+        }
+    };
+    auto firstStmtInTrivalScope = [](const Stmt &s) -> Stmt {
+        switch (s->nodeType()) {
+        case ASTNodeType::StmtSeq:
+            return s.as<StmtSeqNode>()->stmts_.empty()
+                       ? nullptr
+                       : (Stmt)s.as<StmtSeqNode>()->stmts_.front();
+        case ASTNodeType::VarDef:
+            return s.as<VarDefNode>()->body_;
+        case ASTNodeType::Assert:
+            return s.as<AssertNode>()->body_;
+        case ASTNodeType::Assume:
+            return s.as<AssumeNode>()->body_;
+        case ASTNodeType::If:
+            return s.as<IfNode>()->elseCase_.isValid()
+                       ? nullptr
+                       : (Stmt)s.as<IfNode>()->thenCase_;
+        default:
+            return nullptr;
+        }
+    };
+
+    auto s = l0;
+    while (!s->nextStmt().isValid() && s->parentStmt().isValid() &&
+           isTrivialScope(s->parentStmt())) {
+        s = s->parentStmt();
+    }
+    if (s.isValid()) {
+        if (s = s->nextStmt(); s.isValid()) {
+            while (s.isValid() && s->nodeType() != ASTNodeType::For &&
+                   isTrivialScope(s)) {
+                s = firstStmtInTrivalScope(s);
+            }
+            if (s.isValid() && s->nodeType() == ASTNodeType::For) {
+                return fuse(loop0, s->id(), strict);
+            }
+        }
+    }
+    throw InvalidSchedule("Invalid fuse(" + toString(loop0) +
+                          "): Unable to find a following loop of " +
+                          toString(loop0));
 }
 
 void Schedule::swap(const std::vector<ID> &order) {
