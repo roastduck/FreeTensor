@@ -495,7 +495,7 @@ def test_circular_dependency_in_parallel():
     s.parallelize("L", "openmp")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
+    ast = ft.lower(ast, skip_passes=["cpu_lower_parallel_reduction"])
     print(ast)
 
     with ft.VarDef([("a", (256,), "float32", "inout", "cpu"),

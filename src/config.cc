@@ -35,6 +35,7 @@ bool Config::prettyPrint_ = false;
 bool Config::printAllId_ = false;
 bool Config::werror_ = false;
 bool Config::debugBinary_ = false;
+Ref<Target> Config::defaultTarget_;
 Ref<Device> Config::defaultDevice_;
 
 void Config::init() {
@@ -52,6 +53,7 @@ void Config::init() {
     if (auto flag = getBoolEnv("FT_DEBUG_BINARY"); flag.isValid()) {
         Config::setDebugBinary(*flag);
     }
+    Config::setDefaultTarget(Ref<CPU>::make());
     Config::setDefaultDevice(Ref<Device>::make(Ref<CPU>::make()));
 }
 

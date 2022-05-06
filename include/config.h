@@ -7,6 +7,7 @@
 
 namespace freetensor {
 
+class Target;
 class Device;
 
 /**
@@ -21,6 +22,8 @@ class Config {
     static bool
         debugBinary_; /// Compile with `-g` at backend. Do not delete the binary
                       /// file after loaded. Env FT_DEBUG_BINARY
+    static Ref<Target> defaultTarget_; /// Used for lower and codegen when
+                                       /// target is omitted. Initialized to CPU
     static Ref<Device>
         defaultDevice_; /// Used to create Array and Driver when
                         /// device is omitted. Initialized to a CPU Device
@@ -42,6 +45,11 @@ class Config {
 
     static void setDebugBinary(bool flag = true) { debugBinary_ = flag; }
     static bool debugBinary() { return debugBinary_; }
+
+    static void setDefaultTarget(const Ref<Target> &target) {
+        defaultTarget_ = target;
+    }
+    static Ref<Target> defaultTarget() { return defaultTarget_; }
 
     static void setDefaultDevice(const Ref<Device> &dev) {
         defaultDevice_ = dev;

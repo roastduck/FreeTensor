@@ -3,6 +3,7 @@
 
 #include <unordered_set>
 
+#include <config.h>
 #include <driver/target.h>
 #include <pass/cpu/lower_parallel_reduction.h>
 #include <pass/float_simplify.h>
@@ -35,18 +36,20 @@ namespace freetensor {
 /**
  * Lower an AST using a series of passes
  *
- * @param _ast : The AST to be lowered. Can be a `Func` or a `Stmt`
- * @param target : If set, lower the AST to a target with target-specific
- * passes, then the AST can be used for codegen. If not set, these passes are
- * skipped
+ * @param ast : The AST to be lowered. Can be a `Func` or a `Stmt`
+ * @param target : Lower the AST to a target with target-specific
+ * passes, then the AST can be used for codegen. If not set, use the default
+ * Target in Config
  * @param skipPasses : Skip some pass for testing or debugging. Names in
  * `skipPasses` are in underscore_style, as in Python. Please note that some
  * passes will not be skipped even specified in these parameter, because they
  * are indirectly called in some other passes
  */
 template <class T>
-T lower(const T &_ast, const Ref<Target> &target,
+T lower(const T &_ast, const Ref<Target> &_target = nullptr,
         const std::unordered_set<std::string> &skipPasses = {}) {
+
+    auto target = _target.isValid() ? _target : Config::defaultTarget();
 
 #define FIRST_OF(x, ...) (x)
 #define APPLY(name, pass, ...)                                                 \
@@ -73,45 +76,42 @@ T lower(const T &_ast, const Ref<Target> &target,
     ast = APPLY("shrink_for", shrinkFor,
                 ast); // After remove_writes and make_parallel_reduction
 
-    if (target.isValid()) {
-        switch (target->type()) {
-        case TargetType::GPU:
-            // Before gpu_nromalize_threads
-            ast = APPLY("gpu_lower_parallel_reduction",
-                        gpu::lowerParallelReduction, ast);
+    switch (target->type()) {
+    case TargetType::GPU:
+        // Before gpu_nromalize_threads
+        ast = APPLY("gpu_lower_parallel_reduction", gpu::lowerParallelReduction,
+                    ast);
 
-            // TODO: Support dynamic shared memory size, but the size should be
-            // determined outside of kernels
-            ast = APPLY("gpu_multiplex_buffers", gpu::multiplexBuffers, ast);
-            ast = APPLY("gpu_simplex_buffers", gpu::simplexBuffers, ast);
-            // FIXME: MemType::GPUGlobal should also be make const, but only
-            // inside a kernel
-            ast = APPLY(
-                "make_const_shape", makeConstShape, ast,
-                std::vector<MemType>{MemType::GPUShared, MemType::GPULocal});
-            ast = APPLY("gpu_normalize_threads", gpu::normalizeThreads,
-                        ast); // After gpu_multiplex_buffers
-            ast = APPLY("gpu_make_sync", gpu::makeSync,
-                        ast); // After gpu_normalize_threads
-            ast = APPLY("make_1d_var", make1dVar,
-                        ast); // FIXME: make1dVar will break the shape of
-                              // returned tensors
-            ast = APPLY("gpu_lower_vector", gpu::lowerVector,
-                        ast); // After make_1d_var
-            break;
+        // TODO: Support dynamic shared memory size, but the size should be
+        // determined outside of kernels
+        ast = APPLY("gpu_multiplex_buffers", gpu::multiplexBuffers, ast);
+        ast = APPLY("gpu_simplex_buffers", gpu::simplexBuffers, ast);
+        // FIXME: MemType::GPUGlobal should also be make const, but only
+        // inside a kernel
+        ast =
+            APPLY("make_const_shape", makeConstShape, ast,
+                  std::vector<MemType>{MemType::GPUShared, MemType::GPULocal});
+        ast = APPLY("gpu_normalize_threads", gpu::normalizeThreads,
+                    ast); // After gpu_multiplex_buffers
+        ast = APPLY("gpu_make_sync", gpu::makeSync,
+                    ast); // After gpu_normalize_threads
+        ast = APPLY("make_1d_var", make1dVar,
+                    ast); // FIXME: make1dVar will break the shape of
+                          // returned tensors
+        ast = APPLY("gpu_lower_vector", gpu::lowerVector,
+                    ast); // After make_1d_var
+        ast = APPLY("use_builtin_div", useBuiltinDiv, ast);
+        break;
 
-        case TargetType::CPU:
-            ast = APPLY("cpu_lower_parallel_reduction",
-                        cpu::lowerParallelReduction, ast);
-            break;
+    case TargetType::CPU:
+        ast = APPLY("cpu_lower_parallel_reduction", cpu::lowerParallelReduction,
+                    ast);
+        ast = APPLY("use_builtin_div", useBuiltinDiv, ast);
+        break;
 
-        default:
-            ASSERT(false);
-        }
+    default:
+        ASSERT(false);
     }
-
-    // After passes including architecture-specific ones
-    ast = APPLY("use_builtin_div", useBuiltinDiv, ast);
 
 #undef FIRST_OF
 #undef APPLY

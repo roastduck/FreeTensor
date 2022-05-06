@@ -10,6 +10,9 @@ namespace freetensor {
 
 enum class TargetType : int { CPU, GPU };
 
+/**
+ * Target architecture
+ */
 class Target {
     bool useNativeArch_;
 

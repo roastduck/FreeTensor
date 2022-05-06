@@ -32,5 +32,24 @@ from ffi import gpu_lower_vector
 from ffi import lower
 
 
-def lower(ast, target: Optional[ffi.Target] = None, skip_passes: Sequence = []):
+def lower(ast,
+          target: Optional[ffi.Target] = None,
+          skip_passes: Sequence[str] = []):
+    '''
+    Lower an AST using a series of passes
+
+    Parameters
+    ----------
+    ast : AST
+        The AST to be lowered. Can be a `Func` or a `Stmt`
+    target : Target (Optional)
+        Lower the AST to a target with target-specific passes, then the AST can
+        be used for codegen. If not set, use the default Target in Config
+    skip_passes : Sequence[str]
+        Skip some pass for testing or debugging. Names in `skipPasses` are in
+        underscore_style, as in Python. Please note that some passes will not be
+        skipped even specified in these parameter, because they are indirectly
+        called in some other passes
+    '''
+
     return ffi.lower(ast, target, set(skip_passes))

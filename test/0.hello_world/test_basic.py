@@ -8,9 +8,9 @@ def test_hello_world():
         x[2, 3] = 2.0
         x[1, 0] = 3.0
 
-    func = ft.lower(ft.Func("main", ["x"], [], ft.pop_ast()), ft.CPU())
+    func = ft.lower(ft.Func("main", ["x"], [], ft.pop_ast()))
     print(func)
-    code = ft.codegen(func, ft.CPU())
+    code = ft.codegen(func)
     print(code)
 
     x_np = np.zeros((4, 4), dtype="float32")
@@ -29,9 +29,9 @@ def test_hello_world_float64():
         x[2, 3] = 2.0
         x[1, 0] = 3.0
 
-    func = ft.lower(ft.Func("main", ["x"], [], ft.pop_ast()), ft.CPU())
+    func = ft.lower(ft.Func("main", ["x"], [], ft.pop_ast()))
     print(func)
-    code = ft.codegen(func, ft.CPU())
+    code = ft.codegen(func)
     print(code)
 
     x_np = np.zeros((4, 4), dtype="float64")
@@ -50,9 +50,9 @@ def test_hello_world_int64():
         x[2, 3] = 2
         x[1, 0] = 3
 
-    func = ft.lower(ft.Func("main", ["x"], [], ft.pop_ast()), ft.CPU())
+    func = ft.lower(ft.Func("main", ["x"], [], ft.pop_ast()))
     print(func)
-    code = ft.codegen(func, ft.CPU())
+    code = ft.codegen(func)
     print(code)
 
     x_np = np.zeros((4, 4), dtype="int64")
@@ -71,9 +71,9 @@ def test_hello_world_bool():
         x[2, 3] = False
         x[1, 0] = True
 
-    func = ft.lower(ft.Func("main", ["x"], [], ft.pop_ast()), ft.CPU())
+    func = ft.lower(ft.Func("main", ["x"], [], ft.pop_ast()))
     print(func)
-    code = ft.codegen(func, ft.CPU())
+    code = ft.codegen(func)
     print(code)
 
     x_np = np.zeros((4, 4), dtype="bool")
@@ -92,8 +92,8 @@ def test_scalar_op():
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         y[()] = x[()] * 2 + 1
 
-    func = ft.lower(ft.Func("main", ["x", "y"], [], ft.pop_ast()), ft.CPU())
-    code = ft.codegen(func, ft.CPU())
+    func = ft.lower(ft.Func("main", ["x", "y"], [], ft.pop_ast()))
+    code = ft.codegen(func)
     print(code)
     x_np = np.array(5, dtype="int32")
     y_np = np.array(0, dtype="int32")
@@ -110,8 +110,8 @@ def test_cast():
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         y[()] = ft.cast(x[()], "int32") * 2
 
-    func = ft.lower(ft.Func("main", ["x", "y"], [], ft.pop_ast()), ft.CPU())
-    code = ft.codegen(func, ft.CPU())
+    func = ft.lower(ft.Func("main", ["x", "y"], [], ft.pop_ast()))
+    code = ft.codegen(func)
     print(code)
     x_np = np.array(2.5, dtype="float32")
     y_np = np.array(0, dtype="int32")
@@ -129,9 +129,8 @@ def test_real_div():
                     ("y", (), "float32", "output", "cpu")]) as (x1, x2, y):
         y[()] = x1[()] / x2[()]
 
-    func = ft.lower(ft.Func("main", ["x1", "x2", "y"], [], ft.pop_ast()),
-                    ft.CPU())
-    code = ft.codegen(func, ft.CPU())
+    func = ft.lower(ft.Func("main", ["x1", "x2", "y"], [], ft.pop_ast()))
+    code = ft.codegen(func)
     print(code)
     x1_np = np.array(5, dtype="int32")
     x2_np = np.array(2, dtype="int32")
@@ -151,8 +150,8 @@ def test_for():
         with ft.For("i", 0, 4) as i:
             y[i] = x[i] + 1
 
-    func = ft.lower(ft.Func("main", ["x", "y"], [], ft.pop_ast()), ft.CPU())
-    code = ft.codegen(func, ft.CPU())
+    func = ft.lower(ft.Func("main", ["x", "y"], [], ft.pop_ast()))
+    code = ft.codegen(func)
     print(code)
     x_np = np.array([1, 2, 3, 4], dtype="int32")
     y_np = np.zeros((4,), dtype="int32")
@@ -171,8 +170,8 @@ def test_reversed_for():
         with ft.For("i", 3, -1, -1) as i:
             y[i] = x[i] + 1
 
-    func = ft.lower(ft.Func("main", ["x", "y"], [], ft.pop_ast()), ft.CPU())
-    code = ft.codegen(func, ft.CPU())
+    func = ft.lower(ft.Func("main", ["x", "y"], [], ft.pop_ast()))
+    code = ft.codegen(func)
     print(code)
     x_np = np.array([1, 2, 3, 4], dtype="int32")
     y_np = np.zeros((4,), dtype="int32")
@@ -193,8 +192,8 @@ def test_if():
             with ft.Else():
                 y[i] = 1
 
-    func = ft.lower(ft.Func("main", ["y"], [], ft.pop_ast()), ft.CPU())
-    code = ft.codegen(func, ft.CPU())
+    func = ft.lower(ft.Func("main", ["y"], [], ft.pop_ast()))
+    code = ft.codegen(func)
     print(code)
     y_np = np.zeros((4,), dtype="int32")
     y_arr = ft.Array(y_np)
@@ -214,9 +213,8 @@ def test_bool_tensor_as_cond():
             with ft.If(ft.l_and(a[i], b[i])):
                 y[i] = 2
 
-    func = ft.lower(ft.Func("main", ["a", "b", "y"], [], ft.pop_ast()),
-                    ft.CPU())
-    code = ft.codegen(func, ft.CPU())
+    func = ft.lower(ft.Func("main", ["a", "b", "y"], [], ft.pop_ast()))
+    code = ft.codegen(func)
     print(code)
     a_np = np.array([False, False, True, True], dtype="bool")
     a_arr = ft.Array(a_np)
@@ -239,11 +237,10 @@ def test_var_as_shape():
                 with ft.For("j", 0, shape[1]) as j:
                     y[i, j] = x[i, j] * 2
 
-    func = ft.lower(ft.Func("main", ["shape", "x", "y"], [], ft.pop_ast()),
-                    ft.CPU())
+    func = ft.lower(ft.Func("main", ["shape", "x", "y"], [], ft.pop_ast()))
     print(func)
 
-    code = ft.codegen(func, ft.CPU())
+    code = ft.codegen(func)
     print(code)
     shape_np = np.array([4, 4]).astype("int32")
     shape_arr = ft.Array(shape_np)
@@ -264,11 +261,10 @@ def test_var_as_index():
                     ("y", (), "int32", "output", "cpu")]) as (idx, x, y):
         y[()] = x[idx]
 
-    func = ft.lower(ft.Func("main", ["idx", "x", "y"], [], ft.pop_ast()),
-                    ft.CPU())
+    func = ft.lower(ft.Func("main", ["idx", "x", "y"], [], ft.pop_ast()))
     print(func)
 
-    code = ft.codegen(func, ft.CPU())
+    code = ft.codegen(func)
     print(code)
     idx_np = np.array([1, 2]).astype("int32")
     idx_arr = ft.Array(idx_np)
@@ -288,8 +284,8 @@ def test_error_missing_parameters():
         x[2, 3] = 2.0
         x[1, 0] = 3.0
 
-    func = ft.lower(ft.Func("main", ["x"], [], ft.pop_ast()), ft.CPU())
-    code = ft.codegen(func, ft.CPU())
+    func = ft.lower(ft.Func("main", ["x"], [], ft.pop_ast()))
+    code = ft.codegen(func)
 
     driver = ft.Driver(func, code)
     with pytest.raises(ft.DriverError):
@@ -299,14 +295,14 @@ def test_error_missing_parameters():
 def test_inlined_invoke():
     with ft.VarDef("y", (4,), "float32", "output", "cpu") as y:
         y[3] = 2.0
-    g = ft.lower(ft.Func("g", ["y"], [], ft.pop_ast()), ft.CPU())
+    g = ft.lower(ft.Func("g", ["y"], [], ft.pop_ast()))
 
     with ft.VarDef("x", (4, 4), "float32", "output", "cpu") as x:
         ft.Invoke(g, x[2])
-    f = ft.lower(ft.Func("f", ["x"], [], ft.pop_ast()), ft.CPU())
+    f = ft.lower(ft.Func("f", ["x"], [], ft.pop_ast()))
 
     print(f)
-    code = ft.codegen(f, ft.CPU())
+    code = ft.codegen(f)
     print(code)
 
     x_np = np.zeros((4, 4), dtype="float32")
@@ -324,7 +320,7 @@ def test_error_modifying_input_tensor():
         with ft.VarDef("x", (4, 4), "float32", "input", "cpu") as x:
             x[2, 3] = 2.0
             x[1, 0] = 3.0
-        func = ft.lower(ft.Func("main", ["x"], [], ft.pop_ast()), ft.CPU())
+        func = ft.lower(ft.Func("main", ["x"], [], ft.pop_ast()))
 
 
 def test_error_modifying_shape_of_a_var_when_using_it():
@@ -336,8 +332,7 @@ def test_error_modifying_shape_of_a_var_when_using_it():
                 n[()] = 0  # Error
                 with ft.For("i", 0, n[()]) as i:
                     y[i] = x[i] + 1
-        func = ft.lower(ft.Func("main", ["n", "x", "y"], [], ft.pop_ast()),
-                        ft.CPU())
+        func = ft.lower(ft.Func("main", ["n", "x", "y"], [], ft.pop_ast()))
 
 
 def test_error_modifying_a_var_when_borrowed_as_a_slice():
@@ -350,8 +345,7 @@ def test_error_modifying_a_var_when_borrowed_as_a_slice():
             offset[()] = 0  # Error
             for i in range(10):
                 y[i] = x_slice[i]
-        func = ft.lower(ft.Func("main", ["x", "y", "offset"], [], ft.pop_ast()),
-                        ft.CPU())
+        func = ft.lower(ft.Func("main", ["x", "y", "offset"], [], ft.pop_ast()))
 
 
 def test_target_language_keyword_as_name():
@@ -360,8 +354,8 @@ def test_target_language_keyword_as_name():
         with ft.For("for", 0, 4) as i:
             y[i] = x[i] + 1
 
-    func = ft.lower(ft.Func("main", ["x", "y"], [], ft.pop_ast()), ft.CPU())
-    code = ft.codegen(func, ft.CPU())
+    func = ft.lower(ft.Func("main", ["x", "y"], [], ft.pop_ast()))
+    code = ft.codegen(func)
     print(code)
     x_np = np.array([1, 2, 3, 4], dtype="int32")
     y_np = np.zeros((4,), dtype="int32")
