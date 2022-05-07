@@ -919,7 +919,19 @@ def into_staging(func, caller_env, src=None, verbose=False):
     return caller_env[func.__name__], file, func.__name__
 
 
-def transform(func=None, verbose=False, caller_env=None):
+def transform(func=None, verbose: int = 0, caller_env=None):
+    '''
+    Transform a user function to an AST
+
+    Parameters
+    ----------
+    func : Python function
+        The user function to transform
+    verbose : int
+        0 = print nothing. 1 = print the resulting AST. 2 = 1 + print the generated
+        Python code that is used for transforming
+    '''
+
     if caller_env is None:
         caller_env = _get_caller_env(1)
 
@@ -927,7 +939,7 @@ def transform(func=None, verbose=False, caller_env=None):
         params = list(inspect.signature(func).parameters)
         staging_func, filename, funcname = into_staging(func,
                                                         caller_env,
-                                                        verbose=verbose)
+                                                        verbose=verbose >= 2)
 
         try:
             with LifetimeScope():
@@ -968,6 +980,11 @@ def transform(func=None, verbose=False, caller_env=None):
         staged = Func(func.__name__, params + list(closure.keys()), returns,
                       staged_ast, closure)
 
+        if verbose >= 1:
+            print("The transformed AST is:")
+            print(staged)
+            print()
+
         return staged
 
     if callable(func):
@@ -977,6 +994,20 @@ def transform(func=None, verbose=False, caller_env=None):
 
 
 def inline(func=None, src=None, fallback=None, verbose=False, caller_env=None):
+    '''
+    Enable a user function to be called by a transformed function at run time
+
+    Parameters
+    ----------
+    func : Python function
+        The user function
+    src : str (Optional)
+        The source code of `func`. This parameter is only required if the source
+        code cannot be get automatically, e.g., if `func` is generated from a `exec`
+    verbose : bool
+        True to print the generated Python code that is used for transforming
+    '''
+
     if caller_env is None:
         caller_env = _get_caller_env(1)
 

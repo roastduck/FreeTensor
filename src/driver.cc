@@ -166,6 +166,12 @@ void Driver::buildAndLoad() {
 
 void Driver::setParams(const std::vector<Ref<Array>> &args,
                        const std::unordered_map<std::string, Ref<Array>> &kws) {
+    // Hold reference count
+    args_.insert(args_.end(), args.begin(), args.end());
+    for (auto &&[k, v] : kws) {
+        kws_[k] = v;
+    }
+
     for (size_t i = 0, iEnd = args.size(), j = 0; i < iEnd; i++) {
         while (j < params_.size() && f_->closure_.count(f_->params_[j])) {
             j++;

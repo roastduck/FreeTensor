@@ -76,20 +76,17 @@ def test_scalar_op():
 
 def test_return_value_and_runtime_allocation():
 
-    @ft.transform
+    @ft.lower
+    @ft.transform(verbose=1)
     def test(x):
         x: ft.Var[(), "int32"]
         y = ft.empty((), "int32")
         y[()] = x[()] * 2 + 1
         return y
 
-    print(test)
-    func = ft.lower(test)
-    code = ft.codegen(func)
+    code = ft.codegen(test)
     print(debug.with_line_no(code))
-    x_np = np.array(5, dtype="int32")
-    x_arr = ft.Array(x_np)
-    y_arr, = ft.Driver(func, code)(x=x_arr)
+    y_arr, = ft.Driver(test, code)(np.array(5, dtype="int32"))
     y_np = y_arr.numpy()
 
     assert y_np[()] == 11
@@ -272,18 +269,15 @@ def test_assert():
 
 def test_immediate_var_return():
 
-    @ft.transform
+    @ft.lower
+    @ft.transform(verbose=1)
     def test(x):
         x: ft.Var[(), "int32"]
         return ft.var([0, 1, x[()]], "int32")
 
-    print(test)
-    func = ft.lower(test)
-    code = ft.codegen(func)
+    code = ft.codegen(test)
     print(debug.with_line_no(code))
-    x_np = np.array(2, dtype="int32")
-    x_arr = ft.Array(x_np)
-    y_arr, = ft.Driver(func, code)(x=x_arr)
+    y_arr, = ft.Driver(test, code)(np.array(2, dtype="int32"))
     y_np = y_arr.numpy()
 
     assert np.all(y_np == np.array([0, 1, 2]))
