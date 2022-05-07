@@ -8,6 +8,12 @@ void init_ffi_data_type(py::module_ &m) {
         .def(py::init<DataType>())
         .def(py::init(&parseDType))
         .def("__str__", static_cast<std::string (*)(DataType)>(&toString))
+        .def("__repr__",
+             [](DataType dtype) {
+                 auto str = toString(dtype);
+                 str[0] = toupper(str[0]);
+                 return "DataType." + str;
+             })
         .def("__hash__", [](DataType dtype) { return (size_t)dtype; })
         .def("__eq__", [](DataType lhs, DataType rhs) { return lhs == rhs; });
     // no py::implicitly_convertible, because it fails silently

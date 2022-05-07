@@ -561,6 +561,11 @@ void init_ffi_ast(py::module_ &m) {
           "fmt"_a, "params"_a, "retType"_a = DataType::Void,
           "hasSideEffect"_a = false);
 
+    py::enum_<ReduceOp>(m, "ReduceOp")
+        .value("Add", ReduceOp::Add)
+        .value("Max", ReduceOp::Max)
+        .value("Min", ReduceOp::Min)
+        .value("Mul", ReduceOp::Mul);
     m.def("neutral_val", &neutralVal);
 }
 
