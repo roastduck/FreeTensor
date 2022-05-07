@@ -202,6 +202,11 @@ void Driver::run() {
 void Driver::sync() { dev_->sync(); }
 
 std::vector<Ref<Array>> Driver::collectReturns() {
+    // Free reference count holders
+    args_.clear();
+    kws_.clear();
+    std::fill(params_.begin(), params_.end(), nullptr);
+
     std::vector<Ref<Array>> ret;
     for (size_t i = 0, n = f_->returns_.size(); i < n; i++) {
         std::vector<size_t> shape(retShapes_[i], retShapes_[i] + retDims_[i]);
