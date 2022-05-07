@@ -289,21 +289,21 @@ def test_pass_by_value_0d():
     @ft.transform
     def test(n, x, y):
         n: ft.Var[(), "int32", "input", "byvalue"]
-        x: ft.Var[(n[()], 4), "int32", "input", "gpu/global"]
-        y: ft.Var[(n[()], 4), "int32", "output", "gpu/global"]
+        x: ft.Var[(n, 4), "int32", "input", "gpu/global"]
+        y: ft.Var[(n, 4), "int32", "output", "gpu/global"]
         "nid: L1"
         for i in range(0, 4):
             "nid: L2"
-            for j in range(0, n[()]):
+            for j in range(0, n):
                 y[j, i] = x[j, i] + 1
 
     with ft.VarDef("n", (), "int32", "input", "byvalue") as n:
         with ft.VarDef([
-            ("x", (n[()], 4), "int32", "input", "gpu/global"),
-            ("y", (n[()], 4), "int32", "output", "gpu/global"),
+            ("x", (n, 4), "int32", "input", "gpu/global"),
+            ("y", (n, 4), "int32", "output", "gpu/global"),
         ]) as (x, y):
             with ft.For("i", 0, 4, nid="L1") as i:
-                with ft.For("j", 0, n[()], nid="L2") as j:
+                with ft.For("j", 0, n, nid="L2") as j:
                     y[j, i] = x[j, i] + 1
     assert ft.pop_ast().match(test.body)
 
@@ -369,11 +369,11 @@ def test_pass_by_value_1d():
 def test_dynamic_2d_array():
     with ft.VarDef("n", (), "int32", "input", "byvalue") as n:
         with ft.VarDef([
-            ("x", (n[()], n[()]), "int32", "input", "gpu/global"),
-            ("y", (n[()], n[()]), "int32", "output", "gpu/global"),
+            ("x", (n, n), "int32", "input", "gpu/global"),
+            ("y", (n, n), "int32", "output", "gpu/global"),
         ]) as (x, y):
-            with ft.For("i", 0, n[()], nid="L1") as i:
-                with ft.For("j", 0, n[()], nid="L2") as j:
+            with ft.For("i", 0, n, nid="L1") as i:
+                with ft.For("j", 0, n, nid="L2") as j:
                     y[i, j] = x[i, j] + 1
 
     with device:
@@ -664,15 +664,15 @@ def test_relax_shared_shape_to_constants():
             ("x", (4, 256), "int32", "input", "gpu/global"),
             ("y", (4, 256), "int32", "output", "gpu/global"),
         ]) as (x, y):
-            with ft.Assert(n[()] <= 256):
+            with ft.Assert(n <= 256):
                 with ft.For("i", 0, 4, nid="L0") as i:
-                    with ft.VarDef("t", (n[()],), "int32", "cache",
+                    with ft.VarDef("t", (n,), "int32", "cache",
                                    "gpu/shared") as t:
-                        with ft.For("j", 0, n[()], nid="L1") as j:
+                        with ft.For("j", 0, n, nid="L1") as j:
                             t[j] = x[i, j] * 2
-                        with ft.For("j", 0, n[()], nid="L2") as j:
+                        with ft.For("j", 0, n, nid="L2") as j:
                             y[i, j] = t[j] + 1
-                        with ft.For("j", n[()], 256, nid="L3") as j:
+                        with ft.For("j", n, 256, nid="L3") as j:
                             y[i, j] = 0
 
     s = ft.Schedule(ft.Func("main", ["n", "x", "y"], [], ft.pop_ast()))
@@ -684,15 +684,15 @@ def test_relax_shared_shape_to_constants():
             ("x", (4, 256), "int32", "input", "gpu/global"),
             ("y", (4, 256), "int32", "output", "gpu/global"),
         ]) as (x, y):
-            with ft.Assert(n[()] <= 256):
+            with ft.Assert(n <= 256):
                 with ft.For(".threadIdx.y", 0, 4) as i:
                     with ft.VarDef("t", (4, 256), "int32", "cache",
                                    "gpu/shared") as t:
-                        with ft.For("j", 0, n[()]) as j:
+                        with ft.For("j", 0, n) as j:
                             t[i, j] = x[i, j] * 2
-                        with ft.For("j", 0, n[()]) as j:
+                        with ft.For("j", 0, n) as j:
                             y[i, j] = t[i, j] + 1
-                    with ft.For("j", n[()], 256) as j:
+                    with ft.For("j", n, 256) as j:
                         y[i, j] = 0
     assert ft.make_1d_var(ft.pop_ast()).match(func.body)
 
@@ -877,18 +877,18 @@ def test_unbounded_length():
     @ft.transform
     def test(n, x, y):
         n: ft.Var[(), "int32", "input", "gpu/global"]
-        x: ft.Var[(n[()],), "int32", "input", "gpu/global"]
-        y: ft.Var[(n[()],), "int32", "output", "gpu/global"]
+        x: ft.Var[(n,), "int32", "input", "gpu/global"]
+        y: ft.Var[(n,), "int32", "output", "gpu/global"]
         "nid: L1"
-        for i in range(0, n[()]):
+        for i in range(0, n):
             y[i] = x[i] + 1
 
     with ft.VarDef("n", (), "int32", "input", "gpu/global") as n:
         with ft.VarDef([
-            ("x", (n[()],), "int32", "input", "gpu/global"),
-            ("y", (n[()],), "int32", "output", "gpu/global"),
+            ("x", (n,), "int32", "input", "gpu/global"),
+            ("y", (n,), "int32", "output", "gpu/global"),
         ]) as (x, y):
-            with ft.For("i", 0, n[()], nid="L1") as i:
+            with ft.For("i", 0, n, nid="L1") as i:
                 y[i] = x[i] + 1
     assert ft.pop_ast().match(test.body)
 

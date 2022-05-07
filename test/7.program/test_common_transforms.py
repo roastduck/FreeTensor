@@ -189,15 +189,15 @@ def test_dynamic_tiling():
         ("m", (), "int32", "input", "byvalue"),
     ]) as (n, k, m):
         with ft.VarDef([
-            ("a", (n[()], k[()]), "float32", "input", "cpu"),
-            ("b", (k[()], m[()]), "float32", "input", "cpu"),
-            ("c", (n[()], m[()]), "float32", "output", "cpu"),
+            ("a", (n, k), "float32", "input", "cpu"),
+            ("b", (k, m), "float32", "input", "cpu"),
+            ("c", (n, m), "float32", "output", "cpu"),
         ]) as (a, b, c):
-            with ft.For("i", 0, n[()], nid="Li") as i:
-                with ft.For("j", 0, m[()], nid="Lj") as j:
+            with ft.For("i", 0, n, nid="Li") as i:
+                with ft.For("j", 0, m, nid="Lj") as j:
                     with ft.NamedScope("S0"):
                         c[i, j] = 0
-                        with ft.For("p", 0, k[()], nid="Lp") as p:
+                        with ft.For("p", 0, k, nid="Lp") as p:
                             ft.MarkNid("S1")
                             c[i, j] = c[i, j] + a[i, p] * b[p, j]
 
