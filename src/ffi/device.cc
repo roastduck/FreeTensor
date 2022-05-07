@@ -23,7 +23,10 @@ void init_ffi_device(py::module_ &m) {
             "useNativeArch"_a = true)
         .def("use_native_arch", &Target::useNativeArch)
         .def("__str__", &Target::toString)
-        .def("main_mem_type", &Target::mainMemType);
+        .def("main_mem_type", &Target::mainMemType)
+        .def("__eq__",
+             static_cast<bool (*)(const Ref<Target> &, const Ref<Target> &)>(
+                 &isSame));
     py::class_<CPU, Ref<CPU>>(m, "CPU", pyTarget)
         .def(py::init([](bool useNativeArch) {
                  return Ref<CPU>::make(useNativeArch);
