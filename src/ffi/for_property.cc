@@ -9,8 +9,15 @@ void init_ffi_for_property(py::module_ &m) {
     py::class_<ReductionItem, Ref<ReductionItem>>(m, "ReductionItem")
         .def_readonly("op", &ReductionItem::op_)
         .def_readonly("var", &ReductionItem::var_)
-        .def_readonly("begins", &ReductionItem::begins_)
-        .def_readonly("ends", &ReductionItem::ends_);
+        .def_property_readonly(
+            "begins",
+            [](const Ref<ReductionItem> &ri) -> std::vector<Expr> {
+                return ri->begins_;
+            })
+        .def_property_readonly(
+            "ends", [](const Ref<ReductionItem> &ri) -> std::vector<Expr> {
+                return ri->ends_;
+            });
 
     py::class_<ForProperty, Ref<ForProperty>>(m, "ForProperty")
         .def(py::init<>())
