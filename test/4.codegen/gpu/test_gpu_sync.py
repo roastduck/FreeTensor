@@ -42,8 +42,10 @@ def test_syncthreads():
     s.parallelize("L0", "blockIdx.x")
     s.parallelize("L1", "threadIdx.x")
     s.parallelize("L2", "threadIdx.x")
-    func = ft.lower(s.func(), target, skip_passes=['prop_one_time_use'])
-    print(func)
+    func = ft.lower(s.func(),
+                    target,
+                    skip_passes=['prop_one_time_use'],
+                    verbose=1)
 
     with ft.VarDef([
         ("x", (4, 256), "int32", "input", "gpu/global"),
@@ -93,8 +95,10 @@ def test_syncthreads_in_loop():
     s.parallelize("L0", "blockIdx.x")
     s.parallelize("L1", "threadIdx.x")
     s.parallelize("L2", "threadIdx.x")
-    func = ft.lower(s.func(), target, skip_passes=['prop_one_time_use'])
-    print(func)
+    func = ft.lower(s.func(),
+                    target,
+                    skip_passes=['prop_one_time_use'],
+                    verbose=1)
 
     with ft.VarDef([
         ("x", (4, 256), "int32", "input", "gpu/global"),
@@ -136,8 +140,10 @@ def test_syncthreads_at_outer_loop():
     s.parallelize("L0", "blockIdx.x")
     s.parallelize("L1", "threadIdx.x")
     s.parallelize("L2", "threadIdx.x")
-    func = ft.lower(s.func(), target, skip_passes=['prop_one_time_use'])
-    print(func)
+    func = ft.lower(s.func(),
+                    target,
+                    skip_passes=['prop_one_time_use'],
+                    verbose=1)
 
     with ft.VarDef([
         ("x", (4, 256), "int32", "input", "gpu/global"),
@@ -183,8 +189,10 @@ def test_syncthreads_not_at_outer_loop():
     s.parallelize("L1", "threadIdx.x")
     s.parallelize("L2", "threadIdx.x")
     s.parallelize("L3", "threadIdx.x")
-    func = ft.lower(s.func(), target, skip_passes=['prop_one_time_use'])
-    print(func)
+    func = ft.lower(s.func(),
+                    target,
+                    skip_passes=['prop_one_time_use'],
+                    verbose=1)
 
     with ft.VarDef([
         ("x0", (4, 256), "int32", "input", "gpu/global"),
@@ -229,8 +237,7 @@ def test_syncthreads_at_outer_branch():
     s = ft.Schedule(test)
     s.parallelize("L0", "blockIdx.x")
     s.parallelize("L1", "threadIdx.x")
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
     with ft.VarDef([
         ("x", (4, 256), "int32", "input", "gpu/global"),
@@ -269,8 +276,10 @@ def test_syncthreads_at_outer_loop_and_outer_branch():
     s = ft.Schedule(test)
     s.parallelize("L0", "blockIdx.x")
     s.parallelize("L1", "threadIdx.x")
-    func = ft.lower(s.func(), target, skip_passes=['prop_one_time_use'])
-    print(func)
+    func = ft.lower(s.func(),
+                    target,
+                    skip_passes=['prop_one_time_use'],
+                    verbose=1)
 
     with ft.VarDef([
         ("x", (4, 256), "int32", "input", "gpu/global"),
@@ -309,8 +318,7 @@ def test_syncthreads_split_branch():
     s = ft.Schedule(test)
     s.parallelize("L0", "blockIdx.x")
     s.parallelize("L1", "threadIdx.x")
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
     with ft.VarDef([
         ("x", (4, 256), "int32", "input", "gpu/global"),
@@ -355,8 +363,7 @@ def test_syncthreads_split_branch_out_of_const_loop():
     s.parallelize("L0", "blockIdx.x")
     s.parallelize("L1", "threadIdx.y")
     s.parallelize("L3", "threadIdx.x")
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
     with ft.VarDef([("x", (10 * 10 * 32,), "int32", "input", "gpu/global"),
                     ("y", (10 * 10,), "int32", "output", "gpu/global")]) as (x,
@@ -407,8 +414,7 @@ def test_syncthreads_split_branch_with_else():
     s.parallelize("L0", "blockIdx.x")
     s.parallelize("L1", "threadIdx.x")
     s.parallelize("L2", "threadIdx.x")
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
     with ft.VarDef([
         ("x", (4, 256), "int32", "input", "gpu/global"),
@@ -466,8 +472,7 @@ def test_syncthreads_split_branch_and_vardef():
     s = ft.Schedule(test)
     s.parallelize("L0", "blockIdx.x")
     s.parallelize("L1", "threadIdx.x")
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
     with ft.VarDef([
         ("x", (4, 256), "int32", "input", "gpu/global"),
@@ -529,8 +534,7 @@ def test_syncthreads_split_branch_and_vardef_with_else():
     s.parallelize("L0", "blockIdx.x")
     s.parallelize("L1", "threadIdx.x")
     s.parallelize("L2", "threadIdx.x")
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
     with ft.VarDef([
         ("x", (4, 256), "int32", "input", "gpu/global"),
@@ -610,8 +614,10 @@ def test_syncwarp():
     s.parallelize("L0", "blockIdx.x")
     s.parallelize("L1", "threadIdx.x")
     s.parallelize("L2", "threadIdx.x")
-    func = ft.lower(s.func(), target, skip_passes=['prop_one_time_use'])
-    print(func)
+    func = ft.lower(s.func(),
+                    target,
+                    skip_passes=['prop_one_time_use'],
+                    verbose=1)
 
     with ft.VarDef([
         ("x", (4, 4), "int32", "input", "gpu/global"),
@@ -663,8 +669,7 @@ def test_use_syncthreads_for_non_aligned_warps():
     s.parallelize("L1", "blockIdx.x")
     s.parallelize("L2", "threadIdx.y")
     s.parallelize("L3", "threadIdx.x")
-    ast = ft.lower(s.ast(), target)
-    print(ast)
+    ast = ft.lower(s.ast(), target, verbose=1)
 
     with ft.VarDef([("u", (64, 64, 64, 5), "float64", "input", "gpu/global"),
                     ("e", (64, 64, 64, 5), "float64", "output", "gpu/global")

@@ -10,14 +10,12 @@ def test_cache_read():
             with ft.For("j", 0, 8, nid="L2") as j:
                 ft.MarkNid("S0")
                 y[i] = y[i] + x[i, j] * (x[i, j] + 1)
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.cache("S0", "x", "cpu")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (4, 8), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
@@ -41,14 +39,12 @@ def test_cache_write():
             y[i] = 0
             with ft.For("j", 0, 8, nid="L2") as j:
                 y[i] += x[i, j] * 2
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.cache(s.find("L1").body, "y", "cpu")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("x", (4, 8), "int32", "input", "cpu"),
@@ -77,8 +73,7 @@ def test_reduction():
     s.cache("L2", "y", "cpu")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (4, 8), "int32", "input", "cpu"),
                     ("y", (4, 8), "int32", "inout", "cpu")]) as (x, y):
@@ -106,8 +101,7 @@ def test_cache_read_and_write():
                 with ft.NamedScope("S0"):
                     z[i, j] = y[i, j] * 2
                     y[i, j] = x[i, j] + 1
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.cache("S0", "y", "cpu")
     ast = s.ast()
@@ -136,14 +130,12 @@ def test_different_indices():
         with ft.For("i", 0, 4, nid="L1") as i:
             ft.MarkNid("S0")
             y[i] = x[i] + x[i + 1]
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.cache("S0", "x", "cpu")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (5,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
@@ -167,8 +159,7 @@ def test_no_var():
             with ft.For("j", 0, 8, nid="L2") as j:
                 ft.MarkNid("S0")
                 y[i, j] = x[i, j] * 2
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
         s.cache("S0", "z", "cpu")
@@ -183,8 +174,7 @@ def test_no_stmt():
             y[i] = 0
             with ft.For("j", 0, 8, nid="L2") as j:
                 y[i] = y[i] + x[i, j] * 2
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
         s.cache("S0", "x", "cpu")
@@ -200,8 +190,7 @@ def test_sharing_locals():
         with ft.For("i", 0, 4, nid="L1") as i:
             with ft.For("j", 0, 8, nid="L2") as j:
                 y[i, j] = x[i, j] * 2
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.parallelize("L2", "threadIdx.x")
     ast = s.ast()
@@ -218,14 +207,12 @@ def test_local_var_as_index():
             y[i] = 0
             with ft.For("j", 0, 8, nid="L2") as j:
                 y[i] = y[i] + x[i, j] * 2
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.cache("L2", "x", "cpu")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast, skip_passes=['prop_one_time_use'])
-    print(ast)
+    ast = ft.lower(ast, skip_passes=['prop_one_time_use'], verbose=1)
 
     with ft.VarDef([("x", (4, 8), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
@@ -252,14 +239,12 @@ def test_cache_with_condition():
             with ft.For("j", 0, 8, nid="L2") as j:
                 with ft.If(n[()] > 0):
                     y[i] = y[i] + x[i, j] * 2
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.cache("L2", "x", "cpu")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("n", (), "int32", "input", "cpu"),
@@ -294,14 +279,12 @@ def test_cache_with_multiple_conditions():
                         y[i] = y[i] + x[i, j] * 2
                 with ft.If(n[()] < 0):
                     y[i] = y[i] + x[i, j] * 3
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.cache("L2", "x", "cpu")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("n", (), "int32", "input", "cpu"),
@@ -334,14 +317,12 @@ def test_fill_is_necessary_when_possibly_not_written():
                 with ft.If(i == 0):
                     y[0, j] = x[0, j]
                 y[1, j] = x[1, j]
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.cache(s.find("L2").body, "y", "cpu")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (2, 4), "int32", "input", "cpu"),
                     ("y", (2, 4), "int32", "output", "cpu")]) as (x, y):

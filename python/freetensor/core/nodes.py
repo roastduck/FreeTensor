@@ -1,4 +1,5 @@
 import collections
+import sys
 import numpy as np
 from typing import Sequence, Tuple, Any, Optional
 
@@ -117,10 +118,14 @@ class ContextStack:
 ctx_stack = ContextStack()
 
 
-def pop_ast():
+def pop_ast(verbose: bool = False):
     """ Get AST and reset context """
     ret = ctx_stack.pop().make_stmt()
     ctx_stack.reset()
+    if verbose:
+        print("The popped AST is:", file=sys.stderr)
+        print(ret, file=sys.stderr)
+        print(file=sys.stderr)
     return ret
 
 

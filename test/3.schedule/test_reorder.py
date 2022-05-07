@@ -7,14 +7,12 @@ def test_basic():
         with ft.For("i", 0, 4, nid="L1") as i:
             with ft.For("j", 0, 8, nid="L2") as j:
                 y[i, j] = i + j
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.reorder(["L2", "L1"])
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
         with ft.For("j", 0, 8) as j:
@@ -31,14 +29,12 @@ def test_multiple_loops():
             with ft.For("j", 0, 8, nid="L2") as j:
                 with ft.For("k", 0, 16, nid="L3") as k:
                     y[i, j, k] = (i + j) * k
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.reorder(["L3", "L2", "L1"])
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef("y", (4, 8, 16), "int32", "output", "cpu") as y:
         with ft.For("k", 0, 16) as k:
@@ -57,14 +53,12 @@ def test_if_in_between():
             with ft.If(x[i] > 0):
                 with ft.For("j", 0, 8, nid="L2") as j:
                     y[i, j] = i + j
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.reorder(["L2", "L1"])
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4, 8), "int32", "output", "cpu")]) as (x, y):
@@ -84,14 +78,12 @@ def test_stmt_in_between():
             z[i] = i
             with ft.For("j", 0, 8, nid="L2") as j:
                 y[i, j] = i + j
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.reorder(["L2", "L1"])
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
                     ("z", (4,), "int32", "output", "cpu")]) as (y, z):
@@ -111,8 +103,7 @@ def test_dependency():
         with ft.For("i", 0, 4, nid="L1") as i:
             with ft.For("j", 0, 8, nid="L2") as j:
                 y[0] = y[0] * i + j
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
         s.reorder(["L2", "L1"])
@@ -127,14 +118,12 @@ def test_reduction():
         with ft.For("i", 0, 4, nid="L1") as i:
             with ft.For("j", 0, 8, nid="L2") as j:
                 y[0] = y[0] + x[i, j]
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.reorder(["L2", "L1"])
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (4, 8), "int32", "output", "cpu"),
                     ("y", (1,), "int32", "output", "cpu")]) as (x, y):
@@ -160,14 +149,12 @@ def test_local_var():
                     buf[0] = x0[i, j] + x1[i, j]
                     y1[i, j] = buf[0] * 2
                     y2[i, j] = buf[0] * 3
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.reorder(["L2", "L1"])
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("x0", (4, 8), "int32", "input", "cpu"),

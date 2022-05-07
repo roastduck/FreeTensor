@@ -35,8 +35,7 @@ def test_basic():
     with device:
         s = ft.Schedule(test)
         s.parallelize("L1", "threadIdx.x")
-        func = ft.lower(s.func())
-        print(func)
+        func = ft.lower(s.func(), verbose=1)
         code = ft.codegen(func)
         print(debug.with_line_no(code))
         x_np = np.array([1, 2, 3, 4], dtype="int32")
@@ -69,8 +68,7 @@ def test_define_output_inside_kernel():
     with device:
         s = ft.Schedule(test)
         s.parallelize("L1", "threadIdx.x")
-        func = ft.lower(s.func())
-        print(func)
+        func = ft.lower(s.func(), verbose=1)
         code = ft.codegen(func)
         print(debug.with_line_no(code))
         x_np = np.array([1, 2, 3, 4], dtype="int32")
@@ -101,8 +99,7 @@ def test_return_value_and_runtime_allocation():
         s = ft.Schedule(test)
         s.parallelize("L1", "blockIdx.x")
         s.parallelize("L2", "threadIdx.x")
-        func = ft.lower(s.func())
-        print(func)
+        func = ft.lower(s.func(), verbose=1)
         code = ft.codegen(func)
         print(debug.with_line_no(code))
         x_np = np.random.randint(0, 100, (4, 4)).astype("int32")
@@ -127,8 +124,7 @@ def test_split_by_block_and_bind():
     outer, inner = s.split("L1", nparts=3)
     s.parallelize(outer, "blockIdx.x")
     s.parallelize(inner, "threadIdx.x")
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
     with ft.VarDef([
         ("x", (100,), "int32", "input", "gpu/global"),
@@ -177,8 +173,7 @@ def test_shmem():
         s = ft.Schedule(test)
         s.cache("S1", "x", "gpu/shared")
         s.parallelize("L1", "threadIdx.x")
-        func = ft.lower(s.func())
-        print(func)
+        func = ft.lower(s.func(), verbose=1)
         code = ft.codegen(func)
         print(debug.with_line_no(code))
         assert "__shared__" in code
@@ -222,8 +217,7 @@ def test_global_mem():
         s = ft.Schedule(test)
         s.parallelize("L1", "threadIdx.x")
         s.parallelize("L2", "threadIdx.x")
-        func = ft.lower(s.func(), skip_passes=['prop_one_time_use'])
-        print(func)
+        func = ft.lower(s.func(), skip_passes=['prop_one_time_use'], verbose=1)
         code = ft.codegen(func)
         print(debug.with_line_no(code))
         assert "cudaMalloc" in code
@@ -265,8 +259,7 @@ def test_global_mem_in_kernel():
         s = ft.Schedule(test)
         s.parallelize("L1", "threadIdx.x")
         s.parallelize("L2", "threadIdx.x")
-        func = ft.lower(s.func())
-        print(func)
+        func = ft.lower(s.func(), verbose=1)
         code = ft.codegen(func)
         print(debug.with_line_no(code))
         assert re.search(r"cudaMalloc(.*, 32)", code)
@@ -324,8 +317,7 @@ def test_pass_by_value_0d():
     with device:
         s = ft.Schedule(test)
         s.parallelize("L1", "threadIdx.x")
-        func = ft.lower(s.func())
-        print(func)
+        func = ft.lower(s.func(), verbose=1)
         code = ft.codegen(func)
         print(debug.with_line_no(code))
         n_np = np.array(5, dtype="int32")
@@ -367,8 +359,7 @@ def test_pass_by_value_1d():
     with device:
         s = ft.Schedule(test)
         s.parallelize("L1", "threadIdx.x")
-        func = ft.lower(s.func())
-        print(func)
+        func = ft.lower(s.func(), verbose=1)
         code = ft.codegen(func)
         print(debug.with_line_no(code))
         n_np = np.array([5], dtype="int32")
@@ -399,8 +390,7 @@ def test_dynamic_2d_array():
         outer, inner = s.split("L1", 4)
         s.reorder([inner, outer])
         s.parallelize(inner, "threadIdx.x")
-        func = ft.lower(s.func())
-        print(func)
+        func = ft.lower(s.func(), verbose=1)
         code = ft.codegen(func)
         print(debug.with_line_no(code))
         n_np = np.array(5, dtype="int32")
@@ -425,8 +415,7 @@ def test_use_cpu_iters():
     with device:
         s = ft.Schedule(ft.Func("main", ["y"], [], ft.pop_ast()))
         s.parallelize('Lj', "threadIdx.x")
-        func = ft.lower(s.func())
-        print(func)
+        func = ft.lower(s.func(), verbose=1)
         code = ft.codegen(func)
         print(debug.with_line_no(code))
         y_np = np.zeros((4, 1000), dtype="int32")
@@ -460,8 +449,7 @@ def test_intrinsic():
     with device:
         s = ft.Schedule(test)
         s.parallelize("L1", "threadIdx.x")
-        func = ft.lower(s.func())
-        print(func)
+        func = ft.lower(s.func(), verbose=1)
         code = ft.codegen(func)
         print(debug.with_line_no(code))
         x_np = np.array([1, 2, 3, 4], dtype="float32")
@@ -507,8 +495,10 @@ def test_multiplex_shared_1():
     s.parallelize("L0", "threadIdx.y")
     s.parallelize("L1", "threadIdx.x")
     s.parallelize("L2", "threadIdx.x")
-    func = ft.lower(s.func(), target, skip_passes=['prop_one_time_use'])
-    print(func)
+    func = ft.lower(s.func(),
+                    target,
+                    skip_passes=['prop_one_time_use'],
+                    verbose=1)
 
     with ft.VarDef([
         ("x", (4, 256), "int32", "input", "gpu/global"),
@@ -556,8 +546,10 @@ def test_multiplex_shared_2():
     s.parallelize("L0", "threadIdx.y")
     s.parallelize("L1", "threadIdx.x")
     s.parallelize("L2", "threadIdx.x")
-    func = ft.lower(s.func(), target, skip_passes=['prop_one_time_use'])
-    print(func)
+    func = ft.lower(s.func(),
+                    target,
+                    skip_passes=['prop_one_time_use'],
+                    verbose=1)
 
     with ft.VarDef([
         ("x", (4, 256), "int32", "input", "gpu/global"),
@@ -602,8 +594,7 @@ def test_simplex_local_1():
     s.parallelize("L1", "threadIdx.x")
     s.parallelize("L2", "threadIdx.x")
     s.set_mem_type("t", "gpu/local")
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
     with ft.VarDef([("x", (10, 10, 10), "int32", "input", "gpu/global"),
                     ("y", (10, 10, 10), "int32", "output", "gpu/global"),
@@ -663,8 +654,7 @@ def test_simplex_local_2():
     s.parallelize("L0", "threadIdx.x")
     s.parallelize("L1", "threadIdx.x")
     s.set_mem_type("t", "gpu/local")
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
     with ft.VarDef([
         ("x", (10, 10, 10), "int32", "input", "gpu/global"),
@@ -701,8 +691,7 @@ def test_relax_shared_shape_to_constants():
 
     s = ft.Schedule(ft.Func("main", ["n", "x", "y"], [], ft.pop_ast()))
     s.parallelize("L0", "threadIdx.x")
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
     with ft.VarDef("n", (), "int32", "input", "byvalue") as n:
         with ft.VarDef([
@@ -773,8 +762,10 @@ def test_parallel_different_length():
     s.parallelize("L0", "blockIdx.x")
     s.parallelize("L1", "threadIdx.x")
     s.parallelize("L3", "threadIdx.x")
-    func = ft.lower(s.func(), target, skip_passes=['prop_one_time_use'])
-    print(func)
+    func = ft.lower(s.func(),
+                    target,
+                    skip_passes=['prop_one_time_use'],
+                    verbose=1)
 
     with ft.VarDef([
         ("a", (4, 4), "int32", "input", "gpu/global"),
@@ -821,8 +812,7 @@ def test_bounded_length():
     s = ft.Schedule(test)
     s.parallelize("Lj", "threadIdx.y")
     s.parallelize("Li", "threadIdx.x")
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
     with ft.VarDef([
         ("a", (100, 100), "int32", "input", "gpu/global"),
@@ -865,8 +855,10 @@ def test_parallel_broadcast():
     s = ft.Schedule(test)
     s.parallelize("L0", "blockIdx.x")
     s.parallelize("L1", "threadIdx.x")
-    func = ft.lower(s.func(), target, skip_passes=['prop_one_time_use'])
-    print(func)
+    func = ft.lower(s.func(),
+                    target,
+                    skip_passes=['prop_one_time_use'],
+                    verbose=1)
 
     with ft.VarDef([
         ("a", (4, 1), "int32", "input", "gpu/global"),
@@ -920,7 +912,7 @@ def test_unbounded_length():
     s = ft.Schedule(test)
     s.parallelize("L1", "threadIdx.x")
     with pytest.raises(ft.InvalidProgram):
-        print(ft.lower(s.func(), target))
+        ft.lower(s.func(), target, verbose=1)
 
 
 def test_unroll_for():
@@ -947,8 +939,7 @@ def test_unroll_for():
     s = ft.Schedule(test)
     s.parallelize("L1", "blockIdx.x")
     s.unroll("L2")
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
     code = ft.codegen(func, target)
     assert "atomicAdd" not in code
@@ -984,8 +975,7 @@ def test_streams():
     s.parallelize("L1", "cudaStream")
     s.parallelize("L2", "threadIdx.x")
     s.parallelize("L3", "threadIdx.x")
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
     code = ft.codegen(func, target)
     print(debug.with_line_no(code))
     assert "cudaStreamCreate" in code
@@ -1002,7 +992,7 @@ def test_streams():
 
 def test_merge_no_deps_1():
 
-    @ft.transform
+    @ft.transform(verbose=1)
     def test(ptr, edge1, edge2):
         ptr: ft.Var[(4, 11), "int32", "input", "cpu"]
         edge1: ft.Var[(4, 50), "int32", "input", "cpu"]
@@ -1020,13 +1010,11 @@ def test_merge_no_deps_1():
                 for j in range(ptr[b, i], ptr[b, i + 1]):
                     edge2[b, j] += j
 
-    print(test)
     s = ft.Schedule(test)
     s.parallelize("Lb", "blockIdx.x")
     s.parallelize("Li1", "threadIdx.x")
     s.parallelize("Li2", "threadIdx.x")
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
     def matcher(x):
         if x.type() == ft.ASTNodeType.For:
@@ -1041,7 +1029,7 @@ def test_merge_no_deps_1():
 
 def test_merge_no_deps_2():
 
-    @ft.transform
+    @ft.transform(verbose=1)
     def test(ptr, edge1, edge2):
         ptr: ft.Var[(4, 11), "int32", "input", "cpu"]
         edge1: ft.Var[(4, 50), "int32", "input", "cpu"]
@@ -1062,13 +1050,11 @@ def test_merge_no_deps_2():
                 # Nothing to do with edge2 here
                 foobar[b, i] = i
 
-    print(test)
     s = ft.Schedule(test)
     s.parallelize("Lb", "blockIdx.x")
     s.parallelize("Li1", "threadIdx.x")
     s.parallelize("Li2", "threadIdx.x")
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
     def matcher(x):
         if x.type() == ft.ASTNodeType.For:
@@ -1083,7 +1069,7 @@ def test_merge_no_deps_2():
 
 def test_merge_no_deps_3():
 
-    @ft.transform
+    @ft.transform(verbose=1)
     def test(ptr, edge1, edge2):
         ptr: ft.Var[(4, 11), "int32", "input", "cpu"]
         edge1: ft.Var[(4, 50), "int32", "input", "cpu"]
@@ -1100,7 +1086,6 @@ def test_merge_no_deps_3():
                 for j in range(ptr[b, i], ptr[b, i + 1] + 1):
                     edge2[b, j] = edge2[b, j] * 2 + j
 
-    print(test)
     s = ft.Schedule(test)
     s.parallelize("Lb", "blockIdx.x")
     s.parallelize("Li1", "threadIdx.x")
@@ -1127,8 +1112,7 @@ def test_access_gpu_from_cpu_for_debugging():
     assert ft.pop_ast().match(test.body)
 
     s = ft.Schedule(test)
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
     code = ft.codegen(func, target)
     print(debug.with_line_no(code))
     x_np = np.array([1, 2, 3, 4], dtype="int32")

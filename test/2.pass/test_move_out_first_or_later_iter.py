@@ -10,10 +10,8 @@ def test_move_out_first():
             with ft.If(i == 0):
                 y[i] = 0
             y[i] = y[i] + x[i]
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("x", (4,), "int32", "input", "cpu"),
@@ -36,10 +34,8 @@ def test_move_out_last():
             y[i] = y[i] + x[i]
             with ft.If(i == 3):
                 y[i] = 0
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("x", (4,), "int32", "input", "cpu"),

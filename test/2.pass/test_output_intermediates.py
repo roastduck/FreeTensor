@@ -18,8 +18,7 @@ def test_reuse_over_loop():
     print(ast)
     ast = ft.output_intermediates(ast, set(["V_t"]))
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (4, 5, 6), "float32", "input", "cpu"),
                     ("y", (4, 6), "float32", "output", "cpu")]) as (x, y):
@@ -60,8 +59,7 @@ def test_multiple_assignments():
     print(ast)
     ast = ft.output_intermediates(ast, set(["V_t"]))
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (4, 5, 6), "float32", "input", "cpu"),
                     ("y", (4, 6, 2), "float32", "output", "cpu")]) as (x, y):
@@ -103,8 +101,7 @@ def test_reuse_over_loop_with_offset():
     print(ast)
     ast = ft.output_intermediates(ast, set(["V_t"]))
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (4, 5, 6), "float32", "input", "cpu"),
                     ("y", (4, 6), "float32", "output", "cpu")]) as (x, y):
@@ -142,8 +139,7 @@ def test_reuse_over_stmt_seq():
     print(ast)
     ast = ft.output_intermediates(ast, set(["V_t"]))
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (6,), "float32", "input", "cpu"),
                     ("y", (6,), "float32", "inout", "cpu")]) as (x, y):
@@ -192,8 +188,7 @@ def test_reuse_different_lengths():
     print(ast)
     ast = ft.output_intermediates(ast, set(["V_t"]))
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x1", (4, 5, 6), "float32", "input", "cpu"),
                     ("x2", (2, 5, 6), "float32", "input", "cpu"),
@@ -242,8 +237,7 @@ def test_no_need_to_copy():
     print(ast)
     ast = ft.output_intermediates(ast, set(["V_t"]))
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (4, 5, 6), "float32", "input", "cpu"),
                     ("y", (4, 6), "float32", "output", "cpu")]) as (x, y):
@@ -280,8 +274,7 @@ def test_circular_reuse():
     print(ast)
     ast = ft.output_intermediates(ast, set(["V_c", "V_h"]))
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef("y", (128,), "float32", "output", "cpu") as y:
         with ft.VarDef("c.tape", (100, 128), "float32", "output",

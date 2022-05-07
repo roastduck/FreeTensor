@@ -16,8 +16,7 @@ def test_sample_basic():
             with ft.For("j", 0, 32) as j:
                 with ft.For("k", 0, 32) as k:
                     y[i * 32 + k, j] = x[i * 32 + k] * 2
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
 
     features = ft.fixed_length_feature(ast)
 

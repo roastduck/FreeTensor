@@ -8,10 +8,8 @@ def test_basic():
         with ft.For("i", 0, 4) as i:
             t[i] = x[i] + 1
             y[i] = t[i] * 2
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (4,), "int32", "output", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
@@ -30,10 +28,8 @@ def test_prop_across_loops():
             t[i] = x[i] + 1
         with ft.For("i", 0, 4) as i:
             y[i] = t[i] * 2
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (4,), "int32", "output", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
@@ -53,10 +49,8 @@ def test_used_in_many_stmts_no_prop():
                 t[()] = x[i] + 1
                 y1[i] = t[()] * 2
                 y2[i] = t[()] * 3
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (4,), "int32", "output", "cpu"),
                     ("y1", (4,), "int32", "output", "cpu"),
@@ -78,10 +72,8 @@ def test_used_in_many_reads_no_prop():
             with ft.VarDef("t", (), "int32", "cache", "cpu") as t:
                 t[i] = x[i] + 1
                 y[i] = t[i] * t[i] + t[i]
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (4,), "int32", "output", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
@@ -104,10 +96,8 @@ def test_modify_self_no_prop():
             with ft.For("i", 0, 5) as i:
                 t[i] = t[i] - 1
                 y[i] = t[i]
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (5,), "float64", "inout", "cpu"),
                     ("y", (5,), "float64", "output", "cpu")]) as (x, y):
@@ -135,10 +125,8 @@ def test_using_local_var_no_prop():
                     t[i] = s[()] * 2  # No prop t
             with ft.For("i", 0, 5) as i:
                 y[i] = t[i]
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (5, 10), "float64", "inout", "cpu"),
                     ("y", (5,), "float64", "output", "cpu")]) as (x, y):
@@ -167,10 +155,8 @@ def test_different_iter_non_linear():
                     t[i * 4 + j] = x1[i] * x2[j]
             with ft.For("k", 0, 16) as k:
                 y[k] = t[k] + 1
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast, skip_passes=["use_builtin_div"])
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, skip_passes=["use_builtin_div"], verbose=1)
 
     with ft.VarDef([("x1", (4,), "int32", "input", "cpu"),
                     ("x2", (4,), "int32", "input", "cpu"),

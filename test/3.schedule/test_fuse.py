@@ -12,14 +12,12 @@ def test_basic():
                 y[i, j] = i + j
             with ft.For("j2", 0, 8, nid="L2b") as j:
                 z[i, j] = i * j
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.fuse("L2a", "L2b")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("y", (4, 8), "int32", "output", "cpu"),
@@ -44,14 +42,12 @@ def test_find_following_loop():
                 y[i, j] = i + j
             with ft.For("j2", 0, 8, nid="L2b") as j:
                 z[i, j] = i * j
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.fuse("L2a")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("y", (4, 8), "int32", "output", "cpu"),
@@ -76,14 +72,12 @@ def test_not_aligned_1():
                 y[i, j] = i + j
             with ft.For("j2", 2, 10, nid="L2b") as j:
                 z[i, j - 2] = i * (j - 2)
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.fuse("L2a", "L2b")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("y", (4, 8), "int32", "output", "cpu"),
@@ -108,14 +102,12 @@ def test_not_aligned_2():
                 y[i, j] = i + j
             with ft.For("j", 2, 10, nid="L2b") as j:
                 z[i, j - 2] = i * (j - 2)
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.fuse("L2a", "L2b")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("y", (4, 8), "int32", "output", "cpu"),
@@ -140,14 +132,12 @@ def test_step():
                 y[i, j] = i + j
             with ft.For("j2", 1, 9, 2, nid="L2b") as j:
                 z[i, j] = i * j
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.fuse("L2a", "L2b")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("y", (4, 8), "int32", "output", "cpu"),
@@ -195,8 +185,7 @@ def test_not_following_2():
         with ft.For("i", 0, 4, nid="L1b") as i:
             with ft.For("j", 0, 8, nid="L2b") as j:
                 z[i, j] = i * j
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
         s.fuse("L2a", "L2b")
@@ -214,8 +203,7 @@ def test_different_length():
                 y[i, j] = i + j
             with ft.For("j", 0, 10, nid="L2b") as j:
                 z[i, j] = i * j
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
         s.fuse("L2a", "L2b")
@@ -256,14 +244,12 @@ def test_buffer_fuse():
                 with ft.For("j", 0, 8, nid="L2b") as j:
                     y1[i, j] = b[i, j] + 1
                     y2[i, j] = b[i, j] + 2
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.fuse("L2a", "L2b")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("x", (4, 8), "int32", "input", "cpu"),
@@ -289,14 +275,12 @@ def test_hoist_var():
         with ft.VarDef("z", (4, 8), "int32", "output", "cpu") as z:
             with ft.For("j2", 0, 8, nid="L2b") as j:
                 z[i, j] = i * j
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.fuse("L2a", "L2b")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.For("i", 0, 4) as i:
         with ft.VarDef([
@@ -319,14 +303,12 @@ def test_hoist_var_find_following_loop():
         with ft.VarDef("z", (4, 8), "int32", "output", "cpu") as z:
             with ft.For("j2", 0, 8, nid="L2b") as j:
                 z[i, j] = i * j
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.fuse("L2a")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.For("i", 0, 4) as i:
         with ft.VarDef([
@@ -350,14 +332,12 @@ def test_hoist_var_in_stmt_seq():
             with ft.For("j2", 0, 8, nid="L2b") as j:
                 z[i, j] = i * j
             z[0, 0] = -1
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.fuse("L2a", "L2b")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.For("i", 0, 4) as i:
         with ft.VarDef([
@@ -382,14 +362,12 @@ def test_hoist_var_in_stmt_seq_find_following_loop():
             with ft.For("j2", 0, 8, nid="L2b") as j:
                 z[i, j] = i * j
             z[0, 0] = -1
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.fuse("L2a")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.For("i", 0, 4) as i:
         with ft.VarDef([
@@ -412,8 +390,7 @@ def test_hoist_var_with_modified_shape():
         with ft.VarDef("x", (n,), "int32", "output", "cpu") as x:
             with ft.For("i", 0, 4, nid="L2") as i:
                 x[i] = i
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
         s.fuse("L1", "L2")
@@ -508,14 +485,12 @@ def test_fuse_with_if():
                     y[i, j] = i + j
             with ft.For("j2", 0, 8, nid="L2b") as j:
                 z[i, j] = i * j
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.fuse("L2a", "L2b")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("c", (), "int32", "input", "cpu"),
@@ -544,14 +519,12 @@ def test_fuse_with_if_find_following_loop():
                     y[i, j] = i + j
             with ft.For("j2", 0, 8, nid="L2b") as j:
                 z[i, j] = i * j
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.fuse("L2a")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("c", (), "int32", "input", "cpu"),

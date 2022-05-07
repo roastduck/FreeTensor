@@ -6,8 +6,7 @@ def test_basic():
         x[()] = 1
     with ft.VarDef("y", (), "int32", "cache", "cpu") as y:
         y[()] = 2
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     ast = ft.hoist_var_over_stmt_seq(ast)
     print(ast)
 
@@ -25,8 +24,7 @@ def test_rename():
         x[()] = 1
     with ft.VarDef("x", (), "int32", "cache", "cpu") as x:
         x[()] = 2
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     ast = ft.hoist_var_over_stmt_seq(ast)
     print(ast)
 
@@ -48,8 +46,7 @@ def test_rename_nested_1():
         y[()] = 0
     with ft.VarDef("x", (), "int32", "cache", "cpu") as x:
         x[()] = 3
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     ast = ft.hoist_var_over_stmt_seq(ast)
     print(ast)
 
@@ -73,8 +70,7 @@ def test_rename_nested_2():
         with ft.VarDef("x", (), "int32", "cache", "cpu") as x:
             x[()] = 2
         y[()] = 0
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     ast = ft.hoist_var_over_stmt_seq(ast)
     print(ast)
 

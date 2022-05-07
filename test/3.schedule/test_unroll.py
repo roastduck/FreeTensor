@@ -84,8 +84,7 @@ def test_immediate_basic():
     s.unroll("L1", True)
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
@@ -109,8 +108,7 @@ def test_immediate_with_offset():
     s.unroll("L1", True)
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
@@ -133,8 +131,7 @@ def test_immediate_with_step():
     s.unroll("L1", True)
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (8,), "int32", "input", "cpu"),
                     ("y", (8,), "int32", "output", "cpu")]) as (x, y):
@@ -158,8 +155,7 @@ def test_folding_sum():
     s.unroll("L1", True)
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):

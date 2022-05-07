@@ -11,8 +11,7 @@ def test_flop():
         with ft.For("i", 0, 32, nid='L1') as i:
             ft.MarkNid('S1')
             y[i] = x1[i] * x2[i] + x3[i]
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
 
     features = dict(
         map(lambda kv: (str(kv[0]), kv[1]),
@@ -30,8 +29,7 @@ def test_access_count():
         with ft.For("i", 0, 32, nid='L1') as i:
             ft.MarkNid('S1')
             y[i] = x[i] + 1
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
 
     features = dict(
         map(lambda kv: (str(kv[0]), kv[1]),
@@ -56,8 +54,7 @@ def test_access_count_overlap():
                 y1[i] = x[i] + 1
             with ft.For("i", 16, 48, nid='L2') as i:
                 y2[i] = x[i] + 1
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
 
     features = dict(
         map(lambda kv: (str(kv[0]), kv[1]),
@@ -82,8 +79,7 @@ def test_access_area():
         with ft.For("i", 0, 32, nid='L1') as i:
             ft.MarkNid('S1')
             y[i] = x[i] + 1
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
 
     features = dict(
         map(lambda kv: (str(kv[0]), kv[1]),
@@ -108,8 +104,7 @@ def test_access_area_overlap():
                 y1[i] = x[i] + 1
             with ft.For("i", 16, 48, nid='L2') as i:
                 y2[i] = x[i] + 1
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
 
     features = dict(
         map(lambda kv: (str(kv[0]), kv[1]),

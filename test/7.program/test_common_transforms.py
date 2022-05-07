@@ -311,8 +311,7 @@ def test_vectorize_spmv():
             y[i] = 0
             with ft.For("j", 0, 64, nid="Lj") as j:
                 y[i] += x1[i, j] * x2[j]
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     i0, i1 = s.split("Li", 4)
     s.reorder([i0, "Lj", i1])
@@ -321,8 +320,7 @@ def test_vectorize_spmv():
     s.vectorize(s.find("S0.a").parent_stmt())  # FIXME: do not hard-code S0.a
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x1", (64, 64), "int32", "input", "cpu"),
                     ("x2", (64,), "int32", "input", "cpu"),

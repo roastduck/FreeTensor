@@ -7,10 +7,8 @@ def test_basic():
         with ft.VarDef("a", (), "int32", "cache", "cpu") as a:
             a[()] = x[()] + 1
         y[()] = x[()] + 1
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (), "int32", "inout", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
@@ -30,10 +28,8 @@ def test_chained():
                 with ft.VarDef("c", (), "int32", "cache", "cpu") as c:
                     c[()] = a[()] + b[()]
         y[()] = x[()] + 1
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (), "int32", "inout", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
@@ -51,10 +47,8 @@ def test_self_assign():
             with ft.For("i", 0, 10) as i:
                 a[()] = a[()] * x[()] + 1
         y[()] = x[()] + 1
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (), "int32", "inout", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):

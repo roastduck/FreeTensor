@@ -8,14 +8,12 @@ def test_reduce_sum():
         with ft.For("i", 0, 4, nid="L1") as i:
             with ft.For("j", 0, 8, nid="L2") as j:
                 y[i, j] = y[i, j] + x[i, j] * 2
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.cache_reduction("L2", "y", "cpu")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast, skip_passes=['prop_one_time_use'])
-    print(ast)
+    ast = ft.lower(ast, skip_passes=['prop_one_time_use'], verbose=1)
 
     with ft.VarDef([("x", (4, 8), "int32", "input", "cpu"),
                     ("y", (4, 8), "int32", "inout", "cpu")]) as (x, y):
@@ -36,14 +34,12 @@ def test_reduce_sum_loop():
         with ft.For("i", 0, 4, nid="L1") as i:
             with ft.For("j", 0, 8, nid="L2") as j:
                 y[i] = y[i] + x[i, j] * 2
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.cache_reduction("L2", "y", "cpu")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (4, 8), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "inout", "cpu")]) as (x, y):
@@ -66,14 +62,12 @@ def test_reduce_min_loop():
         with ft.For("i", 0, 4, nid="L1") as i:
             with ft.For("j", 0, 8, nid="L2") as j:
                 y[i] = ft.min(y[i], x[i, j] * 2)
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.cache_reduction("L2", "y", "cpu")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("x", (4, 8), "float32", "input", "cpu"),
@@ -97,8 +91,7 @@ def test_no_var():
             with ft.For("j", 0, 8, nid="L2") as j:
                 ft.MarkNid("S0")
                 y[i, j] = y[i, j] + x[i, j] * 2
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
         s.cache_reduction("S0", "z", "cpu")
@@ -112,8 +105,7 @@ def test_no_stmt():
         with ft.For("i", 0, 4, nid="L1") as i:
             with ft.For("j", 0, 8, nid="L2") as j:
                 y[i, j] = y[i, j] + x[i, j] * 2
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
         s.cache_reduction("S0", "x", "cpu")
@@ -129,8 +121,7 @@ def test_read_not_allowed():
             with ft.For("j", 0, 8, nid="L2") as j:
                 ft.MarkNid("S0")
                 y[i] = y[i] + x[i, j] * 2
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
         s.cache_reduction("S0", "x", "cpu")
@@ -147,8 +138,7 @@ def test_write_not_allowed():
             with ft.For("j", 0, 8, nid="L2") as j:
                 ft.MarkNid("S0")
                 y[i, j] = x[i, j] * 2
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
         s.cache_reduction("S0", "y", "cpu")
@@ -164,8 +154,7 @@ def test_mix_op_not_allowed():
                 with ft.NamedScope("S0"):
                     y[i, j] = y[i, j] + x[i, j] * 2
                     y[i, j] = ft.min(y[i, j], x[i, j] * 2)
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
         s.cache_reduction("S0", "y", "cpu")

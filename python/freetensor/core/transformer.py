@@ -910,9 +910,9 @@ def into_staging(func, caller_env, src=None, verbose=False):
         from pygments import highlight
         from pygments.lexers import PythonLexer
         from pygments.formatters import TerminalFormatter
-        print(
-            highlight(source, PythonLexer(),
-                      TerminalFormatter(bg='dark', linenos=True)))
+        print(highlight(source, PythonLexer(),
+                        TerminalFormatter(bg='dark', linenos=True)),
+              file=sys.stderr)
 
     caller_env['freetensor'] = sys.modules['freetensor']
     exec(compile(source, f'<staging:{func.__name__}>', 'exec'), caller_env)
@@ -981,9 +981,9 @@ def transform(func=None, verbose: int = 0, caller_env=None):
                       staged_ast, closure)
 
         if verbose >= 1:
-            print("The transformed AST is:")
-            print(staged)
-            print()
+            print("The transformed AST is:", file=sys.stderr)
+            print(staged, file=sys.stderr)
+            print(file=sys.stderr)
 
         return staged
 
