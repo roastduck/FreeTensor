@@ -12,7 +12,6 @@ using namespace pybind11::literals;
 void init_ffi_driver(py::module_ &m) {
     py::class_<Driver, Ref<Driver>>(m, "Driver")
         .def(py::init<const Func &, const std::string &, const Ref<Device> &>())
-        .def(py::init<const Func &, const std::string &>())
         .def("set_params",
              static_cast<void (Driver::*)(
                  const std::vector<Ref<Array>> &,

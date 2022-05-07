@@ -40,6 +40,13 @@ template <class T> class Opt {
     static Opt make() { return Opt(T()); }
     static Opt make(T &&x) { return Opt(std::move(x)); }
     static Opt make(const T &x) { return Opt(x); }
+
+    friend bool operator==(const Opt &lhs, const Opt &rhs) {
+        return lhs.opt_ == rhs.opt_;
+    }
+    friend bool operator!=(const Opt &lhs, const Opt &rhs) {
+        return lhs.opt_ != rhs.opt_;
+    }
 };
 
 } // namespace freetensor

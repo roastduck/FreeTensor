@@ -45,13 +45,9 @@ class Driver {
      * @param func : AST of the function, where the function signature is needed
      * to determine the parameters and return values
      * @param src : Native code generated from codegen
-     * @param dev : The device to run the program. If omitted, use the default
-     * device in Config
-     * @{
+     * @param dev : The device to run the program
      */
     Driver(const Func &func, const std::string &src, const Ref<Device> &dev);
-    Driver(const Func &func, const std::string &src);
-    /** @} */
 
     ~Driver() {
         for (void *retVal : returns_) {
