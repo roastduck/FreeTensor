@@ -241,13 +241,13 @@ void init_ffi_pass(py::module_ &m) {
                                const std::unordered_set<std::string> &, int)>(
               &lower),
           "func"_a, "target"_a = nullptr,
-          "skip_passes"_a = std::unordered_set<std::string>{}, "lower"_a);
+          "skip_passes"_a = std::unordered_set<std::string>{}, "verbose"_a = 0);
     m.def("lower",
           static_cast<Stmt (*)(const Stmt &, const Ref<Target> &,
                                const std::unordered_set<std::string> &, int)>(
               &lower),
           "stmt"_a, "target"_a = nullptr,
-          "skip_passes"_a = std::unordered_set<std::string>{}, "lower"_a);
+          "skip_passes"_a = std::unordered_set<std::string>{}, "verbose"_a = 0);
 }
 
 } // namespace freetensor
