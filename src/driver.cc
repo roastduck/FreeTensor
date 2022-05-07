@@ -33,9 +33,6 @@ Driver::Driver(const Func &f, const std::string &src, const Ref<Device> &dev)
     buildAndLoad();
 }
 
-Driver::Driver(const Func &f, const std::string &src)
-    : Driver(f, src, Config::defaultDevice()) {}
-
 void Driver::buildAndLoad() {
     std::string home = getenv("HOME");
     mkdir((home + "/.freetensor").c_str(), 0755);

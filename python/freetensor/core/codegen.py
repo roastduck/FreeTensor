@@ -10,9 +10,10 @@ from typing import Optional
 
 class NativeCode:
 
-    def __init__(self, func, code):
+    def __init__(self, func, code, target):
         self.func = func
         self.code = code
+        self.target = target
 
     def __str__(self):
         return self.code
@@ -49,7 +50,7 @@ def codegen(ast=None,
         if verbose:
             print(debug.with_line_no(raw_code), file=sys.stderr)
 
-        return NativeCode(ast, raw_code)
+        return NativeCode(ast, raw_code, target)
 
     else:
 

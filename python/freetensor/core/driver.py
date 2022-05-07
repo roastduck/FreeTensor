@@ -93,10 +93,9 @@ class Driver(ffi.Driver):
             in config
         '''
         src = str(src)
-        if device is not None:
-            super(Driver, self).__init__(func, src, device)
-        else:
-            super(Driver, self).__init__(func, src)
+        if device is None:
+            device = config.default_device()
+        super(Driver, self).__init__(func, src, device)
 
     def set_params(self, *args, **kws):
         super(Driver, self).set_params(args, kws)
@@ -127,6 +126,12 @@ def build_binary(code: Optional[NativeCode] = None,
     '''
 
     if code is not None:
+        if device is None:
+            device = config.default_device()
+        if device.target() != code.target:
+            raise ffi.DriverError(
+                f"Codegen target ({code.target}) is inconsistent with device target ({device.target()})"
+            )
         return Driver(code.func, code.code, device)
     else:
         f = build_binary

@@ -48,6 +48,25 @@ def test_basic():
     assert np.array_equal(y_np, y_std)
 
 
+def test_error_wrong_target():
+
+    @ft.transform
+    def test(x, y):
+        x: ft.Var[(4,), "int32", "input", "gpu/global"]
+        y: ft.Var[(4,), "int32", "output", "gpu/global"]
+        "nid: L1"
+        for i in range(0, 4):
+            y[i] = x[i] + 1
+
+    with pytest.raises(ft.DriverError):
+        with device:
+            s = ft.Schedule(test)
+            s.parallelize("L1", "threadIdx.x")
+            func = ft.lower(s.func(), verbose=1)
+            code = ft.codegen(func, ft.CPU(), verbose=True)
+            ft.build_binary(code)(x=x_arr, y=y_arr)
+
+
 def test_define_output_inside_kernel():
 
     @ft.transform
