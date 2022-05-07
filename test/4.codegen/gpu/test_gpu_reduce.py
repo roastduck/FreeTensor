@@ -34,17 +34,16 @@ def test_parallel_reduction():
     s = ft.Schedule(test)
     s.parallelize("L1", "blockIdx.x")
     s.parallelize("L2", "threadIdx.x")
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
     code = ft.codegen(func, target)
-    assert "atomicAdd" not in code
+    assert "atomicAdd" not in str(code)
     print(debug.with_line_no(code))
     x_np = np.random.randint(0, 100, (4, 64)).astype("int32")
     y_np = np.zeros((4,), dtype="int32")
     x_arr = ft.Array(x_np, device)
     y_arr = ft.Array(y_np, device)
-    ft.Driver(func, code, device)(x=x_arr, y=y_arr)
+    ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.sum(x_np, axis=1)
@@ -68,11 +67,10 @@ def test_parallel_reduction_on_2_vars():
     s = ft.Schedule(test)
     s.parallelize("L1", "blockIdx.x")
     s.parallelize("L2", "threadIdx.x")
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
     code = ft.codegen(func, target)
-    assert "atomicAdd" not in code
+    assert "atomicAdd" not in str(code)
     print(debug.with_line_no(code))
     x_np = np.random.randint(0, 100, (4, 64)).astype("int32")
     y_np = np.zeros((4,), dtype="int32")
@@ -80,7 +78,7 @@ def test_parallel_reduction_on_2_vars():
     x_arr = ft.Array(x_np, device)
     y_arr = ft.Array(y_np, device)
     z_arr = ft.Array(z_np, device)
-    ft.Driver(func, code, device)(x=x_arr, y=y_arr, z=z_arr)
+    ft.build_binary(code, device)(x=x_arr, y=y_arr, z=z_arr)
     y_np = y_arr.numpy()
     z_np = z_arr.numpy()
 
@@ -107,17 +105,16 @@ def test_parallel_reduction_on_array():
     s = ft.Schedule(test)
     s.parallelize("L1", "blockIdx.x")
     s.parallelize("L2", "threadIdx.x")
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
     code = ft.codegen(func, target)
-    assert "atomicAdd" not in code
+    assert "atomicAdd" not in str(code)
     print(debug.with_line_no(code))
     x_np = np.random.randint(0, 100, (4, 64, 64)).astype("int32")
     y_np = np.zeros((4, 64), dtype="int32")
     x_arr = ft.Array(x_np, device)
     y_arr = ft.Array(y_np, device)
-    ft.Driver(func, code, device)(x=x_arr, y=y_arr)
+    ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.sum(x_np, axis=1)
@@ -148,18 +145,17 @@ def test_atomic_reduction():
     s = ft.Schedule(test)
     s.parallelize("L1", "blockIdx.x")
     s.parallelize("L2", "threadIdx.x")
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
     code = ft.codegen(func, target)
-    assert "atomicAdd" in code
-    assert "+=" not in code
+    assert "atomicAdd" in str(code)
+    assert "+=" not in str(code)
     print(debug.with_line_no(code))
     x_np = np.random.randint(0, 100, (4, 64)).astype("int32")
     y_np = np.zeros((4, 2), dtype="int32")
     x_arr = ft.Array(x_np, device)
     y_arr = ft.Array(y_np, device)
-    ft.Driver(func, code, device)(x=x_arr, y=y_arr)
+    ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.sum(x_np.reshape((4, 32, 2)), axis=1)
@@ -182,18 +178,16 @@ def test_atomic_reduction_2_stmts_on_1_var_across_blocks():
 
     s = ft.Schedule(test)
     s.parallelize("L2", "blockIdx.x")
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
-    code = ft.codegen(func, target)
-    print(code)
-    assert code.count("atomicAdd") == 2
-    assert "+=" not in code
+    code = ft.codegen(func, target, verbose=True)
+    assert str(code).count("atomicAdd") == 2
+    assert "+=" not in str(code)
     x_np = np.random.randint(0, 100, (4, 64)).astype("int32")
     y_np = np.zeros((4, 64), dtype="int32")
     x_arr = ft.Array(x_np, device)
     y_arr = ft.Array(y_np, device)
-    ft.Driver(func, code, device)(x=x_arr, y=y_arr)
+    ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = x_np
@@ -217,19 +211,17 @@ def test_no_atomic_reduction_2_stmts_on_1_var_across_threads():
 
     s = ft.Schedule(test)
     s.parallelize("L2", "threadIdx.x")
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
-    code = ft.codegen(func, target)
-    print(code)
-    assert "atomicAdd" not in code
-    assert "__syncthreads" in code
-    assert "+=" in code
+    code = ft.codegen(func, target, verbose=True)
+    assert "atomicAdd" not in str(code)
+    assert "__syncthreads" in str(code)
+    assert "+=" in str(code)
     x_np = np.random.randint(0, 100, (4, 64)).astype("int32")
     y_np = np.zeros((4, 64), dtype="int32")
     x_arr = ft.Array(x_np, device)
     y_arr = ft.Array(y_np, device)
-    ft.Driver(func, code, device)(x=x_arr, y=y_arr)
+    ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = x_np
@@ -260,18 +252,17 @@ def test_serial_reduction():
 
     s = ft.Schedule(test)
     s.parallelize("L1", "blockIdx.x")
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
     code = ft.codegen(func, target)
-    assert "atomicAdd" not in code
-    assert "+=" in code
+    assert "atomicAdd" not in str(code)
+    assert "+=" in str(code)
     print(debug.with_line_no(code))
     x_np = np.random.randint(0, 100, (4, 64)).astype("int32")
     y_np = np.zeros((4,), dtype="int32")
     x_arr = ft.Array(x_np, device)
     y_arr = ft.Array(y_np, device)
-    ft.Driver(func, code, device)(x=x_arr, y=y_arr)
+    ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.sum(x_np, axis=1)

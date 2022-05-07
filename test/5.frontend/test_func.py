@@ -44,8 +44,7 @@ def test_basic_call():
 
 def test_global_functions():
 
-    func = ft.lower(f_global, ft.CPU())
-    print(func)
+    func = ft.lower(f_global, ft.CPU(), verbose=1)
 
     with ft.VarDef("y", (2,), "float32", "output", "cpu") as y:
         y[0] = 2.0
@@ -113,8 +112,7 @@ def test_call_with_external_data():
     std = ft.pop_ast()
     assert std.match(f.body)
 
-    code = ft.codegen(f, ft.CPU())
-    print(debug.with_line_no(code))
+    code = ft.codegen(f, ft.CPU(), verbose=True)
 
     y_np = np.zeros((2, 2), dtype="int32")
     y_arr = ft.Array(y_np, ft.Device(ft.CPU()))
@@ -149,8 +147,7 @@ def test_call_with_literal_data():
     std = ft.pop_ast()
     assert std.match(f.body)
 
-    code = ft.codegen(f, ft.CPU())
-    print(debug.with_line_no(code))
+    code = ft.codegen(f, ft.CPU(), verbose=True)
 
     y_np = np.zeros((2, 2), dtype="int32")
     y_arr = ft.Array(y_np, dev)
@@ -380,8 +377,7 @@ def test_return():
                     with ft.For("j1", 0, 2) as j:
                         c[i, j] = c1[i, j]
                         d[i, j] = d1[i, j]
-    std = ft.pop_ast()
-    print(std)
+    std = ft.pop_ast(verbose=True)
     assert std.match(test.body)
 
 
@@ -437,22 +433,22 @@ def test_func_in_args():
             y[i] = x[i] + 1
         return y
 
+    @ft.build_binary(device=ft.Device(ft.CPU()))
+    @ft.codegen(target=ft.CPU(), verbose=True)
     @ft.lower(target=ft.CPU(), verbose=1)
     @ft.transform
-    def func(x, y):
+    def f(x, y):
         x: ft.Var[(4,), "int32", "input", "cpu"]
         y: ft.Var[(4,), "int32", "output", "cpu"]
         c = plus_one(plus_one(plus_one(x)))
         for i in range(4):
             y[i] = c[i]
 
-    code = ft.codegen(func, ft.CPU())
-    print(code)
     x_np = np.array([1, 2, 3, 4], dtype="int32")
     y_np = np.array([0, 0, 0, 0], dtype="int32")
     x_arr = ft.Array(x_np, ft.Device(ft.CPU()))
     y_arr = ft.Array(y_np, ft.Device(ft.CPU()))
-    ft.Driver(func, code, ft.Device(ft.CPU()))(x=x_arr, y=y_arr)
+    f(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.array([4, 5, 6, 7], dtype="int32")

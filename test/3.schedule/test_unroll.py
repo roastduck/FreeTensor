@@ -20,7 +20,7 @@ def test_not_found():
         s.unroll("L0")
     code_ = ft.codegen(s.func(), target)
 
-    assert code == code_
+    assert str(code) == str(code_)
 
 
 def test_not_constant():
@@ -37,7 +37,7 @@ def test_not_constant():
         s.unroll("L1")
     code_ = ft.codegen(s.func(), target)
 
-    assert code == code_
+    assert str(code) == str(code_)
 
 
 def test_unbounded_length():
@@ -55,7 +55,7 @@ def test_unbounded_length():
         s.unroll("L2")
     code_ = ft.codegen(s.func(), target)
 
-    assert code == code_
+    assert str(code) == str(code_)
 
 
 def test_constant_length():

@@ -61,13 +61,12 @@ def test_syncthreads():
                     ft.Any()
     assert ft.make_1d_var(ft.pop_ast()).match(func.body)
 
-    code = ft.codegen(func, target)
-    print(debug.with_line_no(code))
+    code = ft.codegen(func, target, verbose=True)
     x_np = np.array([range(256)] * 4, dtype="int32")
     y_np = np.zeros((4, 256), dtype="int32")
     x_arr = ft.Array(x_np, device)
     y_arr = ft.Array(y_np, device)
-    ft.Driver(func, code, device)(x=x_arr, y=y_arr)
+    ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.array([range(511, -1, -2)] * 4, dtype="int32")
@@ -631,13 +630,12 @@ def test_syncwarp():
                     ft.Any()
     assert ft.make_1d_var(ft.pop_ast()).match(func.body)
 
-    code = ft.codegen(func, target)
-    print(debug.with_line_no(code))
+    code = ft.codegen(func, target, verbose=True)
     x_np = np.array([[0, 1, 2, 3]] * 4, dtype="int32")
     y_np = np.zeros((4, 4), dtype="int32")
     x_arr = ft.Array(x_np, device)
     y_arr = ft.Array(y_np, device)
-    ft.Driver(func, code, device)(x=x_arr, y=y_arr)
+    ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.array([[7, 5, 3, 1]] * 4, dtype="int32")

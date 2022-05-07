@@ -42,8 +42,7 @@ def test_thread_bind():
     sch = s.test_thread_bind()
     func = ft.lower(sch.func(), target)
     print(func)
-    code = ft.codegen(func, target)
-    print(code)
+    code = ft.codegen(func, target, verbose=True)
     w_np = np.zeros((m, m, a, b), dtype="float32")
     x_np = np.zeros((m, m, b, a), dtype="float32")
     y_np = np.zeros((1, 1, a, a), dtype="float32")
@@ -52,7 +51,7 @@ def test_thread_bind():
     x_arr = ft.Array(x_np, device)
     y_arr = ft.Array(y_np, device)
     z_arr = ft.Array(z_np, device)
-    ft.Driver(func, code, device)(w=w_arr, x=x_arr, y=y_arr, z=z_arr)
+    ft.build_binary(code, device)(w=w_arr, x=x_arr, y=y_arr, z=z_arr)
     std_log = [
         'split(L4, factor=2, nparts=-1)', 'split(L4.0, factor=2, nparts=-1)',
         'split(L4.0.0, factor=2, nparts=-1)',

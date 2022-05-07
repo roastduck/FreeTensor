@@ -23,18 +23,16 @@ def test_vectorize():
     s = ft.Schedule(func)
     s.parallelize("L1", "blockIdx.x")
     s.vectorize("L2")
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
-    code = ft.codegen(func, target)
-    print(debug.with_line_no(code))
-    assert "int4" in code
+    code = ft.codegen(func, target, verbose=True)
+    assert "int4" in str(code)
 
     x_np = np.random.randint(0, 100, (4, 64)).astype("int32")
     y_np = np.zeros((4, 64), dtype="int32")
     x_arr = ft.Array(x_np, device)
     y_arr = ft.Array(y_np, device)
-    ft.Driver(func, code, device)(x=x_arr, y=y_arr)
+    ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = x_np * 2
@@ -54,18 +52,16 @@ def test_vectorize_with_non_vector_access():
     s = ft.Schedule(func)
     s.parallelize("L1", "blockIdx.x")
     s.vectorize("L2")
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
-    code = ft.codegen(func, target)
-    print(debug.with_line_no(code))
-    assert "int4" in code
+    code = ft.codegen(func, target, verbose=True)
+    assert "int4" in str(code)
 
     x_np = np.random.randint(0, 100, (4,)).astype("int32")
     y_np = np.zeros((4, 64), dtype="int32")
     x_arr = ft.Array(x_np, device)
     y_arr = ft.Array(y_np, device)
-    ft.Driver(func, code, device)(x=x_arr, y=y_arr)
+    ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.broadcast_to(x_np * 2, (64, 4)).transpose()
@@ -82,16 +78,14 @@ def test_vectorize_use_iter():
     s = ft.Schedule(func)
     s.parallelize("L1", "blockIdx.x")
     s.vectorize("L2")
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
-    code = ft.codegen(func, target)
-    print(debug.with_line_no(code))
-    assert "int4" in code
+    code = ft.codegen(func, target, verbose=True)
+    assert "int4" in str(code)
 
     y_np = np.zeros((4, 64), dtype="int32")
     y_arr = ft.Array(y_np, device)
-    driver = ft.Driver(func, code, device)(y=y_arr)
+    driver = ft.build_binary(code, device)(y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.array([[i + j for j in range(64)] for i in range(4)])
@@ -111,18 +105,16 @@ def test_vectorize_fallback_to_shorter_when_not_divisible():
     s = ft.Schedule(func)
     s.parallelize("L1", "blockIdx.x")
     s.vectorize("L2")
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
-    code = ft.codegen(func, target)
-    print(debug.with_line_no(code))
-    assert "int2" in code
+    code = ft.codegen(func, target, verbose=True)
+    assert "int2" in str(code)
 
     x_np = np.random.randint(0, 100, (4, 62)).astype("int32")
     y_np = np.zeros((4, 62), dtype="int32")
     x_arr = ft.Array(x_np, device)
     y_arr = ft.Array(y_np, device)
-    ft.Driver(func, code, device)(x=x_arr, y=y_arr)
+    ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = x_np * 2
@@ -142,18 +134,16 @@ def test_vectorize_fallback_to_shorter_when_not_aligned():
     s = ft.Schedule(func)
     s.parallelize("L1", "blockIdx.x")
     s.vectorize("L2")
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
-    code = ft.codegen(func, target)
-    print(debug.with_line_no(code))
-    assert "int2" in code
+    code = ft.codegen(func, target, verbose=True)
+    assert "int2" in str(code)
 
     x_np = np.random.randint(0, 100, (4, 66)).astype("int32")
     y_np = np.zeros((4, 64), dtype="int32")
     x_arr = ft.Array(x_np, device)
     y_arr = ft.Array(y_np, device)
-    ft.Driver(func, code, device)(x=x_arr, y=y_arr)
+    ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = x_np[:, 2:] * 2

@@ -30,8 +30,7 @@ def test_warpshuffle_reverse():
     s.parallelize("L0", "blockIdx.x")
     s.parallelize("L1", "threadIdx.x")
     s.parallelize("L2", "threadIdx.x")
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
     with ft.VarDef([
         ("x", (4, 32), "int32", "input", "gpu/global"),
@@ -46,15 +45,14 @@ def test_warpshuffle_reverse():
                     y[i, j] = value[31 - j]
     assert ft.pop_ast().match(test.body)
 
-    code = ft.codegen(func, target)
-    print(debug.with_line_no(code))
+    code = ft.codegen(func, target, verbose=True)
     x_np = np.array([list(range(num * 32, (num + 1) * 32)) for num in range(4)],
                     dtype="int32")
     y_np = np.zeros((4, 32), dtype="int32")
     x_arr = ft.Array(x_np, device)
     y_arr = ft.Array(y_np, device)
 
-    ft.Driver(func, code, device)(x=x_arr, y=y_arr)
+    ft.build_binary(code, device)(x=x_arr, y=y_arr)
 
     y_np = y_arr.numpy()
     y_std = np.array(
@@ -90,8 +88,7 @@ def test_warpshuffle_sum():
     s.parallelize("L1", "threadIdx.x")
     s.parallelize("L2", "threadIdx.x")
     s.parallelize("L3", "threadIdx.x")
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
     with ft.VarDef([
         ("x", (4, 32), "int32", "input", "gpu/global"),
@@ -112,8 +109,7 @@ def test_warpshuffle_sum():
                         z[i, j] = value2[j]
     assert ft.pop_ast().match(test.body)
 
-    code = ft.codegen(func, target)
-    print(debug.with_line_no(code))
+    code = ft.codegen(func, target, verbose=True)
     x_np = np.array([list(range(num * 32, (num + 1) * 32)) for num in range(4)],
                     dtype="int32")
     y_np = np.array([list(range(num * 32, (num + 1) * 32)) for num in range(4)],
@@ -123,7 +119,7 @@ def test_warpshuffle_sum():
     y_arr = ft.Array(y_np, device)
     z_arr = ft.Array(z_np, device)
 
-    ft.Driver(func, code, device)(x=x_arr, y=y_arr, z=z_arr)
+    ft.build_binary(code, device)(x=x_arr, y=y_arr, z=z_arr)
 
     z_np = z_arr.numpy()
     z_std = np.array([[num * 64 + 31 for k in range(32)] for num in range(4)],

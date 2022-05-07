@@ -24,12 +24,10 @@ def test_mkl_basic():
 
     s = ft.Schedule(test)
     s.as_matmul("L1")
-    func = ft.lower(s.func(), target)
-    print(func)
-    code = ft.codegen(func, target)
-    print(code)
-    assert "cblas" in code
-    assert "mkl_set_num_threads_local(0)" in code
+    func = ft.lower(s.func(), target, verbose=1)
+    code = ft.codegen(func, target, verbose=True)
+    assert "cblas" in str(code)
+    assert "mkl_set_num_threads_local(0)" in str(code)
     a_np = np.random.uniform(size=(48, 64)).astype("float32")
     b_np = np.random.uniform(size=(64, 72)).astype("float32")
     c_np = np.random.uniform(size=(48, 72)).astype("float32")
@@ -57,12 +55,10 @@ def test_mkl_reverse_idx():
 
     s = ft.Schedule(test)
     s.as_matmul("L1")
-    func = ft.lower(s.func(), target)
-    print(func)
-    code = ft.codegen(func, target)
-    print(code)
-    assert "cblas" in code
-    assert "mkl_set_num_threads_local(0)" in code
+    func = ft.lower(s.func(), target, verbose=1)
+    code = ft.codegen(func, target, verbose=True)
+    assert "cblas" in str(code)
+    assert "mkl_set_num_threads_local(0)" in str(code)
     a_np = np.random.uniform(size=(48, 64)).astype("float32")
     b_np = np.random.uniform(size=(64, 72)).astype("float32")
     c_np = np.random.uniform(size=(48, 72)).astype("float32")
@@ -90,11 +86,9 @@ def test_mkl_trans_a():
 
     s = ft.Schedule(test)
     s.as_matmul("L1")
-    func = ft.lower(s.func(), target)
-    print(func)
-    code = ft.codegen(func, target)
-    print(code)
-    assert "cblas" in code
+    func = ft.lower(s.func(), target, verbose=1)
+    code = ft.codegen(func, target, verbose=True)
+    assert "cblas" in str(code)
     a_np = np.random.uniform(size=(64, 48)).astype("float32")
     b_np = np.random.uniform(size=(64, 72)).astype("float32")
     c_np = np.random.uniform(size=(48, 72)).astype("float32")
@@ -122,11 +116,9 @@ def test_mkl_trans_b():
 
     s = ft.Schedule(test)
     s.as_matmul("L1")
-    func = ft.lower(s.func(), target)
-    print(func)
-    code = ft.codegen(func, target)
-    print(code)
-    assert "cblas" in code
+    func = ft.lower(s.func(), target, verbose=1)
+    code = ft.codegen(func, target, verbose=True)
+    assert "cblas" in str(code)
     a_np = np.random.uniform(size=(48, 64)).astype("float32")
     b_np = np.random.uniform(size=(72, 64)).astype("float32")
     c_np = np.random.uniform(size=(48, 72)).astype("float32")
@@ -154,11 +146,9 @@ def test_mkl_trans_c():
 
     s = ft.Schedule(test)
     s.as_matmul("L1")
-    func = ft.lower(s.func(), target)
-    print(func)
-    code = ft.codegen(func, target)
-    print(code)
-    assert "cblas" in code
+    func = ft.lower(s.func(), target, verbose=1)
+    code = ft.codegen(func, target, verbose=True)
+    assert "cblas" in str(code)
     a_np = np.random.uniform(size=(48, 64)).astype("float32")
     b_np = np.random.uniform(size=(64, 72)).astype("float32")
     c_np = np.random.uniform(size=(72, 48)).astype("float32")
@@ -187,11 +177,9 @@ def test_mkl_batch():
 
     s = ft.Schedule(test)
     s.as_matmul("L1")
-    func = ft.lower(s.func(), target)
-    print(func)
-    code = ft.codegen(func, target)
-    print(code)
-    assert "cblas" in code
+    func = ft.lower(s.func(), target, verbose=1)
+    code = ft.codegen(func, target, verbose=True)
+    assert "cblas" in str(code)
     a_np = np.random.uniform(size=(4, 48, 64)).astype("float32")
     b_np = np.random.uniform(size=(4, 64, 72)).astype("float32")
     c_np = np.random.uniform(size=(4, 48, 72)).astype("float32")
@@ -220,11 +208,9 @@ def test_mkl_splitted_dim():
 
     s = ft.Schedule(test)
     s.as_matmul("L1")
-    func = ft.lower(s.func(), target)
-    print(func)
-    code = ft.codegen(func, target)
-    print(code)
-    assert "cblas" in code
+    func = ft.lower(s.func(), target, verbose=1)
+    code = ft.codegen(func, target, verbose=True)
+    assert "cblas" in str(code)
     a_np = np.random.uniform(size=(48, 16, 4)).astype("float32")
     b_np = np.random.uniform(size=(16, 4, 72)).astype("float32")
     c_np = np.random.uniform(size=(48, 72)).astype("float32")
@@ -255,11 +241,9 @@ def test_mkl_with_init():
 
     s = ft.Schedule(test)
     s.as_matmul("L1")
-    func = ft.lower(s.func(), target)
-    print(func)
-    code = ft.codegen(func, target)
-    print(code)
-    assert "cblas" in code
+    func = ft.lower(s.func(), target, verbose=1)
+    code = ft.codegen(func, target, verbose=True)
+    assert "cblas" in str(code)
     a_np = np.random.uniform(size=(48, 64)).astype("float32")
     b_np = np.random.uniform(size=(64, 72)).astype("float32")
     c_np = np.random.uniform(size=(48, 72)).astype("float32")
@@ -290,12 +274,10 @@ def test_mkl_in_parallel():
     s = ft.Schedule(test)
     s.as_matmul("L2")
     s.parallelize("L1", "openmp")
-    func = ft.lower(s.func(), target)
-    print(func)
-    code = ft.codegen(func, target)
-    print(code)
-    assert "cblas" in code
-    assert "mkl_set_num_threads_local(1)" in code
+    func = ft.lower(s.func(), target, verbose=1)
+    code = ft.codegen(func, target, verbose=True)
+    assert "cblas" in str(code)
+    assert "mkl_set_num_threads_local(1)" in str(code)
     a_np = np.random.uniform(size=(64, 48, 64)).astype("float32")
     b_np = np.random.uniform(size=(64, 64, 72)).astype("float32")
     c_np = np.random.uniform(size=(64, 48, 72)).astype("float32")
@@ -322,12 +304,10 @@ def test_mkl_matrix_vector():
 
     s = ft.Schedule(test)
     s.as_matmul("L1")
-    func = ft.lower(s.func(), target)
-    print(func)
-    code = ft.codegen(func, target)
-    print(code)
-    assert "cblas" in code
-    assert "mkl_set_num_threads_local(0)" in code
+    func = ft.lower(s.func(), target, verbose=1)
+    code = ft.codegen(func, target, verbose=True)
+    assert "cblas" in str(code)
+    assert "mkl_set_num_threads_local(0)" in str(code)
     a_np = np.random.uniform(size=(48, 64)).astype("float32")
     b_np = np.random.uniform(size=(64,)).astype("float32")
     c_np = np.random.uniform(size=(48,)).astype("float32")
@@ -354,12 +334,10 @@ def test_mkl_vector_matrix():
 
     s = ft.Schedule(test)
     s.as_matmul("L1")
-    func = ft.lower(s.func(), target)
-    print(func)
-    code = ft.codegen(func, target)
-    print(code)
-    assert "cblas" in code
-    assert "mkl_set_num_threads_local(0)" in code
+    func = ft.lower(s.func(), target, verbose=1)
+    code = ft.codegen(func, target, verbose=True)
+    assert "cblas" in str(code)
+    assert "mkl_set_num_threads_local(0)" in str(code)
     a_np = np.random.uniform(size=(64,)).astype("float32")
     b_np = np.random.uniform(size=(64, 48)).astype("float32")
     c_np = np.random.uniform(size=(48,)).astype("float32")
@@ -388,12 +366,10 @@ def test_mkl_vardef_in_loop():
     s = ft.Schedule(test)
     s.as_matmul("L1")
     print(s.ast())
-    func = ft.lower(s.func(), target)
-    print(func)
-    code = ft.codegen(func, target)
-    print(code)
-    assert "cblas" in code
-    assert "mkl_set_num_threads_local(0)" in code
+    func = ft.lower(s.func(), target, verbose=1)
+    code = ft.codegen(func, target, verbose=True)
+    assert "cblas" in str(code)
+    assert "mkl_set_num_threads_local(0)" in str(code)
     a_np = np.random.uniform(size=(48, 64)).astype("float32")
     b_np = np.random.uniform(size=(64, 72)).astype("float32")
     c_np = np.random.uniform(size=(48, 72)).astype("float32")

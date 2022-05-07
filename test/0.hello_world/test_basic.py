@@ -8,14 +8,12 @@ def test_hello_world():
         x[2, 3] = 2.0
         x[1, 0] = 3.0
 
-    func = ft.lower(ft.Func("main", ["x"], [], ft.pop_ast()))
-    print(func)
-    code = ft.codegen(func)
-    print(code)
+    func = ft.lower(ft.Func("main", ["x"], [], ft.pop_ast()), verbose=1)
+    code = ft.codegen(func, verbose=True)
 
     x_np = np.zeros((4, 4), dtype="float32")
     x_arr = ft.Array(x_np)
-    ft.Driver(func, code)(x=x_arr)
+    ft.build_binary(code)(x=x_arr)
     x_np = x_arr.numpy()
 
     x_std = np.zeros((4, 4), dtype="float32")
@@ -29,14 +27,12 @@ def test_hello_world_float64():
         x[2, 3] = 2.0
         x[1, 0] = 3.0
 
-    func = ft.lower(ft.Func("main", ["x"], [], ft.pop_ast()))
-    print(func)
-    code = ft.codegen(func)
-    print(code)
+    func = ft.lower(ft.Func("main", ["x"], [], ft.pop_ast()), verbose=1)
+    code = ft.codegen(func, verbose=True)
 
     x_np = np.zeros((4, 4), dtype="float64")
     x_arr = ft.Array(x_np)
-    ft.Driver(func, code)(x=x_arr)
+    ft.build_binary(code)(x=x_arr)
     x_np = x_arr.numpy()
 
     x_std = np.zeros((4, 4), dtype="float64")
@@ -50,14 +46,12 @@ def test_hello_world_int64():
         x[2, 3] = 2
         x[1, 0] = 3
 
-    func = ft.lower(ft.Func("main", ["x"], [], ft.pop_ast()))
-    print(func)
-    code = ft.codegen(func)
-    print(code)
+    func = ft.lower(ft.Func("main", ["x"], [], ft.pop_ast()), verbose=1)
+    code = ft.codegen(func, verbose=True)
 
     x_np = np.zeros((4, 4), dtype="int64")
     x_arr = ft.Array(x_np)
-    ft.Driver(func, code)(x=x_arr)
+    ft.build_binary(code)(x=x_arr)
     x_np = x_arr.numpy()
 
     x_std = np.zeros((4, 4), dtype="int64")
@@ -71,14 +65,12 @@ def test_hello_world_bool():
         x[2, 3] = False
         x[1, 0] = True
 
-    func = ft.lower(ft.Func("main", ["x"], [], ft.pop_ast()))
-    print(func)
-    code = ft.codegen(func)
-    print(code)
+    func = ft.lower(ft.Func("main", ["x"], [], ft.pop_ast()), verbose=1)
+    code = ft.codegen(func, verbose=True)
 
     x_np = np.zeros((4, 4), dtype="bool")
     x_arr = ft.Array(x_np)
-    ft.Driver(func, code)(x=x_arr)
+    ft.build_binary(code)(x=x_arr)
     x_np = x_arr.numpy()
 
     x_std = np.zeros((4, 4), dtype="bool")
@@ -92,14 +84,13 @@ def test_scalar_op():
                     ("y", (), "int32", "output")]) as (x, y):
         y[()] = x[()] * 2 + 1
 
-    func = ft.lower(ft.Func("main", ["x", "y"], [], ft.pop_ast()))
-    code = ft.codegen(func)
-    print(code)
+    func = ft.lower(ft.Func("main", ["x", "y"], [], ft.pop_ast()), verbose=1)
+    code = ft.codegen(func, verbose=True)
     x_np = np.array(5, dtype="int32")
     y_np = np.array(0, dtype="int32")
     x_arr = ft.Array(x_np)
     y_arr = ft.Array(y_np)
-    ft.Driver(func, code)(x=x_arr, y=y_arr)
+    ft.build_binary(code)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     assert y_np[()] == 11
@@ -110,14 +101,13 @@ def test_cast():
                     ("y", (), "int32", "output")]) as (x, y):
         y[()] = ft.cast(x[()], "int32") * 2
 
-    func = ft.lower(ft.Func("main", ["x", "y"], [], ft.pop_ast()))
-    code = ft.codegen(func)
-    print(code)
+    func = ft.lower(ft.Func("main", ["x", "y"], [], ft.pop_ast()), verbose=1)
+    code = ft.codegen(func, verbose=True)
     x_np = np.array(2.5, dtype="float32")
     y_np = np.array(0, dtype="int32")
     x_arr = ft.Array(x_np)
     y_arr = ft.Array(y_np)
-    ft.Driver(func, code)(x=x_arr, y=y_arr)
+    ft.build_binary(code)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     assert y_np[()] == 4
@@ -128,16 +118,16 @@ def test_real_div():
                     ("y", (), "float32", "output")]) as (x1, x2, y):
         y[()] = x1[()] / x2[()]
 
-    func = ft.lower(ft.Func("main", ["x1", "x2", "y"], [], ft.pop_ast()))
-    code = ft.codegen(func)
-    print(code)
+    func = ft.lower(ft.Func("main", ["x1", "x2", "y"], [], ft.pop_ast()),
+                    verbose=1)
+    code = ft.codegen(func, verbose=True)
     x1_np = np.array(5, dtype="int32")
     x2_np = np.array(2, dtype="int32")
     y_np = np.array(0, dtype="float32")
     x1_arr = ft.Array(x1_np)
     x2_arr = ft.Array(x2_np)
     y_arr = ft.Array(y_np)
-    ft.Driver(func, code)(x1=x1_arr, x2=x2_arr, y=y_arr)
+    ft.build_binary(code)(x1=x1_arr, x2=x2_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     assert y_np[()] == 2.5
@@ -149,14 +139,13 @@ def test_for():
         with ft.For("i", 0, 4) as i:
             y[i] = x[i] + 1
 
-    func = ft.lower(ft.Func("main", ["x", "y"], [], ft.pop_ast()))
-    code = ft.codegen(func)
-    print(code)
+    func = ft.lower(ft.Func("main", ["x", "y"], [], ft.pop_ast()), verbose=1)
+    code = ft.codegen(func, verbose=True)
     x_np = np.array([1, 2, 3, 4], dtype="int32")
     y_np = np.zeros((4,), dtype="int32")
     x_arr = ft.Array(x_np)
     y_arr = ft.Array(y_np)
-    ft.Driver(func, code)(x=x_arr, y=y_arr)
+    ft.build_binary(code)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.array([2, 3, 4, 5], dtype="int32")
@@ -169,14 +158,13 @@ def test_reversed_for():
         with ft.For("i", 3, -1, -1) as i:
             y[i] = x[i] + 1
 
-    func = ft.lower(ft.Func("main", ["x", "y"], [], ft.pop_ast()))
-    code = ft.codegen(func)
-    print(code)
+    func = ft.lower(ft.Func("main", ["x", "y"], [], ft.pop_ast()), verbose=1)
+    code = ft.codegen(func, verbose=True)
     x_np = np.array([1, 2, 3, 4], dtype="int32")
     y_np = np.zeros((4,), dtype="int32")
     x_arr = ft.Array(x_np)
     y_arr = ft.Array(y_np)
-    ft.Driver(func, code)(x=x_arr, y=y_arr)
+    ft.build_binary(code)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.array([2, 3, 4, 5], dtype="int32")
@@ -191,12 +179,11 @@ def test_if():
             with ft.Else():
                 y[i] = 1
 
-    func = ft.lower(ft.Func("main", ["y"], [], ft.pop_ast()))
-    code = ft.codegen(func)
-    print(code)
+    func = ft.lower(ft.Func("main", ["y"], [], ft.pop_ast()), verbose=1)
+    code = ft.codegen(func, verbose=True)
     y_np = np.zeros((4,), dtype="int32")
     y_arr = ft.Array(y_np)
-    ft.Driver(func, code)(y=y_arr)
+    ft.build_binary(code)(y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.array([0, 0, 1, 1], dtype="int32")
@@ -211,16 +198,16 @@ def test_bool_tensor_as_cond():
             with ft.If(ft.l_and(a[i], b[i])):
                 y[i] = 2
 
-    func = ft.lower(ft.Func("main", ["a", "b", "y"], [], ft.pop_ast()))
-    code = ft.codegen(func)
-    print(code)
+    func = ft.lower(ft.Func("main", ["a", "b", "y"], [], ft.pop_ast()),
+                    verbose=1)
+    code = ft.codegen(func, verbose=True)
     a_np = np.array([False, False, True, True], dtype="bool")
     a_arr = ft.Array(a_np)
     b_np = np.array([False, True, False, True], dtype="bool")
     b_arr = ft.Array(b_np)
     y_np = np.zeros((4,), dtype="int32")
     y_arr = ft.Array(y_np)
-    ft.Driver(func, code)(a=a_arr, b=b_arr, y=y_arr)
+    ft.build_binary(code)(a=a_arr, b=b_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.array([1, 1, 1, 2], dtype="int32")
@@ -235,18 +222,16 @@ def test_var_as_shape():
                 with ft.For("j", 0, shape[1]) as j:
                     y[i, j] = x[i, j] * 2
 
-    func = ft.lower(ft.Func("main", ["shape", "x", "y"], [], ft.pop_ast()))
-    print(func)
-
-    code = ft.codegen(func)
-    print(code)
+    func = ft.lower(ft.Func("main", ["shape", "x", "y"], [], ft.pop_ast()),
+                    verbose=1)
+    code = ft.codegen(func, verbose=True)
     shape_np = np.array([4, 4]).astype("int32")
     shape_arr = ft.Array(shape_np)
     x_np = np.random.randint(0, 100, (4, 4)).astype("int32")
     x_arr = ft.Array(x_np)
     y_np = np.zeros((4, 4), dtype="int32")
     y_arr = ft.Array(y_np)
-    ft.Driver(func, code)(shape=shape_arr, x=x_arr, y=y_arr)
+    ft.build_binary(code)(shape=shape_arr, x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = x_np * 2
@@ -259,18 +244,16 @@ def test_var_as_index():
                     ("y", (), "int32", "output")]) as (idx, x, y):
         y[()] = x[idx]
 
-    func = ft.lower(ft.Func("main", ["idx", "x", "y"], [], ft.pop_ast()))
-    print(func)
-
-    code = ft.codegen(func)
-    print(code)
+    func = ft.lower(ft.Func("main", ["idx", "x", "y"], [], ft.pop_ast()),
+                    verbose=1)
+    code = ft.codegen(func, verbose=True)
     idx_np = np.array([1, 2]).astype("int32")
     idx_arr = ft.Array(idx_np)
     x_np = np.random.randint(0, 100, (4, 4)).astype("int32")
     x_arr = ft.Array(x_np)
     y_np = np.array(0, dtype="int32")
     y_arr = ft.Array(y_np)
-    ft.Driver(func, code)(idx=idx_arr, x=x_arr, y=y_arr)
+    ft.build_binary(code)(idx=idx_arr, x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = x_np[1, 2]
@@ -285,7 +268,7 @@ def test_error_missing_parameters():
     func = ft.lower(ft.Func("main", ["x"], [], ft.pop_ast()))
     code = ft.codegen(func)
 
-    driver = ft.Driver(func, code)
+    driver = ft.build_binary(code)
     with pytest.raises(ft.DriverError):
         driver()
 
@@ -297,11 +280,8 @@ def test_inlined_invoke():
 
     with ft.VarDef("x", (4, 4), "float32", "output") as x:
         ft.Invoke(g, x[2])
-    f = ft.lower(ft.Func("f", ["x"], [], ft.pop_ast()))
-
-    print(f)
-    code = ft.codegen(f)
-    print(code)
+    f = ft.lower(ft.Func("f", ["x"], [], ft.pop_ast()), verbose=1)
+    code = ft.codegen(f, verbose=True)
 
     x_np = np.zeros((4, 4), dtype="float32")
     x_arr = ft.Array(x_np)
@@ -350,14 +330,13 @@ def test_target_language_keyword_as_name():
         with ft.For("for", 0, 4) as i:
             y[i] = x[i] + 1
 
-    func = ft.lower(ft.Func("main", ["x", "y"], [], ft.pop_ast()))
-    code = ft.codegen(func)
-    print(code)
+    func = ft.lower(ft.Func("main", ["x", "y"], [], ft.pop_ast()), verbose=1)
+    code = ft.codegen(func, verbose=True)
     x_np = np.array([1, 2, 3, 4], dtype="int32")
     y_np = np.zeros((4,), dtype="int32")
     x_arr = ft.Array(x_np)
     y_arr = ft.Array(y_np)
-    ft.Driver(func, code)(x=x_arr, y=y_arr)
+    ft.build_binary(code)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.array([2, 3, 4, 5], dtype="int32")

@@ -46,7 +46,7 @@ from .nodes import (
 from .analyze import *
 from .passes import *
 from .schedule import *
-from .codegen import codegen
+from .codegen import NativeCode, codegen
 from .driver import *
 from .config import *
 

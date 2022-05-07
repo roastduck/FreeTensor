@@ -10,13 +10,12 @@ def test_hello_world():
         x[2, 3] = 2.0
         x[1, 0] = 3.0
 
-    func = ft.lower(ft.transform(test))
-    print(func)
+    func = ft.lower(ft.transform(test), verbose=1)
     code = ft.codegen(func)
 
     x_np = np.zeros((4, 4), dtype="float32")
     x_arr = ft.Array(x_np)
-    ft.Driver(func, code)(x=x_arr)
+    ft.build_binary(code)(x=x_arr)
     x_np = x_arr.numpy()
 
     x_std = np.zeros((4, 4), dtype="float32")
@@ -34,13 +33,12 @@ def test_declare_var_in_function_declaration():
         x[2, 3] = 2.0
         x[1, 0] = 3.0
 
-    func = ft.lower(ft.transform(test))
-    print(func)
+    func = ft.lower(ft.transform(test), verbose=1)
     code = ft.codegen(func)
 
     x_np = np.zeros((4, 4), dtype="float32")
     x_arr = ft.Array(x_np)
-    ft.Driver(func, code)(x=x_arr)
+    ft.build_binary(code)(x=x_arr)
     x_np = x_arr.numpy()
 
     x_std = np.zeros((4, 4), dtype="float32")
@@ -65,7 +63,7 @@ def test_scalar_op():
     y_np = np.array(0, dtype="int32")
     x_arr = ft.Array(x_np)
     y_arr = ft.Array(y_np)
-    ft.Driver(func, code)(x=x_arr, y=y_arr)
+    ft.build_binary(code)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
     y_func = np.array(0, dtype="int32")
     test(x_np, y_func)
@@ -84,8 +82,7 @@ def test_return_value_and_runtime_allocation():
         y[()] = x[()] * 2 + 1
         return y
 
-    code = ft.codegen(test)
-    print(debug.with_line_no(code))
+    code = ft.codegen(test, verbose=True)
     y_arr = ft.Driver(test, code)(np.array(5, dtype="int32"))
     y_np = y_arr.numpy()
 
@@ -106,7 +103,7 @@ def test_for():
     y_np = np.zeros((4,), dtype="int32")
     x_arr = ft.Array(x_np)
     y_arr = ft.Array(y_np)
-    ft.Driver(func, code)(x=x_arr, y=y_arr)
+    ft.build_binary(code)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
     y_func = np.zeros((4,), dtype="int32")
     test(x_np, y_func)
@@ -130,7 +127,7 @@ def test_if():
     code = ft.codegen(func)
     y_np = np.zeros((4,), dtype="int32")
     y_arr = ft.Array(y_np)
-    ft.Driver(func, code)(y=y_arr)
+    ft.build_binary(code)(y=y_arr)
     y_np = y_arr.numpy()
     y_func = np.zeros((4,), dtype="int32")
     test(y_func)
@@ -156,7 +153,7 @@ def test_static_if():
     code = ft.codegen(func)
     y_np = np.zeros((4,), dtype="int32")
     y_arr = ft.Array(y_np)
-    ft.Driver(func, code)(y=y_arr)
+    ft.build_binary(code)(y=y_arr)
     y_np = y_arr.numpy()
     y_func = np.zeros((4,), dtype="int32")
     test(y_func)
@@ -186,7 +183,7 @@ def test_static_if_2():
     code = ft.codegen(func)
     y_np = np.zeros((4,), dtype="int32")
     y_arr = ft.Array(y_np)
-    ft.Driver(func, code)(y=y_arr)
+    ft.build_binary(code)(y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.array([1, 1, 1, 1], dtype="int32")
@@ -204,7 +201,7 @@ def test_for_range():
     code = ft.codegen(func)
     x_np = np.array([1, 2, 3, 4], dtype="int32")
     x_arr = ft.Array(x_np)
-    ft.Driver(func, code)(x=x_arr)
+    ft.build_binary(code)(x=x_arr)
     x_np = x_arr.numpy()
     x_func = np.array([1, 2, 3, 4], dtype="int32")
     test(x_func)
@@ -221,13 +218,12 @@ def test_std_func_alias():
         x[2, 3] = 2.0
         x[1, 0] = 3.0
 
-    func = ft.lower(ft.transform(test))
-    print(func)
+    func = ft.lower(ft.transform(test), verbose=1)
     code = ft.codegen(func)
 
     x_np = np.zeros((4, 4), dtype="float32")
     x_arr = ft.Array(x_np)
-    ft.Driver(func, code)(x=x_arr)
+    ft.build_binary(code)(x=x_arr)
     x_np = x_arr.numpy()
 
     x_std = np.zeros((4, 4), dtype="float32")
@@ -241,7 +237,7 @@ def test_std_func_alias():
 
 def test_assert():
 
-    @ft.transform
+    @ft.transform(verbose=1)
     def test(x1, x2, y1, y2):
         x1: ft.Var[(4,), "int32", "input"]
         x2: ft.Var[(4,), "int32", "input"]
@@ -251,8 +247,6 @@ def test_assert():
             y1[i] = x1[i] + x2[i]
             assert x1[i] < x2[i]
             y2[i] = ft.min(x1[i], x2[i])
-
-    print(test)
 
     with ft.VarDef([("x1", (4,), "int32", "input"),
                     ("x2", (4,), "int32", "input"),
@@ -275,8 +269,7 @@ def test_immediate_var_return():
         x: ft.Var[(), "int32"]
         return ft.var([0, 1, x[()]], "int32")
 
-    code = ft.codegen(test)
-    print(debug.with_line_no(code))
+    code = ft.codegen(test, verbose=True)
     y_arr = ft.Driver(test, code)(np.array(2, dtype="int32"))
     y_np = y_arr.numpy()
 
@@ -289,13 +282,12 @@ def test_inline_annotation():
         x[2, 3] = 2.0
         x[1, 0] = 3.0
 
-    func = ft.lower(ft.transform(test))
-    print(func)
+    func = ft.lower(ft.transform(test), verbose=1)
     code = ft.codegen(func)
 
     x_np = np.zeros((4, 4), dtype="float32")
     x_arr = ft.Array(x_np)
-    ft.Driver(func, code)(x=x_arr)
+    ft.build_binary(code)(x=x_arr)
     x_np = x_arr.numpy()
 
     x_std = np.zeros((4, 4), dtype="float32")

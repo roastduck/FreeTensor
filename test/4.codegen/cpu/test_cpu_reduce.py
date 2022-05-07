@@ -29,19 +29,17 @@ def test_parallel_reduction():
 
     s = ft.Schedule(test)
     s.parallelize("L2", "openmp")
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
-    code = ft.codegen(func, target)
-    print(code)
-    assert "#pragma omp parallel for reduction(+:" in code
-    assert "#pragma omp atomic" not in code
-    assert "+=" in code
+    code = ft.codegen(func, target, verbose=True)
+    assert "#pragma omp parallel for reduction(+:" in str(code)
+    assert "#pragma omp atomic" not in str(code)
+    assert "+=" in str(code)
     x_np = np.random.randint(0, 100, (4, 64)).astype("int32")
     y_np = np.zeros((4,), dtype="int32")
     x_arr = ft.Array(x_np, device)
     y_arr = ft.Array(y_np, device)
-    ft.Driver(func, code, device)(x=x_arr, y=y_arr)
+    ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.sum(x_np, axis=1)
@@ -64,21 +62,19 @@ def test_parallel_reduction_on_2_vars():
 
     s = ft.Schedule(test)
     s.parallelize("L2", "openmp")
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
-    code = ft.codegen(func, target)
-    print(code)
-    assert "#pragma omp parallel for reduction(+:" in code
-    assert "#pragma omp atomic" not in code
-    assert "+=" in code
+    code = ft.codegen(func, target, verbose=True)
+    assert "#pragma omp parallel for reduction(+:" in str(code)
+    assert "#pragma omp atomic" not in str(code)
+    assert "+=" in str(code)
     x_np = np.random.randint(0, 100, (4, 64)).astype("int32")
     y_np = np.zeros((4,), dtype="int32")
     z_np = np.zeros((4,), dtype="int32")
     x_arr = ft.Array(x_np, device)
     y_arr = ft.Array(y_np, device)
     z_arr = ft.Array(y_np, device)
-    ft.Driver(func, code, device)(x=x_arr, y=y_arr, z=z_arr)
+    ft.build_binary(code, device)(x=x_arr, y=y_arr, z=z_arr)
     y_np = y_arr.numpy()
     z_np = z_arr.numpy()
 
@@ -104,19 +100,17 @@ def test_parallel_reduction_on_array():
 
     s = ft.Schedule(test)
     s.parallelize("L2", "openmp")
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
-    code = ft.codegen(func, target)
-    print(code)
-    assert "#pragma omp parallel for reduction(+:" in code
-    assert "#pragma omp atomic" not in code
-    assert "+=" in code
+    code = ft.codegen(func, target, verbose=True)
+    assert "#pragma omp parallel for reduction(+:" in str(code)
+    assert "#pragma omp atomic" not in str(code)
+    assert "+=" in str(code)
     x_np = np.random.randint(0, 100, (4, 64, 64)).astype("int32")
     y_np = np.zeros((4, 64), dtype="int32")
     x_arr = ft.Array(x_np, device)
     y_arr = ft.Array(y_np, device)
-    ft.Driver(func, code, device)(x=x_arr, y=y_arr)
+    ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.sum(x_np, axis=1)
@@ -139,19 +133,17 @@ def test_parallel_reduction_on_array_range():
 
     s = ft.Schedule(test)
     s.parallelize("L2", "openmp")
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
-    code = ft.codegen(func, target)
-    print(code)
-    assert re.search(r"pragma omp parallel for reduction.*16", code)
-    assert "#pragma omp atomic" not in code
-    assert "+=" in code
+    code = ft.codegen(func, target, verbose=True)
+    assert re.search(r"pragma omp parallel for reduction.*16", str(code))
+    assert "#pragma omp atomic" not in str(code)
+    assert "+=" in str(code)
     x_np = np.random.randint(0, 100, (64, 64)).astype("int32")
     y_np = np.zeros((64,), dtype="int32")
     x_arr = ft.Array(x_np, device)
     y_arr = ft.Array(y_np, device)
-    ft.Driver(func, code, device)(x=x_arr, y=y_arr)
+    ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.sum(x_np, axis=1)
@@ -175,19 +167,17 @@ def test_parallel_reduction_multiple_statements():
 
     s = ft.Schedule(test)
     s.parallelize("L2", "openmp")
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
-    code = ft.codegen(func, target)
-    print(code)
-    assert "#pragma omp parallel for reduction(+:" in code
-    assert "#pragma omp atomic" not in code
-    assert "+=" in code
+    code = ft.codegen(func, target, verbose=True)
+    assert "#pragma omp parallel for reduction(+:" in str(code)
+    assert "#pragma omp atomic" not in str(code)
+    assert "+=" in str(code)
     x_np = np.random.randint(0, 100, (4, 64, 64)).astype("int32")
     y_np = np.zeros((4, 64), dtype="int32")
     x_arr = ft.Array(x_np, device)
     y_arr = ft.Array(y_np, device)
-    ft.Driver(func, code, device)(x=x_arr, y=y_arr)
+    ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.sum(x_np, axis=1)
@@ -216,19 +206,17 @@ def test_atomic_reduction():
 
     s = ft.Schedule(test)
     s.parallelize("L2", "openmp")
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
-    code = ft.codegen(func, target)
-    print(code)
-    assert "reduction" not in code
-    assert "#pragma omp atomic" in code
-    assert "+=" in code
+    code = ft.codegen(func, target, verbose=True)
+    assert "reduction" not in str(code)
+    assert "#pragma omp atomic" in str(code)
+    assert "+=" in str(code)
     x_np = np.random.randint(0, 100, (4, 64)).astype("int32")
     y_np = np.zeros((4, 2), dtype="int32")
     x_arr = ft.Array(x_np, device)
     y_arr = ft.Array(y_np, device)
-    ft.Driver(func, code, device)(x=x_arr, y=y_arr)
+    ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.sum(x_np.reshape((4, 32, 2)), axis=1)
@@ -251,19 +239,17 @@ def test_atomic_reduction_2_stmts_on_1_var():
 
     s = ft.Schedule(test)
     s.parallelize("L2", "openmp")
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
-    code = ft.codegen(func, target)
-    print(code)
-    assert "reduction" not in code
-    assert code.count("#pragma omp atomic") == 2
-    assert code.count("+=") == 2
+    code = ft.codegen(func, target, verbose=True)
+    assert "reduction" not in str(code)
+    assert str(code).count("#pragma omp atomic") == 2
+    assert str(code).count("+=") == 2
     x_np = np.random.randint(0, 100, (4, 64)).astype("int32")
     y_np = np.zeros((4, 64), dtype="int32")
     x_arr = ft.Array(x_np, device)
     y_arr = ft.Array(y_np, device)
-    ft.Driver(func, code, device)(x=x_arr, y=y_arr)
+    ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = x_np
@@ -287,19 +273,17 @@ def test_atomic_reduction_cache():
 
     s = ft.Schedule(test)
     s.parallelize("L2", "openmp")
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
-    code = ft.codegen(func, target)
-    print(code)
-    assert "reduction" not in code
-    assert code.count("#pragma omp atomic") == 1
-    assert code.count("+=") == 2
+    code = ft.codegen(func, target, verbose=True)
+    assert "reduction" not in str(code)
+    assert str(code).count("#pragma omp atomic") == 1
+    assert str(code).count("+=") == 2
     x_np = np.random.randint(0, 100, (4, 64, 10)).astype("int32")
     y_np = np.zeros((4, 2), dtype="int32")
     x_arr = ft.Array(x_np, device)
     y_arr = ft.Array(y_np, device)
-    ft.Driver(func, code, device)(x=x_arr, y=y_arr)
+    ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.sum(np.sum(x_np, axis=-1).reshape((4, 32, 2)), axis=1)
@@ -324,19 +308,17 @@ def test_atomic_reduction_cache_array():
 
     s = ft.Schedule(test)
     s.parallelize("L2", "openmp")
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
-    code = ft.codegen(func, target)
-    print(code)
-    assert "reduction" not in code
-    assert code.count("#pragma omp atomic") == 1
-    assert code.count("+=") == 2
+    code = ft.codegen(func, target, verbose=True)
+    assert "reduction" not in str(code)
+    assert str(code).count("#pragma omp atomic") == 1
+    assert str(code).count("+=") == 2
     x_np = np.random.randint(0, 100, (4, 64, 10, 3)).astype("int32")
     y_np = np.zeros((4, 2, 3), dtype="int32")
     x_arr = ft.Array(x_np, device)
     y_arr = ft.Array(y_np, device)
-    ft.Driver(func, code, device)(x=x_arr, y=y_arr)
+    ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.sum(np.sum(x_np, axis=-2).reshape((4, 32, 2, 3)), axis=1)
@@ -361,14 +343,12 @@ def test_atomic_reduction_no_cache_array():
 
     s = ft.Schedule(test)
     s.parallelize("L2", "openmp")
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
-    code = ft.codegen(func, target)
-    print(code)
-    assert "reduction" not in code
-    assert code.count("#pragma omp atomic") == 1
-    assert code.count("+=") == 1
+    code = ft.codegen(func, target, verbose=True)
+    assert "reduction" not in str(code)
+    assert str(code).count("#pragma omp atomic") == 1
+    assert str(code).count("+=") == 1
 
 
 def test_simultenous_parallel_and_atomic_reduction():
@@ -394,19 +374,17 @@ def test_simultenous_parallel_and_atomic_reduction():
 
     s = ft.Schedule(test)
     s.parallelize("L2", "openmp")
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
-    code = ft.codegen(func, target)
-    print(code)
-    assert "#pragma omp parallel for reduction(+:" in code
-    assert "#pragma omp atomic" in code
-    assert "+=" in code
+    code = ft.codegen(func, target, verbose=True)
+    assert "#pragma omp parallel for reduction(+:" in str(code)
+    assert "#pragma omp atomic" in str(code)
+    assert "+=" in str(code)
     x_np = np.random.randint(0, 100, (4, 64)).astype("int32")
     y_np = np.zeros((4, 2), dtype="int32")
     x_arr = ft.Array(x_np, device)
     y_arr = ft.Array(y_np, device)
-    ft.Driver(func, code, device)(x=x_arr, y=y_arr)
+    ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.sum(x_np.reshape((4, 32, 2)), axis=1)
@@ -435,19 +413,18 @@ def test_serial_reduction_1():
 
     s = ft.Schedule(test)
     s.parallelize("L1", "openmp")
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
     code = ft.codegen(func, target)
-    assert "reduction" not in code
-    assert "#pragma omp atomic" not in code
-    assert "+=" in code
+    assert "reduction" not in str(code)
+    assert "#pragma omp atomic" not in str(code)
+    assert "+=" in str(code)
     print(code)
     x_np = np.random.randint(0, 100, (4, 64)).astype("int32")
     y_np = np.zeros((4,), dtype="int32")
     x_arr = ft.Array(x_np, device)
     y_arr = ft.Array(y_np, device)
-    ft.Driver(func, code, device)(x=x_arr, y=y_arr)
+    ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.sum(x_np, axis=1)
@@ -471,19 +448,18 @@ def test_serial_reduction_2():
 
     s = ft.Schedule(test)
     s.parallelize("L1", "openmp")
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
     code = ft.codegen(func, target)
-    assert "reduction" not in code
-    assert "#pragma omp atomic" not in code
-    assert "+=" in code
+    assert "reduction" not in str(code)
+    assert "#pragma omp atomic" not in str(code)
+    assert "+=" in str(code)
     print(code)
     x_np = np.random.randint(0, 100, (4, 64)).astype("int32")
     y_np = np.zeros((4,), dtype="int32")
     x_arr = ft.Array(x_np, device)
     y_arr = ft.Array(y_np, device)
-    ft.Driver(func, code, device)(x=x_arr, y=y_arr)
+    ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.sum(x_np, axis=1) * 2
