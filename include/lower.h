@@ -44,16 +44,28 @@ namespace freetensor {
  * `skipPasses` are in underscore_style, as in Python. Please note that some
  * passes will not be skipped even specified in these parameter, because they
  * are indirectly called in some other passes
+ * @param verbose : 0 = print nothing. 1 = print the lowered AST. 2 = print AST
+ * after every single passes
  */
 template <class T>
 T lower(const T &_ast, const Ref<Target> &_target = nullptr,
-        const std::unordered_set<std::string> &skipPasses = {}) {
+        const std::unordered_set<std::string> &skipPasses = {},
+        int verbose = 0) {
 
     auto target = _target.isValid() ? _target : Config::defaultTarget();
 
+    auto maybePrint = [&](const std::string &name, const T &ast) -> T {
+        if (verbose >= 2) {
+            logger() << "AST after " << name << " is:" << std::endl
+                     << toString(ast) << std::endl;
+        }
+        return ast;
+    };
+
 #define FIRST_OF(x, ...) (x)
 #define APPLY(name, pass, ...)                                                 \
-    skipPasses.count(name) ? FIRST_OF(__VA_ARGS__) : pass(__VA_ARGS__)
+    skipPasses.count(name) ? FIRST_OF(__VA_ARGS__)                             \
+                           : maybePrint(name, pass(__VA_ARGS__))
 
     T ast = _ast;
     ast = APPLY("scalar_prop_const", scalarPropConst, ast);
@@ -115,6 +127,11 @@ T lower(const T &_ast, const Ref<Target> &_target = nullptr,
 
 #undef FIRST_OF
 #undef APPLY
+
+    if (verbose >= 1) {
+        logger() << "The lowered AST is:" << std::endl
+                 << toString(ast) << std::endl;
+    }
 
     return ast;
 }

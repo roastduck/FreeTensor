@@ -5,8 +5,6 @@ import functools
 import pytest
 import numpy as np
 
-# TODO: Currently, a callee function must be in the global scope. Can we support a local scope?
-
 
 @ft.inline
 def g_global(y):
@@ -31,19 +29,17 @@ def test_basic_call():
         '''nid: S1'''
         y[1] = 3.0
 
+    @ft.lower(target=ft.CPU(), verbose=1)
     @ft.transform
     def f(y):
         y: ft.Var[(2,), "float32", "output", "cpu"]
         g(y)
 
-    func = ft.lower(f, ft.CPU())
-    print(func)
-
     with ft.VarDef("y", (2,), "float32", "output", "cpu") as y:
         y[0] = 2.0
         y[1] = 3.0
     std = ft.pop_ast()
-    assert std.match(func.body)
+    assert std.match(f.body)
 
 
 def test_global_functions():
@@ -67,6 +63,7 @@ def test_called_multiple_times():
         '''nid: S1'''
         y[1] = 3.0
 
+    @ft.lower(target=ft.CPU(), verbose=1)
     @ft.transform
     def f(y1, y2):
         y1: ft.Var[(2,), "float32", "output", "cpu"]
@@ -76,9 +73,6 @@ def test_called_multiple_times():
         '''nid: C2'''
         g(y2)
 
-    func = ft.lower(f, ft.CPU())
-    print(func)
-
     with ft.VarDef([("y1", (2,), "float32", "output", "cpu"),
                     ("y2", (2,), "float32", "output", "cpu")]) as (y1, y2):
         y1[0] = 2.0
@@ -86,9 +80,9 @@ def test_called_multiple_times():
         y2[0] = 2.0
         y2[1] = 3.0
     std = ft.pop_ast()
-    assert std.match(func.body)
+    assert std.match(f.body)
 
-    s = ft.Schedule(func)
+    s = ft.Schedule(f)
     assert len(s.find_all("C1->S0")) == 1
     assert len(s.find_all("C1->S1")) == 1
     assert len(s.find_all("C2->S0")) == 1
@@ -105,13 +99,11 @@ def test_call_with_external_data():
             for j in range(2):
                 y[i, j] = x[i, j] * 2
 
+    @ft.lower(target=ft.CPU(), verbose=1)
     @ft.transform
     def f(y):
         y: ft.Var[(2, 2), "int32", "output", "cpu"]
         g(ft.capture_var(data), y)
-
-    func = ft.lower(f, ft.CPU())
-    print(func)
 
     with ft.VarDef("y", (2, 2), "int32", "output", "cpu") as y:
         with ft.VarDef("x", (2, 2), "int32", "input", "cpu") as x:
@@ -119,14 +111,14 @@ def test_call_with_external_data():
                 with ft.For("j", 0, 2) as j:
                     y[i, j] = x[i, j] * 2
     std = ft.pop_ast()
-    assert std.match(func.body)
+    assert std.match(f.body)
 
-    code = ft.codegen(func, ft.CPU())
+    code = ft.codegen(f, ft.CPU())
     print(debug.with_line_no(code))
 
     y_np = np.zeros((2, 2), dtype="int32")
     y_arr = ft.Array(y_np, ft.Device(ft.CPU()))
-    ft.Driver(func, code, ft.Device(ft.CPU()))(y=y_arr)
+    ft.Driver(f, code, ft.Device(ft.CPU()))(y=y_arr)
     y_np = y_arr.numpy()
 
     assert np.array_equal(y_np, data.numpy() * 2)
@@ -141,6 +133,7 @@ def test_call_with_literal_data():
             for j in range(2):
                 y[i, j] = x[i, j] * 2
 
+    @ft.lower(target=ft.CPU(), verbose=1)
     @ft.transform
     def f(y):
         y: ft.Var[(2, 2), "int32", "output", "cpu"]
@@ -148,23 +141,20 @@ def test_call_with_literal_data():
             ft.capture_var(
                 ft.Array(np.array([[0, 1], [2, 3]], dtype=np.int32), dev)), y)
 
-    func = ft.lower(f, ft.CPU())
-    print(func)
-
     with ft.VarDef("y", (2, 2), "int32", "output", "cpu") as y:
         with ft.VarDef("x", (2, 2), "int32", "input", "cpu") as x:
             with ft.For("i", 0, 2) as i:
                 with ft.For("j", 0, 2) as j:
                     y[i, j] = x[i, j] * 2
     std = ft.pop_ast()
-    assert std.match(func.body)
+    assert std.match(f.body)
 
-    code = ft.codegen(func, ft.CPU())
+    code = ft.codegen(f, ft.CPU())
     print(debug.with_line_no(code))
 
     y_np = np.zeros((2, 2), dtype="int32")
     y_arr = ft.Array(y_np, dev)
-    ft.Driver(func, code, dev)(y=y_arr)
+    ft.Driver(f, code, dev)(y=y_arr)
     y_np = y_arr.numpy()
 
     assert np.array_equal(y_np, np.array([[0, 1], [2, 3]], dtype=np.int32) * 2)
@@ -177,6 +167,7 @@ def test_call_with_fixed_dim_at_front():
         for i in range(4):
             y[i] = x1[i] + x2[i]
 
+    @ft.lower(target=ft.CPU(), verbose=1)
     @ft.transform
     def f(x1, x2, y):
         x1: ft.Var[(4, 4), "float32", "input", "cpu"]
@@ -185,9 +176,6 @@ def test_call_with_fixed_dim_at_front():
         for i in range(4):
             g(x1[i], x2[i], y[i])
 
-    func = ft.lower(f, ft.CPU())
-    print(func)
-
     with ft.VarDef([("x1", (4, 4), "float32", "input", "cpu"),
                     ("x2", (4, 4), "float32", "input", "cpu"),
                     ("y", (4, 4), "float32", "output", "cpu")]) as (x1, x2, y):
@@ -195,7 +183,7 @@ def test_call_with_fixed_dim_at_front():
             with ft.For("j", 0, 4) as j:
                 y[i, j] = x1[i, j] + x2[i, j]
     std = ft.pop_ast()
-    assert std.match(func.body)
+    assert std.match(f.body)
 
 
 def test_call_with_fixed_dim_at_back():
@@ -205,6 +193,7 @@ def test_call_with_fixed_dim_at_back():
         for i in range(4):
             y[i] = x1[i] + x2[i]
 
+    @ft.lower(target=ft.CPU(), verbose=1)
     @ft.transform
     def f(x1, x2, y):
         x1: ft.Var[(4, 4), "float32", "input", "cpu"]
@@ -213,9 +202,6 @@ def test_call_with_fixed_dim_at_back():
         for i in range(4):
             g(x1[:, i], x2[:, i], y[:, i])
 
-    func = ft.lower(f, ft.CPU())
-    print(func)
-
     with ft.VarDef([("x1", (4, 4), "float32", "input", "cpu"),
                     ("x2", (4, 4), "float32", "input", "cpu"),
                     ("y", (4, 4), "float32", "output", "cpu")]) as (x1, x2, y):
@@ -223,7 +209,7 @@ def test_call_with_fixed_dim_at_back():
             with ft.For("j", 0, 4) as j:
                 y[j, i] = x1[j, i] + x2[j, i]
     std = ft.pop_ast()
-    assert std.match(func.body)
+    assert std.match(f.body)
 
 
 def test_call_with_slice():
@@ -233,6 +219,7 @@ def test_call_with_slice():
         for i in range(4):
             y[i] = x1[i] + x2[i]
 
+    @ft.lower(target=ft.CPU(), verbose=1)
     @ft.transform
     def f(x1, x2, y):
         x1: ft.Var[(5,), "float32", "input", "cpu"]
@@ -241,9 +228,6 @@ def test_call_with_slice():
         y[0] = 0.
         g(x1[1:], x2[1:], y[1:])
 
-    func = ft.lower(f, ft.CPU())
-    print(func)
-
     with ft.VarDef([("x1", (5,), "float32", "input", "cpu"),
                     ("x2", (5,), "float32", "input", "cpu"),
                     ("y", (5,), "float32", "output", "cpu")]) as (x1, x2, y):
@@ -251,7 +235,7 @@ def test_call_with_slice():
         with ft.For("i", 0, 4) as i:
             y[i + 1] = x1[i + 1] + x2[i + 1]
     std = ft.pop_ast()
-    assert std.match(func.body)
+    assert std.match(f.body)
 
 
 def test_call_with_scalar():
@@ -260,6 +244,7 @@ def test_call_with_scalar():
     def g(x1, x2, y):
         y[()] = x1[()] + x2[()]
 
+    @ft.lower(target=ft.CPU(), verbose=1)
     @ft.transform
     def f(x1, x2, y):
         x1: ft.Var[(4,), "float32", "input", "cpu"]
@@ -268,16 +253,13 @@ def test_call_with_scalar():
         for i in range(4):
             g(x1[i], x2[i], y[i])
 
-    func = ft.lower(f, ft.CPU())
-    print(func)
-
     with ft.VarDef([("x1", (4,), "float32", "input", "cpu"),
                     ("x2", (4,), "float32", "input", "cpu"),
                     ("y", (4,), "float32", "output", "cpu")]) as (x1, x2, y):
         with ft.For("i", 0, 4) as i:
             y[i] = x1[i] + x2[i]
     std = ft.pop_ast()
-    assert std.match(func.body)
+    assert std.match(f.body)
 
 
 def test_call_with_literal_scalar():
@@ -286,20 +268,18 @@ def test_call_with_literal_scalar():
     def g(x1, x2, y):
         y[()] = x1 + x2
 
+    @ft.lower(target=ft.CPU(), verbose=1)
     @ft.transform
     def f(y):
         y: ft.Var[(4,), "float32", "output", "cpu"]
         for i in range(4):
             g(1, 2, y[i])
 
-    func = ft.lower(f, ft.CPU())
-    print(func)
-
     with ft.VarDef("y", (4,), "float32", "output", "cpu") as y:
         with ft.For("i", 0, 4) as i:
             y[i] = 3
     std = ft.pop_ast()
-    assert std.match(func.body)
+    assert std.match(f.body)
 
 
 def test_external_call():
@@ -321,6 +301,7 @@ def test_use_external_call_to_build_runtime_ops():
     def g(x1, x2, x3, y):
         y[()] = functools.reduce(lambda x, y: x * y, [x1, x2, x3])
 
+    @ft.lower(target=ft.CPU(), verbose=1)
     @ft.transform
     def f(x1, x2, x3, y):
         x1: ft.Var[(), "int32", "input", "cpu"]
@@ -329,16 +310,13 @@ def test_use_external_call_to_build_runtime_ops():
         y: ft.Var[(), "int32", "output", "cpu"]
         g(x1, x2, x3, y)
 
-    func = ft.lower(f, ft.CPU())
-    print(func)
-
     with ft.VarDef([("x1", (), "int32", "input", "cpu"),
                     ("x2", (), "int32", "input", "cpu"),
                     ("x3", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x1, x2, x3, y):
         y[()] = x1[()] * x2[()] * x3[()]
     std = ft.pop_ast()
-    assert std.match(func.body)
+    assert std.match(f.body)
 
 
 def test_error_missing_parameters():
@@ -372,6 +350,7 @@ def test_return():
                 d[i, j] = b[i, j] + a[i, j]
         return c, d
 
+    @ft.lower(target=ft.CPU(), skip_passes=['prop_one_time_use'], verbose=1)
     @ft.transform
     def test(y, c, d):
         y: ft.Var[(2, 2), "int32", "output", "cpu"]
@@ -384,9 +363,6 @@ def test_return():
             for j in range(2):
                 c[i, j] = c1[i, j]
                 d[i, j] = d1[i, j]
-
-    func = ft.lower(test, ft.CPU(), skip_passes=['prop_one_time_use'])
-    print(func)
 
     with ft.VarDef([("y", (2, 2), "int32", "output", "cpu"),
                     ("c", (2, 2), "int32", "output", "cpu"),
@@ -406,7 +382,7 @@ def test_return():
                         d[i, j] = d1[i, j]
     std = ft.pop_ast()
     print(std)
-    assert std.match(func.body)
+    assert std.match(test.body)
 
 
 def test_return_returned_value():
@@ -425,6 +401,7 @@ def test_return_returned_value():
         y1, y2 = h(x)
         return y2, y1
 
+    @ft.lower(target=ft.CPU(), skip_passes=['prop_one_time_use'], verbose=1)
     @ft.transform
     def f(x, w1, w2):
         x: ft.Var[(8,), "int32", "input", "cpu"]
@@ -434,9 +411,6 @@ def test_return_returned_value():
         for i in range(4):
             w1[i] = y1[i]
             w2[i] = y2[i]
-
-    func = ft.lower(f, ft.CPU(), skip_passes=['prop_one_time_use'])
-    print(func)
 
     with ft.VarDef([("x", (8,), "int32", "input", "cpu"),
                     ("w1", (4,), "int32", "output", "cpu"),
@@ -451,7 +425,7 @@ def test_return_returned_value():
             w1[i] = y1[i]
             w2[i] = y2[i]
     std = ft.pop_ast()
-    assert std.match(func.body)
+    assert std.match(f.body)
 
 
 def test_func_in_args():
@@ -463,16 +437,15 @@ def test_func_in_args():
             y[i] = x[i] + 1
         return y
 
+    @ft.lower(target=ft.CPU(), verbose=1)
     @ft.transform
-    def test(x, y):
+    def func(x, y):
         x: ft.Var[(4,), "int32", "input", "cpu"]
         y: ft.Var[(4,), "int32", "output", "cpu"]
         c = plus_one(plus_one(plus_one(x)))
         for i in range(4):
             y[i] = c[i]
 
-    func = ft.lower(test, ft.CPU())
-    print(func)
     code = ft.codegen(func, ft.CPU())
     print(code)
     x_np = np.array([1, 2, 3, 4], dtype="int32")
@@ -495,14 +468,12 @@ def test_variadic():
         kvs['z'][0] = 4.0
         kvs['z'][1] = 5.0
 
+    @ft.lower(target=ft.CPU(), verbose=1)
     @ft.transform
     def f(y, z):
         y: ft.Var[(2,), "float32", "output", "cpu"]
         z: ft.Var[(2,), "float32", "output", "cpu"]
         g(y, z=z)
-
-    func = ft.lower(f, ft.CPU())
-    print(func)
 
     with ft.VarDef([("y", (2,), "float32", "output", "cpu"),
                     ("z", (2,), "float32", "output", "cpu")]) as (y, z):
@@ -511,7 +482,7 @@ def test_variadic():
         z[0] = 4.0
         z[1] = 5.0
     std = ft.pop_ast()
-    assert std.match(func.body)
+    assert std.match(f.body)
 
 
 def test_no_deps_on_returned_tensor():
@@ -529,6 +500,7 @@ def test_no_deps_on_returned_tensor():
                 d[i, j] = b[i, j] + a[i, j]
         return c, d
 
+    @ft.lower(target=ft.CPU(), skip_passes=['prop_one_time_use'], verbose=1)
     @ft.transform
     def test(y, c, d):
         y: ft.Var[(2, 2), "int32", "output", "cpu"]
@@ -544,8 +516,5 @@ def test_no_deps_on_returned_tensor():
                 c[i, j] = cc[i, j]
                 d[i, j] = dd[i, j]
 
-    func = ft.lower(test, ft.CPU(), skip_passes=['prop_one_time_use'])
-    print(func)
-
-    s = ft.Schedule(func)
+    s = ft.Schedule(test)
     assert s.find('Lj').property.no_deps[0] == s.find('Vc').name
