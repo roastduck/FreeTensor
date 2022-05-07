@@ -107,7 +107,7 @@ def test_return_value_and_runtime_allocation():
         print(debug.with_line_no(code))
         x_np = np.random.randint(0, 100, (4, 4)).astype("int32")
         x_arr = ft.Array(x_np)
-        y_arr, = ft.Driver(func, code)(x_arr)
+        y_arr = ft.Driver(func, code)(x_arr)
         y_np = y_arr.numpy()
 
     assert np.array_equal(y_np, x_np * 2 + 1)

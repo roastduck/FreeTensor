@@ -86,7 +86,7 @@ def test_return_value_and_runtime_allocation():
 
     code = ft.codegen(test)
     print(debug.with_line_no(code))
-    y_arr, = ft.Driver(test, code)(np.array(5, dtype="int32"))
+    y_arr = ft.Driver(test, code)(np.array(5, dtype="int32"))
     y_np = y_arr.numpy()
 
     assert y_np[()] == 11
@@ -277,7 +277,7 @@ def test_immediate_var_return():
 
     code = ft.codegen(test)
     print(debug.with_line_no(code))
-    y_arr, = ft.Driver(test, code)(np.array(2, dtype="int32"))
+    y_arr = ft.Driver(test, code)(np.array(2, dtype="int32"))
     y_np = y_arr.numpy()
 
     assert np.all(y_np == np.array([0, 1, 2]))
