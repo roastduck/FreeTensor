@@ -414,7 +414,7 @@ capture_var = staged_callable(capture_var_staging, capture_var_fallback)
 
 class Var(StagedTypeAnnotation):
 
-    def __init__(self, shape, dtype, atype, mtype=None):
+    def __init__(self, shape, dtype, atype="input", mtype=None):
         '''
         Declare a variable
 
@@ -427,6 +427,9 @@ class Var(StagedTypeAnnotation):
             or another fixed-length VarRef as a shape
         dtype : str or DataType
             Data type of the variable
+        atype : str or AccessType
+            Access type of the variable. It specifies whether (and how) the variable
+            is an I/O variable of the function it belongs to. Defaults to "input"
         mtype : str or MemType (Optional)
             Memory type of the variable. If omitted, the main memory type of the
             default Target in config will be used

@@ -78,7 +78,7 @@ def test_return_value_and_runtime_allocation():
 
     @ft.transform
     def test(x):
-        x: ft.Var[(), "int32", "input"]
+        x: ft.Var[(), "int32"]
         y = ft.empty((), "int32")
         y[()] = x[()] * 2 + 1
         return y
@@ -274,7 +274,7 @@ def test_immediate_var_return():
 
     @ft.transform
     def test(x):
-        x: ft.Var[(), "int32", "input"]
+        x: ft.Var[(), "int32"]
         return ft.var([0, 1, x[()]], "int32")
 
     print(test)

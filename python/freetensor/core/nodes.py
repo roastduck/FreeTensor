@@ -280,6 +280,9 @@ class _VarDef:
             VarRef can be retrived using a `.shape` attribute
         dtype : str or DataType
             Data type of the variable
+        atype : str or AccessType
+            Access type of the variable. It specifies whether (and how) the variable
+            is an I/O variable of the function it belongs to
         mtype : str or MemType (Optional)
             Memory type of the variable. If omitted, the main memory type of the
             default Target in config will be used
