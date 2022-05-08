@@ -68,7 +68,7 @@ void CodeGenCUDA::genScalar(const std::string &var,
 }
 
 bool CodeGenCUDA::inKernel() const {
-    return streamStack_.back().name_ != "default";
+    return streamStack_.back().name_ != "default" || inCublas_;
 }
 
 void CodeGenCUDA::visitStmt(const Stmt &stmt) {
@@ -562,6 +562,8 @@ void CodeGenCUDA::visit(const MatMul &op) {
                              "inside a CUDA kernel is not supported");
     }
 
+    inCublas_ = true;
+
     bool transA = !op->aIsRowMajor_, transB = !op->bIsRowMajor_;
     Expr a = op->a_, b = op->b_, c = op->c_;
     Expr m = op->m_, k = op->k_, n = op->n_;
@@ -617,6 +619,8 @@ void CodeGenCUDA::visit(const MatMul &op) {
     os() << ", " << genCUBLASType(dtype(op->c_)) << ", CUBLAS_GEMM_DEFAULT);"
          << std::endl;
     endBlock();
+
+    inCublas_ = false;
 }
 
 std::string codeGenCUDA(const Func &func) {

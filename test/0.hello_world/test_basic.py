@@ -4,7 +4,7 @@ import pytest
 
 
 def test_hello_world():
-    with ft.VarDef("x", (4, 4), "float32", "output") as x:
+    with ft.VarDef("x", (4, 4), "float32", "inout") as x:
         x[2, 3] = 2.0
         x[1, 0] = 3.0
 
@@ -23,7 +23,7 @@ def test_hello_world():
 
 
 def test_hello_world_float64():
-    with ft.VarDef("x", (4, 4), "float64", "output") as x:
+    with ft.VarDef("x", (4, 4), "float64", "inout") as x:
         x[2, 3] = 2.0
         x[1, 0] = 3.0
 
@@ -42,7 +42,7 @@ def test_hello_world_float64():
 
 
 def test_hello_world_int64():
-    with ft.VarDef("x", (4, 4), "int64", "output") as x:
+    with ft.VarDef("x", (4, 4), "int64", "inout") as x:
         x[2, 3] = 2
         x[1, 0] = 3
 
@@ -61,7 +61,7 @@ def test_hello_world_int64():
 
 
 def test_hello_world_bool():
-    with ft.VarDef("x", (4, 4), "bool", "output") as x:
+    with ft.VarDef("x", (4, 4), "bool", "inout") as x:
         x[2, 3] = False
         x[1, 0] = True
 
@@ -304,11 +304,11 @@ def test_error_wrong_keyword_parameter_data_type():
 
 
 def test_inlined_invoke():
-    with ft.VarDef("y", (4,), "float32", "output") as y:
+    with ft.VarDef("y", (4,), "float32", "inout") as y:
         y[3] = 2.0
     g = ft.lower(ft.Func("g", ["y"], [], ft.pop_ast()))
 
-    with ft.VarDef("x", (4, 4), "float32", "output") as x:
+    with ft.VarDef("x", (4, 4), "float32", "inout") as x:
         ft.Invoke(g, x[2])
     f = ft.lower(ft.Func("f", ["x"], [], ft.pop_ast()), verbose=1)
     code = ft.codegen(f, verbose=True)

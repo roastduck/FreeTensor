@@ -32,7 +32,7 @@ class Driver {
     std::vector<size_t> retDims_;
     std::unordered_map<std::string, size_t> name2param_;
     std::unordered_map<std::string, Ref<Buffer>> name2buffer_;
-    Ref<Device> dev_;
+    Ref<Device> dev_, hostDev_;
 
     std::unique_ptr<Context> ctx_;
 
@@ -46,9 +46,18 @@ class Driver {
      * @param func : AST of the function, where the function signature is needed
      * to determine the parameters and return values
      * @param src : Native code generated from codegen
-     * @param dev : The device to run the program
+     * @param device : The device to run the program
+     * @param hostDevice : The hosting CPU device (Optional)
+     * @{
      */
-    Driver(const Func &func, const std::string &src, const Ref<Device> &dev);
+    Driver(const Func &func, const std::string &src, const Ref<Device> &device,
+           const Ref<Device> &hostDevice);
+    Driver(const Func &func, const std::string &src, const Ref<Device> &device)
+        : Driver(func, src, device,
+                 device->type() == TargetType::CPU
+                     ? device
+                     : Ref<Device>::make(Ref<CPU>::make())) {}
+    /** @} */
 
     ~Driver() {
         for (void *retVal : returns_) {

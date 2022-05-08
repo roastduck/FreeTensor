@@ -248,9 +248,9 @@ def test_collaborative_fetch():
     host = ft.Device(ft.CPU())
 
     with ft.VarDef([
-        ("a", (32, 256), "float32", "input", "cpu"),
-        ("b", (256, 32), "float32", "input", "cpu"),
-        ("c", (32, 32), "float32", "output", "cpu"),
+        ("a", (32, 256), "float32", "input", "gpu/global"),
+        ("b", (256, 32), "float32", "input", "gpu/global"),
+        ("c", (32, 32), "float32", "output", "gpu/global"),
     ]) as (a, b, c):
         with ft.For("i", 0, 32, nid="Li") as i:
             with ft.For("j", 0, 32, nid="Lj") as j:

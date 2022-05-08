@@ -76,7 +76,7 @@ void init_ffi_array(py::module_ &m) {
              })
         .def_property_readonly("shape", &Array::shape)
         .def_property_readonly("dtype", &Array::dtype)
-        .def_property_readonly("device", &Array::device);
+        .def_property_readonly("prefer_device", &Array::preferDevice);
 
     py::implicitly_convertible<py::array, Array>();
 }

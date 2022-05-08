@@ -405,7 +405,7 @@ def capture_var_fallback(arr: ffi.Array, name: str = 'captured'):
 def capture_var_staging(arr: ffi.Array, name: str = 'captured'):
     return StagingContext.register_implicit_scope(
         _VarDef(prepare_vardef(name, capture=arr), arr.shape, arr.dtype,
-                'input', arr.device.main_mem_type()))
+                'input', arr.prefer_device.main_mem_type()))
 
 
 capture_var = staged_callable(capture_var_staging, capture_var_fallback)

@@ -16,7 +16,7 @@ def test_thread_bind():
     def test(w, x, y, z):
         w: ft.Var[(m, m, a, b), "int32", "input", "gpu/global"]
         x: ft.Var[(m, m, b, a), "int32", "input", "gpu/global"]
-        y: ft.Var[(1, 1, a, a), "int32", "cache", "gpu/global"]
+        y: ft.Var[(1, 1, a, a), "int32", "inout", "gpu/global"]
         z: ft.Var[(m, m, a, a), "int32", "output", "gpu/global"]
         "nid: L1"
         for i in range(m):

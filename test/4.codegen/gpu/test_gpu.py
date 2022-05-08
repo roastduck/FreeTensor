@@ -103,8 +103,8 @@ def test_return_value_and_runtime_allocation():
 
     @ft.transform
     def test(x):
-        x: ft.Var[(4, 4), "int32", "input", "cpu"]
-        y = ft.empty((4, 4), "int32", "cpu")
+        x: ft.Var[(4, 4), "int32", "input", "gpu/global"]
+        y = ft.empty((4, 4), "int32", "gpu/global")
         'nid: L1'
         for i in range(4):
             'nid: L2'

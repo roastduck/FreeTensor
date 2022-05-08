@@ -22,6 +22,7 @@ class CodeGenCUDA : public CodeGenC<CodeGenCUDAStream> {
     int nKernel_ = 0;
     int64_t sharedStackTop_ = 0, globalStackTop_ = 0;
     std::unordered_set<Stmt> streamScopes_;
+    bool inCublas_ = false;
 
   public:
     CodeGenCUDA(const std::vector<std::string> &params,

@@ -27,6 +27,13 @@ class Device {
     MemType mainMemType() const { return target_->mainMemType(); }
 
     void sync();
+
+    friend bool operator==(const Device &lhs, const Device &rhs) {
+        return isSame(lhs.target_, rhs.target_) && lhs.num_ == rhs.num_;
+    }
+    friend bool operator!=(const Device &lhs, const Device &rhs) {
+        return !(lhs == rhs);
+    }
 };
 
 } // namespace freetensor

@@ -23,11 +23,48 @@
 
 namespace freetensor {
 
-Driver::Driver(const Func &f, const std::string &src, const Ref<Device> &dev)
+static void *requestPtr(const Ref<Array> &arr, const Ref<Device> &device,
+                        const Ref<Device> &hostDevice, MemType mtype,
+                        AccessType atype) {
+    Ref<Device> d;
+    switch (mtype) {
+    case MemType::CPU:
+    case MemType::ByValue:
+        if (hostDevice->type() != TargetType::CPU) {
+            throw DriverError("A CPU host device is requested");
+        }
+        d = hostDevice;
+        break;
+    case MemType::GPUGlobal:
+        if (device->type() != TargetType::GPU) {
+            throw DriverError("A GPU device is requested");
+        }
+        d = device;
+        break;
+    default:
+        throw DriverError("A I/O variable cannot have a " + toString(mtype) +
+                          " memory type");
+    }
+    switch (atype) {
+    case AccessType::Input:
+        return arr->rawSharedTo(d);
+    case AccessType::Output:
+        return arr->rawInitTo(d);
+    case AccessType::InOut:
+        return arr->rawMovedTo(d);
+    case AccessType::Cache:
+        throw DriverError("A \"cache\" variable cannot be an I/O variable");
+    default:
+        ASSERT(false);
+    }
+}
+
+Driver::Driver(const Func &f, const std::string &src, const Ref<Device> &dev,
+               const Ref<Device> &hostDev)
     : f_(f), src_(src), params_(f->params_.size(), nullptr),
       returns_(f->returns_.size(), nullptr),
       retShapes_(f->returns_.size(), nullptr), retDims_(f->returns_.size(), 0),
-      dev_(dev) {
+      dev_(dev), hostDev_(hostDev) {
     auto nParams = f->params_.size();
     name2param_.reserve(nParams);
     name2buffer_.reserve(nParams);
@@ -186,33 +223,38 @@ void Driver::setParams(const std::vector<Ref<Array>> &args,
         if (j >= params_.size()) {
             throw DriverError("More arguments are given than required");
         }
-        if (name2buffer_.at(f_->params_[j])->tensor()->dtype() !=
-            args[i]->dtype()) {
+        auto &&buffer = name2buffer_.at(f_->params_[j]);
+        if (buffer->tensor()->dtype() != args[i]->dtype()) {
             throw DriverError(
                 "Cannnot pass a " + toString(args[i]->dtype()) +
                 " Array to the " + std::to_string(j) + "-th parameter " +
                 f_->params_[j] + " of type " +
                 toString(name2buffer_.at(f_->params_[j])->tensor()->dtype()));
         }
-        params_[j++] = args[i]->raw();
+        params_[j++] = requestPtr(args[i], dev_, hostDev_, buffer->mtype(),
+                                  buffer->atype());
     }
     for (auto &&[key, value] : kws) {
         if (f_->closure_.count(key)) {
             throw DriverError("Enclosed parameter " + key + " cannot be set");
         }
-        params_[name2param_[key]] = value->raw();
-        if (name2buffer_.at(key)->tensor()->dtype() != value->dtype()) {
+        auto &&buffer = name2buffer_.at(key);
+        if (buffer->tensor()->dtype() != value->dtype()) {
             throw DriverError(
                 "Cannnot pass a " + toString(value->dtype()) +
                 " Array to the " + std::to_string(name2param_[key]) +
                 "-th parameter " + key + " of type " +
                 toString(name2buffer_.at(key)->tensor()->dtype()));
         }
+        params_[name2param_[key]] =
+            requestPtr(value, dev_, hostDev_, buffer->mtype(), buffer->atype());
     }
     for (auto &&[i, param, name] :
          iter::zip(iter::count(), params_, f_->params_)) {
+        auto &&buffer = name2buffer_.at(name);
         if (f_->closure_.count(name)) {
-            param = (*f_->closure_.at(name))->raw();
+            param = requestPtr(*f_->closure_.at(name), dev_, hostDev_,
+                               buffer->mtype(), buffer->atype());
         }
         if (param == nullptr) {
             throw DriverError("The " + std::to_string(i) + "-th parameter " +
