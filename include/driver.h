@@ -31,6 +31,7 @@ class Driver {
     std::vector<size_t *> retShapes_;
     std::vector<size_t> retDims_;
     std::unordered_map<std::string, size_t> name2param_;
+    std::unordered_map<std::string, Ref<Buffer>> name2buffer_;
     Ref<Device> dev_;
 
     std::unique_ptr<Context> ctx_;

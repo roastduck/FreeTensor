@@ -7,6 +7,9 @@
 #include <sys/stat.h> // mkdir
 #include <unistd.h>   // rmdir
 
+#include <itertools.hpp>
+
+#include <analyze/find_stmt.h>
 #include <config.h>
 #include <debug.h>
 #include <driver.h>
@@ -27,8 +30,15 @@ Driver::Driver(const Func &f, const std::string &src, const Ref<Device> &dev)
       dev_(dev) {
     auto nParams = f->params_.size();
     name2param_.reserve(nParams);
+    name2buffer_.reserve(nParams);
     for (size_t i = 0; i < nParams; i++) {
         name2param_[f->params_[i]] = i;
+        auto nodes = findStmt(f->body_, [&](const Stmt &s) -> bool {
+            return s->nodeType() == ASTNodeType::VarDef &&
+                   s.as<VarDefNode>()->name_ == f->params_[i];
+        });
+        ASSERT(nodes.size() == 1);
+        name2buffer_[f->params_[i]] = nodes.front().as<VarDefNode>()->buffer_;
     }
     buildAndLoad();
 }
@@ -176,6 +186,14 @@ void Driver::setParams(const std::vector<Ref<Array>> &args,
         if (j >= params_.size()) {
             throw DriverError("More arguments are given than required");
         }
+        if (name2buffer_.at(f_->params_[j])->tensor()->dtype() !=
+            args[i]->dtype()) {
+            throw DriverError(
+                "Cannnot pass a " + toString(args[i]->dtype()) +
+                " Array to the " + std::to_string(j) + "-th parameter " +
+                f_->params_[j] + " of type " +
+                toString(name2buffer_.at(f_->params_[j])->tensor()->dtype()));
+        }
         params_[j++] = args[i]->raw();
     }
     for (auto &&[key, value] : kws) {
@@ -183,13 +201,22 @@ void Driver::setParams(const std::vector<Ref<Array>> &args,
             throw DriverError("Enclosed parameter " + key + " cannot be set");
         }
         params_[name2param_[key]] = value->raw();
-    }
-    for (size_t i = 0, iEnd = params_.size(); i < iEnd; i++) {
-        if (f_->closure_.count(f_->params_[i])) {
-            params_[i] = (*f_->closure_.at(f_->params_[i]))->raw();
+        if (name2buffer_.at(key)->tensor()->dtype() != value->dtype()) {
+            throw DriverError(
+                "Cannnot pass a " + toString(value->dtype()) +
+                " Array to the " + std::to_string(name2param_[key]) +
+                "-th parameter " + key + " of type " +
+                toString(name2buffer_.at(key)->tensor()->dtype()));
         }
-        if (params_[i] == nullptr) {
-            throw DriverError("Parameter " + std::to_string(i) + " is missing");
+    }
+    for (auto &&[i, param, name] :
+         iter::zip(iter::count(), params_, f_->params_)) {
+        if (f_->closure_.count(name)) {
+            param = (*f_->closure_.at(name))->raw();
+        }
+        if (param == nullptr) {
+            throw DriverError("The " + std::to_string(i) + "-th parameter " +
+                              name + " is missing");
         }
     }
 }

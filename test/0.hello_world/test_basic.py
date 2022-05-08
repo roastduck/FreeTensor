@@ -273,6 +273,36 @@ def test_error_missing_parameters():
         driver()
 
 
+def test_error_wrong_positional_parameter_data_type():
+    with ft.VarDef("x", (4, 4), "float32", "output") as x:
+        x[2, 3] = 2.0
+        x[1, 0] = 3.0
+
+    func = ft.lower(ft.Func("main", ["x"], [], ft.pop_ast()), verbose=1)
+    code = ft.codegen(func, verbose=True)
+
+    with pytest.raises(ft.DriverError):
+        x_np = np.zeros((4, 4), dtype="float64")
+        x_arr = ft.Array(x_np)
+        ft.build_binary(code)(x_arr)
+        x_np = x_arr.numpy()
+
+
+def test_error_wrong_keyword_parameter_data_type():
+    with ft.VarDef("x", (4, 4), "float32", "output") as x:
+        x[2, 3] = 2.0
+        x[1, 0] = 3.0
+
+    func = ft.lower(ft.Func("main", ["x"], [], ft.pop_ast()), verbose=1)
+    code = ft.codegen(func, verbose=True)
+
+    with pytest.raises(ft.DriverError):
+        x_np = np.zeros((4, 4), dtype="float64")
+        x_arr = ft.Array(x_np)
+        ft.build_binary(code)(x=x_arr)
+        x_np = x_arr.numpy()
+
+
 def test_inlined_invoke():
     with ft.VarDef("y", (4,), "float32", "output") as y:
         y[3] = 2.0
