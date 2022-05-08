@@ -56,3 +56,4 @@ from .transformer import (transform, inline, empty, var, capture_var, Var,
 
 from .meta import *
 from .auto_schedule import *
+from .optimize import optimize

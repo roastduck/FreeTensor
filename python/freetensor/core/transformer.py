@@ -919,21 +919,24 @@ def into_staging(func, caller_env, src=None, verbose=False):
     return caller_env[func.__name__], file, func.__name__
 
 
-def transform(func=None, verbose: int = 0, caller_env=None):
+def transform(func=None, verbose: int = 0, depth: int = 1, caller_env=None):
     '''
     Transform a user function to an AST
 
     Parameters
     ----------
     func : Python function
-        The user function to transform
+        The user function to transform. If not specified, a partial function will
+        be returend, which can be used as a decorator
     verbose : int
         0 = print nothing. 1 = print the resulting AST. 2 = 1 + print the generated
         Python code that is used for transforming
     '''
 
+    if verbose is None:
+        verbose = 0
     if caller_env is None:
-        caller_env = _get_caller_env(1)
+        caller_env = _get_caller_env(depth)
 
     def decorator(func):
         params = list(inspect.signature(func).parameters)
