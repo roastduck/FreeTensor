@@ -71,6 +71,15 @@ bool CodeGenCUDA::inKernel() const {
     return streamStack_.back().name_ != "default" || inCublas_;
 }
 
+void CodeGenCUDA::exprOr1(const std::unordered_map<ParallelScope, Expr> &dict,
+                          const ParallelScope &key) {
+    if (dict.count(key)) {
+        (*this)(dict.at(key));
+    } else {
+        os() << 1;
+    }
+}
+
 void CodeGenCUDA::visitStmt(const Stmt &stmt) {
     if (streamScopes_.count(stmt)) {
         makeIndent();
@@ -311,13 +320,6 @@ void CodeGenCUDA::visit(const For &op) {
         }
         CodeGenC::visit(op);
     } else if (std::holds_alternative<CUDAScope>(op->property_->parallel_)) {
-        if (op->len_->nodeType() != ASTNodeType::IntConst) {
-            std::ostringstream msg;
-            msg << "Length of "
-                << ::freetensor::toString(op->property_->parallel_)
-                << " should be constant, instead of " << op->len_;
-            throw Error(msg.str());
-        }
         if (!inKernel()) {
             std::string kernel = "kernel" + std::to_string(nKernel_++);
             pushStream(kernel);
@@ -325,8 +327,7 @@ void CodeGenCUDA::visit(const For &op) {
             globalStackTop_ = 0;
             beginBlock();
             (*this)(op->body_);
-            streamStack_.back().threadDim_[op->property_->parallel_] =
-                op->len_.as<IntConstNode>()->val_;
+            streamStack_.back().threadDim_[op->property_->parallel_] = op->len_;
             endBlock();
             popStream();
             Stream &stream = poppedStream_.back();
@@ -350,14 +351,19 @@ void CodeGenCUDA::visit(const For &op) {
                  << ", cudaFuncAttributeMaxDynamicSharedMemorySize, "
                  << std::to_string(sharedSize) << "));" << std::endl;
             makeIndent();
-            os() << kernel << "<<<dim3("
-                 << (dim.count(blockIdxX) ? dim.at(blockIdxX) : 1) << ", "
-                 << (dim.count(blockIdxY) ? dim.at(blockIdxY) : 1) << ", "
-                 << (dim.count(blockIdxZ) ? dim.at(blockIdxZ) : 1) << "), dim3("
-                 << (dim.count(threadIdxX) ? dim.at(threadIdxX) : 1) << ", "
-                 << (dim.count(threadIdxY) ? dim.at(threadIdxY) : 1) << ", "
-                 << (dim.count(threadIdxZ) ? dim.at(threadIdxZ) : 1) << "), "
-                 << std::to_string(sharedSize) << ", __stream>>>(";
+            os() << kernel << "<<<dim3(";
+            exprOr1(dim, blockIdxX);
+            os() << ", ";
+            exprOr1(dim, blockIdxY);
+            os() << ", ";
+            exprOr1(dim, blockIdxZ);
+            os() << "), dim3(";
+            exprOr1(dim, threadIdxX);
+            os() << ", ";
+            exprOr1(dim, threadIdxY);
+            os() << ", ";
+            exprOr1(dim, threadIdxZ);
+            os() << "), " << std::to_string(sharedSize) << ", __stream>>>(";
             bool first = true;
             for (auto &&[name, buffer] : stream.useBuffers_) {
                 os() << (first ? "" : ", ") << mangle(name);
@@ -375,8 +381,7 @@ void CodeGenCUDA::visit(const For &op) {
             endBlock();
         } else {
             (*this)(op->body_);
-            streamStack_.back().threadDim_[op->property_->parallel_] =
-                op->len_.as<IntConstNode>()->val_;
+            streamStack_.back().threadDim_[op->property_->parallel_] = op->len_;
         }
     } else if (std::holds_alternative<CUDAStreamScope>(
                    op->property_->parallel_)) {
@@ -670,13 +675,27 @@ extern "C" {
         } else {
             const auto &dim = stream.threadDim_;
             std::ostringstream os;
-            os << "__global__ void __launch_bounds__(";
-            os << (dim.count(threadIdxX) ? dim.at(threadIdxX) : 1);
+            os << "__global__ void ";
+            for (auto &&[d, len] : dim) {
+                if (len.isValid() && len->nodeType() != ASTNodeType::IntConst) {
+                    goto dynamic_dim;
+                }
+            }
+            os << "__launch_bounds__(";
+            os << (dim.count(threadIdxX)
+                       ? dim.at(threadIdxX).as<IntConstNode>()->val_
+                       : 1);
             os << " * ";
-            os << (dim.count(threadIdxY) ? dim.at(threadIdxY) : 1);
+            os << (dim.count(threadIdxY)
+                       ? dim.at(threadIdxY).as<IntConstNode>()->val_
+                       : 1);
             os << " * ";
-            os << (dim.count(threadIdxZ) ? dim.at(threadIdxZ) : 1);
-            os << ") " << stream.name_ << "(";
+            os << (dim.count(threadIdxZ)
+                       ? dim.at(threadIdxZ).as<IntConstNode>()->val_
+                       : 1);
+            os << ") ";
+        dynamic_dim:
+            os << stream.name_ << "(";
             bool first = true;
             for (auto &&[name, buffer] : stream.useBuffers_) {
                 os << (first ? "" : ", ");

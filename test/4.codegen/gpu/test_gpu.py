@@ -415,6 +415,34 @@ def test_dynamic_2d_array():
     assert np.array_equal(y_np, y_std)
 
 
+def test_dynamic_thread_dim():
+    with ft.VarDef("n", (), "int32", "input", "byvalue") as n:
+        with ft.VarDef([
+            ("x", (n, n), "int32", "input", "gpu/global"),
+            ("y", (n, n), "int32", "output", "gpu/global"),
+        ]) as (x, y):
+            with ft.For("i", 0, n, nid="L1") as i:
+                with ft.For("j", 0, n, nid="L2") as j:
+                    y[i, j] = x[i, j] + 1
+
+    with device:
+        s = ft.Schedule(ft.Func("main", ["n", "x", "y"], [], ft.pop_ast()))
+        s.parallelize("L1", "threadIdx.x")
+        func = ft.lower(s.func(), verbose=1)
+        code = ft.codegen(func, verbose=True)
+        n_np = np.array(5, dtype="int32")
+        x_np = np.random.randint(0, 100, (5, 5)).astype("int32")
+        y_np = np.zeros((5, 5), dtype="int32")
+        n_arr = ft.Array(n_np, host)
+        x_arr = ft.Array(x_np)
+        y_arr = ft.Array(y_np)
+        ft.build_binary(code)(n=n_arr, x=x_arr, y=y_arr)
+        y_np = y_arr.numpy()
+
+    y_std = x_np + 1
+    assert np.array_equal(y_np, y_std)
+
+
 def test_use_cpu_iters():
     with ft.VarDef("y", (4, 1000), "int32", "output", "gpu/global") as y:
         with ft.For("i", 0, 4, nid="Li") as i:

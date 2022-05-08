@@ -4,6 +4,7 @@
 
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
+#include <pass/const_fold.h>
 #include <pass/gpu/make_sync.h>
 #include <pass/merge_and_hoist_if.h>
 
@@ -13,23 +14,36 @@ namespace gpu {
 
 void FindAllThreads::visit(const For &op) {
     if (op->property_->parallel_ == threadIdxX) {
-        ASSERT(op->len_->nodeType() == ASTNodeType::IntConst);
-        thx_ = op->len_.as<IntConstNode>()->val_;
+        if (op->len_->nodeType() == ASTNodeType::IntConst) {
+            thx_ = Opt<int>::make(op->len_.as<IntConstNode>()->val_);
+        } else {
+            thx_ = nullptr;
+        }
     } else if (op->property_->parallel_ == threadIdxY) {
-        ASSERT(op->len_->nodeType() == ASTNodeType::IntConst);
-        thy_ = op->len_.as<IntConstNode>()->val_;
+        if (op->len_->nodeType() == ASTNodeType::IntConst) {
+            thy_ = Opt<int>::make(op->len_.as<IntConstNode>()->val_);
+        } else {
+            thy_ = nullptr;
+        }
     } else if (op->property_->parallel_ == threadIdxZ) {
-        ASSERT(op->len_->nodeType() == ASTNodeType::IntConst);
-        thz_ = op->len_.as<IntConstNode>()->val_;
+        if (op->len_->nodeType() == ASTNodeType::IntConst) {
+            thz_ = Opt<int>::make(op->len_.as<IntConstNode>()->val_);
+        } else {
+            thz_ = nullptr;
+        }
     }
     Visitor::visit(op);
     if (op->property_->parallel_ == threadIdxX) {
-        results_.emplace_back(ThreadInfo{op, warpSize_ % thx_ == 0});
+        results_.emplace_back(
+            ThreadInfo{op, thx_.isValid() && warpSize_ % *thx_ == 0});
     } else if (op->property_->parallel_ == threadIdxY) {
-        results_.emplace_back(ThreadInfo{op, warpSize_ % (thx_ * thy_) == 0});
+        results_.emplace_back(
+            ThreadInfo{op, thx_.isValid() && thy_.isValid() &&
+                               warpSize_ % (*thx_ * *thy_) == 0});
     } else if (op->property_->parallel_ == threadIdxZ) {
         results_.emplace_back(
-            ThreadInfo{op, warpSize_ % (thx_ * thy_ * thz_) == 0});
+            ThreadInfo{op, thx_.isValid() && thy_.isValid() && thz_.isValid() &&
+                               warpSize_ % (*thx_ * *thy_ * *thz_) == 0});
     }
 }
 
@@ -268,7 +282,7 @@ Stmt MakeSync::visit(const If &_op) {
 }
 
 Stmt makeSync(const Stmt &_op) {
-    auto op = _op;
+    auto op = constFold(_op);
     FindAllThreads finder;
     finder(op);
     auto &&threads = finder.results();
