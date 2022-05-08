@@ -19,12 +19,20 @@ class Schedule {
     Func func_;
     Stmt ast_;
 
+    int verbose_ = 0;
+
     std::vector<std::string> logs_;
+
+  private:
+    void appendLog(const std::string &log);
 
   public:
     Schedule() = default;
-    Schedule(const Stmt &ast);
-    Schedule(const Func &func) : Schedule(func->body_) { func_ = func; }
+    Schedule(const Stmt &ast, int verbose = 0);
+    Schedule(const Func &func, int verbose = 0)
+        : Schedule(func->body_, verbose) {
+        func_ = func;
+    }
 
     Schedule clone() const {
         if (func_.isValid())
@@ -44,7 +52,7 @@ class Schedule {
     /**
      * @return : The statements being transformed, without a function signature
      */
-    Stmt ast() const { return ast_; }
+    Stmt ast() const;
 
     /**
      * @return : Logs of all schedules applied

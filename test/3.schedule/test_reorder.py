@@ -8,10 +8,7 @@ def test_basic():
             with ft.For("j", 0, 8, nid="L2") as j:
                 y[i, j] = i + j
     ast = ft.pop_ast(verbose=True)
-    s = ft.Schedule(ast)
-    s.reorder(["L2", "L1"])
-    ast = s.ast()
-    print(ast)
+    ast = ft.schedule(ast, lambda s: s.reorder(["L2", "L1"]), verbose=1)
     ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
@@ -30,10 +27,7 @@ def test_multiple_loops():
                 with ft.For("k", 0, 16, nid="L3") as k:
                     y[i, j, k] = (i + j) * k
     ast = ft.pop_ast(verbose=True)
-    s = ft.Schedule(ast)
-    s.reorder(["L3", "L2", "L1"])
-    ast = s.ast()
-    print(ast)
+    ast = ft.schedule(ast, lambda s: s.reorder(["L3", "L2", "L1"]), verbose=1)
     ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef("y", (4, 8, 16), "int32", "output", "cpu") as y:
@@ -54,10 +48,7 @@ def test_if_in_between():
                 with ft.For("j", 0, 8, nid="L2") as j:
                     y[i, j] = i + j
     ast = ft.pop_ast(verbose=True)
-    s = ft.Schedule(ast)
-    s.reorder(["L2", "L1"])
-    ast = s.ast()
-    print(ast)
+    ast = ft.schedule(ast, lambda s: s.reorder(["L2", "L1"]), verbose=1)
     ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
@@ -79,10 +70,7 @@ def test_stmt_in_between():
             with ft.For("j", 0, 8, nid="L2") as j:
                 y[i, j] = i + j
     ast = ft.pop_ast(verbose=True)
-    s = ft.Schedule(ast)
-    s.reorder(["L2", "L1"])
-    ast = s.ast()
-    print(ast)
+    ast = ft.schedule(ast, lambda s: s.reorder(["L2", "L1"]), verbose=1)
     ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
@@ -119,10 +107,7 @@ def test_reduction():
             with ft.For("j", 0, 8, nid="L2") as j:
                 y[0] = y[0] + x[i, j]
     ast = ft.pop_ast(verbose=True)
-    s = ft.Schedule(ast)
-    s.reorder(["L2", "L1"])
-    ast = s.ast()
-    print(ast)
+    ast = ft.schedule(ast, lambda s: s.reorder(["L2", "L1"]), verbose=1)
     ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (4, 8), "int32", "output", "cpu"),
@@ -150,10 +135,7 @@ def test_local_var():
                     y1[i, j] = buf[0] * 2
                     y2[i, j] = buf[0] * 3
     ast = ft.pop_ast(verbose=True)
-    s = ft.Schedule(ast)
-    s.reorder(["L2", "L1"])
-    ast = s.ast()
-    print(ast)
+    ast = ft.schedule(ast, lambda s: s.reorder(["L2", "L1"]), verbose=1)
     ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([

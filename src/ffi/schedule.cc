@@ -19,8 +19,8 @@ void init_ffi_schedule(py::module_ &m) {
         .value("RelaxedSize", VarSplitMode::RelaxedSize);
 
     py::class_<Schedule>(m, "Schedule")
-        .def(py::init<const Stmt &>())
-        .def(py::init<const Func &>())
+        .def(py::init<const Stmt &, int>(), "stmt"_a, "verbose"_a = 0)
+        .def(py::init<const Func &, int>(), "func"_a, "verbose"_a = 0)
         .def("ast", &Schedule::ast)
         .def("func", &Schedule::func)
         .def("logs", &Schedule::logs)
