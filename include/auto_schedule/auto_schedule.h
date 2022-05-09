@@ -33,11 +33,12 @@ class AutoSchedule {
     bool paramsSet_;
     std::vector<Ref<Sketch>> measuredSketches_;
     std::set<size_t> measuredHashes_;
-    double mn_;
     std::default_random_engine randGen_;
     py::function predictFunc_;
     py::function updateFunc_;
     std::vector<Ref<Rule>> rules_;
+    double flop_;
+    std::string tag_;
 
   private:
     std::vector<double> measure(std::vector<Ref<Sketch>> &sketches);
@@ -45,7 +46,8 @@ class AutoSchedule {
   public:
     AutoSchedule(const Schedule &schedule, const Ref<Target> &target,
                  const Ref<Device> &device, int measuredSize,
-                 py::function predictFunc, py::function updateFunc);
+                 py::function predictFunc, py::function updateFunc,
+                 std::string tag = "");
 
     size_t measuredSize() const { return measuredSize_; }
 
@@ -68,6 +70,10 @@ class AutoSchedule {
     std::vector<double> testAndAdd(std::vector<Ref<Sketch>> &sketches_in);
 
     Schedule getBestSchedule();
+    double getBestTime();
+
+    double getFlop() { return flop_; }
+    std::string getTag() { return tag_; }
 
     void genSketches();
     Sketch getInitSketch();

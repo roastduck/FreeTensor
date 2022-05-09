@@ -6,8 +6,8 @@ device = ft.Device(target)
 
 
 def test_multi_level_tiling():
-    a = 128
-    b = 128
+    a = 512
+    b = 512
     m = 4
     # c = 64
 

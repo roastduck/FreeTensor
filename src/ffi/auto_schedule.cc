@@ -14,6 +14,9 @@ void init_ffi_auto_schedule(py::module_ &m) {
         .def(
             py::init<const Schedule &, const Ref<Target> &, const Ref<Device> &,
                      size_t, py::function, py::function>())
+        .def(
+            py::init<const Schedule &, const Ref<Target> &, const Ref<Device> &,
+                     size_t, py::function, py::function, std::string>())
         .def("measuredSize", &AutoSchedule::measuredSize)
         .def("set_params", &AutoSchedule::setParams, "args"_a,
              "kws"_a = std::unordered_map<std::string, Ref<Array>>())
@@ -25,7 +28,10 @@ void init_ffi_auto_schedule(py::module_ &m) {
         .def("test_multi_level_tiling_with_fusion",
              &AutoSchedule::testMultiLevelTilingWithFusion, "n_level"_a)
         .def("test_thread_bind", &AutoSchedule::testThreadBind)
-        .def("test_cache_read", &AutoSchedule::testCacheRead);
+        .def("test_cache_read", &AutoSchedule::testCacheRead)
+        .def("get_flop", &AutoSchedule::getFlop)
+        .def("get_tag", &AutoSchedule::getTag)
+        .def("get_best_time", &AutoSchedule::getBestTime);
 }
 
 } // namespace freetensor

@@ -2,6 +2,7 @@
 
 #include <analyze/find_elementwise.h>
 #include <analyze/fixed_length_feature.h>
+#include <analyze/structural_feature.h>
 #include <auto_schedule/auto_schedule.h>
 #include <auto_schedule/rules/cache_write.h>
 #include <auto_schedule/rules/multi_level_tiling.h>
@@ -15,15 +16,24 @@
 #include <lower.h>
 #include <pybind11/numpy.h>
 #include <queue>
+#include <utility>
 
 namespace freetensor {
 
 AutoSchedule::AutoSchedule(const Schedule &schedule, const Ref<Target> &target,
                            const Ref<Device> &device, int measuredSize,
-                           py::function predictFunc, py::function updateFunc)
+                           py::function predictFunc, py::function updateFunc,
+                           std::string tag)
     : original_(schedule.clone()), target_(target), device_(device),
-      measuredSize_(measuredSize), paramsSet_(false), mn_(INFINITY),
-      predictFunc_(std::move(predictFunc)), updateFunc_(std::move(updateFunc)) {
+      measuredSize_(measuredSize), paramsSet_(false),
+      predictFunc_(std::move(predictFunc)), updateFunc_(std::move(updateFunc)),
+      tag_(std::move(tag)) {
+    flop_ = 0;
+    auto opCnt =
+        structuralFeature(original_.ast())[original_.ast()->id()].opCnt_;
+    for (auto cnt : opCnt) {
+        flop_ += cnt.second;
+    }
     if (target->type() == TargetType::CPU) {
         rules_.push_back(new CacheWriteRule(target->type()));
         rules_.push_back(new MultiLevelTilingWithFusionRule(target->type()));
@@ -52,11 +62,9 @@ std::vector<double> AutoSchedule::measure(std::vector<Ref<Sketch>> &sketches) {
 
     size_t n = sketches.size();
     std::vector<Ref<Driver>> drivers(n);
-    std::cout << "codegen" << std::endl;
 #pragma omp parallel for
     for (size_t i = 0; i < n; i++) {
         try {
-            sketches[i]->genCode(target_);
             drivers[i] = Ref<Driver>::make(sketches[i]->lowered(),
                                            sketches[i]->code(), device_);
         } catch (const std::exception &e) {
@@ -82,6 +90,7 @@ std::vector<double> AutoSchedule::measure(std::vector<Ref<Sketch>> &sketches) {
         } catch (const std::exception &e) {
             // OpenMP threads won't report an exception message
             std::cerr << "ERROR measure: " << e.what() << std::endl;
+            std::cerr << toString(sketches[i]->code()) << std::endl;
             times.emplace_back(1e30);
         }
     }
@@ -98,10 +107,11 @@ void AutoSchedule::searchOneRound(size_t n) {
     if (!firstTime) {
         std::vector<Ref<Sketch>> init = getInitPopulation(n);
         std::cout << "evolutionary search" << std::endl;
-        std::vector<Ref<Sketch>> best = evolutionarySearch(init, n);
+        std::vector<Ref<Sketch>> best = evolutionarySearch(init, n * 0.9);
         testAndAdd(best);
     }
-    std::vector<Ref<Sketch>> rand = getRandPopulation(firstTime ? n : n * 0.2);
+    std::vector<Ref<Sketch>> rand =
+        getRandPopulation(firstTime ? n : n - size_t(n * 0.9));
     testAndAdd(rand);
     auto bs = getBestSchedule();
     auto logs = bs.logs();
@@ -138,8 +148,16 @@ std::vector<double>
 AutoSchedule::testAndAdd(std::vector<Ref<Sketch>> &sketches_in) {
     std::cout << "schedule" << std::endl;
     std::vector<Ref<Sketch>> sketches;
-    for (size_t i = 0; i < sketches_in.size(); i++) {
-        if (!sketches_in[i]->genCode(target_).empty()) {
+    size_t nIn = sketches_in.size();
+#pragma omp parallel for
+    for (size_t i = 0; i < nIn; i++) {
+        try {
+            sketches_in[i]->genCode(target_);
+        } catch (const std::exception &e) {
+        }
+    }
+    for (size_t i = 0; i < nIn; i++) {
+        if (!sketches_in[i]->code().empty()) {
             sketches.push_back(sketches_in[i]);
         }
     }
@@ -148,24 +166,29 @@ AutoSchedule::testAndAdd(std::vector<Ref<Sketch>> &sketches_in) {
     size_t n = sketches.size();
     ASSERT(sketches.size() == n);
     std::vector<double> times = measure(sketches);
-    py::list timesList;
+    py::list flopsList;
     py::list featuresList;
     for (size_t i = 0; i < times.size(); i++) {
         if (times[i] > 1e20) {
             continue;
         }
-        timesList.append(py::float_(times[i]));
+        flopsList.append(py::float_(flop_ / times[i]));
         featuresList.append(features[i]);
     }
-    updateFunc_(featuresList, timesList);
+    updateFunc_(featuresList, flopsList);
     auto cmp = [](const Ref<Sketch> &a, const Ref<Sketch> &b) {
         return *a < *b;
     };
     std::make_heap(measuredSketches_.begin(), measuredSketches_.end(), cmp);
+    double avg = 0, mn = 1e20;
+    int cnt = 0;
     for (size_t i = 0; i < n; i++) {
         if (times[i] > 1e20) {
             continue;
         }
+        cnt++;
+        avg += times[i];
+        mn = std::min(mn, times[i]);
         if (measuredSketches_.size() < measuredSize_) {
             measuredSketches_.emplace_back(sketches[i]);
             measuredSketches_.back()->setTime(times[i]);
@@ -180,25 +203,27 @@ AutoSchedule::testAndAdd(std::vector<Ref<Sketch>> &sketches_in) {
                            cmp);
         }
         measuredHashes_.insert(sketches[i]->hash());
-        mn_ = std::min(times[i], mn_);
     }
-
-    std::cout << "min " << mn_ << " max " << measuredSketches_[0]->time()
-              << std::endl;
+    avg /= cnt;
     std::sort(measuredSketches_.begin(), measuredSketches_.end(), cmp);
+    std::cout << "min " << measuredSketches_.front()->time() << " max "
+              << measuredSketches_.back()->time() << std::endl;
+    std::cout << "this round: min: " << mn << " avg: " << avg << std::endl;
     return times;
 }
 
 Schedule AutoSchedule::getBestSchedule() {
-    int best = 0;
-    int time = measuredSketches_[0]->time();
-    for (size_t i = 0; i < measuredSketches_.size(); i++) {
-        if (measuredSketches_[i]->time() < time) {
-            time = measuredSketches_[i]->time();
-            best = i;
-        }
+    if (measuredSketches_.empty()) {
+        return {};
     }
-    return measuredSketches_[best]->genSchedule();
+    return measuredSketches_[0]->genSchedule();
+}
+
+double AutoSchedule::getBestTime() {
+    if (measuredSketches_.empty()) {
+        return 1e30;
+    }
+    return measuredSketches_[0]->time();
 }
 
 std::vector<Ref<Sketch>> AutoSchedule::getRandPopulation(size_t nRand) {
@@ -206,12 +231,12 @@ std::vector<Ref<Sketch>> AutoSchedule::getRandPopulation(size_t nRand) {
     std::set<size_t> used(measuredHashes_);
     std::vector<std::default_random_engine> gens;
     for (size_t i = 0; i < nRand; i++) {
-        gens.push_back(std::default_random_engine((i + i) * randGen_()));
+        gens.emplace_back((i + i) * randGen_());
     }
-    int iter = 0;
+    int roundUnchanged = 0;
     while (ret.size() < nRand) {
         std::vector<Ref<Sketch>> now(nRand);
-        size_t nThisTurn = std::min(nRand, size_t((nRand - ret.size()) * 1.5));
+        size_t nThisTurn = nRand;
 #pragma omp parallel for
         for (size_t i = 0; i < nThisTurn; i++) {
             now[i] = Ref<Sketch>::make(
@@ -221,30 +246,25 @@ std::vector<Ref<Sketch>> AutoSchedule::getRandPopulation(size_t nRand) {
                 now[i]->genCode(target_);
             } catch (const std::exception &e) {
                 now[i] = nullptr;
+                std::cout << e.what() << std::endl;
             };
         }
+        roundUnchanged++;
         for (size_t i = 0; i < nThisTurn; i++) {
             if (!now[i].isValid() || now[i]->code().empty()) {
-                continue;
-            }
-            try {
-                auto driver = Ref<Driver>::make(now[i]->lowered(),
-                                                now[i]->code(), device_);
-                driver->setParams(args_, kws_);
-                driver->time(1, 0);
-            } catch (const std::exception &e) {
                 continue;
             }
             size_t h = now[i]->hash();
             if (!used.count(h)) {
                 used.insert(h);
                 ret.push_back(now[i]);
+                roundUnchanged = 0;
             }
             if (ret.size() >= nRand) {
                 break;
             }
         }
-        if (++iter > 10) {
+        if (roundUnchanged > 10) {
             break;
         }
     }
@@ -270,54 +290,75 @@ AutoSchedule::evolutionarySearch(std::vector<Ref<Sketch>> init,
     std::vector<SketchPred> heap;
     std::set<size_t> heapHashes(measuredHashes_);
     auto cmp = [](const SketchPred &a, const SketchPred &b) {
-        return a.second < b.second;
+        return a.second > b.second;
     };
-
-    for (int i = 0; i < EVOLUTIONARY_SEARCH_ITERS; i++) {
+    std::vector<std::default_random_engine> gens;
+    for (size_t i = 0; i < EVOLUTIONARY_SEARCH_POPULATION; i++) {
+        gens.emplace_back((i + i) * randGen_());
+    }
+    for (int i = 0; i <= EVOLUTIONARY_SEARCH_ITERS; i++) {
         std::cout << "search round " << i << std::endl;
         auto pred = getPrediction(v1);
         auto probSum = getProbSum(pred);
         for (size_t j = 0; j < v1.size(); j++) {
             size_t hash = v1[j]->hash();
-            auto time = pred[j];
-            if (time > 1e20) {
-                continue;
-            }
+            auto flops = pred[j];
             if (!heapHashes.count(hash)) {
                 if (heap.size() < outSize) {
                     heapHashes.insert(hash);
-                    heap.emplace_back(v1[j], time);
+                    heap.emplace_back(v1[j], flops);
                     std::push_heap(heap.begin(), heap.end(), cmp);
-                } else if (time < heap[0].second) {
+                } else if (flops > heap[0].second) {
                     heapHashes.erase(heap[0].first->hash());
                     heapHashes.insert(hash);
                     std::pop_heap(heap.begin(), heap.end(), cmp);
-                    heap.back() = std::make_pair(v1[j], time);
+                    heap.back() = std::make_pair(v1[j], flops);
                     std::push_heap(heap.begin(), heap.end(), cmp);
                 }
             }
         }
+        if (i == EVOLUTIONARY_SEARCH_ITERS) {
+            break;
+        }
 
         while (v2.size() < EVOLUTIONARY_SEARCH_POPULATION) {
-            double r = randomDouble(randGen_);
-            if (r < EVOLUTIONARY_SEARCH_MUTATION_PROB) {
-                int a = randWithProb(probSum, randGen_);
-                auto nw = v1[a]->genMutation(randGen_);
-                if (nw.first) {
-                    v2.push_back(Ref<Sketch>::make(std::move(nw.second)));
+            std::vector<Ref<Sketch>> now(EVOLUTIONARY_SEARCH_POPULATION);
+            std::cout << "evo " << v2.size() << std::endl;
+#pragma omp parallel for
+            for (int j = 0; j < EVOLUTIONARY_SEARCH_POPULATION; j++) {
+                double r = randomDouble(gens[j]);
+                if (r < EVOLUTIONARY_SEARCH_MUTATION_PROB) {
+                    int a = randWithProb(probSum, gens[j]);
+                    auto nw = v1[a]->genMutation(gens[j]);
+                    if (nw.first) {
+                        try {
+                            nw.second.genCode(target_);
+                            now[j] = Ref<Sketch>::make(std::move(nw.second));
+                        } catch (const std::exception &e) {
+                        }
+                    }
+                } else if (r < EVOLUTIONARY_SEARCH_MUTATION_PROB +
+                                   EVOLUTIONARY_SEARCH_CROSSOVER_PROB) {
+                    int a = randWithProb(probSum, gens[j]);
+                    int b = randWithProb(probSum, gens[j]);
+                    while (b == a)
+                        b = randWithProb(probSum, gens[j]);
+                    auto nw = v1[a].get()->genCrossover(*v1[b], gens[j]);
+                    if (nw.first) {
+                        try {
+                            nw.second.genCode(target_);
+                            now[j] = Ref<Sketch>::make(std::move(nw.second));
+                        } catch (const std::exception &e) {
+                        }
+                    }
+                } else {
+                    now[j] = v1[randomInt(v1.size() - 1, gens[j])];
                 }
-            } else if (r < EVOLUTIONARY_SEARCH_MUTATION_PROB +
-                               EVOLUTIONARY_SEARCH_CROSSOVER_PROB) {
-                int a = randWithProb(probSum, randGen_);
-                int b = randWithProb(probSum, randGen_);
-                while (b == a)
-                    b = randWithProb(probSum, randGen_);
-                auto nw = v1[a].get()->genCrossover(*v1[b], randGen_);
-                if (nw.first) {
-                    v2.push_back(Ref<Sketch>::make(std::move(nw.second)));
+            }
+            for (int j = 0; j < EVOLUTIONARY_SEARCH_POPULATION; j++) {
+                if (now[j].isValid() && !now[j]->code().empty()) {
+                    v2.push_back(now[j]);
                 }
-            } else {
-                v2.push_back(v1[randomInt(v1.size() - 1, randGen_)]);
             }
         }
 
@@ -347,7 +388,7 @@ AutoSchedule::getPrediction(std::vector<Ref<Sketch>> &sketches_in) {
             index.push_back(i);
             sketches.push_back(sketches_in[i]);
         } else {
-            ret[i] = 1e30;
+            ret[i] = -1e30;
         }
     }
     std::cout << "get prediction" << std::endl;

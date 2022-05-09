@@ -5,7 +5,7 @@ import numpy as np
 
 class AutoSchedule(ffi.AutoSchedule):
 
-    def __init__(self, schedule, target, device, n_measured):
+    def __init__(self, schedule, target, device, n_measured, tag=""):
         self.model = None
         self.xgb_params = {}
 
@@ -16,7 +16,7 @@ class AutoSchedule(ffi.AutoSchedule):
             return self.update(features, times)
 
         super(AutoSchedule, self).__init__(schedule, target, device, n_measured,
-                                           predict_func, update_func)
+                                           predict_func, update_func, tag)
 
     def set_params(self, *args, **kws):
         super(AutoSchedule, self).set_params(args, kws)
