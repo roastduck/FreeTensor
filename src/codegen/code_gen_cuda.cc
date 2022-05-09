@@ -332,6 +332,9 @@ void CodeGenCUDA::visit(const For &op) {
             Stream &stream = poppedStream_.back();
             const auto &dim = stream.threadDim_;
             auto sharedSize = stream.sharedSize_;
+            if (sharedSize > 96 * 1024) {
+                throw InvalidProgram("Shared memory too large");
+            }
             auto globalSize = stream.globalSize_;
 
             makeIndent();

@@ -56,3 +56,5 @@ from .transformer import (transform, inline, create_var, var, capture_var, Var,
 
 from .meta import *
 from .auto_schedule import *
+
+from .task_scheduler import TaskScheduler

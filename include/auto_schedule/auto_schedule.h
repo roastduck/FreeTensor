@@ -15,8 +15,8 @@
 namespace freetensor {
 namespace py = pybind11;
 
-constexpr int EVOLUTIONARY_SEARCH_POPULATION = 128;
-constexpr int EVOLUTIONARY_SEARCH_ITERS = 4;
+constexpr int EVOLUTIONARY_SEARCH_POPULATION = 32;
+constexpr int EVOLUTIONARY_SEARCH_ITERS = 2;
 constexpr double EVOLUTIONARY_SEARCH_MUTATION_PROB = 0.6;
 constexpr double EVOLUTIONARY_SEARCH_CROSSOVER_PROB = 0.3;
 
@@ -33,19 +33,20 @@ class AutoSchedule {
     bool paramsSet_;
     std::vector<Ref<Sketch>> measuredSketches_;
     std::set<size_t> measuredHashes_;
-    double mn_;
     std::default_random_engine randGen_;
     py::function predictFunc_;
     py::function updateFunc_;
     std::vector<Ref<Rule>> rules_;
+    double flop_;
+    std::string tag_;
 
   private:
     std::vector<double> measure(std::vector<Ref<Sketch>> &sketches);
 
   public:
     AutoSchedule(const Schedule &schedule, const Ref<Target> &target,
-                 const Device &device, int measuredSize,
-                 py::function predictFunc, py::function updateFunc);
+                 Device device, int measuredSize, py::function predictFunc,
+                 py::function updateFunc, std::string tag = "");
 
     size_t measuredSize() const { return measuredSize_; }
 
@@ -68,6 +69,10 @@ class AutoSchedule {
     std::vector<double> testAndAdd(std::vector<Ref<Sketch>> &sketches_in);
 
     Schedule getBestSchedule();
+    double getBestTime();
+
+    double getFlop() { return flop_; }
+    std::string getTag() { return tag_; }
 
     void genSketches();
     Sketch getInitSketch();
