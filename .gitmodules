@@ -1,7 +1,7 @@
 [submodule "3rd-party/pybind11"]
     path = 3rd-party/pybind11
-    url = git@github.com:pybind/pybind11.git
-    branch = v2.6
+    url = git@github.com:roastduck/pybind11.git
+    branch = fix-typing
 [submodule "3rd-party/isl"]
     path = 3rd-party/isl
     url = git://repo.or.cz/isl.git
