@@ -1,6 +1,8 @@
 import functools
 from typing import Optional, Callable
 
+import ffi
+
 from .transformer import transform
 from .schedule import Schedule, schedule
 from .passes import lower
@@ -37,7 +39,7 @@ def optimize(func=None,
 
     Parameters
     ----------
-    func : Python function
+    func : Python function or AST
         The user function to optimize. If not specified, a partial function will
         be returend, which can be used as a decorator
     schedule_callback : Callable (Optional)
@@ -53,7 +55,10 @@ def optimize(func=None,
         if target is None and device is not None:
             target = device.target()
 
-        ast = transform(func, verbose=verbose, depth=2)
+        if not issubclass(type(func), ffi.AST):
+            ast = transform(func, verbose=verbose, depth=2)
+        else:
+            ast = func
         ast = schedule(ast, schedule_callback, verbose=verbose)
         ast = lower(ast, target, verbose=verbose)
         code = codegen(ast, target, verbose=verbose)
