@@ -1,0 +1,18 @@
+site_name: FreeTensor
+
+theme:
+    name: "material" # mkdocstings requires this
+
+plugins:
+    - search
+    - mkdocstrings:
+        handlers:
+            python:
+                selection:
+                    docstring_style: numpy
+        watch:
+            - python/
+            - include/
+            - src/
+
+extra_css: [extra.css]

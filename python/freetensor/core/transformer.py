@@ -177,7 +177,7 @@ def prepare_vardef(name: str,
 F = TypeVar('F')
 
 
-def staged_callable(staging: F, original) -> F:
+def staged_callable(staging: F, original, doc: Optional[str] = None) -> F:
 
     def impl(*args, **kwargs):
         if StagingContext.in_staging():
@@ -185,9 +185,11 @@ def staged_callable(staging: F, original) -> F:
         else:
             return original(*args, **kwargs)
 
-    # Set the name of the staged function.
+    # Set the name and doc of the staged function.
     # It helps when printing error messages
     impl.__name__ = staging.__name__
+    if doc is not None:
+        impl.__doc__ = doc
 
     return impl
 
@@ -319,8 +321,8 @@ def empty_fallback(shape, dtype, mtype=None):
     return np.zeros(shape, dtype)
 
 
-empty = staged_callable(empty_staging, empty_fallback)
-'''
+empty = staged_callable(
+    empty_staging, empty_fallback, '''
 Create an empty variable
 
 Parameters
@@ -333,7 +335,7 @@ dtype : str or DataType
 mtype : str or MemType (Optional)
     Memory type of the variable. If omitted, the main memory type of the
     default Target in config will be used
-'''
+''')
 
 
 class PredefinedVarCreator(VarCreator):
@@ -379,8 +381,8 @@ def var_fallback(initializer, dtype, mtype=None):
     return np.array(initializer, dtype=dtype)
 
 
-var = staged_callable(var_staging, var_fallback)
-'''
+var = staged_callable(
+    var_staging, var_fallback, '''
 Create an with variable a given initializer
 
 Parameters
@@ -395,7 +397,7 @@ dtype : str or DataType
 mtype : str or MemType (Optional)
     Memory type of the variable. If omitted, the main memory type of the
     default Target in config will be used
-'''
+''')
 
 
 def capture_var_fallback(arr: ffi.Array, name: str = 'captured'):
@@ -408,8 +410,8 @@ def capture_var_staging(arr: ffi.Array, name: str = 'captured'):
                 'input', arr.prefer_device.main_mem_type()))
 
 
-capture_var = staged_callable(capture_var_staging, capture_var_fallback)
-'''Capture external array as tensor variable.'''
+capture_var = staged_callable(capture_var_staging, capture_var_fallback,
+                              '''Capture external array as tensor variable.''')
 
 
 class Var(StagedTypeAnnotation):
