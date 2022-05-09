@@ -12,14 +12,12 @@ def test_fission_after():
                 ft.MarkNid("S0")
                 y[i, j] = i + j
                 z[i, j] = i * j
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.fission("L2", ft.FissionSide.After, "S0")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("y", (4, 8), "int32", "output", "cpu"),
@@ -45,14 +43,12 @@ def test_fission_before():
                 y[i, j] = i + j
                 ft.MarkNid("S0")
                 z[i, j] = i * j
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.fission("L2", ft.FissionSide.Before, "S0")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("y", (4, 8), "int32", "output", "cpu"),
@@ -74,8 +70,7 @@ def test_fission_after_empty():
             with ft.For("j", 0, 8, nid="L2") as j:
                 ft.MarkNid("S0")
                 z[i, j] = i * j
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.fission("L2", ft.FissionSide.After, "S0")
     ast = s.ast()
@@ -98,8 +93,7 @@ def test_fission_before_empty():
             with ft.For("j", 0, 8, nid="L2") as j:
                 ft.MarkNid("S0")
                 y[i, j] = i + j
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.fission("L2", ft.FissionSide.Before, "S0")
     ast = s.ast()
@@ -127,14 +121,12 @@ def test_stmt_in_if():
                     ft.MarkNid("S0")
                     y[i, j] = i + j
                 z[i, j] = i * j
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.fission("L2", ft.FissionSide.After, "S0")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("y", (4, 8), "int32", "output", "cpu"),
@@ -163,14 +155,12 @@ def test_buffer_hoist():
                     ft.MarkNid("S0")
                     b[j] = x0[i, j] + x1[i, j]
                     y[i, j] = b[j] * b[j]
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.fission("L2", ft.FissionSide.After, "S0")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("x0", (4, 8), "int32", "input", "cpu"),
@@ -202,14 +192,12 @@ def test_buffer_no_hoist():
                     ft.MarkNid("S0")
                     y[i, j] = b[i, j] * b[i, j]
                     z[i, j] = x0[i, j] * 2
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.fission("L2", ft.FissionSide.After, "S0")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("x0", (4, 8), "int32", "input", "cpu"),
@@ -240,14 +228,12 @@ def test_correct_dependency_after():
                     ft.MarkNid("S0")
                     b[0] = x0[i, j] + x1[i, j]
                     y[i, j] = b[0] * b[0]
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.fission("L2", ft.FissionSide.After, "S0")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("x0", (4, 8), "int32", "input", "cpu"),
@@ -277,14 +263,12 @@ def test_correct_dependency_before():
                     b[0] = x0[i, j] + x1[i, j]
                     ft.MarkNid("S0")
                     y[i, j] = b[0] * b[0]
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.fission("L2", ft.FissionSide.Before, "S0")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("x0", (4, 8), "int32", "input", "cpu"),
@@ -314,14 +298,12 @@ def test_correct_dependency_loop_step():
                     ft.MarkNid("S0")
                     b[0] = x0[i, j] + x1[i, j]
                     y[i, j] = b[0] * b[0]
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.fission("L2", ft.FissionSide.After, "S0")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast, skip_passes=["use_builtin_div"])
-    print(ast)
+    ast = ft.lower(ast, skip_passes=["use_builtin_div"], verbose=1)
 
     with ft.VarDef([
         ("x0", (4, 8), "int32", "input", "cpu"),
@@ -351,14 +333,12 @@ def test_correct_dependency_multi_loop_1():
                     ft.MarkNid("S0")
                     b[0] = x0[i, j] + x1[i, j]
                     y[i, j] = b[0] * b[0]
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.fission("L1", ft.FissionSide.After, "S0")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("x0", (4, 8), "int32", "input", "cpu"),
@@ -400,8 +380,7 @@ def test_correct_dependency_multi_loop_2():
     s.fission("L1", ft.FissionSide.Before, "S0")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("a", (4, 4), "float32", "input", "cpu"),
                     ("b", (4,), "float32", "input", "cpu"),
@@ -433,14 +412,12 @@ def test_correct_dependency_real_dep():
                 b[0] = x[i] * 2
                 with ft.For("j", 0, 8, nid="L2") as j:
                     y[i, j] = b[0] * b[0]
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.fission("L1", ft.FissionSide.After, "S0")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4, 8), "int32", "output", "cpu")]) as (x, y):
@@ -467,8 +444,7 @@ def test_correct_dependency_unable_resolve():
                 ft.MarkNid("S0")
                 b[0] = x0[i, j] + x1[i, j]
                 y[i, j] = b[0] * b[0]
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
         s.fission("L2", ft.FissionSide.After, "S0")
@@ -489,14 +465,12 @@ def test_correct_dependency_no_need_to_modify_no_dep():
                         ft.MarkNid("S0")
                         b[k] = x0[i, k]
                         y[i, j, k] = b[k] * x1[i, j]
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.fission("L2", ft.FissionSide.After, "S0")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, skip_passes=['prop_one_time_use'], verbose=1)
 
     with ft.VarDef([
         ("x0", (4, 4), "int32", "input", "cpu"),
@@ -528,14 +502,12 @@ def test_correct_dependency_no_need_to_modify_broadcast():
                     b[()] = x0[i]
                     with ft.For("k", 0, 4, nid="L3") as k:
                         y[i, j, k] = b[()] * x1[i, j]
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.fission("L2", ft.FissionSide.After, "S0")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, skip_passes=['prop_one_time_use'], verbose=1)
 
     with ft.VarDef([
         ("x0", (4,), "int32", "input", "cpu"),
@@ -569,14 +541,12 @@ def test_correct_dependency_overwritten_store():
                     y[i, j] = b[0] * b[0]  # (3)
     # Explanation: (3)->(1) is a real dependency, while (3)->(2) is not.
     # We cannot determine b is loop-invarient just becase b[0] = 1
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.fission("L2", ft.FissionSide.After, "S0")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("x0", (4, 8), "int32", "input", "cpu"),

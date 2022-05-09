@@ -1,11 +1,14 @@
+import functools
+from typing import Optional, Callable
+
 import ffi
 from ffi import FissionSide, MoveToSide, VarSplitMode, MemType, ParallelScope, ID
 
 
 class Schedule(ffi.Schedule):
 
-    def __init__(self, ast):
-        super(Schedule, self).__init__(ast)
+    def __init__(self, ast, verbose: int = 0):
+        super(Schedule, self).__init__(ast, verbose)
 
     def split(self, node, factor=-1, nparts=-1):
         """
@@ -133,7 +136,7 @@ class Schedule(ffi.Schedule):
         return super(Schedule, self).fission(ID(loop), side, ID(splitter),
                                              suffix0, suffix1)
 
-    def fuse(self, loop0, loop1, strict=False):
+    def fuse(self, loop0, loop1=None, strict=False):
         """
         Fuse two directly following loops with the same length into one
 
@@ -146,10 +149,11 @@ class Schedule(ffi.Schedule):
         ----------
         loop0 : str, ID or Stmt
             The leading loop
-        loop1 : str, ID or Stmt
-            The following loop
+        loop1 : str, ID or Stmt, Optional
+            The following loop. If omitted, it will try to find a following loop
+            of `loop0`
         strict : bool
-            If true, throw an error if unable to determine whether the two loops
+            False by default. If set to True, throw an error if unable to determine whether the two loops
             are of the same length
 
         Raises
@@ -163,7 +167,10 @@ class Schedule(ffi.Schedule):
         str
             ID of the result loop
         """
-        return super(Schedule, self).fuse(ID(loop0), ID(loop1), strict)
+        if loop1 is None:
+            return super(Schedule, self).fuse(ID(loop0), strict)
+        else:
+            return super(Schedule, self).fuse(ID(loop0), ID(loop1), strict)
 
     def swap(self, order):
         """
@@ -619,3 +626,40 @@ class Schedule(ffi.Schedule):
             Target architecture
         """
         super(Schedule, self).auto_unroll(target)
+
+
+def schedule(ast=None,
+             callback: Callable[[Schedule], None] = None,
+             verbose: Optional[int] = None):
+    '''
+    Apply any schedule on an AST through a user callback
+
+    Parameters
+    ----------
+    ast : Func or Stmt
+        The AST to schedule. If not specified, a partial function will be
+        returned that cna be used as a decorator
+    callback : Callable
+        Specify what schedule(s) to do in this callback
+    verbose : int (Optional)
+        0 = print nothing. 1 = print the final AST. 2 = print an AST after
+        each schedule
+    '''
+    if ast is not None:
+        if callback is None:
+            return ast
+        if verbose is None:
+            verbose = 0
+        s = Schedule(ast, verbose=verbose)
+        callback(s)
+        if ast.type() == ffi.ASTNodeType.Func:
+            return s.func()
+        else:
+            return s.ast()
+    else:
+        f = schedule
+        if callback is not None:
+            f = functools.partial(f, callback=callback)
+        if verbose is not None:
+            f = functools.partial(f, verbose=verbose)
+        return f

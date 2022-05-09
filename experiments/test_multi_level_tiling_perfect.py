@@ -21,7 +21,7 @@ def test_multi_level_tiling():
         c: ft.Var[(b, a), "float32", "input", "gpu/global"]
         # x: ft.Var[(b, a), "int32", "input", "cpu"]
         # y: ft.Var[(a, b), "int32", "output", "cpu"]
-        y = ft.create_var((a, a), "float32", "gpu/local")
+        y = ft.empty((a, a), "float32", "gpu/local")
         # y: ft.Var[(a, a), "int32", "output", "cpu"]
         z: ft.Var[(a, a), "float32", "output", "gpu/global"]
         # u: ft.Var[(m, m), "int32", "output", "gpu/global"]

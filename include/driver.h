@@ -9,7 +9,9 @@
 #include <func.h>
 
 #include <../runtime/cpu_context.h>
+#ifdef FT_WITH_CUDA
 #include <../runtime/gpu_context.h>
+#endif
 
 namespace freetensor {
 
@@ -21,11 +23,16 @@ class Driver {
 
     Func f_;
     std::string src_;
-    std::vector<void *> params_, returns_;
+    std::vector<Ref<Array>> args_;                    /// Ref count holders
+    std::unordered_map<std::string, Ref<Array>> kws_; /// Ref count holders
+    std::vector<void *> params_,
+        returns_; /// Raw parameters and return values passed to (from) the
+                  /// native function
     std::vector<size_t *> retShapes_;
     std::vector<size_t> retDims_;
     std::unordered_map<std::string, size_t> name2param_;
-    Device dev_;
+    std::unordered_map<std::string, Ref<Buffer>> name2buffer_;
+    Ref<Device> dev_, hostDev_;
 
     std::unique_ptr<Context> ctx_;
 
@@ -33,7 +40,25 @@ class Driver {
     void buildAndLoad();
 
   public:
-    Driver(const Func &func, const std::string &src, const Device &dev);
+    /**
+     * Compile a program using a backend compiler and load it into memory
+     *
+     * @param func : AST of the function, where the function signature is needed
+     * to determine the parameters and return values
+     * @param src : Native code generated from codegen
+     * @param device : The device to run the program
+     * @param hostDevice : The hosting CPU device (Optional)
+     * @{
+     */
+    Driver(const Func &func, const std::string &src, const Ref<Device> &device,
+           const Ref<Device> &hostDevice);
+    Driver(const Func &func, const std::string &src, const Ref<Device> &device)
+        : Driver(func, src, device,
+                 device->type() == TargetType::CPU
+                     ? device
+                     : Ref<Device>::make(Ref<CPU>::make())) {}
+    /** @} */
+
     ~Driver() {
         for (void *retVal : returns_) {
             if (retVal != nullptr) {

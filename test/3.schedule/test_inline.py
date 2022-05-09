@@ -11,14 +11,12 @@ def test_basic():
                 t[i] = x[i] * 2
             with ft.For("i", 0, 4) as i:
                 y[i] = t[i] + 1
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.inline("T")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
@@ -42,14 +40,12 @@ def test_multiple_assignments():
                 y[i] = t[i] + 1
             with ft.For("i", 2, 4) as i:
                 y[i] = t[i] + 2
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.inline("T")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
@@ -72,14 +68,12 @@ def test_modified_unrelated_item():
             x[4] = 10
             with ft.For("i", 0, 4) as i:
                 y[i] = t[i] + 1
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.inline("T")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (5,), "int32", "inout", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
@@ -102,14 +96,12 @@ def test_loop_around():
                         y[j - 1, i] = t[i] + 1
                 with ft.For("i", 0, 4) as i:
                     t[i] = x[i] * 2
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.inline("T")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4, 3), "int32", "output", "cpu")]) as (x, y):
@@ -132,8 +124,7 @@ def test_loop_around_different_iter_no_prop():
                         y[j + -1, i] = t[i] + 1
                 with ft.For("i", 0, 4) as i:
                     t[i] = x[j, i] * 2
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
         s.inline("T")
@@ -152,8 +143,7 @@ def test_no_inline_expr_is_changed_1():
                 x[i] = 1
             with ft.For("i", 0, 4) as i:
                 y[i] = t[i] + 1
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
         s.inline("T")
@@ -171,8 +161,7 @@ def test_no_inline_expr_is_changed_2():
                 x[i] = 1
             with ft.For("i", 0, 4) as i:
                 y[i] = t[i] + 1
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
         s.inline("T")
@@ -195,8 +184,7 @@ def test_no_inline_expr_is_changed_multiple_times():
                 x[i] = i + 2
             with ft.For("i", 0, 4) as i:
                 y[i] = t[i] + 1
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
         s.inline("T")
@@ -213,8 +201,7 @@ def test_no_inline_output_var():
                 t[i] = x[i] * 2
             with ft.For("i", 0, 4) as i:
                 y[i] = t[i] + 1
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
         s.inline("T")
@@ -231,14 +218,12 @@ def test_different_iter_with_the_same_name():
                 t[i] = x[i] * 2
             with ft.For("i", 4, 8) as i:
                 y[i + -4] = t[i + -4] + 1
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.inline("T")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
@@ -260,14 +245,12 @@ def test_different_iter_with_different_names():
                 y[j + -4] = t[j + -4] + 1
             with ft.For("i", 0, 4) as i:
                 x[i] = 0
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.inline("T")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (4,), "int32", "inout", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
@@ -291,8 +274,7 @@ def test_different_iter_with_uncertain_offset_no_inline():
             offset[()] = 0
             with ft.For("i", 0, 4) as i:
                 y[i] = t[i] + 1
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
         s.inline("T")
@@ -312,14 +294,12 @@ def test_different_iter_non_linear():
                     t[i * 4 + j] = x1[i] * x2[j]
             with ft.For("k", 0, 16) as k:
                 y[k] = t[k] + 1
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.inline("T")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast, skip_passes=["use_builtin_div"])
-    print(ast)
+    ast = ft.lower(ast, skip_passes=["use_builtin_div"], verbose=1)
 
     with ft.VarDef([("x1", (4,), "int32", "input", "cpu"),
                     ("x2", (4,), "int32", "input", "cpu"),
@@ -340,15 +320,13 @@ def test_inline_serial_into_parallel():
                 t[i] = x[i] * 2
             with ft.For("i", 0, 4, nid="L") as i:
                 y[i] = t[i] + 1
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.parallelize("L", "threadIdx.x")
     s.inline("T")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
@@ -372,14 +350,12 @@ def test_correct_scope():
                     u[i] = t[i] + 1
             with ft.For("i", 0, 4) as i:
                 y[i] = u[i] - 1
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.inline("U")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, skip_passes=['prop_one_time_use'], verbose=1)
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
@@ -409,8 +385,7 @@ def test_no_inline_defined_inside_a_loop():
             with ft.For("i", 0, 4) as i:
                 with ft.For("j", 0, 4) as j:
                     y[i, j] = u[i, j] + -1
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
         s.inline("U")
@@ -430,14 +405,12 @@ def test_def_then_use_then_def_in_the_same_place():
                             sx[()] = x[ix + -1, iy + 1, iz + -1] + x[ix, iy + 1,
                                                                      iz + -1]
                             x[ix, iy, iz] = sx[()] / 26.0
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.inline('sx')
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef("x", (128, 128, 128), "float64", "inout", "cpu") as x:
         with ft.VarDef("r", (128, 128, 128), "float64", "input", "cpu") as r:

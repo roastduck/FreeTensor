@@ -157,7 +157,7 @@ def test_for_with_parallel_reduction():
                 y[i] = y[i] + x[i, j]
     s = ft.Schedule(ft.pop_ast())
     s.parallelize("L2", "openmp")
-    ast = ft.lower(s.ast())
+    ast = ft.lower(s.ast(), skip_passes=["cpu_lower_parallel_reduction"])
     txt = ft.dump_ast(ast)
     print(txt)
     ast2 = ft.load_ast(txt)

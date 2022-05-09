@@ -8,14 +8,12 @@ def test_basic():
         with ft.For("i", 0, 4, nid="L1") as i:
             y1[i] = i + 1
             y2[i] = i + 2
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.blend("L1")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("y1", (4,), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):
@@ -38,14 +36,12 @@ def test_begin_and_step():
         with ft.For("i", 6, -2, -2, nid="L1") as i:
             y1[i] = i + 1
             y2[i] = i + 2
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.blend("L1")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("y1", (8,), "int32", "output", "cpu"),
                     ("y2", (8,), "int32", "output", "cpu")]) as (y1, y2):
@@ -72,14 +68,12 @@ def test_inner_if():
             with ft.If(x[i] > 0):
                 y1[i] = i + 1
                 y2[i] = i + 2
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.blend("L1")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("x", (4,), "int32", "input", "cpu"),
@@ -117,14 +111,12 @@ def test_inner_if_fuse():
             with ft.If(x[()] > 0):
                 y1[i] = i + 1
                 y2[i] = i + 2
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.blend("L1")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef("x", (()), "int32", "input", "cpu") as x:
         with ft.If(x[()] > 0):
@@ -158,14 +150,12 @@ def test_inner_if_else():
             with ft.Else():
                 y1[i] = i - 1
                 y2[i] = i - 2
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.blend("L1")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("x", (2,), "int32", "input", "cpu"),
@@ -203,14 +193,12 @@ def test_inner_for():
             with ft.For("j", 0, x[i]):
                 y1[i] = y1[i] * 2
                 y2[i] = y2[i] * 3
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.blend("L1")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("x", (2,), "int32", "input", "cpu"),
@@ -240,14 +228,12 @@ def test_inner_for_fuse():
             with ft.For("j", 0, x[()]):
                 y1[i] = y1[i] * 2
                 y2[i] = y2[i] * 3
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.blend("L1")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("x", (()), "int32", "input", "cpu"),
@@ -274,14 +260,12 @@ def test_inner_for_fuse_different_begin():
             with ft.For("j", i, x[()] + i):
                 y1[i] = y1[i] * 2
                 y2[i] = y2[i] * 3
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.blend("L1")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("x", (()), "int32", "input", "cpu"),
@@ -304,8 +288,7 @@ def test_unsolvable_dependency():
         with ft.For("i", 0, 2, nid="L1") as i:
             y1[()] = y2[()] * i
             y2[()] = y2[()] + i
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
         s.blend("L1")
@@ -319,8 +302,7 @@ def test_loop_not_found():
         with ft.For("i", 0, 4, nid="L1") as i:
             y1[i] = i + 1
             y2[i] = i + 2
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
         s.blend("L2")
@@ -337,14 +319,12 @@ def test_var_def_inside():
                 b[()] = x[i] * 2
                 y1[i] = b[()] + 1
                 y2[i] = b[()] + 2
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.blend("L1")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (2,), "int32", "input", "cpu"),
                     ("y1", (2,), "int32", "output", "cpu"),
@@ -370,14 +350,12 @@ def test_var_def_inside_no_need_to_split():
             with ft.VarDef("b", (), "int32", "cache", "cpu") as b:
                 b[()] = n[()]
                 y[i] = b[()] * x[i]
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.blend("L1")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("n", (), "int32", "input", "cpu"),
                     ("x", (2,), "int32", "input", "cpu"),

@@ -6,14 +6,12 @@ def test_factor():
     with ft.VarDef("y", (8,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 8, nid="L1") as i:
             y[i] = i
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.split("L1", 4)
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef("y", (8,), "int32", "output", "cpu") as y:
         with ft.For("i.0", 0, 2) as i0:
@@ -28,14 +26,12 @@ def test_factor_with_step():
     with ft.VarDef("y", (16,), "int32", "output", "cpu") as y:
         with ft.For("i", 14, -2, -2, nid="L1") as i:
             y[i] = i
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.split("L1", 2)
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef("y", (16,), "int32", "output", "cpu") as y:
         with ft.For("i.0", 0, 4) as i0:
@@ -50,14 +46,12 @@ def test_nparts():
     with ft.VarDef("y", (8,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 8, nid="L1") as i:
             y[i] = i
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.split("L1", nparts=4)
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef("y", (8,), "int32", "output", "cpu") as y:
         with ft.For("i.0", 0, 4) as i0:
@@ -72,14 +66,12 @@ def test_nparts_with_step():
     with ft.VarDef("y", (16,), "int32", "output", "cpu") as y:
         with ft.For("i", 14, -2, -2, nid="L1") as i:
             y[i] = i
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.split("L1", nparts=2)
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef("y", (16,), "int32", "output", "cpu") as y:
         with ft.For("i.0", 0, 2) as i0:
@@ -94,14 +86,12 @@ def test_guard():
     with ft.VarDef("y", (10,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 10, nid="L1") as i:
             y[i] = i
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.split("L1", 4)
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     # The result after simplifying the loop length
     with ft.VarDef("y", (10,), "int32", "output", "cpu") as y:
@@ -117,14 +107,12 @@ def test_guard_with_step():
     with ft.VarDef("y", (10,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 10, 2, nid="L1") as i:
             y[i] = i
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.split("L1", 3)
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     # The result after simplifying the loop length
     with ft.VarDef("y", (10,), "int32", "output", "cpu") as y:
@@ -140,8 +128,7 @@ def test_not_found():
     with ft.VarDef("y", (8,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 8) as i:
             y[i] = i
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
         s.split("L1", 4)
@@ -161,7 +148,6 @@ def test_simplify_split_then_merge():
     L = s.merge(L0, L1)
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     assert std.match(ast)

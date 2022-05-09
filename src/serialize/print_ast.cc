@@ -133,14 +133,14 @@ void PrintVisitor::visit(const VarDef &op) {
     printList(tensor->shape());
     os() << "] ";
     if (op->ioTensor_.isValid()) {
-        os() << "@io_tensor = ";
+        os() << "@!io_tensor = ";
         os() << ::freetensor::toString(op->ioTensor_->dtype()) << "[";
         printList(op->ioTensor_->shape());
         os() << "] ";
         os() << " ";
     }
     if (op->pinned_) {
-        os() << "@pinned ";
+        os() << "@!pinned ";
     }
     beginBlock();
     recur(op->body_);

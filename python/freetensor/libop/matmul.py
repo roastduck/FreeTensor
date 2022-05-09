@@ -83,7 +83,7 @@ def einsum(fmt, *args):
         shapes.append(iter_args[0].shape(iter_offsets[0]))
 
     # FIXME: compute dtype and mtype from every inputs
-    Y = core.create_var(shapes, args[0].dtype, args[0].mtype)
+    Y = core.empty(shapes, args[0].dtype, args[0].mtype)
     einsum_(fmt, *args, Y)
     return Y
 
@@ -180,7 +180,7 @@ def gemm(A,
         dtype = core.up_cast(dtype, C.dtype)
         mtype = core.same_mtype(mtype, C.mtype)
 
-    Y = core.create_var(_comp_shape(A, B, trans_A, trans_B), dtype, mtype)
+    Y = core.empty(_comp_shape(A, B, trans_A, trans_B), dtype, mtype)
     'nid: recur'
     gemm_(A, B, C, Y, trans_A, trans_B, alpha, beta)
     return Y

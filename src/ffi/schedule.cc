@@ -19,8 +19,8 @@ void init_ffi_schedule(py::module_ &m) {
         .value("RelaxedSize", VarSplitMode::RelaxedSize);
 
     py::class_<Schedule>(m, "Schedule")
-        .def(py::init<const Stmt &>())
-        .def(py::init<const Func &>())
+        .def(py::init<const Stmt &, int>(), "stmt"_a, "verbose"_a = 0)
+        .def(py::init<const Func &, int>(), "func"_a, "verbose"_a = 0)
         .def("ast", &Schedule::ast)
         .def("func", &Schedule::func)
         .def("logs", &Schedule::logs)
@@ -41,13 +41,19 @@ void init_ffi_schedule(py::module_ &m) {
         .def("merge", &Schedule::merge, "loop1"_a, "loop2"_a)
         .def("fission", &Schedule::fission, "loop"_a, "side"_a, "splitter"_a,
              "suffix0"_a = ".a", "suffix1"_a = ".b")
-        .def("fuse", &Schedule::fuse, "loop0"_a, "loop1"_a, "strict"_a = false)
+        .def("fuse",
+             static_cast<ID (Schedule::*)(const ID &, const ID &, bool)>(
+                 &Schedule::fuse),
+             "loop0"_a, "loop1"_a, "strict"_a = false)
+        .def("fuse",
+             static_cast<ID (Schedule::*)(const ID &, bool)>(&Schedule::fuse),
+             "loop0"_a, "strict"_a = false)
         .def("swap", &Schedule::swap, "order"_a)
         .def("blend", &Schedule::blend, "loop"_a)
         .def("cache", &Schedule::cache, "stmt"_a, "var"_a, "mtype"_a)
         .def("cache_reduction", &Schedule::cacheReduction, "stmt"_a, "var"_a,
              "mtype"_a)
-        .def("set_mem_type", &Schedule::setMemType, "def"_a, "mtype"_a)
+        .def("set_mem_type", &Schedule::setMemType, "vardef"_a, "mtype"_a)
         .def("var_split", &Schedule::varSplit, "vardef"_a, "dim"_a, "mode"_a,
              "factor"_a = -1, "nparts"_a = -1)
         .def("var_merge", &Schedule::varMerge, "vardef"_a, "dim"_a)

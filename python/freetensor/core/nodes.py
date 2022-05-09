@@ -1,9 +1,12 @@
 import collections
+import sys
 import numpy as np
 from typing import Sequence, Tuple, Any, Optional
 
 import ffi
 from ffi import dump_ast, load_ast
+
+from . import config
 
 
 class Context:
@@ -115,10 +118,14 @@ class ContextStack:
 ctx_stack = ContextStack()
 
 
-def pop_ast():
+def pop_ast(verbose: bool = False):
     """ Get AST and reset context """
     ret = ctx_stack.pop().make_stmt()
     ctx_stack.reset()
+    if verbose:
+        print("The popped AST is:", file=sys.stderr)
+        print(ret, file=sys.stderr)
+        print(file=sys.stderr)
     return ret
 
 
@@ -263,11 +270,27 @@ open_vardefs = {}
 
 class _VarDef:
 
-    def __init__(self, name: str, shape, dtype, atype, mtype):
+    def __init__(self, name: str, shape, dtype, atype, mtype=None):
         '''
-        A variable can be created using a literal shape, or another fixed-length
-        variable as a shape. If using the latter, the shape variable can be retrived
-        using a `.shape` attribute
+        Scope used for creating a VarDef AST node. A VarRef will be returned as a
+        reference to the variable of the VarDef node
+
+        Parameters
+        ----------
+        name : str
+            Name of the variable
+        shape : Sequence[Expr] or VarRef
+            Shape of the variable. A variable can be created using a literal shape,
+            or another fixed-length VarRef as a shape. If using the latter, the shape
+            VarRef can be retrived using a `.shape` attribute
+        dtype : str or DataType
+            Data type of the variable
+        atype : str or AccessType
+            Access type of the variable. It specifies whether (and how) the variable
+            is an I/O variable of the function it belongs to
+        mtype : str or MemType (Optional)
+            Memory type of the variable. If omitted, the main memory type of the
+            default Target in config will be used
         '''
 
         self.name = name
@@ -284,7 +307,10 @@ class _VarDef:
             assert False, "shape cannot be of type %s" % type(shape)
         self.dtype = ffi.DataType(dtype)
         self.atype = ffi.AccessType(atype)
-        self.mtype = ffi.MemType(mtype)
+        if mtype is not None:
+            self.mtype = ffi.MemType(mtype)
+        else:
+            self.mtype = config.default_target().main_mem_type()
 
         self.borrower_cnt = 0
 
@@ -331,6 +357,9 @@ class _VarDef:
 
 
 class _VarsDef:
+    '''
+    Helper class to create a series of nested VarDef nodes
+    '''
 
     def __init__(self, defs: Tuple[str, Any, ffi.DataType, ffi.AccessType]):
         self.defs = [VarDef(*d) for d in defs]
@@ -343,8 +372,11 @@ class _VarsDef:
             d.__exit__(exc_type, exc_value, traceback)
 
 
-# Factory
 def VarDef(*args):
+    '''
+    A factory function that creates a VarDef or a series of nested `VarDef`s
+    '''
+
     if len(args) == 1:
         return _VarsDef(args[0])
     else:

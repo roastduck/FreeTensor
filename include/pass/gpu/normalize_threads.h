@@ -53,6 +53,13 @@ class CheckThreadNum
   public:
     CheckThreadNum() : bound_(*this, *this) {}
 
+  private:
+    /**
+     * Ensure the length is defined with only constants and "byvalue" variables
+     */
+    bool isLegalLen(const Expr &expr);
+    bool isLegalLen(const std::unordered_set<std::string> &names);
+
   protected:
     using BaseClass::visit;
     Stmt visit(const For &op) override;

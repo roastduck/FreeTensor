@@ -35,7 +35,26 @@
 
 namespace freetensor {
 
-Schedule::Schedule(const Stmt &ast) : ast_(ast) { ast_ = simplify(ast_); }
+Schedule::Schedule(const Stmt &ast, int verbose)
+    : ast_(ast), verbose_(verbose) {
+    ast_ = simplify(ast_);
+}
+
+void Schedule::appendLog(const std::string &log) {
+    logs_.emplace_back(log);
+    if (verbose_ >= 2) {
+        logger() << "AST after " + log + " is:" << std::endl
+                 << toString(ast_) << std::endl;
+    }
+}
+
+Stmt Schedule::ast() const {
+    if (verbose_ >= 1) {
+        logger() << "The scheduled AST is:" << std::endl
+                 << toString(ast_) << std::endl;
+    }
+    return ast_;
+}
 
 std::vector<Stmt>
 Schedule::findAll(const std::function<bool(const Stmt &)> &filter) const {
@@ -45,9 +64,9 @@ Schedule::findAll(const std::function<bool(const Stmt &)> &filter) const {
 Stmt Schedule::find(const std::function<bool(const Stmt &)> &filter) const {
     auto ret = findStmt(ast_, filter);
     if (ret.size() != 1) {
-        throw Error("find: There is " + std::to_string(ret.size()) +
-                    " nodes matching the given condition. "
-                    "Consider using findAll");
+        throw InvalidSchedule("find: There is " + std::to_string(ret.size()) +
+                              " nodes matching the given condition. "
+                              "Consider using findAll");
     }
     return ret[0];
 }
@@ -58,7 +77,7 @@ std::pair<ID, ID> Schedule::split(const ID &id, int factor, int nparts) {
     try {
         auto ret = freetensor::split(ast_, id, factor, nparts);
         ast_ = ret.first;
-        logs_.emplace_back(log);
+        appendLog(log);
         return ret.second;
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
@@ -73,7 +92,7 @@ void Schedule::reorder(const std::vector<ID> &order) {
     log += ")";
     try {
         ast_ = freetensor::reorder(ast_, order);
-        logs_.emplace_back(log);
+        appendLog(log);
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule(log + ": " + e.what(), ast_);
     }
@@ -84,7 +103,7 @@ ID Schedule::merge(const ID &loop1, const ID &loop2) {
     try {
         auto ret = freetensor::merge(ast_, loop1, loop2);
         ast_ = ret.first;
-        logs_.emplace_back(log);
+        appendLog(log);
         return ret.second;
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
@@ -101,7 +120,7 @@ Schedule::fission(const ID &loop, FissionSide side, const ID &splitter,
         auto ret =
             freetensor::fission(ast_, loop, side, splitter, suffix0, suffix1);
         ast_ = ret.first;
-        logs_.emplace_back(log);
+        appendLog(log);
         return ret.second;
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
@@ -113,11 +132,70 @@ ID Schedule::fuse(const ID &loop0, const ID &loop1, bool strict) {
     try {
         auto ret = freetensor::fuse(ast_, loop0, loop1, strict);
         ast_ = ret.first;
-        logs_.emplace_back(log);
+        appendLog(log);
         return ret.second;
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
     }
+}
+
+ID Schedule::fuse(const ID &loop0, bool strict) {
+    ast_ = flattenStmtSeq(ast_);
+    auto l0 = find(loop0);
+
+    auto isTrivialScope = [](const Stmt &s) {
+        switch (s->nodeType()) {
+        case ASTNodeType::StmtSeq:
+        case ASTNodeType::VarDef:
+        case ASTNodeType::Assert:
+        case ASTNodeType::Assume:
+            return true;
+        case ASTNodeType::If:
+            return !s.as<IfNode>()->elseCase_.isValid();
+        default:
+            return false;
+        }
+    };
+    auto firstStmtInTrivalScope = [](const Stmt &s) -> Stmt {
+        switch (s->nodeType()) {
+        case ASTNodeType::StmtSeq:
+            return s.as<StmtSeqNode>()->stmts_.empty()
+                       ? nullptr
+                       : (Stmt)s.as<StmtSeqNode>()->stmts_.front();
+        case ASTNodeType::VarDef:
+            return s.as<VarDefNode>()->body_;
+        case ASTNodeType::Assert:
+            return s.as<AssertNode>()->body_;
+        case ASTNodeType::Assume:
+            return s.as<AssumeNode>()->body_;
+        case ASTNodeType::If:
+            return s.as<IfNode>()->elseCase_.isValid()
+                       ? nullptr
+                       : (Stmt)s.as<IfNode>()->thenCase_;
+        default:
+            return nullptr;
+        }
+    };
+
+    auto s = l0;
+    while (!s->nextStmt().isValid() && s->parentStmt().isValid() &&
+           isTrivialScope(s->parentStmt())) {
+        s = s->parentStmt();
+    }
+    if (s.isValid()) {
+        if (s = s->nextStmt(); s.isValid()) {
+            while (s.isValid() && s->nodeType() != ASTNodeType::For &&
+                   isTrivialScope(s)) {
+                s = firstStmtInTrivalScope(s);
+            }
+            if (s.isValid() && s->nodeType() == ASTNodeType::For) {
+                return fuse(loop0, s->id(), strict);
+            }
+        }
+    }
+    throw InvalidSchedule("Invalid fuse(" + toString(loop0) +
+                          "): Unable to find a following loop of " +
+                          toString(loop0));
 }
 
 void Schedule::swap(const std::vector<ID> &order) {
@@ -128,7 +206,7 @@ void Schedule::swap(const std::vector<ID> &order) {
     log += ")";
     try {
         ast_ = freetensor::swap(ast_, order);
-        logs_.emplace_back(log);
+        appendLog(log);
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
     }
@@ -138,7 +216,7 @@ void Schedule::blend(const ID &loop) {
     auto log = "blend(" + toString(loop) + ")";
     try {
         ast_ = freetensor::blend(ast_, loop);
-        logs_.emplace_back(log);
+        appendLog(log);
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
     }
@@ -150,7 +228,7 @@ Schedule::cache(const ID &stmt, const std::string &var, MemType mtype) {
     try {
         auto ret = freetensor::cache(ast_, stmt, var, mtype);
         ast_ = ret.first;
-        logs_.emplace_back(log);
+        appendLog(log);
         return ret.second;
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
@@ -164,7 +242,7 @@ Schedule::cacheReduction(const ID &stmt, const std::string &var,
     try {
         auto ret = freetensor::cacheReduction(ast_, stmt, var, mtype);
         ast_ = ret.first;
-        logs_.emplace_back(log);
+        appendLog(log);
         return ret.second;
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
@@ -175,7 +253,7 @@ void Schedule::setMemType(const ID &def, MemType mtype) {
     auto log = "set_mem_type(" + toString(def) + ", " + toString(mtype) + ")";
     try {
         ast_ = freetensor::setMemType(ast_, def, mtype);
-        logs_.emplace_back(log);
+        appendLog(log);
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
     }
@@ -190,7 +268,7 @@ void Schedule::varSplit(const ID &def, int dim, VarSplitMode mode, int factor,
         ", nparts=" + std::to_string(nparts) + ")";
     try {
         ast_ = freetensor::varSplit(ast_, def, dim, mode, factor, nparts);
-        logs_.emplace_back(log);
+        appendLog(log);
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
     }
@@ -200,7 +278,7 @@ void Schedule::varMerge(const ID &def, int dim) {
     auto log = "var_merge(" + toString(def) + ", " + std::to_string(dim) + ")";
     try {
         ast_ = freetensor::varMerge(ast_, def, dim);
-        logs_.emplace_back(log);
+        appendLog(log);
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
     }
@@ -214,7 +292,7 @@ void Schedule::varReorder(const ID &def, const std::vector<int> &order) {
     log += ")";
     try {
         ast_ = freetensor::varReorder(ast_, def, order);
-        logs_.emplace_back(log);
+        appendLog(log);
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid " + log + "): " + e.what(), ast_);
     }
@@ -323,7 +401,7 @@ void Schedule::inlining(const ID &def) {
     auto log = "inline(" + toString(def) + ")";
     try {
         ast_ = freetensor::inlining(ast_, def);
-        logs_.emplace_back(log);
+        appendLog(log);
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
     }
@@ -334,7 +412,7 @@ void Schedule::parallelize(const ID &loop, const ParallelScope &parallel) {
         "parallelize(" + toString(loop) + ", " + toString(parallel) + ")";
     try {
         ast_ = freetensor::parallelize(ast_, loop, parallel);
-        logs_.emplace_back(log);
+        appendLog(log);
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
     }
@@ -344,7 +422,7 @@ void Schedule::unroll(const ID &loop, bool immediate) {
     auto log = "unroll(" + toString(loop) + ")";
     try {
         ast_ = freetensor::unroll(ast_, loop, immediate);
-        logs_.emplace_back(log);
+        appendLog(log);
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
     }
@@ -354,7 +432,7 @@ void Schedule::vectorize(const ID &loop) {
     auto log = "vectorize(" + toString(loop) + ")";
     try {
         ast_ = freetensor::vectorize(ast_, loop);
-        logs_.emplace_back(log);
+        appendLog(log);
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
     }
@@ -368,7 +446,7 @@ void Schedule::asMatMul(const ID &loop) {
     auto log = "as_matmul(" + toString(loop) + ")";
     try {
         ast_ = freetensor::asMatMul(ast_, loop);
-        logs_.emplace_back(log);
+        appendLog(log);
     } catch (const InvalidSchedule &e) {
         throw InvalidSchedule("Invalid " + log + ": " + e.what(), ast_);
     }

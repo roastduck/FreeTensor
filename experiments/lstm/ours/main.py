@@ -217,9 +217,9 @@ def compile_all(in_feats, hidden_feats, length, device):
         w: ft.Var[(4, in_feats, hidden_feats), "float32", "input", mtype]
         u: ft.Var[(4, hidden_feats, hidden_feats), "float32", "input", mtype]
         b: ft.Var[(4, hidden_feats), "float32", "input", mtype]
-        h = ft.create_var((hidden_feats,), "float32", mtype)
-        c = ft.create_var((hidden_feats,), "float32", mtype)
-        f = ft.create_var((4, hidden_feats), "float32", mtype)
+        h = ft.empty((hidden_feats,), "float32", mtype)
+        c = ft.empty((hidden_feats,), "float32", mtype)
+        f = ft.empty((4, hidden_feats), "float32", mtype)
 
         for l in range(hidden_feats):
             c[l] = 0

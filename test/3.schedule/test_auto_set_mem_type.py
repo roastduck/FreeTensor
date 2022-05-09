@@ -15,8 +15,7 @@ def test_gpu_basic():
                 with ft.For("j", 0, 1000, nid="Lj2") as j:
                     y[i, j] = x[i, j] - t[()]
 
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.parallelize('Li', 'blockIdx.x')
     s.parallelize('Lj2', 'threadIdx.x')
@@ -38,8 +37,7 @@ def test_gpu_local_across_loops():
                 with ft.For("j", 0, 1000, nid="Lj2") as j:
                     y[i, j] = t[j] * 2
 
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.parallelize('Li', 'blockIdx.x')
     s.parallelize('Lj1', 'threadIdx.x')

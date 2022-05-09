@@ -13,14 +13,12 @@ def test_basic():
             with ft.For("i", 0, 4) as i:
                 with ft.For("j", 0, 8) as j:
                     y[i, j] = c[i, j] + 1
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.var_reorder("Dc", [1, 0])
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, skip_passes=['prop_one_time_use'], verbose=1)
 
     with ft.VarDef([("x", (4, 8), "int32", "input", "cpu"),
                     ("y", (4, 8), "int32", "output", "cpu")]) as (x, y):
@@ -48,8 +46,7 @@ def test_not_found():
             with ft.For("i", 0, 4) as i:
                 with ft.For("j", 0, 8) as j:
                     y[i, j] = c[i, j] + 1
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
         s.var_reorder("Dx", [1, 0])
@@ -68,8 +65,7 @@ def test_not_a_permutation():
             with ft.For("i", 0, 4) as i:
                 with ft.For("j", 0, 8) as j:
                     y[i, j] = c[i, j] + 1
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
         s.var_reorder("Dx", [2, 0])

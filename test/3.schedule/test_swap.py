@@ -18,14 +18,12 @@ def test_basic():
             y3[i] = i + 3
             ft.MarkNid("S4")
             y4[i] = i + 4
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.swap(["S2", "S3", "S1"])
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("y1", (4,), "int32", "output", "cpu"),
@@ -59,8 +57,7 @@ def test_not_consecutive():
             y3[i] = i + 3
             ft.MarkNid("S4")
             y4[i] = i + 4
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
         s.swap(["S4", "S1"])
@@ -76,8 +73,7 @@ def test_dependency():
             y1[i] = i + 1
             ft.MarkNid("S2")
             y2[i] = y1[i] * 2
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
         s.swap(["S2", "S1"])

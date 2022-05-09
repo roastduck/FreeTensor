@@ -14,7 +14,7 @@ def test_fusion():
     def test(w, x, y, z):
         w: ft.Var[(m, m, a, b), "int32", "input", "cpu"]
         x: ft.Var[(m, m, b, a), "int32", "input", "cpu"]
-        y: ft.Var[(1, 1, a, a), "int32", "cache", "cpu"]
+        y: ft.Var[(1, 1, a, a), "int32", "inout", "cpu"]
         z: ft.Var[(m, m, a, a), "int32", "output", "cpu"]
         "nid: L1"
         for i in range(m):
@@ -40,17 +40,16 @@ def test_fusion():
     sch = s.test_multi_level_tiling_with_fusion(1)
     func = ft.lower(sch.func(), target)
     print(func)
-    code = ft.codegen(func, target)
-    print(code)
-    w_np = np.zeros((m, m, a, b), dtype="float32")
-    x_np = np.zeros((m, m, b, a), dtype="float32")
-    y_np = np.zeros((1, 1, a, a), dtype="float32")
-    z_np = np.zeros((m, m, a, a), dtype="float32")
+    code = ft.codegen(func, target, verbose=True)
+    w_np = np.zeros((m, m, a, b), dtype="int32")
+    x_np = np.zeros((m, m, b, a), dtype="int32")
+    y_np = np.zeros((1, 1, a, a), dtype="int32")
+    z_np = np.zeros((m, m, a, a), dtype="int32")
     w_arr = ft.Array(w_np, device)
     x_arr = ft.Array(x_np, device)
     y_arr = ft.Array(y_np, device)
     z_arr = ft.Array(z_np, device)
-    ft.Driver(func, code, device)(w=w_arr, x=x_arr, y=y_arr, z=z_arr)
+    ft.build_binary(code, device)(w=w_arr, x=x_arr, y=y_arr, z=z_arr)
     std_log = [
         'split(L4, factor=2, nparts=-1)', 'split(L4.0, factor=2, nparts=-1)',
         'split(L4.0.0, factor=2, nparts=-1)', 'split(L5, factor=2, nparts=-1)',

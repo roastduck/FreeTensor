@@ -6,6 +6,7 @@
 #include <func.h>
 #include <math/bounds.h>
 #include <mutator.h>
+#include <opt.h>
 #include <visitor.h>
 
 namespace freetensor {
@@ -19,7 +20,9 @@ struct ThreadInfo {
 
 class FindAllThreads : public Visitor {
     int warpSize_ = 32; // TODO: Adjust to different arch
-    int thx_ = 1, thy_ = 1, thz_ = 1;
+    Opt<int> thx_ = Opt<int>::make(1);
+    Opt<int> thy_ = Opt<int>::make(1);
+    Opt<int> thz_ = Opt<int>::make(1);
     std::vector<ThreadInfo> results_;
 
   public:

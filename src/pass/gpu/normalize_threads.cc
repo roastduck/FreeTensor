@@ -1,5 +1,6 @@
 #include <climits>
 
+#include <analyze/all_uses.h>
 #include <analyze/merge_no_deps_hint.h>
 #include <pass/gpu/normalize_threads.h>
 #include <pass/merge_and_hoist_if.h>
@@ -123,31 +124,67 @@ Stmt NormalizeThreads::visit(const Eval &op) {
     return doVisitStmt(Mutator::visit(op));
 }
 
+bool CheckThreadNum::isLegalLen(const Expr &expr) {
+    return isLegalLen(allNames(expr));
+}
+
+bool CheckThreadNum::isLegalLen(const std::unordered_set<std::string> &names) {
+    for (auto &&name : names) {
+        if (!hasDef(name) || buffer(name)->mtype() != MemType::ByValue) {
+            return false;
+        }
+    }
+    return true;
+}
+
 Stmt CheckThreadNum::visit(const For &_op) {
     auto __op = BaseClass::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::For);
     auto op = __op.as<ForNode>();
 
     if (op->property_->parallel_ != serialScope) {
-        if (op->begin_->nodeType() != ASTNodeType::IntConst) {
+        if (!isLegalLen(op->begin_)) {
             op->body_ =
                 makeIf("", makeGE(makeVar(op->iter_), op->begin_), op->body_);
-            op->begin_ = makeIntConst(bound_.getIntLower(op->begin_));
+            Expr begin;
+            for (auto &&b : bound_.getLower(op->begin_)) {
+                if (isLegalLen(b.allNames())) {
+                    if (b.lin().isConst() && b.lin().bias_ <= INT_MIN + 1) {
+                        continue;
+                    }
+                    begin =
+                        begin.isValid() ? makeMax(begin, b.expr()) : b.expr();
+                }
+            }
+            if (!begin.isValid()) {
+                throw InvalidProgram("Length of " +
+                                     toString(op->property_->parallel_) +
+                                     " should have a finite bound");
+            }
+            op->begin_ = std::move(begin);
         }
-        if (op->end_->nodeType() != ASTNodeType::IntConst) {
+        if (!isLegalLen(op->end_)) {
             op->body_ =
                 makeIf("", makeLT(makeVar(op->iter_), op->end_), op->body_);
-            op->end_ = makeIntConst(bound_.getIntUpper(op->end_));
+            Expr end;
+            for (auto &&b : bound_.getUpper(op->end_)) {
+                if (isLegalLen(b.allNames())) {
+                    if (b.lin().isConst() && b.lin().bias_ >= INT_MAX - 1) {
+                        continue;
+                    }
+                    end = end.isValid() ? makeMin(end, b.expr()) : b.expr();
+                }
+            }
+            if (!end.isValid()) {
+                throw InvalidProgram("Length of " +
+                                     toString(op->property_->parallel_) +
+                                     " should have a finite bound");
+            }
+            op->end_ = std::move(end);
         }
-        ASSERT(op->begin_->nodeType() == ASTNodeType::IntConst);
-        ASSERT(op->end_->nodeType() == ASTNodeType::IntConst);
-        op->len_ = makeIntConst(op->end_.as<IntConstNode>()->val_ -
-                                op->begin_.as<IntConstNode>()->val_);
-        if (op->end_.as<IntConstNode>()->val_ == INT_MAX) {
-            throw InvalidProgram("Length of " +
-                                 toString(op->property_->parallel_) +
-                                 " should have a finite bound");
-        }
+        ASSERT(op->step_->nodeType() == ASTNodeType::IntConst &&
+               op->step_.as<IntConstNode>()->val_ == 1);
+        op->len_ = makeSub(op->end_, op->begin_);
     }
 
     return op;

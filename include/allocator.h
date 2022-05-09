@@ -38,7 +38,11 @@ class SmallItemAllocator {
     std::vector<SmallItemBlock *> blocks_;
     std::atomic_flag spinLock_ = ATOMIC_FLAG_INIT;
 
-    static thread_local SmallItemAllocator instance_;
+    // We must define instance_ as a static pointer of an dynamic object,
+    // instead of a static object, and dynamic object shall never be free'd.
+    // Otherwise, some static variables that use the allocator may be free'd
+    // after the allocator
+    static thread_local SmallItemAllocator *instance_;
 
   private:
     void lock();
@@ -51,7 +55,12 @@ class SmallItemAllocator {
     [[nodiscard]] void *allocate();
     void deallocate(void *p);
 
-    static SmallItemAllocator *instance() { return &instance_; }
+    static SmallItemAllocator *instance() {
+        if (instance_ == nullptr) {
+            instance_ = new SmallItemAllocator();
+        }
+        return instance_;
+    }
 };
 
 template <class T> class Allocator {

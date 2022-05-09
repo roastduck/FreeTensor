@@ -8,7 +8,7 @@ def test_illegal_assign():
 
     @ft.inline
     def bar():
-        c = ft.create_var((1, 1), "int32", "cpu")
+        c = ft.empty((1, 1), "int32", "cpu")
         c[0] = 1
 
     @ft.inline

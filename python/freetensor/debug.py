@@ -3,7 +3,8 @@ import itertools
 from ffi import logger
 
 
-def with_line_no(s: str):
+def with_line_no(s):
+    s = str(s)
     lines = list(s.splitlines())
     maxNuLen = len(str(len(lines)))
     fmt = "{:%dd}" % maxNuLen

@@ -9,10 +9,8 @@ def test_basic():
             b[2] = x[2]
             y1[2] = b[2] + 1
             y2[2] = b[2] + 2
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y1", (4,), "int32", "output", "cpu"),
@@ -35,10 +33,8 @@ def test_iter():
                 b[i] = x[i] + x[i + 1]
                 y1[i] = b[i] * i
                 y2[i] = b[i] + i
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (5,), "int32", "input", "cpu"),
                     ("y1", (4,), "int32", "output", "cpu"),
@@ -68,10 +64,8 @@ def test_multiple_bounds():
                     with ft.If(j < i):
                         y1[i, j] += b[j]
                         y2[i, j] += b[j]
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (10, 5), "int32", "input", "cpu"),
                     ("y1", (10, 5), "int32", "output", "cpu"),

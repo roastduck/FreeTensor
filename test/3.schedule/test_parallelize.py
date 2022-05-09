@@ -9,8 +9,7 @@ def test_unsolvable_dependency():
         with ft.For("i", 0, 4, nid="L1") as i:
             with ft.For("j", i, i + 2, nid="L2") as j:
                 y[j] = i
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
         s.parallelize("L1", "openmp")
@@ -27,8 +26,7 @@ def test_sharing_locals():
             t[i] = x[i] * 2
         with ft.For("i", 0, 100, nid="L2") as i:
             y[i] = t[i] + 1
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
         s.parallelize("L1", "threadIdx.x")
@@ -40,8 +38,7 @@ def test_not_found():
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4) as i:
             y[i] = i
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
         s.parallelize("L1", "openmp")
@@ -54,8 +51,7 @@ def test_nested_thread_idx():
         with ft.For("i", 0, 4, nid='L1') as i:
             with ft.For("j", 0, 4, nid='L2') as j:
                 y[i, j] = i + j
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.parallelize("L1", "threadIdx.x")
     ast = s.ast()

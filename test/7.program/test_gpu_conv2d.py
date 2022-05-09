@@ -11,6 +11,7 @@ device = ft.Device(target)
 host = ft.Device(ft.CPU())
 
 
+@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_manual_static():
     # Matching http://tvm.apache.org/docs/tutorials/optimize/opt_conv_cuda.html
 
@@ -35,7 +36,7 @@ def test_manual_static():
         code = ft.codegen(func, target)
         if print_code:
             print(debug.with_line_no(code), flush=True)
-        driver = ft.Driver(func, code, device)
+        driver = ft.build_binary(code, device)
         B_np = np.zeros((out_size, out_size, out_channel, batch),
                         dtype="float32")
         A_arr = ft.Array(A_np, device)

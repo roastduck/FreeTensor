@@ -166,7 +166,7 @@ def conv(X,
         dtype = core.up_cast(dtype, B.dtype)
         mtype = core.same_mtype(mtype, B.mtype)
     'nid: V_Y'
-    Y = core.create_var([
+    Y = core.empty([
         X.shape(0),
         W.shape(0),
         calc_out_size(X.shape(2), dilations[0], W.shape(2), pads[0], pads[2],

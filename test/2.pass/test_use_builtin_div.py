@@ -11,10 +11,8 @@ def test_ge0_floor_div_ge0():
         with ft.Assert(a[()] >= 0):
             with ft.Assert(b[()] >= 0):
                 c[()] = a[()] // b[()]
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("a", (), "int32", "input", "cpu"),
@@ -36,10 +34,8 @@ def test_unknown_floor_div_unknown():
         ("c", (), "int32", "output", "cpu"),
     ]) as (a, b, c):
         c[()] = a[()] // b[()]
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("a", (), "int32", "input", "cpu"),
@@ -61,10 +57,8 @@ def test_ge0_ceil_div_ge0():
         with ft.Assert(a[()] >= 0):
             with ft.Assert(b[()] >= 0):
                 c[()] = ft.ceil_div(a[()], b[()])
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("a", (), "int32", "input", "cpu"),
@@ -86,10 +80,8 @@ def test_unknown_ceil_div_unknown():
         ("c", (), "int32", "output", "cpu"),
     ]) as (a, b, c):
         c[()] = ft.ceil_div(a[()], b[()])
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("a", (), "int32", "input", "cpu"),
@@ -111,10 +103,8 @@ def test_ge0_mod_ge0():
         with ft.Assert(a[()] >= 0):
             with ft.Assert(b[()] >= 0):
                 c[()] = a[()] % b[()]
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("a", (), "int32", "input", "cpu"),
@@ -140,10 +130,8 @@ def test_mod_mod_ge0():
             with ft.Assert(b[()] >= 0):
                 with ft.Assert(c[()] >= 0):
                     d[()] = (a[()] % b[()]) % c[()]
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("a", (), "int32", "input", "cpu"),
@@ -167,10 +155,8 @@ def test_unknown_mod_unknown():
         ("c", (), "int32", "output", "cpu"),
     ]) as (a, b, c):
         c[()] = a[()] % b[()]
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("a", (), "int32", "input", "cpu"),

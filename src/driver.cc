@@ -7,26 +7,75 @@
 #include <sys/stat.h> // mkdir
 #include <unistd.h>   // rmdir
 
+#include <itertools.hpp>
+
+#include <analyze/find_stmt.h>
 #include <config.h>
 #include <debug.h>
 #include <driver.h>
-#include <driver/gpu.h>
 #include <except.h>
+#ifdef FT_WITH_CUDA
+#include <driver/gpu.h>
+#endif
 
 #define NAME_(macro) #macro
 #define NAME(macro) NAME_(macro)
 
 namespace freetensor {
 
-Driver::Driver(const Func &f, const std::string &src, const Device &dev)
+static void *requestPtr(const Ref<Array> &arr, const Ref<Device> &device,
+                        const Ref<Device> &hostDevice, MemType mtype,
+                        AccessType atype) {
+    Ref<Device> d;
+    switch (mtype) {
+    case MemType::CPU:
+    case MemType::ByValue:
+        if (hostDevice->type() != TargetType::CPU) {
+            throw DriverError("A CPU host device is requested");
+        }
+        d = hostDevice;
+        break;
+    case MemType::GPUGlobal:
+        if (device->type() != TargetType::GPU) {
+            throw DriverError("A GPU device is requested");
+        }
+        d = device;
+        break;
+    default:
+        throw DriverError("A I/O variable cannot have a " + toString(mtype) +
+                          " memory type");
+    }
+    switch (atype) {
+    case AccessType::Input:
+        return arr->rawSharedTo(d);
+    case AccessType::Output:
+        return arr->rawInitTo(d);
+    case AccessType::InOut:
+        return arr->rawMovedTo(d);
+    case AccessType::Cache:
+        throw DriverError("A \"cache\" variable cannot be an I/O variable");
+    default:
+        ASSERT(false);
+    }
+}
+
+Driver::Driver(const Func &f, const std::string &src, const Ref<Device> &dev,
+               const Ref<Device> &hostDev)
     : f_(f), src_(src), params_(f->params_.size(), nullptr),
       returns_(f->returns_.size(), nullptr),
       retShapes_(f->returns_.size(), nullptr), retDims_(f->returns_.size(), 0),
-      dev_(dev) {
+      dev_(dev), hostDev_(hostDev) {
     auto nParams = f->params_.size();
     name2param_.reserve(nParams);
+    name2buffer_.reserve(nParams);
     for (size_t i = 0; i < nParams; i++) {
         name2param_[f->params_[i]] = i;
+        auto nodes = findStmt(f->body_, [&](const Stmt &s) -> bool {
+            return s->nodeType() == ASTNodeType::VarDef &&
+                   s.as<VarDefNode>()->name_ == f->params_[i];
+        });
+        ASSERT(nodes.size() == 1);
+        name2buffer_[f->params_[i]] = nodes.front().as<VarDefNode>()->buffer_;
     }
     buildAndLoad();
 }
@@ -42,7 +91,7 @@ void Driver::buildAndLoad() {
     ASSERT(mkdtempPtr != nullptr);
 
     std::string srcSuffix;
-    switch (dev_.type()) {
+    switch (dev_->type()) {
     case TargetType::CPU:
         srcSuffix = ".cpp";
         break;
@@ -62,44 +111,45 @@ void Driver::buildAndLoad() {
     std::string cmd;
     // We enable fast-math because our own transformations do not preserve
     // strict floating point rounding order either
-    switch (dev_.type()) {
+    switch (dev_->type()) {
     case TargetType::CPU:
         cmd = "c++ -I" NAME(FT_RUNTIME_DIR) " -std=c++17 -shared -O3 -fPIC "
                                             "-Wall -fopenmp -ffast-math";
         cmd += " -o " + so + " " + cpp;
-#ifdef WITH_MKL
-        cmd += " -I\"" NAME(WITH_MKL) "/include\"";
+#ifdef FT_WITH_MKL
+        cmd += " -I\"" NAME(FT_WITH_MKL) "/include\"";
         cmd += " -Wl,--start-group";
-        cmd += " \"" NAME(WITH_MKL) "/lib/intel64/libmkl_intel_lp64.a\"";
-        cmd += " \"" NAME(WITH_MKL) "/lib/intel64/libmkl_gnu_thread.a\"";
-        cmd += " \"" NAME(WITH_MKL) "/lib/intel64/libmkl_core.a\"";
+        cmd += " \"" NAME(FT_WITH_MKL) "/lib/intel64/libmkl_intel_lp64.a\"";
+        cmd += " \"" NAME(FT_WITH_MKL) "/lib/intel64/libmkl_gnu_thread.a\"";
+        cmd += " \"" NAME(FT_WITH_MKL) "/lib/intel64/libmkl_core.a\"";
         cmd += " -Wl,--end-group";
-        cmd += " -DWITH_MKL=\"" NAME(WITH_MKL) "\"";
+        cmd += " -DFT_WITH_MKL=\"" NAME(FT_WITH_MKL) "\"";
         // Link statically, or there will be dlopen issues
         // Generated with MKL Link Line Advisor
-#endif
-        if (dev_.target()->useNativeArch()) {
+#endif // FT_WITH_MKL
+        if (dev_->target()->useNativeArch()) {
             cmd += " -march=native";
         }
         if (Config::debugBinary()) {
             cmd += " -g";
         }
         break;
+#ifdef FT_WITH_CUDA
     case TargetType::GPU:
         cmd = "nvcc -I" NAME(FT_RUNTIME_DIR) " -std=c++17 -shared -Xcompiler "
                                              "-fPIC,-Wall,-O3 --use_fast_math";
         cmd += " -o " + so + " " + cpp;
         cmd += " -lcublas";
-        if (auto arch = dev_.target().as<GPU>()->computeCapability();
+        if (auto arch = dev_->target().as<GPU>()->computeCapability();
             arch.isValid()) {
             cmd += " -arch sm_" + std::to_string(arch->first) +
                    std::to_string(arch->second);
-        } else if (dev_.target()->useNativeArch()) {
+        } else if (dev_->target()->useNativeArch()) {
             int major, minor;
             checkCudaError(cudaDeviceGetAttribute(
-                &major, cudaDevAttrComputeCapabilityMajor, dev_.num()));
+                &major, cudaDevAttrComputeCapabilityMajor, dev_->num()));
             checkCudaError(cudaDeviceGetAttribute(
-                &minor, cudaDevAttrComputeCapabilityMinor, dev_.num()));
+                &minor, cudaDevAttrComputeCapabilityMinor, dev_->num()));
             cmd += " -arch sm_" + std::to_string(major) + std::to_string(minor);
         } else {
             WARNING("GPU arch not specified, which may result in suboptimal "
@@ -109,6 +159,7 @@ void Driver::buildAndLoad() {
             cmd += " -g";
         }
         break;
+#endif // FT_WITH_CUDA
     default:
         ASSERT(false);
     }
@@ -143,13 +194,15 @@ void Driver::buildAndLoad() {
                 path);
     }
 
-    switch (dev_.type()) {
+    switch (dev_->type()) {
     case TargetType::CPU:
         ctx_ = std::make_unique<CPUContext>();
         break;
+#ifdef FT_WITH_CUDA
     case TargetType::GPU:
         ctx_ = std::make_unique<GPUContext>();
         break;
+#endif // FT_WITH_CUDA
     default:
         ASSERT(false);
     }
@@ -157,6 +210,12 @@ void Driver::buildAndLoad() {
 
 void Driver::setParams(const std::vector<Ref<Array>> &args,
                        const std::unordered_map<std::string, Ref<Array>> &kws) {
+    // Hold reference count
+    args_.insert(args_.end(), args.begin(), args.end());
+    for (auto &&[k, v] : kws) {
+        kws_[k] = v;
+    }
+
     for (size_t i = 0, iEnd = args.size(), j = 0; i < iEnd; i++) {
         while (j < params_.size() && f_->closure_.count(f_->params_[j])) {
             j++;
@@ -164,20 +223,42 @@ void Driver::setParams(const std::vector<Ref<Array>> &args,
         if (j >= params_.size()) {
             throw DriverError("More arguments are given than required");
         }
-        params_[j++] = args[i]->raw();
+        auto &&buffer = name2buffer_.at(f_->params_[j]);
+        if (buffer->tensor()->dtype() != args[i]->dtype()) {
+            throw DriverError(
+                "Cannnot pass a " + toString(args[i]->dtype()) +
+                " Array to the " + std::to_string(j) + "-th parameter " +
+                f_->params_[j] + " of type " +
+                toString(name2buffer_.at(f_->params_[j])->tensor()->dtype()));
+        }
+        params_[j++] = requestPtr(args[i], dev_, hostDev_, buffer->mtype(),
+                                  buffer->atype());
     }
     for (auto &&[key, value] : kws) {
         if (f_->closure_.count(key)) {
             throw DriverError("Enclosed parameter " + key + " cannot be set");
         }
-        params_[name2param_[key]] = value->raw();
-    }
-    for (size_t i = 0, iEnd = params_.size(); i < iEnd; i++) {
-        if (f_->closure_.count(f_->params_[i])) {
-            params_[i] = (*f_->closure_.at(f_->params_[i]))->raw();
+        auto &&buffer = name2buffer_.at(key);
+        if (buffer->tensor()->dtype() != value->dtype()) {
+            throw DriverError(
+                "Cannnot pass a " + toString(value->dtype()) +
+                " Array to the " + std::to_string(name2param_[key]) +
+                "-th parameter " + key + " of type " +
+                toString(name2buffer_.at(key)->tensor()->dtype()));
         }
-        if (params_[i] == nullptr) {
-            throw DriverError("Parameter " + std::to_string(i) + " is missing");
+        params_[name2param_[key]] =
+            requestPtr(value, dev_, hostDev_, buffer->mtype(), buffer->atype());
+    }
+    for (auto &&[i, param, name] :
+         iter::zip(iter::count(), params_, f_->params_)) {
+        auto &&buffer = name2buffer_.at(name);
+        if (f_->closure_.count(name)) {
+            param = requestPtr(*f_->closure_.at(name), dev_, hostDev_,
+                               buffer->mtype(), buffer->atype());
+        }
+        if (param == nullptr) {
+            throw DriverError("The " + std::to_string(i) + "-th parameter " +
+                              name + " is missing");
         }
     }
 }
@@ -187,9 +268,14 @@ void Driver::run() {
           ctx_.get());
 }
 
-void Driver::sync() { dev_.sync(); }
+void Driver::sync() { dev_->sync(); }
 
 std::vector<Ref<Array>> Driver::collectReturns() {
+    // Free reference count holders
+    args_.clear();
+    kws_.clear();
+    std::fill(params_.begin(), params_.end(), nullptr);
+
     std::vector<Ref<Array>> ret;
     for (size_t i = 0, n = f_->returns_.size(); i < n; i++) {
         std::vector<size_t> shape(retShapes_[i], retShapes_[i] + retDims_[i]);
@@ -215,23 +301,29 @@ double Driver::time(int rounds, int warmups) {
     namespace ch = std::chrono;
 
     double tot = 0;
-    auto tgtType = dev_.type();
+    auto tgtType = dev_->type();
     for (int i = 0; i < warmups; i++) {
         run();
         switch (tgtType) {
+#ifdef FT_WITH_CUDA
         case TargetType::GPU:
             checkCudaError(cudaDeviceSynchronize());
+#endif // FT_WITH_CUDA
         default:;
         }
     }
     for (int i = 0; i < rounds; i++) {
+#ifdef FT_WITH_CUDA
         auto cudaErr = cudaSuccess;
+#endif // FT_WITH_CUDA
 
         auto beg = ch::high_resolution_clock::now();
         run();
         switch (tgtType) {
+#ifdef FT_WITH_CUDA
         case TargetType::GPU:
             cudaErr = cudaDeviceSynchronize();
+#endif // FT_WITH_CUDA
         default:;
         }
         auto end = ch::high_resolution_clock::now();
@@ -239,9 +331,11 @@ double Driver::time(int rounds, int warmups) {
             ch::duration_cast<ch::duration<double>>(end - beg).count() *
             1000; // ms
 
+#ifdef FT_WITH_CUDA
         if (cudaErr) {
             throw DriverError(cudaGetErrorString(cudaErr));
         }
+#endif // FT_WITH_CUDA
 
         tot += dur;
     }

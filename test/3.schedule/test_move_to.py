@@ -16,14 +16,12 @@ def test_pure_swap_forward():
             y3[i] = i + 3
             ft.MarkNid("S2")
             y4[i] = i + 4
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.move_to("S2", ft.MoveToSide.After, "S1")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("y1", (4,), "int32", "output", "cpu"),
@@ -55,14 +53,12 @@ def test_pure_swap_backward():
             y3[i] = i + 3
             ft.MarkNid("S2")
             y4[i] = i + 4
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.move_to("S1", ft.MoveToSide.Before, "S2")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("y1", (4,), "int32", "output", "cpu"),
@@ -93,15 +89,13 @@ def test_swap_to_begin():
             y3[i] = i + 3
             ft.MarkNid("S1")
             y4[i] = i + 4
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     dst = s.find("L1").body.stmts[0]
     s.move_to("S1", ft.MoveToSide.Before, dst)
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("y1", (4,), "int32", "output", "cpu"),
@@ -132,15 +126,13 @@ def test_swap_to_end():
             y2[i] = i + 2
             y3[i] = i + 3
             y4[i] = i + 4
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     dst = s.find("L1").body.stmts[-1]
     s.move_to("S1", ft.MoveToSide.After, dst)
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("y1", (4,), "int32", "output", "cpu"),
@@ -168,14 +160,12 @@ def test_pure_fission_forward():
                 ft.MarkNid("S1")
                 y1[i, j] = i * j + 1
                 y2[i, j] = i * j + 2
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.move_to("S1", ft.MoveToSide.Before, "L2")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("y1", (4, 4), "int32", "output", "cpu"),
@@ -201,14 +191,12 @@ def test_pure_fission_backward():
                 y1[i, j] = i * j + 1
                 ft.MarkNid("S1")
                 y2[i, j] = i * j + 2
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.move_to("S1", ft.MoveToSide.After, "L2")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("y1", (4, 4), "int32", "output", "cpu"),
@@ -238,14 +226,12 @@ def test_swap_and_fission_forward():
                 y2[i, j] = i * j + 1
                 ft.MarkNid("S3")
                 y3[i, j] = i * j + 2
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.move_to("S3", ft.MoveToSide.Before, "S1")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("y1", (4,), "int32", "output", "cpu"),
@@ -277,14 +263,12 @@ def test_swap_and_fission_backward():
                 y2[i, j] = i * j + 2
             ft.MarkNid("S1")
             y3[i] = i
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.move_to("S2", ft.MoveToSide.After, "S1")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("y1", (4, 4), "int32", "output", "cpu"),
@@ -315,15 +299,13 @@ def test_crossing_var_def():
                     ft.MarkNid("S1")
                     t[()] = x[i] * x[j]
                     y2[i, j] = t[()]
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     dst = s.find("L1").body.stmts[0]
     s.move_to("S1", ft.MoveToSide.Before, dst)
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, skip_passes=["prop_one_time_use"], verbose=1)
 
     with ft.VarDef([
         ("x", (4,), "int32", "input", "cpu"),

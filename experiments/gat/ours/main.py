@@ -29,41 +29,38 @@ def load_data(data_name: str):
 
 
 def compile_all(num_v, num_e, feat_len, device):
-    mtype = device.main_mem_type()
-
-    inf = float("inf")
 
     @ft.transform
     def inference(ptr, idx, feat, weight, attn_l, attn_r, y):
-        ptr: ft.Var[(num_v + 1,), "int32", "input", mtype]
-        idx: ft.Var[(num_e,), "int32", "input", mtype]
-        feat: ft.Var[(num_v, feat_len), "float32", "input", mtype]
-        weight: ft.Var[(feat_len, feat_len), "float32", "input", mtype]
-        attn_l: ft.Var[(feat_len,), "float32", "input", mtype]
-        attn_r: ft.Var[(feat_len,), "float32", "input", mtype]
-        y: ft.Var[(num_v, feat_len), "float32", "output", mtype]
+        ptr: ft.Var[(num_v + 1,), "int32", "input"]
+        idx: ft.Var[(num_e,), "int32", "input"]
+        feat: ft.Var[(num_v, feat_len), "float32", "input"]
+        weight: ft.Var[(feat_len, feat_len), "float32", "input"]
+        attn_l: ft.Var[(feat_len,), "float32", "input"]
+        attn_r: ft.Var[(feat_len,), "float32", "input"]
+        y: ft.Var[(num_v, feat_len), "float32", "output"]
 
         feat2 = matmul(feat, weight)
         att_l = matmul(feat2, attn_l)
         att_r = matmul(feat2, attn_r)
 
-        edge = ft.create_var((num_e,), "float32", mtype)
-        edge_exp = ft.create_var((num_e,), "float32", mtype)
+        edge = ft.empty((num_e,), "float32")
+        edge_exp = ft.empty((num_e,), "float32")
         'nid: Li'
         'no_deps: edge'
         'no_deps: edge_exp'
         'no_deps: idx'
         for i in range(num_v):
-            edge_max = ft.create_var((), "float32", mtype)
-            edge_max[()] = -inf
+            edge_max = ft.empty((), "float32")
+            edge_max[()] = -float("inf")
             'nid: Lk1'
             'no_deps: att_l'
             for k in range(ptr[i], ptr[i + 1]):
-                e = ft.create_var((), "float32", mtype)
+                e = ft.empty((), "float32")
                 e[()] = att_l[idx[k]] + att_r[i]
                 edge[k] = ft.if_then_else(e[()] >= 0, e[()], e[()] * 0.1)
                 edge_max[()] = ft.max(edge_max[()], edge[k])
-            edge_sum = ft.create_var((), "float32", mtype)
+            edge_sum = ft.empty((), "float32")
             edge_sum[()] = 0
             'nid: Lk2'
             for k in range(ptr[i], ptr[i + 1]):
@@ -83,37 +80,27 @@ def compile_all(num_v, num_e, feat_len, device):
     print("# Inference:")
     print(inference)
     t0 = time.time()
-    s = ft.Schedule(inference)
-    s.auto_schedule(device.target())
-    f = ft.lower(s.func(), device.target())
-    code = ft.codegen(f, device.target())
-    inference_exe = ft.Driver(inference, code, device)
+    inference_exe = ft.optimize(
+        inference,
+        schedule_callback=lambda s: s.auto_schedule(device.target()),
+        verbose=1)
     t1 = time.time()
-    print(f)
-    print(debug.with_line_no(code))
     print(f"Inference compiling time: {t1 - t0}s")
 
     return inference_exe, None, None
     #print("# Forward:")
     #print(forward)
-    #s = ft.Schedule(forward)
-    #s.auto_schedule(device.target())
-    #f = ft.lower(s.func(), device.target())
-    #print(f)
-    #code = ft.codegen(f, device.target())
-    #print(debug.with_line_no(code))
-    #forward_exe = ft.Driver(forward, code, device)
+    #forward_exe = ft.optimize(
+    #    forward,
+    #    schedule_callback=lambda s: s.auto_schedule(device.target()),
+    #    verbose=1)
 
     #print("# Backward:")
     #print(backward)
-    #s = ft.Schedule(backward)
-    #s.auto_schedule(device.target())
-    #print(s.ast())
-    #f = ft.lower(s.func(), device.target())
-    #print(f)
-    #code = ft.codegen(f, device.target())
-    #print(debug.with_line_no(code))
-    #backward_exe = ft.Driver(backward, code, device)
+    #backward_exe = ft.optimize(
+    #    backward,
+    #    schedule_callback=lambda s: s.auto_schedule(device.target()),
+    #    verbose=1)
 
     #def run_backward(ptr, idx, x, w, w_attn_1, w_attn_2, y, d_y, d_x, d_w,
     #                 d_w_attn_1, d_w_attn_2):
@@ -187,7 +174,9 @@ if __name__ == '__main__':
     d_w_attn_2 = ft.Array(d_w_attn_2, ir_dev)
     d_y = ft.Array(d_y, ir_dev)
 
-    inference, forward, backward = compile_all(num_v, num_e, feat_len, ir_dev)
+    with ir_dev:
+        inference, forward, backward = compile_all(num_v, num_e, feat_len,
+                                                   ir_dev)
 
     print(
         f"{cmd_args.warmup_num} warmup, {cmd_args.test_num} repeats for evalution"

@@ -12,10 +12,8 @@ def test_sink_stmt_seq_back():
                 y2[i] = b[0] + i
             y1[0] = 0
             y2[0] = 0
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (5,), "int32", "input", "cpu"),
                     ("y1", (4,), "int32", "output", "cpu"),
@@ -43,10 +41,8 @@ def test_sink_stmt_seq_front():
                 b[0] = x[i] + x[i + 1]
                 y1[i] = b[0] * i
                 y2[i] = b[0] + i
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (5,), "int32", "input", "cpu"),
                     ("y1", (4,), "int32", "output", "cpu"),
@@ -72,10 +68,8 @@ def test_sink_for_no_deps():
                 b[i] = x[i] + x[i + 1]
                 y1[i] = b[i] * i
                 y2[i] = b[i] + i
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (5,), "int32", "input", "cpu"),
                     ("y1", (4,), "int32", "output", "cpu"),
@@ -100,10 +94,8 @@ def test_sink_for_invariant():
                 b[()] = x[0] + x[1]
                 y1[i] = b[()] * i
                 y2[i] = b[()] + i
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (5,), "int32", "input", "cpu"),
                     ("y1", (4,), "int32", "output", "cpu"),
@@ -132,10 +124,8 @@ def test_sink_if():
                     b[i] = x[i] + x[i + 1]
                     y1[i] = b[i] * i
                     y2[i] = b[i] + i
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (5,), "int32", "input", "cpu"),
                     ("y1", (4,), "int32", "output", "cpu"),
@@ -172,10 +162,8 @@ def test_cross_other_vardef():
                     with ft.For("i", 0, 4) as i:
                         y1[i] = t1[i] + t2[i]
                         y2[i] = t1[i] * t2[i]
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (5,), "int32", "input", "cpu"),
                     ("y1", (4,), "int32", "output", "cpu"),

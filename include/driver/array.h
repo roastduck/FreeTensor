@@ -9,20 +9,36 @@
 
 namespace freetensor {
 
+/**
+ * Data stored on a `Device` or shared by multiple `Device`s
+ */
 class Array {
-    uint8_t *ptr_ = nullptr;
+    std::vector<std::pair<Ref<Device>, uint8_t *>> ptrs_;
     size_t size_ = 0, nElem_ = 0;
     std::vector<size_t> shape_;
     DataType dtype_;
-    Device device_;
+    Ref<Device> preferDevice_;
 
   public:
+    /**
+     * Intialize an array on a specific device
+     *
+     * @param shape : Length of each dimensions of the array
+     * @param dtype : Data type of the array
+     * @param preferDevice : Store the data at this device by default. If
+     * omitted, use the default one in Config
+     * @{
+     */
+    Array(const std::vector<size_t> &shape, DataType dtype);
     Array(const std::vector<size_t> &shape, DataType dtype,
-          const Device &device);
+          const Ref<Device> &preferDevice);
+    /** @} */
 
-    // Move from raw pointer. Use with cautious
+    /**
+     * Move from raw pointer. Use with cautious
+     */
     Array(void *ptr, const std::vector<size_t> &shape, DataType dtype,
-          const Device &device);
+          const Ref<Device> &device);
 
     ~Array();
 
@@ -36,12 +52,15 @@ class Array {
     size_t nElem() const { return nElem_; }
     const std::vector<size_t> &shape() const { return shape_; }
     DataType dtype() const { return dtype_; }
-    const Device &device() const { return device_; }
+
+    void *rawSharedTo(const Ref<Device> &device);
+    void *rawMovedTo(const Ref<Device> &device);
+    void *rawInitTo(const Ref<Device> &device);
 
     void fromCPU(const void *other, size_t size);
     void toCPU(void *other, size_t size);
 
-    void *raw() const { return ptr_; }
+    Ref<Device> preferDevice() const { return preferDevice_; }
 };
 
 } // namespace freetensor

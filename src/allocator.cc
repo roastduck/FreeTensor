@@ -29,7 +29,7 @@ SmallItemBlock *SmallItemBlock::newBlk() {
 
 void SmallItemBlock::delBlk(SmallItemBlock *blk) { free(blk); }
 
-thread_local SmallItemAllocator SmallItemAllocator::instance_;
+thread_local SmallItemAllocator *SmallItemAllocator::instance_ = nullptr;
 
 SmallItemAllocator::SmallItemAllocator()
     : curBlk(0), blocks_(1, SmallItemBlock::newBlk()) {}

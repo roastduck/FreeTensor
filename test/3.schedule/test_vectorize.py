@@ -20,7 +20,7 @@ def test_not_found():
         s.vectorize("L0")
     code_ = ft.codegen(s.func(), target)
 
-    assert code == code_
+    assert str(code) == str(code_)
 
 
 def test_dep_not_met():
@@ -35,4 +35,4 @@ def test_dep_not_met():
         s.vectorize("L1")
     code_ = ft.codegen(s.func(), target)
 
-    assert code == code_
+    assert str(code) == str(code_)

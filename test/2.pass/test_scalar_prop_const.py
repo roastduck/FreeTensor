@@ -6,10 +6,8 @@ def test_basic():
                     ("y2", (), "int32", "output", "cpu")]) as (y1, y2):
         y1[()] = 1
         y2[()] = y1[()]
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("y1", (), "int32", "output", "cpu"),
                     ("y2", (), "int32", "output", "cpu")]) as (y1, y2):
@@ -29,10 +27,8 @@ def test_multiple_choices_no_remove():
         with ft.Else():
             y1[()] = 2
         y2[()] = y1[()]
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y1", (), "int32", "output", "cpu"),
@@ -53,10 +49,8 @@ def test_multiple_choices_no_remove_2():
         y[()] = 0
         with ft.For("i", 0, 5) as i:
             y[()] = y[()] + i
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
@@ -73,10 +67,8 @@ def test_remove_intermediate_array():
         with ft.VarDef("t", (), "int32", "cache", "cpu") as t:
             t[()] = 2
             y[()] = t[()]
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef("y", (), "int32", "output", "cpu") as y:
         y[()] = 2
@@ -93,10 +85,8 @@ def test_non_const_no_remove():
             t[()] = x[()] + 1
             y1[()] = t[()] * 2
             y2[()] = t[()] * 3
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y1", (), "int32", "output", "cpu"),
@@ -117,10 +107,8 @@ def test_propagate():
         y1[()] = 1
         y2[()] = y1[()]
         y3[()] = y2[()]
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("y1", (), "int32", "output", "cpu"),
                     ("y2", (), "int32", "output", "cpu"),
@@ -140,10 +128,8 @@ def test_propagate_through_expressions():
         y1[()] = 1
         y2[()] = y1[()]
         y3[()] = y2[()] + y2[()]
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("y1", (), "int32", "output", "cpu"),
                     ("y2", (), "int32", "output", "cpu"),
@@ -162,10 +148,8 @@ def test_prop_iter():
         with ft.For("i", 0, 4) as i:
             y1[()] = i
             y2[i] = y1[()]
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("y1", (), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):
@@ -184,10 +168,8 @@ def test_prop_iter_in_expr():
         with ft.For("i", 0, 4) as i:
             y1[i] = i + 1
             y2[i] = y1[i]
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("y1", (), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):

@@ -16,10 +16,8 @@ def test_merge():
                 y2[i] = 2
             with ft.Else():
                 y2[i] = 3
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("x", (4,), "int32", "input", "cpu"),
@@ -53,10 +51,8 @@ def test_no_merge_different_cond():
                 y2[i] = 2
             with ft.Else():
                 y2[i] = 3
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("x", (4,), "int32", "input", "cpu"),
@@ -84,10 +80,8 @@ def test_no_merge_may_update():
                 a[i] = a[i] / 2
             with ft.If(a[i] > 10):
                 a[i] = a[i] / 2
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef("a", (4,), "int32", "inout", "cpu") as a:
         with ft.For("i", 0, 4) as i:
@@ -107,10 +101,8 @@ def test_hoist():
             with ft.For("j", 0, 4) as j:
                 with ft.If(i % 2 == 0):
                     y[i, j] = x[i, j]
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast, skip_passes=['use_builtin_div'])
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, skip_passes=['use_builtin_div'], verbose=1)
 
     with ft.VarDef([("x", (3, 4), "int32", "input", "cpu"),
                     ("y", (3, 4), "int32", "inout", "cpu")]) as (x, y):
@@ -133,10 +125,8 @@ def test_not_hoisting_not_pure_nested():
                 y[i, j] = 0
                 with ft.If(i % 2 == 0):
                     y[i, j] = x[i, j]
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast, skip_passes=['use_builtin_div'])
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, skip_passes=['use_builtin_div'], verbose=1)
 
     with ft.VarDef([
         ("x", (3, 4), "int32", "input", "cpu"),
@@ -162,10 +152,8 @@ def test_not_hoisting_when_being_updated():
             with ft.If(n[()] < x[i]):
                 y[i] = 0
                 n[()] = n[()] + x[i]
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
         ("n", (), "int32", "inout", "cpu"),
@@ -190,10 +178,8 @@ def test_hoist_then_merge():
                     y[i, j] = x[i, j]
             with ft.If(i % 2 == 0):
                 y[i, 0] = y[i, 0] + 1
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast, skip_passes=['use_builtin_div'])
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, skip_passes=['use_builtin_div'], verbose=1)
 
     with ft.VarDef([("x", (3, 4), "int32", "input", "cpu"),
                     ("y", (3, 4), "int32", "inout", "cpu")]) as (x, y):
@@ -218,10 +204,8 @@ def test_merge_then_hoist():
                 y1[i] = 0
             with ft.If(x[()] < 2):
                 y2[i] = 2
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef("x", (), "int32", "input", "cpu") as x:
         with ft.If(x[()] < 2):

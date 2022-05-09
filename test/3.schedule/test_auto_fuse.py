@@ -12,8 +12,7 @@ def test_basic():
         with ft.For("i", 0, 1000, nid="L2") as i:
             y[i] += c[i]
 
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.auto_fuse(ft.CPU())
     print(s.ast())
@@ -33,8 +32,7 @@ def test_nested():
             with ft.For("j", 0, 10, nid="L4") as j:
                 y[i, j] += c[i, j]
 
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.auto_fuse(ft.CPU())
     print(s.ast())
@@ -56,8 +54,7 @@ def test_stmt_in_between_1():
         with ft.For("i", 0, 1000, nid="L2") as i:
             y2[()] += x2[i]
 
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.auto_fuse(ft.CPU())
     print(s.ast())
@@ -80,8 +77,7 @@ def test_stmt_in_between_2():
         ft.MarkNid('S2')
         x2[()] = 0
 
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.auto_fuse(ft.CPU())
     print(s.ast())

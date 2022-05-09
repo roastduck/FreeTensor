@@ -21,10 +21,10 @@
 namespace freetensor {
 
 AutoSchedule::AutoSchedule(const Schedule &schedule, const Ref<Target> &target,
-                           Device device, int measuredSize,
+                           const Ref<Device> &device, int measuredSize,
                            py::function predictFunc, py::function updateFunc,
                            std::string tag)
-    : original_(schedule.clone()), target_(target), device_(std::move(device)),
+    : original_(schedule.clone()), target_(target), device_(device),
       measuredSize_(measuredSize), paramsSet_(false),
       predictFunc_(std::move(predictFunc)), updateFunc_(std::move(updateFunc)),
       tag_(std::move(tag)) {

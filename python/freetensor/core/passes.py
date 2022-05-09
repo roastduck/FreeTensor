@@ -1,4 +1,5 @@
 from typing import Optional, Sequence
+import functools
 
 import ffi
 
@@ -32,5 +33,42 @@ from ffi import gpu_lower_vector
 from ffi import lower
 
 
-def lower(ast, target: Optional[ffi.Target] = None, skip_passes: Sequence = []):
-    return ffi.lower(ast, target, set(skip_passes))
+def lower(ast=None,
+          target: Optional[ffi.Target] = None,
+          skip_passes: Optional[Sequence[str]] = None,
+          verbose: Optional[int] = None):
+    '''
+    Lower an AST using a series of passes
+
+    Parameters
+    ----------
+    ast : AST
+        The AST to be lowered. Can be a `Func` or a `Stmt`. If not specified, a
+        partial function of `lower` will be returned, which can be used as a
+        decorator
+    target : Target (Optional)
+        Lower the AST to a target with target-specific passes, then the AST can
+        be used for codegen. If not set, use the default Target in Config
+    skip_passes : Sequence[str] (Optional)
+        Skip some pass for testing or debugging. Names in `skipPasses` are in
+        underscore_style, as in Python. Please note that some passes will not be
+        skipped even specified in these parameter, because they are indirectly
+        called in some other passes
+    verbose : int (Optional)
+        0 = print nothing. 1 = print the lowered AST. 2 = print AST after every
+        single passes
+        '''
+
+    if ast is not None:
+        return ffi.lower(ast, target,
+                         set() if skip_passes is None else set(skip_passes),
+                         0 if verbose is None else verbose)
+    else:
+        _lower = lower
+        if target is not None:
+            _lower = functools.partial(_lower, target=target)
+        if skip_passes is not None:
+            _lower = functools.partial(_lower, skip_passes=skip_passes)
+        if verbose is not None:
+            _lower = functools.partial(_lower, verbose=verbose)
+        return _lower

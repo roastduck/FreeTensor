@@ -1,6 +1,7 @@
 import freetensor as ft
 from freetensor import debug
 import numpy as np
+import pytest
 
 
 def test_tiling():
@@ -32,8 +33,7 @@ def test_tiling():
     s.cache(i1, "a", "cpu")
     s.cache(i1, "b", "cpu")
 
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
     with ft.VarDef([
         ("a", (256, 256), "float32", "input", "cpu"),
@@ -64,15 +64,14 @@ def test_tiling():
     std = ft.make_reduction(ft.pop_ast())
     assert std.match(func.body)
 
-    code = ft.codegen(func, target)
-    print(code)
+    code = ft.codegen(func, target, verbose=True)
     a_np = np.random.rand(256, 256).astype("float32")
     b_np = np.random.rand(256, 256).astype("float32")
     c_np = np.zeros((256, 256), dtype="float32")
     a_arr = ft.Array(a_np, device)
     b_arr = ft.Array(b_np, device)
     c_arr = ft.Array(c_np, device)
-    ft.Driver(func, code, device)(a=a_arr, b=b_arr, c=c_arr)
+    ft.build_binary(code, device)(a=a_arr, b=b_arr, c=c_arr)
     c_np = c_arr.numpy()
 
     c_std = a_np @ b_np
@@ -98,8 +97,7 @@ def test_tiled_reduction():
     i0, i1 = s.split(i, 64)
     s.cache_reduction(i1, "y", "cpu")
 
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
     with ft.VarDef([
         ("x", (256,), "float32", "input", "cpu"),
@@ -115,13 +113,12 @@ def test_tiled_reduction():
     std = ft.make_reduction(ft.pop_ast())
     assert std.match(func.body)
 
-    code = ft.codegen(func, target)
-    print(code)
+    code = ft.codegen(func, target, verbose=True)
     x_np = np.random.rand(256).astype("float32")
     y_np = np.zeros((1,), dtype="float32")
     x_arr = ft.Array(x_np, device)
     y_arr = ft.Array(y_np, device)
-    ft.Driver(func, code, device)(x=x_arr, y=y_arr)
+    ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.sum(x_np, keepdims=True)
@@ -152,8 +149,7 @@ def test_parallel_reduction():
 
     s.parallelize(i0, "openmp")
 
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
     with ft.VarDef([
         ("x", (256,), "float32", "input", "cpu"),
@@ -170,13 +166,12 @@ def test_parallel_reduction():
     std = ft.make_reduction(ft.pop_ast())
     assert std.match(func.body)
 
-    code = ft.codegen(func, target)
-    print(code)
+    code = ft.codegen(func, target, verbose=True)
     x_np = np.random.rand(256).astype("float32")
     y_np = np.zeros((1,), dtype="float32")
     x_arr = ft.Array(x_np, device)
     y_arr = ft.Array(y_np, device)
-    ft.Driver(func, code, device)(x=x_arr, y=y_arr)
+    ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.sum(x_np, keepdims=True)
@@ -194,15 +189,15 @@ def test_dynamic_tiling():
         ("m", (), "int32", "input", "byvalue"),
     ]) as (n, k, m):
         with ft.VarDef([
-            ("a", (n[()], k[()]), "float32", "input", "cpu"),
-            ("b", (k[()], m[()]), "float32", "input", "cpu"),
-            ("c", (n[()], m[()]), "float32", "output", "cpu"),
+            ("a", (n, k), "float32", "input", "cpu"),
+            ("b", (k, m), "float32", "input", "cpu"),
+            ("c", (n, m), "float32", "output", "cpu"),
         ]) as (a, b, c):
-            with ft.For("i", 0, n[()], nid="Li") as i:
-                with ft.For("j", 0, m[()], nid="Lj") as j:
+            with ft.For("i", 0, n, nid="Li") as i:
+                with ft.For("j", 0, m, nid="Lj") as j:
                     with ft.NamedScope("S0"):
                         c[i, j] = 0
-                        with ft.For("p", 0, k[()], nid="Lp") as p:
+                        with ft.For("p", 0, k, nid="Lp") as p:
                             ft.MarkNid("S1")
                             c[i, j] = c[i, j] + a[i, p] * b[p, j]
 
@@ -225,8 +220,7 @@ def test_dynamic_tiling():
     func = ft.lower(func, target)
     print(func)
 
-    code = ft.codegen(func, target)
-    print(code)
+    code = ft.codegen(func, target, verbose=True)
     n_np = np.array(300, dtype="int32")
     k_np = np.array(400, dtype="int32")
     m_np = np.array(500, dtype="int32")
@@ -239,7 +233,7 @@ def test_dynamic_tiling():
     a_arr = ft.Array(a_np, device)
     b_arr = ft.Array(b_np, device)
     c_arr = ft.Array(c_np, device)
-    driver = ft.Driver(func, code, device)
+    driver = ft.build_binary(code, device)
     driver(n=n_arr, k=k_arr, m=m_arr, a=a_arr, b=b_arr, c=c_arr)
     c_np = c_arr.numpy()
 
@@ -247,15 +241,16 @@ def test_dynamic_tiling():
     assert np.all(np.isclose(c_np, c_std))
 
 
+@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_collaborative_fetch():
     target = ft.GPU()
     device = ft.Device(target)
     host = ft.Device(ft.CPU())
 
     with ft.VarDef([
-        ("a", (32, 256), "float32", "input", "cpu"),
-        ("b", (256, 32), "float32", "input", "cpu"),
-        ("c", (32, 32), "float32", "output", "cpu"),
+        ("a", (32, 256), "float32", "input", "gpu/global"),
+        ("b", (256, 32), "float32", "input", "gpu/global"),
+        ("c", (32, 32), "float32", "output", "gpu/global"),
     ]) as (a, b, c):
         with ft.For("i", 0, 32, nid="Li") as i:
             with ft.For("j", 0, 32, nid="Lj") as j:
@@ -282,18 +277,16 @@ def test_collaborative_fetch():
             lambda x: x.type() == ft.ASTNodeType.For and x.body.nid == fill_b),
         "threadIdx.y",
     )
-    func = ft.lower(s.func(), target)
-    print(func)
+    func = ft.lower(s.func(), target, verbose=1)
 
-    code = ft.codegen(func, target)
-    print(debug.with_line_no(code))
+    code = ft.codegen(func, target, verbose=True)
     a_np = np.random.rand(32, 256).astype("float32")
     b_np = np.random.rand(256, 32).astype("float32")
     c_np = np.zeros((32, 32), dtype="float32")
     a_arr = ft.Array(a_np, device)
     b_arr = ft.Array(b_np, device)
     c_arr = ft.Array(c_np, device)
-    ft.Driver(func, code, device)(a=a_arr, b=b_arr, c=c_arr)
+    ft.build_binary(code, device)(a=a_arr, b=b_arr, c=c_arr)
     c_np = c_arr.numpy()
 
     c_std = a_np @ b_np
@@ -309,8 +302,7 @@ def test_vectorize_spmv():
             y[i] = 0
             with ft.For("j", 0, 64, nid="Lj") as j:
                 y[i] += x1[i, j] * x2[j]
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     i0, i1 = s.split("Li", 4)
     s.reorder([i0, "Lj", i1])
@@ -319,8 +311,7 @@ def test_vectorize_spmv():
     s.vectorize(s.find("S0.a").parent_stmt())  # FIXME: do not hard-code S0.a
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x1", (64, 64), "int32", "input", "cpu"),
                     ("x2", (64,), "int32", "input", "cpu"),

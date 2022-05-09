@@ -2,15 +2,89 @@
 
 **For PLDI '22 Artifact Evaluation, please follow the README uploaded to the submission site, where you can find step-by-step instructions.**
 
-A language and compiler for irregular tensor programs.
+Write and optimize high-performance native loop-based programs in Python.
+
+## Features
+
+Write a simple vector addition with loops that compiles to native code:
+
+```python
+import freetensor as ft
+import numpy as np
+
+# Change this line to ft.optimize(verbose=1) to see the resulting native code
+@ft.optimize
+def test(a: ft.Var[(4,), "int32"], b: ft.Var[(4,), "int32"]):
+    y = ft.empty((4,), "int32")
+    for i in range(4):
+        y[i] = a[i] + b[i]
+    return y
+
+y = test(np.array([1, 2, 3, 4], dtype="int32"),
+         np.array([2, 3, 4, 5], dtype="int32")).numpy()
+print(y)
+```
+
+Vectors with dynamic lengths are OK, too:
+
+```python
+import freetensor as ft
+import numpy as np
+
+@ft.optimize
+def test(n: ft.Var[(), "int32"], a, b):
+    a: ft.Var[(n,), "int32"]
+    b: ft.Var[(n,), "int32"]
+    y = ft.empty((n,), "int32")
+    for i in range(n):
+        y[i] = a[i] + b[i]
+    return y
+
+y = test(np.array(4, dtype="int32"), np.array([1, 2, 3, 4], dtype="int32"),
+         np.array([2, 3, 4, 5], dtype="int32")).numpy()
+print(y)
+
+assert np.array_equal(y, [3, 5, 7, 9])
+```
+
+If building with CUDA, you can also run the program on a GPU. This time, a "schedule" (an explicit program transformation) is needed, and memory types of variables should be properly set.
+
+```python
+import freetensor as ft
+import numpy as np
+
+# Using the 0-th GPU device
+with ft.Device(ft.GPU(), 0):
+
+    @ft.optimize(
+        # Parallel Loop Li as GPU threads
+        schedule_callback=lambda s: s.parallelize("Li", "threadIdx.x"))
+    # Use "byvalue" for `n` so it can be used both during kernel launching
+    # and inside a kernel
+    def test(n: ft.Var[(), "int32", "input", "byvalue"], a, b):
+        a: ft.Var[(n,), "int32"]
+        b: ft.Var[(n,), "int32"]
+        y = ft.empty((n,), "int32")
+        'nid: Li'  # Name the loop below as "Li"
+        for i in range(n):
+            y[i] = a[i] + b[i]
+        return y
+
+    y = test(np.array(4, dtype="int32"),
+             np.array([1, 2, 3, 4], dtype="int32"),
+             np.array([2, 3, 4, 5], dtype="int32")).numpy()
+    print(y)
+```
+
 
 ## Dependencies
 
+- Linux
 - Python (>= 3.8, for the Python frontend)
 - GCC (>= 8, to support C++17 and the "unroll" pragma)
-- CUDA (>= 10.2, to support GCC 8)
-- Java (Build-time dependency only)
+- CUDA (>= 10.2, to support GCC 8, Optional)
 - MKL (Optional)
+- Java (Build-time dependency only)
 
 ## Build
 
@@ -29,7 +103,7 @@ cmake ..
 make -j
 ```
 
-If using MKL, add a `-DWITH_MKL=<path/to/mkl/root>` to `cmake`.
+If not using CUDA, add a `-DFT_WITH_CUDA=OFF` to `cmake`. If using MKL, add a `-DFT_WITH_MKL=<path/to/mkl/root>` to `cmake`.
 
 It will build a shared library with a name like `ffi.cpython-37m-x86_64-linux-gnu.so`.
 

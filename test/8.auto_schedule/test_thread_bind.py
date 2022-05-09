@@ -1,10 +1,12 @@
 import freetensor as ft
 import numpy as np
+import pytest
 
 target = ft.GPU()
 device = ft.Device(target)
 
 
+@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_thread_bind():
     a = 128
     b = 128
@@ -14,7 +16,7 @@ def test_thread_bind():
     def test(w, x, y, z):
         w: ft.Var[(m, m, a, b), "int32", "input", "gpu/global"]
         x: ft.Var[(m, m, b, a), "int32", "input", "gpu/global"]
-        y: ft.Var[(1, 1, a, a), "int32", "cache", "gpu/global"]
+        y: ft.Var[(1, 1, a, a), "int32", "inout", "gpu/global"]
         z: ft.Var[(m, m, a, a), "int32", "output", "gpu/global"]
         "nid: L1"
         for i in range(m):
@@ -40,17 +42,16 @@ def test_thread_bind():
     sch = s.test_thread_bind()
     func = ft.lower(sch.func(), target)
     print(func)
-    code = ft.codegen(func, target)
-    print(code)
-    w_np = np.zeros((m, m, a, b), dtype="float32")
-    x_np = np.zeros((m, m, b, a), dtype="float32")
-    y_np = np.zeros((1, 1, a, a), dtype="float32")
-    z_np = np.zeros((m, m, a, a), dtype="float32")
+    code = ft.codegen(func, target, verbose=True)
+    w_np = np.zeros((m, m, a, b), dtype="int32")
+    x_np = np.zeros((m, m, b, a), dtype="int32")
+    y_np = np.zeros((1, 1, a, a), dtype="int32")
+    z_np = np.zeros((m, m, a, a), dtype="int32")
     w_arr = ft.Array(w_np, device)
     x_arr = ft.Array(x_np, device)
     y_arr = ft.Array(y_np, device)
     z_arr = ft.Array(z_np, device)
-    ft.Driver(func, code, device)(w=w_arr, x=x_arr, y=y_arr, z=z_arr)
+    ft.build_binary(code, device)(w=w_arr, x=x_arr, y=y_arr, z=z_arr)
     std_log = [
         'split(L4, factor=2, nparts=-1)', 'split(L4.0, factor=2, nparts=-1)',
         'split(L4.0.0, factor=2, nparts=-1)',

@@ -82,26 +82,31 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
             expr = earlier->expr_;
             if (!allIters(expr).empty()) {
                 try {
+                    if (!dep.later2EarlierIter_
+                             .isSingleValued()) { // Check before converting
+                                                  // into PBFunc
+                        throw ParserError("ISL map is not single-valued");
+                    }
                     auto &&[args, values, cond] =
                         parsePBFunc(toString(PBFunc(dep.later2EarlierIter_)));
                     ASSERT(dep.earlier_.iter_.size() <=
                            values.size()); // maybe padded
                     ASSERT(dep.later_.iter_.size() <= args.size());
-                    std::unordered_map<std::string, Expr> islVarToPlaceholder,
-                        oldIterToPlaceholder;
+                    std::unordered_map<std::string, Expr> islVarToNewIter,
+                        oldIterToNewIter;
                     for (auto &&[newIter, arg] :
                          iter::zip(dep.later_.iter_, args)) {
-                        islVarToPlaceholder[arg] = newIter.iter_;
+                        islVarToNewIter[arg] = newIter.iter_;
                     }
                     for (auto &&[oldIter, value] :
                          iter::zip(dep.earlier_.iter_, values)) {
                         if (oldIter.iter_->nodeType() == ASTNodeType::Var) {
-                            oldIterToPlaceholder[oldIter.iter_.as<VarNode>()
-                                                     ->name_] =
-                                ReplaceIter(islVarToPlaceholder)(value);
+                            oldIterToNewIter[oldIter.iter_.as<VarNode>()
+                                                 ->name_] =
+                                ReplaceIter(islVarToNewIter)(value);
                         }
                     }
-                    newExpr = ReplaceIter(oldIterToPlaceholder)(expr);
+                    newExpr = ReplaceIter(oldIterToNewIter)(expr);
                 } catch (const ParserError &e) {
                     throw InvalidSchedule(
                         "Unable to resolve relation of the iterators between "

@@ -10,7 +10,7 @@
 namespace freetensor {
 
 struct CodeGenCUDAStream : public CodeGenStream {
-    std::unordered_map<ParallelScope, int> threadDim_;
+    std::unordered_map<ParallelScope, Expr> threadDim_;
     int64_t sharedSize_ = 0, globalSize_ = 0;
 };
 
@@ -22,6 +22,7 @@ class CodeGenCUDA : public CodeGenC<CodeGenCUDAStream> {
     int nKernel_ = 0;
     int64_t sharedStackTop_ = 0, globalStackTop_ = 0;
     std::unordered_set<Stmt> streamScopes_;
+    bool inCublas_ = false;
 
   public:
     CodeGenCUDA(const std::vector<std::string> &params,
@@ -30,6 +31,9 @@ class CodeGenCUDA : public CodeGenC<CodeGenCUDAStream> {
 
   private:
     bool inKernel() const;
+
+    void exprOr1(const std::unordered_map<ParallelScope, Expr> &dict,
+                 const ParallelScope &key);
 
   protected:
     void genAlloc(const Ref<Tensor> &tensor, const std::string &rawPtr,

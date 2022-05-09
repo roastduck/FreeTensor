@@ -4,12 +4,15 @@
 #include <string>
 
 #include <buffer.h>
-#include <ref.h>
+#include <opt.h>
 
 namespace freetensor {
 
 enum class TargetType : int { CPU, GPU };
 
+/**
+ * Target architecture
+ */
 class Target {
     bool useNativeArch_;
 
@@ -37,7 +40,7 @@ class CPU : public Target {
 };
 
 class GPU : public Target {
-    Ref<std::pair<int, int>> computeCapability_;
+    Opt<std::pair<int, int>> computeCapability_;
 
   public:
     GPU(bool useNativeArch = true) : Target(useNativeArch) {}
@@ -49,12 +52,14 @@ class GPU : public Target {
     /// E.g. (7, 0) for compute capability 7.0 (sm_70)
     void setComputeCapability(int major, int minor) {
         computeCapability_ =
-            Ref<std::pair<int, int>>::make(std::make_pair(major, minor));
+            Opt<std::pair<int, int>>::make(std::make_pair(major, minor));
     }
-    Ref<std::pair<int, int>> computeCapability() const {
+    Opt<std::pair<int, int>> computeCapability() const {
         return computeCapability_;
     }
 };
+
+bool isSame(const Ref<Target> &lhs, const Ref<Target> &rhs);
 
 } // namespace freetensor
 

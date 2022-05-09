@@ -311,16 +311,29 @@ class VarCreator(StagedAssignable):
                     self.mtype))
 
 
-def create_var_staging(shape, dtype, mtype):
+def empty_staging(shape, dtype, mtype=None):
     return VarCreator(shape, dtype, mtype)
 
 
-def create_var_fallback(shape, dtype, mtype):
+def empty_fallback(shape, dtype, mtype=None):
     return np.zeros(shape, dtype)
 
 
-create_var = staged_callable(create_var_staging, create_var_fallback)
-'''Create a IR variable.'''
+empty = staged_callable(empty_staging, empty_fallback)
+'''
+Create an empty variable
+
+Parameters
+----------
+shape : Sequence[Expr] or Var
+    Shape of the variable. A variable can be created using a literal shape,
+    or another fixed-length VarRef as a shape
+dtype : str or DataType
+    Data type of the variable
+mtype : str or MemType (Optional)
+    Memory type of the variable. If omitted, the main memory type of the
+    default Target in config will be used
+'''
 
 
 class PredefinedVarCreator(VarCreator):
@@ -358,16 +371,31 @@ class PredefinedVarCreator(VarCreator):
         return var
 
 
-def var_staging(initializer, dtype, mtype):
+def var_staging(initializer, dtype, mtype=None):
     return PredefinedVarCreator(initializer, dtype, mtype)
 
 
-def var_fallback(initializer, dtype, mtype):
+def var_fallback(initializer, dtype, mtype=None):
     return np.array(initializer, dtype=dtype)
 
 
 var = staged_callable(var_staging, var_fallback)
-'''Create a IR variable with given initializer.'''
+'''
+Create an with variable a given initializer
+
+Parameters
+----------
+initializer : Sequence[Sequence[...Sequence[Expr]...]]
+    (Multi-level of) sequence of expressions. Will be data of the variable
+shape : Sequence[Expr] or Var
+    Shape of the variable. A variable can be created using a literal shape,
+    or another fixed-length VarRef as a shape
+dtype : str or DataType
+    Data type of the variable
+mtype : str or MemType (Optional)
+    Memory type of the variable. If omitted, the main memory type of the
+    default Target in config will be used
+'''
 
 
 def capture_var_fallback(arr: ffi.Array, name: str = 'captured'):
@@ -377,7 +405,7 @@ def capture_var_fallback(arr: ffi.Array, name: str = 'captured'):
 def capture_var_staging(arr: ffi.Array, name: str = 'captured'):
     return StagingContext.register_implicit_scope(
         _VarDef(prepare_vardef(name, capture=arr), arr.shape, arr.dtype,
-                'input', arr.device.main_mem_type()))
+                'input', arr.prefer_device.main_mem_type()))
 
 
 capture_var = staged_callable(capture_var_staging, capture_var_fallback)
@@ -386,7 +414,26 @@ capture_var = staged_callable(capture_var_staging, capture_var_fallback)
 
 class Var(StagedTypeAnnotation):
 
-    def __init__(self, shape, dtype, atype, mtype):
+    def __init__(self, shape, dtype, atype="input", mtype=None):
+        '''
+        Declare a variable
+
+        Parameters
+        ----------
+        name : str
+            Name of the variable
+        shape : Sequence[Expr] or Var
+            Shape of the variable. A variable can be created using a literal shape,
+            or another fixed-length VarRef as a shape
+        dtype : str or DataType
+            Data type of the variable
+        atype : str or AccessType
+            Access type of the variable. It specifies whether (and how) the variable
+            is an I/O variable of the function it belongs to. Defaults to "input"
+        mtype : str or MemType (Optional)
+            Memory type of the variable. If omitted, the main memory type of the
+            default Target in config will be used
+        '''
         self.shape, self.dtype, self.atype, self.mtype = shape, dtype, atype, mtype
 
     def annotate(self, name: str) -> VarRef:
@@ -863,24 +910,39 @@ def into_staging(func, caller_env, src=None, verbose=False):
         from pygments import highlight
         from pygments.lexers import PythonLexer
         from pygments.formatters import TerminalFormatter
-        print(
-            highlight(source, PythonLexer(),
-                      TerminalFormatter(bg='dark', linenos=True)))
+        print(highlight(source, PythonLexer(),
+                        TerminalFormatter(bg='dark', linenos=True)),
+              file=sys.stderr)
 
     caller_env['freetensor'] = sys.modules['freetensor']
     exec(compile(source, f'<staging:{func.__name__}>', 'exec'), caller_env)
     return caller_env[func.__name__], file, func.__name__
 
 
-def transform(func=None, verbose=False, caller_env=None):
+def transform(func=None, verbose: int = 0, depth: int = 1, caller_env=None):
+    '''
+    Transform a user function to an AST
+
+    Parameters
+    ----------
+    func : Python function
+        The user function to transform. If not specified, a partial function will
+        be returend, which can be used as a decorator
+    verbose : int
+        0 = print nothing. 1 = print the resulting AST. 2 = 1 + print the generated
+        Python code that is used for transforming
+    '''
+
+    if verbose is None:
+        verbose = 0
     if caller_env is None:
-        caller_env = _get_caller_env(1)
+        caller_env = _get_caller_env(depth)
 
     def decorator(func):
         params = list(inspect.signature(func).parameters)
         staging_func, filename, funcname = into_staging(func,
                                                         caller_env,
-                                                        verbose=verbose)
+                                                        verbose=verbose >= 2)
 
         try:
             with LifetimeScope():
@@ -921,6 +983,11 @@ def transform(func=None, verbose=False, caller_env=None):
         staged = Func(func.__name__, params + list(closure.keys()), returns,
                       staged_ast, closure)
 
+        if verbose >= 1:
+            print("The transformed AST is:", file=sys.stderr)
+            print(staged, file=sys.stderr)
+            print(file=sys.stderr)
+
         return staged
 
     if callable(func):
@@ -930,6 +997,20 @@ def transform(func=None, verbose=False, caller_env=None):
 
 
 def inline(func=None, src=None, fallback=None, verbose=False, caller_env=None):
+    '''
+    Enable a user function to be called by a transformed function at run time
+
+    Parameters
+    ----------
+    func : Python function
+        The user function
+    src : str (Optional)
+        The source code of `func`. This parameter is only required if the source
+        code cannot be get automatically, e.g., if `func` is generated from a `exec`
+    verbose : bool
+        True to print the generated Python code that is used for transforming
+    '''
+
     if caller_env is None:
         caller_env = _get_caller_env(1)
 

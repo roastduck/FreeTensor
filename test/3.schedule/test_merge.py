@@ -7,14 +7,12 @@ def test_basic():
         with ft.For("i", 0, 4, nid="L1") as i:
             with ft.For("j", 0, 8, nid="L2") as j:
                 y[i, j] = i * j
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.merge("L1", "L2")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast, skip_passes=["use_builtin_div"])
-    print(ast)
+    ast = ft.lower(ast, skip_passes=["use_builtin_div"], verbose=1)
 
     with ft.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 32) as i:
@@ -29,14 +27,12 @@ def test_non_zero_begin():
         with ft.For("i", 2, 6, nid="L1") as i:
             with ft.For("j", 4, 12, nid="L2") as j:
                 y[i - 2, j - 4] = i * j
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.merge("L1", "L2")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast, skip_passes=["use_builtin_div"])
-    print(ast)
+    ast = ft.lower(ast, skip_passes=["use_builtin_div"], verbose=1)
 
     with ft.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 32) as i:
@@ -51,14 +47,12 @@ def test_step():
         with ft.For("i", 2, -2, -2, nid="L1") as i:
             with ft.For("j", 6, -2, -2, nid="L2") as j:
                 y[i, j] = i * j
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.merge("L1", "L2")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast, skip_passes=["use_builtin_div"])
-    print(ast)
+    ast = ft.lower(ast, skip_passes=["use_builtin_div"], verbose=1)
 
     with ft.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 8) as i:
@@ -75,8 +69,7 @@ def test_invalid():
             with ft.For("j", 0, 4, nid="L2") as j:
                 with ft.For("k", 0, 4, nid="L3") as k:
                     y[i, j, k] = i + j + k
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
         s.merge("L1", "L3")
@@ -91,14 +84,12 @@ def test_if_in_between():
             with ft.If(x[i] > 0):
                 with ft.For("j", 0, 8, nid="L2") as j:
                     y[i, j] = i * j
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.merge("L1", "L2")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast, skip_passes=["use_builtin_div"])
-    print(ast)
+    ast = ft.lower(ast, skip_passes=["use_builtin_div"], verbose=1)
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4, 8), "int32", "output", "cpu")]) as (x, y):
@@ -117,14 +108,12 @@ def test_stmt_in_between():
             z[i] = i
             with ft.For("j", 0, 8, nid="L2") as j:
                 y[i, j] = i * j
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.merge("L1", "L2")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast, skip_passes=["use_builtin_div"])
-    print(ast)
+    ast = ft.lower(ast, skip_passes=["use_builtin_div"], verbose=1)
 
     with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
                     ("z", (4,), "int32", "output", "cpu")]) as (y, z):
@@ -145,14 +134,12 @@ def test_def_in_between():
                 z[()] = x[i]
                 with ft.For("j", 0, 8, nid="L2") as j:
                     y[i, j] = z[()] * j
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.merge("L1", "L2")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast, skip_passes=["use_builtin_div"])
-    print(ast)
+    ast = ft.lower(ast, skip_passes=["use_builtin_div"], verbose=1)
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4, 8), "int32", "output", "cpu"),
@@ -173,14 +160,12 @@ def test_prop_expr_of_outer_loop():
                 z[()] = i
                 with ft.For("j", 0, 8, nid="L2") as j:
                     y[i, j] = z[()] * j
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.merge("L1", "L2")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast, skip_passes=["use_builtin_div"])
-    print(ast)
+    ast = ft.lower(ast, skip_passes=["use_builtin_div"], verbose=1)
 
     with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
                     ("z", (), "int32", "output", "cpu")]) as (y, z):

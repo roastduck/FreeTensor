@@ -9,8 +9,7 @@ def test_cpu_basic():
             with ft.For("j", 0, 1000, nid="Lj") as j:
                 y[i, j] = x[i, j] + 1
 
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.auto_parallelize(ft.CPU())
     print(s.logs())
@@ -24,8 +23,7 @@ def test_gpu_basic_static_small():
             with ft.For("j", 0, 10, nid="Lj") as j:
                 y[i, j, 0] = x[i, j, 0] + 1
 
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.auto_parallelize(ft.GPU())
     print(s.ast())
@@ -45,8 +43,7 @@ def test_gpu_basic_static_large():
             with ft.For("j", 0, 1000, nid="Lj") as j:
                 y[i, j, 0] = x[i, j, 0] + 1
 
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.auto_parallelize(ft.GPU())
     print(s.ast())
@@ -67,8 +64,7 @@ def test_gpu_basic_dynamic():
                 with ft.For("j", 0, 1000, nid="Lj") as j:
                     y[i, j, 0] = x[i, j, 0] + 1
 
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.auto_parallelize(ft.GPU())
     print(s.ast())
@@ -91,8 +87,7 @@ def test_non_parallelizable():
             with ft.For("j", 0, 1000, nid="Lj") as j:
                 y[i] = y[i] * 2 + x[i, j]
 
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.auto_parallelize(ft.CPU())
     print(s.logs())
@@ -124,8 +119,7 @@ def test_gpu_warp_static():
             with ft.For("k", 0, 1000, nid="Lk") as k:
                 y[i, 0] += x[i, k]
 
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.auto_parallelize(ft.GPU())
     print(s.ast())
@@ -147,8 +141,7 @@ def test_gpu_warp_dynamic():
                 with ft.For("k", 0, n[()], nid="Lk") as k:
                     y[i, 0] += x[i, k]
 
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.auto_parallelize(ft.GPU())
     print(s.ast())
@@ -172,8 +165,7 @@ def test_outer_loop_too_short():
             with ft.For("j", 0, 1000, nid="Lj2") as j:
                 z[i, j] = y[i, j] + y[i, (j + 1) % 1000]
 
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.auto_parallelize(ft.CPU())
     print(s.ast())
@@ -193,8 +185,7 @@ def test_outer_loop_not_parallelizable():
                 with ft.For("i", 0, 100, nid="Li1") as i:
                     x[i] = y[i]
 
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.auto_parallelize(ft.CPU())
     print(s.ast())

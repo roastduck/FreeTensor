@@ -12,22 +12,21 @@ from common.numpy.io import load_txt, store_txt
 
 
 def compile_all(n_faces, in_feats, out_feats, device, ad_save_all):
-    mtype = device.main_mem_type()
 
     @ft.transform
     def inference(adj, x, w0, w1, w2, w3, y):
-        adj: ft.Var[(n_faces, 3), "int32", "input", mtype]
-        x: ft.Var[(n_faces, in_feats), "float32", "input", mtype]
-        w0: ft.Var[(in_feats, out_feats), "float32", "input", mtype]
-        w1: ft.Var[(in_feats, out_feats), "float32", "input", mtype]
-        w2: ft.Var[(in_feats, out_feats), "float32", "input", mtype]
-        w3: ft.Var[(in_feats, out_feats), "float32", "input", mtype]
-        y: ft.Var[(n_faces, out_feats), "float32", "output", mtype]
+        adj: ft.Var[(n_faces, 3), "int32", "input"]
+        x: ft.Var[(n_faces, in_feats), "float32", "input"]
+        w0: ft.Var[(in_feats, out_feats), "float32", "input"]
+        w1: ft.Var[(in_feats, out_feats), "float32", "input"]
+        w2: ft.Var[(in_feats, out_feats), "float32", "input"]
+        w3: ft.Var[(in_feats, out_feats), "float32", "input"]
+        y: ft.Var[(n_faces, out_feats), "float32", "output"]
 
         for i in range(n_faces):
-            sum1 = zeros((in_feats,), "float32", mtype)
-            sum2 = zeros((in_feats,), "float32", mtype)
-            sum3 = zeros((in_feats,), "float32", mtype)
+            sum1 = zeros((in_feats,), "float32")
+            sum2 = zeros((in_feats,), "float32")
+            sum3 = zeros((in_feats,), "float32")
             for p in range(3):
                 add_to(sum1, x[adj[i, p]])
                 add_to(sum2, abs(sub(x[adj[i, p]], x[adj[i, (p + 1) % 3]])))
@@ -41,14 +40,11 @@ def compile_all(n_faces, in_feats, out_feats, device, ad_save_all):
     print("# Inference:")
     print(inference)
     t0 = time.time()
-    s = ft.Schedule(inference)
-    s.auto_schedule(device.target())
-    f = ft.lower(s.func(), device.target())
-    code = ft.codegen(f, device.target())
-    inference_exe = ft.Driver(inference, code, device)
+    inference_exe = ft.optimize(
+        inference,
+        schedule_callback=lambda s: s.auto_schedule(device.target()),
+        verbose=1)
     t1 = time.time()
-    print(f)
-    print(debug.with_line_no(code))
     print(f"Inference compiling time: {t1 - t0}s")
 
     forward, backward, requires, privdes, _ = ft.grad(
@@ -57,23 +53,17 @@ def compile_all(n_faces, in_feats, out_feats, device, ad_save_all):
 
     print("# Forward:")
     print(forward)
-    s = ft.Schedule(forward)
-    s.auto_schedule(device.target())
-    f = ft.lower(s.func(), device.target())
-    print(f)
-    code = ft.codegen(f, device.target())
-    print(debug.with_line_no(code))
-    forward_exe = ft.Driver(forward, code, device)
+    forward_exe = ft.optimize(
+        forward,
+        schedule_callback=lambda s: s.auto_schedule(device.target()),
+        verbose=1)
 
     print("# Backward:")
     print(backward)
-    s = ft.Schedule(backward)
-    s.auto_schedule(device.target())
-    f = ft.lower(s.func(), device.target())
-    print(f)
-    code = ft.codegen(f, device.target())
-    print(debug.with_line_no(code))
-    backward_exe = ft.Driver(backward, code, device)
+    backward_exe = ft.optimize(
+        backward,
+        schedule_callback=lambda s: s.auto_schedule(device.target()),
+        verbose=1)
 
     def run_backward(adj, x, w0, w1, w2, w3, y, d_y, d_x, d_w0, d_w1, d_w2,
                      d_w3):
@@ -150,8 +140,9 @@ if __name__ == '__main__':
     d_w3 = ft.Array(d_w3, ir_dev)
     d_y = ft.Array(d_y, ir_dev)
 
-    inference, forward, backward = compile_all(n_faces, in_feats, out_feats,
-                                               ir_dev, cmd_args.ad_save_all)
+    with ir_dev:
+        inference, forward, backward = compile_all(n_faces, in_feats, out_feats,
+                                                   ir_dev, cmd_args.ad_save_all)
 
     print(
         f"{cmd_args.warmup_num} warmup, {cmd_args.test_num} repeats for evalution"

@@ -46,15 +46,16 @@ from .nodes import (
 from .analyze import *
 from .passes import *
 from .schedule import *
-from .codegen import codegen
+from .codegen import NativeCode, codegen
 from .driver import *
 from .config import *
 
-from .transformer import (transform, inline, create_var, var, capture_var, Var,
+from .transformer import (transform, inline, empty, var, capture_var, Var,
                           StagingError, StagedAssignable, StagedIterable,
                           StagedTypeAnnotation)
 
 from .meta import *
 from .auto_schedule import *
+from .optimize import optimize
 
 from .task_scheduler import TaskScheduler

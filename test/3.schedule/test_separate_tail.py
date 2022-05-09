@@ -13,13 +13,11 @@ def test_basic():
                 y2[i] = 2
             with ft.Else():
                 y2[i] = 3
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.separate_tail()
     ast = s.ast()
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("y1", (4,), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):
@@ -46,13 +44,11 @@ def test_multiple_cond():
                 y2[i] = 2
             with ft.Else():
                 y2[i] = 3
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.separate_tail()
     ast = s.ast()
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("y1", (5,), "int32", "output", "cpu"),
                     ("y2", (5,), "int32", "output", "cpu")]) as (y1, y2):
@@ -76,13 +72,11 @@ def test_eq():
                 y[i] = 0
             with ft.Else():
                 y[i] = 1
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.separate_tail()
     ast = s.ast()
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef("y", (5,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 2) as i:
@@ -101,13 +95,11 @@ def test_tiled():
             with ft.For("j", 0, 4) as j:
                 with ft.If(4 * i + j < 10):
                     y[4 * i + j] = 4 * i + j
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.separate_tail()
     ast = s.ast()
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef("y", (10,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 2) as i:
@@ -128,14 +120,12 @@ def test_dynamic_tiled():
                     with ft.For("j", 0, 4) as j:
                         with ft.If(4 * i + j < n[()]):
                             y[4 * i + j] = 4 * i + j
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.separate_tail()
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef("n", (), "int32", "input", "byvalue") as n:
         with ft.Assert(n[()] > 0):
@@ -159,13 +149,11 @@ def test_1d_stencil():
                 y[i] = y[i] + x[i - 1]
             with ft.If(i + 1 < 10):
                 y[i] = y[i] + x[i + 1]
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.separate_tail()
     ast = s.ast()
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (10,), "int32", "input", "cpu"),
                     ("y", (10,), "int32", "output", "cpu")]) as (x, y):
@@ -190,13 +178,11 @@ def test_duplicate_vardef():
                     y[i] = t[()] + 1
                 with ft.Else():
                     y[i] = t[()] + 2
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.separate_tail()
     ast = s.ast()
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
@@ -229,13 +215,11 @@ def test_no_duplicate_vardef():
                     y[i] = t[()] + 1
                 with ft.Else():
                     y[i] = t[()] + 2
-    ast = ft.pop_ast()
-    print(ast)
+    ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.separate_tail(True)
     ast = s.ast()
-    ast = ft.lower(ast)
-    print(ast)
+    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
@@ -258,7 +242,7 @@ def test_no_hoisting_loop_variant():
     @ft.transform
     def foo(x):
         x: ft.Var[(32,), 'int32', 'output', 'cpu']
-        a = ft.create_var((), 'int32', 'cpu')
+        a = ft.empty((), 'int32', 'cpu')
         a[()] = 10
         for i in range(32):
             a[()] = 20
