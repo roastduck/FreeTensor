@@ -15,8 +15,8 @@
 namespace freetensor {
 namespace py = pybind11;
 
-constexpr int EVOLUTIONARY_SEARCH_POPULATION = 32;
-constexpr int EVOLUTIONARY_SEARCH_ITERS = 2;
+constexpr int EVOLUTIONARY_SEARCH_POPULATION = 128;
+constexpr int EVOLUTIONARY_SEARCH_ITERS = 4;
 constexpr double EVOLUTIONARY_SEARCH_MUTATION_PROB = 0.6;
 constexpr double EVOLUTIONARY_SEARCH_CROSSOVER_PROB = 0.3;
 
@@ -45,8 +45,9 @@ class AutoSchedule {
 
   public:
     AutoSchedule(const Schedule &schedule, const Ref<Target> &target,
-                 const Ref<Device> &device, int measuredSize, py::function predictFunc,
-                 py::function updateFunc, std::string tag = "");
+                 const Ref<Device> &device, int measuredSize,
+                 py::function predictFunc, py::function updateFunc,
+                 std::string tag = "");
 
     size_t measuredSize() const { return measuredSize_; }
 

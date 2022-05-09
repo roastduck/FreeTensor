@@ -11,10 +11,12 @@ void init_ffi_auto_schedule(py::module_ &m) {
     py::class_<Sketch>(m, "Sketch")
         .def("get_annotation", &Sketch::getAnnotation);
     py::class_<AutoSchedule>(m, "AutoSchedule")
-        .def(py::init<const Schedule &, const Ref<Target> &, const Ref<Device> &,
-                      size_t, py::function, py::function>())
-        .def(py::init<const Schedule &, const Ref<Target> &, const Ref<Device> &,
-                      size_t, py::function, py::function, std::string>())
+        .def(
+            py::init<const Schedule &, const Ref<Target> &, const Ref<Device> &,
+                     size_t, py::function, py::function>())
+        .def(
+            py::init<const Schedule &, const Ref<Target> &, const Ref<Device> &,
+                     size_t, py::function, py::function, std::string>())
         .def("measuredSize", &AutoSchedule::measuredSize)
         .def("set_params", &AutoSchedule::setParams, "args"_a,
              "kws"_a = std::unordered_map<std::string, Ref<Array>>())

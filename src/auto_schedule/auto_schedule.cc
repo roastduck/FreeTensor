@@ -182,10 +182,15 @@ AutoSchedule::testAndAdd(std::vector<Ref<Sketch>> &sketches_in) {
         return *a < *b;
     };
     std::make_heap(measuredSketches_.begin(), measuredSketches_.end(), cmp);
+    double avg = 0, mn = 1e20;
+    int cnt = 0;
     for (size_t i = 0; i < n; i++) {
         if (times[i] > 1e20) {
             continue;
         }
+        cnt++;
+        avg += times[i];
+        mn = std::min(mn, times[i]);
         if (measuredSketches_.size() < measuredSize_) {
             measuredSketches_.emplace_back(sketches[i]);
             measuredSketches_.back()->setTime(times[i]);
@@ -201,10 +206,11 @@ AutoSchedule::testAndAdd(std::vector<Ref<Sketch>> &sketches_in) {
         }
         measuredHashes_.insert(sketches[i]->hash());
     }
-
+    avg /= cnt;
     std::sort(measuredSketches_.begin(), measuredSketches_.end(), cmp);
     std::cout << "min " << measuredSketches_.front()->time() << " max "
               << measuredSketches_.back()->time() << std::endl;
+    std::cout << "this round: min: " << mn << " avg: " << avg << std::endl;
     return times;
 }
 
@@ -295,7 +301,7 @@ AutoSchedule::evolutionarySearch(std::vector<Ref<Sketch>> init,
     std::vector<SketchPred> heap;
     std::set<size_t> heapHashes(measuredHashes_);
     auto cmp = [](const SketchPred &a, const SketchPred &b) {
-        return a.second < b.second;
+        return a.second > b.second;
     };
     std::vector<std::default_random_engine> gens;
     for (size_t i = 0; i < EVOLUTIONARY_SEARCH_POPULATION; i++) {
@@ -307,17 +313,17 @@ AutoSchedule::evolutionarySearch(std::vector<Ref<Sketch>> init,
         auto probSum = getProbSum(pred);
         for (size_t j = 0; j < v1.size(); j++) {
             size_t hash = v1[j]->hash();
-            auto time = pred[j];
+            auto flops = pred[j];
             if (!heapHashes.count(hash)) {
                 if (heap.size() < outSize) {
                     heapHashes.insert(hash);
-                    heap.emplace_back(v1[j], time);
+                    heap.emplace_back(v1[j], flops);
                     std::push_heap(heap.begin(), heap.end(), cmp);
-                } else if (time < heap[0].second) {
+                } else if (flops > heap[0].second) {
                     heapHashes.erase(heap[0].first->hash());
                     heapHashes.insert(hash);
                     std::pop_heap(heap.begin(), heap.end(), cmp);
-                    heap.back() = std::make_pair(v1[j], time);
+                    heap.back() = std::make_pair(v1[j], flops);
                     std::push_heap(heap.begin(), heap.end(), cmp);
                 }
             }
