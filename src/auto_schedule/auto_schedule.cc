@@ -62,11 +62,9 @@ std::vector<double> AutoSchedule::measure(std::vector<Ref<Sketch>> &sketches) {
 
     size_t n = sketches.size();
     std::vector<Ref<Driver>> drivers(n);
-//    std::cout << "codegen" << std::endl;
 #pragma omp parallel for
     for (size_t i = 0; i < n; i++) {
         try {
-            //            sketches[i]->genCode(target_);
             drivers[i] = Ref<Driver>::make(sketches[i]->lowered(),
                                            sketches[i]->code(), device_);
         } catch (const std::exception &e) {
@@ -256,15 +254,6 @@ std::vector<Ref<Sketch>> AutoSchedule::getRandPopulation(size_t nRand) {
             if (!now[i].isValid() || now[i]->code().empty()) {
                 continue;
             }
-            //            try {
-            //                auto driver = Ref<Driver>::make(now[i]->lowered(),
-            //                                                now[i]->code(),
-            //                                                device_);
-            //                driver->setParams(args_, kws_);
-            //                driver->time(1, 0);
-            //            } catch (const std::exception &e) {
-            //                continue;
-            //            }
             size_t h = now[i]->hash();
             if (!used.count(h)) {
                 used.insert(h);
