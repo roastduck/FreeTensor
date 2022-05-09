@@ -74,10 +74,13 @@ Stmt tensorPropConst(const Stmt &_op) {
                     }
                 }
             }
-            r2w[d.later()].emplace_back(
-                d.earlier().as<StmtNode>(),
-                ReplaceInfo{d.earlier_.iter_, d.later_.iter_,
-                            toString(PBFunc(d.later2EarlierIter_))});
+            if (d.later2EarlierIter_
+                    .isSingleValued()) { // Check before converting into PBFunc
+                r2w[d.later()].emplace_back(
+                    d.earlier().as<StmtNode>(),
+                    ReplaceInfo{d.earlier_.iter_, d.later_.iter_,
+                                toString(PBFunc(d.later2EarlierIter_))});
+            }
         };
         auto filterMay = [&](const AccessPoint &later,
                              const AccessPoint &earlier) {

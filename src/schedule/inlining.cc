@@ -82,6 +82,11 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
             expr = earlier->expr_;
             if (!allIters(expr).empty()) {
                 try {
+                    if (!dep.later2EarlierIter_
+                             .isSingleValued()) { // Check before converting
+                                                  // into PBFunc
+                        throw ParserError("ISL map is not single-valued");
+                    }
                     auto &&[args, values, cond] =
                         parsePBFunc(toString(PBFunc(dep.later2EarlierIter_)));
                     ASSERT(dep.earlier_.iter_.size() <=

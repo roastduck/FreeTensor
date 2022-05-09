@@ -51,12 +51,15 @@ Stmt propOneTimeUse(const Stmt &_op) {
         return true;
     };
     auto foundMust = [&](const Dependency &d) {
-        r2w[d.later()].emplace_back(
-            d.earlier().as<StmtNode>(),
-            ReplaceInfo{d.earlier_.iter_, d.later_.iter_,
-                        toString(PBFunc(d.later2EarlierIter_))});
-        w2r[d.earlier().as<StmtNode>()].emplace_back(d.later());
-        stmts[d.later()] = d.later_.stmt_;
+        if (d.later2EarlierIter_
+                .isSingleValued()) { // Check before converting into PBFunc
+            r2w[d.later()].emplace_back(
+                d.earlier().as<StmtNode>(),
+                ReplaceInfo{d.earlier_.iter_, d.later_.iter_,
+                            toString(PBFunc(d.later2EarlierIter_))});
+            w2r[d.earlier().as<StmtNode>()].emplace_back(d.later());
+            stmts[d.later()] = d.later_.stmt_;
+        }
     };
     auto filterMay = [&](const AccessPoint &later, const AccessPoint &earlier) {
         return r2w.count(later.op_) || w2r.count(earlier.op_.as<StmtNode>());

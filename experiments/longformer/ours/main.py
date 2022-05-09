@@ -12,20 +12,16 @@ from common.numpy.io import load_txt, store_txt
 
 def compile_all(w, dilation, dilation_heads, n_heads, seq_len, feat_len, device,
                 ad_save_all):
-    mtype = device.main_mem_type()
-
-    sqrt_d = math.sqrt(feat_len)
-    inf = float("inf")
 
     @ft.transform
     def inference(Q, K, V, Y):
-        Q: ft.Var[(n_heads, seq_len, feat_len), "float32", "input", mtype]
-        K: ft.Var[(n_heads, seq_len, feat_len), "float32", "input", mtype]
-        V: ft.Var[(n_heads, seq_len, feat_len), "float32", "input", mtype]
-        Y: ft.Var[(n_heads, seq_len, feat_len), "float32", "output", mtype]
+        Q: ft.Var[(n_heads, seq_len, feat_len), "float32", "input"]
+        K: ft.Var[(n_heads, seq_len, feat_len), "float32", "input"]
+        V: ft.Var[(n_heads, seq_len, feat_len), "float32", "input"]
+        Y: ft.Var[(n_heads, seq_len, feat_len), "float32", "output"]
         for i in range(n_heads):
             for j in range(seq_len):
-                dot = ft.empty((2 * w + 1,), "float32", mtype)
+                dot = ft.empty((2 * w + 1,), "float32")
                 for k in range(-w, w + 1):
                     dot[k + w] = 0
                     if j + ft.if_then_else(
@@ -36,20 +32,20 @@ def compile_all(w, dilation, dilation_heads, n_heads, seq_len, feat_len, device,
                             dot[k + w] += Q[i, j, p] * K[i, j + ft.if_then_else(
                                 i >= dilation_heads, k, k * dilation), p]
 
-                maxval = ft.empty((), "float32", mtype)
-                maxval[()] = -inf
+                maxval = ft.empty((), "float32")
+                maxval[()] = -float("inf")
                 for k in range(2 * w + 1):
                     maxval[()] = ft.max(maxval[()], dot[k])
-                expval = ft.empty((2 * w + 1,), "float32", mtype)
+                expval = ft.empty((2 * w + 1,), "float32")
                 for k in range(2 * w + 1):
                     expval[k] = ft.exp(dot[k] - maxval[()])
-                expsum = ft.empty((), "float32", mtype)
+                expsum = ft.empty((), "float32")
                 expsum[()] = 0
                 for k in range(2 * w + 1):
                     expsum[()] += expval[k]
-                attn = ft.empty((2 * w + 1,), "float32", mtype)
+                attn = ft.empty((2 * w + 1,), "float32")
                 for k in range(2 * w + 1):
-                    attn[k] = expval[k] / expsum[()] / sqrt_d
+                    attn[k] = expval[k] / expsum[()] / math.sqrt(feat_len)
 
                 for p in range(feat_len):
                     Y[i, j, p] = 0
@@ -66,14 +62,11 @@ def compile_all(w, dilation, dilation_heads, n_heads, seq_len, feat_len, device,
     print("# Inference:")
     print(inference)
     t0 = time.time()
-    s = ft.Schedule(inference)
-    s.auto_schedule(device.target())
-    f = ft.lower(s.func(), device.target())
-    code = ft.codegen(f, device.target())
-    inference_exe = ft.Driver(inference, code, device)
+    inference_exe = ft.optimize(
+        inference,
+        schedule_callback=lambda s: s.auto_schedule(device.target()),
+        verbose=1)
     t1 = time.time()
-    print(f)
-    print(debug.with_line_no(code))
     print(f"Inference compiling time: {t1 - t0}s")
 
     forward, backward, requires, privdes, _ = ft.grad(
@@ -82,23 +75,17 @@ def compile_all(w, dilation, dilation_heads, n_heads, seq_len, feat_len, device,
 
     print("# Forward:")
     print(forward)
-    s = ft.Schedule(forward)
-    s.auto_schedule(device.target())
-    f = ft.lower(s.func(), device.target())
-    print(f)
-    code = ft.codegen(f, device.target())
-    print(debug.with_line_no(code))
-    forward_exe = ft.Driver(forward, code, device)
+    forward_exe = ft.optimize(
+        forward,
+        schedule_callback=lambda s: s.auto_schedule(device.target()),
+        verbose=1)
 
     print("# Backward:")
     print(backward)
-    s = ft.Schedule(backward)
-    s.auto_schedule(device.target())
-    f = ft.lower(s.func(), device.target())
-    print(f)
-    code = ft.codegen(f, device.target())
-    print(debug.with_line_no(code))
-    backward_exe = ft.Driver(backward, code, device)
+    backward_exe = ft.optimize(
+        backward,
+        schedule_callback=lambda s: s.auto_schedule(device.target()),
+        verbose=1)
 
     def run_backward(Q, K, V, Y, d_Y, d_Q, d_K, d_V):
         kvs = {}
@@ -165,9 +152,10 @@ if __name__ == '__main__':
     d_v = ft.Array(d_v, ir_dev)
     d_y = ft.Array(d_y, ir_dev)
 
-    inference, forward, backward = compile_all(w, dilation, dilation_heads,
-                                               n_heads, seq_len, feat_len,
-                                               ir_dev, cmd_args.ad_save_all)
+    with ir_dev:
+        inference, forward, backward = compile_all(w, dilation, dilation_heads,
+                                                   n_heads, seq_len, feat_len,
+                                                   ir_dev, cmd_args.ad_save_all)
 
     print(
         f"{cmd_args.warmup_num} warmup, {cmd_args.test_num} repeats for evalution"
