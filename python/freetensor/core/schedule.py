@@ -10,7 +10,7 @@ class Schedule(ffi.Schedule):
     def __init__(self, ast, verbose: int = 0):
         super(Schedule, self).__init__(ast, verbose)
 
-    def split(self, node, factor=-1, nparts=-1):
+    def split(self, node, factor=-1, nparts=-1, shift=0):
         """
         Split a loop into two nested loops
 
@@ -54,7 +54,7 @@ class Schedule(ffi.Schedule):
         (str, str)
             (outer loop ID, inner loop ID)
         """
-        return super(Schedule, self).split(ID(node), factor, nparts)
+        return super(Schedule, self).split(ID(node), factor, nparts, shift)
 
     def reorder(self, order):
         """

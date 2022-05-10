@@ -36,7 +36,7 @@ void init_ffi_schedule(py::module_ &m) {
              static_cast<std::vector<Stmt> (Schedule::*)(const ID &) const>(
                  &Schedule::findAll))
         .def("split", &Schedule::split, "id"_a, "factor"_a = -1,
-             "nparts"_a = -1)
+             "nparts"_a = -1, "shift"_a = 0)
         .def("reorder", &Schedule::reorder, "order"_a)
         .def("merge", &Schedule::merge, "loop1"_a, "loop2"_a)
         .def("fission", &Schedule::fission, "loop"_a, "side"_a, "splitter"_a,

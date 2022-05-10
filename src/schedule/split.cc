@@ -7,20 +7,23 @@ Stmt Splitter::visit(const For &_op) {
     if (_op->id() == src_) {
         auto iter0 = _op->iter_ + ".0";
         auto iter1 = _op->iter_ + ".1";
+        auto shift = makeIntConst(shift_);
+        auto shifted_len = makeAdd(_op->len_, shift);
         Expr factor, nparts;
 
         if (factor_ != -1) {
             ASSERT(nparts_ == -1);
             factor = makeIntConst(factor_);
-            nparts = makeCeilDiv(_op->len_, factor);
+            nparts = makeCeilDiv(shifted_len, factor);
         } else {
             ASSERT(nparts_ != -1);
             nparts = makeIntConst(nparts_);
-            factor = makeCeilDiv(_op->len_, nparts);
+            factor = makeCeilDiv(shifted_len, nparts);
         }
 
         auto nthIter = makeAdd(makeMul(makeVar(iter0), factor), makeVar(iter1));
-        auto newIter = makeAdd(_op->begin_, makeMul(nthIter, _op->step_));
+        auto newIter =
+            makeSub(makeAdd(_op->begin_, makeMul(nthIter, _op->step_)), shift);
 
         iterFrom_ = _op->iter_;
         iterTo_ = newIter;
@@ -30,7 +33,9 @@ Stmt Splitter::visit(const For &_op) {
         ASSERT(__op->nodeType() == ASTNodeType::For);
         auto &&op = __op.as<ForNode>();
 
-        auto body = makeIf("", makeLT(nthIter, _op->len_), op->body_);
+        auto body = makeIf(
+            "", makeLAnd(makeGE(nthIter, shift), makeLT(nthIter, shifted_len)),
+            op->body_);
         auto inner = makeFor(dst1_, iter1, makeIntConst(0), factor,
                              makeIntConst(1), factor, op->property_, body);
         auto outer = makeFor(dst0_, iter0, makeIntConst(0), nparts,
@@ -51,8 +56,8 @@ Expr Splitter::visit(const Var &op) {
 }
 
 std::pair<Stmt, std::pair<ID, ID>> split(const Stmt &_ast, const ID &id,
-                                         int factor, int nparts) {
-    Splitter mutator(id, factor, nparts);
+                                         int factor, int nparts, int shift) {
+    Splitter mutator(id, factor, nparts, shift);
     auto ast = mutator(_ast);
     if (!mutator.found()) {
         throw InvalidSchedule("Loop not found");

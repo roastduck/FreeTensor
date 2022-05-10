@@ -71,11 +71,13 @@ Stmt Schedule::find(const std::function<bool(const Stmt &)> &filter) const {
     return ret[0];
 }
 
-std::pair<ID, ID> Schedule::split(const ID &id, int factor, int nparts) {
+std::pair<ID, ID> Schedule::split(const ID &id, int factor, int nparts,
+                                  int shift) {
     auto log = "split(" + toString(id) + ", factor=" + std::to_string(factor) +
-               ", nparts=" + std::to_string(nparts) + ")";
+               ", nparts=" + std::to_string(nparts) +
+               ", shift=" + std::to_string(shift) + ")";
     try {
-        auto ret = freetensor::split(ast_, id, factor, nparts);
+        auto ret = freetensor::split(ast_, id, factor, nparts, shift);
         ast_ = ret.first;
         appendLog(log);
         return ret.second;
