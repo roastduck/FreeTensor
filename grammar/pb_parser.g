@@ -6,10 +6,14 @@ options {
 
 @parser::postinclude {
     #include <expr.h>
+    #include <debug.h>
+    #include <serialize/load_ast.h>
+    #include <serialize/mangle.h>
 }
 
 func returns [std::vector<std::string> args, std::vector<Expr> values, Expr cond]
-    : '{' varList '->' exprList (':' expr
+    : (extList=varList '->')?
+        '{' varList '->' exprList (':' expr
       {
         $cond = $expr.node;
       }
@@ -51,7 +55,13 @@ expr returns [Expr node]
       }
     | Id
       {
-        $node = makeVar($Id.text);
+        if (auto pos = $Id.text.find("__ext__"); pos != std::string::npos) {
+            auto expr = loadAST(unmangle($Id.text.substr(0, pos)));
+            ASSERT(expr->isExpr());
+            $node = expr.as<ExprNode>();
+        } else {
+            $node = makeVar($Id.text);
+        }
       }
     | '(' expr ')'
       {

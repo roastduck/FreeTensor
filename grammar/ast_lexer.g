@@ -37,6 +37,7 @@ TRUE:       'true';
 FALSE:      'false';
 
 // expr
+EVAL:       '@!eval';
 FLOOR:      '@!floor';
 CEIL:       '@!ceil';
 ROUNDTO0:   '@!towards0';

@@ -579,8 +579,9 @@ void PrintVisitor::visit(const Intrinsic &op) {
 
 void PrintVisitor::visit(const Eval &op) {
     makeIndent();
+    os() << "@!eval(";
     recur(op->expr_);
-    os() << std::endl;
+    os() << ")" << std::endl;
 }
 
 void PrintVisitor::visit(const MatMul &op) {

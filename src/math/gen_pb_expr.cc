@@ -1,6 +1,7 @@
 #include <math/gen_pb_expr.h>
 #include <math/utils.h>
 #include <serialize/mangle.h>
+#include <serialize/print_ast.h>
 
 namespace freetensor {
 
@@ -41,7 +42,7 @@ void GenPBExpr::visit(const Var &op) {
 
 void GenPBExpr::visit(const Load &op) {
     if (isInt(symbolTable_.buffer(op->var_)->tensor()->dtype())) {
-        auto str = mangle("ext" + std::to_string(op->hash())) + varSuffix_;
+        auto str = mangle(dumpAST(op)) + "__ext__" + varSuffix_;
         vars_[op][op] = str;
         results_[op] = str;
     }

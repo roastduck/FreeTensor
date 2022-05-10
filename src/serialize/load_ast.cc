@@ -13,7 +13,7 @@ AST loadAST(const std::string &txt) {
         antlr4::CommonTokenStream tokens(&lexer);
         ast_parser parser(&tokens);
         parser.setErrorHandler(std::make_shared<antlr4::BailErrorStrategy>());
-        return parser.program()->node;
+        return parser.ast()->node;
     } catch (const antlr4::ParseCancellationException &e) {
         throw ParserError((std::string) "Parser error: " + e.what());
     }

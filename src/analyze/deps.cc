@@ -720,7 +720,7 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
 
     GenPBExpr::VarMap laterExternals;
     PBMap laterMap = makeAccMap(presburger, *later, iterDim, accDim,
-                                laterRelax_, "__ext_later", laterExternals);
+                                laterRelax_, "later", laterExternals);
     if (laterMap.empty()) {
         return;
     }
@@ -736,7 +736,7 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
                    earlierExternalsList)) {
         earlierMap =
             makeAccMap(presburger, *earlier, iterDim, accDim, earlierRelax_,
-                       "__ext_earlier" + std::to_string(i), earlierExternals);
+                       "earlier" + std::to_string(i), earlierExternals);
     }
     projectOutPrivateAxis(presburger, later, earlierList, earlierMapList,
                           iterDim);
@@ -807,9 +807,8 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
         makeNoDepsConstraint(presburger, earlier->def_->name_, iterDim);
 
     GenPBExpr::VarMap earlierExternals;
-    PBMap earlierMap =
-        makeAccMap(presburger, *earlier, iterDim, accDim, earlierRelax_,
-                   "__ext_earlier", earlierExternals);
+    PBMap earlierMap = makeAccMap(presburger, *earlier, iterDim, accDim,
+                                  earlierRelax_, "earlier", earlierExternals);
     if (earlierMap.empty()) {
         return;
     }
@@ -821,9 +820,8 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
     PBMap spDepAllUnion;
     for (auto &&[i, later, laterMap, laterExternals] : iter::zip(
              iter::count(), laterList, laterMapList, laterExternalsList)) {
-        laterMap =
-            makeAccMap(presburger, *later, iterDim, accDim, laterRelax_,
-                       "__ext_later" + std::to_string(i), laterExternals);
+        laterMap = makeAccMap(presburger, *later, iterDim, accDim, laterRelax_,
+                              "later" + std::to_string(i), laterExternals);
     }
     projectOutPrivateAxis(presburger, earlier, laterList, laterMapList,
                           iterDim);

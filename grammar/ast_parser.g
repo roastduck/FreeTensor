@@ -13,13 +13,19 @@ options {
     #include <func.h>
 }
 
-program returns [AST node]
-    : func EOF {
+ast returns [AST node]
+    : func EOF
+      {
         $node = $func.node;
-    }
-    | stmts EOF {
+      }
+    | stmts EOF
+      {
         $node = $stmts.node;
-    }
+      }
+    | expr EOF
+      {
+        $node = $expr.node;
+      }
     ;
 
 // -------------------- type --------------------
@@ -136,7 +142,7 @@ stmtWithoutID returns [Stmt node]
       {
         $node = $assume.node;
       }
-    | expr
+    | EVAL '(' expr ')'
       {
         $node = makeEval(ID(), $expr.node);
       }

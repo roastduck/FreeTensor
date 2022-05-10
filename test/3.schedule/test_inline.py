@@ -263,6 +263,33 @@ def test_different_iter_with_different_names():
     assert std.match(ast)
 
 
+def test_different_iter_with_dynamic_offset():
+    with ft.VarDef([("offset", (), "int32", "inout", "cpu"),
+                    ("x", (4,), "int32", "input", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (offset, x, y):
+        ft.MarkNid("T")
+        with ft.VarDef("t", (4,), "int32", "cache", "cpu") as t:
+            with ft.For("i", offset[()], offset[()] + 4) as i:
+                t[i + -1 * offset[()]] = x[i + -1 * offset[()]] * 2
+            with ft.For("i", 0, 4) as i:
+                y[i] = t[i] + 1
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast)
+    s.inline("T")
+    ast = s.ast()
+    print(ast)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("offset", (), "int32", "inout", "cpu"),
+                    ("x", (4,), "int32", "input", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (offset, x, y):
+        with ft.For("i", 0, 4) as i:
+            y[i] = x[i] * 2 + 1
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
 def test_different_iter_with_uncertain_offset_no_inline():
     with ft.VarDef([("offset", (), "int32", "inout", "cpu"),
                     ("x", (4,), "int32", "input", "cpu"),
