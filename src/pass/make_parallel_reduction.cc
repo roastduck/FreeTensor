@@ -84,17 +84,13 @@ Stmt MakeParallelReduction::visit(const ReduceTo &_op) {
                     goto use_atomic;
                 }
                 std::vector<Expr> dimLowers{makeIntConst(0)}, dimUppers{dim};
-                for (auto &&item : unique_.getLower(idx)) {
-                    if (checkAllDefined(scopeDefined_.at(loopId),
-                                        item.expr())) {
-                        dimLowers.emplace_back(item.expr());
-                    }
+                for (auto &&item :
+                     unique_.getDefinedLower(idx, scopeDefined_.at(loopId))) {
+                    dimLowers.emplace_back(item.expr());
                 }
-                for (auto &&item : unique_.getUpper(idx)) {
-                    if (checkAllDefined(scopeDefined_.at(loopId),
-                                        item.expr())) {
-                        dimUppers.emplace_back(item.expr());
-                    }
+                for (auto &&item :
+                     unique_.getDefinedUpper(idx, scopeDefined_.at(loopId))) {
+                    dimUppers.emplace_back(item.expr());
                 }
                 lowerMap[loopId].emplace_back(std::move(dimLowers));
                 upperMap[loopId].emplace_back(std::move(dimUppers));

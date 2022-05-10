@@ -1,6 +1,8 @@
 #ifndef FREE_TENSOR_COMP_UNIQUE_BOUNDS_H
 #define FREE_TENSOR_COMP_UNIQUE_BOUNDS_H
 
+#include <unordered_set>
+
 #include <analyze/comp_transient_bounds.h>
 #include <analyze/type_infer.h>
 #include <visitor.h>
@@ -56,6 +58,18 @@ class CompUniqueBounds : public WithTypeInfer<Visitor> {
     int getIntLower(const Expr &op);
     int getIntUpper(const Expr &op);
     Opt<int> getInt(const Expr &op);
+
+    /**
+     * Get all bounds defined by only variables or iterators in `names`
+     * @{
+     */
+    LowerBoundsList
+    getDefinedLower(const Expr &op,
+                    const std::unordered_set<std::string> &names);
+    UpperBoundsList
+    getDefinedUpper(const Expr &op,
+                    const std::unordered_set<std::string> &names);
+    /** @} */
 
     /**
      * Check wheter `lhs` is always less than `rhs`

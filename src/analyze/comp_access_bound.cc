@@ -52,7 +52,9 @@ void CompAccessBound::visit(const VarDef &op) {
 
     var_ = op->name_;
     defs_.insert(op->name_);
+    defsAtVarDef_[op->name_] = defs_;
     BaseClass::visit(op);
+    defsAtVarDef_.erase(op->name_);
     defs_.erase(op->name_);
     var_.clear();
 
@@ -79,9 +81,7 @@ void CompAccessBound::visit(const VarDef &op) {
                 lowerItem.emplace_back(index);
             }
             for (auto &&b : access_[j].lower_[i]) {
-                if (checkAllDefined(defs_, b.allNames())) {
-                    lowerItem.emplace_back(b.expr());
-                }
+                lowerItem.emplace_back(b.expr());
             }
             lower.emplace_back(std::move(lowerItem));
         }
@@ -95,9 +95,7 @@ void CompAccessBound::visit(const VarDef &op) {
                 upperItem.emplace_back(index);
             }
             for (auto &&b : access_[j].upper_[i]) {
-                if (checkAllDefined(defs_, b.allNames())) {
-                    upperItem.emplace_back(b.expr());
-                }
+                upperItem.emplace_back(b.expr());
             }
             upper.emplace_back(std::move(upperItem));
         }
@@ -130,21 +128,24 @@ void CompAccessBound::visit(const VarDef &op) {
 void CompAccessBound::visit(const Load &op) {
     BaseClass::visit(op);
     if (op->var_ == var_ && mode_ & COMP_ACCESS_BOUND_READ) {
-        access_.emplace_back(unique_, op->indices_, conds());
+        access_.emplace_back(unique_, op->indices_, conds(),
+                             defsAtVarDef_.at(op->var_));
     }
 }
 
 void CompAccessBound::visit(const Store &op) {
     BaseClass::visit(op);
     if (op->var_ == var_ && mode_ & COMP_ACCESS_BOUND_WRITE) {
-        access_.emplace_back(unique_, op->indices_, conds());
+        access_.emplace_back(unique_, op->indices_, conds(),
+                             defsAtVarDef_.at(op->var_));
     }
 }
 
 void CompAccessBound::visit(const ReduceTo &op) {
     BaseClass::visit(op);
     if (op->var_ == var_) {
-        access_.emplace_back(unique_, op->indices_, conds());
+        access_.emplace_back(unique_, op->indices_, conds(),
+                             defsAtVarDef_.at(op->var_));
     }
 }
 

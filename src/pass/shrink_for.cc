@@ -53,15 +53,11 @@ Stmt ShrinkFor::visitStmt(const Stmt &stmt) {
             auto var = deepCopy(_var).as<VarNode>();
 
             std::vector<Expr> lower, upper;
-            for (auto &&b : bound_.getLower(var)) {
-                if (checkAllDefined(names, b.allNames())) {
-                    lower.emplace_back(b.expr());
-                }
+            for (auto &&b : bound_.getDefinedLower(var, names)) {
+                lower.emplace_back(b.expr());
             }
-            for (auto &&b : bound_.getUpper(var)) {
-                if (checkAllDefined(names, b.allNames())) {
-                    upper.emplace_back(b.expr());
-                }
+            for (auto &&b : bound_.getDefinedUpper(var, names)) {
+                upper.emplace_back(b.expr());
             }
             newRange_[var].first.emplace_back(std::move(lower));
             newRange_[var].second.emplace_back(std::move(upper));

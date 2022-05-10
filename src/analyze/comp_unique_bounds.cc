@@ -3,6 +3,7 @@
 
 #include <analyze/all_uses.h>
 #include <analyze/analyze_linear.h>
+#include <analyze/check_all_defined.h>
 #include <analyze/comp_unique_bounds.h>
 #include <container_utils.h>
 
@@ -78,6 +79,28 @@ Opt<int> CompUniqueBounds::getInt(const Expr &op) {
     int lower = getIntLower(op);
     int upper = getIntUpper(op);
     return lower == upper ? Opt<int>::make(lower) : nullptr;
+}
+
+CompUniqueBounds::LowerBoundsList CompUniqueBounds::getDefinedLower(
+    const Expr &op, const std::unordered_set<std::string> &names) {
+    LowerBoundsList ret;
+    for (auto &&b : getLower(op)) {
+        if (checkAllDefined(names, b.allNames())) {
+            ret.emplace_back(b);
+        }
+    }
+    return ret;
+}
+
+CompUniqueBounds::UpperBoundsList CompUniqueBounds::getDefinedUpper(
+    const Expr &op, const std::unordered_set<std::string> &names) {
+    UpperBoundsList ret;
+    for (auto &&b : getUpper(op)) {
+        if (checkAllDefined(names, b.allNames())) {
+            ret.emplace_back(b);
+        }
+    }
+    return ret;
 }
 
 bool CompUniqueBounds::alwaysLT(const Expr &lhs, const Expr &rhs) {

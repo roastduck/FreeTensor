@@ -51,6 +51,16 @@ class CompAccessBound
         std::vector<std::vector<UpperBound>> upper_;
 
         Access(CompUniqueBounds &unique, const std::vector<Expr> &indices,
+               const std::vector<Expr> &conds,
+               const std::unordered_set<std::string> &names)
+            : indices_(indices), conds_(conds) {
+            for (auto &&idx : indices) {
+                lower_.emplace_back(unique.getDefinedLower(idx, names));
+                upper_.emplace_back(unique.getDefinedUpper(idx, names));
+            }
+        }
+
+        Access(CompUniqueBounds &unique, const std::vector<Expr> &indices,
                const std::vector<Expr> &conds)
             : indices_(indices), conds_(conds) {
             for (auto &&idx : indices) {
@@ -73,6 +83,8 @@ class CompAccessBound
 
     // all defined name in the scope
     std::unordered_set<std::string> defs_;
+    std::unordered_map<std::string, std::unordered_set<std::string>>
+        defsAtVarDef_;
 
     CompAccessBoundMode mode_;
 
