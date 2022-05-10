@@ -311,7 +311,7 @@ def test_correct_dependency_loop_step():
         ("y", (4, 8), "int32", "output", "cpu"),
     ]) as (x0, x1, y):
         with ft.For("i", 0, 4) as i:
-            with ft.VarDef("buf", (3, 1), "int32", "cache", "cpu") as b:
+            with ft.VarDef("buf", (4, 1), "int32", "cache", "cpu") as b:
                 with ft.For("j", 0, 7, 2) as j:
                     b[j // 2, 0] = x0[i, j] + x1[i, j]
                 with ft.For("j", 0, 7, 2) as j:

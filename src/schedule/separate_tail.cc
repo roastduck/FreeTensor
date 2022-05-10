@@ -119,7 +119,7 @@ Stmt SeparateTail::visit(const For &_op) {
         auto &&sep = separations[i];
         auto front =
             makeFor(old->id(), old->iter_, old->begin_, sep, old->step_,
-                    makeFloorDiv(makeSub(sep, old->begin_), old->step_),
+                    makeCeilDiv(makeSub(sep, old->begin_), old->step_),
                     old->property_, old->body_);
         auto back = makeFor(
             old->id(), old->iter_,
@@ -127,7 +127,7 @@ Stmt SeparateTail::visit(const For &_op) {
                             old->step_),
                     old->begin_),
             old->end_, old->step_,
-            makeFloorDiv(makeSub(old->end_, sep), old->step_), old->property_,
+            makeCeilDiv(makeSub(old->end_, sep), old->step_), old->property_,
             old->body_);
         front = dfs(i + 1, AppendIDs(".front")(front).as<ForNode>());
         back = dfs(i + 1, AppendIDs(".back")(back).as<ForNode>());

@@ -7,17 +7,16 @@ Stmt Splitter::visit(const For &_op) {
     if (_op->id() == src_) {
         auto iter0 = _op->iter_ + ".0";
         auto iter1 = _op->iter_ + ".1";
-        auto len = makeFloorDiv(makeSub(_op->end_, _op->begin_), _op->step_);
         Expr factor, nparts;
 
         if (factor_ != -1) {
             ASSERT(nparts_ == -1);
             factor = makeIntConst(factor_);
-            nparts = makeCeilDiv(len, factor);
+            nparts = makeCeilDiv(_op->len_, factor);
         } else {
             ASSERT(nparts_ != -1);
             nparts = makeIntConst(nparts_);
-            factor = makeCeilDiv(len, nparts);
+            factor = makeCeilDiv(_op->len_, nparts);
         }
 
         auto nthIter = makeAdd(makeMul(makeVar(iter0), factor), makeVar(iter1));

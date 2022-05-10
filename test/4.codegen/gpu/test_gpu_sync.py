@@ -231,7 +231,7 @@ def test_syncthreads_at_outer_branch():
             "nid: L1"
             for j in range(0, 256):
                 t[j] = x[i, j]
-            y[i] = t[0] + t[1]
+            y[i] = t[0] + t[255]
 
     s = ft.Schedule(test)
     s.parallelize("L0", "blockIdx.x")
@@ -312,7 +312,7 @@ def test_syncthreads_split_branch():
             for j in range(0, 256):
                 t[j] = x[i, j]
             z[i] = z[i] + 1
-            y[i] = t[0] + t[1]
+            y[i] = t[0] + t[255]
 
     s = ft.Schedule(test)
     s.parallelize("L0", "blockIdx.x")
@@ -464,7 +464,7 @@ def test_syncthreads_split_branch_and_vardef():
                 t[j] = x[i, j]
             u = ft.empty((1,), "int32", "gpu/local")
             u[0] = z1[i] * 2
-            y[i] = t[0] + t[1]
+            y[i] = t[0] + t[255]
             z1[i] = u[0] + 1
             z2[i] = u[0] + 1
 

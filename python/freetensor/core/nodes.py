@@ -1,4 +1,5 @@
 import collections
+import builtins
 import sys
 import numpy as np
 from typing import Sequence, Tuple, Any, Optional
@@ -57,7 +58,7 @@ class Context:
                 begin,
                 end,
                 step,
-                (end - begin) // step,
+                ceil_div(end - begin, step),
                 ffi.ForProperty().with_no_deps(no_deps).with_prefer_libs(
                     prefer_libs),
                 body,
@@ -511,18 +512,26 @@ def remainder(lhs, rhs):
 
 
 def min(lhs, rhs):
+    if type(lhs) in (int, float) and type(rhs) in (int, float):
+        return builtins.min(lhs, rhs)
     return ffi.makeMin(lhs, rhs)
 
 
 def max(lhs, rhs):
+    if type(lhs) in (int, float) and type(rhs) in (int, float):
+        return builtins.max(lhs, rhs)
     return ffi.makeMax(lhs, rhs)
 
 
 def if_then_else(cond, then_case, else_case):
+    if type(cond) is bool:
+        return then_case if cond else else_case
     return ffi.makeIfExpr(cond, then_case, else_case)
 
 
 def abs(expr):
+    if type(expr) in (int, float):
+        return builtins.abs(expr)
     return ffi.makeAbs(expr)
 
 
@@ -548,10 +557,14 @@ def l_not(expr):
 
 
 def floor_div(lhs, rhs):
+    if type(lhs) is int and type(rhs) is int:
+        return lhs // rhs
     return ffi.makeFloorDiv(lhs, rhs)
 
 
 def ceil_div(lhs, rhs):
+    if type(lhs) is int and type(rhs) is int:
+        return lhs // rhs + (lhs % rhs > 0)
     return ffi.makeCeilDiv(lhs, rhs)
 
 
