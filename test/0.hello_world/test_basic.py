@@ -342,6 +342,17 @@ def test_error_modifying_shape_of_a_var_when_using_it():
         func = ft.lower(ft.Func("main", ["n", "x", "y"], [], ft.pop_ast()))
 
 
+def test_error_modifying_range_of_a_loop_when_using_it():
+    with pytest.raises(ft.InvalidProgram):
+        with ft.VarDef("n", (), "int32", "inout") as n:
+            with ft.VarDef([("x", (100,), "float32", "input"),
+                            ("y", (100,), "float32", "output")]) as (x, y):
+                with ft.For("i", 0, n[()]) as i:
+                    y[i] = x[i] + 1
+                    n[()] = 0  # Error
+        func = ft.lower(ft.Func("main", ["n", "x", "y"], [], ft.pop_ast()))
+
+
 def test_error_modifying_a_var_when_borrowed_as_a_slice():
     with pytest.raises(ft.InvalidProgram):
         with ft.VarDef([("x", (10, 10), "float32", "input"),

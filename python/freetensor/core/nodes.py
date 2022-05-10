@@ -166,8 +166,8 @@ class VarRef(ffi.FrontendVar):
         if var.vardef.borrower_cnt > 0:
             raise ffi.InvalidProgram(
                 "Cannot modify tensor `" + self.name +
-                "` becuase it has been borrowed in another tensor's shape, or a tensor slice"
-            )
+                "` becuase it has been borrowed in another tensor's shape, "
+                "a tensor slice, or a range of a loop")
         top = ctx_stack.top()
         top.append_stmt(var.as_store(top.get_next_nid(), value))
 
@@ -402,11 +402,20 @@ class For:
         self.no_deps = no_deps
         self.prefer_libs = prefer_libs
 
+        self.borrowed_vardefs = set()
+        for x in [begin, end, step]:
+            for name in ffi.all_reads(ffi.Expr(x)):
+                self.borrowed_vardefs.add(open_vardefs[name])
+
     def __enter__(self):
+        for item in self.borrowed_vardefs:
+            item.lend_out()
         ctx_stack.push()
         return ffi.makeVar(self.iter_var)
 
     def __exit__(self, exc_type, exc_value, traceback):
+        for item in self.borrowed_vardefs:
+            item.reclaim()
         if exc_value is not None:
             # Do not generate an AST node
             return False  # Do not suppress the exception
