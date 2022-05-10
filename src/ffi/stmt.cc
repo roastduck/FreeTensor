@@ -33,7 +33,8 @@ void init_ffi_ast_stmt(py::module_ &m) {
              })
         .def("prev_stmt", &StmtNode::prevStmt)
         .def("next_stmt", &StmtNode::nextStmt)
-        .def("parent_stmt", &StmtNode::parentStmt);
+        .def("parent_stmt", &StmtNode::parentStmt)
+        .def("parent_stmt", &StmtNode::parentStmtByFilter, "filter"_a);
 
     py::class_<StmtSeqNode, StmtSeq>(m, "StmtSeq", pyStmt)
         .def_property_readonly(

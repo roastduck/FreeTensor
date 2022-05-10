@@ -114,8 +114,8 @@ def test_manual_static():
 
     fill_AA, _, AA, _ = s.cache(rci, "A", "gpu/shared")
     fill_AA = s.find(fill_AA)
-    fill_AA_ty, fill_AA_tx = fill_AA.parent_stmt().parent_stmt(
-    ), fill_AA.parent_stmt()
+    fill_AA_tx = fill_AA.parent_stmt(lambda s: s.type() == ft.ASTNodeType.For)
+    fill_AA_ty = fill_AA_tx.parent_stmt()
     fill_AA_tx, fill_AA_vec = s.split(fill_AA_tx, factor=4)
     s.parallelize(fill_AA_ty, "threadIdx.y")
     s.parallelize(fill_AA_tx, "threadIdx.x")
@@ -123,8 +123,8 @@ def test_manual_static():
 
     fill_WW, _, WW, _ = s.cache(rci, "W", "gpu/shared")
     fill_WW = s.find(fill_WW)
-    fill_WW_ty, fill_WW_tx = fill_WW.parent_stmt().parent_stmt(
-    ), fill_WW.parent_stmt()
+    fill_WW_tx = fill_WW.parent_stmt(lambda s: s.type() == ft.ASTNodeType.For)
+    fill_WW_ty = fill_WW_tx.parent_stmt()
     fill_WW_tx, fill_WW_vec = s.split(fill_WW_tx, factor=4)
     s.parallelize(fill_WW_ty, "threadIdx.y")
     s.parallelize(fill_WW_tx, "threadIdx.x")

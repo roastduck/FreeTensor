@@ -40,7 +40,6 @@ def test_manual_static():
     L_head = s.fuse(L_head)
     L_head = s.fuse(L_head)
     L_head = s.fuse(L_head)
-    L_head = s.fuse(L_head)
 
     # L_seq_outer
     L_seq_outer = s.fuse("softmax->max->impl->recur->init->recur->recur->L")
@@ -57,7 +56,8 @@ def test_manual_static():
     # Store these intermedates to registers
     load_x, _, _, x_local_def = s.cache(
         s.find(L_seq_outer).body, "x", "gpu/global")
-    load_x_loop = s.find(load_x).parent_stmt()
+    load_x_loop = s.find(load_x).parent_stmt(
+        lambda s: s.type() == ft.ASTNodeType.For)
 
     # ----------------
 

@@ -58,10 +58,12 @@ void CompAccessBound::visit(const VarDef &op) {
 
     size_t n = op->buffer_->tensor()->shape().size();
     result_.lower_.reserve(n);
+    result_.upper_.reserve(n);
     result_.len_.reserve(n);
 
     if (access_.empty()) {
         result_.lower_.insert(result_.lower_.end(), n, makeIntConst(0));
+        result_.upper_.insert(result_.upper_.end(), n, makeIntConst(-1));
         result_.len_.insert(result_.len_.end(), n, makeIntConst(0));
         result_.cond_ = makeBoolConst(false);
         return;
@@ -103,6 +105,7 @@ void CompAccessBound::visit(const VarDef &op) {
         auto l = makeMinMax(lower);
         auto u = makeMaxMin(upper);
         result_.lower_.emplace_back(l);
+        result_.upper_.emplace_back(u);
         result_.len_.emplace_back(makeAdd(makeSub(u, l), makeIntConst(1)));
     }
 

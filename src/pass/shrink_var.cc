@@ -1,4 +1,5 @@
 #include <analyze/all_defs.h>
+#include <pass/remove_dead_var.h>
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
 
@@ -15,16 +16,20 @@ Stmt ShrinkVar::visit(const VarDef &_op) {
 
     size_t n = _op->buffer_->tensor()->shape().size();
     ASSERT(range.lower_.size() == n);
+    ASSERT(range.upper_.size() == n);
     ASSERT(range.len_.size() == n);
-    ASSERT(!offset_.count(_op->name_));
-    offset_[_op->name_] = range.lower_;
+    ASSERT(!lower_.count(_op->name_));
+    ASSERT(!upper_.count(_op->name_));
+    lower_[_op->name_] = range.lower_;
+    upper_[_op->name_] = range.upper_;
 
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::VarDef);
     auto op = __op.as<VarDefNode>();
 
     op->buffer_->tensor()->setShape(range.len_);
-    offset_.erase(_op->name_);
+    lower_.erase(_op->name_);
+    upper_.erase(_op->name_);
     return op;
 }
 
@@ -37,17 +42,19 @@ Expr ShrinkVar::visit(const Load &_op) {
 Stmt ShrinkVar::visit(const Store &_op) {
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::Store);
-    return modifyAccess(__op.as<StoreNode>());
+    auto op = __op.as<StoreNode>();
+    return addCheck(op, modifyAccess(op));
 }
 
 Stmt ShrinkVar::visit(const ReduceTo &_op) {
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
-    return modifyAccess(__op.as<ReduceToNode>());
+    auto op = __op.as<ReduceToNode>();
+    return addCheck(op, modifyAccess(op));
 }
 
 Stmt shrinkVar(const Stmt &_op) {
-    auto op = _op;
+    auto op = removeDeadVar(_op);
 
     // Algorithm:
     // (1) Represent the bounds of each vars with min / max expressions
@@ -57,7 +64,8 @@ Stmt shrinkVar(const Stmt &_op) {
     // (1)
     std::unordered_map<ID, AccessBound> bounds;
     for (auto &&[varDefId, name] : allDefs(op, {AccessType::Cache})) {
-        bounds[varDefId] = compAccessBound(op, varDefId);
+        bounds[varDefId] =
+            compAccessBound(op, varDefId, COMP_ACCESS_BOUND_READ);
     }
 
     // (2)
@@ -68,11 +76,11 @@ Stmt shrinkVar(const Stmt &_op) {
 }
 
 Stmt shrinkSingleVar(const Stmt &_op, const ID &varDefId) {
-    auto op = _op;
+    auto op = removeDeadVar(_op);
 
     // (1)
     std::unordered_map<ID, AccessBound> bounds;
-    bounds[varDefId] = compAccessBound(op, varDefId);
+    bounds[varDefId] = compAccessBound(op, varDefId, COMP_ACCESS_BOUND_READ);
 
     // (2)
     op = ShrinkVar(bounds)(op);

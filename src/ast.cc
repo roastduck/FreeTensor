@@ -102,6 +102,16 @@ Stmt StmtNode::parentCtrlFlow() const {
     return nullptr;
 }
 
+Ref<StmtNode> StmtNode::parentStmtByFilter(
+    const std::function<bool(const Stmt &)> &filter) const {
+    for (auto p = parentStmt(); p.isValid(); p = p->parentStmt()) {
+        if (filter(p)) {
+            return p;
+        }
+    }
+    return nullptr;
+}
+
 Stmt StmtNode::prevStmt() const {
     if (auto p = parentStmt();
         p.isValid() && p->nodeType() == ASTNodeType::StmtSeq) {

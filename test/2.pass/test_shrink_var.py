@@ -86,6 +86,33 @@ def test_multiple_bounds():
     assert std.match(ast)
 
 
+def test_bound_only_on_reads():
+    with ft.VarDef([("x", (8,), "int32", "input", "cpu"),
+                    ("y1", (8,), "int32", "output", "cpu"),
+                    ("y2", (8,), "int32", "output", "cpu")]) as (x, y1, y2):
+        with ft.VarDef("b", (8,), "int32", "cache", "cpu") as b:
+            with ft.For("i", 0, 8) as i:
+                b[i] = x[i] * 2
+            with ft.For("i", 0, 4) as i:
+                y1[i] = b[i] + 1
+                y2[i] = b[i] + 2
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("x", (8,), "int32", "input", "cpu"),
+                    ("y1", (8,), "int32", "output", "cpu"),
+                    ("y2", (8,), "int32", "output", "cpu")]) as (x, y1, y2):
+        with ft.VarDef("b", (4,), "int32", "cache", "cpu") as b:
+            with ft.For("i", 0, 4) as i:
+                b[i] = x[i] * 2
+            with ft.For("i", 0, 4) as i:
+                y1[i] = b[i] + 1
+                y2[i] = b[i] + 2
+    std = ft.make_reduction(ft.pop_ast())
+
+    assert std.match(ast)
+
+
 # FIXME: Fix this test
 #def test_const_in_branch_1():
 #    with ft.VarDef([("x", (5,), "int32", "input", "cpu"),

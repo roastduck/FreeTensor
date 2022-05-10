@@ -2,6 +2,7 @@
 #define FREE_TENSOR_AST_H
 
 #include <atomic>
+#include <functional>
 #include <string>
 
 #include <ref.h>
@@ -213,6 +214,8 @@ class StmtNode : public ASTNode {
 
     Ref<StmtNode> parentStmt() const;
     Ref<StmtNode> parentCtrlFlow() const;
+    Ref<StmtNode>
+    parentStmtByFilter(const std::function<bool(const Stmt &)> &filter) const;
     Ref<StmtNode> prevStmt() const;
     Ref<StmtNode> nextStmt() const;
 

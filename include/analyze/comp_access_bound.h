@@ -11,9 +11,14 @@
 namespace freetensor {
 
 struct AccessBound {
-    std::vector<Expr> lower_; // lower_bound(access)
-    std::vector<Expr> len_;   // upper_bound(access_i - access_j)
-    Expr cond_;               // Conditions surrounding the accesses
+    std::vector<Expr> lower_; /// lower_bound(access)
+    std::vector<Expr> upper_; /// upper_bound(access)
+    std::vector<Expr> len_;   /// upper_bound(access) - lower_bound(access) + 1
+    Expr cond_;               /// Conditions surrounding the accesses
+    // TODO: Ideally, len_ should be upper_bound(access_i - access_j) + 1, which
+    // supports shrinking a skewed variable, instead of upper_bound(access) -
+    // lower_bound(aceess). However, it brins too much burden on pass/simplify,
+    // so we do not choose it for now
 };
 
 typedef int CompAccessBoundMode;
