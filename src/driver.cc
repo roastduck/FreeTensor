@@ -264,6 +264,11 @@ void Driver::setParams(const std::vector<Ref<Array>> &args,
 }
 
 void Driver::run() {
+#ifdef FT_WITH_CUDA
+    if (dev_->type() == TargetType::GPU) {
+        checkCudaError(cudaSetDevice(dev_->num()));
+    }
+#endif // FT_WITH_CUDA
     func_(params_.data(), returns_.data(), retShapes_.data(), retDims_.data(),
           ctx_.get());
 }
