@@ -2,7 +2,7 @@
 
 **For PLDI '22 Artifact Evaluation, please follow the README uploaded to the submission site, where you can find step-by-step instructions.**
 
-Write and optimize high-performance native loop-based programs in Python.
+Write and optimize high-performance native loop-based tensor programs in Python.
 
 ## Features
 
@@ -12,11 +12,13 @@ Write a simple vector addition with loops that compiles to native code:
 import freetensor as ft
 import numpy as np
 
+n = 4
+
 # Change this line to ft.optimize(verbose=1) to see the resulting native code
 @ft.optimize
-def test(a: ft.Var[(4,), "int32"], b: ft.Var[(4,), "int32"]):
-    y = ft.empty((4,), "int32")
-    for i in range(4):
+def test(a: ft.Var[(n,), "int32"], b: ft.Var[(4,), "int32"]):
+    y = ft.empty((n,), "int32")
+    for i in range(n):
         y[i] = a[i] + b[i]
     return y
 
@@ -25,7 +27,7 @@ y = test(np.array([1, 2, 3, 4], dtype="int32"),
 print(y)
 ```
 
-Vectors with dynamic lengths are OK, too:
+If you are not willing to compile the program once for each different `n`, you can set `n` as another function argument (but you may lose some performance). In FreeTensor, all variables are tensors, where scalars are 0-D tensors.
 
 ```python
 import freetensor as ft
