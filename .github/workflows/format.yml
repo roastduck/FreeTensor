@@ -1,4 +1,4 @@
-name: Format C++
+name: Format C++ and Python
 
 on: [pull_request]
 
@@ -12,3 +12,12 @@ jobs:
       uses: RafikFarhad/clang-format-github-action@v2.0.0
       with:
         sources: include,runtime,src
+  python-formatting-check:
+    name: Python Formatting Check
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: YAPF
+      uses: AlexanderMelde/yapf-action@master
+      with:
+        args: --verbose
