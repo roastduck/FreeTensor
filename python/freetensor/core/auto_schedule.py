@@ -1,4 +1,4 @@
-import ffi
+import freetensor_ffi as ffi
 import xgboost as xgb
 import numpy as np
 

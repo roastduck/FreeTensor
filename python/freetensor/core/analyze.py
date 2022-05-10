@@ -1,5 +1,5 @@
-import ffi
+import freetensor_ffi as ffi
 
-from ffi import structural_feature
-from ffi import fixed_length_feature
-from ffi import find_multi_level_tiling
+from freetensor_ffi import structural_feature
+from freetensor_ffi import fixed_length_feature
+from freetensor_ffi import find_multi_level_tiling

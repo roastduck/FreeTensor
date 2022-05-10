@@ -2,7 +2,7 @@
 
 namespace freetensor {
 
-PYBIND11_MODULE(ffi, m) {
+PYBIND11_MODULE(freetensor_ffi, m) {
     init_ffi_except(m);
     init_ffi_tensor_types(m);
     init_ffi_device(m);

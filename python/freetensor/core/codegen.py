@@ -1,4 +1,4 @@
-import ffi
+import freetensor_ffi as ffi
 import sys
 import functools
 

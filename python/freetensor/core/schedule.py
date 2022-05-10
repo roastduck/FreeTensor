@@ -1,8 +1,8 @@
 import functools
 from typing import Optional, Callable
 
-import ffi
-from ffi import FissionSide, MoveToSide, VarSplitMode, MemType, ParallelScope, ID
+import freetensor_ffi as ffi
+from freetensor_ffi import FissionSide, MoveToSide, VarSplitMode, MemType, ParallelScope, ID
 
 
 class Schedule(ffi.Schedule):

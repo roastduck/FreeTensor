@@ -133,22 +133,22 @@ foreach(G_FILE IN ITEMS ${PARSERS})
 endforeach()
 
 # Target
-pybind11_add_module(ffi SHARED ${SRC})
-add_dependencies(ffi ISL)
-target_link_libraries(ffi PRIVATE
+pybind11_add_module(freetensor_ffi SHARED ${SRC})
+add_dependencies(freetensor_ffi ISL)
+target_link_libraries(freetensor_ffi PRIVATE
     ${ISL_DIR}/install/lib/libisl.so
     libz3 # See 3rd-party/z3/src/CMakeLists.txt
     antlr4_shared # See 3rd-party/antlr/antlr4/runtime/Cpp/runtime/CMakeLists.txt
     ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES})
-target_include_directories(ffi PUBLIC ${CUDA_INCLUDE_DIRS})
+target_include_directories(freetensor_ffi PUBLIC ${CUDA_INCLUDE_DIRS})
 
 # Pybind11 stubgen
 find_program(PYBIND11_STUBGEN pybind11-stubgen)
 if (PYBIND11_STUBGEN)
     message(STATUS "Enabling pybind11-stubgen step to generate typing stub for IDEs.")
     add_custom_command(
-        TARGET ffi POST_BUILD
-        COMMAND env PYTHONPATH=.:$ENV{PYTHONPATH} ${PYBIND11_STUBGEN} ffi --no-setup-py --root-module-suffix ""
+        TARGET freetensor_ffi POST_BUILD
+        COMMAND env PYTHONPATH=.:$ENV{PYTHONPATH} ${PYBIND11_STUBGEN} freetensor_ffi --no-setup-py --root-module-suffix ""
         VERBATIM
     )
 endif()

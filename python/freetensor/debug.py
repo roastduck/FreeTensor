@@ -1,6 +1,6 @@
 import itertools
 
-from ffi import logger
+from freetensor_ffi import logger
 
 
 def with_line_no(s):

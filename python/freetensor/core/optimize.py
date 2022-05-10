@@ -1,7 +1,7 @@
 import functools
 from typing import Optional, Callable
 
-import ffi
+import freetensor_ffi as ffi
 
 from .transformer import transform
 from .schedule import Schedule, schedule

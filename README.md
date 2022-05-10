@@ -105,7 +105,7 @@ make -j
 
 If not using CUDA, add a `-DFT_WITH_CUDA=OFF` to `cmake`. If using MKL, add a `-DFT_WITH_MKL=<path/to/mkl/root>` to `cmake`.
 
-It will build a shared library with a name like `ffi.cpython-37m-x86_64-linux-gnu.so`.
+It will build a shared library with a name like `freetensor_ffi.cpython-37m-x86_64-linux-gnu.so`.
 
 There are some debugging options. Adding `-DFT_DEBUG_LOG_NODE=ON` to `cmake` enables tracing to tell by which pass a specific AST node is modified. Adding `-DFT_DEBUG_PROFILE` to `cmake` profiles some heavy functions in the compiler.
 

@@ -4,8 +4,8 @@ import sys
 import numpy as np
 from typing import Sequence, Tuple, Any, Optional
 
-import ffi
-from ffi import dump_ast, load_ast
+import freetensor_ffi as ffi
+from freetensor_ffi import dump_ast, load_ast
 
 from . import config
 

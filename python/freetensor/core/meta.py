@@ -1,5 +1,5 @@
-import ffi
-from ffi import up_cast, neutral_val, is_float, DataType, MemType
+import freetensor_ffi as ffi
+from freetensor_ffi import up_cast, neutral_val, is_float, DataType, MemType
 
 
 def min_value(dtype):

@@ -5,7 +5,7 @@ New transformer implementation based on generating a staging function.
 import abc
 import collections
 
-import ffi
+import freetensor_ffi as ffi
 
 import sys
 import ast

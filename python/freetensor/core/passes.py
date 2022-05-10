@@ -1,36 +1,36 @@
 from typing import Optional, Sequence
 import functools
 
-import ffi
+import freetensor_ffi as ffi
 
-from ffi import grad
-from ffi import GradTapeMode
-from ffi import output_intermediates
-from ffi import scalar_prop_const
-from ffi import tensor_prop_const
-from ffi import prop_one_time_use
-from ffi import simplify
-from ffi import z3_simplify
-from ffi import sink_var
-from ffi import shrink_var
-from ffi import shrink_for
-from ffi import merge_and_hoist_if
-from ffi import make_reduction
-from ffi import make_parallel_reduction
-from ffi import remove_writes
-from ffi import remove_dead_var
-from ffi import make_const_shape
-from ffi import make_1d_var
-from ffi import use_builtin_div
-from ffi import hoist_var_over_stmt_seq
-from ffi import cpu_lower_parallel_reduction
-from ffi import gpu_lower_parallel_reduction
-from ffi import gpu_make_sync
-from ffi import gpu_multiplex_buffers
-from ffi import gpu_simplex_buffers
-from ffi import gpu_normalize_threads
-from ffi import gpu_lower_vector
-from ffi import lower
+from freetensor_ffi import grad
+from freetensor_ffi import GradTapeMode
+from freetensor_ffi import output_intermediates
+from freetensor_ffi import scalar_prop_const
+from freetensor_ffi import tensor_prop_const
+from freetensor_ffi import prop_one_time_use
+from freetensor_ffi import simplify
+from freetensor_ffi import z3_simplify
+from freetensor_ffi import sink_var
+from freetensor_ffi import shrink_var
+from freetensor_ffi import shrink_for
+from freetensor_ffi import merge_and_hoist_if
+from freetensor_ffi import make_reduction
+from freetensor_ffi import make_parallel_reduction
+from freetensor_ffi import remove_writes
+from freetensor_ffi import remove_dead_var
+from freetensor_ffi import make_const_shape
+from freetensor_ffi import make_1d_var
+from freetensor_ffi import use_builtin_div
+from freetensor_ffi import hoist_var_over_stmt_seq
+from freetensor_ffi import cpu_lower_parallel_reduction
+from freetensor_ffi import gpu_lower_parallel_reduction
+from freetensor_ffi import gpu_make_sync
+from freetensor_ffi import gpu_multiplex_buffers
+from freetensor_ffi import gpu_simplex_buffers
+from freetensor_ffi import gpu_normalize_threads
+from freetensor_ffi import gpu_lower_vector
+from freetensor_ffi import lower
 
 
 def lower(ast=None,

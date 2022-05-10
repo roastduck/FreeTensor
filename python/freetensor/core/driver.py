@@ -1,8 +1,8 @@
-import ffi
+import freetensor_ffi as ffi
 import functools
 
 from typing import Optional
-from ffi import CPU, GPU, Array
+from freetensor_ffi import CPU, GPU, Array
 
 from . import config
 from .codegen import NativeCode
