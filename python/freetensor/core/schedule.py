@@ -20,14 +20,16 @@ class Schedule(ffi.Schedule):
 
         1. Specify `factor` and leave `nparts` to -1. It will result in an outer
         loop with length `ceil(n / factor)`, and an inner loop with length
-        `factor`, where `n` is the original loop length. The original iterator
-        `i` will be transformed to `i0 * factor + i1`, where `i0` and `i1` are
-        the iterators of the new outer and inner loops, respectively
+        `factor`, where `n` is the original loop length added by `shift`. The
+        original iterator `i` will be transformed to `i0 * factor + i1`, where
+        `i0` and `i1` are the iterators of the new outer and inner loops,
+        respectively
         2. Specify `nparts` and leave `factor` to -1. It will result in an
         outer loop with length `nparts`, and an inner loop with length `ceil(n /
-        nparts)`, where `n` is the original loop length. The original iterator
-        `i` will be transformed to `i0 * ceil(n / nparts) + i1`, where `i0` and
-        `i1` are the iterators of the new outer and inner loops, respectively
+        nparts)`, where `n` is the original loop length added by `shift`. The
+        original iterator `i` will be transformed to `i0 * ceil(n / nparts) +
+        i1`, where `i0` and `i1` are the iterators of the new outer and inner
+        loops, respectively
 
         Please note that the second mode will introduce an `i0 * ceil(n /
         nparts)` factor into the program, which cannot be recognized by
