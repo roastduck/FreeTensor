@@ -124,6 +124,27 @@ def test_guard_with_step():
     assert std.match(ast)
 
 
+def test_shift():
+    with ft.VarDef("y", (10,), "int32", "output", "cpu") as y:
+        with ft.For("i", 0, 10, nid="L1") as i:
+            y[i] = i
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast)
+    s.split("L1", 4, -1, 1)
+    ast = s.ast()
+    print(ast)
+    ast = ft.lower(ast, verbose=1)
+
+    # The result after simplifying the loop length
+    with ft.VarDef("y", (10,), "int32", "output", "cpu") as y:
+        with ft.For("i.0", 0, 3) as i0:
+            with ft.For("i.1", ft.any(), ft.any()) as i1:
+                y[i1 + 4 * i0 - 1] = i1 + 4 * i0 - 1
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
 def test_not_found():
     with ft.VarDef("y", (8,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 8) as i:

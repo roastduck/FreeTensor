@@ -29,7 +29,7 @@ def test_gpu_basic_static_small():
     print(s.ast())
     print(s.logs())
     assert s.logs() == [
-        "merge(Li, Lj)", "split(merged.Li.Lj, factor=-1, nparts=80)",
+        "merge(Li, Lj)", "split(merged.Li.Lj, factor=-1, nparts=80, shift=0)",
         "parallelize(merged.Li.Lj.0, blockIdx.x)",
         "parallelize(merged.Li.Lj.1, threadIdx.x)"
     ]
@@ -49,7 +49,7 @@ def test_gpu_basic_static_large():
     print(s.ast())
     print(s.logs())
     assert s.logs() == [
-        "merge(Li, Lj)", "split(merged.Li.Lj, factor=256, nparts=-1)",
+        "merge(Li, Lj)", "split(merged.Li.Lj, factor=256, nparts=-1, shift=0)",
         "parallelize(merged.Li.Lj.0, blockIdx.x)",
         "parallelize(merged.Li.Lj.1, threadIdx.x)"
     ]
@@ -70,9 +70,9 @@ def test_gpu_basic_dynamic():
     print(s.ast())
     print(s.logs())
     assert s.logs() == [
-        "merge(Li, Lj)", "split(merged.Li.Lj, factor=80, nparts=-1)",
+        "merge(Li, Lj)", "split(merged.Li.Lj, factor=80, nparts=-1, shift=0)",
         "reorder(merged.Li.Lj.1, merged.Li.Lj.0)",
-        "split(merged.Li.Lj.0, factor=256, nparts=-1)",
+        "split(merged.Li.Lj.0, factor=256, nparts=-1, shift=0)",
         "parallelize(merged.Li.Lj.1, blockIdx.y)",
         "parallelize(merged.Li.Lj.0.0, blockIdx.x)",
         "parallelize(merged.Li.Lj.0.1, threadIdx.x)"
@@ -125,8 +125,8 @@ def test_gpu_warp_static():
     print(s.ast())
     print(s.logs())
     assert s.logs() == [
-        "split(Lk, factor=32, nparts=-1)", "parallelize(Lk.1, threadIdx.x)",
-        "reorder(Lk.1, Lk.0)", "split(Li, factor=8, nparts=-1)",
+        "split(Lk, factor=32, nparts=-1, shift=0)", "parallelize(Lk.1, threadIdx.x)",
+        "reorder(Lk.1, Lk.0)", "split(Li, factor=8, nparts=-1, shift=0)",
         "parallelize(Li.0, blockIdx.x)", "parallelize(Li.1, threadIdx.y)"
     ]
 
@@ -147,9 +147,9 @@ def test_gpu_warp_dynamic():
     print(s.ast())
     print(s.logs())
     assert s.logs() == [
-        "split(Lk, factor=32, nparts=-1)", "parallelize(Lk.1, threadIdx.x)",
-        "reorder(Lk.1, Lk.0)", "split(Li, factor=80, nparts=-1)",
-        "reorder(Li.1, Li.0)", "split(Li.0, factor=8, nparts=-1)",
+        "split(Lk, factor=32, nparts=-1, shift=0)", "parallelize(Lk.1, threadIdx.x)",
+        "reorder(Lk.1, Lk.0)", "split(Li, factor=80, nparts=-1, shift=0)",
+        "reorder(Li.1, Li.0)", "split(Li.0, factor=8, nparts=-1, shift=0)",
         "parallelize(Li.1, blockIdx.y)", "parallelize(Li.0.0, blockIdx.x)",
         "parallelize(Li.0.1, threadIdx.y)"
     ]

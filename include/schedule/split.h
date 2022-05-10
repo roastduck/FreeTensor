@@ -9,7 +9,7 @@ namespace freetensor {
 
 class Splitter : public Mutator {
     ID src_, dst0_, dst1_;
-    int factor_ = -1, nparts_ = -1;
+    int factor_ = -1, nparts_ = -1, shift_ = 0;
 
     std::string iterFrom_;
     Expr iterTo_;
@@ -17,9 +17,9 @@ class Splitter : public Mutator {
     bool found_ = false;
 
   public:
-    Splitter(const ID &id, int factor = -1, int nparts = -1)
+    Splitter(const ID &id, int factor = -1, int nparts = -1, int shift = 0)
         : src_(id), dst0_(id.strId() + ".0"), dst1_(id.strId() + ".1"),
-          factor_(factor), nparts_(nparts) {}
+          factor_(factor), nparts_(nparts), shift_(shift) {}
 
     const ID &outerId() const { return dst0_; }
     const ID &innerId() const { return dst1_; }
@@ -31,7 +31,7 @@ class Splitter : public Mutator {
 };
 
 std::pair<Stmt, std::pair<ID, ID>> split(const Stmt &ast, const ID &id,
-                                         int factor, int nparts);
+                                         int factor, int nparts, int shift = 0);
 
 } // namespace freetensor
 
