@@ -110,18 +110,15 @@ if (OPENMP_FOUND)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
 
-include_directories(${CMAKE_SOURCE_DIR}/include)
-include_directories(${CMAKE_SOURCE_DIR}/3rd-party/pybind11/include)
-include_directories(${CMAKE_SOURCE_DIR}/3rd-party/z3/src/api/c++)
-include_directories(${CMAKE_SOURCE_DIR}/3rd-party/cppitertools)
 file(GLOB_RECURSE SRC ${CMAKE_SOURCE_DIR}/src/*.cc)
 
 file(GLOB_RECURSE LEXERS ${CMAKE_SOURCE_DIR}/grammar/*_lexer.g)
+set(ANTLR_INCLUDES "")
 foreach(G_FILE IN ITEMS ${LEXERS})
     get_filename_component(Name ${G_FILE} NAME_WE)
     antlr_target(${Name} ${G_FILE} PACKAGE freetensor)
     list(APPEND SRC ${ANTLR_${Name}_CXX_OUTPUTS})
-    include_directories(${ANTLR_${Name}_OUTPUT_DIR})
+    list(APPEND ANTLR_INCLUDES ${ANTLR_${Name}_OUTPUT_DIR})
     list(APPEND LEXER_OUTPUTS ${ANTLR_${Name}_OUTPUTS})
 endforeach()
 file(GLOB_RECURSE PARSERS ${CMAKE_SOURCE_DIR}/grammar/*_parser.g)
@@ -129,18 +126,30 @@ foreach(G_FILE IN ITEMS ${PARSERS})
     get_filename_component(Name ${G_FILE} NAME_WE)
     antlr_target(${Name} ${G_FILE} PACKAGE freetensor DEPENDS ${LEXER_OUTPUTS})
     list(APPEND SRC ${ANTLR_${Name}_CXX_OUTPUTS})
-    include_directories(${ANTLR_${Name}_OUTPUT_DIR})
+    list(APPEND ANTLR_INCLUDES ${ANTLR_${Name}_OUTPUT_DIR})
 endforeach()
 
 # Target
-pybind11_add_module(freetensor_ffi SHARED ${SRC})
-add_dependencies(freetensor_ffi ISL)
-target_link_libraries(freetensor_ffi PRIVATE
+add_library(freetensor SHARED ${SRC})
+add_dependencies(freetensor ISL)
+target_link_libraries(freetensor PUBLIC
     ${ISL_DIR}/install/lib/libisl.so
     libz3 # See 3rd-party/z3/src/CMakeLists.txt
     antlr4_shared # See 3rd-party/antlr/antlr4/runtime/Cpp/runtime/CMakeLists.txt
     ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES})
-target_include_directories(freetensor_ffi PUBLIC ${CUDA_INCLUDE_DIRS})
+target_include_directories(freetensor PUBLIC
+    ${CUDA_INCLUDE_DIRS}
+    ${CMAKE_SOURCE_DIR}/3rd-party/z3/src/api/c++
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/3rd-party/cppitertools)
+target_include_directories(freetensor PRIVATE ${ANTLR_INCLUDES})
+
+file(GLOB_RECURSE FFI_SRC ${CMAKE_SOURCE_DIR}/ffi/*.cc)
+
+# Target
+pybind11_add_module(freetensor_ffi SHARED ${FFI_SRC})
+target_link_libraries(freetensor_ffi PRIVATE freetensor)
+target_include_directories(freetensor_ffi PRIVATE ${CMAKE_SOURCE_DIR}/ffi)
 
 # Pybind11 stubgen
 find_program(PYBIND11_STUBGEN pybind11-stubgen)
