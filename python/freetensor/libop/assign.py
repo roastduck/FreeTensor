@@ -21,9 +21,9 @@ def _assign_op(op, y, x):
 
 
 assign = named_partial("assign", _assign_op, lambda y, x: x)
-add_to = named_partial("add_to", _assign_op, lambda y, x: x + y)
-sub_to = named_partial("sub_to", _assign_op, lambda y, x: x - y)
-mul_to = named_partial("mul_to", _assign_op, lambda y, x: x * y)
-truediv_to = named_partial("truediv_to", _assign_op, lambda y, x: x / y)
-floordiv_to = named_partial("floordiv_to", _assign_op, lambda y, x: x // y)
-mod_to = named_partial("mod_to", _assign_op, lambda y, x: x % y)
+add_to = named_partial("add_to", _assign_op, lambda y, x: y + x)
+sub_to = named_partial("sub_to", _assign_op, lambda y, x: y - x)
+mul_to = named_partial("mul_to", _assign_op, lambda y, x: y * x)
+truediv_to = named_partial("truediv_to", _assign_op, lambda y, x: y / x)
+floordiv_to = named_partial("floordiv_to", _assign_op, lambda y, x: y // x)
+mod_to = named_partial("mod_to", _assign_op, lambda y, x: y % x)

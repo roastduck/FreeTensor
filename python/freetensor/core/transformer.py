@@ -1,5 +1,5 @@
 '''
-New transformer implementation based on generating a staging function.
+Transform user Python functions to ASTs via generating staging functions.
 '''
 
 import abc

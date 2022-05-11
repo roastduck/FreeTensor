@@ -160,6 +160,10 @@ class VarRef(ffi.FrontendVar):
     def __setitem__(self, key, value):
         var = VarRef(self.name, self.vardef, self.full_shape, self.dtype,
                      self.mtype, self.chain_indices(self._parse_key(key)))
+        if var.ndim > 0:
+            from .. import libop
+            libop.assign(var, value)
+            return
         if var.vardef.atype == ffi.AccessType("input"):
             raise ffi.InvalidProgram("Cannot modify an \"input\" tensor `" +
                                      self.name)
@@ -220,6 +224,13 @@ class VarRef(ffi.FrontendVar):
             return libop.add(other, self)
         return other + self.as_load()
 
+    def __iadd__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            libop.add_to(self, other)
+            return
+        return NotImplemented
+
     def __sub__(self, other):
         if self.ndim > 0:
             from .. import libop
@@ -231,6 +242,13 @@ class VarRef(ffi.FrontendVar):
             from .. import libop
             return libop.sub(other, self)
         return other - self.as_load()
+
+    def __isub__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            libop.sub_to(self, other)
+            return
+        return NotImplemented
 
     def __mul__(self, other):
         if self.ndim > 0:
@@ -244,6 +262,13 @@ class VarRef(ffi.FrontendVar):
             return libop.mul(other, self)
         return other * self.as_load()
 
+    def __imul__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            libop.mul_to(self, other)
+            return
+        return NotImplemented
+
     def __truediv__(self, other):
         if self.ndim > 0:
             from .. import libop
@@ -255,6 +280,13 @@ class VarRef(ffi.FrontendVar):
             from .. import libop
             return libop.truediv(other, self)
         return other / self.as_load()
+
+    def __itruediv__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            libop.truediv_to(self, other)
+            return
+        return NotImplemented
 
     def __floordiv__(self, other):
         if self.ndim > 0:
@@ -268,6 +300,13 @@ class VarRef(ffi.FrontendVar):
             return libop.floordiv(other, self)
         return other // self.as_load()
 
+    def __ifloordiv__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            libop.floordiv_to(self, other)
+            return
+        return NotImplemented
+
     def __mod__(self, other):
         if self.ndim > 0:
             from .. import libop
@@ -279,6 +318,13 @@ class VarRef(ffi.FrontendVar):
             from .. import libop
             return libop.mod(other, self)
         return other % self.as_load()
+
+    def __imod__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            libop.mod_to(self, other)
+            return
+        return NotImplemented
 
     def __lt__(self, other):
         if self.ndim > 0:

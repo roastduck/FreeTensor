@@ -43,7 +43,7 @@ def test_same_static_shape(libop_func, torch_func, dtype):
     f(x_arr, y_arr)
     y_torch_new = torch.tensor(y_arr.numpy())
 
-    assert torch.all(torch.isclose(y_torch_new, torch_func(x_torch, y_torch)))
+    assert torch.all(torch.isclose(y_torch_new, torch_func(y_torch, x_torch)))
 
 
 @pytest.mark.parametrize('libop_func, torch_func, dtype', [
@@ -72,7 +72,7 @@ def test_static_broadcast_shorter(libop_func, torch_func, dtype):
     f(x_arr, y_arr)
     y_torch_new = torch.tensor(y_arr.numpy())
 
-    assert torch.all(torch.isclose(y_torch_new, torch_func(x_torch, y_torch)))
+    assert torch.all(torch.isclose(y_torch_new, torch_func(y_torch, x_torch)))
 
 
 @pytest.mark.parametrize('libop_func, torch_func, dtype', [
@@ -101,7 +101,7 @@ def test_static_broadcast_1_at_front(libop_func, torch_func, dtype):
     f(x_arr, y_arr)
     y_torch_new = torch.tensor(y_arr.numpy())
 
-    assert torch.all(torch.isclose(y_torch_new, torch_func(x_torch, y_torch)))
+    assert torch.all(torch.isclose(y_torch_new, torch_func(y_torch, x_torch)))
 
 
 @pytest.mark.parametrize('libop_func, torch_func, dtype', [
@@ -130,7 +130,7 @@ def test_static_broadcast_1_at_back(libop_func, torch_func, dtype):
     f(x_arr, y_arr)
     y_torch_new = torch.tensor(y_arr.numpy())
 
-    assert torch.all(torch.isclose(y_torch_new, torch_func(x_torch, y_torch)))
+    assert torch.all(torch.isclose(y_torch_new, torch_func(y_torch, x_torch)))
 
 
 @pytest.mark.parametrize('libop_func, torch_func', [
@@ -156,4 +156,33 @@ def test_different_dtype(libop_func, torch_func):
     f(x_arr, y_arr)
     y_torch_new = torch.tensor(y_arr.numpy())
 
-    assert torch.all(torch.isclose(y_torch_new, torch_func(x_torch, y_torch)))
+    assert torch.all(torch.isclose(y_torch_new, torch_func(y_torch, x_torch)))
+
+
+@pytest.mark.parametrize('libop_func, torch_func, dtype', [
+    (operator.iadd, operator.add, "float32"),
+    (operator.isub, operator.sub, "float32"),
+    (operator.imul, operator.mul, "float32"),
+    (operator.itruediv, operator.truediv, "float32"),
+    (operator.ifloordiv, functools.partial(torch.div,
+                                           rounding_mode='floor'), "int32"),
+    (operator.imod, operator.mod, "int32"),
+])
+def test_operator_overload(libop_func, torch_func, dtype):
+    device = ft.Device(ft.CPU())
+
+    @ft.optimize(device=device, verbose=1)
+    def f(x, y):
+        x: ft.Var[(4, 4), dtype, "input", "cpu"]
+        y: ft.Var[(4, 4), dtype, "output", "cpu"]
+        "nid: to_test"
+        libop_func(y[:], x)  # E.g., y[:] += x
+
+    x_torch = rand(4, 4, dtype=dtype)
+    x_arr = ft.Array(x_torch.numpy(), device)
+    y_torch = rand(4, 4, dtype=dtype)
+    y_arr = ft.Array(y_torch.numpy(), device)
+    f(x_arr, y_arr)
+    y_torch_new = torch.tensor(y_arr.numpy())
+
+    assert torch.all(torch.isclose(y_torch_new, torch_func(y_torch, x_torch)))
