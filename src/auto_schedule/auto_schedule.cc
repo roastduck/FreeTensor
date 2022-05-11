@@ -14,7 +14,6 @@
 #include <codegen/code_gen_cuda.h>
 #include <driver.h>
 #include <lower.h>
-#include <pybind11/numpy.h>
 #include <queue>
 #include <utility>
 
