@@ -63,29 +63,17 @@ def test_out_of_place(libop_func, torch_func):
     device = ft.Device(ft.CPU())
 
     @ft.optimize(device=device, verbose=1)
-    def f(x, y_shape, y):
+    def f(x):
         x: ft.Var[(3, 4, 5), "float32", "input", "cpu"]
-        y_shape: ft.Var[(2,), "int32", "output", "cpu"]
-        y: ft.Var[(3, 5), "float32", "output", "cpu"]
         "nid: reduce"
-        _y = libop_func(x, axes=[1], keepdims=False)
-        for i in range(2):
-            y_shape[i] = _y.shape(i)
-        for i in range(3):
-            for j in range(5):
-                y[i, j] = _y[i, j]
+        return libop_func(x, axes=[1], keepdims=False)
 
     x_torch = torch.rand(3, 4, 5, dtype=torch.float32)
     x_arr = ft.Array(x_torch.numpy(), device)
-    y_shape_torch = torch.zeros(2, dtype=torch.int32)
-    y_shape_arr = ft.Array(y_shape_torch.numpy(), device)
-    y_torch = torch.zeros(3, 5, dtype=torch.float32)
-    y_arr = ft.Array(y_torch.numpy(), device)
-    f(x_arr, y_shape_arr, y_arr)
-    y_shape_np = y_shape_arr.numpy()
+    y_arr = f(x_arr)
     y_torch = torch.tensor(y_arr.numpy())
 
-    assert np.array_equal(y_shape_np, [3, 5])
+    assert np.array_equal(y_arr.shape, [3, 5])
     assert torch.all(torch.isclose(y_torch, torch_func(x_torch, axis=1)))
 
 
@@ -97,28 +85,16 @@ def test_out_of_place_keepdims(libop_func, torch_func):
     device = ft.Device(ft.CPU())
 
     @ft.optimize(device=device, verbose=1)
-    def f(x, y_shape, y):
+    def f(x):
         x: ft.Var[(3, 4, 5), "float32", "input", "cpu"]
-        y_shape: ft.Var[(3,), "int32", "output", "cpu"]
-        y: ft.Var[(3, 1, 5), "float32", "output", "cpu"]
         "nid: reduce"
-        _y = libop_func(x, axes=[1], keepdims=True)
-        for i in range(3):
-            y_shape[i] = _y.shape(i)
-        for i in range(3):
-            for j in range(5):
-                y[i, 0, j] = _y[i, 0, j]
+        return libop_func(x, axes=[1], keepdims=True)
 
     x_torch = torch.rand(3, 4, 5, dtype=torch.float32)
     x_arr = ft.Array(x_torch.numpy(), device)
-    y_shape_torch = torch.zeros(3, dtype=torch.int32)
-    y_shape_arr = ft.Array(y_shape_torch.numpy(), device)
-    y_torch = torch.zeros(3, 1, 5, dtype=torch.float32)
-    y_arr = ft.Array(y_torch.numpy(), device)
-    f(x_arr, y_shape_arr, y_arr)
-    y_shape_np = y_shape_arr.numpy()
+    y_arr = f(x_arr)
     y_torch = torch.tensor(y_arr.numpy())
 
-    assert np.array_equal(y_shape_np, [3, 1, 5])
+    assert np.array_equal(y_arr.shape, [3, 1, 5])
     assert torch.all(
         torch.isclose(y_torch, torch_func(x_torch, axis=1, keepdim=True)))

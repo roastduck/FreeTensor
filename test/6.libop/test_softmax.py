@@ -29,29 +29,17 @@ def test_out_of_place():
     device = ft.Device(ft.CPU())
 
     @ft.optimize(device=device, verbose=1)
-    def f(x, y_shape, y):
+    def f(x):
         x: ft.Var[(4, 4), "float32", "input", "cpu"]
-        y_shape: ft.Var[(2,), "int32", "output", "cpu"]
-        y: ft.Var[(4, 4), "float32", "output", "cpu"]
         "nid: softmax"
-        _y = libop.softmax(x, axis=-1)
-        y_shape[0] = _y.shape(0)
-        y_shape[1] = _y.shape(1)
-        for i in range(4):
-            for j in range(4):
-                y[i, j] = _y[i, j]
+        return libop.softmax(x, axis=-1)
 
     x_torch = torch.rand(4, 4, dtype=torch.float32)
     x_arr = ft.Array(x_torch.numpy(), device)
-    y_shape_torch = torch.zeros(2, dtype=torch.int32)
-    y_shape_arr = ft.Array(y_shape_torch.numpy(), device)
-    y_torch = torch.zeros(4, 4, dtype=torch.float32)
-    y_arr = ft.Array(y_torch.numpy(), device)
-    f(x_arr, y_shape_arr, y_arr)
-    y_shape_np = y_shape_arr.numpy()
+    y_arr = f(x_arr)
     y_torch = torch.tensor(y_arr.numpy())
 
-    assert np.array_equal(y_shape_np, [4, 4])
+    assert np.array_equal(y_arr.shape, [4, 4])
     assert torch.all(torch.isclose(y_torch, torch.softmax(x_torch, axis=-1)))
 
 

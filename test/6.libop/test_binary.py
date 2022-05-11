@@ -137,8 +137,6 @@ def test_static_broadcast_1_at_front(libop_func, torch_func, dtype, ret_dtype):
         x: ft.Var[(1, 4), dtype, "input", "cpu"]
         y: ft.Var[(4, 4), dtype, "input", "cpu"]
         out: ft.Var[(4, 4), ret_dtype, "output", "cpu"]
-        "nid: out_shape"
-        out_shape = ft.empty((2,), "int32", "cpu")
         "nid: to_test"
         libop_func(x, y, out)
 
@@ -177,8 +175,6 @@ def test_static_broadcast_1_at_back(libop_func, torch_func, dtype, ret_dtype):
         x: ft.Var[(4, 4), dtype, "input", "cpu"]
         y: ft.Var[(4, 1), dtype, "input", "cpu"]
         out: ft.Var[(4, 4), ret_dtype, "output", "cpu"]
-        "nid: out_shape"
-        out_shape = ft.empty((2,), "int32", "cpu")
         "nid: to_test"
         libop_func(x, y, out)
 
@@ -217,8 +213,6 @@ def test_different_dtype(libop_func, torch_func, dtype, ret_dtype):
         x: ft.Var[(4, 4), "int32", "input", "cpu"]
         y: ft.Var[(4, 4), dtype, "input", "cpu"]
         out: ft.Var[(4, 4), ret_dtype, "output", "cpu"]
-        "nid: out_shape"
-        out_shape = ft.empty((2,), "int32", "cpu")
         "nid: to_test"
         libop_func(x, y, out)
 
@@ -253,32 +247,20 @@ def test_out_of_place(libop_func, torch_func, dtype, ret_dtype):
     device = ft.Device(ft.CPU())
 
     @ft.optimize(device=device, verbose=1)
-    def f(x, y, out_shape, out):
+    def f(x, y):
         x: ft.Var[(4, 4), dtype, "input", "cpu"]
         y: ft.Var[(4, 4), dtype, "input", "cpu"]
-        out_shape: ft.Var[(2,), "int32", "output", "cpu"]
-        out: ft.Var[(4, 4), ret_dtype, "output", "cpu"]
         "nid: to_test"
-        _out = libop_func(x, y)
-        for i in range(2):
-            out_shape[i] = _out.shape(i)
-        for i in range(4):
-            for j in range(4):
-                out[i, j] = _out[i, j]
+        return libop_func(x, y)
 
     x_torch = rand(4, 4, dtype=dtype)
     x_arr = ft.Array(x_torch.numpy(), device)
     y_torch = rand(4, 4, dtype=dtype)
     y_arr = ft.Array(y_torch.numpy(), device)
-    out_shape_torch = torch.zeros(2, dtype=torch.int32)
-    out_shape_arr = ft.Array(out_shape_torch.numpy(), device)
-    out_torch = zeros(4, 4, dtype=ret_dtype)
-    out_arr = ft.Array(out_torch.numpy(), device)
-    f(x_arr, y_arr, out_shape_arr, out_arr)
-    out_shape_numpy = out_shape_arr.numpy()
+    out_arr = f(x_arr, y_arr)
     out_torch = torch.tensor(out_arr.numpy())
 
-    assert np.array_equal(out_shape_numpy, [4, 4])
+    assert np.array_equal(out_arr.shape, [4, 4])
     assert same(out_torch, torch_func(x_torch, y_torch), dtype=dtype)
 
 
@@ -301,32 +283,20 @@ def test_operator_overload(libop_func, torch_func, dtype, ret_dtype):
     device = ft.Device(ft.CPU())
 
     @ft.optimize(device=device, verbose=1)
-    def f(x, y, out_shape, out):
+    def f(x, y):
         x: ft.Var[(4, 4), dtype, "input", "cpu"]
         y: ft.Var[(4, 4), dtype, "input", "cpu"]
-        out_shape: ft.Var[(2,), "int32", "output", "cpu"]
-        out: ft.Var[(4, 4), ret_dtype, "output", "cpu"]
         "nid: to_test"
-        _out = libop_func(x, y)
-        for i in range(2):
-            out_shape[i] = _out.shape(i)
-        for i in range(4):
-            for j in range(4):
-                out[i, j] = _out[i, j]
+        return libop_func(x, y)
 
     x_torch = rand(4, 4, dtype=dtype)
     x_arr = ft.Array(x_torch.numpy(), device)
     y_torch = rand(4, 4, dtype=dtype)
     y_arr = ft.Array(y_torch.numpy(), device)
-    out_shape_torch = torch.zeros(2, dtype=torch.int32)
-    out_shape_arr = ft.Array(out_shape_torch.numpy(), device)
-    out_torch = zeros(4, 4, dtype=ret_dtype)
-    out_arr = ft.Array(out_torch.numpy(), device)
-    f(x_arr, y_arr, out_shape_arr, out_arr)
-    out_shape_numpy = out_shape_arr.numpy()
+    out_arr = f(x_arr, y_arr)
     out_torch = torch.tensor(out_arr.numpy())
 
-    assert np.array_equal(out_shape_numpy, [4, 4])
+    assert np.array_equal(out_arr.shape, [4, 4])
     assert same(out_torch, torch_func(x_torch, y_torch), dtype=dtype)
 
 

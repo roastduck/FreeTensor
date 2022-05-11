@@ -156,33 +156,19 @@ def test_out_of_place():
     device = ft.Device(ft.CPU())
 
     @ft.optimize(device=device, verbose=1)
-    def f(x, w, y_shape, y):
+    def f(x, w):
         x: ft.Var[(2, 3, 14, 14), "float32", "input", "cpu"]
         w: ft.Var[(8, 3, 3, 3), "float32", "input", "cpu"]
-        y_shape: ft.Var[(4,), "int32", "output", "cpu"]
-        y: ft.Var[(2, 8, 12, 12), "float32", "output", "cpu"]
         "nid: conv"
-        _y = libop.conv(x, w, auto_pad='VALID')
-        for i in range(4):
-            y_shape[i] = _y.shape(i)
-        for n in range(2):
-            for c in range(8):
-                for h in range(12):
-                    for w in range(12):
-                        y[n, c, h, w] = _y[n, c, h, w]
+        return libop.conv(x, w, auto_pad='VALID')
 
     x_torch = torch.rand(2, 3, 14, 14, dtype=torch.float32)
     x_arr = ft.Array(x_torch.numpy(), device)
     w_torch = torch.rand(8, 3, 3, 3, dtype=torch.float32)
     w_arr = ft.Array(w_torch.numpy(), device)
-    y_shape_torch = torch.zeros(4, dtype=torch.int32)
-    y_shape_arr = ft.Array(y_shape_torch.numpy(), device)
-    y_torch = torch.zeros(2, 8, 12, 12, dtype=torch.float32)
-    y_arr = ft.Array(y_torch.numpy(), device)
-    f(x_arr, w_arr, y_shape_arr, y_arr)
-    y_shape_np = y_shape_arr.numpy()
+    y_arr = f(x_arr, w_arr)
     y_torch = torch.tensor(y_arr.numpy())
 
     y_std = torch.nn.functional.conv2d(x_torch, w_torch)
-    assert np.array_equal(y_shape_np, [2, 8, 12, 12])
+    assert np.array_equal(y_arr.shape, [2, 8, 12, 12])
     assert torch.all(torch.isclose(y_torch, y_std))
