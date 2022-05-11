@@ -35,7 +35,7 @@ void UnrollPart::apply(Schedule &schedule, SketchTarget &target) {
                 if (loop->property_->parallel_ == serialScope &&
                     !loop->property_->vectorize_ && !loop->property_->unroll_ &&
                     loop->len_->nodeType() == ASTNodeType::IntConst &&
-                    sz * loop->len_.as<IntConstNode>()->val_ <= max_size_) {
+                    sz * loop->len_.as<IntConstNode>()->val_ <= maxSize_) {
                     sz *= loop->len_.as<IntConstNode>()->val_;
                     schedule.unroll(loop->id());
                 }
@@ -49,7 +49,7 @@ void UnrollPart::genRandAnnotation(std::default_random_engine &gen) {
     std::vector<int> &auto_unroll_configs = targetType_ == TargetType::GPU
                                                 ? auto_unroll_configs_gpu
                                                 : auto_unroll_configs_cpu;
-    max_size_ =
+    maxSize_ =
         auto_unroll_configs[randomInt(auto_unroll_configs.size() - 1, gen)];
 }
 
@@ -57,14 +57,14 @@ bool UnrollPart::mutate(std::default_random_engine &gen) {
     std::vector<int> &auto_unroll_configs = targetType_ == TargetType::GPU
                                                 ? auto_unroll_configs_gpu
                                                 : auto_unroll_configs_cpu;
-    max_size_ =
+    maxSize_ =
         auto_unroll_configs[randomInt(auto_unroll_configs.size() - 1, gen)];
     return true;
 }
 bool UnrollPart::crossover(const SketchPart &part,
                            std::default_random_engine &gen) {
     if (auto p = part.as<UnrollPart>(); p.isValid()) {
-        max_size_ = p->max_size_;
+        maxSize_ = p->maxSize_;
         return true;
     }
     return false;
