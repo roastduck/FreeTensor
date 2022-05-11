@@ -11,7 +11,7 @@ from freetensor import libop
 def rand(*shape, **kvs):
     dtype = kvs["dtype"]
     if dtype == "float32":
-        return torch.rand(*shape, dtype=torch.float32)
+        return torch.rand(*shape, dtype=torch.float32) + 1
     if dtype == "int32":
         return torch.randint(1, 100, shape, dtype=torch.int32)
     assert False
