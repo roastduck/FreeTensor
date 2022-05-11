@@ -45,8 +45,42 @@ sub = named_partial("sub", _binary_op, lambda x, y: x - y)
 mul_ = named_partial("mul_", _binary_op_, lambda x, y: x * y)
 mul = named_partial("mul", _binary_op, lambda x, y: x * y)
 
-div_ = named_partial("div_", _binary_op_, lambda x, y: x / y)
-div = named_partial("div", _binary_op, lambda x, y: x / y)
+truediv_ = named_partial("truediv_", _binary_op_, lambda x, y: x / y)
+truediv = named_partial("truediv", _binary_op, lambda x, y: x / y)
+
+
+def _floordivMayFallback(lhs, rhs):
+    if (hasattr(lhs, '__module__') and
+            lhs.__module__ == 'torch') or (hasattr(rhs, '__module__') and
+                                           rhs.__module__ == 'torch'):
+        import torch
+        return torch.div(lhs, rhs, rounding_mode='floor')
+    return lhs // rhs
+
+
+floordiv_ = named_partial("floordiv_", _binary_op_, _floordivMayFallback)
+floordiv = named_partial("floordiv", _binary_op, _floordivMayFallback)
+
+mod_ = named_partial("mod_", _binary_op_, lambda x, y: x % y)
+mod = named_partial("mod", _binary_op, lambda x, y: x % y)
+
+lt_ = named_partial("lt_", _binary_op_, lambda x, y: x < y)
+lt = named_partial("lt", _binary_op, lambda x, y: x < y)
+
+le_ = named_partial("le_", _binary_op_, lambda x, y: x <= y)
+le = named_partial("le", _binary_op, lambda x, y: x <= y)
+
+gt_ = named_partial("gt_", _binary_op_, lambda x, y: x > y)
+gt = named_partial("gt", _binary_op, lambda x, y: x > y)
+
+ge_ = named_partial("ge_", _binary_op_, lambda x, y: x >= y)
+ge = named_partial("ge", _binary_op, lambda x, y: x >= y)
+
+eq_ = named_partial("eq_", _binary_op_, lambda x, y: x == y)
+eq = named_partial("eq", _binary_op, lambda x, y: x == y)
+
+ne_ = named_partial("ne_", _binary_op_, lambda x, y: x != y)
+ne = named_partial("ne", _binary_op, lambda x, y: x != y)
 
 
 @core.inline
@@ -69,6 +103,9 @@ def _unary_op(op, x):
     _unary_op_(op, x, y)
     return y
 
+
+neg_ = named_partial("neg_", _unary_op_, lambda x: -x)
+neg = named_partial("neg", _unary_op, lambda x: -x)
 
 relu_ = named_partial("relu_", _unary_op_, lambda x: core.max(x, 0))
 relu = named_partial("relu", _unary_op, lambda x: core.max(x, 0))

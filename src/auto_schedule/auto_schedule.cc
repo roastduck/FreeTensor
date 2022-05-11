@@ -15,16 +15,17 @@
 #include <codegen/code_gen_cuda.h>
 #include <driver.h>
 #include <lower.h>
-#include <pybind11/numpy.h>
 #include <queue>
 #include <utility>
 
 namespace freetensor {
 
-AutoSchedule::AutoSchedule(const Schedule &schedule, const Ref<Target> &target,
-                           const Ref<Device> &device, int measuredSize,
-                           py::function predictFunc, py::function updateFunc,
-                           std::string tag)
+AutoSchedule::AutoSchedule(
+    const Schedule &schedule, const Ref<Target> &target,
+    const Ref<Device> &device, int measuredSize,
+    const std::function<Predicts(const Features &)> &predictFunc,
+    const std::function<void(const Features &, const Predicts &)> &updateFunc,
+    std::string tag)
     : original_(schedule.clone()), target_(target), device_(device),
       measuredSize_(measuredSize), paramsSet_(false),
       predictFunc_(std::move(predictFunc)), updateFunc_(std::move(updateFunc)),
@@ -36,16 +37,18 @@ AutoSchedule::AutoSchedule(const Schedule &schedule, const Ref<Target> &target,
         flop_ += cnt.second;
     }
     if (target->type() == TargetType::CPU) {
-        rules_.push_back(new CacheWriteRule(target->type()));
-        rules_.push_back(new MultiLevelTilingWithFusionRule(target->type()));
-        rules_.push_back(new MultiLevelTilingRule(target->type()));
+        rules_.push_back(Ref<CacheWriteRule>::make(target->type()));
+        rules_.push_back(
+            Ref<MultiLevelTilingWithFusionRule>::make(target->type()));
+        rules_.push_back(Ref<MultiLevelTilingRule>::make(target->type()));
     } else {
-        rules_.push_back(new CacheWriteRule(target->type()));
-        rules_.push_back(new MultiLevelTilingWithFusionRule(target->type()));
-        rules_.push_back(new ThreadBindRule());
-        rules_.push_back(new UnrollRule(target->type()));
+        rules_.push_back(Ref<CacheWriteRule>::make(target->type()));
+        rules_.push_back(
+            Ref<MultiLevelTilingWithFusionRule>::make(target->type()));
+        rules_.push_back(Ref<ThreadBindRule>::make());
+        rules_.push_back(Ref<UnrollRule>::make(target->type()));
     }
-    rules_.push_back(new SkipRule());
+    rules_.push_back(Ref<SkipRule>::make());
     std::random_device rd;
     randGen_ = std::default_random_engine(rd());
 }
@@ -123,7 +126,8 @@ void AutoSchedule::searchOneRound(size_t n) {
     std::cout << "now best: " << toString(bs.ast()) << std::endl;
 }
 
-py::list AutoSchedule::genFeatures(std::vector<Ref<Sketch>> &sketches) {
+std::vector<std::vector<double>>
+AutoSchedule::genFeatures(std::vector<Ref<Sketch>> &sketches) {
     size_t n = sketches.size();
 #pragma omp parallel for
     for (size_t i = 0; i < n; i++) {
@@ -135,13 +139,9 @@ py::list AutoSchedule::genFeatures(std::vector<Ref<Sketch>> &sketches) {
             exit(-1);
         }
     }
-    py::list featureList;
+    std::vector<std::vector<double>> featureList;
     for (auto &i : sketches) {
-        py::list feature;
-        for (auto j : i->feature()) {
-            feature.append(py::float_(j));
-        }
-        featureList.append(feature);
+        featureList.emplace_back(i->feature());
     }
     return featureList;
 }
@@ -168,16 +168,14 @@ AutoSchedule::testAndAdd(std::vector<Ref<Sketch>> &sketches_in) {
     size_t n = sketches.size();
     ASSERT(sketches.size() == n);
     std::vector<double> times = measure(sketches);
-    py::list flopsList;
-    py::list featuresList;
+    std::vector<double> flopsList;
     for (size_t i = 0; i < times.size(); i++) {
         if (times[i] > 1e20) {
             continue;
         }
-        flopsList.append(py::float_(flop_ / times[i]));
-        featuresList.append(features[i]);
+        flopsList.emplace_back(flop_ / times[i]);
     }
-    updateFunc_(featuresList, flopsList);
+    updateFunc_(features, flopsList);
     auto cmp = [](const Ref<Sketch> &a, const Ref<Sketch> &b) {
         return *a < *b;
     };
@@ -396,9 +394,9 @@ AutoSchedule::getPrediction(std::vector<Ref<Sketch>> &sketches_in) {
     std::cout << "get prediction" << std::endl;
     auto featureList = genFeatures(sketches);
     std::cout << "got prediction" << std::endl;
-    py::list predList = predictFunc_(featureList);
+    auto predList = predictFunc_(featureList);
     for (size_t i = 0; i < predList.size(); i++) {
-        ret[index[i]] = predList[i].cast<double>();
+        ret[index[i]] = predList[i];
     }
     return ret;
 }

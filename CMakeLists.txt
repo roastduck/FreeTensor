@@ -14,8 +14,6 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "${DEFAULT_BUILD_TYPE}")
 endif()
 
-set(BUILD_SHARED_LIBS ON)
-
 # PyBind11
 find_package(Python COMPONENTS Interpreter Development REQUIRED)
 add_subdirectory(${CMAKE_SOURCE_DIR}/3rd-party/pybind11)
@@ -29,8 +27,10 @@ ExternalProject_add(ISL
     CONFIGURE_COMMAND ./autogen.sh && ./configure --prefix=${ISL_DIR}/install
     BUILD_COMMAND make -j
     INSTALL_COMMAND make install)
-include_directories(${ISL_DIR}/install/include)
-link_directories(${ISL_DIR}/install/lib)
+add_library(isl::isl INTERFACE IMPORTED GLOBAL)
+target_include_directories(isl::isl INTERFACE ${ISL_DIR}/install/include)
+target_link_libraries(isl::isl INTERFACE ${ISL_DIR}/install/lib/libisl.so)
+add_dependencies(isl::isl ISL)
 
 # Z3
 set(SUBMODULE_DIR_NAME "3rd-party") # Z3 PR #4959
@@ -110,18 +110,15 @@ if (OPENMP_FOUND)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
 
-include_directories(${CMAKE_SOURCE_DIR}/include)
-include_directories(${CMAKE_SOURCE_DIR}/3rd-party/pybind11/include)
-include_directories(${CMAKE_SOURCE_DIR}/3rd-party/z3/src/api/c++)
-include_directories(${CMAKE_SOURCE_DIR}/3rd-party/cppitertools)
 file(GLOB_RECURSE SRC ${CMAKE_SOURCE_DIR}/src/*.cc)
 
 file(GLOB_RECURSE LEXERS ${CMAKE_SOURCE_DIR}/grammar/*_lexer.g)
+set(ANTLR_INCLUDES "")
 foreach(G_FILE IN ITEMS ${LEXERS})
     get_filename_component(Name ${G_FILE} NAME_WE)
     antlr_target(${Name} ${G_FILE} PACKAGE freetensor)
     list(APPEND SRC ${ANTLR_${Name}_CXX_OUTPUTS})
-    include_directories(${ANTLR_${Name}_OUTPUT_DIR})
+    list(APPEND ANTLR_INCLUDES ${ANTLR_${Name}_OUTPUT_DIR})
     list(APPEND LEXER_OUTPUTS ${ANTLR_${Name}_OUTPUTS})
 endforeach()
 file(GLOB_RECURSE PARSERS ${CMAKE_SOURCE_DIR}/grammar/*_parser.g)
@@ -129,18 +126,30 @@ foreach(G_FILE IN ITEMS ${PARSERS})
     get_filename_component(Name ${G_FILE} NAME_WE)
     antlr_target(${Name} ${G_FILE} PACKAGE freetensor DEPENDS ${LEXER_OUTPUTS})
     list(APPEND SRC ${ANTLR_${Name}_CXX_OUTPUTS})
-    include_directories(${ANTLR_${Name}_OUTPUT_DIR})
+    list(APPEND ANTLR_INCLUDES ${ANTLR_${Name}_OUTPUT_DIR})
 endforeach()
 
 # Target
-pybind11_add_module(freetensor_ffi SHARED ${SRC})
-add_dependencies(freetensor_ffi ISL)
-target_link_libraries(freetensor_ffi PRIVATE
-    ${ISL_DIR}/install/lib/libisl.so
+add_library(freetensor SHARED ${SRC})
+add_dependencies(freetensor ISL)
+target_link_libraries(freetensor PUBLIC
+    isl::isl
     libz3 # See 3rd-party/z3/src/CMakeLists.txt
     antlr4_shared # See 3rd-party/antlr/antlr4/runtime/Cpp/runtime/CMakeLists.txt
     ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES})
-target_include_directories(freetensor_ffi PUBLIC ${CUDA_INCLUDE_DIRS})
+target_include_directories(freetensor PUBLIC
+    ${CUDA_INCLUDE_DIRS}
+    ${CMAKE_SOURCE_DIR}/3rd-party/z3/src/api/c++
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/3rd-party/cppitertools)
+target_include_directories(freetensor PRIVATE ${ANTLR_INCLUDES})
+
+file(GLOB_RECURSE FFI_SRC ${CMAKE_SOURCE_DIR}/ffi/*.cc)
+
+# Target
+pybind11_add_module(freetensor_ffi SHARED ${FFI_SRC})
+target_link_libraries(freetensor_ffi PRIVATE freetensor)
+target_include_directories(freetensor_ffi PRIVATE ${CMAKE_SOURCE_DIR}/ffi)
 
 # Pybind11 stubgen
 find_program(PYBIND11_STUBGEN pybind11-stubgen)

@@ -78,6 +78,23 @@ with ft.Device(ft.GPU(), 0):
     print(y)
 ```
 
+Some common tensor operations, including tensor addition (broadcasting is supported), are pre-defined functions in FreeTensor. They are defiend in `freetensor.libop`, and they can also be invoked using operator overloading. These functions are pure Python functions, which will be inlined into your code, and will enjoy a joint optimization.
+
+```python
+import freetensor as ft
+import numpy as np
+
+@ft.optimize
+def test(n: ft.Var[(), "int32"], a, b):
+    a: ft.Var[(n,), "int32"]
+    b: ft.Var[(n,), "int32"]
+    y = a + b  # Or y = libop.add(a, b)
+    return y
+
+y = test(np.array(4, dtype="int32"), np.array([1, 2, 3, 4], dtype="int32"),
+         np.array([2, 3, 4, 5], dtype="int32")).numpy()
+print(y)
+```
 
 ## Dependencies
 
@@ -158,6 +175,8 @@ Please configure (or install some plugins for) your editor, to support `clang-fo
 ## Code Structure
 
 ```
+ffi/ ------------------------------------------------------- Interface between C++ and Python
+grammar/ --------------------------------------------------- ANTLR grammar files used for serialization
 include/ --------------------------------------------------- C++ headers
 |- ref.h --------------------------------------------------- A smart pointer, based on std::shared_ptr, used all around the code
 |- ast.h --------------------------------------------------- Base class for AST (IR of FreeTensor) nodes
@@ -165,7 +184,6 @@ include/ --------------------------------------------------- C++ headers
 |- expr.h -------------------------------------------------- Expression nodes of an AST
 |- visitor.h ----------------------------------------------- Inherit Visitor in this file to examine an AST
 |- mutator.h ----------------------------------------------- Inherit Mutator in this file to modify an AST
-|- ffi.h --------------------------------------------------- Interface between C++ and Python. Implementations are in src/ffi/
 |- schedule.h ---------------------------------------------- All user specified transformations (schedules). Main interface. Details are in schedule/
 |- frontend/ ----------------------------------------------- C++ utilities used in Python API
 |- math/ --------------------------------------------------- Math utilities
@@ -176,5 +194,6 @@ include/ --------------------------------------------------- C++ headers
 `- driver/ ------------------------------------------------- Infrastructure to run a generated target code
 src/ ------------------------------------------------------- C++ sources (the structure is almost same with include/)
 python/ ---------------------------------------------------- Python API
+runtime/ --------------------------------------------------- (Minimal) runtime code to be compiled into target exexutables
 test/ ------------------------------------------------------ Unit tests
 ```

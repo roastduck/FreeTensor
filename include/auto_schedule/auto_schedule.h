@@ -6,14 +6,13 @@
 #include <driver/array.h>
 #include <driver/device.h>
 #include <driver/target.h>
-#include <pybind11/pybind11.h>
+#include <functional>
 #include <random>
 #include <schedule.h>
 #include <set>
 #include <unordered_map>
 
 namespace freetensor {
-namespace py = pybind11;
 
 constexpr int EVOLUTIONARY_SEARCH_POPULATION = 128;
 constexpr int EVOLUTIONARY_SEARCH_ITERS = 4;
@@ -23,6 +22,11 @@ constexpr double EVOLUTIONARY_SEARCH_CROSSOVER_PROB = 0.3;
 constexpr double INIT_RAND_RATIO = 0.7;
 
 class AutoSchedule {
+  public:
+    typedef std::vector<std::vector<double>> Features;
+    typedef std::vector<double> Predicts;
+
+  private:
     Schedule original_;
     Ref<Target> target_;
     Ref<Device> device_;
@@ -34,8 +38,8 @@ class AutoSchedule {
     std::vector<Ref<Sketch>> measuredSketches_;
     std::set<size_t> measuredHashes_;
     std::default_random_engine randGen_;
-    py::function predictFunc_;
-    py::function updateFunc_;
+    const std::function<Predicts(const Features &)> &predictFunc_;
+    const std::function<void(const Features &, const Predicts &)> &updateFunc_;
     std::vector<Ref<Rule>> rules_;
     double flop_;
     std::string tag_;
@@ -46,7 +50,9 @@ class AutoSchedule {
   public:
     AutoSchedule(const Schedule &schedule, const Ref<Target> &target,
                  const Ref<Device> &device, int measuredSize,
-                 py::function predictFunc, py::function updateFunc,
+                 const std::function<Predicts(const Features &)> &predictFunc,
+                 const std::function<void(const Features &, const Predicts &)>
+                     &updateFunc,
                  std::string tag = "");
 
     size_t measuredSize() const { return measuredSize_; }
@@ -63,7 +69,8 @@ class AutoSchedule {
 
     std::vector<Ref<Sketch>> getRandPopulation(size_t nRand);
 
-    py::list genFeatures(std::vector<Ref<Sketch>> &sketches);
+    std::vector<std::vector<double>>
+    genFeatures(std::vector<Ref<Sketch>> &sketches);
 
     std::vector<double> getPrediction(std::vector<Ref<Sketch>> &sketches_in);
 

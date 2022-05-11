@@ -28,14 +28,14 @@ def compile_all(n_faces, in_feats, out_feats, device, ad_save_all):
             sum2 = zeros((in_feats,), "float32")
             sum3 = zeros((in_feats,), "float32")
             for p in range(3):
-                add_to(sum1, x[adj[i, p]])
-                add_to(sum2, abs(sub(x[adj[i, p]], x[adj[i, (p + 1) % 3]])))
-                add_to(sum3, abs(sub(x[adj[i, p]], x[i])))
+                sum1[:] += x[adj[i, p]]
+                sum2[:] += abs(x[adj[i, p]] - x[adj[i, (p + 1) % 3]])
+                sum3[:] += abs(x[adj[i, p]] - x[i])
             y0 = matmul(x[i], w0)
             y1 = matmul(sum1, w1)
             y2 = matmul(sum2, w2)
             y3 = matmul(sum3, w3)
-            assign(y[i], add(add(add(y0, y1), y2), y3))
+            y[i] = y0 + y1 + y2 + y3
 
     print("# Inference:")
     print(inference)

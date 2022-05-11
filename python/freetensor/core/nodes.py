@@ -160,6 +160,16 @@ class VarRef(ffi.FrontendVar):
     def __setitem__(self, key, value):
         var = VarRef(self.name, self.vardef, self.full_shape, self.dtype,
                      self.mtype, self.chain_indices(self._parse_key(key)))
+        if var.ndim > 0:
+            if value is not None:
+                # In standard Python data model, functions like __iadd__
+                # returns the modified self, and __setitem__ does a self-
+                # assignment. We do the augmenting assignment directly
+                # in __iadd__ and return None, so we do not have to do
+                # it again here
+                from .. import libop
+                libop.assign(var, value)
+            return
         if var.vardef.atype == ffi.AccessType("input"):
             raise ffi.InvalidProgram("Cannot modify an \"input\" tensor `" +
                                      self.name)
@@ -209,60 +219,159 @@ class VarRef(ffi.FrontendVar):
         return ffiIdx
 
     def __add__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            return libop.add(self, other)
         return self.as_load() + other
 
     def __radd__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            return libop.add(other, self)
         return other + self.as_load()
 
+    def __iadd__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            libop.add_to(self, other)
+            return  # Don't return self. See __setitem__
+        return NotImplemented
+
     def __sub__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            return libop.sub(self, other)
         return self.as_load() - other
 
     def __rsub__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            return libop.sub(other, self)
         return other - self.as_load()
 
+    def __isub__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            libop.sub_to(self, other)
+            return  # Don't return self. See __setitem__
+        return NotImplemented
+
     def __mul__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            return libop.mul(self, other)
         return self.as_load() * other
 
     def __rmul__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            return libop.mul(other, self)
         return other * self.as_load()
 
+    def __imul__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            libop.mul_to(self, other)
+            return  # Don't return self. See __setitem__
+        return NotImplemented
+
     def __truediv__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            return libop.truediv(self, other)
         return self.as_load() / other
 
     def __rtruediv__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            return libop.truediv(other, self)
         return other / self.as_load()
 
+    def __itruediv__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            libop.truediv_to(self, other)
+            return  # Don't return self. See __setitem__
+        return NotImplemented
+
     def __floordiv__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            return libop.floordiv(self, other)
         return self.as_load() // other
 
     def __rfloordiv__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            return libop.floordiv(other, self)
         return other // self.as_load()
 
+    def __ifloordiv__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            libop.floordiv_to(self, other)
+            return  # Don't return self. See __setitem__
+        return NotImplemented
+
     def __mod__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            return libop.mod(self, other)
         return self.as_load() % other
 
     def __rmod__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            return libop.mod(other, self)
         return other % self.as_load()
 
+    def __imod__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            libop.mod_to(self, other)
+            return  # Don't return self. See __setitem__
+        return NotImplemented
+
     def __lt__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            return libop.lt(self, other)
         return self.as_load() < other
 
     def __le__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            return libop.le(self, other)
         return self.as_load() <= other
 
     def __gt__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            return libop.gt(self, other)
         return self.as_load() > other
 
     def __ge__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            return libop.ge(self, other)
         return self.as_load() >= other
 
     def __eq__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            return libop.eq(self, other)
         return self.as_load() == other
 
     def __ne__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            return libop.ne(self, other)
         return self.as_load() != other
 
     def __neg__(self):
+        if self.ndim > 0:
+            from .. import libop
+            return libop.neg(self)
         return 0 - self.as_load()
 
 
