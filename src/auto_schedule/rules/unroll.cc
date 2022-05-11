@@ -1,6 +1,5 @@
 #include <analyze/get_loop_nest_tree.h>
-#include <auto_schedule //rules/thread_bind.h>
-#include <auto_schedule/rules/multi_level_tiling.h>
+#include <auto_schedule/rules/thread_bind.h>
 #include <auto_schedule/rules/unroll.h>
 #include <auto_schedule/utils.h>
 #include <schedule/unroll.h>
