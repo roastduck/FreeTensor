@@ -158,6 +158,8 @@ Please configure (or install some plugins for) your editor, to support `clang-fo
 ## Code Structure
 
 ```
+ffi/ ------------------------------------------------------- Interface between C++ and Python
+grammar/ --------------------------------------------------- ANTLR grammar files used for serialization
 include/ --------------------------------------------------- C++ headers
 |- ref.h --------------------------------------------------- A smart pointer, based on std::shared_ptr, used all around the code
 |- ast.h --------------------------------------------------- Base class for AST (IR of FreeTensor) nodes
@@ -165,7 +167,6 @@ include/ --------------------------------------------------- C++ headers
 |- expr.h -------------------------------------------------- Expression nodes of an AST
 |- visitor.h ----------------------------------------------- Inherit Visitor in this file to examine an AST
 |- mutator.h ----------------------------------------------- Inherit Mutator in this file to modify an AST
-|- ffi.h --------------------------------------------------- Interface between C++ and Python. Implementations are in src/ffi/
 |- schedule.h ---------------------------------------------- All user specified transformations (schedules). Main interface. Details are in schedule/
 |- frontend/ ----------------------------------------------- C++ utilities used in Python API
 |- math/ --------------------------------------------------- Math utilities
@@ -176,5 +177,6 @@ include/ --------------------------------------------------- C++ headers
 `- driver/ ------------------------------------------------- Infrastructure to run a generated target code
 src/ ------------------------------------------------------- C++ sources (the structure is almost same with include/)
 python/ ---------------------------------------------------- Python API
+runtime/ --------------------------------------------------- (Minimal) runtime code to be compiled into target exexutables
 test/ ------------------------------------------------------ Unit tests
 ```
