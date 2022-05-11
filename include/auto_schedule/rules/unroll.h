@@ -19,8 +19,8 @@ class UnrollPart : public SketchPartNode {
     int maxSize_;
 
   public:
-    UnrollPart(TargetType targetType, size_t max_size = 0)
-        : targetType_(targetType), maxSize_(max_size) {}
+    UnrollPart(TargetType targetType, size_t maxSize = 0)
+        : targetType_(targetType), maxSize_(maxSize) {}
     void genRandAnnotation(std::default_random_engine &gen) override;
     bool mutate(std::default_random_engine &gen) override;
     bool crossover(const SketchPart &part,
