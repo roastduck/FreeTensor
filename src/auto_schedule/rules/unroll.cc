@@ -11,15 +11,15 @@ static std::vector<int> auto_unroll_configs_gpu = {0, 16, 64, 512, 1024};
 
 void UnrollPart::apply(Schedule &schedule, SketchTarget &target) {
     Stmt root;
-    int vthread_size = 1;
+    int vthreadSize = 1;
     if (targetType_ == TargetType::GPU) {
         SketchPart part = target.getPart(SketchPartType::ThreadBind);
-        ID lastParallelizedID = part.as<ThreadBindPart>()->lastParallelizedID;
+        ID lastParallelizedID = part.as<ThreadBindPart>()->lastParallelizedID_;
         if (!lastParallelizedID.isValid()) {
             return;
         }
         root = schedule.find(lastParallelizedID).as<ForNode>()->body_;
-        vthread_size = part.as<ThreadBindPart>()->vthread_size;
+        vthreadSize = part.as<ThreadBindPart>()->vthreadSize_;
     }
     std::function<int(const Ref<LoopNest> &nest)> visitNest =
         [&](const Ref<LoopNest> &nest) {
@@ -28,7 +28,7 @@ void UnrollPart::apply(Schedule &schedule, SketchTarget &target) {
                 sz += visitNest(subNest);
             }
             if (sz == 0) {
-                sz = vthread_size;
+                sz = vthreadSize;
             }
             auto &&loop = nest->loop_;
             if (loop.isValid()) { // not root
