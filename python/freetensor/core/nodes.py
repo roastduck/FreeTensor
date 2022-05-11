@@ -209,60 +209,117 @@ class VarRef(ffi.FrontendVar):
         return ffiIdx
 
     def __add__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            return libop.add(self, other)
         return self.as_load() + other
 
     def __radd__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            return libop.add(other, self)
         return other + self.as_load()
 
     def __sub__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            return libop.sub(self, other)
         return self.as_load() - other
 
     def __rsub__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            return libop.sub(other, self)
         return other - self.as_load()
 
     def __mul__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            return libop.mul(self, other)
         return self.as_load() * other
 
     def __rmul__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            return libop.mul(other, self)
         return other * self.as_load()
 
     def __truediv__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            return libop.truediv(self, other)
         return self.as_load() / other
 
     def __rtruediv__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            return libop.truediv(other, self)
         return other / self.as_load()
 
     def __floordiv__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            return libop.floordiv(self, other)
         return self.as_load() // other
 
     def __rfloordiv__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            return libop.floordiv(other, self)
         return other // self.as_load()
 
     def __mod__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            return libop.mod(self, other)
         return self.as_load() % other
 
     def __rmod__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            return libop.mod(other, self)
         return other % self.as_load()
 
     def __lt__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            return libop.lt(self, other)
         return self.as_load() < other
 
     def __le__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            return libop.le(self, other)
         return self.as_load() <= other
 
     def __gt__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            return libop.gt(self, other)
         return self.as_load() > other
 
     def __ge__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            return libop.ge(self, other)
         return self.as_load() >= other
 
     def __eq__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            return libop.eq(self, other)
         return self.as_load() == other
 
     def __ne__(self, other):
+        if self.ndim > 0:
+            from .. import libop
+            return libop.ne(self, other)
         return self.as_load() != other
 
     def __neg__(self):
+        if self.ndim > 0:
+            from .. import libop
+            return libop.neg(self)
         return 0 - self.as_load()
 
 

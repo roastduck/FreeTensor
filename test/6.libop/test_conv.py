@@ -23,7 +23,7 @@ def test_basic():
     y_torch = torch.zeros(2, 8, 12, 12, dtype=torch.float32)
     y_arr = ft.Array(y_torch.numpy(), device)
     f(x_arr, w_arr, y_arr)
-    y_torch = torch.Tensor(y_arr.numpy())
+    y_torch = torch.tensor(y_arr.numpy())
 
     y_std = torch.nn.functional.conv2d(x_torch, w_torch)
     assert torch.all(torch.isclose(y_torch, y_std))
@@ -50,7 +50,7 @@ def test_bias():
     y_torch = torch.zeros(2, 8, 12, 12, dtype=torch.float32)
     y_arr = ft.Array(y_torch.numpy(), device)
     f(x_arr, w_arr, b_arr, y_arr)
-    y_torch = torch.Tensor(y_arr.numpy())
+    y_torch = torch.tensor(y_arr.numpy())
 
     y_std = torch.nn.functional.conv2d(x_torch, w_torch, bias=b_torch)
     assert torch.all(torch.isclose(y_torch, y_std))
@@ -74,7 +74,7 @@ def test_same_pad():
     y_torch = torch.zeros(2, 8, 14, 14, dtype=torch.float32)
     y_arr = ft.Array(y_torch.numpy(), device)
     f(x_arr, w_arr, y_arr)
-    y_torch = torch.Tensor(y_arr.numpy())
+    y_torch = torch.tensor(y_arr.numpy())
 
     y_std = torch.nn.functional.conv2d(x_torch, w_torch, padding=[1, 1])
     assert torch.all(torch.isclose(y_torch, y_std))
@@ -98,7 +98,7 @@ def test_stride():
     y_torch = torch.zeros(2, 8, 6, 6, dtype=torch.float32)
     y_arr = ft.Array(y_torch.numpy(), device)
     f(x_arr, w_arr, y_arr)
-    y_torch = torch.Tensor(y_arr.numpy())
+    y_torch = torch.tensor(y_arr.numpy())
 
     y_std = torch.nn.functional.conv2d(x_torch, w_torch, stride=(2, 2))
     assert torch.all(torch.isclose(y_torch, y_std))
@@ -122,7 +122,7 @@ def test_group():
     y_torch = torch.zeros(2, 8, 12, 12, dtype=torch.float32)
     y_arr = ft.Array(y_torch.numpy(), device)
     f(x_arr, w_arr, y_arr)
-    y_torch = torch.Tensor(y_arr.numpy())
+    y_torch = torch.tensor(y_arr.numpy())
 
     y_std = torch.nn.functional.conv2d(x_torch, w_torch, groups=2)
     assert torch.all(torch.isclose(y_torch, y_std))
@@ -146,7 +146,7 @@ def test_dilation():
     y_torch = torch.zeros(2, 8, 10, 10, dtype=torch.float32)
     y_arr = ft.Array(y_torch.numpy(), device)
     f(x_arr, w_arr, y_arr)
-    y_torch = torch.Tensor(y_arr.numpy())
+    y_torch = torch.tensor(y_arr.numpy())
 
     y_std = torch.nn.functional.conv2d(x_torch, w_torch, dilation=(2, 2))
     assert torch.all(torch.isclose(y_torch, y_std))
@@ -181,7 +181,7 @@ def test_out_of_place():
     y_arr = ft.Array(y_torch.numpy(), device)
     f(x_arr, w_arr, y_shape_arr, y_arr)
     y_shape_np = y_shape_arr.numpy()
-    y_torch = torch.Tensor(y_arr.numpy())
+    y_torch = torch.tensor(y_arr.numpy())
 
     y_std = torch.nn.functional.conv2d(x_torch, w_torch)
     assert np.array_equal(y_shape_np, [2, 8, 12, 12])

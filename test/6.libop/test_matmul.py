@@ -23,7 +23,7 @@ def test_mm():
     y_torch = torch.zeros(4, 6, dtype=torch.float32)
     y_arr = ft.Array(y_torch.numpy(), device)
     f(a_arr, b_arr, y_arr)
-    y_torch = torch.Tensor(y_arr.numpy())
+    y_torch = torch.tensor(y_arr.numpy())
 
     y_std = torch.matmul(a_torch, b_torch)
     assert torch.all(torch.isclose(y_torch, y_std))
@@ -47,7 +47,7 @@ def test_bmm_1():
     y_torch = torch.zeros(2, 4, 6, dtype=torch.float32)
     y_arr = ft.Array(y_torch.numpy(), device)
     f(a_arr, b_arr, y_arr)
-    y_torch = torch.Tensor(y_arr.numpy())
+    y_torch = torch.tensor(y_arr.numpy())
 
     y_std = torch.matmul(a_torch, b_torch)
     assert torch.all(torch.isclose(y_torch, y_std))
@@ -71,7 +71,7 @@ def test_bmm_2():
     y_torch = torch.zeros(2, 4, 6, dtype=torch.float32)
     y_arr = ft.Array(y_torch.numpy(), device)
     f(a_arr, b_arr, y_arr)
-    y_torch = torch.Tensor(y_arr.numpy())
+    y_torch = torch.tensor(y_arr.numpy())
 
     y_std = torch.matmul(a_torch, b_torch)
     assert torch.all(torch.isclose(y_torch, y_std))
@@ -95,7 +95,7 @@ def test_mv():
     y_torch = torch.zeros(4, dtype=torch.float32)
     y_arr = ft.Array(y_torch.numpy(), device)
     f(a_arr, b_arr, y_arr)
-    y_torch = torch.Tensor(y_arr.numpy())
+    y_torch = torch.tensor(y_arr.numpy())
 
     y_std = torch.matmul(a_torch, b_torch)
     assert torch.all(torch.isclose(y_torch, y_std))
@@ -119,7 +119,7 @@ def test_vm():
     y_torch = torch.zeros(6, dtype=torch.float32)
     y_arr = ft.Array(y_torch.numpy(), device)
     f(a_arr, b_arr, y_arr)
-    y_torch = torch.Tensor(y_arr.numpy())
+    y_torch = torch.tensor(y_arr.numpy())
 
     y_std = torch.matmul(a_torch, b_torch)
     assert torch.all(torch.isclose(y_torch, y_std))
@@ -150,7 +150,7 @@ def test_out_of_place():
     y_arr = ft.Array(y_torch.numpy(), device)
     f(a_arr, b_arr, y_shape_arr, y_arr)
     y_shape_np = y_shape_arr.numpy()
-    y_torch = torch.Tensor(y_arr.numpy())
+    y_torch = torch.tensor(y_arr.numpy())
 
     y_std = torch.matmul(a_torch, b_torch)
     assert np.array_equal(y_shape_np, [4])
