@@ -81,6 +81,7 @@ class AutoSchedule {
     Schedule testMultiLevelTilingWithFusion(int nLevel);
     Schedule testThreadBind();
     Schedule testCacheRead();
+    Schedule testUnroll();
 };
 
 } // namespace freetensor

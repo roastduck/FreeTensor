@@ -29,6 +29,7 @@ void init_ffi_auto_schedule(py::module_ &m) {
              &AutoSchedule::testMultiLevelTilingWithFusion, "n_level"_a)
         .def("test_thread_bind", &AutoSchedule::testThreadBind)
         .def("test_cache_read", &AutoSchedule::testCacheRead)
+        .def("test_unroll", &AutoSchedule::testUnroll)
         .def("get_flop", &AutoSchedule::getFlop)
         .def("get_tag", &AutoSchedule::getTag)
         .def("get_best_time", &AutoSchedule::getBestTime);
