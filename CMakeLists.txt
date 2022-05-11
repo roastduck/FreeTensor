@@ -14,8 +14,6 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "${DEFAULT_BUILD_TYPE}")
 endif()
 
-set(BUILD_SHARED_LIBS ON)
-
 # PyBind11
 find_package(Python COMPONENTS Interpreter Development REQUIRED)
 add_subdirectory(${CMAKE_SOURCE_DIR}/3rd-party/pybind11)
@@ -29,8 +27,10 @@ ExternalProject_add(ISL
     CONFIGURE_COMMAND ./autogen.sh && ./configure --prefix=${ISL_DIR}/install
     BUILD_COMMAND make -j
     INSTALL_COMMAND make install)
-include_directories(${ISL_DIR}/install/include)
-link_directories(${ISL_DIR}/install/lib)
+add_library(isl::isl INTERFACE IMPORTED GLOBAL)
+target_include_directories(isl::isl INTERFACE ${ISL_DIR}/install/include)
+target_link_libraries(isl::isl INTERFACE ${ISL_DIR}/install/lib/libisl.so)
+add_dependencies(isl::isl ISL)
 
 # Z3
 set(SUBMODULE_DIR_NAME "3rd-party") # Z3 PR #4959
@@ -133,7 +133,7 @@ endforeach()
 add_library(freetensor SHARED ${SRC})
 add_dependencies(freetensor ISL)
 target_link_libraries(freetensor PUBLIC
-    ${ISL_DIR}/install/lib/libisl.so
+    isl::isl
     libz3 # See 3rd-party/z3/src/CMakeLists.txt
     antlr4_shared # See 3rd-party/antlr/antlr4/runtime/Cpp/runtime/CMakeLists.txt
     ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES})
