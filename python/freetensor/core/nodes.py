@@ -161,8 +161,14 @@ class VarRef(ffi.FrontendVar):
         var = VarRef(self.name, self.vardef, self.full_shape, self.dtype,
                      self.mtype, self.chain_indices(self._parse_key(key)))
         if var.ndim > 0:
-            from .. import libop
-            libop.assign(var, value)
+            if value is not None:
+                # In standard Python data model, functions like __iadd__
+                # returns the modified self, and __setitem__ does a self-
+                # assignment. We do the augmenting assignment directly
+                # in __iadd__ and return None, so we do not have to do
+                # it again here
+                from .. import libop
+                libop.assign(var, value)
             return
         if var.vardef.atype == ffi.AccessType("input"):
             raise ffi.InvalidProgram("Cannot modify an \"input\" tensor `" +
@@ -228,7 +234,7 @@ class VarRef(ffi.FrontendVar):
         if self.ndim > 0:
             from .. import libop
             libop.add_to(self, other)
-            return
+            return  # Don't return self. See __setitem__
         return NotImplemented
 
     def __sub__(self, other):
@@ -247,7 +253,7 @@ class VarRef(ffi.FrontendVar):
         if self.ndim > 0:
             from .. import libop
             libop.sub_to(self, other)
-            return
+            return  # Don't return self. See __setitem__
         return NotImplemented
 
     def __mul__(self, other):
@@ -266,7 +272,7 @@ class VarRef(ffi.FrontendVar):
         if self.ndim > 0:
             from .. import libop
             libop.mul_to(self, other)
-            return
+            return  # Don't return self. See __setitem__
         return NotImplemented
 
     def __truediv__(self, other):
@@ -285,7 +291,7 @@ class VarRef(ffi.FrontendVar):
         if self.ndim > 0:
             from .. import libop
             libop.truediv_to(self, other)
-            return
+            return  # Don't return self. See __setitem__
         return NotImplemented
 
     def __floordiv__(self, other):
@@ -304,7 +310,7 @@ class VarRef(ffi.FrontendVar):
         if self.ndim > 0:
             from .. import libop
             libop.floordiv_to(self, other)
-            return
+            return  # Don't return self. See __setitem__
         return NotImplemented
 
     def __mod__(self, other):
@@ -323,7 +329,7 @@ class VarRef(ffi.FrontendVar):
         if self.ndim > 0:
             from .. import libop
             libop.mod_to(self, other)
-            return
+            return  # Don't return self. See __setitem__
         return NotImplemented
 
     def __lt__(self, other):
