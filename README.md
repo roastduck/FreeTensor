@@ -78,6 +78,23 @@ with ft.Device(ft.GPU(), 0):
     print(y)
 ```
 
+Some common tensor operations, including tensor addition (broadcasting is supported), are pre-defined functions in FreeTensor. They are defiend in `freetensor.libop`, and they can also be invoked using operator overloading. These functions are pure Python functions, which will be inlined into your code, and will enjoy a joint optimization.
+
+```python
+import freetensor as ft
+import numpy as np
+
+@ft.optimize
+def test(n: ft.Var[(), "int32"], a, b):
+    a: ft.Var[(n,), "int32"]
+    b: ft.Var[(n,), "int32"]
+    y = a + b  # Or y = libop.add(a, b)
+    return y
+
+y = test(np.array(4, dtype="int32"), np.array([1, 2, 3, 4], dtype="int32"),
+         np.array([2, 3, 4, 5], dtype="int32")).numpy()
+print(y)
+```
 
 ## Dependencies
 
