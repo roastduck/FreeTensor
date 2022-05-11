@@ -8,24 +8,18 @@ from freetensor import libop
 def test_static():
     device = ft.Device(ft.CPU())
 
-    @ft.transform
+    @ft.optimize(device=device, verbose=1)
     def f(x, y):
         x: ft.Var[(3, 4, 5), "float32", "input", "cpu"]
         y: ft.Var[(3, 1, 4, 1, 5), "float32", "output", "cpu"]
         "nid: unsqueeze"
         libop.unsqueeze_(x, y, axes=[1, 3])
 
-    print(f)
-    f = ft.lower(f, ft.CPU())
-    print(f)
-
-    code = ft.codegen(f, ft.CPU())
-
     x_torch = torch.rand(3, 4, 5, dtype=torch.float32)
     x_arr = ft.Array(x_torch.numpy(), device)
     y_torch = torch.zeros(3, 1, 4, 1, 5, dtype=torch.float32)
     y_arr = ft.Array(y_torch.numpy(), device)
-    ft.Driver(f, code, device)(x_arr, y_arr)
+    f(x_arr, y_arr)
     y_torch = torch.Tensor(y_arr.numpy())
 
     assert torch.all(torch.isclose(y_torch, x_torch.reshape(3, 1, 4, 1, 5)))
@@ -34,7 +28,7 @@ def test_static():
 def test_out_of_place():
     device = ft.Device(ft.CPU())
 
-    @ft.transform
+    @ft.optimize(device=device, verbose=1)
     def f(x, y_shape, y):
         x: ft.Var[(3, 4, 5), "float32", "input", "cpu"]
         y_shape: ft.Var[(5,), "int32", "output", "cpu"]
@@ -48,19 +42,13 @@ def test_out_of_place():
                 for k in range(5):
                     y[i, 0, j, 0, k] = _y[i, 0, j, 0, k]
 
-    print(f)
-    f = ft.lower(f, ft.CPU())
-    print(f)
-
-    code = ft.codegen(f, ft.CPU())
-
     x_torch = torch.rand(3, 4, 5, dtype=torch.float32)
     x_arr = ft.Array(x_torch.numpy(), device)
     y_shape_torch = torch.zeros(5, dtype=torch.int32)
     y_shape_arr = ft.Array(y_shape_torch.numpy(), device)
     y_torch = torch.zeros(3, 1, 4, 1, 5, dtype=torch.float32)
     y_arr = ft.Array(y_torch.numpy(), device)
-    ft.Driver(f, code, device)(x_arr, y_shape_arr, y_arr)
+    f(x_arr, y_shape_arr, y_arr)
     y_shape_np = y_shape_arr.numpy()
     y_torch = torch.Tensor(y_arr.numpy())
 

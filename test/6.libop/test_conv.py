@@ -8,7 +8,7 @@ from freetensor import libop
 def test_basic():
     device = ft.Device(ft.CPU())
 
-    @ft.transform
+    @ft.optimize(device=device, verbose=1)
     def f(x, w, y):
         x: ft.Var[(2, 3, 14, 14), "float32", "input", "cpu"]
         w: ft.Var[(8, 3, 3, 3), "float32", "input", "cpu"]
@@ -16,19 +16,13 @@ def test_basic():
         "nid: conv"
         libop.conv_(x, w, None, y, auto_pad='VALID')
 
-    print(f)
-    f = ft.lower(f, ft.CPU())
-    print(f)
-
-    code = ft.codegen(f, ft.CPU())
-
     x_torch = torch.rand(2, 3, 14, 14, dtype=torch.float32)
     x_arr = ft.Array(x_torch.numpy(), device)
     w_torch = torch.rand(8, 3, 3, 3, dtype=torch.float32)
     w_arr = ft.Array(w_torch.numpy(), device)
     y_torch = torch.zeros(2, 8, 12, 12, dtype=torch.float32)
     y_arr = ft.Array(y_torch.numpy(), device)
-    ft.Driver(f, code, device)(x_arr, w_arr, y_arr)
+    f(x_arr, w_arr, y_arr)
     y_torch = torch.Tensor(y_arr.numpy())
 
     y_std = torch.nn.functional.conv2d(x_torch, w_torch)
@@ -38,7 +32,7 @@ def test_basic():
 def test_bias():
     device = ft.Device(ft.CPU())
 
-    @ft.transform
+    @ft.optimize(device=device, verbose=1)
     def f(x, w, b, y):
         x: ft.Var[(2, 3, 14, 14), "float32", "input", "cpu"]
         w: ft.Var[(8, 3, 3, 3), "float32", "input", "cpu"]
@@ -46,12 +40,6 @@ def test_bias():
         y: ft.Var[(2, 8, 12, 12), "float32", "output", "cpu"]
         "nid: conv"
         libop.conv_(x, w, b, y, auto_pad='VALID')
-
-    print(f)
-    f = ft.lower(f, ft.CPU())
-    print(f)
-
-    code = ft.codegen(f, ft.CPU())
 
     x_torch = torch.rand(2, 3, 14, 14, dtype=torch.float32)
     x_arr = ft.Array(x_torch.numpy(), device)
@@ -61,7 +49,7 @@ def test_bias():
     b_arr = ft.Array(b_torch.numpy(), device)
     y_torch = torch.zeros(2, 8, 12, 12, dtype=torch.float32)
     y_arr = ft.Array(y_torch.numpy(), device)
-    ft.Driver(f, code, device)(x_arr, w_arr, b_arr, y_arr)
+    f(x_arr, w_arr, b_arr, y_arr)
     y_torch = torch.Tensor(y_arr.numpy())
 
     y_std = torch.nn.functional.conv2d(x_torch, w_torch, bias=b_torch)
@@ -71,7 +59,7 @@ def test_bias():
 def test_same_pad():
     device = ft.Device(ft.CPU())
 
-    @ft.transform
+    @ft.optimize(device=device, verbose=1)
     def f(x, w, y):
         x: ft.Var[(2, 3, 14, 14), "float32", "input", "cpu"]
         w: ft.Var[(8, 3, 3, 3), "float32", "input", "cpu"]
@@ -79,19 +67,13 @@ def test_same_pad():
         "nid: conv"
         libop.conv_(x, w, None, y, kernel_shape=(3, 3), auto_pad='SAME_UPPER')
 
-    print(f)
-    f = ft.lower(f, ft.CPU())
-    print(f)
-
-    code = ft.codegen(f, ft.CPU())
-
     x_torch = torch.rand(2, 3, 14, 14, dtype=torch.float32)
     x_arr = ft.Array(x_torch.numpy(), device)
     w_torch = torch.rand(8, 3, 3, 3, dtype=torch.float32)
     w_arr = ft.Array(w_torch.numpy(), device)
     y_torch = torch.zeros(2, 8, 14, 14, dtype=torch.float32)
     y_arr = ft.Array(y_torch.numpy(), device)
-    ft.Driver(f, code, device)(x_arr, w_arr, y_arr)
+    f(x_arr, w_arr, y_arr)
     y_torch = torch.Tensor(y_arr.numpy())
 
     y_std = torch.nn.functional.conv2d(x_torch, w_torch, padding=[1, 1])
@@ -101,7 +83,7 @@ def test_same_pad():
 def test_stride():
     device = ft.Device(ft.CPU())
 
-    @ft.transform
+    @ft.optimize(device=device, verbose=1)
     def f(x, w, y):
         x: ft.Var[(2, 3, 14, 14), "float32", "input", "cpu"]
         w: ft.Var[(8, 3, 3, 3), "float32", "input", "cpu"]
@@ -109,19 +91,13 @@ def test_stride():
         "nid: conv"
         libop.conv_(x, w, None, y, auto_pad='VALID', strides=(2, 2))
 
-    print(f)
-    f = ft.lower(f, ft.CPU())
-    print(f)
-
-    code = ft.codegen(f, ft.CPU())
-
     x_torch = torch.rand(2, 3, 14, 14, dtype=torch.float32)
     x_arr = ft.Array(x_torch.numpy(), device)
     w_torch = torch.rand(8, 3, 3, 3, dtype=torch.float32)
     w_arr = ft.Array(w_torch.numpy(), device)
     y_torch = torch.zeros(2, 8, 6, 6, dtype=torch.float32)
     y_arr = ft.Array(y_torch.numpy(), device)
-    ft.Driver(f, code, device)(x_arr, w_arr, y_arr)
+    f(x_arr, w_arr, y_arr)
     y_torch = torch.Tensor(y_arr.numpy())
 
     y_std = torch.nn.functional.conv2d(x_torch, w_torch, stride=(2, 2))
@@ -131,7 +107,7 @@ def test_stride():
 def test_group():
     device = ft.Device(ft.CPU())
 
-    @ft.transform
+    @ft.optimize(device=device, verbose=1)
     def f(x, w, y):
         x: ft.Var[(2, 4, 14, 14), "float32", "input", "cpu"]
         w: ft.Var[(8, 2, 3, 3), "float32", "input", "cpu"]
@@ -139,19 +115,13 @@ def test_group():
         "nid: conv"
         libop.conv_(x, w, None, y, auto_pad='VALID', group=2)
 
-    print(f)
-    f = ft.lower(f, ft.CPU())
-    print(f)
-
-    code = ft.codegen(f, ft.CPU())
-
     x_torch = torch.rand(2, 4, 14, 14, dtype=torch.float32)
     x_arr = ft.Array(x_torch.numpy(), device)
     w_torch = torch.rand(8, 2, 3, 3, dtype=torch.float32)
     w_arr = ft.Array(w_torch.numpy(), device)
     y_torch = torch.zeros(2, 8, 12, 12, dtype=torch.float32)
     y_arr = ft.Array(y_torch.numpy(), device)
-    ft.Driver(f, code, device)(x_arr, w_arr, y_arr)
+    f(x_arr, w_arr, y_arr)
     y_torch = torch.Tensor(y_arr.numpy())
 
     y_std = torch.nn.functional.conv2d(x_torch, w_torch, groups=2)
@@ -161,7 +131,7 @@ def test_group():
 def test_dilation():
     device = ft.Device(ft.CPU())
 
-    @ft.transform
+    @ft.optimize(device=device, verbose=1)
     def f(x, w, y):
         x: ft.Var[(2, 3, 14, 14), "float32", "input", "cpu"]
         w: ft.Var[(8, 3, 3, 3), "float32", "input", "cpu"]
@@ -169,19 +139,13 @@ def test_dilation():
         "nid: conv"
         libop.conv_(x, w, None, y, auto_pad='VALID', dilations=(2, 2))
 
-    print(f)
-    f = ft.lower(f, ft.CPU())
-    print(f)
-
-    code = ft.codegen(f, ft.CPU())
-
     x_torch = torch.rand(2, 3, 14, 14, dtype=torch.float32)
     x_arr = ft.Array(x_torch.numpy(), device)
     w_torch = torch.rand(8, 3, 3, 3, dtype=torch.float32)
     w_arr = ft.Array(w_torch.numpy(), device)
     y_torch = torch.zeros(2, 8, 10, 10, dtype=torch.float32)
     y_arr = ft.Array(y_torch.numpy(), device)
-    ft.Driver(f, code, device)(x_arr, w_arr, y_arr)
+    f(x_arr, w_arr, y_arr)
     y_torch = torch.Tensor(y_arr.numpy())
 
     y_std = torch.nn.functional.conv2d(x_torch, w_torch, dilation=(2, 2))
@@ -191,7 +155,7 @@ def test_dilation():
 def test_out_of_place():
     device = ft.Device(ft.CPU())
 
-    @ft.transform
+    @ft.optimize(device=device, verbose=1)
     def f(x, w, y_shape, y):
         x: ft.Var[(2, 3, 14, 14), "float32", "input", "cpu"]
         w: ft.Var[(8, 3, 3, 3), "float32", "input", "cpu"]
@@ -207,12 +171,6 @@ def test_out_of_place():
                     for w in range(12):
                         y[n, c, h, w] = _y[n, c, h, w]
 
-    print(f)
-    f = ft.lower(f, ft.CPU())
-    print(f)
-
-    code = ft.codegen(f, ft.CPU())
-
     x_torch = torch.rand(2, 3, 14, 14, dtype=torch.float32)
     x_arr = ft.Array(x_torch.numpy(), device)
     w_torch = torch.rand(8, 3, 3, 3, dtype=torch.float32)
@@ -221,7 +179,7 @@ def test_out_of_place():
     y_shape_arr = ft.Array(y_shape_torch.numpy(), device)
     y_torch = torch.zeros(2, 8, 12, 12, dtype=torch.float32)
     y_arr = ft.Array(y_torch.numpy(), device)
-    ft.Driver(f, code, device)(x_arr, w_arr, y_shape_arr, y_arr)
+    f(x_arr, w_arr, y_shape_arr, y_arr)
     y_shape_np = y_shape_arr.numpy()
     y_torch = torch.Tensor(y_arr.numpy())
 

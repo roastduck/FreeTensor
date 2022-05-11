@@ -45,8 +45,8 @@ sub = named_partial("sub", _binary_op, lambda x, y: x - y)
 mul_ = named_partial("mul_", _binary_op_, lambda x, y: x * y)
 mul = named_partial("mul", _binary_op, lambda x, y: x * y)
 
-div_ = named_partial("div_", _binary_op_, lambda x, y: x / y)
-div = named_partial("div", _binary_op, lambda x, y: x / y)
+truediv_ = named_partial("truediv_", _binary_op_, lambda x, y: x / y)
+truediv = named_partial("truediv", _binary_op, lambda x, y: x / y)
 
 
 @core.inline

@@ -1,5 +1,5 @@
 from .. import core
-from .element_wise import exp, exp_, sub, sub_, div, div_
+from .element_wise import exp, exp_, sub, sub_, truediv, truediv_
 from .reduction import reduce_max, reduce_max_, reduce_sum, reduce_sum_
 
 
@@ -14,7 +14,7 @@ def softmax_(x, y, axis=-1):
     'nid: sum'
     summation = reduce_sum(exponent, axes=[axis], keepdims=True)
     'nid: div'
-    div_(exponent, summation, y)
+    truediv_(exponent, summation, y)
 
 
 @core.inline
@@ -28,5 +28,5 @@ def softmax(x, axis=-1):
     'nid: sum'
     summation = reduce_sum(exponent, axes=[axis], keepdims=True)
     'nid: div'
-    out = div(exponent, summation)
+    out = truediv(exponent, summation)
     return out
