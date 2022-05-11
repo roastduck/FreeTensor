@@ -6,8 +6,8 @@
 
 namespace freetensor {
 
-static std::vector<int> auto_unroll_configs_cpu = {0, 16, 64, 512};
-static std::vector<int> auto_unroll_configs_gpu = {0, 16, 64, 512, 1024};
+static std::vector<int> unrollConfigsCpu = {0, 16, 64, 512};
+static std::vector<int> unrollConfigsGpu = {0, 16, 64, 512, 1024};
 
 void UnrollPart::apply(Schedule &schedule, SketchTarget &target) {
     Stmt root;
@@ -46,19 +46,15 @@ void UnrollPart::apply(Schedule &schedule, SketchTarget &target) {
 }
 
 void UnrollPart::genRandAnnotation(std::default_random_engine &gen) {
-    std::vector<int> &auto_unroll_configs = targetType_ == TargetType::GPU
-                                                ? auto_unroll_configs_gpu
-                                                : auto_unroll_configs_cpu;
-    maxSize_ =
-        auto_unroll_configs[randomInt(auto_unroll_configs.size() - 1, gen)];
+    std::vector<int> &unrollConfigs =
+        targetType_ == TargetType::GPU ? unrollConfigsGpu : unrollConfigsCpu;
+    maxSize_ = unrollConfigs[randomInt(unrollConfigs.size() - 1, gen)];
 }
 
 bool UnrollPart::mutate(std::default_random_engine &gen) {
-    std::vector<int> &auto_unroll_configs = targetType_ == TargetType::GPU
-                                                ? auto_unroll_configs_gpu
-                                                : auto_unroll_configs_cpu;
-    maxSize_ =
-        auto_unroll_configs[randomInt(auto_unroll_configs.size() - 1, gen)];
+    std::vector<int> &unrollConfigs =
+        targetType_ == TargetType::GPU ? unrollConfigsGpu : unrollConfigsCpu;
+    maxSize_ = unrollConfigs[randomInt(unrollConfigs.size() - 1, gen)];
     return true;
 }
 bool UnrollPart::crossover(const SketchPart &part,
