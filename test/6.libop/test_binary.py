@@ -73,7 +73,7 @@ def test_same_static_shape(libop_func, torch_func, dtype, ret_dtype):
     f(x_arr, y_arr, out_arr)
     out_torch = torch.tensor(out_arr.numpy())
 
-    assert same(out_torch, torch_func(x_torch, y_torch), dtype=dtype)
+    assert same(out_torch, torch_func(x_torch, y_torch), dtype=ret_dtype)
 
 
 @pytest.mark.parametrize('libop_func, torch_func, dtype, ret_dtype', [
@@ -111,7 +111,7 @@ def test_static_broadcast_shorter(libop_func, torch_func, dtype, ret_dtype):
     f(x_arr, y_arr, out_arr)
     out_torch = torch.tensor(out_arr.numpy())
 
-    assert same(out_torch, torch_func(x_torch, y_torch), dtype=dtype)
+    assert same(out_torch, torch_func(x_torch, y_torch), dtype=ret_dtype)
 
 
 @pytest.mark.parametrize('libop_func, torch_func, dtype, ret_dtype', [
@@ -149,7 +149,7 @@ def test_static_broadcast_1_at_front(libop_func, torch_func, dtype, ret_dtype):
     f(x_arr, y_arr, out_arr)
     out_torch = torch.tensor(out_arr.numpy())
 
-    assert same(out_torch, torch_func(x_torch, y_torch), dtype=dtype)
+    assert same(out_torch, torch_func(x_torch, y_torch), dtype=ret_dtype)
 
 
 @pytest.mark.parametrize('libop_func, torch_func, dtype, ret_dtype', [
@@ -187,45 +187,42 @@ def test_static_broadcast_1_at_back(libop_func, torch_func, dtype, ret_dtype):
     f(x_arr, y_arr, out_arr)
     out_torch = torch.tensor(out_arr.numpy())
 
-    assert same(out_torch, torch_func(x_torch, y_torch), dtype=dtype)
+    assert same(out_torch, torch_func(x_torch, y_torch), dtype=ret_dtype)
 
 
-@pytest.mark.parametrize('libop_func, torch_func, dtype, ret_dtype', [
-    (libop.add_, operator.add, "float32", "float32"),
-    (libop.sub_, operator.sub, "float32", "float32"),
-    (libop.mul_, operator.mul, "float32", "float32"),
-    (libop.truediv_, operator.truediv, "float32", "float32"),
-    (libop.floordiv_, functools.partial(
-        torch.div, rounding_mode='floor'), "int32", "int32"),
-    (libop.mod_, operator.mod, "int32", "int32"),
-    (libop.lt_, operator.lt, "int32", "bool"),
-    (libop.le_, operator.le, "int32", "bool"),
-    (libop.gt_, operator.gt, "int32", "bool"),
-    (libop.ge_, operator.ge, "int32", "bool"),
-    (libop.eq_, operator.eq, "int32", "bool"),
-    (libop.ne_, operator.ne, "int32", "bool"),
+@pytest.mark.parametrize('libop_func, torch_func, dtype1, dtype2, ret_dtype', [
+    (libop.add_, operator.add, "float32", "int32", "float32"),
+    (libop.sub_, operator.sub, "float32", "int32", "float32"),
+    (libop.mul_, operator.mul, "float32", "int32", "float32"),
+    (libop.truediv_, operator.truediv, "float32", "int32", "float32"),
+    (libop.lt_, operator.lt, "float32", "int32", "bool"),
+    (libop.le_, operator.le, "float32", "int32", "bool"),
+    (libop.gt_, operator.gt, "float32", "int32", "bool"),
+    (libop.ge_, operator.ge, "float32", "int32", "bool"),
+    (libop.eq_, operator.eq, "float32", "int32", "bool"),
+    (libop.ne_, operator.ne, "float32", "int32", "bool"),
 ])
-def test_different_dtype(libop_func, torch_func, dtype, ret_dtype):
+def test_different_dtype(libop_func, torch_func, dtype1, dtype2, ret_dtype):
     device = ft.Device(ft.CPU())
 
     @ft.optimize(device=device, verbose=1)
     def f(x, y, out):
-        x: ft.Var[(4, 4), "int32", "input", "cpu"]
-        y: ft.Var[(4, 4), dtype, "input", "cpu"]
+        x: ft.Var[(4, 4), dtype1, "input", "cpu"]
+        y: ft.Var[(4, 4), dtype2, "input", "cpu"]
         out: ft.Var[(4, 4), ret_dtype, "output", "cpu"]
         "nid: to_test"
         libop_func(x, y, out)
 
-    x_torch = torch.randint(0, 100, (4, 4), dtype=torch.int32)
+    x_torch = rand(4, 4, dtype=dtype1)
     x_arr = ft.Array(x_torch.numpy(), device)
-    y_torch = rand(4, 4, dtype=dtype)
+    y_torch = rand(4, 4, dtype=dtype2)
     y_arr = ft.Array(y_torch.numpy(), device)
     out_torch = zeros(4, 4, dtype=ret_dtype)
     out_arr = ft.Array(out_torch.numpy(), device)
     f(x_arr, y_arr, out_arr)
     out_torch = torch.tensor(out_arr.numpy())
 
-    assert same(out_torch, torch_func(x_torch, y_torch), dtype=dtype)
+    assert same(out_torch, torch_func(x_torch, y_torch), dtype=ret_dtype)
 
 
 @pytest.mark.parametrize('libop_func, torch_func, dtype, ret_dtype', [
@@ -261,7 +258,7 @@ def test_out_of_place(libop_func, torch_func, dtype, ret_dtype):
     out_torch = torch.tensor(out_arr.numpy())
 
     assert np.array_equal(out_arr.shape, [4, 4])
-    assert same(out_torch, torch_func(x_torch, y_torch), dtype=dtype)
+    assert same(out_torch, torch_func(x_torch, y_torch), dtype=ret_dtype)
 
 
 @pytest.mark.parametrize('libop_func, torch_func, dtype, ret_dtype', [
@@ -297,7 +294,7 @@ def test_operator_overload(libop_func, torch_func, dtype, ret_dtype):
     out_torch = torch.tensor(out_arr.numpy())
 
     assert np.array_equal(out_arr.shape, [4, 4])
-    assert same(out_torch, torch_func(x_torch, y_torch), dtype=dtype)
+    assert same(out_torch, torch_func(x_torch, y_torch), dtype=ret_dtype)
 
 
 @pytest.mark.parametrize('libop_func, torch_func, dtype, ret_dtype', [
@@ -319,4 +316,4 @@ def test_fallback(libop_func, torch_func, dtype, ret_dtype):
     x = rand(4, 4, dtype=dtype)
     y = rand(4, 4, dtype=dtype)
     out = libop_func(x, y)
-    assert same(out, torch_func(x, y), dtype=dtype)
+    assert same(out, torch_func(x, y), dtype=ret_dtype)
