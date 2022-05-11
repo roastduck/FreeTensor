@@ -43,8 +43,6 @@ void UnrollPart::apply(Schedule &schedule, SketchTarget &target) {
             return sz;
         };
     visitNest(getLoopNestTree(root));
-    //    std::cout << "after unroll " << max_size_ << ": " <<
-    //    toString(schedule.ast()) << std::endl;
 }
 
 void UnrollPart::genRandAnnotation(std::default_random_engine &gen) {

@@ -36,7 +36,6 @@ void ThreadBindPart::apply(Schedule &schedule, SketchTarget &target) {
             vthread_size *= tiles[i].second;
         }
     }
-    //    std::cout << "vthread size: " << vthread_size << std::endl;
     for (size_t i = spaceLoopLength * 2; i < spaceLoopLength * 3; i++) {
         if (tiles[i].second > 1) {
             threadLoops.push_back(tiles[i].first);

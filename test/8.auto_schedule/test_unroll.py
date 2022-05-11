@@ -94,6 +94,3 @@ def test_unroll():
             assert r.startswith('unroll(#')
         else:
             assert l == r
-
-
-test_unroll()
