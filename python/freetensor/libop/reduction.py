@@ -94,6 +94,21 @@ reduce_sum_ = named_partial("reduce_sum_", _general_reduce_, lambda x, y: x + y,
                             0)
 reduce_sum = named_partial("reduce_sum", _general_reduce, lambda x, y: x + y, 0)
 
+reduce_mul_ = named_partial("reduce_mul_", _general_reduce_, lambda x, y: x * y,
+                            1)
+reduce_mul = named_partial("reduce_mul", _general_reduce, lambda x, y: x * y, 1)
+
+reduce_l_and_ = named_partial("reduce_l_and_", _general_reduce_, core.l_and,
+                              True)
+reduce_l_and = named_partial("reduce_l_and", _general_reduce, core.l_and, True)
+all_ = reduce_l_and_
+all = reduce_l_and
+
+reduce_l_or_ = named_partial("reduce_l_or_", _general_reduce_, core.l_or, False)
+reduce_l_or = named_partial("reduce_l_or", _general_reduce, core.l_or, False)
+any_ = reduce_l_or_
+any = reduce_l_or
+
 
 @core.inline
 def reduce_max_(x, y, axes: Sequence[int], keepdims: bool = True):
@@ -106,5 +121,20 @@ def reduce_max_(x, y, axes: Sequence[int], keepdims: bool = True):
 def reduce_max(x, axes: Sequence[int], keepdims: bool = True):
     'nid: impl'
     y = _general_reduce(core.max, core.min_value(core.dtype(x)), x, axes,
+                        keepdims)
+    return y
+
+
+@core.inline
+def reduce_min_(x, y, axes: Sequence[int], keepdims: bool = True):
+    'nid: impl'
+    _general_reduce_(core.min, core.max_value(core.dtype(x)), x, y, axes,
+                     keepdims)
+
+
+@core.inline
+def reduce_min(x, axes: Sequence[int], keepdims: bool = True):
+    'nid: impl'
+    y = _general_reduce(core.min, core.max_value(core.dtype(x)), x, axes,
                         keepdims)
     return y

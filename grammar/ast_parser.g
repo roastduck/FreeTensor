@@ -178,6 +178,14 @@ reduceOp returns [ReduceOp op]
       {
         $op = ReduceOp::Max;
       }
+    | ANDEQ
+      {
+        $op = ReduceOp::LAnd;
+      }
+    | OREQ
+      {
+        $op = ReduceOp::LOr;
+      }
     ;
 
 reduceTo returns [Stmt node]

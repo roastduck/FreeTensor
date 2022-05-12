@@ -271,6 +271,12 @@ template <class Stream> void CodeGenC<Stream>::visit(const ReduceTo &op) {
                        << ">(";
         genAddr(), this->os() << ", ", genExpr(), this->os() << ")";
         break;
+    case ReduceOp::LAnd:
+        genAddr(), this->os() << " &= (bool)(", genExpr(), this->os() << ")";
+        break;
+    case ReduceOp::LOr:
+        genAddr(), this->os() << " |= (bool)(", genExpr(), this->os() << ")";
+        break;
     default:
         ASSERT(false);
     }

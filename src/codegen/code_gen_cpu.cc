@@ -122,6 +122,12 @@ void CodeGenCPU::visit(const For &op) {
             case ReduceOp::Max:
                 os() << "max: ";
                 break;
+            case ReduceOp::LAnd:
+                os() << "&&: ";
+                break;
+            case ReduceOp::LOr:
+                os() << "||: ";
+                break;
             default:
                 ASSERT(false);
             }

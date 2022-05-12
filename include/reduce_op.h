@@ -6,7 +6,7 @@
 
 namespace freetensor {
 
-enum class ReduceOp : int { Add, Mul, Min, Max };
+enum class ReduceOp : int { Add, Mul, Min, Max, LAnd, LOr };
 
 Expr neutralVal(DataType dtype, ReduceOp op);
 

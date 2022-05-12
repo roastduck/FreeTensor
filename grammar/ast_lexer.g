@@ -24,6 +24,8 @@ PLUSEQ:     '+=';
 STAREQ:     '*=';
 MINEQ:      '@!min=';
 MAXEQ:      '@!max=';
+ANDEQ:      '&&=';
+OREQ:       '||=';
 
 // For
 NO_DEPS:    '@!no_deps';

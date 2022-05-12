@@ -516,6 +516,18 @@ Stmt SimplifyPass::visit(const ReduceTo &_op) {
             return makeStmtSeq("", {});
         }
         break;
+    case ReduceOp::LAnd:
+        if (op->expr_->nodeType() == ASTNodeType::BoolConst &&
+            op->expr_.as<BoolConstNode>()->val_ == true) {
+            return makeStmtSeq("", {});
+        }
+        break;
+    case ReduceOp::LOr:
+        if (op->expr_->nodeType() == ASTNodeType::BoolConst &&
+            op->expr_.as<BoolConstNode>()->val_ == false) {
+            return makeStmtSeq("", {});
+        }
+        break;
     default:; // do nothing
     }
     return op;

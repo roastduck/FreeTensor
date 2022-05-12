@@ -315,7 +315,9 @@ void init_ffi_ast_expr(py::module_ &m) {
         .value("Add", ReduceOp::Add)
         .value("Max", ReduceOp::Max)
         .value("Min", ReduceOp::Min)
-        .value("Mul", ReduceOp::Mul);
+        .value("Mul", ReduceOp::Mul)
+        .value("And", ReduceOp::LAnd)
+        .value("Or", ReduceOp::LOr);
     m.def("neutral_val", &neutralVal);
 }
 
