@@ -269,6 +269,14 @@ void CodeGenCUDA::visit(const ReduceTo &op) {
             os() << "atomicMax(&", genAddr(), os() << ", ", genExpr();
             os() << ");" << std::endl;
             break;
+        case ReduceOp::LAnd:
+            os() << "atomicAnd(&", genAddr(), os() << ", (bool)(", genExpr();
+            os() << "));" << std::endl;
+            break;
+        case ReduceOp::LOr:
+            os() << "atomicOr(&", genAddr(), os() << ", (bool)(", genExpr();
+            os() << "));" << std::endl;
+            break;
         default:
             ASSERT(false);
         }
@@ -287,6 +295,14 @@ void CodeGenCUDA::visit(const ReduceTo &op) {
         case ReduceOp::Max:
             genAddr(), os() << " = max(";
             genAddr(), os() << ", ", genExpr(), os() << ")";
+            break;
+        case ReduceOp::LAnd:
+            genAddr(), this->os() << " &= (bool)(", genExpr(),
+                this->os() << ")";
+            break;
+        case ReduceOp::LOr:
+            genAddr(), this->os() << " |= (bool)(", genExpr(),
+                this->os() << ")";
             break;
         default:
             ASSERT(false);

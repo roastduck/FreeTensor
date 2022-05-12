@@ -14,6 +14,8 @@ def rand(*shape, **kvs):
         return torch.rand(*shape, dtype=torch.float32) + 1
     if dtype == "int32":
         return torch.randint(1, 100, shape, dtype=torch.int32)
+    if dtype == "bool":
+        return torch.randint(0, 1, shape, dtype=torch.bool)
     assert False
 
 

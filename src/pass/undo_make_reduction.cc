@@ -20,6 +20,12 @@ Stmt UndoMakeReduction::visit(const ReduceTo &_op) {
     case ReduceOp::Max:
         return makeStore(op->id(), op->var_, op->indices_,
                          makeMax(makeLoad(op->var_, op->indices_), op->expr_));
+    case ReduceOp::LAnd:
+        return makeStore(op->id(), op->var_, op->indices_,
+                         makeLAnd(makeLoad(op->var_, op->indices_), op->expr_));
+    case ReduceOp::LOr:
+        return makeStore(op->id(), op->var_, op->indices_,
+                         makeLOr(makeLoad(op->var_, op->indices_), op->expr_));
     default:
         ASSERT(false);
     }

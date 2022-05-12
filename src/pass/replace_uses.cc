@@ -25,6 +25,12 @@ Stmt ReplaceUses::visit(const ReduceTo &op) {
         case ReduceOp::Max:
             return (*this)(makeStore(op->id(), op->var_, op->indices_,
                                      makeMax(replace_.at(op), op->expr_)));
+        case ReduceOp::LAnd:
+            return (*this)(makeStore(op->id(), op->var_, op->indices_,
+                                     makeLAnd(replace_.at(op), op->expr_)));
+        case ReduceOp::LOr:
+            return (*this)(makeStore(op->id(), op->var_, op->indices_,
+                                     makeLOr(replace_.at(op), op->expr_)));
         default:
             ASSERT(false);
         }

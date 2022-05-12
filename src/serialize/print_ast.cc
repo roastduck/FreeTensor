@@ -189,6 +189,12 @@ void PrintVisitor::visit(const ReduceTo &op) {
     case ReduceOp::Max:
         os() << "@!max=";
         break;
+    case ReduceOp::LAnd:
+        os() << "&&=";
+        break;
+    case ReduceOp::LOr:
+        os() << "||=";
+        break;
     default:
         ASSERT(false);
     }

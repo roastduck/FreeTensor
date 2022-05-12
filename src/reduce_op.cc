@@ -44,6 +44,16 @@ Expr neutralVal(DataType dtype, ReduceOp op) {
             ASSERT(false);
         }
 
+    case DataType::Bool:
+        switch (op) {
+        case ReduceOp::LAnd:
+            return makeBoolConst(true);
+        case ReduceOp::LOr:
+            return makeBoolConst(false);
+        default:
+            ASSERT(false);
+        }
+
     default:
         ASSERT(false);
     }

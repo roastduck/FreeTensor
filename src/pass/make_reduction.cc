@@ -70,6 +70,10 @@ Stmt MakeReduction::visit(const Store &_op) {
         return doMake(op, ReduceOp::Min);
     case ASTNodeType::Max:
         return doMake(op, ReduceOp::Max);
+    case ASTNodeType::LAnd:
+        return doMake(op, ReduceOp::LAnd);
+    case ASTNodeType::LOr:
+        return doMake(op, ReduceOp::LOr);
     default:
         return op;
     }

@@ -22,6 +22,10 @@ static Expr makeReduce(ReduceOp reduceOp, const Expr &lhs, const Expr &rhs) {
         return makeMax(lhs, rhs);
     case ReduceOp::Min:
         return makeMin(lhs, rhs);
+    case ReduceOp::LAnd:
+        return makeLAnd(lhs, rhs);
+    case ReduceOp::LOr:
+        return makeLOr(lhs, rhs);
     default:
         ASSERT(false);
     }
