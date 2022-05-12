@@ -28,6 +28,7 @@ ExternalProject_add(ISL
     BUILD_COMMAND make -j
     INSTALL_COMMAND make install)
 add_library(isl::isl INTERFACE IMPORTED GLOBAL)
+make_directory(${ISL_DIR}/install/include)
 target_include_directories(isl::isl INTERFACE ${ISL_DIR}/install/include)
 target_link_libraries(isl::isl INTERFACE ${ISL_DIR}/install/lib/libisl.so)
 add_dependencies(isl::isl ISL)
