@@ -26,7 +26,8 @@ ExternalProject_add(ISL
     INSTALL_DIR ${ISL_DIR}/install
     CONFIGURE_COMMAND ./autogen.sh && ./configure --prefix=${ISL_DIR}/install
     BUILD_COMMAND make -j
-    INSTALL_COMMAND make install)
+    INSTALL_COMMAND make install
+    BUILD_BYPRODUCTS ${ISL_DIR}/install/lib/libisl.so)
 add_library(isl::isl INTERFACE IMPORTED GLOBAL)
 make_directory(${ISL_DIR}/install/include)
 target_include_directories(isl::isl INTERFACE ${ISL_DIR}/install/include)
