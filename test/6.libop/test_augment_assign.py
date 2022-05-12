@@ -149,9 +149,9 @@ def test_different_dtype(libop_func, torch_func):
         "nid: to_test"
         libop_func(y, x)
 
-    x_torch = torch.randint(0, 100, (4, 4), dtype=torch.int32)
+    x_torch = rand(4, 4, dtype="int32")
     x_arr = ft.Array(x_torch.numpy(), device)
-    y_torch = torch.rand(4, 4, dtype=torch.float32)
+    y_torch = rand(4, 4, dtype="float32")
     y_arr = ft.Array(y_torch.numpy(), device)
     f(x_arr, y_arr)
     y_torch_new = torch.tensor(y_arr.numpy())
