@@ -64,6 +64,12 @@ floordiv = named_partial("floordiv", _binary_op, _floordivMayFallback)
 mod_ = named_partial("mod_", _binary_op_, lambda x, y: x % y)
 mod = named_partial("mod", _binary_op, lambda x, y: x % y)
 
+l_and_ = named_partial("l_and_", _binary_op_, core.l_and)
+l_and = named_partial("l_and", _binary_op, core.l_and)
+
+l_or_ = named_partial("l_and_", _binary_op_, core.l_or)
+l_or = named_partial("l_and", _binary_op, core.l_or)
+
 lt_ = named_partial("lt_", _binary_op_, lambda x, y: x < y)
 lt = named_partial("lt", _binary_op, lambda x, y: x < y)
 
@@ -106,6 +112,9 @@ def _unary_op(op, x):
 
 neg_ = named_partial("neg_", _unary_op_, lambda x: -x)
 neg = named_partial("neg", _unary_op, lambda x: -x)
+
+l_not_ = named_partial("l_not_", _unary_op_, core.l_not)
+l_not = named_partial("l_not", _unary_op, core.l_not)
 
 relu_ = named_partial("relu_", _unary_op_, lambda x: core.max(x, 0))
 relu = named_partial("relu", _unary_op, lambda x: core.max(x, 0))

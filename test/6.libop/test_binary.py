@@ -48,6 +48,8 @@ def same(lhs, rhs, dtype):
     (libop.floordiv_, functools.partial(
         torch.div, rounding_mode='floor'), "int32", "int32"),
     (libop.mod_, operator.mod, "int32", "int32"),
+    (libop.l_and_, torch.logical_and, "bool", "bool"),
+    (libop.l_or_, torch.logical_or, "bool", "bool"),
     (libop.lt_, operator.lt, "int32", "bool"),
     (libop.le_, operator.le, "int32", "bool"),
     (libop.gt_, operator.gt, "int32", "bool"),
@@ -86,6 +88,8 @@ def test_same_static_shape(libop_func, torch_func, dtype, ret_dtype):
     (libop.floordiv_, functools.partial(
         torch.div, rounding_mode='floor'), "int32", "int32"),
     (libop.mod_, operator.mod, "int32", "int32"),
+    (libop.l_and_, torch.logical_and, "bool", "bool"),
+    (libop.l_or_, torch.logical_or, "bool", "bool"),
     (libop.lt_, operator.lt, "int32", "bool"),
     (libop.le_, operator.le, "int32", "bool"),
     (libop.gt_, operator.gt, "int32", "bool"),
@@ -124,6 +128,8 @@ def test_static_broadcast_shorter(libop_func, torch_func, dtype, ret_dtype):
     (libop.floordiv_, functools.partial(
         torch.div, rounding_mode='floor'), "int32", "int32"),
     (libop.mod_, operator.mod, "int32", "int32"),
+    (libop.l_and_, torch.logical_and, "bool", "bool"),
+    (libop.l_or_, torch.logical_or, "bool", "bool"),
     (libop.lt_, operator.lt, "int32", "bool"),
     (libop.le_, operator.le, "int32", "bool"),
     (libop.gt_, operator.gt, "int32", "bool"),
@@ -162,6 +168,8 @@ def test_static_broadcast_1_at_front(libop_func, torch_func, dtype, ret_dtype):
     (libop.floordiv_, functools.partial(
         torch.div, rounding_mode='floor'), "int32", "int32"),
     (libop.mod_, operator.mod, "int32", "int32"),
+    (libop.l_and_, torch.logical_and, "bool", "bool"),
+    (libop.l_or_, torch.logical_or, "bool", "bool"),
     (libop.lt_, operator.lt, "int32", "bool"),
     (libop.le_, operator.le, "int32", "bool"),
     (libop.gt_, operator.gt, "int32", "bool"),
@@ -235,6 +243,8 @@ def test_different_dtype(libop_func, torch_func, dtype1, dtype2, ret_dtype):
     (libop.floordiv, functools.partial(
         torch.div, rounding_mode='floor'), "int32", "int32"),
     (libop.mod, operator.mod, "int32", "int32"),
+    (libop.l_and, torch.logical_and, "bool", "bool"),
+    (libop.l_or, torch.logical_or, "bool", "bool"),
     (libop.lt, operator.lt, "int32", "bool"),
     (libop.le, operator.le, "int32", "bool"),
     (libop.gt, operator.gt, "int32", "bool"),
