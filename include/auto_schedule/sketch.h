@@ -18,6 +18,7 @@ enum class SketchPartType : int {
     MultiLevelTiling = 0,
     MultiLevelTilingWithFusion = 1,
     ThreadBind = 2,
+    Unroll = 3,
 };
 
 struct SketchTarget;

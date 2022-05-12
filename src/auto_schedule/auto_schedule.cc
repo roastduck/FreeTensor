@@ -9,6 +9,7 @@
 #include <auto_schedule/rules/multi_level_tiling_with_fusion.h>
 #include <auto_schedule/rules/skip.h>
 #include <auto_schedule/rules/thread_bind.h>
+#include <auto_schedule/rules/unroll.h>
 #include <auto_schedule/utils.h>
 #include <codegen/code_gen_cpu.h>
 #include <codegen/code_gen_cuda.h>
@@ -45,6 +46,7 @@ AutoSchedule::AutoSchedule(
         rules_.push_back(
             Ref<MultiLevelTilingWithFusionRule>::make(target->type()));
         rules_.push_back(Ref<ThreadBindRule>::make());
+        rules_.push_back(Ref<UnrollRule>::make(target->type()));
     }
     rules_.push_back(Ref<SkipRule>::make());
     std::random_device rd;
@@ -500,6 +502,22 @@ Schedule AutoSchedule::testCacheRead() {
     std::cout << toString(func->body_) << std::endl;
     std::cout << "lower done" << std::endl;
     return {};
+}
+Schedule AutoSchedule::testUnroll() {
+    auto sketch = getInitSketch();
+    MultiLevelTilingWithFusionRule rule(target_->type());
+    if (rule.analyze(sketch) == RuleStatus::Skip) {
+        return sketch.schedule();
+    }
+    Sketch newSketch = rule.genPart(sketch)[0];
+    std::cout << toString(newSketch.schedule().ast()) << std::endl;
+    auto part = newSketch.part(0)[SketchPartType::MultiLevelTilingWithFusion]
+                    .as<MultiLevelTilingWithFusionPart>();
+    part->genSampleAnnotation();
+    newSketch.addPart(Ref<ThreadBindPart>::make());
+    newSketch.addPart(Ref<UnrollPart>::make(target_->type(), 16));
+    auto schedule = newSketch.genSchedule();
+    return schedule;
 }
 
 } // namespace freetensor
