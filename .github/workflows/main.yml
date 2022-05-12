@@ -23,6 +23,8 @@ jobs:
           fetch-depth: 0
       - name: Build ffi module in Release
         run: |
+          git submodule foreach --recursive git clean -ffdx
+          git submodule foreach --recursive git reset --hard
           source /opt/spack/share/spack/setup-env.sh
           spack load python~debug@3.8.12%gcc@10.2.1 cuda@11.4.2 cudnn@8.2.4.15-11.4 intel-mkl@2020.4.304 java@11
           mkdir build
@@ -44,6 +46,8 @@ jobs:
           fetch-depth: 0
       - name: Build ffi module in Release
         run: |
+          git submodule foreach --recursive git clean -ffdx
+          git submodule foreach --recursive git reset --hard
           source /opt/spack/share/spack/setup-env.sh
           spack load python~debug@3.8.12%gcc@10.2.1 cuda@11.4.2 cudnn@8.2.4.15-11.4 intel-mkl@2020.4.304 java@11
           mkdir build
