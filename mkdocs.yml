@@ -1,7 +1,7 @@
 site_name: FreeTensor
 
 theme:
-    name: "material" # mkdocstings requires this
+    name: "readthedocs"
 
 plugins:
     - search
@@ -10,6 +10,7 @@ plugins:
             python:
                 selection:
                     docstring_style: numpy
+                    inherited_members: True
         watch:
             - python/
             - include/

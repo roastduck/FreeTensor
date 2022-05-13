@@ -40,13 +40,13 @@ def same(lhs, rhs, dtype):
 
 @pytest.mark.parametrize('libop_func, torch_func, dtype', [
     (libop.reduce_sum_, torch.sum, "float32"),
-    (libop.reduce_mul_, torch.prod, "float32"),
+    (libop.reduce_prod_, torch.prod, "float32"),
     (libop.reduce_max_, lambda *args, **kvs: torch.max(*args, **kvs).values,
      "float32"),
     (libop.reduce_min_, lambda *args, **kvs: torch.min(*args, **kvs).values,
      "float32"),
-    (libop.reduce_l_and_, torch.all, "bool"),
-    (libop.reduce_l_or_, torch.any, "bool"),
+    (libop.all_, torch.all, "bool"),
+    (libop.any_, torch.any, "bool"),
 ])
 def test_static(libop_func, torch_func, dtype):
     device = ft.Device(ft.CPU())
@@ -70,13 +70,13 @@ def test_static(libop_func, torch_func, dtype):
 
 @pytest.mark.parametrize('libop_func, torch_func, dtype', [
     (libop.reduce_sum_, torch.sum, "float32"),
-    (libop.reduce_mul_, torch.prod, "float32"),
+    (libop.reduce_prod_, torch.prod, "float32"),
     (libop.reduce_max_, lambda *args, **kvs: torch.max(*args, **kvs).values,
      "float32"),
     (libop.reduce_min_, lambda *args, **kvs: torch.min(*args, **kvs).values,
      "float32"),
-    (libop.reduce_l_and_, torch.all, "bool"),
-    (libop.reduce_l_or_, torch.any, "bool"),
+    (libop.all_, torch.all, "bool"),
+    (libop.any_, torch.any, "bool"),
 ])
 def test_keepdims(libop_func, torch_func, dtype):
     device = ft.Device(ft.CPU())
@@ -100,13 +100,13 @@ def test_keepdims(libop_func, torch_func, dtype):
 
 @pytest.mark.parametrize('libop_func, torch_func, dtype', [
     (libop.reduce_sum, torch.sum, "float32"),
-    (libop.reduce_mul, torch.prod, "float32"),
+    (libop.reduce_prod, torch.prod, "float32"),
     (libop.reduce_max, lambda *args, **kvs: torch.max(*args, **kvs).values,
      "float32"),
     (libop.reduce_min, lambda *args, **kvs: torch.min(*args, **kvs).values,
      "float32"),
-    (libop.reduce_l_and, torch.all, "bool"),
-    (libop.reduce_l_or, torch.any, "bool"),
+    (libop.all, torch.all, "bool"),
+    (libop.any, torch.any, "bool"),
 ])
 def test_out_of_place(libop_func, torch_func, dtype):
     device = ft.Device(ft.CPU())
@@ -128,13 +128,13 @@ def test_out_of_place(libop_func, torch_func, dtype):
 
 @pytest.mark.parametrize('libop_func, torch_func, dtype', [
     (libop.reduce_sum, torch.sum, "float32"),
-    (libop.reduce_mul, torch.prod, "float32"),
+    (libop.reduce_prod, torch.prod, "float32"),
     (libop.reduce_max, lambda *args, **kvs: torch.max(*args, **kvs).values,
      "float32"),
     (libop.reduce_min, lambda *args, **kvs: torch.min(*args, **kvs).values,
      "float32"),
-    (libop.reduce_l_and, torch.all, "bool"),
-    (libop.reduce_l_or, torch.any, "bool"),
+    (libop.all, torch.all, "bool"),
+    (libop.any, torch.any, "bool"),
 ])
 def test_out_of_place_keepdims(libop_func, torch_func, dtype):
     device = ft.Device(ft.CPU())

@@ -3,6 +3,7 @@ from freetensor_ffi import AccessType, MemType, DataType, ASTNodeType, TargetTyp
 from freetensor_ffi import InvalidSchedule, InvalidProgram, DriverError, AssertAlwaysFalse
 
 from .nodes import (
+    VarRef,
     pop_ast,
     VarDef,
     For,
