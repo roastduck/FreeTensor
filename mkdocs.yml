@@ -1,7 +1,7 @@
 site_name: FreeTensor
 
 theme:
-    name: "material" # mkdocstings requires this
+    name: "readthedocs"
 
 plugins:
     - search
