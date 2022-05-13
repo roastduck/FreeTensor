@@ -3,7 +3,8 @@ Transform user Python functions to ASTs via generating staging functions.
 '''
 
 import abc
-import collections
+import re
+import tokenize
 
 import freetensor_ffi as ffi
 
@@ -513,6 +514,32 @@ def mark_prefer_libs():
     ctx_stack.top().set_next_prefer_libs()
 
 
+def metadata(entry: str):
+    if entry.startswith('nid: '):
+        ctx_stack.top().set_next_nid(StagingContext.fullid(entry[5:]))
+    elif entry.startswith('no_deps: '):
+        var_name = entry[9:]
+
+        back = inspect.currentframe().f_back
+
+        if var_name in back.f_locals:
+            var = back.f_locals[var_name]
+        elif var_name in back.f_globals:
+            var = back.f_globals[var_name]
+        else:
+            raise StagingError(
+                f'Local variable {var_name} not found for annotating comment ({entry})'
+            )
+
+        if not isinstance(var, VarRef):
+            raise StagingError(
+                f'Local variable {var_name} = {var} is not a VarRef, which is required by annotating comment ({entry})'
+            )
+        ctx_stack.top().add_next_no_deps(var.name)
+    elif entry == 'prefer_libs':
+        ctx_stack.top().set_next_prefer_libs()
+
+
 def mark_position(base_lineno: int, line_offset: int):
     original = StagingContext.call_stack[-1]
     lineno = base_lineno + line_offset - 1
@@ -872,8 +899,7 @@ class Transformer(ast.NodeTransformer):
                              self.base_lineno, node)
 
 
-def _remove_indent(src: str) -> str:
-    lines = src.split('\n')
+def _remove_indent(lines: str) -> str:
     spaces_to_remove = next((i for i, x in enumerate(lines[0]) if x != ' '),
                             len(lines[0]))
     return '\n'.join(line[spaces_to_remove:] for line in lines)
@@ -892,17 +918,32 @@ def _get_caller_env(depth: int):
     return caller_env
 
 
-def into_staging(func, caller_env, src=None, verbose=False):
+def process_annotating_comments(src: str):
+    new_src = []
+    for line in src.splitlines():
+        # line = f'freetensor.metadata("{re.escape(comment[3:])}")'
+        indent = re.match('\\s*', line)[0]
+        rest_line = line[len(indent):]
+        if rest_line.startswith('#! '):
+            new_src.append(f'{indent}freetensor.metadata(r"{rest_line[3:]}")')
+        else:
+            new_src.append(line)
+    new_src = '\n'.join(new_src)
+    print(new_src)
+    return new_src
+
+
+def into_staging(func, caller_env, src: str = None, verbose=False):
     if src is None:
-        src = _remove_indent(ins.getsource(func))
-        tree = ast.parse(src)
-        src, lineno = ins.getsourcelines(func)
+        lines, lineno = ins.getsourcelines(func)
+        src = _remove_indent(lines)
         file = ins.getfile(func)
     else:
-        tree = ast.parse(src)
-        src = src.splitlines()
         lineno = 1
         file = f'<staging:{func.__name__}>'
+
+    print(src)
+    tree = ast.parse(process_annotating_comments(src))
     tree = ast.fix_missing_locations(Transformer(file, lineno).visit(tree))
 
     import astor

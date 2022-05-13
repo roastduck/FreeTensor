@@ -50,8 +50,8 @@ from .codegen import NativeCode, codegen
 from .driver import *
 from .config import *
 
-from .transformer import (transform, inline, empty, var, capture_var, Var,
-                          StagingError, StagedAssignable, StagedIterable,
+from .transformer import (transform, inline, empty, var, capture_var, metadata,
+                          Var, StagingError, StagedAssignable, StagedIterable,
                           StagedTypeAnnotation)
 
 from .meta import *
