@@ -67,7 +67,8 @@ with ft.Device(ft.GPU(), 0):
         a: ft.Var[(n,), "int32"]
         b: ft.Var[(n,), "int32"]
         y = ft.empty((n,), "int32")
-        'nid: Li'  # Name the loop below as "Li"
+        # Name the loop below as "Li"
+        #! nid: Li
         for i in range(n):
             y[i] = a[i] + b[i]
         return y
