@@ -502,18 +502,6 @@ def functiondef_wrapper(filename, funcname):
         return NamingScope(filename, funcname, namespace)
 
 
-def mark_nid(nid: str):
-    ctx_stack.top().set_next_nid(StagingContext.fullid(nid))
-
-
-def mark_no_deps(no_deps: VarRef):
-    ctx_stack.top().add_next_no_deps(no_deps.name)
-
-
-def mark_prefer_libs():
-    ctx_stack.top().set_next_prefer_libs()
-
-
 def metadata(entry: str):
     parts = entry.split()
     if parts[0] == 'nid:':
@@ -547,7 +535,7 @@ def mark_position(base_lineno: int, line_offset: int):
     StagingContext.call_stack[-1] = traceback.FrameSummary(
         original.filename, lineno, original.name)
     if ctx_stack.top().get_next_nid() == "":
-        mark_nid(f'{original.filename}:{lineno}')
+        ctx_stack.top().set_next_nid(f'{original.filename}:{lineno}')
 
 
 def module_helper(callee):
@@ -627,26 +615,6 @@ class Transformer(ast.NodeTransformer):
                                 ast.Constant(node.lineno)))
             ] + new_node, node)
         return new_node
-
-    def visit_Expr(self, old_node: ast.Expr) -> Any:
-        '''Rule:
-        `'nid: ...'` -> `mark_nid('...')`: mark next statement id
-        `'no_deps: ...'` -> `mark_no_deps('...')`: mark next loop no_deps
-        `'prefer_libs'` -> `mark_prefer_libs()`: mark prefer_libs
-        '''
-        node: ast.Expr = self.generic_visit(old_node)
-        if isinstance(node.value, ast.Constant) and isinstance(
-                node.value.value, str):
-            text = node.value.value
-            if text.startswith('nid: '):
-                node = ast.Expr(
-                    call_helper(mark_nid, ast.Constant(text[5:], kind=None)))
-            elif text.startswith('no_deps: '):
-                node = ast.Expr(
-                    call_helper(mark_no_deps, ast.Name(text[9:], ast.Load())))
-            elif text.startswith('prefer_libs'):
-                node = ast.Expr(call_helper(mark_prefer_libs))
-        return location_helper(node, old_node)
 
     def visit_Assign(self, old_node: ast.Assign) -> ast.Assign:
         '''Rule:
