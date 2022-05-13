@@ -17,7 +17,7 @@ def test_cublas_basic():
         a: ft.Var[(48, 64), "float32", "input", "gpu/global"]
         b: ft.Var[(64, 72), "float32", "input", "gpu/global"]
         c: ft.Var[(48, 72), "float32", "inout", "gpu/global"]
-        "nid: L1"
+        #! nid: L1
         for i in range(48):
             for j in range(72):
                 for k in range(64):

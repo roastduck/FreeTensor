@@ -13,7 +13,7 @@ def test_mm():
         a: ft.Var[(4, 5), "float32", "input", "cpu"]
         b: ft.Var[(5, 6), "float32", "input", "cpu"]
         y: ft.Var[(4, 6), "float32", "output", "cpu"]
-        "nid: einsum"
+        #! nid: einsum
         libop.matmul_(a, b, y)
 
     a_torch = torch.rand(4, 5, dtype=torch.float32)
@@ -37,7 +37,7 @@ def test_bmm_1():
         a: ft.Var[(2, 4, 5), "float32", "input", "cpu"]
         b: ft.Var[(2, 5, 6), "float32", "input", "cpu"]
         y: ft.Var[(2, 4, 6), "float32", "output", "cpu"]
-        "nid: einsum"
+        #! nid: einsum
         libop.matmul_(a, b, y)
 
     a_torch = torch.rand(2, 4, 5, dtype=torch.float32)
@@ -61,7 +61,7 @@ def test_bmm_2():
         a: ft.Var[(2, 4, 5), "float32", "input", "cpu"]
         b: ft.Var[(5, 6), "float32", "input", "cpu"]
         y: ft.Var[(2, 4, 6), "float32", "output", "cpu"]
-        "nid: einsum"
+        #! nid: einsum
         libop.matmul_(a, b, y)
 
     a_torch = torch.rand(2, 4, 5, dtype=torch.float32)
@@ -85,7 +85,7 @@ def test_mv():
         a: ft.Var[(4, 5), "float32", "input", "cpu"]
         b: ft.Var[(5,), "float32", "input", "cpu"]
         y: ft.Var[(4,), "float32", "output", "cpu"]
-        "nid: einsum"
+        #! nid: einsum
         libop.matmul_(a, b, y)
 
     a_torch = torch.rand(4, 5, dtype=torch.float32)
@@ -109,7 +109,7 @@ def test_vm():
         a: ft.Var[(5,), "float32", "input", "cpu"]
         b: ft.Var[(5, 6), "float32", "input", "cpu"]
         y: ft.Var[(6,), "float32", "output", "cpu"]
-        "nid: einsum"
+        #! nid: einsum
         libop.matmul_(a, b, y)
 
     a_torch = torch.rand(5, dtype=torch.float32)
@@ -132,7 +132,7 @@ def test_out_of_place():
     def f(a, b):
         a: ft.Var[(4, 5), "float32", "input", "cpu"]
         b: ft.Var[(5,), "float32", "input", "cpu"]
-        "nid: gemm"
+        #! nid: gemm
         return libop.matmul(a, b)
 
     a_torch = torch.rand(4, 5, dtype=torch.float32)

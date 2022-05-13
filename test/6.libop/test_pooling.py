@@ -12,7 +12,7 @@ def test_max_pooling_basic():
     def f(x, y):
         x: ft.Var[(2, 3, 14, 14), "float32", "input", "cpu"]
         y: ft.Var[(2, 3, 12, 12), "float32", "output", "cpu"]
-        "nid: max_pool"
+        #! nid: max_pool
         libop.max_pool_(x, y, auto_pad='VALID', kernel_shape=[3, 3])
 
     x_torch = torch.rand(2, 3, 14, 14, dtype=torch.float32)
@@ -35,9 +35,9 @@ def test_max_pooling_same_padding():
     def f(x, y):
         x: ft.Var[(2, 3, 14, 14), "float32", "input", "cpu"]
         y: ft.Var[(2, 3, 14, 14), "float32", "output", "cpu"]
-        "nid: y_shape"
+        #! nid: y_shape
         y_shape = ft.empty((4,), "int32", "cpu")
-        "nid: max_pool"
+        #! nid: max_pool
         libop.max_pool_(x, y, auto_pad='SAME_UPPER', kernel_shape=[3, 3])
 
     x_torch = torch.rand(2, 3, 14, 14, dtype=torch.float32)
@@ -61,7 +61,7 @@ def test_max_pooling_stride():
     def f(x, y):
         x: ft.Var[(2, 3, 12, 12), "float32", "input", "cpu"]
         y: ft.Var[(2, 3, 4, 4), "float32", "output", "cpu"]
-        "nid: max_pool"
+        #! nid: max_pool
         libop.max_pool_(x,
                         y,
                         auto_pad='VALID',
@@ -88,7 +88,7 @@ def test_max_pooling_dilation():
     def f(x, y):
         x: ft.Var[(2, 3, 14, 14), "float32", "input", "cpu"]
         y: ft.Var[(2, 3, 10, 10), "float32", "output", "cpu"]
-        "nid: max_pool"
+        #! nid: max_pool
         libop.max_pool_(x,
                         y,
                         auto_pad='VALID',
@@ -115,7 +115,7 @@ def test_max_pooling_out_of_place():
     @ft.optimize(device=device, verbose=1)
     def f(x):
         x: ft.Var[(2, 3, 14, 14), "float32", "input", "cpu"]
-        "nid: max_pool"
+        #! nid: max_pool
         return libop.max_pool(x, auto_pad='VALID', kernel_shape=[3, 3])
 
     x_torch = torch.rand(2, 3, 14, 14, dtype=torch.float32)
@@ -137,7 +137,7 @@ def test_global_avg_pool():
     def f(x, y):
         x: ft.Var[(2, 3, 14, 14), "float32", "input", "cpu"]
         y: ft.Var[(2, 3), "float32", "output", "cpu"]
-        "nid: max_pool"
+        #! nid: max_pool
         libop.global_avg_pool_(x, y)
 
     x_torch = torch.rand(2, 3, 14, 14, dtype=torch.float32)
@@ -158,7 +158,7 @@ def test_global_avg_pool_out_of_place():
     @ft.optimize(device=device, verbose=1)
     def f(x):
         x: ft.Var[(2, 3, 14, 14), "float32", "input", "cpu"]
-        "nid: max_pool"
+        #! nid: max_pool
         return libop.global_avg_pool(x)
 
     x_torch = torch.rand(2, 3, 14, 14, dtype=torch.float32)

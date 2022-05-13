@@ -55,7 +55,7 @@ def test_static(libop_func, torch_func, dtype):
     def f(x, y):
         x: ft.Var[(3, 4, 5), dtype, "input", "cpu"]
         y: ft.Var[(3, 5), dtype, "output", "cpu"]
-        "nid: reduce"
+        #! nid: reduce
         libop_func(x, y, axes=[1], keepdims=False)
 
     x_torch = rand(3, 4, 5, dtype=dtype)
@@ -85,7 +85,7 @@ def test_keepdims(libop_func, torch_func, dtype):
     def f(x, y):
         x: ft.Var[(3, 4, 5), dtype, "input", "cpu"]
         y: ft.Var[(3, 1, 5), dtype, "output", "cpu"]
-        "nid: reduce"
+        #! nid: reduce
         libop_func(x, y, axes=[1], keepdims=True)
 
     x_torch = rand(3, 4, 5, dtype=dtype)
@@ -114,7 +114,7 @@ def test_out_of_place(libop_func, torch_func, dtype):
     @ft.optimize(device=device, verbose=1)
     def f(x):
         x: ft.Var[(3, 4, 5), dtype, "input", "cpu"]
-        "nid: reduce"
+        #! nid: reduce
         return libop_func(x, axes=[1], keepdims=False)
 
     x_torch = rand(3, 4, 5, dtype=dtype)
@@ -142,7 +142,7 @@ def test_out_of_place_keepdims(libop_func, torch_func, dtype):
     @ft.optimize(device=device, verbose=1)
     def f(x):
         x: ft.Var[(3, 4, 5), dtype, "input", "cpu"]
-        "nid: reduce"
+        #! nid: reduce
         return libop_func(x, axes=[1], keepdims=True)
 
     x_torch = rand(3, 4, 5, dtype=dtype)

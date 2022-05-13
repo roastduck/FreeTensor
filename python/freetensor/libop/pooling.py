@@ -45,19 +45,19 @@ def max_pool_(X,
             assert False, "auto_pad should be set if pads is not specified"
 
     # yapf: disable
-    'nid: L_n'
+    #! nid: L_n
     for n in range(X.shape(0)):
-        'nid: L_c'
+        #! nid: L_c
         for c in range(X.shape(1)):
-            'nid: L_h'
+            #! nid: L_h
             for h in range(Y.shape(2)):
-                'nid: L_w'
+                #! nid: L_w
                 for w in range(Y.shape(3)):
-                    'nid: init'
+                    #! nid: init
                     Y[n, c, h, w] = core.min_value(X.dtype)
-                    'nid: L_kh'
+                    #! nid: L_kh
                     for kh in range(kernel_shape[0]):
-                        'nid: L_kw'
+                        #! nid: L_kw
                         for kw in range(kernel_shape[1]):
                             # h_in = h * stride + kh * dilation - pad
                             # w_in = w * stride + kw * dilation - pad
@@ -66,7 +66,7 @@ def max_pool_(X,
                                     h * strides[0] + kh * dilations[0] - pads[0] < X.shape(2) and
                                     w * strides[1] + kw * dilations[1] - pads[1] >= 0 and
                                     w * strides[1] + kw * dilations[1] - pads[1] < X.shape(3)):
-                                'nid: compute'
+                                #! nid: compute
                                 Y[n, c, h, w] = core.max(
                                     Y[n, c, h, w],
                                     X[n, c,
@@ -122,7 +122,7 @@ def max_pool(X,
         calc_out_size(X.shape(3), dilations[1], kernel_shape[1], pads[1],
                       pads[3], strides[1])
     ], X.dtype, X.mtype)
-    'nid: recur'
+    #! nid: recur
     max_pool_(X, Y, auto_pad, dilations, kernel_shape, pads, strides)
     return Y
 
@@ -131,19 +131,19 @@ def max_pool(X,
 def global_avg_pool_(X, Y):
 
     n_spatial_dim = 2  # Currently only 2-D convolution is supported (TODO)
-    'nid: L_n'
+    #! nid: L_n
     for n in range(X.shape(0)):
-        'nid: L_c'
+        #! nid: L_c
         for c in range(X.shape(1)):
-            'nid: init'
+            #! nid: init
             Y[n, c] = 0
-            'nid: L_h'
+            #! nid: L_h
             for h in range(X.shape(2)):
-                'nid: L_w'
+                #! nid: L_w
                 for w in range(X.shape(3)):
-                    'nid: compute'
+                    #! nid: compute
                     Y[n, c] += X[n, c, h, w]
-            'nid: flush'
+            #! nid: flush
             Y[n, c] /= X.shape(2) * X.shape(3)
 
 
@@ -153,6 +153,6 @@ def global_avg_pool(X):
     n_spatial_dim = 2  # Currently only 2-D convolution is supported (TODO)
 
     Y = core.empty([X.shape(0), X.shape(1)], X.dtype, X.mtype)
-    'nid: recur'
+    #! nid: recur
     global_avg_pool_(X, Y)
     return Y

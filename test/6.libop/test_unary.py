@@ -22,7 +22,7 @@ def test_static_shape(libop_func, torch_func, require_positive):
     def f(x, y):
         x: ft.Var[(4, 4), "float32", "input", "cpu"]
         y: ft.Var[(4, 4), "float32", "output", "cpu"]
-        "nid: to_test"
+        #! nid: to_test
         libop_func(x, y)
 
     if require_positive:
@@ -54,7 +54,7 @@ def test_out_of_place(libop_func, torch_func, require_positive):
     @ft.optimize(device=device, verbose=1)
     def f(x):
         x: ft.Var[(4, 4), "float32", "input", "cpu"]
-        "nid: to_test"
+        #! nid: to_test
         return libop_func(x)
 
     if require_positive:
@@ -84,7 +84,7 @@ def test_grad(libop_func, torch_func, require_positive):
     def f(x, y):
         x: ft.Var[(4, 4), "float32", "input", "cpu"]
         y: ft.Var[(4, 4), "float32", "output", "cpu"]
-        "nid: to_test"
+        #! nid: to_test
         libop_func(x, y)
 
     print(f)

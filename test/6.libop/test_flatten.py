@@ -12,7 +12,7 @@ def test_static():
     def f(x, y):
         x: ft.Var[(3, 4, 5), "float32", "input", "cpu"]
         y: ft.Var[(3, 20), "float32", "output", "cpu"]
-        "nid: flatten"
+        #! nid: flatten
         libop.flatten_(x, y)
 
     x_torch = torch.rand(3, 4, 5, dtype=torch.float32)
@@ -32,7 +32,7 @@ def test_axis():
     def f(x, y):
         x: ft.Var[(3, 4, 5), "float32", "input", "cpu"]
         y: ft.Var[(12, 5), "float32", "output", "cpu"]
-        "nid: flatten"
+        #! nid: flatten
         libop.flatten_(x, y, axis=2)
 
     x_torch = torch.rand(3, 4, 5, dtype=torch.float32)
@@ -51,7 +51,7 @@ def test_out_of_place():
     @ft.optimize(device=device, verbose=1)
     def f(x):
         x: ft.Var[(3, 4, 5), "float32", "input", "cpu"]
-        "nid: flatten"
+        #! nid: flatten
         return libop.flatten(x)
 
     x_torch = torch.rand(3, 4, 5, dtype=torch.float32)

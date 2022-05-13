@@ -515,10 +515,11 @@ def mark_prefer_libs():
 
 
 def metadata(entry: str):
-    if entry.startswith('nid: '):
-        ctx_stack.top().set_next_nid(StagingContext.fullid(entry[5:]))
-    elif entry.startswith('no_deps: '):
-        var_name = entry[9:]
+    parts = entry.split()
+    if parts[0] == 'nid:':
+        ctx_stack.top().set_next_nid(StagingContext.fullid(parts[1]))
+    elif parts[0] == 'no_deps:':
+        var_name = parts[1]
 
         back = inspect.currentframe().f_back
 
@@ -536,7 +537,7 @@ def metadata(entry: str):
                 f'Local variable {var_name} = {var} is not a VarRef, which is required by annotating comment ({entry})'
             )
         ctx_stack.top().add_next_no_deps(var.name)
-    elif entry == 'prefer_libs':
+    elif parts[0] == 'prefer_libs':
         ctx_stack.top().set_next_prefer_libs()
 
 
@@ -925,11 +926,11 @@ def process_annotating_comments(src: str):
         indent = re.match('\\s*', line)[0]
         rest_line = line[len(indent):]
         if rest_line.startswith('#! '):
-            new_src.append(f'{indent}freetensor.metadata(r"{rest_line[3:]}")')
+            arg = rest_line[3:].replace('"', '\\"')
+            new_src.append(f'{indent}freetensor.metadata("{arg}")')
         else:
             new_src.append(line)
     new_src = '\n'.join(new_src)
-    print(new_src)
     return new_src
 
 
@@ -942,7 +943,6 @@ def into_staging(func, caller_env, src: str = None, verbose=False):
         lineno = 1
         file = f'<staging:{func.__name__}>'
 
-    print(src)
     tree = ast.parse(process_annotating_comments(src))
     tree = ast.fix_missing_locations(Transformer(file, lineno).visit(tree))
 

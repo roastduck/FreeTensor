@@ -12,7 +12,7 @@ def test_static():
     def f(x, y):
         x: ft.Var[(3, 4, 5), "float32", "input", "cpu"]
         y: ft.Var[(3, 1, 4, 1, 5), "float32", "output", "cpu"]
-        "nid: unsqueeze"
+        #! nid: unsqueeze
         libop.unsqueeze_(x, y, axes=[1, 3])
 
     x_torch = torch.rand(3, 4, 5, dtype=torch.float32)
@@ -31,7 +31,7 @@ def test_out_of_place():
     @ft.optimize(device=device, verbose=1)
     def f(x):
         x: ft.Var[(3, 4, 5), "float32", "input", "cpu"]
-        "nid: unsqueeze"
+        #! nid: unsqueeze
         return libop.unsqueeze(x, axes=[1, 3])
 
     x_torch = torch.rand(3, 4, 5, dtype=torch.float32)

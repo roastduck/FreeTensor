@@ -22,13 +22,13 @@ def test_manual_static():
 
     @ft.transform
     def f(x, y):
-        "nid: V_x"
+        #! nid: V_x
         x: ft.Var[(batch_size, n_heads, seq_len, seq_len), "float32", "input",
                   "gpu/global"]
-        "nid: V_y"
+        #! nid: V_y
         y: ft.Var[(batch_size, n_heads, seq_len, seq_len), "float32", "output",
                   "gpu/global"]
-        "nid: softmax"
+        #! nid: softmax
         libop.softmax_(x, y)
 
     print(f)

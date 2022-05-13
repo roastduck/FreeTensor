@@ -20,7 +20,7 @@ def test_basic():
     def test(x, y):
         x: ft.Var[(4,), "int32", "input", "gpu/global"]
         y: ft.Var[(4,), "int32", "output", "gpu/global"]
-        "nid: L1"
+        #! nid: L1
         for i in range(0, 4):
             y[i] = x[i] + 1
 
@@ -54,7 +54,7 @@ def test_error_wrong_target():
     def test(x, y):
         x: ft.Var[(4,), "int32", "input", "gpu/global"]
         y: ft.Var[(4,), "int32", "output", "gpu/global"]
-        "nid: L1"
+        #! nid: L1
         for i in range(0, 4):
             y[i] = x[i] + 1
 
@@ -72,7 +72,7 @@ def test_define_output_inside_kernel():
     @ft.transform
     def test(x, y):
         x: ft.Var[(4,), "int32", "input", "gpu/global"]
-        "nid: L1"
+        #! nid: L1
         for i in range(0, 4):
             y: ft.Var[(4,), "int32", "output", "gpu/global"]
             y[i] = x[i] + 1
@@ -105,9 +105,9 @@ def test_return_value_and_runtime_allocation():
     def test(x):
         x: ft.Var[(4, 4), "int32", "input", "gpu/global"]
         y = ft.empty((4, 4), "int32", "gpu/global")
-        'nid: L1'
+        #! nid: L1
         for i in range(4):
-            'nid: L2'
+            #! nid: L2
             for j in range(4):
                 y[i, j] = x[i, j] * 2 + 1
         return y
@@ -132,7 +132,7 @@ def test_split_by_block_and_bind():
     def test(x, y):
         x: ft.Var[(100,), "int32", "input", "gpu/global"]
         y: ft.Var[(100,), "int32", "output", "gpu/global"]
-        "nid: L1"
+        #! nid: L1
         for i in range(0, 100):
             y[i] = x[i] + 1
 
@@ -170,9 +170,9 @@ def test_shmem():
     def test(x, y):
         x: ft.Var[(4,), "int32", "input", "gpu/global"]
         y: ft.Var[(4,), "int32", "output", "gpu/global"]
-        "nid: L1"
+        #! nid: L1
         for i in range(0, 4):
-            "nid: S1"
+            #! nid: S1
             y[i] = x[i] + 1
 
     with ft.VarDef([
@@ -209,10 +209,10 @@ def test_global_mem():
         x: ft.Var[(4,), "int32", "input", "gpu/global"]
         y: ft.Var[(4,), "int32", "output", "gpu/global"]
         t = ft.empty((4,), "int32", "gpu/global")
-        "nid: L1"
+        #! nid: L1
         for i in range(0, 4):
             t[i] = x[i] * 2
-        "nid: L2"
+        #! nid: L2
         for i in range(0, 4):
             y[i] = t[i] + 1
 
@@ -255,13 +255,13 @@ def test_global_mem_in_kernel():
         y2: ft.Var[(8,), "int32", "output", "gpu/global"]
         z1: ft.Var[(4,), "int32", "output", "gpu/global"]
         z2: ft.Var[(4,), "int32", "output", "gpu/global"]
-        "nid: L1"
+        #! nid: L1
         for i in range(0, 8):
             t = ft.empty((), "int32", "gpu/global")
             t[()] = x[i] * 2
             y1[i] = t[()] + 1
             y2[i] = t[()] + 2
-        "nid: L2"
+        #! nid: L2
         for i in range(0, 4):
             t = ft.empty((), "int32", "gpu/global")
             t[()] = x[i] * 3
@@ -310,9 +310,9 @@ def test_pass_by_value_0d():
         n: ft.Var[(), "int32", "input", "byvalue"]
         x: ft.Var[(n, 4), "int32", "input", "gpu/global"]
         y: ft.Var[(n, 4), "int32", "output", "gpu/global"]
-        "nid: L1"
+        #! nid: L1
         for i in range(0, 4):
-            "nid: L2"
+            #! nid: L2
             for j in range(0, n):
                 y[j, i] = x[j, i] + 1
 
@@ -351,9 +351,9 @@ def test_pass_by_value_1d():
         n: ft.Var[(1,), "int32", "input", "byvalue"]
         x: ft.Var[(n[0], 4), "int32", "input", "gpu/global"]
         y: ft.Var[(n[0], 4), "int32", "output", "gpu/global"]
-        "nid: L1"
+        #! nid: L1
         for i in range(0, 4):
-            "nid: L2"
+            #! nid: L2
             for j in range(0, n[0]):
                 y[j, i] = x[j, i] + 1
 
@@ -470,7 +470,7 @@ def test_intrinsic():
     def test(x, y):
         x: ft.Var[(4,), "float32", "input", "gpu/global"]
         y: ft.Var[(4,), "float32", "output", "gpu/global"]
-        "nid: L1"
+        #! nid: L1
         for i in range(0, 4):
             y[i] = ft.intrinsic("sinf(%)", x[i], ret_type="float32")
 
@@ -504,13 +504,13 @@ def test_multiplex_shared_1():
     def test(x, y):
         x: ft.Var[(4, 256), "int32", "input", "gpu/global"]
         y: ft.Var[(4, 256), "int32", "output", "gpu/global"]
-        "nid: L0"
+        #! nid: L0
         for i in range(0, 4):
             t = ft.empty((256,), "int32", "gpu/shared")
-            "nid: L1"
+            #! nid: L1
             for j in range(0, 256):
                 t[j] = x[i, j] * 2
-            "nid: L2"
+            #! nid: L2
             for j in range(0, 256):
                 y[i, j] = t[j] + 1
 
@@ -565,14 +565,14 @@ def test_multiplex_shared_2():
     def test(x, y):
         x: ft.Var[(4, 256), "int32", "input", "gpu/global"]
         y: ft.Var[(4, 256), "int32", "output", "gpu/global"]
-        "nid: L0"
+        #! nid: L0
         for i in range(0, 4):
             t = ft.empty((256,), "int32", "gpu/shared")
-            "nid: L1"
+            #! nid: L1
             for j in range(i * 64, (i + 1) * 64):
                 t[j] = x[i, j] * 2
                 # No need to hoist over i, although i is not present here
-            "nid: L2"
+            #! nid: L2
             for j in range(i * 64, (i + 1) * 64):
                 y[i, j] = t[j] + 1
 
@@ -605,19 +605,19 @@ def test_simplex_local_1():
         x: ft.Var[(10, 10, 10), "int32", "input", "gpu/global"]
         y: ft.Var[(10, 10, 10), "int32", "output", "gpu/global"]
         z: ft.Var[(10, 10, 10), "int32", "output", "gpu/global"]
-        'nid: Lb'
+        #! nid: Lb
         for b in range(10):
-            'nid: t'
+            #! nid: t
             t = ft.empty((10, 10), "int32", "gpu/global")
-            'nid: L0'
+            #! nid: L0
             for i in range(10):
                 for j in range(10):
                     t[i, j] = x[b, i, j] * 2
-            'nid: L1'
+            #! nid: L1
             for i in range(10):
                 for j in range(10):
                     y[b, i, j] = t[i, j] + 1
-            'nid: L2'
+            #! nid: L2
             for i in range(10):
                 for j in range(10):
                     z[b, i, j] = t[i, j] + 2
@@ -666,18 +666,18 @@ def test_simplex_local_2():
     def test(x, y, z):
         x: ft.Var[(10, 10, 10), "int32", "input", "gpu/global"]
         y: ft.Var[(10, 10, 10), "int32", "output", "gpu/global"]
-        'nid: Lb'
+        #! nid: Lb
         for b in range(10):
-            'nid: t'
+            #! nid: t
             t = ft.empty((10, 10), "int32", "gpu/global")
-            'nid: L0'
+            #! nid: L0
             for i in range(10):
                 for j in range(10):
                     t[i, j] = x[b, i, j] * 2
                 for j in range(10):
                     t[i, j] += t[i, i]
                     # The last dimension can be removed although accessed with i
-            'nid: L1'
+            #! nid: L1
             for i in range(10):
                 for j in range(10):
                     y[b, i, j] = t[i, j] + 1
@@ -764,15 +764,15 @@ def test_parallel_different_length():
         a: ft.Var[(4, 4), "int32", "input", "gpu/global"]
         b: ft.Var[(4, 8), "int32", "input", "gpu/global"]
         c: ft.Var[(4, 8), "int32", "output", "gpu/global"]
-        "nid: L0"
+        #! nid: L0
         for i in range(0, 4):
             t = ft.empty((4,), "int32", "gpu/shared")
-            "nid: L1"
+            #! nid: L1
             for j in range(0, 4):
                 t[j] = a[i, j]
-            "nid: L2"
+            #! nid: L2
             for j in range(0, 4):
-                "nid: L3"
+                #! nid: L3
                 for k in range(0, 8):
                     c[i, k] = c[i, k] + t[j] * b[j, k]
 
@@ -834,9 +834,9 @@ def test_bounded_length():
     def test(a, b):
         a: ft.Var[(100, 100), "int32", "input", "gpu/global"]
         b: ft.Var[(100, 100), "int32", "output", "gpu/global"]
-        'nid: Li'
+        #! nid: Li
         for i in range(100):
-            'nid: Lj'
+            #! nid: Lj
             for j in range(i):
                 b[i, j] = a[i, j] + 1
 
@@ -863,11 +863,11 @@ def test_parallel_broadcast():
         a: ft.Var[(4, 1), "int32", "input", "gpu/global"]
         b: ft.Var[(1, 8), "int32", "input", "gpu/global"]
         c: ft.Var[(4, 8), "int32", "output", "gpu/global"]
-        "nid: L0"
+        #! nid: L0
         for i in range(0, 4):
             t = ft.empty((1,), "int32", "gpu/shared")
             t[0] = a[i, 0]
-            "nid: L1"
+            #! nid: L1
             for k in range(0, 8):
                 c[i, k] = c[i, k] + t[0] * b[0, k]
 
@@ -926,7 +926,7 @@ def test_unbounded_length():
         n: ft.Var[(), "int32", "input", "gpu/global"]
         x: ft.Var[(n,), "int32", "input", "gpu/global"]
         y: ft.Var[(n,), "int32", "output", "gpu/global"]
-        "nid: L1"
+        #! nid: L1
         for i in range(0, n):
             y[i] = x[i] + 1
 
@@ -951,9 +951,9 @@ def test_unroll_for():
     def test(x, y):
         x: ft.Var[(4, 64), "int32", "input", "gpu/global"]
         y: ft.Var[(4,), "int32", "output", "gpu/global"]
-        "nid: L1"
+        #! nid: L1
         for i in range(0, 4):
-            "nid: L2"
+            #! nid: L2
             for j in range(0, 64):
                 y[i] = y[i] + x[i, j]
 
@@ -991,12 +991,12 @@ def test_streams():
     def test(x, y):
         x: ft.Var[(4, 256), "int32", "input", "gpu/global"]
         y: ft.Var[(4, 256), "int32", "output", "gpu/global"]
-        "nid: L1"
+        #! nid: L1
         for i in range(0, 4):
-            "nid: L2"
+            #! nid: L2
             for j in range(0, 256):
                 y[i, j] = x[i, j] + 1
-            "nid: L3"
+            #! nid: L3
             for j in range(0, 128):
                 y[i, j * 2] *= 2
 
@@ -1025,14 +1025,14 @@ def test_merge_no_deps_1():
         ptr: ft.Var[(4, 11), "int32", "input", "cpu"]
         edge1: ft.Var[(4, 50), "int32", "input", "cpu"]
         edge2: ft.Var[(4, 50), "int32", "output", "cpu"]
-        'nid: Lb'
+        #! nid: Lb
         for b in range(4):
-            'nid: Li1'
+            #! nid: Li1
             'no_deps: edge2'
             for i in range(10):
                 for j in range(ptr[b, i], ptr[b, i + 1]):
                     edge2[b, j] = edge1[b, j] + i
-            'nid: Li2'
+            #! nid: Li2
             'no_deps: edge2'
             for i in range(10):
                 for j in range(ptr[b, i], ptr[b, i + 1]):
@@ -1066,14 +1066,14 @@ def test_merge_no_deps_2():
             4,
             10,
         ), "int32", "output", "cpu")
-        'nid: Lb'
+        #! nid: Lb
         for b in range(4):
-            'nid: Li1'
+            #! nid: Li1
             'no_deps: edge2'
             for i in range(10):
                 for j in range(ptr[b, i], ptr[b, i + 1]):
                     edge2[b, j] = edge1[b, j] + i
-            'nid: Li2'
+            #! nid: Li2
             for i in range(10):
                 # Nothing to do with edge2 here
                 foobar[b, i] = i
@@ -1102,14 +1102,14 @@ def test_merge_no_deps_3():
         ptr: ft.Var[(4, 11), "int32", "input", "cpu"]
         edge1: ft.Var[(4, 50), "int32", "input", "cpu"]
         edge2: ft.Var[(4, 50), "int32", "output", "cpu"]
-        'nid: Lb'
+        #! nid: Lb
         for b in range(4):
-            'nid: Li1'
+            #! nid: Li1
             'no_deps: edge2'
             for i in range(10):
                 for j in range(ptr[b, i], ptr[b, i + 1]):
                     edge2[b, j] = edge1[b, j] + i
-            'nid: Li2'  # If we don't mark edge2 here
+            #! nid: Li2  # If we don't mark edge2 here
             for i in range(10):
                 for j in range(ptr[b, i], ptr[b, i + 1] + 1):
                     edge2[b, j] = edge2[b, j] * 2 + j
@@ -1127,7 +1127,7 @@ def test_access_gpu_from_cpu_for_debugging():
     def test(x, y):
         x: ft.Var[(4,), "int32", "input", "gpu/global"]
         y: ft.Var[(4,), "int32", "output", "gpu/global"]
-        "nid: L1"
+        #! nid: L1
         for i in range(0, 4):
             y[i] = x[i] + 1
 

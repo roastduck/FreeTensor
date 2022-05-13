@@ -224,20 +224,20 @@ def compile_all(in_feats, hidden_feats, length, device):
         for l in range(hidden_feats):
             c[l] = 0
             h[l] = 0
-        "nid: K"
+        #! nid: K
         for k in range(length):
-            'nid: m_in'
+            #! nid: m_in
             for m in range(4):
-                'nid: l_in'
+                #! nid: l_in
                 for l in range(hidden_feats):
                     f[m][l] = b[m][l]
-                    'nid: j_in'
+                    #! nid: j_in
                     for j in range(in_feats):
                         f[m][l] += w[m][j][l] * x[k][j]
-                    'nid: j_hidden'
+                    #! nid: j_hidden
                     for j in range(hidden_feats):
                         f[m][l] += u[m][j][l] * h[j]
-            "nid: ch"
+            #! nid: ch
             for l in range(hidden_feats):
                 c[l] = ft.sigmoid(f[0][l]) * c[l] + ft.sigmoid(
                     f[1][l]) * ft.tanh(f[3][l])
