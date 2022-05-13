@@ -903,7 +903,7 @@ class Transformer(ast.NodeTransformer):
 def _remove_indent(lines: str) -> str:
     spaces_to_remove = next((i for i, x in enumerate(lines[0]) if x != ' '),
                             len(lines[0]))
-    return '\n'.join(line[spaces_to_remove:] for line in lines)
+    return ''.join(line[spaces_to_remove:] for line in lines)
 
 
 def _get_caller_env(depth: int):
