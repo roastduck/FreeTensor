@@ -10,6 +10,7 @@ plugins:
             python:
                 selection:
                     docstring_style: numpy
+                    inherited_members: True
         watch:
             - python/
             - include/

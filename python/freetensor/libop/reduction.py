@@ -4,6 +4,20 @@ from .utils import *
 from .. import core
 
 
+def _named_partial(name: str, doc: str, f, *args, **kvs):
+    ''' Similar to functools.partial, but it sets the returned function's __name__ and __doc__ '''
+
+    # This function should be defined in the same file that uses it
+    # https://github.com/mkdocstrings/pytkdocs/issues/143
+
+    def g(*_args, **_kvs):
+        return f(*args, *_args, **kvs, **_kvs)
+
+    g.__name__ = name
+    g.__doc__ = doc
+    return g
+
+
 def _y_ndim(x_ndim, axes, keepdims):
     return x_ndim if keepdims else x_ndim - len(axes)
 
@@ -90,24 +104,66 @@ def _general_reduce(op,
     return y
 
 
-reduce_sum_ = named_partial("reduce_sum_", _general_reduce_, lambda x, y: x + y,
-                            0)
-reduce_sum = named_partial("reduce_sum", _general_reduce, lambda x, y: x + y, 0)
+implace_reduce_doc_template = '''
+{} of a tensor through one or more dimensions. The result is written to another tensor
 
-reduce_mul_ = named_partial("reduce_mul_", _general_reduce_, lambda x, y: x * y,
-                            1)
-reduce_mul = named_partial("reduce_mul", _general_reduce, lambda x, y: x * y, 1)
+Parameters
+----------
+x : VarRef
+    The input tensor
+y : VarRef
+    The result tensor
+axes : Sequence[int] (Optional)
+    Which dimensions to reduce through. Defaults to None, standing for all dimensions, i.e., reduce the tensor to a scalar
+keepdims : bool (Optional)
+    Keep the reduced dimensions as singleton dimensions. Defaults to True
+'''
 
-reduce_l_and_ = named_partial("reduce_l_and_", _general_reduce_, core.l_and,
-                              True)
-reduce_l_and = named_partial("reduce_l_and", _general_reduce, core.l_and, True)
-all_ = reduce_l_and_
-all = reduce_l_and
+out_of_place_reduce_doc_template = '''
+{} of a tensor through one or more dimensions and return the result
 
-reduce_l_or_ = named_partial("reduce_l_or_", _general_reduce_, core.l_or, False)
-reduce_l_or = named_partial("reduce_l_or", _general_reduce, core.l_or, False)
-any_ = reduce_l_or_
-any = reduce_l_or
+Parameters
+----------
+x : VarRef
+    The input tensor
+axes : Sequence[int] (Optional)
+    Which dimensions to reduce through. Defaults to None, standing for all dimensions, i.e., reduce the tensor to a scalar
+keepdims : bool (Optional)
+    Keep the reduced dimensions as singleton dimensions. Defaults to True
+
+Returns
+-------
+VarRef
+    The result tensor
+'''
+
+reduce_sum_ = _named_partial("reduce_sum_",
+                             implace_reduce_doc_template.format("Sum"),
+                             _general_reduce_, lambda x, y: x + y, 0)
+reduce_sum = _named_partial("reduce_sum",
+                            out_of_place_reduce_doc_template.format("Sum"),
+                            _general_reduce, lambda x, y: x + y, 0)
+
+reduce_prod_ = _named_partial("reduce_prod_",
+                              implace_reduce_doc_template.format("Product"),
+                              _general_reduce_, lambda x, y: x * y, 1)
+reduce_prod = _named_partial("reduce_prod",
+                             out_of_place_reduce_doc_template.format("Product"),
+                             _general_reduce, lambda x, y: x * y, 1)
+
+all_ = _named_partial(
+    "all_", implace_reduce_doc_template.format("Reduction of logical and"),
+    _general_reduce_, core.l_and, True)
+all = _named_partial(
+    "all", out_of_place_reduce_doc_template.format("Reduction of logical and"),
+    _general_reduce, core.l_and, True)
+
+any_ = _named_partial(
+    "any_", implace_reduce_doc_template.format("Reduction of logical or"),
+    _general_reduce_, core.l_or, False)
+any = _named_partial(
+    "any", out_of_place_reduce_doc_template.format("Reduction of logical or"),
+    _general_reduce, core.l_or, False)
 
 
 @core.inline
