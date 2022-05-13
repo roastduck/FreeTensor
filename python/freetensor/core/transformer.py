@@ -868,7 +868,7 @@ class Transformer(ast.NodeTransformer):
                              self.base_lineno, node)
 
 
-def _remove_indent(lines: str) -> str:
+def _remove_indent(lines: List[str]) -> str:
     spaces_to_remove = next((i for i, x in enumerate(lines[0]) if x != ' '),
                             len(lines[0]))
     return ''.join(line[spaces_to_remove:] for line in lines)
@@ -890,7 +890,6 @@ def _get_caller_env(depth: int):
 def process_annotating_comments(src: str):
     new_src = []
     for line in src.splitlines():
-        # line = f'freetensor.metadata("{re.escape(comment[3:])}")'
         indent = re.match('\\s*', line)[0]
         rest_line = line[len(indent):]
         if rest_line.startswith('#! '):
