@@ -535,7 +535,8 @@ def mark_position(base_lineno: int, line_offset: int):
     StagingContext.call_stack[-1] = traceback.FrameSummary(
         original.filename, lineno, original.name)
     if ctx_stack.top().get_next_nid() == "":
-        ctx_stack.top().set_next_nid(f'{original.filename}:{lineno}')
+        ctx_stack.top().set_next_nid(
+            StagingContext.fullid(f'{original.filename}:{lineno}'))
 
 
 def module_helper(callee):
