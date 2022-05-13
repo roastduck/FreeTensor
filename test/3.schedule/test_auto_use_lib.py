@@ -34,7 +34,7 @@ def test_fission_when_prefer_libs():
         c1: ft.Var[(1000, 1000), "float32", "inout", "cpu"]
         c2: ft.Var[(1000, 1000), "float32", "inout", "cpu"]
         #! nid: Li
-        'prefer_libs'
+        #! prefer_libs
         for i in range(1000):
             for j in range(1000):
                 for k in range(1000):

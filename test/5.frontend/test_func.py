@@ -507,7 +507,7 @@ def test_no_deps_on_returned_tensor():
                 ft.Array(np.array([[1, 2], [3, 4]], dtype=np.int32), dev)), y)
         for i in range(2):
             #! nid: Lj
-            'no_deps: cc'
+            #! no_deps: cc
             for j in range(2):
                 c[i, j] = cc[i, j]
                 d[i, j] = dd[i, j]

@@ -48,7 +48,7 @@ def _einsum_(lefts: Sequence[str], right: str, order: str, init: bool, *args):
         else:
             for arg, offset in zip(iter_args, iter_offsets):
                 assert arg.shape(offset) == length or arg.shape(offset) == 1
-        'prefer_libs'
+        #! prefer_libs
         for i in range(length):
             _einsum_(
                 next_lefts, next_right, next_order, next_init, *[

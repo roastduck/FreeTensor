@@ -1028,12 +1028,12 @@ def test_merge_no_deps_1():
         #! nid: Lb
         for b in range(4):
             #! nid: Li1
-            'no_deps: edge2'
+            #! no_deps: edge2
             for i in range(10):
                 for j in range(ptr[b, i], ptr[b, i + 1]):
                     edge2[b, j] = edge1[b, j] + i
             #! nid: Li2
-            'no_deps: edge2'
+            #! no_deps: edge2
             for i in range(10):
                 for j in range(ptr[b, i], ptr[b, i + 1]):
                     edge2[b, j] += j
@@ -1069,7 +1069,7 @@ def test_merge_no_deps_2():
         #! nid: Lb
         for b in range(4):
             #! nid: Li1
-            'no_deps: edge2'
+            #! no_deps: edge2
             for i in range(10):
                 for j in range(ptr[b, i], ptr[b, i + 1]):
                     edge2[b, j] = edge1[b, j] + i
@@ -1105,7 +1105,7 @@ def test_merge_no_deps_3():
         #! nid: Lb
         for b in range(4):
             #! nid: Li1
-            'no_deps: edge2'
+            #! no_deps: edge2
             for i in range(10):
                 for j in range(ptr[b, i], ptr[b, i + 1]):
                     edge2[b, j] = edge1[b, j] + i
