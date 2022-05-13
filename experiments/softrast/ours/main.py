@@ -53,7 +53,7 @@ def compile_all(h, w, n_verts, n_faces, device, ad_save_all):
         vertices: ft.Var[(n_verts, 3), "float32", "input"]
         faces: ft.Var[(n_faces, 3), "int32", "input"]
         y: ft.Var[(n_faces, h, w), "float32", "output"]
-        "nid: Li"
+        #! nid: Li
         for i in range(n_faces):
             v = ft.empty((3, 2), "float32")
             for p in range(3):

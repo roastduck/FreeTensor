@@ -13,7 +13,7 @@ def test_basic():
         x: ft.Var[(2, 3, 14, 14), "float32", "input", "cpu"]
         w: ft.Var[(8, 3, 3, 3), "float32", "input", "cpu"]
         y: ft.Var[(2, 8, 12, 12), "float32", "output", "cpu"]
-        "nid: conv"
+        #! nid: conv
         libop.conv_(x, w, None, y, auto_pad='VALID')
 
     x_torch = torch.rand(2, 3, 14, 14, dtype=torch.float32)
@@ -38,7 +38,7 @@ def test_bias():
         w: ft.Var[(8, 3, 3, 3), "float32", "input", "cpu"]
         b: ft.Var[(8,), "float32", "input", "cpu"]
         y: ft.Var[(2, 8, 12, 12), "float32", "output", "cpu"]
-        "nid: conv"
+        #! nid: conv
         libop.conv_(x, w, b, y, auto_pad='VALID')
 
     x_torch = torch.rand(2, 3, 14, 14, dtype=torch.float32)
@@ -64,7 +64,7 @@ def test_same_pad():
         x: ft.Var[(2, 3, 14, 14), "float32", "input", "cpu"]
         w: ft.Var[(8, 3, 3, 3), "float32", "input", "cpu"]
         y: ft.Var[(2, 8, 14, 14), "float32", "output", "cpu"]
-        "nid: conv"
+        #! nid: conv
         libop.conv_(x, w, None, y, kernel_shape=(3, 3), auto_pad='SAME_UPPER')
 
     x_torch = torch.rand(2, 3, 14, 14, dtype=torch.float32)
@@ -88,7 +88,7 @@ def test_stride():
         x: ft.Var[(2, 3, 14, 14), "float32", "input", "cpu"]
         w: ft.Var[(8, 3, 3, 3), "float32", "input", "cpu"]
         y: ft.Var[(2, 8, 6, 6), "float32", "output", "cpu"]
-        "nid: conv"
+        #! nid: conv
         libop.conv_(x, w, None, y, auto_pad='VALID', strides=(2, 2))
 
     x_torch = torch.rand(2, 3, 14, 14, dtype=torch.float32)
@@ -112,7 +112,7 @@ def test_group():
         x: ft.Var[(2, 4, 14, 14), "float32", "input", "cpu"]
         w: ft.Var[(8, 2, 3, 3), "float32", "input", "cpu"]
         y: ft.Var[(2, 8, 12, 12), "float32", "output", "cpu"]
-        "nid: conv"
+        #! nid: conv
         libop.conv_(x, w, None, y, auto_pad='VALID', group=2)
 
     x_torch = torch.rand(2, 4, 14, 14, dtype=torch.float32)
@@ -136,7 +136,7 @@ def test_dilation():
         x: ft.Var[(2, 3, 14, 14), "float32", "input", "cpu"]
         w: ft.Var[(8, 3, 3, 3), "float32", "input", "cpu"]
         y: ft.Var[(2, 8, 10, 10), "float32", "output", "cpu"]
-        "nid: conv"
+        #! nid: conv
         libop.conv_(x, w, None, y, auto_pad='VALID', dilations=(2, 2))
 
     x_torch = torch.rand(2, 3, 14, 14, dtype=torch.float32)
@@ -159,7 +159,7 @@ def test_out_of_place():
     def f(x, w):
         x: ft.Var[(2, 3, 14, 14), "float32", "input", "cpu"]
         w: ft.Var[(8, 3, 3, 3), "float32", "input", "cpu"]
-        "nid: conv"
+        #! nid: conv
         return libop.conv(x, w, auto_pad='VALID')
 
     x_torch = torch.rand(2, 3, 14, 14, dtype=torch.float32)

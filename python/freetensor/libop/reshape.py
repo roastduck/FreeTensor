@@ -10,9 +10,9 @@ def _flatten_inner_(x, y):
     if core.ndim(x) == 0:
         y[0] = x
     else:
-        'nid: L_inner'
+        #! nid: L_inner
         for i in range(x.shape(0)):
-            'nid: recur'
+            #! nid: recur
             _flatten_inner_(
                 x[i], y[i * (y.shape(0) // x.shape(0)):(i + 1) *
                         (y.shape(0) // x.shape(0))])
@@ -21,12 +21,12 @@ def _flatten_inner_(x, y):
 @core.inline
 def flatten_(x, y, axis=1):
     if axis == 0:
-        'nid: recur'
+        #! nid: recur
         _flatten_inner_(x, y[0])
     else:
-        'nid: L_outer'
+        #! nid: L_outer
         for i in range(x.shape(0)):
-            'nid: recur'
+            #! nid: recur
             flatten_(
                 x[i], y[i * (y.shape(0) // x.shape(0)):(i + 1) *
                         (y.shape(0) // x.shape(0))], axis - 1)
@@ -44,7 +44,7 @@ def _flatten_comp_shape(x, axis):
 @core.inline
 def flatten(x, axis=1):
     y = core.empty(_flatten_comp_shape(x, axis), core.dtype(x), core.mtype(x))
-    'nid: recur'
+    #! nid: recur
     flatten_(x, y, axis)
     return y
 
@@ -60,12 +60,12 @@ def unsqueeze_(x, y, axes: Sequence[int]):
     if y.ndim == 0:
         y[()] = x
     elif begin_with_0(axes):
-        'nid: recur'
+        #! nid: recur
         unsqueeze_(x, y[0], all_minus_one(axes[1:]))
     else:
-        'nid: L'
+        #! nid: L
         for i in range(x.shape(0)):
-            'nid: recur'
+            #! nid: recur
             unsqueeze_(x[i], y[i], all_minus_one(axes))
 
 
@@ -80,7 +80,7 @@ def _unsqueeze_comp_shape(axes, x):
 def unsqueeze(x, axes: Sequence[int]):
     y = core.empty(_unsqueeze_comp_shape(_circular_axes(axes, core.ndim(x)), x),
                    core.dtype(x), core.mtype(x))
-    'nid: recur'
+    #! nid: recur
     unsqueeze_(x, y, axes)
     return y
 
@@ -90,13 +90,13 @@ def expand_(a, out):
     if out.ndim == 0:
         out[()] = a
     else:
-        'nid: L_elem'
+        #! nid: L_elem
         for i in range(out.shape(0)):
             if core.ndim(a) < out.ndim:
-                'nid: recur'
+                #! nid: recur
                 expand_(a, out[i])
             else:
-                'nid: recur'
+                #! nid: recur
                 expand_(a[i % a.shape(0)], out[i])
 
 
@@ -104,6 +104,6 @@ def expand_(a, out):
 def expand(a, expand_shape):
     # FIXME: out_shape = broadcast(a.shape, expand_shape)
     out = core.empty(expand_shape, core.dtype(a), core.mtype(a))
-    'nid: recur'
+    #! nid: recur
     expand_(a, out)
     return out

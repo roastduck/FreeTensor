@@ -5,28 +5,28 @@ from .reduction import reduce_max, reduce_max_, reduce_sum, reduce_sum_
 
 @core.inline
 def softmax_(x, y, axis=-1):
-    'nid: max'
+    #! nid: max
     maxval = reduce_max(x, axes=[axis], keepdims=True)
-    'nid: sub'
+    #! nid: sub
     corrected = sub(x, maxval)
-    'nid: exp'
+    #! nid: exp
     exponent = exp(corrected)
-    'nid: sum'
+    #! nid: sum
     summation = reduce_sum(exponent, axes=[axis], keepdims=True)
-    'nid: div'
+    #! nid: div
     truediv_(exponent, summation, y)
 
 
 @core.inline
 def softmax(x, axis=-1):
-    'nid: max'
+    #! nid: max
     maxval = reduce_max(x, axes=[axis], keepdims=True)
-    'nid: sub'
+    #! nid: sub
     corrected = sub(x, maxval)
-    'nid: exp'
+    #! nid: exp
     exponent = exp(corrected)
-    'nid: sum'
+    #! nid: sum
     summation = reduce_sum(exponent, axes=[axis], keepdims=True)
-    'nid: div'
+    #! nid: div
     out = truediv(exponent, summation)
     return out

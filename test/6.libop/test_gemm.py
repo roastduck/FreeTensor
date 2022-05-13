@@ -13,7 +13,7 @@ def test_basic():
         a: ft.Var[(4, 5), "float32", "input", "cpu"]
         b: ft.Var[(5, 6), "float32", "input", "cpu"]
         y: ft.Var[(4, 6), "float32", "output", "cpu"]
-        "nid: gemm"
+        #! nid: gemm
         libop.gemm_(a, b, None, y)
 
     a_torch = torch.rand(4, 5, dtype=torch.float32)
@@ -37,7 +37,7 @@ def test_trans_A():
         a: ft.Var[(5, 4), "float32", "input", "cpu"]
         b: ft.Var[(5, 6), "float32", "input", "cpu"]
         y: ft.Var[(4, 6), "float32", "output", "cpu"]
-        "nid: gemm"
+        #! nid: gemm
         libop.gemm_(a, b, None, y, trans_A=True)
 
     a_torch = torch.rand(5, 4, dtype=torch.float32)
@@ -61,7 +61,7 @@ def test_trans_B():
         a: ft.Var[(4, 5), "float32", "input", "cpu"]
         b: ft.Var[(6, 5), "float32", "input", "cpu"]
         y: ft.Var[(4, 6), "float32", "output", "cpu"]
-        "nid: gemm"
+        #! nid: gemm
         libop.gemm_(a, b, None, y, trans_B=True)
 
     a_torch = torch.rand(4, 5, dtype=torch.float32)
@@ -85,7 +85,7 @@ def test_trans_AB():
         a: ft.Var[(5, 4), "float32", "input", "cpu"]
         b: ft.Var[(6, 5), "float32", "input", "cpu"]
         y: ft.Var[(4, 6), "float32", "output", "cpu"]
-        "nid: gemm"
+        #! nid: gemm
         libop.gemm_(a, b, None, y, trans_A=True, trans_B=True)
 
     a_torch = torch.rand(5, 4, dtype=torch.float32)
@@ -110,7 +110,7 @@ def test_bias():
         b: ft.Var[(5, 6), "float32", "input", "cpu"]
         c: ft.Var[(4, 6), "float32", "input", "cpu"]
         y: ft.Var[(4, 6), "float32", "output", "cpu"]
-        "nid: gemm"
+        #! nid: gemm
         libop.gemm_(a, b, c, y)
 
     a_torch = torch.rand(4, 5, dtype=torch.float32)
@@ -137,7 +137,7 @@ def test_bias_broadcast_1():
         b: ft.Var[(5, 6), "float32", "input", "cpu"]
         c: ft.Var[(4, 1), "float32", "input", "cpu"]
         y: ft.Var[(4, 6), "float32", "output", "cpu"]
-        "nid: gemm"
+        #! nid: gemm
         libop.gemm_(a, b, c, y)
 
     a_torch = torch.rand(4, 5, dtype=torch.float32)
@@ -164,7 +164,7 @@ def test_bias_broadcast_2():
         b: ft.Var[(5, 6), "float32", "input", "cpu"]
         c: ft.Var[(6,), "float32", "input", "cpu"]
         y: ft.Var[(4, 6), "float32", "output", "cpu"]
-        "nid: gemm"
+        #! nid: gemm
         libop.gemm_(a, b, c, y)
 
     a_torch = torch.rand(4, 5, dtype=torch.float32)
@@ -191,7 +191,7 @@ def test_bias_with_coeff():
         b: ft.Var[(5, 6), "float32", "input", "cpu"]
         c: ft.Var[(4, 6), "float32", "input", "cpu"]
         y: ft.Var[(4, 6), "float32", "output", "cpu"]
-        "nid: gemm"
+        #! nid: gemm
         libop.gemm_(a, b, c, y, alpha=2.5, beta=3.8)
 
     a_torch = torch.rand(4, 5, dtype=torch.float32)
@@ -216,7 +216,7 @@ def test_out_of_place():
     def f(a, b):
         a: ft.Var[(4, 5), "float32", "input", "cpu"]
         b: ft.Var[(5, 6), "float32", "input", "cpu"]
-        "nid: gemm"
+        #! nid: gemm
         return libop.gemm(a, b)
 
     a_torch = torch.rand(4, 5, dtype=torch.float32)

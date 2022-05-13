@@ -12,7 +12,7 @@ def test_omp_for():
     def test(x, y):
         x: ft.Var[(4,), "int32", "input", "cpu"]
         y: ft.Var[(4,), "int32", "output", "cpu"]
-        "nid: L1"
+        #! nid: L1
         for i in range(0, 4):
             y[i] = x[i] + 1
 
@@ -43,9 +43,9 @@ def test_omp_for_2():
     def test(x, y):
         x: ft.Var[(4, 4), "int32", "input", "cpu"]
         y: ft.Var[(4, 4), "int32", "output", "cpu"]
-        "nid: L1"
+        #! nid: L1
         for i in range(4):
-            "nid: L2"
+            #! nid: L2
             for j in range(4):
                 y[i, j] = x[i, j] + 1
 
@@ -73,9 +73,9 @@ def test_omp_for_collapse_nested():
     def test(x, y):
         x: ft.Var[(4, 4), "float32", "input", "cpu"]
         y: ft.Var[(4, 4), "float32", "output", "cpu"]
-        "nid: L1"
+        #! nid: L1
         for i in range(0, 4):
-            "nid: L2"
+            #! nid: L2
             for j in range(0, 4):
                 y[i, j] = x[i, j] + 1
 
@@ -101,9 +101,9 @@ def test_parallelize_parametric_access_1():
     def test(idx, y):
         idx: ft.Var[(10,), "int32", "input", "cpu"]
         y: ft.Var[(100,), "int32", "inout", "cpu"]
-        "nid: L1"
+        #! nid: L1
         for i in range(10):
-            "nid: L2"
+            #! nid: L2
             for j in range(10):
                 y[idx[i] + j] += j
 
@@ -123,9 +123,9 @@ def test_parallelize_parametric_access_2():
     def test(idx, y):
         idx: ft.Var[(10,), "int32", "input", "cpu"]
         y: ft.Var[(100,), "int32", "inout", "cpu"]
-        "nid: L1"
+        #! nid: L1
         for i in range(10):
-            "nid: L2"
+            #! nid: L2
             for j in range(10):
                 y[idx[i] + j] += j
 
@@ -145,7 +145,7 @@ def test_unroll_for():
     def test(x, y):
         x: ft.Var[(4,), "int32", "input", "cpu"]
         y: ft.Var[(4,), "int32", "output", "cpu"]
-        "nid: L1"
+        #! nid: L1
         for i in range(0, 4):
             y[i] = x[i] + 1
 
@@ -177,7 +177,7 @@ def test_vectorize_for():
     def test(x, y):
         x: ft.Var[(4,), "int32", "input", "cpu"]
         y: ft.Var[(4,), "int32", "output", "cpu"]
-        "nid: L1"
+        #! nid: L1
         for i in range(0, 4):
             y[i] = x[i] + 1
 

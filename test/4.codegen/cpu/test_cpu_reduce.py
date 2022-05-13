@@ -14,9 +14,9 @@ def test_parallel_reduction():
     def test(x, y):
         x: ft.Var[(4, 64), "int32", "input", "cpu"]
         y: ft.Var[(4,), "int32", "inout", "cpu"]
-        "nid: L1"
+        #! nid: L1
         for i in range(0, 4):
-            "nid: L2"
+            #! nid: L2
             for j in range(0, 64):
                 y[i] = y[i] + x[i, j]
 
@@ -53,9 +53,9 @@ def test_parallel_reduction_on_2_vars():
         x: ft.Var[(4, 64), "int32", "input", "cpu"]
         y: ft.Var[(4,), "int32", "inout", "cpu"]
         z: ft.Var[(4,), "int32", "inout", "cpu"]
-        "nid: L1"
+        #! nid: L1
         for i in range(0, 4):
-            "nid: L2"
+            #! nid: L2
             for j in range(0, 64):
                 y[i] = y[i] + x[i, j]
                 z[i] = z[i] + 2 * x[i, j]
@@ -90,11 +90,11 @@ def test_parallel_reduction_on_array():
     def test(x, y):
         x: ft.Var[(4, 64, 64), "int32", "input", "cpu"]
         y: ft.Var[(4, 64), "int32", "inout", "cpu"]
-        "nid: L1"
+        #! nid: L1
         for i in range(0, 4):
-            "nid: L2"
+            #! nid: L2
             for j in range(0, 64):
-                "nid: L3"
+                #! nid: L3
                 for k in range(0, 64):
                     y[i, k] += x[i, j, k]
 
@@ -123,11 +123,11 @@ def test_parallel_reduction_on_array_range():
     def test(x, y):
         x: ft.Var[(64, 64), "int32", "input", "cpu"]
         y: ft.Var[(64,), "int32", "inout", "cpu"]
-        "nid: L1"
+        #! nid: L1
         for i in range(0, 4):
-            "nid: L2"
+            #! nid: L2
             for j in range(0, 64):
-                "nid: L3"
+                #! nid: L3
                 for k in range(0, 16):
                     y[i * 16 + k] += x[i * 16 + k, j]
 
@@ -156,11 +156,11 @@ def test_parallel_reduction_multiple_statements():
     def test(x, y):
         x: ft.Var[(4, 64, 64), "int32", "input", "cpu"]
         y: ft.Var[(4, 64), "int32", "inout", "cpu"]
-        "nid: L1"
+        #! nid: L1
         for i in range(0, 4):
-            "nid: L2"
+            #! nid: L2
             for j in range(0, 64):
-                "nid: L3"
+                #! nid: L3
                 for k in range(0, 64):
                     y[i, k] += x[i, j, k]
                 y[i, 0] += x[i, j, 0]
@@ -191,9 +191,9 @@ def test_atomic_reduction():
     def test(x, y):
         x: ft.Var[(4, 64), "int32", "input", "cpu"]
         y: ft.Var[(4, 2), "int32", "inout", "cpu"]
-        "nid: L1"
+        #! nid: L1
         for i in range(0, 4):
-            "nid: L2"
+            #! nid: L2
             for j in range(0, 64):
                 y[i, j % 2] = y[i, j % 2] + x[i, j]
 
@@ -229,9 +229,9 @@ def test_atomic_reduction_2_stmts_on_1_var():
     def test(x, y):
         x: ft.Var[(4, 64), "int32", "input", "cpu"]
         y: ft.Var[(4, 64), "int32", "inout", "cpu"]
-        "nid: L1"
+        #! nid: L1
         for i in range(0, 4):
-            "nid: L2"
+            #! nid: L2
             for j in range(0, 64):
                 y[i, j] += x[i, j]
                 if j > 0:
@@ -263,11 +263,11 @@ def test_atomic_reduction_cache():
     def test(x, y):
         x: ft.Var[(4, 64, 10), "int32", "input", "cpu"]
         y: ft.Var[(4, 2), "int32", "inout", "cpu"]
-        "nid: L1"
+        #! nid: L1
         for i in range(0, 4):
-            "nid: L2"
+            #! nid: L2
             for j in range(0, 64):
-                "nid: L3"
+                #! nid: L3
                 for k in range(10):
                     y[i, j % 2] += x[i, j, k]
 
@@ -296,13 +296,13 @@ def test_atomic_reduction_cache_array():
     def test(x, y):
         x: ft.Var[(4, 64, 10, 3), "int32", "input", "cpu"]
         y: ft.Var[(4, 2, 3), "int32", "inout", "cpu"]
-        "nid: L1"
+        #! nid: L1
         for i in range(0, 4):
-            "nid: L2"
+            #! nid: L2
             for j in range(0, 64):
-                "nid: L3"
+                #! nid: L3
                 for k in range(10):
-                    "nid: L4"
+                    #! nid: L4
                     for p in range(3):
                         y[i, j % 2, p] += x[i, j, k, p]
 
@@ -331,13 +331,13 @@ def test_atomic_reduction_no_cache_array():
     def test(x, y):
         x: ft.Var[(4, 64, 10, 3), "int32", "input", "cpu"]
         y: ft.Var[(4, 2, 300), "int32", "inout", "cpu"]
-        "nid: L1"
+        #! nid: L1
         for i in range(0, 4):
-            "nid: L2"
+            #! nid: L2
             for j in range(0, 64):
-                "nid: L3"
+                #! nid: L3
                 for k in range(10):
-                    "nid: L4"
+                    #! nid: L4
                     for p in range(3):
                         y[i, j % 2, p * 100] += x[i, j, k, p]
 
@@ -357,9 +357,9 @@ def test_simultenous_parallel_and_atomic_reduction():
     def test(x, y):
         x: ft.Var[(4, 64), "int32", "input", "cpu"]
         y: ft.Var[(4, 2), "int32", "inout", "cpu"]
-        "nid: L1"
+        #! nid: L1
         for i in range(0, 4):
-            "nid: L2"
+            #! nid: L2
             for j in range(0, 64):
                 y[i, j % 2] += x[i, j]
                 y[i, 0] += x[i, j]
@@ -398,9 +398,9 @@ def test_serial_reduction_1():
     def test(x, y):
         x: ft.Var[(4, 64), "int32", "input", "cpu"]
         y: ft.Var[(4,), "int32", "inout", "cpu"]
-        "nid: L1"
+        #! nid: L1
         for i in range(0, 4):
-            "nid: L2"
+            #! nid: L2
             for j in range(0, 64):
                 y[i] = y[i] + x[i, j]
 
@@ -437,11 +437,11 @@ def test_serial_reduction_2():
     def test(x, y):
         x: ft.Var[(4, 64), "int32", "input", "cpu"]
         y: ft.Var[(4,), "int32", "output", "cpu"]
-        "nid: L1"
+        #! nid: L1
         for i in range(0, 4):
             local_sum = ft.empty((), "int32", "cpu")
             local_sum[()] = 0.
-            "nid: L2"
+            #! nid: L2
             for j in range(0, 64):
                 local_sum[()] += x[i, j]
             y[i] = local_sum[()] * 2

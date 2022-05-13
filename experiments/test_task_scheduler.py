@@ -16,21 +16,21 @@ def func1(w, x, z):
     z: ft.Var[(m, m, a, a), "int32", "output", "gpu/global"]
     i = 0
     j = 0
-    # "nid: L1"
+    # #! nid: L1
     # for i in range(m):
-    #     "nid: L2"
+    #     #! nid: L2
     #     for j in range(m):
     y = ft.empty((1, 1, a, a), "float32", "gpu/local")
-    "nid: L3"
+    #! nid: L3
     for k in range(b):
-        "nid: L4"
+        #! nid: L4
         for p in range(a):
-            "nid: L5"
+            #! nid: L5
             for q in range(a):
                 y[0, 0, p, q] = y[0, 0, p, q] + w[i, j, p, k] * x[i, j, k, q]
-    "nid: L6"
+    #! nid: L6
     for p in range(a):
-        "nid: L7"
+        #! nid: L7
         for q in range(a):
             z[i, j, p, q] = y[0, 0, p, q]
 
@@ -42,16 +42,16 @@ def func2(w, x, c, z):
     c: ft.Var[(b, a), "float32", "input", "gpu/global"]
     y = ft.empty((a, a), "float32", "gpu/local")
     z: ft.Var[(a, a), "float32", "output", "gpu/global"]
-    "nid: L3"
+    #! nid: L3
     for k in range(b):
-        "nid: L4"
+        #! nid: L4
         for p in range(a):
-            "nid: L5"
+            #! nid: L5
             for q in range(a):
                 y[p, q] = y[p, q] + w[p, k] * x[k, q]
-    "nid: L6"
+    #! nid: L6
     for p in range(a):
-        "nid: L7"
+        #! nid: L7
         for q in range(a):
             z[p, q] = y[p, q] + c[p, q]
 

@@ -48,7 +48,7 @@ def _einsum_(lefts: Sequence[str], right: str, order: str, init: bool, *args):
         else:
             for arg, offset in zip(iter_args, iter_offsets):
                 assert arg.shape(offset) == length or arg.shape(offset) == 1
-        'prefer_libs'
+        #! prefer_libs
         for i in range(length):
             _einsum_(
                 next_lefts, next_right, next_order, next_init, *[
@@ -111,13 +111,13 @@ def _make_matmul_fmt(a_ndim, b_ndim):
 
 @core.inline
 def matmul_(A, B, Y):
-    'nid: einsum'
+    #! nid: einsum
     einsum_(_make_matmul_fmt(A.ndim, B.ndim), A, B, Y)
 
 
 @core.inline
 def matmul(A, B):
-    'nid: einsum'
+    #! nid: einsum
     Y = einsum(_make_matmul_fmt(A.ndim, B.ndim), A, B)
     return Y
 
@@ -137,17 +137,17 @@ def gemm_(A,
     fmt = f"{a_fmt},{b_fmt}->ij"
 
     if C is None:
-        'nid: einsum'
+        #! nid: einsum
         einsum_(fmt, A, B, Y)
-        'nid: mul_to'
+        #! nid: mul_to
         mul_to(Y, alpha)
 
     else:
-        'nid: einsum'
+        #! nid: einsum
         einsum_(fmt, A, B, Y)
-        'nid: mul_to'
+        #! nid: mul_to
         mul_to(Y, alpha)
-        'nid: add_to'
+        #! nid: add_to
         add_to(Y, mul(beta, C))
 
 
@@ -181,6 +181,6 @@ def gemm(A,
         mtype = core.same_mtype(mtype, C.mtype)
 
     Y = core.empty(_comp_shape(A, B, trans_A, trans_B), dtype, mtype)
-    'nid: recur'
+    #! nid: recur
     gemm_(A, B, C, Y, trans_A, trans_B, alpha, beta)
     return Y

@@ -68,8 +68,8 @@ def test_no_deps():
         ptr: ft.Var[(11,), "int32", "input", "cpu"]
         edge1: ft.Var[(50,), "int32", "input", "cpu"]
         edge2: ft.Var[(50,), "int32", "output", "cpu"]
-        'nid: Li'
-        'no_deps: edge2'
+        #! nid: Li
+        #! no_deps: edge2
         for i in range(10):
             for j in range(ptr[i], ptr[i + 1]):
                 edge2[j] = edge1[j] + i

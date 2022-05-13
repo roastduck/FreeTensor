@@ -46,15 +46,15 @@ def compile_all(num_v, num_e, feat_len, device):
 
         edge = ft.empty((num_e,), "float32")
         edge_exp = ft.empty((num_e,), "float32")
-        'nid: Li'
-        'no_deps: edge'
-        'no_deps: edge_exp'
-        'no_deps: idx'
+        #! nid: Li
+        #! no_deps: edge
+        #! no_deps: edge_exp
+        #! no_deps: idx
         for i in range(num_v):
             edge_max = ft.empty((), "float32")
             edge_max[()] = -float("inf")
-            'nid: Lk1'
-            'no_deps: att_l'
+            #! nid: Lk1
+            #! no_deps: att_l
             for k in range(ptr[i], ptr[i + 1]):
                 e = ft.empty((), "float32")
                 e[()] = att_l[idx[k]] + att_r[i]
@@ -62,15 +62,15 @@ def compile_all(num_v, num_e, feat_len, device):
                 edge_max[()] = ft.max(edge_max[()], edge[k])
             edge_sum = ft.empty((), "float32")
             edge_sum[()] = 0
-            'nid: Lk2'
+            #! nid: Lk2
             for k in range(ptr[i], ptr[i + 1]):
                 edge_exp[k] = ft.exp(edge[k] - edge_max[()])
                 edge_sum[()] += edge_exp[k]
-            'nid: Lj'
+            #! nid: Lj
             for j in range(feat_len):
                 y[i, j] = 0
-                'nid: Lk3'
-                'no_deps: feat2'
+                #! nid: Lk3
+                #! no_deps: feat2
                 for k in range(ptr[i], ptr[i + 1]):
                     y[i, j] += feat2[idx[k], j] * edge_exp[k] / edge_sum[()]
 

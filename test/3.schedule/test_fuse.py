@@ -405,13 +405,13 @@ def test_fuse_no_deps_1():
         ptr: ft.Var[(11,), "int32", "input", "cpu"]
         edge1: ft.Var[(50,), "int32", "input", "cpu"]
         edge2: ft.Var[(50,), "int32", "output", "cpu"]
-        'nid: Li1'
-        'no_deps: edge2'
+        #! nid: Li1
+        #! no_deps: edge2
         for i in range(10):
             for j in range(ptr[i], ptr[i + 1]):
                 edge2[j] = edge1[j] + i
-        'nid: Li2'
-        'no_deps: edge2'
+        #! nid: Li2
+        #! no_deps: edge2
         for i in range(10):
             for j in range(ptr[i], ptr[i + 1]):
                 edge2[j] += j
@@ -431,12 +431,12 @@ def test_fuse_no_deps_2():
         edge1: ft.Var[(50,), "int32", "input", "cpu"]
         edge2: ft.Var[(50,), "int32", "output", "cpu"]
         foobar: ft.Var[(10,), "int32", "output", "cpu"]
-        'nid: Li1'
-        'no_deps: edge2'
+        #! nid: Li1
+        #! no_deps: edge2
         for i in range(10):
             for j in range(ptr[i], ptr[i + 1]):
                 edge2[j] = edge1[j] + i
-        'nid: Li2'
+        #! nid: Li2
         for i in range(10):
             # Nothing to do with edge2 here
             foobar[i] = i
@@ -455,12 +455,12 @@ def test_fuse_no_deps_3():
         ptr: ft.Var[(11,), "int32", "input", "cpu"]
         edge1: ft.Var[(50,), "int32", "input", "cpu"]
         edge2: ft.Var[(50,), "int32", "output", "cpu"]
-        'nid: Li1'
-        'no_deps: edge2'
+        #! nid: Li1
+        #! no_deps: edge2
         for i in range(10):
             for j in range(ptr[i], ptr[i + 1]):
                 edge2[j] = edge1[j] + i
-        'nid: Li2'  # If we don't mark edge2 here
+        #! nid: Li2  # If we don't mark edge2 here
         for i in range(10):
             for j in range(ptr[i], ptr[i + 1] + 1):
                 edge2[j] += j

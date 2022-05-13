@@ -65,7 +65,7 @@ def test_same_static_shape(libop_func, torch_func, dtype, ret_dtype):
         x: ft.Var[(4, 4), dtype, "input", "cpu"]
         y: ft.Var[(4, 4), dtype, "input", "cpu"]
         out: ft.Var[(4, 4), ret_dtype, "output", "cpu"]
-        "nid: to_test"
+        #! nid: to_test
         libop_func(x, y, out)
 
     x_torch = rand(4, 4, dtype=dtype)
@@ -105,7 +105,7 @@ def test_static_broadcast_shorter(libop_func, torch_func, dtype, ret_dtype):
         x: ft.Var[(4,), dtype, "input", "cpu"]
         y: ft.Var[(4, 4), dtype, "input", "cpu"]
         out: ft.Var[(4, 4), ret_dtype, "output", "cpu"]
-        "nid: to_test"
+        #! nid: to_test
         libop_func(x, y, out)
 
     x_torch = rand(4, dtype=dtype)
@@ -145,7 +145,7 @@ def test_static_broadcast_1_at_front(libop_func, torch_func, dtype, ret_dtype):
         x: ft.Var[(1, 4), dtype, "input", "cpu"]
         y: ft.Var[(4, 4), dtype, "input", "cpu"]
         out: ft.Var[(4, 4), ret_dtype, "output", "cpu"]
-        "nid: to_test"
+        #! nid: to_test
         libop_func(x, y, out)
 
     x_torch = rand(1, 4, dtype=dtype)
@@ -185,7 +185,7 @@ def test_static_broadcast_1_at_back(libop_func, torch_func, dtype, ret_dtype):
         x: ft.Var[(4, 4), dtype, "input", "cpu"]
         y: ft.Var[(4, 1), dtype, "input", "cpu"]
         out: ft.Var[(4, 4), ret_dtype, "output", "cpu"]
-        "nid: to_test"
+        #! nid: to_test
         libop_func(x, y, out)
 
     x_torch = rand(4, 4, dtype=dtype)
@@ -220,7 +220,7 @@ def test_different_dtype(libop_func, torch_func, dtype1, dtype2, ret_dtype):
         x: ft.Var[(4, 4), dtype1, "input", "cpu"]
         y: ft.Var[(4, 4), dtype2, "input", "cpu"]
         out: ft.Var[(4, 4), ret_dtype, "output", "cpu"]
-        "nid: to_test"
+        #! nid: to_test
         libop_func(x, y, out)
 
     x_torch = rand(4, 4, dtype=dtype1)
@@ -259,7 +259,7 @@ def test_out_of_place(libop_func, torch_func, dtype, ret_dtype):
     def f(x, y):
         x: ft.Var[(4, 4), dtype, "input", "cpu"]
         y: ft.Var[(4, 4), dtype, "input", "cpu"]
-        "nid: to_test"
+        #! nid: to_test
         return libop_func(x, y)
 
     x_torch = rand(4, 4, dtype=dtype)
@@ -295,7 +295,7 @@ def test_operator_overload(libop_func, torch_func, dtype, ret_dtype):
     def f(x, y):
         x: ft.Var[(4, 4), dtype, "input", "cpu"]
         y: ft.Var[(4, 4), dtype, "input", "cpu"]
-        "nid: to_test"
+        #! nid: to_test
         return libop_func(x, y)
 
     x_torch = rand(4, 4, dtype=dtype)

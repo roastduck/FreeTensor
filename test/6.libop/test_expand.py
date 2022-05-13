@@ -12,7 +12,7 @@ def test_static():
     def f(x, y):
         x: ft.Var[(3, 1), "float32", "input", "cpu"]
         y: ft.Var[(3, 5), "float32", "output", "cpu"]
-        "nid: expand"
+        #! nid: expand
         libop.expand_(x, y)
 
     x_torch = torch.rand(3, 1, dtype=torch.float32)
@@ -31,7 +31,7 @@ def test_out_of_place():
     @ft.optimize(device=device, verbose=1)
     def f(x):
         x: ft.Var[(3, 1), "float32", "input", "cpu"]
-        "nid: expand"
+        #! nid: expand
         return libop.expand(
             x, ft.capture_var(ft.Array(np.array([3, 5], dtype=np.int32),
                                        device)))

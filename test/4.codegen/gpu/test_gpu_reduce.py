@@ -16,9 +16,9 @@ def test_parallel_reduction():
     def test(x, y):
         x: ft.Var[(4, 64), "int32", "input", "gpu/global"]
         y: ft.Var[(4,), "int32", "output", "gpu/global"]
-        "nid: L1"
+        #! nid: L1
         for i in range(0, 4):
-            "nid: L2"
+            #! nid: L2
             for j in range(0, 64):
                 y[i] = y[i] + x[i, j]
 
@@ -57,9 +57,9 @@ def test_parallel_reduction_on_2_vars():
         x: ft.Var[(4, 64), "int32", "input", "gpu/global"]
         y: ft.Var[(4,), "int32", "output", "gpu/global"]
         z: ft.Var[(4,), "int32", "output", "gpu/global"]
-        "nid: L1"
+        #! nid: L1
         for i in range(0, 4):
-            "nid: L2"
+            #! nid: L2
             for j in range(0, 64):
                 y[i] = y[i] + x[i, j]
                 z[i] = z[i] + x[i, j] * 2
@@ -94,11 +94,11 @@ def test_parallel_reduction_on_array():
     def test(x, y):
         x: ft.Var[(4, 64, 64), "int32", "input", "gpu/global"]
         y: ft.Var[(4, 64), "int32", "output", "gpu/global"]
-        "nid: L1"
+        #! nid: L1
         for i in range(0, 4):
-            "nid: L2"
+            #! nid: L2
             for j in range(0, 64):
-                "nid: L3"
+                #! nid: L3
                 for k in range(0, 64):
                     y[i, k] = y[i, k] + x[i, j, k]
 
@@ -127,9 +127,9 @@ def test_atomic_reduction():
     def test(x, y):
         x: ft.Var[(4, 64), "int32", "input", "gpu/global"]
         y: ft.Var[(4, 2), "int32", "output", "gpu/global"]
-        "nid: L1"
+        #! nid: L1
         for i in range(0, 4):
-            "nid: L2"
+            #! nid: L2
             for j in range(0, 64):
                 y[i, j % 2] += x[i, j]
 
@@ -168,9 +168,9 @@ def test_atomic_reduction_2_stmts_on_1_var_across_blocks():
     def test(x, y):
         x: ft.Var[(4, 64), "int32", "input", "gpu/global"]
         y: ft.Var[(4, 64), "int32", "inout", "gpu/global"]
-        "nid: L1"
+        #! nid: L1
         for i in range(0, 4):
-            "nid: L2"
+            #! nid: L2
             for j in range(0, 64):
                 y[i, j] += x[i, j]
                 if j > 0:
@@ -201,9 +201,9 @@ def test_no_atomic_reduction_2_stmts_on_1_var_across_threads():
     def test(x, y):
         x: ft.Var[(4, 64), "int32", "input", "gpu/global"]
         y: ft.Var[(4, 64), "int32", "inout", "gpu/global"]
-        "nid: L1"
+        #! nid: L1
         for i in range(0, 4):
-            "nid: L2"
+            #! nid: L2
             for j in range(0, 64):
                 y[i, j] += x[i, j]
                 if j > 0:
@@ -235,9 +235,9 @@ def test_serial_reduction():
     def test(x, y):
         x: ft.Var[(4, 64), "int32", "input", "gpu/global"]
         y: ft.Var[(4,), "int32", "output", "gpu/global"]
-        "nid: L1"
+        #! nid: L1
         for i in range(0, 4):
-            "nid: L2"
+            #! nid: L2
             for j in range(0, 64):
                 y[i] = y[i] + x[i, j]
 

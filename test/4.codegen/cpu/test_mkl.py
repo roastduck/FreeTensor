@@ -16,7 +16,7 @@ def test_mkl_basic():
         a: ft.Var[(48, 64), "float32", "input", "cpu"]
         b: ft.Var[(64, 72), "float32", "input", "cpu"]
         c: ft.Var[(48, 72), "float32", "inout", "cpu"]
-        "nid: L1"
+        #! nid: L1
         for i in range(48):
             for j in range(72):
                 for k in range(64):
@@ -47,7 +47,7 @@ def test_mkl_reverse_idx():
         a: ft.Var[(48, 64), "float32", "input", "cpu"]
         b: ft.Var[(64, 72), "float32", "input", "cpu"]
         c: ft.Var[(48, 72), "float32", "inout", "cpu"]
-        "nid: L1"
+        #! nid: L1
         for i in range(48):
             for j in range(72):
                 for k in range(64):
@@ -78,7 +78,7 @@ def test_mkl_trans_a():
         a: ft.Var[(64, 48), "float32", "input", "cpu"]
         b: ft.Var[(64, 72), "float32", "input", "cpu"]
         c: ft.Var[(48, 72), "float32", "inout", "cpu"]
-        "nid: L1"
+        #! nid: L1
         for i in range(48):
             for j in range(72):
                 for k in range(64):
@@ -108,7 +108,7 @@ def test_mkl_trans_b():
         a: ft.Var[(48, 64), "float32", "input", "cpu"]
         b: ft.Var[(72, 64), "float32", "input", "cpu"]
         c: ft.Var[(48, 72), "float32", "inout", "cpu"]
-        "nid: L1"
+        #! nid: L1
         for i in range(48):
             for j in range(72):
                 for k in range(64):
@@ -138,7 +138,7 @@ def test_mkl_trans_c():
         a: ft.Var[(48, 64), "float32", "input", "cpu"]
         b: ft.Var[(64, 72), "float32", "input", "cpu"]
         c: ft.Var[(72, 48), "float32", "inout", "cpu"]
-        "nid: L1"
+        #! nid: L1
         for i in range(48):
             for j in range(72):
                 for k in range(64):
@@ -168,7 +168,7 @@ def test_mkl_batch():
         a: ft.Var[(4, 48, 64), "float32", "input", "cpu"]
         b: ft.Var[(4, 64, 72), "float32", "input", "cpu"]
         c: ft.Var[(4, 48, 72), "float32", "inout", "cpu"]
-        "nid: L1"
+        #! nid: L1
         for n in range(4):
             for i in range(48):
                 for j in range(72):
@@ -199,7 +199,7 @@ def test_mkl_splitted_dim():
         a: ft.Var[(48, 16, 4), "float32", "input", "cpu"]
         b: ft.Var[(16, 4, 72), "float32", "input", "cpu"]
         c: ft.Var[(48, 72), "float32", "inout", "cpu"]
-        "nid: L1"
+        #! nid: L1
         for k0 in range(16):
             for i in range(48):
                 for j in range(72):
@@ -232,7 +232,7 @@ def test_mkl_with_init():
         a: ft.Var[(48, 64), "float32", "input", "cpu"]
         b: ft.Var[(64, 72), "float32", "input", "cpu"]
         c: ft.Var[(48, 72), "float32", "inout", "cpu"]
-        "nid: L1"
+        #! nid: L1
         for i in range(48):
             for j in range(72):
                 c[i, j] = 0
@@ -263,9 +263,9 @@ def test_mkl_in_parallel():
         a: ft.Var[(64, 48, 64), "float32", "input", "cpu"]
         b: ft.Var[(64, 64, 72), "float32", "input", "cpu"]
         c: ft.Var[(64, 48, 72), "float32", "inout", "cpu"]
-        "nid: L1"
+        #! nid: L1
         for n in range(64):
-            "nid: L2"
+            #! nid: L2
             for i in range(48):
                 for j in range(72):
                     for k in range(64):
@@ -297,7 +297,7 @@ def test_mkl_matrix_vector():
         a: ft.Var[(48, 64), "float32", "input", "cpu"]
         b: ft.Var[(64,), "float32", "input", "cpu"]
         c: ft.Var[(48,), "float32", "inout", "cpu"]
-        "nid: L1"
+        #! nid: L1
         for i in range(48):
             for k in range(64):
                 c[i] += a[i, k] * b[k]
@@ -327,7 +327,7 @@ def test_mkl_vector_matrix():
         a: ft.Var[(64,), "float32", "input", "cpu"]
         b: ft.Var[(64, 48), "float32", "input", "cpu"]
         c: ft.Var[(48,), "float32", "inout", "cpu"]
-        "nid: L1"
+        #! nid: L1
         for i in range(48):
             for k in range(64):
                 c[i] += a[k] * b[k, i]
@@ -356,7 +356,7 @@ def test_mkl_vardef_in_loop():
     def test(a, b, c):
         a: ft.Var[(48, 64), "float32", "input", "cpu"]
         c: ft.Var[(48, 72), "float32", "inout", "cpu"]
-        "nid: L1"
+        #! nid: L1
         for i in range(48):
             b: ft.Var[(64, 72), "float32", "input", "cpu"]
             for j in range(72):

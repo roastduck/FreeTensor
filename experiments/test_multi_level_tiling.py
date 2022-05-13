@@ -24,32 +24,32 @@ def test_multi_level_tiling():
         # y: ft.Var[(a, a), "int32", "output", "cpu"]
         z: ft.Var[(m, m, a, a), "int32", "output", "cpu"]
         u: ft.Var[(m, m), "int32", "output", "cpu"]
-        # "nid: L1"
+        # #! nid: L1
         # for i in range(a):
-        #     "nid: L2"
+        #     #! nid: L2
         #     for j in range(a):
         #         # for j in range(b):
-        #         "nid: L3"
+        #         #! nid: L3
         #         for k in range(b):
         #             # for k in range(c):
         #             # y[i, j] = y[i, j] + w[i, j, k]
         #             y[i, j] = y[i, j] + w[i, k] * x[k, j]
-        "nid: L1"
+        #! nid: L1
         for i in range(m):
-            "nid: L2"
+            #! nid: L2
             for j in range(m):
                 u[i, j] = i * j
-                "nid: L3"
+                #! nid: L3
                 for k in range(b):
-                    "nid: L4"
+                    #! nid: L4
                     for p in range(a):
-                        "nid: L5"
+                        #! nid: L5
                         for q in range(a):
                             y[i, j, p,
                               q] = y[i, j, p, q] + w[i, j, p, k] * x[i, j, k, q]
-                "nid: L6"
+                #! nid: L6
                 for p in range(a):
-                    "nid: L7"
+                    #! nid: L7
                     for q in range(a):
                         z[i, j, p, q] = y[i, j, p, q]
 

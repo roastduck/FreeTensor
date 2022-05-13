@@ -3,7 +3,8 @@ Transform user Python functions to ASTs via generating staging functions.
 '''
 
 import abc
-import collections
+import re
+import tokenize
 
 import freetensor_ffi as ffi
 
@@ -501,16 +502,31 @@ def functiondef_wrapper(filename, funcname):
         return NamingScope(filename, funcname, namespace)
 
 
-def mark_nid(nid: str):
-    ctx_stack.top().set_next_nid(StagingContext.fullid(nid))
+def metadata(entry: str):
+    parts = entry.split()
+    if parts[0] == 'nid:':
+        ctx_stack.top().set_next_nid(StagingContext.fullid(parts[1]))
+    elif parts[0] == 'no_deps:':
+        var_name = parts[1]
 
+        back = inspect.currentframe().f_back
 
-def mark_no_deps(no_deps: VarRef):
-    ctx_stack.top().add_next_no_deps(no_deps.name)
+        if var_name in back.f_locals:
+            var = back.f_locals[var_name]
+        elif var_name in back.f_globals:
+            var = back.f_globals[var_name]
+        else:
+            raise StagingError(
+                f'Local variable {var_name} not found for annotating comment ({entry})'
+            )
 
-
-def mark_prefer_libs():
-    ctx_stack.top().set_next_prefer_libs()
+        if not isinstance(var, VarRef):
+            raise StagingError(
+                f'Local variable {var_name} = {var} is not a VarRef, which is required by annotating comment ({entry})'
+            )
+        ctx_stack.top().add_next_no_deps(var.name)
+    elif parts[0] == 'prefer_libs':
+        ctx_stack.top().set_next_prefer_libs()
 
 
 def mark_position(base_lineno: int, line_offset: int):
@@ -519,7 +535,8 @@ def mark_position(base_lineno: int, line_offset: int):
     StagingContext.call_stack[-1] = traceback.FrameSummary(
         original.filename, lineno, original.name)
     if ctx_stack.top().get_next_nid() == "":
-        mark_nid(f'{original.filename}:{lineno}')
+        ctx_stack.top().set_next_nid(
+            StagingContext.fullid(f'{original.filename}:{lineno}'))
 
 
 def module_helper(callee):
@@ -599,26 +616,6 @@ class Transformer(ast.NodeTransformer):
                                 ast.Constant(node.lineno)))
             ] + new_node, node)
         return new_node
-
-    def visit_Expr(self, old_node: ast.Expr) -> Any:
-        '''Rule:
-        `'nid: ...'` -> `mark_nid('...')`: mark next statement id
-        `'no_deps: ...'` -> `mark_no_deps('...')`: mark next loop no_deps
-        `'prefer_libs'` -> `mark_prefer_libs()`: mark prefer_libs
-        '''
-        node: ast.Expr = self.generic_visit(old_node)
-        if isinstance(node.value, ast.Constant) and isinstance(
-                node.value.value, str):
-            text = node.value.value
-            if text.startswith('nid: '):
-                node = ast.Expr(
-                    call_helper(mark_nid, ast.Constant(text[5:], kind=None)))
-            elif text.startswith('no_deps: '):
-                node = ast.Expr(
-                    call_helper(mark_no_deps, ast.Name(text[9:], ast.Load())))
-            elif text.startswith('prefer_libs'):
-                node = ast.Expr(call_helper(mark_prefer_libs))
-        return location_helper(node, old_node)
 
     def visit_Assign(self, old_node: ast.Assign) -> ast.Assign:
         '''Rule:
@@ -872,11 +869,10 @@ class Transformer(ast.NodeTransformer):
                              self.base_lineno, node)
 
 
-def _remove_indent(src: str) -> str:
-    lines = src.split('\n')
+def _remove_indent(lines: List[str]) -> str:
     spaces_to_remove = next((i for i, x in enumerate(lines[0]) if x != ' '),
                             len(lines[0]))
-    return '\n'.join(line[spaces_to_remove:] for line in lines)
+    return ''.join(line[spaces_to_remove:] for line in lines)
 
 
 def _get_caller_env(depth: int):
@@ -892,17 +888,30 @@ def _get_caller_env(depth: int):
     return caller_env
 
 
-def into_staging(func, caller_env, src=None, verbose=False):
+def process_annotating_comments(src: str):
+    new_src = []
+    for line in src.splitlines():
+        indent = re.match('\\s*', line)[0]
+        rest_line = line[len(indent):]
+        if rest_line.startswith('#! '):
+            arg = rest_line[3:].replace('"', '\\"')
+            new_src.append(f'{indent}freetensor.metadata("{arg}")')
+        else:
+            new_src.append(line)
+    new_src = '\n'.join(new_src)
+    return new_src
+
+
+def into_staging(func, caller_env, src: str = None, verbose=False):
     if src is None:
-        src = _remove_indent(ins.getsource(func))
-        tree = ast.parse(src)
-        src, lineno = ins.getsourcelines(func)
+        lines, lineno = ins.getsourcelines(func)
+        src = _remove_indent(lines)
         file = ins.getfile(func)
     else:
-        tree = ast.parse(src)
-        src = src.splitlines()
         lineno = 1
         file = f'<staging:{func.__name__}>'
+
+    tree = ast.parse(process_annotating_comments(src))
     tree = ast.fix_missing_locations(Transformer(file, lineno).visit(tree))
 
     import astor

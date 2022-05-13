@@ -24,27 +24,27 @@ def conv(x, w1, w2, y, n, c_in, c_out, h, w, k_h, k_w, device):
             W2: ft.Var[(c_out, c_in, k_h, k_w), "float32", "input", mtype]
             Y: ft.Var[(n, c_out, h, w), "float32", "output", mtype]
 
-            "nid: Li"
+            #! nid: Li
             for i in range(n):
-                "nid: Lp"
+                #! nid: Lp
                 for p in range(h):
-                    "nid: Lq"
+                    #! nid: Lq
                     for q in range(w):
                         row = ft.empty((k_h, k_w), "float32", mtype)
                         col = ft.empty((k_h, k_w), "float32", mtype)
                         row_int = ft.empty((k_h, k_w), "int32", mtype)
                         col_int = ft.empty((k_h, k_w), "int32", mtype)
-                        "nid: Lro0"
+                        #! nid: Lro0
                         for ro in range(k_h):
-                            "nid: Lso0"
+                            #! nid: Lso0
                             for so in range(k_w):
                                 row[ro, so] = 0
                                 col[ro, so] = 0
-                                "nid: Lki0"
+                                #! nid: Lki0
                                 for ki in range(c_in):
-                                    "nid: Lri"
+                                    #! nid: Lri
                                     for ri in range(k_h):
-                                        "nid: Lsi"
+                                        #! nid: Lsi
                                         for si in range(k_w):
                                             if p + ri >= 0 and p + ri < h and q + si >= 0 and q + si < w:
                                                 row[ro, so] += X[i, ki, p + ri, q + si] * W1[ro, so, 0, ki, ri, si]
@@ -55,11 +55,11 @@ def conv(x, w1, w2, y, n, c_in, c_out, h, w, k_h, k_w, device):
                                 col_int[ro, so] = ft.cast(ft.floor(col[ro, so]), "int32")
 
                         pixel = ft.empty((c_in, k_h, k_w), "float32", mtype)
-                        "nid: Lki1"
+                        #! nid: Lki1
                         for ki in range(c_in):
-                            "nid: Lro1"
+                            #! nid: Lro1
                             for ro in range(k_h):
-                                "nid: Lso1"
+                                #! nid: Lso1
                                 for so in range(k_w):
                                     x = ft.empty((), "int32", mtype)
                                     y = ft.empty((), "int32", mtype)
@@ -83,7 +83,7 @@ def conv(x, w1, w2, y, n, c_in, c_out, h, w, k_h, k_w, device):
                                                 row_int[ro, so] + 1 - row[ro, so]) * (
                                                         col_int[ro, so] + 1 - col[ro, so])
 
-                        "nid: Lko"
+                        #! nid: Lko
                         for ko in range(c_out):
                             Y[i, ko, p, q] = 0
                             for ki in range(c_in):
