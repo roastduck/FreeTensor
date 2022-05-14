@@ -281,7 +281,7 @@ def remainder(lhs, rhs):
 
     Returns
     -------
-    VarRef or Number :
+    VarRef or Number
         The remainder
     '''
     return ffi.makeRemainder(lhs, rhs)
@@ -300,7 +300,7 @@ def min(lhs, rhs):
 
     Returns
     -------
-    VarRef or Number :
+    VarRef or Number
         The minimum
     '''
     if type(lhs) in (int, float) and type(rhs) in (int, float):
@@ -321,7 +321,7 @@ def max(lhs, rhs):
 
     Returns
     -------
-    VarRef or Number :
+    VarRef or Number
         The maximum
     '''
     if type(lhs) in (int, float) and type(rhs) in (int, float):
@@ -348,7 +348,7 @@ def if_then_else(cond, then_case, else_case):
 
     Returns
     -------
-    VarRef or Number :
+    VarRef or Number
         The result
     '''
     if type(cond) is bool:
@@ -367,7 +367,7 @@ def abs(expr):
 
     Returns
     -------
-    VarRef or Number :
+    VarRef or Number
         The absolute value
     '''
     if type(expr) in (int, float):
@@ -390,7 +390,7 @@ def l_and(lhs, rhs):
 
     Returns
     -------
-    VarRef or Number :
+    VarRef or Number
         The logical and
     '''
     if type(lhs) is bool and type(rhs) is bool:
@@ -414,7 +414,7 @@ def l_or(lhs, rhs):
 
     Returns
     -------
-    VarRef or Number :
+    VarRef or Number
         The logical or
     '''
     if type(lhs) is bool and type(rhs) is bool:
@@ -434,7 +434,7 @@ def l_not(expr):
 
     Returns
     -------
-    VarRef or Number :
+    VarRef or Number
         The logical not
     '''
     if type(expr) is bool:
@@ -458,7 +458,7 @@ def floor_div(lhs, rhs):
 
     Returns
     -------
-    VarRef or Number :
+    VarRef or Number
         The quotient
     '''
     if type(lhs) is int and type(rhs) is int:
@@ -481,7 +481,7 @@ def ceil_div(lhs, rhs):
 
     Returns
     -------
-    VarRef or Number :
+    VarRef or Number
         The quotient
     '''
     if type(lhs) is int and type(rhs) is int:
@@ -506,7 +506,7 @@ def round_towards_0_div(lhs, rhs):
 
     Returns
     -------
-    VarRef or Number :
+    VarRef or Number
         The quotient
     '''
     return ffi.makeRoundTowards0Div(lhs, rhs)
@@ -523,7 +523,7 @@ def sqrt(expr):
 
     Returns
     -------
-    VarRef or Number :
+    VarRef or Number
         The square root
     '''
     return ffi.makeSqrt(expr)
@@ -540,7 +540,7 @@ def exp(expr):
 
     Returns
     -------
-    VarRef or Number :
+    VarRef or Number
         The exponent
     '''
     return ffi.makeExp(expr)
@@ -557,7 +557,7 @@ def square(expr):
 
     Returns
     -------
-    VarRef or Number :
+    VarRef or Number
         The square
     '''
     return ffi.makeSquare(expr)
@@ -574,7 +574,7 @@ def sigmoid(expr):
 
     Returns
     -------
-    VarRef or Number :
+    VarRef or Number
         The result
     '''
     return ffi.makeSigmoid(expr)
@@ -591,7 +591,7 @@ def tanh(expr):
 
     Returns
     -------
-    VarRef or Number :
+    VarRef or Number
         The result
     '''
     return ffi.makeTanh(expr)
@@ -608,7 +608,7 @@ def floor(expr):
 
     Returns
     -------
-    VarRef or Number :
+    VarRef or Number
         The result
     '''
     return ffi.makeFloor(expr)
@@ -625,7 +625,7 @@ def ceil(expr):
 
     Returns
     -------
-    VarRef or Number :
+    VarRef or Number
         The result
     '''
     return ffi.makeCeil(expr)
@@ -644,7 +644,7 @@ def cast(expr, dtype):
 
     Returns
     -------
-    VarRef or Number :
+    VarRef or Number
         The result
     '''
     return ffi.makeCast(expr, ffi.DataType(dtype))
