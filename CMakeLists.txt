@@ -16,10 +16,10 @@ endif()
 
 # PyBind11
 find_package(Python COMPONENTS Interpreter Development REQUIRED)
-add_subdirectory(${CMAKE_SOURCE_DIR}/3rd-party/pybind11)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/pybind11)
 
 # ISL
-set(ISL_DIR ${CMAKE_SOURCE_DIR}/3rd-party/isl)
+set(ISL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/isl)
 ExternalProject_add(ISL
     SOURCE_DIR ${ISL_DIR}
     BUILD_IN_SOURCE true
@@ -36,16 +36,16 @@ add_dependencies(isl::isl ISL)
 
 # Z3
 set(SUBMODULE_DIR_NAME "3rd-party") # Z3 PR #4959
-add_subdirectory(${CMAKE_SOURCE_DIR}/3rd-party/z3)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/z3)
 
 # ANTLR
 # 1. Runtime
 set(ANTLR_BUILD_CPP_TESTS OFF)
-add_subdirectory(${CMAKE_SOURCE_DIR}/3rd-party/antlr/antlr4/runtime/Cpp)
-include_directories(${CMAKE_SOURCE_DIR}/3rd-party/antlr/antlr4/runtime/Cpp/runtime/src)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/antlr/antlr4/runtime/Cpp)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/antlr/antlr4/runtime/Cpp/runtime/src)
 # 2. Generator
 find_package(Java QUIET REQUIRED COMPONENTS Runtime)
-set(ANTLR_EXECUTABLE ${CMAKE_SOURCE_DIR}/3rd-party/antlr/antlr-4.10.1-complete.jar)
+set(ANTLR_EXECUTABLE ${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/antlr/antlr-4.10.1-complete.jar)
 macro(ANTLR_TARGET Name InputFile)
     set(ANTLR_ONE_VALUE_ARGS PACKAGE)
     set(ANTLR_MULTI_VALUE_ARGS COMPILE_FLAGS DEPENDS)
@@ -103,7 +103,7 @@ endif()
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS OFF) # -std=gnu++11 when on, -std=c++11 when off
 
-add_definitions(-DFT_RUNTIME_DIR=${CMAKE_SOURCE_DIR}/runtime)
+add_definitions(-DFT_RUNTIME_DIR=${CMAKE_CURRENT_SOURCE_DIR}/runtime)
 
 # OpenMP used to parallelize the compilation of different instances
 find_package(OpenMP)
@@ -112,9 +112,9 @@ if (OPENMP_FOUND)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
 
-file(GLOB_RECURSE SRC ${CMAKE_SOURCE_DIR}/src/*.cc)
+file(GLOB_RECURSE SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cc)
 
-file(GLOB_RECURSE LEXERS ${CMAKE_SOURCE_DIR}/grammar/*_lexer.g)
+file(GLOB_RECURSE LEXERS ${CMAKE_CURRENT_SOURCE_DIR}/grammar/*_lexer.g)
 set(ANTLR_INCLUDES "")
 foreach(G_FILE IN ITEMS ${LEXERS})
     get_filename_component(Name ${G_FILE} NAME_WE)
@@ -123,7 +123,7 @@ foreach(G_FILE IN ITEMS ${LEXERS})
     list(APPEND ANTLR_INCLUDES ${ANTLR_${Name}_OUTPUT_DIR})
     list(APPEND LEXER_OUTPUTS ${ANTLR_${Name}_OUTPUTS})
 endforeach()
-file(GLOB_RECURSE PARSERS ${CMAKE_SOURCE_DIR}/grammar/*_parser.g)
+file(GLOB_RECURSE PARSERS ${CMAKE_CURRENT_SOURCE_DIR}/grammar/*_parser.g)
 foreach(G_FILE IN ITEMS ${PARSERS})
     get_filename_component(Name ${G_FILE} NAME_WE)
     antlr_target(${Name} ${G_FILE} PACKAGE freetensor DEPENDS ${LEXER_OUTPUTS})
@@ -141,17 +141,17 @@ target_link_libraries(freetensor PUBLIC
     ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES})
 target_include_directories(freetensor PUBLIC
     ${CUDA_INCLUDE_DIRS}
-    ${CMAKE_SOURCE_DIR}/3rd-party/z3/src/api/c++
-    ${CMAKE_SOURCE_DIR}/include
-    ${CMAKE_SOURCE_DIR}/3rd-party/cppitertools)
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/z3/src/api/c++
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/cppitertools)
 target_include_directories(freetensor PRIVATE ${ANTLR_INCLUDES})
 
-file(GLOB_RECURSE FFI_SRC ${CMAKE_SOURCE_DIR}/ffi/*.cc)
+file(GLOB_RECURSE FFI_SRC ${CMAKE_CURRENT_SOURCE_DIR}/ffi/*.cc)
 
 # Target
 pybind11_add_module(freetensor_ffi SHARED ${FFI_SRC})
 target_link_libraries(freetensor_ffi PRIVATE freetensor)
-target_include_directories(freetensor_ffi PRIVATE ${CMAKE_SOURCE_DIR}/ffi)
+target_include_directories(freetensor_ffi PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/ffi)
 
 # Pybind11 stubgen
 find_program(PYBIND11_STUBGEN pybind11-stubgen)
