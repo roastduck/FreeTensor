@@ -1,3 +1,19 @@
+'''
+Facility to build ASTs
+
+Most classes and functions in this module is internally used by `transformer` to construct ASTs.
+They are also used by some internal tests. API of these classes and functions are subject to changes.
+End users are encouraged to use `transformer`, instead of this module.
+
+Some functions are exposed to users via `transformer` in a multi-stage programming manner. API of
+these functions should be stable
+
+Classes and functions in this module that generate AST nodes follows a special naming convention:
+
+- BigCammel: generating statement nodes
+- under_score: generating expression nodes
+'''
+
 import collections
 import builtins
 import sys
@@ -120,7 +136,11 @@ ctx_stack = ContextStack()
 
 
 def pop_ast(verbose: bool = False):
-    """ Get AST and reset context """
+    """
+    Get AST and reset context
+
+    Internally used by `transformer` and tests
+    """
     ret = ctx_stack.pop().make_stmt()
     ctx_stack.reset()
     if verbose:
@@ -385,6 +405,8 @@ class _VarDef:
         Scope used for creating a VarDef AST node. A VarRef will be returned as a
         reference to the variable of the VarDef node
 
+        This scope is internally used by `transformer` and tests
+
         Parameters
         ----------
         name : str
@@ -469,6 +491,8 @@ class _VarDef:
 class _VarsDef:
     '''
     Helper class to create a series of nested VarDef nodes
+
+    This scope is internally used by `transformer` and tests
     '''
 
     def __init__(self, defs: Tuple[str, Any, ffi.DataType, ffi.AccessType]):
@@ -485,6 +509,8 @@ class _VarsDef:
 def VarDef(*args):
     '''
     A factory function that creates a VarDef or a series of nested `VarDef`s
+
+    This scope is internally used by `transformer` and tests
     '''
 
     if len(args) == 1:
@@ -494,6 +520,18 @@ def VarDef(*args):
 
 
 class For:
+    '''
+    Scope used to create a For node
+
+    This scope is internally used by `transformer` and tests
+
+    E.g.:
+
+    ```
+    with For('i', 0, n) as i:
+        ... # Loop body
+    ```
+    '''
 
     def __init__(self,
                  iter_var: str,
@@ -541,6 +579,18 @@ class For:
 
 
 class If:
+    '''
+    Scope used to create an If node
+
+    This scope is internally used by `transformer` and tests
+
+    E.g.:
+
+    ```
+    with If(i > 0):
+        ... # Branch body
+    ```
+    '''
 
     def __init__(self, cond):
         self.cond = cond
@@ -557,6 +607,20 @@ class If:
 
 
 class Else:
+    '''
+    Scope used to create an else branch of an If node
+
+    This scope is internally used by `transformer` and tests
+
+    E.g.:
+
+    ```
+    with If(i > 0):
+        ... # True branch
+    with Else():
+        ... # Else branch
+    ```
+    '''
 
     def __init__(self):
         pass
@@ -573,6 +637,18 @@ class Else:
 
 
 class Assert:
+    '''
+    Scope used to create an Assert node
+
+    This scope is internally used by `transformer` and tests
+
+    E.g.:
+
+    ```
+    with Assert(i > 0):
+        ... # Assertion body
+    ```
+    '''
 
     def __init__(self, cond):
         self.cond = cond
@@ -591,11 +667,27 @@ class Assert:
 
 
 def MarkNid(nid: str):
-    """ Mark the ID of the following statement """
+    """
+    Mark the ID of the following statement
+
+    This scope is internally used by `transformer` and tests
+    """
     ctx_stack.top().set_next_nid(nid)
 
 
 class NamedScope:
+    '''
+    Scope used to create an StmtSeq node with an explicit ID
+
+    E.g.:
+
+    ```
+    with NamedScope():
+        ... # body
+    ```
+
+    This scope is used for testing only. StmtSeq nodes can be deleted in many lowering passes
+    '''
 
     def __init__(self, nid: str):
         self.nid = nid
@@ -612,48 +704,186 @@ class NamedScope:
 
 
 def Invoke(func, *args, **kvs):
+    '''
+    Inlined invocation of another AST
+
+    This scope is internally used by `transformer` and tests
+
+    `Invoke` can be used for invoking a gradient function, which has already been lowered as an AST.
+    Please note that once a user function has been lowered as an AST, the dimensionalities of its
+    tensors get fixed. Therefore, to invoke ordinary user functions, please use `inline` in `transformer`
+    instead, which supports generic types
+    '''
     top = ctx_stack.top()
     top.append_stmt(ffi.inlined_invoke(top.get_next_nid(), func, args, kvs))
 
 
 def Eval(expr):
+    '''
+    Create an Eval node
+
+    This scope is internally used by `transformer` and tests
+    '''
     top = ctx_stack.top()
     top.append_stmt(ffi.makeEval(top.get_next_nid(), expr))
 
 
 def Any():
+    '''
+    Create an Any node (only for testing)
+
+    Any nodes matches any statement nodes in `ast.match`
+    '''
     ctx_stack.top().append_stmt(ffi.makeAny())
 
 
 def remainder(lhs, rhs):
+    '''
+    Remainder of `lhs` dividing `rhs`
+
+    The result can be positive or negative (following C convention, instead of Python).
+    End users are encouraged to use `lhs % rhs` instead, which follows Python convetion,
+    and enjoys better optimization in FreeTensor
+
+    This function is a public function. It is not only used internally for constructing
+    AST nodes, and also exposed to users via multi-stage programming
+
+    Parameters
+    ----------
+    lhs : VarRef or Number
+        The left-hand-side operand
+    rhs : VarRef or Number
+        The right-hand-side operand
+
+    Returns
+    -------
+    VarRef or Number :
+        The remainder
+    '''
     return ffi.makeRemainder(lhs, rhs)
 
 
 def min(lhs, rhs):
+    '''
+    Minimum of `lhs` and `rhs`
+
+    This function is a public function. It is not only used internally for constructing
+    AST nodes, and also exposed to users via multi-stage programming
+
+    Parameters
+    ----------
+    lhs : VarRef or Number
+        The left-hand-side operand
+    rhs : VarRef or Number
+        The right-hand-side operand
+
+    Returns
+    -------
+    VarRef or Number :
+        The minimum
+    '''
     if type(lhs) in (int, float) and type(rhs) in (int, float):
         return builtins.min(lhs, rhs)
     return ffi.makeMin(lhs, rhs)
 
 
 def max(lhs, rhs):
+    '''
+    Maximum of `lhs` and `rhs`
+
+    This function is a public function. It is not only used internally for constructing
+    AST nodes, and also exposed to users via multi-stage programming
+
+    Parameters
+    ----------
+    lhs : VarRef or Number
+        The left-hand-side operand
+    rhs : VarRef or Number
+        The right-hand-side operand
+
+    Returns
+    -------
+    VarRef or Number :
+        The maximum
+    '''
     if type(lhs) in (int, float) and type(rhs) in (int, float):
         return builtins.max(lhs, rhs)
     return ffi.makeMax(lhs, rhs)
 
 
 def if_then_else(cond, then_case, else_case):
+    '''
+    Similar to `then_case if cond else else_case`
+
+    NOTE: there is NO guarantee that only one branch will be executed. In some cases,
+    both branches will be executed and the result of one of them will be picked.
+    Therefore, please do NOT use `if_then_else` to guard an out-of-bound array indexing
+
+    This function is a public function. It is not only used internally for constructing
+    AST nodes, and also exposed to users via multi-stage programming
+
+    Parameters
+    ----------
+    cond : VarRef of Number
+        Condition
+    lhs : VarRef or Number
+        Then-case experssion
+    rhs : VarRef or Number
+        Else-case expression
+
+    Returns
+    -------
+    VarRef or Number :
+        The result
+    '''
     if type(cond) is bool:
         return then_case if cond else else_case
     return ffi.makeIfExpr(cond, then_case, else_case)
 
 
 def abs(expr):
+    '''
+    Absolute value
+
+    This function is a public function. It is not only used internally for constructing
+    AST nodes, and also exposed to users via multi-stage programming
+
+    Parameters
+    ----------
+    expr : VarRef or Number
+        The operand
+
+    Returns
+    -------
+    VarRef or Number :
+        The absolute value
+    '''
     if type(expr) in (int, float):
         return builtins.abs(expr)
     return ffi.makeAbs(expr)
 
 
 def l_and(lhs, rhs):
+    '''
+    Logical and of `lhs` and `rhs`
+
+    NOTE: Short-circuit evaluation is NOT supported
+
+    This function is a public function. It is not only used internally for constructing
+    AST nodes, and also exposed to users via multi-stage programming
+
+    Parameters
+    ----------
+    lhs : VarRef or Number
+        The left-hand-side operand
+    rhs : VarRef or Number
+        The right-hand-side operand
+
+    Returns
+    -------
+    VarRef or Number :
+        The logical and
+    '''
     if type(lhs) is bool and type(rhs) is bool:
         return lhs and rhs
     else:
@@ -661,6 +891,26 @@ def l_and(lhs, rhs):
 
 
 def l_or(lhs, rhs):
+    '''
+    Logical or of `lhs` and `rhs`
+
+    NOTE: Short-circuit evaluation is NOT supported
+
+    This function is a public function. It is not only used internally for constructing
+    AST nodes, and also exposed to users via multi-stage programming
+
+    Parameters
+    ----------
+    lhs : VarRef or Number
+        The left-hand-side operand
+    rhs : VarRef or Number
+        The right-hand-side operand
+
+    Returns
+    -------
+    VarRef or Number :
+        The logical or
+    '''
     if type(lhs) is bool and type(rhs) is bool:
         return lhs or rhs
     else:
@@ -668,6 +918,22 @@ def l_or(lhs, rhs):
 
 
 def l_not(expr):
+    '''
+    Logical not
+
+    This function is a public function. It is not only used internally for constructing
+    AST nodes, and also exposed to users via multi-stage programming
+
+    Parameters
+    ----------
+    expr : VarRef or Number
+        The operand
+
+    Returns
+    -------
+    VarRef or Number :
+        The logical not
+    '''
     if type(expr) is bool:
         return not expr
     else:
@@ -675,50 +941,242 @@ def l_not(expr):
 
 
 def floor_div(lhs, rhs):
+    '''
+    Floored integer division of `lhs` dividing by `rhs`
+
+    The result rounds towards negative infinity (following Python convention, instead of C)
+
+    This function is a public function. It is not only used internally for constructing
+    AST nodes, and also exposed to users via multi-stage programming
+
+    Parameters
+    ----------
+    lhs : VarRef or Number
+        The left-hand-side operand
+    rhs : VarRef or Number
+        The right-hand-side operand
+
+    Returns
+    -------
+    VarRef or Number :
+        The quotient
+    '''
     if type(lhs) is int and type(rhs) is int:
         return lhs // rhs
     return ffi.makeFloorDiv(lhs, rhs)
 
 
 def ceil_div(lhs, rhs):
+    '''
+    Ceiling integer division of `lhs` dividing by `rhs`
+
+    The result rounds towards positive infinity
+
+    This function is a public function. It is not only used internally for constructing
+    AST nodes, and also exposed to users via multi-stage programming
+
+    Parameters
+    ----------
+    lhs : VarRef or Number
+        The left-hand-side operand
+    rhs : VarRef or Number
+        The right-hand-side operand
+
+    Returns
+    -------
+    VarRef or Number :
+        The quotient
+    '''
     if type(lhs) is int and type(rhs) is int:
         return lhs // rhs + (lhs % rhs > 0)
     return ffi.makeCeilDiv(lhs, rhs)
 
 
 def round_towards_0_div(lhs, rhs):
+    '''
+    C-style integer division of `lhs` dividing by `rhs`
+
+    The result rounds towards 0 (following C convention, instead of Python)
+    End users are encouraged to use `lhs // rhs` instead, which follows Python convetion,
+    and enjoys better optimization in FreeTensor
+
+    This function is a public function. It is not only used internally for constructing
+    AST nodes, and also exposed to users via multi-stage programming
+
+    Parameters
+    ----------
+    lhs : VarRef or Number
+        The left-hand-side operand
+    rhs : VarRef or Number
+        The right-hand-side operand
+
+    Returns
+    -------
+    VarRef or Number :
+        The quotient
+    '''
     return ffi.makeRoundTowards0Div(lhs, rhs)
 
 
 def sqrt(expr):
+    '''
+    Square root
+
+    This function is a public function. It is not only used internally for constructing
+    AST nodes, and also exposed to users via multi-stage programming
+
+    Parameters
+    ----------
+    expr : VarRef or Number
+        The operand
+
+    Returns
+    -------
+    VarRef or Number :
+        The square root
+    '''
     return ffi.makeSqrt(expr)
 
 
 def exp(expr):
+    '''
+    Natural exponent
+
+    This function is a public function. It is not only used internally for constructing
+    AST nodes, and also exposed to users via multi-stage programming
+
+    Parameters
+    ----------
+    expr : VarRef or Number
+        The operand
+
+    Returns
+    -------
+    VarRef or Number :
+        The exponent
+    '''
     return ffi.makeExp(expr)
 
 
 def square(expr):
+    '''
+    Square
+
+    This function is a public function. It is not only used internally for constructing
+    AST nodes, and also exposed to users via multi-stage programming
+
+    Parameters
+    ----------
+    expr : VarRef or Number
+        The operand
+
+    Returns
+    -------
+    VarRef or Number :
+        The square
+    '''
     return ffi.makeSquare(expr)
 
 
 def sigmoid(expr):
+    '''
+    Sigmoid
+
+    This function is a public function. It is not only used internally for constructing
+    AST nodes, and also exposed to users via multi-stage programming
+
+    Parameters
+    ----------
+    expr : VarRef or Number
+        The operand
+
+    Returns
+    -------
+    VarRef or Number :
+        The result
+    '''
     return ffi.makeSigmoid(expr)
 
 
 def tanh(expr):
+    '''
+    Hyperbolic tangent
+
+    This function is a public function. It is not only used internally for constructing
+    AST nodes, and also exposed to users via multi-stage programming
+
+    Parameters
+    ----------
+    expr : VarRef or Number
+        The operand
+
+    Returns
+    -------
+    VarRef or Number :
+        The result
+    '''
     return ffi.makeTanh(expr)
 
 
 def floor(expr):
+    '''
+    Round a float down to an interger (towards -inf)
+
+    This function is a public function. It is not only used internally for constructing
+    AST nodes, and also exposed to users via multi-stage programming
+
+    Parameters
+    ----------
+    expr : VarRef or Number
+        The operand
+
+    Returns
+    -------
+    VarRef or Number :
+        The result
+    '''
     return ffi.makeFloor(expr)
 
 
 def ceil(expr):
+    '''
+    Round a float up to an interger (towards +inf)
+
+    This function is a public function. It is not only used internally for constructing
+    AST nodes, and also exposed to users via multi-stage programming
+
+    Parameters
+    ----------
+    expr : VarRef or Number
+        The operand
+
+    Returns
+    -------
+    VarRef or Number :
+        The result
+    '''
     return ffi.makeCeil(expr)
 
 
 def cast(expr, dtype):
+    '''
+    Cast to another type
+
+    This function is a public function. It is not only used internally for constructing
+    AST nodes, and also exposed to users via multi-stage programming
+
+    Parameters
+    ----------
+    expr : VarRef or Number
+        The operand
+    dtype : DataTypr or str
+        The target data type
+
+    Returns
+    -------
+    VarRef or Number :
+        The result
+    '''
     return ffi.makeCast(expr, ffi.DataType(dtype))
 
 
@@ -750,6 +1208,11 @@ def intrinsic(fmt, *params, **kws):
 
 
 def any():
+    '''
+    Create an AnyExpr node (only for testing)
+
+    Any nodes matches any expression nodes in `ast.match`
+    '''
     return ffi.makeAnyExpr()
 
 
@@ -758,6 +1221,7 @@ def Func(name, params, returns, body, closure={}):
 
 
 def ndim(var):
+    ''' Get the number of dimensions of a variable '''
     if isinstance(var, VarRef):
         return var.ndim
     else:
@@ -765,13 +1229,15 @@ def ndim(var):
 
 
 def shape(var, i):
+    ''' Get all dimensions of a variable '''
     if isinstance(var, VarRef):
         return var.shape(i)
     else:
-        raise Exception('Scalar object has no shape')
+        return []
 
 
 def dtype(var):
+    ''' Get element data type of a variable '''
     if isinstance(var, VarRef):
         return var.dtype
     else:
@@ -785,6 +1251,7 @@ def dtype(var):
 
 
 def mtype(var):
+    ''' Get memory type of a variable '''
     if isinstance(var, VarRef):
         return var.mtype
     else:
