@@ -18,10 +18,10 @@ from dataclasses import dataclass
 
 import freetensor_ffi as ffi
 
-from . import nodes
-from .nodes import (_VarDef, VarRef, ndim, pop_ast, For, If, Else, MarkNid,
-                    intrinsic, l_and, l_or, l_not, if_then_else, ctx_stack,
-                    Func, Assert)
+from .context import pop_ast
+from .expr import (ndim, intrinsic, l_and, l_or, l_not, if_then_else)
+from .stmt import (_VarDef, VarRef, For, If, Else, MarkNid, ctx_stack, Func,
+                   Assert)
 
 assert sys.version_info >= (3,
                             8), "Python version lower than 3.8 is not supported"

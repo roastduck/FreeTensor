@@ -1,10 +1,11 @@
 import os
 from freetensor_ffi import AccessType, MemType, DataType, ASTNodeType, TargetType
 from freetensor_ffi import InvalidSchedule, InvalidProgram, DriverError, AssertAlwaysFalse
+from freetensor_ffi import dump_ast, load_ast
 
-from .nodes import (
-    VarRef,
-    pop_ast,
+from .context import pop_ast
+from .expr import *
+from .stmt import (
     VarDef,
     For,
     If,
@@ -15,34 +16,7 @@ from .nodes import (
     Invoke,
     Eval,
     Any,
-    remainder,
-    min,
-    max,
-    if_then_else,
-    abs,
-    l_and,
-    l_or,
-    l_not,
-    sqrt,
-    exp,
-    square,
-    sigmoid,
-    tanh,
-    floor,
-    ceil,
-    cast,
-    floor_div,
-    ceil_div,
-    round_towards_0_div,
-    intrinsic,
-    any,
     Func,
-    ndim,
-    shape,
-    dtype,
-    mtype,
-    dump_ast,
-    load_ast,
 )
 from .analyze import *
 from .passes import *
