@@ -114,7 +114,8 @@ x : VarRef
 y : VarRef
     The result tensor
 axes : Sequence[int] (Optional)
-    Which dimensions to reduce through. Defaults to None, standing for all dimensions, i.e., reduce the tensor to a scalar
+    Which dimensions to reduce through. Defaults to None, standing for all dimensions,
+    i.e., reduce the tensor to a scalar. Negative axis means counting form the last dimension
 keepdims : bool (Optional)
     Keep the reduced dimensions as singleton dimensions. Defaults to True
 '''
@@ -127,7 +128,8 @@ Parameters
 x : VarRef
     The input tensor
 axes : Sequence[int] (Optional)
-    Which dimensions to reduce through. Defaults to None, standing for all dimensions, i.e., reduce the tensor to a scalar
+    Which dimensions to reduce through. Defaults to None, standing for all dimensions,
+    i.e., reduce the tensor to a scalar. Negative axis means counting form the last dimension
 keepdims : bool (Optional)
     Keep the reduced dimensions as singleton dimensions. Defaults to True
 
@@ -168,6 +170,21 @@ any = _named_partial(
 
 @core.inline
 def reduce_max_(x, y, axes: Sequence[int], keepdims: bool = True):
+    '''
+    Maximum of a tensor through one or more dimensions. The result is written to another tensor
+
+    Parameters
+    ----------
+    x : VarRef
+        The input tensor
+    y : VarRef
+        The result tensor
+    axes : Sequence[int] (Optional)
+        Which dimensions to reduce through. Defaults to None, standing for all dimensions,
+        i.e., reduce the tensor to a scalar. Negative axis means counting form the last dimension
+    keepdims : bool (Optional)
+        Keep the reduced dimensions as singleton dimensions. Defaults to True
+    '''
     #! nid: impl
     _general_reduce_(core.max, core.min_value(core.dtype(x)), x, y, axes,
                      keepdims)
@@ -175,6 +192,24 @@ def reduce_max_(x, y, axes: Sequence[int], keepdims: bool = True):
 
 @core.inline
 def reduce_max(x, axes: Sequence[int], keepdims: bool = True):
+    '''
+    Maximum of a tensor through one or more dimensions and return the result
+
+    Parameters
+    ----------
+    x : VarRef
+        The input tensor
+    axes : Sequence[int] (Optional)
+        Which dimensions to reduce through. Defaults to None, standing for all dimensions,
+        i.e., reduce the tensor to a scalar. Negative axis means counting form the last dimension
+    keepdims : bool (Optional)
+        Keep the reduced dimensions as singleton dimensions. Defaults to True
+
+    Returns
+    -------
+    VarRef
+        The result tensor
+    '''
     #! nid: impl
     y = _general_reduce(core.max, core.min_value(core.dtype(x)), x, axes,
                         keepdims)
@@ -183,6 +218,21 @@ def reduce_max(x, axes: Sequence[int], keepdims: bool = True):
 
 @core.inline
 def reduce_min_(x, y, axes: Sequence[int], keepdims: bool = True):
+    '''
+    Minimum of a tensor through one or more dimensions. The result is written to another tensor
+
+    Parameters
+    ----------
+    x : VarRef
+        The input tensor
+    y : VarRef
+        The result tensor
+    axes : Sequence[int] (Optional)
+        Which dimensions to reduce through. Defaults to None, standing for all dimensions,
+        i.e., reduce the tensor to a scalar. Negative axis means counting form the last dimension
+    keepdims : bool (Optional)
+        Keep the reduced dimensions as singleton dimensions. Defaults to True
+    '''
     #! nid: impl
     _general_reduce_(core.min, core.max_value(core.dtype(x)), x, y, axes,
                      keepdims)
@@ -190,6 +240,24 @@ def reduce_min_(x, y, axes: Sequence[int], keepdims: bool = True):
 
 @core.inline
 def reduce_min(x, axes: Sequence[int], keepdims: bool = True):
+    '''
+    Minimum of a tensor through one or more dimensions and return the result
+
+    Parameters
+    ----------
+    x : VarRef
+        The input tensor
+    axes : Sequence[int] (Optional)
+        Which dimensions to reduce through. Defaults to None, standing for all dimensions,
+        i.e., reduce the tensor to a scalar. Negative axis means counting form the last dimension
+    keepdims : bool (Optional)
+        Keep the reduced dimensions as singleton dimensions. Defaults to True
+
+    Returns
+    -------
+    VarRef
+        The result tensor
+    '''
     #! nid: impl
     y = _general_reduce(core.min, core.max_value(core.dtype(x)), x, axes,
                         keepdims)

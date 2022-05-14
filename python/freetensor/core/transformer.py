@@ -5,18 +5,18 @@ Transform user Python functions to ASTs via generating staging functions.
 import abc
 import re
 import tokenize
-
-import freetensor_ffi as ffi
-
 import sys
 import ast
 import numpy as np
+import functools
 import inspect
 import traceback
 import sourceinspect as ins
 import copy
 from typing import Callable, Dict, List, Sequence, Optional, Any, TypeVar, Union
 from dataclasses import dataclass
+
+import freetensor_ffi as ffi
 
 from . import nodes
 from .nodes import (_VarDef, VarRef, ndim, pop_ast, For, If, Else, MarkNid,
@@ -1026,9 +1026,9 @@ def inline(func=None, src=None, fallback=None, verbose=False, caller_env=None):
         caller_env = _get_caller_env(1)
 
     def decorator(func):
-        return staged_callable(
+        return functools.wraps(func)(staged_callable(
             into_staging(func, caller_env, src, verbose=verbose)[0], fallback or
-            func)
+            func))
 
     if callable(func):
         return decorator(func)

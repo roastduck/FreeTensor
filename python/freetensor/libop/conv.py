@@ -15,6 +15,11 @@ def conv_(X,
           kernel_shape: Optional[Sequence[int]] = None,
           pads: Optional[Sequence[int]] = None,
           strides: Optional[Sequence[int]] = None):
+    '''
+    Convolution. The result is written to another tensor
+
+    Parameters follow ONNX convention. Currently only 2-D convolution is supported
+    '''
 
     n_spatial_dim = 2  # Currently only 2-D convolution is supported (TODO)
 
@@ -130,6 +135,11 @@ def conv(X,
          kernel_shape: Optional[Sequence[int]] = None,
          pads: Optional[Sequence[int]] = None,
          strides: Optional[Sequence[int]] = None):
+    '''
+    Convolution. The result is returned
+
+    Parameters follow ONNX convention. Currently only 2-D convolution is supported
+    '''
 
     n_spatial_dim = 2  # Currently only 2-D convolution is supported (TODO)
 

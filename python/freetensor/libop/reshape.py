@@ -19,7 +19,21 @@ def _flatten_inner_(x, y):
 
 
 @core.inline
-def flatten_(x, y, axis=1):
+def flatten_(x, y, axis: int = 1):
+    '''
+    Flatten a tensor to have fewer dimensions, and write to another tensor
+
+    Parameters
+    ----------
+    x : VarRef
+        The input tensor
+    y : VarRef
+        The result tensor
+    axis : int (Optional)
+        The result tensor will have up to `axis` dimensions. All dimensions after
+        `axis` will be flatten to 1-D. Negative axis means counting form the last
+        dimension
+    '''
     if axis == 0:
         #! nid: recur
         _flatten_inner_(x, y[0])
@@ -43,6 +57,23 @@ def _flatten_comp_shape(x, axis):
 
 @core.inline
 def flatten(x, axis=1):
+    '''
+    Flatten a tensor to have fewer dimensions, and return the result
+
+    Parameters
+    ----------
+    x : VarRef
+        The input tensor
+    axis : int (Optional)
+        The result tensor will have up to `axis` dimensions. All dimensions after
+        `axis` will be flatten to 1-D. Negative axis means counting form the last
+        dimension
+
+    Returns
+    -------
+    VarRef :
+        The result tensor
+    '''
     y = core.empty(_flatten_comp_shape(x, axis), core.dtype(x), core.mtype(x))
     #! nid: recur
     flatten_(x, y, axis)
@@ -56,6 +87,19 @@ def _circular_axes(axes, x_ndim):
 
 @core.inline
 def unsqueeze_(x, y, axes: Sequence[int]):
+    '''
+    Insert singleton dimensions to a tensor, and write the result to another tensor
+
+    Parameters
+    ----------
+    x : VarRef
+        The input tensor
+    y : VarRef
+        The resulting tensor
+    axes :
+        Dimension numbers of the new singleton dimensions. Negative axis means counting
+        from the last dimension
+    '''
     axes = _circular_axes(axes, core.ndim(x))
     if y.ndim == 0:
         y[()] = x
@@ -78,6 +122,22 @@ def _unsqueeze_comp_shape(axes, x):
 
 @core.inline
 def unsqueeze(x, axes: Sequence[int]):
+    '''
+    Insert singleton dimensions to a tensor, and return the result
+
+    Parameters
+    ----------
+    x : VarRef
+        The input tensor
+    axes :
+        Dimension numbers of the new singleton dimensions. Negative axis means counting
+        from the last dimension
+
+    Returns
+    -------
+    VarRef
+        The resulting tensor
+    '''
     y = core.empty(_unsqueeze_comp_shape(_circular_axes(axes, core.ndim(x)), x),
                    core.dtype(x), core.mtype(x))
     #! nid: recur
@@ -87,6 +147,16 @@ def unsqueeze(x, axes: Sequence[int]):
 
 @core.inline
 def expand_(a, out):
+    '''
+    Broadcast a tensor to an existing tensor, following the broadcasting rules
+
+    Parameters
+    ----------
+    a : VarRef
+        The input tensor
+    b : VarRef
+        The broadcasted tensor
+    '''
     if out.ndim == 0:
         out[()] = a
     else:
@@ -102,6 +172,21 @@ def expand_(a, out):
 
 @core.inline
 def expand(a, expand_shape):
+    '''
+    Broadcast a tensor to a given shape, following the broadcasting rules
+
+    Parameters
+    ----------
+    a : VarRef
+        The input tensor
+    b : Sequence of expressions
+        The broadcasted shape
+
+    Returns
+    -------
+    VarRef :
+        The broadcasted tensor
+    '''
     # FIXME: out_shape = broadcast(a.shape, expand_shape)
     out = core.empty(expand_shape, core.dtype(a), core.mtype(a))
     #! nid: recur

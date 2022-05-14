@@ -172,7 +172,7 @@ class VarRef(ffi.FrontendVar):
             return
         if var.vardef.atype == ffi.AccessType("input"):
             raise ffi.InvalidProgram("Cannot modify an \"input\" tensor `" +
-                                     self.name)
+                                     self.name + "`")
         if var.vardef.borrower_cnt > 0:
             raise ffi.InvalidProgram(
                 "Cannot modify tensor `" + self.name +

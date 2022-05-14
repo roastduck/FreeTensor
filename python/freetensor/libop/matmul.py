@@ -58,7 +58,19 @@ def _einsum_(lefts: Sequence[str], right: str, order: str, init: bool, *args):
 
 
 @core.inline
-def einsum_(fmt, *args):
+def einsum_(fmt: str, *args):
+    '''
+    Einstein summation. The result is written to the last argument
+
+    Parameters
+    ----------
+    fmt : str
+        The format string. E.g. `"ik,kj->ij"` represents a matrix multiplcation
+    args : Sequence[VarRef]
+        All arguments including inputs and the output. E.g. if `fmt` is `"ik,kj->ij"`,
+        it iterates axis `i` and `k` of `args[0]`, axis `k` and `j` of `args[1]`,
+        axis `i` and `j` of `args[2]`
+    '''
     lefts, right = fmt.split('->')
     lefts = lefts.split(',')
     order = right
@@ -70,7 +82,24 @@ def einsum_(fmt, *args):
 
 
 @core.inline
-def einsum(fmt, *args):
+def einsum(fmt: str, *args):
+    '''
+    Einstein summation. The result is returned
+
+    Parameters
+    ----------
+    fmt : str
+        The format string. E.g. `"ik,kj->ij"` represents a matrix multiplcation
+    args : Sequence[VarRef]
+        All inputs arguments. E.g. if `fmt` is `"ik,kj->ij"`,
+        it iterates axis `i` and `k` of `args[0]`, axis `k` and `j` of `args[1]`,
+        axis `i` and `j` of the returned value
+
+    Returns
+    -------
+    VarRef :
+        The result tensor
+    '''
     lefts, right = fmt.split('->')
     lefts = lefts.split(',')
 
@@ -111,12 +140,39 @@ def _make_matmul_fmt(a_ndim, b_ndim):
 
 @core.inline
 def matmul_(A, B, Y):
+    '''
+    Matrix multiplcation. The result is written to an existing tensor
+
+    Parameters
+    ----------
+    A : VarRef
+        The left-hand-side operand
+    B : VarRef
+        The right-hand-side operand
+    C : VarRef
+        The resulting tensor
+    '''
     #! nid: einsum
     einsum_(_make_matmul_fmt(A.ndim, B.ndim), A, B, Y)
 
 
 @core.inline
 def matmul(A, B):
+    '''
+    Matrix multiplcation. The result is returned
+
+    Parameters
+    ----------
+    A : VarRef
+        The left-hand-side operand
+    B : VarRef
+        The right-hand-side operand
+
+    Returns
+    -------
+    VarRef :
+        The resulting tensor
+    '''
     #! nid: einsum
     Y = einsum(_make_matmul_fmt(A.ndim, B.ndim), A, B)
     return Y
@@ -131,6 +187,31 @@ def gemm_(A,
           trans_B: bool = False,
           alpha: float = 1.0,
           beta: float = 1.0):
+    '''
+    General matrix multiplcation following BLAS convention. The result is written to an existing tensor
+
+    It performs `Y = alpha tr?(A) @ tr?(B) + C`, where `@` represents matrix multiplication, `tr?`
+    represents an optional transposition
+
+    Parameters
+    ----------
+    A : VarRef
+        The left-hand-side operand of matrix multiplication
+    B : VarRef
+        The right-hand-side operand of matrix multiplication
+    C : VarRef (Optional)
+        The bias tensor
+    Y : VarRef
+        The resulting tensor
+    trans_A : bool (Optional)
+        If true, transpose `A`. Defaults to False
+    trans_B : bool (Optional)
+        If true, transpose `B`. Defaults to False
+    alpha : Number (Optional)
+        Coefficient of `tr?(A) @ tr?(B)`. Defaults to 1.0
+    beta : Number (Optional)
+        Coefficient of `C`. Defaults to 1.0
+    '''
 
     a_fmt = 'ki' if trans_A else 'ik'
     b_fmt = 'jk' if trans_B else 'kj'
@@ -173,6 +254,34 @@ def gemm(A,
          trans_B: bool = False,
          alpha: float = 1.0,
          beta: float = 1.0):
+    '''
+    General matrix multiplcation following BLAS convention and return the result
+
+    It performs `Y = alpha tr?(A) @ tr?(B) + C`, where `@` represents matrix multiplication, `tr?`
+    represents an optional transposition
+
+    Parameters
+    ----------
+    A : VarRef
+        The left-hand-side operand of matrix multiplication
+    B : VarRef
+        The right-hand-side operand of matrix multiplication
+    C : VarRef (Optional)
+        The bias tensor
+    trans_A : bool (Optional)
+        If true, transpose `A`. Defaults to False
+    trans_B : bool (Optional)
+        If true, transpose `B`. Defaults to False
+    alpha : Number (Optional)
+        Coefficient of `tr?(A) @ tr?(B)`. Defaults to 1.0
+    beta : Number (Optional)
+        Coefficient of `C`. Defaults to 1.0
+
+    Returns
+    -------
+    VarRef :
+        The resulting tensor
+    '''
 
     dtype = core.up_cast(A.dtype, B.dtype)
     mtype = core.same_mtype(A.mtype, B.mtype)

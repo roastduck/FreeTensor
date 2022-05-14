@@ -12,8 +12,13 @@ def max_pool_(X,
               kernel_shape: Sequence[int] = None,
               pads: Optional[Sequence[int]] = None,
               strides: Optional[Sequence[int]] = None):
+    '''
+    Maximum pooling. The result is written to another tensor
 
-    n_spatial_dim = 2  # Currently only 2-D convolution is supported (TODO)
+    Parameters follow ONNX convention. Currently only 2-D pooling is supported
+    '''
+
+    n_spatial_dim = 2  # Currently only 2-D pooling is supported (TODO)
 
     # TODO: ceil_mode
     # TODO: return_indices
@@ -82,8 +87,13 @@ def max_pool(X,
              kernel_shape: Sequence[int] = None,
              pads: Optional[Sequence[int]] = None,
              strides: Optional[Sequence[int]] = None):
+    '''
+    Maximum pooling. The result is returned
 
-    n_spatial_dim = 2  # Currently only 2-D convolution is supported (TODO)
+    Parameters follow ONNX convention. Currently only 2-D pooling is supported
+    '''
+
+    n_spatial_dim = 2  # Currently only 2-D pooling is supported (TODO)
 
     # TODO: ceil_mode
     # TODO: return_indices
@@ -129,8 +139,13 @@ def max_pool(X,
 
 @core.inline
 def global_avg_pool_(X, Y):
+    '''
+    Global averaging pooling. The result is written to another tensor
 
-    n_spatial_dim = 2  # Currently only 2-D convolution is supported (TODO)
+    Parameters follow ONNX convention. Currently only 2-D pooling is supported
+    '''
+
+    n_spatial_dim = 2  # Currently only 2-D pooling is supported (TODO)
     #! nid: L_n
     for n in range(X.shape(0)):
         #! nid: L_c
@@ -149,8 +164,13 @@ def global_avg_pool_(X, Y):
 
 @core.inline
 def global_avg_pool(X):
+    '''
+    Global averaging pooling. The result is returned
 
-    n_spatial_dim = 2  # Currently only 2-D convolution is supported (TODO)
+    Parameters follow ONNX convention. Currently only 2-D pooling is supported
+    '''
+
+    n_spatial_dim = 2  # Currently only 2-D pooling is supported (TODO)
 
     Y = core.empty([X.shape(0), X.shape(1)], X.dtype, X.mtype)
     #! nid: recur
