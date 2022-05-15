@@ -65,6 +65,8 @@
     </li>
     </ul>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../first-program/">Your First Program with FreeTenor</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">API Reference</span></p>
               <ul>
@@ -108,6 +110,14 @@
 <p>Python dependencies:</p>
 <pre><code class="language-sh">pip3 install --user numpy sourceinspect astor Pygments xgboost
 </code></pre>
+<div class="admonition note">
+<p class="admonition-title">Note on Python version</p>
+<p>Because we are analyzing Python AST, which is sensitive to Python version, there may be potential bugs for Python strictly later than 3.8. Please file an issue if something goes wrong</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note on future changes</p>
+<p>We have a plan to migrade to C++20 in a near future, which requires GCC &gt;= 10</p>
+</div>
 <h2 id="build">Build</h2>
 <p>First, clone this repo. Don't forget there are some submodules.</p>
 <pre><code class="language-sh">git clone --recursive &lt;path-to-this-repo&gt;
@@ -166,7 +176,7 @@ make -j  # Or use Ninja
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
         <a href="../" class="btn btn-neutral float-left" title="Get Started"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../../api/" class="btn btn-neutral float-right" title="Python API">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../first-program/" class="btn btn-neutral float-right" title="Your First Program with FreeTenor">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -192,7 +202,7 @@ make -j  # Or use Ninja
       <span><a href="../" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../../api/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="../first-program/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

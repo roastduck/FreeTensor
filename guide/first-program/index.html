@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Your First Program with FreeTenor - FreeTensor</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+        <link href="../../assets/_mkdocstrings.css" rel="stylesheet" />
+        <link href="../../extra.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Your First Program with FreeTenor";
+        var mkdocs_page_input_path = "guide/first-program.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <script src="../../js/jquery-3.6.0.min.js" defer></script>
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+      <script>hljs.initHighlightingOnLoad();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> FreeTensor
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption"><span class="caption-text">GitHub</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="" href="https://github.com/roastduck/FreeTensor">FreeTensor</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">User Guide</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../">Get Started</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../build-and-run/">Build and Run</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="./">Your First Program with FreeTenor</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#example-vector-addition">Example: Vector addition</a>
+    </li>
+    </ul>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">API Reference</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/">Python API</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">FreeTensor</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" alt="Docs"></a> &raquo;</li>
+          <li>User Guide &raquo;</li><li>Your First Program with FreeTenor</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="your-first-program-with-freetenor">Your First Program with FreeTenor</h1>
+<p>In this page, we introduce some basic concepts of FreeTensor.</p>
+<h2 id="example-vector-addition">Example: Vector addition</h2>
+<pre><code class="language-python">import freetensor as ft
+import numpy as np
+
+n = 4
+
+# Change this line to ft.optimize(verbose=1) to see the resulting native code
+@ft.optimize
+def test(a: ft.Var[(n,), &quot;int32&quot;], b: ft.Var[(4,), &quot;int32&quot;]):
+    y = ft.empty((n,), &quot;int32&quot;)
+    for i in range(n):
+        y[i] = a[i] + b[i]
+    return y
+
+y = test(np.array([1, 2, 3, 4], dtype=&quot;int32&quot;),
+         np.array([2, 3, 4, 5], dtype=&quot;int32&quot;)).numpy()
+print(y)
+</code></pre>
+<p>Here is a basic example program in FreeTensor. You write a Python function that manipulates FreeTensor's tensor type <code>ft.Var</code>, decorate the function with <code>ft.optimize</code>, and finally invoke the decorated function. FreeTensor will generate C++ code for this vector addition, compile it using a native compiler, and finally load it back to Python. Set <code>verbose = 1</code> to <code>optimize</code> if you are interested in the generated native code.</p>
+<p>To write such a function, you need to follow some basic concept described in this page.</p>
+<h1 id="declare-and-define-tensors">Declare and Define Tensors</h1>
+<p>All tensors, including function parameters, intermediate tensors and return values should be properly declared or defined.</p>
+<p>Function parameters should be declared like <a href="/api/#freetensor.core.transformer.Var"><code>x : ft.Var[shape, data_type]</code></a>. Declaring a parameter either in the function signature or as a stand-alone statment is acceptable. If your parameter uses another parameter as shape, you will need the latter manner. An optional parameter <code>atype</code> can be set to <code>"output"</code> or <code>"inout"</code> if you want to mutate a function argument.</p>
+<p>Intermediate and returning tensors can be created by <a href="/api/#freetensor.core.transformer.empty"><code>ft.empty</code></a>, <a href="/api/#freetensor.core.transformer.var"><code>ft.var</code></a> or <a href="/api/#freetensor.libop.constant.zeros"><code>ft.zeros</code></a>. If you are using FreeTensor for GPU computing, an optional parameter <code>mtype</code> can be set to specify where to store the tensor. It defaults to the main memory of your currently chosen computing device.</p>
+<p>All tensors and their slices are implemented by an internal <a href="/api/#freetensor.core.expr.VarRef"><code>ft.VarRef</code></a> type. If you are looking for a tensor's API, <code>ft.VarRef</code> is the right place.</p>
+<h1 id="dynamic-or-static">Dynamic or Static</h1>
+<p>Another concept is that statements and expressions in your program are divided into two categories: <em>dynamic</em> and <em>static</em>. Dynamic statements or expressions are restricted to a small subset of Python, and are <em>compiled</em> to native code. Static statements or expressions can be any Python statements or expressions, and are executed <em>before</em> compilation. In other words, static statements or expressions are like macros or templates in C++, while dynamic ones are actually quotations in <a href="https://en.wikipedia.org/wiki/Multi-stage_programming">Multi-Stage Programming</a>.</p>
+<p>The following statements and expressions are considered dynamic:</p>
+<ul>
+<li>Declarations, definitions and operations of FreeTensor's tensor type <code>ft.Var</code> (or its internal implementation <code>ft.VarRef</code>).</li>
+<li><code>if</code> statements, <code>for ... in range(...)</code> and <code>assert</code> statements that have a <code>ft.Var</code> condition or range.</li>
+</ul>
+<p>All other statements and expressions are considered static.</p>
+<p>With the help of dynamic and static categories, you can utilize complex Python functions as the static part, while still generate high-performance native code using dynamic loops. For example, the following code combines static and dynamic code to sum multiple vectors together:</p>
+<pre><code class="language-python">import freetensor as ft
+import numpy as np
+
+n = 4
+
+@ft.optimize
+def test(a: ft.Var[(n,), &quot;int32&quot;], b: ft.Var[(4,), &quot;int32&quot;],
+         c: ft.Var[(4,), &quot;int32&quot;]):
+    inputs = [a, b, c]  # Static
+    y = ft.empty((n,), &quot;int32&quot;)  # Dynamic
+    for i in range(n):  # Dyanmic
+        y[i] = 0  # Dynamic
+        for item in inputs:  # Static
+            y[i] += item[i]  # Dynamic
+    return y
+
+y = test(np.array([1, 2, 3, 4], dtype=&quot;int32&quot;),
+         np.array([2, 3, 4, 5], dtype=&quot;int32&quot;),
+         np.array([3, 4, 5, 6], dtype=&quot;int32&quot;)).numpy()
+print(y)
+</code></pre>
+<p>However, there might be some counterintuitive behaviours when using static statments or expressions. Please remember that static static statements or expressions are executed <em>before</em> compilation, so the following piece of code will result in a list containing only one item: the expression <code>i</code>, instead of 10 numbers:</p>
+<pre><code class="language-python">lst = []
+for i in range(10):  # Dynamic
+    lst.append(i)  # Static. Appends only once
+</code></pre>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../build-and-run/" class="btn btn-neutral float-left" title="Build and Run"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../../api/" class="btn btn-neutral float-right" title="Python API">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../build-and-run/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../../api/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme_extra.js" defer></script>
+    <script src="../../js/theme.js" defer></script>
+      <script src="../../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>
