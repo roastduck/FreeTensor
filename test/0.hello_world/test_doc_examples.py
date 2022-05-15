@@ -3,6 +3,8 @@ import pytest
 
 
 def test_vector_add():
+    # Used in README.md
+
     import freetensor as ft
     import numpy as np
 
@@ -24,6 +26,8 @@ def test_vector_add():
 
 
 def test_vector_add_dynamic_length():
+    # Used in README.md
+
     import freetensor as ft
     import numpy as np
 
@@ -45,6 +49,8 @@ def test_vector_add_dynamic_length():
 
 @pytest.mark.skipif(not freetensor.with_cuda(), reason="requires CUDA")
 def test_vector_add_gpu():
+    # Used in README.md
+
     import freetensor as ft
     import numpy as np
 
@@ -74,6 +80,8 @@ def test_vector_add_gpu():
 
 
 def test_vector_add_libop():
+    # Used in README.md
+
     import freetensor as ft
     import numpy as np
 
@@ -89,3 +97,30 @@ def test_vector_add_libop():
     print(y)
 
     assert np.array_equal(y, [3, 5, 7, 9])
+
+
+def test_dynamic_and_static():
+    # Used in docs/guide/first-program.md
+
+    import freetensor as ft
+    import numpy as np
+
+    n = 4
+
+    @ft.optimize
+    def test(a: ft.Var[(n,), "int32"], b: ft.Var[(4,), "int32"],
+             c: ft.Var[(4,), "int32"]):
+        inputs = [a, b, c]  # Static
+        y = ft.empty((n,), "int32")  # Dynamic
+        for i in range(n):  # Dyanmic
+            y[i] = 0  # Dynamic
+            for item in inputs:  # Static
+                y[i] += item[i]  # Dynamic
+        return y
+
+    y = test(np.array([1, 2, 3, 4], dtype="int32"),
+             np.array([2, 3, 4, 5], dtype="int32"),
+             np.array([3, 4, 5, 6], dtype="int32")).numpy()
+    print(y)
+
+    assert np.array_equal(y, [6, 9, 12, 15])

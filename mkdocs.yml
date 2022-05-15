@@ -25,6 +25,7 @@ nav:
     - 'User Guide':
         - 'Get Started': 'guide/index.md'
         - 'Build and Run': 'guide/build-and-run.md'
+        - 'Your First Program with FreeTenor': 'guide/first-program.md'
     - 'API Reference':
         - 'Python API': 'api.md'
 

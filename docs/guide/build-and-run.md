@@ -15,6 +15,12 @@ Python dependencies:
 pip3 install --user numpy sourceinspect astor Pygments xgboost
 ```
 
+!!! note "Note on Python version"
+    Because we are analyzing Python AST, which is sensitive to Python version, there may be potential bugs for Python strictly later than 3.8. Please file an issue if something goes wrong
+
+!!! note "Note on future changes"
+    We have a plan to migrade to C++20 in a near future, which requires GCC >= 10
+
 ## Build
 
 First, clone this repo. Don't forget there are some submodules.
