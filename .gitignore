@@ -1,4 +1,5 @@
 /build
+/site
 __pycache__
 *.log
 *.csv

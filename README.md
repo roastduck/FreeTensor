@@ -96,77 +96,9 @@ y = test(np.array(4, dtype="int32"), np.array([1, 2, 3, 4], dtype="int32"),
 print(y)
 ```
 
-## Dependencies
+## Get Started
 
-- Linux
-- Python (>= 3.8, for the Python frontend)
-- GCC (>= 8, to support C++17 and the "unroll" pragma)
-- CUDA (>= 10.2, to support GCC 8, Optional)
-- MKL (Optional)
-- Java (Build-time dependency only)
-
-## Build
-
-First, clone this repo. Don't forget there are some submodules.
-
-```sh
-git clone --recursive <path-to-this-repo>
-```
-
-Then, build.
-
-```sh
-mkdir build
-cd build
-cmake ..
-make -j
-```
-
-If not using CUDA, add a `-DFT_WITH_CUDA=OFF` to `cmake`. If using MKL, add a `-DFT_WITH_MKL=<path/to/mkl/root>` to `cmake`.
-
-It will build a shared library with a name like `freetensor_ffi.cpython-37m-x86_64-linux-gnu.so`.
-
-There are some debugging options. Adding `-DFT_DEBUG_LOG_NODE=ON` to `cmake` enables tracing to tell by which pass a specific AST node is modified. Adding `-DFT_DEBUG_PROFILE` to `cmake` profiles some heavy functions in the compiler.
-
-## Run
-
-To run any program with FreeTensor, one should add the `python/` and `build/` directory to `PYTHONPATH` first.
-
-E.g. to run a python program `a.py` with FreeTensor in the `build/` directory,
-
-```sh
-PYTHONPATH=../python:../build:$PYTHONPATH python3 a.py
-```
-
-To run the test, first change into the `test/` directory, then
-
-```sh
-PYTHONPATH=../python:../build:$PYTHONPATH pytest
-```
-
-To run a single test case, specify the test case name, and optionally use `pytest -s` to display the standard output. E.g,
-
-```sh
-PYTHONPATH=../python:../build:$PYTHONPATH pytest -s 0.hello_world/test_basic.py::test_hello_world
-```
-
-If using GDB, one should invoke PyTest with `python3 -m`:
-
-```sh
-PYTHONPATH=../python:../build:$PYTHONPATH gdb --args python3 -m pytest
-```
-
-If using Valgrind, one should set Python to use the system malloc:
-
-```sh
-PYTHONPATH=../python:../build:$PYTHONPATH PYTHONMALLOC=malloc valgrind python3 -m pytest
-```
-
-Sometimes Valgrind is not enough to detect some errors. An alternative is to use the sanitizer from GCC. To use it, first edit `CMakeLists.txt` to add a `-fsanitize=address` compiler flag (or other mode like `-fsanitize=undefined`), then:
-
-```sh
-PYTHONPATH=../python:../build:$PYTHONPATH LD_PRELOAD=`gcc -print-file-name=libasan.so` pytest -s
-```
+[Get Started](https://roastduck.github.io/FreeTensor/guide/)
 
 ## Contribute
 

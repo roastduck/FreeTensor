@@ -16,4 +16,14 @@ plugins:
             - include/
             - src/
 
+markdown_extensions:
+    - admonition
+
+nav:
+    - 'User Guide':
+        - 'Get Started': 'guide/index.md'
+        - 'Build and Run': 'guide/build-and-run.md'
+    - 'API Reference':
+        - 'Python API': 'api.md'
+
 extra_css: [extra.css]
