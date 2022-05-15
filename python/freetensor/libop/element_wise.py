@@ -1,3 +1,5 @@
+import operator
+
 from .. import core
 from .utils import *
 from .shape_utils import *
@@ -39,7 +41,7 @@ def _binary_op_(op, a, b, out):
                 _binary_op_(op, a[i % a.shape(0)], b[i % b.shape(0)], out[i])
 
 
-@core.inline(fallback=lambda op, a, b: op(a, b))
+@core.inline
 def _binary_op(op, a, b):
     #! nid: out
     out = core.empty(broadcast_shape(a, b),
@@ -80,62 +82,52 @@ VarRef
 '''
 
 add_ = _named_partial("add_", implace_binary_doc_template.format('addition'),
-                      _binary_op_, lambda x, y: x + y)
+                      _binary_op_, operator.add)
 add = _named_partial("add", out_of_place_binary_doc_template.format('addition'),
-                     _binary_op, lambda x, y: x + y)
+                     _binary_op, operator.add)
 
 sub_ = _named_partial("sub_", implace_binary_doc_template.format('subtraction'),
-                      _binary_op_, lambda x, y: x - y)
+                      _binary_op_, operator.sub)
 sub = _named_partial("sub",
                      out_of_place_binary_doc_template.format('subtraction'),
-                     _binary_op, lambda x, y: x - y)
+                     _binary_op, operator.sub)
 
 mul_ = _named_partial("mul_",
                       implace_binary_doc_template.format('multiplication'),
-                      _binary_op_, lambda x, y: x * y)
+                      _binary_op_, operator.mul)
 mul = _named_partial("mul",
                      out_of_place_binary_doc_template.format('multiplication'),
-                     _binary_op, lambda x, y: x * y)
+                     _binary_op, operator.mul)
 
 truediv_ = _named_partial(
     "truediv_", implace_binary_doc_template.format('floating-point division'),
-    _binary_op_, lambda x, y: x / y)
+    _binary_op_, operator.truediv)
 truediv = _named_partial(
     "truediv",
     out_of_place_binary_doc_template.format('floating-point division'),
-    _binary_op, lambda x, y: x / y)
-
-
-def _floordivMayFallback(lhs, rhs):
-    if (hasattr(lhs, '__module__') and
-            lhs.__module__ == 'torch') or (hasattr(rhs, '__module__') and
-                                           rhs.__module__ == 'torch'):
-        import torch
-        return torch.div(lhs, rhs, rounding_mode='floor')
-    return lhs // rhs
-
+    _binary_op, operator.truediv)
 
 floordiv_ = _named_partial(
     "floordiv_",
     implace_binary_doc_template.format(
         'rounding-towards-negative-infinity integer division (following Python convention, but not C)'
-    ), _binary_op_, _floordivMayFallback)
+    ), _binary_op_, operator.floordiv)
 floordiv = _named_partial(
     "floordiv",
     out_of_place_binary_doc_template.format(
         'rounding-towards-negative-infinity integer division (following Python convention, but not C)'
-    ), _binary_op, _floordivMayFallback)
+    ), _binary_op, operator.floordiv)
 
 mod_ = _named_partial(
     "mod_",
     implace_binary_doc_template.format(
         'modulo (results are non-negative, following Python convention, but not C)'
-    ), _binary_op_, lambda x, y: x % y)
+    ), _binary_op_, operator.mod)
 mod = _named_partial(
     "mod",
     out_of_place_binary_doc_template.format(
         'modulo (results are non-negative, following Python convention, but not C)'
-    ), _binary_op, lambda x, y: x % y)
+    ), _binary_op, operator.mod)
 
 l_and_ = _named_partial("l_and_",
                         implace_binary_doc_template.format("logical and"),
@@ -152,39 +144,39 @@ l_or = _named_partial("l_or",
                       _binary_op, core.l_or)
 
 lt_ = _named_partial("lt_", implace_binary_doc_template.format("less-than"),
-                     _binary_op_, lambda x, y: x < y)
+                     _binary_op_, operator.lt)
 lt = _named_partial("lt", out_of_place_binary_doc_template.format("less-than"),
-                    _binary_op, lambda x, y: x < y)
+                    _binary_op, operator.lt)
 
 le_ = _named_partial(
     "le_", implace_binary_doc_template.format("less-than-or-equal-to"),
-    _binary_op_, lambda x, y: x <= y)
+    _binary_op_, operator.le)
 le = _named_partial(
     "le", out_of_place_binary_doc_template.format("less-than-or-equal-to"),
-    _binary_op, lambda x, y: x <= y)
+    _binary_op, operator.le)
 
 gt_ = _named_partial("gt_", implace_binary_doc_template.format("greater-than"),
-                     _binary_op_, lambda x, y: x > y)
+                     _binary_op_, operator.gt)
 gt = _named_partial("gt",
                     out_of_place_binary_doc_template.format("greater-than"),
-                    _binary_op, lambda x, y: x > y)
+                    _binary_op, operator.gt)
 
 ge_ = _named_partial(
     "ge_", implace_binary_doc_template.format("greater-than-or-equal-to"),
-    _binary_op_, lambda x, y: x >= y)
+    _binary_op_, operator.ge)
 ge = _named_partial(
     "ge", out_of_place_binary_doc_template.format("greater-than-or-equal-to"),
-    _binary_op, lambda x, y: x >= y)
+    _binary_op, operator.ge)
 
 eq_ = _named_partial("eq_", implace_binary_doc_template.format("equal"),
-                     _binary_op_, lambda x, y: x == y)
+                     _binary_op_, operator.eq)
 eq = _named_partial("eq", out_of_place_binary_doc_template.format("equal"),
-                    _binary_op, lambda x, y: x == y)
+                    _binary_op, operator.eq)
 
 ne_ = _named_partial("ne_", implace_binary_doc_template.format("non-equal"),
-                     _binary_op_, lambda x, y: x != y)
+                     _binary_op_, operator.ne)
 ne = _named_partial("ne", out_of_place_binary_doc_template.format("non-equal"),
-                    _binary_op, lambda x, y: x != y)
+                    _binary_op, operator.ne)
 
 
 @core.inline
@@ -234,9 +226,9 @@ VarRef
 '''
 
 neg_ = _named_partial("neg_", implace_unary_doc_template.format("negation"),
-                      _unary_op_, lambda x: -x)
+                      _unary_op_, operator.neg)
 neg = _named_partial("neg", out_of_place_unary_doc_template.format("negation"),
-                     _unary_op, lambda x: -x)
+                     _unary_op, operator.neg)
 
 l_not_ = _named_partial("l_not_",
                         implace_unary_doc_template.format("logical not"),

@@ -307,25 +307,3 @@ def test_operator_overload(libop_func, torch_func, dtype, ret_dtype):
 
     assert np.array_equal(out_arr.shape, [4, 4])
     assert same(out_torch, torch_func(x_torch, y_torch), dtype=ret_dtype)
-
-
-@pytest.mark.parametrize('libop_func, torch_func, dtype, ret_dtype', [
-    (libop.add, operator.add, "float32", "float32"),
-    (libop.sub, operator.sub, "float32", "float32"),
-    (libop.mul, operator.mul, "float32", "float32"),
-    (libop.truediv, operator.truediv, "float32", "float32"),
-    (libop.floordiv, functools.partial(
-        torch.div, rounding_mode='floor'), "int32", "int32"),
-    (libop.mod, operator.mod, "int32", "int32"),
-    (libop.lt, operator.lt, "int32", "bool"),
-    (libop.le, operator.le, "int32", "bool"),
-    (libop.gt, operator.gt, "int32", "bool"),
-    (libop.ge, operator.ge, "int32", "bool"),
-    (libop.eq, operator.eq, "int32", "bool"),
-    (libop.ne, operator.ne, "int32", "bool"),
-])
-def test_fallback(libop_func, torch_func, dtype, ret_dtype):
-    x = rand(4, 4, dtype=dtype)
-    y = rand(4, 4, dtype=dtype)
-    out = libop_func(x, y)
-    assert same(out, torch_func(x, y), dtype=ret_dtype)
