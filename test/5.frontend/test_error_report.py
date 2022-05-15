@@ -4,11 +4,11 @@ import inspect
 
 
 # DO NOT ADD LINES IN THIS FUNCTION
-def test_illegal_bin_op():
+def test_variable_not_declared():
 
     @ft.inline
     def bar(a, b):
-        a @ b
+        a + c
 
     @ft.inline
     def foo(a, b):
