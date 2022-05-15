@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Build and Run - FreeTensor</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+        <link href="../../assets/_mkdocstrings.css" rel="stylesheet" />
+        <link href="../../extra.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Build and Run";
+        var mkdocs_page_input_path = "guide/build-and-run.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <script src="../../js/jquery-3.6.0.min.js" defer></script>
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+      <script>hljs.initHighlightingOnLoad();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> FreeTensor
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption"><span class="caption-text">User Guide</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../">Get Started</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="./">Build and Run</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#dependencies">Dependencies</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#build">Build</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#run-a-program-with-freetensor">Run a Program with FreeTensor</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#run-the-tests">Run the Tests</a>
+    </li>
+    </ul>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">API Reference</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/">Python API</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">FreeTensor</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" alt="Docs"></a> &raquo;</li>
+          <li>User Guide &raquo;</li><li>Build and Run</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="build-and-run">Build and Run</h1>
+<h2 id="dependencies">Dependencies</h2>
+<ul>
+<li>Linux</li>
+<li>Python (&gt;= 3.8, for the Python frontend)</li>
+<li>GCC (&gt;= 8, to support C++17 and the "unroll" pragma)</li>
+<li>CUDA (&gt;= 10.2, to support GCC 8, Optional)</li>
+<li>MKL (Optional)</li>
+<li>Java (Build-time dependency only)</li>
+</ul>
+<h2 id="build">Build</h2>
+<p>First, clone this repo. Don't forget there are some submodules.</p>
+<pre><code class="language-sh">git clone --recursive &lt;path-to-this-repo&gt;
+</code></pre>
+<p>Then, build.</p>
+<pre><code class="language-sh">mkdir build
+cd build
+cmake ..
+make -j  # Or use Ninja
+</code></pre>
+<p>There are some options to <code>cmake</code>:</p>
+<ul>
+<li><code>-DFT_WITH_CUDA=ON/OFF</code>: build with/without CUDA (defaults to <code>ON</code>).</li>
+<li><code>-DFT_WITH_MKL=&lt;path/to/mkl/root&gt;</code>: build with MKL (path to MKL is required, defaults to building without it).</li>
+<li><code>-DFT_DEBUG_LOG_NODE=ON</code> (for developers): enables tracing to tell by which pass a specific AST node is modified.</li>
+<li><code>-DFT_DEBUG_PROFILE</code> (for developers): profiles some heavy functions in the compiler.</li>
+</ul>
+<p>It will build a shared library with a name like <code>freetensor_ffi.cpython-37m-x86_64-linux-gnu.so</code>, which can be used in Python via <code>import freetensor</code>.</p>
+<h2 id="run-a-program-with-freetensor">Run a Program with FreeTensor</h2>
+<p>To run any program with FreeTensor, one should add the <code>python/</code> and <code>build/</code> directory to <code>PYTHONPATH</code> first.</p>
+<p>E.g. to run a python program <code>a.py</code> with FreeTensor in the <code>build/</code> directory,</p>
+<pre><code class="language-sh">PYTHONPATH=../python:../build:$PYTHONPATH python3 a.py
+</code></pre>
+<h2 id="run-the-tests">Run the Tests</h2>
+<p>To run the test, first change into the <code>test/</code> directory, then</p>
+<pre><code class="language-sh">PYTHONPATH=../python:../build:$PYTHONPATH pytest
+</code></pre>
+<p>To run a single test case, specify the test case name, and optionally use <code>pytest -s</code> to display the standard output. E.g,</p>
+<pre><code class="language-sh">PYTHONPATH=../python:../build:$PYTHONPATH pytest -s 0.hello_world/test_basic.py::test_hello_world
+</code></pre>
+<div class="admonition note">
+<p class="admonition-title">Debugging (for developers)</p>
+<p>If using GDB, one should invoke PyTest with <code>python3 -m</code>:</p>
+<p><code>PYTHONPATH=../python:../build:$PYTHONPATH gdb --args python3 -m pytest</code></p>
+<p>If using Valgrind, one should set Python to use the system malloc:</p>
+<p><code>PYTHONPATH=../python:../build:$PYTHONPATH PYTHONMALLOC=malloc valgrind python3 -m pytest</code></p>
+<p>Sometimes Valgrind is not enough to detect some errors. An alternative is to use the sanitizer from GCC. To use it, first edit <code>CMakeLists.txt</code> to add a <code>-fsanitize=address</code> compiler flag (or other mode like <code>-fsanitize=undefined</code>), then:</p>
+<p><code>PYTHONPATH=../python:../build:$PYTHONPATH LD_PRELOAD=`gcc -print-file-name=libasan.so` pytest -s</code></p>
+</div>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../" class="btn btn-neutral float-left" title="Get Started"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../../api/" class="btn btn-neutral float-right" title="Python API">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../../api/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme_extra.js" defer></script>
+    <script src="../../js/theme.js" defer></script>
+      <script src="../../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>
