@@ -1,0 +1,35 @@
+name: Publish Documents
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow only on master
+  push:
+    branches: [ master ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  build-and-publish-doc:
+    runs-on: self-hosted
+    if: github.event.pull_request.draft == false
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ssh-key: ${{ secrets.CI }}
+          submodules: true
+          fetch-depth: 0
+      - name: Build ffi module in Release
+        run: |
+          git submodule foreach --recursive git clean -ffdx
+          git submodule foreach --recursive git reset --hard
+          source /opt/spack/share/spack/setup-env.sh
+          spack load python~debug@3.8.12%gcc@10.2.1 cuda@11.4.2 cudnn@8.2.4.15-11.4 intel-mkl@2020.4.304 java@11
+          mkdir build
+          cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DFT_WITH_CUDA=OFF -DFT_WITH_MKL=OFF
+          cmake --build build -j
+      - name: Build and publish doc
+        run: |
+          source /opt/spack/share/spack/setup-env.sh
+          spack load python~debug@3.8.12%gcc@10.2.1
+          PYTHONPATH=build:python:$PYTHONPATH mkdocs gh-deploy
