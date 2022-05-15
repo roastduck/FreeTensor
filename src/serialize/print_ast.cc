@@ -249,15 +249,15 @@ void PrintVisitor::visit(const ReduceTo &op) {
 }
 
 void PrintVisitor::visit(const IntConst &op) {
-    os() << prettyLiteral(std::to_string(op->val_)) << RESET;
+    os() << prettyLiteral(std::to_string(op->val_));
 }
 
 void PrintVisitor::visit(const FloatConst &op) {
-    os() << prettyLiteral(std::to_string(op->val_)) << RESET;
+    os() << prettyLiteral(std::to_string(op->val_));
 }
 
 void PrintVisitor::visit(const BoolConst &op) {
-    os() << prettyLiteral(op->val_ ? "true" : "false") << RESET;
+    os() << prettyLiteral(op->val_ ? "true" : "false");
 }
 
 void PrintVisitor::visit(const Add &op) {
