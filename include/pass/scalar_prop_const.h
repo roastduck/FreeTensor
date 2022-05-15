@@ -19,7 +19,7 @@ namespace freetensor {
  * this pass requires both indices and assigned value to be constants.
  */
 class ScalarPropConst : public SymbolTable<ConstFold> {
-  private:
+  protected:
     typedef SymbolTable<ConstFold> BaseClass;
 
     /**
