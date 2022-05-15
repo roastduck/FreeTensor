@@ -57,6 +57,10 @@
     <ul class="current">
     <li class="toctree-l2"><a class="reference internal" href="#example-vector-addition">Example: Vector addition</a>
     </li>
+    <li class="toctree-l2"><a class="reference internal" href="#declare-and-define-tensors">Declare and Define Tensors</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#dynamic-or-static">Dynamic or Static</a>
+    </li>
     </ul>
                   </li>
               </ul>
@@ -111,12 +115,12 @@ print(y)
 </code></pre>
 <p>Here is a basic example program in FreeTensor. You write a Python function that manipulates FreeTensor's tensor type <code>ft.Var</code>, decorate the function with <code>ft.optimize</code>, and finally invoke the decorated function. FreeTensor will generate C++ code for this vector addition, compile it using a native compiler, and finally load it back to Python. Set <code>verbose = 1</code> to <code>optimize</code> if you are interested in the generated native code.</p>
 <p>To write such a function, you need to follow some basic concept described in this page.</p>
-<h1 id="declare-and-define-tensors">Declare and Define Tensors</h1>
+<h2 id="declare-and-define-tensors">Declare and Define Tensors</h2>
 <p>All tensors, including function parameters, intermediate tensors and return values should be properly declared or defined.</p>
 <p>Function parameters should be declared like <a href="/api/#freetensor.core.transformer.Var"><code>x : ft.Var[shape, data_type]</code></a>. Declaring a parameter either in the function signature or as a stand-alone statment is acceptable. If your parameter uses another parameter as shape, you will need the latter manner. An optional parameter <code>atype</code> can be set to <code>"output"</code> or <code>"inout"</code> if you want to mutate a function argument.</p>
 <p>Intermediate and returning tensors can be created by <a href="/api/#freetensor.core.transformer.empty"><code>ft.empty</code></a>, <a href="/api/#freetensor.core.transformer.var"><code>ft.var</code></a> or <a href="/api/#freetensor.libop.constant.zeros"><code>ft.zeros</code></a>. If you are using FreeTensor for GPU computing, an optional parameter <code>mtype</code> can be set to specify where to store the tensor. It defaults to the main memory of your currently chosen computing device.</p>
 <p>All tensors and their slices are implemented by an internal <a href="/api/#freetensor.core.expr.VarRef"><code>ft.VarRef</code></a> type. If you are looking for a tensor's API, <code>ft.VarRef</code> is the right place.</p>
-<h1 id="dynamic-or-static">Dynamic or Static</h1>
+<h2 id="dynamic-or-static">Dynamic or Static</h2>
 <p>Another concept is that statements and expressions in your program are divided into two categories: <em>dynamic</em> and <em>static</em>. Dynamic statements or expressions are restricted to a small subset of Python, and are <em>compiled</em> to native code. Static statements or expressions can be any Python statements or expressions, and are executed <em>before</em> compilation. In other words, static statements or expressions are like macros or templates in C++, while dynamic ones are actually quotations in <a href="https://en.wikipedia.org/wiki/Multi-stage_programming">Multi-Stage Programming</a>.</p>
 <p>The following statements and expressions are considered dynamic:</p>
 <ul>
