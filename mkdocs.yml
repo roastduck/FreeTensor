@@ -20,6 +20,8 @@ markdown_extensions:
     - admonition
 
 nav:
+    - 'GitHub':
+        - 'FreeTensor': 'https://github.com/roastduck/FreeTensor'
     - 'User Guide':
         - 'Get Started': 'guide/index.md'
         - 'Build and Run': 'guide/build-and-run.md'
