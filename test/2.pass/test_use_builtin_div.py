@@ -56,7 +56,7 @@ def test_ge0_ceil_div_ge0():
     ]) as (a, b, c):
         with ft.Assert(a[()] >= 0):
             with ft.Assert(b[()] >= 0):
-                c[()] = ft.ceil_div(a[()], b[()])
+                c[()] = ft.ceildiv(a[()], b[()])
     ast = ft.pop_ast(verbose=True)
     ast = ft.lower(ast, verbose=1)
 
@@ -79,7 +79,7 @@ def test_unknown_ceil_div_unknown():
         ("b", (), "int32", "input", "cpu"),
         ("c", (), "int32", "output", "cpu"),
     ]) as (a, b, c):
-        c[()] = ft.ceil_div(a[()], b[()])
+        c[()] = ft.ceildiv(a[()], b[()])
     ast = ft.pop_ast(verbose=True)
     ast = ft.lower(ast, verbose=1)
 
@@ -88,7 +88,7 @@ def test_unknown_ceil_div_unknown():
         ("b", (), "int32", "input", "cpu"),
         ("c", (), "int32", "output", "cpu"),
     ]) as (a, b, c):
-        c[()] = ft.ceil_div(a[()], b[()])
+        c[()] = ft.ceildiv(a[()], b[()])
     std = ft.pop_ast()
 
     assert std.match(ast)

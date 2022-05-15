@@ -4,16 +4,18 @@ import operator
 import numpy as np
 
 import freetensor as ft
-from freetensor import libop
 
 
 @pytest.mark.parametrize('libop_func, torch_func, require_positive', [
-    (libop.abs_, torch.abs, False),
-    (libop.exp_, torch.exp, False),
-    (libop.sigmoid_, torch.sigmoid, False),
-    (libop.sqrt_, torch.sqrt, True),
-    (libop.relu_, torch.relu, False),
-    (libop.tanh_, torch.tanh, False),
+    (ft.abs_, torch.abs, False),
+    (ft.exp_, torch.exp, False),
+    (ft.sigmoid_, torch.sigmoid, False),
+    (ft.sqrt_, torch.sqrt, True),
+    (ft.square_, torch.square, False),
+    (ft.relu_, torch.relu, False),
+    (ft.tanh_, torch.tanh, False),
+    (ft.floor_, torch.floor, False),
+    (ft.ceil_, torch.ceil, False),
 ])
 def test_static_shape(libop_func, torch_func, require_positive):
     device = ft.Device(ft.CPU())
@@ -26,9 +28,9 @@ def test_static_shape(libop_func, torch_func, require_positive):
         libop_func(x, y)
 
     if require_positive:
-        x_torch = torch.rand(4, 4, dtype=torch.float32)
+        x_torch = torch.rand(4, 4, dtype=torch.float32) * 10
     else:
-        x_torch = torch.rand(4, 4, dtype=torch.float32) - 0.5
+        x_torch = torch.rand(4, 4, dtype=torch.float32) * 10 - 5
     x_arr = ft.Array(x_torch.numpy(), device)
     y_torch = torch.zeros(4, 4, dtype=torch.float32)
     y_arr = ft.Array(y_torch.numpy(), device)
@@ -39,13 +41,16 @@ def test_static_shape(libop_func, torch_func, require_positive):
 
 
 @pytest.mark.parametrize('libop_func, torch_func, require_positive', [
-    (libop.abs, torch.abs, False),
-    (libop.exp, torch.exp, False),
-    (libop.sigmoid, torch.sigmoid, False),
-    (libop.sqrt, torch.sqrt, True),
-    (libop.relu, torch.relu, False),
-    (libop.tanh, torch.tanh, False),
-    (libop.neg, operator.neg, False),
+    (ft.abs, torch.abs, False),
+    (ft.exp, torch.exp, False),
+    (ft.sigmoid, torch.sigmoid, False),
+    (ft.sqrt, torch.sqrt, True),
+    (ft.square, torch.square, False),
+    (ft.relu, torch.relu, False),
+    (ft.tanh, torch.tanh, False),
+    (ft.floor, torch.floor, False),
+    (ft.ceil, torch.ceil, False),
+    (ft.neg, operator.neg, False),
     (operator.neg, operator.neg, False),
 ])
 def test_out_of_place(libop_func, torch_func, require_positive):
@@ -58,9 +63,9 @@ def test_out_of_place(libop_func, torch_func, require_positive):
         return libop_func(x)
 
     if require_positive:
-        x_torch = torch.rand(4, 4, dtype=torch.float32)
+        x_torch = torch.rand(4, 4, dtype=torch.float32) * 10
     else:
-        x_torch = torch.rand(4, 4, dtype=torch.float32) - 0.5
+        x_torch = torch.rand(4, 4, dtype=torch.float32) * 10 - 5
     x_arr = ft.Array(x_torch.numpy(), device)
     y_arr = f(x_arr)
     y_torch = torch.tensor(y_arr.numpy())
@@ -70,12 +75,15 @@ def test_out_of_place(libop_func, torch_func, require_positive):
 
 
 @pytest.mark.parametrize('libop_func, torch_func, require_positive', [
-    (libop.abs_, torch.abs, False),
-    (libop.exp_, torch.exp, False),
-    (libop.sigmoid_, torch.sigmoid, False),
-    (libop.sqrt_, torch.sqrt, True),
-    (libop.relu_, torch.relu, False),
-    (libop.tanh_, torch.tanh, False),
+    (ft.abs_, torch.abs, False),
+    (ft.exp_, torch.exp, False),
+    (ft.sigmoid_, torch.sigmoid, False),
+    (ft.sqrt_, torch.sqrt, True),
+    (ft.square_, torch.square, False),
+    (ft.relu_, torch.relu, False),
+    (ft.tanh_, torch.tanh, False),
+    (ft.floor_, torch.floor, False),
+    (ft.ceil_, torch.ceil, False),
 ])
 def test_grad(libop_func, torch_func, require_positive):
     device = ft.Device(ft.CPU())
@@ -120,9 +128,9 @@ def test_grad(libop_func, torch_func, require_positive):
         return shape, dtype
 
     if require_positive:
-        x_torch = torch.rand(4, 4, dtype=torch.float32)
+        x_torch = torch.rand(4, 4, dtype=torch.float32) * 10
     else:
-        x_torch = torch.rand(4, 4, dtype=torch.float32) - 0.5
+        x_torch = torch.rand(4, 4, dtype=torch.float32) * 10 - 5
     x_arr = ft.Array(x_torch.numpy(), device)
     x_torch.requires_grad = True
     y_torch_ours = torch.zeros(4, 4, dtype=torch.float32)

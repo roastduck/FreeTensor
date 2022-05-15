@@ -110,24 +110,67 @@ truediv = _named_partial(
 floordiv_ = _named_partial(
     "floordiv_",
     implace_binary_doc_template.format(
-        'rounding-towards-negative-infinity integer division (following Python convention, but not C)'
+        'rounding-towards-negative-infinity integer division (following Python convention, but not C, recommended for performance)'
     ), _binary_op_, operator.floordiv)
 floordiv = _named_partial(
     "floordiv",
     out_of_place_binary_doc_template.format(
-        'rounding-towards-negative-infinity integer division (following Python convention, but not C)'
+        'rounding-towards-negative-infinity integer division (following Python convention, but not C, recommended for performance)'
     ), _binary_op, operator.floordiv)
+
+ceildiv_ = _named_partial(
+    "ceildiv_",
+    implace_binary_doc_template.format(
+        'rounding-towards-positive-infinity integer division'), _binary_op_,
+    core.ceildiv)
+ceildiv = _named_partial(
+    "ceildiv",
+    out_of_place_binary_doc_template.format(
+        'rounding-towards-positive-infinity integer division'), _binary_op,
+    core.ceildiv)
+
+round_towards_0_div_ = _named_partial(
+    "round_towards_0_div_",
+    implace_binary_doc_template.format(
+        'rounding-towards-0 integer division (following C convention, but not Python, NOT recommended for performance)'
+    ), _binary_op_, core.round_towards_0_div)
+round_towards_0_div = _named_partial(
+    "round_towards_0_div",
+    out_of_place_binary_doc_template.format(
+        'rounding-towards-0 integer division (following C convention, but not Python, NOT recommended for performance)'
+    ), _binary_op, core.round_towards_0_div)
 
 mod_ = _named_partial(
     "mod_",
     implace_binary_doc_template.format(
-        'modulo (results are non-negative, following Python convention, but not C)'
+        'modulo (results are non-negative, following Python convention, but not C, recommended for performance)'
     ), _binary_op_, operator.mod)
 mod = _named_partial(
     "mod",
     out_of_place_binary_doc_template.format(
-        'modulo (results are non-negative, following Python convention, but not C)'
+        'modulo (results are non-negative, following Python convention, but not C, recommended for performance)'
     ), _binary_op, operator.mod)
+
+remainder_ = _named_partial(
+    "remainder_",
+    implace_binary_doc_template.format(
+        'remainder (results can be positive or negative, following C convention, but not Python, NOT recommended for performance)'
+    ), _binary_op_, core.remainder)
+remainder = _named_partial(
+    "remainder",
+    out_of_place_binary_doc_template.format(
+        'remainder (results can be positive or negative, following C convention, but not Python, NOT recommended for performance)'
+    ), _binary_op, core.remainder)
+
+min_ = _named_partial("min_", implace_binary_doc_template.format('minimum'),
+                      _binary_op_, core.min)
+min = _named_partial("min", out_of_place_binary_doc_template.format('minimum'),
+                     _binary_op, core.min)
+
+max_ = _named_partial("max_", implace_binary_doc_template.format('maximum'),
+                      _binary_op_, core.max)
+max = _named_partial("max", out_of_place_binary_doc_template.format('maximum'),
+                     _binary_op, core.max)
 
 l_and_ = _named_partial("l_and_",
                         implace_binary_doc_template.format("logical and"),
@@ -256,6 +299,12 @@ sqrt = _named_partial("sqrt",
                       out_of_place_unary_doc_template.format("square root"),
                       _unary_op, lambda x: core.sqrt(x))
 
+square_ = _named_partial("square_", implace_unary_doc_template.format("square"),
+                         _unary_op_, lambda x: core.square(x))
+square = _named_partial("square",
+                        out_of_place_unary_doc_template.format("square"),
+                        _unary_op, lambda x: core.square(x))
+
 exp_ = _named_partial("exp_",
                       implace_unary_doc_template.format("natrual exponent"),
                       _unary_op_, lambda x: core.exp(x))
@@ -274,3 +323,13 @@ tanh_ = _named_partial("tanh_", implace_unary_doc_template.format("tanh"),
                        _unary_op_, lambda x: core.tanh(x))
 tanh = _named_partial("tanh", out_of_place_unary_doc_template.format("tanh"),
                       _unary_op, lambda x: core.tanh(x))
+
+floor_ = _named_partial("floor_", implace_unary_doc_template.format("floor"),
+                        _unary_op_, lambda x: core.floor(x))
+floor = _named_partial("floor", out_of_place_unary_doc_template.format("floor"),
+                       _unary_op, lambda x: core.floor(x))
+
+ceil_ = _named_partial("ceil_", implace_unary_doc_template.format("ceil"),
+                       _unary_op_, lambda x: core.ceil(x))
+ceil = _named_partial("ceil", out_of_place_unary_doc_template.format("ceil"),
+                      _unary_op, lambda x: core.ceil(x))

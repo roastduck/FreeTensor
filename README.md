@@ -88,7 +88,7 @@ import numpy as np
 def test(n: ft.Var[(), "int32"], a, b):
     a: ft.Var[(n,), "int32"]
     b: ft.Var[(n,), "int32"]
-    y = a + b  # Or y = libop.add(a, b)
+    y = a + b  # Or y = ft.add(a, b)
     return y
 
 y = test(np.array(4, dtype="int32"), np.array([1, 2, 3, 4], dtype="int32"),

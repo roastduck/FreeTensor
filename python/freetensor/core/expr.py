@@ -7,6 +7,7 @@ and also exposed to users via multi-stage programming
 
 import collections
 import builtins
+import math
 from typing import Sequence, Tuple, Any, Optional
 
 import freetensor_ffi as ffi
@@ -264,6 +265,210 @@ class VarRef(ffi.FrontendVar):
         return 0 - self.as_load()
 
 
+def _istensor(x):
+    return type(x) is VarRef and x.ndim > 0
+
+
+######################################
+# Binary Operators
+
+
+def add(lhs, rhs):
+    '''
+    `lhs + rhs`
+
+    For scalar operands, it emit an expression node in AST. For non-scalar operands,
+    it calls libop.add
+
+    Parameters
+    ----------
+    lhs : VarRef or Number
+        The left-hand-side operand
+    rhs : VarRef or Number
+        The right-hand-side operand
+
+    Returns
+    -------
+    VarRef or Number
+        The sum
+    '''
+    return lhs + rhs
+
+
+def sub(lhs, rhs):
+    '''
+    `lhs - rhs`
+
+    For scalar operands, it emit an expression node in AST. For non-scalar operands,
+    it calls libop.sub
+
+    Parameters
+    ----------
+    lhs : VarRef or Number
+        The left-hand-side operand
+    rhs : VarRef or Number
+        The right-hand-side operand
+
+    Returns
+    -------
+    VarRef or Number
+        The difference
+    '''
+    return lhs - rhs
+
+
+def mul(lhs, rhs):
+    '''
+    `lhs * rhs`
+
+    For scalar operands, it emit an expression node in AST. For non-scalar operands,
+    it calls libop.mul
+
+    Parameters
+    ----------
+    lhs : VarRef or Number
+        The left-hand-side operand
+    rhs : VarRef or Number
+        The right-hand-side operand
+
+    Returns
+    -------
+    VarRef or Number
+        The product
+    '''
+    return lhs * rhs
+
+
+def truediv(lhs, rhs):
+    '''
+    Floating point division of `lhs` dividing by `rhs`
+
+    For scalar operands, it emit an expression node in AST. For non-scalar operands,
+    it calls libop.truediv
+
+    Parameters
+    ----------
+    lhs : VarRef or Number
+        The left-hand-side operand
+    rhs : VarRef or Number
+        The right-hand-side operand
+
+    Returns
+    -------
+    VarRef or Number
+        The quotient
+    '''
+    return lhs / rhs
+
+
+def floordiv(lhs, rhs):
+    '''
+    Floored integer division of `lhs` dividing by `rhs`
+
+    The result rounds towards negative infinity (following Python convention, instead of C)
+    This function is recommended over `round_towards_0_div`, as it enjoys more optimizations
+
+    For scalar operands, it emit an expression node in AST. For non-scalar operands,
+    it calls libop.floordiv
+
+    Parameters
+    ----------
+    lhs : VarRef or Number
+        The left-hand-side operand
+    rhs : VarRef or Number
+        The right-hand-side operand
+
+    Returns
+    -------
+    VarRef or Number
+        The quotient
+    '''
+    return lhs // rhs
+
+
+def ceildiv(lhs, rhs):
+    '''
+    Ceiling integer division of `lhs` dividing by `rhs`
+
+    The result rounds towards positive infinity
+
+    For scalar operands, it emit an expression node in AST. For non-scalar operands,
+    it calls libop.ceildiv
+
+    Parameters
+    ----------
+    lhs : VarRef or Number
+        The left-hand-side operand
+    rhs : VarRef or Number
+        The right-hand-side operand
+
+    Returns
+    -------
+    VarRef or Number
+        The quotient
+    '''
+    if _istensor(lhs) or _istensor(rhs):
+        from .. import libop
+        return libop.ceildiv(lhs, rhs)
+    if type(lhs) is int and type(rhs) is int:
+        return lhs // rhs + (lhs % rhs > 0)
+    return ffi.makeCeilDiv(lhs, rhs)
+
+
+def round_towards_0_div(lhs, rhs):
+    '''
+    C-style integer division of `lhs` dividing by `rhs`
+
+    The result rounds towards 0 (following C convention, instead of Python)
+    End users are encouraged to use `lhs // rhs` instead, which follows Python convetion,
+    and enjoys better optimization in FreeTensor
+
+    For scalar operands, it emit an expression node in AST. For non-scalar operands,
+    it calls libop.round_towards_0_div
+
+    Parameters
+    ----------
+    lhs : VarRef or Number
+        The left-hand-side operand
+    rhs : VarRef or Number
+        The right-hand-side operand
+
+    Returns
+    -------
+    VarRef or Number
+        The quotient
+    '''
+    if _istensor(lhs) or _istensor(rhs):
+        from .. import libop
+        return libop.round_towards_0_div(lhs, rhs)
+    return ffi.makeRoundTowards0Div(lhs, rhs)
+
+
+def mod(lhs, rhs):
+    '''
+    `lhs` modulus `rhs`
+
+    The result is always non-negative (following Python convention, instead of C).
+    This function is recommended over `remainder`, as it enjoys more optimizations
+
+    For scalar operands, it emit an expression node in AST. For non-scalar operands,
+    it calls libop.mod
+
+    Parameters
+    ----------
+    lhs : VarRef or Number
+        The left-hand-side operand
+    rhs : VarRef or Number
+        The right-hand-side operand
+
+    Returns
+    -------
+    VarRef or Number
+        The modulo
+    '''
+    return lhs % rhs
+
+
 def remainder(lhs, rhs):
     '''
     Remainder of `lhs` dividing `rhs`
@@ -271,6 +476,9 @@ def remainder(lhs, rhs):
     The result can be positive or negative (following C convention, instead of Python).
     End users are encouraged to use `lhs % rhs` instead, which follows Python convetion,
     and enjoys better optimization in FreeTensor
+
+    For scalar operands, it emit an expression node in AST. For non-scalar operands,
+    it calls libop.remainder
 
     Parameters
     ----------
@@ -284,12 +492,18 @@ def remainder(lhs, rhs):
     VarRef or Number
         The remainder
     '''
+    if _istensor(lhs) or _istensor(rhs):
+        from .. import libop
+        return libop.remainder(lhs, rhs)
     return ffi.makeRemainder(lhs, rhs)
 
 
 def min(lhs, rhs):
     '''
     Minimum of `lhs` and `rhs`
+
+    For scalar operands, it emit an expression node in AST. For non-scalar operands,
+    it calls libop.min
 
     Parameters
     ----------
@@ -303,6 +517,9 @@ def min(lhs, rhs):
     VarRef or Number
         The minimum
     '''
+    if _istensor(lhs) or _istensor(rhs):
+        from .. import libop
+        return libop.min(lhs, rhs)
     if type(lhs) in (int, float) and type(rhs) in (int, float):
         return builtins.min(lhs, rhs)
     return ffi.makeMin(lhs, rhs)
@@ -311,6 +528,9 @@ def min(lhs, rhs):
 def max(lhs, rhs):
     '''
     Maximum of `lhs` and `rhs`
+
+    For scalar operands, it emit an expression node in AST. For non-scalar operands,
+    it calls libop.max
 
     Parameters
     ----------
@@ -324,9 +544,428 @@ def max(lhs, rhs):
     VarRef or Number
         The maximum
     '''
+    if _istensor(lhs) or _istensor(rhs):
+        from .. import libop
+        return libop.max(lhs, rhs)
     if type(lhs) in (int, float) and type(rhs) in (int, float):
         return builtins.max(lhs, rhs)
     return ffi.makeMax(lhs, rhs)
+
+
+def l_and(lhs, rhs):
+    '''
+    Logical and of `lhs` and `rhs`
+
+    NOTE: Short-circuit evaluation is NOT supported
+
+    For scalar operands, it emit an expression node in AST. For non-scalar operands,
+    it calls libop.l_and
+
+    Parameters
+    ----------
+    lhs : VarRef or Number
+        The left-hand-side operand
+    rhs : VarRef or Number
+        The right-hand-side operand
+
+    Returns
+    -------
+    VarRef or Number
+        The logical and
+    '''
+    if _istensor(lhs) or _istensor(rhs):
+        from .. import libop
+        return libop.l_and(lhs, rhs)
+    if type(lhs) is bool and type(rhs) is bool:
+        return lhs and rhs
+    else:
+        return ffi.makeLAnd(lhs, rhs)
+
+
+def l_or(lhs, rhs):
+    '''
+    Logical or of `lhs` and `rhs`
+
+    NOTE: Short-circuit evaluation is NOT supported
+
+    For scalar operands, it emit an expression node in AST. For non-scalar operands,
+    it calls libop.l_or
+
+    Parameters
+    ----------
+    lhs : VarRef or Number
+        The left-hand-side operand
+    rhs : VarRef or Number
+        The right-hand-side operand
+
+    Returns
+    -------
+    VarRef or Number
+        The logical or
+    '''
+    if _istensor(lhs) or _istensor(rhs):
+        from .. import libop
+        return libop.l_or(lhs, rhs)
+    if type(lhs) is bool and type(rhs) is bool:
+        return lhs or rhs
+    else:
+        return ffi.makeLOr(lhs, rhs)
+
+
+def lt(lhs, rhs):
+    '''
+    `lhs < rhs`
+
+    For scalar operands, it emit an expression node in AST. For non-scalar operands,
+    it calls libop.lt
+
+    Parameters
+    ----------
+    lhs : VarRef or Number
+        The left-hand-side operand
+    rhs : VarRef or Number
+        The right-hand-side operand
+
+    Returns
+    -------
+    VarRef or Number
+        The comparison
+    '''
+    return lhs < rhs
+
+
+def le(lhs, rhs):
+    '''
+    `lhs <= rhs`
+
+    For scalar operands, it emit an expression node in AST. For non-scalar operands,
+    it calls libop.le
+
+    Parameters
+    ----------
+    lhs : VarRef or Number
+        The left-hand-side operand
+    rhs : VarRef or Number
+        The right-hand-side operand
+
+    Returns
+    -------
+    VarRef or Number
+        The comparison
+    '''
+    return lhs <= rhs
+
+
+def gt(lhs, rhs):
+    '''
+    `lhs > rhs`
+
+    For scalar operands, it emit an expression node in AST. For non-scalar operands,
+    it calls libop.gt
+
+    Parameters
+    ----------
+    lhs : VarRef or Number
+        The left-hand-side operand
+    rhs : VarRef or Number
+        The right-hand-side operand
+
+    Returns
+    -------
+    VarRef or Number
+        The comparison
+    '''
+    return lhs > rhs
+
+
+def ge(lhs, rhs):
+    '''
+    `lhs >= rhs`
+
+    For scalar operands, it emit an expression node in AST. For non-scalar operands,
+    it calls libop.ge
+
+    Parameters
+    ----------
+    lhs : VarRef or Number
+        The left-hand-side operand
+    rhs : VarRef or Number
+        The right-hand-side operand
+
+    Returns
+    -------
+    VarRef or Number
+        The comparison
+    '''
+    return lhs >= rhs
+
+
+def eq(lhs, rhs):
+    '''
+    `lhs == rhs`
+
+    For scalar operands, it emit an expression node in AST. For non-scalar operands,
+    it calls libop.eq
+
+    Parameters
+    ----------
+    lhs : VarRef or Number
+        The left-hand-side operand
+    rhs : VarRef or Number
+        The right-hand-side operand
+
+    Returns
+    -------
+    VarRef or Number
+        The comparison
+    '''
+    return lhs == rhs
+
+
+def ne(lhs, rhs):
+    '''
+    `lhs != rhs`
+
+    For scalar operands, it emit an expression node in AST. For non-scalar operands,
+    it calls libop.ne
+
+    Parameters
+    ----------
+    lhs : VarRef or Number
+        The left-hand-side operand
+    rhs : VarRef or Number
+        The right-hand-side operand
+
+    Returns
+    -------
+    VarRef or Number
+        The comparison
+    '''
+    return lhs != rhs
+
+
+######################################
+# Unary Operators
+
+
+def l_not(expr):
+    '''
+    Logical not
+
+    For scalar operands, it emit an expression node in AST. For non-scalar operands,
+    it calls libop.l_not
+
+    Parameters
+    ----------
+    expr : VarRef or Number
+        The operand
+
+    Returns
+    -------
+    VarRef or Number
+        The logical not
+    '''
+    if _istensor(expr):
+        from .. import libop
+        return libop.l_not(expr)
+    if type(expr) is bool:
+        return not expr
+    else:
+        return ffi.makeLNot(expr)
+
+
+def abs(expr):
+    '''
+    Absolute value
+
+    For scalar operands, it emit an expression node in AST. For non-scalar operands,
+    it calls libop.abs
+
+    Parameters
+    ----------
+    expr : VarRef or Number
+        The operand
+
+    Returns
+    -------
+    VarRef or Number
+        The absolute value
+    '''
+    if _istensor(expr):
+        from .. import libop
+        return libop.abs(expr)
+    if type(expr) in (int, float):
+        return builtins.abs(expr)
+    return ffi.makeAbs(expr)
+
+
+def sqrt(expr):
+    '''
+    Square root
+
+    For scalar operands, it emit an expression node in AST. For non-scalar operands,
+    it calls libop.sqrt
+
+    Parameters
+    ----------
+    expr : VarRef or Number
+        The operand
+
+    Returns
+    -------
+    VarRef or Number
+        The square root
+    '''
+    if _istensor(expr):
+        from .. import libop
+        return libop.sqrt(expr)
+    if type(expr) in (int, float):
+        return math.sqrt(expr)
+    return ffi.makeSqrt(expr)
+
+
+def exp(expr):
+    '''
+    Natural exponent
+
+    For scalar operands, it emit an expression node in AST. For non-scalar operands,
+    it calls libop.exp
+
+    Parameters
+    ----------
+    expr : VarRef or Number
+        The operand
+
+    Returns
+    -------
+    VarRef or Number
+        The exponent
+    '''
+    if _istensor(expr):
+        from .. import libop
+        return libop.exp(expr)
+    if type(expr) in (int, float):
+        return math.exp(expr)
+    return ffi.makeExp(expr)
+
+
+def square(expr):
+    '''
+    Square
+
+    For scalar operands, it emit an expression node in AST. For non-scalar operands,
+    it calls libop.square
+
+    Parameters
+    ----------
+    expr : VarRef or Number
+        The operand
+
+    Returns
+    -------
+    VarRef or Number
+        The square
+    '''
+    if _istensor(expr):
+        from .. import libop
+        return libop.square(expr)
+    if type(expr) in (int, float):
+        return expr * expr
+    return ffi.makeSquare(expr)
+
+
+def sigmoid(expr):
+    '''
+    Sigmoid
+
+    For scalar operands, it emit an expression node in AST. For non-scalar operands,
+    it calls libop.sigmoid
+
+    Parameters
+    ----------
+    expr : VarRef or Number
+        The operand
+
+    Returns
+    -------
+    VarRef or Number
+        The result
+    '''
+    if _istensor(expr):
+        from .. import libop
+        return libop.sigmoid(expr)
+    return ffi.makeSigmoid(expr)
+
+
+def tanh(expr):
+    '''
+    Hyperbolic tangent
+
+    For scalar operands, it emit an expression node in AST. For non-scalar operands,
+    it calls libop.tanh
+
+    Parameters
+    ----------
+    expr : VarRef or Number
+        The operand
+
+    Returns
+    -------
+    VarRef or Number
+        The result
+    '''
+    if _istensor(expr):
+        from .. import libop
+        return libop.tanh(expr)
+    if type(expr) in (int, float):
+        return math.tanh(expr)
+    return ffi.makeTanh(expr)
+
+
+def floor(expr):
+    '''
+    Round a float down to an interger (towards -inf)
+
+    For scalar operands, it emit an expression node in AST. For non-scalar operands,
+    it calls libop.floor
+
+    Parameters
+    ----------
+    expr : VarRef or Number
+        The operand
+
+    Returns
+    -------
+    VarRef or Number
+        The result
+    '''
+    if _istensor(expr):
+        from .. import libop
+        return libop.floor(expr)
+    return ffi.makeFloor(expr)
+
+
+def ceil(expr):
+    '''
+    Round a float up to an interger (towards +inf)
+
+    For scalar operands, it emit an expression node in AST. For non-scalar operands,
+    it calls libop.ceil
+
+    Parameters
+    ----------
+    expr : VarRef or Number
+        The operand
+
+    Returns
+    -------
+    VarRef or Number
+        The result
+    '''
+    if _istensor(expr):
+        from .. import libop
+        return libop.ceil(expr)
+    return ffi.makeCeil(expr)
 
 
 def if_then_else(cond, then_case, else_case):
@@ -354,281 +993,6 @@ def if_then_else(cond, then_case, else_case):
     if type(cond) is bool:
         return then_case if cond else else_case
     return ffi.makeIfExpr(cond, then_case, else_case)
-
-
-def abs(expr):
-    '''
-    Absolute value
-
-    Parameters
-    ----------
-    expr : VarRef or Number
-        The operand
-
-    Returns
-    -------
-    VarRef or Number
-        The absolute value
-    '''
-    if type(expr) in (int, float):
-        return builtins.abs(expr)
-    return ffi.makeAbs(expr)
-
-
-def l_and(lhs, rhs):
-    '''
-    Logical and of `lhs` and `rhs`
-
-    NOTE: Short-circuit evaluation is NOT supported
-
-    Parameters
-    ----------
-    lhs : VarRef or Number
-        The left-hand-side operand
-    rhs : VarRef or Number
-        The right-hand-side operand
-
-    Returns
-    -------
-    VarRef or Number
-        The logical and
-    '''
-    if type(lhs) is bool and type(rhs) is bool:
-        return lhs and rhs
-    else:
-        return ffi.makeLAnd(lhs, rhs)
-
-
-def l_or(lhs, rhs):
-    '''
-    Logical or of `lhs` and `rhs`
-
-    NOTE: Short-circuit evaluation is NOT supported
-
-    Parameters
-    ----------
-    lhs : VarRef or Number
-        The left-hand-side operand
-    rhs : VarRef or Number
-        The right-hand-side operand
-
-    Returns
-    -------
-    VarRef or Number
-        The logical or
-    '''
-    if type(lhs) is bool and type(rhs) is bool:
-        return lhs or rhs
-    else:
-        return ffi.makeLOr(lhs, rhs)
-
-
-def l_not(expr):
-    '''
-    Logical not
-
-    Parameters
-    ----------
-    expr : VarRef or Number
-        The operand
-
-    Returns
-    -------
-    VarRef or Number
-        The logical not
-    '''
-    if type(expr) is bool:
-        return not expr
-    else:
-        return ffi.makeLNot(expr)
-
-
-def floor_div(lhs, rhs):
-    '''
-    Floored integer division of `lhs` dividing by `rhs`
-
-    The result rounds towards negative infinity (following Python convention, instead of C)
-
-    Parameters
-    ----------
-    lhs : VarRef or Number
-        The left-hand-side operand
-    rhs : VarRef or Number
-        The right-hand-side operand
-
-    Returns
-    -------
-    VarRef or Number
-        The quotient
-    '''
-    if type(lhs) is int and type(rhs) is int:
-        return lhs // rhs
-    return ffi.makeFloorDiv(lhs, rhs)
-
-
-def ceil_div(lhs, rhs):
-    '''
-    Ceiling integer division of `lhs` dividing by `rhs`
-
-    The result rounds towards positive infinity
-
-    Parameters
-    ----------
-    lhs : VarRef or Number
-        The left-hand-side operand
-    rhs : VarRef or Number
-        The right-hand-side operand
-
-    Returns
-    -------
-    VarRef or Number
-        The quotient
-    '''
-    if type(lhs) is int and type(rhs) is int:
-        return lhs // rhs + (lhs % rhs > 0)
-    return ffi.makeCeilDiv(lhs, rhs)
-
-
-def round_towards_0_div(lhs, rhs):
-    '''
-    C-style integer division of `lhs` dividing by `rhs`
-
-    The result rounds towards 0 (following C convention, instead of Python)
-    End users are encouraged to use `lhs // rhs` instead, which follows Python convetion,
-    and enjoys better optimization in FreeTensor
-
-    Parameters
-    ----------
-    lhs : VarRef or Number
-        The left-hand-side operand
-    rhs : VarRef or Number
-        The right-hand-side operand
-
-    Returns
-    -------
-    VarRef or Number
-        The quotient
-    '''
-    return ffi.makeRoundTowards0Div(lhs, rhs)
-
-
-def sqrt(expr):
-    '''
-    Square root
-
-    Parameters
-    ----------
-    expr : VarRef or Number
-        The operand
-
-    Returns
-    -------
-    VarRef or Number
-        The square root
-    '''
-    return ffi.makeSqrt(expr)
-
-
-def exp(expr):
-    '''
-    Natural exponent
-
-    Parameters
-    ----------
-    expr : VarRef or Number
-        The operand
-
-    Returns
-    -------
-    VarRef or Number
-        The exponent
-    '''
-    return ffi.makeExp(expr)
-
-
-def square(expr):
-    '''
-    Square
-
-    Parameters
-    ----------
-    expr : VarRef or Number
-        The operand
-
-    Returns
-    -------
-    VarRef or Number
-        The square
-    '''
-    return ffi.makeSquare(expr)
-
-
-def sigmoid(expr):
-    '''
-    Sigmoid
-
-    Parameters
-    ----------
-    expr : VarRef or Number
-        The operand
-
-    Returns
-    -------
-    VarRef or Number
-        The result
-    '''
-    return ffi.makeSigmoid(expr)
-
-
-def tanh(expr):
-    '''
-    Hyperbolic tangent
-
-    Parameters
-    ----------
-    expr : VarRef or Number
-        The operand
-
-    Returns
-    -------
-    VarRef or Number
-        The result
-    '''
-    return ffi.makeTanh(expr)
-
-
-def floor(expr):
-    '''
-    Round a float down to an interger (towards -inf)
-
-    Parameters
-    ----------
-    expr : VarRef or Number
-        The operand
-
-    Returns
-    -------
-    VarRef or Number
-        The result
-    '''
-    return ffi.makeFloor(expr)
-
-
-def ceil(expr):
-    '''
-    Round a float up to an interger (towards +inf)
-
-    Parameters
-    ----------
-    expr : VarRef or Number
-        The operand
-
-    Returns
-    -------
-    VarRef or Number
-        The result
-    '''
-    return ffi.makeCeil(expr)
 
 
 def cast(expr, dtype):

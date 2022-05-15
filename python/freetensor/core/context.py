@@ -53,7 +53,7 @@ class Context:
             no_deps = self.next_no_deps
         if prefer_libs is None:
             prefer_libs = self.next_prefer_libs
-        from .expr import ceil_div
+        from .expr import ceildiv
         self.append_stmt(
             ffi.makeFor(
                 nid,
@@ -61,7 +61,7 @@ class Context:
                 begin,
                 end,
                 step,
-                ceil_div(end - begin, step),
+                ceildiv(end - begin, step),
                 ffi.ForProperty().with_no_deps(no_deps).with_prefer_libs(
                     prefer_libs),
                 body,

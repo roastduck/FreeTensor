@@ -116,7 +116,7 @@ def test_dynamic_tiled():
     with ft.VarDef("n", (), "int32", "input", "byvalue") as n:
         with ft.Assert(n[()] > 0):
             with ft.VarDef("y", (n[()],), "int32", "output", "cpu") as y:
-                with ft.For("i", 0, ft.ceil_div(n[()], 4)) as i:
+                with ft.For("i", 0, ft.ceildiv(n[()], 4)) as i:
                     with ft.For("j", 0, 4) as j:
                         with ft.If(4 * i + j < n[()]):
                             y[4 * i + j] = 4 * i + j

@@ -5,7 +5,6 @@ import functools
 import numpy as np
 
 import freetensor as ft
-from freetensor import libop
 
 
 def rand(*shape, **kvs):
@@ -41,21 +40,23 @@ def same(lhs, rhs, dtype):
 
 
 @pytest.mark.parametrize('libop_func, torch_func, dtype, ret_dtype', [
-    (libop.add_, operator.add, "float32", "float32"),
-    (libop.sub_, operator.sub, "float32", "float32"),
-    (libop.mul_, operator.mul, "float32", "float32"),
-    (libop.truediv_, operator.truediv, "float32", "float32"),
-    (libop.floordiv_, functools.partial(
-        torch.div, rounding_mode='floor'), "int32", "int32"),
-    (libop.mod_, operator.mod, "int32", "int32"),
-    (libop.l_and_, torch.logical_and, "bool", "bool"),
-    (libop.l_or_, torch.logical_or, "bool", "bool"),
-    (libop.lt_, operator.lt, "int32", "bool"),
-    (libop.le_, operator.le, "int32", "bool"),
-    (libop.gt_, operator.gt, "int32", "bool"),
-    (libop.ge_, operator.ge, "int32", "bool"),
-    (libop.eq_, operator.eq, "int32", "bool"),
-    (libop.ne_, operator.ne, "int32", "bool"),
+    (ft.add_, operator.add, "float32", "float32"),
+    (ft.sub_, operator.sub, "float32", "float32"),
+    (ft.mul_, operator.mul, "float32", "float32"),
+    (ft.truediv_, operator.truediv, "float32", "float32"),
+    (ft.floordiv_, functools.partial(torch.div,
+                                     rounding_mode='floor'), "int32", "int32"),
+    (ft.mod_, operator.mod, "int32", "int32"),
+    (ft.min_, torch.min, "float32", "float32"),
+    (ft.max_, torch.max, "float32", "float32"),
+    (ft.l_and_, torch.logical_and, "bool", "bool"),
+    (ft.l_or_, torch.logical_or, "bool", "bool"),
+    (ft.lt_, operator.lt, "int32", "bool"),
+    (ft.le_, operator.le, "int32", "bool"),
+    (ft.gt_, operator.gt, "int32", "bool"),
+    (ft.ge_, operator.ge, "int32", "bool"),
+    (ft.eq_, operator.eq, "int32", "bool"),
+    (ft.ne_, operator.ne, "int32", "bool"),
 ])
 def test_same_static_shape(libop_func, torch_func, dtype, ret_dtype):
     device = ft.Device(ft.CPU())
@@ -81,21 +82,23 @@ def test_same_static_shape(libop_func, torch_func, dtype, ret_dtype):
 
 
 @pytest.mark.parametrize('libop_func, torch_func, dtype, ret_dtype', [
-    (libop.add_, operator.add, "float32", "float32"),
-    (libop.sub_, operator.sub, "float32", "float32"),
-    (libop.mul_, operator.mul, "float32", "float32"),
-    (libop.truediv_, operator.truediv, "float32", "float32"),
-    (libop.floordiv_, functools.partial(
-        torch.div, rounding_mode='floor'), "int32", "int32"),
-    (libop.mod_, operator.mod, "int32", "int32"),
-    (libop.l_and_, torch.logical_and, "bool", "bool"),
-    (libop.l_or_, torch.logical_or, "bool", "bool"),
-    (libop.lt_, operator.lt, "int32", "bool"),
-    (libop.le_, operator.le, "int32", "bool"),
-    (libop.gt_, operator.gt, "int32", "bool"),
-    (libop.ge_, operator.ge, "int32", "bool"),
-    (libop.eq_, operator.eq, "int32", "bool"),
-    (libop.ne_, operator.ne, "int32", "bool"),
+    (ft.add_, operator.add, "float32", "float32"),
+    (ft.sub_, operator.sub, "float32", "float32"),
+    (ft.mul_, operator.mul, "float32", "float32"),
+    (ft.truediv_, operator.truediv, "float32", "float32"),
+    (ft.floordiv_, functools.partial(torch.div,
+                                     rounding_mode='floor'), "int32", "int32"),
+    (ft.mod_, operator.mod, "int32", "int32"),
+    (ft.min_, torch.min, "float32", "float32"),
+    (ft.max_, torch.max, "float32", "float32"),
+    (ft.l_and_, torch.logical_and, "bool", "bool"),
+    (ft.l_or_, torch.logical_or, "bool", "bool"),
+    (ft.lt_, operator.lt, "int32", "bool"),
+    (ft.le_, operator.le, "int32", "bool"),
+    (ft.gt_, operator.gt, "int32", "bool"),
+    (ft.ge_, operator.ge, "int32", "bool"),
+    (ft.eq_, operator.eq, "int32", "bool"),
+    (ft.ne_, operator.ne, "int32", "bool"),
 ])
 def test_static_broadcast_shorter(libop_func, torch_func, dtype, ret_dtype):
     device = ft.Device(ft.CPU())
@@ -121,21 +124,23 @@ def test_static_broadcast_shorter(libop_func, torch_func, dtype, ret_dtype):
 
 
 @pytest.mark.parametrize('libop_func, torch_func, dtype, ret_dtype', [
-    (libop.add_, operator.add, "float32", "float32"),
-    (libop.sub_, operator.sub, "float32", "float32"),
-    (libop.mul_, operator.mul, "float32", "float32"),
-    (libop.truediv_, operator.truediv, "float32", "float32"),
-    (libop.floordiv_, functools.partial(
-        torch.div, rounding_mode='floor'), "int32", "int32"),
-    (libop.mod_, operator.mod, "int32", "int32"),
-    (libop.l_and_, torch.logical_and, "bool", "bool"),
-    (libop.l_or_, torch.logical_or, "bool", "bool"),
-    (libop.lt_, operator.lt, "int32", "bool"),
-    (libop.le_, operator.le, "int32", "bool"),
-    (libop.gt_, operator.gt, "int32", "bool"),
-    (libop.ge_, operator.ge, "int32", "bool"),
-    (libop.eq_, operator.eq, "int32", "bool"),
-    (libop.ne_, operator.ne, "int32", "bool"),
+    (ft.add_, operator.add, "float32", "float32"),
+    (ft.sub_, operator.sub, "float32", "float32"),
+    (ft.mul_, operator.mul, "float32", "float32"),
+    (ft.truediv_, operator.truediv, "float32", "float32"),
+    (ft.floordiv_, functools.partial(torch.div,
+                                     rounding_mode='floor'), "int32", "int32"),
+    (ft.mod_, operator.mod, "int32", "int32"),
+    (ft.min_, torch.min, "float32", "float32"),
+    (ft.max_, torch.max, "float32", "float32"),
+    (ft.l_and_, torch.logical_and, "bool", "bool"),
+    (ft.l_or_, torch.logical_or, "bool", "bool"),
+    (ft.lt_, operator.lt, "int32", "bool"),
+    (ft.le_, operator.le, "int32", "bool"),
+    (ft.gt_, operator.gt, "int32", "bool"),
+    (ft.ge_, operator.ge, "int32", "bool"),
+    (ft.eq_, operator.eq, "int32", "bool"),
+    (ft.ne_, operator.ne, "int32", "bool"),
 ])
 def test_static_broadcast_1_at_front(libop_func, torch_func, dtype, ret_dtype):
     device = ft.Device(ft.CPU())
@@ -161,21 +166,23 @@ def test_static_broadcast_1_at_front(libop_func, torch_func, dtype, ret_dtype):
 
 
 @pytest.mark.parametrize('libop_func, torch_func, dtype, ret_dtype', [
-    (libop.add_, operator.add, "float32", "float32"),
-    (libop.sub_, operator.sub, "float32", "float32"),
-    (libop.mul_, operator.mul, "float32", "float32"),
-    (libop.truediv_, operator.truediv, "float32", "float32"),
-    (libop.floordiv_, functools.partial(
-        torch.div, rounding_mode='floor'), "int32", "int32"),
-    (libop.mod_, operator.mod, "int32", "int32"),
-    (libop.l_and_, torch.logical_and, "bool", "bool"),
-    (libop.l_or_, torch.logical_or, "bool", "bool"),
-    (libop.lt_, operator.lt, "int32", "bool"),
-    (libop.le_, operator.le, "int32", "bool"),
-    (libop.gt_, operator.gt, "int32", "bool"),
-    (libop.ge_, operator.ge, "int32", "bool"),
-    (libop.eq_, operator.eq, "int32", "bool"),
-    (libop.ne_, operator.ne, "int32", "bool"),
+    (ft.add_, operator.add, "float32", "float32"),
+    (ft.sub_, operator.sub, "float32", "float32"),
+    (ft.mul_, operator.mul, "float32", "float32"),
+    (ft.truediv_, operator.truediv, "float32", "float32"),
+    (ft.floordiv_, functools.partial(torch.div,
+                                     rounding_mode='floor'), "int32", "int32"),
+    (ft.mod_, operator.mod, "int32", "int32"),
+    (ft.min_, torch.min, "float32", "float32"),
+    (ft.max_, torch.max, "float32", "float32"),
+    (ft.l_and_, torch.logical_and, "bool", "bool"),
+    (ft.l_or_, torch.logical_or, "bool", "bool"),
+    (ft.lt_, operator.lt, "int32", "bool"),
+    (ft.le_, operator.le, "int32", "bool"),
+    (ft.gt_, operator.gt, "int32", "bool"),
+    (ft.ge_, operator.ge, "int32", "bool"),
+    (ft.eq_, operator.eq, "int32", "bool"),
+    (ft.ne_, operator.ne, "int32", "bool"),
 ])
 def test_static_broadcast_1_at_back(libop_func, torch_func, dtype, ret_dtype):
     device = ft.Device(ft.CPU())
@@ -201,16 +208,18 @@ def test_static_broadcast_1_at_back(libop_func, torch_func, dtype, ret_dtype):
 
 
 @pytest.mark.parametrize('libop_func, torch_func, dtype1, dtype2, ret_dtype', [
-    (libop.add_, operator.add, "float32", "int32", "float32"),
-    (libop.sub_, operator.sub, "float32", "int32", "float32"),
-    (libop.mul_, operator.mul, "float32", "int32", "float32"),
-    (libop.truediv_, operator.truediv, "float32", "int32", "float32"),
-    (libop.lt_, operator.lt, "float32", "int32", "bool"),
-    (libop.le_, operator.le, "float32", "int32", "bool"),
-    (libop.gt_, operator.gt, "float32", "int32", "bool"),
-    (libop.ge_, operator.ge, "float32", "int32", "bool"),
-    (libop.eq_, operator.eq, "float32", "int32", "bool"),
-    (libop.ne_, operator.ne, "float32", "int32", "bool"),
+    (ft.add_, operator.add, "float32", "int32", "float32"),
+    (ft.sub_, operator.sub, "float32", "int32", "float32"),
+    (ft.mul_, operator.mul, "float32", "int32", "float32"),
+    (ft.truediv_, operator.truediv, "float32", "int32", "float32"),
+    (ft.min_, torch.min, "float32", "int32", "float32"),
+    (ft.max_, torch.max, "float32", "int32", "float32"),
+    (ft.lt_, operator.lt, "float32", "int32", "bool"),
+    (ft.le_, operator.le, "float32", "int32", "bool"),
+    (ft.gt_, operator.gt, "float32", "int32", "bool"),
+    (ft.ge_, operator.ge, "float32", "int32", "bool"),
+    (ft.eq_, operator.eq, "float32", "int32", "bool"),
+    (ft.ne_, operator.ne, "float32", "int32", "bool"),
 ])
 def test_different_dtype(libop_func, torch_func, dtype1, dtype2, ret_dtype):
     device = ft.Device(ft.CPU())
@@ -236,21 +245,23 @@ def test_different_dtype(libop_func, torch_func, dtype1, dtype2, ret_dtype):
 
 
 @pytest.mark.parametrize('libop_func, torch_func, dtype, ret_dtype', [
-    (libop.add, operator.add, "float32", "float32"),
-    (libop.sub, operator.sub, "float32", "float32"),
-    (libop.mul, operator.mul, "float32", "float32"),
-    (libop.truediv, operator.truediv, "float32", "float32"),
-    (libop.floordiv, functools.partial(
-        torch.div, rounding_mode='floor'), "int32", "int32"),
-    (libop.mod, operator.mod, "int32", "int32"),
-    (libop.l_and, torch.logical_and, "bool", "bool"),
-    (libop.l_or, torch.logical_or, "bool", "bool"),
-    (libop.lt, operator.lt, "int32", "bool"),
-    (libop.le, operator.le, "int32", "bool"),
-    (libop.gt, operator.gt, "int32", "bool"),
-    (libop.ge, operator.ge, "int32", "bool"),
-    (libop.eq, operator.eq, "int32", "bool"),
-    (libop.ne, operator.ne, "int32", "bool"),
+    (ft.add, operator.add, "float32", "float32"),
+    (ft.sub, operator.sub, "float32", "float32"),
+    (ft.mul, operator.mul, "float32", "float32"),
+    (ft.truediv, operator.truediv, "float32", "float32"),
+    (ft.floordiv, functools.partial(torch.div,
+                                    rounding_mode='floor'), "int32", "int32"),
+    (ft.mod, operator.mod, "int32", "int32"),
+    (ft.min, torch.min, "float32", "float32"),
+    (ft.max, torch.max, "float32", "float32"),
+    (ft.l_and, torch.logical_and, "bool", "bool"),
+    (ft.l_or, torch.logical_or, "bool", "bool"),
+    (ft.lt, operator.lt, "int32", "bool"),
+    (ft.le, operator.le, "int32", "bool"),
+    (ft.gt, operator.gt, "int32", "bool"),
+    (ft.ge, operator.ge, "int32", "bool"),
+    (ft.eq, operator.eq, "int32", "bool"),
+    (ft.ne, operator.ne, "int32", "bool"),
 ])
 def test_out_of_place(libop_func, torch_func, dtype, ret_dtype):
     device = ft.Device(ft.CPU())
