@@ -9,6 +9,12 @@
 - MKL (Optional)
 - Java (Build-time dependency only)
 
+Python dependencies:
+
+```sh
+pip3 install --user numpy sourceinspect astor Pygments xgboost
+```
+
 ## Build
 
 First, clone this repo. Don't forget there are some submodules.
@@ -79,3 +85,26 @@ PYTHONPATH=../python:../build:$PYTHONPATH pytest -s 0.hello_world/test_basic.py:
     PYTHONPATH=../python:../build:$PYTHONPATH LD_PRELOAD=`gcc -print-file-name=libasan.so` pytest -s
     ```
 
+## Build this Document
+
+First install some dependencies:
+
+```sh
+pip3 install --user mkdocs mkdocstrings "pytkdocs[numpy-style]"
+```
+
+From the root directory of FreeTensor, run a HTTP server to serve the document (recommended):
+
+```sh
+PYTHONPATH=./python:./build:$PYTHONPATH mkdocs serve
+```
+
+Or build and save the pages:
+
+```sh
+PYTHONPATH=./python:./build:$PYTHONPATH mkdocs build
+```
+
+!!! note "Publish the documents to GitHub Pages (for developers)"
+
+    `PYTHONPATH=./python:./build:$PYTHONPATH mkdocs gh-deploy`
