@@ -9,7 +9,7 @@ namespace freetensor {
 
 class PrintVisitor : public CodeGen<CodeGenStream> {
     bool printAllId_ = false, pretty_ = false;
-    std::unordered_set<std::string> keywords = {
+    const std::unordered_set<std::string> keywords = {
         "if", "else", "for", "in", "assert", "assume", "func", "true", "false",
     };
 
@@ -21,7 +21,14 @@ class PrintVisitor : public CodeGen<CodeGenStream> {
     void recur(const Expr &op);
     void recur(const Stmt &op);
     void printId(const Stmt &op);
-    std::string printName(const std::string &name);
+    
+    std::string escape(const std::string &name);
+    std::string prettyIterName(const std::string &name);
+    std::string prettyVarDefName(const std::string &name);
+    std::string prettyFuncName(const std::string &name);
+    std::string prettyId(const std::string &id);
+    std::string prettyLiteral(const std::string &lit);
+    std::string prettyKeyword(const std::string &kw);
 
   protected:
     void visitStmt(const Stmt &op) override;

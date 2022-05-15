@@ -9,10 +9,59 @@
 
 namespace freetensor {
 
-constexpr const char *MAGENTA = "\u001b[35;1m";
-constexpr const char *CYAN = "\u001b[36m";
-constexpr const char *RESET = "\u001b[0m";
-constexpr const char *BOLD = "\u001b[1m";
+using namespace std::string_literals;
+#define MAGENTA "\u001b[35m"s
+#define CYAN "\u001b[36m"s
+#define BLUE "\u001b[34m"s
+#define UNDERLINE "\u001b[4m"s
+#define RESET "\u001b[0m"s
+#define BOLD "\u001b[1m"s
+
+std::string PrintVisitor::prettyIterName(const std::string &name) {
+    auto escaped = escape(name);
+    if (pretty_)
+        return UNDERLINE + escaped + RESET;
+    else
+        return escaped;
+}
+
+std::string PrintVisitor::prettyVarDefName(const std::string &name) {
+    auto escaped = escape(name);
+    if (pretty_)
+        return BOLD + escaped + RESET;
+    else
+        return escaped;
+}
+
+std::string PrintVisitor::prettyFuncName(const std::string &name) {
+    auto escaped = escape(name);
+    if (pretty_)
+        return BOLD + escaped + RESET;
+    else
+        return escaped;
+}
+
+std::string PrintVisitor::prettyId(const std::string &id) {
+    auto escaped = escape(id);
+    if (pretty_)
+        return CYAN + escaped + RESET;
+    else
+        return escaped;
+}
+
+std::string PrintVisitor::prettyLiteral(const std::string &lit) {
+    if (pretty_)
+        return MAGENTA + lit + RESET;
+    else
+        return lit;
+}
+
+std::string PrintVisitor::prettyKeyword(const std::string &kw) {
+    if (pretty_)
+        return BLUE + BOLD + kw + RESET;
+    else
+        return kw;
+}
 
 void PrintVisitor::recur(const Expr &op) {
     if (op.isValid()) {
@@ -37,32 +86,28 @@ void PrintVisitor::printId(const Stmt &op) {
     os() << "// By " << op->debugCreator_ << std::endl;
 #endif
     if (printAllId_ || op->hasNamedId()) {
-        if (pretty_) {
-            os() << CYAN << printName(::freetensor::toString(op->id())) << ":"
-                 << RESET << std::endl;
-        } else {
-            os() << printName(::freetensor::toString(op->id())) << ":"
-                 << std::endl;
-        }
+        makeIndent();
+        os() << prettyId(::freetensor::toString(op->id())) << ":" << std::endl;
     }
 }
 
-std::string PrintVisitor::printName(const std::string &name) {
+std::string PrintVisitor::escape(const std::string &name) {
     ASSERT(!name.empty());
-    if (keywords.count(name)) {
-        goto escape;
-    }
-    if (!isalpha(name[0]) && name[0] != '_') {
-        goto escape;
-    }
-    for (size_t i = 1, n = name.length(); i < n; i++) {
-        if (!isalnum(name[i]) && name[i] != '_') {
-            goto escape;
-        }
-    }
-    return name;
-escape:
-    return '`' + name + '`';
+
+    bool should_escape = false;
+    if (keywords.count(name))
+        should_escape = true;
+    else if (!isalpha(name[0]) && name[0] != '_')
+        should_escape = true;
+    else
+        for (size_t i = 1, n = name.length(); i < n; i++)
+            if (!isalnum(name[i]) && name[i] != '_')
+                should_escape = true;
+
+    if (should_escape)
+        return '`' + name + '`';
+    else
+        return name;
 }
 
 void PrintVisitor::visitStmt(const Stmt &op) {
@@ -74,9 +119,9 @@ void PrintVisitor::visitStmt(const Stmt &op) {
 
 void PrintVisitor::visit(const Func &op) {
     makeIndent();
-    os() << "func " << printName(op->name_) << "(";
+    os() << "func " << prettyFuncName(op->name_) << "(";
     for (auto &&[i, param] : iter::enumerate(op->params_)) {
-        os() << (i > 0 ? ", " : "") << printName(param);
+        os() << (i > 0 ? ", " : "") << prettyVarDefName(param);
         if (op->closure_.count(param)) {
             os() << " @!closure /* " << op->closure_.at(param).get() << " */";
         }
@@ -86,7 +131,7 @@ void PrintVisitor::visit(const Func &op) {
         os() << "-> ";
         for (auto &&[i, ret] : iter::enumerate(op->returns_)) {
             auto &&[name, dtype] = ret;
-            os() << (i > 0 ? ", " : "") << printName(name) << ": "
+            os() << (i > 0 ? ", " : "") << prettyVarDefName(name) << ": "
                  << ::freetensor::toString(dtype);
             if (op->closure_.count(name)) {
                 os() << " @!closure /* " << op->closure_.at(name).get()
@@ -127,7 +172,7 @@ void PrintVisitor::visit(const VarDef &op) {
     makeIndent();
     os() << "@" << ::freetensor::toString(op->buffer_->atype()) << " @"
          << ::freetensor::toString(op->buffer_->mtype()) << " "
-         << printName(op->name_) << ": ";
+         << prettyVarDefName(op->name_) << ": ";
     auto &&tensor = op->buffer_->tensor();
     os() << ::freetensor::toString(tensor->dtype()) << "[";
     printList(tensor->shape());
@@ -148,13 +193,13 @@ void PrintVisitor::visit(const VarDef &op) {
 }
 
 void PrintVisitor::visit(const Var &op) {
-    os() << printName(op->name_);
+    os() << prettyIterName(op->name_);
     Visitor::visit(op);
 }
 
 void PrintVisitor::visit(const Store &op) {
     makeIndent();
-    os() << printName(op->var_) << "[";
+    os() << prettyVarDefName(op->var_) << "[";
     printList(op->indices_);
     os() << "] = ";
     recur(op->expr_);
@@ -162,7 +207,7 @@ void PrintVisitor::visit(const Store &op) {
 }
 
 void PrintVisitor::visit(const Load &op) {
-    os() << printName(op->var_) << "[";
+    os() << prettyVarDefName(op->var_) << "[";
     printList(op->indices_);
     os() << "]";
 }
@@ -173,7 +218,7 @@ void PrintVisitor::visit(const ReduceTo &op) {
         os() << "@!atomic" << std::endl;
     }
     makeIndent();
-    os() << printName(op->var_) << "[";
+    os() << prettyVarDefName(op->var_) << "[";
     printList(op->indices_);
     os() << "] ";
     switch (op->op_) {
@@ -204,27 +249,15 @@ void PrintVisitor::visit(const ReduceTo &op) {
 }
 
 void PrintVisitor::visit(const IntConst &op) {
-    if (pretty_) {
-        os() << MAGENTA << std::to_string(op->val_) << RESET;
-    } else {
-        os() << std::to_string(op->val_);
-    }
+    os() << prettyLiteral(std::to_string(op->val_)) << RESET;
 }
 
 void PrintVisitor::visit(const FloatConst &op) {
-    if (pretty_) {
-        os() << MAGENTA << std::to_string(op->val_) << RESET;
-    } else {
-        os() << std::to_string(op->val_);
-    }
+    os() << prettyLiteral(std::to_string(op->val_)) << RESET;
 }
 
 void PrintVisitor::visit(const BoolConst &op) {
-    if (pretty_) {
-        os() << MAGENTA << (op->val_ ? "true" : "false") << RESET;
-    } else {
-        os() << (op->val_ ? "true" : "false");
-    }
+    os() << prettyLiteral(op->val_ ? "true" : "false") << RESET;
 }
 
 void PrintVisitor::visit(const Add &op) {
@@ -454,7 +487,7 @@ void PrintVisitor::visit(const For &op) {
         os() << "@!no_deps : ";
         for (auto &&[i, var] : iter::enumerate(op->property_->noDeps_)) {
             os() << (i == 0 ? "" : ", ");
-            os() << printName(var);
+            os() << prettyVarDefName(var);
         }
         os() << std::endl;
     }
@@ -484,7 +517,7 @@ void PrintVisitor::visit(const For &op) {
         }
         os() << ": ";
 
-        os() << printName(reduction->var_);
+        os() << prettyVarDefName(reduction->var_);
         for (auto &&[b, e] : iter::zip(reduction->begins_, reduction->ends_)) {
             os() << "[";
             (*this)(b);
@@ -507,11 +540,7 @@ void PrintVisitor::visit(const For &op) {
         os() << "@!prefer_libs" << std::endl;
     }
     makeIndent();
-    if (pretty_) {
-        os() << BOLD << "for " << RESET << op->iter_ << " in ";
-    } else {
-        os() << "for " << op->iter_ << " in ";
-    }
+    os() << prettyKeyword("for ") << prettyIterName(op->iter_) << prettyKeyword(" in ");
     recur(op->begin_);
     os() << " : ";
     recur(op->end_);
@@ -527,11 +556,7 @@ void PrintVisitor::visit(const For &op) {
 
 void PrintVisitor::visit(const If &op) {
     makeIndent();
-    if (pretty_) {
-        os() << BOLD << "if " << RESET;
-    } else {
-        os() << "if ";
-    }
+    os() << prettyKeyword("if ");
     recur(op->cond_);
     os() << " ";
     beginBlock();
@@ -539,11 +564,7 @@ void PrintVisitor::visit(const If &op) {
     endBlock();
     if (op->elseCase_.isValid()) {
         makeIndent();
-        if (pretty_) {
-            os() << BOLD << "else " << RESET;
-        } else {
-            os() << "else ";
-        }
+        os() << prettyKeyword("else ");
         beginBlock();
         recur(op->elseCase_);
         endBlock();
