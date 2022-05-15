@@ -27,7 +27,7 @@ Here is a basic example program in FreeTensor. You write a Python function that 
 
 To write such a function, you need to follow some basic concept described in this page.
 
-# Declare and Define Tensors
+## Declare and Define Tensors
 
 All tensors, including function parameters, intermediate tensors and return values should be properly declared or defined.
 
@@ -37,7 +37,7 @@ Intermediate and returning tensors can be created by [`ft.empty`](/api/#freetens
 
 All tensors and their slices are implemented by an internal [`ft.VarRef`](/api/#freetensor.core.expr.VarRef) type. If you are looking for a tensor's API, `ft.VarRef` is the right place.
 
-# Dynamic or Static
+## Dynamic or Static
 
 Another concept is that statements and expressions in your program are divided into two categories: *dynamic* and *static*. Dynamic statements or expressions are restricted to a small subset of Python, and are *compiled* to native code. Static statements or expressions can be any Python statements or expressions, and are executed *before* compilation. In other words, static statements or expressions are like macros or templates in C++, while dynamic ones are actually quotations in [Multi-Stage Programming](https://en.wikipedia.org/wiki/Multi-stage_programming).
 
