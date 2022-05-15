@@ -264,6 +264,14 @@ class VarRef(ffi.FrontendVar):
             return libop.neg(self)
         return 0 - self.as_load()
 
+    def __matmul__(self, other):
+        from .. import libop
+        return libop.matmul(self, other)
+
+    def __rmatmul__(self, other):
+        from .. import libop
+        return libop.matmul(other, self)
+
 
 def _istensor(x):
     return type(x) is VarRef and x.ndim > 0
