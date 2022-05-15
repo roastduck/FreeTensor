@@ -268,11 +268,11 @@ for returns [Stmt node]
     ;
 
 if returns [Stmt node]
-    : IF '(' cond=expr ')' '{' thenCase=stmts '}'
+    : IF cond=expr '{' thenCase=stmts '}'
       {
         $node = makeIf(ID(), $cond.node, $thenCase.node);
       }
-    | IF '(' cond=expr ')' '{' thenCase=stmts '}' ELSE '{' elseCase=stmts '}'
+    | IF cond=expr '{' thenCase=stmts '}' ELSE '{' elseCase=stmts '}'
       {
         $node = makeIf(ID(), $cond.node, $thenCase.node, $elseCase.node);
       }

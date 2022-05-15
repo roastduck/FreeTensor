@@ -261,224 +261,252 @@ void PrintVisitor::visit(const BoolConst &op) {
 }
 
 void PrintVisitor::visit(const Add &op) {
-    os() << "(";
-    recur(op->lhs_);
-    os() << " + ";
-    recur(op->rhs_);
-    os() << ")";
+    priority_enclose(Priority::ADD, [&] {
+        recur(op->lhs_);
+        os() << " + ";
+        recur(op->rhs_);
+    });
 }
 
 void PrintVisitor::visit(const Sub &op) {
-    os() << "(";
-    recur(op->lhs_);
-    os() << " - ";
-    recur(op->rhs_);
-    os() << ")";
+    priority_enclose(Priority::ADD, [&] {
+        recur(op->lhs_);
+        os() << " - ";
+        recur(op->rhs_);
+    });
 }
 
 void PrintVisitor::visit(const Mul &op) {
-    os() << "(";
-    recur(op->lhs_);
-    os() << " * ";
-    recur(op->rhs_);
-    os() << ")";
+    priority_enclose(Priority::MUL, [&] {
+        recur(op->lhs_);
+        os() << " * ";
+        recur(op->rhs_);
+    });
 }
 
 void PrintVisitor::visit(const RealDiv &op) {
-    os() << "(";
-    recur(op->lhs_);
-    os() << " / ";
-    recur(op->rhs_);
-    os() << ")";
+    priority_enclose(Priority::MUL, [&] {
+        recur(op->lhs_);
+        os() << " / ";
+        recur(op->rhs_);
+    });
 }
 
 void PrintVisitor::visit(const FloorDiv &op) {
-    os() << "@!floor(";
-    recur(op->lhs_);
-    os() << " / ";
-    recur(op->rhs_);
-    os() << ")";
+    priority_new([&] {
+        os() << "@!floor(";
+        recur(op->lhs_);
+        os() << " / ";
+        recur(op->rhs_);
+        os() << ")";
+    }, Priority::MUL);
 }
 
 void PrintVisitor::visit(const CeilDiv &op) {
-    os() << "@!ceil(";
-    recur(op->lhs_);
-    os() << " / ";
-    recur(op->rhs_);
-    os() << ")";
+    priority_new([&] {
+        os() << "@!ceil(";
+        recur(op->lhs_);
+        os() << " / ";
+        recur(op->rhs_);
+        os() << ")";
+    }, Priority::MUL);
 }
 
 void PrintVisitor::visit(const RoundTowards0Div &op) {
-    os() << "@!towards0(";
-    recur(op->lhs_);
-    os() << " / ";
-    recur(op->rhs_);
-    os() << ")";
+    priority_new([&] {
+        os() << "@!towards0(";
+        recur(op->lhs_);
+        os() << " / ";
+        recur(op->rhs_);
+        os() << ")";
+    }, Priority::MUL);
 }
 
 void PrintVisitor::visit(const Mod &op) {
-    os() << "(";
-    recur(op->lhs_);
-    os() << " % ";
-    recur(op->rhs_);
-    os() << ")";
+    priority_enclose(Priority::MUL, [&] {
+        recur(op->lhs_);
+        os() << " % ";
+        recur(op->rhs_);
+    });
 }
 
 void PrintVisitor::visit(const Remainder &op) {
-    os() << "(";
-    recur(op->lhs_);
-    os() << " %% ";
-    recur(op->rhs_);
-    os() << ")";
+    priority_enclose(Priority::MUL, [&] {
+        recur(op->lhs_);
+        os() << " %% ";
+        recur(op->rhs_);
+    });
 }
 
 void PrintVisitor::visit(const Min &op) {
-    os() << "@!min(";
-    recur(op->lhs_);
-    os() << ", ";
-    recur(op->rhs_);
-    os() << ")";
+    priority_new([&] {
+        os() << "@!min(";
+        recur(op->lhs_);
+        os() << ", ";
+        recur(op->rhs_);
+        os() << ")";
+    });
 }
 
 void PrintVisitor::visit(const Max &op) {
-    os() << "@!max(";
-    recur(op->lhs_);
-    os() << ", ";
-    recur(op->rhs_);
-    os() << ")";
+    priority_new([&] {
+        os() << "@!max(";
+        recur(op->lhs_);
+        os() << ", ";
+        recur(op->rhs_);
+        os() << ")";
+    });
 }
 
 void PrintVisitor::visit(const LT &op) {
-    os() << "(";
-    recur(op->lhs_);
-    os() << " < ";
-    recur(op->rhs_);
-    os() << ")";
+    priority_enclose(Priority::COMP, [&] {
+        recur(op->lhs_);
+        os() << " < ";
+        recur(op->rhs_);
+    });
 }
 
 void PrintVisitor::visit(const LE &op) {
-    os() << "(";
-    recur(op->lhs_);
-    os() << " <= ";
-    recur(op->rhs_);
-    os() << ")";
+    priority_enclose(Priority::COMP, [&] {
+        recur(op->lhs_);
+        os() << " <= ";
+        recur(op->rhs_);
+    });
 }
 
 void PrintVisitor::visit(const GT &op) {
-    os() << "(";
-    recur(op->lhs_);
-    os() << " > ";
-    recur(op->rhs_);
-    os() << ")";
+    priority_enclose(Priority::COMP, [&] {
+        recur(op->lhs_);
+        os() << " > ";
+        recur(op->rhs_);
+    });
 }
 
 void PrintVisitor::visit(const GE &op) {
-    os() << "(";
-    recur(op->lhs_);
-    os() << " >= ";
-    recur(op->rhs_);
-    os() << ")";
+    priority_enclose(Priority::COMP, [&] {
+        recur(op->lhs_);
+        os() << " >= ";
+        recur(op->rhs_);
+    });
 }
 
 void PrintVisitor::visit(const EQ &op) {
-    os() << "(";
-    recur(op->lhs_);
-    os() << " == ";
-    recur(op->rhs_);
-    os() << ")";
+    priority_enclose(Priority::COMP, [&] {
+        recur(op->lhs_);
+        os() << " == ";
+        recur(op->rhs_);
+    });
 }
 
 void PrintVisitor::visit(const NE &op) {
-    os() << "(";
-    recur(op->lhs_);
-    os() << " != ";
-    recur(op->rhs_);
-    os() << ")";
+    priority_enclose(Priority::COMP, [&] {
+        recur(op->lhs_);
+        os() << " != ";
+        recur(op->rhs_);
+    });
 }
 
 void PrintVisitor::visit(const LAnd &op) {
-    os() << "(";
-    recur(op->lhs_);
-    os() << " && ";
-    recur(op->rhs_);
-    os() << ")";
+    priority_enclose(Priority::BINARY_LOGIC, [&] {
+        recur(op->lhs_);
+        os() << " && ";
+        recur(op->rhs_);
+    });
 }
 
 void PrintVisitor::visit(const LOr &op) {
-    os() << "(";
-    recur(op->lhs_);
-    os() << " || ";
-    recur(op->rhs_);
-    os() << ")";
+    priority_enclose(Priority::BINARY_LOGIC, [&] {
+        recur(op->lhs_);
+        os() << " || ";
+        recur(op->rhs_);
+    });
 }
 
 void PrintVisitor::visit(const LNot &op) {
     os() << "!";
-    recur(op->expr_);
+    priority_enclose(Priority::UNARY_LOGIC, [&] { recur(op->expr_); });
 }
 
 void PrintVisitor::visit(const Sqrt &op) {
-    os() << "@!sqrt(";
-    recur(op->expr_);
-    os() << ")";
+    priority_new([&] {
+        os() << "@!sqrt(";
+        recur(op->expr_);
+        os() << ")";
+    });
 }
 
 void PrintVisitor::visit(const Exp &op) {
-    os() << "@!exp(";
-    recur(op->expr_);
-    os() << ")";
+    priority_new([&] {
+        os() << "@!exp(";
+        recur(op->expr_);
+        os() << ")";
+    });
 }
 
 void PrintVisitor::visit(const Square &op) {
-    os() << "@!square(";
-    recur(op->expr_);
-    os() << ")";
+    priority_new([&] {
+        os() << "@!square(";
+        recur(op->expr_);
+        os() << ")";
+    });
 }
 
 void PrintVisitor::visit(const Sigmoid &op) {
-    os() << "@!sigmoid(";
-    recur(op->expr_);
-    os() << ")";
+    priority_new([&] {
+        os() << "@!sigmoid(";
+        recur(op->expr_);
+        os() << ")";
+    });
 }
 
 void PrintVisitor::visit(const Tanh &op) {
-    os() << "@!tanh(";
-    recur(op->expr_);
-    os() << ")";
+    priority_new([&] {
+        os() << "@!tanh(";
+        recur(op->expr_);
+        os() << ")";
+    });
 }
 
 void PrintVisitor::visit(const Abs &op) {
-    os() << "@!abs(";
-    recur(op->expr_);
-    os() << ")";
+    priority_new([&] {
+        os() << "@!abs(";
+        recur(op->expr_);
+        os() << ")";
+    });
 }
 
 void PrintVisitor::visit(const Floor &op) {
-    os() << "@!floor(";
-    recur(op->expr_);
-    os() << ")";
+    priority_new([&] {
+        os() << "@!floor(";
+        recur(op->expr_);
+        os() << ")";
+    });
 }
 
 void PrintVisitor::visit(const Ceil &op) {
-    os() << "@!ceil(";
-    recur(op->expr_);
-    os() << ")";
+    priority_new([&] {
+        os() << "@!ceil(";
+        recur(op->expr_);
+        os() << ")";
+    });
 }
 
 void PrintVisitor::visit(const IfExpr &op) {
-    os() << "(";
-    recur(op->cond_);
-    os() << " ? ";
-    recur(op->thenCase_);
-    os() << " : ";
-    recur(op->elseCase_);
-    os() << ")";
+    priority_enclose(Priority::TRINARY, [&] {
+        recur(op->cond_);
+        os() << " ? ";
+        recur(op->thenCase_);
+        os() << " : ";
+        recur(op->elseCase_);
+    });
 }
 
 void PrintVisitor::visit(const Cast &op) {
-    os() << ::freetensor::toString(op->dtype_) << "(";
-    recur(op->expr_);
-    os() << ")";
+    priority_new([&] {
+        os() << ::freetensor::toString(op->dtype_) << "(";
+        recur(op->expr_);
+        os() << ")";
+    });
 }
 
 void PrintVisitor::visit(const For &op) {
@@ -540,7 +568,8 @@ void PrintVisitor::visit(const For &op) {
         os() << "@!prefer_libs" << std::endl;
     }
     makeIndent();
-    os() << prettyKeyword("for ") << prettyIterName(op->iter_) << prettyKeyword(" in ");
+    os() << prettyKeyword("for ") << prettyIterName(op->iter_)
+         << prettyKeyword(" in ");
     recur(op->begin_);
     os() << " : ";
     recur(op->end_);
