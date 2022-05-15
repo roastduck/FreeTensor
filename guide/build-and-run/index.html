@@ -61,6 +61,8 @@
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#run-the-tests">Run the Tests</a>
     </li>
+    <li class="toctree-l2"><a class="reference internal" href="#build-this-document">Build this Document</a>
+    </li>
     </ul>
                   </li>
               </ul>
@@ -103,6 +105,9 @@
 <li>MKL (Optional)</li>
 <li>Java (Build-time dependency only)</li>
 </ul>
+<p>Python dependencies:</p>
+<pre><code class="language-sh">pip3 install --user numpy sourceinspect astor Pygments xgboost
+</code></pre>
 <h2 id="build">Build</h2>
 <p>First, clone this repo. Don't forget there are some submodules.</p>
 <pre><code class="language-sh">git clone --recursive &lt;path-to-this-repo&gt;
@@ -141,6 +146,20 @@ make -j  # Or use Ninja
 <p><code>PYTHONPATH=../python:../build:$PYTHONPATH PYTHONMALLOC=malloc valgrind python3 -m pytest</code></p>
 <p>Sometimes Valgrind is not enough to detect some errors. An alternative is to use the sanitizer from GCC. To use it, first edit <code>CMakeLists.txt</code> to add a <code>-fsanitize=address</code> compiler flag (or other mode like <code>-fsanitize=undefined</code>), then:</p>
 <p><code>PYTHONPATH=../python:../build:$PYTHONPATH LD_PRELOAD=`gcc -print-file-name=libasan.so` pytest -s</code></p>
+</div>
+<h2 id="build-this-document">Build this Document</h2>
+<p>First install some dependencies:</p>
+<pre><code class="language-sh">pip3 install --user mkdocs mkdocstrings &quot;pytkdocs[numpy-style]&quot;
+</code></pre>
+<p>From the root directory of FreeTensor, run a HTTP server to serve the document (recommended):</p>
+<pre><code class="language-sh">PYTHONPATH=./python:./build:$PYTHONPATH mkdocs serve
+</code></pre>
+<p>Or build and save the pages:</p>
+<pre><code class="language-sh">PYTHONPATH=./python:./build:$PYTHONPATH mkdocs build
+</code></pre>
+<div class="admonition note">
+<p class="admonition-title">Publish the documents to GitHub Pages (for developers)</p>
+<p><code>PYTHONPATH=./python:./build:$PYTHONPATH mkdocs gh-deploy</code></p>
 </div>
               
             </div>
