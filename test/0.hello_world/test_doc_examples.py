@@ -124,3 +124,57 @@ def test_dynamic_and_static():
     print(y)
 
     assert np.array_equal(y, [6, 9, 12, 15])
+
+
+def test_parallel_vector_add():
+    # Used in docs/guide/schedules.md
+
+    import freetensor as ft
+    import numpy as np
+
+    n = 4
+
+    # Add verbose=1 to see the resulting native code
+    @ft.optimize(schedule_callback=lambda s: s.parallelize('Li', 'openmp')
+                )  # <-- 2. Apply the schedule
+    def test(a: ft.Var[(n,), "int32"], b: ft.Var[(4,), "int32"]):
+        y = ft.empty((n,), "int32")
+        #! nid: Li  # <-- 1. Name the loop as Li
+        for i in range(n):
+            y[i] = a[i] + b[i]
+        return y
+
+    y = test(np.array([1, 2, 3, 4], dtype="int32"),
+             np.array([2, 3, 4, 5], dtype="int32")).numpy()
+    print(y)
+
+    assert np.array_equal(y, [3, 5, 7, 9])
+
+
+def test_split_and_parallel_vector_add():
+    # Used in docs/guide/schedules.md
+
+    import freetensor as ft
+    import numpy as np
+
+    n = 1024
+
+    def sch(s):
+        outer, inner = s.split('Li', 32)
+        s.parallelize(outer, 'openmp')
+
+    # Set verbose=1 to see the resulting native code
+    # Set verbose=2 to see the code after EVERY schedule
+    @ft.optimize(schedule_callback=sch)
+    def test(a: ft.Var[(n,), "int32"], b: ft.Var[(4,), "int32"]):
+        y = ft.empty((n,), "int32")
+        #! nid: Li
+        for i in range(n):
+            y[i] = a[i] + b[i]
+        return y
+
+    y = test(np.array(np.arange(1024), dtype="int32"),
+             np.array(np.arange(1024), dtype="int32")).numpy()
+    print(y)
+
+    assert np.array_equal(y, np.arange(0, 2048, 2))

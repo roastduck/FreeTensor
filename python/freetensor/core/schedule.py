@@ -565,7 +565,7 @@ class Schedule(ffi.Schedule):
 
     def auto_schedule(self, target):
         """
-        Automatic scheduling using some heuristics
+        (Experimental) Automatic scheduling using some heuristics
 
         Parameters
         ----------
@@ -576,7 +576,7 @@ class Schedule(ffi.Schedule):
 
     def auto_use_lib(self, target):
         """
-        Automatically use external libs using some heuristics
+        (Experimental) Automatically use external libs using some heuristics
 
         Parameters
         ----------
@@ -587,7 +587,7 @@ class Schedule(ffi.Schedule):
 
     def auto_fuse(self, target):
         """
-        Automatically fuse consecutive loops using some heuristics
+        (Experimental) Automatically fuse consecutive loops using some heuristics
 
         Parameters
         ----------
@@ -598,7 +598,7 @@ class Schedule(ffi.Schedule):
 
     def auto_parallelize(self, target):
         """
-        Automatically parallelize some loops using some heuristics
+        (Experimental) Automatically parallelize some loops using some heuristics
 
         Parameters
         ----------
@@ -609,7 +609,7 @@ class Schedule(ffi.Schedule):
 
     def auto_set_mem_type(self, target):
         """
-        Automatically set memory types using some heuristics
+        (Experimental) Automatically set memory types using some heuristics
 
         Parameters
         ----------
@@ -620,7 +620,7 @@ class Schedule(ffi.Schedule):
 
     def auto_unroll(self, target):
         """
-        Automatically unroll loops using some heuristics
+        (Experimental) Automatically unroll loops using some heuristics
 
         Parameters
         ----------

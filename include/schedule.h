@@ -466,42 +466,42 @@ class Schedule {
     void asMatMul(const ID &loop);
 
     /**
-     * Automatic scheduling using some heuristics
+     * (Experimental) Automatic scheduling using some heuristics
      *
      * @param target : Target architecture
      */
     void autoSchedule(const Target &target);
 
     /**
-     * Automatically use external libs using some heuristics
+     * (Experimental) Automatically use external libs using some heuristics
      *
      * @param target : Target architecture
      */
     void autoUseLib(const Target &target);
 
     /**
-     * Automatically fuse consecutive loops using some heuristics
+     * (Experimental) Automatically fuse consecutive loops using some heuristics
      *
      * @param target : Target architecture
      */
     void autoFuse(const Target &target);
 
     /**
-     * Automatically parallelize some loops using some heuristics
+     * (Experimental) Automatically parallelize some loops using some heuristics
      *
      * @param target : Target architecture
      */
     void autoParallelize(const Target &target);
 
     /**
-     * Automatically set memory types using some heuristics
+     * (Experimental) Automatically set memory types using some heuristics
      *
      * @param target : Target architecture
      */
     void autoSetMemType(const Target &target);
 
     /**
-     * Automatically unroll loops using some heuristics
+     * (Experimental) Automatically unroll loops using some heuristics
      *
      * @param target : Target architecture
      */
