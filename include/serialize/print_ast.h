@@ -9,9 +9,37 @@ namespace freetensor {
 
 class PrintVisitor : public CodeGen<CodeGenStream> {
     bool printAllId_ = false, pretty_ = false;
-    std::unordered_set<std::string> keywords = {
+    const std::unordered_set<std::string> keywords = {
         "if", "else", "for", "in", "assert", "assume", "func", "true", "false",
     };
+
+    enum class Priority {
+        ANY,
+        TRINARY,
+        BINARY_LOGIC,
+        COMP,
+        ADD,
+        MUL,
+        UNARY_LOGIC,
+    } priority_ = Priority::ANY;
+
+    void priority_enclose(Priority new_priority, auto inner) {
+        auto old_priority = priority_;
+        priority_ = new_priority;
+        if (old_priority > priority_)
+            os() << "(";
+        inner();
+        if (old_priority > priority_)
+            os() << ")";
+        priority_ = old_priority;
+    }
+
+    void priority_new(auto inner, Priority new_priority = Priority::ANY) {
+        auto old_priority = priority_;
+        priority_ = new_priority;
+        inner();
+        priority_ = old_priority;
+    }
 
   public:
     PrintVisitor(bool printAllId = false, bool pretty = false)
@@ -21,7 +49,14 @@ class PrintVisitor : public CodeGen<CodeGenStream> {
     void recur(const Expr &op);
     void recur(const Stmt &op);
     void printId(const Stmt &op);
-    std::string printName(const std::string &name);
+
+    std::string escape(const std::string &name);
+    std::string prettyIterName(const std::string &name);
+    std::string prettyVarDefName(const std::string &name);
+    std::string prettyFuncName(const std::string &name);
+    std::string prettyId(const std::string &id);
+    std::string prettyLiteral(const std::string &lit);
+    std::string prettyKeyword(const std::string &kw);
 
   protected:
     void visitStmt(const Stmt &op) override;

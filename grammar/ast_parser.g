@@ -268,18 +268,18 @@ for returns [Stmt node]
     ;
 
 if returns [Stmt node]
-    : IF '(' cond=expr ')' '{' thenCase=stmts '}'
+    : IF cond=expr '{' thenCase=stmts '}'
       {
         $node = makeIf(ID(), $cond.node, $thenCase.node);
       }
-    | IF '(' cond=expr ')' '{' thenCase=stmts '}' ELSE '{' elseCase=stmts '}'
+    | IF cond=expr '{' thenCase=stmts '}' ELSE '{' elseCase=stmts '}'
       {
         $node = makeIf(ID(), $cond.node, $thenCase.node, $elseCase.node);
       }
     ;
 
 assertNode returns [Stmt node]
-    : ASSERT_TOKEN '(' cond=expr ')' '{' stmts '}'
+    : ASSERT_TOKEN cond=expr '{' stmts '}'
       {
         $node = makeAssert(ID(), $cond.node, $stmts.node);
       }
@@ -313,10 +313,6 @@ expr returns [Expr node]
     | var
       {
         $node = makeVar($var.name);
-      }
-    | '(' expr0=expr '?' expr1=expr ':' expr2=expr ')'
-      {
-        $node = makeIfExpr($expr0.node, $expr1.node, $expr2.node);
       }
     | dtype '(' expr ')'
       {
@@ -433,6 +429,10 @@ expr returns [Expr node]
     | MAX '(' expr0=expr ',' expr1=expr ')'
       {
         $node = makeMax($expr0.node, $expr1.node);
+      }
+    | expr0=expr '?' expr1=expr ':' expr2=expr
+      {
+        $node = makeIfExpr($expr0.node, $expr1.node, $expr2.node);
       }
     | '(' expr ')'
       {
