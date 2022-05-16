@@ -22,12 +22,13 @@ std::vector<std::pair<ID, int>> splitLoop(Schedule &schedule, ID loop,
     return result;
 }
 
-Schedule::IDMap fissionLoops(Schedule &schedule, const std::vector<ID>& loops,
-                                          ID splitter) {
+Schedule::IDMap fissionLoops(Schedule &schedule, const std::vector<ID> &loops,
+                             ID splitter) {
     int n = loops.size();
     Schedule::IDMap ret;
     for (int i = n - 1; i >= 0; i--) {
-        auto now = schedule.fission(loops[i], FissionSide::After, splitter).second;
+        auto now =
+            schedule.fission(loops[i], FissionSide::After, splitter).second;
         if (ret.empty()) {
             ret = now;
         } else {
@@ -112,13 +113,15 @@ std::vector<std::pair<ID, int>> multiLevelTilingWithFusion(
             std::vector<int> tiling(level + 1);
             int tot = 1;
             for (int j = 0; j < level; j++) {
-                tiling[level - j] = annotation.spaceLoopTiling[i][spaceTileSize - 1 - j];
+                tiling[level - j] =
+                    annotation.spaceLoopTiling[i][spaceTileSize - 1 - j];
                 tot *= annotation.spaceLoopTiling[i][spaceTileSize - 1 - j];
             }
             tiling[0] = target.spaceLoops[i].length / tot;
             firstAnnotation.spaceLoopTiling.push_back(tiling);
         }
-        auto firstTiles = multiLevelTiling(schedule, firstTarget, firstAnnotation, firstPat);
+        auto firstTiles =
+            multiLevelTiling(schedule, firstTarget, firstAnnotation, firstPat);
         std::vector<ID> fissionIDs;
         ForsWithDataReuse secondTarget;
         secondTarget.spaceLoops = target.spaceLoops;
@@ -132,14 +135,15 @@ std::vector<std::pair<ID, int>> multiLevelTilingWithFusion(
                 fissionIDs.push_back(firstTiles[i].first);
                 secondTarget.spaceLoops[i - lastTileStart].id =
                     firstTiles[i].first.strId();
-                secondTarget.spaceLoops[i - lastTileStart].length = firstTiles[i].second;
+                secondTarget.spaceLoops[i - lastTileStart].length =
+                    firstTiles[i].second;
             }
         }
         auto mp = fissionLoops(schedule, fissionIDs, target.initStmt);
-        for (auto & spaceLoop : secondTarget.spaceLoops) {
+        for (auto &spaceLoop : secondTarget.spaceLoops) {
             spaceLoop.id = mp[spaceLoop.id];
         }
-        for (auto & reductionLoop : secondTarget.reductionLoops) {
+        for (auto &reductionLoop : secondTarget.reductionLoops) {
             reductionLoop.id = mp[reductionLoop.id];
         }
         auto secondPat = pat.substr(level);
@@ -150,8 +154,10 @@ std::vector<std::pair<ID, int>> multiLevelTilingWithFusion(
             }
             secondAnnotation.spaceLoopTiling.push_back(tiling);
         }
-        auto secondTiles = multiLevelTiling(schedule, secondTarget, secondAnnotation, secondPat);
-        tiles.insert(tiles.end(), firstTiles.begin(), firstTiles.begin() + lastTileStart);
+        auto secondTiles = multiLevelTiling(schedule, secondTarget,
+                                            secondAnnotation, secondPat);
+        tiles.insert(tiles.end(), firstTiles.begin(),
+                     firstTiles.begin() + lastTileStart);
         tiles.insert(tiles.end(), secondTiles.begin(), secondTiles.end());
     }
     //    std::cout << "Level: " << level << "Fuse Pattern: " << firstPat <<
