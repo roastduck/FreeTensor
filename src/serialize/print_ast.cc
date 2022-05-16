@@ -101,8 +101,10 @@ std::string PrintVisitor::escape(const std::string &name) {
         should_escape = true;
     else
         for (size_t i = 1, n = name.length(); i < n; i++)
-            if (!isalnum(name[i]) && name[i] != '_')
+            if (!isalnum(name[i]) && name[i] != '_') {
                 should_escape = true;
+                break;
+            }
 
     if (should_escape)
         return '`' + name + '`';
