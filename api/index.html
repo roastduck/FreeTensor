@@ -55,6 +55,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../guide/first-program/">Your First Program with FreeTenor</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../guide/schedules/">Optimize a Program with Schedules</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">API Reference</span></p>
               <ul class="current">
@@ -5743,7 +5745,7 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 
     <span class="k">def</span> <span class="nf">auto_schedule</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Automatic scheduling using some heuristics</span>
+<span class="sd">        (Experimental) Automatic scheduling using some heuristics</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -5754,7 +5756,7 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 
     <span class="k">def</span> <span class="nf">auto_use_lib</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Automatically use external libs using some heuristics</span>
+<span class="sd">        (Experimental) Automatically use external libs using some heuristics</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -5765,7 +5767,7 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 
     <span class="k">def</span> <span class="nf">auto_fuse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Automatically fuse consecutive loops using some heuristics</span>
+<span class="sd">        (Experimental) Automatically fuse consecutive loops using some heuristics</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -5776,7 +5778,7 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 
     <span class="k">def</span> <span class="nf">auto_parallelize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Automatically parallelize some loops using some heuristics</span>
+<span class="sd">        (Experimental) Automatically parallelize some loops using some heuristics</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -5787,7 +5789,7 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 
     <span class="k">def</span> <span class="nf">auto_set_mem_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Automatically set memory types using some heuristics</span>
+<span class="sd">        (Experimental) Automatically set memory types using some heuristics</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -5798,7 +5800,7 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 
     <span class="k">def</span> <span class="nf">auto_unroll</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Automatically unroll loops using some heuristics</span>
+<span class="sd">        (Experimental) Automatically unroll loops using some heuristics</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -5906,7 +5908,7 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 
     <div class="doc doc-contents ">
 
-      <p>Automatically fuse consecutive loops using some heuristics</p>
+      <p>(Experimental) Automatically fuse consecutive loops using some heuristics</p>
 
 <table class="field-list">
   <colgroup>
@@ -5928,7 +5930,7 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
           <summary>Source code in <code>freetensor/core/schedule.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">auto_fuse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Automatically fuse consecutive loops using some heuristics</span>
+<span class="sd">    (Experimental) Automatically fuse consecutive loops using some heuristics</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -5956,7 +5958,7 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 
     <div class="doc doc-contents ">
 
-      <p>Automatically parallelize some loops using some heuristics</p>
+      <p>(Experimental) Automatically parallelize some loops using some heuristics</p>
 
 <table class="field-list">
   <colgroup>
@@ -5978,7 +5980,7 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
           <summary>Source code in <code>freetensor/core/schedule.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">auto_parallelize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Automatically parallelize some loops using some heuristics</span>
+<span class="sd">    (Experimental) Automatically parallelize some loops using some heuristics</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -6006,7 +6008,7 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 
     <div class="doc doc-contents ">
 
-      <p>Automatic scheduling using some heuristics</p>
+      <p>(Experimental) Automatic scheduling using some heuristics</p>
 
 <table class="field-list">
   <colgroup>
@@ -6028,7 +6030,7 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
           <summary>Source code in <code>freetensor/core/schedule.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">auto_schedule</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Automatic scheduling using some heuristics</span>
+<span class="sd">    (Experimental) Automatic scheduling using some heuristics</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -6056,7 +6058,7 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 
     <div class="doc doc-contents ">
 
-      <p>Automatically set memory types using some heuristics</p>
+      <p>(Experimental) Automatically set memory types using some heuristics</p>
 
 <table class="field-list">
   <colgroup>
@@ -6078,7 +6080,7 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
           <summary>Source code in <code>freetensor/core/schedule.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">auto_set_mem_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Automatically set memory types using some heuristics</span>
+<span class="sd">    (Experimental) Automatically set memory types using some heuristics</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -6106,7 +6108,7 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 
     <div class="doc doc-contents ">
 
-      <p>Automatically unroll loops using some heuristics</p>
+      <p>(Experimental) Automatically unroll loops using some heuristics</p>
 
 <table class="field-list">
   <colgroup>
@@ -6128,7 +6130,7 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
           <summary>Source code in <code>freetensor/core/schedule.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">auto_unroll</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Automatically unroll loops using some heuristics</span>
+<span class="sd">    (Experimental) Automatically unroll loops using some heuristics</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -6156,7 +6158,7 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
 
     <div class="doc doc-contents ">
 
-      <p>Automatically use external libs using some heuristics</p>
+      <p>(Experimental) Automatically use external libs using some heuristics</p>
 
 <table class="field-list">
   <colgroup>
@@ -6178,7 +6180,7 @@ Schedule            (<span title="freetensor_ffi.Schedule">Schedule</span>)
           <summary>Source code in <code>freetensor/core/schedule.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">auto_use_lib</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Automatically use external libs using some heuristics</span>
+<span class="sd">    (Experimental) Automatically use external libs using some heuristics</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -19131,7 +19133,7 @@ count from the last dimension</p></li>
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../guide/first-program/" class="btn btn-neutral float-left" title="Your First Program with FreeTenor"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../guide/schedules/" class="btn btn-neutral float-left" title="Optimize a Program with Schedules"><span class="icon icon-circle-arrow-left"></span> Previous</a>
     </div>
 
   <hr/>
@@ -19154,7 +19156,7 @@ count from the last dimension</p></li>
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../guide/first-program/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../guide/schedules/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
   </span>

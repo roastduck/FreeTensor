@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Optimize a Program with Schedules - FreeTensor</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+        <link href="../../assets/_mkdocstrings.css" rel="stylesheet" />
+        <link href="../../extra.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Optimize a Program with Schedules";
+        var mkdocs_page_input_path = "guide/schedules.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <script src="../../js/jquery-3.6.0.min.js" defer></script>
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+      <script>hljs.initHighlightingOnLoad();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> FreeTensor
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption"><span class="caption-text">GitHub</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="" href="https://github.com/roastduck/FreeTensor">FreeTensor</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">User Guide</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../">Get Started</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../build-and-run/">Build and Run</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../first-program/">Your First Program with FreeTenor</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="./">Optimize a Program with Schedules</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#example-parallel-vector-addition">Example: Parallel Vector addition</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#combining-multiple-schdules">Combining Multiple Schdules</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#auto-scheduling-experimental">Auto Scheduling (Experimental)</a>
+    </li>
+    </ul>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">API Reference</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/">Python API</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">FreeTensor</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" alt="Docs"></a> &raquo;</li>
+          <li>User Guide &raquo;</li><li>Optimize a Program with Schedules</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="optimize-a-program-with-schedules">Optimize a Program with Schedules</h1>
+<p>Oftentimes, only compiling your programs to native code is not enough, and you need further optimizations. This can be done by applying "schedules" (explicit program transformations) to you program.</p>
+<h2 id="example-parallel-vector-addition">Example: Parallel Vector addition</h2>
+<pre><code class="language-python">import freetensor as ft
+import numpy as np
+
+n = 4
+
+# Add verbose=1 to see the resulting native code
+@ft.optimize(schedule_callback=lambda s: s.parallelize('Li', 'openmp')
+            )  # &lt;-- 2. Apply the schedule
+def test(a: ft.Var[(n,), &quot;int32&quot;], b: ft.Var[(4,), &quot;int32&quot;]):
+    y = ft.empty((n,), &quot;int32&quot;)
+    #! nid: Li  # &lt;-- 1. Name the loop as Li
+    for i in range(n):
+        y[i] = a[i] + b[i]
+    return y
+
+y = test(np.array([1, 2, 3, 4], dtype=&quot;int32&quot;),
+         np.array([2, 3, 4, 5], dtype=&quot;int32&quot;)).numpy()
+print(y)
+</code></pre>
+<p>Here is an example of a parallel vector addition executed with OpenMP multithreading. Each element is computed by one thread. To achieve this, there are two steps:</p>
+<ol>
+<li>Name the loop to be parallelized with a <code>#! nid:</code> comment. Here <code>nid</code> refers to node ID (of an AST node).</li>
+<li>Apply a <code>parallelize</code> schedule to <code>Li</code> in the <code>schedule_callback</code> argument to <code>optimize</code>.</li>
+</ol>
+<p>And you are done. You can have a look at the generated OpenMP multithreaded code by setting <code>verbose=1</code>.</p>
+<p>Parameter <code>s</code> in <code>schedule_callback</code> is a <a href="../../api/#freetensor.core.schedule.Schedule"><code>Schedule</code></a> object. Besides <code>parallelize</code>, there are more supported scheduling primitives.</p>
+<h2 id="combining-multiple-schdules">Combining Multiple Schdules</h2>
+<p>Some optimizations can be done by applying multiple schedules. For example, a tiled matrix-multiplication can be done by first <code>split</code> the loops, then <code>reorder</code> them, and finally apply <code>cache</code>s to create tile tensors.</p>
+<p>In order to demonstrate the idea, we show a simplier example here: still a vector addtion, but with the loop <code>split</code> and only the outer one <code>parallelize</code>d. Please note that this is an example only for demonstration. Usually you do not need it because OpenMP has its own "schedule(static)" for parallelized loops.</p>
+<pre><code class="language-python">import freetensor as ft
+import numpy as np
+
+n = 1024
+
+def sch(s):
+    outer, inner = s.split('Li', 32)
+    s.parallelize(outer, 'openmp')
+
+# Set verbose=1 to see the resulting native code
+# Set verbose=2 to see the code after EVERY schedule
+@ft.optimize(schedule_callback=sch)
+def test(a: ft.Var[(n,), &quot;int32&quot;], b: ft.Var[(4,), &quot;int32&quot;]):
+    y = ft.empty((n,), &quot;int32&quot;)
+    #! nid: Li
+    for i in range(n):
+        y[i] = a[i] + b[i]
+    return y
+
+y = test(np.array(np.arange(1024), dtype=&quot;int32&quot;),
+         np.array(np.arange(1024), dtype=&quot;int32&quot;)).numpy()
+print(y)
+</code></pre>
+<p>One important thing is to track names of the loops, because the names will change after schedules. You get names of new loops generated from one schedule from its return values (<code>outer</code> and <code>inner</code> in this case), and pass them to a next schedule.</p>
+<h2 id="auto-scheduling-experimental">Auto Scheduling (Experimental)</h2>
+<p>Manually scheduling a program requires a lot of efforts. We provide an experimental automatic scheduling functions in <a href="../../api/#freetensor.core.schedule.Schedule"><code>Schedule</code></a>. You can call <code>s.auto_schedule</code> to pick schedules fully automatically. <code>s.auto_schedule</code> calls other <code>s.auto_xxxxxx</code> functions internally, you can also call one or some of them instead. Please note that these auto-scheduling functions are experimental, and their API is subject to changes.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../first-program/" class="btn btn-neutral float-left" title="Your First Program with FreeTenor"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../../api/" class="btn btn-neutral float-right" title="Python API">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../first-program/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../../api/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme_extra.js" defer></script>
+    <script src="../../js/theme.js" defer></script>
+      <script src="../../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>
