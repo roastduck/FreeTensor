@@ -29,13 +29,21 @@ To write such a function, you need to follow some basic concept described in thi
 
 ## Declare and Define Tensors
 
-All tensors, including function parameters, intermediate tensors and return values should be properly declared or defined.
+All tensors, including function parameters, intermediate tensors and return values should be properly declared or defined. Scalars are 0-D tensors in FreeTensor. Declare or define a tensor with an empty shape, and you will get a scalar.
 
-Function parameters should be declared like [`x : ft.Var[shape, data_type]`](/api/#freetensor.core.transformer.Var). Declaring a parameter either in the function signature or as a stand-alone statment is acceptable. If your parameter uses another parameter as shape, you will need the latter manner. An optional parameter `atype` can be set to `"output"` or `"inout"` if you want to mutate a function argument.
+Function parameters should be declared like [`x : ft.Var[shape, data_type]`](../../api/#freetensor.core.transformer.Var). Declaring a parameter either in the function signature or as a stand-alone statment is acceptable. If your parameter uses another parameter as shape, you will need the latter manner. An optional parameter `atype` can be set to `"output"` or `"inout"` if you want to mutate a function argument.
 
-Intermediate and returning tensors can be created by [`ft.empty`](/api/#freetensor.core.transformer.empty), [`ft.var`](/api/#freetensor.core.transformer.var) or [`ft.zeros`](/api/#freetensor.libop.constant.zeros). If you are using FreeTensor for GPU computing, an optional parameter `mtype` can be set to specify where to store the tensor. It defaults to the main memory of your currently chosen computing device.
+Intermediate and returning tensors can be created by [`ft.empty`](../../api/#freetensor.core.transformer.empty), [`ft.var`](../../api/#freetensor.core.transformer.var) or [`ft.zeros`](../../api/#freetensor.libop.constant.zeros). If you are using FreeTensor for GPU computing, an optional parameter `mtype` can be set to specify where to store the tensor. It defaults to the main memory of your currently chosen computing device.
 
-All tensors and their slices are implemented by an internal [`ft.VarRef`](/api/#freetensor.core.expr.VarRef) type. If you are looking for a tensor's API, `ft.VarRef` is the right place.
+All tensors and their slices are implemented by an internal [`ft.VarRef`](../../api/#freetensor.core.expr.VarRef) type. If you are looking for a tensor's API, `ft.VarRef` is the right place.
+
+## Manipulating Tensors
+
+To read or write tensors in a function, just write `for ... in range(...)` loops that iterate through elements in the tensors, and do arithmetic operations on them. We also provide some functions that operates on a whole tensor or a tensor slice in [`libop`](../../api/#freetensor.libop).
+
+!!! note "Special note on tensor assignments"
+
+    We follow Python convention for tensor assignments, but sometimes it is a little counterintuitive. Suppose you have two `list`s in Python: `a` and `b`. `a = b` *replaces* the object `a` with the object `b`, while `a[:] = b` *assigns* data in `b` to `a`. FreeTensor does not support replacing a tensor object with another one. It supports assignments only. Therefore, we need to write `a[:] = b` to assign a non-scalar tensor, and `a[()] = b` to assign a scalar (0-D) tensor.
 
 ## Dynamic or Static
 

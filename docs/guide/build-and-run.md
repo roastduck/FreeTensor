@@ -65,7 +65,7 @@ There are serveral global configurations can be set via environment variables:
 - `FT_PRINT_ALL_ID=ON/OFF`. Print (or not) IDs of all statements in an AST.
 - `FT_WERROR=ON/OFF`. Treat warnings as errors (or not).
 
-This configurations can also set at runtime in [`ft.config`](/api/#freetensor.core.config).
+This configurations can also set at runtime in [`ft.config`](../../api/#freetensor.core.config).
 
 ## Run the Tests
 
