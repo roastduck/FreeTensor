@@ -13,8 +13,7 @@ plugins:
                     inherited_members: True
         watch:
             - python/
-            - include/
-            - src/
+            # We cannot watch build/. Reload mkdocs manually after rebuilding
 
 markdown_extensions:
     - admonition

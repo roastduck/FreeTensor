@@ -57,6 +57,16 @@ E.g. to run a python program `a.py` with FreeTensor in the `build/` directory,
 PYTHONPATH=../python:../build:$PYTHONPATH python3 a.py
 ```
 
+## Global Configurations
+
+There are serveral global configurations can be set via environment variables:
+
+- `FT_PRETTY_PRINT=ON/OFF`. Enable/disable colored printing.
+- `FT_PRINT_ALL_ID=ON/OFF`. Print (or not) IDs of all statements in an AST.
+- `FT_WERROR=ON/OFF`. Treat warnings as errors (or not).
+
+This configurations can also set at runtime in [`ft.config`](/api/#freetensor.core.config).
+
 ## Run the Tests
 
 To run the test, first change into the `test/` directory, then
