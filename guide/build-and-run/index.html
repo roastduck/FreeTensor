@@ -59,6 +59,8 @@
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#run-a-program-with-freetensor">Run a Program with FreeTensor</a>
     </li>
+    <li class="toctree-l2"><a class="reference internal" href="#global-configurations">Global Configurations</a>
+    </li>
     <li class="toctree-l2"><a class="reference internal" href="#run-the-tests">Run the Tests</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#build-this-document">Build this Document</a>
@@ -141,6 +143,14 @@ make -j  # Or use Ninja
 <p>E.g. to run a python program <code>a.py</code> with FreeTensor in the <code>build/</code> directory,</p>
 <pre><code class="language-sh">PYTHONPATH=../python:../build:$PYTHONPATH python3 a.py
 </code></pre>
+<h2 id="global-configurations">Global Configurations</h2>
+<p>There are serveral global configurations can be set via environment variables:</p>
+<ul>
+<li><code>FT_PRETTY_PRINT=ON/OFF</code>. Enable/disable colored printing.</li>
+<li><code>FT_PRINT_ALL_ID=ON/OFF</code>. Print (or not) IDs of all statements in an AST.</li>
+<li><code>FT_WERROR=ON/OFF</code>. Treat warnings as errors (or not).</li>
+</ul>
+<p>This configurations can also set at runtime in <a href="/api/#freetensor.core.config"><code>ft.config</code></a>.</p>
 <h2 id="run-the-tests">Run the Tests</h2>
 <p>To run the test, first change into the <code>test/</code> directory, then</p>
 <pre><code class="language-sh">PYTHONPATH=../python:../build:$PYTHONPATH pytest

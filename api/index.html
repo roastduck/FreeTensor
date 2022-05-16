@@ -76,6 +76,34 @@
     </li>
         </ul>
     </li>
+    <li class="toctree-l3"><a class="reference internal" href="#freetensor.core.config">config</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.default_device">default_device()</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.default_target">default_target()</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.pretty_print">pretty_print()</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.print_all_id">print_all_id()</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.set_default_device">set_default_device()</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.set_default_target">set_default_target()</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.set_pretty_print">set_pretty_print()</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.set_print_all_id">set_print_all_id()</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.set_werror">set_werror()</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.werror">werror()</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.with_cuda">with_cuda()</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.with_mkl">with_mkl()</a>
+    </li>
+        </ul>
+    </li>
     <li class="toctree-l3"><a class="reference internal" href="#freetensor.core.context">context</a>
         <ul>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.context.pop_ast">pop_ast()</a>
@@ -859,6 +887,366 @@ returned, which can be used as a decorator</p></li>
 
   </div>
 
+
+
+  <div class="doc doc-object doc-module">
+
+
+
+<h3 id="freetensor.core.config" class="doc doc-heading">
+        <code>config</code>
+
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Global configurations</p>
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h4 id="freetensor.core.config.default_device" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">default_device</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>default_device() -&gt; freetensor_ffi.Device</p>
+<p>Check current default device</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/config.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">g</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h4 id="freetensor.core.config.default_target" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">default_target</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>default_target() -&gt; freetensor_ffi.Target</p>
+<p>Check current default target</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/config.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">g</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h4 id="freetensor.core.config.pretty_print" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">pretty_print</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>pretty_print() -&gt; bool</p>
+<p>Check if colored printing enabled</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/config.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">g</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h4 id="freetensor.core.config.print_all_id" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">print_all_id</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>pretty_print() -&gt; bool</p>
+<p>Check if colored printing enabled</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/config.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">g</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h4 id="freetensor.core.config.set_default_device" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">set_default_device</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>set_default_device(device: freetensor_ffi.Device) -&gt; None</p>
+<p>Set default device (internal implementation of <code>with Device</code>)</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/config.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">g</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h4 id="freetensor.core.config.set_default_target" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">set_default_target</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>set_default_target(target: freetensor_ffi.Target) -&gt; None</p>
+<p>Set default target (internal implementation of <code>with Target</code>)</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/config.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">g</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h4 id="freetensor.core.config.set_pretty_print" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">set_pretty_print</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>set_pretty_print(flag: bool = True) -&gt; None</p>
+<p>Set colored printing</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/config.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">g</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h4 id="freetensor.core.config.set_print_all_id" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">set_print_all_id</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>set_pretty_print(flag: bool = True) -&gt; None</p>
+<p>Set colored printing</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/config.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">g</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h4 id="freetensor.core.config.set_werror" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">set_werror</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>set_werror(flag: bool = True) -&gt; None</p>
+<p>Error on warning</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/config.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">g</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h4 id="freetensor.core.config.werror" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">werror</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>werror() -&gt; bool</p>
+<p>Check if error-on-warning enabled</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/config.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">g</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h4 id="freetensor.core.config.with_cuda" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">with_cuda</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>with_cuda() -&gt; bool</p>
+<p>Check if FreeTensor is built with CUDA</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/config.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">g</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h4 id="freetensor.core.config.with_mkl" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">with_mkl</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>with_mkl() -&gt; str</p>
+<p>Check if FreeTensor is built with MKL</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/config.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">g</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
 
 
 
