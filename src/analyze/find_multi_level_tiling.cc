@@ -1,5 +1,6 @@
 #include <analyze/find_multi_level_tiling.h>
 #include <ast.h>
+#include <hash.h>
 #include <iostream>
 
 using std::cout;
@@ -18,6 +19,17 @@ void FindMultiLevelTiling::visit(const For &op) {
     stack_.push_back({op->id(), -1, op->len_.as<IntConstNode>()->val_});
     stackMarkBranch_.push_back(false);
     downward = true;
+    if (auto seq = op->body_.as<StmtSeqNode>();
+        seq.isValid() && seq->nodeType() == ASTNodeType::StmtSeq) {
+        if (seq->stmts_.size() == 2) {
+            if (auto st = seq->stmts_[0].as<StoreNode>();
+                st.isValid() && st->nodeType() == ASTNodeType::Store) {
+                if (st->expr_->isConst()) {
+                    nowInit_ = st;
+                }
+            }
+        }
+    }
     Visitor::visit(op);
     if (stackMarkBranch_.back()) {
         storeBuf();
@@ -35,6 +47,7 @@ void FindMultiLevelTiling::visit(const For &op) {
 }
 
 void FindMultiLevelTiling::storeBuf() {
+    HashComparator cmp;
     if (!buf_.empty()) {
         auto &bufCheckDataReuseIndices = nowFor_.checkDataReuseIndices;
         bool hasDataReuse = false;
@@ -89,11 +102,29 @@ void FindMultiLevelTiling::storeBuf() {
                 }
             }
             std::sort(tmp.spaceLoops.begin(), tmp.spaceLoops.end());
-            found_.push_back(tmp);
+            bool valid = true;
+            if (nowInit_.isValid()) {
+                if (nowInit_->var_ != tmp.dest) {
+                    valid = false;
+                } else {
+                    for (unsigned i = 0; i < bufIndices.size(); i++) {
+                        if (!cmp(bufIndices[i], nowInit_->indices_[i])) {
+                            valid = false;
+                        }
+                    }
+                }
+                if (valid) {
+                    tmp.initStmt = nowInit_->id();
+                }
+            }
+            if (valid) {
+                found_.push_back(tmp);
+            }
         }
 
         buf_.clear();
         nowFor_ = {};
+        nowInit_ = nullptr;
 
         // if (hasDataReuse) {
         //     const auto &nw = found_.back();
@@ -122,6 +153,9 @@ void FindHasStore::visit(const For &op) {
 }
 
 void FindHasStore::visit(const Store &op) {
+    if (op->expr_->isConst()) {
+        return;
+    }
     if (found_.count(stack_.back().id)) {
         ForWithStore &forWithStore = found_.at(stack_.back().id);
         forWithStore.indices.insert(forWithStore.indices.end(),

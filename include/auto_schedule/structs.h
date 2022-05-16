@@ -26,6 +26,7 @@ struct ForsWithDataReuse {
     std::vector<bool> dimIterated;
     std::string dest;
     std::vector<std::string> reads;
+    ID initStmt;
     ID outermost;
 };
 

@@ -33,6 +33,7 @@ class FindMultiLevelTiling : public Visitor {
 
     std::vector<ForInfo> buf_;
     ForWithStore nowFor_;
+    Store nowInit_;
     bool downward = true;
 
     std::vector<ForsWithDataReuse> found_;
@@ -60,7 +61,6 @@ inline std::vector<ForsWithDataReuse> findMultiLevelTiling(const Stmt &ast) {
     findHasStore(ast_wo_reduction);
     auto forsWithStore = findHasStore.result();
     auto loopVariExprMap = findLoopVariance(ast_wo_reduction).first;
-
     FindMultiLevelTiling find(forsWithStore, loopVariExprMap);
     find(ast_wo_reduction);
     find.storeBuf();

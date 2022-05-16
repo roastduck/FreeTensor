@@ -38,8 +38,8 @@ class AutoSchedule {
     std::vector<Ref<Sketch>> measuredSketches_;
     std::set<size_t> measuredHashes_;
     std::default_random_engine randGen_;
-    const std::function<Predicts(const Features &)> &predictFunc_;
-    const std::function<void(const Features &, const Predicts &)> &updateFunc_;
+    std::function<Predicts(const Features &)> predictFunc_;
+    std::function<void(const Features &, const Predicts &)> updateFunc_;
     std::vector<Ref<Rule>> rules_;
     double flop_;
     std::string tag_;

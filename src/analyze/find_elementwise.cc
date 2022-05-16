@@ -22,6 +22,8 @@ void FindSingleElementWise::visit(const ReduceTo &op) {
 
 ElementWiseInfo FindSingleElementWise::isElementWise(const Store &st,
                                                      const Load &ld) {
+    std::cout << "elementwise: " << toString(st) << "\n " << toString(ld)
+              << std::endl;
     const auto &destShape = buffer(st->var_)->tensor()->shape();
     const auto &srcShape = buffer(ld->var_)->tensor()->shape();
     if (destShape.size() != srcShape.size()) {
