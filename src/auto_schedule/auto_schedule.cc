@@ -251,7 +251,6 @@ std::vector<Ref<Sketch>> AutoSchedule::getRandPopulation(size_t nRand) {
                 std::cout << e.what() << std::endl;
             };
         }
-        std::cout << "codegen completed" << std::endl;
         roundUnchanged++;
         for (size_t i = 0; i < nThisTurn; i++) {
             if (!now[i].isValid() || now[i]->code().empty()) {
