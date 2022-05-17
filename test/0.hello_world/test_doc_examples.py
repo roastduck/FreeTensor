@@ -49,7 +49,37 @@ def test_vector_add_dynamic_length():
 
 @pytest.mark.skipif(not freetensor.with_cuda(), reason="requires CUDA")
 def test_vector_add_gpu():
-    # Used in README.md
+    # Used in docs/guide/gpu.md
+
+    import freetensor as ft
+    import numpy as np
+
+    # Using the 0-th GPU device
+    with ft.Device(ft.GPU(), 0):
+
+        n = 4
+
+        # Add verbose=1 to see the resulting native code
+        @ft.optimize(
+            # Parallel Loop Li as GPU threads
+            schedule_callback=lambda s: s.parallelize('Li', 'threadIdx.x'))
+        def test(a: ft.Var[(n,), "int32"], b: ft.Var[(4,), "int32"]):
+            y = ft.empty((n,), "int32")
+            #! nid: Li # Name the loop below as "Li"
+            for i in range(n):
+                y[i] = a[i] + b[i]
+            return y
+
+        y = test(np.array([1, 2, 3, 4], dtype="int32"),
+                 np.array([2, 3, 4, 5], dtype="int32")).numpy()
+        print(y)
+
+    assert np.array_equal(y, [3, 5, 7, 9])
+
+
+@pytest.mark.skipif(not freetensor.with_cuda(), reason="requires CUDA")
+def test_vector_add_dynamic_gpu():
+    # Used in README.md and docs/guide/gpu.md
 
     import freetensor as ft
     import numpy as np
