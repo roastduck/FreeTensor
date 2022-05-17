@@ -33,6 +33,7 @@ class MultiLevelTilingPart : public SketchPartNode {
     MultiLevelTilingAnnotation annotation_;
     std::string pat_;
     int spaceLoopTimes_;
+    int frontSpaceLoopTimes_;
     int reductionLoopTimes_;
     std::vector<std::pair<ID, int>> tiles_;
 
@@ -48,6 +49,7 @@ class MultiLevelTilingPart : public SketchPartNode {
                    std::default_random_engine &gen) override;
     [[nodiscard]] std::vector<int> getAnnotation() const override;
     size_t spaceLoopLength() const { return target_.spaceLoops.size(); }
+    size_t frontSpaceLoopTimes() const { return frontSpaceLoopTimes_; }
     [[nodiscard]] size_t hash() const override;
     SketchPartType partType() override {
         return SketchPartType::MultiLevelTiling;

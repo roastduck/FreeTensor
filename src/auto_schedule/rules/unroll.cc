@@ -1,4 +1,5 @@
 #include <analyze/get_loop_nest_tree.h>
+#include <auto_schedule/rules/parallelize.h>
 #include <auto_schedule/rules/thread_bind.h>
 #include <auto_schedule/rules/unroll.h>
 #include <auto_schedule/utils.h>
@@ -20,6 +21,13 @@ void UnrollPart::apply(Schedule &schedule, SketchTarget &target) {
         }
         root = schedule.find(lastParallelizedID).as<ForNode>()->body_;
         vthreadSize = part.as<ThreadBindPart>()->vthreadSize_;
+    } else {
+        SketchPart part = target.getPart(SketchPartType::Parallelize);
+        ID lastParallelizedID = part.as<ParallelizePart>()->lastParallelizedID_;
+        if (!lastParallelizedID.isValid()) {
+            return;
+        }
+        root = schedule.find(lastParallelizedID).as<ForNode>()->body_;
     }
     std::function<int(const Ref<LoopNest> &nest)> visitNest =
         [&](const Ref<LoopNest> &nest) {
@@ -76,7 +84,9 @@ std::vector<Sketch> UnrollRule::genPart(const Sketch &sketch) {
 RuleStatus UnrollRule::analyze(const Sketch &sketch) {
     if (sketch.nowTarget().hasPart(SketchPartType::Unroll))
         return RuleStatus::Skip;
-    if (sketch.nowTarget().hasPart(SketchPartType::MultiLevelTilingWithFusion))
+    if (sketch.nowTarget().hasPart(
+            SketchPartType::MultiLevelTilingWithFusion) ||
+        sketch.nowTarget().hasPart(SketchPartType::MultiLevelTilingWithFusion))
         return RuleStatus::ApplyAndSkipRest;
     return RuleStatus::Skip;
 }

@@ -7,6 +7,7 @@
 #include <auto_schedule/rules/cache_write.h>
 #include <auto_schedule/rules/multi_level_tiling.h>
 #include <auto_schedule/rules/multi_level_tiling_with_fusion.h>
+#include <auto_schedule/rules/parallelize.h>
 #include <auto_schedule/rules/skip.h>
 #include <auto_schedule/rules/thread_bind.h>
 #include <auto_schedule/rules/unroll.h>
@@ -41,6 +42,7 @@ AutoSchedule::AutoSchedule(
         rules_.push_back(
             Ref<MultiLevelTilingWithFusionRule>::make(target->type()));
         rules_.push_back(Ref<MultiLevelTilingRule>::make(target->type()));
+        rules_.push_back(Ref<ParallelizeRule>::make());
     } else {
         rules_.push_back(Ref<CacheWriteRule>::make(target->type()));
         rules_.push_back(
@@ -249,6 +251,7 @@ std::vector<Ref<Sketch>> AutoSchedule::getRandPopulation(size_t nRand) {
                 std::cout << e.what() << std::endl;
             };
         }
+        std::cout << "codegen completed" << std::endl;
         roundUnchanged++;
         for (size_t i = 0; i < nThisTurn; i++) {
             if (!now[i].isValid() || now[i]->code().empty()) {
@@ -517,6 +520,28 @@ Schedule AutoSchedule::testUnroll() {
     newSketch.addPart(Ref<ThreadBindPart>::make());
     newSketch.addPart(Ref<UnrollPart>::make(target_->type(), 16));
     auto schedule = newSketch.genSchedule();
+    return schedule;
+}
+Schedule AutoSchedule::testParallelize() {
+    auto sketch = getInitSketch();
+    MultiLevelTilingRule rule(target_->type());
+    if (rule.analyze(sketch) == RuleStatus::Skip) {
+        return sketch.schedule();
+    }
+    sketch = rule.genPart(sketch)[0];
+    auto part = sketch.part(0)[SketchPartType::MultiLevelTiling]
+                    .as<MultiLevelTilingPart>();
+    part->genSampleAnnotation();
+    ParallelizeRule par;
+    if (par.analyze(sketch) == RuleStatus::Skip) {
+        return sketch.schedule();
+    };
+    sketch = par.genPart(sketch)[0];
+    auto parPart =
+        sketch.part(0)[SketchPartType::Parallelize].as<ParallelizePart>();
+    parPart->parallelSize_ = parPart->maxSize_;
+    auto schedule = sketch.genSchedule();
+    std::cout << toString(schedule.ast()) << std::endl;
     return schedule;
 }
 

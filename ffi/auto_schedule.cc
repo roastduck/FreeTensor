@@ -34,6 +34,7 @@ void init_ffi_auto_schedule(py::module_ &m) {
         .def("test_thread_bind", &AutoSchedule::testThreadBind)
         .def("test_cache_read", &AutoSchedule::testCacheRead)
         .def("test_unroll", &AutoSchedule::testUnroll)
+        .def("test_parallelize", &AutoSchedule::testParallelize)
         .def("get_flop", &AutoSchedule::getFlop)
         .def("get_tag", &AutoSchedule::getTag)
         .def("get_best_time", &AutoSchedule::getBestTime);

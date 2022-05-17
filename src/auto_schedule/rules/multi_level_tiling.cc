@@ -42,18 +42,25 @@ MultiLevelTilingPart::MultiLevelTilingPart(ForsWithDataReuse fors,
     : pat_(std::move(pat)) {
     target_ = std::move(fors);
     spaceLoopTimes_ = 0;
+    frontSpaceLoopTimes_ = 0;
     reductionLoopTimes_ = 0;
+    bool front = true;
     for (auto c : pat_) {
         if (c == 'S') {
             spaceLoopTimes_++;
+            if (front) {
+                frontSpaceLoopTimes_++;
+            }
         } else {
             reductionLoopTimes_++;
+            front = false;
         }
     }
 }
 
 void MultiLevelTilingPart::apply(Schedule &schedule, SketchTarget &target) {
-    tiles_ = schedule.multiLevelTiling(target_, annotation_, pat_);
+    tiles_ = schedule.multiLevelTiling(target_, annotation_, pat_,
+                                       frontSpaceLoopTimes_);
 }
 
 bool MultiLevelTilingPart::mutate(std::default_random_engine &gen) {

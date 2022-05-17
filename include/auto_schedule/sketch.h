@@ -19,6 +19,7 @@ enum class SketchPartType : int {
     MultiLevelTilingWithFusion = 1,
     ThreadBind = 2,
     Unroll = 3,
+    Parallelize = 4,
 };
 
 struct SketchTarget;
@@ -62,9 +63,15 @@ struct SketchTarget {
         return parts.count(tp);
     }
 
-    SketchPart getPart(SketchPartType tp) {
+    //    SketchPart getPart(SketchPartType tp) {
+    //        if (hasPart(tp)) {
+    //            return parts.at(tp);
+    //        }
+    //        return nullptr;
+    //    }
+    [[nodiscard]] SketchPart getPart(SketchPartType tp) const {
         if (hasPart(tp)) {
-            return parts[tp];
+            return parts.at(tp);
         }
         return nullptr;
     }
