@@ -63,6 +63,8 @@
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#dynamic-or-static">Dynamic or Static</a>
     </li>
+    <li class="toctree-l2"><a class="reference internal" href="#dynamic-tensor-shapes">Dynamic Tensor Shapes</a>
+    </li>
     </ul>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../schedules/">Optimize a Program with Schedules</a>
@@ -165,6 +167,27 @@ print(y)
 for i in range(10):  # Dynamic
     lst.append(i)  # Static. Appends only once
 </code></pre>
+<h2 id="dynamic-tensor-shapes">Dynamic Tensor Shapes</h2>
+<p>In the example of vector addition above, we support <em>any</em> vector length, but only in a <em>static</em> way. This means each time you change the vector length <code>n</code>, you need to recompile (run <code>optimize</code> again) the function. FreeTensor supports defining tensors with <em>dynamic</em> shapes, just by setting their shapes to a dynamic values. The following code shows an example:</p>
+<pre><code class="language-python">import freetensor as ft
+import numpy as np
+
+@ft.optimize
+def test(n: ft.Var[(), &quot;int32&quot;], a, b):
+    a: ft.Var[(n,), &quot;int32&quot;]
+    b: ft.Var[(n,), &quot;int32&quot;]
+    y = ft.empty((n,), &quot;int32&quot;)
+    for i in range(n):
+        y[i] = a[i] + b[i]
+    return y
+
+y = test(np.array(4, dtype=&quot;int32&quot;), np.array([1, 2, 3, 4], dtype=&quot;int32&quot;),
+         np.array([2, 3, 4, 5], dtype=&quot;int32&quot;)).numpy()
+print(y)
+
+assert np.array_equal(y, [3, 5, 7, 9])
+</code></pre>
+<p>In this way, in only have to compile your program once. But you will expect a longer compiling time, and some optimizations are not possible with dynamic shapes.</p>
               
             </div>
           </div><footer>
