@@ -160,7 +160,7 @@ make -j  # Or use Ninja
 <pre><code class="language-sh">PYTHONPATH=../python:../build:$PYTHONPATH pytest
 </code></pre>
 <p>To run a single test case, specify the test case name, and optionally use <code>pytest -s</code> to display the standard output. E.g,</p>
-<pre><code class="language-sh">PYTHONPATH=../python:../build:$PYTHONPATH pytest -s 0.hello_world/test_basic.py::test_hello_world
+<pre><code class="language-sh">PYTHONPATH=../python:../build:$PYTHONPATH pytest -s 00.hello_world/test_basic.py::test_hello_world
 </code></pre>
 <div class="admonition note">
 <p class="admonition-title">Debugging (for developers)</p>
