@@ -3,7 +3,7 @@ import pytest
 
 
 def test_vector_add():
-    # Used in README.md
+    # Used in README.md and docs/guide/schedules.md
 
     import freetensor as ft
     import numpy as np
@@ -26,7 +26,7 @@ def test_vector_add():
 
 
 def test_vector_add_dynamic_length():
-    # Used in README.md
+    # Used in README.md and docs/guide/schedules.md
 
     import freetensor as ft
     import numpy as np

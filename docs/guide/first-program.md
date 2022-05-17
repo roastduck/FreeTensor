@@ -88,3 +88,29 @@ lst = []
 for i in range(10):  # Dynamic
     lst.append(i)  # Static. Appends only once
 ```
+
+## Dynamic Tensor Shapes
+
+In the example of vector addition above, we support *any* vector length, but only in a *static* way. This means each time you change the vector length `n`, you need to recompile (run `optimize` again) the function. FreeTensor supports defining tensors with *dynamic* shapes, just by setting their shapes to a dynamic values. The following code shows an example:
+
+```python
+import freetensor as ft
+import numpy as np
+
+@ft.optimize
+def test(n: ft.Var[(), "int32"], a, b):
+    a: ft.Var[(n,), "int32"]
+    b: ft.Var[(n,), "int32"]
+    y = ft.empty((n,), "int32")
+    for i in range(n):
+        y[i] = a[i] + b[i]
+    return y
+
+y = test(np.array(4, dtype="int32"), np.array([1, 2, 3, 4], dtype="int32"),
+         np.array([2, 3, 4, 5], dtype="int32")).numpy()
+print(y)
+
+assert np.array_equal(y, [3, 5, 7, 9])
+```
+
+In this way, in only have to compile your program once. But you will expect a longer compiling time, and some optimizations are not possible with dynamic shapes.
