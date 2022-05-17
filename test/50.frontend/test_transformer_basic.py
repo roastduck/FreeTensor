@@ -263,14 +263,23 @@ def test_assert():
 
 def test_immediate_var_return():
 
-    @ft.lower
-    @ft.transform(verbose=1)
-    def test(x):
-        x: ft.Var[(), "int32"]
+    @ft.optimize(verbose=1)
+    def test(x: ft.Var[(), "int32"]):
         return ft.var([0, 1, x[()]], "int32")
 
-    code = ft.codegen(test, verbose=True)
-    y_arr = ft.Driver(test, code)(np.array(2, dtype="int32"))
+    y_arr = test(np.array(2, dtype="int32"))
+    y_np = y_arr.numpy()
+
+    assert np.all(y_np == np.array([0, 1, 2]))
+
+
+def test_directly_returning_input_var():
+
+    @ft.optimize(verbose=1)
+    def test(x: ft.Var[(3,), "int32"]):
+        return x
+
+    y_arr = test(np.array([0, 1, 2], dtype="int32"))
     y_np = y_arr.numpy()
 
     assert np.all(y_np == np.array([0, 1, 2]))

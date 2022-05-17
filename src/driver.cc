@@ -61,8 +61,8 @@ static void *requestPtr(const Ref<Array> &arr, const Ref<Device> &device,
 
 Driver::Driver(const Func &f, const std::string &src, const Ref<Device> &dev,
                const Ref<Device> &hostDev)
-    : f_(f), src_(src), params_(f->params_.size(), nullptr),
-      returns_(f->returns_.size(), nullptr),
+    : f_(f), src_(src), args_(f->params_.size(), nullptr),
+      rawArgs(f->params_.size(), nullptr), rawRets(f->returns_.size(), nullptr),
       retShapes_(f->returns_.size(), nullptr), retDims_(f->returns_.size(), 0),
       dev_(dev), hostDev_(hostDev) {
     auto nParams = f->params_.size();
@@ -74,7 +74,11 @@ Driver::Driver(const Func &f, const std::string &src, const Ref<Device> &dev,
             return s->nodeType() == ASTNodeType::VarDef &&
                    s.as<VarDefNode>()->name_ == f->params_[i];
         });
-        ASSERT(nodes.size() == 1);
+        if (nodes.size() != 1) {
+            throw DriverError(
+                "Name " + f->params_[i] +
+                " should be existent and unique in the AST as a paramerter");
+        }
         name2buffer_[f->params_[i]] = nodes.front().as<VarDefNode>()->buffer_;
     }
     buildAndLoad();
@@ -210,17 +214,11 @@ void Driver::buildAndLoad() {
 
 void Driver::setParams(const std::vector<Ref<Array>> &args,
                        const std::unordered_map<std::string, Ref<Array>> &kws) {
-    // Hold reference count
-    args_.insert(args_.end(), args.begin(), args.end());
-    for (auto &&[k, v] : kws) {
-        kws_[k] = v;
-    }
-
     for (size_t i = 0, iEnd = args.size(), j = 0; i < iEnd; i++) {
-        while (j < params_.size() && f_->closure_.count(f_->params_[j])) {
+        while (j < rawArgs.size() && f_->closure_.count(f_->params_[j])) {
             j++;
         }
-        if (j >= params_.size()) {
+        if (j >= rawArgs.size()) {
             throw DriverError("More arguments are given than required");
         }
         auto &&buffer = name2buffer_.at(f_->params_[j]);
@@ -231,8 +229,10 @@ void Driver::setParams(const std::vector<Ref<Array>> &args,
                 f_->params_[j] + " of type " +
                 toString(name2buffer_.at(f_->params_[j])->tensor()->dtype()));
         }
-        params_[j++] = requestPtr(args[i], dev_, hostDev_, buffer->mtype(),
-                                  buffer->atype());
+        args_[j] = args[i];
+        rawArgs[j] = requestPtr(args[i], dev_, hostDev_, buffer->mtype(),
+                                buffer->atype());
+        j++;
     }
     for (auto &&[key, value] : kws) {
         if (f_->closure_.count(key)) {
@@ -246,11 +246,12 @@ void Driver::setParams(const std::vector<Ref<Array>> &args,
                 "-th parameter " + key + " of type " +
                 toString(name2buffer_.at(key)->tensor()->dtype()));
         }
-        params_[name2param_[key]] =
+        args_[name2param_[key]] = value;
+        rawArgs[name2param_[key]] =
             requestPtr(value, dev_, hostDev_, buffer->mtype(), buffer->atype());
     }
     for (auto &&[i, param, name] :
-         iter::zip(iter::count(), params_, f_->params_)) {
+         iter::zip(iter::count(), rawArgs, f_->params_)) {
         auto &&buffer = name2buffer_.at(name);
         if (f_->closure_.count(name)) {
             param = requestPtr(*f_->closure_.at(name), dev_, hostDev_,
@@ -269,25 +270,23 @@ void Driver::run() {
         checkCudaError(cudaSetDevice(dev_->num()));
     }
 #endif // FT_WITH_CUDA
-    func_(params_.data(), returns_.data(), retShapes_.data(), retDims_.data(),
+    func_(rawArgs.data(), rawRets.data(), retShapes_.data(), retDims_.data(),
           ctx_.get());
 }
 
 void Driver::sync() { dev_->sync(); }
 
 std::vector<Ref<Array>> Driver::collectReturns() {
-    // Free reference count holders
-    args_.clear();
-    kws_.clear();
-    std::fill(params_.begin(), params_.end(), nullptr);
-
     std::vector<Ref<Array>> ret;
     for (size_t i = 0, n = f_->returns_.size(); i < n; i++) {
+        auto &&[name, dtype] = f_->returns_[i];
         std::vector<size_t> shape(retShapes_[i], retShapes_[i] + retDims_[i]);
-        auto val =
-            Ref<Array>::make(returns_[i], shape, f_->returns_[i].second, dev_);
-        if (f_->closure_.count(f_->returns_[i].first)) {
-            *f_->closure_.at(f_->returns_[i].first) = val;
+        auto val = Ref<Array>::make(rawRets[i], shape, dtype, dev_);
+        if (f_->closure_.count(name)) {
+            *f_->closure_.at(name) = val;
+        } else if (name2param_.count(name)) {
+            // Returning an argument
+            ret.emplace_back(args_.at(name2param_.at(name)));
         } else {
             ret.emplace_back(val);
         }
@@ -295,10 +294,15 @@ std::vector<Ref<Array>> Driver::collectReturns() {
         if (retShapes_[i] != nullptr) {
             free(retShapes_[i]);
         }
-        returns_[i] = nullptr;
+        rawRets[i] = nullptr;
         retShapes_[i] = nullptr;
         retDims_[i] = 0;
     }
+
+    // Free reference count holders
+    std::fill(args_.begin(), args_.end(), nullptr);
+    std::fill(rawArgs.begin(), rawArgs.end(), nullptr);
+
     return ret;
 }
 

@@ -545,7 +545,7 @@ Stmt SimplifyPass::visit(const VarDef &_op) {
     auto op = __op.as<VarDefNode>();
     varScope_.erase(_op->name_), curScope_--;
 
-    if (isEmptyStmt(op->body_)) {
+    if (isEmptyStmt(op->body_) && op->buffer_->atype() == AccessType::Cache) {
         return makeStmtSeq("", {});
     }
     return op;

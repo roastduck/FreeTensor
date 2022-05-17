@@ -216,6 +216,8 @@ enum class GradTapeMode : int { All, Nothing, NoReuseOnly };
  * and should not be specified in tapes (TODO: allow not storing an output
  * variable)
  * )
+ *
+ * @{
  */
 std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>,
@@ -230,6 +232,7 @@ std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
 grad(const Func &func, const std::unordered_set<std::string> &_requires,
      const std::unordered_set<std::string> &provides,
      GradTapeMode tapeMode = GradTapeMode::NoReuseOnly);
+/** @} */
 
 } // namespace freetensor
 
