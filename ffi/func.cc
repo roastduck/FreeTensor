@@ -17,15 +17,30 @@ void init_ffi_ast_func(py::module_ &m) {
     // maker
     m.def(
         "makeFunc",
-        [](const std::string &name, const std::vector<std::string> &params,
-           const std::vector<std::pair<std::string, DataType>> &returns,
+        [](const std::string &name, const std::vector<std::string> &_params,
+           const std::vector<std::pair<std::string, DataType>> &_returns,
            const Stmt &body,
-           const std::unordered_map<std::string, Ref<Array>> &_closure) {
-            std::unordered_map<std::string, Ref<Ref<Array>>> closure;
-            for (auto &&[name, var] : _closure) {
-                closure[name] = Ref<Ref<Array>>::make(var);
+           const std::unordered_map<std::string, Ref<Array>> &closure) {
+            std::vector<FuncParam> params;
+            std::vector<FuncRet> returns;
+            params.reserve(_params.size());
+            returns.reserve(_returns.size());
+            for (auto &&name : _params) {
+                params.emplace_back(name,
+                                    closure.count(name) ? Ref<Ref<Array>>::make(
+                                                              closure.at(name))
+                                                        : nullptr,
+                                    false);
             }
-            return makeFunc(name, params, returns, body, closure);
+            for (auto &&[name, dtype] : _returns) {
+                returns.emplace_back(
+                    name, dtype,
+                    closure.count(name)
+                        ? Ref<Ref<Array>>::make(closure.at(name))
+                        : nullptr,
+                    false);
+            }
+            return makeFunc(name, std::move(params), std::move(returns), body);
         },
         "name"_a, "params"_a, "returns"_a, "body"_a, "closure"_a);
 }

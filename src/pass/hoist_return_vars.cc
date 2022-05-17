@@ -9,8 +9,8 @@ Stmt HoistReturnVars::visit(const VarDef &_op) {
     auto op = __op.as<VarDefNode>();
     if (outMostLoop_.isValid() &&
         std::find_if(func_->returns_.begin(), func_->returns_.end(),
-                     [&](const std::pair<std::string, DataType> &ret) {
-                         return ret.first == op->name_;
+                     [&](const FuncRet &ret) {
+                         return ret.name_ == op->name_;
                      }) != func_->returns_.end()) {
         for (auto &&dim : op->buffer_->tensor()->shape()) {
             if (!checkNotModified(func_->body_, dim,
@@ -50,7 +50,7 @@ Stmt HoistReturnVars::visit(const For &op) {
 
 Func hoistReturnVars(const Func &func) {
     return makeFunc(func->name_, func->params_, func->returns_,
-                    HoistReturnVars(func)(func->body_), func->closure_);
+                    HoistReturnVars(func)(func->body_));
 }
 
 } // namespace freetensor

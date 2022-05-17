@@ -13,12 +13,12 @@ namespace freetensor {
 template <class Stream> class CodeGenC : public WithTypeInfer<CodeGen<Stream>> {
     typedef WithTypeInfer<CodeGen<Stream>> BaseClass;
 
-    const std::vector<std::string> &params_;
-    const std::vector<std::pair<std::string, DataType>> &returns_;
+    const std::vector<FuncParam> &params_;
+    const std::vector<FuncRet> &returns_;
 
   public:
-    CodeGenC(const std::vector<std::string> &params,
-             const std::vector<std::pair<std::string, DataType>> &returns)
+    CodeGenC(const std::vector<FuncParam> &params,
+             const std::vector<FuncRet> &returns)
         : params_(params), returns_(returns) {}
 
     static std::string gen(DataType dtype);

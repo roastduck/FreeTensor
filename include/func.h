@@ -14,18 +14,34 @@
 
 namespace freetensor {
 
+struct FuncParam {
+    std::string name_;
+    Ref<Ref<Array>> closure_; /// Data bound to this parameter
+    bool updateClosure_;      /// Accept user input even if there is a closure
+
+    FuncParam(const std::string &name, const Ref<Ref<Array>> &closure,
+              bool updateClosure)
+        : name_(name), closure_(closure), updateClosure_(updateClosure) {}
+};
+
+struct FuncRet {
+    std::string name_;
+    DataType dtype_;
+    Ref<Ref<Array>> closure_; /// Data bound to this return value
+    bool returnClosure_;      /// Return even if there is a closure
+
+    FuncRet(const std::string &name, DataType dtype,
+            const Ref<Ref<Array>> &closure, bool returnClosure)
+        : name_(name), dtype_(dtype), closure_(closure),
+          returnClosure_(returnClosure) {}
+};
+
 class FuncNode : public ASTNode {
   public:
     std::string name_;
-    std::vector<std::string> params_;
-    std::vector<std::pair<std::string, DataType>> returns_;
+    std::vector<FuncParam> params_;
+    std::vector<FuncRet> returns_;
     SubTree<StmtNode> body_ = ChildOf{this};
-
-    // Some parameters and/or return values can be enclosed in `closure_`. These
-    // values will be automatically set and collect in `Driver`. They are still
-    // recorded in `params_` and/or `returns_`, but we do not have to specify
-    // them to `Driver`
-    std::unordered_map<std::string, Ref<Ref<Array>>> closure_;
 
     bool isFunc() const override { return true; }
 
@@ -37,26 +53,22 @@ typedef Ref<FuncNode> Func;
 #define makeFunc(...) makeNode(Func, __VA_ARGS__)
 template <class Tbody, class Tparams, class Treturns, class Tclosure>
 Func _makeFunc(const std::string &name, Tparams &&params, Treturns &&returns,
-               Tbody &&body, Tclosure &&closure) {
+               Tbody &&body) {
     Func f = Func::make();
     f->name_ = name;
     f->params_ = std::forward<Tparams>(params);
     f->returns_ = std::forward<Treturns>(returns);
     f->body_ = std::forward<Tbody>(body);
-    f->closure_ = std::forward<Tclosure>(closure);
     return f;
 }
 template <class Tbody>
-Func _makeFunc(
-    const std::string &name, const std::vector<std::string> &params,
-    const std::vector<std::pair<std::string, DataType>> &returns, Tbody &&body,
-    const std::unordered_map<std::string, Ref<Ref<Array>>> &closure) {
+Func _makeFunc(const std::string &name, const std::vector<FuncParam> &params,
+               const std::vector<FuncRet> &returns, Tbody &&body) {
     Func f = Func::make();
     f->name_ = name;
     f->params_ = params;
     f->returns_ = returns;
     f->body_ = std::forward<Tbody>(body);
-    f->closure_ = closure;
     return f;
 }
 
@@ -65,8 +77,7 @@ Func deepCopy(const Func &func);
 #define DEFINE_PASS_FOR_FUNC(pass)                                             \
     template <typename... T> Func pass(const Func &func, T &&...args) {        \
         return makeFunc(func->name_, func->params_, func->returns_,            \
-                        pass(func->body_, std::forward<T>(args)...),           \
-                        func->closure_);                                       \
+                        pass(func->body_, std::forward<T>(args)...));          \
     }
 
 } // namespace freetensor

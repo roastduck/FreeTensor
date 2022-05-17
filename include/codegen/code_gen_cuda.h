@@ -25,8 +25,8 @@ class CodeGenCUDA : public CodeGenC<CodeGenCUDAStream> {
     bool inCublas_ = false;
 
   public:
-    CodeGenCUDA(const std::vector<std::string> &params,
-                const std::vector<std::pair<std::string, DataType>> &returns)
+    CodeGenCUDA(const std::vector<FuncParam> &params,
+                const std::vector<FuncRet> &returns)
         : CodeGenC(params, returns) {}
 
   private:

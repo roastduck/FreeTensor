@@ -59,7 +59,7 @@ parallelScope returns [ParallelScope type]
 
 func returns [Func node]
     @init {
-        std::vector<std::pair<std::string, DataType>> ret;
+        std::vector<FuncRet> ret;
     }
     : FUNC name=var '(' params ')'
         (RARROW retVals
@@ -69,20 +69,20 @@ func returns [Func node]
             if (isClosure) {
                 ERROR("Closure is not supported when parsing a function");
             }
-            ret.emplace_back(name, dtype);
+            ret.emplace_back(name, dtype, nullptr, false);
         }
       }
         )?
         '{' stmts '}'
       {
-        std::vector<std::string> params;
+        std::vector<FuncParam> params;
         for (auto &&[name, isClosure] : $params.vec) {
             if (isClosure) {
                 ERROR("Closure is not supported when parsing a function");
             }
-            params.emplace_back(name);
+            params.emplace_back(name, nullptr, false);
         }
-        $node = makeFunc($name.name, std::move(params), std::move(ret), $stmts.node, {});
+        $node = makeFunc($name.name, std::move(params), std::move(ret), $stmts.node);
       }
     ;
 

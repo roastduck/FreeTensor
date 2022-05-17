@@ -69,17 +69,18 @@ Driver::Driver(const Func &f, const std::string &src, const Ref<Device> &dev,
     name2param_.reserve(nParams);
     name2buffer_.reserve(nParams);
     for (size_t i = 0; i < nParams; i++) {
-        name2param_[f->params_[i]] = i;
+        name2param_[f->params_[i].name_] = i;
         auto nodes = findStmt(f->body_, [&](const Stmt &s) -> bool {
             return s->nodeType() == ASTNodeType::VarDef &&
-                   s.as<VarDefNode>()->name_ == f->params_[i];
+                   s.as<VarDefNode>()->name_ == f->params_[i].name_;
         });
         if (nodes.size() != 1) {
             throw DriverError(
-                "Name " + f->params_[i] +
+                "Name " + f->params_[i].name_ +
                 " should be existent and unique in the AST as a paramerter");
         }
-        name2buffer_[f->params_[i]] = nodes.front().as<VarDefNode>()->buffer_;
+        name2buffer_[f->params_[i].name_] =
+            nodes.front().as<VarDefNode>()->buffer_;
     }
     buildAndLoad();
 }
@@ -215,19 +216,21 @@ void Driver::buildAndLoad() {
 void Driver::setParams(const std::vector<Ref<Array>> &args,
                        const std::unordered_map<std::string, Ref<Array>> &kws) {
     for (size_t i = 0, iEnd = args.size(), j = 0; i < iEnd; i++) {
-        while (j < rawArgs.size() && f_->closure_.count(f_->params_[j])) {
+        while (j < rawArgs.size() && f_->params_[j].closure_.isValid() &&
+               !f_->params_[j].updateClosure_) {
             j++;
         }
         if (j >= rawArgs.size()) {
             throw DriverError("More arguments are given than required");
         }
-        auto &&buffer = name2buffer_.at(f_->params_[j]);
+        auto &&buffer = name2buffer_.at(f_->params_[j].name_);
         if (buffer->tensor()->dtype() != args[i]->dtype()) {
             throw DriverError(
                 "Cannnot pass a " + toString(args[i]->dtype()) +
                 " Array to the " + std::to_string(j) + "-th parameter " +
-                f_->params_[j] + " of type " +
-                toString(name2buffer_.at(f_->params_[j])->tensor()->dtype()));
+                f_->params_[j].name_ + " of type " +
+                toString(
+                    name2buffer_.at(f_->params_[j].name_)->tensor()->dtype()));
         }
         args_[j] = args[i];
         rawArgs[j] = requestPtr(args[i], dev_, hostDev_, buffer->mtype(),
@@ -235,7 +238,12 @@ void Driver::setParams(const std::vector<Ref<Array>> &args,
         j++;
     }
     for (auto &&[key, value] : kws) {
-        if (f_->closure_.count(key)) {
+        if (!name2param_.count(key)) {
+            throw DriverError("There is no parameter named " + key);
+        }
+        auto paramId = name2param_[key];
+        if (f_->params_[paramId].closure_.isValid() &&
+            !f_->params_[paramId].updateClosure_) {
             throw DriverError("Enclosed parameter " + key + " cannot be set");
         }
         auto &&buffer = name2buffer_.at(key);
@@ -246,20 +254,20 @@ void Driver::setParams(const std::vector<Ref<Array>> &args,
                 "-th parameter " + key + " of type " +
                 toString(name2buffer_.at(key)->tensor()->dtype()));
         }
-        args_[name2param_[key]] = value;
-        rawArgs[name2param_[key]] =
+        args_[paramId] = value;
+        rawArgs[paramId] =
             requestPtr(value, dev_, hostDev_, buffer->mtype(), buffer->atype());
     }
-    for (auto &&[i, param, name] :
+    for (auto &&[i, rawArg, param] :
          iter::zip(iter::count(), rawArgs, f_->params_)) {
-        auto &&buffer = name2buffer_.at(name);
-        if (f_->closure_.count(name)) {
-            param = requestPtr(*f_->closure_.at(name), dev_, hostDev_,
-                               buffer->mtype(), buffer->atype());
+        auto &&buffer = name2buffer_.at(param.name_);
+        if (param.closure_.isValid()) {
+            rawArg = requestPtr(*param.closure_, dev_, hostDev_,
+                                buffer->mtype(), buffer->atype());
         }
-        if (param == nullptr) {
+        if (rawArg == nullptr) {
             throw DriverError("The " + std::to_string(i) + "-th parameter " +
-                              name + " is missing");
+                              param.name_ + " is missing");
         }
     }
 }
@@ -279,11 +287,14 @@ void Driver::sync() { dev_->sync(); }
 std::vector<Ref<Array>> Driver::collectReturns() {
     std::vector<Ref<Array>> ret;
     for (size_t i = 0, n = f_->returns_.size(); i < n; i++) {
-        auto &&[name, dtype] = f_->returns_[i];
+        auto &&[name, dtype, closure, returnClosure] = f_->returns_[i];
         std::vector<size_t> shape(retShapes_[i], retShapes_[i] + retDims_[i]);
         auto val = Ref<Array>::make(rawRets[i], shape, dtype, dev_);
-        if (f_->closure_.count(name)) {
-            *f_->closure_.at(name) = val;
+        if (closure.isValid()) {
+            *closure = val;
+            if (returnClosure) {
+                ret.emplace_back(val);
+            }
         } else if (name2param_.count(name)) {
             // Returning an argument
             ret.emplace_back(args_.at(name2param_.at(name)));
