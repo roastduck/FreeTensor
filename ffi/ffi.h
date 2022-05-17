@@ -30,6 +30,7 @@ void init_ffi_ast_stmt(py::module_ &m);
 
 void init_ffi_schedule(py::module_ &m);
 void init_ffi_analyze(py::module_ &m);
+void init_ffi_autograd(py::module_ &m);
 void init_ffi_pass(py::module_ &m);
 void init_ffi_codegen(py::module_ &m);
 void init_ffi_driver(py::module_ &m);

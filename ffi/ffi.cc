@@ -36,6 +36,7 @@ PYBIND11_MODULE(freetensor_ffi, m) {
     init_ffi_debug(m);
 
     // Lower and Schedule depends on Target in driver
+    init_ffi_autograd(m);
     init_ffi_pass(m);
     init_ffi_schedule(m);
     init_ffi_auto_schedule(m);

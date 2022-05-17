@@ -197,7 +197,7 @@ grad(const Func &func, const std::unordered_set<std::string> &_requires,
 enum class GradTapeMode : int { All, Nothing, NoReuseOnly };
 
 /**
- * Auto differentiation
+ * Reverse mode Auto differentiation
  *
  * @param op : Original AST
  * @param requires : Name of input variables that need gradients

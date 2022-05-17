@@ -1,5 +1,5 @@
 #include <analyze/analyze_version.h>
-#include <pass/output_intermediates.h>
+#include <autograd/output_intermediates.h>
 
 namespace freetensor {
 

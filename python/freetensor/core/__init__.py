@@ -19,6 +19,7 @@ from .stmt import (
     Func,
 )
 from .analyze import *
+from .autograd import *
 from .passes import *
 from .schedule import *
 from .codegen import NativeCode, codegen

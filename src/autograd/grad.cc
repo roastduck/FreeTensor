@@ -3,12 +3,12 @@
 #include <analyze/all_uses.h>
 #include <analyze/deps.h>
 #include <analyze/find_stmt.h>
+#include <autograd/grad.h>
+#include <autograd/output_intermediates.h>
 #include <pass/float_simplify.h>
-#include <pass/grad.h>
 #include <pass/hoist_return_vars.h>
 #include <pass/hoist_var_over_stmt_seq.h>
 #include <pass/make_reduction.h>
-#include <pass/output_intermediates.h>
 #include <pass/prop_one_time_use.h>
 #include <pass/remove_cyclic_assign.h>
 #include <pass/remove_dead_var.h>

@@ -3,9 +3,6 @@ import functools
 
 import freetensor_ffi as ffi
 
-from freetensor_ffi import grad
-from freetensor_ffi import GradTapeMode
-from freetensor_ffi import output_intermediates
 from freetensor_ffi import scalar_prop_const
 from freetensor_ffi import tensor_prop_const
 from freetensor_ffi import prop_one_time_use
