@@ -105,7 +105,6 @@ std::string Sketch::genCode(const Ref<Target> &target) {
         code_ = codeGenCUDA(lowered_);
     else
         code_ = codeGenCPU(lowered_);
-    std::cout << "lowered" << std::endl;
     return code_;
 }
 std::vector<double> &Sketch::genFeature() {

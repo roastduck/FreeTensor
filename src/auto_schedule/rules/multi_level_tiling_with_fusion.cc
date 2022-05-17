@@ -14,7 +14,8 @@ RuleStatus MultiLevelTilingWithFusionRule::analyze(const Sketch &sketch) {
                                                     sketch.nowTarget().target);
         toFuse.isValid()) {
         toFuse_ = toFuse;
-        return RuleStatus::ApplyAndSkipRest;
+        return targetType_ == TargetType::CPU ? RuleStatus::Apply
+                                              : RuleStatus::ApplyAndSkipRest;
     }
     return RuleStatus::Skip;
 }

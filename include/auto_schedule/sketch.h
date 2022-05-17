@@ -63,12 +63,6 @@ struct SketchTarget {
         return parts.count(tp);
     }
 
-    //    SketchPart getPart(SketchPartType tp) {
-    //        if (hasPart(tp)) {
-    //            return parts.at(tp);
-    //        }
-    //        return nullptr;
-    //    }
     [[nodiscard]] SketchPart getPart(SketchPartType tp) const {
         if (hasPart(tp)) {
             return parts.at(tp);

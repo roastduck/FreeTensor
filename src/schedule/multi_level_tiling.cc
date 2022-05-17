@@ -133,69 +133,6 @@ std::vector<std::pair<ID, int>> multiLevelTilingWithFusion(
     std::vector<std::pair<ID, int>> tiles =
         multiLevelTiling(schedule, target, annotation, pat, level);
     std::string fusePat = pat.substr(0, level) + "S";
-    //    if (!target.initStmt.isValid()) {
-    //        tiles = _multiLevelTiling(schedule, target, annotation, pat);
-    //    } else {
-    //        ForsWithDataReuse firstTarget;
-    //        MultiLevelTilingAnnotation firstAnnotation;
-    //        firstTarget.spaceLoops = target.spaceLoops;
-    //        int spaceTileSize = annotation.spaceLoopTiling[0].size();
-    //        for (size_t i = 0; i < target.spaceLoops.size(); i++) {
-    //            std::vector<int> tiling(level + 1);
-    //            int tot = 1;
-    //            for (int j = 0; j < level; j++) {
-    //                tiling[level - j] =
-    //                    annotation.spaceLoopTiling[i][spaceTileSize - 1 - j];
-    //                tot *= annotation.spaceLoopTiling[i][spaceTileSize - 1 -
-    //                j];
-    //            }
-    //            tiling[0] = target.spaceLoops[i].length / tot;
-    //            firstAnnotation.spaceLoopTiling.push_back(tiling);
-    //        }
-    //        auto firstTiles = multiLevelTiling(schedule, firstTarget,
-    //                                           firstAnnotation, fusePat, 0);
-    //        std::vector<ID> fissionIDs;
-    //        ForsWithDataReuse secondTarget;
-    //        secondTarget.spaceLoops = target.spaceLoops;
-    //        secondTarget.reductionLoops = target.reductionLoops;
-    //        MultiLevelTilingAnnotation secondAnnotation;
-    //        secondAnnotation.reductionLoopTiling =
-    //        annotation.reductionLoopTiling; size_t lastTileStart =
-    //        firstTiles.size() - target.spaceLoops.size();
-    //
-    //        for (size_t i = lastTileStart; i < firstTiles.size(); i++) {
-    //            if (firstTiles[i].second > 1) {
-    //                fissionIDs.push_back(firstTiles[i].first);
-    //                secondTarget.spaceLoops[i - lastTileStart].id =
-    //                    firstTiles[i].first.strId();
-    //                secondTarget.spaceLoops[i - lastTileStart].length =
-    //                    firstTiles[i].second;
-    //            }
-    //        }
-    //        auto mp = fissionLoops(schedule, fissionIDs, target.initStmt);
-    //        for (auto &spaceLoop : secondTarget.spaceLoops) {
-    //            spaceLoop.id = mp[spaceLoop.id];
-    //        }
-    //        for (auto &reductionLoop : secondTarget.reductionLoops) {
-    //            reductionLoop.id = mp[reductionLoop.id];
-    //        }
-    //        auto secondPat = pat.substr(level);
-    //        for (size_t i = 0; i < target.spaceLoops.size(); i++) {
-    //            std::vector<int> tiling(spaceTileSize - level);
-    //            for (int j = 0; j < spaceTileSize - level; j++) {
-    //                tiling[j] = annotation.spaceLoopTiling[i][j];
-    //            }
-    //            secondAnnotation.spaceLoopTiling.push_back(tiling);
-    //        }
-    //        auto secondTiles = multiLevelTiling(schedule, secondTarget,
-    //                                            secondAnnotation, secondPat,
-    //                                            0);
-    //        tiles.insert(tiles.end(), firstTiles.begin(),
-    //                     firstTiles.begin() + lastTileStart);
-    //        tiles.insert(tiles.end(), secondTiles.begin(), secondTiles.end());
-    //    }
-    //    std::cout << "Level: " << level << "Fuse Pattern: " << fusePat <<
-    //    std::endl;
     MultiLevelTilingAnnotation fuseAnnotation;
     ForsWithDataReuse fuseTarget;
     fuseTarget.spaceLoops = toFuse.fors;
