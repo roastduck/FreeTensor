@@ -11,7 +11,7 @@ jobs:
     - name: Clang Format
       uses: RafikFarhad/clang-format-github-action@v2.0.0
       with:
-        sources: include,runtime,src
+        sources: include/**/*.h,runtime/**/*.h,runtime/**/*.cc,src/**/*.h,src/**/*.cc,ffi/**/*.h,ffi/**/*.cc
   python-formatting-check:
     name: Python Formatting Check
     runs-on: ubuntu-latest
