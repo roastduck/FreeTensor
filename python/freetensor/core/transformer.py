@@ -978,7 +978,9 @@ def transform(func=None, verbose: int = 0, depth: int = 1, caller_env=None):
                             'Illegal return at top level, need to be a `VarRef` or a tuple of `VarRef`s'
                         )
                     for ret in returns:
-                        if ret.vardef.atype != ffi.AccessType('inout'):
+                        if ret.vardef.atype == 'input' or ret.vardef.atype == 'inout':
+                            ret.vardef.set_atype('inout')
+                        else:
                             ret.vardef.set_atype('output')
                     returns = [
                         (ret.vardef.name, ret.vardef.dtype) for ret in returns

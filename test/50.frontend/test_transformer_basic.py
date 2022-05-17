@@ -273,7 +273,7 @@ def test_immediate_var_return():
     assert np.all(y_np == np.array([0, 1, 2]))
 
 
-def test_directly_returning_input_var():
+def test_directly_returning_argument():
 
     @ft.optimize(verbose=1)
     def test(x: ft.Var[(3,), "int32"]):
@@ -283,6 +283,20 @@ def test_directly_returning_input_var():
     y_np = y_arr.numpy()
 
     assert np.all(y_np == np.array([0, 1, 2]))
+
+
+def test_modify_and_return_argument():
+
+    @ft.optimize(verbose=1)
+    def test(x: ft.Var[(3,), "int32", "inout"]):
+        for i in range(3):
+            x[i] += 1
+        return x
+
+    y_arr = test(np.array([0, 1, 2], dtype="int32"))
+    y_np = y_arr.numpy()
+
+    assert np.all(y_np == np.array([1, 2, 3]))
 
 
 def test_inline_annotation():
