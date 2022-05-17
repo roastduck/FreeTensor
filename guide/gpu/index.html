@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Running on a GPU - FreeTensor</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+        <link href="../../assets/_mkdocstrings.css" rel="stylesheet" />
+        <link href="../../extra.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Running on a GPU";
+        var mkdocs_page_input_path = "guide/gpu.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <script src="../../js/jquery-3.6.0.min.js" defer></script>
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+      <script>hljs.initHighlightingOnLoad();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> FreeTensor
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption"><span class="caption-text">GitHub</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="" href="https://github.com/roastduck/FreeTensor">FreeTensor</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">User Guide</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../">Get Started</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../build-and-run/">Build and Run</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../first-program/">Your First Program with FreeTenor</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../schedules/">Optimize a Program with Schedules</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="./">Running on a GPU</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#example-vector-addition-on-a-gpu">Example: Vector addition on a GPU</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#mtypebyvalue-for-dynamic-tensor-shapes">mtype="byvalue" for Dynamic Tensor Shapes</a>
+    </li>
+    </ul>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">API Reference</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/">Python API</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">FreeTensor</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" alt="Docs"></a> &raquo;</li>
+          <li>User Guide &raquo;</li><li>Running on a GPU</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="running-on-a-gpu">Running on a GPU</h1>
+<h2 id="example-vector-addition-on-a-gpu">Example: Vector addition on a GPU</h2>
+<p>If FreeTensor is built with a CUDA backend, you can compile your program to a GPU. We still take a vector addition as an example:</p>
+<pre><code class="language-python">import freetensor as ft
+import numpy as np
+
+# Using the 0-th GPU device
+with ft.Device(ft.GPU(), 0):
+
+    n = 4
+
+    # Add verbose=1 to see the resulting native code
+    @ft.optimize(
+        # Parallel Loop Li as GPU threads
+        schedule_callback=lambda s: s.parallelize('Li', 'threadIdx.x'))
+    def test(a: ft.Var[(n,), &quot;int32&quot;], b: ft.Var[(4,), &quot;int32&quot;]):
+        y = ft.empty((n,), &quot;int32&quot;)
+        #! nid: Li # Name the loop below as &quot;Li&quot;
+        for i in range(n):
+            y[i] = a[i] + b[i]
+        return y
+
+    y = test(np.array([1, 2, 3, 4], dtype=&quot;int32&quot;),
+             np.array([2, 3, 4, 5], dtype=&quot;int32&quot;)).numpy()
+    print(y)
+</code></pre>
+<p>Similar to <a href="../schedules/#example-parallel-vector-addition">parallelizing to OpenMP threads</a>, in this example, we parallelize Loop <code>Li</code> to the <code>threadIdx.x</code> dimension of CUDA. There are two major differences:</p>
+<ol>
+<li>You are now calling <code>parallelize</code> schedule with a <code>threadIdx.x</code> parameter, instead of <code>openmp</code>.</li>
+<li>All the code are enclosed by a <code>with ft.Device(ft.GPU(), 0)</code> scope.</li>
+</ol>
+<p>Usually, you not only parallelize your loops to <code>threadIdx.x</code>, but also other CUDA dimensions like <code>blockIdx.x</code>. To achieve this, you either parallelize different loops in a loop nests to different CUDA dimensions, or <a href="../../api/#freetensor.core.schedule.Schedule.split"><code>split</code></a> your loops before parallelizing them.</p>
+<p>As for the <code>with ft.Device(ft.GPU(), 0)</code> scope, <code>ft.GPU()</code> specifies a <a href="../../api/#freetensor.core.driver.Target"><code>Target</code></a> (a GPU architecture), and <code>ft.Device(ft.GPU(), 0)</code> specifies a <a href="../../api/#freetensor.core.driver.Device"><code>Device</code></a> of that target (a specific hardware device of GPU). By calling <code>with</code> on a device, default values of several classes and functions are set, but currently you only need to be aware of two things:</p>
+<ol>
+<li>It sets the targeting <code>Target</code> and <code>Device</code> of <code>optimize</code>.</li>
+<li>It sets the default <code>mtype</code> of all tensors in the program, which is an optional parameter of <code>ft.Var</code>, <code>ft.empty</code>, etc.</li>
+</ol>
+<p><code>mtype</code> refers to memory type. It controls where a tensor is stored. It defaults to <code>"cpu"</code> for a CPU program, and <code>"gpu/global"</code> for a GPU program. You probably GPU requires putting each variable to a right place (global memory, shared memory, registers, etc.), and this can be done by setting <code>mtype</code>s of each tensor. There are several ways to set <code>mtype</code>s:</p>
+<ol>
+<li>(Recommended) Leave them to the default <code>"gpu/global"</code> first, and modify them with the <a href="../../api/#freetensor.core.schedule.Schedule.set_mem_type"><code>set_mem_type</code></a> schedule. In this way, you write some architecture-dependent schedules, but keep your function architecture-independent.</li>
+<li>(Experimental) Leave them to the default <code>"gpu/global"</code> first, and modify them automatically using <a href="../../api/#freetensor.core.schedule.Schedule.auto_schedule"><code>auto_schedule</code></a>, or the <a href="../../api/#freetensor.core.schedule.Schedule.auto_set_mem_type"><code>auto_set_mem_type</code></a> schedule (which is a part of <code>auto_schedule</code>).</li>
+<li>Set them explicitly in the program by setting an optional <code>mtype</code> parameter of <code>ft.Var</code>, <code>ft.empty</code>, etc.</li>
+</ol>
+<h2 id="mtypebyvalue-for-dynamic-tensor-shapes"><code>mtype="byvalue"</code> for Dynamic Tensor Shapes</h2>
+<p>Tensors with normal <code>mtypes</code> (<code>"cpu"</code>, <code>"gpu/global"</code>, etc.) are passed by references, which means a <code>"cpu"</code> tensor can only be accessed from a CPU, and a <code>"gpu/global"</code> tensor can only be accessed from a GPU. However, sometimes, and especially for dynamic tensor shapes, we want the shapes to be passed by values, and accessible from both CPUs and GPUs (remember we need tensor's shape both when launching a kernel from the CPU side, and during actual computatoin on the GPU side). In this case, we can set the shape-related tensors a <code>"byvalue"</code> <code>mtype</code>, and here is an example:</p>
+<pre><code class="language-python">import freetensor as ft
+import numpy as np
+
+# Using the 0-th GPU device
+with ft.Device(ft.GPU(), 0):
+
+    @ft.optimize(
+        # Parallel Loop Li as GPU threads
+        schedule_callback=lambda s: s.parallelize(&quot;Li&quot;, &quot;threadIdx.x&quot;))
+    # Use &quot;byvalue&quot; for `n` so it can be used both during kernel launching
+    # and inside a kernel
+    def test(n: ft.Var[(), &quot;int32&quot;, &quot;input&quot;, &quot;byvalue&quot;], a, b):
+        a: ft.Var[(n,), &quot;int32&quot;]
+        b: ft.Var[(n,), &quot;int32&quot;]
+        y = ft.empty((n,), &quot;int32&quot;)
+        #! nid: Li # Name the loop below as &quot;Li&quot;
+        for i in range(n):
+            y[i] = a[i] + b[i]
+        return y
+
+    y = test(np.array(4, dtype=&quot;int32&quot;),
+             np.array([1, 2, 3, 4], dtype=&quot;int32&quot;),
+             np.array([2, 3, 4, 5], dtype=&quot;int32&quot;)).numpy()
+    print(y)
+</code></pre>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../schedules/" class="btn btn-neutral float-left" title="Optimize a Program with Schedules"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../../api/" class="btn btn-neutral float-right" title="Python API">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../schedules/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../../api/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme_extra.js" defer></script>
+    <script src="../../js/theme.js" defer></script>
+      <script src="../../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>
