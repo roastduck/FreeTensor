@@ -50,7 +50,7 @@ def compile_all(n_faces, in_feats, out_feats, device, ad_save_all):
     print(debug.with_line_no(code))
     print(f"Inference compiling time: {t1 - t0}s")
 
-    forward, backward, requires, privdes, _ = ft.grad_(
+    forward, backward, requires, privdes = ft.grad_(
         inference, set(["x", "w0", "w1", "w2", "w3"]), set(["y"]),
         ft.GradTapeMode.All if ad_save_all else ft.GradTapeMode.NoReuseOnly)
 

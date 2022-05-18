@@ -188,16 +188,14 @@ gradBody(const Stmt &op, const std::unordered_set<std::string> &_requires,
          const std::unordered_set<ID> &tapes);
 
 std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
-           std::unordered_map<std::string, std::string>,
-           std::unordered_map<ID, std::string>>
+           std::unordered_map<std::string, std::string>>
 gradFuncInplace(const Func &func,
                 const std::unordered_set<std::string> &_requires,
                 const std::unordered_set<std::string> &provides,
                 const std::unordered_set<ID> &tapes);
 
 std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
-           std::unordered_map<std::string, std::string>,
-           std::unordered_map<ID, std::string>>
+           std::unordered_map<std::string, std::string>>
 gradFuncOutOfPlace(const Func &func,
                    const std::unordered_set<std::string> &_requires,
                    const std::unordered_set<std::string> &provides,
@@ -235,16 +233,14 @@ gradBody(const Stmt &op, const std::unordered_set<std::string> &_requires,
          GradTapeMode tapeMode = GradTapeMode::NoReuseOnly);
 
 std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
-           std::unordered_map<std::string, std::string>,
-           std::unordered_map<ID, std::string>>
+           std::unordered_map<std::string, std::string>>
 gradFuncInplace(const Func &func,
                 const std::unordered_set<std::string> &_requires,
                 const std::unordered_set<std::string> &provides,
                 GradTapeMode tapeMode = GradTapeMode::NoReuseOnly);
 
 std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
-           std::unordered_map<std::string, std::string>,
-           std::unordered_map<ID, std::string>>
+           std::unordered_map<std::string, std::string>>
 gradFuncOutOfPlace(const Func &func,
                    const std::unordered_set<std::string> &_requires,
                    const std::unordered_set<std::string> &provides,

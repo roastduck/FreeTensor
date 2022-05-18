@@ -98,8 +98,6 @@ def grad_(func: ffi.Func,
          1. Backward AST.
          2. Mapping from names in requries to its gradient name.
          3. Mapping from names in provides to its gradient name.
-         4. Mapping from VarDef IDs of intermediate variables being stored to its
-        corresponding output names
         )
     '''
 
@@ -147,8 +145,6 @@ def grad(func: ffi.Func,
          1. Backward AST.
          2. Mapping from names in requries to its gradient name.
          3. Mapping from names in provides to its gradient name.
-         4. Mapping from VarDef IDs of intermediate variables being stored to its
-        corresponding output names
         )
     '''
 

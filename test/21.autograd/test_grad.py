@@ -651,8 +651,7 @@ def test_hoist_tape_out_of_loop():
                 y[i] = t[()] * x3[i]
     func = ft.Func("main", ["x1", "x2", "x3", "y"], [], ft.pop_ast())
     print(func)
-    forward, backward, _, _, _ = ft.grad_(func, ["x1", "x2", "x3"], ["y"],
-                                          ["V_t"])
+    forward, backward, _, _ = ft.grad_(func, ["x1", "x2", "x3"], ["y"], ["V_t"])
     print("Forward:")
     print(forward)
     print("Backward:")
@@ -697,8 +696,7 @@ def test_use_tape_in_cond():
                     y[i] = t[()]
     func = ft.Func("main", ["x1", "x2", "x3", "y"], [], ft.pop_ast())
     print(func)
-    forward, backward, _, _, _ = ft.grad_(func, ["x1", "x2", "x3"], ["y"],
-                                          ["V_t"])
+    forward, backward, _, _ = ft.grad_(func, ["x1", "x2", "x3"], ["y"], ["V_t"])
     print("Forward:")
     print(forward)
     print("Backward:")
@@ -909,7 +907,7 @@ def test_no_deps():
                 edge2[j] = edge1[j] + i
 
     print(test)
-    _, backward, _, _, _ = ft.grad_(test, ["edge1"], ["edge2"], set())
+    _, backward, _, _ = ft.grad_(test, ["edge1"], ["edge2"], set())
     print(backward)
     s = ft.Schedule(backward)
     s.parallelize("Li", "openmp")  # No exception here

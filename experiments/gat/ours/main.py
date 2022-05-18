@@ -74,7 +74,7 @@ def compile_all(num_v, num_e, feat_len, device):
                 for k in range(ptr[i], ptr[i + 1]):
                     y[i, j] += feat2[idx[k], j] * edge_exp[k] / edge_sum[()]
 
-    forward, backward, requires, privdes, _ = ft.grad_(
+    forward, backward, requires, privdes = ft.grad_(
         inference, set(["feat", "weight", "attn_l", "attn_r"]), set(["y"]))
 
     print("# Inference:")

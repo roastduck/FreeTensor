@@ -69,7 +69,7 @@ def compile_all(w, dilation, dilation_heads, n_heads, seq_len, feat_len, device,
     t1 = time.time()
     print(f"Inference compiling time: {t1 - t0}s")
 
-    forward, backward, requires, privdes, _ = ft.grad_(
+    forward, backward, requires, privdes = ft.grad_(
         inference, set(["Q", "K", "V"]), set(["Y"]),
         ft.GradTapeMode.All if ad_save_all else ft.GradTapeMode.NoReuseOnly)
 

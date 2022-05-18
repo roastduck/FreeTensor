@@ -54,8 +54,8 @@ def test_grad():
         libop.softmax_(x, y)
 
     print(f)
-    f, g, requires, provides, _ = ft.grad_(f, ["x"], ["y"],
-                                           ft.GradTapeMode.NoReuseOnly)
+    f, g, requires, provides = ft.grad_(f, ["x"], ["y"],
+                                        ft.GradTapeMode.NoReuseOnly)
     print("Forward:")
     f = ft.optimize(f, verbose=1)
     print("Backward:")

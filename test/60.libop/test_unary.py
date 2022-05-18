@@ -95,8 +95,8 @@ def test_inplace_grad_of_inplace_func(libop_func, torch_func, require_positive):
         #! nid: to_test
         libop_func(x, y)
 
-    f, g, requires, provides, _ = ft.grad_(f, ["x"], ["y"],
-                                           ft.GradTapeMode.NoReuseOnly)
+    f, g, requires, provides = ft.grad_(f, ["x"], ["y"],
+                                        ft.GradTapeMode.NoReuseOnly)
     print("Forward:")
     f = ft.optimize(f, verbose=1)
     print("Backward:")
@@ -146,8 +146,8 @@ def test_inplace_grad_of_out_of_place_func(libop_func, torch_func,
         #! nid: to_test
         return libop_func(x)
 
-    f, g, requires, provides, _ = ft.grad_(f, ["x"], [ft.Return()],
-                                           ft.GradTapeMode.NoReuseOnly)
+    f, g, requires, provides = ft.grad_(f, ["x"], [ft.Return()],
+                                        ft.GradTapeMode.NoReuseOnly)
     print("Forward:")
     f = ft.optimize(f, verbose=1)
     print("Backward:")
@@ -195,8 +195,8 @@ def test_out_of_place_grad_of_out_of_place_func(libop_func, torch_func,
         #! nid: to_test
         return libop_func(x)
 
-    f, g, requires, provides, _ = ft.grad(f, ["x"], [ft.Return()],
-                                          ft.GradTapeMode.NoReuseOnly)
+    f, g, requires, provides = ft.grad(f, ["x"], [ft.Return()],
+                                       ft.GradTapeMode.NoReuseOnly)
     print("Forward:")
     f = ft.optimize(f, verbose=1)
     print("Backward:")

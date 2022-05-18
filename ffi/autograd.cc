@@ -26,8 +26,7 @@ void init_ffi_autograd(py::module_ &m) {
         "grad_",
         static_cast<
             std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
-                       std::unordered_map<std::string, std::string>,
-                       std::unordered_map<ID, std::string>> (*)(
+                       std::unordered_map<std::string, std::string>> (*)(
                 const Func &, const std::unordered_set<std::string> &,
                 const std::unordered_set<std::string> &,
                 const std::unordered_set<ID> &)>(&gradFuncInplace),
@@ -36,8 +35,7 @@ void init_ffi_autograd(py::module_ &m) {
         "grad",
         static_cast<
             std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
-                       std::unordered_map<std::string, std::string>,
-                       std::unordered_map<ID, std::string>> (*)(
+                       std::unordered_map<std::string, std::string>> (*)(
                 const Func &, const std::unordered_set<std::string> &,
                 const std::unordered_set<std::string> &,
                 const std::unordered_set<ID> &)>(&gradFuncOutOfPlace),
@@ -58,8 +56,7 @@ void init_ffi_autograd(py::module_ &m) {
         "grad_",
         static_cast<
             std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
-                       std::unordered_map<std::string, std::string>,
-                       std::unordered_map<ID, std::string>> (*)(
+                       std::unordered_map<std::string, std::string>> (*)(
                 const Func &, const std::unordered_set<std::string> &,
                 const std::unordered_set<std::string> &, GradTapeMode)>(
             &gradFuncInplace),
@@ -69,8 +66,7 @@ void init_ffi_autograd(py::module_ &m) {
         "grad",
         static_cast<
             std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
-                       std::unordered_map<std::string, std::string>,
-                       std::unordered_map<ID, std::string>> (*)(
+                       std::unordered_map<std::string, std::string>> (*)(
                 const Func &, const std::unordered_set<std::string> &,
                 const std::unordered_set<std::string> &, GradTapeMode)>(
             &gradFuncOutOfPlace),
