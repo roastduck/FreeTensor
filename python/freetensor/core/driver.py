@@ -81,7 +81,7 @@ class ReturnValuesPack:
     OrderedDict unpacks to keys rather than values
     '''
 
-    def __init__(self, keys: Sequence[Array], values: Sequence[Array]):
+    def __init__(self, keys: Sequence[str], values: Sequence[Array]):
         keys = list(keys)
         values = list(values)
         assert len(keys) == len(values)
