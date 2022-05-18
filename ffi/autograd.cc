@@ -13,25 +13,25 @@ void init_ffi_autograd(py::module_ &m) {
         .value("NoReuseOnly", GradTapeMode::NoReuseOnly);
 
     m.def(
-        "grad",
-        static_cast<
-            std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
-                       std::unordered_map<std::string, std::string>,
-                       std::unordered_map<ID, std::string>> (*)(
-                const Func &, const std::unordered_set<std::string> &,
-                const std::unordered_set<std::string> &,
-                const std::unordered_set<ID> &)>(&grad),
-        "stmt"_a, "requires"_a, "provides"_a, "tapes"_a);
-    m.def(
-        "grad",
+        "grad_body",
         static_cast<
             std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
                        std::unordered_map<std::string, std::string>,
                        std::unordered_map<ID, std::string>> (*)(
                 const Stmt &, const std::unordered_set<std::string> &,
                 const std::unordered_set<std::string> &,
-                const std::unordered_set<ID> &)>(&grad),
+                const std::unordered_set<ID> &)>(&gradBody),
         "func"_a, "requires"_a, "provides"_a, "tapes"_a);
+    m.def(
+        "grad_",
+        static_cast<
+            std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
+                       std::unordered_map<std::string, std::string>,
+                       std::unordered_map<ID, std::string>> (*)(
+                const Func &, const std::unordered_set<std::string> &,
+                const std::unordered_set<std::string> &,
+                const std::unordered_set<ID> &)>(&gradFuncInplace),
+        "stmt"_a, "requires"_a, "provides"_a, "tapes"_a);
     m.def(
         "grad",
         static_cast<
@@ -39,18 +39,42 @@ void init_ffi_autograd(py::module_ &m) {
                        std::unordered_map<std::string, std::string>,
                        std::unordered_map<ID, std::string>> (*)(
                 const Func &, const std::unordered_set<std::string> &,
-                const std::unordered_set<std::string> &, GradTapeMode)>(&grad),
+                const std::unordered_set<std::string> &,
+                const std::unordered_set<ID> &)>(&gradFuncOutOfPlace),
+        "stmt"_a, "requires"_a, "provides"_a, "tapes"_a);
+
+    m.def(
+        "grad_body",
+        static_cast<
+            std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
+                       std::unordered_map<std::string, std::string>,
+                       std::unordered_map<ID, std::string>> (*)(
+                const Stmt &, const std::unordered_set<std::string> &,
+                const std::unordered_set<std::string> &, GradTapeMode)>(
+            &gradBody),
+        "func"_a, "requires"_a, "provides"_a,
+        "tape_mode"_a = GradTapeMode::NoReuseOnly);
+    m.def(
+        "grad_",
+        static_cast<
+            std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
+                       std::unordered_map<std::string, std::string>,
+                       std::unordered_map<ID, std::string>> (*)(
+                const Func &, const std::unordered_set<std::string> &,
+                const std::unordered_set<std::string> &, GradTapeMode)>(
+            &gradFuncInplace),
         "stmt"_a, "requires"_a, "provides"_a,
         "tape_mode"_a = GradTapeMode::NoReuseOnly);
     m.def(
         "grad",
         static_cast<
-            std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
+            std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
                        std::unordered_map<std::string, std::string>,
                        std::unordered_map<ID, std::string>> (*)(
-                const Stmt &, const std::unordered_set<std::string> &,
-                const std::unordered_set<std::string> &, GradTapeMode)>(&grad),
-        "func"_a, "requires"_a, "provides"_a,
+                const Func &, const std::unordered_set<std::string> &,
+                const std::unordered_set<std::string> &, GradTapeMode)>(
+            &gradFuncOutOfPlace),
+        "stmt"_a, "requires"_a, "provides"_a,
         "tape_mode"_a = GradTapeMode::NoReuseOnly);
 
     // std::unordered_map<Load, Expr> cannot be exported to Python

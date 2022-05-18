@@ -106,7 +106,7 @@ def compile_all(h, w, n_verts, n_faces, device, ad_save_all):
     t1 = time.time()
     print(f"Inference compiling time: {t1 - t0}s")
 
-    forward, backward, requires, privdes, _ = ft.grad(
+    forward, backward, requires, privdes, _ = ft.grad_(
         inference, set(["vertices"]), set(["y"]),
         ft.GradTapeMode.All if ad_save_all else ft.GradTapeMode.NoReuseOnly)
 

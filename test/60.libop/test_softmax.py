@@ -54,8 +54,8 @@ def test_grad():
         libop.softmax_(x, y)
 
     print(f)
-    f, g, requires, privdes, _ = ft.grad(f, ["x"], ["y"],
-                                         ft.GradTapeMode.NoReuseOnly)
+    f, g, requires, provides, _ = ft.grad_(f, ["x"], ["y"],
+                                           ft.GradTapeMode.NoReuseOnly)
     print("Forward:")
     f = ft.optimize(f, verbose=1)
     print("Backward:")
@@ -75,7 +75,7 @@ def test_grad():
     d_y_arr = ft.Array(y_torch.grad.numpy(), device)
     x_grad_torch_ours = torch.zeros(4, 4, dtype=torch.float32)
     d_x_arr = ft.Array(x_grad_torch_ours.numpy(), device)
-    g(**{privdes['y']: d_y_arr, requires['x']: d_x_arr})
+    g(**{provides['y']: d_y_arr, requires['x']: d_x_arr})
     x_grad_torch_ours = torch.tensor(d_x_arr.numpy())
     y_torch.backward(y_torch.grad)
     assert torch.all(torch.isclose(x_grad_torch_ours, x_torch.grad, 1e-4, 1e-7))

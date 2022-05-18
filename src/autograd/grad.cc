@@ -509,9 +509,9 @@ void GradExpr::visit(const Abs &op) {
 std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>,
            std::unordered_map<ID, std::string>>
-grad(const Stmt &_op, const std::unordered_set<std::string> &_requires,
-     const std::unordered_set<std::string> &provides,
-     const std::unordered_set<ID> &tapes) {
+gradBody(const Stmt &_op, const std::unordered_set<std::string> &_requires,
+         const std::unordered_set<std::string> &provides,
+         const std::unordered_set<ID> &tapes) {
 
     // expand the scope of each local variable, to avoid unnecessary recomputing
     auto op = hoistVarOverStmtSeq(_op);
@@ -555,23 +555,25 @@ grad(const Stmt &_op, const std::unordered_set<std::string> &_requires,
                            mutator.provideGrads(), tapeMap);
 }
 
-std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
-           std::unordered_map<std::string, std::string>,
-           std::unordered_map<ID, std::string>>
-grad(const Func &func, const std::unordered_set<std::string> &_requires,
-     const std::unordered_set<std::string> &provides,
-     const std::unordered_set<ID> &tapes) {
+template <bool inplace>
+static std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
+                  std::unordered_map<std::string, std::string>,
+                  std::unordered_map<ID, std::string>>
+gradFuncImpl(const Func &func, const std::unordered_set<std::string> &_requires,
+             const std::unordered_set<std::string> &provides,
+             const std::unordered_set<ID> &tapes) {
     auto [forward, backward, requireGrads, provideGrads, tapeMap] =
-        grad(func->body_, _requires, provides, tapes);
+        gradBody(func->body_, _requires, provides, tapes);
 
     std::vector<FuncParam> forwardParams, backwardParams;
+    std::vector<FuncRet> backwardRets;
     for (auto &&param : func->params_) {
         auto nodes = findStmt(func->body_, [&](const Stmt &stmt) {
             return stmt->nodeType() == ASTNodeType::VarDef &&
                    stmt.as<VarDefNode>()->name_ == param.name_;
         });
         ASSERT(nodes.size() == 1);
-        if (nodes.front().as<VarDefNode>()->buffer_->atype() ==
+        if (nodes.front().template as<VarDefNode>()->buffer_->atype() ==
             AccessType::Input) {
             auto closureArr = Ref<Ref<Array>>::make();
             // Redirect input arguments from forward to backward
@@ -589,7 +591,8 @@ grad(const Func &func, const std::unordered_set<std::string> &_requires,
         auto &&oriDef = _oriDef;
         auto &&tapeName = _tapeName;
         auto def = findStmt(func->body_, oriDef);
-        auto tapeDType = def.as<VarDefNode>()->buffer_->tensor()->dtype();
+        auto tapeDType =
+            def.template as<VarDefNode>()->buffer_->tensor()->dtype();
         auto tapeArr = Ref<Ref<Array>>::make(nullptr);
         if (auto iter = std::find_if(
                 forwardReturns.begin(), forwardReturns.end(),
@@ -609,17 +612,52 @@ grad(const Func &func, const std::unordered_set<std::string> &_requires,
 
     forwardFunc = hoistReturnVars(forwardFunc);
 
-    for (auto &&[x, dzdx] : requireGrads) {
-        backwardParams.emplace_back(dzdx, nullptr, false);
+    for (auto &&[x, _dzdx] : requireGrads) {
+        auto &&dzdx = _dzdx;
+        if (inplace) {
+            backwardParams.emplace_back(dzdx, nullptr, false);
+        } else {
+            auto nodes = findStmt(backward, [&](const Stmt &stmt) {
+                return stmt->nodeType() == ASTNodeType::VarDef &&
+                       stmt.as<VarDefNode>()->name_ == dzdx;
+            });
+            ASSERT(nodes.size() == 1);
+            auto dtype = nodes.front()
+                             .template as<VarDefNode>()
+                             ->buffer_->tensor()
+                             ->dtype();
+            backwardRets.emplace_back(dzdx, dtype, nullptr, false);
+        }
     }
     for (auto &&[y, dzdy] : provideGrads) {
         backwardParams.emplace_back(dzdy, nullptr, false);
     }
-    auto backwardFunc = makeFunc(func->name_ + ".grad",
-                                 std::move(backwardParams), {}, backward);
+    auto backwardFunc =
+        makeFunc(func->name_ + ".grad", std::move(backwardParams),
+                 std::move(backwardRets), backward);
 
     return std::make_tuple(forwardFunc, backwardFunc, requireGrads,
                            provideGrads, tapeMap);
+}
+
+std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
+           std::unordered_map<std::string, std::string>,
+           std::unordered_map<ID, std::string>>
+gradFuncInplace(const Func &func,
+                const std::unordered_set<std::string> &_requires,
+                const std::unordered_set<std::string> &provides,
+                const std::unordered_set<ID> &tapes) {
+    return gradFuncImpl<true>(func, _requires, provides, tapes);
+}
+
+std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
+           std::unordered_map<std::string, std::string>,
+           std::unordered_map<ID, std::string>>
+gradFuncOutOfPlace(const Func &func,
+                   const std::unordered_set<std::string> &_requires,
+                   const std::unordered_set<std::string> &provides,
+                   const std::unordered_set<ID> &tapes) {
+    return gradFuncImpl<false>(func, _requires, provides, tapes);
 }
 
 static std::vector<ID> _findTapeDefs(const Stmt &op, GradTapeMode mode) {
@@ -651,17 +689,32 @@ static std::unordered_set<ID> findTapeDefs(const Stmt &op, GradTapeMode mode) {
 std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>,
            std::unordered_map<ID, std::string>>
-grad(const Stmt &op, const std::unordered_set<std::string> &_requires,
-     const std::unordered_set<std::string> &provides, GradTapeMode tapeMode) {
-    return grad(op, _requires, provides, findTapeDefs(op, tapeMode));
+gradBody(const Stmt &op, const std::unordered_set<std::string> &_requires,
+         const std::unordered_set<std::string> &provides,
+         GradTapeMode tapeMode) {
+    return gradBody(op, _requires, provides, findTapeDefs(op, tapeMode));
 }
 
 std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>,
            std::unordered_map<ID, std::string>>
-grad(const Func &func, const std::unordered_set<std::string> &_requires,
-     const std::unordered_set<std::string> &provides, GradTapeMode tapeMode) {
-    return grad(func, _requires, provides, findTapeDefs(func->body_, tapeMode));
+gradFuncInplace(const Func &func,
+                const std::unordered_set<std::string> &_requires,
+                const std::unordered_set<std::string> &provides,
+                GradTapeMode tapeMode) {
+    return gradFuncInplace(func, _requires, provides,
+                           findTapeDefs(func->body_, tapeMode));
+}
+
+std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
+           std::unordered_map<std::string, std::string>,
+           std::unordered_map<ID, std::string>>
+gradFuncOutOfPlace(const Func &func,
+                   const std::unordered_set<std::string> &_requires,
+                   const std::unordered_set<std::string> &provides,
+                   GradTapeMode tapeMode) {
+    return gradFuncOutOfPlace(func, _requires, provides,
+                              findTapeDefs(func->body_, tapeMode));
 }
 
 } // namespace freetensor

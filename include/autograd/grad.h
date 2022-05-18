@@ -162,7 +162,7 @@ class Grad : public SymbolTable<Mutator> {
 };
 
 /**
- * Reverse mode Auto differentiation
+ * Reverse mode automatic differentiation
  *
  * @param op : Original AST
  * @param requires : Name of input variables that need gradients
@@ -183,22 +183,31 @@ class Grad : public SymbolTable<Mutator> {
 std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>,
            std::unordered_map<ID, std::string>>
-grad(const Stmt &op, const std::unordered_set<std::string> &_requires,
-     const std::unordered_set<std::string> &provides,
-     const std::unordered_set<ID> &tapes);
+gradBody(const Stmt &op, const std::unordered_set<std::string> &_requires,
+         const std::unordered_set<std::string> &provides,
+         const std::unordered_set<ID> &tapes);
 
 std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>,
            std::unordered_map<ID, std::string>>
-grad(const Func &func, const std::unordered_set<std::string> &_requires,
-     const std::unordered_set<std::string> &provides,
-     const std::unordered_set<ID> &tapes);
+gradFuncInplace(const Func &func,
+                const std::unordered_set<std::string> &_requires,
+                const std::unordered_set<std::string> &provides,
+                const std::unordered_set<ID> &tapes);
+
+std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
+           std::unordered_map<std::string, std::string>,
+           std::unordered_map<ID, std::string>>
+gradFuncOutOfPlace(const Func &func,
+                   const std::unordered_set<std::string> &_requires,
+                   const std::unordered_set<std::string> &provides,
+                   const std::unordered_set<ID> &tapes);
 /** @} */
 
 enum class GradTapeMode : int { All, Nothing, NoReuseOnly };
 
 /**
- * Reverse mode Auto differentiation
+ * Reverse mode automatic differentiation
  *
  * @param op : Original AST
  * @param requires : Name of input variables that need gradients
@@ -221,16 +230,25 @@ enum class GradTapeMode : int { All, Nothing, NoReuseOnly };
 std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>,
            std::unordered_map<ID, std::string>>
-grad(const Stmt &op, const std::unordered_set<std::string> &_requires,
-     const std::unordered_set<std::string> &provides,
-     GradTapeMode tapeMode = GradTapeMode::NoReuseOnly);
+gradBody(const Stmt &op, const std::unordered_set<std::string> &_requires,
+         const std::unordered_set<std::string> &provides,
+         GradTapeMode tapeMode = GradTapeMode::NoReuseOnly);
 
 std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>,
            std::unordered_map<ID, std::string>>
-grad(const Func &func, const std::unordered_set<std::string> &_requires,
-     const std::unordered_set<std::string> &provides,
-     GradTapeMode tapeMode = GradTapeMode::NoReuseOnly);
+gradFuncInplace(const Func &func,
+                const std::unordered_set<std::string> &_requires,
+                const std::unordered_set<std::string> &provides,
+                GradTapeMode tapeMode = GradTapeMode::NoReuseOnly);
+
+std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
+           std::unordered_map<std::string, std::string>,
+           std::unordered_map<ID, std::string>>
+gradFuncOutOfPlace(const Func &func,
+                   const std::unordered_set<std::string> &_requires,
+                   const std::unordered_set<std::string> &provides,
+                   GradTapeMode tapeMode = GradTapeMode::NoReuseOnly);
 /** @} */
 
 } // namespace freetensor

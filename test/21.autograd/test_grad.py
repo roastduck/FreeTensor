@@ -10,7 +10,7 @@ def test_basic():
     ]) as (x1, x2, x3, y):
         y[()] = (x1[()] + x2[()]) * x3[()]
     ast = ft.pop_ast(verbose=True)
-    _, ast, _, _, _ = ft.grad(ast, ["x1", "x2", "x3"], ["y"], set())
+    _, ast, _, _, _ = ft.grad_body(ast, ["x1", "x2", "x3"], ["y"], set())
     print(ast)
     ast = ft.lower(ast, verbose=1)
 
@@ -39,7 +39,7 @@ def test_partial_gradient():
     ]) as (x1, x2, x3, y):
         y[()] = (x1[()] + x2[()]) * x3[()]
     ast = ft.pop_ast(verbose=True)
-    _, ast, _, _, _ = ft.grad(ast, ["x1"], ["y"], set())
+    _, ast, _, _, _ = ft.grad_body(ast, ["x1"], ["y"], set())
     print(ast)
     ast = ft.lower(ast, verbose=1)
 
@@ -67,7 +67,7 @@ def test_branching_exprs():
         y2[()] = ft.max(x1[()], x2[()])
         y3[()] = ft.if_then_else(x1[()] > 0, x1[()], x2[()])
     ast = ft.pop_ast(verbose=True)
-    _, ast, _, _, _ = ft.grad(ast, ["x1", "x2"], ["y1", "y2", "y3"], set())
+    _, ast, _, _, _ = ft.grad_body(ast, ["x1", "x2"], ["y1", "y2", "y3"], set())
     print(ast)
     ast = ft.lower(ast, verbose=1)
 
@@ -101,7 +101,7 @@ def test_math_funcs():
         y2[()] = ft.exp(x[()])
         y3[()] = ft.square(x[()])
     ast = ft.pop_ast(verbose=True)
-    _, ast, _, _, _ = ft.grad(ast, ["x"], ["y1", "y2", "y3"], set())
+    _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y1", "y2", "y3"], set())
     print(ast)
     ast = ft.lower(ast, verbose=1)
 
@@ -131,7 +131,8 @@ def test_use_forward_value_when_taped():
                         y1[i] = ft.exp(t[()])
                         y2[i] = ft.square(t[()])
     ast = ft.pop_ast(verbose=True)
-    _, ast, _, _, _ = ft.grad(ast, ["x"], ["y1", "y2"], ["V_t", "V_y1", "V_y2"])
+    _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y1", "y2"],
+                                   ["V_t", "V_y1", "V_y2"])
     print(ast)
     ast = ft.lower(ast, verbose=1)
 
@@ -162,7 +163,7 @@ def test_use_taped_forward_value():
                 y1[i] = 2 * t[()]
                 y2[i] = 3 * t[()]
     ast = ft.pop_ast(verbose=True)
-    _, ast, _, _, _ = ft.grad(ast, ["x"], ["y1", "y2"], ["V_t"])
+    _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y1", "y2"], ["V_t"])
     print(ast)
     ast = ft.lower(ast, verbose=1)
 
@@ -192,7 +193,7 @@ def test_multiple_statements():
             y1[()] = t[()] * x3[()]
             y2[()] = t[()] + x3[()]
     ast = ft.pop_ast(verbose=True)
-    _, ast, _, _, _ = ft.grad(ast, ["x1", "x2", "x3"], ["y1", "y2"], set())
+    _, ast, _, _, _ = ft.grad_body(ast, ["x1", "x2", "x3"], ["y1", "y2"], set())
     print(ast)
     ast = ft.lower(ast, verbose=1)
 
@@ -229,7 +230,7 @@ def test_nested_local_def():
                 y1[()] = u[()] * x1[()]
             y2[()] = t[()] * x2[()]
     ast = ft.pop_ast(verbose=True)
-    _, ast, _, _, _ = ft.grad(ast, ["x1", "x2", "x3"], ["y1", "y2"], set())
+    _, ast, _, _, _ = ft.grad_body(ast, ["x1", "x2", "x3"], ["y1", "y2"], set())
     print(ast)
     ast = ft.lower(ast, verbose=1)
 
@@ -262,7 +263,7 @@ def test_dependent_iterations():
         with ft.For("i", 0, 4) as i:
             y[()] = -y[()] + x[i]
     ast = ft.pop_ast(verbose=True)
-    _, ast, _, _, _ = ft.grad(ast, ["x"], ["y"], set())
+    _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y"], set())
     print(ast)
     ast = ft.lower(ast, verbose=1)
 
@@ -285,7 +286,7 @@ def test_assign_quick_path():
         with ft.For("i", 0, 4) as i:
             y[()] = x[i]
     ast = ft.pop_ast(verbose=True)
-    _, ast, _, _, _ = ft.grad(ast, ["x"], ["y"], set())
+    _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y"], set())
     print(ast)
     ast = ft.lower(ast, verbose=1)
 
@@ -306,7 +307,7 @@ def test_reduce_sum_quick_path():
         with ft.For("i", 0, 4) as i:
             y[()] += x[i]
     ast = ft.pop_ast(verbose=True)
-    _, ast, _, _, _ = ft.grad(ast, ["x"], ["y"], set())
+    _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y"], set())
     print(ast)
     ast = ft.lower(ast, verbose=1)
 
@@ -326,7 +327,7 @@ def test_atypical_loop():
         with ft.For("i", -2, 2) as i:
             y[()] = -y[()] + x[i + 2]
     ast = ft.pop_ast(verbose=True)
-    _, ast, _, _, _ = ft.grad(ast, ["x"], ["y"], set())
+    _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y"], set())
     print(ast)
     ast = ft.lower(ast, verbose=1)
 
@@ -358,7 +359,7 @@ def test_nested_loops():
                 with ft.For("j", 0, 4) as j:
                     y[i] += t[j] * w1[i, j]
     ast = ft.pop_ast(verbose=True)
-    _, ast, _, _, _ = ft.grad(ast, ["x", "w0", "w1"], ["y"], set())
+    _, ast, _, _, _ = ft.grad_body(ast, ["x", "w0", "w1"], ["y"], set())
     print(ast)
     ast = ft.lower(ast, verbose=1)
 
@@ -405,8 +406,8 @@ def test_tape_1():
             t[()] = x1[()] + x2[()]
             y[()] = t[()] * x3[()]
     ast = ft.pop_ast(verbose=True)
-    forward, backward, _, _, _ = ft.grad(ast, ["x1", "x2", "x3"], ["y"],
-                                         ["V_t"])
+    forward, backward, _, _, _ = ft.grad_body(ast, ["x1", "x2", "x3"], ["y"],
+                                              ["V_t"])
     print("Forward:")
     print(forward)
     print("Backward:")
@@ -449,8 +450,8 @@ def test_tape_2():
                 t[()] = x1[i] + x2[i]
                 y[i] = t[()] * x3[i]
     ast = ft.pop_ast(verbose=True)
-    forward, backward, _, _, _ = ft.grad(ast, ["x1", "x2", "x3"], ["y"],
-                                         ["V_t"])
+    forward, backward, _, _, _ = ft.grad_body(ast, ["x1", "x2", "x3"], ["y"],
+                                              ["V_t"])
     print("Forward:")
     print(forward)
     print("Backward:")
@@ -499,7 +500,7 @@ def test_tape_3():
                     with ft.For("j", 0, 5, nid="Lj") as j:
                         y[i, k] += t[k] * x2[i, j, k]
     ast = ft.pop_ast(verbose=True)
-    forward, backward, _, _, _ = ft.grad(ast, ["x2"], ["y"], ["V_t"])
+    forward, backward, _, _, _ = ft.grad_body(ast, ["x2"], ["y"], ["V_t"])
     print("Forward:")
     print(forward)
     print("Backward:")
@@ -537,7 +538,7 @@ def test_tape_4():
                 t[()] = t[()] * x[i] + 1
             y[()] = t[()]
     ast = ft.pop_ast(verbose=True)
-    forward, backward, _, _, _ = ft.grad(ast, ["x"], ["y"], ["V_t"])
+    forward, backward, _, _, _ = ft.grad_body(ast, ["x"], ["y"], ["V_t"])
     print("Forward:")
     print(forward)
     print("Backward:")
@@ -588,7 +589,8 @@ def test_tape_5():
                     y[i] = h[i]
 
     ast = ft.pop_ast(verbose=True)
-    forward, backward, _, _, _ = ft.grad(ast, ["x", "u"], ["y"], [":h", ":f"])
+    forward, backward, _, _, _ = ft.grad_body(ast, ["x", "u"], ["y"],
+                                              [":h", ":f"])
     print("Forward:")
     print(forward)
     print("Backward:")
@@ -649,8 +651,8 @@ def test_hoist_tape_out_of_loop():
                 y[i] = t[()] * x3[i]
     func = ft.Func("main", ["x1", "x2", "x3", "y"], [], ft.pop_ast())
     print(func)
-    forward, backward, _, _, _ = ft.grad(func, ["x1", "x2", "x3"], ["y"],
-                                         ["V_t"])
+    forward, backward, _, _, _ = ft.grad_(func, ["x1", "x2", "x3"], ["y"],
+                                          ["V_t"])
     print("Forward:")
     print(forward)
     print("Backward:")
@@ -695,8 +697,8 @@ def test_use_tape_in_cond():
                     y[i] = t[()]
     func = ft.Func("main", ["x1", "x2", "x3", "y"], [], ft.pop_ast())
     print(func)
-    forward, backward, _, _, _ = ft.grad(func, ["x1", "x2", "x3"], ["y"],
-                                         ["V_t"])
+    forward, backward, _, _, _ = ft.grad_(func, ["x1", "x2", "x3"], ["y"],
+                                          ["V_t"])
     print("Forward:")
     print(forward)
     print("Backward:")
@@ -752,8 +754,8 @@ def test_tape_mode_all():
                     u[()] = x2[i] + x3[i]
                     y[i] = u[()] * t[i]
     ast = ft.pop_ast(verbose=True)
-    forward, backward, _, _, _ = ft.grad(ast, ["x1", "x2", "x3"], ["y"],
-                                         ft.GradTapeMode.All)
+    forward, backward, _, _, _ = ft.grad_body(ast, ["x1", "x2", "x3"], ["y"],
+                                              ft.GradTapeMode.All)
     print("Forward:")
     print(forward)
     print("Backward:")
@@ -805,8 +807,8 @@ def test_tape_mode_nothing():
                     u[()] = x2[i] + x3[i]
                     y[i] = u[()] * t[i]
     ast = ft.pop_ast(verbose=True)
-    forward, backward, _, _, _ = ft.grad(ast, ["x1", "x2", "x3"], ["y"],
-                                         ft.GradTapeMode.Nothing)
+    forward, backward, _, _, _ = ft.grad_body(ast, ["x1", "x2", "x3"], ["y"],
+                                              ft.GradTapeMode.Nothing)
     print("Forward:")
     print(forward)
     print("Backward:")
@@ -855,8 +857,8 @@ def test_tape_mode_no_reuse_only():
                     u[()] = x2[i] + x3[i]
                     y[i] = u[()] * t[i]
     ast = ft.pop_ast(verbose=True)
-    forward, backward, _, _, _ = ft.grad(ast, ["x1", "x2", "x3"], ["y"],
-                                         ft.GradTapeMode.NoReuseOnly)
+    forward, backward, _, _, _ = ft.grad_body(ast, ["x1", "x2", "x3"], ["y"],
+                                              ft.GradTapeMode.NoReuseOnly)
     print("Forward:")
     print(forward)
     print("Backward:")
@@ -907,7 +909,7 @@ def test_no_deps():
                 edge2[j] = edge1[j] + i
 
     print(test)
-    _, backward, _, _, _ = ft.grad(test, ["edge1"], ["edge2"], set())
+    _, backward, _, _, _ = ft.grad_(test, ["edge1"], ["edge2"], set())
     print(backward)
     s = ft.Schedule(backward)
     s.parallelize("Li", "openmp")  # No exception here
