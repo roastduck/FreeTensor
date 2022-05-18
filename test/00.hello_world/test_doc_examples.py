@@ -12,7 +12,7 @@ def test_vector_add():
 
     # Change this line to ft.optimize(verbose=1) to see the resulting native code
     @ft.optimize
-    def test(a: ft.Var[(n,), "int32"], b: ft.Var[(4,), "int32"]):
+    def test(a: ft.Var[(n,), "int32"], b: ft.Var[(n,), "int32"]):
         y = ft.empty((n,), "int32")
         for i in range(n):
             y[i] = a[i] + b[i]
@@ -63,7 +63,7 @@ def test_vector_add_gpu():
         @ft.optimize(
             # Parallel Loop Li as GPU threads
             schedule_callback=lambda s: s.parallelize('Li', 'threadIdx.x'))
-        def test(a: ft.Var[(n,), "int32"], b: ft.Var[(4,), "int32"]):
+        def test(a: ft.Var[(n,), "int32"], b: ft.Var[(n,), "int32"]):
             y = ft.empty((n,), "int32")
             #! nid: Li # Name the loop below as "Li"
             for i in range(n):
@@ -138,8 +138,8 @@ def test_dynamic_and_static():
     n = 4
 
     @ft.optimize
-    def test(a: ft.Var[(n,), "int32"], b: ft.Var[(4,), "int32"],
-             c: ft.Var[(4,), "int32"]):
+    def test(a: ft.Var[(n,), "int32"], b: ft.Var[(n,), "int32"],
+             c: ft.Var[(n,), "int32"]):
         inputs = [a, b, c]  # Static
         y = ft.empty((n,), "int32")  # Dynamic
         for i in range(n):  # Dyanmic
@@ -167,7 +167,7 @@ def test_parallel_vector_add():
     # Add verbose=1 to see the resulting native code
     @ft.optimize(schedule_callback=lambda s: s.parallelize('Li', 'openmp')
                 )  # <-- 2. Apply the schedule
-    def test(a: ft.Var[(n,), "int32"], b: ft.Var[(4,), "int32"]):
+    def test(a: ft.Var[(n,), "int32"], b: ft.Var[(n,), "int32"]):
         y = ft.empty((n,), "int32")
         #! nid: Li  # <-- 1. Name the loop as Li
         for i in range(n):
@@ -196,7 +196,7 @@ def test_split_and_parallel_vector_add():
     # Set verbose=1 to see the resulting native code
     # Set verbose=2 to see the code after EVERY schedule
     @ft.optimize(schedule_callback=sch)
-    def test(a: ft.Var[(n,), "int32"], b: ft.Var[(4,), "int32"]):
+    def test(a: ft.Var[(n,), "int32"], b: ft.Var[(n,), "int32"]):
         y = ft.empty((n,), "int32")
         #! nid: Li
         for i in range(n):

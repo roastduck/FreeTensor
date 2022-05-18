@@ -17,7 +17,7 @@ with ft.Device(ft.GPU(), 0):
     @ft.optimize(
         # Parallel Loop Li as GPU threads
         schedule_callback=lambda s: s.parallelize('Li', 'threadIdx.x'))
-    def test(a: ft.Var[(n,), "int32"], b: ft.Var[(4,), "int32"]):
+    def test(a: ft.Var[(n,), "int32"], b: ft.Var[(n,), "int32"]):
         y = ft.empty((n,), "int32")
         #! nid: Li # Name the loop below as "Li"
         for i in range(n):
