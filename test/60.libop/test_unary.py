@@ -85,7 +85,7 @@ def test_out_of_place(libop_func, torch_func, require_positive):
     (ft.floor_, torch.floor, False),
     (ft.ceil_, torch.ceil, False),
 ])
-def test_grad(libop_func, torch_func, require_positive):
+def test_implace_grad_of_implace_func(libop_func, torch_func, require_positive):
     device = ft.Device(ft.CPU())
 
     @ft.transform
@@ -95,22 +95,12 @@ def test_grad(libop_func, torch_func, require_positive):
         #! nid: to_test
         libop_func(x, y)
 
-    print(f)
-    f, g, requires, privdes, _ = ft.grad(f, set(["x"]), set(["y"]),
-                                         ft.GradTapeMode.NoReuseOnly)
+    f, g, requires, provides, _ = ft.grad(f, ["x"], ["y"],
+                                          ft.GradTapeMode.NoReuseOnly)
     print("Forward:")
-    print(f)
+    f = ft.optimize(f, verbose=1)
     print("Backward:")
-    print(g)
-    f = ft.lower(f, ft.CPU())
-    print("Forward:")
-    print(f)
-    g = ft.lower(g, ft.CPU())
-    print("Backward:")
-    print(g)
-
-    f_code = ft.codegen(f, ft.CPU())
-    g_code = ft.codegen(g, ft.CPU())
+    g = ft.optimize(g, verbose=1)
 
     if require_positive:
         x_torch = torch.rand(4, 4, dtype=torch.float32) * 10
@@ -120,7 +110,7 @@ def test_grad(libop_func, torch_func, require_positive):
     x_torch.requires_grad = True
     y_torch_ours = torch.zeros(4, 4, dtype=torch.float32)
     y_arr = ft.Array(y_torch_ours.numpy(), device)
-    ft.Driver(f, f_code, device)(x_arr, y_arr)
+    f(x_arr, y_arr)
     y_torch_ours = torch.tensor(y_arr.numpy())
     y_torch = torch_func(x_torch)
     assert torch.all(torch.isclose(y_torch_ours, y_torch))
@@ -129,10 +119,56 @@ def test_grad(libop_func, torch_func, require_positive):
     d_y_arr = ft.Array(y_torch.grad.numpy(), device)
     x_grad_torch_ours = torch.zeros(4, 4, dtype=torch.float32)
     d_x_arr = ft.Array(x_grad_torch_ours.numpy(), device)
-    kvs = {}
-    kvs[privdes['y']] = d_y_arr
-    kvs[requires['x']] = d_x_arr
-    ft.Driver(g, g_code, device)(**kvs)
+    g(**{provides['y']: d_y_arr, requires['x']: d_x_arr})
+    x_grad_torch_ours = torch.tensor(d_x_arr.numpy())
+    y_torch.backward(y_torch.grad)
+    assert torch.all(torch.isclose(x_grad_torch_ours, x_torch.grad, 1e-4, 1e-7))
+
+
+@pytest.mark.parametrize('libop_func, torch_func, require_positive', [
+    (ft.abs, torch.abs, False),
+    (ft.exp, torch.exp, False),
+    (ft.sigmoid, torch.sigmoid, False),
+    (ft.sqrt, torch.sqrt, True),
+    (ft.square, torch.square, False),
+    (ft.relu, torch.relu, False),
+    (ft.tanh, torch.tanh, False),
+    (ft.floor, torch.floor, False),
+    (ft.ceil, torch.ceil, False),
+])
+def test_implace_grad_of_out_of_place_func(libop_func, torch_func,
+                                           require_positive):
+    device = ft.Device(ft.CPU())
+
+    @ft.transform
+    def f(x):
+        x: ft.Var[(4, 4), "float32", "input", "cpu"]
+        #! nid: to_test
+        return libop_func(x)
+
+    f, g, requires, provides, _ = ft.grad(f, ["x"], [ft.Return()],
+                                          ft.GradTapeMode.NoReuseOnly)
+    print("Forward:")
+    f = ft.optimize(f, verbose=1)
+    print("Backward:")
+    g = ft.optimize(g, verbose=1)
+
+    if require_positive:
+        x_torch = torch.rand(4, 4, dtype=torch.float32) * 10
+    else:
+        x_torch = torch.rand(4, 4, dtype=torch.float32) * 10 - 5
+    x_arr = ft.Array(x_torch.numpy(), device)
+    x_torch.requires_grad = True
+    y_arr = f(x_arr)
+    y_torch_ours = torch.tensor(y_arr.numpy())
+    y_torch = torch_func(x_torch)
+    assert torch.all(torch.isclose(y_torch_ours, y_torch))
+
+    y_torch.grad = torch.rand(4, 4, dtype=torch.float32)
+    d_y_arr = ft.Array(y_torch.grad.numpy(), device)
+    x_grad_torch_ours = torch.zeros(4, 4, dtype=torch.float32)
+    d_x_arr = ft.Array(x_grad_torch_ours.numpy(), device)
+    g(**{provides['y']: d_y_arr, requires['x']: d_x_arr})
     x_grad_torch_ours = torch.tensor(d_x_arr.numpy())
     y_torch.backward(y_torch.grad)
     assert torch.all(torch.isclose(x_grad_torch_ours, x_torch.grad, 1e-4, 1e-7))

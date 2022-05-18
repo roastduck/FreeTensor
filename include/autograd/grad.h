@@ -162,7 +162,7 @@ class Grad : public SymbolTable<Mutator> {
 };
 
 /**
- * Auto differentiation
+ * Reverse mode Auto differentiation
  *
  * @param op : Original AST
  * @param requires : Name of input variables that need gradients
