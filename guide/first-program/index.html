@@ -111,7 +111,7 @@ n = 4
 
 # Change this line to ft.optimize(verbose=1) to see the resulting native code
 @ft.optimize
-def test(a: ft.Var[(n,), &quot;int32&quot;], b: ft.Var[(4,), &quot;int32&quot;]):
+def test(a: ft.Var[(n,), &quot;int32&quot;], b: ft.Var[(n,), &quot;int32&quot;]):
     y = ft.empty((n,), &quot;int32&quot;)
     for i in range(n):
         y[i] = a[i] + b[i]
@@ -149,8 +149,8 @@ import numpy as np
 n = 4
 
 @ft.optimize
-def test(a: ft.Var[(n,), &quot;int32&quot;], b: ft.Var[(4,), &quot;int32&quot;],
-         c: ft.Var[(4,), &quot;int32&quot;]):
+def test(a: ft.Var[(n,), &quot;int32&quot;], b: ft.Var[(n,), &quot;int32&quot;],
+         c: ft.Var[(n,), &quot;int32&quot;]):
     inputs = [a, b, c]  # Static
     y = ft.empty((n,), &quot;int32&quot;)  # Dynamic
     for i in range(n):  # Dyanmic
