@@ -12,16 +12,16 @@ using namespace pybind11::literals;
 void init_ffi_driver(py::module_ &m) {
     py::class_<Driver, Ref<Driver>>(m, "Driver")
         .def(py::init<const Func &, const std::string &, const Ref<Device> &>())
-        .def("set_params",
+        .def("set_args",
              static_cast<void (Driver::*)(
                  const std::vector<Ref<Array>> &,
                  const std::unordered_map<std::string, Ref<Array>> &)>(
-                 &Driver::setParams),
+                 &Driver::setArgs),
              "args"_a, "kws"_a = std::unordered_map<std::string, Ref<Array>>())
-        .def("set_params",
+        .def("set_args",
              static_cast<void (Driver::*)(
                  const std::unordered_map<std::string, Ref<Array>> &)>(
-                 &Driver::setParams),
+                 &Driver::setArgs),
              "kws"_a)
         .def("run", &Driver::run)
         .def("sync", &Driver::sync)

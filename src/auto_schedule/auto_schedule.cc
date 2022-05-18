@@ -91,7 +91,7 @@ std::vector<double> AutoSchedule::measure(std::vector<Ref<Sketch>> &sketches) {
                 times.emplace_back(1e30);
                 continue;
             }
-            drivers[i]->setParams(args_, kws_);
+            drivers[i]->setArgs(args_, kws_);
             double t = drivers[i]->time(5, 20);
             times.emplace_back(t);
         } catch (const std::exception &e) {

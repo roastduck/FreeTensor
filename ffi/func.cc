@@ -6,6 +6,17 @@ namespace freetensor {
 using namespace pybind11::literals;
 
 void init_ffi_ast_func(py::module_ &m) {
+    py::class_<FuncParam>(m, "FuncParam")
+        .def_readonly("name", &FuncParam::name_)
+        .def_readonly("update_closure", &FuncParam::updateClosure_)
+        .def_property_readonly("is_in_closure", &FuncParam::isInClosure);
+
+    py::class_<FuncRet>(m, "FuncRet")
+        .def_readonly("name", &FuncRet::name_)
+        .def_readonly("dtype", &FuncRet::dtype_)
+        .def_readonly("return_closure", &FuncRet::returnClosure_)
+        .def_property_readonly("is_in_closure", &FuncRet::isInClosure);
+
     m.attr("Func")
         .cast<py::class_<FuncNode, Func>>()
         .def_readonly("name", &FuncNode::name_)

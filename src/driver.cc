@@ -213,10 +213,10 @@ void Driver::buildAndLoad() {
     }
 }
 
-void Driver::setParams(const std::vector<Ref<Array>> &args,
-                       const std::unordered_map<std::string, Ref<Array>> &kws) {
+void Driver::setArgs(const std::vector<Ref<Array>> &args,
+                     const std::unordered_map<std::string, Ref<Array>> &kws) {
     for (size_t i = 0, iEnd = args.size(), j = 0; i < iEnd; i++) {
-        while (j < rawArgs.size() && f_->params_[j].closure_.isValid() &&
+        while (j < rawArgs.size() && f_->params_[j].isInClosure() &&
                !f_->params_[j].updateClosure_) {
             j++;
         }
@@ -235,8 +235,7 @@ void Driver::setParams(const std::vector<Ref<Array>> &args,
         args_[j] = args[i];
         rawArgs[j] = requestPtr(args[i], dev_, hostDev_, buffer->mtype(),
                                 buffer->atype());
-        if (f_->params_[j].closure_.isValid() &&
-            f_->params_[j].updateClosure_) {
+        if (f_->params_[j].isInClosure() && f_->params_[j].updateClosure_) {
             *f_->params_[j].closure_ = args[j];
         }
         j++;
@@ -257,7 +256,7 @@ void Driver::setParams(const std::vector<Ref<Array>> &args,
         args_[paramId] = value;
         rawArgs[paramId] =
             requestPtr(value, dev_, hostDev_, buffer->mtype(), buffer->atype());
-        if (f_->params_[paramId].closure_.isValid()) {
+        if (f_->params_[paramId].isInClosure()) {
             if (f_->params_[paramId].updateClosure_) {
                 *f_->params_[paramId].closure_ = value;
             } else {
@@ -269,7 +268,7 @@ void Driver::setParams(const std::vector<Ref<Array>> &args,
     for (auto &&[i, rawArg, param] :
          iter::zip(iter::count(), rawArgs, f_->params_)) {
         auto &&buffer = name2buffer_.at(param.name_);
-        if (rawArg == nullptr && param.closure_.isValid()) {
+        if (rawArg == nullptr && param.isInClosure()) {
             if (!param.closure_->isValid()) {
                 throw DriverError("Closure variable " + param.name_ +
                                   " is not set");

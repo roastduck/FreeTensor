@@ -19,6 +19,8 @@ struct FuncParam {
     Ref<Ref<Array>> closure_; /// Data bound to this parameter
     bool updateClosure_;      /// Accept user input even if there is a closure
 
+    bool isInClosure() const { return closure_.isValid(); }
+
     FuncParam(const std::string &name, const Ref<Ref<Array>> &closure,
               bool updateClosure)
         : name_(name), closure_(closure), updateClosure_(updateClosure) {}
@@ -29,6 +31,8 @@ struct FuncRet {
     DataType dtype_;
     Ref<Ref<Array>> closure_; /// Data bound to this return value
     bool returnClosure_;      /// Return even if there is a closure
+
+    bool isInClosure() const { return closure_.isValid(); }
 
     FuncRet(const std::string &name, DataType dtype,
             const Ref<Ref<Array>> &closure, bool returnClosure)

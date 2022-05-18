@@ -112,21 +112,6 @@ def test_grad(libop_func, torch_func, require_positive):
     f_code = ft.codegen(f, ft.CPU())
     g_code = ft.codegen(g, ft.CPU())
 
-    def get_shape_and_dtype(func, nid):
-        s = ft.Schedule(func)
-        vardef = s.find(nid).node()
-        shape = []
-        for x in vardef.buffer.tensor.shape:
-            assert isinstance(x, ft.ffi.IntConst)
-            shape.append(x.val)
-        if vardef.buffer.tensor.dtype == ft.DataType.Float32:
-            dtype = torch.float32
-        elif vardef.buffer.tensor.dtype == ft.DataType.Int32:
-            dtype = torch.int32
-        else:
-            assert False
-        return shape, dtype
-
     if require_positive:
         x_torch = torch.rand(4, 4, dtype=torch.float32) * 10
     else:

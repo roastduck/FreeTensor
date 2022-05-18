@@ -1,7 +1,7 @@
 import freetensor_ffi as ffi
 import functools
 
-from typing import Optional
+from typing import Optional, Sequence
 from freetensor_ffi import CPU, GPU, Array
 
 from . import config
@@ -70,6 +70,34 @@ class Device(ffi.Device):
         config.set_default_device(self.old_device)
 
 
+class ReturnValuesPack:
+    '''
+    Hold return values from a Driver invocation
+
+    Return values can be retrieved in an anonymous manner: `x, y, z = pack`,
+    or in a named manner: `pack['x']`
+
+    Please note that a ReturnValuesPack is different from a OrderedDict, as
+    OrderedDict unpacks to keys rather than values
+    '''
+
+    def __init__(self, keys: Sequence[Array], values: Sequence[Array]):
+        keys = list(keys)
+        values = list(values)
+        assert len(keys) == len(values)
+        self.keys = keys
+        self.values = values
+
+    def __iter__(self):
+        yield from self.values
+
+    def __getitem__(self, key) -> Array:
+        for k, v in zip(self.keys, self.values):
+            if k == key:
+                return v
+        raise ffi.DriverError("No such return value named " + key)
+
+
 class Driver(ffi.Driver):
 
     def __init__(self,
@@ -96,18 +124,45 @@ class Driver(ffi.Driver):
         if device is None:
             device = config.default_device()
         super(Driver, self).__init__(func, src, device)
+        self.func = func
 
-    def set_params(self, *args, **kws):
-        super(Driver, self).set_params(args, kws)
+    def set_args(self, *args, **kws):
+        ''' Set argument for an invocation '''
+        super(Driver, self).set_args(args, kws)
+
+    def collect_returns(self):
+        '''
+        Collect return values from an invocation
+
+        Return values must be collect. Otherwise there will be memory leaks
+
+        If there is only one return value, it is returned directly. Otherwise,
+        the return values are packed in a ReturnValuesPack
+        '''
+        values = super(Driver, self).collect_returns()
+        if len(values) == 1:
+            return values[0]
+        else:
+            return ReturnValuesPack(
+                map(
+                    lambda r: r.name,
+                    filter(lambda r: not r.is_in_closure or r.return_closure,
+                           self.func.returns)), values)
 
     def __call__(self, *args, **kws):
-        self.set_params(*args, **kws)
+        '''
+        Set argument, execute the binary code, and collect the returns
+
+        If there is only one return value, it is returned directly. Otherwise,
+        the return values are packed in a ReturnValuesPack
+
+        This function will introduce some overhaed handling arguments and return
+        values. For an accurate execution time measurement, plase call
+        `self.set_args` first, then `self.time`, and finally `self.collect_returns`
+        '''
+        self.set_args(*args, **kws)
         self.run()
-        lst = self.collect_returns()
-        if len(lst) == 1:
-            return lst[0]
-        else:
-            return lst
+        return self.collect_returns()
 
 
 def build_binary(code: Optional[NativeCode] = None,

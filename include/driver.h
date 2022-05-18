@@ -74,10 +74,10 @@ class Driver {
     Driver(Driver &&) = default;
     Driver &operator=(Driver &&) = default;
 
-    void setParams(const std::vector<Ref<Array>> &args,
-                   const std::unordered_map<std::string, Ref<Array>> &kws = {});
-    void setParams(const std::unordered_map<std::string, Ref<Array>> &kws) {
-        setParams({}, kws);
+    void setArgs(const std::vector<Ref<Array>> &args,
+                 const std::unordered_map<std::string, Ref<Array>> &kws = {});
+    void setArgs(const std::unordered_map<std::string, Ref<Array>> &kws) {
+        setArgs({}, kws);
     }
 
     void run();
