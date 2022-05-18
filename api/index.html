@@ -76,6 +76,8 @@
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#freetensor.core.autograd">autograd</a>
         <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.autograd.ArgRetDict">ArgRetDict</a>
+    </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.autograd.Return">Return</a>
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.autograd.grad">grad()</a>
@@ -814,6 +816,62 @@ AutoSchedule            (<span title="freetensor_ffi.AutoSchedule">AutoSchedule<
 
 
 
+<h4 id="freetensor.core.autograd.ArgRetDict" class="doc doc-heading">
+        <code>
+ArgRetDict        </code>
+
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Look an object using either a function argument or return value's name or its position</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/autograd.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">ArgRetDict</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39; Look an object using either a function argument or return value&#39;s name or its position &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">func</span> <span class="o">=</span> <span class="n">func</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">d</span> <span class="o">=</span> <span class="n">d</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="ow">is</span> <span class="n">Return</span><span class="p">:</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">get_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+</code></pre></div>
+        </details>
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-class">
+
+
+
 <h4 id="freetensor.core.autograd.Return" class="doc doc-heading">
         <code>
 Return        </code>
@@ -841,12 +899,23 @@ Return        </code>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">n</span> <span class="o">=</span> <span class="n">n</span>
+
+    <span class="k">def</span> <span class="nf">get_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">func</span><span class="o">.</span><span class="n">returns</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">func</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> has no return value&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">func</span><span class="o">.</span><span class="n">returns</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">name</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span>
+                <span class="n">func</span><span class="o">.</span><span class="n">returns</span>
+            <span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">func</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> has more than one return value, and you need to specify the number of a return value&quot;</span>
+            <span class="k">return</span> <span class="n">func</span><span class="o">.</span><span class="n">returns</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span>
 </code></pre></div>
         </details>
 
 
 
   <div class="doc doc-children">
+
 
 
 
@@ -873,7 +942,7 @@ Return        </code>
 
 
 <h4 id="freetensor.core.autograd.grad" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">grad</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">requires</span><span class="p">,</span> <span class="n">provides</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=&lt;</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">:</span> <span class="mi">2</span><span class="o">&gt;</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">grad</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">requires</span><span class="p">,</span> <span class="n">provides</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=&lt;</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">:</span> <span class="mi">2</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 
 </h4>
@@ -940,7 +1009,8 @@ we do not have to store each version of them in their history</p></li>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">grad</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">ffi</span><span class="o">.</span><span class="n">Func</span><span class="p">,</span>
          <span class="n">requires</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Return</span><span class="p">]],</span>
          <span class="n">provides</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Return</span><span class="p">]],</span>
-         <span class="n">tapes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">,</span> <span class="n">GradTapeMode</span><span class="p">]</span> <span class="o">=</span> <span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">):</span>
+         <span class="n">tapes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">,</span> <span class="n">GradTapeMode</span><span class="p">]</span> <span class="o">=</span> <span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">,</span>
+         <span class="n">verbose</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Reverse mode automatic differentiation</span>
 
@@ -981,7 +1051,12 @@ we do not have to store each version of them in their history</p></li>
 <span class="sd">        )</span>
 <span class="sd">    &#39;&#39;&#39;</span>
 
-    <span class="k">return</span> <span class="n">_grad_func</span><span class="p">(</span><span class="n">ffi</span><span class="o">.</span><span class="n">grad</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">requires</span><span class="p">,</span> <span class="n">provides</span><span class="p">,</span> <span class="n">tapes</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_grad_func</span><span class="p">(</span><span class="n">ffi</span><span class="o">.</span><span class="n">grad</span><span class="p">,</span>
+                      <span class="n">func</span><span class="p">,</span>
+                      <span class="n">requires</span><span class="p">,</span>
+                      <span class="n">provides</span><span class="p">,</span>
+                      <span class="n">tapes</span><span class="p">,</span>
+                      <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
 </code></pre></div>
         </details>
     </div>
@@ -995,7 +1070,7 @@ we do not have to store each version of them in their history</p></li>
 
 
 <h4 id="freetensor.core.autograd.grad_" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">grad_</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">requires</span><span class="p">,</span> <span class="n">provides</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=&lt;</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">:</span> <span class="mi">2</span><span class="o">&gt;</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">grad_</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">requires</span><span class="p">,</span> <span class="n">provides</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=&lt;</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">:</span> <span class="mi">2</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 
 </h4>
@@ -1062,7 +1137,8 @@ we do not have to store each version of them in their history</p></li>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">grad_</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">ffi</span><span class="o">.</span><span class="n">Func</span><span class="p">,</span>
           <span class="n">requires</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Return</span><span class="p">]],</span>
           <span class="n">provides</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Return</span><span class="p">]],</span>
-          <span class="n">tapes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">,</span> <span class="n">GradTapeMode</span><span class="p">]</span> <span class="o">=</span> <span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">):</span>
+          <span class="n">tapes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">,</span> <span class="n">GradTapeMode</span><span class="p">]</span> <span class="o">=</span> <span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">,</span>
+          <span class="n">verbose</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Reverse mode automatic differentiation</span>
 
@@ -1103,7 +1179,12 @@ we do not have to store each version of them in their history</p></li>
 <span class="sd">        )</span>
 <span class="sd">    &#39;&#39;&#39;</span>
 
-    <span class="k">return</span> <span class="n">_grad_func</span><span class="p">(</span><span class="n">ffi</span><span class="o">.</span><span class="n">grad_</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">requires</span><span class="p">,</span> <span class="n">provides</span><span class="p">,</span> <span class="n">tapes</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_grad_func</span><span class="p">(</span><span class="n">ffi</span><span class="o">.</span><span class="n">grad_</span><span class="p">,</span>
+                      <span class="n">func</span><span class="p">,</span>
+                      <span class="n">requires</span><span class="p">,</span>
+                      <span class="n">provides</span><span class="p">,</span>
+                      <span class="n">tapes</span><span class="p">,</span>
+                      <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
 </code></pre></div>
         </details>
     </div>
@@ -2176,9 +2257,16 @@ OrderedDict unpacks to keys rather than values</p>
         <span class="bp">self</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="n">values</span>
 
     <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39; Get all return values in the order declared in Func &#39;&#39;&#39;</span>
         <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span>
 
     <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+        <span class="sd">&#39;&#39;&#39; Get a return value with a name. Tuple is supported for multiple values &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">tuple</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">list</span><span class="p">:</span>
+            <span class="n">ret</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">key</span><span class="p">:</span>
+                <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+            <span class="k">return</span> <span class="n">ret</span>
         <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="n">key</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">v</span>
@@ -2198,6 +2286,72 @@ OrderedDict unpacks to keys rather than values</p>
 
 
 
+  <div class="doc doc-object doc-method">
+
+
+
+<h5 id="freetensor.core.driver.ReturnValuesPack.__getitem__" class="doc doc-heading">
+<code class="highlight language-python"><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+</h5>
+
+    <div class="doc doc-contents ">
+
+      <p>Get a return value with a name. Tuple is supported for multiple values</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/driver.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39; Get a return value with a name. Tuple is supported for multiple values &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">tuple</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">list</span><span class="p">:</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">key</span><span class="p">:</span>
+            <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">ret</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="n">key</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">v</span>
+    <span class="k">raise</span> <span class="n">ffi</span><span class="o">.</span><span class="n">DriverError</span><span class="p">(</span><span class="s2">&quot;No such return value named &quot;</span> <span class="o">+</span> <span class="n">key</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h5 id="freetensor.core.driver.ReturnValuesPack.__iter__" class="doc doc-heading">
+<code class="highlight language-python"><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+</h5>
+
+    <div class="doc doc-contents ">
+
+      <p>Get all return values in the order declared in Func</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/driver.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Get all return values in the order declared in Func &#39;&#39;&#39;</span>
+    <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
 
 
 
