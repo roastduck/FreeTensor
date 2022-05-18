@@ -120,6 +120,8 @@
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.driver.Driver">Driver</a>
     </li>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.driver.ReturnValuesPack">ReturnValuesPack</a>
+    </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.driver.Target">Target</a>
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.driver.build_binary">build_binary()</a>
@@ -1490,18 +1492,45 @@ Driver            (<span title="freetensor_ffi.Driver">Driver</span>)
         <span class="k">if</span> <span class="n">device</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">device</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">default_device</span><span class="p">()</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">Driver</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">func</span> <span class="o">=</span> <span class="n">func</span>
 
-    <span class="k">def</span> <span class="nf">set_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kws</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">Driver</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">kws</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">set_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kws</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39; Set argument for an invocation &#39;&#39;&#39;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Driver</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">set_args</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">kws</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">collect_returns</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Collect return values from an invocation</span>
+
+<span class="sd">        Return values must be collect. Otherwise there will be memory leaks</span>
+
+<span class="sd">        If there is only one return value, it is returned directly. Otherwise,</span>
+<span class="sd">        the return values are packed in a ReturnValuesPack</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">Driver</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">collect_returns</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">ReturnValuesPack</span><span class="p">(</span>
+                <span class="nb">map</span><span class="p">(</span>
+                    <span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                    <span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="ow">not</span> <span class="n">r</span><span class="o">.</span><span class="n">is_in_closure</span> <span class="ow">or</span> <span class="n">r</span><span class="o">.</span><span class="n">return_closure</span><span class="p">,</span>
+                           <span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">returns</span><span class="p">)),</span> <span class="n">values</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kws</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kws</span><span class="p">)</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Set argument, execute the binary code, and collect the returns</span>
+
+<span class="sd">        If there is only one return value, it is returned directly. Otherwise,</span>
+<span class="sd">        the return values are packed in a ReturnValuesPack</span>
+
+<span class="sd">        This function will introduce some overhaed handling arguments and return</span>
+<span class="sd">        values. For an accurate execution time measurement, plase call</span>
+<span class="sd">        `self.set_args` first, then `self.time`, and finally `self.collect_returns`</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_args</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kws</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
-        <span class="n">lst</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">collect_returns</span><span class="p">()</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">lst</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">lst</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">lst</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">collect_returns</span><span class="p">()</span>
 </code></pre></div>
         </details>
 
@@ -1516,6 +1545,51 @@ Driver            (<span title="freetensor_ffi.Driver">Driver</span>)
 
 
 
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h5 id="freetensor.core.driver.Driver.__call__" class="doc doc-heading">
+<code class="highlight language-python"><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kws</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+</h5>
+
+    <div class="doc doc-contents ">
+
+      <p>Set argument, execute the binary code, and collect the returns</p>
+<p>If there is only one return value, it is returned directly. Otherwise,
+the return values are packed in a ReturnValuesPack</p>
+<p>This function will introduce some overhaed handling arguments and return
+values. For an accurate execution time measurement, plase call
+<code>self.set_args</code> first, then <code>self.time</code>, and finally <code>self.collect_returns</code></p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/driver.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kws</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Set argument, execute the binary code, and collect the returns</span>
+
+<span class="sd">    If there is only one return value, it is returned directly. Otherwise,</span>
+<span class="sd">    the return values are packed in a ReturnValuesPack</span>
+
+<span class="sd">    This function will introduce some overhaed handling arguments and return</span>
+<span class="sd">    values. For an accurate execution time measurement, plase call</span>
+<span class="sd">    `self.set_args` first, then `self.time`, and finally `self.collect_returns`</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">set_args</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kws</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">collect_returns</span><span class="p">()</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
 
 
 
@@ -1583,6 +1657,7 @@ in config</p></li>
     <span class="k">if</span> <span class="n">device</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">device</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">default_device</span><span class="p">()</span>
     <span class="nb">super</span><span class="p">(</span><span class="n">Driver</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">func</span> <span class="o">=</span> <span class="n">func</span>
 </code></pre></div>
         </details>
     </div>
@@ -1595,34 +1670,147 @@ in config</p></li>
 
 
 
-<h5 id="freetensor.core.driver.Driver.set_params" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">set_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kws</span><span class="p">)</span></code>
+<h5 id="freetensor.core.driver.Driver.collect_returns" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">collect_returns</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></code>
 
 
 </h5>
 
     <div class="doc doc-contents ">
 
-      <p>set_params(<em>args, </em>*kwargs)</p>
-<p>Overloaded function.</p>
-<ol>
-<li>
-<p>set_params(self: freetensor_ffi.Driver, args: List[freetensor_ffi.Array], kws: Dict[str, freetensor_ffi.Array] = {}) -&gt; None</p>
-</li>
-<li>
-<p>set_params(self: freetensor_ffi.Driver, kws: Dict[str, freetensor_ffi.Array]) -&gt; None</p>
-</li>
-</ol>
+      <p>Collect return values from an invocation</p>
+<p>Return values must be collect. Otherwise there will be memory leaks</p>
+<p>If there is only one return value, it is returned directly. Otherwise,
+the return values are packed in a ReturnValuesPack</p>
 
         <details class="quote">
           <summary>Source code in <code>freetensor/core/driver.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">set_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kws</span><span class="p">):</span>
-    <span class="nb">super</span><span class="p">(</span><span class="n">Driver</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">kws</span><span class="p">)</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">collect_returns</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Collect return values from an invocation</span>
+
+<span class="sd">    Return values must be collect. Otherwise there will be memory leaks</span>
+
+<span class="sd">    If there is only one return value, it is returned directly. Otherwise,</span>
+<span class="sd">    the return values are packed in a ReturnValuesPack</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">values</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">Driver</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">collect_returns</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ReturnValuesPack</span><span class="p">(</span>
+            <span class="nb">map</span><span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="ow">not</span> <span class="n">r</span><span class="o">.</span><span class="n">is_in_closure</span> <span class="ow">or</span> <span class="n">r</span><span class="o">.</span><span class="n">return_closure</span><span class="p">,</span>
+                       <span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">returns</span><span class="p">)),</span> <span class="n">values</span><span class="p">)</span>
 </code></pre></div>
         </details>
     </div>
 
   </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h5 id="freetensor.core.driver.Driver.set_args" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">set_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kws</span><span class="p">)</span></code>
+
+
+</h5>
+
+    <div class="doc doc-contents ">
+
+      <p>Set argument for an invocation</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/driver.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">set_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kws</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Set argument for an invocation &#39;&#39;&#39;</span>
+    <span class="nb">super</span><span class="p">(</span><span class="n">Driver</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">set_args</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">kws</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-class">
+
+
+
+<h4 id="freetensor.core.driver.ReturnValuesPack" class="doc doc-heading">
+        <code>
+ReturnValuesPack        </code>
+
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Hold return values from a Driver invocation</p>
+<p>Return values can be retrieved in an anonymous manner: <code>x, y, z = pack</code>,
+or in a named manner: <code>pack['x']</code></p>
+<p>Please note that a ReturnValuesPack is different from a OrderedDict, as
+OrderedDict unpacks to keys rather than values</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/driver.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">ReturnValuesPack</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Hold return values from a Driver invocation</span>
+
+<span class="sd">    Return values can be retrieved in an anonymous manner: `x, y, z = pack`,</span>
+<span class="sd">    or in a named manner: `pack[&#39;x&#39;]`</span>
+
+<span class="sd">    Please note that a ReturnValuesPack is different from a OrderedDict, as</span>
+<span class="sd">    OrderedDict unpacks to keys rather than values</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keys</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Array</span><span class="p">],</span> <span class="n">values</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Array</span><span class="p">]):</span>
+        <span class="n">keys</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">keys</span> <span class="o">=</span> <span class="n">keys</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="n">values</span>
+
+    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="n">key</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">v</span>
+        <span class="k">raise</span> <span class="n">ffi</span><span class="o">.</span><span class="n">DriverError</span><span class="p">(</span><span class="s2">&quot;No such return value named &quot;</span> <span class="o">+</span> <span class="n">key</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
 
 
 
