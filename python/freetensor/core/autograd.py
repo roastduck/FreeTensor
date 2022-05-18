@@ -1,9 +1,12 @@
 from typing import Optional, Union, Sequence
+import sys
 
 import freetensor_ffi as ffi
 
 from freetensor_ffi import GradTapeMode
 from freetensor_ffi import output_intermediates
+
+from .transformer import transform
 
 
 class Return:
@@ -17,6 +20,29 @@ class Return:
 
     def __init__(self, n: Optional[int] = None):
         self.n = n
+
+    def get_name(self, func):
+        assert len(func.returns) > 0, f"{func.name} has no return value"
+        if self.n is not None:
+            return func.returns[self.n].name
+        else:
+            assert len(
+                func.returns
+            ) == 1, f"{func.name} has more than one return value, and you need to specify the number of a return value"
+            return func.returns[0].name
+
+
+class ArgRetDict:
+    ''' Look an object using either a function argument or return value's name or its position '''
+
+    def __init__(self, func, d):
+        self.func = func
+        self.d = d
+
+    def __getitem__(self, key):
+        if type(key) is Return:
+            key = key.get_name(self.func)
+        return self.d[key]
 
 
 def grad_body(stmt: ffi.Stmt,
@@ -36,31 +62,34 @@ def _grad_func(impl,
                func: ffi.Func,
                requires: Sequence[Union[str, Return]],
                provides: Sequence[Union[str, Return]],
-               tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly):
+               tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
+               verbose: Optional[int] = None):
 
+    if not issubclass(type(func), ffi.AST):
+        func = transform(func, verbose=verbose, depth=3)
     req = set(requires)
     prov = set([])
     for p in provides:
         if type(p) is Return:
-            assert len(func.returns) > 0, f"{func.name} has no return value"
-            if p.n is not None:
-                prov.add(func.returns[p.n].name)
-            else:
-                assert len(
-                    func.returns
-                ) == 1, f"{func.name} has more than one return value, and you need to specify the number of a return value"
-                prov.add(func.returns[0].name)
+            prov.add(p.get_name(func))
         else:
             prov.add(p)
     if type(tapes) is not GradTapeMode:
         tapes = set(tapes)
-    return impl(func, req, prov, tapes)
+    fwd, bwd, req_map, prov_map = impl(func, req, prov, tapes)
+    if verbose is not None and verbose >= 1:
+        print("Forward pass from AD:", file=sys.stderr)
+        print(fwd, file=sys.stderr)
+        print("Backward pass from AD:", file=sys.stderr)
+        print(bwd, file=sys.stderr)
+    return fwd, bwd, ArgRetDict(func, req_map), ArgRetDict(func, prov_map)
 
 
 def grad_(func: ffi.Func,
           requires: Sequence[Union[str, Return]],
           provides: Sequence[Union[str, Return]],
-          tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly):
+          tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
+          verbose: Optional[int] = None):
     '''
     Reverse mode automatic differentiation
 
@@ -101,13 +130,19 @@ def grad_(func: ffi.Func,
         )
     '''
 
-    return _grad_func(ffi.grad_, func, requires, provides, tapes)
+    return _grad_func(ffi.grad_,
+                      func,
+                      requires,
+                      provides,
+                      tapes,
+                      verbose=verbose)
 
 
 def grad(func: ffi.Func,
          requires: Sequence[Union[str, Return]],
          provides: Sequence[Union[str, Return]],
-         tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly):
+         tapes: Union[Sequence, GradTapeMode] = GradTapeMode.NoReuseOnly,
+         verbose: Optional[int] = None):
     '''
     Reverse mode automatic differentiation
 
@@ -148,4 +183,9 @@ def grad(func: ffi.Func,
         )
     '''
 
-    return _grad_func(ffi.grad, func, requires, provides, tapes)
+    return _grad_func(ffi.grad,
+                      func,
+                      requires,
+                      provides,
+                      tapes,
+                      verbose=verbose)

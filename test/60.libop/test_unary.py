@@ -215,7 +215,7 @@ def test_out_of_place_grad_of_out_of_place_func(libop_func, torch_func,
 
     y_torch.grad = torch.rand(4, 4, dtype=torch.float32)
     d_y_arr = ft.Array(y_torch.grad.numpy(), device)
-    d_x_arr = g(**{provides['y']: d_y_arr})
+    d_x_arr = g(**{provides[ft.Return()]: d_y_arr})
     x_grad_torch_ours = torch.tensor(d_x_arr.numpy())
     y_torch.backward(y_torch.grad)
     assert torch.all(torch.isclose(x_grad_torch_ours, x_torch.grad, 1e-4, 1e-7))

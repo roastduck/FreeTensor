@@ -89,9 +89,16 @@ class ReturnValuesPack:
         self.values = values
 
     def __iter__(self):
+        ''' Get all return values in the order declared in Func '''
         yield from self.values
 
     def __getitem__(self, key) -> Array:
+        ''' Get a return value with a name. Tuple is supported for multiple values '''
+        if type(key) is tuple or type(key) is list:
+            ret = []
+            for k in key:
+                ret.append(self[k])
+            return ret
         for k, v in zip(self.keys, self.values):
             if k == key:
                 return v

@@ -94,6 +94,36 @@ y = test(np.array(4, dtype="int32"), np.array([1, 2, 3, 4], dtype="int32"),
 print(y)
 ```
 
+FreeTensor also supports reverse-mode Automatic Differentiation:
+
+```python
+import freetensor as ft
+import numpy as np
+
+n = 4
+
+def test(a: ft.Var[(n,), "float32"], b: ft.Var[(n,), "float32"]):
+    y = ft.zeros((), "float32")
+    for i in range(n):
+        y[()] += a[i] * b[i]
+    return y
+
+fwd, bwd, input_grads, output_grads = ft.grad(test, ['a', 'b'],
+                                              [ft.Return()])
+fwd = ft.optimize(fwd)
+bwd = ft.optimize(bwd)
+
+a = np.array([0, 1, 2, 3], dtype="float32")
+b = np.array([3, 2, 1, 0], dtype="float32")
+y = fwd(a, b)
+print(y.numpy())
+dzdy = np.array(1, dtype='float32')
+dzda, dzdb = bwd(**{output_grads[ft.Return()]: dzdy})[input_grads['a'],
+                                                      input_grads['b']]
+print(dzda.numpy())
+print(dzdb.numpy())
+```
+
 ## Get Started
 
 [Get Started](https://roastduck.github.io/FreeTensor/guide/)
