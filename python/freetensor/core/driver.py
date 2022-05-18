@@ -140,7 +140,9 @@ class Driver(ffi.Driver):
         the return values are packed in a ReturnValuesPack
         '''
         values = super(Driver, self).collect_returns()
-        if len(values) == 1:
+        if len(values) == 0:
+            return None
+        elif len(values) == 1:
             return values[0]
         else:
             return ReturnValuesPack(

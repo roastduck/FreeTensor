@@ -585,12 +585,23 @@ grad(const Func &func, const std::unordered_set<std::string> &_requires,
     }
 
     auto forwardReturns = func->returns_;
-    for (auto &&[_oriDef, tapeName] : tapeMap) {
+    for (auto &&[_oriDef, _tapeName] : tapeMap) {
         auto &&oriDef = _oriDef;
+        auto &&tapeName = _tapeName;
         auto def = findStmt(func->body_, oriDef);
         auto tapeDType = def.as<VarDefNode>()->buffer_->tensor()->dtype();
         auto tapeArr = Ref<Ref<Array>>::make(nullptr);
-        forwardReturns.emplace_back(tapeName, tapeDType, tapeArr, false);
+        if (auto iter = std::find_if(
+                forwardReturns.begin(), forwardReturns.end(),
+                [&](const FuncRet &r) { return r.name_ == tapeName; });
+            iter == forwardReturns.end()) {
+            forwardReturns.emplace_back(tapeName, tapeDType, tapeArr, false);
+        } else {
+            // The tape is already a return value
+            ASSERT(!iter->isInClosure());
+            iter->closure_ = tapeArr;
+            iter->returnClosure_ = true;
+        }
         backwardParams.emplace_back(tapeName, tapeArr, false);
     }
     auto forwardFunc = makeFunc(func->name_, std::move(forwardParams),
@@ -604,9 +615,8 @@ grad(const Func &func, const std::unordered_set<std::string> &_requires,
     for (auto &&[y, dzdy] : provideGrads) {
         backwardParams.emplace_back(dzdy, nullptr, false);
     }
-    auto backwardFunc =
-        makeFunc(func->name_ + ".grad", std::move(backwardParams),
-                 func->returns_, backward);
+    auto backwardFunc = makeFunc(func->name_ + ".grad",
+                                 std::move(backwardParams), {}, backward);
 
     return std::make_tuple(forwardFunc, backwardFunc, requireGrads,
                            provideGrads, tapeMap);
