@@ -104,7 +104,7 @@ def _general_reduce(op,
     return y
 
 
-implace_reduce_doc_template = '''
+inplace_reduce_doc_template = '''
 {} of a tensor through one or more dimensions. The result is written to another tensor
 
 Parameters
@@ -140,28 +140,28 @@ VarRef
 '''
 
 reduce_sum_ = _named_partial("reduce_sum_",
-                             implace_reduce_doc_template.format("Sum"),
+                             inplace_reduce_doc_template.format("Sum"),
                              _general_reduce_, lambda x, y: x + y, 0)
 reduce_sum = _named_partial("reduce_sum",
                             out_of_place_reduce_doc_template.format("Sum"),
                             _general_reduce, lambda x, y: x + y, 0)
 
 reduce_prod_ = _named_partial("reduce_prod_",
-                              implace_reduce_doc_template.format("Product"),
+                              inplace_reduce_doc_template.format("Product"),
                               _general_reduce_, lambda x, y: x * y, 1)
 reduce_prod = _named_partial("reduce_prod",
                              out_of_place_reduce_doc_template.format("Product"),
                              _general_reduce, lambda x, y: x * y, 1)
 
 all_ = _named_partial(
-    "all_", implace_reduce_doc_template.format("Reduction of logical and"),
+    "all_", inplace_reduce_doc_template.format("Reduction of logical and"),
     _general_reduce_, core.l_and, True)
 all = _named_partial(
     "all", out_of_place_reduce_doc_template.format("Reduction of logical and"),
     _general_reduce, core.l_and, True)
 
 any_ = _named_partial(
-    "any_", implace_reduce_doc_template.format("Reduction of logical or"),
+    "any_", inplace_reduce_doc_template.format("Reduction of logical or"),
     _general_reduce_, core.l_or, False)
 any = _named_partial(
     "any", out_of_place_reduce_doc_template.format("Reduction of logical or"),

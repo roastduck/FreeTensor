@@ -85,7 +85,7 @@ def test_out_of_place(libop_func, torch_func, require_positive):
     (ft.floor_, torch.floor, False),
     (ft.ceil_, torch.ceil, False),
 ])
-def test_implace_grad_of_implace_func(libop_func, torch_func, require_positive):
+def test_inplace_grad_of_inplace_func(libop_func, torch_func, require_positive):
     device = ft.Device(ft.CPU())
 
     @ft.transform
@@ -136,7 +136,7 @@ def test_implace_grad_of_implace_func(libop_func, torch_func, require_positive):
     (ft.floor, torch.floor, False),
     (ft.ceil, torch.ceil, False),
 ])
-def test_implace_grad_of_out_of_place_func(libop_func, torch_func,
+def test_inplace_grad_of_out_of_place_func(libop_func, torch_func,
                                            require_positive):
     device = ft.Device(ft.CPU())
 
