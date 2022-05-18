@@ -80,6 +80,10 @@
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.autograd.grad">grad()</a>
     </li>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.autograd.grad_">grad_()</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.autograd.grad_body">grad_body()</a>
+    </li>
         </ul>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#freetensor.core.codegen">codegen</a>
@@ -869,14 +873,20 @@ Return        </code>
 
 
 <h4 id="freetensor.core.autograd.grad" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">grad</span><span class="p">(</span><span class="n">ast</span><span class="p">,</span> <span class="n">requires</span><span class="p">,</span> <span class="n">provides</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=&lt;</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">:</span> <span class="mi">2</span><span class="o">&gt;</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">grad</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">requires</span><span class="p">,</span> <span class="n">provides</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=&lt;</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">:</span> <span class="mi">2</span><span class="o">&gt;</span><span class="p">)</span></code>
 
 
 </h4>
 
     <div class="doc doc-contents ">
 
-      <p>Reverse mode Auto differentiation</p>
+      <p>Reverse mode automatic differentiation</p>
+<p>It returns a forward function and a backward function. The forward has the same
+interface of the original function, but it will store some intermediate tensors
+(the tape) to be reused by the backward function in some global states. The
+backward function computes the gradients.</p>
+<p><code>grad</code> is an out-of-place version. The resulting gradient are returned from the
+backward function.</p>
 
 <table class="field-list">
   <colgroup>
@@ -888,7 +898,7 @@ Return        </code>
       <th class="field-name">Parameters:</th>
       <td class="field-body">
         <ul class="first simple">
-            <li><p><strong>ast</strong> (<code>AST (Func or Stmt)</code>) – The original function</p></li>
+            <li><p><strong>func</strong> (<code>Func</code>) – The original function</p></li>
             <li><p><strong>requires</strong> (<code>Sequence[Union[str, freetensor.core.autograd.Return]]</code>) – Name of input variables that need gradients</p></li>
             <li><p><strong>provides</strong> (<code>Sequence[Union[str, freetensor.core.autograd.Return]]</code>) – Name of output variables whose gradients are known. A return value of a
 function can be specified with a <code>Return</code> object</p></li>
@@ -929,16 +939,24 @@ corresponding output names
 </table>
         <details class="quote">
           <summary>Source code in <code>freetensor/core/autograd.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">grad</span><span class="p">(</span><span class="n">ast</span><span class="p">,</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">grad</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">ffi</span><span class="o">.</span><span class="n">Func</span><span class="p">,</span>
          <span class="n">requires</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Return</span><span class="p">]],</span>
          <span class="n">provides</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Return</span><span class="p">]],</span>
          <span class="n">tapes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">,</span> <span class="n">GradTapeMode</span><span class="p">]</span> <span class="o">=</span> <span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">    Reverse mode Auto differentiation</span>
+<span class="sd">    Reverse mode automatic differentiation</span>
+
+<span class="sd">    It returns a forward function and a backward function. The forward has the same</span>
+<span class="sd">    interface of the original function, but it will store some intermediate tensors</span>
+<span class="sd">    (the tape) to be reused by the backward function in some global states. The</span>
+<span class="sd">    backward function computes the gradients.</span>
+
+<span class="sd">    `grad` is an out-of-place version. The resulting gradient are returned from the</span>
+<span class="sd">    backward function.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    ast : AST (Func or Stmt)</span>
+<span class="sd">    func : AST</span>
 <span class="sd">        The original function</span>
 <span class="sd">    requires : Sequence[str]</span>
 <span class="sd">        Name of input variables that need gradients</span>
@@ -967,24 +985,168 @@ corresponding output names
 <span class="sd">        )</span>
 <span class="sd">    &#39;&#39;&#39;</span>
 
+    <span class="k">return</span> <span class="n">_grad_func</span><span class="p">(</span><span class="n">ffi</span><span class="o">.</span><span class="n">grad</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">requires</span><span class="p">,</span> <span class="n">provides</span><span class="p">,</span> <span class="n">tapes</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h4 id="freetensor.core.autograd.grad_" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">grad_</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">requires</span><span class="p">,</span> <span class="n">provides</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=&lt;</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">:</span> <span class="mi">2</span><span class="o">&gt;</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Reverse mode automatic differentiation</p>
+<p>It returns a forward function and a backward function. The forward has the same
+interface of the original function, but it will store some intermediate tensors
+(the tape) to be reused by the backward function in some global states. The
+backward function computes the gradients.</p>
+<p><code>grad_</code> is an inplace version. The resulting gradient are mutable arguments of
+the backward function.</p>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li><p><strong>func</strong> (<code>Func</code>) – The original function</p></li>
+            <li><p><strong>requires</strong> (<code>Sequence[Union[str, freetensor.core.autograd.Return]]</code>) – Name of input variables that need gradients</p></li>
+            <li><p><strong>provides</strong> (<code>Sequence[Union[str, freetensor.core.autograd.Return]]</code>) – Name of output variables whose gradients are known. A return value of a
+function can be specified with a <code>Return</code> object</p></li>
+            <li><p><strong>tapes</strong> (<code>Union[Sequence, freetensor_ffi.GradTapeMode]</code>) – Intermediate variables that need to be stored from the forward pass and
+reused in the backward pass. This parameter can be a sequence, which contains
+VarDef IDs of them. It can also be a <code>GradTapeMode</code>, then it will determine
+which intermediate variables to be stored by heuristics. Avail <code>GradTapeMode</code>s
+are: All: store all variables including local scalars; None: store nothing;
+NoReuseOnly: store variables that only hold one version of data, which means
+we do not have to store each version of them in their history</p></li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+    <th class="field-name">Returns:</th>
+    <td class="field-body">
+        <ul class="first simple">
+          <li><p><code>tuple</code> – (
+ 0. Forward AST.
+ 1. Backward AST.
+ 2. Mapping from names in requries to its gradient name.
+ 3. Mapping from names in provides to its gradient name.
+ 4. Mapping from VarDef IDs of intermediate variables being stored to its
+corresponding output names
+)</p></li>
+        </ul>
+    </td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/autograd.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">grad_</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">ffi</span><span class="o">.</span><span class="n">Func</span><span class="p">,</span>
+          <span class="n">requires</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Return</span><span class="p">]],</span>
+          <span class="n">provides</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Return</span><span class="p">]],</span>
+          <span class="n">tapes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">,</span> <span class="n">GradTapeMode</span><span class="p">]</span> <span class="o">=</span> <span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Reverse mode automatic differentiation</span>
+
+<span class="sd">    It returns a forward function and a backward function. The forward has the same</span>
+<span class="sd">    interface of the original function, but it will store some intermediate tensors</span>
+<span class="sd">    (the tape) to be reused by the backward function in some global states. The</span>
+<span class="sd">    backward function computes the gradients.</span>
+
+<span class="sd">    `grad_` is an inplace version. The resulting gradient are mutable arguments of</span>
+<span class="sd">    the backward function.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    func : AST</span>
+<span class="sd">        The original function</span>
+<span class="sd">    requires : Sequence[str]</span>
+<span class="sd">        Name of input variables that need gradients</span>
+<span class="sd">    provides : Sequence[Union[str, Return]]</span>
+<span class="sd">        Name of output variables whose gradients are known. A return value of a</span>
+<span class="sd">        function can be specified with a `Return` object</span>
+<span class="sd">    tapes : Union[Sequence, GradTapeMode]</span>
+<span class="sd">        Intermediate variables that need to be stored from the forward pass and</span>
+<span class="sd">        reused in the backward pass. This parameter can be a sequence, which contains</span>
+<span class="sd">        VarDef IDs of them. It can also be a `GradTapeMode`, then it will determine</span>
+<span class="sd">        which intermediate variables to be stored by heuristics. Avail `GradTapeMode`s</span>
+<span class="sd">        are: All: store all variables including local scalars; None: store nothing;</span>
+<span class="sd">        NoReuseOnly: store variables that only hold one version of data, which means</span>
+<span class="sd">        we do not have to store each version of them in their history</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    tuple</span>
+<span class="sd">        (</span>
+<span class="sd">         0. Forward AST.</span>
+<span class="sd">         1. Backward AST.</span>
+<span class="sd">         2. Mapping from names in requries to its gradient name.</span>
+<span class="sd">         3. Mapping from names in provides to its gradient name.</span>
+<span class="sd">         4. Mapping from VarDef IDs of intermediate variables being stored to its</span>
+<span class="sd">        corresponding output names</span>
+<span class="sd">        )</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">return</span> <span class="n">_grad_func</span><span class="p">(</span><span class="n">ffi</span><span class="o">.</span><span class="n">grad_</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">requires</span><span class="p">,</span> <span class="n">provides</span><span class="p">,</span> <span class="n">tapes</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h4 id="freetensor.core.autograd.grad_body" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">grad_body</span><span class="p">(</span><span class="n">stmt</span><span class="p">,</span> <span class="n">requires</span><span class="p">,</span> <span class="n">provides</span><span class="p">,</span> <span class="n">tapes</span><span class="o">=&lt;</span><span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">:</span> <span class="mi">2</span><span class="o">&gt;</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p><code>grad</code> or <code>grad_</code> on a function body (for internal tests only)</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/autograd.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">grad_body</span><span class="p">(</span><span class="n">stmt</span><span class="p">:</span> <span class="n">ffi</span><span class="o">.</span><span class="n">Stmt</span><span class="p">,</span>
+              <span class="n">requires</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Return</span><span class="p">]],</span>
+              <span class="n">provides</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Return</span><span class="p">]],</span>
+              <span class="n">tapes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">,</span> <span class="n">GradTapeMode</span><span class="p">]</span> <span class="o">=</span> <span class="n">GradTapeMode</span><span class="o">.</span><span class="n">NoReuseOnly</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; `grad` or `grad_` on a function body (for internal tests only) &#39;&#39;&#39;</span>
+
     <span class="n">req</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">requires</span><span class="p">)</span>
-    <span class="n">prov</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([])</span>
-    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">provides</span><span class="p">:</span>
-        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="ow">is</span> <span class="n">Return</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">ast</span><span class="p">)</span> <span class="ow">is</span> <span class="n">ffi</span><span class="o">.</span><span class="n">Func</span>
-            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">returns</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">ast</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> has no return value&quot;</span>
-            <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">n</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">prov</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">returns</span><span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span>
-                    <span class="n">ast</span><span class="o">.</span><span class="n">returns</span>
-                <span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">ast</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> has more than one return value, and you need to specify the number of a return value&quot;</span>
-                <span class="n">prov</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">returns</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">prov</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+    <span class="n">prov</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">provides</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">tapes</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">GradTapeMode</span><span class="p">:</span>
         <span class="n">tapes</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">tapes</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">ffi</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">ast</span><span class="p">,</span> <span class="n">req</span><span class="p">,</span> <span class="n">prov</span><span class="p">,</span> <span class="n">tapes</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ffi</span><span class="o">.</span><span class="n">grad_body</span><span class="p">(</span><span class="n">stmt</span><span class="p">,</span> <span class="n">req</span><span class="p">,</span> <span class="n">prov</span><span class="p">,</span> <span class="n">tapes</span><span class="p">)</span>
 </code></pre></div>
         </details>
     </div>
