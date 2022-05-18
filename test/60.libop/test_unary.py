@@ -147,7 +147,7 @@ def test_grad(libop_func, torch_func, require_positive):
     kvs = {}
     kvs[privdes['y']] = d_y_arr
     kvs[requires['x']] = d_x_arr
-    ft.Driver(g, g_code, device)(x_arr, y_arr, **kvs)
+    ft.Driver(g, g_code, device)(**kvs)
     x_grad_torch_ours = torch.tensor(d_x_arr.numpy())
     y_torch.backward(y_torch.grad)
     assert torch.all(torch.isclose(x_grad_torch_ours, x_torch.grad, 1e-4, 1e-7))

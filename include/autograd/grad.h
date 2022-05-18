@@ -175,10 +175,10 @@ class Grad : public SymbolTable<Mutator> {
  *  Mapping from names in requries to its gradient name,
  *  Mapping from names in provides to its gradient name
  *  Mapping from VarDef IDs of intermediate variables being stored to its
- * corresponding output names. Currently all output variables must be stored,
- * and should not be specified in tapes (TODO: allow not storing an output
- * variable)
+ * corresponding output names
  * )
+ *
+ * @{
  */
 std::tuple<Stmt, Stmt, std::unordered_map<std::string, std::string>,
            std::unordered_map<std::string, std::string>,
@@ -193,6 +193,7 @@ std::tuple<Func, Func, std::unordered_map<std::string, std::string>,
 grad(const Func &func, const std::unordered_set<std::string> &_requires,
      const std::unordered_set<std::string> &provides,
      const std::unordered_set<ID> &tapes);
+/** @} */
 
 enum class GradTapeMode : int { All, Nothing, NoReuseOnly };
 
@@ -212,9 +213,7 @@ enum class GradTapeMode : int { All, Nothing, NoReuseOnly };
  *  Mapping from names in requries to its gradient name,
  *  Mapping from names in provides to its gradient name,
  *  Mapping from VarDef IDs of intermediate variables being stored to its
- * corresponding output names. Currently all output variables must be stored,
- * and should not be specified in tapes (TODO: allow not storing an output
- * variable)
+ * corresponding output names
  * )
  *
  * @{

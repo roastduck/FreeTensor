@@ -128,7 +128,7 @@ def compile_all(h, w, n_verts, n_faces, device, ad_save_all):
         kvs = {}
         kvs[privdes['y']] = d_y
         kvs[requires['vertices']] = d_vertices
-        backward_exe(vertices, faces, y, **kvs)
+        backward_exe(**kvs)
 
     return inference_exe, forward_exe, run_backward
 

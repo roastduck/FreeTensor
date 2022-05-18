@@ -243,7 +243,7 @@ Stmt Grad::visit(const VarDef &_op) {
 
         if (ret->buffer_->atype() == AccessType::Output ||
             ret->buffer_->atype() == AccessType::InOut) {
-            ret->buffer_->setAtype(AccessType::Input);
+            ret->buffer_->setAtype(AccessType::Cache);
         }
         if (tapeMap_.count(op->id())) {
             auto tapeVar = tapeMap_.at(op->id());
@@ -269,8 +269,7 @@ Stmt Grad::visit(const Store &op) {
         // times? E.g. a = x; use a; a = y; use a;
         bool recomputed =
             recomputed_.count(op->var_) && recomputed_.at(op->var_).count(op);
-        if (!recomputed && b->atype() == AccessType::Cache &&
-            !taped_.count(op->var_)) {
+        if (!recomputed && !taped_.count(op->var_)) {
             recomputed_[op->var_].insert(op);
             auto ret = ReplaceByTape(*this, tapeMap_, versions_, op)(op);
             ret->setId("");
@@ -565,7 +564,26 @@ grad(const Func &func, const std::unordered_set<std::string> &_requires,
     auto [forward, backward, requireGrads, provideGrads, tapeMap] =
         grad(func->body_, _requires, provides, tapes);
 
-    auto backwardParams = func->params_;
+    std::vector<FuncParam> forwardParams, backwardParams;
+    for (auto &&param : func->params_) {
+        auto nodes = findStmt(func->body_, [&](const Stmt &stmt) {
+            return stmt->nodeType() == ASTNodeType::VarDef &&
+                   stmt.as<VarDefNode>()->name_ == param.name_;
+        });
+        ASSERT(nodes.size() == 1);
+        if (nodes.front().as<VarDefNode>()->buffer_->atype() ==
+            AccessType::Input) {
+            auto closureArr = Ref<Ref<Array>>::make();
+            // Redirect input arguments from forward to backward
+            forwardParams.emplace_back(param.name_, closureArr, true);
+            backwardParams.emplace_back(param.name_, closureArr, false);
+        } else {
+            // Backward does not need a froward's output argument. If needed, it
+            // will be found in the tape
+            forwardParams.emplace_back(param);
+        }
+    }
+
     auto forwardReturns = func->returns_;
     for (auto &&[_oriDef, tapeName] : tapeMap) {
         auto &&oriDef = _oriDef;
@@ -575,7 +593,7 @@ grad(const Func &func, const std::unordered_set<std::string> &_requires,
         forwardReturns.emplace_back(tapeName, tapeDType, tapeArr, false);
         backwardParams.emplace_back(tapeName, tapeArr, false);
     }
-    auto forwardFunc = makeFunc(func->name_, func->params_,
+    auto forwardFunc = makeFunc(func->name_, std::move(forwardParams),
                                 std::move(forwardReturns), forward);
 
     forwardFunc = hoistReturnVars(forwardFunc);
@@ -598,7 +616,9 @@ static std::vector<ID> _findTapeDefs(const Stmt &op, GradTapeMode mode) {
     switch (mode) {
     case GradTapeMode::All: {
         std::vector<ID> ret;
-        for (auto &&[id, name] : allDefs(op, {AccessType::Cache})) {
+        for (auto &&[id, name] :
+             allDefs(op, {AccessType::Cache, AccessType::Output,
+                          AccessType::InOut})) {
             ret.emplace_back(id);
         }
         return ret;
@@ -606,7 +626,8 @@ static std::vector<ID> _findTapeDefs(const Stmt &op, GradTapeMode mode) {
     case GradTapeMode::Nothing:
         return {};
     case GradTapeMode::NoReuseOnly:
-        return allNoReuseDefs(op, {AccessType::Cache});
+        return allNoReuseDefs(
+            op, {AccessType::Cache, AccessType::Output, AccessType::InOut});
     default:
         ASSERT(false);
     }

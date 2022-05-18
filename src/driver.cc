@@ -235,16 +235,15 @@ void Driver::setParams(const std::vector<Ref<Array>> &args,
         args_[j] = args[i];
         rawArgs[j] = requestPtr(args[i], dev_, hostDev_, buffer->mtype(),
                                 buffer->atype());
+        if (f_->params_[j].closure_.isValid() &&
+            f_->params_[j].updateClosure_) {
+            *f_->params_[j].closure_ = args[j];
+        }
         j++;
     }
     for (auto &&[key, value] : kws) {
         if (!name2param_.count(key)) {
             throw DriverError("There is no parameter named " + key);
-        }
-        auto paramId = name2param_[key];
-        if (f_->params_[paramId].closure_.isValid() &&
-            !f_->params_[paramId].updateClosure_) {
-            throw DriverError("Enclosed parameter " + key + " cannot be set");
         }
         auto &&buffer = name2buffer_.at(key);
         if (buffer->tensor()->dtype() != value->dtype()) {
@@ -254,14 +253,27 @@ void Driver::setParams(const std::vector<Ref<Array>> &args,
                 "-th parameter " + key + " of type " +
                 toString(name2buffer_.at(key)->tensor()->dtype()));
         }
+        auto paramId = name2param_[key];
         args_[paramId] = value;
         rawArgs[paramId] =
             requestPtr(value, dev_, hostDev_, buffer->mtype(), buffer->atype());
+        if (f_->params_[paramId].closure_.isValid()) {
+            if (f_->params_[paramId].updateClosure_) {
+                *f_->params_[paramId].closure_ = value;
+            } else {
+                throw DriverError("Enclosed parameter " + key +
+                                  " cannot be set");
+            }
+        }
     }
     for (auto &&[i, rawArg, param] :
          iter::zip(iter::count(), rawArgs, f_->params_)) {
         auto &&buffer = name2buffer_.at(param.name_);
-        if (param.closure_.isValid()) {
+        if (rawArg == nullptr && param.closure_.isValid()) {
+            if (!param.closure_->isValid()) {
+                throw DriverError("Closure variable " + param.name_ +
+                                  " is not set");
+            }
             rawArg = requestPtr(*param.closure_, dev_, hostDev_,
                                 buffer->mtype(), buffer->atype());
         }
@@ -288,26 +300,29 @@ std::vector<Ref<Array>> Driver::collectReturns() {
     std::vector<Ref<Array>> ret;
     for (size_t i = 0, n = f_->returns_.size(); i < n; i++) {
         auto &&[name, dtype, closure, returnClosure] = f_->returns_[i];
-        std::vector<size_t> shape(retShapes_[i], retShapes_[i] + retDims_[i]);
-        auto val = Ref<Array>::make(rawRets[i], shape, dtype, dev_);
+        Ref<Array> val;
+        if (name2param_.count(name)) {
+            // Returning an argument
+            val = args_.at(name2param_.at(name));
+        } else {
+            std::vector<size_t> shape(retShapes_[i],
+                                      retShapes_[i] + retDims_[i]);
+            val = Ref<Array>::make(rawRets[i], shape, dtype, dev_);
+            if (retShapes_[i] != nullptr) {
+                free(retShapes_[i]);
+            }
+            rawRets[i] = nullptr;
+            retShapes_[i] = nullptr;
+            retDims_[i] = 0;
+        }
         if (closure.isValid()) {
             *closure = val;
             if (returnClosure) {
                 ret.emplace_back(val);
             }
-        } else if (name2param_.count(name)) {
-            // Returning an argument
-            ret.emplace_back(args_.at(name2param_.at(name)));
         } else {
             ret.emplace_back(val);
         }
-
-        if (retShapes_[i] != nullptr) {
-            free(retShapes_[i]);
-        }
-        rawRets[i] = nullptr;
-        retShapes_[i] = nullptr;
-        retDims_[i] = 0;
     }
 
     // Free reference count holders

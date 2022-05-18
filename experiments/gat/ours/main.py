@@ -110,7 +110,7 @@ def compile_all(num_v, num_e, feat_len, device):
     #    kvs[requires['weight']] = d_w
     #    kvs[requires['attn_l']] = d_w_attn_1
     #    kvs[requires['attn_r']] = d_w_attn_2
-    #    backward_exe(ptr, idx, x, w, w_attn_1, w_attn_2, y, **kvs)
+    #    backward_exe(**kvs)
 
     #return inference_exe, forward_exe, run_backward
 

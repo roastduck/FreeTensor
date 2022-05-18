@@ -74,7 +74,7 @@ def compile_all(n_faces, in_feats, out_feats, device, ad_save_all):
         kvs[requires['w1']] = d_w1
         kvs[requires['w2']] = d_w2
         kvs[requires['w3']] = d_w3
-        backward_exe(adj, x, w0, w1, w2, w3, y, **kvs)
+        backward_exe(**kvs)
 
     return inference_exe, forward_exe, run_backward
 

@@ -93,7 +93,7 @@ def compile_all(w, dilation, dilation_heads, n_heads, seq_len, feat_len, device,
         kvs[requires['Q']] = d_Q
         kvs[requires['K']] = d_K
         kvs[requires['V']] = d_V
-        backward_exe(Q, K, V, Y, **kvs)
+        backward_exe(**kvs)
 
     return inference_exe, forward_exe, run_backward
 

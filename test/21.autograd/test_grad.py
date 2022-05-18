@@ -20,9 +20,8 @@ def test_basic():
                     ("d_x2", (), "float32", "output", "cpu"),
                     ("x3", (), "float32", "input", "cpu"),
                     ("d_x3", (), "float32", "output", "cpu"),
-                    ("y", (), "float32", "input", "cpu"),
                     ("d_y", (), "float32", "inout", "cpu")
-                   ]) as (x1, d_x1, x2, d_x2, x3, d_x3, y, d_y):
+                   ]) as (x1, d_x1, x2, d_x2, x3, d_x3, d_y):
         d_x1[()] = d_y[()] * x3[()]
         d_x2[()] = d_y[()] * x3[()]
         d_x3[()] = d_y[()] * (x1[()] + x2[()])
@@ -48,9 +47,8 @@ def test_partial_gradient():
                     ("d_x1", (), "float32", "output", "cpu"),
                     ("x2", (), "float32", "input", "cpu"),
                     ("x3", (), "float32", "input", "cpu"),
-                    ("y", (), "float32", "input", "cpu"),
                     ("d_y", (), "float32", "inout", "cpu")]) as (x1, d_x1, x2,
-                                                                 x3, y, d_y):
+                                                                 x3, d_y):
         d_x1[()] = d_y[()] * x3[()]
     std = ft.pop_ast()
 
@@ -78,13 +76,10 @@ def test_branching_exprs():
                     ("d_x1", (), "float32", "output", "cpu"),
                     ("x2", (), "float32", "input", "cpu"),
                     ("d_x2", (), "float32", "output", "cpu"),
-                    ("y1", (), "float32", "input", "cpu"),
                     ("d_y1", (), "float32", "inout", "cpu"),
-                    ("y2", (), "float32", "input", "cpu"),
                     ("d_y2", (), "float32", "inout", "cpu"),
-                    ("y3", (), "float32", "input", "cpu"),
                     ("d_y3", (), "float32", "inout", "cpu")
-                   ]) as (x1, d_x1, x2, d_x2, y1, d_y1, y2, d_y2, y3, d_y3):
+                   ]) as (x1, d_x1, x2, d_x2, d_y1, d_y2, d_y3):
         d_x1[()] = ft.if_then_else(x1[()] > 0, d_y3[()], 0) + ft.if_then_else(
             x1[()] >= x2[()], d_y2[()], 0) + ft.if_then_else(
                 x1[()] <= x2[()], d_y1[()], 0)
@@ -113,32 +108,32 @@ def test_math_funcs():
 
     with ft.VarDef([("x", (), "float32", "input", "cpu"),
                     ("d_x", (), "float32", "output", "cpu"),
-                    ("y1", (), "float32", "input", "cpu"),
                     ("d_y1", (), "float32", "inout", "cpu"),
-                    ("y2", (), "float32", "input", "cpu"),
                     ("d_y2", (), "float32", "inout", "cpu"),
-                    ("y3", (), "float32", "input", "cpu"),
-                    ("d_y3", (), "float32", "inout", "cpu")
-                   ]) as (x, d_x, y1, d_y1, y2, d_y2, y3, d_y3):
-        d_x[(
-        )] = 2 * d_y3[()] * x[()] + d_y2[()] * y2[()] + d_y1[()] / (2 * y1[()])
+                    ("d_y3", (), "float32", "inout", "cpu")]) as (x, d_x, d_y1,
+                                                                  d_y2, d_y3):
+        d_x[()] = 2 * d_y3[()] * x[()] + d_y2[()] * ft.exp(x[()]) + d_y1[
+            ()] / (2 * ft.sqrt(x[()]))
     std = ft.make_reduction(ft.pop_ast())
 
     assert std.match(ast)
 
 
 def test_use_forward_value_when_taped():
-    with ft.VarDef([("x", (4,), "float32", "input", "cpu"),
-                    ("y1", (4,), "float32", "output", "cpu"),
-                    ("y2", (4,), "float32", "output", "cpu")]) as (x, y1, y2):
-        with ft.For("i", 0, 4) as i:
-            ft.MarkNid("V_t")
-            with ft.VarDef("t", (), "float32", "cache", "cpu") as t:
-                t[()] = 2 * x[i]
-                y1[i] = ft.exp(t[()])
-                y2[i] = ft.square(t[()])
+    with ft.VarDef("x", (4,), "float32", "input", "cpu") as x:
+        ft.MarkNid("V_y1")
+        with ft.VarDef("y1", (4,), "float32", "output", "cpu") as y1:
+            ft.MarkNid("V_y2")
+            with ft.VarDef("y2", (4,), "float32", "output", "cpu") as y2:
+                with ft.For("i", 0, 4) as i:
+                    ft.MarkNid("V_t")
+                    with ft.VarDef("t", (), "float32", "cache", "cpu") as t:
+                        t[()] = 2 * x[i]
+                        y1[i] = ft.exp(t[()])
+                        y2[i] = ft.square(t[()])
     ast = ft.pop_ast(verbose=True)
-    _, ast, _, _, _ = ft.grad(ast, set(["x"]), set(["y1", "y2"]), set(["V_t"]))
+    _, ast, _, _, _ = ft.grad(ast, set(["x"]), set(["y1", "y2"]),
+                              set(["V_t", "V_y1", "V_y2"]))
     print(ast)
     ast = ft.lower(ast, verbose=1)
 
@@ -154,7 +149,6 @@ def test_use_forward_value_when_taped():
             with ft.VarDef("t.tape", (4,), "float32", "input", "cpu") as t:
                 d_x[i] = 2 * (d_y1[i] * y1[i] + 2 * (d_y2[i] * t[i]))
     std = ft.make_reduction(ft.pop_ast())
-    print(std)
 
     assert std.match(ast)
 
@@ -177,16 +171,13 @@ def test_use_taped_forward_value():
     with ft.VarDef([
         ("x", (4,), "float32", "input", "cpu"),
         ("d_x", (4,), "float32", "output", "cpu"),
-        ("y1", (4,), "float32", "input", "cpu"),
         ("d_y1", (4,), "float32", "inout", "cpu"),
-        ("y2", (4,), "float32", "input", "cpu"),
         ("d_y2", (4,), "float32", "inout", "cpu"),
-    ]) as (x, d_x, y1, d_y1, y2, d_y2):
+    ]) as (x, d_x, d_y1, d_y2):
         with ft.For("i", 3, -1, -1) as i:
             with ft.VarDef("t.tape", (4,), "float32", "input", "cpu") as t:
                 d_x[i] = ((d_y2[i] * 3) + (d_y1[i] * 2)) * t[i]
     std = ft.make_reduction(ft.pop_ast())
-    print(std)
 
     assert std.match(ast)
 
@@ -214,11 +205,9 @@ def test_multiple_statements():
                     ("d_x2", (), "float32", "output", "cpu"),
                     ("x3", (), "float32", "input", "cpu"),
                     ("d_x3", (), "float32", "output", "cpu"),
-                    ("y1", (), "float32", "input", "cpu"),
                     ("d_y1", (), "float32", "inout", "cpu"),
-                    ("y2", (), "float32", "input", "cpu"),
                     ("d_y2", (), "float32", "inout", "cpu")
-                   ]) as (x1, d_x1, x2, d_x2, x3, d_x3, y1, d_y1, y2, d_y2):
+                   ]) as (x1, d_x1, x2, d_x2, x3, d_x3, d_y1, d_y2):
         with ft.VarDef("d_t", (), "float32", "cache", "cpu") as d_t:
             d_t[()] = d_y2[()] + d_y1[()] * x3[()]
             d_x3[()] = d_y2[()] + d_y1[()] * (x1[()] + x2[()])
@@ -254,11 +243,9 @@ def test_nested_local_def():
                     ("d_x2", (), "float32", "output", "cpu"),
                     ("x3", (), "float32", "input", "cpu"),
                     ("d_x3", (), "float32", "output", "cpu"),
-                    ("y1", (), "float32", "input", "cpu"),
                     ("d_y1", (), "float32", "inout", "cpu"),
-                    ("y2", (), "float32", "input", "cpu"),
                     ("d_y2", (), "float32", "inout", "cpu")
-                   ]) as (x1, d_x1, x2, d_x2, x3, d_x3, y1, d_y1, y2, d_y2):
+                   ]) as (x1, d_x1, x2, d_x2, x3, d_x3, d_y1, d_y2):
         with ft.VarDef("u", (), "float32", "cache", "cpu") as u:
             u[()] = x1[()] + x2[()]
             with ft.VarDef("d_t", (), "float32", "cache", "cpu") as d_t:
@@ -285,9 +272,7 @@ def test_dependent_iterations():
 
     with ft.VarDef([("x", (4,), "float32", "input", "cpu"),
                     ("d_x", (4,), "float32", "output", "cpu"),
-                    ("y", (), "float32", "input", "cpu"),
-                    ("d_y", (), "float32", "inout", "cpu")]) as (x, d_x, y,
-                                                                 d_y):
+                    ("d_y", (), "float32", "inout", "cpu")]) as (x, d_x, d_y):
         with ft.For("i", 3, -1, -1) as i:
             with ft.VarDef("d_y.old", (), "float32", "cache", "cpu") as d_y_old:
                 d_y_old[()] = d_y[()]
@@ -310,9 +295,7 @@ def test_assign_quick_path():
 
     with ft.VarDef([("x", (4,), "float32", "input", "cpu"),
                     ("d_x", (4,), "float32", "output", "cpu"),
-                    ("y", (), "float32", "input", "cpu"),
-                    ("d_y", (), "float32", "inout", "cpu")]) as (x, d_x, y,
-                                                                 d_y):
+                    ("d_y", (), "float32", "inout", "cpu")]) as (x, d_x, d_y):
         with ft.For("i", 3, -1, -1) as i:
             d_x[i] = d_y[()]
             d_y[()] = 0
@@ -333,9 +316,7 @@ def test_reduce_sum_quick_path():
 
     with ft.VarDef([("x", (4,), "float32", "input", "cpu"),
                     ("d_x", (4,), "float32", "output", "cpu"),
-                    ("y", (), "float32", "input", "cpu"),
-                    ("d_y", (), "float32", "inout", "cpu")]) as (x, d_x, y,
-                                                                 d_y):
+                    ("d_y", (), "float32", "inout", "cpu")]) as (x, d_x, d_y):
         with ft.For("i", 3, -1, -1) as i:
             d_x[i] = d_y[()]
     std = ft.make_reduction(ft.pop_ast())
@@ -355,9 +336,7 @@ def test_atypical_loop():
 
     with ft.VarDef([("x", (4,), "float32", "input", "cpu"),
                     ("d_x", (4,), "float32", "output", "cpu"),
-                    ("y", (), "float32", "input", "cpu"),
-                    ("d_y", (), "float32", "inout", "cpu")]) as (x, d_x, y,
-                                                                 d_y):
+                    ("d_y", (), "float32", "inout", "cpu")]) as (x, d_x, d_y):
         with ft.For("i", 1, -3, -1) as i:
             with ft.VarDef("d_y.old", (), "float32", "cache", "cpu") as d_y_old:
                 d_y_old[()] = d_y[()]
@@ -393,9 +372,8 @@ def test_nested_loops():
                     ("d_w0", (4, 4), "float32", "output", "cpu"),
                     ("w1", (4, 4), "float32", "input", "cpu"),
                     ("d_w1", (4, 4), "float32", "output", "cpu"),
-                    ("y", (4,), "float32", "input", "cpu"),
                     ("d_y", (4,), "float32", "inout", "cpu")
-                   ]) as (x, d_x, w0, d_w0, w1, d_w1, y, d_y):
+                   ]) as (x, d_x, w0, d_w0, w1, d_w1, d_y):
         with ft.For("i0", 3, -1, -1) as i:
             d_x[i] = 0
         with ft.VarDef("d_t", (4,), "float32", "cache", "cpu") as d_t:
@@ -450,9 +428,8 @@ def test_tape_1():
                     ("d_x2", (), "float32", "output", "cpu"),
                     ("x3", (), "float32", "input", "cpu"),
                     ("d_x3", (), "float32", "output", "cpu"),
-                    ("y", (), "float32", "input", "cpu"),
                     ("d_y", (), "float32", "inout", "cpu")
-                   ]) as (x1, d_x1, x2, d_x2, x3, d_x3, y, d_y):
+                   ]) as (x1, d_x1, x2, d_x2, x3, d_x3, d_y):
         with ft.VarDef("t", (), "float32", "input", "cpu") as t:
             with ft.VarDef("d_t", (), "float32", "cache", "cpu") as d_t:
                 d_t[()] = d_y[()] * x3[()]
@@ -495,9 +472,8 @@ def test_tape_2():
                     ("d_x2", (4,), "float32", "output", "cpu"),
                     ("x3", (4,), "float32", "input", "cpu"),
                     ("d_x3", (4,), "float32", "output", "cpu"),
-                    ("y", (4,), "float32", "input", "cpu"),
                     ("d_y", (4,), "float32", "inout", "cpu")
-                   ]) as (x1, d_x1, x2, d_x2, x3, d_x3, y, d_y):
+                   ]) as (x1, d_x1, x2, d_x2, x3, d_x3, d_y):
         with ft.For("i", 3, -1, -1) as i:
             with ft.VarDef("t.tape", (4,), "float32", "input", "cpu") as t:
                 with ft.VarDef("d_t", (), "float32", "cache", "cpu") as d_t:
@@ -543,9 +519,8 @@ def test_tape_3():
     with ft.VarDef([("x1", (4, 5, 6), "float32", "input", "cpu"),
                     ("x2", (4, 5, 6), "float32", "input", "cpu"),
                     ("d_x2", (4, 5, 6), "float32", "output", "cpu"),
-                    ("y", (4, 6), "float32", "input", "cpu"),
-                    ("d_y", (4, 6), "float32", "inout", "cpu")
-                   ]) as (x1, x2, d_x2, y, d_y):
+                    ("d_y", (4, 6), "float32", "inout", "cpu")]) as (x1, x2,
+                                                                     d_x2, d_y):
         with ft.For("i", 3, -1, -1, nid="Li") as i:
             with ft.VarDef("t", (4, 6), "float32", "input", "cpu") as t:
                 with ft.For("k", 5, -1, -1, nid="Lk2"):
@@ -582,9 +557,7 @@ def test_tape_4():
 
     with ft.VarDef([("x", (100,), "float32", "input", "cpu"),
                     ("d_x", (100,), "float32", "output", "cpu"),
-                    ("y", (), "float32", "input", "cpu"),
-                    ("d_y", (), "float32", "inout", "cpu")]) as (x, d_x, y,
-                                                                 d_y):
+                    ("d_y", (), "float32", "inout", "cpu")]) as (x, d_x, d_y):
         with ft.VarDef([("t", (101,), "float32", "input", "cpu"),
                         ("d_t", (), "float32", "cache", "cpu")]) as (t, d_t):
             d_t[()] = d_y[()]
@@ -636,13 +609,12 @@ def test_tape_5():
 
     with ft.VarDef([("x", (100, 4), "float32", "input", "cpu"),
                     ("x.grad", (100, 4), "float32", "output", "cpu"),
-                    ("y", (256,), "float32", "input", "cpu"),
                     ("y.grad", (256,), "float32", "inout", "cpu"),
                     ("u", (256, 256), "float32", "input", "cpu"),
                     ("u.grad", (256, 256), "float32", "output", "cpu"),
                     ("h.tape", (101, 256), "float32", "input", "cpu"),
                     ("f.tape", (100, 256), "float32", "input", "cpu")
-                   ]) as (x, x_grad, y, dy, u, du, h_tape, f_tape):
+                   ]) as (x, x_grad, dy, u, du, h_tape, f_tape):
         with ft.For(".x.grad.i0", 99, -1, -1) as _x_grad_i0:
             with ft.For(".x.grad.i1", 3, -1, -1) as _x_grad_i1:
                 x_grad[_x_grad_i0, _x_grad_i1] = 0
@@ -749,9 +721,8 @@ def test_use_tape_in_cond():
                     ("d_x2", (4,), "float32", "output", "cpu"),
                     ("x3", (4,), "float32", "input", "cpu"),
                     ("d_x3", (4,), "float32", "output", "cpu"),
-                    ("y", (4,), "float32", "input", "cpu"),
                     ("d_y", (4,), "float32", "inout", "cpu")
-                   ]) as (x1, d_x1, x2, d_x2, x3, d_x3, y, d_y):
+                   ]) as (x1, d_x1, x2, d_x2, x3, d_x3, d_y):
         with ft.For("i0", 3, -1, -1) as i:
             d_x3[i] = 0
         with ft.For("i", 3, -1, -1) as i:
@@ -860,9 +831,8 @@ def test_tape_mode_nothing():
                     ("d_x2", (4,), "float32", "output", "cpu"),
                     ("x3", (4,), "float32", "input", "cpu"),
                     ("d_x3", (4,), "float32", "output", "cpu"),
-                    ("y", (4,), "float32", "input", "cpu"),
                     ("d_y", (4,), "float32", "inout", "cpu")
-                   ]) as (x1, d_x1, x2, d_x2, x3, d_x3, y, d_y):
+                   ]) as (x1, d_x1, x2, d_x2, x3, d_x3, d_y):
         with ft.VarDef("d_t", (4,), "float32", "cache", "cpu") as d_t:
             with ft.For("i", 3, -1, -1) as i:
                 with ft.VarDef("d_u", (), "float32", "cache", "cpu") as d_u:
