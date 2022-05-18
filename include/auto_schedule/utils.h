@@ -6,6 +6,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <random>
+#include <schedule.h>
 
 namespace freetensor {
 
@@ -74,6 +75,54 @@ inline std::vector<int> randomFillArray(int total, int n,
         data[randomInt(n - 1, gen)] *= 2;
     }
     return data;
+}
+
+inline ID mergeLoops(Schedule &schedule, std::vector<ID> loops) {
+    if (loops.empty()) {
+        return {};
+    }
+    ID outermost = loops[0];
+    for (size_t i = 1; i < loops.size(); i++) {
+        outermost = schedule.merge(outermost, loops[i]);
+    }
+    return outermost;
+}
+
+inline std::vector<std::pair<ID, int>> splitLoop(Schedule &schedule, ID loop,
+                                                 std::vector<int> tiling) {
+    int n = tiling.size();
+    std::vector<std::pair<ID, int>> result(n);
+    for (int i = 0; i < n - 1; i++) {
+        if (tiling[i] != 1) {
+            auto t = schedule.split(loop, tiling[i]);
+            loop = t.first;
+            result[n - i - 1] = std::make_pair(t.second, tiling[i]);
+        } else {
+            result[n - i - 1] = std::make_pair("", 1);
+        }
+    }
+    result[0] = std::make_pair(loop, tiling[n - 1]);
+    return result;
+}
+
+inline Schedule::IDMap fissionLoops(Schedule &schedule,
+                                    const std::vector<ID> &loops, ID splitter) {
+    int n = loops.size();
+    Schedule::IDMap ret;
+    for (int i = n - 1; i >= 0; i--) {
+        auto now =
+            schedule.fission(loops[i], FissionSide::After, splitter).second;
+        if (ret.empty()) {
+            ret = now;
+        } else {
+            for (auto &&[key, value] : ret) {
+                ret[key] = now[value];
+            }
+            ret[loops[i]] = loops[i].strId() + ".b";
+        }
+        splitter = loops[i].strId() + ".a";
+    }
+    return ret;
 }
 
 } // namespace freetensor

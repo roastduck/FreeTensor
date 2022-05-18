@@ -66,7 +66,9 @@ MultiLevelTilingWithFusionPart::MultiLevelTilingWithFusionPart(
     ForsWithDataReuse fors, ElementWiseInfo toFuse, int level, std::string pat,
     TargetType targetType)
     : MultiLevelTilingPart(std::move(fors), std::move(pat)),
-      targetType_(targetType), level_(level), toFuse_(std::move(toFuse)) {}
+      targetType_(targetType), level_(level), toFuse_(std::move(toFuse)) {
+    frontSpaceLoopTimes_ = level_;
+}
 
 void MultiLevelTilingWithFusionPart::apply(Schedule &schedule,
                                            SketchTarget &target) {

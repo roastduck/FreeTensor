@@ -89,6 +89,7 @@ class AutoSchedule {
     Schedule testThreadBind();
     Schedule testCacheRead();
     Schedule testUnroll();
+    Schedule testParallelize();
 };
 
 } // namespace freetensor

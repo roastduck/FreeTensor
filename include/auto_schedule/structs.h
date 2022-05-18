@@ -8,6 +8,7 @@
 namespace freetensor {
 
 constexpr int MAX_VTHREAD = 8;
+constexpr int MAX_PARALLELIZE = 256;
 struct MultiLevelTilingAnnotation {
     std::vector<std::vector<int>> spaceLoopTiling;
     std::vector<std::vector<int>> reductionLoopTiling;

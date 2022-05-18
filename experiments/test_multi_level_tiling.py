@@ -38,13 +38,13 @@ def test_multi_level_tiling():
         for i in range(m):
             #! nid: L2
             for j in range(m):
-                u[i, j] = i * j
-                #! nid: L3
-                for k in range(b):
-                    #! nid: L4
-                    for p in range(a):
-                        #! nid: L5
-                        for q in range(a):
+                #! nid: L4
+                for p in range(a):
+                    #! nid: L5
+                    for q in range(a):
+                        y[i, j, p, q] = 0
+                        #! nid: L3
+                        for k in range(b):
                             y[i, j, p,
                               q] = y[i, j, p, q] + w[i, j, p, k] * x[i, j, k, q]
                 #! nid: L6

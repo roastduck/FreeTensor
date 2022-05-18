@@ -509,7 +509,7 @@ class Schedule {
     std::vector<std::pair<ID, int>>
     multiLevelTiling(const ForsWithDataReuse &target,
                      const MultiLevelTilingAnnotation &annotation,
-                     const std::string &pat);
+                     const std::string &pat, int level);
 
     std::vector<std::pair<ID, int>> multiLevelTilingWithFusion(
         const ForsWithDataReuse &target,
