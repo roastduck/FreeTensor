@@ -39,3 +39,7 @@ python/ ---------------------------------------------------- Python API
 runtime/ --------------------------------------------------- (Minimal) runtime code to be compiled into target exexutables
 test/ ------------------------------------------------------ Unit tests
 ```
+
+## Acknowledgement
+
+Many designs in FreeTensor are inspired by [TVM](https://github.com/apache/tvm/). Thank the TVM community for their contributions on tensor program compiling.
