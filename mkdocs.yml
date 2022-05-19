@@ -30,5 +30,8 @@ nav:
         - 'Automatic Differentiation': 'guide/ad.md'
     - 'API Reference':
         - 'Python API': 'api.md'
+    - 'About':
+        - 'Contributing': 'about/contrib.md'
+        - 'Publication': 'about/pub.md'
 
 extra_css: [extra.css]
