@@ -3,9 +3,9 @@
 <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="description" content="None" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="img/favicon.ico" />
-    <title>FreeTensor</title>
+    <title>Home - FreeTensor</title>
     <link rel="stylesheet" href="css/theme.css" />
     <link rel="stylesheet" href="css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
@@ -14,7 +14,7 @@
     
       <script>
         // Current page data
-        var mkdocs_page_name = "FreeTensor";
+        var mkdocs_page_name = "Home";
         var mkdocs_page_input_path = "index.md";
         var mkdocs_page_url = null;
       </script>
@@ -42,9 +42,15 @@
       </div>
 
       <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption"><span class="caption-text">GitHub</span></p>
-              <ul>
-                  <li class="toctree-l1"><a class="" href="https://github.com/roastduck/FreeTensor">FreeTensor</a>
+              <p class="caption"><span class="caption-text">FreeTensor</span></p>
+              <ul class="current">
+                  <li class="toctree-l1 current"><a class="reference internal current" href=".">Home</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#features-by-example">Features by Example</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="" href="https://github.com/roastduck/FreeTensor">GitHub</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">User Guide</span></p>
@@ -89,7 +95,8 @@
       <div class="wy-nav-content">
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
-    <li><a href="." class="icon icon-home" alt="Docs"></a> &raquo;</li><li>FreeTensor</li>
+    <li><a href="." class="icon icon-home" alt="Docs"></a> &raquo;</li>
+          <li>FreeTensor &raquo;</li><li>Home</li>
     <li class="wy-breadcrumbs-aside">
     </li>
   </ul>
@@ -108,9 +115,118 @@
 <li><a href="about/pub">Publication</a></li>
 <li><a href="https://github.com/roastduck/FreeTensor/blob/master/LICENSE">License</a></li>
 </ul>
+<h2 id="features-by-example">Features by Example</h2>
+<p>Write a simple vector addition with loops that compiles to native code:</p>
+<pre><code class="language-python">import freetensor as ft
+import numpy as np
+
+n = 4
+
+# Change this line to ft.optimize(verbose=1) to see the resulting native code
+@ft.optimize
+def test(a: ft.Var[(n,), &quot;int32&quot;], b: ft.Var[(n,), &quot;int32&quot;]):
+    y = ft.empty((n,), &quot;int32&quot;)
+    for i in range(n):
+        y[i] = a[i] + b[i]
+    return y
+
+y = test(np.array([1, 2, 3, 4], dtype=&quot;int32&quot;),
+         np.array([2, 3, 4, 5], dtype=&quot;int32&quot;)).numpy()
+print(y)
+</code></pre>
+<p>If you are not willing to compile the program once for each different <code>n</code>, you can set <code>n</code> as another function argument (but you may lose some performance). In FreeTensor, all variables are tensors, where scalars are 0-D tensors.</p>
+<pre><code class="language-python">import freetensor as ft
+import numpy as np
+
+@ft.optimize
+def test(n: ft.Var[(), &quot;int32&quot;], a, b):
+    a: ft.Var[(n,), &quot;int32&quot;]
+    b: ft.Var[(n,), &quot;int32&quot;]
+    y = ft.empty((n,), &quot;int32&quot;)
+    for i in range(n):
+        y[i] = a[i] + b[i]
+    return y
+
+y = test(np.array(4, dtype=&quot;int32&quot;), np.array([1, 2, 3, 4], dtype=&quot;int32&quot;),
+         np.array([2, 3, 4, 5], dtype=&quot;int32&quot;)).numpy()
+print(y)
+
+assert np.array_equal(y, [3, 5, 7, 9])
+</code></pre>
+<p>If building with CUDA, you can also run the program on a GPU. This time, a "<a href="guide/schedules">schedule</a>" (an explicit program transformation) is needed, and memory types of variables should be properly set.</p>
+<pre><code class="language-python">import freetensor as ft
+import numpy as np
+
+# Using the 0-th GPU device
+with ft.Device(ft.GPU(), 0):
+
+    @ft.optimize(
+        # Parallel Loop Li as GPU threads
+        schedule_callback=lambda s: s.parallelize(&quot;Li&quot;, &quot;threadIdx.x&quot;))
+    # Use &quot;byvalue&quot; for `n` so it can be used both during kernel launching
+    # and inside a kernel
+    def test(n: ft.Var[(), &quot;int32&quot;, &quot;input&quot;, &quot;byvalue&quot;], a, b):
+        a: ft.Var[(n,), &quot;int32&quot;]
+        b: ft.Var[(n,), &quot;int32&quot;]
+        y = ft.empty((n,), &quot;int32&quot;)
+        #! nid: Li # Name the loop below as &quot;Li&quot;
+        for i in range(n):
+            y[i] = a[i] + b[i]
+        return y
+
+    y = test(np.array(4, dtype=&quot;int32&quot;),
+             np.array([1, 2, 3, 4], dtype=&quot;int32&quot;),
+             np.array([2, 3, 4, 5], dtype=&quot;int32&quot;)).numpy()
+    print(y)
+</code></pre>
+<p>Some common tensor operations, including tensor addition (broadcasting is supported), are pre-defined functions in FreeTensor. They are defiend in <a href="api/#freetensor.libop"><code>freetensor.libop</code></a>, and they can also be invoked using operator overloading. These functions are pure Python functions, which will be inlined into your code, and will enjoy a joint optimization.</p>
+<pre><code class="language-python">import freetensor as ft
+import numpy as np
+
+@ft.optimize
+def test(n: ft.Var[(), &quot;int32&quot;], a, b):
+    a: ft.Var[(n,), &quot;int32&quot;]
+    b: ft.Var[(n,), &quot;int32&quot;]
+    y = a + b  # Or y = ft.add(a, b)
+    return y
+
+y = test(np.array(4, dtype=&quot;int32&quot;), np.array([1, 2, 3, 4], dtype=&quot;int32&quot;),
+         np.array([2, 3, 4, 5], dtype=&quot;int32&quot;)).numpy()
+print(y)
+</code></pre>
+<p>FreeTensor also supports reverse-mode Automatic Differentiation:</p>
+<pre><code class="language-python">import freetensor as ft
+import numpy as np
+
+n = 4
+
+def test(a: ft.Var[(n,), &quot;float32&quot;], b: ft.Var[(n,), &quot;float32&quot;]):
+    y = ft.zeros((), &quot;float32&quot;)
+    for i in range(n):
+        y[()] += a[i] * b[i]
+    return y
+
+fwd, bwd, input_grads, output_grads = ft.grad(test, ['a', 'b'],
+                                              [ft.Return()])
+fwd = ft.optimize(fwd)
+bwd = ft.optimize(bwd)
+
+a = np.array([0, 1, 2, 3], dtype=&quot;float32&quot;)
+b = np.array([3, 2, 1, 0], dtype=&quot;float32&quot;)
+y = fwd(a, b)
+print(y.numpy())
+dzdy = np.array(1, dtype='float32')
+dzda, dzdb = bwd(**{output_grads[ft.Return()]: dzdy})[input_grads['a'],
+                                                      input_grads['b']]
+print(dzda.numpy())
+print(dzdb.numpy())
+</code></pre>
               
             </div>
           </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="guide/" class="btn btn-neutral float-right" title="Get Started">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
 
   <hr/>
 
@@ -133,6 +249,8 @@
     
     
     
+      <span><a href="guide/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
   </span>
 </div>
     <script>var base_url = '.';</script>
@@ -147,8 +265,3 @@
 
 </body>
 </html>
-
-<!--
-MkDocs version : 1.3.0
-Build Date UTC : 2022-05-19 05:33:42.621193+00:00
--->
