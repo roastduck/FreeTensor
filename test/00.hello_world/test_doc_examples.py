@@ -211,7 +211,7 @@ def test_split_and_parallel_vector_add():
 
 
 def test_grad():
-    # Used in README.md
+    # Used in README.md and docs/guide/ad.md
 
     import freetensor as ft
     import numpy as np

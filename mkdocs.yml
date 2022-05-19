@@ -27,6 +27,7 @@ nav:
         - 'Your First Program with FreeTenor': 'guide/first-program.md'
         - 'Optimize a Program with Schedules': 'guide/schedules.md'
         - 'Running on a GPU': 'guide/gpu.md'
+        - 'Automatic Differentiation': 'guide/ad.md'
     - 'API Reference':
         - 'Python API': 'api.md'
 
