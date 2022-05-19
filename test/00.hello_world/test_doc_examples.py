@@ -3,7 +3,7 @@ import pytest
 
 
 def test_vector_add():
-    # Used in README.md and docs/guide/schedules.md
+    # Used in docs/index.md and docs/guide/schedules.md
 
     import freetensor as ft
     import numpy as np
@@ -26,7 +26,7 @@ def test_vector_add():
 
 
 def test_vector_add_dynamic_length():
-    # Used in README.md and docs/guide/schedules.md
+    # Used in docs/index.md and docs/guide/schedules.md
 
     import freetensor as ft
     import numpy as np
@@ -79,7 +79,7 @@ def test_vector_add_gpu():
 
 @pytest.mark.skipif(not freetensor.with_cuda(), reason="requires CUDA")
 def test_vector_add_dynamic_gpu():
-    # Used in README.md and docs/guide/gpu.md
+    # Used in docs/index.md and docs/guide/gpu.md
 
     import freetensor as ft
     import numpy as np
@@ -110,7 +110,7 @@ def test_vector_add_dynamic_gpu():
 
 
 def test_vector_add_libop():
-    # Used in README.md
+    # Used in docs/index.md
 
     import freetensor as ft
     import numpy as np
@@ -211,7 +211,7 @@ def test_split_and_parallel_vector_add():
 
 
 def test_grad():
-    # Used in README.md and docs/guide/ad.md
+    # Used in docs/index.md and docs/guide/ad.md
 
     import freetensor as ft
     import numpy as np
