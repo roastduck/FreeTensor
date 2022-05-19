@@ -33,5 +33,6 @@ nav:
     - 'About':
         - 'Contributing': 'about/contrib.md'
         - 'Publication': 'about/pub.md'
+        - 'License': 'https://github.com/roastduck/FreeTensor/blob/master/LICENSE'
 
 extra_css: [extra.css]
