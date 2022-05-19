@@ -1,6 +1,6 @@
 # FreeTensor
 
-[Get Started](https://roastduck.github.io/FreeTensor/guide/) | [Contributing](https://roastduck.github.io/FreeTensor/abuot/contrib) | [Publication](https://roastduck.github.io/FreeTensor/abuot/pub) | [License](https://github.com/roastduck/FreeTensor/blob/master/LICENSE)
+[Get Started](https://roastduck.github.io/FreeTensor/guide/) | [Contributing](https://roastduck.github.io/FreeTensor/abuot/contrib/) | [Publication](https://roastduck.github.io/FreeTensor/abuot/pub/) | [License](https://github.com/roastduck/FreeTensor/blob/master/LICENSE)
 
 Write and optimize high-performance native loop-based tensor programs in Python.
 
