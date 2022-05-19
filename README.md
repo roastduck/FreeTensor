@@ -178,4 +178,4 @@ Shizhi Tang, Jidong Zhai, Haojie Wang, Lin Jiang, Liyan Zheng, Zhenhao Yuan, and
 }
 ```
 
-**NOTE: API of FreeTensor has been changed since submission. To reproduce the exact result in the paper, please consider the Artifact Evaluation version of FreeTensor, published [here](https://zenodo.org/record/6327595).**
+Evaluation code can be found in [this repository](https://github.com/roastduck/FreeTensor_experiments). **NOTE: API of FreeTensor has been changed since submission. To reproduce the exact result in the paper, please consider the Artifact Evaluation version of FreeTensor, published [here](https://zenodo.org/record/6327595).**

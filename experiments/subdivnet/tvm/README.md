@@ -1,1 +1,0 @@
-We implement this test case with Relay operators tuned with AutoSchedule, because we failed to define the computation as a whole. The error log of the latter approach can be found in `log_of_failing_to_use_tvm_compute.py`.
