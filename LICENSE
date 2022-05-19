@@ -199,3 +199,9 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
+
+
+----------------------------------------------------------------------------
+This repository also contains third-party submodules under other open source
+licenses. You can find these submodules under 3rd-party/ directory, which
+catains their own license files
