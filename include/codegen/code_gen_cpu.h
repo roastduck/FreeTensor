@@ -15,8 +15,8 @@ class CodeGenCPU : public CodeGenC<CodeGenStream> {
     std::unordered_set<For> collapsed_;
 
   public:
-    CodeGenCPU(const std::vector<std::string> &params,
-               const std::vector<std::pair<std::string, DataType>> &returns)
+    CodeGenCPU(const std::vector<FuncParam> &params,
+               const std::vector<FuncRet> &returns)
         : CodeGenC(params, returns) {}
 
     int64_t sharedStackSize() const { return sharedStackSize_; }

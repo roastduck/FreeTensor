@@ -76,6 +76,11 @@ Stmt OutputIntermediates::visit(const ReduceTo &op) {
 
 Stmt OutputIntermediates::visit(const VarDef &_op) {
     if (totLens_.count(_op->id())) {
+        if (_op->buffer_->atype() == AccessType::InOut) {
+            // Taping an InOut variable is currently not supported, because we
+            // need to track the input version (TODO)
+            ASSERT(false);
+        }
         // FIXME: What if the scopeLen_ is a loop-variant temporary?
         if (isSingleVersion(_op->id())) {
             // No need to create a new VarDef

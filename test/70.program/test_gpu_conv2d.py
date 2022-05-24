@@ -42,7 +42,7 @@ def test_manual_static():
         A_arr = ft.Array(A_np, device)
         W_arr = ft.Array(W_np, device)
         B_arr = ft.Array(B_np, device)
-        driver.set_params(A=A_arr, W=W_arr, B=B_arr)
+        driver.set_args(A=A_arr, W=W_arr, B=B_arr)
         if time:
             t = driver.time()
             print("time: %s ms" % t)

@@ -78,7 +78,7 @@ Stmt inlinedInvoke(
                              " arguments are provided");
     }
     for (size_t i = 0, n = args.size(); i < n; i++) {
-        kvs[func->params_[i]] = args[i];
+        kvs[func->params_[i].name_] = args[i];
     }
     ast = InlinedInvoke(callSiteId, kvs)(ast);
 

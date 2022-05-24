@@ -54,43 +54,19 @@ def test_grad():
         libop.softmax_(x, y)
 
     print(f)
-    f, g, requires, privdes, _ = ft.grad(f, set(["x"]), set(["y"]),
-                                         ft.GradTapeMode.NoReuseOnly)
+    f, g, requires, provides = ft.grad_(f, ["x"], ["y"],
+                                        ft.GradTapeMode.NoReuseOnly)
     print("Forward:")
-    print(f)
+    f = ft.optimize(f, verbose=1)
     print("Backward:")
-    print(g)
-    f = ft.lower(f, ft.CPU())
-    print("Forward:")
-    print(f)
-    g = ft.lower(g, ft.CPU())
-    print("Backward:")
-    print(g)
-
-    f_code = ft.codegen(f, ft.CPU())
-    g_code = ft.codegen(g, ft.CPU())
-
-    def get_shape_and_dtype(func, nid):
-        s = ft.Schedule(func)
-        vardef = s.find(nid).node()
-        shape = []
-        for x in vardef.buffer.tensor.shape:
-            assert isinstance(x, ft.ffi.IntConst)
-            shape.append(x.val)
-        if vardef.buffer.tensor.dtype == ft.DataType.Float32:
-            dtype = torch.float32
-        elif vardef.buffer.tensor.dtype == ft.DataType.Int32:
-            dtype = torch.int32
-        else:
-            assert False
-        return shape, dtype
+    g = ft.optimize(g, verbose=1)
 
     x_torch = torch.rand(4, 4, dtype=torch.float32)
     x_arr = ft.Array(x_torch.numpy(), device)
     x_torch.requires_grad = True
     y_torch_ours = torch.zeros(4, 4, dtype=torch.float32)
     y_arr = ft.Array(y_torch_ours.numpy(), device)
-    ft.Driver(f, f_code, device)(x_arr, y_arr)
+    f(x_arr, y_arr)
     y_torch_ours = torch.tensor(y_arr.numpy())
     y_torch = torch.softmax(x_torch, axis=-1)
     assert torch.all(torch.isclose(y_torch_ours, y_torch))
@@ -99,10 +75,7 @@ def test_grad():
     d_y_arr = ft.Array(y_torch.grad.numpy(), device)
     x_grad_torch_ours = torch.zeros(4, 4, dtype=torch.float32)
     d_x_arr = ft.Array(x_grad_torch_ours.numpy(), device)
-    kvs = {}
-    kvs[privdes['y']] = d_y_arr
-    kvs[requires['x']] = d_x_arr
-    ft.Driver(g, g_code, device)(x_arr, y_arr, **kvs)
+    g(**{provides['y']: d_y_arr, requires['x']: d_x_arr})
     x_grad_torch_ours = torch.tensor(d_x_arr.numpy())
     y_torch.backward(y_torch.grad)
     assert torch.all(torch.isclose(x_grad_torch_ours, x_torch.grad, 1e-4, 1e-7))

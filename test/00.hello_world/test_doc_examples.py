@@ -3,7 +3,7 @@ import pytest
 
 
 def test_vector_add():
-    # Used in README.md and docs/guide/schedules.md
+    # Used in docs/index.md and docs/guide/schedules.md
 
     import freetensor as ft
     import numpy as np
@@ -12,7 +12,7 @@ def test_vector_add():
 
     # Change this line to ft.optimize(verbose=1) to see the resulting native code
     @ft.optimize
-    def test(a: ft.Var[(n,), "int32"], b: ft.Var[(4,), "int32"]):
+    def test(a: ft.Var[(n,), "int32"], b: ft.Var[(n,), "int32"]):
         y = ft.empty((n,), "int32")
         for i in range(n):
             y[i] = a[i] + b[i]
@@ -26,7 +26,7 @@ def test_vector_add():
 
 
 def test_vector_add_dynamic_length():
-    # Used in README.md and docs/guide/schedules.md
+    # Used in docs/index.md and docs/guide/schedules.md
 
     import freetensor as ft
     import numpy as np
@@ -63,7 +63,7 @@ def test_vector_add_gpu():
         @ft.optimize(
             # Parallel Loop Li as GPU threads
             schedule_callback=lambda s: s.parallelize('Li', 'threadIdx.x'))
-        def test(a: ft.Var[(n,), "int32"], b: ft.Var[(4,), "int32"]):
+        def test(a: ft.Var[(n,), "int32"], b: ft.Var[(n,), "int32"]):
             y = ft.empty((n,), "int32")
             #! nid: Li # Name the loop below as "Li"
             for i in range(n):
@@ -79,7 +79,7 @@ def test_vector_add_gpu():
 
 @pytest.mark.skipif(not freetensor.with_cuda(), reason="requires CUDA")
 def test_vector_add_dynamic_gpu():
-    # Used in README.md and docs/guide/gpu.md
+    # Used in docs/index.md and docs/guide/gpu.md
 
     import freetensor as ft
     import numpy as np
@@ -110,7 +110,7 @@ def test_vector_add_dynamic_gpu():
 
 
 def test_vector_add_libop():
-    # Used in README.md
+    # Used in docs/index.md
 
     import freetensor as ft
     import numpy as np
@@ -138,8 +138,8 @@ def test_dynamic_and_static():
     n = 4
 
     @ft.optimize
-    def test(a: ft.Var[(n,), "int32"], b: ft.Var[(4,), "int32"],
-             c: ft.Var[(4,), "int32"]):
+    def test(a: ft.Var[(n,), "int32"], b: ft.Var[(n,), "int32"],
+             c: ft.Var[(n,), "int32"]):
         inputs = [a, b, c]  # Static
         y = ft.empty((n,), "int32")  # Dynamic
         for i in range(n):  # Dyanmic
@@ -167,7 +167,7 @@ def test_parallel_vector_add():
     # Add verbose=1 to see the resulting native code
     @ft.optimize(schedule_callback=lambda s: s.parallelize('Li', 'openmp')
                 )  # <-- 2. Apply the schedule
-    def test(a: ft.Var[(n,), "int32"], b: ft.Var[(4,), "int32"]):
+    def test(a: ft.Var[(n,), "int32"], b: ft.Var[(n,), "int32"]):
         y = ft.empty((n,), "int32")
         #! nid: Li  # <-- 1. Name the loop as Li
         for i in range(n):
@@ -196,7 +196,7 @@ def test_split_and_parallel_vector_add():
     # Set verbose=1 to see the resulting native code
     # Set verbose=2 to see the code after EVERY schedule
     @ft.optimize(schedule_callback=sch)
-    def test(a: ft.Var[(n,), "int32"], b: ft.Var[(4,), "int32"]):
+    def test(a: ft.Var[(n,), "int32"], b: ft.Var[(n,), "int32"]):
         y = ft.empty((n,), "int32")
         #! nid: Li
         for i in range(n):
@@ -208,3 +208,37 @@ def test_split_and_parallel_vector_add():
     print(y)
 
     assert np.array_equal(y, np.arange(0, 2048, 2))
+
+
+def test_grad():
+    # Used in docs/index.md and docs/guide/ad.md
+
+    import freetensor as ft
+    import numpy as np
+
+    n = 4
+
+    def test(a: ft.Var[(n,), "float32"], b: ft.Var[(n,), "float32"]):
+        y = ft.zeros((), "float32")
+        for i in range(n):
+            y[()] += a[i] * b[i]
+        return y
+
+    fwd, bwd, input_grads, output_grads = ft.grad(test, ['a', 'b'],
+                                                  [ft.Return()])
+    fwd = ft.optimize(fwd)
+    bwd = ft.optimize(bwd)
+
+    a = np.array([0, 1, 2, 3], dtype="float32")
+    b = np.array([3, 2, 1, 0], dtype="float32")
+    y = fwd(a, b)
+    print(y.numpy())
+    dzdy = np.array(1, dtype='float32')
+    dzda, dzdb = bwd(**{output_grads[ft.Return()]: dzdy})[input_grads['a'],
+                                                          input_grads['b']]
+    print(dzda.numpy())
+    print(dzdb.numpy())
+
+    assert y.numpy() == 4
+    assert np.array_equal(dzda.numpy(), [3, 2, 1, 0])
+    assert np.array_equal(dzdb.numpy(), [0, 1, 2, 3])

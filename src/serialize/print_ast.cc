@@ -123,21 +123,20 @@ void PrintVisitor::visit(const Func &op) {
     makeIndent();
     os() << "func " << prettyFuncName(op->name_) << "(";
     for (auto &&[i, param] : iter::enumerate(op->params_)) {
-        os() << (i > 0 ? ", " : "") << prettyVarDefName(param);
-        if (op->closure_.count(param)) {
-            os() << " @!closure /* " << op->closure_.at(param).get() << " */";
+        os() << (i > 0 ? ", " : "") << prettyVarDefName(param.name_);
+        if (param.closure_.isValid()) {
+            os() << " @!closure /* " << param.closure_.get() << " */";
         }
     }
     os() << ") ";
     if (!op->returns_.empty()) {
         os() << "-> ";
         for (auto &&[i, ret] : iter::enumerate(op->returns_)) {
-            auto &&[name, dtype] = ret;
+            auto &&[name, dtype, closure, returnClosure] = ret;
             os() << (i > 0 ? ", " : "") << prettyVarDefName(name) << ": "
                  << ::freetensor::toString(dtype);
-            if (op->closure_.count(name)) {
-                os() << " @!closure /* " << op->closure_.at(name).get()
-                     << " */";
+            if (closure.isValid()) {
+                os() << " @!closure /* " << closure.get() << " */";
             }
         }
         os() << " ";
@@ -295,33 +294,39 @@ void PrintVisitor::visit(const RealDiv &op) {
 }
 
 void PrintVisitor::visit(const FloorDiv &op) {
-    priority_new([&] {
-        os() << "@!floor(";
-        recur(op->lhs_);
-        os() << " / ";
-        recur(op->rhs_);
-        os() << ")";
-    }, Priority::MUL);
+    priority_new(
+        [&] {
+            os() << "@!floor(";
+            recur(op->lhs_);
+            os() << " / ";
+            recur(op->rhs_);
+            os() << ")";
+        },
+        Priority::MUL);
 }
 
 void PrintVisitor::visit(const CeilDiv &op) {
-    priority_new([&] {
-        os() << "@!ceil(";
-        recur(op->lhs_);
-        os() << " / ";
-        recur(op->rhs_);
-        os() << ")";
-    }, Priority::MUL);
+    priority_new(
+        [&] {
+            os() << "@!ceil(";
+            recur(op->lhs_);
+            os() << " / ";
+            recur(op->rhs_);
+            os() << ")";
+        },
+        Priority::MUL);
 }
 
 void PrintVisitor::visit(const RoundTowards0Div &op) {
-    priority_new([&] {
-        os() << "@!towards0(";
-        recur(op->lhs_);
-        os() << " / ";
-        recur(op->rhs_);
-        os() << ")";
-    }, Priority::MUL);
+    priority_new(
+        [&] {
+            os() << "@!towards0(";
+            recur(op->lhs_);
+            os() << " / ";
+            recur(op->rhs_);
+            os() << ")";
+        },
+        Priority::MUL);
 }
 
 void PrintVisitor::visit(const Mod &op) {

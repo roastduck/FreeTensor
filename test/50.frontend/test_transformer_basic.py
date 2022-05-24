@@ -74,19 +74,55 @@ def test_scalar_op():
 
 def test_return_value_and_runtime_allocation():
 
-    @ft.lower
-    @ft.transform(verbose=1)
+    @ft.optimize(verbose=1)
     def test(x):
         x: ft.Var[(), "int32"]
         y = ft.empty((), "int32")
         y[()] = x[()] * 2 + 1
         return y
 
-    code = ft.codegen(test, verbose=True)
-    y_arr = ft.Driver(test, code)(np.array(5, dtype="int32"))
+    y_arr = test(np.array(5, dtype="int32"))
     y_np = y_arr.numpy()
 
     assert y_np[()] == 11
+
+
+def test_multiple_return_values():
+
+    @ft.optimize(verbose=1)
+    def test(x):
+        x: ft.Var[(), "int32"]
+        y = ft.empty((), "int32")
+        z = ft.empty((), "int32")
+        y[()] = x[()] * 2
+        z[()] = x[()] * 2 + 1
+        return y, z
+
+    y_arr, z_arr = test(np.array(5, dtype="int32"))
+    y_np = y_arr.numpy()
+    z_np = z_arr.numpy()
+
+    assert y_np[()] == 10
+    assert z_np[()] == 11
+
+
+def test_named_return_values():
+
+    @ft.optimize(verbose=1)
+    def test(x):
+        x: ft.Var[(), "int32"]
+        y = ft.empty((), "int32")
+        z = ft.empty((), "int32")
+        y[()] = x[()] * 2
+        z[()] = x[()] * 2 + 1
+        return y, z
+
+    ret = test(np.array(5, dtype="int32"))
+    y_np = ret['y'].numpy()
+    z_np = ret['z'].numpy()
+
+    assert y_np[()] == 10
+    assert z_np[()] == 11
 
 
 def test_for():
@@ -263,17 +299,40 @@ def test_assert():
 
 def test_immediate_var_return():
 
-    @ft.lower
-    @ft.transform(verbose=1)
-    def test(x):
-        x: ft.Var[(), "int32"]
+    @ft.optimize(verbose=1)
+    def test(x: ft.Var[(), "int32"]):
         return ft.var([0, 1, x[()]], "int32")
 
-    code = ft.codegen(test, verbose=True)
-    y_arr = ft.Driver(test, code)(np.array(2, dtype="int32"))
+    y_arr = test(np.array(2, dtype="int32"))
     y_np = y_arr.numpy()
 
     assert np.all(y_np == np.array([0, 1, 2]))
+
+
+def test_directly_returning_argument():
+
+    @ft.optimize(verbose=1)
+    def test(x: ft.Var[(3,), "int32"]):
+        return x
+
+    y_arr = test(np.array([0, 1, 2], dtype="int32"))
+    y_np = y_arr.numpy()
+
+    assert np.all(y_np == np.array([0, 1, 2]))
+
+
+def test_modify_and_return_argument():
+
+    @ft.optimize(verbose=1)
+    def test(x: ft.Var[(3,), "int32", "inout"]):
+        for i in range(3):
+            x[i] += 1
+        return x
+
+    y_arr = test(np.array([0, 1, 2], dtype="int32"))
+    y_np = y_arr.numpy()
+
+    assert np.all(y_np == np.array([1, 2, 3]))
 
 
 def test_inline_annotation():

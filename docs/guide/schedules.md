@@ -13,7 +13,7 @@ n = 4
 # Add verbose=1 to see the resulting native code
 @ft.optimize(schedule_callback=lambda s: s.parallelize('Li', 'openmp')
             )  # <-- 2. Apply the schedule
-def test(a: ft.Var[(n,), "int32"], b: ft.Var[(4,), "int32"]):
+def test(a: ft.Var[(n,), "int32"], b: ft.Var[(n,), "int32"]):
     y = ft.empty((n,), "int32")
     #! nid: Li  # <-- 1. Name the loop as Li
     for i in range(n):
@@ -53,7 +53,7 @@ def sch(s):
 # Set verbose=1 to see the resulting native code
 # Set verbose=2 to see the code after EVERY schedule
 @ft.optimize(schedule_callback=sch)
-def test(a: ft.Var[(n,), "int32"], b: ft.Var[(4,), "int32"]):
+def test(a: ft.Var[(n,), "int32"], b: ft.Var[(n,), "int32"]):
     y = ft.empty((n,), "int32")
     #! nid: Li
     for i in range(n):

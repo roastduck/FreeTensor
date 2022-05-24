@@ -83,13 +83,12 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
         }
         this->os() << ";" << std::endl;
     } else {
-        auto nthParamIter =
-            std::find(params_.begin(), params_.end(), op->name_);
-        auto nthReturnsIter =
-            std::find_if(returns_.begin(), returns_.end(),
-                         [&](const std::pair<std::string, DataType> &item) {
-                             return item.first == op->name_;
-                         });
+        auto nthParamIter = std::find_if(
+            params_.begin(), params_.end(),
+            [&](const FuncParam &p) { return p.name_ == op->name_; });
+        auto nthReturnsIter = std::find_if(
+            returns_.begin(), returns_.end(),
+            [&](const FuncRet &item) { return item.name_ == op->name_; });
         bool isParam = nthParamIter != params_.end();
         bool isReturn = nthReturnsIter != returns_.end();
         if (!isParam && !isReturn) {
