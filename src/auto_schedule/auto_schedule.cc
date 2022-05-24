@@ -26,11 +26,11 @@ AutoSchedule::AutoSchedule(
     const Ref<Device> &device, int measuredSize,
     const std::function<Predicts(const Features &)> &predictFunc,
     const std::function<void(const Features &, const Predicts &)> &updateFunc,
-    std::string tag)
+    std::string tag, int minBlockSize)
     : original_(schedule.clone()), target_(target), device_(device),
       measuredSize_(measuredSize), paramsSet_(false),
       predictFunc_(std::move(predictFunc)), updateFunc_(std::move(updateFunc)),
-      tag_(std::move(tag)) {
+      tag_(std::move(tag)), minBlockSize_(minBlockSize) {
     flop_ = 0;
     auto opCnt =
         structuralFeature(original_.ast())[original_.ast()->id()].opCnt_;
@@ -43,10 +43,11 @@ AutoSchedule::AutoSchedule(
             Ref<MultiLevelTilingWithFusionRule>::make(target->type()));
         rules_.push_back(Ref<MultiLevelTilingRule>::make(target->type()));
         rules_.push_back(Ref<ParallelizeRule>::make());
+        rules_.push_back(Ref<UnrollRule>::make(target->type()));
     } else {
         rules_.push_back(Ref<CacheWriteRule>::make(target->type()));
         rules_.push_back(
-            Ref<MultiLevelTilingWithFusionRule>::make(target->type()));
+            Ref<MultiLevelTilingWithFusionRule>::make(target->type(), minBlockSize));
         rules_.push_back(Ref<ThreadBindRule>::make());
         rules_.push_back(Ref<UnrollRule>::make(target->type()));
     }
@@ -125,7 +126,10 @@ void AutoSchedule::searchOneRound(size_t n) {
     for (auto log : logs) {
         std::cout << log << std::endl;
     }
-    std::cout << "now best: " << toString(bs.ast()) << std::endl;
+
+    std::cout << "now best: " << toString(measuredSketches_[0]->genSchedule().ast()) << "\n" << toString(measuredSketches_[0]->lowered()->body_) << "\n" << measuredSketches_[0]->code()
+              << std::endl;
+    measuredSketches_[0]->part(0)[SketchPartType::MultiLevelTilingWithFusion].as<MultiLevelTilingWithFusionPart>()->printAnnotation();
 }
 
 std::vector<std::vector<double>>
@@ -134,7 +138,7 @@ AutoSchedule::genFeatures(std::vector<Ref<Sketch>> &sketches) {
 #pragma omp parallel for
     for (size_t i = 0; i < n; i++) {
         try {
-            sketches[i]->genFeature();
+            sketches[i]->genFeature(target_);
         } catch (const std::exception &e) {
             // OpenMP threads won't report an exception message
             std::cerr << "ERROR feature: " << e.what() << std::endl;

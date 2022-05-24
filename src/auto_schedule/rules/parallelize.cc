@@ -61,8 +61,8 @@ std::vector<Sketch> ParallelizeRule::genPart(const Sketch &sketch) {
                    .getPart(SketchPartType::MultiLevelTilingWithFusion)
                    .as<MultiLevelTilingPart>();
     }
-    newSketch.addPart(Ref<ParallelizePart>::make(part->spaceLoopLength() *
-                                                 part->frontSpaceLoopTimes()));
+    newSketch.addPart(Ref<ParallelizePart>::make(std::min(2ul, part->spaceLoopLength() *
+                                                 part->frontSpaceLoopTimes())));
     newSketch.addLog("parallelize");
     return {newSketch};
 }

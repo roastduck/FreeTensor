@@ -27,7 +27,7 @@ MultiLevelTilingWithFusionRule::genPart(const Sketch &sketch) {
         Sketch newSketch = sketch.clone();
         newSketch.addPart(Ref<MultiLevelTilingWithFusionPart>::make(
             sketch.nowTarget().target, toFuse_, fuseLevels_[i], pat_,
-            targetType_));
+            targetType_, minBlockSize_));
         newSketch.addLog("multi_level_tiling_with_fusion " +
                          std::to_string(fuseLevels_[i]));
         ret.push_back(newSketch);
@@ -44,29 +44,34 @@ void MultiLevelTilingWithFusionPart::genRandAnnotation(
     while (true) {
         int vthread = 1;
         int thread = 1;
+        int block = 1;
         for (int i = 0; i < spaceLoopLength; i++) {
             spaceLoopTiling[i] = randomFillArray(target_.spaceLoops[i].length,
                                                  spaceLoopTimes_, gen);
+            block *= spaceLoopTiling[i][spaceLoopTimes_ - 1];
             vthread *= spaceLoopTiling[i][spaceLoopTimes_ - 2];
             thread *= spaceLoopTiling[i][spaceLoopTimes_ - 3];
         }
-        if (vthread != 1 && vthread <= MAX_VTHREAD && thread <= 1024) {
+        int outer_reduction = 1;
+        for (int i = 0; i < reductionLoopLength; i++) {
+            reductionLoopTiling[i] = randomFillArray(
+                target_.reductionLoops[i].length, reductionLoopTimes_, gen);
+            outer_reduction *= reductionLoopTiling[i][reductionLoopTimes_ - 1];
+        }
+        if (outer_reduction >= 128 && vthread != 1 && vthread == MAX_VTHREAD && thread == 128 && block == minBlockSize_) {
             break;
         }
     }
-    for (int i = 0; i < reductionLoopLength; i++) {
-        reductionLoopTiling[i] = randomFillArray(
-            target_.reductionLoops[i].length, reductionLoopTimes_, gen);
-    }
+
     annotation_.spaceLoopTiling = spaceLoopTiling;
     annotation_.reductionLoopTiling = reductionLoopTiling;
 }
 
 MultiLevelTilingWithFusionPart::MultiLevelTilingWithFusionPart(
     ForsWithDataReuse fors, ElementWiseInfo toFuse, int level, std::string pat,
-    TargetType targetType)
+    TargetType targetType, int minBlockSize)
     : MultiLevelTilingPart(std::move(fors), std::move(pat)),
-      targetType_(targetType), level_(level), toFuse_(std::move(toFuse)) {
+      targetType_(targetType), level_(level), toFuse_(std::move(toFuse)), minBlockSize_(minBlockSize) {
     frontSpaceLoopTimes_ = level_;
 }
 
@@ -93,17 +98,27 @@ bool MultiLevelTilingWithFusionPart::mutate(std::default_random_engine &gen) {
             target_.spaceLoops[mut_idx].length, spaceLoopTimes_, gen);
         int vthread = 1;
         int thread = 1;
+        int block = 1;
         for (size_t i = 0; i < target_.spaceLoops.size(); i++) {
+            block *= mut.spaceLoopTiling[i][spaceLoopTimes_ - 1];
             vthread *= mut.spaceLoopTiling[i][spaceLoopTimes_ - 2];
             thread *= mut.spaceLoopTiling[i][spaceLoopTimes_ - 3];
         }
-        if (vthread == 1 || vthread > MAX_VTHREAD || thread > 1024) {
+        if (vthread == 1 || vthread != MAX_VTHREAD || thread != 128 || block != minBlockSize_) {
             return false;
         }
     } else {
         int mut_idx = randomInt(target_.reductionLoops.size() - 1, gen);
         mut.reductionLoopTiling[mut_idx] = randomFillArray(
             target_.reductionLoops[mut_idx].length, reductionLoopTimes_, gen);
+        int outer_reduction = 1;
+        for (size_t i = 0; i < target_.reductionLoops.size(); i++) {
+            outer_reduction *= mut.reductionLoopTiling[i][reductionLoopTimes_ - 1];
+        }
+        if (outer_reduction < 128) {
+            return false;
+        }
+
     }
     annotation_ = mut;
     // std::cout << "End mutating...\n";
@@ -130,17 +145,26 @@ bool MultiLevelTilingWithFusionPart::crossover(
         mut.spaceLoopTiling[mutIdx] = p->annotation_.spaceLoopTiling[mutIdx];
         int vthread = 1;
         int thread = 1;
+        int block = 1;
         for (size_t i = 0; i < target_.spaceLoops.size(); i++) {
+            block *= mut.spaceLoopTiling[i][spaceLoopTimes_ - 1];
             vthread *= mut.spaceLoopTiling[i][spaceLoopTimes_ - 2];
             thread *= mut.spaceLoopTiling[i][spaceLoopTimes_ - 3];
         }
-        if (vthread == 1 || vthread > MAX_VTHREAD || thread > 1024) {
+        if (vthread == 1 || vthread != MAX_VTHREAD || thread != 128 || block != minBlockSize_) {
             return false;
         }
     } else {
         int mutIdx = randomInt(target_.reductionLoops.size() - 1, gen);
         mut.reductionLoopTiling[mutIdx] =
             p->annotation_.reductionLoopTiling[mutIdx];
+        int outer_reduction = 1;
+        for (size_t i = 0; i < target_.reductionLoops.size(); i++) {
+            outer_reduction *= mut.reductionLoopTiling[i][reductionLoopTimes_ - 1];
+        }
+        if (outer_reduction < 128) {
+            return false;
+        }
     }
     annotation_ = mut;
     // std::cout << "End crossover...\n";
