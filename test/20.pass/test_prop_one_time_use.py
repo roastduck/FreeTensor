@@ -86,6 +86,29 @@ def test_used_in_many_reads_no_prop():
     assert std.match(ast)
 
 
+def test_used_in_many_iterations_no_prop():
+    with ft.VarDef([("x", (4,), "int32", "output", "cpu"),
+                    ("y", (4, 8), "int32", "output", "cpu")]) as (x, y):
+        with ft.For("i", 0, 4) as i:
+            with ft.VarDef("t", (), "int32", "cache", "cpu") as t:
+                t[i] = x[i] + 1
+                with ft.For("j", 0, 8) as j:
+                    y[i, j] = t[i] * 2
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("x", (4,), "int32", "output", "cpu"),
+                    ("y", (4, 8), "int32", "output", "cpu")]) as (x, y):
+        with ft.For("i", 0, 4) as i:
+            with ft.VarDef("t", (), "int32", "cache", "cpu") as t:
+                t[i] = x[i] + 1
+                with ft.For("j", 0, 8) as j:
+                    y[i, j] = t[i] * 2
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
 def test_modify_self_no_prop():
     with ft.VarDef([("x", (5,), "float64", "inout", "cpu"),
                     ("y", (5,), "float64", "output", "cpu")]) as (x, y):

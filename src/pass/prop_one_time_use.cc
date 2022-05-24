@@ -51,8 +51,10 @@ Stmt propOneTimeUse(const Stmt &_op) {
         return true;
     };
     auto foundMust = [&](const Dependency &d) {
-        if (d.later2EarlierIter_
-                .isSingleValued()) { // Check before converting into PBFunc
+        if (d.later2EarlierIter_.isBijective()) {
+            // Check before converting into PBFunc. In prop_one_time_use, we not
+            // only need `singleValued`, but also `bijective`, to ensure it is
+            // really used "one time"
             r2w[d.later()].emplace_back(
                 d.earlier().as<StmtNode>(),
                 ReplaceInfo{d.earlier_.iter_, d.later_.iter_,
