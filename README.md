@@ -12,7 +12,7 @@ Write and optimize high-performance native loop-based tensor programs in Python.
 - Parallelization with OpenMP or CUDA
 - Reverse-mode Automatic Differentiation
 
-[Featuers by Example](https://roastduck.github.io/FreeTensor/#features-by-example)
+[Features by Example](https://roastduck.github.io/FreeTensor/#features-by-example)
 
 ## Code Structure
 
