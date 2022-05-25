@@ -118,18 +118,25 @@ def einsum(fmt: str, *args):
 
 
 def _make_matmul_fmt(a_ndim, b_ndim):
-    a_fmt = 'z'
-    b_fmt = 'z'
+    a_fmt = ''
+    b_fmt = ''
     y_fmt = ''
-    if a_ndim > 1:
+    if a_ndim > 0 and b_ndim > 0:
+        a_fmt = 'z'
+        b_fmt = 'z'
+        a_ndim -= 1
+        b_ndim -= 1
+    if a_ndim > 0:
         a_fmt = 'x' + a_fmt
         y_fmt = 'x' + y_fmt
-    if b_ndim > 1:
+        a_ndim -= 1
+    if b_ndim > 0:
         b_fmt += 'y'
         y_fmt += 'y'
-    for i in range(2, max(a_ndim, b_ndim)):
-        d = chr(ord('a') + i - 2)
-        assert ord('d') < ord('x')
+        b_ndim -= 1
+    for i in range(max(a_ndim, b_ndim)):
+        d = chr(ord('a') + i)
+        assert ord(d) < ord('x')
         if i < a_ndim:
             a_fmt = d + a_fmt
         if i < b_ndim:
