@@ -19,7 +19,7 @@ foreach(MODULE IN ITEMS antlr/antlr4 cppitertools cuda-samples isl pybind11 z3)
     file(GLOB RESULT ${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/${MODULE}/*)
     list(LENGTH RESULT RES_LEN)
     if(RES_LEN EQUAL 0)
-        message(FATAL_ERROR "3rd-party module ${MODULE} not found, please clone with `git clone --recursive <path-to-this-repo>`")
+        message(FATAL_ERROR "3rd-party module ${MODULE} not found, run `git submodule update --init --recursive` to clone 3rd-party modules")
     endif()
 endforeach()
 
