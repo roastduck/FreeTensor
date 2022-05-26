@@ -14,6 +14,15 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "${DEFAULT_BUILD_TYPE}")
 endif()
 
+# Check whther 3rd-party modules exist
+foreach(MODULE IN ITEMS antlr/antlr4 cppitertools cuda-samples isl pybind11 z3)
+    file(GLOB RESULT ${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/${MODULE}/*)
+    list(LENGTH RESULT RES_LEN)
+    if(RES_LEN EQUAL 0)
+        message(FATAL_ERROR "3rd-party module ${MODULE} not found, run `git submodule update --init --recursive` to clone 3rd-party modules")
+    endif()
+endforeach()
+
 # PyBind11
 find_package(Python COMPONENTS Interpreter Development REQUIRED)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/pybind11)
