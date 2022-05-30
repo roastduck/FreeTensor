@@ -17,6 +17,8 @@ def _next_arg(i, arg, offset):
 @core.inline
 def _einsum_(lefts: Sequence[str], right: str, order: str, init: bool, *args):
     if len(order) == 0:
+        if init:
+            args[-1][()] = 0
         args[-1][()] += functools.reduce(lambda x, y: x * y,
                                          [x[()] for x in args[:-1]])
     else:
