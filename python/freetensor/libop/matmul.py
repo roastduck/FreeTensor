@@ -16,9 +16,12 @@ def _next_arg(i, arg, offset):
 
 @core.inline
 def _einsum_(lefts: Sequence[str], right: str, order: str, init: bool, *args):
+    next_init = init
+    if init and right == '':
+        args[-1][()] = 0
+        next_init = False
+
     if len(order) == 0:
-        if init:
-            args[-1][()] = 0
         args[-1][()] += functools.reduce(lambda x, y: x * y,
                                          [x[()] for x in args[:-1]])
     else:
@@ -33,11 +36,6 @@ def _einsum_(lefts: Sequence[str], right: str, order: str, init: bool, *args):
         length = functools.reduce(
             core.max,
             [arg.shape(offset) for arg, offset in zip(iter_args, iter_offsets)])
-
-        next_init = init
-        if init and right == '':
-            args[-1][()] = 0
-            next_init = False
 
         assert_exprs = []
         if right != '':
