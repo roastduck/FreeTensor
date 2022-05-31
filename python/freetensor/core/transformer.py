@@ -19,7 +19,8 @@ from dataclasses import dataclass
 import freetensor_ffi as ffi
 
 from .context import pop_ast
-from .expr import (ndim, intrinsic, l_and, l_or, l_not, if_then_else)
+from .expr import (dtype, mtype, ndim, intrinsic, l_and, l_or, l_not,
+                   if_then_else, shape)
 from .stmt import (_VarDef, VarRef, For, If, Else, MarkNid, ctx_stack, Func,
                    Assert)
 
@@ -299,6 +300,22 @@ def assert_stmt(test):
         StagingContext.register_implicit_scope(Assert(test))
     else:
         assert test
+
+
+def load_attr(obj, attr: str):
+    '''Load attribute staging tool. Allows customization of reading attributes.'''
+    try:
+        return getattr(obj, attr)
+    except:
+        if attr == "ndim":
+            return ndim(obj)
+        if attr == "shape":
+            return lambda i: shape(obj, i)
+        if attr == "dtype":
+            return dtype(obj)
+        if attr == "mtype":
+            return mtype(obj)
+        raise
 
 
 @dataclass
@@ -837,6 +854,12 @@ class Transformer(ast.NodeTransformer):
             node.values.append(ast.Compare(lhs, [op], [rhs]))
             lhs = rhs
         return self.visit(location_helper(node, old_node))
+
+    def visit_Attribute(self, old_node: ast.Attribute) -> Any:
+        node: ast.Attribute = self.generic_visit(old_node)
+        if isinstance(node.ctx, ast.Load):
+            node = call_helper(load_attr, node.value, ast.Constant(node.attr))
+        return location_helper(node, old_node)
 
     def visit_Return(self, old_node: ast.Return) -> Any:
         node: ast.Return = self.generic_visit(old_node)
