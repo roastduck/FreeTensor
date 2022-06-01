@@ -17,10 +17,8 @@ class PBCompBounds : public CompUniqueBounds {
     std::unordered_set<Expr> visited_;
 
   public:
-    PBCompBounds(const SymbolTableInterface &symbolTable,
-                 const CompTransientBoundsInterface &transients)
-        : CompUniqueBounds(symbolTable, transients), transients_(transients),
-          genPBExpr_(symbolTable) {}
+    PBCompBounds(const CompTransientBoundsInterface &transients)
+        : CompUniqueBounds(transients), transients_(transients) {}
 
   protected:
     using CompUniqueBounds::visit;
@@ -32,7 +30,7 @@ class PBSimplify : public SimplifyPass {
     PBCompBounds unique_;
 
   public:
-    PBSimplify() : SimplifyPass(unique_), unique_(*this, *this) {}
+    PBSimplify() : SimplifyPass(unique_), unique_(*this) {}
 };
 
 Stmt pbSimplify(const Stmt &op);

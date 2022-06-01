@@ -41,8 +41,7 @@ class CompTransientBoundsInterface {
  *
  * Invoke pass/annotate_conds before this analysis to get better accuracy
  *
- * Inherit this pass to use it. The BaseClass should be a decent of
- * WithTypeInfer<SymbolTable<...>>
+ * Inherit this pass to use it
  */
 template <class BaseClass>
 class CompTransientBounds : public BaseClass,
@@ -84,7 +83,7 @@ class CompTransientBounds : public BaseClass,
             }
 
             auto &&[lin, type] = *norm;
-            if (!isInt(this->dtype(lin2expr(lin)))) {
+            if (!isInt(lin2expr(lin)->dtype())) {
                 continue;
             }
 

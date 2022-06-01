@@ -195,13 +195,13 @@ void StructuralFeature::visitBinOp(const BinaryExpr &op) {
     BaseClass::visitExpr(op);
     updInfo(op, op->lhs_);
     updInfo(op, op->rhs_);
-    info_[op].opCnt_[upCast(dtype(op->lhs_), dtype(op->rhs_))]++;
+    info_[op].opCnt_[upCast(op->lhs_->dtype(), op->rhs_->dtype())]++;
 }
 
 void StructuralFeature::visitUnaryOp(const UnaryExpr &op) {
     BaseClass::visitExpr(op);
     updInfo(op, op->expr_);
-    info_[op].opCnt_[dtype(op->expr_)]++;
+    info_[op].opCnt_[op->expr_->dtype()]++;
 }
 
 void StructuralFeature::visitStmt(const Stmt &op) {
@@ -250,7 +250,7 @@ void StructuralFeature::visit(const ReduceTo &op) {
     BaseClass::visit(op);
 
     info_[op].opCnt_[upCast(buffer(op->var_)->tensor()->dtype(),
-                            dtype(op->expr_))]++;
+                            op->expr_->dtype())]++;
     info_[op].loadCnt_[buffer(op->var_)->mtype()]++;
     info_[op].storeCnt_[buffer(op->var_)->mtype()]++;
     info_[op].accessCnt_[buffer(op->var_)->mtype()]++;
@@ -269,13 +269,13 @@ void StructuralFeature::visit(const IfExpr &op) {
     updInfo(op, op->cond_);
     updInfo(op, op->thenCase_);
     updInfo(op, op->elseCase_);
-    info_[op].opCnt_[dtype(op->cond_)]++;
+    info_[op].opCnt_[op->cond_->dtype()]++;
 }
 
 void StructuralFeature::visit(const Cast &op) {
     BaseClass::visit(op);
     updInfo(op, op->expr_);
-    info_[op].opCnt_[dtype(op->expr_)]++;
+    info_[op].opCnt_[op->expr_->dtype()]++;
 }
 
 void StructuralFeature::visit(const StmtSeq &op) {
