@@ -1078,6 +1078,8 @@ def dtype(var):
     ''' Get element data type of a variable '''
     if isinstance(var, VarRef):
         return var.dtype
+    elif isinstance(var, ffi.Expr):
+        return var.dtype
     else:
         # TODO: Config default type
         if isinstance(var, float):
