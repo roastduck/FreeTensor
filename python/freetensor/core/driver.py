@@ -110,7 +110,9 @@ class Driver(ffi.Driver):
     def __init__(self,
                  func: ffi.Func,
                  src: str,
-                 device: Optional[Device] = None):
+                 device: Optional[Device] = None,
+                 host_device: Optional[Device] = None,
+                 verbose: Optional[bool] = None):
         '''
         Compile a program using a backend compiler and load it into memory
 
@@ -126,11 +128,19 @@ class Driver(ffi.Driver):
         device : Device (Optional)
             The device to run the program. If omitted, use the default device
             in config
+        verbose : bool (Optional)
+            True to print extra infomation
         '''
         src = str(src)
         if device is None:
             device = config.default_device()
-        super(Driver, self).__init__(func, src, device)
+        if verbose is None:
+            verbose = False
+        if host_device is None:
+            super(Driver, self).__init__(func, src, device, verbose)
+        else:
+            super(Driver, self).__init__(func, src, device, host_device,
+                                         verbose)
         self.func = func
 
     def set_args(self, *args, **kws):
@@ -175,7 +185,9 @@ class Driver(ffi.Driver):
 
 
 def build_binary(code: Optional[NativeCode] = None,
-                 device: Optional[Device] = None):
+                 device: Optional[Device] = None,
+                 host_device: Optional[Device] = None,
+                 verbose: Optional[bool] = None):
     '''
     Compile a program using a backend compiler and load it into memory
 
@@ -196,9 +208,13 @@ def build_binary(code: Optional[NativeCode] = None,
             raise ffi.DriverError(
                 f"Codegen target ({code.target}) is inconsistent with device target ({device.target()})"
             )
-        return Driver(code.func, code.code, device)
+        return Driver(code.func, code.code, device, host_device, verbose)
     else:
         f = build_binary
         if device is not None:
             f = functools.partial(f, device=device)
+        if host_device is not None:
+            f = functools.partial(f, host_device=host_device)
+        if verbose is not None:
+            f = functools.partial(f, verbose=verbose)
         return f
