@@ -41,7 +41,7 @@ Expr OutputIntermediates::visit(const Load &op) {
                           op->indices_.end());
         toTape_[curStmt_].emplace_back(
             makeStore("", op->var_ + ".tape", std::move(newIndices),
-                      makeLoad(op->var_, op->indices_)));
+                      makeLoad(op->var_, op->indices_, op->loadType_)));
     }
     return ret;
 }
@@ -52,8 +52,10 @@ Stmt OutputIntermediates::visit(const Store &op) {
         std::vector<Expr> newIndices(1, versions_.at(op->id()));
         newIndices.insert(newIndices.end(), op->indices_.begin(),
                           op->indices_.end());
-        auto newStore = makeStore("", op->var_ + ".tape", std::move(newIndices),
-                                  makeLoad(op->var_, op->indices_));
+        auto newStore =
+            makeStore("", op->var_ + ".tape", std::move(newIndices),
+                      makeLoad(op->var_, op->indices_,
+                               buffer(op->var_)->tensor()->dtype()));
         return makeStmtSeq("", {oldStore, newStore});
     } else {
         return oldStore;
@@ -66,8 +68,10 @@ Stmt OutputIntermediates::visit(const ReduceTo &op) {
         std::vector<Expr> newIndices(1, versions_.at(op->id()));
         newIndices.insert(newIndices.end(), op->indices_.begin(),
                           op->indices_.end());
-        auto newStore = makeStore("", op->var_ + ".tape", std::move(newIndices),
-                                  makeLoad(op->var_, op->indices_));
+        auto newStore =
+            makeStore("", op->var_ + ".tape", std::move(newIndices),
+                      makeLoad(op->var_, op->indices_,
+                               buffer(op->var_)->tensor()->dtype()));
         return makeStmtSeq("", {oldReduce, newStore});
     } else {
         return oldReduce;

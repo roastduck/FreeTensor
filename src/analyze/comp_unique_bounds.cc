@@ -134,7 +134,7 @@ void CompUniqueBounds::visitExpr(const Expr &op) {
     lower = {};
     upper = {};
 
-    if (!isInt(dtype(op))) {
+    if (!isInt(op->dtype())) {
         return;
     }
 

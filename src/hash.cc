@@ -212,7 +212,7 @@ size_t Hasher::compHash(const IfExprNode &op) {
 size_t Hasher::compHash(const CastNode &op) {
     size_t h = ((size_t)op.nodeType() * K1 + B1) % P;
     h = ((h + op.expr_->hash()) * K2 + B2) % P;
-    h = ((h + std::hash<int>()(int(op.dtype_))) * K2 + B2) % P;
+    h = ((h + std::hash<int>()(int(op.destType_))) * K2 + B2) % P;
     return (h * K3 + B3) % P;
 }
 
@@ -434,7 +434,7 @@ bool HashComparator::compare(const IfExpr &lhs, const IfExpr &rhs) const {
 }
 
 bool HashComparator::compare(const Cast &lhs, const Cast &rhs) const {
-    return lhs->dtype_ == rhs->dtype_ && (*this)(lhs->expr_, rhs->expr_);
+    return lhs->destType_ == rhs->destType_ && (*this)(lhs->expr_, rhs->expr_);
 }
 
 bool HashComparator::compare(const Intrinsic &lhs, const Intrinsic &rhs) const {

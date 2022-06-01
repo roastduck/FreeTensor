@@ -55,7 +55,7 @@ Expr FrontendVar::asLoad() const {
         ASSERT(idx.type() == FrontendVarIdxType::Single);
         indices.emplace_back(idx.single());
     }
-    return makeLoad(name_, std::move(indices));
+    return makeLoad(name_, std::move(indices), dtype_);
 }
 
 Stmt FrontendVar::asStore(const ID &id, const Expr &value) const {

@@ -6,15 +6,14 @@
 #include <unordered_set>
 
 #include <analyze/symbol_table.h>
-#include <analyze/type_infer.h>
 #include <func.h>
 #include <mutator.h>
 #include <pass/const_fold.h>
 
 namespace freetensor {
 
-class FloatSimplify : public WithTypeInfer<SymbolTable<ConstFold>> {
-    typedef WithTypeInfer<SymbolTable<ConstFold>> BaseClass;
+class FloatSimplify : public SymbolTable<ConstFold> {
+    typedef SymbolTable<ConstFold> BaseClass;
 
     std::unordered_set<Expr> nonNeg_, nonPosi_;
 

@@ -278,7 +278,7 @@ Expr SimplifyPass::visit(const LT &_op) {
     }
     ASSERT(__op->nodeType() == ASTNodeType::LT);
     auto op = __op.as<LTNode>();
-    if (!isInt(dtype(op->lhs_)) || !isInt(dtype(op->rhs_))) {
+    if (!isInt(op->lhs_->dtype()) || !isInt(op->rhs_->dtype())) {
         return op;
     }
     auto diff = makeSub(op->lhs_, op->rhs_);
@@ -298,7 +298,7 @@ Expr SimplifyPass::visit(const LE &_op) {
     }
     ASSERT(__op->nodeType() == ASTNodeType::LE);
     auto op = __op.as<LENode>();
-    if (!isInt(dtype(op->lhs_)) || !isInt(dtype(op->rhs_))) {
+    if (!isInt(op->lhs_->dtype()) || !isInt(op->rhs_->dtype())) {
         return op;
     }
     auto diff = makeSub(op->lhs_, op->rhs_);
@@ -318,7 +318,7 @@ Expr SimplifyPass::visit(const GT &_op) {
     }
     ASSERT(__op->nodeType() == ASTNodeType::GT);
     auto op = __op.as<GTNode>();
-    if (!isInt(dtype(op->lhs_)) || !isInt(dtype(op->rhs_))) {
+    if (!isInt(op->lhs_->dtype()) || !isInt(op->rhs_->dtype())) {
         return op;
     }
     auto diff = makeSub(op->lhs_, op->rhs_);
@@ -338,7 +338,7 @@ Expr SimplifyPass::visit(const GE &_op) {
     }
     ASSERT(__op->nodeType() == ASTNodeType::GE);
     auto op = __op.as<GENode>();
-    if (!isInt(dtype(op->lhs_)) || !isInt(dtype(op->rhs_))) {
+    if (!isInt(op->lhs_->dtype()) || !isInt(op->rhs_->dtype())) {
         return op;
     }
     auto diff = makeSub(op->lhs_, op->rhs_);
@@ -358,7 +358,7 @@ Expr SimplifyPass::visit(const EQ &_op) {
     }
     ASSERT(__op->nodeType() == ASTNodeType::EQ);
     auto op = __op.as<EQNode>();
-    if (!isInt(dtype(op->lhs_)) || !isInt(dtype(op->rhs_))) {
+    if (!isInt(op->lhs_->dtype()) || !isInt(op->rhs_->dtype())) {
         return op;
     }
     auto diff = makeSub(op->lhs_, op->rhs_);
@@ -381,7 +381,7 @@ Expr SimplifyPass::visit(const NE &_op) {
     }
     ASSERT(__op->nodeType() == ASTNodeType::NE);
     auto op = __op.as<NENode>();
-    if (!isInt(dtype(op->lhs_)) || !isInt(dtype(op->rhs_))) {
+    if (!isInt(op->lhs_->dtype()) || !isInt(op->rhs_->dtype())) {
         return op;
     }
     auto diff = makeSub(op->lhs_, op->rhs_);

@@ -5,7 +5,6 @@
 #include <unordered_set>
 
 #include <analyze/symbol_table.h>
-#include <analyze/type_infer.h>
 #include <func.h>
 #include <hash.h>
 #include <mutator.h>
@@ -13,8 +12,8 @@
 
 namespace freetensor {
 
-class PropagateRequire : public WithTypeInfer<SymbolTable<Visitor>> {
-    typedef WithTypeInfer<SymbolTable<Visitor>> BaseClass;
+class PropagateRequire : public SymbolTable<Visitor> {
+    typedef SymbolTable<Visitor> BaseClass;
 
     const std::unordered_set<std::string> &requires_; // input var names
     const std::unordered_set<std::string> &provides_; // output var names

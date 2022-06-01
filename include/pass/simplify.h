@@ -8,7 +8,6 @@
 #include <analyze/comp_transient_bounds.h>
 #include <analyze/comp_unique_bounds.h>
 #include <analyze/symbol_table.h>
-#include <analyze/type_infer.h>
 #include <func.h>
 #include <math/bounds.h>
 #include <mutator.h>
@@ -43,10 +42,8 @@ int findInnerMostScope(const std::unordered_map<std::string, int> &varScope,
 // NOTE: We use ConstFold because we cannot rely the bound analysis for constant
 // propagation. E.g f(x) + 0, where f(x) is a complex expression and it does not
 // have a bound. The "+ 0" cannot be removed by bound analysis
-class SimplifyPass
-    : public CompTransientBounds<WithTypeInfer<SymbolTable<ConstFold>>> {
-    typedef CompTransientBounds<WithTypeInfer<SymbolTable<ConstFold>>>
-        BaseClass;
+class SimplifyPass : public CompTransientBounds<SymbolTable<ConstFold>> {
+    typedef CompTransientBounds<SymbolTable<ConstFold>> BaseClass;
 
     // defining scope table
     std::unordered_map<std::string, int> varScope_;
@@ -103,7 +100,7 @@ class BuiltinSimplify : public SimplifyPass {
     CompUniqueBounds unique_;
 
   public:
-    BuiltinSimplify() : SimplifyPass(unique_), unique_(*this, *this) {}
+    BuiltinSimplify() : SimplifyPass(unique_), unique_(*this) {}
 };
 
 /**

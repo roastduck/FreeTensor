@@ -154,8 +154,7 @@ void FindAccessPoint::visit(const Load &op) {
            defAxis_.at(op->var_),
            cur_,
            std::vector<Expr>{op->indices_.begin(), op->indices_.end()},
-           conds_,
-           symbolTableSnapshot()};
+           conds_};
     reads_[def(op->var_)->id()].emplace_back(ap);
 }
 
@@ -257,7 +256,7 @@ PBMap AnalyzeDeps::makeAccMap(PBCtx &presburger, const AccessPoint &p,
                               int iterDim, int accDim, RelaxMode relax,
                               const std::string &extSuffix,
                               GenPBExpr::VarMap &externals) {
-    GenPBExpr genPBExpr(p.symbolTable_, extSuffix);
+    GenPBExpr genPBExpr(extSuffix);
     auto ret = makeIterList(p.iter_, iterDim) + " -> ";
     if (auto str = makeAccList(genPBExpr, p.access_, relax, externals);
         str.isValid()) {

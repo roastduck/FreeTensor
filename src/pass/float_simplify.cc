@@ -130,7 +130,7 @@ Expr FloatSimplify::visit(const Add &_op) {
         setNonPosi(op);
     }
 
-    if (!isFloat(dtype(op))) {
+    if (!isFloat(op->dtype())) {
         return op;
     }
 
@@ -158,7 +158,7 @@ Expr FloatSimplify::visit(const Sub &_op) {
         setNonPosi(op);
     }
 
-    if (!isFloat(dtype(op))) {
+    if (!isFloat(op->dtype())) {
         return op;
     }
 
@@ -193,7 +193,7 @@ Expr FloatSimplify::visit(const Mul &_op) {
         setNonNeg(op);
     }
 
-    if (!isFloat(dtype(op))) {
+    if (!isFloat(op->dtype())) {
         return op;
     }
 
@@ -257,7 +257,7 @@ Expr FloatSimplify::visit(const Min &_op) {
         setNonPosi(op);
     }
 
-    if (!isFloat(dtype(op))) {
+    if (!isFloat(op->dtype())) {
         return op;
     }
 
@@ -290,7 +290,7 @@ Expr FloatSimplify::visit(const Max &_op) {
         setNonPosi(op);
     }
 
-    if (!isFloat(dtype(op))) {
+    if (!isFloat(op->dtype())) {
         return op;
     }
 
@@ -383,7 +383,7 @@ Expr FloatSimplify::visit(const Square &_op) {
     auto op = __op.as<SquareNode>();
     setNonNeg(op);
 
-    if (!isFloat(dtype(op))) {
+    if (!isFloat(op->dtype())) {
         return op;
     }
 
@@ -445,7 +445,7 @@ Expr FloatSimplify::visit(const Abs &_op) {
     auto op = __op.as<AbsNode>();
     setNonNeg(op);
 
-    if (!isFloat(dtype(op))) {
+    if (!isFloat(op->dtype())) {
         return op;
     }
 
