@@ -121,8 +121,8 @@
 <ul>
 <li>Linux</li>
 <li>Python (&gt;= 3.8, for the Python frontend)</li>
-<li>GCC (&gt;= 8, to support C++17 and the "unroll" pragma)</li>
-<li>CUDA (&gt;= 10.2, to support GCC 8, Optional)</li>
+<li>GCC (&gt;= 10, to support C++20 and the "unroll" pragma)</li>
+<li>CUDA (&gt;= 11.4.1, to support GCC 10, Optional)</li>
 <li>MKL (Optional)</li>
 <li>Java (Build-time dependency only)</li>
 </ul>
@@ -132,10 +132,6 @@
 <div class="admonition note">
 <p class="admonition-title">Note on Python version</p>
 <p>Because we are analyzing Python AST, which is sensitive to Python version, there may be potential bugs for Python strictly later than 3.8. Please file an issue if something goes wrong</p>
-</div>
-<div class="admonition note">
-<p class="admonition-title">Note on future changes</p>
-<p>We have a plan to migrade to C++20 in a near future, which requires GCC &gt;= 10</p>
 </div>
 <h2 id="build">Build</h2>
 <p>First, clone this repo. Don't forget there are some submodules.</p>
