@@ -4,8 +4,8 @@
 
 - Linux
 - Python (>= 3.8, for the Python frontend)
-- GCC (>= 8, to support C++17 and the "unroll" pragma)
-- CUDA (>= 10.2, to support GCC 8, Optional)
+- GCC (>= 10, to support C++20 and the "unroll" pragma)
+- CUDA (>= 11.4.1, to support GCC 10, Optional)
 - MKL (Optional)
 - Java (Build-time dependency only)
 
@@ -17,9 +17,6 @@ pip3 install --user numpy sourceinspect astor Pygments xgboost
 
 !!! note "Note on Python version"
     Because we are analyzing Python AST, which is sensitive to Python version, there may be potential bugs for Python strictly later than 3.8. Please file an issue if something goes wrong
-
-!!! note "Note on future changes"
-    We have a plan to migrade to C++20 in a near future, which requires GCC >= 10
 
 ## Build
 
