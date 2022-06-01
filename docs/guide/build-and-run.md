@@ -7,7 +7,7 @@
 - GCC (>= 10, to support C++20 and the "unroll" pragma)
 - CUDA (>= 11.4.1, to support GCC 10, Optional)
 - MKL (Optional)
-- Java (Build-time dependency only)
+- Java (>= 11, Build-time dependency only)
 
 Python dependencies:
 
