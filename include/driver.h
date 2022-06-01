@@ -35,6 +35,8 @@ class Driver {
 
     std::unique_ptr<Context> ctx_;
 
+    bool verbose_ = false;
+
   private:
     void buildAndLoad();
 
@@ -50,12 +52,14 @@ class Driver {
      * @{
      */
     Driver(const Func &func, const std::string &src, const Ref<Device> &device,
-           const Ref<Device> &hostDevice);
-    Driver(const Func &func, const std::string &src, const Ref<Device> &device)
+           const Ref<Device> &hostDevice, bool verbose = false);
+    Driver(const Func &func, const std::string &src, const Ref<Device> &device,
+           bool verbose = false)
         : Driver(func, src, device,
                  device->type() == TargetType::CPU
                      ? device
-                     : Ref<Device>::make(Ref<CPU>::make())) {}
+                     : Ref<Device>::make(Ref<CPU>::make()),
+                 verbose) {}
     /** @} */
 
     ~Driver() {

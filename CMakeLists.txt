@@ -112,7 +112,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS OFF) # -std=gnu++20 when on, -std=c++20 when off
 
-add_definitions(-DFT_RUNTIME_DIR=${CMAKE_CURRENT_SOURCE_DIR}/runtime)
+add_definitions(-DFT_RUNTIME_DIR="${CMAKE_CURRENT_SOURCE_DIR}/runtime")
+add_definitions(-DFT_BACKEND_COMPILER_CXX="${CMAKE_CXX_COMPILER}")
+if(FT_WITH_CUDA)
+    add_definitions(-DFT_BACKEND_COMPILER_NVCC="${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc")
+endif()
 
 # OpenMP used to parallelize the compilation of different instances
 find_package(OpenMP)
