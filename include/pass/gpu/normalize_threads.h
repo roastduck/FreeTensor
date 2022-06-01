@@ -7,7 +7,6 @@
 #include <analyze/comp_transient_bounds.h>
 #include <analyze/comp_unique_bounds.h>
 #include <analyze/symbol_table.h>
-#include <analyze/type_infer.h>
 #include <func.h>
 #include <mutator.h>
 
@@ -44,14 +43,13 @@ class NormalizeThreads : public Mutator {
     Stmt visit(const Eval &op) override;
 };
 
-class CheckThreadNum
-    : public CompTransientBounds<WithTypeInfer<SymbolTable<Mutator>>> {
-    typedef CompTransientBounds<WithTypeInfer<SymbolTable<Mutator>>> BaseClass;
+class CheckThreadNum : public CompTransientBounds<SymbolTable<Mutator>> {
+    typedef CompTransientBounds<SymbolTable<Mutator>> BaseClass;
 
     CompUniqueBounds bound_;
 
   public:
-    CheckThreadNum() : bound_(*this, *this) {}
+    CheckThreadNum() : bound_(*this) {}
 
   private:
     /**

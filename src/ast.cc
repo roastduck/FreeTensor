@@ -176,6 +176,22 @@ bool StmtNode::isBefore(const Stmt &other) const {
     return false;
 }
 
+DataType ExprNode::dtype() {
+    if (dtype_ == DataType::Invalid) {
+        inferDType();
+    }
+    return dtype_;
+}
+
+void ExprNode::resetDType() {
+    if (dtype_ != DataType::Invalid) {
+        dtype_ = DataType::Invalid;
+        if (auto p = parentExpr(); p.isValid()) {
+            p->resetDType();
+        }
+    }
+}
+
 ID::ID(const Stmt &stmt) : ID(stmt->id_) {}
 
 const std::string &ID::strId() const {

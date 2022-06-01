@@ -239,7 +239,7 @@ Stmt MakeParallelReduction::visit(const For &_op) {
                                   neutralVal(dtype, reduce->op_));
             Stmt flush =
                 makeReduceTo("", reduce->var_, targetIndices, reduce->op_,
-                             makeLoad(cacheName, cacheIndices), true);
+                             makeLoad(cacheName, cacheIndices, dtype), true);
             init = makeNestedLoops(
                 cacheIndices, iter::repeat(makeIntConst(0)), newShape,
                 iter::repeat(makeIntConst(1)), newShape,

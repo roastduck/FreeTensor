@@ -606,7 +606,7 @@ void CodeGenCUDA::visit(const MatMul &op) {
     makeIndent();
     beginBlock();
     makeIndent();
-    os() << gen(dtype(op->c_)) << " _cublasAlpha = ";
+    os() << gen(op->c_->dtype()) << " _cublasAlpha = ";
     (*this)(op->alpha_);
     os() << ", _cublasBeta = ";
     (*this)(op->beta_);
@@ -622,25 +622,25 @@ void CodeGenCUDA::visit(const MatMul &op) {
     (*this)(k);
     os() << ", &_cublasAlpha, &";
     (*this)(a);
-    os() << ", " << genCUBLASType(dtype(op->a_)) << ", ";
+    os() << ", " << genCUBLASType(op->a_->dtype()) << ", ";
     (*this)(lda);
     os() << ", ";
     (*this)(stridea);
     os() << ", &";
     (*this)(b);
-    os() << ", " << genCUBLASType(dtype(op->b_)) << ", ";
+    os() << ", " << genCUBLASType(op->b_->dtype()) << ", ";
     (*this)(ldb);
     os() << ", ";
     (*this)(strideb);
     os() << ", &_cublasBeta, &";
     (*this)(c);
-    os() << ", " << genCUBLASType(dtype(op->c_)) << ", ";
+    os() << ", " << genCUBLASType(op->c_->dtype()) << ", ";
     (*this)(ldc);
     os() << ", ";
     (*this)(stridec);
     os() << ", ";
     (*this)(op->batchSize_);
-    os() << ", " << genCUBLASType(dtype(op->c_)) << ", CUBLAS_GEMM_DEFAULT);"
+    os() << ", " << genCUBLASType(op->c_->dtype()) << ", CUBLAS_GEMM_DEFAULT);"
          << std::endl;
     endBlock();
 

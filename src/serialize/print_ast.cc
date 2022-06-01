@@ -211,6 +211,9 @@ void PrintVisitor::visit(const Load &op) {
     os() << prettyVarDefName(op->var_) << "[";
     printList(op->indices_);
     os() << "]";
+    if (dtypeInLoad_) {
+        os() << " : " << ::freetensor::toString(op->loadType_);
+    }
 }
 
 void PrintVisitor::visit(const ReduceTo &op) {
@@ -510,7 +513,7 @@ void PrintVisitor::visit(const IfExpr &op) {
 
 void PrintVisitor::visit(const Cast &op) {
     priority_new([&] {
-        os() << ::freetensor::toString(op->dtype_) << "(";
+        os() << ::freetensor::toString(op->destType_) << "(";
         recur(op->expr_);
         os() << ")";
     });
@@ -695,7 +698,12 @@ std::string toString(const AST &op, bool pretty) {
 }
 
 std::string toString(const AST &op, bool pretty, bool printAllId) {
-    PrintVisitor visitor(printAllId, pretty);
+    return toString(op, pretty, printAllId, false);
+}
+
+std::string toString(const AST &op, bool pretty, bool printAllId,
+                     bool dtypeInLoad) {
+    PrintVisitor visitor(printAllId, pretty, dtypeInLoad);
     visitor(op);
     return visitor.toString(
         [](const CodeGenStream &stream) { return stream.os_.str(); });

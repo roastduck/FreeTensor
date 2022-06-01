@@ -29,20 +29,14 @@ void GenPBExpr::visitExpr(const Expr &op) {
 }
 
 void GenPBExpr::visit(const Var &op) {
-    // Check this here earlier, otherwise an undefined Var will result in an
-    // illegal-presburger-map type error
-    if (!symbolTable_.hasLoop(op->name_)) {
-        ERROR("BUG: Iterator " + op->name_ +
-              " used undefined in a presbuger expression");
-    }
     auto str = mangle(op->name_);
     vars_[op][op] = str;
     results_[op] = str;
 }
 
 void GenPBExpr::visit(const Load &op) {
-    if (isInt(symbolTable_.buffer(op->var_)->tensor()->dtype())) {
-        auto str = mangle(dumpAST(op)) + "__ext__" + varSuffix_;
+    if (isInt(op->loadType_)) {
+        auto str = mangle(dumpAST(op, true)) + "__ext__" + varSuffix_;
         vars_[op][op] = str;
         results_[op] = str;
     }

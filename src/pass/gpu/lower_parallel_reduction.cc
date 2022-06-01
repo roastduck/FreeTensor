@@ -81,7 +81,7 @@ Stmt LowerParallelReduction::visit(const For &_op) {
             asVec<Expr>(
                 iter::imap([](auto &&x, auto &&y) { return makeAdd(x, y); },
                            r->begins_, indices)),
-            r->op_, makeLoad(workspace, cat({makeIntConst(0)}, indices)),
+            r->op_, makeLoad(workspace, cat({makeIntConst(0)}, indices), dtype),
             false);
         flushStmt = makeIf("", makeEQ(nth, makeIntConst(0)), flushStmt);
 
@@ -100,9 +100,10 @@ Stmt LowerParallelReduction::visit(const For &_op) {
             makeLAnd(makeEQ(makeMod(nth, makeMul(k, makeIntConst(2))),
                             makeIntConst(0)),
                      makeLT(makeAdd(nth, k), op->len_)),
-            makeReduceTo("", workspace, cat({nth}, indices), r->op_,
-                         makeLoad(workspace, cat({makeAdd(nth, k)}, indices)),
-                         false));
+            makeReduceTo(
+                "", workspace, cat({nth}, indices), r->op_,
+                makeLoad(workspace, cat({makeAdd(nth, k)}, indices), dtype),
+                false));
         reduceStmt = makeFor(
             "", "__reduce_p", makeIntConst(0), makeIntConst(count),
             makeIntConst(1), makeIntConst(count),

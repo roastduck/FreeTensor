@@ -20,6 +20,7 @@ enum class DataType : size_t {
     Custom,
     // ------
     NumTypes,
+    Invalid,
 };
 
 constexpr std::array dataTypeNames = {

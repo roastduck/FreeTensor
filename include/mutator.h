@@ -94,7 +94,8 @@ class Mutator {
         for (auto &&index : op->indices_) {
             indices.emplace_back((*this)(index));
         }
-        return COPY_DEBUG_INFO(makeLoad(op->var_, std::move(indices)), op);
+        return COPY_DEBUG_INFO(
+            makeLoad(op->var_, std::move(indices), op->loadType_), op);
     }
 
     virtual Stmt visit(const ReduceTo &op) {
@@ -317,7 +318,7 @@ class Mutator {
     }
 
     virtual Expr visit(const Cast &op) {
-        return COPY_DEBUG_INFO(makeCast((*this)(op->expr_), op->dtype_), op);
+        return COPY_DEBUG_INFO(makeCast((*this)(op->expr_), op->destType_), op);
     }
 
     virtual Expr visit(const Intrinsic &op) {

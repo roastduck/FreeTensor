@@ -329,7 +329,7 @@ template <class Stream> void CodeGenC<Stream>::visit(const Mul &op) {
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const RealDiv &op) {
-    if (isFloat(this->dtype(op->lhs_)) || isFloat(this->dtype(op->rhs_))) {
+    if (isFloat(op->lhs_->dtype()) || isFloat(op->rhs_->dtype())) {
         this->os() << "(";
         (*this)(op->lhs_);
         this->os() << " / ";
@@ -355,7 +355,7 @@ void CodeGenC<Stream>::visit(const RoundTowards0Div &op) {
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const FloorDiv &op) {
-    this->os() << "floorDiv<" << this->gen(this->dtype(op)) << ">(";
+    this->os() << "floorDiv<" << this->gen(op->dtype()) << ">(";
     (*this)(op->lhs_);
     this->os() << ", ";
     (*this)(op->rhs_);
@@ -363,7 +363,7 @@ template <class Stream> void CodeGenC<Stream>::visit(const FloorDiv &op) {
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const CeilDiv &op) {
-    this->os() << "ceilDiv<" << this->gen(this->dtype(op)) << ">(";
+    this->os() << "ceilDiv<" << this->gen(op->dtype()) << ">(";
     (*this)(op->lhs_);
     this->os() << ", ";
     (*this)(op->rhs_);
@@ -387,7 +387,7 @@ template <class Stream> void CodeGenC<Stream>::visit(const Remainder &op) {
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const Min &op) {
-    this->os() << "std::min<" << this->gen(this->dtype(op)) << ">(";
+    this->os() << "std::min<" << this->gen(op->dtype()) << ">(";
     (*this)(op->lhs_);
     this->os() << ", ";
     (*this)(op->rhs_);
@@ -395,7 +395,7 @@ template <class Stream> void CodeGenC<Stream>::visit(const Min &op) {
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const Max &op) {
-    this->os() << "std::max<" << this->gen(this->dtype(op)) << ">(";
+    this->os() << "std::max<" << this->gen(op->dtype()) << ">(";
     (*this)(op->lhs_);
     this->os() << ", ";
     (*this)(op->rhs_);
@@ -530,7 +530,7 @@ template <class Stream> void CodeGenC<Stream>::visit(const IfExpr &op) {
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const Cast &op) {
-    this->os() << gen(op->dtype_) << "(";
+    this->os() << gen(op->destType_) << "(";
     (*this)(op->expr_);
     this->os() << ")";
 }

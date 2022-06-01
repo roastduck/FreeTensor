@@ -131,7 +131,8 @@ Stmt ScalarPropConst::visit(const Store &store_orig) {
 
 /// ReduceTo: kill & gen optionally
 Stmt ScalarPropConst::visit(const ReduceTo &op) {
-    return makeReduction(visitStmt(undoMakeReduction(op)));
+    return makeReduction(
+        visitStmt(undoMakeReduction(op, buffer(op->var_)->tensor()->dtype())));
 }
 
 /// Load: read from constants map

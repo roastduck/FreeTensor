@@ -76,6 +76,14 @@ class ASTPart : public EnableSelf<ASTPart> {
      */
     int depth() const;
 
+    /**
+     * Called when a SubTree of ASTPart is modified
+     *
+     * You can override this hook to clear some internal states of an ASTPart.
+     * Remember to call the base class' hook
+     */
+    virtual void modifiedHook() { resetHash(); }
+
     size_t hash();
     void resetHash();
     virtual void compHash() = 0;
@@ -108,7 +116,7 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTree {
     void abandon() {
         if (obj_.isValid()) {
             if (auto p = obj_->parent(); p.isValid()) {
-                p->resetHash();
+                p->modifiedHook();
             }
             obj_->resetParent();
         }
