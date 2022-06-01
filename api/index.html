@@ -1948,7 +1948,9 @@ Driver            (<span title="freetensor_ffi.Driver">Driver</span>)
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
                  <span class="n">func</span><span class="p">:</span> <span class="n">ffi</span><span class="o">.</span><span class="n">Func</span><span class="p">,</span>
                  <span class="n">src</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-                 <span class="n">device</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Device</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+                 <span class="n">device</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Device</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">host_device</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Device</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">verbose</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Compile a program using a backend compiler and load it into memory</span>
 
@@ -1964,11 +1966,19 @@ Driver            (<span title="freetensor_ffi.Driver">Driver</span>)
 <span class="sd">        device : Device (Optional)</span>
 <span class="sd">            The device to run the program. If omitted, use the default device</span>
 <span class="sd">            in config</span>
+<span class="sd">        verbose : bool (Optional)</span>
+<span class="sd">            True to print extra infomation</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">src</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">device</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">device</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">default_device</span><span class="p">()</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">Driver</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">verbose</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="n">host_device</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="nb">super</span><span class="p">(</span><span class="n">Driver</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">super</span><span class="p">(</span><span class="n">Driver</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">host_device</span><span class="p">,</span>
+                                         <span class="n">verbose</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">func</span> <span class="o">=</span> <span class="n">func</span>
 
     <span class="k">def</span> <span class="nf">set_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kws</span><span class="p">):</span>
@@ -2077,7 +2087,7 @@ values. For an accurate execution time measurement, plase call
 
 
 <h5 id="freetensor.core.driver.Driver.__init__" class="doc doc-heading">
-<code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">host_device</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
   <span class="doc doc-properties">
       <small class="doc doc-property doc-property-special"><code>special</code></small>
@@ -2105,6 +2115,7 @@ determine the parameters and return values</p></li>
             <li><p><strong>src</strong> (<code>str</code>) – Native code generated from codegen</p></li>
             <li><p><strong>device</strong> (<code>Optional[freetensor.core.driver.Device]</code>) – The device to run the program. If omitted, use the default device
 in config</p></li>
+            <li><p><strong>verbose</strong> (<code>Optional[bool]</code>) – True to print extra infomation</p></li>
         </ul>
       </td>
     </tr>
@@ -2115,7 +2126,9 @@ in config</p></li>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
              <span class="n">func</span><span class="p">:</span> <span class="n">ffi</span><span class="o">.</span><span class="n">Func</span><span class="p">,</span>
              <span class="n">src</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-             <span class="n">device</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Device</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+             <span class="n">device</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Device</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+             <span class="n">host_device</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Device</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+             <span class="n">verbose</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Compile a program using a backend compiler and load it into memory</span>
 
@@ -2131,11 +2144,19 @@ in config</p></li>
 <span class="sd">    device : Device (Optional)</span>
 <span class="sd">        The device to run the program. If omitted, use the default device</span>
 <span class="sd">        in config</span>
+<span class="sd">    verbose : bool (Optional)</span>
+<span class="sd">        True to print extra infomation</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">src</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">device</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">device</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">default_device</span><span class="p">()</span>
-    <span class="nb">super</span><span class="p">(</span><span class="n">Driver</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">verbose</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">verbose</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="n">host_device</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Driver</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Driver</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">host_device</span><span class="p">,</span>
+                                     <span class="n">verbose</span><span class="p">)</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">func</span> <span class="o">=</span> <span class="n">func</span>
 </code></pre></div>
         </details>
@@ -2467,7 +2488,7 @@ will use it by default. In this style, it also sets the default Device as the
 
 
 <h4 id="freetensor.core.driver.build_binary" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">build_binary</span><span class="p">(</span><span class="n">code</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">build_binary</span><span class="p">(</span><span class="n">code</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">host_device</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 
 </h4>
@@ -2498,7 +2519,9 @@ in config</p></li>
         <details class="quote">
           <summary>Source code in <code>freetensor/core/driver.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">build_binary</span><span class="p">(</span><span class="n">code</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">NativeCode</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">device</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Device</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+                 <span class="n">device</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Device</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">host_device</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Device</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">verbose</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Compile a program using a backend compiler and load it into memory</span>
 
@@ -2519,11 +2542,15 @@ in config</p></li>
             <span class="k">raise</span> <span class="n">ffi</span><span class="o">.</span><span class="n">DriverError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;Codegen target (</span><span class="si">{</span><span class="n">code</span><span class="o">.</span><span class="n">target</span><span class="si">}</span><span class="s2">) is inconsistent with device target (</span><span class="si">{</span><span class="n">device</span><span class="o">.</span><span class="n">target</span><span class="p">()</span><span class="si">}</span><span class="s2">)&quot;</span>
             <span class="p">)</span>
-        <span class="k">return</span> <span class="n">Driver</span><span class="p">(</span><span class="n">code</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="n">code</span><span class="o">.</span><span class="n">code</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Driver</span><span class="p">(</span><span class="n">code</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="n">code</span><span class="o">.</span><span class="n">code</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">host_device</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">f</span> <span class="o">=</span> <span class="n">build_binary</span>
         <span class="k">if</span> <span class="n">device</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">f</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">host_device</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">host_device</span><span class="o">=</span><span class="n">host_device</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">f</span>
 </code></pre></div>
         </details>
@@ -5730,7 +5757,7 @@ be returend, which can be used as a decorator</p></li>
         <span class="n">ast</span> <span class="o">=</span> <span class="n">schedule</span><span class="p">(</span><span class="n">ast</span><span class="p">,</span> <span class="n">schedule_callback</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
         <span class="n">ast</span> <span class="o">=</span> <span class="n">lower</span><span class="p">(</span><span class="n">ast</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
         <span class="n">code</span> <span class="o">=</span> <span class="n">codegen</span><span class="p">(</span><span class="n">ast</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
-        <span class="n">exe</span> <span class="o">=</span> <span class="n">build_binary</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+        <span class="n">exe</span> <span class="o">=</span> <span class="n">build_binary</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">exe</span>
 
     <span class="k">else</span><span class="p">:</span>
