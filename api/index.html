@@ -316,6 +316,8 @@
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.transformer.inline">inline()</a>
     </li>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.transformer.load_attr">load_attr()</a>
+    </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.transformer.module_helper">module_helper()</a>
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.transformer.return_stmt">return_stmt()</a>
@@ -3393,6 +3395,8 @@ it calls libop.ceildiv</p>
     <span class="sd">&#39;&#39;&#39; Get element data type of a variable &#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">VarRef</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">var</span><span class="o">.</span><span class="n">dtype</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">ffi</span><span class="o">.</span><span class="n">Expr</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">var</span><span class="o">.</span><span class="n">dtype</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="c1"># TODO: Config default type</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
@@ -5120,16 +5124,16 @@ it calls libop.round_towards_0_div</p>
 
     <div class="doc doc-contents ">
 
-      <p>Get all dimensions of a variable</p>
+      <p>Get size of specified dimension of a variable</p>
 
         <details class="quote">
           <summary>Source code in <code>freetensor/core/expr.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">shape</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39; Get all dimensions of a variable &#39;&#39;&#39;</span>
+    <span class="sd">&#39;&#39;&#39; Get size of specified dimension of a variable &#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">VarRef</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">var</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="p">[]</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Getting size of dimension </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1"> of scalar </span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
 </code></pre></div>
         </details>
     </div>
@@ -11610,6 +11614,12 @@ Transformer            (<span title="ast.NodeTransformer">NodeTransformer</span>
             <span class="n">lhs</span> <span class="o">=</span> <span class="n">rhs</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">visit</span><span class="p">(</span><span class="n">location_helper</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">old_node</span><span class="p">))</span>
 
+    <span class="k">def</span> <span class="nf">visit_Attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">Attribute</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">Attribute</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generic_visit</span><span class="p">(</span><span class="n">old_node</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">ctx</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Load</span><span class="p">):</span>
+            <span class="n">node</span> <span class="o">=</span> <span class="n">call_helper</span><span class="p">(</span><span class="n">load_attr</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">attr</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">location_helper</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">old_node</span><span class="p">)</span>
+
     <span class="k">def</span> <span class="nf">visit_Return</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">Return</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">Return</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generic_visit</span><span class="p">(</span><span class="n">old_node</span><span class="p">)</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">curr_func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
@@ -11839,6 +11849,7 @@ if freetensor__annotate__x:
     </div>
 
   </div>
+
 
 
 
@@ -13423,6 +13434,44 @@ code cannot be get automatically, e.g., if <code>func</code> is generated from a
 
   </div>
 
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h4 id="freetensor.core.transformer.load_attr" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">load_attr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Load attribute staging tool. Allows customization of reading attributes.</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/transformer.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">load_attr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">attr</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Load attribute staging tool. Allows customization of reading attributes.&#39;&#39;&#39;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">attr</span> <span class="o">==</span> <span class="s2">&quot;ndim&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">ndim</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">attr</span> <span class="o">==</span> <span class="s2">&quot;shape&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="k">lambda</span> <span class="n">i</span><span class="p">:</span> <span class="n">shape</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">attr</span> <span class="o">==</span> <span class="s2">&quot;dtype&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">dtype</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">attr</span> <span class="o">==</span> <span class="s2">&quot;mtype&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">mtype</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="k">raise</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
 
 
 
