@@ -115,8 +115,8 @@ bool hasIdenticalCoeff(const LinearExpr<T> &lhs, const LinearExpr<T> &rhs) {
  * directinos
  */
 template <class T>
-    requires std::integral<T> ||
-    std::floating_point<T> Expr lin2expr(const LinearExpr<T> &lin) {
+requires std::integral<T> || std::floating_point<T>
+    Expr lin2expr(const LinearExpr<T> &lin) {
     Expr b = makeIntConst(lin.bias_);
 
     for (auto &&item : lin.coeff_) {
