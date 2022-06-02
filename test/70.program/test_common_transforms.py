@@ -68,9 +68,9 @@ def test_tiling():
     a_np = np.random.rand(256, 256).astype("float32")
     b_np = np.random.rand(256, 256).astype("float32")
     c_np = np.zeros((256, 256), dtype="float32")
-    a_arr = ft.Array(a_np, device)
-    b_arr = ft.Array(b_np, device)
-    c_arr = ft.Array(c_np, device)
+    a_arr = ft.Array(a_np)
+    b_arr = ft.Array(b_np)
+    c_arr = ft.Array(c_np)
     ft.build_binary(code, device)(a=a_arr, b=b_arr, c=c_arr)
     c_np = c_arr.numpy()
 
@@ -116,8 +116,8 @@ def test_tiled_reduction():
     code = ft.codegen(func, target, verbose=True)
     x_np = np.random.rand(256).astype("float32")
     y_np = np.zeros((1,), dtype="float32")
-    x_arr = ft.Array(x_np, device)
-    y_arr = ft.Array(y_np, device)
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
     ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
@@ -169,8 +169,8 @@ def test_parallel_reduction():
     code = ft.codegen(func, target, verbose=True)
     x_np = np.random.rand(256).astype("float32")
     y_np = np.zeros((1,), dtype="float32")
-    x_arr = ft.Array(x_np, device)
-    y_arr = ft.Array(y_np, device)
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
     ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
@@ -181,7 +181,6 @@ def test_parallel_reduction():
 def test_dynamic_tiling():
     target = ft.CPU()
     device = ft.Device(target)
-    host = device
 
     with ft.VarDef([
         ("n", (), "int32", "input", "byvalue"),
@@ -227,12 +226,12 @@ def test_dynamic_tiling():
     a_np = np.random.rand(300, 400).astype("float32")
     b_np = np.random.rand(400, 500).astype("float32")
     c_np = np.zeros((300, 500), dtype="float32")
-    n_arr = ft.Array(n_np, host)
-    k_arr = ft.Array(k_np, host)
-    m_arr = ft.Array(m_np, host)
-    a_arr = ft.Array(a_np, device)
-    b_arr = ft.Array(b_np, device)
-    c_arr = ft.Array(c_np, device)
+    n_arr = ft.Array(n_np)
+    k_arr = ft.Array(k_np)
+    m_arr = ft.Array(m_np)
+    a_arr = ft.Array(a_np)
+    b_arr = ft.Array(b_np)
+    c_arr = ft.Array(c_np)
     driver = ft.build_binary(code, device)
     driver(n=n_arr, k=k_arr, m=m_arr, a=a_arr, b=b_arr, c=c_arr)
     c_np = c_arr.numpy()
@@ -245,7 +244,6 @@ def test_dynamic_tiling():
 def test_collaborative_fetch():
     target = ft.GPU()
     device = ft.Device(target)
-    host = ft.Device(ft.CPU())
 
     with ft.VarDef([
         ("a", (32, 256), "float32", "input", "gpu/global"),
@@ -283,9 +281,9 @@ def test_collaborative_fetch():
     a_np = np.random.rand(32, 256).astype("float32")
     b_np = np.random.rand(256, 32).astype("float32")
     c_np = np.zeros((32, 32), dtype="float32")
-    a_arr = ft.Array(a_np, device)
-    b_arr = ft.Array(b_np, device)
-    c_arr = ft.Array(c_np, device)
+    a_arr = ft.Array(a_np)
+    b_arr = ft.Array(b_np)
+    c_arr = ft.Array(c_np)
     ft.build_binary(code, device)(a=a_arr, b=b_arr, c=c_arr)
     c_np = c_arr.numpy()
 

@@ -16,9 +16,9 @@ def test_max_pooling_basic():
         libop.max_pool_(x, y, auto_pad='VALID', kernel_shape=[3, 3])
 
     x_torch = torch.rand(2, 3, 14, 14, dtype=torch.float32)
-    x_arr = ft.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy())
     y_torch = torch.zeros(2, 3, 12, 12, dtype=torch.float32)
-    y_arr = ft.Array(y_torch.numpy(), device)
+    y_arr = ft.Array(y_torch.numpy())
     f(x_arr, y_arr)
     y_torch = torch.tensor(y_arr.numpy())
 
@@ -41,9 +41,9 @@ def test_max_pooling_same_padding():
         libop.max_pool_(x, y, auto_pad='SAME_UPPER', kernel_shape=[3, 3])
 
     x_torch = torch.rand(2, 3, 14, 14, dtype=torch.float32)
-    x_arr = ft.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy())
     y_torch = torch.zeros(2, 3, 14, 14, dtype=torch.float32)
-    y_arr = ft.Array(y_torch.numpy(), device)
+    y_arr = ft.Array(y_torch.numpy())
     f(x_arr, y_arr)
     y_torch = torch.tensor(y_arr.numpy())
 
@@ -69,9 +69,9 @@ def test_max_pooling_stride():
                         strides=[3, 3])
 
     x_torch = torch.rand(2, 3, 12, 12, dtype=torch.float32)
-    x_arr = ft.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy())
     y_torch = torch.zeros(2, 3, 4, 4, dtype=torch.float32)
-    y_arr = ft.Array(y_torch.numpy(), device)
+    y_arr = ft.Array(y_torch.numpy())
     f(x_arr, y_arr)
     y_torch = torch.tensor(y_arr.numpy())
 
@@ -96,9 +96,9 @@ def test_max_pooling_dilation():
                         dilations=[2, 2])
 
     x_torch = torch.rand(2, 3, 14, 14, dtype=torch.float32)
-    x_arr = ft.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy())
     y_torch = torch.zeros(2, 3, 10, 10, dtype=torch.float32)
-    y_arr = ft.Array(y_torch.numpy(), device)
+    y_arr = ft.Array(y_torch.numpy())
     f(x_arr, y_arr)
     y_torch = torch.tensor(y_arr.numpy())
 
@@ -119,7 +119,7 @@ def test_max_pooling_out_of_place():
         return libop.max_pool(x, auto_pad='VALID', kernel_shape=[3, 3])
 
     x_torch = torch.rand(2, 3, 14, 14, dtype=torch.float32)
-    x_arr = ft.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy())
     y_arr = f(x_arr)
     y_torch = torch.tensor(y_arr.numpy())
 
@@ -141,9 +141,9 @@ def test_global_avg_pool():
         libop.global_avg_pool_(x, y)
 
     x_torch = torch.rand(2, 3, 14, 14, dtype=torch.float32)
-    x_arr = ft.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy())
     y_torch = torch.zeros(2, 3, dtype=torch.float32)
-    y_arr = ft.Array(y_torch.numpy(), device)
+    y_arr = ft.Array(y_torch.numpy())
     f(x_arr, y_arr)
     y_torch = torch.tensor(y_arr.numpy())
 
@@ -162,7 +162,7 @@ def test_global_avg_pool_out_of_place():
         return libop.global_avg_pool(x)
 
     x_torch = torch.rand(2, 3, 14, 14, dtype=torch.float32)
-    x_arr = ft.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy())
     y_arr = f(x_arr)
     y_torch = torch.tensor(y_arr.numpy())
 

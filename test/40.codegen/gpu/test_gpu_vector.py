@@ -30,8 +30,8 @@ def test_vectorize():
 
     x_np = np.random.randint(0, 100, (4, 64)).astype("int32")
     y_np = np.zeros((4, 64), dtype="int32")
-    x_arr = ft.Array(x_np, device)
-    y_arr = ft.Array(y_np, device)
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
     ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
@@ -59,8 +59,8 @@ def test_vectorize_with_non_vector_access():
 
     x_np = np.random.randint(0, 100, (4,)).astype("int32")
     y_np = np.zeros((4, 64), dtype="int32")
-    x_arr = ft.Array(x_np, device)
-    y_arr = ft.Array(y_np, device)
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
     ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
@@ -84,7 +84,7 @@ def test_vectorize_use_iter():
     assert "int4" in str(code)
 
     y_np = np.zeros((4, 64), dtype="int32")
-    y_arr = ft.Array(y_np, device)
+    y_arr = ft.Array(y_np)
     driver = ft.build_binary(code, device)(y=y_arr)
     y_np = y_arr.numpy()
 
@@ -112,8 +112,8 @@ def test_vectorize_fallback_to_shorter_when_not_divisible():
 
     x_np = np.random.randint(0, 100, (4, 62)).astype("int32")
     y_np = np.zeros((4, 62), dtype="int32")
-    x_arr = ft.Array(x_np, device)
-    y_arr = ft.Array(y_np, device)
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
     ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
@@ -141,8 +141,8 @@ def test_vectorize_fallback_to_shorter_when_not_aligned():
 
     x_np = np.random.randint(0, 100, (4, 66)).astype("int32")
     y_np = np.zeros((4, 64), dtype="int32")
-    x_arr = ft.Array(x_np, device)
-    y_arr = ft.Array(y_np, device)
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
     ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 

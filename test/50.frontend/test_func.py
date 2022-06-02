@@ -89,8 +89,7 @@ def test_called_multiple_times():
 
 
 def test_call_with_external_data():
-    data = ft.Array(np.array([[0, 1], [2, 3]], dtype=np.int32),
-                    ft.Device(ft.CPU()))
+    data = ft.Array(np.array([[0, 1], [2, 3]], dtype=np.int32))
 
     @ft.inline
     def g(x, y):
@@ -115,7 +114,7 @@ def test_call_with_external_data():
     code = ft.codegen(f, ft.CPU(), verbose=True)
 
     y_np = np.zeros((2, 2), dtype="int32")
-    y_arr = ft.Array(y_np, ft.Device(ft.CPU()))
+    y_arr = ft.Array(y_np)
     ft.Driver(f, code, ft.Device(ft.CPU()))(y=y_arr)
     y_np = y_arr.numpy()
 
@@ -135,9 +134,8 @@ def test_call_with_literal_data():
     @ft.transform
     def f(y):
         y: ft.Var[(2, 2), "int32", "output", "cpu"]
-        g(
-            ft.capture_var(
-                ft.Array(np.array([[0, 1], [2, 3]], dtype=np.int32), dev)), y)
+        g(ft.capture_var(ft.Array(np.array([[0, 1], [2, 3]], dtype=np.int32))),
+          y)
 
     with ft.VarDef("y", (2, 2), "int32", "output", "cpu") as y:
         with ft.VarDef("x", (2, 2), "int32", "input", "cpu") as x:
@@ -150,7 +148,7 @@ def test_call_with_literal_data():
     code = ft.codegen(f, ft.CPU(), verbose=True)
 
     y_np = np.zeros((2, 2), dtype="int32")
-    y_arr = ft.Array(y_np, dev)
+    y_arr = ft.Array(y_np)
     ft.Driver(f, code, dev)(y=y_arr)
     y_np = y_arr.numpy()
 
@@ -354,8 +352,8 @@ def test_return():
         c: ft.Var[(2, 2), "int32", "output", "cpu"]
         d: ft.Var[(2, 2), "int32", "output", "cpu"]
         c1, d1 = test_i(
-            ft.capture_var(
-                ft.Array(np.array([[1, 2], [3, 4]], dtype=np.int32), dev)), y)
+            ft.capture_var(ft.Array(np.array([[1, 2], [3, 4]],
+                                             dtype=np.int32))), y)
         for i in range(2):
             for j in range(2):
                 c[i, j] = c1[i, j]
@@ -446,8 +444,8 @@ def test_func_in_args():
 
     x_np = np.array([1, 2, 3, 4], dtype="int32")
     y_np = np.array([0, 0, 0, 0], dtype="int32")
-    x_arr = ft.Array(x_np, ft.Device(ft.CPU()))
-    y_arr = ft.Array(y_np, ft.Device(ft.CPU()))
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
     f(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
@@ -503,8 +501,8 @@ def test_no_deps_on_returned_tensor():
         c: ft.Var[(2, 2), "int32", "output", "cpu"]
         d: ft.Var[(2, 2), "int32", "output", "cpu"]
         cc, dd = test_i(
-            ft.capture_var(
-                ft.Array(np.array([[1, 2], [3, 4]], dtype=np.int32), dev)), y)
+            ft.capture_var(ft.Array(np.array([[1, 2], [3, 4]],
+                                             dtype=np.int32))), y)
         for i in range(2):
             #! nid: Lj
             #! no_deps: cc

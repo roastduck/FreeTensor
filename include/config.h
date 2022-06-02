@@ -27,9 +27,8 @@ class Config {
 
     static Ref<Target> defaultTarget_; /// Used for lower and codegen when
                                        /// target is omitted. Initialized to CPU
-    static Ref<Device>
-        defaultDevice_; /// Used to create Array and Driver when
-                        /// device is omitted. Initialized to a CPU Device
+    static Ref<Device> defaultDevice_; /// Used to create Driver when device is
+                                       /// omitted. Initialized to a CPU Device
 
   public:
     static void init(); /// Called in src/ffi/config.cc

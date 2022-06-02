@@ -28,8 +28,8 @@ def test_omp_for():
     code = ft.codegen(func, target, verbose=True)
     x_np = np.array([1, 2, 3, 4], dtype="int32")
     y_np = np.zeros((4,), dtype="int32")
-    x_arr = ft.Array(x_np, ft.Device(target))
-    y_arr = ft.Array(y_np, ft.Device(target))
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
     ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
@@ -57,8 +57,8 @@ def test_omp_for_2():
     x_np = np.array([[i + j for j in range(4)] for i in range(4)],
                     dtype="int32")
     y_np = np.zeros((4, 4), dtype="int32")
-    x_arr = ft.Array(x_np, ft.Device(target))
-    y_arr = ft.Array(y_np, ft.Device(target))
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
     ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
@@ -87,8 +87,8 @@ def test_omp_for_collapse_nested():
     assert "collapse(2)" in str(code)
     x_np = np.random.rand(4, 4).astype("float32")
     y_np = np.zeros((4, 4), dtype="float32")
-    x_arr = ft.Array(x_np, ft.Device(target))
-    y_arr = ft.Array(y_np, ft.Device(target))
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
     ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
@@ -162,8 +162,8 @@ def test_unroll_for():
     assert "#pragma GCC unroll" in str(code)
     x_np = np.array([1, 2, 3, 4], dtype="int32")
     y_np = np.zeros((4,), dtype="int32")
-    x_arr = ft.Array(x_np, ft.Device(ft.CPU()))
-    y_arr = ft.Array(y_np, ft.Device(ft.CPU()))
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
     ft.Driver(func, code, ft.Device(ft.CPU()))(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
@@ -194,8 +194,8 @@ def test_vectorize_for():
     assert "#pragma omp simd" in str(code)
     x_np = np.array([1, 2, 3, 4], dtype="int32")
     y_np = np.zeros((4,), dtype="int32")
-    x_arr = ft.Array(x_np, ft.Device(ft.CPU()))
-    y_arr = ft.Array(y_np, ft.Device(ft.CPU()))
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
     ft.Driver(func, code, ft.Device(ft.CPU()))(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 

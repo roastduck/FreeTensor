@@ -49,8 +49,8 @@ def test_warpshuffle_reverse():
     x_np = np.array([list(range(num * 32, (num + 1) * 32)) for num in range(4)],
                     dtype="int32")
     y_np = np.zeros((4, 32), dtype="int32")
-    x_arr = ft.Array(x_np, device)
-    y_arr = ft.Array(y_np, device)
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
 
     ft.build_binary(code, device)(x=x_arr, y=y_arr)
 
@@ -115,9 +115,9 @@ def test_warpshuffle_sum():
     y_np = np.array([list(range(num * 32, (num + 1) * 32)) for num in range(4)],
                     dtype="int32")
     z_np = np.zeros((4, 32), dtype="int32")
-    x_arr = ft.Array(x_np, device)
-    y_arr = ft.Array(y_np, device)
-    z_arr = ft.Array(z_np, device)
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
+    z_arr = ft.Array(z_np)
 
     ft.build_binary(code, device)(x=x_arr, y=y_arr, z=z_arr)
 

@@ -39,9 +39,9 @@ def test_manual_static():
         driver = ft.build_binary(code, device)
         B_np = np.zeros((out_size, out_size, out_channel, batch),
                         dtype="float32")
-        A_arr = ft.Array(A_np, device)
-        W_arr = ft.Array(W_np, device)
-        B_arr = ft.Array(B_np, device)
+        A_arr = ft.Array(A_np)
+        W_arr = ft.Array(W_np)
+        B_arr = ft.Array(B_np)
         driver.set_args(A=A_arr, W=W_arr, B=B_arr)
         if time:
             t = driver.time()

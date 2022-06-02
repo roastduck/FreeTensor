@@ -20,12 +20,18 @@ void init_ffi_driver(py::module_ &m) {
                  const std::vector<Ref<Array>> &,
                  const std::unordered_map<std::string, Ref<Array>> &)>(
                  &Driver::setArgs),
-             "args"_a, "kws"_a = std::unordered_map<std::string, Ref<Array>>())
+             "args"_a, "kws"_a = std::unordered_map<std::string, Ref<Array>>(),
+             py::keep_alive<1, 2>(),
+             py::keep_alive<1, 3>()) // Array may keep ref count of user data
+                                     // (numpy), so we should keep ref count of
+                                     // Array
         .def("set_args",
              static_cast<void (Driver::*)(
                  const std::unordered_map<std::string, Ref<Array>> &)>(
                  &Driver::setArgs),
-             "kws"_a)
+             "kws"_a, py::keep_alive<1, 2>()) // Array may keep ref count of
+                                              // user data (numpy), so we should
+                                              // keep ref count of Array
         .def("run", &Driver::run)
         .def("sync", &Driver::sync)
         .def("collect_returns", &Driver::collectReturns)

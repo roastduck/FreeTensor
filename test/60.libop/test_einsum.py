@@ -17,11 +17,11 @@ def test_basic():
         libop.einsum_("ij,j->i", a, b, y)
 
     a_torch = torch.rand(4, 5, dtype=torch.float32)
-    a_arr = ft.Array(a_torch.numpy(), device)
+    a_arr = ft.Array(a_torch.numpy())
     b_torch = torch.rand(5, dtype=torch.float32)
-    b_arr = ft.Array(b_torch.numpy(), device)
+    b_arr = ft.Array(b_torch.numpy())
     y_torch = torch.zeros(4, dtype=torch.float32)
-    y_arr = ft.Array(y_torch.numpy(), device)
+    y_arr = ft.Array(y_torch.numpy())
     f(a_arr, b_arr, y_arr)
     y_torch = torch.tensor(y_arr.numpy())
 
@@ -41,11 +41,11 @@ def test_broadcast():
         libop.einsum_("ij,j->i", a, b, y)
 
     a_torch = torch.rand(4, 1, dtype=torch.float32)
-    a_arr = ft.Array(a_torch.numpy(), device)
+    a_arr = ft.Array(a_torch.numpy())
     b_torch = torch.rand(5, dtype=torch.float32)
-    b_arr = ft.Array(b_torch.numpy(), device)
+    b_arr = ft.Array(b_torch.numpy())
     y_torch = torch.zeros(4, dtype=torch.float32)
-    y_arr = ft.Array(y_torch.numpy(), device)
+    y_arr = ft.Array(y_torch.numpy())
     f(a_arr, b_arr, y_arr)
     y_torch = torch.tensor(y_arr.numpy())
 
@@ -64,9 +64,9 @@ def test_out_of_place():
         return libop.einsum("ij,j->i", a, b)
 
     a_torch = torch.rand(4, 5, dtype=torch.float32)
-    a_arr = ft.Array(a_torch.numpy(), device)
+    a_arr = ft.Array(a_torch.numpy())
     b_torch = torch.rand(5, dtype=torch.float32)
-    b_arr = ft.Array(b_torch.numpy(), device)
+    b_arr = ft.Array(b_torch.numpy())
     y_arr = f(a_arr, b_arr)
     y_torch = torch.tensor(y_arr.numpy())
 
