@@ -306,7 +306,7 @@ def load_attr(obj, attr: str):
     '''Load attribute staging tool. Allows customization of reading attributes.'''
     try:
         return getattr(obj, attr)
-    except:
+    except AttributeError:
         if attr == "ndim":
             return ndim(obj)
         if attr == "shape":
