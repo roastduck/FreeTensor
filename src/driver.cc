@@ -119,7 +119,7 @@ void Driver::buildAndLoad() {
     switch (dev_->type()) {
     case TargetType::CPU:
         cmd = Config::backendCompilerCXX();
-        cmd += " -I" NAME(FT_RUNTIME_DIR) " -std=c++17 -shared -O3 -fPIC "
+        cmd += " -I" NAME(FT_RUNTIME_DIR) " -std=c++20 -shared -O3 -fPIC "
                                           "-Wall -fopenmp -ffast-math";
         cmd += " -o " + so + " " + cpp;
 #ifdef FT_WITH_MKL
