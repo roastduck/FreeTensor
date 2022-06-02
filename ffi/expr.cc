@@ -251,7 +251,9 @@ void init_ffi_ast_expr(py::module_ &m) {
         .def(
             "__neg__",
             [](const Expr &expr) { return makeSub(makeIntConst(0), expr); },
-            py::is_operator());
+            py::is_operator())
+        .def_property_readonly(
+            "dtype", [](const Expr &op) -> DataType { return op->dtype(); });
     py::implicitly_convertible<int, ExprNode>();
     py::implicitly_convertible<float, ExprNode>();
     py::implicitly_convertible<bool, ExprNode>();
