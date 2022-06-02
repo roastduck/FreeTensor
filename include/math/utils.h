@@ -11,20 +11,17 @@ namespace freetensor {
 // NOTE: For floating-points, we always use double to deal with compile-time
 // operations
 
-template <class T, typename std::enable_if_t<std::is_integral_v<T>> * = nullptr>
-T floorDiv(T a, T b) {
+template <class T> requires std::integral<T> T floorDiv(T a, T b) {
     T res = a / b, rem = a % b;
     return res - (rem != 0 && ((rem < 0) != (b < 0)));
 }
 
-template <class T, typename std::enable_if_t<std::is_integral_v<T>> * = nullptr>
-T ceilDiv(T a, T b) {
+template <class T> requires std::integral<T> T ceilDiv(T a, T b) {
     T res = a / b, rem = a % b;
     return res + (rem != 0 && ((rem < 0) == (b < 0)));
 }
 
-template <class T, typename std::enable_if_t<std::is_integral_v<T>> * = nullptr>
-T mod(T a, T b) {
+template <class T> requires std::integral<T> T mod(T a, T b) {
     T m = a % b;
     if (m < 0) {
         // m += (b < 0) ? -b : b; // avoid this form: it is UB when b == INT_MIN
@@ -33,8 +30,7 @@ T mod(T a, T b) {
     return m;
 }
 
-template <class T, typename std::enable_if_t<std::is_integral_v<T>> * = nullptr>
-T gcd(T x, T y) {
+template <class T> requires std::integral<T> T gcd(T x, T y) {
     x = std::abs(x), y = std::abs(y);
     if (x < y) {
         std::swap(x, y);
@@ -47,8 +43,7 @@ T gcd(T x, T y) {
     return x;
 }
 
-template <class T, typename std::enable_if_t<std::is_integral_v<T>> * = nullptr>
-T lcm(T x, T y) {
+template <class T> requires std::integral<T> T lcm(T x, T y) {
     return x / gcd(x, y) * y;
 }
 

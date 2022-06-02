@@ -141,9 +141,8 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTree {
 
     SubTree(std::nullptr_t) { ASSERT(POLICY == NullPolicy::Nullable); }
 
-    template <class U,
-              typename std::enable_if_t<std::is_base_of_v<T, U>> * = nullptr>
-    SubTree(const Ref<U> &obj) : obj_(obj) {
+    template <class U>
+    requires std::derived_from<U, T> SubTree(const Ref<U> &obj) : obj_(obj) {
         if (obj_.isValid()) {
             if (obj_->isSubTree()) {
                 obj_ = deepCopy(obj).template as<T>();
@@ -152,9 +151,8 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTree {
         }
         checkNull();
     }
-    template <class U,
-              typename std::enable_if_t<std::is_base_of_v<T, U>> * = nullptr>
-    SubTree(Ref<U> &&obj) : obj_(obj) {
+    template <class U>
+    requires std::derived_from<U, T> SubTree(Ref<U> &&obj) : obj_(obj) {
         if (obj_.isValid()) {
             if (obj_->isSubTree()) {
                 obj_ = deepCopy(obj).template as<T>();
@@ -237,9 +235,8 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTree {
         return *this;
     }
 
-    template <class U,
-              typename std::enable_if_t<std::is_base_of_v<U, T>> * = nullptr>
-    operator Ref<U>() const {
+    template <class U>
+    requires std::derived_from<T, U> operator Ref<U>() const {
         return obj_;
     }
 
@@ -270,8 +267,8 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTreeList {
   public:
     SubTreeList(const ChildOf &c) : parent_(c.parent_) {}
 
-    template <class U,
-              typename std::enable_if_t<std::is_base_of_v<T, U>> * = nullptr>
+    template <class U>
+    requires std::derived_from<U, T>
     SubTreeList(const std::vector<Ref<U>> &objs) {
         objs_.reserve(objs.size());
         for (auto &&item : objs) {
@@ -280,9 +277,8 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTreeList {
             objs_.emplace_back(std::move(newItem));
         }
     }
-    template <class U,
-              typename std::enable_if_t<std::is_base_of_v<T, U>> * = nullptr>
-    SubTreeList(std::vector<Ref<U>> &&objs) {
+    template <class U>
+    requires std::derived_from<U, T> SubTreeList(std::vector<Ref<U>> &&objs) {
         objs_.reserve(objs.size());
         for (auto &&item : objs) {
             SubTree<T, POLICY> newItem = ChildOf{parent_};
@@ -290,8 +286,8 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTreeList {
             objs_.emplace_back(std::move(newItem));
         }
     }
-    template <class U,
-              typename std::enable_if_t<std::is_base_of_v<T, U>> * = nullptr>
+    template <class U>
+    requires std::derived_from<U, T>
     SubTreeList(std::initializer_list<Ref<U>> objs) {
         objs_.reserve(objs.size());
         for (auto &&item : objs) {
@@ -398,9 +394,8 @@ template <class T, NullPolicy POLICY = NullPolicy::NotNull> class SubTreeList {
         return *this;
     }
 
-    template <class U,
-              typename std::enable_if_t<std::is_base_of_v<U, T>> * = nullptr>
-    operator std::vector<Ref<U>>() const {
+    template <class U>
+    requires std::derived_from<T, U> operator std::vector<Ref<U>>() const {
         return std::vector<Ref<U>>(objs_.begin(), objs_.end());
     }
 
