@@ -3,9 +3,17 @@ import xgboost as xgb
 import numpy as np
 import os
 
+
 class AutoSchedule(ffi.AutoSchedule):
 
-    def __init__(self, schedule, target, device, n_measured, *, tag="", min_block_size=0):
+    def __init__(self,
+                 schedule,
+                 target,
+                 device,
+                 n_measured,
+                 *,
+                 tag="",
+                 min_block_size=0):
         self.model = None
         self.xgb_params = {}
         self.save_file_name = tag + "_xgb.model"
@@ -19,8 +27,9 @@ class AutoSchedule(ffi.AutoSchedule):
         def update_func(features, times):
             return self.update(features, times)
 
-        super(AutoSchedule, self).__init__(schedule, target, device, n_measured,
-                                           predict_func, update_func, tag, min_block_size)
+        super(AutoSchedule,
+              self).__init__(schedule, target, device, n_measured, predict_func,
+                             update_func, tag, min_block_size)
 
     def set_params(self, *args, **kws):
         super(AutoSchedule, self).set_params(args, kws)

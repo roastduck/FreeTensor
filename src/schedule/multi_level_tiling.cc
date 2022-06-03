@@ -184,14 +184,15 @@ multiLevelTilingWithFusion(Schedule &schedule, const ForsWithDataReuse &target,
         if (targetType == TargetType::GPU) {
             for (auto &read : target.reads) {
                 try {
-                    body = schedule.find(firstReduction).as<ForNode>()->body_->id();
+                    body = schedule.find(firstReduction)
+                               .as<ForNode>()
+                               ->body_->id();
                     schedule.cache(body, read, MemType::GPUShared);
                 } catch (const InvalidSchedule &e) {
                 }
             }
         }
     }
-
 
     return tiles;
 }

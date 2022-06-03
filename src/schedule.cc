@@ -86,7 +86,6 @@ std::pair<ID, ID> Schedule::split(const ID &id, int factor, int nparts,
     }
 }
 
-
 void Schedule::reorder(const std::vector<ID> &order) {
     std::string log = "reorder(";
     for (auto &&[i, item] : iter::enumerate(order)) {

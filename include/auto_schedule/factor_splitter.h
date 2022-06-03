@@ -1,9 +1,9 @@
 #ifndef FREE_TENSOR_FACTOR_SPLITTER_H
 #define FREE_TENSOR_FACTOR_SPLITTER_H
 
-#include <vector>
 #include <map>
 #include <mutex>
+#include <vector>
 
 namespace freetensor {
 
@@ -14,6 +14,7 @@ class FactorSplitter {
     static const std::vector<int> &getFactors(int n);
     static std::mutex mtxResults_;
     static std::mutex mtxFactors_;
+
   public:
     static const ResultType &get(int len, int n);
 };

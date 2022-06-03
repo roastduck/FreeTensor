@@ -3,7 +3,8 @@
 
 namespace freetensor {
 
-std::map<std::pair<int, int>, FactorSplitter::ResultType> FactorSplitter::results_;
+std::map<std::pair<int, int>, FactorSplitter::ResultType>
+    FactorSplitter::results_;
 std::map<int, std::vector<int>> FactorSplitter::factors_;
 std::mutex FactorSplitter::mtxResults_;
 std::mutex FactorSplitter::mtxFactors_;

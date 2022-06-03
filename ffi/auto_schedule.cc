@@ -20,7 +20,8 @@ void init_ffi_auto_schedule(py::module_ &m) {
                                           const AutoSchedule::Predicts &)> &,
                  std::string, int>(),
              "schedule"_a, "target"_a, "device"_a, "measured_size"_a,
-             "predict_func"_a, "update_func"_a, "tag"_a = "", "min_block_size"_a = 0)
+             "predict_func"_a, "update_func"_a, "tag"_a = "",
+             "min_block_size"_a = 0)
         .def("measuredSize", &AutoSchedule::measuredSize)
         .def("set_params", &AutoSchedule::setParams, "args"_a,
              "kws"_a = std::unordered_map<std::string, Ref<Array>>())

@@ -46,8 +46,8 @@ AutoSchedule::AutoSchedule(
         rules_.push_back(Ref<UnrollRule>::make(target->type()));
     } else {
         rules_.push_back(Ref<CacheWriteRule>::make(target->type()));
-        rules_.push_back(
-            Ref<MultiLevelTilingWithFusionRule>::make(target->type(), minBlockSize));
+        rules_.push_back(Ref<MultiLevelTilingWithFusionRule>::make(
+            target->type(), minBlockSize));
         rules_.push_back(Ref<ThreadBindRule>::make());
         rules_.push_back(Ref<UnrollRule>::make(target->type()));
     }
@@ -112,7 +112,8 @@ void AutoSchedule::searchOneRound(size_t n) {
     }
     std::cout << "get init population" << std::endl;
     if (!firstTime) {
-        std::vector<Ref<Sketch>> init = getInitPopulation(EVOLUTIONARY_SEARCH_POPULATION);
+        std::vector<Ref<Sketch>> init =
+            getInitPopulation(EVOLUTIONARY_SEARCH_POPULATION);
         std::cout << "evolutionary search" << std::endl;
         std::vector<Ref<Sketch>> best = evolutionarySearch(init, n * 0.9);
         testAndAdd(best);
@@ -126,7 +127,8 @@ void AutoSchedule::searchOneRound(size_t n) {
         std::cout << log << std::endl;
     }
 
-    std::cout << "now best: " << toString(measuredSketches_[0]->genSchedule().ast())
+    std::cout << "now best: "
+              << toString(measuredSketches_[0]->genSchedule().ast())
               << std::endl;
 }
 
@@ -212,7 +214,8 @@ AutoSchedule::testAndAdd(std::vector<Ref<Sketch>> &sketches_in) {
     std::sort(measuredSketches_.begin(), measuredSketches_.end(), cmp);
     std::cout << "min " << measuredSketches_.front()->time() << " max "
               << measuredSketches_.back()->time() << std::endl;
-    std::cout << "this round: min: " << times[0] << " avg: " << avg << "mid: " << times[(times.size() - 1) / 2] << std::endl;
+    std::cout << "this round: min: " << times[0] << " avg: " << avg
+              << "mid: " << times[(times.size() - 1) / 2] << std::endl;
     return times;
 }
 

@@ -3,11 +3,11 @@
 
 #include <algorithm>
 #include <array>
+#include <auto_schedule/factor_splitter.h>
 #include <cmath>
 #include <cstdlib>
 #include <random>
 #include <schedule.h>
-#include <auto_schedule/factor_splitter.h>
 
 namespace freetensor {
 

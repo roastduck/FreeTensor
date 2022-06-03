@@ -170,7 +170,8 @@ void FindHasStore::visit(const Store &op) {
                         op->var_,
                         {},
                         op->indices_,
-                        std::vector<std::vector<Expr>>(1, op->indices_), false}});
+                        std::vector<std::vector<Expr>>(1, op->indices_),
+                        false}});
     }
     Visitor::visit(op);
 }

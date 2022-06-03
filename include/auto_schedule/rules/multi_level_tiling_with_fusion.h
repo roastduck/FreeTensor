@@ -20,7 +20,8 @@ class MultiLevelTilingWithFusionRule : public Rule {
     int minBlockSize_;
 
   public:
-    MultiLevelTilingWithFusionRule(TargetType target, int minBlockSize = 0) : targetType_(target), minBlockSize_(minBlockSize) {
+    MultiLevelTilingWithFusionRule(TargetType target, int minBlockSize = 0)
+        : targetType_(target), minBlockSize_(minBlockSize) {
         if (target == TargetType::CPU) {
             pat_ = "SSRSRS";
             fuseLevels_ = {1, 2};

@@ -61,7 +61,8 @@ void MultiLevelTilingWithFusionPart::genRandAnnotation(
             vthread *= spaceLoopTiling[i][spaceLoopTimes_ - 2];
             thread *= spaceLoopTiling[i][spaceLoopTimes_ - 3];
         }
-        if (vthread != 1 && vthread <= MAX_VTHREAD && thread < 1024 && block >= minBlockSize_) {
+        if (vthread != 1 && vthread <= MAX_VTHREAD && thread < 1024 &&
+            block >= minBlockSize_) {
             break;
         }
     }
@@ -75,7 +76,8 @@ MultiLevelTilingWithFusionPart::MultiLevelTilingWithFusionPart(
     ForsWithDataReuse fors, ElementWiseInfo toFuse, int level, std::string pat,
     TargetType targetType, int minBlockSize)
     : MultiLevelTilingPart(std::move(fors), std::move(pat)),
-      targetType_(targetType), level_(level), toFuse_(std::move(toFuse)), minBlockSize_(minBlockSize) {
+      targetType_(targetType), level_(level), toFuse_(std::move(toFuse)),
+      minBlockSize_(minBlockSize) {
     frontSpaceLoopTimes_ = level_;
 }
 
@@ -109,7 +111,8 @@ bool MultiLevelTilingWithFusionPart::mutate(std::default_random_engine &gen) {
                 vthread *= mut.spaceLoopTiling[i][spaceLoopTimes_ - 2];
                 thread *= mut.spaceLoopTiling[i][spaceLoopTimes_ - 3];
             }
-            if (vthread == 1 || vthread > MAX_VTHREAD || thread > 1024 || block < minBlockSize_) {
+            if (vthread == 1 || vthread > MAX_VTHREAD || thread > 1024 ||
+                block < minBlockSize_) {
                 return false;
             }
         }
@@ -149,7 +152,8 @@ bool MultiLevelTilingWithFusionPart::crossover(
             vthread *= mut.spaceLoopTiling[i][spaceLoopTimes_ - 2];
             thread *= mut.spaceLoopTiling[i][spaceLoopTimes_ - 3];
         }
-        if (vthread == 1 || vthread > MAX_VTHREAD || thread > 1024 || block < minBlockSize_) {
+        if (vthread == 1 || vthread > MAX_VTHREAD || thread > 1024 ||
+            block < minBlockSize_) {
             return false;
         }
     } else {
