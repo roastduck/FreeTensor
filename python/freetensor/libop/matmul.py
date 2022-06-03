@@ -18,11 +18,11 @@ def _next_arg(i, arg, offset):
 def _einsum_(lefts: Sequence[str], right: str, order: str, init: bool, *args):
     next_init = init
     if init and right == '':
-        args[-1] = 0
+        args[-1][()] = 0
         next_init = False
 
     if len(order) == 0:
-        args[-1] += functools.reduce(lambda x, y: x * y, args[:-1])
+        args[-1][()] += functools.reduce(lambda x, y: x * y, args[:-1])
     else:
         v = order[0]
         next_lefts = [left.replace(v, '') for left in lefts]
