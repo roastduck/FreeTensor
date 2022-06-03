@@ -207,6 +207,18 @@ void PrintVisitor::visit(const Store &op) {
     os() << std::endl;
 }
 
+void PrintVisitor::visit(const Alloc &op) {
+    makeIndent();
+    os() << "Alloc(" << prettyVarDefName(op->var_) << ")";
+    os() << std::endl;
+}
+
+void PrintVisitor::visit(const Free &op) {
+    makeIndent();
+    os() << "Free(" << prettyVarDefName(op->var_) << ")";
+    os() << std::endl;
+}
+
 void PrintVisitor::visit(const Load &op) {
     os() << prettyVarDefName(op->var_) << "[";
     printList(op->indices_);

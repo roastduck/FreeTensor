@@ -16,6 +16,8 @@ std::string toString(ASTNodeType type) {
         DISPATCH(StmtSeq);
         DISPATCH(VarDef);
         DISPATCH(Store);
+        DISPATCH(Alloc);
+        DISPATCH(Free);
         DISPATCH(ReduceTo);
         DISPATCH(For);
         DISPATCH(If);

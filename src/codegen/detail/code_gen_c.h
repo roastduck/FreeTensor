@@ -236,6 +236,23 @@ template <class Stream> void CodeGenC<Stream>::visit(const Store &op) {
     this->os() << ";" << std::endl;
 }
 
+template <class Stream> void CodeGenC<Stream>::visit(const Alloc &op) {
+    // this->markUseBuffer(op->var_);
+
+    // // e.g. float (*x)[8][11] = new float[5][8][11];
+    // this->os() << gen(op->dtype_) << " (*" << mangle(op->var_) << ")";
+    // for (int i = 1; i < (int)op->sz_.size(); ++ i)
+    //     this->os() << "[" << op->sz_[i] << "]";
+    // this->os() << " = new " << gen(op->dtype_);
+    // for (int i = 0; i < (int)op->sz_.size(); ++ i)
+    //     this->os() << "[" << op->sz_[i] << "]";
+    // this->os() << ";" << std::endl;
+}
+
+template <class Stream> void CodeGenC<Stream>::visit(const Free &op) {
+    this->os() << "delete " << mangle(op->var_) << ";";
+}
+
 template <class Stream> void CodeGenC<Stream>::visit(const Load &op) {
     this->markUseBuffer(op->var_);
     this->genScalar(op);

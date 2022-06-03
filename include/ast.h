@@ -22,6 +22,8 @@ enum class ASTNodeType : int {
     Store,
     ReduceTo,
     Load,
+    Alloc,
+    Free,
 
     // Structral statements
     StmtSeq,

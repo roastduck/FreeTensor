@@ -88,6 +88,18 @@ class Mutator {
             op);
     }
 
+    virtual Stmt visit(const Alloc &op) {
+        return COPY_DEBUG_INFO(
+            makeAlloc(op->id(), op->var_),
+            op);
+    }
+
+    virtual Stmt visit(const Free &op) {
+        return COPY_DEBUG_INFO(
+            makeFree(op->id(), op->var_),
+            op);
+    }
+
     virtual Expr visit(const Load &op) {
         std::vector<Expr> indices;
         indices.reserve(op->indices_.size());

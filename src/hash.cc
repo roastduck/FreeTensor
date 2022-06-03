@@ -84,6 +84,18 @@ size_t Hasher::compHash(const StoreNode &op) {
     return (h * K3 + B3) % P;
 }
 
+size_t Hasher::compHash(const AllocNode &op) {
+    size_t h = ((size_t)op.nodeType() * K1 + B1) % P;
+    h = ((h + std::hash<std::string>()(op.var_)) * K2 + B2) % P;
+    return (h * K3 + B3) % P;
+}
+
+size_t Hasher::compHash(const FreeNode &op) {
+    size_t h = ((size_t)op.nodeType() * K1 + B1) % P;
+    h = ((h + std::hash<std::string>()(op.var_)) * K2 + B2) % P;
+    return (h * K3 + B3) % P;
+}
+
 size_t Hasher::compHash(const ReduceToNode &op) {
     size_t h = ((size_t)op.nodeType() * K1 + B1) % P;
     h = ((h + std::hash<std::string>()(op.var_)) * K2 + B2) % P;
@@ -278,6 +290,20 @@ bool HashComparator::compare(const Store &lhs, const Store &rhs) const {
         }
     }
     if (!(*this)(lhs->expr_, rhs->expr_)) {
+        return false;
+    }
+    return true;
+}
+
+bool HashComparator::compare(const Alloc &lhs, const Alloc &rhs) const {
+    if (lhs->var_ != rhs->var_) {
+        return false;
+    }
+    return true;
+}
+
+bool HashComparator::compare(const Free &lhs, const Free &rhs) const {
+    if (lhs->var_ != rhs->var_) {
         return false;
     }
     return true;

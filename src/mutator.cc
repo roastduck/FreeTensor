@@ -65,6 +65,8 @@ Stmt Mutator::visitStmt(const Stmt &op) {
         DISPATCH_STMT_CASE(StmtSeq);
         DISPATCH_STMT_CASE(VarDef);
         DISPATCH_STMT_CASE(Store);
+        DISPATCH_STMT_CASE(Alloc);
+        DISPATCH_STMT_CASE(Free);
         DISPATCH_STMT_CASE(ReduceTo);
         DISPATCH_STMT_CASE(For);
         DISPATCH_STMT_CASE(If);

@@ -68,6 +68,8 @@ class PrintVisitor : public CodeGen<CodeGenStream> {
     void visit(const VarDef &op) override;
     void visit(const Var &op) override;
     void visit(const Store &op) override;
+    void visit(const Alloc &op) override;
+    void visit(const Free &op) override;
     void visit(const Load &op) override;
     void visit(const ReduceTo &op) override;
     void visit(const IntConst &op) override;

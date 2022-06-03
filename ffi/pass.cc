@@ -18,6 +18,7 @@
 #include <pass/move_out_first_or_last_iter.h>
 #include <pass/prop_one_time_use.h>
 #include <pass/remove_dead_var.h>
+#include <pass/make_heap_alloc.h>
 #include <pass/remove_writes.h>
 #include <pass/scalar_prop_const.h>
 #include <pass/shrink_for.h>
@@ -114,6 +115,11 @@ void init_ffi_pass(py::module_ &m) {
           static_cast<Func (*)(const Func &)>(&removeDeadVar), "func"_a);
     m.def("remove_dead_var",
           static_cast<Stmt (*)(const Stmt &)>(&removeDeadVar), "stmt"_a);
+      
+    m.def("make_heap_alloc",
+          static_cast<Func (*)(const Func &)>(&makeHeapAlloc), "func"_a);
+    m.def("make_heap_alloc",
+          static_cast<Stmt (*)(const Stmt &)>(&makeHeapAlloc), "stmt"_a);
 
     m.def("make_const_shape",
           static_cast<Func (*)(const Func &, const std::vector<MemType> &)>(

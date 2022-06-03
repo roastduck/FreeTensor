@@ -17,6 +17,8 @@ ANY:        'Any';
 // VarDef
 IO_TENSOR:  '@!io_tensor';
 PINNED:     '@!pinned';
+FREE:       'Free';
+ALLOC:      'Alloc';
 
 // ReduceTo
 ATOMIC:     '@!atomic';
