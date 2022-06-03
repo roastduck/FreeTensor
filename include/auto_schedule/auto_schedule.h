@@ -14,7 +14,7 @@
 
 namespace freetensor {
 
-constexpr int EVOLUTIONARY_SEARCH_POPULATION = 128;
+constexpr int EVOLUTIONARY_SEARCH_POPULATION = 512;
 constexpr int EVOLUTIONARY_SEARCH_ITERS = 4;
 constexpr double EVOLUTIONARY_SEARCH_MUTATION_PROB = 0.6;
 constexpr double EVOLUTIONARY_SEARCH_CROSSOVER_PROB = 0.3;

@@ -85,7 +85,6 @@ std::vector<double> AutoSchedule::measure(std::vector<Ref<Sketch>> &sketches) {
     std::vector<double> times;
     times.reserve(n);
     for (size_t i = 0; i < n; i++) {
-        std::cout << "measure " << i << std::endl;
         ASSERT(paramsSet_);
         try {
             if (!drivers[i].isValid()) {
@@ -113,7 +112,7 @@ void AutoSchedule::searchOneRound(size_t n) {
     }
     std::cout << "get init population" << std::endl;
     if (!firstTime) {
-        std::vector<Ref<Sketch>> init = getInitPopulation(n);
+        std::vector<Ref<Sketch>> init = getInitPopulation(EVOLUTIONARY_SEARCH_POPULATION);
         std::cout << "evolutionary search" << std::endl;
         std::vector<Ref<Sketch>> best = evolutionarySearch(init, n * 0.9);
         testAndAdd(best);
@@ -127,7 +126,7 @@ void AutoSchedule::searchOneRound(size_t n) {
         std::cout << log << std::endl;
     }
 
-    std::cout << "now best: " << toString(measuredSketches_[0]->genSchedule().ast()) << "\n" << toString(measuredSketches_[0]->lowered()->body_) << "\n" << measuredSketches_[0]->code()
+    std::cout << "now best: " << toString(measuredSketches_[0]->genSchedule().ast())
               << std::endl;
     measuredSketches_[0]->part(0)[SketchPartType::MultiLevelTilingWithFusion].as<MultiLevelTilingWithFusionPart>()->printAnnotation();
 }
@@ -186,7 +185,7 @@ AutoSchedule::testAndAdd(std::vector<Ref<Sketch>> &sketches_in) {
         return *a < *b;
     };
     std::make_heap(measuredSketches_.begin(), measuredSketches_.end(), cmp);
-    double avg = 0, mn = 1e20;
+    double avg = 0;
     int cnt = 0;
     for (size_t i = 0; i < n; i++) {
         if (times[i] > 1e20) {
@@ -194,7 +193,6 @@ AutoSchedule::testAndAdd(std::vector<Ref<Sketch>> &sketches_in) {
         }
         cnt++;
         avg += times[i];
-        mn = std::min(mn, times[i]);
         if (measuredSketches_.size() < measuredSize_) {
             measuredSketches_.emplace_back(sketches[i]);
             measuredSketches_.back()->setTime(times[i]);
@@ -211,10 +209,11 @@ AutoSchedule::testAndAdd(std::vector<Ref<Sketch>> &sketches_in) {
         measuredHashes_.insert(sketches[i]->hash());
     }
     avg /= cnt;
+    std::sort(times.begin(), times.end());
     std::sort(measuredSketches_.begin(), measuredSketches_.end(), cmp);
     std::cout << "min " << measuredSketches_.front()->time() << " max "
               << measuredSketches_.back()->time() << std::endl;
-    std::cout << "this round: min: " << mn << " avg: " << avg << std::endl;
+    std::cout << "this round: min: " << times[0] << " avg: " << avg << "mid: " << times[(times.size() - 1) / 2] << std::endl;
     return times;
 }
 
@@ -252,7 +251,6 @@ std::vector<Ref<Sketch>> AutoSchedule::getRandPopulation(size_t nRand) {
                 now[i]->genCode(target_);
             } catch (const std::exception &e) {
                 now[i] = nullptr;
-                std::cout << e.what() << std::endl;
             };
         }
         roundUnchanged++;

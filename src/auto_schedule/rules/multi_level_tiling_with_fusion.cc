@@ -42,29 +42,33 @@ void MultiLevelTilingWithFusionPart::genRandAnnotation(
     std::vector<std::vector<int>> spaceLoopTiling(spaceLoopLength);
     std::vector<std::vector<int>> reductionLoopTiling(reductionLoopLength);
     while (true) {
+        for (int i = 0; i < spaceLoopLength; i++) {
+            spaceLoopTiling[i] = randomFillArray(target_.spaceLoops[i].length,
+                                                 spaceLoopTimes_, gen);
+        }
+        for (int i = 0; i < reductionLoopLength; i++) {
+            reductionLoopTiling[i] = randomFillArray(
+                target_.reductionLoops[i].length, reductionLoopTimes_, gen);
+        }
+        if (targetType_ == TargetType::CPU) {
+            break;
+        }
         int vthread = 1;
         int thread = 1;
         int block = 1;
         for (int i = 0; i < spaceLoopLength; i++) {
-            spaceLoopTiling[i] = randomFillArray(target_.spaceLoops[i].length,
-                                                 spaceLoopTimes_, gen);
             block *= spaceLoopTiling[i][spaceLoopTimes_ - 1];
             vthread *= spaceLoopTiling[i][spaceLoopTimes_ - 2];
             thread *= spaceLoopTiling[i][spaceLoopTimes_ - 3];
         }
-        int outer_reduction = 1;
-        for (int i = 0; i < reductionLoopLength; i++) {
-            reductionLoopTiling[i] = randomFillArray(
-                target_.reductionLoops[i].length, reductionLoopTimes_, gen);
-            outer_reduction *= reductionLoopTiling[i][reductionLoopTimes_ - 1];
-        }
-        if (outer_reduction >= 128 && vthread != 1 && vthread == MAX_VTHREAD && thread == 128 && block == minBlockSize_) {
+        if (vthread != 1 && vthread <= MAX_VTHREAD && thread < 1024 && block >= minBlockSize_) {
             break;
         }
     }
 
     annotation_.spaceLoopTiling = spaceLoopTiling;
     annotation_.reductionLoopTiling = reductionLoopTiling;
+    doCacheRead_ = false;
 }
 
 MultiLevelTilingWithFusionPart::MultiLevelTilingWithFusionPart(
@@ -77,8 +81,8 @@ MultiLevelTilingWithFusionPart::MultiLevelTilingWithFusionPart(
 
 void MultiLevelTilingWithFusionPart::apply(Schedule &schedule,
                                            SketchTarget &target) {
-    tiles_ = schedule.multiLevelTilingWithFusion(target_, annotation_, pat_,
-                                                 toFuse_, level_, targetType_);
+    tiles_ = schedule.multiLevelTilingWithFusion(
+        target_, annotation_, pat_, toFuse_, level_, targetType_, doCacheRead_);
 }
 
 bool MultiLevelTilingWithFusionPart::mutate(std::default_random_engine &gen) {
@@ -96,29 +100,23 @@ bool MultiLevelTilingWithFusionPart::mutate(std::default_random_engine &gen) {
         int mut_idx = randomInt(target_.spaceLoops.size() - 1, gen);
         mut.spaceLoopTiling[mut_idx] = randomFillArray(
             target_.spaceLoops[mut_idx].length, spaceLoopTimes_, gen);
-        int vthread = 1;
-        int thread = 1;
-        int block = 1;
-        for (size_t i = 0; i < target_.spaceLoops.size(); i++) {
-            block *= mut.spaceLoopTiling[i][spaceLoopTimes_ - 1];
-            vthread *= mut.spaceLoopTiling[i][spaceLoopTimes_ - 2];
-            thread *= mut.spaceLoopTiling[i][spaceLoopTimes_ - 3];
-        }
-        if (vthread == 1 || vthread != MAX_VTHREAD || thread != 128 || block != minBlockSize_) {
-            return false;
+        if (targetType_ == TargetType::GPU) {
+            int vthread = 1;
+            int thread = 1;
+            int block = 1;
+            for (size_t i = 0; i < target_.spaceLoops.size(); i++) {
+                block *= mut.spaceLoopTiling[i][spaceLoopTimes_ - 1];
+                vthread *= mut.spaceLoopTiling[i][spaceLoopTimes_ - 2];
+                thread *= mut.spaceLoopTiling[i][spaceLoopTimes_ - 3];
+            }
+            if (vthread == 1 || vthread > MAX_VTHREAD || thread > 1024 || block < minBlockSize_) {
+                return false;
+            }
         }
     } else {
         int mut_idx = randomInt(target_.reductionLoops.size() - 1, gen);
         mut.reductionLoopTiling[mut_idx] = randomFillArray(
             target_.reductionLoops[mut_idx].length, reductionLoopTimes_, gen);
-        int outer_reduction = 1;
-        for (size_t i = 0; i < target_.reductionLoops.size(); i++) {
-            outer_reduction *= mut.reductionLoopTiling[i][reductionLoopTimes_ - 1];
-        }
-        if (outer_reduction < 128) {
-            return false;
-        }
-
     }
     annotation_ = mut;
     // std::cout << "End mutating...\n";
@@ -151,20 +149,13 @@ bool MultiLevelTilingWithFusionPart::crossover(
             vthread *= mut.spaceLoopTiling[i][spaceLoopTimes_ - 2];
             thread *= mut.spaceLoopTiling[i][spaceLoopTimes_ - 3];
         }
-        if (vthread == 1 || vthread != MAX_VTHREAD || thread != 128 || block != minBlockSize_) {
+        if (vthread == 1 || vthread > MAX_VTHREAD || thread > 1024 || block < minBlockSize_) {
             return false;
         }
     } else {
         int mutIdx = randomInt(target_.reductionLoops.size() - 1, gen);
         mut.reductionLoopTiling[mutIdx] =
             p->annotation_.reductionLoopTiling[mutIdx];
-        int outer_reduction = 1;
-        for (size_t i = 0; i < target_.reductionLoops.size(); i++) {
-            outer_reduction *= mut.reductionLoopTiling[i][reductionLoopTimes_ - 1];
-        }
-        if (outer_reduction < 128) {
-            return false;
-        }
     }
     annotation_ = mut;
     // std::cout << "End crossover...\n";
@@ -179,6 +170,7 @@ std::vector<int> MultiLevelTilingWithFusionPart::getAnnotation() const {
     for (auto &item : annotation_.reductionLoopTiling) {
         ret.insert(ret.end(), item.begin(), item.end());
     }
+    ret.push_back(doCacheRead_);
     // std::cout << "Annotation: ";
     // for (int item : ret) {
     //     std::cout << item << " ";
@@ -192,6 +184,7 @@ size_t MultiLevelTilingWithFusionPart::hash() const {
     h = hashCombine(h, std::hash<MultiLevelTilingAnnotation>{}(annotation_));
     h = hashCombine(h, std::hash<ElementWiseInfo>{}(toFuse_));
     h = hashCombine(h, std::hash<int>{}(level_));
+    h = hashCombine(h, std::hash<bool>{}(doCacheRead_));
     return h;
 }
 
