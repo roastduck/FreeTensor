@@ -125,6 +125,48 @@ def test_vm():
     assert torch.all(torch.isclose(y_torch, y_std))
 
 
+def test_scalar_multiply_scalar():
+    device = ft.Device(ft.CPU())
+
+    @ft.optimize(device=device, verbose=1)
+    def f(a, b, y):
+        a: ft.Var[(), "float32", "input", "cpu"]
+        b: ft.Var[(), "float32", "input", "cpu"]
+        y: ft.Var[(), "float32", "output", "cpu"]
+        #! nid: einsum
+        libop.matmul_(a, b, y)
+
+    a_arr = ft.Array(np.array(2, dtype="float32"), device)
+    b_arr = ft.Array(np.array(3, dtype="float32"), device)
+    y_arr = ft.Array(np.array(0, dtype="float32"), device)
+    f(a_arr, b_arr, y_arr)
+
+    assert y_arr.numpy() == 6
+
+
+def test_scalar_multiply_matrix():
+    device = ft.Device(ft.CPU())
+
+    @ft.optimize(device=device, verbose=1)
+    def f(a, b, y):
+        a: ft.Var[(), "float32", "input", "cpu"]
+        b: ft.Var[(5, 6), "float32", "input", "cpu"]
+        y: ft.Var[(5, 6), "float32", "output", "cpu"]
+        #! nid: einsum
+        libop.matmul_(a, b, y)
+
+    a_arr = ft.Array(np.array(2, dtype="float32"), device)
+    b_torch = torch.rand(5, 6, dtype=torch.float32)
+    b_arr = ft.Array(b_torch.numpy(), device)
+    y_torch = torch.zeros(5, 6, dtype=torch.float32)
+    y_arr = ft.Array(y_torch.numpy(), device)
+    f(a_arr, b_arr, y_arr)
+    y_torch = torch.tensor(y_arr.numpy())
+
+    y_std = 2 * b_torch
+    assert torch.all(torch.isclose(y_torch, y_std))
+
+
 def test_out_of_place():
     device = ft.Device(ft.CPU())
 

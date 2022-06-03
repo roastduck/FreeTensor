@@ -156,8 +156,9 @@ void init_ffi_ast_expr(py::module_ &m) {
     py::class_<CastNode, Cast>(m, "Cast", pyExpr)
         .def_property_readonly("expr",
                                [](const Cast &op) -> Expr { return op->expr_; })
-        .def_property_readonly(
-            "dtype", [](const Cast &op) -> DataType { return op->dtype_; });
+        .def_property_readonly("dest_type", [](const Cast &op) -> DataType {
+            return op->destType_;
+        });
     py::class_<IntrinsicNode, Intrinsic> pyIntrinsic(m, "Intrinsic", pyExpr);
     py::class_<AnyExprNode, AnyExpr> pyAnyExpr(m, "AnyExpr", pyExpr);
 
@@ -250,7 +251,9 @@ void init_ffi_ast_expr(py::module_ &m) {
         .def(
             "__neg__",
             [](const Expr &expr) { return makeSub(makeIntConst(0), expr); },
-            py::is_operator());
+            py::is_operator())
+        .def_property_readonly(
+            "dtype", [](const Expr &op) -> DataType { return op->dtype(); });
     py::implicitly_convertible<int, ExprNode>();
     py::implicitly_convertible<float, ExprNode>();
     py::implicitly_convertible<bool, ExprNode>();
@@ -258,6 +261,14 @@ void init_ffi_ast_expr(py::module_ &m) {
 
     // makers
     m.def("makeAnyExpr", &_makeAnyExpr);
+    m.def("makeVar", &_makeVar, "name"_a);
+    m.def("makeIntConst", &_makeIntConst, "val"_a);
+    m.def("makeFloatConst", &_makeFloatConst, "val"_a);
+    m.def("makeBoolConst", &_makeBoolConst, "val"_a);
+    m.def("makeLoad",
+          static_cast<Expr (*)(const std::string &, const std::vector<Expr> &,
+                               DataType)>(&_makeLoad),
+          "var"_a, "indices"_a, "load_type"_a);
     m.def("makeRemainder",
           static_cast<Expr (*)(const Expr &, const Expr &)>(&_makeRemainder),
           "lhs"_a, "rhs"_a);

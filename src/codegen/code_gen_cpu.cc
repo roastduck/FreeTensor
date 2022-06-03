@@ -174,8 +174,8 @@ void CodeGenCPU::visit(const MatMul &op) {
         os() << "mkl_set_num_threads_local(0); // 0 == reset" << std::endl;
     }
 
-    auto d = dtype(op->c_);
-    if (dtype(op->a_) != d || dtype(op->b_) != d) {
+    auto d = op->c_->dtype();
+    if (op->a_->dtype() != d || op->b_->dtype() != d) {
         throw InvalidProgram(
             "MKL requires all matrices have the same data type");
     }

@@ -60,11 +60,11 @@ static void *requestPtr(const Ref<Array> &arr, const Ref<Device> &device,
 }
 
 Driver::Driver(const Func &f, const std::string &src, const Ref<Device> &dev,
-               const Ref<Device> &hostDev)
+               const Ref<Device> &hostDev, bool verbose)
     : f_(f), src_(src), args_(f->params_.size(), nullptr),
       rawArgs(f->params_.size(), nullptr), rawRets(f->returns_.size(), nullptr),
       retShapes_(f->returns_.size(), nullptr), retDims_(f->returns_.size(), 0),
-      dev_(dev), hostDev_(hostDev) {
+      dev_(dev), hostDev_(hostDev), verbose_(verbose) {
     auto nParams = f->params_.size();
     name2param_.reserve(nParams);
     name2buffer_.reserve(nParams);
@@ -118,8 +118,9 @@ void Driver::buildAndLoad() {
     // strict floating point rounding order either
     switch (dev_->type()) {
     case TargetType::CPU:
-        cmd = "c++ -I" NAME(FT_RUNTIME_DIR) " -std=c++17 -shared -O3 -fPIC "
-                                            "-Wall -fopenmp -ffast-math";
+        cmd = Config::backendCompilerCXX();
+        cmd += " -I" NAME(FT_RUNTIME_DIR) " -std=c++20 -shared -O3 -fPIC "
+                                          "-Wall -fopenmp -ffast-math";
         cmd += " -o " + so + " " + cpp;
 #ifdef FT_WITH_MKL
         cmd += " -I\"" NAME(FT_WITH_MKL) "/include\"";
@@ -141,8 +142,9 @@ void Driver::buildAndLoad() {
         break;
 #ifdef FT_WITH_CUDA
     case TargetType::GPU:
-        cmd = "nvcc -I" NAME(FT_RUNTIME_DIR) " -std=c++17 -shared -Xcompiler "
-                                             "-fPIC,-Wall,-O3 --use_fast_math";
+        cmd = Config::backendCompilerNVCC();
+        cmd += " -I" NAME(FT_RUNTIME_DIR) " -std=c++17 -shared -Xcompiler "
+                                          "-fPIC,-Wall,-O3 --use_fast_math";
         cmd += " -o " + so + " " + cpp;
         cmd += " -lcublas";
         if (auto arch = dev_->target().as<GPU>()->computeCapability();
@@ -170,6 +172,9 @@ void Driver::buildAndLoad() {
     }
     if (Config::debugBinary()) {
         WARNING("debug-binary mode on. Compiling with " + cmd);
+    }
+    if (verbose_) {
+        logger() << "Running " << cmd << std::endl;
     }
     auto compilerErr = system(cmd.c_str());
     if (compilerErr != 0) {

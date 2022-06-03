@@ -4,20 +4,18 @@
 #include <analyze/comp_transient_bounds.h>
 #include <analyze/comp_unique_bounds.h>
 #include <analyze/symbol_table.h>
-#include <analyze/type_infer.h>
 #include <func.h>
 #include <mutator.h>
 
 namespace freetensor {
 
-class UseBuiltinDiv
-    : public CompTransientBounds<WithTypeInfer<SymbolTable<Mutator>>> {
-    typedef CompTransientBounds<WithTypeInfer<SymbolTable<Mutator>>> BaseClass;
+class UseBuiltinDiv : public CompTransientBounds<SymbolTable<Mutator>> {
+    typedef CompTransientBounds<SymbolTable<Mutator>> BaseClass;
 
     CompUniqueBounds bound_;
 
   public:
-    UseBuiltinDiv() : bound_(*this, *this) {}
+    UseBuiltinDiv() : bound_(*this) {}
 
   protected:
     using BaseClass::visit;

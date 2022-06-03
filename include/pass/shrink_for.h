@@ -7,7 +7,6 @@
 #include <analyze/comp_transient_bounds.h>
 #include <analyze/comp_unique_bounds.h>
 #include <analyze/symbol_table.h>
-#include <analyze/type_infer.h>
 #include <func.h>
 #include <hash.h>
 #include <mutator.h>
@@ -27,9 +26,8 @@ class CheckSideEffect : public Visitor {
     void visit(const Intrinsic &op) override;
 };
 
-class ShrinkFor
-    : public CompTransientBounds<WithTypeInfer<SymbolTable<Mutator>>> {
-    typedef CompTransientBounds<WithTypeInfer<SymbolTable<Mutator>>> BaseClass;
+class ShrinkFor : public CompTransientBounds<SymbolTable<Mutator>> {
+    typedef CompTransientBounds<SymbolTable<Mutator>> BaseClass;
 
     // We need linear programming from PBCompBounds, because the minimum/maximum
     // value of a linear function does not always appear at the minimum/maximum
@@ -44,7 +42,7 @@ class ShrinkFor
     std::vector<std::unordered_set<std::string>> namesStack_;
 
   public:
-    ShrinkFor() : bound_(*this, *this) {}
+    ShrinkFor() : bound_(*this) {}
 
   protected:
     using BaseClass::visit;

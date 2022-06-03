@@ -16,6 +16,11 @@ def _next_arg(i, arg, offset):
 
 @core.inline
 def _einsum_(lefts: Sequence[str], right: str, order: str, init: bool, *args):
+    next_init = init
+    if init and right == '':
+        args[-1][()] = 0
+        next_init = False
+
     if len(order) == 0:
         args[-1][()] += functools.reduce(lambda x, y: x * y,
                                          [x[()] for x in args[:-1]])
@@ -31,11 +36,6 @@ def _einsum_(lefts: Sequence[str], right: str, order: str, init: bool, *args):
         length = functools.reduce(
             core.max,
             [arg.shape(offset) for arg, offset in zip(iter_args, iter_offsets)])
-
-        next_init = init
-        if init and right == '':
-            args[-1][()] = 0
-            next_init = False
 
         assert_exprs = []
         if right != '':
@@ -118,18 +118,25 @@ def einsum(fmt: str, *args):
 
 
 def _make_matmul_fmt(a_ndim, b_ndim):
-    a_fmt = 'z'
-    b_fmt = 'z'
+    a_fmt = ''
+    b_fmt = ''
     y_fmt = ''
-    if a_ndim > 1:
+    if a_ndim > 0 and b_ndim > 0:
+        a_fmt = 'z'
+        b_fmt = 'z'
+        a_ndim -= 1
+        b_ndim -= 1
+    if a_ndim > 0:
         a_fmt = 'x' + a_fmt
         y_fmt = 'x' + y_fmt
-    if b_ndim > 1:
+        a_ndim -= 1
+    if b_ndim > 0:
         b_fmt += 'y'
         y_fmt += 'y'
-    for i in range(2, max(a_ndim, b_ndim)):
-        d = chr(ord('a') + i - 2)
-        assert ord('d') < ord('x')
+        b_ndim -= 1
+    for i in range(max(a_ndim, b_ndim)):
+        d = chr(ord('a') + i)
+        assert ord(d) < ord('x')
         if i < a_ndim:
             a_fmt = d + a_fmt
         if i < b_ndim:

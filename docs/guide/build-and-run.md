@@ -4,10 +4,10 @@
 
 - Linux
 - Python (>= 3.8, for the Python frontend)
-- GCC (>= 8, to support C++17 and the "unroll" pragma)
-- CUDA (>= 10.2, to support GCC 8, Optional)
+- GCC (>= 10, to support C++20 and the "unroll" pragma)
+- CUDA (>= 11.4.1, to support GCC 10, Optional)
 - MKL (Optional)
-- Java (Build-time dependency only)
+- Java (= 11, Build-time dependency only)
 
 Python dependencies:
 
@@ -17,9 +17,6 @@ pip3 install --user numpy sourceinspect astor Pygments xgboost
 
 !!! note "Note on Python version"
     Because we are analyzing Python AST, which is sensitive to Python version, there may be potential bugs for Python strictly later than 3.8. Please file an issue if something goes wrong
-
-!!! note "Note on future changes"
-    We have a plan to migrade to C++20 in a near future, which requires GCC >= 10
 
 ## Build
 
@@ -64,6 +61,8 @@ There are serveral global configurations can be set via environment variables:
 - `FT_PRETTY_PRINT=ON/OFF`. Enable/disable colored printing.
 - `FT_PRINT_ALL_ID=ON/OFF`. Print (or not) IDs of all statements in an AST.
 - `FT_WERROR=ON/OFF`. Treat warnings as errors (or not).
+- `FT_BACKEND_COMPILER_CXX`. The C++ compiler used to compiler the optimized program. Default to the same compiler found when building FreeTensor itself.
+- `FT_BACKEND_COMPILER_NVCC`. The CUDA compiler used to compiler the optimized program (if built with CUDA). Default to the same compiler found when building FreeTensor itself.
 
 This configurations can also set at runtime in [`ft.config`](../../api/#freetensor.core.config).
 

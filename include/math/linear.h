@@ -114,9 +114,9 @@ bool hasIdenticalCoeff(const LinearExpr<T> &lhs, const LinearExpr<T> &rhs) {
  * LinearExpr<Rational<T>>, see bounds.cc, because there are different rounding
  * directinos
  */
-template <class T,
-          typename std::enable_if_t<std::is_fundamental_v<T>> * = nullptr>
-Expr lin2expr(const LinearExpr<T> &lin) {
+template <class T>
+requires std::integral<T> || std::floating_point<T>
+    Expr lin2expr(const LinearExpr<T> &lin) {
     Expr b = makeIntConst(lin.bias_);
 
     for (auto &&item : lin.coeff_) {

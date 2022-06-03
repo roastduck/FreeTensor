@@ -14,6 +14,15 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "${DEFAULT_BUILD_TYPE}")
 endif()
 
+# Check whther 3rd-party modules exist
+foreach(MODULE IN ITEMS antlr/antlr4 cppitertools cuda-samples isl pybind11 z3)
+    file(GLOB RESULT ${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/${MODULE}/*)
+    list(LENGTH RESULT RES_LEN)
+    if(RES_LEN EQUAL 0)
+        message(FATAL_ERROR "3rd-party module ${MODULE} not found, run `git submodule update --init --recursive` to clone 3rd-party modules")
+    endif()
+endforeach()
+
 # PyBind11
 find_package(Python COMPONENTS Interpreter Development REQUIRED)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/pybind11)
@@ -99,11 +108,15 @@ if(FT_DEBUG_PROFILE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFT_DEBUG_PROFILE")
 endif()
 
-# Not using CMAKE_CXX_STANDARD_REQUIRED since on GCC >= 8 we can work with C++17, let it fallback
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_EXTENSIONS OFF) # -std=gnu++11 when on, -std=c++11 when off
+set(CMAKE_CXX_EXTENSIONS OFF) # -std=gnu++20 when on, -std=c++20 when off
 
-add_definitions(-DFT_RUNTIME_DIR=${CMAKE_CURRENT_SOURCE_DIR}/runtime)
+add_definitions(-DFT_RUNTIME_DIR="${CMAKE_CURRENT_SOURCE_DIR}/runtime")
+add_definitions(-DFT_BACKEND_COMPILER_CXX="${CMAKE_CXX_COMPILER}")
+if(FT_WITH_CUDA)
+    add_definitions(-DFT_BACKEND_COMPILER_NVCC="${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc")
+endif()
 
 # OpenMP used to parallelize the compilation of different instances
 find_package(OpenMP)

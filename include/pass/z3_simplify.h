@@ -29,9 +29,6 @@ namespace freetensor {
 class Z3Simplify : public Mutator {
     typedef Mutator BaseClass;
 
-  protected:
-    const SymbolTableInterface &symbolTable_;
-
   private:
     int varCnt_ = 0;
     ASTHashMap<Expr, int> varId_;
@@ -43,8 +40,7 @@ class Z3Simplify : public Mutator {
     std::unordered_map<Expr, Opt<z3::expr>> z3Exprs_;
 
   public:
-    Z3Simplify(const SymbolTableInterface &symbolTable)
-        : symbolTable_(symbolTable), solver_(ctx_) {}
+    Z3Simplify() : solver_(ctx_) {}
 
   protected:
     int getVarId(const Expr &op);
@@ -94,9 +90,6 @@ class Z3SimplifyWithSymbolTable : public Z3Simplify,
     SymbolTableData symbols_;
 
   public:
-    Z3SimplifyWithSymbolTable()
-        : Z3Simplify((const SymbolTableInterface &)(symbols_)) {}
-
     const std::unordered_set<std::string> &names() const override {
         return symbols_.names();
     }

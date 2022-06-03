@@ -103,7 +103,9 @@ Stmt MakeFillAndFlush::visitStmt(const Stmt &_op) {
         }
 
         Stmt fill;
-        fill = makeStore("", newVar_, indices, makeLoad(oldVar_, indices));
+        fill = makeStore(
+            "", newVar_, indices,
+            makeLoad(oldVar_, indices, def_->buffer_->tensor()->dtype()));
         fillStmt_ = fill->id();
         if (idx1d.isValid()) {
             fill = makeIf("", makeLT(idx1d, sizeLim), fill);
@@ -116,7 +118,9 @@ Stmt MakeFillAndFlush::visitStmt(const Stmt &_op) {
         }
 
         Stmt flush;
-        flush = makeStore("", oldVar_, indices, makeLoad(newVar_, indices));
+        flush = makeStore(
+            "", oldVar_, indices,
+            makeLoad(newVar_, indices, def_->buffer_->tensor()->dtype()));
         flushStmt_ = flush->id();
         if (idx1d.isValid()) {
             flush = makeIf("", makeLT(idx1d, sizeLim), flush);
@@ -179,8 +183,10 @@ Stmt MakeInitAndReduce::visitStmt(const Stmt &_op) {
                                iter::repeat(makeIntConst(1)), range_.len_,
                                iter::repeat(Ref<ForProperty>::make()), init);
 
-        Stmt reduce = makeReduceTo("", oldVar_, indices, reduce_->op_,
-                                   makeLoad(newVar_, indices), false);
+        Stmt reduce = makeReduceTo(
+            "", oldVar_, indices, reduce_->op_,
+            makeLoad(newVar_, indices, def_->buffer_->tensor()->dtype()),
+            false);
         reduceStmt_ = reduce->id();
         if (idx1d.isValid()) {
             reduce = makeIf("", makeLT(idx1d, sizeLim), reduce);

@@ -128,7 +128,6 @@ void AutoSchedule::searchOneRound(size_t n) {
 
     std::cout << "now best: " << toString(measuredSketches_[0]->genSchedule().ast())
               << std::endl;
-    measuredSketches_[0]->part(0)[SketchPartType::MultiLevelTilingWithFusion].as<MultiLevelTilingWithFusionPart>()->printAnnotation();
 }
 
 std::vector<std::vector<double>>

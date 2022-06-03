@@ -42,7 +42,8 @@ class AsMatMul : public SymbolTable<Mutator> {
     findIterUsedAndBaseAddr(const T &acc) {
         std::vector<bool> usedBy(nestCnt_, false);
         std::vector<int> order;
-        Expr baseAddr = makeLoad(acc->var_, acc->indices_);
+        Expr baseAddr = makeLoad(acc->var_, acc->indices_,
+                                 buffer(acc->var_)->tensor()->dtype());
         for (size_t i = 0, n = acc->indices_.size(); i < n; i++) {
             auto &&idx = acc->indices_[i];
             auto &&lin = analyzeLinear(idx);

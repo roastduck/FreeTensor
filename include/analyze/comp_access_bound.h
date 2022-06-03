@@ -5,6 +5,7 @@
 #include <unordered_set>
 
 #include <analyze/comp_unique_bounds.h>
+#include <analyze/symbol_table.h>
 #include <math/bounds.h>
 #include <visitor.h>
 
@@ -40,9 +41,8 @@ class FindMemType : public Visitor {
     void visit(const VarDef &op) override;
 };
 
-class CompAccessBound
-    : public CompTransientBounds<WithTypeInfer<SymbolTable<Visitor>>> {
-    typedef CompTransientBounds<WithTypeInfer<SymbolTable<Visitor>>> BaseClass;
+class CompAccessBound : public CompTransientBounds<SymbolTable<Visitor>> {
+    typedef CompTransientBounds<SymbolTable<Visitor>> BaseClass;
 
   public:
     struct Access {
@@ -93,8 +93,7 @@ class CompAccessBound
   public:
     CompAccessBound(const ID &varDefId, MemType mtype,
                     CompAccessBoundMode mode = COMP_ACCESS_BOUND_ALL)
-        : unique_(*this, *this), varDefId_(varDefId), mtype_(mtype),
-          mode_(mode) {}
+        : unique_(*this), varDefId_(varDefId), mtype_(mtype), mode_(mode) {}
 
     const AccessBound &result() const { return result_; }
 

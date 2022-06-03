@@ -8,7 +8,7 @@
 namespace freetensor {
 
 class PrintVisitor : public CodeGen<CodeGenStream> {
-    bool printAllId_ = false, pretty_ = false;
+    bool printAllId_ = false, pretty_ = false, dtypeInLoad_ = false;
     const std::unordered_set<std::string> keywords = {
         "if", "else", "for", "in", "assert", "assume", "func", "true", "false",
     };
@@ -42,8 +42,9 @@ class PrintVisitor : public CodeGen<CodeGenStream> {
     }
 
   public:
-    PrintVisitor(bool printAllId = false, bool pretty = false)
-        : printAllId_(printAllId), pretty_(pretty) {}
+    PrintVisitor(bool printAllId = false, bool pretty = false,
+                 bool dtypeInLoad = false)
+        : printAllId_(printAllId), pretty_(pretty), dtypeInLoad_(dtypeInLoad) {}
 
   private:
     void recur(const Expr &op);
@@ -116,9 +117,13 @@ class PrintVisitor : public CodeGen<CodeGenStream> {
 std::string toString(const AST &op);
 std::string toString(const AST &op, bool pretty);
 std::string toString(const AST &op, bool pretty, bool printAllId);
+std::string toString(const AST &op, bool pretty, bool printAllId,
+                     bool dtypeInLoad);
 
 // Serialize function for storing an AST and loading it back
-inline std::string dumpAST(const AST &op) { return toString(op, false, false); }
+inline std::string dumpAST(const AST &op, bool dtypeInLoad = false) {
+    return toString(op, false, false, dtypeInLoad);
+}
 
 } // namespace freetensor
 

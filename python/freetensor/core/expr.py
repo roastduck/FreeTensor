@@ -1067,16 +1067,18 @@ def ndim(var):
 
 
 def shape(var, i):
-    ''' Get all dimensions of a variable '''
+    ''' Get size of specified dimension of a variable '''
     if isinstance(var, VarRef):
         return var.shape(i)
     else:
-        return []
+        raise Exception(f'Getting size of dimension {i} of scalar {var}')
 
 
 def dtype(var):
     ''' Get element data type of a variable '''
     if isinstance(var, VarRef):
+        return var.dtype
+    elif isinstance(var, ffi.Expr):
         return var.dtype
     else:
         # TODO: Config default type
