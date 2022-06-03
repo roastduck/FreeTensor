@@ -1,11 +1,36 @@
 import freetensor_ffi as ffi
 import functools
+import numpy as np
 
 from typing import Optional, Sequence
 from freetensor_ffi import CPU, GPU, Array
 
 from . import config
 from .codegen import NativeCode
+
+
+def array(data):
+    '''
+    Factory function for Array
+
+    It converts more data format to Array
+    '''
+
+    if type(data) is Array:
+        return data
+
+    # For NumPy, Although Pybind11's `array_t` type provides a flag `forcecast` to
+    # cast from a strided array to a contiguous one. But it always casts to a specific
+    # type, e.g. float64. I have no idea how to support multiple types. Therfore,
+    # we have to call NumPy's `.copy(order='C')` to make a new NumPy array. This
+    # function can only be called from Python side (not from PyBind11's `py::array`
+    # type).
+    if type(data) is np.ndarray:
+        if not data.flags['C_CONTIGUOUS']:
+            data = data.copy(order='C')
+        return Array(data)
+
+    raise ffi.DriverError(f"Unsupported data type {type(data)} for Array")
 
 
 class Target(ffi.Target):
@@ -145,6 +170,12 @@ class Driver(ffi.Driver):
 
     def set_args(self, *args, **kws):
         ''' Set argument for an invocation '''
+        args = list(args)
+        kws = dict(kws)
+        for i in range(len(args)):
+            args[i] = array(args[i])
+        for key in kws:
+            kws[key] = array(kws[key])
         super(Driver, self).set_args(args, kws)
 
     def collect_returns(self):

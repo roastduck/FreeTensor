@@ -56,8 +56,6 @@ void init_ffi_array(py::module_ &m) {
             py::keep_alive<0, 1>())
         .def_property_readonly("shape", &Array::shape)
         .def_property_readonly("dtype", &Array::dtype);
-
-    py::implicitly_convertible<py::array, Array>();
 }
 
 } // namespace freetensor
