@@ -237,16 +237,30 @@ template <class Stream> void CodeGenC<Stream>::visit(const Store &op) {
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const Alloc &op) {
-    // this->markUseBuffer(op->var_);
+    this->markUseBuffer(op->var_);
+    this->makeIndent();
 
-    // // e.g. float (*x)[8][11] = new float[5][8][11];
-    // this->os() << gen(op->dtype_) << " (*" << mangle(op->var_) << ")";
-    // for (int i = 1; i < (int)op->sz_.size(); ++ i)
-    //     this->os() << "[" << op->sz_[i] << "]";
-    // this->os() << " = new " << gen(op->dtype_);
-    // for (int i = 0; i < (int)op->sz_.size(); ++ i)
-    //     this->os() << "[" << op->sz_[i] << "]";
-    // this->os() << ";" << std::endl;
+    // e.g. float (*x)[8][11] = new float[5][8][11];
+    auto &&tensor = BaseClass::buffer(op->var_)->tensor();
+    auto &&shape = tensor->shape();
+    auto &&dtype = tensor->dtype();
+    int sz = shape.size();
+
+    this->os() << gen(dtype) << "(*" << mangle(op->var_) << ")";
+
+    for (int i = 1; i < sz; ++ i) {
+        this->os() << "[";
+        (*this)(shape[i]);
+        this->os() << "]";
+    }
+
+    this->os() << " = new " << gen(dtype);
+    for (auto &&dim : shape) {
+        this->os() << "[";
+        (*this)(dim);
+        this->os() << "]";
+    }
+    this->os() << ";";
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const Free &op) {

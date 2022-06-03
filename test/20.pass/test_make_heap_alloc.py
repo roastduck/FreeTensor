@@ -20,8 +20,6 @@ def test_basic():
 
     assert std.match(ast)
 
-# test_basic()
-
 # def test_basic_origin():
 #     with ft.VarDef([("x", (), "int32", "inout", "cpu"),
 #                     ("y", (), "int32", "output", "cpu")]) as (x, y):
