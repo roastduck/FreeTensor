@@ -142,6 +142,8 @@
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.driver.Target">Target</a>
     </li>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.driver.array">array()</a>
+    </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.driver.build_binary">build_binary()</a>
     </li>
         </ul>
@@ -1985,6 +1987,12 @@ Driver            (<span title="freetensor_ffi.Driver">Driver</span>)
 
     <span class="k">def</span> <span class="nf">set_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kws</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39; Set argument for an invocation &#39;&#39;&#39;</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+        <span class="n">kws</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">kws</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)):</span>
+            <span class="n">args</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">array</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">kws</span><span class="p">:</span>
+            <span class="n">kws</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">array</span><span class="p">(</span><span class="n">kws</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">Driver</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">set_args</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">kws</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">collect_returns</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -2233,6 +2241,12 @@ the return values are packed in a ReturnValuesPack</p>
           <summary>Source code in <code>freetensor/core/driver.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">set_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kws</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39; Set argument for an invocation &#39;&#39;&#39;</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+    <span class="n">kws</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">kws</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)):</span>
+        <span class="n">args</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">array</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">kws</span><span class="p">:</span>
+        <span class="n">kws</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">array</span><span class="p">(</span><span class="n">kws</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
     <span class="nb">super</span><span class="p">(</span><span class="n">Driver</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">set_args</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">kws</span><span class="p">)</span>
 </code></pre></div>
         </details>
@@ -2482,6 +2496,53 @@ will use it by default. In this style, it also sets the default Device as the
 
   </div>
 
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h4 id="freetensor.core.driver.array" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Factory function for Array</p>
+<p>It converts more data format to Array</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/driver.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">array</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Factory function for Array</span>
+
+<span class="sd">    It converts more data format to Array</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="ow">is</span> <span class="n">Array</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">data</span>
+
+    <span class="c1"># For NumPy, Although Pybind11&#39;s `array_t` type provides a flag `forcecast` to</span>
+    <span class="c1"># cast from a strided array to a contiguous one. But it always casts to a specific</span>
+    <span class="c1"># type, e.g. float64. I have no idea how to support multiple types. Therfore,</span>
+    <span class="c1"># we have to call NumPy&#39;s `.copy(order=&#39;C&#39;)` to make a new NumPy array. This</span>
+    <span class="c1"># function can only be called from Python side (not from PyBind11&#39;s `py::array`</span>
+    <span class="c1"># type).</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="ow">is</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">data</span><span class="o">.</span><span class="n">flags</span><span class="p">[</span><span class="s1">&#39;C_CONTIGUOUS&#39;</span><span class="p">]:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="s1">&#39;C&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Array</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="k">raise</span> <span class="n">ffi</span><span class="o">.</span><span class="n">DriverError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported data type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="si">}</span><span class="s2"> for Array&quot;</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
 
 
 
