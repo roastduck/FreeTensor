@@ -88,7 +88,6 @@ def test_two_branches():
     fors_with_data_reuse = ft.find_multi_level_tiling(ast)
 
     assert str(fors_with_data_reuse[0]).strip() == "S L4 S L5 R L3"
-    assert str(fors_with_data_reuse[1]).strip() == "S L6 S L7"
 
 
 def test_no_data_reuse():
@@ -170,7 +169,6 @@ def test_root_and_branch():
     fors_with_data_reuse = ft.find_multi_level_tiling(ast)
 
     assert str(fors_with_data_reuse[0]).strip() == "S L4 S L5 R L3"
-    assert str(fors_with_data_reuse[1]).strip() == "S L1 S L2"
 
 
 def test_root_with_no_data_reuse():
