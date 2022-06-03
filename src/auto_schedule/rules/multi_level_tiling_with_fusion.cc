@@ -144,17 +144,19 @@ bool MultiLevelTilingWithFusionPart::crossover(
     if (mutPart == 0) {
         int mutIdx = randomInt(target_.spaceLoops.size() - 1, gen);
         mut.spaceLoopTiling[mutIdx] = p->annotation_.spaceLoopTiling[mutIdx];
-        int vthread = 1;
-        int thread = 1;
-        int block = 1;
-        for (size_t i = 0; i < target_.spaceLoops.size(); i++) {
-            block *= mut.spaceLoopTiling[i][spaceLoopTimes_ - 1];
-            vthread *= mut.spaceLoopTiling[i][spaceLoopTimes_ - 2];
-            thread *= mut.spaceLoopTiling[i][spaceLoopTimes_ - 3];
-        }
-        if (vthread == 1 || vthread > MAX_VTHREAD || thread > 1024 ||
-            block < minBlockSize_) {
-            return false;
+        if (targetType_ == TargetType::GPU) {
+            int vthread = 1;
+            int thread = 1;
+            int block = 1;
+            for (size_t i = 0; i < target_.spaceLoops.size(); i++) {
+                block *= mut.spaceLoopTiling[i][spaceLoopTimes_ - 1];
+                vthread *= mut.spaceLoopTiling[i][spaceLoopTimes_ - 2];
+                thread *= mut.spaceLoopTiling[i][spaceLoopTimes_ - 3];
+            }
+            if (vthread == 1 || vthread > MAX_VTHREAD || thread > 1024 ||
+                block < minBlockSize_) {
+                return false;
+            }
         }
     } else {
         int mutIdx = randomInt(target_.reductionLoops.size() - 1, gen);
