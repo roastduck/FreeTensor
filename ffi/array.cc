@@ -34,6 +34,12 @@ void init_ffi_array(py::module_ &m) {
         .def(SHARE_FROM_NUMPY(int64_t, DataType::Int64))
         .def(SHARE_FROM_NUMPY(int32_t, DataType::Int32))
         .def(SHARE_FROM_NUMPY(bool, DataType::Bool))
+        .def(py::init([](const py::array &np) {
+            // Fallback holder. Don't let PyBind11 cast it automatically, or it
+            // will all end up in float64 (the first initializer)
+            throw DriverError(
+                "Unsupported data type or strides from a NumPy Array");
+        }))
         .def(
             "numpy",
             [](Array &arr) -> py::object {
