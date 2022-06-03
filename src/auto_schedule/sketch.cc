@@ -107,9 +107,10 @@ std::string Sketch::genCode(const Ref<Target> &target) {
         code_ = codeGenCPU(lowered_);
     return code_;
 }
-std::vector<double> &Sketch::genFeature() {
+std::vector<double> &Sketch::genFeature(const Ref<Target> &target) {
     if (feature_.empty()) {
-        feature_ = fixedLengthFeature(genSchedule().ast());
+        genCode(target);
+        feature_ = fixedLengthFeature(lowered_->body_);
     }
     return feature_;
 }

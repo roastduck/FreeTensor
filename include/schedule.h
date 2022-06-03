@@ -511,10 +511,12 @@ class Schedule {
                      const MultiLevelTilingAnnotation &annotation,
                      const std::string &pat, int level);
 
-    std::vector<std::pair<ID, int>> multiLevelTilingWithFusion(
-        const ForsWithDataReuse &target,
-        const MultiLevelTilingAnnotation &annotation, const std::string &pat,
-        const ElementWiseInfo &toFuse, int level, TargetType targetType);
+    std::vector<std::pair<ID, int>>
+    multiLevelTilingWithFusion(const ForsWithDataReuse &target,
+                               const MultiLevelTilingAnnotation &annotation,
+                               const std::string &pat,
+                               const ElementWiseInfo &toFuse, int level,
+                               TargetType targetType, bool doCacheRead);
 };
 
 } // namespace freetensor

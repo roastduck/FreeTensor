@@ -152,7 +152,7 @@ class Sketch {
     const std::string &code() const { return code_; }
     Func lowered() const { return lowered_; }
 
-    std::vector<double> &genFeature();
+    std::vector<double> &genFeature(const Ref<Target> &target);
     std::vector<double> &feature() { return feature_; }
 };
 

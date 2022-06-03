@@ -14,7 +14,7 @@
 
 namespace freetensor {
 
-constexpr int EVOLUTIONARY_SEARCH_POPULATION = 128;
+constexpr int EVOLUTIONARY_SEARCH_POPULATION = 512;
 constexpr int EVOLUTIONARY_SEARCH_ITERS = 4;
 constexpr double EVOLUTIONARY_SEARCH_MUTATION_PROB = 0.6;
 constexpr double EVOLUTIONARY_SEARCH_CROSSOVER_PROB = 0.3;
@@ -43,6 +43,7 @@ class AutoSchedule {
     std::vector<Ref<Rule>> rules_;
     double flop_;
     std::string tag_;
+    int minBlockSize_{0};
 
   private:
     std::vector<double> measure(std::vector<Ref<Sketch>> &sketches);
@@ -53,7 +54,7 @@ class AutoSchedule {
                  const std::function<Predicts(const Features &)> &predictFunc,
                  const std::function<void(const Features &, const Predicts &)>
                      &updateFunc,
-                 std::string tag = "");
+                 std::string tag = "", int minBlockSize = 0);
 
     size_t measuredSize() const { return measuredSize_; }
 

@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <array>
+#include <auto_schedule/factor_splitter.h>
 #include <cmath>
 #include <cstdlib>
 #include <random>
@@ -69,12 +70,8 @@ inline int randWithProb(const std::vector<double> &probSum,
 
 inline std::vector<int> randomFillArray(int total, int n,
                                         std::default_random_engine &gen) {
-    int log_total = log2(total);
-    std::vector<int> data(n, 1);
-    for (int i = 0; i < log_total; i++) {
-        data[randomInt(n - 1, gen)] *= 2;
-    }
-    return data;
+    const auto &candidates = FactorSplitter::get(total, n);
+    return candidates[randomInt(candidates.size() - 1, gen)];
 }
 
 inline ID mergeLoops(Schedule &schedule, std::vector<ID> loops) {

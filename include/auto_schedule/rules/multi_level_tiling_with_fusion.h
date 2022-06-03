@@ -17,9 +17,11 @@ class MultiLevelTilingWithFusionRule : public Rule {
     std::string pat_;
     std::vector<int> fuseLevels_;
     TargetType targetType_;
+    int minBlockSize_;
 
   public:
-    MultiLevelTilingWithFusionRule(TargetType target) : targetType_(target) {
+    MultiLevelTilingWithFusionRule(TargetType target, int minBlockSize = 0)
+        : targetType_(target), minBlockSize_(minBlockSize) {
         if (target == TargetType::CPU) {
             pat_ = "SSRSRS";
             fuseLevels_ = {1, 2};
@@ -36,13 +38,16 @@ class MultiLevelTilingWithFusionPart : public MultiLevelTilingPart {
     TargetType targetType_;
     int level_;
     ElementWiseInfo toFuse_;
+    int minBlockSize_;
+    bool doCacheRead_;
 
   public:
     void genRandAnnotation(std::default_random_engine &gen) override;
     explicit MultiLevelTilingWithFusionPart(ForsWithDataReuse fors,
                                             ElementWiseInfo toFuse, int level,
                                             std::string pat,
-                                            TargetType targetType);
+                                            TargetType targetType,
+                                            int minBlockSize);
     void apply(Schedule &schedule, SketchTarget &target) override;
     bool mutate(std::default_random_engine &gen) override;
     bool crossover(const SketchPart &part,

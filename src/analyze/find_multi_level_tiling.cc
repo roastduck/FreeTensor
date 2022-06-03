@@ -51,6 +51,7 @@ void FindMultiLevelTiling::storeBuf() {
     if (!buf_.empty()) {
         auto &bufCheckDataReuseIndices = nowFor_.checkDataReuseIndices;
         bool hasDataReuse = false;
+
         for (const auto &infoItem : bufCheckDataReuseIndices) {
             std::vector<bool> checkAppear(buf_.size());
             for (unsigned i = 0; i < infoItem.size(); i++) {
@@ -73,7 +74,9 @@ void FindMultiLevelTiling::storeBuf() {
                 break;
             }
         }
-
+        if (!nowFor_.readsItself) {
+            hasDataReuse = false;
+        }
         if (hasDataReuse) {
             ForsWithDataReuse tmp;
             tmp.dest = nowFor_.dest;
@@ -167,7 +170,8 @@ void FindHasStore::visit(const Store &op) {
                         op->var_,
                         {},
                         op->indices_,
-                        std::vector<std::vector<Expr>>(1, op->indices_)}});
+                        std::vector<std::vector<Expr>>(1, op->indices_),
+                        false}});
     }
     Visitor::visit(op);
 }
@@ -178,6 +182,8 @@ void FindHasStore::visit(const Load &op) {
         forWithStore.checkDataReuseIndices.push_back(op->indices_);
         if (op->var_ != forWithStore.dest) {
             forWithStore.reads.push_back(op->var_);
+        } else {
+            forWithStore.readsItself = true;
         }
     } else {
         throw Error(
