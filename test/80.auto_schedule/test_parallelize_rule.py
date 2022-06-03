@@ -47,10 +47,10 @@ def test_cache_write():
     x_np = np.zeros((m, m, b, a), dtype="int32")
     y_np = np.zeros((1, 1, a, a), dtype="int32")
     z_np = np.zeros((m, m, a, a), dtype="int32")
-    w_arr = ft.Array(w_np, device)
-    x_arr = ft.Array(x_np, device)
-    y_arr = ft.Array(y_np, device)
-    z_arr = ft.Array(z_np, device)
+    w_arr = ft.Array(w_np)
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
+    z_arr = ft.Array(z_np)
     ft.build_binary(code, device)(w=w_arr, x=x_arr, y=y_arr, z=z_arr)
     std_log = [
         'split(L4, factor=4, nparts=-1, shift=0)',

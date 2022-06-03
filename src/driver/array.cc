@@ -1,6 +1,7 @@
 #include <cstring>
 
 #include <config.h>
+#include <debug.h>
 #include <driver/array.h>
 #include <except.h>
 #ifdef FT_WITH_CUDA
@@ -82,9 +83,8 @@ static void copyToCPU(void *dst /* CPU */, const void *src /* Any device */,
     }
 }
 
-Array::Array(const std::vector<size_t> &shape, DataType dtype,
-             const Ref<Device> &preferDevice)
-    : shape_(shape), dtype_(dtype), preferDevice_(preferDevice) {
+Array::Array(const std::vector<size_t> &shape, DataType dtype)
+    : shape_(shape), dtype_(dtype) {
     nElem_ = 1;
     for (size_t dim : shape_) {
         nElem_ *= dim;
@@ -92,31 +92,31 @@ Array::Array(const std::vector<size_t> &shape, DataType dtype,
     size_ = nElem_ * sizeOf(dtype_);
 }
 
-Array::Array(const std::vector<size_t> &shape, DataType dtype)
-    : Array(shape, dtype, Config::defaultDevice()) {}
+Array Array::moveFromRaw(void *ptr, const std::vector<size_t> &shape,
+                         DataType dtype, const Ref<Device> &device) {
+    Array ret(shape, dtype);
+    ret.ptrs_ = {{device, (uint8_t *)ptr, false}};
+    return ret;
+}
 
-// Move from raw pointer. Use with cautious
-Array::Array(void *ptr, const std::vector<size_t> &shape, DataType dtype,
-             const Ref<Device> &device)
-    : ptrs_({{device, (uint8_t *)ptr}}), shape_(shape), dtype_(dtype),
-      preferDevice_(device) {
-    nElem_ = 1;
-    for (size_t dim : shape_) {
-        nElem_ *= dim;
-    }
-    size_ = nElem_ * sizeOf(dtype_);
+Array Array::borrowFromRaw(void *ptr, const std::vector<size_t> &shape,
+                           DataType dtype, const Ref<Device> &device) {
+    Array ret(shape, dtype);
+    ret.ptrs_ = {{device, (uint8_t *)ptr, true}};
+    return ret;
 }
 
 Array::~Array() {
-    for (auto &&[device, ptr] : ptrs_) {
-        freeFrom(ptr, device);
+    for (auto &&[device, ptr, borrowed] : ptrs_) {
+        if (!borrowed) {
+            freeFrom(ptr, device);
+        }
     }
 }
 
 Array::Array(Array &&other)
     : ptrs_(std::move(other.ptrs_)), size_(other.size_), nElem_(other.nElem_),
-      shape_(std::move(other.shape_)), dtype_(other.dtype_),
-      preferDevice_(std::move(other.preferDevice_)) {
+      shape_(std::move(other.shape_)), dtype_(other.dtype_) {
     other.ptrs_.clear(); // MUST!
     other.size_ = 0;
 }
@@ -126,26 +126,25 @@ Array &Array::operator=(Array &&other) {
     size_ = other.size_;
     nElem_ = other.nElem_;
     dtype_ = other.dtype_;
-    preferDevice_ = std::move(other.preferDevice_);
     other.ptrs_.clear(); // MUST!
     other.size_ = 0;
     return *this;
 }
 
 void *Array::rawSharedTo(const Ref<Device> &device) {
-    for (auto &&[d, p] : ptrs_) {
-        if (d == device) {
+    for (auto &&[d, p, _] : ptrs_) {
+        if (*d == *device) {
             return p;
         }
     }
     auto ptr = allocOn(size_, device);
     if (device->type() == TargetType::CPU) {
-        for (auto &&[d, p] : ptrs_) {
+        for (auto &&[d, p, _] : ptrs_) {
             copyToCPU(ptr, p, size_, d);
             goto done;
         }
     } else {
-        for (auto &&[d, p] : ptrs_) {
+        for (auto &&[d, p, _] : ptrs_) {
             if (d->type() == TargetType::CPU) {
                 copyFromCPU(ptr, p, size_, device);
                 goto done;
@@ -155,30 +154,30 @@ void *Array::rawSharedTo(const Ref<Device> &device) {
                     size_, device);
     }
 done:
-    ptrs_.emplace_back(device, ptr);
+    ptrs_.emplace_back(device, ptr, false);
     return ptr;
 }
 
 void *Array::rawMovedTo(const Ref<Device> &device) {
-    for (auto [d, p] : ptrs_) {
-        if (d == device) {
-            for (auto &&[_d, _p] : ptrs_) {
-                if (_p != p) {
+    for (auto [d, p, borrowed] : ptrs_) {
+        if (*d == *device) {
+            for (auto &&[_d, _p, _borrowed] : ptrs_) {
+                if (_p != p && !_borrowed) {
                     freeFrom(_p, _d);
                 }
             }
-            ptrs_ = {{d, p}};
+            ptrs_ = {{d, p, borrowed}};
             return p;
         }
     }
     auto ptr = allocOn(size_, device);
     if (device->type() == TargetType::CPU) {
-        for (auto &&[d, p] : ptrs_) {
+        for (auto &&[d, p, _] : ptrs_) {
             copyToCPU(ptr, p, size_, d);
             goto done;
         }
     } else {
-        for (auto &&[d, p] : ptrs_) {
+        for (auto &&[d, p, _] : ptrs_) {
             if (d->type() == TargetType::CPU) {
                 copyFromCPU(ptr, p, size_, device);
                 goto done;
@@ -188,42 +187,57 @@ void *Array::rawMovedTo(const Ref<Device> &device) {
                     size_, device);
     }
 done:
-    for (auto &&[d, p] : ptrs_) {
-        freeFrom(p, d);
+    for (auto &&[d, p, borrowed] : ptrs_) {
+        if (!borrowed) {
+            freeFrom(p, d);
+        }
     }
-    ptrs_ = {{device, ptr}};
+    ptrs_ = {{device, ptr, false}};
     return ptr;
 }
 
 void *Array::rawInitTo(const Ref<Device> &device) {
-    for (auto [d, p] : ptrs_) {
-        if (d == device) {
-            for (auto &&[_d, _p] : ptrs_) {
-                if (_p != p) {
+    for (auto [d, p, borrowed] : ptrs_) {
+        if (*d == *device) {
+            for (auto &&[_d, _p, _borrowed] : ptrs_) {
+                if (_p != p && !_borrowed) {
                     freeFrom(_p, _d);
                 }
             }
-            ptrs_ = {{d, p}};
+            ptrs_ = {{d, p, borrowed}};
             return p;
         }
     }
     auto ptr = allocOn(size_, device);
-    for (auto &&[d, p] : ptrs_) {
-        freeFrom(p, d);
+    for (auto &&[d, p, borrowed] : ptrs_) {
+        if (!borrowed) {
+            freeFrom(p, d);
+        }
     }
-    ptrs_ = {{device, ptr}};
+    ptrs_ = {{device, ptr, false}};
     return ptr;
 }
 
-void Array::fromCPU(const void *other, size_t size) {
-    ASSERT(size == size_);
-    copyFromCPU(rawInitTo(preferDevice_), other, size_, preferDevice_);
-}
+void Array::makePrivateCopy() {
+    std::vector<ArrayCopy> newPtrs;
+    newPtrs.reserve(ptrs_.size());
+    for (auto &&[d, p, borrowed] : ptrs_) {
+        if (!borrowed) {
+            newPtrs.emplace_back(d, p, borrowed);
+        }
+    }
+    if (!newPtrs.empty()) {
+        ptrs_ = std::move(newPtrs);
+        return;
+    }
 
-void Array::toCPU(void *other, size_t size) {
-    ASSERT(size == size_);
-    ASSERT(!ptrs_.empty());
-    copyToCPU(other, ptrs_.front().second, size_, ptrs_.front().first);
+    for (auto &&[d, p, _] : ptrs_) {
+        auto dev = Ref<Device>::make(Ref<CPU>::make());
+        auto ptr = allocOn(size_, dev);
+        copyToCPU(ptr, p, size_, d);
+        ptrs_ = {{dev, ptr, false}};
+        return;
+    }
 }
 
 } // namespace freetensor

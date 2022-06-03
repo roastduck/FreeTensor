@@ -311,7 +311,8 @@ std::vector<Ref<Array>> Driver::collectReturns() {
         } else {
             std::vector<size_t> shape(retShapes_[i],
                                       retShapes_[i] + retDims_[i]);
-            val = Ref<Array>::make(rawRets[i], shape, dtype, dev_);
+            val = Ref<Array>::make(
+                Array::moveFromRaw(rawRets[i], shape, dtype, dev_));
             if (retShapes_[i] != nullptr) {
                 free(retShapes_[i]);
             }

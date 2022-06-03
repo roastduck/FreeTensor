@@ -10,16 +10,39 @@
 namespace freetensor {
 
 /**
+ * A copy of Array store on a specific device
+ */
+struct ArrayCopy {
+    Ref<Device> device_;
+    uint8_t *ptr_ = nullptr;
+    bool borrowed_ = false;
+};
+
+/**
  * Data stored on a `Device` or shared by multiple `Device`s
+ *
+ * An `Array` manages one or more `ArrayCopy`s, locating on different devices.
+ * An `ArrayCopy` can be a memory buffer managed by itself, or can be borrowed
+ * from a user object.
+ *
+ * When an `Array` is required for read-only, an `ArrayCopy` will be copied to a
+ * specific device, if there isn't one on the device.
+ *
+ * When an `Array` is requried for write-only, an `ArrayCopy` will be allocated
+ * without initialization on a specific device, if there isn't one, and copies
+ * on other devices will be dropped
+ *
+ * When an `Array` is requried for read-write, an `ArrayCopy` will be copied to
+ * a specific device, if there isn't one, and copies on other devices will be
+ * dropped
  */
 class Array {
-    std::vector<std::pair<Ref<Device>, uint8_t *>> ptrs_;
+    std::vector<ArrayCopy> ptrs_;
     size_t size_ = 0, nElem_ = 0;
     std::vector<size_t> shape_;
     DataType dtype_;
-    Ref<Device> preferDevice_;
 
-  public:
+  private:
     /**
      * Intialize an array on a specific device
      *
@@ -27,18 +50,24 @@ class Array {
      * @param dtype : Data type of the array
      * @param preferDevice : Store the data at this device by default. If
      * omitted, use the default one in Config
-     * @{
      */
     Array(const std::vector<size_t> &shape, DataType dtype);
-    Array(const std::vector<size_t> &shape, DataType dtype,
-          const Ref<Device> &preferDevice);
-    /** @} */
 
+  public:
     /**
      * Move from raw pointer. Use with cautious
      */
-    Array(void *ptr, const std::vector<size_t> &shape, DataType dtype,
-          const Ref<Device> &device);
+    static Array moveFromRaw(void *ptr, const std::vector<size_t> &shape,
+                             DataType dtype, const Ref<Device> &device);
+
+    /**
+     * Borrow from raw pointer.
+     *
+     * Please make sure the owner keeps alive. Use `keep_alive` when exposing
+     * with PyBind11
+     */
+    static Array borrowFromRaw(void *ptr, const std::vector<size_t> &shape,
+                               DataType dtype, const Ref<Device> &device);
 
     ~Array();
 
@@ -57,10 +86,11 @@ class Array {
     void *rawMovedTo(const Ref<Device> &device);
     void *rawInitTo(const Ref<Device> &device);
 
-    void fromCPU(const void *other, size_t size);
-    void toCPU(void *other, size_t size);
-
-    Ref<Device> preferDevice() const { return preferDevice_; }
+    /**
+     * Somethings we can't keep track of user objects, so we need to ensure we
+     * don't borrow from user data
+     */
+    void makePrivateCopy();
 };
 
 } // namespace freetensor

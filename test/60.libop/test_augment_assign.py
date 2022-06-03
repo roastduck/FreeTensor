@@ -37,9 +37,9 @@ def test_same_static_shape(libop_func, torch_func, dtype):
         libop_func(y, x)
 
     x_torch = rand(4, 4, dtype=dtype)
-    x_arr = ft.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy())
     y_torch = rand(4, 4, dtype=dtype)
-    y_arr = ft.Array(y_torch.numpy(), device)
+    y_arr = ft.Array(y_torch.numpy().copy())
     f(x_arr, y_arr)
     y_torch_new = torch.tensor(y_arr.numpy())
 
@@ -66,9 +66,9 @@ def test_static_broadcast_shorter(libop_func, torch_func, dtype):
         libop_func(y, x)
 
     x_torch = rand(4, dtype=dtype)
-    x_arr = ft.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy())
     y_torch = rand(4, 4, dtype=dtype)
-    y_arr = ft.Array(y_torch.numpy(), device)
+    y_arr = ft.Array(y_torch.numpy().copy())
     f(x_arr, y_arr)
     y_torch_new = torch.tensor(y_arr.numpy())
 
@@ -95,9 +95,9 @@ def test_static_broadcast_1_at_front(libop_func, torch_func, dtype):
         libop_func(y, x)
 
     x_torch = rand(1, 4, dtype=dtype)
-    x_arr = ft.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy())
     y_torch = rand(4, 4, dtype=dtype)
-    y_arr = ft.Array(y_torch.numpy(), device)
+    y_arr = ft.Array(y_torch.numpy().copy())
     f(x_arr, y_arr)
     y_torch_new = torch.tensor(y_arr.numpy())
 
@@ -124,9 +124,9 @@ def test_static_broadcast_1_at_back(libop_func, torch_func, dtype):
         libop_func(y, x)
 
     x_torch = rand(4, 1, dtype=dtype)
-    x_arr = ft.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy())
     y_torch = rand(4, 4, dtype=dtype)
-    y_arr = ft.Array(y_torch.numpy(), device)
+    y_arr = ft.Array(y_torch.numpy().copy())
     f(x_arr, y_arr)
     y_torch_new = torch.tensor(y_arr.numpy())
 
@@ -150,9 +150,9 @@ def test_different_dtype(libop_func, torch_func):
         libop_func(y, x)
 
     x_torch = rand(4, 4, dtype="int32")
-    x_arr = ft.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy())
     y_torch = rand(4, 4, dtype="float32")
-    y_arr = ft.Array(y_torch.numpy(), device)
+    y_arr = ft.Array(y_torch.numpy().copy())
     f(x_arr, y_arr)
     y_torch_new = torch.tensor(y_arr.numpy())
 
@@ -179,9 +179,9 @@ def test_operator_overload(libop_func, torch_func, dtype):
         libop_func(y[:], x)  # E.g., y[:] += x
 
     x_torch = rand(4, 4, dtype=dtype)
-    x_arr = ft.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy())
     y_torch = rand(4, 4, dtype=dtype)
-    y_arr = ft.Array(y_torch.numpy(), device)
+    y_arr = ft.Array(y_torch.numpy().copy())
     f(x_arr, y_arr)
     y_torch_new = torch.tensor(y_arr.numpy())
 

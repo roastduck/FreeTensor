@@ -64,8 +64,8 @@ def test_syncthreads():
     code = ft.codegen(func, target, verbose=True)
     x_np = np.array([range(256)] * 4, dtype="int32")
     y_np = np.zeros((4, 256), dtype="int32")
-    x_arr = ft.Array(x_np, device)
-    y_arr = ft.Array(y_np, device)
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
     ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
@@ -633,8 +633,8 @@ def test_syncwarp():
     code = ft.codegen(func, target, verbose=True)
     x_np = np.array([[0, 1, 2, 3]] * 4, dtype="int32")
     y_np = np.zeros((4, 4), dtype="int32")
-    x_arr = ft.Array(x_np, device)
-    y_arr = ft.Array(y_np, device)
+    x_arr = ft.Array(x_np)
+    y_arr = ft.Array(y_np)
     ft.build_binary(code, device)(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 

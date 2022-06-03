@@ -37,19 +37,28 @@ void init_ffi_ast_func(py::module_ &m) {
             params.reserve(_params.size());
             returns.reserve(_returns.size());
             for (auto &&name : _params) {
-                params.emplace_back(name,
-                                    closure.count(name) ? Ref<Ref<Array>>::make(
-                                                              closure.at(name))
-                                                        : nullptr,
-                                    false);
+                if (closure.count(name)) {
+                    auto arr = closure.at(name);
+                    arr->makePrivateCopy(); // Because we load Array back to C++
+                                            // part, we cannot keep tracking
+                                            // user data with py::keep_alive
+                    params.emplace_back(name, Ref<Ref<Array>>::make(arr),
+                                        false);
+                } else {
+                    params.emplace_back(name, nullptr, false);
+                }
             }
             for (auto &&[name, dtype] : _returns) {
-                returns.emplace_back(
-                    name, dtype,
-                    closure.count(name)
-                        ? Ref<Ref<Array>>::make(closure.at(name))
-                        : nullptr,
-                    false);
+                if (closure.count(name)) {
+                    auto arr = closure.at(name);
+                    arr->makePrivateCopy(); // Because we load Array back to C++
+                                            // part, we cannot keep tracking
+                                            // user data with py::keep_alive
+                    returns.emplace_back(name, dtype,
+                                         Ref<Ref<Array>>::make(arr), false);
+                } else {
+                    returns.emplace_back(name, dtype, nullptr, false);
+                }
             }
             return makeFunc(name, std::move(params), std::move(returns), body);
         },

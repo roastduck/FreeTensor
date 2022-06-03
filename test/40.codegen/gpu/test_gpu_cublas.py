@@ -31,9 +31,9 @@ def test_cublas_basic():
     a_np = np.random.uniform(size=(48, 64)).astype("float32")
     b_np = np.random.uniform(size=(64, 72)).astype("float32")
     c_np = np.random.uniform(size=(48, 72)).astype("float32")
-    a_arr = ft.Array(a_np, device)
-    b_arr = ft.Array(b_np, device)
-    c_arr = ft.Array(c_np, device)
+    a_arr = ft.Array(a_np)
+    b_arr = ft.Array(b_np)
+    c_arr = ft.Array(c_np.copy())
     ft.build_binary(code, device)(a=a_arr, b=b_arr, c=c_arr)
     c_result = c_arr.numpy()
 

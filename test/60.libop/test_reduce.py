@@ -59,9 +59,9 @@ def test_static(libop_func, torch_func, dtype):
         libop_func(x, y, axes=[1], keepdims=False)
 
     x_torch = rand(3, 4, 5, dtype=dtype)
-    x_arr = ft.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy())
     y_torch = zeros(3, 5, dtype=dtype)
-    y_arr = ft.Array(y_torch.numpy(), device)
+    y_arr = ft.Array(y_torch.numpy())
     f(x_arr, y_arr)
     y_torch = torch.tensor(y_arr.numpy())
 
@@ -89,9 +89,9 @@ def test_keepdims(libop_func, torch_func, dtype):
         libop_func(x, y, axes=[1], keepdims=True)
 
     x_torch = rand(3, 4, 5, dtype=dtype)
-    x_arr = ft.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy())
     y_torch = zeros(3, 1, 5, dtype=dtype)
-    y_arr = ft.Array(y_torch.numpy(), device)
+    y_arr = ft.Array(y_torch.numpy())
     f(x_arr, y_arr)
     y_torch = torch.tensor(y_arr.numpy())
 
@@ -118,7 +118,7 @@ def test_out_of_place(libop_func, torch_func, dtype):
         return libop_func(x, axes=[1], keepdims=False)
 
     x_torch = rand(3, 4, 5, dtype=dtype)
-    x_arr = ft.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy())
     y_arr = f(x_arr)
     y_torch = torch.tensor(y_arr.numpy())
 
@@ -146,7 +146,7 @@ def test_out_of_place_keepdims(libop_func, torch_func, dtype):
         return libop_func(x, axes=[1], keepdims=True)
 
     x_torch = rand(3, 4, 5, dtype=dtype)
-    x_arr = ft.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy())
     y_arr = f(x_arr)
     y_torch = torch.tensor(y_arr.numpy())
 

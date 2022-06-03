@@ -16,9 +16,9 @@ def test_static():
         libop.unsqueeze_(x, y, axes=[1, 3])
 
     x_torch = torch.rand(3, 4, 5, dtype=torch.float32)
-    x_arr = ft.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy())
     y_torch = torch.zeros(3, 1, 4, 1, 5, dtype=torch.float32)
-    y_arr = ft.Array(y_torch.numpy(), device)
+    y_arr = ft.Array(y_torch.numpy())
     f(x_arr, y_arr)
     y_torch = torch.tensor(y_arr.numpy())
 
@@ -35,7 +35,7 @@ def test_out_of_place():
         return libop.unsqueeze(x, axes=[1, 3])
 
     x_torch = torch.rand(3, 4, 5, dtype=torch.float32)
-    x_arr = ft.Array(x_torch.numpy(), device)
+    x_arr = ft.Array(x_torch.numpy())
     y_arr = f(x_arr)
     y_torch = torch.tensor(y_arr.numpy())
 
