@@ -1,5 +1,6 @@
 #include <cmath>
 #include <map>
+#include <set>
 #include <stack>
 
 #include <analyze/all_uses.h>
@@ -16,7 +17,9 @@ ScalarPropConst::tryToScalar(const std::vector<Expr> &exprs) {
     ScalarIndices res;
     for (auto &i : exprs)
         if (i->nodeType() == ASTNodeType::IntConst)
-            res.offset.push_back(i.as<IntConstNode>()->val_);
+            res.offset.emplace_back(i.as<IntConstNode>()->val_);
+        else if (i->nodeType() == ASTNodeType::Var)
+            res.offset.emplace_back(i.as<VarNode>()->name_);
         else
             return std::nullopt;
     return std::move(res);
@@ -29,9 +32,17 @@ void ScalarPropConst::gen_constant(const std::string &name,
     if (!indices || !allReads(value).empty())
         return;
     constants_[name][*indices] = value;
+
+    std::set<std::string> dep_iters;
     for (auto &it_var : allIters(value)) {
-        iter_dep_constants_.insert({it_var, {name, *indices}});
+        dep_iters.insert(it_var);
     }
+    for (auto &idx : indices->offset)
+        if (idx.index() == 1)
+            dep_iters.insert(std::get<std::string>(idx));
+
+    for (auto &it_var : dep_iters)
+        iter_dep_constants_.insert({it_var, {name, *indices}});
 }
 
 void ScalarPropConst::kill_iter_dep_entry(const std::string &name,

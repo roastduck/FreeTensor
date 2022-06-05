@@ -22,33 +22,39 @@ class ScalarPropConst : public SymbolTable<ConstFold> {
   protected:
     typedef SymbolTable<ConstFold> BaseClass;
 
+    struct ScalarIndex : public std::variant<int64_t, std::string> {
+        std::strong_ordering operator<=>(const ScalarIndex &other) const {
+            switch (index() * 2 + other.index()) {
+            case 0: // int int
+                return std::get<int64_t>(*this) <=> std::get<int64_t>(other);
+            case 1: // int str
+                return std::strong_ordering::less;
+            case 2: // str int
+                return std::strong_ordering::greater;
+            case 3: // str str
+                return std::get<std::string>(*this) <=>
+                       std::get<std::string>(other);
+            }
+        }
+    };
+
     /**
      * @brief Indices to a scalar, includes a sequence of constant offsets.
      */
     struct ScalarIndices {
-        std::vector<int64_t> offset;
+        std::vector<ScalarIndex> offset;
 
         /// Support comparison to use `std::map`.
-        bool operator<(const ScalarIndices &other) const {
-            ASSERT(offset.size() == other.offset.size() &&
-                   "Index count should be identical for same tensor");
-            for (size_t i = 0; i < offset.size(); ++i)
-                if (offset[i] < other.offset[i])
-                    return true;
-                else if (offset[i] > other.offset[i])
-                    return false;
-            return false;
-        }
-
-        /// Support equivalence check
-        bool operator==(const ScalarIndices &other) const {
+        std::strong_ordering operator<=>(const ScalarIndices &other) const {
             ASSERT(offset.size() == other.offset.size() &&
                    "Index count should be identical for same tensor");
             for (size_t i = 0; i < offset.size(); ++i)
                 if (offset[i] != other.offset[i])
-                    return false;
-            return true;
+                    return offset[i] <=> other.offset[i];
+            return std::strong_ordering::equal;
         }
+
+        bool operator==(const ScalarIndices &) const = default;
     };
 
     /**
