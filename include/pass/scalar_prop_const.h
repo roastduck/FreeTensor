@@ -34,6 +34,8 @@ class ScalarPropConst : public SymbolTable<ConstFold> {
             case 3: // str str
                 return std::get<std::string>(*this) <=>
                        std::get<std::string>(other);
+            default:
+                ASSERT(false);
             }
         }
     };
