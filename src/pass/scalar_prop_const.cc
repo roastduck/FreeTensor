@@ -38,7 +38,7 @@ void ScalarPropConst::gen_constant(const std::string &name,
         dep_iters.insert(it_var);
     }
     for (auto &idx : indices->offset)
-        if (idx.index() == 1)
+        if (std::holds_alternative<std::string>(idx))
             dep_iters.insert(std::get<std::string>(idx));
 
     for (auto &it_var : dep_iters)

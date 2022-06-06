@@ -50,10 +50,7 @@ class ScalarPropConst : public SymbolTable<ConstFold> {
         std::strong_ordering operator<=>(const ScalarIndices &other) const {
             ASSERT(offset.size() == other.offset.size() &&
                    "Index count should be identical for same tensor");
-            for (size_t i = 0; i < offset.size(); ++i)
-                if (offset[i] != other.offset[i])
-                    return offset[i] <=> other.offset[i];
-            return std::strong_ordering::equal;
+            return offset <=> other.offset;
         }
 
         bool operator==(const ScalarIndices &) const = default;
