@@ -78,7 +78,7 @@ T lower(const T &_ast, const Ref<Target> &_target = nullptr,
     ast = APPLY("sink_var", sinkVar, ast);
     ast = APPLY("shrink_var", shrinkVar, ast);
     ast = APPLY("merge_and_hoist_if", mergeAndHoistIf, ast);
-    ast = APPLY("tensor_prop_cons", tensorPropConst, ast);
+    ast = APPLY("tensor_prop_const", tensorPropConst, ast);
     ast = APPLY("remove_writes", removeWrites, ast);
     ast = APPLY("remove_cyclic_assign", removeCyclicAssign,
                 ast); // After remove_writes
