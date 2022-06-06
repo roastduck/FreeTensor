@@ -69,7 +69,8 @@ class ScalarPropConst : public SymbolTable<ConstFold> {
     /// second indexing indices
     std::unordered_map<std::string, std::map<ScalarIndices, Expr>> constants_;
 
-    /// Constant entries dependent on each iteration variable
+    /// Constant entries dependent on each iteration variable, mapping one
+    /// iteration variable to multiple (var name, indices) pairs dependent on it
     std::unordered_multimap<std::string, std::pair<std::string, ScalarIndices>>
         iter_dep_constants_;
 
