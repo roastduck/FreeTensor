@@ -141,8 +141,8 @@ Stmt tensorPropConst(const Stmt &_op) {
 
         if (replace.empty() || i > 100) {
             if (i > 100) {
-                WARNING(
-                    "propConst iterates over 100 rounds. Maybe there is a bug");
+                WARNING("tensor_prop_const iterates over 100 rounds. Maybe "
+                        "there is a bug");
             }
             break;
         }
