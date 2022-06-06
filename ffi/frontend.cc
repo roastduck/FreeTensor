@@ -25,7 +25,10 @@ void init_ffi_frontend(py::module_ &m) {
         .def_property_readonly("dtype", &FrontendVar::dtype)
         .def_property_readonly("mtype", &FrontendVar::mtype)
         .def_property_readonly("ndim", &FrontendVar::ndim)
-        .def("shape", &FrontendVar::shape)
+        .def("shape", static_cast<Expr (FrontendVar::*)(const Expr &) const>(
+                          &FrontendVar::shape))
+        .def("shape", static_cast<std::vector<Expr> (FrontendVar::*)() const>(
+                          &FrontendVar::shape))
         .def("as_load", &FrontendVar::asLoad)
         .def("as_store", &FrontendVar::asStore)
         .def("chain_indices", &FrontendVar::chainIndices)
