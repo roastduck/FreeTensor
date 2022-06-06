@@ -20,6 +20,27 @@ def test_basic():
     assert std.match(ast)
 
 
+def test_multiple_vars():
+    with ft.VarDef([("x", (4,), "int32", "output", "cpu"),
+                    ("t", (4,), "int32", "cache", "cpu"),
+                    ("u", (4,), "int32", "cache", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (x, t, u, y):
+        with ft.For("i", 0, 4) as i:
+            t[i] = x[i] + 1
+            u[i] = t[i] + 1
+            y[i] = u[i] * 2
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("x", (4,), "int32", "output", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+        with ft.For("i", 0, 4) as i:
+            y[i] = x[i] * 2 + 4
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
 def test_prop_across_loops():
     with ft.VarDef([("x", (4,), "int32", "output", "cpu"),
                     ("t", (4,), "int32", "cache", "cpu"),
