@@ -209,3 +209,25 @@ def test_operator_overload():
     y_std = torch.matmul(a_torch, b_torch)
     assert np.array_equal(y_arr.shape, [4])
     assert torch.all(torch.isclose(y_torch, y_std))
+
+
+def test_subtensor():
+    device = ft.Device(ft.CPU())
+
+    @ft.optimize(device=device, verbose=1)
+    def f(a, b):
+        a: ft.Var[(2, 2, 2, 4, 5), "float32", "input", "cpu"]
+        b: ft.Var[(2, 2, 2, 5), "float32", "input", "cpu"]
+        #! nid: gemm
+        return a[0, 0, 0] @ b[0, 0, 0]
+
+    a_torch = torch.rand(2, 2, 2, 4, 5, dtype=torch.float32)
+    a_arr = ft.Array(a_torch.numpy())
+    b_torch = torch.rand(2, 2, 2, 5, dtype=torch.float32)
+    b_arr = ft.Array(b_torch.numpy())
+    y_arr = f(a_arr, b_arr)
+    y_torch = torch.tensor(y_arr.numpy())
+
+    y_std = torch.matmul(a_torch[0, 0, 0], b_torch[0, 0, 0])
+    assert np.array_equal(y_arr.shape, [4])
+    assert torch.all(torch.isclose(y_torch, y_std))

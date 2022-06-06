@@ -310,7 +310,7 @@ def load_attr(obj, attr: str):
         if attr == "ndim":
             return ndim(obj)
         if attr == "shape":
-            return lambda i: shape(obj, i)
+            return lambda i=None: shape(obj, i)
         if attr == "dtype":
             return dtype(obj)
         if attr == "mtype":
