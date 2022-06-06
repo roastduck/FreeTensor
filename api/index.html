@@ -2764,7 +2764,7 @@ on <code>VarRef</code> objects generates AST nodes</p>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">Sequence</span><span class="p">):</span>
             <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">key</span><span class="p">,)</span>
         <span class="n">ffiIdx</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">length</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">full_shape</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">length</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">()):</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
                 <span class="n">start</span> <span class="o">=</span> <span class="n">idx</span><span class="o">.</span><span class="n">start</span> <span class="k">if</span> <span class="n">idx</span><span class="o">.</span><span class="n">start</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">0</span>
                 <span class="n">stop</span> <span class="o">=</span> <span class="n">idx</span><span class="o">.</span><span class="n">stop</span> <span class="k">if</span> <span class="n">idx</span><span class="o">.</span><span class="n">stop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">length</span>
@@ -5191,23 +5191,28 @@ it calls libop.round_towards_0_div</p>
 
 
 <h4 id="freetensor.core.expr.shape" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">shape</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">shape</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">i</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 
 </h4>
 
     <div class="doc doc-contents ">
 
-      <p>Get size of specified dimension of a variable</p>
+      <p>shape(var, i): Get size of specified dimension of a variable</p>
+<p>shape(var): Get sizes of all dimensions of a variable</p>
 
         <details class="quote">
           <summary>Source code in <code>freetensor/core/expr.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">shape</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39; Get size of specified dimension of a variable &#39;&#39;&#39;</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">shape</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">i</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; shape(var, i): Get size of specified dimension of a variable</span>
+<span class="sd">        shape(var): Get sizes of all dimensions of a variable &#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">VarRef</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">var</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Getting size of dimension </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1"> of scalar </span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Getting size of dimension </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1"> of scalar </span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
 </code></pre></div>
         </details>
     </div>
@@ -13535,7 +13540,7 @@ code cannot be get automatically, e.g., if <code>func</code> is generated from a
         <span class="k">if</span> <span class="n">attr</span> <span class="o">==</span> <span class="s2">&quot;ndim&quot;</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">ndim</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">attr</span> <span class="o">==</span> <span class="s2">&quot;shape&quot;</span><span class="p">:</span>
-            <span class="k">return</span> <span class="k">lambda</span> <span class="n">i</span><span class="p">:</span> <span class="n">shape</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+            <span class="k">return</span> <span class="k">lambda</span> <span class="n">i</span><span class="o">=</span><span class="kc">None</span><span class="p">:</span> <span class="n">shape</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">attr</span> <span class="o">==</span> <span class="s2">&quot;dtype&quot;</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">dtype</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">attr</span> <span class="o">==</span> <span class="s2">&quot;mtype&quot;</span><span class="p">:</span>
