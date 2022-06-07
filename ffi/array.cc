@@ -87,7 +87,7 @@ void init_ffi_array(py::module_ &m) {
                                     dtype,                                     \
                                     Ref<Device>::make(Ref<CPU>::make()));      \
     }),                                                                        \
-        py::keep_alive<1, 2>()
+        "data"_a.noconvert(), py::keep_alive<1, 2>()
 
 #define SHARE_TO_NUMPY(nativeType, dtype)                                      \
     case dtype: {                                                              \
@@ -129,7 +129,7 @@ void init_ffi_array(py::module_ &m) {
                     "freetensor.Array, for strided PyTorch tensors");
             }
         }),
-        py::keep_alive<1, 2>());
+        "data"_a.noconvert(), py::keep_alive<1, 2>());
 #endif // FT_WITH_PYTORCH
     pyArray.def(
         "numpy",
