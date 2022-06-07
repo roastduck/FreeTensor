@@ -7,7 +7,7 @@ option(FT_DEBUG_LOG_NODE "Log where each AST node is created" OFF)
 option(FT_DEBUG_PROFILE "Profile some heavy functions in the compiler" OFF)
 option(FT_WITH_CUDA "Build with CUDA (ON / OFF)" ON)
 option(FT_WITH_MKL "Build with MKL (Path to MKL / OFF)" OFF)
-option(FT_WITH_PYTORCH "Build with PyTorch interface" ON)
+option(FT_WITH_PYTORCH "Build with PyTorch interface" OFF)
 
 set(DEFAULT_BUILD_TYPE "RelWithDebInfo")
 if(NOT CMAKE_BUILD_TYPE)
