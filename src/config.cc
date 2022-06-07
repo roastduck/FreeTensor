@@ -97,4 +97,12 @@ bool Config::withCUDA() {
 #endif
 }
 
+bool Config::withPyTorch() {
+#ifdef FT_WITH_PYTORCH
+    return true;
+#else
+    return false;
+#endif
+}
+
 } // namespace freetensor

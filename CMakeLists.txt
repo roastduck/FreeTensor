@@ -7,6 +7,7 @@ option(FT_DEBUG_LOG_NODE "Log where each AST node is created" OFF)
 option(FT_DEBUG_PROFILE "Profile some heavy functions in the compiler" OFF)
 option(FT_WITH_CUDA "Build with CUDA (ON / OFF)" ON)
 option(FT_WITH_MKL "Build with MKL (Path to MKL / OFF)" OFF)
+option(FT_WITH_PYTORCH "Build with PyTorch interface" ON)
 
 set(DEFAULT_BUILD_TYPE "RelWithDebInfo")
 if(NOT CMAKE_BUILD_TYPE)
@@ -23,8 +24,10 @@ foreach(MODULE IN ITEMS antlr/antlr4 cppitertools cuda-samples isl pybind11 z3)
     endif()
 endforeach()
 
-# PyBind11
+# Python
 find_package(Python COMPONENTS Interpreter Development REQUIRED)
+
+# PyBind11
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/pybind11)
 
 # ISL
@@ -96,6 +99,37 @@ if(FT_WITH_CUDA)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFT_WITH_CUDA")
 endif()
 
+# PyTorch
+if(FT_WITH_PYTORCH)
+    # https://pytorch.org/cppdocs/installing.html
+    execute_process(
+        COMMAND "${Python_EXECUTABLE}" -c "import torch;print(torch.utils.cmake_prefix_path)"
+        OUTPUT_VARIABLE PYTORCH_CMAKE_PATH)
+    string(STRIP "${PYTORCH_CMAKE_PATH}" PYTORCH_CMAKE_PATH)
+    message(STATUS "Looking for PyTorch CMake package in ${PYTORCH_CMAKE_PATH}")
+    list(PREPEND CMAKE_PREFIX_PATH ${PYTORCH_CMAKE_PATH})
+    find_package(Torch REQUIRED)
+    add_definitions(-DFT_WITH_PYTORCH)
+
+    # find_package(Torch) does not expose PyTorch's Python binding, but we need it
+    list(APPEND TORCH_LIBRARIES "${TORCH_INSTALL_PREFIX}/lib/libtorch_python.so")
+
+    # Use the C++11 (gcc >= 5) ABI
+    # PyTorch's pip release uses the old C++ ABI. When linking PyTorch in CMake, it automatically
+    # sets FreeTensor to use the old ABI as well. The only difference between the two ABIs are
+    # std::string and std::list (https://gcc.gnu.org/onlinedocs/libstdc++/manual/using_dual_abi.html).
+    # We don't pass std::string or std::list from or to PyTorch, so we can keep FreeTensor
+    # to use the new ABI.
+    foreach(TORCH_LIBRARY IN ITEMS ${TORCH_LIBRARIES})
+        if(TARGET ${TORCH_LIBRARY})
+            get_target_property(DEF ${TORCH_LIBRARY} INTERFACE_COMPILE_OPTIONS)
+            message(STATUS "Checking ${TORCH_LIBRARY}: ${DEF}")
+            list(REMOVE_ITEM DEF "-D_GLIBCXX_USE_CXX11_ABI=0")
+            set_property(TARGET ${TORCH_LIBRARY} PROPERTY INTERFACE_COMPILE_OPTIONS ${DEF})
+        endif()
+    endforeach()
+endif()
+
 # THIS PROJECT
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
 if(FT_WITH_MKL)
@@ -160,10 +194,8 @@ target_include_directories(freetensor PUBLIC
 target_include_directories(freetensor PRIVATE ${ANTLR_INCLUDES})
 
 file(GLOB_RECURSE FFI_SRC ${CMAKE_CURRENT_SOURCE_DIR}/ffi/*.cc)
-
-# Target
 pybind11_add_module(freetensor_ffi SHARED ${FFI_SRC})
-target_link_libraries(freetensor_ffi PRIVATE freetensor)
+target_link_libraries(freetensor_ffi PRIVATE freetensor ${TORCH_LIBRARIES})
 target_include_directories(freetensor_ffi PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/ffi)
 
 # Pybind11 stubgen
@@ -172,7 +204,7 @@ if (PYBIND11_STUBGEN)
     message(STATUS "Enabling pybind11-stubgen step to generate typing stub for IDEs.")
     add_custom_command(
         TARGET freetensor_ffi POST_BUILD
-        COMMAND env PYTHONPATH=.:$ENV{PYTHONPATH} ${PYBIND11_STUBGEN} freetensor_ffi --no-setup-py --root-module-suffix ""
+        COMMAND env PYTHONPATH=.:$ENV{PYTHONPATH} ${PYBIND11_STUBGEN} freetensor_ffi --no-setup-py --root-module-suffix "" --ignore-invalid signature
         VERBATIM
     )
 endif()
