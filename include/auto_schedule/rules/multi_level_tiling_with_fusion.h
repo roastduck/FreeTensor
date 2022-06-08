@@ -39,7 +39,7 @@ class MultiLevelTilingWithFusionPart : public MultiLevelTilingPart {
     int level_;
     ElementWiseInfo toFuse_;
     int minBlockSize_;
-    bool doCacheRead_;
+    bool doCacheRead_{false};
 
   public:
     void genRandAnnotation(std::default_random_engine &gen) override;
