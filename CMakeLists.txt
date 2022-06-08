@@ -128,6 +128,17 @@ if(FT_WITH_PYTORCH)
             set_property(TARGET ${TORCH_LIBRARY} PROPERTY INTERFACE_COMPILE_OPTIONS ${DEF})
         endif()
     endforeach()
+
+    # Ensure CUDA used by PyTorch is the same with CUDA used by FreeTensor, or it may fail silently
+    if(FT_WITH_CUDA)
+        execute_process(
+            COMMAND "${Python_EXECUTABLE}" -c "import torch;print(torch.version.cuda)"
+            OUTPUT_VARIABLE PYTORCH_CUDA_VERSION)
+        string(STRIP "${PYTORCH_CUDA_VERSION}" PYTORCH_CUDA_VERSION)
+        if(NOT ${PYTORCH_CUDA_VERSION} STREQUAL ${CUDA_VERSION})
+            message(FATAL_ERROR "CUDA version used in PyTorch (${PYTORCH_CUDA_VERSION}) should match CUDA version used in FreeTensor (${CUDA_VERSION})")
+        endif()
+    endif()
 endif()
 
 # THIS PROJECT
