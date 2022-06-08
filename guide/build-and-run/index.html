@@ -191,7 +191,7 @@ make -j  # Or use Ninja
 </div>
 <h2 id="build-this-document">Build this Document</h2>
 <p>First install some dependencies:</p>
-<pre><code class="language-sh">pip3 install --user mkdocs mkdocstrings &quot;pytkdocs[numpy-style]&quot;
+<pre><code class="language-sh">pip3 install --user mkdocs mkdocstrings==0.18.1 &quot;pytkdocs[numpy-style]&quot;
 </code></pre>
 <p>From the root directory of FreeTensor, run a HTTP server to serve the document (recommended):</p>
 <pre><code class="language-sh">PYTHONPATH=./python:./build:$PYTHONPATH mkdocs serve
