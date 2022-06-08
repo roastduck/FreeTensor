@@ -74,15 +74,14 @@ def test_unroll():
         'fuse(L4.0.0.0.0, L6.0.0.0)', 'fuse(L5.0.0.0.0, L7.0.0.0)',
         'fuse(L4.0.0.0.1, L6.0.0.1)', 'fuse(L5.0.0.0.1, L7.0.0.1)',
         'fuse(L4.0.0.1, L6.0.1)', 'fuse(L5.0.0.1, L7.0.1)', 'cache(#34, y)',
-        'cache(L3.0.1, w)', 'cache(#58, x)',
         'merge(fused.L4.0.0.0.0.L6.0.0.0, fused.L5.0.0.0.0.L7.0.0.0)',
         'merge(fused.L4.0.0.0.1.L6.0.0.1, fused.L5.0.0.0.1.L7.0.0.1)',
         'merge(fused.L4.0.0.1.L6.0.1, fused.L5.0.0.1.L7.0.1)',
         'parallelize(merged.fused.L4.0.0.0.0.L6.0.0.0.fused.L5.0.0.0.0.L7.0.0.0, blockIdx.x)',
         'blend(merged.fused.L4.0.0.0.1.L6.0.0.1.fused.L5.0.0.0.1.L7.0.0.1)',
         'parallelize(merged.fused.L4.0.0.1.L6.0.1.fused.L5.0.0.1.L7.0.1, threadIdx.x)',
-        'unroll(#37)', 'unroll(#81)', 'unroll(#60)', 'unroll(L5.1)',
-        'unroll(L4.1)', 'unroll(L7.1)', 'unroll(#43)'
+        'unroll(#37)', 'unroll(L5.1)', 'unroll(L4.1)', 'unroll(L7.1)',
+        'unroll(#43)'
     ]
     sch_log = sch.logs()
     print(sch_log)

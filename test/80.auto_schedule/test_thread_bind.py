@@ -78,7 +78,6 @@ def test_thread_bind():
         'fuse(L4.0.0.0, L6.0.0.0)', 'fuse(L5.0.0.0, L7.0.0.0)',
         'fuse(L4.0.0.1, L6.0.0.1)', 'fuse(L5.0.0.1, L7.0.0.1)',
         'fuse(L4.0.1, L6.0.1)', 'fuse(L5.0.1, L7.0.1)', 'cache(#50, y)',
-        'cache(L3.b.b.0.1, w)', 'cache(#80, x)',
         'merge(fused.L4.0.0.0.L6.0.0.0, fused.L5.0.0.0.L7.0.0.0)',
         'merge(fused.L4.0.0.1.L6.0.0.1, fused.L5.0.0.1.L7.0.0.1)',
         'merge(fused.L4.0.1.L6.0.1, fused.L5.0.1.L7.0.1)',
