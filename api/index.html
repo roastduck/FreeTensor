@@ -100,6 +100,12 @@
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#freetensor.core.config">config</a>
         <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.backend_compiler_cxx">backend_compiler_cxx()</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.backend_compiler_nvcc">backend_compiler_nvcc()</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.debug_binary">debug_binary()</a>
+    </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.default_device">default_device()</a>
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.default_target">default_target()</a>
@@ -107,6 +113,12 @@
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.pretty_print">pretty_print()</a>
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.print_all_id">print_all_id()</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.set_backend_compiler_cxx">set_backend_compiler_cxx()</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.set_backend_compiler_nvcc">set_backend_compiler_nvcc()</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.set_debug_binary">set_debug_binary()</a>
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.set_default_device">set_default_device()</a>
     </li>
@@ -123,6 +135,8 @@
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.with_cuda">with_cuda()</a>
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.with_mkl">with_mkl()</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#freetensor.core.config.with_pytorch">with_pytorch()</a>
     </li>
         </ul>
     </li>
@@ -1420,6 +1434,87 @@ returned, which can be used as a decorator</p></li>
 
 
 
+<h4 id="freetensor.core.config.backend_compiler_cxx" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">backend_compiler_cxx</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>backend_compiler_cxx() -&gt; str</p>
+<p>Backend compiler used to compile generated C++ code</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/config.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">g</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h4 id="freetensor.core.config.backend_compiler_nvcc" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">backend_compiler_nvcc</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>backend_compiler_nvcc() -&gt; str</p>
+<p>Backend compiler used to compile generated CUDA code</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/config.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">g</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h4 id="freetensor.core.config.debug_binary" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">debug_binary</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>debug_binary() -&gt; bool</p>
+<p>Check if compiling binary in debug mode</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/config.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">g</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
 <h4 id="freetensor.core.config.default_device" class="doc doc-heading">
 <code class="highlight language-python"><span class="n">default_device</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span></code>
 
@@ -1511,6 +1606,87 @@ returned, which can be used as a decorator</p></li>
 
       <p>pretty_print() -&gt; bool</p>
 <p>Check if colored printing enabled</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/config.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">g</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h4 id="freetensor.core.config.set_backend_compiler_cxx" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">set_backend_compiler_cxx</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>set_backend_compiler_cxx(path: str) -&gt; None</p>
+<p>Set backend compiler used to compile generated C++ code</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/config.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">g</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h4 id="freetensor.core.config.set_backend_compiler_nvcc" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">set_backend_compiler_nvcc</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>set_backend_compiler_nvcc(path: str) -&gt; None</p>
+<p>Set backend compiler used to compile generated CUDA code</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/config.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">g</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h4 id="freetensor.core.config.set_debug_binary" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">set_debug_binary</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>set_debug_binary(flag: bool = True) -&gt; None</p>
+<p>Compile with <code>-g</code> at backend. Do not delete the binary file after loaded</p>
 
         <details class="quote">
           <summary>Source code in <code>freetensor/core/config.py</code></summary>
@@ -1727,6 +1903,33 @@ returned, which can be used as a decorator</p></li>
 
       <p>with_mkl() -&gt; str</p>
 <p>Check if FreeTensor is built with MKL</p>
+
+        <details class="quote">
+          <summary>Source code in <code>freetensor/core/config.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">g</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h4 id="freetensor.core.config.with_pytorch" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">with_pytorch</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kvs</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>with_pytorch() -&gt; bool</p>
+<p>Check if FreeTensor is built with PyTorch interface</p>
 
         <details class="quote">
           <summary>Source code in <code>freetensor/core/config.py</code></summary>
@@ -2549,6 +2752,17 @@ will use it by default. In this style, it also sets the default Device as the
         <span class="k">if</span> <span class="ow">not</span> <span class="n">data</span><span class="o">.</span><span class="n">flags</span><span class="p">[</span><span class="s1">&#39;C_CONTIGUOUS&#39;</span><span class="p">]:</span>
             <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="s1">&#39;C&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">Array</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">==</span> <span class="s1">&#39;torch&#39;</span><span class="p">:</span>
+        <span class="kn">import</span> <span class="nn">torch</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="ow">is</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">config</span><span class="o">.</span><span class="n">with_pytorch</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="n">ffi</span><span class="o">.</span><span class="n">DriverError</span><span class="p">(</span>
+                    <span class="s2">&quot;FreeTensor should be built with WITH_PYTORCH to accept a PyTorch tensor&quot;</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">data</span><span class="o">.</span><span class="n">is_contiguous</span><span class="p">():</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">contiguous</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">Array</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
     <span class="k">raise</span> <span class="n">ffi</span><span class="o">.</span><span class="n">DriverError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported data type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="si">}</span><span class="s2"> for Array&quot;</span><span class="p">)</span>
 </code></pre></div>
@@ -9634,7 +9848,8 @@ FunctionScope        </code>
 
         <details class="quote">
           <summary>Source code in <code>freetensor/core/transformer.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">FunctionScope</span><span class="p">:</span>
+          <div class="highlight"><pre><span></span><code><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">FunctionScope</span><span class="p">:</span>
     <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">funcname</span><span class="p">:</span> <span class="nb">str</span>
 
@@ -11454,7 +11669,8 @@ Transformer            (<span title="ast.NodeTransformer">NodeTransformer</span>
 
         <details class="quote">
           <summary>Source code in <code>freetensor/core/transformer.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">Transformer</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">NodeTransformer</span><span class="p">):</span>
+          <div class="highlight"><pre><span></span><code><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">Transformer</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">NodeTransformer</span><span class="p">):</span>
     <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">base_lineno</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">curr_func</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span>
@@ -12676,7 +12892,8 @@ VarCreator            (<a class="autorefs autorefs-internal" title="freetensor.c
 
         <details class="quote">
           <summary>Source code in <code>freetensor/core/transformer.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">VarCreator</span><span class="p">(</span><span class="n">StagedAssignable</span><span class="p">):</span>
+          <div class="highlight"><pre><span></span><code><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">VarCreator</span><span class="p">(</span><span class="n">StagedAssignable</span><span class="p">):</span>
     <span class="n">shape</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">,</span> <span class="n">VarRef</span><span class="p">]</span>
     <span class="n">dtype</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">mtype</span><span class="p">:</span> <span class="nb">str</span>

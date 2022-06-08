@@ -67,6 +67,8 @@
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#dynamic-tensor-shapes">Dynamic Tensor Shapes</a>
     </li>
+    <li class="toctree-l2"><a class="reference internal" href="#copy-free-interface-fromto-pytorch">Copy-free interface from/to PyTorch</a>
+    </li>
     </ul>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../schedules/">Optimize a Program with Schedules</a>
@@ -203,6 +205,25 @@ print(y)
 assert np.array_equal(y, [3, 5, 7, 9])
 </code></pre>
 <p>In this way, in only have to compile your program once. But you will expect a longer compiling time, and some optimizations are not possible with dynamic shapes.</p>
+<h2 id="copy-free-interface-fromto-pytorch">Copy-free interface from/to PyTorch</h2>
+<p>If FreeTensor is built with <code>WITH_PYTORCH=ON</code>, you can directly pass PyTorch tensors to or get them from FreeTensor. For example,</p>
+<pre><code class="language-python">import freetensor as ft
+import torch
+
+n = 4
+
+# Change this line to ft.optimize(verbose=1) to see the resulting native code
+@ft.optimize
+def test(a: ft.Var[(n,), &quot;int32&quot;], b: ft.Var[(n,), &quot;int32&quot;]):
+    y = ft.empty((n,), &quot;int32&quot;)
+    for i in range(n):
+        y[i] = a[i] + b[i]
+    return y
+
+y = test(torch.tensor([1, 2, 3, 4], dtype=torch.int32),
+         torch.tensor([2, 3, 4, 5], dtype=torch.int32)).torch()
+print(y)
+</code></pre>
               
             </div>
           </div><footer>

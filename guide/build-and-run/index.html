@@ -124,14 +124,20 @@
 <li>GCC (&gt;= 10, to support C++20 and the "unroll" pragma)</li>
 <li>CUDA (&gt;= 11.4.1, to support GCC 10, Optional)</li>
 <li>MKL (Optional)</li>
+<li>PyTorch (Optional, see below)</li>
 <li>Java (= 11, Build-time dependency only)</li>
 </ul>
-<p>Python dependencies:</p>
+<p>Other Python dependencies:</p>
 <pre><code class="language-sh">pip3 install --user numpy sourceinspect astor Pygments xgboost
 </code></pre>
 <div class="admonition note">
 <p class="admonition-title">Note on Python version</p>
 <p>Because we are analyzing Python AST, which is sensitive to Python version, there may be potential bugs for Python strictly later than 3.8. Please file an issue if something goes wrong</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">PyTorch support</p>
+<p>FreeTensor can optionally link PyTorch to support a copy-free interface between FreeTensor and PyTorch. Please note that, if you are using CUDA, FreeTensor and PyTorch should link CUDA
+of <em>the same version</em>. PyTorch can be installed in any way you like, see <a href="https://pytorch.org/get-started/locally/">PyTorch's guide</a>.</p>
 </div>
 <h2 id="build">Build</h2>
 <p>First, clone this repo. Don't forget there are some submodules.</p>
@@ -147,6 +153,7 @@ make -j  # Or use Ninja
 <ul>
 <li><code>-DFT_WITH_CUDA=ON/OFF</code>: build with/without CUDA (defaults to <code>ON</code>).</li>
 <li><code>-DFT_WITH_MKL=&lt;path/to/mkl/root&gt;</code>: build with MKL (path to MKL is required, defaults to building without it).</li>
+<li><code>-DFT_WITH_PYTORCH=ON/OFF</code>: build with/without copy-free interface from/to PyTorch, requring PyTorch installed on the system (defaults to <code>OFF</code>).</li>
 <li><code>-DFT_DEBUG_LOG_NODE=ON</code> (for developers): enables tracing to tell by which pass a specific AST node is modified.</li>
 <li><code>-DFT_DEBUG_PROFILE</code> (for developers): profiles some heavy functions in the compiler.</li>
 </ul>
