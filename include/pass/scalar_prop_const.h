@@ -23,6 +23,10 @@ class ScalarPropConst : public SymbolTable<ConstFold> {
     typedef SymbolTable<ConstFold> BaseClass;
 
     struct ScalarIndex : public std::variant<int64_t, std::string> {
+        template <class... Args>
+        ScalarIndex(Args &&...args)
+            : std::variant<int64_t, std::string>(std::forward<Args>(args)...) {}
+
         std::strong_ordering operator<=>(const ScalarIndex &other) const {
             switch (index() * 2 + other.index()) {
             case 0: // int int
