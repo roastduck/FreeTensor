@@ -21,6 +21,8 @@ with_mkl = _import_func(ffi.with_mkl)
 
 with_cuda = _import_func(ffi.with_cuda)
 
+with_pytorch = _import_func(ffi.with_pytorch)
+
 set_pretty_print = _import_func(ffi.set_pretty_print)
 pretty_print = _import_func(ffi.pretty_print)
 
@@ -29,6 +31,15 @@ print_all_id = _import_func(ffi.pretty_print)
 
 set_werror = _import_func(ffi.set_werror)
 werror = _import_func(ffi.werror)
+
+set_debug_binary = _import_func(ffi.set_debug_binary)
+debug_binary = _import_func(ffi.debug_binary)
+
+set_backend_compiler_cxx = _import_func(ffi.set_backend_compiler_cxx)
+backend_compiler_cxx = _import_func(ffi.backend_compiler_cxx)
+
+set_backend_compiler_nvcc = _import_func(ffi.set_backend_compiler_nvcc)
+backend_compiler_nvcc = _import_func(ffi.backend_compiler_nvcc)
 
 set_default_target = _import_func(ffi.set_default_target)
 default_target = _import_func(ffi.default_target)

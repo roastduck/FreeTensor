@@ -16,6 +16,9 @@ struct ArrayCopy {
     Ref<Device> device_;
     uint8_t *ptr_ = nullptr;
     bool borrowed_ = false;
+
+    ArrayCopy(const Ref<Device> &device, uint8_t *ptr, bool borrowed)
+        : device_(device), ptr_(ptr), borrowed_(borrowed) {}
 };
 
 /**

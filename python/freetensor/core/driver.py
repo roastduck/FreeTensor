@@ -30,6 +30,17 @@ def array(data):
             data = data.copy(order='C')
         return Array(data)
 
+    if data.__class__.__module__ == 'torch':
+        import torch
+        if type(data) is torch.Tensor:
+            if not config.with_pytorch():
+                raise ffi.DriverError(
+                    "FreeTensor should be built with WITH_PYTORCH to accept a PyTorch tensor"
+                )
+            if not data.is_contiguous():
+                data = data.contiguous()
+            return Array(data)
+
     raise ffi.DriverError(f"Unsupported data type {type(data)} for Array")
 
 

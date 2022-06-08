@@ -35,6 +35,7 @@ class Config {
 
     static std::string withMKL();
     static bool withCUDA();
+    static bool withPyTorch();
 
     static void setPrettyPrint(bool pretty = true) { prettyPrint_ = pretty; }
     static bool prettyPrint() { return prettyPrint_; }

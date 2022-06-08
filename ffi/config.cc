@@ -13,6 +13,8 @@ void init_ffi_config(py::module_ &m) {
     m.def("with_mkl", Config::withMKL, "Check if FreeTensor is built with MKL");
     m.def("with_cuda", Config::withCUDA,
           "Check if FreeTensor is built with CUDA");
+    m.def("with_pytorch", Config::withPyTorch,
+          "Check if FreeTensor is built with PyTorch interface");
     m.def("set_pretty_print", Config::setPrettyPrint, "Set colored printing",
           "flag"_a = true);
     m.def("pretty_print", Config::prettyPrint,
@@ -23,6 +25,20 @@ void init_ffi_config(py::module_ &m) {
           "Check if printing IDs of all statements in an AST");
     m.def("set_werror", Config::setWerror, "Error on warning", "flag"_a = true);
     m.def("werror", Config::werror, "Check if error-on-warning enabled");
+    m.def("set_debug_binary", Config::setDebugBinary,
+          "Compile with `-g` at backend. Do not delete the binary file after "
+          "loaded",
+          "flag"_a = true);
+    m.def("debug_binary", Config::debugBinary,
+          "Check if compiling binary in debug mode");
+    m.def("set_backend_compiler_cxx", Config::setBackendCompilerCXX,
+          "Set backend compiler used to compile generated C++ code", "path"_a);
+    m.def("backend_compiler_cxx", Config::backendCompilerCXX,
+          "Backend compiler used to compile generated C++ code");
+    m.def("set_backend_compiler_nvcc", Config::setBackendCompilerNVCC,
+          "Set backend compiler used to compile generated CUDA code", "path"_a);
+    m.def("backend_compiler_nvcc", Config::backendCompilerNVCC,
+          "Backend compiler used to compile generated CUDA code");
     m.def("set_default_target", Config::setDefaultTarget,
           "Set default target (internal implementation of `with Target`)",
           "target"_a);

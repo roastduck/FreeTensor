@@ -5,6 +5,7 @@ import pytest
 target = ft.GPU()
 device = ft.Device(target)
 
+# This test fails from time to time (FIXME)
 
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_thread_bind():
