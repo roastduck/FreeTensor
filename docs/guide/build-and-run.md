@@ -7,9 +7,10 @@
 - GCC (>= 10, to support C++20 and the "unroll" pragma)
 - CUDA (>= 11.4.1, to support GCC 10, Optional)
 - MKL (Optional)
+- PyTorch (Optional, see below)
 - Java (= 11, Build-time dependency only)
 
-Python dependencies:
+Other Python dependencies:
 
 ```sh
 pip3 install --user numpy sourceinspect astor Pygments xgboost
@@ -17,6 +18,10 @@ pip3 install --user numpy sourceinspect astor Pygments xgboost
 
 !!! note "Note on Python version"
     Because we are analyzing Python AST, which is sensitive to Python version, there may be potential bugs for Python strictly later than 3.8. Please file an issue if something goes wrong
+
+!!! note "PyTorch support"
+    FreeTensor can optionally link PyTorch to support a copy-free interface between FreeTensor and PyTorch. Please note that, if you are using CUDA, FreeTensor and PyTorch should link CUDA
+    of *the same version*. PyTorch can be installed in any way you like, see [PyTorch's guide](https://pytorch.org/get-started/locally/).
 
 ## Build
 
@@ -39,6 +44,7 @@ There are some options to `cmake`:
 
 - `-DFT_WITH_CUDA=ON/OFF`: build with/without CUDA (defaults to `ON`).
 - `-DFT_WITH_MKL=<path/to/mkl/root>`: build with MKL (path to MKL is required, defaults to building without it).
+- `-DFT_WITH_PYTORCH=ON/OFF`: build with/without copy-free interface from/to PyTorch, requring PyTorch installed on the system (defaults to `OFF`).
 - `-DFT_DEBUG_LOG_NODE=ON` (for developers): enables tracing to tell by which pass a specific AST node is modified.
 - `-DFT_DEBUG_PROFILE` (for developers): profiles some heavy functions in the compiler.
 

@@ -114,3 +114,26 @@ assert np.array_equal(y, [3, 5, 7, 9])
 ```
 
 In this way, in only have to compile your program once. But you will expect a longer compiling time, and some optimizations are not possible with dynamic shapes.
+
+## Copy-free interface from/to PyTorch
+
+If FreeTensor is built with `WITH_PYTORCH=ON`, you can directly pass PyTorch tensors to or get them from FreeTensor. For example,
+
+```python
+import freetensor as ft
+import torch
+
+n = 4
+
+# Change this line to ft.optimize(verbose=1) to see the resulting native code
+@ft.optimize
+def test(a: ft.Var[(n,), "int32"], b: ft.Var[(n,), "int32"]):
+    y = ft.empty((n,), "int32")
+    for i in range(n):
+        y[i] = a[i] + b[i]
+    return y
+
+y = test(torch.tensor([1, 2, 3, 4], dtype=torch.int32),
+         torch.tensor([2, 3, 4, 5], dtype=torch.int32)).torch()
+print(y)
+```
