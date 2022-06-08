@@ -53,7 +53,7 @@ jobs:
           spack load python~debug@3.9.2%gcc@10.2.1 cuda@11.4.2 cudnn@8.2.4.15-11.4 intel-mkl@2020.4.304 java@11
           source /home/rd/venv-freetensor/bin/activate
           mkdir build
-          cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DFT_WITH_CUDA=OFF -DFT_WITH_MKL=OFF
+          cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DFT_WITH_CUDA=OFF -DFT_WITH_MKL=OFF -DFT_WITH_PYTORCH=OFF
           cmake --build build -j
       - name: Run PyTest
         run: |
