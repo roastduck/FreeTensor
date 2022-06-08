@@ -26,7 +26,7 @@ jobs:
           git submodule foreach --recursive git clean -ffdx
           git submodule foreach --recursive git reset --hard
           source /opt/spack/share/spack/setup-env.sh
-          spack load python~debug@3.8.12%gcc@10.2.1 cuda@11.5.0 cudnn@8.3.3.40-11.5 intel-mkl@2020.4.304 java@11
+          spack load python~debug@3.9.2%gcc@10.2.1 cuda@11.5.0 cudnn@8.3.3.40-11.5 intel-mkl@2020.4.304 java@11
           source /home/rd/venv-freetensor/bin/activate
           mkdir build
           cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DFT_WITH_CUDA=ON -DFT_WITH_MKL=/home/spack/spack/opt/spack/linux-debian11-zen2/gcc-10.2.1/intel-mkl-2020.4.304-py6elz2mzhdgres34nr5e2ta5isfja7k/mkl -DFT_WITH_PYTORCH=ON
@@ -50,7 +50,7 @@ jobs:
           git submodule foreach --recursive git clean -ffdx
           git submodule foreach --recursive git reset --hard
           source /opt/spack/share/spack/setup-env.sh
-          spack load python~debug@3.8.12%gcc@10.2.1 cuda@11.4.2 cudnn@8.2.4.15-11.4 intel-mkl@2020.4.304 java@11
+          spack load python~debug@3.9.2%gcc@10.2.1 cuda@11.4.2 cudnn@8.2.4.15-11.4 intel-mkl@2020.4.304 java@11
           source /home/rd/venv-freetensor/bin/activate
           mkdir build
           cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DFT_WITH_CUDA=OFF -DFT_WITH_MKL=OFF
