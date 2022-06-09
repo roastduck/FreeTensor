@@ -31,6 +31,32 @@ static Expr makeReduce(ReduceOp reduceOp, const Expr &lhs, const Expr &rhs) {
     }
 }
 
+static std::vector<std::tuple<Stmt, Stmt, PBSet>>
+topoSort(const std::vector<std::tuple<Stmt, Stmt, PBSet>> &overwrites) {
+    // DFS post order of a reversed DAG is the original DAG's topogical order
+    // We need to find a topogical order of a earlier-to-later graph, which is
+    // the DFS post order of the reversed earlier-to-later graph, or the DFS
+    // post order of the later-to-earlier graph
+    std::vector<std::tuple<Stmt, Stmt, PBSet>> topo;
+    std::unordered_set<AST> visited;
+    std::function<void(const Stmt &x)> recur = [&](const Stmt &later) {
+        if (visited.count(later)) {
+            return;
+        }
+        visited.insert(later);
+        for (auto &&[_later, _earlier, _toKill] : overwrites) {
+            if (_later == later) {
+                recur(_earlier);
+                topo.emplace_back(_later, _earlier, _toKill);
+            }
+        }
+    };
+    for (auto &&[later, earlier, _] : overwrites) {
+        recur(later);
+    }
+    return topo;
+}
+
 void FindLoopInvariantWrites::visit(const For &op) {
     loopStack_.emplace_back(op);
     BaseClass::visit(op);
@@ -273,6 +299,8 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
     std::unordered_map<Stmt, Stmt> replacement;
 
     // Type 1
+
+    // Filter real overwrites
     for (auto i = overwrites.begin(); i != overwrites.end();) {
         auto &&[later, earlier, _] = *i;
         if (usesRAW.count(earlier) && usesWAR.count(later) &&
@@ -287,24 +315,29 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
     }
     for (auto i = overwrites.begin(); i != overwrites.end();) {
         auto &&[later, earlier, _] = *i;
-        if (!kill.at(earlier).empty()) {
+        if (later == earlier) {
+            i = overwrites.erase(i);
+        } else if (!kill.at(earlier).empty()) {
             i = overwrites.erase(i);
         } else {
             i++;
         }
     }
-    for (auto i = overwrites.begin(); i != overwrites.end(); i++) {
-        auto &&[_later, _earlier, _] = *i;
 
-        if (_later == _earlier) {
-            continue;
-        }
-        if (redundant.count(_later) || redundant.count(_earlier)) {
-            continue;
-        }
-        auto later =
-            replacement.count(_later) ? replacement.at(_later) : _later;
-        auto earlier =
+    // To deal with chained propagation, e.g.
+    // a += x  // (1)
+    // a += y  // (2)
+    // a += z  // (3)
+    // I. We first apply a topological sort to eusure we handle (1)->(2) before
+    // (2)->(3).
+    // II. When we are handling (2)->(3), there is already replacement[(2)] =
+    // xxxx. We start from that replacement and keep replacing
+    overwrites = topoSort(overwrites);
+
+    for (auto &&[_later, _earlier, _] : overwrites) {
+        ASSERT(!replacement.count(_later));
+        auto &&later = _later;
+        auto &&earlier =
             replacement.count(_earlier) ? replacement.at(_earlier) : _earlier;
 
         if (later->nodeType() == ASTNodeType::Store) {
@@ -336,14 +369,6 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
                     makeReduce(l->op_, earlier.as<ReduceToNode>()->expr_,
                                l->expr_),
                     false);
-            }
-        }
-
-        auto j = i;
-        for (j++; j != overwrites.end(); j++) {
-            auto &[__later, __earlier, _] = *j;
-            if (__later == _earlier) {
-                __later = _later;
             }
         }
     }

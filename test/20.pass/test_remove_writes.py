@@ -55,7 +55,24 @@ def test_type1_one_then_many():
     assert std.match(ast)
 
 
-def test_type1_many_then_one():
+def test_type1_one_then_many_reduce_no_remove():
+    with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
+        y[0] = 1
+        with ft.For("i", 0, 4) as i:
+            y[i] += i
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
+        y[0] = 1
+        with ft.For("i", 0, 4) as i:
+            y[i] += i
+    std = ft.make_reduction(ft.pop_ast())
+
+    assert std.match(ast)
+
+
+def test_type1_many_then_ones():
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4) as i:
             y[i] = i
@@ -71,6 +88,27 @@ def test_type1_many_then_one():
         y[1] = 1
         y[2] = 2
         y[3] = 3
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_type1_many_then_ones_reduce():
+    with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
+        with ft.For("i", 0, 4) as i:
+            y[i] = 1
+        y[0] += 1
+        y[1] += 2
+        y[2] += 3
+        y[3] += 4
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
+        y[0] = 2
+        y[1] = 3
+        y[2] = 4
+        y[3] = 5
     std = ft.pop_ast()
 
     assert std.match(ast)
