@@ -1,12 +1,24 @@
+#include <analyze/all_uses.h>
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
 #include <container_utils.h>
+#include <math/parse_pb_expr.h>
 #include <pass/hoist_var_over_stmt_seq.h>
 #include <pass/make_reduction.h>
 #include <pass/remove_writes.h>
+#include <pass/replace_iter.h>
 #include <pass/sink_var.h>
 
 namespace freetensor {
+
+namespace {
+
+struct ReplaceInfo {
+    std::vector<IterAxis> earlierIters_, laterIters_;
+    std::string funcStr_;
+};
+
+} // Anonymous namespace
 
 static bool sameParent(const Stmt &x, const Stmt &y) {
     return x->parentCtrlFlow() == y->parentCtrlFlow();
@@ -29,6 +41,32 @@ static Expr makeReduce(ReduceOp reduceOp, const Expr &lhs, const Expr &rhs) {
     default:
         ASSERT(false);
     }
+}
+
+static std::vector<std::tuple<Stmt, Stmt, PBSet, ReplaceInfo>> topoSort(
+    const std::vector<std::tuple<Stmt, Stmt, PBSet, ReplaceInfo>> &overwrites) {
+    // DFS post order of a reversed DAG is the original DAG's topogical order
+    // We need to find a topogical order of a earlier-to-later graph, which is
+    // the DFS post order of the reversed earlier-to-later graph, or the DFS
+    // post order of the later-to-earlier graph
+    std::vector<std::tuple<Stmt, Stmt, PBSet, ReplaceInfo>> topo;
+    std::unordered_set<AST> visited;
+    std::function<void(const Stmt &x)> recur = [&](const Stmt &later) {
+        if (visited.count(later)) {
+            return;
+        }
+        visited.insert(later);
+        for (auto &&[_later, _earlier, _1, _2] : overwrites) {
+            if (_later == later) {
+                recur(_earlier);
+                topo.emplace_back(_later, _earlier, _1, _2);
+            }
+        }
+    };
+    for (auto &&[later, earlier, _1, _2] : overwrites) {
+        recur(later);
+    }
+    return topo;
 }
 
 void FindLoopInvariantWrites::visit(const For &op) {
@@ -176,8 +214,8 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
              filterSelfDependent, false);
 
     PBCtx presburger;
-    // {(later, earlier, toKill)}
-    std::vector<std::tuple<Stmt, Stmt, PBSet>> overwrites;
+    // {(later, earlier, toKill, replaceInfo)}
+    std::vector<std::tuple<Stmt, Stmt, PBSet, ReplaceInfo>> overwrites;
     std::unordered_map<Stmt, std::unordered_set<AST>> usesRAW; // W -> R
     std::unordered_map<Stmt, std::unordered_set<AST>> usesWAR; // W -> R
     std::unordered_map<Stmt, PBSet> kill;
@@ -204,35 +242,28 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
         }
         overwrites.emplace_back(
             later, earlier,
-            PBSet(presburger, toString(range(d.later2EarlierIter_))));
+            PBSet(presburger, toString(range(d.later2EarlierIter_))),
+            ReplaceInfo{});
         suspect.insert(d.def());
     };
     auto foundOverwriteReduce = [&](const Dependency &d) {
         if (d.later() != d.earlier() &&
             (!selfDependentReduces.count(d.later().as<StmtNode>()) ||
              sameParent(d.later_.stmt_, d.earlier_.stmt_))) {
-            if (d.earlier()->nodeType() == ASTNodeType::Store &&
-                d.earlier().as<StoreNode>()->expr_->isConst()) {
-                goto is_overwrite;
-            } else if (d.earlier()->nodeType() == ASTNodeType::ReduceTo &&
-                       d.earlier().as<ReduceToNode>()->expr_->isConst()) {
-                goto is_overwrite;
-            } else if (sameParent(d.later_.stmt_, d.earlier_.stmt_)) {
-                goto is_overwrite;
+            if (d.later2EarlierIter_.isSingleValued()) {
+                auto earlier = d.earlier().as<StmtNode>();
+                auto later = d.later().as<StmtNode>();
+                if (!kill.count(earlier)) {
+                    kill[earlier] =
+                        PBSet(presburger, toString(domain(d.earlierIter2Idx_)));
+                }
+                overwrites.emplace_back(
+                    later, earlier,
+                    PBSet(presburger, toString(range(d.later2EarlierIter_))),
+                    ReplaceInfo{d.earlier_.iter_, d.later_.iter_,
+                                toString(PBFunc(d.later2EarlierIter_))});
+                suspect.insert(d.def());
             }
-            return;
-
-        is_overwrite:
-            auto earlier = d.earlier().as<StmtNode>();
-            auto later = d.later().as<StmtNode>();
-            if (!kill.count(earlier)) {
-                kill[earlier] =
-                    PBSet(presburger, toString(domain(d.earlierIter2Idx_)));
-            }
-            overwrites.emplace_back(
-                later, earlier,
-                PBSet(presburger, toString(range(d.later2EarlierIter_))));
-            suspect.insert(d.def());
         }
     };
     auto filterUse = [&](const AccessPoint &later, const AccessPoint &earlier) {
@@ -273,8 +304,10 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
     std::unordered_map<Stmt, Stmt> replacement;
 
     // Type 1
+
+    // Make sure there is no read between the overwriting two writes
     for (auto i = overwrites.begin(); i != overwrites.end();) {
-        auto &&[later, earlier, _] = *i;
+        auto &&[later, earlier, _1, _2] = *i;
         if (usesRAW.count(earlier) && usesWAR.count(later) &&
             hasIntersect(usesRAW.at(earlier), usesWAR.at(later))) {
             i = overwrites.erase(i);
@@ -282,29 +315,62 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
             i++;
         }
     }
-    for (auto &&[later, earlier, thisKill] : overwrites) {
+
+    // Make sure all instance of earlier is overwritten by later. E.g.,
+    //
+    // for i
+    //   if i < 5
+    //     a = x
+    //   a = y
+    //
+    // is OK, while
+    //
+    // for i
+    //   a = x
+    //   if i < 5
+    //     a = y
+    //
+    // is not.
+    //
+    // We also support a more complex case, where multiple laters overwirtes a
+    // single earlier. E.g.,
+    //
+    // for i
+    //   a = x
+    //   if i < 5
+    //     a = y
+    //   else
+    //     a = z
+    for (auto &&[later, earlier, thisKill, _] : overwrites) {
         kill[earlier] = subtract(std::move(kill.at(earlier)), thisKill);
     }
     for (auto i = overwrites.begin(); i != overwrites.end();) {
-        auto &&[later, earlier, _] = *i;
-        if (!kill.at(earlier).empty()) {
+        auto &&[later, earlier, _1, _2] = *i;
+        if (later == earlier) {
+            i = overwrites.erase(i);
+        } else if (!kill.at(earlier).empty()) {
             i = overwrites.erase(i);
         } else {
             i++;
         }
     }
-    for (auto i = overwrites.begin(); i != overwrites.end(); i++) {
-        auto &&[_later, _earlier, _] = *i;
 
-        if (_later == _earlier) {
-            continue;
-        }
-        if (redundant.count(_later) || redundant.count(_earlier)) {
-            continue;
-        }
-        auto later =
-            replacement.count(_later) ? replacement.at(_later) : _later;
-        auto earlier =
+    // To deal with chained propagation, e.g.
+    //
+    // a += x  // (1)
+    // a += y  // (2)
+    // a += z  // (3)
+    //
+    // I. We first apply a topological sort to eusure we handle (1)->(2) before
+    // (2)->(3).
+    // II. When we are handling (2)->(3), there is already replacement[(2)] =
+    // xxxx. We start from that replacement and keep replacing
+    overwrites = topoSort(overwrites);
+
+    for (auto &&[_later, _earlier, _, repInfo] : overwrites) {
+        ASSERT(!replacement.count(_later));
+        auto &&later = _later;
+        auto &&earlier =
             replacement.count(_earlier) ? replacement.at(_earlier) : _earlier;
 
         if (later->nodeType() == ASTNodeType::Store) {
@@ -316,34 +382,66 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
                             ? earlier.as<StoreNode>()->expr_
                             : earlier.as<ReduceToNode>()->expr_;
 
-            if (!checkNotModified(op, expr, CheckNotModifiedSide::After,
-                                  earlier->id(), CheckNotModifiedSide::Before,
-                                  later->id())) {
-                continue;
-            }
-
-            auto l = later.as<ReduceToNode>();
-            if (earlier->nodeType() == ASTNodeType::Store) {
-                redundant.insert(_earlier);
-                replacement[_later] =
-                    makeStore(later->id(), l->var_, l->indices_,
-                              makeReduce(l->op_, earlier.as<StoreNode>()->expr_,
-                                         l->expr_));
-            } else if (earlier.as<ReduceToNode>()->op_ == l->op_) {
-                redundant.insert(_earlier);
-                replacement[_later] = makeReduceTo(
-                    later->id(), l->var_, l->indices_, l->op_,
-                    makeReduce(l->op_, earlier.as<ReduceToNode>()->expr_,
-                               l->expr_),
-                    false);
-            }
-        }
-
-        auto j = i;
-        for (j++; j != overwrites.end(); j++) {
-            auto &[__later, __earlier, _] = *j;
-            if (__later == _earlier) {
-                __later = _later;
+            if (!allIters(expr).empty()) {
+                try {
+                    auto &&[args, values, cond] =
+                        parsePBFunc(repInfo.funcStr_); // later -> earlier
+                    ASSERT(repInfo.earlierIters_.size() <=
+                           values.size()); // maybe padded
+                    ASSERT(repInfo.laterIters_.size() <= args.size());
+                    std::unordered_map<std::string, Expr> islVarToNewIter,
+                        oldIterToNewIter;
+                    for (auto &&[newIter, arg] :
+                         iter::zip(repInfo.laterIters_, args)) {
+                        islVarToNewIter[arg] = newIter.iter_;
+                    }
+                    for (auto &&[oldIter, value] :
+                         iter::zip(repInfo.earlierIters_, values)) {
+                        if (oldIter.iter_->nodeType() == ASTNodeType::Var) {
+                            oldIterToNewIter[oldIter.iter_.as<VarNode>()
+                                                 ->name_] =
+                                ReplaceIter(islVarToNewIter)(value);
+                        }
+                    }
+                    auto newExpr = ReplaceIter(oldIterToNewIter)(expr);
+                    if (!checkNotModified(
+                            op, expr, newExpr, CheckNotModifiedSide::After,
+                            earlier->id(), CheckNotModifiedSide::Before,
+                            later->id())) {
+                        continue;
+                    }
+                    auto l = later.as<ReduceToNode>();
+                    if (earlier->nodeType() == ASTNodeType::Store) {
+                        redundant.insert(_earlier);
+                        replacement[_later] =
+                            makeStore(later->id(), l->var_, l->indices_,
+                                      makeReduce(l->op_, newExpr, l->expr_));
+                    } else if (earlier.as<ReduceToNode>()->op_ == l->op_) {
+                        redundant.insert(_earlier);
+                        replacement[_later] = makeReduceTo(
+                            later->id(), l->var_, l->indices_, l->op_,
+                            makeReduce(l->op_, newExpr, l->expr_), false);
+                    }
+                } catch (const ParserError &e) {
+                    // do nothing
+                }
+            } else {
+                if (checkNotModified(
+                        op, expr, CheckNotModifiedSide::After, earlier->id(),
+                        CheckNotModifiedSide::Before, later->id())) {
+                    auto l = later.as<ReduceToNode>();
+                    if (earlier->nodeType() == ASTNodeType::Store) {
+                        redundant.insert(_earlier);
+                        replacement[_later] =
+                            makeStore(later->id(), l->var_, l->indices_,
+                                      makeReduce(l->op_, expr, l->expr_));
+                    } else if (earlier.as<ReduceToNode>()->op_ == l->op_) {
+                        redundant.insert(_earlier);
+                        replacement[_later] = makeReduceTo(
+                            later->id(), l->var_, l->indices_, l->op_,
+                            makeReduce(l->op_, expr, l->expr_), false);
+                    }
+                }
             }
         }
     }
