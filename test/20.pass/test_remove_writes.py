@@ -1,7 +1,7 @@
 import freetensor as ft
 
 
-def test_type1_basic():
+def test_type1_write_then_write():
     with ft.VarDef("y", (), "int32", "output", "cpu") as y:
         y[()] = 1
         y[()] = 2
@@ -10,6 +10,23 @@ def test_type1_basic():
 
     with ft.VarDef("y", (), "int32", "output", "cpu") as y:
         y[()] = 2
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_type1_write_then_write_across_loops():
+    with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
+        with ft.For("i", 0, 4) as i:
+            y[i] = i + 1
+        with ft.For("i", 0, 4) as i:
+            y[i] = i + 2
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
+        with ft.For("i", 0, 4) as i:
+            y[i] = i + 2
     std = ft.pop_ast()
 
     assert std.match(ast)
@@ -160,6 +177,40 @@ def test_type1_write_then_reduce():
     assert std.match(ast)
 
 
+def test_type1_write_then_reduce_across_loops():
+    with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
+        with ft.For("i", 0, 4) as i:
+            y[i] = i + 1
+        with ft.For("i", 0, 4) as i:
+            y[i] += 2
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
+        with ft.For("i", 0, 4) as i:
+            y[i] = i + 3
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_type1_write_then_reduce_across_loops_different_indices():
+    with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
+        with ft.For("i", 2, 6) as i:
+            y[i - 2] = i + 1
+        with ft.For("i", 0, 4) as i:
+            y[i] += 2
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
+        with ft.For("i", 0, 4) as i:
+            y[i] = i + 5
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
 def test_type1_write_then_reduce_expr_modified_no_remove():
     with ft.VarDef([("y", (), "int32", "output", "cpu"),
                     ("z", (), "int32", "inout", "cpu")]) as (y, z):
@@ -188,6 +239,23 @@ def test_type1_reduce_then_reduce():
 
     with ft.VarDef("y", (), "int32", "inout", "cpu") as y:
         y[()] = y[()] + 3
+    std = ft.make_reduction(ft.pop_ast())
+
+    assert std.match(ast)
+
+
+def test_type1_reduce_then_reduce_across_loops():
+    with ft.VarDef("y", (4,), "int32", "inout", "cpu") as y:
+        with ft.For("i", 0, 4) as i:
+            y[i] += 1
+        with ft.For("i", 0, 4) as i:
+            y[i] += 2
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef("y", (4,), "int32", "inout", "cpu") as y:
+        with ft.For("i", 0, 4) as i:
+            y[i] += 3
     std = ft.make_reduction(ft.pop_ast())
 
     assert std.match(ast)
