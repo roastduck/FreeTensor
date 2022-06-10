@@ -250,18 +250,6 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
         if (d.later() != d.earlier() &&
             (!selfDependentReduces.count(d.later().as<StmtNode>()) ||
              sameParent(d.later_.stmt_, d.earlier_.stmt_))) {
-            if (d.earlier()->nodeType() == ASTNodeType::Store &&
-                d.earlier().as<StoreNode>()->expr_->isConst()) {
-                goto is_overwrite;
-            } else if (d.earlier()->nodeType() == ASTNodeType::ReduceTo &&
-                       d.earlier().as<ReduceToNode>()->expr_->isConst()) {
-                goto is_overwrite;
-            } else if (sameParent(d.later_.stmt_, d.earlier_.stmt_)) {
-                goto is_overwrite;
-            }
-            return;
-
-        is_overwrite:
             if (d.later2EarlierIter_.isSingleValued()) {
                 auto earlier = d.earlier().as<StmtNode>();
                 auto later = d.later().as<StmtNode>();
