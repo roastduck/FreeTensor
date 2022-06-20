@@ -12,6 +12,7 @@
 #include <analyze/find_loop_variance.h>
 #include <analyze/symbol_table.h>
 #include <analyze/track_stmt.h>
+#include <container_utils.h>
 #include <math/gen_pb_expr.h>
 #include <math/presburger.h>
 #include <visitor.h>
@@ -75,11 +76,18 @@ inline int countBandNodeWidth(const Stmt &op) {
     return visitor.width();
 }
 
+typedef std::function<bool(const AccessPoint &)> FindDepsAccFilter;
+typedef std::function<bool(const AccessPoint &later,
+                           const AccessPoint &earlier)>
+    FindDepsFilter;
+
 /**
  * Find read and write points
  */
 class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
     typedef SymbolTable<TrackStmt<Visitor>> BaseClass;
+
+    const FindDepsAccFilter &accFilter_;
 
     bool lastIsLoad_ = false;
     std::vector<IterAxis> cur_; // Current iteration point in the space
@@ -98,7 +106,7 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
     std::unordered_map<std::string, int> defAxis_;
 
   public:
-    FindAccessPoint(const Stmt &root);
+    FindAccessPoint(const Stmt &root, const FindDepsAccFilter &accFilter);
 
     const std::unordered_map<ID, std::vector<Ref<AccessPoint>>> &reads() const {
         return reads_;
@@ -133,7 +141,9 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
                cur_,
                std::vector<Expr>{op->indices_.begin(), op->indices_.end()},
                conds_};
-        writes_[def(op->var_)->id()].emplace_back(ap);
+        if (accFilter_ == nullptr || accFilter_(*ap)) {
+            writes_[def(op->var_)->id()].emplace_back(ap);
+        }
     }
 
   protected:
@@ -164,13 +174,12 @@ struct NodeIDOrParallelScope {
         : parallel_(parallel), isNode_(false) {}
 };
 
-typedef std::vector<std::pair<NodeIDOrParallelScope, DepDirection>>
-    FindDepsCond;
+typedef std::vector<std::pair<NodeIDOrParallelScope, DepDirection>> FindDepsDir;
 
 class AnalyzeDeps;
 
 struct Dependency {
-    const FindDepsCond &cond_; /// sub-condition that fails
+    const FindDepsDir &dir_; /// Direction vector filtering out this dependence
     const std::string &var_;
     const AccessPoint &later_, &earlier_;
     int iterDim_;
@@ -203,14 +212,10 @@ enum class FindDepsMode : int {
     Dep,         // Dependency may happen between `earlier` and `later`
     KillEarlier, // At any point in the space of `earlier`, it is dependent by
                  // `later`
-    KillLater,   // At any point in the space of `later`, it is dependent on
+    KillLater,   // At any point in the space of `later`, it is depending on
                  // `earlier`
     KillBoth,    // KillEarlier + KillLater
 };
-
-typedef std::function<bool(const AccessPoint &later,
-                           const AccessPoint &earlier)>
-    FindDepsFilter;
 
 /**
  * Find RAW, WAR and WAW dependencies
@@ -218,16 +223,17 @@ typedef std::function<bool(const AccessPoint &later,
 class AnalyzeDeps {
     friend Dependency;
 
-    const std::unordered_map<ID, std::vector<Ref<AccessPoint>>> &reads_,
-        &writes_;
+    std::unordered_map<ID, std::vector<Ref<AccessPoint>>> readsAsEarlier_,
+        readsAsLater_, writesAsEarlier_, writesAsLater_;
     const std::vector<VarDef> &allDefs_;
     const std::unordered_map<ID, std::vector<IterAxis>> &scope2coord_;
     const std::unordered_map<std::string, std::vector<ID>>
         &noDepsLists_; // Var name -> [loop ID]
     const LoopVariExprMap &variantExpr_;
 
-    const std::vector<FindDepsCond> &cond_;
+    const std::vector<FindDepsDir> &direction_;
     const FindDepsCallback &found_;
+    const FindDepsAccFilter &earlierFilter_, &laterFilter_;
     const FindDepsFilter &filter_;
 
     const FindDepsMode mode_;
@@ -248,14 +254,16 @@ class AnalyzeDeps {
         const std::unordered_map<ID, std::vector<IterAxis>> &scope2coord,
         const std::unordered_map<std::string, std::vector<ID>> &noDepsLists,
         const LoopVariExprMap &variantExpr,
-        const std::vector<FindDepsCond> &cond, const FindDepsCallback &found,
-        FindDepsMode mode, DepType depType, const FindDepsFilter &filter,
+        const std::vector<FindDepsDir> &direction,
+        const FindDepsCallback &found, FindDepsMode mode, DepType depType,
+        const FindDepsAccFilter &earlierFilter,
+        const FindDepsAccFilter &laterFilter, const FindDepsFilter &filter,
         bool ignoreReductionWAW, bool eraseOutsideVarDef,
         bool noProjectOutProvateAxis)
-        : reads_(reads), writes_(writes), allDefs_(allDefs),
-          scope2coord_(scope2coord), noDepsLists_(noDepsLists),
-          variantExpr_(variantExpr), cond_(cond), found_(found),
-          filter_(filter), mode_(mode),
+        : allDefs_(allDefs), scope2coord_(scope2coord),
+          noDepsLists_(noDepsLists), variantExpr_(variantExpr),
+          direction_(direction), found_(found), earlierFilter_(earlierFilter),
+          laterFilter_(laterFilter), filter_(filter), mode_(mode),
           earlierRelax_(mode_ == FindDepsMode::KillLater ||
                                 mode_ == FindDepsMode::KillBoth
                             ? RelaxMode::Necessary
@@ -266,7 +274,28 @@ class AnalyzeDeps {
                           : RelaxMode::Possible),
           depType_(depType), ignoreReductionWAW_(ignoreReductionWAW),
           eraseOutsideVarDef_(eraseOutsideVarDef),
-          noProjectOutProvateAxis_(noProjectOutProvateAxis) {}
+          noProjectOutProvateAxis_(noProjectOutProvateAxis) {
+        for (auto &&[id, list] : reads) {
+            readsAsEarlier_[id] =
+                ::freetensor::filter(list, [&](const Ref<AccessPoint> &acc) {
+                    return earlierFilter_ == nullptr || earlierFilter_(*acc);
+                });
+            readsAsLater_[id] =
+                ::freetensor::filter(list, [&](const Ref<AccessPoint> &acc) {
+                    return laterFilter_ == nullptr || laterFilter_(*acc);
+                });
+        }
+        for (auto &&[id, list] : writes) {
+            writesAsEarlier_[id] =
+                ::freetensor::filter(list, [&](const Ref<AccessPoint> &acc) {
+                    return earlierFilter_ == nullptr || earlierFilter_(*acc);
+                });
+            writesAsLater_[id] =
+                ::freetensor::filter(list, [&](const Ref<AccessPoint> &acc) {
+                    return laterFilter_ == nullptr || laterFilter_(*acc);
+                });
+        }
+    }
 
     void genTasks();
 
@@ -396,30 +425,176 @@ class AnalyzeDeps {
 };
 
 /**
- * Find all dependencies of a specific type along the given loops
+ * Find dependences in an AST satisfiying given conditions
  *
- * @param op : AST root
- * @param cond : conditions to check: reduce_or [ reduce_and [ axis, mode ]]
- * @param found : callback
- * @param mode : Dep: all possible dependencies; Kill: all the situations that a
- * later access completely covers a earlier one
- * @param depType : WAW, RAW, RAW, or their combinations
- * @param filter : Additional callback to select which dependencies to check.
- * Return false in this callback to skip some dependencies. This callback can be
- * nullptr
- * @param ignoreReductionWAW : Ignore WAW dependencies between two ReduceTo
- * nodes. This kind of dependencies are false dependencies if running serially
- * @param eraseOutsideVarDef : Ignore all dependencies outside the VarDef
- * @param noProjectOutPrivateAxis : Disable the projectOutPrivateAxis
- * optimization. If you want to further check Presburger maps or sets in the
- * `found` callback, you must set it to true
+ * Conditions can be set with member functions, and finally FindDeps can be run
+ * via `operator()`, e.g. `FindDeps().direction(...).filter(...)(...)`
  */
-void findDeps(const Stmt &op, const std::vector<FindDepsCond> &cond,
-              const FindDepsCallback &found,
-              FindDepsMode mode = FindDepsMode::Dep, DepType depType = DEP_ALL,
-              const FindDepsFilter &filter = nullptr,
-              bool ignoreReductionWAW = true, bool eraseOutsideVarDef = true,
-              bool noProjectOutProvateAxis = false);
+class FindDeps {
+    FindDepsMode mode_ = FindDepsMode::Dep;
+    DepType type_ = DEP_ALL;
+    std::vector<FindDepsDir> direction_ = {{}};
+    FindDepsAccFilter accFilter_ = nullptr;
+    FindDepsAccFilter earlierFilter_ = nullptr;
+    FindDepsAccFilter laterFilter_ = nullptr;
+    FindDepsFilter filter_ = nullptr;
+    bool ignoreReductionWAW_ = true;
+    bool eraseOutsideVarDef_ = true;
+    bool noProjectOutProvateAxis_ = false;
+
+  public:
+    /**
+     * Configure whether one access should depending on / be dependent by ALL
+     * INSTANCES of another access
+     *
+     * Possible values are:
+     *
+     * - Dep: No restriction
+     * - KillEarlier: Any instance of the `earlier` statement / expression is
+     * dependent by `later`
+     * - KillLater: Any instance of the `later` statement is depending on
+     * `earlier`
+     * - KillBoth: KillEarlier + KillLater
+     *
+     * Defaults to no restriction
+     */
+    FindDeps mode(FindDepsMode m) {
+        FindDeps ret = *this;
+        ret.mode_ = m;
+        return ret;
+    }
+
+    /**
+     * Check only for WAW, RAW and / or RAW dependences
+     *
+     * Defaults to no restriction
+     */
+    FindDeps type(DepType t) {
+        FindDeps ret = *this;
+        ret.type_ = t;
+        return ret;
+    }
+
+    /**
+     * Check only for given directions on loops or parallel scopes
+     *
+     * The direction array is in `reduce_or [ reduce_and [ axis, mode ]]`
+     * format.
+     *
+     * E.g. 1, `{{{L1, Same}, {L2, Normal}}}` means dependences should
+     * happen inside one iteration of L1, AND happen along L2.
+     *
+     * E.g. 2, `{{{L1, Same}}, {{L2, Normal}}}` means dependences should
+     * happen inside one iteration of L1, OR happen along L2.
+     *
+     * Defaults to no restriction
+     */
+    FindDeps direction(const std::vector<FindDepsDir> &d) {
+        FindDeps ret = *this;
+        ret.direction_ = d;
+        return ret;
+    }
+
+    /**
+     * Configure an additional callback to select the accesses to check
+     *
+     * `filterAccess` is preferred over `filterEarlier`, `filterLater` and
+     * `filter` for performance
+     *
+     * Defaults to no filter
+     */
+    FindDeps filterAccess(const FindDepsAccFilter &f) {
+        FindDeps ret = *this;
+        ret.accFilter_ = f;
+        return ret;
+    }
+
+    /**
+     * Configure an additional callback to select the dependent (earlier) access
+     * to check
+     *
+     * `filterEarlier` is perferred over `filter` for performance
+     *
+     * Defaults to no filter
+     */
+    FindDeps filterEarlier(const FindDepsAccFilter &f) {
+        FindDeps ret = *this;
+        ret.earlierFilter_ = f;
+        return ret;
+    }
+
+    /**
+     * Configure an additional callback to select the depending (later) access
+     * to check
+     *
+     * `filterLater` is perferred over `filter` for performance
+     *
+     * Defaults to no filter
+     */
+    FindDeps filterLater(const FindDepsAccFilter &f) {
+        FindDeps ret = *this;
+        ret.laterFilter_ = f;
+        return ret;
+    }
+
+    /**
+     * Configure an additional callback to select which dependencies to check
+     *
+     * Please use `filterAccess`, `filterEarlier` or `filterLater` if possbile,
+     * for better performance
+     *
+     * Defaults to no filter
+     */
+    FindDeps filter(const FindDepsFilter &f) {
+        FindDeps ret = *this;
+        ret.filter_ = f;
+        return ret;
+    }
+
+    /**
+     * Ignore WAW dependencies between two ReduceTo nodes. This kind of
+     * dependencies are false dependencies if running serially
+     *
+     * Defaults to true
+     */
+    FindDeps ignoreReductionWAW(bool flag) {
+        FindDeps ret = *this;
+        ret.ignoreReductionWAW_ = flag;
+        return ret;
+    }
+
+    /**
+     * Ignore all dependencies outside the VarDef
+     *
+     * Defaults to true
+     */
+    FindDeps eraseOutsideVarDef(bool flag) {
+        FindDeps ret = *this;
+        ret.eraseOutsideVarDef_ = flag;
+        return ret;
+    }
+
+    /**
+     * Disable the projectOutPrivateAxis optimization. If you want to further
+     * check Presburger maps or sets in the `found` callback, you must set it to
+     * true
+     *
+     * Defaults to false
+     */
+    FindDeps noProjectOutProvateAxis(bool flag) {
+        FindDeps ret = *this;
+        ret.noProjectOutProvateAxis_ = flag;
+        return ret;
+    }
+
+    /**
+     * Run FindDeps
+     *
+     * @param op : AST root
+     * @param found : callback
+     */
+    void operator()(const Stmt &op, const FindDepsCallback &found);
+};
 
 std::string toString(const Dependency &dep);
 

@@ -263,27 +263,23 @@ Stmt MakeParallelReduction::visit(const For &_op) {
 Stmt makeParallelReduction(const Stmt &_op) {
     auto op = makeReduction(_op);
 
-    std::vector<FindDepsCond> cond;
+    std::vector<FindDepsDir> direction;
     FindAllParallel parallelFinder;
     parallelFinder(op);
     auto &&paraInfo = parallelFinder.results();
     for (auto &&[loop, info] : paraInfo) {
-        FindDepsCond findDepsCond{{loop, DepDirection::Different}};
+        FindDepsDir findDepsDir{{loop, DepDirection::Different}};
         for (auto &&outerLoop : info.outerLoops_) {
-            findDepsCond.push_back({outerLoop, DepDirection::Same});
+            findDepsDir.push_back({outerLoop, DepDirection::Same});
         }
-        cond.emplace_back(std::move(findDepsCond));
+        direction.emplace_back(std::move(findDepsDir));
     }
 
     std::unordered_map<ID, std::unordered_set<ID>> toAlter;
-    auto filter = [](const AccessPoint &later, const AccessPoint &earlier) {
-        return earlier.op_->nodeType() == ASTNodeType::ReduceTo &&
-               later.op_->nodeType() == ASTNodeType::ReduceTo;
-    };
     auto found = [&](const Dependency &d) {
-        ASSERT(d.cond_.size() >= 1);
-        ASSERT(d.cond_.front().first.isNode_);
-        auto &&loopId = d.cond_.front().first.id_;
+        ASSERT(d.dir_.size() >= 1);
+        ASSERT(d.dir_.front().first.isNode_);
+        auto &&loopId = d.dir_.front().first.id_;
         if (auto &&parallel = paraInfo.at(loopId).type_;
             std::holds_alternative<CUDAScope>(parallel) &&
             std::get<CUDAScope>(parallel).level_ == CUDAScope::Thread &&
@@ -294,7 +290,15 @@ Stmt makeParallelReduction(const Stmt &_op) {
         toAlter[d.later().as<ReduceToNode>()->id()].insert(loopId);
         toAlter[d.earlier().as<ReduceToNode>()->id()].insert(loopId);
     };
-    findDeps(op, cond, found, FindDepsMode::Dep, DEP_ALL, filter, false);
+    FindDeps()
+        .direction(direction)
+        .filterLater([](const AccessPoint &later) {
+            return later.op_->nodeType() == ASTNodeType::ReduceTo;
+        })
+        .filterEarlier([](const AccessPoint &earlier) {
+            return earlier.op_->nodeType() == ASTNodeType::ReduceTo;
+        })
+        .ignoreReductionWAW(false)(op, found);
 
     FindSerialLoopsOverReduce serialFinder;
     serialFinder(op);

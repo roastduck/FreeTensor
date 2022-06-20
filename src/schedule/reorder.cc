@@ -105,24 +105,28 @@ Stmt reorder(const Stmt &_ast, const std::vector<ID> &dstOrder) {
 
     // A reorder is leagal if and only if, after transformation, there is no
     // such dependence that the out-most non-'=' carrying loop is not a '>'
-    std::vector<FindDepsCond> conds;
+    std::vector<FindDepsDir> direction;
     for (size_t i = 0, n = dstOrder.size(); i < n; i++) {
-        FindDepsCond cond;
+        FindDepsDir dir;
         for (size_t j = 0; j < i; j++) {
-            cond.emplace_back(dstOrder[j], DepDirection::Same);
+            dir.emplace_back(dstOrder[j], DepDirection::Same);
         }
-        cond.emplace_back(dstOrder[i], DepDirection::Inv);
-        conds.emplace_back(std::move(cond));
+        dir.emplace_back(dstOrder[i], DepDirection::Inv);
+        direction.emplace_back(std::move(dir));
     }
-    auto filter = [&](const AccessPoint &later, const AccessPoint &earlier) {
-        return earlier.stmt_->ancestorById(curOrder.front()->id()).isValid() &&
-               later.stmt_->ancestorById(curOrder.front()->id()).isValid();
-    };
     auto found = [&](const Dependency &d) {
         throw InvalidSchedule("Loops are not permutable: " + toString(d) +
                               " cannot be resolved");
     };
-    findDeps(ast, conds, found, FindDepsMode::Dep, DEP_ALL, filter);
+    FindDeps()
+        .direction(direction)
+        .filterEarlier([&](const AccessPoint &earlier) {
+            return earlier.stmt_->ancestorById(curOrder.front()->id())
+                .isValid();
+        })
+        .filterLater([&](const AccessPoint &later) {
+            return later.stmt_->ancestorById(curOrder.front()->id()).isValid();
+        })(ast, found);
 
     // Bubble Sort
     size_t n = index.size();

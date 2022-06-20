@@ -81,42 +81,47 @@ bool checkNotModified(const Stmt &op, const Expr &s0Expr, const Expr &s1Expr,
     }
 
     auto common = lcaStmt(s0Eval, s1Eval);
-    FindDepsCond cond;
+    FindDepsDir dir;
     for (auto p = common; p.isValid(); p = p->parentStmt()) {
         if (p->nodeType() == ASTNodeType::For) {
-            cond.emplace_back(p->id(), DepDirection::Same);
+            dir.emplace_back(p->id(), DepDirection::Same);
         }
     }
 
     // write -> serialized PBSet
     std::unordered_map<Stmt, std::string> writesWAR;
-    auto filterWAR = [&](const AccessPoint &later, const AccessPoint &earlier) {
-        return earlier.stmt_->id() == inserter.s0Eval();
-    };
     auto foundWAR = [&](const Dependency &dep) {
         // Serialize dep.later2EarlierIter_ because it is from a random PBCtx
         writesWAR[dep.later_.stmt_] =
             toString(apply(domain(dep.later2EarlierIter_), dep.laterIter2Idx_));
     };
-    findDeps(tmpOp, {cond}, foundWAR, FindDepsMode::Dep, DEP_WAR, filterWAR,
-             true, true, true);
+    FindDeps()
+        .direction({dir})
+        .type(DEP_WAR)
+        .filterEarlier([&](const AccessPoint &earlier) {
+            return earlier.stmt_->id() == inserter.s0Eval();
+        })
+        .noProjectOutProvateAxis(true)(tmpOp, foundWAR);
 
     for (auto &&[_item, w0] : writesWAR) {
         auto &&item = _item;
         std::string w1;
-        auto filterRAW = [&](const AccessPoint &later,
-                             const AccessPoint &earlier) {
-            return later.stmt_->id() == inserter.s1Eval() &&
-                   earlier.stmt_->id() == item->id();
-        };
         auto foundRAW = [&](const Dependency &dep) {
             // Serialize dep.later2EarlierIter_ because it is from a random
             // PBCtx
             w1 = toString(
                 apply(range(dep.later2EarlierIter_), dep.earlierIter2Idx_));
         };
-        findDeps(tmpOp, {cond}, foundRAW, FindDepsMode::Dep, DEP_RAW, filterRAW,
-                 true, true, true);
+        FindDeps()
+            .direction({dir})
+            .type(DEP_RAW)
+            .filterLater([&](const AccessPoint &later) {
+                return later.stmt_->id() == inserter.s1Eval();
+            })
+            .filterEarlier([&](const AccessPoint &earlier) {
+                return earlier.stmt_->id() == item->id();
+            })
+            .noProjectOutProvateAxis(true)(tmpOp, foundRAW);
 
         if (!w1.empty()) {
             PBCtx ctx;

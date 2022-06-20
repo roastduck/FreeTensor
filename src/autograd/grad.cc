@@ -541,7 +541,7 @@ gradBody(const Stmt &_op, const std::unordered_set<std::string> &_requires,
     auto foundWAW = [&](const Dependency &d) {
         notSingleWrite.insert(d.earlier().as<StmtNode>());
     };
-    findDeps(op, {{}}, foundWAW, FindDepsMode::Dep, DEP_WAW, nullptr, false);
+    FindDeps().type(DEP_WAW).ignoreReductionWAW(false)(op, foundWAW);
 
     Grad mutator(_requires, provides, tapes, propagator.affectedDefs(), tapeMap,
                  versions, totLens, notSingleWrite);

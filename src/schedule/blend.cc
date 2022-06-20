@@ -177,20 +177,23 @@ Stmt blend(const Stmt &_ast, const ID &loop) {
         throw InvalidSchedule("Loop " + toString(loop) + " not found");
     }
 
-    std::vector<FindDepsCond> cond;
+    std::vector<FindDepsDir> direction;
     for (auto &&item : finder.scopes()) {
-        cond.push_back(
+        direction.push_back(
             {{loop, DepDirection::Normal}, {item, DepDirection::Inv}});
     }
-    auto filter = [&](const AccessPoint &later, const AccessPoint &earlier) {
-        return earlier.stmt_->ancestorById(loop).isValid() &&
-               later.stmt_->ancestorById(loop).isValid();
-    };
     auto found = [&](const Dependency &d) {
-        ASSERT(d.cond_.size() == 2);
+        ASSERT(d.dir_.size() == 2);
         throw InvalidSchedule(toString(d) + " cannot be resolved");
     };
-    findDeps(ast, cond, found, FindDepsMode::Dep, DEP_ALL, filter);
+    FindDeps()
+        .direction(direction)
+        .filterEarlier([&](const AccessPoint &earlier) {
+            return earlier.stmt_->ancestorById(loop).isValid();
+        })
+        .filterLater([&](const AccessPoint &later) {
+            return later.stmt_->ancestorById(loop).isValid();
+        })(ast, found);
 
     auto loopVari = findLoopVariance(ast);
     ast = BlendPass(loop, loopVari.first, loopVari.second)(ast);

@@ -32,10 +32,13 @@ Stmt removeCyclicAssign(const Stmt &op) {
     auto foundWAR = [&](const Dependency &d) {
         redundant.emplace(d.later_.stmt_);
     };
-    // No filter for RAW because we want findDeps to find the nearest affecting
+    // No filter for RAW because we want FindDeps to find the nearest affecting
     // write
-    findDeps(op, {{}}, foundRAW, FindDepsMode::KillLater, DEP_RAW);
-    findDeps(op, {{}}, foundWAR, FindDepsMode::KillLater, DEP_WAR, filterWAR);
+    FindDeps().mode(FindDepsMode::KillLater).type(DEP_RAW)(op, foundRAW);
+    FindDeps()
+        .mode(FindDepsMode::KillLater)
+        .type(DEP_WAR)
+        .filter(filterWAR)(op, foundWAR);
     if (!redundant.empty()) {
         return RemoveWrites(redundant, {})(op);
     } else {
