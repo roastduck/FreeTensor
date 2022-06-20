@@ -153,8 +153,11 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
         }
         replace[later] = std::move(newExpr);
     };
-    findDeps(ast, {{}}, found, FindDepsMode::KillLater, DEP_RAW, filter, true,
-             true, true);
+    FindDeps()
+        .mode(FindDepsMode::KillLater)
+        .type(DEP_RAW)
+        .filter(filter)
+        .noProjectOutProvateAxis(true)(ast, found);
     ast = MakeInline(def, replace)(ast);
 
     ast = sinkVar(ast);

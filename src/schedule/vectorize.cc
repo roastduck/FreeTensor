@@ -27,8 +27,9 @@ Stmt vectorize(const Stmt &_ast, const ID &loop) {
     auto found = [&](const Dependency &d) {
         throw InvalidSchedule(toString(d) + " cannot be resolved");
     };
-    findDeps(ast, {{{loop, DepDirection::Normal}}}, found, FindDepsMode::Dep,
-             DEP_ALL, filter);
+    FindDeps()
+        .direction({{{loop, DepDirection::Normal}}})
+        .filter(filter)(ast, found);
     return ast;
 }
 

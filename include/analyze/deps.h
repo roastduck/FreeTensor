@@ -164,13 +164,12 @@ struct NodeIDOrParallelScope {
         : parallel_(parallel), isNode_(false) {}
 };
 
-typedef std::vector<std::pair<NodeIDOrParallelScope, DepDirection>>
-    FindDepsCond;
+typedef std::vector<std::pair<NodeIDOrParallelScope, DepDirection>> FindDepsDir;
 
 class AnalyzeDeps;
 
 struct Dependency {
-    const FindDepsCond &cond_; /// sub-condition that fails
+    const FindDepsDir &dir_; /// Direction vector filtering out this dependence
     const std::string &var_;
     const AccessPoint &later_, &earlier_;
     int iterDim_;
@@ -203,7 +202,7 @@ enum class FindDepsMode : int {
     Dep,         // Dependency may happen between `earlier` and `later`
     KillEarlier, // At any point in the space of `earlier`, it is dependent by
                  // `later`
-    KillLater,   // At any point in the space of `later`, it is dependent on
+    KillLater,   // At any point in the space of `later`, it is depending on
                  // `earlier`
     KillBoth,    // KillEarlier + KillLater
 };
@@ -226,7 +225,7 @@ class AnalyzeDeps {
         &noDepsLists_; // Var name -> [loop ID]
     const LoopVariExprMap &variantExpr_;
 
-    const std::vector<FindDepsCond> &cond_;
+    const std::vector<FindDepsDir> &direction_;
     const FindDepsCallback &found_;
     const FindDepsFilter &filter_;
 
@@ -248,13 +247,13 @@ class AnalyzeDeps {
         const std::unordered_map<ID, std::vector<IterAxis>> &scope2coord,
         const std::unordered_map<std::string, std::vector<ID>> &noDepsLists,
         const LoopVariExprMap &variantExpr,
-        const std::vector<FindDepsCond> &cond, const FindDepsCallback &found,
-        FindDepsMode mode, DepType depType, const FindDepsFilter &filter,
-        bool ignoreReductionWAW, bool eraseOutsideVarDef,
-        bool noProjectOutProvateAxis)
+        const std::vector<FindDepsDir> &direction,
+        const FindDepsCallback &found, FindDepsMode mode, DepType depType,
+        const FindDepsFilter &filter, bool ignoreReductionWAW,
+        bool eraseOutsideVarDef, bool noProjectOutProvateAxis)
         : reads_(reads), writes_(writes), allDefs_(allDefs),
           scope2coord_(scope2coord), noDepsLists_(noDepsLists),
-          variantExpr_(variantExpr), cond_(cond), found_(found),
+          variantExpr_(variantExpr), direction_(direction), found_(found),
           filter_(filter), mode_(mode),
           earlierRelax_(mode_ == FindDepsMode::KillLater ||
                                 mode_ == FindDepsMode::KillBoth
@@ -396,30 +395,128 @@ class AnalyzeDeps {
 };
 
 /**
- * Find all dependencies of a specific type along the given loops
+ * Find dependences in an AST satisfiying given conditions
  *
- * @param op : AST root
- * @param cond : conditions to check: reduce_or [ reduce_and [ axis, mode ]]
- * @param found : callback
- * @param mode : Dep: all possible dependencies; Kill: all the situations that a
- * later access completely covers a earlier one
- * @param depType : WAW, RAW, RAW, or their combinations
- * @param filter : Additional callback to select which dependencies to check.
- * Return false in this callback to skip some dependencies. This callback can be
- * nullptr
- * @param ignoreReductionWAW : Ignore WAW dependencies between two ReduceTo
- * nodes. This kind of dependencies are false dependencies if running serially
- * @param eraseOutsideVarDef : Ignore all dependencies outside the VarDef
- * @param noProjectOutPrivateAxis : Disable the projectOutPrivateAxis
- * optimization. If you want to further check Presburger maps or sets in the
- * `found` callback, you must set it to true
+ * Conditions can be set with member functions, and finally FindDeps can be run
+ * via `operator()`, e.g. `FindDeps().direction(...).filter(...)(...)`
  */
-void findDeps(const Stmt &op, const std::vector<FindDepsCond> &cond,
-              const FindDepsCallback &found,
-              FindDepsMode mode = FindDepsMode::Dep, DepType depType = DEP_ALL,
-              const FindDepsFilter &filter = nullptr,
-              bool ignoreReductionWAW = true, bool eraseOutsideVarDef = true,
-              bool noProjectOutProvateAxis = false);
+class FindDeps {
+    FindDepsMode mode_ = FindDepsMode::Dep;
+    DepType type_ = DEP_ALL;
+    std::vector<FindDepsDir> direction_ = {{}};
+    FindDepsFilter filter_ = nullptr;
+    bool ignoreReductionWAW_ = true;
+    bool eraseOutsideVarDef_ = true;
+    bool noProjectOutProvateAxis_ = false;
+
+  public:
+    /**
+     * Configure whether one access should depending on / be dependent by ALL
+     * INSTANCES of another access
+     *
+     * Possible values are:
+     *
+     * - Dep: No restriction
+     * - KillEarlier: Any instance of the `earlier` statement / expression is
+     * dependent by `later`
+     * - KillLater: Any instance of the `later` statement is depending on
+     * `earlier`
+     * - KillBoth: KillEarlier + KillLater
+     *
+     * Defaults to no restriction
+     */
+    FindDeps mode(FindDepsMode m) {
+        FindDeps ret = *this;
+        ret.mode_ = m;
+        return ret;
+    }
+
+    /**
+     * Check only for WAW, RAW and / or RAW dependences
+     *
+     * Defaults to no restriction
+     */
+    FindDeps type(DepType t) {
+        FindDeps ret = *this;
+        ret.type_ = t;
+        return ret;
+    }
+
+    /**
+     * Check only for given directions on loops or parallel scopes
+     *
+     * The direction array is in `reduce_or [ reduce_and [ axis, mode ]]`
+     * format.
+     *
+     * E.g. 1, `{{{L1, Same}, {L2, Normal}}}` means dependences should
+     * happen inside one iteration of L1, AND happen along L2.
+     *
+     * E.g. 2, `{{{L1, Same}}, {{L2, Normal}}}` means dependences should
+     * happen inside one iteration of L1, OR happen along L2.
+     *
+     * Defaults to no restriction
+     */
+    FindDeps direction(const std::vector<FindDepsDir> &d) {
+        FindDeps ret = *this;
+        ret.direction_ = d;
+        return ret;
+    }
+
+    /**
+     * Configure an additional callback to select which dependencies to check
+     *
+     * Defaults to no filter
+     */
+    FindDeps filter(const FindDepsFilter &f) {
+        FindDeps ret = *this;
+        ret.filter_ = f;
+        return ret;
+    }
+
+    /**
+     * Ignore WAW dependencies between two ReduceTo nodes. This kind of
+     * dependencies are false dependencies if running serially
+     *
+     * Defaults to true
+     */
+    FindDeps ignoreReductionWAW(bool flag) {
+        FindDeps ret = *this;
+        ret.ignoreReductionWAW_ = flag;
+        return ret;
+    }
+
+    /**
+     * Ignore all dependencies outside the VarDef
+     *
+     * Defaults to true
+     */
+    FindDeps eraseOutsideVarDef(bool flag) {
+        FindDeps ret = *this;
+        ret.eraseOutsideVarDef_ = flag;
+        return ret;
+    }
+
+    /**
+     * Disable the projectOutPrivateAxis optimization. If you want to further
+     * check Presburger maps or sets in the `found` callback, you must set it to
+     * true
+     *
+     * Defaults to false
+     */
+    FindDeps noProjectOutProvateAxis(bool flag) {
+        FindDeps ret = *this;
+        ret.noProjectOutProvateAxis_ = flag;
+        return ret;
+    }
+
+    /**
+     * Run FindDeps
+     *
+     * @param op : AST root
+     * @param found : callback
+     */
+    void operator()(const Stmt &op, const FindDepsCallback &found);
+};
 
 std::string toString(const Dependency &dep);
 

@@ -42,9 +42,11 @@ std::vector<std::string> mergeNoDepsHint(const Stmt &ast,
                         return later.def_->name_ == item;
                     };
                     auto found = [&](const Dependency &d) { noDep = false; };
-                    findDeps(ast, {{{loop->id(), DepDirection::Different}}},
-                             found, FindDepsMode::Dep, DEP_ALL, filter, false,
-                             false);
+                    FindDeps()
+                        .direction({{{loop->id(), DepDirection::Different}}})
+                        .filter(filter)
+                        .eraseOutsideVarDef(false)
+                        .ignoreReductionWAW(false)(ast, found);
                     if (!noDep) {
                         goto fail;
                     }

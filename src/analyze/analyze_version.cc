@@ -154,9 +154,9 @@ std::pair<std::unordered_map<ID, Expr>, std::unordered_map<ID, Expr>>
 analyzeVersion(const Stmt &_op, const std::unordered_set<ID> &intermediates) {
     auto op = flattenStmtSeq(_op);
 
-    std::vector<FindDepsCond> conds;
+    std::vector<FindDepsDir> direction;
     for (auto &&scope : findAllLoops(op)) {
-        conds.push_back({{scope, DepDirection::Normal}});
+        direction.push_back({{scope, DepDirection::Normal}});
     }
     std::unordered_map<ID, std::unordered_set<ID>> affectingScopes, needTapes;
     auto filter1 = [&](const AccessPoint &later, const AccessPoint &earlier) {
@@ -178,14 +178,17 @@ analyzeVersion(const Stmt &_op, const std::unordered_set<ID> &intermediates) {
              d.later()->nodeType() != ASTNodeType::Load) ||
             (d.later()->nodeType() == ASTNodeType::Load &&
              d.earlier()->nodeType() != ASTNodeType::Load)) {
-            ASSERT(d.cond_.size() == 1);
-            affectingScopes[d.defId()].insert(d.cond_[0].first.id_);
+            ASSERT(d.dir_.size() == 1);
+            affectingScopes[d.defId()].insert(d.dir_[0].first.id_);
         }
     };
-    findDeps(op, {{}}, found1, FindDepsMode::Dep, DEP_RAW, filter1, true,
-             false);
-    findDeps(op, conds, found2, FindDepsMode::Dep, DEP_RAW | DEP_WAR, filter2,
-             true, false);
+    FindDeps().type(DEP_RAW).filter(filter1).eraseOutsideVarDef(false)(op,
+                                                                       found1);
+    FindDeps()
+        .direction(direction)
+        .type(DEP_RAW | DEP_WAR)
+        .filter(filter2)
+        .eraseOutsideVarDef(false)(op, found2);
 
     std::unordered_map<ID, Expr> versions;
     std::unordered_map<ID, Expr> totLens;

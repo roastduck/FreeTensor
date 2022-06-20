@@ -34,16 +34,16 @@ void FindAllThreads::visit(const For &op) {
     }
     Visitor::visit(op);
     if (op->property_->parallel_ == threadIdxX) {
-        results_.emplace_back(
-            ThreadInfo{op, thx_.isValid() && warpSize_ % *thx_ == 0});
+        results_[op->id()] =
+            ThreadInfo{op, thx_.isValid() && warpSize_ % *thx_ == 0};
     } else if (op->property_->parallel_ == threadIdxY) {
-        results_.emplace_back(
+        results_[op->id()] =
             ThreadInfo{op, thx_.isValid() && thy_.isValid() &&
-                               warpSize_ % (*thx_ * *thy_) == 0});
+                               warpSize_ % (*thx_ * *thy_) == 0};
     } else if (op->property_->parallel_ == threadIdxZ) {
-        results_.emplace_back(
+        results_[op->id()] =
             ThreadInfo{op, thx_.isValid() && thy_.isValid() && thz_.isValid() &&
-                               warpSize_ % (*thx_ * *thy_ * *thz_) == 0});
+                               warpSize_ % (*thx_ * *thy_ * *thz_) == 0};
     }
 }
 
@@ -285,12 +285,12 @@ Stmt makeSync(const Stmt &_op) {
     auto op = constFold(_op);
     FindAllThreads finder;
     finder(op);
-    auto &&threads = finder.results();
+    auto &&loop2thread = finder.results();
 
-    std::vector<FindDepsCond> query;
-    query.reserve(threads.size());
-    for (auto &&thr : threads) {
-        query.push_back({{thr.loop_->id(), DepDirection::Different}});
+    std::vector<FindDepsDir> query;
+    query.reserve(loop2thread.size());
+    for (auto &&[loopId, thr] : loop2thread) {
+        query.push_back({{loopId, DepDirection::Different}});
     }
     std::vector<CrossThreadDep> deps;
     auto filter = [](const AccessPoint &later, const AccessPoint &earlier) {
@@ -301,7 +301,7 @@ Stmt makeSync(const Stmt &_op) {
                later.buffer_->mtype() == MemType::GPUShared;
     };
     auto found = [&](const Dependency &d) {
-        auto i = &d.cond_ - &query[0];
+        ASSERT(d.dir_.size() == 1);
         auto commonStmt = lcaStmt(d.later_.stmt_, d.earlier_.stmt_);
         auto commonLoop = commonStmt;
         while (commonLoop->parent().isValid() &&
@@ -309,12 +309,15 @@ Stmt makeSync(const Stmt &_op) {
             commonLoop = commonLoop->parentStmt();
         }
         ASSERT(commonLoop->nodeType() == ASTNodeType::For);
-        deps.emplace_back(CrossThreadDep{d.later_.stmt_, d.earlier_.stmt_,
-                                         commonStmt, commonLoop,
-                                         threads.at(i).inWarp_, false, false});
+        deps.emplace_back(CrossThreadDep{
+            d.later_.stmt_, d.earlier_.stmt_, commonStmt, commonLoop,
+            loop2thread.at(d.dir_[0].first.id_).inWarp_, false, false});
     };
-    findDeps(op, query, found, FindDepsMode::Dep, DEP_ALL, filter, false,
-             false);
+    FindDeps()
+        .direction(query)
+        .filter(filter)
+        .ignoreReductionWAW(false)
+        .eraseOutsideVarDef(false)(op, found);
 
     MakeSync mutator(op, std::move(deps));
     op = mutator(op);

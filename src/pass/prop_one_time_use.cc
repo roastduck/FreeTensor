@@ -102,8 +102,12 @@ Stmt propOneTimeUse(const Stmt &_op) {
         r2wMay[d.later()].emplace_back(d.earlier().as<StmtNode>());
         w2rMay[d.earlier().as<StmtNode>()].emplace_back(d.later());
     };
-    findDeps(op, {{}}, foundMust, FindDepsMode::KillLater, DEP_RAW, filterMust);
-    findDeps(op, {{}}, foundMay, FindDepsMode::Dep, DEP_RAW, filterMay, false);
+    FindDeps()
+        .mode(FindDepsMode::KillLater)
+        .type(DEP_RAW)
+        .filter(filterMust)(op, foundMust);
+    FindDeps().type(DEP_RAW).filter(filterMay).ignoreReductionWAW(false)(
+        op, foundMay);
 
     // Filter one-time use
     std::unordered_map<AST, std::pair<Stmt, ReplaceInfo>> r2w;

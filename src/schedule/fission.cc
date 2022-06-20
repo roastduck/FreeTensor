@@ -305,7 +305,7 @@ fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
     auto variantExpr = findLoopVariance(ast);
 
     // var name -> loop id
-    std::vector<FindDepsCond> disjunct;
+    std::vector<FindDepsDir> disjunct;
     for (const ID &inner : hoist.innerLoops()) {
         disjunct.push_back({{inner, DepDirection::Normal}});
     }
@@ -323,8 +323,8 @@ fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
     };
     std::unordered_map<ID, std::vector<ID>> toAdd;
     auto found = [&](const Dependency &d) {
-        ASSERT(d.cond_.size() == 1);
-        auto &&id = d.cond_[0].first.id_;
+        ASSERT(d.dir_.size() == 1);
+        auto &&id = d.dir_[0].first.id_;
         if (!xLoops.count(d.var_) ||
             std::find(xLoops.at(d.var_).begin(), xLoops.at(d.var_).end(), id) ==
                 xLoops.at(d.var_).end()) {
@@ -343,7 +343,7 @@ fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
             toAdd[d.defId()].emplace_back(id);
         }
     };
-    findDeps(ast, disjunct, found, FindDepsMode::Dep, DEP_ALL, filter);
+    FindDeps().direction(disjunct).filter(filter)(ast, found);
 
     AddDimToVar adder(toAdd);
     ast = adder(ast);

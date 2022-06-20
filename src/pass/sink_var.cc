@@ -139,17 +139,17 @@ Stmt sinkVar(const Stmt &_op) {
     auto op = _op;
 
     auto allLoops = findAllLoops(op);
-    std::vector<FindDepsCond> cond;
-    cond.reserve(allLoops.size());
+    std::vector<FindDepsDir> direction;
+    direction.reserve(allLoops.size());
     for (auto &&loop : allLoops) {
-        cond.push_back({{loop, DepDirection::Normal}});
+        direction.push_back({{loop, DepDirection::Normal}});
     }
     std::unordered_set<std::pair<std::string, ID>> deps; // {(var, loop)}
     auto found = [&](const Dependency &d) {
-        ASSERT(d.cond_.size() == 1);
-        deps.emplace(d.var_, d.cond_[0].first.id_);
+        ASSERT(d.dir_.size() == 1);
+        deps.emplace(d.var_, d.dir_[0].first.id_);
     };
-    findDeps(op, cond, found);
+    FindDeps().direction(direction)(op, found);
 
     for (int i = 0;; i++) {
         if (i > 100) {

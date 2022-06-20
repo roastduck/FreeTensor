@@ -108,10 +108,11 @@ Stmt multiplexBuffers(const Stmt &op) {
 
     auto variantMap = findLoopVariance(op).second;
 
-    std::vector<FindDepsCond> conds;
+    std::vector<FindDepsDir> direction;
     std::unordered_map<ID, ParallelScope> parallelScopes; // For ID -> parallel
     for (auto &&loop : finder.loops()) {
-        conds.emplace_back(FindDepsCond{{loop->id(), DepDirection::Different}});
+        direction.emplace_back(
+            FindDepsDir{{loop->id(), DepDirection::Different}});
         parallelScopes[loop->id()] = loop->property_->parallel_;
     }
     std::unordered_map<ID, std::unordered_set<ID>>
@@ -121,15 +122,16 @@ Stmt multiplexBuffers(const Stmt &op) {
                later.def_->buffer_->mtype() == MemType::GPUGlobal;
     };
     auto found = [&](const Dependency &d) {
-        ASSERT(d.cond_.size() == 1);
+        ASSERT(d.dir_.size() == 1);
         if (finder.affecting().count(d.defId()) &&
-            finder.affecting().at(d.defId()).count(d.cond_[0].first.id_)) {
-            if (isVariant(variantMap, d.def(), d.cond_[0].first.id_)) {
-                affecting[d.defId()].insert(d.cond_[0].first.id_);
+            finder.affecting().at(d.defId()).count(d.dir_[0].first.id_)) {
+            if (isVariant(variantMap, d.def(), d.dir_[0].first.id_)) {
+                affecting[d.defId()].insert(d.dir_[0].first.id_);
             }
         }
     };
-    findDeps(op, conds, found, FindDepsMode::Dep, DEP_ALL, filter, true, false);
+    FindDeps().direction(direction).filter(filter).eraseOutsideVarDef(false)(
+        op, found);
 
     return MultiplexMutator(affecting)(op);
 }

@@ -1,6 +1,7 @@
 #ifndef FREE_TENSOR_GPU_MAKE_SYNC_H
 #define FREE_TENSOR_GPU_MAKE_SYNC_H
 
+#include <unordered_map>
 #include <unordered_set>
 
 #include <func.h>
@@ -23,10 +24,12 @@ class FindAllThreads : public Visitor {
     Opt<int> thx_ = Opt<int>::make(1);
     Opt<int> thy_ = Opt<int>::make(1);
     Opt<int> thz_ = Opt<int>::make(1);
-    std::vector<ThreadInfo> results_;
+    std::unordered_map<ID, ThreadInfo> results_;
 
   public:
-    const std::vector<ThreadInfo> &results() const { return results_; }
+    const std::unordered_map<ID, ThreadInfo> &results() const {
+        return results_;
+    }
 
   protected:
     void visit(const For &op) override;

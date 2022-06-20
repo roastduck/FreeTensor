@@ -210,8 +210,10 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
     auto foundSelfDependent = [&](const Dependency &d) {
         selfDependentReduces.insert(d.later().as<StmtNode>());
     };
-    findDeps(op, {{}}, foundSelfDependent, FindDepsMode::Dep, DEP_WAW,
-             filterSelfDependent, false);
+    FindDeps()
+        .type(DEP_WAW)
+        .filter(filterSelfDependent)
+        .ignoreReductionWAW(false)(op, foundSelfDependent);
 
     PBCtx presburger;
     // {(later, earlier, toKill, replaceInfo)}
@@ -294,11 +296,18 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
         }
     };
 
-    findDeps(op, {{}}, foundOverwriteStore, FindDepsMode::Dep, DEP_WAW,
-             filterOverwriteStore, false, true, true);
-    findDeps(op, {{}}, foundOverwriteReduce, FindDepsMode::KillLater, DEP_WAW,
-             filterOverwriteReduce, false, true, true);
-    findDeps(op, {{}}, foundUse, FindDepsMode::Dep, DEP_ALL, filterUse, false);
+    FindDeps()
+        .type(DEP_WAW)
+        .filter(filterOverwriteStore)
+        .ignoreReductionWAW(false)
+        .noProjectOutProvateAxis(true)(op, foundOverwriteStore);
+    FindDeps()
+        .mode(FindDepsMode::KillLater)
+        .type(DEP_WAW)
+        .filter(filterOverwriteReduce)
+        .ignoreReductionWAW(false)
+        .noProjectOutProvateAxis(true)(op, foundOverwriteReduce);
+    FindDeps().filter(filterUse).ignoreReductionWAW(false)(op, foundUse);
 
     std::unordered_set<Stmt> redundant;
     std::unordered_map<Stmt, Stmt> replacement;

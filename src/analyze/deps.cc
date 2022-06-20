@@ -607,7 +607,7 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
         return;
     }
 
-    for (auto &&item : cond_) {
+    for (auto &&item : direction_) {
         std::vector<PBMap> _requires;
         for (auto &&[nodeOrParallel, dir] : item) {
             if (nodeOrParallel.isNode_) {
@@ -928,16 +928,13 @@ PBMap Dependency::extraCheck(PBMap dep,
     return dep;
 }
 
-void findDeps(const Stmt &op, const std::vector<FindDepsCond> &cond,
-              const FindDepsCallback &found, FindDepsMode mode, DepType depType,
-              const FindDepsFilter &filter, bool ignoreReductionWAW,
-              bool eraseOutsideVarDef, bool noProjectOutProvateAxis) {
-    if (cond.empty()) {
+void FindDeps::operator()(const Stmt &op, const FindDepsCallback &found) {
+    if (direction_.empty()) {
         return;
     }
 
-    if (mode != FindDepsMode::Dep) {
-        noProjectOutProvateAxis = true;
+    if (mode_ != FindDepsMode::Dep) {
+        noProjectOutProvateAxis_ = true;
     }
 
     FindAccessPoint accFinder(op);
@@ -947,9 +944,9 @@ void findDeps(const Stmt &op, const std::vector<FindDepsCond> &cond,
     auto variantExpr = findLoopVariance(op).first;
     AnalyzeDeps analyzer(accFinder.reads(), accFinder.writes(),
                          accFinder.allDefs(), accFinder.scope2coord(),
-                         noDepsFinder.results(), variantExpr, cond, found, mode,
-                         depType, filter, ignoreReductionWAW,
-                         eraseOutsideVarDef, noProjectOutProvateAxis);
+                         noDepsFinder.results(), variantExpr, direction_, found,
+                         mode_, type_, filter_, ignoreReductionWAW_,
+                         eraseOutsideVarDef_, noProjectOutProvateAxis_);
     analyzer.genTasks();
     size_t n = analyzer.tasks().size();
     std::vector<std::exception_ptr> exceptions(n, nullptr);
@@ -983,7 +980,7 @@ std::string toString(const Dependency &dep) {
         os << " in " << dep.earlier_.stmt_;
     }
     bool first = true;
-    for (auto &&[scope, dir] : dep.cond_) {
+    for (auto &&[scope, dir] : dep.dir_) {
         os << (first ? " along " : " and ");
         first = false;
         if (scope.isNode_) {

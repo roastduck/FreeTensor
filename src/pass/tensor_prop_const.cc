@@ -89,10 +89,13 @@ Stmt tensorPropConst(const Stmt &_op) {
         auto foundMay = [&](const Dependency &d) {
             r2wMay[d.later()].emplace_back(d.earlier().as<StmtNode>());
         };
-        findDeps(op, {{}}, foundMust, FindDepsMode::KillLater, DEP_RAW,
-                 filterMust, true, true, true);
-        findDeps(op, {{}}, foundMay, FindDepsMode::Dep, DEP_RAW, filterMay,
-                 false);
+        FindDeps()
+            .mode(FindDepsMode::KillLater)
+            .type(DEP_RAW)
+            .filter(filterMust)
+            .noProjectOutProvateAxis(true)(op, foundMust);
+        FindDeps().type(DEP_RAW).filter(filterMay).ignoreReductionWAW(false)(
+            op, foundMay);
 
         std::unordered_map<AST, Expr> replace;
         for (auto &&item : r2w) {
