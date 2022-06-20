@@ -117,10 +117,6 @@ Stmt multiplexBuffers(const Stmt &op) {
     }
     std::unordered_map<ID, std::unordered_set<ID>>
         affecting; // VarDef ID -> For ID
-    auto filter = [](const AccessPoint &later, const AccessPoint &earlier) {
-        return later.def_->buffer_->mtype() == MemType::GPUShared ||
-               later.def_->buffer_->mtype() == MemType::GPUGlobal;
-    };
     auto found = [&](const Dependency &d) {
         ASSERT(d.dir_.size() == 1);
         if (finder.affecting().count(d.defId()) &&
@@ -130,8 +126,13 @@ Stmt multiplexBuffers(const Stmt &op) {
             }
         }
     };
-    FindDeps().direction(direction).filter(filter).eraseOutsideVarDef(false)(
-        op, found);
+    FindDeps()
+        .direction(direction)
+        .filterAccess([](const AccessPoint &acc) {
+            return acc.def_->buffer_->mtype() == MemType::GPUShared ||
+                   acc.def_->buffer_->mtype() == MemType::GPUGlobal;
+        })
+        .eraseOutsideVarDef(false)(op, found);
 
     return MultiplexMutator(affecting)(op);
 }

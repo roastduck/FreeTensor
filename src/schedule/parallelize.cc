@@ -62,15 +62,17 @@ Stmt parallelize(const Stmt &_ast, const ID &loop,
         for (auto &&outerLoop : mutator.outerLoops()) {
             findDepsDir.push_back({outerLoop, DepDirection::Same});
         }
-        auto filter = [&](const AccessPoint &later,
-                          const AccessPoint &earlier) {
-            return earlier.stmt_->ancestorById(loop).isValid() &&
-                   later.stmt_->ancestorById(loop).isValid();
-        };
         auto found = [&](const Dependency &d) {
             throw InvalidSchedule(toString(d) + " cannot be resolved");
         };
-        FindDeps().direction({findDepsDir}).filter(filter)(oldAst, found);
+        FindDeps()
+            .direction({findDepsDir})
+            .filterEarlier([&](const AccessPoint &earlier) {
+                return earlier.stmt_->ancestorById(loop).isValid();
+            })
+            .filterLater([&](const AccessPoint &later) {
+                return later.stmt_->ancestorById(loop).isValid();
+            })(oldAst, found);
     }
 
     {

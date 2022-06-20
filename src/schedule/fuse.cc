@@ -263,17 +263,18 @@ std::pair<Stmt, ID> fuse(const Stmt &_ast, const ID &loop0, const ID &loop1,
     FuseFor mutator(_ast, loop0, loop1, strict);
     auto ast = mutator(_ast);
 
-    auto filter = [&](const AccessPoint &later, const AccessPoint &earlier) {
-        return earlier.stmt_->ancestorById(mutator.afterId()).isValid() &&
-               later.stmt_->ancestorById(mutator.beforeId()).isValid();
-    };
     auto found = [&](const Dependency &d) {
         ASSERT(d.dir_.size() == 1);
         throw InvalidSchedule(toString(d) + " cannot be resolved");
     };
     FindDeps()
         .direction({{{mutator.fused(), DepDirection::Normal}}})
-        .filter(filter)(ast, found);
+        .filterEarlier([&](const AccessPoint &earlier) {
+            return earlier.stmt_->ancestorById(mutator.afterId()).isValid();
+        })
+        .filterLater([&](const AccessPoint &later) {
+            return later.stmt_->ancestorById(mutator.beforeId()).isValid();
+        })(ast, found);
 
     try {
         ast = simplify(ast);

@@ -293,13 +293,6 @@ Stmt makeSync(const Stmt &_op) {
         query.push_back({{loopId, DepDirection::Different}});
     }
     std::vector<CrossThreadDep> deps;
-    auto filter = [](const AccessPoint &later, const AccessPoint &earlier) {
-        if (later.op_ == earlier.op_) {
-            return false;
-        }
-        return later.buffer_->mtype() == MemType::GPUGlobal ||
-               later.buffer_->mtype() == MemType::GPUShared;
-    };
     auto found = [&](const Dependency &d) {
         ASSERT(d.dir_.size() == 1);
         auto commonStmt = lcaStmt(d.later_.stmt_, d.earlier_.stmt_);
@@ -315,7 +308,13 @@ Stmt makeSync(const Stmt &_op) {
     };
     FindDeps()
         .direction(query)
-        .filter(filter)
+        .filterAccess([](const AccessPoint &acc) {
+            return acc.buffer_->mtype() == MemType::GPUGlobal ||
+                   acc.buffer_->mtype() == MemType::GPUShared;
+        })
+        .filter([](const AccessPoint &later, const AccessPoint &earlier) {
+            return later.op_ != earlier.op_;
+        })
         .ignoreReductionWAW(false)
         .eraseOutsideVarDef(false)(op, found);
 

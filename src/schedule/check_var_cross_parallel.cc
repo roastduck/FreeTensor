@@ -4,9 +4,6 @@
 namespace freetensor {
 
 void checkVarCrossParallel(const Stmt &ast, const ID &def, MemType mtype) {
-    auto filter = [&](const AccessPoint &later, const AccessPoint &earlier) {
-        return later.def_->id() == def;
-    };
     auto found = [&](const Dependency &d) {
         ASSERT(d.dir_.size() == 1);
         throw InvalidSchedule(toString(d) + " cannot be resolved");
@@ -32,7 +29,9 @@ void checkVarCrossParallel(const Stmt &ast, const ID &def, MemType mtype) {
         break;
     default:; // do nothing
     }
-    FindDeps().direction(direction).filter(filter)(ast, found);
+    FindDeps().direction(direction).filterAccess([&](const AccessPoint &acc) {
+        return acc.def_->id() == def;
+    })(ast, found);
 }
 
 } // namespace freetensor

@@ -68,19 +68,6 @@ Stmt propOneTimeUse(const Stmt &_op) {
     std::unordered_map<AST, std::vector<Stmt>> r2wMay;
     std::unordered_map<Stmt, std::vector<AST>> w2r, w2rMay;
     std::unordered_map<AST, Stmt> stmts;
-    auto filterMust = [&](const AccessPoint &later,
-                          const AccessPoint &earlier) {
-        if (earlier.op_->nodeType() != ASTNodeType::Store) {
-            return false;
-        }
-        if (earlier.def_->buffer_->atype() != AccessType::Cache) {
-            return false;
-        }
-        if (later.op_->nodeType() == ASTNodeType::ReduceTo) {
-            return false; // pass/remove_write will deal with it
-        }
-        return true;
-    };
     auto foundMust = [&](const Dependency &d) {
         if (d.later2EarlierIter_.isBijective()) {
             // Check before converting into PBFunc. In prop_one_time_use, we
@@ -94,10 +81,6 @@ Stmt propOneTimeUse(const Stmt &_op) {
             stmts[d.later()] = d.later_.stmt_;
         }
     };
-    auto filterMay = [&](const AccessPoint &later, const AccessPoint &earlier) {
-        return r2wCandidates.count(later.op_) ||
-               w2r.count(earlier.op_.as<StmtNode>());
-    };
     auto foundMay = [&](const Dependency &d) {
         r2wMay[d.later()].emplace_back(d.earlier().as<StmtNode>());
         w2rMay[d.earlier().as<StmtNode>()].emplace_back(d.later());
@@ -105,9 +88,24 @@ Stmt propOneTimeUse(const Stmt &_op) {
     FindDeps()
         .mode(FindDepsMode::KillLater)
         .type(DEP_RAW)
-        .filter(filterMust)(op, foundMust);
-    FindDeps().type(DEP_RAW).filter(filterMay).ignoreReductionWAW(false)(
-        op, foundMay);
+        .filterAccess([&](const AccessPoint &acc) {
+            return acc.def_->buffer_->atype() == AccessType::Cache;
+        })
+        .filterEarlier([&](const AccessPoint &earlier) {
+            return earlier.op_->nodeType() == ASTNodeType::Store;
+        })
+        .filterLater([&](const AccessPoint &later) {
+            // pass/remove_write will deal with it (TODO: Really? What if we
+            // want to do interleaved prop_one_time_use and remove_write?)
+            return later.op_->nodeType() != ASTNodeType::ReduceTo;
+        })(op, foundMust);
+    FindDeps()
+        .type(DEP_RAW)
+        .filter([&](const AccessPoint &later, const AccessPoint &earlier) {
+            return r2wCandidates.count(later.op_) ||
+                   w2r.count(earlier.op_.as<StmtNode>());
+        })
+        .ignoreReductionWAW(false)(op, foundMay);
 
     // Filter one-time use
     std::unordered_map<AST, std::pair<Stmt, ReplaceInfo>> r2w;

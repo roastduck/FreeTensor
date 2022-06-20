@@ -159,19 +159,11 @@ analyzeVersion(const Stmt &_op, const std::unordered_set<ID> &intermediates) {
         direction.push_back({{scope, DepDirection::Normal}});
     }
     std::unordered_map<ID, std::unordered_set<ID>> affectingScopes, needTapes;
-    auto filter1 = [&](const AccessPoint &later, const AccessPoint &earlier) {
-        return intermediates.count(earlier.def_->id());
-    };
     auto found1 = [&](const Dependency &d) {
         ASSERT(d.earlier()->nodeType() != ASTNodeType::Load);
         if (d.later()->nodeType() != ASTNodeType::ReduceTo) {
             needTapes[d.defId()].insert(d.earlier().as<StmtNode>()->id());
         }
-    };
-    auto filter2 = [&](const AccessPoint &later, const AccessPoint &earlier) {
-        return needTapes.count(earlier.def_->id()) &&
-               (needTapes.at(earlier.def_->id()).count(earlier.stmt_->id()) ||
-                needTapes.at(earlier.def_->id()).count(later.stmt_->id()));
     };
     auto found2 = [&](const Dependency &d) {
         if ((d.earlier()->nodeType() == ASTNodeType::Load &&
@@ -182,12 +174,23 @@ analyzeVersion(const Stmt &_op, const std::unordered_set<ID> &intermediates) {
             affectingScopes[d.defId()].insert(d.dir_[0].first.id_);
         }
     };
-    FindDeps().type(DEP_RAW).filter(filter1).eraseOutsideVarDef(false)(op,
-                                                                       found1);
+    FindDeps()
+        .type(DEP_RAW)
+        .filterAccess([&](const AccessPoint &acc) {
+            return intermediates.count(acc.def_->id());
+        })
+        .eraseOutsideVarDef(false)(op, found1);
     FindDeps()
         .direction(direction)
         .type(DEP_RAW | DEP_WAR)
-        .filter(filter2)
+        .filterAccess([&](const AccessPoint &acc) {
+            return needTapes.count(acc.def_->id());
+        })
+        .filter([&](const AccessPoint &later, const AccessPoint &earlier) {
+            return needTapes.at(earlier.def_->id())
+                       .count(earlier.stmt_->id()) ||
+                   needTapes.at(earlier.def_->id()).count(later.stmt_->id());
+        })
         .eraseOutsideVarDef(false)(op, found2);
 
     std::unordered_map<ID, Expr> versions;

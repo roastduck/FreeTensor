@@ -48,7 +48,9 @@ void CountBandNodeWidth::visit(const ReduceTo &op) {
     lastIsLoad_ = false;
 }
 
-FindAccessPoint::FindAccessPoint(const Stmt &root) {
+FindAccessPoint::FindAccessPoint(const Stmt &root,
+                                 const FindDepsAccFilter &accFilter)
+    : accFilter_(accFilter) {
     if (int width = countBandNodeWidth(root); width > 1) {
         cur_.emplace_back(makeIntConst(-1));
     }
@@ -155,7 +157,9 @@ void FindAccessPoint::visit(const Load &op) {
            cur_,
            std::vector<Expr>{op->indices_.begin(), op->indices_.end()},
            conds_};
-    reads_[def(op->var_)->id()].emplace_back(ap);
+    if (accFilter_ == nullptr || accFilter_(*ap)) {
+        reads_[def(op->var_)->id()].emplace_back(ap);
+    }
 }
 
 std::string AnalyzeDeps::makeIterList(const std::vector<IterAxis> &list,
@@ -877,34 +881,61 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
 
 void AnalyzeDeps::genTasks() {
     for (auto &&def : allDefs_) {
-        if (writes_.count(def->id())) {
-            auto &&allWrites = writes_.at(def->id());
-            if (reads_.count(def->id())) {
-                for (auto &&read : reads_.at(def->id())) {
-                    if (depType_ & DEP_RAW) {
+        // Store / ReduceTo -> Load : RAW
+        if (depType_ & DEP_RAW) {
+            if (writesAsEarlier_.count(def->id())) {
+                auto &&allWrites = writesAsEarlier_.at(def->id());
+                if (readsAsLater_.count(def->id())) {
+                    for (auto &&read : readsAsLater_.at(def->id())) {
                         checkDepLatestEarlier(read, allWrites);
                     }
-                    if (depType_ & DEP_WAR) {
+                }
+            }
+        }
+
+        // Load -> Store / ReduceTo : WAR
+        if (depType_ & DEP_WAR) {
+            if (writesAsLater_.count(def->id())) {
+                auto &&allWrites = writesAsLater_.at(def->id());
+                if (readsAsEarlier_.count(def->id())) {
+                    for (auto &&read : readsAsEarlier_.at(def->id())) {
                         checkDepEarliestLater(allWrites, read);
                     }
                 }
             }
+        }
 
-            for (auto &&write : allWrites) {
-                // Store    -> Store    : WAW
-                // ReduceTo -> Store    : WAW, WAR
-                // Store    -> ReduceTo : WAW, RAW
-                // ReduceTo -> ReduceTo : WAW, RAW, WAR
+        // Store    -> Store    : WAW
+        // ReduceTo -> Store    : WAW, WAR
+        // Store    -> ReduceTo : WAW, RAW
+        // ReduceTo -> ReduceTo : WAW, RAW, WAR
+        if (writesAsLater_.count(def->id())) {
+            auto &&allWritesAsLater = writesAsLater_.at(def->id());
+            if (writesAsEarlier_.count(def->id())) {
+                auto &&allWritesAsEarlier = writesAsEarlier_.at(def->id());
                 if (depType_ & DEP_WAW) {
-                    // Every Store checks its immediate predecessor, so we do
-                    // not have to check its follower
-                    checkDepLatestEarlier(write, allWrites);
-                } else if (write->op_->nodeType() == ASTNodeType::ReduceTo) {
+                    // Every Store checks its immediate predecessor, so we
+                    // do not have to check its follower
+                    for (auto &&write : allWritesAsLater) {
+                        checkDepLatestEarlier(write, allWritesAsEarlier);
+                    }
+                } else {
                     if (depType_ & DEP_RAW) {
-                        checkDepLatestEarlier(write, allWrites);
+                        for (auto &&write : allWritesAsLater) {
+                            if (write->op_->nodeType() ==
+                                ASTNodeType::ReduceTo) {
+                                checkDepLatestEarlier(write,
+                                                      allWritesAsEarlier);
+                            }
+                        }
                     }
                     if (depType_ & DEP_WAR) {
-                        checkDepEarliestLater(allWrites, write);
+                        for (auto &&write : allWritesAsEarlier) {
+                            if (write->op_->nodeType() ==
+                                ASTNodeType::ReduceTo) {
+                                checkDepEarliestLater(allWritesAsLater, write);
+                            }
+                        }
                     }
                 }
             }
@@ -937,16 +968,16 @@ void FindDeps::operator()(const Stmt &op, const FindDepsCallback &found) {
         noProjectOutProvateAxis_ = true;
     }
 
-    FindAccessPoint accFinder(op);
+    FindAccessPoint accFinder(op, accFilter_);
     accFinder(op);
     FindAllNoDeps noDepsFinder;
     noDepsFinder(op);
     auto variantExpr = findLoopVariance(op).first;
-    AnalyzeDeps analyzer(accFinder.reads(), accFinder.writes(),
-                         accFinder.allDefs(), accFinder.scope2coord(),
-                         noDepsFinder.results(), variantExpr, direction_, found,
-                         mode_, type_, filter_, ignoreReductionWAW_,
-                         eraseOutsideVarDef_, noProjectOutProvateAxis_);
+    AnalyzeDeps analyzer(
+        accFinder.reads(), accFinder.writes(), accFinder.allDefs(),
+        accFinder.scope2coord(), noDepsFinder.results(), variantExpr,
+        direction_, found, mode_, type_, earlierFilter_, laterFilter_, filter_,
+        ignoreReductionWAW_, eraseOutsideVarDef_, noProjectOutProvateAxis_);
     analyzer.genTasks();
     size_t n = analyzer.tasks().size();
     std::vector<std::exception_ptr> exceptions(n, nullptr);

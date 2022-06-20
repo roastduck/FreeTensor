@@ -20,16 +20,17 @@ Stmt vectorize(const Stmt &_ast, const ID &loop) {
     if (!mutator.done()) {
         throw InvalidSchedule("Loop " + toString(loop) + " not found");
     }
-    auto filter = [&](const AccessPoint &later, const AccessPoint &earlier) {
-        return earlier.stmt_->ancestorById(loop).isValid() &&
-               later.stmt_->ancestorById(loop).isValid();
-    };
     auto found = [&](const Dependency &d) {
         throw InvalidSchedule(toString(d) + " cannot be resolved");
     };
     FindDeps()
         .direction({{{loop, DepDirection::Normal}}})
-        .filter(filter)(ast, found);
+        .filterLater([&](const AccessPoint &later) {
+            return later.stmt_->ancestorById(loop).isValid();
+        })
+        .filterEarlier([&](const AccessPoint &earlier) {
+            return earlier.stmt_->ancestorById(loop).isValid();
+        })(ast, found);
     return ast;
 }
 

@@ -114,15 +114,19 @@ Stmt reorder(const Stmt &_ast, const std::vector<ID> &dstOrder) {
         dir.emplace_back(dstOrder[i], DepDirection::Inv);
         direction.emplace_back(std::move(dir));
     }
-    auto filter = [&](const AccessPoint &later, const AccessPoint &earlier) {
-        return earlier.stmt_->ancestorById(curOrder.front()->id()).isValid() &&
-               later.stmt_->ancestorById(curOrder.front()->id()).isValid();
-    };
     auto found = [&](const Dependency &d) {
         throw InvalidSchedule("Loops are not permutable: " + toString(d) +
                               " cannot be resolved");
     };
-    FindDeps().direction(direction).filter(filter)(ast, found);
+    FindDeps()
+        .direction(direction)
+        .filterEarlier([&](const AccessPoint &earlier) {
+            return earlier.stmt_->ancestorById(curOrder.front()->id())
+                .isValid();
+        })
+        .filterLater([&](const AccessPoint &later) {
+            return later.stmt_->ancestorById(curOrder.front()->id()).isValid();
+        })(ast, found);
 
     // Bubble Sort
     size_t n = index.size();

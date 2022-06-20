@@ -312,15 +312,6 @@ fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
     auto isRealWrite = [&](const ID &loop, const VarDef &def) -> bool {
         return isVariant(variantExpr.second, def, loop);
     };
-    auto filter = [&](const AccessPoint &later, const AccessPoint &earlier) {
-        for (auto &&[beforeId, afterId] : hoist.scopePairs()) {
-            if (earlier.stmt_->ancestorById(afterId).isValid() &&
-                later.stmt_->ancestorById(beforeId).isValid()) {
-                return true;
-            }
-        }
-        return false;
-    };
     std::unordered_map<ID, std::vector<ID>> toAdd;
     auto found = [&](const Dependency &d) {
         ASSERT(d.dir_.size() == 1);
@@ -343,7 +334,24 @@ fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
             toAdd[d.defId()].emplace_back(id);
         }
     };
-    FindDeps().direction(disjunct).filter(filter)(ast, found);
+    FindDeps()
+        .direction(disjunct)
+        .filterEarlier([&](const AccessPoint &earlier) {
+            for (auto &&[beforeId, afterId] : hoist.scopePairs()) {
+                if (earlier.stmt_->ancestorById(afterId).isValid()) {
+                    return true;
+                }
+            }
+            return false;
+        })
+        .filterLater([&](const AccessPoint &later) {
+            for (auto &&[beforeId, afterId] : hoist.scopePairs()) {
+                if (later.stmt_->ancestorById(beforeId).isValid()) {
+                    return true;
+                }
+            }
+            return false;
+        })(ast, found);
 
     AddDimToVar adder(toAdd);
     ast = adder(ast);

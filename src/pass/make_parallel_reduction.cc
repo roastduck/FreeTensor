@@ -276,10 +276,6 @@ Stmt makeParallelReduction(const Stmt &_op) {
     }
 
     std::unordered_map<ID, std::unordered_set<ID>> toAlter;
-    auto filter = [](const AccessPoint &later, const AccessPoint &earlier) {
-        return earlier.op_->nodeType() == ASTNodeType::ReduceTo &&
-               later.op_->nodeType() == ASTNodeType::ReduceTo;
-    };
     auto found = [&](const Dependency &d) {
         ASSERT(d.dir_.size() >= 1);
         ASSERT(d.dir_.front().first.isNode_);
@@ -294,8 +290,15 @@ Stmt makeParallelReduction(const Stmt &_op) {
         toAlter[d.later().as<ReduceToNode>()->id()].insert(loopId);
         toAlter[d.earlier().as<ReduceToNode>()->id()].insert(loopId);
     };
-    FindDeps().direction(direction).filter(filter).ignoreReductionWAW(false)(
-        op, found);
+    FindDeps()
+        .direction(direction)
+        .filterLater([](const AccessPoint &later) {
+            return later.op_->nodeType() == ASTNodeType::ReduceTo;
+        })
+        .filterEarlier([](const AccessPoint &earlier) {
+            return earlier.op_->nodeType() == ASTNodeType::ReduceTo;
+        })
+        .ignoreReductionWAW(false)(op, found);
 
     FindSerialLoopsOverReduce serialFinder;
     serialFinder(op);

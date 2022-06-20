@@ -12,6 +12,7 @@
 #include <analyze/find_loop_variance.h>
 #include <analyze/symbol_table.h>
 #include <analyze/track_stmt.h>
+#include <container_utils.h>
 #include <math/gen_pb_expr.h>
 #include <math/presburger.h>
 #include <visitor.h>
@@ -75,11 +76,18 @@ inline int countBandNodeWidth(const Stmt &op) {
     return visitor.width();
 }
 
+typedef std::function<bool(const AccessPoint &)> FindDepsAccFilter;
+typedef std::function<bool(const AccessPoint &later,
+                           const AccessPoint &earlier)>
+    FindDepsFilter;
+
 /**
  * Find read and write points
  */
 class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
     typedef SymbolTable<TrackStmt<Visitor>> BaseClass;
+
+    const FindDepsAccFilter &accFilter_;
 
     bool lastIsLoad_ = false;
     std::vector<IterAxis> cur_; // Current iteration point in the space
@@ -98,7 +106,7 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
     std::unordered_map<std::string, int> defAxis_;
 
   public:
-    FindAccessPoint(const Stmt &root);
+    FindAccessPoint(const Stmt &root, const FindDepsAccFilter &accFilter);
 
     const std::unordered_map<ID, std::vector<Ref<AccessPoint>>> &reads() const {
         return reads_;
@@ -133,7 +141,9 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
                cur_,
                std::vector<Expr>{op->indices_.begin(), op->indices_.end()},
                conds_};
-        writes_[def(op->var_)->id()].emplace_back(ap);
+        if (accFilter_ == nullptr || accFilter_(*ap)) {
+            writes_[def(op->var_)->id()].emplace_back(ap);
+        }
     }
 
   protected:
@@ -207,18 +217,14 @@ enum class FindDepsMode : int {
     KillBoth,    // KillEarlier + KillLater
 };
 
-typedef std::function<bool(const AccessPoint &later,
-                           const AccessPoint &earlier)>
-    FindDepsFilter;
-
 /**
  * Find RAW, WAR and WAW dependencies
  */
 class AnalyzeDeps {
     friend Dependency;
 
-    const std::unordered_map<ID, std::vector<Ref<AccessPoint>>> &reads_,
-        &writes_;
+    std::unordered_map<ID, std::vector<Ref<AccessPoint>>> readsAsEarlier_,
+        readsAsLater_, writesAsEarlier_, writesAsLater_;
     const std::vector<VarDef> &allDefs_;
     const std::unordered_map<ID, std::vector<IterAxis>> &scope2coord_;
     const std::unordered_map<std::string, std::vector<ID>>
@@ -227,6 +233,7 @@ class AnalyzeDeps {
 
     const std::vector<FindDepsDir> &direction_;
     const FindDepsCallback &found_;
+    const FindDepsAccFilter &earlierFilter_, &laterFilter_;
     const FindDepsFilter &filter_;
 
     const FindDepsMode mode_;
@@ -249,12 +256,14 @@ class AnalyzeDeps {
         const LoopVariExprMap &variantExpr,
         const std::vector<FindDepsDir> &direction,
         const FindDepsCallback &found, FindDepsMode mode, DepType depType,
-        const FindDepsFilter &filter, bool ignoreReductionWAW,
-        bool eraseOutsideVarDef, bool noProjectOutProvateAxis)
-        : reads_(reads), writes_(writes), allDefs_(allDefs),
-          scope2coord_(scope2coord), noDepsLists_(noDepsLists),
-          variantExpr_(variantExpr), direction_(direction), found_(found),
-          filter_(filter), mode_(mode),
+        const FindDepsAccFilter &earlierFilter,
+        const FindDepsAccFilter &laterFilter, const FindDepsFilter &filter,
+        bool ignoreReductionWAW, bool eraseOutsideVarDef,
+        bool noProjectOutProvateAxis)
+        : allDefs_(allDefs), scope2coord_(scope2coord),
+          noDepsLists_(noDepsLists), variantExpr_(variantExpr),
+          direction_(direction), found_(found), earlierFilter_(earlierFilter),
+          laterFilter_(laterFilter), filter_(filter), mode_(mode),
           earlierRelax_(mode_ == FindDepsMode::KillLater ||
                                 mode_ == FindDepsMode::KillBoth
                             ? RelaxMode::Necessary
@@ -265,7 +274,28 @@ class AnalyzeDeps {
                           : RelaxMode::Possible),
           depType_(depType), ignoreReductionWAW_(ignoreReductionWAW),
           eraseOutsideVarDef_(eraseOutsideVarDef),
-          noProjectOutProvateAxis_(noProjectOutProvateAxis) {}
+          noProjectOutProvateAxis_(noProjectOutProvateAxis) {
+        for (auto &&[id, list] : reads) {
+            readsAsEarlier_[id] =
+                ::freetensor::filter(list, [&](const Ref<AccessPoint> &acc) {
+                    return earlierFilter_ == nullptr || earlierFilter_(*acc);
+                });
+            readsAsLater_[id] =
+                ::freetensor::filter(list, [&](const Ref<AccessPoint> &acc) {
+                    return laterFilter_ == nullptr || laterFilter_(*acc);
+                });
+        }
+        for (auto &&[id, list] : writes) {
+            writesAsEarlier_[id] =
+                ::freetensor::filter(list, [&](const Ref<AccessPoint> &acc) {
+                    return earlierFilter_ == nullptr || earlierFilter_(*acc);
+                });
+            writesAsLater_[id] =
+                ::freetensor::filter(list, [&](const Ref<AccessPoint> &acc) {
+                    return laterFilter_ == nullptr || laterFilter_(*acc);
+                });
+        }
+    }
 
     void genTasks();
 
@@ -404,6 +434,9 @@ class FindDeps {
     FindDepsMode mode_ = FindDepsMode::Dep;
     DepType type_ = DEP_ALL;
     std::vector<FindDepsDir> direction_ = {{}};
+    FindDepsAccFilter accFilter_ = nullptr;
+    FindDepsAccFilter earlierFilter_ = nullptr;
+    FindDepsAccFilter laterFilter_ = nullptr;
     FindDepsFilter filter_ = nullptr;
     bool ignoreReductionWAW_ = true;
     bool eraseOutsideVarDef_ = true;
@@ -463,7 +496,52 @@ class FindDeps {
     }
 
     /**
+     * Configure an additional callback to select the accesses to check
+     *
+     * `filterAccess` is preferred over `filterEarlier`, `filterLater` and
+     * `filter` for performance
+     *
+     * Defaults to no filter
+     */
+    FindDeps filterAccess(const FindDepsAccFilter &f) {
+        FindDeps ret = *this;
+        ret.accFilter_ = f;
+        return ret;
+    }
+
+    /**
+     * Configure an additional callback to select the dependent (earlier) access
+     * to check
+     *
+     * `filterEarlier` is perferred over `filter` for performance
+     *
+     * Defaults to no filter
+     */
+    FindDeps filterEarlier(const FindDepsAccFilter &f) {
+        FindDeps ret = *this;
+        ret.earlierFilter_ = f;
+        return ret;
+    }
+
+    /**
+     * Configure an additional callback to select the depending (later) access
+     * to check
+     *
+     * `filterLater` is perferred over `filter` for performance
+     *
+     * Defaults to no filter
+     */
+    FindDeps filterLater(const FindDepsAccFilter &f) {
+        FindDeps ret = *this;
+        ret.laterFilter_ = f;
+        return ret;
+    }
+
+    /**
      * Configure an additional callback to select which dependencies to check
+     *
+     * Please use `filterAccess`, `filterEarlier` or `filterLater` if possbile,
+     * for better performance
      *
      * Defaults to no filter
      */

@@ -202,17 +202,17 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
 
     // Used to prune
     std::unordered_set<Stmt> selfDependentReduces;
-    auto filterSelfDependent = [&](const AccessPoint &later,
-                                   const AccessPoint &earlier) {
-        return later.op_->nodeType() == ASTNodeType::ReduceTo &&
-               earlier.op_ == later.op_;
-    };
     auto foundSelfDependent = [&](const Dependency &d) {
         selfDependentReduces.insert(d.later().as<StmtNode>());
     };
     FindDeps()
         .type(DEP_WAW)
-        .filter(filterSelfDependent)
+        .filterLater([&](const AccessPoint &later) {
+            return later.op_->nodeType() == ASTNodeType::ReduceTo;
+        })
+        .filter([&](const AccessPoint &later, const AccessPoint &earlier) {
+            return earlier.op_ == later.op_;
+        })
         .ignoreReductionWAW(false)(op, foundSelfDependent);
 
     PBCtx presburger;
@@ -221,20 +221,6 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
     std::unordered_map<Stmt, std::unordered_set<AST>> usesRAW; // W -> R
     std::unordered_map<Stmt, std::unordered_set<AST>> usesWAR; // W -> R
     std::unordered_map<Stmt, PBSet> kill;
-    auto filterOverwriteStore = [&](const AccessPoint &later,
-                                    const AccessPoint &earlier) {
-        if (singleDefId.isValid() && later.def_->id() != singleDefId) {
-            return false;
-        }
-        return later.op_->nodeType() == ASTNodeType::Store;
-    };
-    auto filterOverwriteReduce = [&](const AccessPoint &later,
-                                     const AccessPoint &earlier) {
-        if (singleDefId.isValid() && later.def_->id() != singleDefId) {
-            return false;
-        }
-        return later.op_->nodeType() == ASTNodeType::ReduceTo;
-    };
     auto foundOverwriteStore = [&](const Dependency &d) {
         auto earlier = d.earlier().as<StmtNode>();
         auto later = d.later().as<StmtNode>();
@@ -268,9 +254,6 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
             }
         }
     };
-    auto filterUse = [&](const AccessPoint &later, const AccessPoint &earlier) {
-        return suspect.count(later.def_);
-    };
     auto foundUse = [&](const Dependency &d) {
         if (d.later()->nodeType() != ASTNodeType::Store &&
             d.earlier()->nodeType() != ASTNodeType::Load &&
@@ -298,16 +281,30 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
 
     FindDeps()
         .type(DEP_WAW)
-        .filter(filterOverwriteStore)
+        .filterAccess([&](const AccessPoint &acc) {
+            return !singleDefId.isValid() || acc.def_->id() == singleDefId;
+        })
+        .filterLater([&](const AccessPoint &later) {
+            return later.op_->nodeType() == ASTNodeType::Store;
+        })
         .ignoreReductionWAW(false)
         .noProjectOutProvateAxis(true)(op, foundOverwriteStore);
     FindDeps()
         .mode(FindDepsMode::KillLater)
         .type(DEP_WAW)
-        .filter(filterOverwriteReduce)
+        .filterAccess([&](const AccessPoint &acc) {
+            return !singleDefId.isValid() || acc.def_->id() == singleDefId;
+        })
+        .filterLater([&](const AccessPoint &later) {
+            return later.op_->nodeType() == ASTNodeType::ReduceTo;
+        })
         .ignoreReductionWAW(false)
         .noProjectOutProvateAxis(true)(op, foundOverwriteReduce);
-    FindDeps().filter(filterUse).ignoreReductionWAW(false)(op, foundUse);
+    FindDeps()
+        .filterAccess([&](const AccessPoint &access) {
+            return suspect.count(access.def_);
+        })
+        .ignoreReductionWAW(false)(op, foundUse);
 
     std::unordered_set<Stmt> redundant;
     std::unordered_map<Stmt, Stmt> replacement;

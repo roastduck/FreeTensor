@@ -39,21 +39,6 @@ Stmt tensorPropConst(const Stmt &_op) {
         // pass/remove_writes can not, because statement (1) cannot be removed
         std::unordered_map<AST, std::vector<std::pair<Stmt, ReplaceInfo>>> r2w;
         std::unordered_map<AST, std::vector<Stmt>> r2wMay;
-        auto filterMust = [&](const AccessPoint &later,
-                              const AccessPoint &earlier) {
-            if (later.buffer_->tensor()->isScalar()) {
-                return false;
-            }
-            if (earlier.op_->nodeType() != ASTNodeType::Store) {
-                return false;
-            }
-            auto &&expr = earlier.op_.as<StoreNode>()->expr_;
-            if (!allReads(expr).empty()) {
-                // Expressions should contain only constants and iterating vars
-                return false;
-            }
-            return true;
-        };
         auto foundMust = [&](const Dependency &d) {
             auto &&expr = d.earlier().as<StoreNode>()->expr_;
             auto &&iters = allIters(expr);
@@ -82,20 +67,33 @@ Stmt tensorPropConst(const Stmt &_op) {
                                 toString(PBFunc(d.later2EarlierIter_))});
             }
         };
-        auto filterMay = [&](const AccessPoint &later,
-                             const AccessPoint &earlier) {
-            return r2w.count(later.op_);
-        };
         auto foundMay = [&](const Dependency &d) {
             r2wMay[d.later()].emplace_back(d.earlier().as<StmtNode>());
         };
         FindDeps()
             .mode(FindDepsMode::KillLater)
             .type(DEP_RAW)
-            .filter(filterMust)
+            .filterAccess([&](const AccessPoint &acc) {
+                return !acc.buffer_->tensor()->isScalar();
+            })
+            .filterEarlier([&](const AccessPoint &earlier) {
+                if (earlier.op_->nodeType() != ASTNodeType::Store) {
+                    return false;
+                }
+                auto &&expr = earlier.op_.as<StoreNode>()->expr_;
+                if (!allReads(expr).empty()) {
+                    // Expressions should contain only constants and iterating
+                    // vars
+                    return false;
+                }
+                return true;
+            })
             .noProjectOutProvateAxis(true)(op, foundMust);
-        FindDeps().type(DEP_RAW).filter(filterMay).ignoreReductionWAW(false)(
-            op, foundMay);
+        FindDeps()
+            .type(DEP_RAW)
+            .filterLater(
+                [&](const AccessPoint &later) { return r2w.count(later.op_); })
+            .ignoreReductionWAW(false)(op, foundMay);
 
         std::unordered_map<AST, Expr> replace;
         for (auto &&item : r2w) {

@@ -90,9 +90,6 @@ bool checkNotModified(const Stmt &op, const Expr &s0Expr, const Expr &s1Expr,
 
     // write -> serialized PBSet
     std::unordered_map<Stmt, std::string> writesWAR;
-    auto filterWAR = [&](const AccessPoint &later, const AccessPoint &earlier) {
-        return earlier.stmt_->id() == inserter.s0Eval();
-    };
     auto foundWAR = [&](const Dependency &dep) {
         // Serialize dep.later2EarlierIter_ because it is from a random PBCtx
         writesWAR[dep.later_.stmt_] =
@@ -101,17 +98,14 @@ bool checkNotModified(const Stmt &op, const Expr &s0Expr, const Expr &s1Expr,
     FindDeps()
         .direction({dir})
         .type(DEP_WAR)
-        .filter(filterWAR)
+        .filterEarlier([&](const AccessPoint &earlier) {
+            return earlier.stmt_->id() == inserter.s0Eval();
+        })
         .noProjectOutProvateAxis(true)(tmpOp, foundWAR);
 
     for (auto &&[_item, w0] : writesWAR) {
         auto &&item = _item;
         std::string w1;
-        auto filterRAW = [&](const AccessPoint &later,
-                             const AccessPoint &earlier) {
-            return later.stmt_->id() == inserter.s1Eval() &&
-                   earlier.stmt_->id() == item->id();
-        };
         auto foundRAW = [&](const Dependency &dep) {
             // Serialize dep.later2EarlierIter_ because it is from a random
             // PBCtx
@@ -121,7 +115,12 @@ bool checkNotModified(const Stmt &op, const Expr &s0Expr, const Expr &s1Expr,
         FindDeps()
             .direction({dir})
             .type(DEP_RAW)
-            .filter(filterRAW)
+            .filterLater([&](const AccessPoint &later) {
+                return later.stmt_->id() == inserter.s1Eval();
+            })
+            .filterEarlier([&](const AccessPoint &earlier) {
+                return earlier.stmt_->id() == item->id();
+            })
             .noProjectOutProvateAxis(true)(tmpOp, foundRAW);
 
         if (!w1.empty()) {
