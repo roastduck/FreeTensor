@@ -114,18 +114,18 @@ First install some dependencies:
 pip3 install --user mkdocs mkdocstrings==0.18.1 "pytkdocs[numpy-style]"
 ```
 
-From the root directory of FreeTensor, run a HTTP server to serve the document (recommended):
+From the root directory of FreeTensor, run a HTTP server to serve the document (recommended, but without document on C++ interface due to [a limitation](https://github.com/mkdocs/mkdocs/issues/1901)):
 
 ```sh
 PYTHONPATH=./python:./build:$PYTHONPATH mkdocs serve
 ```
 
-Or build and save the pages:
+Or build and save the pages (with document on C++ interface, requiring Doxygen and Graphviz):
 
 ```sh
-PYTHONPATH=./python:./build:$PYTHONPATH mkdocs build
+doxygen Doxyfile && PYTHONPATH=./python:./build:$PYTHONPATH mkdocs build
 ```
 
 !!! note "Publish the documents to GitHub Pages (for developers)"
 
-    `PYTHONPATH=./python:./build:$PYTHONPATH mkdocs gh-deploy`
+    `doxygen Doxyfile && PYTHONPATH=./python:./build:$PYTHONPATH mkdocs gh-deploy`
