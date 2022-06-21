@@ -1,0 +1,8 @@
+<map id="freetensor::SketchPartNode" name="freetensor::SketchPartNode">
+<area shape="rect" id="node1" title=" " alt="" coords="5,89,204,115"/>
+<area shape="rect" id="node2" href="$classfreetensor_1_1MultiLevelTilingPart.html" title=" " alt="" coords="252,13,479,39"/>
+<area shape="rect" id="node4" href="$classfreetensor_1_1ParallelizePart.html" title=" " alt="" coords="271,63,460,90"/>
+<area shape="rect" id="node5" href="$classfreetensor_1_1ThreadBindPart.html" title=" " alt="" coords="267,114,463,141"/>
+<area shape="rect" id="node6" href="$classfreetensor_1_1UnrollPart.html" title=" " alt="" coords="285,165,446,191"/>
+<area shape="rect" id="node3" href="$classfreetensor_1_1MultiLevelTilingWithFusionPart.html" title=" " alt="" coords="527,5,728,47"/>
+</map>

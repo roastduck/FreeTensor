@@ -1,0 +1,5 @@
+<map id="freetensor::Target" name="freetensor::Target">
+<area shape="rect" id="node1" title=" " alt="" coords="73,5,211,32"/>
+<area shape="rect" id="node2" href="$classfreetensor_1_1CPU.html" title=" " alt="" coords="5,80,129,107"/>
+<area shape="rect" id="node3" href="$classfreetensor_1_1GPU.html" title=" " alt="" coords="154,80,279,107"/>
+</map>

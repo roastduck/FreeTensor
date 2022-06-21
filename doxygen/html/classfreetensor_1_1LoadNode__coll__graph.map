@@ -1,0 +1,11 @@
+<map id="freetensor::LoadNode" name="freetensor::LoadNode">
+<area shape="rect" id="node1" title=" " alt="" coords="193,443,355,469"/>
+<area shape="rect" id="node2" href="$classfreetensor_1_1ExprNode.html" title=" " alt="" coords="41,346,201,373"/>
+<area shape="rect" id="node3" href="$classfreetensor_1_1ASTNode.html" title=" " alt="" coords="27,255,183,282"/>
+<area shape="rect" id="node4" href="$classfreetensor_1_1ASTPart.html" title=" " alt="" coords="31,172,178,199"/>
+<area shape="rect" id="node5" href="$classfreetensor_1_1EnableSelf.html" title=" " alt="" coords="21,81,188,123"/>
+<area shape="rect" id="node6" href="$classfreetensor_1_1EnableSelfBase.html" title=" " alt="" coords="5,5,204,32"/>
+<area shape="rect" id="node7" title=" " alt="" coords="231,346,317,373"/>
+<area shape="rect" id="node8" title=" " alt="" coords="207,248,346,289"/>
+<area shape="rect" id="node9" href="$classfreetensor_1_1SubTreeList.html" title=" " alt="" coords="341,339,532,380"/>
+</map>

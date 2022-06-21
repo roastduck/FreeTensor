@@ -82,6 +82,8 @@
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="../../api/">Python API</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../doxygen/html/">Internal C++ Interface</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">About</span></p>
               <ul>
@@ -193,15 +195,15 @@ make -j  # Or use Ninja
 <p>First install some dependencies:</p>
 <pre><code class="language-sh">pip3 install --user mkdocs mkdocstrings==0.18.1 &quot;pytkdocs[numpy-style]&quot;
 </code></pre>
-<p>From the root directory of FreeTensor, run a HTTP server to serve the document (recommended):</p>
+<p>From the root directory of FreeTensor, run a HTTP server to serve the document (recommended, but without document on C++ interface due to <a href="https://github.com/mkdocs/mkdocs/issues/1901">a limitation</a>):</p>
 <pre><code class="language-sh">PYTHONPATH=./python:./build:$PYTHONPATH mkdocs serve
 </code></pre>
-<p>Or build and save the pages:</p>
-<pre><code class="language-sh">PYTHONPATH=./python:./build:$PYTHONPATH mkdocs build
+<p>Or build and save the pages (with document on C++ interface, requiring Doxygen and Graphviz):</p>
+<pre><code class="language-sh">doxygen Doxyfile &amp;&amp; PYTHONPATH=./python:./build:$PYTHONPATH mkdocs build
 </code></pre>
 <div class="admonition note">
 <p class="admonition-title">Publish the documents to GitHub Pages (for developers)</p>
-<p><code>PYTHONPATH=./python:./build:$PYTHONPATH mkdocs gh-deploy</code></p>
+<p><code>doxygen Doxyfile &amp;&amp; PYTHONPATH=./python:./build:$PYTHONPATH mkdocs gh-deploy</code></p>
 </div>
               
             </div>

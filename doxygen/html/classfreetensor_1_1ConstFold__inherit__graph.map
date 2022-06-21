@@ -1,0 +1,11 @@
+<map id="freetensor::ConstFold" name="freetensor::ConstFold">
+<area shape="rect" id="node1" title=" " alt="" coords="201,89,363,116"/>
+<area shape="rect" id="node3" href="$classfreetensor_1_1SymbolTable.html" title=" " alt="" coords="411,82,591,123"/>
+<area shape="rect" id="node2" href="$classfreetensor_1_1Mutator.html" title=" " alt="" coords="5,89,153,116"/>
+<area shape="rect" id="node4" href="$classfreetensor_1_1CompTransientBounds.html" title=" " alt="" coords="639,23,916,65"/>
+<area shape="rect" id="node8" href="$classfreetensor_1_1FloatSimplify.html" title=" " alt="" coords="686,89,869,116"/>
+<area shape="rect" id="node9" href="$classfreetensor_1_1ScalarPropConst.html" title=" " alt="" coords="676,140,879,167"/>
+<area shape="rect" id="node5" href="$classfreetensor_1_1SimplifyPass.html" title=" " alt="" coords="964,31,1143,57"/>
+<area shape="rect" id="node6" href="$classfreetensor_1_1BuiltinSimplify.html" title=" " alt="" coords="1191,5,1383,32"/>
+<area shape="rect" id="node7" href="$classfreetensor_1_1PBSimplify.html" title=" " alt="" coords="1203,56,1370,83"/>
+</map>
