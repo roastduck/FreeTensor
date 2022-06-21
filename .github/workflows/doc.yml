@@ -32,6 +32,7 @@ jobs:
       - name: Build and publish doc
         run: |
           source /opt/spack/share/spack/setup-env.sh
-          spack load python~debug@3.9.2%gcc@10.2.1 java@11
+          spack load python~debug@3.9.2%gcc@10.2.1 java@11 doxygen+graphviz
           source /home/rd/venv-freetensor/bin/activate
+          doxygen Doxyfile
           PYTHONPATH=build:python:$PYTHONPATH mkdocs gh-deploy

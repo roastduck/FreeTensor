@@ -31,6 +31,7 @@ nav:
         - 'Automatic Differentiation': 'guide/ad.md'
     - 'API Reference':
         - 'Python API': 'api.md'
+        - 'Internal C++ Interface': 'doxygen/html/index.html'
     - 'About':
         - 'Contributing': 'about/contrib.md'
         - 'Publication': 'about/pub.md'
