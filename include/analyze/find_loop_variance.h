@@ -8,7 +8,7 @@
 
 namespace freetensor {
 
-enum class LoopVariability : int { Variance, Invariance };
+enum class LoopVariability : int { Variant, Invariant };
 
 typedef std::unordered_map<std::string, std::unordered_map<ID, LoopVariability>>
     LoopVariTransVarMap;
@@ -31,22 +31,23 @@ class MarkStores : public Visitor {
         : var_(var), loopStack_(loopStack), condStack_(condStack),
           varInfo_(varInfo), exprInfo_(exprInfo) {
         for (auto &&loop : loopStack_) {
-            varInfo_[var_][loop->id()] = LoopVariability::Invariance;
+            varInfo_[var_][loop->id()] = LoopVariability::Invariant;
         }
     }
 
   private:
-    void mergeInfo(const Expr &from, const std::string &to);
+    // to = from meet to
+    void meetTo(const Expr &from, const std::string &to);
 
     template <class T> void visitMemWrite(const T &op) {
         Visitor::visit(op);
         if (op->var_ == var_) {
-            mergeInfo(op->expr_, op->var_);
+            meetTo(op->expr_, op->var_);
             for (auto &&index : op->indices_) {
-                mergeInfo(index, op->var_);
+                meetTo(index, op->var_);
             }
             for (auto &&cond : condStack_) {
-                mergeInfo(cond, op->var_);
+                meetTo(cond, op->var_);
             }
         }
     }
@@ -76,8 +77,10 @@ class FindLoopVariance : public Visitor {
     int knownCnt() const;
 
   private:
+    // to = from
     void copyInfo(const Expr &from, const Expr &to);
-    void mergeInfo(const Expr &from, const Expr &to);
+    // to = from meet to
+    void meetTo(const Expr &from, const Expr &to);
 
     void visitConst(const Const &op);
     void visitBinOp(const BinaryExpr &op);
@@ -100,6 +103,30 @@ bool isVariant(const LoopVariExprMap &exprInfo, const Expr &expr,
 bool isVariant(const LoopVariUniqVarMap &varInfo, const VarDef &def,
                const ID &loop);
 
+/**
+ * Check whether an expression or a variable is loop-variant
+ *
+ * This function returns two map. The first map shows whether an expression is
+ * loop-variant, while the second map shows whether a variable is loop-variant.
+ * The result should be get by calling `isVariant`
+ *
+ * `findLoopVariance` runs an iterative algorithm. The variance info is
+ * expressed as a semi-lattice:
+ *
+ * ```
+ *   Invariant
+ *       |
+ *    Unknown
+ *       |
+ *    Variant
+ * ```
+ *
+ * All variables are initialized to Unkown (implemented by inexistence in the
+ * resulting map), and will become either Invariant or Variant (implemented by
+ * the `LoopVariability` type) during iterations. The variability of an
+ * expression is the "meet" of its sub-expressions' variability. The variability
+ * of a variable is the "meet" of variability of all expressions stored to it
+ */
 std::pair<LoopVariExprMap, LoopVariUniqVarMap> findLoopVariance(const Stmt &op);
 
 } // namespace freetensor

@@ -55,11 +55,8 @@ void FindMultiLevelTiling::storeBuf() {
         for (const auto &infoItem : bufCheckDataReuseIndices) {
             std::vector<bool> checkAppear(buf_.size());
             for (unsigned i = 0; i < infoItem.size(); i++) {
-                const auto &mapItem =
-                    loopVariExprMap_.at(infoItem[i].as<ExprNode>());
                 for (unsigned j = 0; j < buf_.size(); j++) {
-                    if (mapItem.count(buf_[j].id) &&
-                        mapItem.at(buf_[j].id) == LoopVariability::Variance) {
+                    if (isVariant(loopVariExprMap_, infoItem[i], buf_[j].id)) {
                         checkAppear[j] = true;
                     }
                 }
@@ -86,11 +83,9 @@ void FindMultiLevelTiling::storeBuf() {
             tmp.dimIterated = std::vector<bool>(bufIndices.size(), false);
             std::vector<bool> checkAppear(buf_.size());
             for (unsigned i = 0; i < bufIndices.size(); i++) {
-                const auto &mapItem =
-                    loopVariExprMap_.at(bufIndices[i].as<ExprNode>());
                 for (unsigned j = 0; j < buf_.size(); j++) {
-                    if (mapItem.count(buf_[j].id) &&
-                        mapItem.at(buf_[j].id) == LoopVariability::Variance) {
+                    if (isVariant(loopVariExprMap_, bufIndices[i],
+                                  buf_[j].id)) {
                         checkAppear[j] = true;
                         tmp.dimIterated[i] = true;
                         buf_[j].index = i;

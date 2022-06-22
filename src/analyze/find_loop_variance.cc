@@ -3,26 +3,45 @@
 
 namespace freetensor {
 
-void MarkStores::mergeInfo(const Expr &from, const std::string &to) {
-    if (exprInfo_.count(from)) {
-        for (auto &&loop : exprInfo_.at(from)) {
-            if (loop.second == LoopVariability::Variance) {
-                varInfo_[to][loop.first] = LoopVariability::Variance;
+// to = from meet to
+template <class FromMap, class ToMap>
+void meetTo(const FromMap &fromInfo, const typename FromMap::key_type &from,
+            ToMap &toInfo, const typename ToMap::key_type &to) {
+    //     I U V
+    //   +-------
+    // I | I U V
+    // U | U U V
+    // V | V V V
+    if (fromInfo.count(from)) {
+        for (auto &&[loop, vari] : fromInfo.at(from)) {
+            if (vari == LoopVariability::Variant) {
+                // V + ? = V
+                toInfo[to][loop] = LoopVariability::Variant;
             }
         }
     }
-    if (varInfo_.count(to)) {
-        std::vector<ID> toErase;
-        for (auto &&loop : varInfo_.at(to)) {
-            if (!exprInfo_.count(from) ||
-                !exprInfo_.at(from).count(loop.first)) {
-                toErase.emplace_back(loop.first);
+    if (auto i = toInfo.find(to); i != toInfo.end()) {
+        for (auto j = i->second.begin(); j != i->second.end();) {
+            auto &&[loop, vari] = *j;
+            if (vari == LoopVariability::Invariant) {
+                // ? + I = ?
+                if (!fromInfo.count(from) || !fromInfo.at(from).count(loop)) {
+                    j = i->second.erase(j);
+                    continue;
+                } else {
+                    j->second = fromInfo.at(from).at(loop);
+                }
             }
+            j++;
         }
-        for (auto &&item : toErase) {
-            varInfo_.at(to).erase(item);
+        if (i->second.empty()) {
+            i = toInfo.erase(i);
         }
     }
+}
+
+void MarkStores::meetTo(const Expr &from, const std::string &to) {
+    ::freetensor::meetTo(exprInfo_, from, varInfo_, to);
 }
 
 void MarkStores::visit(const For &op) {
@@ -30,12 +49,12 @@ void MarkStores::visit(const For &op) {
     (*this)(op->end_);
     (*this)(op->len_);
 
-    varInfo_[var_][op->id()] = LoopVariability::Invariance;
+    varInfo_[var_][op->id()] = LoopVariability::Invariant;
 
-    varInfo_[op->iter_][op->id()] = LoopVariability::Variance;
+    varInfo_[op->iter_][op->id()] = LoopVariability::Variant;
     for (auto &&loop : loopStack_) {
-        varInfo_[op->iter_][loop->id()] = LoopVariability::Invariance;
-        varInfo_[loop->iter_][op->id()] = LoopVariability::Invariance;
+        varInfo_[op->iter_][loop->id()] = LoopVariability::Invariant;
+        varInfo_[loop->iter_][op->id()] = LoopVariability::Invariant;
     }
     loopStack_.emplace_back(op);
     condStack_.emplace_back(op->len_); // May make a ReduceTo variant
@@ -72,26 +91,8 @@ void FindLoopVariance::copyInfo(const Expr &from, const Expr &to) {
     }
 }
 
-void FindLoopVariance::mergeInfo(const Expr &from, const Expr &to) {
-    if (exprInfo_.count(from)) {
-        for (auto &&loop : exprInfo_.at(from)) {
-            if (loop.second == LoopVariability::Variance) {
-                exprInfo_[to][loop.first] = LoopVariability::Variance;
-            }
-        }
-    }
-    if (exprInfo_.count(to)) {
-        std::vector<ID> toErase;
-        for (auto &&loop : exprInfo_.at(to)) {
-            if (!exprInfo_.count(from) ||
-                !exprInfo_.at(from).count(loop.first)) {
-                toErase.emplace_back(loop.first);
-            }
-        }
-        for (auto &&item : toErase) {
-            exprInfo_.at(to).erase(item);
-        }
-    }
+void FindLoopVariance::meetTo(const Expr &from, const Expr &to) {
+    ::freetensor::meetTo(exprInfo_, from, exprInfo_, to);
 }
 
 void FindLoopVariance::visit(const For &op) {
@@ -99,10 +100,10 @@ void FindLoopVariance::visit(const For &op) {
     (*this)(op->end_);
     (*this)(op->len_);
 
-    varInfo_[op->iter_][op->id()] = LoopVariability::Variance;
+    varInfo_[op->iter_][op->id()] = LoopVariability::Variant;
     for (auto &&loop : loopStack_) {
-        varInfo_[op->iter_][loop->id()] = LoopVariability::Invariance;
-        varInfo_[loop->iter_][op->id()] = LoopVariability::Invariance;
+        varInfo_[op->iter_][loop->id()] = LoopVariability::Invariant;
+        varInfo_[loop->iter_][op->id()] = LoopVariability::Invariant;
     }
     loopStack_.emplace_back(op);
     condStack_.emplace_back(op->len_); // May make a ReduceTo variant
@@ -140,14 +141,14 @@ void FindLoopVariance::visitConst(const Const &op) {
     Visitor::visitExpr(op);
     exprInfo_[op].reserve(allLoops_.size());
     for (auto &&loop : allLoops_) {
-        exprInfo_[op][loop] = LoopVariability::Invariance;
+        exprInfo_[op][loop] = LoopVariability::Invariant;
     }
 }
 
 void FindLoopVariance::visitBinOp(const BinaryExpr &op) {
     Visitor::visitExpr(op);
     copyInfo(op->lhs_, op);
-    mergeInfo(op->rhs_, op);
+    meetTo(op->rhs_, op);
 }
 
 void FindLoopVariance::visitUnaryOp(const UnaryExpr &op) {
@@ -180,15 +181,15 @@ void FindLoopVariance::visit(const Load &op) {
         exprInfo_[op] = varInfo_.at(op->var_);
     }
     for (auto &&index : op->indices_) {
-        mergeInfo(index, op);
+        meetTo(index, op);
     }
 }
 
 void FindLoopVariance::visit(const IfExpr &op) {
     Visitor::visit(op);
     copyInfo(op->cond_, op);
-    mergeInfo(op->thenCase_, op);
-    mergeInfo(op->elseCase_, op);
+    meetTo(op->thenCase_, op);
+    meetTo(op->elseCase_, op);
 }
 
 void FindLoopVariance::visit(const Cast &op) {
@@ -204,7 +205,7 @@ bool isVariant(const LoopVariExprMap &exprInfo, const Expr &expr,
     if (!exprInfo.at(expr).count(loop)) {
         return true;
     }
-    return exprInfo.at(expr).at(loop) == LoopVariability::Variance;
+    return exprInfo.at(expr).at(loop) == LoopVariability::Variant;
 }
 
 bool isVariant(const LoopVariUniqVarMap &varInfo, const VarDef &def,
@@ -215,7 +216,7 @@ bool isVariant(const LoopVariUniqVarMap &varInfo, const VarDef &def,
     if (!varInfo.at(def).count(loop)) {
         return true;
     }
-    return varInfo.at(def).at(loop) == LoopVariability::Variance;
+    return varInfo.at(def).at(loop) == LoopVariability::Variant;
 }
 
 std::pair<LoopVariExprMap, LoopVariUniqVarMap>
