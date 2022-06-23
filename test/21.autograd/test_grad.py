@@ -722,13 +722,9 @@ def test_use_tape_in_cond():
             with ft.VarDef([("t.tape", (4,), "float32", "input", "cpu"),
                             ("d_t", (), "float32", "cache", "cpu")]) as (t,
                                                                          d_t):
-                d_t[()] = 0
                 with ft.If(t[i] >= 0):
                     d_t[()] = d_y[i] * x3[i]
                     d_x3[i] = d_y[i] * t[i]
-                    d_y[i] = 0
-                    # FIXME: Why did we not remove this `= 0`?
-                    # Bugs in analyze/deps that thinks two branches of the `If` depend on each other?
                 with ft.Else():
                     d_t[()] = d_y[i]
                 d_x1[i] = d_t[()]
