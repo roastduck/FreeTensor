@@ -8,7 +8,11 @@
 
 namespace freetensor {
 
-enum class LoopVariability : int { Variant, Invariant };
+enum class LoopVariability : int {
+    // Non-existence = Invariant
+    Unknown,
+    Variant,
+};
 
 typedef std::unordered_map<std::string, std::unordered_map<ID, LoopVariability>>
     LoopVariTransVarMap;
@@ -17,22 +21,45 @@ typedef std::unordered_map<VarDef, std::unordered_map<ID, LoopVariability>>
 typedef std::unordered_map<Expr, std::unordered_map<ID, LoopVariability>>
     LoopVariExprMap;
 
+/**
+ * Initialize all expressions to Unkown to its surrounding loops
+ */
+class InitExprVari : public Visitor {
+    LoopVariExprMap &exprInfo_;
+    std::vector<ID> loopStack_;
+
+  public:
+    InitExprVari(LoopVariExprMap &exprInfo) : exprInfo_(exprInfo) {}
+
+  protected:
+    void visitExpr(const Expr &expr) override;
+    void visit(const For &op) override;
+};
+
+/**
+ * Determine variance of a variable by expressions
+ *
+ * Variance of this particular variable is initialized to Invariant, while
+ * variance of expressions are kept as-is. Therefore:
+ *
+ * - If any of the expressions stored to it is Variant, it will become Variant
+ * - If no expressions stored to it is Variant, but some of them are Unknown, it
+ * will become Unknown
+ * - If all of the expressions stored to it is Invariant, it will become
+ * Invariant
+ */
 class MarkStores : public Visitor {
     const std::string &var_;
-    std::vector<For> &loopStack_;
     std::vector<Expr> &condStack_;
     LoopVariTransVarMap &varInfo_;
     const LoopVariExprMap &exprInfo_;
 
   public:
-    MarkStores(const std::string &var, std::vector<For> &loopStack,
-               std::vector<Expr> &condStack, LoopVariTransVarMap &varInfo,
-               const LoopVariExprMap &exprInfo)
-        : var_(var), loopStack_(loopStack), condStack_(condStack),
-          varInfo_(varInfo), exprInfo_(exprInfo) {
-        for (auto &&loop : loopStack_) {
-            varInfo_[var_][loop->id()] = LoopVariability::Invariant;
-        }
+    MarkStores(const std::string &var, std::vector<Expr> &condStack,
+               LoopVariTransVarMap &varInfo, const LoopVariExprMap &exprInfo)
+        : var_(var), condStack_(condStack), varInfo_(varInfo),
+          exprInfo_(exprInfo) {
+        varInfo_.erase(var_); // Invariant
     }
 
   private:
@@ -60,21 +87,20 @@ class MarkStores : public Visitor {
 };
 
 class FindLoopVariance : public Visitor {
-    const std::vector<ID> &allLoops_;
-
-    std::vector<For> loopStack_;
+    std::vector<ID> loopStack_;
     std::vector<Expr> condStack_;
+    std::unordered_map<std::string, For> loops_;
     LoopVariTransVarMap varInfo_;
     LoopVariUniqVarMap uniqVarInfo_;
     LoopVariExprMap exprInfo_;
 
   public:
-    FindLoopVariance(const std::vector<ID> &allLoops) : allLoops_(allLoops) {}
+    FindLoopVariance(const Stmt &root) { InitExprVari{exprInfo_}(root); }
 
     const LoopVariExprMap &exprInfo() const { return exprInfo_; }
     const LoopVariUniqVarMap &varInfo() const { return uniqVarInfo_; }
 
-    int knownCnt() const;
+    int unknownCnt() const;
 
   private:
     // to = from
@@ -114,18 +140,17 @@ bool isVariant(const LoopVariUniqVarMap &varInfo, const VarDef &def,
  * expressed as a semi-lattice:
  *
  * ```
- *   Invariant
+ *   Invariant (implemented by inexistence in the resulting map)
  *       |
- *    Unknown
+ *    Unknown  (implemented by the `LoopVariability` type)
  *       |
- *    Variant
+ *    Variant  (implemented by the `LoopVariability` type)
  * ```
  *
- * All variables are initialized to Unkown (implemented by inexistence in the
- * resulting map), and will become either Invariant or Variant (implemented by
- * the `LoopVariability` type) during iterations. The variability of an
- * expression is the "meet" of its sub-expressions' variability. The variability
- * of a variable is the "meet" of variability of all expressions stored to it
+ * All variabilities are initialized to Unkown, and will become either Invariant
+ * or Variant during iterations. The variability of an expression is the "meet"
+ * of its sub-expressions' variability. The variability of a variable is the
+ * "meet" of variability of all expressions stored to it
  */
 std::pair<LoopVariExprMap, LoopVariUniqVarMap> findLoopVariance(const Stmt &op);
 
