@@ -344,6 +344,8 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ImmediateUnroll.html">ImmediateUnroll</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1InitExprVari.html">InitExprVari</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1InlinedInvoke.html">InlinedInvoke</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1InsertTmpEval.html">InsertTmpEval</a></td></tr>
@@ -790,8 +792,8 @@ Enumerations</h2></td></tr>
 , <a class="el" href="namespacefreetensor.html#a9b8940bf52e4cbe1737bf81df8692e61aa9bbf2afa85d3bc07956469f17c3478c">KillBoth</a>
  }</td></tr>
 <tr class="separator:a9b8940bf52e4cbe1737bf81df8692e61"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6c054e1147ea4b32ddffdf213dcc074b"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a6c054e1147ea4b32ddffdf213dcc074b">LoopVariability</a> : int { <a class="el" href="namespacefreetensor.html#a6c054e1147ea4b32ddffdf213dcc074ba700bc90a2a50660ba168a0ecdc917606">Variance</a>
-, <a class="el" href="namespacefreetensor.html#a6c054e1147ea4b32ddffdf213dcc074bab72f48a3614d581629f7e2b78ca85491">Invariance</a>
+<tr class="memitem:a6c054e1147ea4b32ddffdf213dcc074b"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a6c054e1147ea4b32ddffdf213dcc074b">LoopVariability</a> : int { <a class="el" href="namespacefreetensor.html#a6c054e1147ea4b32ddffdf213dcc074ba88183b946cc5f0e8c96b2e66e1c74a7e">Unknown</a>
+, <a class="el" href="namespacefreetensor.html#a6c054e1147ea4b32ddffdf213dcc074ba492f18b60811bf85ce118c0c6a1a5c4a">Variant</a>
  }</td></tr>
 <tr class="separator:a6c054e1147ea4b32ddffdf213dcc074b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afc87eee71f05eb84c5799d7f3492915f"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915f">ASTNodeType</a> : int { <br />
@@ -1743,6 +1745,12 @@ requires std::integral&lt;T&gt;</td></tr>
 <tr class="separator:a67c9e15cd811e9f2c9ac1f8717b177c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a386180ba6a8ac3e4cccbf7edeb1b8e5b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Tensor.html">Tensor</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a386180ba6a8ac3e4cccbf7edeb1b8e5b">deepCopy</a> (const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Tensor.html">Tensor</a> &gt; &amp;t)</td></tr>
 <tr class="separator:a386180ba6a8ac3e4cccbf7edeb1b8e5b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4a6fa06c091f0e75bb3113644d58ae5b"><td class="memTemplParams" colspan="2">template&lt;class FromMap , class ToMap &gt; </td></tr>
+<tr class="memitem:a4a6fa06c091f0e75bb3113644d58ae5b"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a4a6fa06c091f0e75bb3113644d58ae5b">copyInfo</a> (const FromMap &amp;fromInfo, const typename FromMap::key_type &amp;from, ToMap &amp;toInfo, const typename ToMap::key_type &amp;to)</td></tr>
+<tr class="separator:a4a6fa06c091f0e75bb3113644d58ae5b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a77d58850a2f3beddc06e062081822b91"><td class="memTemplParams" colspan="2">template&lt;class FromMap , class ToMap &gt; </td></tr>
+<tr class="memitem:a77d58850a2f3beddc06e062081822b91"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a77d58850a2f3beddc06e062081822b91">meetTo</a> (const FromMap &amp;fromInfo, const typename FromMap::key_type &amp;from, ToMap &amp;toInfo, const typename ToMap::key_type &amp;to)</td></tr>
+<tr class="separator:a77d58850a2f3beddc06e062081822b91"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a43d65fb51776569632ba36c4aea1eb3b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a43d65fb51776569632ba36c4aea1eb3b">operator==</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;lhs, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;rhs)</td></tr>
 <tr class="separator:a43d65fb51776569632ba36c4aea1eb3b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac33b2e0bbfce129ec192c0c0c064a50c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ac33b2e0bbfce129ec192c0c0c064a50c">operator!=</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;lhs, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;rhs)</td></tr>
@@ -3240,8 +3248,8 @@ template&lt;class K &gt; </div>
 </table>
 </div><div class="memdoc">
 <table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a6c054e1147ea4b32ddffdf213dcc074ba700bc90a2a50660ba168a0ecdc917606" name="a6c054e1147ea4b32ddffdf213dcc074ba700bc90a2a50660ba168a0ecdc917606"></a>Variance&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="a6c054e1147ea4b32ddffdf213dcc074bab72f48a3614d581629f7e2b78ca85491" name="a6c054e1147ea4b32ddffdf213dcc074bab72f48a3614d581629f7e2b78ca85491"></a>Invariance&#160;</td><td class="fielddoc"></td></tr>
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a6c054e1147ea4b32ddffdf213dcc074ba88183b946cc5f0e8c96b2e66e1c74a7e" name="a6c054e1147ea4b32ddffdf213dcc074ba88183b946cc5f0e8c96b2e66e1c74a7e"></a>Unknown&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a6c054e1147ea4b32ddffdf213dcc074ba492f18b60811bf85ce118c0c6a1a5c4a" name="a6c054e1147ea4b32ddffdf213dcc074ba492f18b60811bf85ce118c0c6a1a5c4a"></a>Variant&#160;</td><td class="fielddoc"></td></tr>
 </table>
 
 </div>
@@ -7213,6 +7221,48 @@ requires std::integral&lt;T&gt;</div>
 
 </div>
 </div>
+<a id="a4a6fa06c091f0e75bb3113644d58ae5b" name="a4a6fa06c091f0e75bb3113644d58ae5b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4a6fa06c091f0e75bb3113644d58ae5b">&#9670;&nbsp;</a></span>copyInfo()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class FromMap , class ToMap &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">void freetensor::copyInfo </td>
+          <td>(</td>
+          <td class="paramtype">const FromMap &amp;&#160;</td>
+          <td class="paramname"><em>fromInfo</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const typename FromMap::key_type &amp;&#160;</td>
+          <td class="paramname"><em>from</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">ToMap &amp;&#160;</td>
+          <td class="paramname"><em>toInfo</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const typename ToMap::key_type &amp;&#160;</td>
+          <td class="paramname"><em>to</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a73d1e1e83aedfa00128a25d37494807b" name="a73d1e1e83aedfa00128a25d37494807b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a73d1e1e83aedfa00128a25d37494807b">&#9670;&nbsp;</a></span>countBandNodeWidth()</h2>
 
@@ -7897,6 +7947,18 @@ template&lt;class T , class U &gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
+<p >Check whether an expression or a variable is loop-variant</p>
+<p >This function returns two map. The first map shows whether an expression is loop-variant, while the second map shows whether a variable is loop-variant. The result should be get by calling <code>isVariant</code></p>
+<p ><code>findLoopVariance</code> runs an iterative algorithm. The variance info is expressed as a semi-lattice:</p>
+<div class="fragment"><div class="line">Invariant (implemented by inexistence in the resulting map)</div>
+<div class="line">    |</div>
+<div class="line"> <a class="code hl_enumvalue" href="namespacefreetensor.html#a6c054e1147ea4b32ddffdf213dcc074ba88183b946cc5f0e8c96b2e66e1c74a7e">Unknown</a>  (implemented by the `<a class="code hl_enumeration" href="namespacefreetensor.html#a6c054e1147ea4b32ddffdf213dcc074b">LoopVariability</a>` type)</div>
+<div class="line">    |</div>
+<div class="line"> <a class="code hl_enumvalue" href="namespacefreetensor.html#a6c054e1147ea4b32ddffdf213dcc074ba492f18b60811bf85ce118c0c6a1a5c4a">Variant</a>  (implemented by the `<a class="code hl_enumeration" href="namespacefreetensor.html#a6c054e1147ea4b32ddffdf213dcc074b">LoopVariability</a>` type)</div>
+<div class="ttc" id="anamespacefreetensor_html_a6c054e1147ea4b32ddffdf213dcc074b"><div class="ttname"><a href="namespacefreetensor.html#a6c054e1147ea4b32ddffdf213dcc074b">freetensor::LoopVariability</a></div><div class="ttdeci">LoopVariability</div><div class="ttdef"><b>Definition:</b> find_loop_variance.h:11</div></div>
+<div class="ttc" id="anamespacefreetensor_html_a6c054e1147ea4b32ddffdf213dcc074ba492f18b60811bf85ce118c0c6a1a5c4a"><div class="ttname"><a href="namespacefreetensor.html#a6c054e1147ea4b32ddffdf213dcc074ba492f18b60811bf85ce118c0c6a1a5c4a">freetensor::LoopVariability::Variant</a></div><div class="ttdeci">@ Variant</div></div>
+<div class="ttc" id="anamespacefreetensor_html_a6c054e1147ea4b32ddffdf213dcc074ba88183b946cc5f0e8c96b2e66e1c74a7e"><div class="ttname"><a href="namespacefreetensor.html#a6c054e1147ea4b32ddffdf213dcc074ba88183b946cc5f0e8c96b2e66e1c74a7e">freetensor::LoopVariability::Unknown</a></div><div class="ttdeci">@ Unknown</div></div>
+</div><!-- fragment --><p >All variabilities are initialized to Unkown, and will become either Invariant or Variant during iterations. The variability of an expression is the "meet" of its sub-expressions' variability. The variability of a variable is the "meet" of variability of all expressions stored to it </p>
 
 </div>
 </div>
@@ -10578,6 +10640,48 @@ template&lt;class T &gt; </div>
           <td></td>
           <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;&#160;</td>
           <td class="paramname"><em>instance</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a77d58850a2f3beddc06e062081822b91" name="a77d58850a2f3beddc06e062081822b91"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a77d58850a2f3beddc06e062081822b91">&#9670;&nbsp;</a></span>meetTo()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class FromMap , class ToMap &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">void freetensor::meetTo </td>
+          <td>(</td>
+          <td class="paramtype">const FromMap &amp;&#160;</td>
+          <td class="paramname"><em>fromInfo</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const typename FromMap::key_type &amp;&#160;</td>
+          <td class="paramname"><em>from</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">ToMap &amp;&#160;</td>
+          <td class="paramname"><em>toInfo</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const typename ToMap::key_type &amp;&#160;</td>
+          <td class="paramname"><em>to</em>&#160;</td>
         </tr>
         <tr>
           <td></td>

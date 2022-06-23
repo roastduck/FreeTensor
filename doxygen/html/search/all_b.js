@@ -6,6 +6,5 @@ var searchData=
   ['kill_5fiter_5fdep_5fentry_3',['kill_iter_dep_entry',['../classfreetensor_1_1ScalarPropConst.html#a706d16a29e74b28277a2f03778fe445d',1,'freetensor::ScalarPropConst']]],
   ['killboth_4',['KillBoth',['../namespacefreetensor.html#a9b8940bf52e4cbe1737bf81df8692e61aa9bbf2afa85d3bc07956469f17c3478c',1,'freetensor']]],
   ['killearlier_5',['KillEarlier',['../namespacefreetensor.html#a9b8940bf52e4cbe1737bf81df8692e61aa377c1ea75256c2e2b00567dec810cf0',1,'freetensor']]],
-  ['killlater_6',['KillLater',['../namespacefreetensor.html#a9b8940bf52e4cbe1737bf81df8692e61a951b03cc1ebd46b37fdd0d48997431b4',1,'freetensor']]],
-  ['knowncnt_7',['knownCnt',['../classfreetensor_1_1FindLoopVariance.html#aaa5cb929f3b33e993acf1fe58028f96c',1,'freetensor::FindLoopVariance']]]
+  ['killlater_6',['KillLater',['../namespacefreetensor.html#a9b8940bf52e4cbe1737bf81df8692e61a951b03cc1ebd46b37fdd0d48997431b4',1,'freetensor']]]
 ];

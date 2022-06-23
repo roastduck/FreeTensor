@@ -81,7 +81,7 @@ var searchData=
   ['findinnermostscope_78',['FindInnerMostScope',['../classfreetensor_1_1FindInnerMostScope.html',1,'freetensor']]],
   ['findloopinscopesdirection_79',['FindLoopInScopesDirection',['../namespacefreetensor.html#a1f683336cea8089de8a4aebaac3568c3',1,'freetensor']]],
   ['findloopinvariantwrites_80',['FindLoopInvariantWrites',['../classfreetensor_1_1FindLoopInvariantWrites.html#a78ff98bb6369d441c1d7a8e129a3551a',1,'freetensor::FindLoopInvariantWrites::FindLoopInvariantWrites()'],['../classfreetensor_1_1FindLoopInvariantWrites.html',1,'freetensor::FindLoopInvariantWrites']]],
-  ['findloopvariance_81',['FindLoopVariance',['../classfreetensor_1_1FindLoopVariance.html#a9cfbf83c8d495ac3a0bfedac9429eb4e',1,'freetensor::FindLoopVariance']]],
+  ['findloopvariance_81',['FindLoopVariance',['../classfreetensor_1_1FindLoopVariance.html#adf415f5ea9c6dd77c4c0c45c25cb33cb',1,'freetensor::FindLoopVariance']]],
   ['findloopvariance_82',['findLoopVariance',['../namespacefreetensor.html#aa4e47af945a5ef2a6219ac757ce73b58',1,'freetensor']]],
   ['findloopvariance_83',['FindLoopVariance',['../classfreetensor_1_1FindLoopVariance.html',1,'freetensor']]],
   ['findmemtype_84',['FindMemType',['../classfreetensor_1_1FindMemType.html#a9e9ecad852f1f22647178cdd7027ed3e',1,'freetensor::FindMemType::FindMemType()'],['../classfreetensor_1_1FindMemType.html',1,'freetensor::FindMemType']]],

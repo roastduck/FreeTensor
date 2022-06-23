@@ -19,7 +19,7 @@ var searchData=
   ['findinnermostscope_16',['FindInnerMostScope',['../classfreetensor_1_1FindInnerMostScope.html#a4aae6cd613851db6665dc8338ee3a7ac',1,'freetensor::FindInnerMostScope']]],
   ['findinnermostscope_17',['findInnerMostScope',['../namespacefreetensor.html#aa8119a1a04c582341d32d887f9e5e71b',1,'freetensor']]],
   ['findloopinvariantwrites_18',['FindLoopInvariantWrites',['../classfreetensor_1_1FindLoopInvariantWrites.html#a78ff98bb6369d441c1d7a8e129a3551a',1,'freetensor::FindLoopInvariantWrites']]],
-  ['findloopvariance_19',['FindLoopVariance',['../classfreetensor_1_1FindLoopVariance.html#a9cfbf83c8d495ac3a0bfedac9429eb4e',1,'freetensor::FindLoopVariance']]],
+  ['findloopvariance_19',['FindLoopVariance',['../classfreetensor_1_1FindLoopVariance.html#adf415f5ea9c6dd77c4c0c45c25cb33cb',1,'freetensor::FindLoopVariance']]],
   ['findloopvariance_20',['findLoopVariance',['../namespacefreetensor.html#aa4e47af945a5ef2a6219ac757ce73b58',1,'freetensor']]],
   ['findmemtype_21',['FindMemType',['../classfreetensor_1_1FindMemType.html#a9e9ecad852f1f22647178cdd7027ed3e',1,'freetensor::FindMemType']]],
   ['findmultileveltiling_22',['FindMultiLevelTiling',['../classfreetensor_1_1FindMultiLevelTiling.html#ad0f547978fb70303e81d8489eec5e076',1,'freetensor::FindMultiLevelTiling']]],

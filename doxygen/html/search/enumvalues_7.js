@@ -9,6 +9,5 @@ var searchData=
   ['intconst_6',['IntConst',['../namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915faf79d80c388f479a9819dbf1fee3453c8',1,'freetensor']]],
   ['intrinsic_7',['Intrinsic',['../namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fa8b0f368e62695dc13b998050ea15a2c5',1,'freetensor']]],
   ['inv_8',['Inv',['../namespacefreetensor.html#a814262c5e3a8f58a762fdf9c4c0670adaa7e871520a392b978d3c9e6344c4407f',1,'freetensor']]],
-  ['invalid_9',['Invalid',['../namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4a4bbb8f967da6d1a610596d7257179c2b',1,'freetensor']]],
-  ['invariance_10',['Invariance',['../namespacefreetensor.html#a6c054e1147ea4b32ddffdf213dcc074bab72f48a3614d581629f7e2b78ca85491',1,'freetensor']]]
+  ['invalid_9',['Invalid',['../namespacefreetensor.html#ab5873118bfa035eef8cd380601a482e4a4bbb8f967da6d1a610596d7257179c2b',1,'freetensor']]]
 ];
