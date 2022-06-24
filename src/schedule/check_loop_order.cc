@@ -16,7 +16,10 @@ void CheckLoopOrder::visit(const For &op) {
         if (curOrder_.size() < dstOrder_.size()) {
             Visitor::visit(op);
         }
-        done_ = true;
+        if (!done_) {
+            done_ = true;
+            stmtSeqInBetween_ = stmtSeqStack_;
+        }
         // done_ is to avoid such a program:
         // for i {
         //	 for j {}
@@ -29,6 +32,12 @@ void CheckLoopOrder::visit(const For &op) {
         }
         Visitor::visit(op);
     }
+}
+
+void CheckLoopOrder::visit(const StmtSeq &op) {
+    stmtSeqStack_.emplace_back(op);
+    Visitor::visit(op);
+    stmtSeqStack_.pop_back();
 }
 
 const std::vector<For> &CheckLoopOrder::order() const {

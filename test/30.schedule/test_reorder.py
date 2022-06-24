@@ -99,6 +99,21 @@ def test_dependency():
     assert ast_.match(ast)
 
 
+def test_dependency_of_stmt_in_between():
+    with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
+                    ("z", (), "int32", "cache", "cpu")]) as (y, z):
+        with ft.For("i", 0, 4, nid="L1") as i:
+            z[()] = i * i
+            with ft.For("j", 0, 8, nid="L2") as j:
+                y[i, j] = z[()] + j
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast)
+    with pytest.raises(ft.InvalidSchedule):
+        s.reorder(["L2", "L1"])
+    ast_ = s.ast()  # Should not changed
+    assert ast_.match(ast)
+
+
 def test_reduction():
     with ft.VarDef([("x", (4, 8), "int32", "output", "cpu"),
                     ("y", (1,), "int32", "output", "cpu")]) as (x, y):
