@@ -48,12 +48,11 @@ var searchData=
   ['subtreelist_3c_20freetensor_3a_3areductionitem_20_3e_45',['SubTreeList&lt; freetensor::ReductionItem &gt;',['../classfreetensor_1_1SubTreeList.html',1,'freetensor']]],
   ['subtreelist_3c_20freetensor_3a_3astmtnode_20_3e_46',['SubTreeList&lt; freetensor::StmtNode &gt;',['../classfreetensor_1_1SubTreeList.html',1,'freetensor']]],
   ['swap_47',['Swap',['../classfreetensor_1_1Swap.html',1,'freetensor']]],
-  ['swapfor_48',['SwapFor',['../classfreetensor_1_1SwapFor.html',1,'freetensor']]],
-  ['symboltable_49',['SymbolTable',['../classfreetensor_1_1SymbolTable.html',1,'freetensor']]],
-  ['symboltable_3c_20constfold_20_3e_50',['SymbolTable&lt; ConstFold &gt;',['../classfreetensor_1_1SymbolTable.html',1,'freetensor']]],
-  ['symboltable_3c_20mutator_20_3e_51',['SymbolTable&lt; Mutator &gt;',['../classfreetensor_1_1SymbolTable.html',1,'freetensor']]],
-  ['symboltable_3c_20trackstmt_3c_20visitor_20_3e_20_3e_52',['SymbolTable&lt; TrackStmt&lt; Visitor &gt; &gt;',['../classfreetensor_1_1SymbolTable.html',1,'freetensor']]],
-  ['symboltable_3c_20visitor_20_3e_53',['SymbolTable&lt; Visitor &gt;',['../classfreetensor_1_1SymbolTable.html',1,'freetensor']]],
-  ['symboltabledata_54',['SymbolTableData',['../classfreetensor_1_1SymbolTableData.html',1,'freetensor']]],
-  ['symboltableinterface_55',['SymbolTableInterface',['../classfreetensor_1_1SymbolTableInterface.html',1,'freetensor']]]
+  ['symboltable_48',['SymbolTable',['../classfreetensor_1_1SymbolTable.html',1,'freetensor']]],
+  ['symboltable_3c_20constfold_20_3e_49',['SymbolTable&lt; ConstFold &gt;',['../classfreetensor_1_1SymbolTable.html',1,'freetensor']]],
+  ['symboltable_3c_20mutator_20_3e_50',['SymbolTable&lt; Mutator &gt;',['../classfreetensor_1_1SymbolTable.html',1,'freetensor']]],
+  ['symboltable_3c_20trackstmt_3c_20visitor_20_3e_20_3e_51',['SymbolTable&lt; TrackStmt&lt; Visitor &gt; &gt;',['../classfreetensor_1_1SymbolTable.html',1,'freetensor']]],
+  ['symboltable_3c_20visitor_20_3e_52',['SymbolTable&lt; Visitor &gt;',['../classfreetensor_1_1SymbolTable.html',1,'freetensor']]],
+  ['symboltabledata_53',['SymbolTableData',['../classfreetensor_1_1SymbolTableData.html',1,'freetensor']]],
+  ['symboltableinterface_54',['SymbolTableInterface',['../classfreetensor_1_1SymbolTableInterface.html',1,'freetensor']]]
 ];

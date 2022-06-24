@@ -36,9 +36,10 @@ var searchData=
   ['removeallwrites_33',['RemoveAllWrites',['../classfreetensor_1_1RemoveAllWrites.html',1,'freetensor']]],
   ['removedeadvar_34',['RemoveDeadVar',['../classfreetensor_1_1RemoveDeadVar.html',1,'freetensor']]],
   ['removewrites_35',['RemoveWrites',['../classfreetensor_1_1RemoveWrites.html',1,'freetensor']]],
-  ['replacebytape_36',['ReplaceByTape',['../classfreetensor_1_1ReplaceByTape.html',1,'freetensor']]],
-  ['replaceiter_37',['ReplaceIter',['../classfreetensor_1_1ReplaceIter.html',1,'freetensor']]],
-  ['replaceuses_38',['ReplaceUses',['../classfreetensor_1_1ReplaceUses.html',1,'freetensor']]],
-  ['roundtowards0divnode_39',['RoundTowards0DivNode',['../classfreetensor_1_1RoundTowards0DivNode.html',1,'freetensor']]],
-  ['rule_40',['Rule',['../classfreetensor_1_1Rule.html',1,'freetensor']]]
+  ['reorder_36',['Reorder',['../classfreetensor_1_1Reorder.html',1,'freetensor']]],
+  ['replacebytape_37',['ReplaceByTape',['../classfreetensor_1_1ReplaceByTape.html',1,'freetensor']]],
+  ['replaceiter_38',['ReplaceIter',['../classfreetensor_1_1ReplaceIter.html',1,'freetensor']]],
+  ['replaceuses_39',['ReplaceUses',['../classfreetensor_1_1ReplaceUses.html',1,'freetensor']]],
+  ['roundtowards0divnode_40',['RoundTowards0DivNode',['../classfreetensor_1_1RoundTowards0DivNode.html',1,'freetensor']]],
+  ['rule_41',['Rule',['../classfreetensor_1_1Rule.html',1,'freetensor']]]
 ];

@@ -100,6 +100,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a2883fbe123eecd8c31f5e282aefc229d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af23a677c371e152cb5477c0b72590831"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; <a class="el" href="namespacefreetensor.html#a56a793ae2a656931c4a3bd7fe6035b9d">For</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CheckLoopOrder.html#af23a677c371e152cb5477c0b72590831">order</a> () const</td></tr>
 <tr class="separator:af23a677c371e152cb5477c0b72590831"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a37c6b141c7a44fc110416e1a7d431d24"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; <a class="el" href="namespacefreetensor.html#afa443a46bd7b0cab600c0bc6fef85f96">StmtSeq</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CheckLoopOrder.html#a37c6b141c7a44fc110416e1a7d431d24">stmtSeqInBetween</a> () const</td></tr>
+<tr class="separator:a37c6b141c7a44fc110416e1a7d431d24"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classfreetensor_1_1Visitor"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classfreetensor_1_1Visitor')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classfreetensor_1_1Visitor.html">freetensor::Visitor</a></td></tr>
 <tr class="memitem:a70f0b0cec974275d2f3cc485d1e84461 inherit pub_methods_classfreetensor_1_1Visitor"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Visitor.html#a70f0b0cec974275d2f3cc485d1e84461">~Visitor</a> ()</td></tr>
 <tr class="separator:a70f0b0cec974275d2f3cc485d1e84461 inherit pub_methods_classfreetensor_1_1Visitor"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -110,6 +112,8 @@ Public Member Functions</h2></td></tr>
 Protected Member Functions</h2></td></tr>
 <tr class="memitem:a0170032afd4ae12ab7964b69d2b1be92"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CheckLoopOrder.html#a0170032afd4ae12ab7964b69d2b1be92">visit</a> (const <a class="el" href="namespacefreetensor.html#a56a793ae2a656931c4a3bd7fe6035b9d">For</a> &amp;op) override</td></tr>
 <tr class="separator:a0170032afd4ae12ab7964b69d2b1be92"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af2e6a7070a3b4351747049472d1924a1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CheckLoopOrder.html#af2e6a7070a3b4351747049472d1924a1">visit</a> (const <a class="el" href="namespacefreetensor.html#afa443a46bd7b0cab600c0bc6fef85f96">StmtSeq</a> &amp;op) override</td></tr>
+<tr class="separator:af2e6a7070a3b4351747049472d1924a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_methods_classfreetensor_1_1Visitor"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classfreetensor_1_1Visitor')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="classfreetensor_1_1Visitor.html">freetensor::Visitor</a></td></tr>
 <tr class="memitem:a8a65094a405dfaaed52d8ff708057316 inherit pro_methods_classfreetensor_1_1Visitor"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Visitor.html#a8a65094a405dfaaed52d8ff708057316">visitExpr</a> (const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;op)</td></tr>
 <tr class="separator:a8a65094a405dfaaed52d8ff708057316 inherit pro_methods_classfreetensor_1_1Visitor"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -269,8 +273,33 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="a37c6b141c7a44fc110416e1a7d431d24" name="a37c6b141c7a44fc110416e1a7d431d24"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a37c6b141c7a44fc110416e1a7d431d24">&#9670;&nbsp;</a></span>stmtSeqInBetween()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const std::vector&lt; <a class="el" href="namespacefreetensor.html#afa443a46bd7b0cab600c0bc6fef85f96">StmtSeq</a> &gt; &amp; freetensor::CheckLoopOrder::stmtSeqInBetween </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a0170032afd4ae12ab7964b69d2b1be92" name="a0170032afd4ae12ab7964b69d2b1be92"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0170032afd4ae12ab7964b69d2b1be92">&#9670;&nbsp;</a></span>visit()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a0170032afd4ae12ab7964b69d2b1be92">&#9670;&nbsp;</a></span>visit() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -294,6 +323,34 @@ Additional Inherited Members</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Reimplemented from <a class="el" href="classfreetensor_1_1Visitor.html#ac6ce1805a1f3456dae93638868b5c496">freetensor::Visitor</a>.</p>
+
+</div>
+</div>
+<a id="af2e6a7070a3b4351747049472d1924a1" name="af2e6a7070a3b4351747049472d1924a1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af2e6a7070a3b4351747049472d1924a1">&#9670;&nbsp;</a></span>visit() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void freetensor::CheckLoopOrder::visit </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#afa443a46bd7b0cab600c0bc6fef85f96">StmtSeq</a> &amp;&#160;</td>
+          <td class="paramname"><em>op</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Reimplemented from <a class="el" href="classfreetensor_1_1Visitor.html#ad5170040c227eb7c9d97c9e9e1bb0bce">freetensor::Visitor</a>.</p>
 
 </div>
 </div>
