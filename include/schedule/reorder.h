@@ -9,15 +9,15 @@
 namespace freetensor {
 
 /**
- * Swap two directly nested loops
+ * Reorder two directly nested loops
  */
-class SwapFor : public Mutator {
+class Reorder : public Mutator {
     For oldOuter_, oldInner_;
     bool insideOuter_ = false, insideInner_ = false;
     bool visitedInner_ = false;
 
   public:
-    SwapFor(const For oldOuter, const For &oldInner)
+    Reorder(const For oldOuter, const For &oldInner)
         : oldOuter_(oldOuter), oldInner_(oldInner) {}
 
   protected:

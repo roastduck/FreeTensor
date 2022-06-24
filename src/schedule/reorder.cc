@@ -22,7 +22,7 @@ std::vector<FindDepsDir> notLexLessAfterPermu(const std::vector<ID> &permu) {
     return direction;
 }
 
-Stmt SwapFor::visit(const For &_op) {
+Stmt Reorder::visit(const For &_op) {
     if (_op->id() == oldOuter_->id()) {
         insideOuter_ = true;
         auto body = Mutator::visit(_op);
@@ -43,7 +43,7 @@ Stmt SwapFor::visit(const For &_op) {
     }
 }
 
-Stmt SwapFor::visit(const StmtSeq &_op) {
+Stmt Reorder::visit(const StmtSeq &_op) {
     if (insideOuter_) {
         if (insideInner_) {
             return Mutator::visit(_op);
@@ -145,8 +145,8 @@ Stmt reorder(const Stmt &_ast, const std::vector<ID> &dstOrder) {
     for (size_t i = 0; i < n; i++) {
         for (size_t j = 0; j + 1 < n; j++) {
             if (index[j] > index[j + 1]) {
-                SwapFor swapper(curOrder[j], curOrder[j + 1]);
-                ast = swapper(ast);
+                Reorder mutator(curOrder[j], curOrder[j + 1]);
+                ast = mutator(ast);
                 std::swap(index[j], index[j + 1]);
                 std::swap(curOrder[j], curOrder[j + 1]);
             }
