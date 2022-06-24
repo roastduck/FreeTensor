@@ -22,6 +22,29 @@ std::vector<FindDepsDir> notLexLessAfterPermu(const std::vector<ID> &permu) {
     return direction;
 }
 
+Expr RenameIter::visit(const Var &_op) {
+    auto __op = Mutator::visit(_op);
+    ASSERT(__op->nodeType() == ASTNodeType::Var);
+    auto op = __op.as<VarNode>();
+    if (op->name_ == oldName_) {
+        op->name_ = newName_;
+    }
+    return op;
+}
+
+Stmt RenameIter::visit(const For &_op) {
+    if (_op->iter_ == oldName_) {
+        newName_ = oldName_ + "." + _op->id().strId();
+        auto __op = Mutator::visit(_op);
+        ASSERT(__op->nodeType() == ASTNodeType::For);
+        auto op = __op.as<ForNode>();
+        op->iter_ = newName_;
+        return op;
+    } else {
+        return Mutator::visit(_op);
+    }
+}
+
 Stmt Reorder::visit(const For &_op) {
     if (_op->id() == oldOuter_->id()) {
         insideOuter_ = true;
@@ -71,20 +94,22 @@ Stmt Reorder::visit(const StmtSeq &_op) {
                 throw InvalidSchedule("Imperfect nesting is not allowed when "
                                       "the inner loop is parallelized");
             }
-            before =
-                makeIf("", makeEQ(makeVar(oldInner_->iter_), oldInner_->begin_),
-                       beforeStmts.size() == 1 ? beforeStmts[0]
-                                               : makeStmtSeq("", beforeStmts));
+            before = makeIf(
+                "", makeEQ(makeVar(oldInner_->iter_), oldInner_->begin_),
+                RenameIter{oldInner_->iter_}(
+                    beforeStmts.size() == 1 ? beforeStmts[0]
+                                            : makeStmtSeq("", beforeStmts)));
         }
         if (!afterStmts.empty()) {
             if (oldInner_->property_->parallel_ != serialScope) {
                 throw InvalidSchedule("Imperfect nesting is not allowed when "
                                       "the inner loop is parallelized");
             }
-            after =
-                makeIf("", makeEQ(makeVar(oldInner_->iter_), oldInner_->begin_),
-                       afterStmts.size() == 1 ? afterStmts[0]
-                                              : makeStmtSeq("", afterStmts));
+            after = makeIf(
+                "", makeEQ(makeVar(oldInner_->iter_), oldInner_->begin_),
+                RenameIter{oldInner_->iter_}(
+                    afterStmts.size() == 1 ? afterStmts[0]
+                                           : makeStmtSeq("", afterStmts)));
         }
 
         std::vector<Stmt> stmts;
