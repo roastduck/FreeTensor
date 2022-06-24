@@ -7,6 +7,21 @@
 
 namespace freetensor {
 
+std::vector<FindDepsDir> notLexLessAfterPermu(const std::vector<ID> &permu) {
+    // Not lexicographically less <==> there is no such dependence that the
+    // out-most non-'=' carrying loop is not a '>'
+    std::vector<FindDepsDir> direction;
+    for (size_t i = 0, n = permu.size(); i < n; i++) {
+        FindDepsDir dir;
+        for (size_t j = 0; j < i; j++) {
+            dir.emplace_back(permu[j], DepDirection::Same);
+        }
+        dir.emplace_back(permu[i], DepDirection::Inv);
+        direction.emplace_back(std::move(dir));
+    }
+    return direction;
+}
+
 Stmt SwapFor::visit(const For &_op) {
     if (_op->id() == oldOuter_->id()) {
         insideOuter_ = true;
@@ -103,30 +118,27 @@ Stmt reorder(const Stmt &_ast, const std::vector<ID> &dstOrder) {
             dstOrder.begin());
     }
 
-    // A reorder is leagal if and only if, after transformation, there is no
-    // such dependence that the out-most non-'=' carrying loop is not a '>'
-    std::vector<FindDepsDir> direction;
-    for (size_t i = 0, n = dstOrder.size(); i < n; i++) {
-        FindDepsDir dir;
-        for (size_t j = 0; j < i; j++) {
-            dir.emplace_back(dstOrder[j], DepDirection::Same);
-        }
-        dir.emplace_back(dstOrder[i], DepDirection::Inv);
-        direction.emplace_back(std::move(dir));
+    // A reorder is leagal if and only if, after transformation, for each
+    // dependence pair, `earlier` is still earlier (lexicographically less) than
+    // `later`.
+    std::vector<ID> dstLoopAndStmtSeqOrder;
+    for (auto &&seq : checker.stmtSeqInBetween()) {
+        dstLoopAndStmtSeqOrder.emplace_back(seq->id());
     }
-    auto found = [&](const Dependency &d) {
-        throw InvalidSchedule("Loops are not permutable: " + toString(d) +
-                              " cannot be resolved");
-    };
+    dstLoopAndStmtSeqOrder.insert(dstLoopAndStmtSeqOrder.end(),
+                                  dstOrder.begin(), dstOrder.end());
     FindDeps()
-        .direction(direction)
+        .direction(notLexLessAfterPermu(dstLoopAndStmtSeqOrder))
         .filterEarlier([&](const AccessPoint &earlier) {
             return earlier.stmt_->ancestorById(curOrder.front()->id())
                 .isValid();
         })
         .filterLater([&](const AccessPoint &later) {
             return later.stmt_->ancestorById(curOrder.front()->id()).isValid();
-        })(ast, found);
+        })(ast, [&](const Dependency &d) {
+            throw InvalidSchedule("Loops are not permutable: " + toString(d) +
+                                  " cannot be resolved");
+        });
 
     // Bubble Sort
     size_t n = index.size();
