@@ -126,6 +126,33 @@ def test_stmt_in_between():
     assert std.match(ast)
 
 
+def test_loop_in_between():
+    with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
+                    ("z", (4, 8), "int32", "output", "cpu")]) as (y, z):
+        with ft.For("i", 0, 4, nid="L1") as i:
+            with ft.For("j", 0, 8, nid="L2") as j:
+                z[i, j] = i + j
+            with ft.For("j", 0, 8, nid="L3") as j:
+                y[i, j] = i * j
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast)
+    s.merge("L1", "L3")
+    ast = s.ast()
+    print(ast)
+    ast = ft.lower(ast, skip_passes=["use_builtin_div"], verbose=1)
+
+    with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
+                    ("z", (4, 8), "int32", "output", "cpu")]) as (y, z):
+        with ft.For("i", 0, 32) as i:
+            with ft.If(i % 8 == 0):
+                with ft.For("j", 0, 8) as j:
+                    z[i // 8, j] = i // 8 + j
+            y[i // 8, i % 8] = i // 8 * (i % 8)
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
 def test_def_in_between():
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4, 8), "int32", "output", "cpu")]) as (x, y):

@@ -8,6 +8,17 @@
 
 namespace freetensor {
 
+class RenameIter : public Mutator {
+    std::string oldName_, newName_;
+
+  public:
+    RenameIter(const std::string &oldName) : oldName_(oldName) {}
+
+  protected:
+    Expr visit(const Var &op) override;
+    Stmt visit(const For &op) override;
+};
+
 /**
  * Reorder two directly nested loops
  */

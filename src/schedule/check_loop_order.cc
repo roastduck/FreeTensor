@@ -25,11 +25,8 @@ void CheckLoopOrder::visit(const For &op) {
         //	 for j {}
         //	 for k {}
         // }
-    } else {
-        if (!curOrder_.empty()) { // Already met the first loop
-            throw InvalidSchedule("Unable to find all the loops. "
-                                  "These loops should be directly nested");
-        }
+    } else if (curOrder_.empty()) {
+        // not yet started
         Visitor::visit(op);
     }
 }
@@ -46,7 +43,7 @@ const std::vector<For> &CheckLoopOrder::order() const {
         for (auto &&[i, item] : iter::enumerate(dstOrder_)) {
             msg += (i > 0 ? ", " : "") + toString(item);
         }
-        msg += "should be directly nested";
+        msg += " should be directly nested";
         throw InvalidSchedule(msg);
     }
     return curOrder_;
