@@ -7,11 +7,15 @@
 template <typename T> class Lazy {
     std::optional<T> container_;
     std::function<T()> delayedInit_;
+    std::mutex mutex_;
 
   public:
     const T &operator*() {
-        if (!container_)
-            container_ = delayedInit_();
+        if (!container_) {
+            std::lock_guard<std::mutex> lock(mutex_);
+            if (!container_)
+                container_ = delayedInit_();
+        }
         return *container_;
     }
 
