@@ -147,7 +147,7 @@ Stmt propOneTimeUse(const Stmt &_op) {
         if (!allIters(toProp).empty()) {
             try {
                 auto &&[args, values, cond] =
-                    parsePBFunc(repInfo.funcStr_); // later -> earlier
+                    parseSimplePBFunc(repInfo.funcStr_); // later -> earlier
                 ASSERT(repInfo.earlierIters_.size() <=
                        values.size()); // maybe padded
                 ASSERT(repInfo.laterIters_.size() <= args.size());
