@@ -21,6 +21,7 @@ class AutoSchedule(ffi.AutoSchedule):
         if os.path.isfile(self.save_file_name):
             self.model = xgb.Booster()
             self.model.load_model(self.save_file_name)
+        self.verbose = verbose
 
         def predict_func(features):
             return self.predict(features)
@@ -37,7 +38,8 @@ class AutoSchedule(ffi.AutoSchedule):
 
     def run(self, iteration):
         for i in range(iteration):
-            print("iter ", i)
+            if self.verbose >= 1:
+                print("Iteration ", i)
             self.search_one_round(64)
         return self.get_best_schedule()
 
