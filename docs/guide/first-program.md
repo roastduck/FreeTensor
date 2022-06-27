@@ -43,7 +43,7 @@ To read or write tensors in a function, just write `for ... in range(...)` loops
 
 !!! note "Special note on tensor assignments"
 
-    We follow Python convention for tensor assignments, but sometimes it is a little counterintuitive. Suppose you have two `list`s in Python: `a` and `b`. `a = b` *replaces* the object `a` with the object `b`, while `a[:] = b` *assigns* data in `b` to `a`. FreeTensor does not support replacing a tensor object with another one. It supports assignments only. Therefore, we need to write `a[:] = b` to assign a non-scalar tensor, and `a[()] = b` to assign a scalar (0-D) tensor.
+    We follow Python convention for tensor assignments, but sometimes it is a little counterintuitive. Suppose you have two `list`s in Python: `a` and `b`. `a = b` *replaces* the object `a` with the object `b`, while `a[...] = b` *assigns* data in `b` to `a`. FreeTensor does not support replacing a tensor object with another one. It supports assignments only. Therefore, we need to write `a[...] = b` to assign tensor. `a[:] = b` (for non-scalars), `a[None] = b` and `a[()] = b` is also supported.
 
 ## Dynamic or Static
 

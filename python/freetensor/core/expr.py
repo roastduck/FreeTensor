@@ -80,6 +80,8 @@ class VarRef(ffi.FrontendVar):
         return self[indices]
 
     def _parse_key(self, key):
+        if key is None or key is ...:
+            key = ()
         if not isinstance(key, collections.abc.Sequence):
             key = (key,)
         ffiIdx = []
