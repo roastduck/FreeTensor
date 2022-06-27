@@ -526,6 +526,8 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SigmoidNode.html">SigmoidNode</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfreetensor_1_1SimplePBFuncAST.html">SimplePBFuncAST</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SimplifyPass.html">SimplifyPass</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SinkVar.html">SinkVar</a></td></tr>
@@ -747,6 +749,8 @@ Typedefs</h2></td></tr>
 <tr class="memitem:ae14e59de18f2f50d26e03b5df64a3866"><td class="memTemplParams" colspan="2">template&lt;class K &gt; </td></tr>
 <tr class="memitem:ae14e59de18f2f50d26e03b5df64a3866"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ae14e59de18f2f50d26e03b5df64a3866">ASTHashSet</a> = std::unordered_set&lt; K, <a class="el" href="classfreetensor_1_1Hasher.html">Hasher</a>, <a class="el" href="classfreetensor_1_1HashComparator.html">HashComparator</a> &gt;</td></tr>
 <tr class="separator:ae14e59de18f2f50d26e03b5df64a3866"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2c312d0f9e2ef2b2914156bc32fa6c7d"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; <a class="el" href="structfreetensor_1_1SimplePBFuncAST.html">SimplePBFuncAST</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a2c312d0f9e2ef2b2914156bc32fa6c7d">PBFuncAST</a></td></tr>
+<tr class="separator:a2c312d0f9e2ef2b2914156bc32fa6c7d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6d19bf2262d0cd0af3903283c9722088"><td class="memItemLeft" align="right" valign="top">typedef std::variant&lt; <a class="el" href="structfreetensor_1_1SerialScope.html">SerialScope</a>, <a class="el" href="structfreetensor_1_1OpenMPScope.html">OpenMPScope</a>, <a class="el" href="structfreetensor_1_1CUDAStreamScope.html">CUDAStreamScope</a>, <a class="el" href="structfreetensor_1_1CUDAScope.html">CUDAScope</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a6d19bf2262d0cd0af3903283c9722088">ParallelScope</a></td></tr>
 <tr class="separator:a6d19bf2262d0cd0af3903283c9722088"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af5802db3227120f362d032359df51adc"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1AnyNode.html">AnyNode</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#af5802db3227120f362d032359df51adc">Any</a></td></tr>
@@ -1351,8 +1355,10 @@ requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;</td></tr>
 <tr class="separator:aa0260001028b6b84273b63c94c2683d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac01fbb51827243e01be6ccc23cfc7ce9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ac01fbb51827243e01be6ccc23cfc7ce9">makeMaxMin</a> (const std::vector&lt; std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &gt; &amp;exprs)</td></tr>
 <tr class="separator:ac01fbb51827243e01be6ccc23cfc7ce9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1f2361303fe302da9863d6a204a3d33f"><td class="memItemLeft" align="right" valign="top">std::tuple&lt; std::vector&lt; std::string &gt;, std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt;, <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a1f2361303fe302da9863d6a204a3d33f">parsePBFunc</a> (const std::string &amp;str)</td></tr>
-<tr class="separator:a1f2361303fe302da9863d6a204a3d33f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aca9654a5ea538c714eac06d7a005446f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a2c312d0f9e2ef2b2914156bc32fa6c7d">PBFuncAST</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aca9654a5ea538c714eac06d7a005446f">parsePBFunc</a> (const std::string &amp;str)</td></tr>
+<tr class="separator:aca9654a5ea538c714eac06d7a005446f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a34838394ebf8a8f18c9c20a8fdf9f57a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structfreetensor_1_1SimplePBFuncAST.html">SimplePBFuncAST</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a34838394ebf8a8f18c9c20a8fdf9f57a">parseSimplePBFunc</a> (const std::string &amp;str)</td></tr>
+<tr class="separator:a34838394ebf8a8f18c9c20a8fdf9f57a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aee725835f2e6cd6677489b1d146f42e0"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
 <tr class="memitem:aee725835f2e6cd6677489b1d146f42e0"><td class="memTemplItemLeft" align="right" valign="top">T *&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aee725835f2e6cd6677489b1d146f42e0">GET_ISL_PTR</a> (T *ptr)</td></tr>
 <tr class="separator:aee725835f2e6cd6677489b1d146f42e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -2682,6 +2688,21 @@ template&lt;class K &gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a id="a2c312d0f9e2ef2b2914156bc32fa6c7d" name="a2c312d0f9e2ef2b2914156bc32fa6c7d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2c312d0f9e2ef2b2914156bc32fa6c7d">&#9670;&nbsp;</a></span>PBFuncAST</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef std::vector&lt;<a class="el" href="structfreetensor_1_1SimplePBFuncAST.html">SimplePBFuncAST</a>&gt; <a class="el" href="namespacefreetensor.html#a2c312d0f9e2ef2b2914156bc32fa6c7d">freetensor::PBFuncAST</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p >A <a class="el" href="classfreetensor_1_1PBFunc.html">PBFunc</a> parsed as ASTs </p>
 
 </div>
 </div>
@@ -12197,14 +12218,14 @@ template&lt;class T &gt; </div>
 
 </div>
 </div>
-<a id="a1f2361303fe302da9863d6a204a3d33f" name="a1f2361303fe302da9863d6a204a3d33f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1f2361303fe302da9863d6a204a3d33f">&#9670;&nbsp;</a></span>parsePBFunc()</h2>
+<a id="aca9654a5ea538c714eac06d7a005446f" name="aca9654a5ea538c714eac06d7a005446f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aca9654a5ea538c714eac06d7a005446f">&#9670;&nbsp;</a></span>parsePBFunc()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">std::tuple&lt; std::vector&lt; std::string &gt;, std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt;, <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; freetensor::parsePBFunc </td>
+          <td class="memname"><a class="el" href="namespacefreetensor.html#a2c312d0f9e2ef2b2914156bc32fa6c7d">PBFuncAST</a> freetensor::parsePBFunc </td>
           <td>(</td>
           <td class="paramtype">const std::string &amp;&#160;</td>
           <td class="paramname"><em>str</em></td><td>)</td>
@@ -12212,6 +12233,26 @@ template&lt;class T &gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
+<p >Parse a <a class="el" href="classfreetensor_1_1PBFunc.html">PBFunc</a> to be ASTs </p>
+
+</div>
+</div>
+<a id="a34838394ebf8a8f18c9c20a8fdf9f57a" name="a34838394ebf8a8f18c9c20a8fdf9f57a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a34838394ebf8a8f18c9c20a8fdf9f57a">&#9670;&nbsp;</a></span>parseSimplePBFunc()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structfreetensor_1_1SimplePBFuncAST.html">SimplePBFuncAST</a> freetensor::parseSimplePBFunc </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>str</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p >Parse a <a class="el" href="classfreetensor_1_1PBFunc.html">PBFunc</a> to be ASTs, but only restricted to one contiguous factor </p>
 
 </div>
 </div>
