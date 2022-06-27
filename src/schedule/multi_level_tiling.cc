@@ -49,11 +49,9 @@ _multiLevelTiling(Schedule &schedule, const ForsWithDataReuse &target,
         }
     }
     std::vector<ID> labels;
-    //    std::cout << "tiles: ";
     for (const auto &tile : tiles) {
         if (tile.second > 1) {
             labels.push_back(tile.first);
-            //            std::cout << tile.first.strId() << " ";
         }
     }
     if (!labels.empty()) {
@@ -156,10 +154,8 @@ multiLevelTilingWithFusion(Schedule &schedule, const ForsWithDataReuse &target,
     }
     auto fuseTiles =
         _multiLevelTiling(schedule, fuseTarget, fuseAnnotation, fusePat);
-    //    std::cout << toString(schedule.ast()) << std::endl;
     size_t fuseTileSize = fuseTiles.size() - fuseTarget.spaceLoops.size();
     ID lastFuse;
-    //    std::cout << "before fuse: " << toString(schedule.ast()) << std::endl;
     for (size_t i = 0; i < fuseTileSize; i++) {
         if (fuseTiles[i].second > 1) {
             lastFuse = tiles[i].first =

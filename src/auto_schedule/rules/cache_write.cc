@@ -16,8 +16,10 @@ RuleStatus CacheWriteRule::analyze(const Sketch &sketch) {
 std::vector<Sketch> CacheWriteRule::genPart(const Sketch &sketch) {
     Sketch newSketch = sketch.clone();
     auto &target = newSketch.nowTarget().target;
-    std::cout << "cache: " << target.outermost.strId() << " " << target.dest
-              << std::endl;
+    if (verbose_ >= 2) {
+        logger() << "cache: " << target.outermost.strId() << " " << target.dest
+                 << std::endl;
+    }
     std::string name = std::get<2>(
         newSketch.schedule().cache(target.outermost, target.dest, memType_));
     target.dest = name;

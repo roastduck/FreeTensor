@@ -13,7 +13,8 @@ class AutoSchedule(ffi.AutoSchedule):
                  n_measured,
                  *,
                  tag="",
-                 min_block_size=0):
+                 min_block_size=0,
+                 verbose=0):
         self.model = None
         self.xgb_params = {}
         self.save_file_name = tag + "_xgb.model"
@@ -29,7 +30,7 @@ class AutoSchedule(ffi.AutoSchedule):
 
         super(AutoSchedule,
               self).__init__(schedule, target, device, n_measured, predict_func,
-                             update_func, tag, min_block_size)
+                             update_func, tag, min_block_size, verbose)
 
     def set_params(self, *args, **kws):
         super(AutoSchedule, self).set_params(args, kws)

@@ -88,7 +88,6 @@ void MultiLevelTilingWithFusionPart::apply(Schedule &schedule,
 }
 
 bool MultiLevelTilingWithFusionPart::mutate(std::default_random_engine &gen) {
-    // std::cout << "Start mutating...\n";
     MultiLevelTilingAnnotation mut = annotation_;
     int mutPart = randomInt(1, gen);
     int spaceSize = target_.spaceLoops.size();
@@ -122,13 +121,11 @@ bool MultiLevelTilingWithFusionPart::mutate(std::default_random_engine &gen) {
             target_.reductionLoops[mut_idx].length, reductionLoopTimes_, gen);
     }
     annotation_ = mut;
-    // std::cout << "End mutating...\n";
     return true;
 }
 
 bool MultiLevelTilingWithFusionPart::crossover(
     const SketchPart &part, std::default_random_engine &gen) {
-    // std::cout << "Start crossover...\n";
     if (part->partType() != SketchPartType::MultiLevelTilingWithFusion)
         return false;
     auto p = part.as<MultiLevelTilingWithFusionPart>();
@@ -164,7 +161,6 @@ bool MultiLevelTilingWithFusionPart::crossover(
             p->annotation_.reductionLoopTiling[mutIdx];
     }
     annotation_ = mut;
-    // std::cout << "End crossover...\n";
     return true;
 }
 
@@ -177,11 +173,6 @@ std::vector<int> MultiLevelTilingWithFusionPart::getAnnotation() const {
         ret.insert(ret.end(), item.begin(), item.end());
     }
     ret.push_back(doCacheRead_);
-    // std::cout << "Annotation: ";
-    // for (int item : ret) {
-    //     std::cout << item << " ";
-    // }
-    // std::cout << "\n";
     return ret;
 }
 
