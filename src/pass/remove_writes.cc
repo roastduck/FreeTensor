@@ -391,7 +391,7 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
             if (!allIters(expr).empty()) {
                 try {
                     auto &&[args, values, cond] =
-                        parsePBFunc(repInfo.funcStr_); // later -> earlier
+                        parseSimplePBFunc(repInfo.funcStr_); // later -> earlier
                     ASSERT(repInfo.earlierIters_.size() <=
                            values.size()); // maybe padded
                     ASSERT(repInfo.laterIters_.size() <= args.size());

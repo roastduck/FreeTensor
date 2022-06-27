@@ -9,18 +9,30 @@ options {
     #include <debug.h>
     #include <serialize/load_ast.h>
     #include <serialize/mangle.h>
+    #include <math/parse_pb_expr.h>
 }
 
-func returns [std::vector<std::string> args, std::vector<Expr> values, Expr cond]
-    : (extList=varList '->')?
-        '{' varList '->' exprList (':' expr
+func returns [PBFuncAST ast]
+    : (extList=varList '->')? '{' simpleFunc
       {
-        $cond = $expr.node;
+        $ast = {$simpleFunc.ast};
       }
-        )? '}'
+        (';' simpleFunc1=simpleFunc
       {
-        $args = $varList.vars;
-        $values = $exprList.nodes;
+        $ast.emplace_back($simpleFunc.ast);
+      }
+        )* '}'
+    ;
+
+simpleFunc returns [SimplePBFuncAST ast]
+    : varList '->' exprList (':' expr
+      {
+        $ast.cond_ = $expr.node;
+      }
+        )?
+      {
+        $ast.args_ = $varList.vars;
+        $ast.values_ = $exprList.nodes;
       }
     ;
 
