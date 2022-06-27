@@ -13,6 +13,7 @@
 #include <analyze/symbol_table.h>
 #include <analyze/track_stmt.h>
 #include <container_utils.h>
+#include <lazy.h>
 #include <math/gen_pb_expr.h>
 #include <math/presburger.h>
 #include <visitor.h>
@@ -229,7 +230,7 @@ class AnalyzeDeps {
     const std::unordered_map<ID, std::vector<IterAxis>> &scope2coord_;
     const std::unordered_map<std::string, std::vector<ID>>
         &noDepsLists_; // Var name -> [loop ID]
-    const LoopVariExprMap &variantExpr_;
+    Lazy<LoopVariExprMap> variantExpr_;
 
     const std::vector<FindDepsDir> &direction_;
     const FindDepsCallback &found_;
@@ -253,7 +254,7 @@ class AnalyzeDeps {
         const std::vector<VarDef> &allDefs,
         const std::unordered_map<ID, std::vector<IterAxis>> &scope2coord,
         const std::unordered_map<std::string, std::vector<ID>> &noDepsLists,
-        const LoopVariExprMap &variantExpr,
+        Lazy<LoopVariExprMap> variantExpr,
         const std::vector<FindDepsDir> &direction,
         const FindDepsCallback &found, FindDepsMode mode, DepType depType,
         const FindDepsAccFilter &earlierFilter,
