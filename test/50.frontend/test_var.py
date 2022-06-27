@@ -1,6 +1,46 @@
 import freetensor as ft
 
 
+def test_ellipsis_index():
+
+    @ft.transform
+    def f(x, y):
+        x: ft.Var[(4,), "int32", "input", "cpu"]
+        y: ft.Var[(), "int32", "output", "cpu"]
+        y[...] = 0
+        for i in range(4):
+            y[...] += x[i]
+
+    print(f)
+
+    with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("y", (), "int32", "output", "cpu")]) as (x, y):
+        y[()] = 0
+        with ft.For("i", 0, 4) as i:
+            y[()] += x[i]
+    assert ft.pop_ast().match(f.body)
+
+
+def test_none_index():
+
+    @ft.transform
+    def f(x, y):
+        x: ft.Var[(4,), "int32", "input", "cpu"]
+        y: ft.Var[(), "int32", "output", "cpu"]
+        y[None] = 0
+        for i in range(4):
+            y[None] += x[i]
+
+    print(f)
+
+    with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("y", (), "int32", "output", "cpu")]) as (x, y):
+        y[()] = 0
+        with ft.For("i", 0, 4) as i:
+            y[()] += x[i]
+    assert ft.pop_ast().match(f.body)
+
+
 def test_chained_subscript():
 
     @ft.transform
