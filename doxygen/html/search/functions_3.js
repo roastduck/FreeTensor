@@ -2,7 +2,7 @@ var searchData=
 [
   ['cache_0',['cache',['../classfreetensor_1_1Schedule.html#adcb75fe9ab13e88589e3eeb6de82a854',1,'freetensor::Schedule::cache()'],['../namespacefreetensor.html#a21baa67a88e67dd41c4e42d5bc2e3795',1,'freetensor::cache()']]],
   ['cachereduction_1',['cacheReduction',['../classfreetensor_1_1Schedule.html#a6e3c690de5bdcec52d0dbacf9d1b2a2d',1,'freetensor::Schedule::cacheReduction()'],['../namespacefreetensor.html#a8ebf410b1b7c1449e07a31c3d0b39de2',1,'freetensor::cacheReduction()']]],
-  ['cachewriterule_2',['CacheWriteRule',['../classfreetensor_1_1CacheWriteRule.html#a4ee671cc46a01bef6afcb571d55832db',1,'freetensor::CacheWriteRule']]],
+  ['cachewriterule_2',['CacheWriteRule',['../classfreetensor_1_1CacheWriteRule.html#a502d80b758461467875a439815d70b4f',1,'freetensor::CacheWriteRule']]],
   ['cancrossover_3',['canCrossOver',['../structfreetensor_1_1SketchTarget.html#a10446664fc7bc35d0119afe5987abf47',1,'freetensor::SketchTarget']]],
   ['casttype_4',['castType',['../classfreetensor_1_1ConstFold.html#a46c428e8f965d166a2a64ca4d7a1588e',1,'freetensor::ConstFold']]],
   ['cat_5',['cat',['../namespacefreetensor.html#ac0031db496e4ad1f6e4ae729835ae653',1,'freetensor']]],

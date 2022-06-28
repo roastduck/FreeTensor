@@ -8,7 +8,7 @@ var searchData=
   ['cache_5fwrite_2ecc_5',['cache_write.cc',['../cache__write_8cc.html',1,'']]],
   ['cache_5fwrite_2eh_6',['cache_write.h',['../cache__write_8h.html',1,'']]],
   ['cachereduction_7',['cacheReduction',['../namespacefreetensor.html#a8ebf410b1b7c1449e07a31c3d0b39de2',1,'freetensor::cacheReduction()'],['../classfreetensor_1_1Schedule.html#a6e3c690de5bdcec52d0dbacf9d1b2a2d',1,'freetensor::Schedule::cacheReduction()']]],
-  ['cachewriterule_8',['CacheWriteRule',['../classfreetensor_1_1CacheWriteRule.html#a4ee671cc46a01bef6afcb571d55832db',1,'freetensor::CacheWriteRule::CacheWriteRule()'],['../classfreetensor_1_1CacheWriteRule.html',1,'freetensor::CacheWriteRule']]],
+  ['cachewriterule_8',['CacheWriteRule',['../classfreetensor_1_1CacheWriteRule.html#a502d80b758461467875a439815d70b4f',1,'freetensor::CacheWriteRule::CacheWriteRule()'],['../classfreetensor_1_1CacheWriteRule.html',1,'freetensor::CacheWriteRule']]],
   ['cancrossover_9',['canCrossOver',['../structfreetensor_1_1SketchTarget.html#a10446664fc7bc35d0119afe5987abf47',1,'freetensor::SketchTarget']]],
   ['cast_10',['Cast',['../namespacefreetensor.html#a539a36f725523c1fee5d301a246343bf',1,'freetensor::Cast()'],['../namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fa4cd9f3996d60790cd11c04f842ebc43c',1,'freetensor::Cast()']]],
   ['castnode_11',['CastNode',['../classfreetensor_1_1CastNode.html',1,'freetensor']]],

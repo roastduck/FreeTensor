@@ -730,13 +730,15 @@ AutoSchedule            (<span title="freetensor_ffi.AutoSchedule">AutoSchedule<
                  <span class="n">n_measured</span><span class="p">,</span>
                  <span class="o">*</span><span class="p">,</span>
                  <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
-                 <span class="n">min_block_size</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+                 <span class="n">min_block_size</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                 <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">xgb_params</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">save_file_name</span> <span class="o">=</span> <span class="n">tag</span> <span class="o">+</span> <span class="s2">&quot;_xgb.model&quot;</span>
         <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">save_file_name</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">xgb</span><span class="o">.</span><span class="n">Booster</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">load_model</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">save_file_name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="n">verbose</span>
 
         <span class="k">def</span> <span class="nf">predict_func</span><span class="p">(</span><span class="n">features</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
@@ -746,14 +748,15 @@ AutoSchedule            (<span title="freetensor_ffi.AutoSchedule">AutoSchedule<
 
         <span class="nb">super</span><span class="p">(</span><span class="n">AutoSchedule</span><span class="p">,</span>
               <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">schedule</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">n_measured</span><span class="p">,</span> <span class="n">predict_func</span><span class="p">,</span>
-                             <span class="n">update_func</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">min_block_size</span><span class="p">)</span>
+                             <span class="n">update_func</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">min_block_size</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">set_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kws</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">AutoSchedule</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">kws</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iteration</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">iteration</span><span class="p">):</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;iter &quot;</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Iteration &quot;</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">search_one_round</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_best_schedule</span><span class="p">()</span>
 
