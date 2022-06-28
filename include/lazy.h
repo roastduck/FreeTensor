@@ -20,7 +20,12 @@ template <typename T> class Lazy {
     }
 
     template <typename F>
-    Lazy(F delayedInit) : container_(std::nullopt), delayedInit_(delayedInit) {}
+    Lazy(F delayedInit)
+        : container_(std::nullopt), delayedInit_(delayedInit), mutex_() {}
+
+    Lazy(const Lazy &other)
+        : container_(other.container_), delayedInit_(other.delayedInit_),
+          mutex_() {}
 };
 
 template <typename F>
