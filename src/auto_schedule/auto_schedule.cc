@@ -475,6 +475,7 @@ Stmt AutoSchedule::testCacheWrite() {
 }
 
 Schedule AutoSchedule::testMultiLevelTilingWithFusion(int nLevel) {
+    std::default_random_engine rng;
     auto sketch = getInitSketch();
     MultiLevelTilingWithFusionRule rule(target_->type());
     if (rule.analyze(sketch) == RuleStatus::Skip) {
@@ -482,14 +483,14 @@ Schedule AutoSchedule::testMultiLevelTilingWithFusion(int nLevel) {
     }
     Sketch newSketch = rule.genPart(sketch)[nLevel];
     std::cout << toString(newSketch.schedule().ast()) << std::endl;
-    auto part = newSketch.part(0)[SketchPartType::MultiLevelTilingWithFusion]
-                    .as<MultiLevelTilingWithFusionPart>();
-    part->genSampleAnnotation();
+    auto part = newSketch.part(0)[SketchPartType::MultiLevelTilingWithFusion];
+    part->genFakeAnnotation(rng);
     auto schedule = newSketch.genSchedule();
     return schedule;
 }
 
 Schedule AutoSchedule::testThreadBind() {
+    std::default_random_engine rng;
     auto sketch = getInitSketch();
     MultiLevelTilingWithFusionRule rule(target_->type());
     if (rule.analyze(sketch) == RuleStatus::Skip) {
@@ -497,15 +498,15 @@ Schedule AutoSchedule::testThreadBind() {
     }
     Sketch newSketch = rule.genPart(sketch)[0];
     std::cout << toString(newSketch.schedule().ast()) << std::endl;
-    auto part = newSketch.part(0)[SketchPartType::MultiLevelTilingWithFusion]
-                    .as<MultiLevelTilingWithFusionPart>();
-    part->genSampleAnnotation();
+    auto part = newSketch.part(0)[SketchPartType::MultiLevelTilingWithFusion];
+    part->genFakeAnnotation(rng);
     newSketch.addPart(Ref<ThreadBindPart>::make());
     auto schedule = newSketch.genSchedule();
     return schedule;
 }
 
 Schedule AutoSchedule::testCacheRead() {
+    std::default_random_engine rng;
     auto sketch = getInitSketch();
     MultiLevelTilingWithFusionRule rule(target_->type());
     if (rule.analyze(sketch) == RuleStatus::Skip) {
@@ -513,8 +514,7 @@ Schedule AutoSchedule::testCacheRead() {
     }
     Sketch newSketch = rule.genPart(sketch)[0];
     std::cout << toString(newSketch.schedule().ast()) << std::endl;
-    auto part = newSketch.part(0)[SketchPartType::MultiLevelTilingWithFusion]
-                    .as<MultiLevelTilingWithFusionPart>();
+    auto part = newSketch.part(0)[SketchPartType::MultiLevelTilingWithFusion];
     part->genRandAnnotation(randGen_);
     newSketch.addPart(Ref<ThreadBindPart>::make());
     auto schedule = newSketch.genSchedule();
@@ -522,7 +522,7 @@ Schedule AutoSchedule::testCacheRead() {
     v.push_back(Ref<Sketch>::make(newSketch));
     auto pred = getPrediction(v);
     std::cout << toString(schedule.ast()) << std::endl;
-    part->printAnnotation();
+    part.as<MultiLevelTilingWithFusionPart>()->printAnnotation();
     auto func = lower(schedule.func(), target_);
     std::cout << toString(func->body_) << std::endl;
     std::cout << "lower done" << std::endl;
@@ -530,6 +530,7 @@ Schedule AutoSchedule::testCacheRead() {
 }
 
 Schedule AutoSchedule::testUnroll() {
+    std::default_random_engine rng;
     auto sketch = getInitSketch();
     MultiLevelTilingWithFusionRule rule(target_->type());
     if (rule.analyze(sketch) == RuleStatus::Skip) {
@@ -537,9 +538,8 @@ Schedule AutoSchedule::testUnroll() {
     }
     Sketch newSketch = rule.genPart(sketch)[0];
     std::cout << toString(newSketch.schedule().ast()) << std::endl;
-    auto part = newSketch.part(0)[SketchPartType::MultiLevelTilingWithFusion]
-                    .as<MultiLevelTilingWithFusionPart>();
-    part->genSampleAnnotation();
+    auto part = newSketch.part(0)[SketchPartType::MultiLevelTilingWithFusion];
+    part->genFakeAnnotation(rng);
     newSketch.addPart(Ref<ThreadBindPart>::make());
     newSketch.addPart(Ref<UnrollPart>::make(target_->type(), 16));
     auto schedule = newSketch.genSchedule();
@@ -547,6 +547,7 @@ Schedule AutoSchedule::testUnroll() {
 }
 
 Schedule AutoSchedule::testParallelize() {
+    std::default_random_engine rng;
     auto sketch = getInitSketch();
     MultiLevelTilingRule rule(target_->type());
     if (rule.analyze(sketch) == RuleStatus::Skip) {
@@ -555,7 +556,7 @@ Schedule AutoSchedule::testParallelize() {
     sketch = rule.genPart(sketch)[0];
     auto part = sketch.part(0)[SketchPartType::MultiLevelTiling]
                     .as<MultiLevelTilingPart>();
-    part->genSampleAnnotation();
+    part->genFakeAnnotation(rng);
     ParallelizeRule par;
     if (par.analyze(sketch) == RuleStatus::Skip) {
         return sketch.schedule();

@@ -127,7 +127,7 @@ size_t MultiLevelTilingPart::hash() const {
     return h;
 }
 
-void MultiLevelTilingPart::genSampleAnnotation() {
+void MultiLevelTilingPart::genFakeAnnotation(std::default_random_engine &gen) {
     int spaceLoopLength = target_.spaceLoops.size();
     int reductionLoopLength = target_.reductionLoops.size();
     std::vector<std::vector<int>> spaceLoopTiling(spaceLoopLength);
